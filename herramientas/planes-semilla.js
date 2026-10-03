@@ -27,8 +27,10 @@
 const fs = require("fs");
 const path = require("path");
 
-const RAIZ = path.join(__dirname, "..");
-const Chess = require(path.join(RAIZ, "node_modules", "chess.js")).Chess;
+const banco = require("./lib/planes-banco");
+const { RAIZ, Chess, contador, fenUsable, leerJSON, aEspanol, chuletaDeDiagrama,
+        recorta, posicion, nota, turnoDe, renglonDeLinea, lineasDeAperturas,
+        ejerciciosDeTema, renglonDeEjercicio } = banco;
 
 /* A quién le quedan los planes. Un plan es del profesor que lo escribió (la RLS
    no deja firmar por otro), así que la semilla tiene que decir de quién es. */
@@ -37,87 +39,6 @@ const PROFESOR_ID = process.env.PROFESOR_ID || "5fc884eb-5374-4353-9a5d-60454c0b
 // Lo que los distingue de los que arme el profesor a mano: se borran y se
 // vuelven a sembrar por este prefijo, sin tocar los suyos.
 const MARCA = "· AI";
-
-// ---------------------------------------------------------------- validación
-
-/* La misma regla que js/posicion-valida.js. No se importa el archivo porque es
-   de navegador (window.PosicionValida); si algún día se separan, este
-   verificador deja pasar lo que la clase en vivo rechaza — por eso el
-   verificador compara las dos, carácter por carácter. */
-function motivoPosicionInvalida(fen) {
-    const parts = String(fen || "").split(" ");
-    const filas = (parts[0] || "").split("/");
-    if (filas.length !== 8) return "no se pudo leer";
-    if ((parts[0].match(/K/g) || []).length !== 1 || (parts[0].match(/k/g) || []).length !== 1) {
-        return "tiene que haber un rey de cada color";
-    }
-    if (/[pP]/.test(filas[0]) || /[pP]/.test(filas[7])) return "peón en la primera o la última fila";
-    const turnoContrario = parts[1] === "b" ? "w" : "b";
-    const prueba = new Chess(filas.join("/") + " " + turnoContrario + " " + (parts[2] || "-") + " - 0 1");
-    if (prueba.in_check && prueba.in_check()) return "el rey que no mueve está en jaque";
-    return null;
-}
-
-let descartadas = 0;
-function fenUsable(fen) {
-    if (!fen) return false;
-    const motivo = motivoPosicionInvalida(fen);
-    if (motivo) { descartadas += 1; return false; }
-    // Y que chess.js la cargue de verdad y queden jugadas: una posición sin
-    // jugadas legales no se puede dar en clase, solo mirar.
-    const c = new Chess();
-    if (!c.load(fen)) { descartadas += 1; return false; }
-    if (!c.moves().length) { descartadas += 1; return false; }
-    return true;
-}
-
-// ------------------------------------------------------------------ utilidades
-
-const leerJSON = (p) => JSON.parse(fs.readFileSync(path.join(RAIZ, p), "utf8"));
-
-const PIEZA_ES = { K: "R", Q: "D", R: "T", B: "A", N: "C" };
-/* La notación de acá, para que la chuleta del profesor no diga "Nf3". Es la
-   misma traducción que hace entreno/aperturas.html en pantalla. */
-function aEspanol(san) {
-    return String(san).replace(/[KQRBN]/g, (m) => PIEZA_ES[m] || m);
-}
-const lineaEnEspanol = (jugadas) => jugadas.map((j, i) =>
-    (i % 2 === 0 ? (i / 2 + 1) + "." : "") + aEspanol(j)).join(" ");
-
-/* La chuleta de un final se arma con los SAN de `jugadas[]`, NO con el campo
-   `linea_es` del banco.
- *
- * Ese campo es texto suelto y tiene capturas escritas sin la x: en "Retrasando
- * la captura" dice "Ra5" donde la jugada de verdad es "Rxa5". Como es solo
- * texto que se lee, nunca falló nada — pero puesto en la chuleta es lo que el
- * profesor lee en voz alta delante de la clase, y no se puede jugar.
- * `jugadas[].san` es el mismo dato que mueve el visor del curso. */
-function lineaDesdeJugadas(fen, jugadas) {
-    const partes = String(fen).split(" ");
-    let numero = parseInt(partes[5], 10) || 1;
-    let tocanBlancas = partes[1] !== "b";
-    const salida = [];
-    jugadas.forEach((j) => {
-        const san = aEspanol(j.san);
-        if (tocanBlancas) {
-            salida.push(numero + "." + san);
-        } else {
-            salida.push(salida.length === 0 ? numero + "..." + san : san);
-            numero += 1;   // el número sube DESPUÉS de la jugada de las negras
-        }
-        tocanBlancas = !tocanBlancas;
-    });
-    return salida.join(" ");
-}
-
-const chuletaDeDiagrama = (d) =>
-    [turnoDe(d.fen), d.resultado_texto].filter(Boolean).join(" · ") +
-    (d.jugadas && d.jugadas.length ? " · Línea: " + lineaDesdeJugadas(d.fen, d.jugadas) : "");
-
-const recorta = (texto, n) => {
-    const t = String(texto || "").replace(/\s+/g, " ").trim();
-    return t.length <= n ? t : t.slice(0, n - 1).trimEnd() + "…";
-};
 
 const planes = [];
 function plan(titulo, notas, items) {
@@ -131,18 +52,6 @@ function plan(titulo, notas, items) {
         items: buenos.map((it, i) => Object.assign({ orden: i }, it)),
     });
 }
-
-/* Un renglón de posición. La `pregunta` lleva la consigna Y la respuesta: este
-   panel solo lo ve el profesor (como el PDF y la lección de curso), así que es
-   su chuleta — no hay ningún lugar donde el alumno la lea. */
-function posicion(titulo, fen, consigna) {
-    if (!fenUsable(fen)) return null;
-    return { tipo: "posicion", titulo: recorta(titulo, 200), fen: fen,
-             pregunta: consigna ? recorta(consigna, 500) : null };
-}
-const nota = (titulo, texto) => ({ tipo: "nota", titulo: recorta(titulo, 200), nota: recorta(texto, 2000) });
-
-const turnoDe = (fen) => (String(fen).split(" ")[1] === "b" ? "Juegan negras" : "Juegan blancas");
 
 // ==================================================================== FINALES
 
@@ -202,10 +111,7 @@ function planesDeEstrategia() {
  * La FEN se calcula jugando la línea con chess.js, no se escribe a mano: así no
  * puede quedar una posición que no corresponda a esas jugadas. */
 function planesDeAperturas() {
-    global.window = global.window || {};
-    require(path.join(RAIZ, "js", "aperturas-lineas.js"));
-    const api = global.window.AperturasLineas;
-    const lineas = api.todas ? api.todas() : (api.LINEAS || api.lineas || []);
+    const lineas = lineasDeAperturas();
 
     const porApertura = new Map();
     lineas.forEach((l) => {
@@ -258,31 +164,6 @@ function planesDeAperturas() {
              t.map((l) => renglonDeLinea(l))));
 }
 
-/* De una línea se siembra la posición a la que LLEGA… salvo cuando esa posición
-   ya no tiene jugadas, que es lo que pasa con toda celada que termina en mate.
-   Ahí se siembra la de UNA JUGADA ANTES y la chuleta dice cuál remata: así la
-   clase tiene algo que encontrar, que es para lo que sirve una celada. Sembrar
-   la final sería enseñarles el mate ya puesto — y además no se puede: una
-   posición sin jugadas legales no entra al tablero de la clase. */
-function renglonDeLinea(l) {
-    const c = new Chess();
-    for (const san of l.jugadas) { if (!c.move(san)) return null; }
-    const quien = l.color === "w" ? "blancas" : "negras";
-    const clave = l.clave ? " · Clave: " + l.clave : "";
-
-    if (c.moves().length) {
-        return posicion(l.nombre, c.fen(),
-            "El alumno lleva " + quien + " · " + lineaEnEspanol(l.jugadas) + clave);
-    }
-
-    const ultima = c.undo();
-    if (!ultima) return null;
-    const antes = l.jugadas.slice(0, -1);
-    return posicion(l.nombre, c.fen(),
-        "El alumno lleva " + quien + " · ¿Cómo remata? " + aEspanol(ultima.san) +
-        " · Hasta aquí: " + lineaEnEspanol(antes) + clave);
-}
-
 // ==================================================================== TÁCTICA
 
 /* QUÉ TEMAS SE SIEMBRAN ES UNA DECISIÓN EDITORIAL, NO UNA DEDUCCIÓN.
@@ -309,18 +190,6 @@ const MATES_CON_NOMBRE = [
     "backRankMate", "smotheredMate", "operaMate", "anastasiaMate", "arabianMate",
 ];
 
-/* Los ejercicios de Lichess que ya sirve `entreno/temas.html`. Se eligen los más
-   fáciles de cada tema (rating más bajo): una clase no empieza por el ejercicio
-   más duro. La SOLUCIÓN va en la chuleta, en la notación de acá. */
-function ejerciciosDeTema(d, key, cuantos) {
-    const ids = (d.themes && d.themes[key]) || [];
-    return ids
-        .map((id) => Object.assign({ id }, d.puzzles[id]))
-        .filter((p) => p && p.fen && fenUsable(p.fen))
-        .sort((a, b) => (a.rating || 9999) - (b.rating || 9999))
-        .slice(0, cuantos);
-}
-
 function planDeTema(d, key, prefijo, notas) {
     let info = null, grupo = null;
     d.groups.forEach((g) => g.themes.forEach((t) => {
@@ -329,10 +198,7 @@ function planDeTema(d, key, prefijo, notas) {
     if (!info) return;
     const elegidos = ejerciciosDeTema(d, key, 6);
     if (elegidos.length < 4) return;   // con menos de cuatro no es una clase
-    const items = elegidos.map((p, i) => posicion(
-        "Ejercicio " + (i + 1) + (p.rating ? " (dificultad " + p.rating + ")" : ""),
-        p.fen,
-        turnoDe(p.fen) + " · Solución: " + (p.solution || []).map(aEspanol).join(" ")));
+    const items = elegidos.map((p, i) => renglonDeEjercicio(p, "Ejercicio " + (i + 1)));
     items.unshift(nota("El tema de hoy", info.name + (info.desc ? ". " + info.desc : "")));
     plan(prefijo + " · " + info.name, notas || (grupo.title + ". Ejercicios de menor a mayor dificultad."), items);
 }
@@ -408,7 +274,7 @@ if (process.argv.includes("--sql")) { console.log(aSQL(planes)); process.exit(0)
 const renglones = planes.reduce((n, p) => n + p.items.length, 0);
 const posiciones = planes.reduce((n, p) => n + p.items.filter((i) => i.tipo === "posicion").length, 0);
 console.log(planes.length + " planes · " + renglones + " renglones (" + posiciones + " posiciones)");
-console.log(descartadas + " posiciones descartadas por no pasar la validación de la clase en vivo");
+console.log(contador.descartadas + " posiciones descartadas por no pasar la validación de la clase en vivo");
 console.log("\nPor bloque:");
 const porBloque = {};
 planes.forEach((p) => {

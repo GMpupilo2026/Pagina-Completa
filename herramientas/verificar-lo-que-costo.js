@@ -129,7 +129,7 @@ function igual(nombre, hallado, esperado) {
   console.log("\n=== planes.html?plan= abre ese plan ===");
   const src = fs.readFileSync(path.join(__dirname, "..", "js", "planes.js"), "utf8");
   igual("planes.js lee ?plan= y lo abre si es uno de sus planes",
-    /get\("plan"\)/.test(src) && /planes\.some\(\(p\) => p\.id === pedido\)\) await abrirPlan\(pedido\)/.test(src), true);
+    /get\("plan"\)/.test(src) && /if \(pedido && \(?planes\.some\(\(p\) => p\.id === pedido\)[^\n]*\) await abrirPlan\(pedido\)/.test(src), true);
   console.log(fallos ? `\n${fallos} fallo(s).` : "\nTodo bien: el profe ve lo que más le costó a su clase y lo manda al plan.");
   process.exit(fallos ? 1 : 0);
 })();

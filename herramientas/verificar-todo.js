@@ -44,7 +44,8 @@ const TOPE_MS = 10 * 60 * 1000;
 /* Lo que tiene que correr ANTES de un verificador, porque comprueba algo que
    se genera y no se commitea (herramientas/planes/ está en .gitignore). */
 const ANTES = {
-  "verificar-planes-semilla.js": [["node", ["herramientas/planes-semilla.js"]]],
+  "verificar-planes-semilla.js": [["node", ["herramientas/planes-semilla.js"]], ["node", ["herramientas/proyecto-semilla.js"]]],
+  "verificar-proyectos.js": [["node", ["herramientas/proyecto-semilla.js"]]],
 };
 
 /* verificar-reportes.py no corre solo: revisa los archivos que deja

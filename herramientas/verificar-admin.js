@@ -97,6 +97,20 @@ window.__consultas = [];
     equipo_entrenadores: [],
     coordinador_profesores: [],
     preparacion_rivales_profesores: [],
+    /* Un proyecto con dos grupos (admin.html#proyectos). «Finales» ya tiene
+       profesora; el otro no, y su nombre trae HTML que tiene que ir literal.
+       Las fechas: una clase que ya pasó y dos que vienen. */
+    proyectos: [{ id: "p-1", slug: "campeones", nombre: "Campeones Colegiales 2026", descripcion: "Formar instructores.", periodo: "Octubre a diciembre de 2026" }],
+    proyecto_grupos: [
+      { id: "g-1", proyecto_id: "p-1", slug: "finales", nombre: "Finales", nivel: "avanzado", horario: "Martes y viernes", orden: 0, profesor_id: "u-profe" },
+      { id: "g-2", proyecto_id: "p-1", slug: "otro", nombre: '<b>Aperturas</b>', nivel: "inicial", horario: "Miércoles", orden: 1, profesor_id: null },
+    ],
+    proyecto_sesiones: [
+      { grupo_id: "g-1", numero: 1, fecha: "2020-01-07", titulo: "Arranque", tipo: "especial" },
+      { grupo_id: "g-1", numero: 2, fecha: "2099-01-09", titulo: "Rey y peón", tipo: "clase" },
+      { grupo_id: "g-1", numero: 3, fecha: "2099-01-13", titulo: "Evaluación 4", tipo: "evaluacion" },
+    ],
+    proyecto_tareas: [{ grupo_id: "g-1", semana: 1 }, { grupo_id: "g-1", semana: 2 }],
     /* Dos solicitudes esperando y una ya contestada: «Lo urgente» cuenta
        solo las que esperan, y las cuenta en la base (head), no bajándolas. */
     /* La bitácora (admin.html#auditoria): 62 filas, más de una página de
@@ -174,6 +188,12 @@ window.__consultas = [];
       if (n === "subgrupos_a_la_vista") return constructor(n, SUBGRUPOS_VISTA);
       /* Activar la preparación de rivales: la base devuelve cómo QUEDÓ, y la
          página pinta eso. Se anota lo que se pidió. */
+      /* Asignar un grupo de un proyecto: la base devuelve a quién QUEDÓ
+         asignado (null si se quitó), y la página pinta eso. */
+      if (n === "asignar_grupo_proyecto") {
+        window.__asignaciones = (window.__asignaciones || []).concat([args]);
+        return Promise.resolve({ data: args.p_profesor || null, error: null });
+      }
       if (n === "activar_preparacion_rivales") {
         window.__activaciones = (window.__activaciones || []).concat([args]);
         return Promise.resolve({ data: !!(args && args.p_activa), error: null });
@@ -286,7 +306,7 @@ async function pruebaUnaSolaPuerta(browser) {
   igual("el menú, por grupos y sin repetir",
     await page.evaluate(() => Array.from(document.querySelectorAll("nav[aria-label='Secciones de administración'] ul")).map((ul) =>
       document.getElementById(ul.getAttribute("aria-labelledby")).textContent + ": " + Array.from(ul.querySelectorAll("a")).map((a) => a.dataset.ir).join(", "))),
-    ["Hoy: inicio", "Supervisión y coordinación: supervisores, profesores, equipos", "Personas: cuentas, crear", "La plataforma: novedades, torneos, preparacion, auditoria"]);
+    ["Hoy: inicio", "Supervisión y coordinación: supervisores, profesores, equipos", "Personas: cuentas, crear", "La plataforma: novedades, torneos, proyectos, preparacion, auditoria"]);
   igual("cada sección del menú existe y hay una por entrada",
     await page.evaluate(() => {
       const menu = Array.from(document.querySelectorAll(".admin-nav")).map((a) => a.dataset.ir).sort();
@@ -302,6 +322,8 @@ async function pruebaUnaSolaPuerta(browser) {
   igual("las páginas se abren desde el panel de la Academia, no desde acá",
     await page.evaluate(() => Array.from(document.querySelectorAll("#app a[href]"))
       .filter((a) => !a.closest("#urgentes") && !a.closest("[data-seccion='torneos']") && !a.closest("[data-seccion='preparacion']")
+        /* La ficha de cada grupo de un proyecto abre SU página (proyecto.html?grupo=): es el contenido del grupo, no otra puerta. */
+        && !a.closest("[data-seccion='proyectos']")
         && !/ver_como=/.test(a.getAttribute("href")) && /\.html/.test(a.getAttribute("href")))
       .map((a) => a.getAttribute("href"))), ["clases.html"]);
   igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
@@ -505,6 +527,53 @@ async function pruebaPreparacionRivales(browser) {
   await page.fill("#prep-buscar", "karina");
   igual("y buscando por nombre se encuentra", (await filas()).length, 1);
   igual("el botón abre la herramienta", await page.getAttribute('[data-seccion="preparacion"] a[href="preparacion-rivales.html"]', "href"), "preparacion-rivales.html");
+  igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
+  await ctx.close();
+}
+
+/* ============ admin.html · los proyectos: una ficha por grupo y su profesor ============ */
+
+async function pruebaProyectos(browser) {
+  console.log("\n=== Proyectos: una ficha por grupo y a quién se le asigna ===");
+  const { page, ctx, errores } = await abrir(browser, "/admin.html", ADMIN);
+  await page.goto(BASE + "/admin.html#proyectos", { waitUntil: "networkidle" });
+  await page.waitForSelector("#app:not(.hidden)", { timeout: 20000 });
+  await page.waitForSelector("#proy-lista article", { timeout: 10000 });
+  const fichas = () => page.evaluate(() => Array.from(document.querySelectorAll("#proy-lista article")).filter((a) => a.checkVisibility()).map((a) => ({
+    nombre: a.querySelector("h4").textContent,
+    lineas: Array.from(a.querySelectorAll("li")).map((li) => li.textContent.trim()),
+    proxima: Array.from(a.querySelectorAll("p")).map((p) => p.textContent).find((t) => /Próxima clase|Ya se dieron/.test(t)) || "",
+    elegido: a.querySelector("select").selectedOptions[0].textContent,
+    estado: a.querySelector("[role=status]").textContent,
+    enlace: a.querySelector("a[href^='proyecto.html']").getAttribute("href"),
+  })));
+  const f = await fichas();
+  igual("el proyecto con su nombre", await page.evaluate(() => document.querySelector("#proy-lista h3").textContent), "Campeones Colegiales 2026");
+  igual("una ficha por grupo, en su orden, y el nombre con HTML va como texto", f.map((x) => x.nombre), ["Finales", "<b>Aperturas</b>"]);
+  igual("el HTML de un nombre no crea nodos", await page.evaluate(() => document.querySelectorAll("#proy-lista b").length), 0);
+  igual("cada ficha dice lo que trae (y el emoji no se lee)", f[0].lineas, [
+    "📚 3 clases con su plan y sus ejercicios listos para el tablero", "🎉 Un momento divertido en cada clase",
+    "📨 2 tareas semanales listas para mandar", "📝 1 clase de evaluación"]);
+  igual("los emojis van escondidos del lector de pantalla", await page.evaluate(() =>
+    Array.from(document.querySelectorAll("#proy-lista li > span:first-child")).every((s) => s.getAttribute("aria-hidden") === "true")), true);
+  igual("la próxima clase es la primera que no ha pasado (en hora de Costa Rica)", /^Próxima clase: .* · Rey y peón$/.test(f[0].proxima), true);
+  igual("quién lo tiene asignado, en el selector y escrito", [f[0].elegido, f[0].estado, f[1].elegido, f[1].estado],
+    ["Karina Rojas", "Asignado a Karina Rojas", "Sin asignar", "Sin profesor asignado"]);
+  igual("el selector ofrece solo profesores (no alumnos ni administración)", await page.evaluate(() =>
+    Array.from(document.querySelectorAll("#proy-lista article")[1].querySelectorAll("option")).map((o) => o.textContent)), ["Sin asignar", "Karina Rojas"]);
+  igual("y cada ficha abre su grupo", f.map((x) => x.enlace), ["proyecto.html?grupo=g-1", "proyecto.html?grupo=g-2"]);
+
+  const segunda = page.locator("#proy-lista article").nth(1);
+  await segunda.locator("select").selectOption("u-profe");
+  await segunda.getByRole("button", { name: "Asignar" }).click();
+  await page.waitForFunction(() => /Asignado a Karina Rojas/.test(document.querySelectorAll("#proy-lista [role=status]")[1].textContent), null, { timeout: 5000 });
+  igual("asignar le pide a la base ESE grupo y ESE profesor", await page.evaluate(() => window.__asignaciones), [{ p_grupo: "g-2", p_profesor: "u-profe" }]);
+  await segunda.locator("select").selectOption("");
+  await segunda.getByRole("button", { name: "Asignar" }).click();
+  await page.waitForFunction(() => /Sin profesor/.test(document.querySelectorAll("#proy-lista [role=status]")[1].textContent), null, { timeout: 5000 });
+  igual("y quitarlo manda null", await page.evaluate(() => window.__asignaciones.pop()), { p_grupo: "g-2", p_profesor: null });
+  igual("las tablas se piden con su tope (PostgREST corta a ~1000 sin avisar)", await page.evaluate(() =>
+    window.__consultas.filter((c) => /^proyecto/.test(c.tabla)).every((c) => c.range)), true);
   igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
   await ctx.close();
 }
@@ -1100,6 +1169,7 @@ async function pruebaVolcarEnUnEquipo(browser) {
     await pruebaSecciones(browser);
     await pruebaUrgente(browser);
     await pruebaPreparacionRivales(browser);
+    await pruebaProyectos(browser);
     await pruebaAuditoria(browser);
     await pruebaFichasDeGrupo(browser);
     await pruebaVolcarEnUnEquipo(browser);

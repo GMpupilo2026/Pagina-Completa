@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8"><!-- guardia: inicio --><script>(function(){try{if(window.sb||localStorage.getItem("sb-bgtijpimpcokxatxxbki-auth-token"))return;}catch(e){return;}try{window.stop()}catch(e){}var p=location.pathname.replace(/^\/+/,'');if(!p||/\/$/.test(p))p+='index.html';else if(!/\.html$/.test(p))p+='.html';location.replace('/login.html?next='+encodeURIComponent(p));})();</script><!-- guardia: fin -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="img/favicon.svg">
+    <title>Proyecto — Ajedrez Integral</title>
+    <meta name="description" content="El plan completo de un grupo de un proyecto: sus clases con los ejercicios listos, el momento divertido de cada una y las tareas semanales para mandar.">
+    <meta name="robots" content="noindex">
+    <link rel="stylesheet" href="css/tailwind.css">
+    <link rel="stylesheet" href="css/styles.css">
+    <!-- oscuro: inicio --><script>(function(){try{var t=localStorage.getItem('theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.classList.add('dark');}catch(e){}})();</script><!-- oscuro: fin -->
+    <script src="js/adaptive-mode.js"></script>
+<!-- app: inicio --><meta name="theme-color" content="#102a43"><link rel="manifest" href="/manifest.json"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Ajedrez"><script src="js/errores.js"></script><script src="js/pwa.js" defer></script><!-- app: fin --><!-- fuentes: inicio --><link rel="stylesheet" href="css/fuentes.css"><!-- fuentes: fin --><!-- tema: inicio --><script>(function(){try{var t=localStorage.getItem('plataforma_tema_v1');if(!t||!/^[a-z]{2,24}$/.test(t)||t==='clasico')return;document.documentElement.setAttribute('data-tema',t);var b=getComputedStyle(document.documentElement).getPropertyValue('--c-brand-800').trim();var m=document.querySelector('meta[name="theme-color"]');if(b&&m)m.setAttribute('content','rgb('+b.replace(/\s+/g,',')+')');}catch(e){}})();</script><!-- tema: fin --></head>
+<body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-accent-500 focus:text-brand-900 focus:font-semibold focus:px-4 focus:py-2 focus:rounded-lg">Saltar al contenido principal</a>
+    <header id="header" class="sticky top-0 z-50 bg-brand-800 shadow-lg transition-all duration-300"><nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Academia"><div class="flex items-center justify-between min-h-[4rem] md:min-h-[5rem] py-2"><a id="marca-enlace" href="clases.html" class="flex items-center gap-2 text-white min-w-0"><img src="/img/logo-marca.png" alt="" width="78" height="48" class="h-10 md:h-12 w-auto shrink-0"><span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span><span class="sr-only"> — panel de la Academia</span></a><div class="flex items-center gap-2"><button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro"><span id="theme-icon" aria-hidden="true">☀️</span></button></div></div></nav></header><!-- migas: inicio --><div class="bg-brand-900"><nav id="migas" aria-label="Estás en" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 text-sm"><ol class="flex flex-wrap items-center gap-x-2 gap-y-1"><li class="flex items-center gap-2"><a href="clases.html" class="text-brand-200 underline underline-offset-2 hover:text-accent-400 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">🏛️ </span>Academia</a></li><li class="flex items-center gap-2"><span aria-hidden="true" class="text-brand-400">›</span><span aria-current="page" class="font-semibold text-white">Proyecto</span></li></ol></nav></div><!-- migas: fin -->
+    <main id="main-content" class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        <div id="loading" role="status" class="min-h-[50vh] flex flex-col items-center justify-center gap-3 px-4 text-center text-brand-500 dark:text-brand-300"><span aria-hidden="true" class="w-8 h-8 rounded-full border-4 border-brand-200 dark:border-brand-700 border-t-accent-500 animate-spin motion-reduce:animate-none"></span><p class="text-sm">Cargando…</p></div>
+
+        <div id="app" class="hidden">
+            <!-- Lo que se ve lo decide la RLS: el profesor ve solo el grupo que
+                 se le asignó, y quien administra ve todos. Esto solo evita
+                 enseñarle una página vacía a quien no tiene nada acá. -->
+            <div id="sin-permiso" hidden class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-8 text-center">
+                <p class="text-brand-500 dark:text-brand-300">Los proyectos son para el profesor al que se le asignó un grupo y para quien administra.</p>
+            </div>
+
+            <!-- Sin ?grupo=: los grupos que la persona puede ver. -->
+            <div id="vista-lista" hidden>
+                <h1 class="font-serif text-3xl sm:text-4xl font-bold text-brand-800 dark:text-white mb-1"><span aria-hidden="true">📁</span> Proyectos</h1>
+                <p class="text-brand-500 dark:text-brand-300 mb-8">Cada grupo trae su plan completo: las clases con sus ejercicios listos para el tablero, un momento divertido en cada una y las tareas de cada semana para mandar a tus alumnos.</p>
+                <p id="lista-vacia" hidden class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-8 text-center text-brand-500 dark:text-brand-300">Todavía no tienes ningún grupo de proyecto asignado. Cuando administración te asigne uno, aparece aquí.</p>
+                <div id="lista-grupos" class="grid gap-4 md:grid-cols-2 lg:grid-cols-3"></div>
+            </div>
+
+            <!-- Con ?grupo=: el grupo completo. -->
+            <div id="vista-grupo" hidden>
+                <p id="g-proyecto" class="text-xs font-semibold uppercase tracking-wide text-brand-450 dark:text-brand-350 mb-1"></p>
+                <h1 id="g-titulo" class="font-serif text-3xl sm:text-4xl font-bold text-brand-800 dark:text-white mb-1"></h1>
+                <p id="g-horario" class="text-brand-500 dark:text-brand-300 mb-4"></p>
+                <nav aria-label="Partes del grupo" class="flex flex-wrap gap-2 mb-6">
+                    <a href="#clases" class="text-sm font-semibold px-3 py-1.5 rounded-full bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">📚</span> Las clases</a>
+                    <a href="#tareas" class="text-sm font-semibold px-3 py-1.5 rounded-full bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">📨</span> Tareas semanales</a>
+                    <a href="#evaluacion" class="text-sm font-semibold px-3 py-1.5 rounded-full bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">📝</span> Evaluación</a>
+                    <a href="#guia" class="text-sm font-semibold px-3 py-1.5 rounded-full bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">🧭</span> La guía del curso</a>
+                </nav>
+
+                <section id="proxima" hidden aria-labelledby="proxima-titulo" class="bg-accent-50 dark:bg-brand-900 border-2 border-accent-400 rounded-2xl p-5 mb-8"></section>
+
+                <section aria-labelledby="intro-titulo" class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-8">
+                    <h2 id="intro-titulo" class="font-serif text-xl font-bold text-brand-800 dark:text-white mb-2">De qué se trata</h2>
+                    <p id="g-intro" class="text-sm text-brand-600 dark:text-brand-200 mb-4"></p>
+                    <h3 class="font-semibold text-brand-800 dark:text-white mb-2">Objetivos</h3>
+                    <ul id="g-objetivos" class="list-disc pl-5 text-sm text-brand-600 dark:text-brand-200 grid gap-1"></ul>
+                </section>
+
+                <section id="clases" aria-labelledby="clases-titulo" class="mb-8 scroll-mt-24">
+                    <h2 id="clases-titulo" class="font-serif text-2xl font-bold text-brand-800 dark:text-white mb-1">Las clases</h2>
+                    <p class="text-sm text-brand-500 dark:text-brand-300 mb-4">Cada clase trae su plan: las posiciones y las lecciones listas para mandar al tablero de la clase en vivo, con la respuesta como chuleta, y un momento divertido para que la clase no sea solo teoría.</p>
+                    <div id="g-sesiones" class="grid gap-3"></div>
+                </section>
+
+                <section id="tareas" aria-labelledby="tareas-titulo" class="mb-8 scroll-mt-24">
+                    <h2 id="tareas-titulo" class="font-serif text-2xl font-bold text-brand-800 dark:text-white mb-1">Tareas semanales</h2>
+                    <p id="tareas-ayuda" class="text-sm text-brand-500 dark:text-brand-300 mb-4">Una por semana, de lunes a lunes. Se mandan desde aquí con un clic: cada renglón se llena solo con lo que el alumno entrena en la plataforma, y la ves avanzar en Tareas.</p>
+                    <div id="g-tareas" class="grid gap-3 md:grid-cols-2"></div>
+
+                    <!-- El formulario para mandar una tarea: uno solo, que se
+                         mueve debajo de la tarea que se va a mandar. -->
+                    <form id="form-mandar" hidden class="md:col-span-2 bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 border-2 border-accent-400" novalidate>
+                        <h3 id="m-titulo-form" class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-3">Mandar la tarea</h3>
+                        <div class="grid gap-3 sm:grid-cols-2 mb-3">
+                            <div class="sm:col-span-2">
+                                <label for="m-titulo" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Título</label>
+                                <input id="m-titulo" type="text" maxlength="200" class="w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                            </div>
+                            <div>
+                                <label for="m-desde" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Disponible desde (opcional)</label>
+                                <input id="m-desde" type="datetime-local" class="w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                            </div>
+                            <div>
+                                <label for="m-vence" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Vence</label>
+                                <input id="m-vence" type="datetime-local" class="w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                            </div>
+                            <div class="sm:col-span-2">
+                                <label for="m-instrucciones" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Instrucciones</label>
+                                <textarea id="m-instrucciones" rows="2" maxlength="2000" class="w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></textarea>
+                            </div>
+                        </div>
+                        <p class="text-xs text-brand-450 dark:text-brand-350 mb-3">Las fechas y horas son de Costa Rica.</p>
+                        <fieldset class="mb-3">
+                            <legend class="text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">A quién</legend>
+                            <div class="flex flex-wrap gap-3 mb-2">
+                                <button type="button" id="m-todos" class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Marcar a todos</button>
+                                <button type="button" id="m-ninguno" class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Desmarcar</button>
+                            </div>
+                            <div id="m-alumnos" class="grid sm:grid-cols-2 gap-1 max-h-64 overflow-y-auto bg-brand-50 dark:bg-brand-950 rounded-lg p-2"></div>
+                            <p id="m-sin-alumnos" hidden class="text-sm text-brand-500 dark:text-brand-300">Todavía no tienes alumnos en la Academia.</p>
+                        </fieldset>
+                        <div class="flex flex-wrap items-center gap-3">
+                            <button type="submit" id="m-enviar" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 disabled:opacity-60 disabled:cursor-wait"><span aria-hidden="true">📨</span> Mandar a los alumnos marcados</button>
+                            <button type="button" id="m-cancelar" class="text-sm font-semibold text-brand-500 dark:text-brand-300 hover:underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Cerrar</button>
+                            <p id="m-estado" role="status" class="text-sm text-brand-600 dark:text-brand-200"></p>
+                        </div>
+                    </form>
+                </section>
+
+                <section id="evaluacion" aria-labelledby="evaluacion-titulo" class="mb-8 scroll-mt-24">
+                    <h2 id="evaluacion-titulo" class="font-serif text-2xl font-bold text-brand-800 dark:text-white mb-4">Evaluación</h2>
+                    <div id="g-evaluacion" class="grid gap-6"></div>
+                </section>
+
+                <section id="guia" aria-labelledby="guia-titulo" class="mb-8 scroll-mt-24">
+                    <h2 id="guia-titulo" class="font-serif text-2xl font-bold text-brand-800 dark:text-white mb-4">La guía del curso</h2>
+                    <div id="g-guia" class="grid gap-6"></div>
+                </section>
+
+                <p class="text-sm"><a href="proyecto.html" class="font-semibold text-accent-700 dark:text-accent-400 underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">← Todos los grupos</a></p>
+            </div>
+        </div>
+    </main>
+    <footer class="bg-brand-900 text-brand-300 py-8"><div class="max-w-7xl mx-auto px-4 text-center text-sm"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p><!-- legal: inicio --><p class="mt-2"><a href="privacidad.html" class="underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Política de privacidad</a> <span aria-hidden="true">·</span> <a href="terminos.html" class="underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Términos y condiciones</a></p><!-- legal: fin --></div></footer>
+    <script src="js/vendor/supabase.js"></script>
+    <script src="js/supabase-client.js"></script>
+    <script src="js/cursos-ocultos.js"></script>
+    <script src="js/material-plataforma.js"></script>
+    <script src="js/subgrupos-marcar.js"></script>
+    <script src="js/avisos.js"></script>
+    <script src="js/main.js"></script>
+    <script src="js/hora-cr.js"></script>
+    <script src="js/proyecto.js"></script>
+<!-- burbuja: inicio --><script src="js/burbuja-en-linea.js" defer></script><!-- burbuja: fin --><!-- juego-aviso: inicio --><script src="js/juego-aviso.js" defer></script><!-- juego-aviso: fin --><!-- aviso-profe: inicio --><script src="js/aviso-profe.js" defer></script><!-- aviso-profe: fin --><!-- tanda: inicio --><script src="js/tanda-diez.js" defer></script><!-- tanda: fin --><!-- acceso: inicio --><script src="js/acceso-vigente.js" defer></script><!-- acceso: fin --><!-- modo-vista: inicio --><script src="js/modo-vista.js" defer></script><!-- modo-vista: fin --><!-- marca: inicio --><script src="js/marca-academia.js" defer></script><!-- marca: fin --><!-- atajo: inicio --><script src="js/atajo-buscar.js" data-arriba="" defer></script><!-- atajo: fin --></body>
+</html>

@@ -72,10 +72,13 @@ async function init() {
 
     await cargarEquipo();
     await cargarPlanes();
-    // planes.html?plan=<id>: llegar directo a un plan (el de repaso que arma el panel).
-    const pedido = new URLSearchParams(location.search).get("plan");
-    if (pedido && planes.some((p) => p.id === pedido)) await abrirPlan(pedido);
     await cargarCompartidosConmigo();
+    // planes.html?plan=<id>: llegar directo a un plan (el de repaso que arma el
+    // panel, o el de una sesión de proyecto.html). Puede ser propio o
+    // compartido: los planes de un proyecto se le COMPARTEN al profesor
+    // asignado, así que los busca en las dos listas.
+    const pedido = new URLSearchParams(location.search).get("plan");
+    if (pedido && (planes.some((p) => p.id === pedido) || compartidosConmigo.some((p) => p.id === pedido))) await abrirPlan(pedido);
 }
 
 /* El equipo docente sale de una función de la base y no de `profiles`: la RLS no

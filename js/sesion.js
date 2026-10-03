@@ -2446,9 +2446,23 @@
             };
             grupo("Tus planes", planesDelProfesor.filter((pl) => pl.profesor_id === session.user.id));
             grupo("Compartidos contigo", compartidos);
-            /* Cuál estaba dando se recuerda en ESTE aparato, como el tema o la
-               clase elegida: si se recarga la página en medio de la clase —que
-               pasa— no hay que volver a buscarlo en la lista. */
+            /* `sesion.html?plan=<id>` llega con ese plan puesto: es el botón
+               «Dar esta clase» de una sesión de un proyecto (proyecto.html).
+               Le gana al recordado y abre la pestaña «Mi plan», porque se vino
+               a dar ESA clase. Un id que no es suyo ni compartido con él no
+               está en la lista y se ignora sin decir nada.
+
+               Si no, cuál estaba dando se recuerda en ESTE aparato, como el
+               tema o la clase elegida: si se recarga la página en medio de la
+               clase —que pasa— no hay que volver a buscarlo en la lista. */
+            const pedido = new URLSearchParams(location.search).get("plan");
+            if (pedido && planesDelProfesor.some((pl) => pl.id === pedido)) {
+                select.value = pedido;
+                await abrirPlanEnClase(pedido);
+                const pestana = document.getElementById("teacher-tab-plan");
+                if (pestana) pestana.click();
+                return;
+            }
             const recordado = localStorage.getItem("plan_en_clase");
             if (recordado && planesDelProfesor.some((pl) => pl.id === recordado)) {
                 select.value = recordado;
@@ -2605,7 +2619,11 @@
                 abrir.className = clases;
                 abrir.textContent = "📖 Abrir la lección";
                 abrir.title = "Abrirla solo en tu pantalla, como el PDF";
-                abrir.addEventListener("click", () => abrirLeccionLocal(item.curso, item.leccion));
+                // El plan guarda la lección contada desde 0 (la 5 se guarda
+                // como 4) y abrirLeccionLocal() la cuenta desde 1, como el
+                // selector de lecciones: sin el +1 abría la de antes, y la
+                // primera de un curso no abría nada.
+                abrir.addEventListener("click", () => abrirLeccionLocal(item.curso, item.leccion + 1));
                 acciones.appendChild(abrir);
             }
 

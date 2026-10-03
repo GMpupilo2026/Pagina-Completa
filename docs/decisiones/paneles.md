@@ -3067,6 +3067,114 @@ después de la táctica, cada veredicto escrito, el dato y el resumen. Roto a
 propósito sin lo esperable por color, con «cerrado» para d4 contra d5 y sin el
 mínimo: saltó cada vez.
 
+## Los proyectos
+
+`admin.html#proyectos` y `proyecto.html`: un programa de clases armado de
+antemano para varios grupos, como Campeones Colegiales 2026 (Finales, Medio
+Juego y Aperturas, 18 clases cada uno, de mediados de octubre al 13 de
+diciembre). Se pidió una ficha «Proyectos» en administración, con una ficha
+por grupo, el plan completo con sus ejercicios listos para la clase en vivo,
+la posibilidad de asignárselo al profesor para que dé cada sesión, tareas
+semanales para mandar a los alumnos y clases entretenidas.
+
+**Cuatro tablas, y desde afuera solo se leen.** `proyectos`,
+`proyecto_grupos` (con su `guia` en jsonb: objetivos, evaluación, rúbrica,
+portafolio, anexos), `proyecto_sesiones` (fecha, tipo, el detalle de cada
+bloque y el `plan_id` de su plan de clase) y `proyecto_tareas` (los renglones
+con la misma forma que recibe `crear_tarea()`). La RLS deja leer a quien
+administra todo y al profesor asignado su grupo, su proyecto, sus sesiones y
+sus tareas; las políticas de proyecto, sesiones y tareas cuelgan de la del
+grupo. No hay ninguna política de escritura: el contenido lo siembra un script
+y la asignación la hace una función.
+
+**Asignar comparte, no copia.** `asignar_grupo_proyecto(grupo, profesor)` exige
+administrar (con `coalesce`), exige que la cuenta sea de un profesor, le
+COMPARTE los planes de las sesiones (`plan_compartidos`) y se los deja de
+compartir al anterior. Devuelve a quién quedó asignado, leído de la tabla, y
+la ficha pinta eso. Los planes son de quien administra, como los de arranque:
+un plan es de quien lo escribió y la RLS no deja firmar por otro. Por eso
+`planes.html?plan=` ahora abre también un plan compartido, y no solo uno
+propio. Asignar reparte acceso a material: `proyecto_grupos` lleva el trigger
+de auditoría (solo sobre `profesor_id`, `asignado_por` y `nombre`; volver a
+sembrar la guía no llena la bitácora) y va en `VIGILADAS`.
+
+**El contenido vive en un JSON y lo convierte un script.**
+`herramientas/proyectos/<slug>.json` dice qué se hace en cada clase y de
+DÓNDE sale cada posición, pero no trae ni una FEN: un final de «El mapa de los
+finales», un tema de Ejercicios por tema, un mate del banco, una línea de
+Aperturas. `herramientas/proyecto-semilla.js` las busca en esos bancos con las
+mismas funciones que los planes de arranque (`herramientas/lib/planes-banco.js`,
+que salió de `planes-semilla.js` sin cambiar su salida) y las pasa por la
+regla de la clase en vivo: 125 posiciones, ninguna descartada. Escribe un SQL
+que se puede correr las veces que haga falta: vuelve a sembrar todo y respeta
+a quién se asignó cada grupo.
+
+**Las lecciones se buscan por su título, no por su número.** El número que
+abre la clase en vivo es la posición del `<details>` en el HTML del curso, y en
+un curso con «Solución» entre lección y lección no coincide con el que dice el
+título. Al revisarlo apareció un error que ya estaba: el renglón de lección de
+un plan guarda `leccion` contada desde 0 y `abrirLeccionLocal(slug, n)` usa
+`detalles[n-1]`, así que en la clase en vivo se abría la lección ANTERIOR. Se
+arregló en `js/sesion.js` (`item.leccion + 1`), y vale para todos los planes,
+no solo los de los proyectos.
+
+**Las tareas, con el catálogo de tareas.html cargado tal cual.** Cada renglón
+sale de `js/material-plataforma.js`: con qué actividad cuenta, qué meta admite
+y a dónde lleva. Un renglón con la actividad equivocada se queda en cero para
+siempre sin dar ningún error. Los cuestionarios listos no tienen un id fijo
+(viven en la base), así que el renglón lleva la marca `@@cuestionario:Título@@`
+y el SQL la reemplaza con el id del listo. **La marca va sin codificar también
+en el enlace:** la primera siembra la codificó (`%40%40…`), el `replace()` no
+la encontró y nueve tareas habrían abierto un cuestionario que no existe. Se
+arregló en la base y en el script, y `verificar-proyectos.js` lo revisa. Las
+semanas van de lunes a lunes; cada una trae su juego (Batalla naval, el Sonar,
+los confites, Ilumina el tablero, Memoria) además de los ejercicios.
+
+**Que la clase sea divertida, con lo que ya tiene la plataforma.** Cada clase
+lleva su momento divertido, en la guía y como nota del plan: la clase vota
+contra el motor, el Kahoot de un cuestionario listo, la ronda rápida, el
+calentamiento en modo competencia, duelos de equipos, Niebla de Guerra o
+Crazyhouse entre compañeros. `verificar-proyectos.js` falla si una clase no lo
+tiene.
+
+**La página del grupo.** `proyecto.html` sin `?grupo=` lista los grupos que la
+persona ve; un profesor con un solo grupo va directo a él. Con `?grupo=`:
+la próxima clase arriba, cada clase con su objetivo, sus bloques, el momento
+divertido y «Ver el plan» y «Dar esta clase» (`sesion.html?plan=`), las tareas
+de cada semana dichas con la frase de Tareas (`MaterialPlataforma.frase`), la
+evaluación, la rúbrica, el portafolio y la guía. «Mandar a mis alumnos» abre un
+formulario debajo de esa tarea, con los alumnos pedidos de mil en mil, el
+selector de subgrupos de Tareas y las fechas propuestas (disponible el lunes a
+las 7:00 si todavía no llegó, vence el lunes siguiente a las 8:00 p. m.), en
+hora de Costa Rica. **Quien administra ve el plan pero no «Dar esta clase» ni
+«Mandar»**: no da clase (ver «El panel de quien administra no es el de un
+profesor»); lo revisa con «Ver como: profesor». Todo lo que viene de la base se
+pinta con `textContent`.
+
+**En el panel del profesor**, la tarjeta «Proyectos» va en «Tus clases» y sale
+solo si tiene un grupo asignado; mirando el panel de otra persona se pregunta
+por esa persona.
+
+**Cómo se sembró.** El contenedor no llega a la base, así que el SQL entró por
+`execute_sql` en 13 trozos de unos 20 KB, sentencias completas cada uno.
+Después se compararon huellas md5 de lo que quedó en la base (la guía en el
+texto canónico de jsonb, las sesiones, cada plan con sus renglones y las
+tareas) contra lo que escribió el script: coincidieron las cuatro. La RLS se
+probó impersonando: el profesor sin grupo y el alumno no ven nada; quien
+administra ve 3 grupos, 54 sesiones y 27 tareas; un profesor no puede asignar,
+a un alumno no se le asigna, y el profesor asignado pasa a ver 1 grupo, 18
+sesiones, 9 tareas y sus 18 planes, que pierde al quitárselo.
+
+**Verificadores.** `verificar-proyectos.js` (sin navegador): calendario en los
+días del horario y en orden, momento divertido en cada clase, cada lección del
+plan es la de su título, el +1 de `sesion.js`, las tareas (semanas seguidas de
+lunes a lunes, actividades y enlaces del catálogo, la marca del cuestionario),
+la página conectada y la migración. `verificar-proyecto-pagina.js` (con
+navegador): lo que ve el profesor, el envío con `crear_tarea()`, lo que no ve
+quien administra y que el alumno no vea nada. La ficha de administración la
+revisa `verificar-admin.js`. Rotos a propósito (sin el +1, con la marca
+codificada, dándole clase a quien administra): saltaron.
+
 ## Las inscripciones a torneos en línea
 
 `inscripciones.html` muestra lo que llegó por `inscripcion.html`, el formulario

@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261003045654
+# al-dia-con: 20261003061045
 tabla  Ejercicios Lichess  rls=true
 tabla  academia_ia  rls=true
 tabla  academia_miembros  rls=true
@@ -89,6 +89,10 @@ tabla  preparaciones_rival  rls=true
 tabla  profesor_videollamada  rls=true
 tabla  profile_teachers  rls=true
 tabla  profiles  rls=true
+tabla  proyecto_grupos  rls=true
+tabla  proyecto_sesiones  rls=true
+tabla  proyecto_tareas  rls=true
+tabla  proyectos  rls=true
 tabla  pruebas_gratis  rls=true
 tabla  public_streak_leaderboard  rls=true
 tabla  public_tournament_champions  rls=true
@@ -831,6 +835,40 @@ columna  profiles.is_admin  boolean
 columna  profiles.role  text
 columna  profiles.teacher_id  uuid
 columna  profiles.ultima_vista_actualizaciones  timestamp with time zone
+columna  proyecto_grupos.asignado_at  timestamp with time zone
+columna  proyecto_grupos.asignado_por  uuid
+columna  proyecto_grupos.created_at  timestamp with time zone
+columna  proyecto_grupos.guia  jsonb
+columna  proyecto_grupos.horario  text
+columna  proyecto_grupos.id  uuid
+columna  proyecto_grupos.nivel  text
+columna  proyecto_grupos.nombre  text
+columna  proyecto_grupos.orden  integer
+columna  proyecto_grupos.profesor_id  uuid
+columna  proyecto_grupos.proyecto_id  uuid
+columna  proyecto_grupos.slug  text
+columna  proyecto_sesiones.detalle  jsonb
+columna  proyecto_sesiones.fecha  date
+columna  proyecto_sesiones.grupo_id  uuid
+columna  proyecto_sesiones.id  uuid
+columna  proyecto_sesiones.numero  integer
+columna  proyecto_sesiones.plan_id  uuid
+columna  proyecto_sesiones.tipo  text
+columna  proyecto_sesiones.titulo  text
+columna  proyecto_tareas.desde  date
+columna  proyecto_tareas.grupo_id  uuid
+columna  proyecto_tareas.id  uuid
+columna  proyecto_tareas.instrucciones  text
+columna  proyecto_tareas.items  jsonb
+columna  proyecto_tareas.semana  integer
+columna  proyecto_tareas.titulo  text
+columna  proyecto_tareas.vence  date
+columna  proyectos.created_at  timestamp with time zone
+columna  proyectos.descripcion  text
+columna  proyectos.id  uuid
+columna  proyectos.nombre  text
+columna  proyectos.periodo  text
+columna  proyectos.slug  text
 columna  pruebas_gratis.aceptado_en  timestamp with time zone
 columna  pruebas_gratis.alumno_id  uuid
 columna  pruebas_gratis.empieza  timestamp with time zone
@@ -1156,6 +1194,7 @@ funcion  alumnos_del_profesor(p_profesor uuid)  invoker  anon=false  auth=true
 funcion  alumnos_del_profesor_con_nombre(p_profesor uuid)  invoker  anon=true  auth=true
 funcion  antes_de_cada_pedido()  definer  anon=true  auth=true
 funcion  anular_recibo(p_recibo uuid, p_anular boolean, p_motivo text)  definer  anon=false  auth=true
+funcion  asignar_grupo_proyecto(p_grupo uuid, p_profesor uuid)  definer  anon=false  auth=true
 funcion  avance_del_plan(p_alumno uuid, p_desde timestamp with time zone)  invoker  anon=false  auth=true
 funcion  avisar_clase_abierta()  definer  anon=false  auth=false
 funcion  avisar_desafio()  definer  anon=false  auth=false
@@ -1711,6 +1750,10 @@ politica  profesor_videollamada  profesor_videollamada_update  UPDATE
 politica  profile_teachers  profile_teachers_select  SELECT
 politica  profiles  profiles_select  SELECT
 politica  profiles  profiles_update_own  UPDATE
+politica  proyecto_grupos  proyecto_grupos_ver  SELECT
+politica  proyecto_sesiones  proyecto_sesiones_ver  SELECT
+politica  proyecto_tareas  proyecto_tareas_ver  SELECT
+politica  proyectos  proyectos_ver  SELECT
 politica  pruebas_gratis  pruebas_gratis_ver  SELECT
 politica  public_streak_leaderboard  public_streak_leaderboard_insert_all  INSERT
 politica  public_streak_leaderboard  public_streak_leaderboard_select_all  SELECT
@@ -1891,6 +1934,7 @@ trigger  profiles  auditar_alta_baja
 trigger  profiles  auditar_cambio
 trigger  profiles  profiles_foto_por_funcion
 trigger  profiles  protect_profiles_identity_columns_trigger
+trigger  proyecto_grupos  auditar
 trigger  pruebas_gratis  auditar
 trigger  question_answers  protect_answer_grading_trigger
 trigger  question_answers  respuesta_calificar_y_plazo_trigger
@@ -2148,6 +2192,17 @@ indice  profiles  profiles_grupo_idx
 indice  profiles  profiles_pkey
 indice  profiles  profiles_single_admin_idx
 indice  profiles  profiles_teacher_id_idx
+indice  proyecto_grupos  proyecto_grupos_asignado_por_idx
+indice  proyecto_grupos  proyecto_grupos_pkey
+indice  proyecto_grupos  proyecto_grupos_profesor_idx
+indice  proyecto_grupos  proyecto_grupos_proyecto_id_slug_key
+indice  proyecto_sesiones  proyecto_sesiones_grupo_id_numero_key
+indice  proyecto_sesiones  proyecto_sesiones_pkey
+indice  proyecto_sesiones  proyecto_sesiones_plan_idx
+indice  proyecto_tareas  proyecto_tareas_grupo_id_semana_key
+indice  proyecto_tareas  proyecto_tareas_pkey
+indice  proyectos  proyectos_pkey
+indice  proyectos  proyectos_slug_key
 indice  pruebas_gratis  pruebas_gratis_pkey
 indice  public_streak_leaderboard  public_streak_leaderboard_best_streak_idx
 indice  public_streak_leaderboard  public_streak_leaderboard_pkey
@@ -2875,6 +2930,10 @@ grant  profiles  authenticated  SELECT
 grant  profiles  authenticated  TRIGGER
 grant  profiles  authenticated  TRUNCATE
 grant  profiles  authenticated  UPDATE
+grant  proyecto_grupos  authenticated  SELECT
+grant  proyecto_sesiones  authenticated  SELECT
+grant  proyecto_tareas  authenticated  SELECT
+grant  proyectos  authenticated  SELECT
 grant  pruebas_gratis  authenticated  SELECT
 grant  public_streak_leaderboard  anon  DELETE
 grant  public_streak_leaderboard  anon  INSERT

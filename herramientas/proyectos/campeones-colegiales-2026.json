@@ -1,0 +1,4281 @@
+{
+ "slug": "campeones-colegiales-2026",
+ "nombre": "Campeones Colegiales 2026",
+ "descripcion": "Formar a estudiantes de secundaria para que den talleres de ajedrez en sus colegios. Cierre del curso: 18 clases por grupo, de mediados de octubre al 13 de diciembre, con microenseñanza, minilección final, portafolio del instructor y tareas semanales.",
+ "periodo": "Octubre a diciembre de 2026",
+ "grupos": [
+  {
+   "slug": "finales",
+   "nombre": "Finales",
+   "nivel": "avanzado",
+   "horario": "Martes de 7:30 a 9:00 p. m. y viernes de 8:00 a 9:30 p. m., por Zoom",
+   "orden": 0,
+   "profesor_sugerido": "Edwin Urbina Quiroz",
+   "guia": {
+    "intro": "Este plan cierra el curso con lo que tu grupo ya domina y con lo que todavía le falta para cumplir el objetivo del proyecto. Tus estudiantes vieron estrategia de alto nivel (dominación, piezas clave, profilaxis, dos debilidades) y la Evaluación 3 los puso a diseñar una clase. Lo que queda es darles los finales esenciales, que son la base del ajedrez y lo más fácil de llevar a un taller, y practicar de forma sistemática cómo enseñar a principiantes. El plan está pensado para que lo apliques tal cual; si necesitas mover una fecha, conserva el orden de las unidades y las evaluaciones.",
+    "objetivos": [
+     "Dominar los finales esenciales que todo jugador debe saber: rey y peón, torre y peón (Lucena y Philidor), torre contra peón y alfiles de distinto color.",
+     "Calcular con método: escribir la variante completa antes de jugar.",
+     "Convertir cada tema avanzado en una explicación para principiantes y dar una minilección evaluada.",
+     "Entregar un plan de taller y la evidencia de al menos dos sesiones dadas en el colegio."
+    ],
+    "partida": [
+     [
+      "Lo que ya domina el grupo",
+      "Dominación, mate de alfil y caballo, infiltración, convertir la ventaja, eliminar piezas clave, profilaxis, mejorar el alfil y el caballo, dos debilidades. Análisis de partidas propias y partidas modelo clásicas."
+     ],
+     [
+      "Lo que falta",
+      "Finales técnicos (el grupo se llama «Finales» y casi no los vio); cálculo con un método fijo; práctica de enseñar con retroalimentación; indicadores de los talleres."
+     ],
+     [
+      "Lo que pidieron en la encuesta",
+      "Más dinamismo y más juego, menos teoría seguida («tanta teoría abruma»), torneos suizos y aprender «métodos pedagógicos para poder impartirlo»."
+     ],
+     [
+      "Lo que se mantiene",
+      "Torneos de los viernes, equipos de colores con puntaje, partidas modelo, estudios de Lichess por clase y la simultánea."
+     ]
+    ],
+    "unidades": [
+     [
+      "Unidad A · Finales esenciales",
+      "16 oct – 3 nov",
+      "6 clases + Evaluación 4"
+     ],
+     [
+      "Unidad B · Cálculo, táctica y estrategia para enseñar",
+      "10 – 17 nov",
+      "3 clases"
+     ],
+     [
+      "Unidad C · Del concepto al taller",
+      "20 nov – 11 dic",
+      "Planificación, minilecciones, torneo y cierre"
+     ]
+    ],
+    "estructura": [
+     [
+      "0–10'",
+      "Calentamiento de cálculo",
+      "Dos posiciones con la variante completa escrita antes de discutir, o el «🔥 Calentamiento» de la clase en vivo."
+     ],
+     [
+      "10–45'",
+      "Contenido",
+      "La lección del curso llevada al tablero de la clase. Preguntas por nombre, sin elegir siempre a los mismos."
+     ],
+     [
+      "45–65'",
+      "Práctica",
+      "Partidas temáticas, retos por equipos o Habilidades. El vocero de cada equipo explica una respuesta."
+     ],
+     [
+      "65–80'",
+      "Microenseñanza",
+      "Dos estudiantes explican 5 minutos como en su taller; un compañero dice qué funcionó y da una sugerencia."
+     ],
+     [
+      "80–90'",
+      "Cierre",
+      "La pregunta de salida que contestan todos, el momento divertido si no fue antes, y la asistencia."
+     ]
+    ],
+    "reglas": [
+     "Roles rotativos (vocero, anotador, organizador del torneo), asignados por turno y con al menos una alumna en cada ronda.",
+     "Cada clase tiene un momento divertido: un juego, una votación contra el motor o un Kahoot. Cuenta para los puntos del mes.",
+     "Asistencia con presentes, justificadas y ausencias por separado; sin clase no se pasa asistencia.",
+     "Después de dos ausencias seguidas, un mensaje por el canal oficial; después de tres, aviso a la coordinación.",
+     "Avisos, tareas y notas solo por Tareas de la Academia o el grupo oficial, nunca por mensajes privados.",
+     "La tarea de la semana se manda el lunes desde esta página y vence el lunes siguiente."
+    ],
+    "evaluacion": [
+     [
+      "Evaluación 4: finales esenciales",
+      "6 de noviembre",
+      "30 %"
+     ],
+     [
+      "Microenseñanza en clase",
+      "16 oct – 20 nov",
+      "10 %"
+     ],
+     [
+      "Minilección final",
+      "24 nov – 1 dic",
+      "30 %"
+     ],
+     [
+      "Portafolio del instructor",
+      "4 de diciembre",
+      "30 %"
+     ]
+    ],
+    "rubrica": [
+     [
+      "Objetivo",
+      "Claro y adecuado para principiantes",
+      "Claro, pero muy amplio",
+      "Confuso",
+      "No se entiende"
+     ],
+     [
+      "Ajedrez correcto",
+      "Sin errores y con un buen ejemplo",
+      "Un error menor que corrige",
+      "Errores que confunden",
+      "Contenido incorrecto"
+     ],
+     [
+      "Participación",
+      "Pregunta y pone a practicar a todos",
+      "Pregunta, pero se responde solo",
+      "Casi solo expone",
+      "No hay interacción"
+     ],
+     [
+      "Cierre",
+      "Comprueba con una pregunta o un ejercicio",
+      "Resume sin comprobar",
+      "Termina sin cierre",
+      "No llega al cierre"
+     ],
+     [
+      "Tiempo y grupo",
+      "Respeta el tiempo y trata con respeto",
+      "Se pasa un poco",
+      "Se pasa mucho o pierde al grupo",
+      "No logra conducir"
+     ]
+    ],
+    "periodo": "13 de octubre al 11 de diciembre de 2026",
+    "anexos": {
+     "A": [
+      "Plantilla del plan de taller",
+      [
+       [
+        "Colegio o lugar",
+        ""
+       ],
+       [
+        "Fecha y duración",
+        "60 minutos"
+       ],
+       [
+        "Participantes esperados",
+        ""
+       ],
+       [
+        "Objetivo (una frase)",
+        "Al terminar, los participantes podrán…"
+       ],
+       [
+        "Materiales",
+        "Tableros, tablero mural o proyector, enlace…"
+       ],
+       [
+        "Inicio (10')",
+        "Cómo saludo y qué pregunto para saber qué saben."
+       ],
+       [
+        "Explicación (15')",
+        "Qué voy a mostrar y con qué ejemplo."
+       ],
+       [
+        "Práctica o juego (25')",
+        "Qué van a hacer ellos y cómo los organizo."
+       ],
+       [
+        "Cierre (10')",
+        "Qué pregunta o ejercicio me dice si aprendieron."
+       ],
+       [
+        "Si algo sale mal",
+        "Plan B: si son menos, si no hay tableros o si el tema les cuesta."
+       ]
+      ]
+     ],
+     "C": [
+      "Registro mensual de talleres",
+      [
+       [
+        "Taller activo",
+        "Sí o no"
+       ],
+       [
+        "Sesiones en el mes",
+        "Cuántas"
+       ],
+       [
+        "Participantes por sesión",
+        "Cuántos, sin nombres"
+       ],
+       [
+        "Tema enseñado",
+        "Qué enseñó"
+       ],
+       [
+        "Evidencia",
+        "Foto autorizada o lista"
+       ]
+      ]
+     ],
+     "D": [
+      "Ficha para el taller",
+      [
+       [
+        "Título",
+        "Por ejemplo: «La regla del cuadrado»"
+       ],
+       [
+        "Idea clave",
+        "Una o dos frases que el principiante debe recordar."
+       ],
+       [
+        "Ejemplo",
+        "Una posición de la lección."
+       ],
+       [
+        "Juego o ejercicio",
+        "Cómo se practica en el taller."
+       ],
+       [
+        "Error típico",
+        "Qué suele hacer mal un principiante y cómo corregirlo sin exponerlo."
+       ],
+       [
+        "Pregunta de cierre",
+        "Cómo saber si lo entendieron."
+       ]
+      ]
+     ]
+    },
+    "portafolio": [
+     [
+      "Plan de taller",
+      "Completo con la plantilla del anexo A.",
+      "25"
+     ],
+     [
+      "Registro de dos sesiones dadas",
+      "Fecha, lugar, participantes, tema y qué funcionó.",
+      "25"
+     ],
+     [
+      "Fichas o ejercicios para el taller",
+      "Las fichas del trimestre o una serie de ejercicios propia.",
+      "25"
+     ],
+     [
+      "Reflexión",
+      "Media página: qué aprendí como instructor y cómo sigo en 2027.",
+      "25"
+     ]
+    ]
+   },
+   "sesiones": [
+    {
+     "numero": 1,
+     "fecha": "2026-10-13",
+     "dia": "Martes 13 de octubre",
+     "titulo": "Arranque del cierre: acuerdos, diagnóstico de finales y roles",
+     "tipo": "especial",
+     "detalle": {
+      "objetivo": "Que el grupo conozca el plan del cierre, sepa cómo se va a evaluar y muestre qué sabe de finales.",
+      "bloques": [
+       [
+        "0–15'",
+        "Presentar el plan y las evaluaciones (ver «Evaluación»). Explicar que cada clase tendrá microenseñanza y que el curso cierra con una minilección de cada estudiante."
+       ],
+       [
+        "15–40'",
+        "Diagnóstico rápido de finales: 5 posiciones de rey y peón y de torre y peón tomadas de los ejercicios de la lección de diagnóstico, con respuesta escrita en el chat privado o en un formulario. No lleva nota: sirve para saber de dónde parte cada uno."
+       ],
+       [
+        "40–60'",
+        "Retroalimentación de la Evaluación 3: qué salió bien en las clases que diseñaron y qué falta. Mostrar la pauta de microenseñanza (anexo B)."
+       ],
+       [
+        "60–80'",
+        "Armar la tabla de roles rotativos del trimestre (vocero de sala, anotador, organizador del torneo, encargado del puntaje), asignados por turno y con al menos una alumna en cada ronda. Publicarla en Classroom."
+       ],
+       [
+        "80–90'",
+        "Registro de talleres: cada estudiante anota en el formulario si tiene taller activo, cuántas sesiones dio y con cuántos participantes (anexo C)."
+       ]
+      ],
+      "divertido": "Reto relámpago: el «🔥 Calentamiento» en modo competencia, 5 minutos, y el podio al final.",
+      "sitio": "Curso El mapa de los finales, lección 1 «Examen de diagnóstico» (sus ejercicios sirven para el diagnóstico). La clase en vivo se registra sola en la Academia."
+     },
+     "plan": {
+      "lecciones": [
+       {
+        "curso": "el-mapa-de-los-finales",
+        "titulo": "Examen de diagnóstico"
+       }
+      ],
+      "posiciones": [
+       {
+        "fuente": "mapa",
+        "capitulo": "Finales básicos",
+        "titulo": "El cuadrado del peón",
+        "n": 1,
+        "desde": 0
+       },
+       {
+        "fuente": "mapa",
+        "capitulo": "Finales básicos",
+        "titulo": "Las casillas críticas",
+        "n": 1,
+        "desde": 0
+       },
+       {
+        "fuente": "mapa",
+        "capitulo": "Dama contra peón",
+        "titulo": "Dama contra peón en séptima. El método ganador",
+        "n": 1,
+        "desde": 0
+       },
+       {
+        "fuente": "mapa",
+        "capitulo": "Torre y peón contra torre",
+        "titulo": "Posición Philidor",
+        "n": 1,
+        "desde": 0
+       },
+       {
+        "fuente": "mapa",
+        "capitulo": "Torre y peón contra torre",
+        "titulo": "Posición Lucena. El puente",
+        "n": 1,
+        "desde": 0
+       }
+      ]
+     }
+    },
+    {
+     "numero": 2,
+     "fecha": "2026-10-16",
+     "dia": "Viernes 16 de octubre",
+     "titulo": "Rey y peón (1): regla del cuadrado y oposición directa",
+     "tipo": "clase",
+     "detalle": {
+      "objetivo": "Saber si el rey alcanza al peón y ganar o empatar finales de rey y peón contra rey con la oposición.",
+      "bloques": [
+       [
+        "Calentamiento (10')",
+        "Dos posiciones de cálculo con la variante escrita completa antes de discutir."
+       ],
+       [
+        "Contenido (35')",
+        "Regla del cuadrado (incluida la salida doble del peón). Oposición directa: quién tiene que mover y por qué decide. Rey delante del peón. Ejemplos de la presentación de la lección."
+       ],
+       [
+        "Práctica (20')",
+        "Partidas temáticas por parejas desde 3 posiciones de los ejercicios de la lección: cada pareja juega con blancas y con negras. Torneo de los viernes en formato temático."
+       ],
+       [
+        "Microenseñanza (15')",
+        "Tú modelas primero: «cómo le enseño la regla del cuadrado a un niño de sétimo» (8 minutos), y el grupo la evalúa con la pauta del anexo B."
+       ],
+       [
+        "Cierre (10'): pregunta de salida",
+        "¿Quién gana esta posición y por qué? (pregunta de salida «❓ ¿qué jugarías?» en la posición del tablero)."
+       ]
+      ],
+      "taller": "Ficha 1 para el taller: regla del cuadrado con un juego de «carrera» rey contra peón.",
+      "divertido": "«🗳️ La clase juega» contra el motor desde un final de rey y peón: la clase vota cada jugada y tiene que coronar.",
+      "sitio": "Curso Finales prácticos: lección 1 «La regla del cuadrado y el peón pasado» y lección 2 «Oposición de reyes» (presentación y ejercicios). El mapa de los finales, lección 1 «Rey y peón contra rey». Práctica: Habilidad «Rey y peón» desde la pestaña Entrenamientos de la clase en vivo."
+     },
+     "plan": {
+      "lecciones": [
+       {
+        "curso": "finales-practicos",
+        "titulo": "La regla del cuadrado y el peón pasado"
+       },
+       {
+        "curso": "finales-practicos",
+        "titulo": "Oposición de reyes"
+       },
+       {
+        "curso": "el-mapa-de-los-finales",
+        "titulo": "Rey y peón contra rey"
+       }
+      ],
+      "posiciones": [
+       {
+        "fuente": "mapa",
+        "capitulo": "Finales básicos",
+        "titulo": "El cuadrado del peón",
+        "n": 2,
+        "desde": 1
+       },
+       {
+        "fuente": "mapa",
+        "capitulo": "Finales básicos",
+        "titulo": "El peón en sexta",
+        "n": 2,
+        "desde": 0
+       }
+      ]
+     }
+    },
+    {
+     "numero": 3,
+     "fecha": "2026-10-20",
+     "dia": "Martes 20 de octubre",
+     "titulo": "Rey y peón (2): casillas clave, oposición a distancia y triangulación",
+     "tipo": "clase",
+     "detalle": {
+      "objetivo": "Usar las casillas clave para saber si un final de peón se gana y ganar el tiempo con la triangulación.",
+      "bloques": [
+       [
+        "Calentamiento (10')",
+        "Dos posiciones de rey y peón para calcular por escrito."
+       ],
+       [
+        "Contenido (35')",
+        "Casillas clave del peón según la fila. Oposición a distancia. Triangulación para pasar el turno. Peón de torre: por qué suele ser tablas."
+       ],
+       [
+        "Práctica (20')",
+        "Retos por equipos de colores: cada equipo resuelve 4 posiciones con tiempo y el vocero (rol rotativo) explica una."
+       ],
+       [
+        "Microenseñanza (15')",
+        "Dos estudiantes explican (5' cada uno): la oposición directa y la regla del cuadrado, como si fuera su taller."
+       ],
+       [
+        "Cierre (10'): pregunta de salida",
+        "Escribe en una frase qué es una casilla clave."
+       ]
+      ],
+      "taller": "Ficha 2: la oposición con el juego «el rey que no deja pasar».",
+      "divertido": "Duelo de equipos de colores: cada posición es una pregunta con tiempo y suma el equipo que acierta primero.",
+      "sitio": "Finales prácticos, lección 3 «Finales de rey y peón: posiciones críticas». Estrategia en el final, lección 2 «La oposición y las casillas críticas». El mapa de los finales, lección 2 «El peón de torre y los rincones del alfil» y lección 6 «Triangulación, peón de alfil y la lucha contra dos peones pasados»."
+     },
+     "plan": {
+      "lecciones": [
+       {
+        "curso": "finales-practicos",
+        "titulo": "Finales de rey y peón: posiciones críticas"
+       },
+       {
+        "curso": "estrategia-en-el-final",
+        "titulo": "La oposición y las casillas críticas"
+       },
+       {
+        "curso": "el-mapa-de-los-finales",
+        "titulo": "Triangulación, peón de alfil"
+       }
+      ],
+      "posiciones": [
+       {
+        "fuente": "mapa",
+        "capitulo": "Finales básicos",
+        "titulo": "Las casillas críticas",
+        "n": 2,
+        "desde": 1
+       },
+       {
+        "fuente": "mapa",
+        "capitulo": "Finales de peones",
+        "titulo": "El peón defensor ha movido. La triangulación",
+        "n": 1,
+        "desde": 0
+       },
+       {
+        "fuente": "mapa",
+        "capitulo": "Finales básicos",
+        "titulo": "El peón de torre. El rey defensor delante del peón",
+        "n": 1,
+        "desde": 0
+       }
+      ]
+     }
+    },
+    {
+     "numero": 4,
+     "fecha": "2026-10-23",
+     "dia": "Viernes 23 de octubre",
+     "titulo": "Dama contra peón y peones pasados",
+     "tipo": "clase",
+     "detalle": {
+      "objetivo": "Ganar con dama contra peón en sétima y saber cuándo el peón de alfil o de torre da tablas; crear y frenar peones pasados.",
+      "bloques": [
+       [
+        "Calentamiento (10')",
+        "Dos posiciones de peón pasado: ¿corona o lo frenan?"
+       ],
+       [
+        "Contenido (35')",
+        "Dama contra peón en sétima: acercar el rey con jaques y clavadas. Excepciones del peón de alfil y de torre. Peón pasado protegido y peones ligados. Ruptura de peones."
+       ],
+       [
+        "Práctica (20')",
+        "Torneo de los viernes en formato temático: se arranca desde finales de dama contra peón y de rupturas."
+       ],
+       [
+        "Microenseñanza (15')",
+        "Dos estudiantes: casillas clave y triangulación (5' cada uno)."
+       ],
+       [
+        "Cierre (10'): pregunta de salida",
+        "¿Por qué el peón de torre en sétima puede dar tablas contra la dama?"
+       ]
+      ],
+      "taller": "Ficha 3: «la carrera de peones», juego de solo peones para principiantes.",
+      "divertido": "«⚡ Ronda rápida» de cinco finales con poco tiempo por posición, y el podio.",
+      "sitio": "El mapa de los finales, lección 9 «Dama contra peón», lección 5 «Peones pasados y las maniobras del rey con doble objetivo» y lección 7 «Peón pasado defendido, alejado, doblado y rupturas». Finales prácticos, lección 4 «Ruptura de peones». Práctica en casa: Finales contra la máquina (dama contra peón)."
+     },
+     "plan": {
+      "lecciones": [
+       {
+        "curso": "el-mapa-de-los-finales",
+        "titulo": "Dama contra peón"
+       },
+       {
+        "curso": "el-mapa-de-los-finales",
+        "titulo": "Peones pasados y las maniobras del rey"
+       },
+       {
+        "curso": "finales-practicos",
+        "titulo": "Ruptura de peones"
+       }
+      ],
+      "posiciones": [
+       {
+        "fuente": "mapa",
+        "capitulo": "Dama contra peón",
+        "titulo": "Dama contra un peón de alfil en séptima",
+        "n": 1,
+        "desde": 0
+       },
+       {
+        "fuente": "mapa",
+        "capitulo": "Dama contra peón",
+        "titulo": "Dama contra un peón de torre en séptima",
+        "n": 1,
+        "desde": 0
+       },
+       {
+        "fuente": "mapa",
+        "capitulo": "Finales de peones",
+        "titulo": "Peones pasados. Maniobras del rey con doble objetivo",
+        "n": 1,
+        "desde": 0
+       },
+       {
+        "fuente": "mapa",
+        "capitulo": "Finales de peones",
+        "titulo": "El peón pasado alejado",
+        "n": 1,
+        "desde": 0
+       }
+      ]
+     }
+    },
+    {
+     "numero": 5,
+     "fecha": "2026-10-27",
+     "dia": "Martes 27 de octubre",
+     "titulo": "Torre y peón (1): la posición de Philidor",
+     "tipo": "clase",
+     "detalle": {
+      "objetivo": "Defender un final de torre y peón con el método de Philidor.",
+      "bloques": [
+       [
+        "Calentamiento (10')",
+        "Dos posiciones de cálculo con jugadas forzadas (jaques, capturas, amenazas)."
+       ],
+       [
+        "Contenido (35')",
+        "Philidor: torre en la tercera fila hasta que el peón avance; después, jaques desde atrás. Errores típicos de la defensa pasiva. Por qué la torre activa vale más."
+       ],
+       [
+        "Práctica (20')",
+        "Por parejas, defender Philidor contra el compañero; luego contra el motor de Lichess desde la misma posición."
+       ],
+       [
+        "Microenseñanza (15')",
+        "Dos estudiantes: dama contra peón y peón pasado (5' cada uno)."
+       ],
+       [
+        "Cierre (10'): pregunta de salida",
+        "Describe en dos pasos cómo se defiende Philidor."
+       ]
+      ],
+      "taller": "Ficha 4: «la torre corta al rey», la idea de cortar al rey en una fila o columna.",
+      "divertido": "La clase defiende Philidor votando contra el profe: si llega a tablas, gana la clase.",
+      "sitio": "Finales prácticos, lección 6 «La posición de Philidor». El mapa de los finales, lección 17 «Philidor, Lucena y el lado largo». Práctica: Finales contra la máquina (Philidor) y la Habilidad «Salva las tablas»."
+     },
+     "plan": {
+      "lecciones": [
+       {
+        "curso": "finales-practicos",
+        "titulo": "La posición de Philidor"
+       },
+       {
+        "curso": "el-mapa-de-los-finales",
+        "titulo": "Philidor, Lucena y el lado largo"
+       }
+      ],
+      "posiciones": [
+       {
+        "fuente": "mapa",
+        "capitulo": "Torre y peón contra torre",
+        "titulo": "Posición Philidor",
+        "n": 1,
+        "desde": 0
+       },
+       {
+        "fuente": "mapa",
+        "capitulo": "Torre y peón contra torre",
+        "titulo": "El lado largo",
+        "n": 1,
+        "desde": 0
+       },
+       {
+        "fuente": "mapa",
+        "capitulo": "Torre y peón contra torre",
+        "titulo": "Peón de caballo. Defensa de la primera fila",
+        "n": 1,
+        "desde": 0
+       }
+      ]
+     }
+    },
+    {
+     "numero": 6,
+     "fecha": "2026-10-30",
+     "dia": "Viernes 30 de octubre",
+     "titulo": "Torre y peón (2): la posición de Lucena y torre contra peón",
+     "tipo": "clase",
+     "detalle": {
+      "objetivo": "Ganar Lucena construyendo el puente y saber cuándo la torre gana o empata contra un peón.",
+      "bloques": [
+       [
+        "Calentamiento (10')",
+        "Dos posiciones de torre: escribe la primera jugada y por qué."
+       ],
+       [
+        "Contenido (35')",
+        "Lucena: cortar al rey, sacar el rey de delante del peón y construir el puente. Torre contra peón: contar tiempos, rey atacante cortado o no."
+       ],
+       [
+        "Práctica (20')",
+        "Torneo de los viernes en formato temático: Lucena desde ambos lados."
+       ],
+       [
+        "Microenseñanza (15')",
+        "Dos estudiantes: Philidor y Lucena, explicados para un principiante (5' cada uno)."
+       ],
+       [
+        "Cierre (10'): pregunta de salida",
+        "¿En qué fila se construye el puente y para qué sirve?"
+       ]
+      ],
+      "taller": "Ficha 5: Lucena en tres pasos, con dibujo del puente.",
+      "divertido": "Carrera Lucena: un voluntario por equipo juega Lucena contra el motor; gana el equipo que corona más rápido.",
+      "sitio": "Finales prácticos, lección 5 «La posición de Lucena». El mapa de los finales, lecciones 10 y 11 «Torre contra peón I y II». Práctica: Finales contra la máquina (Lucena) y la Habilidad «Remata la ventaja»."
+     },
+     "plan": {
+      "lecciones": [
+       {
+        "curso": "finales-practicos",
+        "titulo": "La posición de Lucena"
+       },
+       {
+        "curso": "el-mapa-de-los-finales",
+        "titulo": "Torre contra peón (I)"
+       },
+       {
+        "curso": "el-mapa-de-los-finales",
+        "titulo": "Torre contra peón (II)"
+       }
+      ],
+      "posiciones": [
+       {
+        "fuente": "mapa",
+        "capitulo": "Torre y peón contra torre",
+        "titulo": "Posición Lucena. El puente",
+        "n": 2,
+        "desde": 0
+       },
+       {
+        "fuente": "mapa",
+        "capitulo": "Torre contra peón",
+        "titulo": "Los reyes no se molestan",
+        "n": 1,
+        "desde": 0
+       },
+       {
+        "fuente": "mapa",
+        "capitulo": "Torre contra peón",
+        "titulo": "Rey defensor en tercera: el corte horizontal",
+        "n": 1,
+        "desde": 0
+       }
+      ]
+     }
+    },
+    {
+     "numero": 7,
+     "fecha": "2026-11-03",
+     "dia": "Martes 3 de noviembre",
+     "titulo": "Alfiles de distinto color, alfil contra caballo y repaso de finales",
+     "tipo": "clase",
+     "detalle": {
+      "objetivo": "Reconocer los finales que tienden a tablas y repasar la unidad antes de la evaluación.",
+      "bloques": [
+       [
+        "Calentamiento (10')",
+        "Tres posiciones mezcladas de la unidad con respuesta escrita."
+       ],
+       [
+        "Contenido (35')",
+        "Alfiles de distinto color: por qué tienden a tablas aun con peón de más, y cuándo se gana (dos peones separados). Alfil bueno contra caballo con peones en ambos flancos. Repaso guiado de la unidad A."
+       ],
+       [
+        "Práctica (20')",
+        "Ronda rápida por equipos de colores con las posiciones de todas las clases de la unidad."
+       ],
+       [
+        "Microenseñanza (15')",
+        "Dos estudiantes: torre contra peón y alfiles de distinto color (5' cada uno)."
+       ],
+       [
+        "Cierre (10'): pregunta de salida",
+        "¿Qué final de la unidad te cuesta más? (sirve para el repaso de la evaluación)."
+       ]
+      ],
+      "taller": "Ficha 6: tabla resumen «¿quién gana?» con los finales de la unidad.",
+      "divertido": "«🎯 Cuestionario al estilo Kahoot» con el listo «Finales teóricos»: puntos por rapidez y podio.",
+      "sitio": "Finales prácticos, lección 10 «Finales de alfiles de distinto color». El mapa de los finales, lecciones 15 y 16 «Alfiles de distinto color I y II» y lección 14 «Alfil contra caballo con un peón». Repaso: cuestionario listo «Finales teóricos» (avanzado) con «🎯 Cuestionario al estilo Kahoot»."
+     },
+     "plan": {
+      "lecciones": [
+       {
+        "curso": "finales-practicos",
+        "titulo": "Finales de alfiles de distinto color"
+       },
+       {
+        "curso": "el-mapa-de-los-finales",
+        "titulo": "Alfiles de distinto color (I)"
+       },
+       {
+        "curso": "el-mapa-de-los-finales",
+        "titulo": "Alfil contra caballo con un peón"
+       }
+      ],
+      "posiciones": [
+       {
+        "fuente": "mapa",
+        "capitulo": "Alfil y dos peones contra alfil de distinto color",
+        "titulo": "Peones ligados en la sexta fila",
+        "n": 1,
+        "desde": 0
+       },
+       {
+        "fuente": "mapa",
+        "capitulo": "Alfil y dos peones contra alfil de distinto color",
+        "titulo": "Peones separados por una columna",
+        "n": 1,
+        "desde": 0
+       },
+       {
+        "fuente": "mapa",
+        "capitulo": "Alfil contra caballo con un peón",
+        "titulo": "Caballo y peón contra alfil: peón central",
+        "n": 1,
+        "desde": 0
+       }
+      ]
+     }
+    },
+    {
+     "numero": 8,
+     "fecha": "2026-11-06",
+     "dia": "Viernes 6 de noviembre",
+     "titulo": "Evaluación 4: finales esenciales",
+     "tipo": "evaluacion",
+     "detalle": {
+      "objetivo": "Comprobar que cada estudiante sabe jugar y explicar los finales de la unidad A.",
+      "bloques": [
+       [
+        "0–10'",
+        "Instrucciones y reglas: sin motor, cámara encendida si es posible, respuestas en el formulario."
+       ],
+       [
+        "10–55'",
+        "Parte práctica: 6 posiciones tomadas de los ejercicios de las lecciones de la unidad (rey y peón, dama contra peón, Philidor, Lucena, torre contra peón y alfiles de distinto color). En cada una, la primera jugada y la variante principal escritas. 10 puntos cada una."
+       ],
+       [
+        "55–80'",
+        "Parte oral: en salas de dos o tres, cada estudiante explica en 2 minutos una posición que le toca al azar, como si estuviera en su taller. Se evalúa con los criterios 2 y 3 de la rúbrica del anexo B (40 puntos)."
+       ],
+       [
+        "80–90'",
+        "Registro de talleres de octubre (anexo C)."
+       ]
+      ],
+      "divertido": "Después de la evaluación, 15 minutos de Niebla de Guerra entre compañeros (Juegos).",
+      "sitio": "La parte práctica se arma en Exámenes, con nota e informe por alumno; las posiciones salen de los ejercicios (PDF) de las lecciones de la unidad. La parte oral se hace en la clase en vivo, en salas."
+     },
+     "plan": {
+      "lecciones": [],
+      "posiciones": [
+       {
+        "fuente": "mapa",
+        "capitulo": "Finales básicos",
+        "titulo": "El peón en sexta",
+        "n": 1,
+        "desde": 2
+       },
+       {
+        "fuente": "mapa",
+        "capitulo": "Finales básicos",
+        "titulo": "Las casillas críticas",
+        "n": 1,
+        "desde": 3
+       },
+       {
+        "fuente": "mapa",
+        "capitulo": "Dama contra peón",
+        "titulo": "Dama contra un peón de alfil en séptima",
+        "n": 1,
+        "desde": 1
+       },
+       {
+        "fuente": "mapa",
+        "capitulo": "Torre contra peón",
+        "titulo": "El rey fuerte en una zona lateral",
+        "n": 1,
+        "desde": 0
+       }
+      ]
+     }
+    },
+    {
+     "numero": 9,
+     "fecha": "2026-11-10",
+     "dia": "Martes 10 de noviembre",
+     "titulo": "Retroalimentación de la Evaluación 4 y cálculo con método",
+     "tipo": "clase",
+     "detalle": {
+      "objetivo": "Corregir los errores de la evaluación y fijar un método de cálculo que se pueda enseñar.",
+      "bloques": [
+       [
+        "Calentamiento (10')",
+        "Las dos posiciones de la evaluación con más errores, resueltas de nuevo."
+       ],
+       [
+        "Contenido (35')",
+        "Retroalimentación pregunta por pregunta. Método de cálculo en 3 pasos: jugadas candidatas, jugadas forzadas primero (jaques, capturas, amenazas) y comprobar la respuesta del rival. Visualización: calcular sin mover las piezas."
+       ],
+       [
+        "Práctica (20')",
+        "Cuatro posiciones con la variante completa escrita antes de discutir; gana el equipo con más variantes completas, no solo con la primera jugada."
+       ],
+       [
+        "Microenseñanza (15')",
+        "Dos estudiantes: los 3 pasos del cálculo (5' cada uno)."
+       ],
+       [
+        "Cierre (10'): pregunta de salida",
+        "Escribe los 3 pasos del método en tus palabras."
+       ]
+      ],
+      "taller": "Ficha 7: «jaques, capturas y amenazas», la lista para que un principiante revise antes de jugar.",
+      "divertido": "Ajedrez a la ciega en parejas con la práctica «a ciegas» de la clase en vivo.",
+      "sitio": "Cálculo y visualización: lección 1 «El árbol de variantes», lección 3 «Jugadas candidatas», lección 5 «Jaques y amenazas forzadas» y lección 7 «Verificación final». Práctica: Habilidad «Descarte» (qué candidatas pierden) y Entreno «Visualización» como tarea."
+     },
+     "plan": {
+      "lecciones": [
+       {
+        "curso": "calculo-y-visualizacion",
+        "titulo": "El árbol de variantes"
+       },
+       {
+        "curso": "calculo-y-visualizacion",
+        "titulo": "Jugadas candidatas"
+       },
+       {
+        "curso": "calculo-y-visualizacion",
+        "titulo": "Jaques y amenazas forzadas"
+       },
+       {
+        "curso": "calculo-y-visualizacion",
+        "titulo": "Verificación final"
+       }
+      ],
+      "posiciones": [
+       {
+        "fuente": "tema",
+        "tema": "intermezzo",
+        "n": 2,
+        "desde": 0
+       },
+       {
+        "fuente": "tema",
+        "tema": "clearance",
+        "n": 1,
+        "desde": 0
+       },
+       {
+        "fuente": "tema",
+        "tema": "deflection",
+        "n": 1,
+        "desde": 0
+       }
+      ]
+     }
+    },
+    {
+     "numero": 10,
+     "fecha": "2026-11-13",
+     "dia": "Viernes 13 de noviembre",
+     "titulo": "Táctica elemental para el taller: cómo ordenar lo que enseñan",
+     "tipo": "clase",
+     "detalle": {
+      "objetivo": "Ordenar la táctica básica para principiantes y armar una serie de ejercicios para su taller.",
+      "bloques": [
+       [
+        "Calentamiento (10')",
+        "Dos ejercicios tácticos de nivel de taller: ¿cómo los presentarías?"
+       ],
+       [
+        "Contenido (35')",
+        "Secuencia para principiantes: piezas que se pueden capturar, ataque doble, clavada, descubierta, mates básicos. Cómo elegir ejercicios de Lichess por tema y dificultad."
+       ],
+       [
+        "Práctica (20')",
+        "Por parejas, cada estudiante arma una serie de 8 ejercicios de un solo tema en un estudio de Lichess para su taller. Torneo de los viernes en sistema suizo."
+       ],
+       [
+        "Microenseñanza (15')",
+        "Dos estudiantes presentan su serie de ejercicios (5' cada uno)."
+       ],
+       [
+        "Cierre (10'): pregunta de salida",
+        "¿Qué tema táctico enseñarías primero y por qué?"
+       ]
+      ],
+      "taller": "Ficha 8: la serie de ejercicios de cada estudiante (va en su portafolio).",
+      "divertido": "Torneo relámpago de Duelo Simultáneo (Juegos): los dos eligen la jugada a la vez, en secreto.",
+      "sitio": "Estrategia y táctica: lección 1 «Clavadas absolutas y relativas», lección 2 «Horquillas de caballo y de peón» y lección 3 «Ataques a la descubierta y jaques dobles». Para armar la serie: «Ejercicios por tema» del Entreno. Para principiantes: «Practicar» y «Desafíos»."
+     },
+     "plan": {
+      "lecciones": [
+       {
+        "curso": "estrategia-y-tactica",
+        "titulo": "Clavadas"
+       },
+       {
+        "curso": "estrategia-y-tactica",
+        "titulo": "Horquillas de caballo y de peón"
+       },
+       {
+        "curso": "estrategia-y-tactica",
+        "titulo": "Ataques a la descubierta"
+       }
+      ],
+      "posiciones": [
+       {
+        "fuente": "tema",
+        "tema": "pin",
+        "n": 2,
+        "desde": 0
+       },
+       {
+        "fuente": "tema",
+        "tema": "fork",
+        "n": 2,
+        "desde": 0
+       },
+       {
+        "fuente": "tema",
+        "tema": "discoveredAttack",
+        "n": 2,
+        "desde": 0
+       }
+      ]
+     }
+    },
+    {
+     "numero": 11,
+     "fecha": "2026-11-17",
+     "dia": "Martes 17 de noviembre",
+     "titulo": "Del concepto avanzado al taller: estrategia para principiantes",
+     "tipo": "clase",
+     "detalle": {
+      "objetivo": "Traducir la estrategia que el grupo aprendió (profilaxis, peor pieza, debilidades) a preguntas simples que un principiante pueda usar.",
+      "bloques": [
+       [
+        "Calentamiento (10')",
+        "Una posición de estrategia: ¿cuál es la peor pieza de cada bando?"
+       ],
+       [
+        "Contenido (35')",
+        "Tres preguntas para el taller: «¿qué quiere hacer mi rival?» (profilaxis), «¿cuál es mi peor pieza?» (mejorar las piezas) y «¿dónde está débil el rival?» (debilidades). Cómo elegir una partida modelo corta y sencilla para principiantes."
+       ],
+       [
+        "Práctica (20')",
+        "Por equipos de colores, cada uno toma una partida modelo del curso y prepara cómo la mostraría a principiantes en 10 minutos con las tres preguntas."
+       ],
+       [
+        "Microenseñanza (15')",
+        "Dos voceros presentan la partida modelo adaptada de su equipo (5' cada uno)."
+       ],
+       [
+        "Cierre (10'): pregunta de salida",
+        "¿Cuál de las tres preguntas enseñarías primero y por qué?"
+       ]
+      ],
+      "taller": "Ficha 9: las tres preguntas de estrategia para principiantes.",
+      "divertido": "La Habilidad «Adivina la jugada del maestro» por equipos de colores.",
+      "sitio": "Estrategia en el final, lección 15 «Profilaxis: quitarle el plan» y lección 16 «Convertir las dos debilidades». Habilidades «¿Qué quiere el rival?» y «Constrúyela tú». Partidas cortas para principiantes: curso Partidas modelo."
+     },
+     "plan": {
+      "lecciones": [
+       {
+        "curso": "estrategia-en-el-final",
+        "titulo": "Profilaxis"
+       },
+       {
+        "curso": "estrategia-en-el-final",
+        "titulo": "Convertir"
+       }
+      ],
+      "posiciones": [
+       {
+        "fuente": "estrategia",
+        "titulo": "La ruta del rey",
+        "n": 1
+       },
+       {
+        "fuente": "estrategia",
+        "titulo": "Rupturas de peones",
+        "n": 1
+       }
+      ]
+     }
+    },
+    {
+     "numero": 12,
+     "fecha": "2026-11-20",
+     "dia": "Viernes 20 de noviembre",
+     "titulo": "Planificar un taller de 60 minutos y manejar el grupo",
+     "tipo": "clase",
+     "detalle": {
+      "objetivo": "Que cada estudiante tenga su plan de taller escrito con la plantilla del anexo A.",
+      "bloques": [
+       [
+        "Calentamiento (10')",
+        "Una posición de cálculo con la variante completa."
+       ],
+       [
+        "Contenido (35')",
+        "Partes de un taller: objetivo, inicio, explicación corta, juego o práctica, cierre que compruebe. Manejo del grupo: normas claras, cómo dar la palabra a quien no habla, cómo frenar una burla, cómo invitar a más chicas."
+       ],
+       [
+        "Práctica (20')",
+        "Cada estudiante llena la plantilla del anexo A en Classroom; tú revisas tres en vivo y comentas."
+       ],
+       [
+        "Microenseñanza (15')",
+        "Dos estudiantes: «cómo empiezo mi taller» (5' cada uno)."
+       ],
+       [
+        "Cierre (10'): pregunta de salida",
+        "¿Cuál es el objetivo de tu próximo taller, en una frase?"
+       ]
+      ],
+      "taller": "Entrega del plan de taller (anexo A) antes del 24 de noviembre.",
+      "divertido": "Diez minutos de Ajedrez de Cartas por parejas (Juegos).",
+      "sitio": "Curso Fundamentos del ajedrez: sus 10 lecciones (del tablero a los errores comunes de apertura) son una secuencia lista para un taller de principiantes, con presentación, material y ejercicios. Para practicar con los participantes: Entreno «Aprende», «Practicar» y «Desafíos»."
+     },
+     "plan": {
+      "lecciones": [
+       {
+        "curso": "fundamentos-del-ajedrez",
+        "titulo": "Los tres principios de la apertura"
+       },
+       {
+        "curso": "fundamentos-del-ajedrez",
+        "titulo": "Mate con dos torres"
+       }
+      ],
+      "posiciones": [
+       {
+        "fuente": "mate",
+        "cat": "mate1",
+        "n": 2,
+        "desde": 0
+       }
+      ]
+     }
+    },
+    {
+     "numero": 13,
+     "fecha": "2026-11-24",
+     "dia": "Martes 24 de noviembre",
+     "titulo": "Minilecciones finales (1)",
+     "tipo": "evaluacion",
+     "detalle": {
+      "objetivo": "Que cada estudiante dé una minilección de 8 minutos para principiantes y reciba retroalimentación.",
+      "bloques": [
+       [
+        "Organización",
+        "Se hacen en tres clases (24 y 27 de noviembre y 1 de diciembre), con 5 o 6 estudiantes por clase. El orden se sortea y se publica antes; nadie se elige a dedo."
+       ],
+       [
+        "Cada minilección",
+        "8' de clase + 4' de retroalimentación: primero un compañero (lo que funcionó y una sugerencia), después tú con la rúbrica del anexo B."
+       ],
+       [
+        "Tema",
+        "Lo elige cada estudiante de los temas del curso, pensado para un principiante (por ejemplo: la oposición, el puente de Lucena, la clavada, el mate de la escalera)."
+       ],
+       [
+        "Últimos 10'",
+        "Ronda corta de partidas rápidas o un ejercicio en equipo para cerrar con juego."
+       ]
+      ],
+      "divertido": "La clase vota la minilección que más le sirvió con una pregunta de opciones, y el podio al final.",
+      "sitio": "Clase en vivo: «alumno elegido al azar» para sortear el orden y «Mostrar la respuesta de un alumno» para que cada uno presente desde su tablero."
+     },
+     "plan": {
+      "lecciones": [],
+      "posiciones": []
+     }
+    },
+    {
+     "numero": 14,
+     "fecha": "2026-11-27",
+     "dia": "Viernes 27 de noviembre",
+     "titulo": "Minilecciones finales (2)",
+     "tipo": "evaluacion",
+     "detalle": {
+      "objetivo": "",
+      "bloques": [
+       [
+        "Igual que la clase anterior",
+        "5 o 6 minilecciones con la rúbrica del anexo B."
+       ],
+       [
+        "Últimos 15'",
+        "Partidas rápidas en el torneo de los viernes."
+       ],
+       [
+        "Cierre",
+        "Recordar la entrega del portafolio del instructor el 4 de diciembre."
+       ]
+      ],
+      "divertido": "Entre minilección y minilección, una «⚡ Ronda rápida» de táctica para despejarse.",
+      "sitio": "Clase en vivo: el estudiante que da la minilección usa el tablero de la clase; los compañeros contestan las preguntas que haga."
+     },
+     "plan": {
+      "lecciones": [],
+      "posiciones": []
+     }
+    },
+    {
+     "numero": 15,
+     "fecha": "2026-12-01",
+     "dia": "Martes 1 de diciembre",
+     "titulo": "Minilecciones finales (3)",
+     "tipo": "evaluacion",
+     "detalle": {
+      "objetivo": "",
+      "bloques": [
+       [
+        "0–75'",
+        "Últimas minilecciones y las pendientes de quien faltó con justificación."
+       ],
+       [
+        "75–90'",
+        "Los organizadores del torneo del viernes (rol rotativo) lo crean en Lichess y anuncian las reglas."
+       ]
+      ],
+      "divertido": "Para cerrar las minilecciones, Crazyhouse por parejas (Juegos).",
+      "sitio": "Formación Ajedrez, lección 4 «Sistemas de emparejamiento» y lección 5 «Uso y control del reloj», para quienes organizan el torneo."
+     },
+     "plan": {
+      "lecciones": [],
+      "posiciones": []
+     }
+    },
+    {
+     "numero": 16,
+     "fecha": "2026-12-04",
+     "dia": "Viernes 4 de diciembre",
+     "titulo": "Torneo organizado por los estudiantes y entrega del portafolio",
+     "tipo": "especial",
+     "detalle": {
+      "objetivo": "",
+      "bloques": [
+       [
+        "0–10'",
+        "Los organizadores presentan el torneo: sistema suizo, ritmo y reglas."
+       ],
+       [
+        "10–80'",
+        "Torneo del grupo. Un estudiante hace de árbitro y otro comenta una partida al final."
+       ],
+       [
+        "80–90'",
+        "Entrega del portafolio del instructor (ver «Evaluación»): plan de taller, registro de dos sesiones dadas, las fichas y una reflexión corta."
+       ]
+      ],
+      "divertido": "El torneo suizo del grupo, organizado por los estudiantes.",
+      "sitio": "Torneos de la Academia (inscripción y rondas en vivo) o Lichess. El portafolio se entrega como tarea en Tareas."
+     },
+     "plan": {
+      "lecciones": [
+       {
+        "curso": "formacion-ajedrez",
+        "titulo": "Sistemas de emparejamiento"
+       },
+       {
+        "curso": "formacion-ajedrez",
+        "titulo": "Uso, configuración y control del reloj"
+       }
+      ],
+      "posiciones": []
+     }
+    },
+    {
+     "numero": 17,
+     "fecha": "2026-12-08",
+     "dia": "Martes 8 de diciembre",
+     "titulo": "Retroalimentación final y el taller en 2027",
+     "tipo": "especial",
+     "detalle": {
+      "objetivo": "Devolver a cada estudiante la retroalimentación de su minilección y su portafolio, y dejar armado cómo sigue su taller.",
+      "bloques": [
+       [
+        "0–30'",
+        "Retroalimentación general: lo mejor de las minilecciones (sin comparar personas), los errores más comunes y cómo corregirlos."
+       ],
+       [
+        "30–60'",
+        "En salas, cada estudiante revisa su rúbrica y escribe su «plan del taller para 2027»: colegio, aliado (docente o director), día y hora, y los primeros cuatro temas."
+       ],
+       [
+        "60–80'",
+        "Partidas rápidas o una ronda de ejercicios por equipos."
+       ],
+       [
+        "80–90'",
+        "Registro final de talleres (anexo C)."
+       ]
+      ],
+      "divertido": "Batalla naval de ajedrez con la pantalla compartida: la clase vota dónde disparar.",
+      "sitio": "Repasar mis clases (la partida de cada clase con sus comentarios) e Informes («Lo que le costó a cada alumno»)."
+     },
+     "plan": {
+      "lecciones": [],
+      "posiciones": []
+     }
+    },
+    {
+     "numero": 18,
+     "fecha": "2026-12-11",
+     "dia": "Viernes 11 de diciembre",
+     "titulo": "Cierre del curso",
+     "tipo": "especial",
+     "detalle": {
+      "objetivo": "",
+      "bloques": [
+       [
+        "0–30'",
+        "Simultánea del profesor contra el grupo."
+       ],
+       [
+        "30–55'",
+        "Resultados del trimestre y reconocimientos: mejor minilección, mejor portafolio, equipo de colores ganador, asistencia."
+       ],
+       [
+        "55–75'",
+        "Encuesta anónima de cierre de la coordinación (clima, trato, talleres)."
+       ],
+       [
+        "75–90'",
+        "Preparación de la clase presencial de diciembre: qué llevar, quién necesita transporte u hospedaje."
+       ]
+      ],
+      "divertido": "Simultánea del profesor y el podio de los puntos del mes.",
+      "sitio": "Cuestionario listo «Grandes jugadores y sus estilos» o «Los campeones del mundo» (avanzado), el podio y los puntos del mes de la clase en vivo."
+     },
+     "plan": {
+      "lecciones": [],
+      "posiciones": []
+     }
+    }
+   ],
+   "tareas": [
+    {
+     "semana": 1,
+     "desde": "2026-10-12",
+     "vence": "2026-10-19",
+     "titulo": "Semana 1 · Rey y peón para empezar",
+     "instrucciones": "Repasa la regla del cuadrado y practica rey y peón. Para descansar, dos partidas de Batalla naval.",
+     "items": [
+      {
+       "curso": "finales-practicos",
+       "leccion": 1
+      },
+      {
+       "herramienta": "tipos",
+       "recorte": "peones",
+       "cantidad": 10,
+       "meta": null
+      },
+      {
+       "herramienta": "batalla-naval",
+       "recorte": null,
+       "cantidad": 2,
+       "meta": null
+      }
+     ]
+    },
+    {
+     "semana": 2,
+     "desde": "2026-10-19",
+     "vence": "2026-10-26",
+     "titulo": "Semana 2 · Casillas críticas y finales contra la máquina",
+     "instrucciones": "Estudia las posiciones críticas y gana o salva dos finales contra la máquina.",
+     "items": [
+      {
+       "curso": "finales-practicos",
+       "leccion": 3
+      },
+      {
+       "herramienta": "finales",
+       "recorte": null,
+       "cantidad": 2,
+       "meta": null
+      },
+      {
+       "herramienta": "tipos",
+       "recorte": "peones",
+       "cantidad": 10,
+       "meta": null
+      }
+     ]
+    },
+    {
+     "semana": 3,
+     "desde": "2026-10-26",
+     "vence": "2026-11-02",
+     "titulo": "Semana 3 · Philidor y Lucena",
+     "instrucciones": "Lucena para ganar, Philidor para salvarte. Practícalos contra la máquina.",
+     "items": [
+      {
+       "curso": "finales-practicos",
+       "leccion": 6
+      },
+      {
+       "curso": "finales-practicos",
+       "leccion": 5
+      },
+      {
+       "herramienta": "finales",
+       "recorte": null,
+       "cantidad": 3,
+       "meta": null
+      },
+      {
+       "herramienta": "tipos",
+       "recorte": "tablas",
+       "cantidad": 5,
+       "meta": null
+      }
+     ]
+    },
+    {
+     "semana": 4,
+     "desde": "2026-11-02",
+     "vence": "2026-11-09",
+     "titulo": "Semana 4 · Repaso para la Evaluación 4",
+     "instrucciones": "Contesta el cuestionario de finales y remata cinco ventajas.",
+     "items": [
+      {
+       "herramienta": "cuestionario",
+       "cuestionario": "Finales teóricos"
+      },
+      {
+       "herramienta": "finales",
+       "recorte": null,
+       "cantidad": 4,
+       "meta": null
+      },
+      {
+       "herramienta": "tipos",
+       "recorte": "remata",
+       "cantidad": 5,
+       "meta": null
+      }
+     ]
+    },
+    {
+     "semana": 5,
+     "desde": "2026-11-09",
+     "vence": "2026-11-16",
+     "titulo": "Semana 5 · Calcular con método",
+     "instrucciones": "Calcula sin mover las piezas y tacha las jugadas que pierden.",
+     "items": [
+      {
+       "herramienta": "visualizacion",
+       "recorte": null,
+       "cantidad": 10,
+       "meta": null
+      },
+      {
+       "herramienta": "tipos",
+       "recorte": "descarte",
+       "cantidad": 10,
+       "meta": null
+      },
+      {
+       "herramienta": "temas",
+       "recorte": "intermezzo",
+       "cantidad": 10,
+       "meta": null
+      }
+     ]
+    },
+    {
+     "semana": 6,
+     "desde": "2026-11-16",
+     "vence": "2026-11-23",
+     "titulo": "Semana 6 · Táctica para enseñar y profilaxis",
+     "instrucciones": "Prepara tu serie de ejercicios para el taller y pregúntate qué quiere el rival.",
+     "items": [
+      {
+       "herramienta": "temas",
+       "recorte": "pin",
+       "cantidad": 10,
+       "meta": null
+      },
+      {
+       "herramienta": "temas",
+       "recorte": "fork",
+       "cantidad": 10,
+       "meta": null
+      },
+      {
+       "herramienta": "tipos",
+       "recorte": "amenaza",
+       "cantidad": 10,
+       "meta": null
+      },
+      {
+       "curso": "estrategia-en-el-final",
+       "leccion": 15
+      }
+     ]
+    },
+    {
+     "semana": 7,
+     "desde": "2026-11-23",
+     "vence": "2026-11-30",
+     "titulo": "Semana 7 · Prepara tu minilección",
+     "instrucciones": "Repasa el tema de tu minilección y relájate con los confites del caballo.",
+     "items": [
+      {
+       "herramienta": "temas",
+       "recorte": "mix",
+       "cantidad": 10,
+       "meta": null
+      },
+      {
+       "herramienta": "confites",
+       "recorte": null,
+       "cantidad": 2,
+       "meta": null
+      }
+     ]
+    },
+    {
+     "semana": 8,
+     "desde": "2026-11-30",
+     "vence": "2026-12-07",
+     "titulo": "Semana 8 · Un poco de historia y mucho juego",
+     "instrucciones": "El cuestionario de los grandes jugadores y dos partidas del Sonar.",
+     "items": [
+      {
+       "herramienta": "cuestionario",
+       "cuestionario": "Grandes jugadores y sus estilos"
+      },
+      {
+       "herramienta": "sonar",
+       "recorte": null,
+       "cantidad": 2,
+       "meta": null
+      },
+      {
+       "herramienta": "temas",
+       "recorte": "mix",
+       "cantidad": 15,
+       "meta": null
+      }
+     ]
+    },
+    {
+     "semana": 9,
+     "desde": "2026-12-07",
+     "vence": "2026-12-13",
+     "titulo": "Semana 9 · Cierre: aprende de tus partidas",
+     "instrucciones": "Revisa tus propios errores y entrena la memoria antes de la clase presencial.",
+     "items": [
+      {
+       "herramienta": "tipos",
+       "recorte": "errores",
+       "cantidad": 5,
+       "meta": null
+      },
+      {
+       "herramienta": "memoria",
+       "recorte": null,
+       "cantidad": 5,
+       "meta": null
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "slug": "medio-juego",
+   "nombre": "Medio Juego",
+   "nivel": "intermedio",
+   "horario": "Lunes y jueves de 6:00 a 7:30 p. m., por Zoom",
+   "orden": 1,
+   "profesor_sugerido": "Pamela María Salas Torres",
+   "guia": {
+    "intro": "Tu grupo ya completó las tres unidades de tu plan anual y es el que más avanzó en aprender a enseñar: la «posición feliz», los libros para el taller y la microenseñanza del 20 de agosto son un modelo para el proyecto. Este plan aprovecha eso para el cierre. Agrega una unidad de ataque y defensa con más cálculo propio (es lo que piden los estudiantes más fuertes, que sienten el nivel fácil), los finales de torre que faltan y una evaluación de la capacidad de enseñar, que es el objetivo de tu plan que todavía no se evalúa. El plan está pensado para que lo apliques tal cual.",
+    "objetivos": [
+     "Atacar y defender al rey con método, calculando variantes de tres jugadas o más.",
+     "Jugar bien los finales de torre más comunes (Lucena, Philidor y torre activa).",
+     "Convertir la microenseñanza en rutina y evaluar a cada estudiante con una minilección.",
+     "Entregar un plan de taller y la evidencia de al menos dos sesiones dadas en el colegio."
+    ],
+    "partida": [
+     [
+      "Lo que ya domina el grupo",
+      "Táctica clásica (clavada, ataque doble, descubierta, desviación, atracción, sobrecarga, intercepción, rayos X, enfilada, molino), estrategia (mejorar piezas, puestos avanzados, cambios, profilaxis, centro, estructuras), finales básicos (oposición, cuadrado, Vancura) y el inicio del ataque al rey en el centro."
+     ],
+     [
+      "Lo que falta",
+      "Más reto y cálculo propio para los más fuertes (4 de 16 sienten el nivel muy fácil), finales de torre prácticos, microenseñanza frecuente, una evaluación de la capacidad de enseñar y el seguimiento de quienes dejaron de venir."
+     ],
+     [
+      "Lo que pidieron en la encuesta",
+      "Más torneos, ejercicios más difíciles «a veces» y mantener las dinámicas, que es lo que más les gusta."
+     ],
+     [
+      "Lo que se mantiene",
+      "Preguntas al azar por nombre, Kahoot, carreras en Lichess, equipos y torneos temáticos, y el «¿cómo le enseñarías esto a alguien que empieza?»."
+     ]
+    ],
+    "unidades": [
+     [
+      "Unidad 4 · Ataque y defensa",
+      "15 oct – 5 nov",
+      "6 clases + Evaluación 4"
+     ],
+     [
+      "Unidad 5 · Finales de torre, análisis y planes",
+      "9 – 16 nov",
+      "3 clases"
+     ],
+     [
+      "Unidad 6 · Del concepto al taller",
+      "19 nov – 10 dic",
+      "Planificación, minilecciones, torneo y cierre"
+     ]
+    ],
+    "estructura": [
+     [
+      "0–10'",
+      "Calentamiento de cálculo",
+      "Dos posiciones con la variante completa escrita antes de discutir, o el «🔥 Calentamiento» de la clase en vivo."
+     ],
+     [
+      "10–45'",
+      "Contenido",
+      "La lección del curso llevada al tablero de la clase. Preguntas por nombre, sin elegir siempre a los mismos."
+     ],
+     [
+      "45–65'",
+      "Práctica",
+      "Partidas temáticas, retos por equipos o Habilidades. El vocero de cada equipo explica una respuesta."
+     ],
+     [
+      "65–80'",
+      "Microenseñanza",
+      "Dos estudiantes explican 5 minutos como en su taller; un compañero dice qué funcionó y da una sugerencia."
+     ],
+     [
+      "80–90'",
+      "Cierre",
+      "La pregunta de salida que contestan todos, el momento divertido si no fue antes, y la asistencia."
+     ]
+    ],
+    "reglas": [
+     "Roles rotativos (vocero, anotador, organizador del torneo), asignados por turno y con al menos una alumna en cada ronda.",
+     "Cada clase tiene un momento divertido: un juego, una votación contra el motor o un Kahoot. Cuenta para los puntos del mes.",
+     "Asistencia con presentes, justificadas y ausencias por separado; sin clase no se pasa asistencia.",
+     "Después de dos ausencias seguidas, un mensaje por el canal oficial; después de tres, aviso a la coordinación.",
+     "Avisos, tareas y notas solo por Tareas de la Academia o el grupo oficial, nunca por mensajes privados.",
+     "La tarea de la semana se manda el lunes desde esta página y vence el lunes siguiente."
+    ],
+    "evaluacion": [
+     [
+      "Evaluación 4: ataque, defensa y cálculo",
+      "5 de noviembre",
+      "30 %"
+     ],
+     [
+      "Microenseñanza en clase",
+      "15 oct – 19 nov",
+      "10 %"
+     ],
+     [
+      "Minilección final",
+      "23 – 30 nov",
+      "30 %"
+     ],
+     [
+      "Portafolio del instructor",
+      "3 de diciembre",
+      "30 %"
+     ]
+    ],
+    "rubrica": [
+     [
+      "Objetivo",
+      "Claro y adecuado para principiantes",
+      "Claro, pero muy amplio",
+      "Confuso",
+      "No se entiende"
+     ],
+     [
+      "Ajedrez correcto",
+      "Sin errores y con un buen ejemplo",
+      "Un error menor que corrige",
+      "Errores que confunden",
+      "Contenido incorrecto"
+     ],
+     [
+      "Participación",
+      "Pregunta y pone a practicar a todos",
+      "Pregunta, pero se responde solo",
+      "Casi solo expone",
+      "No hay interacción"
+     ],
+     [
+      "Cierre",
+      "Comprueba con una pregunta o un ejercicio",
+      "Resume sin comprobar",
+      "Termina sin cierre",
+      "No llega al cierre"
+     ],
+     [
+      "Tiempo y grupo",
+      "Respeta el tiempo y trata con respeto",
+      "Se pasa un poco",
+      "Se pasa mucho o pierde al grupo",
+      "No logra conducir"
+     ]
+    ],
+    "periodo": "12 de octubre al 10 de diciembre de 2026",
+    "anexos": {
+     "A": [
+      "Plantilla del plan de taller",
+      [
+       [
+        "Colegio o lugar",
+        ""
+       ],
+       [
+        "Fecha y duración",
+        "60 minutos"
+       ],
+       [
+        "Participantes esperados",
+        ""
+       ],
+       [
+        "Objetivo (una frase)",
+        "Al terminar, los participantes podrán…"
+       ],
+       [
+        "Materiales",
+        "Tableros, tablero mural o proyector, enlace…"
+       ],
+       [
+        "Inicio (10')",
+        "Cómo saludo y qué pregunto para saber qué saben."
+       ],
+       [
+        "Explicación (15')",
+        "Qué voy a mostrar y con qué ejemplo."
+       ],
+       [
+        "Práctica o juego (25')",
+        "Qué van a hacer ellos y cómo los organizo."
+       ],
+       [
+        "Cierre (10')",
+        "Qué pregunta o ejercicio me dice si aprendieron."
+       ],
+       [
+        "Si algo sale mal",
+        "Plan B: si son menos, si no hay tableros o si el tema les cuesta."
+       ]
+      ]
+     ],
+     "C": [
+      "Registro mensual de talleres",
+      [
+       [
+        "Taller activo",
+        "Sí o no"
+       ],
+       [
+        "Sesiones en el mes",
+        "Cuántas"
+       ],
+       [
+        "Participantes por sesión",
+        "Cuántos, sin nombres"
+       ],
+       [
+        "Tema enseñado",
+        "Qué enseñó"
+       ],
+       [
+        "Evidencia",
+        "Foto autorizada o lista"
+       ]
+      ]
+     ],
+     "D": [
+      "Ficha para el taller",
+      [
+       [
+        "Título",
+        "Por ejemplo: «La regla del cuadrado»"
+       ],
+       [
+        "Idea clave",
+        "Una o dos frases que el principiante debe recordar."
+       ],
+       [
+        "Ejemplo",
+        "Una posición de la lección."
+       ],
+       [
+        "Juego o ejercicio",
+        "Cómo se practica en el taller."
+       ],
+       [
+        "Error típico",
+        "Qué suele hacer mal un principiante y cómo corregirlo sin exponerlo."
+       ],
+       [
+        "Pregunta de cierre",
+        "Cómo saber si lo entendieron."
+       ]
+      ]
+     ]
+    },
+    "portafolio": [
+     [
+      "Plan de taller",
+      "Completo con la plantilla del anexo A.",
+      "25"
+     ],
+     [
+      "Registro de dos sesiones dadas",
+      "Fecha, lugar, participantes, tema y qué funcionó.",
+      "25"
+     ],
+     [
+      "Fichas o ejercicios para el taller",
+      "Las fichas del trimestre o una serie de ejercicios propia.",
+      "25"
+     ],
+     [
+      "Reflexión",
+      "Media página: qué aprendí como instructor y cómo sigo en 2027.",
+      "25"
+     ]
+    ]
+   },
+   "sesiones": [
+    {
+     "numero": 1,
+     "fecha": "2026-10-12",
+     "dia": "Lunes 12 de octubre",
+     "titulo": "Arranque del cierre: acuerdos, normas y roles",
+     "tipo": "especial",
+     "detalle": {
+      "objetivo": "Que el grupo conozca el plan del cierre, las evaluaciones y las normas de trabajo.",
+      "bloques": [
+       [
+        "0–15'",
+        "Presentar el plan y las evaluaciones (ver «Evaluación»). Explicar que cada clase tendrá microenseñanza y que el curso cierra con una minilección de cada estudiante."
+       ],
+       [
+        "15–35'",
+        "Acordar las normas con el grupo: la asistencia se pasa a las 7:00 p. m. como hasta ahora; las faltas y los atrasos se hablan en privado; el chat queda abierto para preguntas; las bromas que ofenden se frenan en el momento. Publicarlas en Classroom."
+       ],
+       [
+        "35–55'",
+        "Armar la tabla de roles rotativos del trimestre (vocero de equipo, anotador, organizador del torneo), asignados por turno y con al menos una alumna en cada ronda."
+       ],
+       [
+        "55–80'",
+        "Dos posiciones de reto (nivel alto) y dos de nivel medio, para ver cómo arranca cada estudiante. Se resuelven por escrito."
+       ],
+       [
+        "80–90'",
+        "Registro de talleres: cada estudiante anota si tiene taller activo, cuántas sesiones dio y con cuántos participantes (anexo C)."
+       ]
+      ],
+      "divertido": "Reto relámpago: el «🔥 Calentamiento» en modo competencia, 5 minutos, y el podio al final.",
+      "sitio": "La clase en vivo se registra sola en la Academia. Diagnóstico de reto: «🔥 Calentamiento: 20 ejercicios de Táctica para cada alumno» con el nivel en 1600 a 1800 Elo."
+     },
+     "plan": {
+      "lecciones": [],
+      "posiciones": [
+       {
+        "fuente": "tema",
+        "tema": "sacrifice",
+        "n": 2,
+        "desde": 40
+       },
+       {
+        "fuente": "tema",
+        "tema": "kingsideAttack",
+        "n": 2,
+        "desde": 40
+       }
+      ]
+     }
+    },
+    {
+     "numero": 2,
+     "fecha": "2026-10-15",
+     "dia": "Jueves 15 de octubre",
+     "titulo": "Ataque al rey en el centro (cierre del tema)",
+     "tipo": "clase",
+     "detalle": {
+      "objetivo": "Castigar al rey que no se enroca: abrir la columna e y llegar primero con las piezas.",
+      "bloques": [
+       [
+        "Calentamiento (10')",
+        "Dos posiciones de cálculo con la variante completa escrita (una de nivel medio y una de reto)."
+       ],
+       [
+        "Contenido (35')",
+        "Retomar lo visto el 28 de septiembre: abrir el centro, sacrificar un peón para ganar tiempo, la torre a la columna e. Cuándo el ataque no funciona (el rival se enroca a tiempo)."
+       ],
+       [
+        "Práctica (20')",
+        "Partidas temáticas por parejas desde posiciones con el rey sin enrocar; luego cambian de color."
+       ],
+       [
+        "Microenseñanza (15')",
+        "Dos estudiantes (5' cada uno): «por qué hay que enrocarse temprano», explicado para un taller de principiantes."
+       ],
+       [
+        "Cierre (10'): pregunta de salida",
+        "Escribe una señal de que el rey rival está en peligro en el centro."
+       ]
+      ],
+      "taller": "Idea para el taller: el juego «enróquese a tiempo», donde gana quien se enroca y desarrolla primero.",
+      "divertido": "«🗳️ La clase juega» contra el motor desde una posición con el rey en el centro: ¿lo cazan?",
+      "sitio": "Curso Partidas modelo, lección 2 «El rey en el centro» (Jalifman–Sveshnikov). Cuestionario listo «Aperturas abiertas (1.e4 e5)» (intermedio) para repasar."
+     },
+     "plan": {
+      "lecciones": [
+       {
+        "curso": "partidas-modelo",
+        "titulo": "El rey en el centro"
+       }
+      ],
+      "posiciones": [
+       {
+        "fuente": "tema",
+        "tema": "exposedKing",
+        "n": 3,
+        "desde": 0
+       },
+       {
+        "fuente": "tema",
+        "tema": "attackingF2F7",
+        "n": 1,
+        "desde": 0
+       }
+      ]
+     }
+    },
+    {
+     "numero": 3,
+     "fecha": "2026-10-19",
+     "dia": "Lunes 19 de octubre",
+     "titulo": "Ataque al rey enrocado (1): el sacrificio en h7",
+     "tipo": "clase",
+     "detalle": {
+      "objetivo": "Reconocer cuándo funciona el sacrificio clásico en h7 y calcularlo hasta el final.",
+      "bloques": [
+       [
+        "Calentamiento (10')",
+        "Dos posiciones: ¿funciona el sacrificio o no?"
+       ],
+       [
+        "Contenido (35')",
+        "Condiciones del sacrificio en h7: alfil apuntando a h7, caballo que puede llegar a g5, dama que llega a h5 y ningún defensor en f6. Las tres respuestas del rey y cómo seguir en cada una."
+       ],
+       [
+        "Práctica (20')",
+        "Por equipos, 4 posiciones: en cada una deciden si sacrifican y escriben la variante. Gana el equipo con más variantes correctas, no solo con la primera jugada."
+       ],
+       [
+        "Microenseñanza (15')",
+        "Dos estudiantes: ataque al rey en el centro y las condiciones del sacrificio en h7 (5' cada uno)."
+       ],
+       [
+        "Cierre (10'): pregunta de salida",
+        "Nombra las cuatro condiciones del sacrificio en h7."
+       ]
+      ],
+      "taller": "Idea para el taller: la lista de las cuatro condiciones como «semáforo» antes de sacrificar.",
+      "divertido": "Equipos: ¿sacrifica o no? Cada equipo vota con una pregunta de opciones y el profe revela la respuesta con el motor.",
+      "sitio": "Estrategia y táctica, lección 8 «Sacrificios en h7/h2» y lección 5 «Sacrificios de despeje y de destrucción». Partidas modelo, lección 8 «Sacrificios típicos» (Shirov–Reinderman)."
+     },
+     "plan": {
+      "lecciones": [
+       {
+        "curso": "estrategia-y-tactica",
+        "titulo": "Sacrificios en h7/h2"
+       },
+       {
+        "curso": "estrategia-y-tactica",
+        "titulo": "Sacrificios de despeje y de destrucción"
+       },
+       {
+        "curso": "partidas-modelo",
+        "titulo": "Sacrificios típicos"
+       }
+      ],
+      "posiciones": [
+       {
+        "fuente": "tema",
+        "tema": "enroque-corto",
+        "n": 4,
+        "desde": 0
+       }
+      ]
+     }
+    },
+    {
+     "numero": 4,
+     "fecha": "2026-10-22",
+     "dia": "Jueves 22 de octubre",
+     "titulo": "Ataque al rey enrocado (2): enroques opuestos",
+     "tipo": "clase",
+     "detalle": {
+      "objetivo": "Saber atacar cuando cada rey está en un flanco distinto: avanzar peones y abrir columnas.",
+      "bloques": [
+       [
+        "Calentamiento (10')",
+        "Dos posiciones de ataque con peones."
+       ],
+       [
+        "Contenido (35')",
+        "Enroques opuestos: carrera de ataques, avanzar los peones contra el rey rival, abrir columnas para las torres, por qué el tiempo vale más que el material. Una partida modelo comentada (sin video: la comentas tú en el tablero)."
+       ],
+       [
+        "Práctica (20')",
+        "Partidas temáticas desde una posición con enroques opuestos, con 10 minutos por jugador."
+       ],
+       [
+        "Microenseñanza (15')",
+        "Dos estudiantes: el sacrificio en h7 y la avalancha de peones (5' cada uno)."
+       ],
+       [
+        "Cierre (10'): pregunta de salida",
+        "¿Por qué en los enroques opuestos importa tanto el tiempo?"
+       ]
+      ],
+      "taller": "Idea para el taller: dibujar las flechas del ataque de cada bando antes de jugar.",
+      "divertido": "Partidas temáticas de enroques opuestos con reloj y podio.",
+      "sitio": "Partidas modelo, lección 10 «Enroques en flancos opuestos» (Nunn–Ward), lección 6 «Ideas básicas en el ataque» (Kasparov–Short) y lección 9 «El ataque con oleada de sacrificios»."
+     },
+     "plan": {
+      "lecciones": [
+       {
+        "curso": "partidas-modelo",
+        "titulo": "Enroques en flancos opuestos"
+       },
+       {
+        "curso": "partidas-modelo",
+        "titulo": "Ideas básicas en el ataque"
+       },
+       {
+        "curso": "estrategia-y-tactica",
+        "titulo": "Ataque al enroque contrario"
+       }
+      ],
+      "posiciones": [
+       {
+        "fuente": "tema",
+        "tema": "enroque-largo",
+        "n": 3,
+        "desde": 0
+       },
+       {
+        "fuente": "tema",
+        "tema": "queensideAttack",
+        "n": 2,
+        "desde": 0
+       }
+      ]
+     }
+    },
+    {
+     "numero": 5,
+     "fecha": "2026-10-26",
+     "dia": "Lunes 26 de octubre",
+     "titulo": "La defensa: cómo resistir un ataque",
+     "tipo": "clase",
+     "detalle": {
+      "objetivo": "Defender con método: cambiar las piezas atacantes, contraatacar en el centro y no debilitar el enroque.",
+      "bloques": [
+       [
+        "Calentamiento (10')",
+        "Dos posiciones donde hay que encontrar la defensa."
+       ],
+       [
+        "Contenido (35')",
+        "Principios de defensa: cambiar al atacante más peligroso, golpe en el centro contra un ataque de flanco, no mover los peones del enroque sin necesidad, devolver material a tiempo."
+       ],
+       [
+        "Práctica (20')",
+        "Juego de roles por parejas: uno ataca y otro defiende desde la misma posición; después cambian."
+       ],
+       [
+        "Microenseñanza (15')",
+        "Dos estudiantes: enroques opuestos y un principio de defensa (5' cada uno)."
+       ],
+       [
+        "Cierre (10'): pregunta de salida",
+        "Escribe un principio de defensa en tus palabras."
+       ]
+      ],
+      "taller": "Idea para el taller: «el rey bien guardado», los peones del enroque como una casa.",
+      "divertido": "La clase defiende votando contra el profe: si aguanta, gana la clase.",
+      "sitio": "Partidas modelo, lección 13 «El sacrificio defensivo», lección 14 «Defensa y contraataque» y lección 15 «Defensa a ultranza» (Kramnik–Anand). Práctica: Habilidad «Aguanta»."
+     },
+     "plan": {
+      "lecciones": [
+       {
+        "curso": "partidas-modelo",
+        "titulo": "El sacrificio defensivo"
+       },
+       {
+        "curso": "partidas-modelo",
+        "titulo": "Defensa y contraataque"
+       },
+       {
+        "curso": "estrategia-y-tactica",
+        "titulo": "Defensa activa"
+       }
+      ],
+      "posiciones": [
+       {
+        "fuente": "tema",
+        "tema": "defensiveMove",
+        "n": 4,
+        "desde": 0
+       }
+      ]
+     }
+    },
+    {
+     "numero": 6,
+     "fecha": "2026-10-29",
+     "dia": "Jueves 29 de octubre",
+     "titulo": "Cálculo con método: combinaciones de tres jugadas",
+     "tipo": "clase",
+     "detalle": {
+      "objetivo": "Calcular sin mover las piezas y escribir variantes de tres jugadas o más.",
+      "bloques": [
+       [
+        "Calentamiento (10')",
+        "Ronda corta de ejercicios de Lichess por tema (dos niveles: básico y reto)."
+       ],
+       [
+        "Contenido (35')",
+        "Método de cálculo en 3 pasos: jugadas candidatas, primero las forzadas (jaques, capturas, amenazas) y comprobar la mejor respuesta del rival. Visualización: calcular con el tablero quieto."
+       ],
+       [
+        "Práctica (20')",
+        "Seis posiciones con la variante escrita antes de discutir; los más fuertes trabajan una serie de reto en paralelo."
+       ],
+       [
+        "Microenseñanza (15')",
+        "Dos estudiantes: la defensa y los 3 pasos del cálculo (5' cada uno)."
+       ],
+       [
+        "Cierre (10'): pregunta de salida",
+        "¿Cuál de los tres pasos se te olvida más?"
+       ]
+      ],
+      "taller": "Idea para el taller: «jaques, capturas y amenazas» como regla antes de cada jugada.",
+      "divertido": "«⚡ Ronda rápida» de combinaciones con podio.",
+      "sitio": "Cálculo y visualización, lecciones 1 «El árbol de variantes», 2 «Visualización sin mover piezas» y 3 «Jugadas candidatas». Estrategia y táctica, lección 7 «Combinaciones de dos y tres jugadas». En casa: Entreno «Visualización»."
+     },
+     "plan": {
+      "lecciones": [
+       {
+        "curso": "calculo-y-visualizacion",
+        "titulo": "El árbol de variantes"
+       },
+       {
+        "curso": "calculo-y-visualizacion",
+        "titulo": "Visualización sin mover piezas"
+       },
+       {
+        "curso": "estrategia-y-tactica",
+        "titulo": "Combinaciones de dos y tres jugadas"
+       }
+      ],
+      "posiciones": [
+       {
+        "fuente": "tema",
+        "tema": "mateIn3",
+        "n": 2,
+        "desde": 0
+       },
+       {
+        "fuente": "tema",
+        "tema": "intermezzo",
+        "n": 2,
+        "desde": 0
+       },
+       {
+        "fuente": "tema",
+        "tema": "attraction",
+        "n": 2,
+        "desde": 0
+       }
+      ]
+     }
+    },
+    {
+     "numero": 7,
+     "fecha": "2026-11-02",
+     "dia": "Lunes 2 de noviembre",
+     "titulo": "Repaso de la unidad con dos niveles",
+     "tipo": "clase",
+     "detalle": {
+      "objetivo": "Repasar ataque, defensa y cálculo antes de la evaluación, con un nivel de reto para quienes sienten fácil la clase.",
+      "bloques": [
+       [
+        "Calentamiento (10')",
+        "Kahoot de repaso de la unidad preparado por dos estudiantes (rol rotativo)."
+       ],
+       [
+        "Contenido (35')",
+        "Repaso guiado con las posiciones donde hubo más errores en las preguntas de salida de la unidad."
+       ],
+       [
+        "Práctica (20')",
+        "Dos series en paralelo: nivel medio y reto (combinaciones de cuatro jugadas o más). Cada estudiante elige; quienes hacen el reto explican una posición al resto."
+       ],
+       [
+        "Microenseñanza (15')",
+        "Dos estudiantes: el sacrificio en h7 y enroques opuestos (5' cada uno)."
+       ],
+       [
+        "Cierre (10'): pregunta de salida",
+        "¿Qué tema de la unidad te cuesta más?"
+       ]
+      ],
+      "taller": "Idea para el taller: preparar los ejercicios en dos niveles para atender a todos.",
+      "divertido": "«🎯 Cuestionario al estilo Kahoot» con el listo «Temas tácticos».",
+      "sitio": "Cuestionario listo «Temas tácticos» (intermedio) con «🎯 Cuestionario al estilo Kahoot». Series de dos niveles con «⚡ Ronda rápida» de Táctica, eligiendo la dificultad."
+     },
+     "plan": {
+      "lecciones": [],
+      "posiciones": [
+       {
+        "fuente": "tema",
+        "tema": "kingsideAttack",
+        "n": 2,
+        "desde": 10
+       },
+       {
+        "fuente": "tema",
+        "tema": "sacrifice",
+        "n": 2,
+        "desde": 70
+       }
+      ]
+     }
+    },
+    {
+     "numero": 8,
+     "fecha": "2026-11-05",
+     "dia": "Jueves 5 de noviembre",
+     "titulo": "Evaluación 4: ataque, defensa y cálculo",
+     "tipo": "evaluacion",
+     "detalle": {
+      "objetivo": "Comprobar que cada estudiante calcula y explica, no solo que recuerda.",
+      "bloques": [
+       [
+        "0–10'",
+        "Instrucciones: sin motor y respuestas en el formulario."
+       ],
+       [
+        "10–55'",
+        "Parte práctica: 6 posiciones de los ejercicios de las lecciones de la unidad (ataque al rey en el centro, sacrificio en h7, enroques opuestos, defensa y dos de cálculo). En cada una, la jugada y la variante principal escritas. 10 puntos cada una."
+       ],
+       [
+        "55–80'",
+        "Parte oral: en salas de dos o tres, cada estudiante explica en 2 minutos una posición que le toca al azar, como si estuviera en su taller. Se evalúa con los criterios 2 y 3 de la rúbrica del anexo B (40 puntos)."
+       ],
+       [
+        "80–90'",
+        "Registro de talleres de octubre (anexo C)."
+       ]
+      ],
+      "divertido": "Después de la evaluación, 15 minutos de Niebla de Guerra entre compañeros (Juegos).",
+      "sitio": "La parte práctica se arma en Exámenes, con nota e informe por alumno; las posiciones salen de los ejercicios (PDF) de las lecciones de la unidad. La parte oral se hace en la clase en vivo, en salas."
+     },
+     "plan": {
+      "lecciones": [],
+      "posiciones": [
+       {
+        "fuente": "tema",
+        "tema": "enroque-corto",
+        "n": 2,
+        "desde": 4
+       },
+       {
+        "fuente": "tema",
+        "tema": "defensiveMove",
+        "n": 2,
+        "desde": 4
+       }
+      ]
+     }
+    },
+    {
+     "numero": 9,
+     "fecha": "2026-11-09",
+     "dia": "Lunes 9 de noviembre",
+     "titulo": "Retroalimentación y finales de torre: Lucena, Philidor y torre activa",
+     "tipo": "clase",
+     "detalle": {
+      "objetivo": "Corregir los errores de la evaluación y jugar los finales de torre más comunes.",
+      "bloques": [
+       [
+        "Calentamiento (10')",
+        "Las dos posiciones de la evaluación con más errores, resueltas de nuevo."
+       ],
+       [
+        "Contenido (35')",
+        "Retroalimentación breve. Philidor (defensa en la tercera fila y jaques desde atrás), Lucena (construir el puente) y la regla de la torre activa. Se conecta con la oposición y Vancura, que ya vieron."
+       ],
+       [
+        "Práctica (20')",
+        "Por parejas, ganar Lucena y defender Philidor contra el compañero; luego contra el motor de Lichess."
+       ],
+       [
+        "Microenseñanza (15')",
+        "Dos estudiantes: Philidor y Lucena explicados para un principiante (5' cada uno)."
+       ],
+       [
+        "Cierre (10'): pregunta de salida",
+        "¿En qué fila se construye el puente de Lucena?"
+       ]
+      ],
+      "taller": "Idea para el taller: Lucena en tres pasos con un dibujo.",
+      "divertido": "Carrera Lucena por equipos contra el motor.",
+      "sitio": "Finales prácticos: lección 5 «La posición de Lucena», lección 6 «La posición de Philidor» y lección 7 «Torres activas». Práctica: Finales contra la máquina (Lucena, Philidor y Vancura). Cuestionario listo «Finales de torre»."
+     },
+     "plan": {
+      "lecciones": [
+       {
+        "curso": "finales-practicos",
+        "titulo": "La posición de Lucena"
+       },
+       {
+        "curso": "finales-practicos",
+        "titulo": "La posición de Philidor"
+       },
+       {
+        "curso": "finales-practicos",
+        "titulo": "Torres activas"
+       }
+      ],
+      "posiciones": [
+       {
+        "fuente": "mapa",
+        "capitulo": "Torre y peón contra torre",
+        "titulo": "Posición Lucena. El puente",
+        "n": 1,
+        "desde": 0
+       },
+       {
+        "fuente": "mapa",
+        "capitulo": "Torre y peón contra torre",
+        "titulo": "Posición Philidor",
+        "n": 1,
+        "desde": 0
+       },
+       {
+        "fuente": "mapa",
+        "capitulo": "Torre y peón contra torre",
+        "titulo": "Peón en sexta. La defensa de Vancura",
+        "n": 1,
+        "desde": 0
+       }
+      ]
+     }
+    },
+    {
+     "numero": 10,
+     "fecha": "2026-11-12",
+     "dia": "Jueves 12 de noviembre",
+     "titulo": "Analizar las partidas propias y enseñar a analizar",
+     "tipo": "clase",
+     "detalle": {
+      "objetivo": "Usar un método simple para revisar una partida y enseñarlo en el taller.",
+      "bloques": [
+       [
+        "Calentamiento (10')",
+        "Un error típico de una partida del grupo: ¿qué se debió jugar?"
+       ],
+       [
+        "Contenido (35')",
+        "Método de 3 preguntas: ¿dónde cambió la partida?, ¿qué quería mi rival?, ¿qué haría distinto? Primero sin motor, después se comprueba con el análisis de Lichess."
+       ],
+       [
+        "Práctica (20')",
+        "Cada estudiante analiza una partida propia del torneo con el método y la comenta en su sala; el vocero comparte el mejor hallazgo."
+       ],
+       [
+        "Microenseñanza (15')",
+        "Dos estudiantes: el método de las 3 preguntas (5' cada uno)."
+       ],
+       [
+        "Cierre (10'): pregunta de salida",
+        "¿Qué aprendiste de tu partida hoy?"
+       ]
+      ],
+      "taller": "Idea para el taller: que los principiantes revisen su partida con las 3 preguntas.",
+      "divertido": "La Habilidad «¿Qué apertura es?» por equipos: adivinan la apertura de sus propias partidas.",
+      "sitio": "Habilidad «Tus propios errores» y Repasar mis clases. Las partidas del torneo se suben en PGN a Partidas para revisarlas o llevarlas al tablero en vivo."
+     },
+     "plan": {
+      "lecciones": [],
+      "posiciones": []
+     }
+    },
+    {
+     "numero": 11,
+     "fecha": "2026-11-16",
+     "dia": "Lunes 16 de noviembre",
+     "titulo": "Planes en el medio juego: partidas modelo comentadas por los estudiantes",
+     "tipo": "clase",
+     "detalle": {
+      "objetivo": "Elegir un plan en el medio juego (mejorar la peor pieza, ocupar la columna abierta, el puesto avanzado) y explicarlo con una partida corta.",
+      "bloques": [
+       [
+        "Calentamiento (10')",
+        "Una posición: ¿cuál es el plan de cada bando?"
+       ],
+       [
+        "Contenido (35')",
+        "Repaso de los planes vistos en julio con una partida modelo corta que comentas en el tablero (sin video). Cómo elegir una partida modelo para principiantes."
+       ],
+       [
+        "Práctica (20')",
+        "Por equipos, cada uno prepara una partida modelo corta del curso para comentarla en 5 minutos."
+       ],
+       [
+        "Microenseñanza (15')",
+        "Los voceros de los equipos presentan su partida comentada (cuenta como microenseñanza)."
+       ],
+       [
+        "Cierre (10'): pregunta de salida",
+        "¿Qué plan buscarías primero en tus partidas?"
+       ]
+      ],
+      "taller": "Idea para el taller: una partida modelo corta cada mes.",
+      "divertido": "La Habilidad «Adivina la jugada del maestro» por equipos.",
+      "sitio": "Partidas modelo: lección 18 «Puestos avanzados», lección 19 «Columnas abiertas», lección 23 «El alfil malo» y lección 30 «La torre en séptima». Cuestionario listo «Estrategia del medio juego» (intermedio)."
+     },
+     "plan": {
+      "lecciones": [
+       {
+        "curso": "partidas-modelo",
+        "titulo": "Puestos avanzados"
+       },
+       {
+        "curso": "partidas-modelo",
+        "titulo": "Columnas abiertas"
+       },
+       {
+        "curso": "partidas-modelo",
+        "titulo": "El alfil malo"
+       },
+       {
+        "curso": "partidas-modelo",
+        "titulo": "La torre en séptima"
+       }
+      ],
+      "posiciones": [
+       {
+        "fuente": "tema",
+        "tema": "quietMove",
+        "n": 2,
+        "desde": 0
+       }
+      ]
+     }
+    },
+    {
+     "numero": 12,
+     "fecha": "2026-11-19",
+     "dia": "Jueves 19 de noviembre",
+     "titulo": "Planificar un taller de 60 minutos y cuidar el grupo",
+     "tipo": "clase",
+     "detalle": {
+      "objetivo": "Que cada estudiante tenga su plan de taller escrito con la plantilla del anexo A.",
+      "bloques": [
+       [
+        "Calentamiento (10')",
+        "Una posición de reto y una de nivel medio."
+       ],
+       [
+        "Contenido (35')",
+        "Partes de un taller: objetivo, inicio, explicación corta, juego, cierre que compruebe. Recuperar tu «posición feliz» y los libros para dar clase. Cuidar el grupo: cómo dar la palabra a quien no habla, frenar una burla, invitar a más chicas y hablar de las faltas en privado."
+       ],
+       [
+        "Práctica (20')",
+        "Cada estudiante llena la plantilla del anexo A en Classroom; tú revisas tres en vivo y comentas."
+       ],
+       [
+        "Microenseñanza (15')",
+        "Dos estudiantes: «cómo empiezo mi taller» (5' cada uno)."
+       ],
+       [
+        "Cierre (10'): pregunta de salida",
+        "¿Cuál es el objetivo de tu próximo taller, en una frase?"
+       ]
+      ],
+      "taller": "Entrega del plan de taller (anexo A) antes del 23 de noviembre.",
+      "divertido": "Diez minutos de Ajedrez de Cartas por parejas (Juegos).",
+      "sitio": "Curso Fundamentos del ajedrez: sus 10 lecciones son una secuencia lista para un taller de principiantes, con presentación, material y ejercicios. Para practicar con los participantes: Entreno «Aprende», «Practicar» y «Desafíos»."
+     },
+     "plan": {
+      "lecciones": [
+       {
+        "curso": "fundamentos-del-ajedrez",
+        "titulo": "Los tres principios de la apertura"
+       },
+       {
+        "curso": "fundamentos-del-ajedrez",
+        "titulo": "Piezas que se defienden entre sí"
+       }
+      ],
+      "posiciones": [
+       {
+        "fuente": "tema",
+        "tema": "fork",
+        "n": 2,
+        "desde": 0
+       }
+      ]
+     }
+    },
+    {
+     "numero": 13,
+     "fecha": "2026-11-23",
+     "dia": "Lunes 23 de noviembre",
+     "titulo": "Minilecciones finales (1)",
+     "tipo": "evaluacion",
+     "detalle": {
+      "objetivo": "Que cada estudiante dé una minilección de 8 minutos para principiantes y reciba retroalimentación.",
+      "bloques": [
+       [
+        "Organización",
+        "Se hacen en tres clases (23, 26 y 30 de noviembre), con 5 o 6 estudiantes por clase. El orden se sortea y se publica antes."
+       ],
+       [
+        "Cada minilección",
+        "8' de clase + 4' de retroalimentación: primero un compañero (lo que funcionó y una sugerencia), después tú con la rúbrica del anexo B."
+       ],
+       [
+        "Tema",
+        "Lo elige cada estudiante de los temas del curso, pensado para un principiante. Abre el estudiante al que le ofreciste enseñar el Gambito Coca-Cola el 14 de septiembre."
+       ],
+       [
+        "Últimos 10'",
+        "Una carrera en Lichess para cerrar con juego."
+       ]
+      ],
+      "divertido": "La clase vota la minilección que más le sirvió con una pregunta de opciones, y el podio al final.",
+      "sitio": "Clase en vivo: «alumno elegido al azar» para sortear el orden y «Mostrar la respuesta de un alumno» para que cada uno presente desde su tablero."
+     },
+     "plan": {
+      "lecciones": [],
+      "posiciones": []
+     }
+    },
+    {
+     "numero": 14,
+     "fecha": "2026-11-26",
+     "dia": "Jueves 26 de noviembre",
+     "titulo": "Minilecciones finales (2)",
+     "tipo": "evaluacion",
+     "detalle": {
+      "objetivo": "",
+      "bloques": [
+       [
+        "Igual que la clase anterior",
+        "5 o 6 minilecciones con la rúbrica del anexo B."
+       ],
+       [
+        "Cierre",
+        "Recordar la entrega del portafolio del instructor el 3 de diciembre."
+       ]
+      ],
+      "divertido": "Entre minilecciones, una «⚡ Ronda rápida» de táctica para despejarse.",
+      "sitio": "Clase en vivo: el estudiante que da la minilección usa el tablero de la clase."
+     },
+     "plan": {
+      "lecciones": [],
+      "posiciones": []
+     }
+    },
+    {
+     "numero": 15,
+     "fecha": "2026-11-30",
+     "dia": "Lunes 30 de noviembre",
+     "titulo": "Minilecciones finales (3)",
+     "tipo": "evaluacion",
+     "detalle": {
+      "objetivo": "",
+      "bloques": [
+       [
+        "0–70'",
+        "Últimas minilecciones y las pendientes de quien faltó con justificación."
+       ],
+       [
+        "70–90'",
+        "Kahoot de repaso del curso preparado por dos estudiantes (rol rotativo)."
+       ]
+      ],
+      "divertido": "Kahoot de repaso armado por dos estudiantes.",
+      "sitio": "El Kahoot de repaso se arma en Cuestionarios y se juega con «▶️ Jugarlo con la clase»."
+     },
+     "plan": {
+      "lecciones": [],
+      "posiciones": []
+     }
+    },
+    {
+     "numero": 16,
+     "fecha": "2026-12-03",
+     "dia": "Jueves 3 de diciembre",
+     "titulo": "Torneo temático organizado por los estudiantes y entrega del portafolio",
+     "tipo": "especial",
+     "detalle": {
+      "objetivo": "",
+      "bloques": [
+       [
+        "0–15'",
+        "Los organizadores (rol rotativo) presentan el torneo que crearon en Lichess: sistema, ritmo y reglas."
+       ],
+       [
+        "15–80'",
+        "Torneo temático desde posiciones de ataque y de finales del trimestre. Un estudiante hace de árbitro y otro comenta una partida al final."
+       ],
+       [
+        "80–90'",
+        "Entrega del portafolio del instructor (ver «Evaluación»)."
+       ]
+      ],
+      "divertido": "El torneo temático del grupo, organizado por los estudiantes.",
+      "sitio": "Torneos de la Academia (inscripción y rondas en vivo) o Lichess. Formación Ajedrez, lección 4 «Sistemas de emparejamiento», para los organizadores. El portafolio se entrega como tarea en Tareas."
+     },
+     "plan": {
+      "lecciones": [
+       {
+        "curso": "formacion-ajedrez",
+        "titulo": "Sistemas de emparejamiento"
+       }
+      ],
+      "posiciones": []
+     }
+    },
+    {
+     "numero": 17,
+     "fecha": "2026-12-07",
+     "dia": "Lunes 7 de diciembre",
+     "titulo": "Retroalimentación final y el taller en 2027",
+     "tipo": "especial",
+     "detalle": {
+      "objetivo": "Devolver a cada estudiante la retroalimentación de su minilección y su portafolio, y dejar armado cómo sigue su taller.",
+      "bloques": [
+       [
+        "0–30'",
+        "Retroalimentación general: lo mejor de las minilecciones (sin comparar personas), los errores más comunes y cómo corregirlos."
+       ],
+       [
+        "30–60'",
+        "En salas, cada estudiante revisa su rúbrica y escribe su «plan del taller para 2027»: colegio, aliado (docente o director), día y hora, y los primeros cuatro temas."
+       ],
+       [
+        "60–80'",
+        "Partidas rápidas o una ronda de ejercicios por equipos."
+       ],
+       [
+        "80–90'",
+        "Registro final de talleres (anexo C)."
+       ]
+      ],
+      "divertido": "Ajedrez para 4 por equipos (Juegos).",
+      "sitio": "Repasar mis clases e Informes («Lo que le costó a cada alumno»)."
+     },
+     "plan": {
+      "lecciones": [],
+      "posiciones": []
+     }
+    },
+    {
+     "numero": 18,
+     "fecha": "2026-12-10",
+     "dia": "Jueves 10 de diciembre",
+     "titulo": "Cierre del curso",
+     "tipo": "especial",
+     "detalle": {
+      "objetivo": "",
+      "bloques": [
+       [
+        "0–30'",
+        "Resultados del trimestre y reconocimientos: mejor minilección, mejor portafolio, torneo, asistencia."
+       ],
+       [
+        "30–50'",
+        "Las fotos de los talleres del trimestre, comentadas por quienes los dieron."
+       ],
+       [
+        "50–70'",
+        "Encuesta anónima de cierre de la coordinación (clima, trato, talleres)."
+       ],
+       [
+        "70–90'",
+        "Preparación de la clase presencial de diciembre: qué llevar, quién necesita transporte u hospedaje."
+       ]
+      ],
+      "divertido": "El podio de los puntos del mes y el Kahoot «Partidas célebres».",
+      "sitio": "Cuestionario listo «Partidas célebres» o «Historia y curiosidades del ajedrez», el podio y los puntos del mes de la clase en vivo."
+     },
+     "plan": {
+      "lecciones": [],
+      "posiciones": []
+     }
+    }
+   ],
+   "tareas": [
+    {
+     "semana": 1,
+     "desde": "2026-10-12",
+     "vence": "2026-10-19",
+     "titulo": "Semana 1 · El rey en el centro",
+     "instrucciones": "Estudia la partida modelo y castiga al rey que no se enroca.",
+     "items": [
+      {
+       "curso": "partidas-modelo",
+       "leccion": 2
+      },
+      {
+       "herramienta": "temas",
+       "recorte": "exposedKing",
+       "cantidad": 10,
+       "meta": null
+      },
+      {
+       "herramienta": "batalla-naval",
+       "recorte": null,
+       "cantidad": 2,
+       "meta": null
+      }
+     ]
+    },
+    {
+     "semana": 2,
+     "desde": "2026-10-19",
+     "vence": "2026-10-26",
+     "titulo": "Semana 2 · El sacrificio en h7",
+     "instrucciones": "Repasa los sacrificios en h7 y ataca el enroque corto.",
+     "items": [
+      {
+       "curso": "estrategia-y-tactica",
+       "leccion": 8
+      },
+      {
+       "herramienta": "temas",
+       "recorte": "enroque-corto",
+       "cantidad": 10,
+       "meta": null
+      },
+      {
+       "herramienta": "temas",
+       "recorte": "kingsideAttack",
+       "cantidad": 10,
+       "meta": null
+      }
+     ]
+    },
+    {
+     "semana": 3,
+     "desde": "2026-10-26",
+     "vence": "2026-11-02",
+     "titulo": "Semana 3 · Enroques opuestos y defensa",
+     "instrucciones": "La partida modelo de enroques opuestos, el enroque largo y cinco defensas difíciles.",
+     "items": [
+      {
+       "curso": "partidas-modelo",
+       "leccion": 10
+      },
+      {
+       "herramienta": "temas",
+       "recorte": "enroque-largo",
+       "cantidad": 10,
+       "meta": null
+      },
+      {
+       "herramienta": "tipos",
+       "recorte": "aguanta",
+       "cantidad": 5,
+       "meta": null
+      }
+     ]
+    },
+    {
+     "semana": 4,
+     "desde": "2026-11-02",
+     "vence": "2026-11-09",
+     "titulo": "Semana 4 · Repaso para la Evaluación 4",
+     "instrucciones": "El cuestionario de temas tácticos y cálculo sin mover las piezas.",
+     "items": [
+      {
+       "herramienta": "cuestionario",
+       "cuestionario": "Temas tácticos"
+      },
+      {
+       "herramienta": "visualizacion",
+       "recorte": null,
+       "cantidad": 10,
+       "meta": null
+      },
+      {
+       "herramienta": "temas",
+       "recorte": "defensiveMove",
+       "cantidad": 10,
+       "meta": null
+      }
+     ]
+    },
+    {
+     "semana": 5,
+     "desde": "2026-11-09",
+     "vence": "2026-11-16",
+     "titulo": "Semana 5 · Finales de torre",
+     "instrucciones": "Lucena y Philidor, y tres finales contra la máquina.",
+     "items": [
+      {
+       "curso": "finales-practicos",
+       "leccion": 5
+      },
+      {
+       "curso": "finales-practicos",
+       "leccion": 6
+      },
+      {
+       "herramienta": "finales",
+       "recorte": null,
+       "cantidad": 3,
+       "meta": null
+      },
+      {
+       "herramienta": "tipos",
+       "recorte": "tablas",
+       "cantidad": 5,
+       "meta": null
+      }
+     ]
+    },
+    {
+     "semana": 6,
+     "desde": "2026-11-16",
+     "vence": "2026-11-23",
+     "titulo": "Semana 6 · Tus partidas y los planes",
+     "instrucciones": "Aprende de tus propios errores y estudia una partida modelo de planes.",
+     "items": [
+      {
+       "herramienta": "tipos",
+       "recorte": "errores",
+       "cantidad": 5,
+       "meta": null
+      },
+      {
+       "curso": "partidas-modelo",
+       "leccion": 18
+      },
+      {
+       "herramienta": "temas",
+       "recorte": "quietMove",
+       "cantidad": 10,
+       "meta": null
+      }
+     ]
+    },
+    {
+     "semana": 7,
+     "desde": "2026-11-23",
+     "vence": "2026-11-30",
+     "titulo": "Semana 7 · Prepara tu minilección",
+     "instrucciones": "Repasa el tema de tu minilección y relájate con los confites del caballo.",
+     "items": [
+      {
+       "herramienta": "temas",
+       "recorte": "mix",
+       "cantidad": 15,
+       "meta": null
+      },
+      {
+       "herramienta": "confites",
+       "recorte": null,
+       "cantidad": 2,
+       "meta": null
+      }
+     ]
+    },
+    {
+     "semana": 8,
+     "desde": "2026-11-30",
+     "vence": "2026-12-07",
+     "titulo": "Semana 8 · Estrategia y juego",
+     "instrucciones": "El cuestionario de estrategia del medio juego y dos partidas del Sonar.",
+     "items": [
+      {
+       "herramienta": "cuestionario",
+       "cuestionario": "Estrategia del medio juego"
+      },
+      {
+       "herramienta": "sonar",
+       "recorte": null,
+       "cantidad": 2,
+       "meta": null
+      }
+     ]
+    },
+    {
+     "semana": 9,
+     "desde": "2026-12-07",
+     "vence": "2026-12-13",
+     "titulo": "Semana 9 · Cierre",
+     "instrucciones": "Memoria y una mezcla de ejercicios antes de la clase presencial.",
+     "items": [
+      {
+       "herramienta": "memoria",
+       "recorte": null,
+       "cantidad": 5,
+       "meta": null
+      },
+      {
+       "herramienta": "temas",
+       "recorte": "mix",
+       "cantidad": 10,
+       "meta": null
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "slug": "aperturas",
+   "nombre": "Aperturas",
+   "nivel": "inicial",
+   "horario": "Martes y miércoles de 5:30 a 7:00 p. m., por Google Meet",
+   "orden": 2,
+   "profesor_sugerido": "Felipe Fernández Sibaja",
+   "guia": {
+    "intro": "Tu grupo tiene la mejor asistencia y la mejor recomendación del proyecto, y eso se nota en cómo enseñas a calcular y a revisar las partidas. Este plan sigue tu propio plan de trabajo (cierre de la apertura, finales de peones en octubre y torneos y análisis en noviembre) y le suma lo que el proyecto pide además de enseñar ajedrez: que cada estudiante aprenda a dar una clase en su colegio. Por eso cada clase trae unos minutos de microenseñanza y el curso cierra con una minilección de cada estudiante y su plan de taller. El plan está pensado para que lo apliques tal cual.",
+    "objetivos": [
+     "Cerrar la unidad de aperturas con los principios (centro, desarrollo, enroque) por encima de la memoria.",
+     "Jugar los finales de peones básicos: regla del cuadrado, oposición y peón pasado.",
+     "Organizar un torneo en Lichess y analizar las partidas propias con un método simple.",
+     "Dar una minilección evaluada y entregar un plan de taller con la evidencia de dos sesiones dadas."
+    ],
+    "partida": [
+     [
+      "Lo que ya domina el grupo",
+      "Tablero, movimientos y reglas especiales; jaque y mates básicos (escalera, dama); táctica (clavada, ataque doble, atracción, desviación); mate en dos y mates con nombre (pasillo, árabe, Anastasia); principios de apertura y la italiana."
+     ],
+     [
+      "Lo que falta",
+      "La Evaluación 4, la unidad de finales de peones y la de torneos y análisis; sobre todo, la parte de enseñar a otros: microenseñanza, plan de taller y conversación sobre los talleres."
+     ],
+     [
+      "Lo que pidieron en la encuesta",
+      "Que siga revisando sus partidas, más torneos, más actividades distintas y que la clase alcance para explicar todo."
+     ],
+     [
+      "Lo que se mantiene",
+      "La rutina de cálculo (jaques, capturas, amenazas), las preguntas por escrito, los ejercicios por nombre y el análisis de partidas con tacto."
+     ]
+    ],
+    "unidades": [
+     [
+      "Unidad 4 · Aperturas (cierre)",
+      "13 – 20 oct",
+      "1 clase + Evaluación 4"
+     ],
+     [
+      "Unidad 5 · Finales de peones",
+      "21 oct – 4 nov",
+      "4 clases + Evaluación 5"
+     ],
+     [
+      "Unidad 6 · Torneos, análisis y taller",
+      "10 nov – 9 dic",
+      "Torneos, análisis, táctica para enseñar, planificación, minilecciones y cierre"
+     ]
+    ],
+    "estructura": [
+     [
+      "0–10'",
+      "Calentamiento de cálculo",
+      "Dos posiciones con la variante completa escrita antes de discutir, o el «🔥 Calentamiento» de la clase en vivo."
+     ],
+     [
+      "10–45'",
+      "Contenido",
+      "La lección del curso llevada al tablero de la clase. Preguntas por nombre, sin elegir siempre a los mismos."
+     ],
+     [
+      "45–65'",
+      "Práctica",
+      "Partidas temáticas, retos por equipos o Habilidades. El vocero de cada equipo explica una respuesta."
+     ],
+     [
+      "65–80'",
+      "Microenseñanza",
+      "Dos estudiantes explican 5 minutos como en su taller; un compañero dice qué funcionó y da una sugerencia."
+     ],
+     [
+      "80–90'",
+      "Cierre",
+      "La pregunta de salida que contestan todos, el momento divertido si no fue antes, y la asistencia."
+     ]
+    ],
+    "reglas": [
+     "Roles rotativos (vocero, anotador, organizador del torneo), asignados por turno y con al menos una alumna en cada ronda.",
+     "Cada clase tiene un momento divertido: un juego, una votación contra el motor o un Kahoot. Cuenta para los puntos del mes.",
+     "Asistencia con presentes, justificadas y ausencias por separado; sin clase no se pasa asistencia.",
+     "Después de dos ausencias seguidas, un mensaje por el canal oficial; después de tres, aviso a la coordinación.",
+     "Avisos, tareas y notas solo por Tareas de la Academia o el grupo oficial, nunca por mensajes privados.",
+     "La tarea de la semana se manda el lunes desde esta página y vence el lunes siguiente."
+    ],
+    "evaluacion": [
+     [
+      "Evaluación 4: aperturas",
+      "20 de octubre",
+      "15 %"
+     ],
+     [
+      "Evaluación 5: finales de peones",
+      "4 de noviembre",
+      "15 %"
+     ],
+     [
+      "Microenseñanza en clase",
+      "14 oct – 18 nov",
+      "10 %"
+     ],
+     [
+      "Minilección final",
+      "24 nov – 1 dic",
+      "30 %"
+     ],
+     [
+      "Portafolio del instructor",
+      "2 de diciembre",
+      "30 %"
+     ]
+    ],
+    "rubrica": [
+     [
+      "Objetivo",
+      "Claro y adecuado para principiantes",
+      "Claro, pero muy amplio",
+      "Confuso",
+      "No se entiende"
+     ],
+     [
+      "Ajedrez correcto",
+      "Sin errores y con un buen ejemplo",
+      "Un error menor que corrige",
+      "Errores que confunden",
+      "Contenido incorrecto"
+     ],
+     [
+      "Participación",
+      "Pregunta y pone a practicar a todos",
+      "Pregunta, pero se responde solo",
+      "Casi solo expone",
+      "No hay interacción"
+     ],
+     [
+      "Cierre",
+      "Comprueba con una pregunta o un ejercicio",
+      "Resume sin comprobar",
+      "Termina sin cierre",
+      "No llega al cierre"
+     ],
+     [
+      "Tiempo y grupo",
+      "Respeta el tiempo y trata con respeto",
+      "Se pasa un poco",
+      "Se pasa mucho o pierde al grupo",
+      "No logra conducir"
+     ]
+    ],
+    "periodo": "13 de octubre al 9 de diciembre de 2026",
+    "anexos": {
+     "A": [
+      "Plantilla del plan de taller",
+      [
+       [
+        "Colegio o lugar",
+        ""
+       ],
+       [
+        "Fecha y duración",
+        "60 minutos"
+       ],
+       [
+        "Participantes esperados",
+        ""
+       ],
+       [
+        "Objetivo (una frase)",
+        "Al terminar, los participantes podrán…"
+       ],
+       [
+        "Materiales",
+        "Tableros, tablero mural o proyector, enlace…"
+       ],
+       [
+        "Inicio (10')",
+        "Cómo saludo y qué pregunto para saber qué saben."
+       ],
+       [
+        "Explicación (15')",
+        "Qué voy a mostrar y con qué ejemplo."
+       ],
+       [
+        "Práctica o juego (25')",
+        "Qué van a hacer ellos y cómo los organizo."
+       ],
+       [
+        "Cierre (10')",
+        "Qué pregunta o ejercicio me dice si aprendieron."
+       ],
+       [
+        "Si algo sale mal",
+        "Plan B: si son menos, si no hay tableros o si el tema les cuesta."
+       ]
+      ]
+     ],
+     "C": [
+      "Registro mensual de talleres",
+      [
+       [
+        "Taller activo",
+        "Sí o no"
+       ],
+       [
+        "Sesiones en el mes",
+        "Cuántas"
+       ],
+       [
+        "Participantes por sesión",
+        "Cuántos, sin nombres"
+       ],
+       [
+        "Tema enseñado",
+        "Qué enseñó"
+       ],
+       [
+        "Evidencia",
+        "Foto autorizada o lista"
+       ]
+      ]
+     ],
+     "D": [
+      "Ficha para el taller",
+      [
+       [
+        "Título",
+        "Por ejemplo: «La regla del cuadrado»"
+       ],
+       [
+        "Idea clave",
+        "Una o dos frases que el principiante debe recordar."
+       ],
+       [
+        "Ejemplo",
+        "Una posición de la lección."
+       ],
+       [
+        "Juego o ejercicio",
+        "Cómo se practica en el taller."
+       ],
+       [
+        "Error típico",
+        "Qué suele hacer mal un principiante y cómo corregirlo sin exponerlo."
+       ],
+       [
+        "Pregunta de cierre",
+        "Cómo saber si lo entendieron."
+       ]
+      ]
+     ]
+    },
+    "portafolio": [
+     [
+      "Plan de taller",
+      "Completo con la plantilla del anexo A.",
+      "25"
+     ],
+     [
+      "Registro de dos sesiones dadas",
+      "Fecha, lugar, participantes, tema y qué funcionó.",
+      "25"
+     ],
+     [
+      "Fichas o ejercicios para el taller",
+      "Las fichas del trimestre o una serie de ejercicios propia.",
+      "25"
+     ],
+     [
+      "Reflexión",
+      "Media página: qué aprendí como instructor y cómo sigo en 2027.",
+      "25"
+     ]
+    ]
+   },
+   "sesiones": [
+    {
+     "numero": 1,
+     "fecha": "2026-10-13",
+     "dia": "Martes 13 de octubre",
+     "titulo": "Arranque del cierre: el objetivo del proyecto, acuerdos y roles",
+     "tipo": "especial",
+     "detalle": {
+      "objetivo": "Que el grupo entienda que, además de jugar mejor, se está preparando para enseñar ajedrez en su colegio.",
+      "bloques": [
+       [
+        "0–20'",
+        "Explicar el objetivo del proyecto: formar estudiantes que den talleres en sus colegios. Presentar el plan y las evaluaciones (ver «Evaluación»)."
+       ],
+       [
+        "20–40'",
+        "Conversación sobre los talleres: quién ya dio uno, dónde, con cuántas personas, qué funcionó y qué no. Anotar en el registro (anexo C)."
+       ],
+       [
+        "40–55'",
+        "Acuerdos de trabajo: los avisos y las tareas van por Classroom o por el grupo con la coordinación, no por mensajes privados; si se suspende una clase se avisa antes y no se pasa asistencia."
+       ],
+       [
+        "55–70'",
+        "Armar la tabla de roles rotativos (vocero, anotador, organizador del torneo), asignados por turno y con al menos una alumna en cada ronda."
+       ],
+       [
+        "70–90'",
+        "Partida rápida entre compañeros y revisión de un error con la rutina «jaques, capturas, amenazas»."
+       ]
+      ],
+      "divertido": "«🗳️ La clase juega» contra el motor desde la posición inicial, votando cada jugada.",
+      "sitio": "La clase en vivo se registra sola en la Academia. Los avisos y las tareas pasan por Tareas y la clase en vivo, no por mensajes privados."
+     },
+     "plan": {
+      "lecciones": [],
+      "posiciones": [
+       {
+        "fuente": "linea",
+        "id": "italiana-giuoco"
+       },
+       {
+        "fuente": "mate",
+        "cat": "mate1",
+        "n": 2,
+        "desde": 0
+       }
+      ]
+     }
+    },
+    {
+     "numero": 2,
+     "fecha": "2026-10-14",
+     "dia": "Miércoles 14 de octubre",
+     "titulo": "Principios de apertura en la práctica: ideas, no memoria",
+     "tipo": "clase",
+     "detalle": {
+      "objetivo": "Aplicar los tres principios (centro, desarrollo y enroque) en cualquier apertura, sin depender de memorizar jugadas.",
+      "bloques": [
+       [
+        "Calentamiento (10')",
+        "Dos posiciones de apertura: ¿qué principio se rompió?"
+       ],
+       [
+        "Contenido (35')",
+        "Repaso de la italiana desde las ideas: por qué cada jugada sigue un principio. Errores típicos: sacar la dama temprano, mover dos veces la misma pieza, no enrocarse. Uso del explorador de aperturas de Lichess para ver qué se juega."
+       ],
+       [
+        "Práctica (20')",
+        "Juego «desarrollo primero»: partidas de 10 jugadas donde gana quien desarrolla y enroca mejor; después se juegan completas."
+       ],
+       [
+        "Microenseñanza (15')",
+        "Tú modelas primero: «cómo enseño los tres principios de la apertura a alguien que empieza» (8'), y el grupo lo evalúa con la pauta del anexo B."
+       ],
+       [
+        "Cierre (10'): pregunta de salida",
+        "Escribe los tres principios de la apertura."
+       ]
+      ],
+      "taller": "Ficha 1 para el taller: los tres principios con el juego «desarrollo primero».",
+      "divertido": "El juego «desarrollo primero» con podio: gana quien desarrolla y enroca mejor.",
+      "sitio": "Fundamentos del ajedrez: lección 9 «Los tres principios de la apertura», lección 10 «Errores comunes de apertura» y lección 6 «Enroque corto y largo». Aperturas y defensas, lección 9 «Apertura italiana y variantes modernas». Para casa: Entreno «Aperturas y celadas» y «Estudio»."
+     },
+     "plan": {
+      "lecciones": [
+       {
+        "curso": "fundamentos-del-ajedrez",
+        "titulo": "Los tres principios de la apertura"
+       },
+       {
+        "curso": "fundamentos-del-ajedrez",
+        "titulo": "Errores comunes de apertura"
+       },
+       {
+        "curso": "fundamentos-del-ajedrez",
+        "titulo": "Enroque corto y largo"
+       },
+       {
+        "curso": "aperturas-y-defensas",
+        "titulo": "Apertura Italiana"
+       }
+      ],
+      "posiciones": [
+       {
+        "fuente": "linea",
+        "id": "italiana-giuoco"
+       },
+       {
+        "fuente": "linea",
+        "id": "escocesa"
+       },
+       {
+        "fuente": "linea",
+        "id": "pastor-mate"
+       },
+       {
+        "fuente": "linea",
+        "id": "pastor-refutacion"
+       }
+      ]
+     }
+    },
+    {
+     "numero": 3,
+     "fecha": "2026-10-20",
+     "dia": "Martes 20 de octubre",
+     "titulo": "Evaluación 4: aperturas",
+     "tipo": "evaluacion",
+     "detalle": {
+      "objetivo": "Comprobar que cada estudiante juega la apertura con principios y sabe explicarlos.",
+      "bloques": [
+       [
+        "0–10'",
+        "Instrucciones: sin motor y respuestas en el formulario."
+       ],
+       [
+        "10–50'",
+        "Parte práctica: 5 posiciones de apertura de los ejercicios de las lecciones; en cada una, la mejor jugada y el principio que aplica. 10 puntos cada una (50)."
+       ],
+       [
+        "50–80'",
+        "Parte oral: en salas de dos o tres, cada estudiante explica en 2 minutos el plan de una apertura que le toca al azar. Se evalúa con los criterios 2 y 3 de la rúbrica del anexo B (50 puntos)."
+       ],
+       [
+        "80–90'",
+        "Comentario general de la evaluación."
+       ]
+      ],
+      "divertido": "Después de la evaluación, 15 minutos de Niebla de Guerra (Juegos).",
+      "sitio": "La parte práctica se arma en Exámenes, con nota e informe por alumno; las posiciones salen de los ejercicios (PDF) de las lecciones. Repaso previo: cuestionario listo «Principios de la apertura» (inicial)."
+     },
+     "plan": {
+      "lecciones": [],
+      "posiciones": [
+       {
+        "fuente": "linea",
+        "id": "vienesa"
+       },
+       {
+        "fuente": "linea",
+        "id": "espanola-cambio"
+       },
+       {
+        "fuente": "linea",
+        "id": "celada-legal"
+       }
+      ]
+     }
+    },
+    {
+     "numero": 4,
+     "fecha": "2026-10-21",
+     "dia": "Miércoles 21 de octubre",
+     "titulo": "Finales de peones (1): rey y peón y la regla del cuadrado",
+     "tipo": "clase",
+     "detalle": {
+      "objetivo": "Saber si el rey alcanza al peón y por qué el rey debe ir delante de su peón.",
+      "bloques": [
+       [
+        "Calentamiento (10')",
+        "Retroalimentación de las dos posiciones de la Evaluación 4 con más errores."
+       ],
+       [
+        "Contenido (35')",
+        "Regla del cuadrado (incluida la salida doble del peón). El rey delante del peón. Peón de torre: por qué suele ser tablas."
+       ],
+       [
+        "Práctica (20')",
+        "Juego «la carrera»: rey contra peón por parejas, desde posiciones de los ejercicios de la lección."
+       ],
+       [
+        "Microenseñanza (15')",
+        "Dos estudiantes (5' cada uno): un principio de apertura y el error de sacar la dama temprano."
+       ],
+       [
+        "Cierre (10'): pregunta de salida",
+        "¿El rey alcanza al peón? (una posición, respuesta en una línea)."
+       ]
+      ],
+      "taller": "Ficha 2: la regla del cuadrado con el juego «la carrera».",
+      "divertido": "«La carrera»: rey contra peón por parejas, con el podio de quién coronó más.",
+      "sitio": "Finales prácticos, lección 1 «La regla del cuadrado y el peón pasado». Estrategia en el final, lección 1 «Primero el rey». Práctica: Habilidad «Rey y peón»."
+     },
+     "plan": {
+      "lecciones": [
+       {
+        "curso": "finales-practicos",
+        "titulo": "La regla del cuadrado y el peón pasado"
+       },
+       {
+        "curso": "estrategia-en-el-final",
+        "titulo": "Primero el rey"
+       }
+      ],
+      "posiciones": [
+       {
+        "fuente": "mapa",
+        "capitulo": "Finales básicos",
+        "titulo": "El cuadrado del peón",
+        "n": 3,
+        "desde": 0
+       }
+      ]
+     }
+    },
+    {
+     "numero": 5,
+     "fecha": "2026-10-27",
+     "dia": "Martes 27 de octubre",
+     "titulo": "Finales de peones (2): la oposición",
+     "tipo": "clase",
+     "detalle": {
+      "objetivo": "Ganar o empatar finales de rey y peón contra rey con la oposición.",
+      "bloques": [
+       [
+        "Calentamiento (10')",
+        "Dos posiciones de la regla del cuadrado."
+       ],
+       [
+        "Contenido (35')",
+        "Oposición directa: qué es, quién la tiene y por qué decide. Cómo ganar con el rey delante del peón. Cómo empatar defendiendo con la oposición."
+       ],
+       [
+        "Práctica (20')",
+        "Partidas temáticas por parejas: uno intenta coronar y el otro defiende; luego cambian."
+       ],
+       [
+        "Microenseñanza (15')",
+        "Dos estudiantes: la regla del cuadrado y el rey delante del peón (5' cada uno)."
+       ],
+       [
+        "Cierre (10'): pregunta de salida",
+        "¿Quién tiene la oposición en esta posición?"
+       ]
+      ],
+      "taller": "Ficha 3: la oposición con el juego «el rey que no deja pasar».",
+      "divertido": "«El rey que no deja pasar»: la clase vota contra el profe y tiene que llegar a tablas.",
+      "sitio": "Finales prácticos, lección 2 «Oposición de reyes» y lección 3 «Finales de rey y peón: posiciones críticas». Práctica: Habilidad «Rey y peón»."
+     },
+     "plan": {
+      "lecciones": [
+       {
+        "curso": "finales-practicos",
+        "titulo": "Oposición de reyes"
+       },
+       {
+        "curso": "finales-practicos",
+        "titulo": "Finales de rey y peón: posiciones críticas"
+       }
+      ],
+      "posiciones": [
+       {
+        "fuente": "mapa",
+        "capitulo": "Finales básicos",
+        "titulo": "El peón en sexta",
+        "n": 2,
+        "desde": 0
+       },
+       {
+        "fuente": "mapa",
+        "capitulo": "Finales básicos",
+        "titulo": "Las casillas críticas",
+        "n": 2,
+        "desde": 0
+       }
+      ]
+     }
+    },
+    {
+     "numero": 6,
+     "fecha": "2026-10-28",
+     "dia": "Miércoles 28 de octubre",
+     "titulo": "Finales de peones (3): peón pasado y rey activo",
+     "tipo": "clase",
+     "detalle": {
+      "objetivo": "Crear un peón pasado y usar el rey como pieza de ataque en el final.",
+      "bloques": [
+       [
+        "Calentamiento (10')",
+        "Dos posiciones de oposición."
+       ],
+       [
+        "Contenido (35')",
+        "Peón pasado: cómo se crea (mayoría de peones) y por qué vale tanto. El rey activo en el final. Ruptura de peones sencilla."
+       ],
+       [
+        "Práctica (20')",
+        "Juego de solo peones (la «guerra de peones»): gana quien corona primero. Luego partidas desde finales de peones."
+       ],
+       [
+        "Microenseñanza (15')",
+        "Dos estudiantes: la oposición y el peón pasado (5' cada uno)."
+       ],
+       [
+        "Cierre (10'): pregunta de salida",
+        "¿Por qué el rey debe salir al centro en el final?"
+       ]
+      ],
+      "taller": "Ficha 4: la «guerra de peones», el juego ideal para un primer taller.",
+      "divertido": "La «guerra de peones» por parejas con reloj.",
+      "sitio": "Estrategia en el final, lección 5 «El peón pasado» y lección 6 «Mayorías y el pasado exterior». Finales prácticos, lección 4 «Ruptura de peones». Entreno «Desafíos» (carrera a la coronación)."
+     },
+     "plan": {
+      "lecciones": [
+       {
+        "curso": "estrategia-en-el-final",
+        "titulo": "El peón pasado"
+       },
+       {
+        "curso": "estrategia-en-el-final",
+        "titulo": "Mayorías y el pasado exterior"
+       },
+       {
+        "curso": "finales-practicos",
+        "titulo": "Ruptura de peones"
+       }
+      ],
+      "posiciones": [
+       {
+        "fuente": "mapa",
+        "capitulo": "Finales de peones",
+        "titulo": "Peones pasados. Maniobras del rey con doble objetivo",
+        "n": 2,
+        "desde": 0
+       },
+       {
+        "fuente": "mapa",
+        "capitulo": "Finales de peones",
+        "titulo": "El peón pasado alejado",
+        "n": 1,
+        "desde": 0
+       },
+       {
+        "fuente": "mapa",
+        "capitulo": "Finales de peones",
+        "titulo": "Rupturas lejos del rey",
+        "n": 1,
+        "desde": 0
+       }
+      ]
+     }
+    },
+    {
+     "numero": 7,
+     "fecha": "2026-11-03",
+     "dia": "Martes 3 de noviembre",
+     "titulo": "Enseñar los mates básicos: repaso con la mirada del instructor",
+     "tipo": "clase",
+     "detalle": {
+      "objetivo": "Repasar los mates de dama y de torre preparándolos para enseñarlos.",
+      "bloques": [
+       [
+        "Calentamiento (10')",
+        "Un mate en dos para resolver por escrito."
+       ],
+       [
+        "Contenido (35')",
+        "Mate de la escalera, mate de dama («la jaula») y mate de torre. Cómo enseñarlos paso a paso a un principiante: qué decir, qué error esperar y cómo corregirlo sin exponer."
+       ],
+       [
+        "Práctica (20')",
+        "Por parejas, uno hace de instructor y el otro de principiante: dar el mate de la escalera explicando cada paso. Después cambian."
+       ],
+       [
+        "Microenseñanza (15')",
+        "Dos estudiantes: la escalera y la jaula (5' cada uno)."
+       ],
+       [
+        "Cierre (10'): pregunta de salida",
+        "¿Qué error comete más un principiante en el mate de dama?"
+       ]
+      ],
+      "taller": "Ficha 5: mates básicos en tres pasos.",
+      "divertido": "«🎯 Cuestionario al estilo Kahoot» con el listo «Mates básicos».",
+      "sitio": "Fundamentos del ajedrez, lección 4 «Jaque, jaque mate y ahogado». Entreno «Mates» (mates en 1, 2 y 3) y «Practicar» (patrones de mate). Cuestionarios listos «Mates básicos» (inicial) y «Mates con nombre» (intermedio)."
+     },
+     "plan": {
+      "lecciones": [
+       {
+        "curso": "fundamentos-del-ajedrez",
+        "titulo": "Jaque, jaque mate y ahogado"
+       },
+       {
+        "curso": "fundamentos-del-ajedrez",
+        "titulo": "Mate con dos torres"
+       }
+      ],
+      "posiciones": [
+       {
+        "fuente": "mate",
+        "cat": "mate1",
+        "n": 3,
+        "desde": 2
+       },
+       {
+        "fuente": "tema",
+        "tema": "backRankMate",
+        "n": 2,
+        "desde": 0
+       }
+      ]
+     }
+    },
+    {
+     "numero": 8,
+     "fecha": "2026-11-04",
+     "dia": "Miércoles 4 de noviembre",
+     "titulo": "Evaluación 5: finales de peones",
+     "tipo": "evaluacion",
+     "detalle": {
+      "objetivo": "Comprobar que cada estudiante juega y explica los finales de peones de la unidad.",
+      "bloques": [
+       [
+        "0–10'",
+        "Instrucciones: sin motor y respuestas en el formulario."
+       ],
+       [
+        "10–50'",
+        "Parte práctica: 5 posiciones de los ejercicios de las lecciones de la unidad (regla del cuadrado, oposición, peón de torre, peón pasado y rey activo). En cada una, la jugada y la variante principal. 10 puntos cada una (50)."
+       ],
+       [
+        "50–80'",
+        "Parte oral: cada estudiante explica en 2 minutos una posición al azar como si estuviera en su taller (criterios 2 y 3 del anexo B, 50 puntos)."
+       ],
+       [
+        "80–90'",
+        "Registro de talleres de octubre (anexo C)."
+       ]
+      ],
+      "divertido": "Batalla naval de ajedrez con la pantalla compartida: la clase vota dónde disparar.",
+      "sitio": "La parte práctica se arma en Exámenes. Repaso previo: cuestionario listo «Finales de rey y peón» (intermedio)."
+     },
+     "plan": {
+      "lecciones": [],
+      "posiciones": [
+       {
+        "fuente": "mapa",
+        "capitulo": "Finales de peones",
+        "titulo": "Peón pasado central próximo",
+        "n": 2,
+        "desde": 0
+       },
+       {
+        "fuente": "mapa",
+        "capitulo": "Finales de peones",
+        "titulo": "Peones bloqueados. Las casillas críticas",
+        "n": 2,
+        "desde": 0
+       }
+      ]
+     }
+    },
+    {
+     "numero": 9,
+     "fecha": "2026-11-10",
+     "dia": "Martes 10 de noviembre",
+     "titulo": "Cómo organizar un torneo en Lichess",
+     "tipo": "clase",
+     "detalle": {
+      "objetivo": "Que los estudiantes sepan crear y dirigir un torneo en Lichess para su colegio.",
+      "bloques": [
+       [
+        "Calentamiento (10')",
+        "Retroalimentación de las dos posiciones de la Evaluación 5 con más errores."
+       ],
+       [
+        "Contenido (35')",
+        "Equipos de Lichess, torneo arena y torneo suizo (diferencias y cuándo usar cada uno), ritmo para principiantes, reglas de juego limpio y cómo anunciar resultados."
+       ],
+       [
+        "Práctica (20')",
+        "Por parejas, cada una crea un torneo de prueba en el equipo del grupo y lo prueba con dos rondas rápidas."
+       ],
+       [
+        "Microenseñanza (15')",
+        "Dos estudiantes: la regla del cuadrado y la oposición (5' cada uno)."
+       ],
+       [
+        "Cierre (10'): pregunta de salida",
+        "¿Qué sistema usarías para un taller de 10 personas y por qué?"
+       ]
+      ],
+      "taller": "Ficha 6: guía en cinco pasos para crear un torneo en Lichess.",
+      "divertido": "Torneo arena de prueba de 15 minutos.",
+      "sitio": "Torneos de la Academia (inscripción y rondas en vivo) para el torneo del grupo; Lichess para los torneos de los talleres. Formación Ajedrez, lección 4 «Sistemas de emparejamiento» y lección 5 «Uso y control del reloj». Cuestionario listo «El reglamento y el reloj»."
+     },
+     "plan": {
+      "lecciones": [
+       {
+        "curso": "formacion-ajedrez",
+        "titulo": "Sistemas de emparejamiento"
+       },
+       {
+        "curso": "formacion-ajedrez",
+        "titulo": "Uso, configuración y control del reloj"
+       }
+      ],
+      "posiciones": []
+     }
+    },
+    {
+     "numero": 10,
+     "fecha": "2026-11-11",
+     "dia": "Miércoles 11 de noviembre",
+     "titulo": "Analizar las partidas propias y enseñar a analizar",
+     "tipo": "clase",
+     "detalle": {
+      "objetivo": "Revisar una partida con un método simple y enseñarlo en el taller.",
+      "bloques": [
+       [
+        "Calentamiento (10')",
+        "Un error de una partida del torneo de prueba: ¿qué se debió jugar?"
+       ],
+       [
+        "Contenido (35')",
+        "Método de 3 preguntas: ¿dónde cambió la partida?, ¿qué quería mi rival?, ¿qué haría distinto? Primero sin motor; después se comprueba con el análisis de Lichess."
+       ],
+       [
+        "Práctica (20')",
+        "Cada estudiante analiza una partida propia con el método y la comenta en su sala; el vocero comparte el mejor hallazgo."
+       ],
+       [
+        "Microenseñanza (15')",
+        "Dos estudiantes: cómo crear un torneo y el método de las 3 preguntas (5' cada uno)."
+       ],
+       [
+        "Cierre (10'): pregunta de salida",
+        "¿Qué aprendiste de tu partida hoy?"
+       ]
+      ],
+      "taller": "Ficha 7: las 3 preguntas para revisar una partida.",
+      "divertido": "Duelo Simultáneo por parejas (Juegos).",
+      "sitio": "Habilidad «Tus propios errores» y Repasar mis clases (la partida de cada clase con los comentarios del profesor)."
+     },
+     "plan": {
+      "lecciones": [],
+      "posiciones": []
+     }
+    },
+    {
+     "numero": 11,
+     "fecha": "2026-11-17",
+     "dia": "Martes 17 de noviembre",
+     "titulo": "Táctica elemental para el taller: ordenar lo que enseñan",
+     "tipo": "clase",
+     "detalle": {
+      "objetivo": "Ordenar los temas tácticos vistos para enseñarlos a principiantes y armar una serie de ejercicios.",
+      "bloques": [
+       [
+        "Calentamiento (10')",
+        "Dos ejercicios tácticos de nivel de taller: ¿cómo los presentarías?"
+       ],
+       [
+        "Contenido (35')",
+        "Orden para principiantes: piezas que se pueden capturar, ataque doble, clavada, descubierta y mates con nombre. Cómo buscar ejercicios por tema y dificultad en Lichess."
+       ],
+       [
+        "Práctica (20')",
+        "Por parejas, cada estudiante arma una serie de 8 ejercicios de un tema en un estudio de Lichess para su taller."
+       ],
+       [
+        "Microenseñanza (15')",
+        "Dos estudiantes presentan su serie (5' cada uno)."
+       ],
+       [
+        "Cierre (10'): pregunta de salida",
+        "¿Qué tema táctico enseñarías primero y por qué?"
+       ]
+      ],
+      "taller": "Ficha 8: la serie de ejercicios de cada estudiante (va en su portafolio).",
+      "divertido": "«⚡ Ronda rápida» de táctica con podio.",
+      "sitio": "Estrategia y táctica: lección 1 «Clavadas absolutas y relativas», lección 2 «Horquillas de caballo y de peón» y lección 3 «Ataques a la descubierta y jaques dobles». «Ejercicios por tema» para armar la serie. Cuestionarios listos «La clavada y la enfilada» y «Horquillas y dobles ataques»."
+     },
+     "plan": {
+      "lecciones": [
+       {
+        "curso": "estrategia-y-tactica",
+        "titulo": "Clavadas"
+       },
+       {
+        "curso": "estrategia-y-tactica",
+        "titulo": "Horquillas de caballo y de peón"
+       },
+       {
+        "curso": "estrategia-y-tactica",
+        "titulo": "Ataques a la descubierta"
+       }
+      ],
+      "posiciones": [
+       {
+        "fuente": "tema",
+        "tema": "pin",
+        "n": 2,
+        "desde": 0
+       },
+       {
+        "fuente": "tema",
+        "tema": "fork",
+        "n": 2,
+        "desde": 0
+       },
+       {
+        "fuente": "tema",
+        "tema": "discoveredAttack",
+        "n": 2,
+        "desde": 0
+       }
+      ]
+     }
+    },
+    {
+     "numero": 12,
+     "fecha": "2026-11-18",
+     "dia": "Miércoles 18 de noviembre",
+     "titulo": "Planificar un taller de 60 minutos y manejar el grupo",
+     "tipo": "clase",
+     "detalle": {
+      "objetivo": "Que cada estudiante tenga su plan de taller escrito con la plantilla del anexo A.",
+      "bloques": [
+       [
+        "Calentamiento (10')",
+        "Una posición de cálculo con la variante completa."
+       ],
+       [
+        "Contenido (35')",
+        "Partes de un taller: objetivo, inicio, explicación corta, juego, cierre que compruebe. Juegos para principiantes (guerra de peones, la carrera, desarrollo primero). Manejo del grupo: normas, cómo dar la palabra a quien no habla, cómo frenar una burla."
+       ],
+       [
+        "Práctica (20')",
+        "Cada estudiante llena la plantilla del anexo A en Classroom; tú revisas tres en vivo y comentas."
+       ],
+       [
+        "Microenseñanza (15')",
+        "Dos estudiantes: «cómo empiezo mi taller» (5' cada uno)."
+       ],
+       [
+        "Cierre (10'): pregunta de salida",
+        "¿Cuál es el objetivo de tu próximo taller, en una frase?"
+       ]
+      ],
+      "taller": "Entrega del plan de taller (anexo A) antes del 24 de noviembre.",
+      "divertido": "Diez minutos de Ajedrez de Cartas (Juegos).",
+      "sitio": "Curso Fundamentos del ajedrez: sus 10 lecciones son una secuencia lista para un taller de principiantes, con presentación, material y ejercicios. Para practicar con los participantes: Entreno «Aprende», «Practicar» y «Desafíos»."
+     },
+     "plan": {
+      "lecciones": [
+       {
+        "curso": "fundamentos-del-ajedrez",
+        "titulo": "Movimiento de las piezas: peón, caballo, alfil"
+       },
+       {
+        "curso": "fundamentos-del-ajedrez",
+        "titulo": "Valor relativo de las piezas"
+       }
+      ],
+      "posiciones": [
+       {
+        "fuente": "tema",
+        "tema": "hangingPiece",
+        "n": 2,
+        "desde": 0
+       }
+      ]
+     }
+    },
+    {
+     "numero": 13,
+     "fecha": "2026-11-24",
+     "dia": "Martes 24 de noviembre",
+     "titulo": "Minilecciones finales (1)",
+     "tipo": "evaluacion",
+     "detalle": {
+      "objetivo": "Que cada estudiante dé una minilección de 8 minutos para principiantes y reciba retroalimentación.",
+      "bloques": [
+       [
+        "Organización",
+        "Se hacen en tres clases (24 y 25 de noviembre y 1 de diciembre), con 5 o 6 estudiantes por clase. El orden se sortea y se publica antes."
+       ],
+       [
+        "Cada minilección",
+        "8' de clase + 4' de retroalimentación: primero un compañero (lo que funcionó y una sugerencia), después tú con la rúbrica del anexo B."
+       ],
+       [
+        "Tema",
+        "Lo elige cada estudiante de los temas del curso: un principio de apertura, un mate básico, la regla del cuadrado, la oposición, un tema táctico."
+       ]
+      ],
+      "divertido": "La clase vota la minilección que más le sirvió con una pregunta de opciones, y el podio al final.",
+      "sitio": "Clase en vivo: «alumno elegido al azar» para sortear el orden y «Mostrar la respuesta de un alumno» para que cada uno presente desde su tablero."
+     },
+     "plan": {
+      "lecciones": [],
+      "posiciones": []
+     }
+    },
+    {
+     "numero": 14,
+     "fecha": "2026-11-25",
+     "dia": "Miércoles 25 de noviembre",
+     "titulo": "Minilecciones finales (2)",
+     "tipo": "evaluacion",
+     "detalle": {
+      "objetivo": "",
+      "bloques": [
+       [
+        "Igual que la clase anterior",
+        "5 o 6 minilecciones con la rúbrica del anexo B."
+       ],
+       [
+        "Cierre",
+        "Recordar la entrega del portafolio del instructor el 2 de diciembre."
+       ]
+      ],
+      "divertido": "Para cerrar, Crazyhouse por parejas (Juegos).",
+      "sitio": "Clase en vivo: el estudiante que da la minilección usa el tablero de la clase."
+     },
+     "plan": {
+      "lecciones": [],
+      "posiciones": []
+     }
+    },
+    {
+     "numero": 15,
+     "fecha": "2026-12-01",
+     "dia": "Martes 1 de diciembre",
+     "titulo": "Minilecciones finales (3)",
+     "tipo": "evaluacion",
+     "detalle": {
+      "objetivo": "",
+      "bloques": [
+       [
+        "0–75'",
+        "Últimas minilecciones y las pendientes de quien faltó con justificación."
+       ],
+       [
+        "75–90'",
+        "Los organizadores del torneo (rol rotativo) lo crean en Lichess y anuncian las reglas."
+       ]
+      ],
+      "divertido": "Ajedrez para 4 por equipos (Juegos).",
+      "sitio": "Los organizadores crean el torneo en Torneos de la Academia o en Lichess."
+     },
+     "plan": {
+      "lecciones": [],
+      "posiciones": []
+     }
+    },
+    {
+     "numero": 16,
+     "fecha": "2026-12-02",
+     "dia": "Miércoles 2 de diciembre",
+     "titulo": "Torneo organizado por los estudiantes y entrega del portafolio",
+     "tipo": "especial",
+     "detalle": {
+      "objetivo": "",
+      "bloques": [
+       [
+        "0–15'",
+        "Los organizadores (rol rotativo) presentan el torneo que crearon en Lichess: sistema, ritmo y reglas."
+       ],
+       [
+        "15–75'",
+        "Torneo del grupo. Un estudiante hace de árbitro."
+       ],
+       [
+        "75–90'",
+        "Análisis rápido de una partida del torneo con el método de las 3 preguntas. Entrega del portafolio del instructor (ver «Evaluación»)."
+       ]
+      ],
+      "divertido": "El torneo del grupo, organizado por los estudiantes.",
+      "sitio": "Torneos de la Academia (rondas en vivo). El portafolio se entrega como tarea en Tareas."
+     },
+     "plan": {
+      "lecciones": [],
+      "posiciones": []
+     }
+    },
+    {
+     "numero": 17,
+     "fecha": "2026-12-08",
+     "dia": "Martes 8 de diciembre",
+     "titulo": "Retroalimentación final y el taller en 2027",
+     "tipo": "especial",
+     "detalle": {
+      "objetivo": "Devolver a cada estudiante la retroalimentación de su minilección y su portafolio, y dejar armado cómo sigue su taller.",
+      "bloques": [
+       [
+        "0–30'",
+        "Retroalimentación general: lo mejor de las minilecciones (sin comparar personas), los errores más comunes y cómo corregirlos."
+       ],
+       [
+        "30–60'",
+        "En salas, cada estudiante revisa su rúbrica y escribe su «plan del taller para 2027»: colegio, aliado (docente o director), día y hora, y los primeros cuatro temas."
+       ],
+       [
+        "60–80'",
+        "Partidas rápidas o una ronda de ejercicios por equipos."
+       ],
+       [
+        "80–90'",
+        "Registro final de talleres (anexo C)."
+       ]
+      ],
+      "divertido": "El Sonar con la pantalla compartida: la clase vota hacia dónde mover el rey.",
+      "sitio": "Repasar mis clases e Informes («Lo que le costó a cada alumno»)."
+     },
+     "plan": {
+      "lecciones": [],
+      "posiciones": []
+     }
+    },
+    {
+     "numero": 18,
+     "fecha": "2026-12-09",
+     "dia": "Miércoles 9 de diciembre",
+     "titulo": "Cierre del curso",
+     "tipo": "especial",
+     "detalle": {
+      "objetivo": "",
+      "bloques": [
+       [
+        "0–25'",
+        "Partidas rápidas contra el profesor o una simultánea corta."
+       ],
+       [
+        "25–45'",
+        "Resultados del trimestre y reconocimientos: mejor minilección, mejor portafolio, torneo, asistencia."
+       ],
+       [
+        "45–65'",
+        "Encuesta anónima de cierre de la coordinación (clima, trato, talleres)."
+       ],
+       [
+        "65–90'",
+        "Preparación de la clase presencial de diciembre: qué llevar y quién necesita transporte u hospedaje (en este grupo son la mayoría: coordinarlo con tiempo)."
+       ]
+      ],
+      "divertido": "Partidas rápidas contra el profe y el podio de los puntos del mes.",
+      "sitio": "Cuestionario listo «Historia y curiosidades del ajedrez» (inicial), el podio y los puntos del mes de la clase en vivo."
+     },
+     "plan": {
+      "lecciones": [],
+      "posiciones": []
+     }
+    }
+   ],
+   "tareas": [
+    {
+     "semana": 1,
+     "desde": "2026-10-12",
+     "vence": "2026-10-19",
+     "titulo": "Semana 1 · Los tres principios",
+     "instrucciones": "Estudia la lección de los principios y aprende la italiana. Para descansar, Batalla naval.",
+     "items": [
+      {
+       "curso": "fundamentos-del-ajedrez",
+       "leccion": 9
+      },
+      {
+       "herramienta": "aperturas",
+       "recorte": "italiana-giuoco",
+       "cantidad": 1,
+       "meta": null
+      },
+      {
+       "herramienta": "batalla-naval",
+       "recorte": null,
+       "cantidad": 2,
+       "meta": null
+      }
+     ]
+    },
+    {
+     "semana": 2,
+     "desde": "2026-10-19",
+     "vence": "2026-10-26",
+     "titulo": "Semana 2 · Errores de apertura",
+     "instrucciones": "Estudia los errores comunes, contesta el cuestionario y aprende a parar el mate del pastor.",
+     "items": [
+      {
+       "curso": "fundamentos-del-ajedrez",
+       "leccion": 10
+      },
+      {
+       "herramienta": "cuestionario",
+       "cuestionario": "Principios de la apertura"
+      },
+      {
+       "herramienta": "aperturas",
+       "recorte": "pastor-refutacion",
+       "cantidad": 1,
+       "meta": null
+      }
+     ]
+    },
+    {
+     "semana": 3,
+     "desde": "2026-10-26",
+     "vence": "2026-11-02",
+     "titulo": "Semana 3 · El cuadrado y la oposición",
+     "instrucciones": "Las dos primeras lecciones de finales, rey y peón, y los confites del caballo.",
+     "items": [
+      {
+       "curso": "finales-practicos",
+       "leccion": 1
+      },
+      {
+       "curso": "finales-practicos",
+       "leccion": 2
+      },
+      {
+       "herramienta": "tipos",
+       "recorte": "peones",
+       "cantidad": 10,
+       "meta": null
+      },
+      {
+       "herramienta": "confites",
+       "recorte": null,
+       "cantidad": 2,
+       "meta": null
+      }
+     ]
+    },
+    {
+     "semana": 4,
+     "desde": "2026-11-02",
+     "vence": "2026-11-09",
+     "titulo": "Semana 4 · Repaso para la Evaluación 5",
+     "instrucciones": "Las posiciones críticas, rey y peón y el cuestionario de finales.",
+     "items": [
+      {
+       "curso": "finales-practicos",
+       "leccion": 3
+      },
+      {
+       "herramienta": "tipos",
+       "recorte": "peones",
+       "cantidad": 10,
+       "meta": null
+      },
+      {
+       "herramienta": "cuestionario",
+       "cuestionario": "Finales de rey y peón"
+      }
+     ]
+    },
+    {
+     "semana": 5,
+     "desde": "2026-11-09",
+     "vence": "2026-11-16",
+     "titulo": "Semana 5 · Mates y reglamento",
+     "instrucciones": "Mates en 1 y en 2, y el cuestionario del reglamento para organizar torneos.",
+     "items": [
+      {
+       "herramienta": "mates",
+       "recorte": "mate1",
+       "cantidad": 15,
+       "meta": null
+      },
+      {
+       "herramienta": "mates",
+       "recorte": "mate2",
+       "cantidad": 5,
+       "meta": null
+      },
+      {
+       "herramienta": "cuestionario",
+       "cuestionario": "El reglamento y el reloj"
+      }
+     ]
+    },
+    {
+     "semana": 6,
+     "desde": "2026-11-16",
+     "vence": "2026-11-23",
+     "titulo": "Semana 6 · Táctica para tu taller",
+     "instrucciones": "Clavadas y ataques dobles, y tus propios errores.",
+     "items": [
+      {
+       "herramienta": "temas",
+       "recorte": "pin",
+       "cantidad": 10,
+       "meta": null
+      },
+      {
+       "herramienta": "temas",
+       "recorte": "fork",
+       "cantidad": 10,
+       "meta": null
+      },
+      {
+       "herramienta": "tipos",
+       "recorte": "errores",
+       "cantidad": 3,
+       "meta": null
+      }
+     ]
+    },
+    {
+     "semana": 7,
+     "desde": "2026-11-23",
+     "vence": "2026-11-30",
+     "titulo": "Semana 7 · Prepara tu minilección",
+     "instrucciones": "Piezas colgadas, una mezcla de ejercicios y dos partidas del Sonar.",
+     "items": [
+      {
+       "herramienta": "temas",
+       "recorte": "hangingPiece",
+       "cantidad": 10,
+       "meta": null
+      },
+      {
+       "herramienta": "temas",
+       "recorte": "mix",
+       "cantidad": 10,
+       "meta": null
+      },
+      {
+       "herramienta": "sonar",
+       "recorte": null,
+       "cantidad": 2,
+       "meta": null
+      }
+     ]
+    },
+    {
+     "semana": 8,
+     "desde": "2026-11-30",
+     "vence": "2026-12-07",
+     "titulo": "Semana 8 · Mates básicos y juego",
+     "instrucciones": "El cuestionario de mates básicos y tres niveles de Ilumina el tablero.",
+     "items": [
+      {
+       "herramienta": "cuestionario",
+       "cuestionario": "Mates básicos"
+      },
+      {
+       "herramienta": "ilumina",
+       "recorte": null,
+       "cantidad": 3,
+       "meta": null
+      }
+     ]
+    },
+    {
+     "semana": 9,
+     "desde": "2026-12-07",
+     "vence": "2026-12-13",
+     "titulo": "Semana 9 · Cierre",
+     "instrucciones": "Memoria y un poco de historia antes de la clase presencial.",
+     "items": [
+      {
+       "herramienta": "memoria",
+       "recorte": null,
+       "cantidad": 5,
+       "meta": null
+      },
+      {
+       "herramienta": "cuestionario",
+       "cuestionario": "Historia y curiosidades del ajedrez"
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}
