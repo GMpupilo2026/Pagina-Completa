@@ -313,7 +313,117 @@
 
             const finished = tournament.status === "finished";
             document.getElementById("finished-banner").classList.toggle("hidden", !finished);
-            if (finished) document.getElementById("champion-names").textContent = (tournament.winner_ids || []).map(nameFor).join(" y ") || "—";
+            if (finished) pintarTerminado();
+            renderGestion();
+        }
+
+        /* ---------- Terminar o eliminar el torneo (quien lo organiza) ----------
+           Terminarlo antes de tiempo lo cierra como está: en un suizo o un todos
+           contra todos queda quién iba primero, pero NO es campeón ni entra al
+           salón de la fama — el torneo no se jugó entero. Eliminarlo lo borra con
+           sus rondas, cruces e inscripciones (la base los borra en cascada), y
+           las partidas que seguían en juego. Ver «Terminar y eliminar un torneo»
+           en docs/decisiones/juegos-y-torneos.md. */
+        /* ¿Quedó algo sin jugar? Una ronda abierta, menos rondas que las previstas,
+           o un cruce que terminó DESPUÉS de que se cerró el torneo: una partida que
+           seguía en juego puede terminar más tarde y cerrar su ronda (TorneoSync),
+           y sin esto el torneo cortado en la última ronda se vería completo. */
+        function quedoIncompleto() {
+            if (tournament.status !== "finished") return false;
+            const cierre = tournament.finished_at ? new Date(tournament.finished_at).getTime() : Infinity;
+            const tarde = Object.keys(pairingsByRound).some((id) => pairingsByRound[id].some((p) =>
+                !p.is_bye && (!p.result || (p.finished_at && new Date(p.finished_at).getTime() > cierre))));
+            return !rounds.length || tarde || rounds.some((r) => r.status !== "finished")
+                || (tournament.current_round || 0) < (tournament.total_rounds || 0);
+        }
+
+        function pintarTerminado() {
+            const nombres = (tournament.winner_ids || []).map(nameFor).join(" y ");
+            const temprano = quedoIncompleto();
+            document.getElementById("finished-title").hidden = temprano;
+            document.getElementById("finished-fama").hidden = temprano;
+            document.getElementById("champion-names").textContent = nombres || "—";
+            const nota = document.getElementById("finished-early");
+            nota.hidden = !temprano;
+            nota.textContent = !temprano ? ""
+                : "🏁 Quien lo organiza lo terminó antes de jugarse entero: no hay campeón."
+                    + (nombres ? " Iba" + ((tournament.winner_ids || []).length > 1 ? "n" : "") + " primero: " + nombres + "." : "");
+        }
+
+        function renderGestion() {
+            const seccion = document.getElementById("gestion-torneo");
+            seccion.hidden = !isOwner;
+            if (!isOwner) return;
+            const terminado = tournament.status === "finished";
+            document.getElementById("terminar-torneo-btn").hidden = terminado;
+            document.getElementById("gestion-nota").textContent = terminado
+                ? "El torneo ya terminó. Puedes eliminarlo: se borra con sus rondas y resultados."
+                : "Terminarlo lo cierra como está, sin jugar lo que falta. Eliminarlo lo borra con sus rondas, resultados e inscripciones.";
+        }
+
+        // Los que van primeros con lo jugado hasta ahora (null si no se jugó nada).
+        function lideresHastaAhora() {
+            if (tournament.format === "elimination") return [];
+            const todos = [];
+            Object.keys(pairingsByRound).forEach((id) => pairingsByRound[id].forEach((p) =>
+                todos.push({ white: p.white_id, black: p.black_id, isBye: p.is_bye, result: p.result })));
+            if (!todos.some((p) => p.result && !p.isBye)) return [];
+            const { score } = TorneoEngine.standingsFromPairings(registrations.map((r) => r.player_id), todos);
+            const mejor = Math.max.apply(null, Object.values(score));
+            return Object.keys(score).filter((id) => score[id] === mejor);
+        }
+
+        // Las salas de los cruces que siguen sin resultado.
+        function salasSinTerminar() {
+            const ids = [];
+            Object.keys(pairingsByRound).forEach((id) => pairingsByRound[id].forEach((p) => {
+                if (p.game_room_id && !p.result && !p.is_bye) ids.push(p.game_room_id);
+            }));
+            return ids;
+        }
+
+        async function terminarTorneo() {
+            const msg = document.getElementById("gestion-msg");
+            const enJuego = salasSinTerminar().length;
+            const seguir = await Avisos.confirmar(
+                (tournament.status === "registration"
+                    ? "Se cierra sin jugarse: nadie más se puede inscribir."
+                    : "Se cierra como está, sin jugar lo que falta. No hay campeón ni entra al salón de la fama; se anota quién iba primero.")
+                + (enJuego ? " Las " + enJuego + " partidas que siguen en juego se pueden terminar, pero ya no cuentan." : ""),
+                { titulo: "¿Terminar «" + tournament.name + "»?", aceptar: "Terminar el torneo", peligro: true });
+            if (!seguir) return;
+            const ahora = new Date().toISOString();
+            const { data, error } = await sb.from("tournaments")
+                .update({ status: "finished", winner_ids: lideresHastaAhora(), finished_at: ahora, updated_at: ahora })
+                .eq("id", tournament.id).neq("status", "finished").select("id, status");
+            // Se mira lo que QUEDÓ: si la base no lo cambió, no se dice que terminó.
+            if (error || !data || !data.length || data[0].status !== "finished") {
+                msg.textContent = "No se pudo terminar el torneo" + (error ? ": " + error.message : ".");
+                return;
+            }
+            msg.textContent = "✅ El torneo quedó terminado.";
+            await loadAll();
+        }
+
+        async function eliminarTorneo() {
+            const msg = document.getElementById("gestion-msg");
+            const seguir = await Avisos.confirmar(
+                "Se borra para siempre, con sus rondas, resultados e inscripciones, y las partidas que siguen en juego. "
+                + "Los campeones que ya están en el salón de la fama se quedan ahí.",
+                { titulo: "¿Eliminar «" + tournament.name + "»?", aceptar: "Eliminar el torneo", peligro: true });
+            if (!seguir) return;
+            const salas = salasSinTerminar();
+            const { data, error } = await sb.from("tournaments").delete().eq("id", tournament.id).select("id");
+            if (error || !data || !data.length) {
+                msg.textContent = "No se pudo eliminar el torneo" + (error ? ": " + error.message : ".");
+                return;
+            }
+            // Después del torneo: mientras un cruce la nombra, la sala no se puede borrar.
+            if (salas.length) {
+                const { error: errorSalas } = await sb.from("game_rooms").delete().in("id", salas).eq("status", "playing");
+                if (errorSalas) console.error(errorSalas);
+            }
+            window.location.href = "torneos.html";
         }
 
         function renderRegistration() {
@@ -566,6 +676,8 @@
         document.getElementById("start-btn").addEventListener("click", (e) => unaVez(e.currentTarget, startTournament));
         document.getElementById("ritmo-guardar").addEventListener("click", guardarRitmo);
         document.getElementById("generate-round-btn").addEventListener("click", (e) => unaVez(e.currentTarget, generateRound));
+        document.getElementById("terminar-torneo-btn").addEventListener("click", (e) => unaVez(e.currentTarget, terminarTorneo));
+        document.getElementById("eliminar-torneo-btn").addEventListener("click", (e) => unaVez(e.currentTarget, eliminarTorneo));
 
         async function loadAll() {
             const { data: t, error } = await sb.from("tournaments").select("*").eq("id", TOURNEY_ID).maybeSingle();

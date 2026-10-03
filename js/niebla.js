@@ -37,7 +37,12 @@
 
             let myTurnNow = false;
             if (room.status === "finished") {
-                const resultText = room.result === "draw" ? (esTripleRepeticion(room.moves, room.fen) ? "Tablas por triple repetición." : "Tablas.") : (room.result === "white" ? nameFor(room.white_id) + " ganó con blancas." : nameFor(room.black_id) + " ganó con negras.");
+                // Cómo ganó: se comió el rey (la única forma de ganar jugando), o
+                // por rendición o tiempo, que la posición no dice.
+                const comido = room.fen ? NieblaGuerra.reglas.reyComido(new Chess(room.fen)) : null;
+                const resultText = room.result === "draw" ? (esTripleRepeticion(room.moves, room.fen) ? "Tablas por triple repetición." : "Tablas.")
+                    : (room.result === "white" ? nameFor(room.white_id) + " ganó con blancas" : nameFor(room.black_id) + " ganó con negras")
+                        + (comido ? ": se comió el rey." : ".");
                 setStatus("Partida terminada — " + resultText);
             } else if (waitingToStart) {
                 if (!myColor) setStatus("Esperando a que " + nameFor(room.white_id) + " y " + nameFor(room.black_id) + " confirmen que están listos…");
@@ -47,8 +52,9 @@
                 setStatus("Estás mirando esta partida — solo pueden mover " + nameFor(room.white_id) + " y " + nameFor(room.black_id) + ".");
             } else {
                 myTurnNow = board.game.turn() === myColor;
-                const enJaque = board.game.in_check() && myTurnNow;
-                setStatus((enJaque ? "¡Estás en jaque! " : "") + (myTurnNow ? "Es tu turno." : "Esperando la jugada de " + nameFor(myColor === "w" ? room.black_id : room.white_id) + "…"));
+                // Sin «¡Estás en jaque!»: en la niebla no hay jaques (gana quien se
+                // come el rey), y avisarlo delataba una pieza rival tapada.
+                setStatus(myTurnNow ? "Es tu turno." : "Esperando la jugada de " + nameFor(myColor === "w" ? room.black_id : room.white_id) + "…");
             }
             if (window.TurnAlert) TurnAlert.check(myTurnNow);
         }
@@ -263,6 +269,7 @@
                 spectator: spectator,
                 onMove: handleLocalMove,
                 onPromotionNeeded: showPromotionPicker,
+                sinJaques: true,
             });
             board.loadFen(room.fen);
             renderMovesPanel(room);
@@ -329,7 +336,8 @@
                         const vista = {
                             get: (sq) => (visible.has(sq) ? board.game.get(sq) : null),
                             turn: () => board.game.turn(),
-                            in_check: () => board.game.in_check(),
+                            // En la niebla no hay jaques: decirlo delataría a la pieza que ataca.
+                            in_check: () => false,
                             /* `oculta` es lo que separa "ahí no hay nada" de "no sabes qué hay
                                ahí". Sin ella, preguntar por una casilla con niebla contestaba
                                "vacía" — que es falso (puede haber una pieza rival) y además dice
@@ -346,7 +354,12 @@
                                casilla a la que puede ir una pieza tuya es una casilla que esa
                                pieza VE (el rayo de visibilidad llega hasta la primera ocupada),
                                y el tablero visual le pinta encima su punto de destino. */
-                            moves: (o) => (board.game.turn() === myColor ? board.game.moves(o) : []),
+                            moves: (o) => {
+                                if (board.game.turn() !== myColor) return [];
+                                // Las de la niebla: sin jaques (ver NieblaGuerra.reglas).
+                                const lista = NieblaGuerra.reglas.jugadas(board.game, o);
+                                return o && o.verbose ? lista : lista.map((m) => m.san);
+                            },
                         };
                         vistaVisible = { fen, vista };
                         return vista;

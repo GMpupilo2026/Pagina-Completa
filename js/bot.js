@@ -153,8 +153,8 @@ const MODALIDADES = {
     },
     niebla: {
         emoji: "🌫️", titulo: "Niebla de Guerra",
-        resumen: "Solo ves lo que tus piezas alcanzan a ver.",
-        crear: () => adaptadorChess(new Chess()),
+        resumen: "Solo ves lo que tus piezas alcanzan a ver. No hay jaques: gana quien se come el rey.",
+        crear: () => adaptadorNiebla(new Chess()),
         tablero: "niebla", spectator: false,
     },
     crazyhouse: {
@@ -347,6 +347,43 @@ function adaptadorChess(juego) {
             if (juego.in_stalemate()) return { fin: true, ganador: null, texto: "Ahogado: tablas" };
             if (juego.game_over()) return { fin: true, ganador: null, texto: "Tablas" };
             return { fin: false };
+        },
+        posicion: () => juego.fen(),
+    };
+}
+
+/* Niebla de Guerra: sin jaques, gana quien se come el rey (las reglas son de
+   NieblaGuerra.reglas, en js/niebla-engine.js, las mismas de niebla.html y de
+   los torneos). Para que el bot las entienda sin saber de la variante:
+   - el bando que se quedó sin rey «no tiene jugadas y está en jaque», que es
+     como el bot reconoce una partida perdida (valorSinJugadas);
+   - el material cuenta un rey comido como una partida ganada: el rey vale
+     cero en VALOR, y sin esto el bot no vería la captura al final de la
+     búsqueda. */
+const REY_COMIDO = 50000;
+function adaptadorNiebla(juego) {
+    const R = NieblaGuerra.reglas;
+    const sinRey = () => R.reyComido(juego);
+    return {
+        motor: juego,
+        turno: () => juego.turn(),
+        jugadas: () => (sinRey() ? [] : R.jugadas(juego)),
+        probar(j) {
+            const copia = new Chess(juego.fen());
+            return R.jugar(copia, j) ? adaptadorNiebla(copia) : null;
+        },
+        material() {
+            const c = sinRey();
+            if (c) return c === "w" ? -REY_COMIDO : REY_COMIDO;
+            return materialDeTablero((s) => juego.get(s), TODAS_LAS_CASILLAS);
+        },
+        valorJugada: (j) => valorDeJugada((s) => juego.get(s), j) + (j.captured === "k" ? REY_COMIDO : 0),
+        enJaque: () => !!sinRey(),
+        jugar(j) { return R.jugar(juego, j); },
+        terminada: () => R.desenlace(juego).fin,
+        desenlace() {
+            const d = R.desenlace(juego);
+            return d.fin ? { fin: true, ganador: d.ganador, texto: d.texto } : { fin: false };
         },
         posicion: () => juego.fen(),
     };
@@ -591,6 +628,9 @@ function adaptadorDuelo(dueloGame, colorFijo) {
 const $ = (id) => document.getElementById(id);
 let modalidad = "estandar", nivel = 2, miColor = "w";
 let ad = null, board = null, historial = [], terminada = false, pensando = false;
+// Lo último que jugó el bot, para decirlo en la línea de estado («El bot jugó Cf6»).
+// En la niebla no se dice: ahí la jugada del rival es justamente lo que no se ve.
+let ultimaDelBot = null;
 
 function pintarOpciones() {
     const caja = $("modalidades");
@@ -647,6 +687,7 @@ function empezar() {
     const m = MODALIDADES[modalidad];
     prepararVistaJuego(m);
     historial = [];
+    ultimaDelBot = null;
     terminada = false;
     pensando = false;
 
@@ -679,7 +720,8 @@ function montarTablero(m) {
         onPromotionNeeded: elegirCoronacion,
     };
     if (m.tablero === "niebla") {
-        board = new NieblaBoard(el, Object.assign({ spectator: !!m.spectator }, comun));
+        // Las reglas de la niebla (sin jaques) solo en la niebla: el estándar usa este mismo tablero.
+        board = new NieblaBoard(el, Object.assign({ spectator: !!m.spectator, sinJaques: modalidad === "niebla" }, comun));
         board.loadFen(ad.posicion());
     } else if (m.tablero === "crazyhouse") {
         board = new CrazyhouseBoard(el, $("top-pocket"), $("bottom-pocket"), comun);
@@ -745,6 +787,7 @@ function alMover(info) {
 function turnoDelBot() {
     if (terminada || ad.turno() === miColor) return;
     pensando = true;
+    ultimaDelBot = null;
     actualizar();
     if (MODALIDADES[modalidad].tablero === "cartas") jugarCartaBot(ad.motor, ad.turno());
     const jugada = BotOscar.jugar(ad, nivel);
@@ -752,11 +795,14 @@ function turnoDelBot() {
     if (!jugada) { revisarFinal(); return; }
     const hecho = ad.jugar(jugada);
     anotar(hecho, jugada);
+    ultimaDelBot = historial[historial.length - 1] || null;
     refrescar();
     if (revisarFinal()) return;
     // "Doble turno" (Ajedrez de Cartas) le devuelve el turno a quien acaba de
     // mover: si sigue siendo el del bot, que juegue otra vez.
     if (ad.turno() !== miColor) setTimeout(turnoDelBot, BotOscar.demora(nivel));
+    // Ya jugó y le toca a la persona: pitido (y el título, si no está mirando).
+    else if (window.TurnAlert) TurnAlert.botJugo(MODALIDADES[modalidad].tablero === "niebla" ? "" : ultimaDelBot);
 }
 
 /* El historial va en algebraica española («Cf3», «Txe8+»). Las variantes de
@@ -806,7 +852,9 @@ function pintarHistorial() {
 function actualizar() {
     if (terminada) return;
     const miTurno = ad.turno() === miColor;
-    avisar(pensando ? "El bot está pensando…" : (miTurno ? "Es tu turno." : "Juega el bot…"), "normal");
+    avisar(pensando ? "El bot está pensando…"
+        : miTurno ? (ultimaDelBot && MODALIDADES[modalidad].tablero !== "niebla" ? "El bot jugó " + ultimaDelBot + ". Es tu turno." : "Es tu turno.")
+        : "Juega el bot…", "normal");
     if (MODALIDADES[modalidad].ciegas) $("ciegas-input").disabled = !miTurno;
 }
 

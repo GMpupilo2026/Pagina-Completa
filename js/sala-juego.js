@@ -98,11 +98,52 @@
 
   /* Cada cambio de la sala, filtrado a ESTA sala (ver «Realtime escucha solo
      lo que la pantalla muestra»). */
+  /* Y un respaldo por si un aviso de Realtime no llega: el 3/10, en un torneo,
+     el rival jugaba y al otro no le llegaba la jugada, y su reloj seguía
+     corriendo — sin ningún error en la pantalla (era una política de la base
+     que hacía fallar a Realtime: ver «Realtime perdía jugadas» en
+     docs/decisiones/juegos-y-torneos.md). Por cualquier causa que se repita,
+     la página vuelve a leer la sala:
+       - cada RESPALDO_MS mientras la partida sigue y la pestaña está a la vista
+         (una sola fila por su clave: barato);
+       - al volver a la pestaña;
+       - si el canal se cae (error, se agotó el tiempo o se cerró).
+     Lo que llega por Realtime se entrega siempre, tal cual; lo releído, solo si
+     la fila cambió desde lo último que se entregó (la fila entera: Cartas y
+     Duelo cambian su estado sin tocar la posición). */
+  const RESPALDO_MS = 15000;
+  function claveDeSala(fila) { return fila ? JSON.stringify(fila) : ""; }
   function suscribir(salaId, alCambiar) {
+    let ultima = null, enJuego = true, leyendo = false, ultimaHora = 0;
+    const hora = (fila) => (fila && fila.updated_at ? new Date(fila.updated_at).getTime() || 0 : 0);
+    const entregar = (fila, siempre) => {
+      if (!fila) return;
+      // Una lectura que salió antes de la última jugada y volvió después no la pisa.
+      if (!siempre && hora(fila) < ultimaHora) return;
+      ultimaHora = Math.max(ultimaHora, hora(fila));
+      enJuego = fila.status === "playing";
+      const clave = claveDeSala(fila);
+      if (!siempre && clave === ultima) return;
+      ultima = clave;
+      alCambiar(fila);
+    };
+    async function revisar() {
+      if (leyendo || document.hidden) return;
+      leyendo = true;
+      try { entregar(await releer(salaId), false); } finally { leyendo = false; }
+    }
+    // Lo que había al abrir: el respaldo compara contra esto, no avisa por ello.
+    releer(salaId).then((fila) => {
+      if (fila && ultima === null) { ultima = claveDeSala(fila); ultimaHora = hora(fila); enJuego = fila.status === "playing"; }
+    });
+    setInterval(() => { if (enJuego) revisar(); }, RESPALDO_MS);
+    document.addEventListener("visibilitychange", () => { if (!document.hidden) revisar(); });
     return sb.channel("game-room-" + salaId)
       .on("postgres_changes", { event: "UPDATE", schema: "public", table: "game_rooms", filter: "id=eq." + salaId },
-        (payload) => alCambiar(payload.new))
-      .subscribe();
+        (payload) => entregar(payload.new, true))
+      .subscribe((estado) => {
+        if (estado === "CHANNEL_ERROR" || estado === "TIMED_OUT" || estado === "CLOSED") revisar();
+      });
   }
 
   /* «Estoy listo». Si el rival ya estaba listo, esta confirmación es la que

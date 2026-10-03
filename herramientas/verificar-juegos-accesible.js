@@ -72,6 +72,9 @@ window.__consultas = [];
 window.__escrituras = [];
 (function () {
   const DATOS = ${JSON.stringify(datos)};
+  // Para cambiar la base «desde otra pantalla» (el rival juega) sin pasar por
+  // Realtime, que en este doble no avisa nada (verificar-sala-respaldo.js).
+  window.__tablas = DATOS.tablas;
   function constructor(tabla, filas) {
     let filas2 = (filas || []).slice(), unica = false, resultado = null, cambio = null;
     const cmp = (a, b) => String(a) === String(b);
@@ -1023,7 +1026,10 @@ async function pruebaListoYRendirse(browser) {
   }
 }
 
-(async () => {
+// El doble y la sala los usa también verificar-niebla-reglas.js.
+module.exports = { doble, sala, abrir, PERFILES, CHROME, BASE };
+
+if (require.main === module) (async () => {
   const browser = await chromium.launch({ executablePath: CHROME });
   try {
     await pruebaLaRegionVivaYElInterruptor(browser);

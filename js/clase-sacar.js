@@ -74,6 +74,7 @@ async function sacarDeLaClase(studentId, nombre) {
     sacadosDeLaClase.set(studentId, nombre);
     if (presenceChannel) presenceChannel.send({ type: "broadcast", event: "sacar", payload: { studentId } });
     if (activePlayerId === studentId) await setActivePlayer(null, "both");
+    else if (rivalId === studentId) await setRival(null);
     onlineStudents.delete(studentId);
     renderStudentsList();
     pintarSacados();

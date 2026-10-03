@@ -80,7 +80,8 @@ async function pruebaProfesor(browser) {
 
   igual("la lista de la clase dice cómo va", await page.evaluate(() =>
     [...document.querySelectorAll("#partidas-lista li span")].map((s) => s.textContent)),
-    ["Alumno (blancas) – Alumno (negras) · Ganó Alumno (blancas)"]);
+    // Ana está en los perfiles del doble (nombres_de_jugadores la nombra); Beto no.
+    ["Ana Rojas (blancas) – Alumno (negras) · Ganó Ana Rojas (blancas)"]);
   igual("con un enlace para mirarla", await page.getAttribute("#partidas-lista a", "href"), "estandar.html?room=g1");
 
   await page.click("#emparejar-btn");

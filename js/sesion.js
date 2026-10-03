@@ -77,6 +77,22 @@
         // cualquier color. Permite, por ejemplo, que un alumno juegue con blancas contra
         // el profesor en vivo delante de toda la clase, sin poder tocar las piezas negras.
         let activePlayerColor = "both";
+        /* El rival: otro alumno que mueve el color CONTRARIO al de activePlayerId
+           (game_state.rival_id). Así dos alumnos juegan entre ellos en el tablero de
+           la clase, uno con blancas y otro con negras, y todos miran. Solo existe
+           mientras el control es de un solo color, y que cada uno mueva solo el suyo
+           lo hace cumplir la base (protect_game_state_teacher_columns). Ver «Dos
+           alumnos juegan en el tablero de la clase» en docs/decisiones/clase-en-vivo.md. */
+        let rivalId = null;
+        function colorContrario(c) { return c === "w" ? "b" : c === "b" ? "w" : null; }
+        // Con qué color mueve `id` en el tablero de la clase: "w", "b", "both" o null (no mueve).
+        function colorQueMueve(id) {
+            if (!id) return null;
+            if (id === activePlayerId) return activePlayerColor || "both";
+            if (id === rivalId) return colorContrario(activePlayerColor);
+            return null;
+        }
+        const NOMBRE_BANDO = { w: "blancas", b: "negras" };
         let presenceChannel = null;
         // Profesor: de qué alumno está mirando la partida de práctica en grande (ver
         // «La partida de UN alumno, en grande»). Viaja en su presencia, así que al
@@ -106,13 +122,23 @@
 
         function canMoveNow() {
             if (isTeacher) return true;
-            if (activePlayerId !== profile.id) return false;
-            return activePlayerColor === "both" || activePlayerColor === board.game.turn();
+            const mio = colorQueMueve(profile.id);
+            return mio === "both" || (!!mio && mio === board.game.turn());
+        }
+
+        /* Deshacer: el profe siempre. Un alumno con un solo color deshace solo SU
+           última jugada (la base rechaza lo demás): con dos alumnos jugando, uno no
+           le puede borrar la jugada al otro. */
+        function puedeDeshacer() {
+            if (isTeacher) return true;
+            const mio = colorQueMueve(profile.id);
+            if (mio === "both") return true;
+            return !!mio && board.moves().length > 0 && board.game.turn() !== mio;
         }
 
         function updateUndoButton() {
             const btn = document.getElementById("undo-move-btn");
-            btn.classList.toggle("hidden", !canMoveNow() || board.isViewingHistory());
+            btn.classList.toggle("hidden", !puedeDeshacer() || board.isViewingHistory());
         }
 
         // ---------- Pestañas del profesor (Mi plan/Táctica/Entrenamientos/Preguntar/Practicar) ----------
@@ -603,6 +629,7 @@
             }
             activePlayerId = row.active_player_id || null;
             activePlayerColor = row.active_player_color || "both";
+            rivalId = row.rival_id || null;
             comentariosClase = row.comentarios && typeof row.comentarios === "object" ? row.comentarios : {};
             if (!esObservador) pintarElegido(row.elegido || null);
             pintarPensar(row.pensar || null);
@@ -639,9 +666,13 @@
             // Quien supervisa no tiene control que calcular, y el mensaje de alumno le
             // pisaba el suyo («Estás mirando la clase de…») con cada jugada.
             if (isTeacher || esObservador) return;
-            const hasControl = activePlayerId === profile.id;
-            const colorLabel = activePlayerColor === "w" ? "blancas" : activePlayerColor === "b" ? "negras" : null;
-            const myColorTurn = !hasControl || activePlayerColor === "both" || activePlayerColor === board.game.turn();
+            const mio = colorQueMueve(profile.id);
+            const hasControl = !!mio;
+            const colorLabel = NOMBRE_BANDO[mio] || null;
+            const myColorTurn = !hasControl || mio === "both" || mio === board.game.turn();
+            // Contra quién juega, si juega contra otro alumno.
+            const otroId = profile.id === rivalId ? activePlayerId : profile.id === activePlayerId ? rivalId : null;
+            const otro = otroId ? (otroId === activePlayerId ? nombreDelQueJuega(activePlayerId) : nombreDelQueJuega(rivalId)) : null;
             // Mientras el profe muestra otra posición, una jugada del alumno sería
             // sobre la que ve y no sobre la partida: se espera a que vuelva.
             const profeMuestraOtra = board.isViewingHistory();
@@ -649,7 +680,9 @@
             let text = "Bienvenido a la clase. Verás el tablero moverse en vivo mientras el profesor juega.";
             if (hasControl) {
                 text = colorLabel
-                    ? ("¡El profesor te dio el control con " + colorLabel + "! " + (myColorTurn ? "Ya puedes mover." : "Espera a que le toque a tu color."))
+                    ? (otro
+                        ? "Juegas con " + colorLabel + " contra " + otro + ". " + (myColorTurn ? "Te toca mover." : "Espera su jugada.")
+                        : "¡El profesor te dio el control con " + colorLabel + "! " + (myColorTurn ? "Ya puedes mover." : "Espera a que le toque a tu color."))
                     : "¡El profesor te dio el control del tablero! Ya puedes mover piezas.";
                 if (profeMuestraOtra) text = "Tienes el control, pero tu profe está mostrando otra posición: cuando vuelva a la partida, vas a poder mover.";
             }
@@ -1268,14 +1301,19 @@
            que dejó a 4x4.html colgada en "Comprobando tu sesión…". */
         function motivoPosicionInvalida(fen) { return PosicionValida.motivo(fen); }
 
-        async function aplicarPosicionEnClase(fen, aviso) {
+        /* `jugadas` (opcional): la partida entera desde `fen`, para llevar a la clase
+           la partida de un alumno (js/clase-traer-partida.js). Sin ellas, la posición
+           sola, como siempre. */
+        async function aplicarPosicionEnClase(fen, aviso, jugadas) {
             const motivo = motivoPosicionInvalida(fen);
             if (motivo) { setStatus(motivo); return false; }
-            board.loadMoves([], fen);
+            board.loadMoves(jugadas || [], fen);
             board.viewLive();
             ultimaVistaEnviada = "null";
+            const moves = board.moves();
             const { error } = await sb.from("game_state").update({
-                fen, moves: [], start_fen: fen, last_move: null, vista: null, comentarios: {},
+                fen: moves.length ? board.fen() : fen, moves, start_fen: fen,
+                last_move: moves.length ? moves[moves.length - 1] : null, vista: null, comentarios: {},
                 arrows: [], circles: [], encuesta: null, active_player_id: null, active_player_color: "both",
                 updated_by: session.user.id, updated_at: new Date().toISOString(),
             }).eq("id", myGameStateId);
@@ -1859,7 +1897,7 @@
                     ? "Escribe tu jugada o una pregunta sobre la posición"
                     : "Pregúntale a la posición, o escribe tu jugada cuando tu profe te dé el control",
                 porQueNoPuedes: () => {
-                    if (activePlayerId !== profile.id) return "Ahora mueve tu profe. Cuando te dé el control vas a oírlo, y ahí mismo escribes tu jugada acá. Mientras tanto puedes preguntar: \"posición\", \"caballos\" o \"qué hay en e4\".";
+                    if (!colorQueMueve(profile.id)) return "Ahora mueve tu profe. Cuando te dé el control vas a oírlo, y ahí mismo escribes tu jugada acá. Mientras tanto puedes preguntar: \"posición\", \"caballos\" o \"qué hay en e4\".";
                     return "Todavía no le toca a tu color. Espera la jugada del otro lado.";
                 },
             }) : null;
@@ -2267,7 +2305,7 @@
         });
 
         document.getElementById("undo-move-btn").addEventListener("click", async () => {
-            if (!canMoveNow() || board.isViewingHistory()) return;
+            if (!puedeDeshacer() || board.isViewingHistory()) return;
             const undone = board.undo();
             if (!undone) return;
             await pushBoardState();
@@ -2314,9 +2352,10 @@
             const TEXTO_BTN = "text-xs font-semibold px-2 py-1.5 rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 ";
             for (const [studentId, info] of entries) {
                 const hasControl = activePlayerId === studentId;
+                const esRival = rivalId === studentId;
                 const nombreVisible = info.full_name || info.email;
                 const li = document.createElement("li");
-                li.className = "rounded-lg" + (info.hand_raised || hasControl ? " bg-accent-500/10 px-2 py-1 -mx-2" : "");
+                li.className = "rounded-lg" + (info.hand_raised || hasControl || esRival ? " bg-accent-500/10 px-2 py-1 -mx-2" : "");
                 const fila = document.createElement("div");
                 fila.className = "flex items-center gap-1.5";
                 const label = document.createElement("span");
@@ -2366,12 +2405,13 @@
                 // El control del tablero: dárselo (con ambos colores) o quitárselo.
                 const btn = document.createElement("button");
                 btn.type = "button";
-                btn.className = hasControl ? ICONO + "bg-accent-500 hover:bg-accent-600 text-brand-900" : ICONO_GRIS;
+                const mueve = hasControl || esRival;
+                btn.className = mueve ? ICONO + "bg-accent-500 hover:bg-accent-600 text-brand-900" : ICONO_GRIS;
                 btn.textContent = "🎮";
-                btn.title = hasControl ? "Quitarle el control del tablero" : "Darle el control del tablero: mueve las piezas él mismo";
-                btn.setAttribute("aria-label", (hasControl ? "Quitarle el control a " : "Darle el control a ") + nombreVisible);
-                btn.setAttribute("aria-pressed", hasControl ? "true" : "false");
-                btn.addEventListener("click", () => setActivePlayer(hasControl ? null : studentId, "both"));
+                btn.title = mueve ? "Quitarle el control del tablero" : "Darle el control del tablero: mueve las piezas él mismo";
+                btn.setAttribute("aria-label", (mueve ? "Quitarle el control a " : "Darle el control a ") + nombreVisible);
+                btn.setAttribute("aria-pressed", mueve ? "true" : "false");
+                btn.addEventListener("click", () => (esRival ? setRival(null) : setActivePlayer(hasControl ? null : studentId, "both")));
                 fila.appendChild(btn);
                 // Sacarlo de la clase, por si entró por error (js/clase-sacar.js).
                 const sacarBtn = document.createElement("button");
@@ -2385,7 +2425,7 @@
                 li.appendChild(fila);
 
                 // Lo que es solo de este alumno, en su segundo renglón.
-                if (info.hand_raised || hasControl) {
+                if (info.hand_raised || hasControl || esRival) {
                     const extra = document.createElement("div");
                     extra.className = "flex flex-wrap items-center gap-1.5 mt-1.5 pl-4";
                     if (info.hand_raised) {
@@ -2419,12 +2459,50 @@
                         colorSelect.value = activePlayerColor || "both";
                         colorSelect.addEventListener("change", () => setActivePlayer(studentId, colorSelect.value));
                         extra.appendChild(colorSelect);
+                        /* Con un solo color, el otro lo puede jugar otro alumno: los dos
+                           juegan en el tablero de la clase y todos miran. */
+                        if (colorContrario(activePlayerColor)) {
+                            const rivalSelect = document.createElement("select");
+                            rivalSelect.className = colorSelect.className;
+                            rivalSelect.title = "Quién juega con " + NOMBRE_BANDO[colorContrario(activePlayerColor)];
+                            rivalSelect.setAttribute("aria-label", "Quién juega con " + NOMBRE_BANDO[colorContrario(activePlayerColor)] + " contra " + nombreVisible);
+                            const tu = document.createElement("option");
+                            tu.value = "";
+                            tu.textContent = "Contra: tú (el profe)";
+                            rivalSelect.appendChild(tu);
+                            for (const [otroId, otroInfo] of entries) {
+                                if (otroId === studentId) continue;
+                                const o = document.createElement("option");
+                                o.value = otroId;
+                                // textContent: el nombre lo escribe la persona.
+                                o.textContent = "Contra: " + (otroInfo.full_name || otroInfo.email);
+                                rivalSelect.appendChild(o);
+                            }
+                            rivalSelect.value = rivalId && onlineStudents.has(rivalId) ? rivalId : "";
+                            rivalSelect.addEventListener("change", () => setRival(rivalSelect.value || null));
+                            extra.appendChild(rivalSelect);
+                        }
                         const quitar = document.createElement("button");
                         quitar.type = "button";
                         quitar.className = TEXTO_BTN + "bg-accent-500 hover:bg-accent-600 text-brand-900";
                         quitar.textContent = "Quitar control";
                         quitar.addEventListener("click", () => setActivePlayer(null, colorSelect.value));
                         extra.appendChild(quitar);
+                    }
+                    if (esRival) {
+                        const lado = document.createElement("span");
+                        lado.className = "text-xs font-semibold text-brand-800 dark:text-white";
+                        const c = colorContrario(activePlayerColor);
+                        lado.textContent = (c === "w" ? "⚪ " : "⚫ ") + "Juega con " + (NOMBRE_BANDO[c] || "el otro color")
+                            + " contra " + nombreDelQueJuega(activePlayerId);
+                        extra.appendChild(lado);
+                        const quitarRival = document.createElement("button");
+                        quitarRival.type = "button";
+                        quitarRival.className = TEXTO_BTN + "bg-accent-500 hover:bg-accent-600 text-brand-900";
+                        quitarRival.textContent = "Quitar control";
+                        quitarRival.setAttribute("aria-label", "Quitarle el control a " + nombreVisible + " (vuelves a jugar tú ese color)");
+                        quitarRival.addEventListener("click", () => setRival(null));
+                        extra.appendChild(quitarRival);
                     }
                     li.appendChild(extra);
                 }
@@ -2785,10 +2863,17 @@
         }
 
         async function setActivePlayer(studentId, color) {
-            const { error } = await sb.from("game_state").update({
-                active_player_id: studentId,
-                active_player_color: studentId ? (color || "both") : "both",
-            }).eq("id", myGameStateId);
+            const nuevoColor = studentId ? (color || "both") : "both";
+            const campos = { active_player_id: studentId, active_player_color: nuevoColor };
+            /* El rival sigue solo si el control sigue siendo del mismo alumno y de un
+               color (cambiar de blancas a negras lo deja con el otro color). En
+               cualquier otro caso se va; la base lo borra igual. Sin rival no se
+               manda la columna. */
+            if (rivalId) {
+                const sigue = studentId && studentId === activePlayerId && nuevoColor !== "both" && rivalId !== studentId;
+                campos.rival_id = sigue ? rivalId : null;
+            }
+            const { error } = await sb.from("game_state").update(campos).eq("id", myGameStateId);
             if (error) {
                 console.error(error);
                 setStatus("No se pudo actualizar el control del tablero: " + error.message);
@@ -2797,8 +2882,33 @@
             // La lista no espera el eco de Realtime: con 20 alumnos, el profe ve al
             // toque a quién le dio el control (y su color). El eco llega igual.
             activePlayerId = studentId;
-            activePlayerColor = studentId ? (color || "both") : "both";
+            activePlayerColor = nuevoColor;
+            if ("rival_id" in campos) rivalId = campos.rival_id;
             renderStudentsList();
+        }
+
+        // El otro alumno, que juega el color contrario (null = juega el profe).
+        async function setRival(studentId) {
+            if (studentId && (!activePlayerId || !colorContrario(activePlayerColor) || studentId === activePlayerId)) return;
+            const { data, error } = await sb.from("game_state").update({ rival_id: studentId })
+                .eq("id", myGameStateId).select("rival_id").maybeSingle();
+            if (error) {
+                console.error(error);
+                setStatus("No se pudo poner a jugar a los dos alumnos: " + error.message);
+                return;
+            }
+            // Se mira lo que QUEDÓ: la base lo borra si el control ya no es de un color.
+            rivalId = (data && data.rival_id) || null;
+            renderStudentsList();
+            if (studentId && rivalId === studentId) {
+                setStatus(nombreDelQueJuega(activePlayerId) + " juega con " + NOMBRE_BANDO[activePlayerColor]
+                    + " y " + nombreDelQueJuega(rivalId) + " con " + NOMBRE_BANDO[colorContrario(activePlayerColor)] + ".");
+            }
+        }
+
+        function nombreDelQueJuega(id) {
+            const info = onlineStudents.get(id) || {};
+            return info.full_name || info.email || "su compañero";
         }
 
         // ---------- Levantar la mano (solo alumnos) ----------
@@ -2939,6 +3049,8 @@
                 }
                 dictarFotografiaDeLaPresencia(state);
                 if (!isTeacher && !esObservador) pintarEntrenoDelProfe(state);
+                // Contra quién juega se dice con su nombre, que llega por la presencia.
+                if (!isTeacher && !esObservador && rivalId) updateAccessForRole();
                 renderStudentsList();
                 pintarCuentaCalentamiento();
                 if (isTeacher && tandaActual) { anotarTandaDeLaPresencia(); pintarTandaProfe(); }
@@ -5916,8 +6028,24 @@
         // interesa al profesor, que es quien puede estar viendo muchos tableros a la vez).
         function practiceStatusLabelWithAttempts(row) {
             const attempts = row.attempts || 1;
-            return practiceStatusLabel(row.status) + " · intento " + attempts;
+            const tope = intentosDeLaRonda();
+            return practiceStatusLabel(row.status) + " · intento " + attempts + (tope ? " de " + tope : "");
         }
+
+        // Cuántas partidas deja jugar la ronda a cada alumno (practice_sessions.max_intentos;
+        // null = sin límite). La primera cuenta. Lo hace cumplir la base (el trigger
+        // practica_ayuda_proteger rechaza un reintento de más): esto solo lo dice y esconde
+        // el botón. Ver «La práctica con un límite de intentos» en
+        // docs/decisiones/clase-en-vivo.md.
+        function intentosDeLaRonda() {
+            const n = latestPracticeSession && Number(latestPracticeSession.max_intentos);
+            return n > 0 ? n : null;
+        }
+        function quedanIntentos(row) {
+            const tope = intentosDeLaRonda();
+            return tope === null ? Infinity : Math.max(0, tope - ((row && row.attempts) || 1));
+        }
+        function textoIntentos(n) { return n === 1 ? "1 intento" : n + " intentos"; }
 
         // Resultado desde el punto de vista del alumno, justo después de aplicar una jugada
         // (suya o del motor) sobre `g`. Se llama con el turno YA pasado al otro lado.
@@ -5938,11 +6066,13 @@
             await sb.from("practice_sessions").update({ ended_at: new Date().toISOString() }).eq("created_by", boardOwnerId).is("ended_at", null);
             const reloj = parseInt((document.getElementById("practice-reloj") || {}).value, 10);
             const inc = parseInt((document.getElementById("practice-incremento") || {}).value, 10);
-            return sb.from("practice_sessions").insert({
+            const intentos = parseInt((document.getElementById("practice-intentos") || {}).value, 10);
+            return sb.from("practice_sessions").insert(Object.assign({
                 fen, level, created_by: session.user.id,
                 reloj_segundos: isFinite(reloj) && reloj > 0 ? reloj : null,
                 incremento_segundos: isFinite(reloj) && reloj > 0 && isFinite(inc) ? inc : 0,
-            });
+            // Sin límite no se manda la columna: es lo mismo que null.
+            }, intentos > 0 ? { max_intentos: intentos } : {}));
         }
 
         function montarControlesDePractica() {
@@ -5989,11 +6119,14 @@
             const { parejas, sobra } = PartidasClase.emparejar(ids);
             const btn = document.getElementById("emparejar-btn");
             btn.disabled = true;
-            const filas = parejas.map((p) => ({
+            const desdeTablero = document.getElementById("partidas-desde-tablero").checked;
+            const filas = parejas.map((p) => Object.assign({
                 variant: "estandar", white_id: p.blancas, black_id: p.negras, created_by: session.user.id, fen,
                 initial_seconds: ritmo.inicial, increment_seconds: ritmo.incremento,
                 white_time_left: ritmo.inicial, black_time_left: ritmo.inicial,
-            }));
+            // game_rooms no guarda la posición de salida: sin ella, sus jugadas no se pueden
+            // reproducir para llevar la partida a la clase (js/clase-traer-partida.js).
+            }, desdeTablero ? { variant_state: { inicio: fen } } : {}));
             const { error } = await sb.from("game_rooms").insert(filas);
             btn.disabled = false;
             if (error) { console.error(error); msg.textContent = "No se pudieron armar las partidas: " + error.message; return; }
@@ -6009,7 +6142,7 @@
             if (!lista) return;
             if (!currentOpenSessionId) { lista.innerHTML = ""; return; }
             const { data, error } = await sb.from("game_rooms")
-                .select("id, white_id, black_id, status, result, moves")
+                .select("id, white_id, black_id, status, result, moves, fen, variant_state")
                 .eq("class_session_id", currentOpenSessionId).order("created_at");
             if (error) { console.error(error); return; }
             const { data: nombres } = await sb.rpc("nombres_de_jugadores", {
@@ -6031,7 +6164,10 @@
                 a.className = "shrink-0 font-semibold text-accent-700 dark:text-accent-400 hover:underline";
                 a.textContent = "Mirar";
                 a.setAttribute("aria-label", "Mirar la partida de " + nombre(r.white_id) + " y " + nombre(r.black_id) + " (se abre en otra pestaña)");
-                li.append(t, a);
+                const acciones = document.createElement("div");
+                acciones.className = "shrink-0 flex items-center gap-3";
+                acciones.append(botonPartidaEnLineaALaClase(r, "la partida de " + nombre(r.white_id) + " y " + nombre(r.black_id)), a);
+                li.append(t, acciones);
                 lista.appendChild(li);
             });
         }
@@ -6201,6 +6337,8 @@
             document.getElementById("practice-boards-section").classList.toggle("hidden", !active);
             if (active) {
                 document.getElementById("practice-active-level").textContent = practiceLevelLabel(latestPracticeSession.level);
+                const tope = intentosDeLaRonda();
+                document.getElementById("practice-active-intentos").textContent = tope ? " · " + textoIntentos(tope) + " por alumno" : "";
                 loadPracticeGamesForSession(latestPracticeSession.id);
             } else {
                 cerrarMirada();
@@ -6728,7 +6866,9 @@
                         return { texto: "Empezaste la partida de nuevo." };
                     },
                     porQueNoPuedes: () => !myPracticeGame || myPracticeGame.status !== "playing"
-                        ? "Esta partida ya terminó. Escribe «reintentar» para empezarla de nuevo."
+                        ? (myPracticeGame && quedanIntentos(myPracticeGame) <= 0
+                            ? "Esta partida ya terminó y ya usaste los intentos de esta práctica."
+                            : "Esta partida ya terminó. Escribe «reintentar» para empezarla de nuevo.")
                         : "El motor está pensando su jugada: espera un momento.",
                 }) : null;
             }
@@ -6753,12 +6893,17 @@
             const resignBtn = document.getElementById("practice-resign-btn");
             const retryBtn = document.getElementById("practice-retry-btn");
             const retryEngineBtn = document.getElementById("practice-retry-engine-btn");
+            pintarIntentosAlumno();
+            pintarUltimaDelMotor();
             if (!myPracticeGame || myPracticeGame.status !== "playing") {
                 if (practiceBoard) practiceBoard.setInteractive(false);
-                statusEl.textContent = myPracticeGame ? practiceStatusLabel(myPracticeGame.status) : "";
+                const sinIntentos = !!myPracticeGame && quedanIntentos(myPracticeGame) <= 0;
+                statusEl.textContent = !myPracticeGame ? ""
+                    : practiceStatusLabel(myPracticeGame.status)
+                        + (sinIntentos ? ". Ya usaste " + (intentosDeLaRonda() === 1 ? "tu intento" : "tus " + textoIntentos(intentosDeLaRonda())) + " de esta práctica." : "");
                 resignBtn.classList.add("hidden");
                 retryEngineBtn.classList.add("hidden");
-                retryBtn.classList.toggle("hidden", !myPracticeGame);
+                retryBtn.classList.toggle("hidden", !myPracticeGame || sinIntentos);
                 return;
             }
             resignBtn.classList.remove("hidden");
@@ -6774,11 +6919,63 @@
                 : (myTurn ? "Es tu turno." : (stuck ? "El motor no respondió — toca \"Pedir jugada del motor\" para intentarlo de nuevo." : "Esperando la jugada del motor…"));
         }
 
+        // Devuelve el error, si lo hubo (null si se guardó).
         async function savePracticeGameRow(patch) {
-            if (!myPracticeGame) return;
+            if (!myPracticeGame) return null;
             const { error } = await sb.from("practice_games").update(patch).eq("id", myPracticeGame.id);
-            if (error) { console.error(error); return; }
+            if (error) { console.error(error); return error; }
             myPracticeGame = Object.assign({}, myPracticeGame, patch);
+            return null;
+        }
+
+        // «Intento 2 de 3», junto al nivel y el color. Sin límite no se dice nada.
+        function pintarIntentosAlumno() {
+            const el = document.getElementById("practice-card-intentos");
+            if (!el) return;
+            const tope = intentosDeLaRonda();
+            el.textContent = tope && myPracticeGame ? " · Intento " + (myPracticeGame.attempts || 1) + " de " + tope : "";
+        }
+
+        /* ---------- Avisar que el motor ya jugó ----------
+           El alumno mueve, el motor piensa un momento y contesta: si en ese rato miró
+           otra cosa (el chat, la llamada, otra pestaña), no se enteraba de que ya le
+           tocaba. Ahora la jugada queda escrita encima del tablero, suena un pitido
+           (se puede apagar) y, si la pestaña no está a la vista, el título parpadea
+           (js/turn-alert.js, el mismo aviso de las partidas en línea). Si cerró la
+           tarjeta con la ✖, el botón para volver lo dice. */
+        let ultimaDelMotor = null; // {san, jugadas}: lo que jugó y en qué jugada de la partida
+        function pintarUltimaDelMotor() {
+            const el = document.getElementById("practice-card-ultima");
+            const reabrir = document.getElementById("practice-reopen-btn");
+            if (!el) return;
+            const jugadas = practiceBoard ? practiceBoard.game.history().length : 0;
+            // Solo mientras sea la última jugada de la partida y le toque al alumno.
+            const vigente = !!(ultimaDelMotor && myPracticeGame && myPracticeGame.status === "playing"
+                && ultimaDelMotor.jugadas === jugadas && practiceBoard.game.turn() === myPracticeGame.student_color);
+            el.hidden = !vigente;
+            el.textContent = vigente ? "🔔 El motor jugó " + ComandosTablero.jugadaParaMostrar(ultimaDelMotor.san) + ". Te toca." : "";
+            if (reabrir) reabrir.textContent = vigente ? "🎯 Volver a tu práctica · ¡te toca!" : "🎯 Volver a tu práctica";
+        }
+        function avisarJugadaDelMotor(san) {
+            ultimaDelMotor = { san, jugadas: practiceBoard.game.history().length };
+            pintarUltimaDelMotor();
+            if (!practiceBoard.game.game_over() && window.TurnAlert) TurnAlert.botJugo(ComandosTablero.jugadaParaMostrar(san));
+        }
+
+        function pintarBotonSonido() {
+            const btn = document.getElementById("practice-sonido-btn");
+            if (!btn || !window.TurnAlert) return;
+            const si = TurnAlert.sonidoActivo();
+            btn.setAttribute("aria-pressed", si ? "true" : "false");
+            btn.textContent = si ? "🔔 Sonido cuando juega el motor: encendido" : "🔕 Sonido cuando juega el motor: apagado";
+        }
+        const botonSonido = document.getElementById("practice-sonido-btn");
+        if (botonSonido) {
+            pintarBotonSonido();
+            botonSonido.addEventListener("click", () => {
+                TurnAlert.ponerSonido(!TurnAlert.sonidoActivo());
+                pintarBotonSonido();
+            });
         }
 
         // gameIdAtMove/attemptsAtMove: por si mientras el motor pensaba el alumno se rindió o
@@ -6858,6 +7055,7 @@
 
             if (move) {
                 practiceBoard.render();
+                avisarJugadaDelMotor(move.san);
                 pintarAyudaAlumno();
                 if (practicaAcc) {
                     practicaAcc.actualizar();
@@ -6915,10 +7113,19 @@
         // tablero por alumno) y suma un intento — el profesor ve ese número en su grilla.
         async function retryPracticeGame() {
             if (!myPracticeGame || !latestPracticeSession || latestPracticeSession.ended_at) return;
-            await savePracticeGameRow({
+            if (quedanIntentos(myPracticeGame) <= 0) { updatePracticeCardInteractivity(); return; }
+            // La base lo puede rechazar (se acabaron los intentos): entonces no se
+            // reinicia nada en la pantalla, y se dice por qué.
+            const error = await savePracticeGameRow({
                 fen: latestPracticeSession.fen, moves: [], status: "playing",
                 eval_cp: null, attempts: (myPracticeGame.attempts || 1) + 1, reloj_ms: null,
             });
+            if (error) {
+                updatePracticeCardInteractivity();
+                document.getElementById("practice-card-status").textContent = "No se pudo empezar otra vez: " + error.message;
+                return;
+            }
+            ultimaDelMotor = null;
             // La base borra la ayuda al reintentar: era de la partida anterior.
             myPracticeGame = Object.assign({}, myPracticeGame, { ayuda: null, pide_ayuda_at: null, respuesta: null });
             practiceBoard.loadMoves([], latestPracticeSession.fen);
@@ -7283,7 +7490,7 @@
                 document.getElementById("app").classList.remove("hidden");
                 return;
             }
-            if (isTeacher) { montarControlesDePreguntas(); montarControlesDePractica(); abrirCuestionarioPedido(); }
+            if (isTeacher) { montarControlesDePreguntas(); montarControlesDePractica(); montarTraerPartida(); abrirCuestionarioPedido(); }
             await loadCurrentQuestion();
             subscribeQuestions();
             await loadCurrentPractice();

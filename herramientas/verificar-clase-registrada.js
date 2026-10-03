@@ -314,6 +314,11 @@ window.__deletes = [];
       (window.__rpcs = window.__rpcs || []).push({ n: n, args: args || {} });
       /* Las insignias, como en la base: otorgar_insignia agrega la fila,
          quitar_insignia la borra y premios_de_alumno las cuenta por tipo. */
+      // Como la base: {id, nombre} de los perfiles pedidos (sin el correo).
+      if (n === "nombres_de_jugadores") {
+        const ids = (args && args.p_ids) || [];
+        return constructor(n, TABLAS.profiles.filter((p) => ids.includes(p.id)).map((p) => ({ id: p.id, nombre: p.full_name })));
+      }
       if (n === "otorgar_insignia") {
         const fila = { id: "ins-" + (TABLAS.insignias.length + 1), alumno_id: args.p_alumno, tipo: args.p_tipo,
           motivo: args.p_motivo || "", otorgada_por: ${JSON.stringify(quien)}, created_at: new Date().toISOString() };

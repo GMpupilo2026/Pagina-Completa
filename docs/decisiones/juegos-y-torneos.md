@@ -899,6 +899,130 @@ página calcule el reloj con `Date.now()` a secas, y que el desfase se mida
 contra un servidor que va siete segundos por delante. Está probado que falla de
 verdad: quitando el recorte de la captura al paso, salta.
 
+## Niebla de Guerra: sin jaques, gana quien se come el rey
+
+La niebla jugaba con las reglas de chess.js, las del ajedrez de siempre: no se
+podía dejar al rey en jaque, y la partida terminaba con jaque mate. Con niebla
+eso no tiene sentido —no se sabe si el rey está atacado— y además **delataba
+lo que la niebla tapa**: si una pieza no se dejaba mover (estaba clavada) o el
+rey no podía ir a una casilla, eso decía dónde estaba la pieza rival, y la
+página avisaba «¡Estás en jaque!». Ahora, como en la Niebla de Guerra de
+siempre (la de chess.com):
+
+- **no hay jaque ni jaque mate**: vale toda jugada que la pieza pueda hacer,
+  aunque deje al rey atacado (las «pseudolegales» de chess.js, `legal:
+  false`);
+- se **enroca** aunque el rey esté atacado o pase por una casilla atacada:
+  alcanza con el derecho y las casillas de por medio vacías;
+- **gana quien se come el rey**. No hay ahogado; quedan las tablas por
+  material insuficiente, por las 50 jugadas y por triple repetición.
+
+Las reglas están una sola vez, en `NieblaGuerra.reglas` (`js/niebla-engine.js`):
+`jugadas`, `jugar`, `moverTexto` (la jugada escrita del Modo Adaptado),
+`reyComido` y `desenlace`. chess.js no aplica una jugada que deja al rey en
+jaque: esas se aplican a mano (`fenTras`: la pieza, el al paso, la torre del
+enroque, los derechos de enroque y los contadores) y se vuelve a cargar la
+posición. Las jugadas se anotan **sin «+» ni «#»**: el signo del jaque delataría
+al rey.
+
+- **Dónde valen**: el tablero las usa con `sinJaques` (`js/niebla-board.js`).
+  Lo prende `niebla.html` —las salas de Juegos, los retos y **los torneos de
+  niebla**, que juegan ahí— y la modalidad Niebla de `bot.html`. El estándar
+  del bot usa el mismo tablero sin la opción, con las reglas de siempre.
+- **El Modo Adaptado tampoco dice «jaque»** (`in_check` da falso) y ofrece las
+  mismas jugadas que el tablero.
+- **El bot** las entiende sin saber de la variante (`adaptadorNiebla` en
+  `js/bot.js`): el bando sin rey «no tiene jugadas y está en jaque», que es como
+  el bot reconoce una partida perdida, y un rey comido vale como partida ganada
+  en el material (el rey vale cero en `VALOR`, y sin eso no vería la captura al
+  final de la búsqueda).
+- `niebla.html` escribe la regla arriba del tablero y, al terminar, dice cómo
+  se ganó («… ganó con blancas: se comió el rey.»).
+- La triple repetición se cuenta reproduciendo las jugadas con chess.js
+  (`js/repeticion.js`): una partida con una jugada que chess.js no acepta no
+  llega a la posición guardada, y entonces no se declara nada. Antes que una
+  repetición equivocada, ninguna.
+
+**Al tocarlo, correr `node herramientas/verificar-todo.js niebla-reglas
+juegos-accesible bot-oscar`.** `verificar-niebla-reglas.js` prueba las reglas
+sin navegador (la pieza clavada, el rey a una casilla atacada, el enroque
+pasando por jaque, la posición que queda, la jugada escrita) y `niebla.html`
+con el doble de `verificar-juegos-accesible.js`, que ahora lo exporta. Está
+probado que falla de verdad: sin `sinJaques` en `niebla.js`, salta.
+
+## Realtime perdía jugadas
+
+El 3/10, en un torneo, el rival jugaba y al otro no le llegaba la jugada: su
+reloj seguía corriendo y la pantalla no decía nada. En `realtime_logs`, a la
+misma hora (35 veces en 15 minutos):
+
+    PoolingReplicationError … permission denied for function my_profile
+    … realtime.apply_rls … list_changes
+
+**Realtime revisa cada cambio con los permisos de CADA suscriptor**, y si la
+revisión falla para uno, falla el lote entero: el cambio no le llega a nadie.
+Basta un suscriptor `anon` —una pestaña con la sesión vencida, que se queda
+con la clave anónima; `js/juego-aviso.js` escucha `game_rooms` en todas las
+páginas— para que la política de lectura de `game_rooms` llame a
+`my_profile()`, que `anon` no puede ejecutar (a propósito), y se caiga todo.
+Comprobado: `set local role anon; select count(*) from game_rooms` daba ese
+mismo error.
+
+- **El arreglo, en la base** (migración `20261003194333_realtime_politicas_solo_authenticated`):
+  las 17 políticas de lectura de las tablas publicadas en Realtime que eran
+  `to public` pasan a `to authenticated`. Para `anon` no aplica ninguna: no ve
+  filas, y sin error (comprobado en una transacción revertida: ahora da 0).
+  Para quien tiene sesión no cambia nada. `tv_settings_select_public` queda
+  pública: lo es a propósito y su condición es `true`.
+- **Que no vuelva**: `verificar-realtime-roles.js` revisa cada migración nueva:
+  una política de lectura (o `all`) sobre una tabla publicada va `to
+  authenticated`, y un `alter policy … to public` sobre una de ellas no pasa.
+- **Y un respaldo en la página** (`SalaJuego.suscribir`, en `js/sala-juego.js`,
+  que usan las seis páginas de partida): por cualquier otra causa por la que
+  se pierda un aviso, la página vuelve a leer la sala —una fila, por su clave—
+  cada 15 s mientras la partida sigue y la pestaña se ve, al volver a la
+  pestaña, y si el canal se cae. Lo que llega por Realtime se entrega siempre;
+  lo releído, solo si la fila cambió desde lo último entregado (la fila entera:
+  Cartas y Duelo cambian su estado sin mover la posición), y una lectura que
+  salió antes de la última jugada y volvió después no la pisa (`updated_at`).
+  `verificar-sala-respaldo.js` lo prueba con un doble que no avisa nada por
+  Realtime: el rival juega «en la base», y al volver a la pestaña el tablero
+  lo muestra. Está probado que falla de verdad: sin la lectura al volver a la
+  pestaña, salta.
+
+## Terminar y eliminar un torneo
+
+En `torneo.html`, quien lo organiza (o administración) tiene **«⚙️ Organizar
+el torneo»**, con dos botones, cada uno con su aviso de la página
+(`Avisos.confirmar`, en rojo):
+
+- **🏁 Terminar el torneo**: lo cierra como está, sin jugar lo que falta. En un
+  suizo o un todos contra todos queda anotado quién iba primero
+  (`winner_ids`), pero **no es campeón ni entra al salón de la fama**: el
+  torneo no se jugó entero. La página lo dice («Quien lo organiza lo terminó
+  antes de jugarse entero: no hay campeón. Iba primero: …») y no ofrece el
+  salón de la fama. Un torneo con la inscripción abierta se cierra sin
+  jugarse. Las partidas que seguían en juego se pueden terminar, pero ya no
+  cuentan (`TorneoSync` no toca un torneo terminado), y el aviso lo dice.
+  - Cuándo quedó incompleto se calcula, no se guarda: una ronda abierta, menos
+    rondas que las previstas, o un cruce que terminó DESPUÉS de cerrarse el
+    torneo (una partida que seguía puede terminar y cerrar su ronda: sin esto,
+    el torneo cortado en la última ronda se vería completo).
+- **🗑️ Eliminar el torneo**: lo borra con sus rondas, cruces e inscripciones
+  (la base los borra en cascada) y, después, las partidas que seguían en juego
+  —antes no se puede: el cruce las nombra—; las terminadas se quedan, son la
+  historia de cada alumno. Los campeones que ya estaban en el salón de la fama
+  se quedan (`public_tournament_champions`, `on delete set null`). Vuelve a la
+  lista de torneos, y quien lo tenía abierto lee «No se encontró ese torneo».
+- **Quién puede lo decide la base**: `tournaments_update` y `tournaments_delete`
+  (quien lo creó o administración). Las dos escrituras piden la fila de vuelta
+  y se dice lo que QUEDÓ, no lo que se mandó.
+
+`verificar-torneo-terminar.js` lo prueba con el doble de
+`verificar-torneo-rondas.js`, que ahora lo exporta y cuyo `delete` devuelve las
+filas borradas con `.select()`, como PostgREST. Está probado que falla de
+verdad: coronando a quien iba primero, saltan tres comprobaciones.
+
 ## Una sola copia de lo que comparten los juegos
 
 Cada juego había nacido copiando al anterior, y las copias ya se habían

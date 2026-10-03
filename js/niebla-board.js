@@ -8,8 +8,12 @@
  *
  * Interacción idéntica a Crazyhouse (toque para seleccionar origen, toque
  * para elegir destino entre las jugadas legales resaltadas, o arrastrar la
- * pieza — ver js/board-drag.js): la niebla es solo visual, no cambia qué
- * jugadas son legales ni cómo se hacen.
+ * pieza — ver js/board-drag.js).
+ *
+ * Con `sinJaques` (las partidas de Niebla de Guerra) juega con las reglas de
+ * la niebla: no hay jaques y gana quien se come el rey (NieblaGuerra.reglas,
+ * en js/niebla-engine.js). Sin él es ajedrez de siempre: el bot de Oscar usa
+ * este mismo tablero para la partida estándar.
  *
  * Requiere chess.js y js/niebla-engine.js cargados antes que este archivo.
  */
@@ -41,6 +45,7 @@
      * @param {boolean} opts.interactive
      * @param {"w"|"b"} opts.myColor
      * @param {boolean} opts.spectator - true = ve el tablero completo, sin niebla
+     * @param {boolean} opts.sinJaques - reglas de la niebla: sin jaques, gana quien se come el rey
      * @param {(info:{fen, san, gameOver, result})=>void} opts.onMove
      * @param {(from,to,cb)=>void} opts.onPromotionNeeded
      */
@@ -51,6 +56,7 @@
       this.interactive = !!opts.interactive;
       this.myColor = opts.myColor || "w";
       this.spectator = !!opts.spectator;
+      this.sinJaques = !!opts.sinJaques;
       this.flipped = this.myColor === "b";
       this.onMove = opts.onMove || function () {};
       this.onPromotionNeeded = opts.onPromotionNeeded || null;
@@ -119,6 +125,7 @@
     }
 
     _legalTargetsFromSquare(square) {
+      if (this.sinJaques) return NieblaGuerra.reglas.jugadas(this.game, { square: square });
       return this.game.moves({ square: square, verbose: true });
     }
 
@@ -128,7 +135,8 @@
     }
 
     _applyMove(from, to, promotion) {
-      const move = this.game.move({ from: from, to: to, promotion: promotion || "q" });
+      const mov = { from: from, to: to, promotion: promotion || "q" };
+      const move = this.sinJaques ? NieblaGuerra.reglas.jugar(this.game, mov) : this.game.move(mov);
       if (!move) return;
       this.selected = null;
       // La jugada propia ya se vio moverse con el arrastre o el toque —
@@ -140,7 +148,13 @@
 
     _afterMove(move) {
       let gameOver = false, result = null;
-      if (this.game.in_checkmate()) {
+      if (this.sinJaques) {
+        const d = NieblaGuerra.reglas.desenlace(this.game);
+        if (d.fin) {
+          gameOver = true;
+          result = d.ganador === "w" ? "white" : d.ganador === "b" ? "black" : "draw";
+        }
+      } else if (this.game.in_checkmate()) {
         gameOver = true;
         result = this.game.turn() === "w" ? "black" : "white"; // a quien le toca mover es quien está mate
       } else if (this.game.in_draw()) {
@@ -156,7 +170,10 @@
     tryMove(rawText) {
       if (!this._canActNow()) return { ok: false, reason: "no_turn" };
       if (typeof ChessMoveParser === "undefined") return { ok: false, reason: "no_parser" };
-      const move = ChessMoveParser.tryParseMove(this.game, rawText);
+      // Con las reglas de la niebla, el intérprete prueba sus candidatos contra
+      // ellas (move(candidato)) y no contra las de chess.js.
+      const juego = this.sinJaques ? { move: (c) => NieblaGuerra.reglas.moverTexto(this.game, c) } : this.game;
+      const move = ChessMoveParser.tryParseMove(juego, rawText);
       if (!move) return { ok: false, reason: "invalid" };
       this.selected = null;
       this.lastMove = { from: move.from, to: move.to };
