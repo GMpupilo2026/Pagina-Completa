@@ -182,28 +182,49 @@ async function pruebaCalentamientoDelProfe(browser) {
 
 async function pruebaLosPuntos(browser) {
   console.log("\n=== Los puntos de la clase y el podio ===");
+  const t = (s) => new Date(Date.now() - 60000 + s * 1000).toISOString();
   const semilla = {
     game_state: [fila()],
-    class_attendance: [{ session_id: "c-viva", student_id: "u-ana" }],
-    questions: [pregunta({ closed_at: new Date().toISOString() })],
-    question_answers: [{ id: "a1", question_id: "q1", student_id: "u-ana", moves: ["e4"], is_correct: true }],
+    class_attendance: [{ session_id: "c-viva", student_id: "u-ana" }, { session_id: "c-viva", student_id: "u-luis" }],
+    // Una pregunta difícil (2200: base 50) y otra sin dificultad (la de 1200: base 25).
+    questions: [pregunta({ closed_at: new Date().toISOString(), dificultad: 2200 }), pregunta({ id: "q2", closed_at: new Date().toISOString() })],
+    question_answers: [
+      // q1: Ana acierta primero y a la primera (50 × 1,5 = 75); Luis, segundo y al 2.º intento (50 × 0,6 × 1,3 = 39).
+      { id: "a1", question_id: "q1", student_id: "u-ana", moves: ["e4"], is_correct: true, intentos: 1, updated_at: t(1) },
+      { id: "a2", question_id: "q1", student_id: "u-luis", moves: ["e4"], is_correct: true, intentos: 2, updated_at: t(5) },
+      // q2: Luis acierta primero al 4.º intento (25 × 0,3 × 1,5 = 11); Ana se equivoca: lo malo no suma.
+      { id: "a3", question_id: "q2", student_id: "u-luis", moves: ["d4"], is_correct: true, intentos: 4, updated_at: t(2) },
+      { id: "a4", question_id: "q2", student_id: "u-ana", moves: ["a3"], is_correct: false, intentos: 1, updated_at: t(1) },
+    ],
     clase_elegidos: [{ class_session_id: "c-viva", student_id: "u-ana", resultado: "bien" }],
+    // La competencia (nivel 2200: base 50): el ejercicio 0 lo resuelve primero Ana (75) y después Luis (65);
+    // el 1, Luis lo falla. Lo malo no suma.
+    tanda_resultados: [
+      { semilla: "s1", student_id: "u-ana", class_session_id: "c-viva", indice: 0, bien: true, modo: "reto", elo: 2200, created_at: t(10) },
+      { semilla: "s1", student_id: "u-luis", class_session_id: "c-viva", indice: 0, bien: true, modo: "reto", elo: 2200, created_at: t(12) },
+      { semilla: "s1", student_id: "u-luis", class_session_id: "c-viva", indice: 1, bien: false, modo: "reto", elo: 2200, created_at: t(20) },
+    ],
   };
   const { page, ctx, errores } = await abrir(browser, "u-profe", CLASE, semilla);
   await page.click("#puntos-caja summary");
   await page.waitForFunction(() => /Ana/.test(document.getElementById("puntos-lista").textContent), null, { timeout: 5000 });
-  // 1 contestada + 2 correcta + 2 turno bien.
-  igual("cuenta los puntos, con de dónde salen", await page.evaluate(() =>
+  // Ana: 75 + 75 de la competencia + 20 del turno bien = 170. Luis: 39 + 11 + 65 = 115.
+  igual("cuenta los puntos según la dificultad, los intentos y quién acertó primero, con de dónde salen", await page.evaluate(() =>
     [...document.querySelectorAll("#puntos-lista li p")].map((p) => p.textContent)),
-    ["🥇 1.º Ana Rojas — 5 puntos", "1 × pregunta contestada (+1) · 1 × respuesta correcta (+2) · 1 × turno de palabra bien (+2)"]);
-  igual("la regla va escrita", /respuesta correcta: 2 puntos/.test(await page.textContent("#puntos-regla")), true);
+    ["🥇 1.º Ana Rojas — 170 puntos", "1 respuesta bien (1 a la primera, 1 vez primero en acertar) (+75) · 1 ejercicio del calentamiento bien (1 vez primero) (+75) · 1 × turno de palabra bien (+20)",
+      "🥈 2.º Alumno — 115 puntos", "2 respuestas bien (1 vez primero en acertar) (+50) · 1 ejercicio del calentamiento bien (+65)"]);
+  igual("la regla va escrita", /de 10 a 50 puntos según su dificultad.*a la primera.*el 1\.º en acertar suma un 50 % más/.test(await page.textContent("#puntos-regla")), true);
+  igual("la cuenta de la página es la de la base", await page.evaluate(() => [PuntosClase.puntosDeUnaRespuesta(2200, 1, 1),
+    PuntosClase.puntosDeUnaRespuesta(2200, 2, 2), PuntosClase.puntosDeUnaRespuesta(null, 4, 1), PuntosClase.puntosDeUnaRespuesta(600, 1, null),
+    PuntosClase.puntosDeUnaRespuesta(1400, 5, 3), PuntosClase.puntosDeUnaRespuesta(3000, 1, null)]), [75, 39, 11, 10, 10, 50]);
 
   await page.uncheck("#podio-con-nombres");
   await page.click("#podio-mostrar-btn");
   await page.waitForFunction(() => window.__updates.some((u) => u.tabla === "game_state" && u.campos.podio), null, { timeout: 5000 });
   const podio = (await cambiosDeGameState(page)).find((x) => x.podio).podio;
-  igual("sin nombres, el podio no lleva ninguno", [podio.con_nombres, podio.lineas], [false, [{ id: "u-ana", nombre: null, puntos: 5, puesto: 1 }]]);
-  igual("y se ve también en la pantalla del profe", await page.textContent("#podio-lineas"), "🥇 1.º lugar — 5 puntos");
+  igual("sin nombres, el podio no lleva ninguno", [podio.con_nombres, podio.lineas],
+    [false, [{ id: "u-ana", nombre: null, puntos: 170, puesto: 1 }, { id: "u-luis", nombre: null, puntos: 115, puesto: 2 }]]);
+  igual("y se ve también en la pantalla del profe", await page.textContent("#podio-lineas"), "🥇 1.º lugar — 170 puntos🥈 2.º lugar — 115 puntos");
   igual("sin errores en consola", errores, []);
   await ctx.close();
 }

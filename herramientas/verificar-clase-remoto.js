@@ -193,10 +193,10 @@ async function pruebaPuntosDelMes(browser) {
   await page.click("#puntos-caja summary");
   await page.click("#puntos-mes-btn");
   await page.waitForFunction(() => /Ana/.test(document.getElementById("puntos-mes-lista").textContent), null, { timeout: 5000 });
-  // Sus dos clases del mes (no la de otro profe): 2 contestadas (+2) y 1 correcta (+2).
+  // Sus dos clases del mes (no la de otro profe): 1 correcta, sin dificultad, primera y a la primera: 25 × 1,5 = 38.
   igual("suma las clases del mes del profe, con la misma regla", await page.evaluate(() =>
     [...document.querySelectorAll("#puntos-mes-lista li p")].map((p) => p.textContent)),
-    ["🥇 1.º Ana Rojas — 4 puntos", "2 × pregunta contestada (+2) · 1 × respuesta correcta (+2)"]);
+    ["🥇 1.º Ana Rojas — 38 puntos", "1 respuesta bien (1 a la primera, 1 vez primero en acertar) (+38)"]);
   igual("el botón dice que está abierto", await page.getAttribute("#puntos-mes-btn", "aria-expanded"), "true");
 
   console.log("\n--- La tarjeta del panel del alumno ---");
@@ -205,7 +205,8 @@ async function pruebaPuntosDelMes(browser) {
     caja.hidden = true;
     document.body.appendChild(caja);
     const sbFalso = { rpc: async (n, a) => ({ data: n === "resumen_del_mes" && a.p_profesor === null
-      ? [{ student_id: "u-ana", nombre: "Ana Rojas", clases: 3, respondidas: 4, correctas: 2, turnos_bien: 1 }] : [], error: null }) };
+      ? [{ student_id: "u-ana", nombre: "Ana Rojas", clases: 3, respondidas: 4, correctas: 2, turnos_bien: 1 }]
+      : n === "puntos_del_mes" && a.p_profesor === null ? [{ student_id: "u-ana", puntos_preguntas: 61, a_la_primera: 2, primeros: 1 }] : [], error: null }) };
     await PuntosClase.pintarDelMesDelAlumno(sbFalso, caja);
     const r = [caja.checkVisibility(), caja.querySelector("h2").textContent, caja.querySelectorAll("p")[0].textContent];
     const vacia = document.createElement("section");
@@ -213,7 +214,7 @@ async function pruebaPuntosDelMes(browser) {
     await PuntosClase.pintarDelMesDelAlumno({ rpc: async () => ({ data: [], error: null }) }, vacia);
     return r.concat([vacia.hidden]);
   });
-  igual("con sus puntos del mes (pide solo lo suyo: sin profe)", tarjeta.slice(1, 3), ["🏆 Tus puntos de " + new Intl.DateTimeFormat("es-CR", { timeZone: "America/Costa_Rica", month: "long" }).format(new Date()), "10 puntos en 3 clases"]);
+  igual("con sus puntos del mes (pide solo lo suyo: sin profe)", tarjeta.slice(1, 3), ["🏆 Tus puntos de " + new Intl.DateTimeFormat("es-CR", { timeZone: "America/Costa_Rica", month: "long" }).format(new Date()), "81 puntos en 3 clases"]);
   igual("se ve, y sin clases este mes no aparece", [tarjeta[0], tarjeta[3]], [true, true]);
   const raiz = path.join(__dirname, "..");
   const html = fs.readFileSync(path.join(raiz, "clases.html"), "utf8"), js = fs.readFileSync(path.join(raiz, "js", "clases.js"), "utf8");

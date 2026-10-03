@@ -161,6 +161,10 @@ async function pruebaDelAlumno(browser) {
   await page.waitForFunction(() => /Ejercicio 4 de 20/.test(document.getElementById("tanda-estado").textContent), null, { timeout: 5000 });
   igual("«No sé» pasa al siguiente sin sumar", await page.textContent("#tanda-estado"), "Ejercicio 4 de 20 · llevas 1 bien");
   igual("lo hecho queda guardado (al recargar sigue donde iba)", await page.evaluate(() => JSON.parse(localStorage.getItem(tandaMia.clave)).resultados), [true, false, false]);
+  await page.waitForFunction(() => window.__inserts.filter((i) => i.tabla === "tanda_resultados").length === 3, null, { timeout: 5000 });
+  igual("y cada ejercicio terminado queda en la base, en orden: solo semilla, índice y si le salió (lo demás lo pone la base)",
+    await page.evaluate(() => window.__inserts.filter((i) => i.tabla === "tanda_resultados").map((i) => i.fila)),
+    [{ semilla: "abcd1234", indice: 0, bien: true }, { semilla: "abcd1234", indice: 1, bien: false }, { semilla: "abcd1234", indice: 2, bien: false }]);
 
   // Se acaba el tiempo (el profe lo terminó: la base acorta el plazo).
   await page.evaluate((t) => pintarTanda(Object.assign({}, t, { segundos: 0 })), tanda);

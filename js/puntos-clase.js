@@ -8,30 +8,84 @@
  * un puntaje que nadie sabe de dónde sale no motiva a nadie.
  */
 window.PuntosClase = (function () {
+    /* Las respuestas correctas suman según la dificultad, los intentos y el
+       puesto: eso lo cuenta la base (puntos_de_la_clase, en
+       `puntos_preguntas`) con la misma cuenta que puntosDeUnaRespuesta. Lo
+       demás, por cada vez, en la misma escala (una pregunta media son 25). */
     const REGLAS = [
-        { campo: "respondidas", puntos: 1, texto: "pregunta contestada" },
-        { campo: "correctas", puntos: 2, texto: "respuesta correcta" },
-        { campo: "turnos_bien", puntos: 2, texto: "turno de palabra bien" },
-        { campo: "turnos_casi", puntos: 1, texto: "turno de palabra casi" },
-        { campo: "ganadas", puntos: 3, texto: "práctica ganada al motor" },
-        { campo: "tablas", puntos: 1, texto: "práctica en tablas" },
-        { campo: "partidas_ganadas", puntos: 3, texto: "partida ganada a un compañero" },
-        { campo: "partidas_tablas", puntos: 1, texto: "partida en tablas con un compañero" },
+        { campo: "turnos_bien", puntos: 20, texto: "turno de palabra bien" },
+        { campo: "turnos_casi", puntos: 10, texto: "turno de palabra casi" },
+        { campo: "ganadas", puntos: 30, texto: "práctica ganada al motor" },
+        { campo: "tablas", puntos: 15, texto: "práctica en tablas" },
+        { campo: "partidas_ganadas", puntos: 30, texto: "partida ganada a un compañero" },
+        { campo: "partidas_tablas", puntos: 15, texto: "partida en tablas con un compañero" },
     ];
+    const INTENTOS = [1, 0.6, 0.3];      // a la primera, al 2.º intento, del 3.º en adelante
+    const PUESTOS = [0.5, 0.3, 0.15];    // lo que suma de más el 1.º, el 2.º y el 3.º en acertar
 
-    function puntos(fila) {
-        return REGLAS.reduce((s, r) => s + (Number(fila && fila[r.campo]) || 0) * r.puntos, 0);
+    /* Los puntos de UNA respuesta correcta: la misma cuenta que
+       interno.puntos_de_una_respuesta en la base (migración puntos_de_la_clase).
+       Base de 10 (600 Elo o menos) a 50 (2200 o más); sin dificultad, 25. */
+    function puntosDeUnaRespuesta(dificultad, intentos, puesto) {
+        const d = dificultad == null ? 1200 : dificultad;
+        const base = Math.round(10 + 40 * Math.min(1, Math.max(0, (d - 600) / 1600)));
+        const mult = INTENTOS[Math.min(INTENTOS.length, Math.max(1, intentos || 1)) - 1];
+        const extra = puesto >= 1 && puesto <= PUESTOS.length ? PUESTOS[puesto - 1] : 0;
+        return Math.round(base * mult * (1 + extra));
     }
 
-    // De dónde salen: «2 contestadas (+2) · 1 correcta (+2)».
+    function puntos(fila) {
+        return (Number(fila && fila.puntos_preguntas) || 0) + (Number(fila && fila.puntos_tandas) || 0)
+            + REGLAS.reduce((s, r) => s + (Number(fila && fila[r.campo]) || 0) * r.puntos, 0);
+    }
+
+    // De dónde salen: «3 respuestas bien, 2 a la primera y 1 primero en acertar (+96) · 1 × turno de palabra bien (+20)».
     function desglose(fila) {
-        return REGLAS.filter((r) => Number(fila[r.campo]) > 0)
-            .map((r) => fila[r.campo] + " × " + r.texto + " (+" + fila[r.campo] * r.puntos + ")")
-            .join(" · ");
+        const partes = [];
+        const bien = Number(fila.correctas) || 0;
+        if (bien && Number(fila.puntos_preguntas) > 0) {
+            const det = [];
+            if (Number(fila.a_la_primera) > 0) det.push(fila.a_la_primera + " a la primera");
+            if (Number(fila.primeros) > 0) det.push(fila.primeros + (Number(fila.primeros) === 1 ? " vez primero" : " veces primero") + " en acertar");
+            partes.push(bien + (bien === 1 ? " respuesta bien" : " respuestas bien") + (det.length ? " (" + det.join(", ") + ")" : "") + " (+" + fila.puntos_preguntas + ")");
+        }
+        const tb = Number(fila.tanda_bien) || 0;
+        if (tb && Number(fila.puntos_tandas) > 0) {
+            const tp = Number(fila.tanda_primeros) || 0;
+            partes.push(tb + (tb === 1 ? " ejercicio" : " ejercicios") + " del calentamiento bien"
+                + (tp ? " (" + tp + (tp === 1 ? " vez primero" : " veces primero") + ")" : "") + " (+" + fila.puntos_tandas + ")");
+        }
+        REGLAS.filter((r) => Number(fila[r.campo]) > 0)
+            .forEach((r) => partes.push(fila[r.campo] + " × " + r.texto + " (+" + fila[r.campo] * r.puntos + ")"));
+        return partes.join(" · ");
     }
 
     function reglaEscrita() {
-        return REGLAS.map((r) => r.texto + ": " + r.puntos + (r.puntos === 1 ? " punto" : " puntos")).join(" · ");
+        return "cada respuesta bien vale de 10 a 50 puntos según su dificultad; a la primera, todo (al 2.º intento, el 60 %; después, el 30 %); "
+            + "el 1.º en acertar suma un 50 % más, el 2.º un 30 % y el 3.º un 15 % · "
+            + "cada ejercicio del calentamiento bien, lo mismo según su nivel (en la competencia, también el 1.º, 2.º y 3.º en resolverlo) · "
+            + REGLAS.map((r) => r.texto + ": " + r.puntos + " puntos").join(" · ");
+    }
+
+    /* Junta a cada fila del resumen sus puntos de preguntas (puntos_de_la_clase /
+       puntos_del_mes) y los de los calentamientos (puntos_de_tandas /
+       puntos_de_tandas_del_mes). Quien solo hizo el calentamiento también
+       aparece: no estaba en el resumen. */
+    function juntar(filas, puntosFilas, tandasFilas) {
+        const por = new Map((puntosFilas || []).map((p) => [p.student_id, p]));
+        const tan = new Map((tandasFilas || []).map((p) => [p.student_id, p]));
+        const out = (filas || []).map((f) => {
+            const p = por.get(f.student_id) || {}, t = tan.get(f.student_id) || {};
+            return Object.assign({}, f, { puntos_preguntas: p.puntos_preguntas || 0, a_la_primera: p.a_la_primera || 0, primeros: p.primeros || 0,
+                puntos_tandas: t.puntos || 0, tanda_bien: t.resueltos || 0, tanda_primeros: t.primeros || 0 });
+        });
+        const ya = new Set(out.map((f) => f.student_id));
+        (tandasFilas || []).forEach((t) => {
+            if (ya.has(t.student_id)) return;
+            out.push({ student_id: t.student_id, nombre: t.nombre || "Alumno", puntos_preguntas: 0, a_la_primera: 0, primeros: 0,
+                puntos_tandas: t.puntos || 0, tanda_bien: t.resueltos || 0, tanda_primeros: t.primeros || 0 });
+        });
+        return out;
     }
 
     /* Ordenadas de más a menos, con su puesto. Empatados comparten puesto
@@ -103,8 +157,11 @@ window.PuntosClase = (function () {
        hora de Costa Rica; los puntos salen de la MISMA regla de arriba. El
        profe pasa su id y ve a sus alumnos; el alumno pasa null y ve lo suyo. */
     async function cargarDelMes(sb, profesorId) {
-        const { data, error } = await sb.rpc("resumen_del_mes", { p_profesor: profesorId || null });
-        return { filas: data || [], error };
+        const args = { p_profesor: profesorId || null };
+        const [r, p, t] = await Promise.all([sb.rpc("resumen_del_mes", args), sb.rpc("puntos_del_mes", args), sb.rpc("puntos_de_tandas_del_mes", args)]);
+        if (p.error) console.error(p.error);
+        if (t.error) console.error(t.error);
+        return { filas: juntar(r.data || [], p.data || [], t.data || []), error: r.error || p.error || t.error };
     }
 
     function nombreDelMes() {
@@ -136,6 +193,6 @@ window.PuntosClase = (function () {
     function medalla(puesto) { return puesto === 1 ? "🥇" : puesto === 2 ? "🥈" : puesto === 3 ? "🥉" : ""; }
     function textoPuntos(n) { return n + (n === 1 ? " punto" : " puntos"); }
 
-    return { REGLAS, puntos, desglose, reglaEscrita, ranking, podioParaLaClase, medalla, textoPuntos,
+    return { REGLAS, INTENTOS, PUESTOS, puntosDeUnaRespuesta, juntar, puntos, desglose, reglaEscrita, ranking, podioParaLaClase, medalla, textoPuntos,
         EQUIPOS, repartir, puntosDeEquipos, cargarDelMes, nombreDelMes, pintarDelMesDelAlumno };
 })();

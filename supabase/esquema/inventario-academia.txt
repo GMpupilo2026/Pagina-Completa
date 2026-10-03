@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261003035011
+# al-dia-con: 20261003045654
 tabla  Ejercicios Lichess  rls=true
 tabla  academia_ia  rls=true
 tabla  academia_miembros  rls=true
@@ -112,6 +112,7 @@ tabla  subgrupos  rls=true
 tabla  supervisor_academia_activa  rls=true
 tabla  supervisor_cuentas  rls=true
 tabla  suscripciones  rls=true
+tabla  tanda_resultados  rls=true
 tabla  tarea_items  rls=true
 tabla  tareas  rls=true
 tabla  tournament_pairings  rls=true
@@ -864,6 +865,7 @@ columna  puzzle_rush_scores.student_id  uuid
 columna  puzzle_rush_scores.updated_at  timestamp with time zone
 columna  question_answers.created_at  timestamp with time zone
 columna  question_answers.id  uuid
+columna  question_answers.intentos  integer
 columna  question_answers.is_correct  boolean
 columna  question_answers.moves  jsonb
 columna  question_answers.opcion  integer
@@ -879,6 +881,7 @@ columna  questions.closed_at  timestamp with time zone
 columna  questions.created_at  timestamp with time zone
 columna  questions.created_by  uuid
 columna  questions.de_salida  boolean
+columna  questions.dificultad  integer
 columna  questions.expected_plies  integer
 columna  questions.fen  text
 columna  questions.id  uuid
@@ -1011,6 +1014,16 @@ columna  suscripciones.nota  text
 columna  suscripciones.pagado_hasta  date
 columna  suscripciones.plan_id  uuid
 columna  suscripciones.student_id  uuid
+columna  tanda_resultados.bien  boolean
+columna  tanda_resultados.class_session_id  uuid
+columna  tanda_resultados.created_at  timestamp with time zone
+columna  tanda_resultados.elo  integer
+columna  tanda_resultados.id  bigint
+columna  tanda_resultados.indice  integer
+columna  tanda_resultados.modo  text
+columna  tanda_resultados.profe_id  uuid
+columna  tanda_resultados.semilla  text
+columna  tanda_resultados.student_id  uuid
 columna  tarea_items.actividades  text[]
 columna  tarea_items.completada_at  timestamp with time zone
 columna  tarea_items.created_at  timestamp with time zone
@@ -1170,6 +1183,7 @@ funcion  clase_invitado_modo(p_token text, p_secreto text, p_adaptado boolean)  
 funcion  clase_invitado_salio(p_token text, p_secreto text)  definer  anon=true  auth=true
 funcion  clase_invitado_ver(p_token text, p_secreto text)  definer  anon=true  auth=true
 funcion  cobro_cotizar(p_suscripcion uuid, p_desde date, p_hasta date)  definer  anon=false  auth=true
+funcion  cobro_siguiente(p_suscripcion uuid, p_periodos integer)  definer  anon=false  auth=true
 funcion  cobros_morosos()  invoker  anon=true  auth=true
 funcion  cobros_resumen()  invoker  anon=true  auth=true
 funcion  color_con_texto_blanco(p text)  invoker  anon=true  auth=true
@@ -1299,12 +1313,16 @@ funcion  interno.prefijo_de_nombre(p_nombre text)  invoker  anon=false  auth=tru
 funcion  interno.profesores_de(p_alumno uuid)  definer  anon=false  auth=true
 funcion  interno.profesores_que_coordino()  definer  anon=false  auth=true
 funcion  interno.profiles_foto_por_funcion()  definer  anon=false  auth=false
+funcion  interno.puestos_de_la_clase(p_clase uuid)  definer  anon=false  auth=true
+funcion  interno.puestos_de_tandas(p_clase uuid)  definer  anon=false  auth=true
+funcion  interno.puntos_de_una_respuesta(p_dificultad integer, p_intentos integer, p_puesto integer)  invoker  anon=false  auth=true
 funcion  interno.purgar_auditoria()  definer  anon=false  auth=false
 funcion  interno.salas_torneo_sello()  invoker  anon=false  auth=false
 funcion  interno.sesiones_de_supervisados()  definer  anon=false  auth=true
 funcion  interno.subgrupo_del_equipo_al_dia(p_equipo uuid, p_profesor uuid)  definer  anon=false  auth=false
 funcion  interno.supervisados_de(p_supervisor uuid)  definer  anon=false  auth=false
 funcion  interno.supervisados_por_mi()  definer  anon=false  auth=true
+funcion  interno.tanda_resultado_de_la_base()  definer  anon=false  auth=false
 funcion  interno.validar_periodo(p_desde date, p_hasta date)  invoker  anon=false  auth=false
 funcion  interno.verificacion_al_dia()  definer  anon=false  auth=true
 funcion  interno.version_legal_valida(p text)  invoker  anon=false  auth=false
@@ -1391,6 +1409,10 @@ funcion  puedo_armar_partida_con(p_jugadores uuid[])  definer  anon=false  auth=
 funcion  puedo_cambiar_fide_id(p_persona uuid)  invoker  anon=false  auth=true
 funcion  puedo_corregir_cobros(p_alumno uuid)  invoker  anon=false  auth=true
 funcion  puedo_preparar_rivales()  definer  anon=false  auth=true
+funcion  puntos_de_la_clase(p_clase uuid)  invoker  anon=false  auth=true
+funcion  puntos_de_tandas(p_clase uuid)  invoker  anon=false  auth=true
+funcion  puntos_de_tandas_del_mes(p_profesor uuid)  invoker  anon=false  auth=true
+funcion  puntos_del_mes(p_profesor uuid)  invoker  anon=false  auth=true
 funcion  push_llaves_guardar(p_publica text, p_privada text)  definer  anon=false  auth=false
 funcion  push_llaves_leer()  definer  anon=false  auth=false
 funcion  quiniela_cerrada(p_empezada boolean, p_resultado text, p_cierra_en timestamp with time zone)  invoker  anon=true  auth=true
@@ -1407,6 +1429,7 @@ funcion  recordar_informes_mensuales(p_hoy date)  definer  anon=false  auth=fals
 funcion  registrar_arbitraje_publico(p_nombre text, p_email text, p_porcentaje integer, p_nivel text, p_detalle jsonb)  definer  anon=true  auth=true
 funcion  registrar_cobro_pagado(p_alumno uuid, p_concepto text, p_monto numeric, p_moneda text, p_metodo text, p_referencia text, p_nota text, p_fecha date)  definer  anon=false  auth=true
 funcion  registrar_cobro_pagado_con_periodo(p_alumno uuid, p_concepto text, p_monto numeric, p_moneda text, p_metodo text, p_referencia text, p_nota text, p_fecha date, p_suscripcion uuid, p_desde date, p_hasta date)  definer  anon=false  auth=true
+funcion  registrar_cobro_y_abono(p_alumno uuid, p_concepto text, p_monto numeric, p_moneda text, p_metodo text, p_referencia text, p_nota text, p_fecha date, p_suscripcion uuid, p_desde date, p_hasta date, p_pagado numeric)  definer  anon=false  auth=true
 funcion  registrar_compra(p_profile uuid, p_producto text, p_registrar boolean)  definer  anon=false  auth=true
 funcion  registrar_pago(p_pagos jsonb, p_metodo text, p_referencia text, p_nota text, p_fecha date)  definer  anon=false  auth=true
 funcion  registrar_salida_examen(p_examen uuid, p_segundos integer)  definer  anon=false  auth=true
@@ -1752,6 +1775,10 @@ politica  subgrupos  subgrupos_update  UPDATE
 politica  supervisor_cuentas  supervisor_cuentas_select  SELECT
 politica  suscripciones  suscripciones_coordinacion  ALL
 politica  suscripciones  suscripciones_lee_alumno  SELECT
+politica  tanda_resultados  tanda_resultados_exige_acceso_ins  INSERT  restrictiva
+politica  tanda_resultados  tanda_resultados_inserta_alumno  INSERT
+politica  tanda_resultados  tanda_resultados_lee  SELECT
+politica  tanda_resultados  verificacion_en_dos_pasos  ALL  restrictiva
 politica  tarea_items  tarea_items_delete  DELETE
 politica  tarea_items  tarea_items_exige_acceso_upd  UPDATE  restrictiva
 politica  tarea_items  tarea_items_insert  INSERT
@@ -1874,6 +1901,7 @@ trigger  salas_torneo  salas_torneo_sello
 trigger  saved_games  saved_games_ligar_a_la_clase
 trigger  supervisor_cuentas  auditar
 trigger  suscripciones  auditar
+trigger  tanda_resultados  tanda_resultado_de_la_base
 trigger  tarea_items  proteger_tarea_items_alumno
 trigger  tareas  tareas_avisa_push
 trigger  tareas  tareas_protege_alumno
@@ -2176,6 +2204,11 @@ indice  suscripciones  suscripciones_creado_por_fk
 indice  suscripciones  suscripciones_pkey
 indice  suscripciones  suscripciones_plan_id_fk
 indice  suscripciones  suscripciones_una_activa_por_plan
+indice  tanda_resultados  tanda_resultados_alumno
+indice  tanda_resultados  tanda_resultados_clase
+indice  tanda_resultados  tanda_resultados_pkey
+indice  tanda_resultados  tanda_resultados_profe
+indice  tanda_resultados  tanda_resultados_semilla_student_id_indice_key
 indice  tarea_items  tarea_items_pkey
 indice  tarea_items  tarea_items_tarea_idx
 indice  tareas  tareas_alumno_idx
@@ -3013,6 +3046,20 @@ grant  suscripciones  authenticated  SELECT
 grant  suscripciones  authenticated  TRIGGER
 grant  suscripciones  authenticated  TRUNCATE
 grant  suscripciones  authenticated  UPDATE
+grant  tanda_resultados  anon  DELETE
+grant  tanda_resultados  anon  INSERT
+grant  tanda_resultados  anon  REFERENCES
+grant  tanda_resultados  anon  SELECT
+grant  tanda_resultados  anon  TRIGGER
+grant  tanda_resultados  anon  TRUNCATE
+grant  tanda_resultados  anon  UPDATE
+grant  tanda_resultados  authenticated  DELETE
+grant  tanda_resultados  authenticated  INSERT
+grant  tanda_resultados  authenticated  REFERENCES
+grant  tanda_resultados  authenticated  SELECT
+grant  tanda_resultados  authenticated  TRIGGER
+grant  tanda_resultados  authenticated  TRUNCATE
+grant  tanda_resultados  authenticated  UPDATE
 grant  tarea_items  anon  DELETE
 grant  tarea_items  anon  INSERT
 grant  tarea_items  anon  REFERENCES

@@ -246,6 +246,47 @@ window.__deletes = [];
       }).sort((a, b) => a.nombre.localeCompare(b.nombre));
       return filas;
   }
+  /* Los puntos de las preguntas, como puntos_de_la_clase: la cuenta de
+     interno.puntos_de_una_respuesta (la dificultad, los intentos y el puesto
+     por la hora de la respuesta). */
+  function puntosDeUnaRespuesta(dif, intentos, puesto) {
+    const d = dif == null ? 1200 : dif;
+    const base = Math.round(10 + 40 * Math.min(1, Math.max(0, (d - 600) / 1600)));
+    const mult = (intentos || 1) <= 1 ? 1 : intentos === 2 ? 0.6 : 0.3;
+    const extra = puesto === 1 ? 0.5 : puesto === 2 ? 0.3 : puesto === 3 ? 0.15 : 0;
+    return Math.round(base * mult * (1 + extra));
+  }
+  function puntosDeLaClase(clase) {
+    const qs = TABLAS.questions.filter((q) => q.class_session_id === clase);
+    const suma = {};
+    qs.forEach((q) => {
+      const bien = TABLAS.question_answers.filter((a) => a.question_id === q.id && a.is_correct === true && a.student_id !== q.created_by)
+        .sort((a, b) => String(a.updated_at || a.created_at || "").localeCompare(String(b.updated_at || b.created_at || "")));
+      bien.forEach((a, i) => {
+        const x = suma[a.student_id] = suma[a.student_id] || { student_id: a.student_id, puntos_preguntas: 0, a_la_primera: 0, primeros: 0 };
+        x.puntos_preguntas += puntosDeUnaRespuesta(q.dificultad, a.intentos, i + 1);
+        if ((a.intentos || 1) <= 1) x.a_la_primera += 1;
+        if (i === 0) x.primeros += 1;
+      });
+    });
+    return Object.values(suma);
+  }
+  // Los del calentamiento, como puntos_de_tandas: cada ejercicio bien con el nivel de
+  // la tanda, y en la competencia el puesto en resolver cada uno.
+  function puntosDeTandas(clase) {
+    const bien = (TABLAS.tanda_resultados || []).filter((r) => r.class_session_id === clase && r.bien)
+      .sort((a, b) => String(a.created_at).localeCompare(String(b.created_at)));
+    const suma = {}, vistos = {};
+    bien.forEach((r) => {
+      const k = r.semilla + ":" + r.indice;
+      const puesto = r.modo === "reto" ? (vistos[k] = (vistos[k] || 0) + 1) : null;
+      const x = suma[r.student_id] = suma[r.student_id] || { student_id: r.student_id, puntos: 0, resueltos: 0, primeros: 0 };
+      x.puntos += puntosDeUnaRespuesta(r.elo, 1, puesto);
+      x.resueltos += 1;
+      if (puesto === 1) x.primeros += 1;
+    });
+    return Object.values(suma);
+  }
   const QUIEN = ${JSON.stringify(quien)};
   window.sb = {
     auth: {
@@ -383,6 +424,21 @@ window.__deletes = [];
         return objeto(null);
       }
       if (n === "resumen_de_la_clase") return constructor(n, resumenDeLaClase(args.p_clase));
+      if (n === "puntos_de_la_clase") return constructor(n, puntosDeLaClase(args.p_clase));
+      if (n === "puntos_de_tandas") return constructor(n, puntosDeTandas(args.p_clase));
+      if (n === "puntos_de_tandas_del_mes") return constructor(n, []);
+      if (n === "puntos_del_mes") {
+        const desde = new Date(); desde.setDate(1); desde.setHours(0, 0, 0, 0);
+        const clases = SESIONES.concat(TABLAS.clases_del_mes || []).filter((c) => new Date(c.started_at) >= desde
+          && (!args.p_profesor || c.created_by === args.p_profesor));
+        const suma = {};
+        clases.forEach((c) => puntosDeLaClase(c.id).forEach((f) => {
+          if (f.student_id !== QUIEN && c.created_by !== QUIEN) return;
+          const x = suma[f.student_id] = suma[f.student_id] || { student_id: f.student_id, puntos_preguntas: 0, a_la_primera: 0, primeros: 0 };
+          x.puntos_preguntas += f.puntos_preguntas; x.a_la_primera += f.a_la_primera; x.primeros += f.primeros;
+        }));
+        return constructor(n, Object.values(suma));
+      }
       /* Los puntos del mes: la suma de resumen_de_la_clase de las clases de
          este mes (del profe que se pide), y solo filas de quien pregunta o de
          una clase suya, como la base. */

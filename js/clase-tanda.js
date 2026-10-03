@@ -583,9 +583,24 @@ function juzgarTanda() {
     }, 500);
 }
 
+/* Cada ejercicio terminado queda en la base (tanda_resultados): de ahí salen
+   sus puntos de la clase. La base pone la hora, el plazo y el orden, así que
+   van de a uno, en fila: si el 3 llegara antes que el 2, lo rechazaría. Si
+   uno no se pudo guardar (sin conexión), el calentamiento sigue igual. */
+let tandaGuardando = Promise.resolve();
+function guardarResultadoDeLaTanda(semilla, indice, bien) {
+    if (isTeacher || esObservador || vistaPrevia || !semilla) return;
+    tandaGuardando = tandaGuardando.then(async () => {
+        const { error } = await sb.from("tanda_resultados").insert({ semilla, indice, bien: !!bien });
+        // El mismo dos veces (al recargar) no es un error: ya estaba.
+        if (error && error.code !== "23505") console.error(error);
+    }).catch((e) => console.error(e));
+}
+
 function cerrarEjercicioDeLaTanda(bien, espera) {
     // Mientras se ve cómo terminó este, no hay nada que pasar.
     document.getElementById("tanda-pasar-btn").hidden = true;
+    guardarResultadoDeLaTanda(tandaMia.semilla, tandaMia.i, bien);
     tandaMia.resultados.push(!!bien);
     tandaMia.i += 1;
     if (tandaMia.i >= tandaMia.ejercicios.length) tandaMia.fin = true;

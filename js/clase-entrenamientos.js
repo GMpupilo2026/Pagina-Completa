@@ -93,6 +93,7 @@ window.EntrenosClase = (function () {
 /* ---------- Los adaptadores: los ejercicios de cada entrenamiento ----------
    Cada uno da sus grupos: [{id, titulo, desc, items, practica}], y cada
    ejercicio {id, titulo, fen, solucion (SAN, empieza la del alumno), prompt,
+   elo (su dificultad en puntos Elo: de ahí salen los puntos de la pregunta),
    opciones/correcta (de opciones), guion (lo que ve solo el profe para
    explicarlo), linea (una apertura), final (se juega contra el motor), foto
    (Memoria), practica}. `practica`: {tanda: {banco, filtro, titulo}} o
@@ -128,7 +129,7 @@ const ADAPTADORES_ENTRENO = {
                 const centro = dif && dif.categorias && dif.categorias[c] ? dif.categorias[c].centro : null;
                 const items = mates.filter((m) => m.category === c).map((m, i) => ({
                     id: m.id, titulo: (i + 1) + ". Juegan " + (m.fen.split(" ")[1] === "w" ? "blancas" : "negras"),
-                    fen: m.fen, solucion: m.solution, guion: ["La solución: " + m.solution.join(" ") + "."],
+                    fen: m.fen, solucion: m.solution, elo: (dif && dif.elo && dif.elo[m.id]) || centro || 1200, guion: ["La solución: " + m.solution.join(" ") + "."],
                 }));
                 return { id: c, titulo: "Mate en " + (k + 1), desc: (centro ? "Alrededor de " + centro + " puntos Elo · " : "") + items.length + " ejercicios",
                     items, practica: { tanda: { banco: "mates", filtro: "cat:" + c, titulo: "Mate en " + (k + 1) } } };
@@ -144,7 +145,7 @@ const ADAPTADORES_ENTRENO = {
                 const todos = (d.challenges || []).filter((x) => x.cat === c.id);
                 // Los que no tienen los dos reyes no van al tablero de la clase (ni los juega chess.js).
                 const items = todos.filter((x) => TandaCalentamiento.tieneLosDosReyes(x.fen)).map((x) => ({
-                    id: "desafio-" + x.n, titulo: x.n + ". " + x.text, fen: x.fen, solucion: x.solution.san, prompt: x.text,
+                    id: "desafio-" + x.n, titulo: x.n + ". " + x.text, fen: x.fen, solucion: x.solution.san, prompt: x.text, elo: 1100,
                     guion: [x.text, "La solución: " + x.solution.san.join(" ") + ".", x.solution.explain].filter(Boolean),
                 }));
                 const fuera = todos.length - items.length;
@@ -164,7 +165,7 @@ const ADAPTADORES_ENTRENO = {
                 const sub = TandaCalentamiento.filtrar(d.puzzles, "largo:" + id);
                 const items = Object.keys(sub).sort((a, b) => sub[a].rating - sub[b].rating).map((pid, i) => ({
                     id: pid, titulo: (i + 1) + ". ELO " + sub[pid].rating + " · " + Math.ceil(sub[pid].solution.length / 2) + " jugadas tuyas",
-                    fen: sub[pid].fen, solucion: sub[pid].solution, guion: ["La línea: " + sub[pid].solution.join(" ") + "."],
+                    fen: sub[pid].fen, solucion: sub[pid].solution, elo: sub[pid].rating, guion: ["La línea: " + sub[pid].solution.join(" ") + "."],
                 }));
                 return { id, titulo: "Nivel " + (k + 1) + ": " + titulo, desc: items.length + " ejercicios", items,
                     practica: { tanda: { banco: "temas", filtro: "largo:" + id, titulo: "Visualización, nivel " + (k + 1) } } };
@@ -183,7 +184,7 @@ const ADAPTADORES_ENTRENO = {
             return areas.map((a) => {
                 const suyos = items.filter((i) => i.area === a.id).map((i, k) => ({
                     id: i.id, titulo: (k + 1) + ". Dificultad " + i.dificultad + " · " + i.enunciado, fen: i.fen,
-                    prompt: i.enunciado, opciones: i.opciones, correcta: i.correcta,
+                    prompt: i.enunciado, opciones: i.opciones, correcta: i.correcta, elo: 700 + 400 * (i.dificultad || 2),
                     guion: ["La correcta: " + i.opciones[i.correcta], i.explica].filter(Boolean),
                 }));
                 return { id: a.id, emoji: a.emoji, titulo: a.nombre, desc: suyos.length + " posiciones", items: suyos, practica: { enlace: null } };
@@ -201,7 +202,7 @@ const ADAPTADORES_ENTRENO = {
                     return { id: l.id, titulo: l.nombre + " (" + (l.color === "w" ? "blancas" : "negras") + ", nivel " + l.nivel + ")",
                         fen: EntrenosClase.posicionTras(null, l.jugadas, 0), linea: l.jugadas,
                         // La pregunta: la posición antes de la última jugada de la línea.
-                        fenClave: EntrenosClase.posicionTras(null, l.jugadas, n - 1), solucion: [l.jugadas[n - 1]],
+                        fenClave: EntrenosClase.posicionTras(null, l.jugadas, n - 1), solucion: [l.jugadas[n - 1]], elo: 700 + 300 * (l.nivel || 1),
                         prompt: "¿Cuál es la jugada que sigue en «" + l.nombre + "»?",
                         guion: ["La línea: " + l.jugadas.join(" ") + ".", l.idea, l.clave].filter(Boolean),
                         practica: { enlace: l.id } };
@@ -221,7 +222,7 @@ const ADAPTADORES_ENTRENO = {
                     const fen = f.fen || (linea ? EntrenosClase.posicionTras(null, linea.jugadas, linea.jugadas.length)
                         : f.jugadas ? EntrenosClase.posicionTras(null, f.jugadas, f.jugadas.length) : null);
                     const solucion = f.fen && Array.isArray(f.linea) && f.linea.length ? f.linea : null;
-                    return { id: "ficha-" + f.id, titulo: f.titulo + " — " + f.subtitulo, fen, solucion,
+                    return { id: "ficha-" + f.id, titulo: f.titulo + " — " + f.subtitulo, fen, solucion, elo: 700 + 300 * (f.nivel || 1),
                         guion: [f.resumen, f.diagrama].concat(Array.isArray(f.centro) ? f.centro : []).filter(Boolean),
                         practica: f.temaPractica ? { tanda: { banco: "temas", filtro: "tema:" + f.temaPractica, titulo: f.titulo } }
                             : linea ? { enlaceDe: "aperturas", recorte: linea.id } : { enlace: f.id } };
@@ -267,7 +268,7 @@ const ADAPTADORES_ENTRENO = {
                 const items = L.LESSONS.filter((l) => l.cat === c).map((l) => {
                     const fen = l.fen || (l.rounds && l.rounds[0] && l.rounds[0].fen) || null;
                     const san = l.type === "move" && l.solution ? EntrenosClase.sanDe(l.fen, l.solution.from, l.solution.to, l.solution.promotion) : null;
-                    return { id: l.id, titulo: l.title, fen, solucion: san ? [san] : null, prompt: l.type === "move" ? l.text : null,
+                    return { id: l.id, titulo: l.title, fen, solucion: san ? [san] : null, prompt: l.type === "move" ? l.text : null, elo: 600,
                         guion: [l.text].concat(san ? ["La jugada: " + san + "."] : []).concat(l.targets ? ["Las casillas: " + l.targets.join(", ") + "."] : []) };
                 });
                 return { id: c, titulo: L.CATEGORY_LABEL[c], desc: items.length + " lecciones", items, practica: { enlace: null } };
@@ -490,7 +491,7 @@ function filaDeEntreno(t, item) {
     if (item.opciones && fenPregunta) {
         acciones.appendChild(entrenoBoton("❓ Preguntar", () => preguntarDeOpcionesEntreno(item), false, "Una pregunta de opciones: la base la califica sola"));
     } else if (item.solucion && fenPregunta) {
-        acciones.appendChild(entrenoBoton("❓ Preguntar", () => preguntarEntreno(fenPregunta, item.solucion, item.prompt), false, "Se transmite a todos como una pregunta nueva"));
+        acciones.appendChild(entrenoBoton("❓ Preguntar", () => preguntarEntreno(fenPregunta, item.solucion, item.prompt, item.elo), false, "Se transmite a todos como una pregunta nueva"));
         acciones.appendChild(entrenoBoton("🔥 Calentamiento", () => mandarCalentamiento(fenPregunta, item.solucion, (t.label + ": " + item.titulo).slice(0, 140)), false,
             "Cada alumno la juega en su propio tablero"));
     }
@@ -528,11 +529,11 @@ function filaDeEntreno(t, item) {
     return li;
 }
 
-async function preguntarEntreno(fen, solucion, prompt) {
+async function preguntarEntreno(fen, solucion, prompt, dificultad) {
     if (!(await aplicarPosicionEnClase(fen))) return;
     const plies = EntrenosClase.pliesDe(solucion);
     document.getElementById("question-plies-input").value = plies;
-    const { data, error } = await crearPregunta(fen, plies, null, false, prompt ? { prompt: String(prompt).slice(0, 500) } : null);
+    const { data, error } = await crearPregunta(fen, plies, null, false, { prompt: prompt ? String(prompt).slice(0, 500) : undefined, dificultad });
     if (error) { console.error(error); setStatus("No se pudo crear la pregunta: " + error.message); return; }
     activateTeacherTab("preguntar");
     setStatus("Ejercicio enviado a la clase como pregunta.");
@@ -541,7 +542,7 @@ async function preguntarEntreno(fen, solucion, prompt) {
 
 async function preguntarDeOpcionesEntreno(item) {
     if (!(await aplicarPosicionEnClase(item.fen))) return;
-    const q = await crearPreguntaDeOpciones(item.prompt, item.opciones, item.correcta);
+    const q = await crearPreguntaDeOpciones(item.prompt, item.opciones, item.correcta, item.elo);
     if (q) activateTeacherTab("preguntar");
 }
 
