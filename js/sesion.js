@@ -115,7 +115,7 @@
             btn.classList.toggle("hidden", !canMoveNow() || board.isViewingHistory());
         }
 
-        // ---------- Pestañas del profesor (Mi plan/Táctica/Habilidades/Preguntar/Practicar) ----------
+        // ---------- Pestañas del profesor (Mi plan/Táctica/Entrenamientos/Preguntar/Practicar) ----------
         // Un solo panel visible a la vez, para no obligar a hacer scroll por una barra
         // lateral con los 5 a la vez. Se recuerda la última pestaña abierta en este navegador.
         // El motor y los alumnos conectados NO son pestañas: van siempre a la vista.
@@ -138,7 +138,7 @@
                 panel.classList.toggle("hidden", panel.dataset.tabPanel !== tab);
             });
             try { localStorage.setItem(TEACHER_TAB_KEY, tab); } catch (e) {}
-            if (tab === "tipos") ensureTiposLoaded();
+            if (tab === "tipos") pintarEntrenos();
         }
 
         /* «Alumnos conectados» ya no es una pestaña: va siempre a la vista. Lo que
@@ -160,7 +160,7 @@
            Catorce controles delante, con la clase mirando, es demasiado para la
            primera clase. En modo sencillo se ve lo que hace falta para darla: el
            tablero (el grupo «El tablero — lo ve toda la clase»), el motor, los
-           alumnos conectados y «Mi plan». Táctica, Habilidades, Preguntar,
+           alumnos conectados y «Mi plan». Táctica, Entrenamientos, Preguntar,
            Practicar y el grupo «Tu material» quedan detrás de «Ver todas las
            herramientas».
 
@@ -2742,6 +2742,8 @@
                 tanda: tandaPresencia || undefined,
                 // La Fotografía en curso (solo el profe): ver dictarFotografiaDeLaPresencia.
                 fotografia: fotoEnCurso || undefined,
+                // El entrenamiento que el profe pide abrir (js/clase-entrenamientos.js).
+                entreno: entrenoEnCurso || undefined,
             };
         }
 
@@ -2820,6 +2822,7 @@
                     }
                 }
                 dictarFotografiaDeLaPresencia(state);
+                if (!isTeacher && !esObservador) pintarEntrenoDelProfe(state);
                 renderStudentsList();
                 pintarCuentaCalentamiento();
                 if (isTeacher && tandaActual) { anotarTandaDeLaPresencia(); pintarTandaProfe(); }
@@ -5037,7 +5040,7 @@
         // aplicarPosicionEnClase(), como Táctica y Archivos. Lo que es la RESPUESTA
         // (la opción buena del Detective, la amenaza, qué candidatas pierden, el número
         // del motor) va en «🔎 Respuesta», que se abre solo en esta pantalla: la clase
-        // no ve nada de este panel. Ver «Los Tipos de entrenamiento, en la clase» en
+        // no ve nada de este panel. Ver «Habilidades (los Tipos de entrenamiento)» en
         // docs/decisiones/clase-en-vivo.md.
         let tiposData = null;
         let tiposLoadPromise = null;

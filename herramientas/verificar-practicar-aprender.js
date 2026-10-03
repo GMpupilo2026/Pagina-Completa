@@ -1,5 +1,5 @@
 /* Recorre, sin navegador, las posiciones escritas dentro de Practicar
- * (js/entreno-practicas.js, SETS) y de Aprender (js/entreno-aprender.js,
+ * (js/entreno-practicas.js, SETS) y de Aprender (js/aprender-lecciones.js,
  * LESSONS). Viven en el código y ningún verificador las miraba: así pasaron los
  * mates con otra solución que se arreglaron en #490, y no daban ningún error
  * (el alumno encontraba otro mate y la página le decía que no).
@@ -84,8 +84,8 @@ SETS.forEach((set) => set.rounds.forEach((r, i) => {
 }));
 
 /* ------------------------------------------------ Aprender */
-console.log("=== Aprender (js/entreno-aprender.js) ===");
-const LESSONS = lista("js/entreno-aprender.js", "LESSONS");
+console.log("=== Aprender (js/aprender-lecciones.js) ===");
+const LESSONS = lista("js/aprender-lecciones.js", "LESSONS");
 LESSONS.forEach((l) => {
   const donde = l.id;
   revisados++;

@@ -27,10 +27,10 @@ const paginas = (carpeta) => fs.readdirSync(path.join(RAIZ, carpeta))
   .sort();
 
 function lecciones() {
-  const js = fs.readFileSync(path.join(RAIZ, "js", "entreno-aprender.js"), "utf8");
+  const js = fs.readFileSync(path.join(RAIZ, "js", "aprender-lecciones.js"), "utf8");
   const inicio = js.indexOf("const LESSONS = [");
   const fin = js.indexOf("\n];", inicio);
-  if (inicio < 0 || fin < 0) throw new Error("No encuentro LESSONS en js/entreno-aprender.js");
+  if (inicio < 0 || fin < 0) throw new Error("No encuentro LESSONS en js/aprender-lecciones.js");
   const ids = [...js.slice(inicio, fin).matchAll(/\bid\s*:\s*['"]([^'"]+)['"]/g)].map((m) => m[1]);
   if (!ids.length) throw new Error("LESSONS vino vacío");
   return ids;

@@ -3046,12 +3046,73 @@ viera lo que entra por ahí dejaría la galería en blanco), que al cambiar de t
 una siga funcionando. Está probado que falla de verdad: dibujándolas todas de
 golpe saltan 3 comprobaciones, sin la persistencia 1 y cruzando las posiciones 8.
 
-### Los Tipos de entrenamiento, en la clase
+### Los entrenamientos, en la clase
 
-> En pantalla, la pestaña y el panel se llaman «Habilidades» (ver «Los Tipos
+La pestaña **«🧠 Entrenamientos»** del profe (antes «Habilidades», que ahora
+es una de sus tarjetas) trae todos los entrenamientos del sitio a la clase:
+Mates, Aprender, Desafíos, Fichas de estudio, Aperturas y celadas,
+Visualización, Precisión posicional, Finales contra la máquina, Memoria,
+Habilidades, y los que se hacen en su propia página (Coordenadas, 4×4,
+Practicar, el Sonar…). Es `js/clase-entrenamientos.js`. Para cada ejercicio:
+mostrarlo para explicarlo, preguntarlo a la clase y que lo practiquen.
+
+- **La lista no está escrita en la clase: sale de
+  `MaterialPlataforma.HERRAMIENTAS`** (`js/material-plataforma.js`), la misma
+  de Tareas. Un entrenamiento nuevo que se agrega ahí aparece solo, en «Se
+  hacen en su página» con «📲 Que lo abran todos»; si además se le escribe su
+  adaptador (`ADAPTADORES_ENTRENO`), pasa a «Con el tablero de la clase» con
+  su lista. `verificar-clase-entrenamientos.js` revisa que cada tarjeta del hub
+  (`entreno/index.html`) esté en esa lista: si alguien agrega una tarjeta y no
+  la anota, salta. Quedan afuera Táctica (tiene su pestaña), los diagnósticos,
+  los cuestionarios y el plan contra un rival.
+- **Los datos son los de cada página, sin copia.** Los JSON de `entreno/data`
+  y los módulos de `js/` (`aperturas-lineas.js`, `fichas-estudio.js`,
+  `precision-posicional-items.js`, `aprender-lecciones.js`) se cargan recién
+  al abrir esa tarjeta. Las lecciones de Aprender vivían dentro de
+  `js/entreno-aprender.js`, que pinta la página: se mudaron tal cual a
+  `js/aprender-lecciones.js` (siguen siendo los mismos globales), y
+  `verificar-practicar-aprender.js` y `contenido-panel.js` las leen de ahí.
+- **Cada ejercicio trae sus puertas, las de siempre**: «👁 Vista previa»
+  (`crearVistaPreviaLote`), «📥 Al tablero» (`aplicarPosicionEnClase`),
+  «❓ Preguntar» (`crearPregunta`, con las jugadas del alumno sacadas de la
+  solución; Precisión posicional, de opciones, con
+  `hacer_pregunta_de_opciones`, así la correcta queda en la base), «🔥
+  Calentamiento» (`mandarCalentamiento`), «🤖 Que lo jueguen contra la
+  máquina» (Finales, `crearPractica`), «📸 Mostrar y ocultar» (Memoria, la
+  Fotografía de Habilidades) y «🔎 Guion»: lo que ve solo el profe para
+  explicarlo (la solución, la idea, la explicación de la ficha).
+- **«Que lo practiquen» es el calentamiento de `js/clase-tanda.js`** con los
+  ejercicios de ese grupo, con nota o en competencia: la receta lleva `banco`
+  (`mates`, `desafios`; sin él, Táctica) y `filtro` (`cat:mate2`,
+  `tema:fork`, `largo:l3`), y cada alumno arma sus ejercicios de ahí
+  (`TandaCalentamiento.normalizar`/`filtrar`). Los que no tienen rating llevan
+  el centro de su categoría; el nivel de la receta es la mediana de esa parte
+  del banco. Así practicar Mates, un tema de una ficha o un nivel de
+  Visualización no necesitó otro mecanismo.
+- **Ninguna posición se inventa ni se cuela una inválida.** El verificador
+  carga TODOS los ejercicios de todos los adaptadores (más de 3000) y
+  comprueba que el tablero de la clase acepta cada posición y que cada
+  solución se juega con chess.js (las de Mates, hasta el mate). De Desafíos
+  solo van los que tienen los dos reyes: los otros se hacen en su página.
+- **«📲 Que lo abran todos» no manda una dirección**: manda el slug (y el
+  recorte) en la presencia del profe, como la Fotografía, y cada alumno arma
+  el enlace con la lista del sitio (`EntrenosClase.enlaceDe`). Solo cuenta lo
+  que anuncia el dueño del tablero: lo que anuncie otro no abre nada. Se abre
+  en otra pestaña: la clase sigue abierta.
+- **Ordenado, sin saturar**: el catálogo en dos partes, cada entrenamiento en
+  grupos, y las listas de a 30 con «Mostrar más». Las migas («‹
+  Entrenamientos ‹ Mates») dicen dónde se está.
+
+**Al tocar esto, correr `node herramientas/verificar-todo.js
+clase-entrenamientos sesion-curso`.** Está probado que falla de verdad: con
+una solución cortada (no da mate) o aceptando el pedido de cualquiera, salta.
+
+#### Habilidades (los Tipos de entrenamiento)
+
+> En pantalla, la tarjeta y el panel se llaman «Habilidades» (ver «Los Tipos
 > de entrenamiento» en `entrenamiento.md`).
 
-La pestaña **"🧠 Entrenamientos"** del profesor lista los diecinueve Tipos de
+La tarjeta «🧩 Habilidades» de la pestaña **"🧠 Entrenamientos"** lista los diecinueve Tipos de
 entrenamiento de `entreno/tipos.html` (ver «Los Tipos de entrenamiento» en
 entrenamiento.md) en cascada tipo → nivel → ejercicio, con las mismas
 posiciones (`entreno/data/tipos.json`) y el mismo catálogo

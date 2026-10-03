@@ -491,6 +491,8 @@ async function pruebaTipos(browser) {
   const DATOS = JSON.parse(fs.readFileSync(path.join(RAIZ, "entreno/data/tipos.json"), "utf8"));
   const { page, ctx, errores } = await abrir(browser, [PROFE, ALUMNA], "u-profe");
   await page.click("#teacher-tab-tipos");
+  // Habilidades es una tarjeta de la pestaña Entrenamientos (js/clase-entrenamientos.js).
+  await page.click('#entrenos-body [data-entreno="tipos"]', { timeout: 30000 });
   await page.waitForSelector("#tipos-body button", { timeout: 30000 });
   igual("los diecinueve tipos", await page.$$eval("#tipos-body > div > button", (b) => b.length), 19);
 
