@@ -2282,6 +2282,8 @@
             const entries = Array.from(onlineStudents.entries());
             if (badge) badge.classList.toggle("hidden", !entries.some(([, info]) => info.hand_raised));
             if (entries.length === 0) {
+                const sinNadie = document.getElementById("students-count");
+                if (sinNadie) sinNadie.textContent = "";
                 listEl.innerHTML = '<li class="text-brand-450 dark:text-brand-350">Nadie conectado todavía…</li>';
                 return;
             }
@@ -2292,12 +2294,27 @@
             entries.sort((a, b) => (b[1].hand_raised ? 1 : 0) - (a[1].hand_raised ? 1 : 0) || llegada(a[1]) - llegada(b[1]));
             let turnoEnCola = 0;
             listEl.innerHTML = "";
+            const cuenta = document.getElementById("students-count");
+            if (cuenta) cuenta.textContent = "(" + entries.length + ")";
+            /* Un renglón por alumno: el nombre y tres botones chicos de icono
+               (bitácora, trofeos, control). Lo que es de UNO solo va en un
+               segundo renglón de ese alumno: el color y «Quitar control» al que
+               tiene el control, «Darle la palabra» al que levantó la mano. Con
+               20 alumnos, cuatro controles repetidos en cada uno hacían una
+               lista de tres renglones por alumno. En el celular, el CSS los
+               lleva a 44 px para el dedo (ver «La clase en el celular del profe»). */
+            const ICONO = "shrink-0 w-7 h-7 inline-flex items-center justify-center text-sm rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 ";
+            const ICONO_GRIS = ICONO + "bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200";
+            const TEXTO_BTN = "text-xs font-semibold px-2 py-1.5 rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 ";
             for (const [studentId, info] of entries) {
                 const hasControl = activePlayerId === studentId;
+                const nombreVisible = info.full_name || info.email;
                 const li = document.createElement("li");
-                li.className = "flex items-center justify-between gap-2 flex-wrap" + (info.hand_raised ? " bg-accent-500/10 rounded-lg px-2 py-1 -mx-2" : "");
+                li.className = "rounded-lg" + (info.hand_raised || hasControl ? " bg-accent-500/10 px-2 py-1 -mx-2" : "");
+                const fila = document.createElement("div");
+                fila.className = "flex items-center gap-1.5";
                 const label = document.createElement("span");
-                label.className = "flex items-center gap-2 text-brand-700 dark:text-brand-200 truncate";
+                label.className = "flex items-center gap-2 text-brand-700 dark:text-brand-200 min-w-0 flex-1";
                 const dot = document.createElement("span");
                 dot.className = "w-2 h-2 rounded-full bg-green-500 shrink-0";
                 dot.title = "En vivo";
@@ -2313,76 +2330,89 @@
                 }
                 const name = document.createElement("span");
                 name.className = "truncate";
+                name.title = nombreVisible;
                 // Nunca innerHTML aquí: full_name/email vienen de datos que el propio usuario
                 // controla (presence.track), textContent los trata siempre como texto plano.
-                name.textContent = info.full_name || info.email;
+                name.textContent = nombreVisible;
                 // Su foto de perfil, o su inicial (js/foto-perfil.js).
-                if (window.FotoPerfil) label.appendChild(FotoPerfil.avatar(studentId, info.full_name || info.email));
+                if (window.FotoPerfil) label.appendChild(FotoPerfil.avatar(studentId, nombreVisible));
                 label.appendChild(name);
-                const actions = document.createElement("span");
-                actions.className = "flex flex-wrap items-center gap-1";
-                if (info.hand_raised) {
-                    const palabraBtn = document.createElement("button");
-                    palabraBtn.type = "button";
-                    palabraBtn.className = "text-xs font-semibold px-2 py-1.5 rounded-lg bg-accent-500 hover:bg-accent-600 text-brand-900 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
-                    palabraBtn.textContent = "🗣️ Darle la palabra";
-                    palabraBtn.setAttribute("aria-label", "Darle la palabra a " + (info.full_name || info.email));
-                    palabraBtn.addEventListener("click", () => darLaPalabra(studentId));
-                    actions.appendChild(palabraBtn);
-                    const lowerBtn = document.createElement("button");
-                    lowerBtn.type = "button";
-                    lowerBtn.className = "text-xs font-semibold px-2 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors";
-                    lowerBtn.textContent = "✋ Bajar";
-                    lowerBtn.title = "Bajarle la mano a este alumno";
-                    lowerBtn.addEventListener("click", () => lowerStudentHand(studentId));
-                    actions.appendChild(lowerBtn);
-                }
+                fila.appendChild(label);
+
                 // La bitácora de ESTE alumno, sin salir de la clase.
                 const notasBtn = document.createElement("button");
                 notasBtn.type = "button";
-                notasBtn.className = "shrink-0 text-xs font-semibold px-2 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
+                notasBtn.className = ICONO_GRIS;
                 notasBtn.textContent = "📝";
                 notasBtn.title = "Anotar algo de este alumno (solo lo ves tú)";
-                notasBtn.setAttribute("aria-label", "Bitácora de " + (info.full_name || info.email));
-                notasBtn.addEventListener("click", () => abrirNotasEnClase(studentId, info.full_name || info.email));
-                actions.appendChild(notasBtn);
+                notasBtn.setAttribute("aria-label", "Bitácora de " + nombreVisible);
+                notasBtn.addEventListener("click", () => abrirNotasEnClase(studentId, nombreVisible));
+                fila.appendChild(notasBtn);
                 // Sus trofeos: sumar por un buen trabajo o quitar uno contado de más.
                 const trofeosBtn = document.createElement("button");
                 trofeosBtn.type = "button";
-                trofeosBtn.className = notasBtn.className;
+                trofeosBtn.className = ICONO_GRIS;
                 trofeosBtn.textContent = "🏆";
                 trofeosBtn.title = "Trofeos e insignias: sumar, quitar o darle una insignia";
-                trofeosBtn.setAttribute("aria-label", "Trofeos e insignias de " + (info.full_name || info.email));
-                trofeosBtn.addEventListener("click", () => abrirTrofeosEnClase(studentId, info.full_name || info.email));
-                actions.appendChild(trofeosBtn);
-
-                // Con qué color puede mover: se elige ANTES de dar el control (para dárselo
-                // ya con el color correcto) y también se puede cambiar mientras ya lo tiene
-                // (por ejemplo, para pasar de "solo blancas" a "ambos colores" a mitad de la
-                // demostración), sin tener que quitarle y volver a darle el control.
-                const colorSelect = document.createElement("select");
-                colorSelect.className = "shrink-0 text-xs bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-1 py-1.5 text-brand-700 dark:text-brand-200 focus:outline-none focus:ring-2 focus:ring-accent-500";
-                colorSelect.title = "Con qué color puede mover este alumno";
-                colorSelect.innerHTML =
-                    '<option value="both">♟️ Ambos colores</option>' +
-                    '<option value="w">⚪ Solo blancas</option>' +
-                    '<option value="b">⚫ Solo negras</option>';
-                colorSelect.value = hasControl ? activePlayerColor : "both";
-                colorSelect.addEventListener("change", () => {
-                    if (hasControl) setActivePlayer(studentId, colorSelect.value);
-                });
-                actions.appendChild(colorSelect);
-
+                trofeosBtn.setAttribute("aria-label", "Trofeos e insignias de " + nombreVisible);
+                trofeosBtn.addEventListener("click", () => abrirTrofeosEnClase(studentId, nombreVisible));
+                fila.appendChild(trofeosBtn);
+                // El control del tablero: dárselo (con ambos colores) o quitárselo.
                 const btn = document.createElement("button");
                 btn.type = "button";
-                btn.className = hasControl
-                    ? "shrink-0 text-xs font-semibold px-3 py-1.5 rounded-lg bg-accent-500 hover:bg-accent-600 text-brand-900 transition-colors"
-                    : "shrink-0 text-xs font-semibold px-3 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors";
-                btn.textContent = hasControl ? "Quitar control" : "Dar control";
-                btn.addEventListener("click", () => setActivePlayer(hasControl ? null : studentId, colorSelect.value));
-                actions.appendChild(btn);
-                li.appendChild(label);
-                li.appendChild(actions);
+                btn.className = hasControl ? ICONO + "bg-accent-500 hover:bg-accent-600 text-brand-900" : ICONO_GRIS;
+                btn.textContent = "🎮";
+                btn.title = hasControl ? "Quitarle el control del tablero" : "Darle el control del tablero: mueve las piezas él mismo";
+                btn.setAttribute("aria-label", (hasControl ? "Quitarle el control a " : "Darle el control a ") + nombreVisible);
+                btn.setAttribute("aria-pressed", hasControl ? "true" : "false");
+                btn.addEventListener("click", () => setActivePlayer(hasControl ? null : studentId, "both"));
+                fila.appendChild(btn);
+                li.appendChild(fila);
+
+                // Lo que es solo de este alumno, en su segundo renglón.
+                if (info.hand_raised || hasControl) {
+                    const extra = document.createElement("div");
+                    extra.className = "flex flex-wrap items-center gap-1.5 mt-1.5 pl-4";
+                    if (info.hand_raised) {
+                        const palabraBtn = document.createElement("button");
+                        palabraBtn.type = "button";
+                        palabraBtn.className = TEXTO_BTN + "bg-accent-500 hover:bg-accent-600 text-brand-900";
+                        palabraBtn.textContent = "🗣️ Darle la palabra";
+                        palabraBtn.setAttribute("aria-label", "Darle la palabra a " + nombreVisible);
+                        palabraBtn.addEventListener("click", () => darLaPalabra(studentId));
+                        extra.appendChild(palabraBtn);
+                        const lowerBtn = document.createElement("button");
+                        lowerBtn.type = "button";
+                        lowerBtn.className = TEXTO_BTN + "bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200";
+                        lowerBtn.textContent = "✋ Bajar";
+                        lowerBtn.title = "Bajarle la mano a este alumno";
+                        lowerBtn.addEventListener("click", () => lowerStudentHand(studentId));
+                        extra.appendChild(lowerBtn);
+                    }
+                    if (hasControl) {
+                        /* Con qué color puede mover: se cambia mientras ya lo tiene (por
+                           ejemplo, de «solo blancas» a «ambos colores» a mitad de la
+                           demostración), sin quitarle y volver a darle el control. */
+                        const colorSelect = document.createElement("select");
+                        colorSelect.className = "text-xs bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-1 py-1.5 text-brand-700 dark:text-brand-200 focus:outline-none focus:ring-2 focus:ring-accent-500";
+                        colorSelect.title = "Con qué color puede mover este alumno";
+                        colorSelect.setAttribute("aria-label", "Con qué color mueve " + nombreVisible);
+                        colorSelect.innerHTML =
+                            '<option value="both">♟️ Ambos colores</option>' +
+                            '<option value="w">⚪ Solo blancas</option>' +
+                            '<option value="b">⚫ Solo negras</option>';
+                        colorSelect.value = activePlayerColor || "both";
+                        colorSelect.addEventListener("change", () => setActivePlayer(studentId, colorSelect.value));
+                        extra.appendChild(colorSelect);
+                        const quitar = document.createElement("button");
+                        quitar.type = "button";
+                        quitar.className = TEXTO_BTN + "bg-accent-500 hover:bg-accent-600 text-brand-900";
+                        quitar.textContent = "Quitar control";
+                        quitar.addEventListener("click", () => setActivePlayer(null, colorSelect.value));
+                        extra.appendChild(quitar);
+                    }
+                    li.appendChild(extra);
+                }
                 listEl.appendChild(li);
             }
         }
@@ -2747,7 +2777,13 @@
             if (error) {
                 console.error(error);
                 setStatus("No se pudo actualizar el control del tablero: " + error.message);
+                return;
             }
+            // La lista no espera el eco de Realtime: con 20 alumnos, el profe ve al
+            // toque a quién le dio el control (y su color). El eco llega igual.
+            activePlayerId = studentId;
+            activePlayerColor = studentId ? (color || "both") : "both";
+            renderStudentsList();
         }
 
         // ---------- Levantar la mano (solo alumnos) ----------

@@ -640,6 +640,34 @@ respondió.
 **Al tocar esto, correr `node herramientas/verificar-todo.js clase-elegido`.**
 Está probado que falla de verdad: sin mostrar el aviso grande, se cae.
 
+### La lista de alumnos conectados, un renglón por alumno
+
+Con 20 alumnos, la lista de «Alumnos conectados» era un desorden: cada uno
+traía cuatro controles (📝, 🏆, el color y «Dar control») que no cabían al lado
+del nombre y caían en dos renglones más, y el selector de color solo sirve para
+el que tiene el control.
+
+- **Un renglón por alumno**: el punto, su foto, el nombre (cortado si no cabe,
+  entero al pasar el puntero) y tres iconos: 📝 bitácora, 🏆 trofeos y 🎮
+  control. Cada uno dice qué hace y a quién (`aria-label`: «Darle el control a
+  Ana Rojas»); la leyenda de arriba los explica en palabras. El título dice
+  cuántos hay conectados.
+- **Lo que es de uno solo va en su segundo renglón**: el color con que mueve y
+  «Quitar control» al que tiene el control (se le da con ambos colores y se
+  cambia ahí mismo, sin quitárselo); «Darle la palabra» y «Bajar» al que
+  levantó la mano. Esos dos renglones van resaltados.
+- **El control se ve al toque**: `setActivePlayer` repinta la lista apenas la
+  base lo confirma, sin esperar el eco de Realtime.
+- «Participación en esta clase» (que repite los 20 nombres) va cerrada de
+  entrada, a un clic.
+- En el celular, el CSS de la columna de herramientas lleva cada botón a 44 px
+  para el dedo (ver «La clase en el celular del profe»).
+
+**Al tocar esto, correr `node herramientas/verificar-todo.js
+clase-participacion clase-elegido clase-notas trofeos foto-perfil
+clase-movil`.** Está probado que falla de verdad: sin repintar al dar el
+control, salta.
+
 ### La participación oral: cómo respondió, y la cola de manos levantadas
 
 El turno al azar decía a quién le tocaba, pero no cómo le fue; y «Levantar la

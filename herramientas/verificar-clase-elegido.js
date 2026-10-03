@@ -82,7 +82,10 @@ async function pruebaProfesor(browser) {
     window.__inserts.filter((i) => i.tabla === "clase_elegidos").map((i) => i.fila.class_session_id)), ["c-viva", "c-viva"]);
   igual("y el profe ve cuántas veces le tocó a cada uno", await page.evaluate(() =>
     [...document.querySelectorAll("#elegidos-cuenta li")].map((li) => li.textContent).sort()), ["Ana Rojas1 vez", "Beto Mora1 vez"]);
-  igual("la cuenta se ve", await seVe(page, "#elegidos-cuenta"), true);
+  // Cerrada de entrada (con 20 alumnos repetía la lista entera): a un clic.
+  igual("la cuenta está a un clic, cerrada para no estirar el panel", [await seVe(page, "#elegidos-cuenta-caja summary"), await seVe(page, "#elegidos-cuenta")], [true, false]);
+  await page.click("#elegidos-cuenta-caja summary");
+  igual("al abrirla, la cuenta se ve", await seVe(page, "#elegidos-cuenta"), true);
 
   await page.click("#elegido-insignia-btn");
   igual("las insignias se abren para ESE alumno", await page.textContent("#trofeos-en-clase-titulo"),

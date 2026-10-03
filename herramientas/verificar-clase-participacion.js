@@ -95,6 +95,52 @@ async function pruebaManos(browser) {
   await ctx.close();
 }
 
+/* La lista de conectados, ordenada para una clase de 20: un renglón por
+   alumno con sus tres iconos; el color y «Quitar control» solo en el que
+   tiene el control, y apenas la base lo confirma (sin esperar el eco). */
+async function pruebaListaOrdenada(browser) {
+  console.log("\n=== La lista de conectados, un renglón por alumno ===");
+  const { page, ctx, errores } = await abrir(browser, "u-profe", CLASE, { game_state: [fila(null)] });
+  await page.waitForSelector("#students-list", { state: "attached", timeout: 10000 });
+  await page.evaluate(() => {
+    window.__ponerPresencia("u-ana", { full_name: "Ana Rojas", role: "alumno" });
+    window.__ponerPresencia("u-beto", { full_name: "Beto Mora", role: "alumno" });
+  });
+  await page.waitForFunction(() => document.querySelectorAll("#students-list li").length === 2, null, { timeout: 5000 });
+  igual("dice cuántos hay conectados", await page.textContent("#students-count"), "(2)");
+  igual("cada alumno en un renglón, con sus tres iconos y sin el selector de color",
+    await page.evaluate(() => [...document.querySelectorAll("#students-list li")].map((li) => [
+      li.children.length, [...li.querySelectorAll("button")].map((b) => b.textContent).join(" "), li.querySelectorAll("select").length])),
+    [[1, "📝 🏆 🎮", 0], [1, "📝 🏆 🎮", 0]]);
+  igual("los iconos dicen qué hacen y a quién", await page.evaluate(() =>
+    [...document.querySelectorAll("#students-list li:first-child button")].map((b) => b.getAttribute("aria-label"))),
+    ["Bitácora de Ana Rojas", "Trofeos e insignias de Ana Rojas", "Darle el control a Ana Rojas"]);
+  await page.click('#students-list button[aria-label="Darle el control a Beto Mora"]');
+  await page.waitForFunction(() => document.querySelector('#students-list select'), null, { timeout: 3000 }).catch(() => {});
+  igual("le da el control con ambos colores", await page.evaluate(() => {
+    const u = window.__updates.filter((x) => x.tabla === "game_state" && "active_player_id" in x.campos).pop().campos;
+    return [u.active_player_id, u.active_player_color];
+  }), ["u-beto", "both"]);
+  igual("y sin esperar el eco, su renglón trae el color y «Quitar control»; los demás no", await page.evaluate(() =>
+    [...document.querySelectorAll("#students-list li")].map((li) => [li.querySelectorAll("select").length,
+      [...li.querySelectorAll("button")].some((b) => b.textContent === "Quitar control"),
+      li.querySelector('button[aria-pressed="true"]') ? "con control" : "sin control"])),
+    [[0, false, "sin control"], [1, true, "con control"]]);
+  await page.selectOption("#students-list select", "w");
+  igual("el color se cambia sin quitarle el control", await page.evaluate(() => {
+    const u = window.__updates.filter((x) => x.tabla === "game_state" && "active_player_id" in x.campos).pop().campos;
+    return [u.active_player_id, u.active_player_color];
+  }), ["u-beto", "w"]);
+  await page.locator("#students-list").getByRole("button", { name: "Quitar control" }).click();
+  await page.waitForFunction(() => !document.querySelector("#students-list select"), null, { timeout: 3000 }).catch(() => {});
+  igual("«Quitar control» se lo quita, y la lista vuelve a un renglón por alumno", [await page.evaluate(() => {
+    const u = window.__updates.filter((x) => x.tabla === "game_state" && "active_player_id" in x.campos).pop().campos;
+    return u.active_player_id;
+  }), await page.evaluate(() => document.querySelectorAll("#students-list select").length)], [null, 0]);
+  igual("sin errores en consola", errores, []);
+  await ctx.close();
+}
+
 async function pruebaAlumnos(browser) {
   console.log("\n=== Lo que ven los alumnos cuando es por mano levantada ===");
   const elegido = { id: "u-ana", at: new Date().toISOString(), nombre: "Ana Rojas", motivo: "mano" };
@@ -147,6 +193,7 @@ async function pruebaResumen(browser) {
   try {
     await pruebaAnotar(browser);
     await pruebaManos(browser);
+    await pruebaListaOrdenada(browser);
     await pruebaAlumnos(browser);
     await pruebaResumen(browser);
   } catch (e) {
