@@ -838,7 +838,7 @@ function pintarModoAlta() {
     document.getElementById("alta-encargado-ayuda").textContent = conClave
         ? "Ahí llega el informe de cómo le va. Con la contraseña puesta no hace falta para entrar; si se deja en blanco, no se apunta a nadie."
         : sinCorreo
-        ? "Ahí llega el enlace para crear la contraseña Y el informe de cómo le va. Sin esto no hay forma de escribirle a esta familia."
+        ? "Ahí llegan el usuario y la contraseña provisional Y el informe de cómo le va. Sin esto no hay forma de escribirle a esta familia."
         : "Ahí llega el informe de cómo le va. Si se deja en blanco, no se apunta a nadie.";
     document.getElementById("alta-enviar").textContent = conClave
         ? "Crear la cuenta" : "Crear la cuenta y enviar la invitación";
@@ -944,7 +944,7 @@ async function enviarAlta() {
             return fallar("La contraseña no puede empezar ni terminar con espacios.", "alta-contrasena");
         }
         if (!contrasena && !encargadoCorreo) {
-            return fallar("Sin correo propio, el de la persona encargada es obligatorio: es a donde va el enlace para crear la contraseña. O ponle tú la contraseña.", "alta-encargado-correo");
+            return fallar("Sin correo propio, el de la persona encargada es obligatorio: es a donde van el usuario y la contraseña provisional. O ponle tú la contraseña.", "alta-encargado-correo");
         }
         if (!usuario) {
             return fallar("Falta el usuario con el que va a entrar.", "alta-usuario");
@@ -1013,11 +1013,11 @@ async function enviarAlta() {
             // y nadie lo adivina. El correo salió hacia la casa, no hacia el
             // alumno, y quien da de alta tiene que saberlo para poder decírselo.
             await Avisos.alerta(`${alumnoNombre || "El alumno"} entra con:\n\n    ${entra}\n\n` +
-                  `El enlace para crear la contraseña salió a ${out.correo_destino || encargadoCorreo}, ` +
+                  `El usuario y la contraseña provisional salieron a ${out.correo_destino || encargadoCorreo}, ` +
                   `no al alumno — ese usuario no recibe correo.${encargado}`, { titulo: "Cuenta creada" });
         } else {
-            Avisos.avisar(`Invitación enviada a ${entra}: le llega un correo para crear su ` +
-                  `contraseña, con los pasos para entrar.${encargado}`);
+            Avisos.avisar(`Invitación enviada a ${entra}: le llega un correo con su ` +
+                  `contraseña provisional y los pasos para entrar.${encargado}`);
         }
     } catch (err) {
         msg.textContent = err.message;

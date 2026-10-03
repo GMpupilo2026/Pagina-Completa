@@ -118,6 +118,30 @@ export function problemaDeContrasena(clave: string): string | null {
   return null;
 }
 
+/* Las palabras de la contraseña provisional. Del ajedrez, sin tildes ni eñe:
+   se dicta por teléfono y se escribe en un celular. */
+const PALABRAS_CLAVE = [
+  "torre", "alfil", "caballo", "dama", "jaque", "enroque", "tablero", "peon",
+  "reina", "casilla", "columna", "fila", "gambito", "apertura", "final",
+  "tablas", "reloj", "torneo", "diagonal", "corona",
+];
+
+/**
+ * La contraseña provisional que lleva el correo de bienvenida: dos palabras
+ * del ajedrez y cuatro números («torre-alfil-4821»). Se puede leer en voz alta
+ * y escribir en un celular, y son cuatro millones de combinaciones, no las
+ * diez mil de una palabra y tres números: esta viaja por correo y nadie la
+ * eligió. Los números salen de `crypto`, nunca de `Math.random`. Siempre pasa
+ * `problemaDeContrasena()`.
+ */
+export function contrasenaProvisional(): string {
+  const n = new Uint32Array(3);
+  crypto.getRandomValues(n);
+  const a = PALABRAS_CLAVE[n[0] % PALABRAS_CLAVE.length];
+  const b = PALABRAS_CLAVE[n[1] % PALABRAS_CLAVE.length];
+  return `${a}-${b}-${String(n[2] % 10000).padStart(4, "0")}`;
+}
+
 type ClienteAdminCrear = {
   auth: {
     admin: {
@@ -142,12 +166,19 @@ export async function crearConContrasena(
   usuario: string,
   clave: string,
   fullName?: string | null,
+  /** La contraseña es la provisional del correo de bienvenida: al entrar, el
+   *  sitio le ofrece cambiarla (ver `contrasena_provisional` en login.js). La
+   *  que pone quien le da clase no lo es: se la dio en la mano y es la suya. */
+  provisional = false,
 ): Promise<{ user: { id: string; email?: string } | null; error: string | null }> {
+  const metadata: Record<string, unknown> = {};
+  if (fullName) metadata.full_name = fullName;
+  if (provisional) metadata.contrasena_provisional = true;
   const { data, error } = await adminClient.auth.admin.createUser({
     email: usuario,
     password: clave,
     email_confirm: true,
-    user_metadata: fullName ? { full_name: fullName } : undefined,
+    user_metadata: Object.keys(metadata).length ? metadata : undefined,
   });
   return {
     user: (data?.user as { id: string; email?: string } | null) ?? null,

@@ -118,8 +118,46 @@
             return new URLSearchParams(window.location.search).get("recuperar") === "1";
         }
 
+        /* login.html manda aquí con ?provisional=1 a quien entró con la
+           contraseña provisional del correo de bienvenida. Ya tiene sesión: no
+           hay enlace que canjear, solo ofrecerle cambiarla por una suya. Puede
+           seguir con la provisional («Ahora no»), y entonces se le vuelve a
+           ofrecer la próxima vez que entre. */
+        function vieneConProvisional() {
+            return new URLSearchParams(window.location.search).get("provisional") === "1";
+        }
+
+        /* A dónde sigue después: la misma regla de login.js, solo una página
+           propia del sitio, para que el parámetro no sirva de redirección
+           abierta hacia otro lado. */
+        function destinoSeguro() {
+            const raw = new URLSearchParams(window.location.search).get("next");
+            if (raw && /^[a-zA-Z0-9_\-./]+\.html$/.test(raw) && !raw.startsWith("//") && !raw.includes("..")) {
+                return raw;
+            }
+            return "clases.html";
+        }
+
+        function prepararProvisional() {
+            document.getElementById("titulo").textContent = "Cambia tu contraseña provisional";
+            document.getElementById("subtitulo").textContent =
+                "Entraste con la contraseña que te llegó por correo. Elige una tuya, que solo sepas tú.";
+            const h2 = pasos.crear.querySelector("h2");
+            if (h2) h2.textContent = "Tu contraseña nueva";
+            const destino = destinoSeguro();
+            document.getElementById("seguir-provisional-enlace").href = destino;
+            document.getElementById("seguir-provisional").classList.remove("hidden");
+            document.querySelector("#paso-listo a").href = destino;
+        }
+
         (async () => {
             tituloSegunClase();
+
+            if (vieneConProvisional()) {
+                const { data: { session } } = await sb.auth.getSession();
+                if (!session) { window.location.replace("login.html"); return; }
+                prepararProvisional();
+            }
 
             if (vienePorOlvido()) {
                 document.getElementById("titulo").textContent = "¿Olvidaste tu contraseña?";
@@ -192,7 +230,9 @@
             btn.disabled = true;
             btn.textContent = "Guardando…";
 
-            const { error } = await sb.auth.updateUser({ password: clave });
+            /* Cualquier contraseña que la persona elige quita la marca de
+               provisional: si no, login.js le seguiría pidiendo cambiarla. */
+            const { error } = await sb.auth.updateUser({ password: clave, data: { contrasena_provisional: false } });
 
             if (error) {
                 decir(error.message);

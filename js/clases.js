@@ -3457,7 +3457,7 @@
                 pwMsg.className = "text-xs text-red-600 dark:text-red-400 mb-3";
                 return;
             }
-            const { error } = await sb.auth.updateUser({ password: newPassword });
+            const { error } = await sb.auth.updateUser({ password: newPassword, data: { contrasena_provisional: false } });
             if (error) {
                 pwMsg.textContent = error.message;
                 pwMsg.className = "text-xs text-red-600 dark:text-red-400 mb-3";

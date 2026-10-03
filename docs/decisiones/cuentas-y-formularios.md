@@ -725,8 +725,8 @@ le funcionó.
 Lo revisan `verificar-bienvenida.js` (el canje del token, el aviso del enlace
 anulado, que el pedido vaya a la función y diga la hora) y
 `verificar-alumno-sin-correo.js` (que los dos casos vayan por la función y
-contesten lo mismo). Las invitaciones de alta no cambiaron: siguen con su
-`action_link`.
+contesten lo mismo). Las invitaciones de alta no van por acá: llevan una
+contraseña provisional (ver «La contraseña provisional»).
 
 ### La contraseña también se le puede asignar
 
@@ -942,6 +942,56 @@ invitó se enteraba cuando preguntaba por qué nunca entró.
 - Los estilos del correo van **a mano en cada etiqueta**, no en una hoja
   aparte: Gmail descarta el `<style>` del `<head>`. Misma decisión que
   `informe-html.ts`.
+
+### La contraseña provisional
+
+**Desde el 3 de octubre la invitación ya no lleva un enlace para crear la
+contraseña: lleva el usuario y una contraseña provisional.** El enlace fallaba
+callado por las mismas razones que el de recuperar (ver «El correo para una
+contraseña nueva»): se usa una sola vez, se vence, y los filtros de correo lo
+abren antes que la persona. La familia lo abría tarde y el alumno llegaba a la
+clase sin poder entrar.
+
+- **La cuenta se crea confirmada y con la contraseña puesta**
+  (`crearConContrasena(..., provisional = true)`), igual que cuando quien da
+  clase pone la contraseña al crear la cuenta, y el correo nuestro trae los dos
+  datos grandes y aparte, con un botón a `login.html`. Vale para las dos
+  puertas de alta, que comparten `invitacion-email.ts`, y para el alumno sin
+  correo (los datos le llegan a la casa).
+- **`contrasenaProvisional()`** (en `_compartido/usuario-alumno.ts`) arma dos
+  palabras del ajedrez y cuatro números (`torre-alfil-4821`): se dicta y se
+  escribe en un celular, y son cuatro millones de combinaciones y no las diez
+  mil de «caballo482», porque esta viaja por correo y nadie la eligió. Los
+  números salen de `crypto`.
+- **La cuenta queda marcada**: `contrasena_provisional: true` en la
+  `user_metadata`. Al iniciar sesión, `login.js` (`irAlDestino()`) manda a
+  quien la tiene a `bienvenida.html?provisional=1&next=…`, que pide la
+  contraseña nueva. **Puede decir «Ahora no: seguir con la provisional»** y
+  sigue a donde iba; se le vuelve a ofrecer la próxima vez que entre. El
+  `next` pasa por la misma regla de `login.js`: solo una página del sitio.
+- **Cualquier cambio de contraseña quita la marca**: `bienvenida.html` y el
+  botón «Contraseña» de `clases.html`, `configuracion.html` y `sesion.html`
+  mandan `data: { contrasena_provisional: false }` junto con la contraseña, y
+  la acción `contrasena` de `correos-alumno` (la que pone quien le da clase)
+  también la quita: esa se la dio en la mano y no es provisional. La marca está
+  en la `user_metadata`, que la persona puede escribir: lo peor que puede hacer
+  es quitarse el aviso, que es suyo.
+- **La que pone quien da clase al crear la cuenta no es provisional** y no
+  sale correo, como antes (ver «La contraseña se puede poner al crear la
+  cuenta»).
+- **Sin `RESEND_API_KEY` todo sigue como antes**: invita Supabase con su
+  enlace. No hay forma de mandar la contraseña sin el correo nuestro, y crear
+  una cuenta con una contraseña que no le llega a nadie sería peor.
+- Si el correo no sale, la cuenta queda creada con una contraseña que nadie
+  conoce: es el mismo `correo_enviado: false` de siempre, y la salida es la
+  misma («¿Olvidaste tu contraseña?», o «Su contraseña» desde la ficha).
+
+Esto pide desplegar `create-student`, `inscribir-alumno` y `correos-alumno`
+(armadas con `node herramientas/funciones-armar.js`). Lo revisa
+`verificar-bienvenida.js` («La contraseña provisional»: que `login.html` mande
+a cambiarla sin perder a dónde iba, que con una contraseña propia entre
+directo, que guardar quite la marca, que «Ahora no» siga a donde iba y que un
+`next` de otro sitio no sirva de redirección).
 
 **Al tocar `bienvenida.html`, `login.html` o cualquiera de las dos funciones,
 correr `node herramientas/verificar-bienvenida.js`** (con el sitio en

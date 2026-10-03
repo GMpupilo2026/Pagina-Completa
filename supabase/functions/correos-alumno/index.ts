@@ -241,7 +241,12 @@ Deno.serve(async (req) => {
     // email_confirm: una cuenta invitada que nunca abrió su enlace queda sin
     // confirmar, y sin confirmar GoTrue no la deja entrar ni con la contraseña
     // buena («Email not confirmed»). Ese enlace se mandó a otro buzón.
-    const { error } = await admin.auth.admin.updateUserById(alumnoId, { password: clave, email_confirm: true });
+    // La que pone quien le da clase no es provisional: se la da en la mano.
+    // Sin quitar la marca, el sitio le pediría cambiarla al entrar (ver
+    // «La contraseña provisional»). GoTrue mezcla user_metadata, no la pisa.
+    const { error } = await admin.auth.admin.updateUserById(alumnoId, {
+      password: clave, email_confirm: true, user_metadata: { contrasena_provisional: false },
+    });
     if (error) return json({ error: "No se pudo poner la contraseña: " + error.message }, 400);
     return json({ ok: true, usuario: alumno.email });
   }

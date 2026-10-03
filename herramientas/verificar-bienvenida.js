@@ -32,7 +32,8 @@ function igual(que, recibido, esperado) {
 
 /* El doble. `haySesion` es lo único que cambia entre escenarios: es
    exactamente lo que decide el enlace del correo. */
-function clienteFalso(haySesion) {
+function clienteFalso(haySesion, provisional = false) {
+  const usuario = `{ id: "u-1", email: ${JSON.stringify(CORREO)}, user_metadata: { contrasena_provisional: ${provisional} } }`;
   return `
 window.SUPABASE_URL = "https://ejemplo.supabase.co";
 window.SUPABASE_ANON_KEY = "anon-de-mentira";
@@ -40,8 +41,7 @@ window.__claves = [];     // lo que se mandó a updateUser
 window.__enlaces = [];    // lo que se mandó a resetPasswordForEmail (no debe usarse)
 window.__pedidos = [];    // lo que se le pidió a recuperar-acceso
 window.__canjes = [];     // lo que se mandó a verifyOtp
-window.__sesion = ${haySesion
-  ? `{ user: { id: "u-1", email: ${JSON.stringify(CORREO)} } }` : "null"};
+window.__sesion = ${haySesion ? `{ user: ${usuario} }` : "null"};
 (function () {
   const original = window.fetch;
   window.fetch = function (url, opciones) {
@@ -55,6 +55,11 @@ window.__sesion = ${haySesion
 window.sb = {
   auth: {
     getSession: () => Promise.resolve({ data: { session: window.__sesion } }),
+    // Cualquier contraseña entra: lo que se mira es a dónde manda después.
+    signInWithPassword: () => {
+      window.__sesion = { user: ${usuario} };
+      return Promise.resolve({ data: { session: window.__sesion }, error: null });
+    },
     // El token "bueno" abre la sesión; cualquier otro es uno anulado.
     verifyOtp: (datos) => {
       window.__canjes.push(datos);
@@ -78,7 +83,7 @@ window.sb = {
 `;
 }
 
-async function abrir(browser, { haySesion, ruta = "/bienvenida.html", oscuro = false }) {
+async function abrir(browser, { haySesion, ruta = "/bienvenida.html", oscuro = false, provisional = false }) {
   const contexto = await browser.newContext({
     // Al recargar es el service worker quien sirve los archivos, y lo que él
     // pide no pasa por las rutas del contexto: volvería el cliente de verdad.
@@ -91,7 +96,7 @@ async function abrir(browser, { haySesion, ruta = "/bienvenida.html", oscuro = f
     r.fulfill({ status: 200, contentType: "text/css", body: "" }));
   await contexto.route("**/fonts.gstatic.com/**", (r) => r.abort());
   await contexto.route("**/js/supabase-client.js", (r) =>
-    r.fulfill({ status: 200, contentType: "application/javascript", body: clienteFalso(haySesion) }));
+    r.fulfill({ status: 200, contentType: "application/javascript", body: clienteFalso(haySesion, provisional) }));
 
   const p = await contexto.newPage();
   const errores = [];
@@ -152,7 +157,10 @@ async function conEnlaceBueno(browser) {
   await p.click("#guardar-clave");
   await p.waitForTimeout(250);
   igual("manda a guardar EXACTAMENTE la contraseña que se escribió",
-        await p.evaluate(() => window.__claves), [{ password: "caballoblanco7" }]);
+        await p.evaluate(() => window.__claves),
+        [{ password: "caballoblanco7", data: { contrasena_provisional: false } }]);
+  ok("no ofrece seguir con una contraseña provisional que no tiene",
+     !(await seVe(p, "#seguir-provisional")));
   ok("después dice que quedó guardada", await seVe(p, "#paso-listo"));
   ok("y ofrece entrar a la Academia",
      (await p.getAttribute("#paso-listo a", "href")) === "clases.html");
@@ -335,6 +343,99 @@ async function desdeLogin(browser) {
   await contexto.close();
 }
 
+// ---------------------------------------------------------------- 7b. La contraseña provisional
+/* La invitación trae una contraseña provisional en el correo. Quien entra con
+   ella pasa por bienvenida.html?provisional=1 a cambiarla, y puede dejarlo
+   para después. Ver «La contraseña provisional» en cuentas-y-formularios.md. */
+async function contrasenaProvisional(browser) {
+  console.log("\nLa contraseña provisional — al entrar con ella se ofrece cambiarla");
+  {
+    const contexto = await browser.newContext({ serviceWorkers: "block" });
+    await contexto.route("**/cdn.jsdelivr.net/**", (r) =>
+      r.fulfill({ status: 200, contentType: "application/javascript", body: "" }));
+    await contexto.route("**/fonts.googleapis.com/**", (r) =>
+      r.fulfill({ status: 200, contentType: "text/css", body: "" }));
+    await contexto.route("**/js/supabase-client.js", (r) =>
+      r.fulfill({ status: 200, contentType: "application/javascript", body: clienteFalso(false, true) }));
+    const p = await contexto.newPage();
+    // El doble no guarda la sesión entre páginas: bienvenida.html, sin ella,
+    // vuelve a login.html. Por eso se mira a dónde FUE, no dónde terminó.
+    const visitadas = [];
+    p.on("framenavigated", (f) => { if (f === p.mainFrame()) visitadas.push(f.url()); });
+    await p.goto(BASE + "/login.html?next=entreno.html", { waitUntil: "networkidle" });
+    await p.fill("#email", CORREO);
+    await p.fill("#password", "torre-alfil-4821");
+    await Promise.all([p.waitForURL(/bienvenida\.html/, { timeout: 5000 }).catch(() => {}), p.click("#submit-btn")]);
+    ok("login.html lo manda a cambiarla, sin perder a dónde iba",
+       visitadas.some((u) => u.includes("/bienvenida.html?provisional=1&next=entreno.html")), visitadas.join(" → "));
+    await contexto.close();
+  }
+  {
+    const contexto = await browser.newContext({ serviceWorkers: "block" });
+    await contexto.route("**/cdn.jsdelivr.net/**", (r) =>
+      r.fulfill({ status: 200, contentType: "application/javascript", body: "" }));
+    await contexto.route("**/fonts.googleapis.com/**", (r) =>
+      r.fulfill({ status: 200, contentType: "text/css", body: "" }));
+    await contexto.route("**/js/supabase-client.js", (r) =>
+      r.fulfill({ status: 200, contentType: "application/javascript", body: clienteFalso(false, false) }));
+    const p = await contexto.newPage();
+    const visitadas = [];
+    p.on("framenavigated", (f) => { if (f === p.mainFrame()) visitadas.push(f.url()); });
+    await p.goto(BASE + "/login.html", { waitUntil: "networkidle" });
+    await p.fill("#email", CORREO);
+    await p.fill("#password", "caballoblanco7");
+    await Promise.all([p.waitForURL(/clases\.html|bienvenida\.html/, { timeout: 5000 }).catch(() => {}), p.click("#submit-btn")]);
+    ok("con su propia contraseña entra directo al panel, sin pasar por ahí",
+       visitadas.some((u) => u.includes("/clases.html")) && !visitadas.some((u) => u.includes("bienvenida.html")),
+       visitadas.join(" → "));
+    await contexto.close();
+  }
+  {
+    const { p, contexto, errores } = await abrir(browser, {
+      haySesion: true, provisional: true, ruta: "/bienvenida.html?provisional=1&next=entreno.html",
+    });
+    ok("pide la contraseña nueva", await seVe(p, "#paso-crear"));
+    ok("y dice que la que tiene es provisional",
+       (await p.textContent("#titulo")).includes("provisional"), await p.textContent("#titulo"));
+    ok("no le habla de un enlace vencido", !(await seVe(p, "#paso-sin-enlace")));
+    ok("ofrece seguir con la provisional por ahora", await seVe(p, "#seguir-provisional"));
+    igual("y ese «Ahora no» sigue a donde iba",
+          await p.getAttribute("#seguir-provisional-enlace", "href"), "entreno.html");
+    await p.fill("#clave", "caballoblanco7");
+    await p.fill("#clave2", "caballoblanco7");
+    await p.click("#guardar-clave");
+    await p.waitForTimeout(250);
+    igual("guarda la contraseña nueva y le quita la marca de provisional",
+          await p.evaluate(() => window.__claves),
+          [{ password: "caballoblanco7", data: { contrasena_provisional: false } }]);
+    ok("dice que quedó guardada", await seVe(p, "#paso-listo"));
+    igual("y sigue a donde iba", await p.getAttribute("#paso-listo a", "href"), "entreno.html");
+    errores.forEach((e) => { console.log("  ✗ error de la página: " + e); fallos += 1; });
+    await contexto.close();
+  }
+  {
+    const { p, contexto } = await abrir(browser, {
+      haySesion: true, provisional: true,
+      ruta: "/bienvenida.html?provisional=1&next=" + encodeURIComponent("https://otro-sitio.com/x.html"),
+    });
+    igual("un «next» de otro sitio no sirve de redirección abierta",
+          await p.getAttribute("#seguir-provisional-enlace", "href"), "clases.html");
+    await contexto.close();
+  }
+  {
+    const contexto = await browser.newContext({ serviceWorkers: "block" });
+    await contexto.route("**/cdn.jsdelivr.net/**", (r) =>
+      r.fulfill({ status: 200, contentType: "application/javascript", body: "" }));
+    await contexto.route("**/js/supabase-client.js", (r) =>
+      r.fulfill({ status: 200, contentType: "application/javascript", body: clienteFalso(false) }));
+    const p = await contexto.newPage();
+    await p.goto(BASE + "/bienvenida.html?provisional=1", { waitUntil: "networkidle" }).catch(() => {});
+    await p.waitForTimeout(400);
+    ok("sin sesión, ?provisional=1 manda a iniciar sesión", p.url().includes("/login.html"), p.url());
+    await contexto.close();
+  }
+}
+
 // ---------------------------------------------------------------- 8. La red de seguridad
 async function redDeSeguridad(browser) {
   console.log("\nclases.html — la red por si Supabase no acepta el destino nuevo");
@@ -379,6 +480,7 @@ async function redDeSeguridad(browser) {
     await olvidoLaClave(browser);
     await queSeVea(browser);
     await desdeLogin(browser);
+    await contrasenaProvisional(browser);
     await redDeSeguridad(browser);
   } finally {
     await browser.close();

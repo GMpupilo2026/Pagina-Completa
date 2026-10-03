@@ -12,10 +12,10 @@
 // Antes salían DOS correos: el de invitación que arma Supabase (con el enlace,
 // en inglés y sin explicar nada) y otro nuestro con el PDF de instrucciones.
 // El alumno entraba ya autenticado y su contraseña quedaba sin poner — para
-// volver al día siguiente tenía que adivinar cómo. Ahora sale UNO solo: el
-// enlace lo generamos nosotros (`generateLink`, que crea la cuenta pero NO
-// manda correo) y lo mandamos dentro de un correo que pide crear la contraseña
-// y explica, paso por paso, cómo se entra de aquí en adelante.
+// volver al día siguiente tenía que adivinar cómo. Ahora sale UNO solo: la
+// cuenta la creamos nosotros (sin que Supabase mande nada) y el correo nuestro
+// trae el usuario, la contraseña provisional y, paso por paso, cómo se entra
+// de aquí en adelante.
 //
 // EL ALUMNO SIN CORREO PROPIO: EL CORREO VA A LA CASA
 // Un niño de siete años no tiene correo, y su familia tiene UNO para los dos
@@ -23,7 +23,7 @@
 // (ver `usuario-alumno.ts`), que no recibe nada — así que su correo de
 // bienvenida se le manda a la persona encargada, con el usuario y la
 // explicación escritos para quien va a acompañar al niño a entrar, no para el
-// niño. Es el MISMO enlace de siempre: quien lo abre crea la contraseña. Lo
+// niño. Son los MISMOS datos de siempre —usuario y contraseña provisional—: lo
 // único que cambia es a qué bandeja llega y cómo está redactado.
 //
 // EL CAMINO DE RESPALDO NO ES UN ADORNO
@@ -34,12 +34,26 @@
 // se dice — `correo_enviado: false` sube hasta la pantalla de quien invitó, en
 // vez de dejar una cuenta muda de la que nadie se entera hasta que alguien
 // pregunta por qué ese alumno nunca entró.
+//
+// LA CONTRASEÑA PROVISIONAL VIAJA EN EL CORREO (desde el 3 de octubre)
+// El enlace para crear la contraseña fallaba de una forma que no da error: se
+// usa una sola vez, dura poco, y los filtros de correo lo abren antes que la
+// persona. La familia lo abría tarde, o lo abría un filtro, y el alumno se
+// quedaba sin poder entrar. Ahora la cuenta se crea ya confirmada y con una
+// contraseña provisional (`contrasenaProvisional()`), y el correo trae el
+// usuario y esa contraseña: con eso entra cuando quiera, sin enlaces que se
+// venzan. La cuenta queda marcada (`contrasena_provisional` en la metadata) y,
+// al entrar, login.js lo manda a bienvenida.html a cambiarla por una suya. Si
+// dice «Ahora no», se le vuelve a ofrecer la próxima vez; cualquier cambio de
+// contraseña quita la marca.
 
 import { cabeceraCorreo } from "./marca-correo.ts";
+import { contrasenaProvisional, crearConContrasena } from "./usuario-alumno.ts";
 
 const SITE_URL = "https://ajedrez-integral.com";
 const PDF_URL = `${SITE_URL}/instrucciones-adaptadas.pdf`;
 const DESTINO = `${SITE_URL}/bienvenida.html`;
+const ENTRAR = `${SITE_URL}/login.html`;
 const WHATSAPP = "https://wa.me/50683092291";
 
 export type ResultadoInvitacion = {
@@ -72,6 +86,7 @@ export async function invitarConBienvenida(
       admin: {
         inviteUserByEmail: (email: string, opts: unknown) => Promise<{ data: { user: unknown } | null; error: { message: string } | null }>;
         generateLink: (opts: unknown) => Promise<{ data: { user: unknown; properties?: { action_link?: string } } | null; error: { message: string } | null }>;
+        createUser: (opts: unknown) => Promise<{ data: { user: unknown } | null; error: { message: string } | null }>;
       };
     };
   },
@@ -122,37 +137,24 @@ export async function invitarConBienvenida(
     };
   }
 
-  // Crea la cuenta y devuelve el enlace SIN mandar ningún correo: el correo lo
-  // armamos nosotros abajo, con la explicación adentro.
-  const { data, error } = await adminClient.auth.admin.generateLink({
-    type: "invite",
-    email,
-    options: opciones,
-  });
+  // Crea la cuenta YA confirmada y con la contraseña provisional puesta, sin
+  // mandar ningún correo: el correo lo armamos nosotros abajo, con el usuario,
+  // la contraseña y la explicación adentro.
+  const clave = contrasenaProvisional();
+  const creada = await crearConContrasena(adminClient, email, clave, fullName, true);
 
-  if (error || !data?.user) {
+  if (creada.error || !creada.user) {
     return {
-      user: null, error: error?.message ?? "No se pudo invitar al alumno",
+      user: null, error: creada.error ?? "No se pudo invitar al alumno",
       correoEnviado: false, via: "propio", destino: null,
     };
   }
 
-  const enlace = data.properties?.action_link;
-  if (!enlace) {
-    return {
-      user: data.user as ResultadoInvitacion["user"],
-      error: null,
-      correoEnviado: false,
-      via: "propio",
-      destino: null,
-    };
-  }
-
   const correoEnviado = await enviarBienvenida(
-    envio.destino, enlace, fullName ?? undefined, envio, aLaCasa?.nombre ?? null,
+    envio.destino, clave, fullName ?? undefined, envio, aLaCasa?.nombre ?? null,
   );
   return {
-    user: data.user as ResultadoInvitacion["user"], error: null,
+    user: creada.user, error: null,
     correoEnviado, via: "propio", destino: correoEnviado ? envio.destino : null,
   };
 }
@@ -161,7 +163,8 @@ export async function invitarConBienvenida(
  *  cuando se llega aquí y tumbar el alta por un correo sería peor. */
 export async function enviarBienvenida(
   email: string,
-  enlace: string,
+  /** La contraseña provisional con la que entra la primera vez. */
+  clave: string,
   fullName?: string,
   envio?: Envio | null,
   nombreEncargado?: string | null,
@@ -181,10 +184,10 @@ export async function enviarBienvenida(
         to: [email],
         subject: envio?.aLaCasa
           ? `La cuenta de ${(fullName || "tu hijo o hija").trim().split(/\s+/)[0]} en Ajedrez Integral`
-          : "Tu cuenta de Ajedrez Integral: crea tu contraseña",
+          : "Tu cuenta de Ajedrez Integral: tu usuario y tu contraseña",
         html: envio?.aLaCasa
-          ? cuerpoBienvenidaCasa(envio.usuario, enlace, fullName, nombreEncargado)
-          : cuerpoBienvenida(email, enlace, fullName),
+          ? cuerpoBienvenidaCasa(envio.usuario, clave, fullName, nombreEncargado)
+          : cuerpoBienvenida(email, clave, fullName),
         ...(adjuntos.length ? { attachments: adjuntos } : {}),
       }),
     });
@@ -250,7 +253,36 @@ function paso(numero: number, texto: string) {
   );
 }
 
-export function cuerpoBienvenida(email: string, enlace: string, fullName?: string): string {
+/* El usuario y la contraseña, grandes y aparte: son los dos datos que hay que
+   copiar. La contraseña va en letra de máquina para que no se confunda una l
+   con un 1, y sin nada pegado: copiarla con el dedo en el celular no debe
+   arrastrar un punto o un espacio. */
+function datosDeEntrada(etiquetaUsuario: string, usuario: string, clave: string) {
+  const fila = (etiqueta: string, valor: string, mono: boolean) =>
+    `<p style="font-size:13px;color:#627d98;margin:0 0 2px;">${etiqueta}</p>` +
+    `<p style="font-size:19px;color:#102a43;font-weight:bold;margin:0 0 12px;word-break:break-all;` +
+    (mono ? `font-family:'Courier New',Courier,monospace;letter-spacing:0.5px;` : ``) +
+    `">${valor}</p>`;
+  return (
+    `<table role="presentation" cellpadding="0" cellspacing="0" ` +
+    `style="width:100%;background:#f0f4f8;border-radius:10px;margin:0 0 18px;">` +
+    `<tr><td style="padding:16px 18px 4px;">` +
+    fila(etiquetaUsuario, escapar(usuario), false) +
+    fila("Contraseña provisional:", escapar(clave), true) +
+    `</td></tr></table>`
+  );
+}
+
+function botonEntrar(texto: string) {
+  return (
+    `<p style="margin:0 0 8px;">` +
+    `<a href="${ENTRAR}" style="display:inline-block;background:#f0b429;color:#102a43;` +
+    `font-weight:bold;font-size:16px;text-decoration:none;padding:14px 26px;border-radius:10px;">` +
+    `${texto}</a></p>`
+  );
+}
+
+export function cuerpoBienvenida(email: string, clave: string, fullName?: string): string {
   const nombre = fullName ? fullName.trim().split(/\s+/)[0] : "";
   const saludo = nombre ? `¡Hola ${escapar(nombre)}!` : "¡Hola!";
   const correo = escapar(email);
@@ -262,28 +294,28 @@ export function cuerpoBienvenida(email: string, enlace: string, fullName?: strin
     `<h1 style="font-size:22px;color:#102a43;margin:0 0 6px;">${saludo}</h1>` +
     `<p style="font-size:16px;line-height:1.6;margin:0 0 18px;">` +
     `Ya tienes tu cuenta en la <strong>Academia de Ajedrez Integral</strong>. ` +
-    `Solo falta un paso: <strong>crear tu contraseña</strong>.</p>` +
+    `Estos son tus datos para entrar:</p>` +
 
-    `<p style="margin:0 0 8px;">` +
-    `<a href="${enlace}" style="display:inline-block;background:#f0b429;color:#102a43;` +
-    `font-weight:bold;font-size:16px;text-decoration:none;padding:14px 26px;border-radius:10px;">` +
-    `Crear mi contraseña y entrar</a></p>` +
+    datosDeEntrada("Tu correo:", email, clave) +
+
+    botonEntrar("Entrar a la Academia") +
     `<p style="font-size:13px;color:#627d98;margin:0 0 22px;">` +
-    `Ese botón te lleva a una página donde eliges tu contraseña. El enlace se usa una sola vez y dura poco, ` +
-    `así que conviene abrirlo hoy mismo. Si se te vence, en esa misma página puedes pedir otro.</p>` +
+    `La contraseña es <strong>provisional</strong>: la primera vez que entres te vamos a pedir que ` +
+    `la cambies por una tuya, que solo sepas tú. Si prefieres hacerlo después, también puedes ` +
+    `cambiarla cuando quieras desde el botón «Contraseña» de tu panel.</p>` +
 
     `<h2 style="font-size:17px;color:#102a43;margin:0 0 12px;">Así entras de aquí en adelante</h2>` +
     `<table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;margin:0 0 6px;">` +
     paso(1, `Entra a <a href="${SITE_URL}" style="color:#b44d12;">ajedrez-integral.com</a> desde el celular o la computadora.`) +
     paso(2, `Toca <strong>«Academia»</strong> en el menú de arriba.`) +
-    paso(3, `Escribe tu correo —<strong>${correo}</strong>— y la contraseña que acabas de crear.`) +
+    paso(3, `Escribe tu correo —<strong>${correo}</strong>— y tu contraseña: la provisional de arriba, o la tuya si ya la cambiaste.`) +
     paso(4, `Ahí está tu panel: las clases en vivo, los cursos, el entrenamiento y tus tareas.`) +
     `</table>` +
 
     `<p style="font-size:14px;line-height:1.6;background:#f0f4f8;border-radius:10px;padding:14px 16px;margin:14px 0 18px;">` +
     `<strong style="color:#102a43;">¿Se te olvida la contraseña?</strong> ` +
     `En la pantalla de inicio de sesión toca «¿Olvidaste tu contraseña?» y te llega un correo para poner una nueva. ` +
-    `Nadie más la conoce, ni tu profesor.</p>` +
+    `Cuando la cambies por una tuya, nadie más la va a conocer, ni tu profesor.</p>` +
 
     `<p style="font-size:14px;line-height:1.6;margin:0 0 18px;">` +
     `Te adjuntamos también el PDF <strong>Instrucciones adaptadas</strong>: una guía accesible con los pasos ` +
@@ -315,7 +347,7 @@ export function cuerpoBienvenida(email: string, enlace: string, fullName?: strin
      intentar escribirle ahí y que nadie conteste nunca. */
 export function cuerpoBienvenidaCasa(
   usuario: string,
-  enlace: string,
+  clave: string,
   fullName?: string,
   nombreEncargado?: string | null,
 ): string {
@@ -334,28 +366,21 @@ export function cuerpoBienvenidaCasa(
     `<p style="font-size:16px;line-height:1.6;margin:0 0 18px;">` +
     `Ya está lista la cuenta ${deQuien} en la <strong>Academia de Ajedrez Integral</strong>. ` +
     `Como ${suyo} todavía no tiene correo propio, le preparamos un <strong>usuario</strong> ` +
-    `y te mandamos todo a ti.</p>` +
+    `y te mandamos todo a ti. Estos son sus datos para entrar:</p>` +
 
-    `<table role="presentation" cellpadding="0" cellspacing="0" ` +
-    `style="width:100%;background:#f0f4f8;border-radius:10px;margin:0 0 18px;">` +
-    `<tr><td style="padding:16px 18px;">` +
-    `<p style="font-size:13px;color:#627d98;margin:0 0 4px;">El usuario ${deQuien} es:</p>` +
-    `<p style="font-size:19px;color:#102a43;font-weight:bold;margin:0;word-break:break-all;">${u}</p>` +
-    `</td></tr></table>` +
+    datosDeEntrada(`El usuario ${deQuien}:`, usuario, clave) +
 
-    `<p style="margin:0 0 8px;">` +
-    `<a href="${enlace}" style="display:inline-block;background:#f0b429;color:#102a43;` +
-    `font-weight:bold;font-size:16px;text-decoration:none;padding:14px 26px;border-radius:10px;">` +
-    `Crear la contraseña</a></p>` +
+    botonEntrar("Entrar a la Academia") +
     `<p style="font-size:13px;color:#627d98;margin:0 0 22px;">` +
-    `Ese botón abre una página donde eliges la contraseña ${deQuien}. El enlace se usa una sola vez ` +
-    `y dura poco, así que conviene abrirlo hoy mismo. Si se vence, en esa misma página puedes pedir otro.</p>` +
+    `La contraseña es <strong>provisional</strong>: la primera vez que entren, el sitio les pide ` +
+    `cambiarla por una que elijan ustedes. Si prefieren hacerlo después, se puede cambiar cuando ` +
+    `quieran desde el botón «Contraseña» del panel.</p>` +
 
     `<h2 style="font-size:17px;color:#102a43;margin:0 0 12px;">Así entra ${suyo}</h2>` +
     `<table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;margin:0 0 6px;">` +
     paso(1, `Entra a <a href="${SITE_URL}" style="color:#b44d12;">ajedrez-integral.com</a> desde el celular o la computadora.`) +
     paso(2, `Toca <strong>«Academia»</strong> en el menú de arriba.`) +
-    paso(3, `Escribe el usuario —<strong>${u}</strong>— y la contraseña que acabas de crear.`) +
+    paso(3, `Escribe el usuario —<strong>${u}</strong>— y la contraseña: la provisional de arriba, o la nueva si ya la cambiaron.`) +
     paso(4, `Ahí está su panel: las clases en vivo, los cursos, el entrenamiento y sus tareas.`) +
     `</table>` +
 

@@ -371,7 +371,7 @@
             const msg = document.getElementById("pw-msg");
             const newPassword = document.getElementById("new-password").value;
             if (newPassword.length < 8) { msg.textContent = "La contraseña debe tener al menos 8 caracteres."; msg.className = "text-xs text-red-600 dark:text-red-400"; return; }
-            const { error } = await sb.auth.updateUser({ password: newPassword });
+            const { error } = await sb.auth.updateUser({ password: newPassword, data: { contrasena_provisional: false } });
             if (error) { msg.textContent = error.message; msg.className = "text-xs text-red-600 dark:text-red-400"; return; }
             msg.textContent = "Contraseña actualizada.";
             msg.className = "text-xs text-green-600 dark:text-green-400";
