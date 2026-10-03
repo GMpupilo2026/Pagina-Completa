@@ -55,8 +55,10 @@
             </section>
 
             <div id="finished-banner" class="hidden mb-6 rounded-xl bg-accent-500/15 border border-accent-500/40 px-4 py-3 text-center">
-                <p class="text-lg font-serif font-bold text-brand-800 dark:text-white">🏆 Campeón(es): <span id="champion-names"></span></p>
-                <a href="campeones.html" class="text-sm text-accent-700 dark:text-accent-400 hover:text-accent-700 transition-colors">Ver el salón de la fama →</a>
+                <p id="finished-title" class="text-lg font-serif font-bold text-brand-800 dark:text-white"><span aria-hidden="true">🏆 </span>Campeón(es): <span id="champion-names"></span></p>
+                <!-- Terminado antes de tiempo por quien lo organiza: no hay campeón, se dice quién iba primero. -->
+                <p id="finished-early" hidden class="text-sm text-brand-700 dark:text-brand-200 mt-1"></p>
+                <a id="finished-fama" href="campeones.html" class="text-sm text-accent-700 dark:text-accent-400 hover:text-accent-700 transition-colors">Ver el salón de la fama →</a>
             </div>
 
             <section id="registration-section" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 mb-6">
@@ -85,6 +87,18 @@
             <section id="standings-section" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5">
                 <h2 class="font-serif font-bold text-brand-800 dark:text-white mb-3">Tabla de posiciones</h2>
                 <ul id="standings-list" class="text-sm text-brand-700 dark:text-brand-200"></ul>
+            </section>
+
+            <!-- Solo quien organiza (o administra): terminarlo antes de tiempo o borrarlo.
+                 Quién puede lo decide la base (tournaments_update / tournaments_delete). -->
+            <section id="gestion-torneo" hidden class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 mt-6" aria-labelledby="gestion-titulo">
+                <h2 id="gestion-titulo" class="font-serif font-bold text-brand-800 dark:text-white mb-1"><span aria-hidden="true">⚙️ </span>Organizar el torneo</h2>
+                <p id="gestion-nota" class="text-xs text-brand-450 dark:text-brand-350 mb-3"></p>
+                <div class="flex flex-wrap gap-2">
+                    <button id="terminar-torneo-btn" type="button" class="bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 disabled:opacity-50 text-brand-700 dark:text-brand-200 font-semibold px-4 py-2 rounded-xl text-sm transition-colors"><span aria-hidden="true">🏁 </span>Terminar el torneo</button>
+                    <button id="eliminar-torneo-btn" type="button" class="bg-red-100 hover:bg-red-200 dark:bg-red-900/40 dark:hover:bg-red-900/60 disabled:opacity-50 text-red-700 dark:text-red-300 font-semibold px-4 py-2 rounded-xl text-sm transition-colors"><span aria-hidden="true">🗑️ </span>Eliminar el torneo</button>
+                </div>
+                <p id="gestion-msg" role="status" class="text-xs text-brand-600 dark:text-brand-300 mt-2 min-h-[1em]"></p>
             </section>
         </div>
     </div>

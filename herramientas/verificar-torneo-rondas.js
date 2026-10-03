@@ -122,9 +122,11 @@ function doble(datos, usuarioId) {
       }
       if (op === "delete") {
         const quedan = filas.filter((r) => !pasa(r));
-        window.__escrituras.push({ tabla: tabla, op: "delete", filas: filas.length - quedan.length });
+        const borradas = filas.filter(pasa);
+        window.__escrituras.push({ tabla: tabla, op: "delete", filas: borradas.length });
         T[tabla] = quedan;
-        return { data: null, error: null };
+        // Como PostgREST: con .select() devuelve las filas que borró.
+        return { data: devolver ? borradas.map((r) => Object.assign({}, r)) : null, error: null };
       }
       let d = filas.filter(pasa).map((r) => Object.assign({}, r));
       if (orden) d.sort((x, y) => (x[orden.c] < y[orden.c] ? -1 : x[orden.c] > y[orden.c] ? 1 : 0) * (orden.asc ? 1 : -1));
@@ -581,7 +583,10 @@ async function correr(prueba, ...args) {
   catch (e) { fallos++; console.log("  ❌ " + prueba.name + " se cayó: " + String(e && e.message || e).split("\n")[0]); }
 }
 
-(async () => {
+// El doble y los datos los usa también verificar-torneo-terminar.js.
+module.exports = { doble, datosBase, abrir, PROFE, JUGADORES, CHROME, BASE };
+
+if (require.main === module) (async () => {
   pruebaMotor();
   const browser = await chromium.launch({ executablePath: CHROME });
   try {
