@@ -211,10 +211,13 @@ async function pruebaLogin(browser) {
 }
 
 /* ------------------------------------- 4. el olvido de contraseña, los dos caminos
-   Un correo de verdad sigue por `resetPasswordForEmail`, que está probado. Un
-   usuario de la academia NO puede ir por ahí: el enlace saldría hacia un buzón
-   que no existe y la página diría igual que salió — el niño se queda fuera para
-   siempre y nadie se entera. Ese caso tiene que ir por `recuperar-acceso`. */
+   Un usuario de la academia NO puede ir por `resetPasswordForEmail`: el enlace
+   saldría hacia un buzón que no existe y la página diría igual que salió — el
+   niño se queda fuera para siempre y nadie se entera. Ese caso tiene que ir
+   por `recuperar-acceso`. Y desde el 3 de octubre también un correo de verdad
+   va por ahí (la plantilla de Supabase hacía que Gmail juntara los correos y
+   la persona abriera uno ya anulado: ver «El correo para una contraseña
+   nueva»). */
 async function pruebaOlvido(browser) {
   console.log("\n=== El olvido de contraseña sale por donde de verdad llega ===");
   const page = await browser.newPage();
@@ -277,13 +280,17 @@ async function pruebaOlvido(browser) {
     conUsuario.edge[0] && conUsuario.edge[0].cuerpo.usuario, "sofia.munoz@" + dominio);
 
   const conCorreo = await pedir("mama@gmail.com");
-  igual("un correo de verdad sigue por el camino de siempre", conCorreo.reset, ["mama@gmail.com"]);
-  igual("y NO llama a la función nueva", conCorreo.edge.length, 0);
+  igual("un correo de verdad tampoco va por resetPasswordForEmail", conCorreo.reset, []);
+  igual("va por recuperar-acceso, tal cual se escribió",
+    conCorreo.edge.map((e) => [e.url.replace("https://ejemplo.supabase.co", ""), e.cuerpo.usuario]),
+    [["/functions/v1/recuperar-acceso", "mama@gmail.com"]]);
 
   /* Las dos respuestas tienen que ser IDÉNTICAS: si una dijera algo distinto,
      se podría averiguar quién tiene cuenta acá probando correos — y son
      menores de edad. */
-  igual("los dos caminos contestan exactamente lo mismo", conUsuario.dice, conCorreo.dice);
+  // (sin la hora del pedido, que cambia si el minuto pasa entre los dos)
+  const sinHora = (t) => t.replace(/a las .*? m\./, "a las …");
+  igual("los dos caminos contestan exactamente lo mismo", sinHora(conUsuario.dice), sinHora(conCorreo.dice));
 
   cierto("la página no tiró ningún error", errores.length === 0, errores.join("\n      "));
   await page.close();

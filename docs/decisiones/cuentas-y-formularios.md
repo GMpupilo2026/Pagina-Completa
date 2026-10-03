@@ -666,14 +666,67 @@ service role y lo manda a donde de verdad se le puede escribir a esa familia,
 que lo dice `correo_de_contacto()` — la misma regla de los informes a la casa y
 los avisos de cobro.
 
-- **Los correos de verdad siguen por el camino de siempre.** `bienvenida.html`
-  elige por `UsuarioAlumno.esInterno()`: lo que ya estaba probado no se toca.
+- **Desde el 3 de octubre también los correos de verdad van por acá** (antes
+  seguían por `resetPasswordForEmail`): ver «El correo para una contraseña
+  nueva», abajo.
 - `verify_jwt` va en **false**, porque quien olvidó su contraseña no tiene
   sesión. A cambio **no dice nunca si la cuenta existe**: contesta lo mismo en
   todos los casos, exista o no, salga el correo o no, y hasta si algo falla.
   Decir "ese usuario no está registrado" le contaría a cualquiera quién tiene
   cuenta acá, y son menores de edad. **Tampoco dice a qué correo lo mandó**: ese
   dato es de la familia.
+
+### El correo para una contraseña nueva
+
+**Lo que pasaba.** Una familia escribió que «al reenviar el correo de
+restablecer contraseña, no llega». Llegaba: Resend los marcaba entregados, y
+los registros de Auth mostraban a la persona abriendo el enlace a los 40-100
+segundos de pedirlo, desde su propia IP, y recibiendo cada vez `One-time token
+not found`. El token del último correo seguía **sin usar** en la base. La
+persona abría un correo viejo: cada enlace nuevo anula los anteriores, y la
+plantilla de Supabase («Reset your password», en inglés, igual siempre) hacía
+que Gmail juntara todos en UNA conversación. La página le decía «el enlace no
+sirve, pide otro», pedía otro y lo anulaba también: once en una hora, ninguno
+le funcionó.
+
+**Lo que se cambió.**
+
+- **Todo «olvidé mi contraseña» va por `recuperar-acceso`**, también con un
+  correo de verdad (al propio correo; con usuario de la Academia, a
+  `correo_de_contacto()`). Sale nuestro correo, en español, de
+  `_compartido/recuperacion-email.ts`, el mismo que usa `reenviar-acceso`.
+  El «Reenviar acceso» de `admin.html` también va por `reenviar-acceso` con
+  cualquier cuenta que no sea la que administra (esa sigue por
+  `admin-manage-users`).
+- **El asunto lleva la hora del pedido** (`asuntoRecuperacion()`): cada correo
+  va en su propia conversación y el más nuevo queda arriba. El correo dice
+  que si pidió más de uno, sirve solo el último, y la página, al pedirlo, dice
+  la hora y que los de antes ya no sirven.
+- **El enlace apunta al sitio**: `bienvenida.html?token_hash=…&type=recovery`
+  (`enlaceRecuperacion()`), y la página lo canjea con `verifyOtp()`. El
+  `action_link` de Supabase gasta el token con solo abrirse, y los filtros de
+  correo lo abren antes que la persona (se vio a una IP de Google haciéndolo);
+  un enlace a supabase.co en un correo que pide una contraseña es, además, lo
+  que castigan los filtros de spam. La página saca el token de la barra antes
+  de canjearlo: recargar no lo vuelve a gastar, y si al recargar la sesión ya
+  estaba, no es un error.
+- **Un enlace por minuto y por cuenta.** `resetPasswordForEmail` traía ese
+  freno; `generateLink` no trae ninguno, así que la función mira
+  `recovery_sent_at` y, si salió uno hace menos de un minuto, no crea otro:
+  ese sigue sirviendo. Se vio a alguien tocar el botón cinco veces en dos
+  segundos. La respuesta sigue siendo la misma en todos los casos.
+- **Cuando un enlace no sirve, la página lo explica primero**: «si pediste más
+  de uno, abre el más reciente», y solo después ofrece pedir otro. Supabase
+  contesta `otp_expired` tanto si se venció como si lo anuló uno nuevo; no se
+  pueden distinguir, así que se dicen los dos.
+- El correo de la persona se busca con `ilike` y los comodines escapados: un
+  `%` escrito en el campo encontraría la cuenta de otra.
+
+Lo revisan `verificar-bienvenida.js` (el canje del token, el aviso del enlace
+anulado, que el pedido vaya a la función y diga la hora) y
+`verificar-alumno-sin-correo.js` (que los dos casos vayan por la función y
+contesten lo mismo). Las invitaciones de alta no cambiaron: siguen con su
+`action_link`.
 
 ### La contraseña también se le puede asignar
 

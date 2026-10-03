@@ -30,7 +30,7 @@
 
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { esCorreoInterno } from "./usuario-alumno.ts";
-import { cuerpoRecuperacion } from "./recuperacion-email.ts";
+import { asuntoRecuperacion, cuerpoRecuperacion, enlaceRecuperacion } from "./recuperacion-email.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -115,10 +115,12 @@ Deno.serve(async (req) => {
     options: { redirectTo: DESTINO },
   });
 
-  const enlace = link?.properties?.action_link;
-  if (linkError || !enlace) {
+  // El enlace va al sitio, no a supabase.co: ver enlaceRecuperacion().
+  const token = link?.properties?.hashed_token;
+  if (linkError || !token) {
     return json({ error: "No se pudo generar el enlace: " + (linkError?.message ?? "") }, 500);
   }
+  const enlace = enlaceRecuperacion(token);
 
   const apiKey = Deno.env.get("RESEND_API_KEY");
   if (!apiKey) return json({ error: "Falta configurar el correo (RESEND_API_KEY)" }, 500);
@@ -136,7 +138,7 @@ Deno.serve(async (req) => {
       body: JSON.stringify({
         from,
         to: [destino],
-        subject: "Una contraseña nueva para entrar a Ajedrez Integral",
+        subject: asuntoRecuperacion(),
         html: cuerpoRecuperacion(enlace, alumno.email, alumno.full_name, esCuentaPropia),
       }),
     });

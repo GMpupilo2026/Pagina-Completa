@@ -38,10 +38,43 @@
             const codigo = p.get("error_code") || q.get("error_code");
             const descripcion = p.get("error_description") || q.get("error_description");
             if (!codigo && !descripcion && !p.get("error") && !q.get("error")) return null;
-            if (codigo === "otp_expired") {
-                return "El enlace se venció. Los del correo duran poco tiempo y se usan una sola vez.";
-            }
-            return "El enlace no se pudo usar. Puede que ya lo hayas abierto antes o que se haya vencido.";
+            /* Supabase dice otp_expired también cuando el enlace fue anulado
+               por uno más nuevo («Email link is invalid or has expired»): no
+               se pueden distinguir, así que se explican los dos casos. */
+            return ENLACE_QUE_NO_SIRVE;
+        }
+
+        /* Lo más común NO es que se haya vencido: es que la persona pidió otro
+           y abrió el correo viejo. Cada enlace nuevo anula los anteriores, y
+           el 3 de octubre una familia pidió once seguidos abriendo siempre uno
+           anulado (el del último seguía sin usar en la base). Por eso esto lo
+           dice primero, y no ofrece pedir otro sin explicarlo. */
+        const ENLACE_QUE_NO_SIRVE =
+            "Este enlace ya no sirve. Cada vez que pides uno nuevo, los anteriores dejan de funcionar: " +
+            "si pediste más de uno, abre el correo más reciente (el asunto dice a qué hora lo pediste). " +
+            "También deja de servir cuando ya se usó o se venció.";
+
+        /* El enlace de recuperar-acceso y reenviar-acceso trae el token en la
+           dirección (?token_hash=…&type=recovery) y se canjea aquí, no al
+           abrir el correo: los filtros de correo que visitan los enlaces antes
+           que la persona solo piden el HTML, y el token llega entero. Devuelve
+           null si no había token, o { error } si no sirvió. */
+        async function canjearToken() {
+            const entrada = window.__entrada || { busqueda: "" };
+            const q = new URLSearchParams(entrada.busqueda || "");
+            const tokenHash = q.get("token_hash");
+            if (!tokenHash) return null;
+            // Sin el token en la barra: recargar no lo vuelve a gastar, y no
+            // queda en el historial.
+            q.delete("token_hash");
+            const resto = q.toString();
+            history.replaceState(null, "", window.location.pathname + (resto ? "?" + resto : ""));
+            const { error } = await sb.auth.verifyOtp({ token_hash: tokenHash, type: q.get("type") || "recovery" });
+            if (!error) return {};
+            // Si ya hay sesión (la página se recargó con el token puesto), el
+            // canje falla pero la persona sigue adentro: no es un error.
+            const { data: { session } } = await sb.auth.getSession();
+            return session ? {} : { error: ENLACE_QUE_NO_SIRVE };
         }
 
         function tituloSegunClase() {
@@ -100,10 +133,10 @@
                 return;
             }
 
-            const fallo = errorDelEnlace();
+            const fallo = errorDelEnlace() || (await canjearToken())?.error;
             if (fallo) {
                 document.getElementById("sin-enlace-motivo").textContent =
-                    fallo + " Escribe tu correo y te mandamos uno nuevo.";
+                    fallo + " Si no tienes uno más nuevo, escribe tu correo y te mandamos otro.";
                 mostrar("sinEnlace");
                 return;
             }
@@ -186,35 +219,33 @@
             /* Se responde lo mismo exista o no la cuenta: decir "ese correo no
                está registrado" le contaría a cualquiera quién tiene cuenta.
 
-               DOS CAMINOS, PORQUE SON DOS COSAS DISTINTAS. Un correo de verdad
-               sigue por el de siempre, que está probado y no necesita nada más.
-               Un alumno con usuario de la academia no tiene buzón: mandarle el
-               enlace ahí sería mandarlo a la nada, y la pantalla diría igual
-               que salió — el niño se quedaría fuera para siempre sin que nadie
-               se entere. Para ese caso, `recuperar-acceso` lo manda a donde de
-               verdad se le puede escribir a esa familia. */
+               UN SOLO CAMINO, `recuperar-acceso`. Un alumno con usuario de la
+               academia no tiene buzón, y la función lo manda a donde de verdad
+               se le puede escribir a esa familia. Un correo de verdad iba por
+               `resetPasswordForEmail`, con la plantilla de Supabase: en inglés
+               y con el mismo asunto siempre, así que Gmail juntaba los correos
+               y la persona abría uno ya anulado. La función manda el nuestro,
+               con la hora en el asunto (ver «El correo para una contraseña
+               nueva» en docs/decisiones/cuentas-y-formularios.md). */
             try {
-                if (UsuarioAlumno.esInterno(correo)) {
-                    await fetch(`${window.SUPABASE_URL}/functions/v1/recuperar-acceso`, {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/json",
-                            "apikey": window.SUPABASE_ANON_KEY,
-                        },
-                        body: JSON.stringify({ usuario: correo }),
-                    });
-                } else {
-                    await sb.auth.resetPasswordForEmail(correo, {
-                        redirectTo: window.location.origin + "/bienvenida.html",
-                    });
-                }
+                await fetch(`${window.SUPABASE_URL}/functions/v1/recuperar-acceso`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "apikey": window.SUPABASE_ANON_KEY,
+                    },
+                    body: JSON.stringify({ usuario: correo }),
+                });
             } catch (_) {
                 /* Ni el fallo se cuenta: decir "esa cuenta no existe" y decir
                    "algo falló" son dos respuestas distintas, y con dos
                    respuestas distintas se puede averiguar quién tiene cuenta. */
             }
 
-            msg.textContent = "Si esa cuenta existe, ya salió un correo con el enlace nuevo. Revisa también la carpeta de spam.";
+            msg.textContent =
+                "Si esa cuenta existe, ya salió un correo con el enlace nuevo, pedido a las " +
+                HoraCR.hora(new Date()) + ". Abre ese: los de antes ya no sirven. " +
+                "Puede tardar un par de minutos; revisa también la carpeta de spam.";
             msg.className = "text-sm text-green-600 dark:text-green-400";
             msg.classList.remove("hidden");
             btn.disabled = false;

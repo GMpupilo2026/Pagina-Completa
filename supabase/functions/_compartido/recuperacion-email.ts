@@ -17,6 +17,33 @@
 // distinción que ya hace `cuerpoBienvenidaCasa` en `invitacion-email.ts`.
 
 const WHATSAPP = "https://wa.me/50683092291";
+const SITIO = "https://ajedrez-integral.com";
+
+// EL ENLACE APUNTA AL SITIO, NO A SUPABASE
+// El `action_link` de `generateLink()` es una dirección de supabase.co que
+// gasta el token con solo abrirla. Dos cosas salían mal con eso: los filtros
+// de correo (Google entre ellos: se vio a 173.194.x.x abriéndolos) visitan los
+// enlaces antes que la persona y el token ya llegaba gastado, y un enlace a un
+// dominio ajeno en un correo que pide «pon una contraseña» es justo lo que los
+// filtros de spam castigan. Con el `hashed_token` el enlace es nuestro:
+// `bienvenida.html` lo canjea con `verifyOtp()` cuando la página de verdad
+// corre, no cuando alguien solo pide el HTML.
+export function enlaceRecuperacion(hashedToken: string): string {
+  return `${SITIO}/bienvenida.html?token_hash=${encodeURIComponent(hashedToken)}&type=recovery`;
+}
+
+// EL ASUNTO LLEVA LA HORA
+// Cada enlace nuevo anula el anterior. Con el mismo asunto todas las veces,
+// Gmail junta los correos en UNA conversación, la persona abre el primero —ya
+// anulado—, la página le dice que no sirve, pide otro, y otra vez: el 3 de
+// octubre una familia pidió once en una hora y ninguno le funcionó. Con la hora
+// en el asunto cada correo va aparte y el más nuevo queda arriba.
+export function asuntoRecuperacion(ahora: Date = new Date()): string {
+  const hora = ahora.toLocaleTimeString("es-CR", {
+    hour: "numeric", minute: "2-digit", timeZone: "America/Costa_Rica",
+  });
+  return `Tu enlace para una contraseña nueva (pedido a las ${hora})`;
+}
 
 function escapar(texto: string) {
   return texto
@@ -59,8 +86,8 @@ export function cuerpoRecuperacion(
     `font-weight:bold;font-size:16px;text-decoration:none;padding:14px 26px;border-radius:10px;">` +
     `Poner una contraseña nueva</a></p>` +
     `<p style="font-size:13px;color:#627d98;margin:0 0 22px;">` +
-    `El enlace se usa una sola vez y dura poco, así que conviene abrirlo hoy mismo. ` +
-    `Si se vence, puedes pedir otro desde la misma pantalla de acceso.</p>` +
+    `El enlace se usa una sola vez y dura poco, así que conviene abrirlo ya. ` +
+    `<strong>Si pediste más de uno, sirve solo el último</strong>: cada enlace nuevo anula los anteriores.</p>` +
 
     `<p style="font-size:14px;line-height:1.6;margin:0 0 18px;">` +
     `<strong style="color:#102a43;">¿No pediste esto?</strong> ` +
