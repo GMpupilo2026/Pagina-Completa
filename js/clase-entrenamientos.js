@@ -12,7 +12,7 @@
      MaterialPlataforma.HERRAMIENTAS (js/material-plataforma.js), la misma de
      Tareas. Un entrenamiento nuevo que entra ahí aparece solo en la clase:
      si tiene «adaptador» (abajo) con su lista de ejercicios; si no, con
-     «📲 Que lo abran todos». verificar-clase-entrenamientos.js revisa que
+     «🪟 Abrirlo a todos en una ventana». verificar-clase-entrenamientos.js revisa que
      cada tarjeta del hub (entreno/index.html) esté en esa lista.
    - Los datos son los de cada página, sin copiar: los JSON de entreno/data y
      los módulos de js/ (aperturas-lineas.js, fichas-estudio.js,
@@ -49,7 +49,7 @@ window.EntrenosClase = (function () {
                 conLista: !!(adaptadores && adaptadores[h.slug]) }));
     }
 
-    /* El enlace que le llega a cada alumno al «📲 Que lo abran todos». No
+    /* El enlace que se le abre a cada alumno con «🪟 Abrirlo a todos en una ventana». No
        viaja una dirección: viaja el slug (y el recorte), y la dirección sale
        de la lista. Así nadie puede mandar a la clase a cualquier lado. */
     function enlaceDe(herramientas, slug, recorte) {
@@ -339,7 +339,7 @@ function pintarEntrenos() {
     if (!ad) {
         const p = document.createElement("p");
         p.className = "text-xs text-brand-450 dark:text-brand-350 mt-2";
-        p.textContent = "Este entrenamiento se hace en su propia página (no usa el tablero de la clase): con «Que lo abran todos» a cada alumno le aparece el botón para abrirlo.";
+        p.textContent = "Este entrenamiento tiene su propio tablero: con «Abrirlo a todos en una ventana», a cada alumno se le abre encima de la clase, como la práctica contra el motor. Cuando termines, «Cerrar la ventana a todos».";
         body.appendChild(p);
         return;
     }
@@ -380,7 +380,7 @@ function pintarCatalogoEntrenos(body, tarjetas) {
     body.appendChild(p);
     const partes = [
         ["Con el tablero de la clase", tarjetas.filter((t) => t.conLista || t.slug === "tipos")],
-        ["Se hacen en su página: que lo abran", tarjetas.filter((t) => !t.conLista && t.slug !== "tipos")],
+        ["Con su propio tablero: se abren en una ventana", tarjetas.filter((t) => !t.conLista && t.slug !== "tipos")],
     ];
     partes.forEach(([titulo, lista]) => {
         if (!lista.length) return;
@@ -503,7 +503,7 @@ function filaDeEntreno(t, item) {
     } else if (item.practica && (item.practica.enlace || item.practica.enlaceDe)) {
         const slug = item.practica.enlaceDe || t.slug;
         const recorte = item.practica.enlaceDe ? item.practica.recorte : item.practica.enlace;
-        acciones.appendChild(entrenoBoton("📲 Que la practiquen", () => pedirQueLoAbran(slug, recorte), false, "A cada alumno le aparece el botón para abrirla"));
+        acciones.appendChild(entrenoBoton("🪟 Que la practiquen", () => pedirQueLoAbran(slug, recorte), false, "A cada alumno se le abre en una ventana encima de la clase"));
     }
     if (item.guion && item.guion.length) {
         const g = entrenoBoton("🔎 Guion", () => {
@@ -600,14 +600,15 @@ function abrirPracticaDeFila(li, tanda) {
     if (sel) sel.focus();
 }
 
-/* «📲 Que lo abran todos»: a cada alumno le aparece el botón para abrir ese
-   entrenamiento (en otra pestaña: la clase sigue abierta). Va en la presencia
-   del profe, como la Fotografía: quien entra o recarga lo ve igual. */
+/* «🪟 Abrirlo a todos en una ventana»: a cada alumno se le abre ese
+   entrenamiento en una ventana encima de la clase (un marco con la página,
+   ver pintarEntrenoDelProfe). Va en la presencia del profe, como la
+   Fotografía: quien entra o recarga lo ve igual. */
 function cajaQueLoAbran(t, recorte) {
     const fila = document.createElement("div");
     fila.className = "flex flex-wrap items-center gap-1.5 mt-2";
-    fila.appendChild(entrenoBoton("📲 Que lo abran todos", () => pedirQueLoAbran(t.slug, recorte), !ADAPTADORES_ENTRENO[t.slug],
-        "A cada alumno le aparece el botón para abrir «" + t.label + "»"));
+    fila.appendChild(entrenoBoton("🪟 Abrirlo a todos en una ventana", () => pedirQueLoAbran(t.slug, recorte), !ADAPTADORES_ENTRENO[t.slug],
+        "A cada alumno se le abre «" + t.label + "» en una ventana encima de la clase"));
     const a = document.createElement("a");
     a.href = t.href;
     a.target = "_blank";
@@ -624,7 +625,7 @@ function pedirQueLoAbran(slug, recorte) {
     entrenoEnCurso = { slug, recorte: recorte || null, at: new Date().toISOString() };
     if (presenceChannel && presenceChannel.track) presenceChannel.track(metaDePresencia()).catch((err) => console.error(err));
     pintarEntrenoPedido();
-    setStatus("📲 A tus alumnos les aparece el botón para abrir «" + e.label + "».");
+    setStatus("🪟 A tus alumnos se les abre «" + e.label + "» en una ventana encima de la clase.");
 }
 
 function dejarDePedirloAbrir() {
@@ -639,33 +640,93 @@ function pintarEntrenoPedido() {
     if (!caja) return;
     const e = entrenoEnCurso && EntrenosClase.enlaceDe(herramientasDelSitio(), entrenoEnCurso.slug, entrenoEnCurso.recorte);
     caja.hidden = !e;
-    if (e) document.getElementById("entreno-pedido-texto").textContent = "Tus alumnos ven el botón para abrir «" + e.label + "».";
+    if (e) document.getElementById("entreno-pedido-texto").textContent = "Tus alumnos tienen abierto «" + e.label + "» en una ventana encima de la clase.";
 }
 
-/* Alumno: lo que pidió el profe, sacado de su presencia. El enlace sale de la
-   lista del sitio (EntrenosClase.enlaceDe), nunca de lo que viene escrito. */
+/* Alumno: lo que abrió el profe, sacado de su presencia. El enlace sale de la
+   lista del sitio (EntrenosClase.enlaceDe), nunca de lo que viene escrito.
+   Se abre en una ventana encima de la clase (#entreno-ventana), como la
+   práctica contra el motor: la página del entrenamiento va en un marco, en
+   su modo «en clase» (js/main.js: sin encabezado ni pie). Se abre sola UNA
+   vez por pedido; si el alumno la cierra, el aviso le deja volver. */
+let entrenoAbiertoAt = null;   // el pedido que ya se abrió solo
+let entrenoEnLaVentana = null; // el pedido cargado en el marco
+let entrenoFocoAntes = null;
+
+const enlaceEnClase = (href) => href + (href.includes("?") ? "&" : "?") + "en-clase=1";
+
+function abrirVentanaDeEntreno(e, at) {
+    const v = document.getElementById("entreno-ventana");
+    const marco = document.getElementById("entreno-ventana-marco");
+    if (!v || !marco) return;
+    if (entrenoEnLaVentana !== at) {
+        marco.title = e.label + ", dentro de la clase";
+        marco.src = enlaceEnClase(e.href);
+        entrenoEnLaVentana = at;
+    }
+    textoConEmojiMudo(document.getElementById("entreno-ventana-titulo"), "📲 " + e.label + ": lo abrió tu profe");
+    document.getElementById("entreno-ventana-pestana").href = e.href;
+    if (v.classList.contains("hidden")) entrenoFocoAntes = document.activeElement;
+    v.classList.remove("hidden");
+    enfocarCuandoSeVea(document.getElementById("entreno-ventana-titulo"));
+}
+
+function cerrarVentanaDeEntreno(vaciar) {
+    const v = document.getElementById("entreno-ventana");
+    if (!v) return;
+    const estabaAbierta = !v.classList.contains("hidden");
+    v.classList.add("hidden");
+    // Sin pedido, el marco se vacía: que no siga corriendo nada adentro.
+    if (vaciar) {
+        const marco = document.getElementById("entreno-ventana-marco");
+        marco.removeAttribute("src");
+        entrenoEnLaVentana = null;
+    }
+    if (estabaAbierta) {
+        const volver = document.getElementById("entreno-aviso-abrir");
+        const destino = volver && volver.checkVisibility && volver.checkVisibility() ? volver : entrenoFocoAntes;
+        if (destino && destino.focus) destino.focus();
+    }
+}
+
 function pintarEntrenoDelProfe(state) {
     const caja = document.getElementById("entreno-aviso");
     if (!caja || isTeacher) return;
     // Solo lo que anuncia el dueño del tablero (el profe de esta clase).
     const pedido = ((state || {})[boardOwnerId] || []).map((x) => x && x.entreno).find((x) => x && x.slug && x.at) || null;
     const e = pedido && EntrenosClase.enlaceDe(herramientasDelSitio(), pedido.slug, pedido.recorte);
-    const nuevo = e && entrenoVisto !== pedido.at;
-    caja.hidden = !nuevo;
-    if (!nuevo) return;
+    if (!e) { caja.hidden = true; cerrarVentanaDeEntreno(true); return; }
     caja.dataset.at = pedido.at;
-    document.getElementById("entreno-aviso-texto").textContent = "Tu profe te pide abrir «" + e.label + "».";
-    const a = document.getElementById("entreno-aviso-abrir");
-    a.href = e.href;
-    a.textContent = "Abrir «" + e.label + "» (otra pestaña)";
-    anunciarALaClase("entreno", pedido.at, "Tu profe te pide abrir " + e.label + ". El botón está debajo del tablero.");
+    caja.hidden = entrenoVisto === pedido.at;
+    document.getElementById("entreno-aviso-texto").textContent = "Tu profe abrió «" + e.label + "» para la clase.";
+    const b = document.getElementById("entreno-aviso-abrir");
+    b.textContent = "Volver a «" + e.label + "»";
+    b.onclick = null;
+    b.dataset.at = pedido.at;
+    if (entrenoAbiertoAt !== pedido.at) {
+        entrenoAbiertoAt = pedido.at;
+        entrenoVisto = null;
+        caja.hidden = false;
+        abrirVentanaDeEntreno(e, pedido.at);
+        anunciarALaClase("entreno", pedido.at, "Tu profe abrió " + e.label + " para la clase, en una ventana encima. Para volver a la clase, el botón «Volver a la clase».");
+    }
+    entrenoPedidoVisto = { e, at: pedido.at };
 }
+let entrenoPedidoVisto = null; // alumno: el último pedido válido, para el botón «Volver a…»
 
 if (document.getElementById("entreno-aviso-cerrar")) {
     document.getElementById("entreno-aviso-cerrar").addEventListener("click", () => {
         const caja = document.getElementById("entreno-aviso");
         entrenoVisto = caja.dataset.at || null;
         caja.hidden = true;
+    });
+    document.getElementById("entreno-aviso-abrir").addEventListener("click", () => {
+        if (entrenoPedidoVisto) abrirVentanaDeEntreno(entrenoPedidoVisto.e, entrenoPedidoVisto.at);
+    });
+    document.getElementById("entreno-ventana-cerrar").addEventListener("click", () => cerrarVentanaDeEntreno(false));
+    // Escape vuelve a la clase, como en las demás ventanas (si el foco no está dentro del marco).
+    document.getElementById("entreno-ventana").addEventListener("keydown", (ev) => {
+        if (ev.key === "Escape") { ev.preventDefault(); cerrarVentanaDeEntreno(false); }
     });
 }
 if (document.getElementById("entreno-pedido-quitar")) {
