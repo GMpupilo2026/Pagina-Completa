@@ -931,8 +931,8 @@
                          palabra, a quién darle el control. Primero la lista; lo demás
                          (elegir al azar, puntos, equipos) debajo. -->
                     <section id="students-panel" aria-labelledby="students-panel-titulo" class="hidden bg-white dark:bg-brand-900 rounded-xl shadow-md p-5">
-                        <h2 id="students-panel-titulo" class="font-serif font-bold text-brand-800 dark:text-white mb-1 flex items-center gap-2 flex-wrap"><span><span aria-hidden="true">👥</span> Alumnos conectados</span><span id="hand-raised-badge" class="hidden text-xs font-semibold px-2 py-0.5 rounded-full bg-accent-500 text-brand-900"><span aria-hidden="true">✋ </span>Piden la palabra</span></h2>
-                        <p class="text-xs text-brand-450 dark:text-brand-350 mb-3">Dale el control a un alumno para que pueda mover piezas él mismo.</p>
+                        <h2 id="students-panel-titulo" class="font-serif font-bold text-brand-800 dark:text-white mb-1 flex items-center gap-2 flex-wrap"><span><span aria-hidden="true">👥</span> Alumnos conectados <span id="students-count" class="text-sm font-sans font-semibold text-brand-450 dark:text-brand-350"></span></span><span id="hand-raised-badge" class="hidden text-xs font-semibold px-2 py-0.5 rounded-full bg-accent-500 text-brand-900"><span aria-hidden="true">✋ </span>Piden la palabra</span></h2>
+                        <p class="text-xs text-brand-450 dark:text-brand-350 mb-3"><span aria-hidden="true">📝</span> bitácora · <span aria-hidden="true">🏆</span> trofeos · <span aria-hidden="true">🎮</span> darle el control del tablero, para que mueva él mismo.</p>
                         <ul id="students-list" class="space-y-2 text-sm mb-4">
                             <li class="text-brand-450 dark:text-brand-350">Nadie conectado todavía…</li>
                         </ul>
@@ -965,7 +965,7 @@
                             </div>
                             <!-- Cuántas veces le tocó a cada uno en ESTA clase (clase_elegidos). El
                                  sorteo elige entre los que llevan menos. -->
-                            <details id="elegidos-cuenta-caja" hidden open class="mt-3 border-t border-accent-400/40 pt-2">
+                            <details id="elegidos-cuenta-caja" hidden class="mt-3 border-t border-accent-400/40 pt-2">
                                 <summary class="cursor-pointer text-xs font-semibold text-brand-700 dark:text-brand-200">Participación en esta clase: cuántas veces le tocó a cada uno y cómo le fue</summary>
                                 <ul id="elegidos-cuenta" class="mt-2 space-y-1 text-sm"></ul>
                             </details>
