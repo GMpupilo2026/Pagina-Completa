@@ -77,6 +77,22 @@
         // cualquier color. Permite, por ejemplo, que un alumno juegue con blancas contra
         // el profesor en vivo delante de toda la clase, sin poder tocar las piezas negras.
         let activePlayerColor = "both";
+        /* El rival: otro alumno que mueve el color CONTRARIO al de activePlayerId
+           (game_state.rival_id). Así dos alumnos juegan entre ellos en el tablero de
+           la clase, uno con blancas y otro con negras, y todos miran. Solo existe
+           mientras el control es de un solo color, y que cada uno mueva solo el suyo
+           lo hace cumplir la base (protect_game_state_teacher_columns). Ver «Dos
+           alumnos juegan en el tablero de la clase» en docs/decisiones/clase-en-vivo.md. */
+        let rivalId = null;
+        function colorContrario(c) { return c === "w" ? "b" : c === "b" ? "w" : null; }
+        // Con qué color mueve `id` en el tablero de la clase: "w", "b", "both" o null (no mueve).
+        function colorQueMueve(id) {
+            if (!id) return null;
+            if (id === activePlayerId) return activePlayerColor || "both";
+            if (id === rivalId) return colorContrario(activePlayerColor);
+            return null;
+        }
+        const NOMBRE_BANDO = { w: "blancas", b: "negras" };
         let presenceChannel = null;
         // Profesor: de qué alumno está mirando la partida de práctica en grande (ver
         // «La partida de UN alumno, en grande»). Viaja en su presencia, así que al
@@ -106,13 +122,23 @@
 
         function canMoveNow() {
             if (isTeacher) return true;
-            if (activePlayerId !== profile.id) return false;
-            return activePlayerColor === "both" || activePlayerColor === board.game.turn();
+            const mio = colorQueMueve(profile.id);
+            return mio === "both" || (!!mio && mio === board.game.turn());
+        }
+
+        /* Deshacer: el profe siempre. Un alumno con un solo color deshace solo SU
+           última jugada (la base rechaza lo demás): con dos alumnos jugando, uno no
+           le puede borrar la jugada al otro. */
+        function puedeDeshacer() {
+            if (isTeacher) return true;
+            const mio = colorQueMueve(profile.id);
+            if (mio === "both") return true;
+            return !!mio && board.moves().length > 0 && board.game.turn() !== mio;
         }
 
         function updateUndoButton() {
             const btn = document.getElementById("undo-move-btn");
-            btn.classList.toggle("hidden", !canMoveNow() || board.isViewingHistory());
+            btn.classList.toggle("hidden", !puedeDeshacer() || board.isViewingHistory());
         }
 
         // ---------- Pestañas del profesor (Mi plan/Táctica/Entrenamientos/Preguntar/Practicar) ----------
@@ -603,6 +629,7 @@
             }
             activePlayerId = row.active_player_id || null;
             activePlayerColor = row.active_player_color || "both";
+            rivalId = row.rival_id || null;
             comentariosClase = row.comentarios && typeof row.comentarios === "object" ? row.comentarios : {};
             if (!esObservador) pintarElegido(row.elegido || null);
             pintarPensar(row.pensar || null);
@@ -639,9 +666,13 @@
             // Quien supervisa no tiene control que calcular, y el mensaje de alumno le
             // pisaba el suyo («Estás mirando la clase de…») con cada jugada.
             if (isTeacher || esObservador) return;
-            const hasControl = activePlayerId === profile.id;
-            const colorLabel = activePlayerColor === "w" ? "blancas" : activePlayerColor === "b" ? "negras" : null;
-            const myColorTurn = !hasControl || activePlayerColor === "both" || activePlayerColor === board.game.turn();
+            const mio = colorQueMueve(profile.id);
+            const hasControl = !!mio;
+            const colorLabel = NOMBRE_BANDO[mio] || null;
+            const myColorTurn = !hasControl || mio === "both" || mio === board.game.turn();
+            // Contra quién juega, si juega contra otro alumno.
+            const otroId = profile.id === rivalId ? activePlayerId : profile.id === activePlayerId ? rivalId : null;
+            const otro = otroId ? (otroId === activePlayerId ? nombreDelQueJuega(activePlayerId) : nombreDelQueJuega(rivalId)) : null;
             // Mientras el profe muestra otra posición, una jugada del alumno sería
             // sobre la que ve y no sobre la partida: se espera a que vuelva.
             const profeMuestraOtra = board.isViewingHistory();
@@ -649,7 +680,9 @@
             let text = "Bienvenido a la clase. Verás el tablero moverse en vivo mientras el profesor juega.";
             if (hasControl) {
                 text = colorLabel
-                    ? ("¡El profesor te dio el control con " + colorLabel + "! " + (myColorTurn ? "Ya puedes mover." : "Espera a que le toque a tu color."))
+                    ? (otro
+                        ? "Juegas con " + colorLabel + " contra " + otro + ". " + (myColorTurn ? "Te toca mover." : "Espera su jugada.")
+                        : "¡El profesor te dio el control con " + colorLabel + "! " + (myColorTurn ? "Ya puedes mover." : "Espera a que le toque a tu color."))
                     : "¡El profesor te dio el control del tablero! Ya puedes mover piezas.";
                 if (profeMuestraOtra) text = "Tienes el control, pero tu profe está mostrando otra posición: cuando vuelva a la partida, vas a poder mover.";
             }
@@ -1864,7 +1897,7 @@
                     ? "Escribe tu jugada o una pregunta sobre la posición"
                     : "Pregúntale a la posición, o escribe tu jugada cuando tu profe te dé el control",
                 porQueNoPuedes: () => {
-                    if (activePlayerId !== profile.id) return "Ahora mueve tu profe. Cuando te dé el control vas a oírlo, y ahí mismo escribes tu jugada acá. Mientras tanto puedes preguntar: \"posición\", \"caballos\" o \"qué hay en e4\".";
+                    if (!colorQueMueve(profile.id)) return "Ahora mueve tu profe. Cuando te dé el control vas a oírlo, y ahí mismo escribes tu jugada acá. Mientras tanto puedes preguntar: \"posición\", \"caballos\" o \"qué hay en e4\".";
                     return "Todavía no le toca a tu color. Espera la jugada del otro lado.";
                 },
             }) : null;
@@ -2272,7 +2305,7 @@
         });
 
         document.getElementById("undo-move-btn").addEventListener("click", async () => {
-            if (!canMoveNow() || board.isViewingHistory()) return;
+            if (!puedeDeshacer() || board.isViewingHistory()) return;
             const undone = board.undo();
             if (!undone) return;
             await pushBoardState();
@@ -2319,9 +2352,10 @@
             const TEXTO_BTN = "text-xs font-semibold px-2 py-1.5 rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 ";
             for (const [studentId, info] of entries) {
                 const hasControl = activePlayerId === studentId;
+                const esRival = rivalId === studentId;
                 const nombreVisible = info.full_name || info.email;
                 const li = document.createElement("li");
-                li.className = "rounded-lg" + (info.hand_raised || hasControl ? " bg-accent-500/10 px-2 py-1 -mx-2" : "");
+                li.className = "rounded-lg" + (info.hand_raised || hasControl || esRival ? " bg-accent-500/10 px-2 py-1 -mx-2" : "");
                 const fila = document.createElement("div");
                 fila.className = "flex items-center gap-1.5";
                 const label = document.createElement("span");
@@ -2371,12 +2405,13 @@
                 // El control del tablero: dárselo (con ambos colores) o quitárselo.
                 const btn = document.createElement("button");
                 btn.type = "button";
-                btn.className = hasControl ? ICONO + "bg-accent-500 hover:bg-accent-600 text-brand-900" : ICONO_GRIS;
+                const mueve = hasControl || esRival;
+                btn.className = mueve ? ICONO + "bg-accent-500 hover:bg-accent-600 text-brand-900" : ICONO_GRIS;
                 btn.textContent = "🎮";
-                btn.title = hasControl ? "Quitarle el control del tablero" : "Darle el control del tablero: mueve las piezas él mismo";
-                btn.setAttribute("aria-label", (hasControl ? "Quitarle el control a " : "Darle el control a ") + nombreVisible);
-                btn.setAttribute("aria-pressed", hasControl ? "true" : "false");
-                btn.addEventListener("click", () => setActivePlayer(hasControl ? null : studentId, "both"));
+                btn.title = mueve ? "Quitarle el control del tablero" : "Darle el control del tablero: mueve las piezas él mismo";
+                btn.setAttribute("aria-label", (mueve ? "Quitarle el control a " : "Darle el control a ") + nombreVisible);
+                btn.setAttribute("aria-pressed", mueve ? "true" : "false");
+                btn.addEventListener("click", () => (esRival ? setRival(null) : setActivePlayer(hasControl ? null : studentId, "both")));
                 fila.appendChild(btn);
                 // Sacarlo de la clase, por si entró por error (js/clase-sacar.js).
                 const sacarBtn = document.createElement("button");
@@ -2390,7 +2425,7 @@
                 li.appendChild(fila);
 
                 // Lo que es solo de este alumno, en su segundo renglón.
-                if (info.hand_raised || hasControl) {
+                if (info.hand_raised || hasControl || esRival) {
                     const extra = document.createElement("div");
                     extra.className = "flex flex-wrap items-center gap-1.5 mt-1.5 pl-4";
                     if (info.hand_raised) {
@@ -2424,12 +2459,50 @@
                         colorSelect.value = activePlayerColor || "both";
                         colorSelect.addEventListener("change", () => setActivePlayer(studentId, colorSelect.value));
                         extra.appendChild(colorSelect);
+                        /* Con un solo color, el otro lo puede jugar otro alumno: los dos
+                           juegan en el tablero de la clase y todos miran. */
+                        if (colorContrario(activePlayerColor)) {
+                            const rivalSelect = document.createElement("select");
+                            rivalSelect.className = colorSelect.className;
+                            rivalSelect.title = "Quién juega con " + NOMBRE_BANDO[colorContrario(activePlayerColor)];
+                            rivalSelect.setAttribute("aria-label", "Quién juega con " + NOMBRE_BANDO[colorContrario(activePlayerColor)] + " contra " + nombreVisible);
+                            const tu = document.createElement("option");
+                            tu.value = "";
+                            tu.textContent = "Contra: tú (el profe)";
+                            rivalSelect.appendChild(tu);
+                            for (const [otroId, otroInfo] of entries) {
+                                if (otroId === studentId) continue;
+                                const o = document.createElement("option");
+                                o.value = otroId;
+                                // textContent: el nombre lo escribe la persona.
+                                o.textContent = "Contra: " + (otroInfo.full_name || otroInfo.email);
+                                rivalSelect.appendChild(o);
+                            }
+                            rivalSelect.value = rivalId && onlineStudents.has(rivalId) ? rivalId : "";
+                            rivalSelect.addEventListener("change", () => setRival(rivalSelect.value || null));
+                            extra.appendChild(rivalSelect);
+                        }
                         const quitar = document.createElement("button");
                         quitar.type = "button";
                         quitar.className = TEXTO_BTN + "bg-accent-500 hover:bg-accent-600 text-brand-900";
                         quitar.textContent = "Quitar control";
                         quitar.addEventListener("click", () => setActivePlayer(null, colorSelect.value));
                         extra.appendChild(quitar);
+                    }
+                    if (esRival) {
+                        const lado = document.createElement("span");
+                        lado.className = "text-xs font-semibold text-brand-800 dark:text-white";
+                        const c = colorContrario(activePlayerColor);
+                        lado.textContent = (c === "w" ? "⚪ " : "⚫ ") + "Juega con " + (NOMBRE_BANDO[c] || "el otro color")
+                            + " contra " + nombreDelQueJuega(activePlayerId);
+                        extra.appendChild(lado);
+                        const quitarRival = document.createElement("button");
+                        quitarRival.type = "button";
+                        quitarRival.className = TEXTO_BTN + "bg-accent-500 hover:bg-accent-600 text-brand-900";
+                        quitarRival.textContent = "Quitar control";
+                        quitarRival.setAttribute("aria-label", "Quitarle el control a " + nombreVisible + " (vuelves a jugar tú ese color)");
+                        quitarRival.addEventListener("click", () => setRival(null));
+                        extra.appendChild(quitarRival);
                     }
                     li.appendChild(extra);
                 }
@@ -2790,10 +2863,17 @@
         }
 
         async function setActivePlayer(studentId, color) {
-            const { error } = await sb.from("game_state").update({
-                active_player_id: studentId,
-                active_player_color: studentId ? (color || "both") : "both",
-            }).eq("id", myGameStateId);
+            const nuevoColor = studentId ? (color || "both") : "both";
+            const campos = { active_player_id: studentId, active_player_color: nuevoColor };
+            /* El rival sigue solo si el control sigue siendo del mismo alumno y de un
+               color (cambiar de blancas a negras lo deja con el otro color). En
+               cualquier otro caso se va; la base lo borra igual. Sin rival no se
+               manda la columna. */
+            if (rivalId) {
+                const sigue = studentId && studentId === activePlayerId && nuevoColor !== "both" && rivalId !== studentId;
+                campos.rival_id = sigue ? rivalId : null;
+            }
+            const { error } = await sb.from("game_state").update(campos).eq("id", myGameStateId);
             if (error) {
                 console.error(error);
                 setStatus("No se pudo actualizar el control del tablero: " + error.message);
@@ -2802,8 +2882,33 @@
             // La lista no espera el eco de Realtime: con 20 alumnos, el profe ve al
             // toque a quién le dio el control (y su color). El eco llega igual.
             activePlayerId = studentId;
-            activePlayerColor = studentId ? (color || "both") : "both";
+            activePlayerColor = nuevoColor;
+            if ("rival_id" in campos) rivalId = campos.rival_id;
             renderStudentsList();
+        }
+
+        // El otro alumno, que juega el color contrario (null = juega el profe).
+        async function setRival(studentId) {
+            if (studentId && (!activePlayerId || !colorContrario(activePlayerColor) || studentId === activePlayerId)) return;
+            const { data, error } = await sb.from("game_state").update({ rival_id: studentId })
+                .eq("id", myGameStateId).select("rival_id").maybeSingle();
+            if (error) {
+                console.error(error);
+                setStatus("No se pudo poner a jugar a los dos alumnos: " + error.message);
+                return;
+            }
+            // Se mira lo que QUEDÓ: la base lo borra si el control ya no es de un color.
+            rivalId = (data && data.rival_id) || null;
+            renderStudentsList();
+            if (studentId && rivalId === studentId) {
+                setStatus(nombreDelQueJuega(activePlayerId) + " juega con " + NOMBRE_BANDO[activePlayerColor]
+                    + " y " + nombreDelQueJuega(rivalId) + " con " + NOMBRE_BANDO[colorContrario(activePlayerColor)] + ".");
+            }
+        }
+
+        function nombreDelQueJuega(id) {
+            const info = onlineStudents.get(id) || {};
+            return info.full_name || info.email || "su compañero";
         }
 
         // ---------- Levantar la mano (solo alumnos) ----------
@@ -2944,6 +3049,8 @@
                 }
                 dictarFotografiaDeLaPresencia(state);
                 if (!isTeacher && !esObservador) pintarEntrenoDelProfe(state);
+                // Contra quién juega se dice con su nombre, que llega por la presencia.
+                if (!isTeacher && !esObservador && rivalId) updateAccessForRole();
                 renderStudentsList();
                 pintarCuentaCalentamiento();
                 if (isTeacher && tandaActual) { anotarTandaDeLaPresencia(); pintarTandaProfe(); }

@@ -3194,6 +3194,45 @@ desde la jugada 0, o con «Reintentar» a la vista sin intentos, salta. El doble
 de `verificar-clase-registrada.js` contesta ahora `nombres_de_jugadores` como
 la base (`{id, nombre}`), así que `verificar-clase-partidas.js` nombra a Ana.
 
+### Dos alumnos juegan en el tablero de la clase
+
+El control del tablero era de UN alumno (`active_player_id`), con un color o
+con los dos (`active_player_color`): para que dos alumnos jugaran entre ellos
+delante de la clase, el profe tenía que ir pasándole el control a uno y a otro
+en cada jugada. Ahora, cuando quien tiene el control mueve un solo color, su
+renglón trae **«Contra: …»** con los demás conectados (o «tú, el profe», como
+antes): el elegido queda en `game_state.rival_id` y mueve el color contrario.
+
+- El renglón del rival dice con qué color juega y contra quién («⚫ Juega con
+  negras contra Ana Rojas»), su 🎮 queda apretado, y «Quitar control» le
+  quita solo su lado: el otro sigue jugando contra el profe.
+- Cada alumno lee contra quién juega y si le toca («Juegas con negras contra
+  Ana Rojas. Espera su jugada.»), con el nombre que llega por la presencia.
+- **Deshacer**: un alumno con un solo color deshace solo SU última jugada; con
+  dos jugando, uno no le puede borrar la jugada al otro.
+- Sacar al rival de la clase le quita su lado.
+
+**Lo hace cumplir la base** (migración `clase_dos_alumnos_juegan`). Antes que
+cada uno moviera solo su color lo decía la pantalla; con dos alumnos
+escribiendo la misma fila tiene que decirlo la base:
+
+- la política `game_state_update` deja escribir también al rival;
+- `protect_game_state_teacher_columns` le devuelve a cualquiera que no sea el
+  profe `active_player_color` y `rival_id` (como ya pasaba con
+  `active_player_id`): nadie se cambia de color ni se pone de rival;
+- sin control de un solo color no hay rival: quitar el control, pasarlo a
+  «ambos colores» o dárselo al mismo alumno lo borra;
+- **con un solo color se juega de a una jugada**: agregar una del color al que
+  le toca (el turno de la posición vieja) o deshacer la propia; lo demás (dos
+  jugadas de golpe, cambiar la posición sin jugar) se rechaza.
+
+En la pantalla, `rival_id` solo se manda cuando hay rival: así el control de
+siempre sigue funcionando aunque la columna todavía no exista.
+
+**Al tocarlo, correr `node herramientas/verificar-todo.js clase-dos-alumnos
+clase-movil clase-remoto clase-sacar`.** Está probado que falla de verdad: sin
+contar al rival en `colorQueMueve()`, Beto no ve que le toca y la prueba se cae.
+
 ### Táctica por tema: la vista previa y su botón
 
 - **El tablero de la vista previa lo dibuja el mismo diagrama de ejemplo que los
