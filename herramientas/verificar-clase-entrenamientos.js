@@ -12,8 +12,13 @@
      pregunta (la de opciones, con su correcta en la base), «Que lo
      practiquen» manda el calentamiento con su banco y su filtro, y el alumno
      arma sus ejercicios de ese banco.
-   - «Que lo abran todos»: viaja el slug en la presencia del profe y el alumno
-     arma el enlace de la lista (nunca de lo que viene escrito).
+   - «Abrirlo a todos en una ventana»: viaja el slug en la presencia del profe,
+     y a cada alumno se le abre una ventana encima de la clase con la página
+     del entrenamiento en un marco (?en-clase=1), con el enlace armado de la
+     lista (nunca de lo que viene escrito). Se abre sola una vez; si la
+     cierra, el aviso le deja volver; si el profe la cierra, se cierra.
+   - El modo «en clase» de las páginas (js/main.js): dentro de un marco, sin
+     encabezado, migas ni pie; abierta sola, la página es la de siempre.
 
    Con el sitio en localhost:8777 y playwright:
        node herramientas/verificar-clase-entrenamientos.js
@@ -162,17 +167,17 @@ async function pruebaDelProfe(browser) {
   await page.waitForSelector("#tipos-body button");
   igual("Habilidades abre sus diecinueve", await page.$$eval("#tipos-body > div > button", (b) => b.length), 19);
 
-  // Coordenadas: se hace en su página → «Que lo abran todos».
+  // Coordenadas: tiene su propio tablero → «Abrirlo a todos en una ventana».
   await page.evaluate(() => { entrenosView = { slug: null, grupo: null, mostrar: 30 }; pintarEntrenos(); });
   igual("Habilidades se esconde al volver", await seVe(page, "#tipos-body"), false);
   await page.click('#entrenos-body [data-entreno="coordenadas"]');
-  await page.locator("#entrenos-body").getByRole("button", { name: "Que lo abran todos" }).click();
+  await page.locator("#entrenos-body").getByRole("button", { name: "Abrirlo a todos en una ventana" }).click();
   const meta = await page.evaluate(() => window.__tracks.slice(-1)[0].entreno);
-  igual("«Que lo abran todos» va en la presencia del profe: el slug, no la dirección", [meta.slug, meta.href], ["coordenadas", undefined]);
+  igual("«Abrirlo a todos» va en la presencia del profe: el slug, no la dirección", [meta.slug, meta.href], ["coordenadas", undefined]);
   igual("el profe ve que lo está pidiendo", [await seVe(page, "#entreno-pedido"), await page.textContent("#entreno-pedido-texto")],
-    [true, "Tus alumnos ven el botón para abrir «Coordenadas»."]);
+    [true, "Tus alumnos tienen abierto «Coordenadas» en una ventana encima de la clase."]);
   await page.click("#entreno-pedido-quitar");
-  igual("y lo deja de pedir", [await seVe(page, "#entreno-pedido"), await page.evaluate(() => window.__tracks.slice(-1)[0].entreno)], [false, undefined]);
+  igual("«Cerrar la ventana a todos» lo saca de la presencia", [await seVe(page, "#entreno-pedido"), await page.evaluate(() => window.__tracks.slice(-1)[0].entreno)], [false, undefined]);
   igual("sin errores en consola", errores, []);
   await ctx.close();
 }
@@ -192,20 +197,68 @@ async function pruebaDelAlumno(browser) {
   await page.waitForFunction(() => /llevas 1 bien/.test(document.getElementById("tanda-estado").textContent), null, { timeout: 6000 });
   igual("el mate cuenta", true, true);
 
-  igual("sin pedido, no hay aviso", await seVe(page, "#entreno-aviso"), false);
-  // El profe pide abrir Aperturas, en una línea. Un pedido de otro (no del profe de la clase) no cuenta.
+  igual("sin pedido, no hay aviso ni ventana", [await seVe(page, "#entreno-aviso"), await seVe(page, "#entreno-ventana")], [false, false]);
+  // Un pedido de otro (no del profe de la clase) no cuenta.
   await page.evaluate(() => window.__ponerPresencia("u-beto", { role: "alumno", full_name: "Beto", entreno: { slug: "coordenadas", at: "x" } }));
-  igual("lo que anuncia otro alumno no abre nada", await seVe(page, "#entreno-aviso"), false);
-  await page.evaluate(() => window.__ponerPresencia("u-profe", { role: "profesor", full_name: "Profe", entreno: { slug: "aperturas", recorte: "italiana", at: new Date().toISOString() } }));
-  await page.waitForFunction(() => document.getElementById("entreno-aviso").checkVisibility(), null, { timeout: 5000 });
-  igual("le aparece el botón, con el enlace armado de la lista",
-    [await page.textContent("#entreno-aviso-texto"), await page.getAttribute("#entreno-aviso-abrir", "href"), await page.getAttribute("#entreno-aviso-abrir", "target")],
-    ["Tu profe te pide abrir «Aperturas y celadas».", "entreno/aperturas.html?linea=italiana", "_blank"]);
-  await page.click("#entreno-aviso-cerrar");
-  igual("lo cierra", await seVe(page, "#entreno-aviso"), false);
+  igual("lo que anuncia otro alumno no abre nada", [await seVe(page, "#entreno-aviso"), await seVe(page, "#entreno-ventana")], [false, false]);
+  // El profe abre Coordenadas a todos: al alumno se le abre la ventana, sola.
+  await page.evaluate(() => window.__ponerPresencia("u-profe", { role: "profesor", full_name: "Profe", entreno: { slug: "coordenadas", at: new Date().toISOString() } }));
+  await page.waitForFunction(() => document.getElementById("entreno-ventana").checkVisibility(), null, { timeout: 5000 });
+  igual("se le abre la ventana encima de la clase, con la página en su modo «en clase» (armada de la lista)",
+    [await page.getAttribute("#entreno-ventana-marco", "src"), await page.textContent("#entreno-ventana-titulo"),
+      await page.getAttribute("#entreno-ventana-marco", "title"), await page.getAttribute("#entreno-ventana-pestana", "href")],
+    ["entreno/coordenadas.html?en-clase=1", "📲 Coordenadas: lo abrió tu profe", "Coordenadas, dentro de la clase", "entreno/coordenadas.html"]);
+  await page.waitForFunction(() => document.activeElement && document.activeElement.id === "entreno-ventana-titulo", null, { timeout: 3000 }).catch(() => {});
+  igual("es una ventana que lo dice (diálogo) y el foco va a su título",
+    [await page.getAttribute("#entreno-ventana", "role"), await page.evaluate(() => document.activeElement.id)], ["dialog", "entreno-ventana-titulo"]);
+  // Adentro, la página sin encabezado ni pie: la clase ya tiene los suyos.
+  await page.waitForFunction(() => {
+    const d = document.getElementById("entreno-ventana-marco").contentDocument;
+    return d && d.documentElement.classList.contains("en-clase") && d.getElementById("header");
+  }, null, { timeout: 15000 });
+  igual("dentro del marco, sin encabezado, migas ni pie", await page.evaluate(() => {
+    const d = document.getElementById("entreno-ventana-marco").contentDocument;
+    const ve = (el) => !!(el && el.checkVisibility());
+    return [ve(d.getElementById("header")), ve(d.getElementById("migas")), ve(d.querySelector("body > footer"))];
+  }), [false, false, false]);
+
+  await page.click("#entreno-ventana-cerrar");
+  igual("«Volver a la clase» la cierra, y el aviso deja volver", [await seVe(page, "#entreno-ventana"), await seVe(page, "#entreno-aviso"),
+    await page.textContent("#entreno-aviso-abrir"), await page.evaluate(() => document.activeElement.id)],
+    [false, true, "Volver a «Coordenadas»", "entreno-aviso-abrir"]);
+  // Otro eco de la presencia (el mismo pedido) no la vuelve a abrir sola.
+  await page.evaluate(() => window.__entraOtroAlumno());
+  igual("el mismo pedido no se vuelve a abrir solo", await seVe(page, "#entreno-ventana"), false);
+  await page.click("#entreno-aviso-abrir");
+  igual("«Volver a…» la abre otra vez, sin recargar la página de adentro",
+    [await seVe(page, "#entreno-ventana"), await page.getAttribute("#entreno-ventana-marco", "src")], [true, "entreno/coordenadas.html?en-clase=1"]);
+  await page.focus("#entreno-ventana-cerrar");
+  await page.keyboard.press("Escape");
+  igual("Escape también vuelve a la clase", await seVe(page, "#entreno-ventana"), false);
+
+  // Con un recorte (una línea de Aperturas): el enlace sale de la lista, con su recorte.
+  await page.evaluate(() => window.__ponerPresencia("u-profe", { role: "profesor", full_name: "Profe", entreno: { slug: "aperturas", recorte: "italiana", at: new Date(Date.now() + 1000).toISOString() } }));
+  await page.waitForFunction(() => document.getElementById("entreno-ventana").checkVisibility(), null, { timeout: 5000 });
+  igual("otro pedido se abre solo, con su recorte", await page.getAttribute("#entreno-ventana-marco", "src"), "entreno/aperturas.html?linea=italiana&en-clase=1");
+
+  // El profe cierra la ventana a todos: se cierra y el marco se vacía.
+  await page.evaluate(() => window.__ponerPresencia("u-profe", { role: "profesor", full_name: "Profe" }));
+  igual("si el profe la cierra a todos, se cierra y se vacía",
+    [await seVe(page, "#entreno-ventana"), await seVe(page, "#entreno-aviso"), await page.getAttribute("#entreno-ventana-marco", "src")], [false, false, null]);
   await page.evaluate(() => window.__ponerPresencia("u-profe", { role: "profesor", full_name: "Profe", entreno: { slug: "fuera", at: "y" } }));
-  igual("un slug que no está en la lista no muestra nada", await seVe(page, "#entreno-aviso"), false);
+  igual("un slug que no está en la lista no abre nada", [await seVe(page, "#entreno-aviso"), await seVe(page, "#entreno-ventana")], [false, false]);
   igual("sin errores en consola", errores, []);
+  await ctx.close();
+}
+
+async function pruebaAbiertaSola(browser) {
+  console.log("\n=== La página de un entrenamiento abierta sola: la de siempre ===");
+  const ctx = await browser.newContext({ serviceWorkers: "block" });
+  const page = await ctx.newPage();
+  await page.goto("http://localhost:8777/entreno/coordenadas.html?en-clase=1", { waitUntil: "domcontentloaded" });
+  await page.waitForTimeout(800);
+  igual("aun con ?en-clase=1, sin marco no se esconde nada", [await page.evaluate(() => document.documentElement.classList.contains("en-clase")),
+    await seVe(page, "#header")], [false, true]);
   await ctx.close();
 }
 
@@ -215,6 +268,7 @@ async function pruebaDelAlumno(browser) {
   try {
     await pruebaDelProfe(browser);
     await pruebaDelAlumno(browser);
+    await pruebaAbiertaSola(browser);
   } catch (e) {
     console.log("  ✗ la prueba se cayó: " + (e && e.stack || e));
     fallos += 1;

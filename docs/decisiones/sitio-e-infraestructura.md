@@ -874,6 +874,25 @@ ninguna página cargue dos veces el mismo script y que la hoja de fuentes no
 frene el pintado. `verificar-vendor.js` vigila además que nadie vuelva a pedir
 chess.js a un CDN.
 
+## Las páginas se enmarcan solo dentro del sitio
+
+`_headers` decía `frame-ancestors 'none'` y `X-Frame-Options: DENY`: ninguna
+página se podía meter en un marco, ni en otra del propio sitio. Desde que la
+clase en vivo abre Coordenadas, 4×4 y los demás en una ventana encima del
+tablero (ver «Los entrenamientos, en la clase» en `clase-en-vivo.md`), dice
+`frame-ancestors 'self'` y `X-Frame-Options: SAMEORIGIN`, y `frame-src` suma
+`'self'`.
+
+- **Otro sitio sigue sin poder enmarcar ninguna**: lo que cuida el
+  clickjacking (un sitio ajeno que tapa el nuestro con un botón falso) es que
+  nadie de afuera pueda; un marco del propio sitio ya tiene todo lo que tendría
+  esa página.
+- **Los cursos protegidos no cambian**: los sirve el worker con sus propias
+  cabeceras, todavía con `frame-ancestors 'none'` y `DENY`
+  (`verificar-worker.js` lo revisa).
+- Una página dentro de un marco con `?en-clase=1` se muestra sin encabezado ni
+  pie (`js/main.js`); fuera de un marco no cambia nada.
+
 ## Metadatos: que el enlace se vea y la página se encuentre
 
 Cada página pública lleva su descripción, su `canonical` y su bloque de Open

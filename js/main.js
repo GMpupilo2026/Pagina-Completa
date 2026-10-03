@@ -1,6 +1,19 @@
 /* ===== Ajedrez Integral — Main JS (navegación responsive) ===== */
 (function () {
     'use strict';
+    /* Dentro de la clase en vivo: sesion.html abre un entrenamiento en una
+       ventana encima del tablero (un marco con ?en-clase=1). Ahí la página va
+       sola, sin encabezado, migas, pie ni lo que flota: la clase ya tiene los
+       suyos. Solo dentro de un marco: abierta sola, la página es la de siempre.
+       Ver «Los entrenamientos, en la clase» en docs/decisiones/clase-en-vivo.md. */
+    if (window.self !== window.top && /[?&]en-clase=1(&|$)/.test(location.search)) {
+        document.documentElement.classList.add('en-clase');
+        const estilo = document.createElement('style');
+        estilo.textContent = 'html.en-clase #header, html.en-clase #migas, html.en-clase body > footer, '
+            + 'html.en-clase #burbuja-en-linea, html.en-clase #juego-aviso, html.en-clase #tanda-diez, '
+            + 'html.en-clase #tarea-en-curso, html.en-clase #modo-vista-barra { display: none !important; }';
+        document.head.appendChild(estilo);
+    }
     const menuToggle = document.getElementById('menu-toggle');
     const mobileMenu = document.getElementById('mobile-menu');
     const iconOpen = document.getElementById('icon-open');

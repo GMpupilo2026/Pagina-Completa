@@ -3165,18 +3165,36 @@ mostrarlo para explicarlo, preguntarlo a la clase y que lo practiquen.
   comprueba que el tablero de la clase acepta cada posición y que cada
   solución se juega con chess.js (las de Mates, hasta el mate). De Desafíos
   solo van los que tienen los dos reyes: los otros se hacen en su página.
-- **«📲 Que lo abran todos» no manda una dirección**: manda el slug (y el
-  recorte) en la presencia del profe, como la Fotografía, y cada alumno arma
-  el enlace con la lista del sitio (`EntrenosClase.enlaceDe`). Solo cuenta lo
-  que anuncia el dueño del tablero: lo que anuncie otro no abre nada. Se abre
-  en otra pestaña: la clase sigue abierta.
+- **«🪟 Abrirlo a todos en una ventana» no manda una dirección**: manda el
+  slug (y el recorte) en la presencia del profe, como la Fotografía, y cada
+  alumno arma el enlace con la lista del sitio (`EntrenosClase.enlaceDe`).
+  Solo cuenta lo que anuncia el dueño del tablero: lo que anuncie otro no
+  abre nada.
+- **Coordenadas, 4×4 y los que tienen su propio tablero se abren en una
+  ventana encima de la clase** (`#entreno-ventana`), como la práctica contra
+  el motor: la página del entrenamiento va en un marco. Antes se abrían en
+  otra pestaña, y el alumno salía de la clase. No se mudaron a la clase: cada
+  página es un script atado a su propio HTML (`gate`, `app`, `unlock`…), y
+  cargarlo en `sesion.html` chocaría con el de la clase.
+  - **La página, en su modo «en clase»** (`?en-clase=1`, `js/main.js`): sin
+    encabezado, migas, pie ni lo que flota (burbuja, avisos), que la clase ya
+    tiene. Solo dentro de un marco: abierta sola, aun con `?en-clase=1`, es la
+    de siempre.
+  - **Se abre sola UNA vez por pedido**; «Volver a la clase» (o Escape) la
+    cierra sin recargarla, y el aviso debajo del tablero deja volver («Volver
+    a «Coordenadas»»). Si el profe la cierra a todos («Cerrar la ventana a
+    todos»), se cierra y el marco se vacía, para que no siga corriendo nada.
+    Arriba lleva «Abrir en otra pestaña», para quien lo prefiera.
+  - **Para eso el sitio se deja enmarcar, solo por sí mismo**: ver «Las
+    páginas se enmarcan solo dentro del sitio» en `sitio-e-infraestructura.md`.
 - **Ordenado, sin saturar**: el catálogo en dos partes, cada entrenamiento en
   grupos, y las listas de a 30 con «Mostrar más». Las migas («‹
   Entrenamientos ‹ Mates») dicen dónde se está.
 
 **Al tocar esto, correr `node herramientas/verificar-todo.js
 clase-entrenamientos sesion-curso`.** Está probado que falla de verdad: con
-una solución cortada (no da mate) o aceptando el pedido de cualquiera, salta.
+una solución cortada (no da mate), aceptando el pedido de cualquiera, sin
+abrir la ventana sola o con el encabezado a la vista dentro del marco, salta.
 
 #### Habilidades (los Tipos de entrenamiento)
 
