@@ -136,6 +136,9 @@ window.SUPABASE_ANON_KEY = "anon-falsa";
     pago_adelantado: ${JSON.stringify(RECIBO_NUEVO)},
     registrar_cobro_pagado: ${JSON.stringify(RECIBO_NUEVO)},
     registrar_cobro_pagado_con_periodo: ${JSON.stringify(RECIBO_NUEVO)},
+    registrar_cobro_y_abono: ${JSON.stringify(RECIBO_NUEVO)},
+    // El periodo que sigue en un plan, para el pago adelantado.
+    cobro_siguiente: { desde: "2026-10-15", hasta: "2026-11-14", activo: true, pendientes: null },
     // Lo que propone la base para un periodo a la medida (cobro_cotizar) y el
     // periodo en palabras con el que se rehace un concepto (rango_es).
     cobro_cotizar: { concepto: "Mensualidad · 15 de octubre al 14 de noviembre 2026", monto: 22906.45, moneda: "CRC", se_cruza_con: null },
@@ -224,7 +227,9 @@ window.SUPABASE_ANON_KEY = "anon-falsa";
   }
   window.sb = {
     auth: {
-      getSession: () => Promise.resolve({ data: { session: { user: { id: PERFIL.id }, access_token: "t" } } }),
+      // El token cambia cuando sb lo renueva (vence a la hora): la página lo
+      // tiene que pedir en cada llamada, no guardar el de cuando cargó.
+      getSession: () => Promise.resolve({ data: { session: { user: { id: PERFIL.id }, access_token: window.__token || "t" } } }),
       signOut: () => Promise.resolve({}),
     },
     from: (t) => constructor(TABLAS[t] !== undefined ? TABLAS[t] : [], t),
@@ -251,7 +256,7 @@ window.SUPABASE_ANON_KEY = "anon-falsa";
   window.fetch = function (url, opciones) {
     if (String(url).indexOf("/functions/v1/") !== -1) {
       const cuerpo = JSON.parse((opciones && opciones.body) || "{}");
-      window.__llamadas.push({ funcion: cuerpo });
+      window.__llamadas.push({ funcion: cuerpo, token: ((opciones && opciones.headers) || {}).Authorization });
       const respuesta = String(url).indexOf("correos-alumno") !== -1
         ? RETRATO
         : cuerpo.action === "recibo_ver"
@@ -751,12 +756,17 @@ async function pruebaCoordinacion(browser) {
   igual("el prefijo de los números no es cosa suya",
     await page.evaluate(() => document.getElementById("rc-prefijo-caja").checkVisibility()), "false");
   // Ver el recibo: lo arma la función del correo y no ofrece mandarlo.
-  await page.evaluate(() => { window.__llamadas = []; });
+  // Con la página abierta más de una hora el token se renovó: va el nuevo.
+  await page.evaluate(() => { window.__llamadas = []; window.__token = "token-renovado"; });
   await page.locator("#rc-lista .recibo-fila").first().locator("button", { hasText: "Ver o imprimir" }).click();
   await page.waitForFunction(() => { const m = document.querySelector("#rc-previa iframe"); return m && m.srcdoc; });
   igual("ver el recibo se lo pide a la función, con ESE recibo",
     await page.evaluate(() => (window.__llamadas.find((l) => l.funcion && l.funcion.action === "recibo_ver") || {}).funcion),
     { action: "recibo_ver", recibo_id: "r-1" });
+  igual("y con el token de AHORA, no el de cuando cargó la página (si no: «Token inválido»)",
+    await page.evaluate(() => (window.__llamadas.find((l) => l.funcion && l.funcion.action === "recibo_ver") || {}).token),
+    "Bearer token-renovado");
+  await page.evaluate(() => { window.__token = null; });
   igual("el marco del recibo no corre código",
     await page.evaluate(() => document.querySelector("#rc-previa iframe").getAttribute("sandbox")), "allow-same-origin allow-modals");
   igual("y a quien coordina no se le ofrece mandarlo",
@@ -1105,46 +1115,92 @@ async function pruebaSupervisora(browser) {
     await page.evaluate(() => (window.__llamadas.find((l) => l.rpc === "anular_recibo") || {}).args),
     { p_recibo: "r-3", p_anular: false, p_motivo: null });
 
-  // -------- el pago adelantado
+  // -------- el pago adelantado: todo se propone y todo se puede cambiar
+  await page.evaluate(() => { window.__llamadas = []; });
   await page.selectOption("#pa-alumno", "u-ana");
-  igual("ofrece adelantar el plan de ese alumno, un periodo a la medida de ese plan, o pagar otra cosa",
-    await page.evaluate(() => [...document.getElementById("pa-que").options].map((o) => o.value)), ["s-1", "medida:s-1", "otro"]);
-  igual("y dice cuánto es cada periodo, con la beca",
-    /Cada mes de este plan es de ₡22500/.test(sinSeparadores(await page.evaluate(() => document.getElementById("pa-plan-ayuda").textContent))), "true");
+  await page.waitForTimeout(300);
+  igual("ofrece el plan de ese alumno (adelantar o a la medida) o pagar otra cosa",
+    await page.evaluate(() => [...document.getElementById("pa-que").options].map((o) => o.value)), ["s-1", "otro"]);
+  igual("con un plan se ven los periodos, las fechas, el monto y lo que paga hoy, pero no la moneda (es la del plan)",
+    await page.evaluate(() => ["pa-plan-cell", "pa-periodo-cell", "pa-otro-cell", "pa-pagado", "pa-moneda-cell"]
+      .map((id) => document.getElementById(id).checkVisibility())), [true, true, true, true, false]);
+  igual("le pregunta a la base cuál es el periodo que sigue en ESE plan",
+    await page.evaluate(() => (window.__llamadas.filter((l) => l.rpc === "cobro_siguiente").pop() || {}).args),
+    { p_suscripcion: "s-1", p_periodos: 1 });
+  igual("y escribe las fechas, el concepto y el monto que propone",
+    await page.evaluate(() => ["pa-desde", "pa-hasta", "pa-concepto", "pa-monto"].map((id) => document.getElementById(id).value)),
+    ["2026-10-15", "2026-11-14", "Mensualidad · 15 de octubre al 14 de noviembre 2026", "22906.45"]);
+  await page.evaluate(() => { window.__llamadas = []; });
   await page.fill("#pa-periodos", "3");
+  await page.press("#pa-periodos", "Tab");
+  // Se espera a que la cotización vuelva: si llega después, pisa el monto.
+  await page.waitForFunction(() => window.__llamadas.some((l) => l.rpc === "cobro_cotizar"));
+  await page.waitForTimeout(100);
+  igual("cambiar cuántos periodos vuelve a preguntar el periodo",
+    await page.evaluate(() => (window.__llamadas.filter((l) => l.rpc === "cobro_siguiente").pop() || {}).args),
+    { p_suscripcion: "s-1", p_periodos: 3 });
+  await page.fill("#pa-monto", "22000");
+  await page.fill("#pa-pagado", "10000");
   await page.selectOption("#pa-metodo", "transferencia");
   await page.fill("#pa-referencia", "BN-77");
   await page.evaluate(() => { window.__llamadas = []; });
   await page.click("#pa-guardar");
   await page.waitForTimeout(500);
-  igual("adelantar tres meses lo hace la base con ESA suscripción",
-    await page.evaluate(() => (window.__llamadas.find((l) => l.rpc === "pago_adelantado") || {}).args),
-    { p_suscripcion: "s-1", p_periodos: 3, p_metodo: "transferencia", p_referencia: "BN-77", p_nota: null, p_fecha: await fechaDelPago(page) });
+  igual("registrarlo ata el cobro al plan, con el monto que se dejó y pagando solo una parte",
+    await page.evaluate(() => (window.__llamadas.find((l) => l.rpc === "registrar_cobro_y_abono") || {}).args),
+    { p_alumno: "u-ana", p_concepto: "Mensualidad · 15 de octubre al 14 de noviembre 2026", p_monto: 22000, p_moneda: "CRC",
+      p_metodo: "transferencia", p_referencia: "BN-77", p_nota: null, p_fecha: await fechaDelPago(page),
+      p_suscripcion: "s-1", p_desde: "2026-10-15", p_hasta: "2026-11-14", p_pagado: 10000 });
   igual("y enseguida se le pone delante el recibo para revisarlo",
     await page.evaluate(() => window.__avisos.some((a) => a.includes("Revisa el recibo R-ADAPZ-2026-0004"))), "true");
-  await page.fill("#pa-periodos", "30");
+  igual("después vuelve a proponer el periodo que sigue, con lo que paga hoy en blanco",
+    await page.evaluate(() => [document.getElementById("pa-desde").value, document.getElementById("pa-pagado").value]), ["2026-10-15", ""]);
+
+  // Las fechas a mano: le pregunta a la base cuánto es por esos días.
+  await page.evaluate(() => { window.__llamadas = []; });
+  await page.fill("#pa-desde", "2026-12-16");
+  await page.press("#pa-desde", "Tab");
+  await page.fill("#pa-hasta", "2027-01-15");
+  await page.press("#pa-hasta", "Tab");
+  await page.waitForTimeout(300);
+  igual("cambiar las fechas cotiza ESOS días de ESE plan",
+    await page.evaluate(() => (window.__llamadas.filter((l) => l.rpc === "cobro_cotizar").pop() || {}).args),
+    { p_suscripcion: "s-1", p_desde: "2026-12-16", p_hasta: "2027-01-15" });
+  await page.fill("#pa-pagado", "999999");
+  await page.evaluate(() => { window.__llamadas = []; window.__avisos = []; });
+  await page.click("#pa-guardar");
+  await page.waitForTimeout(300);
+  igual("pagar hoy más que el monto no se manda",
+    [await page.evaluate(() => window.__llamadas.filter((l) => l.rpc === "registrar_cobro_y_abono").length),
+     await page.evaluate(() => window.__avisos.some((a) => a.includes("es más que el monto")))], [0, true]);
+  await page.fill("#pa-pagado", "");
+  await page.fill("#pa-hasta", "");
   await page.evaluate(() => { window.__llamadas = []; });
   await page.click("#pa-guardar");
   await page.waitForTimeout(300);
-  igual("más de 24 periodos no se manda",
-    await page.evaluate(() => window.__llamadas.filter((l) => l.rpc === "pago_adelantado").length), 0);
+  igual("un plan sin las dos fechas no se manda",
+    await page.evaluate(() => window.__llamadas.filter((l) => l.rpc === "registrar_cobro_y_abono").length), 0);
 
   await page.selectOption("#pa-que", "otro");
-  igual("«Otra cosa» cambia los campos",
-    await page.evaluate(() => [document.getElementById("pa-plan-cell").checkVisibility(), document.getElementById("pa-otro-cell").checkVisibility()]),
-    [false, true]);
+  igual("«Otra cosa» cambia los campos: sin periodos, con moneda",
+    await page.evaluate(() => ["pa-plan-cell", "pa-otro-cell", "pa-moneda-cell"].map((id) => document.getElementById(id).checkVisibility())),
+    [false, true, true]);
+  await page.fill("#pa-desde", "");
+  await page.fill("#pa-hasta", "");
   await page.fill("#pa-concepto", "Inscripción al torneo");
   await page.fill("#pa-monto", "15000");
   await page.evaluate(() => { window.__llamadas = []; });
   await page.click("#pa-guardar");
   await page.waitForTimeout(500);
-  igual("un pago sin cobro previo emite su cobro pagado, con su recibo (sin periodo, si no se dijo)",
-    await page.evaluate(() => (window.__llamadas.find((l) => l.rpc === "registrar_cobro_pagado_con_periodo") || {}).args),
+  igual("un pago sin cobro previo emite su cobro pagado entero, con su recibo (sin periodo, si no se dijo)",
+    await page.evaluate(() => (window.__llamadas.find((l) => l.rpc === "registrar_cobro_y_abono") || {}).args),
     { p_alumno: "u-ana", p_concepto: "Inscripción al torneo", p_monto: 15000, p_moneda: "CRC", p_metodo: "transferencia",
-      p_referencia: null, p_nota: null, p_fecha: await fechaDelPago(page), p_suscripcion: null, p_desde: null, p_hasta: null });
+      p_referencia: null, p_nota: null, p_fecha: await fechaDelPago(page), p_suscripcion: null, p_desde: null, p_hasta: null, p_pagado: null });
+  await page.selectOption("#pa-que", "otro");
   await page.fill("#pa-concepto", "Campamento");
   await page.fill("#pa-monto", "40000");
   await page.fill("#pa-desde", "2026-12-01");
+  await page.fill("#pa-hasta", "");
   await page.evaluate(() => { window.__llamadas = []; window.__avisos = []; });
   await page.click("#pa-guardar");
   await page.waitForTimeout(300);
@@ -1152,39 +1208,13 @@ async function pruebaSupervisora(browser) {
     [await page.evaluate(() => window.__llamadas.filter((l) => String(l.rpc || "").startsWith("registrar_cobro")).length),
      await page.evaluate(() => window.__avisos.some((a) => a.includes("Falta una de las dos fechas")))], [0, true]);
   await page.fill("#pa-hasta", "2026-12-15");
+  await page.fill("#pa-pagado", "15000");
   await page.click("#pa-guardar");
   await page.waitForTimeout(500);
-  igual("otra cosa con periodo lo manda",
-    await page.evaluate(() => { const a = (window.__llamadas.find((l) => l.rpc === "registrar_cobro_pagado_con_periodo") || {}).args || {};
-                                return [a.p_concepto, a.p_desde, a.p_hasta, a.p_suscripcion]; }),
-    ["Campamento", "2026-12-01", "2026-12-15", null]);
-
-  // -------- un periodo a la medida de un plan: de qué día a qué día
-  await page.selectOption("#pa-que", "medida:s-1");
-  igual("pide las fechas, el concepto y el monto, pero no la moneda (es la del plan)",
-    await page.evaluate(() => ["pa-periodo-cell", "pa-otro-cell", "pa-moneda-cell", "pa-plan-cell"]
-      .map((id) => document.getElementById(id).checkVisibility())), [true, true, false, false]);
-  await page.evaluate(() => { window.__llamadas = []; });
-  await page.fill("#pa-desde", "2026-10-15");
-  await page.fill("#pa-hasta", "2026-11-14");
-  await page.waitForTimeout(300);
-  igual("le pregunta a la base cuánto es por esos días de ESE plan",
-    await page.evaluate(() => (window.__llamadas.filter((l) => l.rpc === "cobro_cotizar").pop() || {}).args),
-    { p_suscripcion: "s-1", p_desde: "2026-10-15", p_hasta: "2026-11-14" });
-  igual("y escribe el concepto y el monto que propone",
-    await page.evaluate(() => [document.getElementById("pa-concepto").value, document.getElementById("pa-monto").value]),
-    ["Mensualidad · 15 de octubre al 14 de noviembre 2026", "22906.45"]);
-  await page.fill("#pa-monto", "22000");
-  await page.evaluate(() => { window.__llamadas = []; });
-  await page.click("#pa-guardar");
-  await page.waitForTimeout(500);
-  igual("registrar el periodo a la medida lo ata al plan, con el monto que se dejó",
-    await page.evaluate(() => (window.__llamadas.find((l) => l.rpc === "registrar_cobro_pagado_con_periodo") || {}).args),
-    { p_alumno: "u-ana", p_concepto: "Mensualidad · 15 de octubre al 14 de noviembre 2026", p_monto: 22000, p_moneda: "CRC",
-      p_metodo: "transferencia", p_referencia: null, p_nota: null, p_fecha: await fechaDelPago(page),
-      p_suscripcion: "s-1", p_desde: "2026-10-15", p_hasta: "2026-11-14" });
-  igual("y después se limpian las fechas",
-    await page.evaluate(() => [document.getElementById("pa-desde").value, document.getElementById("pa-hasta").value]), ["", ""]);
+  igual("otra cosa con periodo y pago parcial lo manda",
+    await page.evaluate(() => { const a = (window.__llamadas.find((l) => l.rpc === "registrar_cobro_y_abono") || {}).args || {};
+                                return [a.p_concepto, a.p_desde, a.p_hasta, a.p_suscripcion, a.p_monto, a.p_pagado]; }),
+    ["Campamento", "2026-12-01", "2026-12-15", null, 40000, 15000]);
 
   // -------- el prefijo de los números: solo las academias que supervisa
   igual("ve el prefijo de su academia y nada más",
