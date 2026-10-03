@@ -9,6 +9,7 @@
 */
 window.LoQueCosto = (function () {
     const DIAS = 30;
+    const CLAVE_PLEGADA = "panel_lo_que_costo_plegada_v1";
 
     function el(tag, cls, texto) {
         const e = document.createElement(tag);
@@ -139,7 +140,30 @@ window.LoQueCosto = (function () {
         const ic = el("span", "", "🧩 ");
         ic.setAttribute("aria-hidden", "true");
         h2.append(ic, document.createTextNode("Lo que más le costó a tu clase"));
-        caja.append(h2, el("p", "text-sm text-brand-500 dark:text-brand-300 mt-1",
+        /* Ocupa mucho: el profe la puede plegar a una línea, y queda así en
+           este aparato. Plegada sigue a mano, por si quiere volver a ella. */
+        const cuerpo = el("div", "");
+        cuerpo.id = "lo-que-costo-cuerpo";
+        const plegar = el("button", "shrink-0 text-sm font-semibold px-3 py-1.5 rounded-lg border border-brand-200 dark:border-brand-700 text-brand-700 dark:text-brand-200 hover:bg-brand-50 dark:hover:bg-brand-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400");
+        plegar.type = "button";
+        plegar.setAttribute("aria-controls", cuerpo.id);
+        const aplicar = (plegada) => {
+            cuerpo.hidden = plegada;
+            plegar.textContent = plegada ? "Mostrar" : "Ocultar";
+            plegar.setAttribute("aria-expanded", String(!plegada));
+        };
+        let plegada = false;
+        try { plegada = localStorage.getItem(CLAVE_PLEGADA) === "1"; } catch (e) {}
+        aplicar(plegada);
+        plegar.addEventListener("click", () => {
+            plegada = !plegada;
+            aplicar(plegada);
+            try { if (plegada) localStorage.setItem(CLAVE_PLEGADA, "1"); else localStorage.removeItem(CLAVE_PLEGADA); } catch (e) {}
+        });
+        const cabeza = el("div", "flex items-start justify-between gap-3");
+        cabeza.append(h2, plegar);
+        caja.append(cabeza, cuerpo);
+        cuerpo.append(el("p", "text-sm text-brand-500 dark:text-brand-300 mt-1",
             "Las preguntas de los últimos " + DIAS + " días que más fallaron tus alumnos. Conviene volver a ellas."));
         const ol = el("ol", "mt-3 grid sm:grid-cols-2 gap-4");
         filas.forEach((f) => ol.appendChild(renglon(f, [
@@ -147,7 +171,7 @@ window.LoQueCosto = (function () {
             ["text-brand-700 dark:text-brand-200", f.prompt || "¿Qué jugarías?"],
             ["text-xs text-brand-500 dark:text-brand-300", (f.clase_titulo ? "«" + f.clase_titulo + "», " : "Clase del ") + fecha(f.created_at)],
         ])));
-        caja.append(ol, ...botonDePlan(filas.length === 1 ? "Armar un plan de repaso con esta" : "Armar un plan de repaso con estas " + filas.length,
+        cuerpo.append(ol, ...botonDePlan(filas.length === 1 ? "Armar un plan de repaso con esta" : "Armar un plan de repaso con estas " + filas.length,
             () => armarPlan(sb, profesorId, filas)));
         caja.hidden = false;
     }

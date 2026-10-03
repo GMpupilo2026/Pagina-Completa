@@ -11,6 +11,8 @@
    - que «Armar un plan de repaso» cree UN plan con un renglón de posición por
      pregunta, en el mismo orden, y lleve a planes.html?plan=<id>;
    - que planes.html?plan= abra ese plan;
+   - que «Ocultar» la pliegue a una línea, que siga así al volver y que
+     «Mostrar» la abra;
    - que sin preguntas falladas la tarjeta no aparezca, y que al alumno no se
      le pida.
 
@@ -64,6 +66,21 @@ function igual(nombre, hallado, esperado) {
     igual("con un renglón de posición por pregunta, en orden", ins.slice(1).map(([t, f]) => [t, f.plan_id, f.orden, f.tipo, f.fen, f.pregunta]),
       [["plan_items", "planes_clase-1", 0, "posicion", PASILLO, "Mate en uno <b>ya</b>"], ["plan_items", "planes_clase-1", 1, "posicion", TRAS_E5, null]]);
     igual("y lleva al plan", await page.getAttribute("#lo-que-costo a[href^='planes.html?plan=']", "href"), "planes.html?plan=planes_clase-1");
+
+    // Ocupa mucho: el profe la pliega a una línea, y queda así al volver.
+    const plegado = () => page.evaluate(() => {
+      const b = [...document.querySelectorAll("#lo-que-costo button")].find((x) => /^(Ocultar|Mostrar)$/.test(x.textContent));
+      return [document.getElementById("lo-que-costo").checkVisibility(), document.getElementById("lo-que-costo-cuerpo").checkVisibility(),
+        b && b.textContent, b && b.getAttribute("aria-expanded"), Math.round(document.getElementById("lo-que-costo").getBoundingClientRect().height) < 120];
+    });
+    igual("abierta, con su botón para ocultarla", await plegado(), [true, true, "Ocultar", "true", false]);
+    await page.getByRole("button", { name: "Ocultar", exact: true }).click();
+    igual("al ocultarla queda en una línea", await plegado(), [true, false, "Mostrar", "false", true]);
+    await page.reload();
+    await page.waitForFunction(() => { const c = document.getElementById("lo-que-costo"); return c && c.checkVisibility(); }, null, { timeout: 10000 });
+    igual("y sigue plegada al volver al panel", await plegado(), [true, false, "Mostrar", "false", true]);
+    await page.getByRole("button", { name: "Mostrar", exact: true }).click();
+    igual("«Mostrar» la abre de nuevo", await plegado(), [true, true, "Ocultar", "true", false]);
     igual("sin errores en la página", errores, []);
     await ctx.close();
 
