@@ -66,8 +66,10 @@ window.TandaDiez = (function () {
     if (t && t.fin <= Date.now()) { borrar(); if (barra) barra.remove(); return; }
     if (!t) { if (barra) barra.remove(); if (reloj) clearInterval(reloj); return; }
     // El paso en que va: el de esta página si está en la lista.
-    const aqui = location.pathname + location.search;
-    const j = t.pasos.findIndex((p) => p.href === aqui || p.href.split("?")[0] === location.pathname);
+    // Sin el .html: los pasos lo llevan y Cloudflare sirve la página sin él.
+    const sinHtml = (r) => r.replace(/\.html(?=\?|$)/, "");
+    const aqui = sinHtml(location.pathname) + location.search;
+    const j = t.pasos.findIndex((p) => sinHtml(p.href) === aqui || sinHtml(p.href.split("?")[0]) === sinHtml(location.pathname));
     if (j >= 0 && j !== t.i) { t.i = j; guardar(t); }
 
     if (!barra) {

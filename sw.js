@@ -99,8 +99,11 @@ self.addEventListener("fetch", (evento) => {
       // Sin red y sin copia: si iba a una página, se explica; si era un
       // archivo suelto, se deja fallar, que es lo honesto.
       if (pedido.mode === "navigate") {
+        // Se rearma: /offline.html se guardó siguiendo el 307 de Cloudflare a
+        // /offline, y una respuesta marcada como redirigida no sirve para una
+        // navegación (Chrome la cambia por su propio error de red).
         const aviso = await caches.match("/offline.html");
-        if (aviso) return aviso;
+        if (aviso) return new Response(aviso.body, { status: 200, headers: aviso.headers });
       }
       throw e;
     }
