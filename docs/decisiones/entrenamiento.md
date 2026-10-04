@@ -3121,10 +3121,11 @@ enroques de B saltan las 3 que corresponden.
   que digan cómo salieron no hay porcentaje de limpios, sin mes anterior lo
   dice («este es el primero»), y un mes vacío no ofrece compartir. Las líneas
   no dicen «tú» ni «él», porque las mismas sirven en pantalla y para la
-  familia. Lo más entrenado usa los nombres de `js/tiempo-secciones.js`. Ahí
-  falta `tactica` (sale «Tactica»); agregarla pide desplegar también
-  `informes-encargados`, que tiene la misma tabla (lo vigila
-  `verificar-tiempo-secciones.js`), y queda para un cambio aparte.
+  familia. Lo más entrenado usa los nombres de `js/tiempo-secciones.js`, que
+  tiene la misma tabla que `informes-encargados` (lo vigila
+  `verificar-tiempo-secciones.js`). Ahí faltaba `tactica` y salía «Tactica»:
+  se agregó «Táctica de ataque» en las dos y se volvió a desplegar la función
+  (versión 23), así que el informe a la casa también lo dice bien.
 - **En «Hoy te toca», del día 1 al 7**: «📅 Tu septiembre en ajedrez: 876
   ejercicios en 7 días. Míralo y compártelo →» a `logros.html?mes=…#mes`. Solo
   si el mes que pasó tuvo algo; después del día 7 ni siquiera se le pregunta a
