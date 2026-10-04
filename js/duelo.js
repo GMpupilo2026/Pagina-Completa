@@ -98,13 +98,15 @@
             // Solo se guarda si la partida sigue en juego: si el rival se rindió mientras
             // tanto, esta ronda no puede pisar ese resultado. Y si no quedó guardada, se
             // vuelve a leer la sala para que el tablero enseñe el estado real.
-            const { data: guardada, error } = await sb.from("game_rooms").update(patch).eq("id", ROOM_ID).eq("status", "playing").select("id");
+            // Se pide la fila de vuelta y, si mientras viajaba ya llegó algo más nuevo
+            // (el rival también escribe), se queda lo más nuevo.
+            const { data: guardada, error } = await sb.from("game_rooms").update(patch).eq("id", ROOM_ID).eq("status", "playing").select("*");
             if (error || !guardada || !guardada.length) {
                 if (error) console.error(error);
                 await releerSala(error ? "No se pudo guardar la jugada: " + error.message : "La partida ya había terminado: esa jugada no quedó guardada.");
                 return false;
             }
-            room = Object.assign({}, room, patch);
+            room = SalaJuego.laMasNueva(room, guardada[0]);
             return true;
         }
 
@@ -209,10 +211,10 @@
         async function releerSala(mensaje) {
             const fila = await SalaJuego.releer(ROOM_ID);
             if (fila) applyRemoteRoom(fila, true);
-            setStatus(mensaje);
+            if (mensaje) setStatus(mensaje);
         }
 
-        function subscribeRoom() { SalaJuego.suscribir(ROOM_ID, (fila) => applyRemoteRoom(fila)); }
+        function subscribeRoom() { SalaJuego.suscribir(ROOM_ID, (fila) => applyRemoteRoom(fila), { sala: () => room, miColor: () => myColor, esperando: () => true }); }
 
         SalaJuego.montarRendirse({ salaId: ROOM_ID, sala: () => room, miColor: () => myColor, decir: setStatus, releer: releerSala });
 

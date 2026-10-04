@@ -32,7 +32,6 @@ const SIN_FILTRO = {
   "tv.js · game_rooms · *": "pantalla de TV: una o dos abiertas, no una por alumno",
   "tv.js · fourplayer_games · *": "ídem",
   "tv.js · tv_settings · UPDATE": "tabla de una fila",
-  "torneo.js · game_rooms · *": "game_rooms no lleva tournament_id; pendiente acotarlo a las mesas de la ronda",
   "partidas.js · archivos_pgn · *": "panel de quien da clase; cambios raros",
   "partidas.js · saved_games · *": "ídem",
 };

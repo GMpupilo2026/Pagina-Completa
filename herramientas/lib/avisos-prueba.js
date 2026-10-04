@@ -16,6 +16,8 @@
  *                         respuesta preparada, esos diálogos se cancelan
  *                         (como el prompt() que devolvía null).
  *   window.__cancelarAvisos = true   para que las confirmaciones digan que no.
+ *   window.__campos       lo que traía cada formulario ANTES de contestarlo
+ *                         ({ etiquetas, valores }): lo que ya venía escrito.
  *
  * Los diálogos se aprietan de verdad, con click(): si un día el botón no está
  * o el diálogo no se abre, la prueba lo nota.
@@ -25,8 +27,13 @@ function contestarAvisos() {
   window.__respuestas = window.__respuestas || [];
   const contestar = (d) => {
     window.__avisos.push(d.textContent.replace(/\s+/g, " ").trim());
-    const campos = [...d.querySelectorAll("input, select")];
+    const campos = [...d.querySelectorAll("input, select, textarea")];
     const clase = d.dataset.avisos;
+    (window.__campos = window.__campos || []).push({
+      titulo: (d.querySelector("h2") || {}).textContent || "",
+      etiquetas: [...d.querySelectorAll("label")].map((l) => l.textContent),
+      valores: Object.fromEntries(campos.map((c) => [c.name, c.value])),
+    });
     if (clase === "pedir" || clase === "formulario") {
       if (!window.__respuestas.length) { d.querySelector("[data-avisos-cancelar]").click(); return; }
       const r = window.__respuestas.shift();

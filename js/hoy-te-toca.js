@@ -41,10 +41,40 @@ window.HoyTeToca = (function () {
       <!-- Y día por día (la clave «dias» de la misma función): siete barras con
            el número escrito debajo. Las barras son adorno; el dato es el número. -->
       <ol id="hoy-semana-dias" class="mt-2 grid grid-cols-7 gap-1 max-w-xs list-none p-0" aria-label="Ejercicios por día, los últimos 7 días" style="display:none"></ol>
+      <!-- La meta de la semana, la que elige el alumno (meta_semana_v1, viaja
+           con la cuenta): días que cuentan y ejercicios, de lunes a domingo.
+           La cuenta sale de la misma «dias» de entreno_mi_semana. -->
+      <div id="hoy-metasem" class="mt-3" hidden>
+        <p id="hoy-metasem-texto" class="text-sm text-brand-700 dark:text-brand-100"></p>
+        <div id="hoy-metasem-barras" class="mt-1 space-y-1 max-w-xs" hidden>
+          <div class="flex items-center gap-2"><span class="text-xs w-20 text-brand-600 dark:text-brand-200" aria-hidden="true">Días</span><div id="hoy-metasem-dias" class="h-2 flex-1 rounded bg-brand-100 dark:bg-brand-800 overflow-hidden" role="progressbar" aria-label="Días de tu meta" aria-valuemin="0"><div class="h-full bg-accent-500 rounded" style="width:0%"></div></div></div>
+          <div class="flex items-center gap-2"><span class="text-xs w-20 text-brand-600 dark:text-brand-200" aria-hidden="true">Ejercicios</span><div id="hoy-metasem-ejer" class="h-2 flex-1 rounded bg-brand-100 dark:bg-brand-800 overflow-hidden" role="progressbar" aria-label="Ejercicios de tu meta" aria-valuemin="0"><div class="h-full bg-accent-500 rounded" style="width:0%"></div></div></div>
+        </div>
+        <button type="button" id="hoy-metasem-abrir" aria-expanded="false" aria-controls="hoy-metasem-form" class="mt-1 text-sm text-brand-600 dark:text-brand-200 underline underline-offset-2 hover:text-accent-700 dark:hover:text-accent-400 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-500"></button>
+        <form id="hoy-metasem-form" class="mt-2 p-3 rounded-xl bg-brand-50 dark:bg-brand-800 text-sm max-w-sm" hidden>
+          <p class="text-brand-700 dark:text-brand-100 mb-2">Tu meta va de lunes a domingo. Un día cuenta con <span id="hoy-metasem-diaria">5</span> ejercicios, como en la racha.</p>
+          <div class="flex flex-wrap gap-3 mb-3">
+            <label class="flex flex-col gap-1 text-brand-800 dark:text-white font-semibold">Días que entreno
+              <select id="hoy-metasem-sel-dias" class="font-normal rounded-lg border border-brand-300 dark:border-brand-600 bg-white dark:bg-brand-900 text-brand-800 dark:text-white px-2 py-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-500"></select>
+            </label>
+            <label class="flex flex-col gap-1 text-brand-800 dark:text-white font-semibold">Ejercicios en la semana
+              <select id="hoy-metasem-sel-ejer" class="font-normal rounded-lg border border-brand-300 dark:border-brand-600 bg-white dark:bg-brand-900 text-brand-800 dark:text-white px-2 py-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-500"></select>
+            </label>
+          </div>
+          <div class="flex flex-wrap items-center gap-2">
+            <button type="submit" class="bg-brand-800 hover:bg-brand-900 dark:bg-brand-700 dark:hover:bg-brand-600 text-white font-semibold px-3 py-1.5 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Guardar mi meta</button>
+            <button type="button" id="hoy-metasem-cancelar" class="text-sm text-brand-500 dark:text-brand-300 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 rounded px-1">Cancelar</button>
+            <button type="button" id="hoy-metasem-quitar" class="text-sm text-brand-500 dark:text-brand-300 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 rounded px-1" hidden>Quitar la meta</button>
+          </div>
+        </form>
+      </div>
       <!-- La próxima medalla (js/logros-catalogo.js): la más cerca de las que ya
            empezó, y cuánto le falta. Una meta a la vista engancha más que la
            lista entera en Logros. -->
       <a id="hoy-medalla" class="block text-sm text-brand-600 dark:text-brand-200 mt-1 underline underline-offset-2 hover:text-accent-700 dark:hover:text-accent-400 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-500" hidden></a>
+      <!-- «Tu mes en ajedrez» (js/tu-mes.js): los primeros días de cada mes,
+           el resumen del que pasó, si entrenó algo. Lleva a Logros. -->
+      <a id="hoy-mes" class="block text-sm text-brand-600 dark:text-brand-200 mt-1 underline underline-offset-2 hover:text-accent-700 dark:hover:text-accent-400 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-500" hidden></a>
     </div>
     <ul id="hoy-lista" class="list-none p-0 m-0 space-y-2"></ul>
     <!-- «Entrenar 10 minutos» (js/tanda-diez.js): arma una tanda con lo de
@@ -87,7 +117,6 @@ window.HoyTeToca = (function () {
 
   async function cosasDeHoy(op){
     const cosas = [];
-    const SRS = window.RepasoEspaciado;
     const E = op.entreno, alumnoId = op.alumnoId;
     const diag = leerJSON('diagnostico_resultado_v1');
 
@@ -99,31 +128,15 @@ window.HoyTeToca = (function () {
       if (delPlan) cosas.push(delPlan);
     }
 
-    // Ejercicios por tema que se resolvieron con error o con pista y vuelven hoy.
-    if (window.RepasoFallados) {
-      const n = RepasoFallados.pendientes(RepasoFallados.CLAVES.temas).length;
-      if (n) cosas.push({ icono: '🔁', href: E + 'temas.html?repaso=1',
-        texto: n === 1 ? 'Repasar 1 ejercicio que te costó' : `Repasar ${n} ejercicios que te costaron` });
-      const m = RepasoFallados.pendientes(RepasoFallados.CLAVES.mates).length;
-      if (m) cosas.push({ icono: '♚', href: E + 'mates.html?repaso=1',
-        texto: m === 1 ? 'Repasar 1 mate que te costó' : `Repasar ${m} mates que te costaron` });
-      const v = RepasoFallados.pendientes(RepasoFallados.CLAVES.visualizacion).length;
-      if (v) cosas.push({ icono: '👁️', href: E + 'visualizacion.html?repaso=1',
-        texto: v === 1 ? 'Repasar 1 ejercicio de Visualización que te costó' : `Repasar ${v} ejercicios de Visualización que te costaron` });
-      const p = RepasoFallados.pendientes(RepasoFallados.CLAVES.practicas).length;
-      if (p) cosas.push({ icono: '♞', href: E + 'practicas.html?repaso=1',
-        texto: p === 1 ? 'Repasar 1 posición de Practicar que te costó' : `Repasar ${p} posiciones de Practicar que te costaron` });
-      const t = RepasoFallados.pendientes(RepasoFallados.CLAVES.tipos).length;
-      if (t) cosas.push({ icono: '🧩', href: E + 'tipos.html#repaso',
-        texto: t === 1 ? 'Repasar 1 ejercicio de Habilidades que te costó' : `Repasar ${t} ejercicios de Habilidades que te costaron` });
-      const f = RepasoFallados.pendientes(RepasoFallados.CLAVES.finales).length;
-      if (f) cosas.push({ icono: '🏁', href: E + 'finales.html?repaso=1',
-        texto: f === 1 ? 'Volver a jugar 1 final que te costó' : `Volver a jugar ${f} finales que te costaron` });
-      // Las preguntas de clase en las que viste la respuesta en tu repaso: vuelven a la semana.
-      const c = RepasoFallados.pendientes(RepasoFallados.CLAVES.clase).length;
-      if (c) cosas.push({ icono: '📌', href: op.arriba + 'repasar-clases.html?vuelven=1',
-        texto: c === 1 ? 'Te vuelve 1 pregunta de tus clases' : `Te vuelven ${c} preguntas de tus clases` });
-    }
+    /* Lo que vuelve hoy de las colas de «Repasar fallados» y de Aperturas.
+       Con dos secciones o más, va UNA sola cosa, «Repaso del día», que las
+       recorre en orden con la barra de js/tanda-diez.js (sin reloj): antes eran
+       una cosa por sección, y con tres colas vencidas el repaso ocupaba toda la
+       lista y no dejaba ver nada más. Con una sola sección se dice tal cual.
+       Ver «Un solo repaso del día» en docs/decisiones/entrenamiento.md. */
+    const repasos = repasosDeHoy(op);
+    if (repasos.length === 1) cosas.push(repasos[0]);
+    else if (repasos.length > 1) cosas.push(repasoDelDia(repasos));
 
     // El nivel de Tipos de entrenamiento que quedó a medias (lo
     // anota js/entreno-tipos.js al jugar). Uno completo no se propone: ya está hecho.
@@ -152,15 +165,6 @@ window.HoyTeToca = (function () {
         if (f && f.porcentaje < TipoFlojo.FLOJO) cosas.push({ icono: '📉', href: E + 'tipos.html#' + encodeURIComponent(f.tipo),
           texto: `Tu habilidad más floja, «${f.nombre}»: tres estrellas en ${f.limpios} de ${f.intentos}` });
       } catch (e) { /* sin dato, sin propuesta */ }
-    }
-
-    // Líneas de Aperturas ya empezadas cuyo repaso venció (las nuevas no cuentan:
-    // eso es estudiar algo nuevo, no un repaso pendiente).
-    const srs = leerJSON('aperturas_srs_v1');
-    if (SRS && srs && typeof srs === 'object') {
-      const n = Object.keys(srs).filter((id) => srs[id] && srs[id].ultimo && SRS.toca(srs[id])).length;
-      if (n) cosas.push({ icono: '📖', href: E + 'aperturas.html',
-        texto: n === 1 ? '1 línea de aperturas para repasar' : `${n} líneas de aperturas para repasar` });
     }
 
     /* El diagnóstico: hacerlo si no hay, repetirlo a las cuatro semanas (es lo
@@ -196,6 +200,57 @@ window.HoyTeToca = (function () {
       if (sug) cosas.push(sug);
     }
     return cosas.slice(0, 3);
+  }
+
+  /* Cada cola que tiene algo hoy, con cuántos y a dónde lleva. `seccion` es
+     el nombre corto que usa «Repaso del día». */
+  function repasosDeHoy(op){
+    const E = op.entreno, salida = [];
+    const RF = window.RepasoFallados;
+    const cola = (clave) => (RF ? RF.pendientes(RF.CLAVES[clave]).length : 0);
+    const n = cola('temas');
+    if (n) salida.push({ icono: '🔁', href: E + 'temas.html?repaso=1', n, seccion: 'Ejercicios por tema',
+      texto: n === 1 ? 'Repasar 1 ejercicio que te costó' : `Repasar ${n} ejercicios que te costaron` });
+    const m = cola('mates');
+    if (m) salida.push({ icono: '♚', href: E + 'mates.html?repaso=1', n: m, seccion: 'Mates',
+      texto: m === 1 ? 'Repasar 1 mate que te costó' : `Repasar ${m} mates que te costaron` });
+    const v = cola('visualizacion');
+    if (v) salida.push({ icono: '👁️', href: E + 'visualizacion.html?repaso=1', n: v, seccion: 'Visualización',
+      texto: v === 1 ? 'Repasar 1 ejercicio de Visualización que te costó' : `Repasar ${v} ejercicios de Visualización que te costaron` });
+    const p = cola('practicas');
+    if (p) salida.push({ icono: '♞', href: E + 'practicas.html?repaso=1', n: p, seccion: 'Practicar',
+      texto: p === 1 ? 'Repasar 1 posición de Practicar que te costó' : `Repasar ${p} posiciones de Practicar que te costaron` });
+    const t = cola('tipos');
+    if (t) salida.push({ icono: '🧩', href: E + 'tipos.html#repaso', n: t, seccion: 'Habilidades',
+      texto: t === 1 ? 'Repasar 1 ejercicio de Habilidades que te costó' : `Repasar ${t} ejercicios de Habilidades que te costaron` });
+    const f = cola('finales');
+    if (f) salida.push({ icono: '🏁', href: E + 'finales.html?repaso=1', n: f, seccion: 'Finales',
+      texto: f === 1 ? 'Volver a jugar 1 final que te costó' : `Volver a jugar ${f} finales que te costaron` });
+    // Las preguntas de clase en las que viste la respuesta en tu repaso: vuelven a la semana.
+    const c = cola('clase');
+    if (c) salida.push({ icono: '📌', href: op.arriba + 'repasar-clases.html?vuelven=1', n: c, seccion: 'Tus clases',
+      texto: c === 1 ? 'Te vuelve 1 pregunta de tus clases' : `Te vuelven ${c} preguntas de tus clases` });
+    // Líneas de Aperturas ya empezadas cuyo repaso venció (las nuevas no cuentan:
+    // eso es estudiar algo nuevo, no un repaso pendiente).
+    const SRS = window.RepasoEspaciado;
+    const srs = leerJSON('aperturas_srs_v1');
+    if (SRS && srs && typeof srs === 'object') {
+      const a = Object.keys(srs).filter((id) => srs[id] && srs[id].ultimo && SRS.toca(srs[id])).length;
+      if (a) salida.push({ icono: '📖', href: E + 'aperturas.html', n: a, seccion: 'Aperturas',
+        texto: a === 1 ? '1 línea de aperturas para repasar' : `${a} líneas de aperturas para repasar` });
+    }
+    return salida;
+  }
+
+  /* «Repaso del día: 9 en 3 secciones (Ejercicios por tema 4 · Mates 3 ·
+     Finales 2)». Lleva a la primera y arma el recorrido entero. */
+  function repasoDelDia(repasos){
+    const total = repasos.reduce((x, r) => x + r.n, 0);
+    return {
+      icono: '🔁', href: repasos[0].href,
+      texto: `Repaso del día: ${total} en ${repasos.length} secciones (${repasos.map((r) => r.seccion + ' ' + r.n).join(' · ')})`,
+      recorrido: repasos.map((r) => ({ href: r.href, texto: r.seccion + ' (' + r.n + ')', icono: r.icono })),
+    };
   }
 
   async function partidasSinRevisar(op){
@@ -313,6 +368,7 @@ window.HoyTeToca = (function () {
     if (hoy > 0) await pintarResumenHoy();
     await pintarSemana();
     pintarMedalla(r, op);
+    await pintarMesPasado(op);
     return true;
   }
 
@@ -356,10 +412,181 @@ window.HoyTeToca = (function () {
       const { data, error } = await sb.rpc('entreno_mi_semana');
       if (!error && data && typeof data === 'object') s = data;
     } catch (e) { s = null; }
+    // La meta de la semana sale aunque no haya entrenado nada: es justamente
+    // cuando más sirve proponérsela. Sin respuesta de la base, no sale.
+    if (s) pintarMetaSemana(s.dias);
     if (!s || (!s.esta && !s.anterior)) return;
     caja.textContent = textoSemana(s);
     caja.hidden = false;
     pintarDias(s.dias);
+  }
+
+  /* Los primeros días de cada mes: «📅 Tu septiembre en ajedrez: 876
+     ejercicios en 7 días. Míralo →», a logros.html#mes. Solo si el mes que
+     pasó tuvo algo: un «0 ejercicios» no invita a nada. La cuenta es la de
+     js/tu-mes.js (entreno_mi_mes en la base); sin ese módulo, no sale. */
+  const DIAS_AVISO_MES = 7;
+  async function pintarMesPasado(op){
+    const el = document.getElementById('hoy-mes');
+    const TM = window.TuMes;
+    if (!el || !TM) return;
+    const hoy = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Costa_Rica' });
+    if (Number(hoy.slice(8, 10)) > DIAS_AVISO_MES) return;
+    const mes = TM.sumarMeses(hoy.slice(0, 7), -1);
+    const r = await TM.pedir(mes);
+    const n = Number(r && r.ejercicios) || 0;
+    if (!n) return;
+    const dias = Number(r.dias_con_algo) || 0;
+    el.href = op.arriba + 'logros.html?mes=' + mes + '#mes';
+    el.replaceChildren();
+    const ic = document.createElement('span');
+    ic.setAttribute('aria-hidden', 'true');
+    ic.textContent = '📅 ';
+    el.append(ic, `Tu ${TM.nombreMes(mes, false)} en ajedrez: ${n} ${n === 1 ? 'ejercicio' : 'ejercicios'} en ${dias} ${dias === 1 ? 'día' : 'días'}. Míralo y compártelo →`);
+    el.hidden = false;
+  }
+
+  /* La meta de la semana: la elige el alumno —cuántos días entrena y cuántos
+     ejercicios hace de lunes a domingo— y se ve cuánto lleva. La «meta del
+     día» la pone el sitio (los 5 de la racha); esta es la suya. Se guarda en
+     `meta_semana_v1` (viaja con la cuenta: js/progreso-usuario.js) y la cuenta
+     sale de los siete días de entreno_mi_semana: la semana de lunes a hoy
+     nunca tiene más de siete, así que no hace falta otra función en la base.
+     Un día cuenta con Logros.META_DIARIA ejercicios, igual que en la racha. */
+  const CLAVE_META_SEMANA = 'meta_semana_v1';
+  const META_OPCIONES_DIAS = [2, 3, 4, 5, 6, 7];
+  const META_OPCIONES_EJER = [20, 35, 50, 75, 100, 150, 200];
+  const META_PROPUESTA = { dias: 3, ejercicios: 35 };
+
+  // Lo guardado se valida: lo escribió el navegador y se puede tocar desde la
+  // consola. Un valor que no está entre las opciones es como no tener meta.
+  function leerMetaSemana(){
+    const m = leerJSON(CLAVE_META_SEMANA);
+    if (!m || typeof m !== 'object') return null;
+    const dias = Number(m.dias), ejercicios = Number(m.ejercicios);
+    if (!META_OPCIONES_DIAS.includes(dias) || !META_OPCIONES_EJER.includes(ejercicios)) return null;
+    return { dias, ejercicios };
+  }
+
+  /* De los siete días (del más viejo a hoy, como los da entreno_mi_semana),
+     los de esta semana: de lunes a hoy. `quedan` son los días que faltan
+     hasta el domingo, sin contar hoy. */
+  function avanceMetaSemana(dias, metaDiaria){
+    if (!Array.isArray(dias) || dias.length !== 7) return null;
+    const hoy = new Date(String(dias[6].dia) + 'T12:00:00Z');
+    if (isNaN(hoy)) return null;
+    const desdeLunes = (hoy.getUTCDay() + 6) % 7;   // lunes 0 … domingo 6
+    const semana = dias.slice(6 - desdeLunes);
+    const n = (d) => Number(d && d.n) || 0;
+    return {
+      ejercicios: semana.reduce((t, d) => t + n(d), 0),
+      dias: semana.filter((d) => n(d) >= metaDiaria).length,
+      quedan: 6 - desdeLunes,
+    };
+  }
+
+  function textoMetaSemana(meta, av){
+    const d = (x) => x === 1 ? '1 día' : `${x} días`;
+    const e = (x) => x === 1 ? '1 ejercicio' : `${x} ejercicios`;
+    const diasOk = av.dias >= meta.dias, ejerOk = av.ejercicios >= meta.ejercicios;
+    if (diasOk && ejerOk) {
+      return `🎯 ¡Cumpliste tu meta de la semana! ${d(av.dias)} y ${e(av.ejercicios)} (tu meta: ${d(meta.dias)} y ${e(meta.ejercicios)}).`;
+    }
+    let t = `🎯 Tu meta de la semana: ${av.dias} de ${d(meta.dias)} · ${av.ejercicios} de ${e(meta.ejercicios)}.`;
+    const faltanDias = meta.dias - av.dias;
+    // Hoy todavía puede contar si no ha llegado a los ejercicios del día.
+    const quedanUtiles = av.quedan + (av.hoyCuenta ? 0 : 1);
+    if (av.quedan === 0) t += ' Hoy es el último día.';
+    else t += ` ${av.quedan === 1 ? 'Queda 1 día' : `Quedan ${av.quedan} días`} para el domingo.`;
+    if (faltanDias > quedanUtiles) t += ' Los días ya no alcanzan esta semana: igual, cada ejercicio suma.';
+    return t;
+  }
+
+  function pintarBarra(id, valor, total){
+    const b = document.getElementById(id);
+    b.setAttribute('aria-valuemax', String(total));
+    b.setAttribute('aria-valuenow', String(Math.min(valor, total)));
+    b.setAttribute('aria-valuetext', `${valor} de ${total}`);
+    b.firstElementChild.style.width = Math.round(100 * Math.min(valor, total) / total) + '%';
+  }
+
+  function pintarMetaSemana(dias){
+    const caja = document.getElementById('hoy-metasem');
+    if (!caja || !window.Logros) return;
+    const metaDiaria = Logros.META_DIARIA;
+    const av = avanceMetaSemana(dias, metaDiaria);
+    if (!av) return;
+    av.hoyCuenta = (Number(dias[6].n) || 0) >= metaDiaria;
+    const meta = leerMetaSemana();
+    const texto = document.getElementById('hoy-metasem-texto');
+    const barras = document.getElementById('hoy-metasem-barras');
+    const abrir = document.getElementById('hoy-metasem-abrir');
+    if (meta) {
+      texto.textContent = textoMetaSemana(meta, av);
+      texto.hidden = false;
+      pintarBarra('hoy-metasem-dias', av.dias, meta.dias);
+      pintarBarra('hoy-metasem-ejer', av.ejercicios, meta.ejercicios);
+      barras.hidden = false;
+      abrir.textContent = 'Cambiar mi meta';
+    } else {
+      texto.hidden = true;
+      barras.hidden = true;
+      // El 🎯 va aparte, escondido del lector de pantalla.
+      abrir.replaceChildren();
+      const ic = document.createElement('span');
+      ic.setAttribute('aria-hidden', 'true');
+      ic.textContent = '🎯 ';
+      abrir.append(ic, 'Ponte una meta para esta semana');
+    }
+    caja.hidden = false;
+    caja.__dias = dias;
+  }
+
+  function atarMetaSemana(){
+    const abrir = document.getElementById('hoy-metasem-abrir');
+    const form = document.getElementById('hoy-metasem-form');
+    const selDias = document.getElementById('hoy-metasem-sel-dias');
+    const selEjer = document.getElementById('hoy-metasem-sel-ejer');
+    const quitar = document.getElementById('hoy-metasem-quitar');
+    const llenar = (sel, opciones, valor, sufijo) => {
+      sel.replaceChildren(...opciones.map((v) => {
+        const o = document.createElement('option');
+        o.value = String(v);
+        o.textContent = `${v} ${sufijo}`;
+        o.selected = v === valor;
+        return o;
+      }));
+    };
+    const cerrar = () => {
+      form.hidden = true;
+      abrir.setAttribute('aria-expanded', 'false');
+      abrir.focus();
+    };
+    const repintar = () => pintarMetaSemana(document.getElementById('hoy-metasem').__dias);
+    abrir.addEventListener('click', () => {
+      if (!form.hidden) { cerrar(); return; }
+      const meta = leerMetaSemana() || META_PROPUESTA;
+      document.getElementById('hoy-metasem-diaria').textContent = String(window.Logros ? Logros.META_DIARIA : 5);
+      llenar(selDias, META_OPCIONES_DIAS, meta.dias, 'días');
+      llenar(selEjer, META_OPCIONES_EJER, meta.ejercicios, 'ejercicios');
+      quitar.hidden = !leerMetaSemana();
+      form.hidden = false;
+      abrir.setAttribute('aria-expanded', 'true');
+      selDias.focus();
+    });
+    form.addEventListener('submit', (ev) => {
+      ev.preventDefault();
+      const meta = { dias: Number(selDias.value), ejercicios: Number(selEjer.value), desde: new Date().toISOString() };
+      try { localStorage.setItem(CLAVE_META_SEMANA, JSON.stringify(meta)); } catch (e) {}
+      repintar();
+      cerrar();
+    });
+    document.getElementById('hoy-metasem-cancelar').addEventListener('click', cerrar);
+    quitar.addEventListener('click', () => {
+      try { localStorage.removeItem(CLAVE_META_SEMANA); } catch (e) {}
+      repintar();
+      cerrar();
+    });
   }
 
   /* Las siete barras. La más alta llena la caja; hoy va en negrita y dice
@@ -500,6 +727,7 @@ window.HoyTeToca = (function () {
     const op = Object.assign({ arriba: '', entreno: '', enPanel: false }, opciones || {});
     caja.innerHTML = MARCADO;
     atarAvisos();
+    atarMetaSemana();
     const [cosas, conMeta] = await Promise.all([cosasDeHoy(op), pintarMeta(op)]);
     const lista = document.getElementById('hoy-lista');
     lista.innerHTML = '';
@@ -518,6 +746,13 @@ window.HoyTeToca = (function () {
       flecha.className = 'ml-auto';
       flecha.textContent = '→';
       a.appendChild(flecha);
+      /* «Repaso del día» arranca el recorrido: la barra de abajo lleva de una
+         sección a la siguiente. Sin la barra (o sin almacenamiento), el
+         enlace sigue llevando a la primera. */
+      if (c.recorrido && window.TandaDiez) {
+        a.dataset.repasoDelDia = '';
+        a.addEventListener('click', (e) => { if (TandaDiez.empezarRepaso(c.recorrido)) e.preventDefault(); });
+      }
       li.appendChild(a);
       lista.appendChild(li);
     });
@@ -539,5 +774,5 @@ window.HoyTeToca = (function () {
     caja.hidden = false;
   }
 
-  return { pintar, textoSemana, proximaMedalla };
+  return { pintar, textoSemana, proximaMedalla, avanceMetaSemana, textoMetaSemana };
 })();

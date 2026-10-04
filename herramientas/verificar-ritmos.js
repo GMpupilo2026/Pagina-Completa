@@ -166,7 +166,12 @@ async function pruebaCrearTorneo(browser) {
   const datos = { tablas: { profiles: [PROFE], tournaments: [], tournament_registrations: [] } };
   const { page, ctx, errores } = await abrir(browser, "/torneos.html", datos, "u-profe");
   await page.waitForSelector("#time-select option", { state: "attached", timeout: 20000 });
-  await page.route("**/torneo.html*", (r) => r.fulfill({ status: 200, contentType: "text/html", body: "ok" }));
+  // El doble de torneo.html pide la transición entre páginas como la página de
+  // verdad (css/styles.css). Sin eso, Chrome cancela el fundido que pidió
+  // torneos.html y lo anota como error de la página — un error del doble, no
+  // del sitio (ver «La navegación se siente inmediata»).
+  await page.route("**/torneo.html*", (r) => r.fulfill({ status: 200, contentType: "text/html",
+    body: "<!doctype html><style>@view-transition { navigation: auto; }</style>ok" }));
   await page.fill("#name-input", "Bala de prueba");
   await page.selectOption("#time-select", "1+1");
   // Al crear, la página se va a torneo.html: lo escrito se guarda antes de irse.

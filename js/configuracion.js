@@ -700,6 +700,9 @@
             radiosConFlechas(grid);
         }
         renderPieceStyleThemeGrid();
+        // El estilo por omisión de la cuenta llega después de pintar la
+        // rejilla (pregunta a la base): sin esto, la tarjeta marcaría otro.
+        document.addEventListener("piecestyle:change", () => renderPieceStyleThemeGrid());
 
         // ---------- Colores a tu gusto (modo normal) ----------
         // Cada color se puede elegir de dos formas que dicen lo mismo: el cuadrito de la
@@ -1047,11 +1050,35 @@
                 document.getElementById("dos-pasos").hidden = false;
                 pintarDosPasos();
             }
+            if (profile.role === "alumno" && !profile.is_admin) pintarPequenos();
             document.getElementById("loading").classList.add("hidden");
             document.getElementById("app").classList.remove("hidden");
             pintarAvisos();
             pintarAvisoRacha();
             Notificaciones.atenderRenovaciones();
+        }
+
+        /* ---------------- El panel para los más pequeños ----------------
+           Una preferencia de este aparato (`panel_pequenos_v1`), que lee
+           js/clases.js. Ver «El panel para los más pequeños» en
+           docs/decisiones/paneles.md. */
+        function pintarPequenos() {
+            const caja = document.getElementById("pequenos");
+            const casilla = document.getElementById("pequenos-activo");
+            if (!caja || !casilla) return;
+            let activo = false;
+            try { activo = localStorage.getItem("panel_pequenos_v1") === "1"; } catch (e) { activo = false; }
+            casilla.checked = activo;
+            casilla.addEventListener("change", () => {
+                try {
+                    if (casilla.checked) localStorage.setItem("panel_pequenos_v1", "1");
+                    else localStorage.removeItem("panel_pequenos_v1");
+                } catch (e) { /* sin almacenamiento no se guarda */ }
+                document.getElementById("pequenos-estado").textContent = casilla.checked
+                    ? "Listo: al volver al panel lo vas a ver con dibujos grandes."
+                    : "Listo: el panel vuelve a ser el de siempre.";
+            });
+            caja.hidden = false;
         }
 
         /* ---------------- Verificación en dos pasos ----------------

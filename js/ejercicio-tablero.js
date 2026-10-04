@@ -70,7 +70,7 @@
  *   EjercicioTablero.jugadaEs(san)
  *       La jugada en castellano (Cf3, Dxh7#), como la escribe el alumno.
  *
- *   EjercicioTablero.fin({ caja, desde, jugadas, orientacion, siguiente })
+ *   EjercicioTablero.fin({ caja, desde, jugadas, orientacion, siguiente, origen })
  *       Al terminar un ejercicio, en vez de saltar al siguiente al segundo:
  *       «Siguiente →» (el alumno decide cuándo) y «Ver la línea», que abre la
  *       línea jugada desde `desde` en js/visor-linea.js (recorrible con
@@ -323,6 +323,11 @@
     visor.hidden = true;
     ver.setAttribute("aria-controls", visor.id);
     botones.append(sig, ver);
+    /* «Guardar en mi cuaderno» (js/cuaderno.js), si la página lo cargó: la
+       posición de arranque del ejercicio, con su línea y de dónde salió. */
+    if (window.Cuaderno && o.desde) {
+      botones.appendChild(Cuaderno.boton(() => ({ fen: o.desde, jugadas: o.jugadas || [], origen: o.origen || "" })));
+    }
     caja.append(botones, visor);
     let montado = null, activo = true;
     ver.addEventListener("click", () => {

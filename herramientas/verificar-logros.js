@@ -245,8 +245,9 @@ async function abrir(browser, ruta, sesion, stats, opts) {
       // trofeos_de es la cuenta de los trofeos de la clase, también en la base.
       // mis_avisos_sin_leer es la ventana del aviso del profe (js/aviso-profe.js,
       // también en toda página de la Academia).
+      // entreno_mi_mes es «Tu mes en ajedrez» (js/tu-mes.js): también lo cuenta la base.
       await page.evaluate(() => Array.from(new Set(window.__rpcPedidos.filter((n) => !["mi_acceso", "mi_marca_academia", "mis_academias_supervisadas", "mis_avisos_sin_leer"].includes(n)))).sort()),
-      ["logros_hitos", "premios_de_alumno", "progreso_dias_y_racha", "trofeos_de"]);
+      ["entreno_mi_mes", "logros_hitos", "premios_de_alumno", "progreso_dias_y_racha", "trofeos_de"]);
 
     console.log("\n=== Los logros: la página pinta lo que el catálogo calcula ===");
     const esperado = await page.evaluate((stats) => window.LogrosCatalogo.conEstado(stats), Object.assign({}, STATS, { trofeos: PREMIOS.trofeos_total, insignias: PREMIOS.insignias_total, hitos: HITOS, tipos_completos: 2 }));

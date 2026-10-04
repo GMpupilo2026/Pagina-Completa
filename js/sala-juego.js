@@ -24,6 +24,50 @@
     return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0");
   }
 
+  /* De quién es el turno según la SALA guardada, no según el tablero. Mientras
+     la jugada propia viaja a la base, el tablero ya la muestra (es el turno del
+     rival), pero para la base el reloj que corre sigue siendo el propio: con el
+     turno del tablero, el reloj del rival bajaba todo lo que uno había
+     pensado, de golpe, hasta que llegaba la respuesta. En Cartas la posición va
+     en cartas_state.fen (la columna fen no se actualiza), y Abrazos guarda la
+     suya en JSON, con el turno en `t`. */
+  function turnoDe(room) {
+    const fen = String((room && room.cartas_state && room.cartas_state.fen) || (room && room.fen) || "");
+    if (fen.charAt(0) === "{") {
+      try { return JSON.parse(fen).t === "b" ? "b" : "w"; } catch (e) { return "w"; }
+    }
+    return fen.split(" ")[1] === "b" ? "b" : "w";
+  }
+
+  /* Cuán avanzada va una versión de la sala. Lo que Realtime entrega puede
+     llegar tarde y desordenado (el eco de la jugada propia después de la
+     respuesta del rival, una relectura que salió antes de una jugada y volvió
+     después): sin esto, una versión vieja pisaba a una nueva y el tablero
+     volvía atrás una jugada, o el reloj corría para quien ya había jugado. */
+  function avance(room) {
+    const d = room.duelo_state;
+    const contar = (o) => (o ? (o.w ? 1 : 0) + (o.b ? 1 : 0) : 0);
+    // Ajedrez para 4 (fourplayer_games): los listos y quién quedó fuera
+    // (rendido o eliminado, que pasa sin jugada) van en cada asiento.
+    const asientos = room.seats ? Object.values(room.seats).filter(Boolean) : null;
+    return [
+      room.status === "finished" ? 1 : 0,
+      (room.moves || []).length,
+      asientos ? asientos.filter((a) => a.status && a.status !== "active").length : 0,
+      d ? (d.round || 0) * 10 + contar(d.commit) + contar(d.reveal) : 0,
+      asientos ? asientos.filter((a) => a.ready).length : (room.white_ready ? 1 : 0) + (room.black_ready ? 1 : 0),
+      room.clock_updated_at ? Date.parse(room.clock_updated_at) || 0 : 0,
+    ];
+  }
+  // ¿`fila` es más vieja que `actual`? Igual no es más vieja: se aplica.
+  function esAnterior(fila, actual) {
+    if (!fila || !actual) return false;
+    const a = avance(fila), b = avance(actual);
+    for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return a[i] < b[i];
+    return false;
+  }
+  function laMasNueva(actual, fila) { return fila && !esAnterior(fila, actual) ? fila : actual; }
+
   /* Lo que le queda a `color`, contando lo que corre desde la última jugada
      si es su turno. La hora es la del servidor (js/reloj-servidor.js): la del
      celular de cada uno puede estar adelantada. */
@@ -76,17 +120,29 @@
 
   /* Si al que le toca se le acabó el tiempo, la partida termina. La escritura
      solo pega si la partida sigue en juego (.eq("status", "playing")): los dos
-     navegadores la ven caer a la vez y no se pisan. */
+     navegadores la ven caer a la vez y no se pisan.
+     Si la base la rechaza («Todavía le queda tiempo»), lo que se ve está
+     atrasado: casi siempre, una jugada del rival que no llegó. Se vuelve a leer
+     la sala en vez de insistir cada 250 ms (cuatro pedidos por segundo por
+     cada pantalla trabada, justo cuando la base anda lenta). */
+  const banderaEnPausa = {};
   async function revisarBandera(room, salaId, turno) {
     if (room.status !== "playing" || room.initial_seconds == null) return;
+    turno = turno || turnoDe(room);
     const quedan = restante(room, turno, turno);
     if (quedan === null || quedan > 0) return;
+    if (banderaEnPausa[salaId] && Date.now() < banderaEnPausa[salaId]) return;
+    banderaEnPausa[salaId] = Date.now() + 60000; // una a la vez
     const ganador = turno === "w" ? "black" : "white";
     const clave = turno === "w" ? "white_time_left" : "black_time_left";
     const { error } = await sb.from("game_rooms")
       .update({ status: "finished", result: ganador, [clave]: 0, updated_at: new Date().toISOString() })
       .eq("id", salaId).eq("status", "playing");
-    if (error) console.error(error);
+    banderaEnPausa[salaId] = Date.now() + (error ? 1000 : 250);
+    if (error) {
+      console.error(error);
+      if (vigilantes[salaId]) vigilantes[salaId].refrescar();
+    }
   }
 
   /* La sala como está en la base, tras una escritura que no quedó. */
@@ -97,12 +153,127 @@
   }
 
   /* Cada cambio de la sala, filtrado a ESTA sala (ver «Realtime escucha solo
-     lo que la pantalla muestra»). */
-  function suscribir(salaId, alCambiar) {
-    return sb.channel("game-room-" + salaId)
-      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "game_rooms", filter: "id=eq." + salaId },
-        (payload) => alCambiar(payload.new))
-      .subscribe();
+     lo que la pantalla muestra»), y sin perderse ninguno (ver «Las jugadas
+     llegan siempre» en docs/decisiones/juegos-y-torneos.md).
+
+     Realtime solo avisa lo que pasa MIENTRAS el canal está conectado, y no
+     dice nada de lo que se perdió: un celular que bloqueó la pantalla, una
+     pestaña en segundo plano a la que el navegador le frenó el latido, un
+     cambio de wifi a datos, o el propio Realtime atrasado con la base
+     cargada. La jugada del rival quedaba guardada en la base y la pantalla no
+     se enteraba nunca: el reloj del rival seguía corriendo en una pantalla
+     mientras en la otra corría el propio. Por eso:
+       · cada vez que el canal queda conectado (también al reconectarse, y la
+         primera vez: entre leer la sala y quedar suscrito pudo pasar una
+         jugada) se vuelve a leer la sala;
+       · al volver a la pestaña, al recuperar la red y si el canal se cae;
+       · y, de respaldo, si pasa un rato sin noticias con la partida en juego:
+         5 s si se espera al rival, 15 s si es el turno propio, 3 s con el
+         canal caído. Cada lectura es UNA fila por su llave.
+     Lo que llega viejo o repetido no se aplica (esAnterior, y la misma fila
+     dos veces no repinta nada).
+
+     opciones: sala() → la sala que se ve; miColor() → "w", "b" o null (en
+     Ajedrez para 4, el asiento); esperando() (opcional) → si se espera algo
+     del otro lado; tabla y canal (opcionales) → para fourplayer_games. */
+  const vigilantes = {};
+  const ESPERA_RIVAL_MS = 5000, ESPERA_PROPIA_MS = 15000, ESPERA_SIN_CANAL_MS = 3000, ESPERA_MIRANDO_MS = 8000;
+
+  function suscribir(salaId, alCambiar, opciones) {
+    opciones = opciones || {};
+    const sala = opciones.sala || (() => null);
+    const tabla = opciones.tabla || "game_rooms";
+    let canal = null, vuelta = 0, conectada = false, caidaDesde = Date.now(), ultimoContacto = Date.now(), leyendo = null;
+
+    function aplicar(fila) {
+      ultimoContacto = Date.now();
+      if (!fila) return;
+      const actual = sala();
+      if (actual && esAnterior(fila, actual)) return;
+      if (actual && JSON.stringify(actual) === JSON.stringify(fila)) return;
+      alCambiar(fila);
+    }
+
+    function refrescar() {
+      if (leyendo) return leyendo;
+      leyendo = (async () => {
+        try {
+          const { data, error } = await sb.from(tabla).select("*").eq("id", salaId).maybeSingle();
+          if (error) console.error(error);
+          else aplicar(data);
+        } catch (e) { console.error(e); }
+        ultimoContacto = Date.now();
+        leyendo = null;
+      })();
+      return leyendo;
+    }
+
+    function pintarConexion() {
+      const banner = document.getElementById("status-banner");
+      if (!banner || !banner.parentNode) return;
+      let aviso = document.getElementById("sala-conexion");
+      const mostrar = !conectada && Date.now() - caidaDesde > 4000;
+      if (!aviso) {
+        if (!mostrar) return;
+        aviso = document.createElement("p");
+        aviso.id = "sala-conexion";
+        aviso.setAttribute("role", "status");
+        aviso.className = "mb-2 rounded-xl bg-brand-100 dark:bg-brand-900 px-4 py-2 text-sm text-brand-600 dark:text-brand-300";
+        banner.parentNode.insertBefore(aviso, banner.nextSibling);
+      }
+      const texto = mostrar ? "📶 Reconectando… Las jugadas se siguen leyendo de la base cada pocos segundos." : "";
+      if (aviso.textContent !== texto) aviso.textContent = texto;
+      aviso.classList.toggle("hidden", !mostrar);
+    }
+
+    function abrir() {
+      const propio = ++vuelta;
+      canal = sb.channel((opciones.canal || "game-room-") + salaId + (propio > 1 ? "-" + propio : ""))
+        .on("postgres_changes", { event: "UPDATE", schema: "public", table: tabla, filter: "id=eq." + salaId },
+          (payload) => aplicar(payload.new))
+        .subscribe((estado) => {
+          if (propio !== vuelta) return; // un canal viejo que todavía no terminó de cerrarse
+          if (estado === "SUBSCRIBED") {
+            conectada = true;
+            refrescar();
+          } else if (estado === "CHANNEL_ERROR" || estado === "TIMED_OUT" || estado === "CLOSED") {
+            // CHANNEL_ERROR y TIMED_OUT los reintenta solo la librería. CLOSED no:
+            // ahí se abre otro canal.
+            if (conectada) caidaDesde = Date.now();
+            conectada = false;
+            if (estado === "CLOSED") {
+              setTimeout(() => {
+                if (propio !== vuelta) return;
+                try { sb.removeChannel(canal); } catch (e) {}
+                abrir();
+              }, 2000);
+            }
+          }
+          pintarConexion();
+        });
+    }
+
+    setInterval(() => {
+      pintarConexion();
+      if (document.visibilityState === "hidden") return;
+      const actual = sala();
+      if (!actual || actual.status !== "playing") return;
+      const color = opciones.miColor ? opciones.miColor() : null;
+      let espera;
+      if (!conectada) espera = ESPERA_SIN_CANAL_MS;
+      else if (!color) espera = ESPERA_MIRANDO_MS;
+      else if (opciones.esperando) espera = opciones.esperando() ? ESPERA_RIVAL_MS : ESPERA_PROPIA_MS;
+      else espera = (!actual.white_ready || !actual.black_ready || turnoDe(actual) !== color) ? ESPERA_RIVAL_MS : ESPERA_PROPIA_MS;
+      if (Date.now() - ultimoContacto >= espera) refrescar();
+    }, 1000);
+
+    document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") refrescar(); });
+    window.addEventListener("online", () => refrescar());
+    window.addEventListener("pageshow", (e) => { if (e.persisted) refrescar(); });
+
+    vigilantes[salaId] = { refrescar };
+    abrir();
+    return vigilantes[salaId];
   }
 
   /* «Estoy listo». Si el rival ya estaba listo, esta confirmación es la que
@@ -117,9 +288,12 @@
     if (elOtroYaEstaba && room.initial_seconds != null && !room.clock_updated_at) {
       cambio.clock_updated_at = new Date().toISOString();
     }
-    const { error } = await sb.from("game_rooms").update(cambio).eq("id", salaId);
+    // Se pide la fila de vuelta: el reloj arranca con la hora de la BASE (la
+    // pone el trigger), no con la de esta computadora.
+    const { data, error } = await sb.from("game_rooms").update(cambio).eq("id", salaId).select("*");
     if (error) console.error(error);
-    return { cambio, error };
+    const fila = Array.isArray(data) ? data[0] : null;
+    return { cambio: fila ? laMasNueva(room, fila) : cambio, error };
   }
 
   /* El botón «Rendirse» (#resign-btn). `sala()` y `miColor()` se leen al
@@ -149,5 +323,5 @@
     return !!window.Repeticion && Repeticion.esTriple(SALIDA, jugadas, (f) => new Chess(f), fen);
   }
 
-  window.SalaJuego = { formatear, restante, pintarRelojes, revisarBandera, releer, suscribir, marcarListo, montarRendirse, esTripleRepeticion };
+  window.SalaJuego = { formatear, turnoDe, esAnterior, laMasNueva, restante, pintarRelojes, revisarBandera, releer, suscribir, marcarListo, montarRendirse, esTripleRepeticion };
 })();

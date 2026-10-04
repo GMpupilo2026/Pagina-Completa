@@ -73,14 +73,14 @@
 
         function formatClock(seconds) { return SalaJuego.formatear(seconds); }
 
-        function liveTimeLeft(color) { return SalaJuego.restante(room, color, board.game.turn()); }
+        function liveTimeLeft(color) { return SalaJuego.restante(room, color, SalaJuego.turnoDe(room)); }
 
         // El reloj y su rótulo dicho son de js/sala-juego.js (una sola copia).
         function renderClocks() {
-            SalaJuego.pintarRelojes(room, { miColor: myColor, turno: board.game.turn(), nombreDe: (c) => nameFor(c === "w" ? room.white_id : room.black_id) });
+            SalaJuego.pintarRelojes(room, { miColor: myColor, turno: SalaJuego.turnoDe(room), nombreDe: (c) => nameFor(c === "w" ? room.white_id : room.black_id) });
         }
 
-        function checkFlagFall() { return SalaJuego.revisarBandera(room, ROOM_ID, board.game.turn()); }
+        function checkFlagFall() { return SalaJuego.revisarBandera(room, ROOM_ID, SalaJuego.turnoDe(room)); }
 
         setInterval(() => {
             if (!room || !board) return;
@@ -148,6 +148,9 @@
             jugadas.forEach((san) => board.game.move(san));
         }
 
+        // La posición de la jugada propia que se está guardando (ver handleLocalMove).
+        let jugadaEnVuelo = null;
+
         async function handleLocalMove(info) {
             const newMoves = (room.moves || []).concat([info.san]);
             const patch = { fen: info.fen, moves: newMoves, updated_at: new Date().toISOString() };
@@ -169,13 +172,25 @@
             // bandera mientras tanto, esta jugada no puede pisar ese resultado. Y si no
             // quedó guardada, el tablero ya la muestra: se vuelve a leer la sala para
             // que enseñe la posición real en vez de quedarse desincronizado.
-            const { data: guardada, error } = await sb.from("game_rooms").update(patch).eq("id", ROOM_ID).eq("status", "playing").select("id");
+            // Y solo sobre la posición de la que salió la jugada (`fen`): si la sala
+            // ya iba más adelante —otra pestaña de la misma cuenta, una jugada
+            // repetida—, no la pisa. Se pide la fila de vuelta: el reloj queda con la
+            // hora de la base, no con la de esta computadora.
+            jugadaEnVuelo = info.fen;
+            let guardar = sb.from("game_rooms").update(patch).eq("id", ROOM_ID).eq("status", "playing");
+            if (room.fen) guardar = guardar.eq("fen", room.fen);
+            const { data: guardada, error } = await guardar.select("*");
+            jugadaEnVuelo = null;
             if (error || !guardada || !guardada.length) {
                 if (error) console.error(error);
-                await releerSala(error ? "No se pudo guardar la jugada: " + error.message : "La partida ya había terminado: esa jugada no quedó guardada.");
+                await releerSala(error ? "No se pudo guardar la jugada: " + error.message : null);
+                if (!error) setStatus(room.status === "playing" ? "Esa jugada no quedó guardada: la partida ya iba más adelante." : "La partida ya había terminado: esa jugada no quedó guardada.");
                 return;
             }
-            room = Object.assign({}, room, patch);
+            // Si mientras viajaba ya llegó algo más nuevo (el eco de esta misma jugada,
+            // o hasta la respuesta del rival), se queda lo más nuevo: antes esto
+            // pegaba el parche encima y la sala volvía una jugada atrás.
+            room = SalaJuego.laMasNueva(room, guardada[0]);
             renderMoveHistory(room.moves);
             updateStatusText();
             renderClocks();
@@ -194,7 +209,7 @@
             // Si cambió la posición es porque la jugada la hizo el rival — la propia ya
             // quedó reflejada en "room" de forma local antes de que llegue este eco (ver
             // handleLocalMove), así que este caso siempre es una jugada ajena de verdad.
-            if (positionChanged && blindCtl && row.moves && row.moves.length) {
+            if (positionChanged && row.fen !== jugadaEnVuelo && blindCtl && row.moves && row.moves.length) {
                 blindCtl.announceOpponentMove(row.moves[row.moves.length - 1]);
             }
         }
@@ -205,10 +220,10 @@
         async function releerSala(mensaje) {
             const fila = await SalaJuego.releer(ROOM_ID);
             if (fila) applyRemoteRoom(fila, true);
-            setStatus(mensaje);
+            if (mensaje) setStatus(mensaje);
         }
 
-        function subscribeRoom() { SalaJuego.suscribir(ROOM_ID, (fila) => applyRemoteRoom(fila)); }
+        function subscribeRoom() { SalaJuego.suscribir(ROOM_ID, (fila) => applyRemoteRoom(fila), { sala: () => room, miColor: () => myColor }); }
 
         SalaJuego.montarRendirse({ salaId: ROOM_ID, sala: () => room, miColor: () => myColor, decir: setStatus, releer: releerSala });
 
@@ -275,7 +290,7 @@
                     // "reloj" / "tiempo" en el recuadro, y los avisos de 30 y 10 segundos.
                     reloj: () => {
                         if (!room || room.initial_seconds == null) return null;
-                        const corre = room.status === "playing" && bothReady(room) && room.clock_updated_at ? board.game.turn() : null;
+                        const corre = room.status === "playing" && bothReady(room) && room.clock_updated_at ? SalaJuego.turnoDe(room) : null;
                         return { blancas: liveTimeLeft("w"), negras: liveTimeLeft("b"), miColor: myColor, corre };
                     },
                     // "última jugada". Las jugadas se guardan desde la posición inicial,

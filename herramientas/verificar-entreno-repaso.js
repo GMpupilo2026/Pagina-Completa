@@ -13,7 +13,8 @@
      con a dónde ir y cuánto lleva ahí), repasos de Temas, líneas de Aperturas
      vencidas (no las nuevas) y el diagnóstico si falta o tiene más de cuatro
      semanas. Arriba, la meta del día (de Logros); sin nada pendiente queda
-     solo esa.
+     solo esa. Y la meta de la semana que elige el alumno (días y
+     ejercicios de lunes a domingo).
 
    - Visualización y Practicar tienen la misma cola (Practicar, por ronda,
      y en el repaso vale el motivo de la serie de origen), y el hub la
@@ -177,13 +178,37 @@ async function hub(browser) {
     await page.waitForFunction(() => document.querySelectorAll("#hoy-lista a").length > 0, { timeout: 10000 });
     const items = await page.evaluate(() => Array.from(document.querySelectorAll("#hoy-lista a")).map((a) => [a.textContent.replace("→", "").trim(), a.getAttribute("href")]));
     igual("se ve", await page.evaluate(() => document.getElementById("hoy").checkVisibility()), "true");
-    igual("los repasos de Temas que vencieron (2 de 3)", items[0], ["🔁Repasar 2 ejercicios que te costaron", "temas.html?repaso=1"]);
-    igual("los mates que costaron", items[1], ["♚Repasar 1 mate que te costó", "mates.html?repaso=1"]);
-    igual("las líneas de Aperturas vencidas, sin contar la nueva", items[2], ["📖2 líneas de aperturas para repasar", "aperturas.html"]);
-    igual("y nunca más de tres: el diagnóstico queda para cuando haya lugar", items.length, "3");
+    /* Tres colas con algo hoy (Temas 2 de 3, Mates 1, Aperturas 2 sin
+       contar la nueva) van en UNA cosa: el «Repaso del día». */
+    igual("las colas de hoy van juntas en el «Repaso del día», con cuántas de cada una", items[0],
+      ["🔁Repaso del día: 5 en 3 secciones (Ejercicios por tema 2 · Mates 1 · Aperturas 2)", "temas.html?repaso=1"]);
+    igual("y deja lugar para lo demás (el diagnóstico)", items.map((x) => x[1]), ["temas.html?repaso=1", "diagnostico.html"]);
     igual("el título es un encabezado del nivel correcto (h2, bajo el h1)",
       await page.evaluate(() => document.getElementById("hoy-titulo").tagName), "H2");
     sinErrores(errores, "hub");
+
+    /* Tocarlo arranca el recorrido: la barra (sin reloj) dice el paso y lleva
+       a la sección siguiente; al final, «Terminar el repaso». */
+    const barra = () => page.evaluate(() => { const b = document.getElementById("tanda-diez");
+      return b ? { seVe: b.checkVisibility(), nombre: b.getAttribute("aria-label"), paso: b.querySelector("[role=status]").textContent,
+        reloj: b.querySelector("[data-tanda-reloj]").textContent, sig: (b.querySelector("[data-tanda-siguiente]") || {}).textContent || null,
+        destino: b.querySelector("[data-tanda-siguiente]") ? b.querySelector("[data-tanda-siguiente]").getAttribute("href") : null,
+        salir: b.querySelector("[data-tanda-salir]").textContent } : null; });
+    await Promise.all([page.waitForNavigation({ waitUntil: "load" }), page.click("#hoy-lista a[data-repaso-del-dia]")]);
+    await page.waitForSelector("#tanda-diez", { timeout: 10000 }).catch(() => {});
+    igual("abre la primera sección con la barra del repaso, sin reloj", await barra(), {
+      seVe: true, nombre: "Repaso del día", paso: "Repaso del día, paso 1 de 3: Ejercicios por tema (2)", reloj: "🔁",
+      sig: "Siguiente: Mates (1) →", destino: "/entreno/mates.html?repaso=1", salir: "Dejar el repaso" });
+    await Promise.all([page.waitForNavigation({ waitUntil: "load" }), page.click("[data-tanda-siguiente]")]);
+    await page.waitForSelector("#tanda-diez", { timeout: 10000 }).catch(() => {});
+    await Promise.all([page.waitForNavigation({ waitUntil: "load" }), page.click("[data-tanda-siguiente]")]);
+    await page.waitForSelector("#tanda-diez", { timeout: 10000 }).catch(() => {});
+    const ultimo = await barra();
+    igual("en la última sección, terminar en vez de seguir", ultimo && [ultimo.paso, ultimo.sig, ultimo.salir],
+      ["Repaso del día, paso 3 de 3: Aperturas (2)", null, "Terminar el repaso"]);
+    await page.click("[data-tanda-salir]");
+    igual("y al terminar lo dice y no deja nada guardado", await page.evaluate(() => [document.querySelector("#tanda-diez [role=status]").textContent, localStorage.getItem("tanda_diez_v1")]),
+      ["¡Listo! Terminaste tu repaso del día.", null]);
     await ctx.close();
   }
   {
@@ -267,7 +292,7 @@ async function hub(browser) {
     let items = await page.evaluate(() => Array.from(document.querySelectorAll("#hoy-lista a")).map((a) => [a.textContent.replace("→", "").trim(), a.getAttribute("href")]));
     igual("el plan va primero, con su semana, a dónde ir y cuánto lleva", items[0],
       [`📅Tu plan, semana 1 de ${plan.semanas.length} · Táctica: ${recurso.texto} (✓ 3 hechos)`, "../" + recurso.href]);
-    igual("y sigue sin pasar de tres cosas", items.length, "3");
+    igual("y después el repaso del día, sin pasar de tres cosas", [items.length <= 3, /^🔁Repaso del día/.test(items[1][0])], [true, true]);
     sinErrores(errores, "hub con plan");
     await ctx.close();
 
@@ -394,9 +419,9 @@ async function hub(browser) {
     }));
     await page.waitForSelector("#app:not(.hidden)", { timeout: 20000 });
     await page.waitForFunction(() => document.querySelectorAll("#hoy-lista a").length > 0, { timeout: 10000 });
-    igual("propone los repasos de Visualización y de Practicar, con a dónde ir", await page.evaluate(() =>
+    igual("propone los repasos de Visualización y de Practicar, juntos en el repaso del día", await page.evaluate(() =>
       Array.from(document.querySelectorAll("#hoy-lista a")).map((a) => [a.textContent.replace("→", "").trim(), a.getAttribute("href")])),
-      [["👁️Repasar 2 ejercicios de Visualización que te costaron", "visualizacion.html?repaso=1"], ["♞Repasar 1 posición de Practicar que te costó", "practicas.html?repaso=1"]]);
+      [["🔁Repaso del día: 3 en 2 secciones (Visualización 2 · Practicar 1)", "visualizacion.html?repaso=1"]]);
     await ctx.close();
   }
   /* Y los de Tipos y de Finales. */
@@ -409,9 +434,9 @@ async function hub(browser) {
     }));
     await page.waitForSelector("#app:not(.hidden)", { timeout: 20000 });
     await page.waitForFunction(() => document.querySelectorAll("#hoy-lista a").length > 0, { timeout: 10000 });
-    igual("propone los repasos de Tipos y de Finales, con a dónde ir", await page.evaluate(() =>
+    igual("propone los repasos de Tipos y de Finales, juntos en el repaso del día", await page.evaluate(() =>
       Array.from(document.querySelectorAll("#hoy-lista a")).map((a) => [a.textContent.replace("→", "").trim(), a.getAttribute("href")])),
-      [["🧩Repasar 2 ejercicios de Habilidades que te costaron", "tipos.html#repaso"], ["🏁Volver a jugar 1 final que te costó", "finales.html?repaso=1"]]);
+      [["🔁Repaso del día: 3 en 2 secciones (Habilidades 2 · Finales 1)", "tipos.html#repaso"]]);
     await ctx.close();
   }
   /* Lo empezado que no vence: los finales contra la máquina a medias y una
@@ -723,6 +748,101 @@ async function limpios(browser) {
   }
 }
 
+/* La meta de la semana que elige el alumno (meta_semana_v1): se pone desde
+   «Hoy te toca», se guarda en la cuenta y cuenta de lunes a hoy con los siete
+   días de entreno_mi_semana. Un día cuenta con 5 ejercicios, como la racha. */
+async function metaSemana(browser) {
+  console.log("\n=== «Hoy te toca»: la meta de la semana ===");
+  // Siete días que terminan un miércoles (30/9): la semana es lunes, martes y hoy.
+  const dias = (ns, hasta) => ns.map((n, i) => {
+    const d = new Date(Date.parse(hasta + "T12:00:00Z") - (6 - i) * 86400000);
+    return { dia: d.toISOString().slice(0, 10), n };
+  });
+  const miercoles = dias([9, 9, 9, 9, 6, 2, 34], "2026-09-30");   // lun 6 (cuenta), mar 2 (no), hoy 34 (cuenta)
+  const fresco = { diagnostico_resultado_v1: JSON.stringify({ fecha: new Date().toISOString() }) };
+  const abrirHub = async (d, local) => {
+    const r = await abrir(browser, "/entreno/index.html",
+      { "rpc:progreso_dias_y_racha": [{ hoy_ejercicios: 0, racha_actual: 0 }],
+        "rpc:entreno_mi_semana": { esta: 0, esta_con: 0, esta_limpios: 0, anterior: 0, anterior_con: 0, anterior_limpios: 0, dias: d } },
+      Object.assign({}, fresco, local || {}));
+    await r.page.waitForFunction(() => document.getElementById("hoy-metasem").checkVisibility(), null, { timeout: 10000 });
+    return r;
+  };
+  const leer = (page) => page.evaluate(() => {
+    const t = document.getElementById("hoy-metasem-texto");
+    return { texto: t.checkVisibility() ? t.textContent : null,
+      boton: document.getElementById("hoy-metasem-abrir").textContent.trim(),
+      barras: document.getElementById("hoy-metasem-barras").checkVisibility(),
+      dias: document.getElementById("hoy-metasem-dias").getAttribute("aria-valuetext"),
+      ejer: document.getElementById("hoy-metasem-ejer").getAttribute("aria-valuetext") };
+  });
+
+  {
+    const { page, ctx, errores } = await abrirHub(miercoles);
+    igual("la cuenta va de lunes a hoy: días con 5 o más y ejercicios",
+      await page.evaluate((d) => HoyTeToca.avanceMetaSemana(d, 5), miercoles), { ejercicios: 42, dias: 2, quedan: 4 });
+    igual("un domingo, la semana son los siete días y no queda ninguno",
+      await page.evaluate((d) => HoyTeToca.avanceMetaSemana(d, 5), dias([5, 0, 0, 0, 0, 0, 1], "2026-10-04")), { ejercicios: 6, dias: 1, quedan: 0 });
+    // Sin meta: se ofrece ponerla, aunque esta semana y la anterior estén en cero.
+    let m = await leer(page);
+    igual("sin meta, se ofrece ponerla (aunque no haya entrenado)", [m.texto, m.boton, m.barras], [null, "🎯 Ponte una meta para esta semana", false]);
+    // Se abre: el formulario se ve, el botón lo dice y el foco va al primer campo.
+    await page.click("#hoy-metasem-abrir");
+    igual("al abrirla, el formulario se ve, el botón dice que está abierto y el foco va a los días",
+      await page.evaluate(() => [document.getElementById("hoy-metasem-form").checkVisibility(),
+        document.getElementById("hoy-metasem-abrir").getAttribute("aria-expanded"), document.activeElement.id]),
+      [true, "true", "hoy-metasem-sel-dias"]);
+    igual("propone 3 días y 35 ejercicios, y no ofrece quitar una meta que no hay",
+      await page.evaluate(() => [document.getElementById("hoy-metasem-sel-dias").value, document.getElementById("hoy-metasem-sel-ejer").value,
+        document.getElementById("hoy-metasem-quitar").checkVisibility()]), ["3", "35", false]);
+    await page.selectOption("#hoy-metasem-sel-dias", "4");
+    await page.selectOption("#hoy-metasem-sel-ejer", "50");
+    await page.click("#hoy-metasem-form button[type=submit]");
+    m = await leer(page);
+    igual("guardada: cuánto lleva de cada cosa y cuánto le queda de semana", m.texto,
+      "🎯 Tu meta de la semana: 2 de 4 días · 42 de 50 ejercicios. Quedan 4 días para el domingo.");
+    igual("con sus dos barras, y el número escrito para el lector", [m.barras, m.dias, m.ejer, m.boton], [true, "2 de 4", "42 de 50", "Cambiar mi meta"]);
+    igual("se guarda en la cuenta (meta_semana_v1) y el formulario se cierra devolviendo el foco",
+      await page.evaluate(() => { const g = JSON.parse(localStorage.getItem("meta_semana_v1")); return [g.dias, g.ejercicios,
+        document.getElementById("hoy-metasem-form").checkVisibility(), document.activeElement.id]; }),
+      [4, 50, false, "hoy-metasem-abrir"]);
+    // Cambiarla trae lo guardado; «Quitar la meta» la borra.
+    await page.click("#hoy-metasem-abrir");
+    igual("al cambiarla, trae lo que ya tenía", await page.evaluate(() =>
+      [document.getElementById("hoy-metasem-sel-dias").value, document.getElementById("hoy-metasem-sel-ejer").value]), ["4", "50"]);
+    await page.click("#hoy-metasem-quitar");
+    m = await leer(page);
+    igual("«Quitar la meta» la borra y vuelve a ofrecerla",
+      [m.texto, m.boton, await page.evaluate(() => localStorage.getItem("meta_semana_v1"))], [null, "🎯 Ponte una meta para esta semana", null]);
+    sinErrores(errores, "hub (meta de la semana)");
+    await ctx.close();
+  }
+  {
+    const { page, ctx, errores } = await abrirHub(miercoles, { meta_semana_v1: JSON.stringify({ dias: 2, ejercicios: 35 }) });
+    igual("cumplida, lo celebra", (await leer(page)).texto,
+      "🎯 ¡Cumpliste tu meta de la semana! 2 días y 42 ejercicios (tu meta: 2 días y 35 ejercicios).");
+    sinErrores(errores, "hub (meta cumplida)");
+    await ctx.close();
+  }
+  {
+    // Domingo, sin haber llegado: es el último día y los días ya no alcanzan.
+    const { page, ctx } = await abrirHub(dias([5, 0, 0, 0, 0, 0, 1], "2026-10-04"), { meta_semana_v1: JSON.stringify({ dias: 4, ejercicios: 20 }) });
+    igual("el domingo lo dice, y avisa cuando los días ya no alcanzan", (await leer(page)).texto,
+      "🎯 Tu meta de la semana: 1 de 4 días · 6 de 20 ejercicios. Hoy es el último día. Los días ya no alcanzan esta semana: igual, cada ejercicio suma.");
+    await ctx.close();
+  }
+  {
+    // Lo guardado se puede tocar desde la consola: lo que no es una opción no vale.
+    const { page, ctx, errores } = await abrirHub(miercoles, { meta_semana_v1: JSON.stringify({ dias: 99, ejercicios: "<img src=x onerror=alert(1)>" }) });
+    const m = await leer(page);
+    igual("una meta que no está entre las opciones es como no tener meta", [m.texto, m.boton], [null, "🎯 Ponte una meta para esta semana"]);
+    sinErrores(errores, "hub (meta tocada)");
+    await ctx.close();
+  }
+  igual("la clave viaja con la cuenta (js/progreso-usuario.js)",
+    /clave: "meta_semana_v1",\s+fusion: "ultimaEscritura"/.test(require("fs").readFileSync(require("path").join(__dirname, "..", "js", "progreso-usuario.js"), "utf8")), true);
+}
+
 (async () => {
   const browser = await chromium.launch({ executablePath: CHROME });
   try {
@@ -734,6 +854,7 @@ async function limpios(browser) {
     await finales(browser);
     await limpios(browser);
     await hub(browser);
+    await metaSemana(browser);
   } catch (e) {
     console.log("  ✗ " + (e && e.stack || e));
     fallos += 1;

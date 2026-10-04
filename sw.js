@@ -20,7 +20,7 @@
  *     teléfono sería dejarlos ahí después de cerrar sesión;
  *   - las respuestas que no vengan bien (un 404 o un 500 no se guardan).
  */
-const VERSION = "ai-2026-09-4";
+const VERSION = "ai-2026-10-1";
 const CACHE = "ajedrez-integral-" + VERSION;
 
 /* El mínimo para que la app abra sin red y explique qué pasa. */
@@ -66,6 +66,15 @@ self.addEventListener("activate", (evento) => {
   evento.waitUntil((async () => {
     const nombres = await caches.keys();
     await Promise.all(nombres.filter((n) => n !== CACHE).map((n) => caches.delete(n)));
+    // Navigation preload: al abrir una página, el navegador pide el HTML a la
+    // red A LA VEZ que despierta este service worker, en vez de esperar a que
+    // arranque para recién ahí pedirlo. Un service worker dormido tarda de 50
+    // a varios cientos de milisegundos en despertar en un celular, y eso se
+    // sumaba a CADA clic. No cambia nada de lo de arriba: la red sigue yendo
+    // primero; solo sale antes.
+    if (self.registration.navigationPreload) {
+      try { await self.registration.navigationPreload.enable(); } catch (e) {}
+    }
     await self.clients.claim();
   })());
 });
@@ -86,7 +95,11 @@ self.addEventListener("fetch", (evento) => {
 
   evento.respondWith((async () => {
     try {
-      const respuesta = await fetch(pedido);
+      // La que ya salió con navigation preload, si salió; si no, se pide.
+      // Si la adelantada falló, se intenta una vez más con fetch: si de verdad
+      // no hay red, ese también falla y se cae abajo, al aviso sin red.
+      const adelantada = pedido.mode === "navigate" ? await Promise.resolve(evento.preloadResponse).catch(() => null) : null;
+      const respuesta = adelantada || await fetch(pedido);
       // Solo se guardan respuestas propias y buenas.
       if (respuesta && respuesta.ok && respuesta.type === "basic") {
         const cache = await caches.open(CACHE);
@@ -99,8 +112,11 @@ self.addEventListener("fetch", (evento) => {
       // Sin red y sin copia: si iba a una página, se explica; si era un
       // archivo suelto, se deja fallar, que es lo honesto.
       if (pedido.mode === "navigate") {
+        // Se rearma: /offline.html se guardó siguiendo el 307 de Cloudflare a
+        // /offline, y una respuesta marcada como redirigida no sirve para una
+        // navegación (Chrome la cambia por su propio error de red).
         const aviso = await caches.match("/offline.html");
-        if (aviso) return aviso;
+        if (aviso) return new Response(aviso.body, { status: 200, headers: aviso.headers });
       }
       throw e;
     }

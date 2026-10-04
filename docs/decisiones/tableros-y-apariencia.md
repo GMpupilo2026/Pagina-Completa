@@ -119,6 +119,39 @@ negras van sin borde» más abajo).
   se respeta siempre, y al encender o apagar el modo (`adaptivemode:change`)
   se vuelve a poner `data-pieza`.
 
+### El estilo por omisión de la cuenta: «Clásico ilustrado»
+
+Desde el 4/10/2026, **a todos los profesores (y a quien administra) y a los
+alumnos nuevos** les queda puesto el estilo **«Clásico ilustrado»** si en ese
+navegador nunca eligieron uno. Los alumnos de antes siguen con los símbolos de
+siempre: a ellos no se les cambia el tablero sin que lo pidan.
+
+- **La preferencia sigue siendo del navegador** (`piece_style_theme_v1`), así
+  que la omisión se decide por cuenta y por navegador: `js/piece-style-themes.js`
+  pregunta a la base (por `MiPerfil`, la única lectura de `profiles` de la
+  página) al cargar y, si toca, escribe `ilustrado` en **su propia clave**,
+  `piece_style_cuenta_v1`, que `getPreference()` usa solo cuando no hay nada
+  elegido a mano y el Modo Adaptado está apagado. La tarjeta sale marcada en
+  Configuración igual. Al principio se escribía con el mismo `setPreference()`
+  de Configuración, en `piece_style_theme_v1`: desde ahí contaba como elegido a
+  mano, y quien encendía después el Modo Adaptado seguía con las ilustradas en
+  vez del aro. Si en el mismo navegador entra otra cuenta a la que no le toca,
+  la clave se borra.
+- **Alumno «nuevo» es el que tiene `profiles.created_at` desde
+  `CORTE_ALUMNOS`** (medianoche del 4/10 en Costa Rica, `2026-10-04T06:00:00Z`).
+- **Lo elegido a mano no se toca nunca**: con algo en `piece_style_theme_v1` no
+  se pregunta nada. Y `piece_style_omision_v1` guarda para qué cuenta ya se
+  decidió, así no se pregunta en cada página ni se vuelve a poner si después
+  elige otro.
+- **En Modo Adaptado no se escribe nada**: ahí el de omisión es el aro (ver
+  arriba), que es lo que necesita quien tiene el alto contraste del celular.
+  Al apagar el modo se vuelve a preguntar.
+- La respuesta llega después del primer pintado, así que la PRIMERA página con
+  tablero de ese navegador puede salir con símbolos; desde la siguiente jugada
+  o página, dibujada. Configuración repinta su rejilla con `piecestyle:change`.
+- Lo revisa `verificar-pieza-omision.js` (profesor, administración, alumno
+  nuevo y de antes, quien ya eligió y Modo Adaptado).
+
 ### «Ver mejor el tablero en el celular»: lo mismo, sin Modo Adaptado
 
 Mucha gente con baja visión usa el sitio en modo normal, y ahí lo que hacía

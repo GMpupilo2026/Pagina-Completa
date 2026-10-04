@@ -315,11 +315,79 @@
                         nota.appendChild(a);
                     }
                     wrap.appendChild(nota);
+                    if (c.total && c.hechos >= c.total) wrap.appendChild(cursoCertificado(propio ? profile.id : studentId, c, propio));
                     if (!propio && studentId && c.total) wrap.appendChild(cursoUnlockControl(studentId, c, unlocksPorCurso));
                     body.appendChild(wrap);
                 });
             }
             box.classList.remove("hidden");
+        }
+
+        /* El certificado de un curso completo (ver «Los certificados de curso» en
+           docs/decisiones/cursos-y-material.md). Si ya lo tiene: «Ver certificado».
+           Si no, el profesor (o administración) lo da con «Dar certificado»; el
+           alumno ve que falta que su profe lo confirme. Quién puede darlo y que el
+           curso esté completo lo decide la base (emitir_certificado), no este botón. */
+        function cursoCertificado(alumnoId, c, propio) {
+            const caja = document.createElement("div");
+            caja.className = "mt-2 flex items-center gap-2 flex-wrap text-xs";
+            const msg = document.createElement("span");
+            msg.className = "text-brand-500 dark:text-brand-300";
+            msg.setAttribute("role", "status");
+            const verEnlace = (codigo) => {
+                const a = document.createElement("a");
+                a.href = "certificado.html?c=" + encodeURIComponent(codigo);
+                a.target = "_blank";
+                a.rel = "noopener";
+                a.className = "inline-flex items-center gap-1 font-semibold text-accent-700 dark:text-accent-400 hover:underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-500";
+                const ic = document.createElement("span"); ic.setAttribute("aria-hidden", "true"); ic.textContent = "🎓";
+                a.append(ic, "Ver certificado", Object.assign(document.createElement("span"), { className: "sr-only", textContent: " (se abre en otra pestaña)" }));
+                return a;
+            };
+            const pintar = (codigo) => {
+                caja.replaceChildren();
+                if (codigo) {
+                    caja.appendChild(verEnlace(codigo));
+                    if (!propio && puedeMandarTareas()) {
+                        const anular = document.createElement("button");
+                        anular.type = "button";
+                        anular.className = "text-brand-500 dark:text-brand-300 hover:underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-500";
+                        anular.textContent = "Anular";
+                        anular.addEventListener("click", async () => {
+                            if (!(await Avisos.confirmar("Deja de valer y lo dice en el mismo enlace. Después se puede dar uno nuevo.", { titulo: `¿Anular el certificado de «${c.titulo}»?`, aceptar: "Anular el certificado", peligro: true }))) return;
+                            const { error } = await sb.rpc("anular_certificado", { p_codigo: codigo });
+                            if (error) { msg.textContent = "No se pudo anular: " + error.message; return; }
+                            pintar(null);
+                            msg.textContent = "Certificado anulado.";
+                        });
+                        caja.appendChild(anular);
+                    }
+                } else if (!propio && puedeMandarTareas()) {
+                    const dar = document.createElement("button");
+                    dar.type = "button";
+                    dar.className = "inline-flex items-center gap-1 bg-brand-800 hover:bg-brand-900 dark:bg-brand-700 dark:hover:bg-brand-600 text-white font-semibold px-2.5 py-1 rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
+                    const ic = document.createElement("span"); ic.setAttribute("aria-hidden", "true"); ic.textContent = "🎓";
+                    dar.append(ic, "Dar certificado");
+                    dar.addEventListener("click", async () => {
+                        if (!(await Avisos.confirmar("Lleva el logo de su academia y el de Ajedrez Integral, y un código para que cualquiera compruebe que es auténtico.", { titulo: `¿Darle el certificado de «${c.titulo}»?`, aceptar: "Dar el certificado" }))) return;
+                        dar.disabled = true;
+                        const { data, error } = await sb.rpc("emitir_certificado", { p_alumno: alumnoId, p_curso: c.slug });
+                        if (error || !data) { dar.disabled = false; msg.textContent = "No se pudo dar: " + (error ? error.message : "sin respuesta"); return; }
+                        pintar(String(data));
+                        msg.textContent = "Certificado dado. El alumno ya lo ve en sus cursos.";
+                    });
+                    caja.appendChild(dar);
+                } else if (propio) {
+                    msg.textContent = "🎓 Cuando tu profe lo confirme, aquí sale tu certificado.";
+                }
+                caja.appendChild(msg);
+            };
+            caja.textContent = "";
+            // El certificado vigente de este curso, si hay (la RLS deja ver los
+            // propios, los de sus alumnos y, a administración, todos).
+            sb.from("certificados").select("codigo").eq("student_id", alumnoId).eq("curso", c.slug).is("anulado_at", null).limit(1)
+                .then(({ data }) => pintar(data && data[0] ? data[0].codigo : null), () => pintar(null));
+            return caja;
         }
 
         // Control "Desbloquear hasta el tema N": le salta a ESTE alumno el orden de
@@ -441,6 +509,7 @@
             renderCursosReport(entreno, true);
             renderTiempo(profile.id, true, "");
             renderEvolucion(profile.id, true, "");
+            renderAntesYAhora(profile.id, true, "");
             renderDeberes(profile.id, true);
             renderPremios(profile.id, true);
             renderNotasDelAlumno(profile.id);
@@ -1056,12 +1125,14 @@
             renderCursosReport(entreno, false, name, studentId, unlocksPorCurso);
             renderTiempo(studentId, false, name);
             renderEvolucion(studentId, false, name);
+            renderAntesYAhora(studentId, false, name);
             renderDiagnosticoProfesor(studentId, name, entreno);
             renderDeberes(studentId, false);
             renderPremios(studentId, false);
             renderErroresPartidas(studentId, name);
             renderAcceso(studentId, name);
             renderNotas(studentId);
+            renderCuadernoCompartido(studentId);
             // Lo que le costó en clase. Mirando a otra persona («Ver como») se ve, pero el plan no se arma: sería de quien mira.
             LoQueCosto.pintarDelAlumno(sb, document.getElementById("le-costo-report"), studentId, name, session.user.id, !profile._persona)
                 .catch((e) => console.error(e));
@@ -1469,6 +1540,23 @@
             if (!semanas && !comparacion) panel.classList.add("hidden");
         }
 
+        /* «Antes y ahora»: si sabe más, no solo si trabaja (ver
+           js/antes-y-ahora.js). Sin diagnóstico medido ni nada superado, el
+           bloque no se destapa, como «Cómo viene». */
+        async function renderAntesYAhora(studentId, propio, nombre) {
+            const panel = document.getElementById("antes-report");
+            if (!panel || !window.AntesYAhora) return;
+            tituloConEmoji("antes-title", "🌱", "Antes y ahora");
+            document.getElementById("antes-sub").textContent = propio
+                ? "Cuánto cambiaste: tu fuerza medida en cada diagnóstico y lo que antes fallabas y ahora te sale."
+                : "Si sabe más, no solo si trabaja: su fuerza medida en cada diagnóstico y lo que antes fallaba y ahora le sale.";
+            panel.classList.add("hidden");
+            try {
+                const n = await AntesYAhora.montar(sb, "antes-body", studentId, { propio, raiz: "" });
+                panel.classList.toggle("hidden", !n);
+            } catch (e) { console.error(e); }
+        }
+
         /* Los diagnósticos anteriores salen de `training_progress` y no del
            espejo `training_state`: el espejo guarda SOLO el último, así que con
            él no hay con qué comparar. Son pocas filas por alumno y la RLS ya
@@ -1488,6 +1576,25 @@
             return '<div class="mt-5 border-t border-brand-100 dark:border-brand-800 pt-4">'
                 + EvolucionAlumno.comparacionHTML(lista, fmtFecha(anterior.created_at), fmtFecha(ultimo.created_at))
                 + "</div>";
+        }
+
+        /* Lo que el alumno guardó en su cuaderno y decidió compartir: se
+           cuenta (sin bajar nada) y se lleva a cuaderno.html?alumno=…, que lo
+           pinta en solo lectura. Lo que no compartió, la RLS no lo da. */
+        async function renderCuadernoCompartido(studentId) {
+            const caja = document.getElementById("cuaderno-compartido");
+            if (!caja) return;
+            caja.hidden = true;
+            const { count, error } = await sb.from("cuaderno").select("id", { count: "exact", head: true })
+                .eq("alumno_id", studentId).eq("compartida", true);
+            if (error || !count) return;
+            const a = document.getElementById("cuaderno-compartido-enlace");
+            a.href = "cuaderno.html?alumno=" + encodeURIComponent(studentId);
+            const ic = document.createElement("span");
+            ic.setAttribute("aria-hidden", "true");
+            ic.textContent = "📓 ";
+            a.replaceChildren(ic, document.createTextNode("Su cuaderno: " + (count === 1 ? "1 posición que te compartió" : count + " posiciones que te compartió") + " →"));
+            caja.hidden = false;
         }
 
         function renderNotas(studentId) {
@@ -3032,6 +3139,75 @@ function areasFlojasArbitraje(fila) {
     .map((a) => `${a.nombre.toLowerCase()} (${a.porcentaje}%)`);
 }
 
+        /* ---------------- El informe del grupo en PDF ----------------
+           Para una reunión con las familias o el colegio: el grupo elegido
+           arriba (o todos), con los MISMOS números de esta página (asistencia
+           sin las justificadas, el nivel de PlanEntrenamiento, la nota de cada
+           área). El buscador no cuenta: un informe de grupo es del grupo. Los
+           tres archivos se bajan al apretar el botón. Ver «El informe del grupo
+           en PDF» en docs/decisiones/informes.md. */
+        function datosInformeGrupo() {
+            const sel = document.getElementById("group-filter");
+            const grupo = sel.value ? sel.selectedOptions[0].textContent : "";
+            const alumnos = filteredStudents().map((s) => {
+                const r = nivelDeAlumno(s);
+                return {
+                    nombre: s.full_name || s.email || "Sin nombre",
+                    asistencia: asistenciaDe(s, teacherData.closedSessions),
+                    minutosClase: s.minutos_clase || 0,
+                    minutosEjercicios: s.minutos_ejercicios || 0,
+                    respuestas: s.respuestas || 0,
+                    correctas: s.correctas || 0,
+                    nivel: r ? { etiqueta: r.nivel.etiqueta, elo: r.elo.combinado, porArea: r.porArea } : null,
+                };
+            });
+            const conDiag = alumnos.filter((a) => a.nivel);
+            const areas = conDiag.length ? PE.AREAS.map((a) => {
+                const notas = conDiag.map((x) => (x.nivel.porArea.find((y) => y.id === a.id) || {}).nota).filter((v) => typeof v === "number");
+                const promedio = notas.length ? Math.round(notas.reduce((t, v) => t + v, 0) / notas.length) : 0;
+                return { nombre: a.nombre, promedio, banda: bandaDe(promedio).etiqueta };
+            }) : [];
+            return { grupo, profesor: profile.full_name || "", fecha: new Date(), clasesCerradas: teacherData.closedSessions || 0, alumnos, areas };
+        }
+        let pdfGrupoListo = null;
+        function cargarPdfGrupo() {
+            if (!pdfGrupoListo) {
+                const cargar = (src) => new Promise((ok, mal) => {
+                    const sc = document.createElement("script");
+                    sc.src = src;
+                    sc.onload = ok;
+                    sc.onerror = () => mal(new Error("no se pudo cargar " + src));
+                    document.head.appendChild(sc);
+                });
+                pdfGrupoListo = Promise.all([
+                    window.ReportePDF ? null : cargar("js/reporte-pdf.js"),
+                    window.MarcaAgua ? null : cargar("js/marca-agua.js"),
+                    window.InformeGrupoPDF ? null : cargar("js/informe-grupo-pdf.js"),
+                ]).catch((e) => { pdfGrupoListo = null; throw e; });
+            }
+            return pdfGrupoListo;
+        }
+        async function bajarInformeGrupo() {
+            const boton = document.getElementById("informe-grupo-pdf");
+            const estado = document.getElementById("informe-grupo-estado");
+            const datos = datosInformeGrupo();
+            if (!datos.alumnos.length) { estado.textContent = "No hay alumnos en este grupo."; return; }
+            boton.disabled = true;
+            estado.textContent = "Armando el PDF…";
+            try {
+                await cargarPdfGrupo();
+                const r = await InformeGrupoPDF.descargar(datos);
+                estado.textContent = "Listo: se bajó «" + r.nombre + "» con " + datos.alumnos.length + (datos.alumnos.length === 1 ? " alumno." : " alumnos.");
+            } catch (e) {
+                console.error(e);
+                estado.textContent = "";
+                Avisos.avisar("No se pudo armar el PDF. Vuelve a intentarlo.", { tipo: "error" });
+            } finally {
+                boton.disabled = false;
+            }
+        }
+        document.getElementById("informe-grupo-pdf").addEventListener("click", bajarInformeGrupo);
+
         /* El PDF de un visitante: los tres archivos se bajan al apretar el botón,
            no al abrir Informes. Este panel es solo de administración y el
            generador no le sirve a nadie más que la vea. */
@@ -3475,6 +3651,15 @@ function areasFlojasArbitraje(fila) {
                 </div>
                 </details>
 
+                ${conDiagnostico.length >= 2 ? `<details class="group mt-7" id="comparar-alumnos">
+                <summary class="cursor-pointer list-none flex items-center justify-between gap-4">
+                    <h3 class="font-serif font-bold text-brand-800 dark:text-white inline">Comparar alumnos</h3>
+                    <span class="text-accent-700 dark:text-accent-400 group-open:rotate-45 transition-transform text-xl leading-none shrink-0" aria-hidden="true">+</span>
+                </summary>
+                <p class="text-xs text-brand-450 dark:text-brand-350 mt-2 mb-3">Dos o tres alumnos lado a lado, área por área: para armar grupos de nivel o parejas de práctica.</p>
+                <div id="comparar-alumnos-cuerpo"></div>
+                </details>` : ""}
+
                 ${pendientes.length ? (() => {
                     /* El nombre lo escribe el alumno (ver «El nombre de un alumno
                        es texto ajeno»): acá se pintaba CRUDO. Es el único sitio de
@@ -3530,6 +3715,8 @@ function areasFlojasArbitraje(fila) {
                     masPend.textContent = abierto ? "Ver solo los primeros" : `Ver los ${pendientes.length}`;
                 });
             }
+
+            if (window.CompararAlumnos) CompararAlumnos.montar(contenedor.querySelector("#comparar-alumnos-cuerpo"), conDiagnostico, { escapar: escVis });
 
             // Los nombres llevan al informe completo de ese alumno.
             contenedor.querySelectorAll("[data-alumno]").forEach((btn) => {

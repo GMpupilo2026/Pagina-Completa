@@ -15,6 +15,11 @@
  * pero NO se anuncia (sería un parloteo): se anuncia el paso al llegar a la
  * página y el final, en un role="status". Ver «Entrenar 10 minutos» en
  * docs/decisiones/paneles.md.
+ *
+ * La misma barra lleva el «Repaso del día» (empezarRepaso): las colas de
+ * repaso que tocan hoy, una detrás de otra, SIN reloj —un repaso se termina,
+ * no se corta a los diez minutos—. Dura hasta el final del día. Ver «Un solo
+ * repaso del día» en docs/decisiones/entrenamiento.md.
  */
 window.TandaDiez = (function () {
   "use strict";
@@ -47,6 +52,20 @@ window.TandaDiez = (function () {
     return true;
   }
 
+  /* El «Repaso del día»: hasta ocho secciones, sin reloj. Vence a las 12
+     horas: si lo deja a medias, mañana es otro repaso. */
+  const REPASO_MS = 12 * 60 * 60 * 1000;
+  function empezarRepaso(pasos) {
+    const limpios = (pasos || []).filter((p) => p && p.href).slice(0, 8).map((p) => {
+      const u = new URL(p.href, location.href);
+      return { href: u.pathname + u.search + u.hash, texto: String(p.texto || ""), icono: String(p.icono || "") };
+    });
+    if (!limpios.length) return false;
+    if (!guardar({ tipo: "repaso", inicio: Date.now(), fin: Date.now() + REPASO_MS, pasos: limpios, i: 0 })) return false;
+    location.href = limpios[0].href;
+    return true;
+  }
+
   function mmss(ms) {
     const s = Math.max(0, Math.ceil(ms / 1000));
     return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0");
@@ -66,23 +85,27 @@ window.TandaDiez = (function () {
     if (t && t.fin <= Date.now()) { borrar(); if (barra) barra.remove(); return; }
     if (!t) { if (barra) barra.remove(); if (reloj) clearInterval(reloj); return; }
     // El paso en que va: el de esta página si está en la lista.
-    const aqui = location.pathname + location.search;
-    const j = t.pasos.findIndex((p) => p.href === aqui || p.href.split("?")[0] === location.pathname);
+    // Sin el .html: los pasos lo llevan y Cloudflare sirve la página sin él.
+    // El #… de un paso (tipos.html#repaso) no es parte de la página.
+    const sinHtml = (r) => r.replace(/\.html(?=[?#]|$)/, "");
+    const aqui = sinHtml(location.pathname) + location.search;
+    const j = t.pasos.findIndex((p) => sinHtml(p.href.split("#")[0]) === aqui || sinHtml(p.href.split(/[?#]/)[0]) === sinHtml(location.pathname));
     if (j >= 0 && j !== t.i) { t.i = j; guardar(t); }
 
     if (!barra) {
       barra = el("div", "fixed z-[70] bottom-4 left-3 right-20 sm:right-auto sm:max-w-sm rounded-2xl shadow-xl bg-brand-900 text-white p-3 text-sm");
       barra.id = "tanda-diez";
       barra.setAttribute("role", "region");
-      barra.setAttribute("aria-label", "Tanda de 10 minutos");
       document.body.appendChild(barra);
     }
+    const repaso = t.tipo === "repaso";
+    barra.setAttribute("aria-label", repaso ? "Repaso del día" : "Tanda de 10 minutos");
     barra.replaceChildren();
     const arriba = el("div", "flex items-center gap-2");
-    const cuenta = el("span", "font-bold tabular-nums", "⏱️ " + mmss(t.fin - Date.now()));
+    const cuenta = el("span", "font-bold tabular-nums", repaso ? "🔁" : "⏱️ " + mmss(t.fin - Date.now()));
     cuenta.dataset.tandaReloj = "";
     cuenta.setAttribute("aria-hidden", "true");
-    const paso = el("span", "truncate", "Paso " + (t.i + 1) + " de " + t.pasos.length + ": " + t.pasos[t.i].texto);
+    const paso = el("span", "truncate", (repaso ? "Repaso del día, " : "") + (repaso ? "paso " : "Paso ") + (t.i + 1) + " de " + t.pasos.length + ": " + t.pasos[t.i].texto);
     paso.setAttribute("role", "status");
     arriba.append(cuenta, paso);
     const abajo = el("div", "mt-2 flex flex-wrap items-center gap-2");
@@ -94,12 +117,19 @@ window.TandaDiez = (function () {
       a.addEventListener("click", () => { t.i += 1; guardar(t); });
       abajo.appendChild(a);
     }
-    const salir = el("button", BTN + " border border-white/40 hover:bg-white/10", sig ? "Dejar la tanda" : "Terminar la tanda");
+    const salir = el("button", BTN + " border border-white/40 hover:bg-white/10",
+      repaso ? (sig ? "Dejar el repaso" : "Terminar el repaso") : (sig ? "Dejar la tanda" : "Terminar la tanda"));
     salir.type = "button";
     salir.dataset.tandaSalir = "";
-    salir.addEventListener("click", () => { borrar(); pintar(); });
+    salir.addEventListener("click", () => {
+      borrar();
+      if (repaso && !sig) return terminado(barra, "¡Listo! Terminaste tu repaso del día.");
+      pintar();
+    });
     abajo.appendChild(salir);
     barra.append(arriba, abajo);
+
+    if (repaso) { if (reloj) clearInterval(reloj); return; }
 
     if (reloj) clearInterval(reloj);
     reloj = setInterval(() => {
@@ -107,18 +137,23 @@ window.TandaDiez = (function () {
       if (falta > 0) { cuenta.textContent = "⏱️ " + mmss(falta); return; }
       clearInterval(reloj);
       borrar();
-      barra.replaceChildren();
-      const listo = el("p", "font-semibold", "¡Listo! Hiciste tus 10 minutos de entrenamiento.");
-      listo.setAttribute("role", "status");
-      const cerrar = el("button", BTN + " mt-2 bg-accent-500 hover:bg-accent-600 text-brand-900", "Cerrar");
-      cerrar.type = "button";
-      cerrar.addEventListener("click", () => barra.remove());
-      barra.append(listo, cerrar);
+      terminado(barra, "¡Listo! Hiciste tus 10 minutos de entrenamiento.");
     }, 1000);
+  }
+
+  function terminado(barra, texto) {
+    barra.replaceChildren();
+    const listo = el("p", "font-semibold", texto);
+    listo.setAttribute("role", "status");
+    const cerrar = el("button", BTN + " mt-2 bg-accent-500 hover:bg-accent-600 text-brand-900", "Cerrar");
+    cerrar.type = "button";
+    cerrar.addEventListener("click", () => barra.remove());
+    barra.append(listo, cerrar);
+    cerrar.focus();
   }
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", pintar);
   else pintar();
 
-  return { empezar, activa: () => !!leer(), CLAVE, DURACION_MS };
+  return { empezar, empezarRepaso, activa: () => !!leer(), CLAVE, DURACION_MS };
 })();

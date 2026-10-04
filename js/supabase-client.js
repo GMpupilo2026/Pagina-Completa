@@ -116,19 +116,26 @@ window.MiPerfil = (function () {
 // Ver «La verificación en dos pasos» en docs/decisiones/permisos-y-roles.md.
 (function () {
   try {
-    if (/\/login\.html$/.test(location.pathname)) return;
+    // Cloudflare sirve las páginas sin .html (/cobros, /entreno/estudio):
+    // las comparaciones aceptan las dos formas.
+    if (/\/login(\.html)?$/.test(location.pathname)) return;
     var academia = false;
     var nodos = document.head ? document.head.childNodes : [];
     for (var i = 0; i < nodos.length; i++) {
       if (nodos[i].nodeType === 8 && /guardia: inicio/.test(nodos[i].nodeValue)) { academia = true; break; }
     }
-    if (!academia && !/\/cobros\.html$/.test(location.pathname)) return;
+    if (!academia && !/\/cobros(\.html)?$/.test(location.pathname)) return;
     var mfa = window.sb && window.sb.auth && window.sb.auth.mfa;
     if (!mfa || typeof mfa.getAuthenticatorAssuranceLevel !== "function") return;
     mfa.getAuthenticatorAssuranceLevel().then(function (r) {
       var d = r && r.data;
       if (!d || d.currentLevel !== "aal1" || d.nextLevel !== "aal2") return;
-      var aca = location.pathname.replace(/^\/+/, "") || "clases.html";
+      // El login solo acepta un next que termine en .html: se le devuelve la
+      // extensión (y index.html a una carpeta), como hace la guardia.
+      var aca = location.pathname.replace(/^\/+/, "");
+      if (!aca) aca = "clases.html";
+      else if (/\/$/.test(aca)) aca += "index.html";
+      else if (!/\.html$/.test(aca)) aca += ".html";
       location.replace("/login.html?next=" + encodeURIComponent(aca));
     }, function () { });
   } catch (e) { }

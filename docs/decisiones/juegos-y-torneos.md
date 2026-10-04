@@ -928,6 +928,147 @@ los relojes, «Estoy listo» y «Rendirse» (con un doble que anota lo escrito),
 en las dos rachas que el otro mate cuenta. Las tres pruebas fallan con las
 copias viejas o rompiendo el módulo a propósito.
 
+## Las jugadas llegan siempre
+
+En un torneo pasó que el reloj corría y al alumno no le aparecía la jugada del
+rival, o la suya no le llegaba al otro. No daba ningún error: la jugada estaba
+guardada en la base y la pantalla no se enteraba. Se encontraron cuatro
+causas, todas calladas:
+
+- **La sala solo escuchaba Realtime, y Realtime no avisa lo que se perdió.**
+  Un celular que bloqueó la pantalla, una pestaña en segundo plano a la que el
+  navegador le frenó el latido, un cambio de wifi a datos, o el propio
+  Realtime atrasado con la base cargada: el canal se reconecta solo, pero las
+  jugadas que pasaron mientras tanto no llegan nunca. La pantalla se quedaba
+  esperando una jugada que ya estaba hecha, con el reloj del rival corriendo,
+  mientras en la otra pantalla corría el propio. Lo mismo entre leer la sala
+  al abrirla y quedar suscrito: una jugada en ese medio segundo se perdía.
+  **Ahora `SalaJuego.suscribir()` vuelve a leer la sala** (una fila por su
+  llave) cada vez que el canal queda conectado —la primera vez y cada
+  reconexión—, al volver a la pestaña, al recuperar la red, y de respaldo si
+  pasa un rato sin noticias con la partida en juego: 5 s esperando al rival,
+  15 s en el turno propio, 8 s mirando, 3 s con el canal caído. Si el canal
+  se cierra del todo (`CLOSED`, la librería no lo reintenta) abre otro. Con el
+  canal caído más de 4 s se dice «Reconectando…» debajo del estado.
+- **Lo que llega tarde pisaba lo nuevo.** Realtime no garantiza el orden
+  frente a la respuesta de la propia escritura ni frente a una relectura. Y
+  `handleLocalMove` pegaba su parche sobre la sala después de guardar: si la
+  respuesta del rival llegaba antes que la de la base (con la base lenta, pasa),
+  la sala volvía una jugada atrás y la siguiente jugada se guardaba sin la del
+  rival en la lista. Ahora **cada versión se ordena** (`SalaJuego.esAnterior`:
+  terminada, cuántas jugadas, la ronda del Duelo, cuántos listos, desde cuándo
+  corre el reloj) y lo viejo no se aplica; la jugada se guarda pidiendo la fila
+  de vuelta (`select("*")`) y se queda la más nueva. La misma fila dos veces no
+  repinta nada.
+- **Una jugada solo se guarda sobre la posición de la que salió**
+  (`.eq("fen", room.fen)`, en Estándar, Niebla, Crazyhouse y las variantes): si
+  la sala ya iba más adelante —otra pestaña de la misma cuenta, una jugada
+  repetida— no la pisa; se vuelve a leer y se dice «Esa jugada no quedó
+  guardada: la partida ya iba más adelante». Cartas no lo lleva (su posición
+  va en `cartas_state` y la columna `fen` no se actualiza).
+- **El reloj corría según el tablero, no según la sala.** Al mover, el tablero
+  ya muestra la jugada (le toca al rival), pero para la base el reloj que
+  corre sigue siendo el propio hasta que la jugada queda guardada: el reloj del
+  rival bajaba de golpe todo lo que uno había pensado, y con la base lenta
+  podía hasta intentar cantarle la bandera. Ahora el turno del reloj sale de
+  la sala guardada (`SalaJuego.turnoDe(room)`, que lee también
+  `cartas_state.fen` y el JSON de Abrazos). Y la hora con que arranca el reloj
+  propio es la de la base (la fila devuelta), no la de la computadora.
+- **Una bandera rechazada ya no se reintenta cada 250 ms.** Si la base dice
+  «Todavía le queda tiempo», lo que se ve está atrasado (casi siempre, una
+  jugada que no llegó): se vuelve a leer la sala, y se espera un segundo antes
+  de volver a intentar. Antes era una pantalla trabada mandando cuatro
+  pedidos por segundo, justo cuando la base anda lenta.
+
+**Ajedrez para 4** (`cuatro-jugadores.js`) tenía lo mismo y dos cosas suyas.
+Usa la misma escucha (`SalaJuego.suscribir` con `tabla: "fourplayer_games"`;
+el orden cuenta también quién quedó fuera y cuántos están listos, que van en
+los asientos) y su reloj corre según `room.turn`, el turno guardado. Además:
+
+- **Guarda el tablero ENTERO en cada escritura** (los cuatro asientos y el
+  tablero son jsonb), así que dos escrituras casi a la vez se pisaban: la
+  segunda borraba a la primera sin ningún error. Lo más común era **«Estoy
+  listo»**: si dos lo tocaban en el mismo medio segundo, uno quedaba sin
+  listo y la partida no arrancaba nunca. Ahora cada escritura va solo sobre la
+  versión que se tenía a la vista (`.eq("updated_at", room.updated_at)`, que
+  cambia con cada escritura), la jugada además solo en el turno propio, y
+  «Estoy listo» —que también pone `updated_at`— vuelve a leer y lo intenta otra
+  vez sobre lo nuevo.
+- **Acá la base no valida la bandera** (ver «La bandera la canta el
+  servidor»), y la bandera se calculaba con el turno del tablero: mientras la
+  jugada propia viajaba, el reloj del siguiente bajaba todo lo que uno había
+  pensado y la pantalla lo podía dar por eliminado. Ahora la bandera y el rey
+  en piloto automático solo se resuelven cuando el tablero coincide con lo
+  guardado (`game.turn === room.turn`).
+- **La rendición también vuelve a intentar.** Con la regla de la versión, una
+  rendición que se cruzaba con la jugada de otro (lo común con cuatro) no
+  encontraba la fila, y la pantalla decía «La partida ya había terminado: la
+  rendición no se registró» con la partida en juego. Ahora `persist()` devuelve
+  si quedó (`true`), si la sala había cambiado (`false`) o si la base dio error
+  (`null`), y la rendición se repite sobre la sala recién leída, como «Estoy
+  listo».
+- **Lo guardado rehace el tablero.** La jugada propia cambia el reloj de
+  `room` antes de guardarse; una relectura que llegaba en ese momento (el
+  reloj de 15 s, volver a la pestaña) traía la sala de antes, no era «la
+  misma» y se aplicaba: la jugada desaparecía del tablero aunque quedaba
+  guardada, y como su eco era igual a `room`, nada la traía de vuelta. Ahora,
+  al quedar, `game` se rehace desde la fila guardada.
+
+Los dos cruces los arma a mano `verificar-cuatro-escrituras.js`: en la prueba
+de carga casi nunca caen por azar.
+
+Y lo que cargaba a Realtime para todos:
+
+- **`torneo.html` escuchaba `game_rooms` entera** —«la siguiente candidata si
+  los torneos crecen», decía «Realtime escucha solo lo que la pantalla
+  muestra»—: cada jugada de cualquier partida de la plataforma le llegaba a
+  cada pantalla de torneo abierta, y Realtime revisa la RLS de cada cambio
+  contra cada quien escucha, en un solo hilo. Con 50 mesas y los jugadores
+  con el torneo abierto en otra pestaña, eso atrasaba las jugadas de todos,
+  también las de los tableros. Ahora escucha solo las mesas que dibuja,
+  `id=in.(…)` de a 100 (el tope de Realtime), y vuelve a armar la escucha
+  cuando cambia la lista. Niebla no dibuja sus mesas y no escucha ninguna. Un
+  tablerito no retrocede con una versión que llega tarde.
+- **La TV** (`tv.html`) volvía a pedir todas las partidas en juego, con todas
+  sus jugadas y los nombres, por **cada jugada** de cada partida. Ahora junta
+  los avisos: una recarga a la vez y a lo sumo una por segundo. Lo mismo la
+  lista de partidas de la clase en `sesion.html`.
+
+**Al tocar `js/sala-juego.js`, la forma en que una sala (también la de Ajedrez
+para 4) guarda o aplica una jugada, o lo que escucha `torneo.html`, correr `node
+herramientas/verificar-partidas-simultaneas.js`** (con el sitio en
+localhost:8777 y playwright; `PARTIDAS=10` para una corrida corta). Abre
+pestañas de `estandar.html` contra un servidor de mentira que hace de base y de
+Realtime para todas (con las reglas del trigger del reloj), y en cada una un
+jugador automático mueve al azar cuando le toca. Mide cuánto tarda cada jugada
+en verse del otro lado:
+
+- **10 partidas, red sana**: todas en menos de 1 s (medido: mediana 108 ms, la
+  más lenta 205 ms).
+- **50 partidas a la vez (100 pestañas), red sana**: ninguna se pierde ni se
+  traba, ninguna pasa de 6 s. Con 100 pestañas en una computadora de 4
+  procesadores la mediana sube a ~0,5 s, y es la computadora: la prueba
+  imprime también cuánto atrasaba ella los relojes de cada pestaña. En un
+  torneo, cada alumno tiene su aparato.
+- **50 partidas con red mala** —Realtime pierde el 15 % de los avisos,
+  entrega otro 10 % tarde y desordenado, corta y cierra canales, y una de cada
+  diez respuestas de la base tarda hasta 2,5 s—: ninguna partida se traba,
+  ninguna jugada pasa de 15 s (medido: la mitad en menos de medio segundo, la
+  peor 8,6 s: un aviso perdido, 5 s de espera y dos respuestas lentas), al
+  final todas las pantallas muestran lo que hay en la base, y la lista de
+  jugadas guardada lleva siempre a la posición guardada.
+
+- **12 partidas de Ajedrez para 4 (48 pestañas)**, con red sana y con red
+  mala: los cuatro tocan «Estoy listo» casi a la vez y todas arrancan; cada
+  jugada la ven los otros tres (ver una posición más nueva cuenta como ver las
+  anteriores: quien espera puede pasar de una vez a la última), y la lista de
+  jugadas guardada es siempre la del tablero guardado. Con el Ajedrez para 4
+  de antes, **ninguna de las partidas arrancaba**, ni con la red sana: los
+  «listo» casi simultáneos se borraban entre sí.
+
+Con la sala de antes, la red mala deja partidas trabadas para siempre (una
+jugada tardó 5 minutos en verse; otras no llegaron nunca).
+
 ## La sala de cine de las transmisiones
 
 `torneos-en-vivo.html` (el enlace «Torneos» junto a «¡Te reto!» y «TV en
@@ -1222,3 +1363,69 @@ arcade…), el antetítulo y el nombre de la pizarra. Migración
   administración con el cine. Lo encontró el verificador.
 - El enlace «Ver en chess-results» de la pizarra dejó de ponerse blanco al
   pasar el mouse (`hover:text-white`): sobre una pizarra clara desaparecía.
+
+## Retos de ejercicios entre compañeros
+
+Retar a alguien en Competir es jugar una partida, y los dos tienen que estar
+conectados a la vez. **«🆚 Retos de ejercicios»** (`reto-ejercicios.html`,
+tarjeta del alumno en «Jugar y competir») es un reto que no exige estar a la
+vez: los MISMOS 5 ejercicios para los dos, cada uno cuando puede, en una
+semana. Gana quien resuelve más y, si empatan, quien tardó menos.
+
+- **Solo entre compañeros**: mismo profesor y misma academia
+  (`es_companero()`, que ya cumple «Las academias son privadas»). La lista del
+  formulario es la que la RLS de `profiles` ya le da al alumno (los alumnos de
+  sus profesores en sus academias), y el insert lo vuelve a exigir en la base.
+- **Ninguna posición se inventa**: el reto guarda los **ids** de 5 problemas
+  del banco de Ejercicios por tema (`entreno/data/temas.json`, problemas de
+  Lichess ya verificados), elegidos al azar dentro de la dificultad (el rating
+  de Lichess: fácil hasta 1199, media de 1200 a 1599, difícil de 1600 a 2100).
+  La solución no viaja por la base.
+- **Se juega dentro de Ejercicios por tema** (`entreno/temas.html?reto=<id>`),
+  con su tablero, el cuadro de comandos para contestar escribiendo y el
+  mismo final del ejercicio. Un segundo tablero solo para el reto habría sido
+  otra copia de lo mismo. En el reto:
+  - un intento por ejercicio: la primera jugada equivocada lo termina y se
+    dice cuál era la buena;
+  - sin pistas, sin reiniciar ni saltar (los botones no están y `giveHint`
+    no hace nada);
+  - cuenta el tiempo de cada uno;
+  - **recargar a mitad de un ejercicio no da otro intento**: al empezarlo se
+    anota en el aparato (`reto_ejercicios_en_curso_v1:<id>`) y, al volver,
+    cuenta como no resuelto. En otro aparato no se sabe. Es un juego entre
+    compañeros, no un examen: cerrar eso del todo pediría que el tablero
+    viviera en el servidor, como en los exámenes.
+  - Resuelto, cuenta para la racha y los informes como cualquier ejercicio
+    (`training_progress`, `theme: 'reto'`, que no es un motivo y no entra al
+    tema más flojo).
+- **La base** (migraciones `20261004054923` y `20261004055024`):
+  `retos_ejercicios` (quién, a quién, nivel, los 5 ids, vence a la semana;
+  las fechas las pone el trigger, que también corta a 10 retos por día) y
+  `retos_ejercicios_respuestas` (una por ejercicio y alumno: clave primaria,
+  no se cambia ni se repite).
+  - **Lo del rival no se ve hasta terminar los propios cinco** (o hasta que
+    vence): si no, el segundo jugaría sabiendo cuánto le hace falta. La RLS
+    de las respuestas deja ver las ajenas solo de los retos que
+    `retos_ejercicios_abiertos_para_mi()` da por abiertos. Cuántas lleva el
+    otro sí se sabe siempre (`retos_ejercicios_cuantas()`, solo el número),
+    para poder decir «Esperando a Bea (2 de 5)».
+  - `mis_retos_de_ejercicios()` (SECURITY INVOKER) arma la lista con esos
+    números. Quién ganó lo dice `RetoEjercicios.estado()`, una sola vez, para
+    la página y para la tarjeta del panel.
+  - La política de lectura de `retos_ejercicios` mira sus propias columnas
+    (`auth.uid()` es el retador o el rival). La primera versión preguntaba a
+    un conjunto armado por una función, que no ve la fila que se está
+    insertando, y el insert con RETURNING se rechazaba.
+  - Probado impersonando roles, con filas revertidas: se reta a un compañero
+    y no a otro alumno; un id que no tiene forma de id del banco y una
+    respuesta repetida se rechazan; el rival ve el reto pero no lo que hizo
+    el otro hasta terminar los suyos (y después sí); nadie contesta a nombre
+    de otro; un alumno ajeno no ve el reto ni puede contestar.
+- **La tarjeta avisa**: «Te toca jugar: 2 retos» (con el aro de color), como
+  Competir avisa los retos sin contestar. Mirando el panel de otra persona no
+  se pide: la función contesta con quien mira.
+- Lo prueba `verificar-retos-ejercicios.js`: la elección (5 distintos, en la
+  dificultad), quién gana en cada caso, la página (compañeros, estados, el
+  insert) y el reto jugado (acierto, un solo intento, sin pistas y la recarga
+  que no da otro intento).
+

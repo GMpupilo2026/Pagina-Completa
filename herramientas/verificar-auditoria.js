@@ -36,6 +36,8 @@ const VIGILADAS = [
   "planes_cobro", "suscripciones", "cobros", "pagos", "recibos",
   // No reparte permisos: es un dato de salud, y quién lo marcó queda anotado.
   "vision_personas",
+  // Un reconocimiento de la academia: quién dio (o anuló) cada certificado.
+  "certificados",
 ];
 
 let fallos = 0;
