@@ -1000,6 +1000,22 @@ los asientos) y su reloj corre según `room.turn`, el turno guardado. Además:
   pensado y la pantalla lo podía dar por eliminado. Ahora la bandera y el rey
   en piloto automático solo se resuelven cuando el tablero coincide con lo
   guardado (`game.turn === room.turn`).
+- **La rendición también vuelve a intentar.** Con la regla de la versión, una
+  rendición que se cruzaba con la jugada de otro (lo común con cuatro) no
+  encontraba la fila, y la pantalla decía «La partida ya había terminado: la
+  rendición no se registró» con la partida en juego. Ahora `persist()` devuelve
+  si quedó (`true`), si la sala había cambiado (`false`) o si la base dio error
+  (`null`), y la rendición se repite sobre la sala recién leída, como «Estoy
+  listo».
+- **Lo guardado rehace el tablero.** La jugada propia cambia el reloj de
+  `room` antes de guardarse; una relectura que llegaba en ese momento (el
+  reloj de 15 s, volver a la pestaña) traía la sala de antes, no era «la
+  misma» y se aplicaba: la jugada desaparecía del tablero aunque quedaba
+  guardada, y como su eco era igual a `room`, nada la traía de vuelta. Ahora,
+  al quedar, `game` se rehace desde la fila guardada.
+
+Los dos cruces los arma a mano `verificar-cuatro-escrituras.js`: en la prueba
+de carga casi nunca caen por azar.
 
 Y lo que cargaba a Realtime para todos:
 
@@ -1347,6 +1363,71 @@ arcade…), el antetítulo y el nombre de la pizarra. Migración
   administración con el cine. Lo encontró el verificador.
 - El enlace «Ver en chess-results» de la pizarra dejó de ponerse blanco al
   pasar el mouse (`hover:text-white`): sobre una pizarra clara desaparecía.
+
+## Retos de ejercicios entre compañeros
+
+Retar a alguien en Competir es jugar una partida, y los dos tienen que estar
+conectados a la vez. **«🆚 Retos de ejercicios»** (`reto-ejercicios.html`,
+tarjeta del alumno en «Jugar y competir») es un reto que no exige estar a la
+vez: los MISMOS 5 ejercicios para los dos, cada uno cuando puede, en una
+semana. Gana quien resuelve más y, si empatan, quien tardó menos.
+
+- **Solo entre compañeros**: mismo profesor y misma academia
+  (`es_companero()`, que ya cumple «Las academias son privadas»). La lista del
+  formulario es la que la RLS de `profiles` ya le da al alumno (los alumnos de
+  sus profesores en sus academias), y el insert lo vuelve a exigir en la base.
+- **Ninguna posición se inventa**: el reto guarda los **ids** de 5 problemas
+  del banco de Ejercicios por tema (`entreno/data/temas.json`, problemas de
+  Lichess ya verificados), elegidos al azar dentro de la dificultad (el rating
+  de Lichess: fácil hasta 1199, media de 1200 a 1599, difícil de 1600 a 2100).
+  La solución no viaja por la base.
+- **Se juega dentro de Ejercicios por tema** (`entreno/temas.html?reto=<id>`),
+  con su tablero, el cuadro de comandos para contestar escribiendo y el
+  mismo final del ejercicio. Un segundo tablero solo para el reto habría sido
+  otra copia de lo mismo. En el reto:
+  - un intento por ejercicio: la primera jugada equivocada lo termina y se
+    dice cuál era la buena;
+  - sin pistas, sin reiniciar ni saltar (los botones no están y `giveHint`
+    no hace nada);
+  - cuenta el tiempo de cada uno;
+  - **recargar a mitad de un ejercicio no da otro intento**: al empezarlo se
+    anota en el aparato (`reto_ejercicios_en_curso_v1:<id>`) y, al volver,
+    cuenta como no resuelto. En otro aparato no se sabe. Es un juego entre
+    compañeros, no un examen: cerrar eso del todo pediría que el tablero
+    viviera en el servidor, como en los exámenes.
+  - Resuelto, cuenta para la racha y los informes como cualquier ejercicio
+    (`training_progress`, `theme: 'reto'`, que no es un motivo y no entra al
+    tema más flojo).
+- **La base** (migraciones `20261004054923` y `20261004055024`):
+  `retos_ejercicios` (quién, a quién, nivel, los 5 ids, vence a la semana;
+  las fechas las pone el trigger, que también corta a 10 retos por día) y
+  `retos_ejercicios_respuestas` (una por ejercicio y alumno: clave primaria,
+  no se cambia ni se repite).
+  - **Lo del rival no se ve hasta terminar los propios cinco** (o hasta que
+    vence): si no, el segundo jugaría sabiendo cuánto le hace falta. La RLS
+    de las respuestas deja ver las ajenas solo de los retos que
+    `retos_ejercicios_abiertos_para_mi()` da por abiertos. Cuántas lleva el
+    otro sí se sabe siempre (`retos_ejercicios_cuantas()`, solo el número),
+    para poder decir «Esperando a Bea (2 de 5)».
+  - `mis_retos_de_ejercicios()` (SECURITY INVOKER) arma la lista con esos
+    números. Quién ganó lo dice `RetoEjercicios.estado()`, una sola vez, para
+    la página y para la tarjeta del panel.
+  - La política de lectura de `retos_ejercicios` mira sus propias columnas
+    (`auth.uid()` es el retador o el rival). La primera versión preguntaba a
+    un conjunto armado por una función, que no ve la fila que se está
+    insertando, y el insert con RETURNING se rechazaba.
+  - Probado impersonando roles, con filas revertidas: se reta a un compañero
+    y no a otro alumno; un id que no tiene forma de id del banco y una
+    respuesta repetida se rechazan; el rival ve el reto pero no lo que hizo
+    el otro hasta terminar los suyos (y después sí); nadie contesta a nombre
+    de otro; un alumno ajeno no ve el reto ni puede contestar.
+- **La tarjeta avisa**: «Te toca jugar: 2 retos» (con el aro de color), como
+  Competir avisa los retos sin contestar. Mirando el panel de otra persona no
+  se pide: la función contesta con quien mira.
+- Lo prueba `verificar-retos-ejercicios.js`: la elección (5 distintos, en la
+  dificultad), quién gana en cada caso, la página (compañeros, estados, el
+  insert) y el reto jugado (acierto, un solo intento, sin pistas y la recarga
+  que no da otro intento).
 
 ## Cuatro juegos que no están en otras plataformas
 

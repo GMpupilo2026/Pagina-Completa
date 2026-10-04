@@ -127,7 +127,7 @@ async function abrir(browser, cfg, capturarErrores) {
     page.on("pageerror", (e) => errores.push(String(e)));
     page.on("console", (m) => { if (m.type() === "error") errores.push(m.text()); });
   }
-  await page.goto(BASE + PAGINA, { waitUntil: "networkidle" });
+  await page.goto(BASE + (cfg.pagina || PAGINA), { waitUntil: "networkidle" });
   // El script va con `defer` y se autoarranca: getSession → profiles → channel.
   await page.waitForTimeout(900);
   return { page, ctx, errores };
@@ -186,9 +186,19 @@ async function pruebaAlumnaEnOtraPagina(browser) {
   const v = await r.page.evaluate(LEER);
   igual("aparece el aviso en ESTA página, sin estar en Juegos", v.hayAviso, "true");
   igual("dice de qué partida es", /Ajedrez estándar/.test(v.texto), "true");
-  igual("\"Entrar ahora\" apunta a la página y la sala correctas", v.href, "estandar.html?room=sala-1");
+  igual("\"Entrar ahora\" apunta a la página y la sala correctas", v.href, "/estandar.html?room=sala-1");
 
   await r.ctx.close();
+
+  // Desde entreno/ también: relativa, llevaba a entreno/estandar.html (un 404).
+  const e = await abrir(browser, { yo: "u-ana", perfiles: [ANA], pagina: "/entreno/mates.html" });
+  await e.page.evaluate(() => window.__insertar("game_rooms", {
+    id: "sala-1", status: "playing", variant: "estandar", white_id: "u-ana", black_id: "u-profe",
+  }));
+  await e.page.waitForTimeout(300);
+  igual("desde Entrenamiento lleva a la misma página, no a entreno/",
+    await e.page.evaluate(() => { const a = document.getElementById("juego-aviso-ir"); return a ? new URL(a.href).pathname : null; }), "/estandar.html");
+  await e.ctx.close();
 }
 
 async function pruebaAdaptado(browser) {
@@ -218,7 +228,7 @@ async function pruebaCuatroJugadores(browser) {
   await r.page.waitForTimeout(300);
   const v = await r.page.evaluate(LEER);
   igual("aparece el aviso de 4 jugadores", v.hayAviso, "true");
-  igual("lleva a cuatro-jugadores.html con SU sala", v.href, "cuatro-jugadores.html?room=sala-4");
+  igual("lleva a cuatro-jugadores.html con SU sala", v.href, "/cuatro-jugadores.html?room=sala-4");
 
   await r.ctx.close();
 }

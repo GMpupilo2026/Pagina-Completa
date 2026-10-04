@@ -40,9 +40,11 @@ window.JuegoAviso = (function () {
   const ESPERA_MS = 4000;
   let sb = null, userId = null, yaAvisado = false, iniciado = false;
 
+  // Desde la raíz: este aviso también corre en entreno/ y cursos/academia/,
+  // y relativo llevaba a entreno/estandar.html, que no existe.
   function destinoDe(row, tabla) {
-    if (tabla === "fourplayer_games") return "cuatro-jugadores.html?room=" + row.id;
-    return (PAGINA[row.variant] || "crazyhouse.html") + "?room=" + row.id;
+    if (tabla === "fourplayer_games") return "/cuatro-jugadores.html?room=" + row.id;
+    return "/" + (PAGINA[row.variant] || "crazyhouse.html") + "?room=" + row.id;
   }
   function esMia(row, tabla) {
     if (tabla === "fourplayer_games") return !!(row.seats && SEATS.some((s) => row.seats[s] && row.seats[s].player_id === userId));

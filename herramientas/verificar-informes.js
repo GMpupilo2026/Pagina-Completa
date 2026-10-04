@@ -90,7 +90,7 @@ window.__funcion = [];
   if (DATOS.supabaseUrl) window.SUPABASE_URL = DATOS.supabaseUrl;
   function constructor(filas, etiqueta) {
     let desde = null, hasta = null, limite = null, unica = false;
-    let condiciones = [], dentro = [], orden = null, pendiente = null;
+    let condiciones = [], dentro = [], nulos = [], orden = null, pendiente = null;
     // El doble FILTRA Y ORDENA de verdad. Uno que devolviera siempre la tabla
     // entera daría por buena una página que mezcla las filas de dos alumnos, y
     // uno que ignorara el orden daría por bueno un código que se quedara con la
@@ -100,6 +100,9 @@ window.__funcion = [];
       select() { return b; },
       eq(col, val) { condiciones.push([col, val]); return b; },
       in(col, vals) { dentro.push([col, vals.map(String)]); return b; },
+      // .is(col, null): las que no tienen nada en col (un certificado vigente
+      // es uno sin anulado_at). Filtra de verdad, como los demás.
+      is(col, val) { if (val === null) nulos.push(col); return b; },
       order(col, o) { orden = [col, !o || o.ascending !== false]; return b; },
       limit(n) { limite = n; return b; },
       range(a, z) { desde = a; hasta = z; return b; },
@@ -141,6 +144,7 @@ window.__funcion = [];
         if (Array.isArray(d)) {
           condiciones.forEach(([c, v]) => { d = d.filter((f) => String(f[c]) === String(v)); });
           dentro.forEach(([c, vs]) => { d = d.filter((f) => vs.indexOf(String(f[c])) !== -1); });
+          nulos.forEach((c) => { d = d.filter((f) => f[c] == null); });
           if (orden) {
             const [c, asc] = orden;
             d = d.slice().sort((x, y) => (x[c] < y[c] ? -1 : x[c] > y[c] ? 1 : 0) * (asc ? 1 : -1));
@@ -1852,6 +1856,237 @@ async function pruebaFotos(browser) {
   await page.close();
 }
 
+/* Los certificados de curso en la ficha del alumno (ver «Los certificados de
+   curso» en docs/decisiones/cursos-y-material.md). Con el curso completo el
+   profesor ve «Dar certificado», que pide emitir_certificado para ESE alumno
+   y ESE curso; con uno vigente, «Ver certificado» (el anulado y el de otra
+   alumna no cuentan). Con el curso a medias, nada. El alumno ve el suyo, o
+   que falta que su profe lo confirme. */
+async function pruebaCertificados(browser) {
+  console.log("\n=== Certificados de curso ===");
+  const completo = { student_id: "a-1", slug: "finales-practicos", titulo: "Finales prácticos", total: 14, hechos: 14, ultimo_titulo: "Repaso", ultima_fecha: "2026-09-20T10:00:00Z" };
+  const aMedias = { student_id: "a-1", slug: "estrategia-y-tactica", titulo: "Estrategia y Táctica", total: 20, hechos: 7, ultimo_titulo: "Peones", ultima_fecha: "2026-09-19T10:00:00Z" };
+  const datos = (certificados, propio) => ({
+    rpc: {
+      informes_resumen_alumnos: [ANA], informes_cursos_alumnos: [completo, aMedias], informes_entreno_modulos: [MODULOS_ANA],
+      informes_diagnosticos_alumnos: [], informes_totales: { clases_cerradas: 4, preguntas: 10, partidas: 2 },
+      resumen_tareas_examenes: DEBERES, evolucion_alumno: CURVA, emitir_certificado: "abcdef1234",
+    },
+    tablas: {
+      profiles: propio ? [{ id: "a-1", role: "alumno", is_admin: false, full_name: "Ana Rojas", email: "ana@x.cr" }]
+        : [{ id: "prof-1", role: "profesor", is_admin: false, full_name: "Oscar", email: "o@x.cr" },
+           { id: "a-1", role: "alumno", is_admin: false, full_name: "Ana Rojas" }],
+      training_plans: [], question_answers: [], training_progress: [], certificados,
+    },
+  });
+  const fila = (page, i) => page.evaluate((n) => {
+    const d = document.querySelectorAll("#cursos-report-body > div")[n];
+    const a = d && [...d.querySelectorAll("a")].find((x) => /certificado\.html/.test(x.getAttribute("href") || ""));
+    const b = d && [...d.querySelectorAll("button")].find((x) => /Dar certificado/.test(x.textContent));
+    return { enlace: a ? a.getAttribute("href") : null, dar: !!(b && b.checkVisibility()), texto: d ? d.textContent.replace(/\s+/g, " ") : "" };
+  }, i);
+  const abrirAna = async (certificados) => {
+    const r = await abrir(browser, datos(certificados), "prof-1");
+    await r.page.selectOption("#student-filter", "a-1");
+    await r.page.waitForFunction(() => !document.getElementById("student-report").classList.contains("hidden"));
+    await r.page.waitForFunction(() => /certificado/i.test(document.querySelector("#cursos-report-body > div").textContent));
+    return r;
+  };
+
+  let { page, errores } = await abrirAna([]);
+  let f = await fila(page, 0);
+  igual("curso completo sin certificado: el profe ve «Dar certificado»", [f.dar, f.enlace].join(","), "true,");
+  igual("con el curso a medias no se ofrece", JSON.stringify(await fila(page, 1)).includes("certificado"), "false");
+  await page.evaluate(() => [...document.querySelectorAll("#cursos-report-body button")].find((x) => /Dar certificado/.test(x.textContent)).click());
+  await page.waitForFunction(() => document.querySelector('#cursos-report-body a[href^="certificado.html"]'));
+  igual("pide el certificado de ESTE alumno y ESTE curso", JSON.stringify(await page.evaluate(() => window.__rpcArgs.filter((a) => a[0] === "emitir_certificado").map((a) => a[1]))),
+    JSON.stringify([{ p_alumno: "a-1", p_curso: "finales-practicos" }]));
+  igual("después de confirmar", await page.evaluate(() => window.__avisos.some((t) => /¿Darle el certificado de «Finales prácticos»\?/.test(t))), "true");
+  f = await fila(page, 0);
+  igual("y queda «Ver certificado» con su código", [f.enlace, f.dar, /Certificado dado/.test(f.texto)].join(","), "certificado.html?c=abcdef1234,false,true");
+  igual("sin errores (dar certificado)", errores.join(" | "), "");
+  await page.close();
+
+  ({ page, errores } = await abrirAna([
+    { student_id: "a-1", curso: "finales-practicos", codigo: "1111111111", anulado_at: "2026-09-01T00:00:00Z" },
+    { student_id: "a-2", curso: "finales-practicos", codigo: "2222222222", anulado_at: null },
+    { student_id: "a-1", curso: "finales-practicos", codigo: "0123456789", anulado_at: null },
+  ]));
+  f = await fila(page, 0);
+  igual("con uno vigente: «Ver certificado» (ni el anulado ni el de otra alumna)", [f.enlace, f.dar].join(","), "certificado.html?c=0123456789,false");
+  igual("y se puede anular", await page.evaluate(() => [...document.querySelectorAll("#cursos-report-body > div:first-child button")].some((b) => b.textContent === "Anular")), "true");
+  await page.close();
+
+  // El propio alumno: sin certificado, que falta su profe; con uno, el enlace. Nunca «Dar».
+  ({ page, errores } = await abrir(browser, datos([]), "a-1"));
+  await page.waitForFunction(() => /profe lo confirme/.test(document.getElementById("cursos-report-body").textContent));
+  f = await fila(page, 0);
+  igual("el alumno sin certificado: falta que su profe lo confirme", [f.dar, f.enlace, /Cuando tu profe lo confirme/.test(f.texto)].join(","), "false,,true");
+  await page.close();
+  ({ page, errores } = await abrir(browser, datos([{ student_id: "a-1", curso: "finales-practicos", codigo: "0123456789", anulado_at: null }], true), "a-1"));
+  await page.waitForFunction(() => document.querySelector('#cursos-report-body a[href^="certificado.html"]'));
+  f = await fila(page, 0);
+  igual("el alumno con certificado: lo ve, y no puede anularlo", [f.enlace, /Anular/.test(f.texto)].join(","), "certificado.html?c=0123456789,false");
+  igual("sin errores (alumno)", errores.join(" | "), "");
+  await page.close();
+}
+
+/* «Antes y ahora» (js/antes-y-ahora.js). Lo que se rompe acá no da ningún
+   error: un «subiste» que no pasa el margen de la prueba, o un diagnóstico de
+   otra versión comparado con el de ahora, se leen perfecto y dicen algo falso.
+   Primero la lógica sin navegador; después, la página del alumno. */
+async function pruebaAntesYAhora(browser) {
+  console.log("\n=== Antes y ahora ===");
+  const AyA = require("../js/antes-y-ahora.js");
+  const diag = (fecha, version, elo, error, nivel) => ({ created_at: fecha, detail: { version, nivel_etiqueta: nivel, areas: {}, medicion: { elo, error, modelo: "elo-400" } } });
+  const viejo = { created_at: "2026-03-01T12:00:00Z", detail: { version: "3", areas: {}, porcentaje: 40 } };
+  const lista = AyA.fuerzas([diag("2026-09-26T12:00:00Z", "6", 1611, 67, "Intermedio"), viejo,
+    diag("2026-06-01T12:00:00Z", "5", 1200, 90, "Principiante"), diag("2026-08-01T12:00:00Z", "6", 1329, 84, "Principiante")]);
+  igual("sin medición (versiones viejas) no entra; del más viejo al más nuevo", lista.map((x) => x.elo).join(","), "1200,1329,1611");
+  const v = AyA.veredicto(lista, true);
+  igual("compara solo los de la misma versión, y dice que pasa el margen", [v.tipo, v.dif, v.margen].join(","), "sube,282,107");
+  igual("…y le habla de tú", /^Subiste 282 puntos: de 1329 a 1611/.test(v.texto), true);
+  igual("dentro del margen dice que todavía no se puede decir",
+    AyA.veredicto(AyA.fuerzas([diag("2026-08-01T12:00:00Z", "6", 1329, 84), diag("2026-09-01T12:00:00Z", "6", 1400, 67)]), false).tipo, "parejo");
+  igual("con el anterior de otra versión, no se comparan los números",
+    AyA.veredicto(AyA.fuerzas([diag("2026-06-01T12:00:00Z", "5", 1200, 90), diag("2026-09-01T12:00:00Z", "6", 1700, 67)]), false).tipo, "otra-version");
+  igual("con uno solo, no hay veredicto", AyA.veredicto(lista.slice(0, 1)), null);
+  const ficha = (ultimo, fuera, extra) => Object.assign({ facilidad: 2.5, intervalo: 7, repasos: 3, fallos: 2, vence: "2026-10-10", ultimo, limpiosSeguidos: fuera ? 3 : 1, fuera }, extra || {});
+  const COLAS = {
+    entreno_temas_repaso_v1: JSON.stringify({ "pin-001": ficha("2026-09-30T10:00:00Z", true, { tema: "pin" }), "pin-002": ficha("2026-10-01T10:00:00Z", false, { tema: "pin" }) }),
+    entreno_mates_repaso_v1: JSON.stringify({ "mate2-0330": ficha("2026-10-02T10:00:00Z", true, { category: "mate2" }) }),
+    entreno_finales_repaso_v1: "{roto",
+  };
+  const sup = AyA.superados(COLAS);
+  igual("solo lo que salió con tres limpios, lo más reciente primero (una cola rota no rompe nada)",
+    sup.map((x) => x.seccion + ":" + x.id).join(","), "Mates:mate2-0330,Ejercicios por tema:pin-001");
+  igual("cada uno con su nombre", sup.map((x) => AyA.nombreDe(x, { temas: { pin: "Clavada" } })).join(","), "Mate en 2,Clavada");
+
+  const ESTADO = Object.entries(COLAS).map(([key, raw]) => ({ student_id: "a-1", key, value: { raw } }))
+    .concat([{ student_id: "a-2", key: "entreno_tipos_repaso_v1", value: { raw: JSON.stringify({ "balanza:x": ficha("2026-10-03T10:00:00Z", true, { tipo: "balanza" }) }) } }]);
+  const DIAG_ANA = [diag("2026-08-01T12:00:00Z", "6", 1329, 84, "Principiante"), diag("2026-09-26T12:00:00Z", "6", 1611, 67, "Intermedio")]
+    .map((d) => Object.assign({ student_id: "a-1", activity: "diagnostico" }, d))
+    .concat([Object.assign({ student_id: "a-2", activity: "diagnostico" }, diag("2026-09-27T12:00:00Z", "6", 2100, 60, "Avanzado"))]);
+  let { page, errores } = await abrir(browser, {
+    rpc: { informes_resumen_alumnos: [ANA], informes_totales: { clases_cerradas: 4, preguntas: 10, partidas: 2 } },
+    tablas: { profiles: [{ id: "a-1", role: "alumno", is_admin: false, full_name: "Ana Rojas", email: "ana@x.cr" }],
+      training_progress: DIAG_ANA, training_state: ESTADO },
+  }, "a-1");
+  await page.waitForFunction(() => !document.getElementById("antes-report").classList.contains("hidden"), null, { timeout: 8000 }).catch(() => {});
+  const visto = await page.evaluate(() => ({
+    seVe: document.getElementById("antes-report").checkVisibility(),
+    texto: document.getElementById("antes-body").innerText.replace(/\s+/g, " "),
+    items: [...document.querySelectorAll("#antes-body ul:last-of-type li")].map((li) => li.textContent.replace(/\s+/g, " ").trim()),
+  }));
+  igual("el bloque se ve en la página del alumno", visto.seVe, true);
+  igual("con su fuerza y el veredicto de tú", /Tu fuerza, diagnóstico a diagnóstico.*1329 ± 84.*1611 ± 67.*Subiste 282 puntos/.test(visto.texto), true);
+  igual("solo lo suyo: ni el diagnóstico ni la habilidad de otro alumno", /2100|balanza|Balanza/.test(visto.texto), false);
+  igual("lo que antes fallaba, con el nombre de cada uno", visto.items.map((t) => t.replace(/ \(.*$/, "")).join(" | "), "✅ Mates · Mate en 2 | ✅ Ejercicios por tema · Clavada");
+  igual("y desde cuándo le sale, en hora de Costa Rica", /te sale desde el 2 oct 2026/.test(visto.items[0]), true);
+  igual("pide lo de UN alumno", await page.evaluate(() => window.__consultas.filter((c) => /training_state|training_progress/.test(c.etiqueta))
+    .every((c) => c.donde.some(([col, val]) => col === "student_id" && val === "a-1"))), true);
+  if (errores.length) { console.log("  ✗ errores en la página: " + errores.join(" | ")); fallos += 1; }
+  await page.close();
+
+  // Sin nada medido ni superado, el bloque no se destapa.
+  ({ page, errores } = await abrir(browser, {
+    rpc: { informes_resumen_alumnos: [ANA], informes_totales: { clases_cerradas: 4, preguntas: 10, partidas: 2 } },
+    tablas: { profiles: [{ id: "a-1", role: "alumno", is_admin: false, full_name: "Ana Rojas", email: "ana@x.cr" }], training_progress: [], training_state: [] },
+  }, "a-1"));
+  await page.waitForTimeout(600);
+  igual("sin nada, no se ve", await page.evaluate(() => document.getElementById("antes-report").checkVisibility()), false);
+  await page.close();
+}
+
+/* «Comparar alumnos» (js/comparar-alumnos.js): dos de entrada, hasta tres,
+   cada barra con su número escrito y la leyenda con el nombre (el color nunca
+   va solo), y la frase de dónde más se separan. */
+async function pruebaComparar(browser) {
+  console.log("\n=== Comparar alumnos ===");
+  const { page, errores } = await abrir(browser, {
+    rpc: {
+      informes_resumen_alumnos: [ANA, BRUNO, CARLA],
+      informes_diagnosticos_alumnos: [
+        { student_id: "a-1", detalle: diagnosticoCon(90, 20), fecha: "2026-09-10T12:00:00Z", a_medias_pregunta: null, a_medias_fecha: null },
+        { student_id: "a-2", detalle: diagnosticoCon(20, 90), fecha: "2026-09-11T12:00:00Z", a_medias_pregunta: null, a_medias_fecha: null },
+        { student_id: "a-3", detalle: diagnosticoCon(50, 50), fecha: "2026-09-12T12:00:00Z", a_medias_pregunta: null, a_medias_fecha: null },
+      ],
+      informes_totales: { clases_cerradas: 0, preguntas: 0, partidas: 0 },
+    },
+    tablas: { profiles: [{ id: "prof-1", role: "profesor", is_admin: false, full_name: "Karina", email: "k@x.cr" }], training_plans: [] },
+  }, "prof-1");
+  await page.waitForSelector("#comparar-alumnos", { state: "attached", timeout: 15000 }).catch(() => {});
+  await page.evaluate(() => { const d = document.getElementById("comparar-alumnos"); if (d) { d.open = true; d.scrollIntoView(); } });
+  const leer = () => page.evaluate(() => {
+    const c = document.getElementById("comparar-alumnos-cuerpo");
+    return {
+      marcadas: [...c.querySelectorAll("[data-comparar-casillas] input")].map((i) => [i.parentElement.textContent.trim(), i.checked, i.disabled]),
+      leyenda: [...c.querySelectorAll("ul li")].map((li) => li.textContent.replace(/\s+/g, " ").trim()),
+      areas: c.querySelectorAll("[data-comparar-area]").length,
+      barrasPorArea: [...c.querySelectorAll("[data-comparar-area]")].map((a) => a.querySelectorAll(".rounded-r.h-full").length),
+      numeros: [...c.querySelectorAll("[data-comparar-area='finales'] .tabular-nums")].map((x) => x.textContent.replace(/\s+/g, " ").trim()),
+      resumen: (c.querySelector("[data-comparar-resumen]") || {}).textContent,
+      seVe: c.checkVisibility(),
+    };
+  });
+  let v = await leer();
+  const nombres = v.marcadas.map((m) => m[0]);
+  igual("de entrada, los dos primeros marcados", v.marcadas.map((m) => m[1]), [true, true, false]);
+  igual("la leyenda dice quién es cada color, con su fuerza y su nivel", v.leyenda.length === 2 && v.leyenda.every((t) => /^.+ · ≈\d+ · .+$/.test(t)), true);
+  igual("todas las áreas, con una barra por alumno", [v.areas > 0, v.barrasPorArea.every((n) => n === 2)], [true, true]);
+  igual("cada barra con su número escrito (la nota y el porcentaje)", v.numeros.length === 2 && v.numeros.every((t) => /: \d+ \(\d+ %\)$/.test(t)), true);
+  igual("dice dónde más se separan, con los dos números", /^Donde más se separan: .+ \(.+ \d+, .+ \d+\)\.$/.test(v.resumen || ""), true);
+  await page.check("#comparar-alumnos-cuerpo [data-comparar-casillas] label:nth-child(3) input");
+  v = await leer();
+  igual("con tres, una barra más por área", v.barrasPorArea.every((n) => n === 3), true);
+  await page.uncheck("#comparar-alumnos-cuerpo [data-comparar-casillas] label:nth-child(1) input");
+  await page.uncheck("#comparar-alumnos-cuerpo [data-comparar-casillas] label:nth-child(2) input");
+  igual("con uno solo, pide otro", await page.evaluate(() => document.querySelector("#comparar-alumnos-cuerpo [data-comparar-cuerpo]").textContent.trim()), "Elige al menos dos para compararlos.");
+  igual("los nombres son los de los alumnos con diagnóstico", nombres.slice().sort(), ["Ana Rojas", "Bruno Mena", "Carla Soto"]);
+  if (errores.length) { console.log("  ✗ errores en la página: " + errores.join(" | ")); fallos += 1; }
+  await page.close();
+}
+
+/* El informe del grupo en PDF (js/informe-grupo-pdf.js): del grupo elegido
+   arriba, con los números de la página. Se baja de verdad y se lee el texto
+   del PDF con pypdf: un PDF roto se descarga igual y no da ningún error. */
+async function pruebaInformeGrupo(browser) {
+  console.log("\n=== El informe del grupo en PDF ===");
+  const ctx = await browser.newContext({ acceptDownloads: true, serviceWorkers: "block" });
+  const nuevaPagina = browser.newPage;
+  browser.newPage = () => ctx.newPage();
+  const ANA2 = Object.assign({}, ANA, { grupo: "7A" }), BRUNO2 = Object.assign({}, BRUNO, { grupo: "7A" });
+  const { page, errores } = await abrir(browser, {
+    rpc: {
+      informes_resumen_alumnos: [ANA2, BRUNO2, CARLA],
+      informes_diagnosticos_alumnos: [{ student_id: "a-1", detalle: diagnosticoCon(90, 20), fecha: "2026-09-10T12:00:00Z", a_medias_pregunta: null, a_medias_fecha: null }],
+      informes_totales: { clases_cerradas: 4, preguntas: 10, partidas: 2 },
+    },
+    tablas: { profiles: [{ id: "prof-1", role: "profesor", is_admin: false, full_name: "Karina Rojas", email: "k@x.cr" }], training_plans: [] },
+  }, "prof-1");
+  browser.newPage = nuevaPagina;
+  await page.waitForSelector("#informe-grupo-pdf", { timeout: 15000 });
+  await page.selectOption("#group-filter", "7A");
+  await page.waitForTimeout(300);
+  const [bajada] = await Promise.all([page.waitForEvent("download", { timeout: 20000 }).catch(() => null), page.click("#informe-grupo-pdf")]);
+  igual("baja «informe-7a.pdf»", bajada && bajada.suggestedFilename(), "informe-7a.pdf");
+  if (bajada) {
+    const ruta = await bajada.path();
+    const fs = require("fs");
+    igual("es un PDF", fs.readFileSync(ruta).slice(0, 5).toString(), "%PDF-");
+    let texto = "";
+    try {
+      texto = require("child_process").execFileSync("python3", ["-c", "import sys,pypdf; print('\\n'.join(p.extract_text() for p in pypdf.PdfReader(sys.argv[1]).pages))", ruta]).toString().replace(/\s+/g, " ");
+    } catch (e) { texto = "pypdf: " + e.message; }
+    igual("con el título del grupo y quien lo prepara", /Informe del grupo 7A/.test(texto) && /Karina Rojas/.test(texto), true);
+    igual("solo los del grupo: Ana y Bruno, no Carla", [/Ana Rojas/.test(texto), /Bruno Mena/.test(texto), /Carla Soto/.test(texto)], [true, true, false]);
+    igual("dice el resumen, las áreas y cada alumno", ["Resumen", "Por áreas", "Cada alumno", "2 alumnos.", "Sin diagnóstico"].every((t) => texto.includes(t)), true);
+  }
+  igual("y lo dice en la página", /^Listo: se bajó «informe-7a\.pdf» con 2 alumnos\.$/.test(await page.textContent("#informe-grupo-estado")), true);
+  if (errores.length) { console.log("  ✗ errores en la página: " + errores.join(" | ")); fallos += 1; }
+  await ctx.close();
+}
+
 (async () => {
   const browser = await chromium.launch({ executablePath: CHROME });
   try {
@@ -1861,6 +2096,10 @@ async function pruebaFotos(browser) {
     await pruebaProfesor(browser);
     await pruebaClaseGrande(browser);
     await pruebaAlumno(browser);
+    await pruebaCertificados(browser);
+    await pruebaAntesYAhora(browser);
+    await pruebaComparar(browser);
+    await pruebaInformeGrupo(browser);
     await pruebaCompartirPlanes(browser);
     await pruebaNombreAjeno(browser);
     await pruebaPdfVisitante(browser);

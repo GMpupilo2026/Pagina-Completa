@@ -9,3 +9,4 @@ recordar-informes-mensuales  0 14 * * *   activo=true   (8:00 a.m. CR — pide e
 avisar-fichas-faltantes      10 * * * *   activo=true   (cada hora — avisa al profesor de una clase de su horario que paso sin ficha)
 limpiar-invitados-de-clase  20 7 * * *   activo=true   (1:20 a.m. CR — borra los invitados de una clase de hace más de dos días)
 elo-fide-nacional       10 9 * * *   activo=true   (3:10 a.m. CR — lee el Elo FIDE y Nacional de quien tiene código FIDE)
+cerrar-clases-inactivas  */10 * * * *  activo=true   (cada 10 min — cierra la clase en linea que lleva 1 hora sin actividad, con la hora de su ultima actividad)

@@ -519,6 +519,8 @@ function finishPuzzle(){
   finEjercicio = EjercicioTablero.fin({
     caja: '#fin-ejercicio', desde: puzzle.fen, jugadas: game.history(), orientacion: orientation,
     siguiente: pasarAlSiguiente,
+    // Para «Guardar en mi cuaderno»: «Mates · Mate en 2».
+    origen: 'Mates' + (/^mate(\d)/.test(puzzle.category || '') ? ' · Mate en ' + /^mate(\d)/.exec(puzzle.category)[1] : ''),
   });
 }
 function pasarAlSiguiente(){

@@ -72,6 +72,9 @@ window.HoyTeToca = (function () {
            empezó, y cuánto le falta. Una meta a la vista engancha más que la
            lista entera en Logros. -->
       <a id="hoy-medalla" class="block text-sm text-brand-600 dark:text-brand-200 mt-1 underline underline-offset-2 hover:text-accent-700 dark:hover:text-accent-400 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-500" hidden></a>
+      <!-- «Tu mes en ajedrez» (js/tu-mes.js): los primeros días de cada mes,
+           el resumen del que pasó, si entrenó algo. Lleva a Logros. -->
+      <a id="hoy-mes" class="block text-sm text-brand-600 dark:text-brand-200 mt-1 underline underline-offset-2 hover:text-accent-700 dark:hover:text-accent-400 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-500" hidden></a>
     </div>
     <ul id="hoy-lista" class="list-none p-0 m-0 space-y-2"></ul>
     <!-- «Entrenar 10 minutos» (js/tanda-diez.js): arma una tanda con lo de
@@ -114,7 +117,6 @@ window.HoyTeToca = (function () {
 
   async function cosasDeHoy(op){
     const cosas = [];
-    const SRS = window.RepasoEspaciado;
     const E = op.entreno, alumnoId = op.alumnoId;
     const diag = leerJSON('diagnostico_resultado_v1');
 
@@ -126,31 +128,15 @@ window.HoyTeToca = (function () {
       if (delPlan) cosas.push(delPlan);
     }
 
-    // Ejercicios por tema que se resolvieron con error o con pista y vuelven hoy.
-    if (window.RepasoFallados) {
-      const n = RepasoFallados.pendientes(RepasoFallados.CLAVES.temas).length;
-      if (n) cosas.push({ icono: '🔁', href: E + 'temas.html?repaso=1',
-        texto: n === 1 ? 'Repasar 1 ejercicio que te costó' : `Repasar ${n} ejercicios que te costaron` });
-      const m = RepasoFallados.pendientes(RepasoFallados.CLAVES.mates).length;
-      if (m) cosas.push({ icono: '♚', href: E + 'mates.html?repaso=1',
-        texto: m === 1 ? 'Repasar 1 mate que te costó' : `Repasar ${m} mates que te costaron` });
-      const v = RepasoFallados.pendientes(RepasoFallados.CLAVES.visualizacion).length;
-      if (v) cosas.push({ icono: '👁️', href: E + 'visualizacion.html?repaso=1',
-        texto: v === 1 ? 'Repasar 1 ejercicio de Visualización que te costó' : `Repasar ${v} ejercicios de Visualización que te costaron` });
-      const p = RepasoFallados.pendientes(RepasoFallados.CLAVES.practicas).length;
-      if (p) cosas.push({ icono: '♞', href: E + 'practicas.html?repaso=1',
-        texto: p === 1 ? 'Repasar 1 posición de Practicar que te costó' : `Repasar ${p} posiciones de Practicar que te costaron` });
-      const t = RepasoFallados.pendientes(RepasoFallados.CLAVES.tipos).length;
-      if (t) cosas.push({ icono: '🧩', href: E + 'tipos.html#repaso',
-        texto: t === 1 ? 'Repasar 1 ejercicio de Habilidades que te costó' : `Repasar ${t} ejercicios de Habilidades que te costaron` });
-      const f = RepasoFallados.pendientes(RepasoFallados.CLAVES.finales).length;
-      if (f) cosas.push({ icono: '🏁', href: E + 'finales.html?repaso=1',
-        texto: f === 1 ? 'Volver a jugar 1 final que te costó' : `Volver a jugar ${f} finales que te costaron` });
-      // Las preguntas de clase en las que viste la respuesta en tu repaso: vuelven a la semana.
-      const c = RepasoFallados.pendientes(RepasoFallados.CLAVES.clase).length;
-      if (c) cosas.push({ icono: '📌', href: op.arriba + 'repasar-clases.html?vuelven=1',
-        texto: c === 1 ? 'Te vuelve 1 pregunta de tus clases' : `Te vuelven ${c} preguntas de tus clases` });
-    }
+    /* Lo que vuelve hoy de las colas de «Repasar fallados» y de Aperturas.
+       Con dos secciones o más, va UNA sola cosa, «Repaso del día», que las
+       recorre en orden con la barra de js/tanda-diez.js (sin reloj): antes eran
+       una cosa por sección, y con tres colas vencidas el repaso ocupaba toda la
+       lista y no dejaba ver nada más. Con una sola sección se dice tal cual.
+       Ver «Un solo repaso del día» en docs/decisiones/entrenamiento.md. */
+    const repasos = repasosDeHoy(op);
+    if (repasos.length === 1) cosas.push(repasos[0]);
+    else if (repasos.length > 1) cosas.push(repasoDelDia(repasos));
 
     // El nivel de Tipos de entrenamiento que quedó a medias (lo
     // anota js/entreno-tipos.js al jugar). Uno completo no se propone: ya está hecho.
@@ -179,15 +165,6 @@ window.HoyTeToca = (function () {
         if (f && f.porcentaje < TipoFlojo.FLOJO) cosas.push({ icono: '📉', href: E + 'tipos.html#' + encodeURIComponent(f.tipo),
           texto: `Tu habilidad más floja, «${f.nombre}»: tres estrellas en ${f.limpios} de ${f.intentos}` });
       } catch (e) { /* sin dato, sin propuesta */ }
-    }
-
-    // Líneas de Aperturas ya empezadas cuyo repaso venció (las nuevas no cuentan:
-    // eso es estudiar algo nuevo, no un repaso pendiente).
-    const srs = leerJSON('aperturas_srs_v1');
-    if (SRS && srs && typeof srs === 'object') {
-      const n = Object.keys(srs).filter((id) => srs[id] && srs[id].ultimo && SRS.toca(srs[id])).length;
-      if (n) cosas.push({ icono: '📖', href: E + 'aperturas.html',
-        texto: n === 1 ? '1 línea de aperturas para repasar' : `${n} líneas de aperturas para repasar` });
     }
 
     /* El diagnóstico: hacerlo si no hay, repetirlo a las cuatro semanas (es lo
@@ -223,6 +200,57 @@ window.HoyTeToca = (function () {
       if (sug) cosas.push(sug);
     }
     return cosas.slice(0, 3);
+  }
+
+  /* Cada cola que tiene algo hoy, con cuántos y a dónde lleva. `seccion` es
+     el nombre corto que usa «Repaso del día». */
+  function repasosDeHoy(op){
+    const E = op.entreno, salida = [];
+    const RF = window.RepasoFallados;
+    const cola = (clave) => (RF ? RF.pendientes(RF.CLAVES[clave]).length : 0);
+    const n = cola('temas');
+    if (n) salida.push({ icono: '🔁', href: E + 'temas.html?repaso=1', n, seccion: 'Ejercicios por tema',
+      texto: n === 1 ? 'Repasar 1 ejercicio que te costó' : `Repasar ${n} ejercicios que te costaron` });
+    const m = cola('mates');
+    if (m) salida.push({ icono: '♚', href: E + 'mates.html?repaso=1', n: m, seccion: 'Mates',
+      texto: m === 1 ? 'Repasar 1 mate que te costó' : `Repasar ${m} mates que te costaron` });
+    const v = cola('visualizacion');
+    if (v) salida.push({ icono: '👁️', href: E + 'visualizacion.html?repaso=1', n: v, seccion: 'Visualización',
+      texto: v === 1 ? 'Repasar 1 ejercicio de Visualización que te costó' : `Repasar ${v} ejercicios de Visualización que te costaron` });
+    const p = cola('practicas');
+    if (p) salida.push({ icono: '♞', href: E + 'practicas.html?repaso=1', n: p, seccion: 'Practicar',
+      texto: p === 1 ? 'Repasar 1 posición de Practicar que te costó' : `Repasar ${p} posiciones de Practicar que te costaron` });
+    const t = cola('tipos');
+    if (t) salida.push({ icono: '🧩', href: E + 'tipos.html#repaso', n: t, seccion: 'Habilidades',
+      texto: t === 1 ? 'Repasar 1 ejercicio de Habilidades que te costó' : `Repasar ${t} ejercicios de Habilidades que te costaron` });
+    const f = cola('finales');
+    if (f) salida.push({ icono: '🏁', href: E + 'finales.html?repaso=1', n: f, seccion: 'Finales',
+      texto: f === 1 ? 'Volver a jugar 1 final que te costó' : `Volver a jugar ${f} finales que te costaron` });
+    // Las preguntas de clase en las que viste la respuesta en tu repaso: vuelven a la semana.
+    const c = cola('clase');
+    if (c) salida.push({ icono: '📌', href: op.arriba + 'repasar-clases.html?vuelven=1', n: c, seccion: 'Tus clases',
+      texto: c === 1 ? 'Te vuelve 1 pregunta de tus clases' : `Te vuelven ${c} preguntas de tus clases` });
+    // Líneas de Aperturas ya empezadas cuyo repaso venció (las nuevas no cuentan:
+    // eso es estudiar algo nuevo, no un repaso pendiente).
+    const SRS = window.RepasoEspaciado;
+    const srs = leerJSON('aperturas_srs_v1');
+    if (SRS && srs && typeof srs === 'object') {
+      const a = Object.keys(srs).filter((id) => srs[id] && srs[id].ultimo && SRS.toca(srs[id])).length;
+      if (a) salida.push({ icono: '📖', href: E + 'aperturas.html', n: a, seccion: 'Aperturas',
+        texto: a === 1 ? '1 línea de aperturas para repasar' : `${a} líneas de aperturas para repasar` });
+    }
+    return salida;
+  }
+
+  /* «Repaso del día: 9 en 3 secciones (Ejercicios por tema 4 · Mates 3 ·
+     Finales 2)». Lleva a la primera y arma el recorrido entero. */
+  function repasoDelDia(repasos){
+    const total = repasos.reduce((x, r) => x + r.n, 0);
+    return {
+      icono: '🔁', href: repasos[0].href,
+      texto: `Repaso del día: ${total} en ${repasos.length} secciones (${repasos.map((r) => r.seccion + ' ' + r.n).join(' · ')})`,
+      recorrido: repasos.map((r) => ({ href: r.href, texto: r.seccion + ' (' + r.n + ')', icono: r.icono })),
+    };
   }
 
   async function partidasSinRevisar(op){
@@ -340,6 +368,7 @@ window.HoyTeToca = (function () {
     if (hoy > 0) await pintarResumenHoy();
     await pintarSemana();
     pintarMedalla(r, op);
+    await pintarMesPasado(op);
     return true;
   }
 
@@ -390,6 +419,31 @@ window.HoyTeToca = (function () {
     caja.textContent = textoSemana(s);
     caja.hidden = false;
     pintarDias(s.dias);
+  }
+
+  /* Los primeros días de cada mes: «📅 Tu septiembre en ajedrez: 876
+     ejercicios en 7 días. Míralo →», a logros.html#mes. Solo si el mes que
+     pasó tuvo algo: un «0 ejercicios» no invita a nada. La cuenta es la de
+     js/tu-mes.js (entreno_mi_mes en la base); sin ese módulo, no sale. */
+  const DIAS_AVISO_MES = 7;
+  async function pintarMesPasado(op){
+    const el = document.getElementById('hoy-mes');
+    const TM = window.TuMes;
+    if (!el || !TM) return;
+    const hoy = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Costa_Rica' });
+    if (Number(hoy.slice(8, 10)) > DIAS_AVISO_MES) return;
+    const mes = TM.sumarMeses(hoy.slice(0, 7), -1);
+    const r = await TM.pedir(mes);
+    const n = Number(r && r.ejercicios) || 0;
+    if (!n) return;
+    const dias = Number(r.dias_con_algo) || 0;
+    el.href = op.arriba + 'logros.html?mes=' + mes + '#mes';
+    el.replaceChildren();
+    const ic = document.createElement('span');
+    ic.setAttribute('aria-hidden', 'true');
+    ic.textContent = '📅 ';
+    el.append(ic, `Tu ${TM.nombreMes(mes, false)} en ajedrez: ${n} ${n === 1 ? 'ejercicio' : 'ejercicios'} en ${dias} ${dias === 1 ? 'día' : 'días'}. Míralo y compártelo →`);
+    el.hidden = false;
   }
 
   /* La meta de la semana: la elige el alumno —cuántos días entrena y cuántos
@@ -692,6 +746,13 @@ window.HoyTeToca = (function () {
       flecha.className = 'ml-auto';
       flecha.textContent = '→';
       a.appendChild(flecha);
+      /* «Repaso del día» arranca el recorrido: la barra de abajo lleva de una
+         sección a la siguiente. Sin la barra (o sin almacenamiento), el
+         enlace sigue llevando a la primera. */
+      if (c.recorrido && window.TandaDiez) {
+        a.dataset.repasoDelDia = '';
+        a.addEventListener('click', (e) => { if (TandaDiez.empezarRepaso(c.recorrido)) e.preventDefault(); });
+      }
       li.appendChild(a);
       lista.appendChild(li);
     });

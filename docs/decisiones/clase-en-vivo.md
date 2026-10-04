@@ -1236,13 +1236,53 @@ Lo que se miró y queda como está, anotado para la próxima vez:
   cuelga de la vieja (ver «Cerrar la clase tiene que SIGNIFICAR cerrarla»). El
   3/10 había dos abiertas desde el 29/9. La franja lo dice («Clase abierta»
   con su hora): antes de empezar, si dice abierta y no la abriste hoy,
-  cerrarla y abrir otra.
+  cerrarla y abrir otra. Desde el 4/10 se cierra sola: ver «La clase sin
+  actividad se cierra sola».
 
 `verificar-clase-reconexion.js` corta la conexión de mentira (cambia la base
 sin aviso y vuelve a llamar lo que la página hace al quedar suscrita) y mira
 que la alumna vea la jugada y la pregunta, y que el profe no relea.
 `verificar-clase-tanda.js` comprueba que el anuncio no sale en el acto. Los
 dos fallan sin el arreglo.
+
+### La clase sin actividad se cierra sola
+
+Una clase en línea que nadie cierra se come la del día siguiente (ver «Cerrar
+la clase tiene que SIGNIFICAR cerrarla»): el 29/9 quedaron dos abiertas, una
+siguió recibiendo alumnos hasta el 3/10 y se cerraron a mano. Desde la
+migración `20261004005032`, pg_cron corre cada 10 minutos
+`interno.cerrar_clases_inactivas()`:
+
+- **Se cierra la que lleva 1 hora sin ninguna señal de actividad**, y se
+  cierra **con la hora de la última señal**, no con la de ahora: una clase de
+  2 horas olvidada 4 días no puede contar 4 días en los informes. Las señales
+  las junta `interno.ultima_actividad_de_clase()`: el latido de cada alumno
+  conectado (`class_presence_log`, cada 20 s), el tablero del profe
+  (`game_state.updated_at`), las preguntas, rondas de práctica y tandas de esa
+  clase, y los invitados que la miran (`clase_espectadores.visto_at`).
+- **Mientras un alumno tenga la clase abierta en su pantalla, no se cierra**:
+  su latido cuenta. Es «la última conexión», que es lo que se pidió.
+- **Las presenciales no entran**: nacen cerradas.
+- **El profe que sigue en la página** ve la franja pasar a «no abierta» (le
+  llega el cierre por Realtime), y la posición que mande después abre una
+  clase nueva.
+- **Solo cierra: no limpia el tablero.** El podio, los equipos, el
+  calentamiento… los protege `protect_game_state_teacher_columns`, que deshace
+  en silencio el cambio si `auth.uid()` no es un profesor, y bajo pg_cron no
+  hay nadie. Hacerlo a nombre del profe (poniendo `request.jwt.claims`) se
+  probó y se descartó. Lo que quede puesto lo quita el profe al cerrar su
+  clase siguiente. Tampoco guarda la partida en «Partidas guardadas» (el PGN
+  lo arma el navegador).
+- Las dos funciones no se pueden llamar desde la web (`revoke` a `public`,
+  `anon` y `authenticated`): solo las corre pg_cron.
+
+Se aplicó con `execute_sql`, no con `apply_migration`, y se anotó a mano en
+`supabase_migrations.schema_migrations` con el contenido exacto del archivo
+(mismo md5), para que la huella del punto de restauración siga sirviendo.
+Ensayada en un bloque que se deshace solo: una clase de 3 h sin actividad se
+cerró a su hora de inicio, una de 30 min siguió abierta y una segunda pasada no
+cerró nada. Con las dos clases del 29/9, la función da la misma hora de cierre
+que se les puso a mano.
 
 ### Lo de la clase se limpia al cerrar
 

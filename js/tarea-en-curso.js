@@ -52,9 +52,12 @@
      en la dirección: una tarea puede pedir mates en 1 y mates en 2, y la
      franja tiene que hablar del que se está haciendo. */
   function renglonDeEstaPagina(items) {
-    const archivo = location.pathname.split("/").pop() || "";
+    // Sin el .html de los dos lados: Cloudflare sirve /entreno/temas, y el
+    // renglón guarda «temas.html».
+    const sinHtml = (n) => n.replace(/\.html$/, "");
+    const archivo = sinHtml(location.pathname.split("/").pop() || "");
     const candidatos = (items || []).filter((r) => {
-      const suyo = String(r.material_href || "").split("?")[0].split("/").pop();
+      const suyo = sinHtml(String(r.material_href || "").split("?")[0].split("/").pop());
       return suyo && suyo === archivo;
     });
     if (candidatos.length < 2) return candidatos[0] || null;

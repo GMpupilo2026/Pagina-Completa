@@ -734,6 +734,38 @@ hacer, y la lista quedaba abajo de la pantalla.
   Tipos de punta a punta, `?repaso=1` de Finales, el hub y el `limpio` de las
   tres.
 
+## Un solo repaso del día
+
+Con seis colas de «Repasar fallados» más Aperturas y las preguntas de clase,
+«Hoy te toca» proponía UNA cosa por cola. Con tres colas vencidas, el repaso
+ocupaba las tres líneas de la lista, y el plan, el tema más flojo o el
+diagnóstico no llegaban nunca. Además había que entrar a cada sección por
+separado.
+
+- **Con dos secciones o más que tienen algo hoy, va UNA cosa**: «🔁 Repaso del
+  día: 5 en 3 secciones (Ejercicios por tema 2 · Mates 1 · Aperturas 2)».
+  Con una sola sección se sigue diciendo tal cual («Repasar 2 mates que te
+  costaron»): un recorrido de un paso no aporta nada. Las cuentas son las de
+  siempre (`RepasoFallados.pendientes` y las líneas de Aperturas ya empezadas
+  y vencidas), ahora en `repasosDeHoy()` de `js/hoy-te-toca.js`.
+- **Tocarlo arranca un recorrido**: la barra de «Entrenar 10 minutos»
+  (`js/tanda-diez.js` → `TandaDiez.empezarRepaso`) en modo repaso. Va **sin
+  reloj**, porque un repaso se termina y no se corta a los diez minutos. Dice
+  «Repaso del día, paso 1 de 3: Ejercicios por tema (2)», lleva a la sección
+  siguiente y, en la última, «Terminar el repaso». Dura 12 horas (si queda a
+  medias, mañana es otro repaso) y es del aparato (`tanda_diez_v1`, con
+  `tipo: "repaso"`), como la tanda.
+- **Cada sección sigue repasando a su manera**: el recorrido solo encadena
+  los `?repaso=1` (y `tipos.html#repaso`) que ya existían. Juntar los
+  ejercicios de todas en una sola página habría sido reescribir seis
+  tableros distintos (Finales se juega contra la máquina, Visualización no
+  tiene tablero que se toque), y cada uno ya tiene su manera de puntuar.
+- Sin la barra o sin almacenamiento, el enlace sigue llevando a la primera
+  sección.
+- Lo prueban `verificar-entreno-repaso.js` (el texto, que deja lugar para lo
+  demás, el recorrido de punta a punta y el final) y `verificar-panel.js`
+  (lo mismo en el panel, con las direcciones desde la raíz).
+
 ## El tema más flojo, en el hub
 
 El «Hoy te toca» propone el motivo que menos sale limpio («Tu tema más flojo,
@@ -2993,3 +3025,38 @@ enroques de B saltan las 3 que corresponden.
   miércoles y un domingo, ponerla, cambiarla, quitarla, cumplida y una meta
   tocada desde la consola. Contando la semana desde el domingo en vez del
   lunes, salta.
+
+## Tu mes en ajedrez
+
+> Vive en `js/tu-mes.js`. Lo pinta `logros.html` (sección `#mes`) y lo anuncia
+> «Hoy te toca» los primeros días de cada mes.
+
+- **Qué es**: lo que el alumno entrenó en un mes, contado por la base, con un
+  texto para compartir con la familia. En Logros se elige el mes (de hoy hacia
+  atrás, hasta 24 meses; nunca uno que todavía no llega) y «📤 Compartir mi
+  mes» usa el compartir del celular o, si no hay, lo copia y avisa. No se
+  manda a ningún lado: lo comparte el alumno.
+- **La cuenta es `entreno_mi_mes(alumno, p_mes)`** (migración
+  `20261004051405`, y `20261004051442` para que `alumno` en null sea «yo»,
+  como al omitirlo). `SECURITY INVOKER`: la RLS de `training_progress` decide,
+  y solo lee dos meses de UN alumno. Meses y días de Costa Rica; un día cuenta
+  con 5 ejercicios, el mismo corte de la racha, y `racha_mejor` es la tirada
+  más larga dentro del mes. Comprobado impersonando a un alumno: su
+  septiembre dio 876 ejercicios en 7 días (lo mismo que la cuenta directa), y
+  el de otro alumno, todo en cero.
+- **Cada número dice lo que es, y lo que no hay no se dice**: sin ejercicios
+  que digan cómo salieron no hay porcentaje de limpios, sin mes anterior lo
+  dice («este es el primero»), y un mes vacío no ofrece compartir. Las líneas
+  no dicen «tú» ni «él», porque las mismas sirven en pantalla y para la
+  familia. Lo más entrenado usa los nombres de `js/tiempo-secciones.js`. Ahí
+  falta `tactica` (sale «Tactica»); agregarla pide desplegar también
+  `informes-encargados`, que tiene la misma tabla (lo vigila
+  `verificar-tiempo-secciones.js`), y queda para un cambio aparte.
+- **En «Hoy te toca», del día 1 al 7**: «📅 Tu septiembre en ajedrez: 876
+  ejercicios en 7 días. Míralo y compártelo →» a `logros.html?mes=…#mes`. Solo
+  si el mes que pasó tuvo algo; después del día 7 ni siquiera se le pregunta a
+  la base. Logros baja hasta `#mes` a mano, porque la página se destapa
+  después de cargar.
+- Lo prueba `verificar-tu-mes.js`, con el reloj del navegador fijo (en hora de
+  Costa Rica: el 4 a las 8 p. m., en UTC ya es el 5). Dejando que el aviso
+  salga todo el mes, o abriendo un mes del futuro, salta.

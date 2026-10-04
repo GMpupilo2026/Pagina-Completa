@@ -92,9 +92,14 @@ window.__llamadas = [];
       const llamada = { rpc: nombre, args: args };
       window.__llamadas.push(llamada);
       const data = nombre === "reporte_actividades" ? DATOS : nombre === "faltas_justificadas" ? FALTAS : null;
+      // Como PostgREST: el rango corta lo que se devuelve (y nunca más de mil).
       const r = {
+        order(col) { llamada.orden = col; return r; },
         range(a, z) { llamada.rango = [a, z]; return r; },
-        then(res, rej) { return Promise.resolve({ data: data, error: null }).then(res, rej); },
+        then(res, rej) {
+          const d = data && llamada.rango ? data.slice(llamada.rango[0], Math.min(llamada.rango[1], llamada.rango[0] + 999) + 1) : data;
+          return Promise.resolve({ data: d, error: null }).then(res, rej);
+        },
       };
       return r;
     },
@@ -378,12 +383,13 @@ async function probarTranscripcion(navegador) {
   cumple("trae el detalle de cada clase", vista.includes("Táctica básica") && vista.includes("Finales de peones"));
   cumple("trae lo que se trabajó", vista.includes("Horquillas y clavadas"));
   cumple("trae la asistencia por estudiante", vista.includes("Jean Quesada Arauz") && vista.includes("María Herrera"));
-  igual("pide las faltas justificadas del MISMO periodo, sin cortar a mil",
+  // De mil en mil y en orden: pedir range(0, 4999) igual devolvía mil, sin avisar.
+  igual("pide las faltas justificadas del MISMO periodo, de mil en mil y en orden",
     await p.evaluate(() => {
       const suyas = window.__llamadas.filter((l) => l.rpc === "faltas_justificadas");
-      return suyas.length ? [suyas[suyas.length - 1].args, suyas[suyas.length - 1].rango] : null;
+      return suyas.length ? [suyas[suyas.length - 1].args, suyas[suyas.length - 1].rango, suyas[suyas.length - 1].orden] : null;
     }),
-    [{ p_desde: "2026-09-01", p_hasta: "2026-09-30" }, [0, 4999]]);
+    [{ p_desde: "2026-09-01", p_hasta: "2026-09-30" }, [0, 999], "student_id"]);
   cumple("suma las faltas justificadas al resumen", /Faltas justificadas \(aceptadas\)\s*3/.test(vista), vista.match(/Faltas justificadas[^\n]{0,40}/));
   igual("y las pone por estudiante, con quien faltó a todas justificado incluido",
     await p.evaluate(() => {

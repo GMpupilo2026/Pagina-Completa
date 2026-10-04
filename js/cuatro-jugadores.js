@@ -259,13 +259,21 @@
                 // leer la sala para que enseñe la real. Con turnoDe, cero filas es lo
                 // normal (otro navegador resolvió ese turno antes) y no se avisa.
                 if (error) console.error(error);
-                const aviso = error ? "No se pudo guardar: " + error.message : (opts.aviso || (opts.turnoDe ? null : "La partida ya había terminado: esa jugada no quedó guardada."));
-                await releerSala(aviso);
-                return;
+                const aviso = error ? "No se pudo guardar: " + error.message : (opts.aviso != null ? opts.aviso : (opts.turnoDe ? null : "La partida ya había terminado: esa jugada no quedó guardada."));
+                await releerSala(aviso || null);
+                // null: la base dio un error (ya se dijo); false: cero filas, la
+                // sala había cambiado.
+                return error ? null : false;
             }
             // La fila de la base (el reloj con SU hora), o algo más nuevo si ya llegó.
+            // El tablero se rehace desde ella: una relectura que llegó mientras se
+            // guardaba traía la sala de antes de la jugada y la borraba del tablero
+            // local, y la jugada quedaba guardada sin verse (ni su eco la traía de
+            // vuelta, porque era igual a `room`).
             room = SalaJuego.laMasNueva(room, guardada[0]);
+            game = FourPlayerChess.Game.fromJSON(room.board);
             renderAll();
+            return true;
         }
 
         // Vuelve a leer la sala y la aplica como un cambio remoto: el `game` local se
@@ -350,12 +358,21 @@
             // El diálogo pudo quedar abierto un buen rato: si mientras tanto la partida
             // terminó o te eliminaron, rendirse no puede pisar ese estado.
             if (room.status !== "playing" || game.gameOver || game.status[mySeat] !== "active") { setStatus("La partida ya había terminado para ti."); return; }
-            const turnoAntes = game.turn;
-            game.resign(mySeat);
-            const patch = {};
-            // Si la rendición le pasa el turno a otro, su reloj arranca ahora.
-            if (game.turn !== turnoAntes) patch.clock_updated_at = new Date().toISOString();
-            await persist(patch, { aviso: "La partida ya había terminado: la rendición no se registró." });
+            // Con cuatro jugando, la rendición choca a menudo con la jugada de otro
+            // (persist solo escribe sobre la versión de la sala que se tenía): si
+            // la partida sigue, se vuelve a intentar sobre la sala recién leída,
+            // igual que «Estoy listo».
+            for (let intento = 0; intento < 3; intento++) {
+                if (room.status !== "playing" || game.gameOver || game.status[mySeat] !== "active") { setStatus("La partida ya había terminado para ti: la rendición no hizo falta."); return; }
+                const turnoAntes = game.turn;
+                game.resign(mySeat);
+                const patch = {};
+                // Si la rendición le pasa el turno a otro, su reloj arranca ahora.
+                if (game.turn !== turnoAntes) patch.clock_updated_at = new Date().toISOString();
+                const quedo = await persist(patch, { aviso: "" });
+                if (quedo !== false) return;
+            }
+            setStatus("Tu rendición no quedó: la partida cambiaba sin parar. Vuelve a tocar «Rendirse».");
         });
 
         async function init() {

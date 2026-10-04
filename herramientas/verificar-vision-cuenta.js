@@ -200,6 +200,13 @@ async function abrir(browser, ruta, local) {
   await ctx.route("**/*.supabase.co/**", (r) => r.abort());
   await ctx.route("**/js/supabase-client.js", (r) =>
     r.fulfill({ status: 200, contentType: "application/javascript", body: clienteFalso([ALUMNA, PROFE, ADMIN], local.__quien || "u-ana", [], CIEGA) }));
+  // Cloudflare sirve las páginas sin .html (/crazyhouse): una ruta sin
+  // extensión se contesta con su archivo, como allá.
+  if (!/\.html$|\/$/.test(ruta.split("?")[0])) {
+    const sinExt = BASE + ruta.split("?")[0];
+    await ctx.route((u) => u.href.split("?")[0] === sinExt, async (r) =>
+      r.fulfill({ response: await r.fetch({ url: sinExt + ".html" }) }));
+  }
   const page = await ctx.newPage();
   await page.goto(BASE + ruta, { waitUntil: "load" });
   await page.waitForFunction(() => window.VisionCuenta, { timeout: 10000 }).catch(() => {});
@@ -220,8 +227,13 @@ async function pruebaJuegos(browser) {
 }
 
 async function pruebaPaginaNoAdaptada(browser) {
-  console.log("\n=== Una página no adaptada ===");
-  const { page, ctx } = await abrir(browser, "/crazyhouse.html", { ai_vision_v1: JSON.stringify({ persona: "u-ana", vision: "ciego" }) });
+  // Con y sin .html: en producción la dirección es /crazyhouse, y comparada
+  // contra «crazyhouse.html» el aviso no salía nunca.
+  for (const ruta of ["/crazyhouse.html", "/crazyhouse"]) await paginaNoAdaptada(browser, ruta);
+}
+async function paginaNoAdaptada(browser, ruta) {
+  console.log("\n=== Una página no adaptada (" + ruta + ") ===");
+  const { page, ctx } = await abrir(browser, ruta, { ai_vision_v1: JSON.stringify({ persona: "u-ana", vision: "ciego" }) });
   const r = await page.evaluate(() => {
     const caja = document.getElementById("vc-no-adaptada");
     return caja && {
