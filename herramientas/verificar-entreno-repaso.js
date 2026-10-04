@@ -13,7 +13,8 @@
      con a dónde ir y cuánto lleva ahí), repasos de Temas, líneas de Aperturas
      vencidas (no las nuevas) y el diagnóstico si falta o tiene más de cuatro
      semanas. Arriba, la meta del día (de Logros); sin nada pendiente queda
-     solo esa.
+     solo esa. Y la meta de la semana que elige el alumno (días y
+     ejercicios de lunes a domingo).
 
    - Visualización y Practicar tienen la misma cola (Practicar, por ronda,
      y en el repaso vale el motivo de la serie de origen), y el hub la
@@ -723,6 +724,101 @@ async function limpios(browser) {
   }
 }
 
+/* La meta de la semana que elige el alumno (meta_semana_v1): se pone desde
+   «Hoy te toca», se guarda en la cuenta y cuenta de lunes a hoy con los siete
+   días de entreno_mi_semana. Un día cuenta con 5 ejercicios, como la racha. */
+async function metaSemana(browser) {
+  console.log("\n=== «Hoy te toca»: la meta de la semana ===");
+  // Siete días que terminan un miércoles (30/9): la semana es lunes, martes y hoy.
+  const dias = (ns, hasta) => ns.map((n, i) => {
+    const d = new Date(Date.parse(hasta + "T12:00:00Z") - (6 - i) * 86400000);
+    return { dia: d.toISOString().slice(0, 10), n };
+  });
+  const miercoles = dias([9, 9, 9, 9, 6, 2, 34], "2026-09-30");   // lun 6 (cuenta), mar 2 (no), hoy 34 (cuenta)
+  const fresco = { diagnostico_resultado_v1: JSON.stringify({ fecha: new Date().toISOString() }) };
+  const abrirHub = async (d, local) => {
+    const r = await abrir(browser, "/entreno/index.html",
+      { "rpc:progreso_dias_y_racha": [{ hoy_ejercicios: 0, racha_actual: 0 }],
+        "rpc:entreno_mi_semana": { esta: 0, esta_con: 0, esta_limpios: 0, anterior: 0, anterior_con: 0, anterior_limpios: 0, dias: d } },
+      Object.assign({}, fresco, local || {}));
+    await r.page.waitForFunction(() => document.getElementById("hoy-metasem").checkVisibility(), null, { timeout: 10000 });
+    return r;
+  };
+  const leer = (page) => page.evaluate(() => {
+    const t = document.getElementById("hoy-metasem-texto");
+    return { texto: t.checkVisibility() ? t.textContent : null,
+      boton: document.getElementById("hoy-metasem-abrir").textContent.trim(),
+      barras: document.getElementById("hoy-metasem-barras").checkVisibility(),
+      dias: document.getElementById("hoy-metasem-dias").getAttribute("aria-valuetext"),
+      ejer: document.getElementById("hoy-metasem-ejer").getAttribute("aria-valuetext") };
+  });
+
+  {
+    const { page, ctx, errores } = await abrirHub(miercoles);
+    igual("la cuenta va de lunes a hoy: días con 5 o más y ejercicios",
+      await page.evaluate((d) => HoyTeToca.avanceMetaSemana(d, 5), miercoles), { ejercicios: 42, dias: 2, quedan: 4 });
+    igual("un domingo, la semana son los siete días y no queda ninguno",
+      await page.evaluate((d) => HoyTeToca.avanceMetaSemana(d, 5), dias([5, 0, 0, 0, 0, 0, 1], "2026-10-04")), { ejercicios: 6, dias: 1, quedan: 0 });
+    // Sin meta: se ofrece ponerla, aunque esta semana y la anterior estén en cero.
+    let m = await leer(page);
+    igual("sin meta, se ofrece ponerla (aunque no haya entrenado)", [m.texto, m.boton, m.barras], [null, "🎯 Ponte una meta para esta semana", false]);
+    // Se abre: el formulario se ve, el botón lo dice y el foco va al primer campo.
+    await page.click("#hoy-metasem-abrir");
+    igual("al abrirla, el formulario se ve, el botón dice que está abierto y el foco va a los días",
+      await page.evaluate(() => [document.getElementById("hoy-metasem-form").checkVisibility(),
+        document.getElementById("hoy-metasem-abrir").getAttribute("aria-expanded"), document.activeElement.id]),
+      [true, "true", "hoy-metasem-sel-dias"]);
+    igual("propone 3 días y 35 ejercicios, y no ofrece quitar una meta que no hay",
+      await page.evaluate(() => [document.getElementById("hoy-metasem-sel-dias").value, document.getElementById("hoy-metasem-sel-ejer").value,
+        document.getElementById("hoy-metasem-quitar").checkVisibility()]), ["3", "35", false]);
+    await page.selectOption("#hoy-metasem-sel-dias", "4");
+    await page.selectOption("#hoy-metasem-sel-ejer", "50");
+    await page.click("#hoy-metasem-form button[type=submit]");
+    m = await leer(page);
+    igual("guardada: cuánto lleva de cada cosa y cuánto le queda de semana", m.texto,
+      "🎯 Tu meta de la semana: 2 de 4 días · 42 de 50 ejercicios. Quedan 4 días para el domingo.");
+    igual("con sus dos barras, y el número escrito para el lector", [m.barras, m.dias, m.ejer, m.boton], [true, "2 de 4", "42 de 50", "Cambiar mi meta"]);
+    igual("se guarda en la cuenta (meta_semana_v1) y el formulario se cierra devolviendo el foco",
+      await page.evaluate(() => { const g = JSON.parse(localStorage.getItem("meta_semana_v1")); return [g.dias, g.ejercicios,
+        document.getElementById("hoy-metasem-form").checkVisibility(), document.activeElement.id]; }),
+      [4, 50, false, "hoy-metasem-abrir"]);
+    // Cambiarla trae lo guardado; «Quitar la meta» la borra.
+    await page.click("#hoy-metasem-abrir");
+    igual("al cambiarla, trae lo que ya tenía", await page.evaluate(() =>
+      [document.getElementById("hoy-metasem-sel-dias").value, document.getElementById("hoy-metasem-sel-ejer").value]), ["4", "50"]);
+    await page.click("#hoy-metasem-quitar");
+    m = await leer(page);
+    igual("«Quitar la meta» la borra y vuelve a ofrecerla",
+      [m.texto, m.boton, await page.evaluate(() => localStorage.getItem("meta_semana_v1"))], [null, "🎯 Ponte una meta para esta semana", null]);
+    sinErrores(errores, "hub (meta de la semana)");
+    await ctx.close();
+  }
+  {
+    const { page, ctx, errores } = await abrirHub(miercoles, { meta_semana_v1: JSON.stringify({ dias: 2, ejercicios: 35 }) });
+    igual("cumplida, lo celebra", (await leer(page)).texto,
+      "🎯 ¡Cumpliste tu meta de la semana! 2 días y 42 ejercicios (tu meta: 2 días y 35 ejercicios).");
+    sinErrores(errores, "hub (meta cumplida)");
+    await ctx.close();
+  }
+  {
+    // Domingo, sin haber llegado: es el último día y los días ya no alcanzan.
+    const { page, ctx } = await abrirHub(dias([5, 0, 0, 0, 0, 0, 1], "2026-10-04"), { meta_semana_v1: JSON.stringify({ dias: 4, ejercicios: 20 }) });
+    igual("el domingo lo dice, y avisa cuando los días ya no alcanzan", (await leer(page)).texto,
+      "🎯 Tu meta de la semana: 1 de 4 días · 6 de 20 ejercicios. Hoy es el último día. Los días ya no alcanzan esta semana: igual, cada ejercicio suma.");
+    await ctx.close();
+  }
+  {
+    // Lo guardado se puede tocar desde la consola: lo que no es una opción no vale.
+    const { page, ctx, errores } = await abrirHub(miercoles, { meta_semana_v1: JSON.stringify({ dias: 99, ejercicios: "<img src=x onerror=alert(1)>" }) });
+    const m = await leer(page);
+    igual("una meta que no está entre las opciones es como no tener meta", [m.texto, m.boton], [null, "🎯 Ponte una meta para esta semana"]);
+    sinErrores(errores, "hub (meta tocada)");
+    await ctx.close();
+  }
+  igual("la clave viaja con la cuenta (js/progreso-usuario.js)",
+    /clave: "meta_semana_v1",\s+fusion: "ultimaEscritura"/.test(require("fs").readFileSync(require("path").join(__dirname, "..", "js", "progreso-usuario.js"), "utf8")), true);
+}
+
 (async () => {
   const browser = await chromium.launch({ executablePath: CHROME });
   try {
@@ -734,6 +830,7 @@ async function limpios(browser) {
     await finales(browser);
     await limpios(browser);
     await hub(browser);
+    await metaSemana(browser);
   } catch (e) {
     console.log("  ✗ " + (e && e.stack || e));
     fallos += 1;

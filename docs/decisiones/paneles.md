@@ -3346,3 +3346,51 @@ estudiantes», «+120 artículos» cuando había 7) y no los respaldaba nada.
   tampoco, por lo mismo que la lista de los que se caen.
 - Lo prueba `verificar-panel.js` (nombre por textContent incluido, sin
   «limpios» cuando no hay con qué, oculto sin nadie).
+
+## Agregar a mi calendario
+
+El alumno veía «Tu próxima clase» en el panel, pero solo una y solo si
+entraba a mirar. Ahora, en «Tus clases», la tarjeta «📅 Tu calendario» baja
+un `.ics` con sus clases de las próximas cuatro semanas, sus tareas
+pendientes y sus exámenes por rendir. El calendario del celular, Google
+Calendar y Outlook lo abren y lo agregan.
+
+- **Las clases las da `public.mis_clases_proximas(p_dias)`** (migración
+  `20261004044349`, SECURITY DEFINER). Es `mi_proxima_clase()` con más de
+  una fila, con la misma regla de qué clase es suya (su subgrupo, o un grupo
+  igual al suyo, de uno de SUS profesores). El horario del profe sigue sin
+  abrírsele. `p_dias` va de 1 a 90 y la respuesta no pasa de 200 filas.
+  - Probado impersonando roles, con filas de prueba revertidas: el alumno ve
+    sus dos horarios (uno escrito con su grupo en mayúsculas), 2 clases en 7
+    días, 8 en 28 y 26 en 1000 (el tope de 90). Otro alumno no ve ninguna y
+    sigue sin leer `horario_clases`, y `anon` no la puede llamar.
+- **Las tareas y los exámenes** salen de las mismas funciones que la franja
+  de arriba (`tareas_con_avance`, `examenes_con_nota`). Lo vencido, lo
+  entregado y lo congelado no entran.
+- **El archivo lo arma `js/calendario-ics.js`**, que es puro y se prueba sin
+  navegador:
+  - Las horas van con `TZID=America/Costa_Rica` y su `VTIMEZONE` (UTC−6 fijo):
+    la clase de las 4 p. m. es la de Costa Rica en cualquier aparato.
+  - **Cada evento lleva un UID que no cambia**: la clase de ESE horario en ESE
+    día, y la tarea o el examen por su id. Es una foto, no una suscripción.
+    Si el profe cambia el horario, el alumno vuelve a bajarlo, y los
+    calendarios que respetan el UID actualizan en vez de duplicar. Una
+    suscripción (`webcal://`) necesitaría una dirección con una clave por
+    alumno que no caduque, y eso es otra puerta a sus datos. Se dejó afuera.
+  - Avisa 30 minutos antes de cada clase y un día antes de cada entrega.
+  - El título que escribió el profe se escapa (`;`, `,`, `\`, saltos de
+    línea): un «;» suelto cortaba el campo. Las líneas se doblan a 75 bytes
+    sin partir una tilde.
+- **Solo al alumno con profesor**, y no mirando como otra persona: sin profe
+  no hay clase que agendar, y con «Ver como» las funciones contestarían con
+  la cuenta de quien mira. Sin nada con fecha, lo dice y no baja un archivo
+  vacío.
+- **Va en «Tus clases» y no al lado de la línea de la clase en vivo**: esa
+  línea tiene que ocupar poco en el celular (`pruebaSesionEnVivo`, menos de
+  110 px), y el botón la pasaba. «Tus clases» se pinta si hay calendario,
+  última clase o puntos del mes.
+- Lo prueban `verificar-calendario-ics.js` (el archivo: zona, escapado,
+  líneas dobladas, UID, lo que no entra) y `pruebaCalendario` en
+  `verificar-panel.js`: baja el archivo con las 4 fechas, pide 28 días y lo
+  suyo con su id, sin profe no está y quien da clase no lo ve. Si el escapado
+  de la coma se rompe a propósito, salta.

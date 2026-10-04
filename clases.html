@@ -269,11 +269,20 @@
                  «Tu última clase» y «Tus puntos del mes» juntos, en un bloque que
                  se pliega: en el celular arranca cerrado —estaban entre «Hoy te
                  toca» y los accesos, y alargaban el panel— y en la computadora
-                 abierto. <details> dice solo si está abierto. Si no hay ninguna
-                 de las dos cosas, el bloque no se pinta (ajustarTusClases en
+                 abierto. <details> dice solo si está abierto. Si no hay nada
+                 (ni calendario, ni última clase, ni puntos), el bloque no se pinta (ajustarTusClases en
                  js/clases.js). -->
             <details id="tus-clases" hidden class="mb-8">
-                <summary class="flex items-center gap-2 cursor-pointer select-none font-serif text-lg font-bold text-brand-800 dark:text-white mb-3 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Tus clases <span class="font-sans text-xs font-normal text-brand-500 dark:text-brand-300">tu última clase y tus puntos del mes</span></summary>
+                <summary class="flex items-center gap-2 cursor-pointer select-none font-serif text-lg font-bold text-brand-800 dark:text-white mb-3 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Tus clases <span class="font-sans text-xs font-normal text-brand-500 dark:text-brand-300">tu calendario, tu última clase y tus puntos del mes</span></summary>
+                <!-- «Agregar a mi calendario» (solo alumno con profe): sus clases de
+                     cuatro semanas, sus tareas y sus exámenes en un .ics. Ver
+                     botonCalendario en js/clases.js y js/calendario-ics.js. -->
+                <div id="calendario-alumno" hidden class="mb-8 bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6">
+                    <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white"><span aria-hidden="true">📅 </span>Tu calendario</h2>
+                    <p class="text-sm text-brand-500 dark:text-brand-300 mt-1">Pasa tus clases de las próximas cuatro semanas y lo que vence (tareas y exámenes) al calendario de tu celular o tu computadora. Te avisa 30 minutos antes de cada clase y un día antes de cada entrega.</p>
+                    <button type="button" id="agregar-calendario" class="mt-3 rounded-xl px-4 py-2 text-sm font-semibold bg-accent-500 text-brand-900 hover:bg-accent-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2">Agregar a mi calendario</button>
+                    <p id="agregar-calendario-estado" role="status" class="mt-2 text-xs text-brand-500 dark:text-brand-300"></p>
+                </div>
                 <!-- «Tu última clase» (solo alumno): lo que hizo y contestó en la última clase
                      en línea, de las dos últimas semanas. Ver js/resumen-clase.js. -->
                 <section id="ultima-clase" hidden aria-labelledby="ultima-clase-titulo" class="mb-8 bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6"></section>
@@ -509,6 +518,7 @@
     <script src="js/foto-perfil.js"></script>
     <script src="js/cursos-ocultos.js"></script>
     <script src="js/hora-cr.js"></script>
+    <script src="js/calendario-ics.js"></script>
     <script src="js/busqueda-base.js"></script>
     <script src="js/clases.js"></script>
 <!-- burbuja: inicio --><script src="js/burbuja-en-linea.js" defer></script><!-- burbuja: fin --><!-- juego-aviso: inicio --><script src="js/juego-aviso.js" defer></script><!-- juego-aviso: fin --><!-- aviso-profe: inicio --><script src="js/aviso-profe.js" defer></script><!-- aviso-profe: fin --><!-- tanda: inicio --><script src="js/tanda-diez.js" defer></script><!-- tanda: fin --><!-- acceso: inicio --><script src="js/acceso-vigente.js" defer></script><!-- acceso: fin --><!-- marca: inicio --><script src="js/marca-academia.js" defer></script><!-- marca: fin --><!-- ayuda: inicio --><script src="js/ayuda-guia.js" defer></script><!-- ayuda: fin --></body>

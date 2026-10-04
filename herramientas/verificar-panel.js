@@ -1019,7 +1019,7 @@ async function pruebaUltimaClase(browser) {
   const cel = await r.page.evaluate(() => { const d = document.getElementById("tus-clases");
     return [d.checkVisibility(), d.open, document.getElementById("ultima-clase").checkVisibility(), d.querySelector("summary").textContent.replace(/\s+/g, " ").trim()]; });
   igual("en el celular, «Tus clases» arranca cerrado, con su título a la vista", cel,
-    [true, false, false, "Tus clases tu última clase y tus puntos del mes"]);
+    [true, false, false, "Tus clases tu calendario, tu última clase y tus puntos del mes"]);
   await r.page.click("#tus-clases summary");
   igual("al tocarlo se abre", await r.page.evaluate(() => document.getElementById("ultima-clase").checkVisibility()), true);
   /* El evento «toggle» llega en otra vuelta: se espera a que quede guardado
@@ -2592,9 +2592,12 @@ async function pruebaLoQueHaceFalta(browser) {
     [true, true, true, "logros.html"]);
   igual("y es una que ya empezó y no tiene", esperada && esperada.empezada, true);
 
-  // 5. «Tus clases»: en la computadora, abierto; sin nada que mostrar, no está.
-  igual("sin última clase ni puntos del mes, «Tus clases» no se pinta",
-    await page.evaluate(() => document.getElementById("tus-clases").checkVisibility()), false);
+  /* 5. «Tus clases»: sin última clase ni puntos del mes, a quien tiene profe
+     le queda su calendario; las otras dos no se pintan vacías. Sin profe, ni
+     eso: el bloque no está (pruebaCalendario). */
+  igual("sin última clase ni puntos del mes, «Tus clases» trae solo el calendario",
+    await page.evaluate(() => ["tus-clases", "calendario-alumno", "ultima-clase", "puntos-mes"].map((id) => document.getElementById(id).checkVisibility())),
+    [true, true, false, false]);
   igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
   await ctx.close();
 
@@ -3138,6 +3141,60 @@ async function pruebaTercera(browser) {
   await r.ctx.close();
 }
 
+/* «Agregar a mi calendario»: el botón está para el alumno con profe, baja un
+   .ics con sus clases (mis_clases_proximas), sus tareas y sus exámenes, y
+   dice cuántas fechas trae. Lo bien armado del archivo lo mira
+   verificar-calendario-ics.js; acá, que el panel junte lo que la base le da. */
+async function pruebaCalendario(browser) {
+  console.log("\n=== Agregar a mi calendario ===");
+  const enDias = (d, h) => new Date(Date.now() + d * 86400000 + (h || 0) * 3600000).toISOString();
+  const datos = { rpc: {
+    mis_clases_proximas: [
+      { horario_id: "h-1", inicio: enDias(1), fin: enDias(1, 1.5), titulo: "Finales", modalidad: "en_linea", profesor: "Karina Rojas" },
+      { horario_id: "h-1", inicio: enDias(8), fin: enDias(8, 1.5), titulo: "Finales", modalidad: "en_linea", profesor: "Karina Rojas" },
+    ],
+    tareas_con_avance: [{ id: "t-1", titulo: "Mates en dos", vence_at: enDias(3), situacion: "pendiente", renglones: [] }],
+    examenes_con_nota: [{ id: "e-1", titulo: "Examen de octubre", estado: "pendiente", vence_at: enDias(5) }],
+  } };
+  let r = await panel(browser, [ALUMNA, PROFE], "u-ana", { acceptDownloads: true }, datos);
+  await r.page.waitForSelector("#agregar-calendario", { timeout: 10000 }).catch(() => {});
+  igual("el alumno con profe ve el botón", await r.page.evaluate(() => { const b = document.getElementById("agregar-calendario"); return !!b && b.checkVisibility(); }), true);
+  const [bajada] = await Promise.all([r.page.waitForEvent("download", { timeout: 10000 }).catch(() => null), r.page.click("#agregar-calendario")]);
+  cierto("tocarlo baja «ajedrez-integral.ics»", bajada && bajada.suggestedFilename() === "ajedrez-integral.ics");
+  if (bajada) {
+    const texto = require("fs").readFileSync(await bajada.path(), "utf8");
+    igual("trae las 2 clases, la tarea y el examen", (texto.match(/BEGIN:VEVENT/g) || []).length, 4);
+    igual("con los UID de la tarea y el examen", [/UID:tarea-t-1@/.test(texto), /UID:examen-e-1@/.test(texto)], [true, true]);
+  }
+  await r.page.waitForFunction(() => /^Listo/.test(document.getElementById("agregar-calendario-estado").textContent), null, { timeout: 5000 }).catch(() => {});
+  igual("y dice cuántas fechas trajo", await r.page.evaluate(() => document.getElementById("agregar-calendario-estado").textContent),
+    "Listo: se bajó «ajedrez-integral.ics» con 4 fechas. Ábrelo para agregarlas a tu calendario. Si tu profe cambia el horario, vuelve a bajarlo.");
+  igual("las clases se piden para 4 semanas, y lo suyo con su id",
+    await r.page.evaluate(() => [window.__consultas.find((c) => c.tabla === "mis_clases_proximas").args, window.__consultas.filter((c) => c.tabla === "tareas_con_avance").pop().args.p_alumno]),
+    [{ p_dias: 28 }, "u-ana"]);
+  igual("sin errores en la página", r.errores, []);
+  await r.ctx.close();
+
+  r = await panel(browser, [ALUMNA, PROFE], "u-ana", null, {});
+  await r.page.waitForSelector("#agregar-calendario", { timeout: 10000 }).catch(() => {});
+  await r.page.click("#agregar-calendario").catch(() => {});
+  await r.page.waitForFunction(() => /Todavía/.test(document.getElementById("agregar-calendario-estado").textContent), null, { timeout: 5000 }).catch(() => {});
+  igual("sin nada con fecha, lo dice y no baja un archivo vacío", await r.page.evaluate(() => document.getElementById("agregar-calendario-estado").textContent),
+    "Todavía no hay clases en el horario de tu profe ni tareas o exámenes con fecha. Cuando los haya, vuelve a tocar el botón.");
+  await r.ctx.close();
+
+  r = await panel(browser, [ALUMNA, PROFE], "u-ana", null, { mis_clases: [] });
+  await r.page.waitForTimeout(500);
+  igual("sin profe no hay botón, y sin nada más «Tus clases» no se pinta",
+    await r.page.evaluate(() => [document.getElementById("agregar-calendario").checkVisibility(), document.getElementById("tus-clases").checkVisibility()]), [false, false]);
+  await r.ctx.close();
+
+  r = await panel(browser, [PROFE, ALUMNA], "u-profe", null, {});
+  await r.page.waitForTimeout(500);
+  igual("quien da clase no lo ve", await r.page.evaluate(() => { const b = document.getElementById("agregar-calendario"); return !!b && b.checkVisibility(); }), false);
+  await r.ctx.close();
+}
+
 (async () => {
   const browser = await chromium.launch({ executablePath: CHROME });
   try {
@@ -3156,6 +3213,7 @@ async function pruebaTercera(browser) {
     await pruebaPlegables(browser);
     await pruebaLoQueHaceFalta(browser);
     await pruebaMasDelPanel(browser);
+    await pruebaCalendario(browser);
     await pruebaTercera(browser);
     await pruebaBaseLenta(browser);
     await pruebaSemanaProfesora(browser);
