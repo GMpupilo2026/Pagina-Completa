@@ -1513,8 +1513,13 @@ guarda y el `{nombre}` de la plantilla.
 `String()`, y dos objetos cualesquiera dan «[object Object]». Todas las pruebas
 de lo que se escribe (agregar un encargado, «Deshacer»…) pasaban sin comparar
 nada. Ahora compara el contenido; salió una sola expectativa vieja mal escrita
-(la página estaba bien). `verificar-clase-registrada.js`, `verificar-notas.js`
-y `verificar-planes.js` tienen el mismo `igual()`.
+(la página estaba bien). `verificar-clase-registrada.js`, `verificar-notas.js`,
+`verificar-planes.js`, `verificar-camino-entrenador.js` y
+`verificar-temas-plataforma.js` tenían el mismo `igual()` y ya comparan el
+contenido. En esos cinco no escondía nada —sus 200 y tantas comprobaciones
+comparan textos y números—, pero la primera que comparara un objeto habría
+pasado siempre. (El `cmp` de los dobles de otros verificadores compara valores
+de columnas, no objetos, y está bien.)
 
 ### Las tareas y los exámenes del informe NO se cuentan con la RLS de quien mira
 

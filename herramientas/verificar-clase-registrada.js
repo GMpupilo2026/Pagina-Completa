@@ -514,12 +514,20 @@ window.__deletes = [];
 }
 
 let fallos = 0;
+/* Un objeto se compara por su contenido. Con String() a secas, dos objetos
+   cualesquiera dan «[object Object]» y la comparación pasaba siempre: lo que
+   se escribía en la base no se estaba comprobando. Ver «Unas palabras de su
+   profe» en docs/decisiones/informes.md, donde apareció. */
+function textoDe(v) {
+  const conObjeto = (x) => x !== null && typeof x === "object" && (!Array.isArray(x) || x.some(conObjeto));
+  return conObjeto(v) ? JSON.stringify(v) : String(v);
+}
 function igual(nombre, hallado, esperado) {
-  if (String(hallado) !== String(esperado)) {
-    console.log("  ✗ " + nombre + "\n      esperaba: " + esperado + "\n      salió:    " + hallado);
+  if (textoDe(hallado) !== textoDe(esperado)) {
+    console.log("  ✗ " + nombre + "\n      esperaba: " + textoDe(esperado) + "\n      salió:    " + textoDe(hallado));
     fallos += 1;
   } else {
-    console.log("  ✓ " + nombre + ": " + hallado);
+    console.log("  ✓ " + nombre + ": " + textoDe(hallado));
   }
 }
 

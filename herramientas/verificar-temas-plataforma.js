@@ -50,8 +50,14 @@ const CHROME = process.env.CHROME_PATH || "/opt/pw-browsers/chromium-1194/chrome
 const BASE = process.env.BASE_URL || "http://localhost:8777";
 
 let fallos = 0;
+/* Un objeto se compara por su contenido: con String() a secas dos objetos
+   cualesquiera dan «[object Object]» y la comparación pasa siempre. */
+function textoDe(v) {
+  const conObjeto = (x) => x !== null && typeof x === "object" && (!Array.isArray(x) || x.some(conObjeto));
+  return conObjeto(v) ? JSON.stringify(v) : String(v);
+}
 function igual(que, real, esperado) {
-  const ok = String(real) === String(esperado);
+  const ok = textoDe(real) === textoDe(esperado);
   if (!ok) fallos++;
   console.log(`  ${ok ? "✓" : "✗"} ${que}${ok ? ": " + real : `\n      esperaba ${esperado}, llegó ${real}`}`);
 }
