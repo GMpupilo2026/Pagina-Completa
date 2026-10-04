@@ -971,6 +971,16 @@ clase sin poder entrar.
   datos grandes y aparte, con un botón a `login.html`. Vale para las dos
   puertas de alta, que comparten `invitacion-email.ts`, y para el alumno sin
   correo (los datos le llegan a la casa).
+- **También para las cuentas que crea administración** («Crear cuenta» de
+  `admin.html` y aprobar una solicitud de `unirse.html`): `admin-manage-users`
+  se quedó un día con `inviteUserByEmail` —el enlace de Supabase, sin
+  contraseña— y quien creaba una cuenta desde ahí no recibía la contraseña
+  provisional. Desde el 4 de octubre usa el mismo `invitarConBienvenida()` (en
+  `funciones-armar.js` lleva `invitacion-email.ts`) y devuelve
+  `correo_enviado`: si el correo no salió, la pantalla lo dice en rojo y manda
+  a «Reenviar acceso» en vez de decir «Invitación enviada». El PDF de
+  instrucciones adaptadas ya viene adjunto en ese correo: el segundo correo
+  aparte que mandaba esta función se quitó.
 - **`contrasenaProvisional()`** (en `_compartido/usuario-alumno.ts`) arma dos
   palabras del ajedrez y cuatro números (`torre-alfil-4821`): se dicta y se
   escribe en un celular, y son cuatro millones de combinaciones y no las diez
@@ -999,7 +1009,7 @@ clase sin poder entrar.
   conoce: es el mismo `correo_enviado: false` de siempre, y la salida es la
   misma («¿Olvidaste tu contraseña?», o «Su contraseña» desde la ficha).
 
-Esto pide desplegar `create-student`, `inscribir-alumno` y `correos-alumno`
+Esto pide desplegar `create-student`, `inscribir-alumno`, `correos-alumno` y `admin-manage-users`
 (armadas con `node herramientas/funciones-armar.js`). Lo revisa
 `verificar-bienvenida.js` («La contraseña provisional»: que `login.html` mande
 a cambiarla sin perder a dónde iba, que con una contraseña propia entre

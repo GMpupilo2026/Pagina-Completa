@@ -37,7 +37,8 @@ const FUNCIONES = {
   // Su instrucciones-email.ts es suyo y vive en su carpeta: no lo usa nadie
   // más. Va en esta lista igual, para que se despliegue con el resto y no
   // haya que acordarse de subirla aparte.
-  "admin-manage-users": ["usuario-alumno.ts"],
+  // Su correo de bienvenida es el mismo de las otras dos puertas de alta.
+  "admin-manage-users": ["invitacion-email.ts", "usuario-alumno.ts", "marca-correo.ts"],
   "create-student": ["invitacion-email.ts", "usuario-alumno.ts", "profesor-elegido.ts", "marca-correo.ts"],
   "inscribir-alumno": ["invitacion-email.ts", "usuario-alumno.ts", "profesor-elegido.ts", "marca-correo.ts"],
   "recuperar-acceso": ["usuario-alumno.ts", "recuperacion-email.ts", "envio-resend.ts"],

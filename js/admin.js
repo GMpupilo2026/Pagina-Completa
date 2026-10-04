@@ -2288,8 +2288,16 @@
             btn.disabled = true; btn.textContent = "Enviando…";
             try {
                 const result = await callAdmin("create", { email, full_name, role, grupo, teacher_id });
-                msg.textContent = `Invitación enviada a ${result.email}.`;
-                msg.className = "text-xs mt-3 text-green-600 dark:text-green-400";
+                /* La cuenta se crea con una contraseña provisional que solo
+                   viaja en el correo: si el correo no salió, nadie la conoce y
+                   hay que decirlo ahora, no cuando la persona no pueda entrar. */
+                if (result.correo_enviado === false) {
+                    msg.textContent = `La cuenta de ${result.email} quedó creada, pero el correo con su contraseña provisional no salió. Usa «Reenviar acceso» en su fila.`;
+                    msg.className = "text-xs mt-3 text-red-600 dark:text-red-400";
+                } else {
+                    msg.textContent = `Cuenta creada: le llegó a ${result.email} un correo con su usuario y una contraseña provisional.`;
+                    msg.className = "text-xs mt-3 text-green-600 dark:text-green-400";
+                }
                 document.getElementById("create-form").reset();
                 loadUsers();
             } catch (err) {
