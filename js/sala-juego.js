@@ -47,11 +47,15 @@
   function avance(room) {
     const d = room.duelo_state;
     const contar = (o) => (o ? (o.w ? 1 : 0) + (o.b ? 1 : 0) : 0);
+    // Ajedrez para 4 (fourplayer_games): los listos y quién quedó fuera
+    // (rendido o eliminado, que pasa sin jugada) van en cada asiento.
+    const asientos = room.seats ? Object.values(room.seats).filter(Boolean) : null;
     return [
       room.status === "finished" ? 1 : 0,
       (room.moves || []).length,
+      asientos ? asientos.filter((a) => a.status && a.status !== "active").length : 0,
       d ? (d.round || 0) * 10 + contar(d.commit) + contar(d.reveal) : 0,
-      (room.white_ready ? 1 : 0) + (room.black_ready ? 1 : 0),
+      asientos ? asientos.filter((a) => a.ready).length : (room.white_ready ? 1 : 0) + (room.black_ready ? 1 : 0),
       room.clock_updated_at ? Date.parse(room.clock_updated_at) || 0 : 0,
     ];
   }
@@ -169,14 +173,16 @@
      Lo que llega viejo o repetido no se aplica (esAnterior, y la misma fila
      dos veces no repinta nada).
 
-     opciones: sala() → la sala que se ve; miColor() → "w", "b" o null;
-     esperando() (opcional) → si se espera algo del otro lado. */
+     opciones: sala() → la sala que se ve; miColor() → "w", "b" o null (en
+     Ajedrez para 4, el asiento); esperando() (opcional) → si se espera algo
+     del otro lado; tabla y canal (opcionales) → para fourplayer_games. */
   const vigilantes = {};
   const ESPERA_RIVAL_MS = 5000, ESPERA_PROPIA_MS = 15000, ESPERA_SIN_CANAL_MS = 3000, ESPERA_MIRANDO_MS = 8000;
 
   function suscribir(salaId, alCambiar, opciones) {
     opciones = opciones || {};
     const sala = opciones.sala || (() => null);
+    const tabla = opciones.tabla || "game_rooms";
     let canal = null, vuelta = 0, conectada = false, caidaDesde = Date.now(), ultimoContacto = Date.now(), leyendo = null;
 
     function aplicar(fila) {
@@ -192,7 +198,7 @@
       if (leyendo) return leyendo;
       leyendo = (async () => {
         try {
-          const { data, error } = await sb.from("game_rooms").select("*").eq("id", salaId).maybeSingle();
+          const { data, error } = await sb.from(tabla).select("*").eq("id", salaId).maybeSingle();
           if (error) console.error(error);
           else aplicar(data);
         } catch (e) { console.error(e); }
@@ -222,8 +228,8 @@
 
     function abrir() {
       const propio = ++vuelta;
-      canal = sb.channel("game-room-" + salaId + (propio > 1 ? "-" + propio : ""))
-        .on("postgres_changes", { event: "UPDATE", schema: "public", table: "game_rooms", filter: "id=eq." + salaId },
+      canal = sb.channel((opciones.canal || "game-room-") + salaId + (propio > 1 ? "-" + propio : ""))
+        .on("postgres_changes", { event: "UPDATE", schema: "public", table: tabla, filter: "id=eq." + salaId },
           (payload) => aplicar(payload.new))
         .subscribe((estado) => {
           if (propio !== vuelta) return; // un canal viejo que todavía no terminó de cerrarse
