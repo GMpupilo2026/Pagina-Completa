@@ -1076,6 +1076,13 @@ de abajo — que es lo que hace que se sienta una app y no páginas sueltas.
 - El navegador que no lo conoce (Firefox, por ahora) lo ignora sin errores.
 - `view-transition-name` tiene que ser único en la página: va en `#header`,
   que hay uno solo. No ponérselo a nada que se repita.
+- **Cuando la página de llegada no pide la transición** (`inscripcion.html`,
+  `offline.html`, un PDF, o la respuesta de mentira de un verificador), el
+  navegador la cancela y rechaza sus promesas: en Chrome 153 eso salía como
+  error de la página (`InvalidStateError: … ViewTransition opt-in disabled`),
+  le llegaba a Sentry y tumbó `verificar-ritmos.js` en el CI. No es un error
+  —la página cambia igual, sin fundido—, así que `js/navegacion.js` atrapa
+  esas promesas en `pageswap` y `pagereveal`.
 
 **3. Una barra dice «ya va» (`js/navegacion.js`).** En el navegador, mientras
 llega la página nueva se ve la ruedita de la pestaña. En la app instalada no

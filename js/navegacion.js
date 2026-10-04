@@ -97,4 +97,20 @@
   }
 
   window.addEventListener("pageshow", apagar);
+
+  /* La transición entre páginas (@view-transition en css/styles.css) la
+     cancela el navegador cuando la página de llegada no la pide —
+     inscripcion.html, offline.html, un PDF— o cuando no le da tiempo. Eso
+     rechaza sus promesas, y un rechazo que nadie atrapa sale como error de la
+     página: le llegaba a Sentry y hacía fallar a los verificadores que miran
+     los errores. No es un error: la página cambia igual, sin fundido. */
+  function sinRechazos(e) {
+    var vt = e && e.viewTransition;
+    if (!vt) return;
+    ["ready", "finished", "updateCallbackDone"].forEach(function (k) {
+      if (vt[k] && typeof vt[k].catch === "function") vt[k].catch(function () {});
+    });
+  }
+  window.addEventListener("pageswap", sinRechazos);
+  window.addEventListener("pagereveal", sinRechazos);
 })();

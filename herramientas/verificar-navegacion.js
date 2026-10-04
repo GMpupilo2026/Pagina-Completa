@@ -9,8 +9,9 @@
        (WhatsApp en el celular abre la app y la página se queda: la barra
        quedaría pegada);
      - se apaga al volver con «Atrás» a una página guardada entera (bfcache);
-     - la transición entre páginas (@view-transition) está, y se apaga para
-       quien pidió menos movimiento;
+     - la transición entre páginas (@view-transition) está, se apaga para
+       quien pidió menos movimiento, y cuando el navegador la cancela no sale
+       como error de la página;
      - el service worker deja encendido el navigation preload y la página
        sale y se guarda igual con él (lo de sin red lo prueba verificar-pwa);
      - todas las páginas con la cabecera de app cargan js/navegacion.js.
@@ -201,6 +202,26 @@ async function probarTransicion(navegador) {
     }
     await ctx.close();
   }
+
+  // Si la página de llegada no pide la transición, el navegador la cancela y
+  // rechaza sus promesas: eso no puede salir como error de la página (le
+  // llegaría a Sentry). Se simula el pageswap con una transición cancelada.
+  const ctx = await navegador.newContext({ serviceWorkers: "block" });
+  const p = await ctx.newPage();
+  const errores = [];
+  p.on("pageerror", (e) => errores.push(String(e)));
+  await p.goto(BASE + "/index.html", { waitUntil: "load" });
+  await p.evaluate(() => {
+    const cancelada = () => Promise.reject(new DOMException("Transition was aborted because of invalid state. ViewTransition opt-in disabled", "InvalidStateError"));
+    for (const tipo of ["pageswap", "pagereveal"]) {
+      const e = new Event(tipo);
+      e.viewTransition = { ready: cancelada(), finished: cancelada(), updateCallbackDone: cancelada() };
+      window.dispatchEvent(e);
+    }
+  });
+  await p.waitForTimeout(300);
+  ok("una transición cancelada no sale como error de la página", errores.length === 0, errores.join(" | "));
+  await ctx.close();
 }
 
 async function probarServiceWorker(navegador) {
