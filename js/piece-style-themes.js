@@ -41,6 +41,10 @@
   // así se pregunta a la base una sola vez, y no en cada página.
   const OMISION = "piece_style_omision_v1";
   const OMISION_CUENTA = "ilustrado";
+  // El estilo por omisión que le tocó a esa cuenta, aparte de lo elegido a
+  // mano (KEY): escrito en KEY contaba como elegido, y al encender después el
+  // Modo Adaptado ya no salía el aro.
+  const DE_LA_CUENTA = "piece_style_cuenta_v1";
   // Medianoche del 4/10/2026 en Costa Rica: las cuentas de alumno creadas
   // desde ahí son «nuevas».
   const CORTE_ALUMNOS = "2026-10-04T06:00:00Z";
@@ -71,7 +75,9 @@
       id = localStorage.getItem(KEY);
     } catch (e) {}
     if (id && THEMES[id]) return id;
-    return modoAdaptado() ? "aro" : "clasico";
+    if (modoAdaptado()) return "aro";
+    try { id = localStorage.getItem(DE_LA_CUENTA); } catch (e) { id = null; }
+    return id && THEMES[id] ? id : "clasico";
   }
 
   function esDibujado() {
@@ -124,8 +130,14 @@
         if (res.error || !res.data) return null;
         if (eligioAMano() || modoAdaptado()) return null;
         try { localStorage.setItem(OMISION, persona); } catch (e) {}
-        if (!tocaIlustrado(res.data)) return null;
-        setPreference(OMISION_CUENTA);
+        // Otra cuenta en el mismo navegador decide la suya: la de antes no queda.
+        if (!tocaIlustrado(res.data)) {
+          try { localStorage.removeItem(DE_LA_CUENTA); } catch (e) {}
+          aplicar(getPreference());
+          return null;
+        }
+        try { localStorage.setItem(DE_LA_CUENTA, OMISION_CUENTA); } catch (e) {}
+        aplicar(getPreference());
         try { document.dispatchEvent(new CustomEvent("piecestyle:change", { detail: { id: OMISION_CUENTA } })); } catch (e) {}
         return OMISION_CUENTA;
       });
