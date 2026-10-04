@@ -52,7 +52,7 @@ function clienteFalso(conSesion) {
   function tabla(nombre) {
     let filas = ((window.__filas || {})[nombre] || []).slice();
     const filtros = [];
-    let orden = null, desde = 0, hasta = Infinity;
+    let orden = null, desde = 0, hasta = Infinity, borrar = false;
     const api = {
       select() { return api; }, limit() { return api; },
       eq(c, v) { filtros.push((f) => f[c] === v); return api; },
@@ -68,8 +68,29 @@ function clienteFalso(conSesion) {
       maybeSingle() { return Promise.resolve({ data: null, error: null }); },
       single() { return Promise.resolve({ data: null, error: null }); },
       upsert(fila) { window.__escrituras.push({ tabla: nombre, fila }); return Promise.resolve({ error: null }); },
-      insert(fila) { window.__escrituras.push({ tabla: nombre, fila }); return Promise.resolve({ error: null }); },
+      /* Las tablas de window.__guardan guardan de verdad lo que llega (con su
+         id, como la base) y .select().single() lo devuelve; las demás solo lo
+         anotan. */
+      insert(fila) {
+        window.__escrituras.push({ tabla: nombre, fila });
+        let nueva = null;
+        if ((window.__guardan || []).indexOf(nombre) >= 0) {
+          window.__nId = (window.__nId || 0) + 1;
+          nueva = Object.assign({ id: "00000000-0000-4000-8000-" + String(window.__nId).padStart(12, "0"), student_id: "u-1", created_at: new Date().toISOString() }, fila);
+          ((window.__filas = window.__filas || {})[nombre] = window.__filas[nombre] || []).push(nueva);
+        }
+        const r = { select() { return r; }, single() { return Promise.resolve({ data: nueva, error: null }); },
+          then(res, rej) { return Promise.resolve({ error: null }).then(res, rej); } };
+        return r;
+      },
+      delete() { borrar = true; return api; },
       then(res, rej) {
+        if (borrar) {
+          const quedan = ((window.__filas || {})[nombre] || []).filter((f) => !filtros.every((fn) => fn(f)));
+          window.__escrituras.push({ tabla: nombre, borradas: ((window.__filas || {})[nombre] || []).length - quedan.length });
+          if (window.__filas) window.__filas[nombre] = quedan;
+          return Promise.resolve({ data: null, error: null }).then(res, rej);
+        }
         let d = filas.filter((f) => filtros.every((fn) => fn(f)));
         if (orden) d.sort((a, b) => (a[orden.c] < b[orden.c] ? -1 : a[orden.c] > b[orden.c] ? 1 : 0) * (orden.asc ? 1 : -1));
         d = d.slice(desde, hasta + 1);
@@ -993,6 +1014,87 @@ window.PreparacionMotor = {
       await ctx.close();
       }
     }
+  }
+
+  console.log("\n=== Mis partidas de torneo: anotarla, guardarla y revisarla ===");
+  {
+    /* La misma partida de antes (Cxe5 regala el caballo), anotada a mano en
+       español como sale de una planilla. Hay además una partida de torneo de
+       OTRA persona: el doble filtra de verdad, no debe aparecer. */
+    const JUGADAS = ["e4", "e5", "Nf3", "Nc6", "Bc4", "Nd4", "Nxe5", "Qg5", "Nxf7", "Qxg2", "Rf1", "Qxe4+"];
+    const PLANILLA = "1. e4 e5 2. Cf3 Cc6 3. Ac4 Cd4 4. Cxe5 Dg5 5. Cxf7 Dxg2 6. Tf1 Dxe4+";
+    const g = new Chess();
+    const fens = [g.fen()];
+    JUGADAS.forEach((x) => { g.move(x); fens.push(g.fen()); });
+    const evals = {};
+    fens.forEach((f, i) => { evals[f] = i <= 6 ? 0 : -3; });
+    const opciones = { [fens[6]]: [{ san: "c3", eval: 0.2 }, { san: "O-O", eval: 0 }, { san: "Nxe5", eval: -3 }] };
+    const filas = {
+      game_rooms: [], practice_games: [], practice_sessions: [],
+      partidas_torneo: [{ id: "00000000-0000-4000-8000-0000000000ff", student_id: "u-2", color: "w", resultado: "1-0", fecha: "2026-09-01", jugadas: JUGADAS, evento: "De otra persona", created_at: "2026-09-01T00:00:00Z" }],
+    };
+    const MOTOR = `window.PreparacionMotor = { disponible() { return true; },
+      async evaluar(fen) { return { eval: (window.__evals || {})[fen] || 0, mejor: null }; },
+      async opciones(fen) { return (window.__opciones || {})[fen] || []; } };`;
+    const preparar = async (ctx) => {
+      await ctx.route("**/js/preparacion-motor.js", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: MOTOR }));
+      await ctx.addInitScript((v) => { window.__filas = v.filas; window.__evals = v.evals; window.__opciones = v.opciones; window.__guardan = ["partidas_torneo"]; }, { filas, evals, opciones });
+    };
+    const aviso = (page) => page.textContent('#tipo-extra [role="status"]');
+    const abrirTorneo = async (page) => { await page.click("#anotar-torneo summary"); await page.waitForSelector("#anotar-torneo textarea", { state: "visible" }); };
+    const guardadas = (page) => page.evaluate(() => window.__escrituras.filter((e) => e.tabla === "partidas_torneo" && e.fila).map((e) => e.fila));
+    const { page, ctx, errores } = await abrir(browser, true, "#errores", preparar);
+    await page.waitForSelector("#vista-tipo:not(.hidden) #anotar-torneo summary");
+    ok("el formulario está plegado al llegar", !(await page.locator("#anotar-torneo textarea").isVisible()));
+    await abrirTorneo(page);
+    ok("la partida de otra persona no aparece en «Tus partidas anotadas»", (await page.textContent("#mis-partidas-torneo")).trim() === "", await page.textContent("#mis-partidas-torneo"));
+    // Una jugada que no se puede leer: lo dice con su número y no guarda nada.
+    await page.getByLabel("Tus jugadas").fill("1. e4 e5 2. Cf3 Cc6 3. Rf3 a6 4. h3 h6 5. a3 b6");
+    await page.getByRole("button", { name: "Guardar y revisar" }).click();
+    ok("una jugada que no es legal se señala con su número", /^No pude leer «Rf3», la jugada 3 de las blancas\./.test(await aviso(page)), await aviso(page));
+    ok("y el cursor vuelve a las jugadas", await page.evaluate(() => document.activeElement && document.activeElement.tagName === "TEXTAREA"));
+    await page.getByLabel("Tus jugadas").fill("1. e4 e5 2. Cf3");
+    await page.getByRole("button", { name: "Guardar y revisar" }).click();
+    ok("una partida de 3 medias jugadas no se guarda", /al menos 5 jugadas de cada uno/.test(await aviso(page)), await aviso(page));
+    await page.getByLabel("Elo del rival (si lo sabes)").fill("99999");
+    await page.getByLabel("Tus jugadas").fill(PLANILLA);
+    await page.getByRole("button", { name: "Guardar y revisar" }).click();
+    ok("un Elo imposible se dice", /El Elo del rival es un número entre 0 y 3500/.test(await aviso(page)), await aviso(page));
+    ok("nada de eso llegó a la base", (await guardadas(page)).length === 0);
+    // Ahora bien: en español, con negras… no: con blancas, y perdió.
+    await page.getByLabel("Elo del rival (si lo sabes)").fill("1450");
+    await page.getByLabel("Resultado").selectOption("perdi");
+    await page.getByLabel("Torneo (opcional)").fill("Abierto de prueba, ronda 3");
+    await page.getByRole("button", { name: "Guardar y revisar" }).click();
+    await page.waitForFunction(() => /Revisé|ya estaba|No encontré|No se pudieron|No se pudo/.test(document.querySelector('#tipo-extra [role="status"]').textContent), null, { timeout: 15000 }).catch(() => {});
+    ok("guarda la partida y la revisa sola", /^Revisé tu partida: 1 error para practicar\./.test(await aviso(page)), await aviso(page));
+    const hoy = new Date().toLocaleDateString("en-CA", { timeZone: "America/Costa_Rica" });
+    const [fila] = await guardadas(page);
+    ok("a la base llegan las jugadas en inglés, comprobadas, y nada del rival salvo su Elo",
+      !!fila && JSON.stringify(Object.keys(fila).sort()) === JSON.stringify(["color", "evento", "fecha", "jugadas", "resultado", "rival_elo"]) &&
+      JSON.stringify(fila.jugadas) === JSON.stringify(JUGADAS) && fila.color === "w" && fila.resultado === "0-1" && fila.rival_elo === 1450 &&
+      fila.fecha === hoy && fila.evento === "Abierto de prueba, ronda 3", JSON.stringify(fila));
+    const gt = await page.evaluate(() => ({ vistas: Object.keys(JSON.parse(localStorage.getItem("errores_analizadas_v1") || "{}")), ej: Object.values(JSON.parse(localStorage.getItem("errores_propios_v1") || "{}")) }));
+    ok("queda revisada SOLA esa, con su clave de torneo (la de otra persona ni se mira)", JSON.stringify(gt.vistas) === JSON.stringify(["torneo:00000000-0000-4000-8000-000000000001"]), JSON.stringify(gt.vistas));
+    ok("el ejercicio es la posición del error y dice que es de un torneo", gt.ej.length === 1 && gt.ej[0].fen === fens[6] && /^Partida de torneo del /.test(gt.ej[0].resumen), JSON.stringify(gt.ej.map((x) => [x.id, x.resumen])));
+    const ir = await page.getAttribute('#tipo-extra [role="status"] a', "href").catch(() => null);
+    ok("y ofrece ir directo al error", ir === "#errores/1/torneo-00000000-0000-4000-8000-000000000001-6", ir);
+    // La lista: la suya, con cómo le fue, y se borra en dos pasos.
+    await abrirTorneo(page);
+    await page.waitForFunction(() => /anotada/.test(document.getElementById("mis-partidas-torneo").textContent), null, { timeout: 5000 }).catch(() => {});
+    const lista = await page.textContent("#mis-partidas-torneo");
+    await (await page.$("#anotar-torneo")).screenshot({ path: "/tmp/tipos-torneo.png" }).catch(() => {});
+    ok("«Tu partida anotada» la muestra: blancas, perdiste, 6 jugadas y el torneo", /Tu partida anotada:/.test(lista) && /blancas · perdiste · 6 jugadas · Abierto de prueba, ronda 3/.test(lista), lista);
+    const borrar = page.locator("#mis-partidas-torneo button");
+    await borrar.click();
+    ok("el primer clic en «Borrar» solo pregunta", (await page.evaluate(() => window.__escrituras.filter((e) => e.borradas !== undefined).length)) === 0 && /¿Seguro\?/.test(await borrar.textContent()));
+    await borrar.click();
+    await page.waitForFunction(() => /Partida borrada/.test(document.querySelector('#tipo-extra [role="status"]').textContent), null, { timeout: 5000 }).catch(() => {});
+    ok("el segundo la borra (solo esa) y la lista queda vacía",
+      JSON.stringify(await page.evaluate(() => window.__escrituras.filter((e) => e.borradas !== undefined).map((e) => e.borradas))) === "[1]" &&
+      (await page.textContent("#mis-partidas-torneo")).trim() === "", await page.textContent("#mis-partidas-torneo"));
+    ok("sin errores en consola", !errores.length, errores.join(" | "));
+    await ctx.close();
   }
 
   console.log("\n=== Tus propios errores: el final, el reloj y la curva ===");
