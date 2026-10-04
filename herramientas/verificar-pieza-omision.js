@@ -78,6 +78,7 @@ const CASOS = [
       const previa = document.querySelector("#piece-style-theme-grid [aria-checked=\"true\"] .chess-piece-svg");
       return {
         guardado: localStorage.getItem("piece_style_theme_v1"),
+        deLaCuenta: localStorage.getItem("piece_style_cuenta_v1"),
         marcada: marcada ? marcada.textContent.trim() : null,
         dibujada: !!previa,
         datoPieza: document.documentElement.getAttribute("data-pieza"),
@@ -91,9 +92,18 @@ const CASOS = [
       ok(r.guardado === (c.elegido || null), `${c.nombre}: no se toca lo guardado (${r.guardado})`);
       ok(r.marcada && r.marcada.includes(nombreTarjeta[c.espera]), `${c.nombre}: tarjeta marcada «${r.marcada}»`);
     } else {
-      ok(r.guardado === c.espera, `${c.nombre}: queda guardado «${c.espera}» (${r.guardado})`);
+      // La omisión va aparte de lo elegido a mano: escrita como elegida, el
+      // Modo Adaptado encendido después ya no ponía el aro.
+      ok(r.guardado === null && r.deLaCuenta === c.espera, `${c.nombre}: queda «${c.espera}» como omisión de la cuenta, no como elegido (${r.guardado} / ${r.deLaCuenta})`);
       ok(r.marcada && r.marcada.includes(nombreTarjeta[c.espera]), `${c.nombre}: en Configuración queda marcada «${r.marcada}»`);
       ok(r.dibujada && r.datoPieza === "ilustrado", `${c.nombre}: la vista previa sale dibujada`);
+      // Si después enciende el Modo Adaptado, sale el aro, como a quien nunca eligió.
+      await page.evaluate(() => { localStorage.setItem("oscarBlindMode_v1", "1"); });
+      await page.reload({ waitUntil: "load" });
+      await page.waitForTimeout(500);
+      const conModo = await page.evaluate(() => document.documentElement.getAttribute("data-pieza"));
+      ok(conModo === "aro", `${c.nombre}: al encender después el Modo Adaptado sale el aro (${conModo})`);
+      await page.evaluate(() => { localStorage.removeItem("oscarBlindMode_v1"); });
       // Lo que elija después se respeta: la omisión no vuelve a pisarlo.
       await page.evaluate(() => { localStorage.setItem("piece_style_theme_v1", "clasico"); });
       await page.reload({ waitUntil: "load" });

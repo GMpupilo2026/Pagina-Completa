@@ -78,6 +78,39 @@ correo— no da ningún error: simplemente dejan de llegar.
   `smtp.resend.com` y una API key de Resend—, y eso es de cada persona, no del
   sitio.
 
+## Cloudflare sirve las páginas sin .html
+
+Cloudflare (Workers Assets, `html_handling` por omisión) contesta
+`/entreno/temas.html` con un 307 a `/entreno/temas`, y las carpetas con barra
+(`/entreno/`). **En producción `location.pathname` nunca termina en `.html`.**
+En la máquina, el servidor de prueba sí la deja, así que todo lo que compara la
+dirección contra `"algo.html"` funciona perfecto en los verificadores y en
+producción nunca coincide, sin ningún error. El 4/10/2026 se encontraron seis
+así:
+
+- `js/vision-cuenta.js`: los atajos de la cuenta ciega sacaban de la clase en
+  vivo y del examen a medias (`puedeSalir()` buscaba `sesion.html`), y el
+  aviso de página no adaptada no salía nunca.
+- `js/tarea-en-curso.js`: la franja «Resolver 10… · 4 de 10» no salía en
+  ninguna página de Entrenamiento.
+- `js/supabase-client.js`: la sesión a medias (falta el código de dos pasos)
+  volvía a `clases.html` en vez de a la página, porque el login solo acepta un
+  `next` con `.html`; y en `/cobros` no mandaba al login.
+- `js/curso-academia.js`: con la sesión vencida, volvía al catálogo y no al
+  curso.
+- `js/tanda-diez.js`: la barra de la tanda marcaba el paso equivocado.
+- `sw.js`: `/offline.html` quedaba guardado siguiendo el 307, y una respuesta
+  redirigida no sirve para una navegación: sin señal salía el error del
+  navegador. Se rearma antes de devolverla.
+
+La regla: **se compara con `(\.html)?$`, o se quita la extensión de los dos
+lados**; y lo que va al login como `next` se manda con la extensión puesta
+(`index.html` a una carpeta), como la guardia. Lo que se arma para ir a otra
+página va desde la raíz (`/estandar.html`) si el script corre en más de una
+carpeta: `js/juego-aviso.js` llevaba a `entreno/estandar.html`, un 404.
+`verificar-rutas.js` lo revisa (y que cada `href` propio a una página exista);
+`verificar-vision-cuenta.js` abre una página también sin la extensión.
+
 ## El sitio se instala como app (PWA)
 
 `manifest.json`, `sw.js`, `js/pwa.js` y los iconos de `img/app/` hacen que el

@@ -36,8 +36,9 @@
 
   // Ruta de vuelta para login.html?next=… (solo rutas propias del sitio).
   function rutaActual() {
-    var m = location.pathname.match(/cursos\/academia\/[a-z0-9\-]+\.html$/);
-    return m ? m[0] : "cursos/academia/index.html";
+    // Con o sin .html (Cloudflare la sirve sin), y el login la quiere con él.
+    var m = location.pathname.match(/cursos\/academia\/([a-z0-9\-]+)(\.html)?$/);
+    return m ? "cursos/academia/" + m[1] + ".html" : "cursos/academia/index.html";
   }
   function irALogin() { location.replace("../../login.html?next=" + encodeURIComponent(rutaActual())); }
 

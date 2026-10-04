@@ -80,7 +80,7 @@ window.EntrenoProgress = (function () {
     let donde, ir;
     if (ref && ref.origin === location.origin && ref.href !== location.href && history.length > 1) {
       const p = ref.pathname;
-      donde = /\/clases\.html$/.test(p) ? "a tu panel"
+      donde = /\/clases(\.html)?$/.test(p) ? "a tu panel"
         : /\/entreno\/(index\.html)?$/.test(p) ? "a Entrenamiento"
         : "a la página anterior";
       ir = () => history.back();
