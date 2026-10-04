@@ -1214,6 +1214,16 @@ curva que ve él en su ficha: errores por partida revisada, mes a mes, y si
 mejora (ver «¿Cometes menos errores?» en entrenamiento.md). Sale de
 `ErroresPropios.deFilas()`, que la arma con las revisadas que traen cuenta.
 
+### Sus partidas de torneo
+
+Al pie del mismo panel, «Partidas de torneo que anotó»: las que el alumno
+copió de su planilla en «Tus propios errores» (`partidas_torneo`, ver «Mis
+partidas de torneo» en entrenamiento.md). Las últimas 10 con el total exacto
+(`count`), cómo le fue en ellas, el Elo del rival si lo anotó, el torneo y las
+jugadas plegadas en castellano. Lo que no tiene forma de jugada se descarta y
+todo va por `textContent`. Si se cambia de alumno antes de que conteste, la
+respuesta vieja no se pinta (`torneoVez`).
+
 ## Los informes que llegan a la casa
 
 En Informes, mirando a UN alumno, está "📧 Informes a la casa": a qué correos se

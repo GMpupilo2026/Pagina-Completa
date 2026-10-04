@@ -438,6 +438,16 @@ async function pruebaProfesor(browser) {
       question_answers: RESPUESTAS,
       training_progress: DIAGNOSTICOS,
       training_state: ESTADO_ERRORES,
+      // Sus partidas de torneo anotadas (y una de otra alumna, que no debe
+      // colarse). Una trae una «jugada» que es HTML: no se pinta.
+      partidas_torneo: [
+        { id: "pt-1", student_id: "a-1", fecha: "2026-09-27", created_at: "2026-09-27T20:00:00Z", color: "b", resultado: "0-1", rival_elo: 1620, evento: "Abierto de Heredia, ronda 2",
+          jugadas: ["e4", "c5", "Nf3", "d6", "d4", "cxd4", "Nxd4", "Nf6", "Nc3", "a6", "<img src=x onerror=window.__xss=1>"] },
+        { id: "pt-2", student_id: "a-1", fecha: "2026-09-13", created_at: "2026-09-13T20:00:00Z", color: "w", resultado: "1/2-1/2", rival_elo: null, evento: null,
+          jugadas: ["d4", "d5", "c4", "e6", "Nc3", "Nf6", "Bg5", "Be7", "e3", "O-O", "Nf3", "h6"] },
+        { id: "pt-3", student_id: "a-2", fecha: "2026-09-28", created_at: "2026-09-28T20:00:00Z", color: "w", resultado: "1-0", rival_elo: 1500, evento: "De Bea",
+          jugadas: ["e4", "e5", "Nf3", "Nc6", "Bb5", "a6", "Ba4", "Nf6", "O-O", "Be7"] },
+      ],
       encargados: [{ id: "enc-1", student_id: "a-1", nombre: "Mamá de Ana", email: "mama@x.cr",
                      frecuencia: "semanal", activo: true, ultimo_envio_at: "2026-09-08T12:00:00Z", creado_por: "otra" },
                    { id: "enc-2", student_id: "a-1", nombre: "Tía de Ana", email: "tia@x.cr", frecuencia: "mensual",
@@ -805,6 +815,23 @@ async function pruebaProfesor(browser) {
   igual("lo que no tiene forma de ejercicio no se pinta (ni se ejecuta)", await page.evaluate(() =>
     [document.getElementById("errores-body").innerHTML.includes("onerror"), !!document.querySelector("#errores-body img")].join()), "false,false");
   igual("lo de otra alumna no se cuela", await page.evaluate(() => document.getElementById("errores-body").textContent.includes("De Bea")), "false");
+  await page.waitForFunction(() => document.getElementById("partidas-torneo"), null, { timeout: 8000 }).catch(() => {});
+  igual("al pie, sus partidas de torneo: cuántas y cómo le fue", await page.evaluate(() =>
+    document.querySelector("#partidas-torneo p").textContent.trim()),
+    "2 partidas: 1 ganada, 1 tablas, 0 perdidas. Al anotarlas se revisan con el motor: sus errores salen arriba como «Partida de torneo».");
+  igual("cada una con el día, el color, el resultado, el Elo del rival y el torneo", await page.evaluate(() =>
+    [...document.querySelectorAll("#partidas-torneo li > p")].map((p) => p.textContent).join(" // ")),
+    "27 sept 2026 · con negras · ganó · rival de 1620 Elo · 5 jugadas · Abierto de Heredia, ronda 2 // 13 sept 2026 · con blancas · tablas · 6 jugadas");
+  igual("las jugadas, plegadas y en castellano; la que es HTML no se pinta ni se ejecuta", await page.evaluate(() => {
+    const d = document.querySelector("#partidas-torneo details");
+    const antes = d.querySelector("p").checkVisibility();
+    d.open = true;
+    return [antes, d.querySelector("p").textContent, !!document.querySelector("#partidas-torneo img"), window.__xss || 0].join(" | ");
+  }), "false | 1. e4 c5 2. Cf3 d6 3. d4 cxd4 4. Cxd4 Cf6 5. Cc3 a6 | false | 0");
+  igual("la partida de otra alumna no se cuela, y se pide la de ESE alumno con tope", await page.evaluate(() => {
+    const c = window.__consultas.find((x) => x.etiqueta === "from:partidas_torneo");
+    return [document.getElementById("partidas-torneo").textContent.includes("De Bea"), c ? JSON.stringify(c.donde) : null].join(" | ");
+  }), 'false | [["student_id","a-1"]]');
   await (await page.$("#errores-report")).screenshot({ path: "/tmp/informes-errores.png" }).catch(() => {});
 
   // Llevar sus errores a un plan de clase (quien da clase: prof-1 es profesor).

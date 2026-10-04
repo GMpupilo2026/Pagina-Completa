@@ -8,6 +8,8 @@
  *     (la partida empezó «desde el tablero»), la partida se deja fuera.
  *   - practice_games: la práctica contra el motor en la clase. La posición de
  *     inicio está en practice_sessions (la leen los alumnos de quien la creó).
+ *   - partidas_torneo: las de torneo en tablero que el alumno anota de su
+ *     planilla (leerJugadas() las comprueba con chess.js antes de guardarlas).
  *   - Lichess y Chess.com: si el alumno escribe su usuario, sus últimas
  *     partidas públicas (PreparacionDescarga, la misma de la preparación de
  *     rivales; solo sale el nombre de usuario). `deLaWeb()` las convierte.
@@ -417,7 +419,65 @@
   function vistas() { return leer(CLAVE_VISTAS); }
 
   /* Cómo se nombra cada origen en el resumen de un ejercicio. */
-  const ORIGEN = { juego: "Partida", practica: "Práctica en clase", lichess: "Partida de Lichess", chesscom: "Partida de Chess.com" };
+  const ORIGEN = { juego: "Partida", practica: "Práctica en clase", lichess: "Partida de Lichess", chesscom: "Partida de Chess.com", torneo: "Partida de torneo" };
+
+  /* ---------- una partida de torneo anotada a mano ----------
+     El alumno copia su planilla: «1. e4 e5 2. Cf3 Cc6…», en español
+     (R D T A C) o en inglés (K Q R B N), con o sin números, o pega un PGN
+     (las etiquetas, los comentarios, las variantes y el resultado se saltan).
+     Cada jugada se comprueba con chess.js desde la posición inicial: nada que
+     no sea legal llega a la base.
+     → { jugadas: [SAN en inglés], notacion: "es" | "en" }
+       o { error: { vacia } | { numero, color, jugada } } con la PRIMERA jugada
+       que no se pudo leer (en la notación que más lejos llegó). Pura. */
+  const PIEZA_ES = { R: "K", D: "Q", T: "R", A: "B", C: "N" };
+  const CORONA_ES = { D: "Q", T: "R", A: "B", C: "N" };
+  function fichasDelTexto(texto) {
+    let t = String(texto || "").slice(0, 20000)
+      .replace(/\[[^\]]*\]/g, " ")          // etiquetas del PGN
+      .replace(/\{[^}]*\}/g, " ")           // comentarios
+      .replace(/;[^\n]*/g, " ")
+      .replace(/\$\d+/g, " ");
+    // Las variantes, también una dentro de otra.
+    let antes;
+    do { antes = t; t = t.replace(/\([^()]*\)/g, " "); } while (t !== antes);
+    t = t.replace(/(?:^|\s)(?:1-0|0-1|1\/2-1\/2|½-½|\*)(?=\s|$)/g, " ")
+      .replace(/\d+\s*\.(?:\s*\.\.)?/g, " ")  // «12.», «12...», «12. ...»
+      .replace(/…/g, " ");
+    return t.split(/\s+/).filter((x) => x && !/^(?:\.+|\d+)$/.test(x));   // «1 e4 e5 2 Cf3»: el número suelto
+  }
+  function normalizar(ficha, es) {
+    let f = ficha.replace(/[!?]+$/g, "").replace(/[+#]+$/, "").replace(/e\.?p\.?$/i, "");
+    if (/^[0Oo]-[0Oo]-[0Oo]$/.test(f)) return "O-O-O";
+    if (/^[0Oo]-[0Oo]$/.test(f)) return "O-O";
+    f = f.replace(/^P(?=[a-h])/, "");
+    if (es && PIEZA_ES[f[0]]) f = PIEZA_ES[f[0]] + f.slice(1);
+    // La coronación: «e8=D», «e8D» o «e8=Q». Al rey no se corona.
+    f = f.replace(/=?([QRBNDTAC])$/, (m, p) => "=" + (es ? CORONA_ES[p] || p : p));
+    if (/^[a-h][1-8]-?x?[a-h][1-8]/.test(f)) f = f.replace("-", "");
+    return f;
+  }
+  function leerCon(Chess, fichas, es) {
+    const g = new Chess();
+    const jugadas = [];
+    for (let i = 0; i < fichas.length; i++) {
+      let m = null;
+      try { m = g.move(normalizar(fichas[i], es), { sloppy: true }); } catch (e) { m = null; }
+      if (!m) return { jugadas, falla: i };
+      jugadas.push(m.san);
+    }
+    return { jugadas, falla: -1 };
+  }
+  function leerJugadas(Chess, texto) {
+    const fichas = fichasDelTexto(texto);
+    if (!fichas.length) return { error: { vacia: true } };
+    const en = leerCon(Chess, fichas, false);
+    if (en.falla < 0) return { jugadas: en.jugadas, notacion: "en" };
+    const es = leerCon(Chess, fichas, true);
+    if (es.falla < 0) return { jugadas: es.jugadas, notacion: "es" };
+    const i = Math.max(en.falla, es.falla);
+    return { error: { numero: Math.floor(i / 2) + 1, color: i % 2 ? "b" : "w", jugada: fichas[i].slice(0, 20) } };
+  }
 
   /* ---------- las partidas de Lichess o Chess.com ----------
      `partidas`: lo que devuelve PreparacionAnalisis.leerPgn() del PGN que bajó
@@ -472,18 +532,31 @@
   async function traerPartidas(sb, uid, solo) {
     const out = [];
     const soloJuego = solo && /^juego:[0-9a-zA-Z-]{1,64}$/.test(solo) ? solo.slice(6) : null;
+    const soloTorneo = solo && /^torneo:[0-9a-f-]{36}$/.test(solo) ? solo.slice(7) : null;
     let pedidoJuegos = sb.from("game_rooms").select("id, white_id, black_id, moves, updated_at")
       .eq("variant", "estandar").eq("status", "finished")
       .or("white_id.eq." + uid + ",black_id.eq." + uid);
     if (soloJuego) pedidoJuegos = pedidoJuegos.eq("id", soloJuego);
-    const [juegos, practicas] = await Promise.all([
+    // Las de torneo, anotadas por el alumno (ver «Mis partidas de torneo»).
+    let pedidoTorneo = sb.from("partidas_torneo").select("id, color, jugadas, fecha, created_at").eq("student_id", uid);
+    if (soloTorneo) pedidoTorneo = pedidoTorneo.eq("id", soloTorneo);
+    const [juegos, practicas, torneos] = await Promise.all([
       pedidoJuegos.order("updated_at", { ascending: false }).range(0, 29),
       sb.from("practice_games").select("id, session_id, moves, student_color, status, updated_at")
         .eq("student_id", uid).neq("status", "playing")
         .order("updated_at", { ascending: false }).range(0, 29),
+      pedidoTorneo.order("fecha", { ascending: false }).order("created_at", { ascending: false }).range(0, 29),
     ]);
     if (juegos.error) throw juegos.error;
     if (practicas.error) throw practicas.error;
+    // Sin la tabla (una base sin la migración) se sigue con las demás.
+    (torneos.error ? [] : torneos.data || []).forEach((r) => {
+      if (r.color !== "w" && r.color !== "b") return;
+      // La fecha es un día de calendario: mediodía en Costa Rica, para que
+      // «del 4 oct» no se corra al día anterior.
+      out.push({ clave: "torneo:" + r.id, origen: "torneo", color: r.color, turno0: "w", fenInicial: null,
+        jugadas: Array.isArray(r.jugadas) ? r.jugadas.filter((x) => typeof x === "string") : [], fecha: r.fecha + "T18:00:00Z" });
+    });
     (juegos.data || []).forEach((r) => {
       out.push({ clave: "juego:" + r.id, origen: "juego", color: r.white_id === uid ? "w" : "b", turno0: "w",
         fenInicial: null, jugadas: Array.isArray(r.moves) ? r.moves : [], fecha: r.updated_at });
@@ -612,7 +685,7 @@
   const ErroresPropios = {
     CLAVE_EJERCICIOS, CLAVE_VISTAS, CORTE, MAX_PARTIDAS, MAX_EJERCICIOS,
     detectar, ejercicio, temaDelError, temasDe, posiciones, acierta, ejercicios, guardar, vistas, traerPartidas, analizar, deFilas,
-    deLaWeb, ORIGEN, enLaApertura, lineaDeApertura, JUGADAS_DE_APERTURA,
+    deLaWeb, leerJugadas, ORIGEN, enLaApertura, lineaDeApertura, JUGADAS_DE_APERTURA,
     apurado, APURADO, conCelada, completarCeladas, finalDelError, finalDelBanco, curva, tendencia, curvaEnPantalla,
     SITIO_WEB, MAX_WEB, HORAS_WEB, cuentaWeb, guardarCuentaWeb, cargarWeb, sinRevisar,
   };

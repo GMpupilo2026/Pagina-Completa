@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261004055024
+# al-dia-con: 20261004203720
 tabla  Ejercicios Lichess  rls=true
 tabla  academia_ia  rls=true
 tabla  academia_miembros  rls=true
@@ -78,6 +78,7 @@ tabla  notas_alumno  rls=true
 tabla  pagos  rls=true
 tabla  paquete_alumnos  rls=true
 tabla  paquetes_acceso  rls=true
+tabla  partidas_torneo  rls=true
 tabla  pizarras_cache  rls=true
 tabla  plan_compartidos  rls=true
 tabla  plan_items  rls=true
@@ -769,6 +770,15 @@ columna  paquetes_acceso.precio_mensual  numeric(12,2)
 columna  paquetes_acceso.titular_id  uuid
 columna  paquetes_acceso.vigente_desde  date
 columna  paquetes_acceso.vigente_hasta  date
+columna  partidas_torneo.color  text
+columna  partidas_torneo.created_at  timestamp with time zone
+columna  partidas_torneo.evento  text
+columna  partidas_torneo.fecha  date
+columna  partidas_torneo.id  uuid
+columna  partidas_torneo.jugadas  jsonb
+columna  partidas_torneo.resultado  text
+columna  partidas_torneo.rival_elo  integer
+columna  partidas_torneo.student_id  uuid
 columna  pizarras_cache.datos  jsonb
 columna  pizarras_cache.leido_en  timestamp with time zone
 columna  pizarras_cache.url  text
@@ -1816,6 +1826,10 @@ politica  pagos  pagos_coordinacion  ALL
 politica  pagos  pagos_lee_alumno  SELECT
 politica  paquete_alumnos  paquete_alumnos_select  SELECT
 politica  paquetes_acceso  paquetes_acceso_select  SELECT
+politica  partidas_torneo  partidas_torneo_anota  INSERT
+politica  partidas_torneo  partidas_torneo_borra  DELETE
+politica  partidas_torneo  partidas_torneo_lee  SELECT
+politica  partidas_torneo  partidas_torneo_lee_supervisor  SELECT
 politica  plan_compartidos  plan_compartidos_delete  DELETE
 politica  plan_compartidos  plan_compartidos_insert  INSERT
 politica  plan_compartidos  plan_compartidos_select  SELECT
@@ -2312,6 +2326,8 @@ indice  paquetes_acceso  paquetes_acceso_academia_idx
 indice  paquetes_acceso  paquetes_acceso_creado_por_fk
 indice  paquetes_acceso  paquetes_acceso_pkey
 indice  paquetes_acceso  paquetes_acceso_titular_idx
+indice  partidas_torneo  partidas_torneo_alumno
+indice  partidas_torneo  partidas_torneo_pkey
 indice  pizarras_cache  pizarras_cache_pkey
 indice  plan_compartidos  plan_compartidos_pkey
 indice  plan_compartidos  plan_compartidos_profesor_idx
@@ -3019,6 +3035,9 @@ grant  paquetes_acceso  authenticated  REFERENCES
 grant  paquetes_acceso  authenticated  SELECT
 grant  paquetes_acceso  authenticated  TRIGGER
 grant  paquetes_acceso  authenticated  TRUNCATE
+grant  partidas_torneo  authenticated  DELETE
+grant  partidas_torneo  authenticated  INSERT
+grant  partidas_torneo  authenticated  SELECT
 grant  plan_compartidos  authenticated  DELETE
 grant  plan_compartidos  authenticated  INSERT
 grant  plan_compartidos  authenticated  REFERENCES

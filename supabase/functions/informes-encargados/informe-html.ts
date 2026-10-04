@@ -139,6 +139,7 @@ export const SECCIONES: Record<string, { nombre: string; emoji: string; unidad?:
   "desafios":             { nombre: "Desafíos",              emoji: "🔥", unidad: ["serie", "series"] },
   "mates":                { nombre: "Mates",                 emoji: "♚", unidad: ["mate", "mates"] },
   "temas":                { nombre: "Ejercicios por tema",   emoji: "🎯", unidad: ["ejercicio", "ejercicios"] },
+  "tactica":              { nombre: "Táctica de ataque",     emoji: "⚔️", unidad: ["ejercicio", "ejercicios"] },
   "concentracion":        { nombre: "Concentración",         emoji: "🧠", unidad: ["ejercicio", "ejercicios"] },
   "diagnostico":          { nombre: "Diagnóstico de nivel",  emoji: "🧭", unidad: ["prueba", "pruebas"] },
   "aperturas":            { nombre: "Aperturas y celadas",   emoji: "📖", unidad: ["línea", "líneas"] },

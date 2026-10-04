@@ -2957,6 +2957,56 @@ hay lista: cada alumno tiene los suyos) y los verificadores.
   la ficha completa una vez los que se guardaron antes (`completarCeladas`):
   que la clave esté, aunque sea `null`, dice que ya se miró.
 
+### Mis partidas de torneo
+
+Las partidas más serias del alumno son las del torneo en tablero, y esas no
+pasaban por ningún lado: ni Juegos ni Lichess las tienen. En «Tus propios
+errores», debajo de «¿Juegas en Lichess o Chess.com?», está **«¿Jugaste en un
+torneo en tablero? Anota tu partida»**: copia su planilla, dice fecha, color,
+resultado y (si quiere) el torneo y el Elo del rival, y al guardar se revisa
+esa sola con el motor, como «Revisa esta partida» (`?revisar=torneo:<id>`).
+
+- **Cada jugada se comprueba con chess.js antes de guardar**
+  (`ErroresPropios.leerJugadas`, pura, con su prueba en
+  `verificar-errores-propios.js`). Acepta lo que escribe un alumno de verdad:
+  español (R D T A C, enroque con ceros, coronar con `=D`) o inglés, con o sin
+  números («1.», «1 », «12...»), o un PGN pegado (salta etiquetas,
+  comentarios, variantes una dentro de otra, NAG y el resultado). Prueba la
+  partida entera en inglés y, si no pasa, en español: no se adivina jugada a
+  jugada, porque la R es rey en una y torre en la otra. Si ninguna pasa, dice
+  la PRIMERA jugada que no se pudo hacer, con su número y color, de la
+  notación que más lejos llegó. A la base llega en SAN inglesa, como las de
+  Juegos: el resto del tipo 18 no distingue de dónde salió.
+- **`partidas_torneo`** (migraciones `…203716_partidas_de_torneo` y
+  `…203720_partidas_de_torneo_permisos`): la ven el alumno, sus profesores
+  (`interno.alumnos_de` armado una vez), quien lo supervisa y administración;
+  la escribe y la borra solo el alumno. No se edita: se borra y se vuelve a
+  anotar (comprobado impersonando roles: el alumno anota y borra lo suyo y
+  no a nombre de otro; su profesor la ve y no la puede borrar; otro alumno ni
+  la ve; `anon` no tiene permiso). La base solo acota el tamaño (10 a 600 medias jugadas, evento de
+  120 letras, Elo 0–3500): las jugadas las escribe el navegador y se pueden
+  tocar desde la consola, así que quien las lee (Informes) vuelve a filtrar
+  lo que no tenga forma de jugada.
+- **El nombre del rival no se guarda.** Es de otra persona, que no tiene
+  cuenta ni dio su consentimiento, y para revisar la partida no hace falta. El
+  formulario lo dice.
+- `traerPartidas()` las suma a las de Juegos y la práctica (clave
+  `torneo:<id>`, origen «Partida de torneo», las 30 más recientes), así que
+  «Buscar errores en mis partidas» y el aviso del hub también las cuentan. La
+  fecha es un día de calendario: se guarda como mediodía en Costa Rica para
+  que «del 4 oct» no se corra al día anterior.
+- Debajo, «Tus partidas anotadas» con «Borrar» en dos pasos (la página no
+  carga `js/avisos.js`): el primer clic pregunta, el segundo borra. Los
+  ejercicios que ya salieron de ella se quedan.
+- En Informes, al pie de «Errores de las partidas de…», **«Partidas de torneo
+  que anotó»**: las últimas 10, cómo le fue (ganadas, tablas, perdidas), el Elo
+  del rival, el torneo y las jugadas plegadas, en castellano (ver «Los errores
+  de sus partidas» en informes.md).
+- Lo prueban `verificar-tipos-pagina.js` (anotar con errores y bien, lo que
+  llega a la base, la revisión sola de esa, la lista y el borrado) y
+  `verificar-informes.js` (lo que ve el profesor, sin colarse otra alumna ni
+  pintar HTML).
+
 ### El tipo 19: Salva las tablas
 
 El espejo de Remata la ventaja: al alumno le falta material, pero el motor
@@ -3121,10 +3171,11 @@ enroques de B saltan las 3 que corresponden.
   que digan cómo salieron no hay porcentaje de limpios, sin mes anterior lo
   dice («este es el primero»), y un mes vacío no ofrece compartir. Las líneas
   no dicen «tú» ni «él», porque las mismas sirven en pantalla y para la
-  familia. Lo más entrenado usa los nombres de `js/tiempo-secciones.js`. Ahí
-  falta `tactica` (sale «Tactica»); agregarla pide desplegar también
-  `informes-encargados`, que tiene la misma tabla (lo vigila
-  `verificar-tiempo-secciones.js`), y queda para un cambio aparte.
+  familia. Lo más entrenado usa los nombres de `js/tiempo-secciones.js`, que
+  tiene la misma tabla que `informes-encargados` (lo vigila
+  `verificar-tiempo-secciones.js`). Ahí faltaba `tactica` y salía «Tactica»:
+  se agregó «Táctica de ataque» en las dos y se volvió a desplegar la función
+  (versión 23), así que el informe a la casa también lo dice bien.
 - **En «Hoy te toca», del día 1 al 7**: «📅 Tu septiembre en ajedrez: 876
   ejercicios en 7 días. Míralo y compártelo →» a `logros.html?mes=…#mes`. Solo
   si el mes que pasó tuvo algo; después del día 7 ni siquiera se le pregunta a

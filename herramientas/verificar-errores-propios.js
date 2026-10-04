@@ -18,6 +18,10 @@
  *   - temaDelError() / temasDe(): el tema de cada error con el reconocedor de
  *     la preparación de rivales (si regaló, el del castigo del rival; si se le
  *     escapó, el de la mejor que no vio) y cuál se repite;
+ *   - leerJugadas(): una partida de torneo copiada de la planilla, en español
+ *     o en inglés, con o sin números, o un PGN con comentarios y variantes,
+ *     sale en SAN inglesa comprobada con chess.js; si una jugada no se puede
+ *     hacer, dice cuál (número y color);
  *   - deLaWeb(): de las partidas de Lichess o Chess.com, solo las de ajedrez
  *     normal desde la inicial en que jugó el usuario, sin repetir, con el id
  *     del sitio como clave;
@@ -153,6 +157,36 @@ console.log("\n=== deFilas() (lo que lee Informes) ===");
   ok("sin filas, vacío", E.deFilas([]).ejercicios.length === 0 && E.deFilas(null).revisadas === 0);
   const conTema = E.deFilas([{ key: "errores_propios_v1", value: { raw: JSON.stringify({ a: bueno("a", "1", { tema: "clavada" }), b: bueno("b", "2", { tema: "<script>" }) }) } }]);
   ok("el tema se lee, y uno que no tiene forma de tema se descarta", conTema.ejercicios.map((x) => x.id + ":" + x.tema).join() === "b:null,a:clavada", conTema.ejercicios.map((x) => x.id + ":" + x.tema).join());
+}
+
+console.log("\n=== leerJugadas(): una partida de torneo copiada de la planilla ===");
+{
+  const L = (t) => E.leerJugadas(Chess, t);
+  const ESPERADO = ["e4", "e5", "Nf3", "Nc6", "Bb5", "a6", "Ba4", "Nf6", "O-O", "Be7", "Re1", "b5", "Bb3", "d6", "c3", "O-O"];
+  const es = L("1. e4 e5 2. Cf3 Cc6 3. Ab5 a6 4. Aa4 Cf6 5. 0-0 Ae7 6. Te1 b5 7. Ab3 d6 8. c3 0-0 1/2-1/2");
+  ok("en español (R D T A C, enroque con ceros) sale en SAN inglesa", es.notacion === "es" && JSON.stringify(es.jugadas) === JSON.stringify(ESPERADO), JSON.stringify(es));
+  const en = L("1.e4 e5 2.Nf3 Nc6 3.Bb5 a6 4.Ba4 Nf6 5.O-O Be7 6.Re1 b5 7.Bb3 d6 8.c3 O-O");
+  ok("en inglés y sin espacio después del número", en.notacion === "en" && JSON.stringify(en.jugadas) === JSON.stringify(ESPERADO), JSON.stringify(en));
+  const sinNumeros = L("e4 e5 Cf3 Cc6 Ab5 a6 Aa4 Cf6 O-O Ae7 Te1 b5 Ab3 d6 c3 O-O");
+  ok("sin números de jugada", JSON.stringify(sinNumeros.jugadas) === JSON.stringify(ESPERADO), JSON.stringify(sinNumeros));
+  const sueltos = L("1 e4 e5 2 Cf3 Cc6 3 Ab5 a6 4 Aa4 Cf6 5 O-O Ae7 6 Te1 b5 7 Ab3 d6 8 c3 O-O");
+  ok("con los números sin punto", JSON.stringify(sueltos.jugadas) === JSON.stringify(ESPERADO), JSON.stringify(sueltos));
+  const pgn = L('[Event "Abierto"]\n[White "Alguien"]\n\n1. e4 {la de siempre} e5 2. Nf3 Nc6 (2... d6 3. d4 (3. Bc4)) 3. Bb5 $1 a6!? 4. Ba4 Nf6 5. O-O Be7 6. Re1 b5 7. Bb3 d6 8. c3 O-O 1-0');
+  ok("un PGN: sin etiquetas, comentarios, variantes (una dentro de otra), NAG ni resultado", JSON.stringify(pgn.jugadas) === JSON.stringify(ESPERADO), JSON.stringify(pgn));
+  const negras = L("1. e4 e5 2. Cf3 Cc6 3. Ab5 a6 4. Aa4 Cf6 5. 0-0 Ae7 6. Te1 b5 7. Ab3 d6 8. c3 0-0 9. h3 Ca5 10. Ac2 c5 11. d4 Dc7 12. Cbd2 cxd4 13. cxd4 Ab7 14. d5 Tac8");
+  ok("los «...» y la dama (D) y torre (T) de las negras", negras.jugadas && negras.jugadas.slice(-4).join() === "cxd4,Bb7,d5,Rac8" && negras.jugadas[21] === "Qc7", JSON.stringify(negras.jugadas));
+  const corona = L("1. a4 b5 2. axb5 a6 3. bxa6 Ab7 4. axb7 Cc6 5. bxa8=D Dc8");
+  ok("la coronación en español (=D) es a dama", corona.jugadas && corona.jugadas[8] === "bxa8=Q", JSON.stringify(corona));
+  const corona2 = L("1. a4 b5 2. axb5 a6 3. bxa6 Bb7 4. axb7 Nc6 5. bxa8Q Qc8");
+  ok("y sin el «=», en inglés", corona2.jugadas && corona2.jugadas[8] === "bxa8=Q", JSON.stringify(corona2));
+  const mal = L("1. e4 e5 2. Cf3 Cc6 3. Ab5 a6 4. Axc6 dxc6 5. Cxe5 Dd4 6. Cxf7 Dxe4+ 7. De2 Rxf7");
+  ok("una partida legal en español con R = rey", mal.jugadas && mal.jugadas[13] === "Kxf7", JSON.stringify(mal));
+  const ilegal = L("1. e4 e5 2. Cf3 Cc6 3. Ab5 a6 4. Ab5");
+  ok("una jugada que no es legal: su número, el color y lo que se escribió", ilegal.error && ilegal.error.numero === 4 && ilegal.error.color === "w" && ilegal.error.jugada === "Ab5", JSON.stringify(ilegal));
+  const ilegalN = L("1. e4 e5 2. Cf3 Cc6 3. Ab5 Cd5");
+  ok("y de las negras", ilegalN.error && ilegalN.error.numero === 3 && ilegalN.error.color === "b" && ilegalN.error.jugada === "Cd5", JSON.stringify(ilegalN));
+  ok("vacía, o solo números y resultado: «vacía»", L("").error.vacia === true && L("1. 2. 1-0").error.vacia === true);
+  ok("nada que sea HTML pasa como jugada", !!L("1. e4 <img src=x> 2. Cf3").error);
 }
 
 console.log("\n=== deLaWeb(): las partidas de Lichess y Chess.com ===");

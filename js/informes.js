@@ -1305,7 +1305,72 @@
         }
 
         const ERRORES_A_LA_VISTA = 5;
+        /* Las partidas de torneo que anotó el alumno (partidas_torneo, «Mis
+           partidas de torneo» en docs/decisiones/entrenamiento.md): van al pie
+           de sus errores, con cómo le fue y sus jugadas. Las deja leer la RLS
+           (sus profesores, quien supervisa, administración); las jugadas se
+           comprobaron con chess.js al anotarlas, pero acá igual se pinta con
+           textContent y se descarta lo que no tenga forma de jugada. `torneoVez`:
+           si se cambia de alumno antes de que conteste, no se pinta. */
+        let torneoVez = 0;
+        const TORNEO_A_LA_VISTA = 10;
         async function renderErroresPartidas(studentId, name) {
+            const vez = ++torneoVez;
+            await renderErroresDePartidas(studentId, name);
+            if (vez !== torneoVez || !window.ErroresPropios) return;
+            const { data, error, count } = await sb.from("partidas_torneo")
+                .select("id, evento, fecha, color, resultado, rival_elo, jugadas", { count: "exact" })
+                .eq("student_id", studentId)
+                .order("fecha", { ascending: false }).order("created_at", { ascending: false })
+                .range(0, TORNEO_A_LA_VISTA - 1);
+            if (vez !== torneoVez || error || !data || !data.length) return;
+            const body = document.getElementById("errores-body");
+            const SAN = /^(?:[KQRBN]?[a-h]?[1-8]?x?[a-h][1-8](?:=[QRBN])?|O-O(?:-O)?)[+#]?$/;
+            const sanEs = (x) => (window.TiposReglas ? TiposReglas.sanEs(x) : x);
+            const sec = document.createElement("div");
+            sec.id = "partidas-torneo";
+            sec.className = "mt-5 border-t border-brand-100 dark:border-brand-800 pt-4";
+            const h = document.createElement("h3");
+            h.className = "text-sm font-bold text-brand-800 dark:text-brand-100 mb-1";
+            const ic = document.createElement("span"); ic.setAttribute("aria-hidden", "true"); ic.textContent = "🏆 ";
+            h.append(ic, document.createTextNode("Partidas de torneo que anotó"));
+            const total = typeof count === "number" ? count : data.length;
+            const como = (f) => f.resultado === "1/2-1/2" ? "tablas" : f.resultado === "*" ? "sin resultado" : (f.resultado === "1-0") === (f.color === "w") ? "ganó" : "perdió";
+            const cuenta = { "ganó": 0, "tablas": 0, "perdió": 0 };
+            data.forEach((f) => { if (cuenta[como(f)] !== undefined) cuenta[como(f)] += 1; });
+            const res = document.createElement("p");
+            res.className = "text-sm text-brand-600 dark:text-brand-300 mb-2";
+            res.textContent = (total > data.length ? "Las últimas " + data.length + " de " + total + ": " : pluralES(total, "partida", "partidas") + ": ") +
+                pluralES(cuenta["ganó"], "ganada", "ganadas") + ", " + cuenta["tablas"] + " tablas, " + pluralES(cuenta["perdió"], "perdida", "perdidas") +
+                ". Al anotarlas se revisan con el motor: sus errores salen arriba como «Partida de torneo».";
+            const ul = document.createElement("ul");
+            ul.className = "space-y-2";
+            data.forEach((f) => {
+                const jug = Array.isArray(f.jugadas) ? f.jugadas.filter((x) => typeof x === "string" && SAN.test(x)) : [];
+                const li = document.createElement("li");
+                li.className = "text-sm";
+                const cab = document.createElement("p");
+                cab.className = "font-semibold text-brand-700 dark:text-brand-200";
+                const dia = /^\d{4}-\d{2}-\d{2}$/.test(f.fecha || "") ? new Date(f.fecha + "T18:00:00Z").toLocaleDateString("es-CR", { day: "numeric", month: "short", year: "numeric", timeZone: "America/Costa_Rica" }) : "";
+                cab.textContent = [dia, f.color === "w" ? "con blancas" : "con negras", como(f),
+                    Number.isInteger(f.rival_elo) ? "rival de " + f.rival_elo + " Elo" : null,
+                    pluralES(Math.ceil(jug.length / 2), "jugada", "jugadas"),
+                    f.evento ? String(f.evento).slice(0, 120) : null].filter(Boolean).join(" · ");
+                const det = document.createElement("details");
+                const sum = document.createElement("summary");
+                sum.className = "cursor-pointer text-xs text-accent-700 dark:text-accent-400 underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
+                sum.textContent = "Ver las jugadas";
+                const txt = document.createElement("p");
+                txt.className = "mt-1 text-xs font-mono text-brand-700 dark:text-brand-200";
+                txt.textContent = jug.map((x, i) => (i % 2 === 0 ? (i / 2 + 1) + ". " : "") + sanEs(x)).join(" ");
+                det.append(sum, txt);
+                li.append(cab, det);
+                ul.appendChild(li);
+            });
+            sec.append(h, res, ul);
+            body.appendChild(sec);
+        }
+        async function renderErroresDePartidas(studentId, name) {
             const caja = document.getElementById("errores-report");
             const body = document.getElementById("errores-body");
             if (!window.ErroresPropios) { caja.classList.add("hidden"); return; }

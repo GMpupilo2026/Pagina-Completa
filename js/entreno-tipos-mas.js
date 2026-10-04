@@ -965,7 +965,7 @@
       let uid = null;
       try { const { data } = await sb.auth.getSession(); uid = data && data.session && data.session.user && data.session.user.id; } catch (e) { uid = null; }
       if (!uid) { aviso.textContent = "Necesitas iniciar sesión para revisar tus partidas."; return; }
-      buscar.disabled = true; traer.disabled = true; parar.classList.remove("hidden"); detener = false;
+      buscar.disabled = true; traer.disabled = true; anotar.disabled = true; parar.classList.remove("hidden"); detener = false;
       aviso.textContent = solo ? "Buscando tu partida…" : web ? "Trayendo tus últimas partidas de " + SITIO_WEB[web.sitio] + "…" : "Buscando tus partidas terminadas…";
       let primero = null;
       try {
@@ -1008,7 +1008,7 @@
         if (e && e.paraMostrar) aviso.textContent = e.message;
         else { console.error(e); aviso.textContent = "No se pudieron revisar las partidas. Intenta de nuevo en un momento."; }
       }
-      buscar.disabled = false; traer.disabled = false; parar.classList.add("hidden");
+      buscar.disabled = false; traer.disabled = false; anotar.disabled = false; parar.classList.add("hidden");
       const texto = aviso.textContent;
       U.repintarTipo("errores");
       const nuevo = $("tipo-extra").querySelector('[role="status"]');
@@ -1054,6 +1054,125 @@
       E.guardarCuentaWeb(sitio.value, u);
       buscarErrores(null, { sitio: sitio.value, usuario: u });
     });
+    /* ¿Jugaste en un torneo en tablero? El alumno copia su planilla, cada
+       jugada se comprueba con chess.js (E.leerJugadas) y la partida se guarda
+       en partidas_torneo, donde la ve su profesor. Después se revisa esa sola.
+       Sin el nombre del rival. Ver «Mis partidas de torneo». */
+    const CAMPO = "border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm bg-white dark:bg-brand-900 text-brand-800 dark:text-brand-100";
+    const torneo = el("details", "mt-4 border-t border-brand-100 dark:border-brand-800 pt-3");
+    torneo.id = "anotar-torneo";
+    torneo.appendChild(el("summary", "cursor-pointer text-sm font-semibold text-brand-700 dark:text-brand-200 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400", "¿Jugaste en un torneo en tablero? Anota tu partida"));
+    const formT = el("form", "mt-3 flex flex-col gap-3");
+    formT.noValidate = true;
+    const textoJugadas = el("textarea", CAMPO + " font-mono");
+    textoJugadas.rows = 5; textoJugadas.maxLength = 6000; textoJugadas.spellcheck = false;
+    textoJugadas.placeholder = "1. e4 e5 2. Cf3 Cc6 3. Ab5 a6 …";
+    const ayudaJugadas = el("span", "text-xs text-brand-500 dark:text-brand-300",
+      "Cópialas de tu planilla, en español (R D T A C) o en inglés (K Q R B N), con o sin números. También puedes pegar un PGN.");
+    ayudaJugadas.id = "torneo-ayuda";
+    textoJugadas.setAttribute("aria-describedby", "torneo-ayuda");
+    const lJugadas = campo("Tus jugadas", textoJugadas);
+    lJugadas.appendChild(ayudaJugadas);
+    const hoyCR = window.RepasoEspaciado ? RepasoEspaciado.hoy() : new Date().toLocaleDateString("en-CA", { timeZone: "America/Costa_Rica" });
+    const fechaT = el("input", CAMPO);
+    fechaT.type = "date"; fechaT.value = hoyCR; fechaT.max = hoyCR; fechaT.required = true;
+    const colorT = el("select", CAMPO);
+    [["w", "Blancas"], ["b", "Negras"]].forEach(([v, t]) => { const o = el("option", null, t); o.value = v; colorT.appendChild(o); });
+    const resultadoT = el("select", CAMPO);
+    [["gane", "Victoria"], ["perdi", "Derrota"], ["tablas", "Tablas"], ["*", "No terminó o no me acuerdo"]].forEach(([v, t]) => { const o = el("option", null, t); o.value = v; resultadoT.appendChild(o); });
+    const eventoT = el("input", CAMPO);
+    eventoT.type = "text"; eventoT.maxLength = 120; eventoT.autocomplete = "off"; eventoT.placeholder = "Abierto de San José, ronda 3";
+    const eloT = el("input", CAMPO + " w-28");
+    eloT.type = "number"; eloT.min = "0"; eloT.max = "3500"; eloT.step = "1"; eloT.inputMode = "numeric";
+    const fila = el("div", "flex flex-wrap items-end gap-3");
+    fila.append(campo("Fecha", fechaT), campo("Jugué con", colorT), campo("Resultado", resultadoT), campo("Elo del rival (si lo sabes)", eloT));
+    const anotar = el("button", BTN_PRIMARIO + " self-start", "Guardar y revisar");
+    anotar.type = "submit";
+    formT.append(lJugadas, fila, campo("Torneo (opcional)", eventoT), anotar);
+    torneo.appendChild(formT);
+    torneo.appendChild(el("p", "text-xs text-brand-500 dark:text-brand-300 mt-2",
+      "Se guarda en tu cuenta y tu profesor la puede ver en tu informe. No anotes el nombre de tu rival: no hace falta para revisarla."));
+    const misTorneo = el("ul", "mt-3 space-y-1 text-sm text-brand-700 dark:text-brand-200");
+    misTorneo.id = "mis-partidas-torneo";
+    torneo.appendChild(misTorneo);
+    const RESULTADO = { w: { gane: "1-0", perdi: "0-1" }, b: { gane: "0-1", perdi: "1-0" } };
+    const comoTermino = (r, color) => r === "1/2-1/2" ? "tablas" : r === "*" ? "sin resultado" : (r === "1-0") === (color === "w") ? "ganaste" : "perdiste";
+    async function pintarMisTorneo() {
+      let filas = [];
+      try {
+        const { data: ses } = await sb.auth.getSession();
+        const yo = ses && ses.session && ses.session.user && ses.session.user.id;
+        if (!yo) return;
+        const { data, error } = await sb.from("partidas_torneo").select("id, evento, fecha, color, resultado, jugadas")
+          .eq("student_id", yo).order("fecha", { ascending: false }).order("created_at", { ascending: false }).range(0, 29);
+        if (error) return;
+        filas = data || [];
+      } catch (e) { return; }
+      misTorneo.replaceChildren();
+      if (!filas.length) return;
+      misTorneo.appendChild(el("li", "font-semibold", filas.length === 1 ? "Tu partida anotada:" : "Tus partidas anotadas:"));
+      filas.forEach((f) => {
+        const li = el("li", "flex flex-wrap items-center gap-2");
+        const dia = new Date(f.fecha + "T18:00:00Z").toLocaleDateString("es-CR", { day: "numeric", month: "short", year: "numeric", timeZone: "America/Costa_Rica" });
+        li.appendChild(el("span", null, dia + " · " + (f.color === "w" ? "blancas" : "negras") + " · " + comoTermino(f.resultado, f.color) +
+          " · " + Math.ceil((Array.isArray(f.jugadas) ? f.jugadas.length : 0) / 2) + " jugadas" + (f.evento ? " · " + f.evento : "")));
+        const borrar = el("button", "text-xs underline text-brand-600 dark:text-brand-300 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400", "Borrar");
+        borrar.type = "button";
+        borrar.setAttribute("aria-label", "Borrar la partida del " + dia);
+        let seguro = false;
+        borrar.addEventListener("click", async () => {
+          // Dos pasos, sin confirm(): el primer clic pregunta, el segundo borra.
+          if (!seguro) { seguro = true; borrar.textContent = "¿Seguro? Borrar la partida"; borrar.setAttribute("aria-label", "¿Seguro? Borrar la partida del " + dia); setTimeout(() => { seguro = false; borrar.textContent = "Borrar"; borrar.setAttribute("aria-label", "Borrar la partida del " + dia); }, 6000); return; }
+          borrar.disabled = true;
+          const { error } = await sb.from("partidas_torneo").delete().eq("id", f.id);
+          if (error) { aviso.textContent = "No se pudo borrar la partida. Intenta de nuevo."; borrar.disabled = false; return; }
+          aviso.textContent = "Partida borrada. Los ejercicios que salieron de ella se quedan.";
+          pintarMisTorneo();
+        });
+        li.appendChild(borrar);
+        misTorneo.appendChild(li);
+      });
+    }
+    torneo.addEventListener("toggle", () => { if (torneo.open) pintarMisTorneo(); });
+    formT.addEventListener("submit", async (ev) => {
+      ev.preventDefault();
+      const leido = E ? E.leerJugadas(Chess, textoJugadas.value) : { error: { vacia: true } };
+      if (leido.error) {
+        const x = leido.error;
+        aviso.textContent = x.vacia ? "Escribe las jugadas de tu partida."
+          : "No pude leer «" + x.jugada + "», la jugada " + x.numero + " de las " + (x.color === "w" ? "blancas" : "negras") +
+            ". Revisa que esté bien copiada y que sea legal en esa posición.";
+        textoJugadas.focus();
+        return;
+      }
+      if (leido.jugadas.length < 10) { aviso.textContent = "Anota al menos 5 jugadas de cada uno: con menos no hay qué revisar."; textoJugadas.focus(); return; }
+      if (leido.jugadas.length > 600) { aviso.textContent = "Esa partida es demasiado larga para guardarla (más de 300 jugadas)."; textoJugadas.focus(); return; }
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(fechaT.value) || fechaT.value > hoyCR) { aviso.textContent = "Elige el día en que jugaste (no puede ser después de hoy)."; fechaT.focus(); return; }
+      const elo = eloT.value.trim() === "" ? null : Number(eloT.value);
+      if (elo !== null && !(Number.isInteger(elo) && elo >= 0 && elo <= 3500)) { aviso.textContent = "El Elo del rival es un número entre 0 y 3500 (o déjalo vacío)."; eloT.focus(); return; }
+      const r = resultadoT.value;
+      const partida = {
+        fecha: fechaT.value, color: colorT.value, jugadas: leido.jugadas, rival_elo: elo,
+        resultado: r === "tablas" ? "1/2-1/2" : r === "*" ? "*" : RESULTADO[colorT.value][r],
+        evento: eventoT.value.trim() || null,
+      };
+      anotar.disabled = true;
+      aviso.textContent = "Guardando tu partida…";
+      let id = null;
+      try {
+        const { data, error } = await sb.from("partidas_torneo").insert(partida).select("id").single();
+        if (error) throw error;
+        id = data && data.id;
+      } catch (e) {
+        console.error(e);
+        aviso.textContent = "No se pudo guardar la partida. Revisa tu conexión e intenta de nuevo.";
+        anotar.disabled = false;
+        return;
+      }
+      anotar.disabled = false;
+      textoJugadas.value = ""; eventoT.value = ""; eloT.value = "";
+      if (id) buscarErrores("torneo:" + id);
+    });
     // ?revisar=juego:<id>: se revisa esa partida sola, una vez, y se saca de la
     // dirección (volver atrás o recargar no la vuelve a pedir).
     // ?traer=web (el aviso del hub «partidas sin revisar»): se traen solas las
@@ -1070,7 +1189,7 @@
       try { history.replaceState(null, "", location.pathname + location.hash); } catch (e) {}
       setTimeout(() => buscarErrores(pedida), 0);
     }
-    cuadro.append(aviso, buscar, parar, web);
+    cuadro.append(aviso, buscar, parar, web, torneo);
     caja.appendChild(cuadro);
   };
   U.JUEGOS.errores = function (item) {
