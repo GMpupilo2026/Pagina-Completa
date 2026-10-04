@@ -1431,6 +1431,7 @@ section:has(> .proyector-contenido) > #status-banner:empty { padding: 0; margin:
   .certificado-marca { font-size: 13pt; }
   .certificado-marca-img { height: 14mm; }
   .certificado-qr { width: 26mm; height: 26mm; }
+}
 
 /* ===== La navegación entre páginas (ver «La navegación se siente
    inmediata» en docs/decisiones/sitio-e-infraestructura.md) ===== */
