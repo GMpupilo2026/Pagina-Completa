@@ -1273,8 +1273,8 @@ la línea se programa para más adelante.
 ## Estudio: una ficha por idea, con su mapa y su posición
 
 `entreno/estudio.html` (tarjeta **"📚 Estudio"** en `clases.html` → grupo
-"Aprender") son 98 fichas de estudio: 18 aperturas, 19 defensas, 27 temas
-tácticos, 24 conceptos y 10 finales. Cada una es **una sola pantalla**: la idea principal
+"Aprender") son 126 fichas de estudio: 22 aperturas, 22 defensas, 34 temas
+tácticos, 32 conceptos y 16 finales. Cada una es **una sola pantalla**: la idea principal
 arriba, cuatro bloques alrededor de un nodo con la pieza, y abajo la posición
 que lo explica, recorrible jugada por jugada.
 
@@ -1452,6 +1452,50 @@ dejó escrito:
   índice del libro pasó a dos páginas, partido por categorías enteras.
 - «Escocés» y «París» terminan como un voseo (tenés, decís) y no lo son: van
   en la lista blanca de `verificar-voseo.py`.
+
+### La cuarta tanda: de 98 a 126 fichas
+
+Entraron 28 fichas para los temas importantes que faltaban: 4 aperturas
+(siciliana abierta, Smith-Morra, cuatro caballos, gambito danés), 3 defensas
+(Berlín, inglesa simétrica, Benko), 7 tácticas (pieza colgada, cómo
+defenderse, sacrificio de calidad, jugada tranquila y los mates árabe, de las
+hombreras y de Morphy), 8 conceptos (cómo armar un plan, torre en séptima,
+enroques opuestos, mayoría de peones, casillas débiles de un color, peones
+colgantes, jugadas candidatas, el reloj) y 6 finales (peón pasado alejado,
+torre contra peón, la ruptura de los tres peones, cortar al rey con la torre,
+caballo contra peón, alfil contra caballo).
+
+- **Siete líneas nuevas** en `js/aperturas-lineas.js` (57 en total), así que
+  las siete fichas de apertura y defensa tienen su botón de practicar. Todas
+  se miraron con Stockfish: salen parejas, menos el danés, que da +1 al negro
+  con juego correcto (lo dice la ficha: si el ataque no da nada, el negro
+  gana con los peones de más).
+- **Las tácticas salen de Lichess** (el id al lado de la `fen`; cuando la
+  base no trae el id del ejercicio, el de la partida). El mate de las
+  hombreras se cambió por uno de forma clásica —rey en d8 con su torre y su
+  caballo a los lados—: el primero que salió tenía una sola «hombrera».
+- **«Cómo defenderse» no promete resultado**: el motor da +1,2 tras la única
+  defensa (Rxf2), y las otras dos pierden. Lo que comprueba (`enJaque`) es que
+  haya un jaque cuyas respuestas comparar. **«Jugadas candidatas» tampoco**
+  promete «gana» (+2,25, debajo del +3 que pide `fichas-motor.js`); comprueba
+  el jaque y el material al terminar la línea.
+- **Una mayoría con un peón de más no enseña la mayoría**: la primera posición
+  daba +4,4 porque el blanco tenía un peón más. La de la ficha tiene cinco
+  contra cinco, y la comprobación `mayoria` exige los peones parejos.
+- **Las posiciones del motor que estaban mal planteadas se cambiaron**: la de
+  casillas débiles daba +10 porque dejaba una torre colgada (ahora es el
+  «ataque 150», Ah6 contra el fianchetto), y cortar al rey con la torre contra
+  un rey solo no enseña nada; contra torre y con el peón en b2, el motor dio
+  tablas: la de la ficha tiene el peón en b4 y gana.
+- **El motor se cae con una posición ilegal y no avisa**: dos candidatas de
+  caballo contra peón tenían al rey negro en jaque del caballo con las blancas
+  al mover; Stockfish no contestó y el script terminó sin escribir nada. Igual
+  que en la tercera tanda: chess.js primero.
+- **Comprobaciones nuevas en `verificar-fichas.js`**: `enJaque`, `septima`
+  (la torre en su séptima, con el rey rival en la octava o dos peones ahí),
+  `enroquesOpuestos`, `mayoria` y `sinAlfil` (sin el alfil de un color de
+  casilla). Se rompieron a propósito y saltan.
+- El libro pasó a 136 páginas (el índice, a tres) y las cartas a 14 hojas.
 
 ### Lo demás que hace la página
 

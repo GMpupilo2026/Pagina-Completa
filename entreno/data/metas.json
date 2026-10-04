@@ -1250,6 +1250,69 @@
    "actividades": [
     "aperturas"
    ]
+  },
+  {
+   "clave": "siciliana-abierta",
+   "label": "Siciliana abierta, con Ae2",
+   "grupo": "Defensa siciliana",
+   "total": 1,
+   "actividades": [
+    "aperturas"
+   ]
+  },
+  {
+   "clave": "smith-morra",
+   "label": "Gambito Smith-Morra",
+   "grupo": "Defensa siciliana",
+   "total": 1,
+   "actividades": [
+    "aperturas"
+   ]
+  },
+  {
+   "clave": "cuatro-caballos",
+   "label": "Apertura de los cuatro caballos",
+   "grupo": "Apertura de los cuatro caballos",
+   "total": 1,
+   "actividades": [
+    "aperturas"
+   ]
+  },
+  {
+   "clave": "gambito-danes",
+   "label": "Gambito danés",
+   "grupo": "Apertura del centro",
+   "total": 1,
+   "actividades": [
+    "aperturas"
+   ]
+  },
+  {
+   "clave": "berlin",
+   "label": "Defensa Berlín contra la española",
+   "grupo": "Apertura española",
+   "total": 1,
+   "actividades": [
+    "aperturas"
+   ]
+  },
+  {
+   "clave": "inglesa-simetrica",
+   "label": "Inglesa simétrica",
+   "grupo": "Apertura inglesa",
+   "total": 1,
+   "actividades": [
+    "aperturas"
+   ]
+  },
+  {
+   "clave": "benko",
+   "label": "Gambito Benko",
+   "grupo": "Defensa Benoni",
+   "total": 1,
+   "actividades": [
+    "aperturas"
+   ]
   }
  ],
  "estudio": [
@@ -1935,6 +1998,202 @@
   {
    "clave": "mate-alfil-caballo",
    "label": "Mate de alfil y caballo",
+   "grupo": "Finales",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "siciliana-abierta",
+   "label": "Siciliana abierta",
+   "grupo": "Aperturas",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "smith-morra",
+   "label": "Gambito Smith-Morra",
+   "grupo": "Aperturas",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "cuatro-caballos",
+   "label": "Los cuatro caballos",
+   "grupo": "Aperturas",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "gambito-danes",
+   "label": "Gambito danés",
+   "grupo": "Aperturas",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "berlin",
+   "label": "Defensa Berlín",
+   "grupo": "Defensas",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "inglesa-simetrica",
+   "label": "Inglesa simétrica",
+   "grupo": "Defensas",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "benko",
+   "label": "Gambito Benko",
+   "grupo": "Defensas",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "pieza-colgada",
+   "label": "La pieza colgada",
+   "grupo": "Táctica",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "defensa",
+   "label": "Cómo defenderse",
+   "grupo": "Táctica",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "sacrificio-calidad",
+   "label": "El sacrificio de calidad",
+   "grupo": "Táctica",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "jugada-tranquila",
+   "label": "La jugada tranquila",
+   "grupo": "Táctica",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "mate-arabe",
+   "label": "El mate árabe",
+   "grupo": "Táctica",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "mate-hombreras",
+   "label": "El mate de las hombreras",
+   "grupo": "Táctica",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "mate-morphy",
+   "label": "El mate de Morphy",
+   "grupo": "Táctica",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "armar-un-plan",
+   "label": "Cómo armar un plan",
+   "grupo": "Conceptos",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "torre-en-septima",
+   "label": "La torre en séptima",
+   "grupo": "Conceptos",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "enroques-opuestos",
+   "label": "Enroques opuestos",
+   "grupo": "Conceptos",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "mayoria-de-peones",
+   "label": "La mayoría de peones",
+   "grupo": "Conceptos",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "casillas-debiles",
+   "label": "Las casillas débiles de un color",
+   "grupo": "Conceptos",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "peones-colgantes",
+   "label": "Los peones colgantes",
+   "grupo": "Conceptos",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "jugadas-candidatas",
+   "label": "Las jugadas candidatas",
+   "grupo": "Conceptos",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "el-reloj",
+   "label": "El reloj",
+   "grupo": "Conceptos",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "peon-pasado-alejado",
+   "label": "El peón pasado alejado",
+   "grupo": "Finales",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "torre-contra-peon",
+   "label": "Torre contra peón",
+   "grupo": "Finales",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "ruptura-tres-peones",
+   "label": "La ruptura de los tres peones",
+   "grupo": "Finales",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "cortar-al-rey",
+   "label": "Cortar al rey con la torre",
+   "grupo": "Finales",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "caballo-contra-peon",
+   "label": "Caballo contra peón",
+   "grupo": "Finales",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "alfil-contra-caballo",
+   "label": "Alfil contra caballo",
    "grupo": "Finales",
    "total": 1,
    "actividades": []

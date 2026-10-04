@@ -491,6 +491,66 @@ const COMPRUEBAN = {
     if (tablero(g) !== tablero(g0)) return "después del triángulo las piezas no volvieron a su lugar";
     return g.turn() !== g0.turn() ? null : "volvió la misma posición con el mismo turno: eso no pierde ningún tiempo";
   },
+
+  // ---- de acá para abajo, los que trajo la cuarta tanda ----
+
+  // El bando que mueve está en jaque: la ficha enseña a elegir entre las
+  // respuestas, y si no hay jaque no hay nada que elegir.
+  enJaque(F, g0) {
+    return g0.in_check() ? null : "no hay jaque: no hay respuestas al jaque que comparar";
+  },
+
+  // La torre en séptima: en la séptima fila contando desde su lado, con el rey
+  // rival encerrado en la octava o con al menos dos peones rivales en esa fila.
+  septima(F, g0, casilla) {
+    const torre = g0.get(casilla);
+    if (!torre || torre.type !== "r") return `en ${casilla} no hay una torre`;
+    const fila = torre.color === "w" ? 7 : 2, fondo = torre.color === "w" ? 8 : 1;
+    if (+casilla[1] !== fila) return `la torre de ${casilla} no está en la séptima`;
+    let peones = 0, reyAtras = false;
+    g0.SQUARES.forEach((sq) => {
+      const p = g0.get(sq);
+      if (!p || p.color === torre.color) return;
+      if (p.type === "p" && +sq[1] === fila) peones += 1;
+      if (p.type === "k" && +sq[1] === fondo) reyAtras = true;
+    });
+    return reyAtras || peones >= 2 ? null : "no encierra al rey ni ataca peones: estar en la séptima no le sirve de nada";
+  },
+
+  // Enroques opuestos: un rey en cada flanco (columnas a-c contra f-h).
+  enroquesOpuestos(F, g0) {
+    const col = {};
+    g0.SQUARES.forEach((sq) => { const p = g0.get(sq); if (p && p.type === "k") col[p.color] = sq.charCodeAt(0) - 97; });
+    const lado = (c) => (c <= 2 ? "dama" : c >= 5 ? "rey" : "centro");
+    return lado(col.w) !== "centro" && lado(col.b) !== "centro" && lado(col.w) !== lado(col.b)
+      ? null : "los reyes no están enrocados en flancos distintos";
+  },
+
+  // Mayoría de peones en un flanco (dama: columnas a-d; rey: e-h), con el
+  // material de peones parejo en el tablero: la ventaja es dónde están, no
+  // cuántos son.
+  mayoria(F, g0, opt) {
+    const cuenta = { w: { dama: 0, rey: 0 }, b: { dama: 0, rey: 0 } };
+    g0.SQUARES.forEach((sq) => {
+      const p = g0.get(sq);
+      if (p && p.type === "p") cuenta[p.color][sq.charCodeAt(0) - 97 <= 3 ? "dama" : "rey"] += 1;
+    });
+    const rival = opt.color === "w" ? "b" : "w";
+    const total = (c) => cuenta[c].dama + cuenta[c].rey;
+    if (total(opt.color) !== total(rival)) return `los peones no están parejos (${total("w")} contra ${total("b")}): la ventaja sería el peón de más`;
+    return cuenta[opt.color][opt.flanco] > cuenta[rival][opt.flanco]
+      ? null : `en el flanco de ${opt.flanco} no tiene más peones que el rival`;
+  },
+
+  // Sin el alfil de un color de casilla: lo que deja débiles esas casillas.
+  sinAlfil(F, g0, opt) {
+    const claro = (sq) => ((sq.charCodeAt(0) - 97) + (+sq[1] - 1)) % 2 === 1;
+    const tiene = g0.SQUARES.some((sq) => {
+      const p = g0.get(sq);
+      return p && p.type === "b" && p.color === opt.color && claro(sq) === (opt.casillas === "claras");
+    });
+    return tiene ? `todavía tiene el alfil de las casillas ${opt.casillas}` : null;
+  },
 };
 
 FICHAS.filter((F) => F.comprueba).forEach((F) => {
