@@ -337,7 +337,81 @@ function jugadasDe(F) {
     igual("los cinco bloques y el diagrama sí se imprimen",
       await page.evaluate(() => [...document.querySelectorAll(".caja")].every((c) => c.checkVisibility())
         && document.querySelector(".diagrama").checkVisibility()), "true");
+    igual("en el papel es un mapa: la idea a lo ancho y el tablero EN MEDIO de los bloques",
+      await page.evaluate(() => {
+        const r = (s) => document.querySelector(s).getBoundingClientRect();
+        const t = r("#tablero"), i = r(".caja-idea"), c1 = r(".caja-1"), c2 = r(".caja-2");
+        return i.bottom <= t.top && c1.right <= t.left && c2.left >= t.right;
+      }), "true");
+    igual("una flecha de su color por bloque, trazada con la maqueta de la hoja",
+      await page.evaluate(() => document.querySelectorAll(".mapa-lineas path[marker-end]").length), 5);
+    igual("el sello de Ajedrez Integral de marca de agua: se ve en el papel y ya cargó",
+      await page.evaluate(() => {
+        const img = document.querySelector(".marca-agua img");
+        return img.checkVisibility() && img.complete && img.naturalWidth > 0 && /logo-oscar-angulo-marca\.png$/.test(img.src);
+      }), "true");
+    igual("en la esquina, el logo del encabezado (sin academia, el de Ajedrez Integral)",
+      await page.evaluate(() => {
+        const img = document.querySelector("#logo-esquina img");
+        return !!img && img.checkVisibility() && img.src === document.querySelector("#marca-enlace img").src;
+      }), "true");
     await page.emulateMedia({ media: "screen" });
+    igual("en la pantalla no hay marca de agua ni logo de esquina",
+      await page.evaluate(() => [".marca-agua", "#logo-esquina"].map((s) => document.querySelector(s).checkVisibility())), [false, false]);
+
+    console.log("\n=== El logo de la esquina es el de la academia ===");
+    // js/marca-academia.js cambia el encabezado cuando llega la marca: la
+    // esquina lo sigue, con logo o, si la academia no tiene, con su nombre.
+    igual("con logo de academia, la esquina pone ESE logo",
+      await page.evaluate(async () => {
+        const enlace = document.getElementById("marca-enlace");
+        enlace.innerHTML = '<span><img src="/img/logo-oscar-angulo.png" alt=""><span class="font-serif">ADAPZ</span></span>';
+        await new Promise((r) => setTimeout(r, 50));
+        const img = document.querySelector("#logo-esquina img");
+        return !!img && /logo-oscar-angulo\.png$/.test(img.src);
+      }), "true");
+    igual("sin logo, la esquina pone el nombre de la academia",
+      await page.evaluate(async () => {
+        const enlace = document.getElementById("marca-enlace");
+        enlace.innerHTML = '<span><span aria-hidden="true">♟️</span><span class="font-serif">CCDR San José</span></span>';
+        await new Promise((r) => setTimeout(r, 50));
+        const e = document.getElementById("logo-esquina");
+        return !e.querySelector("img") && e.textContent;
+      }), "CCDR San José");
+
+    console.log("\n=== En el papel, la posición que cuenta el pie ===");
+    // En pantalla abre en la salida; impresa, una apertura con las piezas en
+    // su casilla de siempre no dice nada. Al imprimir va al final de la línea
+    // y al terminar vuelve.
+    const jugadasF1 = jugadasDe(F1);
+    await page.evaluate(() => window.dispatchEvent(new Event("beforeprint")));
+    igual("al imprimir, el tablero muestra el final de la línea",
+      ordenado(await page.evaluate(LEER_TABLERO)), ordenado(tableroEsperado(jugadasF1, jugadasF1.length)));
+    await page.evaluate(() => window.dispatchEvent(new Event("afterprint")));
+    igual("después de imprimir vuelve a la posición de salida",
+      ordenado(await page.evaluate(LEER_TABLERO)), ordenado(tableroEsperado(jugadasF1, 0)));
+
+    console.log("\n=== Cada ficha cabe en UNA hoja, carta y A4 ===");
+    // Antes el tablero se partía entre dos hojas y las coordenadas de afuera
+    // empujaban una segunda en blanco. Se imprime de verdad (PDF) y se cuentan
+    // las hojas; y que las letras de las columnas salgan en el papel.
+    const hojas = (pdf) => (pdf.toString("latin1").match(/\/Type\s*\/Page[^s]/g) || []).length;
+    // Sin esto el PDF sale con los estilos de pantalla: arriba se emuló «screen».
+    await page.emulateMedia({ media: null });
+    const deMas = [];
+    let sinLetras = 0;
+    for (const F of ESTUDIO) {
+      await page.goto(BASE + "/entreno/estudio.html?ficha=" + F.id, { waitUntil: "networkidle" });
+      await page.waitForSelector("#ficha-vista", { state: "visible", timeout: 10000 });
+      for (const format of ["Letter", "A4"]) {
+        const n = hojas(await page.pdf({ format }));
+        if (n !== 1) deMas.push(F.id + " (" + format + ": " + n + ")");
+      }
+      const letras = await page.evaluate(() => [...document.querySelectorAll(".coord-columna")].map((e) => e.textContent).join(""));
+      if (letras !== "abcdefgh") sinLetras += 1;
+    }
+    igual("las " + ESTUDIO.length + " fichas, en una sola hoja", deMas.join(", ") || "todas", "todas");
+    igual("con las letras de las columnas debajo del tablero", sinLetras, 0);
 
     igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
     await ctx.close();
