@@ -38,6 +38,12 @@ function escuchadas() {
     if (!/postgres_changes/.test(src)) continue;
     const nombres = new Set();
     for (const m of src.matchAll(/table:\s*["']([a-z_0-9]+)["']/g)) nombres.add(m[1]);
+    /* La escucha de js/sala-juego.js recibe la tabla como opción
+       (SalaJuego.suscribir(id, cb, { tabla: "relevos" })): esa página la
+       escucha aunque el `postgres_changes` esté escrito en sala-juego.js. */
+    if (/SalaJuego\.suscribir\(/.test(src)) {
+      for (const m of src.matchAll(/tabla:\s*["']([a-z_0-9]+)["']/g)) nombres.add(m[1]);
+    }
     const listas = [
       ...src.matchAll(/for\s*\(\s*const\s+table\s+of\s*\[([^\]]*)\]/g),
       ...src.matchAll(/\[([^\]]*)\]\s*\.forEach\(\s*\(?\s*table\b/g),

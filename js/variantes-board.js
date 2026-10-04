@@ -10,6 +10,8 @@
  *   myColor           "w" | "b" (los espectadores miran con blancas abajo)
  *   interactive       si este usuario puede mover ahora
  *   hidePieces        Ciegas: no dibuja piezas (solo casillas y coordenadas)
+ *   ambosColores      mueve el bando al que le toca, sea cual sea (La partida
+ *                     perdida: una sola persona juega las dos partes)
  *   onMove(info)      { san, fen, gameOver, result, from, to }
  *   onPromotionNeeded(from, to, cb)  cb(pieza | null)
  */
@@ -39,6 +41,7 @@
       this.flipped = this.myColor === "b";
       this.interactive = !!opts.interactive;
       this.hidePieces = !!opts.hidePieces;
+      this.ambosColores = !!opts.ambosColores;
       this.onMove = opts.onMove || function () {};
       this.onPromotionNeeded = opts.onPromotionNeeded || null;
       this.selected = null;
@@ -51,7 +54,7 @@
     setInteractive(v) { this.interactive = !!v; this.render(); }
     setHidePieces(v) { this.hidePieces = !!v; this.render(); }
     setLastMove(m) { this.lastMove = m || null; this.render(); }
-    _canActNow() { return this.interactive && this.engine.turn() === this.myColor; }
+    _canActNow() { return this.interactive && (this.ambosColores || this.engine.turn() === this.myColor); }
 
     _onSquareClick(square) {
       if (!this._canActNow()) return;
@@ -70,7 +73,7 @@
         }
       }
       const p = this.engine.get(square);
-      if (p && p.color === this.myColor) { this.selected = square; this.render(); }
+      if (p && p.color === (this.ambosColores ? this.engine.turn() : this.myColor)) { this.selected = square; this.render(); }
     }
 
     _apply(from, to, promotion) {
