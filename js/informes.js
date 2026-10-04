@@ -3582,6 +3582,15 @@ function areasFlojasArbitraje(fila) {
                 </div>
                 </details>
 
+                ${conDiagnostico.length >= 2 ? `<details class="group mt-7" id="comparar-alumnos">
+                <summary class="cursor-pointer list-none flex items-center justify-between gap-4">
+                    <h3 class="font-serif font-bold text-brand-800 dark:text-white inline">Comparar alumnos</h3>
+                    <span class="text-accent-700 dark:text-accent-400 group-open:rotate-45 transition-transform text-xl leading-none shrink-0" aria-hidden="true">+</span>
+                </summary>
+                <p class="text-xs text-brand-450 dark:text-brand-350 mt-2 mb-3">Dos o tres alumnos lado a lado, área por área: para armar grupos de nivel o parejas de práctica.</p>
+                <div id="comparar-alumnos-cuerpo"></div>
+                </details>` : ""}
+
                 ${pendientes.length ? (() => {
                     /* El nombre lo escribe el alumno (ver «El nombre de un alumno
                        es texto ajeno»): acá se pintaba CRUDO. Es el único sitio de
@@ -3637,6 +3646,8 @@ function areasFlojasArbitraje(fila) {
                     masPend.textContent = abierto ? "Ver solo los primeros" : `Ver los ${pendientes.length}`;
                 });
             }
+
+            if (window.CompararAlumnos) CompararAlumnos.montar(contenedor.querySelector("#comparar-alumnos-cuerpo"), conDiagnostico, { escapar: escVis });
 
             // Los nombres llevan al informe completo de ese alumno.
             contenedor.querySelectorAll("[data-alumno]").forEach((btn) => {

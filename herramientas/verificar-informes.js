@@ -1998,6 +1998,55 @@ async function pruebaAntesYAhora(browser) {
   await page.close();
 }
 
+/* «Comparar alumnos» (js/comparar-alumnos.js): dos de entrada, hasta tres,
+   cada barra con su número escrito y la leyenda con el nombre (el color nunca
+   va solo), y la frase de dónde más se separan. */
+async function pruebaComparar(browser) {
+  console.log("\n=== Comparar alumnos ===");
+  const { page, errores } = await abrir(browser, {
+    rpc: {
+      informes_resumen_alumnos: [ANA, BRUNO, CARLA],
+      informes_diagnosticos_alumnos: [
+        { student_id: "a-1", detalle: diagnosticoCon(90, 20), fecha: "2026-09-10T12:00:00Z", a_medias_pregunta: null, a_medias_fecha: null },
+        { student_id: "a-2", detalle: diagnosticoCon(20, 90), fecha: "2026-09-11T12:00:00Z", a_medias_pregunta: null, a_medias_fecha: null },
+        { student_id: "a-3", detalle: diagnosticoCon(50, 50), fecha: "2026-09-12T12:00:00Z", a_medias_pregunta: null, a_medias_fecha: null },
+      ],
+      informes_totales: { clases_cerradas: 0, preguntas: 0, partidas: 0 },
+    },
+    tablas: { profiles: [{ id: "prof-1", role: "profesor", is_admin: false, full_name: "Karina", email: "k@x.cr" }], training_plans: [] },
+  }, "prof-1");
+  await page.waitForSelector("#comparar-alumnos", { state: "attached", timeout: 15000 }).catch(() => {});
+  await page.evaluate(() => { const d = document.getElementById("comparar-alumnos"); if (d) { d.open = true; d.scrollIntoView(); } });
+  const leer = () => page.evaluate(() => {
+    const c = document.getElementById("comparar-alumnos-cuerpo");
+    return {
+      marcadas: [...c.querySelectorAll("[data-comparar-casillas] input")].map((i) => [i.parentElement.textContent.trim(), i.checked, i.disabled]),
+      leyenda: [...c.querySelectorAll("ul li")].map((li) => li.textContent.replace(/\s+/g, " ").trim()),
+      areas: c.querySelectorAll("[data-comparar-area]").length,
+      barrasPorArea: [...c.querySelectorAll("[data-comparar-area]")].map((a) => a.querySelectorAll(".rounded-r.h-full").length),
+      numeros: [...c.querySelectorAll("[data-comparar-area='finales'] .tabular-nums")].map((x) => x.textContent.replace(/\s+/g, " ").trim()),
+      resumen: (c.querySelector("[data-comparar-resumen]") || {}).textContent,
+      seVe: c.checkVisibility(),
+    };
+  });
+  let v = await leer();
+  const nombres = v.marcadas.map((m) => m[0]);
+  igual("de entrada, los dos primeros marcados", v.marcadas.map((m) => m[1]), [true, true, false]);
+  igual("la leyenda dice quién es cada color, con su fuerza y su nivel", v.leyenda.length === 2 && v.leyenda.every((t) => /^.+ · ≈\d+ · .+$/.test(t)), true);
+  igual("todas las áreas, con una barra por alumno", [v.areas > 0, v.barrasPorArea.every((n) => n === 2)], [true, true]);
+  igual("cada barra con su número escrito (la nota y el porcentaje)", v.numeros.length === 2 && v.numeros.every((t) => /: \d+ \(\d+ %\)$/.test(t)), true);
+  igual("dice dónde más se separan, con los dos números", /^Donde más se separan: .+ \(.+ \d+, .+ \d+\)\.$/.test(v.resumen || ""), true);
+  await page.check("#comparar-alumnos-cuerpo [data-comparar-casillas] label:nth-child(3) input");
+  v = await leer();
+  igual("con tres, una barra más por área", v.barrasPorArea.every((n) => n === 3), true);
+  await page.uncheck("#comparar-alumnos-cuerpo [data-comparar-casillas] label:nth-child(1) input");
+  await page.uncheck("#comparar-alumnos-cuerpo [data-comparar-casillas] label:nth-child(2) input");
+  igual("con uno solo, pide otro", await page.evaluate(() => document.querySelector("#comparar-alumnos-cuerpo [data-comparar-cuerpo]").textContent.trim()), "Elige al menos dos para compararlos.");
+  igual("los nombres son los de los alumnos con diagnóstico", nombres.slice().sort(), ["Ana Rojas", "Bruno Mena", "Carla Soto"]);
+  if (errores.length) { console.log("  ✗ errores en la página: " + errores.join(" | ")); fallos += 1; }
+  await page.close();
+}
+
 (async () => {
   const browser = await chromium.launch({ executablePath: CHROME });
   try {
@@ -2009,6 +2058,7 @@ async function pruebaAntesYAhora(browser) {
     await pruebaAlumno(browser);
     await pruebaCertificados(browser);
     await pruebaAntesYAhora(browser);
+    await pruebaComparar(browser);
     await pruebaCompartirPlanes(browser);
     await pruebaNombreAjeno(browser);
     await pruebaPdfVisitante(browser);
