@@ -164,6 +164,13 @@
             const { data } = await sb.auth.getSession();
             const yo = data && data.session ? data.session.user.id : null;
             if (window.Trofeos) Trofeos.montarLectura(document.getElementById("trofeos-body"), { sb, alumnoId: yo });
+            // «Tu mes en ajedrez» (js/tu-mes.js): el mes de ?mes=AAAA-MM o el de hoy.
+            if (window.TuMes) {
+                const listo = TuMes.montar(document.getElementById("mes-body"));
+                // La página se destapa después de cargar: el navegador ya no
+                // baja solo hasta #mes cuando se llega desde «Hoy te toca».
+                if (location.hash === "#mes") Promise.resolve(listo).then(() => document.getElementById("mes").scrollIntoView());
+            }
         }
 
         // Igual que Entrenamiento: exige sesión iniciada en el sitio, porque

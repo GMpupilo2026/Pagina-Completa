@@ -3025,3 +3025,38 @@ enroques de B saltan las 3 que corresponden.
   miércoles y un domingo, ponerla, cambiarla, quitarla, cumplida y una meta
   tocada desde la consola. Contando la semana desde el domingo en vez del
   lunes, salta.
+
+## Tu mes en ajedrez
+
+> Vive en `js/tu-mes.js`. Lo pinta `logros.html` (sección `#mes`) y lo anuncia
+> «Hoy te toca» los primeros días de cada mes.
+
+- **Qué es**: lo que el alumno entrenó en un mes, contado por la base, con un
+  texto para compartir con la familia. En Logros se elige el mes (de hoy hacia
+  atrás, hasta 24 meses; nunca uno que todavía no llega) y «📤 Compartir mi
+  mes» usa el compartir del celular o, si no hay, lo copia y avisa. No se
+  manda a ningún lado: lo comparte el alumno.
+- **La cuenta es `entreno_mi_mes(alumno, p_mes)`** (migración
+  `20261004051405`, y `20261004051442` para que `alumno` en null sea «yo»,
+  como al omitirlo). `SECURITY INVOKER`: la RLS de `training_progress` decide,
+  y solo lee dos meses de UN alumno. Meses y días de Costa Rica; un día cuenta
+  con 5 ejercicios, el mismo corte de la racha, y `racha_mejor` es la tirada
+  más larga dentro del mes. Comprobado impersonando a un alumno: su
+  septiembre dio 876 ejercicios en 7 días (lo mismo que la cuenta directa), y
+  el de otro alumno, todo en cero.
+- **Cada número dice lo que es, y lo que no hay no se dice**: sin ejercicios
+  que digan cómo salieron no hay porcentaje de limpios, sin mes anterior lo
+  dice («este es el primero»), y un mes vacío no ofrece compartir. Las líneas
+  no dicen «tú» ni «él», porque las mismas sirven en pantalla y para la
+  familia. Lo más entrenado usa los nombres de `js/tiempo-secciones.js`. Ahí
+  falta `tactica` (sale «Tactica»); agregarla pide desplegar también
+  `informes-encargados`, que tiene la misma tabla (lo vigila
+  `verificar-tiempo-secciones.js`), y queda para un cambio aparte.
+- **En «Hoy te toca», del día 1 al 7**: «📅 Tu septiembre en ajedrez: 876
+  ejercicios en 7 días. Míralo y compártelo →» a `logros.html?mes=…#mes`. Solo
+  si el mes que pasó tuvo algo; después del día 7 ni siquiera se le pregunta a
+  la base. Logros baja hasta `#mes` a mano, porque la página se destapa
+  después de cargar.
+- Lo prueba `verificar-tu-mes.js`, con el reloj del navegador fijo (en hora de
+  Costa Rica: el 4 a las 8 p. m., en UTC ya es el 5). Dejando que el aviso
+  salga todo el mes, o abriendo un mes del futuro, salta.

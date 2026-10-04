@@ -1389,6 +1389,50 @@ section:has(> .proyector-contenido) > #status-banner:empty { padding: 0; margin:
   .colores-con-ayuda:focus-within .ayuda-colores:not(.hidden) { display: block; }
 }
 
+/* ===== El certificado de un curso (certificado.html, js/certificado.js) =====
+   Un papel: siempre claro (también en modo oscuro), apaisado como una hoja A4
+   y con un marco doble. Al imprimir sale solo el papel, en su propia página
+   con nombre (@page certificado): así la hoja apaisada no cambia cómo se
+   imprime ninguna otra página del sitio. */
+.certificado { aspect-ratio: 297 / 210; max-width: 100%; }
+.certificado-marco {
+  position: absolute; inset: 0.9rem; padding: clamp(1rem, 3.5vw, 2.5rem);
+  border: 3px double rgb(var(--c-brand-800, 36 59 83)); border-radius: 0.75rem;
+  display: flex; flex-direction: column; justify-content: space-between;
+}
+.certificado-logo { height: clamp(2.5rem, 7vw, 4.5rem); width: auto; object-fit: contain; }
+.certificado-marca { padding: 0.4rem 0.9rem; font-size: clamp(0.9rem, 2.2vw, 1.4rem); }
+.certificado-marca-img { height: clamp(1.75rem, 4.5vw, 3rem); width: auto; }
+.certificado-qr { width: clamp(4rem, 10vw, 6rem); height: clamp(4rem, 10vw, 6rem); }
+.certificado-nombre { border-bottom: 2px solid rgb(var(--c-accent-500, 217 160 41)); display: inline-block; padding: 0 1rem 0.25rem; }
+/* Un certificado anulado lo dice encima, cruzado: no se puede pasar por bueno. */
+.certificado-anulado {
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  font-size: clamp(3rem, 12vw, 9rem); font-weight: 800; letter-spacing: 0.15em;
+  color: rgb(185 28 28 / 0.35); transform: rotate(-18deg); pointer-events: none;
+}
+/* En un celular angosto el papel no cabe apaisado: se alarga hacia abajo. */
+@media (max-width: 640px) {
+  .certificado { aspect-ratio: auto; }
+  .certificado-marco { position: relative; inset: auto; margin: 0.75rem; }
+}
+@page certificado { size: A4 landscape; margin: 0; }
+@media print {
+  body:has(#certificado) { background: #fff !important; }
+  body:has(#certificado) .no-imprimir { display: none !important; }
+  body:has(#certificado) main { max-width: none !important; padding: 0 !important; margin: 0 !important; }
+  .certificado {
+    page: certificado; width: 297mm; height: 210mm; aspect-ratio: auto;
+    border-radius: 0 !important; box-shadow: none !important;
+    -webkit-print-color-adjust: exact; print-color-adjust: exact;
+  }
+  .certificado-marco { position: absolute; inset: 10mm; margin: 0; padding: 12mm; }
+  .certificado-logo { height: 22mm; }
+  .certificado-marca { font-size: 13pt; }
+  .certificado-marca-img { height: 14mm; }
+  .certificado-qr { width: 26mm; height: 26mm; }
+}
+
 /* ===== La navegación entre páginas (ver «La navegación se siente
    inmediata» en docs/decisiones/sitio-e-infraestructura.md) ===== */
 

@@ -315,11 +315,79 @@
                         nota.appendChild(a);
                     }
                     wrap.appendChild(nota);
+                    if (c.total && c.hechos >= c.total) wrap.appendChild(cursoCertificado(propio ? profile.id : studentId, c, propio));
                     if (!propio && studentId && c.total) wrap.appendChild(cursoUnlockControl(studentId, c, unlocksPorCurso));
                     body.appendChild(wrap);
                 });
             }
             box.classList.remove("hidden");
+        }
+
+        /* El certificado de un curso completo (ver «Los certificados de curso» en
+           docs/decisiones/cursos-y-material.md). Si ya lo tiene: «Ver certificado».
+           Si no, el profesor (o administración) lo da con «Dar certificado»; el
+           alumno ve que falta que su profe lo confirme. Quién puede darlo y que el
+           curso esté completo lo decide la base (emitir_certificado), no este botón. */
+        function cursoCertificado(alumnoId, c, propio) {
+            const caja = document.createElement("div");
+            caja.className = "mt-2 flex items-center gap-2 flex-wrap text-xs";
+            const msg = document.createElement("span");
+            msg.className = "text-brand-500 dark:text-brand-300";
+            msg.setAttribute("role", "status");
+            const verEnlace = (codigo) => {
+                const a = document.createElement("a");
+                a.href = "certificado.html?c=" + encodeURIComponent(codigo);
+                a.target = "_blank";
+                a.rel = "noopener";
+                a.className = "inline-flex items-center gap-1 font-semibold text-accent-700 dark:text-accent-400 hover:underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-500";
+                const ic = document.createElement("span"); ic.setAttribute("aria-hidden", "true"); ic.textContent = "🎓";
+                a.append(ic, "Ver certificado", Object.assign(document.createElement("span"), { className: "sr-only", textContent: " (se abre en otra pestaña)" }));
+                return a;
+            };
+            const pintar = (codigo) => {
+                caja.replaceChildren();
+                if (codigo) {
+                    caja.appendChild(verEnlace(codigo));
+                    if (!propio && puedeMandarTareas()) {
+                        const anular = document.createElement("button");
+                        anular.type = "button";
+                        anular.className = "text-brand-500 dark:text-brand-300 hover:underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-500";
+                        anular.textContent = "Anular";
+                        anular.addEventListener("click", async () => {
+                            if (!(await Avisos.confirmar("Deja de valer y lo dice en el mismo enlace. Después se puede dar uno nuevo.", { titulo: `¿Anular el certificado de «${c.titulo}»?`, aceptar: "Anular el certificado", peligro: true }))) return;
+                            const { error } = await sb.rpc("anular_certificado", { p_codigo: codigo });
+                            if (error) { msg.textContent = "No se pudo anular: " + error.message; return; }
+                            pintar(null);
+                            msg.textContent = "Certificado anulado.";
+                        });
+                        caja.appendChild(anular);
+                    }
+                } else if (!propio && puedeMandarTareas()) {
+                    const dar = document.createElement("button");
+                    dar.type = "button";
+                    dar.className = "inline-flex items-center gap-1 bg-brand-800 hover:bg-brand-900 dark:bg-brand-700 dark:hover:bg-brand-600 text-white font-semibold px-2.5 py-1 rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
+                    const ic = document.createElement("span"); ic.setAttribute("aria-hidden", "true"); ic.textContent = "🎓";
+                    dar.append(ic, "Dar certificado");
+                    dar.addEventListener("click", async () => {
+                        if (!(await Avisos.confirmar("Lleva el logo de su academia y el de Ajedrez Integral, y un código para que cualquiera compruebe que es auténtico.", { titulo: `¿Darle el certificado de «${c.titulo}»?`, aceptar: "Dar el certificado" }))) return;
+                        dar.disabled = true;
+                        const { data, error } = await sb.rpc("emitir_certificado", { p_alumno: alumnoId, p_curso: c.slug });
+                        if (error || !data) { dar.disabled = false; msg.textContent = "No se pudo dar: " + (error ? error.message : "sin respuesta"); return; }
+                        pintar(String(data));
+                        msg.textContent = "Certificado dado. El alumno ya lo ve en sus cursos.";
+                    });
+                    caja.appendChild(dar);
+                } else if (propio) {
+                    msg.textContent = "🎓 Cuando tu profe lo confirme, aquí sale tu certificado.";
+                }
+                caja.appendChild(msg);
+            };
+            caja.textContent = "";
+            // El certificado vigente de este curso, si hay (la RLS deja ver los
+            // propios, los de sus alumnos y, a administración, todos).
+            sb.from("certificados").select("codigo").eq("student_id", alumnoId).eq("curso", c.slug).is("anulado_at", null).limit(1)
+                .then(({ data }) => pintar(data && data[0] ? data[0].codigo : null), () => pintar(null));
+            return caja;
         }
 
         // Control "Desbloquear hasta el tema N": le salta a ESTE alumno el orden de
