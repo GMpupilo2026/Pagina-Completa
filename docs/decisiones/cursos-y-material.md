@@ -761,3 +761,55 @@ sistema y no decían nada del curso.
   de la dama.
 - El `alt` de cada diagrama **dice qué se ve**, no "diagrama de ajedrez": es
   información del curso, no decoración.
+
+## Los certificados de curso
+
+El alumno termina **todas** las lecciones de un curso y su profesor (o
+administración) le da el certificado desde Informes. Lleva el logo de la
+academia del alumno y la marca de Ajedrez Integral, y un código para que
+cualquiera compruebe, sin cuenta, que es auténtico.
+
+- **Por qué hace falta el profesor**: el avance de un curso son filas que el
+  alumno escribe en `training_progress` (`activity = 'curso'`) y la base no
+  valida. El certificado es la palabra de la academia de que lo hizo, así que
+  hacen falta las dos cosas: el curso completo **y** el profe que lo confirma.
+- **La base sabe cuántas lecciones tiene cada curso**:
+  `interno.curso_lecciones`, contadas como las cuenta `js/curso-academia.js`
+  (un `<details>` de primer nivel por lección en `cursos/protegido/<slug>.html`).
+  El catálogo no sirve: en tres cursos su número no coincide con el real.
+  `verificar-certificados.js` compara la tabla de la migración con cada página;
+  si un curso suma una lección, hay que corregir la tabla con una migración
+  nueva, o nadie podría completarlo para la base (o se completaría antes).
+- **`certificados` es un acta**: guarda el nombre del alumno, el curso, quién lo
+  dio y la academia (nombre y logo) tal como eran ese día. No se reescribe ni
+  se borra: `anular_certificado` lo marca, y el mismo enlace lo dice («fue
+  anulado y ya no vale», cruzado encima y sin «Imprimir»). Uno vigente por
+  alumno y curso: lo garantiza el índice `certificados_uno_vigente`, y dar dos
+  veces devuelve el mismo código. Va en la bitácora de auditoría.
+- **Quién**: `emitir_certificado` y `anular_certificado` (SECURITY DEFINER)
+  piden `soy_profesor_de(alumno) or soy_admin()` envuelto en `coalesce`; la
+  tabla no tiene política de escritura. La leen el alumno, sus profesores y
+  administración (el conjunto de alumnos se arma una vez). La academia del
+  certificado es la del alumno; si es de varias, la que comparte con quien lo da.
+- **Comprobarlo sin cuenta**: `certificado.html?c=<código>`. El código son 10
+  caracteres al azar (como el enlace del diagnóstico); uno con otra forma ni se
+  le pregunta a la base. `certificado_publico(código)` devuelve solo lo que va
+  en el papel: ni el id del alumno ni su correo. Quien tenga el enlace ve el
+  nombre del alumno, igual que en un certificado impreso.
+- **La página es un papel**: blanco también en modo oscuro, apaisado, con un QR
+  que lleva al mismo enlace. «Imprimir o guardar en PDF» saca solo el papel, en
+  una hoja A4 apaisada (`@page certificado`, una página con nombre, para no
+  cambiar cómo se imprime el resto del sitio). La marca de Ajedrez Integral va
+  como en el encabezado (el caballo y el nombre sobre el azul): el caballo es
+  claro y sobre el papel blanco no se vería. `logo-completo-*.png` es la marca
+  personal de Oscar, no la del sitio.
+- **En Informes** (`cursoCertificado` en `js/informes.js`): con el curso
+  completo, el profe ve «🎓 Dar certificado» (con confirmación) y, si ya lo dio,
+  «Ver certificado» y «Anular». El alumno ve el suyo, o «Cuando tu profe lo
+  confirme, aquí sale tu certificado».
+- Lo prueban `verificar-certificados.js` (las lecciones de cada curso y la
+  página) y `pruebaCertificados` en `verificar-informes.js`. Probado también en
+  la base, impersonando roles y deshaciendo todo al final: anon no puede dar ni
+  leer la tabla; el alumno no se lo da a sí mismo; un profe ajeno, tampoco; con
+  el curso a medias, «lleva 1 de 20 lecciones»; completo, sale; otro alumno no
+  lo ve; anon lo comprueba con el código; queda en la bitácora; anulado, lo dice.
