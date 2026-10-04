@@ -1273,8 +1273,8 @@ la línea se programa para más adelante.
 ## Estudio: una ficha por idea, con su mapa y su posición
 
 `entreno/estudio.html` (tarjeta **"📚 Estudio"** en `clases.html` → grupo
-"Aprender") son 126 fichas de estudio: 22 aperturas, 22 defensas, 34 temas
-tácticos, 32 conceptos y 16 finales. Cada una es **una sola pantalla**: la idea principal
+"Aprender") son 152 fichas de estudio: 23 aperturas, 26 defensas, 40 temas
+tácticos, 39 conceptos y 24 finales. Cada una es **una sola pantalla**: la idea principal
 arriba, cuatro bloques alrededor de un nodo con la pieza, y abajo la posición
 que lo explica, recorrible jugada por jugada.
 
@@ -1496,6 +1496,44 @@ caballo contra peón, alfil contra caballo).
   `enroquesOpuestos`, `mayoria` y `sinAlfil` (sin el alfil de un color de
   casilla). Se rompieron a propósito y saltan.
 - El libro pasó a 136 páginas (el índice, a tres) y las cartas a 14 hojas.
+
+### La quinta tanda: de 126 a 152 fichas
+
+Entraron 26 fichas: 8 finales (peones ligados, oposición lejana, la
+fortaleza, torre contra alfil, torre contra caballo, dama contra torre,
+mate con rey y dos alfiles, alfil bueno contra alfil malo), 7 conceptos (el valor de las piezas,
+cómo atacar al rey enrocado, el peón retrasado, el bloqueo, la columna
+semiabierta, convertir la ventaja, la coordinación de las piezas), 6 tácticas
+(el ataque a f7, la coronación, los mates de los dos alfiles y de Damiano, el
+rey expuesto, el sacrificio en h6), 1 apertura (Stonewall) y 4 defensas
+(Najdorf, Winawer, moderna, Budapest).
+
+- **Cuatro líneas nuevas** en `js/aperturas-lineas.js` (61): Winawer, moderna,
+  Stonewall y Budapest. La Najdorf ya estaba como línea y le faltaba la ficha.
+  **La primera Stonewall regalaba la dama**: con el alfil negro en g4, Ce5
+  destapaba la diagonal g4-d1 (el motor dio +6 al negro). Se cambió el orden
+  de jugadas; chess.js no ve eso: las jugadas eran todas legales.
+- **La oposición lejana se buscó con el oráculo de rey y peón**: entre todas
+  las posiciones ganadas, las que tienen UNA sola jugada que gana, que es de
+  rey y deja a los reyes en la misma columna con un número impar de casillas
+  en medio. La de la ficha es Rf2, con cinco casillas entre f2 y f8.
+- **Dama contra torre no llegaba al +3 a profundidad 20** en la primera
+  posición (+2,95, aunque es teoría ganada): la de la ficha da mate en 9 y
+  `fichas-motor.js` lo confirma. Lo mismo con el final de alfiles del mismo
+  color: las tres posiciones probadas dan entre 0 y +0,4, así que la ficha
+  no promete resultado; lo que comprueba es que los alfiles sean del mismo
+  color y que el negro sea el malo.
+- **Damiano no tiene tema en Lichess**: el ejercicio se buscó por la figura
+  (dama que da mate en h7 sostenida por un peón en g6) y la ficha manda a
+  practicar «Mate en 1».
+- **Comprobaciones nuevas en `verificar-fichas.js`**: `lejana`, `cuenta` (el
+  material del diagrama, en peones), `retrasado` (sin vecinos a su altura o
+  atrás y la casilla de adelante atacada por un peón rival), `bloquea`,
+  `semiabierta` y `alfilesIguales`. Se rompieron a propósito y saltan.
+- **«Las casillas clave» se sacó antes de entrar**: ya es el subtítulo de «Rey
+  y peón contra rey», que las enseña. En su lugar entró torre contra caballo.
+  Antes de sumar una ficha, buscar el tema también en los subtítulos.
+- El libro pasó a 162 páginas y las cartas a 17 hojas.
 
 ### Lo demás que hace la página
 
