@@ -129,9 +129,14 @@ siempre: a ellos no se les cambia el tablero sin que lo pidan.
 - **La preferencia sigue siendo del navegador** (`piece_style_theme_v1`), así
   que la omisión se decide por cuenta y por navegador: `js/piece-style-themes.js`
   pregunta a la base (por `MiPerfil`, la única lectura de `profiles` de la
-  página) al cargar y, si toca, **escribe** `ilustrado` con el mismo
-  `setPreference()` de Configuración. Por eso la tarjeta sale marcada ahí, como
-  si la persona la hubiera elegido.
+  página) al cargar y, si toca, escribe `ilustrado` en **su propia clave**,
+  `piece_style_cuenta_v1`, que `getPreference()` usa solo cuando no hay nada
+  elegido a mano y el Modo Adaptado está apagado. La tarjeta sale marcada en
+  Configuración igual. Al principio se escribía con el mismo `setPreference()`
+  de Configuración, en `piece_style_theme_v1`: desde ahí contaba como elegido a
+  mano, y quien encendía después el Modo Adaptado seguía con las ilustradas en
+  vez del aro. Si en el mismo navegador entra otra cuenta a la que no le toca,
+  la clave se borra.
 - **Alumno «nuevo» es el que tiene `profiles.created_at` desde
   `CORTE_ALUMNOS`** (medianoche del 4/10 en Costa Rica, `2026-10-04T06:00:00Z`).
 - **Lo elegido a mano no se toca nunca**: con algo en `piece_style_theme_v1` no

@@ -1000,6 +1000,22 @@ los asientos) y su reloj corre según `room.turn`, el turno guardado. Además:
   pensado y la pantalla lo podía dar por eliminado. Ahora la bandera y el rey
   en piloto automático solo se resuelven cuando el tablero coincide con lo
   guardado (`game.turn === room.turn`).
+- **La rendición también vuelve a intentar.** Con la regla de la versión, una
+  rendición que se cruzaba con la jugada de otro (lo común con cuatro) no
+  encontraba la fila, y la pantalla decía «La partida ya había terminado: la
+  rendición no se registró» con la partida en juego. Ahora `persist()` devuelve
+  si quedó (`true`), si la sala había cambiado (`false`) o si la base dio error
+  (`null`), y la rendición se repite sobre la sala recién leída, como «Estoy
+  listo».
+- **Lo guardado rehace el tablero.** La jugada propia cambia el reloj de
+  `room` antes de guardarse; una relectura que llegaba en ese momento (el
+  reloj de 15 s, volver a la pestaña) traía la sala de antes, no era «la
+  misma» y se aplicaba: la jugada desaparecía del tablero aunque quedaba
+  guardada, y como su eco era igual a `room`, nada la traía de vuelta. Ahora,
+  al quedar, `game` se rehace desde la fila guardada.
+
+Los dos cruces los arma a mano `verificar-cuatro-escrituras.js`: en la prueba
+de carga casi nunca caen por azar.
 
 Y lo que cargaba a Realtime para todos:
 

@@ -135,9 +135,13 @@ window.VisionCuenta = (function () {
   /* ---------------------------------------------------------------- modo ciego */
 
   function ruta(pagina) { return RAIZ + pagina; }
+  // Con su .html: Cloudflare sirve las páginas sin la extensión (/sesion),
+  // y sin devolvérsela nunca coincidía con «sesion.html» ni con NO_ADAPTADAS
+  // (los atajos sacaban de la clase en vivo, y el aviso no salía nunca).
   function paginaActual() {
     var p = location.pathname.replace(/\/+$/, "/index.html");
-    return p.slice(p.lastIndexOf("/") + 1) || "index.html";
+    p = p.slice(p.lastIndexOf("/") + 1) || "index.html";
+    return /\.html$/.test(p) ? p : p + ".html";
   }
   /* Salir de la clase en vivo o de un examen tiene su propio camino (cierra la
      asistencia, congela el examen): ahí los atajos solo mueven el foco, nunca

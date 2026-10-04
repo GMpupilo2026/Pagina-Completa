@@ -509,6 +509,7 @@
             renderCursosReport(entreno, true);
             renderTiempo(profile.id, true, "");
             renderEvolucion(profile.id, true, "");
+            renderAntesYAhora(profile.id, true, "");
             renderDeberes(profile.id, true);
             renderPremios(profile.id, true);
             renderNotasDelAlumno(profile.id);
@@ -1124,6 +1125,7 @@
             renderCursosReport(entreno, false, name, studentId, unlocksPorCurso);
             renderTiempo(studentId, false, name);
             renderEvolucion(studentId, false, name);
+            renderAntesYAhora(studentId, false, name);
             renderDiagnosticoProfesor(studentId, name, entreno);
             renderDeberes(studentId, false);
             renderPremios(studentId, false);
@@ -1535,6 +1537,23 @@
             const semanas = await EvolucionAlumno.montar(sb, "evolucion-body", studentId, { propio, comparacion });
             // Sin curva y sin dos diagnósticos no hay nada que mirar acá.
             if (!semanas && !comparacion) panel.classList.add("hidden");
+        }
+
+        /* «Antes y ahora»: si sabe más, no solo si trabaja (ver
+           js/antes-y-ahora.js). Sin diagnóstico medido ni nada superado, el
+           bloque no se destapa, como «Cómo viene». */
+        async function renderAntesYAhora(studentId, propio, nombre) {
+            const panel = document.getElementById("antes-report");
+            if (!panel || !window.AntesYAhora) return;
+            tituloConEmoji("antes-title", "🌱", "Antes y ahora");
+            document.getElementById("antes-sub").textContent = propio
+                ? "Cuánto cambiaste: tu fuerza medida en cada diagnóstico y lo que antes fallabas y ahora te sale."
+                : "Si sabe más, no solo si trabaja: su fuerza medida en cada diagnóstico y lo que antes fallaba y ahora le sale.";
+            panel.classList.add("hidden");
+            try {
+                const n = await AntesYAhora.montar(sb, "antes-body", studentId, { propio, raiz: "" });
+                panel.classList.toggle("hidden", !n);
+            } catch (e) { console.error(e); }
         }
 
         /* Los diagnósticos anteriores salen de `training_progress` y no del

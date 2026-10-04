@@ -1931,6 +1931,73 @@ async function pruebaCertificados(browser) {
   await page.close();
 }
 
+/* «Antes y ahora» (js/antes-y-ahora.js). Lo que se rompe acá no da ningún
+   error: un «subiste» que no pasa el margen de la prueba, o un diagnóstico de
+   otra versión comparado con el de ahora, se leen perfecto y dicen algo falso.
+   Primero la lógica sin navegador; después, la página del alumno. */
+async function pruebaAntesYAhora(browser) {
+  console.log("\n=== Antes y ahora ===");
+  const AyA = require("../js/antes-y-ahora.js");
+  const diag = (fecha, version, elo, error, nivel) => ({ created_at: fecha, detail: { version, nivel_etiqueta: nivel, areas: {}, medicion: { elo, error, modelo: "elo-400" } } });
+  const viejo = { created_at: "2026-03-01T12:00:00Z", detail: { version: "3", areas: {}, porcentaje: 40 } };
+  const lista = AyA.fuerzas([diag("2026-09-26T12:00:00Z", "6", 1611, 67, "Intermedio"), viejo,
+    diag("2026-06-01T12:00:00Z", "5", 1200, 90, "Principiante"), diag("2026-08-01T12:00:00Z", "6", 1329, 84, "Principiante")]);
+  igual("sin medición (versiones viejas) no entra; del más viejo al más nuevo", lista.map((x) => x.elo).join(","), "1200,1329,1611");
+  const v = AyA.veredicto(lista, true);
+  igual("compara solo los de la misma versión, y dice que pasa el margen", [v.tipo, v.dif, v.margen].join(","), "sube,282,107");
+  igual("…y le habla de tú", /^Subiste 282 puntos: de 1329 a 1611/.test(v.texto), true);
+  igual("dentro del margen dice que todavía no se puede decir",
+    AyA.veredicto(AyA.fuerzas([diag("2026-08-01T12:00:00Z", "6", 1329, 84), diag("2026-09-01T12:00:00Z", "6", 1400, 67)]), false).tipo, "parejo");
+  igual("con el anterior de otra versión, no se comparan los números",
+    AyA.veredicto(AyA.fuerzas([diag("2026-06-01T12:00:00Z", "5", 1200, 90), diag("2026-09-01T12:00:00Z", "6", 1700, 67)]), false).tipo, "otra-version");
+  igual("con uno solo, no hay veredicto", AyA.veredicto(lista.slice(0, 1)), null);
+  const ficha = (ultimo, fuera, extra) => Object.assign({ facilidad: 2.5, intervalo: 7, repasos: 3, fallos: 2, vence: "2026-10-10", ultimo, limpiosSeguidos: fuera ? 3 : 1, fuera }, extra || {});
+  const COLAS = {
+    entreno_temas_repaso_v1: JSON.stringify({ "pin-001": ficha("2026-09-30T10:00:00Z", true, { tema: "pin" }), "pin-002": ficha("2026-10-01T10:00:00Z", false, { tema: "pin" }) }),
+    entreno_mates_repaso_v1: JSON.stringify({ "mate2-0330": ficha("2026-10-02T10:00:00Z", true, { category: "mate2" }) }),
+    entreno_finales_repaso_v1: "{roto",
+  };
+  const sup = AyA.superados(COLAS);
+  igual("solo lo que salió con tres limpios, lo más reciente primero (una cola rota no rompe nada)",
+    sup.map((x) => x.seccion + ":" + x.id).join(","), "Mates:mate2-0330,Ejercicios por tema:pin-001");
+  igual("cada uno con su nombre", sup.map((x) => AyA.nombreDe(x, { temas: { pin: "Clavada" } })).join(","), "Mate en 2,Clavada");
+
+  const ESTADO = Object.entries(COLAS).map(([key, raw]) => ({ student_id: "a-1", key, value: { raw } }))
+    .concat([{ student_id: "a-2", key: "entreno_tipos_repaso_v1", value: { raw: JSON.stringify({ "balanza:x": ficha("2026-10-03T10:00:00Z", true, { tipo: "balanza" }) }) } }]);
+  const DIAG_ANA = [diag("2026-08-01T12:00:00Z", "6", 1329, 84, "Principiante"), diag("2026-09-26T12:00:00Z", "6", 1611, 67, "Intermedio")]
+    .map((d) => Object.assign({ student_id: "a-1", activity: "diagnostico" }, d))
+    .concat([Object.assign({ student_id: "a-2", activity: "diagnostico" }, diag("2026-09-27T12:00:00Z", "6", 2100, 60, "Avanzado"))]);
+  let { page, errores } = await abrir(browser, {
+    rpc: { informes_resumen_alumnos: [ANA], informes_totales: { clases_cerradas: 4, preguntas: 10, partidas: 2 } },
+    tablas: { profiles: [{ id: "a-1", role: "alumno", is_admin: false, full_name: "Ana Rojas", email: "ana@x.cr" }],
+      training_progress: DIAG_ANA, training_state: ESTADO },
+  }, "a-1");
+  await page.waitForFunction(() => !document.getElementById("antes-report").classList.contains("hidden"), null, { timeout: 8000 }).catch(() => {});
+  const visto = await page.evaluate(() => ({
+    seVe: document.getElementById("antes-report").checkVisibility(),
+    texto: document.getElementById("antes-body").innerText.replace(/\s+/g, " "),
+    items: [...document.querySelectorAll("#antes-body ul:last-of-type li")].map((li) => li.textContent.replace(/\s+/g, " ").trim()),
+  }));
+  igual("el bloque se ve en la página del alumno", visto.seVe, true);
+  igual("con su fuerza y el veredicto de tú", /Tu fuerza, diagnóstico a diagnóstico.*1329 ± 84.*1611 ± 67.*Subiste 282 puntos/.test(visto.texto), true);
+  igual("solo lo suyo: ni el diagnóstico ni la habilidad de otro alumno", /2100|balanza|Balanza/.test(visto.texto), false);
+  igual("lo que antes fallaba, con el nombre de cada uno", visto.items.map((t) => t.replace(/ \(.*$/, "")).join(" | "), "✅ Mates · Mate en 2 | ✅ Ejercicios por tema · Clavada");
+  igual("y desde cuándo le sale, en hora de Costa Rica", /te sale desde el 2 oct 2026/.test(visto.items[0]), true);
+  igual("pide lo de UN alumno", await page.evaluate(() => window.__consultas.filter((c) => /training_state|training_progress/.test(c.etiqueta))
+    .every((c) => c.donde.some(([col, val]) => col === "student_id" && val === "a-1"))), true);
+  if (errores.length) { console.log("  ✗ errores en la página: " + errores.join(" | ")); fallos += 1; }
+  await page.close();
+
+  // Sin nada medido ni superado, el bloque no se destapa.
+  ({ page, errores } = await abrir(browser, {
+    rpc: { informes_resumen_alumnos: [ANA], informes_totales: { clases_cerradas: 4, preguntas: 10, partidas: 2 } },
+    tablas: { profiles: [{ id: "a-1", role: "alumno", is_admin: false, full_name: "Ana Rojas", email: "ana@x.cr" }], training_progress: [], training_state: [] },
+  }, "a-1"));
+  await page.waitForTimeout(600);
+  igual("sin nada, no se ve", await page.evaluate(() => document.getElementById("antes-report").checkVisibility()), false);
+  await page.close();
+}
+
 (async () => {
   const browser = await chromium.launch({ executablePath: CHROME });
   try {
@@ -1941,6 +2008,7 @@ async function pruebaCertificados(browser) {
     await pruebaClaseGrande(browser);
     await pruebaAlumno(browser);
     await pruebaCertificados(browser);
+    await pruebaAntesYAhora(browser);
     await pruebaCompartirPlanes(browser);
     await pruebaNombreAjeno(browser);
     await pruebaPdfVisitante(browser);

@@ -395,8 +395,18 @@
             const [rep, just] = await Promise.all([
                 sb.rpc("reporte_actividades", { p_desde: desde, p_hasta: hasta }),
                 // Las faltas con una justificación ACEPTADA en el periodo: las
-                // cuenta la base, la misma función que usa Informes.
-                sb.rpc("faltas_justificadas", { p_desde: desde, p_hasta: hasta }).range(0, 4999),
+                // cuenta la base, la misma función que usa Informes. De mil en
+                // mil: PostgREST corta en mil aunque se pidan 5000, sin avisar,
+                // y un periodo largo con todas las academias se pasa.
+                (async () => {
+                    const filas = [];
+                    for (let i = 0; ; i += 1000) {
+                        const r = await sb.rpc("faltas_justificadas", { p_desde: desde, p_hasta: hasta }).order("student_id").range(i, i + 999);
+                        if (r.error) return r;
+                        filas.push(...(r.data || []));
+                        if (!r.data || r.data.length < 1000) return { data: filas, error: null };
+                    }
+                })(),
             ]);
             const error = rep.error || just.error;
             if (error) return decir(estado, "No se pudieron traer los datos: " + error.message, true);
