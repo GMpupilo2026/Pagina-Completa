@@ -7,6 +7,8 @@ Son tres etiquetas y un script, en todas las páginas del sitio:
     <link rel="manifest">         lo que le dice al celular que esto se instala
     <link rel="apple-touch-icon"> el icono en iPhone, que no lee el manifest
     <script src="js/pwa.js">      registra el service worker
+    <script src="js/navegacion.js"> la barra de «cargando la página siguiente»
+                                  (ver «La navegación se siente inmediata»)
     <script src="js/errores.js">  avisa a Sentry de los errores de la gente;
                                   SÍNCRONO a propósito: tiene que estar
                                   escuchando antes de que corran los scripts
@@ -73,6 +75,7 @@ def bloque(ruta):
         + '<meta name="apple-mobile-web-app-title" content="Ajedrez">'
         + f'<script src="{arriba}js/errores.js"></script>'
         + f'<script src="{arriba}js/pwa.js" defer></script>'
+        + f'<script src="{arriba}js/navegacion.js" defer></script>'
         + FIN
     )
 
