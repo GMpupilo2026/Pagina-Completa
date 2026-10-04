@@ -40,6 +40,7 @@ window.TiempoSecciones = (function () {
         "aperturas":            { nombre: "Aperturas y celadas",   emoji: "📖", unidad: ["línea", "líneas"] },
         "confites":             { nombre: "Confites del caballo",  emoji: "🍬", unidad: ["recorrido", "recorridos"] },
         "ilumina":              { nombre: "Ilumina el tablero",    emoji: "💡", unidad: ["nivel", "niveles"] },
+        "partida-perdida":      { nombre: "La partida perdida",    emoji: "🔍" },
         "visualizacion":        { nombre: "Visualización",         emoji: "👁️", unidad: ["ejercicio", "ejercicios"] },
         "finales":              { nombre: "Finales contra la máquina", emoji: "🏁", unidad: ["final", "finales"] },
         "preparacion":          { nombre: "Preparación de rivales", emoji: "🔭", unidad: ["línea", "líneas"] },

@@ -162,6 +162,7 @@ window.ProgresoUsuario = (function () {
     { clave: "ilumina_solved",                   fusion: "unionObjeto" },   // Ilumina el Tablero
     { clave: "ilumina_hints_earned",             fusion: "maxNumero" },
     { clave: "ilumina_hints_used",               fusion: "maxNumero" },
+    { clave: "partida_perdida_resueltos",        fusion: "unionObjeto" },   // La partida perdida
     { clave: "confites_best",                    fusion: "maxNumero" },   // Confites del caballo
     { clave: "confites_best_limpio",             fusion: "maxNumero" },
     { clave: "sonar_estrellas_v1",               fusion: "maxPorClave" },   // El Sonar: nivel → estrellas
