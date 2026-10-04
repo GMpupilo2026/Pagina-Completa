@@ -569,6 +569,42 @@ diagnóstico de otro alumno** y que sin nada el bloque no se destape.
   los datos de prueba, a los que les faltaba el `student_id` — era el doble el
   que estaba incompleto, no la página.
 
+### Antes y ahora: si sabe más, no solo si trabaja
+
+«Cómo viene» mide si TRABAJA (ejercicios por semana). Se puede resolver
+trescientos ejercicios de lo que uno ya sabía, así que el bloque **«🌱 Antes y
+ahora»** (debajo de «Cómo viene», en el informe del alumno y en la página del
+propio alumno) dice si SABE más, con dos cosas que no se inflan entrenando lo
+fácil. Lo pinta `js/antes-y-ahora.js`, el mismo para las dos vistas.
+
+- **Su fuerza, diagnóstico a diagnóstico**: el Elo que mide la prueba
+  (`detalle.medicion`: elo ± error, desde la versión 5), los últimos seis.
+  - **Se comparan solo los de la misma versión que el último**, como manda
+    «Un diagnóstico nuevo ya no se compara con uno viejo». Si el anterior es
+    de otra versión, lo dice y no saca la cuenta.
+  - **«Sube» o «baja» solo si pasa el margen de los dos juntos**
+    (√(e1² + e2²)). Con ±84 y ±67, menos de 107 puntos es «parejo: dentro del
+    margen de la prueba». Sin ese margen, un vaivén de la prueba se leería
+    como un progreso.
+  - Los diagnósticos sin medición (versiones 1 a 4) no entran: no se inventa
+    un Elo que la prueba no midió.
+- **Lo que antes fallaba y ahora le sale**: los ejercicios de las colas de
+  «Repasar fallados» (Temas, Mates, Habilidades, Finales, Visualización y
+  Practicar) que salieron con tres repasos limpios seguidos (`fuera: true`).
+  Es un hecho y no un porcentaje: lo falló (o necesitó pista) y después lo
+  resolvió tres veces sin ayuda, en días distintos. Van los seis más recientes
+  con su nombre (el motivo de `temas-motivos.json`, «Mate en N», el tipo del
+  catálogo, el título del final) y la cuenta por sección. La cola de la clase
+  no entra: ahí se anota «vi la respuesta», no un fallo.
+- **No hay migración**: las dos cosas salen de lo que la RLS ya deja leer
+  (`training_progress` del diagnóstico y el espejo `training_state` de las
+  seis colas), acotado al `student_id`. Son pocas filas por alumno. Sin
+  diagnóstico medido ni nada superado, el bloque no se destapa.
+- Lo prueba `pruebaAntesYAhora` en `verificar-informes.js`: la lógica sin
+  navegador (orden, misma versión, margen, la cola rota que no rompe nada) y
+  la página del alumno (lo suyo y no lo de otro, los nombres, la fecha en hora
+  de Costa Rica). Si se quita el filtro de versión a propósito, salta.
+
 ### El tiempo conectado no se lo cree porque lo diga el navegador
 
 `class_presence_log` (clase en vivo, latido de `sesion.html`) y
