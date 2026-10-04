@@ -29,8 +29,9 @@
  *   await Avisos.formulario({ titulo, texto, campos, aceptar, peligro })
  *       → { nombre: valor, … } o null. Varios datos de una vez (el pago de un
  *       cobro: monto, método y comprobante) en vez de tres `prompt()` seguidos.
- *       Cada campo: { nombre, etiqueta, tipo: "text"|"select", valor,
- *       opciones: [[valor, texto]…], ayuda, inputmode }. Con `peligro`, el
+ *       Cada campo: { nombre, etiqueta, tipo: "text"|"select"|"textarea",
+ *       valor, opciones: [[valor, texto]…], ayuda, inputmode, max }. `max`
+ *       es el tope de caracteres (el mismo CHECK de la base). Con `peligro`, el
  *       botón va en rojo y el foco arranca en «Cancelar» si no hay campos.
  *
  * Todo texto entra por `textContent`: lo que se muestra suele llevar el
@@ -210,12 +211,16 @@
             op.value = valor;
             input.appendChild(op);
           });
+        } else if (c.tipo === "textarea") {
+          input = el("textarea", CAMPO);
+          input.rows = 4;
         } else {
           input = el("input", CAMPO);
           input.type = "text";
           if (c.inputmode) input.inputMode = c.inputmode;
           input.autocomplete = "off";
         }
+        if (c.max) input.maxLength = c.max;
         input.id = campoId;
         input.name = c.nombre;
         if (c.valor != null) input.value = String(c.valor);

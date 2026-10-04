@@ -176,6 +176,11 @@
                 { emoji: "⚙️", label: "Configuración", desc: "Tu perfil y contraseña", href: "configuracion.html" },
                 { emoji: "📊", label: "Informes", desc: "Tu progreso y estadísticas", descProfe: "El progreso de tus alumnos y los informes a la casa", href: "informes.html" },
                 { emoji: "🏅", label: "Logros", desc: "Tu racha de días entrenando y las medallas que has ganado", descProfe: "El catálogo de medallas y cómo se gana la racha de días", href: "logros.html" },
+                /* Lo que el alumno guarda y anota él (la bitácora es del
+                   profe). Solo del alumnado: el profe ve lo que le comparten
+                   desde el informe de cada alumno. Ver «Mi cuaderno» en
+                   docs/decisiones/seguimiento-del-alumno.md. */
+                { emoji: "📓", label: "Mi cuaderno", desc: "Las posiciones que guardaste, con tus notas", href: "cuaderno.html", soloAlumno: true },
             ] },
         ];
 
@@ -600,7 +605,7 @@
             { title: "Aprender y estudiar", id: "aprender", hrefs: ["entreno/aprender.html", "entreno/estudio.html", "cursos/academia/index.html", "repasar-clases.html", "articulos.html"] },
             { title: "Entrenar", id: "entrenar", hrefs: ["entreno/mates.html", "entreno/practicas.html", "entreno/desafios.html", "entreno/4x4.html", "entreno/coordenadas.html", "entreno/temas.html", "entreno/aperturas.html", "entreno/memoria.html", "entreno/visualizacion.html", "entreno/precision-posicional.html", "entreno/finales.html", "entreno/tipos.html"] },
             { title: "Jugar", id: "jugar", hrefs: ["sonar.html", "batalla-naval.html", "te-reto.html", "tablero.html", "juegos.html", "competir.html"] },
-            { title: "Tu cuenta", id: "cuenta", hrefs: ["ciegos.html", "configuracion.html", "informes.html", "logros.html", "justificaciones.html", "encuesta-profesor.html"] },
+            { title: "Tu cuenta", id: "cuenta", hrefs: ["ciegos.html", "configuracion.html", "informes.html", "logros.html", "cuaderno.html", "justificaciones.html", "encuesta-profesor.html"] },
         ];
         const TILES_SOLO_ADAPTADO = [
             { emoji: "🔊", label: "El Sonar", desc: "Busca el tesoro escondido escribiendo casillas: el sonar dice a cuántas jugadas está", href: "sonar.html" },
@@ -1320,6 +1325,7 @@
             "competir.html": "retar reto en linea conectados partidas en curso terminadas rival torneo torneos competencia rondas tabla tv ver partidas en directo transmision",
             "tablero.html": "bot motor oscar jugar contra la computadora",
             "logros.html": "medallas racha premios",
+            "cuaderno.html": "notas apuntes posiciones guardadas favoritas",
             "entreno/diagnostico.html": "nivel examen de nivel prueba de nivel",
             "nivel-de-arbitraje.html": "arbitro reglamento fide",
             "arbitraje.html": "arbitro reglamento fide revisar",

@@ -697,6 +697,8 @@ function finishPuzzle(){
   finEjercicio = EjercicioTablero.fin({
     caja: '#fin-ejercicio', desde: puzzle.fen, jugadas: game.history(), orientacion: orientation,
     siguiente: pasarAlSiguiente,
+    // Para «Guardar en mi cuaderno»: de dónde salió (el título del tema, o «Repaso»).
+    origen: 'Ejercicios por tema · ' + document.getElementById('play-title').textContent,
   });
 }
 function pasarAlSiguiente(){

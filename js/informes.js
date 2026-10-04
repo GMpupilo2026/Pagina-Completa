@@ -1132,6 +1132,7 @@
             renderErroresPartidas(studentId, name);
             renderAcceso(studentId, name);
             renderNotas(studentId);
+            renderCuadernoCompartido(studentId);
             // Lo que le costó en clase. Mirando a otra persona («Ver como») se ve, pero el plan no se arma: sería de quien mira.
             LoQueCosto.pintarDelAlumno(sb, document.getElementById("le-costo-report"), studentId, name, session.user.id, !profile._persona)
                 .catch((e) => console.error(e));
@@ -1575,6 +1576,25 @@
             return '<div class="mt-5 border-t border-brand-100 dark:border-brand-800 pt-4">'
                 + EvolucionAlumno.comparacionHTML(lista, fmtFecha(anterior.created_at), fmtFecha(ultimo.created_at))
                 + "</div>";
+        }
+
+        /* Lo que el alumno guardó en su cuaderno y decidió compartir: se
+           cuenta (sin bajar nada) y se lleva a cuaderno.html?alumno=…, que lo
+           pinta en solo lectura. Lo que no compartió, la RLS no lo da. */
+        async function renderCuadernoCompartido(studentId) {
+            const caja = document.getElementById("cuaderno-compartido");
+            if (!caja) return;
+            caja.hidden = true;
+            const { count, error } = await sb.from("cuaderno").select("id", { count: "exact", head: true })
+                .eq("alumno_id", studentId).eq("compartida", true);
+            if (error || !count) return;
+            const a = document.getElementById("cuaderno-compartido-enlace");
+            a.href = "cuaderno.html?alumno=" + encodeURIComponent(studentId);
+            const ic = document.createElement("span");
+            ic.setAttribute("aria-hidden", "true");
+            ic.textContent = "📓 ";
+            a.replaceChildren(ic, document.createTextNode("Su cuaderno: " + (count === 1 ? "1 posición que te compartió" : count + " posiciones que te compartió") + " →"));
+            caja.hidden = false;
         }
 
         function renderNotas(studentId) {

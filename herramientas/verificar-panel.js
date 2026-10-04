@@ -434,9 +434,9 @@ async function pruebaAlumna(browser) {
      recibos a quien entre por la dirección — lo que se quitó es el camino. */
   /* La encuesta de satisfacción es SOLO del alumnado: el equipo docente no
      tiene a quién calificar (la prueba del profesor, más abajo, lo dice). */
-  igual("Tu cuenta, en su orden, con la encuesta sobre su profesor",
+  igual("Tu cuenta, en su orden, con su cuaderno y la encuesta sobre su profesor",
     grupo(grupos, "Tu cuenta").tiles.map((t) => t.etiqueta),
-    ["Configuración", "Informes", "Logros", "Justificar una ausencia", "¿Cómo van tus clases?"]);
+    ["Configuración", "Informes", "Logros", "Mi cuaderno", "Justificar una ausencia", "¿Cómo van tus clases?"]);
   igual("y a la alumna no se le ofrecen los cobros por ninguna parte",
     grupos.flatMap((g) => g.tiles).filter((t) => /cobros\.html/.test(t.enlace || "")).length, "0");
   igual("«Cerrar sesión» no está dos veces: en el grid ya no",
