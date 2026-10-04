@@ -3220,6 +3220,49 @@ async function pruebaRetosEjercicios(browser) {
   await r.ctx.close();
 }
 
+/* El panel para los más pequeños: pocas puertas, grandes, sin descripciones y
+   con «Escúchame»; lo de leer se esconde DE VERDAD (checkVisibility). Es del
+   alumno: a quien da clase la misma marca en el aparato no le cambia nada. */
+async function pruebaPanelPequenos(browser) {
+  console.log("\n=== El panel para los más pequeños ===");
+  let r = await panel(browser, [ALUMNA, PROFE], "u-ana", { viewport: { width: 390, height: 900 } }, Object.assign(datosAlumna(false), { local: { panel_pequenos_v1: "1" } }));
+  await r.page.waitForSelector("#pequenos-barra", { timeout: 10000 }).catch(() => {});
+  const grupos = await r.page.evaluate(LEER_GRILLA);
+  igual("cinco grupos con pocas puertas y nombres cortos", grupos.map((g) => [g.titulo, g.tiles.map((t) => t.enlace || t.etiqueta2.trim().slice(0, 14))]), [
+    ["Mi clase", ["♟️Sesión en vi"]],
+    ["Lo que me pidió mi profe", ["tareas.html"]],
+    ["A entrenar", ["entreno/mates.html", "entreno/4x4.html", "entreno/coordenadas.html", "entreno/aprender.html"]],
+    ["A jugar", ["tablero.html", "juegos.html"]],
+    ["Mis premios", ["logros.html"]],
+  ]);
+  igual("las tarjetas dicen solo el nombre que entiende un niño", await r.page.evaluate(() =>
+    ["tareas.html", "entreno/coordenadas.html", "tablero.html", "logros.html"].map((h) => document.querySelector('#tile-grid a[href="' + h + '"]').textContent.trim())),
+    ["📋Mis tareas", "🎯Las casillas", "Juega con Oscar", "🏅Mis medallas"]);
+  igual("lo que es para leer no se ve (buscador, números, tus clases)", await r.page.evaluate(() =>
+    ["buscar-panel", "progreso-alumno", "tus-clases"].map((id) => document.getElementById(id).checkVisibility())), [false, false, false]);
+  igual("lo que vence sí sigue arriba", await r.page.evaluate(() => document.getElementById("pendientes-aviso").checkVisibility()), true);
+  igual("«Escúchame» dice lo que hay para tocar", await r.page.evaluate(() => {
+    let dicho = null;
+    Object.defineProperty(window, "speechSynthesis", { configurable: true, value: { cancel() {}, speak(u) { dicho = u.text; } } });
+    window.BlindNotation = undefined;
+    document.getElementById("pequenos-escuchar").click();
+    return dicho;
+  }), "Hola Ana. Toca un dibujo para entrar: Sesión en vivo, Mis tareas, Mates, 4×4, Las casillas, Aprender, Juega con Oscar, Juegos, Mis medallas.");
+  igual("la página no se sale del ancho del celular", await r.page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), true);
+  /* Lo que se guardó al irse se anota en sessionStorage: al recargar, la
+     prueba vuelve a sembrar la marca (es lo que «ya estaba en el aparato»). */
+  await r.page.evaluate(() => addEventListener("beforeunload", () => sessionStorage.setItem("marca_al_salir", localStorage.getItem("panel_pequenos_v1") || "ninguna")));
+  await Promise.all([r.page.waitForNavigation({ waitUntil: "networkidle" }), r.page.click("#pequenos-volver")]);
+  igual("«Volver al panel de siempre» borra la marca y recarga", await r.page.evaluate(() => sessionStorage.getItem("marca_al_salir")), "ninguna");
+  igual("sin errores en la página", r.errores, []);
+  await r.ctx.close();
+
+  r = await panel(browser, [PROFE, ALUMNA], "u-profe", null, { local: { panel_pequenos_v1: "1" } });
+  await r.page.waitForTimeout(500);
+  igual("a quien da clase no le cambia nada", await r.page.evaluate(() => [!!document.getElementById("pequenos-barra"), document.documentElement.classList.contains("panel-pequenos")]), [false, false]);
+  await r.ctx.close();
+}
+
 (async () => {
   const browser = await chromium.launch({ executablePath: CHROME });
   try {
@@ -3240,6 +3283,7 @@ async function pruebaRetosEjercicios(browser) {
     await pruebaMasDelPanel(browser);
     await pruebaCalendario(browser);
     await pruebaRetosEjercicios(browser);
+    await pruebaPanelPequenos(browser);
     await pruebaTercera(browser);
     await pruebaBaseLenta(browser);
     await pruebaSemanaProfesora(browser);

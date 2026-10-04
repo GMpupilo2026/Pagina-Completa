@@ -639,6 +639,91 @@
             })).filter((g) => g.tiles.length);
             TILE_GROUPS.splice(0, TILE_GROUPS.length, ...grupos);
         }
+        /* ---------- El panel para los más pequeños ----------
+           Para alumnos de 5 a 8 años: pocas puertas, dibujos grandes, el nombre
+           corto y sin descripciones, y un botón que lee en voz alta lo que hay.
+           Lo enciende el alumno (o su familia) en Configuración, en ESTE
+           aparato (`panel_pequenos_v1`), como el Modo Adaptado: suele ser la
+           tableta de la casa. Las tarjetas son las mismas de TILE_GROUPS,
+           buscadas por destino (así el mantenimiento y las marcas valen igual),
+           con el nombre que entiende un niño. Ver «El panel para los más
+           pequeños» en docs/decisiones/paneles.md. */
+        const CLAVE_PEQUENOS = "panel_pequenos_v1";
+        const PANEL_PEQUENOS = [
+            { title: "Mi clase", destacado: true, hrefs: ["sesion.html"] },
+            { title: "Lo que me pidió mi profe", hrefs: ["tareas.html"] },
+            { title: "A entrenar", hrefs: ["entreno/mates.html", "entreno/4x4.html", "entreno/coordenadas.html", "entreno/aprender.html"] },
+            { title: "A jugar", hrefs: ["tablero.html", "juegos.html"] },
+            { title: "Mis premios", hrefs: ["logros.html"] },
+        ];
+        const NOMBRE_PEQUENOS = {
+            "tareas.html": "Mis tareas",
+            "entreno/coordenadas.html": "Las casillas",
+            "entreno/aprender.html": "Aprender",
+            "tablero.html": "Juega con Oscar",
+            "juegos.html": "Juegos",
+            "logros.html": "Mis medallas",
+        };
+        function quierePanelPequenos() {
+            if (esEquipoDocente() || profile._persona || profile.role !== "alumno") return false;
+            try { return localStorage.getItem(CLAVE_PEQUENOS) === "1"; } catch (e) { return false; }
+        }
+        function armarPanelPequenos() {
+            const todas = TILE_GROUPS.flatMap((g) => g.tiles);
+            const grupos = PANEL_PEQUENOS.map((g) => ({
+                title: g.title, destacado: !!g.destacado, grande: true,
+                tiles: g.hrefs.map((h) => todas.find((t) => t.href === h)).filter(Boolean)
+                    .map((t) => ({ ...t, label: NOMBRE_PEQUENOS[t.href] || t.label })),
+            })).filter((g) => g.tiles.length);
+            TILE_GROUPS.splice(0, TILE_GROUPS.length, ...grupos);
+            document.documentElement.classList.add("panel-pequenos");
+            pintarBarraPequenos();
+        }
+        /* Arriba: «Escúchame» lee lo que hay (con la voz del navegador, la
+           misma de «Activar voz») y «Volver al panel de siempre» lo apaga. */
+        function pintarBarraPequenos() {
+            if (document.getElementById("pequenos-barra")) return;
+            const barra = document.createElement("div");
+            barra.id = "pequenos-barra";
+            barra.className = "mt-3 flex flex-wrap gap-3";
+            const BTN = "rounded-2xl px-5 py-3 text-lg font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2";
+            const oir = document.createElement("button");
+            oir.type = "button";
+            oir.id = "pequenos-escuchar";
+            oir.className = BTN + " bg-accent-500 text-brand-900 hover:bg-accent-400";
+            const ic = document.createElement("span");
+            ic.setAttribute("aria-hidden", "true");
+            ic.textContent = "🔊 ";
+            oir.append(ic, document.createTextNode("Escúchame"));
+            oir.addEventListener("click", () => decirEnVoz(textoParaOir()));
+            const volver = document.createElement("button");
+            volver.type = "button";
+            volver.id = "pequenos-volver";
+            volver.className = "rounded-xl px-3 py-2 text-sm font-semibold border border-brand-200 dark:border-brand-700 text-brand-700 dark:text-brand-200 hover:bg-brand-50 dark:hover:bg-brand-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 self-center";
+            volver.textContent = "Volver al panel de siempre";
+            volver.addEventListener("click", () => {
+                try { localStorage.removeItem(CLAVE_PEQUENOS); } catch (e) { /* nada */ }
+                location.reload();
+            });
+            barra.append(oir, volver);
+            document.getElementById("panel-subtitulo").after(barra);
+        }
+        function textoParaOir() {
+            const nombre = (document.getElementById("welcome-name") || {}).textContent || "";
+            const puertas = TILE_GROUPS.flatMap((g) => g.tiles).filter((t) => !t.disabled).map((t) => t.label);
+            return "Hola " + nombre + ". Toca un dibujo para entrar: " + puertas.join(", ") + ".";
+        }
+        function decirEnVoz(texto) {
+            try {
+                if (window.BlindNotation && BlindNotation.speak) { BlindNotation.speak(texto); return; }
+                if (!window.speechSynthesis) return;
+                window.speechSynthesis.cancel();
+                const u = new SpeechSynthesisUtterance(texto);
+                u.lang = "es-CR";
+                window.speechSynthesis.speak(u);
+            } catch (e) { /* sin voz en este navegador */ }
+        }
+
         /* ¿Es ciego el alumno de este panel? Lo dice la base; si tarda (la base
            saturada), vale lo último que se supo en este aparato. Mirando el
            panel de otra persona se pregunta por ESA persona. */
@@ -670,7 +755,7 @@
                 : tiene("cobros.html"));
         }
 
-        function renderTileCard(t, destacado, compacto) {
+        function renderTileCard(t, destacado, compacto, grande) {
             const base = compacto
                 ? "group flex flex-row items-center text-left gap-3 rounded-xl p-3 shadow-sm transition-all duration-200"
                 : "group flex flex-col items-center text-center gap-2 rounded-2xl p-5 shadow-md transition-all duration-200"
@@ -719,7 +804,7 @@
                 el.appendChild(punto);
             }
             const iconWrap = document.createElement("div");
-            iconWrap.className = (compacto ? "w-10 h-10 rounded-lg text-xl " : "w-14 h-14 rounded-xl text-3xl ") + "flex items-center justify-center overflow-hidden shrink-0 " + (t.primary ? "bg-accent-500/20" : "bg-brand-50 dark:bg-brand-800") + " group-hover:scale-105 transition-transform";
+            iconWrap.className = (compacto ? "w-10 h-10 rounded-lg text-xl " : grande ? "w-20 h-20 rounded-2xl text-5xl " : "w-14 h-14 rounded-xl text-3xl ") + "flex items-center justify-center overflow-hidden shrink-0 " + (t.primary ? "bg-accent-500/20" : "bg-brand-50 dark:bg-brand-800") + " group-hover:scale-105 transition-transform";
             if (t.photo) {
                 // Foto real de Oscar en vez de un emoji genérico, igual que en tablero.html
                 // ("Juega contra Oscar"): la etiqueta de al lado ya dice de qué se trata,
@@ -739,7 +824,7 @@
             const texto = document.createElement("span");
             texto.className = "flex flex-col gap-1 " + (compacto ? "items-start min-w-0" : "items-center" + (destacado ? " sm:items-start" : ""));
             const label = document.createElement("span");
-            label.className = "font-semibold text-sm " + ((t.apagado && t.apagado.tituloClases) || "text-brand-800 dark:text-white");
+            label.className = "font-semibold " + (grande ? "text-lg " : "text-sm ") + ((t.apagado && t.apagado.tituloClases) || "text-brand-800 dark:text-white");
             label.textContent = t.label;
             const desc = document.createElement("span");
             /* En una tarjeta compacta la descripción va solo desde la
@@ -747,7 +832,9 @@
                ya dice a dónde lleva, y así caben dos por fila. */
             desc.className = "text-xs " + (compacto ? "hidden sm:block " : "") + ((t.apagado && t.apagado.notaClases) || "text-brand-450 dark:text-brand-350");
             desc.textContent = t.desc;
-            texto.append(label, desc);
+            // En el panel de los más pequeños no hay descripciones: el dibujo y
+            // el nombre dicen a dónde lleva.
+            if (grande) texto.append(label); else texto.append(label, desc);
             if (t.pedido && !t.disabled) {
                 // Mismo par de colores que la llamada a la acción de la franja
                 // de arriba, sobre el mismo fondo de tarjeta.
@@ -1180,6 +1267,8 @@
                    poco y acompaña a quien no ve lee la tarjeta entera. */
                 tilesGrid.className = group.destacado
                     ? "grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-4 md:gap-5"
+                    : group.grande
+                    ? "grid grid-cols-2 sm:grid-cols-4 gap-4 md:gap-5"
                     : group.compacto
                     ? "grid grid-cols-2 lg:grid-cols-3 gap-3"
                     : group.adaptado
@@ -1187,7 +1276,7 @@
                     : "grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-5";
                 group.tiles.forEach((t) => {
                     if (!t.videollamada) {
-                        const tarjeta = renderTileCard(t, !!group.destacado, !!group.compacto);
+                        const tarjeta = renderTileCard(t, !!group.destacado, !!group.compacto, !!group.grande);
                         tarjeta.dataset.buscar = buscableDeTile(t);
                         tilesGrid.appendChild(tarjeta);
                         return;
@@ -3966,6 +4055,9 @@
                 nota.textContent = profile._persona
                     ? "Su panel adaptado: está marcado como ciego, así que ve solo lo que se usa con lector de pantalla."
                     : "Tu panel adaptado: solo lo que se usa con lector de pantalla. Alt + Mayúscula + D dice dónde estás y Alt + Mayúscula + H, todos los atajos.";
+            } else if (quierePanelPequenos()) {
+                ordenarPanelDocente();
+                armarPanelPequenos();
             } else {
                 ordenarPanelDocente();
             }
