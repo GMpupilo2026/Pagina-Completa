@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261004054600
+# al-dia-con: 20261004055024
 tabla  Ejercicios Lichess  rls=true
 tabla  academia_ia  rls=true
 tabla  academia_miembros  rls=true
@@ -34,6 +34,7 @@ tabla  compras_tienda  rls=true
 tabla  coordinador_funciones_quitadas  rls=true
 tabla  coordinador_profesores  rls=true
 tabla  course_unlocks  rls=true
+tabla  cuaderno  rls=true
 tabla  cuestionario_intentos  rls=true
 tabla  cuestionarios  rls=true
 tabla  curso_adjuntos  rls=true
@@ -111,6 +112,8 @@ tabla  recibo_contadores  rls=true
 tabla  recibos  rls=true
 tabla  recordatorios_informe  rls=true
 tabla  respuestas_en_curso  rls=true
+tabla  retos_ejercicios  rls=true
+tabla  retos_ejercicios_respuestas  rls=true
 tabla  salas_torneo  rls=true
 tabla  saved_games  rls=true
 tabla  solicitudes_academia  rls=true
@@ -355,6 +358,17 @@ columna  course_unlocks.hasta_leccion  integer
 columna  course_unlocks.id  uuid
 columna  course_unlocks.student_id  uuid
 columna  course_unlocks.updated_at  timestamp with time zone
+columna  cuaderno.alumno_id  uuid
+columna  cuaderno.compartida  boolean
+columna  cuaderno.created_at  timestamp with time zone
+columna  cuaderno.enlace  text
+columna  cuaderno.fen  text
+columna  cuaderno.id  uuid
+columna  cuaderno.jugadas  text[]
+columna  cuaderno.nota  text
+columna  cuaderno.origen  text
+columna  cuaderno.titulo  text
+columna  cuaderno.updated_at  timestamp with time zone
 columna  cuestionario_intentos.aciertos  integer
 columna  cuestionario_intentos.alumno_id  uuid
 columna  cuestionario_intentos.created_at  timestamp with time zone
@@ -1007,6 +1021,19 @@ columna  respuestas_en_curso.moves  jsonb
 columna  respuestas_en_curso.question_id  uuid
 columna  respuestas_en_curso.student_id  uuid
 columna  respuestas_en_curso.updated_at  timestamp with time zone
+columna  retos_ejercicios.created_at  timestamp with time zone
+columna  retos_ejercicios.ejercicios  text[]
+columna  retos_ejercicios.id  uuid
+columna  retos_ejercicios.nivel  text
+columna  retos_ejercicios.retador_id  uuid
+columna  retos_ejercicios.rival_id  uuid
+columna  retos_ejercicios.vence_at  timestamp with time zone
+columna  retos_ejercicios_respuestas.acierto  boolean
+columna  retos_ejercicios_respuestas.alumno_id  uuid
+columna  retos_ejercicios_respuestas.created_at  timestamp with time zone
+columna  retos_ejercicios_respuestas.idx  smallint
+columna  retos_ejercicios_respuestas.ms  integer
+columna  retos_ejercicios_respuestas.reto_id  uuid
 columna  salas_torneo.clave  text
 columna  salas_torneo.created_at  timestamp with time zone
 columna  salas_torneo.descripcion  text
@@ -1367,6 +1394,8 @@ funcion  interno.cobros_corrige_supervision()  definer  anon=false  auth=false
 funcion  interno.comparten_academia(p_a uuid, p_b uuid)  definer  anon=false  auth=true
 funcion  interno.coordinadores_de(p_persona uuid)  definer  anon=false  auth=false
 funcion  interno.corrijo_cobros_de(p_alumno uuid)  definer  anon=false  auth=true
+funcion  interno.cuaderno_al_cambiar()  invoker  anon=false  auth=false
+funcion  interno.cuaderno_tope()  definer  anon=false  auth=false
 funcion  interno.cuestionario_del_renglon(p_item uuid)  definer  anon=false  auth=false
 funcion  interno.emitir_cobros(p_hasta date, p_suscripcion uuid)  definer  anon=false  auth=false
 funcion  interno.emitir_recibo(p_alumno uuid, p_fecha date, p_metodo text, p_referencia text, p_nota text, p_emitido_por uuid)  definer  anon=false  auth=false
@@ -1377,6 +1406,7 @@ funcion  interno.jsonb_o_nulo(p text)  invoker  anon=false  auth=true
 funcion  interno.lecciones_hechas(p_alumno uuid, p_curso text)  definer  anon=false  auth=false
 funcion  interno.me_sacaron_de(p_clase uuid)  definer  anon=false  auth=true
 funcion  interno.me_sacaron_de_la_pregunta(p_pregunta uuid)  definer  anon=false  auth=true
+funcion  interno.mis_retos_ejercicios()  definer  anon=false  auth=true
 funcion  interno.monto_rango(p_base date, p_meses integer, p_precio numeric, p_desde date, p_hasta date)  invoker  anon=false  auth=false
 funcion  interno.nombre_libre_de_subgrupo(p_profesor uuid, p_base text, p_excepto uuid)  definer  anon=false  auth=false
 funcion  interno.pagar(p_pagos jsonb, p_metodo text, p_referencia text, p_nota text, p_fecha date)  definer  anon=false  auth=false
@@ -1390,6 +1420,9 @@ funcion  interno.puestos_de_la_clase(p_clase uuid)  definer  anon=false  auth=tr
 funcion  interno.puestos_de_tandas(p_clase uuid)  definer  anon=false  auth=true
 funcion  interno.puntos_de_una_respuesta(p_dificultad integer, p_intentos integer, p_puesto integer)  invoker  anon=false  auth=true
 funcion  interno.purgar_auditoria()  definer  anon=false  auth=false
+funcion  interno.retos_ejercicios_abiertos_para_mi()  definer  anon=false  auth=true
+funcion  interno.retos_ejercicios_cuantas()  definer  anon=false  auth=true
+funcion  interno.retos_ejercicios_tope()  definer  anon=false  auth=false
 funcion  interno.salas_torneo_sello()  invoker  anon=false  auth=false
 funcion  interno.sesiones_de_supervisados()  definer  anon=false  auth=true
 funcion  interno.subgrupo_del_equipo_al_dia(p_equipo uuid, p_profesor uuid)  definer  anon=false  auth=false
@@ -1432,6 +1465,7 @@ funcion  mis_avisos_sin_leer()  definer  anon=false  auth=true
 funcion  mis_clases()  invoker  anon=false  auth=true
 funcion  mis_clases_proximas(p_dias integer)  definer  anon=false  auth=true
 funcion  mis_funciones_coordinacion()  definer  anon=false  auth=true
+funcion  mis_retos_de_ejercicios()  invoker  anon=false  auth=true
 funcion  mis_subgrupos()  invoker  anon=false  auth=true
 funcion  mis_supervisados()  definer  anon=false  auth=true
 funcion  mis_supervisores()  definer  anon=false  auth=true
@@ -1639,6 +1673,14 @@ politica  course_unlocks  course_unlocks_insert  INSERT
 politica  course_unlocks  course_unlocks_select  SELECT
 politica  course_unlocks  course_unlocks_select_supervisor  SELECT
 politica  course_unlocks  course_unlocks_update  UPDATE
+politica  cuaderno  cuaderno_delete_propio  DELETE
+politica  cuaderno  cuaderno_exige_acceso_ins  INSERT  restrictiva
+politica  cuaderno  cuaderno_exige_acceso_upd  UPDATE  restrictiva
+politica  cuaderno  cuaderno_insert_propio  INSERT
+politica  cuaderno  cuaderno_select_profesor  SELECT
+politica  cuaderno  cuaderno_select_propio  SELECT
+politica  cuaderno  cuaderno_select_supervisor  SELECT
+politica  cuaderno  cuaderno_update_propio  UPDATE
 politica  cuestionario_intentos  cuestionario_intentos_select  SELECT
 politica  cuestionarios  cuestionarios_delete  DELETE
 politica  cuestionarios  cuestionarios_insert  INSERT
@@ -1838,6 +1880,12 @@ politica  respuestas_en_curso  respuestas_en_curso_insert  INSERT
 politica  respuestas_en_curso  respuestas_en_curso_select  SELECT
 politica  respuestas_en_curso  respuestas_en_curso_update  UPDATE
 politica  respuestas_en_curso  verificacion_en_dos_pasos  ALL  restrictiva
+politica  retos_ejercicios  retos_ejercicios_exige_acceso_ins  INSERT  restrictiva
+politica  retos_ejercicios  retos_ejercicios_insert  INSERT
+politica  retos_ejercicios  retos_ejercicios_select  SELECT
+politica  retos_ejercicios_respuestas  retos_ejercicios_respuestas_exige_acceso_ins  INSERT  restrictiva
+politica  retos_ejercicios_respuestas  retos_ejercicios_respuestas_insert  INSERT
+politica  retos_ejercicios_respuestas  retos_ejercicios_respuestas_select  SELECT
 politica  salas_torneo  salas_torneo_borrar  DELETE
 politica  salas_torneo  salas_torneo_crear  INSERT
 politica  salas_torneo  salas_torneo_editar  UPDATE
@@ -1940,6 +1988,8 @@ trigger  cobros  cobros_corrige_supervision
 trigger  cobros_contacto  cobros_contacto_protegido
 trigger  coordinador_funciones_quitadas  auditar
 trigger  coordinador_profesores  auditar
+trigger  cuaderno  cuaderno_al_cambiar
+trigger  cuaderno  cuaderno_tope
 trigger  desafios  desafios_avisa_push
 trigger  diagnosticos_publicos  diagnosticos_publicos_avisa
 trigger  diagnosticos_publicos  diagnosticos_publicos_supervisor
@@ -1986,6 +2036,7 @@ trigger  question_answers  respuesta_calificar_y_plazo_trigger
 trigger  question_answers  respuesta_hora_de_la_base_trigger
 trigger  questions  questions_ligar_a_la_clase
 trigger  recibos  auditar
+trigger  retos_ejercicios  retos_ejercicios_tope
 trigger  salas_torneo  salas_torneo_sello
 trigger  saved_games  saved_games_ligar_a_la_clase
 trigger  supervisor_cuentas  auditar
@@ -2088,6 +2139,9 @@ indice  coordinador_profesores  coordinador_profesores_por_profesor
 indice  course_unlocks  course_unlocks_granted_by_fk
 indice  course_unlocks  course_unlocks_pkey
 indice  course_unlocks  course_unlocks_student_id_curso_key
+indice  cuaderno  cuaderno_alumno_fecha
+indice  cuaderno  cuaderno_alumno_fen
+indice  cuaderno  cuaderno_pkey
 indice  cuestionario_intentos  cuestionario_intentos_alumno_id_fk
 indice  cuestionario_intentos  cuestionario_intentos_cuestionario_id_fk
 indice  cuestionario_intentos  cuestionario_intentos_item_idx
@@ -2291,6 +2345,11 @@ indice  recordatorios_informe  recordatorios_informe_persona_id_fk
 indice  recordatorios_informe  recordatorios_informe_pkey
 indice  respuestas_en_curso  respuestas_en_curso_pkey
 indice  respuestas_en_curso  respuestas_en_curso_student_id_fk
+indice  retos_ejercicios  retos_ejercicios_pkey
+indice  retos_ejercicios  retos_ejercicios_retador
+indice  retos_ejercicios  retos_ejercicios_rival
+indice  retos_ejercicios_respuestas  retos_ejercicios_respuestas_alumno
+indice  retos_ejercicios_respuestas  retos_ejercicios_respuestas_pkey
 indice  salas_torneo  salas_torneo_clave_key
 indice  salas_torneo  salas_torneo_pkey
 indice  salas_torneo  salas_torneo_updated_by_fk
@@ -2619,6 +2678,13 @@ grant  course_unlocks  authenticated  SELECT
 grant  course_unlocks  authenticated  TRIGGER
 grant  course_unlocks  authenticated  TRUNCATE
 grant  course_unlocks  authenticated  UPDATE
+grant  cuaderno  authenticated  DELETE
+grant  cuaderno  authenticated  INSERT
+grant  cuaderno  authenticated  REFERENCES
+grant  cuaderno  authenticated  SELECT
+grant  cuaderno  authenticated  TRIGGER
+grant  cuaderno  authenticated  TRUNCATE
+grant  cuaderno  authenticated  UPDATE
 grant  cuestionario_intentos  authenticated  SELECT
 grant  cuestionarios  authenticated  DELETE
 grant  cuestionarios  authenticated  INSERT
@@ -3116,6 +3182,20 @@ grant  respuestas_en_curso  authenticated  SELECT
 grant  respuestas_en_curso  authenticated  TRIGGER
 grant  respuestas_en_curso  authenticated  TRUNCATE
 grant  respuestas_en_curso  authenticated  UPDATE
+grant  retos_ejercicios  authenticated  DELETE
+grant  retos_ejercicios  authenticated  INSERT
+grant  retos_ejercicios  authenticated  REFERENCES
+grant  retos_ejercicios  authenticated  SELECT
+grant  retos_ejercicios  authenticated  TRIGGER
+grant  retos_ejercicios  authenticated  TRUNCATE
+grant  retos_ejercicios  authenticated  UPDATE
+grant  retos_ejercicios_respuestas  authenticated  DELETE
+grant  retos_ejercicios_respuestas  authenticated  INSERT
+grant  retos_ejercicios_respuestas  authenticated  REFERENCES
+grant  retos_ejercicios_respuestas  authenticated  SELECT
+grant  retos_ejercicios_respuestas  authenticated  TRIGGER
+grant  retos_ejercicios_respuestas  authenticated  TRUNCATE
+grant  retos_ejercicios_respuestas  authenticated  UPDATE
 grant  salas_torneo  anon  SELECT
 grant  salas_torneo  authenticated  DELETE
 grant  salas_torneo  authenticated  INSERT

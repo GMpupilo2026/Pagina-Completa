@@ -1132,6 +1132,7 @@
             renderErroresPartidas(studentId, name);
             renderAcceso(studentId, name);
             renderNotas(studentId);
+            renderCuadernoCompartido(studentId);
             // Lo que le costó en clase. Mirando a otra persona («Ver como») se ve, pero el plan no se arma: sería de quien mira.
             LoQueCosto.pintarDelAlumno(sb, document.getElementById("le-costo-report"), studentId, name, session.user.id, !profile._persona)
                 .catch((e) => console.error(e));
@@ -1575,6 +1576,25 @@
             return '<div class="mt-5 border-t border-brand-100 dark:border-brand-800 pt-4">'
                 + EvolucionAlumno.comparacionHTML(lista, fmtFecha(anterior.created_at), fmtFecha(ultimo.created_at))
                 + "</div>";
+        }
+
+        /* Lo que el alumno guardó en su cuaderno y decidió compartir: se
+           cuenta (sin bajar nada) y se lleva a cuaderno.html?alumno=…, que lo
+           pinta en solo lectura. Lo que no compartió, la RLS no lo da. */
+        async function renderCuadernoCompartido(studentId) {
+            const caja = document.getElementById("cuaderno-compartido");
+            if (!caja) return;
+            caja.hidden = true;
+            const { count, error } = await sb.from("cuaderno").select("id", { count: "exact", head: true })
+                .eq("alumno_id", studentId).eq("compartida", true);
+            if (error || !count) return;
+            const a = document.getElementById("cuaderno-compartido-enlace");
+            a.href = "cuaderno.html?alumno=" + encodeURIComponent(studentId);
+            const ic = document.createElement("span");
+            ic.setAttribute("aria-hidden", "true");
+            ic.textContent = "📓 ";
+            a.replaceChildren(ic, document.createTextNode("Su cuaderno: " + (count === 1 ? "1 posición que te compartió" : count + " posiciones que te compartió") + " →"));
+            caja.hidden = false;
         }
 
         function renderNotas(studentId) {
@@ -3119,6 +3139,75 @@ function areasFlojasArbitraje(fila) {
     .map((a) => `${a.nombre.toLowerCase()} (${a.porcentaje}%)`);
 }
 
+        /* ---------------- El informe del grupo en PDF ----------------
+           Para una reunión con las familias o el colegio: el grupo elegido
+           arriba (o todos), con los MISMOS números de esta página (asistencia
+           sin las justificadas, el nivel de PlanEntrenamiento, la nota de cada
+           área). El buscador no cuenta: un informe de grupo es del grupo. Los
+           tres archivos se bajan al apretar el botón. Ver «El informe del grupo
+           en PDF» en docs/decisiones/informes.md. */
+        function datosInformeGrupo() {
+            const sel = document.getElementById("group-filter");
+            const grupo = sel.value ? sel.selectedOptions[0].textContent : "";
+            const alumnos = filteredStudents().map((s) => {
+                const r = nivelDeAlumno(s);
+                return {
+                    nombre: s.full_name || s.email || "Sin nombre",
+                    asistencia: asistenciaDe(s, teacherData.closedSessions),
+                    minutosClase: s.minutos_clase || 0,
+                    minutosEjercicios: s.minutos_ejercicios || 0,
+                    respuestas: s.respuestas || 0,
+                    correctas: s.correctas || 0,
+                    nivel: r ? { etiqueta: r.nivel.etiqueta, elo: r.elo.combinado, porArea: r.porArea } : null,
+                };
+            });
+            const conDiag = alumnos.filter((a) => a.nivel);
+            const areas = conDiag.length ? PE.AREAS.map((a) => {
+                const notas = conDiag.map((x) => (x.nivel.porArea.find((y) => y.id === a.id) || {}).nota).filter((v) => typeof v === "number");
+                const promedio = notas.length ? Math.round(notas.reduce((t, v) => t + v, 0) / notas.length) : 0;
+                return { nombre: a.nombre, promedio, banda: bandaDe(promedio).etiqueta };
+            }) : [];
+            return { grupo, profesor: profile.full_name || "", fecha: new Date(), clasesCerradas: teacherData.closedSessions || 0, alumnos, areas };
+        }
+        let pdfGrupoListo = null;
+        function cargarPdfGrupo() {
+            if (!pdfGrupoListo) {
+                const cargar = (src) => new Promise((ok, mal) => {
+                    const sc = document.createElement("script");
+                    sc.src = src;
+                    sc.onload = ok;
+                    sc.onerror = () => mal(new Error("no se pudo cargar " + src));
+                    document.head.appendChild(sc);
+                });
+                pdfGrupoListo = Promise.all([
+                    window.ReportePDF ? null : cargar("js/reporte-pdf.js"),
+                    window.MarcaAgua ? null : cargar("js/marca-agua.js"),
+                    window.InformeGrupoPDF ? null : cargar("js/informe-grupo-pdf.js"),
+                ]).catch((e) => { pdfGrupoListo = null; throw e; });
+            }
+            return pdfGrupoListo;
+        }
+        async function bajarInformeGrupo() {
+            const boton = document.getElementById("informe-grupo-pdf");
+            const estado = document.getElementById("informe-grupo-estado");
+            const datos = datosInformeGrupo();
+            if (!datos.alumnos.length) { estado.textContent = "No hay alumnos en este grupo."; return; }
+            boton.disabled = true;
+            estado.textContent = "Armando el PDF…";
+            try {
+                await cargarPdfGrupo();
+                const r = await InformeGrupoPDF.descargar(datos);
+                estado.textContent = "Listo: se bajó «" + r.nombre + "» con " + datos.alumnos.length + (datos.alumnos.length === 1 ? " alumno." : " alumnos.");
+            } catch (e) {
+                console.error(e);
+                estado.textContent = "";
+                Avisos.avisar("No se pudo armar el PDF. Vuelve a intentarlo.", { tipo: "error" });
+            } finally {
+                boton.disabled = false;
+            }
+        }
+        document.getElementById("informe-grupo-pdf").addEventListener("click", bajarInformeGrupo);
+
         /* El PDF de un visitante: los tres archivos se bajan al apretar el botón,
            no al abrir Informes. Este panel es solo de administración y el
            generador no le sirve a nadie más que la vea. */
@@ -3562,6 +3651,15 @@ function areasFlojasArbitraje(fila) {
                 </div>
                 </details>
 
+                ${conDiagnostico.length >= 2 ? `<details class="group mt-7" id="comparar-alumnos">
+                <summary class="cursor-pointer list-none flex items-center justify-between gap-4">
+                    <h3 class="font-serif font-bold text-brand-800 dark:text-white inline">Comparar alumnos</h3>
+                    <span class="text-accent-700 dark:text-accent-400 group-open:rotate-45 transition-transform text-xl leading-none shrink-0" aria-hidden="true">+</span>
+                </summary>
+                <p class="text-xs text-brand-450 dark:text-brand-350 mt-2 mb-3">Dos o tres alumnos lado a lado, área por área: para armar grupos de nivel o parejas de práctica.</p>
+                <div id="comparar-alumnos-cuerpo"></div>
+                </details>` : ""}
+
                 ${pendientes.length ? (() => {
                     /* El nombre lo escribe el alumno (ver «El nombre de un alumno
                        es texto ajeno»): acá se pintaba CRUDO. Es el único sitio de
@@ -3617,6 +3715,8 @@ function areasFlojasArbitraje(fila) {
                     masPend.textContent = abierto ? "Ver solo los primeros" : `Ver los ${pendientes.length}`;
                 });
             }
+
+            if (window.CompararAlumnos) CompararAlumnos.montar(contenedor.querySelector("#comparar-alumnos-cuerpo"), conDiagnostico, { escapar: escVis });
 
             // Los nombres llevan al informe completo de ese alumno.
             contenedor.querySelectorAll("[data-alumno]").forEach((btn) => {

@@ -1469,3 +1469,30 @@ html[data-marca-academia] #barra-navegacion { background-color: #ffffff; }
   /* Quieta: aparece entera, sin crecer. */
   #barra-navegacion, #barra-navegacion.activa, #barra-navegacion.arranca { transform: none; transition: none; }
 }
+
+/* El panel para los más pequeños (js/clases.js, armarPanelPequenos): se queda
+   lo que vence (la franja de tareas) y las puertas grandes. Lo demás —el
+   buscador, los números, «Tus clases», lo que más usa, las favoritas, la
+   campana— es texto para leer, y a esa edad estorba. Ver «El panel para los
+   más pequeños» en docs/decisiones/paneles.md. */
+html.panel-pequenos #buscar-panel,
+html.panel-pequenos #progreso-alumno,
+html.panel-pequenos #tus-clases,
+html.panel-pequenos #mas-usado,
+html.panel-pequenos #favoritas,
+html.panel-pequenos #seguir-curso,
+html.panel-pequenos #campana,
+html.panel-pequenos #campana-panel { display: none !important; }
+
+/* «Comparar alumnos» (js/comparar-alumnos.js): los tres primeros colores de
+   la paleta categórica de referencia, validados contra el fondo de la tarjeta
+   (blanco en claro, brand-900 en oscuro) con el validador de la guía de
+   gráficos. El oscuro es su propio paso, no el claro invertido. Cada barra
+   lleva su número escrito: el color nunca va solo. */
+.comparar-serie-1 { background: #2a78d6; }
+.comparar-serie-2 { background: #eb6834; }
+.comparar-serie-3 { background: #1baf7a; }
+html.dark .comparar-serie-1 { background: #3987e5; }
+html.dark .comparar-serie-2 { background: #d95926; }
+html.dark .comparar-serie-3 { background: #199e70; }
+.comparar-muestra { display: inline-block; width: 0.75rem; height: 0.75rem; border-radius: 3px; }

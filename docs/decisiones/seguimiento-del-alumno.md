@@ -618,6 +618,55 @@ navegador, no la clase). Su Supabase de mentira **filtra de verdad por `eq`**:
 uno que devolviera siempre la tabla entera daría por buena una página que mezcla
 las notas de dos alumnos.
 
+## Mi cuaderno: lo que el alumno guarda y anota él
+
+La bitácora es del profesor: él la escribe y decide qué le comparte. El
+alumno no tenía un lugar suyo para anotar «esto no lo vi» sobre una posición.
+**«📓 Mi cuaderno»** (`cuaderno.html`, tarjeta en «Tu cuenta» del panel del
+alumno) es ese lugar.
+
+- **Se guarda al terminar un ejercicio**: el final de
+  `EjercicioTablero.fin()` (Temas y Mates) lleva «📓 Guardar en mi cuaderno»
+  si la página carga `js/cuaderno.js`. Guarda la posición de arranque, la
+  línea que se jugó, de dónde salió («Mates · Mate en 2») y la dirección para
+  volver. También se puede **pegar un FEN** en la página. Antes de guardar, se
+  comprueba con chess.js y `PosicionValida` (sin reyes no se guarda, y se dice
+  por qué).
+- **La ventana pide título, nota y quién la ve** («Solo yo» o «Yo y mi
+  profe»). Es `Avisos.formulario`, que para esto aprendió el campo
+  `textarea` (con su `max`, el mismo tope de la base).
+- **La tabla es `public.cuaderno`** (migración `20261004051951`):
+  - La escribe, la cambia y la borra solo su dueño. El profe, quien
+    supervisa y administración solo LEEN, y solo lo `compartida`, con el
+    alcance de siempre (`interno.alumnos_de`, `supervisados_por_mi`,
+    `is_admin`). Con el acceso vencido no se escribe (las restrictivas
+    `exige_acceso`, como el resto de lo que escribe un alumno).
+  - **Una posición se guarda una vez** (índice único `alumno_id, fen`). Si se
+    guarda otra vez la misma, la ventana se abre con lo que tenía y se cambia
+    por su id. La búsqueda previa va con `alumno_id` = el propio: a un profe
+    la RLS también le muestra las compartidas de sus alumnos, que no son
+    suyas.
+  - `enlace` solo acepta una dirección del sitio (un CHECK con la forma
+    `carpeta/pagina.html?…`), porque se pinta como enlace. Hasta 500
+    posiciones por alumno (trigger) y textos con tope (CHECK). El trigger
+    `cuaderno_al_cambiar` pone `updated_at` y no deja cambiar el dueño.
+  - Probado impersonando roles, con filas revertidas: el dueño ve y escribe
+    lo suyo; otro alumno no ve nada ni puede cambiar o borrar; el profe no ve
+    lo no compartido y, compartido, lo ve pero no lo cambia; un profe ajeno no
+    ve nada; el duplicado, el enlace a otra página y una fila a nombre de otro
+    se rechazan; `anon` no tiene permiso.
+- **La página pide de a 30** (`range`, con su «Ver más») y **busca en la
+  base** (`ilike` en título, nota y origen). Lo que se escribe en el buscador
+  se limpia de comas, paréntesis y comodines, que romperían o ensancharían el
+  filtro de PostgREST.
+- **El profe lo ve desde el informe del alumno**: debajo de la bitácora,
+  «📓 Su cuaderno: N posiciones que te compartió →» (se cuenta con `head`, sin
+  bajar nada) abre `cuaderno.html?alumno=<id>`, en solo lectura: sin agregar,
+  editar ni borrar. Un `?alumno=` que no tiene forma de id se ignora.
+- Lo prueba `verificar-cuaderno.js`: la lista, la búsqueda limpia, la posición
+  rota que no se guarda, lo que se inserta, borrar por id, la vista del profe
+  y el botón del final del ejercicio (que cambia la suya por su id).
+
 ## Exámenes: acá se ejecuta y se demuestra, no se practica
 
 `examenes.html` (armar y ver) y `examen.html?id=…` (rendir) son la otra mitad

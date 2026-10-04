@@ -3394,3 +3394,36 @@ Calendar y Outlook lo abren y lo agregan.
   `verificar-panel.js`: baja el archivo con las 4 fechas, pide 28 días y lo
   suyo con su id, sin profe no está y quien da clase no lo ve. Si el escapado
   de la coma se rompe a propósito, salta.
+
+## El panel para los más pequeños
+
+El panel del alumno está pensado para quien lee: grupos, descripciones, «Hoy
+te toca», números. Un niño de 5 a 8 años se pierde ahí. **«🧸 Panel para los
+más pequeños»** (Configuración, solo al alumnado) cambia el panel por uno de
+pocas puertas grandes.
+
+- **Es de este aparato** (`panel_pequenos_v1`), como el Modo Adaptado: suele
+  ser la tableta de la casa, y el mismo alumno en la compu del colegio ve el
+  de siempre. No es de la cuenta a propósito: no depende de quién es el niño
+  sino de dónde está y quién lo acompaña.
+- **Cinco grupos con nombres de niño** (`PANEL_PEQUENOS` en `js/clases.js`):
+  «Mi clase», «Lo que me pidió mi profe» (Mis tareas), «A entrenar» (Mates,
+  4×4, Las casillas, Aprender), «A jugar» (Juega con Oscar, Juegos) y «Mis
+  premios» (Mis medallas). Son las mismas tarjetas de `TILE_GROUPS` buscadas
+  por destino, así que el mantenimiento y las marcas valen igual. Lo que
+  cambia es el nombre (`NOMBRE_PEQUENOS`), el dibujo grande (`grande` en
+  `renderTileCard`) y que no lleva descripción.
+- **Lo que es para leer se esconde** con una regla de `css/styles.css` sobre
+  `html.panel-pequenos`: el buscador, «Hoy te toca» y los números, «Tus
+  clases», lo que más usa, las favoritas y la campana. La franja de lo que
+  vence (las tareas) se queda: es lo único con fecha.
+- **«🔊 Escúchame»** dice en voz alta lo que hay para tocar («Hola Ana. Toca un
+  dibujo para entrar: …»), con la voz del navegador (`BlindNotation.speak` si
+  está, si no `speechSynthesis` en es-CR). **«Volver al panel de siempre»**
+  borra la marca y recarga: no hace falta que un adulto busque Configuración.
+- No vale para quien da clase, para «Ver como» ni para el panel adaptado (la
+  cuenta marcada como ciega manda).
+- Lo prueba `pruebaPanelPequenos` en `verificar-panel.js`: los grupos, los
+  nombres, que lo de leer no se VE (`checkVisibility`), la franja que se
+  queda, lo que dice «Escúchame», el ancho del celular, que «Volver» borra la
+  marca, y que a quien da clase no le cambia nada.

@@ -1998,6 +1998,95 @@ async function pruebaAntesYAhora(browser) {
   await page.close();
 }
 
+/* «Comparar alumnos» (js/comparar-alumnos.js): dos de entrada, hasta tres,
+   cada barra con su número escrito y la leyenda con el nombre (el color nunca
+   va solo), y la frase de dónde más se separan. */
+async function pruebaComparar(browser) {
+  console.log("\n=== Comparar alumnos ===");
+  const { page, errores } = await abrir(browser, {
+    rpc: {
+      informes_resumen_alumnos: [ANA, BRUNO, CARLA],
+      informes_diagnosticos_alumnos: [
+        { student_id: "a-1", detalle: diagnosticoCon(90, 20), fecha: "2026-09-10T12:00:00Z", a_medias_pregunta: null, a_medias_fecha: null },
+        { student_id: "a-2", detalle: diagnosticoCon(20, 90), fecha: "2026-09-11T12:00:00Z", a_medias_pregunta: null, a_medias_fecha: null },
+        { student_id: "a-3", detalle: diagnosticoCon(50, 50), fecha: "2026-09-12T12:00:00Z", a_medias_pregunta: null, a_medias_fecha: null },
+      ],
+      informes_totales: { clases_cerradas: 0, preguntas: 0, partidas: 0 },
+    },
+    tablas: { profiles: [{ id: "prof-1", role: "profesor", is_admin: false, full_name: "Karina", email: "k@x.cr" }], training_plans: [] },
+  }, "prof-1");
+  await page.waitForSelector("#comparar-alumnos", { state: "attached", timeout: 15000 }).catch(() => {});
+  await page.evaluate(() => { const d = document.getElementById("comparar-alumnos"); if (d) { d.open = true; d.scrollIntoView(); } });
+  const leer = () => page.evaluate(() => {
+    const c = document.getElementById("comparar-alumnos-cuerpo");
+    return {
+      marcadas: [...c.querySelectorAll("[data-comparar-casillas] input")].map((i) => [i.parentElement.textContent.trim(), i.checked, i.disabled]),
+      leyenda: [...c.querySelectorAll("ul li")].map((li) => li.textContent.replace(/\s+/g, " ").trim()),
+      areas: c.querySelectorAll("[data-comparar-area]").length,
+      barrasPorArea: [...c.querySelectorAll("[data-comparar-area]")].map((a) => a.querySelectorAll(".rounded-r.h-full").length),
+      numeros: [...c.querySelectorAll("[data-comparar-area='finales'] .tabular-nums")].map((x) => x.textContent.replace(/\s+/g, " ").trim()),
+      resumen: (c.querySelector("[data-comparar-resumen]") || {}).textContent,
+      seVe: c.checkVisibility(),
+    };
+  });
+  let v = await leer();
+  const nombres = v.marcadas.map((m) => m[0]);
+  igual("de entrada, los dos primeros marcados", v.marcadas.map((m) => m[1]), [true, true, false]);
+  igual("la leyenda dice quién es cada color, con su fuerza y su nivel", v.leyenda.length === 2 && v.leyenda.every((t) => /^.+ · ≈\d+ · .+$/.test(t)), true);
+  igual("todas las áreas, con una barra por alumno", [v.areas > 0, v.barrasPorArea.every((n) => n === 2)], [true, true]);
+  igual("cada barra con su número escrito (la nota y el porcentaje)", v.numeros.length === 2 && v.numeros.every((t) => /: \d+ \(\d+ %\)$/.test(t)), true);
+  igual("dice dónde más se separan, con los dos números", /^Donde más se separan: .+ \(.+ \d+, .+ \d+\)\.$/.test(v.resumen || ""), true);
+  await page.check("#comparar-alumnos-cuerpo [data-comparar-casillas] label:nth-child(3) input");
+  v = await leer();
+  igual("con tres, una barra más por área", v.barrasPorArea.every((n) => n === 3), true);
+  await page.uncheck("#comparar-alumnos-cuerpo [data-comparar-casillas] label:nth-child(1) input");
+  await page.uncheck("#comparar-alumnos-cuerpo [data-comparar-casillas] label:nth-child(2) input");
+  igual("con uno solo, pide otro", await page.evaluate(() => document.querySelector("#comparar-alumnos-cuerpo [data-comparar-cuerpo]").textContent.trim()), "Elige al menos dos para compararlos.");
+  igual("los nombres son los de los alumnos con diagnóstico", nombres.slice().sort(), ["Ana Rojas", "Bruno Mena", "Carla Soto"]);
+  if (errores.length) { console.log("  ✗ errores en la página: " + errores.join(" | ")); fallos += 1; }
+  await page.close();
+}
+
+/* El informe del grupo en PDF (js/informe-grupo-pdf.js): del grupo elegido
+   arriba, con los números de la página. Se baja de verdad y se lee el texto
+   del PDF con pypdf: un PDF roto se descarga igual y no da ningún error. */
+async function pruebaInformeGrupo(browser) {
+  console.log("\n=== El informe del grupo en PDF ===");
+  const ctx = await browser.newContext({ acceptDownloads: true, serviceWorkers: "block" });
+  const nuevaPagina = browser.newPage;
+  browser.newPage = () => ctx.newPage();
+  const ANA2 = Object.assign({}, ANA, { grupo: "7A" }), BRUNO2 = Object.assign({}, BRUNO, { grupo: "7A" });
+  const { page, errores } = await abrir(browser, {
+    rpc: {
+      informes_resumen_alumnos: [ANA2, BRUNO2, CARLA],
+      informes_diagnosticos_alumnos: [{ student_id: "a-1", detalle: diagnosticoCon(90, 20), fecha: "2026-09-10T12:00:00Z", a_medias_pregunta: null, a_medias_fecha: null }],
+      informes_totales: { clases_cerradas: 4, preguntas: 10, partidas: 2 },
+    },
+    tablas: { profiles: [{ id: "prof-1", role: "profesor", is_admin: false, full_name: "Karina Rojas", email: "k@x.cr" }], training_plans: [] },
+  }, "prof-1");
+  browser.newPage = nuevaPagina;
+  await page.waitForSelector("#informe-grupo-pdf", { timeout: 15000 });
+  await page.selectOption("#group-filter", "7A");
+  await page.waitForTimeout(300);
+  const [bajada] = await Promise.all([page.waitForEvent("download", { timeout: 20000 }).catch(() => null), page.click("#informe-grupo-pdf")]);
+  igual("baja «informe-7a.pdf»", bajada && bajada.suggestedFilename(), "informe-7a.pdf");
+  if (bajada) {
+    const ruta = await bajada.path();
+    const fs = require("fs");
+    igual("es un PDF", fs.readFileSync(ruta).slice(0, 5).toString(), "%PDF-");
+    let texto = "";
+    try {
+      texto = require("child_process").execFileSync("python3", ["-c", "import sys,pypdf; print('\\n'.join(p.extract_text() for p in pypdf.PdfReader(sys.argv[1]).pages))", ruta]).toString().replace(/\s+/g, " ");
+    } catch (e) { texto = "pypdf: " + e.message; }
+    igual("con el título del grupo y quien lo prepara", /Informe del grupo 7A/.test(texto) && /Karina Rojas/.test(texto), true);
+    igual("solo los del grupo: Ana y Bruno, no Carla", [/Ana Rojas/.test(texto), /Bruno Mena/.test(texto), /Carla Soto/.test(texto)], [true, true, false]);
+    igual("dice el resumen, las áreas y cada alumno", ["Resumen", "Por áreas", "Cada alumno", "2 alumnos.", "Sin diagnóstico"].every((t) => texto.includes(t)), true);
+  }
+  igual("y lo dice en la página", /^Listo: se bajó «informe-7a\.pdf» con 2 alumnos\.$/.test(await page.textContent("#informe-grupo-estado")), true);
+  if (errores.length) { console.log("  ✗ errores en la página: " + errores.join(" | ")); fallos += 1; }
+  await ctx.close();
+}
+
 (async () => {
   const browser = await chromium.launch({ executablePath: CHROME });
   try {
@@ -2009,6 +2098,8 @@ async function pruebaAntesYAhora(browser) {
     await pruebaAlumno(browser);
     await pruebaCertificados(browser);
     await pruebaAntesYAhora(browser);
+    await pruebaComparar(browser);
+    await pruebaInformeGrupo(browser);
     await pruebaCompartirPlanes(browser);
     await pruebaNombreAjeno(browser);
     await pruebaPdfVisitante(browser);

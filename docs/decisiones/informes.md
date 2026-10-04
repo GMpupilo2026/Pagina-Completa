@@ -605,6 +605,58 @@ fácil. Lo pinta `js/antes-y-ahora.js`, el mismo para las dos vistas.
   la página del alumno (lo suyo y no lo de otro, los nombres, la fecha en hora
   de Costa Rica). Si se quita el filtro de versión a propósito, salta.
 
+### Comparar alumnos
+
+«El perfil de cada alumno» los muestra de a uno, en tarjetas separadas, y
+comparar dos perfiles a ojo es justo lo que no se hace. **«Comparar alumnos»**
+(dentro del diagnóstico de la clase, debajo del perfil) pone dos o tres lado
+a lado, área por área, para armar grupos de nivel o parejas de práctica. Lo
+pinta `js/comparar-alumnos.js` con los diagnósticos que la página ya tiene
+(no pide nada a la base) y respeta el filtro de grupo de arriba.
+
+- **Hasta tres**, con los tres primeros colores de la paleta categórica de
+  referencia de la guía de gráficos, pasados por su validador contra el fondo
+  de la tarjeta (blanco en claro, brand-900 en oscuro; el oscuro con sus
+  propios pasos). Con un cuarto, dos colores ya no se distinguen con
+  daltonismo, así que la cuarta casilla se apaga y lo dice.
+- **El color nunca va solo**: cada barra lleva su número escrito y su nombre
+  para el lector de pantalla, y la leyenda dice quién es cada color con su
+  fuerza y su nivel. El verde en modo claro no llega a 3:1 contra el blanco: el
+  número escrito es lo que lo permite.
+- **Se compara la nota de cada área** (rendir lo esperable para su fuerza es
+  70), la misma de «Dónde se debe mejorar» y del perfil. El porcentaje va
+  entre paréntesis.
+- Arriba, una frase: **dónde más se separan** («Táctica: Bruno 90, Ana 20»),
+  que es lo que se busca para armar parejas.
+- Lo prueba `pruebaComparar` en `verificar-informes.js`.
+
+### El informe del grupo en PDF
+
+Para una reunión con las familias o con el colegio, el profe necesitaba algo
+que se pueda imprimir o mandar. «Reportes de actividades» (`reportes.html`) es
+de quien coordina y habla de las clases de un periodo. Esto es de quien da
+clase y habla de **su grupo**. **«📄 Informe del grupo en PDF»**, en «Tus
+alumnos», baja un PDF del grupo elegido arriba (o de todos):
+
+- **Resumen**: cuántos alumnos, asistencia promedio, tiempo en clase y en
+  ejercicios, participación en las preguntas de la clase y cuántos hicieron
+  el diagnóstico, con su fuerza media.
+- **Por áreas**: el promedio del grupo en cada área del diagnóstico (la nota,
+  como «Dónde se debe mejorar»), de la más floja a la más firme y con la banda
+  escrita, porque el PDF se imprime en blanco y negro. Al pie, qué reforzar.
+- **Cada alumno**: asistencia, tiempo, participación y nivel, en una fila.
+- **No se cuenta nada aparte**: los números son los que la página ya pintó
+  (`informes_resumen_alumnos`, `asistenciaDe` sin las justificadas,
+  `PlanEntrenamiento.resumir`). El buscador no cuenta: un informe de grupo es
+  del grupo.
+- El PDF lo escribe `js/reporte-pdf.js`, el mismo de los reportes, con la marca
+  de agua de `js/marca-agua.js`. El documento lo arma
+  `js/informe-grupo-pdf.js`. Los tres se bajan al apretar el botón, no al abrir
+  Informes.
+- Lo prueba `pruebaInformeGrupo` en `verificar-informes.js`: baja el PDF de
+  verdad y lee su texto con pypdf (el título, quién lo prepara, solo los del
+  grupo, las tres partes).
+
 ### El tiempo conectado no se lo cree porque lo diga el navegador
 
 `class_presence_log` (clase en vivo, latido de `sesion.html`) y
