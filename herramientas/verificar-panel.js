@@ -892,8 +892,8 @@ async function pruebaPersonas(browser) {
   await r.page.waitForFunction(() => !document.getElementById("buscar-personas").hidden, null, { timeout: 5000 });
   igual("a la profesora solo le sale su alumna, que va a su informe", await r.page.evaluate(PERSONAS),
     [["María Rojas", "informes.html?alumno=a-maria"]]);
-  igual("y el campo le dice que puede buscar por nombre", await r.page.getAttribute("#buscar-panel-campo", "placeholder"),
-    "Cobros, tareas, el nombre de un alumno…");
+  igual("y el campo le dice que puede buscar por nombre, sin sugerirle Cobros (no los ve)",
+    await r.page.getAttribute("#buscar-panel-campo", "placeholder"), "Tareas, informes, el nombre de un alumno…");
   await r.page.press("#buscar-panel-campo", "Escape");
   igual("Escape también se lleva a las personas", await r.page.evaluate(() => document.getElementById("buscar-personas").checkVisibility()), false);
   await r.ctx.close();

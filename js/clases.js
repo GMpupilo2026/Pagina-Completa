@@ -648,8 +648,11 @@
            SÍ tiene. A quien no coordina no se le cuentan solicitudes ni
            cobros; sería decirle «al día» sobre algo que no puede ver. Su
            informe mensual va siempre (la base mira si tiene supervisión). */
+        function tieneTarjeta(h) {
+            return TILE_GROUPS.some((g) => g.tiles.some((t) => t.href === h));
+        }
         function clavesUrgenteDocente() {
-            const tiene = (h) => TILE_GROUPS.some((g) => g.tiles.some((t) => t.href === h));
+            const tiene = tieneTarjeta;
             return ["justificaciones", "informePropio", "solicitudes", "morosos"].filter((c) =>
                 c === "informePropio" ? tiene("informe-mensual.html")
                 : c === "justificaciones" ? tiene("justificaciones.html")
@@ -1061,8 +1064,12 @@
         }
 
         function renderTiles() {
-            // Quien puede buscar gente lo ve escrito en el campo.
-            if (buscaPersonas()) campoBusqueda.placeholder = "Cobros, tareas, el nombre de un alumno…";
+            /* Quien puede buscar gente lo ve escrito en el campo. «Cobros»
+               solo a quien tiene la tarjeta: a un profesor que no coordina
+               se le sugería buscar algo que no puede ver. */
+            if (buscaPersonas()) campoBusqueda.placeholder = tieneTarjeta("cobros.html")
+                ? "Cobros, tareas, el nombre de un alumno…"
+                : "Tareas, informes, el nombre de un alumno…";
             const grid = document.getElementById("tile-grid");
             /* Si el foco estaba en el título de un grupo (se llegó con
                #entrenar), repintar la grilla lo tiraba al <body>: vuelve al
@@ -1401,7 +1408,7 @@
             if (!escrito) { estadoBusqueda.textContent = ""; return; }
             anuncioBusqueda = setTimeout(() => {
                 if (!accesosEncontrados && !personasEncontradas) {
-                    estadoBusqueda.textContent = `Nada con «${escrito}». Prueba con otra palabra: cobros, tareas, contraseña…`;
+                    estadoBusqueda.textContent = `Nada con «${escrito}». Prueba con otra palabra: ${tieneTarjeta("cobros.html") ? "cobros" : "informes"}, tareas, contraseña…`;
                     return;
                 }
                 const partes = [];
