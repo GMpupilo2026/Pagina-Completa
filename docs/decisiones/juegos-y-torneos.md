@@ -980,6 +980,27 @@ causas, todas calladas:
   de volver a intentar. Antes era una pantalla trabada mandando cuatro
   pedidos por segundo, justo cuando la base anda lenta.
 
+**Ajedrez para 4** (`cuatro-jugadores.js`) tenía lo mismo y dos cosas suyas.
+Usa la misma escucha (`SalaJuego.suscribir` con `tabla: "fourplayer_games"`;
+el orden cuenta también quién quedó fuera y cuántos están listos, que van en
+los asientos) y su reloj corre según `room.turn`, el turno guardado. Además:
+
+- **Guarda el tablero ENTERO en cada escritura** (los cuatro asientos y el
+  tablero son jsonb), así que dos escrituras casi a la vez se pisaban: la
+  segunda borraba a la primera sin ningún error. Lo más común era **«Estoy
+  listo»**: si dos lo tocaban en el mismo medio segundo, uno quedaba sin
+  listo y la partida no arrancaba nunca. Ahora cada escritura va solo sobre la
+  versión que se tenía a la vista (`.eq("updated_at", room.updated_at)`, que
+  cambia con cada escritura), la jugada además solo en el turno propio, y
+  «Estoy listo» —que también pone `updated_at`— vuelve a leer y lo intenta otra
+  vez sobre lo nuevo.
+- **Acá la base no valida la bandera** (ver «La bandera la canta el
+  servidor»), y la bandera se calculaba con el turno del tablero: mientras la
+  jugada propia viajaba, el reloj del siguiente bajaba todo lo que uno había
+  pensado y la pantalla lo podía dar por eliminado. Ahora la bandera y el rey
+  en piloto automático solo se resuelven cuando el tablero coincide con lo
+  guardado (`game.turn === room.turn`).
+
 Y lo que cargaba a Realtime para todos:
 
 - **`torneo.html` escuchaba `game_rooms` entera** —«la siguiente candidata si
@@ -997,8 +1018,8 @@ Y lo que cargaba a Realtime para todos:
   los avisos: una recarga a la vez y a lo sumo una por segundo. Lo mismo la
   lista de partidas de la clase en `sesion.html`.
 
-**Al tocar `js/sala-juego.js`, la forma en que una sala guarda o aplica una
-jugada, o lo que escucha `torneo.html`, correr `node
+**Al tocar `js/sala-juego.js`, la forma en que una sala (también la de Ajedrez
+para 4) guarda o aplica una jugada, o lo que escucha `torneo.html`, correr `node
 herramientas/verificar-partidas-simultaneas.js`** (con el sitio en
 localhost:8777 y playwright; `PARTIDAS=10` para una corrida corta). Abre
 pestañas de `estandar.html` contra un servidor de mentira que hace de base y de
@@ -1020,6 +1041,14 @@ en verse del otro lado:
   peor 8,6 s: un aviso perdido, 5 s de espera y dos respuestas lentas), al
   final todas las pantallas muestran lo que hay en la base, y la lista de
   jugadas guardada lleva siempre a la posición guardada.
+
+- **12 partidas de Ajedrez para 4 (48 pestañas)**, con red sana y con red
+  mala: los cuatro tocan «Estoy listo» casi a la vez y todas arrancan; cada
+  jugada la ven los otros tres (ver una posición más nueva cuenta como ver las
+  anteriores: quien espera puede pasar de una vez a la última), y la lista de
+  jugadas guardada es siempre la del tablero guardado. Con el Ajedrez para 4
+  de antes, **ninguna de las partidas arrancaba**, ni con la red sana: los
+  «listo» casi simultáneos se borraban entre sí.
 
 Con la sala de antes, la red mala deja partidas trabadas para siempre (una
 jugada tardó 5 minutos en verse; otras no llegaron nunca).

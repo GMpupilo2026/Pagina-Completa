@@ -108,10 +108,16 @@
             const s = Math.max(0, Math.ceil(seconds));
             return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0");
         }
+        /* El turno del reloj es el de la sala GUARDADA (room.turn), no el del
+           tablero: mientras la jugada propia viaja a la base, el tablero ya le
+           pasó el turno al siguiente, pero su reloj todavía no arrancó. Con el
+           del tablero, al siguiente le bajaba de golpe todo lo que uno había
+           pensado y —como acá la base no valida la bandera— esta pantalla podía
+           llegar a darlo por eliminado. Ver «Las jugadas llegan siempre». */
         function liveTimeLeft(seat) {
             const stored = room.seats[seat] && room.seats[seat].time_left;
             if (stored == null) return null;
-            const isRunning = room.status === "playing" && !game.gameOver && room.clock_updated_at && game.turn === seat && game.status[seat] !== "eliminated";
+            const isRunning = room.status === "playing" && !game.gameOver && room.clock_updated_at && room.turn === seat && game.status[seat] !== "eliminated";
             if (!isRunning) return stored;
             const elapsed = RelojServidor.desde(room.clock_updated_at);
             return Math.max(0, stored - elapsed);
@@ -137,6 +143,8 @@
         // evita que dos navegadores dupliquen el resultado si lo ven al mismo tiempo.
         async function checkFlagFall() {
             if (room.status !== "playing" || room.initial_seconds == null || game.gameOver) return;
+            // Con una jugada propia viajando, el tablero va adelantado: nada que cantar.
+            if (game.turn !== room.turn) return;
             const turnSeat = game.turn;
             const secondsLeft = liveTimeLeft(turnSeat);
             if (secondsLeft === null || secondsLeft > 0) return;
@@ -160,7 +168,7 @@
         // 0 filas porque el turno ya cambió) — no hace falta coordinación extra. ----
         let zombieAttemptInFlight = false;
         async function maybeAdvanceZombie() {
-            if (zombieAttemptInFlight || !room || room.status !== "playing" || game.gameOver) return;
+            if (zombieAttemptInFlight || !room || room.status !== "playing" || game.gameOver || game.turn !== room.turn) return;
             const seat = game.turn;
             if (game.status[seat] !== "zombie") return;
             zombieAttemptInFlight = true;
@@ -238,19 +246,25 @@
             }, patch, { seats: newSeats });
             // Solo se escribe sobre una partida que sigue en juego: una rendición o una
             // jugada que llega tarde no puede pisar un final que ya quedó guardado.
+            // Y solo sobre la versión de la sala que se tenía a la vista
+            // (`updated_at`, que cambia con cada escritura de la partida): acá se
+            // guarda el tablero ENTERO, así que una rendición y una jugada casi a la
+            // vez se pisaban, y la que llegaba segunda borraba a la otra.
             let query = sb.from("fourplayer_games").update(fullPatch).eq("id", ROOM_ID).eq("status", "playing");
             if (opts.turnoDe) query = query.eq("turn", opts.turnoDe);
-            const { data: guardada, error } = await query.select("id");
+            if (room.updated_at) query = query.eq("updated_at", room.updated_at);
+            const { data: guardada, error } = await query.select("*");
             if (error || !guardada || !guardada.length) {
                 // No quedó: el tablero local ya muestra la jugada, así que se vuelve a
                 // leer la sala para que enseñe la real. Con turnoDe, cero filas es lo
                 // normal (otro navegador resolvió ese turno antes) y no se avisa.
                 if (error) console.error(error);
-                const aviso = error ? "No se pudo guardar: " + error.message : (opts.turnoDe ? null : (opts.aviso || "La partida ya había terminado: esa jugada no quedó guardada."));
+                const aviso = error ? "No se pudo guardar: " + error.message : (opts.aviso || (opts.turnoDe ? null : "La partida ya había terminado: esa jugada no quedó guardada."));
                 await releerSala(aviso);
                 return;
             }
-            room = Object.assign({}, room, fullPatch);
+            // La fila de la base (el reloj con SU hora), o algo más nuevo si ya llegó.
+            room = SalaJuego.laMasNueva(room, guardada[0]);
             renderAll();
         }
 
@@ -274,7 +288,7 @@
                 patch.clock_updated_at = new Date().toISOString();
             }
             room = Object.assign({}, room, { seats: newSeats });
-            await persist(patch, { jugada: res });
+            await persist(patch, { jugada: res, turnoDe: mySeat, aviso: "Esa jugada no quedó guardada: la partida ya iba más adelante." });
         }
 
         function renderAll() {
@@ -287,29 +301,47 @@
         }
 
         function applyRemoteRoom(row) {
+            // Lo viejo o repetido que llegue tarde no hace retroceder el tablero.
+            if (room && SalaJuego.esAnterior(row, room)) return;
             room = row;
             game = FourPlayerChess.Game.fromJSON(row.board);
             renderAll();
         }
 
+        /* La misma escucha que las salas de dos (js/sala-juego.js): vuelve a
+           leer la sala al reconectarse, al volver a la pestaña y si pasa un rato
+           sin noticias. Antes solo escuchaba Realtime, y una jugada que pasaba con
+           el canal caído no llegaba nunca. */
         function subscribeRoom() {
-            sb.channel("fourplayer-game-" + ROOM_ID)
-                .on("postgres_changes", { event: "UPDATE", schema: "public", table: "fourplayer_games", filter: "id=eq." + ROOM_ID }, (payload) => applyRemoteRoom(payload.new))
-                .subscribe();
+            SalaJuego.suscribir(ROOM_ID, (fila) => applyRemoteRoom(fila), {
+                tabla: "fourplayer_games", canal: "fourplayer-game-",
+                sala: () => room, miColor: () => mySeat,
+                esperando: () => !allReady(room) || room.turn !== mySeat,
+            });
         }
 
+        /* «Estoy listo» guarda los cuatro asientos (es un solo jsonb): si dos lo
+           tocaban casi a la vez, el segundo borraba el «listo» del primero y la
+           partida no arrancaba nunca. Ahora se guarda solo sobre la versión que se
+           tenía a la vista (`updated_at`) y, si otro escribió antes, se vuelve a
+           leer y se intenta otra vez sobre lo nuevo. */
         document.getElementById("ready-btn").addEventListener("click", async () => {
-            if (!mySeat || room.status !== "playing") return;
-            const newSeats = JSON.parse(JSON.stringify(room.seats));
-            newSeats[mySeat].ready = true;
-            const patch = { seats: newSeats };
-            if (allReady(Object.assign({}, room, { seats: newSeats })) && room.initial_seconds != null && !room.clock_updated_at) {
-                patch.clock_updated_at = new Date().toISOString();
+            for (let intento = 0; intento < 6; intento++) {
+                if (!mySeat || room.status !== "playing" || room.seats[mySeat].ready) return;
+                const newSeats = JSON.parse(JSON.stringify(room.seats));
+                newSeats[mySeat].ready = true;
+                const patch = { seats: newSeats, updated_at: new Date().toISOString() };
+                if (allReady(Object.assign({}, room, { seats: newSeats })) && room.initial_seconds != null && !room.clock_updated_at) {
+                    patch.clock_updated_at = new Date().toISOString();
+                }
+                let query = sb.from("fourplayer_games").update(patch).eq("id", ROOM_ID);
+                if (room.updated_at) query = query.eq("updated_at", room.updated_at);
+                const { data: guardada, error } = await query.select("*");
+                if (error) { console.error(error); setStatus("No se pudo confirmar: " + error.message); return; }
+                if (guardada && guardada[0]) { room = SalaJuego.laMasNueva(room, guardada[0]); renderAll(); return; }
+                await releerSala(null);
             }
-            const { error } = await sb.from("fourplayer_games").update(patch).eq("id", ROOM_ID);
-            if (error) { console.error(error); setStatus("No se pudo confirmar: " + error.message); return; }
-            room = Object.assign({}, room, patch);
-            renderAll();
+            setStatus("No se pudo confirmar: la sala cambiaba sin parar. Vuelve a tocar «Estoy listo».");
         });
 
         document.getElementById("resign-btn").addEventListener("click", async () => {
