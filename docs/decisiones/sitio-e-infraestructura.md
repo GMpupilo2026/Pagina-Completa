@@ -1077,19 +1077,19 @@ de abajo — que es lo que hace que se sienta una app y no páginas sueltas.
 - `view-transition-name` tiene que ser único en la página: va en `#header`,
   que hay uno solo. No ponérselo a nada que se repita.
 - **Cuando la página de llegada no pide la transición** (`inscripcion.html`,
-  `offline.html`, un PDF, o la respuesta de mentira de un verificador), el
-  navegador la cancela y rechaza sus promesas: en Chrome 153 eso salía como
-  error de la página (`InvalidStateError: … ViewTransition opt-in disabled`),
-  le llegaba a Sentry y tumbó `verificar-ritmos.js` en el CI. No es un error
-  —la página cambia igual, sin fundido—, así que `js/navegacion.js` atrapa
-  esas promesas en `pageswap` y `pagereveal`. **Eso no alcanzó**: en el CI el
-  rechazo se seguía escapando a veces (pasaba en una corrida y fallaba en la
-  siguiente), por un camino que esos eventos no exponen. Lo que lo resuelve
-  es `js/errores.js`, que escucha `unhandledrejection` desde el principio de
-  cada página: reconoce «Transition was aborted/skipped…» (y solo eso), no lo
-  manda a Sentry y llama a `preventDefault()`, con lo que el navegador no lo
-  anota como error. `verificar-navegacion.js` comprueba que eso se calle y
-  que un rechazo de otra cosa siga saliendo.
+  `offline.html`, un PDF), el navegador la cancela. Si la página vieja
+  todavía está viva, eso rechaza las promesas de la transición y saldría como
+  error de la página (`InvalidStateError: … ViewTransition opt-in disabled`):
+  `js/navegacion.js` las atrapa en `pageswap` y `pagereveal`. Pero cuando la
+  cancelación llega con la página vieja ya descargándose, Chrome 153 la anota
+  igual y no hay evento ni `unhandledrejection` donde atraparla (se probó: ni
+  `preventDefault()` en `errores.js` la calla). La página cambia igual, sin
+  fundido, así que en el sitio no importa; **en un verificador sí**, porque
+  `verificar-ritmos.js` reemplazaba `torneo.html` por un doble que decía
+  «ok» a secas, sin la transición, y fallaba a veces (una corrida sí, otra
+  no). **Un doble de una página del sitio pide la transición como la de
+  verdad** (`<style>@view-transition { navigation: auto; }</style>`): el
+  problema era el doble, no la página.
 
 **3. Una barra dice «ya va» (`js/navegacion.js`).** En el navegador, mientras
 llega la página nueva se ve la ruedita de la pestaña. En la app instalada no

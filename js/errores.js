@@ -42,27 +42,6 @@
   "use strict";
   if (window.ErroresSitio) return;
 
-  /* La transición entre páginas (@view-transition) la cancela el navegador
-     cuando la página de llegada no la pide (inscripcion.html, offline.html, un
-     PDF) o cuando la navegación se corta: rechaza sus promesas con
-     «Transition was aborted…» o «Transition was skipped…». No es un error —la
-     página cambia igual, sin fundido— y no siempre llega por un evento donde
-     atraparlo (js/navegacion.js lo intenta en pageswap/pagereveal, pero en
-     Chrome 153 se escapaba a veces). Se reconoce acá, que es lo primero que
-     corre en todas las páginas, y ANTES de ver si Sentry está prendido: con
-     preventDefault el navegador no lo anota como error en ningún lado
-     (localhost y los verificadores incluidos), y más abajo tampoco se manda.
-     Ver «La navegación se siente inmediata» en
-     docs/decisiones/sitio-e-infraestructura.md. */
-  function transicionCancelada(r) {
-    return !!r && (r.name === "InvalidStateError" || r.name === "AbortError")
-      && /^Transition was (aborted|skipped)\b/.test(String(r.message || ""));
-  }
-
-  window.addEventListener("unhandledrejection", function (e) {
-    if (e && transicionCancelada(e.reason)) e.preventDefault();
-  });
-
   // El DSN no es secreto: es la dirección a la que el navegador manda los
   // errores, y cualquiera la ve en la pestaña Red. Vacío = apagado.
   var DSN = "";
@@ -188,7 +167,6 @@
   });
 
   window.addEventListener("unhandledrejection", function (e) {
-    if (e && transicionCancelada(e.reason)) return;
     anotar(e && e.reason, "onunhandledrejection");
   });
 
