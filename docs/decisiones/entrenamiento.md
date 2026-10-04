@@ -1462,6 +1462,12 @@ y 16 conceptos) sin tocar ni una de las 28 primeras. Lo que dejó escrito:
   - En los dos, el tablero muestra el final de la línea, como al imprimir.
     La versión accesible es la propia página, que se lee entera con lector de
     pantalla.
+  - **Se bajan desde la lista de Estudio**, en el recuadro «Las fichas en
+    papel», que solo ve quien administra: el worker se los niega a cualquier
+    otra cuenta, así que ofrecérselos sería un enlace que da «se compra
+    aparte». Respeta «Ver como» (`ModoVista.perfilVisto`): quien administra
+    mirando como alumno o como profesor no lo ve. `verificar-estudio.js` lo
+    comprueba con las tres cuentas.
   - **Al tocar el banco de fichas o la ficha impresa, se vuelve a generar.**
     `verificar-fichas-pdf.py` lo nota: cuenta las páginas contra el banco y
     busca cada título en la página que dice el índice y en las dos caras de

@@ -85,6 +85,13 @@
      no llega al contraste AA sobre el fondo claro. */
   .solo-cat{color:var(--text-muted); font-size:0.9rem; margin:16px 0 0;}
   .solo-cat[hidden]{display:none;}
+  /* Las fichas en papel (el libro y las cartas para recortar): solo lo ve
+     quien administra, lo decide js/entreno-estudio.js. */
+  .papel{margin:16px 0 0; padding:14px 16px; border:1px solid var(--line); border-left:4px solid var(--brass); background:var(--bg-panel);}
+  .papel[hidden]{display:none;}
+  .papel h2{font-size:1.05rem; margin:0 0 4px;}
+  .papel p{color:var(--text-muted); font-size:0.88rem; line-height:1.5; margin:0;}
+  .papel-botones{display:flex; flex-wrap:wrap; gap:10px; margin:10px 0;}
   .solo-cat button{background:none; border:0; padding:4px 2px; min-height:44px; font:inherit; font-weight:600;
     color:var(--text); text-decoration:underline; text-underline-offset:2px; cursor:pointer;}
   /* ---------- El buscador ---------- */
@@ -367,6 +374,20 @@
 
     <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
       <div id="lista-vista">
+        <!-- Las fichas en papel: el libro y las cartas de 63 × 88 mm que arma
+             herramientas/fichas-estudio-pdf.js. Viven en material/, que el
+             worker solo le sirve a administración (y a quien las compre), así
+             que el recuadro también es solo de administración: a cualquier
+             otra cuenta el enlace le daría «se compra aparte». -->
+        <section class="papel" id="papel-admin" aria-labelledby="papel-titulo" hidden>
+          <h2 id="papel-titulo">Las fichas en papel</h2>
+          <p>Solo para administración. El libro trae todas las fichas, una por página, con su índice. Las cartas miden 63 × 88 mm, van nueve por hoja carta y llevan el reverso detrás.</p>
+          <div class="papel-botones">
+            <a class="bctrl" id="papel-libro" href="../material/fichas-de-estudio/fichas-de-estudio-libro.pdf" download><span aria-hidden="true">📕&nbsp;</span>Descargar el libro (PDF)</a>
+            <a class="bctrl" id="papel-cartas" href="../material/fichas-de-estudio/fichas-de-estudio-cartas.pdf" download><span aria-hidden="true">🃏&nbsp;</span>Descargar las cartas para recortar (PDF)</a>
+          </div>
+          <p>Las cartas se imprimen a tamaño real (100 %, sin «ajustar a la página») y a doble cara, volteando la hoja por el borde largo. Se cortan por las líneas grises, guiándose por las marcas del margen.</p>
+        </section>
         <p id="solo-cat" class="solo-cat" hidden><span id="solo-cat-texto"></span> <button type="button" id="solo-cat-todas">Ver todas las fichas</button></p>
         <div id="ficha-lista"></div>
       </div>
