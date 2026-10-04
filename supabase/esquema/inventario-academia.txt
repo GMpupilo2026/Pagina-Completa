@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261004210857
+# al-dia-con: 20261004212658
 tabla  Ejercicios Lichess  rls=true
 tabla  academia_ia  rls=true
 tabla  academia_miembros  rls=true
@@ -1494,6 +1494,7 @@ funcion  interno.subgrupo_del_equipo_al_dia(p_equipo uuid, p_profesor uuid)  def
 funcion  interno.supervisados_de(p_supervisor uuid)  definer  anon=false  auth=false
 funcion  interno.supervisados_por_mi()  definer  anon=false  auth=true
 funcion  interno.tanda_resultado_de_la_base()  definer  anon=false  auth=false
+funcion  interno.training_progress_hora()  definer  anon=false  auth=false
 funcion  interno.ultima_actividad_de_clase(p_clase uuid)  definer  anon=false  auth=false
 funcion  interno.validar_periodo(p_desde date, p_hasta date)  invoker  anon=false  auth=false
 funcion  interno.verificacion_al_dia()  definer  anon=false  auth=true
@@ -2144,6 +2145,7 @@ trigger  tarea_items  proteger_tarea_items_alumno
 trigger  tareas  tareas_avisa_push
 trigger  tareas  tareas_protege_alumno
 trigger  tournaments  tournaments_proteger
+trigger  training_progress  training_progress_hora
 trigger  training_progress  training_progress_valida_marca
 trigger  vision_personas  auditar
 indice  Ejercicios Lichess  ejercicios_lichess_nbplays_idx
@@ -2521,6 +2523,7 @@ indice  training_plans  training_plans_student_id_key
 indice  training_plans  training_plans_student_idx
 indice  training_plans  training_plans_teacher_id_fk
 indice  training_progress  training_progress_pkey
+indice  training_progress  training_progress_sin_internet
 indice  training_progress  training_progress_student_idx
 indice  training_state  training_state_pkey
 indice  trofeos_ajustes  trofeos_ajustes_alumno

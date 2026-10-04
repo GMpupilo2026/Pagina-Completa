@@ -20,8 +20,13 @@
  *     teléfono sería dejarlos ahí después de cerrar sesión;
  *   - las respuestas que no vengan bien (un 404 o un 500 no se guardan).
  */
-const VERSION = "ai-2026-10-1";
+const VERSION = "ai-2026-10-2";
 const CACHE = "ajedrez-integral-" + VERSION;
+/* La de «Ejercicios sin internet» (entreno/sin-internet.html): la llena esa
+   página, con ella misma y sus scripts, cuando el alumno guarda una tanda. No
+   se borra al cambiar de versión —si no, la tanda que preparó ayer no abriría
+   hoy sin señal— y la página la renueva cada vez que se abre con señal. */
+const CACHE_SIN_RED = "ajedrez-integral-sin-red";
 
 /* El mínimo para que la app abra sin red y explique qué pasa. */
 const CASCARON = [
@@ -65,7 +70,7 @@ self.addEventListener("install", (evento) => {
 self.addEventListener("activate", (evento) => {
   evento.waitUntil((async () => {
     const nombres = await caches.keys();
-    await Promise.all(nombres.filter((n) => n !== CACHE).map((n) => caches.delete(n)));
+    await Promise.all(nombres.filter((n) => n !== CACHE && n !== CACHE_SIN_RED).map((n) => caches.delete(n)));
     // Navigation preload: al abrir una página, el navegador pide el HTML a la
     // red A LA VEZ que despierta este service worker, en vez de esperar a que
     // arranque para recién ahí pedirlo. Un service worker dormido tarda de 50
@@ -78,6 +83,14 @@ self.addEventListener("activate", (evento) => {
     await self.clients.claim();
   })());
 });
+
+// La misma página con o sin .html: el enlace puede venir de cualquiera de
+// las dos y la copia guardada, de la otra.
+async function otraForma(url) {
+  const p = url.pathname;
+  const otra = /\.html$/.test(p) ? p.replace(/\.html$/, "") : (/\/[^./]+$/.test(p) ? p + ".html" : null);
+  return otra ? caches.match(otra) : null;
+}
 
 function seGuarda(url) {
   return !NUNCA.some((re) => re.test(url.pathname));
@@ -107,8 +120,14 @@ self.addEventListener("fetch", (evento) => {
       }
       return respuesta;
     } catch (e) {
-      const guardada = await caches.match(pedido);
-      if (guardada) return guardada;
+      const guardada = await caches.match(pedido)
+        || (pedido.mode === "navigate" ? await otraForma(url) : null);
+      if (guardada) {
+        // Una respuesta que llegó por una redirección (Cloudflare manda
+        // /x.html a /x) no sirve para abrir una página: se rearma.
+        return pedido.mode === "navigate" && guardada.redirected
+          ? new Response(guardada.body, { status: 200, headers: guardada.headers }) : guardada;
+      }
       // Sin red y sin copia: si iba a una página, se explica; si era un
       // archivo suelto, se deja fallar, que es lo honesto.
       if (pedido.mode === "navigate") {

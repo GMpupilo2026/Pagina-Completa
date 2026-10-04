@@ -1321,6 +1321,54 @@ guarde), lo que se guarda, entrenarla entera, «Volver», borrar ESA y su ficha
 marcada, y el enlace `?linea=mi:<id>`. Rompiendo el choque o la marca de
 borrada, salta.
 
+## Ejercicios sin internet
+
+`entreno/sin-internet.html` (tarjeta «📴 Ejercicios sin internet», en
+Entrenamiento intermedio): con señal, el alumno guarda en el celular una tanda
+de 10, 20 o 30 problemas del banco de Ejercicios por tema (partidas reales de
+Lichess, ya comprobadas), de la dificultad que elija. Sin señal, abre la
+página y la resuelve —con clics o escribiendo, con pista y «Ver solución»—, y
+cada resultado se sube solo cuando vuelve la conexión.
+
+- **La página se guarda en su PROPIA caché** (`ajedrez-integral-sin-red`), con
+  ella misma —con y sin `.html`, porque Cloudflare redirige una a la otra— y
+  todos sus scripts y hojas, sacados de la propia página: un script nuevo
+  entra solo. `sw.js` no la borra al cambiar de versión (si no, la tanda de
+  ayer no abriría hoy sin señal) y, sin red, busca la página con el otro
+  nombre y rearma una respuesta redirigida, que Chrome no acepta para abrir
+  una página.
+- **Se vuelve a guardar cada vez que se abre con señal.** `sw.js` sirve la red
+  primero para no juntar HTML nuevo con CSS viejo; una copia guardada una vez
+  y nunca más sería justo eso. Así, sin red se abre la de la última vez que
+  hubo señal, entera.
+- **Lo que se sube es lo mismo que sube Ejercicios por tema**
+  (`training_progress`, actividad «temas», con cómo salió), con la HORA en que
+  se resolvió: si no, la racha y «Cómo viene» lo contarían el día que hubo
+  señal. La base acota esa hora (trigger `training_progress_hora`): hasta 7
+  días atrás, nunca adelante; fuera de eso vale la de la base. Antes
+  `created_at` se aceptaba tal cual lo mandara el navegador, con cualquier
+  fecha; ahora no, para nadie.
+- **Un resultado no se cuenta dos veces.** Cada uno lleva su `sin_internet_id`
+  y un índice único parcial de la base lo rechaza si ya estaba (se subió y la
+  respuesta se perdió con la señal). Se sube de a uno y cada uno sale de la
+  cola solo cuando la base lo aceptó, o cuando dijo que ya lo tenía.
+- **Lo que costó entra en la cola de repaso** de Ejercicios por tema
+  (`RepasoFallados`), igual que si lo hubiera resuelto allá; esa cola se sube
+  con `js/progreso-usuario.js` cuando hay señal.
+- **Sin señal no se puede preparar otra tanda**, y se dice; cambiar una tanda
+  con ejercicios sin hacer pregunta antes. El tiempo conectado no se cuenta:
+  `js/tiempo-plataforma.js` no lo cree por lo que diga el navegador, y sin
+  red no hay con quién contarlo.
+
+**Al tocarlo, correr `node herramientas/verificar-todo.js sin-internet`.**
+Prepara una tanda, le corta la red al navegador (`setOffline`), la resuelve
+con clics y escribiendo, comprueba que no se escriba nada sin señal y que, al
+volver, se suba cada uno con su hora y su id, y que uno que la base ya tenía
+salga de la cola sin contarse; y con el service worker de verdad, que la
+página abra sin red con la tanda donde quedó. Comprobado en la base: 2 días
+atrás se respeta, 30 días atrás y el futuro pasan a «ahora», y un
+`sin_internet_id` repetido da 23505.
+
 ## Estudio: una ficha por idea, con su mapa y su posición
 
 `entreno/estudio.html` (tarjeta **"📚 Estudio"** en `clases.html` → grupo

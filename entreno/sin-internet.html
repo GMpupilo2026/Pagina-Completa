@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"><!-- guardia: inicio --><script>(function(){try{if(window.sb||localStorage.getItem("sb-bgtijpimpcokxatxxbki-auth-token"))return;}catch(e){return;}try{window.stop()}catch(e){}var p=location.pathname.replace(/^\/+/,'');if(!p||/\/$/.test(p))p+='index.html';else if(!/\.html$/.test(p))p+='.html';location.replace('/login.html?next='+encodeURIComponent(p));})();</script><!-- guardia: fin -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="../img/favicon.svg">
+<title>Ejercicios sin internet — Entreno — Ajedrez Integral</title>
+<meta name="description" content="Una tanda de ejercicios guardada en tu celular para resolverla sin señal; los resultados se suben solos cuando vuelve la conexión.">
+<meta name="robots" content="noindex">
+    <!-- Tailwind compilado: lo genera herramientas/css-construir.js.
+         Antes venía del CDN, que baja ~400 KB de JavaScript y compila el CSS
+         dentro del navegador en cada visita. -->
+    <link rel="stylesheet" href="../css/tailwind.css">
+<link rel="stylesheet" href="../css/styles.css">
+<!-- oscuro: inicio --><script>(function(){try{var t=localStorage.getItem('theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.classList.add('dark');}catch(e){}})();</script><!-- oscuro: fin -->
+<script src="../js/tarea-en-curso.js" defer></script>
+<style>
+  :root{
+    --bg-deep:#f0f4f8;
+    --bg-panel:#ffffff;
+    --bg-panel-2:#f0f4f8;
+    --line:#d9e2ec;
+    --text:#102a43;
+    --text-muted:#627d98;
+    --brass:#de911d;
+    --brass-bright:#f0b429;
+    --mate1:#3b6ea5;
+    --mate2:#9c4148;
+    --mate3:#6b3fa0;
+    --ok:#3f8f4f;
+    --bad:#c0392b;
+  }
+  html.dark{
+    --bg-deep:#0a1f33;
+    --bg-panel:#102a43;
+    --bg-panel-2:#0a1f33;
+    --line:#243b53;
+    --text:#f0f4f8;
+    --text-muted:#9fb3c8;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{font-family:'Inter', sans-serif; min-height:100vh; min-height:100dvh;}
+  h1,h2,h3{font-family:'Merriweather', serif; font-weight:700; margin:0;}
+  a{color:var(--brass-bright);}
+  *:focus-visible{outline:3px solid var(--brass-bright); outline-offset:2px;}
+
+  .streak-bar{
+    max-width:900px; margin:0 auto; padding:10px 24px 0; display:flex; align-items:center;
+    justify-content:center; gap:8px; font-size:0.95rem; color:var(--text-muted);
+  }
+  .streak-bar .flame{font-size:1.15rem; transition:transform .2s;}
+  .streak-bar.pulse .flame{animation:pulse-flame .4s ease-out;}
+  @keyframes pulse-flame{0%{transform:scale(1);} 40%{transform:scale(1.5);} 100%{transform:scale(1);}}
+  .streak-count{font-weight:700; color:var(--text);}
+
+  nav.tabs{display:flex; gap:6px; max-width:900px; margin:0 auto; padding:14px 24px 0; flex-wrap:wrap; justify-content:center;}
+  .tab{
+    background:var(--bg-panel); border:1px solid var(--line); border-bottom:3px solid var(--tab-color, var(--line));
+    color:var(--text-muted); font-family:'Inter', sans-serif; font-size:0.88rem; font-weight:500;
+    padding:10px 16px; cursor:pointer; transition:background .2s, color .2s, transform .12s ease-out;
+  }
+  .tab:hover{color:var(--text);}
+  .tab:active{transform:scale(0.97);}
+  .tab.active{background:var(--bg-panel-2); color:var(--text);}
+  .tab .n{color:var(--text-muted); font-size:0.8em;}
+
+  main{max-width:900px; margin:0 auto; padding:22px 24px 60px;}
+
+  .progress-track{max-width:420px; margin:0 auto 14px; height:6px; background:var(--line); border-radius:3px; overflow:hidden;}
+  .progress-fill{height:100%; background:var(--brass); border-radius:3px; transition:width .3s;}
+  .progress-label{max-width:420px; margin:0 auto 10px; text-align:center; font-size:0.82rem; color:var(--text-muted);}
+
+  .board-wrap{max-width:420px; margin:0 auto; position:relative;}
+  .board8{
+    /* minmax(0,1fr): con 1fr una fila con piezas crecía más que su parte y
+       el tablero salía estirado en el celular (ver «Estudio: una ficha por idea» en
+       docs/decisiones/entrenamiento.md). */
+    display:grid; grid-template-columns:repeat(8,minmax(0,1fr)); grid-template-rows:repeat(8,minmax(0,1fr));
+    width:100%; aspect-ratio:1/1; border:2px solid var(--brass); box-shadow:0 8px 30px rgba(16,42,67,0.18);
+  }
+  .sq{
+    position:relative; display:flex; align-items:center; justify-content:center;
+    font-size:min(7vw,32px); cursor:pointer; user-select:none; border:none; padding:0;
+    line-height:1; min-width:0; min-height:0; overflow:hidden;
+    transition:background .12s;
+  }
+  .sq.light{background:var(--sq-light);}
+  .sq.dark{background:var(--sq-dark);}
+  .sq.selected{box-shadow:inset 0 0 0 4px var(--brass-bright);}
+  .sq.wrong-flash{background:color-mix(in srgb, var(--bad) 55%, transparent) !important;}
+  .sq.hint-from{box-shadow:inset 0 0 0 4px #f0b429; animation:hint-pulse 1s ease-in-out infinite;}
+  .sq.target::after{content:""; position:absolute; inset:32%; border-radius:50%; background:rgba(240,180,41,0.5);}
+  .sq.target-capture::after{content:""; position:absolute; inset:8%; border:4px solid rgba(203,110,23,0.7); border-radius:50%; background:none;}
+  @keyframes hint-pulse{0%,100%{opacity:1;} 50%{opacity:0.35;}}
+
+  .mode-bar{
+    max-width:420px; margin:10px auto 0; padding:0 24px; display:flex;
+    justify-content:flex-end; align-items:center; gap:8px; font-size:0.78rem; color:var(--text-muted);
+  }
+  .mode-switch{display:inline-flex; border:1px solid var(--line); overflow:hidden;}
+  .mode-btn{
+    background:var(--bg-panel); border:none; color:var(--text-muted); font-family:'Inter', sans-serif;
+    font-size:0.78rem; padding:5px 10px; cursor:pointer; transition:background .15s, color .15s;
+  }
+  .mode-btn + .mode-btn{border-left:1px solid var(--line);}
+  .mode-btn.active{background:var(--brass); color:#102a43;}
+  .speech-btn{
+    background:var(--bg-panel); border:1px solid var(--line); border-radius:4px; color:var(--text-muted);
+    font-family:'Inter', sans-serif; font-size:0.78rem; padding:5px 10px; cursor:pointer; transition:background .15s, color .15s;
+  }
+
+  .position-readout{
+    background:var(--bg-panel); border:1px solid var(--line); padding:12px 16px; margin:0 0 16px;
+    font-size:0.85rem; color:var(--text-muted); line-height:1.6; max-width:420px; margin-left:auto; margin-right:auto;
+  }
+  .position-readout p{margin:2px 0;}
+
+  .turn-banner{max-width:420px; margin:14px auto 0; text-align:center; font-size:0.95rem; color:var(--text-muted);}
+  .turn-banner b{color:var(--text);}
+
+  .round-status{margin-top:12px; text-align:center; font-size:0.95rem; min-height:1.4em;}
+  .round-status.ok{color:var(--ok); font-weight:600;}
+  .round-status.bad{color:var(--bad);}
+  .round-controls{display:flex; gap:10px; justify-content:center; margin-top:16px; flex-wrap:wrap;}
+  .bctrl{
+    background:transparent; border:1px solid var(--line); color:var(--text); font-family:'Inter',sans-serif;
+    font-size:0.9rem; padding:11px 18px; cursor:pointer; transition:border-color .2s, transform .12s ease-out, background .2s;
+    min-height:44px;
+  }
+  .bctrl:hover{border-color:var(--brass);}
+  .bctrl:active:not(:disabled){transform:scale(0.97);}
+  .bctrl:disabled{opacity:0.35; cursor:not-allowed;}
+  .bctrl.primary{background:var(--brass); color:#102a43; border-color:var(--brass); font-weight:600;}
+  .bctrl.primary:hover{background:var(--brass-bright); border-color:var(--brass-bright);}
+
+  /* ---------- Selector de coronación ---------- */
+  #promo-modal{display:none; position:fixed; inset:0; z-index:60; background:rgba(0,0,0,0.6); align-items:center; justify-content:center; padding:16px;}
+  #promo-modal .box{background:var(--bg-panel); border-radius:14px; padding:20px; text-align:center;}
+  #promo-modal p{color:var(--text-muted); font-size:0.85rem; margin:0 0 12px;}
+  #promo-modal .opts{display:flex; gap:8px;}
+  .promo-btn{width:52px; height:52px; font-size:1.8rem; border:1px solid var(--line); background:var(--bg-panel-2); cursor:pointer; border-radius:10px;}
+  .promo-btn:hover{border-color:var(--brass);}
+
+  /* ---------- Celebración al terminar una categoría ---------- */
+  #celebration{display:none; text-align:center; padding:30px 20px;}
+  #celebration .big-emoji{font-size:3.5rem; margin-bottom:10px; display:inline-block; animation:bounce-in .5s ease-out;}
+  @keyframes bounce-in{0%{transform:scale(0.3); opacity:0;} 60%{transform:scale(1.15); opacity:1;} 100%{transform:scale(1);}}
+  #celebration .stats{color:var(--text-muted); font-size:0.9rem; margin-bottom:18px;}
+
+  @media (prefers-reduced-motion: reduce){
+    .tab, .bctrl{transition-property: background-color, border-color, color;}
+    .sq.hint-from, .streak-bar.pulse .flame, #celebration .big-emoji{animation:none;}
+  }
+  /* ---- propios de esta página ---- */
+  .wrap{max-width:900px;margin:0 auto;padding:1.5rem 1rem 3rem;}
+  .hidden{display:none !important;}
+  h1{font-family:Merriweather,Georgia,serif;font-size:1.9rem;font-weight:700;color:var(--text);margin:0 0 .3rem;}
+  h2{font-family:Merriweather,Georgia,serif;font-size:1.25rem;font-weight:700;color:var(--text);margin:0;}
+  .sub{color:var(--text-muted);font-size:.95rem;margin:0 0 1.2rem;}
+  .panel{background:var(--bg-panel);border:1px solid var(--line);border-radius:14px;padding:1.1rem;color:var(--text);}
+  .resumen{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:.6rem;margin-bottom:1.3rem;}
+  .resumen div{background:var(--bg-panel);border:1px solid var(--line);border-radius:12px;padding:.7rem;text-align:center;}
+  .resumen b{display:block;font-size:1.5rem;color:var(--text);}
+  .resumen span{font-size:.75rem;color:var(--text-muted);}
+  .filtros{display:flex;flex-wrap:wrap;align-items:center;gap:.5rem;margin:0 0 1rem;font-size:.85rem;color:var(--text-muted);}
+  .filtros select{background:var(--bg-panel);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:.35rem .5rem;font:inherit;}
+  .ficha{width:100%;text-align:left;background:var(--bg-panel);border:1px solid var(--line);border-radius:12px;
+         padding:.85rem 1rem;margin-bottom:.6rem;cursor:pointer;color:var(--text);font:inherit;display:flex;
+         align-items:flex-start;gap:.7rem;transition:border-color .15s;}
+  .ficha:hover{border-color:var(--brass);}
+  .ficha .estado{font-size:1.25rem;line-height:1.3;flex-shrink:0;}
+  .ficha .info{flex:1;min-width:0;}
+  .ficha .nombre{display:block;font-weight:600;line-height:1.35;}
+  .ficha .detalle{display:block;font-size:.8rem;color:var(--text-muted);margin-top:.15rem;}
+  .ficha .cuando{display:block;font-size:.75rem;color:var(--text-muted);margin-top:.25rem;}
+  .cabecera-linea{display:flex;align-items:flex-start;gap:.8rem;margin-bottom:1rem;}
+  .jugadas{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.95rem;color:var(--text);
+           background:var(--bg-panel-2);border:1px solid var(--line);border-radius:10px;padding:.6rem .8rem;
+           margin:.7rem 0;min-height:2.4rem;line-height:1.9;}
+  .jugadas .num{color:var(--text-muted);}
+  .jugadas .mia{font-weight:700;}
+  .promo{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
+         gap:.6rem;background:color-mix(in srgb, var(--bg-panel) 94%, transparent);}
+  .promo p{color:var(--text);font-weight:600;margin:0;}
+  .promo div{display:flex;gap:.4rem;flex-wrap:wrap;justify-content:center;}
+  .final-nota{font-size:1.1rem;font-weight:700;margin:0 0 .5rem;color:var(--text);}
+  .clave{border-left:3px solid var(--brass);padding-left:.7rem;color:var(--text);}
+  .bctrl{white-space:nowrap;}
+  .bctrl.principal{background:var(--brass-bright);color:#102a43;border-color:var(--brass);font-weight:700;}
+  .board-wrap{position:relative;}
+</style>
+    <script src="../js/piece-color-themes.js"></script>
+    <script src="../js/piece-style-themes.js"></script>
+    <script src="../js/board-color-themes.js"></script>
+    <script src="../js/adaptive-mode.js"></script>
+
+
+<!-- app: inicio --><meta name="theme-color" content="#102a43"><link rel="manifest" href="/manifest.json"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Ajedrez"><script src="../js/errores.js"></script><script src="../js/pwa.js" defer></script><script src="../js/navegacion.js" defer></script><!-- app: fin --><!-- fuentes: inicio --><link rel="stylesheet" href="../css/fuentes.css"><!-- fuentes: fin --><!-- tema: inicio --><script>(function(){try{var l=localStorage.getItem('plataforma_letra_v1');if(l&&/^[a-z]{2,24}$/.test(l)&&l!=='tema')document.documentElement.setAttribute('data-letra',l);var t=localStorage.getItem('plataforma_tema_v1');if(!t||!/^[a-z]{2,24}$/.test(t)||t==='clasico')return;document.documentElement.setAttribute('data-tema',t);var b=getComputedStyle(document.documentElement).getPropertyValue('--c-brand-800').trim();var m=document.querySelector('meta[name="theme-color"]');if(b&&m)m.setAttribute('content','rgb('+b.replace(/\s+/g,',')+')');}catch(e){}})();</script><!-- tema: fin --></head>
+<body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-accent-500 focus:text-brand-900 focus:font-semibold focus:px-4 focus:py-2 focus:rounded-lg">Saltar al contenido principal</a>
+    <header id="header" class="sticky top-0 z-50 bg-brand-800 shadow-lg transition-all duration-300"><nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Academia"><div class="flex items-center justify-between min-h-[4rem] md:min-h-[5rem] py-2"><a id="marca-enlace" href="../clases.html" class="flex items-center gap-2 text-white min-w-0"><img src="/img/logo-marca.png" alt="" width="78" height="48" class="h-10 md:h-12 w-auto shrink-0"><span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span><span class="sr-only"> — panel de la Academia</span></a><div class="flex items-center gap-2"><a id="ayuda-guia" href="../guia-del-profesor-accesible.html#cap-8" target="_blank" rel="noopener" class="hidden text-white font-bold text-lg w-9 h-9 items-center justify-center rounded-lg border border-white/40 hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Ayuda: capítulo «Entrenamiento» de la guía del profesor (se abre en otra pestaña)" title="Guía del profesor: Entrenamiento"><span aria-hidden="true">?</span></a><button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro"><span id="theme-icon" aria-hidden="true">☀️</span></button></div></div></nav></header><!-- migas: inicio --><div class="bg-brand-900"><nav id="migas" aria-label="Estás en" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 text-sm"><ol class="flex flex-wrap items-center gap-x-2 gap-y-1"><li class="flex items-center gap-2"><a href="../clases.html" class="text-brand-200 underline underline-offset-2 hover:text-accent-400 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">🏛️ </span>Academia</a></li><li class="flex items-center gap-2"><span aria-hidden="true" class="text-brand-400">›</span><span aria-current="page" class="font-semibold text-white">Ejercicios sin internet</span></li></ol></nav></div><!-- migas: fin -->
+  <main id="main-content">
+    <div id="gate" class="wrap">
+      <p id="gate-checking" class="panel">Comprobando tu sesión…</p>
+    </div>
+
+    <div id="app" class="wrap hidden">
+      <h1><span aria-hidden="true">📴</span> Ejercicios sin internet</h1>
+      <p class="sub">Guarda una tanda de ejercicios en este celular mientras tienes señal, y resuélvela en el bus, en el campo o donde no haya internet. Lo que resuelvas se sube solo cuando vuelva la conexión.</p>
+
+      <!-- Hay señal o no, y lo que espera para subirse: siempre a la vista. -->
+      <p id="red" class="panel" role="status" aria-live="polite"></p>
+      <div id="pendientes" class="panel hidden" style="margin-top:.6rem">
+        <p id="pendientes-texto" style="margin:0"></p>
+        <div class="round-controls" style="justify-content:flex-start;margin-top:.6rem">
+          <button type="button" class="bctrl" id="subir-btn">Subir ahora</button>
+        </div>
+      </div>
+
+      <!-- ------- Preparar una tanda (con señal) ------- -->
+      <section id="preparar" class="panel" style="margin-top:1rem" aria-labelledby="preparar-titulo">
+        <h2 id="preparar-titulo">Preparar una tanda</h2>
+        <p class="sub" style="margin-top:.4rem">Elige cuántos y de qué dificultad. Son problemas de partidas reales de Lichess, ya comprobados.</p>
+        <div class="filtros">
+          <label for="cuantos">Cuántos</label>
+          <select id="cuantos">
+            <option value="10">10</option>
+            <option value="20" selected>20</option>
+            <option value="30">30</option>
+          </select>
+          <label for="nivel">Dificultad</label>
+          <select id="nivel">
+            <option value="facil">Fácil</option>
+            <option value="medio" selected>Media</option>
+            <option value="dificil">Difícil</option>
+          </select>
+        </div>
+        <div class="round-controls" style="justify-content:flex-start">
+          <button type="button" class="bctrl primary" id="guardar-btn">📥 Guardar la tanda en este celular</button>
+        </div>
+        <p id="preparar-estado" class="sub" role="status" aria-live="polite" style="margin:.6rem 0 0"></p>
+      </section>
+
+      <!-- ------- La tanda guardada ------- -->
+      <section id="tanda" class="hidden" style="margin-top:1rem" aria-labelledby="tanda-titulo">
+        <h2 id="tanda-titulo" tabindex="-1">Tu tanda</h2>
+        <p id="tanda-avance" class="sub" style="margin-top:.3rem"></p>
+
+        <div id="jugando">
+          <p class="turn-banner" id="turn-banner"></p>
+          <div class="board-wrap">
+            <div class="board8" id="board" role="group" aria-label="Tablero del ejercicio"></div>
+          </div>
+          <!-- Donde se escribe la jugada (js/cuadro-comandos.js): todo
+               ejercicio se puede contestar escribiendo. -->
+          <div id="q-comandos"></div>
+          <p class="round-status" id="round-status" role="status" aria-live="polite"></p>
+          <div class="round-controls">
+            <button type="button" class="bctrl" id="pista-btn">💡 Pista</button>
+            <button type="button" class="bctrl" id="solucion-btn">Ver solución</button>
+            <button type="button" class="bctrl primary hidden" id="siguiente-btn">Siguiente →</button>
+          </div>
+        </div>
+
+        <div id="terminada" class="panel hidden">
+          <p id="terminada-texto" class="final-nota"></p>
+          <div class="round-controls">
+            <button type="button" class="bctrl primary" id="otra-btn">Preparar otra tanda</button>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+<footer class="bg-brand-900 text-brand-300 py-8"><div class="max-w-7xl mx-auto px-4 text-center text-sm"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p><!-- legal: inicio --><p class="mt-2"><a href="../privacidad.html" class="underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Política de privacidad</a> <span aria-hidden="true">·</span> <a href="../terminos.html" class="underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Términos y condiciones</a></p><!-- legal: fin --></div></footer>
+<!-- tablero-js: inicio -->
+<script src="../js/board-themes.js"></script>
+<script src="../js/pieza-preferida.js"></script>
+<!-- tablero-js: fin -->
+<script src="../js/coronacion.js"></script>
+<script src="../js/vendor/supabase.js"></script>
+<script src="../js/supabase-client.js"></script>
+<script src="../js/entreno-progress.js"></script>
+<script src="../js/chess-piece-svg.js"></script>
+<script src="../js/main.js"></script>
+<script src="../js/coordenadas-tablero.js"></script>
+<script src="../js/vendor/chess.js"></script>
+<script src="../js/progreso-usuario.js"></script>
+<script src="../js/blind-notation.js"></script>
+<script src="../js/tablero-accesible.js"></script>
+<script src="../js/chess-move-parser.js"></script>
+<script src="../js/comandos-tablero.js"></script>
+<script src="../js/cuadro-comandos.js"></script>
+<script src="../js/repaso-espaciado.js"></script>
+<script src="../js/repaso-fallados.js"></script>
+<script src="../js/ejercicio-tablero.js"></script>
+<script src="../js/avisos.js"></script>
+<script src="../js/hora-cr.js"></script>
+<script src="../js/sin-internet.js"></script>
+<!-- burbuja: inicio --><script src="../js/burbuja-en-linea.js" defer></script><!-- burbuja: fin --><!-- juego-aviso: inicio --><script src="../js/juego-aviso.js" defer></script><!-- juego-aviso: fin --><!-- aviso-profe: inicio --><script src="../js/aviso-profe.js" defer></script><!-- aviso-profe: fin --><!-- tanda: inicio --><script src="../js/tanda-diez.js" defer></script><!-- tanda: fin --><!-- acceso: inicio --><script src="../js/acceso-vigente.js" defer></script><!-- acceso: fin --><!-- modo-vista: inicio --><script src="../js/modo-vista.js" defer></script><!-- modo-vista: fin --><!-- marca: inicio --><script src="../js/marca-academia.js" defer></script><!-- marca: fin --><!-- ayuda: inicio --><script src="../js/ayuda-guia.js" defer></script><!-- ayuda: fin --><!-- atajo: inicio --><script src="../js/atajo-buscar.js" data-arriba="../" defer></script><!-- atajo: fin --></body>
+</html>
