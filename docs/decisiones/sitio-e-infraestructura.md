@@ -1082,6 +1082,104 @@ comprueba que un PDF y cerrar sesión no se adelanten, que no haya `prerender`
 ni `eager`, y que la CSP no se queje. Probado rompiéndolo: sin el tipo, con la
 trampa del `?` y con `prerender`, falla.
 
+## La navegación se siente inmediata
+
+«La navegación se adelanta» trae el HTML antes del clic; esto es lo que pasa
+entre el clic y la página nueva. Se hicieron tres cosas, y se descartaron dos
+más tentadoras a propósito.
+
+**1. El service worker ya no frena cada clic (navigation preload).** Con un
+service worker instalado, toda navegación pasa por su `fetch`, y si estaba
+dormido —lo normal después de unos segundos sin actividad— el navegador lo
+despertaba ANTES de pedir la página: de 50 ms a varios cientos en un celular,
+sumados a cada clic. `sw.js` enciende `navigationPreload` en su `activate`:
+el navegador pide el HTML a la red a la vez que lo despierta, y el `fetch`
+usa esa respuesta (`evento.preloadResponse`). La red sigue yendo primero, lo
+guardado sigue igual y, si la adelantada falla, se intenta una vez con
+`fetch` antes de caer en `offline.html`.
+
+**2. La página no parpadea en blanco (`@view-transition`).** `css/styles.css`
+lleva `@view-transition { navigation: auto; }`: entre dos páginas del sitio el
+navegador funde la vieja con la nueva en 160 ms. El encabezado tiene su propio
+`view-transition-name` (`encabezado`), así que se queda quieto y solo cambia lo
+de abajo — que es lo que hace que se sienta una app y no páginas sueltas.
+
+- **Va dentro de `@media (prefers-reduced-motion: no-preference)`**: quien
+  pidió menos movimiento cambia de página como siempre, sin fundido.
+- El navegador que no lo conoce (Firefox, por ahora) lo ignora sin errores.
+- `view-transition-name` tiene que ser único en la página: va en `#header`,
+  que hay uno solo. No ponérselo a nada que se repita.
+- **Cuando la página de llegada no pide la transición** (`inscripcion.html`,
+  `offline.html`, un PDF), el navegador la cancela. Si la página vieja
+  todavía está viva, eso rechaza las promesas de la transición y saldría como
+  error de la página (`InvalidStateError: … ViewTransition opt-in disabled`):
+  `js/navegacion.js` las atrapa en `pageswap` y `pagereveal`. Pero cuando la
+  cancelación llega con la página vieja ya descargándose, Chrome 153 la anota
+  igual y no hay evento ni `unhandledrejection` donde atraparla (se probó: ni
+  `preventDefault()` en `errores.js` la calla). La página cambia igual, sin
+  fundido, así que en el sitio no importa; **en un verificador sí**, porque
+  `verificar-ritmos.js` reemplazaba `torneo.html` por un doble que decía
+  «ok» a secas, sin la transición, y fallaba a veces (una corrida sí, otra
+  no). **Un doble de una página del sitio pide la transición como la de
+  verdad** (`<style>@view-transition { navigation: auto; }</style>`): el
+  problema era el doble, no la página.
+
+**3. Una barra dice «ya va» (`js/navegacion.js`).** En el navegador, mientras
+llega la página nueva se ve la ruedita de la pestaña. En la app instalada no
+hay pestaña: durante ese medio segundo no pasaba nada en la pantalla, y la
+gente volvía a tocar o creía que el botón no servía. Ahora una barra de 3 px
+arriba crece mientras la página carga.
+
+- Sale a los **100 ms**: si la página llega antes (adelantada por
+  `anticipar.json`), no parpadea nada.
+- Usa la Navigation API (el evento `navigate`), que ve también las
+  navegaciones del código (`location.href = …`, que en la Academia son
+  muchas); donde no existe, escucha los clics en los enlaces.
+- **Solo para páginas de este sitio**, nunca un ancla de la misma página ni
+  un enlace afuera: WhatsApp en el celular abre la app y la página se queda
+  donde estaba, con la barra pegada. Por lo mismo se apaga sola a los 10 s
+  (una descarga, un «¿Salir de la página?» cancelado) y en cada `pageshow`
+  (volver con «Atrás» a una página guardada entera la devuelve tal como quedó).
+- El color está medido: `accent-400` sobre el encabezado (`brand-800`) da
+  7,8:1 en los ocho temas, con un borde de `brand-900` abajo para cuando no
+  hay encabezado detrás. Con el color de una academia va **blanca**, que es
+  contra lo único que ese color está medido. Es adorno (`aria-hidden`): el
+  lector de pantalla ya anuncia la página nueva. Con «reducir movimiento»
+  sale entera y quieta.
+- La pone `pwa-cabecera.py`, con `defer`, en las mismas páginas que el
+  service worker. Una página nueva la recibe al correr el generador.
+- **El generador reemplaza su bloque en el mismo lugar**, y solo una página
+  nueva lo recibe al final del `<head>`. La primera versión de este cambio lo
+  sacaba y lo volvía a poner al final, y con eso la `<meta name="theme-color">`
+  quedó DESPUÉS del bloque del tema, que es el que le pone el color: con
+  Princesas la barra del celular seguía azul, sin ningún error. Lo atrapó
+  `verificar-temas-plataforma.js` en el CI.
+
+**Lo que se descartó:**
+
+- **Servir de la caché primero, o `stale-while-revalidate`.** Es lo que más
+  rápido haría cada página, y es exactamente la falla de «El service worker es
+  deliberadamente tonto»: HTML nuevo con CSS viejo, que no da error. Para eso
+  primero los archivos tendrían que llevar la huella en el nombre.
+- **Dejar que «Atrás» devuelva la página guardada entera (bfcache) en la
+  Academia.** Hoy casi ninguna página de la Academia entra al bfcache porque
+  tiene abierto el socket de Realtime (la burbuja de conectados va en 65).
+  Cerrarlo en `pagehide` y reabrirlo en `pageshow` funciona —los canales de
+  supabase-js se vuelven a unir solos—, pero la mayoría de las páginas escucha
+  cambios sin volver a leer al reconectarse (`clases.js`, `partidas.js`…): al
+  volver, el panel mostraría las tareas como estaban antes de hacerlas, sin
+  ningún error. Antes de eso, cada página con Realtime tendría que volver a
+  leer en su `SUBSCRIBED`, como ya hacen `sala-juego.js` y `torneo.js`.
+
+`verificar-navegacion.js` lo sostiene en un navegador de verdad: que la barra
+salga mientras la página tarda (opacidad y `checkVisibility`, no la clase) y
+se vaya al llegar, que no salga con un ancla ni con un enlace afuera, que
+`pageshow` la apague, su contraste en la pantalla y en los ocho temas, que la
+transición esté y se apague con «reducir movimiento», que el preload quede
+encendido y la página llegue y se guarde con él, y que las 128 páginas
+carguen `js/navegacion.js`. Probado rompiéndolo: sin el preload, sin el
+filtro de otro sitio y sacando la barra de una página, falla.
+
 ## El encabezado ocupa su propio espacio
 
 El encabezado del sitio es `sticky top-0`, **no `fixed`**, y esa es la razón por
