@@ -1442,6 +1442,31 @@ misiones-secretas partida-perdida`.** Antes de darlos por buenos se rompió a
 propósito cada cosa que miden (la misión que no se cobra, el rótulo del
 volcán, el rey expuesto, una posición del banco) y saltaron.
 
+**Jugados de verdad, con el reloj: `verificar-juegos-nuevos-en-vivo.js`.**
+Los verificadores de arriba abren cada pantalla sola, sin reloj y con la
+base quieta, y la pregunta del dueño fue justo la otra: «¿que el tiempo
+corra bien y no haya problemas?». Este abre dos o tres pestañas por partida
+contra un servidor de mentira que hace de base y de Realtime para todas, con
+las reglas del trigger del reloj y de `relevo_jugar()`, y jugadores
+automáticos. Comprueba lo siguiente:
+
+- En Volcanes, el reloj arranca recién con los dos listos.
+- Mientras piensa el rival, en la pantalla propia baja SU reloj y el propio
+  se queda quieto. Se mide en el texto del reloj, y las dos pantallas dicen
+  lo mismo.
+- En 30 medias jugadas al azar hay cuatro erupciones, el trigger no rechaza
+  nada y ningún reloj sube más que el incremento.
+- Las dos pantallas terminan igual que la base, y la planilla, rejugada con
+  los volcanes, llega a la posición guardada.
+- Con 6 s y sin mover, cae la bandera y la base lo acepta.
+- En Misiones, de punta a punta y con reloj: el rival ve el aviso, la
+  partida se cobra al volver el turno y se destapan las dos misiones.
+- En el relevo, con tres pantallas, cada uno mueve en su turno y ninguna
+  jugada se rechaza.
+
+Rompiendo la rotación del relevo en la página, la base rechaza las jugadas y
+la prueba salta; apagando los volcanes, también.
+
 ### Volcanes
 
 Una modalidad más de `variante.html` (`variant = 'volcanes'`, en
