@@ -21,7 +21,15 @@
  *   RepertorioAperturas.arbol(lineas)             → nodos { san, ply, hijos, lineas }
  *   RepertorioAperturas.leerTexto(texto, previas) → { jugadas, error }
  *   RepertorioAperturas.aLinea(fila)              → una línea del entrenador
+ *   RepertorioAperturas.libroDe(lineas, color)    → el libro del rival, para «Juega contra él»
+ *   RepertorioAperturas.planDe(lineas, color)     → el árbol como plan (PlanNode)
  *   RepertorioAperturas.montar(contenedor, opciones)
+ *
+ * «Jugar con mi repertorio»: una partida contra la computadora que, mientras
+ * la posición esté en tus líneas, juega las jugadas del RIVAL que preparaste
+ * (js/preparacion-sparring.js, el mismo de «Juega contra él», con el libro
+ * armado de tus líneas). Si te sales de tu línea te dice cuál era tu jugada;
+ * cuando tu repertorio se acaba, sigue Stockfish a la fuerza que elijas.
  */
 (function () {
   "use strict";
@@ -103,6 +111,37 @@
     return { jugadas: nuevas, error: nuevas.length ? null : "Escribe una jugada, por ejemplo e4 o Cf3." };
   }
 
+  /* El libro del rival: en cada posición de tus líneas donde le toca a él,
+     las jugadas que preparaste, con cuántas líneas pasan por cada una (es el
+     peso del sorteo). La posición se reconoce como la reconoce la preparación
+     (js/preparacion-posiciones.js): dos órdenes de jugadas que llegan a lo
+     mismo son la misma posición. */
+  function libroDe(lineas, color) {
+    const Pos = typeof window !== "undefined" && window.PreparacionPosiciones ? window.PreparacionPosiciones : require("./preparacion-posiciones.js");
+    const Lb = typeof window !== "undefined" && window.PreparacionLibro ? window.PreparacionLibro : require("./preparacion-libro.js");
+    const libro = {};
+    (lineas || []).filter((L) => L.color === color).forEach((L) => {
+      let e = Pos.inicial();
+      L.jugadas.forEach((san, i) => {
+        if (!esMia(color, i)) {
+          const k = Lb.huella(Pos.clave(e));
+          const lista = libro[k] || (libro[k] = []);
+          const x = lista.find((y) => y[0] === san);
+          if (x) x[1] += 1; else lista.push([san, 1]);
+        }
+        e = Pos.aplicar(e, san);
+      });
+    });
+    return libro;
+  }
+
+  // El árbol de un color como el plan de la preparación: lo que lee seguirPlan.
+  function planDe(lineas, color) {
+    const r = arbol((lineas || []).filter((L) => L.color === color));
+    const conv = (n) => n.hijos.map((h) => ({ san: h.san, quien: esMia(color, h.ply) ? "tu" : "rival", hijos: conv(h) }));
+    return conv(r);
+  }
+
   // Una fila de la base, como una línea más del entrenador.
   function aLinea(f) {
     return {
@@ -169,7 +208,11 @@
     editor.id = "rep-editor";
     const arboles = el("div");
     arboles.id = "rep-arboles";
-    contenedor.append(intro, acciones, estado, editor, arboles);
+    const partida = el("section", "panel hidden");
+    partida.id = "rep-partida";
+    partida.setAttribute("aria-labelledby", "rep-partida-titulo");
+    partida.style.marginBottom = "1rem";
+    contenedor.append(intro, acciones, estado, editor, partida, arboles);
 
     function pintar() {
       arboles.innerHTML = "";
@@ -195,6 +238,11 @@
           ul.style.listStyle = "none"; ul.style.paddingLeft = "0"; ul.style.margin = ".6rem 0 0";
           pintarNodo(ul, arbol(suyas), []);
           sec.appendChild(ul);
+          const jugar = boton("▶ Jugar con mi repertorio", "bctrl", "Jugar una partida con tu repertorio de " + (color === "w" ? "blancas" : "negras"));
+          jugar.setAttribute("data-rep-jugar", color);
+          jugar.style.marginTop = ".6rem";
+          jugar.addEventListener("click", () => jugarCon(color, jugar));
+          sec.appendChild(jugar);
         }
         arboles.appendChild(sec);
       });
@@ -245,6 +293,71 @@
         }
         ul.appendChild(li);
       });
+    }
+
+    /* ---------------- la partida con el repertorio ---------------- */
+    const SCRIPTS_PARTIDA = ["coronacion.js", "visor-linea.js", "entrenador-linea.js", "shared-engine.js",
+      "preparacion-posiciones.js", "preparacion-libro.js", "preparacion-lineas.js", "preparacion-sparring.js"];
+    let cargando = null;
+    function cargarPartida() {
+      if (window.PreparacionSparring && window.EntrenadorLinea) return Promise.resolve();
+      if (cargando) return cargando;
+      const base = new URL("../js/", location.href);
+      // Uno detrás de otro: el orden importa (el libro usa las posiciones).
+      cargando = SCRIPTS_PARTIDA.reduce((p, nombre) => p.then(() => new Promise((ok, mal) => {
+        if (document.querySelector('script[data-rep-cargado="' + nombre + '"]')) return ok();
+        const sc = document.createElement("script");
+        sc.src = new URL(nombre, base).href;
+        sc.dataset.repCargado = nombre;
+        sc.onload = ok;
+        sc.onerror = () => mal(new Error("no se pudo cargar " + nombre));
+        document.body.appendChild(sc);
+      })), Promise.resolve());
+      return cargando;
+    }
+    async function jugarCon(color, btn) {
+      btn.disabled = true;
+      try { await cargarPartida(); }
+      catch (e) { o.avisar("No se pudo abrir la partida: " + e.message, "error"); btn.disabled = false; return; }
+      btn.disabled = false;
+      partida.classList.remove("hidden");
+      partida.innerHTML = "";
+      const tit = el("h2", null, "Juegas con " + (color === "w" ? "blancas" : "negras") + " con tu repertorio");
+      tit.id = "rep-partida-titulo";
+      tit.tabIndex = -1;
+      const ayuda = el("p", "sub", "Mientras sigas tus líneas, el rival juega las jugadas que preparaste. Si te sales, te digo cuál era la tuya. Cuando tu repertorio se acaba, sigue la computadora.");
+      const fila = el("div", "filtros");
+      const lab = el("label", null, "Fuerza de la computadora después");
+      lab.htmlFor = "rep-elo";
+      const sel = el("select"); sel.id = "rep-elo";
+      [[1350, "Principiante"], [1600, "Intermedia"], [1900, "Fuerte"], [2200, "Muy fuerte"]]
+        .forEach(([v, t]) => sel.appendChild(new Option(t + " (Elo " + v + ")", String(v))));
+      sel.value = "1600";
+      fila.append(lab, sel);
+      const cerrar = boton("Cerrar la partida", "bctrl");
+      cerrar.addEventListener("click", () => { partida.classList.add("hidden"); partida.innerHTML = ""; btn.focus(); });
+      const caja = el("div");
+      partida.append(tit, ayuda, fila, caja, cerrar);
+      const suyas = lineas.filter((L) => L.color === color);
+      const s = window.PreparacionSparring.montar(caja);
+      const empezar = () => s.empezar({
+        libro: libroDe(suyas, color), plan: planDe(suyas, color), color, elo: Number(sel.value), rival: "tu rival",
+        textos: {
+          plan: "tu repertorio",
+          deLibro: (x) => (x.reparto < 1
+            ? "Es una de las respuestas del rival que preparaste aquí (sale al azar)."
+            : "Es la respuesta del rival que preparaste."),
+          saleDelLibro: (elo) => "Aquí termina tu repertorio: desde ahora juega la computadora (Elo " + elo + ").",
+          desvio: (jugada) => "En tu repertorio jugabas " + jugada + ".",
+          resumenLibro: (estado, desde) => desde == null
+            ? "Todas las jugadas del rival (" + estado.suyas + ") salieron de tu repertorio."
+            : "El rival jugó " + estado.deLibro + (estado.deLibro === 1 ? " jugada" : " jugadas") + " de tu repertorio; desde " + desde + " jugó la computadora.",
+        },
+      });
+      sel.addEventListener("change", empezar);
+      empezar();
+      partida.scrollIntoView({ block: "start" });
+      tit.focus();
     }
 
     /* ---------------- el editor ---------------- */
@@ -445,7 +558,7 @@
     return { lineas: () => lineas, pintar };
   }
 
-  const api = { PREFIJO, MAX_JUGADAS, validar, choque, arbol, leerTexto, aLinea, montar };
+  const api = { PREFIJO, MAX_JUGADAS, validar, choque, arbol, leerTexto, aLinea, libroDe, planDe, montar };
   if (typeof window !== "undefined") window.RepertorioAperturas = api;
   if (typeof module !== "undefined") module.exports = api;
 })();

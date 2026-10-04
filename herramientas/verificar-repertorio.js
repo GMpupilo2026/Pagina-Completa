@@ -175,6 +175,27 @@ async function jugarClics(page, tablero, desde, hasta) {
       await page.evaluate(() => [...document.querySelectorAll('[data-rep-color="b"] li > p')].map((p) => p.textContent)),
       ["1. e4 c5 2. Cf3 d6", "1. d4 Cf6 2. c4 e6"]);
 
+    console.log("\n=== Jugar con mi repertorio ===");
+    // El sorteo entre las respuestas preparadas, fijo: sale la primera (1.e4).
+    await page.evaluate(() => { Math.random = () => 0; });
+    await page.click('[data-rep-jugar="b"]');
+    await page.waitForSelector("#rep-partida:not(.hidden) .visor-tablero [data-square]", { timeout: 15000 });
+    await page.waitForFunction(() => /El rival: /.test((document.querySelector("#rep-partida .visor-nota") || {}).textContent || ""), null, { timeout: 8000 });
+    igual("el rival juega lo que preparaste, y lo dice",
+      await page.evaluate(() => /^El rival: .*(e4|eva 4).* Es una de las respuestas del rival que preparaste aquí \(sale al azar\)\.$/
+        .test(document.querySelector("#rep-partida .visor-nota").textContent)), true);
+    // Me salgo de la línea: la Siciliana dice 1…c5.
+    await jugarClics(page, "#rep-partida .visor-tablero", "e7", "e5");
+    igual("al salirte te dice cuál era tu jugada",
+      /En tu repertorio jugabas 1…c5\./.test(await page.textContent("#rep-partida .visor-nota")), true);
+    await page.click('#rep-partida button:has-text("Terminar la partida")');
+    await page.waitForSelector("#rep-partida [data-sparring-resumen] li", { timeout: 8000 });
+    igual("y el resumen lo cuenta con las palabras del repertorio",
+      await page.evaluate(() => [...document.querySelectorAll("#rep-partida [data-sparring-resumen] li")].map((li) => li.textContent)[0]),
+      "Te saliste de tu repertorio en 1…e5: tu repertorio decía 1…c5.");
+    await page.click('#rep-partida button:has-text("Cerrar la partida")');
+    igual("«Cerrar la partida» la esconde", await seVe(page, "#rep-partida"), false);
+
     console.log("\n=== Entrenarla ===");
     await page.click('[data-rep-linea="it"] button:has-text("Entrenar")');
     await page.waitForSelector("#vista-tablero:not(.hidden)");

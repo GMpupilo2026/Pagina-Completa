@@ -1313,6 +1313,28 @@ del rival y otra apertura entran; una jugada mal escrita y una fila a nombre
 de otro se rechazan; su profe la ve y no la cambia; una profesora ajena no ve
 nada.
 
+#### Jugar con mi repertorio
+
+Cada color del árbol trae «▶ Jugar con mi repertorio»: una partida en la que,
+mientras la posición esté en sus líneas, la computadora juega las jugadas del
+RIVAL que el alumno preparó, y si él se sale de su línea le dice cuál era la
+suya («En tu repertorio jugabas 1…c5»). Cuando el repertorio se acaba sigue
+Stockfish, a la fuerza que se elige (de Elo 1350 a 2200).
+
+- **Es «Juega contra él» de la preparación de rivales**
+  (`js/preparacion-sparring.js`), no otra partida: el libro del rival se arma
+  con sus líneas (`RepertorioAperturas.libroDe`, con la misma huella de
+  posición, así que dos órdenes que llegan a lo mismo son lo mismo) y el plan
+  es su árbol (`planDe`). Donde preparó dos respuestas del rival, sale una al
+  azar.
+- **Los textos cambian, lo que hace no.** El sparring aceptaba solo frases de
+  rival real («la juega 63 % de las veces en sus partidas»), que acá serían
+  mentira; ahora recibe `textos` opcionales. Sin ellos dice exactamente lo de
+  antes — `verificar-preparacion-rivales.js` lo comprueba, y fue el que
+  atrapó un «Te saliste de el plan» al generalizarlo.
+- **Los scripts de la partida y Stockfish se bajan al apretar el botón**, no
+  al abrir Aperturas: quien solo repasa no paga los megas del motor.
+
 **Al tocarlo, correr `node herramientas/verificar-todo.js repertorio
 aperturas-pagina`.** `verificar-repertorio.js` prueba las funciones con
 chess.js y la página en un navegador: el árbol de cada color, la fila que no se
