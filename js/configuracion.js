@@ -700,6 +700,9 @@
             radiosConFlechas(grid);
         }
         renderPieceStyleThemeGrid();
+        // El estilo por omisión de la cuenta llega después de pintar la
+        // rejilla (pregunta a la base): sin esto, la tarjeta marcaría otro.
+        document.addEventListener("piecestyle:change", () => renderPieceStyleThemeGrid());
 
         // ---------- Colores a tu gusto (modo normal) ----------
         // Cada color se puede elegir de dos formas que dicen lo mismo: el cuadrito de la
