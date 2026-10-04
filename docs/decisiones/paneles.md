@@ -1843,6 +1843,44 @@ que no existe se diga. La
 sección de administración la prueba `verificar-admin.js` y la tarjeta del panel
 `verificar-panel.js`.
 
+### Prepárate tú: el alumno se prepara solo
+
+En `plan-rival.html`, sin `?id=`, arriba de los planes que le mandó el profe,
+está **«Prepárate tú contra tu próximo rival»**: el usuario de Lichess o
+Chess.com del rival y con qué color va a jugar. Se entra también desde
+Competir («Prepara tu próxima partida»).
+
+- **Es la misma preparación, con lo mismo.** Las partidas se bajan con
+  `PreparacionDescarga` (las últimas 300), se analizan con
+  `PreparacionAnalisis.analizar()` y el plan sale de `planDelAlumno()`: lo
+  mismo que le llega cuando se lo manda el profe. Por eso se pinta con
+  `pintarPlan()`, se entrena con `montarEntrenamiento()` y se juega con
+  `montarSparring()`, sin una segunda copia de nada. Los cuatro módulos que el
+  plan del profe no necesita (táctica, estructuras, análisis y descarga) se
+  cargan solo al apretar «Preparar mi plan».
+- **Solo ajedrez normal desde la inicial** (como «Tus propios errores»): una
+  partida de Chess960 o «desde posición» no entra.
+- **No se guarda en la base ni sale del navegador.** A Lichess o Chess.com solo
+  se les manda el usuario del rival (está en `privacidad.html`), y el último
+  rival y color quedan en `localStorage` para la próxima vez, como comodidad.
+  El entrenamiento de las líneas sí queda en `training_progress`, como el de
+  un plan del profe, con el id `propio:<sitio>:<usuario>:<lado>`: así el
+  repaso espaciado encuentra las líneas la próxima vez que prepare al mismo
+  rival con el mismo color.
+- **A todos, sin activar nada.** La preparación del profesor la activa
+  administración porque es una herramienta de trabajo con su análisis
+  guardado; esta es una consulta del alumno a partidas públicas, que no
+  guarda nada.
+- Arriba del plan, **«Lo que juega»** en palabras: cuántas partidas y de
+  cuándo, cuánto saca con cada color, su Elo y, del lado que le toca, sus
+  jugadas más repetidas. Con pocas partidas lo dice. Si con ese color juega
+  muy poco para un plan, lo dice y no pinta nada.
+- Lo prueba `verificar-preparacion-rivales.js` (`pruebaPropio`) con el mismo
+  Lichess de mentira: el usuario inválido no se pide, el que no existe se
+  dice, a Lichess solo va el usuario con el tope de 300, el plan con blancas y
+  con negras, «Lo que juega», que se puede entrenar, que no se inserta nada
+  del plan ni del análisis y que el formulario recuerda al último rival.
+
 ### La base de la preparación: etapa 1
 
 Se pidieron siete mejoras (cruzar con las partidas del alumno, dónde se sale de

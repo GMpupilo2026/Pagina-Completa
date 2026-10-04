@@ -1914,6 +1914,70 @@ function pruebaArchivosDelMotor() {
 }
 
 // En un navegador de verdad: la página carga el 19 y contesta.
+/* «Prepárate tú» (plan-rival.html sin ?id=): el alumno se prepara solo contra
+   un rival que juega en Lichess. Se baja con el mismo Lichess de mentira, se
+   analiza en el navegador y se pinta con lo mismo que el plan del profe, sin
+   guardar nada en la base. Pedro (acá «PedroP») con negras contra 1.e4 juega
+   siempre 1…e5; con blancas abre 1.e4 y 1.d4. */
+async function pruebaPropio(browser) {
+  console.log("\n=== Prepárate tú: el alumno se prepara solo (plan-rival.html) ===");
+  const pedidos = [];
+  const { page, ctx, errores } = await abrir(browser, false, [], false, { planes_rival_alumno: [], training_progress: [] }, "plan-rival.html");
+  await servirSitios(ctx, pedidos);
+  cierto("la sección se ve en la lista, aunque el profe no haya mandado nada", await page.evaluate(() => SE_VE("propio-caja") && SE_VE("lista-vacia")));
+  cierto("el analizador y el descargador no se cargan hasta que se piden", await page.evaluate(() => !window.PreparacionAnalisis && !window.PreparacionDescarga));
+  await page.fill("#propio-usuario", "no vale!");
+  await page.click("#propio-preparar");
+  cierto("un usuario inválido se explica y no se pide nada", /tal como sale en su perfil/.test(await page.textContent("#propio-estado")) && pedidos.length === 0);
+  await page.fill("#propio-usuario", "nadie");
+  await page.click("#propio-preparar");
+  await page.waitForFunction(() => /No existe|No se pudieron/.test(document.getElementById("propio-estado").textContent), null, { timeout: 15000 }).catch(() => {});
+  igual("un usuario que no existe se dice en palabras", await page.textContent("#propio-estado"), "No existe el usuario «nadie» en Lichess.");
+  // Con blancas: el plan arranca en 1.e4, donde él contesta siempre 1…e5.
+  await page.fill("#propio-usuario", "PedroP");
+  await page.selectOption("#propio-color", "w");
+  await page.click("#propio-preparar");
+  await page.waitForFunction(() => SE_VE("app") || /No /.test(document.getElementById("propio-estado").textContent), null, { timeout: 30000 }).catch(() => {});
+  const u = new URL(pedidos[pedidos.length - 1] || "https://x/");
+  igual("a Lichess solo se le pide ese usuario, con sus últimas 300", [u.pathname, u.searchParams.get("max")], ["/api/games/user/PedroP", "300"]);
+  const vista = await page.evaluate(() => ({
+    lista: SE_VE("lista"), app: SE_VE("app"), titulo: document.getElementById("titulo").textContent,
+    sub: document.getElementById("subtitulo").textContent,
+    resumen: [...document.querySelectorAll("#propio-resumen li")].map((x) => x.textContent),
+    plan: document.getElementById("plan").textContent,
+    progreso: document.getElementById("entrenar-progreso").textContent,
+    foco: document.activeElement && document.activeElement.id,
+  }));
+  igual("se va de la lista al plan, con su nombre y el foco en el título", [vista.lista, vista.app, vista.titulo, vista.foco], [false, true, "Tu plan contra PedroP", "titulo"]);
+  cierto("dice que lo preparó él y con cuántas partidas: " + vista.sub, /^Con blancas · lo preparaste tú el .+ con sus últimas 73 partidas de Lichess\.$/.test(vista.sub));
+  cierto("lo que juega, en palabras (contra 1.e4, siempre 1…e5): " + JSON.stringify(vista.resumen),
+    /^Revisé 73 partidas, todas del 4 de marzo de 2025\. Con blancas saca/.test(vista.resumen[0]) && vista.resumen.some((t) => t === "Contra 1.e4 contesta 1…e5 (100,0 %)."));
+  cierto("el plan es el mismo del análisis: arranca en 1.e4", /e4/.test(vista.plan) && /e5/.test(vista.plan));
+  cierto("y se puede entrenar como el del profe: " + vista.progreso, /^Te salen sin errores 0 de \d+ línea/.test(vista.progreso));
+  // (El tiempo en la página sí se anota, como en cualquier página: platform_activity_log.)
+  igual("no se guarda nada en la base: ni el plan ni el análisis", await page.evaluate(() => window.__insertados.filter((x) => /plan|prepara/.test(x.tabla)).length), 0);
+  igual("el rival y el color quedan para la próxima vez (en este navegador)", await page.evaluate(() => localStorage.getItem("plan_propio_ultimo_v1")), JSON.stringify({ sitio: "lichess", usuario: "PedroP", color: "w" }));
+  await (await page.$("main")).screenshot({ path: "/tmp/plan-propio.png" }).catch(() => {});
+  // El 404 es el de «nadie», que el Lichess de mentira contesta a propósito.
+  igual("sin errores (prepárate tú, blancas)", errores.filter((e) => !/Failed to load resource: the server responded with a status of 404/.test(e)).join(" | "), "");
+  await ctx.close();
+
+  // Con negras: él lleva blancas y abre 1.e4 o 1.d4. El formulario recuerda lo de antes.
+  const otra = await abrir(browser, false, [], false, { planes_rival_alumno: [], training_progress: [] }, "plan-rival.html");
+  await servirSitios(otra.ctx, []);
+  await otra.page.evaluate(() => localStorage.setItem("plan_propio_ultimo_v1", JSON.stringify({ sitio: "lichess", usuario: "PedroP", color: "b" })));
+  await otra.page.reload({ waitUntil: "networkidle" });
+  await otra.page.waitForFunction(() => document.getElementById("loading").classList.contains("hidden"), null, { timeout: 15000 });
+  igual("el formulario vuelve con el último rival", [await otra.page.inputValue("#propio-usuario"), await otra.page.inputValue("#propio-color")], ["PedroP", "b"]);
+  await otra.page.click("#propio-preparar");
+  await otra.page.waitForFunction(() => SE_VE("app"), null, { timeout: 30000 }).catch(() => {});
+  const res = await otra.page.evaluate(() => [...document.querySelectorAll("#propio-resumen li")].map((x) => x.textContent));
+  cierto("con negras, dice cómo abre él: " + JSON.stringify(res), res.some((t) => /^Con blancas abre 1\.e4 \(.+\), 1\.d4 \(.+\)\.$/.test(t)));
+  cierto("y el plan es con negras", /^Con negras · lo preparaste tú/.test(await otra.page.textContent("#subtitulo")));
+  igual("sin errores (prepárate tú, negras)", otra.errores.join(" | "), "");
+  await otra.ctx.close();
+}
+
 async function pruebaDerrotasEnLaPagina(browser, r) {
   console.log("\n=== Las partidas donde perdió, en la página ===");
   const { page, ctx, errores } = await abrir(browser, true, [{ id: "p-d", profesor_id: "u-profe", rival: "Pedro", partidas: r.total, created_at: "2026-09-29T01:00:00Z", analisis: JSON.parse(JSON.stringify(r)) }]);
@@ -2248,6 +2312,7 @@ async function pruebaMotorDeVerdad(browser) {
     await pruebaEtapa6(browser);
     await pruebaEtapa7(browser);
     await pruebaRepasoEnLaPagina(browser);
+    await pruebaPropio(browser);
     await pruebaDerrotasEnLaPagina(browser, conDerrotas);
     await pruebaTacticaEnLaPagina(browser, conTactica);
     await pruebaRitmoEHojaEnLaPagina(browser);

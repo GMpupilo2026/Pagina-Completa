@@ -51,7 +51,9 @@
     const lado = fila.lado;
     document.title = "Tu plan contra " + fila.rival + " — Ajedrez Integral";
     $("titulo").textContent = "Tu plan contra " + fila.rival;
-    $("subtitulo").textContent = "Con " + (lado === "conBlancas" ? "blancas" : "negras") + " · te lo mandaron el " + fecha(fila.created_at) + ".";
+    $("subtitulo").textContent = "Con " + (lado === "conBlancas" ? "blancas" : "negras") + " · " + (fila.propio
+      ? "lo preparaste tú el " + fecha(fila.created_at) + " con " + (fila.propio.n === 1 ? "su última partida" : "sus últimas " + fila.propio.n + " partidas") + " de " + SITIO[fila.propio.sitio] + "."
+      : "te lo mandaron el " + fecha(fila.created_at) + ".");
     if (fila.nota) { $("nota").textContent = fila.nota; $("nota-caja").hidden = false; }
 
     const visor = VisorLinea.montar($("visor"), { nombre: "Tablero del plan" });
@@ -97,6 +99,137 @@
       li.appendChild(a);
       ul.appendChild(li);
     }
+  }
+
+  // ------------------------------------------------------------ prepárate tú
+
+  /* El alumno se prepara solo contra un rival que juega en Lichess o
+     Chess.com: se bajan sus últimas partidas públicas (PreparacionDescarga, la
+     misma de la preparación de rivales y de «Tus propios errores»), se analizan
+     en el navegador con PreparacionAnalisis.analizar() y se arma el plan con
+     planDelAlumno(), lo mismo que le llega cuando se lo manda el profe. Así se
+     pinta, se entrena y se juega igual, con el mismo código. NO se guarda en la
+     base ni sale del navegador: solo el usuario del rival va a esos sitios. El
+     entrenamiento sí queda en training_progress, con un id de plan propio
+     («propio:<sitio>:<usuario>:<lado>»), para que el repaso espaciado lo
+     encuentre la próxima vez. Ver «Prepárate tú» en docs/decisiones/paneles.md. */
+  const SITIO = { lichess: "Lichess", chesscom: "Chess.com" };
+  const MAX_PROPIO = 300;
+  const CLAVE_PROPIO = "plan_propio_ultimo_v1";
+  // Lo que falta para analizar (lo demás ya lo trae la página), en orden.
+  const MODULOS = [["preparacion-tactica.js", "PreparacionTactica"], ["preparacion-estructuras.js", "PreparacionEstructuras"],
+    ["preparacion-analisis.js", "PreparacionAnalisis"], ["preparacion-descarga.js", "PreparacionDescarga"]];
+  let cargando = null;
+  function cargarAnalisis() {
+    if (cargando) return cargando;
+    cargando = MODULOS.filter(([, g]) => !window[g]).reduce((antes, [archivo]) => antes.then(() => new Promise((ok, mal) => {
+      const sc = document.createElement("script");
+      sc.src = "js/" + archivo;
+      sc.onload = ok;
+      sc.onerror = () => mal(new Error("no cargó " + archivo));
+      document.head.appendChild(sc);
+    })), Promise.resolve()).catch((e) => { cargando = null; throw e; });
+    return cargando;
+  }
+  function leerUltimo() {
+    try { const o = JSON.parse(localStorage.getItem(CLAVE_PROPIO) || "{}"); return o && typeof o === "object" ? o : {}; } catch (e) { return {}; }
+  }
+
+  // Solo ajedrez normal desde la posición inicial (como «Tus propios errores»).
+  const esNormal = (p) => { const e = (p && p.etiquetas) || {}; return /^(standard|chess)?$/i.test(String(e.Variant || "").trim()) && e.SetUp !== "1" && !e.FEN; };
+
+  // Un día de calendario («2026-09-20») se lee a mediodía UTC: así no se
+  // corre al día anterior en hora de Costa Rica.
+  const diaLargo = (dia) => new Date(dia + "T12:00:00Z").toLocaleDateString("es-CR", { timeZone: "UTC", day: "numeric", month: "long", year: "numeric" });
+
+  // Lo que juega, en palabras: con qué color saca más y, del lado que le toca,
+  // sus jugadas más repetidas. Los textos van por textContent.
+  function resumenPropio(r, lado) {
+    const li = [];
+    const veces = (n) => (n === 1 ? "1 partida" : n + " partidas");
+    li.push("Revisé " + veces(r.total) + (!r.fechas || !r.fechas.desde ? "" : r.fechas.desde === r.fechas.hasta ? ", todas del " + diaLargo(r.fechas.desde) : ", del " + diaLargo(r.fechas.desde) + " al " + diaLargo(r.fechas.hasta)) +
+      ". Con blancas saca " + L.pct(r.porColor.w.puntos) + " (" + veces(r.porColor.w.n) + "); con negras, " + L.pct(r.porColor.b.puntos) + " (" + veces(r.porColor.b.n) + ").");
+    if (r.elo && r.elo.reciente) li.push("Su Elo en esas partidas anda por " + r.elo.reciente + ".");
+    if (lado === "conNegras") {
+      const b = (r.repertorio.blancas || []).slice(0, 3);
+      if (b.length) li.push("Con blancas abre " + b.map((x) => "1." + L.sanEs(x.san) + " (" + L.pct(x.reparto) + ")").join(", ") + ".");
+    } else {
+      (r.repertorio.negras || []).slice(0, 2).forEach((x) => {
+        const resp = (x.respuestas || []).slice(0, 2);
+        if (resp.length) li.push("Contra 1." + L.sanEs(x.contra) + " contesta " + resp.map((y) => "1…" + L.sanEs(y.san) + " (" + L.pct(y.reparto) + ")").join(" o ") + ".");
+      });
+    }
+    if (r.pocas) li.push("Son pocas partidas: tómalo como una pista, no como algo seguro.");
+    return li;
+  }
+
+  function montarPropio(yo) {
+    const ultimo = leerUltimo();
+    if (SITIO[ultimo.sitio]) $("propio-sitio").value = ultimo.sitio;
+    if (typeof ultimo.usuario === "string") $("propio-usuario").value = ultimo.usuario.slice(0, 30);
+    if (ultimo.color === "w" || ultimo.color === "b") $("propio-color").value = ultimo.color;
+    const estado = $("propio-estado");
+    let control = null;
+    $("propio-parar").addEventListener("click", () => { if (control) control.abort(); });
+    $("propio-form").addEventListener("submit", async (ev) => {
+      ev.preventDefault();
+      const sitio = $("propio-sitio").value;
+      const usuario = $("propio-usuario").value.trim().replace(/^@/, "");
+      const color = $("propio-color").value === "b" ? "b" : "w";
+      if (!SITIO[sitio]) return;
+      if (!/^[A-Za-z0-9][A-Za-z0-9_-]{1,29}$/.test(usuario)) {
+        estado.textContent = "Escribe el usuario de tu rival tal como sale en su perfil: letras, números, guion o guion bajo.";
+        $("propio-usuario").focus();
+        return;
+      }
+      try { localStorage.setItem(CLAVE_PROPIO, JSON.stringify({ sitio, usuario, color })); } catch (e) {}
+      $("propio-preparar").disabled = true;
+      $("propio-parar").hidden = false;
+      control = new AbortController();
+      estado.textContent = "Trayendo las partidas de «" + usuario + "» en " + SITIO[sitio] + "…";
+      let r = null;
+      try {
+        await cargarAnalisis();
+        let pgn;
+        try {
+          pgn = await PreparacionDescarga.descargar({ sitio, usuario, maximo: MAX_PROPIO, senal: control.signal,
+            alAvanzar: (n) => { estado.textContent = "Trayendo las partidas de «" + usuario + "» en " + SITIO[sitio] + "… van " + n + "."; } });
+        } catch (e) {
+          // Detenido: se analiza lo que ya llegó.
+          if (e && e.name === "AbortError") pgn = PreparacionDescarga.ultimoTexto || "";
+          else throw e;
+        }
+        estado.textContent = "Revisando sus partidas…";
+        await new Promise((ok) => setTimeout(ok, 0));
+        const partidas = PreparacionAnalisis.leerPgn(pgn).filter(esNormal);
+        r = partidas.length ? PreparacionAnalisis.analizar(partidas, usuario) : null;
+      } catch (e) {
+        if (e && e.paraMostrar) estado.textContent = e.message;
+        else { console.error(e); estado.textContent = "No se pudieron traer sus partidas. Revisa tu conexión y vuelve a intentarlo."; }
+        $("propio-preparar").disabled = false; $("propio-parar").hidden = true;
+        return;
+      }
+      $("propio-preparar").disabled = false; $("propio-parar").hidden = true;
+      if (!r || r.vacio) { estado.textContent = "No encontré partidas de ajedrez normal de «" + usuario + "» en " + SITIO[sitio] + "."; return; }
+      const lado = color === "w" ? "conBlancas" : "conNegras";
+      const plan = L.planDelAlumno(r, lado);
+      if (!plan.plan.length) {
+        estado.textContent = "Revisé " + r.total + (r.total === 1 ? " partida" : " partidas") + ", pero con " + (color === "w" ? "negras" : "blancas") +
+          " juega muy poco para armarte un plan. Prueba con el otro color, o pídele a tu profe que te ayude.";
+        return;
+      }
+      const fila = { id: "propio:" + sitio + ":" + usuario.toLowerCase() + ":" + lado, alumno_id: yo, rival: r.rival, lado, plan,
+        nota: null, created_at: new Date().toISOString(), propio: { sitio, n: r.total } };
+      $("lista").classList.add("hidden");
+      const ul = $("propio-resumen");
+      ul.textContent = "";
+      resumenPropio(r, lado).forEach((t) => { const x = document.createElement("li"); x.textContent = t; ul.appendChild(x); });
+      $("propio-resumen-caja").hidden = false;
+      const rr = pintarPlan(fila);
+      await montarEntrenamiento(fila, rr, yo);
+      montarSparring(fila, rr);
+      $("titulo").focus();
+    });
   }
 
   // ------------------------------------------------------------ entrenarlo
@@ -273,6 +406,7 @@
     if (!sesion) { location.href = "login.html?next=" + encodeURIComponent("plan-rival.html" + location.search); return; }
     const id = new URLSearchParams(location.search).get("id");
     if (!id) {
+      montarPropio(sesion.user.id);
       await pintarLista(sesion.user.id);
       $("loading").classList.add("hidden");
       return;

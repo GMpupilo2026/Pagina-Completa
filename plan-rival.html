@@ -27,7 +27,37 @@
         <!-- Sin ?id=: la lista de los planes que le mandaron. -->
         <div id="lista" class="hidden">
             <h1 class="font-serif text-3xl sm:text-4xl font-bold text-brand-800 dark:text-white"><span aria-hidden="true">🔭</span> Tus planes contra rivales</h1>
-            <p class="text-brand-500 dark:text-brand-300 mt-1 mb-6 max-w-3xl">Lo que tu profe te preparó para jugarle a un rival. Ábrelo para recorrer cada línea en el tablero.</p>
+            <p class="text-brand-500 dark:text-brand-300 mt-1 mb-6 max-w-3xl">Prepárate tú contra el rival de tu próxima partida, o abre lo que tu profe te preparó.</p>
+
+            <!-- Prepárate tú: el plan contra un rival que juega en Lichess o
+                 Chess.com, armado en este navegador con sus partidas públicas
+                 (js/plan-rival.js, «Prepárate tú»). No se guarda en la base. -->
+            <section id="propio-caja" aria-labelledby="propio-titulo" class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-8">
+                <h2 id="propio-titulo" class="font-serif text-xl font-bold text-brand-800 dark:text-white mb-1"><span aria-hidden="true">🎯</span> Prepárate tú contra tu próximo rival</h2>
+                <p class="text-sm text-brand-500 dark:text-brand-300 mb-4 max-w-3xl">Si tu rival juega en Lichess o en Chess.com, escribe su usuario y con qué color vas a jugar. Se bajan sus últimas partidas públicas y se arma tu plan: qué juega él y qué jugarle tú, para verlo en el tablero, entrenarlo y jugar contra su forma de jugar. A esos sitios solo se les manda su nombre de usuario; las partidas se revisan en tu computadora o celular y no se guardan. <a href="privacidad.html" class="underline">Política de privacidad</a></p>
+                <form id="propio-form" class="flex flex-wrap items-end gap-3" novalidate>
+                    <label class="text-sm text-brand-700 dark:text-brand-200 flex flex-col gap-1">Sitio
+                        <select id="propio-sitio" class="border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm bg-white dark:bg-brand-900 text-brand-800 dark:text-brand-100">
+                            <option value="lichess">Lichess</option>
+                            <option value="chesscom">Chess.com</option>
+                        </select>
+                    </label>
+                    <label class="text-sm text-brand-700 dark:text-brand-200 flex flex-col gap-1">Usuario de tu rival
+                        <input id="propio-usuario" type="text" maxlength="30" autocomplete="off" spellcheck="false" class="border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm bg-white dark:bg-brand-900 text-brand-800 dark:text-brand-100">
+                    </label>
+                    <label class="text-sm text-brand-700 dark:text-brand-200 flex flex-col gap-1">Vas a jugar con
+                        <select id="propio-color" class="border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm bg-white dark:bg-brand-900 text-brand-800 dark:text-brand-100">
+                            <option value="w">Blancas</option>
+                            <option value="b">Negras</option>
+                        </select>
+                    </label>
+                    <button id="propio-preparar" type="submit" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Preparar mi plan</button>
+                    <button id="propio-parar" type="button" hidden class="bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-4 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Detener</button>
+                </form>
+                <p id="propio-estado" role="status" class="text-sm font-semibold text-brand-700 dark:text-brand-100 mt-3"></p>
+            </section>
+
+            <h2 class="font-serif text-xl font-bold text-brand-800 dark:text-white mb-3">Los que te mandó tu profe</h2>
             <p id="lista-vacia" hidden class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-6 text-brand-600 dark:text-brand-200">Todavía no te mandaron ningún plan.</p>
             <ul id="lista-planes" class="space-y-3"></ul>
         </div>
@@ -36,6 +66,12 @@
         <div id="app" class="hidden">
             <h1 id="titulo" tabindex="-1" class="font-serif text-3xl sm:text-4xl font-bold text-brand-800 dark:text-white focus:outline-none"></h1>
             <p id="subtitulo" class="text-brand-500 dark:text-brand-300 mt-1 mb-6 max-w-3xl"></p>
+            <!-- Prepárate tú: lo que juega el rival, en palabras, y volver. -->
+            <div id="propio-resumen-caja" hidden class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6">
+                <h2 class="font-serif text-xl font-bold text-brand-800 dark:text-white mb-2">Lo que juega</h2>
+                <ul id="propio-resumen" class="space-y-1 text-sm text-brand-700 dark:text-brand-100 list-disc pl-5"></ul>
+                <a href="plan-rival.html" class="inline-block mt-4 text-sm font-semibold text-accent-700 dark:text-accent-400 underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Preparar a otro rival</a>
+            </div>
             <div id="nota-caja" hidden class="bg-accent-50 dark:bg-brand-900 border-l-4 border-accent-500 rounded-xl px-5 py-4 mb-6">
                 <p class="text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">La nota de tu profe</p>
                 <p id="nota" class="text-brand-700 dark:text-brand-100 whitespace-pre-line"></p>
