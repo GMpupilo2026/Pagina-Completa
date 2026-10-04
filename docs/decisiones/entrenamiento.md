@@ -2957,3 +2957,39 @@ enroques de B saltan las 3 que corresponden.
   semana 1 sin nada hecho dice «Tu primer paso: hoy mismo»; después, «Esta
   semana te toca» y cuánto lleva ahí. A un visitante no se le pinta.
 - Lo prueba `verificar-entreno-repaso.js`.
+
+## La meta de la semana, la que elige el alumno
+
+> Vive en `js/hoy-te-toca.js`, así que sale en el hub de Entrenamiento y en el
+> panel del alumno.
+
+- **La meta del día la pone el sitio** (los 5 ejercicios de la racha) y la
+  «Meta de Elo» la pone el plan del diagnóstico. Al alumno le faltaba una que
+  fuera suya. En «Hoy te toca», debajo de las siete barras de «Tu semana»,
+  dice «🎯 Ponte una meta para esta semana»: cuántos días entrena (de 2 a 7) y
+  cuántos ejercicios hace (de 20 a 200), de lunes a domingo.
+- **Con la meta puesta**: «🎯 Tu meta de la semana: 2 de 4 días · 42 de 50
+  ejercicios. Quedan 4 días para el domingo.», con dos barras rotuladas
+  («Días», «Ejercicios») que dan el número también al lector de pantalla
+  (`aria-valuetext`). Cuando se cumple, lo celebra. El domingo dice que es el
+  último día, y si los días ya no alcanzan lo dice sin regañar: «igual, cada
+  ejercicio suma».
+- **Un día cuenta igual que en la racha**: con `Logros.META_DIARIA`
+  ejercicios. Dos reglas distintas para «un día» confundirían al alumno.
+- **No hace falta otra función en la base**: la semana de lunes a hoy nunca
+  tiene más de siete días, y `entreno_mi_semana()` ya da los últimos siete,
+  día por día y en hora de Costa Rica (la clave `dias`). La cuenta es
+  `HoyTeToca.avanceMetaSemana(dias, metaDiaria)`. La meta sale aunque no
+  haya entrenado nada en dos semanas (justo cuando más sirve), pero no si la
+  base no responde.
+- **Se guarda en `meta_semana_v1`**, que viaja con la cuenta
+  (`js/progreso-usuario.js`, `ultimaEscritura`): se la pone en la computadora
+  y la ve en el celular. **No se le cree a lo guardado**: un número que no
+  está entre las opciones es como no tener meta.
+- El formulario va dentro de la caja, no en un `prompt()`: el botón dice si
+  está abierto (`aria-expanded`), el foco va al primer campo y vuelve al botón
+  al cerrar. «Quitar la meta» solo sale si hay una.
+- Lo prueba `verificar-entreno-repaso.js` (`metaSemana`): la cuenta un
+  miércoles y un domingo, ponerla, cambiarla, quitarla, cumplida y una meta
+  tocada desde la consola. Contando la semana desde el domingo en vez del
+  lunes, salta.
