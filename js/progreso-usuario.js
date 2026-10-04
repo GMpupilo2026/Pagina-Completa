@@ -198,6 +198,9 @@ window.ProgresoUsuario = (function () {
        o el modo adaptado. Gana la última que eligió. Ver «Tus favoritas» en
        docs/decisiones/paneles.md. */
     { clave: "panel_favoritas_v1",               fusion: "ultimaEscritura" },
+    /* La meta de la semana que se pone el alumno («Hoy te toca»): la elige en
+       un aparato y la quiere ver en el otro. Gana la última que eligió. */
+    { clave: "meta_semana_v1",                   fusion: "ultimaEscritura" },
   ];
 
   // Cuándo se escribió en ESTE aparato cada clave que se funde por fecha.
