@@ -221,6 +221,19 @@ async function probarTransicion(navegador) {
   });
   await p.waitForTimeout(300);
   ok("una transición cancelada no sale como error de la página", errores.length === 0, errores.join(" | "));
+
+  // …y aunque el rechazo no pase por pageswap (en Chrome 153 se escapaba a
+  // veces): js/errores.js lo reconoce, no lo manda a Sentry y lo calla. Un
+  // error de verdad con otro mensaje sí tiene que seguir saliendo.
+  await p.evaluate(() => {
+    Promise.reject(new DOMException("Transition was aborted because of invalid state. ViewTransition opt-in disabled", "InvalidStateError"));
+    Promise.reject(new DOMException("Transition was skipped. Navigation aborted", "AbortError"));
+  });
+  await p.waitForTimeout(300);
+  ok("un rechazo suelto de una transición cancelada tampoco sale como error", errores.length === 0, errores.join(" | "));
+  await p.evaluate(() => { Promise.reject(new DOMException("Otra cosa que falló", "AbortError")); });
+  await p.waitForTimeout(300);
+  ok("un rechazo de otra cosa sí sale (no se calla todo)", errores.length === 1, errores.join(" | ") || "no salió");
   await ctx.close();
 }
 
