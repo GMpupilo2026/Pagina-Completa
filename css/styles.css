@@ -1388,3 +1388,40 @@ section:has(> .proyector-contenido) > #status-banner:empty { padding: 0; margin:
   .colores-con-ayuda:hover .ayuda-colores:not(.hidden),
   .colores-con-ayuda:focus-within .ayuda-colores:not(.hidden) { display: block; }
 }
+
+/* ===== La navegación entre páginas (ver «La navegación se siente
+   inmediata» en docs/decisiones/sitio-e-infraestructura.md) ===== */
+
+/* Al pasar de una página del sitio a otra, el navegador funde la vieja con la
+   nueva en vez de dejar la pantalla en blanco un instante. El encabezado lleva
+   su propio nombre, así que se queda quieto y solo cambia lo de abajo. Solo
+   para quien no pidió menos movimiento; el navegador que no lo conoce cambia
+   de página como siempre. */
+@media (prefers-reduced-motion: no-preference) {
+  @view-transition { navigation: auto; }
+  #header { view-transition-name: encabezado; }
+  ::view-transition-old(root),
+  ::view-transition-new(root) { animation-duration: 160ms; }
+  ::view-transition-group(encabezado) { animation-duration: 160ms; }
+}
+
+/* La barra de «cargando la página siguiente» (js/navegacion.js). Va encima
+   del encabezado: accent-400 sobre brand-800 da 7,8:1 en los ocho temas, y el
+   borde oscuro de abajo la separa del fondo cuando no hay encabezado detrás.
+   Con el color de una academia, blanca: ese color está medido contra el
+   blanco (ver arriba). */
+#barra-navegacion {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 9999;
+  height: 3px; pointer-events: none;
+  background-color: rgb(var(--c-accent-400, 240 180 41));
+  box-shadow: 0 1px 0 rgb(var(--c-brand-900, 16 42 67));
+  transform-origin: left center; transform: scaleX(0);
+  opacity: 0; transition: opacity 150ms ease;
+}
+html[data-marca-academia] #barra-navegacion { background-color: #ffffff; }
+#barra-navegacion.activa { opacity: 1; transform: scaleX(0.85); transition: opacity 150ms ease, transform 8s cubic-bezier(0.1, 0.7, 0.2, 1); }
+#barra-navegacion.arranca { opacity: 1; transform: scaleX(0.08); transition: none; }
+@media (prefers-reduced-motion: reduce) {
+  /* Quieta: aparece entera, sin crecer. */
+  #barra-navegacion, #barra-navegacion.activa, #barra-navegacion.arranca { transform: none; transition: none; }
+}
