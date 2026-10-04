@@ -159,7 +159,11 @@
   /* ---------- El diagrama ---------- */
   .diagrama{max-width:400px; margin:26px auto 0;}
   .board8{
-    display:grid; grid-template-columns:repeat(8,1fr); grid-template-rows:repeat(8,1fr);
+    /* minmax(0,1fr) y no 1fr: un 1fr no deja que la fila sea más chica que lo
+       que trae adentro, y una fila con piezas crecía más que una vacía (en el
+       celular el tablero salía de 38×41 en unas filas y 38×36 en otras, y en
+       el papel 232×268). Con esto las ocho filas miden lo mismo siempre. */
+    display:grid; grid-template-columns:repeat(8,minmax(0,1fr)); grid-template-rows:repeat(8,minmax(0,1fr));
     width:100%; aspect-ratio:1/1; border:2px solid var(--brass); box-shadow:0 8px 30px rgba(16,42,67,0.18);
     /* Una ficha se mira, no se juega: el tablero no responde al ratón. Y eso no
        le quita el teclado — `pointer-events` apaga el puntero y nada más—, que
@@ -174,6 +178,9 @@
     position:relative; display:flex; align-items:center; justify-content:center;
     font-size:min(7vw,32px); user-select:none;
     border:0; padding:0; margin:0; font-family:inherit; color:inherit;
+    /* Interlineado 1: heredaba 1,5, y con la pieza a 27 px el renglón medía
+       41 px en una casilla de 38. */
+    line-height:1; min-width:0; min-height:0; overflow:hidden;
   }
   .sq.light{background:#f0f4f8;}
   .sq.dark{background:#486581;}

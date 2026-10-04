@@ -1441,6 +1441,43 @@ y 16 conceptos) sin tocar ni una de las 28 primeras. Lo que dejó escrito:
     se imprime esa), y al terminar vuelve.
   - En el papel van siempre los colores del modo claro: los de oscuro son
     pálidos y en blanco no se leen.
+- **Las fichas en papel: el libro y las cartas.** `herramientas/fichas-estudio-pdf.js`
+  arma en `material/fichas-de-estudio/` (que el worker solo le sirve a
+  administración y a quien lo compre):
+  - `fichas-de-estudio-libro.pdf`: tapa, presentación, índice con el número
+    de página de cada ficha, una portadilla por categoría y una ficha por
+    página, en hoja carta. **Las páginas de ficha son la ficha impresa de esta
+    página, tal cual**: se abre `estudio.html?ficha=…` y se imprime, con el
+    número al pie. Una segunda maqueta del mapa se iría separando de la
+    primera; por eso el generador necesita el sitio levantado en el 8777.
+  - `fichas-de-estudio-cartas.pdf`: cartas de 63 × 88 mm (las de juego), nueve
+    por hoja carta, pegadas y con marcas de corte en el margen. Frente: título,
+    tablero (con coordenadas, de `herramientas/lib/tablero-svg.js`, que
+    prometía la opción y no la tenía) e idea principal; reverso, los cuatro
+    bloques. Las hojas van frente, reverso, frente… y el reverso en espejo,
+    para imprimir a doble cara volteando por el borde largo. Cada carta deja
+    3 mm de aire por dentro por si el corte o la doble cara se corren. El
+    texto se achica solo hasta que entra y no baja de 5,6 pt: si una carta no
+    entrara ni así, el generador se detiene en vez de imprimirla cortada.
+  - En los dos, el tablero muestra el final de la línea, como al imprimir.
+    La versión accesible es la propia página, que se lee entera con lector de
+    pantalla.
+  - **Al tocar el banco de fichas o la ficha impresa, se vuelve a generar.**
+    `verificar-fichas-pdf.py` lo nota: cuenta las páginas contra el banco y
+    busca cada título en la página que dice el índice y en las dos caras de
+    su carta (renombrar una ficha sin regenerar lo hace saltar).
+- **El tablero es cuadrado, con las ocho filas iguales** (también en
+  Aperturas y en Repasar clases). Con `grid-template-rows: repeat(8, 1fr)`
+  una fila no puede ser más chica que lo que trae adentro, y las casillas
+  heredaban el interlineado de 1,5 del sitio: con la pieza a 27 px el renglón
+  medía 41 px en una casilla de 38. En el celular las filas con piezas
+  crecían y el tablero salía estirado (38×41 en Estudio y Aperturas, 310×332
+  en Repasar clases) y la ficha impresa de la Española salía de 232×268. Se
+  veía «más o menos bien» y nadie lo notaba. El arreglo es
+  `repeat(8, minmax(0,1fr))` y `line-height:1` en la casilla.
+  `verificar-tablero-cuadrado.js` mide esos tableros en cuatro anchos (360,
+  390, 768 y 1280 px) y `verificar-estudio.js` cada ficha impresa; un tablero
+  nuevo que copie la regla vieja va en `PAGINAS` del primero.
 - **El tablero es decorativo** (`aria-hidden`): el pie cuenta qué se ve y la
   posición va contada pieza por pieza con `BlindNotation.positionSentence()`,
   que es la única tabla de nombres y plurales del sitio — escribirla otra vez
