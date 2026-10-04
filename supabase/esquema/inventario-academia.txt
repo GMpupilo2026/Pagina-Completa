@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261004203720
+# al-dia-con: 20261004205925
 tabla  Ejercicios Lichess  rls=true
 tabla  academia_ia  rls=true
 tabla  academia_miembros  rls=true
@@ -73,6 +73,7 @@ tabla  interno.envios_publicos  rls=true
 tabla  interno.lector_planilla_uso  rls=true
 tabla  interno.salud_base  rls=true
 tabla  justificaciones_ausencia  rls=true
+tabla  mensajes_casa  rls=true
 tabla  misiones_secretas  rls=true
 tabla  notas_alumno  rls=true
 tabla  pagos  rls=true
@@ -85,6 +86,7 @@ tabla  plan_items  rls=true
 tabla  planes_clase  rls=true
 tabla  planes_cobro  rls=true
 tabla  planes_rival_alumno  rls=true
+tabla  plantillas_casa  rls=true
 tabla  platform_activity_log  rls=true
 tabla  practice_games  rls=true
 tabla  practice_sessions  rls=true
@@ -730,6 +732,11 @@ columna  justificaciones_ausencia.revisada_en  timestamp with time zone
 columna  justificaciones_ausencia.revisada_por  uuid
 columna  justificaciones_ausencia.revisada_por_nombre  text
 columna  justificaciones_ausencia.student_id  uuid
+columna  mensajes_casa.alumno_id  uuid
+columna  mensajes_casa.autor_id  uuid
+columna  mensajes_casa.created_at  timestamp with time zone
+columna  mensajes_casa.id  uuid
+columna  mensajes_casa.texto  text
 columna  misiones_secretas.color  text
 columna  misiones_secretas.created_at  timestamp with time zone
 columna  misiones_secretas.jugador_id  uuid
@@ -821,6 +828,11 @@ columna  planes_rival_alumno.nota  text
 columna  planes_rival_alumno.plan  jsonb
 columna  planes_rival_alumno.profesor_id  uuid
 columna  planes_rival_alumno.rival  text
+columna  plantillas_casa.created_at  timestamp with time zone
+columna  plantillas_casa.id  uuid
+columna  plantillas_casa.profesor_id  uuid
+columna  plantillas_casa.situacion  text
+columna  plantillas_casa.texto  text
 columna  platform_activity_log.activity  text
 columna  platform_activity_log.id  uuid
 columna  platform_activity_log.joined_at  timestamp with time zone
@@ -1447,12 +1459,14 @@ funcion  interno.jsonb_o_nulo(p text)  invoker  anon=false  auth=true
 funcion  interno.lecciones_hechas(p_alumno uuid, p_curso text)  definer  anon=false  auth=false
 funcion  interno.me_sacaron_de(p_clase uuid)  definer  anon=false  auth=true
 funcion  interno.me_sacaron_de_la_pregunta(p_pregunta uuid)  definer  anon=false  auth=true
+funcion  interno.mensajes_casa_al_crear()  definer  anon=false  auth=false
 funcion  interno.mis_relevos()  definer  anon=false  auth=true
 funcion  interno.mis_retos_ejercicios()  definer  anon=false  auth=true
 funcion  interno.monto_rango(p_base date, p_meses integer, p_precio numeric, p_desde date, p_hasta date)  invoker  anon=false  auth=false
 funcion  interno.nombre_libre_de_subgrupo(p_profesor uuid, p_base text, p_excepto uuid)  definer  anon=false  auth=false
 funcion  interno.pagar(p_pagos jsonb, p_metodo text, p_referencia text, p_nota text, p_fecha date)  definer  anon=false  auth=false
 funcion  interno.pizarras_de_sala_validas(p jsonb)  invoker  anon=true  auth=true
+funcion  interno.plantillas_casa_tope()  definer  anon=false  auth=false
 funcion  interno.prefijo_de_nombre(p_nombre text)  invoker  anon=false  auth=true
 funcion  interno.profesores_de(p_alumno uuid)  definer  anon=false  auth=true
 funcion  interno.profesores_que_coordino()  definer  anon=false  auth=true
@@ -1492,6 +1506,7 @@ funcion  marcar_aviso_leido(p_aviso uuid)  definer  anon=false  auth=true
 funcion  marcar_coordinador(p_profesor uuid, p_valor boolean)  definer  anon=false  auth=true
 funcion  marcar_supervisor(p_persona uuid, p_valor boolean)  definer  anon=false  auth=true
 funcion  marcar_vision(p_persona uuid, p_vision text)  definer  anon=false  auth=true
+funcion  mensajes_casa_de(p_alumno uuid, p_desde timestamp with time zone, p_hasta timestamp with time zone)  definer  anon=false  auth=true
 funcion  mes_en_palabras(p_periodo date)  invoker  anon=false  auth=true
 funcion  mes_es(d date)  invoker  anon=true  auth=true
 funcion  mi_acceso()  definer  anon=false  auth=true
@@ -1813,6 +1828,9 @@ politica  insignias  insignias_ver  SELECT
 politica  insignias  verificacion_en_dos_pasos  ALL  restrictiva
 politica  insignias_tipos  insignias_tipos_ver  SELECT
 politica  justificaciones_ausencia  justificaciones_select  SELECT
+politica  mensajes_casa  mensajes_casa_delete  DELETE
+politica  mensajes_casa  mensajes_casa_insert  INSERT
+politica  mensajes_casa  mensajes_casa_select  SELECT
 politica  misiones_secretas  misiones_secretas_lee  SELECT
 politica  misiones_secretas  verificacion_en_dos_pasos  ALL  restrictiva
 politica  notas_alumno  notas_alumno_delete  DELETE
@@ -1846,6 +1864,7 @@ politica  planes_cobro  planes_lee_coordinacion  SELECT
 politica  planes_rival_alumno  planes_rival_alumno_borrar  DELETE
 politica  planes_rival_alumno  planes_rival_alumno_mandar  INSERT
 politica  planes_rival_alumno  planes_rival_alumno_ver  SELECT
+politica  plantillas_casa  plantillas_casa_propias  ALL
 politica  platform_activity_log  platform_activity_log_exige_acceso_ins  INSERT  restrictiva
 politica  platform_activity_log  platform_activity_log_exige_acceso_upd  UPDATE  restrictiva
 politica  platform_activity_log  platform_activity_log_insert_own  INSERT
@@ -2070,6 +2089,7 @@ trigger  game_rooms  game_rooms_ligar_a_la_clase
 trigger  game_rooms  reloj_de_partida
 trigger  game_state  protect_game_state_teacher_columns_trigger
 trigger  ia_uso  ia_uso_avisa_tope
+trigger  mensajes_casa  mensajes_casa_al_crear
 trigger  notas_alumno  notas_alumno_clase_propia
 trigger  notas_alumno  notas_alumno_proteger
 trigger  pagos  auditar
@@ -2077,6 +2097,7 @@ trigger  paquete_alumnos  auditar
 trigger  paquetes_acceso  auditar
 trigger  planes_clase  planes_clase_proteger
 trigger  planes_cobro  auditar
+trigger  plantillas_casa  plantillas_casa_tope
 trigger  platform_activity_log  platform_activity_log_protege_tiempos
 trigger  practice_games  practica_ayuda_proteger
 trigger  practice_sessions  practice_sessions_ligar_a_la_clase
@@ -2310,6 +2331,9 @@ indice  justificaciones_ausencia  justificaciones_ausencia_pkey
 indice  justificaciones_ausencia  justificaciones_por_fecha
 indice  justificaciones_ausencia  justificaciones_revisada_por_fk
 indice  justificaciones_ausencia  justificaciones_una_por_dias
+indice  mensajes_casa  mensajes_casa_alumno
+indice  mensajes_casa  mensajes_casa_autor
+indice  mensajes_casa  mensajes_casa_pkey
 indice  misiones_secretas  misiones_secretas_jugador
 indice  misiones_secretas  misiones_secretas_pkey
 indice  notas_alumno  notas_alumno_alumno_compartida_idx
@@ -2340,6 +2364,8 @@ indice  planes_cobro  planes_cobro_pkey
 indice  planes_rival_alumno  planes_rival_alumno_alumno_idx
 indice  planes_rival_alumno  planes_rival_alumno_pkey
 indice  planes_rival_alumno  planes_rival_alumno_profesor_idx
+indice  plantillas_casa  plantillas_casa_pkey
+indice  plantillas_casa  plantillas_casa_profesor_id_situacion_texto_key
 indice  platform_activity_log  platform_activity_log_pkey
 indice  platform_activity_log  platform_activity_log_student_idx
 indice  practice_games  practice_games_pkey
@@ -3000,6 +3026,11 @@ grant  insignias_tipos  authenticated  SELECT
 grant  justificaciones_ausencia  authenticated  REFERENCES
 grant  justificaciones_ausencia  authenticated  SELECT
 grant  justificaciones_ausencia  authenticated  TRIGGER
+grant  mensajes_casa  authenticated  DELETE
+grant  mensajes_casa  authenticated  INSERT
+grant  mensajes_casa  authenticated  REFERENCES
+grant  mensajes_casa  authenticated  SELECT
+grant  mensajes_casa  authenticated  TRIGGER
 grant  misiones_secretas  anon  DELETE
 grant  misiones_secretas  anon  INSERT
 grant  misiones_secretas  anon  REFERENCES
@@ -3069,6 +3100,12 @@ grant  planes_cobro  authenticated  UPDATE
 grant  planes_rival_alumno  authenticated  DELETE
 grant  planes_rival_alumno  authenticated  INSERT
 grant  planes_rival_alumno  authenticated  SELECT
+grant  plantillas_casa  authenticated  DELETE
+grant  plantillas_casa  authenticated  INSERT
+grant  plantillas_casa  authenticated  REFERENCES
+grant  plantillas_casa  authenticated  SELECT
+grant  plantillas_casa  authenticated  TRIGGER
+grant  plantillas_casa  authenticated  UPDATE
 grant  platform_activity_log  anon  DELETE
 grant  platform_activity_log  anon  INSERT
 grant  platform_activity_log  anon  REFERENCES

@@ -1137,6 +1137,14 @@
             LoQueCosto.pintarDelAlumno(sb, document.getElementById("le-costo-report"), studentId, name, session.user.id, !profile._persona)
                 .catch((e) => console.error(e));
             renderEncargados(studentId, name);
+            // «Unas palabras para la casa»: se monta UNA vez por alumno, no en
+            // cada repintado de la lista de encargados (borraría el borrador),
+            // y recién cuando se abre «Informes a la casa»: va plegado, y pedir
+            // cómo viene a la Edge Function en cada alumno que se mira sería
+            // una llamada por clic para algo que casi nunca se abre. Mirando
+            // como otra persona se ve, pero no se escribe a su nombre.
+            mensajeCasaPendiente = { id: studentId, nombre: name };
+            montarMensajeCasa();
 
             const historyEl = document.getElementById("student-history");
             historyEl.innerHTML = "";
@@ -1939,6 +1947,19 @@
             if (!res.ok || r.error) throw new Error(r.error || "No se pudo completar");
             return r;
         }
+
+        var mensajeCasaPendiente = null, mensajeCasaMontado = null;   // var: renderStudentDetail está más arriba
+        function montarMensajeCasa() {
+            const caja = document.getElementById("encargados-report");
+            if (!window.PlantillasCasa || !mensajeCasaPendiente || !caja.open) return;
+            if (mensajeCasaMontado === mensajeCasaPendiente.id) return;
+            mensajeCasaMontado = mensajeCasaPendiente.id;
+            PlantillasCasa.montar(document.getElementById("mensaje-casa"), {
+                sb, alumno: mensajeCasaPendiente, yo: session.user.id,
+                llamar: llamarInformes, soloLectura: !!profile._persona,
+            }).catch((e) => console.error(e));
+        }
+        document.getElementById("encargados-report").addEventListener("toggle", montarMensajeCasa);
 
         async function renderEncargados(studentId, nombreAlumno) {
             encargadoAlumno = { id: studentId, nombre: nombreAlumno };

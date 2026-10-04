@@ -170,6 +170,12 @@ window.__funcion = [];
     if (String(url).indexOf("/functions/v1/informes-encargados") !== -1) {
       const cuerpo = JSON.parse((opciones && opciones.body) || "{}");
       window.__funcion.push(cuerpo);
+      // Cómo viene el alumno, para las frases del mensaje a la casa.
+      if (cuerpo.action === "situacion") {
+        (window.__situaciones = window.__situaciones || []).push(cuerpo);
+        return Promise.resolve(new Response(JSON.stringify(DATOS.situacion ? { ok: true, situacion: DATOS.situacion } : { error: "no" }),
+          { status: DATOS.situacion ? 200 : 403, headers: { "Content-Type": "application/json" } }));
+      }
       return Promise.resolve(new Response(JSON.stringify({ ok: true, html: "<p>informe</p>", alumno: "Ana Rojas" }),
         { status: 200, headers: { "Content-Type": "application/json" } }));
     }
@@ -292,12 +298,20 @@ const DIAGNOSTICOS = [
 ];
 
 let fallos = 0;
+/* Un objeto se compara por su contenido. Con String() a secas, dos objetos
+   cualesquiera dan «[object Object]» y la comparación pasaba siempre: las
+   pruebas de lo que se escribe (agregar un encargado, «Deshacer»…) no estaban
+   comprobando nada. */
+function texto(v) {
+  const conObjeto = (x) => x !== null && typeof x === "object" && (!Array.isArray(x) || x.some(conObjeto));
+  return conObjeto(v) ? JSON.stringify(v) : String(v);
+}
 function igual(nombre, hallado, esperado) {
-  if (String(hallado) !== String(esperado)) {
-    console.log("  ✗ " + nombre + "\n      esperaba: " + esperado + "\n      salió:    " + hallado);
+  if (texto(hallado) !== texto(esperado)) {
+    console.log("  ✗ " + nombre + "\n      esperaba: " + texto(esperado) + "\n      salió:    " + texto(hallado));
     fallos += 1;
   } else {
-    console.log("  ✓ " + nombre + ": " + hallado);
+    console.log("  ✓ " + nombre + ": " + texto(hallado));
   }
 }
 
@@ -453,7 +467,22 @@ async function pruebaProfesor(browser) {
                    { id: "enc-2", student_id: "a-1", nombre: "Tía de Ana", email: "tia@x.cr", frecuencia: "mensual",
                      activo: true, hora_envio: 18, dia_semana: null, ultimo_envio_at: "2026-09-01T12:00:00Z",
                      creado_por: "prof-1", created_at: "2026-09-02T10:00:00Z" }],
+      /* Unas palabras para la casa: uno suyo y uno de otra profe de Ana (ese
+         no se puede quitar desde acá), y uno de Bruno que no tiene que colarse.
+         Sus plantillas: una para «practicó poco» y una para «va bien», que con
+         Ana practicando poco no se ofrece. */
+      mensajes_casa: [
+        { id: "m-1", alumno_id: "a-1", autor_id: "prof-1", texto: "Ana <b>trabajó</b> bien en clase.", created_at: "2026-09-20T15:00:00Z" },
+        { id: "m-2", alumno_id: "a-1", autor_id: "otra", texto: "Recuerden el torneo del sábado.", created_at: "2026-09-19T15:00:00Z" },
+        { id: "m-3", alumno_id: "a-2", autor_id: "prof-1", texto: "Mensaje de Bruno", created_at: "2026-09-21T15:00:00Z" },
+      ],
+      plantillas_casa: [
+        { id: "p-1", situacion: "poco", texto: "{nombre} puede más: lo vemos el jueves.", created_at: "2026-09-01T00:00:00Z" },
+        { id: "p-2", situacion: "bien", texto: "Sigan así.", created_at: "2026-09-02T00:00:00Z" },
+      ],
     },
+    situacion: { clave: "poco", titulo: "Practicó poco", nombre: "Ana", dias: 2, dias_periodo: 7,
+                 ejercicios: null, ejercicios_antes: null, area: "Finales" },
   }, "prof-1");
 
   console.log("-- Resumen general");
@@ -887,7 +916,7 @@ async function pruebaProfesor(browser) {
   await page.click("#enc-agregar");
   await page.waitForFunction(() => window.__escrituras.length > 0);
   igual("agregar un encargado manda lo correcto", await page.evaluate(() => window.__escrituras[0]),
-    { etiqueta: "from:encargados", accion: "insert",
+    { etiqueta: "from:encargados", donde: [], dentro: [], accion: "insert",
       fila: { student_id: "a-1", nombre: "Papá de Ana", email: "papa@x.cr", frecuencia: "mensual",
               hora_envio: 7, dia_semana: null, creado_por: "prof-1" } });
 
@@ -934,6 +963,65 @@ async function pruebaProfesor(browser) {
   igual("descargar pide el MISMO informe que sale por correo, del periodo elegido",
     await page.evaluate(() => window.__funcion[0]),
     { action: "vista_previa", student_id: "a-1", frecuencia: "mensual" });
+
+  console.log("-- Unas palabras para la casa");
+  await page.waitForFunction(() => /Practicó poco/.test((document.querySelector("[data-casa-situacion]") || {}).textContent || ""));
+  const casa = () => page.evaluate(() => ({
+    situacion: document.querySelector("[data-casa-situacion]").textContent,
+    frases: [...document.querySelectorAll("[data-casa-frase]")].map((b) => b.getAttribute("data-casa-frase") + ": " + b.textContent.replace(/^\+/, "").trim()),
+    recientes: [...document.querySelectorAll("[data-casa-recientes] li")].map((li) =>
+      [li.querySelector("p").textContent, !!li.querySelector("button")].join(" | ")),
+    nadieSeVe: document.querySelector("[data-casa-nadie]").checkVisibility(),
+    seVe: document.getElementById("mensaje-casa-texto").checkVisibility(),
+  }));
+  let mc = await casa();
+  igual("dice cómo viene, con la misma regla del correo", mc.situacion, "Esta semana: Practicó poco (2 días de 7).");
+  igual("lo pide a la función, de ESE alumno y de la semana", await page.evaluate(() =>
+    JSON.stringify((window.__situaciones || [])[0])), '{"action":"situacion","student_id":"a-1","frecuencia":"semanal"}');
+  igual("la plantilla propia va primero, con el nombre puesto, y la de «va bien» no se ofrece",
+    [mc.frases[0], mc.frases.some((f) => /Sigan así/.test(f))], ["propia: Ana puede más: lo vemos el jueves.(tuya)", false]);
+  igual("las frases del sitio de «practicó poco», con los datos puestos",
+    mc.frases.filter((f) => f.startsWith("sitio")).map((f) => f.slice(7)), [
+      "Esta semana Ana practicó 2 días de 7. Con diez minutos casi todos los días se nota mucho la diferencia.",
+      "Les propongo buscar un momento fijo para practicar en la casa, aunque sea corto: ayuda a crear el hábito.",
+      "Lo que más le conviene practicar ahora es finales: lo tiene en su plan, dentro de la plataforma.",
+      "Cualquier consulta, me pueden escribir.",
+    ]);
+  igual("ninguna frase deja una llave sin llenar", mc.frases.some((f) => /[{}]/.test(f)), false);
+  igual("los mensajes de Ana, el más nuevo arriba; solo el propio se puede quitar, y el texto va como texto",
+    mc.recientes, ["Ana <b>trabajó</b> bien en clase. | true", "Recuerden el torneo del sábado. | false"]);
+  igual("con encargados apuntados no avisa que no le llega a nadie", mc.nadieSeVe, false);
+  igual("el campo del mensaje se ve", mc.seVe, true);
+
+  await page.evaluate(() => { window.__escrituras.length = 0; });
+  await page.click("[data-casa-frase='sitio']");
+  await page.click("[data-casa-frase='propia']");
+  igual("tocar frases las suma al mensaje", await page.inputValue("#mensaje-casa-texto"),
+    "Esta semana Ana practicó 2 días de 7. Con diez minutos casi todos los días se nota mucho la diferencia. Ana puede más: lo vemos el jueves.");
+  await page.click("[data-casa-mandar]");
+  await page.waitForFunction(() => window.__escrituras.some((e) => e.etiqueta === "from:mensajes_casa"));
+  igual("«Mandar con el próximo informe» guarda el mensaje de ESE alumno", await page.evaluate(() =>
+    window.__escrituras.find((e) => e.etiqueta === "from:mensajes_casa")),
+    { etiqueta: "from:mensajes_casa", donde: [], dentro: [], accion: "insert",
+      fila: { alumno_id: "a-1", texto: "Esta semana Ana practicó 2 días de 7. Con diez minutos casi todos los días se nota mucho la diferencia. Ana puede más: lo vemos el jueves." } });
+  igual("y el campo queda vacío", await page.inputValue("#mensaje-casa-texto"), "");
+
+  await page.fill("#mensaje-casa-texto", "Ana y Anabel trabajaron muy bien.");
+  await page.click("[data-casa-guardar]");
+  await page.waitForFunction(() => window.__escrituras.some((e) => e.etiqueta === "from:plantillas_casa"));
+  igual("guardar como plantilla cambia el nombre por {nombre} (solo la palabra entera) y la guarda para «practicó poco»",
+    await page.evaluate(() => window.__escrituras.find((e) => e.etiqueta === "from:plantillas_casa").fila),
+    { situacion: "poco", texto: "{nombre} y Anabel trabajaron muy bien." });
+  await page.waitForFunction(() => document.querySelectorAll("[data-casa-frase='propia']").length === 2);
+  igual("la plantilla nueva aparece entre las suyas", await page.evaluate(() =>
+    document.querySelector("[data-casa-frase='propia']").textContent.replace(/^\+/, "").trim()), "Ana y Anabel trabajaron muy bien.(tuya)");
+
+  await page.evaluate(() => { window.__escrituras.length = 0; });
+  await page.click("[data-casa-recientes] li button");
+  await page.waitForFunction(() => window.__escrituras.some((e) => e.accion === "delete"));
+  igual("«Quitar» pregunta y borra ESE mensaje", await page.evaluate(() =>
+    [window.__avisos.some((a) => /¿Quitar este mensaje\?/.test(a)), JSON.stringify(window.__escrituras.find((e) => e.accion === "delete").donde)]),
+    [true, '[["id","m-1"]]']);
 
   console.log("-- Filtros de grupo y de tema");
   await page.selectOption("#student-filter", "");

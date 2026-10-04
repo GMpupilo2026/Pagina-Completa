@@ -149,6 +149,19 @@ const CASOS = [
   { nombre: "elo-vacio", frecuencia: "semanal", datos: { ...BASE, dias_activos: 5,
       tareas: SIN_DEBERES, examenes: { rendidos: 0, sin_hacer_hoy: 0, pendientes: 0 },
       elo: { fide_id: "1<b>2", actual: { periodo: "2026-09-01", fide: null, nacional: null }, anterior: null } } },
+  /* Unas palabras de su profe (public.mensajes_casa_de(), dentro de
+     informe_de_alumno()). El texto lo escribe el profe y lleva HTML a
+     propósito: tiene que llegar como texto. */
+  { nombre: "con-mensaje", frecuencia: "semanal", datos: { ...BASE, dias_activos: 1,
+      tareas: SIN_DEBERES, examenes: { rendidos: 0, sin_hacer_hoy: 0, pendientes: 0 },
+      comparacion: { esta: 12, esta_con: 0, esta_limpios: 0, anterior: 30, anterior_con: 0, anterior_limpios: 0 },
+      plan: { compartido_at: "2026-09-02T10:00:00Z", areas: [{ titulo: "Semana 1 · 🏁 Finales", objetivo: "x" }] },
+      mensajes: [
+        { texto: "Esta semana le costó <b>arrancar</b>.\nEl jueves lo vemos juntos.", autor: "Profe Oscar", fecha: "2026-09-18T15:00:00Z" },
+        { texto: "   ", autor: "Nadie", fecha: "2026-09-18T15:00:00Z" },
+      ] } },
+  { nombre: "mensajes-vacios", frecuencia: "semanal", datos: { ...BASE, dias_activos: 5,
+      tareas: SIN_DEBERES, examenes: { rendidos: 0, sin_hacer_hoy: 0, pendientes: 0 }, mensajes: [] } },
   { nombre: "diario-si", frecuencia: "diario", datos: { ...BASE, dias_del_periodo: 1, dias_activos: 1,
       tareas: SIN_DEBERES, examenes: { rendidos: 0, sin_hacer_hoy: 0, pendientes: 0 } } },
   { nombre: "diario-no", frecuencia: "diario", datos: { ...BASE, dias_del_periodo: 1, dias_activos: 0,
@@ -164,7 +177,7 @@ if (r.status !== 0) {
   console.error("No se pudo generar el informe:\n" + (r.stderr || r.stdout));
   process.exit(1);
 }
-const { html, periodos } = JSON.parse(r.stdout);
+const { html, periodos, situaciones } = JSON.parse(r.stdout);
 
 const fallos = [];
 const ok = (cond, msg) => { if (!cond) fallos.push(msg); };
@@ -322,6 +335,30 @@ ok(/FIDE Estándar 2152/.test(ep) && /Nacional \(Costa Rica\) 2268/.test(ep), "e
 ok(!/(subió|bajó) \d|igual que en/.test(ep), "el primer mes no tiene contra qué comparar: no dice subió ni bajó");
 ok(!/Su Elo oficial/.test(texto("elo-vacio")) && !/<b>2/.test(html["elo-vacio"]), "sin ningún Elo leído el bloque no sale");
 ok(!/Su Elo oficial/.test(texto("va-bien")), "sin la clave elo (sin código FIDE, o una base de antes) el bloque no sale");
+
+// ---------- Unas palabras de su profe ----------
+const cmsj = texto("con-mensaje");
+ok(/Unas palabras de su profe/.test(cmsj), "con un mensaje del profe falta el bloque «Unas palabras de su profe»");
+ok(/— Profe Oscar, 18 de septiembre/.test(cmsj), "el mensaje debería decir quién lo escribió y cuándo: " + cmsj.slice(0, 500));
+ok(/Esta semana le costó &lt;b&gt;arrancar&lt;\/b&gt;\./.test(html["con-mensaje"]), "el texto del profe tiene que llegar escapado, como texto");
+ok(!/Nadie/.test(cmsj), "un mensaje en blanco no se pinta");
+ok(cmsj.indexOf("Unas palabras de su profe") < cmsj.indexOf("a dónde va"),
+  "el mensaje va arriba, pegado al veredicto, antes del plan");
+ok(!/Unas palabras de su profe/.test(texto("mensajes-vacios")) && !/Unas palabras de su profe/.test(texto("va-bien")),
+  "sin mensajes (o con una base de antes) el bloque no sale");
+
+// ---------- Cómo viene, para las plantillas ----------
+/* Las frases sugeridas salen de la MISMA regla que la franja del correo: si se
+   separaran, el profe le escribiría «¡qué buena semana!» encima de «Practicó
+   poco». */
+const claves = { "va-bien": "bien", "practico-poco": "poco", "no-entro": "no_entro", "vencido-aunque-practique": "vencido" };
+Object.entries(claves).forEach(([caso, clave]) => ok(situaciones[caso] && situaciones[caso].clave === clave,
+  `la situación de «${caso}» para las plantillas debería ser «${clave}», es ${JSON.stringify(situaciones[caso])}`));
+const sm = situaciones["con-mensaje"];
+ok(sm && sm.nombre === "Sofía" && sm.dias === 1 && sm.dias_periodo === 7, "la situación debería traer el nombre de pila y los días: " + JSON.stringify(sm));
+ok(sm && sm.ejercicios === 12 && sm.ejercicios_antes === 30, "y los ejercicios contra el periodo anterior");
+ok(sm && sm.area === "Finales", "y el área del plan, sin «Semana 1 ·» ni emoji: " + JSON.stringify(sm && sm.area));
+ok(situaciones["va-bien"].ejercicios === null && situaciones["va-bien"].area === null, "sin comparación ni plan, esos datos van en null");
 
 if (fallos.length) {
   console.error(`❌ ${fallos.length} fallo(s):\n` + fallos.map((f) => "  - " + f).join("\n"));

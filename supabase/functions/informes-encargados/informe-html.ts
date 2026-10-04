@@ -254,30 +254,71 @@ function comoVa(d: Record<string, any>, frecuencia: Frecuencia) {
     if (Number(tareas.sin_hacer_hoy)) partes.push(plural(Number(tareas.sin_hacer_hoy), "tarea", "tareas"));
     if (Number(examenes.sin_hacer_hoy)) partes.push(plural(Number(examenes.sin_hacer_hoy), "examen", "exámenes"));
     return {
-      fondo: "#fef2f2", borde: "#dc2626",
+      clave: "vencido", fondo: "#fef2f2", borde: "#dc2626",
       titulo: `Se le pasó la fecha de ${partes.join(" y ")}`,
       texto: `${cuantosDias} Lo que venció ya no se puede entregar solo: conviene que hable con quien le da clase para ponerse al día.`,
     };
   }
   if (dias === 0) {
     return {
-      fondo: "#fffbea", borde: "#f0b429",
+      clave: "no_entro", fondo: "#fffbea", borde: "#f0b429",
       titulo: `${nombre} no entró a practicar`,
       texto: "Si necesita ayuda para retomar, o si algo se complicó estos días, escríbenos y lo vemos juntos.",
     };
   }
   if (dias < periodo.esperados) {
     return {
-      fondo: "#fffbea", borde: "#f0b429",
+      clave: "poco", fondo: "#fffbea", borde: "#f0b429",
       titulo: "Practicó poco",
       texto: `${cuantosDias} Diez o quince minutos casi todos los días rinden mucho más que un rato largo de una sola vez.`,
     };
   }
   return {
-    fondo: "#f0f4f8", borde: "#102a43",
+    clave: "bien", fondo: "#f0f4f8", borde: "#102a43",
     titulo: "Va bien",
     texto: `${cuantosDias} Así es como se avanza: poquito y seguido.`,
   };
+}
+
+/* Cómo viene, para las plantillas del mensaje a la casa (js/plantillas-casa.js).
+   Es la MISMA regla que decide la franja de arriba del correo: si las frases
+   sugeridas salieran de otra cuenta, el profe le escribiría «¡qué buena
+   semana!» a la casa justo encima de una franja que dice «Practicó poco». Solo
+   lo que una frase necesita: nada de números de tareas ajenas. */
+export function situacionParaPlantillas(d: Record<string, any>, frecuencia: Frecuencia) {
+  const periodo = PERIODOS[frecuencia] ?? PERIODOS.semanal;
+  const estado = comoVa(d, frecuencia);
+  const c = (d.comparacion ?? null) as Record<string, any> | null;
+  const plan = (d.plan ?? null) as Record<string, any> | null;
+  const areas = plan && Array.isArray(plan.areas) ? plan.areas as Array<Record<string, any>> : [];
+  const area = areas.length ? String(areas[0].titulo || "").replace(/^Semana \d+ · /, "").replace(/^[^\p{L}]+/u, "").trim() : "";
+  return {
+    clave: estado.clave,
+    titulo: estado.titulo,
+    nombre: String(d.alumno || "").split(" ")[0] || "",
+    dias: Number(d.dias_activos) || 0,
+    dias_periodo: periodo.dias,
+    ejercicios: c ? Number(c.esta) || 0 : null,
+    ejercicios_antes: c ? Number(c.anterior) || 0 : null,
+    area: area || null,
+  };
+}
+
+/* Unas palabras de su profe: lo único del correo, junto con la nota del
+   plan, que escribió una persona. Va pegado debajo del veredicto. Lo llena
+   public.mensajes_casa_de(): los mensajes escritos dentro del periodo que cubre
+   este informe, así cada encargado lo recibe una vez. Sin mensajes no sale. */
+function bloqueMensajes(d: Record<string, any>) {
+  const lista = Array.isArray(d.mensajes) ? d.mensajes as Array<Record<string, any>> : [];
+  const validos = lista.filter((m) => m && typeof m.texto === "string" && m.texto.trim());
+  if (!validos.length) return "";
+  return `
+    <div style="margin:0 0 20px;padding:14px 16px;background:#fffbeb;border-left:4px solid #f0b429;border-radius:8px">
+      <div style="font-size:11px;font-weight:700;color:#a85a0d;letter-spacing:.04em;text-transform:uppercase">Unas palabras de su profe</div>
+      ${validos.map((m) => `
+      <div style="font-size:14px;color:#243b53;margin-top:8px;line-height:1.5;white-space:pre-line">${escapar(m.texto.trim())}</div>
+      <div style="font-size:12px;color:#55708a;margin-top:2px">${m.autor ? "— " + escapar(m.autor) : ""}${m.fecha ? (m.autor ? ", " : "") + fechaCorta(m.fecha) : ""}</div>`).join("")}
+    </div>`;
 }
 
 /* La foto de perfil del alumno, al lado de su nombre. Solo se aceptan dos
@@ -532,6 +573,8 @@ export function informeHtml(
       <div style="font-size:15px;font-weight:700;color:#102a43">${escapar(estado.titulo)}</div>
       <div style="font-size:14px;color:#243b53;margin-top:4px;line-height:1.5">${escapar(estado.texto)}</div>
     </div>
+
+    ${bloqueMensajes(d)}
 
     ${bloquePlan}
 

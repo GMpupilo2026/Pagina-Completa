@@ -32,7 +32,7 @@
 // dominio verificado del sitio.
 
 import { createClient } from "npm:@supabase/supabase-js@2";
-import { informeHtml, invitarPracticarHtml, PERIODOS, type Frecuencia } from "./informe-html.ts";
+import { informeHtml, invitarPracticarHtml, PERIODOS, situacionParaPlantillas, type Frecuencia } from "./informe-html.ts";
 import { contactoDeConsultas } from "./contacto-academia.ts";
 import { remitenteDe, type Remitente } from "./remitente-academia.ts";
 import { cabeceraCorreo, firmaDe } from "./marca-correo.ts";
@@ -251,6 +251,23 @@ Deno.serve(async (req) => {
     } catch (err) {
       return json({ error: "No se pudo armar el informe de ese alumno" }, 403);
     }
+  }
+
+  // Cómo viene el alumno, para las frases sugeridas del mensaje a la casa
+  // (js/plantillas-casa.js). Con la misma regla que pinta la franja del
+  // correo, y con el cliente de quien llama: sin ser su profe, no hay nada.
+  if (accion === "situacion") {
+    const studentId = typeof body.student_id === "string" ? body.student_id : "";
+    const frecuencia = (typeof body.frecuencia === "string" ? body.frecuencia : "semanal") as Frecuencia;
+    if (!studentId) return json({ error: "student_id es requerido" }, 400);
+    if (!PERIODOS[frecuencia]) return json({ error: "Frecuencia inválida" }, 400);
+    const { data, error } = await comoQuienLlama.rpc("informe_de_alumno", {
+      p_alumno: studentId,
+      p_desde: desdeDe(frecuencia).toISOString(),
+      p_hasta: new Date().toISOString(),
+    });
+    if (error || !data) return json({ error: "No se pudo leer cómo viene ese alumno" }, 403);
+    return json({ ok: true, situacion: situacionParaPlantillas(data, frecuencia) });
   }
 
   if (accion === "enviar_ahora") {
