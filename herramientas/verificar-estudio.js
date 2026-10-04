@@ -366,14 +366,18 @@ function jugadasDe(F) {
     igual("en la pantalla no salen el sello del medallón ni el logo de esquina",
       await page.evaluate(() => [".logo-centro", "#logo-esquina"].map((s) => document.querySelector(s).checkVisibility())), [false, false]);
 
-    console.log("\n=== Las fichas en papel, solo para administración ===");
+    console.log("\n=== Las fichas en papel: administración y quien las compró ===");
     // El libro y las cartas viven en material/, que el worker solo le sirve a
-    // administración: el recuadro se le ofrece solo a quien administra, y no
-    // a quien administra mirando «como alumno» (Ver como).
+    // administración y a quien las compró: el recuadro se le ofrece a esas
+    // cuentas, y no a quien administra mirando «como alumno» (Ver como).
     {
-      const conPerfil = (esAdmin) => CON_SESION.replace("})();", `
+      // `compro`: lo que contesta puede_bajar('fichas-de-estudio', false), la
+      // misma pregunta que hace el worker. Se anota con qué se preguntó.
+      const conPerfil = (esAdmin, compro) => CON_SESION.replace("})();", `
   window.sb.from = () => { const q = { select: () => q, eq: () => q,
     maybeSingle: () => Promise.resolve({ data: { id: "u-ana", role: "profesor", is_admin: ${esAdmin}, es_supervisor: false }, error: null }) }; return q; };
+  window.__preguntas = [];
+  window.sb.rpc = (f, args) => { window.__preguntas.push([f, args]); return Promise.resolve({ data: f === "puede_bajar" ? ${!!compro} : null, error: null }); };
 })();`);
       const verRecuadro = async (cliente, modo) => {
         const d = await abrir(browser, "/entreno/estudio.html", cliente);
@@ -385,7 +389,8 @@ function jugadasDe(F) {
         await d.page.waitForTimeout(400);
         const r = await d.page.evaluate(() => {
           const caja = document.getElementById("papel-admin");
-          return { visible: caja.checkVisibility(), enlaces: [...caja.querySelectorAll("a[href]")].map((a) => a.getAttribute("href")) };
+          return { visible: caja.checkVisibility(), enlaces: [...caja.querySelectorAll("a[href]")].map((a) => a.getAttribute("href")),
+                   quien: document.getElementById("papel-quien").textContent, preguntas: window.__preguntas };
         });
         await d.ctx.close();
         return r;
@@ -394,7 +399,13 @@ function jugadasDe(F) {
       igual("quien administra ve el recuadro para bajar el libro y las cartas", admin.visible, "true");
       igual("los dos enlaces llevan a archivos que existen",
         admin.enlaces.map((h) => fs.existsSync(path.join(__dirname, "..", "entreno", h))), [true, true]);
-      igual("una cuenta que no administra no lo ve", (await verRecuadro(conPerfil(false))).visible, "false");
+      igual("dice que es solo de administración", admin.quien, "Solo para administración.");
+      igual("una cuenta que no administra ni lo compró no lo ve", (await verRecuadro(conPerfil(false, false))).visible, "false");
+      const compra = await verRecuadro(conPerfil(false, true));
+      igual("quien lo compró en la tienda sí lo ve", compra.visible, "true");
+      igual("y se le dice por qué", /compraste/i.test(compra.quien), "true");
+      igual("se pregunta lo mismo que el worker: puede_bajar con la carpeta y sin que baste el acceso",
+        compra.preguntas.filter(([f]) => f === "puede_bajar"), [["puede_bajar", { p_producto: "fichas-de-estudio", p_basta_acceso: false }]]);
       igual("quien administra mirando «como alumno» tampoco", (await verRecuadro(conPerfil(true), "alumno")).visible, "false");
     }
 

@@ -201,6 +201,18 @@ window.TiendaCatalogo = (function () {
 
     /* ---- Los libros y las guías ---- */
     {
+      id: "fichas-de-estudio",
+      categoria: "libro",
+      emoji: "🗂️",
+      titulo: "Las fichas de estudio en papel",
+      nivel: "Alumnos de todos los niveles",
+      gancho: "Cada idea del ajedrez en una página, y en una carta para llevar en el bolsillo.",
+      resumen: "Las fichas de Estudio de la Academia —aperturas, defensas, táctica y conceptos— en dos formatos: un libro en hoja carta, una ficha por página con su mapa de ideas, su tablero y su índice; y las mismas fichas como cartas de 63 × 88 mm, nueve por hoja, listas para imprimir a doble cara y recortar.",
+      archivos: ["material/fichas-de-estudio/fichas-de-estudio-libro.pdf", "material/fichas-de-estudio/fichas-de-estudio-cartas.pdf"],
+      // Lo comprueba verificar-fichas-pdf.py contra el banco y los dos PDF.
+      piezas: { fichas: 56, paginas: 63, cartas: 56 },
+    },
+    {
       id: "libro-de-diagnostico",
       categoria: "libro",
       emoji: "📕",
@@ -285,7 +297,7 @@ window.TiendaCatalogo = (function () {
       titulo: "Aperturas y técnica de finales",
       promesa: "Guías claras y prácticas para cada etapa",
       detalle: "Las primeras diez jugadas y las últimas diez, que son las dos que deciden la partida.",
-      productos: ["aperturas-y-defensas", "finales-practicos", "el-mapa-de-los-finales", "estrategia-en-el-final"],
+      productos: ["aperturas-y-defensas", "finales-practicos", "el-mapa-de-los-finales", "estrategia-en-el-final", "fichas-de-estudio"],
     },
     {
       numero: 4,
@@ -378,6 +390,14 @@ window.TiendaCatalogo = (function () {
   function piezasDe(p) {
     return Object.values(p.piezas || {}).reduce((a, b) => a + b, 0);
   }
+  /* Cuántos ARCHIVOS entrega un material. En un curso las piezas son archivos
+     (cada cuadernillo, hoja y presentación es uno); en un libro no: sus
+     piezas son preguntas, páginas o fichas, y el libro es uno o dos PDF. El
+     pie de cada módulo sumaba piezasDe() y decía «463 archivos» con las
+     páginas del libro contadas como archivos. */
+  function archivosDe(p) {
+    return p.carpeta ? piezasDe(p) : (p.archivos || []).length;
+  }
   function totalArchivos() {
     return PRODUCTOS.filter((p) => p.categoria === "curso").reduce((a, p) => a + piezasDe(p), 0);
   }
@@ -397,6 +417,6 @@ window.TiendaCatalogo = (function () {
     PRECIO, MONEDA, DESCUENTO_PACK,
     PRODUCTOS, MODULOS, BONOS,
     producto, porCategoria,
-    precioSuelto, precioPack, ahorroPack, moneda, piezasDe, totalArchivos, vistaDe,
+    precioSuelto, precioPack, ahorroPack, moneda, piezasDe, archivosDe, totalArchivos, vistaDe,
   };
 })();

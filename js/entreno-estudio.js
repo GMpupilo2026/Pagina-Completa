@@ -350,26 +350,41 @@ async function unlock(){
   const pedida = new URLSearchParams(window.location.search).get('ficha');
   const F = pedida ? FICHAS.find((x) => x.id === pedida) : null;
   if(F) abrirFicha(F); else mostrarLista();
-  mostrarPapelSiAdministra();
+  mostrarPapelSiPuedeBajarlo();
 }
 
 /* El libro y las cartas para recortar (material/fichas-de-estudio/) los baja
-   solo administración: el worker se los niega a cualquier otra cuenta, así que
-   ofrecérselos sería un enlace que da «se compra aparte». Como todo filtro de
-   pantalla, esto decide qué se PINTA; el candado es el del worker. Respeta
-   «Ver como»: quien administra mirando como alumno o como profesor no lo ve,
-   porque ellos no lo ven (ModoVista.perfilVisto le apaga is_admin). Se espera
-   al DOMContentLoaded porque js/modo-vista.js llega con defer, después que
-   este archivo. */
-async function mostrarPapelSiAdministra(){
+   quien administra y quien los compró en la tienda: el worker se los niega a
+   cualquier otra cuenta, así que ofrecérselos sería un enlace que da «se
+   compra aparte». Como todo filtro de pantalla, esto decide qué se PINTA; el
+   candado es el del worker, que hace la misma pregunta: puede_bajar() con el
+   nombre de la carpeta y sin que baste el acceso a la Academia.
+   Respeta «Ver como»: quien administra mirando como alumno o como profesor no
+   lo ve, porque ellos no lo ven sin comprarlo (ModoVista.perfilVisto le apaga
+   is_admin; a quien administra puede_bajar() siempre le dice que sí, por eso
+   no se le pregunta). Se espera al DOMContentLoaded porque js/modo-vista.js
+   llega con defer, después que este archivo. */
+const PRODUCTO_PAPEL = 'fichas-de-estudio';
+async function mostrarPapelSiPuedeBajarlo(){
   try {
     if(document.readyState === 'loading') await new Promise((r) => document.addEventListener('DOMContentLoaded', r, { once: true }));
     const { data: ses } = await sb.auth.getSession();
     const uid = ses && ses.session && ses.session.user && ses.session.user.id;
     if(!uid) return;
     const { data } = await sb.from('profiles').select('id, role, is_admin, es_supervisor').eq('id', uid).maybeSingle();
-    const visto = data && window.ModoVista ? ModoVista.perfilVisto(data) : data;
-    if(!visto || visto.is_admin !== true) return;
+    if(!data) return;
+    let quien = null;
+    if(data.is_admin === true){
+      const visto = window.ModoVista ? ModoVista.perfilVisto(data) : data;
+      if(visto && visto.is_admin === true) quien = 'admin';
+    } else {
+      const { data: puede, error } = await sb.rpc('puede_bajar', { p_producto: PRODUCTO_PAPEL, p_basta_acceso: false });
+      if(!error && puede === true) quien = 'compra';
+    }
+    if(!quien) return;
+    document.getElementById('papel-quien').textContent = quien === 'admin'
+      ? 'Solo para administración.'
+      : 'Los compraste en la tienda: aquí los bajas cuando quieras.';
     document.getElementById('papel-admin').hidden = false;
   } catch (e) { /* si no se puede saber, no se muestra */ }
 }
