@@ -1429,3 +1429,169 @@ semana. Gana quien resuelve más y, si empatan, quien tardó menos.
   insert) y el reto jugado (acierto, un solo intento, sin pistas y la recarga
   que no da otro intento).
 
+## Cuatro juegos que no están en otras plataformas
+
+Se pidieron juegos de ajedrez originales, que no estuvieran ya en Lichess,
+Chess.com y compañía. Se hicieron cuatro: Volcanes, Misiones secretas,
+Relevo en silencio y La partida perdida. Las ideas que ya existen se
+descartaron antes de empezar: «mano y cerebro» (Hand and Brain), el tablero
+cilíndrico, las piezas fantasma y el solitario de capturas. La migración es
+`20261004050608_juegos_volcanes_misiones_relevo`. **Al tocar cualquiera de
+los cuatro, correr `node herramientas/verificar-todo.js juegos-nuevos
+misiones-secretas partida-perdida`.** Antes de darlos por buenos se rompió a
+propósito cada cosa que miden (la misión que no se cobra, el rótulo del
+volcán, el rey expuesto, una posición del banco) y saltaron.
+
+### Volcanes
+
+Una modalidad más de `variante.html` (`variant = 'volcanes'`, en
+`game_rooms`): es ajedrez normal en la columna `fen`, así que el reloj del
+trigger sigue leyendo el turno del segundo campo y todo lo de la sala
+(«Estoy listo», la bandera, la escucha que no pierde jugadas) sirve igual.
+El motor es `Variantes.Volcanes` (`js/variantes-engines.js`), hijo de
+`Ciegas`:
+
+- **Cada 6 medias jugadas hace erupción una casilla y la pieza que esté ahí
+  se pierde.** La primera erupción es al llegar a la jugada 10 y se anuncia
+  4 medias jugadas antes, así que cada uno tiene dos jugadas para
+  quitarse. Cuántas van se lee del FEN (número de jugada y turno), no de la
+  planilla.
+- Las casillas salen de una lista de 16, sorteada al crear la partida
+  (`estadoInicial()` → `variant_state.volcanes`), de las filas 3 a 6. **Los
+  dos jugadores pueden leer la lista en la consola**, y está bien así: un
+  volcán se anuncia igual, para los dos. Lo único que da es saber antes el
+  que sigue, cosa que también se puede calcular con la misma regla.
+- **Si en el volcán está un rey, pierde su bando.** Y si la erupción deja
+  atacado al rey de quien acaba de mover (le saca la pieza que lo tapaba),
+  ese rey queda indefenso: también pierde. Sin esta regla, chess.js quedaba
+  en una posición donde el bando que mueve puede «capturar» al rey. Si la
+  erupción deja en jaque al que mueve, es un jaque normal.
+- **Al quemarse una torre o un rey se borra ese enroque** (`_arreglar()`),
+  y también la captura al paso si se quemó el peón. `remove()` de chess.js
+  no toca esos campos, y chess.js dejaba enrocar con una torre que ya no
+  estaba.
+- Las tablas se arman a mano, como en Vampiro: `in_draw()` vuelve a jugar la
+  planilla desde la salida y no sabe nada de las piezas quemadas.
+- El tablero marca el volcán anunciado (`engine.marca()`): un recuadro rojo
+  con «🌋 N» escrito (N es cuántas jugadas faltan) y el rótulo de la casilla
+  dice «volcán: hace erupción dentro de N jugadas». Arriba del tablero
+  (`#volcan-info`) se dice cuál es y qué se llevó la última erupción. El
+  color nunca va solo. El sello es blanco sobre `red-700`: 6,5:1.
+- La planilla anota la erupción con la jugada: «d6 🌋e4×P».
+
+### Misiones secretas
+
+Otra modalidad de `variante.html` (`variant = 'misiones'`), ajedrez normal
+con un objetivo escondido:
+
+- **La misión no va en `variant_state`**, que el rival puede leer: va en
+  `misiones_secretas`, y su RLS solo le muestra a cada jugador la suya
+  mientras se juega. La ven también quien le da clase y quien administra.
+  Al terminar, ven las dos todos los que ven la partida (la subconsulta a
+  `game_rooms` pasa por la RLS de esa tabla). La tabla no tiene política de
+  escritura.
+- **La reparte la base**: `repartir_misiones(sala)`, la primera vez que
+  entra uno de los dos. Sortea dos misiones distintas, las guarda y devuelve
+  la de quien llama. Lleva un candado (`pg_advisory_xact_lock`): si los dos
+  entran a la vez, sin el candado cada uno sortearía su par y podrían
+  quedar con la misma.
+- El catálogo es `js/misiones-secretas.js`. Los `id` tienen que ser los
+  mismos de la lista de `repartir_misiones()`, y `verificar-misiones-secretas.js`
+  lo comprueba: una misión que la base reparte y la página no conoce se ve
+  como «—» y no se puede ganar nunca, sin dar ningún error. También revisa
+  que ninguna esté cumplida en la posición de salida. Las filas se cuentan
+  desde cada bando: la sexta de las negras es la tercera del tablero.
+- **Se gana si, al llegar tu turno, tu misión está cumplida.** Es decir, la
+  cumpliste con tu jugada y el rival no la deshizo con la suya. Cobra la
+  pantalla de quien la cumplió (`revisarMision()`), igual que el mate lo
+  escribe quien lo da: pone la partida terminada, con
+  `variant_state.fin = { motivo: "mision", … }`. Solo lo hace sobre la
+  posición guardada (`.eq("fen")`) y con la partida en juego, para no pisar
+  una bandera ni una rendición.
+- Cuando tu jugada deja tu misión cumplida, se escribe
+  `variant_state.amenaza[tu color] = true`. El rival ve «⚠️ Tu rival tiene
+  su misión cumplida: si no la deshaces con esta jugada, gana», sin saber
+  cuál es. Esa marca es lo único de la misión que sale de la base.
+- El misterio es de la base, no de la pantalla: un alumno con la consola
+  abierta no lee la misión del rival. Quien hace trampa con la consola
+  puede cobrar una misión que no cumplió, igual que hoy puede escribir un
+  mate falso: la legalidad de las jugadas de todas las partidas la mira
+  chess.js en el navegador.
+
+### Relevo en silencio
+
+Ajedrez por equipos (de 1 a 4 por bando, al menos 3 en total). Cada
+integrante hace una jugada cuando le toca, en el orden de su equipo, y no se
+habla: solo hay tres señales (⚔️ Ataca, 🛡️ Defiende, ⚠️ Cuidado). Lo arma
+quien da clase o quien administra en `juegos.html` («🤫 Relevo en silencio»)
+y se juega en `relevo.html?relevo=<id>`. **No usa `game_rooms`**: su RLS
+deja escribir solo a `white_id` y `black_id`, y acá juega un equipo. Tampoco
+lleva reloj: con varios por bando, el reloj de un equipo no sería de nadie.
+
+- **Tablas:** `relevos` (la posición y la planilla), `relevo_jugadores`
+  (quién, de qué color y en qué orden; con `on delete cascade` a
+  `profiles`) y `relevo_senales`. **Ninguna tiene política de escritura**:
+  todo pasa por funciones que validan. Las tres llevan
+  `verificacion_en_dos_pasos`, y `relevos` y `relevo_senales` están en
+  Realtime.
+- **A quién le toca lo decide la base.** `relevo_jugar(relevo, fen_antes,
+  fen, san, resultado)` rechaza a quien no le toca
+  (`interno.relevo_a_quien_le_toca()`: el integrante que sigue del color
+  que mueve, contando las jugadas de su equipo) y rechaza la jugada que no
+  sale de la posición guardada («La partida ya iba más adelante»). La
+  legalidad la mira chess.js en la pantalla, como en las demás partidas.
+- **Las señales del equipo rival no llegan a la pantalla** mientras se
+  juega: la política de `relevo_senales` las esconde a quien juega en el
+  otro color. Quien da clase y quien administra ven las dos, y al terminar
+  las ven todos. Es una por persona y por jugada, con un índice único (no
+  es un chat).
+- **Ver un relevo** es `interno.mis_relevos()`: los relevos donde juega
+  quien llama, los que armó, los de sus alumnos (`alumnos_de()`) y, si
+  administra, todos. Arma el conjunto una vez y lo usan las tres políticas.
+  Además evita la recursión que tendrían `relevos` y `relevo_jugadores` si
+  cada política preguntara por la otra tabla.
+- `relevo_terminar()`: un integrante rinde a su equipo; quien lo armó (o
+  da clase o administra) lo termina con un resultado («si se acabó el
+  tiempo de la clase»).
+- La sala se escucha con `SalaJuego.suscribir(…, { tabla: "relevos" })`, la
+  misma escucha que vuelve a leer la sala al reconectarse. Por eso
+  `verificar-realtime-publicadas.js` reconoce ahora la `tabla:` que se le
+  pasa a `SalaJuego.suscribir`. Las señales tienen su propio canal, filtrado
+  a `relevo_id`.
+- Se comprobó en SQL impersonando a cada rol, dentro de una transacción que
+  se deshizo: un integrante del otro color no ve las señales (0) y su
+  compañero sí (1); nadie juega fuera de turno; una posición vieja se
+  rechaza; dos señales en la misma jugada no entran; la rendición da el
+  resultado correcto. Lo mismo para las misiones: cada jugador ve 1, el
+  profe 2 y, al terminar, el rival 2.
+
+### La partida perdida
+
+Un juego solitario en `partida-perdida.html` (en las tarjetas de Juegos).
+Se muestra una posición y cuántas medias jugadas se hicieron para llegar a
+ella desde la de salida, y hay que reconstruir la partida. En los libros de
+problemas esto se llama «partida justificativa», pero casi ninguna
+plataforma lo ofrece como juego con niveles.
+
+- **Ninguna posición se escribió a mano.** `herramientas/partida-perdida-generar.js`
+  tiene solo las partidas, y la posición la calcula chess.js jugándolas.
+  Genera `js/partida-perdida-banco.js`, que no se edita a mano.
+  `verificar-partida-perdida.js` comprueba que el banco esté al día con el
+  generador y que cada solución llegue en las jugadas que dice.
+- **Cuenta cualquier camino** que deje cada pieza en su casilla en ese
+  número exacto de jugadas, no solo el del banco: se compara la colocación
+  (la primera parte del FEN). Los enroques posibles no se comparan, para
+  que no haya que adivinar algo que no se ve. Cuando no coincide, se dice
+  qué casillas cambian.
+- Los retos tienen trampas a propósito: perder un tiempo («Ida y vuelta»),
+  volver a la posición de salida («Como si nada»), un peón que no es el que
+  parece, una coronación en caballo. Van de 2 a 12 jugadas.
+- Se juega con los dos colores en el mismo tablero
+  (`VarianteBoard` con `ambosColores`) y se puede escribir cada jugada.
+  También hay Deshacer, la pista y «Ver una solución».
+- Lo resuelto queda en `partida_perdida_resueltos` (localStorage) y viaja
+  con la cuenta por `js/progreso-usuario.js`. **No cuenta tiempo ni
+  ejercicios en los informes**, a propósito: `training_progress` tiene un
+  `check` con la lista de actividades, y el nombre de cada sección de tiempo
+  vive también en la Edge Function `informes-encargados`. Sumarla pide una
+  migración y desplegar esa función: queda para cuando se quiera.

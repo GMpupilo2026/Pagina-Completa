@@ -29,12 +29,14 @@ window.JuegoAviso = (function () {
   "use strict";
 
   const PAGINA = { crazyhouse: "crazyhouse.html", estandar: "estandar.html", cartas: "cartas.html", duelo: "duelo.html", niebla: "niebla.html",
-                   abrazos: "variante.html", camaleon: "variante.html", ciegas: "variante.html", vampiro: "variante.html" };
+                   abrazos: "variante.html", camaleon: "variante.html", ciegas: "variante.html", vampiro: "variante.html",
+                   volcanes: "variante.html", misiones: "variante.html" };
   const ETIQUETA = { crazyhouse: "♞ Crazyhouse", estandar: "♟️ Ajedrez estándar", cartas: "🃏 Ajedrez de Cartas", duelo: "⚡ Duelo Simultáneo", niebla: "🌫️ Niebla de Guerra",
-                     abrazos: "🤗 Ajedrez de abrazos", camaleon: "🦎 Camaleón", ciegas: "🙈 A ciegas", vampiro: "🧛 Ajedrez Vampiro" };
+                     abrazos: "🤗 Ajedrez de abrazos", camaleon: "🦎 Camaleón", ciegas: "🙈 A ciegas", vampiro: "🧛 Ajedrez Vampiro",
+                     volcanes: "🌋 Volcanes", misiones: "🎯 Misiones secretas" };
   const SEATS = ["red", "blue", "yellow", "green"];
   // Las variantes cuya partida empieza cuando los dos marcan "listo".
-  const CON_LISTO = { crazyhouse: 1, estandar: 1, cartas: 1, niebla: 1, abrazos: 1, camaleon: 1, ciegas: 1, vampiro: 1 };
+  const CON_LISTO = { crazyhouse: 1, estandar: 1, cartas: 1, niebla: 1, abrazos: 1, camaleon: 1, ciegas: 1, vampiro: 1, volcanes: 1, misiones: 1 };
   const ESPERA_MS = 4000;
   let sb = null, userId = null, yaAvisado = false, iniciado = false;
 

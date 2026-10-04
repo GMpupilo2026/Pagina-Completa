@@ -73,6 +73,7 @@ tabla  interno.envios_publicos  rls=true
 tabla  interno.lector_planilla_uso  rls=true
 tabla  interno.salud_base  rls=true
 tabla  justificaciones_ausencia  rls=true
+tabla  misiones_secretas  rls=true
 tabla  notas_alumno  rls=true
 tabla  pagos  rls=true
 tabla  paquete_alumnos  rls=true
@@ -111,6 +112,9 @@ tabla  quiniela_pronosticos  rls=true
 tabla  recibo_contadores  rls=true
 tabla  recibos  rls=true
 tabla  recordatorios_informe  rls=true
+tabla  relevo_jugadores  rls=true
+tabla  relevo_senales  rls=true
+tabla  relevos  rls=true
 tabla  respuestas_en_curso  rls=true
 tabla  retos_ejercicios  rls=true
 tabla  retos_ejercicios_respuestas  rls=true
@@ -725,6 +729,11 @@ columna  justificaciones_ausencia.revisada_en  timestamp with time zone
 columna  justificaciones_ausencia.revisada_por  uuid
 columna  justificaciones_ausencia.revisada_por_nombre  text
 columna  justificaciones_ausencia.student_id  uuid
+columna  misiones_secretas.color  text
+columna  misiones_secretas.created_at  timestamp with time zone
+columna  misiones_secretas.jugador_id  uuid
+columna  misiones_secretas.mision  text
+columna  misiones_secretas.sala_id  uuid
 columna  notas_alumno.alumno_id  uuid
 columna  notas_alumno.class_session_id  uuid
 columna  notas_alumno.compartida  boolean
@@ -1016,6 +1025,26 @@ columna  recordatorios_informe.enviado_at  timestamp with time zone
 columna  recordatorios_informe.periodo  date
 columna  recordatorios_informe.persona_id  uuid
 columna  recordatorios_informe.tipo  text
+columna  relevo_jugadores.color  text
+columna  relevo_jugadores.jugador_id  uuid
+columna  relevo_jugadores.orden  smallint
+columna  relevo_jugadores.relevo_id  uuid
+columna  relevo_senales.color  text
+columna  relevo_senales.created_at  timestamp with time zone
+columna  relevo_senales.de_id  uuid
+columna  relevo_senales.id  bigint
+columna  relevo_senales.ply  integer
+columna  relevo_senales.relevo_id  uuid
+columna  relevo_senales.senal  text
+columna  relevos.created_at  timestamp with time zone
+columna  relevos.created_by  uuid
+columna  relevos.fen  text
+columna  relevos.id  uuid
+columna  relevos.motivo  text
+columna  relevos.moves  jsonb
+columna  relevos.result  text
+columna  relevos.status  text
+columna  relevos.updated_at  timestamp with time zone
 columna  respuestas_en_curso.fen  text
 columna  respuestas_en_curso.moves  jsonb
 columna  respuestas_en_curso.question_id  uuid
@@ -1296,6 +1325,7 @@ funcion  correo_cobro(p_alumno uuid)  invoker  anon=true  auth=true
 funcion  correo_de_contacto(p_alumno uuid)  invoker  anon=true  auth=true
 funcion  correos_de_supervision(p_alumno uuid)  definer  anon=false  auth=false
 funcion  crear_examen(p_alumnos uuid[], p_titulo text, p_instrucciones text, p_minutos integer, p_vence timestamp with time zone, p_items jsonb, p_salidas_permitidas integer, p_disponible_desde timestamp with time zone)  invoker  anon=true  auth=true
+funcion  crear_relevo(p_blancas uuid[], p_negras uuid[])  definer  anon=false  auth=true
 funcion  crear_tarea(p_alumnos uuid[], p_titulo text, p_instrucciones text, p_vence timestamp with time zone, p_items jsonb, p_disponible_desde timestamp with time zone)  invoker  anon=true  auth=true
 funcion  cuestionario_de_tarea(p_item uuid)  definer  anon=false  auth=true
 funcion  dejar_volver_a_la_clase(p_clase uuid, p_alumno uuid)  definer  anon=false  auth=true
@@ -1407,6 +1437,7 @@ funcion  interno.jsonb_o_nulo(p text)  invoker  anon=false  auth=true
 funcion  interno.lecciones_hechas(p_alumno uuid, p_curso text)  definer  anon=false  auth=false
 funcion  interno.me_sacaron_de(p_clase uuid)  definer  anon=false  auth=true
 funcion  interno.me_sacaron_de_la_pregunta(p_pregunta uuid)  definer  anon=false  auth=true
+funcion  interno.mis_relevos()  definer  anon=false  auth=true
 funcion  interno.mis_retos_ejercicios()  definer  anon=false  auth=true
 funcion  interno.monto_rango(p_base date, p_meses integer, p_precio numeric, p_desde date, p_hasta date)  invoker  anon=false  auth=false
 funcion  interno.nombre_libre_de_subgrupo(p_profesor uuid, p_base text, p_excepto uuid)  definer  anon=false  auth=false
@@ -1421,6 +1452,7 @@ funcion  interno.puestos_de_la_clase(p_clase uuid)  definer  anon=false  auth=tr
 funcion  interno.puestos_de_tandas(p_clase uuid)  definer  anon=false  auth=true
 funcion  interno.puntos_de_una_respuesta(p_dificultad integer, p_intentos integer, p_puesto integer)  invoker  anon=false  auth=true
 funcion  interno.purgar_auditoria()  definer  anon=false  auth=false
+funcion  interno.relevo_a_quien_le_toca(p_relevo uuid, p_fen text, p_jugadas integer)  definer  anon=false  auth=false
 funcion  interno.retos_ejercicios_abiertos_para_mi()  definer  anon=false  auth=true
 funcion  interno.retos_ejercicios_cuantas()  definer  anon=false  auth=true
 funcion  interno.retos_ejercicios_tope()  definer  anon=false  auth=false
@@ -1543,6 +1575,10 @@ funcion  registrar_cobro_y_abono(p_alumno uuid, p_concepto text, p_monto numeric
 funcion  registrar_compra(p_profile uuid, p_producto text, p_registrar boolean)  definer  anon=false  auth=true
 funcion  registrar_pago(p_pagos jsonb, p_metodo text, p_referencia text, p_nota text, p_fecha date)  definer  anon=false  auth=true
 funcion  registrar_salida_examen(p_examen uuid, p_segundos integer)  definer  anon=false  auth=true
+funcion  relevo_jugar(p_relevo uuid, p_fen_antes text, p_fen text, p_san text, p_resultado text)  definer  anon=false  auth=true
+funcion  relevo_senal(p_relevo uuid, p_senal text)  definer  anon=false  auth=true
+funcion  relevo_terminar(p_relevo uuid, p_resultado text)  definer  anon=false  auth=true
+funcion  repartir_misiones(p_sala uuid)  definer  anon=false  auth=true
 funcion  reporte_actividades(p_desde date, p_hasta date)  invoker  anon=false  auth=true
 funcion  responder_encuesta_curso(p_slug text, p_respuestas jsonb, p_version_privacidad text)  definer  anon=true  auth=true
 funcion  responder_encuesta_profesor(p_profesor uuid, p_explica integer, p_aprende integer, p_claridad integer, p_creatividad integer, p_resuelve integer, p_contento integer, p_seguir text, p_comentario text)  definer  anon=false  auth=true
@@ -1767,6 +1803,8 @@ politica  insignias  insignias_ver  SELECT
 politica  insignias  verificacion_en_dos_pasos  ALL  restrictiva
 politica  insignias_tipos  insignias_tipos_ver  SELECT
 politica  justificaciones_ausencia  justificaciones_select  SELECT
+politica  misiones_secretas  misiones_secretas_lee  SELECT
+politica  misiones_secretas  verificacion_en_dos_pasos  ALL  restrictiva
 politica  notas_alumno  notas_alumno_delete  DELETE
 politica  notas_alumno  notas_alumno_insert  INSERT
 politica  notas_alumno  notas_alumno_select_alumno  SELECT
@@ -1876,6 +1914,12 @@ politica  quiniela_partidas  quiniela_partidas_admin  SELECT
 politica  quiniela_pronosticos  quiniela_pronosticos_admin  SELECT
 politica  recibos  recibos_coordinacion  SELECT
 politica  recibos  recibos_lee_alumno  SELECT
+politica  relevo_jugadores  relevo_jugadores_lee  SELECT
+politica  relevo_jugadores  verificacion_en_dos_pasos  ALL  restrictiva
+politica  relevo_senales  relevo_senales_lee  SELECT
+politica  relevo_senales  verificacion_en_dos_pasos  ALL  restrictiva
+politica  relevos  relevos_lee  SELECT
+politica  relevos  verificacion_en_dos_pasos  ALL  restrictiva
 politica  respuestas_en_curso  respuestas_en_curso_exige_acceso_ins  INSERT  restrictiva
 politica  respuestas_en_curso  respuestas_en_curso_exige_acceso_upd  UPDATE  restrictiva
 politica  respuestas_en_curso  respuestas_en_curso_insert  INSERT
@@ -2252,6 +2296,8 @@ indice  justificaciones_ausencia  justificaciones_ausencia_pkey
 indice  justificaciones_ausencia  justificaciones_por_fecha
 indice  justificaciones_ausencia  justificaciones_revisada_por_fk
 indice  justificaciones_ausencia  justificaciones_una_por_dias
+indice  misiones_secretas  misiones_secretas_jugador
+indice  misiones_secretas  misiones_secretas_pkey
 indice  notas_alumno  notas_alumno_alumno_compartida_idx
 indice  notas_alumno  notas_alumno_class_session_id_fk
 indice  notas_alumno  notas_alumno_pkey
@@ -2345,6 +2391,14 @@ indice  recibos  recibos_por_alumno
 indice  recibos  recibos_por_fecha
 indice  recordatorios_informe  recordatorios_informe_persona_id_fk
 indice  recordatorios_informe  recordatorios_informe_pkey
+indice  relevo_jugadores  relevo_jugadores_jugador
+indice  relevo_jugadores  relevo_jugadores_pkey
+indice  relevo_jugadores  relevo_jugadores_relevo_id_color_orden_key
+indice  relevo_senales  relevo_senales_de
+indice  relevo_senales  relevo_senales_pkey
+indice  relevo_senales  relevo_senales_una_por_jugada
+indice  relevos  relevos_created_by
+indice  relevos  relevos_pkey
 indice  respuestas_en_curso  respuestas_en_curso_pkey
 indice  respuestas_en_curso  respuestas_en_curso_student_id_fk
 indice  retos_ejercicios  retos_ejercicios_pkey
@@ -2437,6 +2491,8 @@ realtime  practice_games
 realtime  practice_sessions
 realtime  question_answers
 realtime  questions
+realtime  relevo_senales
+realtime  relevos
 realtime  respuestas_en_curso
 realtime  saved_games
 realtime  tournament_pairings
@@ -2928,6 +2984,20 @@ grant  insignias_tipos  authenticated  SELECT
 grant  justificaciones_ausencia  authenticated  REFERENCES
 grant  justificaciones_ausencia  authenticated  SELECT
 grant  justificaciones_ausencia  authenticated  TRIGGER
+grant  misiones_secretas  anon  DELETE
+grant  misiones_secretas  anon  INSERT
+grant  misiones_secretas  anon  REFERENCES
+grant  misiones_secretas  anon  SELECT
+grant  misiones_secretas  anon  TRIGGER
+grant  misiones_secretas  anon  TRUNCATE
+grant  misiones_secretas  anon  UPDATE
+grant  misiones_secretas  authenticated  DELETE
+grant  misiones_secretas  authenticated  INSERT
+grant  misiones_secretas  authenticated  REFERENCES
+grant  misiones_secretas  authenticated  SELECT
+grant  misiones_secretas  authenticated  TRIGGER
+grant  misiones_secretas  authenticated  TRUNCATE
+grant  misiones_secretas  authenticated  UPDATE
 grant  notas_alumno  authenticated  DELETE
 grant  notas_alumno  authenticated  INSERT
 grant  notas_alumno  authenticated  REFERENCES
@@ -3178,6 +3248,48 @@ grant  recibos_vista  authenticated  SELECT
 grant  recibos_vista  authenticated  TRIGGER
 grant  recibos_vista  authenticated  TRUNCATE
 grant  recibos_vista  authenticated  UPDATE
+grant  relevo_jugadores  anon  DELETE
+grant  relevo_jugadores  anon  INSERT
+grant  relevo_jugadores  anon  REFERENCES
+grant  relevo_jugadores  anon  SELECT
+grant  relevo_jugadores  anon  TRIGGER
+grant  relevo_jugadores  anon  TRUNCATE
+grant  relevo_jugadores  anon  UPDATE
+grant  relevo_jugadores  authenticated  DELETE
+grant  relevo_jugadores  authenticated  INSERT
+grant  relevo_jugadores  authenticated  REFERENCES
+grant  relevo_jugadores  authenticated  SELECT
+grant  relevo_jugadores  authenticated  TRIGGER
+grant  relevo_jugadores  authenticated  TRUNCATE
+grant  relevo_jugadores  authenticated  UPDATE
+grant  relevo_senales  anon  DELETE
+grant  relevo_senales  anon  INSERT
+grant  relevo_senales  anon  REFERENCES
+grant  relevo_senales  anon  SELECT
+grant  relevo_senales  anon  TRIGGER
+grant  relevo_senales  anon  TRUNCATE
+grant  relevo_senales  anon  UPDATE
+grant  relevo_senales  authenticated  DELETE
+grant  relevo_senales  authenticated  INSERT
+grant  relevo_senales  authenticated  REFERENCES
+grant  relevo_senales  authenticated  SELECT
+grant  relevo_senales  authenticated  TRIGGER
+grant  relevo_senales  authenticated  TRUNCATE
+grant  relevo_senales  authenticated  UPDATE
+grant  relevos  anon  DELETE
+grant  relevos  anon  INSERT
+grant  relevos  anon  REFERENCES
+grant  relevos  anon  SELECT
+grant  relevos  anon  TRIGGER
+grant  relevos  anon  TRUNCATE
+grant  relevos  anon  UPDATE
+grant  relevos  authenticated  DELETE
+grant  relevos  authenticated  INSERT
+grant  relevos  authenticated  REFERENCES
+grant  relevos  authenticated  SELECT
+grant  relevos  authenticated  TRIGGER
+grant  relevos  authenticated  TRUNCATE
+grant  relevos  authenticated  UPDATE
 grant  respuestas_en_curso  authenticated  DELETE
 grant  respuestas_en_curso  authenticated  INSERT
 grant  respuestas_en_curso  authenticated  REFERENCES

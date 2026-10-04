@@ -10,6 +10,8 @@
  *   myColor           "w" | "b" (los espectadores miran con blancas abajo)
  *   interactive       si este usuario puede mover ahora
  *   hidePieces        Ciegas: no dibuja piezas (solo casillas y coordenadas)
+ *   ambosColores      mueve el bando al que le toca, sea cual sea (La partida
+ *                     perdida: una sola persona juega las dos partes)
  *   onMove(info)      { san, fen, gameOver, result, from, to }
  *   onPromotionNeeded(from, to, cb)  cb(pieza | null)
  */
@@ -39,6 +41,7 @@
       this.flipped = this.myColor === "b";
       this.interactive = !!opts.interactive;
       this.hidePieces = !!opts.hidePieces;
+      this.ambosColores = !!opts.ambosColores;
       this.onMove = opts.onMove || function () {};
       this.onPromotionNeeded = opts.onPromotionNeeded || null;
       this.selected = null;
@@ -51,7 +54,7 @@
     setInteractive(v) { this.interactive = !!v; this.render(); }
     setHidePieces(v) { this.hidePieces = !!v; this.render(); }
     setLastMove(m) { this.lastMove = m || null; this.render(); }
-    _canActNow() { return this.interactive && this.engine.turn() === this.myColor; }
+    _canActNow() { return this.interactive && (this.ambosColores || this.engine.turn() === this.myColor); }
 
     _onSquareClick(square) {
       if (!this._canActNow()) return;
@@ -70,7 +73,7 @@
         }
       }
       const p = this.engine.get(square);
-      if (p && p.color === this.myColor) { this.selected = square; this.render(); }
+      if (p && p.color === (this.ambosColores ? this.engine.turn() : this.myColor)) { this.selected = square; this.render(); }
     }
 
     _apply(from, to, promotion) {
@@ -97,7 +100,18 @@
         btn.className = cls;
         btn.setAttribute("data-square", square);
         const p = this.hidePieces ? null : this.engine.get(square);
-        btn.setAttribute("aria-label", "Casilla " + square + ": " + (this.hidePieces ? "oculta" : p ? p.label : "vacía"));
+        // Lo que el motor quiere escrito en la casilla (el volcán de Volcanes):
+        // se dibuja y también se dice, nunca solo con color.
+        const marca = !this.hidePieces && this.engine.marca ? this.engine.marca(square) : null;
+        btn.setAttribute("aria-label", "Casilla " + square + ": " + (this.hidePieces ? "oculta" : p ? p.label : "vacía") + (marca ? ", " + marca.texto : ""));
+        if (marca) {
+          const fondo = document.createElement("span"); fondo.setAttribute("aria-hidden", "true");
+          fondo.className = "absolute inset-0 ring-4 ring-inset ring-red-700 bg-red-600/25 pointer-events-none";
+          const sello = document.createElement("span"); sello.setAttribute("aria-hidden", "true");
+          sello.className = "absolute top-0 left-0 z-10 flex items-center gap-0.5 rounded-br-md bg-red-700 text-white text-[10px] sm:text-xs font-bold leading-none px-1 py-0.5 pointer-events-none";
+          sello.textContent = marca.emoji + (marca.cuenta ? " " + marca.cuenta : "");
+          btn.appendChild(fondo); btn.appendChild(sello);
+        }
         if (this.lastMove && (this.lastMove.from === square || this.lastMove.to === square) && !this.hidePieces) {
           const mark = document.createElement("span"); mark.setAttribute("aria-hidden", "true");
           mark.className = "absolute inset-0 bg-accent-400/30 pointer-events-none"; btn.appendChild(mark);

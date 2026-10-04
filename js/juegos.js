@@ -48,8 +48,28 @@
                 .order("created_at", { ascending: false })
                 .limit(10);
 
+            // Relevos en silencio donde juego (sus integrantes los ve la RLS).
+            const { data: misPuestos } = await sb.from("relevo_jugadores").select("relevo_id, color").eq("jugador_id", profile.id);
+            let misRelevos = [];
+            if (misPuestos && misPuestos.length) {
+                const { data: enJuego } = await sb.from("relevos").select("id")
+                    .in("id", misPuestos.map((p) => p.relevo_id)).eq("status", "playing")
+                    .order("created_at", { ascending: false }).limit(10);
+                misRelevos = (enJuego || []).map((r) => ({ id: r.id, color: misPuestos.find((p) => p.relevo_id === r.id).color }));
+            }
+
             const activeEl = document.getElementById("my-active-games");
             activeEl.innerHTML = "";
+            misRelevos.forEach((r) => {
+                const card = document.createElement("a");
+                card.href = "relevo.html?relevo=" + r.id;
+                card.className = "block bg-white dark:bg-brand-900 rounded-xl shadow-md p-4 hover:shadow-lg transition-shadow";
+                card.innerHTML =
+                    '<p class="text-xs text-accent-700 dark:text-accent-400 font-semibold uppercase mb-1">🤫 Relevo en silencio · en curso</p>' +
+                    '<h2 class="font-semibold text-brand-800 dark:text-white">Juegas en el equipo de ' + (r.color === "w" ? "blancas ⚪" : "negras ⚫") + '</h2>' +
+                    '<p class="text-xs text-brand-450 dark:text-brand-350 mt-1">Una jugada cada uno, sin hablar — toca para entrar →</p>';
+                activeEl.appendChild(card);
+            });
             const active = (myRooms || []).filter((r) => r.status === "playing").map((r) => Object.assign({ _table: "game_rooms" }, r));
             const active4p = (my4pGames || []).filter((r) => r.status === "playing").map((r) => Object.assign({ _table: "fourplayer_games" }, r));
             if (active.length || active4p.length) {
@@ -83,7 +103,7 @@
                         '<p class="text-xs text-brand-450 dark:text-brand-350 mt-1">Juegas con ' + SEAT_LABEL[mySeat] + ' — toca para continuar →</p>';
                     activeEl.appendChild(card);
                 });
-            } else if (!isTeacher) {
+            } else if (!isTeacher && !misRelevos.length) {
                 // Al profesor sin partidas propias no se le dice nada: lo suyo
                 // empieza en el panel de abajo. El aviso de "espera a que te
                 // asignen" es para el alumno y solo para él.
@@ -160,6 +180,27 @@
                 mio.appendChild(opt);
                 sel.appendChild(mio);
             });
+            // Relevo en silencio: una casilla por persona en cada equipo.
+            ["w", "b"].forEach((color) => {
+                const caja = document.getElementById("relevo-" + color);
+                caja.innerHTML = "";
+                allStudents.concat([{ id: profile.id, full_name: nombreVisible(profile) + " (yo)" }]).forEach((p) => {
+                    const etiqueta = document.createElement("label");
+                    etiqueta.className = "flex items-center gap-2 text-sm text-brand-700 dark:text-brand-200";
+                    const casilla = document.createElement("input");
+                    casilla.type = "checkbox";
+                    casilla.value = p.id;
+                    casilla.className = "accent-accent-500";
+                    casilla.addEventListener("change", () => {
+                        // Nadie juega en los dos equipos: al marcarlo en uno, se desmarca del otro.
+                        if (!casilla.checked) return;
+                        const otra = document.querySelector("#relevo-" + (color === "w" ? "b" : "w") + ' input[value="' + p.id + '"]');
+                        if (otra) otra.checked = false;
+                    });
+                    etiqueta.append(casilla, document.createTextNode(p.full_name || p.email));
+                    caja.appendChild(etiqueta);
+                });
+            });
             // Con dos alumnos o más, el caso de siempre: los dos primeros. Con uno
             // solo, el rival natural soy yo — antes quedaban las dos casillas en
             // el mismo alumno y el formulario se quejaba sin razón aparente.
@@ -173,8 +214,13 @@
         function updateVariantFieldsVisibility() {
             const variant = document.getElementById("variant-select").value;
             const is4p = variant === "4ffa" || variant === "4teams";
-            document.getElementById("fields-2p").classList.toggle("hidden", is4p);
+            const relevo = variant === "relevo";
+            document.getElementById("fields-2p").classList.toggle("hidden", is4p || relevo);
             document.getElementById("fields-4p").classList.toggle("hidden", !is4p);
+            document.getElementById("fields-relevo").classList.toggle("hidden", !relevo);
+            // El relevo se juega sin reloj: con varios jugadores por bando, el
+            // reloj de cada equipo no sería de nadie.
+            document.getElementById("fields-tiempo").classList.toggle("hidden", relevo);
             document.getElementById("fields-4p-hint").textContent = variant === "4teams"
                 ? "En Equipos, los que quedan frente a frente en el tablero son compañeros: 🔴 Rojo + 🟡 Amarillo vs. 🔵 Azul + 🟢 Verde."
                 : "Todos contra todos: el orden de turno es Rojo → Azul → Amarillo → Verde.";
@@ -186,6 +232,24 @@
             const msg = document.getElementById("create-room-msg");
             const fail = (text) => { msg.textContent = text; msg.className = "text-xs text-red-600 dark:text-red-400 min-h-[1em]"; };
             const variant = document.getElementById("variant-select").value;
+            if (variant === "relevo") {
+                const marcados = (color) => Array.from(document.querySelectorAll("#relevo-" + color + " input:checked")).map((c) => c.value);
+                const blancas = marcados("w"), negras = marcados("b");
+                if (!blancas.length || !negras.length) return fail("Cada equipo necesita al menos un jugador.");
+                if (blancas.length > 4 || negras.length > 4) return fail("Cada equipo lleva como mucho 4 jugadores.");
+                if (blancas.length + negras.length < 3) return fail("Un relevo necesita al menos 3 jugadores; para dos, arma una partida común.");
+                const { data: idRelevo, error } = await sb.rpc("crear_relevo", { p_blancas: blancas, p_negras: negras });
+                if (error) { console.error(error); return fail("No se pudo crear el relevo: " + error.message); }
+                msg.textContent = "¡Relevo creado! ";
+                const enlace = document.createElement("a");
+                enlace.href = "relevo.html?relevo=" + idRelevo;
+                enlace.className = "underline font-semibold";
+                enlace.textContent = "Ábrelo para mirarlo";
+                msg.append(enlace, ".");
+                msg.className = "text-xs text-green-700 dark:text-green-400 min-h-[1em]";
+                await renderRelevosProfe();
+                return;
+            }
             const timeControl = ritmoPartida.leer();
             if (timeControl.error) { fail(timeControl.error); return; }
 
@@ -233,11 +297,35 @@
             await renderMisPartidas();
         });
 
+        // Los relevos que creó quien mira la página y siguen en juego.
+        async function renderRelevosProfe() {
+            const caja = document.getElementById("relevos-profe");
+            const { data } = await sb.from("relevos").select("id, created_at, moves")
+                .eq("created_by", profile.id).eq("status", "playing")
+                .order("created_at", { ascending: false }).limit(20);
+            caja.innerHTML = "";
+            if (!data || !data.length) return;
+            const h = document.createElement("h2");
+            h.className = "font-serif text-lg font-bold text-brand-800 dark:text-white";
+            h.textContent = "Relevos en curso";
+            caja.appendChild(h);
+            data.forEach((r) => {
+                const a = document.createElement("a");
+                a.href = "relevo.html?relevo=" + r.id;
+                a.className = "block bg-white dark:bg-brand-900 rounded-xl shadow-md p-4 hover:shadow-lg transition-shadow";
+                const n = (r.moves || []).length;
+                a.innerHTML = '<p class="font-semibold text-brand-800 dark:text-white"><span aria-hidden="true">🤫</span> Relevo en silencio</p>' +
+                    '<p class="text-xs text-brand-450 dark:text-brand-350 mt-1">' + (n ? n + (n === 1 ? " jugada" : " jugadas") : "Todavía sin jugadas") + ' — toca para mirarlo →</p>';
+                caja.appendChild(a);
+            });
+        }
+
         async function renderTeacherView() {
             document.getElementById("teacher-view").classList.remove("hidden");
             populateTimeControlSelect();
             await loadPlayersIntoSelects();
             updateVariantFieldsVisibility();
+            await renderRelevosProfe();
             // Los topes bajan en uno porque el profesor cuenta como jugador: con
             // un solo alumno ya hay partida, y con tres ya se puede armar una de
             // cuatro.

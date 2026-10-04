@@ -21,7 +21,10 @@
             { id: "abrazos", emoji: "🤗", label: "Ajedrez de abrazos", desc: "Nadie captura: al llegar a la casilla de una pieza rival, las dos se abrazan y forman una unidad tuya que mueve como cualquiera de sus piezas. Gana quien abraza al rey rival. Reacciones en cadena garantizadas." },
             { id: "camaleon", emoji: "🦎", label: "Camaleón", desc: "Cada pieza mueve como la pieza que empieza en su columna: en a y h como torre, en b y g como caballo, en c y f como alfil, en d como dama y en e como rey. Los peones, como peones. Jaque mate de siempre." },
             { id: "vampiro", emoji: "🧛", label: "Ajedrez Vampiro", desc: "Ajedrez de siempre, pero al capturar una pieza rival te transformas en ella (conservando tu color): un caballo que captura una dama se vuelve dama. El rey nunca se transforma. Jaque mate de siempre." },
+            { id: "volcanes", emoji: "🌋", label: "Volcanes", desc: "Ajedrez de siempre, pero cada 6 jugadas un volcán hace erupción en una casilla y se lleva la pieza que esté ahí. Se anuncia 4 jugadas antes: quítate a tiempo… o lleva al rival hacia ahí. Un rey en el volcán pierde." },
+            { id: "misiones", emoji: "🎯", label: "Misiones secretas", desc: "Cada uno recibe una misión que el otro no ve (una torre en séptima, dejar al rival sin caballos…). Ganas por mate o si al llegar tu turno tu misión sigue cumplida. Adivina el plan del rival antes de que sea tarde." },
             { id: "ciegas", emoji: "🙈", label: "A ciegas", desc: "Ajedrez normal sin ver las piezas: escribes tu jugada en un panel, la del rival aparece 10 segundos y desaparece. Cinco oportunidades de ver la planilla 20 segundos." },
+            { id: "relevo", emoji: "🤫", label: "Relevo en silencio", equipos: true, desc: "Ajedrez por equipos: cada integrante hace una jugada cuando le toca, sin hablar. Solo hay tres señales para el equipo —ataca, defiende y cuidado— y el otro equipo no las ve. Hay que adivinar el plan del compañero." },
             { id: "4ffa", emoji: "♟️", label: "4 jugadores · Todos contra todos", desc: "4 personas, un solo tablero en cruz. Suma puntos por capturas y jaque mate — no hace falta ser el último en pie para ganar." },
             { id: "4teams", emoji: "🤝", label: "4 jugadores · Equipos", desc: "2 parejas (los que quedan frente a frente en el tablero): gana el primer equipo que da jaque mate a un rival. No se puede capturar al compañero." },
             { id: "kingofthehill", emoji: "⛰️", label: "Rey de la colina", desc: "Próximamente", disabled: true },
@@ -53,6 +56,11 @@
                 fila.fen = Variantes.inicio(variant);
                 if (variant === "ciegas") fila.variant_state = { w_unlocks: 5, b_unlocks: 5 };
             }
+            // Volcanes sortea acá sus casillas (las ven los dos: se anuncian igual).
+            // Misiones secretas no guarda nada acá: la misión la reparte la base,
+            // escondida (repartir_misiones()).
+            if (variant === "volcanes" || variant === "misiones") fila.fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+            if (variant === "volcanes" && window.Variantes) fila.variant_state = { volcanes: Variantes.Volcanes.sorteo() };
             return fila;
         }
 
@@ -63,7 +71,7 @@
             if (variant === "cartas") return "cartas.html";
             if (variant === "duelo") return "duelo.html";
             if (variant === "niebla") return "niebla.html";
-            if (variant === "abrazos" || variant === "camaleon" || variant === "ciegas" || variant === "vampiro") return "variante.html";
+            if (variant === "abrazos" || variant === "camaleon" || variant === "ciegas" || variant === "vampiro" || variant === "volcanes" || variant === "misiones") return "variante.html";
             return "crazyhouse.html";
         }
 

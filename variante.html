@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="img/favicon.svg">
     <title>Partida — Ajedrez Integral</title>
-    <meta name="description" content="Partida de una variante de Juegos: Ajedrez de abrazos, Camaleón, A ciegas o Ajedrez Vampiro.">
+    <meta name="description" content="Partida de una variante de Juegos: Ajedrez de abrazos, Camaleón, A ciegas, Ajedrez Vampiro, Volcanes o Misiones secretas.">
     <meta name="robots" content="noindex">
     <!-- Tailwind compilado: lo genera herramientas/css-construir.js.
          Antes venía del CDN, que baja ~400 KB de JavaScript y compila el CSS
@@ -48,6 +48,18 @@
 
             <div id="status-banner" class="mb-4 rounded-xl bg-brand-100 dark:bg-brand-900 px-4 py-2.5 text-sm text-brand-600 dark:text-brand-300" aria-live="polite"></div>
 
+            <!-- Volcanes: dónde y cuándo hace erupción el próximo volcán, escrito
+                 (el tablero lo marca, pero el color nunca va solo). -->
+            <p id="volcan-info" hidden class="mb-4 rounded-xl border-2 border-red-700 bg-white dark:bg-brand-900 px-4 py-2.5 text-sm font-semibold text-brand-800 dark:text-white" aria-live="polite"></p>
+
+            <!-- Misiones secretas: la misión propia (la del rival no llega a esta
+                 pantalla: la esconde la base) y, al terminar, las dos. -->
+            <div id="mision-panel" hidden class="mb-4 rounded-xl border-2 border-accent-500 bg-white dark:bg-brand-900 px-4 py-3">
+                <h2 class="font-serif font-bold text-sm text-brand-800 dark:text-white"><span aria-hidden="true">🎯</span> <span id="mision-titulo">Tu misión secreta</span></h2>
+                <p id="mision-texto" class="text-sm text-brand-600 dark:text-brand-300 mt-1"></p>
+                <p id="mision-estado" class="text-sm font-semibold text-brand-800 dark:text-white mt-1 empty:hidden" aria-live="polite"></p>
+            </div>
+
             <div class="flex items-center justify-center gap-2 mb-1">
                 <p id="top-player" class="text-center text-sm font-semibold text-brand-600 dark:text-brand-300"></p>
                 <span id="top-clock" class="hidden font-mono text-sm font-bold px-2 py-0.5 rounded-md bg-brand-100 dark:bg-brand-800 text-brand-700 dark:text-brand-200"></span>
@@ -74,6 +86,15 @@
                 </form>
                 <p id="ciegas-msg" class="text-xs text-brand-500 dark:text-brand-300 mt-2 min-h-[1em]" aria-live="polite"></p>
             </div>
+            <!-- Volcanes y Misiones: la jugada también se puede escribir. -->
+            <form id="jugada-form" hidden class="mt-3 mb-2 flex flex-wrap gap-2 items-end">
+                <div class="flex-1 min-w-[10rem]">
+                    <label for="jugada-input" class="block text-xs font-medium text-brand-500 dark:text-brand-300 mb-1">O escribe tu jugada (Cf3, e4 o g1f3)</label>
+                    <input id="jugada-input" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="12" class="w-full font-mono px-3 py-2 rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 text-sm focus:outline-none focus:ring-2 focus:ring-accent-500">
+                </div>
+                <button type="submit" id="jugada-jugar" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2 rounded-lg text-sm transition-colors">Jugar</button>
+                <p id="jugada-msg" class="w-full text-xs text-brand-500 dark:text-brand-300 min-h-[1em]" role="status"></p>
+            </form>
             <div class="flex items-center justify-center gap-2 mb-2">
                 <p id="bottom-player" class="text-center text-sm font-semibold text-brand-600 dark:text-brand-300"></p>
                 <span id="bottom-clock" class="hidden font-mono text-sm font-bold px-2 py-0.5 rounded-md bg-brand-100 dark:bg-brand-800 text-brand-700 dark:text-brand-200"></span>
@@ -116,6 +137,7 @@
     <script src="js/supabase-client.js"></script>
     <script src="js/reloj-servidor.js"></script>
     <script src="js/variantes-engines.js"></script>
+    <script src="js/misiones-secretas.js"></script>
     <script src="js/board-drag.js"></script>
     <script src="js/chess-piece-svg.js"></script>
     <script src="js/variantes-board.js"></script>

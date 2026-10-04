@@ -215,7 +215,7 @@
                jugada: retar a Crazyhouse lo mandaría a un tablero que no puede
                usar. */
             const ciego = document.documentElement.classList.contains("modo-ciego");
-            VARIANTS.filter((v) => !v.disabled && v.id.indexOf("4") !== 0 && (!ciego || MODALIDADES_ADAPTADAS.includes(v.id))).forEach((v) => {
+            VARIANTS.filter((v) => !v.disabled && !v.equipos && v.id.indexOf("4") !== 0 && (!ciego || MODALIDADES_ADAPTADAS.includes(v.id))).forEach((v) => {
                 const o = document.createElement("option");
                 o.value = v.id; o.textContent = v.emoji + " " + v.label;
                 mod.appendChild(o);

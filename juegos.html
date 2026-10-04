@@ -107,6 +107,16 @@
                 </div>
             </a>
 
+            <a href="partida-perdida.html" class="block bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 mb-4 hover:shadow-lg transition-shadow">
+                <div class="flex items-center gap-4">
+                    <span class="text-4xl" aria-hidden="true">🔍</span>
+                    <div>
+                        <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white">La partida perdida</h2>
+                        <p class="text-sm text-brand-500 dark:text-brand-300">Solo quedó la posición final y cuántas jugadas se hicieron. Reconstruye la partida: retos de 2 a 12 jugadas, con trampas de las buenas.</p>
+                    </div>
+                </div>
+            </a>
+
             <a href="ilumina-tablero.html" class="block bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 mb-8 hover:shadow-lg transition-shadow">
                 <div class="flex items-center gap-4">
                     <span class="text-4xl" aria-hidden="true">💡</span>
@@ -160,6 +170,9 @@
                                 <option value="camaleon">🦎 Camaleón</option>
                                 <option value="vampiro">🧛 Ajedrez Vampiro</option>
                                 <option value="ciegas">🙈 A ciegas</option>
+                                <option value="volcanes">🌋 Volcanes</option>
+                                <option value="misiones">🎯 Misiones secretas</option>
+                                <option value="relevo">🤫 Relevo en silencio (equipos)</option>
                                 <option value="4ffa">♟️ 4 jugadores · Todos contra todos</option>
                                 <option value="4teams">🤝 4 jugadores · Equipos</option>
                             </select>
@@ -174,6 +187,22 @@
                             <div>
                                 <label for="black-select" class="block text-xs font-medium text-brand-500 dark:text-brand-300 mb-1">⚫ Juega con negras</label>
                                 <select id="black-select" class="w-full text-sm bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-2 text-brand-700 dark:text-brand-200 focus:outline-none focus:ring-2 focus:ring-accent-500"></select>
+                            </div>
+                        </div>
+
+                        <!-- Relevo en silencio: dos equipos de 1 a 4. El orden de la lista
+                             es el orden en que juegan. -->
+                        <div id="fields-relevo" class="hidden">
+                            <p class="text-xs text-brand-450 dark:text-brand-350 mb-2">Marca quién juega en cada equipo (de 1 a 4 por equipo, al menos 3 en total). Juegan en el orden de la lista, una jugada cada uno, sin hablar.</p>
+                            <div class="grid sm:grid-cols-2 gap-3">
+                                <fieldset class="border border-brand-200 dark:border-brand-700 rounded-lg p-3">
+                                    <legend class="text-xs font-medium text-brand-500 dark:text-brand-300 px-1">⚪ Equipo de blancas</legend>
+                                    <div id="relevo-w" class="space-y-1 max-h-56 overflow-y-auto"></div>
+                                </fieldset>
+                                <fieldset class="border border-brand-200 dark:border-brand-700 rounded-lg p-3">
+                                    <legend class="text-xs font-medium text-brand-500 dark:text-brand-300 px-1">⚫ Equipo de negras</legend>
+                                    <div id="relevo-b" class="space-y-1 max-h-56 overflow-y-auto"></div>
+                                </fieldset>
                             </div>
                         </div>
 
@@ -200,7 +229,7 @@
                             </div>
                         </div>
 
-                        <div>
+                        <div id="fields-tiempo">
                             <label for="time-control-select" class="block text-xs font-medium text-brand-500 dark:text-brand-300 mb-1">⏱️ Tiempo</label>
                             <select id="time-control-select" class="w-full text-sm bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-2 text-brand-700 dark:text-brand-200 focus:outline-none focus:ring-2 focus:ring-accent-500"></select>
                         </div>
@@ -209,6 +238,9 @@
                     </form>
                 </div>
 
+                <!-- Los relevos que armé, en curso: el profe entra a mirarlos (y a
+                     terminarlos si se acaba la clase). -->
+                <div id="relevos-profe" class="space-y-3 mb-6"></div>
             </div>
         </div>
     </div>

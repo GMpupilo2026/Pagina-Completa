@@ -27,6 +27,9 @@
  *                        transformaciones — pisaría el tablero real); sí
  *                        detecta jaque mate, ahogado, material insuficiente y
  *                        la regla de 50 jugadas.
+ *   Variantes.Volcanes — "Volcanes": ajedrez normal (chess.js) en el que cada 6
+ *                        medias jugadas hace erupción una casilla anunciada y
+ *                        se pierde la pieza que esté ahí (ver la clase).
  *
  * Todos comparten la misma interfaz, que es la que usa js/variantes-board.js:
  *   load(texto) / serialize()      posición completa como texto (va en game_rooms.fen)
@@ -400,7 +403,136 @@
     }
   }
 
-  window.Variantes = { Abrazos, Camaleon, Ciegas, Vampiro, LETRA, NOMBRE, COLUMNA_TIPO,
-    crear(id) { return id === "abrazos" ? new Abrazos() : id === "camaleon" ? new Camaleon() : id === "vampiro" ? new Vampiro() : new Ciegas(); },
+  /* ======================= VOLCANES (chess.js) =======================
+     Ajedrez normal, pero cada VOLCAN_CADA medias jugadas (la primera, al
+     llegar a VOLCAN_PRIMERA) hace erupción una casilla y la pieza que esté ahí
+     se pierde. La casilla se anuncia VOLCAN_AVISO medias jugadas antes (dos
+     jugadas de cada uno), así que siempre hay tiempo de quitarse.
+       · Si en el volcán está un REY, ese bando pierde.
+       · Si la erupción deja atacado al rey de quien acaba de mover (le quita
+         la pieza que lo tapaba), ese rey queda indefenso: pierde. Es como
+         dejar el rey en jaque, y estaba anunciado.
+     Las casillas salen de una lista sorteada al crear la partida
+     (variant_state.volcanes, ver estadoInicial en js/juegos-comun.js); la
+     erupción número k usa volcanes[k % largo]. Cuántas medias jugadas van se
+     lee del FEN (número de jugada y turno), así que no hace falta la planilla. */
+  const VOLCAN_PRIMERA = 10, VOLCAN_CADA = 6, VOLCAN_AVISO = 4;
+  class Volcanes extends Ciegas {
+    constructor() { super(); this.volcanes = []; }
+    static get PRIMERA() { return VOLCAN_PRIMERA; }
+    static get CADA() { return VOLCAN_CADA; }
+    static get AVISO() { return VOLCAN_AVISO; }
+    // 16 casillas distintas de las filas 3 a 6 (el medio del tablero), al azar.
+    static sorteo(azar) {
+      const rnd = azar || Math.random, todas = [];
+      for (let r = 3; r <= 6; r++) for (const f of FILES) todas.push(f + r);
+      for (let i = todas.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); const t = todas[i]; todas[i] = todas[j]; todas[j] = t; }
+      return todas.slice(0, 16);
+    }
+    static medias(fen) {
+      const p = String(fen || "").split(" ");
+      return ((parseInt(p[5], 10) || 1) - 1) * 2 + (p[1] === "b" ? 1 : 0);
+    }
+    configurar(estado) {
+      const lista = estado && Array.isArray(estado.volcanes) ? estado.volcanes : [];
+      this.volcanes = lista.filter((s) => /^[a-h][1-8]$/.test(s));
+    }
+    jugadas() { return Volcanes.medias(this.game.fen()); }
+    // La casilla que hace erupción al llegar a `n` medias jugadas, o null.
+    erupcionEn(n) {
+      if (!this.volcanes.length || n < VOLCAN_PRIMERA || (n - VOLCAN_PRIMERA) % VOLCAN_CADA) return null;
+      return this.volcanes[((n - VOLCAN_PRIMERA) / VOLCAN_CADA) % this.volcanes.length];
+    }
+    // El próximo volcán: { casilla, faltan (medias jugadas), anunciado }.
+    proximo() {
+      if (!this.volcanes.length) return null;
+      const n = this.jugadas();
+      const k = n < VOLCAN_PRIMERA ? 0 : Math.floor((n - VOLCAN_PRIMERA) / VOLCAN_CADA) + 1;
+      const en = VOLCAN_PRIMERA + k * VOLCAN_CADA;
+      return { casilla: this.erupcionEn(en), faltan: en - n, anunciado: en - n <= VOLCAN_AVISO };
+    }
+    // La última erupción, si fue en esta jugada o la anterior (para marcarla).
+    ultima() {
+      const n = this.jugadas();
+      if (n < VOLCAN_PRIMERA) return null;
+      const en = VOLCAN_PRIMERA + Math.floor((n - VOLCAN_PRIMERA) / VOLCAN_CADA) * VOLCAN_CADA;
+      return n - en <= 1 ? { casilla: this.erupcionEn(en), hace: n - en } : null;
+    }
+    // Lo que el tablero escribe en una casilla (js/variantes-board.js).
+    marca(s) {
+      const p = this.proximo();
+      if (p && p.anunciado && p.casilla === s) {
+        return { emoji: "🌋", cuenta: String(p.faltan),
+          texto: "volcán: hace erupción " + (p.faltan === 1 ? "después de la próxima jugada" : "dentro de " + p.faltan + " jugadas") };
+      }
+      const u = this.ultima();
+      if (u && u.casilla === s) return { emoji: "💥", texto: "aquí acaba de hacer erupción un volcán" };
+      return null;
+    }
+    // Después de quitar una pieza: los enroques y la captura al paso que ya no valen.
+    _arreglar() {
+      const p = this.game.fen().split(" "), g = this.game;
+      const es = (s, t, c) => { const x = g.get(s); return !!x && x.type === t && x.color === c; };
+      let enroque = "";
+      if (p[2].indexOf("K") !== -1 && es("e1", "k", "w") && es("h1", "r", "w")) enroque += "K";
+      if (p[2].indexOf("Q") !== -1 && es("e1", "k", "w") && es("a1", "r", "w")) enroque += "Q";
+      if (p[2].indexOf("k") !== -1 && es("e8", "k", "b") && es("h8", "r", "b")) enroque += "k";
+      if (p[2].indexOf("q") !== -1 && es("e8", "k", "b") && es("a8", "r", "b")) enroque += "q";
+      p[2] = enroque || "-";
+      if (p[3] !== "-") {
+        const peon = p[3][0] + (p[3][1] === "3" ? "4" : "5");
+        if (!es(peon, "p", p[3][1] === "3" ? "w" : "b")) p[3] = "-";
+      }
+      g.load(p.join(" "));
+    }
+    // ¿El rey de `color` está atacado, aunque no le toque mover?
+    _reyAtacado(color) {
+      const p = this.game.fen().split(" ");
+      p[1] = color; p[3] = "-";
+      const g = new Chess();
+      return g.load(p.join(" ")) ? g.in_check() : false;
+    }
+    move(m) {
+      const mv = this.game.move({ from: m.from, to: m.to, promotion: m.promotion || "q" });
+      if (!mv) return null;
+      let san = Ciegas.sanEs(mv.san), gameOver = false, result = null, erupcion = null;
+      const casilla = this.erupcionEn(this.jugadas());
+      if (casilla) {
+        const pieza = this.game.get(casilla);
+        erupcion = { casilla, pieza: pieza || null, rey: false };
+        san = san.replace(/[+#]$/, "") + " 🌋" + casilla + (pieza ? "×" + (LETRA[pieza.type] || "P") : "");
+        if (pieza) {
+          this.game.remove(casilla);
+          if (pieza.type === "k") {
+            gameOver = true; result = pieza.color === "w" ? "black" : "white"; erupcion.rey = "volcan";
+          } else {
+            this._arreglar();
+            if (this._reyAtacado(mv.color)) { gameOver = true; result = mv.color === "w" ? "black" : "white"; erupcion.rey = "expuesto"; }
+          }
+        }
+      }
+      if (!gameOver) {
+        /* Las tablas se arman a mano, como en Vampiro: in_draw() reproduce la
+           planilla desde el arranque y no sabe de las piezas que quemó un volcán. */
+        const mate = this.game.in_checkmate();
+        const semi = parseInt(this.game.fen().split(" ")[4], 10) || 0;
+        if (casilla) { if (mate) san += "#"; else if (this.game.in_check()) san += "+"; }
+        if (mate) { gameOver = true; result = this.game.turn() === "w" ? "black" : "white"; }
+        else if (this.game.in_stalemate() || this.game.insufficient_material() || semi >= 100) { gameOver = true; result = "draw"; }
+      }
+      return { san, gameOver, result, captura: !!mv.captured, erupcion };
+    }
+    // Lo escrito se entiende igual que en Ciegas, pero la jugada pasa por move().
+    moveText(texto) {
+      const g = new Chess(this.game.fen());
+      const mv = Ciegas.prototype.moveText.call({ game: g, _terminar: (x) => x }, texto);
+      return mv ? this.move({ from: mv.from, to: mv.to, promotion: mv.promotion }) : null;
+    }
+  }
+
+  window.Variantes = { Abrazos, Camaleon, Ciegas, Vampiro, Volcanes, LETRA, NOMBRE, COLUMNA_TIPO,
+    // Misiones secretas es ajedrez normal (Ciegas, sin esconder nada): la
+    // misión la mira js/misiones-secretas.js.
+    crear(id) { return id === "abrazos" ? new Abrazos() : id === "camaleon" ? new Camaleon() : id === "vampiro" ? new Vampiro() : id === "volcanes" ? new Volcanes() : new Ciegas(); },
     inicio(id) { return id === "abrazos" ? Abrazos.START : id === "camaleon" ? Camaleon.START : id === "vampiro" ? Vampiro.START : Ciegas.START; } };
 })();

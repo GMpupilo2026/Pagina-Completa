@@ -12,7 +12,7 @@
         const ROOM_ID = new URLSearchParams(window.location.search).get("room");
         const playerNames = {}; // id -> nombre para mostrar
 
-        // Las tres modalidades que atiende esta página (las reglas también están en juegos.html).
+        // Las modalidades que atiende esta página (su descripción corta está en js/juegos-comun.js).
         const MODALIDADES = {
             abrazos: {
                 titulo: "🤗 Ajedrez de abrazos",
@@ -52,8 +52,155 @@
                     "Anotación: Cxb5=A (el caballo capturó en b5 y se transformó en alfil); cxb8=T+ (el peón coronó capturando una torre y dio jaque).",
                 ],
             },
+            volcanes: {
+                titulo: "🌋 Volcanes",
+                reglas: [
+                    "Ajedrez de toda la vida, con un peligro más: <strong>los volcanes</strong>. Cada 6 jugadas (contando las de los dos), uno hace erupción en una casilla del medio del tablero, y <strong>la pieza que esté ahí se pierde</strong>, sea de quien sea.",
+                    "El volcán se <strong>anuncia 4 jugadas antes</strong>: la casilla se marca en rojo con 🌋 y el número de jugadas que faltan, y arriba del tablero se dice cuál es. Hay tiempo de quitarse… o de llevar al rival hacia ahí.",
+                    "El primero hace erupción al llegar a la jugada 10 (la quinta de cada uno), y después uno cada 6.",
+                    "Si en el volcán está <strong>un rey, ese bando pierde</strong>. Y si la erupción le quita a tu rey la pieza que lo tapaba de un ataque justo después de tu jugada, tu rey queda indefenso y también pierdes: es como dejarlo en jaque.",
+                    "Por lo demás, jaque mate de siempre. En la planilla, «Cf3 🌋d5×A» quiere decir que después de Cf3 hizo erupción el volcán de d5 y se llevó un alfil.",
+                ],
+            },
+            misiones: {
+                titulo: "🎯 Misiones secretas",
+                reglas: [
+                    "Ajedrez de toda la vida, pero cada uno recibe una <strong>misión secreta</strong> que el rival no ve: por ejemplo, «pon una torre en tu séptima fila» o «deja al rival sin caballos».",
+                    "Ganas por jaque mate, como siempre, <strong>o si al llegar tu turno tu misión está cumplida</strong>: la cumpliste con tu jugada y tu rival no pudo (o no supo) deshacerla.",
+                    "Cuando tu rival tiene su misión cumplida, te avisamos: <strong>esa jugada es tu única oportunidad</strong> de deshacerla. No sabes cuál es, así que hay que adivinar su plan por lo que viene haciendo.",
+                    "Las filas se cuentan desde cada bando: la «sexta fila» de las negras es la tercera del tablero.",
+                    "Al terminar la partida se destapan las dos misiones.",
+                ],
+            },
         };
         let mod = null;
+
+        // ---- Volcanes ----
+        const NOMBRE_LETRA = { R: "el rey", D: "una dama", T: "una torre", A: "un alfil", C: "un caballo", P: "un peón" };
+        function pintarVolcan() {
+            const el = document.getElementById("volcan-info");
+            if (!room || room.variant !== "volcanes") { el.hidden = true; return; }
+            el.hidden = false;
+            const ultima = (room.moves || [])[(room.moves || []).length - 1] || "";
+            const m = ultima.match(/🌋([a-h][1-8])(?:×([RDTACP]))?/);
+            let texto = m ? "💥 Hizo erupción el volcán de " + m[1] + (m[2] ? " y se llevó " + NOMBRE_LETRA[m[2]] + ". " : ", pero la casilla estaba vacía. ") : "";
+            if (room.status !== "playing") { el.textContent = texto.trim() || "🌋 La partida terminó."; return; }
+            const p = engine.proximo();
+            if (p && p.anunciado) {
+                texto += "🌋 Próximo volcán: " + p.casilla + ". Hace erupción " + (p.faltan === 1 ? "después de la próxima jugada" : "dentro de " + p.faltan + " jugadas") + ": la pieza que esté ahí se pierde.";
+            } else if (p) {
+                const en = p.faltan - Variantes.Volcanes.AVISO;
+                texto += "🌋 El próximo volcán se anuncia " + (en === 1 ? "después de la próxima jugada." : "dentro de " + en + " jugadas.");
+            }
+            el.textContent = texto;
+        }
+
+        // ---- Misiones secretas ----
+        /* misionMia: la de quien juega (la reparte y la devuelve la base).
+           misiones: las dos, cuando la base deja verlas (al terminar, o a quien
+           da clase). La del rival nunca pasa por esta pantalla mientras se
+           juega: la esconde la RLS de misiones_secretas. */
+        let misionMia = null, misiones = null, reclamando = false;
+        async function cargarMisiones() {
+            if (!room || room.variant !== "misiones") return;
+            if (myColor && room.status === "playing" && !misionMia) {
+                const { data, error } = await sb.rpc("repartir_misiones", { p_sala: ROOM_ID });
+                if (error) console.error(error);
+                else misionMia = data;
+            }
+            if (!myColor || room.status !== "playing") {
+                const { data, error } = await sb.from("misiones_secretas").select("color, mision").eq("sala_id", ROOM_ID);
+                if (error) console.error(error);
+                misiones = {};
+                (data || []).forEach((r) => { misiones[r.color] = r.mision; });
+                if (myColor && misiones[myColor]) misionMia = misiones[myColor];
+            }
+            pintarMision();
+            revisarMision();
+        }
+        function amenazaDe(color) { return !!(room.variant_state && room.variant_state.amenaza && room.variant_state.amenaza[color]); }
+        function pintarMision() {
+            const panel = document.getElementById("mision-panel");
+            if (!room || room.variant !== "misiones") { panel.hidden = true; return; }
+            panel.hidden = false;
+            const titulo = document.getElementById("mision-titulo"), texto = document.getElementById("mision-texto"), estado = document.getElementById("mision-estado");
+            const nombreMision = (id) => { const m = MisionesSecretas.buscar(id); return m ? m.titulo + ": " + m.texto.charAt(0).toLowerCase() + m.texto.slice(1) : "—"; };
+            if (room.status !== "playing" || !myColor) {
+                const hay = misiones && (misiones.w || misiones.b);
+                titulo.textContent = room.status === "playing" ? "Las misiones de esta partida" : "Las misiones, destapadas";
+                texto.textContent = hay
+                    ? "Blancas — " + nombreMision(misiones.w) + " Negras — " + nombreMision(misiones.b)
+                    : (room.status === "playing" ? "Las misiones son secretas: se destapan cuando termina la partida." : "Esta partida no llegó a repartir misiones.");
+                estado.textContent = "";
+                return;
+            }
+            const m = MisionesSecretas.buscar(misionMia);
+            titulo.textContent = m ? "Tu misión secreta: " + m.titulo : "Tu misión secreta";
+            texto.textContent = m ? m.texto : "Repartiendo las misiones…";
+            const rival = myColor === "w" ? "b" : "w";
+            const miTurno = engine.turn() === myColor;
+            if (m && !miTurno && MisionesSecretas.cumple(misionMia, engine.game, myColor)) {
+                estado.textContent = "✅ ¡Tu misión está cumplida! Si sigue así cuando vuelva tu turno, ganas.";
+            } else if (miTurno && amenazaDe(rival) && bothReady(room)) {
+                estado.textContent = "⚠️ Tu rival tiene su misión cumplida: si no la deshaces con esta jugada, gana.";
+            } else {
+                estado.textContent = "";
+            }
+        }
+        /* Al llegar el turno propio con la misión cumplida, se gana. Solo sobre
+           la posición guardada (`fen`) y con la partida en juego: si mientras
+           tanto pasó otra cosa (una bandera, una rendición), no la pisa. */
+        async function revisarMision() {
+            if (!room || room.variant !== "misiones" || !myColor || !misionMia || reclamando || jugadaEnVuelo) return;
+            if (room.status !== "playing" || !bothReady(room) || engine.turn() !== myColor) return;
+            if (!MisionesSecretas.cumple(misionMia, engine.game, myColor)) return;
+            reclamando = true;
+            const estado = Object.assign({}, room.variant_state || {}, { fin: { motivo: "mision", color: myColor, mision: misionMia } });
+            const { data, error } = await sb.from("game_rooms")
+                .update({ status: "finished", result: myColor === "w" ? "white" : "black", variant_state: estado, updated_at: new Date().toISOString() })
+                .eq("id", ROOM_ID).eq("status", "playing").eq("fen", room.fen).select("*");
+            reclamando = false;
+            if (error || !data || !data.length) {
+                if (error) console.error(error);
+                await releerSala(error ? "No se pudo cobrar la misión: " + error.message : null);
+                return;
+            }
+            room = SalaJuego.laMasNueva(room, data[0]);
+            board.setInteractive(false);
+            updateStatusText();
+            await cargarMisiones();
+        }
+
+        // ---- La jugada escrita (Volcanes y Misiones) ----
+        function conJugadaEscrita() { return !!room && (room.variant === "volcanes" || room.variant === "misiones") && !!myColor; }
+        function pintarJugadaEscrita() {
+            const form = document.getElementById("jugada-form");
+            form.hidden = !conJugadaEscrita() || room.status !== "playing";
+            const miTurno = room.status === "playing" && bothReady(room) && engine.turn() === myColor;
+            document.getElementById("jugada-input").disabled = !miTurno;
+            document.getElementById("jugada-jugar").disabled = !miTurno;
+        }
+        document.getElementById("jugada-form").addEventListener("submit", (ev) => {
+            ev.preventDefault();
+            if (!conJugadaEscrita() || room.status !== "playing" || !bothReady(room) || engine.turn() !== myColor) return;
+            const input = document.getElementById("jugada-input"), msg = document.getElementById("jugada-msg");
+            const texto = input.value.trim();
+            if (!texto) return;
+            const dicho = texto.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/\s+/g, " ");
+            const r = engine.moveText(dicho === "enroque corto" ? "O-O" : dicho === "enroque largo" ? "O-O-O" : texto);
+            if (!r) { msg.textContent = window.ComandosTablero ? ComandosTablero.noSePudoJugar(texto) : "“" + texto + "” no es una jugada legal en esta posición."; input.select(); return; }
+            input.value = "";
+            msg.textContent = "Jugaste " + r.san + ".";
+            board.render();
+            handleLocalMove(Object.assign({ fen: engine.serialize() }, r));
+        });
+
+        // Lo que cambia en las dos con cada versión de la sala.
+        function pintarExtras() {
+            pintarVolcan();
+            pintarMision();
+            pintarJugadaEscrita();
+        }
 
         // ---- A ciegas ----
         let ciegasTimer = null, ciegasUnlockTimer = null, ciegasUnlocked = false;
@@ -164,7 +311,17 @@
             readyBtn.classList.toggle("hidden", !myColor || room.status !== "playing" || myReady);
 
             if (room.status === "finished") {
-                const resultText = room.result === "draw" ? "Tablas." : (room.result === "white" ? nameFor(room.white_id) + " ganó con blancas." : nameFor(room.black_id) + " ganó con negras.");
+                let resultText = room.result === "draw" ? "Tablas." : (room.result === "white" ? nameFor(room.white_id) + " ganó con blancas." : nameFor(room.black_id) + " ganó con negras.");
+                // Cómo se ganó, cuando no fue de la forma de siempre.
+                const fin = room.variant_state && room.variant_state.fin;
+                if (fin && fin.motivo === "mision") {
+                    const m = window.MisionesSecretas && MisionesSecretas.buscar(fin.mision);
+                    resultText = resultText.replace(/\.$/, "") + ", cumpliendo su misión secreta" + (m ? " («" + m.titulo + "»)." : ".");
+                } else if (fin && fin.motivo === "volcan") {
+                    resultText = "El rey cayó en el volcán. " + resultText;
+                } else if (fin && fin.motivo === "expuesto") {
+                    resultText = "El volcán dejó al rey sin protección. " + resultText;
+                }
                 setStatus("Partida terminada — " + resultText);
             } else if (waitingToStart) {
                 if (!myColor) {
@@ -191,7 +348,9 @@
             board.setInteractive(!!myColor && room.status === "playing" && bothReady(room) && room.variant !== "ciegas");
             if (room.variant === "ciegas") ciegasActualizarPanel();
             updateStatusText();
+            pintarExtras();
             renderClocks();
+            revisarMision();
         });
 
         // ---- Reloj (tiempo asignado a cada jugador) ----
@@ -291,6 +450,15 @@
             if (info.gameOver) {
                 patch.status = "finished";
                 patch.result = info.result;
+                // Volcanes: si la partida la terminó un volcán, queda dicho cómo.
+                if (info.erupcion && info.erupcion.rey) patch.variant_state = Object.assign({}, room.variant_state || {}, { fin: { motivo: info.erupcion.rey === "volcan" ? "volcan" : "expuesto" } });
+            }
+            /* Misiones: si esta jugada deja la misión cumplida, el rival se
+               entera (sin saber cuál es): su próxima jugada es su única
+               oportunidad de deshacerla. */
+            if (room.variant === "misiones" && misionMia) {
+                const amenaza = Object.assign({}, (room.variant_state && room.variant_state.amenaza) || {}, { [myColor]: MisionesSecretas.cumple(misionMia, engine.game, myColor) });
+                patch.variant_state = Object.assign({}, room.variant_state || {}, patch.variant_state || {}, { amenaza: amenaza });
             }
             // Solo se guarda si la partida sigue en juego: si al rival se le cayó la
             // bandera mientras tanto, esta jugada no puede pisar ese resultado. Y si no
@@ -318,7 +486,9 @@
             if (room.variant === "ciegas") { board.setHidePieces(ciegasOculto()); ciegasActualizarPanel(); }
             renderMoveHistory(room.moves);
             updateStatusText();
+            pintarExtras();
             renderClocks();
+            if (room.status !== "playing") cargarMisiones();
         }
 
         function applyRemoteRoom(row, forzarTablero) {
@@ -334,7 +504,9 @@
             }
             renderMoveHistory(row.moves);
             updateStatusText();
+            pintarExtras();
             renderClocks();
+            if (row.variant === "misiones") { if (row.status !== "playing" && !misiones) cargarMisiones(); else revisarMision(); }
         }
 
         // Vuelve a leer la sala de la base y la aplica como un cambio remoto, forzando
@@ -382,6 +554,7 @@
             document.getElementById("titulo").textContent = mod.titulo;
             document.getElementById("reglas-texto").innerHTML = mod.reglas.map((r) => "<p>" + r + "</p>").join("");
             engine = Variantes.crear(room.variant);
+            if (engine.configurar) engine.configurar(room.variant_state);
             board = new VarianteBoard(document.getElementById("board"), {
                 engine: engine,
                 interactive: !!myColor && room.status === "playing" && bothReady(room) && room.variant !== "ciegas",
@@ -395,8 +568,10 @@
             if (room.variant === "ciegas") { board.setHidePieces(ciegasOculto()); ciegasActualizarPanel(); }
             renderMoveHistory(room.moves);
             updateStatusText();
+            pintarExtras();
             renderClocks();
             subscribeRoom();
+            cargarMisiones();
 
             document.getElementById("loading").classList.add("hidden");
             document.getElementById("app").classList.remove("hidden");
