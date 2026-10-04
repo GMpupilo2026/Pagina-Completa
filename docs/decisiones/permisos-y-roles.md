@@ -2128,3 +2128,34 @@ pregunta con los avisos de la página; diez firmas a la vez son un pedido; el
 avatar del panel lleva la foto; y en la clase, la lista de conectados (sin
 volver a pedir al repintar), el elegido para el profe y para los compañeros, y
 el podio con nombres —y sin nombres, ninguna cara—.
+
+## Borrar una cuenta
+
+«Eliminar» en `admin.html` llama a `admin-manage-users` (`action: "delete"`),
+que borra en `auth.users`; eso cascadea a `public.profiles`, y de ahí a todo lo
+que apunte al perfil. **Si una sola clave foránea a `profiles` (o a
+`auth.users`) no dice qué hacer al borrar, queda en NO ACTION y la base
+rechaza el borrado entero.** El panel solo muestra «Database error deleting
+user»; el motivo de verdad está en el registro de Auth (`auth_logs`):
+`violates foreign key constraint "practice_games_student_id_fkey"`.
+
+Pasó el 3/10/2026 con dos cuentas: bastaba haber jugado una partida de
+práctica o tener una fila de actividad. Había 23 claves así, de las tablas más
+viejas. La migración `20261004000748_borrar_cuenta_sin_trabas` le dio a cada
+una su regla:
+
+| la fila… | regla | tablas |
+|---|---|---|
+| es DE la persona | `on delete cascade` | `practice_games`, `platform_activity_log`, `question_answers`, `class_chat_messages` (quien manda y el alumno), `tournament_registrations`, `game_rooms` |
+| solo anota quién la hizo | `on delete set null` (sin `not null`) | `created_by` / `updated_by` / `actualizado_por` / `creado_por` / `revisado_por` de `tournaments`, `class_sessions`, `questions`, `saved_games`, `variant_nodes`, `practice_sessions`, `fourplayer_games`, `game_state`, `tv_settings`, `ajustes_academia`, `cobros_contacto`, `cobros_recordatorios_programados`, `solicitudes_academia` |
+| es un pareo de torneo | `on delete set null` | `tournament_pairings` (`white_id`, `black_id`, `advance_id`): la partida queda y el jugador, vacío |
+
+`tournaments.created_by` era `not null` y se le quitó: un torneo con otros
+jugadores inscritos no puede desaparecer porque se borre quien lo creó.
+
+Se comprobó borrando las dos cuentas que fallaban dentro de una transacción
+que se deshace (`raise exception` al final): se borraron sin error. La misma
+migración termina mirando el catálogo y no entra si queda alguna sin regla.
+
+**Una columna nueva que apunte a una cuenta lleva su `on delete`** en la misma
+migración: `verificar-borrar-cuenta.js` lo revisa en cada migración desde esa.
