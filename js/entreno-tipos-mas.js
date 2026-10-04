@@ -1073,6 +1073,46 @@
     textoJugadas.setAttribute("aria-describedby", "torneo-ayuda");
     const lJugadas = campo("Tus jugadas", textoJugadas);
     lJugadas.appendChild(ayudaJugadas);
+    /* O una foto de la planilla: la lee ocr-scoresheet (Google Vision, con su
+       tope diario) con el mismo lector de lector-planilla.html
+       (js/planilla-ocr.js), y las jugadas caen en el cuadro para revisarlas
+       antes de guardar. Las que se adivinaron por parecido llevan «?». */
+    const foto = el("input", "text-sm text-brand-700 dark:text-brand-200 file:mr-3 file:rounded-lg file:border-0 file:px-3 file:py-2 file:font-semibold file:bg-brand-100 file:text-brand-800 dark:file:bg-brand-800 dark:file:text-brand-100");
+    foto.type = "file"; foto.accept = "image/*";
+    const leerFoto = el("button", BTN_SEGUNDO + " self-start", "📷 Leer la foto");
+    leerFoto.type = "button";
+    const filaFoto = el("div", "flex flex-wrap items-end gap-3");
+    filaFoto.append(campo("¿Prefieres tomarle una foto a tu planilla?", foto), leerFoto);
+    leerFoto.addEventListener("click", async () => {
+      const archivo = foto.files && foto.files[0];
+      if (!archivo) { aviso.textContent = "Elige primero la foto de tu planilla."; foto.focus(); return; }
+      if (!window.PlanillaOcr) { aviso.textContent = "El lector de planilla no está disponible en esta página."; return; }
+      let token = null;
+      try { const { data } = await sb.auth.getSession(); token = data && data.session && data.session.access_token; } catch (e) { token = null; }
+      if (!token) { aviso.textContent = "Necesitas iniciar sesión para leer la foto."; return; }
+      leerFoto.disabled = true; anotar.disabled = true;
+      aviso.textContent = "Leyendo tu planilla… puede tardar unos segundos.";
+      try {
+        const { words } = await PlanillaOcr.leerFoto(archivo, token);
+        const r = PlanillaOcr.leerTokens(Chess, PlanillaOcr.reconstructMoveTokens(words));
+        if (!r.jugadas.length) {
+          aviso.textContent = "No encontré jugadas en la foto. Prueba con una más nítida, derecha y con buena luz, o escríbelas.";
+        } else {
+          const dudosas = new Set(r.adivinadas);
+          textoJugadas.value = r.jugadas.map((x, i) => (i % 2 === 0 ? (i / 2 + 1) + ". " : "") + PlanillaOcr.sanEnEspanol(x) + (dudosas.has(i) ? "?" : "")).join(" ");
+          const cuales = r.adivinadas.slice(0, 5).map((i) => "la " + (Math.floor(i / 2) + 1) + " de las " + (i % 2 ? "negras" : "blancas")).join(", ");
+          aviso.textContent = "Leí " + Math.ceil(r.jugadas.length / 2) + (r.jugadas.length > 2 ? " jugadas" : " jugada") + ". " +
+            (r.adivinadas.length === 1 ? "Una no se leía bien y va con «?», la más parecida que es legal (" + cuales + "): compárala con tu planilla. "
+              : r.adivinadas.length ? r.adivinadas.length + " no se leían bien y van con «?», las más parecidas que son legales (" + cuales + (r.adivinadas.length > 5 ? "…" : "") + "): compáralas con tu planilla. "
+              : "") +
+            "Revisa que estén todas y que coincidan con tu planilla antes de guardar.";
+          textoJugadas.focus();
+        }
+      } catch (e) {
+        aviso.textContent = "No se pudo leer la foto: " + (e && e.message ? e.message : "inténtalo de nuevo") + (/\.$/.test(e && e.message || "") ? "" : ".");
+      }
+      leerFoto.disabled = false; anotar.disabled = false;
+    });
     const hoyCR = window.RepasoEspaciado ? RepasoEspaciado.hoy() : new Date().toLocaleDateString("en-CA", { timeZone: "America/Costa_Rica" });
     const fechaT = el("input", CAMPO);
     fechaT.type = "date"; fechaT.value = hoyCR; fechaT.max = hoyCR; fechaT.required = true;
@@ -1088,7 +1128,7 @@
     fila.append(campo("Fecha", fechaT), campo("Jugué con", colorT), campo("Resultado", resultadoT), campo("Elo del rival (si lo sabes)", eloT));
     const anotar = el("button", BTN_PRIMARIO + " self-start", "Guardar y revisar");
     anotar.type = "submit";
-    formT.append(lJugadas, fila, campo("Torneo (opcional)", eventoT), anotar);
+    formT.append(lJugadas, filaFoto, fila, campo("Torneo (opcional)", eventoT), anotar);
     torneo.appendChild(formT);
     torneo.appendChild(el("p", "text-xs text-brand-500 dark:text-brand-300 mt-2",
       "Se guarda en tu cuenta y tu profesor la puede ver en tu informe. No anotes el nombre de tu rival: no hace falta para revisarla."));
