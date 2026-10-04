@@ -1108,6 +1108,12 @@ arriba crece mientras la página carga.
   sale entera y quieta.
 - La pone `pwa-cabecera.py`, con `defer`, en las mismas páginas que el
   service worker. Una página nueva la recibe al correr el generador.
+- **El generador reemplaza su bloque en el mismo lugar**, y solo una página
+  nueva lo recibe al final del `<head>`. La primera versión de este cambio lo
+  sacaba y lo volvía a poner al final, y con eso la `<meta name="theme-color">`
+  quedó DESPUÉS del bloque del tema, que es el que le pone el color: con
+  Princesas la barra del celular seguía azul, sin ningún error. Lo atrapó
+  `verificar-temas-plataforma.js` en el CI.
 
 **Lo que se descartó:**
 

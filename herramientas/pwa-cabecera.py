@@ -83,12 +83,17 @@ def bloque(ruta):
 def poner(ruta, quitar=False):
     s = open(ruta, encoding="utf-8").read()
     original = s
-    # Fuera lo de la corrida anterior.
+    # Lo de la corrida anterior se reemplaza EN SU LUGAR, no se manda al final
+    # del <head>: la <meta name="theme-color"> tiene que existir antes de que
+    # corra el bloque del tema (tema-cabecera.py), que le pone el color del
+    # tema. Mandarlo al final la dejaba después, y la barra del celular se
+    # quedaba azul con cualquier tema, sin dar ningún error
+    # (verificar-temas-plataforma.js lo revisa).
     i = s.find(INICIO)
     if i >= 0:
         j = s.find(FIN, i)
-        s = s[:i] + s[j + len(FIN):]
-    if not quitar:
+        s = s[:i] + ("" if quitar else bloque(ruta)) + s[j + len(FIN):]
+    elif not quitar:
         cierre = s.find("</head>")
         if cierre < 0:
             return None                      # no es una página con <head>
