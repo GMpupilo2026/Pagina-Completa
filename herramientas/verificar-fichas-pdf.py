@@ -8,7 +8,8 @@ renombra una ficha el libro sigue diciendo lo de antes y el índice manda a la
 página equivocada. Lo que se comprueba:
 
   - que los dos abran sin contraseña y lleven al autor en sus datos;
-  - el libro: tapa, presentación, índice, una portadilla por categoría y UNA
+  - el libro: tapa, presentación, índice (en las páginas que ocupe), una
+    portadilla por categoría y UNA
     página por ficha, en el orden de la página; que cada ficha esté en la
     página que dice el índice, con su título y su número al pie;
   - las cartas: dos páginas (frente y reverso) por cada nueve fichas, y que
@@ -67,12 +68,18 @@ if os.path.exists(LIBRO):
     r = PdfReader(LIBRO)
     ok("abre sin contraseña", not r.is_encrypted)
     ok("lleva al autor", "Oscar Angulo" in str((r.metadata or {}).get("/Author", "")))
-    esperadas = 3 + len(banco["c"]) + n
-    ok(f"{esperadas} páginas: tapa, presentación, índice, {len(banco['c'])} portadillas y {n} fichas",
-       len(r.pages) == esperadas, f"tiene {len(r.pages)}")
     textos = [plano(p.extract_text()) for p in r.pages]
-    indice = textos[2] if len(textos) > 2 else ""
-    pagina, mal, sin_numero = 3, [], []
+    # El índice ocupa las páginas que hagan falta, justo después de la
+    # presentación; cada una empieza con «Índice».
+    hojas_indice = 0
+    while 2 + hojas_indice < len(textos) and textos[2 + hojas_indice].startswith("Índice"):
+        hojas_indice += 1
+    ok("trae índice", hojas_indice >= 1)
+    esperadas = 2 + hojas_indice + len(banco["c"]) + n
+    ok(f"{esperadas} páginas: tapa, presentación, {hojas_indice} de índice, {len(banco['c'])} portadillas y {n} fichas",
+       len(r.pages) == esperadas, f"tiene {len(r.pages)}")
+    indice = " ".join(textos[2:2 + hojas_indice])
+    pagina, mal, sin_numero = 2 + hojas_indice, [], []
     for c in banco["c"]:
         pagina += 1   # la portadilla
         for F in (F for F in orden if F["c"] == c):

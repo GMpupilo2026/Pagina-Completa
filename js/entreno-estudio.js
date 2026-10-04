@@ -13,7 +13,7 @@ const app = document.getElementById('app');
 const gateChecking = document.getElementById('gate-checking');
 const NEXT_PATH = 'entreno/estudio.html';
 
-/* ---------------- Las fichas, las 56, en una sola página ----------------
+/* ---------------- Todas las fichas, en una sola página ----------------
    Acá vive TODO el material de fichas: aperturas, defensas, temas tácticos y
    conceptos. Antes estaba partido en dos páginas —esta con las 24 de apertura
    y defensa, y entreno/fichas.html con las 56— y eran la misma página dos
@@ -22,7 +22,7 @@ const NEXT_PATH = 'entreno/estudio.html';
    redirige a esta en `_redirects`, con su ?ficha= incluido, porque esos
    enlaces se compartían y un 404 no le dice a nadie a dónde ir.
 
-   Sin pestañas, a propósito: las cuatro categorías se pintan una debajo de
+   Sin pestañas, a propósito: las categorías se pintan una debajo de
    otra con su <h2>, así se salta de grupo en grupo con lector de pantalla y
    nadie tiene que elegir una pestaña antes de poder ver nada. */
 const { FICHAS, CATEGORIAS } = window.FichasEstudio;
@@ -42,7 +42,7 @@ let categoria = (() => {
 })();
 const etiquetaDe = (id) => (CATEGORIAS.find((c) => c.id === id) || {}).etiqueta || '';
 
-/* Buscar mira las cuatro categorías y va sin tildes: "peon pasado" tiene que
+/* Buscar mira todas las categorías y va sin tildes: "peon pasado" tiene que
    encontrar la ficha aunque se escriba sin acento. Lo que sobrevive se sigue
    pintando dentro de su grupo, así el árbol de encabezados no cambia según lo
    que se escriba. */

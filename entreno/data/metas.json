@@ -1160,6 +1160,96 @@
    "actividades": [
     "aperturas"
    ]
+  },
+  {
+   "clave": "colle",
+   "label": "Sistema Colle",
+   "grupo": "Sistema Colle",
+   "total": 1,
+   "actividades": [
+    "aperturas"
+   ]
+  },
+  {
+   "clave": "alapin",
+   "label": "Ataque Alapin contra la siciliana",
+   "grupo": "Defensa siciliana",
+   "total": 1,
+   "actividades": [
+    "aperturas"
+   ]
+  },
+  {
+   "clave": "trompowsky",
+   "label": "Ataque Trompowsky",
+   "grupo": "Ataque Trompowsky",
+   "total": 1,
+   "actividades": [
+    "aperturas"
+   ]
+  },
+  {
+   "clave": "reti",
+   "label": "Apertura Réti",
+   "grupo": "Apertura Réti",
+   "total": 1,
+   "actividades": [
+    "aperturas"
+   ]
+  },
+  {
+   "clave": "catalana",
+   "label": "Apertura catalana",
+   "grupo": "Gambito de dama",
+   "total": 1,
+   "actividades": [
+    "aperturas"
+   ]
+  },
+  {
+   "clave": "gambito-escoces",
+   "label": "Gambito escocés",
+   "grupo": "Apertura escocesa",
+   "total": 1,
+   "actividades": [
+    "aperturas"
+   ]
+  },
+  {
+   "clave": "philidor",
+   "label": "Defensa Philidor",
+   "grupo": "Defensa Philidor",
+   "total": 1,
+   "actividades": [
+    "aperturas"
+   ]
+  },
+  {
+   "clave": "gambito-dama-aceptado",
+   "label": "Gambito de dama aceptado",
+   "grupo": "Gambito de dama",
+   "total": 1,
+   "actividades": [
+    "aperturas"
+   ]
+  },
+  {
+   "clave": "semieslava",
+   "label": "Defensa semieslava, variante Merano",
+   "grupo": "Defensa eslava",
+   "total": 1,
+   "actividades": [
+    "aperturas"
+   ]
+  },
+  {
+   "clave": "benoni-moderna",
+   "label": "Benoni moderna",
+   "grupo": "Defensa Benoni",
+   "total": 1,
+   "actividades": [
+    "aperturas"
+   ]
   }
  ],
  "estudio": [
@@ -1552,6 +1642,300 @@
    "clave": "cadena-de-peones",
    "label": "La cadena de peones",
    "grupo": "Conceptos",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "colle",
+   "label": "Sistema Colle",
+   "grupo": "Aperturas",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "alapin",
+   "label": "Ataque Alapin",
+   "grupo": "Aperturas",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "trompowsky",
+   "label": "Ataque Trompowsky",
+   "grupo": "Aperturas",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "reti",
+   "label": "Apertura Réti",
+   "grupo": "Aperturas",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "catalana",
+   "label": "Apertura catalana",
+   "grupo": "Aperturas",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "gambito-escoces",
+   "label": "Gambito escocés",
+   "grupo": "Aperturas",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "dos-caballos",
+   "label": "Defensa de los dos caballos",
+   "grupo": "Defensas",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "philidor",
+   "label": "Defensa Philidor",
+   "grupo": "Defensas",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "holandesa",
+   "label": "Defensa holandesa",
+   "grupo": "Defensas",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "alekhine",
+   "label": "Defensa Alekhine",
+   "grupo": "Defensas",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "gambito-dama-aceptado",
+   "label": "Gambito de dama aceptado",
+   "grupo": "Defensas",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "semieslava",
+   "label": "Defensa semieslava",
+   "grupo": "Defensas",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "benoni-moderna",
+   "label": "Benoni moderna",
+   "grupo": "Defensas",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "mate-escalera",
+   "label": "El mate de la escalera",
+   "grupo": "Táctica",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "mate-pastor",
+   "label": "El mate del pastor",
+   "grupo": "Táctica",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "jugada-intermedia",
+   "label": "La jugada intermedia",
+   "grupo": "Táctica",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "interferencia",
+   "label": "La interferencia",
+   "grupo": "Táctica",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "despeje",
+   "label": "El despeje",
+   "grupo": "Táctica",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "rayos-x",
+   "label": "Los rayos X",
+   "grupo": "Táctica",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "molino",
+   "label": "El molino",
+   "grupo": "Táctica",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "sacrificio-griego",
+   "label": "El sacrificio griego",
+   "grupo": "Táctica",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "mate-boden",
+   "label": "El mate de Boden",
+   "grupo": "Táctica",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "mate-legal",
+   "label": "El mate de Légal",
+   "grupo": "Táctica",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "eliminacion-defensor",
+   "label": "La eliminación del defensor",
+   "grupo": "Táctica",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "cuando-cambiar",
+   "label": "Cuándo cambiar piezas",
+   "grupo": "Conceptos",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "pieza-buena-mala",
+   "label": "Pieza buena y pieza mala",
+   "grupo": "Conceptos",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "ventaja-espacio",
+   "label": "La ventaja de espacio",
+   "grupo": "Conceptos",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "ruptura-peones",
+   "label": "La ruptura de peones",
+   "grupo": "Conceptos",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "profilaxis",
+   "label": "La profilaxis",
+   "grupo": "Conceptos",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "ataque-minorias",
+   "label": "El ataque de minorías",
+   "grupo": "Conceptos",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "dos-debilidades",
+   "label": "El principio de las dos debilidades",
+   "grupo": "Conceptos",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "iniciativa",
+   "label": "La iniciativa y los tiempos",
+   "grupo": "Conceptos",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "mate-rey-dama",
+   "label": "Mate con rey y dama",
+   "grupo": "Finales",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "mate-rey-torre",
+   "label": "Mate con rey y torre",
+   "grupo": "Finales",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "rey-peon-contra-rey",
+   "label": "Rey y peón contra rey",
+   "grupo": "Finales",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "posicion-lucena",
+   "label": "La posición de Lucena",
+   "grupo": "Finales",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "posicion-philidor",
+   "label": "La posición de Philidor",
+   "grupo": "Finales",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "triangulacion",
+   "label": "La triangulación",
+   "grupo": "Finales",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "alfiles-distinto-color",
+   "label": "Alfiles de distinto color",
+   "grupo": "Finales",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "peon-de-torre",
+   "label": "El peón de torre",
+   "grupo": "Finales",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "dama-contra-peon",
+   "label": "Dama contra peón en séptima",
+   "grupo": "Finales",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "mate-alfil-caballo",
+   "label": "Mate de alfil y caballo",
+   "grupo": "Finales",
    "total": 1,
    "actividades": []
   }

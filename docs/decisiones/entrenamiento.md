@@ -1273,8 +1273,8 @@ la línea se programa para más adelante.
 ## Estudio: una ficha por idea, con su mapa y su posición
 
 `entreno/estudio.html` (tarjeta **"📚 Estudio"** en `clases.html` → grupo
-"Aprender") son 56 fichas de estudio: 12 aperturas, 12 defensas, 16 temas
-tácticos y 16 conceptos. Cada una es **una sola pantalla**: la idea principal
+"Aprender") son 98 fichas de estudio: 18 aperturas, 19 defensas, 27 temas
+tácticos, 24 conceptos y 10 finales. Cada una es **una sola pantalla**: la idea principal
 arriba, cuatro bloques alrededor de un nodo con la pieza, y abajo la posición
 que lo explica, recorrible jugada por jugada.
 
@@ -1403,6 +1403,55 @@ y 16 conceptos) sin tocar ni una de las 28 primeras. Lo que dejó escrito:
   el verificador lo contaba como fallo. Era el doble el que estaba incompleto,
   no la página.
 
+
+### La tercera tanda: de 56 a 98 fichas, y los finales
+
+Entraron 42 fichas (6 aperturas, 7 defensas, 11 tácticas, 8 conceptos) y una
+quinta categoría, **Finales** (10), con sus títulos de bloque propios: «Cuándo
+aparece», «Cómo se juega», «Errores frecuentes», «Para practicarlo». Lo que
+dejó escrito:
+
+- **Ninguna posición se inventó.** Las de apertura y defensa salen de líneas
+  del banco: diez líneas nuevas entraron a `js/aperturas-lineas.js` (50 en
+  total: Colle, Alapin, Trompowsky, Réti, catalana, gambito escocés, Philidor,
+  gambito de dama aceptado, semieslava y Benoni moderna), así que todas
+  tienen su botón de practicar; las de los dos caballos, Alekhine, holandesa,
+  Légal y el pastor reusan líneas que ya estaban. Seis tácticas salen de la
+  base abierta de Lichess que ya usa Ejercicios por tema (el id va al lado de
+  cada `fen`), eligiendo el ejercicio más corto, de rating más bajo y con
+  menos piezas de cada tema. El molino, el sacrificio griego y todas las de
+  finales se armaron y se comprobaron con Stockfish 16.
+- **Lo que promete una posición lo confirma un motor**: el campo `promete`
+  ("mate", "gana" o "tablas", desde el bando que mueve) lo revisa
+  `herramientas/fichas-motor.js`. NO se llama `verificar-*` porque el CI no
+  tiene Stockfish y fallaría siempre: se corre a mano al tocar una ficha que
+  lo trae. Pide, además del resultado, que la primera jugada de la línea no
+  tire la ventaja (la Lucena se gana con Td1+ aunque el motor prefiera Tc7+)
+  y que un mate prometido sea forzado.
+- **El motor acepta posiciones imposibles.** La primera versión del mate de
+  alfil y caballo tenía al rey negro en jaque con las blancas al mover: Stockfish
+  la analizó sin quejarse y la cazó `verificar-fichas.js` («el bando que no
+  mueve está en jaque»). Por eso chess.js va primero y el motor después.
+- **Comprobaciones nuevas en `verificar-fichas.js`**: `kpk` (rey y peón contra
+  rey, con el oráculo exacto de `herramientas/lib/kpk.js`, que arma la tabla
+  entera en 0,3 s y sí corre en el CI), `alfilesDistintos`, `ahogadoFinal` y
+  `triangulo` (tras las cinco primeras jugadas de la línea las piezas vuelven
+  a su lugar con el turno cambiado). Las cinco se rompieron a propósito y
+  saltan.
+- **La triangulación se buscó con el motor** entre finales de peones trabados:
+  con negras al mover pierden; con blancas, la jugada natural (Rg5) empata y
+  el triángulo h6-h5-g5 gana. También gana Rh7, que es otra forma de perder el
+  tiempo: la ficha enseña el triángulo y no promete que sea la única.
+- **«Pieza buena y pieza mala» no promete resultado**: el motor da 0,00 (con
+  todo cerrado, el caballo bueno no gana solo) y la ficha lo dice en «En el
+  final». Lo que sí comprueba es que el alfil sea malo y la casilla fuerte.
+- La quinta categoría tiene su tarjeta en el panel del alumno («🏁 Finales»,
+  `?cat=final`), su entrada en el buscador de `clases.html`, en
+  `data/contenido-panel.json` y en `entreno/data/metas.json`. En el papel
+  lleva su color (#5b3e8a, 8,4:1 contra blanco en los dos sentidos) y el
+  índice del libro pasó a dos páginas, partido por categorías enteras.
+- «Escocés» y «París» terminan como un voseo (tenés, decís) y no lo son: van
+  en la lista blanca de `verificar-voseo.py`.
 
 ### Lo demás que hace la página
 
