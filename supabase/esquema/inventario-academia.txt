@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261004212658
+# al-dia-con: 20261004225509
 tabla  Ejercicios Lichess  rls=true
 tabla  academia_ia  rls=true
 tabla  academia_miembros  rls=true
@@ -8,6 +8,7 @@ tabla  academias  rls=true
 tabla  acceso_config  rls=true
 tabla  actualizaciones_plataforma  rls=true
 tabla  ajustes_academia  rls=true
+tabla  analisis_partidas_alumno  rls=true
 tabla  arbitrajes_publicos  rls=true
 tabla  archivos_pgn  rls=true
 tabla  auditoria  rls=true
@@ -188,6 +189,14 @@ columna  ajustes_academia.actualizado_at  timestamp with time zone
 columna  ajustes_academia.actualizado_por  uuid
 columna  ajustes_academia.clave  text
 columna  ajustes_academia.valor  text
+columna  analisis_partidas_alumno.alumno_id  uuid
+columna  analisis_partidas_alumno.analisis  jsonb
+columna  analisis_partidas_alumno.analizado_at  timestamp with time zone
+columna  analisis_partidas_alumno.analizado_por  uuid
+columna  analisis_partidas_alumno.chesscom  text
+columna  analisis_partidas_alumno.lichess  text
+columna  analisis_partidas_alumno.partidas  integer
+columna  analisis_partidas_alumno.updated_at  timestamp with time zone
 columna  arbitrajes_publicos.created_at  timestamp with time zone
 columna  arbitrajes_publicos.detalle  jsonb
 columna  arbitrajes_publicos.email  text
@@ -1441,6 +1450,7 @@ funcion  interno.academia_activa()  definer  anon=false  auth=true
 funcion  interno.academia_para_recibo(p_alumno uuid)  definer  anon=false  auth=false
 funcion  interno.academias_de(p_persona uuid)  definer  anon=false  auth=true
 funcion  interno.alumnos_de(p_profesor uuid)  definer  anon=false  auth=true
+funcion  interno.analisis_partidas_al_guardar()  definer  anon=false  auth=false
 funcion  interno.auditar()  definer  anon=false  auth=false
 funcion  interno.auditoria_intocable()  invoker  anon=false  auth=false
 funcion  interno.avisos_que_mande()  definer  anon=false  auth=true
@@ -1679,6 +1689,10 @@ politica  actualizaciones_plataforma  actualizaciones_plataforma_select  SELECT
 politica  actualizaciones_plataforma  actualizaciones_plataforma_update  UPDATE
 politica  ajustes_academia  ajustes_academia_coordinacion  ALL
 politica  ajustes_academia  ajustes_academia_select  SELECT
+politica  analisis_partidas_alumno  analisis_partidas_delete  DELETE
+politica  analisis_partidas_alumno  analisis_partidas_insert  INSERT
+politica  analisis_partidas_alumno  analisis_partidas_select  SELECT
+politica  analisis_partidas_alumno  analisis_partidas_update  UPDATE
 politica  arbitrajes_publicos  arbitrajes_publicos_insert  INSERT
 politica  arbitrajes_publicos  arbitrajes_publicos_select  SELECT
 politica  arbitrajes_publicos  arbitrajes_publicos_update  UPDATE
@@ -2074,6 +2088,7 @@ trigger  academia_miembros  auditar
 trigger  academias  auditar
 trigger  acceso_config  auditar
 trigger  ajustes_academia  ajustes_academia_protegido
+trigger  analisis_partidas_alumno  analisis_partidas_al_guardar
 trigger  auditoria  auditoria_intocable
 trigger  auditoria  auditoria_sin_truncate
 trigger  certificados  auditar
@@ -2167,6 +2182,7 @@ indice  actualizaciones_plataforma  actualizaciones_plataforma_created_by_fk
 indice  actualizaciones_plataforma  actualizaciones_plataforma_pkey
 indice  ajustes_academia  ajustes_academia_actualizado_por_fk
 indice  ajustes_academia  ajustes_academia_pkey
+indice  analisis_partidas_alumno  analisis_partidas_alumno_pkey
 indice  arbitrajes_publicos  arbitrajes_publicos_pendientes
 indice  arbitrajes_publicos  arbitrajes_publicos_pkey
 indice  arbitrajes_publicos  arbitrajes_publicos_revisado_por_fk
@@ -2620,6 +2636,10 @@ grant  ajustes_academia  authenticated  SELECT
 grant  ajustes_academia  authenticated  TRIGGER
 grant  ajustes_academia  authenticated  TRUNCATE
 grant  ajustes_academia  authenticated  UPDATE
+grant  analisis_partidas_alumno  authenticated  DELETE
+grant  analisis_partidas_alumno  authenticated  INSERT
+grant  analisis_partidas_alumno  authenticated  SELECT
+grant  analisis_partidas_alumno  authenticated  UPDATE
 grant  arbitrajes_publicos  anon  DELETE
 grant  arbitrajes_publicos  anon  INSERT
 grant  arbitrajes_publicos  anon  REFERENCES

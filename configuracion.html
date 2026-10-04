@@ -96,6 +96,20 @@
                     <p id="fide-elo" hidden class="text-sm text-brand-700 dark:text-brand-300 mb-1"></p>
                     <p id="fide-ayuda" class="text-xs text-brand-450 dark:text-brand-350">Con tu código, la plataforma lee sola cada mes tu Elo FIDE Estándar y tu Elo Nacional de Costa Rica, y le cuenta a tu casa si subió o bajó. Lo encuentras buscando tu nombre en <a href="https://ratings.fide.com" target="_blank" rel="noopener" class="underline font-semibold text-accent-700 dark:text-accent-400">ratings.fide.com</a> (se abre en otra pestaña). Si no tienes código FIDE, déjalo vacío.</p>
                 </fieldset>
+                <!-- Sus cuentas de Lichess y Chess.com: su navegador baja sus
+                     partidas públicas y las analiza (js/analisis-alumno.js) para
+                     que su profe vea qué juega de verdad. Solo alumnos. Ver «Lo que
+                     juega en Lichess y Chess.com» en docs/decisiones/informes.md. -->
+                <fieldset id="cuentas-juego" hidden class="mb-4">
+                    <legend class="block text-xs font-medium text-brand-500 dark:text-brand-300 mb-1">Tus cuentas de Lichess y Chess.com</legend>
+                    <div class="flex flex-wrap gap-2 mb-1">
+                        <input id="cuenta-lichess" type="text" autocomplete="off" maxlength="30" placeholder="Usuario de Lichess" aria-label="Tu usuario de Lichess" aria-describedby="cuentas-ayuda" class="w-44 px-3 py-2 rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 text-sm focus:outline-none focus:ring-2 focus:ring-accent-500">
+                        <input id="cuenta-chesscom" type="text" autocomplete="off" maxlength="30" placeholder="Usuario de Chess.com" aria-label="Tu usuario de Chess.com" aria-describedby="cuentas-ayuda" class="w-44 px-3 py-2 rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 text-sm focus:outline-none focus:ring-2 focus:ring-accent-500">
+                        <button id="save-cuentas-btn" type="button" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2 rounded-lg transition-colors text-sm whitespace-nowrap">Guardar y analizar mis partidas</button>
+                    </div>
+                    <p id="cuentas-msg" class="text-xs mb-1" role="status" aria-live="polite"></p>
+                    <p id="cuentas-ayuda" class="text-xs text-brand-450 dark:text-brand-350">Con tus usuarios, la plataforma baja tus últimas partidas públicas y le muestra a tu profe qué abres con blancas, qué contestas con negras y dónde te va mejor y peor, comparado con lo que preparaste en «Mi repertorio». Las partidas no se guardan: solo el resumen. Si no juegas en alguno de los dos, déjalo vacío; para borrar tus usuarios y el resumen, deja los dos vacíos y aprieta el botón.</p>
+                </fieldset>
                 <!-- Un <p>, no un <label>: no hay campo que rotular (el correo no se cambia desde acá). -->
                 <p id="email-titulo" class="block text-xs font-medium text-brand-500 dark:text-brand-300 mb-1">Correo</p>
                 <p id="email-display" class="text-sm text-brand-700 dark:text-brand-300 mb-1"></p>

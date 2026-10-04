@@ -944,6 +944,7 @@
             document.getElementById("diagnostico-report").classList.add("hidden");
             document.getElementById("acceso-report").classList.add("hidden");
             document.getElementById("encargados-report").classList.add("hidden");
+            document.getElementById("aperturas-alumno-report").classList.add("hidden");
             document.getElementById("deberes-report").classList.add("hidden");
             document.getElementById("premios-report").classList.add("hidden");
             document.getElementById("errores-report").classList.add("hidden");
@@ -1145,6 +1146,9 @@
             // como otra persona se ve, pero no se escribe a su nombre.
             mensajeCasaPendiente = { id: studentId, nombre: name };
             montarMensajeCasa();
+            aperturasPendiente = { id: studentId, nombre: name };
+            document.getElementById("aperturas-alumno-report").classList.remove("hidden");
+            montarAperturasAlumno();
 
             const historyEl = document.getElementById("student-history");
             historyEl.innerHTML = "";
@@ -1948,6 +1952,22 @@
             return r;
         }
 
+        /* «Sus aperturas» (js/analisis-alumno.js): igual que el mensaje a la
+           casa, se pide recién cuando se abre, una vez por alumno. Escribir
+           (poner sus usuarios, volver a analizar) es de quien le da clase o
+           administra; «Ver como» y quien supervisa solo miran. */
+        var aperturasPendiente = null, aperturasMontado = null;
+        function montarAperturasAlumno() {
+            const caja = document.getElementById("aperturas-alumno-report");
+            if (!window.AnalisisAlumno || !aperturasPendiente || !caja.open) return;
+            if (aperturasMontado === aperturasPendiente.id) return;
+            aperturasMontado = aperturasPendiente.id;
+            AnalisisAlumno.montarProfe(document.getElementById("aperturas-alumno-cuerpo"), {
+                sb, alumnoId: aperturasPendiente.id, nombre: aperturasPendiente.nombre,
+                puedeEscribir: !profile._persona && (profile.is_admin || profile.role === "profesor"),
+            }).catch((e) => console.error(e));
+        }
+        document.getElementById("aperturas-alumno-report").addEventListener("toggle", montarAperturasAlumno);
         var mensajeCasaPendiente = null, mensajeCasaMontado = null;   // var: renderStudentDetail está más arriba
         function montarMensajeCasa() {
             const caja = document.getElementById("encargados-report");

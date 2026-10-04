@@ -76,6 +76,26 @@ const RESPUESTAS = [
   { student_id: "a-2", created_at: "2026-09-13T10:00:00Z", is_correct: true },
 ];
 
+/* El análisis de las partidas en línea de Ana, hecho con el análisis de verdad
+   (js/preparacion-analisis.js) sobre partidas armadas con chess.js: abre 1.e4
+   y le va bien, contra 1.e4 contesta 1…e5. */
+const ANALISIS_ANA = (() => {
+  const A = require("../js/preparacion-analisis.js");
+  const AA = require("../js/analisis-alumno.js");
+  const ChessMod = require("chess.js");
+  const Chess = ChessMod.Chess || ChessMod;
+  const p = [];
+  const partida = (bl, ng, jug, res, d) => {
+    const g = new Chess();
+    jug.forEach((m) => g.move(m));
+    return `[Event "Rated blitz game"]\n[Date "2026.09.${String(d).padStart(2, "0")}"]\n[White "${bl}"]\n[Black "${ng}"]\n[Result "${res}"]\n\n`
+      + g.history().map((m, i) => (i % 2 === 0 ? (i / 2 + 1) + ". " : "") + m).join(" ") + " " + res + "\n";
+  };
+  for (let i = 0; i < 14; i++) p.push(partida("ana_123", "r" + i, ["e4", "e5", "Nf3"], i < 12 ? "1-0" : "0-1", (i % 28) + 1));
+  for (let i = 0; i < 8; i++) p.push(partida("x" + i, "ana_123", ["e4", "e5", "Nf3"], i < 2 ? "0-1" : "1-0", (i % 28) + 1));
+  return AA.reducir(A.analizar(A.leerPgn(p.join("\n")), "ana_123", { reciente: true }));
+})();
+
 // El cliente de mentira: los mismos métodos encadenados que usa la página
 // (select/eq/order/limit/range/maybeSingle) sobre listas fijas, apuntando qué se
 // pidió para poder comprobar el pedido por páginas.
@@ -476,6 +496,16 @@ async function pruebaProfesor(browser) {
         { id: "m-2", alumno_id: "a-1", autor_id: "otra", texto: "Recuerden el torneo del sábado.", created_at: "2026-09-19T15:00:00Z" },
         { id: "m-3", alumno_id: "a-2", autor_id: "prof-1", texto: "Mensaje de Bruno", created_at: "2026-09-21T15:00:00Z" },
       ],
+      /* Sus aperturas: lo que armó en «Mi repertorio» y el análisis de sus
+         partidas en línea (armado con partidas de mentira, con el análisis de
+         verdad, en ANALISIS_ANA). */
+      repertorio: [
+        { id: "r-1", alumno_id: "a-1", color: "w", nombre: "Londres", jugadas: ["d4", "d5", "Bf4"], created_at: "2026-09-01T00:00:00Z" },
+        { id: "r-2", alumno_id: "a-1", color: "b", nombre: "Siciliana", jugadas: ["e4", "c5"], created_at: "2026-09-02T00:00:00Z" },
+        { id: "r-3", alumno_id: "a-2", color: "w", nombre: "De Bruno", jugadas: ["c4", "e5"], created_at: "2026-09-02T00:00:00Z" },
+      ],
+      analisis_partidas_alumno: [{ alumno_id: "a-1", lichess: "ana_123", chesscom: null, partidas: 22,
+        analizado_at: "2026-10-01T15:00:00Z", analisis: ANALISIS_ANA }],
       plantillas_casa: [
         { id: "p-1", situacion: "poco", texto: "{nombre} puede más: lo vemos el jueves.", created_at: "2026-09-01T00:00:00Z" },
         { id: "p-2", situacion: "bien", texto: "Sigan así.", created_at: "2026-09-02T00:00:00Z" },
@@ -963,6 +993,30 @@ async function pruebaProfesor(browser) {
   igual("descargar pide el MISMO informe que sale por correo, del periodo elegido",
     await page.evaluate(() => window.__funcion[0]),
     { action: "vista_previa", student_id: "a-1", frecuencia: "mensual" });
+
+  console.log("-- Sus aperturas");
+  await page.click("#aperturas-alumno-report > summary");
+  await page.waitForFunction(() => document.querySelector("#aperturas-alumno-cuerpo [data-analisis-resultado]"), null, { timeout: 15000 });
+  const ap = await page.evaluate(() => {
+    const c = document.getElementById("aperturas-alumno-cuerpo");
+    const t = c.textContent.replace(/\s+/g, " ");
+    return {
+      lineas: [...c.querySelectorAll("ul")][0] ? [...c.querySelectorAll("ul")].slice(0, 2).map((u) => [...u.querySelectorAll("li")].map((li) => li.textContent).join(" | ")) : [],
+      cruce: [...c.querySelectorAll("[data-analisis-cruce] li")].map((li) => li.textContent),
+      fuerte: /Puntos fuertes/.test(t) && /Rinde más con blancas/.test(t),
+      debil: /Puntos débiles/.test(t) && /Con negras saca menos/.test(t),
+      bruno: /De Bruno/.test(t),
+      boton: !!c.querySelector("[data-analisis-analizar]"),
+      cuentas: /Lichess: ana_123/.test(t),
+    };
+  });
+  igual("lo que armó en «Mi repertorio», en la notación de acá", ap.lineas, ["Londres: 1.d4 d5 2.Af4", "Siciliana: 1.e4 c5"]);
+  igual("comparado con lo que juega", ap.cruce, [
+    "Con blancas preparó 1.d4, pero en sus partidas abre sobre todo 1.e4 (100 % de 14); 1.d4 no aparece en sus partidas.",
+    "Contra 1.e4 preparó 1…c5, pero contesta sobre todo 1…e5 (100 % de 8).",
+  ]);
+  igual("con sus puntos fuertes y débiles, sus cuentas y nada de otro alumno", [ap.fuerte, ap.debil, ap.cuentas, ap.bruno], [true, true, true, false]);
+  igual("quien le da clase puede volver a analizar", ap.boton, true);
 
   console.log("-- Unas palabras para la casa");
   await page.waitForFunction(() => /Practicó poco/.test((document.querySelector("[data-casa-situacion]") || {}).textContent || ""));
