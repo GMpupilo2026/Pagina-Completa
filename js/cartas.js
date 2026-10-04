@@ -76,12 +76,12 @@
         });
 
         function formatClock(seconds) { return SalaJuego.formatear(seconds); }
-        function liveTimeLeft(color) { return SalaJuego.restante(room, color, board.game.turn()); }
+        function liveTimeLeft(color) { return SalaJuego.restante(room, color, SalaJuego.turnoDe(room)); }
         // El reloj y su rótulo dicho son de js/sala-juego.js (una sola copia).
         function renderClocks() {
-            SalaJuego.pintarRelojes(room, { miColor: myColor, turno: board.game.turn(), nombreDe: (c) => nameFor(c === "w" ? room.white_id : room.black_id) });
+            SalaJuego.pintarRelojes(room, { miColor: myColor, turno: SalaJuego.turnoDe(room), nombreDe: (c) => nameFor(c === "w" ? room.white_id : room.black_id) });
         }
-        function checkFlagFall() { return SalaJuego.revisarBandera(room, ROOM_ID, board.game.turn()); }
+        function checkFlagFall() { return SalaJuego.revisarBandera(room, ROOM_ID, SalaJuego.turnoDe(room)); }
         setInterval(() => { if (!room || !board) return; renderClocks(); checkFlagFall(); }, 250);
 
         // Las jugadas se guardan como las da el motor (con letras inglesas) y se
@@ -147,13 +147,15 @@
             // bandera mientras tanto, esta jugada no puede pisar ese resultado. Y si no
             // quedó guardada, el tablero ya la muestra: se vuelve a leer la sala para
             // que enseñe el estado real en vez de quedarse desincronizado.
-            const { data: guardada, error } = await sb.from("game_rooms").update(patch).eq("id", ROOM_ID).eq("status", "playing").select("id");
+            // Se pide la fila de vuelta (el reloj con la hora de la base) y, si mientras
+            // viajaba ya llegó algo más nuevo, se queda lo más nuevo.
+            const { data: guardada, error } = await sb.from("game_rooms").update(patch).eq("id", ROOM_ID).eq("status", "playing").select("*");
             if (error || !guardada || !guardada.length) {
                 if (error) console.error(error);
                 await releerSala(error ? "No se pudo guardar la jugada: " + error.message : "La partida ya había terminado: esa jugada no quedó guardada.");
                 return;
             }
-            room = Object.assign({}, room, patch);
+            room = SalaJuego.laMasNueva(room, guardada[0]);
             renderMoveHistory(room.moves);
             updateStatusText();
             renderClocks();
@@ -196,10 +198,10 @@
         async function releerSala(mensaje) {
             const fila = await SalaJuego.releer(ROOM_ID);
             if (fila) applyRemoteRoom(fila, true);
-            setStatus(mensaje);
+            if (mensaje) setStatus(mensaje);
         }
 
-        function subscribeRoom() { SalaJuego.suscribir(ROOM_ID, (fila) => applyRemoteRoom(fila)); }
+        function subscribeRoom() { SalaJuego.suscribir(ROOM_ID, (fila) => applyRemoteRoom(fila), { sala: () => room, miColor: () => myColor }); }
 
         SalaJuego.montarRendirse({ salaId: ROOM_ID, sala: () => room, miColor: () => myColor, decir: setStatus, releer: releerSala });
 
