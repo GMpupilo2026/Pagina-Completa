@@ -2774,7 +2774,7 @@
         const SCRIPTS_HOY = ["js/repaso-espaciado.js", "js/repaso-fallados.js", "js/tema-flojo.js",
             "js/tipos-catalogo.js", "js/tipo-flojo.js", "js/tiempo-secciones.js",
             "js/errores-propios.js", "js/material-plataforma.js", "js/plan-entrenamiento.js",
-            "js/progreso-usuario.js", "js/hoy-te-toca.js"];
+            "js/progreso-usuario.js", "js/tu-mes.js", "js/hoy-te-toca.js"];
         async function cargarHoyTeToca(rachaP) {
             try {
                 /* Todos a la vez y en orden: se bajan en paralelo y corren en

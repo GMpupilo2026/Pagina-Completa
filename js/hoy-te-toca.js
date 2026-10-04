@@ -72,6 +72,9 @@ window.HoyTeToca = (function () {
            empezó, y cuánto le falta. Una meta a la vista engancha más que la
            lista entera en Logros. -->
       <a id="hoy-medalla" class="block text-sm text-brand-600 dark:text-brand-200 mt-1 underline underline-offset-2 hover:text-accent-700 dark:hover:text-accent-400 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-500" hidden></a>
+      <!-- «Tu mes en ajedrez» (js/tu-mes.js): los primeros días de cada mes,
+           el resumen del que pasó, si entrenó algo. Lleva a Logros. -->
+      <a id="hoy-mes" class="block text-sm text-brand-600 dark:text-brand-200 mt-1 underline underline-offset-2 hover:text-accent-700 dark:hover:text-accent-400 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-500" hidden></a>
     </div>
     <ul id="hoy-lista" class="list-none p-0 m-0 space-y-2"></ul>
     <!-- «Entrenar 10 minutos» (js/tanda-diez.js): arma una tanda con lo de
@@ -340,6 +343,7 @@ window.HoyTeToca = (function () {
     if (hoy > 0) await pintarResumenHoy();
     await pintarSemana();
     pintarMedalla(r, op);
+    await pintarMesPasado(op);
     return true;
   }
 
@@ -390,6 +394,31 @@ window.HoyTeToca = (function () {
     caja.textContent = textoSemana(s);
     caja.hidden = false;
     pintarDias(s.dias);
+  }
+
+  /* Los primeros días de cada mes: «📅 Tu septiembre en ajedrez: 876
+     ejercicios en 7 días. Míralo →», a logros.html#mes. Solo si el mes que
+     pasó tuvo algo: un «0 ejercicios» no invita a nada. La cuenta es la de
+     js/tu-mes.js (entreno_mi_mes en la base); sin ese módulo, no sale. */
+  const DIAS_AVISO_MES = 7;
+  async function pintarMesPasado(op){
+    const el = document.getElementById('hoy-mes');
+    const TM = window.TuMes;
+    if (!el || !TM) return;
+    const hoy = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Costa_Rica' });
+    if (Number(hoy.slice(8, 10)) > DIAS_AVISO_MES) return;
+    const mes = TM.sumarMeses(hoy.slice(0, 7), -1);
+    const r = await TM.pedir(mes);
+    const n = Number(r && r.ejercicios) || 0;
+    if (!n) return;
+    const dias = Number(r.dias_con_algo) || 0;
+    el.href = op.arriba + 'logros.html?mes=' + mes + '#mes';
+    el.replaceChildren();
+    const ic = document.createElement('span');
+    ic.setAttribute('aria-hidden', 'true');
+    ic.textContent = '📅 ';
+    el.append(ic, `Tu ${TM.nombreMes(mes, false)} en ajedrez: ${n} ${n === 1 ? 'ejercicio' : 'ejercicios'} en ${dias} ${dias === 1 ? 'día' : 'días'}. Míralo y compártelo →`);
+    el.hidden = false;
   }
 
   /* La meta de la semana: la elige el alumno —cuántos días entrena y cuántos
