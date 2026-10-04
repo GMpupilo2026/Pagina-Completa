@@ -178,13 +178,37 @@ async function hub(browser) {
     await page.waitForFunction(() => document.querySelectorAll("#hoy-lista a").length > 0, { timeout: 10000 });
     const items = await page.evaluate(() => Array.from(document.querySelectorAll("#hoy-lista a")).map((a) => [a.textContent.replace("→", "").trim(), a.getAttribute("href")]));
     igual("se ve", await page.evaluate(() => document.getElementById("hoy").checkVisibility()), "true");
-    igual("los repasos de Temas que vencieron (2 de 3)", items[0], ["🔁Repasar 2 ejercicios que te costaron", "temas.html?repaso=1"]);
-    igual("los mates que costaron", items[1], ["♚Repasar 1 mate que te costó", "mates.html?repaso=1"]);
-    igual("las líneas de Aperturas vencidas, sin contar la nueva", items[2], ["📖2 líneas de aperturas para repasar", "aperturas.html"]);
-    igual("y nunca más de tres: el diagnóstico queda para cuando haya lugar", items.length, "3");
+    /* Tres colas con algo hoy (Temas 2 de 3, Mates 1, Aperturas 2 sin
+       contar la nueva) van en UNA cosa: el «Repaso del día». */
+    igual("las colas de hoy van juntas en el «Repaso del día», con cuántas de cada una", items[0],
+      ["🔁Repaso del día: 5 en 3 secciones (Ejercicios por tema 2 · Mates 1 · Aperturas 2)", "temas.html?repaso=1"]);
+    igual("y deja lugar para lo demás (el diagnóstico)", items.map((x) => x[1]), ["temas.html?repaso=1", "diagnostico.html"]);
     igual("el título es un encabezado del nivel correcto (h2, bajo el h1)",
       await page.evaluate(() => document.getElementById("hoy-titulo").tagName), "H2");
     sinErrores(errores, "hub");
+
+    /* Tocarlo arranca el recorrido: la barra (sin reloj) dice el paso y lleva
+       a la sección siguiente; al final, «Terminar el repaso». */
+    const barra = () => page.evaluate(() => { const b = document.getElementById("tanda-diez");
+      return b ? { seVe: b.checkVisibility(), nombre: b.getAttribute("aria-label"), paso: b.querySelector("[role=status]").textContent,
+        reloj: b.querySelector("[data-tanda-reloj]").textContent, sig: (b.querySelector("[data-tanda-siguiente]") || {}).textContent || null,
+        destino: b.querySelector("[data-tanda-siguiente]") ? b.querySelector("[data-tanda-siguiente]").getAttribute("href") : null,
+        salir: b.querySelector("[data-tanda-salir]").textContent } : null; });
+    await Promise.all([page.waitForNavigation({ waitUntil: "load" }), page.click("#hoy-lista a[data-repaso-del-dia]")]);
+    await page.waitForSelector("#tanda-diez", { timeout: 10000 }).catch(() => {});
+    igual("abre la primera sección con la barra del repaso, sin reloj", await barra(), {
+      seVe: true, nombre: "Repaso del día", paso: "Repaso del día, paso 1 de 3: Ejercicios por tema (2)", reloj: "🔁",
+      sig: "Siguiente: Mates (1) →", destino: "/entreno/mates.html?repaso=1", salir: "Dejar el repaso" });
+    await Promise.all([page.waitForNavigation({ waitUntil: "load" }), page.click("[data-tanda-siguiente]")]);
+    await page.waitForSelector("#tanda-diez", { timeout: 10000 }).catch(() => {});
+    await Promise.all([page.waitForNavigation({ waitUntil: "load" }), page.click("[data-tanda-siguiente]")]);
+    await page.waitForSelector("#tanda-diez", { timeout: 10000 }).catch(() => {});
+    const ultimo = await barra();
+    igual("en la última sección, terminar en vez de seguir", ultimo && [ultimo.paso, ultimo.sig, ultimo.salir],
+      ["Repaso del día, paso 3 de 3: Aperturas (2)", null, "Terminar el repaso"]);
+    await page.click("[data-tanda-salir]");
+    igual("y al terminar lo dice y no deja nada guardado", await page.evaluate(() => [document.querySelector("#tanda-diez [role=status]").textContent, localStorage.getItem("tanda_diez_v1")]),
+      ["¡Listo! Terminaste tu repaso del día.", null]);
     await ctx.close();
   }
   {
@@ -268,7 +292,7 @@ async function hub(browser) {
     let items = await page.evaluate(() => Array.from(document.querySelectorAll("#hoy-lista a")).map((a) => [a.textContent.replace("→", "").trim(), a.getAttribute("href")]));
     igual("el plan va primero, con su semana, a dónde ir y cuánto lleva", items[0],
       [`📅Tu plan, semana 1 de ${plan.semanas.length} · Táctica: ${recurso.texto} (✓ 3 hechos)`, "../" + recurso.href]);
-    igual("y sigue sin pasar de tres cosas", items.length, "3");
+    igual("y después el repaso del día, sin pasar de tres cosas", [items.length <= 3, /^🔁Repaso del día/.test(items[1][0])], [true, true]);
     sinErrores(errores, "hub con plan");
     await ctx.close();
 
@@ -395,9 +419,9 @@ async function hub(browser) {
     }));
     await page.waitForSelector("#app:not(.hidden)", { timeout: 20000 });
     await page.waitForFunction(() => document.querySelectorAll("#hoy-lista a").length > 0, { timeout: 10000 });
-    igual("propone los repasos de Visualización y de Practicar, con a dónde ir", await page.evaluate(() =>
+    igual("propone los repasos de Visualización y de Practicar, juntos en el repaso del día", await page.evaluate(() =>
       Array.from(document.querySelectorAll("#hoy-lista a")).map((a) => [a.textContent.replace("→", "").trim(), a.getAttribute("href")])),
-      [["👁️Repasar 2 ejercicios de Visualización que te costaron", "visualizacion.html?repaso=1"], ["♞Repasar 1 posición de Practicar que te costó", "practicas.html?repaso=1"]]);
+      [["🔁Repaso del día: 3 en 2 secciones (Visualización 2 · Practicar 1)", "visualizacion.html?repaso=1"]]);
     await ctx.close();
   }
   /* Y los de Tipos y de Finales. */
@@ -410,9 +434,9 @@ async function hub(browser) {
     }));
     await page.waitForSelector("#app:not(.hidden)", { timeout: 20000 });
     await page.waitForFunction(() => document.querySelectorAll("#hoy-lista a").length > 0, { timeout: 10000 });
-    igual("propone los repasos de Tipos y de Finales, con a dónde ir", await page.evaluate(() =>
+    igual("propone los repasos de Tipos y de Finales, juntos en el repaso del día", await page.evaluate(() =>
       Array.from(document.querySelectorAll("#hoy-lista a")).map((a) => [a.textContent.replace("→", "").trim(), a.getAttribute("href")])),
-      [["🧩Repasar 2 ejercicios de Habilidades que te costaron", "tipos.html#repaso"], ["🏁Volver a jugar 1 final que te costó", "finales.html?repaso=1"]]);
+      [["🔁Repaso del día: 3 en 2 secciones (Habilidades 2 · Finales 1)", "tipos.html#repaso"]]);
     await ctx.close();
   }
   /* Lo empezado que no vence: los finales contra la máquina a medias y una

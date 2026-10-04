@@ -2723,8 +2723,8 @@ async function pruebaHoyEnElPanel(browser) {
   await page.waitForFunction(() => document.querySelectorAll("#hoy-lista a").length > 0, null, { timeout: 15000 }).catch(() => {});
   const items = await page.evaluate(() => Array.from(document.querySelectorAll("#hoy-lista a")).map((a) => [a.textContent.replace("→", "").trim(), a.getAttribute("href")]));
   igual("se ve", await page.evaluate(() => document.getElementById("hoy").checkVisibility()), "true");
-  igual("con las direcciones desde la raíz del sitio", items,
-    [["🔁Repasar 1 ejercicio que te costó", "entreno/temas.html?repaso=1"], ["📖1 línea de aperturas para repasar", "entreno/aperturas.html"]]);
+  igual("con las direcciones desde la raíz del sitio (dos colas: un solo repaso del día)", items,
+    [["🔁Repaso del día: 2 en 2 secciones (Ejercicios por tema 1 · Aperturas 1)", "entreno/temas.html?repaso=1"]]);
   igual("sin diagnóstico, no lo propone: ya lo ofrecen la franja y su tarjeta",
     items.filter(([t]) => /diagn/i.test(t)).length, "0");
   igual("va después de lo que vence y antes de la grilla", await page.evaluate(() => {

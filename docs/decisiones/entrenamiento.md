@@ -734,6 +734,38 @@ hacer, y la lista quedaba abajo de la pantalla.
   Tipos de punta a punta, `?repaso=1` de Finales, el hub y el `limpio` de las
   tres.
 
+## Un solo repaso del día
+
+Con seis colas de «Repasar fallados» más Aperturas y las preguntas de clase,
+«Hoy te toca» proponía UNA cosa por cola. Con tres colas vencidas, el repaso
+ocupaba las tres líneas de la lista, y el plan, el tema más flojo o el
+diagnóstico no llegaban nunca. Además había que entrar a cada sección por
+separado.
+
+- **Con dos secciones o más que tienen algo hoy, va UNA cosa**: «🔁 Repaso del
+  día: 5 en 3 secciones (Ejercicios por tema 2 · Mates 1 · Aperturas 2)».
+  Con una sola sección se sigue diciendo tal cual («Repasar 2 mates que te
+  costaron»): un recorrido de un paso no aporta nada. Las cuentas son las de
+  siempre (`RepasoFallados.pendientes` y las líneas de Aperturas ya empezadas
+  y vencidas), ahora en `repasosDeHoy()` de `js/hoy-te-toca.js`.
+- **Tocarlo arranca un recorrido**: la barra de «Entrenar 10 minutos»
+  (`js/tanda-diez.js` → `TandaDiez.empezarRepaso`) en modo repaso. Va **sin
+  reloj**, porque un repaso se termina y no se corta a los diez minutos. Dice
+  «Repaso del día, paso 1 de 3: Ejercicios por tema (2)», lleva a la sección
+  siguiente y, en la última, «Terminar el repaso». Dura 12 horas (si queda a
+  medias, mañana es otro repaso) y es del aparato (`tanda_diez_v1`, con
+  `tipo: "repaso"`), como la tanda.
+- **Cada sección sigue repasando a su manera**: el recorrido solo encadena
+  los `?repaso=1` (y `tipos.html#repaso`) que ya existían. Juntar los
+  ejercicios de todas en una sola página habría sido reescribir seis
+  tableros distintos (Finales se juega contra la máquina, Visualización no
+  tiene tablero que se toque), y cada uno ya tiene su manera de puntuar.
+- Sin la barra o sin almacenamiento, el enlace sigue llevando a la primera
+  sección.
+- Lo prueban `verificar-entreno-repaso.js` (el texto, que deja lugar para lo
+  demás, el recorrido de punta a punta y el final) y `verificar-panel.js`
+  (lo mismo en el panel, con las direcciones desde la raíz).
+
 ## El tema más flojo, en el hub
 
 El «Hoy te toca» propone el motivo que menos sale limpio («Tu tema más flojo,
