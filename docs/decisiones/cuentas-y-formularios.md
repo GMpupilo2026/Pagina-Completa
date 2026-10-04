@@ -722,6 +722,19 @@ le funcionó.
 - El correo de la persona se busca con `ilike` y los comodines escapados: un
   `%` escrito en el campo encontraría la cuenta de otra.
 
+- **Un correo que Resend descartó ya no pasa por «enviado».** Resend acepta
+  el envío aunque la dirección esté en su lista de bloqueo (entra ahí la
+  primera vez que rebota) y lo descarta después: `suppressed`. Así se
+  perdieron los dos enlaces de una cuenta de prueba cuya bienvenida había
+  rebotado una semana antes. `_compartido/envio-resend.ts` pregunta en qué
+  terminó (`GET /emails/{id}`, unas pocas veces en ~5 s) y
+  `reenviar-acceso` se lo dice a quien lo mandó, con la dirección y qué
+  revisar. `recuperar-acceso` no puede contar nada (contesta siempre lo
+  mismo): lo deja en los registros, revisado después de contestar. Sacar una
+  dirección de la lista es a mano, en Resend, y solo si se sabe que está bien:
+  volver a mandarle a una que rebota daña la reputación del dominio. Lo
+  revisa `verificar-envio-resend.js`.
+
 Lo revisan `verificar-bienvenida.js` (el canje del token, el aviso del enlace
 anulado, que el pedido vaya a la función y diga la hora) y
 `verificar-alumno-sin-correo.js` (que los dos casos vayan por la función y

@@ -31,6 +31,7 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { esCorreoInterno } from "./usuario-alumno.ts";
 import { asuntoRecuperacion, cuerpoRecuperacion, enlaceRecuperacion } from "./recuperacion-email.ts";
+import { envioFallido, motivoNoLlego } from "./envio-resend.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -146,6 +147,14 @@ Deno.serve(async (req) => {
       const detalle = await res.text();
       console.error("reenviar-acceso: Resend rechazó el correo:", res.status, detalle);
       return json({ error: "El correo no se pudo mandar" }, 502);
+    }
+    // Resend acepta aunque la dirección esté bloqueada por un rebote viejo, y
+    // lo descarta después: se pregunta en qué terminó, y si no llegó se le
+    // dice a quien lo mandó, que es quien puede arreglar la dirección.
+    const fallo = await envioFallido(apiKey, (await res.json().catch(() => null))?.id);
+    if (fallo) {
+      console.error("reenviar-acceso: el correo para", alumnoId, "terminó en", fallo);
+      return json({ error: motivoNoLlego(fallo, destino), correo_destino: destino, no_llego: fallo }, 502);
     }
   } catch (err) {
     console.error("reenviar-acceso: error mandando el correo:", err);
