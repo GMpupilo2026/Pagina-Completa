@@ -244,6 +244,21 @@ window.Coordenadas = (function () {
     // Cambiar de tema (claro/oscuro, o el de la plataforma) cambia el fondo.
     new MutationObserver(repintar).observe(document.documentElement, { attributes: true, attributeFilter: ["class", "data-tema"] });
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(repintar);
+    // Al imprimir, el tablero cambia de tamaño y de lugar (la hoja es más
+    // angosta y la página la achica) y ni el ResizeObserver ni el cuadro
+    // siguiente llegan a correr antes de que salga el papel: las etiquetas
+    // quedaban donde estaban en la pantalla, sueltas, y hasta empujaban una
+    // segunda hoja en blanco con la a…h y el 1…8. Este aviso sí corre a tiempo,
+    // con la maqueta de la hoja ya armada, así que se recolocan ahí mismo, sin
+    // esperar al cuadro siguiente. Y al volver a la pantalla, de nuevo.
+    window.addEventListener("beforeprint", () => { marco.hidden = true; });
+    if (window.matchMedia) {
+      const impresion = window.matchMedia("print");
+      const alImprimir = () => posicionar(tablero, marco);
+      if (impresion.addEventListener) impresion.addEventListener("change", alImprimir);
+      else if (impresion.addListener) impresion.addListener(alImprimir);
+    }
+    window.addEventListener("afterprint", () => posicionar(tablero, marco));
     posicionar(tablero, marco);
   }
 

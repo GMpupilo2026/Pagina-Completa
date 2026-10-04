@@ -240,7 +240,7 @@ window.FichaRender = (function () {
     document.getElementById("b-adelante").addEventListener("click", () => irA(indice + 1));
     document.getElementById("b-final").addEventListener("click", () => irA(jugadasDe(fichaActual).length));
 
-    return { abrir, irA, lineaDe };
+    return { abrir, irA, lineaDe, indice: () => indice, ficha: () => fichaActual };
   }
 
   return { crear, jugadasDe, lineaDe };

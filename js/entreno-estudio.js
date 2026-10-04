@@ -186,6 +186,153 @@ function abrirFicha(F){
 document.getElementById('volver').addEventListener('click', (e) => { e.preventDefault(); mostrarLista(); document.getElementById('buscar').focus(); });
 document.getElementById('solo-cat-todas').addEventListener('click', soltarCategoria);
 document.getElementById('b-imprimir').addEventListener('click', () => window.print());
+
+/* ---------------- Las flechas del mapa ----------------
+   Se trazan midiendo dónde quedó cada caja, no con coordenadas fijas: el mapa
+   se arma distinto en pantalla ancha y en el papel (ahí el tablero va en el
+   medio), y unas líneas en porcentajes apuntaban al vacío en una de las dos.
+   De la idea principal baja una flecha a la pieza; de la pieza salen las de
+   los dos bloques de arriba y, en el papel, las de abajo salen del tablero
+   (`--centro-abajo: tablero` en la hoja de impresión). Cada una lleva el color
+   de su bloque, que también tiene su título escrito: el color no dice nada solo.
+   Al imprimir se vuelven a trazar en el aviso de `matchMedia("print")`, que
+   corre con la maqueta de la hoja ya armada (ver js/coordenadas-tablero.js). */
+const SVG_NS = 'http://www.w3.org/2000/svg';
+function bordeHacia(r, hacia, redondo){
+  const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+  const dx = hacia.x - cx, dy = hacia.y - cy;
+  if(!dx && !dy) return { x: cx, y: cy };
+  const k = redondo
+    ? (r.width / 2) / Math.hypot(dx, dy)
+    : Math.min(dx ? (r.width / 2) / Math.abs(dx) : Infinity, dy ? (r.height / 2) / Math.abs(dy) : Infinity);
+  return { x: cx + dx * k, y: cy + dy * k };
+}
+const centroDe = (r) => ({ x: r.left + r.width / 2, y: r.top + r.height / 2 });
+function trazarFlechas(){
+  const svg = document.querySelector('.mapa-lineas');
+  const nodo = document.getElementById('nodo');
+  if(!svg || !nodo || !svg.getClientRects().length) return;
+  const base = svg.getBoundingClientRect();
+  const rn = nodo.getBoundingClientRect();
+  if(!base.width || !rn.width) { svg.replaceChildren(); return; }
+  const abajo = getComputedStyle(svg).getPropertyValue('--centro-abajo').trim() === 'tablero'
+    ? document.getElementById('tablero') : nodo;
+  const rt = abajo.getBoundingClientRect();
+  const defs = document.createElementNS(SVG_NS, 'defs');
+  const trazos = [];
+  [['caja-idea', '--b-idea', null], ['caja-1', '--b-1', rn], ['caja-2', '--b-2', rn],
+   ['caja-3', '--b-3', abajo === nodo ? rn : 'tablero'], ['caja-4', '--b-4', abajo === nodo ? rn : 'tablero']].forEach(([clase, color, eje], i) => {
+    const caja = document.querySelector('.' + clase);
+    const rc = caja && caja.getBoundingClientRect();
+    if(!rc || !rc.width) return;
+    // La de la idea va de la caja a la pieza; las demás, del eje a la caja.
+    // Cuando el eje es el tablero (en el papel), la flecha sale derecha del
+    // costado, por fuera de los números de las filas, a la altura de la caja.
+    let p1, p2;
+    if(eje === 'tablero'){
+      const izquierda = rc.left + rc.width / 2 < rt.left + rt.width / 2;
+      const y = Math.min(Math.max(rc.top + rc.height / 2, rt.top + 12), rt.bottom - 12);
+      p1 = { x: izquierda ? rt.left - 18 : rt.right + 2, y };
+      p2 = { x: izquierda ? rc.right : rc.left, y };
+    } else {
+      const desde = eje || rc, hasta = eje ? rc : rn;
+      p1 = bordeHacia(desde, centroDe(hasta), desde === rn);
+      p2 = bordeHacia(hasta, centroDe(desde), hasta === rn);
+    }
+    const largo = Math.hypot(p2.x - p1.x, p2.y - p1.y);
+    if(largo < 12) return;
+    // Que la punta no se meta en el borde de la caja.
+    const ux = (p2.x - p1.x) / largo, uy = (p2.y - p1.y) / largo;
+    const x1 = p1.x + ux * 3 - base.left, y1 = p1.y + uy * 3 - base.top;
+    const x2 = p2.x - ux * 4 - base.left, y2 = p2.y - uy * 4 - base.top;
+    const id = 'flecha-' + i;
+    const marca = document.createElementNS(SVG_NS, 'marker');
+    marca.setAttribute('id', id);
+    marca.setAttribute('viewBox', '0 0 10 10');
+    marca.setAttribute('refX', '9'); marca.setAttribute('refY', '5');
+    marca.setAttribute('markerWidth', '7'); marca.setAttribute('markerHeight', '7');
+    marca.setAttribute('orient', 'auto');
+    const punta = document.createElementNS(SVG_NS, 'path');
+    punta.setAttribute('d', 'M0,0 L10,5 L0,10 z');
+    punta.style.fill = 'var(' + color + ')';
+    marca.appendChild(punta);
+    defs.appendChild(marca);
+    // Una curva suave y no una recta: se lee como un mapa hecho a mano.
+    const mx = (x1 + x2) / 2, my = (y1 + y2) / 2;
+    const curva = eje === 'tablero' ? 0 : Math.min(24, largo / 6);
+    const cx = mx - uy * curva, cy = my + ux * curva;
+    const linea = document.createElementNS(SVG_NS, 'path');
+    linea.setAttribute('d', `M${x1.toFixed(1)},${y1.toFixed(1)} Q${cx.toFixed(1)},${cy.toFixed(1)} ${x2.toFixed(1)},${y2.toFixed(1)}`);
+    linea.setAttribute('fill', 'none');
+    linea.setAttribute('stroke-width', '1.8');
+    linea.setAttribute('stroke-linecap', 'round');
+    linea.style.stroke = 'var(' + color + ')';
+    linea.setAttribute('marker-end', 'url(#' + id + ')');
+    trazos.push(linea);
+  });
+  svg.setAttribute('viewBox', `0 0 ${base.width.toFixed(1)} ${base.height.toFixed(1)}`);
+  svg.replaceChildren(defs, ...trazos);
+}
+let flechasPedidas = 0;
+function pedirFlechas(){
+  if(flechasPedidas) return;
+  flechasPedidas = requestAnimationFrame(() => { flechasPedidas = 0; trazarFlechas(); });
+}
+if(window.ResizeObserver) new ResizeObserver(pedirFlechas).observe(document.getElementById('ficha-vista'));
+new MutationObserver(pedirFlechas).observe(document.getElementById('mapa'), { childList: true, subtree: true, characterData: true });
+window.addEventListener('resize', pedirFlechas);
+if(document.fonts && document.fonts.ready) document.fonts.ready.then(pedirFlechas);
+
+/* ---------------- El logo de la academia, en la esquina del papel ----------------
+   El mismo que lleva el encabezado: el de la academia activa si la cuenta es
+   de una (lo pone js/marca-academia.js, que llega después), o el de Ajedrez
+   Integral si no. Una academia sin logo pone su nombre escrito. Se copia
+   cuando cambia el encabezado, no al imprimir: una imagen que se empieza a
+   pedir en el momento de imprimir no llega al papel. */
+function copiarLogoEsquina(){
+  const esquina = document.getElementById('logo-esquina');
+  const enlace = document.getElementById('marca-enlace');
+  if(!esquina || !enlace) return;
+  const img = enlace.querySelector('img');
+  if(img && img.getAttribute('src')){
+    const copia = document.createElement('img');
+    copia.src = img.src;
+    copia.alt = '';
+    copia.addEventListener('error', () => copia.remove());
+    esquina.replaceChildren(copia);
+  } else {
+    const nombre = enlace.querySelector('.font-serif');
+    esquina.textContent = nombre ? nombre.textContent.trim() : '';
+  }
+}
+copiarLogoEsquina();
+if(document.getElementById('marca-enlace')){
+  new MutationObserver(copiarLogoEsquina).observe(document.getElementById('marca-enlace'), { childList: true, subtree: true, attributes: true, attributeFilter: ['src'] });
+}
+if(window.matchMedia){
+  const impresion = window.matchMedia('print');
+  if(impresion.addEventListener) impresion.addEventListener('change', trazarFlechas);
+  else if(impresion.addListener) impresion.addListener(trazarFlechas);
+}
+window.addEventListener('afterprint', pedirFlechas);
+
+/* En pantalla la ficha abre en la posición de salida, para recorrer la línea
+   jugada a jugada. En el papel eso es un tablero con las piezas en su casilla
+   de siempre debajo de un pie que cuenta otra cosa («las blancas armaron el
+   centro…»): se imprime la posición del final de la línea, que es la que
+   describe el pie. Si se fue a una jugada en particular, se imprime esa. Al
+   terminar vuelve a donde estaba. */
+let volverAlInicio = false;
+window.addEventListener('beforeprint', () => {
+  const F = visor.ficha();
+  const n = F ? FichaRender.jugadasDe(F).length : 0;
+  volverAlInicio = !!n && visor.indice() === 0;
+  if(volverAlInicio) visor.irA(n);
+});
+window.addEventListener('afterprint', () => {
+  if(volverAlInicio) visor.irA(0);
+  volverAlInicio = false;
+});
 document.getElementById('buscar').addEventListener('input', (e) => {
   busqueda = e.target.value.trim();
   pintarLista();

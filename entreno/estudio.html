@@ -209,20 +209,106 @@
   html.adaptive-mode .en-palabras{border-color:var(--brass);}
   html.adaptive-mode .en-palabras p{color:var(--text); font-size:1rem;}
 
+  .logo-centro, .logo-esquina{display:none;}
+
   /* La ficha se imprime: es de lo que más sentido tiene pegar en el cuaderno.
-     Se va todo lo que no es la ficha —el encabezado, la lista, los botones— y
-     el mapa se acomoda a una hoja. */
+     En el papel es un mapa de ideas de UNA hoja carta o A4: el título arriba,
+     la idea principal a lo ancho, el tablero en el medio como eje (con el
+     sello de Ajedrez Integral en un medallón encima, de donde salen las
+     flechas) y los cuatro bloques a los costados, cada uno con su flecha de
+     su color. En la esquina, el logo de la academia. Sin marca de agua: se
+     probó y el dueño prefirió el sello en el medallón.
+
+     Antes el tablero quedaba partido entre dos hojas: las áreas del mapa solo
+     se nombraban en pantalla ancha, nada le prohibía al tablero cortarse, y
+     las coordenadas de afuera se quedaban donde estaban en la pantalla y
+     empujaban una segunda hoja (ver js/coordenadas-tablero.js).
+     verificar-estudio.js imprime las 56 fichas en PDF y cuenta las hojas.
+
+     `.mapa` se vuelve `display:contents` para que sus cajas y el tablero
+     (que en el HTML va después, fuera del mapa) sean hijos de la misma
+     cuadrícula: así el tablero puede ir EN MEDIO de los bloques sin mover
+     nada del DOM, que es el orden en que lo lee un lector de pantalla. */
   @media print{
-    header, footer, .intro, .buscador, #lista-vista, .controles, .ficha-pie, .ficha-cabeza a, #app > div:first-child{display:none !important;}
-    body, .caja, .nodo, .diagrama{background:#fff !important; color:#000 !important;}
-    .caja{border:1px solid #888 !important; break-inside:avoid;}
-    .caja li, .pie, .ficha-cabeza .sub{color:#333 !important;}
-    .mapa{grid-template-columns:1fr 1fr; grid-template-areas:"idea idea" "b1 b2" "b3 b4";}
-    .mapa-lineas, .nodo{display:none !important;}
-    .diagrama{max-width:260px;}
-    .sq{print-color-adjust:exact; -webkit-print-color-adjust:exact;}
-    .en-palabras{display:none;}
-    main{padding:0;}
+    @page{margin:12mm;}
+    /* En el papel siempre van los tonos de claro: los de oscuro son pálidos
+       para ir sobre fondo oscuro y en blanco no se leen. Medidos contra
+       blanco, los cinco pasan AA de sobra (6:1 o más). */
+    :root, html.dark{
+      --b-idea:#486581; --b-1:#2c6b4f; --b-2:#a8371a; --b-3:#2c5f7f; --b-4:#8c2f3f;
+      --brass:#de911d; --line:#bcccdc; --text:#102a43; --text-muted:#486581; --text-cuerpo:#243b53;
+      --cat-apertura:#a1670f; --cat-defensa:#2c5f7f; --bg-panel:#fff;
+    }
+    header, footer, .intro, .buscador, #lista-vista, .controles, .ficha-pie, .ficha-cabeza a, #app > div:first-child, #q-comandos, #migas, .en-palabras{display:none !important;}
+    body, .caja, .nodo{background:#fff !important; color:#102a43 !important;}
+    main, #app{padding:0 !important;}
+    * {print-color-adjust:exact; -webkit-print-color-adjust:exact;}
+
+    /* Solo la ficha abierta (la página la muestra con display:block en línea). */
+    #ficha-vista[style*="block"]{
+      position:relative; display:grid !important; column-gap:40px; row-gap:10px;
+      grid-template-columns:1fr 232px 1fr;
+      grid-template-areas:
+        "cab  cab  cab"
+        "idea idea idea"
+        "b1   nodo b2"
+        "b1   tab  b2"
+        "b3   tab  b4"
+        "b3   pie  b4"
+        "jug  jug  jug";
+      /* Lo que sobra de alto de los bloques de abajo va a la fila del pie, no
+         entre el tablero y su pie. */
+      grid-template-rows:auto auto auto auto auto 1fr auto;
+      align-items:start;
+    }
+    .mapa{display:contents;}
+    .ficha-cabeza{grid-area:cab; margin:0 0 4px; padding:0 110px 8px 0; border-bottom:3px double var(--brass);}
+    .ficha-cabeza h2{font-size:1.75rem; line-height:1.15;}
+    .ficha-cabeza .sub{color:var(--text-cuerpo) !important; font-size:0.85rem;}
+
+    .caja{
+      border:1.5px solid var(--c) !important; border-radius:12px; padding:8px 12px 6px;
+      break-inside:avoid; background:#fff !important;
+    }
+    .caja h3{
+      display:inline-block; margin:-19px 0 4px -2px; padding:1px 10px; border-radius:999px;
+      background:#fff; border:1.5px solid var(--c); color:var(--c);
+      font-size:0.7rem; letter-spacing:0.04em; text-transform:uppercase; white-space:nowrap;
+    }
+    .caja li{font-size:0.82rem; line-height:1.36; margin-bottom:2px; color:#243b53 !important;}
+    .caja-idea{grid-area:idea; justify-self:center; width:78%; margin-top:12px; border-width:2px !important; text-align:left;}
+    .caja-1{grid-area:b1; margin-top:12px;} .caja-2{grid-area:b2; margin-top:12px;}
+    .caja-3{grid-area:b3; margin-top:12px;} .caja-4{grid-area:b4; margin-top:12px;}
+
+    /* El medallón con doble aro, encima del tablero: en el papel lleva el
+       sello de Ajedrez Integral (.logo-centro, en la misma celda y encima) y
+       no la pieza de la ficha, que se esconde pero deja el círculo, que es
+       de donde se miden las flechas. */
+    .nodo{
+      grid-area:nodo; display:flex !important; width:112px; height:112px; font-size:2.4rem;
+      justify-self:center; align-self:center; margin:26px 0 8px;
+      border:2px solid var(--brass); box-shadow:0 0 0 4px #fff, 0 0 0 5.5px var(--b-idea);
+    }
+    .nodo > *{visibility:hidden;}
+
+    .mapa-lineas{display:block !important; position:absolute; inset:0; width:100%; height:100%; z-index:0; --centro-abajo:tablero;}
+    .diagrama{grid-area:tab; width:100%; max-width:none; margin:0; position:relative; z-index:1; break-inside:avoid;}
+    .board8{box-shadow:none; break-inside:avoid;}
+    .sq{font-size:22px;}
+    .pie{grid-area:pie; margin:0; max-width:none; font-size:0.75rem; line-height:1.35; color:#243b53 !important; break-before:avoid;}
+    .jugadas{grid-area:jug; margin:2px 0 0; max-width:none; font-size:0.85rem; break-inside:avoid;}
+    .jugada{font-size:0.85rem; padding:0 4px;}
+
+    .logo-centro{
+      display:block !important; grid-area:nodo; justify-self:center; align-self:center;
+      width:92px; height:auto; margin-top:14px; position:relative; z-index:2;
+    }
+    .logo-esquina{
+      display:flex !important; position:absolute; top:0; right:0; z-index:2;
+      max-width:100px; height:56px; align-items:center; justify-content:flex-end;
+      font-family:'Merriweather',serif; font-weight:700; font-size:0.8rem; text-align:right; color:#102a43;
+    }
+    .logo-esquina img{max-width:100px; max-height:56px; object-fit:contain;}
   }
 
   @media (prefers-reduced-motion: reduce){
@@ -283,6 +369,10 @@
            palabras justo debajo y el pie dice qué se ve, igual que el material
            de estudio de los cursos. Nada de esto depende de ver una imagen. -->
       <div id="ficha-vista">
+        <!-- Solo en el papel: el sello de Ajedrez Integral en el medallón del
+             centro y, en la esquina, el logo de la academia (el del encabezado). -->
+        <img class="logo-centro" src="../img/logo-oscar-angulo-marca.png" alt="" aria-hidden="true" width="760" height="571" decoding="async">
+        <div class="logo-esquina" id="logo-esquina" aria-hidden="true"></div>
         <div class="ficha-cabeza">
           <a href="#" id="volver">← Todas las fichas</a>
           <p><span class="etiqueta" id="ficha-etiqueta"></span><span class="etiqueta" id="ficha-nivel"></span></p>
@@ -291,15 +381,10 @@
         </div>
 
         <div class="mapa" id="mapa">
-          <svg class="mapa-lineas" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true" focusable="false">
-            <g fill="none" stroke-width="1.5">
-              <line x1="50" y1="50" x2="50" y2="14" stroke="var(--b-idea)" vector-effect="non-scaling-stroke"></line>
-              <line x1="50" y1="50" x2="16" y2="44" stroke="var(--b-1)" vector-effect="non-scaling-stroke"></line>
-              <line x1="50" y1="50" x2="84" y2="44" stroke="var(--b-2)" vector-effect="non-scaling-stroke"></line>
-              <line x1="50" y1="50" x2="16" y2="86" stroke="var(--b-3)" vector-effect="non-scaling-stroke"></line>
-              <line x1="50" y1="50" x2="84" y2="86" stroke="var(--b-4)" vector-effect="non-scaling-stroke"></line>
-            </g>
-          </svg>
+          <!-- Las flechas del mapa las traza js/entreno-estudio.js midiendo dónde
+               quedó cada caja: en pantalla y en el papel la maqueta es otra, y
+               unas líneas fijas en porcentajes apuntaban al vacío en una de las dos. -->
+          <svg class="mapa-lineas" aria-hidden="true" focusable="false"></svg>
           <section class="caja caja-idea" style="--c:var(--b-idea)"><h3 id="t-idea"></h3><ul id="l-idea"></ul></section>
           <section class="caja caja-1" style="--c:var(--b-1)"><h3 id="t-1"></h3><ul id="l-1"></ul></section>
           <section class="caja caja-2" style="--c:var(--b-2)"><h3 id="t-2"></h3><ul id="l-2"></ul></section>

@@ -1408,9 +1408,39 @@ y 16 conceptos) sin tocar ni una de las 28 primeras. Lo que dejó escrito:
 
 - **Cada ficha tiene su enlace** (`estudio.html?ficha=<id>`), para mandarla por
   WhatsApp. Un id que ya no existe cae a la lista, no a una ficha en blanco.
-- **Se imprime.** Una hoja de estilos de impresión deja solo la ficha —sin
-  encabezado, sin lista, sin buscador, sin botones— y acomoda el mapa a dos
-  columnas.
+- **Se imprime, y en UNA hoja.** Una hoja de estilos de impresión deja solo la
+  ficha —sin encabezado, sin lista, sin buscador, sin botones— y la arma como
+  un mapa de ideas: la idea principal a lo ancho, el tablero en el medio como
+  eje con un medallón encima, y los cuatro bloques a
+  los costados, cada uno con su flecha de su color (y su título escrito: el
+  color no dice nada solo). En el papel, el medallón del centro —de donde
+  salen las flechas— lleva el sello de Ajedrez Integral
+  (`img/logo-oscar-angulo-marca.png`) en vez de la pieza; se probó primero de
+  marca de agua y el dueño lo prefirió ahí. En la esquina va el logo del
+  encabezado: el de la academia si la cuenta es de una
+  (`js/marca-academia.js`), el de Ajedrez Integral si no, y el nombre de la
+  academia si no tiene logo. Se copia cuando cambia el encabezado, no al
+  imprimir: una imagen que se empieza a pedir al imprimir no llega al papel.
+  - **El tablero se partía entre dos hojas** (la mitad de arriba en una, el
+    resto con el pie en la otra). Tres causas juntas: las áreas del mapa solo
+    se nombraban en pantalla ancha, nada le prohibía al tablero cortarse, y
+    las coordenadas de afuera se quedaban donde estaban en la pantalla y
+    empujaban una hoja más. Esto último valía para cualquier tablero impreso:
+    lo arregla `js/coordenadas-tablero.js` (las esconde en `beforeprint` y
+    las recoloca en el aviso de `matchMedia("print")`, que en Chrome corre con
+    la maqueta de la hoja ya armada; el ResizeObserver y el cuadro siguiente
+    no llegan a correr antes de que salga el papel).
+  - `.mapa` pasa a `display:contents` en el papel, así el tablero (que en el
+    HTML va después del mapa) queda en la misma cuadrícula que los bloques sin
+    cambiar el orden del DOM, que es el que lee el lector de pantalla.
+  - **Las flechas se trazan midiendo** (`trazarFlechas()` en
+    `js/entreno-estudio.js`), en pantalla y en el papel: eran líneas fijas en
+    porcentajes, y con dos maquetas distintas apuntaban al vacío en una.
+  - En pantalla la ficha abre en la posición de salida; **al imprimir va al
+    final de la línea**, que es la que describe el pie (si se fue a una jugada,
+    se imprime esa), y al terminar vuelve.
+  - En el papel van siempre los colores del modo claro: los de oscuro son
+    pálidos y en blanco no se leen.
 - **El tablero es decorativo** (`aria-hidden`): el pie cuenta qué se ve y la
   posición va contada pieza por pieza con `BlindNotation.positionSentence()`,
   que es la única tabla de nombres y plurales del sitio — escribirla otra vez
@@ -1443,7 +1473,7 @@ cada bloque traiga SUS renglones y no los del de al lado, que el tablero dibuje
 contra lo que diga la página), que el buscador mire las cuatro categorías, que
 el enlace `?ficha=` abra la ficha y que un id inventado caiga a la lista, que
 **la regla de `_redirects` siga mandando la dirección vieja de Fichas acá**, que
-al imprimir salga la ficha y no la lista, y que la página **se vea**: sin CSS
+al imprimir salga la ficha y no la lista —como mapa, con sus cinco flechas, el sello en el medallón, el logo de la academia en la esquina y la posición final de la línea—, que **las 56 fichas quepan en una hoja carta y en una A4** (las imprime en PDF y cuenta las hojas), y que la página **se vea**: sin CSS
 impreso como texto, con una sola hoja, y en oscuro cuando el tema está en
 oscuro. Absorbió todo lo que comprobaba `verificar-fichas-pagina.js`, que se fue
 con la página.
