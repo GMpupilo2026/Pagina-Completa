@@ -2,11 +2,11 @@
  *
  * Arma dos archivos en material/fichas-de-estudio/:
  *
- *   fichas-de-estudio-libro.pdf    Las 56 fichas como un libro, en hoja carta:
- *                                  tapa, presentación, índice, una portadilla
+ *   fichas-de-estudio-libro.pdf    Todas las fichas como un libro, en hoja carta:
+ *                                  tapa, presentación, índice (una o más páginas), una portadilla
  *                                  por categoría y una ficha por página, con
  *                                  su número.
- *   fichas-de-estudio-cartas.pdf   Las mismas 56 como cartas de 63 × 88 mm
+ *   fichas-de-estudio-cartas.pdf   Las mismas como cartas de 63 × 88 mm
  *                                  (el tamaño de una carta de juego), nueve por
  *                                  hoja carta, con marcas de corte. Frente: el
  *                                  título, el tablero y la idea principal.
@@ -61,8 +61,10 @@ const Chess = CJS.Chess || CJS;
 
 const NIVEL = { 1: "Principiante", 2: "Intermedio", 3: "Avanzado" };
 // Los colores de cada categoría y de cada bloque son los de la ficha en
-// pantalla (entreno/estudio.html), medidos contra blanco: 6:1 o más.
-const COLOR_CAT = { apertura: "#a1670f", defensa: "#2c5f7f", tactica: "#8c2f3f", concepto: "#2c6b4f" };
+// pantalla (entreno/estudio.html); el de los finales es propio del papel.
+// Todos medidos contra blanco, en los dos sentidos (texto de color sobre
+// blanco y letra blanca sobre el color de la banda): de 4,7:1 a 8,4:1.
+const COLOR_CAT = { apertura: "#a1670f", defensa: "#2c5f7f", tactica: "#8c2f3f", concepto: "#2c6b4f", final: "#5b3e8a" };
 const COLOR_BLOQUE = ["#486581", "#2c6b4f", "#a8371a", "#2c5f7f", "#8c2f3f"];
 
 const solo = process.argv.includes("--solo-cartas") ? "cartas" : process.argv.includes("--solo-libro") ? "libro" : "";
@@ -173,7 +175,7 @@ function htmlPresentacion() {
     <ul>
       <li><strong>La idea principal</strong>: lo que hay que recordar aunque se olvide todo lo demás.</li>
       <li><strong>El tablero</strong>: la posición del final de la línea, la que cuenta el texto de abajo.</li>
-      <li><strong>Los cuatro bloques</strong>: en las aperturas y defensas, los planes, las ideas tácticas, el medio juego y el final; en la táctica, cómo se reconoce, quién la hace, los errores frecuentes y cómo practicarla; en los conceptos, cuándo aparece, qué hacer, los errores frecuentes y qué pasa en el final.</li>
+      <li><strong>Los cuatro bloques</strong>: en las aperturas y defensas, los planes, las ideas tácticas, el medio juego y el final; en la táctica, cómo se reconoce, quién la hace, los errores frecuentes y cómo practicarla; en los conceptos, cuándo aparece, qué hacer, los errores frecuentes y qué pasa en el final; en los finales, cuándo aparece, cómo se juega, los errores frecuentes y cómo practicarlo.</li>
       <li><strong>Las jugadas</strong>: la línea completa, abajo, para jugarla en un tablero de verdad.</li>
     </ul>
     <h2>Cómo estudiarlas</h2>
@@ -186,8 +188,24 @@ function htmlPresentacion() {
   </body></html>`;
 }
 
-function htmlIndice(paginas) {
-  const bloques = ORDEN.map(({ cat, fichas }) => `
+/* El índice se reparte por categorías enteras, hasta unos setenta títulos por
+   página (dos columnas de 35 renglones): con 98 fichas ya no entraba en una,
+   y una categoría partida entre dos páginas se busca mal. */
+const POR_PAGINA_INDICE = 70;
+function paginasDelIndice() {
+  const out = [];
+  let actual = [], cuenta = 0;
+  for (const grupo of ORDEN) {
+    if (actual.length && cuenta + grupo.fichas.length > POR_PAGINA_INDICE) { out.push(actual); actual = []; cuenta = 0; }
+    actual.push(grupo);
+    cuenta += grupo.fichas.length;
+  }
+  if (actual.length) out.push(actual);
+  return out;
+}
+
+function htmlIndice(paginas, grupos, primera) {
+  const bloques = grupos.map(({ cat, fichas }) => `
     <section><h2>${esc(cat.etiqueta)} <span>${esc(cat.sub)}</span></h2><ol>
     ${fichas.map((F) => `<li><span class="t">${esc(F.titulo)}</span><span class="p">${paginas[F.id]}</span></li>`).join("")}
     </ol></section>`).join("");
@@ -202,7 +220,7 @@ function htmlIndice(paginas) {
     .t{flex:0 1 auto;} .p{margin-left:auto; padding-left:2mm; font-variant-numeric:tabular-nums;}
     li::after{content:""; order:1; flex:1; border-bottom:1px dotted #9fb3c8; margin:0 1.5mm; transform:translateY(-3px);}
     .p{order:2;}
-  </style></head><body><h1>Índice</h1><div class="cols">${bloques}</div></body></html>`;
+  </style></head><body><h1>${primera ? "Índice" : "Índice <span style=\"font-size:13pt;color:#486581\">(sigue)</span>"}</h1><div class="cols">${bloques}</div></body></html>`;
 }
 
 function htmlPortadilla({ cat, fichas }) {
@@ -225,10 +243,11 @@ async function libro(browser) {
   const ctx = await contexto(browser);
   const piezas = [];   // { pdf, nombre } en orden
 
-  // La numeración: tapa (sin número), presentación 2, índice 3, y después
-  // una portadilla y las fichas de cada categoría.
+  // La numeración: tapa (sin número), presentación 2, el índice (las
+  // páginas que ocupe) y después una portadilla y las fichas de cada categoría.
+  const indice = paginasDelIndice();
   const paginas = {};
-  let n = 3;
+  let n = 2 + indice.length;
   const portadillas = {};
   for (const grupo of ORDEN) {
     portadillas[grupo.cat.id] = ++n;
@@ -237,7 +256,9 @@ async function libro(browser) {
 
   piezas.push({ nombre: "tapa", pdf: await pdfDeHtml(ctx, htmlTapa(), { pdf: { format: "Letter" } }) });
   piezas.push({ nombre: "presentación", pdf: await pdfDeHtml(ctx, htmlPresentacion(), { pdf: { format: "Letter", displayHeaderFooter: true, headerTemplate: "<span></span>", footerTemplate: PIE(2), margin: MARGEN, preferCSSPageSize: false } }) });
-  piezas.push({ nombre: "índice", pdf: await pdfDeHtml(ctx, htmlIndice(paginas), { pdf: { format: "Letter", displayHeaderFooter: true, headerTemplate: "<span></span>", footerTemplate: PIE(3), margin: MARGEN, preferCSSPageSize: false } }) });
+  for (let i = 0; i < indice.length; i++) {
+    piezas.push({ nombre: "índice " + (i + 1), pdf: await pdfDeHtml(ctx, htmlIndice(paginas, indice[i], i === 0), { pdf: { format: "Letter", displayHeaderFooter: true, headerTemplate: "<span></span>", footerTemplate: PIE(3 + i), margin: MARGEN, preferCSSPageSize: false } }) });
+  }
 
   const page = await ctx.newPage();
   const errores = [];

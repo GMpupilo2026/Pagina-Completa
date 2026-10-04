@@ -3,7 +3,7 @@
  * mapa de una sola pantalla (idea + cuatro bloques alrededor de la pieza) y,
  * abajo, el tablero que la explica, recorrible jugada por jugada.
  *
- * Lo usa entreno/estudio.html, las 56 fichas en sus cuatro categorías. Vive
+ * Lo usa entreno/estudio.html, todas las fichas en sus categorías. Vive
  * aparte y no dentro de esa página porque antes estaba escrito dentro de
  * entreno/fichas.html —la página que se fusionó con Estudio— y corregirle algo
  * ahí no lo habría corregido en la otra.

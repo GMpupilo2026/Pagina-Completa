@@ -112,7 +112,7 @@ function jugadasDe(F) {
 
     igual("no queda ninguna pestaña en la página",
       await page.evaluate(() => document.querySelectorAll("nav.tabs, .tab").length), 0);
-    igual("se ven TODAS las fichas de una, las cuatro categorías juntas",
+    igual("se ven TODAS las fichas de una, todas las categorías juntas",
       await page.evaluate(() => document.querySelectorAll(".ficha-item").length), ESTUDIO.length);
     igual("agrupadas en un <h2> por categoría",
       await page.evaluate(() => [...document.querySelectorAll("h2.study-group-title")].map((h) => h.textContent)),
@@ -204,7 +204,7 @@ function jugadasDe(F) {
       "juegas con negras · " + { 1: "Principiante", 2: "Intermedio", 3: "Avanzado" }[ESTUDIO.find((F) => F.id === "siciliana").nivel] +
         " · " + ESTUDIO.find((F) => F.id === "siciliana").subtitulo);
 
-    console.log("\n=== El buscador mira las cuatro categorías ===");
+    console.log("\n=== El buscador mira todas las categorías ===");
     await page.fill("#buscar", "peon pasado");     // sin tilde, como lo escribe cualquiera
     const hallado = await page.evaluate(() => [...document.querySelectorAll(".ficha-item")].map((b) => b.dataset.ficha));
     igual("«peon pasado» encuentra exactamente las fichas que hablan de él",

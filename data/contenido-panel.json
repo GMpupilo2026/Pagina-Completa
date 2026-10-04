@@ -57,7 +57,13 @@
   "gambito-evans",
   "siciliana-cerrada",
   "francesa-tarrasch",
-  "ataque-indio-de-rey"
+  "ataque-indio-de-rey",
+  "colle",
+  "alapin",
+  "trompowsky",
+  "reti",
+  "catalana",
+  "gambito-escoces"
  ],
  "entreno/estudio.html?cat=defensa": [
   "siciliana",
@@ -71,7 +77,14 @@
   "india-de-dama",
   "petrov",
   "pirc",
-  "siciliana-dragon"
+  "siciliana-dragon",
+  "dos-caballos",
+  "philidor",
+  "holandesa",
+  "alekhine",
+  "gambito-dama-aceptado",
+  "semieslava",
+  "benoni-moderna"
  ],
  "entreno/estudio.html?cat=tactica": [
   "horquilla",
@@ -89,7 +102,18 @@
   "mate-anastasia",
   "pieza-atrapada",
   "jaque-perpetuo",
-  "subpromocion"
+  "subpromocion",
+  "mate-escalera",
+  "mate-pastor",
+  "jugada-intermedia",
+  "interferencia",
+  "despeje",
+  "rayos-x",
+  "molino",
+  "sacrificio-griego",
+  "mate-boden",
+  "mate-legal",
+  "eliminacion-defensor"
  ],
  "entreno/estudio.html?cat=concepto": [
   "el-centro",
@@ -107,6 +131,26 @@
   "alfil-malo",
   "peon-dama-aislado",
   "rey-ahogado",
-  "cadena-de-peones"
+  "cadena-de-peones",
+  "cuando-cambiar",
+  "pieza-buena-mala",
+  "ventaja-espacio",
+  "ruptura-peones",
+  "profilaxis",
+  "ataque-minorias",
+  "dos-debilidades",
+  "iniciativa"
+ ],
+ "entreno/estudio.html?cat=final": [
+  "mate-rey-dama",
+  "mate-rey-torre",
+  "rey-peon-contra-rey",
+  "posicion-lucena",
+  "posicion-philidor",
+  "triangulacion",
+  "alfiles-distinto-color",
+  "peon-de-torre",
+  "dama-contra-peon",
+  "mate-alfil-caballo"
  ]
 }

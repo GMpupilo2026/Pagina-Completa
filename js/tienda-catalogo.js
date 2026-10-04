@@ -207,10 +207,10 @@ window.TiendaCatalogo = (function () {
       titulo: "Las fichas de estudio en papel",
       nivel: "Alumnos de todos los niveles",
       gancho: "Cada idea del ajedrez en una página, y en una carta para llevar en el bolsillo.",
-      resumen: "Las fichas de Estudio de la Academia —aperturas, defensas, táctica y conceptos— en dos formatos: un libro en hoja carta, una ficha por página con su mapa de ideas, su tablero y su índice; y las mismas fichas como cartas de 63 × 88 mm, nueve por hoja, listas para imprimir a doble cara y recortar.",
+      resumen: "Las fichas de Estudio de la Academia —aperturas, defensas, táctica, conceptos y finales— en dos formatos: un libro en hoja carta, una ficha por página con su mapa de ideas, su tablero y su índice; y las mismas fichas como cartas de 63 × 88 mm, nueve por hoja, listas para imprimir a doble cara y recortar.",
       archivos: ["material/fichas-de-estudio/fichas-de-estudio-libro.pdf", "material/fichas-de-estudio/fichas-de-estudio-cartas.pdf"],
       // Lo comprueba verificar-fichas-pdf.py contra el banco y los dos PDF.
-      piezas: { fichas: 56, paginas: 63, cartas: 56 },
+      piezas: { fichas: 98, paginas: 107, cartas: 98 },
     },
     {
       id: "libro-de-diagnostico",

@@ -680,7 +680,7 @@
           "titulo": "Entreno",
           "intro": "Lo que ya es preparación, no fundamentos.",
           "pasos": [
-            "Aperturas y celadas: 40 líneas que se memorizan JUGÁNDOLAS, con repaso espaciado. El sitio le pone la nota según cuántas veces se equivocó y cuántas pistas pidió, no según lo que él diga.",
+            "Aperturas y celadas: 50 líneas que se memorizan JUGÁNDOLAS, con repaso espaciado. El sitio le pone la nota según cuántas veces se equivocó y cuántas pistas pidió, no según lo que él diga.",
             "4×4: ejercicios de cálculo en tablero reducido."
           ],
           "ojo": [
@@ -691,10 +691,10 @@
         {
           "titulo": "Estudio: una ficha por idea",
           "donde": "clases.html › Aprender › Estudio",
-          "intro": "56 fichas de una sola pantalla: 12 aperturas, 12 defensas, 16 temas tácticos y 16 conceptos.",
+          "intro": "98 fichas de una sola pantalla: 18 aperturas, 19 defensas, 27 temas tácticos, 24 conceptos y 10 finales.",
           "pasos": [
             "Cada ficha: la idea arriba, cuatro bloques alrededor y la posición que lo explica, recorrible.",
-            "Buscador que mira las cuatro categorías a la vez.",
+            "Buscador que mira todas las categorías a la vez.",
             "Cada ficha tiene su enlace propio, para mandarla por WhatsApp, y se imprime limpia para pegarla en el cuaderno."
           ],
           "ojo": [

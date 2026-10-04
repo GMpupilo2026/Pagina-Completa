@@ -118,7 +118,7 @@ def por_node(js):
 
 
 def recortes_de_aperturas():
-    """Las 40 líneas de Aperturas y celadas, cada una con su id.
+    """Las líneas de Aperturas y celadas, cada una con su id.
 
     El id NO se cambia nunca: es la clave con la que queda guardado el avance
     de cada alumno (y ahora, también, con la que una tarea pide esa línea)."""
@@ -138,8 +138,8 @@ def recortes_de_aperturas():
 
 
 def recortes_de_estudio():
-    """Las 56 fichas de Estudio. Van con su enlace propio (?ficha=<id>), que
-    es lo que evita que el alumno tenga que buscarla entre las cuatro
+    """Las fichas de Estudio. Van con su enlace propio (?ficha=<id>), que
+    es lo que evita que el alumno tenga que buscarla entre las
     secciones. No se miden solas —Estudio no escribe en training_progress, a
     propósito— así que su meta es 'completar'."""
     fichas = por_node(
@@ -148,7 +148,8 @@ def recortes_de_estudio():
         "console.log(JSON.stringify(F.FICHAS.map(f=>({id:f.id,titulo:f.titulo,"
         "categoria:f.categoria}))))")
     etiqueta = {"apertura": "Aperturas", "defensa": "Defensas",
-                "tactica": "Táctica", "concepto": "Conceptos"}
+                "tactica": "Táctica", "concepto": "Conceptos",
+                "final": "Finales"}
     return [
         {"clave": f["id"], "label": f["titulo"],
          "grupo": etiqueta.get(f["categoria"], f["categoria"]),
