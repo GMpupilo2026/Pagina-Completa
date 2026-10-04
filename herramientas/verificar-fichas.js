@@ -647,6 +647,38 @@ FICHAS.filter((F) => F.comprueba).forEach((F) => {
   });
 });
 
+console.log("\n=== Lo que nombra el pie del diagrama está en el tablero ===");
+/* El pie del diagrama es lo que oye quien no ve el tablero, y lo que lee quien
+   lo imprime: si dice «el alfil de c4» y el alfil está en b5, la ficha enseña
+   otra posición y nada falla. Cada «<pieza> (blanco/negro) de|en <casilla>»
+   tiene que estar en alguna de las posiciones de la ficha: la mostrada, o
+   alguna de la línea (el pie muchas veces cuenta lo que ya se jugó, como «el
+   peón de c4 ya se cambió»). Así se cazó «la torre está pegada a su rey en
+   d7», que se leía como si el rey estuviera en d7. */
+const PIEZA_PIE = { "peón": "p", peones: "p", caballo: "n", caballos: "n", alfil: "b", alfiles: "b", torre: "r", torres: "r", dama: "q", rey: "k" };
+const RE_PIE = /\b(peón|peones|caballo|caballos|alfil|alfiles|torre|torres|dama|rey)\b((?:\s+(?:blanco|blanca|negro|negra|blancos|blancas|negros|negras))?)\s+(?:de|en|que está en|ya está en)\s+([a-h][1-8])\b/gi;
+let menciones = 0;
+FICHAS.forEach((F) => {
+  const { fen, jugadas } = posicionDe(F);
+  const g = new Chess();
+  if (fen) g.load(fen);
+  const todas = [g.fen()];
+  jugadas.forEach((san) => { g.move(san, { sloppy: true }); todas.push(g.fen()); });
+  let m;
+  RE_PIE.lastIndex = 0;
+  while ((m = RE_PIE.exec(F.diagrama))) {
+    menciones += 1;
+    const tipo = PIEZA_PIE[m[1].toLowerCase()];
+    const color = /blanc/i.test(m[2]) ? "w" : /negr/i.test(m[2]) ? "b" : null;
+    const esta = todas.some((f) => {
+      const p = new Chess(f).get(m[3]);
+      return p && p.type === tipo && (!color || p.color === color);
+    });
+    if (!esta) mal(`[${F.id}] el pie dice «${m[0]}» y eso no está en ninguna posición de la ficha`);
+  }
+});
+if (!fallos) bien(`las ${menciones} piezas que nombran los pies están donde dicen`);
+
 console.log("\n=== Los temas que la ficha manda a buscar existen ===");
 /* Cuando una ficha dice «el tema X», ese X tiene que existir en Ejercicios por
    tema. Mandar a un alumno a un tema que no está no da ningún error: lo busca

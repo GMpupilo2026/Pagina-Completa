@@ -1575,7 +1575,7 @@
       linea: ["g3"],
       comprueba: { atrapada: "h2" },
       resumen: "Una pieza se mete a comer un peón, se le cierran las salidas y se pierde sola.",
-      diagrama: "El alfil negro se comió el peón de h2; con g3 se le tapan las salidas: g3 lo defiende el peón de f2 y g1 lo cuida el rey.",
+      diagrama: "El alfil negro entró en h2 comiéndose un peón; con g3 se le tapan las salidas: g3 lo defiende el peón de f2 y g1 lo cuida el rey.",
       centro: [
         "No hace falta comerla: alcanza con que no tenga a dónde ir",
         "Casi siempre es una pieza que se fue sola a comer un peón de flanco",
@@ -6092,7 +6092,7 @@
       linea: ["Qf5"],
       promete: "gana",
       resumen: "La dama le gana a la torre, pero hay técnica: llevar al rey a la orilla y separar la torre de su rey hasta ganarla con un jaque doble.",
-      diagrama: "La torre negra está pegada a su rey en d7; la dama maniobra por los costados y, con el rey blanco cerca, el negro termina dejando la torre lejos, donde se pierde.",
+      diagrama: "La torre negra, en d7, está pegada a su rey en d8; la dama maniobra por los costados y, con el rey blanco cerca, el negro termina dejando la torre lejos, donde se pierde.",
       centro: [
         "La dama gana a la torre: vale cuatro puntos más",
         "La torre aguanta mientras esté pegada a su rey",
