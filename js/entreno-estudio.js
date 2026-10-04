@@ -350,6 +350,28 @@ async function unlock(){
   const pedida = new URLSearchParams(window.location.search).get('ficha');
   const F = pedida ? FICHAS.find((x) => x.id === pedida) : null;
   if(F) abrirFicha(F); else mostrarLista();
+  mostrarPapelSiAdministra();
+}
+
+/* El libro y las cartas para recortar (material/fichas-de-estudio/) los baja
+   solo administración: el worker se los niega a cualquier otra cuenta, así que
+   ofrecérselos sería un enlace que da «se compra aparte». Como todo filtro de
+   pantalla, esto decide qué se PINTA; el candado es el del worker. Respeta
+   «Ver como»: quien administra mirando como alumno o como profesor no lo ve,
+   porque ellos no lo ven (ModoVista.perfilVisto le apaga is_admin). Se espera
+   al DOMContentLoaded porque js/modo-vista.js llega con defer, después que
+   este archivo. */
+async function mostrarPapelSiAdministra(){
+  try {
+    if(document.readyState === 'loading') await new Promise((r) => document.addEventListener('DOMContentLoaded', r, { once: true }));
+    const { data: ses } = await sb.auth.getSession();
+    const uid = ses && ses.session && ses.session.user && ses.session.user.id;
+    if(!uid) return;
+    const { data } = await sb.from('profiles').select('id, role, is_admin, es_supervisor').eq('id', uid).maybeSingle();
+    const visto = data && window.ModoVista ? ModoVista.perfilVisto(data) : data;
+    if(!visto || visto.is_admin !== true) return;
+    document.getElementById('papel-admin').hidden = false;
+  } catch (e) { /* si no se puede saber, no se muestra */ }
 }
 
 // Entrenamiento exige sesión iniciada en el sitio (Academia) — así el

@@ -366,6 +366,38 @@ function jugadasDe(F) {
     igual("en la pantalla no salen el sello del medallón ni el logo de esquina",
       await page.evaluate(() => [".logo-centro", "#logo-esquina"].map((s) => document.querySelector(s).checkVisibility())), [false, false]);
 
+    console.log("\n=== Las fichas en papel, solo para administración ===");
+    // El libro y las cartas viven en material/, que el worker solo le sirve a
+    // administración: el recuadro se le ofrece solo a quien administra, y no
+    // a quien administra mirando «como alumno» (Ver como).
+    {
+      const conPerfil = (esAdmin) => CON_SESION.replace("})();", `
+  window.sb.from = () => { const q = { select: () => q, eq: () => q,
+    maybeSingle: () => Promise.resolve({ data: { id: "u-ana", role: "profesor", is_admin: ${esAdmin}, es_supervisor: false }, error: null }) }; return q; };
+})();`);
+      const verRecuadro = async (cliente, modo) => {
+        const d = await abrir(browser, "/entreno/estudio.html", cliente);
+        if (modo) {
+          await d.page.evaluate((m) => localStorage.setItem("modo_vista_admin_v1", m), modo);
+          await d.page.reload({ waitUntil: "networkidle" });
+        }
+        await d.page.waitForSelector("#app:not(.hidden)", { timeout: 20000 });
+        await d.page.waitForTimeout(400);
+        const r = await d.page.evaluate(() => {
+          const caja = document.getElementById("papel-admin");
+          return { visible: caja.checkVisibility(), enlaces: [...caja.querySelectorAll("a[href]")].map((a) => a.getAttribute("href")) };
+        });
+        await d.ctx.close();
+        return r;
+      };
+      const admin = await verRecuadro(conPerfil(true));
+      igual("quien administra ve el recuadro para bajar el libro y las cartas", admin.visible, "true");
+      igual("los dos enlaces llevan a archivos que existen",
+        admin.enlaces.map((h) => fs.existsSync(path.join(__dirname, "..", "entreno", h))), [true, true]);
+      igual("una cuenta que no administra no lo ve", (await verRecuadro(conPerfil(false))).visible, "false");
+      igual("quien administra mirando «como alumno» tampoco", (await verRecuadro(conPerfil(true), "alumno")).visible, "false");
+    }
+
     console.log("\n=== El logo de la esquina es el de la academia ===");
     // js/marca-academia.js cambia el encabezado cuando llega la marca: la
     // esquina lo sigue, con logo o, si la academia no tiene, con su nombre.
