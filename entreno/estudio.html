@@ -209,14 +209,15 @@
   html.adaptive-mode .en-palabras{border-color:var(--brass);}
   html.adaptive-mode .en-palabras p{color:var(--text); font-size:1rem;}
 
-  .marca-agua, .logo-esquina{display:none;}
+  .logo-centro, .logo-esquina{display:none;}
 
   /* La ficha se imprime: es de lo que más sentido tiene pegar en el cuaderno.
      En el papel es un mapa de ideas de UNA hoja carta o A4: el título arriba,
-     la idea principal a lo ancho, el tablero en el medio como eje (con la
-     pieza de la ficha en un medallón encima) y los cuatro bloques a los
-     costados, cada uno con su flecha de su color. Detrás, el sello de Ajedrez
-     Integral de marca de agua; en la esquina, el logo de la academia.
+     la idea principal a lo ancho, el tablero en el medio como eje (con el
+     sello de Ajedrez Integral en un medallón encima, de donde salen las
+     flechas) y los cuatro bloques a los costados, cada uno con su flecha de
+     su color. En la esquina, el logo de la academia. Sin marca de agua: se
+     probó y el dueño prefirió el sello en el medallón.
 
      Antes el tablero quedaba partido entre dos hojas: las áreas del mapa solo
      se nombraban en pantalla ancha, nada le prohibía al tablero cortarse, y
@@ -279,13 +280,16 @@
     .caja-1{grid-area:b1; margin-top:12px;} .caja-2{grid-area:b2; margin-top:12px;}
     .caja-3{grid-area:b3; margin-top:12px;} .caja-4{grid-area:b4; margin-top:12px;}
 
-    /* La pieza en un medallón con doble aro, encima del tablero. */
+    /* El medallón con doble aro, encima del tablero: en el papel lleva el
+       sello de Ajedrez Integral (.logo-centro, en la misma celda y encima) y
+       no la pieza de la ficha, que se esconde pero deja el círculo, que es
+       de donde se miden las flechas. */
     .nodo{
-      grid-area:nodo; display:flex !important; width:78px; height:78px; font-size:2.4rem;
+      grid-area:nodo; display:flex !important; width:112px; height:112px; font-size:2.4rem;
       justify-self:center; align-self:center; margin:26px 0 8px;
       border:2px solid var(--brass); box-shadow:0 0 0 4px #fff, 0 0 0 5.5px var(--b-idea);
     }
-    .nodo svg{width:50px; height:50px;}
+    .nodo > *{visibility:hidden;}
 
     .mapa-lineas{display:block !important; position:absolute; inset:0; width:100%; height:100%; z-index:0; --centro-abajo:tablero;}
     .diagrama{grid-area:tab; width:100%; max-width:none; margin:0; position:relative; z-index:1; break-inside:avoid;}
@@ -295,11 +299,10 @@
     .jugadas{grid-area:jug; margin:2px 0 0; max-width:none; font-size:0.85rem; break-inside:avoid;}
     .jugada{font-size:0.85rem; padding:0 4px;}
 
-    .marca-agua{
-      display:flex !important; position:fixed; inset:0; align-items:center; justify-content:center;
-      z-index:0; pointer-events:none;
+    .logo-centro{
+      display:block !important; grid-area:nodo; justify-self:center; align-self:center;
+      width:92px; height:auto; margin-top:14px; position:relative; z-index:2;
     }
-    .marca-agua img{width:70%; height:auto; opacity:0.07;}
     .logo-esquina{
       display:flex !important; position:absolute; top:0; right:0; z-index:2;
       max-width:100px; height:56px; align-items:center; justify-content:flex-end;
@@ -366,9 +369,9 @@
            palabras justo debajo y el pie dice qué se ve, igual que el material
            de estudio de los cursos. Nada de esto depende de ver una imagen. -->
       <div id="ficha-vista">
-        <!-- Solo en el papel: el sello de Ajedrez Integral de marca de agua y,
-             en la esquina, el logo de la academia (el mismo del encabezado). -->
-        <div class="marca-agua" aria-hidden="true"><img src="../img/logo-oscar-angulo-marca.png" alt="" width="760" height="571" decoding="async"></div>
+        <!-- Solo en el papel: el sello de Ajedrez Integral en el medallón del
+             centro y, en la esquina, el logo de la academia (el del encabezado). -->
+        <img class="logo-centro" src="../img/logo-oscar-angulo-marca.png" alt="" aria-hidden="true" width="760" height="571" decoding="async">
         <div class="logo-esquina" id="logo-esquina" aria-hidden="true"></div>
         <div class="ficha-cabeza">
           <a href="#" id="volver">← Todas las fichas</a>

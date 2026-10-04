@@ -1411,11 +1411,13 @@ y 16 conceptos) sin tocar ni una de las 28 primeras. Lo que dejó escrito:
 - **Se imprime, y en UNA hoja.** Una hoja de estilos de impresión deja solo la
   ficha —sin encabezado, sin lista, sin buscador, sin botones— y la arma como
   un mapa de ideas: la idea principal a lo ancho, el tablero en el medio como
-  eje con la pieza de la ficha en un medallón encima, y los cuatro bloques a
+  eje con un medallón encima, y los cuatro bloques a
   los costados, cada uno con su flecha de su color (y su título escrito: el
-  color no dice nada solo). Detrás va el sello de Ajedrez Integral
-  (`img/logo-oscar-angulo-marca.png`) de marca de agua y, en la esquina, el
-  logo del encabezado: el de la academia si la cuenta es de una
+  color no dice nada solo). En el papel, el medallón del centro —de donde
+  salen las flechas— lleva el sello de Ajedrez Integral
+  (`img/logo-oscar-angulo-marca.png`) en vez de la pieza; se probó primero de
+  marca de agua y el dueño lo prefirió ahí. En la esquina va el logo del
+  encabezado: el de la academia si la cuenta es de una
   (`js/marca-academia.js`), el de Ajedrez Integral si no, y el nombre de la
   academia si no tiene logo. Se copia cuando cambia el encabezado, no al
   imprimir: una imagen que se empieza a pedir al imprimir no llega al papel.
@@ -1471,7 +1473,7 @@ cada bloque traiga SUS renglones y no los del de al lado, que el tablero dibuje
 contra lo que diga la página), que el buscador mire las cuatro categorías, que
 el enlace `?ficha=` abra la ficha y que un id inventado caiga a la lista, que
 **la regla de `_redirects` siga mandando la dirección vieja de Fichas acá**, que
-al imprimir salga la ficha y no la lista —como mapa, con sus cinco flechas, la marca de agua, el logo de la academia en la esquina y la posición final de la línea—, que **las 56 fichas quepan en una hoja carta y en una A4** (las imprime en PDF y cuenta las hojas), y que la página **se vea**: sin CSS
+al imprimir salga la ficha y no la lista —como mapa, con sus cinco flechas, el sello en el medallón, el logo de la academia en la esquina y la posición final de la línea—, que **las 56 fichas quepan en una hoja carta y en una A4** (las imprime en PDF y cuenta las hojas), y que la página **se vea**: sin CSS
 impreso como texto, con una sola hoja, y en oscuro cuando el tema está en
 oscuro. Absorbió todo lo que comprobaba `verificar-fichas-pagina.js`, que se fue
 con la página.

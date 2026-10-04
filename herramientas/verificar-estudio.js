@@ -345,10 +345,17 @@ function jugadasDe(F) {
       }), "true");
     igual("una flecha de su color por bloque, trazada con la maqueta de la hoja",
       await page.evaluate(() => document.querySelectorAll(".mapa-lineas path[marker-end]").length), 5);
-    igual("el sello de Ajedrez Integral de marca de agua: se ve en el papel y ya cargó",
+    igual("el sello de Ajedrez Integral va en el medallón del centro, ya cargado, y sin marca de agua",
       await page.evaluate(() => {
-        const img = document.querySelector(".marca-agua img");
-        return img.checkVisibility() && img.complete && img.naturalWidth > 0 && /logo-oscar-angulo-marca\.png$/.test(img.src);
+        const img = document.querySelector(".logo-centro");
+        const n = document.getElementById("nodo").getBoundingClientRect();
+        const r = img.getBoundingClientRect();
+        const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+        const dentro = Math.hypot(cx - (n.left + n.width / 2), cy - (n.top + n.height / 2)) < 12 && r.width < n.width;
+        return img.checkVisibility() && img.complete && img.naturalWidth > 0
+          && /logo-oscar-angulo-marca\.png$/.test(img.src) && dentro
+          && !document.querySelector(".marca-agua")
+          && getComputedStyle(document.querySelector("#nodo > *")).visibility === "hidden";
       }), "true");
     igual("en la esquina, el logo del encabezado (sin academia, el de Ajedrez Integral)",
       await page.evaluate(() => {
@@ -356,8 +363,8 @@ function jugadasDe(F) {
         return !!img && img.checkVisibility() && img.src === document.querySelector("#marca-enlace img").src;
       }), "true");
     await page.emulateMedia({ media: "screen" });
-    igual("en la pantalla no hay marca de agua ni logo de esquina",
-      await page.evaluate(() => [".marca-agua", "#logo-esquina"].map((s) => document.querySelector(s).checkVisibility())), [false, false]);
+    igual("en la pantalla no salen el sello del medallón ni el logo de esquina",
+      await page.evaluate(() => [".logo-centro", "#logo-esquina"].map((s) => document.querySelector(s).checkVisibility())), [false, false]);
 
     console.log("\n=== El logo de la esquina es el de la academia ===");
     // js/marca-academia.js cambia el encabezado cuando llega la marca: la
