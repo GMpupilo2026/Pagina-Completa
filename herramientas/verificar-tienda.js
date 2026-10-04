@@ -303,6 +303,17 @@ async function pruebaAdmin(browser) {
   igual("y los " + T.BONOS.length + " bonos",
     await page.evaluate(() => document.querySelectorAll("#bonos li").length), T.BONOS.length);
 
+  /* El pie de cada módulo dice cuántos ARCHIVOS trae. Se cuentan en el disco,
+     no con el catálogo: sumaba las piezas, y en un libro las piezas son
+     preguntas o páginas, así que el módulo de los libros prometía cientos de
+     «archivos» que eran páginas de dos PDF. */
+  const archivosEnDisco = (p) => p.carpeta
+    ? fs.readdirSync(path.join(RAIZ, p.carpeta)).filter((f) => Object.values(TERMINACION).some((suf) => f.endsWith(suf))).length
+    : (p.archivos || []).filter((a) => fs.existsSync(path.join(RAIZ, a))).length;
+  igual("el pie de cada módulo cuenta archivos de verdad, no páginas ni preguntas",
+    await page.evaluate(() => [...document.querySelectorAll("#modulos article")].map((a) => parseInt(a.querySelector("p:last-child").textContent.split(" archivos")[0].replace(/\D/g, ""), 10))),
+    T.MODULOS.map((m) => m.productos.reduce((s, id) => s + archivosEnDisco(T.producto(id)), 0)));
+
   /* Cada módulo tiene que NOMBRAR sus materiales: un módulo que solo promete
      ("táctica paso a paso") y no dice de qué cursos sale es la promesa que la
      entrega no puede cumplir. */

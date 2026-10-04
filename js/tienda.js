@@ -106,11 +106,11 @@
 
                 const lista = document.createElement("ul");
                 lista.className = "mt-4 space-y-1.5 text-sm flex-1";
-                let piezas = 0;
+                let archivos = 0;
                 m.productos.forEach((id) => {
                     const p = T.producto(id);
                     if (!p) return;              // no puede pasar: lo comprueba el verificador
-                    piezas += T.piezasDe(p);
+                    archivos += T.archivosDe(p);
                     const li = document.createElement("li");
                     li.className = "flex items-start gap-2 text-brand-600 dark:text-brand-200";
                     const tic = document.createElement("span");
@@ -125,7 +125,7 @@
 
                 const pie = document.createElement("p");
                 pie.className = "mt-4 pt-3 border-t border-brand-100 dark:border-brand-800 text-xs text-brand-450 dark:text-brand-350";
-                pie.textContent = piezas.toLocaleString("es-CR") + " archivos · " +
+                pie.textContent = archivos.toLocaleString("es-CR") + " archivos · " +
                     m.productos.length + (m.productos.length === 1 ? " material" : " materiales");
 
                 cuerpo.append(h, promesa, detalle, lista, pie);
@@ -218,6 +218,8 @@
                 capitulos: ["capítulo", "capítulos"],
                 apartados: ["apartado", "apartados"],
                 laminas: ["lámina", "láminas"],
+                fichas: ["ficha", "fichas"],
+                cartas: ["carta para recortar", "cartas para recortar"],
             };
             Object.entries(p.piezas || {}).forEach(([clave, n]) => {
                 if (!n) return;                       // cero no se pinta: "0 versiones accesibles" es ruido

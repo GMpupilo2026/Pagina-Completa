@@ -1135,13 +1135,22 @@ ninguno. Se veía perfecto y no daba ningún error.
   tenerlos, no el acceso.
 - `sw.js` no guarda nada de `material/`: una copia en el teléfono se seguiría
   abriendo después de quitar la compra.
+- **El pie de cada módulo cuenta ARCHIVOS** (`archivosDe()`): en un curso las
+  piezas son archivos, en un libro no (son preguntas, páginas o fichas, y el
+  libro es uno o dos PDF). Sumaba las piezas y el módulo de los libros decía
+  «1.080 archivos» con 29. `verificar-tienda.js` cuenta los archivos en el
+  disco y los compara con lo que dice cada módulo.
+- **Las fichas de estudio en papel** (el libro y las cartas para recortar,
+  `material/fichas-de-estudio/`) entraron al módulo 3, «Aperturas y técnica de
+  finales». Quien las compra las baja desde la lista de Estudio (ver «Las
+  fichas en papel: el libro y las cartas» en `entrenamiento.md`).
 
 
 **Al tocar `js/tienda-catalogo.js`, `tienda.html` o el material que vende,
 correr `node herramientas/verificar-tienda.js`** (con el sitio en
 localhost:8777 y playwright). Existe porque la página está detrás del login
 **y** detrás del rol: `verificar-css.js` abre las páginas sin cuenta y no ve
-nada de esto. Comprueba el catálogo contra el disco —que los diecisiete
+nada de esto. Comprueba el catálogo contra el disco —que todos los
 productos apunten a archivos que existen, que las piezas que promete cada ficha
 estén de verdad en la carpeta, y que ningún curso quede fuera de los módulos ni
 metido en dos— y después, en un navegador de verdad, que el sello del anuncio

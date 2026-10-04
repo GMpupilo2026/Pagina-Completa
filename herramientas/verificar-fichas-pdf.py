@@ -13,7 +13,8 @@ página equivocada. Lo que se comprueba:
     página que dice el índice, con su título y su número al pie;
   - las cartas: dos páginas (frente y reverso) por cada nueve fichas, y que
     cada ficha aparezca en las dos caras con su título;
-  - que las tildes y las eñes hayan llegado.
+  - que las tildes y las eñes hayan llegado;
+  - que la ficha de la tienda prometa las fichas, páginas y cartas que hay.
 
 Si falla, casi siempre basta con volver a generar:
     python3 -m http.server 8777 & node herramientas/fichas-estudio-pdf.js
@@ -106,6 +107,24 @@ if os.path.exists(CARTAS):
         if F["t"] not in frente or F["t"] not in reverso:
             mal.append(F["t"])
     ok("cada ficha en las dos caras de su hoja", not mal, "; ".join(mal[:8]))
+
+print("\n=== Lo que promete la tienda ===")
+# La ficha de la tienda (js/tienda-catalogo.js) dice cuántas fichas, páginas y
+# cartas trae: un número que nadie cuenta se cree, y quien compra recibe otra
+# cosa. Se compara contra el banco y contra los dos PDF.
+tienda = json.loads(subprocess.check_output(
+    ["node", "-e", "global.window={};require('./js/tienda-catalogo.js');"
+     "console.log(JSON.stringify(window.TiendaCatalogo.producto('fichas-de-estudio')||null))"],
+    cwd=RAIZ, text=True))
+ok("las fichas en papel están en el catálogo de la tienda", tienda is not None)
+if tienda:
+    pz = tienda.get("piezas", {})
+    paginas_libro = len(PdfReader(LIBRO).pages) if os.path.exists(LIBRO) else -1
+    ok(f"promete {n} fichas", pz.get("fichas") == n, f"dice {pz.get('fichas')}")
+    ok(f"promete {paginas_libro} páginas de libro", pz.get("paginas") == paginas_libro, f"dice {pz.get('paginas')}")
+    ok(f"promete {n} cartas", pz.get("cartas") == n, f"dice {pz.get('cartas')}")
+    ok("vende los dos archivos", sorted(tienda.get("archivos", [])) == sorted(
+        ["material/fichas-de-estudio/fichas-de-estudio-libro.pdf", "material/fichas-de-estudio/fichas-de-estudio-cartas.pdf"]))
 
 print(f"\n✗ {fallos} problema(s)." if fallos else "\n✓ Todo bien.")
 sys.exit(1 if fallos else 0)
