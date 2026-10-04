@@ -1270,6 +1270,57 @@ la línea se programa para más adelante.
   propias pinten algo de verdad y que con el tema oscuro el fondo sea oscuro.
   **Al clonar la cabecera de otra página, mirar la pantalla, no solo el DOM.**
 
+### Mi repertorio
+
+El banco son 40 líneas iguales para todos. «🗂️ Mi repertorio», la tercera
+pestaña de Aperturas y celadas, es lo que juega ESTE alumno, con blancas y con
+negras (`js/repertorio-aperturas.js`, tabla `repertorio`). Va en la misma
+página y no en otra: es la misma tarea —memorizar líneas jugándolas— y dos
+puertas para lo mismo es el error que el panel ya cometió.
+
+- **Se arma jugando las dos partes** en un tablero, escribiéndolas (una o
+  varias: «1.e4 c5 2.Cf3», en la notación de acá o en la inglesa, con el mismo
+  intérprete de todo el sitio) o partiendo de una línea del banco o de una
+  suya. Solo entran jugadas legales: las hace chess.js.
+- **Se entrena con el mismo entrenador y la misma cola de repaso**: cada línea
+  suya es una línea más, con id `mi:<uuid>` en `aperturas_srs_v1`. Por eso
+  entra sola en el «Repaso del día», que cuenta esa clave.
+- **Una respuesta tuya por posición.** Si contestas 1.e4 con c5 en una línea y
+  con e5 en otra, el entrenador te pediría dos jugadas distintas en el mismo
+  lugar. Lo frena la base (trigger `repertorio_coherente`, también en un
+  update) y la pantalla lo dice antes de guardar, con la jugada que ya tienes
+  («Choca con «Siciliana»: en la jugada 1 ahí juegas c5»). Otra jugada del
+  RIVAL no choca: es una rama más del árbol.
+- **El árbol** junta lo que las líneas tienen en común y abre las ramas; una
+  cadena sin ramas va en un renglón («1. e4 c5 2. Cf3 d6»), en la notación de
+  acá.
+- **La base no sabe ajedrez, pero exige la forma** de cada jugada (SAN), entre
+  2 y 40, un tope de 100 líneas y que no se repita una línea. La legalidad se
+  vuelve a comprobar al leerla: una fila que no se puede jugar no se entrena y
+  se dice («Una línea no se pudo leer»), en vez de dejar al alumno frente a una
+  línea que no puede terminar nunca.
+- **Borrar una línea deja su ficha de repaso marcada como borrada**, con fecha
+  de hoy y sin vencimiento. Si solo se quitara, la copia de la cuenta (que se
+  queda con la ficha MÁS RECIENTE de cada línea, `srsPorLinea`) la devolvería,
+  y el «Repaso del día» seguiría contando una línea que ya no existe.
+- **Lo escribe solo el alumno**; lo leen también sus profesores, su
+  supervisión y administración (como el cuaderno), para preparar sus partidas.
+  Todavía no hay pantalla del profe que lo muestre: la base ya lo permite.
+
+Comprobado impersonando roles en SQL: el alumno guarda; una segunda respuesta
+a 1.e4 se rechaza con el mensaje, y también un update que la meta; otra jugada
+del rival y otra apertura entran; una jugada mal escrita y una fila a nombre
+de otro se rechazan; su profe la ve y no la cambia; una profesora ajena no ve
+nada.
+
+**Al tocarlo, correr `node herramientas/verificar-todo.js repertorio
+aperturas-pagina`.** `verificar-repertorio.js` prueba las funciones con
+chess.js y la página en un navegador: el árbol de cada color, la fila que no se
+puede jugar, armar con clics y escribiendo, el aviso del choque (y que no se
+guarde), lo que se guarda, entrenarla entera, «Volver», borrar ESA y su ficha
+marcada, y el enlace `?linea=mi:<id>`. Rompiendo el choque o la marca de
+borrada, salta.
+
 ## Estudio: una ficha por idea, con su mapa y su posición
 
 `entreno/estudio.html` (tarjeta **"📚 Estudio"** en `clases.html` → grupo

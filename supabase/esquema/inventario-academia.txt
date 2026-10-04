@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261004205925
+# al-dia-con: 20261004210857
 tabla  Ejercicios Lichess  rls=true
 tabla  academia_ia  rls=true
 tabla  academia_miembros  rls=true
@@ -118,6 +118,7 @@ tabla  recordatorios_informe  rls=true
 tabla  relevo_jugadores  rls=true
 tabla  relevo_senales  rls=true
 tabla  relevos  rls=true
+tabla  repertorio  rls=true
 tabla  respuestas_en_curso  rls=true
 tabla  retos_ejercicios  rls=true
 tabla  retos_ejercicios_respuestas  rls=true
@@ -1067,6 +1068,12 @@ columna  relevos.moves  jsonb
 columna  relevos.result  text
 columna  relevos.status  text
 columna  relevos.updated_at  timestamp with time zone
+columna  repertorio.alumno_id  uuid
+columna  repertorio.color  text
+columna  repertorio.created_at  timestamp with time zone
+columna  repertorio.id  uuid
+columna  repertorio.jugadas  text[]
+columna  repertorio.nombre  text
 columna  respuestas_en_curso.fen  text
 columna  respuestas_en_curso.moves  jsonb
 columna  respuestas_en_curso.question_id  uuid
@@ -1477,6 +1484,7 @@ funcion  interno.puestos_de_tandas(p_clase uuid)  definer  anon=false  auth=true
 funcion  interno.puntos_de_una_respuesta(p_dificultad integer, p_intentos integer, p_puesto integer)  invoker  anon=false  auth=true
 funcion  interno.purgar_auditoria()  definer  anon=false  auth=false
 funcion  interno.relevo_a_quien_le_toca(p_relevo uuid, p_fen text, p_jugadas integer)  definer  anon=false  auth=false
+funcion  interno.repertorio_coherente()  definer  anon=false  auth=false
 funcion  interno.retos_ejercicios_abiertos_para_mi()  definer  anon=false  auth=true
 funcion  interno.retos_ejercicios_cuantas()  definer  anon=false  auth=true
 funcion  interno.retos_ejercicios_tope()  definer  anon=false  auth=false
@@ -1953,6 +1961,14 @@ politica  relevo_senales  relevo_senales_lee  SELECT
 politica  relevo_senales  verificacion_en_dos_pasos  ALL  restrictiva
 politica  relevos  relevos_lee  SELECT
 politica  relevos  verificacion_en_dos_pasos  ALL  restrictiva
+politica  repertorio  repertorio_delete_propio  DELETE
+politica  repertorio  repertorio_exige_acceso_ins  INSERT  restrictiva
+politica  repertorio  repertorio_exige_acceso_upd  UPDATE  restrictiva
+politica  repertorio  repertorio_insert_propio  INSERT
+politica  repertorio  repertorio_select_profesor  SELECT
+politica  repertorio  repertorio_select_propio  SELECT
+politica  repertorio  repertorio_select_supervisor  SELECT
+politica  repertorio  repertorio_update_propio  UPDATE
 politica  respuestas_en_curso  respuestas_en_curso_exige_acceso_ins  INSERT  restrictiva
 politica  respuestas_en_curso  respuestas_en_curso_exige_acceso_upd  UPDATE  restrictiva
 politica  respuestas_en_curso  respuestas_en_curso_insert  INSERT
@@ -2117,6 +2133,7 @@ trigger  question_answers  respuesta_calificar_y_plazo_trigger
 trigger  question_answers  respuesta_hora_de_la_base_trigger
 trigger  questions  questions_ligar_a_la_clase
 trigger  recibos  auditar
+trigger  repertorio  repertorio_coherente
 trigger  retos_ejercicios  retos_ejercicios_tope
 trigger  salas_torneo  salas_torneo_sello
 trigger  saved_games  saved_games_ligar_a_la_clase
@@ -2441,6 +2458,9 @@ indice  relevo_senales  relevo_senales_pkey
 indice  relevo_senales  relevo_senales_una_por_jugada
 indice  relevos  relevos_created_by
 indice  relevos  relevos_pkey
+indice  repertorio  repertorio_alumno
+indice  repertorio  repertorio_alumno_id_color_jugadas_key
+indice  repertorio  repertorio_pkey
 indice  respuestas_en_curso  respuestas_en_curso_pkey
 indice  respuestas_en_curso  respuestas_en_curso_student_id_fk
 indice  retos_ejercicios  retos_ejercicios_pkey
@@ -3346,6 +3366,10 @@ grant  relevos  authenticated  SELECT
 grant  relevos  authenticated  TRIGGER
 grant  relevos  authenticated  TRUNCATE
 grant  relevos  authenticated  UPDATE
+grant  repertorio  authenticated  DELETE
+grant  repertorio  authenticated  INSERT
+grant  repertorio  authenticated  SELECT
+grant  repertorio  authenticated  UPDATE
 grant  respuestas_en_curso  authenticated  DELETE
 grant  respuestas_en_curso  authenticated  INSERT
 grant  respuestas_en_curso  authenticated  REFERENCES

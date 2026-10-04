@@ -27,7 +27,7 @@ window.__guardado = {};
        training_progress (js/entreno-progress.js): sin él, terminar una línea
        tiraba un TypeError en la consola y el verificador lo contaba como
        fallo — un doble incompleto marcando en rojo una página que está bien. */
-    from: () => ({ select() { return this; }, eq() { return this; }, in() { return this; },
+    from: () => ({ select() { return this; }, eq() { return this; }, in() { return this; }, order() { return this; },
                    insert() { return this; }, upsert() { return this; }, maybeSingle() { return this; },
                    then(r) { return Promise.resolve({ data: [], error: null }).then(r); } }),
     rpc: () => ({ then(r) { return Promise.resolve({ data: [], error: null }).then(r); } }),
