@@ -5964,9 +5964,17 @@
             ritmo.value = "1";
             document.getElementById("emparejar-btn").addEventListener("click", emparejarAlumnos);
             cargarPartidasDeLaClase();
+            /* Cada jugada de cada partida de la clase actualiza su fila y avisa:
+               con 25 parejas eran decenas de recargas de la lista por segundo. Se
+               juntan en una por segundo, y al reconectarse se recarga una vez. */
+            let recargaPendiente = null;
+            const programarRecarga = () => {
+                if (recargaPendiente) return;
+                recargaPendiente = setTimeout(() => { recargaPendiente = null; cargarPartidasDeLaClase(); }, 1000);
+            };
             sb.channel("partidas-clase:" + boardOwnerId)
-                .on("postgres_changes", { event: "*", schema: "public", table: "game_rooms", filter: "created_by=eq." + boardOwnerId }, () => cargarPartidasDeLaClase())
-                .subscribe();
+                .on("postgres_changes", { event: "*", schema: "public", table: "game_rooms", filter: "created_by=eq." + boardOwnerId }, programarRecarga)
+                .subscribe((estado) => { if (estado === "SUBSCRIBED") programarRecarga(); });
         }
 
         /* Empareja a los conectados (onlineStudents: solo alumnos, sin quien

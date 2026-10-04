@@ -928,6 +928,102 @@ los relojes, «Estoy listo» y «Rendirse» (con un doble que anota lo escrito),
 en las dos rachas que el otro mate cuenta. Las tres pruebas fallan con las
 copias viejas o rompiendo el módulo a propósito.
 
+## Las jugadas llegan siempre
+
+En un torneo pasó que el reloj corría y al alumno no le aparecía la jugada del
+rival, o la suya no le llegaba al otro. No daba ningún error: la jugada estaba
+guardada en la base y la pantalla no se enteraba. Se encontraron cuatro
+causas, todas calladas:
+
+- **La sala solo escuchaba Realtime, y Realtime no avisa lo que se perdió.**
+  Un celular que bloqueó la pantalla, una pestaña en segundo plano a la que el
+  navegador le frenó el latido, un cambio de wifi a datos, o el propio
+  Realtime atrasado con la base cargada: el canal se reconecta solo, pero las
+  jugadas que pasaron mientras tanto no llegan nunca. La pantalla se quedaba
+  esperando una jugada que ya estaba hecha, con el reloj del rival corriendo,
+  mientras en la otra pantalla corría el propio. Lo mismo entre leer la sala
+  al abrirla y quedar suscrito: una jugada en ese medio segundo se perdía.
+  **Ahora `SalaJuego.suscribir()` vuelve a leer la sala** (una fila por su
+  llave) cada vez que el canal queda conectado —la primera vez y cada
+  reconexión—, al volver a la pestaña, al recuperar la red, y de respaldo si
+  pasa un rato sin noticias con la partida en juego: 5 s esperando al rival,
+  15 s en el turno propio, 8 s mirando, 3 s con el canal caído. Si el canal
+  se cierra del todo (`CLOSED`, la librería no lo reintenta) abre otro. Con el
+  canal caído más de 4 s se dice «Reconectando…» debajo del estado.
+- **Lo que llega tarde pisaba lo nuevo.** Realtime no garantiza el orden
+  frente a la respuesta de la propia escritura ni frente a una relectura. Y
+  `handleLocalMove` pegaba su parche sobre la sala después de guardar: si la
+  respuesta del rival llegaba antes que la de la base (con la base lenta, pasa),
+  la sala volvía una jugada atrás y la siguiente jugada se guardaba sin la del
+  rival en la lista. Ahora **cada versión se ordena** (`SalaJuego.esAnterior`:
+  terminada, cuántas jugadas, la ronda del Duelo, cuántos listos, desde cuándo
+  corre el reloj) y lo viejo no se aplica; la jugada se guarda pidiendo la fila
+  de vuelta (`select("*")`) y se queda la más nueva. La misma fila dos veces no
+  repinta nada.
+- **Una jugada solo se guarda sobre la posición de la que salió**
+  (`.eq("fen", room.fen)`, en Estándar, Niebla, Crazyhouse y las variantes): si
+  la sala ya iba más adelante —otra pestaña de la misma cuenta, una jugada
+  repetida— no la pisa; se vuelve a leer y se dice «Esa jugada no quedó
+  guardada: la partida ya iba más adelante». Cartas no lo lleva (su posición
+  va en `cartas_state` y la columna `fen` no se actualiza).
+- **El reloj corría según el tablero, no según la sala.** Al mover, el tablero
+  ya muestra la jugada (le toca al rival), pero para la base el reloj que
+  corre sigue siendo el propio hasta que la jugada queda guardada: el reloj del
+  rival bajaba de golpe todo lo que uno había pensado, y con la base lenta
+  podía hasta intentar cantarle la bandera. Ahora el turno del reloj sale de
+  la sala guardada (`SalaJuego.turnoDe(room)`, que lee también
+  `cartas_state.fen` y el JSON de Abrazos). Y la hora con que arranca el reloj
+  propio es la de la base (la fila devuelta), no la de la computadora.
+- **Una bandera rechazada ya no se reintenta cada 250 ms.** Si la base dice
+  «Todavía le queda tiempo», lo que se ve está atrasado (casi siempre, una
+  jugada que no llegó): se vuelve a leer la sala, y se espera un segundo antes
+  de volver a intentar. Antes era una pantalla trabada mandando cuatro
+  pedidos por segundo, justo cuando la base anda lenta.
+
+Y lo que cargaba a Realtime para todos:
+
+- **`torneo.html` escuchaba `game_rooms` entera** —«la siguiente candidata si
+  los torneos crecen», decía «Realtime escucha solo lo que la pantalla
+  muestra»—: cada jugada de cualquier partida de la plataforma le llegaba a
+  cada pantalla de torneo abierta, y Realtime revisa la RLS de cada cambio
+  contra cada quien escucha, en un solo hilo. Con 50 mesas y los jugadores
+  con el torneo abierto en otra pestaña, eso atrasaba las jugadas de todos,
+  también las de los tableros. Ahora escucha solo las mesas que dibuja,
+  `id=in.(…)` de a 100 (el tope de Realtime), y vuelve a armar la escucha
+  cuando cambia la lista. Niebla no dibuja sus mesas y no escucha ninguna. Un
+  tablerito no retrocede con una versión que llega tarde.
+- **La TV** (`tv.html`) volvía a pedir todas las partidas en juego, con todas
+  sus jugadas y los nombres, por **cada jugada** de cada partida. Ahora junta
+  los avisos: una recarga a la vez y a lo sumo una por segundo. Lo mismo la
+  lista de partidas de la clase en `sesion.html`.
+
+**Al tocar `js/sala-juego.js`, la forma en que una sala guarda o aplica una
+jugada, o lo que escucha `torneo.html`, correr `node
+herramientas/verificar-partidas-simultaneas.js`** (con el sitio en
+localhost:8777 y playwright; `PARTIDAS=10` para una corrida corta). Abre
+pestañas de `estandar.html` contra un servidor de mentira que hace de base y de
+Realtime para todas (con las reglas del trigger del reloj), y en cada una un
+jugador automático mueve al azar cuando le toca. Mide cuánto tarda cada jugada
+en verse del otro lado:
+
+- **10 partidas, red sana**: todas en menos de 1 s (medido: mediana 108 ms, la
+  más lenta 205 ms).
+- **50 partidas a la vez (100 pestañas), red sana**: ninguna se pierde ni se
+  traba, ninguna pasa de 6 s. Con 100 pestañas en una computadora de 4
+  procesadores la mediana sube a ~0,5 s, y es la computadora: la prueba
+  imprime también cuánto atrasaba ella los relojes de cada pestaña. En un
+  torneo, cada alumno tiene su aparato.
+- **50 partidas con red mala** —Realtime pierde el 15 % de los avisos,
+  entrega otro 10 % tarde y desordenado, corta y cierra canales, y una de cada
+  diez respuestas de la base tarda hasta 2,5 s—: ninguna partida se traba,
+  ninguna jugada pasa de 15 s (medido: la mitad en menos de medio segundo, la
+  peor 8,6 s: un aviso perdido, 5 s de espera y dos respuestas lentas), al
+  final todas las pantallas muestran lo que hay en la base, y la lista de
+  jugadas guardada lleva siempre a la posición guardada.
+
+Con la sala de antes, la red mala deja partidas trabadas para siempre (una
+jugada tardó 5 minutos en verse; otras no llegaron nunca).
+
 ## La sala de cine de las transmisiones
 
 `torneos-en-vivo.html` (el enlace «Torneos» junto a «¡Te reto!» y «TV en

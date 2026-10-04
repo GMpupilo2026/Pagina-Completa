@@ -438,10 +438,27 @@
                 // Sin filtro: son pocas partidas a la vez, así que ante cualquier cambio
                 // (nueva partida, jugada, o que termine) simplemente se vuelve a pedir la
                 // lista completa de "en curso" en vez de tratar de aplicar el parche a mano.
+                // Pero juntando los avisos: cada jugada de cada partida es un aviso, y con
+                // 50 mesas a la vez eran decenas de recargas por segundo (tres consultas
+                // cada una, con todas las jugadas de todas las partidas). Una a la vez y
+                // a lo sumo una por segundo; los avisos que llegan mientras tanto se
+                // juntan en la siguiente.
+                let refrescando = false, otraVez = false, ultimoRefresco = 0;
+                async function programarRefresco() {
+                    if (refrescando) { otraVez = true; return; }
+                    refrescando = true;
+                    const falta = 1000 - (Date.now() - ultimoRefresco);
+                    if (falta > 0) await new Promise((r) => setTimeout(r, falta));
+                    otraVez = false;
+                    ultimoRefresco = Date.now();
+                    try { await refreshInternalGames(); } catch (e) { console.error(e); }
+                    refrescando = false;
+                    if (otraVez) programarRefresco();
+                }
                 sb.channel("tv-internal-games")
-                    .on("postgres_changes", { event: "*", schema: "public", table: "game_rooms" }, refreshInternalGames)
-                    .on("postgres_changes", { event: "*", schema: "public", table: "fourplayer_games" }, refreshInternalGames)
-                    .subscribe();
+                    .on("postgres_changes", { event: "*", schema: "public", table: "game_rooms" }, programarRefresco)
+                    .on("postgres_changes", { event: "*", schema: "public", table: "fourplayer_games" }, programarRefresco)
+                    .subscribe((estado) => { if (estado === "SUBSCRIBED") programarRefresco(); });
             }
 
             function showState(state) {

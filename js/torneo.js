@@ -610,6 +610,7 @@
             }
 
             render();
+            escucharSalas();
         }
 
         /* Una jugada NO recarga el torneo entero: se repinta el tablerito de esa
@@ -620,6 +621,10 @@
            resultado). */
         function actualizarSala(sala) {
             if (!sala || !sala.id) return;
+            // Una versión que llega tarde (Realtime no garantiza el orden frente a
+            // una relectura) no hace retroceder el tablerito.
+            const antes = salasEnJuego[sala.id];
+            if (antes && (sala.moves || []).length < (antes.moves || []).length) return;
             salasEnJuego[sala.id] = sala;
             const tablero = tablerosEnVivo[sala.id];
             if (tablero) tablero.loadFen(fenDeLaSala(sala));
@@ -638,14 +643,47 @@
                 const filterColumn = table === "tournaments" ? "id" : "tournament_id";
                 ch.on("postgres_changes", { event: "*", schema: "public", table: table, filter: filterColumn + "=eq." + TOURNEY_ID }, scheduleReload);
             });
-            /* Las partidas de la ronda se mueven en su propia tabla, que no lleva
-               `tournament_id`: no se puede filtrar del lado del servidor, así que
-               llegan todas las de game_rooms y acá se descarta lo que no es de
-               este torneo. `actualizarSala` ya lo hace solo —una sala que no esté
-               en `tablerosEnVivo` no pinta nada—. */
-            ch.on("postgres_changes", { event: "*", schema: "public", table: "game_rooms" },
-                (payload) => actualizarSala(payload.new));
-            ch.subscribe();
+            // Al reconectarse (un celular que se durmió, un cambio de red) lo que
+            // pasó mientras tanto no llega solo: se vuelve a leer.
+            let primera = true;
+            ch.subscribe((estado) => {
+                if (estado !== "SUBSCRIBED") return;
+                if (!primera) scheduleReload();
+                primera = false;
+            });
+        }
+
+        /* Las partidas de la ronda se mueven en su propia tabla, que no lleva
+           `tournament_id`. Antes se escuchaba game_rooms ENTERA y acá se
+           descartaba lo ajeno: cada jugada de cualquier partida de la plataforma
+           le llegaba a cada pantalla de torneo abierta, y Realtime revisa la RLS
+           de cada cambio contra cada quien escucha, en un solo hilo (ver
+           «Realtime escucha solo lo que la pantalla muestra»). Con 50 mesas a la
+           vez, eso atrasaba las jugadas de TODOS, también las de los tableros de
+           los que juegan. Ahora se escuchan solo las mesas que se dibujan,
+           `id=in.(…)` de a 100 (el tope de Realtime), y se vuelven a armar
+           cuando cambia la lista. Niebla no dibuja sus mesas: no escucha nada. */
+        let canalesSalas = [], salasEscuchadas = "";
+        function escucharSalas() {
+            const ids = tournament && tournament.variant !== "niebla" ? Object.keys(salasEnJuego).sort() : [];
+            const clave = ids.join(",");
+            if (clave === salasEscuchadas) return;
+            salasEscuchadas = clave;
+            canalesSalas.forEach((c) => { try { sb.removeChannel(c); } catch (e) {} });
+            canalesSalas = [];
+            for (let i = 0; i < ids.length; i += 100) {
+                const tanda = ids.slice(i, i + 100);
+                const canal = sb.channel("torneo-salas-" + TOURNEY_ID + "-" + i + "-" + Date.now())
+                    .on("postgres_changes", { event: "UPDATE", schema: "public", table: "game_rooms", filter: "id=in.(" + tanda.join(",") + ")" },
+                        (payload) => actualizarSala(payload.new));
+                canal.subscribe(async (estado) => {
+                    if (estado !== "SUBSCRIBED") return;
+                    // Lo que se movió entre leer las salas y quedar escuchando.
+                    const { data: salas } = await sb.from("game_rooms").select("*").in("id", tanda);
+                    (salas || []).forEach(actualizarSala);
+                });
+                canalesSalas.push(canal);
+            }
         }
 
         async function init() {

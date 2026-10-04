@@ -203,18 +203,18 @@
         // miran la partida ven el mismo reloj sin sobrecargar la base de datos.
         function formatClock(seconds) { return SalaJuego.formatear(seconds); }
 
-        function liveTimeLeft(color) { return SalaJuego.restante(room, color, engine.turn()); }
+        function liveTimeLeft(color) { return SalaJuego.restante(room, color, SalaJuego.turnoDe(room)); }
 
         // El reloj y su rótulo dicho son de js/sala-juego.js (una sola copia).
         function renderClocks() {
-            SalaJuego.pintarRelojes(room, { miColor: myColor, turno: engine.turn(), nombreDe: (c) => nameFor(c === "w" ? room.white_id : room.black_id) });
+            SalaJuego.pintarRelojes(room, { miColor: myColor, turno: SalaJuego.turnoDe(room), nombreDe: (c) => nameFor(c === "w" ? room.white_id : room.black_id) });
         }
 
         // Si a quien le toca mover se le acabó el reloj, declara ganador al rival.
         // El filtro .eq("status", "playing") evita que dos navegadores (por ejemplo
         // ambos jugadores, o un jugador y el profesor mirando) dupliquen el resultado
         // si detectan el mismo cero casi al mismo tiempo.
-        function checkFlagFall() { return SalaJuego.revisarBandera(room, ROOM_ID, engine.turn()); }
+        function checkFlagFall() { return SalaJuego.revisarBandera(room, ROOM_ID, SalaJuego.turnoDe(room)); }
 
         setInterval(() => {
             if (!room || !board) return;
@@ -271,6 +271,9 @@
             modal.classList.remove("hidden");
         }
 
+        // La posición de la jugada propia que se está guardando (ver handleLocalMove).
+        let jugadaEnVuelo = null;
+
         async function handleLocalMove(info) {
             const newMoves = (room.moves || []).concat([info.san]);
             const patch = { fen: info.fen, moves: newMoves, updated_at: new Date().toISOString() };
@@ -293,13 +296,25 @@
             // bandera mientras tanto, esta jugada no puede pisar ese resultado. Y si no
             // quedó guardada, el tablero ya la muestra: se vuelve a leer la sala para
             // que enseñe la posición real en vez de quedarse desincronizado.
-            const { data: guardada, error } = await sb.from("game_rooms").update(patch).eq("id", ROOM_ID).eq("status", "playing").select("id");
+            // Y solo sobre la posición de la que salió la jugada (`fen`): si la sala
+            // ya iba más adelante —otra pestaña de la misma cuenta, una jugada
+            // repetida—, no la pisa. Se pide la fila de vuelta: el reloj queda con la
+            // hora de la base, no con la de esta computadora.
+            jugadaEnVuelo = info.fen;
+            let guardar = sb.from("game_rooms").update(patch).eq("id", ROOM_ID).eq("status", "playing");
+            if (room.fen) guardar = guardar.eq("fen", room.fen);
+            const { data: guardada, error } = await guardar.select("*");
+            jugadaEnVuelo = null;
             if (error || !guardada || !guardada.length) {
                 if (error) console.error(error);
-                await releerSala(error ? "No se pudo guardar la jugada: " + error.message : "La partida ya había terminado: esa jugada no quedó guardada.");
+                await releerSala(error ? "No se pudo guardar la jugada: " + error.message : null);
+                if (!error) setStatus(room.status === "playing" ? "Esa jugada no quedó guardada: la partida ya iba más adelante." : "La partida ya había terminado: esa jugada no quedó guardada.");
                 return;
             }
-            room = Object.assign({}, room, patch);
+            // Si mientras viajaba ya llegó algo más nuevo (el eco de esta misma jugada,
+            // o hasta la respuesta del rival), se queda lo más nuevo: antes esto
+            // pegaba el parche encima y la sala volvía una jugada atrás.
+            room = SalaJuego.laMasNueva(room, guardada[0]);
             if (room.variant === "ciegas") { board.setHidePieces(ciegasOculto()); ciegasActualizarPanel(); }
             renderMoveHistory(room.moves);
             updateStatusText();
@@ -328,10 +343,10 @@
         async function releerSala(mensaje) {
             const fila = await SalaJuego.releer(ROOM_ID);
             if (fila) applyRemoteRoom(fila, true);
-            setStatus(mensaje);
+            if (mensaje) setStatus(mensaje);
         }
 
-        function subscribeRoom() { SalaJuego.suscribir(ROOM_ID, (fila) => applyRemoteRoom(fila)); }
+        function subscribeRoom() { SalaJuego.suscribir(ROOM_ID, (fila) => applyRemoteRoom(fila), { sala: () => room, miColor: () => myColor }); }
 
         SalaJuego.montarRendirse({ salaId: ROOM_ID, sala: () => room, miColor: () => myColor, decir: setStatus, releer: releerSala });
 

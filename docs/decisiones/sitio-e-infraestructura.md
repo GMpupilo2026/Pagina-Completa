@@ -1566,9 +1566,9 @@ lecturas.
   escucha. `verificar-practica-ayuda.js` comprueba el filtro.
 - **Quedan sin filtro, anotadas con su porqué**, las escuchas que abren pocas
   pantallas (la TV, el panel de partidas guardadas, el lado del profesor en
-  las preguntas) y `torneo.js` sobre `game_rooms`, que no lleva
-  `tournament_id`. Esa es la siguiente candidata si los torneos crecen: acotarla
-  con `id=in.(<mesas de la ronda>)`.
+  las preguntas). `torneo.js` sobre `game_rooms` ya se acotó a las mesas de la
+  ronda, con `id=in.(…)` (ver «Las jugadas llegan siempre» en
+  `juegos-y-torneos.md`).
 
 `verificar-realtime-filtros.js` (sin navegador) recorre `js/` y falla ante
 cualquier `postgres_changes` sin `filter` que no sea DELETE ni esté en su lista
