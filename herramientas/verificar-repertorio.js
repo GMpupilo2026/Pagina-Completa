@@ -141,6 +141,20 @@ async function jugarClics(page, tablero, desde, hasta) {
     igual("cuenta las suyas, no la de Beto, y dice que una no se pudo leer",
       [/^2 líneas en tu repertorio · 2 para repasar hoy\./.test(est), /Una línea no se pudo leer y no se entrena\./.test(est), est.includes("Beto")], [true, true, false]);
 
+    console.log("\n=== El repertorio en PDF ===");
+    const [bajada] = await Promise.all([page.waitForEvent("download", { timeout: 20000 }).catch(() => null), page.click("#rep-pdf")]);
+    igual("baja «mi-repertorio.pdf»", bajada && bajada.suggestedFilename(), "mi-repertorio.pdf");
+    if (bajada) {
+      const ruta = await bajada.path();
+      let texto = "";
+      try {
+        texto = require("child_process").execFileSync("python3", ["-c", "import sys,pypdf; print('\\n'.join(p.extract_text() for p in pypdf.PdfReader(sys.argv[1]).pages))", ruta]).toString().replace(/\s+/g, " ");
+      } catch (e) { texto = "pypdf: " + e.message; }
+      igual("con su título, los dos colores y cada línea en la notación de acá",
+        ["Mi repertorio de aperturas", "Con blancas", "Italiana", "1. e4 e5 2. Cf3 Cc6 3. Ac4", "Con negras", "Siciliana", "1. e4 c5 2. Cf3 d6"].filter((t) => !texto.includes(t)), []);
+      igual("la línea que no se puede jugar no va", texto.includes("Rota"), false);
+    }
+
     console.log("\n=== Armar una línea ===");
     await page.click("#rep-agregar");
     igual("el botón dice que abrió el editor", await page.getAttribute("#rep-agregar", "aria-expanded"), "true");

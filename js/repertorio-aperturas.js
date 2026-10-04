@@ -23,6 +23,7 @@
  *   RepertorioAperturas.aLinea(fila)              → una línea del entrenador
  *   RepertorioAperturas.libroDe(lineas, color)    → el libro del rival, para «Juega contra él»
  *   RepertorioAperturas.planDe(lineas, color)     → el árbol como plan (PlanNode)
+ *   RepertorioAperturas.documentoPdf(lineas, o)   → el repertorio para js/reporte-pdf.js
  *   RepertorioAperturas.montar(contenedor, opciones)
  *
  * «Jugar con mi repertorio»: una partida contra la computadora que, mientras
@@ -142,6 +143,34 @@
     return conv(r);
   }
 
+  /* El repertorio en papel, para llevarlo al torneo: una tabla por color con
+     cada línea entera, en la notación de acá (Cf3, no Nf3: la ficha la lee el
+     alumno, no el motor), y cómo va su repaso. Lo escribe js/reporte-pdf.js,
+     el mismo de los informes; sin emojis, que Helvetica no tiene. */
+  function documentoPdf(lineas, o) {
+    const op = o || {};
+    const esp = (san) => (typeof window !== "undefined" && window.ComandosTablero && window.ComandosTablero.sanEspanol
+      ? window.ComandosTablero.sanEspanol(san) : san);
+    const numeradas = (jugadas) => jugadas.map((san, i) => (i % 2 === 0 ? (i / 2 + 1) + ". " : "") + esp(san)).join(" ");
+    const bloques = [];
+    ["w", "b"].forEach((color) => {
+      const suyas = (lineas || []).filter((L) => L.color === color)
+        .slice().sort((a, b) => (a.jugadas.join(" ") < b.jugadas.join(" ") ? -1 : 1));
+      bloques.push({ tipo: "titulo", texto: color === "w" ? "Con blancas" : "Con negras" });
+      if (!suyas.length) { bloques.push({ tipo: "parrafo", texto: "Todavía no hay líneas con este color." }); return; }
+      bloques.push({
+        tipo: "tabla", encabezados: ["Línea", "Jugadas", "Repaso"], anchos: [2.2, 5.6, 1.6],
+        filas: suyas.map((L) => [L.nombre, numeradas(L.jugadas), op.cuando ? op.cuando(L.id) : ""]),
+      });
+    });
+    bloques.push({ tipo: "nota", texto: "Las jugadas van en notación algebraica: R rey, D dama, T torre, A alfil, C caballo; el peón no lleva letra. Va ordenado por jugadas, para que las líneas que empiezan igual queden juntas." });
+    return {
+      titulo: "Mi repertorio de aperturas",
+      subtitulo: [op.nombre, op.fecha, "Ajedrez Integral"].filter(Boolean).join(" · "),
+      bloques, fotos: [],
+    };
+  }
+
   // Una fila de la base, como una línea más del entrenador.
   function aLinea(f) {
     return {
@@ -200,7 +229,9 @@
     agregar.id = "rep-agregar";
     agregar.setAttribute("aria-expanded", "false");
     agregar.setAttribute("aria-controls", "rep-editor");
-    acciones.append(repasar, agregar);
+    const pdf = boton("🖨️ Bajar en PDF", "bctrl", "Bajar tu repertorio en PDF, para imprimirlo");
+    pdf.id = "rep-pdf";
+    acciones.append(repasar, agregar, pdf);
     const estado = el("p", "sub");
     estado.id = "rep-estado";
     estado.setAttribute("role", "status");
@@ -549,6 +580,40 @@
       agregar.focus();
     }
     agregar.addEventListener("click", () => (editor.classList.contains("hidden") ? abrirEditor() : cerrarEditor()));
+    pdf.addEventListener("click", async () => {
+      if (!lineas.length) { o.avisar("Agrega primero alguna línea: el PDF saldría vacío.", "error"); return; }
+      pdf.disabled = true;
+      try {
+        const base = new URL("../js/", location.href);
+        await ["reporte-pdf.js", "marca-agua.js"].reduce((p, n) => p.then(() => (
+          document.querySelector('script[data-rep-cargado="' + n + '"]') ? null : new Promise((ok, mal) => {
+            const sc = document.createElement("script");
+            sc.src = new URL(n, base).href; sc.dataset.repCargado = n;
+            sc.onload = ok; sc.onerror = () => mal(new Error("no se pudo cargar " + n));
+            document.body.appendChild(sc);
+          }))), Promise.resolve());
+        let nombre = "";
+        try {
+          const { data: ses } = await o.sb.auth.getSession();
+          const yo = ses && ses.session ? ses.session.user.id : null;
+          const { data } = await o.sb.from("profiles").select("full_name").eq("id", yo).maybeSingle();
+          nombre = (data && data.full_name) || "";
+        } catch (e) { nombre = ""; }
+        const fecha = new Date().toLocaleDateString("es-CR", { day: "numeric", month: "long", year: "numeric", timeZone: "America/Costa_Rica" });
+        const doc = documentoPdf(lineas, { nombre, fecha, cuando: o.cuando });
+        // La marca de agua se pide con la dirección vista desde entreno/.
+        try { doc.marca = window.MarcaAgua ? await window.MarcaAgua.prepararDesde(new URL("../img/logo-oscar-angulo-marca.png", location.href).href) : null; } catch (e) { doc.marca = null; }
+        const blob = await window.ReportePDF.generar(doc);
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = "mi-repertorio.pdf";
+        document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(() => URL.revokeObjectURL(a.href), 10000);
+        o.avisar("Listo: se bajó «mi-repertorio.pdf».");
+      } catch (e) {
+        o.avisar("No se pudo armar el PDF: " + (e && e.message ? e.message : e), "error");
+      } finally { pdf.disabled = false; }
+    });
     repasar.addEventListener("click", () => {
       const toca = lineas.filter((L) => /hoy|sin empezar/.test(o.cuando(L.id)));
       if (toca.length) o.entrenar(toca[0].id);
@@ -558,7 +623,7 @@
     return { lineas: () => lineas, pintar };
   }
 
-  const api = { PREFIJO, MAX_JUGADAS, validar, choque, arbol, leerTexto, aLinea, libroDe, planDe, montar };
+  const api = { PREFIJO, MAX_JUGADAS, validar, choque, arbol, leerTexto, aLinea, libroDe, planDe, documentoPdf, montar };
   if (typeof window !== "undefined") window.RepertorioAperturas = api;
   if (typeof module !== "undefined") module.exports = api;
 })();

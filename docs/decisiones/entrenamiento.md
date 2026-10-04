@@ -1313,6 +1313,16 @@ del rival y otra apertura entran; una jugada mal escrita y una fila a nombre
 de otro se rechazan; su profe la ve y no la cambia; una profesora ajena no ve
 nada.
 
+#### El repertorio en PDF
+
+«🖨️ Bajar en PDF» arma una hoja con una tabla por color: cada línea entera en
+la notación de acá (Cf3, no Nf3: la lee el alumno, no el motor), ordenada por
+jugadas para que las que empiezan igual queden juntas, y cómo va su repaso. La
+escribe `js/reporte-pdf.js`, el mismo de los informes, con la marca de agua
+pedida con su dirección vista desde `entreno/` (la de `MarcaAgua.preparar()`
+es relativa a la raíz y desde ahí no se encontraba). Una línea que no se puede
+jugar no va. El verificador baja el PDF y lee su texto con pypdf.
+
 #### Jugar con mi repertorio
 
 Cada color del árbol trae «▶ Jugar con mi repertorio»: una partida en la que,
