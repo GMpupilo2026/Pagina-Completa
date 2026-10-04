@@ -1027,6 +1027,59 @@
             linea.style.display = compacta ? "flex" : "none";
             grilla.style.display = compacta ? "none" : "";
             seccion.dataset.compacta = compacta ? "1" : "";
+            botonCalendario();
+        }
+
+        /* ---------- Agregar a mi calendario ----------
+           Las clases de las próximas cuatro semanas (mis_clases_proximas, la
+           misma regla de «Tu próxima clase»), las tareas y los exámenes con
+           fecha, en un .ics que abre el calendario del celular. Es una foto:
+           si el profe cambia el horario, se vuelve a bajar (los UID no
+           cambian, así que se actualiza en vez de duplicarse). Solo al alumno
+           con profesor: sin profe no hay clase que agendar. Ver «Agregar a mi
+           calendario» en docs/decisiones/paneles.md. */
+        function botonCalendario() {
+            const caja = document.getElementById("calendario-alumno");
+            if (!caja) return;
+            const ve = !esEquipoDocente() && !profile._persona && videollamadaLista && misClases.length > 0;
+            if (ve && !caja.dataset.armado) {
+                caja.dataset.armado = "1";
+                const boton = document.getElementById("agregar-calendario");
+                boton.addEventListener("click", () => bajarCalendario(boton, document.getElementById("agregar-calendario-estado")));
+            }
+            caja.hidden = !ve;
+            ajustarTusClases();
+        }
+
+        async function bajarCalendario(boton, estado) {
+            boton.disabled = true;
+            estado.textContent = "Armando tu calendario…";
+            try {
+                const [c, t, x] = await Promise.all([
+                    sb.rpc("mis_clases_proximas", { p_dias: 28 }),
+                    sb.rpc("tareas_con_avance", { p_alumno: profile.id, p_pendientes: true, p_limite: 50 }),
+                    sb.rpc("examenes_con_nota", { p_alumno: profile.id, p_limite: 50 }),
+                ]);
+                if (c.error && t.error && x.error) throw c.error;
+                const { texto, eventos } = CalendarioIcs.armar({
+                    clases: c.error ? [] : c.data,
+                    tareas: t.error ? [] : t.data,
+                    examenes: x.error ? [] : x.data,
+                });
+                if (!eventos) {
+                    estado.textContent = "Todavía no hay clases en el horario de tu profe ni tareas o exámenes con fecha. Cuando los haya, vuelve a tocar el botón.";
+                    return;
+                }
+                CalendarioIcs.bajar(texto, "ajedrez-integral.ics");
+                estado.textContent = "Listo: se bajó «ajedrez-integral.ics» con " + eventos
+                    + (eventos === 1 ? " fecha" : " fechas")
+                    + ". Ábrelo para agregarlas a tu calendario. Si tu profe cambia el horario, vuelve a bajarlo.";
+            } catch (e) {
+                estado.textContent = "";
+                Avisos.avisar("No se pudo armar tu calendario. Revisa tu conexión y vuelve a intentarlo.", { tipo: "error" });
+            } finally {
+                boton.disabled = false;
+            }
         }
 
         function pintarVideollamada() {
@@ -2219,7 +2272,7 @@
         function ajustarTusClases() {
             const caja = document.getElementById("tus-clases");
             if (!caja) return;
-            const hay = ["ultima-clase", "puntos-mes"].some((id) => !document.getElementById(id).hidden);
+            const hay = ["calendario-alumno", "ultima-clase", "puntos-mes"].some((id) => !document.getElementById(id).hidden);
             if (!caja.dataset.armado) {
                 caja.dataset.armado = "1";
                 const guardado = gruposGuardados()["Tus clases"];
