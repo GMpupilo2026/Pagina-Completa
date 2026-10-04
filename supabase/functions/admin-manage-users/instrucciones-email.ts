@@ -1,15 +1,9 @@
-// Envía el correo "Instrucciones adaptadas" con el PDF adjunto, justo
-// después de invitar a una persona nueva. Usa Resend (requiere el secreto
-// RESEND_API_KEY en el proyecto de Supabase; sin él, no se envía nada pero
-// tampoco se rompe la invitación — crear la cuenta es lo importante).
-//
-// El PDF se sirve como archivo estático del sitio (instrucciones-adaptadas.pdf
-// en la raíz) y se descarga aquí en cada envío en vez de guardarlo embebido
-// en el código: así basta con reemplazar ese archivo para actualizar el
-// contenido del PDF sin tener que volver a desplegar esta función.
+// El correo que le llega a quien se rechaza desde la bandeja de solicitudes.
+// El de bienvenida (usuario, contraseña provisional y el PDF de instrucciones
+// adaptadas) ya no vive aquí: es `invitacion-email.ts`, el mismo de
+// create-student e inscribir-alumno.
 
 const SITE_URL = "https://ajedrez-integral.com";
-const PDF_URL = `${SITE_URL}/instrucciones-adaptadas.pdf`;
 const WHATSAPP = "https://wa.me/50683092291";
 
 // El nombre lo escribe quien pide entrar (unirse.html): va escapado, como todo
@@ -25,68 +19,11 @@ function saludoPara(fullName?: string) {
   return nombre ? `Hola ${escapar(nombre)},` : "Hola,";
 }
 
-export async function sendInstruccionesAdaptadas(email: string, fullName?: string) {
-  const apiKey = Deno.env.get("RESEND_API_KEY");
-  if (!apiKey) {
-    console.warn("RESEND_API_KEY no configurado: no se envía el PDF de instrucciones adaptadas.");
-    return;
-  }
-
-  try {
-    const pdfRes = await fetch(PDF_URL);
-    if (!pdfRes.ok) {
-      console.error("No se pudo descargar instrucciones-adaptadas.pdf:", pdfRes.status);
-      return;
-    }
-    const pdfBuffer = new Uint8Array(await pdfRes.arrayBuffer());
-    let binary = "";
-    for (let i = 0; i < pdfBuffer.length; i++) binary += String.fromCharCode(pdfBuffer[i]);
-    const pdfBase64 = btoa(binary);
-
-    const saludo = saludoPara(fullName);
-    const from = Deno.env.get("RESEND_FROM") || "Ajedrez Integral <onboarding@resend.dev>";
-
-    const res = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        from,
-        to: [email],
-        subject: "Instrucciones adaptadas — Ajedrez Integral",
-        html:
-          `<p>${saludo}</p>` +
-          `<p>Junto con tu invitación a Ajedrez Integral, te compartimos el PDF <strong>Instrucciones adaptadas</strong>: ` +
-          `una guía en formato accesible con los enlaces y los pasos completos para usar todo el sitio ` +
-          `— el tablero, el entrenamiento y el panel de la Academia — en su modo adaptado para lector de pantalla.</p>` +
-          `<p>Puedes descargarlo también aquí: <a href=\"${PDF_URL}\">${PDF_URL}</a></p>` +
-          `<p>Cualquier duda, escríbenos por WhatsApp: <a href=\"${WHATSAPP}\">+506 8309-2291</a>.</p>`,
-        attachments: [
-          {
-            filename: "instrucciones-adaptadas.pdf",
-            content: pdfBase64,
-          },
-        ],
-      }),
-    });
-
-    if (!res.ok) {
-      console.error("Resend respondió con error al enviar instrucciones adaptadas:", res.status, await res.text());
-    }
-  } catch (err) {
-    // Nunca dejamos que un fallo de correo tumbe la invitación real (la cuenta
-    // ya se creó con inviteUserByEmail antes de llegar aquí).
-    console.error("Error enviando instrucciones adaptadas:", err);
-  }
-}
-
 // Correo que le llega a quien fue rechazado de la Academia gratuita,
 // invitándolo a elegir un plan pago en vez de una cuenta de alumno. Mismo
 // mecanismo (Resend, HTML con estilos inline porque Gmail recorta un
 // <style> en <head>) y el mismo "si falla, no se rompe nada más" que
-// sendInstruccionesAdaptadas — el rechazo ya quedó guardado antes de llamar
+// el correo de bienvenida — el rechazo ya quedó guardado antes de llamar
 // a esto.
 //
 // NO lleva precios: los tenía escritos a mano y se habían quedado viejos (el

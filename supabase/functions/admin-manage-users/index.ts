@@ -49,10 +49,15 @@
 // consumir_invitacion(); acá solo se fija el techo. Quien administra no tiene
 // tope. "reset_invitaciones" pone el contador de usadas de vuelta en cero.
 //
-// "create" también envía, aparte, el PDF "Instrucciones adaptadas" (ver
-// instrucciones-email.ts) — la invitación de Supabase no admite adjuntos,
-// así que va como un segundo correo. Si ese segundo envío falla, la cuenta
-// ya invitada no se deshace: crearla es lo importante.
+// "create" y "approve_request" mandan EL MISMO correo de bienvenida que
+// create-student e inscribir-alumno (`invitarConBienvenida()` de
+// invitacion-email.ts): la cuenta se crea confirmada con una contraseña
+// provisional y el correo trae el usuario, esa contraseña y el PDF de
+// instrucciones adaptadas. Hasta el 4 de octubre esto seguía con
+// `inviteUserByEmail` —el enlace de Supabase, sin contraseña— y quien creaba
+// una cuenta desde administración no recibía la contraseña provisional que ya
+// les llegaba a las otras dos puertas. Si el correo no sale, la cuenta no se
+// deshace: `correo_enviado: false` sube a la pantalla.
 //
 // "approve_request"/"reject_request" atienden la bandeja de
 // solicitudes_academia (alguien se anotó solo desde unirse.html). A
@@ -73,7 +78,8 @@
 // una Edge Function que tendría que volver a preguntar lo mismo.
 
 import { createClient } from "npm:@supabase/supabase-js@2";
-import { sendInstruccionesAdaptadas, sendInvitacionPlan } from "./instrucciones-email.ts";
+import { sendInvitacionPlan } from "./instrucciones-email.ts";
+import { invitarConBienvenida } from "./invitacion-email.ts";
 import { esCorreoInterno } from "./usuario-alumno.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
@@ -173,21 +179,20 @@ function validarCupo(valor: unknown) {
   return { ok: true, value: n };
 }
 
-// Invita por correo (Supabase Auth) y completa el perfil que deja el trigger
-// on_auth_user_created (rol "alumno" por defecto) — lo que ya hacía la acción
-// "create" a mano, factorizado para que "approve_request" use exactamente lo
-// mismo. Devuelve { userId, email } o { error }.
+// Crea la cuenta con su correo de bienvenida (usuario y contraseña
+// provisional, ver la cabecera) y completa el perfil que deja el trigger
+// on_auth_user_created (rol "alumno" por defecto). Lo usan "create" y
+// "approve_request". Devuelve { userId, email, correoEnviado } o { error }.
 async function invitarYCompletarPerfil(adminClient: Cliente, opts: {
   email: string; full_name: string; role: string; grupo: string;
   cupo: number | null; teacherIds: string[];
 }) {
   const { email, full_name, role, grupo, cupo, teacherIds } = opts;
-  const { data: invited, error: inviteError } = await adminClient.auth.admin.inviteUserByEmail(email, {
-    redirectTo: `${SITE_URL}/clases.html`,
-    data: full_name ? { full_name } : undefined,
-  });
-  if (inviteError || !invited?.user) {
-    return { error: inviteError?.message ?? "No se pudo invitar a la persona" };
+  // deno-lint-ignore no-explicit-any
+  const invitacion = await invitarConBienvenida(adminClient as any, email, full_name || null);
+  const user = invitacion.user;
+  if (invitacion.error || !user) {
+    return { error: invitacion.error ?? "No se pudo invitar a la persona" };
   }
 
   // El registro en "profiles" lo crea el trigger on_auth_user_created con
@@ -199,16 +204,18 @@ async function invitarYCompletarPerfil(adminClient: Cliente, opts: {
   if (grupo) updates.grupo = grupo;
   if (cupo !== null) updates.invitaciones_max = cupo;
   if (Object.keys(updates).length) {
-    await adminClient.from("profiles").update(updates).eq("id", invited.user.id);
+    await adminClient.from("profiles").update(updates).eq("id", user.id);
   }
   if (teacherIds.length && role === "alumno") {
-    const r = await ponerProfesores(adminClient, invited.user.id, teacherIds);
+    const r = await ponerProfesores(adminClient, user.id, teacherIds);
     if (r.error) return { error: r.error };
   }
 
-  await sendInstruccionesAdaptadas(invited.user.email ?? email, full_name);
-
-  return { userId: invited.user.id as string, email: (invited.user.email ?? email) as string };
+  return {
+    userId: user.id as string,
+    email: (user.email ?? email) as string,
+    correoEnviado: invitacion.correoEnviado,
+  };
 }
 
 Deno.serve(async (req) => {
@@ -291,7 +298,7 @@ Deno.serve(async (req) => {
     const r = await invitarYCompletarPerfil(adminClient, { email, full_name, role, grupo, cupo, teacherIds: profes.value });
     if (r.error) return json({ error: r.error }, 400);
 
-    return json({ ok: true, user_id: r.userId, email: r.email });
+    return json({ ok: true, user_id: r.userId, email: r.email, correo_enviado: r.correoEnviado });
   }
 
   if (action === "update") {
@@ -493,7 +500,7 @@ Deno.serve(async (req) => {
       .eq("id", solicitudId);
     if (updError) return json({ error: updError.message }, 400);
 
-    return json({ ok: true, user_id: r.userId, email: r.email });
+    return json({ ok: true, user_id: r.userId, email: r.email, correo_enviado: r.correoEnviado });
   }
 
   if (action === "reject_request") {
