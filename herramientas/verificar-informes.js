@@ -90,7 +90,7 @@ window.__funcion = [];
   if (DATOS.supabaseUrl) window.SUPABASE_URL = DATOS.supabaseUrl;
   function constructor(filas, etiqueta) {
     let desde = null, hasta = null, limite = null, unica = false;
-    let condiciones = [], dentro = [], orden = null, pendiente = null;
+    let condiciones = [], dentro = [], nulos = [], orden = null, pendiente = null;
     // El doble FILTRA Y ORDENA de verdad. Uno que devolviera siempre la tabla
     // entera daría por buena una página que mezcla las filas de dos alumnos, y
     // uno que ignorara el orden daría por bueno un código que se quedara con la
@@ -100,6 +100,9 @@ window.__funcion = [];
       select() { return b; },
       eq(col, val) { condiciones.push([col, val]); return b; },
       in(col, vals) { dentro.push([col, vals.map(String)]); return b; },
+      // .is(col, null): las que no tienen nada en col (un certificado vigente
+      // es uno sin anulado_at). Filtra de verdad, como los demás.
+      is(col, val) { if (val === null) nulos.push(col); return b; },
       order(col, o) { orden = [col, !o || o.ascending !== false]; return b; },
       limit(n) { limite = n; return b; },
       range(a, z) { desde = a; hasta = z; return b; },
@@ -141,6 +144,7 @@ window.__funcion = [];
         if (Array.isArray(d)) {
           condiciones.forEach(([c, v]) => { d = d.filter((f) => String(f[c]) === String(v)); });
           dentro.forEach(([c, vs]) => { d = d.filter((f) => vs.indexOf(String(f[c])) !== -1); });
+          nulos.forEach((c) => { d = d.filter((f) => f[c] == null); });
           if (orden) {
             const [c, asc] = orden;
             d = d.slice().sort((x, y) => (x[c] < y[c] ? -1 : x[c] > y[c] ? 1 : 0) * (asc ? 1 : -1));
@@ -1852,6 +1856,81 @@ async function pruebaFotos(browser) {
   await page.close();
 }
 
+/* Los certificados de curso en la ficha del alumno (ver «Los certificados de
+   curso» en docs/decisiones/cursos-y-material.md). Con el curso completo el
+   profesor ve «Dar certificado», que pide emitir_certificado para ESE alumno
+   y ESE curso; con uno vigente, «Ver certificado» (el anulado y el de otra
+   alumna no cuentan). Con el curso a medias, nada. El alumno ve el suyo, o
+   que falta que su profe lo confirme. */
+async function pruebaCertificados(browser) {
+  console.log("\n=== Certificados de curso ===");
+  const completo = { student_id: "a-1", slug: "finales-practicos", titulo: "Finales prácticos", total: 14, hechos: 14, ultimo_titulo: "Repaso", ultima_fecha: "2026-09-20T10:00:00Z" };
+  const aMedias = { student_id: "a-1", slug: "estrategia-y-tactica", titulo: "Estrategia y Táctica", total: 20, hechos: 7, ultimo_titulo: "Peones", ultima_fecha: "2026-09-19T10:00:00Z" };
+  const datos = (certificados, propio) => ({
+    rpc: {
+      informes_resumen_alumnos: [ANA], informes_cursos_alumnos: [completo, aMedias], informes_entreno_modulos: [MODULOS_ANA],
+      informes_diagnosticos_alumnos: [], informes_totales: { clases_cerradas: 4, preguntas: 10, partidas: 2 },
+      resumen_tareas_examenes: DEBERES, evolucion_alumno: CURVA, emitir_certificado: "abcdef1234",
+    },
+    tablas: {
+      profiles: propio ? [{ id: "a-1", role: "alumno", is_admin: false, full_name: "Ana Rojas", email: "ana@x.cr" }]
+        : [{ id: "prof-1", role: "profesor", is_admin: false, full_name: "Oscar", email: "o@x.cr" },
+           { id: "a-1", role: "alumno", is_admin: false, full_name: "Ana Rojas" }],
+      training_plans: [], question_answers: [], training_progress: [], certificados,
+    },
+  });
+  const fila = (page, i) => page.evaluate((n) => {
+    const d = document.querySelectorAll("#cursos-report-body > div")[n];
+    const a = d && [...d.querySelectorAll("a")].find((x) => /certificado\.html/.test(x.getAttribute("href") || ""));
+    const b = d && [...d.querySelectorAll("button")].find((x) => /Dar certificado/.test(x.textContent));
+    return { enlace: a ? a.getAttribute("href") : null, dar: !!(b && b.checkVisibility()), texto: d ? d.textContent.replace(/\s+/g, " ") : "" };
+  }, i);
+  const abrirAna = async (certificados) => {
+    const r = await abrir(browser, datos(certificados), "prof-1");
+    await r.page.selectOption("#student-filter", "a-1");
+    await r.page.waitForFunction(() => !document.getElementById("student-report").classList.contains("hidden"));
+    await r.page.waitForFunction(() => /certificado/i.test(document.querySelector("#cursos-report-body > div").textContent));
+    return r;
+  };
+
+  let { page, errores } = await abrirAna([]);
+  let f = await fila(page, 0);
+  igual("curso completo sin certificado: el profe ve «Dar certificado»", [f.dar, f.enlace].join(","), "true,");
+  igual("con el curso a medias no se ofrece", JSON.stringify(await fila(page, 1)).includes("certificado"), "false");
+  await page.evaluate(() => [...document.querySelectorAll("#cursos-report-body button")].find((x) => /Dar certificado/.test(x.textContent)).click());
+  await page.waitForFunction(() => document.querySelector('#cursos-report-body a[href^="certificado.html"]'));
+  igual("pide el certificado de ESTE alumno y ESTE curso", JSON.stringify(await page.evaluate(() => window.__rpcArgs.filter((a) => a[0] === "emitir_certificado").map((a) => a[1]))),
+    JSON.stringify([{ p_alumno: "a-1", p_curso: "finales-practicos" }]));
+  igual("después de confirmar", await page.evaluate(() => window.__avisos.some((t) => /¿Darle el certificado de «Finales prácticos»\?/.test(t))), "true");
+  f = await fila(page, 0);
+  igual("y queda «Ver certificado» con su código", [f.enlace, f.dar, /Certificado dado/.test(f.texto)].join(","), "certificado.html?c=abcdef1234,false,true");
+  igual("sin errores (dar certificado)", errores.join(" | "), "");
+  await page.close();
+
+  ({ page, errores } = await abrirAna([
+    { student_id: "a-1", curso: "finales-practicos", codigo: "1111111111", anulado_at: "2026-09-01T00:00:00Z" },
+    { student_id: "a-2", curso: "finales-practicos", codigo: "2222222222", anulado_at: null },
+    { student_id: "a-1", curso: "finales-practicos", codigo: "0123456789", anulado_at: null },
+  ]));
+  f = await fila(page, 0);
+  igual("con uno vigente: «Ver certificado» (ni el anulado ni el de otra alumna)", [f.enlace, f.dar].join(","), "certificado.html?c=0123456789,false");
+  igual("y se puede anular", await page.evaluate(() => [...document.querySelectorAll("#cursos-report-body > div:first-child button")].some((b) => b.textContent === "Anular")), "true");
+  await page.close();
+
+  // El propio alumno: sin certificado, que falta su profe; con uno, el enlace. Nunca «Dar».
+  ({ page, errores } = await abrir(browser, datos([]), "a-1"));
+  await page.waitForFunction(() => /profe lo confirme/.test(document.getElementById("cursos-report-body").textContent));
+  f = await fila(page, 0);
+  igual("el alumno sin certificado: falta que su profe lo confirme", [f.dar, f.enlace, /Cuando tu profe lo confirme/.test(f.texto)].join(","), "false,,true");
+  await page.close();
+  ({ page, errores } = await abrir(browser, datos([{ student_id: "a-1", curso: "finales-practicos", codigo: "0123456789", anulado_at: null }], true), "a-1"));
+  await page.waitForFunction(() => document.querySelector('#cursos-report-body a[href^="certificado.html"]'));
+  f = await fila(page, 0);
+  igual("el alumno con certificado: lo ve, y no puede anularlo", [f.enlace, /Anular/.test(f.texto)].join(","), "certificado.html?c=0123456789,false");
+  igual("sin errores (alumno)", errores.join(" | "), "");
+  await page.close();
+}
+
 (async () => {
   const browser = await chromium.launch({ executablePath: CHROME });
   try {
@@ -1861,6 +1940,7 @@ async function pruebaFotos(browser) {
     await pruebaProfesor(browser);
     await pruebaClaseGrande(browser);
     await pruebaAlumno(browser);
+    await pruebaCertificados(browser);
     await pruebaCompartirPlanes(browser);
     await pruebaNombreAjeno(browser);
     await pruebaPdfVisitante(browser);
