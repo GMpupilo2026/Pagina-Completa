@@ -157,6 +157,11 @@
                 { emoji: "🎲", label: "Juegos", desc: "Crazyhouse y otras modalidades — tu profesor te asigna el rival", descProfe: "Crazyhouse y otras modalidades — arma las partidas de tus alumnos", href: "juegos.html" },
                 { emoji: "⚔️", label: "Competir", desc: "Torneos, TV en vivo, retos a quien esté en línea y tus partidas", descProfe: "Torneos para tus alumnos, TV en vivo, retos a quien esté en línea y sus partidas", href: "competir.html" },
                 { photo: "img/oscar-avatar.jpg", label: "Juega contra mí", desc: "Practica contra Oscar, nuestro motor", href: "tablero.html" },
+                /* Los mismos 5 ejercicios para dos compañeros, cada uno cuando
+                   puede. Solo del alumnado: se reta a un compañero de clase.
+                   Ver «Retos de ejercicios entre compañeros» en
+                   docs/decisiones/juegos-y-torneos.md. */
+                { emoji: "🆚", label: "Retos de ejercicios", desc: "Reta a un compañero a los mismos 5 ejercicios y mira quién resuelve más", href: "reto-ejercicios.html", soloAlumno: true },
             ] },
             /* «Mide tu nivel» (los dos diagnósticos) ya no existe: el de
                nivel está en «Lo que te pone tu profesor» y el de arbitraje
@@ -604,7 +609,7 @@
             { title: "Lo que te pone tu profesor", id: "tareas", hrefs: ["tareas.html", "examenes.html", "entreno/diagnostico.html"] },
             { title: "Aprender y estudiar", id: "aprender", hrefs: ["entreno/aprender.html", "entreno/estudio.html", "cursos/academia/index.html", "repasar-clases.html", "articulos.html"] },
             { title: "Entrenar", id: "entrenar", hrefs: ["entreno/mates.html", "entreno/practicas.html", "entreno/desafios.html", "entreno/4x4.html", "entreno/coordenadas.html", "entreno/temas.html", "entreno/aperturas.html", "entreno/memoria.html", "entreno/visualizacion.html", "entreno/precision-posicional.html", "entreno/finales.html", "entreno/tipos.html"] },
-            { title: "Jugar", id: "jugar", hrefs: ["sonar.html", "batalla-naval.html", "te-reto.html", "tablero.html", "juegos.html", "competir.html"] },
+            { title: "Jugar", id: "jugar", hrefs: ["sonar.html", "batalla-naval.html", "te-reto.html", "tablero.html", "juegos.html", "competir.html", "reto-ejercicios.html"] },
             { title: "Tu cuenta", id: "cuenta", hrefs: ["ciegos.html", "configuracion.html", "informes.html", "logros.html", "cuaderno.html", "justificaciones.html", "encuesta-profesor.html"] },
         ];
         const TILES_SOLO_ADAPTADO = [
@@ -1326,6 +1331,7 @@
             "tablero.html": "bot motor oscar jugar contra la computadora",
             "logros.html": "medallas racha premios",
             "cuaderno.html": "notas apuntes posiciones guardadas favoritas",
+            "reto-ejercicios.html": "retar companero duelo ejercicios competir quien resuelve mas",
             "entreno/diagnostico.html": "nivel examen de nivel prueba de nivel",
             "nivel-de-arbitraje.html": "arbitro reglamento fide",
             "arbitraje.html": "arbitro reglamento fide revisar",
@@ -2015,6 +2021,33 @@
                 chip("torneo", torneo.inscrito ? "Juegas «" + nombre + "»: va en curso" : "Inscripción abierta: «" + nombre + "»", false);
             }
             if (retos) a.classList.add("ring-2", "ring-accent-500");
+        }
+
+        /* ---------- Los retos de ejercicios que esperan ----------
+           Un compañero te retó y no te enteras si no entras a mirar. La
+           tarjeta dice cuántos te toca jugar, con la misma cuenta de la página
+           (mis_retos_de_ejercicios y RetoEjercicios.estado). Mirando el panel
+           de otra persona no se pide: la función contesta con quien mira. */
+        async function avisoRetosEjercicios() {
+            const a = tarjetaEnPanel("reto-ejercicios.html");
+            if (!a || profile._persona || !window.RetoEjercicios) return;
+            let filas = [];
+            try {
+                const { data, error } = await sb.rpc("mis_retos_de_ejercicios");
+                if (error) return;
+                filas = data || [];
+            } catch (e) { return; }
+            const ahora = new Date();
+            const toca = filas.filter((f) => RetoEjercicios.estado(f, ahora).tipo === "jugar").length;
+            const texto = a.lastElementChild || a;
+            texto.querySelectorAll("[data-retos-ejercicios]").forEach((x) => x.remove());
+            if (!toca) return;
+            const c = document.createElement("span");
+            c.dataset.retosEjercicios = "";
+            c.className = "text-[11px] font-semibold px-2 py-0.5 rounded-full border border-accent-500 text-accent-700 dark:text-accent-400";
+            c.textContent = "Te toca jugar: " + toca + (toca === 1 ? " reto" : " retos");
+            texto.appendChild(c);
+            a.classList.add("ring-2", "ring-accent-500");
         }
 
         /* ---------- La marca «Nuevo» ----------
@@ -4032,6 +4065,7 @@
                 if (!panelAdaptado && !profile._persona) pintarFavoritas();
                 if (!panelAdaptado) cargarLoQueMasUsas().catch((e) => console.error(e));
                 avisosDeCompetir().catch((e) => console.error(e));
+                avisoRetosEjercicios().catch((e) => console.error(e));
                 if (!profile._persona) cargarCampana().catch((e) => console.error(e));
                 if (!panelAdaptado && !profile._persona) marcarContenidoNuevo().catch((e) => console.error(e));
                 marcarLoUltimo().catch((e) => console.error(e));

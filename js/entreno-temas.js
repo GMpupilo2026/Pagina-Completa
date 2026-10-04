@@ -88,7 +88,7 @@ function markSolved(id){
   localStorage.setItem('entreno_temas_solved', JSON.stringify(s));
 }
 function isSolved(id){ return !!getSolved()[id]; }
-function idsOf(theme){ return theme === REPASO ? repasoIds : (DATA.themes[theme] || []); }
+function idsOf(theme){ return theme === REPASO ? repasoIds : theme === RETO ? reto.ids : (DATA.themes[theme] || []); }
 
 /* ---------------- Repasar fallados ----------------
    Lo que se resolvió con error o con pista entra a una cola de repaso
@@ -133,6 +133,73 @@ function terminarRepaso(){
   document.getElementById('celebration-replay-btn').style.display = 'none';
   document.getElementById('celebration-stats').textContent =
     `Repasaste ${repasoIds.length} ${repasoIds.length === 1 ? 'ejercicio' : 'ejercicios'}. Los que salieron limpios vuelven más adelante.`;
+  updateProgressBar();
+}
+/* ---------------- El reto de un compañero ----------------
+   temas.html?reto=<id>: los 5 ejercicios de un reto (js/reto-ejercicios.js),
+   con un intento cada uno, sin pistas y con el tiempo contando. Lo que se
+   contesta va a la base (una respuesta por ejercicio: la base no deja
+   repetir). Ver «Retos de ejercicios entre compañeros» en
+   docs/decisiones/juegos-y-torneos.md. */
+const RETO = '__reto';
+const reto = { id: null, ids: [], contestadas: new Map(), rival: '', inicio: 0 };
+function enReto(){ return currentTheme === RETO; }
+function siguienteDelReto(desde){
+  for(let i = desde; i < reto.ids.length; i++){ if(!reto.contestadas.has(i)) return i; }
+  return reto.ids.length;
+}
+async function abrirReto(id){
+  const R = window.RetoEjercicios;
+  const datos = R ? await R.cargar(sb, id).catch(() => null) : null;
+  if(!datos){
+    if(window.Avisos) Avisos.avisar('No se encontró ese reto. Puede que no sea tuyo o que ya no exista.', { tipo: 'error' });
+    showThemes(false);
+    return;
+  }
+  reto.id = id; reto.ids = datos.reto.ejercicios.slice(); reto.contestadas = datos.contestadas; reto.rival = datos.rival;
+  reto.vencido = new Date(datos.reto.vence_at) <= new Date();
+  currentTheme = RETO;
+  document.getElementById('play-title').textContent = reto.rival ? `Reto con ${reto.rival}` : 'Reto de ejercicios';
+  document.getElementById('play-desc').textContent = 'Los mismos 5 ejercicios para los dos. Un intento por ejercicio, sin pistas, y cuenta el tiempo. Si sales a mitad de un ejercicio, ese cuenta como no resuelto.';
+  ['hint-btn', 'retry-btn', 'skip-btn'].forEach((b) => { document.getElementById(b).style.display = 'none'; });
+  // Del reto se vuelve a los retos, no a la lista de temas.
+  const volver = document.getElementById('back-themes');
+  volver.textContent = '← Mis retos';
+  volver.setAttribute('href', '../reto-ejercicios.html');
+  document.getElementById('nivel-desde-caja').style.display = 'none';
+  document.getElementById('themes-view').style.display = 'none';
+  document.getElementById('play-view').style.display = 'block';
+  // Si se fue a mitad de uno (en este aparato), ese ya se jugó.
+  const dejado = R.abandonado(id, reto.contestadas);
+  if(dejado && !reto.vencido){
+    await R.responder(sb, id, dejado.idx, false, dejado.ms).catch(() => {});
+    reto.contestadas.set(dejado.idx, { acierto: false, ms: dejado.ms });
+  }
+  currentIndex = siguienteDelReto(0);
+  if(reto.vencido || currentIndex >= reto.ids.length){ terminarReto(); return; }
+  loadPuzzle();
+  window.scrollTo({ top: 0 });
+  if(document.documentElement.classList.contains('adaptive-mode') && comandos) comandos.enfocar();
+  else { const t = document.getElementById('play-title'); t.setAttribute('tabindex', '-1'); t.focus(); }
+}
+async function contestarReto(acierto){
+  const ms = Date.now() - reto.inicio;
+  reto.contestadas.set(currentIndex, { acierto, ms });
+  try { await RetoEjercicios.responder(sb, reto.id, currentIndex, acierto, ms); }
+  catch(e){ if(window.Avisos) Avisos.avisar('No se pudo guardar tu respuesta. Revisa tu conexión: si recargas, este ejercicio cuenta como no resuelto.', { tipo: 'error' }); }
+}
+function terminarReto(){
+  document.getElementById('play-area').style.display = 'none';
+  document.getElementById('celebration').style.display = 'block';
+  document.getElementById('celebration-title').textContent = reto.vencido ? 'Este reto ya venció' : '¡Reto terminado!';
+  document.getElementById('celebration-replay-btn').style.display = 'none';
+  document.getElementById('celebration-back-btn').textContent = 'Ver mis retos';
+  const hechas = [...reto.contestadas.values()];
+  const bien = hechas.filter((x) => x.acierto).length;
+  const ms = hechas.reduce((t, x) => t + (x.ms || 0), 0);
+  document.getElementById('celebration-stats').textContent =
+    `Resolviste ${bien} de ${reto.ids.length} en ${RetoEjercicios.mmss(ms)}. ` +
+    (reto.rival ? `Cuando ${reto.rival} termine, en «Retos de ejercicios» ves quién ganó.` : 'En «Retos de ejercicios» ves quién ganó.');
   updateProgressBar();
 }
 function solvedCountFor(theme){
@@ -420,6 +487,12 @@ function openTheme(key){
 }
 
 function updateProgressBar(){
+  if(enReto()){
+    const total = reto.ids.length;
+    document.getElementById('progress-fill').style.width = (total ? Math.round(100 * reto.contestadas.size / total) : 0) + '%';
+    document.getElementById('progress-label').textContent = `Reto · ejercicio ${Math.min(currentIndex + 1, total)} de ${total}`;
+    return;
+  }
   if(enRepaso()){
     const total = repasoIds.length;
     document.getElementById('progress-fill').style.width = (total ? Math.round(100 * currentIndex / total) : 0) + '%';
@@ -568,6 +641,8 @@ function loadPuzzle(){
   setStatus(document.documentElement.classList.contains('adaptive-mode')
     ? `${objetivo} ${posicion ? posicion + ' ' : ''}Escribe tu jugada en el recuadro, o "posición" para volver a oír el tablero.`
     : `${objetivo} Haz clic en la pieza que quieres mover.`);
+  // En un reto, el reloj de este ejercicio arranca acá (y se anota en el aparato).
+  if(enReto()){ reto.inicio = Date.now(); RetoEjercicios.empezar(reto.id, currentIndex); }
 }
 
 function onSquareClick(square, btn){
@@ -625,6 +700,7 @@ function playMove(from, to, promotion){
     game.undo();
     drawBoard();
     missedThisPuzzle = true;
+    if(enReto()){ falloDelReto(moveResult.san); return; }
     resetStreak();
     EjercicioTablero.destello(document.querySelector('[data-square="' + to + '"]'));
     // «Respuesta incorrecta» y no «no es legal»: la jugada se pudo hacer.
@@ -662,11 +738,37 @@ function playMove(from, to, promotion){
   }, 650);
 }
 
+/* En el reto hay un solo intento: la jugada equivocada termina el ejercicio,
+   y se dice cuál era la buena. */
+function falloDelReto(jugada){
+  locked = true;
+  const puzzle = currentPuzzle();
+  const buena = puzzle.solution[solutionStep];
+  setStatus(`No era ${jugadaDicha(jugada)}: la jugada era ${jugadaDicha(buena)}. En el reto hay un solo intento.`, 'bad');
+  contestarReto(false);
+  finEjercicio = EjercicioTablero.fin({
+    caja: '#fin-ejercicio', desde: puzzle.fen, jugadas: puzzle.solution, orientacion: orientation,
+    siguiente: pasarAlSiguiente,
+    origen: 'Ejercicios por tema · ' + document.getElementById('play-title').textContent,
+  });
+}
 function finishPuzzle(){
   locked = true;
   document.getElementById('hint-btn').disabled = true;
   const puzzle = currentPuzzle();
   const id = currentId();
+  if(enReto()){
+    setStatus(game.in_checkmate() ? '✅ ¡Jaque mate!' : '✅ ¡Correcto!', 'ok');
+    contestarReto(true);
+    // Cuenta para la racha y los informes, como cualquier ejercicio resuelto.
+    EntrenoProgress.log('temas', { puzzle_id: id, theme: 'reto', rating: puzzle.rating ?? null, ...EntrenoProgress.comoSalio(false, false) });
+    finEjercicio = EjercicioTablero.fin({
+      caja: '#fin-ejercicio', desde: puzzle.fen, jugadas: game.history(), orientacion: orientation,
+      siguiente: pasarAlSiguiente,
+      origen: 'Ejercicios por tema · ' + document.getElementById('play-title').textContent,
+    });
+    return;
+  }
   const alreadySolved = isSolved(id);
   if(!missedThisPuzzle && !usedHintThisPuzzle) bumpStreak(); else resetStreak();
   ajustarDificultad(!missedThisPuzzle && !usedHintThisPuzzle);
@@ -703,6 +805,12 @@ function finishPuzzle(){
 }
 function pasarAlSiguiente(){
   finEjercicio = null;
+  if(enReto()){
+    currentIndex = siguienteDelReto(currentIndex + 1);
+    if(currentIndex >= reto.ids.length) currentIndex = siguienteDelReto(0);
+    if(currentIndex >= reto.ids.length) terminarReto(); else loadPuzzle();
+    return;
+  }
   if(enRepaso()){
     if(currentIndex < repasoIds.length - 1){ currentIndex++; loadPuzzle(); }
     else { currentIndex = repasoIds.length; terminarRepaso(); }
@@ -764,7 +872,7 @@ const pistas = EjercicioTablero.pistas({
   alResolver: (j, frase) => { selectedSquare = null; prefijoAviso = frase || ''; playMove(j.from, j.to, j.promotion || undefined); },
 });
 function giveHint(){
-  if(locked) return;
+  if(locked || enReto()) return;   // el reto es sin pistas
   pistas.dar();
 }
 document.getElementById('hint-btn').addEventListener('click', giveHint);
@@ -797,8 +905,15 @@ document.getElementById('celebration-replay-btn').addEventListener('click', () =
   currentIndex = 0;
   loadPuzzle();
 });
-document.getElementById('celebration-back-btn').addEventListener('click', () => showThemes(true));
-document.getElementById('back-themes').addEventListener('click', (e) => { e.preventDefault(); showThemes(true); });
+document.getElementById('celebration-back-btn').addEventListener('click', () => {
+  // Del reto se vuelve a la lista de retos, que es donde se ve quién ganó.
+  if(enReto()){ location.href = '../reto-ejercicios.html'; return; }
+  showThemes(true);
+});
+document.getElementById('back-themes').addEventListener('click', (e) => {
+  if(enReto()) return;   // en el reto es un enlace de verdad, a la lista de retos
+  e.preventDefault(); showThemes(true);
+});
 
 /* ---------------- Arranque ---------------- */
 let appInitialized = false;
@@ -823,6 +938,9 @@ function initApp(){
   // le vuelve a poner delante.
   // ?repaso=1 es el enlace de «Hoy te toca» del hub: abre la cola directo.
   if(new URLSearchParams(location.search).has('repaso') && pendientesDeRepaso().length){ abrirRepaso(); return; }
+  // ?reto=<id>: el reto de un compañero (la lista de retos lleva acá).
+  const retoPedido = new URLSearchParams(location.search).get('reto');
+  if(retoPedido && /^[0-9a-f-]{36}$/i.test(retoPedido)){ abrirReto(retoPedido); return; }
   if(wanted) openTheme(wanted); else showThemes(document.documentElement.classList.contains('modo-ciego'));
 }
 
