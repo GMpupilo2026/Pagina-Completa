@@ -405,7 +405,7 @@ function jugadasDe(F) {
     const hojas = (pdf) => (pdf.toString("latin1").match(/\/Type\s*\/Page[^s]/g) || []).length;
     // Sin esto el PDF sale con los estilos de pantalla: arriba se emuló «screen».
     await page.emulateMedia({ media: null });
-    const deMas = [];
+    const deMas = [], deformes = [];
     let sinLetras = 0;
     for (const F of ESTUDIO) {
       await page.goto(BASE + "/entreno/estudio.html?ficha=" + F.id, { waitUntil: "networkidle" });
@@ -416,7 +416,18 @@ function jugadasDe(F) {
       }
       const letras = await page.evaluate(() => [...document.querySelectorAll(".coord-columna")].map((e) => e.textContent).join(""));
       if (letras !== "abcdefgh") sinLetras += 1;
+      // En el papel el tablero también es cuadrado y con las filas parejas:
+      // las casillas con pieza crecían a lo alto (232×268 en la Española).
+      await page.emulateMedia({ media: "print" });
+      const forma = await page.evaluate(() => {
+        const t = document.getElementById("tablero"), r = t.getBoundingClientRect();
+        const filas = getComputedStyle(t).gridTemplateRows.split(" ").map(parseFloat);
+        return { cuadrado: Math.abs(r.width - r.height) <= 1.5, parejas: Math.max(...filas) - Math.min(...filas) <= 1, medida: `${r.width.toFixed(0)}×${r.height.toFixed(0)}` };
+      });
+      await page.emulateMedia({ media: null });
+      if (!forma.cuadrado || !forma.parejas) deformes.push(F.id + " " + forma.medida);
     }
+    igual("en el papel, todos los tableros cuadrados y con las filas parejas", deformes.join(", ") || "todos", "todos");
     igual("las " + ESTUDIO.length + " fichas, en una sola hoja", deMas.join(", ") || "todas", "todas");
     igual("con las letras de las columnas debajo del tablero", sinLetras, 0);
 

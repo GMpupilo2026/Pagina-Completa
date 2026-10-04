@@ -1441,6 +1441,18 @@ y 16 conceptos) sin tocar ni una de las 28 primeras. Lo que dejó escrito:
     se imprime esa), y al terminar vuelve.
   - En el papel van siempre los colores del modo claro: los de oscuro son
     pálidos y en blanco no se leen.
+- **El tablero es cuadrado, con las ocho filas iguales** (también en
+  Aperturas y en Repasar clases). Con `grid-template-rows: repeat(8, 1fr)`
+  una fila no puede ser más chica que lo que trae adentro, y las casillas
+  heredaban el interlineado de 1,5 del sitio: con la pieza a 27 px el renglón
+  medía 41 px en una casilla de 38. En el celular las filas con piezas
+  crecían y el tablero salía estirado (38×41 en Estudio y Aperturas, 310×332
+  en Repasar clases) y la ficha impresa de la Española salía de 232×268. Se
+  veía «más o menos bien» y nadie lo notaba. El arreglo es
+  `repeat(8, minmax(0,1fr))` y `line-height:1` en la casilla.
+  `verificar-tablero-cuadrado.js` mide esos tableros en cuatro anchos (360,
+  390, 768 y 1280 px) y `verificar-estudio.js` cada ficha impresa; un tablero
+  nuevo que copie la regla vieja va en `PAGINAS` del primero.
 - **El tablero es decorativo** (`aria-hidden`): el pie cuenta qué se ve y la
   posición va contada pieza por pieza con `BlindNotation.positionSentence()`,
   que es la única tabla de nombres y plurales del sitio — escribirla otra vez

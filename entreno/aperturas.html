@@ -73,12 +73,16 @@
 
   .board-wrap{max-width:420px; margin:0 auto; position:relative;}
   .board8{
-    display:grid; grid-template-columns:repeat(8,1fr); grid-template-rows:repeat(8,1fr);
+    /* minmax(0,1fr): con 1fr una fila con piezas crecía más que su parte y
+       el tablero salía estirado en el celular (ver «Estudio: una ficha por idea» en
+       docs/decisiones/entrenamiento.md). */
+    display:grid; grid-template-columns:repeat(8,minmax(0,1fr)); grid-template-rows:repeat(8,minmax(0,1fr));
     width:100%; aspect-ratio:1/1; border:2px solid var(--brass); box-shadow:0 8px 30px rgba(16,42,67,0.18);
   }
   .sq{
     position:relative; display:flex; align-items:center; justify-content:center;
     font-size:min(7vw,32px); cursor:pointer; user-select:none; border:none; padding:0;
+    line-height:1; min-width:0; min-height:0; overflow:hidden;
     transition:background .12s;
   }
   .sq.light{background:var(--sq-light);}
