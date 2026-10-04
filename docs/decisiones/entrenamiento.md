@@ -2995,6 +2995,20 @@ esa sola con el motor, como «Revisa esta partida» (`?revisar=torneo:<id>`).
   120 letras, Elo 0–3500): las jugadas las escribe el navegador y se pueden
   tocar desde la consola, así que quien las lee (Informes) vuelve a filtrar
   lo que no tenga forma de jugada.
+- **O con una foto de la planilla** («📷 Leer la foto»). Usa el mismo lector
+  que `lector-planilla.html`, que pasó de la página a `js/planilla-ocr.js`
+  para que haya una sola copia: la foto va a la Edge Function
+  `ocr-scoresheet` (Google Vision, con el tope diario de 30 fotos por persona;
+  ver «El lector de planilla tiene tope diario» en cuentas-y-formularios.md),
+  las palabras se ordenan por filas y cada una se lee como jugada o se
+  cambia por la legal más parecida, comparada también en español («Ac9» es
+  `Bc4`, no `Qc4`). **No se guarda sola**: las jugadas caen en el cuadro, en
+  español, y las adivinadas llevan «?» (que `leerJugadas` salta como una
+  anotación), con un aviso de cuáles son, para que el alumno las compare con
+  su planilla antes de «Guardar y revisar». Lo que dice el servidor (el tope
+  del día, la foto muy grande) se dice tal cual y el cuadro no se toca. Lo
+  prueban `verificar-planilla-ocr.js` (sin navegador) y
+  `verificar-tipos-pagina.js` (con un Vision de mentira).
 - **El nombre del rival no se guarda.** Es de otra persona, que no tiene
   cuenta ni dio su consentimiento, y para revisar la partida no hace falta. El
   formulario lo dice.

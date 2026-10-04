@@ -1097,6 +1097,58 @@ window.PreparacionMotor = {
     await ctx.close();
   }
 
+  console.log("\n=== Mis partidas de torneo: leer la foto de la planilla ===");
+  {
+    /* Un Google Vision de mentira (la Edge Function ocr-scoresheet): devuelve
+       las palabras de una planilla con su lugar en la foto, desordenadas como
+       las devuelve el OCR y con «Ac4» mal leída como «Ac9». */
+    const FILAS = [["1.", "e4", "e5"], ["2.", "Cf3", "Cc6"], ["3.", "Ac9", "Cd4"], ["4.", "Cxe5", "Dg5"], ["5.", "Cxf7", "Dxg2"], ["6.", "Tf1", "Dxe4+"]];
+    const words = [];
+    FILAS.forEach((f, i) => f.forEach((t, j) => words.push({ text: t, bbox: { x0: j * 100, y0: i * 40, x1: j * 100 + 60, y1: i * 40 + 25 } })));
+    words.reverse();
+    const pedidos = [];
+    const preparar = async (ctx) => {
+      await ctx.addInitScript(() => { window.__filas = { game_rooms: [], practice_games: [], practice_sessions: [], partidas_torneo: [] }; window.__guardan = ["partidas_torneo"]; window.SUPABASE_URL = "https://proyecto.supabase.co"; });
+      await ctx.route("https://proyecto.supabase.co/functions/v1/ocr-scoresheet", (r) => {
+        if (r.request().method() === "OPTIONS") return r.fulfill({ status: 200, headers: { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "*" }, body: "ok" });
+        const cuerpo = JSON.parse(r.request().postData() || "{}");
+        pedidos.push({ auth: r.request().headers()["authorization"], foto: typeof cuerpo.image_base64 === "string" && cuerpo.image_base64.length > 10 });
+        if (pedidos.length === 2) return r.fulfill({ status: 429, contentType: "application/json", headers: { "Access-Control-Allow-Origin": "*" }, body: JSON.stringify({ error: "Ya leíste 30 fotos hoy. Mañana puedes seguir." }) });
+        return r.fulfill({ status: 200, contentType: "application/json", headers: { "Access-Control-Allow-Origin": "*" }, body: JSON.stringify({ words }) });
+      });
+    };
+    const PNG = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==", "base64");
+    const aviso = (page) => page.textContent('#tipo-extra [role="status"]');
+    const { page, ctx, errores } = await abrir(browser, true, "#errores", preparar);
+    await page.waitForSelector("#vista-tipo:not(.hidden) #anotar-torneo summary");
+    await page.click("#anotar-torneo summary");
+    await page.getByRole("button", { name: "📷 Leer la foto" }).click();
+    ok("sin foto elegida, lo pide y no manda nada", /Elige primero la foto/.test(await aviso(page)) && pedidos.length === 0, await aviso(page));
+    await page.getByLabel("¿Prefieres tomarle una foto a tu planilla?").setInputFiles({ name: "planilla.png", mimeType: "image/png", buffer: PNG });
+    await page.getByRole("button", { name: "📷 Leer la foto" }).click();
+    await page.waitForFunction(() => /Leí|No se pudo|No encontré/.test(document.querySelector('#tipo-extra [role="status"]').textContent), null, { timeout: 10000 }).catch(() => {});
+    ok("la foto va a ocr-scoresheet con la sesión de quien la sube", pedidos.length === 1 && pedidos[0].auth === "Bearer t" && pedidos[0].foto, JSON.stringify(pedidos));
+    const texto = await page.getByLabel("Tus jugadas").inputValue();
+    ok("las jugadas caen en el cuadro, en orden y en español, con «?» en la que adivinó",
+      texto === "1. e4 e5 2. Cf3 Cc6 3. Ac4? Cd4 4. Cxe5 Dg5 5. Cxf7 Dxg2 6. Tf1 Dxe4+", texto);
+    ok("y dice cuál revisar", /^Leí 6 jugadas\. Una no se leía bien y va con «\?», la más parecida que es legal \(la 3 de las blancas\)/.test(await aviso(page)), await aviso(page));
+    ok("el cursor queda en las jugadas para revisarlas", await page.evaluate(() => document.activeElement && document.activeElement.tagName === "TEXTAREA"));
+    ok("leer la foto no guarda nada todavía", (await page.evaluate(() => window.__escrituras.filter((e) => e.tabla === "partidas_torneo").length)) === 0);
+    await (await page.$("#tipo-extra")).screenshot({ path: "/tmp/tipos-torneo-foto.png" }).catch(() => {});
+    // El tope diario: lo que dice el servidor se dice tal cual, y el cuadro no se toca.
+    await page.getByRole("button", { name: "📷 Leer la foto" }).click();
+    await page.waitForFunction(() => /No se pudo leer la foto/.test(document.querySelector('#tipo-extra [role="status"]').textContent), null, { timeout: 10000 }).catch(() => {});
+    ok("con el tope del día gastado, lo dice en palabras", /^No se pudo leer la foto: Ya leíste 30 fotos hoy\. Mañana puedes seguir\.$/.test(await aviso(page)), await aviso(page));
+    ok("y lo que ya estaba en el cuadro se queda", (await page.getByLabel("Tus jugadas").inputValue()) === texto);
+    // Guardar lo leído (con el «?» puesto): se lee igual.
+    await page.getByRole("button", { name: "Guardar y revisar" }).click();
+    await page.waitForFunction(() => window.__escrituras.some((e) => e.tabla === "partidas_torneo"), null, { timeout: 10000 }).catch(() => {});
+    const fila = await page.evaluate(() => (window.__escrituras.find((e) => e.tabla === "partidas_torneo") || {}).fila);
+    ok("lo leído se guarda con las jugadas comprobadas", !!fila && fila.jugadas.join(" ") === "e4 e5 Nf3 Nc6 Bc4 Nd4 Nxe5 Qg5 Nxf7 Qxg2 Rf1 Qxe4+", JSON.stringify(fila && fila.jugadas));
+    ok("sin errores en consola", !errores.length, errores.join(" | "));
+    await ctx.close();
+  }
+
   console.log("\n=== Tus propios errores: el final, el reloj y la curva ===");
   {
     /* Ejercicios ya guardados: uno en una posición del banco de Finales (la de

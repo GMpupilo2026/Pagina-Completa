@@ -287,6 +287,11 @@ Rica:
   el mensaje, quien administra pasa de 30, el techo total frena a todos y
   `anon` no tiene `execute`.
 
+La lectura (el orden de las filas, la notación y la jugada legal más
+parecida) vive en `js/planilla-ocr.js`, una sola copia para el Lector de
+planilla y para «Anota tu partida» de «Tus propios errores» (ver «Mis
+partidas de torneo» en entrenamiento.md): las dos gastan del mismo tope.
+
 Para cambiar los topes, una migración nueva que vuelva a crear la función con
 otros números. `node herramientas/verificar-lector-planilla.js` (sin red ni
 base) comprueba que la Edge Function gaste el uso antes de llamar a Google y
