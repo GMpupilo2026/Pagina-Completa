@@ -62,10 +62,15 @@ function tablero(fen, opciones) {
         }
     });
     const tam = 96, celda = tam / 8, pad = 6, total = tam + 2 * pad;
-    const xy = (sq) => [pad + "abcdefgh".indexOf(sq[0]) * celda, pad + (8 - +sq[1]) * celda];
+    // Con coordenadas, los números van a la izquierda y las letras abajo, por
+    // fuera del marco, como en los tableros del sitio: se agranda el lienzo
+    // por esos dos lados y el tablero se corre a la derecha.
+    const izq = opciones.coordenadas ? 8 : 0, abajo = opciones.coordenadas ? 8 : 0;
+    const ancho = total + izq, alto = total + abajo;
+    const xy = (sq) => [izq + pad + "abcdefgh".indexOf(sq[0]) * celda, pad + (8 - +sq[1]) * celda];
 
-    const s = ['<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + total + " " + total +
-               '" width="' + total + '" height="' + total + '" role="img" aria-labelledby="t">'];
+    const s = ['<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + ancho + " " + alto +
+               '" width="' + ancho + '" height="' + alto + '" role="img" aria-labelledby="t">'];
     s.push("<title id=\"t\">" + (opciones.titulo || "Diagrama de ajedrez").replace(/&/g, "&amp;").replace(/</g, "&lt;") + "</title>");
     // Las piezas de js/chess-piece-svg.js pintan con var(--piece-white) y
     // var(--piece-black), que css/styles.css define en :root para los
@@ -77,10 +82,17 @@ function tablero(fen, opciones) {
     // valores por defecto que css/styles.css, para que el dibujo se vea igual
     // suelto que dentro del sitio.
     s.push("<style>:root{--piece-white:#fff;--piece-black:#17202a;}</style>");
-    s.push('<rect width="' + total + '" height="' + total + '" rx="4" fill="' + BORDE + '"/>');
+    s.push('<rect x="' + izq + '" width="' + total + '" height="' + total + '" rx="4" fill="' + BORDE + '"/>');
     for (let r = 0; r < 8; r++) for (let c = 0; c < 8; c++) {
-        s.push('<rect x="' + (pad + c * celda) + '" y="' + (pad + r * celda) + '" width="' + celda +
+        s.push('<rect x="' + (izq + pad + c * celda) + '" y="' + (pad + r * celda) + '" width="' + celda +
                '" height="' + celda + '" fill="' + ((r + c) % 2 === 0 ? CLARA : OSCURA) + '"/>');
+    }
+    if (opciones.coordenadas) {
+        const letra = 'font-family="Inter, Arial, sans-serif" font-size="5.2" font-weight="600" fill="' + BORDE + '"';
+        for (let i = 0; i < 8; i++) {
+            s.push('<text x="' + (izq + pad + i * celda + celda / 2) + '" y="' + (total + 6) + '" text-anchor="middle" ' + letra + ">" + "abcdefgh"[i] + "</text>");
+            s.push('<text x="' + (izq - 1.5) + '" y="' + (pad + i * celda + celda / 2 + 1.9) + '" text-anchor="end" ' + letra + ">" + (8 - i) + "</text>");
+        }
     }
     (opciones.destacar || []).forEach((sq) => {
         const [x, y] = xy(sq);
