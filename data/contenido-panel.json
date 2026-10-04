@@ -63,7 +63,11 @@
   "trompowsky",
   "reti",
   "catalana",
-  "gambito-escoces"
+  "gambito-escoces",
+  "siciliana-abierta",
+  "smith-morra",
+  "cuatro-caballos",
+  "gambito-danes"
  ],
  "entreno/estudio.html?cat=defensa": [
   "siciliana",
@@ -84,7 +88,10 @@
   "alekhine",
   "gambito-dama-aceptado",
   "semieslava",
-  "benoni-moderna"
+  "benoni-moderna",
+  "berlin",
+  "inglesa-simetrica",
+  "benko"
  ],
  "entreno/estudio.html?cat=tactica": [
   "horquilla",
@@ -113,7 +120,14 @@
   "sacrificio-griego",
   "mate-boden",
   "mate-legal",
-  "eliminacion-defensor"
+  "eliminacion-defensor",
+  "pieza-colgada",
+  "defensa",
+  "sacrificio-calidad",
+  "jugada-tranquila",
+  "mate-arabe",
+  "mate-hombreras",
+  "mate-morphy"
  ],
  "entreno/estudio.html?cat=concepto": [
   "el-centro",
@@ -139,7 +153,15 @@
   "profilaxis",
   "ataque-minorias",
   "dos-debilidades",
-  "iniciativa"
+  "iniciativa",
+  "armar-un-plan",
+  "torre-en-septima",
+  "enroques-opuestos",
+  "mayoria-de-peones",
+  "casillas-debiles",
+  "peones-colgantes",
+  "jugadas-candidatas",
+  "el-reloj"
  ],
  "entreno/estudio.html?cat=final": [
   "mate-rey-dama",
@@ -151,6 +173,12 @@
   "alfiles-distinto-color",
   "peon-de-torre",
   "dama-contra-peon",
-  "mate-alfil-caballo"
+  "mate-alfil-caballo",
+  "peon-pasado-alejado",
+  "torre-contra-peon",
+  "ruptura-tres-peones",
+  "cortar-al-rey",
+  "caballo-contra-peon",
+  "alfil-contra-caballo"
  ]
 }
