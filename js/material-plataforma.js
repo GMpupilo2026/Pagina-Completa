@@ -8,7 +8,7 @@
  *    misma fuente que arma las tarjetas de cursos.html. El enlace apunta a
  *    cursos/academia/<slug>.html, el espejo del curso dentro de la Academia.
  *  - Los RECORTES (los 80 temas, las 3 categorías de Mates, las 40 líneas de
- *    Aperturas, las 56 fichas de Estudio…) salen de entreno/data/metas.json,
+ *    Aperturas, las fichas de Estudio…) salen de entreno/data/metas.json,
  *    que GENERA herramientas/metas-indice.py leyendo los bancos de verdad.
  *    No se bajan los bancos enteros acá: temas.json ya pesa 1,8 MB, y esta
  *    página no es para resolver ejercicios sino para elegirlos.

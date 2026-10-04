@@ -60,8 +60,8 @@ lista, y el resto se acomoda solo.
   Academia: con dos tarjetas genéricas (Entrenamiento y Estudio), el alumno
   tenía que entrar para saber qué había adentro. Ahora, después de "Lo que te
   pone tu profesor", van seis grupos:
-  - **Aprender**: las cuatro categorías de fichas de Estudio (Fichas de
-    aperturas, Defensas, Táctica, Conceptos), Lecciones, Desafíos y Artículos.
+  - **Aprender**: las cinco categorías de fichas de Estudio (Fichas de
+    aperturas, Defensas, Táctica, Conceptos, Finales), Lecciones, Desafíos y Artículos.
   - **Estudiar**: Cursos y Repasar mis clases, lo que se estudia con el profe.
   - **Entrenamiento básico / intermedio / avanzado**: las páginas del hub,
     por escalón.

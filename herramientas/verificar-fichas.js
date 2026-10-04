@@ -29,6 +29,11 @@ const PIEZAS = ["p", "n", "b", "r", "q", "k"];
 const normal = (t) => String(t).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
 const CATS = CATEGORIAS.map((c) => c.id);
 const PorId = new Map(LINEAS.map((L) => [L.id, L]));
+// El oráculo exacto de rey y peón contra rey: la tabla entera, en menos de un
+// segundo. Solo se arma si alguna ficha lo pide.
+const TABLA_KPK = FICHAS.some((F) => F.comprueba && F.comprueba.kpk)
+  ? require(path.join(__dirname, "lib", "kpk.js")).resolver() : null;
+const PROMESAS = ["mate", "gana", "tablas"];
 
 console.log("=== Estructura de cada ficha ===");
 const vistos = new Set();
@@ -56,6 +61,10 @@ FICHAS.forEach((F) => {
   const fuentes = ["lineaId", "jugadas", "fen"].filter((k) => F[k]);
   if (fuentes.length !== 1) q(`la posición sale de una sola fuente (lineaId, jugadas o fen); trae ${fuentes.length}`);
   if (F.linea && !F.fen) q("`linea` son las jugadas desde una `fen`: sin fen no significa nada");
+  // Lo que promete al motor (herramientas/fichas-motor.js) tiene que ser uno
+  // de los tres resultados que ese script sabe comprobar.
+  if (F.promete !== undefined && !PROMESAS.includes(F.promete)) q(`promete «${F.promete}»: tiene que ser ${PROMESAS.join(", ")}`);
+  if (F.promete === "mate" && !(F.comprueba && F.comprueba.mateFinal) && !(F.linea && /#$/.test(F.linea[F.linea.length - 1]))) q("promete mate y la línea no termina en mate");
 });
 if (!fallos) bien(`las ${FICHAS.length} fichas tienen su estructura completa`);
 
@@ -434,6 +443,54 @@ const COMPRUEBAN = {
     const b = g0.get("g1"), n = g0.get("g8");
     return (b && b.type === "k" && n && n.type === "k") ? null : "los dos reyes tendrían que estar enrocados corto";
   },
+
+  // ---- de acá para abajo, los que trajeron los finales ----
+
+  // Rey y peón contra rey, juzgado por el oráculo exacto de
+  // herramientas/lib/kpk.js (la tabla entera, no una búsqueda): "gana" o
+  // "tablas", con el bando y el turno que tiene la posición. El peón tiene que
+  // ser blanco, que es como está armada la tabla.
+  kpk(F, g0, esperado) {
+    const piezas = [];
+    g0.SQUARES.forEach((sq) => { const p = g0.get(sq); if (p) piezas.push({ sq, ...p }); });
+    const wk = piezas.find((p) => p.type === "k" && p.color === "w");
+    const bk = piezas.find((p) => p.type === "k" && p.color === "b");
+    const pe = piezas.filter((p) => p.type === "p");
+    if (piezas.length !== 3 || pe.length !== 1 || pe[0].color !== "w") return "no es rey y peón blanco contra rey";
+    const idx = (sq) => (+sq[1] - 1) * 8 + (sq.charCodeAt(0) - 97);
+    const i = TABLA_KPK.id(idx(wk.sq), idx(bk.sq), idx(pe[0].sq));
+    const gana = g0.turn() === "w" ? TABLA_KPK.W[i] === 1 : TABLA_KPK.B[i] === 1;
+    const dice = gana ? "gana" : "tablas";
+    return dice === esperado ? null : `la ficha dice «${esperado}» y el oráculo dice «${dice}»`;
+  },
+
+  // Alfiles de distinto color: uno por bando, en casillas de distinto color.
+  alfilesDistintos(F, g0) {
+    const claro = (sq) => ((sq.charCodeAt(0) - 97) + (+sq[1] - 1)) % 2 === 1;
+    const de = { w: [], b: [] };
+    g0.SQUARES.forEach((sq) => { const p = g0.get(sq); if (p && p.type === "b") de[p.color].push(sq); });
+    if (de.w.length !== 1 || de.b.length !== 1) return `tiene que haber un alfil por bando (hay ${de.w.length} y ${de.b.length})`;
+    return claro(de.w[0]) !== claro(de.b[0]) ? null : "los dos alfiles van por el mismo color";
+  },
+
+  // La línea termina en ahogado (y no en mate ni con jugadas).
+  ahogadoFinal(F, g0) {
+    const g = new Chess(g0.fen());
+    F.linea.forEach((san) => g.move(san, { sloppy: true }));
+    return g.in_stalemate() ? null : "la línea no termina en ahogado";
+  },
+
+  // Triangulación: tras las cinco primeras jugadas de la línea (tres del
+  // bando que mueve, dos del rival), las piezas están exactamente donde
+  // estaban y le toca al otro. Es lo que hace que la misma posición pase de
+  // empatar a ganar.
+  triangulo(F, g0) {
+    const g = new Chess(g0.fen());
+    F.linea.slice(0, 5).forEach((san) => g.move(san, { sloppy: true }));
+    const tablero = (x) => x.fen().split(" ")[0];
+    if (tablero(g) !== tablero(g0)) return "después del triángulo las piezas no volvieron a su lugar";
+    return g.turn() !== g0.turn() ? null : "volvió la misma posición con el mismo turno: eso no pierde ningún tiempo";
+  },
 };
 
 FICHAS.filter((F) => F.comprueba).forEach((F) => {
@@ -489,7 +546,7 @@ FICHAS.forEach((F) => {
 });
 bien(`los ${citados} temas que nombran las fichas existen en Ejercicios por tema`);
 
-console.log("\n=== Las cuatro pestañas ===");
+console.log("\n=== Las pestañas ===");
 CATEGORIAS.forEach((c) => {
   const n = FICHAS.filter((F) => F.categoria === c.id).length;
   if (n < 4) mal(`la pestaña «${c.etiqueta}» tiene ${n} ficha(s): con menos de cuatro no vale la pena la pestaña`);
