@@ -318,6 +318,13 @@
                         <p id="alumnos-cuenta" class="text-xs text-brand-450 dark:text-brand-350" aria-live="polite"></p>
                     </div>
                     <p class="text-xs text-brand-450 dark:text-brand-350 mb-4">Toca a un alumno para abrir su informe completo. Para ver a toda la clase en una actividad puntual, usa el filtro «Tema o actividad» de arriba.</p>
+                    <!-- El informe del grupo en PDF (js/informe-grupo-pdf.js): para una
+                         reunión con las familias o el colegio. Es del grupo
+                         elegido arriba, con los mismos números de esta página. -->
+                    <div class="flex flex-wrap items-center gap-3 mb-4">
+                        <button type="button" id="informe-grupo-pdf" class="inline-flex items-center gap-2 border border-brand-200 dark:border-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-4 py-2 rounded-lg text-sm hover:border-accent-500 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">📄</span> Informe del grupo en PDF</button>
+                        <p id="informe-grupo-estado" role="status" class="text-xs text-brand-500 dark:text-brand-300"></p>
+                    </div>
 
                     <div class="flex flex-wrap gap-3 mb-4">
                         <div class="flex-1 min-w-[12rem]">

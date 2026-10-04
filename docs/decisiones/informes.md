@@ -630,6 +630,33 @@ pinta `js/comparar-alumnos.js` con los diagnósticos que la página ya tiene
   que es lo que se busca para armar parejas.
 - Lo prueba `pruebaComparar` en `verificar-informes.js`.
 
+### El informe del grupo en PDF
+
+Para una reunión con las familias o con el colegio, el profe necesitaba algo
+que se pueda imprimir o mandar. «Reportes de actividades» (`reportes.html`) es
+de quien coordina y habla de las clases de un periodo. Esto es de quien da
+clase y habla de **su grupo**. **«📄 Informe del grupo en PDF»**, en «Tus
+alumnos», baja un PDF del grupo elegido arriba (o de todos):
+
+- **Resumen**: cuántos alumnos, asistencia promedio, tiempo en clase y en
+  ejercicios, participación en las preguntas de la clase y cuántos hicieron
+  el diagnóstico, con su fuerza media.
+- **Por áreas**: el promedio del grupo en cada área del diagnóstico (la nota,
+  como «Dónde se debe mejorar»), de la más floja a la más firme y con la banda
+  escrita, porque el PDF se imprime en blanco y negro. Al pie, qué reforzar.
+- **Cada alumno**: asistencia, tiempo, participación y nivel, en una fila.
+- **No se cuenta nada aparte**: los números son los que la página ya pintó
+  (`informes_resumen_alumnos`, `asistenciaDe` sin las justificadas,
+  `PlanEntrenamiento.resumir`). El buscador no cuenta: un informe de grupo es
+  del grupo.
+- El PDF lo escribe `js/reporte-pdf.js`, el mismo de los reportes, con la marca
+  de agua de `js/marca-agua.js`. El documento lo arma
+  `js/informe-grupo-pdf.js`. Los tres se bajan al apretar el botón, no al abrir
+  Informes.
+- Lo prueba `pruebaInformeGrupo` en `verificar-informes.js`: baja el PDF de
+  verdad y lee su texto con pypdf (el título, quién lo prepara, solo los del
+  grupo, las tres partes).
+
 ### El tiempo conectado no se lo cree porque lo diga el navegador
 
 `class_presence_log` (clase en vivo, latido de `sesion.html`) y

@@ -2047,6 +2047,46 @@ async function pruebaComparar(browser) {
   await page.close();
 }
 
+/* El informe del grupo en PDF (js/informe-grupo-pdf.js): del grupo elegido
+   arriba, con los números de la página. Se baja de verdad y se lee el texto
+   del PDF con pypdf: un PDF roto se descarga igual y no da ningún error. */
+async function pruebaInformeGrupo(browser) {
+  console.log("\n=== El informe del grupo en PDF ===");
+  const ctx = await browser.newContext({ acceptDownloads: true, serviceWorkers: "block" });
+  const nuevaPagina = browser.newPage;
+  browser.newPage = () => ctx.newPage();
+  const ANA2 = Object.assign({}, ANA, { grupo: "7A" }), BRUNO2 = Object.assign({}, BRUNO, { grupo: "7A" });
+  const { page, errores } = await abrir(browser, {
+    rpc: {
+      informes_resumen_alumnos: [ANA2, BRUNO2, CARLA],
+      informes_diagnosticos_alumnos: [{ student_id: "a-1", detalle: diagnosticoCon(90, 20), fecha: "2026-09-10T12:00:00Z", a_medias_pregunta: null, a_medias_fecha: null }],
+      informes_totales: { clases_cerradas: 4, preguntas: 10, partidas: 2 },
+    },
+    tablas: { profiles: [{ id: "prof-1", role: "profesor", is_admin: false, full_name: "Karina Rojas", email: "k@x.cr" }], training_plans: [] },
+  }, "prof-1");
+  browser.newPage = nuevaPagina;
+  await page.waitForSelector("#informe-grupo-pdf", { timeout: 15000 });
+  await page.selectOption("#group-filter", "7A");
+  await page.waitForTimeout(300);
+  const [bajada] = await Promise.all([page.waitForEvent("download", { timeout: 20000 }).catch(() => null), page.click("#informe-grupo-pdf")]);
+  igual("baja «informe-7a.pdf»", bajada && bajada.suggestedFilename(), "informe-7a.pdf");
+  if (bajada) {
+    const ruta = await bajada.path();
+    const fs = require("fs");
+    igual("es un PDF", fs.readFileSync(ruta).slice(0, 5).toString(), "%PDF-");
+    let texto = "";
+    try {
+      texto = require("child_process").execFileSync("python3", ["-c", "import sys,pypdf; print('\\n'.join(p.extract_text() for p in pypdf.PdfReader(sys.argv[1]).pages))", ruta]).toString().replace(/\s+/g, " ");
+    } catch (e) { texto = "pypdf: " + e.message; }
+    igual("con el título del grupo y quien lo prepara", /Informe del grupo 7A/.test(texto) && /Karina Rojas/.test(texto), true);
+    igual("solo los del grupo: Ana y Bruno, no Carla", [/Ana Rojas/.test(texto), /Bruno Mena/.test(texto), /Carla Soto/.test(texto)], [true, true, false]);
+    igual("dice el resumen, las áreas y cada alumno", ["Resumen", "Por áreas", "Cada alumno", "2 alumnos.", "Sin diagnóstico"].every((t) => texto.includes(t)), true);
+  }
+  igual("y lo dice en la página", /^Listo: se bajó «informe-7a\.pdf» con 2 alumnos\.$/.test(await page.textContent("#informe-grupo-estado")), true);
+  if (errores.length) { console.log("  ✗ errores en la página: " + errores.join(" | ")); fallos += 1; }
+  await ctx.close();
+}
+
 (async () => {
   const browser = await chromium.launch({ executablePath: CHROME });
   try {
@@ -2059,6 +2099,7 @@ async function pruebaComparar(browser) {
     await pruebaCertificados(browser);
     await pruebaAntesYAhora(browser);
     await pruebaComparar(browser);
+    await pruebaInformeGrupo(browser);
     await pruebaCompartirPlanes(browser);
     await pruebaNombreAjeno(browser);
     await pruebaPdfVisitante(browser);
