@@ -46,6 +46,7 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { DOMINIO_ALUMNO, esCorreoInterno } from "./usuario-alumno.ts";
 import { asuntoRecuperacion, cuerpoRecuperacion, enlaceRecuperacion } from "./recuperacion-email.ts";
+import { envioFallido } from "./envio-resend.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -135,20 +136,32 @@ Deno.serve(async (req) => {
   }
   const enlace = enlaceRecuperacion(token);
 
-  await mandar(destino, enlace, usuario, perfil.full_name, !interno);
+  const id = await mandar(destino, enlace, usuario, perfil.full_name, !interno);
+
+  // Si Resend lo descartó (la dirección rebotó antes y está bloqueada), acá no
+  // se le puede decir a nadie —la respuesta es siempre la misma—, pero queda
+  // en los registros. Se revisa después de contestar, para que la respuesta
+  // no tarde más cuando la cuenta existe.
+  const revisar = envioFallido(Deno.env.get("RESEND_API_KEY") ?? "", id).then((fallo) => {
+    if (fallo) console.error("recuperar-acceso: el correo para", perfil.id, "terminó en", fallo, "(no le llegó)");
+  });
+  // deno-lint-ignore no-explicit-any
+  const runtime = (globalThis as any).EdgeRuntime;
+  if (runtime?.waitUntil) runtime.waitUntil(revisar); else await revisar;
   return json(MISMA_RESPUESTA);
 });
 
-/** Manda el correo. Nunca lanza: el enlace ya está generado y tumbar la
- *  respuesta por un fallo de correo no le arregla nada a nadie. */
+/** Manda el correo y devuelve su id en Resend (o null). Nunca lanza: el
+ *  enlace ya está generado y tumbar la respuesta por un fallo de correo no le
+ *  arregla nada a nadie. */
 async function mandar(
   destino: string, enlace: string, usuario: string, nombre: string | null | undefined,
   esCuentaPropia: boolean,
-) {
+): Promise<string | null> {
   const apiKey = Deno.env.get("RESEND_API_KEY");
   if (!apiKey) {
     console.error("recuperar-acceso: sin RESEND_API_KEY no hay forma de mandar el enlace");
-    return;
+    return null;
   }
   try {
     const from = Deno.env.get("RESEND_FROM") || "Ajedrez Integral <informes@ajedrez-integral.com>";
@@ -162,8 +175,13 @@ async function mandar(
         html: cuerpoRecuperacion(enlace, usuario, nombre, esCuentaPropia),
       }),
     });
-    if (!res.ok) console.error("Resend rechazó el enlace de recuperación:", res.status, await res.text());
+    if (!res.ok) {
+      console.error("Resend rechazó el enlace de recuperación:", res.status, await res.text());
+      return null;
+    }
+    return (await res.json().catch(() => null))?.id ?? null;
   } catch (err) {
     console.error("Error mandando el enlace de recuperación:", err);
+    return null;
   }
 }
