@@ -174,4 +174,3 @@ end;
 $$;
 create trigger cobros_corrige_supervision before update on public.cobros
   for each row execute function interno.cobros_corrige_supervision();
-
