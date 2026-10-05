@@ -268,7 +268,7 @@ window.SUPABASE_ANON_KEY = "anon-falsa";
   }
   window.sb = {
     auth: {
-      getSession: () => Promise.resolve({ data: { session: { user: { id: CFG.yo }, access_token: "token-de-prueba" } } }),
+      getSession: () => Promise.resolve({ data: { session: { user: { id: CFG.yo }, access_token: window.__token || "token-de-prueba" } } }),
       getUser: () => Promise.resolve({ data: { user: { id: CFG.yo } } }),
       onAuthStateChange: () => ({ data: { subscription: { unsubscribe() {} } } }),
     },
@@ -407,12 +407,15 @@ async function pruebaPagina(browser) {
   cierto("sin la casilla de la privacidad no manda nada", /Política de privacidad/.test(await page.textContent("#jdn-error")));
   await page.check("#jdn-acepto");
 
+  // supabase-js renovó el token (pasó más de una hora): «Guardar» tiene que mandar el nuevo.
+  await page.evaluate(() => { window.__token = "token-renovado"; });
   const descarga = page.waitForEvent("download");
   await page.click("#jdn-guardar");
   const d = await descarga;
   await page.waitForSelector("#jdn-listo:not([hidden])");
   igual("la ficha se descarga con el nombre de la persona", d.suggestedFilename(), "Ficha JDN 2027 - Valeria Solano Ruiz.docx");
   const g = pedidos.find((p) => p.body.action === "guardar");
+  igual("manda el token del momento, no el de cuando se abrió la página", g.auth, "Bearer token-renovado");
   igual("manda la carpeta con el nombre", g.body.persona, "Valeria Solano Ruiz");
   igual("y la versión de la política", g.body.privacidad_version, leer("js/legal-version.js").match(/PRIVACIDAD: "([\d-]+)"/)[1]);
   igual("los archivos: la ficha, la foto en JPEG y la certificación en PDF",
@@ -438,6 +441,21 @@ async function pruebaPagina(browser) {
     (await page.inputValue("#f-nombre")) === "" && (await page.inputValue("#f-comite")) === "CCDR de Barva" && await vis(page, "#jdn-form"));
   cierto("sin errores en la página", errores.length === 0, errores.join(" | "));
   await ctx.close();
+
+  // La sesión cerrada en otro aparato: la función contesta 401 aunque el token parezca bueno.
+  {
+    const { ctx, page } = await abrir(browser, { yo: "u-admin", tablas: PERFILES },
+      () => [401, { error: "La sesión no es válida." }]);
+    await page.waitForFunction(() => !/Revisando/.test(document.getElementById("drive-estado").textContent));
+    cierto("con la sesión cerrada, dice que hay que volver a entrar (no «el Drive no contesta»)",
+      /^Tu sesión se cerró/.test(await page.textContent("#drive-estado")), await page.textContent("#drive-estado"));
+    await page.fill("#drive-url", "https://script.google.com/macros/s/AKfycbxxxxxxxxxxxxxxxxxxxxxxxx/exec");
+    await page.fill("#drive-secreto", "a".repeat(64));
+    await page.click("#drive-probar");
+    await page.waitForFunction(() => document.getElementById("drive-msg").textContent && !/Probando/.test(document.getElementById("drive-msg").textContent));
+    cierto("y al conectar, lo mismo", /^Tu sesión se cerró/.test(await page.textContent("#drive-msg")));
+    await ctx.close();
+  }
 }
 
 (async () => {

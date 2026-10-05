@@ -30,23 +30,35 @@
     certificacion: "Certificación de nacimiento",
   };
 
+  const SESION_CERRADA = "Tu sesión se cerró (por ejemplo, porque saliste en otra pestaña o en otro aparato). Vuelve a entrar en otra pestaña y prueba de nuevo aquí: lo que llenaste no se pierde.";
   let sesion = null;
   let conectado = false;
   let ultimaFicha = null;   // { bytes, nombre } de la última que se armó
 
   /* ------------------------------------------------------------ la función */
 
+  /* El token se pide en cada llamada, no se guarda al abrir la página: dura
+     una hora, y supabase-js lo renueva en su almacenamiento, no en una
+     variable nuestra. Con la página abierta más de una hora, «Guardar»
+     mandaba el token vencido. */
   async function llamar(accion, datos) {
+    const { data } = await sb.auth.getSession();
+    const token = data && data.session && data.session.access_token;
+    if (!token) throw new Error(SESION_CERRADA);
     const res = await fetch(FUNCION, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": "Bearer " + sesion.access_token,
+        "Authorization": "Bearer " + token,
         "apikey": window.SUPABASE_ANON_KEY,
       },
       body: JSON.stringify(Object.assign({ action: accion }, datos || {})),
     });
     const r = await res.json().catch(() => ({}));
+    // Un 401 es la sesión: vencida o cerrada en otro aparato («Cerrar sesión»
+    // cierra todas las de la cuenta, pero esta pestaña conserva un token que
+    // parece bueno hasta que vence).
+    if (res.status === 401 && !/segundo paso/.test(r.error || "")) throw new Error(SESION_CERRADA);
     if (!res.ok || r.error && accion !== "estado") throw new Error(r.error || "El servidor no contestó. Intenta de nuevo.");
     return r;
   }
@@ -65,7 +77,8 @@
       a.textContent = "«" + (r.carpeta || "JDN 2027") + "»";
       p.append(a, ".");
     } else {
-      p.textContent = r && r.error
+      p.textContent = r && r.error === SESION_CERRADA ? SESION_CERRADA
+        : r && r.error
         ? "El Drive no contesta (" + r.error + "). Vuelve a conectarlo abajo, o descarga la ficha sin guardarla."
         : "Todavía no está conectado el Drive. Conéctalo abajo; mientras tanto puedes descargar la ficha sin guardarla.";
       $("drive-conectar").open = true;
