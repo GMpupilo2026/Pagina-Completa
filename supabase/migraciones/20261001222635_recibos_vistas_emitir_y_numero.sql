@@ -242,4 +242,3 @@ revoke execute on function interno.academia_para_recibo(uuid) from public, anon,
 revoke execute on function interno.emitir_recibo(uuid, date, text, text, text, uuid) from public, anon, authenticated;
 revoke execute on function interno.pagar(jsonb, text, text, text, date) from public, anon, authenticated;
 revoke execute on function interno.cobros_corrige_supervision() from public, anon, authenticated;
-
