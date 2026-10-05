@@ -1847,15 +1847,16 @@
             if (!coordina) return;
             document.getElementById("acceso-info").textContent =
                 `Por si la familia dice que el correo de bienvenida nunca llegó o que ya no encuentra ` +
-                `la contraseña: le vuelve a mandar el enlace para crear una nueva.`;
+                `la contraseña. Si todavía no ha entrado nunca, le llega su usuario con una contraseña provisional ` +
+                `nueva; si ya entró, un enlace para crear una contraseña nueva.`;
 
             const btn = document.getElementById("acceso-reenviar");
             const msg = document.getElementById("acceso-msg");
             msg.textContent = "";
             btn.disabled = false;
-            btn.textContent = "Reenviar enlace para restablecer la contraseña";
+            btn.textContent = "Reenviar el acceso";
             btn.onclick = async () => {
-                if (!(await Avisos.confirmar(`Le llega un correo con un enlace para crear una contraseña nueva.`, { titulo: `¿Mandarle a ${nombreAlumno} un enlace nuevo?`, aceptar: "Mandar el enlace" }))) return;
+                if (!(await Avisos.confirmar(`Si todavía no ha entrado nunca, le llega su usuario con una contraseña provisional nueva y la de antes deja de servir. Si ya entró, le llega un enlace para crear una contraseña nueva.`, { titulo: `¿Reenviarle el acceso a ${nombreAlumno}?`, aceptar: "Reenviar el acceso" }))) return;
                 btn.disabled = true;
                 btn.textContent = "Enviando…";
                 msg.textContent = "";
@@ -1876,14 +1877,16 @@
                     });
                     const r = await res.json().catch(() => ({}));
                     if (!res.ok || r.error) throw new Error(r.error || "No se pudo enviar");
-                    msg.textContent = `Enviado a ${r.correo_destino}.`;
+                    msg.textContent = r.modo === "provisional"
+                        ? `Le salió su usuario con una contraseña provisional nueva a ${r.correo_destino}.`
+                        : `Le salió el enlace para crear una contraseña nueva a ${r.correo_destino}.`;
                     msg.className = "text-sm mt-3 text-green-700 dark:text-green-400";
                 } catch (err) {
                     msg.textContent = err.message;
                     msg.className = "text-sm mt-3 text-red-600 dark:text-red-400";
                 } finally {
                     btn.disabled = false;
-                    btn.textContent = "Reenviar enlace para restablecer la contraseña";
+                    btn.textContent = "Reenviar el acceso";
                 }
             };
         }

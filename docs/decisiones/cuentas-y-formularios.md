@@ -1013,8 +1013,36 @@ clase sin poder entrar.
 - Si el correo no sale, la cuenta queda creada con una contraseña que nadie
   conoce: es el mismo `correo_enviado: false` de siempre, y la salida es la
   misma («¿Olvidaste tu contraseña?», o «Su contraseña» desde la ficha).
+- **«Reenviar acceso» a una cuenta nueva manda otra contraseña provisional, no
+  un enlace** (desde el 5 de octubre). Hasta entonces `reenviar-acceso`
+  mandaba siempre el enlace para crear la contraseña: justo lo que se había
+  quitado de la invitación, y justo a quien no le había llegado la
+  bienvenida. Ahora, si la cuenta **no tiene una contraseña suya**
+  (`sinContrasenaPropia()` en `_compartido/usuario-alumno.ts`: sigue marcada
+  con `contrasena_provisional`, o la invitó Supabase con su enlace
+  —`invited_at`, las de antes del 3 de octubre— y nunca entró), le pone una
+  provisional nueva, confirmada y marcada, y le llega el **mismo correo de
+  bienvenida** (`mandarBienvenida(..., { reenvio: true })`), al propio correo
+  o al de la casa. A la que ya entró con su contraseña le sigue llegando el
+  enlace: esa contraseña es suya y no se le cambia por correo. Tampoco a la
+  que le puso quien da clase sin que haya entrado todavía (no tiene ni la
+  marca ni `invited_at`): se la dio en la mano, y cambiársela la dejaría sin
+  servir.
+  - **El asunto del reenvío lleva la hora** y el correo avisa que la
+    contraseña de antes ya no sirve: cada correo trae OTRA contraseña, y con el
+    asunto igual Gmail los junta y la familia copia la del primero (lo mismo
+    que pasó con los enlaces, ver «El correo para una contraseña nueva»).
+  - **La contraseña se cambia solo si hay con qué mandar el correo**
+    (`RESEND_API_KEY`): sin eso, se dice y no se toca nada.
+  - La función contesta `modo: "provisional" | "enlace"`, y `admin.html`,
+    `coordinacion.html` e `informes.html` dicen cuál de los dos salió. El
+    botón de `informes.html` dice ahora «Reenviar el acceso».
+  - Lo revisa `verificar-reenviar-provisional.js` (la regla con cada tipo de
+    cuenta, el correo del reenvío, el orden en la función y las tres
+    pantallas). `reenviar-acceso` se despliega ahora con `invitacion-email.ts`
+    y `marca-correo.ts`.
 
-Esto pide desplegar `create-student`, `inscribir-alumno`, `correos-alumno` y `admin-manage-users`
+Esto pide desplegar `create-student`, `inscribir-alumno`, `correos-alumno`, `admin-manage-users` y `reenviar-acceso`
 (armadas con `node herramientas/funciones-armar.js`). Lo revisa
 `verificar-bienvenida.js` («La contraseña provisional»: que `login.html` mande
 a cambiarla sin perder a dónde iba, que con una contraseña propia entre
