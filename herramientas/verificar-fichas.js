@@ -627,6 +627,77 @@ const COMPRUEBAN = {
     return suyos ? null : `la columna ${opt.columna} está abierta del todo, no semiabierta`;
   },
 
+  // ---- de acá para abajo, los que trajo la sexta tanda ----
+
+  // La primera jugada de la línea es una captura al paso de verdad.
+  alPaso(F, g0) {
+    const g = new Chess(g0.fen());
+    const m = g.move(F.linea[0], { sloppy: true });
+    return m && m.flags.includes("e") ? null : `${F.linea[0]} no es una captura al paso`;
+  },
+
+  // Qué enroques se pueden y cuáles no, en la posición mostrada.
+  enroque(F, g0, opt) {
+    const hay = g0.moves().map((s) => s.replace(/[+#]$/, ""));
+    const faltan = (opt.puede || []).filter((s) => !hay.includes(s));
+    const sobran = (opt.noPuede || []).filter((s) => hay.includes(s));
+    if (faltan.length) return `${faltan.join(" y ")} no es legal y la ficha dice que sí`;
+    return sobran.length ? `${sobran.join(" y ")} es legal y la ficha dice que no` : null;
+  },
+
+  // Tablas por material insuficiente: nadie puede dar mate.
+  insuficiente(F, g0) {
+    return g0.insufficient_material() ? null : "con este material todavía se puede dar mate";
+  },
+
+  // Peón protegido: defendido por un peón propio desde atrás en diagonal.
+  protegido(F, g0, casilla) {
+    const peon = g0.get(casilla);
+    if (!peon || peon.type !== "p") return `en ${casilla} no hay un peón`;
+    const fila = +casilla[1] + (peon.color === "w" ? -1 : 1), col = casilla.charCodeAt(0) - 97;
+    const lo = [col - 1, col + 1].some((c) => {
+      if (c < 0 || c > 7) return false;
+      const p = g0.get(String.fromCharCode(97 + c) + fila);
+      return p && p.type === "p" && p.color === peon.color;
+    });
+    return lo ? null : `ningún peón propio defiende al de ${casilla}`;
+  },
+
+  // El alfil del color equivocado: peón de torre y un alfil que no cubre la
+  // casilla de coronación.
+  alfilEquivocado(F, g0, casilla) {
+    const peon = g0.get(casilla);
+    if (!peon || peon.type !== "p" || !"ah".includes(casilla[0])) return `en ${casilla} no hay un peón de torre`;
+    const corona = casilla[0] + (peon.color === "w" ? 8 : 1);
+    const claro = (sq) => ((sq.charCodeAt(0) - 97) + (+sq[1] - 1)) % 2 === 1;
+    const alfiles = g0.SQUARES.filter((sq) => { const p = g0.get(sq); return p && p.type === "b" && p.color === peon.color; });
+    if (alfiles.length !== 1) return `tiene ${alfiles.length} alfiles`;
+    return claro(alfiles[0]) !== claro(corona) ? null : `el alfil sí cubre ${corona}: no es el color equivocado`;
+  },
+
+  // Tensión: algún peón puede comerse un peón rival (de cualquiera de los dos).
+  tension(F, g0) {
+    const hay = ["w", "b"].some((c) => {
+      const fen = g0.fen().split(" ");
+      fen[1] = c; fen[3] = "-";
+      const g = new Chess(fen.join(" "));
+      return g.moves({ verbose: true }).some((m) => m.piece === "p" && m.captured === "p");
+    });
+    return hay ? null : "ningún peón puede comerse otro: no hay tensión";
+  },
+
+  // Una pieza concreta en una casilla concreta.
+  piezaEn(F, g0, opt) {
+    const p = g0.get(opt.casilla);
+    return p && p.type === opt.tipo && p.color === opt.color ? null : `en ${opt.casilla} no está esa pieza`;
+  },
+
+  // Casillas vacías (las de adelante de un centro móvil, por ejemplo).
+  vacias(F, g0, casillas) {
+    const llenas = casillas.filter((sq) => g0.get(sq));
+    return llenas.length ? `${llenas.join(", ")} no está(n) vacía(s)` : null;
+  },
+
   // Alfiles del mismo color: uno por bando, por el mismo color de casilla.
   alfilesIguales(F, g0) {
     return COMPRUEBAN.alfilesDistintos(F, g0) === "los dos alfiles van por el mismo color"

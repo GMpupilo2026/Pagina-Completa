@@ -1349,6 +1349,87 @@
    "actividades": [
     "aperturas"
    ]
+  },
+  {
+   "clave": "ponziani",
+   "label": "Apertura Ponziani",
+   "grupo": "Apertura Ponziani",
+   "total": 1,
+   "actividades": [
+    "aperturas"
+   ]
+  },
+  {
+   "clave": "apertura-alfil",
+   "label": "Apertura del alfil",
+   "grupo": "Apertura del alfil",
+   "total": 1,
+   "actividades": [
+    "aperturas"
+   ]
+  },
+  {
+   "clave": "bird",
+   "label": "Apertura Bird",
+   "grupo": "Apertura Bird",
+   "total": 1,
+   "actividades": [
+    "aperturas"
+   ]
+  },
+  {
+   "clave": "grand-prix",
+   "label": "Ataque Grand Prix",
+   "grupo": "Defensa siciliana",
+   "total": 1,
+   "actividades": [
+    "aperturas"
+   ]
+  },
+  {
+   "clave": "siciliana-sveshnikov",
+   "label": "Siciliana Sveshnikov",
+   "grupo": "Defensa siciliana",
+   "total": 1,
+   "actividades": [
+    "aperturas"
+   ]
+  },
+  {
+   "clave": "siciliana-kan",
+   "label": "Siciliana Kan",
+   "grupo": "Defensa siciliana",
+   "total": 1,
+   "actividades": [
+    "aperturas"
+   ]
+  },
+  {
+   "clave": "bogoindia",
+   "label": "Defensa Bogoindia",
+   "grupo": "Peón de dama",
+   "total": 1,
+   "actividades": [
+    "aperturas"
+   ]
+  },
+  {
+   "clave": "india-antigua",
+   "label": "Defensa india antigua",
+   "grupo": "Peón de dama",
+   "total": 1,
+   "actividades": [
+    "aperturas"
+   ]
+  },
+  {
+   "clave": "holandesa-leningrado",
+   "label": "Holandesa Leningrado",
+   "grupo": "Defensa holandesa",
+   "total": 1,
+   "actividades": [
+    "aperturas"
+   ]
   }
  ],
  "estudio": [
@@ -1556,16 +1637,44 @@
    "actividades": []
   },
   {
+   "clave": "mate-rey-dama",
+   "label": "Mate con rey y dama",
+   "grupo": "Mates",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "mate-rey-torre",
+   "label": "Mate con rey y torre",
+   "grupo": "Mates",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "mate-rey-dos-alfiles",
+   "label": "Mate con rey y dos alfiles",
+   "grupo": "Mates",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "mate-alfil-caballo",
+   "label": "Mate de alfil y caballo",
+   "grupo": "Mates",
+   "total": 1,
+   "actividades": []
+  },
+  {
    "clave": "mate-pasillo",
    "label": "El mate del pasillo",
-   "grupo": "Táctica",
+   "grupo": "Mates",
    "total": 1,
    "actividades": []
   },
   {
    "clave": "mate-coz",
    "label": "El mate de la coz",
-   "grupo": "Táctica",
+   "grupo": "Mates",
    "total": 1,
    "actividades": []
   },
@@ -1607,7 +1716,7 @@
   {
    "clave": "mate-anastasia",
    "label": "El mate de Anastasia",
-   "grupo": "Táctica",
+   "grupo": "Mates",
    "total": 1,
    "actividades": []
   },
@@ -1838,14 +1947,14 @@
   {
    "clave": "mate-escalera",
    "label": "El mate de la escalera",
-   "grupo": "Táctica",
+   "grupo": "Mates",
    "total": 1,
    "actividades": []
   },
   {
    "clave": "mate-pastor",
    "label": "El mate del pastor",
-   "grupo": "Táctica",
+   "grupo": "Mates",
    "total": 1,
    "actividades": []
   },
@@ -1894,14 +2003,14 @@
   {
    "clave": "mate-boden",
    "label": "El mate de Boden",
-   "grupo": "Táctica",
+   "grupo": "Mates",
    "total": 1,
    "actividades": []
   },
   {
    "clave": "mate-legal",
    "label": "El mate de Légal",
-   "grupo": "Táctica",
+   "grupo": "Mates",
    "total": 1,
    "actividades": []
   },
@@ -1969,20 +2078,6 @@
    "actividades": []
   },
   {
-   "clave": "mate-rey-dama",
-   "label": "Mate con rey y dama",
-   "grupo": "Finales",
-   "total": 1,
-   "actividades": []
-  },
-  {
-   "clave": "mate-rey-torre",
-   "label": "Mate con rey y torre",
-   "grupo": "Finales",
-   "total": 1,
-   "actividades": []
-  },
-  {
    "clave": "rey-peon-contra-rey",
    "label": "Rey y peón contra rey",
    "grupo": "Finales",
@@ -2027,13 +2122,6 @@
   {
    "clave": "dama-contra-peon",
    "label": "Dama contra peón en séptima",
-   "grupo": "Finales",
-   "total": 1,
-   "actividades": []
-  },
-  {
-   "clave": "mate-alfil-caballo",
-   "label": "Mate de alfil y caballo",
    "grupo": "Finales",
    "total": 1,
    "actividades": []
@@ -2118,21 +2206,21 @@
   {
    "clave": "mate-arabe",
    "label": "El mate árabe",
-   "grupo": "Táctica",
+   "grupo": "Mates",
    "total": 1,
    "actividades": []
   },
   {
    "clave": "mate-hombreras",
    "label": "El mate de las hombreras",
-   "grupo": "Táctica",
+   "grupo": "Mates",
    "total": 1,
    "actividades": []
   },
   {
    "clave": "mate-morphy",
    "label": "El mate de Morphy",
-   "grupo": "Táctica",
+   "grupo": "Mates",
    "total": 1,
    "actividades": []
   },
@@ -2286,14 +2374,14 @@
   {
    "clave": "mate-dos-alfiles",
    "label": "El mate de los dos alfiles",
-   "grupo": "Táctica",
+   "grupo": "Mates",
    "total": 1,
    "actividades": []
   },
   {
    "clave": "mate-damiano",
    "label": "El mate de Damiano",
-   "grupo": "Táctica",
+   "grupo": "Mates",
    "total": 1,
    "actividades": []
   },
@@ -2403,16 +2491,233 @@
    "actividades": []
   },
   {
-   "clave": "mate-rey-dos-alfiles",
-   "label": "Mate con rey y dos alfiles",
+   "clave": "alfil-bueno-alfil-malo",
+   "label": "Alfil bueno contra alfil malo",
    "grupo": "Finales",
    "total": 1,
    "actividades": []
   },
   {
-   "clave": "alfil-bueno-alfil-malo",
-   "label": "Alfil bueno contra alfil malo",
+   "clave": "captura-al-paso",
+   "label": "La captura al paso",
+   "grupo": "Conceptos",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "el-enroque",
+   "label": "El enroque",
+   "grupo": "Conceptos",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "las-tablas",
+   "label": "Las tablas",
+   "grupo": "Conceptos",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "carrera-de-peones",
+   "label": "La carrera de peones",
    "grupo": "Finales",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "peon-pasado-protegido",
+   "label": "El peón pasado protegido",
+   "grupo": "Finales",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "alfil-peon-torre",
+   "label": "El alfil del color equivocado",
+   "grupo": "Finales",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "torre-contra-peones-ligados",
+   "label": "Torre contra dos peones ligados",
+   "grupo": "Finales",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "posicion-vancura",
+   "label": "La posición de Vancura",
+   "grupo": "Finales",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "recapturar-hacia-el-centro",
+   "label": "Recapturar hacia el centro",
+   "grupo": "Conceptos",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "mantener-la-tension",
+   "label": "Mantener la tensión",
+   "grupo": "Conceptos",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "fianchetto",
+   "label": "El fianchetto",
+   "grupo": "Conceptos",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "caballo-en-el-borde",
+   "label": "El caballo en el borde",
+   "grupo": "Conceptos",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "compensacion",
+   "label": "La compensación",
+   "grupo": "Conceptos",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "evaluar-la-posicion",
+   "label": "Cómo evaluar una posición",
+   "grupo": "Conceptos",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "centro-movil",
+   "label": "El centro móvil y el centro fijo",
+   "grupo": "Conceptos",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "mate-opera",
+   "label": "El mate de la Ópera",
+   "grupo": "Mates",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "mate-cerdo-ciego",
+   "label": "El mate del cerdo ciego",
+   "grupo": "Mates",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "mate-pillsbury",
+   "label": "El mate de Pillsbury",
+   "grupo": "Mates",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "mate-gancho",
+   "label": "El mate del gancho",
+   "grupo": "Mates",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "mate-esquina",
+   "label": "El mate de la esquina",
+   "grupo": "Mates",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "mate-dama-alfil",
+   "label": "El mate de dama y alfil",
+   "grupo": "Mates",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "mate-cola-golondrina",
+   "label": "El mate cola de golondrina",
+   "grupo": "Mates",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "mate-cozio",
+   "label": "El mate de Cozio",
+   "grupo": "Mates",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "ponziani",
+   "label": "Apertura Ponziani",
+   "grupo": "Aperturas",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "apertura-alfil",
+   "label": "Apertura del alfil",
+   "grupo": "Aperturas",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "bird",
+   "label": "Apertura Bird",
+   "grupo": "Aperturas",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "grand-prix",
+   "label": "Ataque Grand Prix",
+   "grupo": "Aperturas",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "siciliana-sveshnikov",
+   "label": "Siciliana Sveshnikov",
+   "grupo": "Defensas",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "siciliana-kan",
+   "label": "Siciliana Kan",
+   "grupo": "Defensas",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "bogoindia",
+   "label": "Defensa Bogoindia",
+   "grupo": "Defensas",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "india-antigua",
+   "label": "Defensa india antigua",
+   "grupo": "Defensas",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "holandesa-leningrado",
+   "label": "Holandesa Leningrado",
+   "grupo": "Defensas",
    "total": 1,
    "actividades": []
   }

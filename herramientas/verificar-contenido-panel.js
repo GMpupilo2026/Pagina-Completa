@@ -12,7 +12,7 @@ function cierto(txt, ok) { console.log((ok ? "  ✓ " : "  ✗ ") + txt); if (!o
 const hecho = fs.existsSync(SALIDA) ? fs.readFileSync(SALIDA, "utf8") : "";
 cierto("data/contenido-panel.json está al día (si no: node herramientas/contenido-panel.js)", hecho === armar());
 const d = JSON.parse(hecho || "{}");
-cierto("trae las ocho tarjetas", Object.keys(d).length === 8);
+cierto("trae las nueve tarjetas", Object.keys(d).length === 9);
 cierto("ninguna viene vacía", Object.values(d).every((ids) => Array.isArray(ids) && ids.length > 0));
 cierto("sin identificadores repetidos en una tarjeta", Object.values(d).every((ids) => new Set(ids).size === ids.length));
 

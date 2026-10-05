@@ -44,7 +44,7 @@ function armar() {
     "cursos/academia/index.html": paginas("cursos/academia"),
     "entreno/aprender.html": lecciones(),
   };
-  ["apertura", "defensa", "tactica", "concepto", "final"].forEach((cat) => {
+  ["apertura", "defensa", "tactica", "mate", "concepto", "final"].forEach((cat) => {
     const ids = fichas(cat);
     if (!ids.length) throw new Error("No hay fichas de «" + cat + "»");
     salida["entreno/estudio.html?cat=" + cat] = ids;

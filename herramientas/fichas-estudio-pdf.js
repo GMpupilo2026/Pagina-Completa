@@ -61,10 +61,11 @@ const Chess = CJS.Chess || CJS;
 
 const NIVEL = { 1: "Principiante", 2: "Intermedio", 3: "Avanzado" };
 // Los colores de cada categoría y de cada bloque son los de la ficha en
-// pantalla (entreno/estudio.html); el de los finales es propio del papel.
+// pantalla (entreno/estudio.html); los de los finales y los mates son
+// propios del papel (el de los mates, #a01a6b, da 7,4:1).
 // Todos medidos contra blanco, en los dos sentidos (texto de color sobre
 // blanco y letra blanca sobre el color de la banda): de 4,7:1 a 8,4:1.
-const COLOR_CAT = { apertura: "#a1670f", defensa: "#2c5f7f", tactica: "#8c2f3f", concepto: "#2c6b4f", final: "#5b3e8a" };
+const COLOR_CAT = { apertura: "#a1670f", defensa: "#2c5f7f", tactica: "#8c2f3f", mate: "#a01a6b", concepto: "#2c6b4f", final: "#5b3e8a" };
 const COLOR_BLOQUE = ["#486581", "#2c6b4f", "#a8371a", "#2c5f7f", "#8c2f3f"];
 
 const solo = process.argv.includes("--solo-cartas") ? "cartas" : process.argv.includes("--solo-libro") ? "libro" : "";
@@ -190,7 +191,10 @@ function htmlPresentacion() {
 
 /* El índice se reparte por categorías enteras, hasta unos setenta títulos por
    página (dos columnas de 35 renglones): con 98 fichas ya no entraba en una,
-   y una categoría partida entre dos páginas se busca mal. */
+   y una categoría partida entre dos páginas se busca mal. Dentro de la página
+   sí puede seguir en la otra columna: con 184 fichas, Táctica sola tiene 48
+   títulos y no cabe en una columna (el título de la sección no se separa de
+   sus primeras líneas). */
 const POR_PAGINA_INDICE = 70;
 function paginasDelIndice() {
   const out = [];
@@ -213,8 +217,8 @@ function htmlIndice(paginas, grupos, primera) {
   <style>
     h1{font-size:22pt; margin-bottom:5mm; padding-bottom:3mm; border-bottom:3px double #de911d;}
     .cols{columns:2; column-gap:10mm;}
-    section{break-inside:avoid; margin-bottom:5mm;}
-    h2{font-size:11.5pt; margin-bottom:1.5mm;} h2 span{font-family:'Inter',Arial,sans-serif; font-weight:400; font-size:8.5pt; color:#486581;}
+    section{margin-bottom:5mm;}
+    h2{font-size:11.5pt; margin-bottom:1.5mm; break-after:avoid;} h2 span{font-family:'Inter',Arial,sans-serif; font-weight:400; font-size:8.5pt; color:#486581;}
     ol{list-style:none; margin:0; padding:0;}
     li{display:flex; align-items:baseline; font-size:9.5pt; line-height:1.55;}
     .t{flex:0 1 auto;} .p{margin-left:auto; padding-left:2mm; font-variant-numeric:tabular-nums;}

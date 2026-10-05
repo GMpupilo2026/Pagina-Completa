@@ -1404,8 +1404,8 @@ atrás se respeta, 30 días atrás y el futuro pasan a «ahora», y un
 ## Estudio: una ficha por idea, con su mapa y su posición
 
 `entreno/estudio.html` (tarjeta **"📚 Estudio"** en `clases.html` → grupo
-"Aprender") son 152 fichas de estudio: 23 aperturas, 26 defensas, 40 temas
-tácticos, 39 conceptos y 24 finales. Cada una es **una sola pantalla**: la idea principal
+"Aprender") son 184 fichas de estudio: 27 aperturas, 31 defensas, 28 temas
+tácticos, 24 mates, 49 conceptos y 25 finales. Cada una es **una sola pantalla**: la idea principal
 arriba, cuatro bloques alrededor de un nodo con la pieza, y abajo la posición
 que lo explica, recorrible jugada por jugada.
 
@@ -1636,7 +1636,7 @@ mate con rey y dos alfiles, alfil bueno contra alfil malo), 7 conceptos (el valo
 cómo atacar al rey enrocado, el peón retrasado, el bloqueo, la columna
 semiabierta, convertir la ventaja, la coordinación de las piezas), 6 tácticas
 (el ataque a f7, la coronación, los mates de los dos alfiles y de Damiano, el
-rey expuesto, el sacrificio en h6), 1 apertura (Stonewall) y 4 defensas
+rey expuesto, el sacrificio en h6; los dos mates pasaron después a Mates), 1 apertura (Stonewall) y 4 defensas
 (Najdorf, Winawer, moderna, Budapest).
 
 - **Cuatro líneas nuevas** en `js/aperturas-lineas.js` (61): Winawer, moderna,
@@ -1665,6 +1665,61 @@ rey expuesto, el sacrificio en h6), 1 apertura (Stonewall) y 4 defensas
   y peón contra rey», que las enseña. En su lugar entró torre contra caballo.
   Antes de sumar una ficha, buscar el tema también en los subtítulos.
 - El libro pasó a 162 páginas y las cartas a 17 hojas.
+
+### Los mates, en una pestaña propia
+
+Con 24 fichas de mate repartidas entre Táctica y Finales, el dueño de la
+Academia pidió juntarlas. Entró la sexta categoría, **Mates** («las figuras
+que hay que conocer»), con sus títulos de bloque: «Cuándo aparece», «Cómo se
+da», «Errores frecuentes», «Cómo practicarlo».
+
+- **Qué se movió**: los 20 mates con nombre que estaban en Táctica (del
+  pasillo al de Cozio) y los cuatro básicos que estaban en Finales (rey y
+  dama, rey y torre, rey y dos alfiles, alfil y caballo). Los ids no cambian:
+  los enlaces `?ficha=` siguen funcionando.
+- **El orden lo da el banco**: la pestaña muestra las fichas en el orden de
+  `js/fichas-estudio.js`, así que los cuatro básicos se movieron antes del
+  primer mate con nombre, de más fácil a más difícil.
+- **Dónde se nota**: la tarjeta «♚ Mates» en el grupo Aprender del panel del
+  alumno (`?cat=mate`), su entrada en el buscador, en
+  `data/contenido-panel.json` y en `entreno/data/metas.json`. En pantalla,
+  como Táctica, Conceptos y Finales, va con el color de línea neutro; en el
+  papel lleva su color (#a01a6b, 7,4:1 contra blanco) y su portadilla, así que
+  el libro tiene 196 páginas.
+
+### La sexta tanda: de 152 a 184 fichas
+
+Entraron 32 fichas: las reglas que no tenían ficha (la captura al paso, el
+enroque y cuándo no se puede, las tablas), 5 finales (la carrera de peones, el
+peón pasado protegido, el alfil del color equivocado, torre contra dos peones
+ligados, la posición de Vancura), 7 conceptos (recapturar hacia el centro,
+mantener la tensión, el fianchetto, el caballo en el borde, la compensación,
+cómo evaluar una posición, el centro móvil y el fijo), 8 mates con nombre (de
+la Ópera, del cerdo ciego, de Pillsbury, del gancho, de la esquina, de dama y
+alfil, cola de golondrina, de Cozio) y 9 aperturas y defensas (Ponziani,
+apertura del alfil, Bird, Grand Prix, Sveshnikov, Kan, Bogoindia, india
+antigua, holandesa Leningrado), con sus nueve líneas nuevas (70 en total).
+
+- **El mate de la Ópera sale de la partida de verdad** (Morphy, París 1858):
+  la posición se armó jugando las 16 primeras jugadas con chess.js, no se
+  copió de memoria. Los otros siete mates salen de Lichess.
+- **La carrera de peones se buscó con el motor**: con el rey negro fuera de la
+  diagonal a8-h1, los dos peones coronan y la dama blanca se come la negra por
+  esa diagonal. Solo a6 gana: la jugada de rey pierde.
+- **Las reglas se comprueban como reglas**: `alPaso` (la jugada es captura al
+  paso, con la casilla en la FEN), `enroque` (qué enroques son legales en la
+  posición) e `insuficiente` (chess.js dice que no hay material para mate).
+  Además entraron `protegido`, `alfilEquivocado`, `tension`, `piezaEn` y
+  `vacias`. Todas se rompieron a propósito y saltan.
+- **Los pies nuevos se leyeron con el tablero al lado** antes de entrar, como
+  pide la sección de abajo: dos decían algo falso (el alfil de b3 «apuntando a
+  f7» con el peón de d5 en medio, «todas las piezas afuera» con el alfil de c8
+  en su casa) y diez quedaban flojos; se corrigieron todos.
+- **El índice del libro ya no entraba**: Táctica sola tiene 48 títulos y cada
+  categoría estaba marcada para no partirse, así que no cabía en una columna
+  de 35. Ahora una categoría puede seguir en la otra columna de la misma
+  página (el título no se separa de sus primeras líneas). El libro tiene 195
+  páginas, con el índice en cuatro, y las cartas, 21 hojas.
 
 ### El pie de cada diagrama, revisado contra su tablero
 
