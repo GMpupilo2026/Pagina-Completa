@@ -453,7 +453,9 @@ async function reenviar(u, boton) {
         });
         const datos = await res.json().catch(() => ({}));
         if (!res.ok || datos.error) throw new Error(datos.error || `El servidor respondió ${res.status}`);
-        avisar("Le salió el enlace para crear su contraseña a " + (datos.correo_destino || "su correo") + ".");
+        avisar((datos.modo === "provisional"
+            ? "Le salió su usuario con una contraseña provisional nueva a "
+            : "Le salió el enlace para crear su contraseña a ") + (datos.correo_destino || "su correo") + ".");
     } catch (err) {
         avisar("No se pudo mandar: " + err.message, true);
     }

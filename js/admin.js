@@ -859,7 +859,9 @@
                             });
                             const datos = await res.json().catch(() => ({}));
                             if (!res.ok || datos.error) throw new Error(datos.error || `El servidor respondió ${res.status}`);
-                            Avisos.avisar(`Le salió el enlace para crear su contraseña a ${datos.correo_destino || "el correo de su casa"}.`);
+                            Avisos.avisar(datos.modo === "provisional"
+                                ? `Le salió su usuario con una contraseña provisional nueva a ${datos.correo_destino || "el correo de su casa"}.`
+                                : `Le salió el enlace para crear su contraseña a ${datos.correo_destino || "el correo de su casa"}.`);
                             return;
                         }
                         const result = await callAdmin("reset_password", { target_id: u.id });
@@ -1047,7 +1049,7 @@
                 const interno = UsuarioAlumno.esInterno(u.email);
                 estado.textContent = interno
                     ? "Entra con el usuario «" + UsuarioAlumno.soloUsuario(u.email) + "» y la contraseña que le pongas abajo."
-                    : "Entra con su correo, " + u.email + ", y la contraseña la crea con el enlace de «Reenviar acceso». "
+                    : "Entra con su correo, " + u.email + ". «Reenviar acceso» le manda una contraseña provisional nueva si todavía no ha entrado, o el enlace para crear una si ya entró. "
                       + "Si no puede abrir ese correo, dale un usuario de la Academia y ponle tú la contraseña.";
                 texto.textContent = interno ? "Su usuario" : "Usuario de la Academia";
                 input.setAttribute("aria-label", (interno ? "Usuario de " : "Usuario de la Academia para ") + nombre);

@@ -42,7 +42,7 @@ const FUNCIONES = {
   "create-student": ["invitacion-email.ts", "usuario-alumno.ts", "profesor-elegido.ts", "marca-correo.ts"],
   "inscribir-alumno": ["invitacion-email.ts", "usuario-alumno.ts", "profesor-elegido.ts", "marca-correo.ts"],
   "recuperar-acceso": ["usuario-alumno.ts", "recuperacion-email.ts", "envio-resend.ts"],
-  "reenviar-acceso": ["usuario-alumno.ts", "recuperacion-email.ts", "envio-resend.ts"],
+  "reenviar-acceso": ["usuario-alumno.ts", "recuperacion-email.ts", "envio-resend.ts", "invitacion-email.ts", "marca-correo.ts"],
   "correos-alumno": ["usuario-alumno.ts"],
   // Su examen-html.ts es suyo y vive en su carpeta; lo único compartido es el
   // número al que la casa escribe, que es el mismo en los tres correos.
