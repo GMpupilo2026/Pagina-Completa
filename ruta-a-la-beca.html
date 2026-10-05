@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="img/favicon.svg">
+    <title>Ruta a la Beca — Club de Ajedrez Cenfotec</title>
+    <meta name="description" content="Programa de alto rendimiento en ajedrez para estudiantes de colegio desde 9.º año: 36 semanas, 1 hora de clase por Meet y 10 horas semanales en la plataforma. Quien aguante el ritmo puede ganarse una beca universitaria en Cenfotec.">
+    <meta name="robots" content="noindex">
+    <!-- Para cuando alguien pega el enlace en WhatsApp, que es por donde se comparte esto. -->
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Ajedrez Integral">
+    <meta property="og:locale" content="es_CR">
+    <meta property="og:title" content="Ruta a la Beca — Club de Ajedrez Cenfotec">
+    <meta property="og:description" content="Programa de alto rendimiento en ajedrez para estudiantes de colegio desde 9.º año: 36 semanas, 1 hora de clase por Meet y 10 horas semanales en la plataforma. Quien aguante el ritmo puede ganarse una beca universitaria en Cenfotec.">
+    <meta property="og:url" content="https://ajedrez-integral.com/ruta-a-la-beca.html">
+    <meta property="og:image" content="https://ajedrez-integral.com/img/og-ajedrez-integral.jpg">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="Ajedrez Integral — clases de ajedrez en vivo, no solo videos. ajedrez-integral.com">
+    <meta name="twitter:card" content="summary_large_image">
+    <!-- Tailwind compilado: lo genera herramientas/css-construir.js.
+         Antes venía del CDN, que baja ~400 KB de JavaScript y compila el CSS
+         dentro del navegador en cada visita. -->
+    <link rel="stylesheet" href="css/tailwind.css">
+    <link rel="stylesheet" href="css/styles.css">
+    <!-- oscuro: inicio --><script>(function(){try{var t=localStorage.getItem('theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.classList.add('dark');}catch(e){}})();</script><!-- oscuro: fin -->
+    <script src="js/adaptive-mode.js"></script>
+<!-- app: inicio --><meta name="theme-color" content="#102a43"><link rel="manifest" href="/manifest.json"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Ajedrez"><script src="js/errores.js"></script><script src="js/pwa.js" defer></script><script src="js/navegacion.js" defer></script><!-- app: fin --><!-- tema: inicio --><script>(function(){try{var l=localStorage.getItem('plataforma_letra_v1');if(l&&/^[a-z]{2,24}$/.test(l)&&l!=='tema')document.documentElement.setAttribute('data-letra',l);var t=localStorage.getItem('plataforma_tema_v1');if(!t||!/^[a-z]{2,24}$/.test(t)||t==='clasico')return;document.documentElement.setAttribute('data-tema',t);var b=getComputedStyle(document.documentElement).getPropertyValue('--c-brand-800').trim();var m=document.querySelector('meta[name="theme-color"]');if(b&&m)m.setAttribute('content','rgb('+b.replace(/\s+/g,',')+')');}catch(e){}})();</script><!-- tema: fin --><!-- fuentes: inicio --><link rel="stylesheet" href="css/fuentes.css"><!-- fuentes: fin --></head>
+<body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-accent-500 focus:text-brand-900 focus:font-semibold focus:px-4 focus:py-2 focus:rounded-lg">Saltar al contenido principal</a>
+    <header id="header" class="sticky top-0 z-50 bg-brand-800 shadow-lg transition-all duration-300">
+        <div class="hidden lg:block bg-brand-900 border-b border-brand-700/60">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-8 flex items-center justify-end gap-5 text-xs text-brand-300">
+                <a href="te-reto.html" class="hover:text-accent-400 transition-colors">🏆 ¡Te reto!</a>
+                <span class="text-brand-700" aria-hidden="true">&middot;</span>
+                <a href="tv.html" class="hover:text-accent-400 transition-colors">TV en vivo</a>
+                <span class="text-brand-700" aria-hidden="true">&middot;</span>
+                <a href="torneos-en-vivo.html" class="hover:text-accent-400 transition-colors">Torneos</a>
+            </div>
+        </div>
+        <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Navegación principal">
+            <div class="flex items-center justify-between min-h-[4rem] md:min-h-[5rem] py-2">
+                <a href="index.html" class="flex items-center gap-2 text-white"><img src="/img/logo-marca.png" alt="" width="78" height="48" class="h-10 md:h-12 w-auto shrink-0"><span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span></a>
+                <ul class="hidden lg:flex items-center gap-8 text-brand-100 font-medium">
+                    <li><a href="index.html" class="hover:text-accent-400 transition-colors">Inicio</a></li>
+                    <li><a href="cursos.html" class="hover:text-accent-400 transition-colors">Cursos</a></li>
+                    <li><a href="articulos.html" class="hover:text-accent-400 transition-colors">Artículos</a></li>
+                    <li><a href="tablero.html" class="hover:text-accent-400 transition-colors">Jugar contra el profe</a></li>
+                    <li><a href="clases.html" class="hover:text-accent-400 text-accent-400 transition-colors">Academia</a></li>
+                    <li><a href="precios.html" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg transition-colors">Inscríbete</a></li>
+                </ul>
+                <div class="flex items-center gap-2 sm:gap-3">
+                    <button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro">
+                        <span id="theme-icon" aria-hidden="true">☀️</span>
+                    </button>
+                    <button id="menu-toggle" class="lg:hidden text-white text-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Abrir menú" aria-expanded="false" aria-controls="mobile-menu">
+                        <svg id="icon-open" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                        <svg id="icon-close" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+            </div>
+        </nav>
+        <div id="mobile-menu" class="lg:hidden hidden bg-brand-800 border-t border-brand-700">
+            <ul class="px-4 py-4 space-y-3 text-brand-100 font-medium">
+                <li><a href="index.html" class="block py-2 hover:text-accent-400">Inicio</a></li>
+                <li><a href="cursos.html" class="block py-2 hover:text-accent-400">Cursos</a></li>
+                <li><a href="articulos.html" class="block py-2 hover:text-accent-400">Artículos</a></li>
+                <li><a href="tablero.html" class="block py-2 hover:text-accent-400">Jugar contra el profe</a></li>
+                <li><a href="clases.html" class="block py-2 text-accent-400">Academia</a></li>
+                <li><a href="te-reto.html" class="block py-2 hover:text-accent-400">🏆 ¡Te reto!</a></li>
+                <li><a href="tv.html" class="block py-2 hover:text-accent-400">TV en vivo</a></li>
+                <li><a href="torneos-en-vivo.html" class="block py-2 hover:text-accent-400">Torneos</a></li>
+                <li><a href="precios.html" class="block py-2 bg-accent-500 text-brand-900 font-semibold px-4 rounded-lg text-center">Inscríbete</a></li>
+            </ul>
+        </div>
+    </header>
+    <main id="main-content">
+        <!-- ============ PORTADA ============ -->
+        <section class="bg-gradient-to-br from-brand-800 via-brand-700 to-brand-900">
+            <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-20 text-center">
+                <p class="inline-block bg-accent-500/20 text-accent-400 text-sm font-semibold px-4 py-1.5 rounded-full mb-6">Club de Ajedrez · Universidad Cenfotec</p>
+                <h1 class="font-serif text-4xl sm:text-5xl font-bold text-white leading-tight mb-4">Ruta a la <span class="text-accent-400">Beca</span></h1>
+                <p class="text-lg sm:text-xl text-brand-200 font-semibold mb-4">Programa de alto rendimiento en ajedrez para estudiantes de colegio, desde 9.º año</p>
+                <p class="text-brand-200 text-base sm:text-lg max-w-2xl mx-auto">36 semanas de entrenamiento exigente, en línea. Cada semana tiene un mínimo que cumplir, y quien no lo cumple sale del programa. Quien aguante el ritmo hasta el final puede ganarse una beca universitaria en Cenfotec.</p>
+                <div class="flex flex-col sm:flex-row gap-4 justify-center mt-8">
+                    <a href="formulario.html?f=ruta-a-la-beca" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-bold px-8 py-4 rounded-xl text-lg transition-colors shadow-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800">Inscribirme</a>
+                    <a href="#la-regla" class="bg-white/10 hover:bg-white/20 text-white font-semibold px-8 py-4 rounded-xl text-lg transition-colors border border-white/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Leer las reglas</a>
+                </div>
+                <p class="text-brand-200 text-sm mt-6">Inscripciones abiertas hasta el domingo 25 de octubre de 2026.</p>
+            </div>
+        </section>
+
+        <!-- ============ CIFRAS ============ -->
+        <section class="bg-brand-700 py-8" aria-label="El programa en cifras">
+            <ul class="max-w-5xl mx-auto px-4 grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+                <li><span class="block text-3xl md:text-4xl font-bold text-accent-400">36</span><span class="text-brand-200 text-sm mt-1 block">semanas de trabajo</span></li>
+                <li><span class="block text-3xl md:text-4xl font-bold text-accent-400">1 h</span><span class="text-brand-200 text-sm mt-1 block">de clase en vivo por Meet cada semana</span></li>
+                <li><span class="block text-3xl md:text-4xl font-bold text-accent-400">10 h</span><span class="text-brand-200 text-sm mt-1 block">mínimas por semana en la plataforma</span></li>
+                <li><span class="block text-3xl md:text-4xl font-bold text-accent-400">9.º</span><span class="text-brand-200 text-sm mt-1 block">año de colegio en adelante</span></li>
+            </ul>
+        </section>
+
+        <!-- ============ CÓMO FUNCIONA ============ -->
+        <section class="py-16 md:py-20 bg-white dark:bg-brand-900">
+            <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+                <p class="text-accent-700 dark:text-accent-400 font-semibold uppercase tracking-wide text-sm">Cómo funciona</p>
+                <h2 class="font-serif text-3xl md:text-4xl font-bold text-brand-800 dark:text-white mt-2 mb-4">Una clase por semana y 10 horas de trabajo</h2>
+                <p class="text-brand-600 dark:text-brand-300 mb-8">Cada semana tienes una clase de 1 hora con tu profesor por Google Meet y, aparte, al menos 10 horas de trabajo en ajedrez-integral.com. Las 10 horas no son libres: se reparten en seis trabajos, y cada uno tiene una meta que la plataforma mide sola. Solo cuenta el tiempo activo: dejar la página abierta no suma.</p>
+                <div class="overflow-x-auto rounded-xl border border-brand-100 dark:border-brand-800">
+                    <table class="w-full text-sm text-left">
+                        <caption class="sr-only">Las 10 horas de cada semana: trabajo, horas, meta mínima y dónde se hace</caption>
+                        <thead class="bg-brand-50 dark:bg-brand-800 text-brand-800 dark:text-white">
+                            <tr><th scope="col" class="px-4 py-3 font-semibold">Trabajo</th><th scope="col" class="px-4 py-3 font-semibold">Horas</th><th scope="col" class="px-4 py-3 font-semibold">Meta mínima de la semana</th><th scope="col" class="px-4 py-3 font-semibold">Dónde</th></tr>
+                        </thead>
+                        <tbody class="text-brand-600 dark:text-brand-300">
+                            <tr class="border-t border-brand-100 dark:border-brand-800"><th scope="row" class="px-4 py-3 font-semibold text-brand-800 dark:text-white">Táctica</th><td class="px-4 py-3">3</td><td class="px-4 py-3">60 ejercicios del tema de la semana</td><td class="px-4 py-3">Ejercicios por tema y Mates</td></tr>
+                            <tr class="border-t border-brand-100 dark:border-brand-800"><th scope="row" class="px-4 py-3 font-semibold text-brand-800 dark:text-white">Partidas</th><td class="px-4 py-3">2</td><td class="px-4 py-3">3 partidas a 15 + 10 y 1 partida tuya analizada</td><td class="px-4 py-3">Juegos y Tus propios errores</td></tr>
+                            <tr class="border-t border-brand-100 dark:border-brand-800"><th scope="row" class="px-4 py-3 font-semibold text-brand-800 dark:text-white">Cálculo y visualización</th><td class="px-4 py-3">1,5</td><td class="px-4 py-3">30 ejercicios</td><td class="px-4 py-3">Habilidades y Visualización</td></tr>
+                            <tr class="border-t border-brand-100 dark:border-brand-800"><th scope="row" class="px-4 py-3 font-semibold text-brand-800 dark:text-white">Finales</th><td class="px-4 py-3">1,5</td><td class="px-4 py-3">2 finales ganados contra la máquina</td><td class="px-4 py-3">Finales y El mapa de los finales</td></tr>
+                            <tr class="border-t border-brand-100 dark:border-brand-800"><th scope="row" class="px-4 py-3 font-semibold text-brand-800 dark:text-white">Lección de la fase</th><td class="px-4 py-3">1,5</td><td class="px-4 py-3">La lección de la semana, completa</td><td class="px-4 py-3">Cursos de la Academia</td></tr>
+                            <tr class="border-t border-brand-100 dark:border-brand-800"><th scope="row" class="px-4 py-3 font-semibold text-brand-800 dark:text-white">Repaso y aperturas</th><td class="px-4 py-3">0,5</td><td class="px-4 py-3">El Repaso del día, al menos 4 días</td><td class="px-4 py-3">Repaso del día y Mi repertorio</td></tr>
+                            <tr class="border-t-2 border-brand-200 dark:border-brand-700 bg-brand-50 dark:bg-brand-800"><th scope="row" class="px-4 py-3 font-bold text-brand-800 dark:text-white">Total</th><td class="px-4 py-3 font-bold text-brand-800 dark:text-white">10</td><td class="px-4 py-3" colspan="2">El Meet de 1 hora va aparte</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <p class="text-sm text-brand-500 dark:text-brand-300 mt-4">La semana va de lunes a domingo, en hora de Costa Rica. Las metas de ejercicios suben un poco en cada fase; las horas no cambian.</p>
+            </div>
+        </section>
+
+        <!-- ============ LA REGLA ============ -->
+        <section id="la-regla" class="py-16 md:py-20 bg-brand-50 dark:bg-brand-950 scroll-mt-16">
+            <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+                <p class="text-accent-700 dark:text-accent-400 font-semibold uppercase tracking-wide text-sm">La regla</p>
+                <h2 class="font-serif text-3xl md:text-4xl font-bold text-brand-800 dark:text-white mt-2 mb-4">Cada lunes se revisa quién sigue</h2>
+                <p class="text-brand-600 dark:text-brand-300 mb-8">El lunes, tu profesor ve en la plataforma si cumpliste el mínimo de la semana anterior. Si no lo cumpliste y no tienes una justificación aceptada, sales del programa ese día. No hay comodines.</p>
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div class="bg-white dark:bg-brand-900 rounded-2xl p-6 shadow-sm">
+                        <h3 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-3">El mínimo son las cuatro cosas juntas</h3>
+                        <ol class="list-decimal pl-5 space-y-2 text-brand-600 dark:text-brand-300">
+                            <li>10 horas de tiempo activo en la plataforma.</li>
+                            <li>Las seis metas de la tarea de la semana.</li>
+                            <li>Trabajo en al menos 4 días distintos: se busca un hábito, no una maratón el domingo.</li>
+                            <li>Asistencia al Meet, o la grabación vista con tu justificación de ausencia.</li>
+                        </ol>
+                    </div>
+                    <div class="bg-white dark:bg-brand-900 rounded-2xl p-6 shadow-sm">
+                        <h3 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-3">Justificaciones que se aceptan</h3>
+                        <ul class="list-disc pl-5 space-y-2 text-brand-600 dark:text-brand-300">
+                            <li>Enfermedad, con dictamen médico.</li>
+                            <li>Duelo o emergencia familiar, con aviso de tu familia.</li>
+                            <li>Semana de exámenes del colegio, con el calendario de pruebas: el mínimo baja a 6 horas y 4 metas. Una vez por fase y pedida antes de que empiece la semana.</li>
+                            <li>Una falla de la plataforma comprobada por el club.</li>
+                        </ul>
+                        <p class="text-sm text-brand-500 dark:text-brand-300 mt-3">Se presentan en la plataforma antes del lunes a las 7:00 a. m.</p>
+                    </div>
+                </div>
+                <p class="text-brand-600 dark:text-brand-300 mt-6"><strong class="text-brand-800 dark:text-white">Si sales y crees que fue un error,</strong> tú o tu familia tienen 48 horas para pedir que la coordinación del club lo revise. La coordinación mira los datos y decide en 3 días hábiles. La salida se comunica en privado, nunca frente al grupo, y puedes seguir en el club fuera del programa.</p>
+            </div>
+        </section>
+
+        <!-- ============ CALENDARIO ============ -->
+        <section class="py-16 md:py-20 bg-white dark:bg-brand-900">
+            <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+                <p class="text-accent-700 dark:text-accent-400 font-semibold uppercase tracking-wide text-sm">Calendario</p>
+                <h2 class="font-serif text-3xl md:text-4xl font-bold text-brand-800 dark:text-white mt-2 mb-4">Cuatro fases, del 2 de noviembre al 1 de agosto</h2>
+                <p class="text-brand-600 dark:text-brand-300 mb-8">Cada fase dura 9 semanas y cierra con una evaluación. Las dos semanas de Navidad (21 de diciembre al 3 de enero) y la de Semana Santa (22 al 28 de marzo) son pausa: no hay clase ni mínimo.</p>
+                <ol class="grid sm:grid-cols-2 gap-4">
+                    <li class="bg-brand-50 dark:bg-brand-800 rounded-2xl p-6 shadow-sm">
+                        <p class="text-xs font-semibold text-accent-700 dark:text-accent-400 uppercase">Fase 1 · semanas 1 a 9</p>
+                        <h3 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1">Fundamentos</h3>
+                        <p class="text-sm text-brand-600 dark:text-brand-300">2 de noviembre al 17 de enero. Mates básicos, temas tácticos, principios de apertura, rey y peón.</p>
+                    </li>
+                    <li class="bg-brand-50 dark:bg-brand-800 rounded-2xl p-6 shadow-sm">
+                        <p class="text-xs font-semibold text-accent-700 dark:text-accent-400 uppercase">Fase 2 · semanas 10 a 18</p>
+                        <h3 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1">Táctica y cálculo</h3>
+                        <p class="text-sm text-brand-600 dark:text-brand-300">18 de enero al 21 de marzo. Combinaciones, cálculo con método, defensa, finales de torre.</p>
+                    </li>
+                    <li class="bg-brand-50 dark:bg-brand-800 rounded-2xl p-6 shadow-sm">
+                        <p class="text-xs font-semibold text-accent-700 dark:text-accent-400 uppercase">Fase 3 · semanas 19 a 27</p>
+                        <h3 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1">Estrategia y finales</h3>
+                        <p class="text-sm text-brand-600 dark:text-brand-300">29 de marzo al 30 de mayo. Estructuras de peones, piezas buenas y malas, planes, Lucena y Philidor.</p>
+                    </li>
+                    <li class="bg-brand-50 dark:bg-brand-800 rounded-2xl p-6 shadow-sm">
+                        <p class="text-xs font-semibold text-accent-700 dark:text-accent-400 uppercase">Fase 4 · semanas 28 a 36</p>
+                        <h3 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1">Competencia</h3>
+                        <p class="text-sm text-brand-600 dark:text-brand-300">31 de mayo al 1 de agosto. Repertorio propio, preparación de rivales, partidas lentas y el torneo de cierre.</p>
+                    </li>
+                </ol>
+            </div>
+        </section>
+
+        <!-- ============ LA BECA ============ -->
+        <section class="py-16 md:py-20 bg-brand-50 dark:bg-brand-950">
+            <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+                <p class="text-accent-700 dark:text-accent-400 font-semibold uppercase tracking-wide text-sm">La beca</p>
+                <h2 class="font-serif text-3xl md:text-4xl font-bold text-brand-800 dark:text-white mt-2 mb-4">Quien llega a la semana 36 puede optar a la beca</h2>
+                <p class="text-brand-600 dark:text-brand-300 mb-8">Para optar hay que terminar las 36 semanas dentro del programa y presentar las cuatro evaluaciones de fase. Entre quienes terminan, el orden lo da una nota final de 100 puntos. Cuántas becas hay y de qué porcentaje lo define la universidad, y la beca se usa al cumplir los requisitos de admisión de Cenfotec.</p>
+                <div class="overflow-x-auto rounded-xl border border-brand-100 dark:border-brand-800 bg-white dark:bg-brand-900">
+                    <table class="w-full text-sm text-left">
+                        <caption class="sr-only">La nota final: criterio, peso y cómo se mide</caption>
+                        <thead class="bg-brand-50 dark:bg-brand-800 text-brand-800 dark:text-white">
+                            <tr><th scope="col" class="px-4 py-3 font-semibold">Criterio</th><th scope="col" class="px-4 py-3 font-semibold">Peso</th><th scope="col" class="px-4 py-3 font-semibold">Cómo se mide</th></tr>
+                        </thead>
+                        <tbody class="text-brand-600 dark:text-brand-300">
+                            <tr class="border-t border-brand-100 dark:border-brand-800"><th scope="row" class="px-4 py-3 font-semibold text-brand-800 dark:text-white">Evaluaciones de fase</th><td class="px-4 py-3">35 %</td><td class="px-4 py-3">Promedio de las cuatro evaluaciones</td></tr>
+                            <tr class="border-t border-brand-100 dark:border-brand-800"><th scope="row" class="px-4 py-3 font-semibold text-brand-800 dark:text-white">Progreso en puntos Elo</th><td class="px-4 py-3">25 %</td><td class="px-4 py-3">Diferencia entre el diagnóstico de la semana 1 y el de la semana 36</td></tr>
+                            <tr class="border-t border-brand-100 dark:border-brand-800"><th scope="row" class="px-4 py-3 font-semibold text-brand-800 dark:text-white">Constancia</th><td class="px-4 py-3">20 %</td><td class="px-4 py-3">Horas por encima del mínimo y días activos por semana</td></tr>
+                            <tr class="border-t border-brand-100 dark:border-brand-800"><th scope="row" class="px-4 py-3 font-semibold text-brand-800 dark:text-white">Asistencia y participación en el Meet</th><td class="px-4 py-3">10 %</td><td class="px-4 py-3">Registro de cada clase</td></tr>
+                            <tr class="border-t border-brand-100 dark:border-brand-800"><th scope="row" class="px-4 py-3 font-semibold text-brand-800 dark:text-white">Torneo de cierre</th><td class="px-4 py-3">10 %</td><td class="px-4 py-3">Puntos en el torneo de la semana 36</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <p class="text-sm text-brand-500 dark:text-brand-300 mt-4">El progreso pesa más que el nivel: compite en igualdad quien empezó sin saber jugar. Quien gane la beca estando en 9.º o 10.º año la conserva hasta que entre a la universidad.</p>
+            </div>
+        </section>
+
+        <!-- ============ INSCRIPCIÓN ============ -->
+        <section class="py-16 md:py-20 bg-white dark:bg-brand-900">
+            <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+                <p class="text-accent-700 dark:text-accent-400 font-semibold uppercase tracking-wide text-sm">Inscripción</p>
+                <h2 class="font-serif text-3xl md:text-4xl font-bold text-brand-800 dark:text-white mt-2 mb-6">Quién puede entrar y cómo</h2>
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div>
+                        <h3 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-3">Requisitos</h3>
+                        <ul class="list-disc pl-5 space-y-2 text-brand-600 dark:text-brand-300">
+                            <li>Estar en 9.º, 10.º, 11.º o 12.º año de un colegio de Costa Rica.</li>
+                            <li>Autorización de tu madre, padre o persona encargada si eres menor de edad.</li>
+                            <li>Computadora o celular con internet.</li>
+                            <li>Aceptar el reglamento, con la regla de cada lunes.</li>
+                        </ul>
+                        <p class="text-sm text-brand-500 dark:text-brand-300 mt-3">No necesitas jugar bien: necesitas sostener el ritmo.</p>
+                    </div>
+                    <div>
+                        <h3 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-3">Pasos</h3>
+                        <ol class="list-decimal pl-5 space-y-2 text-brand-600 dark:text-brand-300">
+                            <li>Llenas el formulario de inscripción, hasta el 25 de octubre.</li>
+                            <li>El club te crea la cuenta en ajedrez-integral.com.</li>
+                            <li>Haces el diagnóstico de nivel; con él se arman los grupos.</li>
+                            <li>Semana de prueba, del 26 de octubre al 1 de noviembre: todavía no cuenta.</li>
+                            <li>El lunes 2 de noviembre empieza la semana 1.</li>
+                        </ol>
+                    </div>
+                </div>
+                <div class="text-center mt-10">
+                    <a href="formulario.html?f=ruta-a-la-beca" class="inline-block bg-accent-500 hover:bg-accent-600 text-brand-900 font-bold px-8 py-4 rounded-xl text-lg transition-colors shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2">Inscribirme</a>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============ PREGUNTAS ============ -->
+        <section class="py-16 md:py-20 bg-brand-50 dark:bg-brand-950">
+            <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+                <h2 class="font-serif text-3xl md:text-4xl font-bold text-brand-800 dark:text-white mb-6">Preguntas frecuentes</h2>
+                <div class="space-y-3">
+                    <details class="bg-white dark:bg-brand-900 rounded-xl p-4 shadow-sm">
+                        <summary class="font-semibold text-brand-800 dark:text-white cursor-pointer rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">¿Puedo hacer las 10 horas el fin de semana?</summary>
+                        <p class="text-brand-600 dark:text-brand-300 mt-2">No. Tienen que repartirse en al menos 4 días distintos de la semana. Una hora y media al día, la mayoría de los días, alcanza.</p>
+                    </details>
+                    <details class="bg-white dark:bg-brand-900 rounded-xl p-4 shadow-sm">
+                        <summary class="font-semibold text-brand-800 dark:text-white cursor-pointer rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">¿Cómo sé cuánto llevo?</summary>
+                        <p class="text-brand-600 dark:text-brand-300 mt-2">En la plataforma ves tu tarea de la semana con el avance de cada meta y tus horas, en todo momento. Tu profesor y tu familia ven los mismos datos.</p>
+                    </details>
+                    <details class="bg-white dark:bg-brand-900 rounded-xl p-4 shadow-sm">
+                        <summary class="font-semibold text-brand-800 dark:text-white cursor-pointer rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">¿Qué pasa si salgo del programa?</summary>
+                        <p class="text-brand-600 dark:text-brand-300 mt-2">Ya no puedes optar a la beca en esta edición, pero puedes seguir en el club de ajedrez como cualquier miembro.</p>
+                    </details>
+                    <details class="bg-white dark:bg-brand-900 rounded-xl p-4 shadow-sm">
+                        <summary class="font-semibold text-brand-800 dark:text-white cursor-pointer rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Estoy en 9.º año. ¿De qué me sirve una beca universitaria?</summary>
+                        <p class="text-brand-600 dark:text-brand-300 mt-2">La beca se guarda hasta que entres a la universidad. Mientras terminas el colegio, puedes seguir en el club como monitor.</p>
+                    </details>
+                    <details class="bg-white dark:bg-brand-900 rounded-xl p-4 shadow-sm">
+                        <summary class="font-semibold text-brand-800 dark:text-white cursor-pointer rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">¿Hay que prender la cámara en el Meet?</summary>
+                        <p class="text-brand-600 dark:text-brand-300 mt-2">No, la cámara es opcional. La asistencia se registra en la clase en vivo de la plataforma.</p>
+                    </details>
+                </div>
+                <p class="text-brand-600 dark:text-brand-300 mt-8">¿Otra duda? Escríbenos a <a href="mailto:info@ajedrez-integral.com" class="underline font-semibold hover:text-accent-600 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">info@ajedrez-integral.com</a> o por <a href="https://wa.me/50683092291" target="_blank" rel="noopener" class="underline font-semibold hover:text-accent-600 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">WhatsApp al +506 8309-2291</a>.</p>
+            </div>
+        </section>
+    </main>
+<footer class="bg-brand-900 text-brand-300 pt-16 pb-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid md:grid-cols-4 gap-8 mb-12">
+                <div><a href="index.html" class="flex items-center gap-2 text-white mb-4"><img src="/img/logo-marca.png" alt="" width="78" height="48" class="h-9 w-auto shrink-0"><span class="font-serif text-lg font-bold">Ajedrez Integral</span></a><p class="text-sm text-brand-300">Plataforma educativa de ajedrez para escuelas, colegios y familias. Aprende, practica y compite.</p></div>
+                <div><h3 class="text-white font-semibold mb-4">Navegación</h3><ul class="space-y-2 text-sm"><li><a href="index.html" class="hover:text-accent-400 transition-colors">Inicio</a></li><li><a href="cursos.html" class="hover:text-accent-400 transition-colors">Cursos</a></li><li><a href="articulos.html" class="hover:text-accent-400 transition-colors">Artículos</a></li><li><a href="tablero.html" class="hover:text-accent-400 transition-colors">Jugar contra el profe</a></li><li><a href="clases.html" class="hover:text-accent-400 transition-colors">Academia</a></li><li><a href="te-reto.html" class="hover:text-accent-400 transition-colors">🏆 ¡Te reto!</a></li><li><a href="tv.html" class="hover:text-accent-400 transition-colors">TV en vivo</a></li><li><a href="torneos-en-vivo.html" class="hover:text-accent-400 transition-colors">Torneos</a></li></ul></div>
+                <div><h3 class="text-white font-semibold mb-4">Recursos</h3><ul class="space-y-2 text-sm"><li><a href="entreno/diagnostico.html" class="hover:text-accent-400 transition-colors">Diagnóstico de nivel gratis</a></li><li><a href="bot.html" class="hover:text-accent-400 transition-colors">Jugar contra el bot</a></li><li><a href="sobre-oscar.html" class="hover:text-accent-400 transition-colors">Sobre Oscar</a></li><li><a href="inscripcion.html" class="hover:text-accent-400 transition-colors">Torneos en línea</a></li></ul></div>
+                <div><h3 class="text-white font-semibold mb-4">Contacto</h3><ul class="space-y-2 text-sm"><li><a href="mailto:info@ajedrez-integral.com" class="hover:text-accent-400 transition-colors">info@ajedrez-integral.com</a></li><li><a href="https://wa.me/50683092291" target="_blank" rel="noopener" class="hover:text-accent-400 transition-colors">+506 8309-2291 (WhatsApp)</a></li><li>Clases en línea desde Costa Rica</li></ul></div>
+            </div>
+            <div class="border-t border-brand-700 pt-6 text-center text-sm text-brand-300"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p><!-- legal: inicio --><p class="mt-2"><a href="privacidad.html" class="underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Política de privacidad</a> <span aria-hidden="true">·</span> <a href="terminos.html" class="underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Términos y condiciones</a></p><!-- legal: fin --></div>
+        </div>
+    </footer>
+    <script src="js/main.js"></script>
+</body>
+</html>
