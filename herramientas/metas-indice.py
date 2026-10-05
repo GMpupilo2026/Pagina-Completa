@@ -148,7 +148,7 @@ def recortes_de_estudio():
         "console.log(JSON.stringify(F.FICHAS.map(f=>({id:f.id,titulo:f.titulo,"
         "categoria:f.categoria}))))")
     etiqueta = {"apertura": "Aperturas", "defensa": "Defensas",
-                "tactica": "Táctica", "concepto": "Conceptos",
+                "tactica": "Táctica", "mate": "Mates", "concepto": "Conceptos",
                 "final": "Finales"}
     return [
         {"clave": f["id"], "label": f["titulo"],

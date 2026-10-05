@@ -381,10 +381,11 @@ async function pruebaAlumna(browser) {
   /* Al alumnado, Entrenamiento y Estudio no son dos puertas: lo que hay
      detrás está abierto en el panel, repartido por lo que es. Lo pidió así el
      dueño de la Academia. Las dos puertas siguen siendo del equipo docente. */
-  igual("Aprender: las cinco categorías de fichas, las lecciones, los desafíos y la lectura",
+  igual("Aprender: las seis categorías de fichas, las lecciones, los desafíos y la lectura",
     grupo(grupos, "Aprender").tiles.map((t) => t.enlace),
     ["entreno/estudio.html?cat=apertura", "entreno/estudio.html?cat=defensa",
-     "entreno/estudio.html?cat=tactica", "entreno/estudio.html?cat=concepto",
+     "entreno/estudio.html?cat=tactica", "entreno/estudio.html?cat=mate",
+     "entreno/estudio.html?cat=concepto",
      "entreno/estudio.html?cat=final",
      "entreno/aprender.html", "entreno/desafios.html", "articulos.html"]);
   igual("Estudiar: lo que se estudia con el profe",
@@ -2665,7 +2666,7 @@ async function pruebaPlegables(browser) {
     e.filter((x) => !PLEGABLES.includes(x.titulo) && x.titulo !== "Clase en vivo").every((x) => x.boton === null && x.grilla), true);
   igual("el título sigue siendo un encabezado, y dice cuántos accesos tiene",
     await page.evaluate(() => document.querySelector("#tile-grid [aria-controls]").closest("section").querySelector("h2 + span").textContent),
-    "8 accesos");
+    "9 accesos");
   const jugar = await page.evaluate(() => {
     const s = Array.from(document.querySelectorAll("#tile-grid > section")).find((x) => x.querySelector("h2").textContent === "Jugar y competir");
     return Math.round(s.getBoundingClientRect().top + scrollY);
