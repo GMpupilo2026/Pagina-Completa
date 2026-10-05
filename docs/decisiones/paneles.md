@@ -1860,6 +1860,9 @@ Competir («Prepara tu próxima partida»).
   cargan solo al apretar «Preparar mi plan».
 - **Solo ajedrez normal desde la inicial** (como «Tus propios errores»): una
   partida de Chess960 o «desde posición» no entra.
+- **El plan queda en el navegador para compararlo después** con la partida
+  del torneo (`plan_propio_guardados_v1`, los últimos 8, solo el árbol; ver
+  «La partida contra lo que había preparado» en entrenamiento.md).
 - **No se guarda en la base ni sale del navegador.** A Lichess o Chess.com solo
   se les manda el usuario del rival (está en `privacidad.html`), y el último
   rival y color quedan en `localStorage` para la próxima vez, como comodidad.

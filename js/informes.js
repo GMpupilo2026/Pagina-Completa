@@ -1379,7 +1379,12 @@
                 li.append(cab, det);
                 ul.appendChild(li);
             });
-            sec.append(h, res, ul);
+            // La libreta: por torneo, con lo que pensaba en cada jugada.
+            const libreta = document.createElement("a");
+            libreta.href = "libreta-torneos.html?alumno=" + encodeURIComponent(studentId);
+            libreta.className = "inline-block mt-3 text-sm font-semibold text-accent-700 dark:text-accent-400 underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
+            libreta.textContent = "Ver su libreta de torneos →";
+            sec.append(h, res, ul, libreta);
             body.appendChild(sec);
         }
         async function renderErroresDePartidas(studentId, name) {
@@ -1486,17 +1491,8 @@
                 const sanEs = (s) => (window.TiposReglas ? TiposReglas.sanEs(s) : s);
                 try {
                     const hoy = new Intl.DateTimeFormat("es-CR", { timeZone: "America/Costa_Rica", day: "numeric", month: "long" }).format(new Date());
-                    const plan = await PlanClase.crearPlan(sb, profile.id, ("Errores de las partidas de " + name + " (al " + hoy + ")").slice(0, 200),
-                        "Salen de «Tus propios errores»: la posición antes de cada error de sus partidas. En la clase, pon cada una en el tablero y pregunta qué jugarían.");
-                    for (let i = 0; i < elegidos.length; i += 1) {
-                        const x = elegidos[i];
-                        const tema = x.tema && T && T[x.tema] ? " · " + T[x.tema].nombre.toLowerCase() : "";
-                        await PlanClase.agregarItem(sb, plan.id, {
-                            orden: i, tipo: "posicion", fen: x.fen,
-                            titulo: (String(x.resumen || "Error").slice(0, 80) + tema).slice(0, 200),
-                            pregunta: ("¿Qué jugarías? En la partida se jugó " + sanEs(x.jugada) + "; lo bueno: " + x.buenas.map(sanEs).join(" o ") + ".").slice(0, 500),
-                        });
-                    }
+                    const plan = await ErroresPropios.llevarAPlan(sb, PlanClase, profile.id,
+                        "Errores de las partidas de " + name + " (al " + hoy + ")", elegidos, { TEMAS: T, sanEs });
                     msg.textContent = "Listo: el plan quedó en tus Planes de clase. En la clase lo abres y pones cada posición en el tablero. ";
                     const a = document.createElement("a");
                     a.href = "planes.html?plan=" + encodeURIComponent(plan.id);

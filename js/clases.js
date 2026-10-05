@@ -552,7 +552,7 @@
            Ver «El panel de quien da clase» en docs/decisiones/paneles.md. */
         const PANEL_DOCENTE = [
             { title: "Clase en vivo", destacado: true, hrefs: ["sesion.html"] },
-            { title: "Tus alumnos", hrefs: ["tareas.html", "examenes.html", "informes.html", "justificaciones.html", "subgrupos.html"] },
+            { title: "Tus alumnos", hrefs: ["tareas.html", "examenes.html", "informes.html", "justificaciones.html", "libreta-torneos.html", "subgrupos.html"] },
             { title: "Tus clases", hrefs: ["proyecto.html", "planes.html", "cuestionarios.html", "asistencia.html", "repasar-clases.html", "partidas.html", "preparacion-rivales.html", "informe-mensual.html"] },
             { title: "Coordinación", hrefs: ["coordinacion.html", "solicitudes.html", "formularios.html", "cobros.html"] },
             { title: "Aprender", hrefs: ["entreno/index.html", "entreno/estudio.html", "cursos/academia/index.html", "articulos.html"] },
@@ -750,9 +750,10 @@
         }
         function clavesUrgenteDocente() {
             const tiene = tieneTarjeta;
-            return ["justificaciones", "informePropio", "solicitudes", "morosos"].filter((c) =>
+            return ["justificaciones", "informePropio", "solicitudes", "partidasTorneo", "morosos"].filter((c) =>
                 c === "informePropio" ? tiene("informe-mensual.html")
                 : c === "justificaciones" ? tiene("justificaciones.html")
+                : c === "partidasTorneo" ? tiene("libreta-torneos.html")
                 : c === "solicitudes" ? tiene("solicitudes.html")
                 : tiene("cobros.html"));
         }
@@ -1440,6 +1441,7 @@
             "cuestionarios.html": "kahoot preguntas opciones quiz concurso juego de preguntas trivia",
             "asistencia.html": "pasar lista presencial aula",
             "justificaciones.html": "justificar ausencia falta faltas falte excusa constancia medica dictamen incapacidad permiso",
+            "libreta-torneos.html": "libreta torneo torneos planilla partida partidas tablero ronda errores comentarios",
             "informe-mensual.html": "informe del mes supervision",
             "subgrupos.html": "listas grupos de alumnos",
             "guia-del-profesor-accesible.html": "ayuda manual como se hace",
@@ -3915,6 +3917,10 @@
                        Las manda el alumno desde su panel y le llegan a sus
                        profesores, a su coordinación y a su supervisión. */
                     { emoji: "🩺", label: "Justificaciones de ausencia", desc: "Por qué faltaron tus alumnos, con sus documentos: acéptala o no y le llega la respuesta", href: "justificaciones.html" },
+                    /* Las partidas de torneo en tablero que anotan sus alumnos:
+                       los errores del motor, lo que pensaban y llevarlos a un plan
+                       de clase. Ver «Mi libreta de torneos» en entrenamiento.md. */
+                    { emoji: "📒", label: "Libreta de torneos", desc: "Las partidas de torneo que anotan tus alumnos: sus errores, lo que pensaban y llevarlas a la clase", href: "libreta-torneos.html" },
                     /* El informe del mes para la supervisión. Los números se llenan
                        solos con lo que pasó en la plataforma; el profesor escribe
                        lo que los números no dicen. */

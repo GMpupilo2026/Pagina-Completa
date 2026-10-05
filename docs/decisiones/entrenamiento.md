@@ -3314,6 +3314,89 @@ esa sola con el motor, como «Revisa esta partida» (`?revisar=torneo:<id>`).
   `verificar-informes.js` (lo que ve el profesor, sin colarse otra alumna ni
   pintar HTML).
 
+### Mi libreta de torneos
+
+`libreta-torneos.html`: las partidas de torneo que el alumno anotó, **por
+torneo** (el nombre sin mayúsculas ni espacios de más: «Abierto de Heredia» y
+«abierto de heredia » son el mismo), el más reciente arriba. Se entra desde
+Competir, desde «Tus propios errores» y, quien da clase, desde su panel.
+
+- **Cada torneo**: las fechas, los puntos («Hiciste 1½ de 2 puntos», sin
+  contar las partidas sin resultado) y **cómo cambió su Elo oficial** con
+  `elo_historial`: el de la lista del mes en que empezó y el de la primera
+  lista después del mes en que terminó (la FIDE publica el 1.º de cada mes).
+  Sin las dos filas, no se dice nada.
+- **Cada partida**, por ronda (el formulario ahora pide la ronda y propone la
+  siguiente): color, resultado, Elo del rival, jugadas y lo que encontró el
+  motor (los ejercicios `torneo-<id>-<media jugada>` de su `training_state`,
+  con `deFilas()`, que no le cree nada al navegador).
+- **Lo que pensaba** (`comentarios`, por media jugada desde 1): el alumno abre
+  la partida en el tablero (`VisorLinea`, que ganó `alCambiar` para saber en
+  qué jugada está) y escribe qué pensaba en ESA jugada. Se manda la UNIÓN con
+  lo que ya había (como las funciones `set_*`) y se queda con lo que devuelve
+  la base; vacío lo borra. La nota del tablero junta lo que pensaba y lo que
+  dijo el motor de esa jugada, y la lista de comentarios queda a la vista
+  (también al imprimir). Para el profe es la mitad que faltaba: el motor dice
+  DÓNDE se equivocó; el comentario, por qué.
+- **El permiso es por columna**: `grant update (ronda, evento, comentarios)`
+  y la política `partidas_torneo_corrige` (solo lo suyo). Las jugadas, el
+  color, el resultado y lo que dijo el motor no se tocan desde afuera.
+- **Su profesor** la abre con `?alumno=` (lo que ve lo decide la RLS): sin
+  formulario, y con **«Llevar sus errores a un plan de clase»** por partida.
+  Ese armado pasó de Informes a `ErroresPropios.llevarAPlan()`: una sola
+  copia para los dos.
+- **Quien da clase sin `?alumno=`** ve las últimas 30 partidas que anotaron
+  sus alumnos, cada una a su libreta en esa partida (`#partida-<id>`).
+- **El aviso al profe** (`avisar_partida_torneo()`): cuando el navegador del
+  alumno termina de revisar la partida que acaba de anotar, manda cuántos
+  errores salieron. La función marca la partida (`errores`, `avisada_at`)
+  ANTES de avisar, solo si es suya y no se había avisado: una sola vez, y
+  nadie la dispara por otro. El aviso llega al celular de sus profesores con
+  el enlace a esa partida en su libreta. Si la revisión se detuvo a la mitad,
+  no se avisa: el número no sería cierto. En su panel, «Lo urgente» (a
+  vigilar) cuenta las de la última semana (`partidasTorneo` de
+  `js/pendientes.js`).
+- **Se imprime**: el botón usa la impresión del navegador; el tablero y los
+  botones no salen (`print:hidden`).
+- Comprobado impersonando roles en SQL: el alumno comenta y pone la ronda,
+  pero no cambia el resultado, las jugadas ni lo que dijo el motor; avisa una
+  vez (la segunda devuelve `false`); su profesor no comenta ni avisa; otro
+  alumno no corrige ni avisa; `anon` no ejecuta la función.
+- Lo prueba `verificar-libreta-torneos.js` (la migración sin navegador; la
+  libreta de la alumna, comentar y borrar, imprimir, la del profesor con el
+  plan de clase y la lista de sus alumnos) y `verificar-tipos-pagina.js` (la
+  ronda y el aviso al anotar).
+
+### La partida contra lo que había preparado
+
+Al anotar la partida, **«¿La preparaste?»** ofrece sus planes: los de
+«Prepárate tú» (los últimos 8 quedan en ESTE navegador, `plan_propio_guardados_v1`,
+solo el árbol de jugadas) y los que le mandó su profe (`planes_rival_alumno`,
+lo que la RLS le deja leer: los suyos). Al guardar,
+`ErroresPropios.compararConPlan()` recorre la partida por el árbol del plan
+hasta la primera jugada que no está y dice **quién se salió** (él o su
+rival), en qué jugada, cuál fue la última que coincidió y qué esperaba el
+plan; o que siguió hasta el final del plan.
+
+- **Se guarda la foto** en `partidas_torneo.preparacion` (como un acta): el
+  plan propio vive solo en su navegador y el del profe puede borrarse, y lo
+  que pasó en ESA partida no cambia. Pesa unos pocos bytes; la base acota a
+  4000.
+- **El plan tiene que ser del color con que jugó**: uno con negras para una
+  partida con blancas se dice y no se guarda.
+- Se dice en palabras (`textoPreparacion()`, a «tú» o a «él»), debajo de lo
+  que encontró el motor al guardarla y en su libreta («🎯 La partida siguió
+  tu preparación contra PedroP hasta 2.Cf3; ahí tu rival jugó 2…Cf6, que el
+  plan no esperaba (el plan decía 2…Cc6)»). Lo guardado no se le cree al
+  navegador: una «jugada» sin forma de jugada no se escribe.
+- Por qué: prepararse bien también se aprende. Ver dónde se salió el rival
+  (la línea que no esperaba) o dónde se salió uno mismo (la que no se sabía)
+  dice qué preparar distinto la próxima vez.
+- Lo prueban `verificar-errores-propios.js` (las dos funciones),
+  `verificar-tipos-pagina.js` (las opciones, el color que no coincide, lo que
+  se guarda y lo que dice), `verificar-libreta-torneos.js` (en la libreta) y
+  `verificar-preparacion-rivales.js` (que «Prepárate tú» deja el plan).
+
 ### El tipo 19: Salva las tablas
 
 El espejo de Remata la ventaja: al alumno le falta material, pero el motor

@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261004225509
+# al-dia-con: 20261005001911
 tabla  Ejercicios Lichess  rls=true
 tabla  academia_ia  rls=true
 tabla  academia_miembros  rls=true
@@ -787,14 +787,19 @@ columna  paquetes_acceso.precio_mensual  numeric(12,2)
 columna  paquetes_acceso.titular_id  uuid
 columna  paquetes_acceso.vigente_desde  date
 columna  paquetes_acceso.vigente_hasta  date
+columna  partidas_torneo.avisada_at  timestamp with time zone
 columna  partidas_torneo.color  text
+columna  partidas_torneo.comentarios  jsonb
 columna  partidas_torneo.created_at  timestamp with time zone
+columna  partidas_torneo.errores  smallint
 columna  partidas_torneo.evento  text
 columna  partidas_torneo.fecha  date
 columna  partidas_torneo.id  uuid
 columna  partidas_torneo.jugadas  jsonb
+columna  partidas_torneo.preparacion  jsonb
 columna  partidas_torneo.resultado  text
 columna  partidas_torneo.rival_elo  integer
+columna  partidas_torneo.ronda  smallint
 columna  partidas_torneo.student_id  uuid
 columna  pizarras_cache.datos  jsonb
 columna  pizarras_cache.leido_en  timestamp with time zone
@@ -1322,6 +1327,7 @@ funcion  avisar_diagnostico_supervisor()  definer  anon=false  auth=false
 funcion  avisar_examen_asignado()  definer  anon=false  auth=false
 funcion  avisar_examen_reabierto()  definer  anon=false  auth=false
 funcion  avisar_fichas_faltantes()  definer  anon=false  auth=false
+funcion  avisar_partida_torneo(p_id uuid, p_errores integer)  definer  anon=false  auth=true
 funcion  avisar_push(p_a uuid[], p_titulo text, p_cuerpo text, p_url text, p_etiqueta text)  definer  anon=false  auth=false
 funcion  avisar_rachas()  definer  anon=false  auth=false
 funcion  avisar_tarea_asignada()  definer  anon=false  auth=false
@@ -1869,6 +1875,7 @@ politica  paquete_alumnos  paquete_alumnos_select  SELECT
 politica  paquetes_acceso  paquetes_acceso_select  SELECT
 politica  partidas_torneo  partidas_torneo_anota  INSERT
 politica  partidas_torneo  partidas_torneo_borra  DELETE
+politica  partidas_torneo  partidas_torneo_corrige  UPDATE
 politica  partidas_torneo  partidas_torneo_lee  SELECT
 politica  partidas_torneo  partidas_torneo_lee_supervisor  SELECT
 politica  plan_compartidos  plan_compartidos_delete  DELETE

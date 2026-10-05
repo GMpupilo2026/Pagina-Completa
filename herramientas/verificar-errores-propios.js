@@ -189,6 +189,25 @@ console.log("\n=== leerJugadas(): una partida de torneo copiada de la planilla =
   ok("nada que sea HTML pasa como jugada", !!L("1. e4 <img src=x> 2. Cf3").error);
 }
 
+console.log("\n=== compararConPlan() / textoPreparacion(): la partida contra lo preparado ===");
+{
+  const plan = [{ san: "e4", quien: "tu", hijos: [
+    { san: "e5", quien: "rival", hijos: [{ san: "Nf3", quien: "tu", hijos: [{ san: "Nc6", quien: "rival", hijos: [] }, { san: "d6", quien: "rival", hijos: [] }] }] },
+    { san: "c5", quien: "rival", hijos: [] }] }];
+  const es = (x) => x.replace(/^N/, "C").replace(/^B/, "A");
+  const c1 = E.compararConPlan(plan, ["e4", "e5", "Bc4", "Nc6"]);
+  ok("se salió él (el alumno): dónde, qué jugó y qué decía el plan", JSON.stringify(c1) === JSON.stringify({ hasta: 2, salio: "tu", jugada: "Bc4", ultima: "e5", esperadas: ["Nf3"] }), JSON.stringify(c1));
+  ok("…en palabras", E.textoPreparacion(Object.assign({ origen: "propio", rival: "PedroP" }, c1), true, es) === "La partida siguió tu preparación contra PedroP hasta 1…e5; ahí jugaste 2.Ac4 (el plan decía 2.Cf3).", E.textoPreparacion(Object.assign({ origen: "propio", rival: "PedroP" }, c1), true, es));
+  const c2 = E.compararConPlan(plan, ["e4", "e5", "Nf3", "Nf6+"]);
+  ok("se salió el rival, con todas las que el plan esperaba", c2.salio === "rival" && c2.hasta === 3 && c2.esperadas.join() === "Nc6,d6");
+  ok("…y dicho de otra persona (el profe mirando)", E.textoPreparacion(Object.assign({ origen: "profe", rival: "PedroP" }, c2), false, es) === "La partida siguió el plan de su profe contra PedroP hasta 2.Cf3; ahí su rival jugó 2…Cf6+, que el plan no esperaba (el plan decía 2…Cc6 o 2…d6).");
+  ok("el «+» no cuenta para seguir el plan", E.compararConPlan(plan, ["e4+", "e5", "Nf3", "Nc6", "a3"]).salio === "fin");
+  ok("se acabó el plan: «hasta el final del plan»", E.textoPreparacion(Object.assign({ origen: "propio" }, E.compararConPlan(plan, ["e4", "c5", "Nf3"])), true) === "Seguiste tu preparación hasta el final del plan.");
+  ok("se salió en la primera jugada", E.textoPreparacion(Object.assign({ origen: "propio" }, E.compararConPlan(plan, ["d4"])), true) === "Desde la primera jugada te saliste de tu preparación: jugaste 1.d4 (el plan decía 1.e4).");
+  ok("un plan vacío no compara nada", E.compararConPlan([], ["e4"]) === null);
+  ok("lo guardado que no tiene forma no se escribe (una «jugada» que es HTML)", E.textoPreparacion({ origen: "propio", hasta: 2, salio: "tu", jugada: "<img src=x>", esperadas: [] }, true) === "");
+}
+
 console.log("\n=== deLaWeb(): las partidas de Lichess y Chess.com ===");
 {
   /* El PGN como lo manda cada sitio, leído con el MISMO lector de la

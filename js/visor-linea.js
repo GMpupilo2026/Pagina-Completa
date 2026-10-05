@@ -27,6 +27,9 @@
  * `orientacion: "b"` la mira desde las negras: así la usan Ejercicios por tema
  * y Mates para «Ver la línea» de un ejercicio ya resuelto.
  *
+ * `alCambiar(indice)`, opcional en montar(), avisa cada vez que se va a otra
+ * jugada (la libreta de torneos la usa para comentar ESA jugada).
+ *
  * `notas[i]`, si viene, es un texto sobre la jugada i (cuánto saca el rival
  * ahí, lo que dijo Stockfish): se escribe debajo de la jugada contada.
  */
@@ -294,6 +297,7 @@ window.VisorLinea = (function () {
       nota.hidden = !nota.textContent;
       completa.textContent = window.BlindNotation ? BlindNotation.positionSentence(partida) : "";
       evaluarAhora();
+      if (o.alCambiar) o.alCambiar(indice);
     }
 
     bInicio.addEventListener("click", () => irA(0));
