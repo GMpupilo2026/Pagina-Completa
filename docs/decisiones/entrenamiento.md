@@ -1270,6 +1270,137 @@ la línea se programa para más adelante.
   propias pinten algo de verdad y que con el tema oscuro el fondo sea oscuro.
   **Al clonar la cabecera de otra página, mirar la pantalla, no solo el DOM.**
 
+### Mi repertorio
+
+El banco son 40 líneas iguales para todos. «🗂️ Mi repertorio», la tercera
+pestaña de Aperturas y celadas, es lo que juega ESTE alumno, con blancas y con
+negras (`js/repertorio-aperturas.js`, tabla `repertorio`). Va en la misma
+página y no en otra: es la misma tarea —memorizar líneas jugándolas— y dos
+puertas para lo mismo es el error que el panel ya cometió.
+
+- **Se arma jugando las dos partes** en un tablero, escribiéndolas (una o
+  varias: «1.e4 c5 2.Cf3», en la notación de acá o en la inglesa, con el mismo
+  intérprete de todo el sitio) o partiendo de una línea del banco o de una
+  suya. Solo entran jugadas legales: las hace chess.js.
+- **Se entrena con el mismo entrenador y la misma cola de repaso**: cada línea
+  suya es una línea más, con id `mi:<uuid>` en `aperturas_srs_v1`. Por eso
+  entra sola en el «Repaso del día», que cuenta esa clave.
+- **Una respuesta tuya por posición.** Si contestas 1.e4 con c5 en una línea y
+  con e5 en otra, el entrenador te pediría dos jugadas distintas en el mismo
+  lugar. Lo frena la base (trigger `repertorio_coherente`, también en un
+  update) y la pantalla lo dice antes de guardar, con la jugada que ya tienes
+  («Choca con «Siciliana»: en la jugada 1 ahí juegas c5»). Otra jugada del
+  RIVAL no choca: es una rama más del árbol.
+- **El árbol** junta lo que las líneas tienen en común y abre las ramas; una
+  cadena sin ramas va en un renglón («1. e4 c5 2. Cf3 d6»), en la notación de
+  acá.
+- **La base no sabe ajedrez, pero exige la forma** de cada jugada (SAN), entre
+  2 y 40, un tope de 100 líneas y que no se repita una línea. La legalidad se
+  vuelve a comprobar al leerla: una fila que no se puede jugar no se entrena y
+  se dice («Una línea no se pudo leer»), en vez de dejar al alumno frente a una
+  línea que no puede terminar nunca.
+- **Borrar una línea deja su ficha de repaso marcada como borrada**, con fecha
+  de hoy y sin vencimiento. Si solo se quitara, la copia de la cuenta (que se
+  queda con la ficha MÁS RECIENTE de cada línea, `srsPorLinea`) la devolvería,
+  y el «Repaso del día» seguiría contando una línea que ya no existe.
+- **Lo escribe solo el alumno**; lo leen también sus profesores, su
+  supervisión y administración (como el cuaderno), para preparar sus partidas.
+  Todavía no hay pantalla del profe que lo muestre: la base ya lo permite.
+
+Comprobado impersonando roles en SQL: el alumno guarda; una segunda respuesta
+a 1.e4 se rechaza con el mensaje, y también un update que la meta; otra jugada
+del rival y otra apertura entran; una jugada mal escrita y una fila a nombre
+de otro se rechazan; su profe la ve y no la cambia; una profesora ajena no ve
+nada.
+
+#### El repertorio en PDF
+
+«🖨️ Bajar en PDF» arma una hoja con una tabla por color: cada línea entera en
+la notación de acá (Cf3, no Nf3: la lee el alumno, no el motor), ordenada por
+jugadas para que las que empiezan igual queden juntas, y cómo va su repaso. La
+escribe `js/reporte-pdf.js`, el mismo de los informes, con la marca de agua
+pedida con su dirección vista desde `entreno/` (la de `MarcaAgua.preparar()`
+es relativa a la raíz y desde ahí no se encontraba). Una línea que no se puede
+jugar no va. El verificador baja el PDF y lee su texto con pypdf.
+
+#### Jugar con mi repertorio
+
+Cada color del árbol trae «▶ Jugar con mi repertorio»: una partida en la que,
+mientras la posición esté en sus líneas, la computadora juega las jugadas del
+RIVAL que el alumno preparó, y si él se sale de su línea le dice cuál era la
+suya («En tu repertorio jugabas 1…c5»). Cuando el repertorio se acaba sigue
+Stockfish, a la fuerza que se elige (de Elo 1350 a 2200).
+
+- **Es «Juega contra él» de la preparación de rivales**
+  (`js/preparacion-sparring.js`), no otra partida: el libro del rival se arma
+  con sus líneas (`RepertorioAperturas.libroDe`, con la misma huella de
+  posición, así que dos órdenes que llegan a lo mismo son lo mismo) y el plan
+  es su árbol (`planDe`). Donde preparó dos respuestas del rival, sale una al
+  azar.
+- **Los textos cambian, lo que hace no.** El sparring aceptaba solo frases de
+  rival real («la juega 63 % de las veces en sus partidas»), que acá serían
+  mentira; ahora recibe `textos` opcionales. Sin ellos dice exactamente lo de
+  antes — `verificar-preparacion-rivales.js` lo comprueba, y fue el que
+  atrapó un «Te saliste de el plan» al generalizarlo.
+- **Los scripts de la partida y Stockfish se bajan al apretar el botón**, no
+  al abrir Aperturas: quien solo repasa no paga los megas del motor.
+
+**Al tocarlo, correr `node herramientas/verificar-todo.js repertorio
+aperturas-pagina`.** `verificar-repertorio.js` prueba las funciones con
+chess.js y la página en un navegador: el árbol de cada color, la fila que no se
+puede jugar, armar con clics y escribiendo, el aviso del choque (y que no se
+guarde), lo que se guarda, entrenarla entera, «Volver», borrar ESA y su ficha
+marcada, y el enlace `?linea=mi:<id>`. Rompiendo el choque o la marca de
+borrada, salta.
+
+## Ejercicios sin internet
+
+`entreno/sin-internet.html` (tarjeta «📴 Ejercicios sin internet», en
+Entrenamiento intermedio): con señal, el alumno guarda en el celular una tanda
+de 10, 20 o 30 problemas del banco de Ejercicios por tema (partidas reales de
+Lichess, ya comprobadas), de la dificultad que elija. Sin señal, abre la
+página y la resuelve —con clics o escribiendo, con pista y «Ver solución»—, y
+cada resultado se sube solo cuando vuelve la conexión.
+
+- **La página se guarda en su PROPIA caché** (`ajedrez-integral-sin-red`), con
+  ella misma —con y sin `.html`, porque Cloudflare redirige una a la otra— y
+  todos sus scripts y hojas, sacados de la propia página: un script nuevo
+  entra solo. `sw.js` no la borra al cambiar de versión (si no, la tanda de
+  ayer no abriría hoy sin señal) y, sin red, busca la página con el otro
+  nombre y rearma una respuesta redirigida, que Chrome no acepta para abrir
+  una página.
+- **Se vuelve a guardar cada vez que se abre con señal.** `sw.js` sirve la red
+  primero para no juntar HTML nuevo con CSS viejo; una copia guardada una vez
+  y nunca más sería justo eso. Así, sin red se abre la de la última vez que
+  hubo señal, entera.
+- **Lo que se sube es lo mismo que sube Ejercicios por tema**
+  (`training_progress`, actividad «temas», con cómo salió), con la HORA en que
+  se resolvió: si no, la racha y «Cómo viene» lo contarían el día que hubo
+  señal. La base acota esa hora (trigger `training_progress_hora`): hasta 7
+  días atrás, nunca adelante; fuera de eso vale la de la base. Antes
+  `created_at` se aceptaba tal cual lo mandara el navegador, con cualquier
+  fecha; ahora no, para nadie.
+- **Un resultado no se cuenta dos veces.** Cada uno lleva su `sin_internet_id`
+  y un índice único parcial de la base lo rechaza si ya estaba (se subió y la
+  respuesta se perdió con la señal). Se sube de a uno y cada uno sale de la
+  cola solo cuando la base lo aceptó, o cuando dijo que ya lo tenía.
+- **Lo que costó entra en la cola de repaso** de Ejercicios por tema
+  (`RepasoFallados`), igual que si lo hubiera resuelto allá; esa cola se sube
+  con `js/progreso-usuario.js` cuando hay señal.
+- **Sin señal no se puede preparar otra tanda**, y se dice; cambiar una tanda
+  con ejercicios sin hacer pregunta antes. El tiempo conectado no se cuenta:
+  `js/tiempo-plataforma.js` no lo cree por lo que diga el navegador, y sin
+  red no hay con quién contarlo.
+
+**Al tocarlo, correr `node herramientas/verificar-todo.js sin-internet`.**
+Prepara una tanda, le corta la red al navegador (`setOffline`), la resuelve
+con clics y escribiendo, comprueba que no se escriba nada sin señal y que, al
+volver, se suba cada uno con su hora y su id, y que uno que la base ya tenía
+salga de la cola sin contarse; y con el service worker de verdad, que la
+página abra sin red con la tanda donde quedó. Comprobado en la base: 2 días
+atrás se respeta, 30 días atrás y el futuro pasan a «ahora», y un
+`sin_internet_id` repetido da 23505.
+
 ## Estudio: una ficha por idea, con su mapa y su posición
 
 `entreno/estudio.html` (tarjeta **"📚 Estudio"** en `clases.html` → grupo
