@@ -229,13 +229,16 @@ function htmlIndice(paginas, grupos, primera) {
 
 function htmlPortadilla({ cat, fichas }) {
   const color = COLOR_CAT[cat.id];
+  // Hasta unas 44 entran con la letra grande; Conceptos llegó a 52 y se iba a
+  // una segunda hoja: con más de 44, la lista va más apretada.
+  const apretada = fichas.length > 44;
   return `<!doctype html><html lang="es"><head><meta charset="utf-8"><title>${esc(cat.etiqueta)}</title>${ESTILO_LIBRO}
   <style>
     body{height:252mm; display:flex; flex-direction:column; justify-content:center; padding:0 12mm;}
     .raya{width:40mm; height:2.5mm; background:${color}; margin-bottom:8mm;}
     h1{font-size:40pt; color:${color};}
     .sub{font-size:13pt; color:#486581; margin:4mm 0 12mm;}
-    ol{margin:0; padding-left:1.4em; columns:2; column-gap:10mm; font-size:10.5pt;} li{margin-bottom:2.5mm;}
+    ol{margin:0; padding-left:1.4em; columns:2; column-gap:10mm; font-size:${apretada ? "9.5pt" : "10.5pt"};} li{margin-bottom:${apretada ? "1.2mm" : "2.5mm"};}
   </style></head><body>
     <div class="raya"></div><h1>${esc(cat.etiqueta)}</h1>
     <p class="sub">${esc(cat.sub)} · ${fichas.length} fichas</p>

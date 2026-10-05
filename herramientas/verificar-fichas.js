@@ -698,6 +698,20 @@ const COMPRUEBAN = {
     return llenas.length ? `${llenas.join(", ")} no está(n) vacía(s)` : null;
   },
 
+  // ---- la séptima tanda ----
+
+  // Las tres formas de salir del jaque están en la posición: mover el rey,
+  // comer la pieza que da jaque y tapar la línea.
+  tresSalidas(F, g0) {
+    if (!g0.in_check()) return "no hay jaque";
+    const js = g0.moves({ verbose: true });
+    const huir = js.some((m) => m.piece === "k");
+    const comer = js.some((m) => m.piece !== "k" && m.captured);
+    const tapar = js.some((m) => m.piece !== "k" && !m.captured);
+    const faltan = [!huir && "huir", !comer && "comer", !tapar && "tapar"].filter(Boolean);
+    return faltan.length ? `falta la forma de ${faltan.join(" y ")}` : null;
+  },
+
   // Alfiles del mismo color: uno por bando, por el mismo color de casilla.
   alfilesIguales(F, g0) {
     return COMPRUEBAN.alfilesDistintos(F, g0) === "los dos alfiles van por el mismo color"

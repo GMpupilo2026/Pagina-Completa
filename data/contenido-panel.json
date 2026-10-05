@@ -72,7 +72,9 @@
   "ponziani",
   "apertura-alfil",
   "bird",
-  "grand-prix"
+  "grand-prix",
+  "ataque-torre",
+  "larsen"
  ],
  "entreno/estudio.html?cat=defensa": [
   "siciliana",
@@ -105,7 +107,11 @@
   "siciliana-kan",
   "bogoindia",
   "india-antigua",
-  "holandesa-leningrado"
+  "holandesa-leningrado",
+  "defensa-tarrasch",
+  "dragon-acelerado",
+  "defensa-nimzowitsch",
+  "siciliana-taimanov"
  ],
  "entreno/estudio.html?cat=tactica": [
   "horquilla",
@@ -135,7 +141,8 @@
   "ataque-f7",
   "coronacion",
   "rey-expuesto",
-  "sacrificio-h6"
+  "sacrificio-h6",
+  "atrapar-la-dama"
  ],
  "entreno/estudio.html?cat=mate": [
   "mate-rey-dama",
@@ -161,7 +168,10 @@
   "mate-esquina",
   "mate-dama-alfil",
   "mate-cola-golondrina",
-  "mate-cozio"
+  "mate-cozio",
+  "mate-del-loco",
+  "mate-greco",
+  "mate-blackburne"
  ],
  "entreno/estudio.html?cat=concepto": [
   "el-centro",
@@ -212,7 +222,10 @@
   "caballo-en-el-borde",
   "compensacion",
   "evaluar-la-posicion",
-  "centro-movil"
+  "centro-movil",
+  "salir-del-jaque",
+  "notacion-algebraica",
+  "como-calcular"
  ],
  "entreno/estudio.html?cat=final": [
   "rey-peon-contra-rey",
@@ -239,6 +252,7 @@
   "peon-pasado-protegido",
   "alfil-peon-torre",
   "torre-contra-peones-ligados",
-  "posicion-vancura"
+  "posicion-vancura",
+  "lado-corto"
  ]
 }

@@ -210,7 +210,7 @@ window.TiendaCatalogo = (function () {
       resumen: "Las fichas de Estudio de la Academia —aperturas, defensas, táctica, mates, conceptos y finales— en dos formatos: un libro en hoja carta, una ficha por página con su mapa de ideas, su tablero y su índice; y las mismas fichas como cartas de 63 × 88 mm, nueve por hoja, listas para imprimir a doble cara y recortar.",
       archivos: ["material/fichas-de-estudio/fichas-de-estudio-libro.pdf", "material/fichas-de-estudio/fichas-de-estudio-cartas.pdf"],
       // Lo comprueba verificar-fichas-pdf.py contra el banco y los dos PDF.
-      piezas: { fichas: 184, paginas: 196, cartas: 184 },
+      piezas: { fichas: 198, paginas: 210, cartas: 198 },
     },
     {
       id: "libro-de-diagnostico",

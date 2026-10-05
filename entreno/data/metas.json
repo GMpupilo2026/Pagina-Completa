@@ -1430,6 +1430,60 @@
    "actividades": [
     "aperturas"
    ]
+  },
+  {
+   "clave": "ataque-torre",
+   "label": "Ataque Torre",
+   "grupo": "Peón de dama",
+   "total": 1,
+   "actividades": [
+    "aperturas"
+   ]
+  },
+  {
+   "clave": "larsen",
+   "label": "Apertura Larsen",
+   "grupo": "Apertura Larsen",
+   "total": 1,
+   "actividades": [
+    "aperturas"
+   ]
+  },
+  {
+   "clave": "defensa-tarrasch",
+   "label": "Defensa Tarrasch",
+   "grupo": "Gambito de dama",
+   "total": 1,
+   "actividades": [
+    "aperturas"
+   ]
+  },
+  {
+   "clave": "dragon-acelerado",
+   "label": "Dragón acelerado",
+   "grupo": "Defensa siciliana",
+   "total": 1,
+   "actividades": [
+    "aperturas"
+   ]
+  },
+  {
+   "clave": "defensa-nimzowitsch",
+   "label": "Defensa Nimzowitsch",
+   "grupo": "Defensa Nimzowitsch",
+   "total": 1,
+   "actividades": [
+    "aperturas"
+   ]
+  },
+  {
+   "clave": "siciliana-taimanov",
+   "label": "Siciliana Taimanov",
+   "grupo": "Defensa siciliana",
+   "total": 1,
+   "actividades": [
+    "aperturas"
+   ]
   }
  ],
  "estudio": [
@@ -2717,6 +2771,104 @@
   {
    "clave": "holandesa-leningrado",
    "label": "Holandesa Leningrado",
+   "grupo": "Defensas",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "mate-del-loco",
+   "label": "El mate del loco",
+   "grupo": "Mates",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "mate-greco",
+   "label": "El mate de Greco",
+   "grupo": "Mates",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "mate-blackburne",
+   "label": "El mate de Blackburne",
+   "grupo": "Mates",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "salir-del-jaque",
+   "label": "Cómo salir de un jaque",
+   "grupo": "Conceptos",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "notacion-algebraica",
+   "label": "La notación algebraica",
+   "grupo": "Conceptos",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "como-calcular",
+   "label": "Cómo calcular",
+   "grupo": "Conceptos",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "atrapar-la-dama",
+   "label": "Atrapar la dama",
+   "grupo": "Táctica",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "lado-corto",
+   "label": "La defensa por el lado corto",
+   "grupo": "Finales",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "ataque-torre",
+   "label": "Ataque Torre",
+   "grupo": "Aperturas",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "larsen",
+   "label": "Apertura Larsen",
+   "grupo": "Aperturas",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "defensa-tarrasch",
+   "label": "Defensa Tarrasch",
+   "grupo": "Defensas",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "dragon-acelerado",
+   "label": "Dragón acelerado",
+   "grupo": "Defensas",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "defensa-nimzowitsch",
+   "label": "Defensa Nimzowitsch",
+   "grupo": "Defensas",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "siciliana-taimanov",
+   "label": "Siciliana Taimanov",
    "grupo": "Defensas",
    "total": 1,
    "actividades": []
