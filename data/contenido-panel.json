@@ -67,7 +67,8 @@
   "siciliana-abierta",
   "smith-morra",
   "cuatro-caballos",
-  "gambito-danes"
+  "gambito-danes",
+  "stonewall"
  ],
  "entreno/estudio.html?cat=defensa": [
   "siciliana",
@@ -91,7 +92,11 @@
   "benoni-moderna",
   "berlin",
   "inglesa-simetrica",
-  "benko"
+  "benko",
+  "siciliana-najdorf",
+  "francesa-winawer",
+  "defensa-moderna",
+  "gambito-budapest"
  ],
  "entreno/estudio.html?cat=tactica": [
   "horquilla",
@@ -127,7 +132,13 @@
   "jugada-tranquila",
   "mate-arabe",
   "mate-hombreras",
-  "mate-morphy"
+  "mate-morphy",
+  "ataque-f7",
+  "coronacion",
+  "mate-dos-alfiles",
+  "mate-damiano",
+  "rey-expuesto",
+  "sacrificio-h6"
  ],
  "entreno/estudio.html?cat=concepto": [
   "el-centro",
@@ -161,7 +172,14 @@
   "casillas-debiles",
   "peones-colgantes",
   "jugadas-candidatas",
-  "el-reloj"
+  "el-reloj",
+  "valor-de-las-piezas",
+  "atacar-al-rey",
+  "peon-retrasado",
+  "bloqueo",
+  "columna-semiabierta",
+  "convertir-la-ventaja",
+  "coordinacion"
  ],
  "entreno/estudio.html?cat=final": [
   "mate-rey-dama",
@@ -179,6 +197,14 @@
   "ruptura-tres-peones",
   "cortar-al-rey",
   "caballo-contra-peon",
-  "alfil-contra-caballo"
+  "alfil-contra-caballo",
+  "peones-ligados",
+  "torre-contra-caballo",
+  "oposicion-lejana",
+  "fortaleza",
+  "torre-contra-alfil",
+  "dama-contra-torre",
+  "mate-rey-dos-alfiles",
+  "alfil-bueno-alfil-malo"
  ]
 }

@@ -551,6 +551,87 @@ const COMPRUEBAN = {
     });
     return tiene ? `todavía tiene el alfil de las casillas ${opt.casillas}` : null;
   },
+
+  // ---- de acá para abajo, los que trajo la quinta tanda ----
+
+  // Oposición lejana: tras la primera jugada de la línea, los reyes en la misma
+  // columna o fila con tres casillas o más en medio (un número impar), y le
+  // toca al otro.
+  lejana(F, g0) {
+    const g = new Chess(g0.fen());
+    g.move(F.linea[0], { sloppy: true });
+    const donde = {};
+    g.SQUARES.forEach((sq) => { const p = g.get(sq); if (p && p.type === "k") donde[p.color] = sq; });
+    const dc = Math.abs(donde.w.charCodeAt(0) - donde.b.charCodeAt(0));
+    const df = Math.abs(+donde.w[1] - +donde.b[1]);
+    const lejos = (dc === 0 && df >= 4 && df % 2 === 0) || (df === 0 && dc >= 4 && dc % 2 === 0);
+    return lejos ? null : `después de ${F.linea[0]} los reyes (${donde.w} y ${donde.b}) no están en oposición lejana`;
+  },
+
+  // La cuenta del material en el tablero: cuántos peones de ventaja tiene un
+  // bando (negativo si tiene menos). Es lo que la ficha del valor de las piezas
+  // pone en el diagrama, y lo que la de convertir la ventaja da por hecho.
+  cuenta(F, g0, opt) {
+    const VALE = { p: 1, n: 3, b: 3, r: 5, q: 9, k: 0 };
+    let n = 0;
+    g0.SQUARES.forEach((sq) => {
+      const p = g0.get(sq);
+      if (p) n += VALE[p.type] * (p.color === opt.color ? 1 : -1);
+    });
+    return n === opt.diferencia ? null : `la cuenta da ${n}, no ${opt.diferencia}`;
+  },
+
+  // Peón retrasado: ningún peón propio en las columnas de al lado que esté a
+  // su altura o más atrás (nadie lo puede acompañar), y la casilla de adelante
+  // la ataca un peón rival (no puede avanzar sin perderse).
+  retrasado(F, g0, casilla) {
+    const peon = g0.get(casilla);
+    if (!peon || peon.type !== "p") return `en ${casilla} no hay un peón`;
+    const col = casilla.charCodeAt(0) - 97, fila = +casilla[1];
+    const paso = peon.color === "w" ? 1 : -1;
+    for (const c of [col - 1, col + 1]) {
+      if (c < 0 || c > 7) continue;
+      for (let f = 1; f <= 8; f++) {
+        const p = g0.get(String.fromCharCode(97 + c) + f);
+        const atras = peon.color === "w" ? f <= fila : f >= fila;
+        if (p && p.type === "p" && p.color === peon.color && atras) return `lo puede acompañar el peón de ${String.fromCharCode(97 + c) + f}`;
+      }
+    }
+    const adelante = casilla[0] + (fila + paso);
+    const atacada = [col - 1, col + 1].some((c) => {
+      if (c < 0 || c > 7) return false;
+      const p = g0.get(String.fromCharCode(97 + c) + (fila + 2 * paso));
+      return p && p.type === "p" && p.color !== peon.color;
+    });
+    return atacada ? null : `${adelante} no la ataca ningún peón rival: el peón puede avanzar`;
+  },
+
+  // Bloqueo: una pieza (no un peón) parada justo delante de un peón rival.
+  bloquea(F, g0, opt) {
+    const pieza = g0.get(opt.pieza), peon = g0.get(opt.peon);
+    if (!pieza || pieza.type === "p") return `en ${opt.pieza} no hay una pieza`;
+    if (!peon || peon.type !== "p") return `en ${opt.peon} no hay un peón`;
+    if (pieza.color === peon.color) return "la pieza y el peón son del mismo bando: eso no es un bloqueo";
+    const delante = opt.peon[0] + (+opt.peon[1] + (peon.color === "w" ? 1 : -1));
+    return delante === opt.pieza ? null : `la casilla de adelante del peón es ${delante}, no ${opt.pieza}`;
+  },
+
+  // Columna semiabierta para un bando: sin peones suyos, con alguno del rival.
+  semiabierta(F, g0, opt) {
+    let mios = 0, suyos = 0;
+    for (let f = 1; f <= 8; f++) {
+      const p = g0.get(opt.columna + f);
+      if (p && p.type === "p") { if (p.color === opt.color) mios += 1; else suyos += 1; }
+    }
+    if (mios) return `en la columna ${opt.columna} todavía tiene ${mios} peón(es) propio(s)`;
+    return suyos ? null : `la columna ${opt.columna} está abierta del todo, no semiabierta`;
+  },
+
+  // Alfiles del mismo color: uno por bando, por el mismo color de casilla.
+  alfilesIguales(F, g0) {
+    return COMPRUEBAN.alfilesDistintos(F, g0) === "los dos alfiles van por el mismo color"
+      ? null : "tiene que haber un alfil por bando, y del mismo color de casilla";
+  },
 };
 
 FICHAS.filter((F) => F.comprueba).forEach((F) => {
@@ -565,6 +646,38 @@ FICHAS.filter((F) => F.comprueba).forEach((F) => {
     else bien(`[${F.id}] ${clave}`);
   });
 });
+
+console.log("\n=== Lo que nombra el pie del diagrama está en el tablero ===");
+/* El pie del diagrama es lo que oye quien no ve el tablero, y lo que lee quien
+   lo imprime: si dice «el alfil de c4» y el alfil está en b5, la ficha enseña
+   otra posición y nada falla. Cada «<pieza> (blanco/negro) de|en <casilla>»
+   tiene que estar en alguna de las posiciones de la ficha: la mostrada, o
+   alguna de la línea (el pie muchas veces cuenta lo que ya se jugó, como «el
+   peón de c4 ya se cambió»). Así se cazó «la torre está pegada a su rey en
+   d7», que se leía como si el rey estuviera en d7. */
+const PIEZA_PIE = { "peón": "p", peones: "p", caballo: "n", caballos: "n", alfil: "b", alfiles: "b", torre: "r", torres: "r", dama: "q", rey: "k" };
+const RE_PIE = /\b(peón|peones|caballo|caballos|alfil|alfiles|torre|torres|dama|rey)\b((?:\s+(?:blanco|blanca|negro|negra|blancos|blancas|negros|negras))?)\s+(?:de|en|que está en|ya está en)\s+([a-h][1-8])\b/gi;
+let menciones = 0;
+FICHAS.forEach((F) => {
+  const { fen, jugadas } = posicionDe(F);
+  const g = new Chess();
+  if (fen) g.load(fen);
+  const todas = [g.fen()];
+  jugadas.forEach((san) => { g.move(san, { sloppy: true }); todas.push(g.fen()); });
+  let m;
+  RE_PIE.lastIndex = 0;
+  while ((m = RE_PIE.exec(F.diagrama))) {
+    menciones += 1;
+    const tipo = PIEZA_PIE[m[1].toLowerCase()];
+    const color = /blanc/i.test(m[2]) ? "w" : /negr/i.test(m[2]) ? "b" : null;
+    const esta = todas.some((f) => {
+      const p = new Chess(f).get(m[3]);
+      return p && p.type === tipo && (!color || p.color === color);
+    });
+    if (!esta) mal(`[${F.id}] el pie dice «${m[0]}» y eso no está en ninguna posición de la ficha`);
+  }
+});
+if (!fallos) bien(`las ${menciones} piezas que nombran los pies están donde dicen`);
 
 console.log("\n=== Los temas que la ficha manda a buscar existen ===");
 /* Cuando una ficha dice «el tema X», ese X tiene que existir en Ejercicios por
