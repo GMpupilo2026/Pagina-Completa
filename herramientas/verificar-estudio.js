@@ -397,8 +397,8 @@ function jugadasDe(F) {
       };
       const admin = await verRecuadro(conPerfil(true));
       igual("quien administra ve el recuadro para bajar el libro y las cartas", admin.visible, "true");
-      igual("los dos enlaces llevan a archivos que existen",
-        admin.enlaces.map((h) => fs.existsSync(path.join(__dirname, "..", "entreno", h))), [true, true]);
+      igual("los tres enlaces (versión accesible, libro y cartas) llevan a archivos que existen",
+        admin.enlaces.map((h) => fs.existsSync(path.join(__dirname, "..", "entreno", h))), [true, true, true]);
       igual("dice que es solo de administración", admin.quien, "Solo para administración.");
       igual("una cuenta que no administra ni lo compró no lo ve", (await verRecuadro(conPerfil(false, false))).visible, "false");
       const compra = await verRecuadro(conPerfil(false, true));
