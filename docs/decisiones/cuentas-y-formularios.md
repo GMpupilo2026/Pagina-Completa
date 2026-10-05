@@ -1060,3 +1060,68 @@ manden nada y lo digan, que los cuatro pasos del ingreso **se vean de verdad**
 `verificar-pwa.js`) ya antes de guardar, que el enlace vencido ofrezca otro y
 que `login.html` tenga de verdad el «¿Olvidaste tu contraseña?» que la página
 promete.
+
+## La ficha de los JDN 2027
+
+`jdn.html` (solo administración; la tarjeta «Ficha JDN 2027» del grupo
+Administración del panel de la Academia) llena la **ficha de inscripción y
+consentimiento informado de los Juegos Deportivos y Paradeportivos Nacionales
+2027** del ICODER y la guarda en el Drive: por cada persona, una carpeta con su
+nombre dentro de «JDN 2027», con la ficha, la fotografía y la cédula por los dos
+lados (o la certificación de nacimiento, si es menor de 12). Verificador:
+`node herramientas/verificar-todo.js jdn`.
+
+- **La ficha es la plantilla del ICODER, no una imitación.**
+  `material/jdn/consentimiento-jdn-2027.docx` es el `CONSENTIMIENTO.docx` de la
+  carpeta del Drive, byte a byte. `js/jdn-consentimiento.js` abre el ZIP (el
+  lector de `js/reporte-excel.js`), escribe en `word/document.xml` y lo vuelve a
+  empaquetar (el `Zip` de `js/reporte-docx.js`); las demás partes —el logo, la
+  letra Arial Black incrustada— no se tocan. Un formulario «parecido» lo puede
+  rechazar el Comité Cantonal.
+  - Cada dato va en un trozo **subrayado** después del texto de la pregunta, y
+    las opciones se marcan cambiando «( )» por «(X)». El recuadro de las pruebas
+    es un cuadro de texto de la plantilla (`w:txbxContent`): escribir en el
+    párrafo de abajo quedaba TAPADO por el recuadro, que tiene fondo blanco.
+  - Entre «( )» y la opción puede haber cambios de run («( )», « »,
+    «Deterioro en el rango…» van en tres): la marca los salta.
+  - **La fecha y las firmas quedan en blanco.** Se firma en papel, a mano; la
+    misma ficha dice que una firma pegada como imagen no vale.
+  - Si el ICODER cambia el formulario, se reemplaza el .docx y el llenado
+    **falla diciendo qué texto ya no encuentra**, en vez de llenar a medias.
+- **La categoría sale del AÑO de nacimiento**, con la tabla de ajedrez de la
+  convocatoria: U-12 (2015 a 2020), U-16 (2011 a 2014), U-20 (2007 a 2010). Es
+  lo que mira el ICODER; la edad de hoy no sirve (un nacido en diciembre de
+  2010 tiene 15 años y es U-20). Fuera de esos años no se puede guardar.
+  - La **edad de hoy** (en hora de Costa Rica) decide otras dos cosas: menor de
+    18 abre los datos del tutor y a quién autoriza (delegado o subdelegado); menor
+    de 12 pide la certificación de nacimiento en vez de la cédula, como dice la
+    nota de la pregunta 3.
+  - Rama: femenina o abierta; un hombre solo la abierta.
+- **El Drive lo toca un Apps Script de la dueña del Drive**
+  (`material/jdn/puente-drive.gs`, publicado como aplicación web «ejecutar
+  como yo»). Una cuenta de servicio de Google no tiene espacio en «Mi unidad», y
+  una llave de Google Cloud en Supabase sería una credencial más que cuidar.
+  - La Edge Function `jdn-drive` es la única que le habla, con un secreto. La
+    URL y el secreto viven en la bóveda (`jdn_drive_leer()` y
+    `jdn_drive_guardar()`, cerradas a todos menos la service role) y los pone
+    administración desde la página, con «Conectar con Drive»: **se prueban
+    antes de guardarlos**. El secreto lo genera `configurar()` en el Apps
+    Script; no está escrito en ningún archivo.
+  - La función comprueba la sesión, el `aal2` y `is_admin` **antes** de leer la
+    bóveda: son cédulas de menores de edad.
+  - Volver a mandar la ficha de la misma persona usa **la misma carpeta** y
+    manda a la papelera los archivos con el mismo nombre: nunca quedan dos
+    fichas distintas. El `LockService` evita dos carpetas si se manda dos veces
+    seguidas.
+  - Con el servicio avanzado «Drive API» agregado al Apps Script, también se
+    guarda la ficha **en PDF** (convertida a Documento de Google y exportada),
+    lista para imprimir. Sin él, queda solo el .docx, que se imprime igual.
+- **Las imágenes se guardan en JPEG** (las pide así el ICODER), pasadas por un
+  `<canvas>` en el navegador y achicadas a 2000 px por lado: la foto de un
+  celular baja de varios MB a unos cientos de KB y el envío cabe holgado.
+- **No se guarda nada en la base**: la carpeta del Drive es el registro. La
+  descripción de la carpeta dice quién la guardó, cuándo y qué versión de la
+  Política de privacidad aceptó la familia (la casilla de la página; Google
+  Drive está en la lista de proveedores).
+- El Comité Cantonal se recuerda en `localStorage` de esa computadora: suele ser
+  el mismo para toda la delegación.

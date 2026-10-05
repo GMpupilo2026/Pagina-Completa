@@ -286,6 +286,7 @@
             { title: "Administración", tiles: [
                 { emoji: "👑", label: "Administración", desc: "Lo urgente, las cuentas, supervisores, profesores, coordinadores y equipos", href: "admin.html" },
                 { emoji: "🏫", label: "Academias", desc: "Crea las academias, ponles supervisor y reparte a su gente", href: "academias.html" },
+                { emoji: "🏅", label: "Ficha JDN 2027", desc: "La inscripción a los Juegos Deportivos Nacionales: la ficha lista para firmar y su carpeta en el Drive", href: "jdn.html" },
             ] },
             { title: "Supervisión y coordinación", tiles: [
                 { emoji: "🧑‍🏫", label: "Supervisión de profesores", desc: "Qué hizo cada profesor en el mes —clases, tareas, exámenes— y su informe mensual", href: "supervision.html" },

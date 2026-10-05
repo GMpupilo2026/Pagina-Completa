@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8"><!-- guardia: inicio --><script>(function(){try{if(window.sb||localStorage.getItem("sb-bgtijpimpcokxatxxbki-auth-token"))return;}catch(e){return;}try{window.stop()}catch(e){}var p=location.pathname.replace(/^\/+/,'');if(!p||/\/$/.test(p))p+='index.html';else if(!/\.html$/.test(p))p+='.html';location.replace('/login.html?next='+encodeURIComponent(p));})();</script><!-- guardia: fin -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="img/favicon.svg">
+    <title>Ficha de los JDN 2027 — Ajedrez Integral</title>
+    <meta name="description" content="Panel de administración: la ficha de inscripción y consentimiento de los Juegos Deportivos Nacionales 2027, guardada en el Drive.">
+    <meta name="robots" content="noindex">
+    <link rel="stylesheet" href="css/tailwind.css">
+    <link rel="stylesheet" href="css/styles.css">
+    <!-- oscuro: inicio --><script>(function(){try{var t=localStorage.getItem('theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.classList.add('dark');}catch(e){}})();</script><!-- oscuro: fin -->
+    <script src="js/adaptive-mode.js"></script>
+
+
+<!-- app: inicio --><meta name="theme-color" content="#102a43"><link rel="manifest" href="/manifest.json"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Ajedrez"><script src="js/errores.js"></script><script src="js/pwa.js" defer></script><script src="js/navegacion.js" defer></script><!-- app: fin --><!-- fuentes: inicio --><link rel="stylesheet" href="css/fuentes.css"><!-- fuentes: fin --><!-- tema: inicio --><script>(function(){try{var l=localStorage.getItem('plataforma_letra_v1');if(l&&/^[a-z]{2,24}$/.test(l)&&l!=='tema')document.documentElement.setAttribute('data-letra',l);var t=localStorage.getItem('plataforma_tema_v1');if(!t||!/^[a-z]{2,24}$/.test(t)||t==='clasico')return;document.documentElement.setAttribute('data-tema',t);var b=getComputedStyle(document.documentElement).getPropertyValue('--c-brand-800').trim();var m=document.querySelector('meta[name="theme-color"]');if(b&&m)m.setAttribute('content','rgb('+b.replace(/\s+/g,',')+')');}catch(e){}})();</script><!-- tema: fin --></head>
+<body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-accent-500 focus:text-brand-900 focus:font-semibold focus:px-4 focus:py-2 focus:rounded-lg">Saltar al contenido principal</a>
+    <header id="header" class="sticky top-0 z-50 bg-brand-800 shadow-lg transition-all duration-300"><nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Academia"><div class="flex items-center justify-between min-h-[4rem] md:min-h-[5rem] py-2"><a id="marca-enlace" href="clases.html" class="flex items-center gap-2 text-white min-w-0"><img src="/img/logo-marca.png" alt="" width="78" height="48" class="h-10 md:h-12 w-auto shrink-0"><span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span><span class="sr-only"> — panel de la Academia</span></a><div class="flex items-center gap-2"><button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro"><span id="theme-icon" aria-hidden="true">☀️</span></button></div></div></nav></header><!-- migas: inicio --><div class="bg-brand-900"><nav id="migas" aria-label="Estás en" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 text-sm"><ol class="flex flex-wrap items-center gap-x-2 gap-y-1"><li class="flex items-center gap-2"><a href="clases.html" class="text-brand-200 underline underline-offset-2 hover:text-accent-400 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">🏛️ </span>Academia</a></li><li class="flex items-center gap-2"><span aria-hidden="true" class="text-brand-400">›</span><a href="admin.html" class="text-brand-200 underline underline-offset-2 hover:text-accent-400 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Administración</a></li><li class="flex items-center gap-2"><span aria-hidden="true" class="text-brand-400">›</span><span aria-current="page" class="font-semibold text-white">Ficha de los JDN 2027</span></li></ol></nav></div><!-- migas: fin -->
+    <main id="main-content">
+
+    <div id="loading" role="status" class="min-h-[50vh] flex flex-col items-center justify-center gap-3 px-4 text-center text-brand-500 dark:text-brand-300"><span aria-hidden="true" class="w-8 h-8 rounded-full border-4 border-brand-200 dark:border-brand-700 border-t-accent-500 animate-spin motion-reduce:animate-none"></span><p class="text-sm">Cargando…</p></div>
+
+    <div id="denied" class="hidden pt-20 min-h-screen flex items-center justify-center px-4">
+        <div class="text-center">
+            <p class="text-5xl mb-3" aria-hidden="true">🔒</p>
+            <p class="text-brand-500 dark:text-brand-300">Esta sección es solo para la persona administradora.</p>
+            <a href="admin.html" class="inline-block mt-4 text-accent-500 hover:underline">← Volver al panel de administración</a>
+        </div>
+    </div>
+
+    <!-- La ficha de inscripción y consentimiento de los Juegos Deportivos
+         Nacionales 2027: este formulario la llena (js/jdn-consentimiento.js,
+         sobre la plantilla del ICODER) y la guarda en el Drive, en una carpeta
+         con el nombre de la persona dentro de «JDN 2027», junto con su foto y su
+         cédula (Edge Function jdn-drive y el Apps Script de
+         material/jdn/puente-drive.gs). Ver «La ficha de los JDN 2027» en
+         docs/decisiones/cuentas-y-formularios.md. -->
+    <div id="app" class="hidden pt-10 pb-16">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <h1 class="font-serif text-3xl font-bold text-brand-800 dark:text-white mb-1"><span aria-hidden="true">🏅</span> Ficha de los JDN 2027</h1>
+            <p class="text-brand-500 dark:text-brand-300 mb-6">
+                Llena la ficha de inscripción y consentimiento de los Juegos Deportivos Nacionales 2027 (ICODER).
+                Al guardarla se crea en el Drive, dentro de «JDN 2027», una carpeta con el nombre de la persona: ahí quedan la ficha lista para imprimir y firmar, la fotografía y la cédula por los dos lados.
+            </p>
+
+            <!-- La conexión con el Drive -->
+            <section aria-labelledby="titulo-drive" class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-8">
+                <h2 id="titulo-drive" class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-2">El Drive</h2>
+                <p id="drive-estado" role="status" class="text-sm text-brand-600 dark:text-brand-200">Revisando la conexión con el Drive…</p>
+                <details id="drive-conectar" class="mt-3">
+                    <summary class="cursor-pointer text-sm font-semibold text-accent-700 dark:text-accent-400 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Conectar con Drive</summary>
+                    <ol class="list-decimal pl-5 mt-3 space-y-1 text-sm text-brand-600 dark:text-brand-200">
+                        <li>Con la cuenta dueña de la carpeta «JDN 2027», abre <a href="https://script.google.com/home/projects/create" target="_blank" rel="noopener" class="underline font-semibold hover:text-accent-600">un proyecto nuevo de Apps Script</a> y pega el <a href="material/jdn/puente-drive.gs" download class="underline font-semibold hover:text-accent-600">código del puente</a> en Código.gs.</li>
+                        <li>En «Servicios» agrega «Drive API»: es lo que arma el PDF para imprimir.</li>
+                        <li>Ejecuta la función <code>configurar</code> y acepta los permisos. En el registro aparece el secreto.</li>
+                        <li>«Implementar» → «Nueva implementación» → «Aplicación web». Ejecutar como: tú. Quién tiene acceso: cualquier persona. Copia la URL.</li>
+                        <li>Pega aquí la URL y el secreto.</li>
+                    </ol>
+                    <form id="drive-form" class="grid sm:grid-cols-2 gap-3 mt-4" novalidate>
+                        <div class="sm:col-span-2">
+                            <label for="drive-url" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">URL de la aplicación web</label>
+                            <input id="drive-url" type="url" autocomplete="off" placeholder="https://script.google.com/macros/s/…/exec" class="w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none">
+                        </div>
+                        <div class="sm:col-span-2">
+                            <label for="drive-secreto" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Secreto</label>
+                            <input id="drive-secreto" type="password" autocomplete="off" class="w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none">
+                        </div>
+                        <div class="sm:col-span-2">
+                            <button type="submit" id="drive-probar" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Probar y conectar</button>
+                            <p id="drive-msg" role="status" class="text-sm mt-2"></p>
+                        </div>
+                    </form>
+                </details>
+            </section>
+
+            <form id="jdn-form" class="space-y-6" novalidate>
+                <fieldset class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6">
+                    <legend class="font-serif text-lg font-bold text-brand-800 dark:text-white px-1">La persona</legend>
+                    <div class="grid sm:grid-cols-2 gap-4 mt-2">
+                        <div class="sm:col-span-2">
+                            <p id="et-condicion" class="text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Se inscribe como *</p>
+                            <div role="radiogroup" aria-labelledby="et-condicion" class="flex flex-wrap gap-4 text-sm">
+                                <label class="flex items-center gap-2"><input type="radio" name="condicion" value="atleta" checked class="h-4 w-4 text-accent-500 focus:ring-accent-500"> Atleta</label>
+                                <label class="flex items-center gap-2"><input type="radio" name="condicion" value="paratleta" class="h-4 w-4 text-accent-500 focus:ring-accent-500"> Paratleta</label>
+                            </div>
+                        </div>
+                        <div class="sm:col-span-2">
+                            <label for="f-nombre" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Nombre y apellidos *</label>
+                            <input id="f-nombre" name="nombre" type="text" autocomplete="off" class="jdn-campo w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none">
+                        </div>
+                        <div>
+                            <label for="f-identificacion" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Número de identificación *</label>
+                            <input id="f-identificacion" name="identificacion" type="text" autocomplete="off" placeholder="ej. 1-2345-0678" class="jdn-campo w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none">
+                        </div>
+                        <div>
+                            <label for="f-tipoDocumento" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Tipo de documento *</label>
+                            <select id="f-tipoDocumento" name="tipoDocumento" data-opciones="tipoDocumento" class="jdn-campo w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none"></select>
+                        </div>
+                        <div>
+                            <label for="f-nacimiento" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Fecha de nacimiento *</label>
+                            <input id="f-nacimiento" name="nacimiento" type="date" min="2007-01-01" max="2020-12-31" aria-describedby="jdn-categoria" class="jdn-campo w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none">
+                        </div>
+                        <div>
+                            <p class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Categoría</p>
+                            <p id="jdn-categoria" role="status" class="text-sm font-semibold text-brand-700 dark:text-brand-100 py-2">Escribe la fecha de nacimiento.</p>
+                        </div>
+                        <div>
+                            <label for="f-nacionalidad" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Nacionalidad *</label>
+                            <input id="f-nacionalidad" name="nacionalidad" type="text" value="Costarricense" class="jdn-campo w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none">
+                        </div>
+                        <div>
+                            <label for="f-estadoCivil" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Estado civil *</label>
+                            <select id="f-estadoCivil" name="estadoCivil" data-opciones="estadoCivil" class="jdn-campo w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none"></select>
+                        </div>
+                        <div>
+                            <p id="et-sexo" class="text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Sexo biológico *</p>
+                            <div role="radiogroup" aria-labelledby="et-sexo" class="flex flex-wrap gap-4 text-sm py-2">
+                                <label class="flex items-center gap-2"><input type="radio" name="sexo" value="mujer" class="h-4 w-4 text-accent-500 focus:ring-accent-500"> Mujer</label>
+                                <label class="flex items-center gap-2"><input type="radio" name="sexo" value="hombre" class="h-4 w-4 text-accent-500 focus:ring-accent-500"> Hombre</label>
+                            </div>
+                        </div>
+                        <div>
+                            <p id="et-lateralidad" class="text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Lateralidad *</p>
+                            <div role="radiogroup" aria-labelledby="et-lateralidad" class="flex flex-wrap gap-4 text-sm py-2">
+                                <label class="flex items-center gap-2"><input type="radio" name="lateralidad" value="Derecho" class="h-4 w-4 text-accent-500 focus:ring-accent-500"> Derecho</label>
+                                <label class="flex items-center gap-2"><input type="radio" name="lateralidad" value="Izquierdo" class="h-4 w-4 text-accent-500 focus:ring-accent-500"> Izquierdo</label>
+                            </div>
+                        </div>
+                        <div>
+                            <label for="f-escolaridad" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Escolaridad *</label>
+                            <input id="f-escolaridad" name="escolaridad" type="text" list="lista-escolaridad" placeholder="ej. Primaria incompleta" class="jdn-campo w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none">
+                            <datalist id="lista-escolaridad">
+                                <option value="Primaria incompleta"></option><option value="Primaria completa"></option>
+                                <option value="Secundaria incompleta"></option><option value="Secundaria completa"></option>
+                                <option value="Universitaria incompleta"></option><option value="Universitaria completa"></option>
+                            </datalist>
+                        </div>
+                        <div>
+                            <label for="f-telefono" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Teléfono del atleta o tutor *</label>
+                            <input id="f-telefono" name="telefono" type="tel" autocomplete="off" class="jdn-campo w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none">
+                        </div>
+                        <div class="sm:col-span-2">
+                            <label for="f-correo" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Correo del atleta o tutor *</label>
+                            <input id="f-correo" name="correo" type="email" autocomplete="off" class="jdn-campo w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none">
+                        </div>
+                    </div>
+                </fieldset>
+
+                <fieldset class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6">
+                    <legend class="font-serif text-lg font-bold text-brand-800 dark:text-white px-1">Lugar de residencia</legend>
+                    <div class="grid sm:grid-cols-3 gap-4 mt-2">
+                        <div>
+                            <label for="f-provincia" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Provincia *</label>
+                            <select id="f-provincia" name="provincia" class="jdn-campo w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none">
+                                <option value="">Elige…</option><option>San José</option><option>Alajuela</option><option>Cartago</option><option>Heredia</option><option>Guanacaste</option><option>Puntarenas</option><option>Limón</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="f-canton" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Cantón *</label>
+                            <input id="f-canton" name="canton" type="text" class="jdn-campo w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none">
+                        </div>
+                        <div>
+                            <label for="f-distrito" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Distrito *</label>
+                            <input id="f-distrito" name="distrito" type="text" class="jdn-campo w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none">
+                        </div>
+                        <div class="sm:col-span-3">
+                            <label for="f-direccion" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Dirección exacta *</label>
+                            <input id="f-direccion" name="direccion" type="text" class="jdn-campo w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none">
+                        </div>
+                    </div>
+                </fieldset>
+
+                <fieldset class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6">
+                    <legend class="font-serif text-lg font-bold text-brand-800 dark:text-white px-1">La inscripción</legend>
+                    <div class="grid sm:grid-cols-2 gap-4 mt-2">
+                        <div class="sm:col-span-2">
+                            <label for="f-comite" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Comité Cantonal / Concejo de Distrito *</label>
+                            <input id="f-comite" name="comite" type="text" aria-describedby="ayuda-comite" class="jdn-campo w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none">
+                            <p id="ayuda-comite" class="text-xs text-brand-500 dark:text-brand-300 mt-1">Se recuerda para la próxima ficha en esta computadora.</p>
+                        </div>
+                        <div class="sm:col-span-2">
+                            <p id="et-rama" class="text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Rama *</p>
+                            <div role="radiogroup" aria-labelledby="et-rama" class="flex flex-wrap gap-4 text-sm">
+                                <label class="flex items-center gap-2"><input type="radio" name="rama" value="femenina" class="h-4 w-4 text-accent-500 focus:ring-accent-500"> Femenina</label>
+                                <label class="flex items-center gap-2"><input type="radio" name="rama" value="abierta" class="h-4 w-4 text-accent-500 focus:ring-accent-500"> Abierta</label>
+                            </div>
+                        </div>
+                        <div class="sm:col-span-2">
+                            <p id="et-pruebas" class="text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Pruebas *</p>
+                            <div id="jdn-pruebas" role="group" aria-labelledby="et-pruebas" class="grid sm:grid-cols-2 gap-2 text-sm"></div>
+                        </div>
+                    </div>
+                </fieldset>
+
+                <fieldset id="caja-paratleta" hidden class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6">
+                    <legend class="font-serif text-lg font-bold text-brand-800 dark:text-white px-1">Paratleta</legend>
+                    <p id="et-discapacidad" class="text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mt-2 mb-1">Tipo de discapacidad *</p>
+                    <div id="jdn-discapacidad" role="group" aria-labelledby="et-discapacidad" class="grid sm:grid-cols-2 gap-2 text-sm"></div>
+                    <div class="grid sm:grid-cols-2 gap-4 mt-4">
+                        <div>
+                            <p id="et-perro" class="text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Perro guía *</p>
+                            <div role="radiogroup" aria-labelledby="et-perro" class="flex flex-wrap gap-4 text-sm py-2">
+                                <label class="flex items-center gap-2"><input type="radio" name="perroGuia" value="sí" class="h-4 w-4 text-accent-500 focus:ring-accent-500"> Sí</label>
+                                <label class="flex items-center gap-2"><input type="radio" name="perroGuia" value="no" class="h-4 w-4 text-accent-500 focus:ring-accent-500"> No</label>
+                            </div>
+                        </div>
+                        <div>
+                            <label for="f-silla" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Silla de ruedas</label>
+                            <select id="f-silla" name="silla" class="jdn-campo w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none">
+                                <option value="">No usa</option><option>Convencional</option><option>Deportiva</option><option>Eléctrica</option>
+                            </select>
+                        </div>
+                    </div>
+                </fieldset>
+
+                <fieldset id="caja-tutor" hidden class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6">
+                    <legend class="font-serif text-lg font-bold text-brand-800 dark:text-white px-1">Madre, padre o tutor (es menor de edad)</legend>
+                    <div class="grid sm:grid-cols-2 gap-4 mt-2">
+                        <div class="sm:col-span-2">
+                            <label for="f-tutorNombre" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Nombre completo *</label>
+                            <input id="f-tutorNombre" name="tutorNombre" type="text" class="jdn-campo w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none">
+                        </div>
+                        <div>
+                            <label for="f-tutorCondicion" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Es *</label>
+                            <select id="f-tutorCondicion" name="tutorCondicion" class="jdn-campo w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none">
+                                <option value="">Elige…</option><option value="madre">Madre</option><option value="padre">Padre</option><option value="tutor legal">Tutor legal</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="f-tutorCedula" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Cédula *</label>
+                            <input id="f-tutorCedula" name="tutorCedula" type="text" class="jdn-campo w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none">
+                        </div>
+                        <div>
+                            <label for="f-tutorEstadoCivil" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Estado civil *</label>
+                            <input id="f-tutorEstadoCivil" name="tutorEstadoCivil" type="text" placeholder="ej. casada" class="jdn-campo w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none">
+                        </div>
+                        <div>
+                            <label for="f-tutorProfesion" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Profesión u oficio *</label>
+                            <input id="f-tutorProfesion" name="tutorProfesion" type="text" class="jdn-campo w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none">
+                        </div>
+                        <div>
+                            <label for="f-autorizadoNombre" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Autoriza a *</label>
+                            <input id="f-autorizadoNombre" name="autorizadoNombre" type="text" aria-describedby="ayuda-autorizado" class="jdn-campo w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none">
+                            <p id="ayuda-autorizado" class="text-xs text-brand-500 dark:text-brand-300 mt-1">Quien acompaña a la persona menor de edad si tiene que presentar una denuncia por hostigamiento sexual.</p>
+                        </div>
+                        <div>
+                            <label for="f-autorizadoRol" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Que es *</label>
+                            <select id="f-autorizadoRol" name="autorizadoRol" class="jdn-campo w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none">
+                                <option value="">Elige…</option><option value="delegado">Delegado</option><option value="subdelegado">Subdelegado</option>
+                            </select>
+                        </div>
+                    </div>
+                </fieldset>
+
+                <fieldset class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6">
+                    <legend class="font-serif text-lg font-bold text-brand-800 dark:text-white px-1">Beneficiario de la póliza</legend>
+                    <button type="button" id="jdn-mismo-tutor" hidden class="mt-2 text-sm font-semibold text-accent-700 dark:text-accent-400 hover:underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Usar los datos del tutor</button>
+                    <div class="grid sm:grid-cols-2 gap-4 mt-2">
+                        <div>
+                            <label for="f-beneficiarioNombre" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Nombre y apellidos *</label>
+                            <input id="f-beneficiarioNombre" name="beneficiarioNombre" type="text" class="jdn-campo w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none">
+                        </div>
+                        <div>
+                            <label for="f-beneficiarioCedula" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Cédula *</label>
+                            <input id="f-beneficiarioCedula" name="beneficiarioCedula" type="text" class="jdn-campo w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none">
+                        </div>
+                        <div>
+                            <label for="f-parentesco" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Parentesco *</label>
+                            <select id="f-parentesco" name="parentesco" data-opciones="parentesco" class="jdn-campo w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none"></select>
+                        </div>
+                    </div>
+                </fieldset>
+
+                <fieldset class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6">
+                    <legend class="font-serif text-lg font-bold text-brand-800 dark:text-white px-1">Fotografía y cédula</legend>
+                    <p class="text-sm text-brand-500 dark:text-brand-300 mt-2">A color (no en blanco y negro). Se guardan en JPEG, como las pide el ICODER.</p>
+                    <div class="grid sm:grid-cols-3 gap-4 mt-3">
+                        <div data-doc="foto">
+                            <label for="f-foto" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Fotografía *</label>
+                            <input id="f-foto" type="file" accept="image/*" class="jdn-archivo block w-full text-sm">
+                            <img alt="" hidden class="jdn-vista mt-2 max-h-32 rounded-lg border border-brand-200 dark:border-brand-700">
+                        </div>
+                        <div data-doc="frente">
+                            <label for="f-frente" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Cédula, frente <span class="jdn-oblig">*</span></label>
+                            <input id="f-frente" type="file" accept="image/*" class="jdn-archivo block w-full text-sm">
+                            <img alt="" hidden class="jdn-vista mt-2 max-h-32 rounded-lg border border-brand-200 dark:border-brand-700">
+                        </div>
+                        <div data-doc="reverso">
+                            <label for="f-reverso" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Cédula, reverso <span class="jdn-oblig">*</span></label>
+                            <input id="f-reverso" type="file" accept="image/*" class="jdn-archivo block w-full text-sm">
+                            <img alt="" hidden class="jdn-vista mt-2 max-h-32 rounded-lg border border-brand-200 dark:border-brand-700">
+                        </div>
+                        <div data-doc="certificacion" id="caja-certificacion" hidden class="sm:col-span-3">
+                            <label for="f-certificacion" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Certificación de nacimiento (menor de 12 años) *</label>
+                            <input id="f-certificacion" type="file" accept="image/*,application/pdf" aria-describedby="ayuda-certificacion" class="jdn-archivo block w-full text-sm">
+                            <p id="ayuda-certificacion" class="text-xs text-brand-500 dark:text-brand-300 mt-1">La del Registro Civil o la del Registro en línea con su código verificador. Con ella, la cédula no hace falta.</p>
+                            <img alt="" hidden class="jdn-vista mt-2 max-h-32 rounded-lg border border-brand-200 dark:border-brand-700">
+                        </div>
+                    </div>
+                </fieldset>
+
+                <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6">
+                    <!-- Consentimiento (Ley 8968, art. 5): la versión aceptada queda en la descripción de la carpeta. -->
+                    <div class="flex items-start gap-3">
+                        <input id="jdn-acepto" type="checkbox" class="mt-1 h-4 w-4 shrink-0 rounded border-brand-300 text-accent-500 focus:ring-accent-500">
+                        <label for="jdn-acepto" class="text-sm text-brand-600 dark:text-brand-300">
+                            La persona (o, si es menor de edad, su madre, padre o tutor) entregó estos datos y documentos para inscribirse en los JDN 2027 y acepta que se guarden en el Drive de la academia, según la
+                            <a href="privacidad.html" target="_blank" rel="noopener" class="underline font-semibold hover:text-accent-600">Política de privacidad</a>. *
+                        </label>
+                    </div>
+                    <p id="jdn-error" role="alert" class="text-sm font-semibold text-red-700 dark:text-red-300 mt-4"></p>
+                    <div class="flex flex-wrap gap-3 mt-4">
+                        <button type="submit" id="jdn-guardar" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Guardar en el Drive</button>
+                        <button type="button" id="jdn-solo-ficha" class="border border-brand-200 dark:border-brand-700 hover:border-accent-400 text-brand-700 dark:text-brand-200 font-semibold px-5 py-2.5 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Solo descargar la ficha</button>
+                    </div>
+                    <p id="jdn-progreso" role="status" class="text-sm text-brand-600 dark:text-brand-200 mt-3"></p>
+                </div>
+            </form>
+
+            <section id="jdn-listo" hidden tabindex="-1" aria-labelledby="titulo-listo" class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mt-6 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                <h2 id="titulo-listo" class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-2"><span aria-hidden="true">✅ </span>Ficha guardada</h2>
+                <p id="listo-texto" class="text-sm text-brand-600 dark:text-brand-200"></p>
+                <ul class="mt-3 space-y-2 text-sm">
+                    <li id="listo-pdf-li" hidden><a id="listo-pdf" target="_blank" rel="noopener" class="font-semibold text-accent-700 dark:text-accent-400 underline">Abrir el PDF para imprimir y firmar</a></li>
+                    <li><a id="listo-carpeta" target="_blank" rel="noopener" class="font-semibold text-accent-700 dark:text-accent-400 underline">Abrir la carpeta en el Drive</a></li>
+                    <li><button type="button" id="listo-descargar" class="font-semibold text-accent-700 dark:text-accent-400 underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Descargar la ficha otra vez (Word)</button></li>
+                </ul>
+                <button type="button" id="jdn-otra" class="mt-4 bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Llenar otra ficha</button>
+            </section>
+        </div>
+    </div>
+
+    </main>
+
+    <footer class="bg-brand-900 text-brand-300 py-8"><div class="max-w-7xl mx-auto px-4 text-center text-sm"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p><!-- legal: inicio --><p class="mt-2"><a href="privacidad.html" class="underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Política de privacidad</a> <span aria-hidden="true">·</span> <a href="terminos.html" class="underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Términos y condiciones</a></p><!-- legal: fin --></div></footer>
+    <script src="js/vendor/supabase.js"></script>
+    <script src="js/supabase-client.js"></script>
+    <script src="js/main.js"></script>
+    <script src="js/hora-cr.js"></script>
+    <script src="js/avisos.js"></script>
+    <script src="js/legal-version.js"></script>
+    <script src="js/reporte-excel.js"></script>
+    <script src="js/reporte-docx.js"></script>
+    <script src="js/jdn-consentimiento.js"></script>
+    <script src="js/jdn.js"></script>
+<!-- burbuja: inicio --><script src="js/burbuja-en-linea.js" defer></script><!-- burbuja: fin --><!-- juego-aviso: inicio --><script src="js/juego-aviso.js" defer></script><!-- juego-aviso: fin --><!-- aviso-profe: inicio --><script src="js/aviso-profe.js" defer></script><!-- aviso-profe: fin --><!-- tanda: inicio --><script src="js/tanda-diez.js" defer></script><!-- tanda: fin --><!-- acceso: inicio --><script src="js/acceso-vigente.js" defer></script><!-- acceso: fin --><!-- modo-vista: inicio --><script src="js/modo-vista.js" defer></script><!-- modo-vista: fin --><!-- marca: inicio --><script src="js/marca-academia.js" defer></script><!-- marca: fin --><!-- atajo: inicio --><script src="js/atajo-buscar.js" data-arriba="" defer></script><!-- atajo: fin --></body>
+</html>
