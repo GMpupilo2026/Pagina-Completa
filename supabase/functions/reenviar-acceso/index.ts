@@ -1,7 +1,8 @@
 // Edge Function: reenviar-acceso
 //
-// Le vuelve a mandar a UN alumno el enlace para crear o cambiar su
-// contraseña, a pedido de quien coordina o administra. Es la otra mitad de
+// Le vuelve a mandar a UN alumno su acceso, a pedido de quien coordina o
+// administra: a una cuenta NUEVA, su usuario con una contraseña provisional
+// nueva (ver más abajo); a una que ya entró, el enlace para crear una nueva. Es la otra mitad de
 // `recuperar-acceso`: aquella es el "olvidé mi contraseña" del propio alumno,
 // sin sesión y sin decir nunca nada; esta es la misma necesidad vista desde
 // quien coordina, cuando una familia dice que el correo de bienvenida nunca
@@ -28,8 +29,23 @@
 // no hay ninguno de los dos, se dice — mandarlo a una dirección inventada no
 // da ningún error, el correo simplemente se pierde.
 
+// LA CUENTA NUEVA RECIBE OTRA VEZ LA CONTRASEÑA PROVISIONAL, NO UN ENLACE
+// Toda invitación de alta lleva el usuario y una contraseña provisional (ver
+// «La contraseña provisional»). Reenviar el acceso a quien todavía no entró
+// mandaba en cambio un enlace, con los mismos problemas que llevaron a quitarlo
+// de la invitación: se usa una vez, se vence y los filtros de correo lo abren
+// antes que la persona. Así que a una cuenta nueva se le pone una contraseña
+// provisional nueva y le llega el mismo correo de bienvenida, con la hora en el
+// asunto. «Nueva» es: sigue marcada con `contrasena_provisional`, o la invitó
+// Supabase con su enlace (`invited_at`, las de antes del 3 de octubre) y nunca
+// entró. A una cuenta que ya tiene su contraseña no se le cambia: esa es de la
+// persona, y le llega el enlace. Tampoco a la que le puso quien da clase sin
+// que haya entrado todavía (no tiene ni la marca ni `invited_at`): esa ya se
+// la dio en la mano, y cambiársela por correo la dejaría sin servir.
+
 import { createClient } from "npm:@supabase/supabase-js@2";
-import { esCorreoInterno } from "./usuario-alumno.ts";
+import { contrasenaProvisional, esCorreoInterno, sinContrasenaPropia } from "./usuario-alumno.ts";
+import { mandarBienvenida } from "./invitacion-email.ts";
 import { asuntoRecuperacion, cuerpoRecuperacion, enlaceRecuperacion } from "./recuperacion-email.ts";
 import { envioFallido, motivoNoLlego } from "./envio-resend.ts";
 
@@ -109,30 +125,71 @@ Deno.serve(async (req) => {
     }, 400);
   }
 
-  const adminClient = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
-  const { data: link, error: linkError } = await adminClient.auth.admin.generateLink({
-    type: "recovery",
-    email: alumno.email,
-    options: { redirectTo: DESTINO },
-  });
-
-  // El enlace va al sitio, no a supabase.co: ver enlaceRecuperacion().
-  const token = link?.properties?.hashed_token;
-  if (linkError || !token) {
-    return json({ error: "No se pudo generar el enlace: " + (linkError?.message ?? "") }, 500);
-  }
-  const enlace = enlaceRecuperacion(token);
-
   const apiKey = Deno.env.get("RESEND_API_KEY");
   if (!apiKey) return json({ error: "Falta configurar el correo (RESEND_API_KEY)" }, 500);
 
-  try {
-    const from = Deno.env.get("RESEND_FROM") || "Ajedrez Integral <informes@ajedrez-integral.com>";
+  const adminClient = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
+  const { data: cuenta, error: cuentaError } = await adminClient.auth.admin.getUserById(alumnoId);
+  if (cuentaError || !cuenta?.user) return json({ error: "No se encontró esa cuenta" }, 404);
+  const esCuentaPropia = !esCorreoInterno(alumno.email);
+
+  let enviado: { ok: boolean; id: string | null };
+  let modo: "provisional" | "enlace";
+  if (sinContrasenaPropia(cuenta.user)) {
+    modo = "provisional";
+    const clave = contrasenaProvisional();
+    // Confirmada: una cuenta invitada que nunca abrió su enlace está sin
+    // confirmar, y GoTrue no la deja entrar ni con la contraseña buena. La
+    // user_metadata se mezcla, no se reemplaza: el nombre se queda.
+    const { error: claveError } = await adminClient.auth.admin.updateUserById(alumnoId, {
+      password: clave,
+      email_confirm: true,
+      user_metadata: { contrasena_provisional: true },
+    });
+    if (claveError) return json({ error: "No se pudo poner la contraseña provisional: " + claveError.message }, 500);
+    enviado = await mandarBienvenida(
+      destino, clave, alumno.full_name ?? undefined,
+      { destino, usuario: alumno.email, aLaCasa: !esCuentaPropia }, null, { reenvio: true },
+    );
+  } else {
+    modo = "enlace";
+    const { data: link, error: linkError } = await adminClient.auth.admin.generateLink({
+      type: "recovery",
+      email: alumno.email,
+      options: { redirectTo: DESTINO },
+    });
+
+    // El enlace va al sitio, no a supabase.co: ver enlaceRecuperacion().
+    const token = link?.properties?.hashed_token;
+    if (linkError || !token) {
+      return json({ error: "No se pudo generar el enlace: " + (linkError?.message ?? "") }, 500);
+    }
     // Si el correo con el que entra NO es un usuario de la academia,
     // `correo_de_contacto()` devolvió ese mismo correo: le está llegando a la
     // propia cuenta, y el correo se lo dice así en vez de hablarle de "tu hijo
     // o hija".
-    const esCuentaPropia = !esCorreoInterno(alumno.email);
+    enviado = await mandarEnlace(apiKey, destino, enlaceRecuperacion(token), alumno.email, alumno.full_name, esCuentaPropia);
+  }
+
+  if (!enviado.ok) return json({ error: "El correo no se pudo mandar" }, 502);
+  // Resend acepta aunque la dirección esté bloqueada por un rebote viejo, y
+  // lo descarta después: se pregunta en qué terminó, y si no llegó se le
+  // dice a quien lo mandó, que es quien puede arreglar la dirección.
+  const fallo = await envioFallido(apiKey, enviado.id);
+  if (fallo) {
+    console.error("reenviar-acceso: el correo para", alumnoId, "terminó en", fallo);
+    return json({ error: motivoNoLlego(fallo, destino), correo_destino: destino, no_llego: fallo }, 502);
+  }
+
+  return json({ ok: true, correo_destino: destino, usuario: alumno.email, modo });
+});
+
+async function mandarEnlace(
+  apiKey: string, destino: string, enlace: string, usuario: string,
+  nombre: string | null, esCuentaPropia: boolean,
+): Promise<{ ok: boolean; id: string | null }> {
+  try {
+    const from = Deno.env.get("RESEND_FROM") || "Ajedrez Integral <informes@ajedrez-integral.com>";
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
@@ -140,26 +197,16 @@ Deno.serve(async (req) => {
         from,
         to: [destino],
         subject: asuntoRecuperacion(),
-        html: cuerpoRecuperacion(enlace, alumno.email, alumno.full_name, esCuentaPropia),
+        html: cuerpoRecuperacion(enlace, usuario, nombre, esCuentaPropia),
       }),
     });
     if (!res.ok) {
-      const detalle = await res.text();
-      console.error("reenviar-acceso: Resend rechazó el correo:", res.status, detalle);
-      return json({ error: "El correo no se pudo mandar" }, 502);
+      console.error("reenviar-acceso: Resend rechazó el correo:", res.status, await res.text());
+      return { ok: false, id: null };
     }
-    // Resend acepta aunque la dirección esté bloqueada por un rebote viejo, y
-    // lo descarta después: se pregunta en qué terminó, y si no llegó se le
-    // dice a quien lo mandó, que es quien puede arreglar la dirección.
-    const fallo = await envioFallido(apiKey, (await res.json().catch(() => null))?.id);
-    if (fallo) {
-      console.error("reenviar-acceso: el correo para", alumnoId, "terminó en", fallo);
-      return json({ error: motivoNoLlego(fallo, destino), correo_destino: destino, no_llego: fallo }, 502);
-    }
+    return { ok: true, id: (await res.json().catch(() => null))?.id ?? null };
   } catch (err) {
     console.error("reenviar-acceso: error mandando el correo:", err);
-    return json({ error: "El correo no se pudo mandar" }, 502);
+    return { ok: false, id: null };
   }
-
-  return json({ ok: true, correo_destino: destino, usuario: alumno.email });
-});
+}

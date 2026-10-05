@@ -185,3 +185,21 @@ export async function crearConContrasena(
     error: error?.message ?? (data?.user ? null : "No se pudo crear la cuenta"),
   };
 }
+
+/** ¿La cuenta todavía no tiene una contraseña suya? Es la que recibe una
+ *  contraseña provisional nueva al reenviarle el acceso (`reenviar-acceso`):
+ *  - sigue marcada con `contrasena_provisional` (la invitación de alta desde
+ *    el 3 de octubre, o una que dijo «Ahora no» y sigue con la provisional);
+ *  - o la invitó Supabase con su enlace (`invited_at`, las de antes) y nunca
+ *    entró.
+ *  La que le puso quien da clase no tiene ni lo uno ni lo otro, aunque no haya
+ *  entrado todavía: esa ya se la dio en la mano, y cambiársela por correo la
+ *  dejaría sin servir. Una que ya entró con su contraseña tampoco: es suya. */
+export function sinContrasenaPropia(u: {
+  user_metadata?: Record<string, unknown> | null;
+  last_sign_in_at?: string | null;
+  invited_at?: string | null;
+}): boolean {
+  if (u.user_metadata?.contrasena_provisional === true) return true;
+  return !u.last_sign_in_at && !!u.invited_at;
+}

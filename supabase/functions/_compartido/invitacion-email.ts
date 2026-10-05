@@ -169,12 +169,33 @@ export async function enviarBienvenida(
   envio?: Envio | null,
   nombreEncargado?: string | null,
 ): Promise<boolean> {
+  return (await mandarBienvenida(email, clave, fullName, envio, nombreEncargado)).ok;
+}
+
+/** Lo mismo que `enviarBienvenida()`, pero devuelve también el id que le dio
+ *  Resend, para preguntar después en qué terminó (`envioFallido()`): lo usa
+ *  `reenviar-acceso`, que sí le puede contar a quien lo mandó que no llegó.
+ *  Con `reenvio`, el asunto lleva la hora: cada correo nuevo trae OTRA
+ *  contraseña, y con el asunto igual Gmail los junta en una conversación y la
+ *  familia copia la del primero, que ya no sirve (lo mismo que pasó con los
+ *  enlaces, ver asuntoRecuperacion()). */
+export async function mandarBienvenida(
+  email: string,
+  clave: string,
+  fullName?: string,
+  envio?: Envio | null,
+  nombreEncargado?: string | null,
+  { reenvio = false }: { reenvio?: boolean } = {},
+): Promise<{ ok: boolean; id: string | null }> {
   const apiKey = Deno.env.get("RESEND_API_KEY");
-  if (!apiKey) return false;
+  if (!apiKey) return { ok: false, id: null };
 
   try {
     const from = Deno.env.get("RESEND_FROM") || "Ajedrez Integral <informes@ajedrez-integral.com>";
     const adjuntos = await adjuntoInstrucciones();
+    const asunto = envio?.aLaCasa
+      ? `La cuenta de ${(fullName || "tu hijo o hija").trim().split(/\s+/)[0]} en Ajedrez Integral`
+      : "Tu cuenta de Ajedrez Integral: tu usuario y tu contraseña";
 
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
@@ -182,25 +203,42 @@ export async function enviarBienvenida(
       body: JSON.stringify({
         from,
         to: [email],
-        subject: envio?.aLaCasa
-          ? `La cuenta de ${(fullName || "tu hijo o hija").trim().split(/\s+/)[0]} en Ajedrez Integral`
-          : "Tu cuenta de Ajedrez Integral: tu usuario y tu contraseña",
+        subject: reenvio ? `${asunto} (${horaDelEnvio()})` : asunto,
         html: envio?.aLaCasa
-          ? cuerpoBienvenidaCasa(envio.usuario, clave, fullName, nombreEncargado)
-          : cuerpoBienvenida(email, clave, fullName),
+          ? cuerpoBienvenidaCasa(envio.usuario, clave, fullName, nombreEncargado, reenvio)
+          : cuerpoBienvenida(email, clave, fullName, reenvio),
         ...(adjuntos.length ? { attachments: adjuntos } : {}),
       }),
     });
 
     if (!res.ok) {
       console.error("Resend rechazó el correo de bienvenida:", res.status, await res.text());
-      return false;
+      return { ok: false, id: null };
     }
-    return true;
+    const id = (await res.json().catch(() => null))?.id ?? null;
+    return { ok: true, id };
   } catch (err) {
     console.error("Error enviando el correo de bienvenida:", err);
-    return false;
+    return { ok: false, id: null };
   }
+}
+
+/** «enviado a las 3:05 p. m.», en hora de Costa Rica. */
+export function horaDelEnvio(ahora: Date = new Date()): string {
+  const hora = ahora.toLocaleTimeString("es-CR", {
+    hour: "numeric", minute: "2-digit", timeZone: "America/Costa_Rica",
+  });
+  return `enviado a las ${hora}`;
+}
+
+/** El aviso de que esta contraseña reemplaza a la de un correo anterior. */
+function avisoReenvio(): string {
+  return (
+    `<p style="font-size:14px;line-height:1.6;background:#fffaf0;border-left:4px solid #f0b429;` +
+    `border-radius:6px;padding:12px 16px;margin:0 0 18px;">` +
+    `<strong style="color:#102a43;">Esta contraseña es nueva.</strong> ` +
+    `Si te llegó otro correo con una contraseña antes, esa ya no sirve: usa la de este.</p>`
+  );
 }
 
 async function adjuntoInstrucciones() {
@@ -282,7 +320,7 @@ function botonEntrar(texto: string) {
   );
 }
 
-export function cuerpoBienvenida(email: string, clave: string, fullName?: string): string {
+export function cuerpoBienvenida(email: string, clave: string, fullName?: string, reenvio = false): string {
   const nombre = fullName ? fullName.trim().split(/\s+/)[0] : "";
   const saludo = nombre ? `¡Hola ${escapar(nombre)}!` : "¡Hola!";
   const correo = escapar(email);
@@ -297,6 +335,7 @@ export function cuerpoBienvenida(email: string, clave: string, fullName?: string
     `Estos son tus datos para entrar:</p>` +
 
     datosDeEntrada("Tu correo:", email, clave) +
+    (reenvio ? avisoReenvio() : "") +
 
     botonEntrar("Entrar a la Academia") +
     `<p style="font-size:13px;color:#627d98;margin:0 0 22px;">` +
@@ -350,6 +389,7 @@ export function cuerpoBienvenidaCasa(
   clave: string,
   fullName?: string,
   nombreEncargado?: string | null,
+  reenvio = false,
 ): string {
   const alumno = fullName ? fullName.trim().split(/\s+/)[0] : "";
   const quien = nombreEncargado ? nombreEncargado.trim().split(/\s+/)[0] : "";
@@ -369,6 +409,7 @@ export function cuerpoBienvenidaCasa(
     `y te mandamos todo a ti. Estos son sus datos para entrar:</p>` +
 
     datosDeEntrada(`El usuario ${deQuien}:`, usuario, clave) +
+    (reenvio ? avisoReenvio() : "") +
 
     botonEntrar("Entrar a la Academia") +
     `<p style="font-size:13px;color:#627d98;margin:0 0 22px;">` +

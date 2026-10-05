@@ -515,7 +515,7 @@
             "«📋 Tareas y exámenes»: lo que le pusiste y cómo va.",
             "«📝 Bitácora»: tus observaciones sobre él.",
             "Su diagnóstico de nivel, área por área.",
-            "«🔑 Acceso a la cuenta»: reenviarle el enlace para restablecer la contraseña."
+            "«🔑 Acceso a la cuenta»: reenviarle el acceso (una contraseña provisional nueva si nunca ha entrado, o el enlace para crear una)."
           ],
           "ojo": [
             "«Desbloquear hasta el tema» le abre el curso a ESE alumno y deja rastro de que fuiste tú.",
@@ -1277,7 +1277,7 @@
             "«No puedo aplicar esta posición»: el aviso te dice cuál de las tres reglas rompe. Casi siempre falta un rey.",
             "«Se le congeló el examen»: reábrelo desde Exámenes. Conserva lo que ya contestó.",
             "«No le llega el correo a la familia»: revisa el correo de la persona encargada en «📧 Informes a la casa». Si el alumno entra con usuario, todo va al correo de quien está a cargo.",
-            "«Se le olvidó la contraseña»: «Reenviar enlace para restablecer la contraseña» en el informe de ese alumno."
+            "«Se le olvidó la contraseña»: «Reenviar el acceso» en el informe de ese alumno."
           ]
         },
         {
