@@ -216,23 +216,41 @@ function pruebaFuncion() {
   console.log("\n=== La Edge Function (supabase/functions/jdn-drive) ===");
   const ts = leer("supabase/functions/jdn-drive/index.ts");
   const pos = (re) => ts.search(re);
+  const publico = pos(/const publico = accion === "guardar" && body\.modo !== "admin"/);
+  const soloAdmin = pos(/if \(!publico\) \{/);
   const usuario = pos(/auth\.getUser\(jwt\)/);
   const aal = pos(/if \(sesionAMedias\(/);
   const esAdmin = pos(/if \(!perfil\?\.is_admin\) return/);
   const boveda = pos(/rpc\("jdn_drive_leer"\)/);
   cierto("mira la sesión, el segundo paso e is_admin ANTES de leer la bóveda",
     usuario >= 0 && aal > usuario && esAdmin > aal && boveda > esAdmin);
+  cierto("lo único que se puede sin cuenta es «guardar» (estado y conectar son de administración)",
+    publico >= 0 && soloAdmin > publico && usuario > soloAdmin);
+  const frenoPos = pos(/rpc\("jdn_frenar", \{ p_ip: ipDe\(req\), p_correo: correo \}\)/);
+  const puentePos = ts.indexOf('const r = await alPuente(guardado.url, { secreto: guardado.secreto, accion: "guardar"');
+  cierto("sin cuenta: el freno (IP y correo) va ANTES de tocar el Drive, y si frena no sigue",
+    frenoPos >= 0 && puentePos > frenoPos && /if \(freno\) return json\(\{ error: freno \}, 429\)/.test(ts));
+  cierto("sin cuenta: exige un correo y UNA ficha", /if \(!\/\^\[\^\\s@\]\+@/.test(ts) && /filter\(\(a\) => a\.ficha\)\.length !== 1/.test(ts));
+  cierto("sin cuenta: los archivos llevan fecha y hora (el puente no le borra la ficha a nadie)",
+    /for \(const a of limpios\) a\.nombre = a\.nombre\.replace\(\/\(\\\.\[a-z\]\+\)\$\/i, ` \(enviada \$\{marca\}\)\$1`\)/.test(ts));
+  cierto("sin cuenta: no devuelve los enlaces del Drive", /if \(publico\) return json\(\{ ok: true \}\);/.test(ts));
   cierto("«guardar» exige la versión de la política aceptada", /accion === "guardar"[\s\S]*privacidad_version[\s\S]*\\d\{4\}-\\d\{2\}-\\d\{2\}/.test(ts));
   cierto("solo deja pasar la ficha, JPEG y PDF", /TIPOS = new Set\(\[\s*"application\/vnd\.openxmlformats-officedocument\.wordprocessingml\.document",\s*"image\/jpeg",\s*"application\/pdf",?\s*\]\)/.test(ts));
   cierto("solo conecta con una aplicación web de Apps Script", /URL_SCRIPT = \/\^https:\\\/\\\/script\\\.google\\\.com/.test(ts));
   cierto("prueba la conexión ANTES de guardarla", pos(/accion: "probar"/) >= 0 && ts.indexOf('rpc("jdn_drive_guardar"') > ts.indexOf('const r = await alPuente(url, { secreto, accion: "probar" })'));
   cierto("funciones-armar.js la arma con hora-cr.ts", /"jdn-drive":\s*\["hora-cr\.ts"\]/.test(leer("herramientas/funciones-armar.js")));
-  cierto("está en la lista de desplegadas con verify_jwt en true", /^jdn-drive\s+true\s/m.test(leer("supabase/esquema/funciones-desplegadas.txt")));
+  cierto("está en la lista de desplegadas con verify_jwt en false (la puerta sin cuenta)", /^jdn-drive\s+false\s/m.test(leer("supabase/esquema/funciones-desplegadas.txt")));
 
-  const sql = fs.readdirSync(path.join(RAIZ, "supabase/migraciones")).filter((f) => /jdn_drive/.test(f)).map((f) => leer("supabase/migraciones/" + f)).join("\n");
+  const sql = fs.readdirSync(path.join(RAIZ, "supabase/migraciones")).filter((f) => /jdn_/.test(f)).map((f) => leer("supabase/migraciones/" + f)).join("\n");
   cierto("la bóveda solo la abre la service role (revoke a public, anon y authenticated)",
     /revoke all on function public\.jdn_drive_leer\(\) from public, anon, authenticated/.test(sql) &&
     /revoke all on function public\.jdn_drive_guardar\(text, text\) from public, anon, authenticated/.test(sql));
+  cierto("el freno de la ficha: topes propios por IP, correo y total, y después el de los formularios (que anota el envío)",
+    /ambito = 'jdn-2027' and ip = v_ip[\s\S]*>= \d+ then/.test(sql) &&
+    /ambito = 'jdn-2027' and correo = v_correo[\s\S]*>= \d+ then/.test(sql) &&
+    /return interno\.frenar_envio_publico\('formulario', 'jdn-2027', v_correo, v_ip\)/.test(sql));
+  cierto("y su puerta la llama solo la service role",
+    /revoke all on function public\.jdn_frenar\(text, text\) from public, anon, authenticated/.test(sql));
 
   console.log("\n=== El puente (material/jdn/puente-drive.gs) ===");
   const gs = leer("material/jdn/puente-drive.gs");
@@ -268,7 +286,7 @@ window.SUPABASE_ANON_KEY = "anon-falsa";
   }
   window.sb = {
     auth: {
-      getSession: () => Promise.resolve({ data: { session: { user: { id: CFG.yo }, access_token: window.__token || "token-de-prueba" } } }),
+      getSession: () => Promise.resolve({ data: { session: CFG.yo ? { user: { id: CFG.yo }, access_token: window.__token || "token-de-prueba" } : null } }),
       getUser: () => Promise.resolve({ data: { user: { id: CFG.yo } } }),
       onAuthStateChange: () => ({ data: { subscription: { unsubscribe() {} } } }),
     },
@@ -310,14 +328,70 @@ async function abrir(browser, cfg, drive) {
 }
 const vis = (page, sel) => page.evaluate((s) => { const e = document.querySelector(s); return !!e && e.checkVisibility(); }, sel);
 
+// Una menor de 12, con su tutora (los mismos datos en las dos puertas).
+async function llenarMenor(page) {
+  const llenar = async (sel, v) => page.fill(sel, v);
+  await page.check('input[name="condicion"][value="atleta"]');
+  await llenar("#f-nombre", "Valeria Solano Ruiz");
+  await llenar("#f-identificacion", "1-2222-3333");
+  await page.selectOption("#f-tipoDocumento", "Nacional");
+  await llenar("#f-nacimiento", "2016-05-10");
+  await page.selectOption("#f-estadoCivil", "Soltero(a)");
+  await page.check('input[name="sexo"][value="mujer"]');
+  await page.check('input[name="lateralidad"][value="Derecho"]');
+  await llenar("#f-escolaridad", "Primaria incompleta");
+  await llenar("#f-telefono", "8888-0000");
+  await llenar("#f-correo", "casa@ejemplo.cr");
+  await page.selectOption("#f-provincia", "Heredia");
+  await llenar("#f-canton", "Barva");
+  await llenar("#f-distrito", "San Pablo");
+  await llenar("#f-direccion", "Del parque 100 m sur");
+  await llenar("#f-comite", "CCDR de Barva");
+  await page.check('input[name="rama"][value="femenina"]');
+  await llenar("#f-tutorNombre", "Marta Ruiz Mora");
+  await page.selectOption("#f-tutorCondicion", "madre");
+  await llenar("#f-tutorCedula", "2-3333-4444");
+  await llenar("#f-tutorEstadoCivil", "divorciada");
+  await llenar("#f-tutorProfesion", "contadora");
+  await llenar("#f-autorizadoNombre", "Pedro Mora");
+  await page.selectOption("#f-autorizadoRol", "delegado");
+  await page.click("#jdn-mismo-tutor");
+  if (!page.__ya) igual("«Usar los datos del tutor» llena el beneficiario",
+    [await page.inputValue("#f-beneficiarioNombre"), await page.inputValue("#f-beneficiarioCedula"), await page.inputValue("#f-parentesco")],
+    ["Marta Ruiz Mora", "2-3333-4444", "Madre"]);
+
+}
+
 const PERFILES = { profiles: [{ id: "u-admin", is_admin: true }, { id: "u-profe", is_admin: false }] };
 
 async function pruebaPagina(browser) {
   console.log("\n=== jdn.html ===");
-  {
-    const { ctx, page, pedidos } = await abrir(browser, { yo: "u-profe", tablas: PERFILES }, () => [200, {}]);
-    cierto("a quien no administra le dice que no, y no llama a la función",
-      await vis(page, "#denied") && !(await vis(page, "#jdn-form")) && pedidos.length === 0);
+  // Sin cuenta (y con una que no administra): el formulario, sin «El Drive».
+  for (const [quien, cfg] of [["sin cuenta", { tablas: PERFILES }], ["con una cuenta que no administra", { yo: "u-profe", tablas: PERFILES }]]) {
+    const { ctx, page, pedidos, errores } = await abrir(browser, cfg,
+      (b) => b.action === "guardar" ? [200, { ok: true }] : [403, { error: "Solo quien administra" }]);
+    cierto(quien + ": se ve el formulario y no «El Drive», y no le pregunta nada a la función",
+      await vis(page, "#jdn-form") && !(await vis(page, "#caja-drive")) && pedidos.length === 0);
+    igual(quien + ": el botón dice «Enviar la ficha» y está encendido",
+      [(await page.textContent("#jdn-guardar")).trim(), await page.isDisabled("#jdn-guardar")], ["Enviar la ficha", false]);
+    page.__ya = true;
+    await llenarMenor(page);
+    await page.setInputFiles("#f-foto", { name: "foto.png", mimeType: "image/png", buffer: await pngDePrueba(page) });
+    await page.setInputFiles("#f-certificacion", { name: "cert.pdf", mimeType: "application/pdf", buffer: Buffer.from("%PDF-1.4 prueba") });
+    await page.check("#jdn-acepto");
+    const descarga = page.waitForEvent("download", { timeout: 8000 }).catch(() => null);
+    await page.click("#jdn-guardar");
+    const bajada = await descarga;
+    if (!bajada) console.log("      (error en la página: " + await page.textContent("#jdn-error") + " | " + await page.textContent("#jdn-progreso") + ")");
+    igual(quien + ": la ficha se descarga para imprimirla", bajada && bajada.suggestedFilename(), "Ficha JDN 2027 - Valeria Solano Ruiz.docx");
+    await page.waitForSelector("#jdn-listo:not([hidden])");
+    const g = pedidos.find((x) => x.body.action === "guardar");
+    cierto(quien + ": manda por la puerta pública, sin token, con el correo",
+      g && g.body.modo === "publico" && g.auth === null && g.body.correo === "casa@ejemplo.cr", JSON.stringify(g && { modo: g.body.modo, auth: g.auth }));
+    cierto(quien + ": al terminar dice que la imprima y la firme, sin enlaces al Drive",
+      /imprímela, fírmala a mano/.test(await page.textContent("#listo-texto")) &&
+      !(await vis(page, "#listo-carpeta")) && !(await vis(page, "#listo-pdf")));
+    cierto(quien + ": sin errores en la página", errores.length === 0, errores.join(" | "));
     await ctx.close();
   }
 
@@ -341,6 +415,7 @@ async function pruebaPagina(browser) {
   await page.waitForFunction(() => /Conectado/.test(document.getElementById("drive-estado").textContent));
   const con = pedidos.find((p) => p.body.action === "conectar");
   cierto("conectar manda la URL y el secreto con la sesión", con && con.body.secreto === "a".repeat(64) && con.auth === "Bearer token-de-prueba");
+  igual("quien administra ve «Guardar en el Drive»", (await page.textContent("#jdn-guardar")).trim(), "Guardar en el Drive");
   cierto("y ya conectado se puede guardar (el secreto no queda escrito)", !(await page.isDisabled("#jdn-guardar")) && (await page.inputValue("#drive-secreto")) === "");
 
   // La categoría y lo que se abre según la fecha
@@ -366,36 +441,7 @@ async function pruebaPagina(browser) {
   cierto("guardar sin llenar dice qué falta y no manda nada",
     /^Falta: /.test(await page.textContent("#jdn-error")) && pedidos.length === antes);
 
-  // Llenar una menor de 12
-  const llenar = async (sel, v) => page.fill(sel, v);
-  await page.check('input[name="condicion"][value="atleta"]');
-  await llenar("#f-nombre", "Valeria Solano Ruiz");
-  await llenar("#f-identificacion", "1-2222-3333");
-  await page.selectOption("#f-tipoDocumento", "Nacional");
-  await llenar("#f-nacimiento", "2016-05-10");
-  await page.selectOption("#f-estadoCivil", "Soltero(a)");
-  await page.check('input[name="lateralidad"][value="Derecho"]');
-  await llenar("#f-escolaridad", "Primaria incompleta");
-  await llenar("#f-telefono", "8888-0000");
-  await llenar("#f-correo", "casa@ejemplo.cr");
-  await page.selectOption("#f-provincia", "Heredia");
-  await llenar("#f-canton", "Barva");
-  await llenar("#f-distrito", "San Pablo");
-  await llenar("#f-direccion", "Del parque 100 m sur");
-  await llenar("#f-comite", "CCDR de Barva");
-  await page.check('input[name="rama"][value="femenina"]');
-  await llenar("#f-tutorNombre", "Marta Ruiz Mora");
-  await page.selectOption("#f-tutorCondicion", "madre");
-  await llenar("#f-tutorCedula", "2-3333-4444");
-  await llenar("#f-tutorEstadoCivil", "divorciada");
-  await llenar("#f-tutorProfesion", "contadora");
-  await llenar("#f-autorizadoNombre", "Pedro Mora");
-  await page.selectOption("#f-autorizadoRol", "delegado");
-  await page.click("#jdn-mismo-tutor");
-  igual("«Usar los datos del tutor» llena el beneficiario",
-    [await page.inputValue("#f-beneficiarioNombre"), await page.inputValue("#f-beneficiarioCedula"), await page.inputValue("#f-parentesco")],
-    ["Marta Ruiz Mora", "2-3333-4444", "Madre"]);
-
+  await llenarMenor(page);
   const png = await pngDePrueba(page);
   await page.setInputFiles("#f-foto", { name: "foto.png", mimeType: "image/png", buffer: png });
   cierto("la foto se ve antes de mandarla, con su texto", await vis(page, '[data-doc="foto"] .jdn-vista') &&
@@ -416,6 +462,7 @@ async function pruebaPagina(browser) {
   igual("la ficha se descarga con el nombre de la persona", d.suggestedFilename(), "Ficha JDN 2027 - Valeria Solano Ruiz.docx");
   const g = pedidos.find((p) => p.body.action === "guardar");
   igual("manda el token del momento, no el de cuando se abrió la página", g.auth, "Bearer token-renovado");
+  igual("y por la puerta de administración", g.body.modo, "admin");
   igual("manda la carpeta con el nombre", g.body.persona, "Valeria Solano Ruiz");
   igual("y la versión de la política", g.body.privacidad_version, leer("js/legal-version.js").match(/PRIVACIDAD: "([\d-]+)"/)[1]);
   igual("los archivos: la ficha, la foto en JPEG y la certificación en PDF",
