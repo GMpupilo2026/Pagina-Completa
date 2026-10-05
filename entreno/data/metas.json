@@ -1637,6 +1637,34 @@
    "actividades": []
   },
   {
+   "clave": "mate-rey-dama",
+   "label": "Mate con rey y dama",
+   "grupo": "Mates",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "mate-rey-torre",
+   "label": "Mate con rey y torre",
+   "grupo": "Mates",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "mate-rey-dos-alfiles",
+   "label": "Mate con rey y dos alfiles",
+   "grupo": "Mates",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "mate-alfil-caballo",
+   "label": "Mate de alfil y caballo",
+   "grupo": "Mates",
+   "total": 1,
+   "actividades": []
+  },
+  {
    "clave": "mate-pasillo",
    "label": "El mate del pasillo",
    "grupo": "Mates",
@@ -2050,20 +2078,6 @@
    "actividades": []
   },
   {
-   "clave": "mate-rey-dama",
-   "label": "Mate con rey y dama",
-   "grupo": "Mates",
-   "total": 1,
-   "actividades": []
-  },
-  {
-   "clave": "mate-rey-torre",
-   "label": "Mate con rey y torre",
-   "grupo": "Mates",
-   "total": 1,
-   "actividades": []
-  },
-  {
    "clave": "rey-peon-contra-rey",
    "label": "Rey y peón contra rey",
    "grupo": "Finales",
@@ -2109,13 +2123,6 @@
    "clave": "dama-contra-peon",
    "label": "Dama contra peón en séptima",
    "grupo": "Finales",
-   "total": 1,
-   "actividades": []
-  },
-  {
-   "clave": "mate-alfil-caballo",
-   "label": "Mate de alfil y caballo",
-   "grupo": "Mates",
    "total": 1,
    "actividades": []
   },
@@ -2480,13 +2487,6 @@
    "clave": "dama-contra-torre",
    "label": "Dama contra torre",
    "grupo": "Finales",
-   "total": 1,
-   "actividades": []
-  },
-  {
-   "clave": "mate-rey-dos-alfiles",
-   "label": "Mate con rey y dos alfiles",
-   "grupo": "Mates",
    "total": 1,
    "actividades": []
   },
