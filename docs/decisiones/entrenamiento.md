@@ -1404,8 +1404,8 @@ atrás se respeta, 30 días atrás y el futuro pasan a «ahora», y un
 ## Estudio: una ficha por idea, con su mapa y su posición
 
 `entreno/estudio.html` (tarjeta **"📚 Estudio"** en `clases.html` → grupo
-"Aprender") son 184 fichas de estudio: 27 aperturas, 31 defensas, 28 temas
-tácticos, 24 mates, 49 conceptos y 25 finales. Cada una es **una sola pantalla**: la idea principal
+"Aprender") son 198 fichas de estudio: 29 aperturas, 35 defensas, 29 temas
+tácticos, 27 mates, 52 conceptos y 26 finales. Cada una es **una sola pantalla**: la idea principal
 arriba, cuatro bloques alrededor de un nodo con la pieza, y abajo la posición
 que lo explica, recorrible jugada por jugada.
 
@@ -1665,6 +1665,30 @@ rey expuesto, el sacrificio en h6; los dos mates pasaron después a Mates), 1 ap
   y peón contra rey», que las enseña. En su lugar entró torre contra caballo.
   Antes de sumar una ficha, buscar el tema también en los subtítulos.
 - El libro pasó a 162 páginas y las cartas a 17 hojas.
+
+### La séptima tanda: de 184 a 198 fichas
+
+Catorce fichas que eligió el dueño de la Academia de la lista de lo que
+faltaba: el mate del loco, cómo salir de un jaque, la notación algebraica, los
+mates de Greco y de Blackburne, la defensa por el lado corto, atrapar la dama,
+cómo calcular, el Ataque Torre, la apertura Larsen, la defensa Tarrasch, el
+dragón acelerado, la defensa Nimzowitsch y la siciliana Taimanov (seis líneas
+nuevas, 76 en total).
+
+- **El mate de Blackburne no está en el banco de Lichess** con su figura (dos
+  alfiles y caballo, el rey en g8 con la torre en f8): la posición se armó a
+  mano y la comprueban chess.js (que Ah7 sea mate) y Stockfish. El comentario
+  de la ficha lo dice; las demás posiciones de estudio salen de partidas.
+- **«Cómo salir de un jaque» comprueba las tres formas** (`tresSalidas`): en
+  la posición hay una jugada de rey, una que come la pieza que da jaque y una
+  que tapa. Se rompió sacando el caballo de d3 y saltó.
+- **El pie se escribe con el tablero al lado**: la comprobación del pie cazó
+  «el alfil en e2» (el alfil todavía está en f1), y la lectura con el tablero,
+  «todas sus piezas menores afuera» en la Tarrasch, con el alfil de c8 en su
+  casa.
+- **La portadilla de Conceptos (52) se iba a una segunda hoja**: con más de 44
+  fichas, la lista de la portadilla va con la letra más chica. El libro tiene
+  210 páginas y las cartas, 22 hojas.
 
 ### Los mates, en una pestaña propia
 
