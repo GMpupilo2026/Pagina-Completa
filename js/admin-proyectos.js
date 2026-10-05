@@ -158,13 +158,23 @@
 
   async function cargar() {
     try {
-      // Tablas chicas (un proyecto trae unas decenas de sesiones), pero se
-      // piden con su tope explícito: PostgREST corta a ~1000 sin avisar.
+      // Tablas chicas (un proyecto trae unas decenas de sesiones), pero
+      // PostgREST corta a ~1000 sin avisar aunque se pida más: las que crecen
+      // con cada grupo se piden de mil en mil, en un orden fijo.
+      const deMilEnMil = async (pedir) => {
+        const filas = [];
+        for (let i = 0; ; i += 1000) {
+          const r = await pedir().range(i, i + 999);
+          if (r.error) return r;
+          filas.push(...(r.data || []));
+          if (!r.data || r.data.length < 1000) return { data: filas, error: null };
+        }
+      };
       const [p, g, s, t] = await Promise.all([
         sb.from("proyectos").select("id, slug, nombre, descripcion, periodo").order("created_at").range(0, 999),
         sb.from("proyecto_grupos").select("id, proyecto_id, slug, nombre, nivel, horario, orden, profesor_id").range(0, 999),
-        sb.from("proyecto_sesiones").select("grupo_id, numero, fecha, titulo, tipo").range(0, 4999),
-        sb.from("proyecto_tareas").select("grupo_id, semana").range(0, 4999),
+        deMilEnMil(() => sb.from("proyecto_sesiones").select("grupo_id, numero, fecha, titulo, tipo").order("grupo_id").order("numero")),
+        deMilEnMil(() => sb.from("proyecto_tareas").select("grupo_id, semana").order("grupo_id").order("semana")),
       ]);
       for (const r of [p, g, s, t]) if (r.error) throw r.error;
       proyectos = p.data || []; grupos = g.data || []; sesiones = s.data || []; tareas = t.data || [];

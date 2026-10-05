@@ -183,8 +183,8 @@ const visible = (page, sel) => page.evaluate((s) => { const e = document.querySe
         ["🔥 1. Calentamiento · 15 min", "📘 2. Contenido · 55 min", "🎉 3. Actividad recreativa · 30 min", "✅ 4. Cierre · 12 min", "📨 5. Tarea · 8 min"]);
       igual("con cada ejercicio y su respuesta, debajo de su parte", clases[1].ejercicios, [true, true]);
       igual("y lo que dura cada parte", clases[1].minutos, "⏱️ 2 horas: calentamiento 15, contenido 55, actividad recreativa 30, cierre 12, tarea 8");
-      igual("los renglones del plan se piden juntos y con tope", await page.evaluate(() =>
-        window.__consultas.filter((c) => c.tabla === "plan_items").map((c) => [c.in && c.in.plan_id, c.range])), [[["plan-1", "plan-2", "plan-3"], [0, 4999]]]);
+      igual("los renglones del plan se piden juntos y de mil en mil (pedir 5000 igual devuelve mil)", await page.evaluate(() =>
+        window.__consultas.filter((c) => c.tabla === "plan_items").map((c) => [c.in && c.in.plan_id, c.range])), [[["plan-1", "plan-2", "plan-3"], [0, 999]]]);
       igual("el texto del plan va como texto", await page.evaluate(() => document.querySelectorAll("#g-sesiones b").length), 0);
       igual("el emoji de cada parte no se lee", await page.evaluate(() =>
         Array.from(document.querySelectorAll("#g-sesiones h4 > span:first-child")).map((x) => x.getAttribute("aria-hidden"))), ["true", "true", "true", "true", "true"]);

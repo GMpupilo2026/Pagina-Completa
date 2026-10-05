@@ -135,9 +135,16 @@
     const ids = sesiones.map((x) => x.plan_id).filter(Boolean);
     const renglones = {};
     if (ids.length) {
-      const r = await sb.from("plan_items").select("plan_id, orden, tipo, titulo, pregunta, curso, leccion, nota")
-        .in("plan_id", ids).order("orden").range(0, 4999);
-      for (const it of r.data || []) (renglones[it.plan_id] = renglones[it.plan_id] || []).push(it);
+      // De mil en mil y en un orden fijo: PostgREST corta en mil aunque se
+      // pidan 5000, sin avisar, y los últimos pasos quedaban fuera.
+      const filas = [];
+      for (let i = 0; ; i += 1000) {
+        const r = await sb.from("plan_items").select("plan_id, orden, tipo, titulo, pregunta, curso, leccion, nota")
+          .in("plan_id", ids).order("plan_id").order("orden").range(i, i + 999);
+        filas.push(...(r.data || []));
+        if (r.error || !r.data || r.data.length < 1000) break;
+      }
+      for (const it of filas) (renglones[it.plan_id] = renglones[it.plan_id] || []).push(it);
       Object.values(renglones).forEach((xs) => xs.sort((a, b2) => a.orden - b2.orden));
     }
     pintarProxima(sesiones);
