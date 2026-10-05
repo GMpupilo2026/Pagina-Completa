@@ -9,7 +9,7 @@
     "verificar:rapido": "node herramientas/verificar-todo.js --sin-navegador"
   },
   "devDependencies": {
-    "@sentry/browser": "11.1.0",
+    "@sentry/browser": "11.3.0",
     "@supabase/supabase-js": "2.117.2",
     "chess.js": "0.10.3",
     "esbuild": "0.28.2",
