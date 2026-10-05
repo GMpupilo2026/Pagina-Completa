@@ -175,7 +175,7 @@
       pieza: "q",
       lineaId: "gambito-dama-declinado",
       resumen: "Se ofrece un peón de flanco para conseguir a cambio todo el centro.",
-      diagrama: "Peones enfrentados en d4 y d5 con el de c4 ofreciéndose; el alfil blanco de g5 presiona el caballo de f6, al que el negro acaba de preguntarle con h6.",
+      diagrama: "Peones enfrentados en d4 y d5 con el de c4 ofreciéndose; el alfil blanco de g5 presiona el caballo de f6, y el negro le acaba de preguntar al alfil con h6.",
       centro: [
         "No es un gambito de verdad: el peón de c4 se recupera casi siempre",
         "Se cambia un peón de flanco por un peón de centro, que vale más",
@@ -332,7 +332,7 @@
       pieza: "p",
       lineaId: "gambito-de-rey",
       resumen: "Se regala un peón en la segunda jugada para quedarse con todo el centro y la iniciativa.",
-      diagrama: "El negro se quedó con el peón de f y lo sostuvo con g5 y g4; el caballo blanco saltó a e5 y el peón de h4 rompe la cadena negra.",
+      diagrama: "El negro se quedó con el peón de f y lo sostuvo con g5 y g4; el caballo blanco saltó a e5, y con h4 el blanco obligó al peón de g5 a avanzar: los peones de f4 y g4 ya no se sostienen entre sí.",
       centro: [
         "Un peón por el centro y por la columna f abierta, desde la jugada dos",
         "Es la apertura más vieja que se sigue jugando: velocidad contra material",
@@ -371,7 +371,7 @@
       pieza: "n",
       lineaId: "vienesa",
       resumen: "Es el gambito de rey con el caballo ya puesto en c3: el mismo ataque, con una pieza más lista.",
-      diagrama: "El centro quedó abierto: el peón blanco llegó a e5, el caballo negro se metió en e4 y el blanco lo va a echar con d3.",
+      diagrama: "El centro quedó abierto: el peón blanco llegó a e5, el caballo negro se metió en e4 y el blanco lo acaba de atacar con d3.",
       centro: [
         "Cc3 antes de f4: la pieza sale primero y el gambito llega después",
         "Sostiene e4 y pelea d5, que es la ruptura con la que el negro se libera",
@@ -449,7 +449,7 @@
       pieza: "b",
       lineaId: "siciliana-cerrada",
       resumen: "Contra la siciliana, no abrir el centro: fianchetto, ataque al rey y cero variantes que memorizar.",
-      diagrama: "Los dos alfiles salieron a la diagonal larga, el centro quedó trabado con e4 contra c5 y nadie cambió nada todavía.",
+      diagrama: "Los dos alfiles salieron a la diagonal larga, el blanco tiene el peón en e4 y el negro en c5, y nadie cambió nada todavía.",
       centro: [
         "El blanco ELIGE no entrar en la teoría abierta de la siciliana",
         "Se juega con piezas y con el avance f4-f5, no con líneas memorizadas",
@@ -488,7 +488,7 @@
       pieza: "n",
       lineaId: "francesa-tarrasch",
       resumen: "El caballo va a d2 y no a c3: no se deja clavar, y a cambio el blanco juega un poco más lento.",
-      diagrama: "El centro se cambió: los dos peones de e desaparecieron, el negro quedó con un peón aislado en d5 y el juego está abierto.",
+      diagrama: "El centro se cambió: los dos peones de e desaparecieron, el negro tiene los peones de c5 y d5, y si se cambia en c5 le queda un peón aislado en d5.",
       centro: [
         "Cd2 en vez de Cc3 para que el alfil negro no pueda clavar en b4",
         "El precio es tapar al alfil de c1 por unas jugadas",
@@ -607,7 +607,7 @@
       pieza: "p",
       lineaId: "francesa-avance",
       resumen: "Un centro sólido desde la jugada uno, a cambio de encerrar un alfil y tener que liberarlo.",
-      diagrama: "La cadena blanca va de d4 a e5 y el negro ya le está pegando a la base con c5, el caballo en c6 y la dama en b6.",
+      diagrama: "La cadena blanca va de d4 a e5 y el negro ya le está pegando a la base: el peón de c5 y el caballo de c6 atacan d4, y la dama de b6, detrás del peón, espera el cambio.",
       centro: [
         "e6 y d5 arman un muro de peones que no se rompe fácil",
         "El precio es el alfil de c8, encerrado detrás de sus propios peones",
@@ -763,7 +763,7 @@
       pieza: "p",
       lineaId: "eslava",
       resumen: "Sostiene d5 con c6 en vez de e6, así que el alfil de c8 no queda encerrado.",
-      diagrama: "El negro sostuvo d5 con c6, tomó en c4 y sacó su alfil a f5, que es todo el punto de esta defensa; el blanco contestó a4.",
+      diagrama: "El negro sostuvo d5 con c6, tomó en c4 y, después de a4 del blanco, sacó su alfil a f5, que es todo el punto de esta defensa.",
       centro: [
         "c6 hace el mismo trabajo que e6 y deja libre al alfil de c8",
         "Tomar en c4 no es robar un peón: es ganar tiempo para sacar el alfil",
@@ -920,7 +920,7 @@
       pieza: "n",
       lineaId: "petrov",
       resumen: "En vez de defender el peón, el negro copia y ataca el de enfrente: simetría y calma.",
-      diagrama: "Los dos caballos se cambiaron de posición: el negro está en e4 y el blanco volvió a f3, con los peones de d enfrentados en d4 y d5.",
+      diagrama: "Los dos caballos dieron su vuelta: el negro está en e4 y el blanco volvió a f3, con los peones de d enfrentados en d4 y d5.",
       centro: [
         "No se defiende e5: se ataca e4. Un peón por un peón",
         "La simetría no es pasividad: es negarse a que el blanco elija el terreno",
@@ -1616,7 +1616,7 @@
       linea: ["Qd8+", "Kh7", "Qd3+", "Kg8", "Qd8+", "Kh7", "Qd3+", "Kg8", "Qd8+", "Kh7", "Qd3+", "Kg8"],
       comprueba: { jaque: true, repeticion: true },
       resumen: "Con una pieza de menos y el rey rival al descubierto, una cadena de jaques que no se puede parar salva medio punto.",
-      diagrama: "El negro tiene un caballo de más y amenaza mate, pero la dama blanca va y viene entre d8 y d3 dando jaques que el rey no puede esquivar.",
+      diagrama: "El negro tiene un caballo de más y la partida ganada, pero la dama blanca va y viene entre d8 y d3 con jaques que no se acaban.",
       centro: [
         "Medio punto vale muchísimo cuando la otra opción es perder",
         "Los jaques tienen que ser forzados y repetirse: si el rey se escapa una vez, se acabó",
@@ -1697,7 +1697,7 @@
       pieza: "p",
       jugadas: ["d4", "d5", "c4", "e6", "Nc3", "Nf6"],
       resumen: "Desde el centro las piezas llegan a todas partes; desde el borde, a la mitad.",
-      diagrama: "Los cuatro peones centrales enfrentados en d4, d5, c4 y e6, con los caballos peleando por las mismas casillas.",
+      diagrama: "Los peones enfrentados en d4 y d5, con el de c4 y el de e6 peleando por d5, con los caballos peleando por las mismas casillas.",
       centro: [
         "Un caballo en el centro llega a ocho casillas; en la esquina, a dos",
         "Quien controla el centro decide en qué ala se juega",
@@ -1736,7 +1736,7 @@
       jugadas: ["e4", "e5", "Nf3", "Nc6", "Bc4", "Bc5", "O-O", "Nf6", "d3", "d6", "Nc3", "O-O"],
       comprueba: { enrocados: true },
       resumen: "Sacar todas las piezas y guardar al rey antes de empezar a atacar: en ese orden.",
-      diagrama: "Cada bando con sus dos caballos y su alfil de casillas claras afuera, y los dos reyes ya enrocados detrás de sus tres peones.",
+      diagrama: "Cada bando con sus dos caballos y un alfil afuera, y los dos reyes ya enrocados detrás de sus tres peones.",
       centro: [
         "Una pieza por jugada, y ninguna dos veces en la apertura",
         "El rey se guarda antes de abrir el juego, no después",
@@ -1853,7 +1853,7 @@
       fen: "3r2k1/5ppp/8/8/8/8/5PPP/3R2K1 w - - 0 1",
       comprueba: { columnaAbierta: "d" },
       resumen: "Una torre sin columna es una pieza que mira una pared: la columna abierta es su trabajo.",
-      diagrama: "Las dos torres enfrentadas en la columna d, que no tiene ningún peón: la única línea abierta de la posición.",
+      diagrama: "Las dos torres enfrentadas en la columna d, que no tiene ningún peón: la torre que la domine primero va a entrar en el campo rival.",
       centro: [
         "Una columna sin peones es por donde entran las torres",
         "Quien la ocupa primero y la sostiene es quien entra a la séptima fila",
@@ -2170,7 +2170,7 @@
       fen: "6k1/5ppp/8/3P4/4P3/5P2/2B5/6K1 w - - 0 1",
       comprueba: { alfilMalo: "w" },
       resumen: "Un alfil con todos sus peones en el mismo color de casilla mira una pared: hay que cambiarlo o mover los peones.",
-      diagrama: "El alfil blanco es de casillas claras y sus tres peones —d5, e4 y f3— están todos en casillas claras: le tapan cada diagonal.",
+      diagrama: "El alfil blanco es de casillas claras y sus tres peones —d5, e4 y f3— están todos en casillas claras: le tapan la diagonal grande y le quitan casillas.",
       centro: [
         "Un alfil solo puede pisar la mitad del tablero: la de su color",
         "Si los peones propios están en ese mismo color, lo encierran",
@@ -2597,7 +2597,7 @@
       pieza: "p",
       lineaId: "philidor",
       resumen: "El negro sostiene su peón de e5 con d6 y Cbd7 y arma una posición sólida, sin regalar nada.",
-      diagrama: "Los dos bandos enrocaron; el negro sostiene e5 con d6 y el caballo de d7, y acaba de jugar c6 para preparar b5 o d5.",
+      diagrama: "Los dos bandos enrocaron; el negro sostiene e5 con d6 y el caballo de d7, y jugó c6 para preparar b5 o d5; el blanco contestó a4 para frenar b5.",
       centro: [
         "d6 y Cbd7 sostienen el peón de e5: el negro no suelta el centro",
         "Una posición sólida, fácil de entender y con pocas trampas",
@@ -3131,7 +3131,7 @@
       comprueba: { jaque: true },
       promete: "gana",
       resumen: "El alfil se entrega en h7 con jaque, el caballo salta a g5 y la dama llega a h5: el rey enrocado se queda solo.",
-      diagrama: "El alfil se entrega en h7 con jaque, el caballo salta a g5 con jaque y la dama llega a h5: el rey negro queda solo frente a tres piezas.",
+      diagrama: "El alfil se entrega en h7 con jaque, el caballo salta a g5 con jaque y la dama llega a h5: el rey negro queda solo frente a la dama y el caballo.",
       centro: [
         "El alfil de d3 se entrega en h7 con jaque y el rey queda al descubierto",
         "El caballo salta a g5 con jaque y la dama llega a h5 amenazando mate",
@@ -3411,7 +3411,7 @@
       lineaId: "francesa-avance",
       comprueba: { peonesEn: { color: "w", casillas: ["d4", "e5"] } },
       resumen: "Cuando los peones están trabados, el juego lo decide quién abre y por dónde: eso es una ruptura.",
-      diagrama: "La cadena blanca d4-e5 bloquea el centro; el negro ya golpeó la base con c5 y presiona d4 con el caballo y la dama.",
+      diagrama: "La cadena blanca d4-e5 bloquea el centro; el negro ya golpeó la base con c5 y presiona d4 con el caballo; la dama de b6 ataca b2.",
       centro: [
         "Con los peones trabados, las piezas no pasan: hay que abrir",
         "Una ruptura es un peón que avanza para cambiar y abrir una columna o una diagonal",
@@ -3564,7 +3564,7 @@
       pieza: "n",
       lineaId: "gambito-evans",
       resumen: "Quien amenaza obliga al rival a contestar: así se gana tiempo, y el tiempo puede valer más que un peón.",
-      diagrama: "El blanco entregó el peón de b4 y con c3 y d4 gana tiempos sobre el alfil negro: arma el centro mientras el negro tiene que mover piezas ya desarrolladas.",
+      diagrama: "El blanco entregó el peón de b4 y con c3 le gana un tiempo al alfil negro y con d4 arma el centro mientras el negro tiene que mover piezas ya desarrolladas.",
       centro: [
         "Cada jugada que obliga al rival a contestar es un tiempo ganado",
         "Con la iniciativa, uno elige qué pasa; sin ella, se contesta",
@@ -3607,11 +3607,11 @@
       temaPractica: "mateIn2",
       pieza: "q",
       fen: "6k1/8/5K2/8/8/8/8/7Q w - - 0 1",
-      linea: ["Qh7+", "Kf8", "Qf7#"],
+      linea: ["Qh5", "Kf8", "Qf7#"],
       comprueba: { mateFinal: true },
       promete: "mate",
       resumen: "La dama encierra al rey contra el borde y el rey propio se acerca para el golpe final.",
-      diagrama: "El rey negro está en la orilla y el rey blanco en f6; la dama da jaque en h7, el rey negro solo puede ir a f8 y la dama da mate en f7, sostenida por su rey.",
+      diagrama: "El rey negro está en la orilla y el rey blanco en f6; la dama va a h5 y le quita la columna h, el rey negro solo puede ir a f8 y la dama da mate en f7, sostenida por su rey.",
       centro: [
         "La dama sola no da mate: hace falta el rey propio cerca",
         "Primero se encierra al rey rival contra un borde, después se da el mate",
@@ -3653,7 +3653,7 @@
       comprueba: { mateFinal: true },
       promete: "mate",
       resumen: "La torre corta las filas y el rey propio se pone frente al rival: con los reyes enfrentados, la torre da mate.",
-      diagrama: "El rey blanco se pone en g6, enfrente del rey negro; al negro solo le queda ir a g8 y la torre da mate en la octava fila.",
+      diagrama: "El rey blanco se pone en g6 y le quita g7 y h7 al rey negro; al negro solo le queda ir a g8 y la torre da mate en la octava fila.",
       centro: [
         "La torre corta una fila o una columna y el rey rival no puede pasar",
         "El rey propio se pone enfrente del rival, con una casilla en medio",
@@ -3822,7 +3822,7 @@
       comprueba: { triangulo: true, materialGanado: { color: "w", al_menos: 1 } },
       promete: "gana",
       resumen: "El rey da tres pasos en triángulo y vuelve a la misma casilla: la posición es la misma, pero ahora le toca mover al rival.",
-      diagrama: "El rey blanco hace el triángulo h6-h5-g5 y vuelve a h6, mientras el negro solo puede ir y volver entre f7 y g7; con el negro al mover, el rey blanco entra y se come el peón de e6.",
+      diagrama: "El rey blanco hace el triángulo h6-h5-g5 y vuelve a h6, mientras el negro va y viene entre g7 y f7; así se repite la posición con el negro al mover, el rey blanco entra y se come el peón de e6.",
       centro: [
         "La misma posición puede ganar o empatar según a quién le toque mover",
         "El rey propio da tres pasos en triángulo; el rival solo puede ir y volver en dos",
@@ -3946,7 +3946,7 @@
       linea: ["Qe4+", "Kf2", "Qd3", "Ke1", "Qe3+", "Kd1", "Kb7"],
       promete: "gana",
       resumen: "La dama da jaques hasta obligar al rey rival a ponerse delante de su peón, y en cada respiro el rey propio se acerca.",
-      diagrama: "El peón negro está a un paso de coronar en d1; la dama da jaques hasta que el rey negro tiene que ponerse en d1, delante de su peón, y el rey blanco aprovecha para acercarse.",
+      diagrama: "El peón negro está a un paso de coronar en d1; la dama, con jaques y una jugada que cuida d1, obliga al rey negro a ponerse en d1, delante de su peón, y el rey blanco aprovecha para acercarse.",
       centro: [
         "La dama sola no para el peón: lo para obligando al rey rival a taparlo",
         "Cada vez que el rey rival se pone delante del peón, el rey propio da un paso",
@@ -4065,7 +4065,7 @@
       pieza: "p",
       lineaId: "smith-morra",
       resumen: "Se entrega un peón contra la siciliana y a cambio todas las piezas salen rápido a columnas abiertas.",
-      diagrama: "El blanco tiene un peón menos, pero todas sus piezas afuera; la torre de d1 apunta al peón de d6 y el rey negro sigue en el centro.",
+      diagrama: "El blanco tiene un peón menos, pero casi todas sus piezas afuera; la torre de d1 apunta al peón de d6 y el rey negro sigue en el centro.",
       centro: [
         "c3 ofrece un peón para que el negro no juegue la siciliana que conoce",
         "Si lo toma, el blanco saca las piezas antes que el negro",
@@ -4141,7 +4141,7 @@
       pieza: "b",
       lineaId: "gambito-danes",
       resumen: "Un gambito antiguo y agresivo: el blanco da dos peones para que sus dos alfiles apunten al rey negro.",
-      diagrama: "El blanco dio dos peones; a cambio, el alfil de c4 apunta a f7 y el de b2 a g7, y el negro tiene que cuidarse el rey.",
+      diagrama: "El blanco dio dos peones; a cambio, el alfil de c4 apunta a f7 y el de b2 a la diagonal larga, hacia g7, en cuanto se mueva el caballo de c3, y el negro tiene que cuidarse el rey.",
       centro: [
         "Se ofrecen dos peones para abrir las diagonales de los dos alfiles",
         "El alfil de c4 mira a f7 y el de b2 a g7",
@@ -4255,7 +4255,7 @@
       pieza: "r",
       lineaId: "benko",
       resumen: "El negro entrega un peón del flanco de dama y juega toda la partida con las columnas a y b abiertas.",
-      diagrama: "El negro tiene un peón menos y el blanco perdió el enroque; las columnas a y b están abiertas para las torres negras.",
+      diagrama: "El negro tiene un peón menos y el blanco perdió el enroque; las columnas a y b están semiabiertas para las torres negras.",
       centro: [
         "El negro da el peón de b para abrir las columnas a y b",
         "El blanco come, pero tiene que gastar tiempo y pierde el enroque",
@@ -4871,7 +4871,7 @@
       lineaId: "italiana-giuoco",
       comprueba: { enJaque: true },
       resumen: "El tiempo es una pieza más: se gasta en las jugadas que deciden la partida y se ahorra en las que ya se saben.",
-      diagrama: "El negro acaba de dar jaque con el alfil en b4: el blanco tiene que elegir entre tapar con Ad2, Cbd2 o Cc3 o mover el rey, una decisión que merece tiempo de reloj.",
+      diagrama: "El negro acaba de dar jaque con el alfil en b4: el blanco tiene que elegir entre tapar con Ad2, Cc3, Cbd2 o Cfd2, o mover el rey, una decisión que merece tiempo de reloj.",
       centro: [
         "El tiempo del reloj se reparte: no todas las jugadas valen lo mismo",
         "Las jugadas de apertura que ya se saben van rápido",
@@ -5232,7 +5232,7 @@
       pieza: "b",
       lineaId: "francesa-winawer",
       resumen: "El negro clava el caballo de c3 y lo cambia: le deja al blanco los peones doblados a cambio de su alfil de casillas negras.",
-      diagrama: "El blanco tiene los peones doblados en c2 y c3 y los dos alfiles; el negro presiona c3 con la dama de a5 y el caballo de c6, y la cadena e5-d4 cierra el centro.",
+      diagrama: "El blanco tiene los peones doblados en c2 y c3 y los dos alfiles; el negro presiona c3 con la dama de a5 y d4 con el caballo de c6, y la cadena e5-d4 cierra el centro.",
       centro: [
         "Ab4 clava el caballo de c3 y lo cambia",
         "El blanco queda con los peones doblados en c, pero con los dos alfiles",
@@ -5437,7 +5437,7 @@
       comprueba: { mateFinal: true },
       promete: "mate",
       resumen: "Dos alfiles juntos cubren casillas de los dos colores: uno da el jaque y el otro le quita al rey la única salida.",
-      diagrama: "Los alfiles negros de d4 y e4 apuntan al rey blanco de h1: Axf3 da jaque por una diagonal, el otro alfil cubre g1 y el peón de h2 le tapa la última casilla.",
+      diagrama: "Los alfiles negros de d4 y e4 rodean al rey blanco de h1: Axf3 da jaque por una diagonal, el otro alfil cubre g1 y el peón de h2 le tapa la última casilla.",
       centro: [
         "Cada alfil cubre las casillas de su color",
         "Juntos, le quitan al rey casillas de los dos colores",
@@ -5523,7 +5523,7 @@
       comprueba: { jaque: true, materialGanado: { color: "w", al_menos: 3 } },
       promete: "gana",
       resumen: "Un rey sin peones que lo cubran queda a merced de los jaques: con cada jaque se gana un tiempo y aparece una táctica.",
-      diagrama: "El rey negro no tiene peones delante: Tb8+ lo mueve, el caballo come en g5 con jaque y, en la jugada siguiente, se come la torre de f7.",
+      diagrama: "El rey negro casi no tiene peones alrededor: Tb8+ lo mueve, el caballo come en g5 con jaque y, en la jugada siguiente, se come la torre de f7.",
       centro: [
         "Un rey sin peones delante no tiene donde esconderse",
         "Cada jaque obliga al rival a responder y nos da un tiempo",
@@ -5605,7 +5605,7 @@
       jugadas: ["e4", "e5", "Nf3", "Nc6", "Bc4", "Nf6", "Ng5", "d5", "exd5", "Nxd5", "Nxf7", "Kxf7"],
       comprueba: { cuenta: { color: "w", diferencia: -2 } },
       resumen: "Peón 1, caballo 3, alfil 3, torre 5 y dama 9: con esa cuenta se decide si un cambio conviene, aunque la cuenta no lo es todo.",
-      diagrama: "El blanco dio un caballo por el peón de f7: en la cuenta va dos puntos abajo, pero el rey negro quedó en el medio del tablero y el blanco sigue con Df3+.",
+      diagrama: "El blanco dio un caballo por el peón de f7: en la cuenta va dos puntos abajo, pero el rey negro quedó sin enroque y expuesto en f7, y el blanco sigue con Df3+.",
       centro: [
         "Peón 1, caballo 3, alfil 3, torre 5, dama 9; el rey no se cambia",
         "Antes de cambiar, sumar lo que se da y lo que se recibe",
@@ -6051,7 +6051,7 @@
       fen: "6bk/R7/5K2/8/8/8/8/8 w - - 0 1",
       promete: "tablas",
       resumen: "Torre contra alfil sin peones es tablas si el rey defensor va a la esquina que su alfil NO puede cubrir.",
-      diagrama: "El rey negro está en h8, una esquina oscura, y su alfil va por las blancas: es la esquina buena. Cuando la torre amenaza mate en la octava, el alfil se interpone en g8.",
+      diagrama: "El rey negro está en h8, una esquina oscura, y su alfil va por las blancas: es la esquina buena. Cuando la torre amenaza mate en la octava, el alfil, en g8, se la tapa.",
       centro: [
         "Torre contra alfil, sin peones, suele ser tablas",
         "El rey defensor va a la esquina del color contrario al de su alfil",
@@ -6174,7 +6174,7 @@
       fen: "8/3bk1p1/p3p3/Pp1pP2P/1P1P4/4K3/4B3/8 w - - 0 1",
       comprueba: { alfilesIguales: true, alfilMalo: "b" },
       resumen: "Con alfiles del mismo color, el que tiene sus peones en el otro color tiene el alfil bueno: ataca y no tiene que defender.",
-      diagrama: "Los dos alfiles van por las blancas, pero los peones negros también están en blancas: el alfil negro solo los defiende, mientras los peones blancos están casi todos en negras y su alfil queda libre.",
+      diagrama: "Los dos alfiles van por las blancas, pero casi todos los peones negros también están en blancas: el alfil negro solo los defiende, mientras los peones blancos están casi todos en negras y su alfil queda libre.",
       centro: [
         "Con alfiles del mismo color, importa de qué color están los peones",
         "Los peones en el color del alfil le tapan el camino: es el alfil malo",

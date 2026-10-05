@@ -1535,6 +1535,29 @@ rey expuesto, el sacrificio en h6), 1 apertura (Stonewall) y 4 defensas
   Antes de sumar una ficha, buscar el tema también en los subtítulos.
 - El libro pasó a 162 páginas y las cartas a 17 hojas.
 
+### El pie de cada diagrama, revisado contra su tablero
+
+El pie del diagrama es lo que oye quien no ve el tablero y lo que lee quien
+imprime la ficha. Se revisaron los 152 pies contra su posición, y 32 decían
+algo que el tablero no muestra. Ninguno daba error: la ficha se veía bien.
+
+- **Una línea estaba mal**: en «Mate con rey y dama», Dh7+ dejaba la dama sin
+  defensa (el rey blanco en f6 no llega a h7) y el negro se la comía. El motor
+  confirmaba «mate» porque mira la posición, no la línea de la ficha. Ahora es
+  Dh5 Rf8 Df7#, con Rf8 forzada.
+- **Lo que más se repetía**: ataques tapados (la dama de b6 no ataca d4 con
+  su peón en c5; el alfil de b2 no llega a g7 con el caballo en c3), jugadas
+  contadas en otro orden o en otro tiempo («lo va a echar con d3» cuando d3
+  ya se jugó), un peón llamado aislado que todavía tenía vecino, y cifras de
+  más («la única columna abierta», «tres piezas» cuando el alfil ya se había
+  entregado).
+- **Lo que quedó fijo en `verificar-fichas.js`**: toda «<pieza> de|en
+  <casilla>» del pie tiene que estar en alguna posición de la ficha (la
+  mostrada o alguna de la línea). Cazó dos pies al estrenarse y uno más que
+  se escribió durante la revisión. Lo demás (ataques, enroques, material)
+  no se puede comprobar con una expresión regular: al escribir un pie nuevo,
+  leerlo con el tablero al lado.
+
 ### Lo demás que hace la página
 
 - **Cada ficha tiene su enlace** (`estudio.html?ficha=<id>`), para mandarla por
