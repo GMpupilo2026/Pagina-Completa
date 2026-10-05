@@ -486,9 +486,9 @@ async function pruebaProfesora(browser) {
   igual("cada destino una sola vez", enlacesProfe.filter((h, i) => enlacesProfe.indexOf(h) !== i), []);
   /* Informes es de sus alumnos, no de su cuenta; y el diagnóstico ya no es
      una segunda puerta a Informes (informes.html?tema=diagnostico). */
-  igual("«Tus alumnos»: tareas, exámenes, informes, justificaciones y subgrupos",
+  igual("«Tus alumnos»: tareas, exámenes, informes, justificaciones, la libreta de torneos y subgrupos",
     grupo(grupos, "Tus alumnos").tiles.map((t) => t.enlace),
-    ["tareas.html", "examenes.html", "informes.html", "justificaciones.html", "subgrupos.html"]);
+    ["tareas.html", "examenes.html", "informes.html", "justificaciones.html", "libreta-torneos.html", "subgrupos.html"]);
   igual("una sola puerta a Informes", enlacesProfe.filter((h) => h.startsWith("informes.html")), ["informes.html"]);
   igual("y no se le ofrece ninguna de las dos pruebas",
     await page.evaluate(() => document.querySelectorAll(

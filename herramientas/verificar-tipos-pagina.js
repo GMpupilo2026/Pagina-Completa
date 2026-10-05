@@ -105,7 +105,8 @@ function clienteFalso(conSesion) {
       onAuthStateChange: () => ({ data: { subscription: { unsubscribe() {} } } }),
     },
     from: (n) => tabla(n),
-    rpc: () => Promise.resolve({ data: null, error: null }),
+    // Se anota con qué se llamó cada función de la base (window.__rpcs).
+    rpc: (n, a) => { (window.__rpcs = window.__rpcs || []).push([n, a || null]); return Promise.resolve({ data: null, error: null }); },
     channel: () => ({ on() { return this; }, subscribe() { return this; }, track() { return Promise.resolve(); } }),
     removeChannel: () => {},
   };
@@ -1065,13 +1066,14 @@ window.PreparacionMotor = {
     await page.getByLabel("Elo del rival (si lo sabes)").fill("1450");
     await page.getByLabel("Resultado").selectOption("perdi");
     await page.getByLabel("Torneo (opcional)").fill("Abierto de prueba, ronda 3");
+    await page.getByLabel("Ronda", { exact: true }).fill("3");
     await page.getByRole("button", { name: "Guardar y revisar" }).click();
     await page.waitForFunction(() => /Revisé|ya estaba|No encontré|No se pudieron|No se pudo/.test(document.querySelector('#tipo-extra [role="status"]').textContent), null, { timeout: 15000 }).catch(() => {});
     ok("guarda la partida y la revisa sola", /^Revisé tu partida: 1 error para practicar\./.test(await aviso(page)), await aviso(page));
     const hoy = new Date().toLocaleDateString("en-CA", { timeZone: "America/Costa_Rica" });
     const [fila] = await guardadas(page);
     ok("a la base llegan las jugadas en inglés, comprobadas, y nada del rival salvo su Elo",
-      !!fila && JSON.stringify(Object.keys(fila).sort()) === JSON.stringify(["color", "evento", "fecha", "jugadas", "resultado", "rival_elo"]) &&
+      !!fila && JSON.stringify(Object.keys(fila).sort()) === JSON.stringify(["color", "evento", "fecha", "jugadas", "resultado", "rival_elo", "ronda"]) && fila.ronda === 3 &&
       JSON.stringify(fila.jugadas) === JSON.stringify(JUGADAS) && fila.color === "w" && fila.resultado === "0-1" && fila.rival_elo === 1450 &&
       fila.fecha === hoy && fila.evento === "Abierto de prueba, ronda 3", JSON.stringify(fila));
     const gt = await page.evaluate(() => ({ vistas: Object.keys(JSON.parse(localStorage.getItem("errores_analizadas_v1") || "{}")), ej: Object.values(JSON.parse(localStorage.getItem("errores_propios_v1") || "{}")) }));
@@ -1079,6 +1081,10 @@ window.PreparacionMotor = {
     ok("el ejercicio es la posición del error y dice que es de un torneo", gt.ej.length === 1 && gt.ej[0].fen === fens[6] && /^Partida de torneo del /.test(gt.ej[0].resumen), JSON.stringify(gt.ej.map((x) => [x.id, x.resumen])));
     const ir = await page.getAttribute('#tipo-extra [role="status"] a', "href").catch(() => null);
     ok("y ofrece ir directo al error", ir === "#errores/1/torneo-00000000-0000-4000-8000-000000000001-6", ir);
+    await page.waitForFunction(() => (window.__rpcs || []).some((x) => x[0] === "avisar_partida_torneo"), null, { timeout: 5000 }).catch(() => {});
+    ok("revisada entera, le avisa a su profe UNA vez con cuántos errores salieron",
+      JSON.stringify(await page.evaluate(() => (window.__rpcs || []).filter((x) => x[0] === "avisar_partida_torneo"))) === JSON.stringify([["avisar_partida_torneo", { p_id: "00000000-0000-4000-8000-000000000001", p_errores: 1 }]]),
+      JSON.stringify(await page.evaluate(() => window.__rpcs)));
     // La lista: la suya, con cómo le fue, y se borra en dos pasos.
     await abrirTorneo(page);
     await page.waitForFunction(() => /anotada/.test(document.getElementById("mis-partidas-torneo").textContent), null, { timeout: 5000 }).catch(() => {});

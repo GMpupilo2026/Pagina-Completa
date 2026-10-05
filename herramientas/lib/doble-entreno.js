@@ -47,8 +47,10 @@ function clienteFalso(tablas) {
       // todavía no hay ninguno. Se anota en window.__updates y cambia las filas.
       update(campos) { porActualizar = campos; return q; },
       filas() { return (TABLAS[tabla] || []).filter((f) => filtros.every(([c, v, modo]) => modo === "noNulo" ? f[c] != null : modo === "nulo" ? f[c] == null : modo === "en" ? v.includes(String(f[c])) : modo === "distinto" ? f[c] !== v : modo === "o" ? v.some(([k, x]) => String(f[k]) === x) : f[c] === v)); },
-      maybeSingle() { return Promise.resolve({ data: q.filas()[0] || null, error: null }); },
-      single() { return Promise.resolve({ data: q.filas()[0] || null, error: null }); },
+      // Con un update pendiente (.update().eq().select().maybeSingle()),
+      // primero se escribe y se devuelve la fila ya cambiada, como la base.
+      maybeSingle() { if (porActualizar) return q.then((r) => ({ data: (r.data || [])[0] || null, error: null })); return Promise.resolve({ data: q.filas()[0] || null, error: null }); },
+      single() { if (porActualizar) return q.then((r) => ({ data: (r.data || [])[0] || null, error: null })); return Promise.resolve({ data: q.filas()[0] || null, error: null }); },
       then(r) {
         if (porActualizar) {
           const cambiadas = q.filas();

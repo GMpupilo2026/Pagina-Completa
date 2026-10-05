@@ -682,10 +682,32 @@
     return { legal: true, ok: item.buenas.indexOf(san) >= 0, san: m.san, esLaDeLaPartida: san === item.jugada };
   }
 
+  /* Llevar errores a un plan de clase (js/plan-clase.js): una posición por
+     error, con la pregunta para la clase. Lo usan Informes (todos los errores
+     de un alumno) y la libreta de torneos (los de una partida). `o`: { TEMAS,
+     sanEs }. Devuelve el plan creado. */
+  async function llevarAPlan(sb, PlanClase, profesorId, titulo, elegidos, o) {
+    const op = o || {};
+    const T = op.TEMAS || null;
+    const sanEs = op.sanEs || ((s) => s);
+    const plan = await PlanClase.crearPlan(sb, profesorId, String(titulo).slice(0, 200),
+      "Salen de «Tus propios errores»: la posición antes de cada error de sus partidas. En la clase, pon cada una en el tablero y pregunta qué jugarían.");
+    for (let i = 0; i < elegidos.length; i += 1) {
+      const x = elegidos[i];
+      const tema = x.tema && T && T[x.tema] ? " · " + T[x.tema].nombre.toLowerCase() : "";
+      await PlanClase.agregarItem(sb, plan.id, {
+        orden: i, tipo: "posicion", fen: x.fen,
+        titulo: (String(x.resumen || "Error").slice(0, 80) + tema).slice(0, 200),
+        pregunta: ("¿Qué jugarías? En la partida se jugó " + sanEs(x.jugada) + "; lo bueno: " + x.buenas.map(sanEs).join(" o ") + ".").slice(0, 500),
+      });
+    }
+    return plan;
+  }
+
   const ErroresPropios = {
     CLAVE_EJERCICIOS, CLAVE_VISTAS, CORTE, MAX_PARTIDAS, MAX_EJERCICIOS,
     detectar, ejercicio, temaDelError, temasDe, posiciones, acierta, ejercicios, guardar, vistas, traerPartidas, analizar, deFilas,
-    deLaWeb, leerJugadas, ORIGEN, enLaApertura, lineaDeApertura, JUGADAS_DE_APERTURA,
+    deLaWeb, leerJugadas, llevarAPlan, ORIGEN, enLaApertura, lineaDeApertura, JUGADAS_DE_APERTURA,
     apurado, APURADO, conCelada, completarCeladas, finalDelError, finalDelBanco, curva, tendencia, curvaEnPantalla,
     SITIO_WEB, MAX_WEB, HORAS_WEB, cuentaWeb, guardarCuentaWeb, cargarWeb, sinRevisar,
   };

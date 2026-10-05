@@ -968,6 +968,7 @@
       buscar.disabled = true; traer.disabled = true; anotar.disabled = true; parar.classList.remove("hidden"); detener = false;
       aviso.textContent = solo ? "Buscando tu partida…" : web ? "Trayendo tus últimas partidas de " + SITIO_WEB[web.sitio] + "…" : "Buscando tus partidas terminadas…";
       let primero = null;
+      let resultado = null;
       try {
         let externas = null;
         if (web) {
@@ -983,6 +984,7 @@
           parar: () => detener,
           alAvanzar: (texto) => { aviso.textContent = "Revisando… " + texto; },
         });
+        resultado = r;
         U.cargarPropios();
         if (solo) {
           const lista = r.yaRevisada ? r.deEsa : r.nuevos;
@@ -1020,6 +1022,7 @@
           nuevo.appendChild(ir);
         }
       }
+      return resultado;
     }
     buscar.addEventListener("click", () => buscarErrores(null));
     /* ¿Juegas en Lichess o Chess.com? Sus últimas partidas públicas, por el
@@ -1124,14 +1127,19 @@
     eventoT.type = "text"; eventoT.maxLength = 120; eventoT.autocomplete = "off"; eventoT.placeholder = "Abierto de San José, ronda 3";
     const eloT = el("input", CAMPO + " w-28");
     eloT.type = "number"; eloT.min = "0"; eloT.max = "3500"; eloT.step = "1"; eloT.inputMode = "numeric";
+    const rondaT = el("input", CAMPO + " w-20");
+    rondaT.type = "number"; rondaT.min = "1"; rondaT.max = "30"; rondaT.step = "1"; rondaT.inputMode = "numeric";
     const fila = el("div", "flex flex-wrap items-end gap-3");
-    fila.append(campo("Fecha", fechaT), campo("Jugué con", colorT), campo("Resultado", resultadoT), campo("Elo del rival (si lo sabes)", eloT));
+    fila.append(campo("Fecha", fechaT), campo("Ronda", rondaT), campo("Jugué con", colorT), campo("Resultado", resultadoT), campo("Elo del rival (si lo sabes)", eloT));
     const anotar = el("button", BTN_PRIMARIO + " self-start", "Guardar y revisar");
     anotar.type = "submit";
     formT.append(lJugadas, filaFoto, fila, campo("Torneo (opcional)", eventoT), anotar);
     torneo.appendChild(formT);
     torneo.appendChild(el("p", "text-xs text-brand-500 dark:text-brand-300 mt-2",
-      "Se guarda en tu cuenta y tu profesor la puede ver en tu informe. No anotes el nombre de tu rival: no hace falta para revisarla."));
+      "Se guarda en tu libreta de torneos, y a tu profe le llega un aviso cuando termina de revisarse. No anotes el nombre de tu rival: no hace falta para revisarla."));
+    const aLibreta = el("a", "inline-block mt-2 text-sm font-semibold text-accent-700 dark:text-accent-400 underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400", "📒 Ver mi libreta de torneos →");
+    aLibreta.href = "../libreta-torneos.html";
+    torneo.appendChild(aLibreta);
     const misTorneo = el("ul", "mt-3 space-y-1 text-sm text-brand-700 dark:text-brand-200");
     misTorneo.id = "mis-partidas-torneo";
     torneo.appendChild(misTorneo);
@@ -1188,11 +1196,13 @@
       if (leido.jugadas.length < 10) { aviso.textContent = "Anota al menos 5 jugadas de cada uno: con menos no hay qué revisar."; textoJugadas.focus(); return; }
       if (leido.jugadas.length > 600) { aviso.textContent = "Esa partida es demasiado larga para guardarla (más de 300 jugadas)."; textoJugadas.focus(); return; }
       if (!/^\d{4}-\d{2}-\d{2}$/.test(fechaT.value) || fechaT.value > hoyCR) { aviso.textContent = "Elige el día en que jugaste (no puede ser después de hoy)."; fechaT.focus(); return; }
+      const ronda = rondaT.value.trim() === "" ? null : Number(rondaT.value);
+      if (ronda !== null && !(Number.isInteger(ronda) && ronda >= 1 && ronda <= 30)) { aviso.textContent = "La ronda es un número del 1 al 30 (o déjala vacía)."; rondaT.focus(); return; }
       const elo = eloT.value.trim() === "" ? null : Number(eloT.value);
       if (elo !== null && !(Number.isInteger(elo) && elo >= 0 && elo <= 3500)) { aviso.textContent = "El Elo del rival es un número entre 0 y 3500 (o déjalo vacío)."; eloT.focus(); return; }
       const r = resultadoT.value;
       const partida = {
-        fecha: fechaT.value, color: colorT.value, jugadas: leido.jugadas, rival_elo: elo,
+        fecha: fechaT.value, color: colorT.value, jugadas: leido.jugadas, rival_elo: elo, ronda,
         resultado: r === "tablas" ? "1/2-1/2" : r === "*" ? "*" : RESULTADO[colorT.value][r],
         evento: eventoT.value.trim() || null,
       };
@@ -1210,8 +1220,16 @@
         return;
       }
       anotar.disabled = false;
-      textoJugadas.value = ""; eventoT.value = ""; eloT.value = "";
-      if (id) buscarErrores("torneo:" + id);
+      // El torneo y la fecha se quedan: la próxima ronda suele ser del mismo.
+      textoJugadas.value = ""; eloT.value = ""; rondaT.value = ronda && ronda < 30 ? String(ronda + 1) : "";
+      if (!id) return;
+      const revisada = await buscarErrores("torneo:" + id);
+      /* Revisada entera: se le avisa a su profe, una sola vez, con cuántos
+         errores salieron (avisar_partida_torneo; ver «Mi libreta de
+         torneos»). Si se detuvo a la mitad, no: el número no sería cierto. */
+      if (revisada && revisada.partidas === 1 && !revisada.noEncontrada && !revisada.muyCorta) {
+        try { await sb.rpc("avisar_partida_torneo", { p_id: id, p_errores: revisada.nuevos.length }); } catch (e) { /* el aviso no es lo importante */ }
+      }
     });
     // ?revisar=juego:<id>: se revisa esa partida sola, una vez, y se saca de la
     // dirección (volver atrás o recargar no la vuelve a pedir).

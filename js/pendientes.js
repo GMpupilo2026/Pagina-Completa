@@ -56,6 +56,10 @@
     justificaciones: (sb) => sb.rpc("justificaciones_pendientes"),
     informesSinLeer: (sb, op) => sb.from("informes_profesor").select("id", CABEZA)
       .eq("estado", "enviado").is("leido_at", null).neq("profesor_id", op.yo),
+    // Las partidas de torneo que anotaron sus alumnos esta semana (la RLS ya
+    // acota a los suyos; las propias no cuentan). Ver «Mi libreta de torneos».
+    partidasTorneo: (sb, op) => sb.from("partidas_torneo").select("id", CABEZA)
+      .neq("student_id", op.yo).gte("created_at", new Date(Date.now() - 7 * 864e5).toISOString()),
     seVan: (sb) => {
       const hoy = hoyCR();
       return sb.rpc("respuestas_satisfaccion", { p_desde: hoy.slice(0, 8) + "01", p_hasta: hoy, p_profesor: null, p_solo_se_van: true }, CABEZA);
@@ -115,6 +119,10 @@
       titulo: (n) => pl(n, "recibo de pago por revisar y entregar", "recibos de pago por revisar y entregar"),
       porque: "Se registró el pago y la familia espera su recibo. Revísalo y mándalo por correo o márcalo como entregado en mano.",
       accion: "Revisar", href: "cobros.html#recibos", alDia: "Recibos entregados" },
+    { clave: "partidasTorneo", nivel: "vigilar", emoji: "📒",
+      titulo: (n) => pl(n, "partida de torneo anotada esta semana por tus alumnos", "partidas de torneo anotadas esta semana por tus alumnos"),
+      porque: "Las anotaron de su planilla y el motor ya las revisó: sus errores, lo que pensaban, y llevarlos a la clase.",
+      accion: "Verlas", href: "libreta-torneos.html", alDia: "Ninguna partida de torneo nueva esta semana" },
     { clave: "seVan", nivel: "vigilar", emoji: "🚪",
       titulo: (n) => pl(n, "alumno dijo este mes que no sigue", "alumnos dijeron este mes que no siguen"),
       porque: "Lo contestaron en la encuesta de satisfacción con su profesor.",
