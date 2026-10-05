@@ -1666,6 +1666,40 @@ rey expuesto, el sacrificio en h6; los dos mates pasaron después a Mates), 1 ap
   Antes de sumar una ficha, buscar el tema también en los subtítulos.
 - El libro pasó a 162 páginas y las cartas a 17 hojas.
 
+### Las fichas para quien no ve: la versión accesible
+
+El dueño pidió un documento «100 % adaptado para ciegos, con índice para buscar
+y llegar directo». Es `material/fichas-de-estudio/fichas-de-estudio-accesible.html`,
+el tercer archivo de lo que se vende (y se baja desde el recuadro de Estudio,
+primero de los tres).
+
+- **Es HTML y no PDF, a propósito**: la misma decisión del material de los
+  cursos y del libro del diagnóstico. Un PDF con diagramas es lo peor que se le
+  puede dar a un lector de pantalla. No tiene una sola imagen ni un script: se
+  abre suelto, hasta sin red.
+- **Cómo se llega directo a una ficha**: los encabezados van en orden (h1 el
+  documento, h2 cada categoría, h3 cada ficha, h4 cada bloque), así que con la
+  tecla H, 2 o 3 del lector se salta de ficha en ficha; hay un índice por
+  categoría y otro alfabético por la palabra que importa («Horquilla, la»), con
+  las letras como atajos; cada ficha lleva su número («Ficha 65») y termina con
+  «Volver al índice». Arriba se explica cómo moverse, con las teclas de NVDA,
+  JAWS y VoiceOver. **No lleva buscador con código** porque se abre suelto: la
+  búsqueda del navegador y la lista de enlaces del lector lo hacen.
+- **Cada posición va contada pieza por pieza** (`lib/describir-fen.js`, la de
+  los cursos) y **cada jugada dicha** («caballo felix 7 jaque»,
+  `lib/notacion.js`): la línea sale de chess.js, numerada, y la prosa pasa por
+  `textoHablado`. La ficha de la notación algebraica deja sus jugadas escritas
+  (`data-notacion="escrita"`), porque ahí lo que se aprende es a escribirlas.
+- **Sale del mismo banco y del mismo generador** que el libro y las cartas
+  (`fichas-estudio-pdf.js`; `--solo-accesible` la rehace sin sitio ni PDF), así
+  que dice lo mismo que el papel. `verificar-fichas-pdf.py` comprueba que esté al
+  día, sin imágenes ni scripts, con un solo h1 y sin saltos de nivel, con todos
+  los enlaces internos llevando a algo que existe y las 198 fichas en orden, en
+  los dos índices, numeradas, con su posición y su «Volver al índice». Se rompió
+  a propósito (una imagen, un h6, un enlace roto) y salta.
+- Los colores están medidos: texto 16,6:1 y enlaces 8,4:1 en claro; 14,8:1 y
+  10,2:1 en oscuro; el foco, 4,7:1 y 10,5:1.
+
 ### La séptima tanda: de 184 a 198 fichas
 
 Catorce fichas que eligió el dueño de la Academia de la lista de lo que

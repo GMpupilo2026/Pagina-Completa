@@ -27,9 +27,17 @@
  * En los dos, el tablero muestra la posición del FINAL de la línea, que es la
  * que describe el pie de la ficha (igual que al imprimir desde la página).
  *
- * La versión accesible de este material es la propia página de Estudio, que se
- * lee completa con lector de pantalla y se recorre con el teclado: no hace
- * falta un tercer archivo.
+ *   fichas-de-estudio-accesible.html
+ *                                  Las mismas fichas para quien no ve: sin una
+ *                                  sola imagen, con un índice por categoría y
+ *                                  otro alfabético que llevan directo a cada
+ *                                  ficha, cada posición contada pieza por pieza
+ *                                  y cada jugada dicha («caballo felix 3»). Sale
+ *                                  del mismo banco, así que dice lo mismo que el
+ *                                  papel. La página de Estudio también se lee con
+ *                                  lector de pantalla, pero es una ficha por vez:
+ *                                  el dueño pidió un documento entero, con índice,
+ *                                  para buscar y llegar directo.
  *
  * Al tocar el banco de fichas, o la ficha impresa, hay que volver a correrlo o
  * el papel deja de coincidir con la pantalla.
@@ -41,6 +49,7 @@
  *     node herramientas/fichas-estudio-pdf.js
  *     node herramientas/fichas-estudio-pdf.js --solo-cartas
  *     node herramientas/fichas-estudio-pdf.js --solo-libro
+ *     node herramientas/fichas-estudio-pdf.js --solo-accesible   # sin sitio, sin PDF
  */
 "use strict";
 const fs = require("fs");
@@ -68,7 +77,7 @@ const NIVEL = { 1: "Principiante", 2: "Intermedio", 3: "Avanzado" };
 const COLOR_CAT = { apertura: "#a1670f", defensa: "#2c5f7f", tactica: "#8c2f3f", mate: "#a01a6b", concepto: "#2c6b4f", final: "#5b3e8a" };
 const COLOR_BLOQUE = ["#486581", "#2c6b4f", "#a8371a", "#2c5f7f", "#8c2f3f"];
 
-const solo = process.argv.includes("--solo-cartas") ? "cartas" : process.argv.includes("--solo-libro") ? "libro" : "";
+const solo = process.argv.includes("--solo-cartas") ? "cartas" : process.argv.includes("--solo-libro") ? "libro" : process.argv.includes("--solo-accesible") ? "accesible" : "";
 
 const esc = (t) => String(t).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 const incrustar = (rel) => "data:image/png;base64," + fs.readFileSync(path.join(RAIZ, rel)).toString("base64");
@@ -475,6 +484,214 @@ with open(destino, "wb") as f:
   }
 }
 
+/* ===================== La versión accesible =====================
+   Un HTML sin una sola imagen, hecho para leerse con lector de pantalla (o con
+   la letra agrandada). Es la misma decisión del material de los cursos y del
+   libro del diagnóstico: un PDF con diagramas es lo peor que se le puede dar a
+   un lector de pantalla.
+
+   Cómo se llega a una ficha sin leer todo:
+   - los encabezados van en orden (h1 el documento, h2 cada parte y cada
+     categoría, h3 cada ficha, h4 cada bloque), así que con la tecla H del
+     lector se salta de ficha en ficha y con 2 o 3, por niveles;
+   - hay dos índices con enlaces: por categoría (en el orden del libro) y
+     alfabético por la palabra que importa («Horquilla, la»), con las letras
+     como atajos;
+   - cada ficha lleva su número («Ficha 37»), así que se encuentra buscando
+     «Ficha 37» o su nombre, y termina con «Volver al índice».
+   No lleva buscador con código: un documento que se baja y se abre suelto,
+   hasta sin red, no puede depender de un script. La búsqueda del navegador y
+   la lista de enlaces del lector (Insert + F7) hacen ese trabajo. */
+const N = require("./lib/notacion.js");
+const { describir } = require("./lib/describir-fen.js");
+
+/* La línea de la ficha, numerada y dicha: «1. peón eva 4, peón eva 5, 2. …».
+   Sale de chess.js y no del texto, para que la jugada sea la que se jugó. */
+function lineaDicha(fenInicio, jugadas) {
+  const g = new Chess();
+  if (fenInicio) g.load(fenInicio);
+  const partes = [];
+  let num = fenInicio ? +fenInicio.split(" ")[5] : 1;
+  jugadas.forEach((j, i) => {
+    const blancas = g.turn() === "w";
+    const m = g.move(j, { sloppy: true });
+    if (!m) throw new Error(`Jugada ilegal ${j}`);
+    const dicha = N.sanHablada(m.san);
+    if (blancas) partes.push(`${num}. ${dicha}`);
+    else partes.push(i === 0 ? `${num}… ${dicha}` : dicha);
+    if (!blancas) num += 1;
+  });
+  return partes.join(", ");
+}
+
+function posicionContada(fen) {
+  const d = describir(fen);
+  return `${d.turno} Piezas blancas: ${esc(d.blancas)}. Piezas negras: ${esc(d.negras)}.`;
+}
+
+// Para el índice alfabético: «La horquilla» se busca por «horquilla».
+const ARTICULO = /^(el|la|los|las)\s+/i;
+const sinTilde = (t) => t.normalize("NFD").replace(/[̀-ͯ]/g, "");
+function claveAlfabetica(titulo) {
+  const m = titulo.match(ARTICULO);
+  const resto = titulo.replace(ARTICULO, "");
+  const nombre = resto.charAt(0).toUpperCase() + resto.slice(1) + (m ? ", " + m[1].toLowerCase() : "");
+  return { nombre, orden: sinTilde(resto).toLowerCase(), letra: sinTilde(resto).charAt(0).toUpperCase() };
+}
+
+function htmlAccesible() {
+  const todas = ORDEN.flatMap((g) => g.fichas);
+  const numero = new Map(todas.map((F, i) => [F.id, i + 1]));
+  const NIVEL_MIN = { 1: "principiante", 2: "intermedio", 3: "avanzado" };
+
+  const indiceCategorias = ORDEN.map(({ cat, fichas }) => `
+    <h3 id="indice-${cat.id}">${esc(cat.etiqueta)}: ${esc(cat.sub)}, ${fichas.length} fichas</h3>
+    <ol>${fichas.map((F) => `<li value="${numero.get(F.id)}"><a href="#ficha-${F.id}">${esc(F.titulo)}</a>, nivel ${NIVEL_MIN[F.nivel]}</li>`).join("")}</ol>
+    <p><a href="#cat-${cat.id}">Ir a las fichas de ${esc(cat.etiqueta)}</a></p>`).join("");
+
+  const alfa = todas.map((F) => ({ F, ...claveAlfabetica(F.titulo) })).sort((a, b) => a.orden.localeCompare(b.orden, "es"));
+  const letras = [...new Set(alfa.map((x) => x.letra))];
+  const indiceAlfabetico = `
+    <p>Saltar a una letra: ${letras.map((l) => `<a href="#letra-${l}">${l}</a>`).join(" · ")}.</p>
+    ${letras.map((l) => `<h3 id="letra-${l}">Letra ${l}</h3><ul>${alfa.filter((x) => x.letra === l)
+      .map((x) => `<li><a href="#ficha-${x.F.id}">${esc(x.nombre)}</a>, ficha ${numero.get(x.F.id)}, ${esc(etiquetaCat(x.F.categoria))}</li>`).join("")}</ul>`).join("")}`;
+
+  const fichas = ORDEN.map(({ cat, fichas }) => `
+  <section aria-labelledby="cat-${cat.id}">
+    <h2 id="cat-${cat.id}">${esc(cat.etiqueta)}: ${esc(cat.sub)}</h2>
+    <p>${fichas.length} fichas. <a href="#indice-${cat.id}">Ver la lista de ${esc(cat.etiqueta)} en el índice</a>.</p>
+    ${fichas.map((F) => fichaAccesible(F, cat, numero.get(F.id), todas.length)).join("")}
+  </section>`).join("");
+
+  return `<!doctype html>
+<html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Fichas de estudio — versión accesible</title>
+<style>
+  :root { color-scheme: light dark; }
+  body { max-width: 44rem; margin: 0 auto; padding: 1.5rem 1rem 4rem; background: #fff; color: #10202e;
+         font-family: Georgia, "Times New Roman", serif; font-size: 1.2rem; line-height: 1.8; }
+  h1 { font-size: 2rem; line-height: 1.25; }
+  h2 { font-size: 1.55rem; margin-top: 3rem; border-bottom: 3px solid #10202e; padding-bottom: .3rem; }
+  h3 { font-size: 1.3rem; margin-top: 2.4rem; }
+  h4 { font-size: 1.05rem; margin: 1.4rem 0 .3rem; font-family: system-ui, sans-serif; letter-spacing: .02em; }
+  section.ficha { border-top: 2px solid #c9d4de; margin-top: 2rem; }
+  .posicion { background: #f1f5f8; padding: .7rem .9rem; }
+  .fen { display: block; font-family: ui-monospace, monospace; font-size: .85em; word-break: break-all; }
+  a { color: #0b4f8a; text-underline-offset: .2em; }
+  a:focus-visible { outline: 3px solid #b35c00; outline-offset: 3px; }
+  ul, ol { padding-left: 1.6rem; } li { margin-bottom: .35rem; }
+  .volver { font-family: system-ui, sans-serif; font-size: 1rem; }
+  footer { margin-top: 3rem; border-top: 1px solid #c9d4de; padding-top: 1rem; font-size: 1rem; }
+  @media (prefers-color-scheme: dark) {
+    body { background: #10202e; color: #eef3f7; }
+    h2 { border-color: #eef3f7; }
+    .posicion { background: #1b3145; }
+    a { color: #9fd0ff; }
+    a:focus-visible { outline-color: #ffc46b; }
+    section.ficha, footer { border-color: #3b5165; }
+  }
+</style>
+</head><body>
+<nav aria-label="Volver a Estudio"><p><a href="../../entreno/estudio.html">Volver a Estudio, en Entrenamiento</a></p></nav>
+<main>
+<h1>Fichas de estudio de Ajedrez Integral</h1>
+<p>Las ${todas.length} fichas de Estudio, escritas para leerse con lector de pantalla o con la letra agrandada.
+Es el mismo contenido del libro en papel, sin una sola imagen: cada posición va contada pieza por pieza
+y cada jugada va dicha en palabras.</p>
+
+<h2 id="como-usar">Cómo moverse por este documento</h2>
+<ul>
+  <li>Cada ficha es un encabezado de nivel 3, y cada categoría, uno de nivel 2. Con el lector de pantalla,
+  la tecla H salta de encabezado en encabezado; la tecla 2 salta de categoría en categoría y la tecla 3,
+  de ficha en ficha.</li>
+  <li>Hay dos índices con enlaces que llevan directo a cada ficha: uno por categoría, en el orden del libro,
+  y otro alfabético. La lista de enlaces del lector (Insert más F7 en NVDA y JAWS, o el rotor en VoiceOver)
+  también sirve para buscar una ficha por su nombre.</li>
+  <li>Cada ficha tiene su número, del 1 al ${todas.length}. Para llegar a una, se puede buscar «Ficha 37»
+  o su nombre con la búsqueda del navegador (Control más F, o Comando más F en Mac).</li>
+  <li>Al final de cada ficha hay un enlace para volver al índice.</li>
+  <li>Cada ficha trae: de qué trata, su nivel, la idea principal, cuatro bloques, la posición contada
+  pieza por pieza, las jugadas dichas y lo que muestra la posición. Al final va la FEN, por si se quiere
+  cargar la posición en un programa de ajedrez.</li>
+</ul>
+
+<nav aria-labelledby="indice">
+<h2 id="indice">Índice por categoría</h2>
+<p>Seis categorías: ${ORDEN.map(({ cat, fichas }) => `<a href="#indice-${cat.id}">${esc(cat.etiqueta)}</a> (${fichas.length})`).join(", ")}.
+También hay un <a href="#indice-alfabetico">índice alfabético</a>.</p>
+${indiceCategorias}
+</nav>
+
+<nav aria-labelledby="indice-alfabetico">
+<h2 id="indice-alfabetico">Índice alfabético</h2>
+<p>Las fichas ordenadas por la palabra que importa: «La horquilla» está en la H, como «Horquilla, la».</p>
+${indiceAlfabetico}
+<p><a href="#indice">Volver al índice por categoría</a></p>
+</nav>
+
+${fichas}
+</main>
+<footer>
+  <p>Ajedrez Integral · Oscar Angulo Cubero. Las posiciones están comprobadas con chess.js, y las que
+  prometen un resultado (mate, gana o tablas), con el motor Stockfish.</p>
+  <p><a href="#indice">Volver al índice</a> · <a href="../../entreno/estudio.html">Volver a Estudio, en Entrenamiento</a></p>
+</footer>
+</body></html>
+`;
+}
+
+const etiquetaCat = (id) => (CATEGORIAS.find((c) => c.id === id) || {}).etiqueta || id;
+
+function fichaAccesible(F, cat, n, total) {
+  // La ficha que enseña a anotar deja sus jugadas escritas: ahí «Cf3» es lo que
+  // se aprende. Lo respeta verificar-notacion-espanola.js.
+  const escrita = F.id === "notacion-algebraica";
+  const decir = (t) => esc(escrita ? t : N.textoHablado(t, "espanol"));
+  const titulos = TITULOS[F.categoria];
+  const NIVEL_MIN = { 1: "principiante", 2: "intermedio", 3: "avanzado" };
+  const jugadas = jugadasDe(F);
+  let posicion;
+  if (F.fen) {
+    posicion = `<p class="posicion"><strong>La posición de partida.</strong> ${posicionContada(F.fen)}</p>` +
+      (jugadas.length ? `<p><strong>Las jugadas.</strong> ${esc(lineaDicha(F.fen, jugadas))}.</p>
+        <p class="posicion"><strong>Cómo queda al final.</strong> ${posicionContada(fenFinal(F))}</p>` : "");
+  } else {
+    posicion = `<p><strong>Las jugadas, desde el principio.</strong> ${esc(lineaDicha(null, jugadas))}.</p>
+      <p class="posicion"><strong>La posición al final de la línea.</strong> ${posicionContada(fenFinal(F))}</p>`;
+  }
+  return `
+    <section class="ficha" id="ficha-${F.id}" aria-labelledby="titulo-${F.id}"${escrita ? ' data-notacion="escrita"' : ""}>
+      <h3 id="titulo-${F.id}">Ficha ${n}. ${esc(F.titulo)}</h3>
+      <p>${esc(cat.etiqueta)}, nivel ${NIVEL_MIN[F.nivel]}. ${decir(F.subtitulo)}.</p>
+      <p>${decir(F.resumen)}</p>
+      <h4>${esc(titulos[0])}</h4>
+      <ul>${F.centro.map((r) => `<li>${decir(r)}</li>`).join("")}</ul>
+      ${F.bloques.map((b, i) => `<h4>${esc(titulos[i + 1])}</h4><ul>${b.map((r) => `<li>${decir(r)}</li>`).join("")}</ul>`).join("")}
+      <h4>La posición</h4>
+      ${posicion}
+      <p><strong>Qué muestra.</strong> ${decir(F.diagrama)}</p>
+      <p class="fen">FEN de la posición final, para cargarla en un programa: ${esc(fenFinal(F))}</p>
+      <p class="volver"><a href="#indice">Volver al índice</a> · <a href="#indice-${cat.id}">Volver a la lista de ${esc(cat.etiqueta)}</a> · ficha ${n} de ${total}</p>
+    </section>`;
+}
+
+const DESTINO_ACCESIBLE = path.join(DESTINO, "fichas-de-estudio-accesible.html");
+function escribirAccesible() {
+  fs.mkdirSync(DESTINO, { recursive: true });
+  fs.writeFileSync(DESTINO_ACCESIBLE, htmlAccesible());
+  return DESTINO_ACCESIBLE;
+}
+
+module.exports = { htmlAccesible, DESTINO_ACCESIBLE };
+
+if (require.main === module) {
+  if (solo === "" || solo === "accesible") console.log(`✓ ${path.relative(RAIZ, escribirAccesible())}`);
+  if (solo !== "accesible") generarPapel();
+}
+
+function generarPapel() {
 (async () => {
   try {
     await fetch(BASE + "/entreno/estudio.html").then((r) => { if (!r.ok) throw new Error(r.status); });
@@ -496,3 +713,4 @@ with open(destino, "wb") as f:
     await browser.close();
   }
 })().catch((e) => { console.error("✗ " + e.message); process.exit(1); });
+}

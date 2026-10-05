@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""Comprueba los dos PDF de las fichas de Estudio (material/fichas-de-estudio/).
+"""Comprueba los dos PDF de las fichas de Estudio (material/fichas-de-estudio/)
+y su versión accesible.
 
 Los arma herramientas/fichas-estudio-pdf.js a partir del banco de fichas
 (js/fichas-estudio.js) y de la ficha impresa de entreno/estudio.html. Un PDF
@@ -15,7 +16,10 @@ página equivocada. Lo que se comprueba:
   - las cartas: dos páginas (frente y reverso) por cada nueve fichas, y que
     cada ficha aparezca en las dos caras con su título;
   - que las tildes y las eñes hayan llegado;
-  - que la ficha de la tienda prometa las fichas, páginas y cartas que hay.
+  - que la ficha de la tienda prometa las fichas, páginas y cartas que hay;
+  - la versión accesible: al día con el banco, sin imágenes, con los
+    encabezados en orden, las 198 fichas en los dos índices y cada enlace
+    llevando a algo que existe.
 
 Si falla, casi siempre basta con volver a generar:
     python3 -m http.server 8777 & node herramientas/fichas-estudio-pdf.js
@@ -130,8 +134,53 @@ if tienda:
     ok(f"promete {n} fichas", pz.get("fichas") == n, f"dice {pz.get('fichas')}")
     ok(f"promete {paginas_libro} páginas de libro", pz.get("paginas") == paginas_libro, f"dice {pz.get('paginas')}")
     ok(f"promete {n} cartas", pz.get("cartas") == n, f"dice {pz.get('cartas')}")
-    ok("vende los dos archivos", sorted(tienda.get("archivos", [])) == sorted(
-        ["material/fichas-de-estudio/fichas-de-estudio-libro.pdf", "material/fichas-de-estudio/fichas-de-estudio-cartas.pdf"]))
+    ok("promete la versión accesible", pz.get("accesibles") == 1, f"dice {pz.get('accesibles')}")
+    ok("vende los tres archivos", sorted(tienda.get("archivos", [])) == sorted(
+        ["material/fichas-de-estudio/fichas-de-estudio-libro.pdf", "material/fichas-de-estudio/fichas-de-estudio-cartas.pdf",
+         "material/fichas-de-estudio/fichas-de-estudio-accesible.html"]))
+
+print("\n=== La versión accesible ===")
+# Es lo único que puede leer quien no ve: si se rompe, la página se ve bien
+# (no tiene nada que ver) y para esa persona el documento deja de servir.
+ACCESIBLE = os.path.join(CARPETA, "fichas-de-estudio-accesible.html")
+existe = os.path.exists(ACCESIBLE)
+ok("existe fichas-de-estudio-accesible.html", existe)
+if existe:
+    html = open(ACCESIBLE, encoding="utf-8").read()
+    al_dia = subprocess.check_output(
+        ["node", "-e", "process.stdout.write(require('./herramientas/fichas-estudio-pdf.js').htmlAccesible())"],
+        cwd=RAIZ, text=True)
+    ok("está al día con el banco (si no: node herramientas/fichas-estudio-pdf.js --solo-accesible)", html == al_dia)
+    ok("en español (lang=\"es\") y con su título", 'lang="es"' in html and "<title>" in html)
+    # Sin imágenes ni código: no hace falta ver nada, y se abre suelto, sin red.
+    ok("sin una sola imagen ni script", not re.search(r"<(img|svg|canvas|script|picture|video)\b", html, re.I),
+       ", ".join(sorted(set(re.findall(r"<(img|svg|canvas|script|picture|video)\b", html, re.I)))))
+    # Los encabezados son el mapa del lector de pantalla: uno solo de nivel 1
+    # y ninguno que salte un nivel (de un h2 a un h4 se pierde el hilo).
+    niveles = [int(x) for x in re.findall(r"<h([1-6])\b", html)]
+    saltos = [f"h{a}→h{b}" for a, b in zip(niveles, niveles[1:]) if b > a + 1]
+    ok("un solo encabezado de nivel 1, y es el primero", niveles[:1] == [1] and niveles.count(1) == 1)
+    ok("los encabezados no saltan niveles", not saltos, ", ".join(saltos[:5]))
+    # Cada enlace del índice lleva a algo que existe: un enlace roto es un
+    # callejón sin salida para quien navega con el teclado.
+    ids = set(re.findall(r'\bid="([^"]+)"', html))
+    rotos = sorted({h for h in re.findall(r'href="#([^"]+)"', html) if h not in ids})
+    ok("todos los enlaces internos llevan a algo que existe", not rotos, ", ".join(rotos[:5]))
+    # Las 198 fichas, en el orden del libro, cada una con su número, en los dos
+    # índices, con la posición contada y su «Volver al índice».
+    orden = [F["id"] for c in banco["c"] for F in banco["f"] if F["c"] == c]
+    en_doc = re.findall(r'<section class="ficha" id="ficha-([^"]+)"', html)
+    ok(f"trae las {n} fichas, en el orden del libro", en_doc == orden, f"trae {len(en_doc)}")
+    enlazadas = {i: html.count(f'href="#ficha-{i}"') for i in orden}
+    pocas = [i for i, k in enlazadas.items() if k < 2]
+    ok("cada ficha está en los dos índices (por categoría y alfabético)", not pocas, ", ".join(pocas[:5]))
+    trozos = re.split(r'<section class="ficha"', html)[1:]
+    sin_pos = [orden[k] for k, t in enumerate(trozos) if "Piezas blancas:" not in t or "Piezas negras:" not in t]
+    ok("cada ficha cuenta su posición pieza por pieza", not sin_pos, ", ".join(sin_pos[:5]))
+    sin_volver = [orden[k] for k, t in enumerate(trozos) if 'href="#indice"' not in t]
+    ok("cada ficha termina con «Volver al índice»", not sin_volver, ", ".join(sin_volver[:5]))
+    numeros = [int(x) for x in re.findall(r'<h3 id="titulo-[^"]+">Ficha (\d+)\.', html)]
+    ok("las fichas van numeradas del 1 al final, sin huecos", numeros == list(range(1, n + 1)))
 
 print(f"\n✗ {fallos} problema(s)." if fallos else "\n✓ Todo bien.")
 sys.exit(1 if fallos else 0)
