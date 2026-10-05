@@ -53,7 +53,7 @@ RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # forma confiable por convención de nombre — sí se puede, y ya se hizo,
 # revisando el patrón de cada archivo antes de escribir esta lista.
 PAGINAS = [
-    "admin-jugador.html", "admin.html", "arbitraje.html", "asistencia.html",
+    "admin-jugador.html", "admin.html", "jdn.html", "arbitraje.html", "asistencia.html",
     "cartas.html",
     "ciegos.html", "clases.html", "cobros.html", "concentracion.html",
     "configuracion.html", "crazyhouse.html", "cuatro-jugadores.html",
@@ -597,6 +597,7 @@ NOMBRE_Y_PADRE = {
     "clases.html": ("Academia", None),
     "admin.html": ("Administración", "clases.html"),
     "admin-jugador.html": ("Base de datos de jugadores", "admin.html"),
+    "jdn.html": ("Ficha de los JDN 2027", "admin.html"),
     "inscripciones.html": ("Inscripciones a torneos", "admin.html"),
     "novedades.html": ("Actualizaciones", "admin.html"),
     "arbitraje.html": ("Examen de arbitraje", "clases.html"),

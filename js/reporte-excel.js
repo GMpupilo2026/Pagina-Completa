@@ -74,6 +74,9 @@ window.ReporteExcel = (function () {
         if (!partes[n]) return null;
         return new TextDecoder().decode(await descomprimir(partes[n].bytes, partes[n].metodo));
       },
+      // Los bytes tal cual (una imagen, una fuente): lo usa la ficha de los
+      // JDN (js/jdn-consentimiento.js) para volver a armar la plantilla.
+      bytes: async (n) => (partes[n] ? descomprimir(partes[n].bytes, partes[n].metodo) : null),
       nombres: () => Object.keys(partes),
     };
   }
