@@ -3175,6 +3175,36 @@ Competir, desde «Tus propios errores» y, quien da clase, desde su panel.
   plan de clase y la lista de sus alumnos) y `verificar-tipos-pagina.js` (la
   ronda y el aviso al anotar).
 
+### La partida contra lo que había preparado
+
+Al anotar la partida, **«¿La preparaste?»** ofrece sus planes: los de
+«Prepárate tú» (los últimos 8 quedan en ESTE navegador, `plan_propio_guardados_v1`,
+solo el árbol de jugadas) y los que le mandó su profe (`planes_rival_alumno`,
+lo que la RLS le deja leer: los suyos). Al guardar,
+`ErroresPropios.compararConPlan()` recorre la partida por el árbol del plan
+hasta la primera jugada que no está y dice **quién se salió** (él o su
+rival), en qué jugada, cuál fue la última que coincidió y qué esperaba el
+plan; o que siguió hasta el final del plan.
+
+- **Se guarda la foto** en `partidas_torneo.preparacion` (como un acta): el
+  plan propio vive solo en su navegador y el del profe puede borrarse, y lo
+  que pasó en ESA partida no cambia. Pesa unos pocos bytes; la base acota a
+  4000.
+- **El plan tiene que ser del color con que jugó**: uno con negras para una
+  partida con blancas se dice y no se guarda.
+- Se dice en palabras (`textoPreparacion()`, a «tú» o a «él»), debajo de lo
+  que encontró el motor al guardarla y en su libreta («🎯 La partida siguió
+  tu preparación contra PedroP hasta 2.Cf3; ahí tu rival jugó 2…Cf6, que el
+  plan no esperaba (el plan decía 2…Cc6)»). Lo guardado no se le cree al
+  navegador: una «jugada» sin forma de jugada no se escribe.
+- Por qué: prepararse bien también se aprende. Ver dónde se salió el rival
+  (la línea que no esperaba) o dónde se salió uno mismo (la que no se sabía)
+  dice qué preparar distinto la próxima vez.
+- Lo prueban `verificar-errores-propios.js` (las dos funciones),
+  `verificar-tipos-pagina.js` (las opciones, el color que no coincide, lo que
+  se guarda y lo que dice), `verificar-libreta-torneos.js` (en la libreta) y
+  `verificar-preparacion-rivales.js` (que «Prepárate tú» deja el plan).
+
 ### El tipo 19: Salva las tablas
 
 El espejo de Remata la ventaja: al alumno le falta material, pero el motor

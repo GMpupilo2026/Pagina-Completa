@@ -1956,6 +1956,10 @@ async function pruebaPropio(browser) {
   cierto("y se puede entrenar como el del profe: " + vista.progreso, /^Te salen sin errores 0 de \d+ línea/.test(vista.progreso));
   // (El tiempo en la página sí se anota, como en cualquier página: platform_activity_log.)
   igual("no se guarda nada en la base: ni el plan ni el análisis", await page.evaluate(() => window.__insertados.filter((x) => /plan|prepara/.test(x.tabla)).length), 0);
+  igual("el plan queda en este navegador, para compararlo con la partida del torneo (solo el árbol)", await page.evaluate(() => {
+    const l = JSON.parse(localStorage.getItem("plan_propio_guardados_v1") || "[]");
+    return l.length + " · " + l[0].rival + " · " + l[0].lado + " · " + l[0].plan[0].san + " · " + Object.keys(l[0].plan[0]).sort().join(",");
+  }), "1 · PedroP · conBlancas · e4 · hijos,quien,san");
   igual("el rival y el color quedan para la próxima vez (en este navegador)", await page.evaluate(() => localStorage.getItem("plan_propio_ultimo_v1")), JSON.stringify({ sitio: "lichess", usuario: "PedroP", color: "w" }));
   await (await page.$("main")).screenshot({ path: "/tmp/plan-propio.png" }).catch(() => {});
   // El 404 es el de «nadie», que el Lichess de mentira contesta a propósito.

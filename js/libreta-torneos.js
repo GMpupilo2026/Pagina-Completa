@@ -110,6 +110,10 @@
     li.appendChild(el("p", "text-sm text-brand-600 dark:text-brand-300",
       nErr === null ? "Todavía no se revisó con el motor." : nErr === 0 ? "El motor no encontró errores grandes." : "El motor encontró " + (nErr === 1 ? "1 error" : nErr + " errores") + "."));
 
+    // Cómo le fue con lo que había preparado (la foto que se guardó al anotarla).
+    const prep = E && p.preparacion ? E.textoPreparacion(p.preparacion, ctx.tu, sanEs) : "";
+    if (prep) { const x = el("p", "text-sm text-brand-700 dark:text-brand-100 mt-1"); x.dataset.preparacion = ""; x.append(el("span", null, "🎯 "), document.createTextNode(prep)); x.firstChild.setAttribute("aria-hidden", "true"); li.appendChild(x); }
+
     // Lo que pensaba, a la vista (también al imprimir).
     const lista = el("ul", "mt-2 space-y-1 text-sm text-brand-700 dark:text-brand-100");
     lista.dataset.comentarios = "";
@@ -270,7 +274,7 @@
       nombre = data.full_name || "este alumno";
     }
     const [partidas, historial, estado] = await Promise.all([
-      sb.from("partidas_torneo").select("id, evento, ronda, fecha, color, resultado, rival_elo, jugadas, comentarios, errores, created_at")
+      sb.from("partidas_torneo").select("id, evento, ronda, fecha, color, resultado, rival_elo, jugadas, comentarios, errores, preparacion, created_at")
         .eq("student_id", alumno).order("fecha", { ascending: false }).range(0, 199),
       sb.from("elo_historial").select("periodo, fide_estandar, nacional").eq("student_id", alumno).order("periodo", { ascending: true }).range(0, 299),
       E ? sb.from("training_state").select("key, value").eq("student_id", alumno).in("key", [E.CLAVE_EJERCICIOS]) : Promise.resolve({ data: [] }),

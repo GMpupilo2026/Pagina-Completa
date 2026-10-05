@@ -1033,13 +1033,22 @@ window.PreparacionMotor = {
     const filas = {
       game_rooms: [], practice_games: [], practice_sessions: [],
       partidas_torneo: [{ id: "00000000-0000-4000-8000-0000000000ff", student_id: "u-2", color: "w", resultado: "1-0", fecha: "2026-09-01", jugadas: JUGADAS, evento: "De otra persona", created_at: "2026-09-01T00:00:00Z" }],
+      // El plan que le mandó su profe contra «Pedro»: 1.e4 e5 2.Cf3 Cc6 3.Ab5. Y uno de otra alumna.
+      planes_rival_alumno: [
+        { id: "plan-p", alumno_id: "u-1", rival: "Pedro", lado: "conBlancas", created_at: "2026-09-30T00:00:00Z",
+          plan: { plan: [{ san: "e4", quien: "tu", hijos: [{ san: "e5", quien: "rival", hijos: [{ san: "Nf3", quien: "tu", hijos: [{ san: "Nc6", quien: "rival", hijos: [{ san: "Bb5", quien: "tu", hijos: [] }] }] }] }] }] } },
+        { id: "plan-otro", alumno_id: "u-2", rival: "Ajeno", lado: "conBlancas", created_at: "2026-09-30T00:00:00Z", plan: { plan: [{ san: "d4", quien: "tu", hijos: [] }] } },
+      ],
     };
     const MOTOR = `window.PreparacionMotor = { disponible() { return true; },
       async evaluar(fen) { return { eval: (window.__evals || {})[fen] || 0, mejor: null }; },
       async opciones(fen) { return (window.__opciones || {})[fen] || []; } };`;
     const preparar = async (ctx) => {
       await ctx.route("**/js/preparacion-motor.js", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: MOTOR }));
-      await ctx.addInitScript((v) => { window.__filas = v.filas; window.__evals = v.evals; window.__opciones = v.opciones; window.__guardan = ["partidas_torneo"]; }, { filas, evals, opciones });
+      await ctx.addInitScript((v) => { window.__filas = v.filas; window.__evals = v.evals; window.__opciones = v.opciones; window.__guardan = ["partidas_torneo"];
+        // Uno de «Prepárate tú», en este navegador: contra «Lucía», con negras.
+        try { localStorage.setItem("plan_propio_guardados_v1", JSON.stringify([{ id: "propio:lichess:lucia:conNegras", rival: "Lucía", lado: "conNegras", plan: [{ san: "e4", quien: "rival", hijos: [{ san: "c5", quien: "tu", hijos: [] }] }] }])); } catch (e) {}
+      }, { filas, evals, opciones });
     };
     const aviso = (page) => page.textContent('#tipo-extra [role="status"]');
     const abrirTorneo = async (page) => { await page.click("#anotar-torneo summary"); await page.waitForSelector("#anotar-torneo textarea", { state: "visible" }); };
@@ -1062,6 +1071,15 @@ window.PreparacionMotor = {
     await page.getByRole("button", { name: "Guardar y revisar" }).click();
     ok("un Elo imposible se dice", /El Elo del rival es un número entre 0 y 3500/.test(await aviso(page)), await aviso(page));
     ok("nada de eso llegó a la base", (await guardadas(page)).length === 0);
+    // ¿La preparó? Los suyos de «Prepárate tú» y los del profe (no los de otra persona).
+    const opcionesPrep = await page.$$eval("#anotar-torneo select option", (os) => os.map((o) => o.textContent).filter((t) => /Prepárate|profe|Sin prep/.test(t)));
+    ok("«¿La preparaste?» trae los de Prepárate tú y los de su profe, no los ajenos",
+      JSON.stringify(opcionesPrep) === JSON.stringify(["Sin preparación", "Prepárate tú: contra Lucía, con negras", "Plan de tu profe: contra Pedro, con blancas"]), JSON.stringify(opcionesPrep));
+    await page.getByLabel("Elo del rival (si lo sabes)").fill("1450");
+    await page.getByLabel("¿La preparaste?").selectOption({ label: "Prepárate tú: contra Lucía, con negras" });
+    await page.getByRole("button", { name: "Guardar y revisar" }).click();
+    ok("un plan con negras para una partida con blancas se dice y no se guarda", /Ese plan es con negras y anotaste que jugaste con blancas/.test(await aviso(page)) && (await guardadas(page)).length === 0, await aviso(page));
+    await page.getByLabel("¿La preparaste?").selectOption({ label: "Plan de tu profe: contra Pedro, con blancas" });
     // Ahora bien: en español, con negras… no: con blancas, y perdió.
     await page.getByLabel("Elo del rival (si lo sabes)").fill("1450");
     await page.getByLabel("Resultado").selectOption("perdi");
@@ -1072,8 +1090,11 @@ window.PreparacionMotor = {
     ok("guarda la partida y la revisa sola", /^Revisé tu partida: 1 error para practicar\./.test(await aviso(page)), await aviso(page));
     const hoy = new Date().toLocaleDateString("en-CA", { timeZone: "America/Costa_Rica" });
     const [fila] = await guardadas(page);
+    ok("con lo preparado: hasta dónde siguió el plan del profe y que se salió él, en 3.Ac4",
+      !!fila && JSON.stringify(fila.preparacion) === JSON.stringify({ origen: "profe", rival: "Pedro", lado: "conBlancas", hasta: 4, salio: "tu", jugada: "Bc4", ultima: "Nc6", esperadas: ["Bb5"] }), JSON.stringify(fila && fila.preparacion));
+    ok("y lo dice debajo de lo que encontró el motor", /La partida siguió el plan de tu profe contra Pedro hasta 2…Cc6; ahí jugaste 3\.Ac4 \(el plan decía 3\.Ab5\)\./.test(await aviso(page)), await aviso(page));
     ok("a la base llegan las jugadas en inglés, comprobadas, y nada del rival salvo su Elo",
-      !!fila && JSON.stringify(Object.keys(fila).sort()) === JSON.stringify(["color", "evento", "fecha", "jugadas", "resultado", "rival_elo", "ronda"]) && fila.ronda === 3 &&
+      !!fila && JSON.stringify(Object.keys(fila).sort()) === JSON.stringify(["color", "evento", "fecha", "jugadas", "preparacion", "resultado", "rival_elo", "ronda"]) && fila.ronda === 3 &&
       JSON.stringify(fila.jugadas) === JSON.stringify(JUGADAS) && fila.color === "w" && fila.resultado === "0-1" && fila.rival_elo === 1450 &&
       fila.fecha === hoy && fila.evento === "Abierto de prueba, ronda 3", JSON.stringify(fila));
     const gt = await page.evaluate(() => ({ vistas: Object.keys(JSON.parse(localStorage.getItem("errores_analizadas_v1") || "{}")), ej: Object.values(JSON.parse(localStorage.getItem("errores_propios_v1") || "{}")) }));

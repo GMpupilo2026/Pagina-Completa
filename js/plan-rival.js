@@ -131,6 +131,21 @@
     })), Promise.resolve()).catch((e) => { cargando = null; throw e; });
     return cargando;
   }
+  /* Los planes que preparó (los últimos 8), en ESTE navegador: para que al
+     anotar la partida del torneo pueda compararla con lo preparado (ver «La
+     partida contra lo que había preparado» en entrenamiento.md). Solo el
+     árbol de jugadas: san, de quién es y lo que sigue. */
+  const CLAVE_GUARDADOS = "plan_propio_guardados_v1";
+  const MAX_GUARDADOS = 8;
+  function guardarPropio(fila) {
+    const arbol = (nodos) => (nodos || []).map((x) => ({ san: x.san, quien: x.quien, hijos: arbol(x.hijos) }));
+    try {
+      const antes = JSON.parse(localStorage.getItem(CLAVE_GUARDADOS) || "[]");
+      const lista = (Array.isArray(antes) ? antes : []).filter((x) => x && x.id !== fila.id);
+      lista.unshift({ id: fila.id, rival: fila.rival, lado: fila.lado, fecha: fila.created_at, plan: arbol(fila.plan.plan) });
+      localStorage.setItem(CLAVE_GUARDADOS, JSON.stringify(lista.slice(0, MAX_GUARDADOS)));
+    } catch (e) { /* sin espacio o sin almacenamiento: no se compara, nada más */ }
+  }
   function leerUltimo() {
     try { const o = JSON.parse(localStorage.getItem(CLAVE_PROPIO) || "{}"); return o && typeof o === "object" ? o : {}; } catch (e) { return {}; }
   }
@@ -220,6 +235,7 @@
       }
       const fila = { id: "propio:" + sitio + ":" + usuario.toLowerCase() + ":" + lado, alumno_id: yo, rival: r.rival, lado, plan,
         nota: null, created_at: new Date().toISOString(), propio: { sitio, n: r.total } };
+      guardarPropio(fila);
       $("lista").classList.add("hidden");
       const ul = $("propio-resumen");
       ul.textContent = "";

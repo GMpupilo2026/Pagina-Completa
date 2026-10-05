@@ -65,7 +65,8 @@ const TABLAS_ANA = {
   profiles: [{ id: "u-ana", role: "alumno", is_admin: false, full_name: "Ana Rojas" }],
   partidas_torneo: [
     partida({ id: ID1, student_id: "u-ana", evento: "Abierto de Heredia", ronda: 2, fecha: "2026-09-13", resultado: "1/2-1/2", errores: 1, comentarios: { "3": "quería atacar f7" } }),
-    partida({ id: ID2, student_id: "u-ana", evento: "abierto de heredia ", ronda: 1, fecha: "2026-09-12", color: "b", resultado: "0-1", rival_elo: 1620 }),
+    partida({ id: ID2, student_id: "u-ana", evento: "abierto de heredia ", ronda: 1, fecha: "2026-09-12", color: "b", resultado: "0-1", rival_elo: 1620,
+      preparacion: { origen: "propio", rival: "PedroP", lado: "conNegras", hasta: 3, salio: "rival", jugada: "Nf6", ultima: "Nf3", esperadas: ["Nc6"] } }),
     partida({ id: ID3, student_id: "u-ana", evento: "<img src=x onerror=window.__xss=1>", fecha: "2026-10-03", resultado: "0-1" }),
     partida({ id: ID4, student_id: "u-bea", evento: "De Bea", fecha: "2026-10-04" }),
   ],
@@ -101,6 +102,9 @@ async function laAlumna(browser) {
     ["Ronda 1 · 12 sept 2026 · con negras · ganaste · rival de 1620 Elo · 6 jugadas", "Ronda 2 · 13 sept 2026 · con blancas · tablas · 6 jugadas"]);
   cierto("nada de la partida de otra persona", !/De Bea/.test(v.texto));
   igual("lo que encontró el motor", await page.textContent("#partida-" + ID1 + " > p:nth-child(2)"), "El motor encontró 1 error.");
+  igual("cómo le fue con lo que había preparado", await page.textContent("#partida-" + ID2 + " [data-preparacion]"),
+    "🎯 La partida siguió tu preparación contra PedroP hasta 2.Cf3; ahí tu rival jugó 2…Cf6, que el plan no esperaba (el plan decía 2…Cc6).");
+  igual("sin preparación, no dice nada", await page.locator("#partida-" + ID1 + " [data-preparacion]").count(), 0);
   igual("lo que ya pensaba, a la vista", await page.textContent("#partida-" + ID1 + " [data-comentarios]"), "2.Cf3: «quería atacar f7»");
 
   // Comentar la jugada 7 (4.Cxe5, el error).

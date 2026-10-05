@@ -1131,9 +1131,39 @@
     rondaT.type = "number"; rondaT.min = "1"; rondaT.max = "30"; rondaT.step = "1"; rondaT.inputMode = "numeric";
     const fila = el("div", "flex flex-wrap items-end gap-3");
     fila.append(campo("Fecha", fechaT), campo("Ronda", rondaT), campo("Jugué con", colorT), campo("Resultado", resultadoT), campo("Elo del rival (si lo sabes)", eloT));
+    /* ¿La preparó? Con «Prepárate tú» (los planes quedan en este navegador) o
+       con un plan que le mandó su profe (planes_rival_alumno, que la RLS le
+       deja leer). Al guardar se compara la partida con el plan
+       (E.compararConPlan) y se guarda la foto en `preparacion`. */
+    const prepT = el("select", CAMPO);
+    const planes = {};
+    const sinPrep = el("option", null, "Sin preparación"); sinPrep.value = ""; prepT.appendChild(sinPrep);
+    let planesCargados = false;
+    async function cargarPlanes() {
+      if (planesCargados) return;
+      planesCargados = true;
+      const lado = (l) => (l === "conBlancas" ? "con blancas" : "con negras");
+      const agregar = (clave, texto, plan) => { planes[clave] = plan; const o = el("option", null, texto); o.value = clave; prepT.appendChild(o); };
+      let propios = [];
+      try { propios = JSON.parse(localStorage.getItem("plan_propio_guardados_v1") || "[]"); } catch (e) { propios = []; }
+      (Array.isArray(propios) ? propios : []).filter((x) => x && Array.isArray(x.plan) && x.plan.length && (x.lado === "conBlancas" || x.lado === "conNegras")).forEach((x, i) => {
+        agregar("propio:" + i, "Prepárate tú: contra " + String(x.rival || "").slice(0, 40) + ", " + lado(x.lado), { origen: "propio", rival: String(x.rival || "").slice(0, 60), lado: x.lado, plan: x.plan });
+      });
+      try {
+        const { data: ses } = await sb.auth.getSession();
+        const yo = ses && ses.session && ses.session.user && ses.session.user.id;
+        if (!yo) return;
+        const { data } = await sb.from("planes_rival_alumno").select("id, rival, lado, plan, created_at").eq("alumno_id", yo)
+          .order("created_at", { ascending: false }).range(0, 19);
+        (data || []).filter((x) => x.plan && Array.isArray(x.plan.plan) && x.plan.plan.length).forEach((x) => {
+          agregar("profe:" + x.id, "Plan de tu profe: contra " + String(x.rival || "").slice(0, 40) + ", " + lado(x.lado), { origen: "profe", rival: String(x.rival || "").slice(0, 60), lado: x.lado, plan: x.plan.plan });
+        });
+      } catch (e) { /* sin los del profe, quedan los propios */ }
+    }
+    torneo.addEventListener("toggle", () => { if (torneo.open) cargarPlanes(); });
     const anotar = el("button", BTN_PRIMARIO + " self-start", "Guardar y revisar");
     anotar.type = "submit";
-    formT.append(lJugadas, filaFoto, fila, campo("Torneo (opcional)", eventoT), anotar);
+    formT.append(lJugadas, filaFoto, fila, campo("Torneo (opcional)", eventoT), campo("¿La preparaste?", prepT), anotar);
     torneo.appendChild(formT);
     torneo.appendChild(el("p", "text-xs text-brand-500 dark:text-brand-300 mt-2",
       "Se guarda en tu libreta de torneos, y a tu profe le llega un aviso cuando termina de revisarse. No anotes el nombre de tu rival: no hace falta para revisarla."));
@@ -1200,12 +1230,25 @@
       if (ronda !== null && !(Number.isInteger(ronda) && ronda >= 1 && ronda <= 30)) { aviso.textContent = "La ronda es un número del 1 al 30 (o déjala vacía)."; rondaT.focus(); return; }
       const elo = eloT.value.trim() === "" ? null : Number(eloT.value);
       if (elo !== null && !(Number.isInteger(elo) && elo >= 0 && elo <= 3500)) { aviso.textContent = "El Elo del rival es un número entre 0 y 3500 (o déjalo vacío)."; eloT.focus(); return; }
+      // Contra lo preparado: el plan tiene que ser del color con que jugó.
+      let preparacion = null;
+      const elegido = planes[prepT.value];
+      if (elegido) {
+        if ((elegido.lado === "conBlancas") !== (colorT.value === "w")) {
+          aviso.textContent = "Ese plan es " + (elegido.lado === "conBlancas" ? "con blancas" : "con negras") + " y anotaste que jugaste con " + (colorT.value === "w" ? "blancas" : "negras") + ": revisa el color o elige otro plan.";
+          prepT.focus();
+          return;
+        }
+        const c = E.compararConPlan(elegido.plan, leido.jugadas);
+        if (c) preparacion = Object.assign({ origen: elegido.origen, rival: elegido.rival, lado: elegido.lado }, c);
+      }
       const r = resultadoT.value;
       const partida = {
         fecha: fechaT.value, color: colorT.value, jugadas: leido.jugadas, rival_elo: elo, ronda,
         resultado: r === "tablas" ? "1/2-1/2" : r === "*" ? "*" : RESULTADO[colorT.value][r],
         evento: eventoT.value.trim() || null,
       };
+      if (preparacion) partida.preparacion = preparacion;
       anotar.disabled = true;
       aviso.textContent = "Guardando tu partida…";
       let id = null;
@@ -1223,7 +1266,18 @@
       // El torneo y la fecha se quedan: la próxima ronda suele ser del mismo.
       textoJugadas.value = ""; eloT.value = ""; rondaT.value = ronda && ronda < 30 ? String(ronda + 1) : "";
       if (!id) return;
+      prepT.value = "";
       const revisada = await buscarErrores("torneo:" + id);
+      // Y cómo le fue con lo preparado, debajo de lo que dijo el motor.
+      const textoPrep = preparacion ? E.textoPreparacion(preparacion, true, (x) => (window.TiposReglas ? TiposReglas.sanEs(x) : x)) : "";
+      const estadoNuevo = $("tipo-extra").querySelector('[role="status"]');
+      if (textoPrep && estadoNuevo) {
+        const x = el("span", "block mt-2 font-normal");
+        x.dataset.preparacion = "";
+        const ic = el("span", null, "🎯 "); ic.setAttribute("aria-hidden", "true");
+        x.append(ic, document.createTextNode(textoPrep));
+        estadoNuevo.appendChild(x);
+      }
       /* Revisada entera: se le avisa a su profe, una sola vez, con cuántos
          errores salieron (avisar_partida_torneo; ver «Mi libreta de
          torneos»). Si se detuvo a la mitad, no: el número no sería cierto. */

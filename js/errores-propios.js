@@ -682,6 +682,57 @@
     return { legal: true, ok: item.buenas.indexOf(san) >= 0, san: m.san, esLaDeLaPartida: san === item.jugada };
   }
 
+  /* ---------- la partida contra lo que había preparado ----------
+     `plan`: el árbol de un plan («Prepárate tú» o el que mandó el profe):
+     [{ san, quien: "tu" | "rival", hijos }]. Se recorre con las jugadas de la
+     partida hasta que una no está entre las del plan.
+     → { hasta (medias jugadas que siguieron el plan), salio: "tu" | "rival" |
+         "fin" (se acabó el plan) | "partida" (se acabó la partida antes),
+         jugada (la que se salió), ultima (la última que coincidió), esperadas }
+       o null si el plan está vacío. Pura. */
+  const sinJaque = (s) => String(s || "").replace(/[+#]$/, "");
+  function compararConPlan(plan, jugadas) {
+    let nodos = Array.isArray(plan) ? plan : [];
+    if (!nodos.length) return null;
+    const jug = Array.isArray(jugadas) ? jugadas : [];
+    for (let i = 0; i < jug.length; i++) {
+      const sigue = nodos.find((x) => x && sinJaque(x.san) === sinJaque(jug[i]));
+      if (!sigue) {
+        return { hasta: i, salio: nodos[0].quien === "tu" ? "tu" : "rival", jugada: jug[i], ultima: i ? jug[i - 1] : null,
+          esperadas: nodos.map((x) => x.san).filter((x) => typeof x === "string").slice(0, 3) };
+      }
+      nodos = Array.isArray(sigue.hijos) ? sigue.hijos : [];
+      if (!nodos.length) return { hasta: i + 1, salio: "fin", jugada: null, esperadas: [] };
+    }
+    return { hasta: jug.length, salio: "partida", jugada: null, esperadas: [] };
+  }
+  /* En palabras, para quien la mira (`tu`: el alumno; si no, «él»). `p`: lo
+     guardado en partidas_torneo.preparacion ({ origen, rival, hasta, salio,
+     jugada, esperadas }). Las jugadas en notación española (`sanEs`). */
+  function textoPreparacion(p, tu, sanEs) {
+    if (!p || typeof p !== "object" || !Number.isInteger(p.hasta)) return "";
+    const es = sanEs || ((x) => x);
+    const num = (i, san) => (i % 2 === 0 ? (i / 2 + 1) + "." : Math.floor(i / 2) + 1 + "…") + es(san);
+    const de = (p.origen === "profe" ? (tu ? "el plan de tu profe" : "el plan de su profe") : (tu ? "tu preparación" : "su preparación")) +
+      (typeof p.rival === "string" && p.rival ? " contra " + p.rival.slice(0, 40) : "");
+    const esperadas = (Array.isArray(p.esperadas) ? p.esperadas : []).filter((x) => typeof x === "string" && SAN.test(x)).map((x) => num(p.hasta, x));
+    const jugada = typeof p.jugada === "string" && SAN.test(p.jugada) ? num(p.hasta, p.jugada) : null;
+    const ultima = typeof p.ultima === "string" && SAN.test(p.ultima) && p.hasta > 0 ? num(p.hasta - 1, p.ultima) : null;
+    if (p.salio === "fin") return (tu ? "Seguiste " : "Siguió ") + de + " hasta el final del plan.";
+    if (p.salio === "partida") return "La partida siguió " + de + " hasta que terminó.";
+    if (!jugada) return "";
+    const plan = esperadas.length ? " (el plan decía " + esperadas.join(" o ") + ")" : "";
+    if (!ultima) {
+      return p.salio === "tu"
+        ? "Desde la primera jugada " + (tu ? "te saliste de " : "se salió de ") + de + ": " + (tu ? "jugaste " : "jugó ") + jugada + plan + "."
+        : "Desde la primera jugada " + (tu ? "tu rival" : "su rival") + " se salió de " + de + ": jugó " + jugada + plan + ".";
+    }
+    const inicio = "La partida siguió " + de + " hasta " + ultima + "; ahí ";
+    return p.salio === "tu"
+      ? inicio + (tu ? "jugaste " : "jugó ") + jugada + plan + "."
+      : inicio + (tu ? "tu rival" : "su rival") + " jugó " + jugada + ", que el plan no esperaba" + plan + ".";
+  }
+
   /* Llevar errores a un plan de clase (js/plan-clase.js): una posición por
      error, con la pregunta para la clase. Lo usan Informes (todos los errores
      de un alumno) y la libreta de torneos (los de una partida). `o`: { TEMAS,
@@ -707,7 +758,7 @@
   const ErroresPropios = {
     CLAVE_EJERCICIOS, CLAVE_VISTAS, CORTE, MAX_PARTIDAS, MAX_EJERCICIOS,
     detectar, ejercicio, temaDelError, temasDe, posiciones, acierta, ejercicios, guardar, vistas, traerPartidas, analizar, deFilas,
-    deLaWeb, leerJugadas, llevarAPlan, ORIGEN, enLaApertura, lineaDeApertura, JUGADAS_DE_APERTURA,
+    deLaWeb, leerJugadas, llevarAPlan, compararConPlan, textoPreparacion, ORIGEN, enLaApertura, lineaDeApertura, JUGADAS_DE_APERTURA,
     apurado, APURADO, conCelada, completarCeladas, finalDelError, finalDelBanco, curva, tendencia, curvaEnPantalla,
     SITIO_WEB, MAX_WEB, HORAS_WEB, cuentaWeb, guardarCuentaWeb, cargarWeb, sinRevisar,
   };
