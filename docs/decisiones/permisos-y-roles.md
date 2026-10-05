@@ -2153,6 +2153,16 @@ una su regla:
 `tournaments.created_by` era `not null` y se le quitó: un torneo con otros
 jugadores inscritos no puede desaparecer porque se borre quien lo creó.
 
+**El segundo eslabón también cuenta.** `game_rooms` se borra en cascada con
+quien jugó o la creó, y `tournament_pairings.game_room_id` apuntaba a ella sin
+regla: borrar a quien jugó una partida de torneo seguía fallando, ahora con
+`violates foreign key constraint "tournament_pairings_game_room_id_fkey"` (se
+reprodujo el 4/10 dentro de una transacción). La migración
+`20261005141012_borrar_cuenta_pareos_con_sala` la deja en `on delete set null`
+(el pareo queda, sin sala) y termina revisando la cadena entera: toda tabla que
+se borra en cascada desde `auth.users`, y cada clave que apunte a cualquiera de
+ellas.
+
 Se comprobó borrando las dos cuentas que fallaban dentro de una transacción
 que se deshace (`raise exception` al final): se borraron sin error. La misma
 migración termina mirando el catálogo y no entra si queda alguna sin regla.
