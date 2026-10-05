@@ -630,7 +630,7 @@
             "juegos.html": "Ajedrez estándar y Niebla de guerra contra otro alumno, escribiendo la jugada: las demás modalidades todavía no están adaptadas",
             "competir.html": "Retos a quien esté en línea y los torneos; la partida se juega escribiendo la jugada",
             "tablero.html": "Juega contra Oscar, nuestro motor, escribiendo la jugada y oyendo la suya",
-            "entreno/estudio.html": "Las fichas de aperturas, defensas, táctica y conceptos, con la posición dicha y la línea que se recorre escribiendo",
+            "entreno/estudio.html": "Las fichas de aperturas, defensas, táctica, mates, conceptos y finales, con la posición dicha y la línea que se recorre escribiendo",
         };
         function armarPanelAdaptado() {
             const todas = TILE_GROUPS.flatMap((g) => g.tiles).concat(TILES_SOLO_ADAPTADO);
