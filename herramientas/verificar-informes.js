@@ -76,6 +76,26 @@ const RESPUESTAS = [
   { student_id: "a-2", created_at: "2026-09-13T10:00:00Z", is_correct: true },
 ];
 
+/* El análisis de las partidas en línea de Ana, hecho con el análisis de verdad
+   (js/preparacion-analisis.js) sobre partidas armadas con chess.js: abre 1.e4
+   y le va bien, contra 1.e4 contesta 1…e5. */
+const ANALISIS_ANA = (() => {
+  const A = require("../js/preparacion-analisis.js");
+  const AA = require("../js/analisis-alumno.js");
+  const ChessMod = require("chess.js");
+  const Chess = ChessMod.Chess || ChessMod;
+  const p = [];
+  const partida = (bl, ng, jug, res, d) => {
+    const g = new Chess();
+    jug.forEach((m) => g.move(m));
+    return `[Event "Rated blitz game"]\n[Date "2026.09.${String(d).padStart(2, "0")}"]\n[White "${bl}"]\n[Black "${ng}"]\n[Result "${res}"]\n\n`
+      + g.history().map((m, i) => (i % 2 === 0 ? (i / 2 + 1) + ". " : "") + m).join(" ") + " " + res + "\n";
+  };
+  for (let i = 0; i < 14; i++) p.push(partida("ana_123", "r" + i, ["e4", "e5", "Nf3"], i < 12 ? "1-0" : "0-1", (i % 28) + 1));
+  for (let i = 0; i < 8; i++) p.push(partida("x" + i, "ana_123", ["e4", "e5", "Nf3"], i < 2 ? "0-1" : "1-0", (i % 28) + 1));
+  return AA.reducir(A.analizar(A.leerPgn(p.join("\n")), "ana_123", { reciente: true }));
+})();
+
 // El cliente de mentira: los mismos métodos encadenados que usa la página
 // (select/eq/order/limit/range/maybeSingle) sobre listas fijas, apuntando qué se
 // pidió para poder comprobar el pedido por páginas.
@@ -170,6 +190,12 @@ window.__funcion = [];
     if (String(url).indexOf("/functions/v1/informes-encargados") !== -1) {
       const cuerpo = JSON.parse((opciones && opciones.body) || "{}");
       window.__funcion.push(cuerpo);
+      // Cómo viene el alumno, para las frases del mensaje a la casa.
+      if (cuerpo.action === "situacion") {
+        (window.__situaciones = window.__situaciones || []).push(cuerpo);
+        return Promise.resolve(new Response(JSON.stringify(DATOS.situacion ? { ok: true, situacion: DATOS.situacion } : { error: "no" }),
+          { status: DATOS.situacion ? 200 : 403, headers: { "Content-Type": "application/json" } }));
+      }
       return Promise.resolve(new Response(JSON.stringify({ ok: true, html: "<p>informe</p>", alumno: "Ana Rojas" }),
         { status: 200, headers: { "Content-Type": "application/json" } }));
     }
@@ -292,12 +318,20 @@ const DIAGNOSTICOS = [
 ];
 
 let fallos = 0;
+/* Un objeto se compara por su contenido. Con String() a secas, dos objetos
+   cualesquiera dan «[object Object]» y la comparación pasaba siempre: las
+   pruebas de lo que se escribe (agregar un encargado, «Deshacer»…) no estaban
+   comprobando nada. */
+function texto(v) {
+  const conObjeto = (x) => x !== null && typeof x === "object" && (!Array.isArray(x) || x.some(conObjeto));
+  return conObjeto(v) ? JSON.stringify(v) : String(v);
+}
 function igual(nombre, hallado, esperado) {
-  if (String(hallado) !== String(esperado)) {
-    console.log("  ✗ " + nombre + "\n      esperaba: " + esperado + "\n      salió:    " + hallado);
+  if (texto(hallado) !== texto(esperado)) {
+    console.log("  ✗ " + nombre + "\n      esperaba: " + texto(esperado) + "\n      salió:    " + texto(hallado));
     fallos += 1;
   } else {
-    console.log("  ✓ " + nombre + ": " + hallado);
+    console.log("  ✓ " + nombre + ": " + texto(hallado));
   }
 }
 
@@ -453,7 +487,32 @@ async function pruebaProfesor(browser) {
                    { id: "enc-2", student_id: "a-1", nombre: "Tía de Ana", email: "tia@x.cr", frecuencia: "mensual",
                      activo: true, hora_envio: 18, dia_semana: null, ultimo_envio_at: "2026-09-01T12:00:00Z",
                      creado_por: "prof-1", created_at: "2026-09-02T10:00:00Z" }],
+      /* Unas palabras para la casa: uno suyo y uno de otra profe de Ana (ese
+         no se puede quitar desde acá), y uno de Bruno que no tiene que colarse.
+         Sus plantillas: una para «practicó poco» y una para «va bien», que con
+         Ana practicando poco no se ofrece. */
+      mensajes_casa: [
+        { id: "m-1", alumno_id: "a-1", autor_id: "prof-1", texto: "Ana <b>trabajó</b> bien en clase.", created_at: "2026-09-20T15:00:00Z" },
+        { id: "m-2", alumno_id: "a-1", autor_id: "otra", texto: "Recuerden el torneo del sábado.", created_at: "2026-09-19T15:00:00Z" },
+        { id: "m-3", alumno_id: "a-2", autor_id: "prof-1", texto: "Mensaje de Bruno", created_at: "2026-09-21T15:00:00Z" },
+      ],
+      /* Sus aperturas: lo que armó en «Mi repertorio» y el análisis de sus
+         partidas en línea (armado con partidas de mentira, con el análisis de
+         verdad, en ANALISIS_ANA). */
+      repertorio: [
+        { id: "r-1", alumno_id: "a-1", color: "w", nombre: "Londres", jugadas: ["d4", "d5", "Bf4"], created_at: "2026-09-01T00:00:00Z" },
+        { id: "r-2", alumno_id: "a-1", color: "b", nombre: "Siciliana", jugadas: ["e4", "c5"], created_at: "2026-09-02T00:00:00Z" },
+        { id: "r-3", alumno_id: "a-2", color: "w", nombre: "De Bruno", jugadas: ["c4", "e5"], created_at: "2026-09-02T00:00:00Z" },
+      ],
+      analisis_partidas_alumno: [{ alumno_id: "a-1", lichess: "ana_123", chesscom: null, partidas: 22,
+        analizado_at: "2026-10-01T15:00:00Z", analisis: ANALISIS_ANA }],
+      plantillas_casa: [
+        { id: "p-1", situacion: "poco", texto: "{nombre} puede más: lo vemos el jueves.", created_at: "2026-09-01T00:00:00Z" },
+        { id: "p-2", situacion: "bien", texto: "Sigan así.", created_at: "2026-09-02T00:00:00Z" },
+      ],
     },
+    situacion: { clave: "poco", titulo: "Practicó poco", nombre: "Ana", dias: 2, dias_periodo: 7,
+                 ejercicios: null, ejercicios_antes: null, area: "Finales" },
   }, "prof-1");
 
   console.log("-- Resumen general");
@@ -887,7 +946,7 @@ async function pruebaProfesor(browser) {
   await page.click("#enc-agregar");
   await page.waitForFunction(() => window.__escrituras.length > 0);
   igual("agregar un encargado manda lo correcto", await page.evaluate(() => window.__escrituras[0]),
-    { etiqueta: "from:encargados", accion: "insert",
+    { etiqueta: "from:encargados", donde: [], dentro: [], accion: "insert",
       fila: { student_id: "a-1", nombre: "Papá de Ana", email: "papa@x.cr", frecuencia: "mensual",
               hora_envio: 7, dia_semana: null, creado_por: "prof-1" } });
 
@@ -934,6 +993,89 @@ async function pruebaProfesor(browser) {
   igual("descargar pide el MISMO informe que sale por correo, del periodo elegido",
     await page.evaluate(() => window.__funcion[0]),
     { action: "vista_previa", student_id: "a-1", frecuencia: "mensual" });
+
+  console.log("-- Sus aperturas");
+  await page.click("#aperturas-alumno-report > summary");
+  await page.waitForFunction(() => document.querySelector("#aperturas-alumno-cuerpo [data-analisis-resultado]"), null, { timeout: 15000 });
+  const ap = await page.evaluate(() => {
+    const c = document.getElementById("aperturas-alumno-cuerpo");
+    const t = c.textContent.replace(/\s+/g, " ");
+    return {
+      lineas: [...c.querySelectorAll("ul")][0] ? [...c.querySelectorAll("ul")].slice(0, 2).map((u) => [...u.querySelectorAll("li")].map((li) => li.textContent).join(" | ")) : [],
+      cruce: [...c.querySelectorAll("[data-analisis-cruce] li")].map((li) => li.textContent),
+      fuerte: /Puntos fuertes/.test(t) && /Rinde más con blancas/.test(t),
+      debil: /Puntos débiles/.test(t) && /Con negras saca menos/.test(t),
+      bruno: /De Bruno/.test(t),
+      boton: !!c.querySelector("[data-analisis-analizar]"),
+      cuentas: /Lichess: ana_123/.test(t),
+    };
+  });
+  igual("lo que armó en «Mi repertorio», en la notación de acá", ap.lineas, ["Londres: 1.d4 d5 2.Af4", "Siciliana: 1.e4 c5"]);
+  igual("comparado con lo que juega", ap.cruce, [
+    "Con blancas preparó 1.d4, pero en sus partidas abre sobre todo 1.e4 (100 % de 14); 1.d4 no aparece en sus partidas.",
+    "Contra 1.e4 preparó 1…c5, pero contesta sobre todo 1…e5 (100 % de 8).",
+  ]);
+  igual("con sus puntos fuertes y débiles, sus cuentas y nada de otro alumno", [ap.fuerte, ap.debil, ap.cuentas, ap.bruno], [true, true, true, false]);
+  igual("quien le da clase puede volver a analizar", ap.boton, true);
+
+  console.log("-- Unas palabras para la casa");
+  await page.waitForFunction(() => /Practicó poco/.test((document.querySelector("[data-casa-situacion]") || {}).textContent || ""));
+  const casa = () => page.evaluate(() => ({
+    situacion: document.querySelector("[data-casa-situacion]").textContent,
+    frases: [...document.querySelectorAll("[data-casa-frase]")].map((b) => b.getAttribute("data-casa-frase") + ": " + b.textContent.replace(/^\+/, "").trim()),
+    recientes: [...document.querySelectorAll("[data-casa-recientes] li")].map((li) =>
+      [li.querySelector("p").textContent, !!li.querySelector("button")].join(" | ")),
+    nadieSeVe: document.querySelector("[data-casa-nadie]").checkVisibility(),
+    seVe: document.getElementById("mensaje-casa-texto").checkVisibility(),
+  }));
+  let mc = await casa();
+  igual("dice cómo viene, con la misma regla del correo", mc.situacion, "Esta semana: Practicó poco (2 días de 7).");
+  igual("lo pide a la función, de ESE alumno y de la semana", await page.evaluate(() =>
+    JSON.stringify((window.__situaciones || [])[0])), '{"action":"situacion","student_id":"a-1","frecuencia":"semanal"}');
+  igual("la plantilla propia va primero, con el nombre puesto, y la de «va bien» no se ofrece",
+    [mc.frases[0], mc.frases.some((f) => /Sigan así/.test(f))], ["propia: Ana puede más: lo vemos el jueves.(tuya)", false]);
+  igual("las frases del sitio de «practicó poco», con los datos puestos",
+    mc.frases.filter((f) => f.startsWith("sitio")).map((f) => f.slice(7)), [
+      "Esta semana Ana practicó 2 días de 7. Con diez minutos casi todos los días se nota mucho la diferencia.",
+      "Les propongo buscar un momento fijo para practicar en la casa, aunque sea corto: ayuda a crear el hábito.",
+      "Lo que más le conviene practicar ahora es finales: lo tiene en su plan, dentro de la plataforma.",
+      "Cualquier consulta, me pueden escribir.",
+    ]);
+  igual("ninguna frase deja una llave sin llenar", mc.frases.some((f) => /[{}]/.test(f)), false);
+  igual("los mensajes de Ana, el más nuevo arriba; solo el propio se puede quitar, y el texto va como texto",
+    mc.recientes, ["Ana <b>trabajó</b> bien en clase. | true", "Recuerden el torneo del sábado. | false"]);
+  igual("con encargados apuntados no avisa que no le llega a nadie", mc.nadieSeVe, false);
+  igual("el campo del mensaje se ve", mc.seVe, true);
+
+  await page.evaluate(() => { window.__escrituras.length = 0; });
+  await page.click("[data-casa-frase='sitio']");
+  await page.click("[data-casa-frase='propia']");
+  igual("tocar frases las suma al mensaje", await page.inputValue("#mensaje-casa-texto"),
+    "Esta semana Ana practicó 2 días de 7. Con diez minutos casi todos los días se nota mucho la diferencia. Ana puede más: lo vemos el jueves.");
+  await page.click("[data-casa-mandar]");
+  await page.waitForFunction(() => window.__escrituras.some((e) => e.etiqueta === "from:mensajes_casa"));
+  igual("«Mandar con el próximo informe» guarda el mensaje de ESE alumno", await page.evaluate(() =>
+    window.__escrituras.find((e) => e.etiqueta === "from:mensajes_casa")),
+    { etiqueta: "from:mensajes_casa", donde: [], dentro: [], accion: "insert",
+      fila: { alumno_id: "a-1", texto: "Esta semana Ana practicó 2 días de 7. Con diez minutos casi todos los días se nota mucho la diferencia. Ana puede más: lo vemos el jueves." } });
+  igual("y el campo queda vacío", await page.inputValue("#mensaje-casa-texto"), "");
+
+  await page.fill("#mensaje-casa-texto", "Ana y Anabel trabajaron muy bien.");
+  await page.click("[data-casa-guardar]");
+  await page.waitForFunction(() => window.__escrituras.some((e) => e.etiqueta === "from:plantillas_casa"));
+  igual("guardar como plantilla cambia el nombre por {nombre} (solo la palabra entera) y la guarda para «practicó poco»",
+    await page.evaluate(() => window.__escrituras.find((e) => e.etiqueta === "from:plantillas_casa").fila),
+    { situacion: "poco", texto: "{nombre} y Anabel trabajaron muy bien." });
+  await page.waitForFunction(() => document.querySelectorAll("[data-casa-frase='propia']").length === 2);
+  igual("la plantilla nueva aparece entre las suyas", await page.evaluate(() =>
+    document.querySelector("[data-casa-frase='propia']").textContent.replace(/^\+/, "").trim()), "Ana y Anabel trabajaron muy bien.(tuya)");
+
+  await page.evaluate(() => { window.__escrituras.length = 0; });
+  await page.click("[data-casa-recientes] li button");
+  await page.waitForFunction(() => window.__escrituras.some((e) => e.accion === "delete"));
+  igual("«Quitar» pregunta y borra ESE mensaje", await page.evaluate(() =>
+    [window.__avisos.some((a) => /¿Quitar este mensaje\?/.test(a)), JSON.stringify(window.__escrituras.find((e) => e.accion === "delete").donde)]),
+    [true, '[["id","m-1"]]']);
 
   console.log("-- Filtros de grupo y de tema");
   await page.selectOption("#student-filter", "");

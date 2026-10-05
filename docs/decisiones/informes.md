@@ -1449,6 +1449,123 @@ Es lo mismo que el alumno ve como «Tu semana» en su hub.
 - `verificar-informe-casa.js` prueba el semanal, el mensual sin periodo
   anterior, el caso en cero y la base sin la clave.
 
+### Unas palabras de su profe
+
+El correo a la casa lo arma el sitio solo. Lo único escrito por una persona era
+la nota del plan, que dura cuatro semanas y solo sale si el plan está
+compartido: el profe no tenía cómo decirle a la familia «esta semana le costó
+arrancar, el jueves lo vemos». Ahora, en «📧 Informes a la casa» de cada
+alumno, está **«✍️ Unas palabras para la casa»**: un mensaje que sale arriba
+del próximo informe, pegado al veredicto, firmado con el nombre del profe.
+
+- **Se arma con frases listas según cómo viene el alumno**
+  (`js/plantillas-casa.js`): «Va bien», «Practicó poco», «No entró» y
+  «Tiene entregas vencidas», más unas que sirven siempre. Tocar una la suma al
+  mensaje con los datos puestos (el nombre, «2 días de 7», el área del plan) y
+  el profe la ajusta antes de mandarla.
+- **Cómo viene NO se calcula en la página.** Lo contesta la Edge Function
+  (acción `situacion`) con `situacionParaPlantillas()`, que usa la MISMA
+  `comoVa()` que pinta la franja del correo. Si las frases salieran de otra
+  cuenta, el profe le escribiría «¡qué buena semana!» a la casa justo encima de
+  una franja que dice «Practicó poco», y nada fallaría.
+- **Una frase que necesita un dato solo se ofrece si el dato existe**: la de
+  «hizo más ejercicios que la semana anterior» pide que de verdad haya hecho
+  más; la del área, que haya plan. Y ninguna adivina el género del alumno
+  («Gracias por el apoyo», no «por acompañarlo»).
+- **Las plantillas propias** (`plantillas_casa`) son solo de quien las guardó
+  (una política `for all` con `profesor_id`). Al guardar, el nombre del alumno
+  pasa a ser `{nombre}`, solo como palabra entera (Ana sí, Anabel no): si no,
+  la plantilla le diría «Ana» a la familia de Bruno. Se guarda para la
+  situación en que está el alumno, o para cualquiera si se marca.
+- **Qué mensajes van en cada informe NO se guarda: se calcula.** Van los
+  escritos dentro del periodo que cubre ese informe —el semanal, los de la
+  semana— y como mucho los tres últimos. Así cada encargado lo recibe una vez
+  con su frecuencia, sin una marca de «ya enviado» que se desincronice con
+  cada encargado. Quitarlo lo saca de los que todavía no salieron.
+- **Los lee `mensajes_casa_de()`, que es `SECURITY DEFINER`**, con el mismo
+  permiso que `resumen_tareas_examenes()` (el alumno, administración,
+  `soy_profesor_de()`, su supervisión; `auth.uid()` nulo es la tanda), y se
+  suma a la cola de `informe_de_alumno()` como el Elo. La tanda, la vista
+  previa del profe y la de quien supervisa ven el mismo informe.
+- **La base pone las reglas**: escribe quien da clase al alumno (o
+  administración) y siempre a su nombre (`autor_id = auth.uid()`); no se
+  edita (se quita y se escribe otro); lo quita solo su autor; la fecha la pone
+  la base, que decide en qué informe sale; y hay un tope de 5 por alumno al
+  día, porque es un mensaje para la familia, no un chat. El alumno lo puede
+  leer: es lo que le llega a su casa.
+- **«Ver como» una persona** muestra el bloque pero no deja escribir: sería un
+  mensaje firmado por otra persona.
+
+Comprobado impersonando roles en SQL: el profe del alumno escribe y lo ve en
+la función; firmar con el `autor_id` de otro se rechaza; una profesora que no
+es de ese alumno no ve nada, no escribe y la función le da excepción; el
+alumno lo lee pero no escribe ni edita; y la tanda lo recibe con el nombre del
+profe, y un periodo anterior no lo trae.
+
+**Al tocarlo, correr `node herramientas/verificar-informe-casa.js` y
+`verificar-informes.js`.** El primero mira el bloque en el correo (escapado,
+sin mensajes no sale, va antes del plan) y que las cuatro situaciones lleguen
+con su clave. El segundo, la pantalla: las frases de la situación, la plantilla
+propia primero y la de otra situación fuera, ninguna llave sin llenar, lo que se
+guarda y el `{nombre}` de la plantilla.
+
+**Esto destapó un hueco del propio verificador**: su `igual()` comparaba con
+`String()`, y dos objetos cualesquiera dan «[object Object]». Todas las pruebas
+de lo que se escribe (agregar un encargado, «Deshacer»…) pasaban sin comparar
+nada. Ahora compara el contenido; salió una sola expectativa vieja mal escrita
+(la página estaba bien). `verificar-clase-registrada.js`, `verificar-notas.js`,
+`verificar-planes.js`, `verificar-camino-entrenador.js` y
+`verificar-temas-plataforma.js` tenían el mismo `igual()` y ya comparan el
+contenido. En esos cinco no escondía nada —sus 200 y tantas comprobaciones
+comparan textos y números—, pero la primera que comparara un objeto habría
+pasado siempre. (El `cmp` de los dobles de otros verificadores compara valores
+de columnas, no objetos, y está bien.)
+
+### Lo que juega en Lichess y Chess.com
+
+El profe veía lo que el alumno preparaba («Mi repertorio») pero no lo que
+juega de verdad. Ahora el alumno pone en Configuración sus usuarios de Lichess
+y Chess.com, su navegador baja sus últimas partidas públicas (hasta 300 por
+cuenta) y las analiza, y su profe lo ve en Informes, en «♞ Sus aperturas».
+
+- **No es un análisis nuevo: es el de la preparación de rivales**
+  (`js/preparacion-analisis.js`), aplicado al propio alumno. Los puntos
+  fuertes y débiles son sus mismas frases, con sus mismos umbrales (una línea
+  es fuerte o débil con z ≥ 1,28 y 5 puntos de diferencia con su promedio con
+  ese color, y nunca con menos partidas que el mínimo). Con pocas partidas no
+  sale ninguna, y está bien: no se inventa una tendencia.
+- **Su repertorio contra lo que juega** (`AnalisisAlumno.cruce`): con blancas,
+  si su primera jugada preparada es la que juega; con negras, si contra cada
+  primera jugada del rival contesta lo que preparó. «Es lo que juega» pide la
+  mitad de las partidas o más; sin muestra, «muy pocas partidas para saber».
+- **Las dos cuentas son una persona**: la segunda se renombra como la primera
+  antes de analizar (`unirCuentas`), si no se analizarían como dos jugadores.
+- **Se guarda solo lo que se pinta** (`reducir`): el análisis entero trae el
+  libro y la táctica, que acá no se usan y lo harían diez veces más pesado.
+  Las partidas no se guardan nunca, igual que en la preparación.
+- **`analisis_partidas_alumno`, una fila por alumno.** La escriben el alumno,
+  quien le da clase o administración (el profe puede poner los usuarios él
+  mismo y «Volver a analizar» desde Informes, con su navegador); la leen
+  ellos y su supervisión. La base anota quién y cuándo analizó, y si cambian
+  los usuarios sin un análisis nuevo, borra el viejo: no se le muestra al
+  profe lo de otra cuenta. Con los dos campos vacíos, el alumno borra su fila.
+- **El bloque va plegado y se pide al abrirlo**, como «Informes a la casa»: no
+  se piden dos tablas en cada alumno que se mira.
+- **La política de privacidad lo dice** (versión 2026-10-04): esos usuarios
+  quedan en la cuenta con el resumen, y quién los ve.
+
+Comprobado impersonando roles en SQL: el alumno guarda y queda anotado como
+quien analizó; a nombre de otro y un usuario mal escrito se rechazan; su profe
+lo ve, lo vuelve a analizar y queda anotado él; cambiar los usuarios borra el
+análisis; una profesora ajena no ve ni cambia nada.
+
+**Al tocarlo, correr `node herramientas/verificar-todo.js analisis-alumno
+informes`.** El primero analiza partidas armadas con chess.js (sin navegador)
+y comprueba la comparación, y en Configuración —con Lichess y Chess.com de
+mentira— que baje de los dos, junte las cuentas, guarde una fila por alumno
+sin las partidas y que vacío borre. El segundo, «Sus aperturas» del profe:
+sus líneas, la comparación, fuertes y débiles, y nada de otro alumno.
+
 ### Las tareas y los exámenes del informe NO se cuentan con la RLS de quien mira
 
 `tareas` y `examenes` están aisladas por profesor a propósito (un profesor solo

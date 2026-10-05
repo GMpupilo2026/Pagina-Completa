@@ -44,6 +44,13 @@ const TIPOS = { celada: "Celada", apertura: "Apertura" };
 function aEspanol(san) { return ComandosTablero.jugadaParaMostrar(san); }
 
 let estado = {};          // id → ficha de repaso
+/* «Mi repertorio» (js/repertorio-aperturas.js): las líneas del alumno, con id
+   «mi:<uuid>», entrenadas igual que las del banco y en la misma cola de
+   repaso. `modo` dice qué se está mirando: el repaso, todas o lo suyo. */
+let mias = [];
+let repertorio = null;
+let modo = "repaso";
+function todas() { return AperturasLineas.LINEAS.concat(mias); }
 let cola = [];            // los ids que toca repasar, en orden
 let linea = null, juego = null, indice = 0;
 let errores = 0, pistas = 0;
@@ -365,15 +372,16 @@ function intentar(jugada) {
 
 /* ---------------- empezar, pista, terminar ---------------- */
 function empezar(id) {
-  linea = AperturasLineas.LINEAS.find((L) => L.id === id);
+  linea = todas().find((L) => L.id === id);
   if (!linea) return;
   juego = new Chess();
   indice = 0; errores = 0; pistas = 0;
   seleccion = null; promoPendiente = null; esperandoRival = false;
 
   document.getElementById("linea-nombre").textContent = linea.nombre;
-  document.getElementById("linea-apertura").textContent =
-    `${TIPOS[linea.tipo]} · ${linea.apertura} · ${NIVELES[linea.nivel]}`;
+  document.getElementById("linea-apertura").textContent = linea.propia
+    ? `Mi repertorio · juegas con ${linea.color === "w" ? "blancas" : "negras"}`
+    : `${TIPOS[linea.tipo]} · ${linea.apertura} · ${NIVELES[linea.nivel]}`;
   document.getElementById("final").classList.add("hidden");
   document.getElementById("promo").classList.add("hidden");
   document.getElementById("pista-btn").disabled = false;
@@ -433,18 +441,22 @@ function terminar() {
     (nota === "bien" ? "✅ " : nota === "regular" ? "🟡 " : "🔁 ") + EXPLICACION[nota];
   document.getElementById("final-idea").textContent = linea.idea;
   document.getElementById("final-clave").textContent = linea.clave;
+  document.getElementById("final-clave").classList.toggle("hidden", !linea.clave);
   document.getElementById("final-cuando").textContent = f.intervalo === 0
     ? "Vuelve a aparecer hoy mismo."
     : "Vuelve a aparecer " + (f.intervalo === 1 ? "mañana." : "en " + f.intervalo + " días.");
   document.getElementById("final").classList.remove("hidden");
   pintarResumen();
+  if (repertorio) repertorio.pintar();
 }
 
 function siguiente() {
-  // La cola se recalcula: si la línea se falló, vuelve a estar en ella.
-  const lista = lineasFiltradas().map((L) => L.id);
+  // La cola se recalcula: si la línea se falló, vuelve a estar en ella. Una
+  // línea del repertorio sigue con las del repertorio.
+  const lista = (linea.propia ? mias : lineasFiltradas()).map((L) => L.id);
   cola = RepasoEspaciado.pendientes(lista, estado).filter((id) => id !== linea.id);
   if (cola.length) { empezar(cola[0]); return; }
+  if (linea.propia) { elegirModo("mio"); return; }
   mostrar("vista-lista");
   pintarLista(true);
   pintarResumen();
@@ -453,27 +465,41 @@ function siguiente() {
 /* ---------------- ir y venir ---------------- */
 function mostrar(cual) {
   document.getElementById("vista-lista").classList.toggle("hidden", cual !== "vista-lista");
+  document.getElementById("vista-mio").classList.toggle("hidden", cual !== "vista-mio");
+  document.getElementById("barra-modos").classList.toggle("hidden", cual === "vista-tablero");
   document.getElementById("vista-tablero").classList.toggle("hidden", cual !== "vista-tablero");
   // Con el tablero abierto, el resumen de arriba no aporta nada y en un celular
   // empuja el tablero fuera de la pantalla.
   document.getElementById("resumen").classList.toggle("hidden", cual !== "vista-lista");
 }
 
-document.getElementById("btn-repaso").addEventListener("click", () => {
-  document.getElementById("btn-repaso").classList.add("active");
-  document.getElementById("btn-todas").classList.remove("active");
-  pintarLista(true);
-});
-document.getElementById("btn-todas").addEventListener("click", () => {
-  document.getElementById("btn-todas").classList.add("active");
-  document.getElementById("btn-repaso").classList.remove("active");
-  pintarLista(false);
-});
+/* Tres modos, una barra: el repaso del banco, todo el banco y lo suyo. Cada
+   botón dice si está elegido (aria-pressed), no solo con el color. */
+function elegirModo(m) {
+  modo = m;
+  [["btn-repaso", "repaso"], ["btn-todas", "todas"], ["btn-mio", "mio"]].forEach(([id, cual]) => {
+    const b = document.getElementById(id);
+    b.classList.toggle("active", m === cual);
+    b.setAttribute("aria-pressed", m === cual ? "true" : "false");
+  });
+  if (m === "mio") {
+    mostrar("vista-mio");
+    if (repertorio) repertorio.pintar();
+    return;
+  }
+  mostrar("vista-lista");
+  pintarLista(m === "repaso");
+  pintarResumen();
+}
+document.getElementById("btn-repaso").addEventListener("click", () => elegirModo("repaso"));
+document.getElementById("btn-todas").addEventListener("click", () => elegirModo("todas"));
+document.getElementById("btn-mio").addEventListener("click", () => elegirModo("mio"));
 document.getElementById("f-tipo").addEventListener("change", () =>
   pintarLista(document.getElementById("btn-repaso").classList.contains("active")));
 document.getElementById("f-nivel").addEventListener("change", () =>
   pintarLista(document.getElementById("btn-repaso").classList.contains("active")));
 document.getElementById("volver-btn").addEventListener("click", () => {
+  if (linea && linea.propia) { elegirModo("mio"); document.getElementById("mio-titulo").focus(); return; }
   mostrar("vista-lista");
   pintarLista(document.getElementById("btn-repaso").classList.contains("active"));
   pintarResumen();
@@ -491,6 +517,46 @@ document.querySelectorAll(".promo-btn").forEach((b) => b.addEventListener("click
   document.getElementById("promo").classList.add("hidden");
   intentar(jugada);
 }));
+
+/* ---------------- Mi repertorio ---------------- */
+async function cargarRepertorio() {
+  if (!window.RepertorioAperturas) return;
+  let filas = [];
+  try {
+    const { data: ses } = await sb.auth.getSession();
+    const yo = ses && ses.session ? ses.session.user.id : null;
+    const { data, error } = await sb.from("repertorio").select("id, color, nombre, jugadas, created_at")
+      .eq("alumno_id", yo).order("created_at", { ascending: true });
+    if (error) throw error;
+    filas = data || [];
+  } catch (e) {
+    document.getElementById("repertorio").textContent = "No se pudo cargar tu repertorio. Vuelve a intentarlo en un rato.";
+    return;
+  }
+  repertorio = RepertorioAperturas.montar(document.getElementById("repertorio"), {
+    sb, filas, banco: AperturasLineas.LINEAS,
+    cuando: (id) => cuandoTexto(estado[id]),
+    entrenar: (id) => empezar(id),
+    avisar: (texto, tipo) => (window.Avisos ? Avisos.avisar(texto, { tipo: tipo || "ok" }) : decir(texto, tipo === "error" ? "bad" : "")),
+    confirmar: (texto, op) => (window.Avisos ? Avisos.confirmar(texto, op) : Promise.resolve(false)),
+    alCambiar: (lineas) => {
+      mias = lineas;
+      /* Una línea borrada deja su ficha de repaso marcada como borrada, con
+         fecha de hoy y sin vencimiento: si solo se quitara, la copia de la
+         cuenta (que se queda con la ficha MÁS RECIENTE de cada línea) la
+         devolvería, y el «Repaso del día» seguiría contando una línea que ya
+         no existe. */
+      const vivas = new Set(lineas.map((L) => L.id));
+      Object.keys(estado).forEach((id) => {
+        if (id.indexOf(RepertorioAperturas.PREFIJO) === 0 && !vivas.has(id) && !(estado[id] && estado[id].borrada)) {
+          estado[id] = { borrada: true, ultimo: new Date().toISOString(), vence: "9999-12-31", intervalo: 0 };
+        }
+      });
+      guardarEstado();
+    },
+  });
+  mias = repertorio.lineas();
+}
 
 /* ---------------- arranque ---------------- */
 async function init() {
@@ -515,16 +581,15 @@ async function init() {
   if (window.ProgresoUsuario) await ProgresoUsuario.init();
   if (window.EntrenoProgress) await EntrenoProgress.init();
   estado = leerEstado();
+  await cargarRepertorio();
 
   document.getElementById("gate").classList.add("hidden");
   document.getElementById("app").classList.remove("hidden");
-  document.getElementById("btn-repaso").classList.add("active");
-  pintarResumen();
-  pintarLista(true);
+  elegirModo(new URLSearchParams(location.search).get("ver") === "mio" ? "mio" : "repaso");
 
   // Si el id no existe (línea borrada o mal escrita) se cae a la lista de
   // siempre, en vez de quedarse mostrando un tablero de mentira.
-  if (idLinea && AperturasLineas.LINEAS.some((L) => L.id === idLinea)) empezar(idLinea);
+  if (idLinea && todas().some((L) => L.id === idLinea)) empezar(idLinea);
   // Con la cuenta ciega, el foco empieza en el título de la lista y no en el
   // <body>: desde ahí, el siguiente Tab ya son los filtros y las líneas.
   else if (document.documentElement.classList.contains("modo-ciego")) document.getElementById("lista-titulo").focus();

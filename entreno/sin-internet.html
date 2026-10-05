@@ -4,8 +4,8 @@
 <meta charset="UTF-8"><!-- guardia: inicio --><script>(function(){try{if(window.sb||localStorage.getItem("sb-bgtijpimpcokxatxxbki-auth-token"))return;}catch(e){return;}try{window.stop()}catch(e){}var p=location.pathname.replace(/^\/+/,'');if(!p||/\/$/.test(p))p+='index.html';else if(!/\.html$/.test(p))p+='.html';location.replace('/login.html?next='+encodeURIComponent(p));})();</script><!-- guardia: fin -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="../img/favicon.svg">
-<title>Aperturas y celadas — Entreno — Ajedrez Integral</title>
-<meta name="description" content="Memoriza aperturas y celadas jugándolas en el tablero, con repetición espaciada: lo que te sale bien vuelve más tarde cada vez.">
+<title>Ejercicios sin internet — Entreno — Ajedrez Integral</title>
+<meta name="description" content="Una tanda de ejercicios guardada en tu celular para resolverla sin señal; los resultados se suben solos cuando vuelve la conexión.">
 <meta name="robots" content="noindex">
     <!-- Tailwind compilado: lo genera herramientas/css-construir.js.
          Antes venía del CDN, que baja ~400 KB de JavaScript y compila el CSS
@@ -199,105 +199,74 @@
 <!-- app: inicio --><meta name="theme-color" content="#102a43"><link rel="manifest" href="/manifest.json"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Ajedrez"><script src="../js/errores.js"></script><script src="../js/pwa.js" defer></script><script src="../js/navegacion.js" defer></script><!-- app: fin --><!-- fuentes: inicio --><link rel="stylesheet" href="../css/fuentes.css"><!-- fuentes: fin --><!-- tema: inicio --><script>(function(){try{var l=localStorage.getItem('plataforma_letra_v1');if(l&&/^[a-z]{2,24}$/.test(l)&&l!=='tema')document.documentElement.setAttribute('data-letra',l);var t=localStorage.getItem('plataforma_tema_v1');if(!t||!/^[a-z]{2,24}$/.test(t)||t==='clasico')return;document.documentElement.setAttribute('data-tema',t);var b=getComputedStyle(document.documentElement).getPropertyValue('--c-brand-800').trim();var m=document.querySelector('meta[name="theme-color"]');if(b&&m)m.setAttribute('content','rgb('+b.replace(/\s+/g,',')+')');}catch(e){}})();</script><!-- tema: fin --></head>
 <body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
     <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-accent-500 focus:text-brand-900 focus:font-semibold focus:px-4 focus:py-2 focus:rounded-lg">Saltar al contenido principal</a>
-    <header id="header" class="sticky top-0 z-50 bg-brand-800 shadow-lg transition-all duration-300"><nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Academia"><div class="flex items-center justify-between min-h-[4rem] md:min-h-[5rem] py-2"><a id="marca-enlace" href="../clases.html" class="flex items-center gap-2 text-white min-w-0"><img src="/img/logo-marca.png" alt="" width="78" height="48" class="h-10 md:h-12 w-auto shrink-0"><span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span><span class="sr-only"> — panel de la Academia</span></a><div class="flex items-center gap-2"><a id="ayuda-guia" href="../guia-del-profesor-accesible.html#cap-8" target="_blank" rel="noopener" class="hidden text-white font-bold text-lg w-9 h-9 items-center justify-center rounded-lg border border-white/40 hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Ayuda: capítulo «Entrenamiento» de la guía del profesor (se abre en otra pestaña)" title="Guía del profesor: Entrenamiento"><span aria-hidden="true">?</span></a><button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro"><span id="theme-icon" aria-hidden="true">☀️</span></button></div></div></nav></header><!-- migas: inicio --><div class="bg-brand-900"><nav id="migas" aria-label="Estás en" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 text-sm"><ol class="flex flex-wrap items-center gap-x-2 gap-y-1"><li class="flex items-center gap-2"><a href="../clases.html" class="text-brand-200 underline underline-offset-2 hover:text-accent-400 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">🏛️ </span>Academia</a></li><li class="flex items-center gap-2"><span aria-hidden="true" class="text-brand-400">›</span><span aria-current="page" class="font-semibold text-white">Aperturas y celadas</span></li></ol></nav></div><!-- migas: fin -->
+    <header id="header" class="sticky top-0 z-50 bg-brand-800 shadow-lg transition-all duration-300"><nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Academia"><div class="flex items-center justify-between min-h-[4rem] md:min-h-[5rem] py-2"><a id="marca-enlace" href="../clases.html" class="flex items-center gap-2 text-white min-w-0"><img src="/img/logo-marca.png" alt="" width="78" height="48" class="h-10 md:h-12 w-auto shrink-0"><span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span><span class="sr-only"> — panel de la Academia</span></a><div class="flex items-center gap-2"><a id="ayuda-guia" href="../guia-del-profesor-accesible.html#cap-8" target="_blank" rel="noopener" class="hidden text-white font-bold text-lg w-9 h-9 items-center justify-center rounded-lg border border-white/40 hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Ayuda: capítulo «Entrenamiento» de la guía del profesor (se abre en otra pestaña)" title="Guía del profesor: Entrenamiento"><span aria-hidden="true">?</span></a><button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro"><span id="theme-icon" aria-hidden="true">☀️</span></button></div></div></nav></header><!-- migas: inicio --><div class="bg-brand-900"><nav id="migas" aria-label="Estás en" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 text-sm"><ol class="flex flex-wrap items-center gap-x-2 gap-y-1"><li class="flex items-center gap-2"><a href="../clases.html" class="text-brand-200 underline underline-offset-2 hover:text-accent-400 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">🏛️ </span>Academia</a></li><li class="flex items-center gap-2"><span aria-hidden="true" class="text-brand-400">›</span><span aria-current="page" class="font-semibold text-white">Ejercicios sin internet</span></li></ol></nav></div><!-- migas: fin -->
   <main id="main-content">
     <div id="gate" class="wrap">
       <p id="gate-checking" class="panel">Comprobando tu sesión…</p>
     </div>
 
     <div id="app" class="wrap hidden">
-      <h1><span aria-hidden="true">♞</span> Aperturas y celadas</h1>
-      <p class="sub" id="sub-total">Memoriza líneas jugándolas. Lo que te sale bien vuelve más tarde cada vez; lo que fallas, vuelve hoy.</p>
+      <h1><span aria-hidden="true">📴</span> Ejercicios sin internet</h1>
+      <p class="sub">Guarda una tanda de ejercicios en este celular mientras tienes señal, y resuélvela en el bus, en el campo o donde no haya internet. Lo que resuelvas se sube solo cuando vuelva la conexión.</p>
 
-      <!-- ------- Cómo va el estudio ------- -->
-      <div class="resumen" id="resumen"></div>
-
-      <!-- ------- Lista ------- -->
-      <div class="mode-bar" id="barra-modos" role="group" aria-label="Qué estudiar">
-        <button type="button" class="mode-btn" id="btn-repaso">🔁 Repasar lo de hoy</button>
-        <button type="button" class="mode-btn" id="btn-todas">📚 Ver todas</button>
-        <button type="button" class="mode-btn" id="btn-mio">🗂️ Mi repertorio</button>
+      <!-- Hay señal o no, y lo que espera para subirse: siempre a la vista. -->
+      <p id="red" class="panel" role="status" aria-live="polite"></p>
+      <div id="pendientes" class="panel hidden" style="margin-top:.6rem">
+        <p id="pendientes-texto" style="margin:0"></p>
+        <div class="round-controls" style="justify-content:flex-start;margin-top:.6rem">
+          <button type="button" class="bctrl" id="subir-btn">Subir ahora</button>
+        </div>
       </div>
 
-      <section id="vista-lista" aria-labelledby="lista-titulo">
-        <!-- A dónde va el foco al volver del tablero: el botón «Volver» desaparece
-             con su vista y el foco caía al <body>. -->
-        <p id="lista-titulo" role="heading" aria-level="2" class="sr-only" tabindex="-1">Lista de aperturas y celadas</p>
-
+      <!-- ------- Preparar una tanda (con señal) ------- -->
+      <section id="preparar" class="panel" style="margin-top:1rem" aria-labelledby="preparar-titulo">
+        <h2 id="preparar-titulo">Preparar una tanda</h2>
+        <p class="sub" style="margin-top:.4rem">Elige cuántos y de qué dificultad. Son problemas de partidas reales de Lichess, ya comprobados.</p>
         <div class="filtros">
-          <label for="f-tipo">Qué</label>
-          <select id="f-tipo">
-            <option value="">Todo</option>
-            <option value="celada">Solo celadas</option>
-            <option value="apertura">Solo aperturas</option>
+          <label for="cuantos">Cuántos</label>
+          <select id="cuantos">
+            <option value="10">10</option>
+            <option value="20" selected>20</option>
+            <option value="30">30</option>
           </select>
-          <label for="f-nivel">Nivel</label>
-          <select id="f-nivel">
-            <option value="">Todos</option>
-            <option value="1">Principiante</option>
-            <option value="2">Intermedio</option>
-            <option value="3">Avanzado</option>
+          <label for="nivel">Dificultad</label>
+          <select id="nivel">
+            <option value="facil">Fácil</option>
+            <option value="medio" selected>Media</option>
+            <option value="dificil">Difícil</option>
           </select>
         </div>
-
-        <div id="lista"></div>
-        <p id="lista-vacia" class="panel hidden"></p>
+        <div class="round-controls" style="justify-content:flex-start">
+          <button type="button" class="bctrl primary" id="guardar-btn">📥 Guardar la tanda en este celular</button>
+        </div>
+        <p id="preparar-estado" class="sub" role="status" aria-live="polite" style="margin:.6rem 0 0"></p>
       </section>
 
-      <!-- ------- Mi repertorio (js/repertorio-aperturas.js) ------- -->
-      <section id="vista-mio" class="hidden" aria-labelledby="mio-titulo">
-        <p id="mio-titulo" role="heading" aria-level="2" class="sr-only" tabindex="-1">Mi repertorio</p>
-        <div id="repertorio"></div>
-      </section>
+      <!-- ------- La tanda guardada ------- -->
+      <section id="tanda" class="hidden" style="margin-top:1rem" aria-labelledby="tanda-titulo">
+        <h2 id="tanda-titulo" tabindex="-1">Tu tanda</h2>
+        <p id="tanda-avance" class="sub" style="margin-top:.3rem"></p>
 
-      <!-- ------- Entrenador ------- -->
-      <section id="vista-tablero" class="hidden">
-        <div class="cabecera-linea">
-          <button type="button" class="bctrl" id="volver-btn">← Volver</button>
-          <div>
-            <h2 id="linea-nombre"></h2>
-            <p id="linea-apertura" class="sub"></p>
+        <div id="jugando">
+          <p class="turn-banner" id="turn-banner"></p>
+          <div class="board-wrap">
+            <div class="board8" id="board" role="group" aria-label="Tablero del ejercicio"></div>
           </div>
-        </div>
-
-        <p class="turn-banner" id="turn-banner" role="status" aria-live="polite"></p>
-
-        <div class="board-wrap">
-          <div class="board8" id="board" role="group" aria-label="Tablero de la línea"></div>
-          <div id="promo" class="promo hidden" role="group" aria-label="Elige en qué pieza corona">
-            <p>¿En qué coronas?</p>
-            <div>
-              <button type="button" class="promo-btn" data-pieza="q">♕ Dama</button>
-              <button type="button" class="promo-btn" data-pieza="r">♖ Torre</button>
-              <button type="button" class="promo-btn" data-pieza="b">♗ Alfil</button>
-              <button type="button" class="promo-btn" data-pieza="n">♘ Caballo</button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Donde se escribe la jugada y se le pregunta a la posición
-             (js/cuadro-comandos.js). Esta página no tenía NADA: sus 64 casillas
-             eran botones mudos —el lector de pantalla decía "botón" sesenta y
-             cuatro veces— así que la línea no se podía ni mirar ni contestar, y
-             no fallaba nada: la página se veía perfecta. -->
-        <div id="q-comandos"></div>
-
-        <p class="round-status" id="round-status" role="status" aria-live="polite"></p>
-        <p class="jugadas" id="jugadas-hechas" aria-label="Jugadas de la línea"></p>
-
-        <div class="round-controls">
-          <button type="button" class="bctrl" id="pista-btn">💡 Enséñame la jugada</button>
-          <button type="button" class="bctrl" id="reiniciar-btn">↺ Empezar de nuevo</button>
-        </div>
-
-        <div id="final" class="panel hidden">
-          <p id="final-nota" class="final-nota"></p>
-          <p id="final-idea"></p>
-          <p id="final-clave" class="clave"></p>
-          <p id="final-cuando" class="sub"></p>
+          <!-- Donde se escribe la jugada (js/cuadro-comandos.js): todo
+               ejercicio se puede contestar escribiendo. -->
+          <div id="q-comandos"></div>
+          <p class="round-status" id="round-status" role="status" aria-live="polite"></p>
           <div class="round-controls">
-            <button type="button" class="bctrl principal" id="siguiente-btn">Siguiente →</button>
-            <button type="button" class="bctrl" id="repetir-btn">Repetirla ahora</button>
+            <button type="button" class="bctrl" id="pista-btn">💡 Pista</button>
+            <button type="button" class="bctrl" id="solucion-btn">Ver solución</button>
+            <button type="button" class="bctrl primary hidden" id="siguiente-btn">Siguiente →</button>
+          </div>
+        </div>
+
+        <div id="terminada" class="panel hidden">
+          <p id="terminada-texto" class="final-nota"></p>
+          <div class="round-controls">
+            <button type="button" class="bctrl primary" id="otra-btn">Preparar otra tanda</button>
           </div>
         </div>
       </section>
@@ -308,9 +277,9 @@
 <script src="../js/board-themes.js"></script>
 <script src="../js/pieza-preferida.js"></script>
 <!-- tablero-js: fin -->
+<script src="../js/coronacion.js"></script>
 <script src="../js/vendor/supabase.js"></script>
 <script src="../js/supabase-client.js"></script>
-<script src="../js/tiempo-plataforma.js" data-activity="aperturas"></script>
 <script src="../js/entreno-progress.js"></script>
 <script src="../js/chess-piece-svg.js"></script>
 <script src="../js/main.js"></script>
@@ -318,16 +287,15 @@
 <script src="../js/vendor/chess.js"></script>
 <script src="../js/progreso-usuario.js"></script>
 <script src="../js/blind-notation.js"></script>
-<!-- El teclado del tablero, las preguntas que se le pueden hacer y el recuadro
-     donde se contesta: escritos una sola vez para todo Entrenamiento. -->
 <script src="../js/tablero-accesible.js"></script>
 <script src="../js/chess-move-parser.js"></script>
 <script src="../js/comandos-tablero.js"></script>
 <script src="../js/cuadro-comandos.js"></script>
-<script src="../js/avisos.js"></script>
-<script src="../js/aperturas-lineas.js"></script>
-<script src="../js/repertorio-aperturas.js"></script>
 <script src="../js/repaso-espaciado.js"></script>
-<script src="../js/entreno-aperturas.js"></script>
+<script src="../js/repaso-fallados.js"></script>
+<script src="../js/ejercicio-tablero.js"></script>
+<script src="../js/avisos.js"></script>
+<script src="../js/hora-cr.js"></script>
+<script src="../js/sin-internet.js"></script>
 <!-- burbuja: inicio --><script src="../js/burbuja-en-linea.js" defer></script><!-- burbuja: fin --><!-- juego-aviso: inicio --><script src="../js/juego-aviso.js" defer></script><!-- juego-aviso: fin --><!-- aviso-profe: inicio --><script src="../js/aviso-profe.js" defer></script><!-- aviso-profe: fin --><!-- tanda: inicio --><script src="../js/tanda-diez.js" defer></script><!-- tanda: fin --><!-- acceso: inicio --><script src="../js/acceso-vigente.js" defer></script><!-- acceso: fin --><!-- modo-vista: inicio --><script src="../js/modo-vista.js" defer></script><!-- modo-vista: fin --><!-- marca: inicio --><script src="../js/marca-academia.js" defer></script><!-- marca: fin --><!-- ayuda: inicio --><script src="../js/ayuda-guia.js" defer></script><!-- ayuda: fin --><!-- atajo: inicio --><script src="../js/atajo-buscar.js" data-arriba="../" defer></script><!-- atajo: fin --></body>
 </html>

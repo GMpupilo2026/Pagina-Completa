@@ -558,6 +558,42 @@
       idea: "El negro entrega un peón y a cambio abre las columnas a y b para sus torres.",
       clave: "El alfil de g7 y las torres en a8 y b8 presionan el flanco de dama durante toda la partida.",
     },
+    {
+      id: "francesa-winawer",
+      nombre: "Francesa, variante Winawer",
+      apertura: "Defensa francesa",
+      tipo: "apertura", color: "b", nivel: 3,
+      jugadas: ["e4", "e6", "d4", "d5", "Nc3", "Bb4", "e5", "c5", "a3", "Bxc3+", "bxc3", "Ne7", "Nf3", "Nbc6", "a4", "Qa5", "Bd2"],
+      idea: "El negro clava el caballo de c3 y lo cambia: le deja al blanco los peones doblados a cambio del alfil.",
+      clave: "El negro presiona c3 y d4 con la dama, los caballos y el peón de c5; el blanco tiene los dos alfiles y espacio.",
+    },
+    {
+      id: "defensa-moderna",
+      nombre: "Defensa moderna",
+      apertura: "Defensa moderna",
+      tipo: "apertura", color: "b", nivel: 2,
+      jugadas: ["e4", "g6", "d4", "Bg7", "Nc3", "d6", "Be3", "a6", "Qd2", "b5", "f3", "Nd7"],
+      idea: "El negro deja que el blanco arme el centro y lo ataca después, desde lejos, con el alfil de g7.",
+      clave: "a6 y b5 ganan espacio en el flanco de dama; el caballo va a d7 para no tapar al alfil y preparar c5.",
+    },
+    {
+      id: "stonewall",
+      nombre: "Ataque Stonewall",
+      apertura: "Peón de dama",
+      tipo: "apertura", color: "w", nivel: 1,
+      jugadas: ["d4", "d5", "e3", "Nf6", "Bd3", "c5", "c3", "Nc6", "f4", "e6", "Nf3", "Bd6", "Nbd2", "O-O", "O-O", "Qc7", "Ne5"],
+      idea: "Los peones de c3, d4, e3 y f4 arman un muro, y el caballo se planta en e5 apoyado por ellos.",
+      clave: "El caballo de e5 y el alfil de d3 apuntan al enroque negro; la torre puede subir por f3 hasta h3.",
+    },
+    {
+      id: "gambito-budapest",
+      nombre: "Gambito Budapest",
+      apertura: "Peón de dama",
+      tipo: "apertura", color: "b", nivel: 2,
+      jugadas: ["d4", "Nf6", "c4", "e5", "dxe5", "Ng4", "Bf4", "Nc6", "Nf3", "Bb4+", "Nbd2", "Qe7", "e3", "Ngxe5", "Nxe5", "Nxe5"],
+      idea: "El negro entrega el peón de e5 en la segunda jugada y casi siempre lo recupera con desarrollo rápido.",
+      clave: "El caballo vuelve a e5 y el alfil de b4 clava al caballo de d2: el negro sale de la apertura sin peón de menos.",
+    },
   ];
 
   // Cuántas jugadas tiene que dar el alumno en una línea.

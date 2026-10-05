@@ -1313,6 +1313,42 @@
    "actividades": [
     "aperturas"
    ]
+  },
+  {
+   "clave": "francesa-winawer",
+   "label": "Francesa, variante Winawer",
+   "grupo": "Defensa francesa",
+   "total": 1,
+   "actividades": [
+    "aperturas"
+   ]
+  },
+  {
+   "clave": "defensa-moderna",
+   "label": "Defensa moderna",
+   "grupo": "Defensa moderna",
+   "total": 1,
+   "actividades": [
+    "aperturas"
+   ]
+  },
+  {
+   "clave": "stonewall",
+   "label": "Ataque Stonewall",
+   "grupo": "Peón de dama",
+   "total": 1,
+   "actividades": [
+    "aperturas"
+   ]
+  },
+  {
+   "clave": "gambito-budapest",
+   "label": "Gambito Budapest",
+   "grupo": "Peón de dama",
+   "total": 1,
+   "actividades": [
+    "aperturas"
+   ]
   }
  ],
  "estudio": [
@@ -2194,6 +2230,188 @@
   {
    "clave": "alfil-contra-caballo",
    "label": "Alfil contra caballo",
+   "grupo": "Finales",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "stonewall",
+   "label": "Ataque Stonewall",
+   "grupo": "Aperturas",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "siciliana-najdorf",
+   "label": "Siciliana Najdorf",
+   "grupo": "Defensas",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "francesa-winawer",
+   "label": "Francesa Winawer",
+   "grupo": "Defensas",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "defensa-moderna",
+   "label": "Defensa moderna",
+   "grupo": "Defensas",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "gambito-budapest",
+   "label": "Gambito Budapest",
+   "grupo": "Defensas",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "ataque-f7",
+   "label": "El ataque a f7",
+   "grupo": "Táctica",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "coronacion",
+   "label": "La coronación",
+   "grupo": "Táctica",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "mate-dos-alfiles",
+   "label": "El mate de los dos alfiles",
+   "grupo": "Táctica",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "mate-damiano",
+   "label": "El mate de Damiano",
+   "grupo": "Táctica",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "rey-expuesto",
+   "label": "El rey expuesto",
+   "grupo": "Táctica",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "sacrificio-h6",
+   "label": "El sacrificio en h6",
+   "grupo": "Táctica",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "valor-de-las-piezas",
+   "label": "El valor de las piezas",
+   "grupo": "Conceptos",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "atacar-al-rey",
+   "label": "Cómo atacar al rey enrocado",
+   "grupo": "Conceptos",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "peon-retrasado",
+   "label": "El peón retrasado",
+   "grupo": "Conceptos",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "bloqueo",
+   "label": "El bloqueo",
+   "grupo": "Conceptos",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "columna-semiabierta",
+   "label": "La columna semiabierta",
+   "grupo": "Conceptos",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "convertir-la-ventaja",
+   "label": "Convertir la ventaja",
+   "grupo": "Conceptos",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "coordinacion",
+   "label": "La coordinación de las piezas",
+   "grupo": "Conceptos",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "peones-ligados",
+   "label": "Los peones ligados",
+   "grupo": "Finales",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "torre-contra-caballo",
+   "label": "Torre contra caballo",
+   "grupo": "Finales",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "oposicion-lejana",
+   "label": "La oposición lejana",
+   "grupo": "Finales",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "fortaleza",
+   "label": "La fortaleza",
+   "grupo": "Finales",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "torre-contra-alfil",
+   "label": "Torre contra alfil",
+   "grupo": "Finales",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "dama-contra-torre",
+   "label": "Dama contra torre",
+   "grupo": "Finales",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "mate-rey-dos-alfiles",
+   "label": "Mate con rey y dos alfiles",
+   "grupo": "Finales",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "alfil-bueno-alfil-malo",
+   "label": "Alfil bueno contra alfil malo",
    "grupo": "Finales",
    "total": 1,
    "actividades": []

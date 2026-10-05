@@ -93,6 +93,68 @@
             msg.className = "text-xs text-green-600 dark:text-green-400 mb-1";
         });
 
+        /* ---------------- Tus cuentas de Lichess y Chess.com ----------------
+           Al guardar, este navegador baja sus partidas públicas y las analiza
+           con el análisis de la preparación de rivales (js/analisis-alumno.js,
+           que se carga recién al apretar): su profe lo ve en Informes. Ver «Lo
+           que juega en Lichess y Chess.com» en docs/decisiones/informes.md. */
+        function cuentasMensaje(texto, malo) {
+            const msg = document.getElementById("cuentas-msg");
+            msg.textContent = texto;
+            msg.className = "text-xs mb-1 " + (malo ? "text-red-600 dark:text-red-400" : "text-brand-600 dark:text-brand-300");
+        }
+        async function pintarCuentasJuego() {
+            const caja = document.getElementById("cuentas-juego");
+            if (!caja) return;
+            caja.hidden = false;
+            const { data } = await sb.from("analisis_partidas_alumno").select("lichess, chesscom, partidas, analizado_at").eq("alumno_id", profile.id).maybeSingle();
+            if (data) {
+                document.getElementById("cuenta-lichess").value = data.lichess || "";
+                document.getElementById("cuenta-chesscom").value = data.chesscom || "";
+                if (data.analizado_at) cuentasMensaje(`Tu profe ya ve el análisis de ${data.partidas} partidas. Puedes volver a analizarlas cuando juegues más.`);
+            }
+        }
+        function cargarAnalisisAlumno() {
+            if (window.AnalisisAlumno) return Promise.resolve();
+            return new Promise((ok, mal) => {
+                const sc = document.createElement("script");
+                sc.src = "js/analisis-alumno.js";
+                sc.onload = ok;
+                sc.onerror = () => mal(new Error("no se pudo cargar el análisis"));
+                document.body.appendChild(sc);
+            });
+        }
+        document.getElementById("save-cuentas-btn").addEventListener("click", async () => {
+            const btn = document.getElementById("save-cuentas-btn");
+            const cuentas = {
+                lichess: document.getElementById("cuenta-lichess").value.trim().replace(/^@/, ""),
+                chesscom: document.getElementById("cuenta-chesscom").value.trim().replace(/^@/, ""),
+            };
+            const valido = /^[A-Za-z0-9][A-Za-z0-9_-]{1,29}$/;
+            // Los dos vacíos: se borran sus cuentas y su análisis (lo promete la
+            // política de privacidad).
+            if (!cuentas.lichess && !cuentas.chesscom) {
+                btn.disabled = true;
+                const { error } = await sb.from("analisis_partidas_alumno").delete().eq("alumno_id", profile.id);
+                btn.disabled = false;
+                cuentasMensaje(error ? "No se pudo borrar: " + error.message : "Se borraron tus usuarios y el resumen de tus partidas.", !!error);
+                return;
+            }
+            if ([cuentas.lichess, cuentas.chesscom].some((u) => u && !valido.test(u))) { cuentasMensaje("Un usuario lleva solo letras, números, guion o guion bajo.", true); return; }
+            btn.disabled = true;
+            try {
+                await cargarAnalisisAlumno();
+                cuentasMensaje("Bajando tus partidas…");
+                const r = await AnalisisAlumno.analizar(Object.assign({ alAvanzar: (t) => cuentasMensaje(t) }, cuentas));
+                await AnalisisAlumno.guardar(sb, profile.id, cuentas, r);
+                cuentasMensaje(`Listo: se analizaron ${r.total} partidas. Tu profe ya puede ver qué juegas y dónde te va mejor y peor.`);
+            } catch (e) {
+                cuentasMensaje(e && e.paraMostrar ? e.message : "No se pudo analizar: " + (e && e.message ? e.message : e), true);
+            } finally {
+                btn.disabled = false;
+            }
+        });
+
         /* ---------------- Tu código FIDE ----------------
            guardar_fide_id() lo guarda (y borra el historial si el código
            cambió: era de otra ficha); después elo-fide lee el Elo en ese
@@ -1051,6 +1113,7 @@
                 pintarDosPasos();
             }
             if (profile.role === "alumno" && !profile.is_admin) pintarPequenos();
+            if (profile.role === "alumno" && !profile.is_admin && !profile._persona) pintarCuentasJuego();
             document.getElementById("loading").classList.add("hidden");
             document.getElementById("app").classList.remove("hidden");
             pintarAvisos();

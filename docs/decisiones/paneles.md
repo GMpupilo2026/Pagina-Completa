@@ -2936,6 +2936,15 @@ con el Elo, las opciones UCI en su orden, «Cómo te fue», el foco al cerrar, e
 aviso de un análisis viejo, y en la página del alumno la partida, sin motor y
 sin guardar nada.
 
+#### Los textos, a pedido de quien la usa
+
+«Mi repertorio» (Aperturas y celadas) usa esta misma partida con el libro
+armado de las líneas del alumno. Por eso `empezar()` acepta `textos`
+(`deLibro`, `saleDelLibro`, `desvio`, `resumenLibro`, `plan`): lo que se dice
+de una jugada de libro cambia, lo que se hace no. Sin `textos`, las frases son
+las de siempre, palabra por palabra. Ver «Jugar con mi repertorio» en
+`entrenamiento.md`.
+
 ### Repasar las líneas del plan
 
 «Entrénalo» decía qué líneas ya salían limpias, pero una línea que salió limpia

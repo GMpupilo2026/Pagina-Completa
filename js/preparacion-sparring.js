@@ -15,6 +15,14 @@
  *
  *   const s = PreparacionSparring.montar(contenedor);
  *   s.empezar({ libro, plan, color: "w", elo: 1850, rival: "Pedro", reciente: true });
+ *
+ * `textos` (opcional) cambia lo que se dice, no lo que se hace: «Mi
+ * repertorio» (js/repertorio-aperturas.js) juega con el libro de SUS líneas,
+ * y ahí «la juega 63 % de las veces en sus partidas» no sería verdad.
+ *   textos.deLibro(x)          la nota de una jugada del libro
+ *   textos.saleDelLibro(elo)   la nota cuando el libro se acaba
+ *   textos.desvio(jugada)      tu jugada se aparta del plan («El plan decía …»)
+ *   textos.resumenLibro(estado, desde)  el renglón del resumen sobre el libro
  */
 window.PreparacionSparring = (function () {
   "use strict";
@@ -81,6 +89,7 @@ window.PreparacionSparring = (function () {
     function empezar(cfg) {
       const color = cfg.color === "b" ? "b" : "w";
       const nombre = cfg.rival || "el rival";
+      const T = cfg.textos || {};
       // Qué pasó, para el resumen: sus jugadas de libro y dónde salió de él.
       const estado = { deLibro: 0, suyas: 0, salioEn: null, desvioDicho: false };
       resumen.textContent = "";
@@ -94,6 +103,7 @@ window.PreparacionSparring = (function () {
           const x = Lb().elegir(cfg.libro, juego.fen());
           if (x) {
             estado.deLibro += 1;
+            if (T.deLibro) return { san: x.san, nota: T.deLibro(x) };
             // Con lo reciente pesando más, el porcentaje es de lo que juega ahora.
             return { san: x.san, nota: (cfg.reciente ? "Últimamente la juega " : "La juega ") + pctEntero(x.reparto) + " de las veces en esta posición (" + x.n + (x.n === 1 ? " partida)." : " partidas).") };
           }
@@ -101,7 +111,8 @@ window.PreparacionSparring = (function () {
           if (primera) estado.salioEn = i;
           const san = await jugadaDelMotor(juego.fen(), cfg.elo);
           if (!san) return null;
-          return { san, nota: primera ? "Aquí se acaba lo que él juega en sus partidas: desde ahora juega Stockfish a su nivel (Elo " + eloDelMotor(cfg.elo) + ")." : "" };
+          return { san, nota: !primera ? "" : T.saleDelLibro ? T.saleDelLibro(eloDelMotor(cfg.elo))
+            : "Aquí se acaba lo que él juega en sus partidas: desde ahora juega Stockfish a su nivel (Elo " + eloDelMotor(cfg.elo) + ")." };
         },
         // Tu jugada contra el plan: se dice una vez, la primera que se aparta.
         alJugar: (hecha, juego) => {
@@ -109,7 +120,7 @@ window.PreparacionSparring = (function () {
           const s = Lb().seguirPlan(cfg.plan, sec, color);
           if (s.desvio && s.desvio.i === sec.length - 1 && !estado.desvioDicho) {
             estado.desvioDicho = true;
-            return "El plan decía " + numerada(s.desvio.i, s.desvio.plan) + ".";
+            return T.desvio ? T.desvio(numerada(s.desvio.i, s.desvio.plan)) : "El plan decía " + numerada(s.desvio.i, s.desvio.plan) + ".";
           }
           if (!s.desvio && !s.sinPreparar && s.seguidas === sec.length) return "Es la del plan.";
           return "";
@@ -128,11 +139,16 @@ window.PreparacionSparring = (function () {
       else if (motivo === "tablas") item("Terminó en tablas.");
       else if (motivo === "sin-jugada") item("Aquí se acabó lo que él juega y Stockfish no contestó, así que la partida se terminó.");
       const s = Lb().seguirPlan(cfg.plan, sec, color);
-      if (s.desvio) item("Te saliste del plan en " + numerada(s.desvio.i, s.desvio.jugada) + ": el plan decía " + numerada(s.desvio.i, s.desvio.plan) + ".");
-      else if (s.sinPreparar) item("Seguiste el plan hasta que él jugó " + numerada(s.sinPreparar.i, s.sinPreparar.jugada) + ", que el plan no prepara.");
-      else if (s.seguidas && s.fin) item("Seguiste el plan hasta el final.");
-      else if (s.seguidas) item("Ibas en el plan cuando terminó la partida.");
-      if (estado.suyas) {
+      const P = (cfg.textos && cfg.textos.plan) || "el plan";
+      const deP = /^el /.test(P) ? "del " + P.slice(3) : "de " + P;   // «del plan», «de tu repertorio»
+      if (s.desvio) item("Te saliste " + deP + " en " + numerada(s.desvio.i, s.desvio.jugada) + ": " + P + " decía " + numerada(s.desvio.i, s.desvio.plan) + ".");
+      else if (s.sinPreparar) item("Seguiste " + P + " hasta que " + (cfg.textos ? "el rival" : "él") + " jugó " + numerada(s.sinPreparar.i, s.sinPreparar.jugada) + ", que " + P + " no prepara.");
+      else if (s.seguidas && s.fin) item("Seguiste " + P + " hasta el final.");
+      else if (s.seguidas) item("Ibas en " + P + " cuando terminó la partida.");
+      if (estado.suyas && cfg.textos && cfg.textos.resumenLibro) {
+        const i = estado.salioEn;
+        item(cfg.textos.resumenLibro(estado, i == null ? null : (sec[i] ? numerada(i, sec[i]) : "la jugada " + (Math.floor(i / 2) + 1))));
+      } else if (estado.suyas) {
         const i = estado.salioEn;
         item(i == null
           ? "Todas sus jugadas (" + estado.suyas + ") salieron de sus partidas."
