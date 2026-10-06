@@ -23,13 +23,13 @@
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
-                    "Authorization": `Bearer ${session.access_token}`,
+                    "Authorization": `Bearer ${await window.tokenDeSesion()}`,
                     "apikey": window.SUPABASE_ANON_KEY,
                 },
                 body: JSON.stringify({ action, ...payload }),
             });
             const result = await res.json().catch(() => ({}));
-            if (!res.ok || result.error) throw new Error(result.error || "Error desconocido");
+            if (!res.ok || result.error) throw new Error(window.errorDeFuncion(res, result));
             return result;
         }
 
