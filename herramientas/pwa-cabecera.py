@@ -37,8 +37,8 @@ FIN = "<!-- app: fin -->"
 #   - offline.html ya las trae escritas a mano (es la que se enseña sin red);
 #   - libro-de-diagnostico-accesible.html, guia-del-profesor-accesible.html,
 #     fichas-de-estudio-accesible.html, ponte-a-prueba-accesible.html y
-#     mide-tu-fuerza-accesible.html, mide-tu-fuerza-2-accesible.html y
-#     mide-tu-fuerza-3-accesible.html son
+#     y los accesibles de los cuatro volúmenes de «Mide tu fuerza»
+#     (mide-tu-fuerza-accesible.html, mide-tu-fuerza-2-accesible.html…) son
 #     documentos que se descargan y se abren sueltos, hasta por correo y sin
 #     red: declarar un manifest que no va a poder cargar es peor que no
 #     declararlo. Esta lista tiene que decir lo mismo que la de
@@ -53,7 +53,8 @@ FUERA = {"inscripcion.html", "offline.html", "formulario.html",
          "ponte-a-prueba-accesible.html",
          "mide-tu-fuerza-accesible.html",
          "mide-tu-fuerza-2-accesible.html",
-         "mide-tu-fuerza-3-accesible.html"}
+         "mide-tu-fuerza-3-accesible.html",
+         "mide-tu-fuerza-4-accesible.html"}
 CARPETAS_FUERA = ("cursos/recursos/", "cursos/protegido/", "material/", "herramientas/", "node_modules/")
 
 

@@ -216,7 +216,7 @@ function servidorPropio() {
         if (["inscripcion.html", "formulario.html", "libro-de-diagnostico-accesible.html",
              "guia-del-profesor-accesible.html", "fichas-de-estudio-accesible.html",
              "ponte-a-prueba-accesible.html", "mide-tu-fuerza-accesible.html", "mide-tu-fuerza-2-accesible.html",
-             "mide-tu-fuerza-3-accesible.html"].includes(e.name)) continue;
+             "mide-tu-fuerza-3-accesible.html", "mide-tu-fuerza-4-accesible.html"].includes(e.name)) continue;
         paginas.push(rel);
       }
     }

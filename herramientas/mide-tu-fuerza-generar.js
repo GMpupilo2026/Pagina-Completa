@@ -73,6 +73,10 @@
  *   select … from n where k <= 20                 -- volumen 1
  *   select … from n where k between 21 and 40     -- volumen 2
  *   select … from n where k between 41 and 60     -- volumen 3
+ *   select … from n where k between 61 and 80     -- volumen 4 (ver su archivo:
+ *                                                    los temas que ya no tenían 20
+ *                                                    se completan con un filtro
+ *                                                    algo más ancho)
  */
 "use strict";
 const fs = require("fs");
