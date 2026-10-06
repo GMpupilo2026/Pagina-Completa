@@ -1325,21 +1325,27 @@ ninguno. El único camino de salida seguro era saber que el logo lleva al panel.
   encabezado, cada paso existe, el primero es el panel, y en la pantalla se ven,
   no desbordan a 360 px y pasan AA en claro y en oscuro.
 
-### El «?» de la guía, solo para administración
+### El «?» de la guía, para el equipo docente
 
 Al lado del botón de tema, las páginas de la Academia que la guía del profesor
 explica llevan un «?». Lleva al capítulo de la guía que habla de esa página:
 Informes al capítulo «Informes», Niebla al capítulo «Jugar», un curso al
 capítulo «Los cursos de la Academia».
 
-- **Por ahora es solo de administración**, igual que la tarjeta «📘 Guía del
-  profesor» del panel (solo en `ADMIN_GROUPS`). Lo decidió el dueño del sitio: la guía
-  todavía no se le ofrece al equipo docente. El enlace llega en el HTML
-  **escondido** (clase `hidden`), y `js/ayuda-guia.js` lo destapa solo si
-  quien mira administra y está en su propia vista. Mirando «como estudiante» o
-  «como profesor» (`js/modo-vista.js`) no aparece, porque ese rol no lo tiene.
-  El día que la guía sea del equipo docente, se cambia la condición de ese
-  archivo y la de la tarjeta, las dos juntas.
+- **Es del equipo docente**: quien da clase (`role = 'profesor'`, y con eso
+  quien coordina o supervisa) y quien administra, igual que la tarjeta
+  «📘 Guía del profesor», que va en «Tu cuenta» del panel docente
+  (`PANEL_DOCENTE`) y en «Revisar el contenido» del de administración. Al
+  alumnado no se le ofrece: su tarjeta es `soloDocente`. Primero fue solo de
+  administración, mientras la guía se escribía; el dueño la abrió al equipo
+  docente cuando quedó revisada contra el sitio de hoy (octubre de 2026: rutas
+  del panel nuevo, botones con su nombre actual, lo que se agregó a la clase en
+  vivo y lo que dejó de ser del profesor, como el lector de planilla y el
+  arbitraje del equipo).
+- El enlace llega en el HTML **escondido** (clase `hidden`), y
+  `js/ayuda-guia.js` lo destapa a ese equipo. Quien administra mirando «como
+  estudiante» (`js/modo-vista.js`) no lo ve, porque ese rol no lo tiene;
+  «como profesor» o «como supervisor», sí.
 - La guía no se protege con esto: es una página pública. Lo que se decide es a
   quién se le **ofrece**.
 - **El capítulo va por su `id`** de `herramientas/guia/contenido.json`
@@ -1358,6 +1364,11 @@ capítulo «Los cursos de la Academia».
   supervisión, academias y el tablero por academia. Cada apartado se escribió
   leyendo la página y su decisión, no de memoria. Siguen sin «?» Novedades, la
   tienda (todavía cerrada), Sonar y la vista de jugador de administración.
+  Al abrirla al equipo docente entraron también las de su día a día que la
+  guía revisada ya cuenta: crear la cuenta de un alumno (en «Lo primero»), los
+  cuestionarios (en «La clase en vivo»), los proyectos (en «Planes»), el
+  cuaderno y la libreta de torneos (en «Informes»), la preparación de rivales
+  (en «Jugar») y repasar las clases (en «Archivos»).
   `verificar-ayuda.js` comprueba que cada una de esas siete páginas lleve a SU
   capítulo.
 - Se abre en otra pestaña, para no perder lo que se estaba haciendo, y el
@@ -1366,8 +1377,8 @@ capítulo «Los cursos de la Academia».
 - Lo comprueba `herramientas/verificar-ayuda.js`:
   - que cada ancla exista en la guía y sea el capítulo que dice su nombre;
   - que llegue escondido;
-  - que lo vea administración y no un profesor, ni administración mirando
-    «como estudiante»;
+  - que lo vea un profesor y quien administra (también «como profesor»), y no
+    una alumna ni administración mirando «como estudiante»;
   - el contraste contra el encabezado.
 
 ### Ctrl + K en toda la Academia
@@ -1383,7 +1394,9 @@ Rojas» en una lista y apretar Ctrl + K la busca.
   - `clases.html` tiene su propio atajo, que lleva al campo sin recargar;
   - `sesion.html`, porque salir de la clase en vivo tiene que cerrar antes la
     asistencia del alumno (lo hacen sus migas y su logo), y un atajo que cambia
-    de página por su cuenta se la saltaría;
+    de página por su cuenta se la saltaría. Ahí Ctrl + K trae el buscador de
+    herramientas de la clase, sin salir (ver «Buscar una herramienta sin salir
+    de la clase» en clase-en-vivo.md);
   - `examen.html`, porque salir del examen cuenta como salida y lo congela.
 - Solo Ctrl + K, no «/»: fuera del panel hay tableros, ejercicios y cuadros de
   comandos donde «/» es parte de lo que se escribe.

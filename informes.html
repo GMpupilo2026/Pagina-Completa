@@ -108,6 +108,14 @@
                     <p id="informe-persona-grupo" class="text-sm text-brand-500 dark:text-brand-300"></p>
                 </div>
             </div>
+            <!-- «Con este alumno»: lo que se hace con él sin volver al panel. Lo
+                 arma pintarAccionesDelAlumno() de js/informes.js. Ver «La ficha
+                 del alumno: lo que se hace con él, a un clic» en
+                 docs/decisiones/informes.md. -->
+            <nav id="informe-acciones" hidden aria-labelledby="informe-acciones-titulo" class="mb-5">
+                <h2 id="informe-acciones-titulo" class="text-sm font-semibold text-brand-600 dark:text-brand-300 mb-2">Con este alumno</h2>
+                <ul id="informe-acciones-lista" class="flex flex-wrap gap-2"></ul>
+            </nav>
             <div id="stat-cards" role="list" aria-label="Los números" class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-3"></div>
             <!-- Las tarjetas secundarias nacen escondidas (ver statCard): dieciséis
                  números de golpe no los lee nadie, y las ocho que importan quedan

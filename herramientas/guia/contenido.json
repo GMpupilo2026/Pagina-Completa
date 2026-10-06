@@ -25,44 +25,101 @@
         {
           "titulo": "Tu panel al entrar",
           "donde": "clases.html",
-          "intro": "El panel es la puerta de todo. A ti no te muestra el panel del alumno: arriba te pone «Tu semana», que es a quién hay que perseguir esta semana.",
+          "intro": "El panel es la puerta de todo, y está ordenado por lo que vienes a hacer. Arriba va el buscador; debajo, lo que te toca.",
           "pasos": [
-            "«Tu semana» te dice cuántos alumnos tienes, cuántos no entrenaron en los últimos 7 días, cuántas tareas tuyas siguen sin hacerse y cuántas ya vencieron.",
-            "Debajo, el estado de la clase: si hay una abierta ahora, o el botón «Iniciar clase» si te toca a ti.",
-            "Más abajo, la grilla de accesos agrupada: Clase en vivo, Aprender, Jugar y competir, Evaluaciones, Herramientas y Tu cuenta.",
-            "Al final, el registro de clases: todas las clases dadas, agrupadas por mes, con buscador por título o notas."
+            "«¿Qué buscas?»: escribe lo que necesitas («asistencia», «deberes») o el nombre de un alumno. Enter abre lo primero que quedó.",
+            "«Lo urgente», solo cuando hay algo: justificaciones por revisar, tu informe mensual sin enviar y, si coordinas, solicitudes y saldos vencidos.",
+            "«Tu semana»: tus alumnos, cuántos no entrenaron en 7 días, tus tareas sin hacer, las vencidas y tus clases del mes.",
+            "Los accesos: Clase en vivo, Tus alumnos, Tus clases, Coordinación (solo si coordinas), Aprender, Jugar y competir y Tu cuenta.",
+            "Al final, el registro de tus clases, por mes, con buscador."
           ],
           "ojo": [
-            "El número rojo solo aparece cuando no es cero. Si está en rojo, es algo de hoy.",
-            "El registro de clases no se baja entero: filtra por periodo y busca por texto, y se va cargando de 20 en 20."
+            "Ctrl + K (⌘ + K en Mac) o «/» te llevan al buscador. En las demás páginas, Ctrl + K te trae a este mismo buscador.",
+            "El número rojo solo aparece cuando no es cero. Si está en rojo, es algo de hoy."
           ],
           "captura": "panel"
         },
         {
-          "titulo": "Los tres roles, y qué abre cada uno",
-          "intro": "La plataforma tiene tres niveles de permiso, y uno de ellos es una marca encima de otro. Lo que ves depende de eso, no de la página que abras.",
+          "titulo": "Tu primera vez: el recorrido y el primer paso",
+          "donde": "clases.html",
+          "intro": "La primera vez que entras al panel, un recorrido corto te enseña lo esencial en pocos pasos.",
           "pasos": [
-            "Alumno: su progreso, sus tareas, sus cursos y su clase.",
-            "Profesor: todo lo del alumno más sus propios alumnos, su clase en vivo, tareas, exámenes, informes, planes de clase y bitácora.",
-            "Coordinación: es un profesor con una marca encima. Suma formularios de inscripción, cobros de la Academia y reportes de actividades.",
-            "Administración: lo ve y lo maneja todo, incluidas las cuentas, los equipos y los cupos de invitación."
+            "El recorrido te muestra el buscador, la clase en vivo, «Tus alumnos», el informe de un alumno y dónde está esta guía. Puedes saltarlo cuando quieras.",
+            "Lo vuelves a ver cuando quieras con «🧭 Ver el recorrido otra vez», debajo del buscador del panel.",
+            "Mientras te falte algo, una franja arriba te dice el siguiente paso: el diagnóstico de tus alumnos, compartir sus planes, la primera tarea, la primera clase."
           ],
           "ojo": [
-            "Coordinar no te quita nada de profesor: es una marca encima del rol, precisamente para que no se pierda ningún permiso por el camino.",
-            "Todo lo que se hace para los profesores se hace también para quien administra, con su alcance: el profesor ve lo suyo, quien administra ve todo."
+            "«Todavía no tienes alumnos» no quiere decir que algo esté roto: te los asigna administración.",
+            "La franja se apaga sola al cumplir el paso. No hay nada que marcar."
           ]
         },
         {
-          "titulo": "Solo ves a TUS alumnos, y eso lo hace cumplir la base",
-          "intro": "No es que las páginas te escondan a los demás: la base de datos no te los entrega. Aunque abrieras la consola del navegador, no están.",
+          "titulo": "La guía, a mano en cada página",
+          "intro": "No hace falta leer esta guía de corrido: cada página te lleva a la parte que la explica.",
+          "pasos": [
+            "El «?» del encabezado de cada página abre, en otra pestaña, el capítulo de esta guía que habla de esa página.",
+            "La guía entera está en el panel, en Tu cuenta › Guía del profesor.",
+            "Desde ahí se bajan el manual en PDF, para tenerlo al lado del teclado, y la presentación, para una capacitación."
+          ],
+          "ojo": [
+            "Se abre en otra pestaña a propósito: no pierdes lo que estabas haciendo."
+          ]
+        },
+        {
+          "titulo": "Los roles, y qué abre cada uno",
+          "intro": "Lo que ves depende de tu rol, no de la página que abras. Coordinar y supervisar son marcas encima de profesor.",
+          "pasos": [
+            "Alumno: su progreso, sus tareas, sus cursos y su clase.",
+            "Profesor: lo del alumno más sus propios alumnos, su clase en vivo, tareas, exámenes, informes, planes de clase y bitácora.",
+            "Coordinación: un profesor que además corrige las cuentas de su gente y maneja solicitudes, formularios de inscripción y cobros.",
+            "Supervisión: revisa a sus profesores (su informe mensual, el tablero de su academia, los reportes). No da clase.",
+            "Administración: lo ve y lo maneja todo, incluidas las cuentas, los equipos y los cupos de invitación."
+          ],
+          "ojo": [
+            "Coordinar no te quita nada de profesor: es una marca encima del rol.",
+            "Lo que un profesor ve de sus alumnos, administración lo ve de todos."
+          ]
+        },
+        {
+          "titulo": "Solo ves a TUS alumnos",
+          "intro": "No es que las páginas te escondan a los demás: el sistema no te los entrega. Aunque abrieras la consola del navegador, no están.",
           "pasos": [
             "Un alumno puede tener varios profesores, y todos lo ven.",
-            "Estar en el mismo equipo que un alumno te da sobre él los mismos permisos que tenerlo asignado directo.",
-            "Si un alumno no aparece en tus informes, es que no está asignado a ti ni comparten equipo. Se arregla desde Administración."
+            "Estar en el mismo equipo que un alumno te da sobre él lo mismo que tenerlo asignado directo.",
+            "Si un alumno no aparece en tus informes, no está asignado a ti ni comparten equipo. Se arregla desde Administración."
           ],
           "ojo": [
             "Tus tareas, tus exámenes, tus notas de bitácora y tu clase en vivo son TUYOS: un colega que comparte el mismo alumno no los ve.",
-            "Un alumno sin ningún profesor asignado no sale en los informes de nadie. El panel de Administración avisa cuando hay alumnos así."
+            "Las academias son privadas: nada de la gente de una academia le llega a otra, salvo para retarse a jugar."
+          ]
+        },
+        {
+          "titulo": "Crear la cuenta de un alumno",
+          "donde": "clases.html › Tus alumnos › Crear cuenta de alumno",
+          "intro": "La primera ficha de «Tus alumnos» es «Crear cuenta de alumno». Gasta una de las invitaciones que te asignó administración.",
+          "pasos": [
+            "La ficha dice cuántas invitaciones te quedan. Ábrela y «＋ Crear la cuenta de un alumno».",
+            "Escribe el nombre y el correo del alumno, y el nombre y el correo de la persona encargada.",
+            "Si no tiene correo propio, márcalo: entra con un usuario. Puedes ponerle tú una contraseña y dársela en la clase.",
+            "«Crear la cuenta y enviar la invitación». Le llega su acceso por correo."
+          ],
+          "ojo": [
+            "Sin invitaciones, la ficha se apaga y te dice que hace falta un plan mayor.",
+            "Revisa que cada correo esté en su campo: mandarle la invitación a la mamá en vez de al alumno no da ningún error."
+          ]
+        },
+        {
+          "titulo": "La verificación en dos pasos",
+          "donde": "configuracion.html › Verificación en dos pasos",
+          "intro": "Tu cuenta ve datos de otras personas. Con la verificación en dos pasos, una contraseña robada no alcanza para entrar.",
+          "pasos": [
+            "En Configuración, tarjeta «Verificación en dos pasos 🔐», escanea el código con una app del celular (Google Authenticator o cualquier otra).",
+            "Queda activada al escribir el primer código bueno.",
+            "Desde ahí, al entrar te pide el código de 6 números después de la contraseña."
+          ],
+          "ojo": [
+            "Si pierdes el celular, quien administra te la quita para que la vuelvas a activar.",
+            "Hoy es voluntaria, pero conviene activarla."
           ]
         },
         {
@@ -85,46 +142,86 @@
     {
       "id": "clase-en-vivo",
       "titulo": "La clase en vivo",
-      "resumen": "El tablero que ve tu clase, y las siete formas de ponerle algo delante. Es la herramienta más grande de la plataforma.",
+      "resumen": "El tablero que ve tu clase y todo lo que le puedes poner delante: preguntas, calentamientos, cuestionarios y partidas. Es la herramienta más grande de la plataforma.",
       "laminas": [
         {
           "titulo": "Abrir la clase",
-          "donde": "clases.html › Iniciar clase · sesion.html",
-          "intro": "La clase en vivo es un tablero compartido: tú mueves y todos tus alumnos lo ven al instante, cada uno en su pantalla.",
+          "donde": "clases.html › Clase en vivo › Sesión en vivo · sesion.html",
+          "intro": "La clase en vivo es un tablero compartido: tú mueves y todos tus alumnos lo ven al instante. Mientras no la abras, ellos no pueden entrar.",
           "pasos": [
-            "Desde el panel, «Iniciar clase». Se le manda un aviso al celular a los alumnos que lo tengan encendido.",
-            "Entra a «Sesión en vivo» y ya estás en el tablero.",
-            "Al terminar, «Cerrar clase» desde el panel. La clase queda guardada en el registro con su duración."
+            "Entra a «Sesión en vivo» y aprieta «Abrir la clase». También se abre sola en cuanto mandas una posición al tablero.",
+            "La franja de arriba dice con letras si la clase se está registrando o no.",
+            "Al terminar, «Cerrar la clase»: el primer toque te pide el nombre y qué se trabajó; el segundo la cierra."
           ],
           "ojo": [
-            "Cada profesor tiene SU propio tablero. Puedes dar clase al mismo tiempo que otro colega sin pisarte.",
-            "Un alumno con dos profesores elige en qué clase entra; si solo tiene uno, entra directo."
+            "Una clase que nadie cierra se cierra sola después de una hora sin actividad, con la hora de la última señal.",
+            "Cada profesor tiene SU tablero: puedes dar clase a la vez que un colega. Un alumno con dos profesores elige en qué clase entra."
           ],
           "captura": "sesion"
         },
         {
-          "titulo": "Lo que la clase ve y lo que no",
-          "intro": "Esta es la línea más importante de toda la página: tú tienes delante cosas que la clase NO ve, y una sola cosa que sí recibe.",
+          "titulo": "La videollamada de tus clases",
+          "donde": "configuracion.html › Videollamada de tus clases",
+          "intro": "La voz va por Meet, Zoom o Teams. El enlace lo pones una vez y tus alumnos lo encuentran en su panel.",
           "pasos": [
-            "La clase recibe: la posición del tablero. Eso es todo.",
-            "Solo tú ves: el PDF que estás leyendo, la lección de curso que abriste, tu plan de clase, la vista previa de Táctica y tus notas de bitácora."
+            "En Configuración, «Videollamada de tus clases», pega el enlace de tu sala.",
+            "Si das clase a varios grupos, puedes poner una sala por grupo y una general para los demás.",
+            "Al alumno le aparece el botón de la videollamada al lado de «Sesión en vivo»."
           ],
           "ojo": [
-            "La lección de curso que abres NO se sincroniza, a propósito: si se sincronizara, el alumno tendría delante las respuestas de sus propios ejercicios mientras tú vas por el primer diagrama.",
-            "Para que algo de esos materiales llegue a la clase hay que mandarlo al tablero con su botón. Nada viaja solo."
+            "El botón se abre solo mientras tengas una clase abierta; el resto del tiempo sale con candado.",
+            "Usa salas que no caduquen: si el enlace cambia en cada clase, hay que volver a pegarlo."
+          ]
+        },
+        {
+          "titulo": "Lo que la clase ve y lo que no",
+          "intro": "La pantalla está ordenada por QUIÉN VE CADA COSA, y cada grupo de botones lo dice en su rótulo.",
+          "pasos": [
+            "«Tu material — solo lo ves tú»: 📚 Curso, 📂 Archivos, 📄 PDF y ✏️ Armar posición. También son solo tuyos el motor, tu plan y la vista previa de cada ejercicio.",
+            "«El tablero — lo ve toda la clase»: la posición, las flechas y todo lo que les lanzas (preguntas, calentamientos, el podio)."
+          ],
+          "ojo": [
+            "Nada de tu material viaja solo: para que llegue a la clase hay que mandarlo con su botón.",
+            "La lección de curso que abres NO se sincroniza, a propósito: si no, el alumno tendría delante las respuestas de sus propios ejercicios."
+          ]
+        },
+        {
+          "titulo": "Al principio, el modo sencillo",
+          "donde": "sesion.html",
+          "intro": "Si llevas menos de tres clases dadas, la clase arranca en modo sencillo: el tablero, el motor, tus alumnos y tu plan.",
+          "pasos": [
+            "«🧰 Ver todas las herramientas» destapa Táctica, Entrenamientos, Preguntar, Practicar y tu material.",
+            "«🪶 Volver al modo sencillo» las guarda otra vez.",
+            "«🔎 En grande» abre tus herramientas en una ventana encima del tablero, con todo más grande. «✕ Volver al tablero» o Esc la cierran."
+          ],
+          "ojo": [
+            "Lo que elijas se recuerda en ese aparato."
+          ]
+        },
+        {
+          "titulo": "«¿Qué quieres hacer?»: el buscador de la clase",
+          "donde": "sesion.html › ¿Qué quieres hacer?",
+          "intro": "Dentro de la clase tienes tu propio buscador de herramientas, para no tener que acordarte de en qué pestaña vive cada cosa.",
+          "pasos": [
+            "Escribe lo que quieres hacer: «ronda», «cuestionario», «calentamiento», «votar»…",
+            "Ctrl + K (⌘ + K en Mac) te lleva a ese buscador desde cualquier parte de la clase.",
+            "Al elegir una, te lleva a ella sin salir de la clase: abre su pestaña y su caja, y la deja lista. Nada se manda a la clase hasta que tú aprietas el botón."
+          ],
+          "ojo": [
+            "Dentro de la clase, Ctrl + K abre este buscador y no el del panel: así no te sales de la clase sin querer."
           ]
         },
         {
           "titulo": "Editar la posición a mano",
-          "donde": "sesion.html › ✏️ Editando el tablero",
-          "intro": "El editor es para armar una posición desde cero o retocar la que hay.",
+          "donde": "sesion.html › ✏️ Armar posición",
+          "intro": "El editor es para armar una posición desde cero, retocar la que hay o cargarla de un FEN o un PGN.",
           "pasos": [
-            "Abre «✏️ Editar» y arrastra las piezas, o usa «🗑️ Vaciar tablero» y «♟️ Posición inicial».",
+            "«✏️ Armar posición» y arrastra las piezas, o usa «🗑️ Vaciar tablero» y «♟️ Posición inicial».",
             "Elige de quién es la jugada con «⚪ Blancas» / «⚫ Negras».",
             "«✅ Aplicar posición» la manda al tablero de la clase."
           ],
           "ojo": [
-            "Hay tres posiciones que el sitio NO te deja aplicar: sin rey, con peones en la primera o la última fila, o con el rey que no le toca mover en jaque. No es un capricho: rompen el motor de análisis para el resto de la sesión.",
+            "Hay tres posiciones que el sitio NO te deja aplicar: sin rey, con peones en la primera o la última fila, o con el rey que no le toca mover en jaque. Rompen el motor de análisis para el resto de la clase.",
             "Cuando una posición se rechaza, el aviso te dice exactamente por qué."
           ]
         },
@@ -159,14 +256,28 @@
         {
           "titulo": "Táctica por tema",
           "donde": "sesion.html › 🧩 Táctica",
-          "intro": "Un banco de ejercicios tácticos por tema, con vista previa, para sacar un ejercicio en medio de la clase sin buscarlo antes.",
+          "intro": "Un banco de ejercicios tácticos por tema y dificultad, con vista previa, para sacar un ejercicio en medio de la clase sin buscarlo antes.",
           "pasos": [
-            "«🧩 Táctica» › elige el tema.",
-            "La vista previa te enseña la posición y de quién es la jugada.",
-            "«📥 Al tablero» la transmite para explicarla, o «❓ Preguntar» la transmite Y abre la pregunta."
+            "«🧩 Táctica» › elige el tema y la dificultad.",
+            "La vista previa te enseña la posición y de quién es la jugada. «👁 Ver todas las posiciones» las pone juntas para elegir.",
+            "«📥 Al tablero» la transmite para explicarla; «❓ Preguntar» la transmite Y abre la pregunta."
           ],
           "ojo": [
-            "Son dos botones distintos a propósito: con uno solo tendrías que preguntar para poder enseñar el ejercicio, y el alumno ya estaría contestando mientras explicas."
+            "Son dos botones distintos a propósito: con uno solo, el alumno ya estaría contestando mientras explicas."
+          ]
+        },
+        {
+          "titulo": "La pestaña Entrenamientos",
+          "donde": "sesion.html › 🧠 Entrenamientos",
+          "intro": "Todos los entrenamientos del sitio, a mano en la clase: Mates, Aprender, Desafíos, fichas de Estudio, Aperturas, Visualización, Finales, Memoria, Habilidades…",
+          "pasos": [
+            "«🧠 Entrenamientos» y elige uno: cada ejercicio trae sus botones.",
+            "«👁 Vista previa» y «🔎 Guion» son solo para ti: el guion trae la solución y la idea para explicarlo.",
+            "«📥 Al tablero» lo muestra, «❓ Preguntar» se lo pregunta a la clase y «🔥 Calentamiento» se lo manda a practicar.",
+            "Los que tienen su propia página: «🪟 Abrirlo a todos en una ventana», y al terminar «Cerrar la ventana a todos»."
+          ],
+          "ojo": [
+            "Todas las posiciones salen de los mismos bancos verificados que usan tus alumnos al entrenar."
           ]
         },
         {
@@ -176,7 +287,7 @@
           "pasos": [
             "«📂 Archivos» y busca la partida en la lista.",
             "«👁 Vista previa» te enseña la posición de salida.",
-            "«Cargar» pone la línea entera jugada por jugada; «❓ Preguntar» abre la pregunta; «🎯 Practicar» abre una ronda contra el motor desde ahí."
+            "«📥 Cargar» pone la línea entera jugada por jugada; «❓ Preguntar» abre la pregunta; «🎯 Practicar» abre una ronda contra el motor desde ahí."
           ],
           "ojo": [
             "Un .pgn con varios ejercicios llega separado uno por uno: cada partida del archivo es su propia fila.",
@@ -188,45 +299,130 @@
           "donde": "sesion.html › ❓ Preguntar",
           "intro": "Le pones delante la posición y les pides la jugada. Cada quien contesta en su tablero y tú ves quién acertó.",
           "pasos": [
-            "«❓ Preguntar: ¿qué jugarías?» sobre la posición que está en el tablero.",
-            "Elige cuántas jugadas tiene que dar (por omisión, una).",
-            "Las respuestas van apareciendo en tu pantalla. «Cerrar pregunta» la termina."
+            "«❓ Preguntar: ¿qué jugarías?» sobre la posición del tablero. Elige cuántas jugadas tiene que dar y el tiempo para contestar.",
+            "En «Otras preguntas»: ¿quién está mejor?, una pregunta con tus opciones o ¿lo entendiste?",
+            "Las respuestas te van llegando. «📊 Mostrar las respuestas a la clase» les enseña lo que contestó el grupo, sin nombres.",
+            "«🗺️ Pasar el mapa de jugadas al tablero» dibuja las más elegidas. «Cerrar pregunta» la termina."
           ],
           "ojo": [
-            "Cerrar la pregunta es tuyo: al alumno no se le enseña la respuesta antes de tiempo.",
-            "Todas las respuestas quedan guardadas y salen en Informes, con su porcentaje de acierto por alumno."
+            "El tiempo para contestar lo controla el servidor: nadie contesta tarde.",
+            "Todas las respuestas quedan guardadas y salen en Informes, con el porcentaje de acierto de cada alumno."
+          ]
+        },
+        {
+          "titulo": "Calentamiento y competencia de ejercicios",
+          "donde": "sesion.html › ❓ Preguntar › 🔥 Calentamiento",
+          "intro": "Para que entren en calor: ejercicios de Táctica que cada alumno resuelve en su propio tablero, contra reloj.",
+          "pasos": [
+            "Elige el modo: «Con nota» (20 distintos para cada alumno, del mismo nivel) o «Competencia» (los mismos para todos, en el mismo orden).",
+            "Elige el nivel y los minutos, y «🔥 Mandar el calentamiento».",
+            "Mientras corre, puedes sumar o quitar un minuto, o «Terminar ya y dar las notas»."
+          ],
+          "ojo": [
+            "Cada ejercicio tiene una sola jugada buena en cada paso; si falla, ve cuál era y pasa al siguiente.",
+            "En la competencia gana quien resuelva más, y los empatados comparten puesto. Cada alumno ve en qué puesto va."
+          ]
+        },
+        {
+          "titulo": "La ronda rápida",
+          "donde": "sesion.html › 🧩 Táctica · ❓ Preguntar › ⚡ Ronda rápida",
+          "intro": "Cinco posiciones de Táctica seguidas, cada una con su tiempo, y podio al final.",
+          "pasos": [
+            "En Táctica, elige el tema, la dificultad y el tiempo por posición.",
+            "«⚡ Ronda rápida con 5 de estos, al azar». Cada posición es una pregunta con tiempo que se califica sola.",
+            "«Pasar a la siguiente» adelanta; al final ves cuántas acertó cada uno y «🏆 Mostrar el podio de la ronda a la clase»."
+          ],
+          "ojo": [
+            "Vale la jugada de la solución o cualquier mate, y cuenta para los puntos de la clase."
+          ]
+        },
+        {
+          "titulo": "El cuestionario al estilo Kahoot",
+          "donde": "cuestionarios.html · sesion.html › ❓ Preguntar › 🎯 Cuestionario",
+          "intro": "Preguntas con opciones, de ajedrez o no, con puntos por rapidez y podio después de cada pregunta.",
+          "pasos": [
+            "Arma los tuyos en Tus clases › Cuestionarios, o usa uno de los 30 listos de la Academia, por nivel.",
+            "En la clase, pestaña Preguntar, «🎯 Cuestionario»: elígelo y juégalo con la clase.",
+            "«Ya contestaron: cerrar esta pregunta» y «Siguiente pregunta». Tras cada una, la clase ve qué contestó el grupo, la correcta y el podio.",
+            "Desde Cuestionarios, «📨 Mandarlo como tarea»: lo contestan en la casa, sin reloj."
+          ],
+          "ojo": [
+            "Acertar da de 500 a 1000 puntos, más cuanto antes; fallar, 0. Cuenta la última respuesta.",
+            "Tus cuestionarios solo los ves tú: tus alumnos no pueden leer cuál es la correcta."
           ]
         },
         {
           "titulo": "Practicar contra el motor",
           "donde": "sesion.html › 🎯 Practicar",
-          "intro": "Manda a toda la clase a jugar la posición contra el motor, cada quien en su tablero, con el nivel que elijas.",
+          "intro": "Manda a toda la clase a jugar la posición contra el motor, cada quien en su tablero, con el nivel y el reloj que elijas.",
           "pasos": [
-            "Elige el nivel en la pestaña Practicar.",
+            "En la pestaña Practicar, elige el nivel del motor y el reloj del alumno.",
             "«🎯 Practicar: posición actual».",
             "Ves cómo va cada alumno en «Tableros de los alumnos». «Terminar práctica» cierra la ronda."
           ],
           "ojo": [
+            "Puedes mirar la partida de un alumno y mandarle una ayuda, sin que la vea el resto.",
             "La ronda es tuya: cerrarla no toca la de ningún otro profesor que esté dando clase al mismo tiempo."
           ]
         },
         {
-          "titulo": "Lo demás que tienes en la clase",
-          "intro": "Alrededor del tablero hay herramientas que no mandan nada a la clase pero te resuelven el día.",
+          "titulo": "La clase juega: votando y entre ellos",
+          "donde": "sesion.html › ❓ Preguntar · 🎯 Practicar",
+          "intro": "Dos formas de jugar partidas en plena clase.",
           "pasos": [
-            "«♞ Motor de análisis» y «👥 Alumnos conectados»: arriba de la columna, siempre a la vista. El motor es solo para ti.",
-            "Debajo del tablero, una fila de iconos (al pasar el ratón dicen qué hacen): ⇅ girar, 🔢 coordenadas, 🔄 reiniciar, 🧹 borrar flechas, 🙈 ocultar, 💾 guardar PGN, ⏮ ◀ ▶ ⏭ para recorrer la partida, 📽️ proyector, 🎓 ver como alumno y 📱 control remoto. Más abajo, «⏳ Tiempo para pensar».",
-            "«💬 Chat privado con el profesor»: un hilo por alumno, continuo, no «de una clase».",
-            "«🖐️ Levantar la mano»: el alumno pide turno y te sale en la lista.",
-            "«📝» junto a cada alumno conectado: le escribes una nota de bitácora en el momento."
+            "«🗳️ La clase juega» (en Preguntar): desde la posición del tablero, contra el motor o contra ti. En cada turno vota la clase y se juega la jugada más votada.",
+            "«Partidas entre alumnos» (en Practicar): elige el ritmo y «Emparejar a los alumnos conectados». A cada uno le llega el aviso para entrar a su partida.",
+            "Desde tu plan, «🗳️ Jugar votando» empieza la votación desde esa posición."
           ],
           "ojo": [
+            "Las partidas entre alumnos quedan en el registro de esa clase."
+          ]
+        },
+        {
+          "titulo": "Tus alumnos en la clase",
+          "donde": "sesion.html › 👥 Alumnos conectados",
+          "intro": "«👥 Alumnos conectados» va siempre a la vista: quién llegó, quién pide la palabra y qué hacer con cada uno.",
+          "pasos": [
+            "Junto a cada alumno: 📝 bitácora, 🏆 trofeos, 🎮 darle el control del tablero y 🚪 sacarlo de la clase si entró por error.",
+            "«🎲 Elegir a un alumno al azar»: sin repetir hasta que les toque a todos. Al elegido le sale en grande en su pantalla.",
+            "«🏆 Puntos de esta clase» y «👥 Equipos»: el podio se le muestra a la clase, con o sin nombres.",
+            "«🙋 Llevan un rato sin contestar» te avisa quién se está quedando callado. Solo lo ves tú."
+          ],
+          "ojo": [
+            "Los puntos dependen de la dificultad, los intentos y quién acierta primero."
+          ]
+        },
+        {
+          "titulo": "Lo demás que tienes en la clase",
+          "intro": "Alrededor del tablero hay herramientas que te resuelven el día.",
+          "pasos": [
+            "Debajo del tablero, una fila de iconos (al pasar el ratón dicen qué hacen): ⇅ girar, 🔢 nombre en cada casilla, 🔄 reiniciar, 🧹 borrar flechas, 🙈 ocultar, 💾 guardar PGN, ⏮ ◀ ▶ ⏭ recorrer, ↶ deshacer, 📽️ proyector, 🎓 ver como alumno y 📱 control remoto.",
+            "«⏳ Tiempo para pensar»: una cuenta regresiva que ve toda la clase.",
+            "«💬 Chat privado con el profesor»: un hilo por alumno, continuo, no «de una clase».",
+            "«🔗 Que vean la clase sin cuenta»: un enlace para invitados, que miran sin poder mover nada."
+          ],
+          "ojo": [
+            "El proyector trae «📱 Código para entrar»: un QR para que tus alumnos entren desde el celular.",
             "El chat es continuo: con dos profesores, los dos ven y escriben en el mismo hilo con ese alumno."
           ]
         },
         {
+          "titulo": "Al cerrar la clase",
+          "donde": "sesion.html › Cerrar la clase",
+          "intro": "Cerrar no es solo terminar: es el momento de saber qué quedó.",
+          "pasos": [
+            "«🚪 Pregunta de salida» (opcional): una última sobre lo visto. Su resultado se te recuerda al abrir la clase siguiente.",
+            "Antes de confirmar ves lo que contestó cada alumno en esta clase, y puedes mostrar el podio.",
+            "«📤 Que la repasen también los que faltaron»: la partida de la clase queda en «Repasar mis clases», con sus preguntas.",
+            "Ya cerrada: «📋 Mandar una tarea de repaso a los que vinieron» o «📌 Mandarle a cada uno su repaso» (las preguntas que falló o no contestó)."
+          ],
+          "ojo": [
+            "Lo que guardaste con 💾 durante la clase lo repasan después quienes asistieron."
+          ]
+        },
+        {
           "titulo": "La clase del aula también cuenta",
-          "donde": "clases.html › Herramientas › Asistencia presencial",
+          "donde": "clases.html › Tus clases › Asistencia presencial",
           "intro": "La clase que das en el aula se registra en una ficha, y desde ahí entra sola a Informes, al informe que llega a la casa y a tu informe mensual.",
           "pasos": [
             "«Una clase nueva»: el día, la hora de inicio, cuánto duró y qué se hizo.",
@@ -259,16 +455,16 @@
     {
       "id": "planes",
       "titulo": "Planes de clase",
-      "resumen": "Preparar la clase ANTES de darla, y darla de nuevo la semana siguiente sin volver a armarla.",
+      "resumen": "Preparar la clase ANTES de darla, darla de nuevo la semana siguiente sin volver a armarla, y los proyectos que ya vienen armados.",
       "laminas": [
         {
           "titulo": "Qué es un plan y qué te ahorra",
-          "donde": "clases.html › Herramientas › Planes de clase",
+          "donde": "clases.html › Tus clases › Planes de clase",
           "intro": "Un plan es la lista de lo que vas a dar, en orden: posiciones, lecciones y tus notas. La clase en vivo lo lee y te lo va sirviendo.",
           "pasos": [
-            "«Crear» y ponle nombre.",
+            "«Plan nuevo»: ponle nombre y «Crear».",
             "Ve agregando renglones con «Agregar al plan».",
-            "En la clase, el panel «📋 Plan» te lo pone delante y tocas cada renglón cuando te toca."
+            "En la clase, la pestaña «📋 Mi plan» te lo pone delante y tocas cada renglón cuando te toca."
           ],
           "ojo": [
             "El plan NO está atado a una clase ni a un grupo: el mismo plan se da al grupo de la mañana y al de la tarde.",
@@ -280,8 +476,8 @@
           "titulo": "Los tres tipos de renglón",
           "intro": "Cada renglón hace una cosa distinta al tocarlo en clase, y las tres corresponden a una puerta que la clase en vivo ya tiene.",
           "pasos": [
-            "Posición: la transmite a toda la clase.",
-            "Lección: la abre solo en tu pantalla, como el PDF.",
+            "Posición: «📥 Al tablero» la transmite a toda la clase; también trae «❓ Preguntar» y «🗳️ Jugar votando».",
+            "Lección de curso: la abre solo en tu pantalla, como el PDF.",
             "Nota: no toca el tablero. Es tu chuleta."
           ],
           "ojo": [
@@ -315,6 +511,20 @@
             "Ninguna de esas posiciones está inventada: todas salen de los bancos que la plataforma ya verificó con motor.",
             "La chuleta de cada renglón lleva la solución escrita, y se puede jugar de verdad en el tablero. Solo la ves tú."
           ]
+        },
+        {
+          "titulo": "Proyectos: el programa de tu grupo",
+          "donde": "clases.html › Tus clases › Proyectos",
+          "intro": "Si administración te asignó un grupo de un proyecto (como Campeones Colegiales), te aparece la tarjeta «Proyectos» con todo el programa armado.",
+          "pasos": [
+            "Cada clase dura 2 horas, en cinco partes: calentamiento, contenido, actividad recreativa, cierre y tarea, con su paso a paso y los ejercicios en orden.",
+            "«Ver el plan» lo abre; «Dar esta clase» lo lleva a la clase en vivo.",
+            "En «Tareas semanales», «Mandar a mis alumnos» manda la tarea de esa semana, con las fechas ya propuestas."
+          ],
+          "ojo": [
+            "Los planes de las clases te llegan compartidos: los das y los duplicas, pero no los editas.",
+            "La tarjeta solo sale si tienes un grupo asignado."
+          ]
         }
       ]
     },
@@ -325,7 +535,7 @@
       "laminas": [
         {
           "titulo": "Cómo se manda una tarea",
-          "donde": "clases.html › Aprender › Tareas",
+          "donde": "clases.html › Tus alumnos › Tareas",
           "intro": "Una tarea son varios renglones con su fecha de vencimiento, para uno o varios alumnos a la vez.",
           "pasos": [
             "«Asignar una tarea»: marca a qué alumnos y pon la fecha límite.",
@@ -350,6 +560,19 @@
           "ojo": [
             "El sitio solo te ofrece las metas que esa herramienta puede medir de verdad. Una barra que no puede subir nunca es peor que no tener la barra.",
             "El avance se cuenta DESDE que mandaste la tarea: lo que el alumno ya tenía hecho no cuenta. Son diez ejercicios nuevos."
+          ]
+        },
+        {
+          "titulo": "El diagnóstico y el cuestionario, como tarea",
+          "donde": "tareas.html › Asignar una tarea",
+          "intro": "Dos renglones especiales: se piden una vez y no tienen cantidad que elegir.",
+          "pasos": [
+            "«Diagnóstico de nivel»: le pide el diagnóstico. Solo cuenta uno hecho DESPUÉS de pedirlo.",
+            "En «Tareas enviadas» ves «Ya hizo el diagnóstico» con «Ver su resultado →».",
+            "«Cuestionario»: uno tuyo o de los listos. Lo contesta en la casa, sin reloj, y al entregar ve cuáles eran las correctas."
+          ],
+          "ojo": [
+            "La nota del cuestionario es la de la primera vez; puede repetirlo para practicar y tú ves cuántas veces lo hizo y su mejor nota."
           ]
         },
         {
@@ -381,7 +604,7 @@
         },
         {
           "titulo": "Subgrupos: tus propias listas",
-          "donde": "clases.html › Herramientas › Mis subgrupos",
+          "donde": "clases.html › Tus alumnos › Mis subgrupos",
           "intro": "Un subgrupo es una lista tuya («los del martes», «los que van al torneo») para no marcar alumno por alumno cada vez.",
           "pasos": [
             "Escribe el nombre y «Crear».",
@@ -415,7 +638,7 @@
         },
         {
           "titulo": "Armar un examen",
-          "donde": "clases.html › Evaluaciones › Exámenes",
+          "donde": "clases.html › Tus alumnos › Exámenes",
           "intro": "Un examen se arma sumando bloques, como los renglones de una tarea. «10 de finales + 5 de reglamento + ejecutar la italiana» es UN examen.",
           "pasos": [
             "«Poner un examen»: marca a qué alumnos.",
@@ -448,11 +671,11 @@
           "pasos": [
             "Se pide pantalla completa al empezar.",
             "Se detecta cada salida de la ventana y se cuenta en el servidor, no en el navegador.",
-            "Los primeros avisos perdonan; al pasarse del tope, el examen se congela y se califica con lo que llevaba."
+            "Las primeras salidas se perdonan; al pasarse del tope, el examen se congela y se califica con lo que llevaba."
           ],
           "ojo": [
-            "Cuántas salidas se perdonan lo eliges TÚ al poner el examen. Puedes dejarlo sin tope para un examen en el aula, donde estás al lado: se cuentan igual y salen en el informe, pero no se le cierra la pantalla a nadie.",
-            "Las salidas van SIEMPRE en el informe, aunque no se haya congelado. Y el informe dice el número Y el tope: tres salidas con cinco permitidas no es lo mismo que tres con dos."
+            "Cuántas salidas se perdonan lo eliges TÚ al poner el examen («Si se sale de la pantalla»). Sin tope, se cuentan igual y salen en el informe, pero no se le cierra la pantalla a nadie.",
+            "Las salidas van SIEMPRE en el informe, con el número Y el tope: tres salidas con cinco permitidas no es lo mismo que tres con dos."
           ]
         },
         {
@@ -487,39 +710,51 @@
     {
       "id": "informes",
       "titulo": "Informes",
-      "resumen": "Todo lo que la plataforma sabe de cada alumno, y lo que le llega a la casa por correo sin que aprietes nada.",
+      "resumen": "Todo lo que la plataforma sabe de cada alumno, lo que hace por su cuenta, y lo que le llega a la casa por correo sin que aprietes nada.",
       "laminas": [
         {
           "titulo": "El resumen de tu clase",
-          "donde": "clases.html › Tu cuenta › Informes",
-          "intro": "Informes abre con las cuentas de toda tu clase y de ahí te metes a un alumno.",
+          "donde": "clases.html › Tus alumnos › Informes",
+          "intro": "Informes abre con tus alumnos y lo que pide atención; de ahí te metes a uno.",
           "pasos": [
-            "Arriba, las tarjetas con los totales.",
-            "Precisión por alumno: respuestas de pizarra y aciertos.",
-            "Asistencia y tiempo en la plataforma: clases asistidas, minutos en clase y minutos entrenando.",
-            "Entrenamiento: ejercicios 4×4, lecciones, mejor marca de coordenadas, mates, táctica, concentración.",
-            "El selector de tema de arriba recorta el informe a un solo asunto."
+            "Arriba, las preguntas de siempre: ¿Quién no está entrenando?, ¿Quién viene a clase?, ¿Cómo contestan en clase?, ¿Qué nivel tiene cada uno? Lo que pide atención va escrito dentro.",
+            "«👥 Tus alumnos»: una fila por alumno, con buscador sin tildes. Tocar a uno abre su informe.",
+            "Los filtros de arriba recortan el informe a un grupo (o a uno de tus subgrupos) y a un solo tema.",
+            "«📄 Informe del grupo en PDF» baja el resumen del grupo para una reunión con las familias o el colegio."
           ],
           "ojo": [
-            "Los minutos no son sumar filas: dos pestañas abiertas a la vez no cuentan doble, y una ventana que se cerró sin avisar no cuenta un día entero.",
-            "Si alguna consulta falla, te lo dice en pantalla en vez de pintar ceros."
+            "Los minutos no son sumar filas: dos pestañas abiertas a la vez no cuentan doble.",
+            "Las tablas completas, columna a columna, van plegadas dentro de «Tus alumnos»."
           ],
           "captura": "informes"
         },
         {
           "titulo": "El informe de un alumno",
+          "donde": "informes.html?alumno=…",
           "intro": "Eligiendo un alumno, Informes se convierte en su ficha completa.",
           "pasos": [
-            "Sus cursos y por dónde va en cada uno.",
-            "Sus últimas asignaciones y su plan de entrenamiento.",
-            "«📋 Tareas y exámenes»: lo que le pusiste y cómo va.",
-            "«📝 Bitácora»: tus observaciones sobre él.",
-            "Su diagnóstico de nivel, área por área.",
-            "«🔑 Acceso a la cuenta»: reenviarle el acceso (una contraseña provisional nueva si nunca ha entrado, o el enlace para crear una)."
+            "Arriba, «Con este alumno»: ponerle una tarea o un examen (con él ya elegido), y sus atajos a la bitácora, a los informes a la casa, a su cuaderno y a su libreta de torneos.",
+            "«📈 Cómo viene» (semana a semana) y «🌱 Antes y ahora» (si sabe más: su fuerza de un diagnóstico a otro y lo que antes fallaba y ya le sale).",
+            "«📋 Tareas y exámenes», «📝 Bitácora», «🏆 Trofeos e insignias» y «🪞 Errores de sus partidas».",
+            "Su diagnóstico y plan de entrenamiento, «♞ Sus aperturas» (lo que juega en Lichess y Chess.com) y «🔑 Acceso a la cuenta»."
           ],
           "ojo": [
-            "«Desbloquear hasta el tema» le abre el curso a ESE alumno y deja rastro de que fuiste tú.",
-            "«Guardar Elo» apunta su Elo si lo tiene."
+            "«Desbloquear hasta el tema» le abre un curso a ESE alumno, y queda el rastro de que fuiste tú.",
+            "Con su código FIDE, su Elo oficial se lee solo cada mes."
+          ]
+        },
+        {
+          "titulo": "Su cuaderno, sus torneos y su certificado",
+          "donde": "informes.html · libreta-torneos.html · cuaderno.html",
+          "intro": "Tres cosas que el alumno hace por su cuenta y tú puedes seguir.",
+          "pasos": [
+            "«📓 Su cuaderno»: las posiciones que guardó con sus notas y quiso compartir contigo. Las lees, no las cambias.",
+            "«📒 Libreta de torneos»: sus partidas de torneo, por torneo, con lo que pensaba en cada jugada y lo que encontró el motor. «Llevar sus errores a un plan de clase» arma el plan.",
+            "Cuando termina TODAS las lecciones de un curso, en su informe sale «🎓 Dar certificado», con un código para comprobar que es auténtico."
+          ],
+          "ojo": [
+            "Cuando un alumno anota una partida de torneo y se revisa, te llega un aviso con cuántos errores salieron.",
+            "Un certificado no se borra: se anula, y el mismo enlace lo dice."
           ]
         },
         {
@@ -554,6 +789,19 @@
           ]
         },
         {
+          "titulo": "Unas palabras de su profe",
+          "donde": "informes.html › 📧 Informes a la casa",
+          "intro": "Además de los números, puedes escribirle a la familia: tu mensaje sale arriba del próximo informe, firmado con tu nombre.",
+          "pasos": [
+            "En «📧 Informes a la casa», abre «✍️ Unas palabras para la casa».",
+            "Toca una frase lista según cómo viene el alumno («Va bien», «Practicó poco»…): se suma con sus datos y la ajustas antes de mandarla.",
+            "Puedes guardar tus propias plantillas; el nombre del alumno se cambia solo por el de cada uno."
+          ],
+          "ojo": [
+            "Es un mensaje, no un chat: hay un tope de 5 por alumno al día. El alumno también lo puede leer."
+          ]
+        },
+        {
           "titulo": "Lo que el correo a la casa dice primero",
           "intro": "Arriba de todo va una franja con el veredicto, y muchas veces es lo único que se lee.",
           "pasos": [
@@ -569,17 +817,16 @@
           ]
         },
         {
-          "titulo": "Los exámenes del público y los diagnósticos",
-          "donde": "informes.html › ⚖️ Exámenes de arbitraje · 🧭 Diagnósticos de nivel",
-          "intro": "Informes también junta lo que llega de fuera del panel: gente que hizo el diagnóstico o el examen de arbitraje desde la página pública.",
+          "titulo": "Los diagnósticos de tus alumnos",
+          "donde": "informes.html › 🧭 Diagnósticos de nivel",
+          "intro": "El diagnóstico de nivel de cada alumno llega a Informes, junto con el de todo el grupo.",
           "pasos": [
             "«🧭 Diagnósticos de nivel»: el resumen del grupo, el promedio por área y el perfil de cada alumno.",
-            "«🌐 Diagnósticos de visitantes»: los de gente sin cuenta. Son contactos para invitar.",
-            "«⚖️ Exámenes de arbitraje»: cuántos llegaron, cuántos faltan por responder y el estado de cada uno."
+            "«Comparar alumnos» pone a dos o tres lado a lado, área por área: sirve para armar grupos de nivel o parejas de práctica.",
+            "Los diagnósticos de visitantes y los exámenes de arbitraje del público los ve solo administración."
           ],
           "ojo": [
-            "En los gráficos el color nunca va solo: cada barra lleva su porcentaje y su etiqueta escrita, porque verde y ámbar no se distinguen con daltonismo.",
-            "Responder los exámenes del público se hace en la página de Arbitraje, que es donde está el detalle pregunta por pregunta."
+            "En los gráficos el color nunca va solo: cada barra lleva su número y su etiqueta escrita."
           ]
         }
       ]
@@ -587,26 +834,26 @@
     {
       "id": "cursos",
       "titulo": "Los cursos de la Academia",
-      "resumen": "Diez cursos con 186 lecciones, cada una con su cuadernillo, su presentación y su hoja de ejercicios.",
+      "resumen": "Los cursos con su temario y sus lecciones, cada una con su cuadernillo, su presentación y su hoja de ejercicios.",
       "laminas": [
         {
           "titulo": "Qué hay y quién lo ve",
           "donde": "clases.html › Aprender › Cursos",
           "intro": "El temario de cada curso es público; el contenido completo de las lecciones se ve con sesión iniciada.",
           "pasos": [
-            "Entra a Cursos desde el panel y elige uno.",
+            "Entra a Cursos desde Aprender y elige uno.",
             "Cada lección trae su texto, sus diagramas y su material descargable.",
-            "Lo que tú tienes abierto de más: para quien administra, todas las lecciones están desbloqueadas desde el primer día."
+            "Algunos cursos están en preparación y por ahora no se ven: no salen en la lista, ni en la clase, ni en tareas o exámenes."
           ],
           "ojo": [
             "Para el alumno las lecciones se abren de a poco, según va avanzando.",
-            "Si necesitas abrirle un curso a un alumno concreto, es «Desbloquear hasta el tema» en Informes, y queda el rastro."
+            "Si necesitas adelantarle un curso a un alumno, es «Desbloquear hasta el tema» en su informe, y queda el rastro."
           ],
           "captura": "cursos-academia"
         },
         {
           "titulo": "El material de cada lección",
-          "intro": "Cada una de las 186 lecciones tiene dos archivos de estudio, enlazados desde la propia lección.",
+          "intro": "Cada lección tiene dos archivos de estudio, enlazados desde la propia lección.",
           "pasos": [
             "El cuadernillo en PDF: de qué trata, los conceptos con su error frecuente, ejemplos con diagrama, ejercicios, preguntas con su respuesta y las fuentes.",
             "El mismo contenido en HTML accesible, con cada posición contada pieza por pieza.",
@@ -656,7 +903,8 @@
             "Mates: mate en 1, en 2 y en 3, por categoría.",
             "Aprender: lecciones interactivas que se van abriendo.",
             "Coordenadas: rondas contra reloj, con su mejor marca.",
-            "Desafíos: series mezcladas."
+            "Desafíos: series mezcladas.",
+            "Estudio: las fichas de una pantalla (abajo)."
           ],
           "ojo": [
             "Coordenadas se manda por minutos; Mates, por cantidad.",
@@ -680,13 +928,27 @@
           "titulo": "Entreno",
           "intro": "Lo que ya es preparación, no fundamentos.",
           "pasos": [
-            "Aperturas y celadas: 76 líneas que se memorizan JUGÁNDOLAS, con repaso espaciado. El sitio le pone la nota según cuántas veces se equivocó y cuántas pistas pidió, no según lo que él diga.",
-            "4×4: ejercicios de cálculo en tablero reducido."
+            "Aperturas y celadas: 76 líneas que se memorizan JUGÁNDOLAS, con repaso espaciado. La nota la pone el sitio según los errores y las pistas, no según lo que diga el alumno.",
+            "4×4: ejercicios de cálculo en tablero reducido.",
+            "Visualización, Precisión posicional, Finales contra la máquina y Memoria."
           ],
           "ojo": [
             "En Aperturas la coronación se elige y no se asume dama: la trampa de Lasker en la Albin solo funciona coronando caballo."
           ],
           "captura": "aperturas"
+        },
+        {
+          "titulo": "Habilidades",
+          "donde": "clases.html › Aprender › Entrenamiento › Habilidades",
+          "intro": "Ejercicios por la forma de pensar que entrenan, cada uno con sus niveles.",
+          "pasos": [
+            "Detective, Descarte, Barrido, Intercambios, Remata la ventaja, Salva las tablas, Elige a tiempo y más.",
+            "«Tus propios errores»: el alumno revisa sus partidas (de la Academia, de Lichess, de Chess.com o las de torneo que anota) y el motor saca ejercicios de sus errores.",
+            "Las partidas de torneo las puede anotar a mano o leerlas de una foto de su planilla."
+          ],
+          "ojo": [
+            "Lo que anota de sus torneos lo ves tú en su libreta de torneos."
+          ]
         },
         {
           "titulo": "Estudio: una ficha por idea",
@@ -705,22 +967,22 @@
         },
         {
           "titulo": "Los otros juegos de entrenamiento",
-          "donde": "clases.html › Jugar y competir",
-          "intro": "Se mandan igual que lo demás y sirven para trabajar visión de tablero.",
+          "donde": "clases.html › Jugar y competir › Juegos",
+          "intro": "Juegos cortos para trabajar visión de tablero y cálculo rápido.",
           "pasos": [
-            "Racha táctica: la jugada correcta en 10 segundos, y la racha de la clase.",
+            "Racha táctica y ¡Te reto!: la jugada correcta en 10 segundos, encadenando la racha.",
             "Concentración: niveles de memoria de posición.",
             "Ilumina el tablero: encontrar la casilla.",
             "Confites del caballo: el paseo del caballo, con dos marcas (la mejor, y la mejor sin pistas ni deshacer).",
-            "Visualización: jugar sin ver las piezas."
+            "El Sonar y Batalla naval: encontrar lo escondido escribiendo casillas."
           ],
           "ojo": [
-            "Concentración e Ilumina no tienen cuadro para escribir la respuesta, y no es un olvido: ahí la tarea ES mirar."
+            "Concentración, Ilumina, Confites, el Sonar y Batalla naval también se mandan como renglón de una tarea."
           ]
         },
         {
           "titulo": "Logros y racha de días",
-          "donde": "clases.html › Jugar y competir › Logros",
+          "donde": "clases.html › Tu cuenta › Logros",
           "intro": "Una racha de días y un catálogo de medallas. Sirve para que vuelvan mañana.",
           "pasos": [
             "Un día cuenta con 5 ejercicios o más, de cualquier tipo.",
@@ -737,36 +999,36 @@
     {
       "id": "evaluaciones",
       "titulo": "Diagnóstico de nivel y arbitraje",
-      "resumen": "Las dos pruebas que ubican a alguien. Sirven contigo, con tus alumnos y con quien todavía no es alumno.",
+      "resumen": "Las dos pruebas que ubican a alguien: el diagnóstico de nivel, que le pides a tus alumnos, y el examen de arbitraje.",
       "laminas": [
         {
           "titulo": "El diagnóstico de nivel",
-          "donde": "clases.html › Evaluaciones › Diagnóstico de nivel",
+          "donde": "entreno/diagnostico.html · informes.html › 🧭 Diagnósticos de nivel",
           "intro": "60 preguntas en nueve áreas, la mitad difíciles y muchas para resolver en el tablero. Devuelve la fuerza estimada en puntos Elo (con su margen), un nivel y un plan de entrenamiento de 4 semanas.",
           "pasos": [
-            "El alumno lo hace desde su panel y el resultado te llega a Informes.",
-            "En Informes ves su perfil de nueve áreas y dónde está flojo.",
+            "Pídeselo como tarea, con el renglón «Diagnóstico de nivel». Él lo hace desde su panel.",
+            "En Informes ves su fuerza, su perfil de nueve áreas y dónde está flojo.",
             "El plan de 4 semanas se le comparte desde ahí."
           ],
           "ojo": [
-            "El nivel NO sale del porcentaje: sale del escalón de dificultad más alto que superó. Con el porcentaje, un jugador de 1400 y uno de 2300 sacaban los dos «Experto».",
+            "El nivel sale de la fuerza en puntos Elo, no del porcentaje. Y cada área se juzga contra lo esperable para su fuerza.",
             "Cada pregunta ofrece «🤔 No lo sé todavía», que vale cero pero se guarda aparte: un hueco que enseñar no es lo mismo que algo mal aprendido.",
-            "También se puede hacer sin cuenta, desde la portada. Esos resultados te llegan como contactos."
+            "También se puede hacer sin cuenta, desde la portada."
           ],
           "captura": "diagnostico"
         },
         {
           "titulo": "El examen de arbitraje",
-          "donde": "clases.html › Evaluaciones › Diagnóstico de arbitraje",
+          "donde": "arbitraje.html (administración) · nivel-de-arbitraje.html",
           "intro": "40 preguntas del Handbook de la FIDE, 50 minutos, ocho áreas y un nivel estimado de arbitraje.",
           "pasos": [
-            "Hazlo tú desde el panel: la página del equipo docente te enseña el detalle pregunta por pregunta.",
+            "La versión del equipo docente, con el detalle pregunta por pregunta, hoy la abre solo administración.",
             "Cada respuesta cita su artículo exacto del Handbook.",
-            "En «📥 Exámenes del público» revisas los que llegaron de fuera y armas la retroalimentación."
+            "El público lo hace sin cuenta en «Nivel de arbitraje», desde la portada; administración revisa esos resultados y arma la respuesta."
           ],
           "ojo": [
             "Es una estimación de conocimiento del reglamento, NO un título: los títulos los da la FIDE.",
-            "La respuesta al público la manda una persona, desde su propio correo: el borrador se arma solo con el resultado."
+            "Si das clase y quieres hacerlo, pídeselo a quien administra."
           ],
           "captura": "arbitraje"
         },
@@ -788,7 +1050,7 @@
     {
       "id": "juegos",
       "titulo": "Jugar: partidas, retos y torneos",
-      "resumen": "Armar partidas entre alumnos, sentarte tú a jugar, y montar un torneo con sus rondas.",
+      "resumen": "Armar partidas entre alumnos, sentarte tú a jugar, montar un torneo y preparar a un alumno contra un rival.",
       "laminas": [
         {
           "titulo": "Asignar rivales",
@@ -796,8 +1058,8 @@
           "intro": "Eliges la modalidad, el reloj y quiénes juegan. La partida nace y a los dos les aparece.",
           "pasos": [
             "«Asignar rivales»: elige blancas y negras de tu lista.",
-            "Elige la modalidad y el control de tiempo.",
-            "En «Competir», «Partidas en curso» te deja verlas todas mientras se juegan, y «Partidas terminadas», las que ya acabaron."
+            "Elige la modalidad y el control de tiempo, y «🎲 Crear partida».",
+            "En «Competir», «♟️ Partidas en curso» te deja verlas mientras se juegan, y «🏁 Partidas terminadas», las que ya acabaron."
           ],
           "ojo": [
             "Tú también puedes jugar: apareces al final de los selectores, en tu propio grupo, para que el caso de todos los días —dos alumnos— siga saliendo de una.",
@@ -809,9 +1071,10 @@
           "titulo": "Las modalidades",
           "intro": "Además del ajedrez de siempre, hay modalidades que enseñan cosas distintas.",
           "pasos": [
-            "Estándar, Crazyhouse, Niebla de guerra, A ciegas.",
-            "Abrazos y Camaleón, con sus reglas de fusión.",
-            "Ajedrez de cartas, Duelo simultáneo y partidas de cuatro jugadores."
+            "Estándar, Crazyhouse, Niebla de guerra y A ciegas.",
+            "Abrazos, Camaleón y Vampiro, con sus reglas propias.",
+            "Ajedrez de cartas, Duelo simultáneo y Ajedrez para 4 (todos contra todos o por equipos).",
+            "Los juegos de la casa: Volcanes, Misiones secretas y Relevo en silencio (por equipos). Y en Juegos, La partida perdida."
           ],
           "ojo": [
             "El reloj de cada partida lo valida el servidor: nadie puede regalarse tiempo desde el navegador."
@@ -827,8 +1090,9 @@
             "Puede aceptar, o rechazar con un motivo escrito."
           ],
           "ojo": [
-            "Se puede retar a cualquiera de la Academia que tenga Competir abierto, aunque no sea de la misma clase. Si no hay nadie, la página ofrece el bot de Oscar.",
-            "Tú también sales en esa lista, rotulado como profe."
+            "Se puede retar a cualquiera que tenga Competir abierto, aunque no sea de la misma clase. Si no hay nadie, la página ofrece el bot de Oscar.",
+            "Tú también sales en esa lista, rotulado como profe.",
+            "Los alumnos además se retan a ejercicios: los mismos 5 para los dos, cada uno cuando puede."
           ]
         },
         {
@@ -849,17 +1113,31 @@
         },
         {
           "titulo": "El bot de Oscar",
-          "donde": "clases.html › Jugar y competir › Juega contra mí",
-          "intro": "Un rival de la casa para cualquier modalidad, con tres niveles. La partida vive en el navegador y no se guarda.",
+          "donde": "tablero.html · juegos.html › Jugar contra el bot de Oscar",
+          "intro": "Dos rivales de la casa, para cuando no hay nadie del otro lado.",
           "pasos": [
-            "Elige la modalidad y el nivel.",
-            "Juega. No ocupa una fila ni sale en los informes: contra el bot se practica."
+            "«Juega contra mí» (en Jugar y competir): ajedrez normal contra Oscar, con tres niveles. En el difícil juega con su repertorio, sacado de sus propias partidas.",
+            "«Jugar contra el bot de Oscar» (dentro de Juegos): cualquier modalidad, con cuatro niveles. La partida vive en el navegador y no se guarda."
           ],
           "ojo": [
-            "En el nivel difícil juega con el repertorio de Oscar, sacado de sus propias partidas.",
-            "Faltan dos modalidades: Ajedrez de cartas y Duelo simultáneo."
+            "Contra el bot de las modalidades se practica: no ocupa una partida ni sale en los informes.",
+            "Ahí faltan dos modalidades: Ajedrez de cartas y Duelo simultáneo."
           ],
           "captura": "bot"
+        },
+        {
+          "titulo": "Preparar a un alumno contra un rival",
+          "donde": "clases.html › Tus clases › Preparación de rivales",
+          "intro": "Cargas las partidas de un rival y la página arma su análisis: su repertorio, dónde rinde menos, su FODA y qué jugarle, revisado con Stockfish.",
+          "pasos": [
+            "Bájalas con su usuario de Lichess o Chess.com, o carga un PGN, y analízalas.",
+            "«Guardar el análisis» lo deja en «Tus análisis guardados».",
+            "Debajo de cada plan: «Mandárselo a un alumno» o «Guardar en Archivos (para la clase)»."
+          ],
+          "ojo": [
+            "La activa administración, profesor por profesor: si no ves la tarjeta, pídela.",
+            "Al alumno le llega solo el plan, no el análisis entero. Él también se prepara solo en Competir › «Prepara tu próxima partida»."
+          ]
         }
       ]
     },
@@ -870,7 +1148,7 @@
       "laminas": [
         {
           "titulo": "Subir tus PGN",
-          "donde": "clases.html › Herramientas › Archivos",
+          "donde": "clases.html › Tus clases › Archivos",
           "intro": "Tus propias partidas y colecciones de ejercicios, listas para llevar a la clase.",
           "pasos": [
             "«📤 Tus PGN subidos»: sube el archivo.",
@@ -889,16 +1167,19 @@
           "pasos": [
             "Entra a Archivos y baja a las partidas guardadas.",
             "Descárgalas o vuélvelas a llevar al tablero."
+          ],
+          "ojo": [
+            "La partida guardada durante una clase queda ligada a ella: quienes asistieron la repasan en «Repasar mis clases»."
           ]
         },
         {
           "titulo": "El lector de planilla",
-          "donde": "clases.html › Herramientas › Lector de planilla",
+          "donde": "lector-planilla.html (en prueba)",
           "intro": "Fotografías la planilla de papel de una partida y sale el PGN.",
           "pasos": [
-            "Toma la foto de la planilla.",
-            "Revisa lo que leyó y corrige lo que haga falta.",
-            "Descarga el PGN."
+            "La página todavía está en prueba, y hoy la abre solo administración.",
+            "Lo que sí tienen tus alumnos: al anotar una partida de torneo, «📷 Leer la foto» lee su planilla con el mismo lector.",
+            "Las jugadas que leyó caen en el cuadro, y las adivinadas van marcadas con «?» para compararlas con el papel."
           ],
           "ojo": [
             "Es una ayuda, no un dictado perfecto: una planilla escrita a mano siempre hay que repasarla."
@@ -914,7 +1195,7 @@
       "laminas": [
         {
           "titulo": "El Modo Adaptado",
-          "donde": "En el encabezado de las páginas de entrenamiento",
+          "donde": "El encabezado de cada página",
           "intro": "Un modo que agranda la letra, sube el contraste y cambia qué se ofrece en cada ejercicio.",
           "pasos": [
             "Se enciende a mano, y el sitio también lo adivina por el contraste del sistema o por el primer Tab.",
@@ -923,6 +1204,19 @@
           ],
           "ojo": [
             "La accesibilidad de verdad no depende de ese modo: los encabezados que permiten saltar de lección en lección están SIEMPRE puestos, esté el modo encendido o no."
+          ]
+        },
+        {
+          "titulo": "La voz, y la visión de cada alumno",
+          "intro": "Quien ve poco muchas veces no usa lector de pantalla. Para eso está «Activar voz», y administración puede dejarlo puesto.",
+          "pasos": [
+            "El 🔇 del encabezado enciende la voz: el sitio dice en voz alta los avisos y las jugadas.",
+            "Administración puede marcar cómo ve cada alumno: «Baja visión» le enciende la voz; «Ciega» le arma un panel adaptado.",
+            "En la clase en vivo, el enlace para invitados puede abrir con el modo adaptado o con la voz encendida."
+          ],
+          "ojo": [
+            "Si tienes un alumno que ve poco o no ve, avísale a administración: así no depende de que encuentre el botón.",
+            "Es un dato sensible: solo lo ven él, sus profesores y administración."
           ]
         },
         {
@@ -966,11 +1260,25 @@
     {
       "id": "coordinacion",
       "titulo": "Coordinación",
-      "resumen": "Formularios de inscripción, dar de alta a las familias, cobros y reportes. Es lo que se suma con la marca de coordinación.",
+      "resumen": "Lo que se suma con la marca de coordinación: las cuentas de tu gente, solicitudes, formularios de inscripción, cobros y reportes.",
       "laminas": [
         {
+          "titulo": "Lo que suma coordinar",
+          "donde": "clases.html › Coordinación",
+          "intro": "Si coordinas, en tu panel aparece el grupo «Coordinación».",
+          "pasos": [
+            "«🧭 Coordinación»: tus profesores y sus alumnos. Corriges nombre, grupo, correo, profesores y rol, y reenvías el acceso.",
+            "«Solicitudes de la Academia»: quien pidió unirse; aprobar crea la cuenta.",
+            "«Formularios de inscripción» y «Cobros de la Academia» (abajo)."
+          ],
+          "ojo": [
+            "Tu supervisor puede apagar alguna de estas herramientas: si no ves una, es por eso.",
+            "Sin profesores vinculados, coordinar alcanza a casi nadie. El panel lo dice y nombra quién te los vincula."
+          ]
+        },
+        {
           "titulo": "Formularios de inscripción",
-          "donde": "clases.html › Herramientas › Formularios de inscripción",
+          "donde": "clases.html › Coordinación › Formularios de inscripción",
           "intro": "Armas un formulario, lo compartes por enlace y bajas las respuestas. No hay que escribir HTML.",
           "pasos": [
             "«Lo básico»: título, equipo y fecha de cierre.",
@@ -1005,8 +1313,8 @@
           "titulo": "El alumno que no tiene correo propio",
           "intro": "Una familia con dos hijos pequeños tiene un solo correo. Los dos no pueden compartir cuenta: el correo es la llave con la que se entra.",
           "pasos": [
-            "Marca «No tiene correo propio» en el alta.",
-            "El campo del correo del alumno se apaga y el de la persona encargada pasa a ser obligatorio.",
+            "Marca «No tiene correo propio» en el alta (en Formularios o en «Crear cuenta de alumno»).",
+            "El correo de la persona encargada pasa a ser obligatorio, salvo que le pongas tú una contraseña.",
             "El sitio propone un usuario del tipo sofia.munoz, te lo enseña y lo puedes corregir antes de crear la cuenta.",
             "El aviso del final te dice el usuario que quedó y a qué bandeja salió el correo."
           ],
@@ -1018,25 +1326,24 @@
         },
         {
           "titulo": "Cobros de la Academia",
-          "donde": "clases.html › Herramientas › Cobros de la Academia",
-          "intro": "Planes, quién paga qué, cobros emitidos, pagos y morosidad.",
+          "donde": "clases.html › Coordinación › Cobros de la Academia",
+          "intro": "Planes, quién paga qué, cobros emitidos, pagos, recibos y morosidad. Solo de coordinación y administración.",
           "pasos": [
-            "«Plan nuevo»: nombre, monto, moneda y periodicidad.",
-            "«Poner a un alumno en un plan» y la fecha de inicio.",
-            "Los cobros se emiten solos cada mes, a las 5:30 de la mañana.",
-            "Registras cada pago (SINPE, transferencia o efectivo). Se aceptan pagos parciales."
+            "«🏷️ Planes» › «Plan nuevo»: nombre, monto, moneda y periodicidad.",
+            "«Poner alumnos en un plan», con su fecha de inicio.",
+            "Los cobros se emiten solos, cada madrugada a las 5:30, cuando les toca.",
+            "«Registrar el pago» (SINPE, transferencia o efectivo). Se aceptan pagos parciales, y cada pago queda en un recibo."
           ],
           "ojo": [
-            "No se guarda «pagado»: se calcula de los pagos registrados. Un cobro queda pagado cuando la suma alcanza, sin que nadie lo marque.",
-            "Los avisos de morosidad salen solos: tres días antes, al día siguiente del vencimiento y a los 15 días. Un correo por alumno, no uno por cobro.",
-            "Ningún aviso amenaza. Ni el de los 15 días habla de sacar a nadie de clase.",
-            "No hay pasarela de pago ni factura electrónica de Hacienda: el consecutivo de hoy es el del recibo interno."
+            "Un cobro queda pagado cuando la suma de los pagos alcanza, sin que nadie lo marque.",
+            "Los tres avisos de morosidad salen solos (de fábrica: 3 días antes, al día siguiente y a los 15 días). Ninguno amenaza.",
+            "El recibo lo revisa y lo entrega a la familia quien supervisa tu academia. No hay pasarela de pago ni factura electrónica."
           ],
           "captura": "cobros"
         },
         {
           "titulo": "Reportes de actividades",
-          "donde": "clases.html › Herramientas · admin.html › Reportes",
+          "donde": "Panel de quien supervisa o administra › Reportes de actividades",
           "intro": "El informe de lo que pasó en clase en un periodo, para presentarlo a quien haya que presentárselo. Sale en Word y en PDF, con la marca de agua.",
           "pasos": [
             "Elige el periodo.",
@@ -1086,7 +1393,7 @@
       "laminas": [
         {
           "titulo": "El informe mensual del profesor",
-          "donde": "clases.html › Herramientas › Informe mensual",
+          "donde": "clases.html › Tus clases › Informe mensual",
           "intro": "Los números del mes salen solos: clases en línea y presenciales, tareas, exámenes, alumnos que entrenaron. Tú escribes lo que los números no dicen.",
           "pasos": [
             "Elige el mes y revisa «Tus números del mes» y «El detalle del mes» (clase por clase y estudiante por estudiante).",
@@ -1095,13 +1402,13 @@
           ],
           "ojo": [
             "Un informe enviado ya no se cambia, y los números que viajan son los del momento de enviarlo.",
-            "Un borrador no lo ve nadie más que tú.",
+            "Si tu academia tiene IA, «✨ Mejorar informe» te propone otra redacción; solo cambia tu texto si aprietas «Usar este texto».",
             "Si tienes supervisión y no lo mandas, los días 1 y 3 del mes siguiente te llega un recordatorio, y el día 5 tu supervisión recibe la lista de los que faltan."
           ]
         },
         {
           "titulo": "Leer los informes de tus profesores",
-          "donde": "clases.html › Supervisión de profesores",
+          "donde": "Panel de quien supervisa › Supervisión de profesores",
           "intro": "Una fila por profesor con lo que hizo en el mes y el estado de su informe, escrito: «⏳ Sin enviar», «📨 sin leer» o «✅ leído».",
           "pasos": [
             "Elige el mes.",
@@ -1116,7 +1423,7 @@
         },
         {
           "titulo": "Academias",
-          "donde": "clases.html › Academias",
+          "donde": "academias.html",
           "intro": "Cada academia tiene un solo supervisor, su gente y su nombre en los correos que les llegan a las familias.",
           "pasos": [
             "«Crear una academia desde un grupo»: eliges el grupo y ves, ANTES de crearla, quién va a entrar. El botón dice cuántas personas.",
@@ -1131,7 +1438,7 @@
         },
         {
           "titulo": "El tablero por academia",
-          "donde": "clases.html › Tablero por academia",
+          "donde": "tablero-academias.html",
           "intro": "Una fila por academia con las cifras del mes: clases y horas, cuántas del horario se dieron, alumnos que entrenaron, informes enviados y cobros pendientes.",
           "pasos": [
             "Elige el mes.",
@@ -1151,17 +1458,16 @@
       "resumen": "Cuentas, profesores, equipos y cupos. Es la mitad que decide quién ve a quién.",
       "laminas": [
         {
-          "titulo": "El panel y sus dos mitades",
-          "donde": "clases.html › Tu cuenta › Administración",
-          "intro": "Arriba los atajos por grupos; abajo las cuentas, que se ven POR GRUPO y no todas de una.",
+          "titulo": "El panel de quien administra",
+          "donde": "clases.html › Administración · admin.html",
+          "intro": "Quien administra tiene su propio panel, sin herramientas de dar clase. Lo de dar clase lo revisa con «Ver como: profesor».",
           "pasos": [
-            "Los atajos: Resultados (los dos diagnósticos y los dos exámenes), Formularios, Bases de datos y Reportes.",
+            "admin.html tiene un menú a la izquierda y una sección a la vista: Lo urgente, Las cuentas por grupo, Crear cuenta nueva, Profesores y coordinadores, Supervisores, Equipos, Proyectos, Preparación de rivales…",
             "Las cuentas empiezan en fichas de grupo: cuánta gente tiene, qué profesores lo llevan y cuántos se quedaron sin profesor.",
-            "Abres un grupo o buscas a alguien para ver las filas."
+            "El buscador de cuentas va arriba, en todas las secciones."
           ],
           "ojo": [
-            "Buscar manda sobre el grupo abierto y mira TODOS los grupos: buscar a alguien sin saber en qué grupo está es justamente para lo que se busca.",
-            "La búsqueda no distingue tildes: «ramirez» encuentra a «Ramírez»."
+            "Buscar mira TODOS los grupos, y no distingue tildes: «ramirez» encuentra a «Ramírez»."
           ],
           "captura": "admin"
         },
@@ -1211,16 +1517,28 @@
           ]
         },
         {
-          "titulo": "Nombrar coordinación",
-          "intro": "Coordinar es una marca encima de profesor, que se pone y se quita desde Administración.",
+          "titulo": "Nombrar coordinación y supervisión",
+          "donde": "admin.html › Profesores y coordinadores · Supervisores",
+          "intro": "Coordinar y supervisar son marcas encima de profesor, que se ponen y se quitan desde Administración.",
           "pasos": [
-            "Marca a la persona como coordinadora en su fila.",
-            "Con eso le aparecen formularios de inscripción, cobros y reportes.",
-            "No pierde ni un permiso de profesor."
+            "En «Profesores y coordinadores», marca a la persona como coordinadora y vincúlale sus profesores.",
+            "Con eso le aparece el grupo Coordinación: cuentas, solicitudes, formularios y cobros.",
+            "En «Supervisores», a quien supervisa se le asignan las cuentas que revisa."
           ],
           "ojo": [
-            "Solo se le puede poner a alguien que ya es profesor.",
-            "Nadie se la puede dar a sí mismo."
+            "Solo se le puede poner a alguien que ya es profesor, y nadie se la puede dar a sí mismo."
+          ]
+        },
+        {
+          "titulo": "Proyectos y preparación de rivales",
+          "donde": "admin.html › Proyectos · Preparación de rivales",
+          "intro": "Dos cosas que se le dan a un profesor desde administración.",
+          "pasos": [
+            "«Proyectos»: cada grupo del proyecto se le asigna a un profesor, y con eso le llegan compartidos los planes de sus clases.",
+            "«Preparación de rivales»: el interruptor de cada profesor. Encendido, le aparece la tarjeta en «Tus clases»."
+          ],
+          "ojo": [
+            "Quien administra ve el proyecto entero, pero no «Dar esta clase» ni «Mandar»: no da clase."
           ]
         },
         {
@@ -1238,7 +1556,7 @@
         },
         {
           "titulo": "Accesos y cupos",
-          "donde": "clases.html › Cobros y accesos › Accesos y cupos",
+          "donde": "clases.html › Administración › Accesos y cupos",
           "intro": "El acceso de un alumno a la Academia es un cupo de un paquete. Una cuenta individual es un paquete de 1 cupo.",
           "pasos": [
             "«Nuevo paquete»: nombre, titular (quién reparte los cupos: una academia o un profesor), cupos, fechas y precio.",
@@ -1263,20 +1581,21 @@
           "intro": "Ninguno da error en pantalla. Esa es exactamente la razón por la que están acá.",
           "pasos": [
             "Mandar la tarea a todos los alumnos en vez de a los marcados.",
-            "Mandar al tablero la posición inicial del diagrama en vez de la que tienes en pantalla (recorre la línea ANTES de apretar el botón: manda la que estás viendo).",
-            "Crear la cuenta con el correo de la mamá en el campo del alumno: revisa el diálogo antes de confirmar.",
-            "Usar el modo «reemplazar» del lote de profesores creyendo que suma.",
-            "Dar por hecho que el alumno vio la tarea: el aviso push sale al asignarla y no vuelve. Lo que sí le avisa todos los días es la franja de su panel."
+            "Dar la clase sin abrirla: mientras no la abras (o mandes una posición), tus alumnos no entran y no se registra nada.",
+            "Mandar al tablero la posición inicial del diagrama en vez de la que tienes en pantalla: recorre la línea ANTES de apretar el botón.",
+            "Crear la cuenta con el correo de la mamá en el campo del alumno: revisa antes de confirmar.",
+            "Dar por hecho que el alumno vio la tarea: el aviso al celular sale al asignarla y no vuelve. Lo que sí le avisa todos los días es la franja de su panel."
           ]
         },
         {
           "titulo": "Cuando algo no sale",
           "intro": "Lo que se puede arreglar sin pedirle nada a nadie.",
           "pasos": [
+            "«Mis alumnos no pueden entrar a la clase»: ábrela con «Abrir la clase».",
             "«El alumno no me aparece»: no está asignado a ti ni comparten equipo. Se arregla en Administración.",
             "«No puedo aplicar esta posición»: el aviso te dice cuál de las tres reglas rompe. Casi siempre falta un rey.",
             "«Se le congeló el examen»: reábrelo desde Exámenes. Conserva lo que ya contestó.",
-            "«No le llega el correo a la familia»: revisa el correo de la persona encargada en «📧 Informes a la casa». Si el alumno entra con usuario, todo va al correo de quien está a cargo.",
+            "«No le llega el correo a la familia»: revisa el correo de la persona encargada en «📧 Informes a la casa».",
             "«Se le olvidó la contraseña»: «Reenviar el acceso» en el informe de ese alumno."
           ]
         },
@@ -1298,11 +1617,10 @@
           "titulo": "Lo que la plataforma NO hace",
           "intro": "Decirlo evita prometerlo.",
           "pasos": [
-            "No usa ninguna inteligencia artificial que escriba o resuma: ni el tiempo recomendado de un examen, ni los reportes de actividades.",
+            "No escribe por ti: la única inteligencia artificial es «✨ Mejorar informe» (si tu academia la tiene), que solo propone otra redacción. Ni el tiempo de un examen ni los números de un informe salen de ella.",
             "No impide que alguien cambie de pestaña en un examen: lo cuenta y lo informa.",
             "No emite factura electrónica de Hacienda ni cobra con tarjeta.",
-            "Los cursos no traen video de lección.",
-            "Ningún filtro del sitio es una caja fuerte: lo que decide es qué se PINTA. Quien conoce la dirección de un PDF lo baja igual, y por eso van con marca de agua."
+            "Los cursos no traen video de lección."
           ]
         },
         {
@@ -1313,7 +1631,7 @@
             "La tarea se llena sola: pides cantidades, no revisas nada.",
             "La bitácora se escribe EN la clase, no después: si hay que esperar, no se anota.",
             "El informe a la casa sale solo, y lo primero que dice es si el alumno está trabajando o no.",
-            "En la clase en vivo, lo único que viaja es la posición. Todo lo demás es tuyo."
+            "En la clase en vivo, a la clase solo llega lo que mandas con su botón. Tu material es tuyo."
           ]
         }
       ]

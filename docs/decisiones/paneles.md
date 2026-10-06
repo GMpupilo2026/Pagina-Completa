@@ -1502,7 +1502,7 @@ su lugar y sin caminos repetidos.
   repasar, archivos, la preparación de rivales si se la activaron y el informe
   mensual); «Coordinación», solo a quien coordina (coordinación, solicitudes,
   formularios y cobros, lo que su supervisor no le apagó); «Aprender»; «Jugar
-  y competir» y «Tu cuenta» (configuración y logros). Antes todo lo suyo caía
+  y competir» y «Tu cuenta» (configuración, la guía del profesor y logros). Antes todo lo suyo caía
   en «Herramientas», y Informes vivía en «Tu cuenta» aunque es de sus
   alumnos.
   - Se ordena **sobre la lista ya armada**, así respeta lo que cada quien
@@ -1538,6 +1538,36 @@ su lugar y sin caminos repetidos.
   y que sin supervisión no se reclame), `pruebaPreparacionRivales` y
   `pruebaCoordinadorRecortado` en `verificar-panel.js`. Rompiendo a propósito
   el filtro `soloAlumno` o dando el informe por enviado, saltan.
+
+### El recorrido del profesor nuevo
+
+El panel del profesor está ordenado (grupos por lo que se viene a hacer,
+buscador, «Lo urgente»), pero la primera vez nadie le dice dónde está cada
+cosa. `js/recorrido-profe.js` arma cinco pasos: el buscador, la clase en vivo,
+«Tus alumnos», el informe de un alumno (con «Con este alumno») y el «?» de la
+guía.
+
+- **Solo a quien da clase, en su propio panel** (`profile.role ===
+  "profesor"`, sin «Ver como»; `montarRecorrido()` en `js/clases.js`). Quien
+  administra tiene otro panel; la alumna, el suyo.
+- **Una vez por cuenta y aparato**: `localStorage`, con el id de la persona en
+  la clave, así una computadora compartida no se lo salta a la siguiente
+  cuenta. Es una comodidad, y si el almacenamiento falla el panel funciona
+  igual. «🧭 Ver el recorrido otra vez», debajo del buscador, lo vuelve a abrir.
+- **No tapa el panel**: una tarjeta abajo, sin fondo oscuro (`role="dialog"`,
+  `aria-modal="false"`), y lo que nombra queda con el aro `.buscar-resaltado`.
+  «Saltar el recorrido» o Escape lo cierran y no vuelve. Escape escrito en
+  otro campo es de ese campo: el buscador lo usa para borrar.
+- **Al salir solo no mueve el foco**: el panel acaba de dejarlo en su título,
+  y quien llegó por Ctrl + K está escribiendo. Lo anuncia un `role="status"`.
+  Abierto a mano, y al avanzar, el foco va al título de la tarjeta; al cerrar
+  vuelve a donde estaba si estaba en la tarjeta. Con `?buscar=` no sale.
+- **Un paso cuya cosa no se ve en ESE panel se salta**: un aro sobre nada
+  confunde más que callarlo. Los grupos llevan `id` para eso
+  (`grupo-clase-en-vivo`, `grupo-tus-alumnos`).
+- Lo prueba `pruebaRecorrido` en `verificar-panel.js`: que salga sin robar el
+  foco, que cada paso señale algo que se ve, que no vuelva, el botón, Escape,
+  y que a la alumna y a quien administra no les salga.
 
 ### La ficha Crear cuenta de alumno
 

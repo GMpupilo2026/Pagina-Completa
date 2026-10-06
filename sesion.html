@@ -877,6 +877,18 @@
                         <p class="font-semibold"><span aria-hidden="true">🙋 </span>Llevan un rato sin contestar</p>
                         <ul id="callados-lista" class="mt-1.5 space-y-1.5"></ul>
                     </div>
+                    <!-- «¿Qué quieres hacer?»: el buscador de herramientas del profe
+                         (js/clase-buscar.js). Lleva a la herramienta (abre su pestaña y su
+                         caja) y la deja con el foco, sin apretarla. Ctrl + K lo trae. Ver
+                         «Buscar una herramienta sin salir de la clase» en
+                         docs/decisiones/clase-en-vivo.md. -->
+                    <div id="buscar-herramienta" hidden class="relative bg-white dark:bg-brand-900 rounded-xl shadow-md p-3">
+                        <label for="buscar-herramienta-campo" class="block text-xs font-semibold text-brand-700 dark:text-brand-200 mb-1"><span aria-hidden="true">🔍 </span>¿Qué quieres hacer?</label>
+                        <input id="buscar-herramienta-campo" type="search" autocomplete="off" spellcheck="false" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="buscar-herramienta-lista" aria-describedby="buscar-herramienta-ayuda" placeholder="Ronda, cuestionario, puntos, proyector…" class="w-full bg-brand-50 dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm text-brand-800 dark:text-brand-100 placeholder:text-brand-450 dark:placeholder:text-brand-350 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                        <p id="buscar-herramienta-ayuda" class="mt-1 text-[0.6875rem] text-brand-500 dark:text-brand-300">Te lleva a la herramienta sin salir de la clase. Ctrl + K desde cualquier parte.</p>
+                        <ul id="buscar-herramienta-lista" role="listbox" aria-label="Herramientas" hidden class="absolute left-3 right-3 z-30 mt-1 max-h-72 overflow-y-auto rounded-xl border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-900 shadow-lg p-1"></ul>
+                        <p id="buscar-herramienta-estado" class="sr-only" role="status" aria-live="polite"></p>
+                    </div>
                     <!-- La columna va en el orden en que se mira dando clase: primero lo que
                          se consulta todo el tiempo (el motor y los alumnos conectados, siempre a
                          la vista), después lo que se busca para una actividad (tu material y las
@@ -1504,6 +1516,7 @@
     <script src="js/clase-invitados.js"></script>
     <script src="js/clase-sacar.js"></script>
     <script src="js/clase-herramientas-grandes.js"></script>
+    <script src="js/clase-buscar.js"></script>
     <script src="js/foto-perfil.js"></script>
     <script src="js/cursos-ocultos.js"></script>
     <!-- Después de cursos-ocultos.js: la lista del material la consulta. -->

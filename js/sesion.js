@@ -7243,6 +7243,9 @@
                 let savedTab = TEACHER_TABS[0];
                 try { savedTab = localStorage.getItem(TEACHER_TAB_KEY) || savedTab; } catch (e) {}
                 activateTeacherTab(savedTab);
+                if (window.ClaseBuscar && !modoProyector && !modoControl) {
+                    ClaseBuscar.montar({ activarPestana: (btn) => btn.click() });
+                }
                 await arrancarModoSencillo();
                 cargarPlanesEnClase();
                 setupTeacherLessonTools();

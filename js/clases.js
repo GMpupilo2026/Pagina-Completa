@@ -184,6 +184,9 @@
                 { emoji: "⚙️", label: "Configuración", desc: "Tu perfil y contraseña", href: "configuracion.html" },
                 { emoji: "📊", label: "Informes", desc: "Tu progreso y estadísticas", descProfe: "El progreso de tus alumnos y los informes a la casa", href: "informes.html" },
                 { emoji: "🏅", label: "Logros", desc: "Tu racha de días entrenando y las medallas que has ganado", descProfe: "El catálogo de medallas y cómo se gana la racha de días", href: "logros.html" },
+                /* La guía es del equipo docente (también el «?» de cada
+                   página, js/ayuda-guia.js): al alumnado se le quita. */
+                { emoji: "📘", label: "Guía del profesor", desc: "Todo lo que la plataforma deja hacer y cómo se hace", href: "guia-del-profesor-accesible.html", soloDocente: true },
                 /* Lo que el alumno guarda y anota él (la bitácora es del
                    profe). Solo del alumnado: el profe ve lo que le comparten
                    desde el informe de cada alumno. Ver «Mi cuaderno» en
@@ -553,13 +556,13 @@
            verificar-panel.js pide que ese grupo no exista.
            Ver «El panel de quien da clase» en docs/decisiones/paneles.md. */
         const PANEL_DOCENTE = [
-            { title: "Clase en vivo", destacado: true, hrefs: ["sesion.html"] },
-            { title: "Tus alumnos", hrefs: ["alumno-nuevo.html", "tareas.html", "examenes.html", "informes.html", "justificaciones.html", "libreta-torneos.html", "subgrupos.html"] },
+            { title: "Clase en vivo", id: "grupo-clase-en-vivo", destacado: true, hrefs: ["sesion.html"] },
+            { title: "Tus alumnos", id: "grupo-tus-alumnos", hrefs: ["alumno-nuevo.html", "tareas.html", "examenes.html", "informes.html", "justificaciones.html", "libreta-torneos.html", "subgrupos.html"] },
             { title: "Tus clases", hrefs: ["proyecto.html", "planes.html", "cuestionarios.html", "asistencia.html", "repasar-clases.html", "partidas.html", "preparacion-rivales.html", "informe-mensual.html"] },
             { title: "Coordinación", hrefs: ["coordinacion.html", "solicitudes.html", "formularios.html", "cobros.html"] },
             { title: "Aprender", hrefs: ["entreno/index.html", "entreno/estudio.html", "cursos/academia/index.html", "articulos.html"] },
             { title: "Jugar y competir", hrefs: ["juegos.html", "competir.html", "tablero.html"] },
-            { title: "Tu cuenta", hrefs: ["configuracion.html", "logros.html"] },
+            { title: "Tu cuenta", hrefs: ["configuracion.html", "guia-del-profesor-accesible.html", "logros.html"] },
         ];
         function ordenarPanelDocente() {
             /* Al alumnado se le quitan las dos puertas del equipo docente
@@ -586,7 +589,7 @@
                día, no se pliega. Ver «El panel del profe, con la misma mano»
                en docs/decisiones/paneles.md. */
             const grupos = PANEL_DOCENTE.map((g) => ({
-                title: g.title, destacado: !!g.destacado,
+                title: g.title, id: g.id, destacado: !!g.destacado,
                 plegable: !g.destacado && g.title !== "Tu cuenta",
                 compacto: g.title === "Tu cuenta",
                 tiles: g.hrefs.map((h) => todas.find((t) => t.href === h)).filter((t) => t && usadas.add(t)),
@@ -4221,6 +4224,26 @@
             await sinEsperarDeMas(...partes);
             if (!profile._persona) subscribeSessions();
             mostrarPanel();
+            montarRecorrido();
+        }
+
+        /* El recorrido del profesor nuevo (js/recorrido-profe.js): a quien da
+           clase, en su propio panel, la primera vez. No a quien administra (su
+           panel es otro) ni mirando el de otra persona. Con `?buscar=` llegó
+           a buscar algo: no se le cruza nada delante. Ver «El recorrido del
+           profesor nuevo» en docs/decisiones/paneles.md. */
+        // Se mira al cargar: abrirBusquedaPedida() limpia la dirección antes.
+        const LLEGO_BUSCANDO = new URLSearchParams(location.search).has("buscar");
+        function montarRecorrido() {
+            if (!window.RecorridoProfe || profile.role !== "profesor" || profile._persona) return;
+            const otraVez = document.getElementById("recorrido-otra-vez");
+            if (otraVez) {
+                otraVez.hidden = false;
+                otraVez.addEventListener("click", () => RecorridoProfe.abrir({ uid: profile.id }));
+            }
+            if (LLEGO_BUSCANDO) return;
+            // Un respiro: el «?» del encabezado se destapa con su propia consulta.
+            setTimeout(() => RecorridoProfe.abrir({ uid: profile.id, auto: true }), 700);
         }
 
         init().catch((e) => {

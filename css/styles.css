@@ -1496,3 +1496,9 @@ html.dark .comparar-serie-1 { background: #3987e5; }
 html.dark .comparar-serie-2 { background: #d95926; }
 html.dark .comparar-serie-3 { background: #199e70; }
 .comparar-muestra { display: inline-block; width: 0.75rem; height: 0.75rem; border-radius: 3px; }
+
+/* La herramienta a la que llevó «¿Qué quieres hacer?» (js/clase-buscar.js) y el
+   paso del recorrido del panel (js/recorrido-profe.js): un aro del color de
+   acento, que el buscador quita a los 2,5 s. Sin animación: con movimiento
+   reducido se vería igual. */
+.buscar-resaltado { outline: 3px solid rgb(var(--c-accent-500)); outline-offset: 3px; border-radius: 0.75rem; }

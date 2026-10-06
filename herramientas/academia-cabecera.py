@@ -177,12 +177,12 @@ def pie(ruta):
 #
 # SOLO van las páginas que la guía de verdad explica. Un «?» que lleva a un
 # capítulo que no habla de esa página es peor que no tenerlo: quien lo abre
-# lee todo el capítulo buscando algo que no está. Por eso subgrupos,
-# asistencia presencial, el informe mensual, supervisión, academias, accesos,
-# la tienda y otras no llevan: la guía todavía no las cuenta.
+# lee todo el capítulo buscando algo que no está. Antes de sumar una página,
+# se le escribe su apartado en la guía. La tienda, Novedades y otras no llevan:
+# la guía todavía no las cuenta.
 #
-# Por ahora el «?» es solo de administración (lo destapa js/ayuda-guia.js),
-# igual que la tarjeta «Guía del profesor» del panel.
+# El «?» es del equipo docente: quien da clase y quien administra (lo destapa
+# js/ayuda-guia.js), igual que la tarjeta «Guía del profesor» del panel.
 AYUDA_GUIA = {
     "clases.html": "empezar", "configuracion.html": "empezar",
     "sesion.html": "clase-en-vivo",
@@ -206,6 +206,14 @@ AYUDA_GUIA = {
     "asistencia.html": "clase-en-vivo", "subgrupos.html": "tareas",
     "informe-mensual.html": "supervision", "supervision.html": "supervision",
     "academias.html": "supervision", "tablero-academias.html": "supervision",
+    # Las del día a día del profe que la guía ya cuenta (ver «El «?» de la
+    # guía, para el equipo docente»).
+    "alumno-nuevo.html": "empezar",
+    "cuestionarios.html": "clase-en-vivo",
+    "proyecto.html": "planes",
+    "cuaderno.html": "informes", "libreta-torneos.html": "informes",
+    "preparacion-rivales.html": "juegos",
+    "repasar-clases.html": "archivos",
 }
 AYUDA_CARPETAS = {"entreno/": "entrenamiento", "cursos/academia/": "cursos"}
 AYUDA_INICIO = "<!-- ayuda: inicio -->"
