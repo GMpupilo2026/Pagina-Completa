@@ -1,6 +1,7 @@
-/* Los materiales de clase en admin.html#materiales: cada material (hoy, el
- * libro «Ponte a prueba»), con sus sub-fichas —las pruebas y sus versiones
- * como cuestionario— y CON QUIÉN se comparte.
+/* Los materiales de clase en admin.html#materiales: cada material (los libros
+ * «Ponte a prueba» y «Peonita y el reino de las 64 casillas»), con sus
+ * sub-fichas —las pruebas y sus versiones como cuestionario, si las tiene— y
+ * CON QUIÉN se comparte.
  *
  * Quién lo puede usar lo decide la base, no esta pantalla:
  *   - la lista vive en material_compartido, que solo lee administración y no
@@ -33,6 +34,17 @@
       pruebas: 6,
       posicionesPorPrueba: 30,
       versiones: ["A", "B", "C"],
+    },
+    {
+      producto: "peonita",
+      emoji: "🧸",
+      titulo: "Peonita y el reino de las 64 casillas",
+      autor: "Oscar Angulo Cubero",
+      resumen: "Un cuento ilustrado para que niñas y niños de 4 a 8 años aprendan a jugar ajedrez: Peonita, un peón blanco, aprende con Don Lento a mover cada pieza, el jaque, el mate, el ahogado y el enroque. Quince capítulos con «Lo que aprendí» y una página de «¡A jugar!», el diploma y las soluciones. Se puede imprimir.",
+      archivos: [
+        { href: "material/peonita/peonita.pdf", texto: "📥 El libro en PDF" },
+        { href: "material/peonita/peonita-accesible.html", texto: "♿ Versión accesible" },
+      ],
     },
   ];
 
@@ -335,6 +347,8 @@
       pintarAgregar(m, comp);
       art.appendChild(comp);
 
+      // Un libro sin pruebas (el cuento de Peonita) no lleva esa sección.
+      if (!m.pruebas) { lista.appendChild(art); return; }
       const pr = el("section");
       pr.appendChild(el("h4", "text-sm font-bold uppercase tracking-wide text-brand-500 dark:text-brand-300 mb-1", "Las pruebas, como cuestionario"));
       pr.appendChild(el("p", "text-xs text-brand-450 dark:text-brand-350 mb-3",

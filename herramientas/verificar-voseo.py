@@ -116,6 +116,7 @@ empecé aprendí entendí leí tomé repasé jugué estudié olvidé
 cortés descortés
 encontré revisé recargué creé comprometí revelé
 dejé llegué terminé
+moví saqué enroqué pensé equivoqué
 quizá
 mamá papá bebé
 dará hará podrá dispondrá será tendrá tendrás vendrá verá verás sabrás habrá saldrá

@@ -571,8 +571,12 @@ async function pruebaMateriales(browser) {
   const resumen = () => page.textContent("#mat-lista [role=status]");
   const lista = () => page.evaluate(() => Array.from(document.querySelectorAll("#mat-lista article > section:first-of-type ul:first-of-type > li"))
     .filter((li) => li.checkVisibility()).map((li) => li.querySelector("p").textContent));
-  igual("el libro, con sus archivos", await page.evaluate(() => Array.from(document.querySelectorAll("#mat-lista article a[href^='material/']")).map((a) => a.getAttribute("href"))),
-    ["material/ponte-a-prueba/ponte-a-prueba.pdf", "material/ponte-a-prueba/ponte-a-prueba-accesible.html"]);
+  igual("los libros, con sus archivos", await page.evaluate(() => Array.from(document.querySelectorAll("#mat-lista article a[href^='material/']")).map((a) => a.getAttribute("href"))),
+    ["material/ponte-a-prueba/ponte-a-prueba.pdf", "material/ponte-a-prueba/ponte-a-prueba-accesible.html",
+     "material/peonita/peonita.pdf", "material/peonita/peonita-accesible.html"]);
+  igual("el cuento de Peonita no tiene pruebas como cuestionario", await page.evaluate(() =>
+    Array.from(document.querySelectorAll("#mat-peonita-titulo, #mat-lista article[aria-labelledby='mat-titulo-peonita'] h4")).map((h) => h.textContent)),
+    ["Con quién lo compartes"]);
   igual("dice con quién está compartido, también con palabras", [await resumen(), await lista()],
     ["Lo tienen: 1 academia, y tú.", ["🏫 Academia Norte"]]);
 

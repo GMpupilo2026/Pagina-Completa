@@ -937,10 +937,83 @@ lo baja administración y aquellos con quienes se comparte (ver «Los
 materiales de clase»). Para venderlo suelto falta darlo de alta como producto
 de la tienda.
 
+## El libro de Peonita, para los más pequeños
+
+*Peonita y el reino de las 64 casillas*, de Oscar Angulo Cubero: un cuento
+ilustrado para que niñas y niños de 4 a 8 años aprendan a jugar. Peonita, un
+peón blanco, sale de noche de la caja de ajedrez de una escuela tica, y Don
+Lento, un perezoso del guarumo de la ventana, le enseña a mover cada pieza.
+Quince capítulos (el tablero y el nombre de las casillas, las piezas una por
+una, el valor, jaque, mate, ahogado, enroque y captura al paso, tres consejos
+de apertura y las reglas del buen jugador), cada uno con su ilustración, «Lo
+que aprendí» y una página de «¡A jugar!»; al final, el diploma y las
+soluciones.
+
+- `herramientas/libro-ninos/contenido.js` tiene el cuento, los ejercicios y
+  **sus respuestas escritas a mano**; `herramientas/libro-ninos/dibujos.js`,
+  los personajes y las escenas; `herramientas/libro-ninos-pdf.js` lo pone en
+  papel: `material/peonita/peonita.pdf` y `peonita-accesible.html`.
+- Lo revisa `verificar-libro-ninos.js`.
+
+### Tomado de un libro ajeno como referencia, no copiado
+
+El dueño lo pidió «como» *El maravilloso mundo del ajedrez escolar*, de Carlos
+Salgado Allaria (un cuento con una peona que aprende con su profe, y
+actividades entre capítulo y capítulo). Ese libro tiene licencia Creative
+Commons **sin obra derivada**: adaptarlo, aunque se cambien los nombres, es
+justo lo que la licencia no deja. Se tomó el **tipo de libro**, que no es de
+nadie (cuento + idea principal + actividades, para leer acompañado), y todo lo
+demás es propio: la historia, los personajes, los textos, los dibujos y los
+ejercicios. Ninguno sale de ahí.
+
+### Las respuestas se escriben a mano y las comprueba chess.js
+
+Cada ejercicio trae su `respuesta` escrita en el contenido, y el verificador
+la **vuelve a calcular desde la posición** sin usar nada del generador: cuántas
+casillas alcanza la pieza, cuál es la única que puede comer, si el rey está en
+jaque, cuál es la única forma de salir del jaque (huir, tapar o comer), que el
+mate en una sea UNO solo y el escrito, mate/ahogado/ninguno, si el enroque
+corto es legal, los saltos del caballo, los puntos de cada grupo. Si el
+generador calculara las respuestas, el verificador estaría comprobando el
+cálculo contra sí mismo. Una posición con los dos reyes además tiene que ser
+legal (el rey del que no mueve, fuera de jaque).
+
+Las posiciones para aprender a mover una pieza llevan esa pieza sola, sin
+reyes (como en cualquier libro de iniciación). chess.js 0.10.3 las carga y les
+cuenta las jugadas igual; los puntos de «puede ir» los saca el generador de
+chess.js, nunca se dibujan a mano.
+
+### Los dibujos son SVG escritos en el repositorio
+
+Sin imágenes de afuera: el libro se vuelve a generar igual en cualquier
+máquina, nadie tiene que pedir permiso por una ilustración, y cada personaje se
+ve igual en todos los capítulos. Las piezas son personajes (ojos, cachetes,
+el moño de Peonita, la bufanda de Tizón) pero con la **silueta de la pieza de
+verdad**: el niño tiene que reconocer la torre cuando la vea en un tablero.
+Cada escena lleva su descripción (`alt`), que es también lo que dice la versión
+accesible en lugar del dibujo.
+
+### Lo que lo distingue de los otros libros
+
+- **Se deja imprimir**: las páginas de «¡A jugar!» se pintan y se escriben.
+- **La marca de agua va al 7 %, no al 11 %**: va encima de ilustraciones de
+  colores y a la opacidad de los otros libros ensuciaba los dibujos.
+- Los diagramas son de madera y no azules (`colores` de `lib/tablero-svg.js`),
+  con dos marcas nuevas: un punto donde la pieza puede ir y un aro donde puede
+  comer. **Los colores se midieron** contra las dos casillas: el primer verde
+  daba 1,7:1 en la casilla oscura y el punto casi no se veía en la mitad de
+  las casillas; el de ahora da 4,1:1 (el aro, 3,9:1). Y el pie de cada
+  diagrama dice qué son los puntos.
+- Con un solo diagrama, el diagrama y «Lo que aprendí» van lado a lado: si no,
+  el recuadro quedaba solo en una página casi vacía.
+- Comparte con «Ponte a prueba» el cierre (`lib/pdf-armar.js`) y el
+  `describir()` de la versión accesible. Va en `admin.html#materiales` y se
+  comparte igual; sin pruebas como cuestionario, esa sección no aparece.
+
 ## Los materiales de clase
 
 `admin.html#materiales` («Materiales de clases») junta los materiales para dar
-clase —hoy, «Ponte a prueba»— y dice **con quién se comparte cada uno**: una
+clase —hoy, «Ponte a prueba» y el libro de Peonita— y dice **con quién se comparte cada uno**: una
 persona, una academia entera o todos los profesores. Lo pinta
 `js/admin-materiales.js`; lo prueba `verificar-admin.js`.
 
