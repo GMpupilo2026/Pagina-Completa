@@ -722,6 +722,37 @@ abrirlo, que se diga cuántos estudiantes quedan fuera, y que de quien no envió
 lea el de hoy. Está probado que falla de verdad: haciendo que el enviado enseñe el
 detalle de hoy, salta.
 
+#### Quien administra baja el mes completo de cada profesor
+
+En `supervision.html`, a quien administra (`is_admin`) cada profesor le trae
+**«⬇ Descargar el mes completo (Excel)»**: un solo archivo con lo que escribió
+(resumen, logros, dificultades, plan y el comentario de supervisión), sus
+números del mes y el detalle clase por clase y estudiante por estudiante. Quien
+supervisa sin administrar no lo tiene: sigue con las dos tablas sueltas del
+detalle.
+
+- **No cuenta nada nuevo**: junta lo que ya dan `informes_profesor` (por su
+  RLS, que a quien administra solo le abre los enviados),
+  `actividad_profesor()` (por `resumen_profesores_supervisados()`) y las dos
+  puertas del detalle. Los nombres de los números salen de
+  `ActividadProfesor.CAMPOS` y las fechas y el «dónde» de `DetalleMensual`: una
+  sola copia de cada cosa.
+- **Con el informe enviado, los números y el detalle son la FOTO de ese día**
+  (`informes_profesor.datos` y `detalle_informe_mensual()`), como en pantalla;
+  sin enviar, los de hoy, y la fila «Estado» lo dice. Un borrador no viaja:
+  la base no se lo entrega a quien administra.
+- El tiempo va en minutos y como número, para poder sumarlo en Excel. Lo que
+  escribió una persona pasa por `CsvExcel`, que le desarma las fórmulas.
+- El botón solo cambia lo que se pinta: lo que se baja ya lo podía leer quien
+  administra, así que el permiso sigue siendo el de la base.
+
+`verificar-informe-mensual.js` lo comprueba: que quien supervisa sin
+administrar no tenga el botón, que el archivo diga de quién y de qué mes, que
+el enviado baje la foto y no los números de hoy, que de quien no envió se pida
+el detalle de hoy con su id y su mes y no lleve textos, y que una fórmula
+escrita por el profesor llegue desarmada. Está probado que falla de verdad:
+haciendo que el enviado baje los números de hoy, saltan 2.
+
 ### Los modos de vista de quien administra
 
 `js/modo-vista.js`: quien administra elige ver la plataforma «como

@@ -558,7 +558,7 @@ de la maqueta no comprobaría nada.
 
 ### Las capturas de pantalla
 
-`herramientas/guia-capturas.js` fotografía 25 páginas de la plataforma y deja
+`herramientas/guia-capturas.js` fotografía 27 páginas de la plataforma y deja
 los archivos en `img/guia/<slug>.jpg`. Cada apartado del contenido puede
 declarar `"captura": "<slug>"`, y entonces:
 
@@ -650,6 +650,37 @@ páginas del cuerpo** —el error clásico es estamparla solo en la portada—.
   cualquier archivo y la comprobación se veía perfecta sin comprobar nada. Se
   pregunta con `in`. Está probado que discrimina de verdad: sobre el PDF sin
   sellar da 0 de 39 páginas con marca, y sobre el sellado, 39 de 39.
+
+### Las capturas de la guía, con la cuenta de quien la lee
+
+Cuando la guía se abrió al equipo docente (ver «El «?» de la guía, para el
+equipo docente»), las capturas se rehicieron enteras. Tres cosas:
+
+- **La profesora de mentira ya no administra.** Con `is_admin` el panel es el
+  de administración, y `panel.jpg` enseñaba tarjetas que el profesor no tiene.
+  `PROFE` da clase y coordina; las páginas que hoy son solo de administración
+  (`admin`, `arbitraje`, `lector-planilla`, `reportes`) llevan `quien: "admin"`
+  y se fotografían con `ADMIN`, otra cuenta inventada. La guía dice en cada una
+  que es de administración.
+- **El navegador lleva una sesión guardada** (`sembrar()` de
+  `lib/playwright-con-sesion.js`): sin ella, la guardia del `<head>` (ver «Sin
+  sesión, al login antes de bajar nada») recargaba la página una y otra vez y
+  ninguna captura llegaba a sacarse; las 21 con sesión fallaban por tiempo y se
+  borraban. El login no la lleva: se fotografía como lo ve quien no entró.
+  El recorrido del profesor nuevo se da por visto, para que no tape el panel.
+- **`DEMO` se puso al día con lo que leen las páginas**, que es el fallo
+  callado de siempre: el resumen de Informes trae `id` (no `student_id`), y
+  con el nombre viejo el selector de alumnos tenía seis opciones «undefined»
+  y `?alumno=` no elegía a nadie; los cursos traen `hechos` y `titulo`
+  («undefined/20 · NaN%»); y faltaban `mis_funciones_coordinacion` (Cobros y
+  Formularios salían diciendo «no está entre tus funciones») y
+  `entreno_mi_mes` (Logros decía «No se pudo cargar este mes»).
+- Se sumaron dos: `informe-alumno` (el informe de Sofía, con «Con este
+  alumno») y `clase-buscar` (la clase con «¿Qué quieres hacer?» buscando).
+- Al rehacerlas, el panel enseñó un texto viejo: «la clase se abre sola…, en
+  cuanto llegue un alumno», cuando eso dejó de pasar (ver «La sesión en vivo
+  se abre cuando el profesor la abre»). Se corrigió en `js/clases.js` y lo
+  cuida `verificar-panel.js`. Mirar las capturas es también revisar el sitio.
 
 ## El video promocional
 

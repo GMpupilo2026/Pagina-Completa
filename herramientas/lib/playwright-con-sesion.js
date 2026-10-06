@@ -67,4 +67,6 @@ chromium.launchPersistentContext = async (...args) => {
   return ctx;
 };
 
-module.exports = { ...pw, chromium };
+// `sembrar` suelto: para quien arma contextos con y sin sesión desde el mismo
+// navegador (guia-capturas.js fotografía también el login, que no la lleva).
+module.exports = { ...pw, chromium, sembrar };

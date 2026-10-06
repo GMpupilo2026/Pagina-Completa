@@ -209,7 +209,8 @@
           ],
           "ojo": [
             "Dentro de la clase, Ctrl + K abre este buscador y no el del panel: así no te sales de la clase sin querer."
-          ]
+          ],
+          "captura": "clase-buscar"
         },
         {
           "titulo": "Editar la posición a mano",
@@ -741,7 +742,8 @@
           "ojo": [
             "«Desbloquear hasta el tema» le abre un curso a ESE alumno, y queda el rastro de que fuiste tú.",
             "Con su código FIDE, su Elo oficial se lee solo cada mes."
-          ]
+          ],
+          "captura": "informe-alumno"
         },
         {
           "titulo": "Su cuaderno, sus torneos y su certificado",
