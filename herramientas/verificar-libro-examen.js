@@ -1,4 +1,4 @@
-/* Verifica el banco del libro «Ponte a prueba» (js/libro-examen-items.js) y su
+/* Verifica el banco del libro «Ponte a prueba» (material/ponte-a-prueba/banco.js) y su
  * paso a los exámenes de la plataforma (fuente «libro» de js/examen-banco.js).
  *
  * Lo que comprueba, porque nada de esto da error si se rompe —el libro se
@@ -33,7 +33,7 @@ cargar("js/plan-entrenamiento.js");
 cargar("js/diagnostico-items.js");
 cargar("js/arbitraje-items.js");
 cargar("js/aperturas-lineas.js");
-cargar("js/libro-examen-items.js");
+cargar("material/ponte-a-prueba/banco.js");
 cargar("js/examen-banco.js");
 
 const LIBRO = win.LIBRO_EXAMEN;

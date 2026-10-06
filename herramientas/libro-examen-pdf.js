@@ -4,7 +4,7 @@
  * medirse uno mismo —180 posiciones en seis pruebas de 30—, con sus
  * soluciones, la planilla de puntos, las tablas que pasan los puntos a una
  * fuerza en Elo (total y por categoría) y la guía de qué entrenar según lo que
- * salga flojo. Las posiciones y los puntos salen de js/libro-examen-items.js,
+ * salga flojo. Las posiciones y los puntos salen de material/ponte-a-prueba/banco.js,
  * que arma herramientas/libro-examen-generar.js: este script no decide nada
  * de ajedrez, solo lo pone en papel.
  *
@@ -43,7 +43,7 @@ const N = require("./lib/notacion.js");
 const { unir, proteger } = require("./lib/pdf-armar.js");
 
 global.window = {};
-eval(fs.readFileSync(path.join(RAIZ, "js/libro-examen-items.js"), "utf8"));
+eval(fs.readFileSync(path.join(RAIZ, "material/ponte-a-prueba/banco.js"), "utf8"));
 const LIBRO = global.window.LIBRO_EXAMEN;
 const ITEMS = global.window.LIBRO_EXAMEN_ITEMS;
 const CATS = LIBRO.CATEGORIAS;

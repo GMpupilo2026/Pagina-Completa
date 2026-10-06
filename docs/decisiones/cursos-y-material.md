@@ -822,7 +822,7 @@ los puntos a una fuerza en Elo —total y por categoría— y una guía de qué
 entrenar según lo que salga flojo. Lo arman dos scripts:
 
 - `herramientas/libro-examen-generar.js` escribe el banco,
-  `js/libro-examen-items.js` (no se edita a mano);
+  `material/ponte-a-prueba/banco.js` (no se edita a mano);
 - `herramientas/libro-examen-pdf.js` escribe
   `material/ponte-a-prueba/ponte-a-prueba.pdf` y su versión accesible.
 
@@ -890,11 +890,80 @@ Se toma la pregunta de la jugada como `opcion_tablero` y vale la buena: el
 examen de la plataforma califica bien o mal, sin crédito parcial. La pregunta
 de la evaluación queda guardada en el banco por si un día se quiere usar.
 
+**El banco vive en `material/ponte-a-prueba/banco.js`, no en `js/`.** Trae
+las respuestas: en `js/` lo bajaba cualquiera, y «elegir con quién se
+comparte» no habría significado nada. Detrás del candado de `material/` el
+worker solo se lo sirve a quien puede bajar el material; a los demás les
+contesta 403, el script no carga y `examenes.js` no ofrece la fuente.
+
 ### El PDF
 
 Lleva tapa, marca de agua con el logo, firma del autor y protección, como el
 libro del diagnóstico, con el código compartido en `herramientas/lib/pdf-armar.js`.
 A diferencia de aquel, **se deja imprimir**: es un examen que se contesta en
 papel. Vive en `material/ponte-a-prueba/`, detrás del candado del worker:
-hoy lo baja administración. Para venderlo falta darlo de alta como producto
+lo baja administración y aquellos con quienes se comparte (ver «Los
+materiales de clase»). Para venderlo suelto falta darlo de alta como producto
 de la tienda.
+
+## Los materiales de clase
+
+`admin.html#materiales` («Materiales de clases») junta los materiales para dar
+clase —hoy, «Ponte a prueba»— y dice **con quién se comparte cada uno**: una
+persona, una academia entera o todos los profesores. Lo pinta
+`js/admin-materiales.js`; lo prueba `verificar-admin.js`.
+
+### Quién lo ve lo decide la base
+
+- `material_compartido` guarda con quién: una fila por persona, academia o
+  «todos los profesores» (una sola de las tres, por `check`), con índices
+  únicos parciales para no repetir. Solo la lee administración y no tiene
+  política de escritura: la escribe `material_compartir()`, que exige
+  `soy_admin()`. Reparte accesos, así que lleva `interno.auditar` y va en
+  `VIGILADAS` de `verificar-auditoria.js`.
+- `interno.material_compartido_conmigo(producto)` contesta por quien llama:
+  la persona, un miembro de la academia o quien la supervisa, o un profesor
+  si se compartió con todos.
+- `puede_bajar()` —la que pregunta el worker para `material/<producto>/`— lo
+  suma. Así el PDF, la versión accesible y el banco quedan detrás del mismo
+  candado. El worker guarda la respuesta 5 minutos: dejar de compartir tarda
+  eso en cerrarse del todo.
+- Compartir con una academia incluye a sus alumnos (pueden bajar el libro y
+  hacerlo en papel); con «todos los profesores», no.
+
+### Las pruebas como cuestionario, en tres versiones
+
+`herramientas/libro-examen-cuestionarios.js` arma, para cada una de las seis
+pruebas, tres versiones (A, B y C) de 20 preguntas: las 30 posiciones se
+reparten en tres tandas de 10 que **no se repiten**, cada una con la misma
+mezcla de dificultad, y cada posición trae sus dos preguntas (cuánto ganan y
+cuál es la jugada). Las opciones de la jugada se barajan distinto en cada
+versión. Así un grupo no recibe el mismo examen que otro.
+
+Son cuestionarios **listos** (sin dueño) con `material = 'ponte-a-prueba'`. La
+política de `cuestionarios` deja leer un listo con material solo a quien
+`puede_bajar()` ese material; los listos de siempre (`material` nulo) siguen
+igual. El SQL actualiza por título y no borra, para no dejar colgadas las
+tareas que apuntan a una versión; y la semilla de los listos de la Academia
+(`cuestionarios-listos.js`) borra solo `where listo and material is null`.
+
+### Cada alumno, su orden
+
+En `cuestionario-tarea.html` las preguntas y las opciones se ven en un orden
+propio de cada alumno —y otro cada vez que lo vuelve a contestar—, sacado de
+una semilla (renglón, alumno, intento). Así no se pasan las respuestas por letra
+y repetirlo para practicar no es repetir de memoria. La base no se entera: se
+manda cada respuesta con el número ORIGINAL de la opción, en el orden
+original, y se califica igual que siempre. No se barajan las opciones de dos
+(«Verdadero / Falso») ni las que dicen «todas», «ninguna», «ambas» o
+«anterior», ni el orden de las preguntas si alguna habla de la «anterior»: ahí
+el lugar es parte de la pregunta. Lo prueba `verificar-cuestionario-tarea.js`
+(«Cada alumno, su orden»), contestando por el texto de la opción.
+
+### Cómo se aplicó
+
+La sesión que lo armó no podía escribir en la base, así que la migración y la
+semilla se aplicaron en el editor SQL, en una transacción, anotando la
+migración en `supabase_migrations.schema_migrations` con el mismo texto del
+archivo: así el punto de restauración coincide igual que si la hubiera
+aplicado el CLI.

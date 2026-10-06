@@ -153,6 +153,15 @@ const FUENTES = [
   { valor: "libro",     texto: "Libro «Ponte a prueba»" },
 ];
 
+/* El libro se ofrece solo si su banco cargó: vive en material/ponte-a-prueba/,
+   y el worker se lo sirve únicamente a quien puede bajar ese material
+   (administración, quien lo compró o con quien se compartió). A los demás el
+   archivo les contesta 403 y la opción no aparece. */
+function fuentesDisponibles() {
+  const conLibro = Array.isArray(window.LIBRO_EXAMEN_ITEMS) && window.LIBRO_EXAMEN_ITEMS.length > 0;
+  return FUENTES.filter((f) => f.valor !== "libro" || conLibro);
+}
+
 let bloques = [];
 let seqBloque = 0;
 
@@ -241,7 +250,7 @@ function pintarBloque(b) {
   // Fila de arriba: sobre qué, y cuál.
   const arriba = document.createElement("div");
   arriba.className = "grid gap-3 sm:grid-cols-2";
-  arriba.appendChild(sel(`b${b.id}-fuente`, "Sobre qué", FUENTES, b.fuente, (v) => {
+  arriba.appendChild(sel(`b${b.id}-fuente`, "Sobre qué", fuentesDisponibles(), b.fuente, (v) => {
     b.fuente = v;
     const ops = opcionesDeCual(b);
     b.cual = ops.length ? ops[0].valor : "";

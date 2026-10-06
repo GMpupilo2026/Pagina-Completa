@@ -8,7 +8,8 @@
  * cuál es la mejor jugada (jugada). Los puntos de cada respuesta van en
  * `puntos`, en el mismo orden que las opciones; la buena siempre vale 5.
  * La sirven el libro impreso (herramientas/libro-examen-pdf.js) y la fuente
- * «libro» de los exámenes (js/examen-banco.js).
+ * «libro» de los exámenes (js/examen-banco.js). Vive detrás del candado de
+ * material/: trae las respuestas, y solo lo baja quien tiene el material.
  */
 window.LIBRO_EXAMEN = {
   TITULO: 'Ponte a prueba',

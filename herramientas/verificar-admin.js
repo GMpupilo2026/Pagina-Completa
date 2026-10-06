@@ -97,6 +97,15 @@ window.__consultas = [];
     equipo_entrenadores: [],
     coordinador_profesores: [],
     preparacion_rivales_profesores: [],
+    /* Los materiales de clase (admin.html#materiales): «Ponte a prueba» ya
+       está compartido con una academia; la otra academia trae HTML en el
+       nombre, que tiene que ir literal. Dos versiones cargadas de la prueba 1. */
+    material_compartido: [{ id: "mc-1", producto: "ponte-a-prueba", persona_id: null, academia_id: "ac-1", todos_profesores: false, creado_en: "2026-10-06T10:00:00Z" }],
+    academias: [{ id: "ac-1", nombre: "Academia Norte" }, { id: "ac-2", nombre: '<img src=x onerror="window.__xss=1">Sur' }],
+    cuestionarios: [
+      { id: "cq-1A", titulo: "Ponte a prueba · Prueba 1 · versión A", material: "ponte-a-prueba" },
+      { id: "cq-1B", titulo: "Ponte a prueba · Prueba 1 · versión B", material: "ponte-a-prueba" },
+    ],
     /* Un proyecto con dos grupos (admin.html#proyectos). «Finales» ya tiene
        profesora; el otro no, y su nombre trae HTML que tiene que ir literal.
        Las fechas: una clase que ya pasó y dos que vienen. */
@@ -193,6 +202,21 @@ window.__consultas = [];
       if (n === "asignar_grupo_proyecto") {
         window.__asignaciones = (window.__asignaciones || []).concat([args]);
         return Promise.resolve({ data: args.p_profesor || null, error: null });
+      }
+      /* Compartir un material: la base escribe la fila (o la borra) y la
+         página vuelve a LEER la lista. Se anota lo que se pidió. */
+      if (n === "material_compartir") {
+        window.__compartidos = (window.__compartidos || []).concat([args]);
+        const lista = TABLAS.material_compartido;
+        const igualA = (f) => f.producto === args.p_producto && (f.persona_id || null) === (args.p_persona || null)
+          && (f.academia_id || null) === (args.p_academia || null) && !!f.todos_profesores === !!args.p_todos;
+        if (args.p_compartir) {
+          if (!lista.some(igualA)) lista.push({ id: "mc-" + (lista.length + 2), producto: args.p_producto, persona_id: args.p_persona || null,
+            academia_id: args.p_academia || null, todos_profesores: !!args.p_todos, creado_en: "2026-10-06T11:00:00Z" });
+        } else {
+          for (let i = lista.length - 1; i >= 0; i--) if (igualA(lista[i])) lista.splice(i, 1);
+        }
+        return Promise.resolve({ data: null, error: null });
       }
       if (n === "activar_preparacion_rivales") {
         window.__activaciones = (window.__activaciones || []).concat([args]);
@@ -306,7 +330,7 @@ async function pruebaUnaSolaPuerta(browser) {
   igual("el menú, por grupos y sin repetir",
     await page.evaluate(() => Array.from(document.querySelectorAll("nav[aria-label='Secciones de administración'] ul")).map((ul) =>
       document.getElementById(ul.getAttribute("aria-labelledby")).textContent + ": " + Array.from(ul.querySelectorAll("a")).map((a) => a.dataset.ir).join(", "))),
-    ["Hoy: inicio", "Supervisión y coordinación: supervisores, profesores, equipos", "Personas: cuentas, crear", "La plataforma: novedades, torneos, proyectos, preparacion, auditoria"]);
+    ["Hoy: inicio", "Supervisión y coordinación: supervisores, profesores, equipos", "Personas: cuentas, crear", "La plataforma: novedades, torneos, proyectos, materiales, preparacion, auditoria"]);
   igual("cada sección del menú existe y hay una por entrada",
     await page.evaluate(() => {
       const menu = Array.from(document.querySelectorAll(".admin-nav")).map((a) => a.dataset.ir).sort();
@@ -324,6 +348,8 @@ async function pruebaUnaSolaPuerta(browser) {
       .filter((a) => !a.closest("#urgentes") && !a.closest("[data-seccion='torneos']") && !a.closest("[data-seccion='preparacion']")
         /* La ficha de cada grupo de un proyecto abre SU página (proyecto.html?grupo=): es el contenido del grupo, no otra puerta. */
         && !a.closest("[data-seccion='proyectos']")
+        /* Cada material abre SUS archivos y sus versiones como cuestionario: es el material, no otra puerta. */
+        && !a.closest("[data-seccion='materiales']")
         && !/ver_como=/.test(a.getAttribute("href")) && /\.html/.test(a.getAttribute("href")))
       .map((a) => a.getAttribute("href"))), ["clases.html"]);
   igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
@@ -527,6 +553,73 @@ async function pruebaPreparacionRivales(browser) {
   await page.fill("#prep-buscar", "karina");
   igual("y buscando por nombre se encuentra", (await filas()).length, 1);
   igual("el botón abre la herramienta", await page.getAttribute('[data-seccion="preparacion"] a[href="preparacion-rivales.html"]', "href"), "preparacion-rivales.html");
+  igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
+  await ctx.close();
+}
+
+/* ============ admin.html · los materiales de clase y con quién se comparten ============ */
+
+async function pruebaMateriales(browser) {
+  console.log("\n=== Materiales de clases: con quién se comparte cada uno ===");
+  const { page, ctx, errores } = await abrir(browser, "/admin.html", ADMIN);
+  await page.goto(BASE + "/admin.html", { waitUntil: "networkidle" });
+  await page.waitForSelector("#app:not(.hidden)", { timeout: 20000 });
+  // Las confirmaciones son de js/avisos.js: se aprietan como una persona.
+  await page.evaluate(contestarAvisos);
+  await irA(page, "materiales");
+  await page.waitForSelector("#mat-lista article", { timeout: 10000 });
+  const resumen = () => page.textContent("#mat-lista [role=status]");
+  const lista = () => page.evaluate(() => Array.from(document.querySelectorAll("#mat-lista article > section:first-of-type ul:first-of-type > li"))
+    .filter((li) => li.checkVisibility()).map((li) => li.querySelector("p").textContent));
+  igual("el libro, con sus archivos", await page.evaluate(() => Array.from(document.querySelectorAll("#mat-lista article a[href^='material/']")).map((a) => a.getAttribute("href"))),
+    ["material/ponte-a-prueba/ponte-a-prueba.pdf", "material/ponte-a-prueba/ponte-a-prueba-accesible.html"]);
+  igual("dice con quién está compartido, también con palabras", [await resumen(), await lista()],
+    ["Lo tienen: 1 academia, y tú.", ["🏫 Academia Norte"]]);
+
+  // Compartir con una persona: se busca sin tildes, y no salen las cuentas de administración.
+  await page.fill("#mat-ponte-a-prueba-buscar", "karína");
+  await page.waitForSelector("#mat-ponte-a-prueba-resultados button", { timeout: 5000 });
+  igual("buscar encuentra sin importar las tildes", await page.evaluate(() =>
+    Array.from(document.querySelectorAll("#mat-ponte-a-prueba-resultados li p:first-child")).map((p) => p.textContent)), ["Karina Rojas"]);
+  await page.fill("#mat-ponte-a-prueba-buscar", "oscar");
+  igual("quien administra no sale: ya lo tiene siempre", await page.textContent("#mat-ponte-a-prueba-resultados"), "No hay nadie más con ese nombre o correo.");
+  await page.fill("#mat-ponte-a-prueba-buscar", "karina");
+  await page.click("#mat-ponte-a-prueba-resultados button");
+  await page.waitForFunction(() => /1 persona/.test(document.querySelector("#mat-lista [role=status]").textContent), null, { timeout: 5000 });
+  igual("compartir le pide a la base ESA persona y ESE material",
+    await page.evaluate(() => window.__compartidos[0]), { p_producto: "ponte-a-prueba", p_persona: "u-profe", p_academia: null, p_todos: false, p_compartir: true });
+  igual("y la lista pinta lo que quedó en la base", [await resumen(), await lista()],
+    ["Lo tienen: 1 academia, 1 persona, y tú.", ["🏫 Academia Norte", "Karina Rojas"]]);
+
+  // Una academia: la que ya está no se ofrece de nuevo, y el nombre va literal.
+  await page.selectOption("#mat-ponte-a-prueba-tipo", "academia");
+  igual("solo se ofrecen las academias que no lo tienen, con el nombre tal cual", await page.evaluate(() =>
+    Array.from(document.querySelectorAll("#mat-ponte-a-prueba-academia option")).map((o) => o.textContent)), ['<img src=x onerror="window.__xss=1">Sur']);
+  igual("y el nombre no se ejecuta", await page.evaluate(() => window.__xss || 0), 0);
+
+  // Todos los profesores.
+  await page.selectOption("#mat-ponte-a-prueba-tipo", "todos");
+  await page.click("#mat-lista button:has-text('Compartir con todos los profesores')");
+  await page.waitForFunction(() => /todos los profesores/.test(document.querySelector("#mat-lista [role=status]").textContent), null, { timeout: 5000 });
+  igual("con todos los profesores", await resumen(), "Lo tienen: todos los profesores, 1 academia, 1 persona, y tú.");
+
+  // Dejar de compartir pregunta antes, y quita esa fila y nada más.
+  await page.click("#mat-lista button[aria-label='Dejar de compartir con Karina Rojas']");
+  await page.waitForFunction(() => !/1 persona/.test(document.querySelector("#mat-lista [role=status]").textContent), null, { timeout: 5000 });
+  igual("dejar de compartir quita a esa persona y nada más", [await resumen(), await page.evaluate(() => window.__compartidos.slice(-1)[0])],
+    ["Lo tienen: todos los profesores, 1 academia, y tú.", { p_producto: "ponte-a-prueba", p_persona: "u-profe", p_academia: null, p_todos: false, p_compartir: false }]);
+
+  // Las sub-fichas: seis pruebas, y las versiones que hay llevan a su cuestionario.
+  igual("seis pruebas, cada una con sus tres versiones", await page.evaluate(() => {
+    const fichas = Array.from(document.querySelectorAll("#mat-lista article > section:last-of-type > ul > li"));
+    return [fichas.length, fichas[0].querySelectorAll("ul > li").length];
+  }), [6, 3]);
+  igual("las versiones cargadas llevan a su cuestionario; la que falta lo dice", await page.evaluate(() =>
+    Array.from(document.querySelectorAll("#mat-lista article > section:last-of-type > ul > li"))[0].querySelector("ul").textContent.replace(/\s+/g, " ").trim()),
+    "Versión AVersión BVersión C: sin cargar");
+  igual("el enlace de la versión A", await page.getAttribute("#mat-lista a[aria-label='Ver la versión A de la prueba 1']", "href"), "cuestionarios.html?id=cq-1A");
+  // CAPTURAS=<carpeta> guarda cómo se ve, para mirarla y no solo medir el DOM.
+  if (process.env.CAPTURAS) await page.screenshot({ path: path.join(process.env.CAPTURAS, "admin-materiales.png"), fullPage: true });
   igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
   await ctx.close();
 }
@@ -1170,6 +1263,7 @@ async function pruebaVolcarEnUnEquipo(browser) {
     await pruebaUrgente(browser);
     await pruebaPreparacionRivales(browser);
     await pruebaProyectos(browser);
+    await pruebaMateriales(browser);
     await pruebaAuditoria(browser);
     await pruebaFichasDeGrupo(browser);
     await pruebaVolcarEnUnEquipo(browser);

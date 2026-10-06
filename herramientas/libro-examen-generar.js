@@ -1,6 +1,6 @@
 /* ===== El banco del libro «Ponte a prueba» =====
  *
- * Arma js/libro-examen-items.js: las 180 posiciones del libro de examen de
+ * Arma material/ponte-a-prueba/banco.js: las 180 posiciones del libro de examen de
  * Oscar Angulo Cubero, repartidas en seis pruebas de 30. El mismo banco sirve
  * para el libro impreso (herramientas/libro-examen-pdf.js) y para armar
  * exámenes en la plataforma (fuente «libro» de js/examen-banco.js).
@@ -29,7 +29,11 @@
  *     de cada tramo de dificultad, así que cualquiera de ellas sirve sola como
  *     examen corto y las seis juntas dan la fuerza por categoría.
  *
- * NO se edita js/libro-examen-items.js a mano: se vuelve a correr esto.
+ * El banco vive en material/ponte-a-prueba/ y no en js/: trae las respuestas, y
+ * así lo sirve el worker solo a quien puede bajar el material (administración,
+ * quien lo compró o con quien se compartió desde admin.html#materiales).
+ *
+ * NO se edita material/ponte-a-prueba/banco.js a mano: se vuelve a correr esto.
  *
  * Cómo se corre (hace falta Stockfish: apt install stockfish):
  *
@@ -71,7 +75,7 @@ const L = require("./diagnostico-lichess.js");
 const RAIZ = path.join(__dirname, "..");
 const CANDIDATAS = path.join(__dirname, "datos", "libro-examen-candidatas.txt");
 const CACHE = path.join(__dirname, ".cache-libro-examen.json");
-const SALIDA = path.join(RAIZ, "js", "libro-examen-items.js");
+const SALIDA = path.join(RAIZ, "material", "ponte-a-prueba", "banco.js");
 const MOTOR = process.env.STOCKFISH || "/usr/games/stockfish";
 
 const PRUEBAS = 6;
@@ -343,7 +347,8 @@ async function main() {
  * cuál es la mejor jugada (jugada). Los puntos de cada respuesta van en
  * \`puntos\`, en el mismo orden que las opciones; la buena siempre vale 5.
  * La sirven el libro impreso (herramientas/libro-examen-pdf.js) y la fuente
- * «libro» de los exámenes (js/examen-banco.js).
+ * «libro» de los exámenes (js/examen-banco.js). Vive detrás del candado de
+ * material/: trae las respuestas, y solo lo baja quien tiene el material.
  */
 window.LIBRO_EXAMEN = {
   TITULO: 'Ponte a prueba',

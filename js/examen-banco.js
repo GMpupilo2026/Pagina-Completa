@@ -16,7 +16,7 @@
  *    escalón y su cita del Handbook.
  *  - `js/aperturas-lineas.js` — 40 líneas, para "ejecuta esta apertura
  *    de una vez", sin pistas y sin deshacer.
- *  - `js/libro-examen-items.js` — las 180 posiciones del libro «Ponte a
+ *  - `material/ponte-a-prueba/banco.js` — las 180 posiciones del libro «Ponte a
  *    prueba», en seis pruebas de 30, comprobadas con Stockfish. Cada una
  *    trae dos preguntas (cómo queda y cuál es la jugada) con crédito
  *    parcial para el papel; acá se toma la de la jugada, que es la que
