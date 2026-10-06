@@ -77,6 +77,8 @@
  *                                                    los temas que ya no tenían 20
  *                                                    se completan con un filtro
  *                                                    algo más ancho)
+ *   volumen 5: las 20 siguientes que no tomó ningún volumen anterior, en orden
+ *              de calidad (ver la cabecera de su archivo de candidatas)
  */
 "use strict";
 const fs = require("fs");

@@ -939,7 +939,7 @@ de la tienda.
 
 ## El banco de ejercicios «Mide tu fuerza»
 
-Un libro de tests tácticos de Oscar Angulo Cubero, en cuatro volúmenes de 360
+Un libro de tests tácticos de Oscar Angulo Cubero, en cinco volúmenes de 360
 posiciones en 45 tests de 8 cada uno; cada test de **un solo tema** (ataque doble, ataque a la descubierta,
 jaque doble, clavada, enfilada, desviación, atracción, interferencia, despeje,
 eliminación del defensor, rayos X, jugada intermedia, pieza atrapada, jugada
@@ -955,8 +955,8 @@ página y que estén los 45 tests).
 
 Cada volumen tiene **la misma forma** (los mismos 15 temas, los tres niveles,
 los tiempos y los puntos) y **posiciones distintas**: el volumen 2 sirve para
-seguir entrenando y para volver a medir sin que la memoria cuente (y el 3 y
-el 4, una tercera y una cuarta vez). El 1 vive
+seguir entrenando y para volver a medir sin que la memoria cuente (y los
+siguientes, una vez más cada uno). El 1 vive
 en `material/mide-tu-fuerza/` y cada siguiente en su propia carpeta
 (`material/mide-tu-fuerza-2/`), que es también **su propio material**: se
 comparte aparte en `admin.html#materiales`, y `puede_bajar()` lo decide por
@@ -979,10 +979,20 @@ Para el 4 (`k between 61 and 80`) los temas raros ya no daban 20 con los
 filtros de siempre. Ahí, **y solo ahí**, se completa hasta 20 con un filtro
 algo más ancho (Popularity ≥ 80, NbPlays ≥ 400, RatingDeviation ≤ 90): son
 ejercicios igual de comprobados por Stockfish, con un rating medido con menos
-intentos. Un quinto volumen tendría que ensanchar más o cambiar de temas.
+intentos.
 
-Cada tapa lleva «Volumen N» y su propio color (verde, vino, azul y morado; el
-contraste del texto se midió contra el más claro de cada degradado: 7,2 o más).
+El 5 toma, de cada tema y nivel, las 20 siguientes que no tomó ningún volumen
+anterior, **en orden de calidad**: primero lo que queda con el filtro de
+siempre, después el del 4 y, solo donde todavía faltan (los temas raros), un
+tercero (Popularity ≥ 75, NbPlays ≥ 200, RatingDeviation ≤ 100). La consulta
+cuenta lo que tomó cada volumen anterior, y el archivo de candidatas lo
+confirma: ninguna repetida. Con eso los rayos X difíciles quedan en 16 y el
+resto lo completa el nivel vecino; un sexto volumen ya tendría que cambiar de
+temas o de forma.
+
+Cada tapa lleva «Volumen N» y su propio color (verde, vino, azul, morado y
+café; el contraste del texto se midió contra el más claro de cada degradado:
+6,5 o más, AA).
 
 ### Tomado de un libro ajeno como referencia, no copiado
 
@@ -1036,7 +1046,7 @@ detrás del candado del worker, y se comparte desde `admin.html#materiales`.
 ## Los materiales de clase
 
 `admin.html#materiales` («Materiales de clases») junta los materiales para dar
-clase —hoy, «Ponte a prueba» y los cuatro volúmenes del banco de ejercicios «Mide
+clase —hoy, «Ponte a prueba» y los cinco volúmenes del banco de ejercicios «Mide
 tu fuerza»— y
 dice **con quién se comparte cada uno**: una
 persona, una academia entera o todos los profesores. Lo pinta
