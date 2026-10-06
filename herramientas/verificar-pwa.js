@@ -219,7 +219,7 @@ function servidorPropio() {
              "mide-tu-fuerza-3-accesible.html", "mide-tu-fuerza-4-accesible.html",
              "mide-tu-fuerza-5-accesible.html", "mide-tu-fuerza-6-accesible.html",
              "mide-tu-fuerza-7-accesible.html", "mide-tu-fuerza-8-accesible.html",
-             "mide-tu-fuerza-9-accesible.html"].includes(e.name)) continue;
+             "mide-tu-fuerza-9-accesible.html", "mide-tu-fuerza-10-accesible.html"].includes(e.name)) continue;
         paginas.push(rel);
       }
     }
