@@ -161,7 +161,11 @@ async function elProfe(browser) {
     igual("el título con su nombre", await page.textContent("#titulo"), "📒 Libreta de torneos de Bea Mora");
     igual("habla de ella, no de «tú»", (await page.textContent("[data-puntos]")).slice(0, 6), "Hizo 0");
     await page.click("#partida-" + ID1 + " summary");
-    igual("sin formulario para comentar", await page.locator("#partida-" + ID1 + " form").count(), 0);
+    /* Se espera al tablero (se monta al abrir la caja) y se cuenta SOLO el
+       formulario de comentar: el tablero trae su cuadro de comandos, que
+       también es un <form>, y contar cualquiera daba 0 o 1 según llegara. */
+    await page.waitForFunction((id) => document.querySelector("#partida-" + id + " details .grid > div").childElementCount > 0, ID1, { timeout: 10000 });
+    igual("sin formulario para comentar", await page.locator("#partida-" + ID1 + " form[data-comentar]").count(), 0);
     const boton = page.getByRole("button", { name: "Llevar su error a un plan de clase" });
     igual("y el botón para llevar su error a la clase", await boton.count(), 1);
     await boton.click();
