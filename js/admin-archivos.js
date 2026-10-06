@@ -1,14 +1,14 @@
-/* La sección «PDF» de admin.html: todos los PDF del sitio, ordenados, para
- * abrirlos o bajarlos de a uno o de a grupo.
+/* La sección «PDF, Word y Excel» de admin.html: todos esos archivos del sitio,
+ * una ficha por tipo, ordenados, para abrirlos o bajarlos de a uno o de a grupo.
  *
- * La lista sale de data/pdfs.json, que arma herramientas/pdfs-catalogo.js
- * leyendo el disco: un PDF nuevo aparece acá al volver a correrlo, y si nadie
- * lo corre verificar-pdfs-catalogo.js falla en el CI. Esta pantalla no lleva
- * ninguna lista escrita.
+ * La lista sale de data/archivos.json, que arma herramientas/archivos-catalogo.js
+ * leyendo el disco: un archivo nuevo aparece acá al volver a correrlo, y si
+ * nadie lo corre verificar-archivos-catalogo.js falla en el CI. Esta pantalla
+ * no lleva ninguna lista escrita.
  *
  * Bajar no pasa por acá: los de cursos/recursos/ y material/ los sirve el
  * worker, que deja pasar a quien administra (puede_bajar()). Esta pantalla
- * solo pinta enlaces. Ver «La sección PDF» en
+ * solo pinta enlaces. Ver «La sección PDF, Word y Excel» en
  * docs/decisiones/cursos-y-material.md.
  */
 (function () {
@@ -25,7 +25,8 @@
   const BOTON = "inline-flex items-center gap-1 rounded-lg bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-3 py-1.5 text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 disabled:opacity-60";
   const ENLACE = "inline-flex items-center gap-1 rounded-lg border border-brand-200 dark:border-brand-700 px-2.5 py-1 text-xs font-semibold text-brand-700 dark:text-brand-100 hover:border-accent-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
 
-  let datos = null;
+  let todo = null;      // data/archivos.json entero
+  let datos = null;     // su parte de PDF
   let pedido = null;
   let bajando = null;   // { cancelar: bool } mientras se baja un grupo
 
@@ -56,6 +57,8 @@
   /* Un PDF: «Abrir» en otra pestaña y «Bajar» (con download). */
   function botonesDe(a, etiqueta) {
     const caja = el("span", "inline-flex flex-wrap items-center gap-1.5");
+    // Un Word o un Excel no se abre en el navegador: solo se baja.
+    const esPdf = /\.pdf$/i.test(a.ruta);
     const abrir = el("a", ENLACE);
     abrir.href = a.ruta;
     abrir.target = "_blank";
@@ -68,7 +71,8 @@
     bajar.setAttribute("download", nombreArchivo(a.ruta));
     bajar.append(el("span", null, "📥 Bajar"));
     bajar.append(el("span", "sr-only", " " + etiqueta));
-    caja.append(abrir, bajar);
+    if (esPdf) caja.append(abrir);
+    caja.append(bajar);
     return caja;
   }
 
@@ -151,7 +155,8 @@
     h.append(e, document.createTextNode(titulo));
     izq.append(h);
     izq.append(el("p", "text-sm text-brand-500 dark:text-brand-300 mt-1",
-      descripcion + " " + plural(lista.length, "PDF", "PDF") + " · " + tamano(sumaKb(lista)) + "."));
+      descripcion + " " + (lista.every((x) => /\.pdf$/i.test(x.ruta)) ? plural(lista.length, "PDF", "PDF")
+        : plural(lista.length, "archivo", "archivos")) + " · " + tamano(sumaKb(lista)) + "."));
     cab.append(izq, botonGrupo(lista, "📥 Bajar los " + lista.length));
     sec.append(cab);
     const ul = el("ul", "divide-y divide-brand-100 dark:divide-brand-800");
@@ -252,6 +257,47 @@
     filtrar();
   }
 
+  /* Una ficha de Word o de Excel: pocos archivos, por carpeta. */
+  const FICHA = {
+    word: { emoji: "📝", nombre: "Word", vacio: "Todavía no hay ningún documento de Word en la plataforma." },
+    excel: { emoji: "📊", nombre: "Excel", vacio: "Todavía no hay ningún Excel guardado en la plataforma. Los que se bajan desde las páginas (por ejemplo, el mes de cada profesor en Supervisión o los reportes) se arman en el momento con los datos de ese día, así que no viven acá. Cuando se suba uno, aparece en esta ficha." },
+  };
+
+  function pintarPorCarpeta(tipo) {
+    const caja = $("arch-lista-" + tipo);
+    caja.replaceChildren();
+    const f = todo[tipo] || { total: 0, grupos: [] };
+    if (!f.total) {
+      caja.append(el("p", "text-sm text-brand-500 dark:text-brand-300", FICHA[tipo].vacio));
+      return;
+    }
+    const todos = f.grupos.flatMap((g) => g.archivos);
+    caja.append(el("p", "text-sm font-semibold text-brand-600 dark:text-brand-200",
+      plural(f.total, "archivo", "archivos") + " de " + FICHA[tipo].nombre + " · " + tamano(sumaKb(todos)) + "."));
+    f.grupos.forEach((g, i) => {
+      caja.append(tarjeta("arch-titulo-" + tipo + "-" + i, "📁", g.titulo,
+        "Carpeta " + g.carpeta + ".", g.archivos, (a) => a.titulo));
+    });
+  }
+
+  /* Las fichas (PDF, Word, Excel): una a la vista, con las flechas del
+     teclado para pasar de una a otra, como pide el patrón de pestañas. */
+  function elegirFicha(tipo, foco) {
+    document.querySelectorAll("#arch-fichas [role=tab]").forEach((b) => {
+      const es = b.dataset.ficha === tipo;
+      b.setAttribute("aria-selected", es ? "true" : "false");
+      b.tabIndex = es ? 0 : -1;
+      b.classList.toggle("bg-accent-500", es);
+      b.classList.toggle("text-brand-900", es);
+      b.classList.toggle("bg-white", !es);
+      b.classList.toggle("dark:bg-brand-900", !es);
+      b.classList.toggle("text-brand-700", !es);
+      b.classList.toggle("dark:text-brand-100", !es);
+      if (es && foco) b.focus();
+    });
+    document.querySelectorAll("[data-ficha-panel]").forEach((p) => { p.hidden = p.dataset.fichaPanel !== tipo; });
+  }
+
   /* Buscar y filtrar por tipo: esconde filas, lecciones, cursos y niveles que
      se quedan vacíos, y abre los cursos que tienen algo cuando se busca. */
   function filtrar() {
@@ -284,18 +330,23 @@
     if (datos || pedido) return pedido;
     pedido = (async () => {
       try {
-        const r = await fetch("data/pdfs.json", { cache: "no-cache" });
+        const r = await fetch("data/archivos.json", { cache: "no-cache" });
         if (!r.ok) throw new Error("HTTP " + r.status);
-        datos = await r.json();
+        todo = await r.json();
+        datos = todo.pdf;
         $("pdf-cargando").hidden = true;
+        $("arch-fichas").hidden = false;
         $("pdf-controles").hidden = false;
         pintar();
+        pintarPorCarpeta("word");
+        pintarPorCarpeta("excel");
+        ["pdf", "word", "excel"].forEach((t) => { $("arch-cuenta-" + t).textContent = String((todo[t] || {}).total || 0); });
       } catch (e) {
         pedido = null;
         $("pdf-cargando").hidden = true;
         const err = $("pdf-error");
         err.hidden = false;
-        err.textContent = "No se pudo cargar la lista de PDF (" + (e.message || e) + "). Recarga la página para intentarlo otra vez.";
+        err.textContent = "No se pudo cargar la lista de archivos (" + (e.message || e) + "). Recarga la página para intentarlo otra vez.";
       }
     })();
     return pedido;
@@ -304,10 +355,24 @@
   function iniciar() {
     $("pdf-buscar").addEventListener("input", filtrar);
     $("pdf-tipo").addEventListener("change", filtrar);
+    const fichas = Array.from(document.querySelectorAll("#arch-fichas [role=tab]"));
+    fichas.forEach((b, i) => {
+      b.addEventListener("click", () => elegirFicha(b.dataset.ficha));
+      b.addEventListener("keydown", (e) => {
+        const paso = { ArrowRight: 1, ArrowLeft: -1 }[e.key];
+        let j = null;
+        if (paso) j = (i + paso + fichas.length) % fichas.length;
+        else if (e.key === "Home") j = 0;
+        else if (e.key === "End") j = fichas.length - 1;
+        if (j === null) return;
+        e.preventDefault();
+        elegirFicha(fichas[j].dataset.ficha, true);
+      });
+    });
   }
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", iniciar);
   else iniciar();
 
-  window.AdminPdfs = { abrir };
+  window.AdminArchivos = { abrir };
 })();

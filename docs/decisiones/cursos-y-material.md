@@ -1063,26 +1063,40 @@ migración en `supabase_migrations.schema_migrations` con el mismo texto del
 archivo: así el punto de restauración coincide igual que si la hubiera
 aplicado el CLI.
 
-## La sección PDF
+## La sección PDF, Word y Excel
 
-`admin.html#pdf` junta **todos** los PDF del sitio (hoy 414) para que quien
-administra los abra o los baje sin ir curso por curso. Están ordenados en tres
-grupos: **Libros y material** (`material/<carpeta>/`), **Cursos**
-(`cursos/recursos/<curso>/`, por nivel y en el orden del catálogo, cada curso
-plegado y adentro lección por lección con su material de estudio y sus
-ejercicios) y **Otros PDF del sitio** (lo que queda fuera, como
-`instrucciones-adaptadas.pdf`). Hay un buscador sin tildes, un filtro por tipo y
-«Bajar los N» por grupo y por curso: baja uno detrás de otro, porque el sitio no
-tiene con qué armar un .zip y la CSP no deja traer una librería para eso. Con
-más de 40 se avisa antes, porque el navegador pregunta si deja bajar varios.
+`admin.html#archivos` junta **todos** los PDF, Word y Excel del sitio para que
+quien administra los abra o los baje sin ir curso por curso. Va **una ficha por
+tipo** (pestañas PDF, Word y Excel, con cuántos hay en cada una; se pasa de una
+a otra también con las flechas del teclado).
 
-- **La lista no se escribe a mano.** La arma `herramientas/pdfs-catalogo.js`
-  leyendo el disco y la deja en `data/pdfs.json`; la pantalla
-  (`js/admin-pdfs.js`) solo la pinta. Un PDF nuevo entra **solo** al volver a
-  correr el generador, y si nadie lo corre, `verificar-pdfs-catalogo.js` falla
-  en el CI y dice cuál falta: así se cumple «los nuevos aparecen solos» sin
-  depender de que alguien se acuerde. El peso (`kb`) no se compara, porque
-  volver a generar un PDF lo mueve unos bytes y no por eso la lista queda mal.
+Los PDF (hoy 414) van en tres grupos: **Libros y material**
+(`material/<carpeta>/`), **Cursos** (`cursos/recursos/<curso>/`, por nivel y en
+el orden del catálogo, cada curso plegado y adentro lección por lección con su
+material de estudio y sus ejercicios) y **Otros PDF del sitio** (lo que queda
+fuera, como `instrucciones-adaptadas.pdf`). Hay un buscador sin tildes, un
+filtro por tipo y «Bajar los N» por grupo y por curso: baja uno detrás de otro,
+porque el sitio no tiene con qué armar un .zip y la CSP no deja traer una
+librería para eso. Con más de 40 se avisa antes, porque el navegador pregunta
+si deja bajar varios.
+
+Los Word (`.docx`, `.doc`, `.odt`) y los Excel (`.xlsx`, `.xlsm`, `.xls`,
+`.ods`) son pocos y sueltos: van por carpeta, con el nombre de `CARPETAS` en el
+generador, y solo se bajan (el navegador no los abre). Hoy hay dos Word (los
+consentimientos de los JDN 2027) y **ningún Excel guardado**: los Excel de la
+plataforma (el mes de cada profesor en Supervisión, los reportes) se arman en
+el navegador con los datos del momento, así que no son archivos del sitio. La
+ficha lo dice en vez de quedar vacía.
+
+- **La lista no se escribe a mano.** La arma `herramientas/archivos-catalogo.js`
+  leyendo el disco y la deja en `data/archivos.json`; la pantalla
+  (`js/admin-archivos.js`) solo la pinta. Un archivo nuevo entra **solo** al
+  volver a correr el generador, y si nadie lo corre,
+  `verificar-archivos-catalogo.js` falla en el CI y dice cuál falta: así se
+  cumple «los nuevos aparecen solos» sin depender de que alguien se acuerde.
+  El peso (`kb`) no se compara, porque volver a generar un archivo lo mueve
+  unos bytes y no por eso la lista queda mal. Un tipo nuevo de archivo es una
+  línea más en `TIPOS` y su ficha.
 - **El nombre de cada lección sale de la página del curso**
   (`cursos/protegido/<curso>.html`): cada lección abre con un
   `<summary class="cursor-pointer…">`, y los PDF que enlaza hasta la siguiente
@@ -1090,12 +1104,13 @@ más de 40 se avisa antes, porque el navegador pregunta si deja bajar varios.
   (en «El mapa de los finales» el examen de diagnóstico es `01-…-material` y
   `00-…-ejercicios`). Lo que la página no enlaza va en «Otros archivos del
   curso»; nunca se pierde.
-- Los libros de `material/` (y los PDF sueltos) toman su nombre de `TITULOS`
-  en el generador. Uno nuevo sin entrada aparece igual, con el nombre del
-  archivo, sin tildes: conviene sumarle su título ahí.
+- Los libros de `material/`, los PDF sueltos y los Word y Excel toman su nombre
+  de `TITULOS` en el generador. Uno nuevo sin entrada aparece igual, con el
+  nombre del archivo, sin tildes: conviene sumarle su título ahí.
 - Bajar no pasa por esta pantalla: `cursos/recursos/` y `material/` los sirve el
-  worker, que deja pasar a quien administra. Por eso esta lista puede ser un
+  worker, que deja pasar a quien administra; `documentos/` es público. Por eso esta lista puede ser un
   archivo público: dice qué existe, no da acceso.
-- Lo comprueba `verificar-admin.js` (están todos, en su lugar, buscar y filtrar
-  esconden de verdad, «Bajar los N» baja N) y `verificar-pdfs-catalogo.js`
-  (la lista al día con el disco).
+- Lo comprueba `verificar-admin.js` (están todos, cada tipo en su ficha y en su
+  lugar, buscar y filtrar esconden de verdad, «Bajar los N» baja N, las
+  flechas pasan de ficha) y `verificar-archivos-catalogo.js` (la lista al día
+  con el disco).

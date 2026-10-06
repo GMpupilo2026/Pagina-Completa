@@ -330,7 +330,7 @@ async function pruebaUnaSolaPuerta(browser) {
   igual("el menú, por grupos y sin repetir",
     await page.evaluate(() => Array.from(document.querySelectorAll("nav[aria-label='Secciones de administración'] ul")).map((ul) =>
       document.getElementById(ul.getAttribute("aria-labelledby")).textContent + ": " + Array.from(ul.querySelectorAll("a")).map((a) => a.dataset.ir).join(", "))),
-    ["Hoy: inicio", "Supervisión y coordinación: supervisores, profesores, equipos", "Personas: cuentas, crear", "La plataforma: novedades, torneos, proyectos, materiales, pdf, preparacion, auditoria"]);
+    ["Hoy: inicio", "Supervisión y coordinación: supervisores, profesores, equipos", "Personas: cuentas, crear", "La plataforma: novedades, torneos, proyectos, materiales, archivos, preparacion, auditoria"]);
   igual("cada sección del menú existe y hay una por entrada",
     await page.evaluate(() => {
       const menu = Array.from(document.querySelectorAll(".admin-nav")).map((a) => a.dataset.ir).sort();
@@ -632,19 +632,26 @@ async function pruebaMateriales(browser) {
   await ctx.close();
 }
 
-/* ============ admin.html · todos los PDF, ordenados ============
-   La lista es data/pdfs.json (herramientas/pdfs-catalogo.js, leído del disco):
-   acá se mira que la pantalla muestre TODOS, en su lugar, que buscar y filtrar
-   escondan de verdad (checkVisibility) y que «Bajar los N» baje N. Que el JSON
-   esté al día con el disco lo cuida verificar-pdfs-catalogo.js. */
+/* ============ admin.html · todos los PDF, Word y Excel, ordenados ============
+   La lista es data/archivos.json (herramientas/archivos-catalogo.js, leído del
+   disco): acá se mira que la pantalla muestre TODOS, cada tipo en su ficha y
+   en su lugar, que buscar y filtrar escondan de verdad (checkVisibility) y que
+   «Bajar los N» baje N. Que el JSON esté al día con el disco lo cuida
+   verificar-archivos-catalogo.js. */
 async function pruebaPdfs(browser) {
-  console.log("\n=== PDF: todos, ordenados, para abrir o bajar ===");
-  const catalogo = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "data", "pdfs.json"), "utf8"));
+  console.log("\n=== PDF, Word y Excel: todos, ordenados, para abrir o bajar ===");
+  const todo = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "data", "archivos.json"), "utf8"));
+  const catalogo = todo.pdf;
   const { page, ctx, errores } = await abrir(browser, "/admin.html", ADMIN, { acceptDownloads: true });
   await page.goto(BASE + "/admin.html", { waitUntil: "networkidle" });
   await page.waitForSelector("#app:not(.hidden)", { timeout: 20000 });
-  await irA(page, "pdf");
+  await irA(page, "archivos");
   await page.waitForSelector("#pdf-lista .pdf-fila", { state: "attached", timeout: 10000 });
+  igual("tres fichas, cada una con cuántos tiene, y se abre en PDF", await page.evaluate(() =>
+    Array.from(document.querySelectorAll("#arch-fichas [role=tab]")).map((b) => b.textContent.trim() + (b.getAttribute("aria-selected") === "true" ? " *" : ""))),
+    ["📕 PDF (" + catalogo.total + ") *", "📝 Word (" + todo.word.total + ")", "📊 Excel (" + todo.excel.total + ")"]);
+  igual("solo se ve la ficha de PDF", await page.evaluate(() =>
+    ["pdf", "word", "excel"].filter((t) => document.getElementById("arch-panel-" + t).checkVisibility())), ["pdf"]);
   igual("están todos los PDF, cada uno una vez", await page.evaluate(() => {
     const rutas = Array.from(document.querySelectorAll("#pdf-lista .pdf-fila a[download]")).map((a) => a.getAttribute("href"));
     return [rutas.length, new Set(rutas).size];
@@ -696,6 +703,30 @@ async function pruebaPdfs(browser) {
   igual("«Bajar los N» de libros baja esos N", bajados.slice().sort(),
     catalogo.material.map((a) => a.ruta.split("/").pop()).sort());
   if (process.env.CAPTURAS) await page.screenshot({ path: path.join(process.env.CAPTURAS, "admin-pdf.png"), fullPage: true });
+
+  // Word: con la flecha del teclado, como cualquier grupo de pestañas.
+  await page.focus("#arch-ficha-pdf");
+  await page.keyboard.press("ArrowRight");
+  igual("la flecha pasa a Word, con el foco y solo esa ficha a la vista", await page.evaluate(() => [
+    document.activeElement.id, document.getElementById("arch-ficha-word").getAttribute("aria-selected"),
+    ["pdf", "word", "excel"].filter((t) => document.getElementById("arch-panel-" + t).checkVisibility())]),
+    ["arch-ficha-word", "true", ["word"]]);
+  const words = todo.word.grupos.flatMap((g) => g.archivos.map((a) => a.ruta));
+  igual("están todos los Word, por carpeta, y solo se bajan (no se «abren»)", await page.evaluate(() => {
+    const filas = Array.from(document.querySelectorAll("#arch-lista-word .pdf-fila")).filter((f) => f.checkVisibility());
+    return [filas.map((f) => f.querySelector("a[download]").getAttribute("href")).sort(),
+      filas.every((f) => f.querySelectorAll("a").length === 1)];
+  }), [words.slice().sort(), true]);
+  igual("cada carpeta con su nombre", await page.evaluate(() =>
+    Array.from(document.querySelectorAll("#arch-lista-word h3")).map((h) => h.textContent.replace("📁 ", ""))),
+    todo.word.grupos.map((g) => g.titulo));
+  if (process.env.CAPTURAS) await page.screenshot({ path: path.join(process.env.CAPTURAS, "admin-word.png") });
+  await page.keyboard.press("ArrowRight");
+  const excelTexto = await page.evaluate(() => document.getElementById("arch-panel-excel").checkVisibility() && document.getElementById("arch-lista-excel").textContent);
+  igual("Excel: lo que hay, o se dice que todavía no hay ninguno",
+    todo.excel.total ? (excelTexto.match(/\.xls/g) || []).length >= todo.excel.total : /Todavía no hay ningún Excel/.test(excelTexto), true);
+  await page.keyboard.press("ArrowRight");
+  igual("y desde la última, la flecha vuelve a PDF", await page.evaluate(() => document.activeElement.id), "arch-ficha-pdf");
   igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
   await ctx.close();
 }

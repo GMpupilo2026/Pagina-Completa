@@ -1,24 +1,25 @@
 #!/usr/bin/env node
-/* Arma data/pdfs.json: la lista de TODOS los PDF del sitio, ordenada para la
- * sección «PDF» de admin.html (la pinta js/admin-pdfs.js).
+/* Arma data/archivos.json: la lista de TODOS los PDF, Word y Excel del sitio,
+ * ordenada para la sección «PDF, Word y Excel» de admin.html (la pinta
+ * js/admin-archivos.js, una ficha por tipo).
  *
- * La lista no se escribe a mano: se lee del disco. Un PDF nuevo (un curso, un
- * libro de material/, uno suelto en la raíz) entra al volver a correr esto, y
- * si alguien se olvida, verificar-pdfs-catalogo.js falla en el CI y dice qué
- * falta. Así ningún PDF queda fuera de la sección sin que se note.
+ * La lista no se escribe a mano: se lee del disco. Un archivo nuevo (un curso,
+ * un libro de material/, un formulario en documentos/) entra al volver a
+ * correr esto, y si alguien se olvida, verificar-archivos-catalogo.js falla en
+ * el CI y dice cuál falta. Así ninguno queda fuera sin que se note.
  *
- * Cómo se ordena:
- *   - Libros y material (material/<carpeta>/): el título sale de TITULOS; una
- *     carpeta nueva sin título usa el nombre del archivo.
+ * Cómo se ordenan los PDF:
+ *   - Libros y material (material/<carpeta>/): el título sale de TITULOS; uno
+ *     nuevo sin título usa el nombre del archivo.
  *   - Cursos (cursos/recursos/<curso>/): en el orden y con el nombre del
  *     catálogo (herramientas/cursos/catalogo.json). Dentro, por lección: el
  *     nombre de cada lección y qué PDF lleva se leen de su página
  *     (cursos/protegido/<curso>.html, un <details> por lección). Lo que la
  *     página no enlaza va en «Otros archivos del curso».
  *   - Sueltos: los PDF fuera de esas dos carpetas (hoy, la raíz).
+ * Los Word y los Excel van por carpeta (el nombre, de CARPETAS).
  *
- *   node herramientas/pdfs-catalogo.js           escribe data/pdfs.json
- *   node herramientas/pdfs-catalogo.js --revisar  solo dice si está al día
+ *   node herramientas/archivos-catalogo.js   escribe data/archivos.json
  */
 "use strict";
 
@@ -26,9 +27,16 @@ const fs = require("fs");
 const path = require("path");
 
 const RAIZ = path.resolve(__dirname, "..");
-const SALIDA = path.join(RAIZ, "data", "pdfs.json");
+const SALIDA = path.join(RAIZ, "data", "archivos.json");
 
-// Lo que no se publica (.assetsignore) ni es del sitio: ahí no se buscan PDF.
+// Las fichas de la sección: qué extensiones van en cada una.
+const TIPOS = {
+  pdf: /\.pdf$/i,
+  word: /\.(docx?|odt)$/i,
+  excel: /\.(xlsx|xlsm|xls|ods)$/i,
+};
+
+// Lo que no se publica (.assetsignore) ni es del sitio: ahí no se busca.
 const NO_MIRAR = new Set([".git", ".github", "node_modules", "herramientas", "docs", "supabase",
   "respaldos", "promo", ".wrangler"]);
 
@@ -47,16 +55,25 @@ const TITULOS = {
   "cursos/recursos/formacion-ajedrez/08-prueba-final.pdf": "Prueba final teórica",
   "cursos/recursos/formacion-ajedrez/08-torneo-real-evaluacion-formularios.pdf": "Formularios y lista de cotejo del torneo",
   "instrucciones-adaptadas.pdf": "Instrucciones adaptadas (para quien ve poco o no ve)",
+  "documentos/jdn/consentimiento-jdn-2027.docx": "Consentimiento informado JDN 2027 — atleta",
+  "documentos/jdn/consentimiento-entrenador-jdn-2027.docx": "Consentimiento informado JDN 2027 — entrenador",
 };
 
-function buscarPdfs(dir, rel, salida) {
+/* El nombre de cada carpeta, para los Word y los Excel. Una nueva sin entrada
+   aparece con el nombre de la carpeta. */
+const CARPETAS = {
+  "documentos/jdn": "Juegos Deportivos Nacionales 2027",
+  ".": "En la raíz del sitio",
+};
+
+function buscar(dir, rel, salida, re) {
   for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
     if (e.name.startsWith(".") && e.name !== ".") continue;
     const r = rel ? rel + "/" + e.name : e.name;
     if (e.isDirectory()) {
       if (!rel && NO_MIRAR.has(e.name)) continue;
-      buscarPdfs(path.join(dir, e.name), r, salida);
-    } else if (/\.pdf$/i.test(e.name)) {
+      buscar(path.join(dir, e.name), r, salida, re);
+    } else if (re.test(e.name)) {
       salida.push(r);
     }
   }
@@ -66,7 +83,7 @@ function buscarPdfs(dir, rel, salida) {
 // «01-apertura-espanola-material.pdf» → «Apertura espanola». Solo para lo que
 // no tiene nombre en ningún lado: no sabe de tildes.
 function nombreDelArchivo(archivo) {
-  const t = path.basename(archivo).replace(/\.pdf$/i, "").replace(/^\d+-/, "")
+  const t = path.basename(archivo).replace(/\.[a-z0-9]+$/i, "").replace(/^\d+-/, "")
     .replace(/-(material|ejercicios)$/, "").replace(/-/g, " ").trim();
   return t.charAt(0).toUpperCase() + t.slice(1);
 }
@@ -111,8 +128,10 @@ function leccionesDe(slug) {
   return lecciones;
 }
 
-function armar() {
-  const todos = buscarPdfs(RAIZ, "", []).sort((a, b) => a.localeCompare(b, "es"));
+const enDisco = (tipo) => buscar(RAIZ, "", [], TIPOS[tipo]).sort((a, b) => a.localeCompare(b, "es"));
+
+function armarPdf() {
+  const todos = enDisco("pdf");
   const catalogo = JSON.parse(fs.readFileSync(path.join(RAIZ, "herramientas", "cursos", "catalogo.json"), "utf8"));
   const usados = new Set();
   const archivo = (ruta, titulo) => {
@@ -144,13 +163,12 @@ function armar() {
           : tipoDe(r) === "ejercicios" ? "Ejercicios" : undefined)),
     })).filter((l) => l.archivos.length);
     const otros = [...delCurso].filter((r) => !usados.has(r)).map((r) => archivo(r));
-    return { slug, titulo: info.titulo || nombreDelArchivo(slug + ".pdf"), nivel: info.nivel || null, lecciones, otros };
+    return { slug, titulo: info.titulo || nombreDelArchivo(slug), nivel: info.nivel || null, lecciones, otros };
   });
 
   const sueltos = todos.filter((r) => !usados.has(r)).map((r) => archivo(r));
 
   return {
-    _comentario: "Lo genera herramientas/pdfs-catalogo.js. No se edita a mano.",
     niveles: catalogo.niveles.map((n) => ({ id: n.id, nombre: n.nombre })),
     total: todos.length,
     material,
@@ -159,25 +177,40 @@ function armar() {
   };
 }
 
+/* Los Word y los Excel: pocos y sueltos, así que van por carpeta. */
+function armarPorCarpeta(tipo) {
+  const todos = enDisco(tipo);
+  const carpetas = [...new Set(todos.map((r) => path.posix.dirname(r)))];
+  return {
+    total: todos.length,
+    grupos: carpetas.map((c) => ({
+      carpeta: c,
+      titulo: CARPETAS[c] || nombreDelArchivo(c.split("/").pop()),
+      archivos: todos.filter((r) => path.posix.dirname(r) === c).map((ruta) => ({
+        ruta, titulo: TITULOS[ruta] || nombreDelArchivo(ruta), tipo: "otro", kb: kb(ruta),
+      })),
+    })),
+  };
+}
+
+function armar() {
+  return {
+    _comentario: "Lo genera herramientas/archivos-catalogo.js. No se edita a mano.",
+    pdf: armarPdf(),
+    word: armarPorCarpeta("word"),
+    excel: armarPorCarpeta("excel"),
+  };
+}
+
 function texto() {
   return JSON.stringify(armar(), null, 1) + "\n";
 }
 
 if (require.main === module) {
-  const nuevo = texto();
-  const viejo = fs.existsSync(SALIDA) ? fs.readFileSync(SALIDA, "utf8") : "";
-  if (process.argv.includes("--revisar")) {
-    if (nuevo !== viejo) {
-      console.error("data/pdfs.json no está al día: corre node herramientas/pdfs-catalogo.js");
-      process.exit(1);
-    }
-    console.log("data/pdfs.json al día.");
-  } else {
-    fs.writeFileSync(SALIDA, nuevo);
-    const d = JSON.parse(nuevo);
-    console.log(`data/pdfs.json: ${d.total} PDF (${d.material.length} de material, `
-      + `${d.cursos.length} cursos, ${d.sueltos.length} sueltos).`);
-  }
+  fs.writeFileSync(SALIDA, texto());
+  const d = armar();
+  console.log(`data/archivos.json: ${d.pdf.total} PDF (${d.pdf.material.length} de material, `
+    + `${d.pdf.cursos.length} cursos, ${d.pdf.sueltos.length} sueltos), ${d.word.total} Word, ${d.excel.total} Excel.`);
 }
 
-module.exports = { armar, texto, buscarPdfs, SALIDA, RAIZ };
+module.exports = { armar, texto, enDisco, TIPOS, SALIDA, RAIZ };

@@ -36,7 +36,7 @@
          * para que atrás/adelante y un enlace guardado lleven a la misma.
          * Todo lo que ya estaba sigue con sus mismos ids: solo cambia qué se ve.
          */
-        const SECCIONES = ["inicio", "cuentas", "crear", "profesores", "supervisores", "equipos", "novedades", "torneos", "proyectos", "materiales", "pdf", "preparacion", "auditoria"];
+        const SECCIONES = ["inicio", "cuentas", "crear", "profesores", "supervisores", "equipos", "novedades", "torneos", "proyectos", "materiales", "archivos", "preparacion", "auditoria"];
 
         function seccionDelEnlace() {
             const h = location.hash.replace("#", "");
@@ -64,8 +64,8 @@
             if (nombre === "auditoria" && window.AdminAuditoria) AdminAuditoria.abrir();
             // Con quién se comparte cada material: también se pide al abrirlo.
             if (nombre === "materiales" && window.AdminMateriales) AdminMateriales.abrir();
-            // La lista de todos los PDF (data/pdfs.json), igual: al abrirla.
-            if (nombre === "pdf" && window.AdminPdfs) AdminPdfs.abrir();
+            // La lista de todos los PDF, Word y Excel (data/archivos.json), igual: al abrirla.
+            if (nombre === "archivos" && window.AdminArchivos) AdminArchivos.abrir();
             if (!(opciones && opciones.sinHistoria) && location.hash !== "#" + nombre) {
                 history.pushState(null, "", "#" + nombre);
             }
