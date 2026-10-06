@@ -1,10 +1,11 @@
 /* ===== El libro «Mide tu fuerza», de Oscar Angulo Cubero =====
  *
- * Arma material/mide-tu-fuerza/mide-tu-fuerza.pdf: un banco de ejercicios
+ * Arma el PDF de un volumen (material/mide-tu-fuerza/mide-tu-fuerza.pdf el 1,
+ * material/mide-tu-fuerza-2/mide-tu-fuerza-2.pdf el 2…): un banco de ejercicios
  * tácticos para medirse uno mismo —360 posiciones en 45 tests temáticos de 8,
  * en tres niveles—, con sus soluciones, el cuadro de puntuación y las tablas
  * que pasan los puntos a una fuerza en Elo. Las posiciones salen de
- * material/mide-tu-fuerza/banco.js, que arma herramientas/mide-tu-fuerza-generar.js:
+ * el banco.js de su carpeta, que arma herramientas/mide-tu-fuerza-generar.js:
  * este script no decide nada de ajedrez, solo lo pone en papel.
  *
  * Se cierra igual que «Ponte a prueba» (tapa a página completa, marca de agua
@@ -12,7 +13,7 @@
  * herramientas/lib/pdf-armar.js), y como aquel se deja imprimir: los tests se
  * contestan en papel.
  *
- * El mismo contenido sale también en mide-tu-fuerza-accesible.html, con cada
+ * El mismo contenido sale también en <producto>-accesible.html, con cada
  * posición contada pieza por pieza, para quien usa lector de pantalla.
  *
  * Las tablas de fuerza no son de nadie más: salen de la dificultad de cada
@@ -23,8 +24,9 @@
  *
  * Cómo se corre (Node, Chromium por Playwright y pypdf):
  *
- *     node herramientas/mide-tu-fuerza-pdf.js
- *     node herramientas/mide-tu-fuerza-pdf.js --solo-accesible   # sin PDF ni pypdf
+ *     node herramientas/mide-tu-fuerza-pdf.js                     # volumen 1
+ *     node herramientas/mide-tu-fuerza-pdf.js 2                   # volumen 2
+ *     node herramientas/mide-tu-fuerza-pdf.js 2 --solo-accesible  # sin PDF ni pypdf
  *
  * Con CHROMIUM=/ruta/al/chrome se le puede indicar un Chromium ya instalado.
  * Al volver a generar el banco hay que volver a correr esto.
@@ -41,14 +43,25 @@ const N = require("./lib/notacion.js");
 const { unir, proteger } = require("./lib/pdf-armar.js");
 
 global.window = {};
-eval(fs.readFileSync(path.join(RAIZ, "material/mide-tu-fuerza/banco.js"), "utf8"));
+const { producto, banco } = require("./mide-tu-fuerza-generar.js");
+const VOLUMEN = +(process.argv.slice(2).find((a) => /^\d+$/.test(a)) || 1);
+const PRODUCTO = producto(VOLUMEN);
+eval(fs.readFileSync(banco(VOLUMEN), "utf8"));
 const LIBRO = global.window.MIDE_TU_FUERZA;
 const ITEMS = global.window.MIDE_TU_FUERZA_ITEMS;
 
 const AUTOR = LIBRO.AUTOR;
 const PUNTOS = LIBRO.PUNTOS;
-const CLAVE_PROPIETARIO = "mide-tu-fuerza-oac-2026";
-const CARPETA = path.join(RAIZ, "material", "mide-tu-fuerza");
+const CLAVE_PROPIETARIO = `${PRODUCTO}-oac-2026`;
+const CARPETA = path.join(RAIZ, "material", PRODUCTO);
+const NOMBRE = `Mide tu fuerza · Volumen ${VOLUMEN}`;
+/* Cada volumen, su color de tapa (todos oscuros: el texto crema y ámbar de la
+   tapa se mide contra el más claro de los tres tonos). */
+const TAPA = {
+  1: ["#0c2a22", "#12443a", "#0a241d"],
+  2: ["#2e0f1a", "#4a1a2b", "#260c16"],
+  3: ["#101a3a", "#1c2c5c", "#0c1530"],
+}[VOLUMEN] || ["#0c2a22", "#12443a", "#0a241d"];
 const ANIO = 2026;
 
 function incrustar(relativo) {
@@ -175,7 +188,7 @@ const cuadro = `<table class="planilla">
 </table>`;
 
 const html = `<!doctype html><html lang="es"><head><meta charset="utf-8">
-<title>Mide tu fuerza · cuerpo</title>
+<title>${esc(NOMBRE)} · cuerpo</title>
 <style>
   @page { size: A4; margin: 16mm 15mm 15mm; }
   * { box-sizing: border-box; }
@@ -238,6 +251,9 @@ const html = `<!doctype html><html lang="es"><head><meta charset="utf-8">
   <p>Este es un banco de ejercicios para entrenar la táctica y, de paso, medir cuánto has avanzado. No es un
   libro para leer de corrido: es un cuaderno de trabajo. Lo vas a disfrutar más si lo haces con calma, un
   test a la vez, y si vuelves sobre lo que fallaste.</p>
+  ${VOLUMEN > 1 ? `<p>Este es el <strong>volumen ${VOLUMEN}</strong>. Tiene la misma forma que el volumen 1 —los mismos temas,
+  niveles, tiempos y puntos— y posiciones <strong>todas nuevas</strong>: ninguna se repite. Sirve para seguir
+  entrenando después del primero, y para medir de nuevo sin que la memoria haga trampa.</p>` : ""}
   <p>Tiene <strong>${TOTAL} posiciones</strong> en <strong>${TESTS.length} tests de ${POR_TEST}</strong>. Cada test trabaja
   <strong>un solo tema</strong> —el ataque doble, la clavada, la desviación…— y te dice cuál es antes de empezar.
   Saber el tema no regala la solución: entrena el ojo para reconocerlo. En una partida nadie te avisa, pero quien
@@ -337,13 +353,13 @@ ${testsHtml}
 
 /* ---------------------------------------------------------- la tapa */
 const htmlPortada = `<!doctype html><html lang="es"><head><meta charset="utf-8">
-<title>Mide tu fuerza</title>
+<title>${esc(NOMBRE)}</title>
 <style>
   @page { size: A4; margin: 0; }
   * { box-sizing: border-box; }
   html, body { margin: 0; padding: 0; }
   body { width: 210mm; height: 297mm; font-family: "DejaVu Serif", Georgia, serif; color: #f0f4f8;
-         background: linear-gradient(158deg, #0c2a22 0%, #12443a 48%, #0a241d 100%); position: relative; overflow: hidden; }
+         background: linear-gradient(158deg, ${TAPA[0]} 0%, ${TAPA[1]} 48%, ${TAPA[2]} 100%); position: relative; overflow: hidden; }
   /* Los adornos van dentro de su propio recorte: overflow:hidden en el body se
      propaga al viewport y Chromium encoge la tapa (ver diagnostico-libro.js). */
   .fondo { position: absolute; inset: 0; overflow: hidden; }
@@ -380,7 +396,7 @@ const htmlPortada = `<!doctype html><html lang="es"><head><meta charset="utf-8">
   <div class="hoja">
     <p class="marca-casa">&#9822; Ajedrez Integral</p>
     <div class="centro">
-      <p class="eyebrow">Banco de ejercicios tácticos</p>
+      <p class="eyebrow">Banco de ejercicios tácticos · Volumen ${VOLUMEN}</p>
       <h1>Mide<span class="segunda">tu fuerza</span></h1>
       <div class="filete"></div>
       <p class="sub">Tests por tema, con tiempo y puntos, para entrenar la combinación y saber cuánto vas
@@ -441,7 +457,7 @@ function accesible() {
   return `<!doctype html><html lang="es"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex">
-<title>Mide tu fuerza — versión accesible</title>
+<title>${esc(NOMBRE)} — versión accesible</title>
 <style>
   :root { color-scheme: light dark; }
   body { max-width: 42rem; margin: 0 auto; padding: 1.5rem 1rem 4rem; background: #fff; color: #10202e;
@@ -465,8 +481,8 @@ function accesible() {
   }
 </style>
 </head><body>
-<h1>Mide tu fuerza</h1>
-<p>Banco de ejercicios tácticos de ${esc(AUTOR)}. Es el mismo contenido del libro en PDF, escrito para
+<h1>${esc(NOMBRE)}</h1>
+<p>Banco de ejercicios tácticos de ${esc(AUTOR)}, volumen ${VOLUMEN}.${VOLUMEN > 1 ? " La misma forma que el volumen 1, con posiciones todas nuevas." : ""} Es el mismo contenido del libro en PDF, escrito para
 leerse con lector de pantalla o con la letra agrandada: las posiciones van contadas pieza por pieza y con su
 FEN, y no hay ninguna imagen.</p>
 <p>${TOTAL} posiciones en ${TESTS.length} tests de ${POR_TEST}, uno por tema, en tres niveles. Cada posición resuelta vale
@@ -507,13 +523,13 @@ ITEMS.forEach((it) => {
 
 fs.mkdirSync(CARPETA, { recursive: true });
 const tmp = os.tmpdir();
-const htmlTemporal = path.join(tmp, "mide-tu-fuerza-cuerpo.html");
-const htmlPortadaTemporal = path.join(tmp, "mide-tu-fuerza-tapa.html");
-const htmlMarcaTemporal = path.join(tmp, "mide-tu-fuerza-marca.html");
+const htmlTemporal = path.join(tmp, `${PRODUCTO}-cuerpo.html`);
+const htmlPortadaTemporal = path.join(tmp, `${PRODUCTO}-tapa.html`);
+const htmlMarcaTemporal = path.join(tmp, `${PRODUCTO}-marca.html`);
 fs.writeFileSync(htmlTemporal, html);
 fs.writeFileSync(htmlPortadaTemporal, htmlPortada);
 fs.writeFileSync(htmlMarcaTemporal, htmlMarca);
-const destinoAccesible = path.join(CARPETA, "mide-tu-fuerza-accesible.html");
+const destinoAccesible = path.join(CARPETA, `${PRODUCTO}-accesible.html`);
 fs.writeFileSync(destinoAccesible, accesible());
 console.log(`Maqueta: ${htmlTemporal}\nAccesible: ${destinoAccesible}`);
 console.log(`${TOTAL} posiciones · ${TESTS.length} tests · ${LIBRO.TEMAS.length} temas`);
@@ -522,10 +538,10 @@ if (process.argv.includes("--solo-accesible")) process.exit(0);
 (async () => {
   const { chromium } = require("playwright");
   const navegador = await chromium.launch(process.env.CHROMIUM ? { executablePath: process.env.CHROMIUM } : {});
-  const destino = path.join(CARPETA, "mide-tu-fuerza.pdf");
-  const tapa = path.join(tmp, "mide-tu-fuerza-tapa.pdf");
-  const cuerpo = path.join(tmp, "mide-tu-fuerza-cuerpo.pdf");
-  const marca = path.join(tmp, "mide-tu-fuerza-marca.pdf");
+  const destino = path.join(CARPETA, `${PRODUCTO}.pdf`);
+  const tapa = path.join(tmp, `${PRODUCTO}-tapa.pdf`);
+  const cuerpo = path.join(tmp, `${PRODUCTO}-cuerpo.pdf`);
+  const marca = path.join(tmp, `${PRODUCTO}-marca.pdf`);
   const sinMargen = { top: 0, bottom: 0, left: 0, right: 0 };
 
   const pTapa = await navegador.newPage();
@@ -543,13 +559,13 @@ if (process.argv.includes("--solo-accesible")) process.exit(0);
     margin: { top: "16mm", bottom: "15mm", left: "15mm", right: "15mm" },
     displayHeaderFooter: true,
     headerTemplate: "<div></div>",
-    footerTemplate: `<div style="width:100%;font-size:7.5pt;color:#9fb3c8;font-family:Arial,sans-serif;padding:0 15mm;display:flex;justify-content:space-between;align-items:center;"><span>Mide tu fuerza · Ajedrez Integral</span><span style="font-weight:700;color:#829ab1;">${esc(AUTOR)}</span><span class="pageNumber"></span></div>`,
+    footerTemplate: `<div style="width:100%;font-size:7.5pt;color:#9fb3c8;font-family:Arial,sans-serif;padding:0 15mm;display:flex;justify-content:space-between;align-items:center;"><span>${esc(NOMBRE)} · Ajedrez Integral</span><span style="font-weight:700;color:#829ab1;">${esc(AUTOR)}</span><span class="pageNumber"></span></div>`,
   });
   await navegador.close();
   unir(tapa, cuerpo, marca, destino);
   proteger(destino, {
     clave: CLAVE_PROPIETARIO, autor: AUTOR, imprimir: true,
-    titulo: "Mide tu fuerza - banco de ejercicios tacticos de ajedrez",
+    titulo: `Mide tu fuerza, volumen ${VOLUMEN} - banco de ejercicios tacticos de ajedrez`,
     asunto: "Tests de combinacion por tema, con tiempo, puntos y fuerza en Elo",
   });
   console.log("PDF listo:", destino);

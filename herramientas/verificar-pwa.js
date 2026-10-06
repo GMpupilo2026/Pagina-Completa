@@ -215,7 +215,8 @@ function servidorPropio() {
            herramientas/pwa-cabecera.py. */
         if (["inscripcion.html", "formulario.html", "libro-de-diagnostico-accesible.html",
              "guia-del-profesor-accesible.html", "fichas-de-estudio-accesible.html",
-             "ponte-a-prueba-accesible.html", "mide-tu-fuerza-accesible.html"].includes(e.name)) continue;
+             "ponte-a-prueba-accesible.html", "mide-tu-fuerza-accesible.html", "mide-tu-fuerza-2-accesible.html",
+             "mide-tu-fuerza-3-accesible.html"].includes(e.name)) continue;
         paginas.push(rel);
       }
     }

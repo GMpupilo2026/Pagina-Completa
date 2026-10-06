@@ -1,9 +1,14 @@
 /* ===== El banco del libro «Mide tu fuerza» =====
  *
- * Arma material/mide-tu-fuerza/banco.js: el banco de ejercicios tácticos de
- * Oscar Angulo Cubero, 360 posiciones en 45 tests temáticos de 8, en tres
- * niveles. El mismo banco sirve para el libro impreso
- * (herramientas/mide-tu-fuerza-pdf.js) y para su versión accesible.
+ * Arma el banco de cada volumen del libro de ejercicios tácticos de Oscar
+ * Angulo Cubero: 360 posiciones en 45 tests temáticos de 8, en tres niveles.
+ * El volumen 1 va en material/mide-tu-fuerza/banco.js y cada uno de los
+ * siguientes en su propia carpeta (material/mide-tu-fuerza-2/banco.js…), que es
+ * también su propio material para compartir. El mismo banco sirve para el
+ * libro impreso (herramientas/mide-tu-fuerza-pdf.js) y su versión accesible.
+ *
+ * Todos los volúmenes tienen la misma forma (los mismos temas, niveles y
+ * tiempos) y posiciones distintas: ninguna se repite entre volúmenes.
  *
  * El MÉTODO toma como referencia los libros de tests por tema (cada test, un
  * solo motivo táctico; ocho posiciones; tiempo fijo; 5 puntos por posición;
@@ -14,7 +19,8 @@
  *     abierta de ejercicios de Lichess (CC0), la tabla «Ejercicios Lichess» de
  *     Supabase, con filtros de calidad (Popularity ≥ 85, NbPlays ≥ 1000,
  *     RatingDeviation ≤ 80). Las candidatas están en
- *     herramientas/datos/mide-tu-fuerza-candidatas.txt.
+ *     herramientas/datos/mide-tu-fuerza-candidatas.txt (volumen 1) y
+ *     mide-tu-fuerza-N-candidatas.txt (volumen N).
  *   - Ninguna se cree a ciegas: pasan por el MISMO análisis de Stockfish que
  *     el diagnóstico y «Ponte a prueba» (analizar() de
  *     herramientas/diagnostico-lichess.js), que solo deja las que tienen UNA
@@ -22,7 +28,8 @@
  *     combinaciones promete que hay una, y si la posición solo empata, quien
  *     busca el golpe busca algo que no está.
  *   - Ninguna repite una pregunta del diagnóstico ni una posición de «Ponte a
- *     prueba»: el mismo ejercicio en dos pruebas mediría memoria.
+ *     prueba», ni una de otro volumen: el mismo ejercicio en dos pruebas
+ *     mediría memoria.
  *   - El tema de cada test es el que Lichess le puso a la posición. Si tiene
  *     varios, manda el más raro (el orden de TEMAS en la consulta): un jaque
  *     doble casi siempre es también un ataque a la descubierta, y al revés no.
@@ -31,15 +38,16 @@
  *     midió su calibración (380). Acá se contesta igual: sin opciones, con la
  *     jugada y la línea.
  *
- * El banco vive en material/mide-tu-fuerza/ y no en js/: trae las respuestas,
+ * El banco vive en material/ y no en js/: trae las respuestas,
  * y así lo sirve el worker solo a quien puede bajar el material (administración
  * o con quien se compartió desde admin.html#materiales).
  *
- * NO se edita material/mide-tu-fuerza/banco.js a mano: se vuelve a correr esto.
+ * NO se edita a mano el banco.js de ningún volumen: se vuelve a correr esto.
  *
  * Cómo se corre (hace falta Stockfish: apt install stockfish):
  *
- *   STOCKFISH=/usr/games/stockfish node herramientas/mide-tu-fuerza-generar.js
+ *   STOCKFISH=/usr/games/stockfish node herramientas/mide-tu-fuerza-generar.js      # volumen 1
+ *   STOCKFISH=/usr/games/stockfish node herramientas/mide-tu-fuerza-generar.js 2    # volumen 2 (y 3…)
  *
  * El análisis queda en herramientas/.cache-mide-tu-fuerza.json (fuera del
  * repositorio) para no repetirlo.
@@ -62,7 +70,9 @@
  *       and e."Rating" between 1250 and 2549
  *   ), n as (select *, row_number() over (partition by tema, banda order by md5(id)) k
  *            from c where tema is not null)
- *   select … from n where k <= 20
+ *   select … from n where k <= 20                 -- volumen 1
+ *   select … from n where k between 21 and 40     -- volumen 2
+ *   select … from n where k between 41 and 60     -- volumen 3
  */
 "use strict";
 const fs = require("fs");
@@ -72,9 +82,25 @@ const { Motor } = require("./lib/motor-uci");
 const L = require("./diagnostico-lichess.js");
 
 const RAIZ = path.join(__dirname, "..");
-const CANDIDATAS = path.join(__dirname, "datos", "mide-tu-fuerza-candidatas.txt");
 const CACHE = path.join(__dirname, ".cache-mide-tu-fuerza.json");
-const SALIDA = path.join(RAIZ, "material", "mide-tu-fuerza", "banco.js");
+
+/* El producto de cada volumen: la carpeta de material/ y el nombre que usa
+   la base para compartirlo (admin.html#materiales). */
+function producto(volumen) {
+  return volumen === 1 ? "mide-tu-fuerza" : `mide-tu-fuerza-${volumen}`;
+}
+function banco(volumen) {
+  return path.join(RAIZ, "material", producto(volumen), "banco.js");
+}
+/* Los volúmenes que ya tienen banco, en orden. */
+function volumenes() {
+  const v = [];
+  for (let n = 1; fs.existsSync(banco(n)); n++) v.push(n);
+  return v;
+}
+const VOLUMEN = +(process.argv[2] || 1);
+const CANDIDATAS = path.join(__dirname, "datos", `${producto(VOLUMEN)}-candidatas.txt`);
+const SALIDA = banco(VOLUMEN);
 const MOTOR = process.env.STOCKFISH || "/usr/games/stockfish";
 
 const POR_TEST = 8;
@@ -144,7 +170,14 @@ function yaUsadas() {
   const w = {};
   new Function("window", fs.readFileSync(path.join(RAIZ, "js", "diagnostico-items.js"), "utf8"))(w);
   new Function("window", fs.readFileSync(path.join(RAIZ, "material", "ponte-a-prueba", "banco.js"), "utf8"))(w);
-  return new Set((w.DIAGNOSTICO_ITEMS || []).concat(w.LIBRO_EXAMEN_ITEMS || []).map((i) => i.lichess).filter(Boolean));
+  const usadas = (w.DIAGNOSTICO_ITEMS || []).concat(w.LIBRO_EXAMEN_ITEMS || []).map((i) => i.lichess).filter(Boolean);
+  // Las de los otros volúmenes: cada volumen trae posiciones nuevas.
+  volumenes().filter((v) => v !== VOLUMEN).forEach((v) => {
+    const o = {};
+    new Function("window", fs.readFileSync(banco(v), "utf8"))(o);
+    o.MIDE_TU_FUERZA_ITEMS.forEach((i) => usadas.push(i.lichess));
+  });
+  return new Set(usadas);
 }
 
 function leerCandidatas() {
@@ -264,7 +297,7 @@ async function main() {
   });
 
   const cuerpo = items.map((it) => "  {\n" + Object.keys(it).map((k) => `    ${k}: ${js(it[k])},`).join("\n") + "\n  },").join("\n");
-  const texto = `/* ===== El banco del libro «Mide tu fuerza», de Oscar Angulo Cubero =====
+  const texto = `/* ===== El banco del libro «Mide tu fuerza», volumen ${VOLUMEN}, de Oscar Angulo Cubero =====
  *
  * GENERADO por herramientas/mide-tu-fuerza-generar.js — no se edita a mano.
  *
@@ -277,6 +310,8 @@ async function main() {
  */
 window.MIDE_TU_FUERZA = {
   TITULO: 'Mide tu fuerza',
+  VOLUMEN: ${VOLUMEN},
+  PRODUCTO: '${producto(VOLUMEN)}',
   AUTOR: 'Oscar Angulo Cubero',
   POR_TEST: ${POR_TEST},
   PUNTOS: 5,
@@ -305,4 +340,4 @@ ${cuerpo}
 }
 
 if (require.main === module) main().catch((e) => { console.error(e.message); process.exit(1); });
-module.exports = { TEMAS, NIVELES, DESCUENTO_LICHESS, POR_TEST };
+module.exports = { TEMAS, NIVELES, DESCUENTO_LICHESS, POR_TEST, producto, banco, volumenes };

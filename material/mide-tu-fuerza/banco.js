@@ -1,4 +1,4 @@
-/* ===== El banco del libro «Mide tu fuerza», de Oscar Angulo Cubero =====
+/* ===== El banco del libro «Mide tu fuerza», volumen 1, de Oscar Angulo Cubero =====
  *
  * GENERADO por herramientas/mide-tu-fuerza-generar.js — no se edita a mano.
  *
@@ -11,6 +11,8 @@
  */
 window.MIDE_TU_FUERZA = {
   TITULO: 'Mide tu fuerza',
+  VOLUMEN: 1,
+  PRODUCTO: 'mide-tu-fuerza',
   AUTOR: 'Oscar Angulo Cubero',
   POR_TEST: 8,
   PUNTOS: 5,

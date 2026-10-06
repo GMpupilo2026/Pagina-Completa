@@ -571,16 +571,19 @@ async function pruebaMateriales(browser) {
   const resumen = () => page.textContent("#mat-lista [role=status]");
   const lista = () => page.evaluate(() => Array.from(document.querySelectorAll("#mat-lista article > section:first-of-type ul:first-of-type > li"))
     .filter((li) => li.checkVisibility()).map((li) => li.querySelector("p").textContent));
-  igual("los dos libros, con sus archivos", await page.evaluate(() => Array.from(document.querySelectorAll("#mat-lista article a[href^='material/']")).map((a) => a.getAttribute("href"))),
+  igual("los libros, con sus archivos", await page.evaluate(() => Array.from(document.querySelectorAll("#mat-lista article a[href^='material/']")).map((a) => a.getAttribute("href"))),
     ["material/ponte-a-prueba/ponte-a-prueba.pdf", "material/ponte-a-prueba/ponte-a-prueba-accesible.html",
-     "material/mide-tu-fuerza/mide-tu-fuerza.pdf", "material/mide-tu-fuerza/mide-tu-fuerza-accesible.html"]);
+     "material/mide-tu-fuerza/mide-tu-fuerza.pdf", "material/mide-tu-fuerza/mide-tu-fuerza-accesible.html",
+     "material/mide-tu-fuerza-2/mide-tu-fuerza-2.pdf", "material/mide-tu-fuerza-2/mide-tu-fuerza-2-accesible.html",
+     "material/mide-tu-fuerza-3/mide-tu-fuerza-3.pdf", "material/mide-tu-fuerza-3/mide-tu-fuerza-3-accesible.html"]);
   // El banco de ejercicios no tiene pruebas como cuestionario: solo se
   // comparte. Antes de separarlo, cualquier material sin pruebas pintaba
   // igual el título y «todavía no están en la base».
-  igual("el banco de ejercicios se comparte y no tiene sección de pruebas", await page.evaluate(() => {
-    const art = document.querySelector("#mat-lista article[aria-labelledby='mat-titulo-mide-tu-fuerza']");
-    return [art.querySelectorAll(":scope > section").length, /como cuestionario/.test(art.textContent), !!art.querySelector("#mat-mide-tu-fuerza-buscar")];
-  }), [1, false, true]);
+  igual("cada volumen del banco de ejercicios se comparte aparte y no tiene sección de pruebas", await page.evaluate(() =>
+    ["mide-tu-fuerza", "mide-tu-fuerza-2", "mide-tu-fuerza-3"].map((p) => {
+      const art = document.querySelector("#mat-lista article[aria-labelledby='mat-titulo-" + p + "']");
+      return [art.querySelectorAll(":scope > section").length, /como cuestionario/.test(art.textContent), !!art.querySelector("#mat-" + p + "-buscar")];
+    })), [[1, false, true], [1, false, true], [1, false, true]]);
   igual("dice con quién está compartido, también con palabras", [await resumen(), await lista()],
     ["Lo tienen: 1 academia, y tú.", ["🏫 Academia Norte"]]);
 

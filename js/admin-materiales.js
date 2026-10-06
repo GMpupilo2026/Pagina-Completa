@@ -1,5 +1,6 @@
 /* Los materiales de clase en admin.html#materiales: cada material (el libro
- * «Ponte a prueba» y el banco de ejercicios «Mide tu fuerza»), con sus
+ * «Ponte a prueba» y los tres volúmenes del banco de ejercicios «Mide
+ * tu fuerza»), con sus
  * sub-fichas —las pruebas y sus versiones como cuestionario, si las tiene— y
  * CON QUIÉN se comparte.
  *
@@ -44,6 +45,28 @@
       archivos: [
         { href: "material/mide-tu-fuerza/mide-tu-fuerza.pdf", texto: "📥 El libro en PDF" },
         { href: "material/mide-tu-fuerza/mide-tu-fuerza-accesible.html", texto: "♿ Versión accesible" },
+      ],
+    },
+    {
+      producto: "mide-tu-fuerza-2",
+      emoji: "📘",
+      titulo: "Mide tu fuerza · Volumen 2",
+      autor: "Oscar Angulo Cubero",
+      resumen: "Segundo volumen del banco de ejercicios tácticos: la misma forma que el primero (45 tests de 8, los mismos 15 temas y tres niveles, con su tiempo, sus puntos y la fuerza en Elo) y 360 posiciones todas nuevas, ninguna repetida del volumen 1. Sirve para seguir entrenando y para volver a medir sin que cuente la memoria.",
+      archivos: [
+        { href: "material/mide-tu-fuerza-2/mide-tu-fuerza-2.pdf", texto: "📥 El libro en PDF" },
+        { href: "material/mide-tu-fuerza-2/mide-tu-fuerza-2-accesible.html", texto: "♿ Versión accesible" },
+      ],
+    },
+    {
+      producto: "mide-tu-fuerza-3",
+      emoji: "📙",
+      titulo: "Mide tu fuerza · Volumen 3",
+      autor: "Oscar Angulo Cubero",
+      resumen: "Tercer volumen del banco de ejercicios tácticos: la misma forma que los anteriores (45 tests de 8, los mismos 15 temas y tres niveles, con su tiempo, sus puntos y la fuerza en Elo) y 360 posiciones todas nuevas, ninguna repetida de los volúmenes 1 y 2.",
+      archivos: [
+        { href: "material/mide-tu-fuerza-3/mide-tu-fuerza-3.pdf", texto: "📥 El libro en PDF" },
+        { href: "material/mide-tu-fuerza-3/mide-tu-fuerza-3-accesible.html", texto: "♿ Versión accesible" },
       ],
     },
   ];
