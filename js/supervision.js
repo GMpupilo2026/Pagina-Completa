@@ -20,6 +20,8 @@
  * mandó se dice «sin enviar», que es lo que de verdad pasa.
  */
 let session = null;
+// Quien administra baja, además, el mes completo de cada profesor en un Excel.
+let esAdmin = false;
 let mes = null;
 let filas = [];
 // Los profesores con la clase abierta ahora: la RLS de class_sessions solo le
@@ -149,6 +151,20 @@ function tarjeta(f) {
     });
     li.appendChild(detC);
 
+    if (esAdmin) {
+        const caja = el("div", "mt-2");
+        const baja = el("button", "bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-800 dark:text-white font-semibold px-4 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400", "⬇ Descargar el mes completo (Excel)");
+        baja.type = "button";
+        baja.dataset.mesCompleto = f.id;
+        baja.addEventListener("click", async () => {
+            baja.disabled = true;
+            try { await bajarMesCompleto(f); }
+            finally { baja.disabled = false; }
+        });
+        caja.appendChild(baja);
+        li.appendChild(caja);
+    }
+
     if (f.informe_id) {
         const b = el("button", "mt-2 bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400", "Leer su informe");
         b.type = "button";
@@ -165,6 +181,71 @@ function tarjeta(f) {
         li.append(b, caja);
     }
     return li;
+}
+
+/* El mes completo de un profesor en un solo Excel, para quien administra: lo
+   que escribió (si envió el informe), sus números y el detalle por clase y por
+   estudiante. Con el informe enviado va la FOTO de ese día —los números y el
+   detalle que leyó la supervisión—; sin enviar, los de hoy, y se dice. Las
+   cuentas son las mismas de la pantalla: `actividad_profesor()` y las dos
+   puertas del detalle; acá solo se juntan. */
+async function bajarMesCompleto(f) {
+    let inf = null;
+    if (f.informe_id) {
+        const r = await sb.from("informes_profesor")
+            .select("id, periodo, resumen, logros, dificultades, proximo_mes, datos, enviado_at, leido_at, comentario")
+            .eq("id", f.informe_id).maybeSingle();
+        if (r.error || !r.data) { avisar("No se pudo leer su informe" + (r.error ? ": " + r.error.message : "."), true); return; }
+        inf = r.data;
+    }
+    const { data: det, error } = f.informe_id
+        ? await sb.rpc("detalle_informe_mensual", { p_informe: f.informe_id })
+        : await sb.rpc("detalle_mensual_profesor", { p_profesor: f.id, p_periodo: mes });
+    if (error) { avisar("No se pudo armar el detalle del mes: " + error.message, true); return; }
+
+    const numeros = (inf && inf.datos) || f.actividad || {};
+    const filas = [];
+    filas.push(["Mes", ActividadProfesor.textoMes(mes)]);
+    if (f.grupo) filas.push(["Grupo", f.grupo]);
+    filas.push(["Estado", inf
+        ? "Enviado el " + ActividadProfesor.fecha(inf.enviado_at) + (inf.leido_at ? " · leído" : " · sin leer")
+        : "Sin enviar: los números y el detalle son los de hoy"]);
+    if (inf) {
+        filas.push([]);
+        [["Resumen del mes", inf.resumen], ["Logros", inf.logros], ["Dificultades", inf.dificultades],
+         ["Plan para el mes que viene", inf.proximo_mes], ["Comentario de supervisión", inf.comentario]]
+            .forEach(([t, v]) => filas.push([t, v || ""]));
+    }
+
+    filas.push([], ["Sus números del mes" + (inf && inf.datos ? " (tal como estaban el día que lo envió)" : "")]);
+    ActividadProfesor.CAMPOS.forEach((c) => {
+        // El tiempo va en minutos, como número: en Excel se suma.
+        if (c.formato === "horas") filas.push([c.etiqueta + " (minutos)", Math.round(Number(numeros[c.clave]) || 0)]);
+        else if (c.formato === "horario" || c.formato === "nota") filas.push([c.etiqueta, ActividadProfesor.valor(c, numeros)]);
+        else filas.push([c.etiqueta, numeros[c.clave] == null ? "" : Number(numeros[c.clave])]);
+    });
+
+    filas.push([]);
+    if (!det) {
+        filas.push(["Este informe se envió antes de que existiera el detalle por clase y por estudiante."]);
+    } else {
+        const clases = Array.isArray(det.clases) ? det.clases : [];
+        const alumnos = Array.isArray(det.alumnos) ? det.alumnos : [];
+        filas.push(["Clase por clase"],
+                   ["Cuándo", "Dónde", "Clase", "Minutos", "Asistentes", "Llegaron tarde", "Qué se hizo"]);
+        clases.forEach((c) => filas.push([DetalleMensual.fecha(c.inicio), DetalleMensual.dondeDe(c.modalidad), c.titulo || "",
+            Math.round(Number(c.minutos) || 0), c.asistentes || 0, c.tarde || 0, c.notas || ""]));
+        if (!clases.length) filas.push(["No dio ninguna clase este mes."]);
+        filas.push([], ["Estudiante por estudiante"],
+                   ["Estudiante", "Grupo", "Clases en línea", "Clases presenciales", "Minutos en clase", "Veces tarde", "Minutos tarde", "Ejercicios"]);
+        alumnos.forEach((a) => filas.push([a.nombre || "", a.grupo || "", a.clases_en_linea || 0, a.clases_presenciales || 0,
+            a.minutos_clase || 0, a.veces_tarde || 0, a.minutos_tarde || 0, a.ejercicios || 0]));
+        if (!alumnos.length) filas.push(["No hay estudiantes que mostrar."]);
+    }
+
+    const nombre = String(f.nombre || "profesor").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+    CsvExcel.bajar("informe-" + (nombre || "profesor") + "-" + String(mes).slice(0, 7) + ".csv",
+        ["Informe mensual de", f.nombre || "Sin nombre"], filas);
 }
 
 async function abrirInforme(f, caja) {
@@ -233,6 +314,7 @@ async function init() {
     session = data.session;
     if (!session) { location.href = "login.html?next=supervision.html"; return; }
     const { data: perfil } = await sb.from("profiles").select("es_supervisor, is_admin").eq("id", session.user.id).maybeSingle();
+    esAdmin = !!(perfil && perfil.is_admin);
     document.getElementById("loading").classList.add("hidden");
     if (!perfil || !(perfil.es_supervisor || perfil.is_admin)) {
         document.getElementById("denegado").classList.remove("hidden");
