@@ -59,6 +59,32 @@ const TITULOS = {
   "documentos/jdn/consentimiento-entrenador-jdn-2027.docx": "Consentimiento informado JDN 2027 — entrenador",
 };
 
+/* Los nombres que siguen un patrón (muchos archivos de una misma serie). */
+const PATRONES = [
+  [/^material\/ponte-a-prueba\/versiones\/prueba-(\d+)-version-([a-z])\.pdf$/,
+    (m) => `Prueba ${m[1]}, versión ${m[2].toUpperCase()} (cuadernillo para imprimir)`],
+  [/^material\/ponte-a-prueba\/versiones\/claves-de-correccion\.pdf$/,
+    () => "Claves de corrección de las 18 versiones (para el profe)"],
+];
+
+/* El nombre de cada libro de material/ (su carpeta): los PDF de «Libros y
+   material» se agrupan por libro. Uno nuevo sin entrada usa el de la carpeta. */
+const LIBROS = {
+  "ponte-a-prueba": "Ponte a prueba",
+  "mide-tu-fuerza": "Mide tu fuerza",
+  "diagnostico-de-nivel": "Diagnóstico de nivel",
+  "libro-de-diagnostico": "Libro del diagnóstico de nivel",
+  "examen-de-arbitraje": "Examen de arbitraje",
+  "fichas-de-estudio": "Fichas de estudio",
+  "guia-del-profesor": "Guía del profesor",
+};
+
+function tituloDe(ruta) {
+  if (TITULOS[ruta]) return TITULOS[ruta];
+  for (const [re, f] of PATRONES) { const m = ruta.match(re); if (m) return f(m); }
+  return nombreDelArchivo(ruta);
+}
+
 /* El nombre de cada carpeta, para los Word y los Excel. Una nueva sin entrada
    aparece con el nombre de la carpeta. */
 const CARPETAS = {
@@ -136,11 +162,15 @@ function armarPdf() {
   const usados = new Set();
   const archivo = (ruta, titulo) => {
     usados.add(ruta);
-    return { ruta, titulo: titulo || TITULOS[ruta] || nombreDelArchivo(ruta), tipo: tipoDe(ruta), kb: kb(ruta) };
+    return { ruta, titulo: titulo || tituloDe(ruta), tipo: tipoDe(ruta), kb: kb(ruta) };
   };
 
   // Libros y material.
-  const material = todos.filter((r) => r.startsWith("material/")).map((r) => archivo(r));
+  // Libros y material, con el libro al que pertenece cada uno.
+  const material = todos.filter((r) => r.startsWith("material/")).map((r) => {
+    const carpeta = r.split("/")[1];
+    return Object.assign(archivo(r), { libro: LIBROS[carpeta] || nombreDelArchivo(carpeta) });
+  });
 
   // Cursos: los del catálogo en su orden; una carpeta que no esté en el
   // catálogo va al final con el nombre de la carpeta.
@@ -187,7 +217,7 @@ function armarPorCarpeta(tipo) {
       carpeta: c,
       titulo: CARPETAS[c] || nombreDelArchivo(c.split("/").pop()),
       archivos: todos.filter((r) => path.posix.dirname(r) === c).map((ruta) => ({
-        ruta, titulo: TITULOS[ruta] || nombreDelArchivo(ruta), tipo: "otro", kb: kb(ruta),
+        ruta, titulo: tituloDe(ruta), tipo: "otro", kb: kb(ruta),
       })),
     })),
   };

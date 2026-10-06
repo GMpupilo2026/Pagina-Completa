@@ -1042,6 +1042,35 @@ igual. El SQL actualiza por título y no borra, para no dejar colgadas las
 tareas que apuntan a una versión; y la semilla de los listos de la Academia
 (`cuestionarios-listos.js`) borra solo `where listo and material is null`.
 
+### Las versiones en papel
+
+`herramientas/libro-examen-versiones-pdf.js` pone las mismas 18 versiones en
+papel, en `material/ponte-a-prueba/versiones/`:
+
+- un cuadernillo por versión para el ALUMNO (`prueba-<p>-version-<x>.pdf`):
+  las 10 posiciones con sus dos preguntas, los datos de quien la rinde y la
+  hoja de respuestas. Sin soluciones: se reparte;
+- `claves-de-correccion.pdf` para el PROFE: la respuesta y los puntos de cada
+  opción de las 18 versiones, una por página para imprimir solo la que se va
+  a usar, con la línea de la solución y su tabla de puntos a fuerza;
+- `ponte-a-prueba-versiones-accesible.html`, lo mismo sin imágenes.
+
+Las versiones salen de `cuestionarios()` de `libro-examen-cuestionarios.js`,
+con las opciones en el MISMO orden que el cuestionario de la plataforma: una
+clave sirve para el papel y para la pantalla, y un grupo puede hacer la A en
+papel mientras otro hace la B en la plataforma. Los puntos de cada opción se
+buscan en el banco por el texto de la opción, no por su lugar. La tabla de
+fuerza es la del libro (`lib/libro-examen-comun.js`, que comparten los dos
+PDF), pero de a 200 puntos: con diez posiciones no se puede prometer más.
+
+Los cuadernillos no tienen tapa, así que la marca de agua va en todas las
+páginas (`unir(null, …)` en `lib/pdf-armar.js`), y el logo crema va en su
+recuadro azul: sobre el blanco del papel casi no se veía. En
+`admin.html#materiales` cada versión tiene su «🖨️ PDF», y las claves y la
+versión accesible van junto al libro. Lo revisa `verificar-libro-examen.js`
+(que cada prueba tenga tres versiones de 10 sin repetir, que la buena sea la
+solución y valga 5, y que estén los 19 PDF).
+
 ### Cada alumno, su orden
 
 En `cuestionario-tarea.html` las preguntas y las opciones se ven en un orden
@@ -1070,8 +1099,8 @@ quien administra los abra o los baje sin ir curso por curso. Va **una ficha por
 tipo** (pestañas PDF, Word y Excel, con cuántos hay en cada una; se pasa de una
 a otra también con las flechas del teclado).
 
-Los PDF (hoy 414) van en tres grupos: **Libros y material**
-(`material/<carpeta>/`), **Cursos** (`cursos/recursos/<curso>/`, por nivel y en
+Los PDF (hoy 433) van en tres grupos: **Libros y material**
+(`material/<carpeta>/`, un bloque por libro con el nombre de `LIBROS`), **Cursos** (`cursos/recursos/<curso>/`, por nivel y en
 el orden del catálogo, cada curso plegado y adentro lección por lección con su
 material de estudio y sus ejercicios) y **Otros PDF del sitio** (lo que queda
 fuera, como `instrucciones-adaptadas.pdf`). Hay un buscador sin tildes, un
@@ -1105,7 +1134,8 @@ ficha lo dice en vez de quedar vacía.
   `00-…-ejercicios`). Lo que la página no enlaza va en «Otros archivos del
   curso»; nunca se pierde.
 - Los libros de `material/`, los PDF sueltos y los Word y Excel toman su nombre
-  de `TITULOS` en el generador. Uno nuevo sin entrada aparece igual, con el
+  de `TITULOS` en el generador, y una serie (las 18 versiones de «Ponte a
+  prueba») de un patrón en `PATRONES`. Uno nuevo sin entrada aparece igual, con el
   nombre del archivo, sin tildes: conviene sumarle su título ahí.
 - Bajar no pasa por esta pantalla: `cursos/recursos/` y `material/` los sirve el
   worker, que deja pasar a quien administra; `documentos/` es público. Por eso esta lista puede ser un

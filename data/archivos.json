@@ -23,61 +23,203 @@
     "nombre": "Formación docente"
    }
   ],
-  "total": 414,
+  "total": 433,
   "material": [
    {
     "ruta": "material/diagnostico-de-nivel/diagnostico-de-nivel.pdf",
     "titulo": "Diagnóstico de nivel — la prueba",
     "tipo": "otro",
-    "kb": 450
+    "kb": 450,
+    "libro": "Diagnóstico de nivel"
    },
    {
     "ruta": "material/examen-de-arbitraje/examen-de-arbitraje.pdf",
     "titulo": "Examen de arbitraje — banco de preguntas",
     "tipo": "otro",
-    "kb": 1650
+    "kb": 1650,
+    "libro": "Examen de arbitraje"
    },
    {
     "ruta": "material/fichas-de-estudio/fichas-de-estudio-cartas.pdf",
     "titulo": "Fichas de estudio — cartas para recortar",
     "tipo": "otro",
-    "kb": 2595
+    "kb": 2595,
+    "libro": "Fichas de estudio"
    },
    {
     "ruta": "material/fichas-de-estudio/fichas-de-estudio-libro.pdf",
     "titulo": "Fichas de estudio — libro",
     "tipo": "otro",
-    "kb": 22302
+    "kb": 22302,
+    "libro": "Fichas de estudio"
    },
    {
     "ruta": "material/guia-del-profesor/guia-del-profesor-presentacion.pdf",
     "titulo": "Guía del profesor — presentación",
     "tipo": "otro",
-    "kb": 6401
+    "kb": 6401,
+    "libro": "Guía del profesor"
    },
    {
     "ruta": "material/guia-del-profesor/guia-del-profesor.pdf",
     "titulo": "Guía del profesor — manual",
     "tipo": "otro",
-    "kb": 4637
+    "kb": 4637,
+    "libro": "Guía del profesor"
    },
    {
     "ruta": "material/libro-de-diagnostico/libro-de-diagnostico.pdf",
     "titulo": "Libro del diagnóstico de nivel — banco de preguntas",
     "tipo": "otro",
-    "kb": 2497
+    "kb": 2497,
+    "libro": "Libro del diagnóstico de nivel"
    },
    {
     "ruta": "material/mide-tu-fuerza/mide-tu-fuerza.pdf",
     "titulo": "Mide tu fuerza — banco de ejercicios tácticos",
     "tipo": "otro",
-    "kb": 2933
+    "kb": 2933,
+    "libro": "Mide tu fuerza"
    },
    {
     "ruta": "material/ponte-a-prueba/ponte-a-prueba.pdf",
     "titulo": "Ponte a prueba — examen y guía de entrenamiento",
     "tipo": "otro",
-    "kb": 2123
+    "kb": 2123,
+    "libro": "Ponte a prueba"
+   },
+   {
+    "ruta": "material/ponte-a-prueba/versiones/claves-de-correccion.pdf",
+    "titulo": "Claves de corrección de las 18 versiones (para el profe)",
+    "tipo": "otro",
+    "kb": 350,
+    "libro": "Ponte a prueba"
+   },
+   {
+    "ruta": "material/ponte-a-prueba/versiones/prueba-1-version-a.pdf",
+    "titulo": "Prueba 1, versión A (cuadernillo para imprimir)",
+    "tipo": "otro",
+    "kb": 354,
+    "libro": "Ponte a prueba"
+   },
+   {
+    "ruta": "material/ponte-a-prueba/versiones/prueba-1-version-b.pdf",
+    "titulo": "Prueba 1, versión B (cuadernillo para imprimir)",
+    "tipo": "otro",
+    "kb": 356,
+    "libro": "Ponte a prueba"
+   },
+   {
+    "ruta": "material/ponte-a-prueba/versiones/prueba-1-version-c.pdf",
+    "titulo": "Prueba 1, versión C (cuadernillo para imprimir)",
+    "tipo": "otro",
+    "kb": 358,
+    "libro": "Ponte a prueba"
+   },
+   {
+    "ruta": "material/ponte-a-prueba/versiones/prueba-2-version-a.pdf",
+    "titulo": "Prueba 2, versión A (cuadernillo para imprimir)",
+    "tipo": "otro",
+    "kb": 358,
+    "libro": "Ponte a prueba"
+   },
+   {
+    "ruta": "material/ponte-a-prueba/versiones/prueba-2-version-b.pdf",
+    "titulo": "Prueba 2, versión B (cuadernillo para imprimir)",
+    "tipo": "otro",
+    "kb": 354,
+    "libro": "Ponte a prueba"
+   },
+   {
+    "ruta": "material/ponte-a-prueba/versiones/prueba-2-version-c.pdf",
+    "titulo": "Prueba 2, versión C (cuadernillo para imprimir)",
+    "tipo": "otro",
+    "kb": 353,
+    "libro": "Ponte a prueba"
+   },
+   {
+    "ruta": "material/ponte-a-prueba/versiones/prueba-3-version-a.pdf",
+    "titulo": "Prueba 3, versión A (cuadernillo para imprimir)",
+    "tipo": "otro",
+    "kb": 361,
+    "libro": "Ponte a prueba"
+   },
+   {
+    "ruta": "material/ponte-a-prueba/versiones/prueba-3-version-b.pdf",
+    "titulo": "Prueba 3, versión B (cuadernillo para imprimir)",
+    "tipo": "otro",
+    "kb": 352,
+    "libro": "Ponte a prueba"
+   },
+   {
+    "ruta": "material/ponte-a-prueba/versiones/prueba-3-version-c.pdf",
+    "titulo": "Prueba 3, versión C (cuadernillo para imprimir)",
+    "tipo": "otro",
+    "kb": 357,
+    "libro": "Ponte a prueba"
+   },
+   {
+    "ruta": "material/ponte-a-prueba/versiones/prueba-4-version-a.pdf",
+    "titulo": "Prueba 4, versión A (cuadernillo para imprimir)",
+    "tipo": "otro",
+    "kb": 360,
+    "libro": "Ponte a prueba"
+   },
+   {
+    "ruta": "material/ponte-a-prueba/versiones/prueba-4-version-b.pdf",
+    "titulo": "Prueba 4, versión B (cuadernillo para imprimir)",
+    "tipo": "otro",
+    "kb": 356,
+    "libro": "Ponte a prueba"
+   },
+   {
+    "ruta": "material/ponte-a-prueba/versiones/prueba-4-version-c.pdf",
+    "titulo": "Prueba 4, versión C (cuadernillo para imprimir)",
+    "tipo": "otro",
+    "kb": 354,
+    "libro": "Ponte a prueba"
+   },
+   {
+    "ruta": "material/ponte-a-prueba/versiones/prueba-5-version-a.pdf",
+    "titulo": "Prueba 5, versión A (cuadernillo para imprimir)",
+    "tipo": "otro",
+    "kb": 348,
+    "libro": "Ponte a prueba"
+   },
+   {
+    "ruta": "material/ponte-a-prueba/versiones/prueba-5-version-b.pdf",
+    "titulo": "Prueba 5, versión B (cuadernillo para imprimir)",
+    "tipo": "otro",
+    "kb": 360,
+    "libro": "Ponte a prueba"
+   },
+   {
+    "ruta": "material/ponte-a-prueba/versiones/prueba-5-version-c.pdf",
+    "titulo": "Prueba 5, versión C (cuadernillo para imprimir)",
+    "tipo": "otro",
+    "kb": 353,
+    "libro": "Ponte a prueba"
+   },
+   {
+    "ruta": "material/ponte-a-prueba/versiones/prueba-6-version-a.pdf",
+    "titulo": "Prueba 6, versión A (cuadernillo para imprimir)",
+    "tipo": "otro",
+    "kb": 356,
+    "libro": "Ponte a prueba"
+   },
+   {
+    "ruta": "material/ponte-a-prueba/versiones/prueba-6-version-b.pdf",
+    "titulo": "Prueba 6, versión B (cuadernillo para imprimir)",
+    "tipo": "otro",
+    "kb": 352,
+    "libro": "Ponte a prueba"
+   },
+   {
+    "ruta": "material/ponte-a-prueba/versiones/prueba-6-version-c.pdf",
+    "titulo": "Prueba 6, versión C (cuadernillo para imprimir)",
+    "tipo": "otro",
+    "kb": 356,
+    "libro": "Ponte a prueba"
    }
   ],
   "cursos": [

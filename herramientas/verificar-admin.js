@@ -571,8 +571,9 @@ async function pruebaMateriales(browser) {
   const resumen = () => page.textContent("#mat-lista [role=status]");
   const lista = () => page.evaluate(() => Array.from(document.querySelectorAll("#mat-lista article > section:first-of-type ul:first-of-type > li"))
     .filter((li) => li.checkVisibility()).map((li) => li.querySelector("p").textContent));
-  igual("los dos libros, con sus archivos", await page.evaluate(() => Array.from(document.querySelectorAll("#mat-lista article a[href^='material/']")).map((a) => a.getAttribute("href"))),
+  igual("los dos libros, con sus archivos", await page.evaluate(() => Array.from(document.querySelectorAll("#mat-lista article > div:first-child a[href^='material/']")).map((a) => a.getAttribute("href"))),
     ["material/ponte-a-prueba/ponte-a-prueba.pdf", "material/ponte-a-prueba/ponte-a-prueba-accesible.html",
+     "material/ponte-a-prueba/versiones/claves-de-correccion.pdf", "material/ponte-a-prueba/ponte-a-prueba-versiones-accesible.html",
      "material/mide-tu-fuerza/mide-tu-fuerza.pdf", "material/mide-tu-fuerza/mide-tu-fuerza-accesible.html"]);
   // El banco de ejercicios no tiene pruebas como cuestionario: solo se
   // comparte. Antes de separarlo, cualquier material sin pruebas pintaba
@@ -624,7 +625,11 @@ async function pruebaMateriales(browser) {
   }), [6, 3]);
   igual("las versiones cargadas llevan a su cuestionario; la que falta lo dice", await page.evaluate(() =>
     Array.from(document.querySelectorAll("#mat-lista article:first-of-type > section:last-of-type > ul > li"))[0].querySelector("ul").textContent.replace(/\s+/g, " ").trim()),
-    "Versión AVersión BVersión C: sin cargar");
+    "Versión A🖨️ PDFVersión B🖨️ PDFVersión C: sin cargar🖨️ PDF");
+  // Cada versión también en papel: su cuadernillo, aunque no esté cargada como cuestionario.
+  igual("cada versión lleva a su PDF para imprimir", await page.evaluate(() =>
+    ["A", "C"].map((l) => document.querySelector("#mat-lista a[aria-label='Imprimir la versión " + l + " de la prueba 6']").getAttribute("href"))),
+    ["material/ponte-a-prueba/versiones/prueba-6-version-a.pdf", "material/ponte-a-prueba/versiones/prueba-6-version-c.pdf"]);
   igual("el enlace de la versión A", await page.getAttribute("#mat-lista a[aria-label='Ver la versión A de la prueba 1']", "href"), "cuestionarios.html?id=cq-1A");
   // CAPTURAS=<carpeta> guarda cómo se ve, para mirarla y no solo medir el DOM.
   if (process.env.CAPTURAS) await page.screenshot({ path: path.join(process.env.CAPTURAS, "admin-materiales.png"), fullPage: true });

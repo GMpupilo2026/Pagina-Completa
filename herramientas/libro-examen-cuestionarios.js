@@ -26,16 +26,11 @@ const fs = require("fs");
 const path = require("path");
 
 const RAIZ = path.join(__dirname, "..");
+const { banco } = require("./lib/libro-examen-comun.js");
 const MATERIAL = "ponte-a-prueba";
 const VERSIONES = ["A", "B", "C"];
 const TIEMPO_EVALUACION = 30;
 const TIEMPO_JUGADA = 60;
-
-function banco() {
-  const w = {};
-  new Function("window", fs.readFileSync(path.join(RAIZ, "material", MATERIAL, "banco.js"), "utf8"))(w);
-  return { LIBRO: w.LIBRO_EXAMEN, ITEMS: w.LIBRO_EXAMEN_ITEMS };
-}
 
 /* Un sorteo que se repite: la misma semilla da el mismo orden, así aplicar el
    SQL dos veces deja las versiones iguales. */

@@ -160,7 +160,26 @@
     cab.append(izq, botonGrupo(lista, "📥 Bajar los " + lista.length));
     sec.append(cab);
     const ul = el("ul", "divide-y divide-brand-100 dark:divide-brand-800");
-    lista.forEach((a) => ul.append(fila(a, nombreDe(a), titulo)));
+    if (lista.some((a) => a.libro)) {
+      // Libros y material: un bloque por libro, como las lecciones de un curso.
+      [...new Set(lista.map((a) => a.libro))].forEach((libro) => {
+        const delLibro = lista.filter((a) => a.libro === libro);
+        const li = el("li", "pdf-leccion py-3");
+        li.append(el("p", "text-sm font-bold text-brand-800 dark:text-white mb-1",
+          libro + (delLibro.length > 1 ? " · " + plural(delLibro.length, "PDF", "PDF") : "")));
+        const sub = el("ul", "pl-0 md:pl-4");
+        delLibro.forEach((a) => {
+          const f = fila(a, nombreDe(a), libro);
+          f.classList.remove("py-2");
+          f.classList.add("py-1");
+          sub.append(f);
+        });
+        li.append(sub);
+        ul.append(li);
+      });
+    } else {
+      lista.forEach((a) => ul.append(fila(a, nombreDe(a), titulo)));
+    }
     sec.append(ul);
     return sec;
   }
