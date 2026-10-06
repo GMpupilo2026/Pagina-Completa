@@ -330,7 +330,7 @@ async function pruebaUnaSolaPuerta(browser) {
   igual("el menú, por grupos y sin repetir",
     await page.evaluate(() => Array.from(document.querySelectorAll("nav[aria-label='Secciones de administración'] ul")).map((ul) =>
       document.getElementById(ul.getAttribute("aria-labelledby")).textContent + ": " + Array.from(ul.querySelectorAll("a")).map((a) => a.dataset.ir).join(", "))),
-    ["Hoy: inicio", "Supervisión y coordinación: supervisores, profesores, equipos", "Personas: cuentas, crear", "La plataforma: novedades, torneos, proyectos, materiales, preparacion, auditoria"]);
+    ["Hoy: inicio", "Supervisión y coordinación: supervisores, profesores, equipos", "Personas: cuentas, crear", "La plataforma: novedades, torneos, proyectos, materiales, pdf, preparacion, auditoria"]);
   igual("cada sección del menú existe y hay una por entrada",
     await page.evaluate(() => {
       const menu = Array.from(document.querySelectorAll(".admin-nav")).map((a) => a.dataset.ir).sort();
@@ -628,6 +628,74 @@ async function pruebaMateriales(browser) {
   igual("el enlace de la versión A", await page.getAttribute("#mat-lista a[aria-label='Ver la versión A de la prueba 1']", "href"), "cuestionarios.html?id=cq-1A");
   // CAPTURAS=<carpeta> guarda cómo se ve, para mirarla y no solo medir el DOM.
   if (process.env.CAPTURAS) await page.screenshot({ path: path.join(process.env.CAPTURAS, "admin-materiales.png"), fullPage: true });
+  igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
+  await ctx.close();
+}
+
+/* ============ admin.html · todos los PDF, ordenados ============
+   La lista es data/pdfs.json (herramientas/pdfs-catalogo.js, leído del disco):
+   acá se mira que la pantalla muestre TODOS, en su lugar, que buscar y filtrar
+   escondan de verdad (checkVisibility) y que «Bajar los N» baje N. Que el JSON
+   esté al día con el disco lo cuida verificar-pdfs-catalogo.js. */
+async function pruebaPdfs(browser) {
+  console.log("\n=== PDF: todos, ordenados, para abrir o bajar ===");
+  const catalogo = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "data", "pdfs.json"), "utf8"));
+  const { page, ctx, errores } = await abrir(browser, "/admin.html", ADMIN, { acceptDownloads: true });
+  await page.goto(BASE + "/admin.html", { waitUntil: "networkidle" });
+  await page.waitForSelector("#app:not(.hidden)", { timeout: 20000 });
+  await irA(page, "pdf");
+  await page.waitForSelector("#pdf-lista .pdf-fila", { state: "attached", timeout: 10000 });
+  igual("están todos los PDF, cada uno una vez", await page.evaluate(() => {
+    const rutas = Array.from(document.querySelectorAll("#pdf-lista .pdf-fila a[download]")).map((a) => a.getAttribute("href"));
+    return [rutas.length, new Set(rutas).size];
+  }), [catalogo.total, catalogo.total]);
+  igual("el resumen dice cuántos son", new RegExp("^" + catalogo.total + " PDF en total").test(await page.textContent("#pdf-resumen")), true);
+  igual("primero los libros, después los cursos, después los sueltos", await page.evaluate(() =>
+    Array.from(document.querySelectorAll("#pdf-lista h3")).map((h) => h.textContent.trim())),
+    ["📕 Libros y material", "🎓 Cursos", "📄 Otros PDF del sitio"]);
+  igual("los cursos, por nivel y en el orden del catálogo", await page.evaluate(() =>
+    Array.from(document.querySelectorAll("#pdf-lista .pdf-curso summary")).map((s) => s.firstElementChild.textContent.replace("▸", ""))),
+    catalogo.cursos.map((c) => c.titulo));
+  igual("los cursos empiezan plegados: se ven los libros, no las 400 filas", await page.evaluate(() =>
+    Array.from(document.querySelectorAll("#pdf-lista .pdf-fila")).filter((f) => f.checkVisibility()).length),
+    catalogo.material.length + catalogo.sueltos.length);
+  await page.click("#pdf-lista .pdf-curso summary");
+  const leccion = await page.evaluate(() => {
+    const l = document.querySelector("#pdf-lista .pdf-curso[open] .pdf-leccion");
+    return [l.querySelector("p").textContent, Array.from(l.querySelectorAll(".pdf-fila p:first-child")).map((p) => p.textContent)];
+  });
+  igual("abrir un curso muestra cada lección con su material y sus ejercicios", leccion,
+    ["1. " + catalogo.cursos[0].lecciones[0].titulo, ["Material de estudio", "Ejercicios"]]);
+  igual("el enlace de cada PDF existe en el sitio", await page.evaluate(async () => {
+    const rutas = Array.from(document.querySelectorAll("#pdf-lista a[download]")).map((a) => a.getAttribute("href")).filter((_, i) => i % 37 === 0);
+    const malos = [];
+    for (const r of rutas) { const x = await fetch(r, { method: "HEAD" }); if (!x.ok) malos.push(r + " " + x.status); }
+    return malos;
+  }), []);
+
+  await page.fill("#pdf-buscar", "lucena");
+  const conLucena = await page.evaluate(() => Array.from(document.querySelectorAll("#pdf-lista .pdf-fila")).filter((f) => f.checkVisibility())
+    .map((f) => f.querySelector("a[download]").getAttribute("href")));
+  igual("buscar (sin tildes ni mayúsculas) abre el curso y deja solo lo que coincide",
+    conLucena.length > 0 && conLucena.every((r) => /lucena/.test(r)) && conLucena.length < catalogo.total, true);
+  await page.fill("#pdf-buscar", "");
+  await page.selectOption("#pdf-tipo", "ejercicios");
+  igual("«Solo ejercicios» deja solo ejercicios", await page.evaluate(() => {
+    const v = Array.from(document.querySelectorAll("#pdf-lista .pdf-fila")).filter((f) => f.checkVisibility());
+    return v.length > 0 && v.every((f) => f.dataset.tipo === "ejercicios") && !document.querySelector("[aria-labelledby='pdf-titulo-material']").checkVisibility();
+  }), true);
+  await page.selectOption("#pdf-tipo", "todos");
+  await page.fill("#pdf-buscar", "zzzz no existe");
+  igual("si nada coincide, se dice", await page.locator("#pdf-vacio").isVisible(), true);
+  await page.fill("#pdf-buscar", "");
+
+  const bajados = [];
+  page.on("download", (d) => bajados.push(d.suggestedFilename()));
+  await page.click("[aria-labelledby='pdf-titulo-material'] button");
+  await page.waitForFunction(() => /^Listo/.test(document.querySelector("[aria-labelledby='pdf-titulo-material'] [role=status]").textContent), null, { timeout: 30000 });
+  igual("«Bajar los N» de libros baja esos N", bajados.slice().sort(),
+    catalogo.material.map((a) => a.ruta.split("/").pop()).sort());
+  if (process.env.CAPTURAS) await page.screenshot({ path: path.join(process.env.CAPTURAS, "admin-pdf.png"), fullPage: true });
   igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
   await ctx.close();
 }
@@ -1272,6 +1340,7 @@ async function pruebaVolcarEnUnEquipo(browser) {
     await pruebaPreparacionRivales(browser);
     await pruebaProyectos(browser);
     await pruebaMateriales(browser);
+    await pruebaPdfs(browser);
     await pruebaAuditoria(browser);
     await pruebaFichasDeGrupo(browser);
     await pruebaVolcarEnUnEquipo(browser);
