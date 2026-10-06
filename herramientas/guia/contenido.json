@@ -1202,7 +1202,7 @@
           "pasos": [
             "«Crear cuenta nueva»: nombre, correo y rol.",
             "A cada profesor le pones su cupo de invitaciones.",
-            "El profesor gasta ese cupo al dar de alta a un alumno desde Formularios."
+            "El profesor gasta ese cupo con la ficha «Crear cuenta de alumno» de su panel (o desde Formularios, si coordina). Sin invitaciones, la ficha se apaga y le dice que adquiera un plan mayor."
           ],
           "ojo": [
             "Quien administra no tiene tope.",
