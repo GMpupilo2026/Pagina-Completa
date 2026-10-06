@@ -31,6 +31,7 @@ const { Chess } = require("chess.js");
 const { tablero } = require("./lib/tablero-svg.js");
 const { describir } = require("./lib/describir-fen.js");
 const { unir, proteger } = require("./lib/pdf-armar.js");
+const N = require("./lib/notacion.js");
 const D = require("./libro-ninos/dibujos.js");
 const L = require("./libro-ninos/contenido.js");
 
@@ -514,8 +515,9 @@ const htmlMarca = `<!doctype html><html lang="es"><head><meta charset="utf-8">
 </head><body><div class="sello"><img src="${LOGO_MARCA}" alt=""></div></body></html>`;
 
 /* ---------------------------------------------------------- accesible */
-/* Sin una sola imagen: cada dibujo se cuenta en palabras y cada posición
-   pieza por pieza, que es como se entiende con lector de pantalla. */
+/* Sin una sola imagen: cada dibujo se cuenta en palabras, cada posición
+   pieza por pieza y cada jugada dicha («torre anna 8», no «Ta8»), que es como
+   se entiende con lector de pantalla. */
 function posicionEnPalabras(fen, extra) {
   const d = describir(fen);
   const partes = [];
@@ -589,7 +591,7 @@ ${capitulos}
 <p class="dibujo"><strong>El dibujo.</strong> ${esc(escenaFinal.alt)}</p>
 ${L.FINAL.map((t) => `<p>${esc(t)}</p>`).join("")}
 <h2>Soluciones</h2>
-${L.CAPITULOS.map((c) => `<h3>Capítulo ${c.n}. ${esc(c.titulo)}</h3><ol>${c.ejercicios.map((e) => `<li>${esc(solucion(e))}</li>`).join("")}</ol>`).join("")}
+${L.CAPITULOS.map((c) => `<h3>Capítulo ${c.n}. ${esc(c.titulo)}</h3><ol>${c.ejercicios.map((e) => `<li>${esc(N.textoHablado(solucion(e), "espanol"))}</li>`).join("")}</ol>`).join("")}
 <footer><p>${esc(L.AUTOR)} · Academia Ajedrez Integral · ${ANIO}.</p></footer>
 </body></html>`;
 }
