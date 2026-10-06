@@ -965,7 +965,10 @@ volumen (`node herramientas/mide-tu-fuerza-generar.js 2`,
 `node herramientas/mide-tu-fuerza-pdf.js 2`) y los verificadores recorren todos
 los que tengan banco. Un volumen nuevo es: sus candidatas, correr los dos
 scripts con su número y agregarlo en `MATERIALES` de `js/admin-materiales.js`
-(y su accesible en las listas de `verificar-pwa.js` y `pwa-cabecera.py`).
+(y su accesible en las listas de `verificar-pwa.js` y `pwa-cabecera.py`). Su
+PDF nuevo entra también en la sección «Archivos»: después de generarlo se
+corre `node herramientas/archivos-catalogo.js`, o `verificar-archivos-catalogo`
+falla en el CI (pasó con el volumen 6).
 
 Las candidatas del 2 son las 20 siguientes de cada tema y nivel en la misma
 consulta (`k between 21 and 40`). El generador descarta además las que ya están

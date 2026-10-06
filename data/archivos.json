@@ -23,7 +23,7 @@
     "nombre": "Formación docente"
    }
   ],
-  "total": 437,
+  "total": 438,
   "material": [
    {
     "ruta": "material/diagnostico-de-nivel/diagnostico-de-nivel.pdf",
@@ -101,6 +101,13 @@
     "tipo": "otro",
     "kb": 2996,
     "libro": "Mide tu fuerza 5"
+   },
+   {
+    "ruta": "material/mide-tu-fuerza-6/mide-tu-fuerza-6.pdf",
+    "titulo": "Mide tu fuerza 6",
+    "tipo": "otro",
+    "kb": 2931,
+    "libro": "Mide tu fuerza 6"
    },
    {
     "ruta": "material/mide-tu-fuerza/mide-tu-fuerza.pdf",
