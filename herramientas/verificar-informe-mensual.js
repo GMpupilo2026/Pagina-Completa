@@ -30,6 +30,7 @@ const BASE = process.env.BASE_URL || "http://localhost:8777";
 const PROFE = { id: "p-1", role: "profesor", is_admin: false, es_supervisor: false };
 const SUP = { id: "s-1", role: "profesor", is_admin: false, es_supervisor: true };
 const ALUMNA = { id: "a-1", role: "alumno", is_admin: false, es_supervisor: false };
+const ADMIN = { id: "ad-1", role: "admin", is_admin: true, es_supervisor: false };
 
 const EN_VIVO = {
   alumnos: 60, alumnos_activos: 44, ejercicios_alumnos: 5070, clases_en_linea: 5,
@@ -260,6 +261,8 @@ async function pruebaSupervisor(browser) {
   igual("quien da clase ahora se puede mirar en vivo (y lo dice escrito)",
         await page.$$eval("#lista a[data-observar]", (as) => as.map((a) => [a.dataset.observar, a.getAttribute("href"), a.textContent])),
         [["p-1", "sesion.html?observar=p-1", "🔴 En clase ahora · Mirar la clase"]]);
+  igual("quien supervisa sin administrar no tiene «Descargar el mes completo»",
+        await page.$$eval("#lista [data-mes-completo]", (b) => b.length), 0);
   igual("a quien no mandó no se le ofrece leer nada",
         await page.$$eval('#lista li[data-profesor="p-2"] > button', (b) => b.length), 0);
 
@@ -303,6 +306,62 @@ async function pruebaSupervisor(browser) {
   await vacio.page.close();
 }
 
+/* Quien administra baja el mes completo de cada profesor en un Excel. Lo que
+   se rompe callado: un enviado que baja los números de HOY en vez de la foto
+   que leyó la supervisión, o el Excel de un profesor con el detalle de otro. */
+async function pruebaAdmin(browser) {
+  console.log("\nQuien administra baja el mes completo de cada profesor");
+  const datos = { tablas: { informes_profesor: [{
+      id: "inf-9", profesor_id: "p-1", periodo: "2026-09-01", resumen: "=Clases de finales en los dos grupos.",
+      logros: "Subieron dos.", dificultades: "", proximo_mes: "Torneo interno.", datos: FOTO,
+      enviado_at: "2026-09-02T15:00:00Z", leido_at: null, comentario: "Muy bien." }] },
+    rpc: { resumen_profesores_supervisados: [
+      { id: "p-1", nombre: "Karina Rojas", grupo: "SJ", actividad: EN_VIVO,
+        informe_id: "inf-9", enviado_at: "2026-09-02T15:00:00Z", leido_at: null, comentado: true },
+      { id: "p-2", nombre: "Luis Mora", grupo: null, actividad: EN_VIVO,
+        informe_id: null, enviado_at: null, leido_at: null, comentado: false },
+    ], detalle_mensual_profesor: DETALLE, detalle_informe_mensual: DETALLE_FOTO } };
+  const { page, errores } = await abrir(browser, "/supervision.html", datos, ADMIN);
+  await page.waitForSelector("#lista li");
+  const mes = await page.evaluate(() => ActividadProfesor.mesPorOmision());
+  igual("cada profesor tiene su «Descargar el mes completo»",
+        await page.$$eval("#lista [data-mes-completo]", (bs) => bs.map((b) => [b.dataset.mesCompleto, b.textContent])),
+        [["p-1", "⬇ Descargar el mes completo (Excel)"], ["p-2", "⬇ Descargar el mes completo (Excel)"]]);
+
+  const bajar = async (id) => {
+    const bajada = page.waitForEvent("download");
+    await page.click('#lista [data-mes-completo="' + id + '"]');
+    const archivo = await bajada;
+    return { nombre: archivo.suggestedFilename(), csv: require("fs").readFileSync(await archivo.path(), "utf8") };
+  };
+  const fila = (csv, primera) => (csv.split("\r\n").find((l) => l.startsWith('"' + primera + '"')) || "(no está)");
+
+  const env = await bajar("p-1");
+  igual("el archivo dice de quién y de qué mes", env.nombre, "informe-karina-rojas-" + mes.slice(0, 7) + ".csv");
+  igual("sale con BOM y punto y coma", [env.csv.charCodeAt(0) === 0xfeff, env.csv.split("\r\n")[0]],
+        [true, '\ufeff"Informe mensual de";"Karina Rojas"']);
+  igual("lleva lo que escribió, con la fórmula desarmada",
+        fila(env.csv, "Resumen del mes"), '"Resumen del mes";"\'=Clases de finales en los dos grupos."');
+  igual("y el comentario de supervisión", fila(env.csv, "Comentario de supervisión"), '"Comentario de supervisión";"Muy bien."');
+  igual("los números son la FOTO del envío, no los de hoy", fila(env.csv, "Tareas puestas"), '"Tareas puestas";"7"');
+  igual("el tiempo va en minutos", fila(env.csv, "Tiempo de clase (minutos)"), '"Tiempo de clase (minutos)";"90"');
+  igual("el detalle es la foto de su informe", (await llamadas(page, "detalle_informe_mensual"))[0].args, { p_informe: "inf-9" });
+  igual("con su clase y su estudiante",
+        [env.csv.includes('"Finales de torre";"60"'), env.csv.includes('"Aula SJ"'), fila(env.csv, "Bruno Mena")],
+        [true, false, '"Bruno Mena";"";"0";"0";"0";"0";"0";"0"']);
+
+  const sin = await bajar("p-2");
+  igual("de quien no envió, el detalle de hoy con su id y el mes",
+        (await llamadas(page, "detalle_mensual_profesor"))[0].args, { p_profesor: "p-2", p_periodo: mes });
+  igual("y dice que no lo envió", fila(sin.csv, "Estado"), '"Estado";"Sin enviar: los números y el detalle son los de hoy"');
+  igual("sus números son los de hoy", fila(sin.csv, "Tareas puestas"), '"Tareas puestas";"19"');
+  igual("no lleva textos que no mandó", fila(sin.csv, "Resumen del mes"), "(no está)");
+  igual("el nombre con etiquetas va literal, como texto",
+        sin.csv.includes('"' + XSS.replace(/"/g, '""') + '";"SJ"'), true);
+  igual("sin errores en la página", errores, []);
+  await page.close();
+}
+
 async function pruebaPuertas(browser) {
   console.log("\nCada pantalla es de quien es");
   const a = await abrir(browser, "/informe-mensual.html", { tablas: {}, rpc: {} }, ALUMNA, "#denegado:not(.hidden)");
@@ -320,6 +379,7 @@ async function pruebaPuertas(browser) {
     await pruebaProfesor(browser);
     await pruebaEnviado(browser);
     await pruebaSupervisor(browser);
+    await pruebaAdmin(browser);
     await pruebaPuertas(browser);
   } catch (e) {
     console.log("  ✗ la prueba se cayó: " + (e && e.stack || e));
