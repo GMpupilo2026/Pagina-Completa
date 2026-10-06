@@ -64,6 +64,7 @@ const TAPA = {
   4: ["#1c0f2e", "#3a2160", "#160b26"],
   5: ["#2a1a0c", "#4a3015", "#20140a"],
   6: ["#22222a", "#3d3d46", "#1a1a20"],
+  7: ["#2b1020", "#4b1d3a", "#220c19"],
 }[VOLUMEN] || ["#0c2a22", "#12443a", "#0a241d"];
 const ANIO = 2026;
 
@@ -254,7 +255,10 @@ const html = `<!doctype html><html lang="es"><head><meta charset="utf-8">
   <p>Este es un banco de ejercicios para entrenar la táctica y, de paso, medir cuánto has avanzado. No es un
   libro para leer de corrido: es un cuaderno de trabajo. Lo vas a disfrutar más si lo haces con calma, un
   test a la vez, y si vuelves sobre lo que fallaste.</p>
-  ${VOLUMEN > 1 ? `<p>Este es el <strong>volumen ${VOLUMEN}</strong>. Tiene la misma forma que el volumen 1 —los mismos temas,
+  ${VOLUMEN >= 7 ? `<p>Este es el <strong>volumen ${VOLUMEN}</strong>. Tiene la forma de los anteriores —niveles, tiempos
+  y puntos— y posiciones <strong>todas nuevas</strong>: ninguna se repite. Trae además <strong>tres temas nuevos</strong>:
+  el mate en dos, el mate en tres y el sacrificio, en lugar del jaque doble, los rayos X y la interferencia.</p>`
+  : VOLUMEN > 1 ? `<p>Este es el <strong>volumen ${VOLUMEN}</strong>. Tiene la misma forma que el volumen 1 —los mismos temas,
   niveles, tiempos y puntos— y posiciones <strong>todas nuevas</strong>: ninguna se repite. Sirve para seguir
   entrenando después del primero, y para medir de nuevo sin que la memoria haga trampa.</p>` : ""}
   <p>Tiene <strong>${TOTAL} posiciones</strong> en <strong>${TESTS.length} tests de ${POR_TEST}</strong>. Cada test trabaja
@@ -485,7 +489,7 @@ function accesible() {
 </style>
 </head><body>
 <h1>${esc(NOMBRE)}</h1>
-<p>Banco de ejercicios tácticos de ${esc(AUTOR)}, volumen ${VOLUMEN}.${VOLUMEN > 1 ? " La misma forma que el volumen 1, con posiciones todas nuevas." : ""} Es el mismo contenido del libro en PDF, escrito para
+<p>Banco de ejercicios tácticos de ${esc(AUTOR)}, volumen ${VOLUMEN}.${VOLUMEN >= 7 ? " La forma de los anteriores, con posiciones todas nuevas y tres temas nuevos: mate en dos, mate en tres y sacrificio." : VOLUMEN > 1 ? " La misma forma que el volumen 1, con posiciones todas nuevas." : ""} Es el mismo contenido del libro en PDF, escrito para
 leerse con lector de pantalla o con la letra agrandada: las posiciones van contadas pieza por pieza y con su
 FEN, y no hay ninguna imagen.</p>
 <p>${TOTAL} posiciones en ${TESTS.length} tests de ${POR_TEST}, uno por tema, en tres niveles. Cada posición resuelta vale

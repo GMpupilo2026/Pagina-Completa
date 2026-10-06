@@ -939,7 +939,7 @@ de la tienda.
 
 ## El banco de ejercicios «Mide tu fuerza»
 
-Un libro de tests tácticos de Oscar Angulo Cubero, en seis volúmenes de 360
+Un libro de tests tácticos de Oscar Angulo Cubero, en siete volúmenes de 360
 posiciones en 45 tests de 8 cada uno; cada test de **un solo tema** (ataque doble, ataque a la descubierta,
 jaque doble, clavada, enfilada, desviación, atracción, interferencia, despeje,
 eliminación del defensor, rayos X, jugada intermedia, pieza atrapada, jugada
@@ -995,13 +995,26 @@ descartaron los que ya eran candidatas de los volúmenes 1 a 5. Hizo falta un
 **cuarto filtro** (Popularity ≥ 70, NbPlays ≥ 100, RatingDeviation ≤ 110), y
 solo en los temas raros: de 891 candidatas, 720 son del filtro de siempre y
 49 del cuarto (jaque doble, rayos X e interferencia). Ahí la base ya está
-prácticamente agotada: **un séptimo volumen igual no se puede hacer** sin
-bajar todavía más la calidad de esos temas; tendría que cambiarlos o cambiar
-de forma.
+prácticamente agotada: un séptimo volumen igual no se podía hacer sin bajar
+todavía más la calidad de esos temas.
 
-Cada tapa lleva «Volumen N» y su propio color (verde, vino, azul, morado, café
-y gris pizarra; el contraste del texto se midió contra el más claro de cada
-degradado: 5,7 o más, AA).
+Por eso el **7 cambia tres temas** (lo decidió el dueño del repo): jaque doble,
+rayos X e interferencia se cambian por **mate en dos, mate en tres y
+sacrificio** (`CAMBIOS_DESDE_7` y `temasDe()` en el generador; cada uno entra
+en el lugar del que sale). Los tres tienen cientos de posiciones con el filtro
+de siempre. El sacrificio se toma solo si no tiene mate ni ninguno de los
+otros temas del libro, para que no se cruce con los demás tests; los mates no
+se habían usado nunca, porque los otros temas excluyen las posiciones con
+mate. En los otros doce temas siguen las 20 siguientes; solo cuatro casilleros
+del tercer nivel (eliminación del defensor, enfilada, jugada intermedia y
+pieza atrapada) se completaron con los filtros más anchos: 66 de 900. Cada
+banco guarda sus propios temas y el verificador comprueba que sean los de su
+volumen. Un octavo volumen con estos temas ya no tendría jugada intermedia ni
+pieza atrapada difíciles con el filtro de siempre.
+
+Cada tapa lleva «Volumen N» y su propio color (verde, vino, azul, morado, café,
+gris pizarra y ciruela; el contraste del texto se midió contra el más claro de
+cada degradado: 5,7 o más, AA).
 
 ### Tomado de un libro ajeno como referencia, no copiado
 
@@ -1055,7 +1068,7 @@ detrás del candado del worker, y se comparte desde `admin.html#materiales`.
 ## Los materiales de clase
 
 `admin.html#materiales` («Materiales de clases») junta los materiales para dar
-clase —hoy, «Ponte a prueba» y los seis volúmenes del banco de ejercicios «Mide
+clase —hoy, «Ponte a prueba» y los siete volúmenes del banco de ejercicios «Mide
 tu fuerza»— y
 dice **con quién se comparte cada uno**: una
 persona, una academia entera o todos los profesores. Lo pinta

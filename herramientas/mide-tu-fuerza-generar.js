@@ -80,6 +80,8 @@
  *   volumen 5: las 20 siguientes que no tomó ningún volumen anterior, en orden
  *              de calidad (ver la cabecera de su archivo de candidatas)
  *   volumen 6: igual que el 5, con un cuarto filtro solo para los temas raros
+ *   volumen 7: tres temas nuevos (ver CAMBIOS_DESDE_7) y, en los demás, las
+ *              20 siguientes con el filtro de siempre
  */
 "use strict";
 const fs = require("fs");
@@ -163,6 +165,26 @@ const TEMAS = [
     pista: "Cuenta cuántas jugadas le faltan al peón para coronar y quién lo puede frenar: ¿puedes quitar a ese guardián?" },
 ];
 
+/* Desde el volumen 7 cambian tres temas. Jaque doble, rayos X e
+   interferencia se agotaron en la base (en el volumen 6 ya hizo falta un
+   cuarto filtro, y no quedaba casi nada): se cambian por tres temas con
+   cientos de posiciones de calidad. Cada uno entra en el lugar del que sale,
+   así el libro sigue yendo de lo más conocido a lo más fino. */
+const CAMBIOS_DESDE_7 = {
+  doubleCheck: { id: "mateIn2", nombre: "Mate en dos",
+    idea: "Una jugada que no deja defensa y, sea cual sea la respuesta, mate a la siguiente. Muchas veces la primera jugada es un sacrificio o una jugada tranquila que quita la última casilla al rey.",
+    pista: "Antes de dar jaque, mira las casillas de escape del rey: a veces el golpe es la jugada que las tapa." },
+  xRayAttack: { id: "mateIn3", nombre: "Mate en tres",
+    idea: "Tres jugadas que obligan: cada una deja al rival con una sola respuesta, o con varias que pierden igual. Hay que ver la posición final antes de empezar.",
+    pista: "Busca primero la posición de mate (qué pieza da el mate y en qué casilla) y después cómo llevar al rey o a tus piezas hasta ahí." },
+  interference: { id: "sacrifice", nombre: "El sacrificio",
+    idea: "Se entrega material —un peón, una pieza, la calidad o hasta la dama— para conseguir algo que vale más: abrir al rey, ganar más material unas jugadas después o un ataque que no se puede parar.",
+    pista: "Si una captura o un jaque parece imposible porque pierde material, calcula igual: ¿qué gana el rival y qué ganas tú tres jugadas después?" },
+};
+function temasDe(volumen) {
+  return volumen >= 7 ? TEMAS.map((t) => CAMBIOS_DESDE_7[t.id] || t) : TEMAS;
+}
+
 /* Tres niveles, como tres tomos. El tiempo de cada test sale de la
    dificultad: con 8 posiciones, 4, 5 y 6 minutos por posición. Se escribe
    en el banco para que el libro y quien lo use en clase digan lo mismo. */
@@ -230,7 +252,7 @@ function elegir(cands, cache) {
   const usadas = new Set();
   const tests = [];
   NIVELES.forEach((nivel) => {
-    TEMAS.forEach((tema) => {
+    temasDe(VOLUMEN).forEach((tema) => {
       const buenas = cands
         .filter((x) => x.tema === tema.id)
         .map((x) => ({ x, a: cache[x.c[2]] }))
@@ -309,7 +331,7 @@ async function main() {
  * GENERADO por herramientas/mide-tu-fuerza-generar.js — no se edita a mano.
  *
  * ${items.length} posiciones de la base abierta de Lichess (CC0), comprobadas con
- * Stockfish, en ${tests.length} tests temáticos de ${POR_TEST} (${TEMAS.length} temas en ${NIVELES.length} niveles).
+ * Stockfish, en ${tests.length} tests temáticos de ${POR_TEST} (${temasDe(VOLUMEN).length} temas en ${NIVELES.length} niveles).
  * Cada posición se contesta con la jugada y la línea; la buena vale 5 puntos.
  * Lo usan el libro impreso (herramientas/mide-tu-fuerza-pdf.js) y su versión
  * accesible. Vive detrás del candado de material/: trae las respuestas, y solo
@@ -322,7 +344,7 @@ window.MIDE_TU_FUERZA = {
   AUTOR: 'Oscar Angulo Cubero',
   POR_TEST: ${POR_TEST},
   PUNTOS: 5,
-  TEMAS: ${js(TEMAS)},
+  TEMAS: ${js(temasDe(VOLUMEN))},
   NIVELES: ${js(NIVELES)},
 };
 window.MIDE_TU_FUERZA_ITEMS = [
@@ -347,4 +369,4 @@ ${cuerpo}
 }
 
 if (require.main === module) main().catch((e) => { console.error(e.message); process.exit(1); });
-module.exports = { TEMAS, NIVELES, DESCUENTO_LICHESS, POR_TEST, producto, banco, volumenes };
+module.exports = { TEMAS, temasDe, NIVELES, DESCUENTO_LICHESS, POR_TEST, producto, banco, volumenes };

@@ -22,7 +22,7 @@
 const fs = require("fs");
 const path = require("path");
 const { Chess } = require("chess.js");
-const { DESCUENTO_LICHESS, TEMAS, NIVELES, POR_TEST, producto, banco, volumenes } = require("./mide-tu-fuerza-generar.js");
+const { DESCUENTO_LICHESS, temasDe, NIVELES, POR_TEST, producto, banco, volumenes } = require("./mide-tu-fuerza-generar.js");
 
 const RAIZ = path.join(__dirname, "..");
 const fallos = [];
@@ -55,7 +55,10 @@ BANCOS.forEach(({ v, LIBRO, ITEMS }) => {
   const aIngles = (san) => san.replace(/^[RDTAC]/, (c) => INGLES[c]).replace(/=([DTAC])/, (_, c) => "=" + INGLES[c]);
 
   /* ---------- la forma ---------- */
+  const TEMAS = temasDe(v);
   const TESTS = TEMAS.length * NIVELES.length;
+  ok(JSON.stringify(LIBRO.TEMAS.map((t) => t.id)) === JSON.stringify(TEMAS.map((t) => t.id)),
+    `los temas del banco no son los de su volumen: ${LIBRO.TEMAS.map((t) => t.id).join(", ")}`);
   ok(LIBRO.AUTOR === "Oscar Angulo Cubero", `el autor dice «${LIBRO.AUTOR}»`);
   ok(ITEMS.length === TESTS * POR_TEST, `esperaba ${TESTS * POR_TEST} posiciones y hay ${ITEMS.length}`);
   ok(ITEMS.every((it, i) => it.n === i + 1), "la numeración de las posiciones no va de 1 en adelante en orden");
