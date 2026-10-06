@@ -55,10 +55,23 @@ const PANTALLA = { width: 1440, height: 810 };
 /* ==========================================================================
    Las cuentas y los datos de demostración — TODOS inventados
    ========================================================================== */
+/* La guía es del equipo docente, así que las capturas son las de una
+   profesora que da clase y coordina, pero NO administra: con `is_admin` el
+   panel es otro (el de administración) y la captura enseñaría tarjetas que el
+   profesor no tiene. Las pocas páginas que hoy son solo de administración
+   (admin, el examen de arbitraje del equipo, el lector de planilla, los
+   reportes) se fotografían con ADMIN, otra cuenta de mentira (`quien:
+   "admin"` en PAGINAS). Ver «Las capturas de la guía, con la cuenta de quien
+   la lee» en docs/decisiones/cursos-y-material.md. */
 const PROFE = {
   id: "demo-profe", full_name: "Karina Rojas", email: "karina@ejemplo.test",
-  role: "profesor", is_admin: true, es_coordinador: true, grupo: null,
+  role: "profesor", is_admin: false, es_coordinador: true, grupo: null,
   teacher_id: null, invitaciones_max: 20, invitaciones_usadas: 3, elo: null,
+};
+const ADMIN = {
+  id: "demo-admin", full_name: "Laura Méndez", email: "laura@ejemplo.test",
+  role: "profesor", is_admin: true, es_coordinador: true, grupo: null,
+  teacher_id: null, invitaciones_max: 50, invitaciones_usadas: 8, elo: null,
 };
 const ALUMNOS = [
   ["demo-a1", "Sofía Muñoz", "7° B", 1240],
@@ -77,7 +90,7 @@ const hace = (dias) => new Date(Date.now() - dias * 86400000).toISOString();
 const dentro = (dias) => new Date(Date.now() + dias * 86400000).toISOString();
 
 const DEMO = {
-  perfiles: [PROFE].concat(ALUMNOS),
+  perfiles: [PROFE, ADMIN].concat(ALUMNOS),
 
   class_sessions: [0, 2, 5, 9, 14, 21].map((d, i) => ({
     id: "demo-c" + i, created_by: PROFE.id,
@@ -109,19 +122,29 @@ const DEMO = {
       por_actividad: { temas: 120, mates: 96, coordenadas: 40, practicar: 62, puzzles: 70, tactica: 20, lecciones: 10 },
     }],
     informes_totales: [{ clases_cerradas: 6, preguntas: 24, partidas: 11 }],
+    /* La fila lleva `id` (no `student_id`): con el nombre viejo el selector
+       de alumnos salía con seis opciones «undefined» y `?alumno=` no elegía a
+       nadie. Los nombres son los que lee informes.js (los mismos que los datos
+       de verificar-informes.js). */
     informes_resumen_alumnos: ALUMNOS.map((a, i) => ({
-      student_id: a.id, full_name: a.full_name, grupo: a.grupo, elo: a.elo,
-      respuestas: 30 + i * 7, correctas: 20 + i * 5, aciertos: 20 + i * 5,
+      id: a.id, full_name: a.full_name, email: a.email, grupo: a.grupo, elo: a.elo,
+      respuestas: 30 + i * 7, correctas: 20 + i * 5, calificadas: 28 + i * 7, aciertos: 20 + i * 5,
+      practicar_series: 6 + i, practicar_estrellas: 2 + i,
       clases: 5 - (i % 3), clases_asistidas: 5 - (i % 3),
       minutos_clase: 180 + i * 25, minutos_ejercicios: 90 + i * 30,
       puzzles: 30 + i * 6, lecciones: 4 + i, mejor_coord: 18 + i,
       practicar: 6 + i, estrellas: 2, mate1: 20 + i, mate2: 8 + i, mate3: 3,
       tactica: 25 + i * 4, concentracion: 5, cursos_temas: 2,
     })),
-    informes_cursos_alumnos: ALUMNOS.slice(0, 4).map((a, i) => ({
-      student_id: a.id, curso: ["el-mapa-de-los-finales", "estrategia-en-el-final",
-        "partidas-modelo", "aperturas-y-defensas"][i],
-      total: 20, hechas: 6 + i * 3, ultimo_tema: 6 + i * 3, ultimo_at: hace(i + 1),
+    /* Los nombres que lee informes.js (`hechos`, `titulo`, `ultimo_titulo`).
+       Con los viejos el curso salía «undefined/20 · NaN%». Los cursos son los
+       que un profesor ve, con su cantidad real de temas; el último tema
+       estudiado no se inventa: va sin él. */
+    informes_cursos_alumnos: ALUMNOS.slice(0, 3).map((a, i) => ({
+      student_id: a.id,
+      slug: ["el-mapa-de-los-finales", "estrategia-en-el-final", "partidas-modelo"][i],
+      titulo: ["El mapa de los finales", "Estrategia en el final", "Partidas modelo del ajedrez moderno"][i],
+      total: [27, 16, 33][i], hechos: [9, 6, 12][i], ultimo_titulo: null, ultima_fecha: hace(i + 1),
     })),
     informes_diagnosticos_alumnos: ALUMNOS.slice(0, 3).map((a, i) => ({
       student_id: a.id, nivel: ["Básico", "Intermedio", "Avanzado"][i],
@@ -156,6 +179,11 @@ const DEMO = {
       tareas_puestas: 4, tareas_terminadas: 2, sin_hacer_hoy: 1, proxima_vence: dentro(2),
       examenes_rendidos: 2, nota_promedio: 8.4,
     }],
+    /* Las funciones que su supervisor le dejó a la coordinadora. Sin esta
+       respuesta, Cobros y Formularios se fotografiaban diciendo «no está entre
+       tus funciones de coordinación». Son todas: la guía enseña lo que se
+       puede hacer. */
+    mis_funciones_coordinacion: ["formularios", "altas", "solicitudes", "cuentas", "acceso", "roles", "cobros", "equipos", "subgrupos"],
     cobros_resumen: [{ moneda: "CRC", cobrado_mes: 180000, pendiente: 60000, vencido: 20000, alumnos_morosos: 1 }],
   },
 
@@ -296,6 +324,15 @@ function rpcObjetoConFechas() {
   copia.reporte_actividades.desde = primero.toISOString().slice(0, 10);
   copia.reporte_actividades.hasta = hoy.toISOString().slice(0, 10);
   copia.reporte_actividades.generado = hoy.toISOString();
+  /* «Tu mes en ajedrez» (Logros) es del mes en curso: sin esta respuesta
+     decía «No se pudo cargar este mes». */
+  const mes = hoy.toISOString().slice(0, 7);
+  copia.entreno_mi_mes = {
+    mes, ejercicios: 186, dias_con_algo: 5, dias_activos: 4, racha_mejor: 3,
+    mejor_dia: { dia: mes + "-0" + Math.max(1, Math.min(hoy.getDate(), 9)), n: 62 },
+    con_como_salio: 120, limpios: 74, anterior: 140,
+    por_actividad: { temas: 90, mates: 60, coordenadas: 36 },
+  };
   return copia;
 }
 
@@ -396,23 +433,35 @@ const PAGINAS = [
   { slug: "login", url: "/login.html", espera: "form, input[type=password]", sesion: false },
   { slug: "panel", url: "/clases.html", espera: "#tile-grid" },
   { slug: "sesion", url: "/sesion.html", espera: "#board, .board" },
+  /* La clase con «¿Qué quieres hacer?» buscando: lo que la lámina del
+     buscador cuenta es la lista que sale, no el campo vacío. */
+  { slug: "clase-buscar", url: "/sesion.html", espera: "#buscar-herramienta-campo",
+    antes: () => {
+      const c = document.getElementById("buscar-herramienta-campo");
+      if (!c) return;
+      c.scrollIntoView({ block: "start" });
+      c.value = "pregunta";
+      c.dispatchEvent(new Event("input"));
+    } },
   { slug: "planes", url: "/planes.html", espera: "main" },
   { slug: "tareas", url: "/tareas.html", espera: "main" },
   { slug: "examenes", url: "/examenes.html", espera: "main" },
   { slug: "informes", url: "/informes.html", espera: "main" },
+  /* El informe de UN alumno, con «Con este alumno» arriba. */
+  { slug: "informe-alumno", url: "/informes.html?alumno=demo-a1", espera: "#informe-acciones a" },
   { slug: "cursos-academia", url: "/cursos/academia/index.html", espera: "main" },
   { slug: "entreno", url: "/entreno/index.html", espera: "main" },
   { slug: "estudio", url: "/entreno/estudio.html", espera: "main" },
   { slug: "temas", url: "/entreno/temas.html", espera: "main" },
   { slug: "aperturas", url: "/entreno/aperturas.html", espera: "main" },
   { slug: "diagnostico", url: "/entreno/diagnostico.html", espera: "main", sesion: false },
-  { slug: "arbitraje", url: "/arbitraje.html", espera: "main" },
+  { slug: "arbitraje", url: "/arbitraje.html", espera: "main", quien: "admin" },
   { slug: "juegos", url: "/juegos.html", espera: "main" },
   { slug: "torneos", url: "/torneos.html", espera: "main" },
   { slug: "partidas", url: "/partidas.html", espera: "main" },
   { slug: "logros", url: "/logros.html", espera: "main" },
   { slug: "bot", url: "/bot.html", espera: "main", sesion: false },
-  { slug: "lector-planilla", url: "/lector-planilla.html", espera: "main" },
+  { slug: "lector-planilla", url: "/lector-planilla.html", espera: "main", quien: "admin" },
   { slug: "formularios", url: "/formularios.html", espera: "main" },
   { slug: "cobros", url: "/cobros.html", espera: "main" },
   /* El reporte pinta su vista previa a partir del periodo del formulario, que
@@ -422,9 +471,9 @@ const PAGINAS = [
   /* El informe se pinta al apretar «Traer»: la página abre con el formulario y
      la vista previa vacía, y una captura de eso no enseña lo que el apartado
      está contando. Las fechas ya vienen puestas (el mes en curso). */
-  { slug: "reportes", url: "/reportes.html", espera: "main",
+  { slug: "reportes", url: "/reportes.html", espera: "main", quien: "admin",
     antes: () => { const b = document.getElementById("traer"); if (b) b.click(); } },
-  { slug: "admin", url: "/admin.html", espera: "main" },
+  { slug: "admin", url: "/admin.html", espera: "main", quien: "admin" },
   { slug: "configuracion", url: "/configuracion.html", espera: "main" },
 ];
 
@@ -464,8 +513,17 @@ async function capturar(navegador, pagina) {
      vivo en «Cargando…» para siempre, sin ningún error. */
 
   if (pagina.sesion !== false) {
+    /* Una sesión guardada en el navegador: sin ella, la guardia del <head>
+       (ver «Sin sesión, al login antes de bajar nada») no deja cargar la
+       página y la captura se queda esperando. Solo en las páginas con sesión:
+       el login se fotografía como lo ve quien todavía no entró. */
+    await require("./lib/playwright-con-sesion").sembrar(ctx);
+    const yo = pagina.quien === "admin" ? ADMIN : PROFE;
     await ctx.route("**/js/supabase-client.js", (r) =>
-      r.fulfill({ status: 200, contentType: "application/javascript", body: clienteFalso() }));
+      r.fulfill({ status: 200, contentType: "application/javascript", body: clienteFalso({ yo }) }));
+    /* El recorrido del profesor nuevo (js/recorrido-profe.js) sale la primera
+       vez y taparía la esquina del panel: la profesora de mentira ya lo vio. */
+    await ctx.addInitScript((id) => { try { localStorage.setItem("recorrido_profe_v1:" + id, "1"); } catch (e) {} }, yo.id);
   }
 
   const page = await ctx.newPage();
@@ -525,7 +583,7 @@ async function capturar(navegador, pagina) {
 /* Se exporta para poder depurar una página suelta con EL MISMO doble que usan
    las capturas: uno escrito aparte para depurar se separa del de verdad y se
    termina arreglando un problema que no existe. */
-module.exports = { clienteFalso, capturar, PAGINAS, DEMO, PROFE, ALUMNOS };
+module.exports = { clienteFalso, capturar, PAGINAS, DEMO, PROFE, ADMIN, ALUMNOS };
 if (require.main !== module) return;
 
 (async () => {
