@@ -82,7 +82,7 @@
  *   volumen 6: igual que el 5, con un cuarto filtro solo para los temas raros
  *   volumen 7: tres temas nuevos (ver CAMBIOS_DESDE_7) y, en los demás, las
  *              20 siguientes con el filtro de siempre
- *   volumen 8: los temas del 7, las 20 siguientes en orden de calidad
+ *   volúmenes 8 y 9: los temas del 7, las 20 siguientes en orden de calidad
  */
 "use strict";
 const fs = require("fs");
