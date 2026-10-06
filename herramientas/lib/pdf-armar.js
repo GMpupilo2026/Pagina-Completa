@@ -18,6 +18,8 @@ const { execFileSync } = require("child_process");
    todas las páginas pero al paginar no respeta el centrado, y termina corrida
    y cortada. Va en su propia hoja y se estampa encima de cada página del
    cuerpo. La tapa no la lleva: ya tiene el logo en grande. */
+/* Sin tapa (tapa = null, como un cuadernillo de examen), la marca va en todas
+   las páginas. */
 function unir(tapa, cuerpo, marca, destino) {
   const guion = `
 import sys, zlib
@@ -26,10 +28,11 @@ from pypdf.generic import StreamObject, NameObject
 tapa, cuerpo, marca, destino = sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4]
 escritor = PdfWriter()
 for archivo in (tapa, cuerpo):
-    escritor.append_pages_from_reader(PdfReader(archivo))
+    if archivo:
+        escritor.append_pages_from_reader(PdfReader(archivo))
 sello = PdfReader(marca).pages[0]
 for n, pagina in enumerate(escritor.pages):
-    if n == 0:
+    if n == 0 and tapa:
         continue
     pagina.merge_page(sello, over=True)
 
@@ -46,10 +49,10 @@ escritor.write(destino)
 # quedan sueltos pero el escritor los sigue guardando, y clonar solo copia lo
 # que cuelga del catálogo.
 PdfWriter(clone_from=destino).write(destino)
-print("marca de agua en", len(escritor.pages) - 1, "páginas")
+print("marca de agua en", len(escritor.pages) - (1 if tapa else 0), "páginas")
 `;
   try {
-    console.log(String(execFileSync("python3", ["-c", guion, tapa, cuerpo, marca, destino], { stdio: ["ignore", "pipe", "pipe"] })).trim());
+    console.log(String(execFileSync("python3", ["-c", guion, tapa || "", cuerpo, marca, destino], { stdio: ["ignore", "pipe", "pipe"] })).trim());
   } catch (e) {
     console.error("\nNo se pudieron unir tapa y cuerpo. Falta pypdf: pip install pypdf");
     console.error(String(e.stderr || "").trim().split("\n").slice(-3).join("\n"));

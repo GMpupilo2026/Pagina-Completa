@@ -330,7 +330,7 @@ async function pruebaUnaSolaPuerta(browser) {
   igual("el menú, por grupos y sin repetir",
     await page.evaluate(() => Array.from(document.querySelectorAll("nav[aria-label='Secciones de administración'] ul")).map((ul) =>
       document.getElementById(ul.getAttribute("aria-labelledby")).textContent + ": " + Array.from(ul.querySelectorAll("a")).map((a) => a.dataset.ir).join(", "))),
-    ["Hoy: inicio", "Supervisión y coordinación: supervisores, profesores, equipos", "Personas: cuentas, crear", "La plataforma: novedades, torneos, proyectos, materiales, preparacion, auditoria"]);
+    ["Hoy: inicio", "Supervisión y coordinación: supervisores, profesores, equipos", "Personas: cuentas, crear", "La plataforma: novedades, torneos, proyectos, materiales, archivos, preparacion, auditoria"]);
   igual("cada sección del menú existe y hay una por entrada",
     await page.evaluate(() => {
       const menu = Array.from(document.querySelectorAll(".admin-nav")).map((a) => a.dataset.ir).sort();
@@ -571,12 +571,22 @@ async function pruebaMateriales(browser) {
   const resumen = () => page.textContent("#mat-lista [role=status]");
   const lista = () => page.evaluate(() => Array.from(document.querySelectorAll("#mat-lista article > section:first-of-type ul:first-of-type > li"))
     .filter((li) => li.checkVisibility()).map((li) => li.querySelector("p").textContent));
-  igual("los libros, con sus archivos", await page.evaluate(() => Array.from(document.querySelectorAll("#mat-lista article a[href^='material/']")).map((a) => a.getAttribute("href"))),
+  igual("los libros, con sus archivos", await page.evaluate(() => Array.from(document.querySelectorAll("#mat-lista article > div:first-child a[href^='material/']")).map((a) => a.getAttribute("href"))),
     ["material/ponte-a-prueba/ponte-a-prueba.pdf", "material/ponte-a-prueba/ponte-a-prueba-accesible.html",
+     "material/ponte-a-prueba/versiones/claves-de-correccion.pdf", "material/ponte-a-prueba/ponte-a-prueba-versiones-accesible.html",
+     "material/mide-tu-fuerza/mide-tu-fuerza.pdf", "material/mide-tu-fuerza/mide-tu-fuerza-accesible.html",
      "material/peonita/peonita.pdf", "material/peonita/peonita-accesible.html"]);
-  igual("el cuento de Peonita no tiene pruebas como cuestionario", await page.evaluate(() =>
-    Array.from(document.querySelectorAll("#mat-peonita-titulo, #mat-lista article[aria-labelledby='mat-titulo-peonita'] h4")).map((h) => h.textContent)),
-    ["Con quién lo compartes"]);
+  // El banco de ejercicios no tiene pruebas como cuestionario: solo se
+  // comparte. Antes de separarlo, cualquier material sin pruebas pintaba
+  // igual el título y «todavía no están en la base».
+  igual("el banco de ejercicios se comparte y no tiene sección de pruebas", await page.evaluate(() => {
+    const art = document.querySelector("#mat-lista article[aria-labelledby='mat-titulo-mide-tu-fuerza']");
+    return [art.querySelectorAll(":scope > section").length, /como cuestionario/.test(art.textContent), !!art.querySelector("#mat-mide-tu-fuerza-buscar")];
+  }), [1, false, true]);
+  igual("el cuento de Peonita tampoco", await page.evaluate(() => {
+    const art = document.querySelector("#mat-lista article[aria-labelledby='mat-titulo-peonita']");
+    return [art.querySelectorAll(":scope > section").length, /como cuestionario/.test(art.textContent), !!art.querySelector("#mat-peonita-buscar")];
+  }), [1, false, true]);
   igual("dice con quién está compartido, también con palabras", [await resumen(), await lista()],
     ["Lo tienen: 1 academia, y tú.", ["🏫 Academia Norte"]]);
 
@@ -615,15 +625,138 @@ async function pruebaMateriales(browser) {
 
   // Las sub-fichas: seis pruebas, y las versiones que hay llevan a su cuestionario.
   igual("seis pruebas, cada una con sus tres versiones", await page.evaluate(() => {
-    const fichas = Array.from(document.querySelectorAll("#mat-lista article > section:last-of-type > ul > li"));
+    const fichas = Array.from(document.querySelectorAll("#mat-lista article:first-of-type > section:last-of-type > ul > li"));
     return [fichas.length, fichas[0].querySelectorAll("ul > li").length];
   }), [6, 3]);
   igual("las versiones cargadas llevan a su cuestionario; la que falta lo dice", await page.evaluate(() =>
-    Array.from(document.querySelectorAll("#mat-lista article > section:last-of-type > ul > li"))[0].querySelector("ul").textContent.replace(/\s+/g, " ").trim()),
-    "Versión AVersión BVersión C: sin cargar");
+    Array.from(document.querySelectorAll("#mat-lista article:first-of-type > section:last-of-type > ul > li"))[0].querySelector("ul").textContent.replace(/\s+/g, " ").trim()),
+    "Versión A🖨️ PDFVersión B🖨️ PDFVersión C: sin cargar🖨️ PDF");
+  // Cada versión también en papel: su cuadernillo, aunque no esté cargada como cuestionario.
+  igual("cada versión lleva a su PDF para imprimir", await page.evaluate(() =>
+    ["A", "C"].map((l) => document.querySelector("#mat-lista a[aria-label='Imprimir la versión " + l + " de la prueba 6']").getAttribute("href"))),
+    ["material/ponte-a-prueba/versiones/prueba-6-version-a.pdf", "material/ponte-a-prueba/versiones/prueba-6-version-c.pdf"]);
   igual("el enlace de la versión A", await page.getAttribute("#mat-lista a[aria-label='Ver la versión A de la prueba 1']", "href"), "cuestionarios.html?id=cq-1A");
   // CAPTURAS=<carpeta> guarda cómo se ve, para mirarla y no solo medir el DOM.
   if (process.env.CAPTURAS) await page.screenshot({ path: path.join(process.env.CAPTURAS, "admin-materiales.png"), fullPage: true });
+  igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
+  await ctx.close();
+}
+
+/* ============ admin.html · Archivos: todos los PDF, Word, Excel y presentaciones ============
+   La lista es data/archivos.json (herramientas/archivos-catalogo.js, leído del
+   disco): acá se mira que la pantalla muestre TODOS, cada tipo en su ficha y
+   en su lugar, que buscar y filtrar escondan de verdad (checkVisibility) y que
+   «Bajar los N» baje N. Que el JSON esté al día con el disco lo cuida
+   verificar-archivos-catalogo.js. */
+async function pruebaPdfs(browser) {
+  console.log("\n=== Archivos: PDF, Word, Excel y presentaciones, ordenados, para abrir o bajar ===");
+  const todo = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "data", "archivos.json"), "utf8"));
+  const catalogo = todo.pdf;
+  const { page, ctx, errores } = await abrir(browser, "/admin.html", ADMIN, { acceptDownloads: true });
+  await page.goto(BASE + "/admin.html", { waitUntil: "networkidle" });
+  await page.waitForSelector("#app:not(.hidden)", { timeout: 20000 });
+  await irA(page, "archivos");
+  await page.waitForSelector("#pdf-lista .pdf-fila", { state: "attached", timeout: 10000 });
+  igual("cuatro fichas, cada una con cuántos tiene, y se abre en PDF", await page.evaluate(() =>
+    Array.from(document.querySelectorAll("#arch-fichas [role=tab]")).map((b) => b.textContent.trim() + (b.getAttribute("aria-selected") === "true" ? " *" : ""))),
+    ["📕 PDF (" + catalogo.total + ") *", "📝 Word (" + todo.word.total + ")", "📊 Excel (" + todo.excel.total + ")", "📽️ Presentaciones (" + todo.presentaciones.total + ")"]);
+  igual("solo se ve la ficha de PDF", await page.evaluate(() =>
+    ["pdf", "word", "excel", "presentaciones"].filter((t) => document.getElementById("arch-panel-" + t).checkVisibility())), ["pdf"]);
+  igual("están todos los PDF, cada uno una vez", await page.evaluate(() => {
+    const rutas = Array.from(document.querySelectorAll("#pdf-lista .pdf-fila a[download]")).map((a) => a.getAttribute("href"));
+    return [rutas.length, new Set(rutas).size];
+  }), [catalogo.total, catalogo.total]);
+  igual("el resumen dice cuántos son", new RegExp("^" + catalogo.total + " PDF en total").test(await page.textContent("#pdf-resumen")), true);
+  igual("primero los libros, después los cursos, después los sueltos", await page.evaluate(() =>
+    Array.from(document.querySelectorAll("#pdf-lista h3")).map((h) => h.textContent.trim())),
+    ["📕 Libros y material", "🎓 Cursos", "📄 Otros PDF del sitio"]);
+  igual("los cursos, por nivel y en el orden del catálogo", await page.evaluate(() =>
+    Array.from(document.querySelectorAll("#pdf-lista .pdf-curso summary")).map((s) => s.firstElementChild.textContent.replace("▸", ""))),
+    catalogo.cursos.map((c) => c.titulo));
+  igual("los cursos empiezan plegados: se ven los libros, no las 400 filas", await page.evaluate(() =>
+    Array.from(document.querySelectorAll("#pdf-lista .pdf-fila")).filter((f) => f.checkVisibility()).length),
+    catalogo.material.length + catalogo.sueltos.length);
+  await page.click("#pdf-lista .pdf-curso summary");
+  const leccion = await page.evaluate(() => {
+    const l = document.querySelector("#pdf-lista .pdf-curso[open] .pdf-leccion");
+    return [l.querySelector("p").textContent, Array.from(l.querySelectorAll(".pdf-fila p:first-child")).map((p) => p.textContent)];
+  });
+  igual("abrir un curso muestra cada lección con su material y sus ejercicios", leccion,
+    ["1. " + catalogo.cursos[0].lecciones[0].titulo, ["Material de estudio", "Ejercicios"]]);
+  igual("el enlace de cada PDF existe en el sitio", await page.evaluate(async () => {
+    const rutas = Array.from(document.querySelectorAll("#pdf-lista a[download]")).map((a) => a.getAttribute("href")).filter((_, i) => i % 37 === 0);
+    const malos = [];
+    for (const r of rutas) { const x = await fetch(r, { method: "HEAD" }); if (!x.ok) malos.push(r + " " + x.status); }
+    return malos;
+  }), []);
+
+  await page.fill("#pdf-buscar", "lucena");
+  const conLucena = await page.evaluate(() => Array.from(document.querySelectorAll("#pdf-lista .pdf-fila")).filter((f) => f.checkVisibility())
+    .map((f) => f.querySelector("a[download]").getAttribute("href")));
+  igual("buscar (sin tildes ni mayúsculas) abre el curso y deja solo lo que coincide",
+    conLucena.length > 0 && conLucena.every((r) => /lucena/.test(r)) && conLucena.length < catalogo.total, true);
+  await page.fill("#pdf-buscar", "");
+  await page.selectOption("#pdf-tipo", "ejercicios");
+  igual("«Solo ejercicios» deja solo ejercicios", await page.evaluate(() => {
+    const v = Array.from(document.querySelectorAll("#pdf-lista .pdf-fila")).filter((f) => f.checkVisibility());
+    return v.length > 0 && v.every((f) => f.dataset.tipo === "ejercicios") && !document.querySelector("[aria-labelledby='pdf-titulo-material']").checkVisibility();
+  }), true);
+  await page.selectOption("#pdf-tipo", "todos");
+  await page.fill("#pdf-buscar", "zzzz no existe");
+  igual("si nada coincide, se dice", await page.locator("#pdf-vacio").isVisible(), true);
+  await page.fill("#pdf-buscar", "");
+
+  const bajados = [];
+  page.on("download", (d) => bajados.push(d.suggestedFilename()));
+  await page.click("[aria-labelledby='pdf-titulo-material'] button");
+  await page.waitForFunction(() => /^Listo/.test(document.querySelector("[aria-labelledby='pdf-titulo-material'] [role=status]").textContent), null, { timeout: 30000 });
+  igual("«Bajar los N» de libros baja esos N", bajados.slice().sort(),
+    catalogo.material.map((a) => a.ruta.split("/").pop()).sort());
+  if (process.env.CAPTURAS) await page.screenshot({ path: path.join(process.env.CAPTURAS, "admin-pdf.png"), fullPage: true });
+
+  // Word: con la flecha del teclado, como cualquier grupo de pestañas.
+  await page.focus("#arch-ficha-pdf");
+  await page.keyboard.press("ArrowRight");
+  igual("la flecha pasa a Word, con el foco y solo esa ficha a la vista", await page.evaluate(() => [
+    document.activeElement.id, document.getElementById("arch-ficha-word").getAttribute("aria-selected"),
+    ["pdf", "word", "excel", "presentaciones"].filter((t) => document.getElementById("arch-panel-" + t).checkVisibility())]),
+    ["arch-ficha-word", "true", ["word"]]);
+  const words = todo.word.grupos.flatMap((g) => g.archivos.map((a) => a.ruta));
+  igual("están todos los Word, por carpeta, y solo se bajan (no se «abren»)", await page.evaluate(() => {
+    const filas = Array.from(document.querySelectorAll("#arch-lista-word .pdf-fila")).filter((f) => f.checkVisibility());
+    return [filas.map((f) => f.querySelector("a[download]").getAttribute("href")).sort(),
+      filas.every((f) => f.querySelectorAll("a").length === 1)];
+  }), [words.slice().sort(), true]);
+  igual("cada carpeta con su nombre", await page.evaluate(() =>
+    Array.from(document.querySelectorAll("#arch-lista-word h3")).map((h) => h.textContent.replace("📁 ", ""))),
+    todo.word.grupos.map((g) => g.titulo));
+  if (process.env.CAPTURAS) await page.screenshot({ path: path.join(process.env.CAPTURAS, "admin-word.png") });
+  await page.keyboard.press("ArrowRight");
+  const excelTexto = await page.evaluate(() => document.getElementById("arch-panel-excel").checkVisibility() && document.getElementById("arch-lista-excel").textContent);
+  igual("Excel: lo que hay, o se dice que todavía no hay ninguno",
+    todo.excel.total ? (excelTexto.match(/\.xls/g) || []).length >= todo.excel.total : /Todavía no hay ningún Excel/.test(excelTexto), true);
+  await page.keyboard.press("ArrowRight");
+  const pres = todo.presentaciones;
+  const rutasPres = pres.material.concat(pres.sueltos, ...pres.cursos.map((c) => c.lecciones.flatMap((l) => l.archivos).concat(c.otros))).map((a) => a.ruta);
+  igual("Presentaciones: están todas, una vez, y solo se bajan", await page.evaluate(() => {
+    const p = document.getElementById("arch-panel-presentaciones");
+    const filas = Array.from(p.querySelectorAll(".pdf-fila"));
+    return [p.checkVisibility(), filas.map((f) => f.querySelector("a[download]").getAttribute("href")).sort(),
+      filas.every((f) => f.querySelectorAll("a").length === 1)];
+  }).then(([ve, rutas, soloBajar]) => [ve, rutas.length, JSON.stringify(rutas) === JSON.stringify(rutasPres.slice().sort()), soloBajar]),
+  [true, rutasPres.length, true, true]);
+  igual("por curso, en el orden del catálogo, plegados", await page.evaluate(() =>
+    Array.from(document.querySelectorAll("#arch-lista-presentaciones .pdf-curso")).map((d) => d.querySelector("summary").firstElementChild.textContent.replace("▸", "") + (d.open ? " (abierto)" : ""))),
+    pres.cursos.map((c) => c.titulo));
+  await page.click("#arch-lista-presentaciones .pdf-curso summary");
+  igual("cada lección con su presentación", await page.evaluate(() => {
+    const l = document.querySelector("#arch-lista-presentaciones .pdf-curso[open] .pdf-leccion");
+    return [l.querySelector("p").textContent, l.querySelector(".pdf-fila p").textContent];
+  }), ["1. " + pres.cursos[0].lecciones[0].titulo, "Presentación"]);
+  if (process.env.CAPTURAS) await page.screenshot({ path: path.join(process.env.CAPTURAS, "admin-presentaciones.png") });
+  await page.focus("#arch-ficha-presentaciones");
+  await page.keyboard.press("ArrowRight");
+  igual("y desde la última, la flecha vuelve a PDF", await page.evaluate(() => document.activeElement.id), "arch-ficha-pdf");
   igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
   await ctx.close();
 }
@@ -1268,6 +1401,7 @@ async function pruebaVolcarEnUnEquipo(browser) {
     await pruebaPreparacionRivales(browser);
     await pruebaProyectos(browser);
     await pruebaMateriales(browser);
+    await pruebaPdfs(browser);
     await pruebaAuditoria(browser);
     await pruebaFichasDeGrupo(browser);
     await pruebaVolcarEnUnEquipo(browser);

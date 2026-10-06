@@ -32,3 +32,4 @@ herramientas/.cache-tipos.json
 
 # Caché del análisis de Stockfish de herramientas/libro-examen-generar.js.
 herramientas/.cache-libro-examen.json
+herramientas/.cache-mide-tu-fuerza.json

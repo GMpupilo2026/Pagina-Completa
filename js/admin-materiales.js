@@ -1,5 +1,6 @@
-/* Los materiales de clase en admin.html#materiales: cada material (los libros
- * «Ponte a prueba» y «Peonita y el reino de las 64 casillas»), con sus
+/* Los materiales de clase en admin.html#materiales: cada material (el libro
+ * «Ponte a prueba», el banco de ejercicios «Mide tu fuerza» y el cuento
+ * «Peonita y el reino de las 64 casillas»), con sus
  * sub-fichas —las pruebas y sus versiones como cuestionario, si las tiene— y
  * CON QUIÉN se comparte.
  *
@@ -30,10 +31,26 @@
       archivos: [
         { href: "material/ponte-a-prueba/ponte-a-prueba.pdf", texto: "📥 El libro en PDF" },
         { href: "material/ponte-a-prueba/ponte-a-prueba-accesible.html", texto: "♿ Versión accesible" },
+        { href: "material/ponte-a-prueba/versiones/claves-de-correccion.pdf", texto: "🔑 Claves de las versiones" },
+        { href: "material/ponte-a-prueba/ponte-a-prueba-versiones-accesible.html", texto: "♿ Versiones, accesibles" },
       ],
+      // Los cuadernillos de cada versión para imprimir
+      // (herramientas/libro-examen-versiones-pdf.js).
+      pdfVersiones: "material/ponte-a-prueba/versiones/",
       pruebas: 6,
       posicionesPorPrueba: 30,
       versiones: ["A", "B", "C"],
+    },
+    {
+      producto: "mide-tu-fuerza",
+      emoji: "📗",
+      titulo: "Mide tu fuerza",
+      autor: "Oscar Angulo Cubero",
+      resumen: "Banco de ejercicios tácticos: 360 posiciones en 45 tests de 8, uno por tema (ataque doble, clavada, desviación, atracción, rayos X y diez más), en tres niveles. Cada test con su tiempo y sus puntos, el cuadro de puntuación y la fuerza en Elo por nivel y total.",
+      archivos: [
+        { href: "material/mide-tu-fuerza/mide-tu-fuerza.pdf", texto: "📥 El libro en PDF" },
+        { href: "material/mide-tu-fuerza/mide-tu-fuerza-accesible.html", texto: "♿ Versión accesible" },
+      ],
     },
     {
       producto: "peonita",
@@ -306,6 +323,14 @@
         } else {
           item.appendChild(el("span", "text-xs text-brand-450 dark:text-brand-350", "Versión " + letra + ": sin cargar"));
         }
+        // La misma versión en papel: el cuadernillo del alumno, con las
+        // opciones en el mismo orden que el cuestionario.
+        if (m.pdfVersiones) {
+          const pdf = el("a", ENLACE + " ml-1", "🖨️ PDF");
+          pdf.href = m.pdfVersiones + "prueba-" + p + "-version-" + letra.toLowerCase() + ".pdf";
+          pdf.setAttribute("aria-label", "Imprimir la versión " + letra + " de la prueba " + p);
+          item.appendChild(pdf);
+        }
         ul.appendChild(item);
       });
       li.appendChild(ul);
@@ -347,12 +372,13 @@
       pintarAgregar(m, comp);
       art.appendChild(comp);
 
-      // Un libro sin pruebas (el cuento de Peonita) no lleva esa sección.
+      // Solo un material con pruebas cargadas como cuestionario tiene esta
+      // sección: el banco de ejercicios es un libro y nada más.
       if (!m.pruebas) { lista.appendChild(art); return; }
       const pr = el("section");
-      pr.appendChild(el("h4", "text-sm font-bold uppercase tracking-wide text-brand-500 dark:text-brand-300 mb-1", "Las pruebas, como cuestionario"));
+      pr.appendChild(el("h4", "text-sm font-bold uppercase tracking-wide text-brand-500 dark:text-brand-300 mb-1", "Las pruebas, como cuestionario y para imprimir"));
       pr.appendChild(el("p", "text-xs text-brand-450 dark:text-brand-350 mb-3",
-        "Cada prueba sale en tres versiones con preguntas distintas, para que un grupo no reciba lo mismo que otro. Quien tenga el material las usa en la clase en vivo o las manda de tarea, y cada alumno ve las preguntas y las opciones en su propio orden. Para un examen con preguntas sorteadas, el banco aparece en Exámenes como «Libro “Ponte a prueba”»."));
+        "Cada prueba sale en tres versiones con preguntas distintas, para que un grupo no reciba lo mismo que otro. Cada versión está también en PDF para imprimir, con su hoja de respuestas; las respuestas y los puntos de las 18 están en «Claves de las versiones». Quien tenga el material las usa en la clase en vivo o las manda de tarea, y cada alumno ve las preguntas y las opciones en su propio orden. Para un examen con preguntas sorteadas, el banco aparece en Exámenes como «Libro “Ponte a prueba”»."));
       pintarPruebas(m, pr);
       art.appendChild(pr);
       lista.appendChild(art);
