@@ -939,7 +939,7 @@ de la tienda.
 
 ## El banco de ejercicios «Mide tu fuerza»
 
-Un libro de tests tácticos de Oscar Angulo Cubero, en siete volúmenes de 360
+Un libro de tests tácticos de Oscar Angulo Cubero, en ocho volúmenes de 360
 posiciones en 45 tests de 8 cada uno; cada test de **un solo tema** (ataque doble, ataque a la descubierta,
 jaque doble, clavada, enfilada, desviación, atracción, interferencia, despeje,
 eliminación del defensor, rayos X, jugada intermedia, pieza atrapada, jugada
@@ -1009,12 +1009,17 @@ mate. En los otros doce temas siguen las 20 siguientes; solo cuatro casilleros
 del tercer nivel (eliminación del defensor, enfilada, jugada intermedia y
 pieza atrapada) se completaron con los filtros más anchos: 66 de 900. Cada
 banco guarda sus propios temas y el verificador comprueba que sean los de su
-volumen. Un octavo volumen con estos temas ya no tendría jugada intermedia ni
-pieza atrapada difíciles con el filtro de siempre.
+volumen.
+
+El 8 lleva los temas del 7 y las 20 siguientes de cada casillero en orden de
+calidad: 820 del filtro de siempre y 80 de los cuatro casilleros agotados del
+tercer nivel (jugada intermedia, enfilada y pieza atrapada con el filtro 2;
+eliminación del defensor con el 3). Un noveno volumen con estos temas ya bajaría
+a los filtros 3 y 4 en esos cuatro.
 
 Cada tapa lleva «Volumen N» y su propio color (verde, vino, azul, morado, café,
-gris pizarra y ciruela; el contraste del texto se midió contra el más claro de
-cada degradado: 5,7 o más, AA).
+gris pizarra, ciruela y oliva; el contraste del texto se midió contra el más
+claro de cada degradado: 5,7 o más, AA).
 
 ### Tomado de un libro ajeno como referencia, no copiado
 
@@ -1068,7 +1073,7 @@ detrás del candado del worker, y se comparte desde `admin.html#materiales`.
 ## Los materiales de clase
 
 `admin.html#materiales` («Materiales de clases») junta los materiales para dar
-clase —hoy, «Ponte a prueba» y los siete volúmenes del banco de ejercicios «Mide
+clase —hoy, «Ponte a prueba» y los ocho volúmenes del banco de ejercicios «Mide
 tu fuerza»— y
 dice **con quién se comparte cada uno**: una
 persona, una academia entera o todos los profesores. Lo pinta

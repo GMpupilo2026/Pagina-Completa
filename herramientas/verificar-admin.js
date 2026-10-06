@@ -580,15 +580,16 @@ async function pruebaMateriales(browser) {
      "material/mide-tu-fuerza-4/mide-tu-fuerza-4.pdf", "material/mide-tu-fuerza-4/mide-tu-fuerza-4-accesible.html",
      "material/mide-tu-fuerza-5/mide-tu-fuerza-5.pdf", "material/mide-tu-fuerza-5/mide-tu-fuerza-5-accesible.html",
      "material/mide-tu-fuerza-6/mide-tu-fuerza-6.pdf", "material/mide-tu-fuerza-6/mide-tu-fuerza-6-accesible.html",
-     "material/mide-tu-fuerza-7/mide-tu-fuerza-7.pdf", "material/mide-tu-fuerza-7/mide-tu-fuerza-7-accesible.html"]);
+     "material/mide-tu-fuerza-7/mide-tu-fuerza-7.pdf", "material/mide-tu-fuerza-7/mide-tu-fuerza-7-accesible.html",
+     "material/mide-tu-fuerza-8/mide-tu-fuerza-8.pdf", "material/mide-tu-fuerza-8/mide-tu-fuerza-8-accesible.html"]);
   // El banco de ejercicios no tiene pruebas como cuestionario: solo se
   // comparte. Antes de separarlo, cualquier material sin pruebas pintaba
   // igual el título y «todavía no están en la base».
   igual("cada volumen del banco de ejercicios se comparte aparte y no tiene sección de pruebas", await page.evaluate(() =>
-    ["mide-tu-fuerza", "mide-tu-fuerza-2", "mide-tu-fuerza-3", "mide-tu-fuerza-4", "mide-tu-fuerza-5", "mide-tu-fuerza-6", "mide-tu-fuerza-7"].map((p) => {
+    ["mide-tu-fuerza", "mide-tu-fuerza-2", "mide-tu-fuerza-3", "mide-tu-fuerza-4", "mide-tu-fuerza-5", "mide-tu-fuerza-6", "mide-tu-fuerza-7", "mide-tu-fuerza-8"].map((p) => {
       const art = document.querySelector("#mat-lista article[aria-labelledby='mat-titulo-" + p + "']");
       return [art.querySelectorAll(":scope > section").length, /como cuestionario/.test(art.textContent), !!art.querySelector("#mat-" + p + "-buscar")];
-    })), Array(7).fill([1, false, true]));
+    })), Array(8).fill([1, false, true]));
   igual("dice con quién está compartido, también con palabras", [await resumen(), await lista()],
     ["Lo tienen: 1 academia, y tú.", ["🏫 Academia Norte"]]);
 
