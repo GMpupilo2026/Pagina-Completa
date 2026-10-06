@@ -675,355 +675,42 @@ function celdaCuenta(r) {
 }
 
 // ------------------------------------------------------------------ dar de alta
-let altaRespuesta = null;
-let altaVolverEl = null;
-// Cierto cuando el diálogo se abrió con "＋ Alumno nuevo" y no con el botón
-// "Crear cuenta" de una respuesta: no hay `formulario_respuestas` de la que
-// partir, así que se manda a create-student (la misma que usa la invitación
-// directa desde la clase en vivo) en vez de a inscribir-alumno, que exige un
-// respuesta_id.
-let altaManual = false;
+// La caja vive en js/alta-alumno.js, que comparte con alumno-nuevo.html (la
+// ficha «Crear cuenta de alumno» del panel del profesor). Acá solo se decide
+// con qué datos se abre.
 
 function abrirAlta(r, boton) {
     const { formulario: f, papeles } = respuestasActuales;
-    altaRespuesta = r;
-    altaManual = false;
-    altaVolverEl = boton || null;
-    document.getElementById("alta-titulo").textContent = "Crear la cuenta del alumno";
     const dato = (papel) => {
         const id = papeles[papel];
         return id ? valorLegible(r.respuestas[id]) : "";
     };
-    document.getElementById("alta-alumno-nombre").value = dato("alumno_nombre");
-    document.getElementById("alta-alumno-correo").value = dato("alumno_correo");
-    document.getElementById("alta-encargado-nombre").value = dato("encargado_nombre");
-    document.getElementById("alta-encargado-correo").value = dato("encargado_correo");
-    document.getElementById("alta-frecuencia").value = "semanal";
-    // El equipo del formulario: si se armó para 7° B, sus alumnos son de 7° B.
-    document.getElementById("alta-grupo").value = f.grupo || "";
-
-    /* La casilla arranca marcada cuando el formulario no trajo correo del
-       alumno: es lo que de verdad pasa con los pequeños — la familia escribe
-       el suyo y deja ese campo vacío. Se propone, no se decide: queda a la
-       vista y se puede desmarcar. */
-    // La marca de "lo puso a mano" se borra al abrir OTRA respuesta: si no,
-    // el usuario que se corrigió para un alumno se le quedaría puesto al
-    // siguiente, y ese es el usuario con el que va a entrar.
-    const campoUsuario = document.getElementById("alta-usuario");
-    delete campoUsuario.dataset.tocado;
-    campoUsuario.value = "";
-    // La contraseña del alumno de antes no se le queda puesta al siguiente.
-    document.getElementById("alta-contrasena").value = "";
-    document.getElementById("alta-sin-correo").checked = !dato("alumno_correo");
-    document.getElementById("alta-usuario-dominio").textContent = "@" + UsuarioAlumno.DOMINIO;
-    pintarModoAlta();
-    document.getElementById("alta-profesor").value = "";
-    pintarAsignado();
-    const msg = document.getElementById("alta-msg");
-    msg.textContent = "";
-    msg.className = "text-sm mt-4";
-    document.getElementById("alta-enviar").disabled = false;
-    document.getElementById("alta-fondo").classList.remove("hidden");
-    document.getElementById("alta-alumno-correo").focus();
+    AltaAlumno.abrir({
+        respuestaId: r.id,
+        volverEl: boton || null,
+        datos: {
+            alumnoNombre: dato("alumno_nombre"),
+            alumnoCorreo: dato("alumno_correo"),
+            encargadoNombre: dato("encargado_nombre"),
+            encargadoCorreo: dato("encargado_correo"),
+            // El equipo del formulario: si se armó para 7° B, sus alumnos son de 7° B.
+            grupo: f.grupo || "",
+        },
+        // La pantalla dice lo que de verdad pasó, no "listo" a secas: si ya
+        // tenía cuenta no salió ninguna invitación, y conviene saberlo.
+        alCrear: (out) => {
+            r.cuenta_id = out.alumno_id;
+            r.cuenta_creada_at = new Date().toISOString();
+            pintarRespuestas();
+        },
+    });
 }
 
 /* La misma caja, en blanco: para el alumno que se inscribe por WhatsApp o en
-   persona, sin pasar por el enlace del formulario. Manda a create-student
-   (ver enviarAlta) en vez de inscribir-alumno. */
+   persona, sin pasar por el enlace del formulario. Manda a create-student en
+   vez de inscribir-alumno. */
 function abrirAltaManual() {
-    altaRespuesta = null;
-    altaManual = true;
-    altaVolverEl = document.getElementById("alumno-nuevo-btn");
-    document.getElementById("alta-titulo").textContent = "Crear una cuenta de alumno";
-    document.getElementById("alta-alumno-nombre").value = "";
-    document.getElementById("alta-alumno-correo").value = "";
-    document.getElementById("alta-encargado-nombre").value = "";
-    document.getElementById("alta-encargado-correo").value = "";
-    document.getElementById("alta-frecuencia").value = "semanal";
-    document.getElementById("alta-grupo").value = "";
-
-    const campoUsuario = document.getElementById("alta-usuario");
-    delete campoUsuario.dataset.tocado;
-    campoUsuario.value = "";
-    // La contraseña del alumno de antes no se le queda puesta al siguiente.
-    document.getElementById("alta-contrasena").value = "";
-    document.getElementById("alta-sin-correo").checked = false;
-    document.getElementById("alta-usuario-dominio").textContent = "@" + UsuarioAlumno.DOMINIO;
-    pintarModoAlta();
-    document.getElementById("alta-profesor").value = "";
-    pintarAsignado();
-    const msg = document.getElementById("alta-msg");
-    msg.textContent = "";
-    msg.className = "text-sm mt-4";
-    document.getElementById("alta-enviar").disabled = false;
-    document.getElementById("alta-fondo").classList.remove("hidden");
-    document.getElementById("alta-alumno-nombre").focus();
-}
-
-/* De quién queda alumno, dicho arriba en el diálogo. Sin elegir, de quien lo
-   da de alta si da clase; quien administra sin ser profesor no da clase, y
-   entonces queda sin profesor (lo deciden igual las Edge Functions). */
-function pintarAsignado() {
-    const sel = document.getElementById("alta-profesor");
-    const elegido = sel.value ? sel.options[sel.selectedIndex].textContent : "";
-    document.getElementById("alta-asignado").textContent = elegido
-        ? "queda en la clase de " + elegido
-        : perfil.role === "profesor"
-            ? "queda asignado a tu clase"
-            : "queda sin profesor hasta que se lo asignes en Administración";
-}
-
-/* Los profesores que puede elegir quien administra (todos) o supervisa (los
-   suyos): los que le da `mi_gente`, que filtra la base. Viene de a 200 como
-   mucho por página, así que se pide hasta el final: con un límite a ojo, un
-   profesor se quedaría fuera del selector sin que nada falle. */
-async function cargarProfesoresAlta() {
-    if (!(perfil.is_admin || perfil.es_supervisor)) return;
-    const trozo = 200;
-    let desde = 0, todo = [], total = null;
-    try {
-        for (;;) {
-            const { data, error } = await sb.rpc("mi_gente",
-                { p_busqueda: null, p_rol: "profesor", p_limite: trozo, p_desde: desde });
-            if (error) throw error;
-            const filas = data || [];
-            if (total === null) total = filas.length ? Number(filas[0].total) : 0;
-            todo = todo.concat(filas);
-            desde += trozo;
-            if (!filas.length || todo.length >= total) break;
-        }
-    } catch (err) {
-        return; // Sin la lista no se ofrece: queda lo de siempre.
-    }
-    const nombre = (p) => (p.full_name || "").trim() || p.email || "Sin nombre";
-    const otros = todo.filter((p) => p.id !== perfil.id)
-        .sort((a, b) => nombre(a).localeCompare(nombre(b), "es"));
-    if (!otros.length) return;
-    const sel = document.getElementById("alta-profesor");
-    sel.textContent = "";
-    const primera = document.createElement("option");
-    primera.value = "";
-    primera.textContent = perfil.role === "profesor"
-        ? "Yo (" + ((perfil.full_name || "").trim() || "mi clase") + ")"
-        : "— Sin profesor por ahora —";
-    sel.appendChild(primera);
-    otros.forEach((p) => {
-        const o = document.createElement("option");
-        o.value = p.id;
-        o.textContent = nombre(p);
-        sel.appendChild(o);
-    });
-    document.getElementById("alta-profesor-fila").classList.remove("hidden");
-}
-
-/* Qué se ve y qué se pide según haya correo propio o no. Es UNA sola función
-   y la llaman el abrir y la casilla: si cada uno pintara lo suyo, marcar la
-   casilla y volver a abrir el diálogo dejarían la pantalla en dos estados
-   distintos. */
-function pintarModoAlta() {
-    const sinCorreo = document.getElementById("alta-sin-correo").checked;
-    const correo = document.getElementById("alta-alumno-correo");
-    const fila = document.getElementById("alta-usuario-fila");
-    const usuario = document.getElementById("alta-usuario");
-
-    correo.disabled = sinCorreo;
-    correo.classList.toggle("opacity-50", sinCorreo);
-    // El asterisco se muda: sin correo propio, el obligatorio es el de la casa.
-    document.getElementById("alta-correo-obligatorio").classList.toggle("hidden", sinCorreo);
-    fila.classList.toggle("hidden", !sinCorreo);
-
-    // Con la contraseña puesta no sale ningún correo: la casa vuelve a ser
-    // opcional y el botón dice lo que de verdad va a hacer.
-    const conClave = sinCorreo && document.getElementById("alta-contrasena").value !== "";
-    document.getElementById("alta-encargado-ayuda").textContent = conClave
-        ? "Ahí llega el informe de cómo le va. Con la contraseña puesta no hace falta para entrar; si se deja en blanco, no se apunta a nadie."
-        : sinCorreo
-        ? "Ahí llegan el usuario y la contraseña provisional Y el informe de cómo le va. Sin esto no hay forma de escribirle a esta familia."
-        : "Ahí llega el informe de cómo le va. Si se deja en blanco, no se apunta a nadie.";
-    document.getElementById("alta-enviar").textContent = conClave
-        ? "Crear la cuenta" : "Crear la cuenta y enviar la invitación";
-
-    // Se propone desde el nombre, pero lo escrito a mano no se pisa: quien lo
-    // corrigió no quiere que se le deshaga al volver a tocar la casilla.
-    if (sinCorreo && !usuario.dataset.tocado) {
-        usuario.value = baseDeUsuarioEnPantalla(document.getElementById("alta-alumno-nombre").value);
-    }
-}
-
-/* La misma regla que `baseDeUsuario()` de la Edge Function: primer nombre y
-   primer apellido, sin tildes. Acá es solo para PROPONER lo que se ve en
-   pantalla — quien decide de verdad es el servidor, que además desempata si el
-   usuario ya está tomado. Que las dos coincidan lo comprueba
-   verificar-alumno-sin-correo.js. */
-function baseDeUsuarioEnPantalla(nombre) {
-    const pedazos = String(nombre || "")
-        .normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/ñ/gi, "n")
-        .toLowerCase().replace(/[^a-z0-9\s]/g, " ").trim().split(/\s+/).filter(Boolean);
-    if (!pedazos.length) return "";
-    const apellido = pedazos.length >= 4 ? pedazos[2] : pedazos[1];
-    return [pedazos[0], apellido].filter(Boolean).join(".").slice(0, 40);
-}
-
-function cerrarAlta() {
-    document.getElementById("alta-fondo").classList.add("hidden");
-    altaRespuesta = null;
-    altaManual = false;
-    // El foco vuelve al botón que abrió esto: si no, se queda dentro de algo
-    // que ya no está en pantalla.
-    if (altaVolverEl && document.body.contains(altaVolverEl)) altaVolverEl.focus();
-    altaVolverEl = null;
-}
-
-async function enviarAlta() {
-    if (!altaRespuesta && !altaManual) return;
-    const btn = document.getElementById("alta-enviar");
-    const msg = document.getElementById("alta-msg");
-    const v = (id) => document.getElementById(id).value.trim();
-
-    const sinCorreo = document.getElementById("alta-sin-correo").checked;
-    const alumnoNombre = v("alta-alumno-nombre");
-    const alumnoCorreo = sinCorreo ? "" : v("alta-alumno-correo");
-    const usuario = sinCorreo ? v("alta-usuario") : "";
-    // Sin recortar: un espacio al final se dice, no se arregla callado.
-    const contrasena = sinCorreo ? document.getElementById("alta-contrasena").value : "";
-    const encargadoNombre = v("alta-encargado-nombre");
-    const encargadoCorreo = v("alta-encargado-correo");
-    const frecuencia = document.getElementById("alta-frecuencia").value;
-    const grupo = v("alta-grupo");
-    const profesorElegido = document.getElementById("alta-profesor").value;
-    const profesorNombre = profesorElegido
-        ? document.getElementById("alta-profesor").selectedOptions[0].textContent : "";
-
-    // Las dos puertas —"Crear cuenta" de una respuesta e "＋ Alumno nuevo"—
-    // validan y avisan igual; lo único que cambia es a qué función se manda
-    // y con qué nombres de campo la espera cada una.
-    const cuerpo = altaManual ? {
-        email: alumnoCorreo,
-        full_name: alumnoNombre,
-        sin_correo: sinCorreo,
-        usuario,
-        encargado_nombre: encargadoNombre,
-        encargado_email: encargadoCorreo,
-        frecuencia,
-        grupo,
-        contrasena,
-    } : {
-        respuesta_id: altaRespuesta.id,
-        alumno_nombre: alumnoNombre,
-        alumno_email: alumnoCorreo,
-        sin_correo: sinCorreo,
-        usuario,
-        encargado_nombre: encargadoNombre,
-        encargado_email: encargadoCorreo,
-        frecuencia,
-        grupo,
-        contrasena,
-    };
-
-    // Solo viaja si se eligió a alguien: sin él, la función decide como siempre.
-    if (profesorElegido) cuerpo.profesor_id = profesorElegido;
-
-    const fallar = (texto, campo) => {
-        msg.textContent = texto;
-        msg.className = "text-sm mt-4 text-red-600 dark:text-red-400";
-        document.getElementById(campo).focus();
-    };
-
-    if (sinCorreo) {
-        // Sin buzón propio y sin contraseña, el de la casa es la ÚNICA forma
-        // de mandarle el enlace: sin él la cuenta queda creada y muda, y de
-        // eso nadie se entera hasta que el alumno nunca aparece. Con la
-        // contraseña puesta ya entra, y la casa es opcional.
-        if (!alumnoNombre) {
-            return fallar("Para armarle un usuario hace falta el nombre del alumno.", "alta-alumno-nombre");
-        }
-        if (contrasena && contrasena.length < ContrasenaAlumno.MINIMO) {
-            return fallar(`La contraseña tiene que tener al menos ${ContrasenaAlumno.MINIMO} caracteres.`, "alta-contrasena");
-        }
-        if (contrasena && contrasena.trim() !== contrasena) {
-            return fallar("La contraseña no puede empezar ni terminar con espacios.", "alta-contrasena");
-        }
-        if (!contrasena && !encargadoCorreo) {
-            return fallar("Sin correo propio, el de la persona encargada es obligatorio: es a donde van el usuario y la contraseña provisional. O ponle tú la contraseña.", "alta-encargado-correo");
-        }
-        if (!usuario) {
-            return fallar("Falta el usuario con el que va a entrar.", "alta-usuario");
-        }
-    } else if (!alumnoCorreo) {
-        return fallar("Falta el correo del alumno: es a donde va la invitación. Si no tiene, marca «No tiene correo propio».", "alta-alumno-correo");
-    }
-
-    btn.disabled = true;
-    msg.textContent = "Creando la cuenta…";
-    msg.className = "text-sm mt-4 text-brand-500 dark:text-brand-300";
-    try {
-        const funcion = altaManual ? "create-student" : "inscribir-alumno";
-        const res = await fetch(`${window.SUPABASE_URL}/functions/v1/${funcion}`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${await window.tokenDeSesion()}`,
-                "apikey": window.SUPABASE_ANON_KEY,
-            },
-            body: JSON.stringify(cuerpo),
-        });
-        const out = await res.json().catch(() => ({}));
-        if (!res.ok || !out.ok) throw new Error(res.ok ? (out.error || "No se pudo crear la cuenta") : window.errorDeFuncion(res, out));
-
-        // La pantalla dice lo que de verdad pasó, no "listo" a secas: si ya
-        // tenía cuenta no salió ninguna invitación, y conviene saberlo. Solo
-        // aplica a una respuesta de formulario: "＋ Alumno nuevo" siempre crea
-        // una cuenta nueva, y no hay fila de respuesta que marcar.
-        if (!altaManual) {
-            altaRespuesta.cuenta_id = out.alumno_id;
-            altaRespuesta.cuenta_creada_at = new Date().toISOString();
-            pintarRespuestas();
-        }
-        cerrarAlta();
-        // Quien administra sin dar clase no queda como su profesor: el alumno
-        // queda sin nadie, y sin profesor no sale en los informes de nadie.
-        const encargado = (out.encargado_guardado
-            ? " La persona encargada quedó apuntada para los informes a la casa." : "") +
-            (out.asignado === false
-            ? " Quedó sin profesor: asígnaselo en Administración."
-            : profesorElegido && out.profesor_id === profesorElegido
-            ? ` Quedó en la clase de ${profesorNombre}.` : "");
-        // Con qué entra de verdad lo dice el servidor, no la pantalla: el
-        // usuario pudo salir con un número al final si ya estaba tomado, y
-        // quien da de alta tiene que ver el que de verdad quedó.
-        const entra = out.usuario || out.email;
-
-        if (out.ya_tenia_cuenta) {
-            await Avisos.alerta(`Esta respuesta ya tenía su cuenta creada, así que no se mandó otra invitación. ` +
-                  `Entra con ${entra}.${encargado}`, { titulo: "Ya tenía cuenta" });
-        } else if (out.con_contrasena) {
-            // No salió ningún correo: el usuario y la contraseña los da quien
-            // lo dio de alta, así que se enseñan los dos. El usuario sin el
-            // dominio, que es lo que el niño escribe en la pantalla de acceso.
-            await Avisos.alerta(`${alumnoNombre || "El alumno"} ya puede entrar con:\n\n` +
-                  `    Usuario: ${UsuarioAlumno.soloUsuario(entra)}\n    Contraseña: ${contrasena}\n\n` +
-                  `Dáselos en la clase: no salió ningún correo.${encargado}`, { titulo: "Cuenta creada" });
-        } else if (out.correo_enviado === false) {
-            // La cuenta quedó creada y el correo no salió: se dice, o el alumno
-            // nunca aparece y nadie sabe por qué.
-            await Avisos.alerta(`La cuenta quedó creada (entra con ${entra}), pero el correo NO salió. ` +
-                  `Dile que entre con «¿Olvidaste tu contraseña?» en la pantalla de acceso.${encargado}`, { titulo: "El correo no salió" });
-        } else if (out.sin_correo) {
-            // El dato nuevo es el usuario, y hay que enseñarlo: no es un correo
-            // y nadie lo adivina. El correo salió hacia la casa, no hacia el
-            // alumno, y quien da de alta tiene que saberlo para poder decírselo.
-            await Avisos.alerta(`${alumnoNombre || "El alumno"} entra con:\n\n    ${entra}\n\n` +
-                  `El usuario y la contraseña provisional salieron a ${out.correo_destino || encargadoCorreo}, ` +
-                  `no al alumno — ese usuario no recibe correo.${encargado}`, { titulo: "Cuenta creada" });
-        } else {
-            Avisos.avisar(`Invitación enviada a ${entra}: le llega un correo con su ` +
-                  `contraseña provisional y los pasos para entrar.${encargado}`);
-        }
-    } catch (err) {
-        msg.textContent = err.message;
-        msg.className = "text-sm mt-4 text-red-600 dark:text-red-400";
-        btn.disabled = false;
-    }
+    AltaAlumno.abrir({ volverEl: document.getElementById("alumno-nuevo-btn") });
 }
 
 function valorLegible(v, c) {
@@ -1063,40 +750,11 @@ function bajarCsv() {
 // ------------------------------------------------------------------ arranque
 document.getElementById("nuevo-btn").addEventListener("click", () => abrirEditor(null));
 document.getElementById("alumno-nuevo-btn").addEventListener("click", abrirAltaManual);
-document.getElementById("alta-profesor").addEventListener("change", pintarAsignado);
 document.getElementById("volver-btn").addEventListener("click", () => mostrar("vista-lista"));
 document.getElementById("volver-btn-2").addEventListener("click", () => mostrar("vista-lista"));
 document.getElementById("guardar-btn").addEventListener("click", guardar);
 document.getElementById("csv-btn").addEventListener("click", bajarCsv);
 document.getElementById("buscar-respuestas").addEventListener("input", pintarRespuestas);
-document.getElementById("alta-enviar").addEventListener("click", enviarAlta);
-document.getElementById("alta-cancelar").addEventListener("click", cerrarAlta);
-document.getElementById("alta-sin-correo").addEventListener("change", pintarModoAlta);
-document.getElementById("alta-contrasena").addEventListener("input", pintarModoAlta);
-document.getElementById("alta-contrasena-proponer").addEventListener("click", () => {
-    const campo = document.getElementById("alta-contrasena");
-    campo.value = ContrasenaAlumno.claveFacil();
-    campo.focus();
-    pintarModoAlta();
-});
-// Corregir el nombre vuelve a proponer el usuario, mientras nadie lo haya
-// escrito a mano: arreglar una tilde del nombre no tiene por qué dejar el
-// usuario apuntando al nombre viejo.
-document.getElementById("alta-alumno-nombre").addEventListener("input", () => {
-    const usuario = document.getElementById("alta-usuario");
-    if (!usuario.dataset.tocado) pintarModoAlta();
-});
-// Lo escrito a mano manda: desde acá, el nombre ya no lo pisa.
-document.getElementById("alta-usuario").addEventListener("input", (e) => {
-    e.target.dataset.tocado = "1";
-});
-// Clic fuera de la caja y Escape cierran, como cualquier diálogo del sitio.
-document.getElementById("alta-fondo").addEventListener("click", (e) => {
-    if (e.target === e.currentTarget) cerrarAlta();
-});
-document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape" && !document.getElementById("alta-fondo").classList.contains("hidden")) cerrarAlta();
-});
 document.getElementById("campo-btn").addEventListener("click", () => { agregarCampo(); pintarCampos(); });
 document.getElementById("plantilla-btn").addEventListener("click", async () => {
     if (campos.length && !(await Avisos.confirmar("Las preguntas que ya pusiste se cambian por las de la plantilla.", { titulo: "¿Usar la plantilla?", aceptar: "Usar la plantilla" }))) return;
@@ -1129,8 +787,7 @@ async function init() {
         return;
     }
     document.getElementById("alumno-nuevo-btn").hidden = !FuncionesCoordinacion.puede("altas");
-    pintarAsignado();
-    cargarProfesoresAlta();
+    AltaAlumno.montar(perfil);
     if (perfil.is_admin) {
         document.getElementById("subtitulo").textContent =
             "Arma un formulario, compártelo por enlace y baja las respuestas en Excel. Como administras, ves todos los formularios de la plataforma.";

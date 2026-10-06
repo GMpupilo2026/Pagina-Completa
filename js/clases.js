@@ -554,7 +554,7 @@
            Ver «El panel de quien da clase» en docs/decisiones/paneles.md. */
         const PANEL_DOCENTE = [
             { title: "Clase en vivo", destacado: true, hrefs: ["sesion.html"] },
-            { title: "Tus alumnos", hrefs: ["tareas.html", "examenes.html", "informes.html", "justificaciones.html", "libreta-torneos.html", "subgrupos.html"] },
+            { title: "Tus alumnos", hrefs: ["alumno-nuevo.html", "tareas.html", "examenes.html", "informes.html", "justificaciones.html", "libreta-torneos.html", "subgrupos.html"] },
             { title: "Tus clases", hrefs: ["proyecto.html", "planes.html", "cuestionarios.html", "asistencia.html", "repasar-clases.html", "partidas.html", "preparacion-rivales.html", "informe-mensual.html"] },
             { title: "Coordinación", hrefs: ["coordinacion.html", "solicitudes.html", "formularios.html", "cobros.html"] },
             { title: "Aprender", hrefs: ["entreno/index.html", "entreno/estudio.html", "cursos/academia/index.html", "articulos.html"] },
@@ -788,6 +788,13 @@
                 el.className = base + " cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 "
                     + (t.apagado ? t.apagado.clases : "bg-white/60 dark:bg-brand-900/60 opacity-60");
                 el.setAttribute("aria-disabled", "true");
+                /* Una ficha apagada que tiene algo que decir además de su
+                   nota (la de «Crear cuenta de alumno» sin invitaciones lleva
+                   a los planes): con clic o Enter, como cualquier enlace. */
+                if (t.alPulsar) {
+                    el.addEventListener("click", t.alPulsar);
+                    el.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); t.alPulsar(); } });
+                }
             } else {
                 el = document.createElement("a");
                 el.href = t.href;
@@ -862,6 +869,40 @@
             }
             el.append(iconWrap, texto);
             return el;
+        }
+
+        /* ---------- «Crear cuenta de alumno» y el cupo de invitaciones ----------
+           El profesor crea la cuenta de un alumno nuevo desde su panel
+           (alumno-nuevo.html), gastando una del cupo que le fijó quien
+           administra. Mientras le queden, la ficha dice cuántas; sin ninguna
+           se apaga —sin `href`, pero se alcanza con Tab— y dice por qué y qué
+           hacer: adquirir un plan mayor. Al pulsarla lo dice en un aviso con
+           el botón a los planes, que es lo único que una ficha apagada no
+           puede llevar escrito como enlace. El candado de verdad es la base
+           (consumir_invitacion); esto solo lo enseña.
+           Ver «La ficha Crear cuenta de alumno» en docs/decisiones/paneles.md. */
+        function tarjetaAlumnoNuevo() {
+            const t = { emoji: "🧑‍🎓", label: "Crear cuenta de alumno", href: "alumno-nuevo.html" };
+            /* Mirando el panel de otra persona: la cuenta se crearía a nombre
+               de quien mira, y el cupo que se ve sería el suyo. */
+            if (profile._persona) {
+                return Object.assign(t, { disabled: true, apagado: VLL_APAGADO, nota: "Desde su cuenta",
+                    desc: "Las cuentas de sus alumnos las crea desde su propio panel" });
+            }
+            const c = CupoInvitaciones.de(profile);
+            if (c.ilimitado) return Object.assign(t, { desc: "Invita a un alumno nuevo: le llega su acceso por correo o entra con un usuario", aviso: "Sin tope" });
+            if (c.restantes > 0) {
+                return Object.assign(t, { desc: "Invita a un alumno nuevo a tu clase: le llega su acceso por correo o entra con un usuario",
+                    aviso: c.restantes === 1 ? "Te queda 1 invitación" : "Te quedan " + c.restantes + " invitaciones" });
+            }
+            return Object.assign(t, { disabled: true, apagado: VLL_APAGADO, nota: "Sin invitaciones",
+                desc: CupoInvitaciones.textoSinCupo(c.max),
+                alPulsar: async () => {
+                    const ir = await Avisos.confirmar(CupoInvitaciones.textoSinCupo(c.max), {
+                        titulo: "No te quedan invitaciones", aceptar: "Ver los planes", cancelar: "Ahora no",
+                    });
+                    if (ir) location.href = CupoInvitaciones.PLANES;
+                } });
         }
 
         /* ---------- La videollamada de la clase ----------
@@ -1447,6 +1488,7 @@
             "libreta-torneos.html": "libreta torneo torneos planilla partida partidas tablero ronda errores comentarios",
             "informe-mensual.html": "informe del mes supervision",
             "subgrupos.html": "listas grupos de alumnos",
+            "alumno-nuevo.html": "crear cuenta nueva alumno nuevo estudiante invitar invitacion invitaciones inscribir alta matricular",
             "guia-del-profesor-accesible.html": "ayuda manual como se hace",
             "coordinacion.html": "cuentas usuarios profesores alumnos",
             "solicitudes.html": "aprobar nuevos unirse inscripciones",
@@ -3932,7 +3974,8 @@
                        Administración —esos dan permisos— ni el grupo de cada
                        alumno: son de quien las arma y solo sirven para filtrar
                        y para mandar una tarea a varios de una vez. */
-                    { emoji: "👥", label: "Mis subgrupos", desc: "Arma tus propias listas de alumnos para filtrar Informes y mandarles tareas de una vez", href: "subgrupos.html" }
+                    { emoji: "👥", label: "Mis subgrupos", desc: "Arma tus propias listas de alumnos para filtrar Informes y mandarles tareas de una vez", href: "subgrupos.html" },
+                    tarjetaAlumnoNuevo()
                 );
                 /* Preparación de rivales: solo si administración se la activó
                    (admin.html#preparacion). Mirando el panel de otra persona se

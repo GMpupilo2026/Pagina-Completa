@@ -1497,8 +1497,8 @@ su lugar y sin caminos repetidos.
 
 - **Se reparte por lo que se viene a hacer** (`PANEL_DOCENTE` y
   `ordenarPanelDocente()` de `js/clases.js`), no como el panel del alumno con
-  cosas encima: «Clase en vivo»; «Tus alumnos» (tareas, exámenes, informes,
-  justificaciones, subgrupos); «Tus clases» (planes, asistencia presencial,
+  cosas encima: «Clase en vivo»; «Tus alumnos» (crear la cuenta de un alumno
+  nuevo, tareas, exámenes, informes, justificaciones, subgrupos); «Tus clases» (planes, asistencia presencial,
   repasar, archivos, la preparación de rivales si se la activaron y el informe
   mensual); «Coordinación», solo a quien coordina (coordinación, solicitudes,
   formularios y cobros, lo que su supervisor no le apagó); «Aprender»; «Jugar
@@ -1538,6 +1538,50 @@ su lugar y sin caminos repetidos.
   y que sin supervisión no se reclame), `pruebaPreparacionRivales` y
   `pruebaCoordinadorRecortado` en `verificar-panel.js`. Rompiendo a propósito
   el filtro `soloAlumno` o dando el informe por enviado, saltan.
+
+### La ficha Crear cuenta de alumno
+
+Un profesor que no coordina **no tenía ninguna puerta para crear la cuenta de
+un alumno**: la caja de alta vivía solo en `formularios.html`, que es de
+coordinación. Sin embargo su cupo de invitaciones (`invitaciones_max`, que le
+fija administración en `admin.html`) existía y la base lo descontaba. Ahora la
+primera ficha de «Tus alumnos» es **«Crear cuenta de alumno»**, que lleva a
+`alumno-nuevo.html`.
+
+- **Con invitaciones**, la ficha lleva a la página y dice cuántas le quedan
+  («Te quedan 3 invitaciones»). Quien administra (o mira «como profesor») no
+  tiene tope y la ficha dice «Sin tope».
+- **Sin invitaciones** (las usó todas, o nunca le asignaron), la ficha **se
+  apaga**: sin `href`, pero se alcanza con Tab, con la nota «Sin
+  invitaciones» y el texto «Ya usaste tus N invitaciones. Para crear más
+  cuentas de alumno, adquiere un plan mayor». Va con la pinta de
+  `VLL_APAGADO` (fondo gris y borde), no con `opacity`, para que ese texto se
+  pueda leer. Al pulsarla (clic o Enter) repite el aviso con el botón «Ver
+  los planes», que lleva a los paquetes de `precios.html#t-paquetes`: una
+  ficha apagada no puede llevar un enlace escrito adentro (`t.alPulsar` en
+  `renderTileCard()`).
+- **Mirando el panel de otra persona**, la ficha va apagada («Desde su
+  cuenta»): la cuenta se crearía a nombre de quien mira y el cupo sería el
+  suyo.
+- `alumno-nuevo.html` enseña el cupo y el botón que abre la caja; sin
+  invitaciones, en su lugar va el bloqueo con el mismo aviso y el enlace a los
+  planes. Después de cada alta **vuelve a leer la fila** en vez de restar uno
+  en pantalla.
+- **La caja de alta es una sola**: `js/alta-alumno.js` (el marcado y la
+  lógica), que comparten `formularios.html` —desde una respuesta, a
+  inscribir-alumno; «＋ Alumno nuevo», a create-student— y
+  `alumno-nuevo.html`. Antes vivía repartida entre `formularios.html` y
+  `formularios.js`. Cuántas quedan lo lee `js/cupo-invitaciones.js`, que usan
+  la ficha, la página y la caja.
+- **El candado de verdad es la base**: `consumir_invitacion()`, desde la Edge
+  Function, comprueba y gasta en la misma operación. Si la pantalla quedó
+  vieja (otra pestaña gastó la última), la función contesta `sin_cupo`: la
+  caja se cierra, avisa con «Ver los planes» y la página se pinta bloqueada.
+  No se cambió ninguna función ni migración.
+- Lo prueban `pruebaCupoInvitaciones` de `verificar-panel.js` (la ficha con
+  invitaciones, en singular, apagada y su aviso con Enter) y
+  `verificar-alumno-nuevo.js` (la página: cuenta, crea, se bloquea sola al
+  gastar la última, la respuesta `sin_cupo` y quién entra).
 
 ### El panel del alumno, sin caminos repetidos
 
