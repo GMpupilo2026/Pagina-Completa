@@ -409,13 +409,13 @@ async function llamarCorreos(cuerpo) {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${session.access_token}`,
+            "Authorization": `Bearer ${await window.tokenDeSesion()}`,
             "apikey": window.SUPABASE_ANON_KEY,
         },
         body: JSON.stringify(cuerpo),
     });
     const datos = await res.json().catch(() => ({}));
-    if (!res.ok || datos.error) throw new Error(datos.error || `El servidor respondió ${res.status}`);
+    if (!res.ok || datos.error) throw new Error(window.errorDeFuncion(res, datos));
     return datos;
 }
 
@@ -446,13 +446,13 @@ async function reenviar(u, boton) {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
-                "Authorization": `Bearer ${session.access_token}`,
+                "Authorization": `Bearer ${await window.tokenDeSesion()}`,
                 "apikey": window.SUPABASE_ANON_KEY,
             },
             body: JSON.stringify({ alumno_id: u.id }),
         });
         const datos = await res.json().catch(() => ({}));
-        if (!res.ok || datos.error) throw new Error(datos.error || `El servidor respondió ${res.status}`);
+        if (!res.ok || datos.error) throw new Error(window.errorDeFuncion(res, datos));
         avisar((datos.modo === "provisional"
             ? "Le salió su usuario con una contraseña provisional nueva a "
             : "Le salió el enlace para crear su contraseña a ") + (datos.correo_destino || "su correo") + ".");

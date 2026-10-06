@@ -32,11 +32,15 @@
    Uso:  python3 -m http.server 8777    (desde la raíz del sitio)
          node herramientas/verificar-panel.js                                 */
 const { chromium } = require("./lib/playwright-con-sesion");
+const { contestarAvisos } = require("./lib/avisos-prueba.js");
 
 const CHROME = process.env.CHROME_PATH || "/opt/pw-browsers/chromium-1194/chrome-linux/chrome";
 const BASE = process.env.BASE_URL || "http://localhost:8777";
 
-const PROFE  = { id: "u-profe", role: "profesor", is_admin: false, es_coordinador: false, full_name: "Karina Rojas", email: "karina@x.cr", grupo: null };
+/* Con invitaciones de sobra: sin ellas, «Crear cuenta de alumno» sale apagada
+   (pruebaCupoInvitaciones), y eso no es lo que miran las demás pruebas. */
+const PROFE  = { id: "u-profe", role: "profesor", is_admin: false, es_coordinador: false, full_name: "Karina Rojas", email: "karina@x.cr", grupo: null,
+                 invitaciones_max: 10, invitaciones_usadas: 3 };
 const ALUMNA = { id: "u-ana",   role: "alumno",   is_admin: false, es_coordinador: false, full_name: "Ana Rojas",    email: "ana@x.cr",    grupo: "7B" };
 /* La cuenta master ya no es ni profesora ni alumna: su `role` es 'admin'.
    Antes estaba guardada como alumna, así que salía en las listas de «para
@@ -487,9 +491,9 @@ async function pruebaProfesora(browser) {
   igual("cada destino una sola vez", enlacesProfe.filter((h, i) => enlacesProfe.indexOf(h) !== i), []);
   /* Informes es de sus alumnos, no de su cuenta; y el diagnóstico ya no es
      una segunda puerta a Informes (informes.html?tema=diagnostico). */
-  igual("«Tus alumnos»: tareas, exámenes, informes, justificaciones, la libreta de torneos y subgrupos",
+  igual("«Tus alumnos»: crear la cuenta de uno nuevo, tareas, exámenes, informes, justificaciones, la libreta de torneos y subgrupos",
     grupo(grupos, "Tus alumnos").tiles.map((t) => t.enlace),
-    ["tareas.html", "examenes.html", "informes.html", "justificaciones.html", "libreta-torneos.html", "subgrupos.html"]);
+    ["alumno-nuevo.html", "tareas.html", "examenes.html", "informes.html", "justificaciones.html", "libreta-torneos.html", "subgrupos.html"]);
   igual("una sola puerta a Informes", enlacesProfe.filter((h) => h.startsWith("informes.html")), ["informes.html"]);
   igual("y no se le ofrece ninguna de las dos pruebas",
     await page.evaluate(() => document.querySelectorAll(
@@ -525,6 +529,83 @@ async function pruebaProfesora(browser) {
     grupos.flatMap((g) => g.tiles).filter((t) => t.enlace === "cobros.html").length, "0");
   igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
   await ctx.close();
+}
+
+/* «Crear cuenta de alumno» y el cupo de invitaciones. Con invitaciones, la
+   ficha lleva a alumno-nuevo.html y dice cuántas le quedan; sin ninguna se
+   apaga —sin href, pero se alcanza con Tab—, dice que hace falta un plan
+   mayor y, al pulsarla, lo repite en un aviso con el botón a los planes.
+   Quien de verdad pone el tope es la base (consumir_invitacion). */
+async function pruebaCupoInvitaciones(browser) {
+  console.log("\n=== «Crear cuenta de alumno» y el cupo de invitaciones ===");
+  const ficha = () => {
+    const el = [...document.querySelectorAll("#tile-grid section")]
+      .find((s) => s.querySelector("h2").textContent === "Tus alumnos")
+      .querySelector("div.grid").firstElementChild;
+    return { etiqueta: el.querySelector("span > span").textContent, texto: el.textContent.replace(/\s+/g, " "),
+             enlace: el.getAttribute("href"), apagada: el.getAttribute("aria-disabled") === "true",
+             tab: el.tabIndex, opacidad: getComputedStyle(el).opacity };
+  };
+
+  // Le quedan 2 de 5.
+  {
+    const quedan = Object.assign({}, PROFE, { invitaciones_max: 5, invitaciones_usadas: 3 });
+    const { page, ctx, errores } = await panel(browser, [quedan], "u-profe");
+    const f = await page.evaluate(ficha);
+    igual("es la primera de «Tus alumnos»", f.etiqueta, "Crear cuenta de alumno");
+    igual("con invitaciones, lleva a alumno-nuevo.html", f.enlace, "alumno-nuevo.html");
+    cierto("y dice cuántas le quedan: " + f.texto, /Te quedan 2 invitaciones/.test(f.texto));
+    igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
+    await ctx.close();
+  }
+  // Una sola: en singular.
+  {
+    const una = Object.assign({}, PROFE, { invitaciones_max: 5, invitaciones_usadas: 4 });
+    const { page, ctx } = await panel(browser, [una], "u-profe");
+    cierto("con una, «Te queda 1 invitación»", /Te queda 1 invitación/.test((await page.evaluate(ficha)).texto));
+    await ctx.close();
+  }
+  // Las usó todas.
+  {
+    const sinCupo = Object.assign({}, PROFE, { invitaciones_max: 5, invitaciones_usadas: 5 });
+    const { page, ctx, errores } = await panel(browser, [sinCupo], "u-profe");
+    await page.evaluate(contestarAvisos);
+    const f = await page.evaluate(ficha);
+    igual("sin invitaciones, la ficha se apaga: sin enlace", [f.apagada, f.enlace], [true, null]);
+    igual("pero se alcanza con Tab", f.tab, 0);
+    cierto("dice por qué y qué hacer (adquirir un plan mayor): " + f.texto,
+      /Sin invitaciones/.test(f.texto) && /Ya usaste tus 5 invitaciones/.test(f.texto) && /plan mayor/.test(f.texto));
+    // La nota es la que explica el candado: sin opacidad que la deje ilegible.
+    igual("sin opacidad encima (la nota se tiene que poder leer)", f.opacidad, "1");
+    await page.evaluate(() => { window.__cancelarAvisos = true; });
+    await page.evaluate(() => [...document.querySelectorAll("#tile-grid [aria-disabled=true]")]
+      .find((el) => /Crear cuenta de alumno/.test(el.textContent)).click());
+    await page.waitForFunction(() => (window.__avisos || []).length > 0, null, { timeout: 5000 }).catch(() => {});
+    const aviso = await page.evaluate(() => (window.__avisos || []).join(" | "));
+    cierto("al pulsarla, el aviso de que hace falta un plan mayor, con el botón a los planes: " + aviso,
+      /No te quedan invitaciones/.test(aviso) && /plan mayor/.test(aviso) && /Ver los planes/.test(aviso));
+    igual("y con «Ahora no» se queda en el panel", new URL(page.url()).pathname, "/clases.html");
+    // Con Enter, lo mismo, y «Ver los planes» lleva a los paquetes.
+    await page.evaluate(() => { window.__cancelarAvisos = false; window.__avisos = []; });
+    await page.evaluate(() => [...document.querySelectorAll("#tile-grid [aria-disabled=true]")]
+      .find((el) => /Crear cuenta de alumno/.test(el.textContent)).focus());
+    await Promise.all([
+      page.waitForURL(/precios\.html#t-paquetes/, { timeout: 10000 }).catch(() => {}),
+      page.keyboard.press("Enter"),
+    ]);
+    cierto("con Enter y «Ver los planes», va a los paquetes de precios.html: " + page.url(),
+      /precios\.html#t-paquetes$/.test(page.url()));
+    igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
+    await ctx.close();
+  }
+  // Sin ninguna asignada (la cuenta recién creada): también apagada.
+  {
+    const cero = Object.assign({}, PROFE, { invitaciones_max: 0, invitaciones_usadas: 0 });
+    const { page, ctx } = await panel(browser, [cero], "u-profe");
+    const f = await page.evaluate(ficha);
+    cierto("con cupo 0, apagada y con el aviso del plan: " + f.texto, f.apagada && /no trae invitaciones/.test(f.texto) && /plan mayor/.test(f.texto));
+    await ctx.close();
+  }
 }
 
 /* «Lo urgente» de quien da clase: solo aparece cuando hay algo, y solo con
@@ -3290,6 +3371,7 @@ async function pruebaPanelPequenos(browser) {
     await pruebaBaseLenta(browser);
     await pruebaSemanaProfesora(browser);
     await pruebaProfesora(browser);
+    await pruebaCupoInvitaciones(browser);
     await pruebaPreparacionRivales(browser);
     await pruebaUrgenteProfesora(browser);
     await pruebaTextosPorRol(browser);
