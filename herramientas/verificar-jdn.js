@@ -542,6 +542,11 @@ async function pruebaPagina(browser) {
   igual("2016: U-12, y la edad", (await page.textContent("#jdn-categoria")).trim(), "U-12 (nacidos de 2015 a 2020) · 10 años");
   cierto("menor de 12: pide tutor y certificación de nacimiento, la cédula ya no es obligatoria",
     await vis(page, "#caja-tutor") && await vis(page, "#caja-certificacion") && !(await vis(page, ".jdn-oblig")));
+  cierto("menor de 12: dice dónde comprar la certificación (el sitio del TSE, en otra pestaña)",
+    await vis(page, "#enlace-certificacion") &&
+    (await page.getAttribute("#enlace-certificacion", "href")) === "https://www.consulta.tse.go.cr/appcdi#/" &&
+    (await page.getAttribute("#enlace-certificacion", "target")) === "_blank" &&
+    /noopener/.test(await page.getAttribute("#enlace-certificacion", "rel")));
   await page.fill("#f-nacimiento", "2008-01-10");
   cierto("2008 (18 años): U-20, sin tutor ni certificación",
     /^U-20/.test(await page.textContent("#jdn-categoria")) && !(await vis(page, "#caja-tutor")) && !(await vis(page, "#caja-certificacion")));
