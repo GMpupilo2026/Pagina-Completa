@@ -813,3 +813,88 @@ cualquiera compruebe, sin cuenta, que es auténtico.
   leer la tabla; el alumno no se lo da a sí mismo; un profe ajeno, tampoco; con
   el curso a medias, «lleva 1 de 20 lecciones»; completo, sale; otro alumno no
   lo ve; anon lo comprueba con el código; queda en la bitácora; anulado, lo dice.
+
+## El libro «Ponte a prueba»
+
+Un libro de examen de Oscar Angulo Cubero: 180 posiciones en seis pruebas de
+30 para medirse uno mismo, con soluciones, planilla de puntos, tablas que pasan
+los puntos a una fuerza en Elo —total y por categoría— y una guía de qué
+entrenar según lo que salga flojo. Lo arman dos scripts:
+
+- `herramientas/libro-examen-generar.js` escribe el banco,
+  `js/libro-examen-items.js` (no se edita a mano);
+- `herramientas/libro-examen-pdf.js` escribe
+  `material/ponte-a-prueba/ponte-a-prueba.pdf` y su versión accesible.
+
+Lo revisa `verificar-libro-examen.js`.
+
+### Tomado de un libro ajeno como referencia, no copiado
+
+El dueño pidió un libro «basado» en *Chess Exam and Training Guide* y *Chess
+Exam: Tactics*, de Igor Khmelnitsky, «como si lo hiciera yo». Traducir esos
+libros y ponerles otra firma es publicar la obra de otro con nuestro nombre,
+y eso no se hace. Se tomó el **método**, que no es de nadie:
+
+- dos preguntas por posición: cómo queda y cuál es la jugada. Encontrar la
+  jugada sin saber adónde lleva vale menos que encontrarla entendiéndola;
+- crédito parcial y negativo, para que adivinar no sume;
+- cada posición suma a varias categorías, y la comparación entre categorías
+  es lo que dice qué entrenar;
+- una guía de entrenamiento por categoría.
+
+Las posiciones, los textos, las categorías, los puntos y las tablas son
+propios. Ninguna posición sale de esos libros.
+
+### Las posiciones y los puntos los decide el motor
+
+- Salen de la base abierta de Lichess (CC0), con los mismos filtros de calidad
+  que el diagnóstico, y pasan por el MISMO análisis de Stockfish
+  (`analizar()` de `diagnostico-lichess.js`, que ahora se exporta): una sola
+  jugada buena y tres opciones que tientan y fallan. Ninguna repite un
+  ejercicio del diagnóstico: el mismo ejercicio en las dos pruebas mediría
+  memoria.
+- La pregunta 1 tiene cuatro respuestas fijas: mate a la fuerza, más de 4
+  peones, de 2 a 4, menos de 2. Primero se probó «ganan / ventaja / igualdad /
+  negras mejor», y en un banco de ejercicios 154 de 180 tenían la misma
+  respuesta: contestar siempre «ganan» sacaba casi todo sin leer nada. Con
+  los cortes nuevos la más repetida queda en 74. Cerca de un corte la vecina
+  vale 2 y no 1: ahí dos lecturas son razonables.
+- En la pregunta 2 la buena vale 5, una que deja a las blancas mejor 1, una que
+  deja escapar la ventaja 0 y una que pierde −1, según lo que dice el motor de
+  cada una.
+- La dificultad es el rating de Lichess menos 710: el descuento de las
+  preguntas de opción con tablero más el corrimiento que midió la calibración
+  del diagnóstico.
+
+### Las seis pruebas son parejas
+
+Cada grupo de origen (apertura, táctica, ataque, cálculo, defensa, finales)
+aporta 30 posiciones de cinco tramos de dificultad, y se reparten de a una por
+prueba. Así cada prueba trae 5 de cada grupo de todas las dificultades y sirve
+sola como examen corto, con su propia tabla. Las seis juntas dan la fuerza por
+categoría.
+
+### Las tablas salen de la curva del Elo, no de un muestreo
+
+No hay todavía gente que haya hecho el libro, así que la tabla de puntos a
+fuerza se calcula: para una fuerza R, cada posición se acierta con probabilidad
+0,25 + 0,75 / (1 + 10^((elo − R)/400)), y al fallar se cobra el promedio de las
+otras opciones. Cuando se junten resultados reales conviene recalibrar como
+se hizo con el diagnóstico.
+
+### En la plataforma
+
+El banco es la fuente «Libro “Ponte a prueba”» de `examenes.html`
+(`ExamenBanco.armar({ fuente: "libro", prueba })`), entera o prueba por prueba.
+Se toma la pregunta de la jugada como `opcion_tablero` y vale la buena: el
+examen de la plataforma califica bien o mal, sin crédito parcial. La pregunta
+de la evaluación queda guardada en el banco por si un día se quiere usar.
+
+### El PDF
+
+Lleva tapa, marca de agua con el logo, firma del autor y protección, como el
+libro del diagnóstico, con el código compartido en `herramientas/lib/pdf-armar.js`.
+A diferencia de aquel, **se deja imprimir**: es un examen que se contesta en
+papel. Vive en `material/ponte-a-prueba/`, detrás del candado del worker:
+hoy lo baja administración. Para venderlo falta darlo de alta como producto
+de la tienda.

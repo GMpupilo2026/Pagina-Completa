@@ -16,6 +16,11 @@
  *    escalón y su cita del Handbook.
  *  - `js/aperturas-lineas.js` — 40 líneas, para "ejecuta esta apertura
  *    de una vez", sin pistas y sin deshacer.
+ *  - `js/libro-examen-items.js` — las 180 posiciones del libro «Ponte a
+ *    prueba», en seis pruebas de 30, comprobadas con Stockfish. Cada una
+ *    trae dos preguntas (cómo queda y cuál es la jugada) con crédito
+ *    parcial para el papel; acá se toma la de la jugada, que es la que
+ *    tiene una sola respuesta buena.
  *
  * LO QUE ESTE ARCHIVO SEPARA, y es su razón de ser: cada pregunta se
  * parte en `visible` (lo que el alumno ve) y `clave` (la respuesta). La
@@ -80,6 +85,10 @@ window.ExamenBanco = (function () {
 
   function itemsArbitraje() {
     return (window.ARBITRAJE_ITEMS || []).slice();
+  }
+
+  function itemsLibro() {
+    return (window.LIBRO_EXAMEN_ITEMS || []).slice();
   }
 
   function lineas() {
@@ -172,6 +181,36 @@ window.ExamenBanco = (function () {
     };
   }
 
+  /* Una posición del libro «Ponte a prueba»: la pregunta de la jugada, con
+     sus cuatro opciones barajadas. En el libro una opción mala resta y una
+     aceptable suma 1; el examen de la plataforma califica bien o mal, así
+     que acá vale la buena y nada más. */
+  function deLibro(it, rnd) {
+    const conIndice = it.jugada.opciones.map((texto, i) => ({ texto, i }));
+    const mezcladas = barajar(conIndice, rnd);
+    const correcta = mezcladas.findIndex((o) => o.i === it.jugada.correcta);
+    return {
+      tipo: "opcion_tablero",
+      banco: "libro",
+      item_id: it.id,
+      area: it.grupo,
+      peso: it.peso,
+      visible: {
+        enunciado: "Las negras acaban de jugar …" + it.ultima + ". Juegan las blancas: ¿cuál es la mejor jugada?",
+        opciones: mezcladas.map((o) => o.texto),
+        fen: it.fen,
+        explica: it.explica || "",
+      },
+      clave: { correcta: String(correcta) },
+    };
+  }
+
+  function candidatosLibro(op, min, max) {
+    const prueba = parseInt(op.prueba, 10) || 0;
+    return itemsLibro().filter((it) =>
+      it.peso >= min && it.peso <= max && (!prueba || it.prueba === prueba));
+  }
+
   /* Ejecutar una apertura: se le pide la línea entera de su color, de
      una vez. La dificultad sale del `nivel` de la línea y de cuántas
      jugadas le tocan — memorizar diez es más que memorizar cuatro. */
@@ -231,8 +270,9 @@ window.ExamenBanco = (function () {
   }
 
   /* opciones:
-       { fuente: 'curso' | 'areas' | 'arbitraje' | 'linea',
-         curso, areas: [], linea_id, cantidad, dificultad: {min, max}, semilla } */
+       { fuente: 'curso' | 'areas' | 'arbitraje' | 'linea' | 'libro',
+         curso, areas: [], linea_id, prueba, cantidad, dificultad: {min, max}, semilla }
+     `prueba` (1 a 6) es solo del libro; vacía, las seis. */
   function armar(op) {
     const rnd = azar(op.semilla || Math.floor(Math.random() * 1e9));
     const min = Math.max(1, (op.dificultad && op.dificultad.min) || 1);
@@ -251,6 +291,10 @@ window.ExamenBanco = (function () {
         return p >= min && p <= max && (!op.areas || !op.areas.length || op.areas.includes(it.area));
       });
       return sortear(cand, cantidad, rnd).map((it) => deArbitraje(it, rnd));
+    }
+
+    if (op.fuente === "libro") {
+      return sortear(candidatosLibro(op, min, max), cantidad, rnd).map((it) => deLibro(it, rnd));
     }
 
     let areas = op.areas || [];
@@ -281,6 +325,7 @@ window.ExamenBanco = (function () {
         return p >= min && p <= max && (!op.areas || !op.areas.length || op.areas.includes(it.area));
       }).length;
     }
+    if (op.fuente === "libro") return candidatosLibro(op, min, max).length;
     let areas = op.areas || [];
     if (op.fuente === "curso") areas = AREAS_DEL_CURSO[op.curso] || [];
     return items().filter((it) =>

@@ -150,6 +150,7 @@ const FUENTES = [
   { valor: "areas",     texto: "Áreas sueltas" },
   { valor: "linea",     texto: "Ejecutar una apertura o defensa" },
   { valor: "arbitraje", texto: "Reglamento (arbitraje)" },
+  { valor: "libro",     texto: "Libro «Ponte a prueba»" },
 ];
 
 let bloques = [];
@@ -168,6 +169,11 @@ function opcionesDeCual(b) {
     return cursosCatalogo.filter((c) => conPreguntas.includes(c.slug))
       .map((c) => ({ valor: c.slug, texto: c.label }));
   }
+  if (b.fuente === "libro") {
+    const n = (window.LIBRO_EXAMEN && window.LIBRO_EXAMEN.PRUEBAS) || 0;
+    return [{ valor: "", texto: "Las seis pruebas" }].concat(
+      Array.from({ length: n }, (_, i) => ({ valor: String(i + 1), texto: "Prueba " + (i + 1) })));
+  }
   if (b.fuente === "linea") {
     return ((window.AperturasLineas && window.AperturasLineas.LINEAS) || []).map((l) => ({
       valor: l.id,
@@ -182,6 +188,7 @@ function opcionesDelBloque(b) {
     fuente: b.fuente,
     curso: b.fuente === "curso" ? b.cual : null,
     linea_id: b.fuente === "linea" ? b.cual : null,
+    prueba: b.fuente === "libro" ? b.cual : null,
     areas: b.fuente === "areas" ? b.areas.slice() : [],
     cantidad: Math.max(1, b.cantidad || 1),
     dificultad: { min: b.difMin, max: b.difMax },
@@ -198,6 +205,7 @@ function nombreDeBloque(b) {
   if (b.fuente === "curso") return op ? op.texto : "un curso";
   if (b.fuente === "linea") return op ? op.texto.split(" — ")[0] : "una apertura";
   if (b.fuente === "arbitraje") return "reglamento";
+  if (b.fuente === "libro") return "Ponte a prueba" + (b.cual ? ", prueba " + b.cual : "");
   return b.areas.length ? b.areas.join(", ") : "todas las áreas";
 }
 
