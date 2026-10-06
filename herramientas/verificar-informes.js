@@ -1722,6 +1722,56 @@ async function pruebaAlumnoPorEnlace(browser) {
   await r.page.close();
 }
 
+/* «Con este alumno»: lo que se hace con él, a un clic, arriba de su
+   informe. Ponerle una tarea o un examen es dar clase (no a quien solo
+   administra); los enlaces llevan su id. Ver «La ficha del alumno: lo que se
+   hace con él, a un clic» en docs/decisiones/informes.md. */
+async function pruebaConEsteAlumno(browser) {
+  console.log("\n=== «Con este alumno» ===");
+  const datos = (perfil) => ({
+    rpc: { informes_resumen_alumnos: [ANA, BRUNO, CARLA], informes_totales: { clases_cerradas: 0, preguntas: 0, partidas: 0 } },
+    tablas: { profiles: [perfil], training_plans: [], diagnosticos_publicos: [], arbitrajes_publicos: [] },
+  });
+  const leer = (page) => page.evaluate(() => {
+    const nav = document.getElementById("informe-acciones");
+    return {
+      seVe: nav.checkVisibility(),
+      enlaces: [...nav.querySelectorAll("a")].map((a) => a.textContent + " → " + a.getAttribute("href")),
+    };
+  });
+  let r = await abrir(browser, datos({ id: "prof-1", role: "profesor", is_admin: false, full_name: "Karina", email: "k@x.cr" }), "prof-1", "/informes.html");
+  igual("en el resumen del grupo no aparece", (await leer(r.page)).seVe, false);
+  await r.page.selectOption("#student-filter", "a-1");
+  await r.page.waitForFunction(() => !document.getElementById("student-report").classList.contains("hidden"), null, { timeout: 10000 });
+  let v = await leer(r.page);
+  igual("al elegir un alumno, se ve", v.seVe, true);
+  igual("con sus atajos, cada uno con el alumno ya elegido", v.enlaces, [
+    "📋Ponerle una tarea → tareas.html?alumno=a-1",
+    "📝Ponerle un examen → examenes.html?alumno=a-1",
+    "✍️Su bitácora → #notas-report",
+    "📧Informes a la casa → #encargados-report",
+    "📓Su cuaderno → cuaderno.html?alumno=a-1",
+    "🏆Su libreta de torneos → libreta-torneos.html?alumno=a-1",
+  ]);
+  igual("el emoji no se lee", await r.page.evaluate(() =>
+    [...document.querySelectorAll("#informe-acciones a > span")].every((s) => s.getAttribute("aria-hidden") === "true")), true);
+  await r.page.click("#informe-acciones a[href='#encargados-report']");
+  igual("«Informes a la casa» abre su caja plegada y deja el foco ahí", await r.page.evaluate(() =>
+    [document.getElementById("encargados-report").open, !!document.activeElement.closest("#encargados-report")]), [true, true]);
+  igual("y no cambia de página", await r.page.evaluate(() => location.pathname + location.hash), "/informes.html");
+  await r.page.selectOption("#student-filter", "");
+  igual("al volver al grupo, se va", (await leer(r.page)).seVe, false);
+  igual("sin errores", r.errores.join(" | "), "");
+  await r.page.close();
+
+  r = await abrir(browser, datos({ id: "adm-1", role: "admin", is_admin: true, full_name: "Oscar", email: "o@x.cr" }), "adm-1", "/informes.html?alumno=a-1");
+  await r.page.waitForFunction(() => !document.getElementById("student-report").classList.contains("hidden"), null, { timeout: 10000 });
+  v = await leer(r.page);
+  igual("a quien administra (no da clase) no le ofrece poner tareas ni exámenes", v.enlaces.map((e) => e.split(" → ")[1].split("?")[0]),
+    ["#notas-report", "#encargados-report", "cuaderno.html", "libreta-torneos.html"]);
+  await r.page.close();
+}
+
 async function pruebaPdfVisitante(browser) {
   console.log("\n=== El diagnóstico de un visitante, en PDF ===");
   const VISITANTES = [
@@ -2275,6 +2325,7 @@ async function pruebaInformeGrupo(browser) {
     await pruebaEnlaceSupervisor(browser);
     await pruebaPdfAcademia(browser);
     await pruebaAlumnoPorEnlace(browser);
+    await pruebaConEsteAlumno(browser);
     await pruebaContrasenaProfesor(browser);
   } finally {
     await browser.close();

@@ -104,6 +104,8 @@
                            class="w-full rounded-xl border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-900 text-brand-800 dark:text-white placeholder:text-brand-450 dark:placeholder:text-brand-350 pl-10 pr-3 py-2.5 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
                 </div>
                 <p id="buscar-panel-ayuda" class="text-xs text-brand-450 dark:text-brand-350 mt-1.5">El panel deja solo lo que coincide; Enter abre el primero.<span class="hidden sm:inline"> Atajo: Ctrl + K.</span></p>
+                <!-- Solo a quien da clase (js/clases.js, montarRecorrido): vuelve a abrir el recorrido. -->
+                <button id="recorrido-otra-vez" type="button" hidden class="mt-1.5 text-xs font-semibold text-accent-700 dark:text-accent-400 underline underline-offset-2 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">🧭 </span>Ver el recorrido otra vez</button>
                 <p id="buscar-panel-estado" role="status" class="text-sm text-brand-600 dark:text-brand-300 mt-2 empty:hidden"></p>
             </form>
 
@@ -522,6 +524,7 @@
     <script src="js/reto-ejercicios.js"></script>
     <script src="js/busqueda-base.js"></script>
     <script src="js/cupo-invitaciones.js"></script>
+    <script src="js/recorrido-profe.js"></script>
     <script src="js/clases.js"></script>
 <!-- burbuja: inicio --><script src="js/burbuja-en-linea.js" defer></script><!-- burbuja: fin --><!-- juego-aviso: inicio --><script src="js/juego-aviso.js" defer></script><!-- juego-aviso: fin --><!-- aviso-profe: inicio --><script src="js/aviso-profe.js" defer></script><!-- aviso-profe: fin --><!-- tanda: inicio --><script src="js/tanda-diez.js" defer></script><!-- tanda: fin --><!-- acceso: inicio --><script src="js/acceso-vigente.js" defer></script><!-- acceso: fin --><!-- marca: inicio --><script src="js/marca-academia.js" defer></script><!-- marca: fin --><!-- ayuda: inicio --><script src="js/ayuda-guia.js" defer></script><!-- ayuda: fin --></body>
 </html>

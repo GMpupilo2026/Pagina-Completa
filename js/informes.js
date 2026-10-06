@@ -934,8 +934,66 @@
             else foto.dataset.inicial = nombre.trim().charAt(0).toUpperCase();
         }
 
+        /* «Con este alumno»: lo que un profe hace con UN alumno vivía en cinco
+           páginas, y desde el informe había que volver al panel y buscarlo otra
+           vez. Cada atajo abre su página con el alumno ya elegido (la misma
+           `?alumno=` que ya leen Tareas, Exámenes, el cuaderno y la libreta).
+           Ponerle una tarea o un examen es dar clase: solo a quien da clase
+           (como el plan, `profile.role === "profesor"`) y nunca mirando como
+           otra persona, que lo mandaría a su nombre. Lo que es mirar (el
+           cuaderno, la libreta, la bitácora) sí lo ve todo el que llega acá.
+           Ver «La ficha del alumno: lo que se hace con él, a un clic» en
+           docs/decisiones/informes.md. */
+        function pintarAccionesDelAlumno(studentId) {
+            const caja = document.getElementById("informe-acciones");
+            const lista = document.getElementById("informe-acciones-lista");
+            if (!caja || !lista) return;
+            lista.replaceChildren();
+            caja.hidden = !studentId;
+            if (!studentId) return;
+            const id = encodeURIComponent(studentId);
+            const daClase = profile.role === "profesor" && !profile._persona;
+            const acciones = [
+                daClase && { emoji: "📋", texto: "Ponerle una tarea", href: "tareas.html?alumno=" + id },
+                daClase && { emoji: "📝", texto: "Ponerle un examen", href: "examenes.html?alumno=" + id },
+                { emoji: "✍️", texto: "Su bitácora", seccion: "notas-report" },
+                { emoji: "📧", texto: "Informes a la casa", seccion: "encargados-report" },
+                { emoji: "📓", texto: "Su cuaderno", href: "cuaderno.html?alumno=" + id },
+                { emoji: "🏆", texto: "Su libreta de torneos", href: "libreta-torneos.html?alumno=" + id },
+            ].filter(Boolean);
+            acciones.forEach((a) => {
+                const li = document.createElement("li");
+                const el = document.createElement("a");
+                el.className = "inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-900 text-sm font-medium text-brand-700 dark:text-brand-100 hover:border-accent-400 hover:text-accent-700 dark:hover:text-accent-400 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
+                el.href = a.href || "#" + a.seccion;
+                if (a.seccion) {
+                    /* Lleva a la sección de esta misma página; la de la casa
+                       va plegada (un <details>), así que se abre al llegar. */
+                    el.addEventListener("click", (ev) => {
+                        const destino = document.getElementById(a.seccion);
+                        if (!destino) return;
+                        ev.preventDefault();
+                        if (destino.tagName === "DETAILS") destino.open = true;
+                        destino.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
+                        const foco = destino.querySelector("summary, h2, h3");
+                        if (foco) {
+                            if (!foco.matches("summary")) foco.setAttribute("tabindex", "-1");
+                            foco.focus({ preventScroll: true });
+                        }
+                    });
+                }
+                const ic = document.createElement("span");
+                ic.setAttribute("aria-hidden", "true");
+                ic.textContent = a.emoji;
+                el.append(ic, document.createTextNode(a.texto));
+                li.appendChild(el);
+                lista.appendChild(li);
+            });
+        }
+
         function hideAllReportPanels() {
             pintarPersonaDelInforme(null);
+            pintarAccionesDelAlumno(null);
             document.getElementById("stat-cards").innerHTML = "";
             document.getElementById("stat-cards").classList.add("hidden");
             document.getElementById("stat-cards-mas").classList.add("hidden");
@@ -1079,6 +1137,7 @@
             const name = student ? (student.full_name || student.email) : "el alumno";
             tituloConEmoji("student-report-title", "🚩", "Últimas asignaciones de " + name);
             pintarPersonaDelInforme(student ? Object.assign({ id: studentId }, student) : { id: studentId });
+            pintarAccionesDelAlumno(studentId);
 
             const fila = student || {};
             const respondidas = fila.respuestas || 0;

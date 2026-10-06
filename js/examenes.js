@@ -62,6 +62,7 @@ async function init() {
   if (puedeExaminar) {
     $("vista-profesor").classList.remove("hidden");
     await cargarAlumnos();
+    marcarAlumnoDeLaDireccion();
     cursosCatalogo = await MaterialPlataforma.cursos();
     $("e-agregar-bloque").addEventListener("click", () => {
       bloques.push(bloqueNuevo());
@@ -118,6 +119,18 @@ async function cargarAlumnos() {
   // misma pieza que usa Tareas, para que elegir "los del martes" se haga igual
   // en las dos pantallas donde se manda algo.
   if (window.SubgruposMarcar) SubgruposMarcar.montar({ sb, antesDe: cont, casillas: ".alumno-check" });
+}
+
+/* Desde el informe de un alumno («Con este alumno», js/informes.js):
+   `?alumno=<id>` lo deja marcado, como en Tareas. Un id que no es de la lista
+   no marca nada: lo que se puede mandar lo sigue decidiendo la base. */
+function marcarAlumnoDeLaDireccion() {
+  const id = new URLSearchParams(location.search).get("alumno");
+  if (!id) return;
+  const check = document.querySelector('.alumno-check[value="' + CSS.escape(id) + '"]');
+  if (!check) return;
+  check.checked = true;
+  check.closest("label").scrollIntoView({ block: "nearest" });
 }
 
 /* ---------------- Los bloques de preguntas ----------------

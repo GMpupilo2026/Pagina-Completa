@@ -9,10 +9,10 @@
       apuntando al capítulo de al lado, esto lo nota.
    2. Que toda página con «?» cargue js/ayuda-guia.js, y que ninguna lo cargue
       sin tener el enlace.
-   3. Que llegue escondido, y que js/ayuda-guia.js lo destape SOLO para quien
-      administra y está en su propia vista. Ni a un profesor, ni a quien
-      administra mirando «como estudiante». Hoy la guía no se le ofrece al
-      equipo docente (ver «El «?» de la guía, solo para administración» en
+   3. Que llegue escondido, y que js/ayuda-guia.js lo destape SOLO al equipo
+      docente: quien da clase y quien administra (también mirando «como
+      profesor»). Ni a un alumno, ni a quien administra mirando «como
+      estudiante» (ver «El «?» de la guía, para el equipo docente» en
       docs/decisiones/sitio-e-infraestructura.md).
    4. Que, a la vista, se vea, tenga contraste AA contra el encabezado y diga
       que se abre en otra pestaña.
@@ -98,14 +98,14 @@ function pruebaEstatica() {
 
 /* Un cliente de Supabase de mentira que solo sabe quién es y si administra:
    es todo lo que js/ayuda-guia.js le pregunta. */
-function clienteFalso(esAdmin) {
+function clienteFalso(esAdmin, role) {
   return `window.sb = {
     auth: { getSession: async () => ({ data: { session: { user: { id: "u-1" } } } }) },
-    from: () => ({ select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: { is_admin: ${esAdmin} } }) }) }) }),
+    from: () => ({ select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: { is_admin: ${esAdmin}, role: ${JSON.stringify(role || "alumno")} } }) }) }) }),
   };`;
 }
 
-async function abrir(browser, { esAdmin, modo, js }) {
+async function abrir(browser, { esAdmin, role, modo, js }) {
   const ctx = await browser.newContext({ serviceWorkers: "block", javaScriptEnabled: js !== false, viewport: { width: 1100, height: 700 } });
   const page = await ctx.newPage();
   if (modo) await page.addInitScript((m) => { try { localStorage.setItem("modo_vista_admin_v1", m); } catch (e) {} }, modo);
@@ -115,7 +115,7 @@ async function abrir(browser, { esAdmin, modo, js }) {
   await page.route("**/*.js", (r) => {
     const u = r.request().url();
     if (/\/js\/(ayuda-guia|modo-vista)\.js$/.test(u)) return r.continue();
-    if (/\/js\/supabase-client\.js$/.test(u)) return r.fulfill({ status: 200, contentType: "application/javascript", body: clienteFalso(esAdmin) });
+    if (/\/js\/supabase-client\.js$/.test(u)) return r.fulfill({ status: 200, contentType: "application/javascript", body: clienteFalso(esAdmin, role) });
     return r.fulfill({ status: 200, contentType: "application/javascript", body: "" });
   });
   await page.goto(BASE + "/logros.html", { waitUntil: "load" });
@@ -154,8 +154,16 @@ async function pruebaEnPantalla(browser) {
     document.activeElement.id === "ayuda-guia" && getComputedStyle(document.activeElement).boxShadow !== "none"));
   await r.ctx.close();
 
-  r = await abrir(browser, { esAdmin: false });
-  cierto("a un profesor no se le ve: la guía hoy no se le ofrece", !(await r.page.evaluate(SE_VE)));
+  r = await abrir(browser, { esAdmin: false, role: "profesor" });
+  cierto("a un profesor se le ve: la guía es del equipo docente", await r.page.evaluate(SE_VE));
+  await r.ctx.close();
+
+  r = await abrir(browser, { esAdmin: false, role: "alumno" });
+  cierto("a un alumno no se le ve", !(await r.page.evaluate(SE_VE)));
+  await r.ctx.close();
+
+  r = await abrir(browser, { esAdmin: true, modo: "profesor" });
+  cierto("a quien administra mirando «como profesor», sí: es lo que ve ese rol", await r.page.evaluate(SE_VE));
   await r.ctx.close();
 
   r = await abrir(browser, { esAdmin: true, modo: "alumno" });

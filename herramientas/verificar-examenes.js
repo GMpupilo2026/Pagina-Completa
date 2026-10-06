@@ -572,6 +572,21 @@ async function main() {
     await ctx.close();
   }
 
+  // ---------- Desde el informe de un alumno: ?alumno= lo deja marcado ----------
+  {
+    const ctx = await contexto(navegador, clienteFalso(PROFE, EXAMEN, { lista: [] }));
+    const p = await ctx.newPage();
+    await p.goto(`${BASE}/examenes.html?alumno=u-ana`, { waitUntil: "networkidle" });
+    await p.waitForSelector("#app:not(.hidden)", { timeout: 10000 });
+    const marcados = await p.evaluate(() => [...document.querySelectorAll(".alumno-check:checked")].map((c) => c.value));
+    ok(marcados.length === 1 && marcados[0] === "u-ana", `?alumno=u-ana debería dejar marcada solo a Ana, quedaron: ${marcados.join(",")}`);
+    await p.goto(`${BASE}/examenes.html?alumno=alguien-ajeno`, { waitUntil: "networkidle" });
+    await p.waitForSelector("#app:not(.hidden)", { timeout: 10000 });
+    const ninguno = await p.evaluate(() => document.querySelectorAll(".alumno-check:checked").length);
+    ok(ninguno === 0, `un alumno que no está en la lista no debería marcar nada (${ninguno})`);
+    await ctx.close();
+  }
+
   // ---------- 6) El profesor: arma, manda y ve el informe ----------
   {
     const lista = [{

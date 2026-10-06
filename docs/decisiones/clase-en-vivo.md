@@ -2192,6 +2192,49 @@ grande; «✕ Volver al tablero» o Esc la cierran.
 herramientas-grandes`.** Está probado que falla de verdad: sin el zoom, sin que
 la barra la cierre, y sin dejar inerte lo de atrás.
 
+### Buscar una herramienta sin salir de la clase
+
+La clase tiene decenas de herramientas: cinco pestañas, cajas plegadas dentro de
+Preguntar, la barra del tablero, «Tu material» y la lista de alumnos. Quien
+busca «la ronda rápida» con la clase mirando no tiene tiempo de abrir pestaña
+por pestaña. Arriba de la columna del profe va **«¿Qué quieres hacer?»**
+(`js/clase-buscar.js`, `#buscar-herramienta`): se escribe y te lleva.
+
+- **Lleva, no aprieta.** Abre la pestaña (con su propio botón, así sesion.js
+  hace lo de siempre: cargar Táctica, recordar la pestaña), despliega cada
+  `<details>` del camino y deja el foco en el botón. Muchas herramientas le
+  mandan algo a toda la clase —una pregunta, un calentamiento, reiniciar el
+  tablero—: un Enter apurado en el buscador no puede mandarlas. Usarla es el
+  Enter siguiente, del profe.
+- **El catálogo se escribe a mano** (`HERRAMIENTAS`), con las palabras con que
+  se pide cada una. Como las claves del buscador del panel, cada palabra tiene
+  que ser cierta. `verificar-clase-buscar.js` pide que cada destino exista en
+  `sesion.html`: un `id` renombrado no puede dejar una entrada que lleve a nada.
+- **Solo ofrece lo que se puede alcanzar ahora**: el elemento existe y lo único
+  que lo esconde es algo que el buscador sabe abrir (una pestaña, una caja
+  plegada, «Tu material» en modo sencillo). Lo que esconde el código de cada
+  herramienta no se toca: con la clase abierta, «Abrir la clase» no sale.
+- **En modo sencillo**, pedir algo de una pestaña avanzada o de «Tu material»
+  aprieta «Ver todas las herramientas»: buscarla es pedir verla. Queda
+  recordado, como si se hubiera apretado a mano.
+- Con «En grande» abierto y un destino fuera de la columna (la barra del
+  tablero), la ventana se cierra primero: lo de afuera está inerte.
+- **Ctrl + K (⌘ + K) trae este buscador**, no el del panel: en `sesion.html`
+  el atajo que cambia de página no va, porque salir tiene que cerrar antes la
+  asistencia. Sin «/»: en la clase se escribe en el chat, en los comentarios y
+  en el cuadro de comandos.
+- Accesible como combobox: `role="combobox"` con su `listbox`, flechas,
+  `aria-activedescendant`, Enter y Escape. El resultado se anuncia en un
+  `role="status"` cuando se deja de escribir (350 ms), no a cada tecla. La
+  herramienta elegida queda 2,5 s con un aro del color de acento
+  (`.buscar-resaltado` en `css/styles.css`, sin animación).
+- No se monta en el proyector ni en el control remoto, y a la alumna no se le
+  pinta.
+- Lo prueba `verificar-clase-buscar.js`: llevar a la ronda (pestaña, caja y
+  foco), que «¿qué jugarías?» no se mande, flechas y Escape, lo que no está no
+  se ofrece, Ctrl + K sin salir, el modo sencillo y la alumna. Haciendo que
+  apriete el botón al llegar, salta.
+
 ### La sesión en vivo se abre cuando el profesor la abre
 
 El alumno entraba al tablero a cualquier hora. Veía la posición que hubiera

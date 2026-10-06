@@ -657,6 +657,32 @@ alumnos», baja un PDF del grupo elegido arriba (o de todos):
   verdad y lee su texto con pypdf (el título, quién lo prepara, solo los del
   grupo, las tres partes).
 
+### La ficha del alumno: lo que se hace con él, a un clic
+
+Lo que un profe hace con UN alumno vivía en cinco páginas: desde su informe
+había que volver al panel, entrar a Tareas y buscarlo otra vez en la lista.
+Arriba del informe de un alumno, debajo de su nombre, va **«Con este
+alumno»** (`#informe-acciones`, `pintarAccionesDelAlumno()`):
+
+- «📋 Ponerle una tarea» (`tareas.html?alumno=…`) y «📝 Ponerle un examen»
+  (`examenes.html?alumno=…`): la página abre con él ya marcado en la lista.
+  Un id que no está en la lista no marca nada; lo que se puede mandar lo sigue
+  decidiendo la base.
+- «✍️ Su bitácora» y «📧 Informes a la casa»: van a su sección de esta misma
+  página. La de la casa es un `<details>` plegado: se abre al llegar y el foco
+  queda en su título.
+- «📓 Su cuaderno» y «🏆 Su libreta de torneos», con su `?alumno=`.
+- **Ponerle una tarea o un examen es dar clase**: solo a quien da clase
+  (`profile.role === "profesor"`, la misma condición que el plan) y nunca
+  mirando como otra persona, que lo mandaría a su nombre. Quien administra no
+  da clase (ver «El panel de quien administra no es el de un profesor»): a él
+  le quedan los cuatro de mirar.
+- No va en el resumen del grupo ni en el informe propio del alumno.
+- Lo prueban `pruebaConEsteAlumno` en `verificar-informes.js` (los enlaces con
+  su id, que la casa se abra, que no aparezca en el grupo y que quien
+  administra no tenga los de dar clase) y `verificar-examenes.js` (que
+  `?alumno=` marque a ese y a nadie más).
+
 ### El tiempo conectado no se lo cree porque lo diga el navegador
 
 `class_presence_log` (clase en vivo, latido de `sesion.html`) y

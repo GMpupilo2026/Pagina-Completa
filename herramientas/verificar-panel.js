@@ -516,15 +516,20 @@ async function pruebaProfesora(browser) {
      así que a quien da clase no se le pinta ni escondida — un enlace
      invisible pero presente sigue siendo una parada de tabulador, y encima
      hacia una página que le va a decir que no. */
-  igual("y ni el lector de planilla, ni la guía, ni la tienda le quedan escondidos en la página",
+  igual("y ni el lector de planilla ni la tienda le quedan escondidos en la página",
     await page.evaluate(() => document.querySelectorAll(
-      "#tile-grid [href='lector-planilla.html'], #tile-grid [href='guia-del-profesor-accesible.html'], #tile-grid [href='tienda.html'], #tile-grid [href='novedades.html']").length), "0");
+      "#tile-grid [href='lector-planilla.html'], #tile-grid [href='tienda.html'], #tile-grid [href='novedades.html']").length), "0");
+  /* La guía del profesor sí es suya: va en «Tu cuenta», con el «?» de cada
+     página. Ver «El «?» de la guía, para el equipo docente». */
+  igual("«Tu cuenta»: configuración, la guía del profesor y logros",
+    grupo(grupos, "Tu cuenta").tiles.map((t) => t.enlace),
+    ["configuracion.html", "guia-del-profesor-accesible.html", "logros.html"]);
 
   /* "Mis pagos" es el recibo de la familia del alumno: a una profesora le
      ofrecía "lo que se te ha cobrado" sobre una cuenta a la que no se le cobra
      nada. Y como no coordina, tampoco le toca la página entera de Cobros. */
   igual("a quien da clase no se le ofrece su propio recibo",
-    grupo(grupos, "Tu cuenta").tiles.map((t) => t.etiqueta), ["Configuración", "Logros"]);
+    grupo(grupos, "Tu cuenta").tiles.map((t) => t.etiqueta), ["Configuración", "Guía del profesor", "Logros"]);
   igual("y sin coordinar, cobros.html no le aparece por ningún lado",
     grupos.flatMap((g) => g.tiles).filter((t) => t.enlace === "cobros.html").length, "0");
   igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
@@ -536,6 +541,67 @@ async function pruebaProfesora(browser) {
    apaga —sin href, pero se alcanza con Tab—, dice que hace falta un plan
    mayor y, al pulsarla, lo repite en un aviso con el botón a los planes.
    Quien de verdad pone el tope es la base (consumir_invitacion). */
+/* El recorrido del profesor nuevo (js/recorrido-profe.js): sale solo la
+   primera vez, sin robarle el foco a nadie; cada paso señala algo que se ve; no
+   vuelve después de cerrarlo; «Ver el recorrido otra vez» lo trae. Ni a la
+   alumna ni a quien administra. Ver «El recorrido del profesor nuevo». */
+async function pruebaRecorrido(browser) {
+  console.log("\n=== El recorrido del profesor nuevo ===");
+  let { page, ctx, errores } = await panel(browser, [PROFE], "u-profe");
+  await page.waitForSelector("#recorrido-profe", { state: "visible", timeout: 5000 }).catch(() => {});
+  igual("la primera vez sale solo", await page.evaluate(() => !!document.getElementById("recorrido-profe") && document.getElementById("recorrido-profe").checkVisibility()), true);
+  igual("y no le roba el foco", await page.evaluate(() => !!document.activeElement.closest("#recorrido-profe")), false);
+  igual("es un diálogo con nombre", await page.evaluate(() => {
+    const t = document.getElementById("recorrido-profe");
+    return [t.getAttribute("role"), document.getElementById(t.getAttribute("aria-labelledby")).textContent];
+  }), ["dialog", "Busca lo que necesites"]);
+  igual("señala el buscador, con el aro a la vista", await page.evaluate(() =>
+    [...document.querySelectorAll(".buscar-resaltado")].map((el) => el.id + ":" + el.checkVisibility())), ["buscar-panel:true"]);
+  const pasos = [];
+  for (let n = 0; n < 6; n++) {
+    pasos.push(await page.evaluate(() => {
+      const r = document.querySelector(".buscar-resaltado");
+      return document.getElementById("recorrido-titulo").textContent + " → " + (r ? (r.id || r.getAttribute("href")) + (r.checkVisibility() ? "" : " (no se ve)") : "nada");
+    }));
+    const sig = page.locator("#recorrido-profe button", { hasText: /Siguiente|Listo/ });
+    if (!(await sig.count())) break;
+    const ultimo = /Listo/.test(await sig.textContent());
+    await sig.click();
+    if (n === 0) igual("al avanzar, el foco va a la tarjeta", await page.evaluate(() => document.activeElement.id), "recorrido-titulo");
+    if (ultimo) break;
+  }
+  igual("cada paso señala algo que se ve", pasos, [
+    "Busca lo que necesites → buscar-panel",
+    "Tu clase en vivo → grupo-clase-en-vivo",
+    "Tus alumnos → grupo-tus-alumnos",
+    "El informe de cada alumno → informes.html",
+    "Si te trabas, la guía → ayuda-guia",
+  ]);
+  igual("al terminar se va, y sin aro", await page.evaluate(() =>
+    [!!document.getElementById("recorrido-profe"), document.querySelectorAll(".buscar-resaltado").length]), [false, 0]);
+  igual("y queda anotado en este aparato", await page.evaluate(() => localStorage.getItem("recorrido_profe_v1:u-profe")), "1");
+  await page.reload({ waitUntil: "networkidle" });
+  await page.waitForSelector("#app:not(.hidden)");
+  await page.waitForTimeout(1200);
+  igual("al volver, ya no sale", await page.evaluate(() => !!document.getElementById("recorrido-profe")), false);
+  igual("«Ver el recorrido otra vez» se ve", await page.evaluate(() => document.getElementById("recorrido-otra-vez").checkVisibility()), true);
+  await page.click("#recorrido-otra-vez");
+  igual("y lo vuelve a abrir, con el foco en la tarjeta", await page.evaluate(() => document.activeElement.id), "recorrido-titulo");
+  await page.keyboard.press("Escape");
+  igual("Escape lo cierra y el foco vuelve al botón", await page.evaluate(() =>
+    [!!document.getElementById("recorrido-profe"), document.activeElement.id]), [false, "recorrido-otra-vez"]);
+  igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
+  await ctx.close();
+
+  for (const [quien, perfiles, id] of [["la alumna", [ALUMNA], "u-ana"], ["quien administra", [ADMIN], "u-admin"]]) {
+    ({ page, ctx } = await panel(browser, perfiles, id));
+    await page.waitForTimeout(1200);
+    igual("a " + quien + " no le sale ni el recorrido ni el botón", await page.evaluate(() =>
+      [!!document.getElementById("recorrido-profe"), document.getElementById("recorrido-otra-vez").checkVisibility()]), [false, false]);
+    await ctx.close();
+  }
+}
+
 async function pruebaCupoInvitaciones(browser) {
   console.log("\n=== «Crear cuenta de alumno» y el cupo de invitaciones ===");
   const ficha = () => {
@@ -3371,6 +3437,7 @@ async function pruebaPanelPequenos(browser) {
     await pruebaBaseLenta(browser);
     await pruebaSemanaProfesora(browser);
     await pruebaProfesora(browser);
+    await pruebaRecorrido(browser);
     await pruebaCupoInvitaciones(browser);
     await pruebaPreparacionRivales(browser);
     await pruebaUrgenteProfesora(browser);
