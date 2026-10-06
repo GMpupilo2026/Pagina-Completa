@@ -937,10 +937,74 @@ lo baja administración y aquellos con quienes se comparte (ver «Los
 materiales de clase»). Para venderlo suelto falta darlo de alta como producto
 de la tienda.
 
+## El banco de ejercicios «Mide tu fuerza»
+
+Un libro de tests tácticos de Oscar Angulo Cubero: 360 posiciones en 45 tests
+de 8, cada test de **un solo tema** (ataque doble, ataque a la descubierta,
+jaque doble, clavada, enfilada, desviación, atracción, interferencia, despeje,
+eliminación del defensor, rayos X, jugada intermedia, pieza atrapada, jugada
+tranquila y el peón avanzado), en tres niveles. Lo arman dos scripts, como
+«Ponte a prueba»: `herramientas/mide-tu-fuerza-generar.js` (el banco,
+`material/mide-tu-fuerza/banco.js`, que no se edita a mano) y
+`herramientas/mide-tu-fuerza-pdf.js` (el PDF y la versión accesible). Lo
+comprueban `verificar-mide-tu-fuerza.js` (el banco y lo accesible) y
+`verificar-mide-tu-fuerza-pdf.py` (protección, autor, marca de agua en cada
+página y que estén los 45 tests).
+
+### Tomado de un libro ajeno como referencia, no copiado
+
+La referencia fueron los tomos de *Mida su fuerza ajedrecística*, de Livshitz
+(tests temáticos de ocho posiciones, tiempo fijo por test, 5 puntos por
+posición, premio o castigo por el tiempo y la suma pasada a Elo). De ahí se
+tomó **el método y nada más**: ni una posición, ni un texto, ni una tabla.
+Las posiciones salen de la base abierta de Lichess (CC0); las explicaciones de
+cada tema, las pistas, las reglas de los puntos parciales (5, 3, 1, 0) y los
+tiempos son propios; y la tabla de fuerza se calcula, no se copia (ver abajo).
+El título tampoco es el del libro: «Mide tu fuerza», en tuteo.
+
+### Las posiciones: una sola jugada que gana
+
+Las candidatas (`herramientas/datos/mide-tu-fuerza-candidatas.txt`, la
+consulta está en la cabecera del generador) pasan por el **mismo** `analizar()`
+del diagnóstico: solo quedan las que tienen una sola jugada buena. Además se
+exige que **gane** (+3 o mate): el test promete que hay una combinación, y si
+la posición solo empata quien busca el golpe busca algo que no está. El tema
+de cada posición es el que le puso Lichess; si tiene varios manda el más raro
+(un jaque doble casi siempre es también un ataque a la descubierta). Ninguna
+repite una pregunta del diagnóstico ni de «Ponte a prueba». Si un nivel queda
+corto en un tema (los rayos X difíciles casi no existen en la base), lo
+completa el nivel vecino con el rating más cercano.
+
+A diferencia de «Ponte a prueba», juegan blancas **o negras**, como en una
+partida: el tablero se ve siempre desde las blancas y cada diagrama dice
+arriba, en un recuadro blanco o negro y con palabras, quién juega.
+
+### La dificultad y las tablas
+
+`elo` = rating de Lichess − 780: el descuento de las preguntas de mover del
+diagnóstico (400) más el corrimiento que midió su calibración (380), porque
+acá también se contesta sin opciones. La tabla de fuerza sale de la curva del
+Elo, igual que en «Ponte a prueba» pero sin acierto al azar: para una fuerza
+R, cada posición se resuelve con probabilidad 1 / (1 + 10^((elo − R)/400)) y
+vale 5. Hay una tabla por nivel (para quien hace uno solo) y una del total.
+
+El tiempo de cada test es el de su nivel (30, 40 y 50 minutos: 4, 5 y 6 por
+posición) y vive en el banco, para que el libro y quien lo use en clase digan
+lo mismo.
+
+### El PDF
+
+Igual que «Ponte a prueba»: tapa, marca de agua con el logo en cada página del
+cuerpo, el nombre del autor en la tapa, el pie de cada página y los datos del
+archivo, y protección (`herramientas/lib/pdf-armar.js`). **Se deja
+imprimir**: es un cuaderno de trabajo. Vive en `material/mide-tu-fuerza/`,
+detrás del candado del worker, y se comparte desde `admin.html#materiales`.
+
 ## Los materiales de clase
 
 `admin.html#materiales` («Materiales de clases») junta los materiales para dar
-clase —hoy, «Ponte a prueba»— y dice **con quién se comparte cada uno**: una
+clase —hoy, «Ponte a prueba» y el banco de ejercicios «Mide tu fuerza»— y
+dice **con quién se comparte cada uno**: una
 persona, una academia entera o todos los profesores. Lo pinta
 `js/admin-materiales.js`; lo prueba `verificar-admin.js`.
 
