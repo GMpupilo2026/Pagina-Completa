@@ -258,6 +258,32 @@ async function pruebaFicha() {
 }
 
 /* ==================================================================
+   1b. Provincias, cantones y distritos (TSE)
+   ================================================================== */
+function pruebaDivision() {
+  console.log("\n=== Provincia, cantón y distrito (División Territorial Electoral del TSE) ===");
+  // js/division-territorial.js es generado: volver a generarlo no lo cambia.
+  const antes = leer("js/division-territorial.js");
+  require("child_process").execFileSync("node", [path.join(__dirname, "division-territorial-generar.js")]);
+  cierto("js/division-territorial.js está al día con su generador (no se editó a mano)", leer("js/division-territorial.js") === antes);
+  const D = require("../js/division-territorial.js");
+  const nC = D.reduce((s, p) => s + p.cantones.length, 0);
+  const nD = D.reduce((s, p) => s + p.cantones.reduce((t, c) => t + c.distritos.length, 0), 0);
+  igual("7 provincias, 84 cantones y 492 distritos", [D.length, nC, nD], [7, 84, 492]);
+  igual("las provincias, en el orden del decreto", D.map((p) => p.provincia),
+    ["San José", "Alajuela", "Cartago", "Heredia", "Guanacaste", "Puntarenas", "Limón"]);
+  cierto("ningún cantón repetido en su provincia, ni distrito en su cantón",
+    D.every((p) => new Set(p.cantones.map((c) => c.canton)).size === p.cantones.length &&
+      p.cantones.every((c) => c.distritos.length && new Set(c.distritos).size === c.distritos.length)));
+  const de = (p, c) => D.find((x) => x.provincia === p).cantones.find((x) => x.canton === c);
+  cierto("con su ortografía: tildes, «de», «de la» y nombres propios",
+    !!de("San José", "Pérez Zeledón") && de("San José", "Pérez Zeledón").distritos[0] === "San Isidro de El General" &&
+    !!de("San José", "Vázquez de Coronado") && de("Heredia", "Barva").distritos.includes("San José de la Montaña") &&
+    de("Limón", "Limón").distritos.includes("Valle La Estrella") && de("San José", "Tibás").distritos.includes("León XIII") &&
+    !!de("Alajuela", "Río Cuarto") && !!de("Puntarenas", "Puerto Jiménez"));
+}
+
+/* ==================================================================
    2. La función y el puente
    ================================================================== */
 function pruebaFuncion() {
@@ -428,8 +454,8 @@ async function llenarMenor(page) {
   if (!page.__ya) igual("el teléfono solo deja números, y 8 (con guion y de más, se limpia)", await page.inputValue("#f-telefono"), "88880000");
   await llenar("#f-correo", "casa@ejemplo.cr");
   await page.selectOption("#f-provincia", "Heredia");
-  await llenar("#f-canton", "Barva");
-  await llenar("#f-distrito", "San Pablo");
+  await page.selectOption("#f-canton", "Barva");
+  await page.selectOption("#f-distrito", "San Pablo");
   await llenar("#f-direccion", "Del parque 100 m sur");
   await llenar("#f-tutorNombre", "Marta Ruiz Mora");
   await page.selectOption("#f-tutorCondicion", "madre");
@@ -526,6 +552,25 @@ async function pruebaPagina(browser) {
     /Fotografía y cédula del atleta/.test(await page.textContent("#jdn-form")) &&
     /Fotografía del atleta/.test(await page.textContent('label[for="f-foto"]')) &&
     /Cédula del atleta, frente/.test(await page.textContent('label[for="f-frente"]')));
+
+  // Provincia → cantón → distrito: solo lo de la provincia y el cantón elegidos.
+  cierto("antes de la provincia, el cantón y el distrito están apagados",
+    await page.isDisabled("#f-canton") && await page.isDisabled("#f-distrito"));
+  igual("la provincia trae las siete", (await page.$$eval("#f-provincia option", (os) => os.map((o) => o.value))).filter(Boolean).length, 7);
+  await page.selectOption("#f-provincia", "Heredia");
+  igual("Heredia: sus 10 cantones, y el distrito sigue apagado",
+    [(await page.$$eval("#f-canton option", (os) => os.map((o) => o.value))).filter(Boolean).length, await page.isDisabled("#f-distrito")], [10, true]);
+  await page.selectOption("#f-canton", "Barva");
+  igual("Barva: sus distritos",
+    (await page.$$eval("#f-distrito option", (os) => os.map((o) => o.value))).filter(Boolean),
+    ["Barva", "San Pedro", "San Pablo", "San Roque", "Santa Lucía", "San José de la Montaña", "Puente Salas"]);
+  await page.selectOption("#f-distrito", "San Pablo");
+  await page.selectOption("#f-provincia", "Limón");
+  cierto("cambiar de provincia borra el cantón y el distrito elegidos",
+    (await page.inputValue("#f-canton")) === "" && (await page.inputValue("#f-distrito")) === "" && await page.isDisabled("#f-distrito") &&
+    !(await page.$$eval("#f-canton option", (os) => os.map((o) => o.value))).includes("Barva"));
+  igual("el comité se puede elegir de los 84 comités cantonales",
+    [await page.$$eval("#lista-comites option", (os) => os.length), await page.getAttribute("#f-comite", "list")], [84, "lista-comites"]);
 
   // Guardar sin llenar: dice qué falta y no llama
   const antes = pedidos.length;
@@ -637,6 +682,7 @@ async function pruebaPagina(browser) {
 
 (async () => {
   await pruebaFicha();
+  pruebaDivision();
   pruebaFuncion();
   if (process.argv.includes("--sin-navegador")) return terminar();
   const browser = await chromium.launch({ executablePath: fs.existsSync(CHROME) ? CHROME : undefined });

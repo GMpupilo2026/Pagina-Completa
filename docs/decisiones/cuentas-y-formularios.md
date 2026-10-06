@@ -1121,11 +1121,32 @@ la hoja «Resumen - <comité>» de la carpeta del comité. Verificador:
     equipo» de la 20, y decide la carpeta del Drive. La rama no se pregunta,
     y el recuadro de las pruebas dice solo «Clásico, Rápido, Relámpago.», sin
     la categoría (la categoría ya está en su renglón).
-  - Hoy el comité se escribe a mano («CCDR San José»), y el puente busca la
-    carpeta **sin mirar mayúsculas ni tildes**. Provincia es una lista; el
-    cantón y el distrito todavía se escriben: el dueño del sitio va a subir la
-    división territorial oficial al Drive, y con ella se arman las listas en
-    cascada (provincia → cantón → distrito), y de paso la del comité.
+  - El comité se elige de la lista de los 84 comités cantonales («CCDR
+    <cantón>») o se escribe (un Concejo de Distrito, por ejemplo), y el puente
+    busca la carpeta **sin mirar mayúsculas ni tildes**.
+- **Provincia → cantón → distrito, en cascada**: solo se puede elegir un
+  cantón de la provincia elegida y un distrito de ese cantón; cambiar de
+  provincia borra los dos. La lista es la **División Territorial Electoral del
+  TSE** (Decreto 2-2025), el PDF «Provincias, Cantones, Distritos, Barrios»
+  que el dueño del sitio subió a «JDN 2027»: 7 provincias, 84 cantones, 492
+  distritos.
+  - `herramientas/division-territorial-extraer.py <PDF>` la saca a
+    `herramientas/division-territorial-tse.json`, tal cual la escribe el TSE,
+    y se comprueba sola: los distritos de cada cantón, contados por sus
+    encabezados, tienen que dar lo mismo que contados por los códigos de
+    poblado. El PDF escribe «Xl» y «Xll» con ele: sin aceptarla se perdían
+    dos distritos de Turrialba. El texto que da el Drive del mismo PDF viene
+    cortado (llega hasta Alajuela): hay que leer el PDF.
+  - `herramientas/division-territorial-generar.js` escribe
+    `js/division-territorial.js` (no se edita a mano). El TSE escribe todo en
+    mayúsculas y sin tildes: el generador pasa a mayúscula inicial y pone las
+    tildes con su tabla `TILDES`, palabra por palabra; una palabra de la tabla
+    que no está en la lista del TSE lo hace fallar. «de», «del» y «o» van en
+    minúscula, y el artículo solo detrás de «de» («San José de la Montaña»,
+    pero «Valle La Estrella» y «San Isidro de El General»).
+  - Cuando el TSE publique otra división: bajar el PDF nuevo, correr los dos
+    scripts y `verificar-jdn` (que cuenta 7, 84 y 492: se cambian ahí si
+    cambió de verdad).
 - **Atleta o entrenador.** El formulario pregunta primero qué es, y cada uno
   llena su consentimiento. Al entrenador no se le pide condición
   (atleta/paratleta), categoría, tutor ni certificación de nacimiento, y su

@@ -228,6 +228,40 @@
     if (limpio !== t.value) t.value = limpio;
   }
 
+  /* Provincia → cantón → distrito, de la División Territorial Electoral del
+     TSE (js/division-territorial.js, generado: ver
+     herramientas/division-territorial-generar.js). Solo se puede elegir lo que
+     hay en la provincia y el cantón elegidos. */
+  const D = window.DivisionTerritorial;
+  const cantonesDe = (prov) => ((D.find((p) => p.provincia === prov) || {}).cantones || []);
+
+  function llenarLista(select, valores, vacia) {
+    select.textContent = "";
+    const o0 = document.createElement("option");
+    o0.value = "";
+    o0.textContent = vacia;
+    select.append(o0);
+    for (const v of valores) {
+      const o = document.createElement("option");
+      o.value = v;
+      o.textContent = v;
+      select.append(o);
+    }
+    select.disabled = !valores.length;
+  }
+
+  function alCambiarProvincia() {
+    const cs = cantonesDe($("f-provincia").value).map((c) => c.canton);
+    llenarLista($("f-canton"), cs, cs.length ? "Elige…" : "Primero la provincia");
+    alCambiarCanton();
+  }
+
+  function alCambiarCanton() {
+    const c = cantonesDe($("f-provincia").value).find((x) => x.canton === $("f-canton").value);
+    const ds = c ? c.distritos : [];
+    llenarLista($("f-distrito"), ds, ds.length ? "Elige…" : "Primero el cantón");
+  }
+
   function mismoTutor() {
     $("f-beneficiarioNombre").value = $("f-tutorNombre").value;
     $("f-beneficiarioCedula").value = $("f-tutorCedula").value;
@@ -435,6 +469,7 @@
 
   function otra() {
     $("jdn-form").reset();
+    alCambiarProvincia();
     document.querySelectorAll(".jdn-archivo").forEach(vistaPrevia);
     $("jdn-listo").hidden = true;
     $("jdn-form").hidden = false;
@@ -446,6 +481,16 @@
   /* ------------------------------------------------------------ arranque */
 
   function armar() {
+    llenarLista($("f-provincia"), D.map((p) => p.provincia), "Elige…");
+    // Los comités cantonales, para elegir en vez de escribir (y que no salgan
+    // dos carpetas del mismo comité con nombres distintos).
+    for (const p of D) for (const c of p.cantones) {
+      const o = document.createElement("option");
+      o.value = "CCDR " + c.canton;
+      $("lista-comites").append(o);
+    }
+    $("f-provincia").addEventListener("change", alCambiarProvincia);
+    $("f-canton").addEventListener("change", alCambiarCanton);
     document.querySelectorAll("select[data-opciones]").forEach((s) => opciones(s, J.OPCIONES[s.dataset.opciones]));
     casillas($("jdn-discapacidad"), "discapacidad", J.OPCIONES.discapacidad, false);
 

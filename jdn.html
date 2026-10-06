@@ -127,8 +127,9 @@
                         </div>
                         <div>
                             <label for="f-comite" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Comité que representa *</label>
-                            <input id="f-comite" name="comite" type="text" autocomplete="off" placeholder="ej. CCDR San José" aria-describedby="ayuda-comite" class="jdn-campo w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none">
-                            <p id="ayuda-comite" class="text-xs text-brand-500 dark:text-brand-300 mt-1">El comité cantonal de deportes por el que compite. Va en «Nombre del equipo» de la ficha.</p>
+                            <input id="f-comite" name="comite" type="text" autocomplete="off" list="lista-comites" placeholder="ej. CCDR San José" aria-describedby="ayuda-comite" class="jdn-campo w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none">
+                            <datalist id="lista-comites"></datalist>
+                            <p id="ayuda-comite" class="text-xs text-brand-500 dark:text-brand-300 mt-1">El comité cantonal de deportes por el que compite: elígelo de la lista o escríbelo. Va en «Nombre del equipo» de la ficha.</p>
                         </div>
                         <div id="caja-condicion" class="sm:col-span-2">
                             <p id="et-condicion" class="text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Se inscribe como *</p>
@@ -207,16 +208,16 @@
                         <div>
                             <label for="f-provincia" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Provincia *</label>
                             <select id="f-provincia" name="provincia" class="jdn-campo w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none">
-                                <option value="">Elige…</option><option>San José</option><option>Alajuela</option><option>Cartago</option><option>Heredia</option><option>Guanacaste</option><option>Puntarenas</option><option>Limón</option>
+                                <option value="">Elige…</option>
                             </select>
                         </div>
                         <div>
                             <label for="f-canton" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Cantón *</label>
-                            <input id="f-canton" name="canton" type="text" class="jdn-campo w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none">
+                            <select id="f-canton" name="canton" disabled class="jdn-campo w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none disabled:opacity-60"><option value="">Primero la provincia</option></select>
                         </div>
                         <div>
                             <label for="f-distrito" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Distrito *</label>
-                            <input id="f-distrito" name="distrito" type="text" class="jdn-campo w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none">
+                            <select id="f-distrito" name="distrito" disabled class="jdn-campo w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none disabled:opacity-60"><option value="">Primero el cantón</option></select>
                         </div>
                         <div class="sm:col-span-3">
                             <label for="f-direccion" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Dirección exacta *</label>
@@ -383,6 +384,7 @@
     <script src="js/legal-version.js"></script>
     <script src="js/reporte-excel.js"></script>
     <script src="js/reporte-docx.js"></script>
+    <script src="js/division-territorial.js"></script>
     <script src="js/jdn-consentimiento.js"></script>
     <script src="js/jdn.js"></script>
 </body>
