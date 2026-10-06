@@ -1,13 +1,15 @@
 #!/usr/bin/env node
 /*
  * La lista de admin.html#archivos (data/archivos.json) está al día con el
- * disco: todos los PDF, Word y Excel del sitio. No necesita red ni navegador.
+ * disco: todos los PDF, Word, Excel y presentaciones del sitio. No necesita
+ * red ni navegador.
  *
  * La sección promete TODOS los archivos, también los que se creen después. La
  * lista la arma herramientas/archivos-catalogo.js leyendo el disco, pero un
  * generador que nadie corre no promete nada: el archivo nuevo no aparece y no
  * da ningún error. Por eso esto falla en el CI —y dice cuál falta— hasta que
- * se vuelva a generar. Comprueba, para cada ficha (PDF, Word, Excel):
+ * se vuelva a generar. Comprueba, para cada ficha (PDF, Word, Excel,
+ * presentaciones):
  *   - cada archivo del sitio está una sola vez, y cada uno de la lista existe;
  *   - data/archivos.json es lo que el generador arma hoy (sin mirar el peso);
  *   - cada lección de un curso trae algo, y nada de un curso cae en «sueltos».
@@ -26,11 +28,11 @@ const guardado = fs.existsSync(SALIDA) ? JSON.parse(fs.readFileSync(SALIDA, "utf
 ok(guardado, "data/archivos.json existe");
 if (!guardado) process.exit(1);
 
-const NOMBRE = { pdf: "PDF", word: "Word", excel: "Excel" };
+const NOMBRE = { pdf: "PDF", word: "Word", excel: "Excel", presentaciones: "Presentaciones" };
 function rutasDe(tipo, d) {
   const f = d[tipo];
   if (!f) return [];
-  if (tipo === "pdf") {
+  if (f.cursos) {
     return f.material.concat(f.sueltos, ...f.cursos.map((c) => c.lecciones.flatMap((l) => l.archivos).concat(c.otros)))
       .map((a) => a.ruta);
   }
@@ -51,13 +53,15 @@ for (const tipo of Object.keys(TIPOS)) {
   ok(guardado[tipo] && guardado[tipo].total === disco.size, `el total dice ${guardado[tipo] && guardado[tipo].total} y hay ${disco.size}`);
 }
 
-console.log("\nLos PDF, en su lugar");
-const pdf = guardado.pdf;
-ok(pdf.sueltos.every((a) => !a.ruta.startsWith("cursos/") && !a.ruta.startsWith("material/")),
-  "nada de un curso ni de material/ cae en «sueltos»");
-const vacias = pdf.cursos.flatMap((c) => c.lecciones.filter((l) => !l.archivos.length).map((l) => c.slug + ": " + l.titulo));
-ok(!vacias.length, vacias.length ? `lecciones sin PDF: ${vacias.join(", ")}` : "cada lección trae sus PDF");
-ok(pdf.cursos.flatMap((c) => c.lecciones).every((l) => l.titulo), "cada lección tiene su nombre");
+for (const tipo of ["pdf", "presentaciones"]) {
+  console.log(`\n${NOMBRE[tipo]}, en su lugar`);
+  const f = guardado[tipo];
+  ok(f.sueltos.every((a) => !a.ruta.startsWith("cursos/") && !a.ruta.startsWith("material/")),
+    "nada de un curso ni de material/ cae en «sueltos»");
+  const vacias = f.cursos.flatMap((c) => c.lecciones.filter((l) => !l.archivos.length).map((l) => c.slug + ": " + l.titulo));
+  ok(!vacias.length, vacias.length ? `lecciones vacías: ${vacias.join(", ")}` : "cada lección trae lo suyo");
+  ok(f.cursos.flatMap((c) => c.lecciones).every((l) => l.titulo), "cada lección tiene su nombre");
+}
 
 console.log("\nAl día");
 // El peso (kb) no se compara: volver a generar un archivo lo cambia en unos

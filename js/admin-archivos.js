@@ -1,5 +1,6 @@
-/* La sección «PDF, Word y Excel» de admin.html: todos esos archivos del sitio,
- * una ficha por tipo, ordenados, para abrirlos o bajarlos de a uno o de a grupo.
+/* La sección «Archivos» de admin.html: todos los PDF, Word, Excel y
+ * presentaciones del sitio, una ficha por tipo, ordenados, para abrirlos o
+ * bajarlos de a uno o de a grupo.
  *
  * La lista sale de data/archivos.json, que arma herramientas/archivos-catalogo.js
  * leyendo el disco: un archivo nuevo aparece acá al volver a correrlo, y si
@@ -8,7 +9,7 @@
  *
  * Bajar no pasa por acá: los de cursos/recursos/ y material/ los sirve el
  * worker, que deja pasar a quien administra (puede_bajar()). Esta pantalla
- * solo pinta enlaces. Ver «La sección PDF, Word y Excel» en
+ * solo pinta enlaces. Ver «La sección Archivos» en
  * docs/decisiones/cursos-y-material.md.
  */
 (function () {
@@ -19,6 +20,7 @@
   const TIPO = {
     material: { emoji: "📚", nombre: "Material de estudio" },
     ejercicios: { emoji: "📄", nombre: "Ejercicios" },
+    presentacion: { emoji: "📊", nombre: "Presentación" },
     otro: { emoji: "📎", nombre: "Otro" },
   };
 
@@ -47,6 +49,23 @@
   }
 
   const sumaKb = (lista) => lista.reduce((s, a) => s + a.kb, 0);
+
+  /* «3 PDF», «3 presentaciones» o «3 archivos», según lo que haya en la lista. */
+  /* «Bajar los 9», «Bajar las 12 presentaciones del curso», «Bajar el PDF». */
+  function textoBajar(lista, conNombre, cola) {
+    const n = lista.length;
+    const fem = lista.every((a) => /\.(pptx?|odp)$/i.test(a.ruta));
+    const art = n === 1 ? (fem ? "la" : "el") : (fem ? "las" : "los");
+    if (n === 1) return "📥 Bajar " + art + " " + cuantos(lista).replace(/^1 /, "") + (cola || "");
+    return "📥 Bajar " + art + " " + (conNombre ? cuantos(lista) : String(n)) + (cola || "");
+  }
+
+  function cuantos(lista) {
+    const n = lista.length;
+    if (lista.every((a) => /\.pdf$/i.test(a.ruta))) return n + " PDF";
+    if (lista.every((a) => /\.(pptx?|odp)$/i.test(a.ruta))) return n + (n === 1 ? " presentación" : " presentaciones");
+    return n + (n === 1 ? " archivo" : " archivos");
+  }
   const plural = (n, uno, varios) => n + " " + (n === 1 ? uno : varios);
   const nombreArchivo = (ruta) => ruta.split("/").pop();
 
@@ -155,9 +174,8 @@
     h.append(e, document.createTextNode(titulo));
     izq.append(h);
     izq.append(el("p", "text-sm text-brand-500 dark:text-brand-300 mt-1",
-      descripcion + " " + (lista.every((x) => /\.pdf$/i.test(x.ruta)) ? plural(lista.length, "PDF", "PDF")
-        : plural(lista.length, "archivo", "archivos")) + " · " + tamano(sumaKb(lista)) + "."));
-    cab.append(izq, botonGrupo(lista, "📥 Bajar los " + lista.length));
+      descripcion + " " + cuantos(lista) + " · " + tamano(sumaKb(lista)) + "."));
+    cab.append(izq, botonGrupo(lista, textoBajar(lista)));
     sec.append(cab);
     const ul = el("ul", "divide-y divide-brand-100 dark:divide-brand-800");
     if (lista.some((a) => a.libro)) {
@@ -194,12 +212,12 @@
     flecha.setAttribute("aria-hidden", "true");
     t.append(flecha, document.createTextNode(c.titulo));
     const cuenta = el("span", "text-xs font-semibold text-brand-500 dark:text-brand-300",
-      plural(c.lecciones.length, "lección", "lecciones") + " · " + plural(todos.length, "PDF", "PDF") + " · " + tamano(sumaKb(todos)));
+      plural(c.lecciones.length, "lección", "lecciones") + " · " + cuantos(todos) + " · " + tamano(sumaKb(todos)));
     sum.append(t, cuenta);
     det.append(sum);
 
     const cuerpo = el("div", "px-4 md:px-5 pb-5");
-    cuerpo.append(botonGrupo(todos, "📥 Bajar los " + todos.length + " PDF del curso"));
+    cuerpo.append(botonGrupo(todos, textoBajar(todos, true, " del curso")));
     const ol = el("ol", "mt-3 divide-y divide-brand-100 dark:divide-brand-800");
     c.lecciones.forEach((l) => {
       const li = el("li", "pdf-leccion py-3");
@@ -229,6 +247,59 @@
     return det;
   }
 
+  /* Los cursos, por nivel (el orden del catálogo), cada uno plegado. Lo usan
+     las fichas de PDF y de presentaciones. */
+  function bloqueCursos(f, idTitulo, descripcion) {
+    const todosCursos = f.cursos.flatMap(archivosDeCurso);
+    const cajaCursos = el("section", "space-y-3");
+    cajaCursos.setAttribute("aria-labelledby", idTitulo);
+    const cab = el("div", "flex flex-wrap items-start justify-between gap-3");
+    const izq = el("div");
+    const h = el("h3", "font-serif text-xl font-bold text-brand-800 dark:text-white");
+    h.id = idTitulo;
+    const e = el("span", null, "🎓 ");
+    e.setAttribute("aria-hidden", "true");
+    h.append(e, document.createTextNode("Cursos"));
+    izq.append(h, el("p", "text-sm text-brand-500 dark:text-brand-300 mt-1",
+      descripcion + " " + plural(f.cursos.length, "curso", "cursos") +
+      " · " + cuantos(todosCursos) + " · " + tamano(sumaKb(todosCursos)) + ". Abre un curso para ver sus lecciones."));
+    cab.append(izq, botonGrupo(todosCursos, textoBajar(todosCursos)));
+    cajaCursos.append(cab);
+    const niveles = f.niveles.concat([{ id: null, nombre: "Otros cursos" }]);
+    niveles.forEach((n) => {
+      const delNivel = f.cursos.filter((c) => (c.nivel || null) === n.id ||
+        (n.id === null && !f.niveles.some((x) => x.id === c.nivel)));
+      if (!delNivel.length) return;
+      const bloque = el("div", "pdf-nivel space-y-3");
+      bloque.append(el("h4", "pt-2 text-xs font-bold uppercase tracking-wide text-brand-450 dark:text-brand-350", n.nombre));
+      delNivel.forEach((c) => bloque.append(curso(c)));
+      cajaCursos.append(bloque);
+    });
+    return cajaCursos;
+  }
+
+  /* La ficha de presentaciones: los .pptx de cada lección, ordenados como los
+     PDF. Lo que no es de un curso va al final, igual. */
+  function pintarPresentaciones() {
+    const caja = $("arch-lista-presentaciones");
+    caja.replaceChildren();
+    const f = todo.presentaciones;
+    if (!f || !f.total) {
+      caja.append(el("p", "text-sm text-brand-500 dark:text-brand-300", "Todavía no hay ninguna presentación en la plataforma."));
+      return;
+    }
+    const todas = f.material.concat(f.sueltos, f.cursos.flatMap(archivosDeCurso));
+    caja.append(el("p", "text-sm font-semibold text-brand-600 dark:text-brand-200",
+      cuantos(todas) + " en total · " + tamano(sumaKb(todas)) + ". Se bajan para abrirlas en PowerPoint, Keynote o Google Presentaciones."));
+    if (f.material.length) {
+      caja.append(tarjeta("pres-titulo-material", "📕", "Libros y material", "Las de los libros y guías.", f.material, (a) => a.titulo));
+    }
+    if (f.cursos.length) caja.append(bloqueCursos(f, "pres-titulo-cursos", "La presentación de cada lección, para proyectar en clase."));
+    if (f.sueltos.length) {
+      caja.append(tarjeta("pres-titulo-sueltos", "📄", "Otras presentaciones", "Las que están fuera de los cursos y del material.", f.sueltos, (a) => a.titulo));
+    }
+  }
+
   function pintar() {
     const lista = $("pdf-lista");
     lista.replaceChildren();
@@ -242,32 +313,8 @@
         "Los libros, bancos de preguntas y guías para dar clase.", datos.material, (a) => a.titulo));
     }
 
-    // Los cursos, por nivel (el orden del catálogo).
-    const cajaCursos = el("section", "space-y-3");
-    cajaCursos.setAttribute("aria-labelledby", "pdf-titulo-cursos");
-    const cab = el("div", "flex flex-wrap items-start justify-between gap-3");
-    const izq = el("div");
-    const h = el("h3", "font-serif text-xl font-bold text-brand-800 dark:text-white");
-    h.id = "pdf-titulo-cursos";
-    const e = el("span", null, "🎓 ");
-    e.setAttribute("aria-hidden", "true");
-    h.append(e, document.createTextNode("Cursos"));
-    izq.append(h, el("p", "text-sm text-brand-500 dark:text-brand-300 mt-1",
-      "El material de estudio y los ejercicios de cada lección. " + plural(datos.cursos.length, "curso", "cursos") +
-      " · " + plural(todosCursos.length, "PDF", "PDF") + " · " + tamano(sumaKb(todosCursos)) + ". Abre un curso para ver sus lecciones."));
-    cab.append(izq, botonGrupo(todosCursos, "📥 Bajar los " + todosCursos.length));
-    cajaCursos.append(cab);
-    const niveles = datos.niveles.concat([{ id: null, nombre: "Otros cursos" }]);
-    niveles.forEach((n) => {
-      const delNivel = datos.cursos.filter((c) => (c.nivel || null) === n.id ||
-        (n.id === null && !datos.niveles.some((x) => x.id === c.nivel)));
-      if (!delNivel.length) return;
-      const bloque = el("div", "pdf-nivel space-y-3");
-      bloque.append(el("h4", "pt-2 text-xs font-bold uppercase tracking-wide text-brand-450 dark:text-brand-350", n.nombre));
-      delNivel.forEach((c) => bloque.append(curso(c)));
-      cajaCursos.append(bloque);
-    });
-    lista.append(cajaCursos);
+    lista.append(bloqueCursos(datos, "pdf-titulo-cursos",
+      "El material de estudio y los ejercicios de cada lección."));
 
     if (datos.sueltos.length) {
       lista.append(tarjeta("pdf-titulo-sueltos", "📄", "Otros PDF del sitio",
@@ -299,7 +346,7 @@
     });
   }
 
-  /* Las fichas (PDF, Word, Excel): una a la vista, con las flechas del
+  /* Las fichas (PDF, Word, Excel, presentaciones): una a la vista, con las flechas del
      teclado para pasar de una a otra, como pide el patrón de pestañas. */
   function elegirFicha(tipo, foco) {
     document.querySelectorAll("#arch-fichas [role=tab]").forEach((b) => {
@@ -359,7 +406,8 @@
         pintar();
         pintarPorCarpeta("word");
         pintarPorCarpeta("excel");
-        ["pdf", "word", "excel"].forEach((t) => { $("arch-cuenta-" + t).textContent = String((todo[t] || {}).total || 0); });
+        pintarPresentaciones();
+        ["pdf", "word", "excel", "presentaciones"].forEach((t) => { $("arch-cuenta-" + t).textContent = String((todo[t] || {}).total || 0); });
       } catch (e) {
         pedido = null;
         $("pdf-cargando").hidden = true;

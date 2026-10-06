@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-/* Arma data/archivos.json: la lista de TODOS los PDF, Word y Excel del sitio,
- * ordenada para la sección «PDF, Word y Excel» de admin.html (la pinta
+/* Arma data/archivos.json: la lista de TODOS los PDF, Word, Excel y
+ * presentaciones del sitio, ordenada para la sección «Archivos» de admin.html (la pinta
  * js/admin-archivos.js, una ficha por tipo).
  *
  * La lista no se escribe a mano: se lee del disco. Un archivo nuevo (un curso,
@@ -17,7 +17,8 @@
  *     (cursos/protegido/<curso>.html, un <details> por lección). Lo que la
  *     página no enlaza va en «Otros archivos del curso».
  *   - Sueltos: los PDF fuera de esas dos carpetas (hoy, la raíz).
- * Los Word y los Excel van por carpeta (el nombre, de CARPETAS).
+ * Las presentaciones (.pptx) se ordenan igual que los PDF. Los Word y los
+ * Excel van por carpeta (el nombre, de CARPETAS).
  *
  *   node herramientas/archivos-catalogo.js   escribe data/archivos.json
  */
@@ -34,6 +35,7 @@ const TIPOS = {
   pdf: /\.pdf$/i,
   word: /\.(docx?|odt)$/i,
   excel: /\.(xlsx|xlsm|xls|ods)$/i,
+  presentaciones: /\.(pptx?|odp)$/i,
 };
 
 // Lo que no se publica (.assetsignore) ni es del sitio: ahí no se busca.
@@ -117,6 +119,7 @@ function nombreDelArchivo(archivo) {
 function tipoDe(archivo) {
   if (/-material\.pdf$/i.test(archivo)) return "material";
   if (/-ejercicios\.pdf$/i.test(archivo)) return "ejercicios";
+  if (TIPOS.presentaciones.test(archivo)) return "presentacion";
   return "otro";
 }
 
@@ -127,8 +130,9 @@ function textoPlano(html) {
     .replace(/&#39;/g, "'").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/\s+/g, " ").trim();
 }
 
-/* Las lecciones de un curso, leídas de su página: [{ numero, titulo, pdfs }]. */
-function leccionesDe(slug) {
+/* Las lecciones de un curso, leídas de su página, con los archivos de un tipo
+   que enlaza cada una: [{ numero, titulo, pdfs }]. */
+function leccionesDe(slug, tipo) {
   const pagina = path.join(RAIZ, "cursos", "protegido", slug + ".html");
   if (!fs.existsSync(pagina)) return [];
   const html = fs.readFileSync(pagina, "utf8");
@@ -140,9 +144,10 @@ function leccionesDe(slug) {
     const s = t.match(/^<summary[^>]*>([\s\S]*?)<\/summary>/);
     if (!s) continue;
     const pdfs = [];
-    const re = /href="(?:\.\.\/)?(recursos\/[^"]+?\.pdf)"/gi;
+    const re = /href="(?:\.\.\/)?(recursos\/[^"]+?)"/gi;
     let m;
     while ((m = re.exec(t))) {
+      if (!TIPOS[tipo].test(m[1])) continue;
       const ruta = "cursos/" + m[1];
       if (!pdfs.includes(ruta)) pdfs.push(ruta);
     }
@@ -156,8 +161,12 @@ function leccionesDe(slug) {
 
 const enDisco = (tipo) => buscar(RAIZ, "", [], TIPOS[tipo]).sort((a, b) => a.localeCompare(b, "es"));
 
-function armarPdf() {
-  const todos = enDisco("pdf");
+/* Los PDF y las presentaciones: muchos y de los cursos, así que van ordenados
+   (libros y material, cursos por lección, sueltos). */
+const NOMBRE_EN_LECCION = { material: "Material de estudio", ejercicios: "Ejercicios", presentacion: "Presentación" };
+
+function armarOrdenado(tipo) {
+  const todos = enDisco(tipo);
   const catalogo = JSON.parse(fs.readFileSync(path.join(RAIZ, "herramientas", "cursos", "catalogo.json"), "utf8"));
   const usados = new Set();
   const archivo = (ruta, titulo) => {
@@ -165,7 +174,6 @@ function armarPdf() {
     return { ruta, titulo: titulo || tituloDe(ruta), tipo: tipoDe(ruta), kb: kb(ruta) };
   };
 
-  // Libros y material.
   // Libros y material, con el libro al que pertenece cada uno.
   const material = todos.filter((r) => r.startsWith("material/")).map((r) => {
     const carpeta = r.split("/")[1];
@@ -184,13 +192,12 @@ function armarPdf() {
   const cursos = carpetas.map((slug) => {
     const info = catalogo.cursos.find((c) => c.slug === slug) || {};
     const delCurso = new Set(todos.filter((r) => r.startsWith("cursos/recursos/" + slug + "/")));
-    const lecciones = leccionesDe(slug).map((l) => ({
+    const lecciones = leccionesDe(slug, tipo).map((l) => ({
       numero: l.numero,
       titulo: l.titulo,
       // Solo lo que existe: un enlace roto de la página no se ofrece.
       archivos: l.pdfs.filter((r) => delCurso.has(r) && !usados.has(r))
-        .map((r) => archivo(r, tipoDe(r) === "material" ? "Material de estudio"
-          : tipoDe(r) === "ejercicios" ? "Ejercicios" : undefined)),
+        .map((r) => archivo(r, NOMBRE_EN_LECCION[tipoDe(r)])),
     })).filter((l) => l.archivos.length);
     const otros = [...delCurso].filter((r) => !usados.has(r)).map((r) => archivo(r));
     return { slug, titulo: info.titulo || nombreDelArchivo(slug), nivel: info.nivel || null, lecciones, otros };
@@ -226,9 +233,10 @@ function armarPorCarpeta(tipo) {
 function armar() {
   return {
     _comentario: "Lo genera herramientas/archivos-catalogo.js. No se edita a mano.",
-    pdf: armarPdf(),
+    pdf: armarOrdenado("pdf"),
     word: armarPorCarpeta("word"),
     excel: armarPorCarpeta("excel"),
+    presentaciones: armarOrdenado("presentaciones"),
   };
 }
 
@@ -240,7 +248,8 @@ if (require.main === module) {
   fs.writeFileSync(SALIDA, texto());
   const d = armar();
   console.log(`data/archivos.json: ${d.pdf.total} PDF (${d.pdf.material.length} de material, `
-    + `${d.pdf.cursos.length} cursos, ${d.pdf.sueltos.length} sueltos), ${d.word.total} Word, ${d.excel.total} Excel.`);
+    + `${d.pdf.cursos.length} cursos, ${d.pdf.sueltos.length} sueltos), ${d.word.total} Word, ${d.excel.total} Excel, `
+    + `${d.presentaciones.total} presentaciones.`);
 }
 
 module.exports = { armar, texto, enDisco, TIPOS, SALIDA, RAIZ };

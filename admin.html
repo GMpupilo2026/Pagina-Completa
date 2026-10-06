@@ -82,7 +82,7 @@
                                     <li><a href="#torneos" data-ir="torneos" class="admin-nav flex items-center gap-3 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-semibold text-brand-100 hover:bg-brand-800 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true" class="w-5 text-center">🏆</span><span>Salas de torneos</span></a></li>
                                     <li><a href="#proyectos" data-ir="proyectos" class="admin-nav flex items-center gap-3 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-semibold text-brand-100 hover:bg-brand-800 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true" class="w-5 text-center">📁</span><span>Proyectos</span></a></li>
                                     <li><a href="#materiales" data-ir="materiales" class="admin-nav flex items-center gap-3 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-semibold text-brand-100 hover:bg-brand-800 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true" class="w-5 text-center">📚</span><span>Materiales de clases</span></a></li>
-                                    <li><a href="#archivos" data-ir="archivos" class="admin-nav flex items-center gap-3 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-semibold text-brand-100 hover:bg-brand-800 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true" class="w-5 text-center">📥</span><span>PDF, Word y Excel</span></a></li>
+                                    <li><a href="#archivos" data-ir="archivos" class="admin-nav flex items-center gap-3 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-semibold text-brand-100 hover:bg-brand-800 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true" class="w-5 text-center">📥</span><span>Archivos</span></a></li>
                                     <li><a href="#preparacion" data-ir="preparacion" class="admin-nav flex items-center gap-3 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-semibold text-brand-100 hover:bg-brand-800 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true" class="w-5 text-center">🔭</span><span>Preparación de rivales</span></a></li>
                                     <li><a href="#auditoria" data-ir="auditoria" class="admin-nav flex items-center gap-3 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-semibold text-brand-100 hover:bg-brand-800 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true" class="w-5 text-center">🧾</span><span>Registro de cambios</span></a></li>
                                 </ul>
@@ -522,23 +522,24 @@
                     <div id="mat-lista" class="space-y-8"></div>
                 </section>
 
-                <!-- ===== PDF, Word y Excel =====
-                     Todos esos archivos del sitio, una ficha por tipo. Los PDF, ordenados
-                     (libros y material, cursos por nivel y lección, sueltos); los Word y
-                     los Excel, por carpeta. La lista es data/archivos.json, que arma
+                <!-- ===== Archivos =====
+                     Todos los PDF, Word, Excel y presentaciones del sitio, una ficha por
+                     tipo. Los PDF y las presentaciones, ordenados (libros y material,
+                     cursos por nivel y lección, sueltos); los Word y los Excel, por carpeta. La lista es data/archivos.json, que arma
                      herramientas/archivos-catalogo.js leyendo el disco: los nuevos entran
                      solos al volver a correrlo, y el CI falla si alguien se olvida
                      (verificar-archivos-catalogo.js). Lo pinta js/admin-archivos.js. Ver
-                     «La sección PDF, Word y Excel» en docs/decisiones/cursos-y-material.md. -->
+                     «La sección Archivos» en docs/decisiones/cursos-y-material.md. -->
                 <section data-seccion="archivos" aria-labelledby="titulo-archivos" hidden>
-                    <h2 id="titulo-archivos" class="font-serif text-2xl font-bold text-brand-800 dark:text-white mb-1">PDF, Word y Excel</h2>
-                    <p class="text-sm text-brand-500 dark:text-brand-300 mb-5">Todos los archivos para bajar que hay en la plataforma, en un solo lugar y separados por tipo: ábrelos o bájalos de a uno, por curso o por grupo. Cuando se crea uno nuevo, aparece aquí solo.</p>
+                    <h2 id="titulo-archivos" class="font-serif text-2xl font-bold text-brand-800 dark:text-white mb-1">Archivos</h2>
+                    <p class="text-sm text-brand-500 dark:text-brand-300 mb-5">Todos los PDF, Word, Excel y presentaciones que hay en la plataforma, en un solo lugar y en una ficha por tipo: ábrelos o bájalos de a uno, por curso o por grupo. Cuando se crea uno nuevo, aparece aquí solo.</p>
                     <p id="pdf-cargando" class="text-sm text-brand-500 dark:text-brand-300">Cargando la lista de archivos…</p>
                     <p id="pdf-error" hidden role="alert" class="text-sm font-semibold text-red-700 dark:text-red-300"></p>
                     <div id="arch-fichas" hidden role="tablist" aria-label="Tipo de archivo" class="flex flex-wrap gap-2 mb-6">
                         <button type="button" role="tab" id="arch-ficha-pdf" data-ficha="pdf" aria-controls="arch-panel-pdf" aria-selected="true" tabindex="0" class="px-4 py-2 rounded-lg text-sm font-semibold border border-brand-200 dark:border-brand-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 bg-accent-500 text-brand-900"><span aria-hidden="true">📕 </span>PDF (<span id="arch-cuenta-pdf">…</span>)</button>
                         <button type="button" role="tab" id="arch-ficha-word" data-ficha="word" aria-controls="arch-panel-word" aria-selected="false" tabindex="-1" class="px-4 py-2 rounded-lg text-sm font-semibold border border-brand-200 dark:border-brand-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 bg-white dark:bg-brand-900 text-brand-700 dark:text-brand-100"><span aria-hidden="true">📝 </span>Word (<span id="arch-cuenta-word">…</span>)</button>
                         <button type="button" role="tab" id="arch-ficha-excel" data-ficha="excel" aria-controls="arch-panel-excel" aria-selected="false" tabindex="-1" class="px-4 py-2 rounded-lg text-sm font-semibold border border-brand-200 dark:border-brand-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 bg-white dark:bg-brand-900 text-brand-700 dark:text-brand-100"><span aria-hidden="true">📊 </span>Excel (<span id="arch-cuenta-excel">…</span>)</button>
+                        <button type="button" role="tab" id="arch-ficha-presentaciones" data-ficha="presentaciones" aria-controls="arch-panel-presentaciones" aria-selected="false" tabindex="-1" class="px-4 py-2 rounded-lg text-sm font-semibold border border-brand-200 dark:border-brand-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 bg-white dark:bg-brand-900 text-brand-700 dark:text-brand-100"><span aria-hidden="true">📽️ </span>Presentaciones (<span id="arch-cuenta-presentaciones">…</span>)</button>
                     </div>
                     <div id="arch-panel-pdf" data-ficha-panel="pdf" role="tabpanel" aria-labelledby="arch-ficha-pdf">
                         <p id="pdf-resumen" class="text-sm font-semibold text-brand-600 dark:text-brand-200 mb-4"></p>
@@ -566,6 +567,9 @@
                     </div>
                     <div id="arch-panel-excel" data-ficha-panel="excel" role="tabpanel" aria-labelledby="arch-ficha-excel" hidden>
                         <div id="arch-lista-excel" class="space-y-6"></div>
+                    </div>
+                    <div id="arch-panel-presentaciones" data-ficha-panel="presentaciones" role="tabpanel" aria-labelledby="arch-ficha-presentaciones" hidden>
+                        <div id="arch-lista-presentaciones" class="space-y-6"></div>
                     </div>
                 </section>
 

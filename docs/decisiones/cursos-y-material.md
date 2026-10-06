@@ -1092,12 +1092,12 @@ migración en `supabase_migrations.schema_migrations` con el mismo texto del
 archivo: así el punto de restauración coincide igual que si la hubiera
 aplicado el CLI.
 
-## La sección PDF, Word y Excel
+## La sección Archivos
 
-`admin.html#archivos` junta **todos** los PDF, Word y Excel del sitio para que
-quien administra los abra o los baje sin ir curso por curso. Va **una ficha por
-tipo** (pestañas PDF, Word y Excel, con cuántos hay en cada una; se pasa de una
-a otra también con las flechas del teclado).
+`admin.html#archivos` junta **todos** los PDF, Word, Excel y presentaciones del
+sitio para que quien administra los abra o los baje sin ir curso por curso. Va
+**una ficha por tipo** (pestañas PDF, Word, Excel y Presentaciones, con cuántos
+hay en cada una; se pasa de una a otra también con las flechas del teclado).
 
 Los PDF (hoy 433) van en tres grupos: **Libros y material**
 (`material/<carpeta>/`, un bloque por libro con el nombre de `LIBROS`), **Cursos** (`cursos/recursos/<curso>/`, por nivel y en
@@ -1108,6 +1108,10 @@ filtro por tipo y «Bajar los N» por grupo y por curso: baja uno detrás de otr
 porque el sitio no tiene con qué armar un .zip y la CSP no deja traer una
 librería para eso. Con más de 40 se avisa antes, porque el navegador pregunta
 si deja bajar varios.
+
+Las presentaciones (`.pptx`, `.ppt`, `.odp`; hoy 203, una por lección) se
+ordenan igual que los PDF —por nivel, curso y lección, leídas de la misma
+página del curso— y solo se bajan.
 
 Los Word (`.docx`, `.doc`, `.odt`) y los Excel (`.xlsx`, `.xlsm`, `.xls`,
 `.ods`) son pocos y sueltos: van por carpeta, con el nombre de `CARPETAS` en el

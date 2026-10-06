@@ -64,7 +64,7 @@
             if (nombre === "auditoria" && window.AdminAuditoria) AdminAuditoria.abrir();
             // Con quién se comparte cada material: también se pide al abrirlo.
             if (nombre === "materiales" && window.AdminMateriales) AdminMateriales.abrir();
-            // La lista de todos los PDF, Word y Excel (data/archivos.json), igual: al abrirla.
+            // La lista de todos los archivos para bajar (data/archivos.json), igual: al abrirla.
             if (nombre === "archivos" && window.AdminArchivos) AdminArchivos.abrir();
             if (!(opciones && opciones.sinHistoria) && location.hash !== "#" + nombre) {
                 history.pushState(null, "", "#" + nombre);

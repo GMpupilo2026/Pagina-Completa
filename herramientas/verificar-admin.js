@@ -637,14 +637,14 @@ async function pruebaMateriales(browser) {
   await ctx.close();
 }
 
-/* ============ admin.html · todos los PDF, Word y Excel, ordenados ============
+/* ============ admin.html · Archivos: todos los PDF, Word, Excel y presentaciones ============
    La lista es data/archivos.json (herramientas/archivos-catalogo.js, leído del
    disco): acá se mira que la pantalla muestre TODOS, cada tipo en su ficha y
    en su lugar, que buscar y filtrar escondan de verdad (checkVisibility) y que
    «Bajar los N» baje N. Que el JSON esté al día con el disco lo cuida
    verificar-archivos-catalogo.js. */
 async function pruebaPdfs(browser) {
-  console.log("\n=== PDF, Word y Excel: todos, ordenados, para abrir o bajar ===");
+  console.log("\n=== Archivos: PDF, Word, Excel y presentaciones, ordenados, para abrir o bajar ===");
   const todo = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "data", "archivos.json"), "utf8"));
   const catalogo = todo.pdf;
   const { page, ctx, errores } = await abrir(browser, "/admin.html", ADMIN, { acceptDownloads: true });
@@ -652,11 +652,11 @@ async function pruebaPdfs(browser) {
   await page.waitForSelector("#app:not(.hidden)", { timeout: 20000 });
   await irA(page, "archivos");
   await page.waitForSelector("#pdf-lista .pdf-fila", { state: "attached", timeout: 10000 });
-  igual("tres fichas, cada una con cuántos tiene, y se abre en PDF", await page.evaluate(() =>
+  igual("cuatro fichas, cada una con cuántos tiene, y se abre en PDF", await page.evaluate(() =>
     Array.from(document.querySelectorAll("#arch-fichas [role=tab]")).map((b) => b.textContent.trim() + (b.getAttribute("aria-selected") === "true" ? " *" : ""))),
-    ["📕 PDF (" + catalogo.total + ") *", "📝 Word (" + todo.word.total + ")", "📊 Excel (" + todo.excel.total + ")"]);
+    ["📕 PDF (" + catalogo.total + ") *", "📝 Word (" + todo.word.total + ")", "📊 Excel (" + todo.excel.total + ")", "📽️ Presentaciones (" + todo.presentaciones.total + ")"]);
   igual("solo se ve la ficha de PDF", await page.evaluate(() =>
-    ["pdf", "word", "excel"].filter((t) => document.getElementById("arch-panel-" + t).checkVisibility())), ["pdf"]);
+    ["pdf", "word", "excel", "presentaciones"].filter((t) => document.getElementById("arch-panel-" + t).checkVisibility())), ["pdf"]);
   igual("están todos los PDF, cada uno una vez", await page.evaluate(() => {
     const rutas = Array.from(document.querySelectorAll("#pdf-lista .pdf-fila a[download]")).map((a) => a.getAttribute("href"));
     return [rutas.length, new Set(rutas).size];
@@ -714,7 +714,7 @@ async function pruebaPdfs(browser) {
   await page.keyboard.press("ArrowRight");
   igual("la flecha pasa a Word, con el foco y solo esa ficha a la vista", await page.evaluate(() => [
     document.activeElement.id, document.getElementById("arch-ficha-word").getAttribute("aria-selected"),
-    ["pdf", "word", "excel"].filter((t) => document.getElementById("arch-panel-" + t).checkVisibility())]),
+    ["pdf", "word", "excel", "presentaciones"].filter((t) => document.getElementById("arch-panel-" + t).checkVisibility())]),
     ["arch-ficha-word", "true", ["word"]]);
   const words = todo.word.grupos.flatMap((g) => g.archivos.map((a) => a.ruta));
   igual("están todos los Word, por carpeta, y solo se bajan (no se «abren»)", await page.evaluate(() => {
@@ -730,6 +730,26 @@ async function pruebaPdfs(browser) {
   const excelTexto = await page.evaluate(() => document.getElementById("arch-panel-excel").checkVisibility() && document.getElementById("arch-lista-excel").textContent);
   igual("Excel: lo que hay, o se dice que todavía no hay ninguno",
     todo.excel.total ? (excelTexto.match(/\.xls/g) || []).length >= todo.excel.total : /Todavía no hay ningún Excel/.test(excelTexto), true);
+  await page.keyboard.press("ArrowRight");
+  const pres = todo.presentaciones;
+  const rutasPres = pres.material.concat(pres.sueltos, ...pres.cursos.map((c) => c.lecciones.flatMap((l) => l.archivos).concat(c.otros))).map((a) => a.ruta);
+  igual("Presentaciones: están todas, una vez, y solo se bajan", await page.evaluate(() => {
+    const p = document.getElementById("arch-panel-presentaciones");
+    const filas = Array.from(p.querySelectorAll(".pdf-fila"));
+    return [p.checkVisibility(), filas.map((f) => f.querySelector("a[download]").getAttribute("href")).sort(),
+      filas.every((f) => f.querySelectorAll("a").length === 1)];
+  }).then(([ve, rutas, soloBajar]) => [ve, rutas.length, JSON.stringify(rutas) === JSON.stringify(rutasPres.slice().sort()), soloBajar]),
+  [true, rutasPres.length, true, true]);
+  igual("por curso, en el orden del catálogo, plegados", await page.evaluate(() =>
+    Array.from(document.querySelectorAll("#arch-lista-presentaciones .pdf-curso")).map((d) => d.querySelector("summary").firstElementChild.textContent.replace("▸", "") + (d.open ? " (abierto)" : ""))),
+    pres.cursos.map((c) => c.titulo));
+  await page.click("#arch-lista-presentaciones .pdf-curso summary");
+  igual("cada lección con su presentación", await page.evaluate(() => {
+    const l = document.querySelector("#arch-lista-presentaciones .pdf-curso[open] .pdf-leccion");
+    return [l.querySelector("p").textContent, l.querySelector(".pdf-fila p").textContent];
+  }), ["1. " + pres.cursos[0].lecciones[0].titulo, "Presentación"]);
+  if (process.env.CAPTURAS) await page.screenshot({ path: path.join(process.env.CAPTURAS, "admin-presentaciones.png") });
+  await page.focus("#arch-ficha-presentaciones");
   await page.keyboard.press("ArrowRight");
   igual("y desde la última, la flecha vuelve a PDF", await page.evaluate(() => document.activeElement.id), "arch-ficha-pdf");
   igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
