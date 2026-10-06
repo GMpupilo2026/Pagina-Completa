@@ -129,8 +129,42 @@ if (fs.existsSync(acc)) {
 }
 ok(fs.existsSync(path.join(RAIZ, "material/ponte-a-prueba/ponte-a-prueba.pdf")), "falta el PDF del libro");
 
+/* ---------- las versiones para imprimir ----------
+   Los cuadernillos salen del mismo módulo que los cuestionarios: si una
+   versión repitiera una posición de otra de su prueba, o la buena no fuera la
+   solución, el papel se vería perfecto y corregiría mal. */
+const { versiones, archivoDe } = require("./libro-examen-versiones-pdf.js");
+const vs = versiones();
+ok(vs.length === LIBRO.PRUEBAS * 3, `esperaba ${LIBRO.PRUEBAS * 3} versiones y hay ${vs.length}`);
+for (let p = 1; p <= LIBRO.PRUEBAS; p++) {
+  const deLa = vs.filter((v) => v.prueba === p);
+  const ids = deLa.flatMap((v) => v.posiciones.map((x) => x.it.id));
+  ok(deLa.length === 3 && deLa.every((v) => v.posiciones.length === 10), `la prueba ${p} no tiene tres versiones de 10`);
+  ok(new Set(ids).size === 30 && ids.every((id) => porId[id].prueba === p),
+    `las versiones de la prueba ${p} repiten posiciones o traen de otra prueba`);
+}
+let versionesMal = 0;
+vs.forEach((v) => v.posiciones.forEach((x) => {
+  const buena = new Chess(x.it.fen).move(aIngles(x.jugada.opciones[x.jugada.correcta]));
+  if (!buena || buena.from !== x.it.solucion.from || buena.to !== x.it.solucion.to) versionesMal++;
+  if (x.jugada.puntos[x.jugada.correcta] !== 5 || x.evaluacion.puntos[x.evaluacion.correcta] !== 5) versionesMal++;
+}));
+ok(versionesMal === 0, `${versionesMal} preguntas de las versiones no marcan la buena o no le dan 5 puntos`);
+const enPapel = vs.map(archivoDe).concat(["claves-de-correccion.pdf"])
+  .filter((f) => { const r = path.join(RAIZ, "material/ponte-a-prueba/versiones", f); return !fs.existsSync(r) || fs.statSync(r).size < 50000; });
+ok(!enPapel.length, `faltan PDF de las versiones (correr libro-examen-versiones-pdf.js): ${enPapel.join(", ")}`);
+const accV = path.join(RAIZ, "material/ponte-a-prueba/ponte-a-prueba-versiones-accesible.html");
+if (fs.existsSync(accV)) {
+  const html = fs.readFileSync(accV, "utf8");
+  const sinPos = vs.flatMap((v) => v.posiciones).filter((x) => !html.includes(x.it.fen));
+  ok(!sinPos.length, `a la versión accesible de las versiones le faltan ${sinPos.length} posiciones`);
+  ok(!/<img|<svg/.test(html), "la versión accesible de las versiones trae imágenes");
+} else {
+  fallos.push("falta material/ponte-a-prueba/ponte-a-prueba-versiones-accesible.html");
+}
+
 if (fallos.length) {
   console.error("✗ Libro «Ponte a prueba»:\n  - " + fallos.join("\n  - "));
   process.exit(1);
 }
-console.log(`✓ Libro «Ponte a prueba»: ${ITEMS.length} posiciones en ${LIBRO.PRUEBAS} pruebas, ${revisadas} preguntas de examen con la clave bien.`);
+console.log(`✓ Libro «Ponte a prueba»: ${ITEMS.length} posiciones en ${LIBRO.PRUEBAS} pruebas, ${revisadas} preguntas de examen con la clave bien, ${vs.length} versiones para imprimir.`);
