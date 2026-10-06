@@ -30,6 +30,7 @@ const fs = require("fs");
 const path = require("path");
 const { Chess } = require("chess.js");
 const LIBROS = require("./libro-ninos/libros.js");
+const D = require("./libro-ninos/dibujos.js");
 const { ganancias, MATE } = require("./lib/tactica.js");
 
 const RAIZ = path.join(__dirname, "..");
@@ -223,6 +224,10 @@ const letras = (t) => t.normalize("NFD").toUpperCase().replace(/[^A-Z]/g, "").sp
   } else if (sec.tipo === "anagrama") {
     ok(letras(sec.nombre) === letras(L.SECRETO), `${L.SLUG}: «${sec.nombre}» ya no tiene las mismas letras que ${L.SECRETO}`);
     ok(JSON.stringify(L.CAPITULOS).includes(sec.nombre), `${L.SLUG}: «${sec.nombre}» ya no aparece en el cuento`);
+  } else if (sec.tipo === "sol-bebe") {
+    const conSol = L.CAPITULOS.filter((c) => c.escena.sol === "bebe");
+    ok(conSol.length === 1 && (conSol[0].escena.fondo || "dia") === "dia", `${L.SLUG}: tiene que haber un solo sol de bebé, en una escena de día (hay ${conSol.length})`);
+    ok(conSol.length !== 1 || D.escena(conSol[0].escena).includes('data-secreto="sol-bebe"'), `${L.SLUG}: la escena del sol de bebé ya no lo dibuja`);
   } else if (sec.tipo === "grabado") {
     ok(L.SECRETO.startsWith(sec.texto), `${L.SLUG}: el grabado «${sec.texto}» no es parte de ${L.SECRETO}`);
     ok(L.CAPITULOS.some((c) => c.escena.contenido.includes(`data-grabado="${sec.texto}"`)), `${L.SLUG}: ya no hay ningún árbol con el grabado «${sec.texto}»`);

@@ -21,7 +21,8 @@
  * diez títulos, de arriba hacia abajo en el índice, dicen ALESSANDRO. Y en
  * el capítulo 1, en el tronco del árbol donde se esconde Peonita, hay un
  * corazoncito grabado con «ALE» adentro, tan chiquito que hay que buscarlo
- * con lupa.
+ * con lupa. Y a la mitad del libro, en el capítulo 5, el sol es Alessandro de
+ * bebé con su gorrito tejido de orejitas: es el único sol así de los dos libros.
  */
 "use strict";
 const D = require("./dibujos.js");
@@ -34,7 +35,7 @@ const TITULO_PDF = "Peonita, Tizon y los trucos del bosque";
 const SUBTITULO = "Un cuento para aprender los primeros trucos del ajedrez";
 const ASUNTO = "Cuento para que ninas y ninos aprendan los primeros trucos tacticos del ajedrez";
 const SECRETO = "ALESSANDRO";
-const SECRETOS = [{ tipo: "acrostico-titulos" }, { tipo: "grabado", texto: "ALE" }];
+const SECRETOS = [{ tipo: "acrostico-titulos" }, { tipo: "grabado", texto: "ALE" }, { tipo: "sol-bebe" }];
 
 const TAPA = {
   arriba: "Peonita, Tizón", medio: "y los trucos del", abajo: "bosque",
@@ -218,7 +219,7 @@ const CAPITULOS = [
     n: 5,
     titulo: "Sujeta y no la sueltes: la clavada",
     escena: {
-      id: "clavada", fondo: "dia",
+      id: "clavada", fondo: "dia", sol: "bebe",
       alt: "Don Saleras, el alfil blanco, apunta con una flecha larga e inclinada que atraviesa a un caballo negro y llega hasta el rey negro, que está detrás.",
       contenido: D.pieza("a", "b", 110, 292, 0.95) + D.pieza("c", "n", 320, 232, 0.6, { cara: "pensando" }) + D.pieza("r", "n", 500, 182, 0.6, { cara: "sorpresa", espejo: true }) +
         D.flecha(170, 230, 470, 90, "#9c36b5"),

@@ -1125,6 +1125,15 @@ trucos Peonita y Tizón. La descripción del dibujo dice que hay un corazón
 grabado, pero no qué dice. El verificador comprueba que el árbol siga
 teniéndolo (`data-grabado`).
 
+A la mitad del libro, en el capítulo 5, **el sol es Alessandro de bebé**: una
+carita con su gorrito tejido de orejitas, dibujada a partir de una foto que
+mandó el autor (`solBebe()` de `dibujos.js`, que sale con `sol: "bebe"` en la
+escena). Es el único sol así de los dos libros: el autor lo quiso en uno solo
+y no en todos. Se dibujó en vez de pegar la foto, para que tenga el estilo del
+libro y porque la foto de un niño no debe ir dentro de un PDF que se comparte
+y se descarga. La foto no está en el repositorio. El verificador comprueba que
+haya exactamente un sol de bebé y que sea de día.
+
 ### En un libro de trucos, la respuesta tiene que ser LA jugada
 
 Un ejercicio de táctica promete que hay un truco y que es ese. El CI no tiene
