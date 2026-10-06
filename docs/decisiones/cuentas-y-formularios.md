@@ -1153,6 +1153,13 @@ la hoja «Resumen - <comité>» de la carpeta del comité. Verificador:
   fecha de nacimiento no se limita a 2007–2020. En su ficha se marca
   «ENTRENADOR(A)» como función, el deporte es Ajedrez y «Deportes de
   conjunto» dice «No aplica (ajedrez)».
+- **La foto y la cédula llevan su ejemplo al lado** (`img/jdn/`, la cara
+  pixelada y una cédula sin datos): bien recortadas, solo la tarjeta o de los
+  hombros hacia arriba, sin mesa ni dedos alrededor. El Comité Cantonal
+  rechaza las que no vienen así, y explicarlo con palabras no alcanzaba.
+- **El beneficiario de la póliza es otra persona**: con la misma cédula
+  (aunque cambien los guiones) o el mismo nombre (sin mirar tildes ni
+  mayúsculas) que quien se inscribe, la ficha no se arma.
 - **El teléfono son 8 números exactos**: el campo quita lo que no es número
   mientras se escribe o se pega. Sin `maxlength`: cortaba «8888-1234» pegado
   en «8888-123» antes de quitarle el guion.

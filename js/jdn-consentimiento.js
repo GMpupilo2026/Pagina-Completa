@@ -91,6 +91,10 @@
   /* ------------------------------------------------------------ los datos */
 
   const limpio = (v) => String(v == null ? "" : v).replace(/\s+/g, " ").trim();
+  // «1-2345-0678» y «123450678» son la misma cédula; «José Pérez» y «jose  perez», el mismo nombre.
+  const mismaCedula = (a, b) => { const x = String(a || "").replace(/[^0-9A-Za-z]/g, "").toUpperCase(); return !!x && x === String(b || "").replace(/[^0-9A-Za-z]/g, "").toUpperCase(); };
+  const sinTildes = (v) => limpio(v).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  const mismoNombre = (a, b) => !!sinTildes(a) && sinTildes(a) === sinTildes(b);
 
   // Lo que hace falta para que la ficha no lleve espacios en blanco (la
   // plantilla lo exige). Devuelve la lista de lo que falta, en palabras.
@@ -129,6 +133,13 @@
     pide("beneficiarioCedula", "la cédula del beneficiario de la póliza");
     pide("beneficiarioNombre", "el nombre del beneficiario de la póliza");
     elige("parentesco", OPCIONES.parentesco, "el parentesco del beneficiario");
+    // El beneficiario de la póliza es OTRA persona: quien cobra si a quien se
+    // inscribe le pasa algo. Con su misma cédula o su mismo nombre, la póliza
+    // queda sin beneficiario.
+    if ((limpio(d.beneficiarioCedula) && mismaCedula(d.beneficiarioCedula, d.identificacion)) ||
+        (limpio(d.beneficiarioNombre) && mismoNombre(d.beneficiarioNombre, d.nombre))) {
+      f.push("un beneficiario de la póliza que sea otra persona (no puede ser quien se inscribe)");
+    }
     if (atleta && d.condicion === "paratleta") {
       if (!(d.discapacidad || []).some((x) => OPCIONES.discapacidad.includes(x))) f.push("el tipo de discapacidad");
       elige("perroGuia", OPCIONES.perroGuia, "si usa perro guía");

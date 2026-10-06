@@ -130,6 +130,10 @@ async function pruebaFicha() {
     J.validar(sinTutor, HOY).some((f) => /padre, madre o tutor/.test(f)) && J.validar(sinTutor, HOY).some((f) => /entrenador al que autoriza/.test(f)));
   cierto("pide el comité que representa",
     J.validar(Object.assign({}, MENOR, { comite: "  " }), HOY).some((f) => /comité/.test(f)));
+  cierto("el beneficiario no puede ser quien se inscribe (misma cédula, aunque cambien los guiones)",
+    J.validar(Object.assign({}, MENOR, { beneficiarioCedula: "123450678" }), HOY).some((f) => /beneficiario de la póliza que sea otra persona/.test(f)));
+  cierto("ni con su mismo nombre (sin mirar tildes, mayúsculas ni espacios)",
+    J.validar(Object.assign({}, MENOR, { beneficiarioNombre: "  sofia perez & <MORA> " }), HOY).some((f) => /otra persona/.test(f)));
   cierto("pide si es atleta o entrenador", J.validar(Object.assign({}, MENOR, { rol: "" }), HOY).some((f) => /atleta o entrenador/.test(f)));
   igual("el teléfono: 8 números exactos", ["88881234", "8888-1234", "8888123", "888812345", "8888 1234", "abcdefgh"].map(J.telefonoValido),
     [true, false, false, false, false, false]);
@@ -571,6 +575,18 @@ async function pruebaPagina(browser) {
     !(await page.$$eval("#f-canton option", (os) => os.map((o) => o.value))).includes("Barva"));
   igual("el comité se puede elegir de los 84 comités cantonales",
     [await page.$$eval("#lista-comites option", (os) => os.length), await page.getAttribute("#f-comite", "list")], [84, "lista-comites"]);
+
+  // Los ejemplos de cómo van la foto y la cédula: bien recortadas.
+  const ejemplos = await page.$$eval(".jdn-ejemplo img", (is) => is.map((i) => ({
+    src: i.getAttribute("src"), cargo: i.complete && i.naturalWidth > 0, alt: i.alt, ve: i.checkVisibility(),
+  })));
+  cierto("la foto y los dos lados de la cédula traen su ejemplo, cargado, visible y con su texto alternativo",
+    ejemplos.length === 3 && ejemplos.every((e) => e.cargo && e.ve && /^Ejemplo de/.test(e.alt)), JSON.stringify(ejemplos));
+  cierto("cada campo dice cómo tiene que ir (aria-describedby a su ejemplo, que pide recortarla)",
+    await page.evaluate(() => ["foto", "frente", "reverso"].every((k) => {
+      const d = document.getElementById(document.getElementById("f-" + k).getAttribute("aria-describedby") || "-");
+      return d && /^Así:/.test(d.textContent) && /recortada/i.test(d.textContent);
+    })));
 
   // Guardar sin llenar: dice qué falta y no llama
   const antes = pedidos.length;

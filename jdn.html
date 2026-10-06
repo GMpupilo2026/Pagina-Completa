@@ -288,6 +288,7 @@
 
                 <fieldset class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6">
                     <legend class="font-serif text-lg font-bold text-brand-800 dark:text-white px-1">Beneficiario de la póliza</legend>
+                    <p class="text-sm text-brand-500 dark:text-brand-300 mt-2">Otra persona, no quien se inscribe: quien recibe la póliza si a quien se inscribe le pasa algo.</p>
                     <button type="button" id="jdn-mismo-tutor" hidden class="mt-2 text-sm font-semibold text-accent-700 dark:text-accent-400 hover:underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Usar los datos del tutor</button>
                     <div class="grid sm:grid-cols-2 gap-4 mt-2">
                         <div>
@@ -307,21 +308,33 @@
 
                 <fieldset class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6">
                     <legend class="font-serif text-lg font-bold text-brand-800 dark:text-white px-1">Fotografía y cédula <span class="jdn-quien">del atleta</span></legend>
-                    <p class="text-sm text-brand-500 dark:text-brand-300 mt-2">A color (no en blanco y negro). Se guardan en JPEG, como las pide el ICODER, y la fotografía va también en la ficha.</p>
+                    <p class="text-sm text-brand-500 dark:text-brand-300 mt-2">A color (no en blanco y negro) y <strong>bien recortadas, como en los ejemplos</strong>: el Comité Cantonal las rechaza si se ve la mesa, los dedos o el fondo alrededor. Se guardan en JPEG, como las pide el ICODER, y la fotografía va también en la ficha.</p>
                     <div class="grid sm:grid-cols-3 gap-4 mt-3">
                         <div data-doc="foto">
                             <label for="f-foto" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Fotografía <span class="jdn-quien">del atleta</span> *</label>
-                            <input id="f-foto" type="file" accept="image/*" class="jdn-archivo block w-full text-sm">
+                            <figure class="jdn-ejemplo mb-2">
+                                <img src="img/jdn/ejemplo-fotografia.jpg" width="300" height="402" loading="lazy" alt="Ejemplo de fotografía: de frente, de los hombros hacia arriba, con fondo claro." class="w-24 h-auto rounded-lg border border-brand-200 dark:border-brand-700 bg-white">
+                                <figcaption id="ejemplo-foto" class="text-xs text-brand-500 dark:text-brand-300 mt-1"><strong>Así:</strong> de frente, de los hombros hacia arriba, con fondo claro y sin lentes oscuros ni gorra. Recortada para que no salga nada más.</figcaption>
+                            </figure>
+                            <input id="f-foto" type="file" accept="image/*" aria-describedby="ejemplo-foto" class="jdn-archivo block w-full text-sm">
                             <img alt="" hidden class="jdn-vista mt-2 max-h-32 rounded-lg border border-brand-200 dark:border-brand-700">
                         </div>
                         <div data-doc="frente">
                             <label for="f-frente" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Cédula <span class="jdn-quien">del atleta</span>, frente <span class="jdn-oblig">*</span></label>
-                            <input id="f-frente" type="file" accept="image/*" class="jdn-archivo block w-full text-sm">
+                            <figure class="jdn-ejemplo mb-2">
+                                <img src="img/jdn/ejemplo-cedula-frente.jpg" width="480" height="303" loading="lazy" alt="Ejemplo de cédula por el frente, recortada justo en el borde de la tarjeta." class="w-full max-w-[14rem] h-auto rounded-lg border border-brand-200 dark:border-brand-700 bg-white">
+                                <figcaption id="ejemplo-frente" class="text-xs text-brand-500 dark:text-brand-300 mt-1"><strong>Así:</strong> solo la cédula, recortada justo en su borde (sin mesa ni dedos alrededor), derecha y que se lea todo.</figcaption>
+                            </figure>
+                            <input id="f-frente" type="file" accept="image/*" aria-describedby="ejemplo-frente" class="jdn-archivo block w-full text-sm">
                             <img alt="" hidden class="jdn-vista mt-2 max-h-32 rounded-lg border border-brand-200 dark:border-brand-700">
                         </div>
                         <div data-doc="reverso">
                             <label for="f-reverso" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Cédula <span class="jdn-quien">del atleta</span>, reverso <span class="jdn-oblig">*</span></label>
-                            <input id="f-reverso" type="file" accept="image/*" class="jdn-archivo block w-full text-sm">
+                            <figure class="jdn-ejemplo mb-2">
+                                <img src="img/jdn/ejemplo-cedula-reverso.jpg" width="480" height="305" loading="lazy" alt="Ejemplo de cédula por detrás, recortada justo en el borde de la tarjeta." class="w-full max-w-[14rem] h-auto rounded-lg border border-brand-200 dark:border-brand-700 bg-white">
+                                <figcaption id="ejemplo-reverso" class="text-xs text-brand-500 dark:text-brand-300 mt-1"><strong>Así:</strong> igual que el frente: solo la tarjeta, recortada justo en su borde, derecha, sin reflejos y que se lean todos los datos.</figcaption>
+                            </figure>
+                            <input id="f-reverso" type="file" accept="image/*" aria-describedby="ejemplo-reverso" class="jdn-archivo block w-full text-sm">
                             <img alt="" hidden class="jdn-vista mt-2 max-h-32 rounded-lg border border-brand-200 dark:border-brand-700">
                         </div>
                         <div data-doc="certificacion" id="caja-certificacion" hidden class="sm:col-span-3">
