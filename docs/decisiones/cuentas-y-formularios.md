@@ -237,6 +237,7 @@ aparecían.
   | Solicitud de academia | 5 | 3 por día | 30 |
   | Encuesta anónima de un curso | 40 | — | 300 por encuesta |
   | Quiniela de una sala de torneo | 40 | 5 por día | 500 por sala |
+  | Ficha de los JDN 2027 (`jdn_frenar`, sobre el de formularios) | 15 (y los 40 de formularios) | 8 por día | 60 |
 
   **El de IP es generoso a propósito**: un colegio entero sale a internet por
   UNA IP, y una clase haciendo el examen de arbitraje o una reunión de padres
@@ -1063,7 +1064,7 @@ promete.
 
 ## La ficha de los JDN 2027
 
-`jdn.html` (solo administración; la tarjeta «Ficha JDN 2027» del grupo
+`jdn.html` (pública: la llena la familia; para quien administra, la tarjeta «Ficha JDN 2027» del grupo
 Administración del panel de la Academia) llena la **ficha de inscripción y
 consentimiento informado de los Juegos Deportivos y Paradeportivos Nacionales
 2027** del ICODER y la guarda en el Drive: por cada persona, una carpeta con su
@@ -1097,6 +1098,28 @@ lados (o la certificación de nacimiento, si es menor de 12). Verificador:
     de 12 pide la certificación de nacimiento en vez de la cédula, como dice la
     nota de la pregunta 3.
   - Rama: femenina o abierta; un hombre solo la abierta.
+- **La página es pública: la llena la familia, sin cuenta** (lo pidió el
+  dueño del sitio). `jdn.html` no está en `academia-cabecera.py`: lleva la
+  cabecera de los formularios públicos, como `formulario.html`. Quien
+  administra ve además «El Drive» (conectar el puente) y, al guardar, los
+  enlaces a la carpeta y al PDF; la familia solo ve que se recibió, y se le
+  descarga la ficha para imprimirla y firmarla.
+  - Por eso `jdn-drive` va con **`verify_jwt` en false**: una página sin
+    sesión no trae JWT de persona. «estado», «conectar» y el «guardar» con
+    `modo: "admin"` siguen exigiendo sesión, `aal2` e `is_admin`; el
+    «guardar» sin cuenta pasa antes por **`jdn_frenar()`** (por IP, por correo
+    y en total, y después el freno de los formularios, que anota el envío),
+    exige el correo y UNA ficha, y nunca devuelve los enlaces del Drive.
+  - **Un envío sin cuenta nunca reemplaza nada**: sus archivos llevan «(enviada
+    AAAA-MM-DD HH.MM)» en el nombre. El puente manda a la papelera los que se
+    llaman igual, y sin eso cualquiera con el nombre de otra persona podía
+    borrarle la ficha.
+  - **El freno no le agrega un tipo a `interno.frenar_envio_publico`**: usa el
+    de `'formulario'` con su ámbito (`jdn-2027`) y le suma sus topes. Volver a
+    crear esa función compartida obliga a reescribir su `delete` de limpieza,
+    y la herramienta de migraciones de Supabase pide confirmar a mano todo SQL
+    con `delete`: la petición se quedaba esperando una confirmación que nunca
+    llegaba, y vencía sin aplicar nada.
 - **El Drive lo toca un Apps Script de la dueña del Drive**
   (`material/jdn/puente-drive.gs`, publicado como aplicación web «ejecutar
   como yo»). Una cuenta de servicio de Google no tiene espacio en «Mi unidad», y

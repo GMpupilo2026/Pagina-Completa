@@ -13,6 +13,12 @@
  * muestra al escribir la fecha; ser menor de edad abre los datos del tutor, y
  * ser menor de 12 pide la certificación de nacimiento en vez de la cédula. Ver
  * «La ficha de los JDN 2027» en docs/decisiones/cuentas-y-formularios.md.
+ *
+ * DOS MODOS. La página es pública: sin cuenta (o con una que no administra) la
+ * llena la familia, «Enviar la ficha» manda a la función sin sesión y la
+ * función la pasa por el freno de los envíos públicos. Con la sesión de quien
+ * administra aparecen «El Drive» (conectar el puente) y los enlaces a la
+ * carpeta y al PDF; la función le exige el aal2 e is_admin.
  */
 (function () {
   "use strict";
@@ -31,7 +37,7 @@
   };
 
   const SESION_CERRADA = "Tu sesión se cerró (por ejemplo, porque saliste en otra pestaña o en otro aparato). Vuelve a entrar en otra pestaña y prueba de nuevo aquí: lo que llenaste no se pierde.";
-  let sesion = null;
+  let esAdmin = false;
   let conectado = false;
   let ultimaFicha = null;   // { bytes, nombre } de la última que se armó
 
@@ -42,23 +48,25 @@
      variable nuestra. Con la página abierta más de una hora, «Guardar»
      mandaba el token vencido. */
   async function llamar(accion, datos) {
-    const { data } = await sb.auth.getSession();
-    const token = data && data.session && data.session.access_token;
-    if (!token) throw new Error(SESION_CERRADA);
+    const headers = { "Content-Type": "application/json", "apikey": window.SUPABASE_ANON_KEY };
+    // Sin cuenta no hay token que mandar: la función recibe el envío por su
+    // puerta pública (con el freno).
+    if (esAdmin) {
+      const { data } = await sb.auth.getSession();
+      const token = data && data.session && data.session.access_token;
+      if (!token) throw new Error(SESION_CERRADA);
+      headers.Authorization = "Bearer " + token;
+    }
     const res = await fetch(FUNCION, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer " + token,
-        "apikey": window.SUPABASE_ANON_KEY,
-      },
+      headers,
       body: JSON.stringify(Object.assign({ action: accion }, datos || {})),
     });
     const r = await res.json().catch(() => ({}));
     // Un 401 es la sesión: vencida o cerrada en otro aparato («Cerrar sesión»
     // cierra todas las de la cuenta, pero esta pestaña conserva un token que
     // parece bueno hasta que vence).
-    if (res.status === 401 && !/segundo paso/.test(r.error || "")) throw new Error(SESION_CERRADA);
+    if (esAdmin && res.status === 401 && !/segundo paso/.test(r.error || "")) throw new Error(SESION_CERRADA);
     if (!res.ok || r.error && accion !== "estado") throw new Error(r.error || "El servidor no contestó. Intenta de nuevo.");
     return r;
   }
@@ -311,7 +319,7 @@
 
   async function guardar(ev) {
     ev.preventDefault();
-    if (!conectado) return falta("El Drive no está conectado: conéctalo arriba, o usa «Solo descargar la ficha».", $("drive-conectar").querySelector("summary"));
+    if (esAdmin && !conectado) return falta("El Drive no está conectado: conéctalo arriba, o usa «Solo descargar la ficha».", $("drive-conectar").querySelector("summary"));
     const d = datos();
     if (revisar(d, true)) return;
 
@@ -337,6 +345,8 @@
 
       progreso.textContent = "Guardando en el Drive… (puede tardar un minuto)";
       const r = await llamar("guardar", {
+        modo: esAdmin ? "admin" : "publico",
+        correo: d.correo,
         persona: nombre,
         archivos,
         privacidad_version: window.LegalVersion.PRIVACIDAD,
@@ -355,6 +365,18 @@
 
   function mostrarListo(r, nombre) {
     $("jdn-form").hidden = true;
+    $("listo-carpeta-li").hidden = !esAdmin;
+    if (!esAdmin) {
+      // La familia no tiene acceso al Drive de la academia: su ficha es la
+      // que se acaba de descargar.
+      $("listo-pdf-li").hidden = true;
+      $("listo-texto").textContent = "La academia recibió la ficha de " + nombre + " con sus documentos. " +
+        "La ficha llena se descargó en este aparato: imprímela, fírmala a mano (y que la firme también la madre, el padre o el tutor si es menor de edad) y entrégala a la academia.";
+      $("jdn-listo").hidden = false;
+      $("jdn-listo").focus();
+      return;
+    }
+    $("listo-titulo").textContent = "Ficha guardada";
     $("listo-texto").textContent = "Se creó la carpeta «" + (r.nombre || nombre) + "» en «JDN 2027» con " +
       (r.archivos || []).length + " archivos. La ficha también se descargó en esta computadora." +
       (r.pdf ? "" : " (No se armó el PDF: falta agregar el servicio «Drive API» en el Apps Script; la ficha en Word se imprime igual.)");
@@ -397,19 +419,25 @@
     actualizar();
   }
 
+  // Quien administra ve «El Drive»; cualquier otra persona, el formulario
+  // solo. Lo que cada una puede hacer lo decide la función, no esto.
   async function iniciar() {
-    const { data } = await sb.auth.getSession();
-    sesion = data && data.session;
-    if (!sesion) { location.href = "login.html?next=jdn.html"; return; }
-    const { data: perfil, error } = await sb.from("profiles").select("is_admin").eq("id", sesion.user.id).single();
+    try {
+      const { data } = await sb.auth.getSession();
+      const sesion = data && data.session;
+      if (sesion) {
+        const { data: perfil } = await sb.from("profiles").select("is_admin").eq("id", sesion.user.id).maybeSingle();
+        esAdmin = !!(perfil && perfil.is_admin);
+      }
+    } catch (e) { esAdmin = false; }
     $("loading").classList.add("hidden");
-    if (error || !perfil || !perfil.is_admin) {
-      $("denied").classList.remove("hidden");
-      return;
-    }
     $("app").classList.remove("hidden");
     armar();
-    revisarDrive();
+    if (esAdmin) {
+      $("caja-drive").hidden = false;
+      $("jdn-guardar").textContent = "Guardar en el Drive";
+      revisarDrive();
+    }
   }
 
   iniciar();

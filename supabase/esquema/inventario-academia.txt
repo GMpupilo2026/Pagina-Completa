@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261005214206
+# al-dia-con: 20261005233749
 tabla  Ejercicios Lichess  rls=true
 tabla  academia_ia  rls=true
 tabla  academia_miembros  rls=true
@@ -1517,6 +1517,7 @@ funcion  interno.verificacion_al_dia()  definer  anon=false  auth=true
 funcion  interno.version_legal_valida(p text)  invoker  anon=false  auth=false
 funcion  jdn_drive_guardar(p_url text, p_secreto text)  definer  anon=false  auth=false
 funcion  jdn_drive_leer()  definer  anon=false  auth=false
+funcion  jdn_frenar(p_ip text, p_correo text)  definer  anon=false  auth=false
 funcion  json_seguro(p_texto text)  invoker  anon=false  auth=true
 funcion  jugadores_de_asientos(p_asientos jsonb)  invoker  anon=false  auth=true
 funcion  justificaciones_pendientes()  invoker  anon=false  auth=true

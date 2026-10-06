@@ -49,6 +49,16 @@ de la bóveda y solo recibe el `id` del diagnóstico: a quién se le escribe y q
 dice sale de la fila. Con `verify_jwt` en true el trigger recibe un 401 y el
 supervisor simplemente no se entera, sin que nada falle a la vista.
 
+## `jdn-drive` va con `verify_jwt` en **false**
+
+La ficha de los JDN 2027 (`jdn.html`) la manda también la familia, sin cuenta:
+una página sin sesión no trae un JWT de persona. A cambio la función decide
+sola: «estado», «conectar» y el «guardar» de administración exigen la sesión,
+el `aal2` e `is_admin`; el «guardar» sin cuenta pasa antes por el freno de los
+envíos públicos (`jdn_frenar`) y sus archivos llevan fecha y hora en el nombre,
+para no reemplazar los de nadie. Ver «La ficha de los JDN 2027» en
+`docs/decisiones/cuentas-y-formularios.md`.
+
 ## `alerta-base` va con `verify_jwt` en **false**
 
 La llama `public.vigilar_base()` (pg_cron, cada cinco minutos) cuando la base

@@ -10,31 +10,41 @@
 // Los archivos tienen que ser de la dueña del Drive y gastar su espacio. Una
 // cuenta de servicio de Google no tiene espacio propio en «Mi unidad», y una
 // llave de Google Cloud acá sería una credencial más que cuidar. El puente es
-// herramientas/jdn-drive.gs, publicado como aplicación web que corre como su
+// material/jdn/puente-drive.gs, publicado como aplicación web que corre como su
 // dueña; esta función le pasa los archivos con un secreto. La dirección y el
 // secreto viven en la bóveda (jdn_drive_leer / jdn_drive_guardar), y los pone
 // quien administra desde jdn.html con «Conectar con Drive»: antes de guardarlos
 // se prueban.
 //
-// SOLO QUIEN ADMINISTRA, CON SU SEGUNDO PASO
-// Son datos de menores de edad y fotos de su cédula. Va con verify_jwt en
-// true, se comprueba is_admin del perfil y el aal del token: esta función mira
-// el permiso con la clave de servicio, así que el candado de la base
-// (public.antes_de_cada_pedido) no la alcanza.
+// DOS PUERTAS: ADMINISTRACIÓN Y LA FAMILIA SIN CUENTA
+// La ficha la puede mandar cualquiera desde jdn.html, sin cuenta (lo pidió el
+// dueño del sitio: así la llena la familia). Por eso va con verify_jwt en
+// FALSE: una página sin sesión no trae un JWT de persona, y la comprobación la
+// hace esta función.
+// - «estado», «conectar» y el «guardar» con modo "admin" exigen la sesión de
+//   quien administra: getUser, el aal2 (esta función mira el permiso con la
+//   clave de servicio, así que el candado de la base no la alcanza) e is_admin.
+// - El «guardar» sin cuenta pasa por el freno de los envíos públicos
+//   (jdn_frenar: por IP, por correo y en total) ANTES de tocar el Drive, y sus
+//   archivos llevan la fecha y la hora en el nombre: el puente manda a la
+//   papelera los que se llaman igual, y un envío anónimo con el nombre de otra
+//   persona no puede borrarle su ficha. Tampoco recibe los enlaces del Drive.
 //
 // Acciones:
 //   "estado"   {}                         -> { conectado, carpeta?, url? }
 //   "conectar" { url, secreto }           -> lo prueba y, si contesta, lo guarda
-//   "guardar"  { persona, archivos, nota, privacidad_version }
-//                                         -> { carpeta, archivos, pdf }
+//   "guardar"  { modo?, persona, correo, archivos, privacidad_version }
+//              modo "admin"               -> { carpeta, archivos, pdf }
+//              sin cuenta                 -> { ok }
 
 import { createClient } from "npm:@supabase/supabase-js@2";
-import { fechaCR } from "./hora-cr.ts";
+import { fechaCR, ZONA_CR } from "./hora-cr.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const SITE_URL = "https://ajedrez-integral.com";
 const MAX_BASE64 = 24 * 1024 * 1024;   // la ficha y tres imágenes ya achicadas pesan ~2 MB
+const MAX_BASE64_PUBLICO = 12 * 1024 * 1024;   // sin cuenta, la mitad: alcanza de sobra
 const TIPOS = new Set([
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
   "image/jpeg",
@@ -89,20 +99,21 @@ async function alPuente(url: string, cuerpo: Record<string, unknown>) {
   }
 }
 
+// La IP de quien manda, para el freno: la pone Cloudflare delante de Supabase.
+function ipDe(req: Request): string | null {
+  const ip = req.headers.get("cf-connecting-ip") ?? req.headers.get("x-real-ip") ??
+    (req.headers.get("x-forwarded-for") ?? "").split(",")[0];
+  return ip?.trim() || null;
+}
+
+// «2026-10-05 17.04», en hora de Costa Rica, para el nombre de los archivos.
+function marcaDeHora(): string {
+  return new Date().toLocaleString("sv-SE", { timeZone: ZONA_CR }).slice(0, 16).replace(":", ".");
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   if (req.method !== "POST") return json({ error: "Método no permitido" }, 405);
-
-  const jwt = (req.headers.get("Authorization") ?? "").replace(/^Bearer\s+/i, "");
-  if (!jwt) return json({ error: "Falta la sesión." }, 401);
-  const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
-  const { data: quien, error: quienError } = await admin.auth.getUser(jwt);
-  if (quienError || !quien?.user) return json({ error: "La sesión no es válida." }, 401);
-  if (sesionAMedias(quien.user.factors, jwt)) {
-    return json({ error: "Falta el segundo paso de la verificación: vuelve a entrar y escribe el código de tu app." }, 401);
-  }
-  const { data: perfil } = await admin.from("profiles").select("is_admin").eq("id", quien.user.id).maybeSingle();
-  if (!perfil?.is_admin) return json({ error: "Solo quien administra guarda las fichas de los JDN." }, 403);
 
   let body: Record<string, unknown>;
   try {
@@ -110,10 +121,27 @@ Deno.serve(async (req) => {
   } catch {
     return json({ error: "Cuerpo JSON inválido" }, 400);
   }
+  const accion = body.action;
+  const publico = accion === "guardar" && body.modo !== "admin";
+  const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
+
+  // Administración: sesión, segundo paso e is_admin, ANTES de leer la bóveda.
+  let quien: { id: string; email?: string } | null = null;
+  if (!publico) {
+    const jwt = (req.headers.get("Authorization") ?? "").replace(/^Bearer\s+/i, "");
+    if (!jwt) return json({ error: "Falta la sesión." }, 401);
+    const { data: usuario, error: quienError } = await admin.auth.getUser(jwt);
+    if (quienError || !usuario?.user) return json({ error: "La sesión no es válida." }, 401);
+    if (sesionAMedias(usuario.user.factors, jwt)) {
+      return json({ error: "Falta el segundo paso de la verificación: vuelve a entrar y escribe el código de tu app." }, 401);
+    }
+    const { data: perfil } = await admin.from("profiles").select("is_admin").eq("id", usuario.user.id).maybeSingle();
+    if (!perfil?.is_admin) return json({ error: "Solo quien administra guarda las fichas de los JDN." }, 403);
+    quien = { id: usuario.user.id, email: usuario.user.email };
+  }
 
   const { data: filas } = await admin.rpc("jdn_drive_leer");
   const guardado = Array.isArray(filas) ? filas[0] : filas;
-  const accion = body.action;
 
   if (accion === "estado") {
     if (!guardado?.url || !guardado?.secreto) return json({ conectado: false });
@@ -136,7 +164,11 @@ Deno.serve(async (req) => {
   }
 
   if (accion === "guardar") {
-    if (!guardado?.url || !guardado?.secreto) return json({ error: "Todavía no está conectado el Drive: usa «Conectar con Drive»." }, 409);
+    if (!guardado?.url || !guardado?.secreto) {
+      return json({ error: publico
+        ? "La academia todavía no está recibiendo fichas. Escríbele para avisarle."
+        : "Todavía no está conectado el Drive: usa «Conectar con Drive»." }, 409);
+    }
     // El consentimiento de quien entrega los datos: la versión de la política
     // que se le mostró (AAAA-MM-DD, de js/legal-version.js).
     const version = String(body.privacidad_version ?? "");
@@ -159,13 +191,33 @@ Deno.serve(async (req) => {
       total += base64.length;
       limpios.push({ nombre, tipo, base64, ficha: a.ficha === true });
     }
-    if (total > MAX_BASE64) return json({ error: "Los archivos pesan demasiado: usa fotos más livianas." }, 413);
+    if (total > (publico ? MAX_BASE64_PUBLICO : MAX_BASE64)) return json({ error: "Los archivos pesan demasiado: usa fotos más livianas." }, 413);
 
-    const nota = `Ficha JDN 2027 guardada desde Ajedrez Integral por ${quien.user.email ?? quien.user.id} ` +
-      `(${fechaCR(new Date(), { day: "numeric", month: "long", year: "numeric", hour: "numeric", minute: "2-digit" })}). ` +
-      `Consentimiento: Política de privacidad versión ${version}.`;
+    const cuando = fechaCR(new Date(), { day: "numeric", month: "long", year: "numeric", hour: "numeric", minute: "2-digit" });
+    let nota: string;
+    if (publico) {
+      // Sin cuenta: el correo es obligatorio (lo cuenta el freno) y el freno
+      // va ANTES de tocar el Drive.
+      const correo = String(body.correo ?? "").trim().toLowerCase().slice(0, 200);
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo)) return json({ error: "Falta un correo válido." }, 400);
+      if (limpios.filter((a) => a.ficha).length !== 1) return json({ error: "Falta la ficha." }, 400);
+      const { data: freno, error: frenoError } = await admin.rpc("jdn_frenar", { p_ip: ipDe(req), p_correo: correo });
+      if (frenoError) return json({ error: "No se pudo recibir la ficha. Intenta de nuevo en un momento." }, 500);
+      if (freno) return json({ error: freno }, 429);
+      // Con la fecha y la hora en el nombre: nunca se llaman igual que los que
+      // ya están, así que el puente no manda nada a la papelera.
+      const marca = marcaDeHora();
+      for (const a of limpios) a.nombre = a.nombre.replace(/(\.[a-z]+)$/i, ` (enviada ${marca})$1`);
+      nota = `Ficha JDN 2027 enviada sin cuenta desde ajedrez-integral.com/jdn.html (${cuando}), correo de contacto ${correo}. ` +
+        `Consentimiento: Política de privacidad versión ${version}.`;
+    } else {
+      nota = `Ficha JDN 2027 guardada desde Ajedrez Integral por ${quien!.email ?? quien!.id} (${cuando}). ` +
+        `Consentimiento: Política de privacidad versión ${version}.`;
+    }
     const r = await alPuente(guardado.url, { secreto: guardado.secreto, accion: "guardar", persona, archivos: limpios, nota });
-    if (!r.ok) return json({ error: r.error || "El Drive no guardó los archivos." }, 502);
+    if (!r.ok) return json({ error: publico ? "No se pudo guardar la ficha. Intenta de nuevo en un momento." : (r.error || "El Drive no guardó los archivos.") }, 502);
+    // Los enlaces del Drive son de la academia: a quien manda sin cuenta no le sirven.
+    if (publico) return json({ ok: true });
     return json({ ok: true, carpeta: r.carpeta, nombre: r.nombre, archivos: r.archivos, pdf: r.pdf ?? null });
   }
 
