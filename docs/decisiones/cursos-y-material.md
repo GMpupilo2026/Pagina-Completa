@@ -1042,6 +1042,35 @@ igual. El SQL actualiza por título y no borra, para no dejar colgadas las
 tareas que apuntan a una versión; y la semilla de los listos de la Academia
 (`cuestionarios-listos.js`) borra solo `where listo and material is null`.
 
+### Las versiones en papel
+
+`herramientas/libro-examen-versiones-pdf.js` pone las mismas 18 versiones en
+papel, en `material/ponte-a-prueba/versiones/`:
+
+- un cuadernillo por versión para el ALUMNO (`prueba-<p>-version-<x>.pdf`):
+  las 10 posiciones con sus dos preguntas, los datos de quien la rinde y la
+  hoja de respuestas. Sin soluciones: se reparte;
+- `claves-de-correccion.pdf` para el PROFE: la respuesta y los puntos de cada
+  opción de las 18 versiones, una por página para imprimir solo la que se va
+  a usar, con la línea de la solución y su tabla de puntos a fuerza;
+- `ponte-a-prueba-versiones-accesible.html`, lo mismo sin imágenes.
+
+Las versiones salen de `cuestionarios()` de `libro-examen-cuestionarios.js`,
+con las opciones en el MISMO orden que el cuestionario de la plataforma: una
+clave sirve para el papel y para la pantalla, y un grupo puede hacer la A en
+papel mientras otro hace la B en la plataforma. Los puntos de cada opción se
+buscan en el banco por el texto de la opción, no por su lugar. La tabla de
+fuerza es la del libro (`lib/libro-examen-comun.js`, que comparten los dos
+PDF), pero de a 200 puntos: con diez posiciones no se puede prometer más.
+
+Los cuadernillos no tienen tapa, así que la marca de agua va en todas las
+páginas (`unir(null, …)` en `lib/pdf-armar.js`), y el logo crema va en su
+recuadro azul: sobre el blanco del papel casi no se veía. En
+`admin.html#materiales` cada versión tiene su «🖨️ PDF», y las claves y la
+versión accesible van junto al libro. Lo revisa `verificar-libro-examen.js`
+(que cada prueba tenga tres versiones de 10 sin repetir, que la buena sea la
+solución y valga 5, y que estén los 19 PDF).
+
 ### Cada alumno, su orden
 
 En `cuestionario-tarea.html` las preguntas y las opciones se ven en un orden
