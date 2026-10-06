@@ -10,7 +10,7 @@
 // Los archivos tienen que ser de la dueña del Drive y gastar su espacio. Una
 // cuenta de servicio de Google no tiene espacio propio en «Mi unidad», y una
 // llave de Google Cloud acá sería una credencial más que cuidar. El puente es
-// material/jdn/puente-drive.gs, publicado como aplicación web que corre como su
+// documentos/jdn/puente-drive.gs, publicado como aplicación web que corre como su
 // dueña; esta función le pasa los archivos con un secreto. La dirección y el
 // secreto viven en la bóveda (jdn_drive_leer / jdn_drive_guardar), y los pone
 // quien administra desde jdn.html con «Conectar con Drive»: antes de guardarlos

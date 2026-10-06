@@ -1,5 +1,5 @@
 /* La ficha de los JDN 2027 (jdn.html, js/jdn-consentimiento.js, la Edge
- * Function jdn-drive y el puente material/jdn/puente-drive.gs).
+ * Function jdn-drive y el puente documentos/jdn/puente-drive.gs).
  *
  * Lo que se rompe acá no da error: la página se ve perfecta y la ficha sale
  * con la categoría equivocada, con una opción marcada en el renglón de al lado,
@@ -30,7 +30,7 @@ const J = require("../js/jdn-consentimiento.js");
 const RAIZ = path.join(__dirname, "..");
 const CHROME = process.env.CHROME_PATH || "/opt/pw-browsers/chromium-1194/chrome-linux/chrome";
 const BASE = process.env.BASE_URL || "http://localhost:8777";
-const PLANTILLA = path.join(RAIZ, "material", "jdn", "consentimiento-jdn-2027.docx");
+const PLANTILLA = path.join(RAIZ, "documentos", "jdn", "consentimiento-jdn-2027.docx");
 const HOY = "2026-10-05";
 
 let fallos = 0;
@@ -251,8 +251,23 @@ function pruebaFuncion() {
   cierto("y su puerta la llama solo la service role",
     /revoke all on function public\.jdn_frenar\(text, text\) from public, anon, authenticated/.test(sql));
 
-  console.log("\n=== El puente (material/jdn/puente-drive.gs) ===");
-  const gs = leer("material/jdn/puente-drive.gs");
+  console.log("\n=== Lo que baja la página, sin candado ===");
+  // La página es pública: lo que baja no puede caer bajo una ruta que el
+  // worker cierra (run_worker_first). La plantilla estuvo en material/, que es
+  // de lo que se vende, y a una familia sin cuenta le salía «No se pudo leer
+  // la plantilla de la ficha»; con el sitio servido sin worker, aquí no se veía.
+  const cerradas = (JSON.parse(leer("wrangler.jsonc").replace(/^\s*\/\/.*$/gm, "")).assets || {}).run_worker_first || [];
+  const deLaPagina = [
+    (leer("js/jdn.js").match(/const PLANTILLA = "([^"]+)"/) || [])[1],
+    (leer("jdn.html").match(/href="([^"]*puente-drive\.gs)"/) || [])[1],
+  ];
+  for (const ruta of deLaPagina) {
+    const cerrada = !ruta || cerradas.some((g) => new RegExp("^" + g.replace(/[.+?^${}()|[\]\\]/g, "\\$&").replace(/\*/g, ".*") + "$").test("/" + ruta));
+    cierto("«" + ruta + "» existe y el worker no le pone candado", ruta && fs.existsSync(path.join(RAIZ, ruta)) && !cerrada, cerradas.join(", "));
+  }
+
+  console.log("\n=== El puente (documentos/jdn/puente-drive.gs) ===");
+  const gs = leer("documentos/jdn/puente-drive.gs");
   cierto("compara el secreto antes de abrir el Drive", gs.indexOf("mismoSecreto(pedido.secreto") < gs.indexOf("DriveApp.getFolderById(CARPETA_JDN)", gs.indexOf("function doPost")));
   cierto("guarda dentro de «JDN 2027»", /CARPETA_JDN = "15YupRymnvhqmSCbD6OLL-Vvpn_g65FMg"/.test(gs));
   cierto("una carpeta por persona, la misma si se vuelve a mandar", /getFoldersByName\(nombre\)[\s\S]{0,80}hasNext\(\) \? existentes\.next\(\) : raiz\.createFolder\(nombre\)/.test(gs));
