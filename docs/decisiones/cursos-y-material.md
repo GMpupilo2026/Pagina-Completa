@@ -1099,6 +1099,16 @@ sitio para que quien administra los abra o los baje sin ir curso por curso. Va
 **una ficha por tipo** (pestañas PDF, Word, Excel y Presentaciones, con cuántos
 hay en cada una; se pasa de una a otra también con las flechas del teclado).
 
+Cada ficha es un **explorador**: a la izquierda las carpetas, agrupadas (los
+libros, uno por carpeta; los cursos por nivel, en el orden del catálogo; lo
+suelto al final), cada una con cuántos archivos trae; a la derecha lo de la
+carpeta elegida, lección por lección, con «Bajar los N» de la carpeta. Primero
+era una sola lista larguísima con todos los cursos plegados uno debajo de otro:
+para llegar a una lección había que bajar, abrir y volver a bajar. En el
+celular las carpetas son un selector. El buscador busca en **toda la ficha**
+(no solo en la carpeta elegida) y muestra lo que coincide carpeta por carpeta;
+elegir una carpeta lo limpia.
+
 Los PDF (hoy 433) van en tres grupos: **Libros y material**
 (`material/<carpeta>/`, un bloque por libro con el nombre de `LIBROS`), **Cursos** (`cursos/recursos/<curso>/`, por nivel y en
 el orden del catálogo, cada curso plegado y adentro lección por lección con su
@@ -1120,6 +1130,31 @@ consentimientos de los JDN 2027) y **ningún Excel guardado**: los Excel de la
 plataforma (el mes de cada profesor en Supervisión, los reportes) se arman en
 el navegador con los datos del momento, así que no son archivos del sitio. La
 ficha lo dice en vez de quedar vacía.
+
+### La vista previa
+
+Cada archivo trae **«👁 Vista previa»**: una ventana encima de la página
+(`<dialog>` con `showModal()`, que encierra el foco; Esc la cierra y el foco
+vuelve al botón), con «Anterior» y «Siguiente» para recorrer la carpeta (o lo
+encontrado) sin cerrarla. La pinta `js/vista-previa.js`:
+
+- **PDF**: el visor del navegador en un marco. Es del mismo sitio, así que
+  `frame-src 'self'` y `X-Frame-Options: SAMEORIGIN` lo dejan; se probó en
+  Chrome con las cabeceras de `_headers` puestas (también `object-src 'none'`)
+  y el visor se muestra.
+- **Presentación, Word y Excel**: son un `.zip` con XML adentro, y no se
+  pueden mandar a un visor de afuera (Office en línea pide una dirección
+  pública, y estos archivos están detrás del candado del worker). Se abren en
+  el navegador mismo: un lector de `.zip` de cincuenta líneas con
+  `DecompressionStream("deflate-raw")` —sin librerías: la CSP no deja traerlas— y
+  `DOMParser` para el XML. La presentación se arma **diapositiva por
+  diapositiva**, con su fondo, cada texto e imagen en su lugar y tamaño (las
+  medidas en EMU pasadas a porcentajes, la letra en `cqw` para que escale con
+  la lámina); el Word, con su texto, negritas, tablas e imágenes; el Excel, hoja
+  por hoja (las primeras 300 filas). Lo viejo (`.ppt`, `.doc`, `.xls`) se dice y
+  se ofrece bajar.
+- Todo texto del archivo entra por `textContent`, y las imágenes van como
+  `blob:` (que `img-src` permite) y se sueltan al cerrar.
 
 - **La lista no se escribe a mano.** La arma `herramientas/archivos-catalogo.js`
   leyendo el disco y la deja en `data/archivos.json`; la pantalla
