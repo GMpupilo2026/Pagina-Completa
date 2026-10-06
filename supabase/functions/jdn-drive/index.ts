@@ -1,9 +1,10 @@
 // Edge Function: jdn-drive
 //
 // Guarda la ficha de inscripción de los Juegos Deportivos Nacionales 2027 en
-// el Drive: una carpeta con el nombre de la persona dentro de «JDN 2027», con
-// la ficha llena (la arma el navegador, js/jdn-consentimiento.js), la
-// fotografía y la cédula. Ver «La ficha de los JDN 2027» en
+// el Drive, ordenada por comité: JDN 2027 / <comité> / <Atletas|Entrenadores> /
+// <Mujeres|Hombres> / <persona>, con la ficha llena (la arma el navegador,
+// js/jdn-consentimiento.js), la fotografía y la cédula; y una fila en la hoja
+// «Resumen» del comité. Ver «La ficha de los JDN 2027» en
 // docs/decisiones/cuentas-y-formularios.md.
 //
 // EL DRIVE LO TOCA UN APPS SCRIPT, NO ESTA FUNCIÓN
@@ -33,9 +34,18 @@
 // Acciones:
 //   "estado"   {}                         -> { conectado, carpeta?, url? }
 //   "conectar" { url, secreto }           -> lo prueba y, si contesta, lo guarda
-//   "guardar"  { modo?, persona, correo, archivos, privacidad_version }
-//              modo "admin"               -> { carpeta, archivos, pdf }
-//              sin cuenta                 -> { ok }
+//   "guardar"  { modo?, persona, correo, comite, rol, sexo, resumen, archivos,
+//                privacidad_version }     -> { ok }
+//
+// A nadie se le devuelven los enlaces del Drive: quien llena solo descarga su
+// ficha (lo pidió el dueño del sitio), y quien administra entra al Drive por
+// su cuenta.
+//
+// EL CORREO SE COMPRUEBA CONTRA EL DNS
+// Además de la forma, el dominio tiene que recibir correo (un MX, o al menos
+// una dirección, como dice el RFC 5321). Se pregunta a dns.google con un tope
+// de 4 segundos; si no contesta, se deja pasar: un DNS caído no frena una
+// inscripción. «gmial.com» o «hotmail.co» sí se frenan.
 
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { fechaCR, ZONA_CR } from "./hora-cr.ts";
@@ -50,6 +60,11 @@ const TIPOS = new Set([
   "image/jpeg",
   "application/pdf",
 ]);
+const ROLES = new Set(["atleta", "entrenador"]);
+const SEXOS = new Set(["mujer", "hombre"]);
+const CAMPOS_RESUMEN = ["nombre", "rol", "sexo", "categoria", "identificacion", "nacimiento", "telefono", "correo", "canton"];
+// El dominio de los alumnos sin correo no tiene MX a propósito (ver CLAUDE.md).
+const SIN_CORREO = /(^|\.)alumno\.ajedrez-integral\.com$/i;
 const URL_SCRIPT = /^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]{20,}\/exec$/;
 
 const corsHeaders = {
@@ -104,6 +119,33 @@ function ipDe(req: Request): string | null {
   const ip = req.headers.get("cf-connecting-ip") ?? req.headers.get("x-real-ip") ??
     (req.headers.get("x-forwarded-for") ?? "").split(",")[0];
   return ip?.trim() || null;
+}
+
+// ¿El dominio del correo recibe correo? Ver «EL CORREO SE COMPRUEBA CONTRA EL
+// DNS» arriba. Solo dice que no cuando el DNS lo dice claro.
+async function dominioRecibe(dominio: string): Promise<boolean> {
+  if (SIN_CORREO.test(dominio)) return false;
+  const preguntar = async (tipo: string) => {
+    const res = await fetch(`https://dns.google/resolve?name=${encodeURIComponent(dominio)}&type=${tipo}`, {
+      headers: { accept: "application/dns-json" },
+      signal: AbortSignal.timeout(4_000),
+    });
+    if (!res.ok) throw new Error("dns");
+    return await res.json() as { Status: number; Answer?: { type: number; data: string }[] };
+  };
+  try {
+    const mx = await preguntar("MX");
+    if (mx.Status === 3) return false;          // NXDOMAIN: el dominio no existe
+    if (mx.Status !== 0) return true;           // el DNS falló: no se frena a nadie
+    const registros = (mx.Answer ?? []).filter((a) => a.type === 15);
+    // «0 .» es el MX nulo: el dominio dice que no recibe correo (RFC 7505).
+    if (registros.length) return registros.some((a) => !/^0\s+\.$/.test(a.data.trim()));
+    const a = await preguntar("A");
+    if (a.Status !== 0) return a.Status !== 3;
+    return (a.Answer ?? []).some((r) => r.type === 1);
+  } catch {
+    return true;
+  }
 }
 
 // «2026-10-05 17.04», en hora de Costa Rica, para el nombre de los archivos.
@@ -177,6 +219,25 @@ Deno.serve(async (req) => {
     }
     const persona = String(body.persona ?? "").replace(/\s+/g, " ").trim().slice(0, 120);
     if ((persona.match(/\p{L}/gu) || []).length < 2) return json({ error: "Falta el nombre de la persona." }, 400);
+    const comite = String(body.comite ?? "").replace(/[\\/]+/g, " ").replace(/\s+/g, " ").trim().slice(0, 80);
+    if ((comite.match(/\p{L}/gu) || []).length < 2) return json({ error: "Falta el comité que representa." }, 400);
+    const rol = String(body.rol ?? "");
+    const sexo = String(body.sexo ?? "");
+    if (!ROLES.has(rol)) return json({ error: "Falta si es atleta o entrenador." }, 400);
+    if (!SEXOS.has(sexo)) return json({ error: "Falta el sexo biológico." }, 400);
+    const r0 = (body.resumen && typeof body.resumen === "object") ? body.resumen as Record<string, unknown> : {};
+    const resumen: Record<string, string> = {};
+    for (const k of CAMPOS_RESUMEN) resumen[k] = String(r0[k] ?? "").replace(/\s+/g, " ").trim().slice(0, 200);
+
+    // El correo es obligatorio en la ficha: con forma de correo y un dominio
+    // que reciba correo.
+    const correo = String(body.correo ?? "").trim().toLowerCase().slice(0, 200);
+    if (!/^[^\s@,;]+@[a-z0-9-]+(\.[a-z0-9-]+)*\.[a-z]{2,}$/.test(correo)) return json({ error: "Falta un correo válido." }, 400);
+    if (!(await dominioRecibe(correo.split("@")[1]))) {
+      return json({ error: `El correo ${correo} no puede recibir mensajes: revisa lo que va después de la @.` }, 400);
+    }
+    resumen.correo = correo;
+
     const archivos = Array.isArray(body.archivos) ? body.archivos : [];
     if (!archivos.length || archivos.length > 6) return json({ error: "Llegaron archivos de más o de menos." }, 400);
     let total = 0;
@@ -196,10 +257,7 @@ Deno.serve(async (req) => {
     const cuando = fechaCR(new Date(), { day: "numeric", month: "long", year: "numeric", hour: "numeric", minute: "2-digit" });
     let nota: string;
     if (publico) {
-      // Sin cuenta: el correo es obligatorio (lo cuenta el freno) y el freno
-      // va ANTES de tocar el Drive.
-      const correo = String(body.correo ?? "").trim().toLowerCase().slice(0, 200);
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo)) return json({ error: "Falta un correo válido." }, 400);
+      // Sin cuenta: el freno (que cuenta el correo) va ANTES de tocar el Drive.
       if (limpios.filter((a) => a.ficha).length !== 1) return json({ error: "Falta la ficha." }, 400);
       const { data: freno, error: frenoError } = await admin.rpc("jdn_frenar", { p_ip: ipDe(req), p_correo: correo });
       if (frenoError) return json({ error: "No se pudo recibir la ficha. Intenta de nuevo en un momento." }, 500);
@@ -214,11 +272,14 @@ Deno.serve(async (req) => {
       nota = `Ficha JDN 2027 guardada desde Ajedrez Integral por ${quien!.email ?? quien!.id} (${cuando}). ` +
         `Consentimiento: Política de privacidad versión ${version}.`;
     }
-    const r = await alPuente(guardado.url, { secreto: guardado.secreto, accion: "guardar", persona, archivos: limpios, nota });
+    resumen.enviada = cuando;
+    resumen.nota = publico ? "Sin cuenta" : `Por ${quien!.email ?? quien!.id}`;
+    const r = await alPuente(guardado.url, {
+      secreto: guardado.secreto, accion: "guardar", persona, comite, rol, sexo, resumen, archivos: limpios, nota,
+    });
     if (!r.ok) return json({ error: publico ? "No se pudo guardar la ficha. Intenta de nuevo en un momento." : (r.error || "El Drive no guardó los archivos.") }, 502);
-    // Los enlaces del Drive son de la academia: a quien manda sin cuenta no le sirven.
-    if (publico) return json({ ok: true });
-    return json({ ok: true, carpeta: r.carpeta, nombre: r.nombre, archivos: r.archivos, pdf: r.pdf ?? null });
+    // Los enlaces del Drive son de la academia: nadie los recibe de vuelta.
+    return json({ ok: true });
   }
 
   return json({ error: "Acción desconocida" }, 400);

@@ -14,11 +14,21 @@
  * ser menor de 12 pide la certificación de nacimiento en vez de la cédula. Ver
  * «La ficha de los JDN 2027» en docs/decisiones/cuentas-y-formularios.md.
  *
+ * ATLETA O ENTRENADOR. Cada uno llena su consentimiento (PLANTILLA). Al
+ * entrenador no se le pide categoría, tutor ni la condición de paratleta. El
+ * comité que representa va en «Nombre del equipo» de la ficha y decide la
+ * carpeta del Drive: JDN 2027 / <comité> / <Atletas|Entrenadores> /
+ * <Mujeres|Hombres> / <persona>, con la hoja «Resumen» del comité.
+ *
+ * Al terminar, quien llena solo puede descargar la ficha: los enlaces al Drive
+ * no se muestran a nadie (tampoco a quien administra, que entra al Drive por su
+ * cuenta).
+ *
  * DOS MODOS. La página es pública: sin cuenta (o con una que no administra) la
  * llena la familia, «Enviar la ficha» manda a la función sin sesión y la
  * función la pasa por el freno de los envíos públicos. Con la sesión de quien
- * administra aparecen «El Drive» (conectar el puente) y los enlaces a la
- * carpeta y al PDF; la función le exige el aal2 e is_admin.
+ * administra aparece «El Drive» (conectar el puente); la función le exige el
+ * aal2 e is_admin.
  */
 (function () {
   "use strict";
@@ -26,7 +36,11 @@
   const J = window.JDNConsentimiento;
   const $ = (id) => document.getElementById(id);
   const FUNCION = window.SUPABASE_URL + "/functions/v1/jdn-drive";
-  const PLANTILLA = "documentos/jdn/consentimiento-jdn-2027.docx";
+  // Cada rol tiene su consentimiento del ICODER.
+  const PLANTILLA = {
+    atleta: "documentos/jdn/consentimiento-jdn-2027.docx",
+    entrenador: "documentos/jdn/consentimiento-entrenador-jdn-2027.docx",
+  };
   const LADO_MAX = 2000;
   const DOCS = {
     foto: "Fotografía",
@@ -162,6 +176,7 @@
   function datos() {
     const d = {};
     document.querySelectorAll(".jdn-campo").forEach((c) => { d[c.name] = c.value.trim(); });
+    d.rol = radio("rol");
     d.condicion = radio("condicion");
     d.sexo = radio("sexo");
     d.lateralidad = radio("lateralidad");
@@ -170,13 +185,22 @@
     return d;
   }
 
+  const esEntrenador = () => radio("rol") === "entrenador";
   const edadDe = () => J.edad($("f-nacimiento").value, hoy());
-  const esMenor = () => { const e = edadDe(); return e != null && e < 18; };
-  const pideCertificacion = () => { const e = edadDe(); return e != null && e < 12; };
+  const esMenor = () => { const e = edadDe(); return !esEntrenador() && e != null && e < 18; };
+  const pideCertificacion = () => { const e = edadDe(); return !esEntrenador() && e != null && e < 12; };
 
   // Lo que depende de otras respuestas: la categoría, el tutor, la
   // certificación y la caja de paratleta.
   function actualizar() {
+    const ent = esEntrenador();
+    $("caja-condicion").hidden = ent;
+    $("caja-categoria").hidden = ent;
+    // Las fechas posibles de un atleta son las de las categorías; un
+    // entrenador puede haber nacido cuando sea.
+    if (ent) { $("f-nacimiento").removeAttribute("min"); $("f-nacimiento").removeAttribute("max"); }
+    else { $("f-nacimiento").min = "2007-01-01"; $("f-nacimiento").max = "2020-12-31"; }
+    document.querySelectorAll(".jdn-quien").forEach((s) => { s.textContent = ent ? "del entrenador" : "del atleta"; });
     const nac = $("f-nacimiento").value;
     const cat = J.categoria(nac);
     const e = edadDe();
@@ -192,7 +216,16 @@
     $("caja-certificacion").hidden = !cert;
     document.querySelectorAll(".jdn-oblig").forEach((s) => { s.hidden = cert; });
 
-    $("caja-paratleta").hidden = radio("condicion") !== "paratleta";
+    $("caja-paratleta").hidden = ent || radio("condicion") !== "paratleta";
+  }
+
+  // El teléfono es de 8 números: lo que no es número no entra (tampoco al
+  // pegar «8888-1234»). Sin maxlength en el campo: cortaría «8888-1234» en
+  // «8888-123» ANTES de quitarle el guion.
+  function soloNumeros() {
+    const t = $("f-telefono");
+    const limpio = t.value.replace(/\D/g, "").slice(0, 8);
+    if (limpio !== t.value) t.value = limpio;
   }
 
   function mismoTutor() {
@@ -204,7 +237,8 @@
 
   /* ------------------------------------------------------------ las imágenes */
 
-  // Una imagen cualquiera → JPEG de hasta 2000 px por lado.
+  // Una imagen cualquiera → JPEG de hasta 2000 px por lado, con su tamaño
+  // (la fotografía va también dentro de la ficha).
   async function aJpeg(archivo) {
     let img;
     try {
@@ -222,7 +256,7 @@
     ctx.drawImage(img, 0, 0, lienzo.width, lienzo.height);
     const blob = await new Promise((ok) => lienzo.toBlob(ok, "image/jpeg", 0.9));
     if (!blob) throw new Error("No se pudo convertir «" + archivo.name + "» a JPEG.");
-    return new Uint8Array(await blob.arrayBuffer());
+    return { bytes: new Uint8Array(await blob.arrayBuffer()), ancho: lienzo.width, alto: lienzo.height };
   }
 
   function base64(bytes) {
@@ -260,11 +294,18 @@
     return null;
   }
 
-  async function armarFicha(d) {
-    const res = await fetch(PLANTILLA);
+  // `foto`: { bytes, ancho, alto } en JPEG, o null (la ficha sale sin foto).
+  async function armarFicha(d, foto) {
+    const res = await fetch(PLANTILLA[d.rol] || PLANTILLA.atleta);
     if (!res.ok) throw new Error("No se pudo leer la plantilla de la ficha.");
-    const bytes = await J.generar(await res.arrayBuffer(), d, hoy());
-    return { bytes, nombre: "Ficha JDN 2027 - " + J.nombreArchivo(d.nombre) + ".docx" };
+    const bytes = await J.generar(await res.arrayBuffer(), d, hoy(), foto);
+    const que = d.rol === "entrenador" ? "Ficha entrenador JDN 2027 - " : "Ficha JDN 2027 - ";
+    return { bytes, nombre: que + J.nombreArchivo(d.nombre) + ".docx" };
+  }
+
+  async function fotoElegida() {
+    const f = $("f-foto").files && $("f-foto").files[0];
+    return f ? aJpeg(f) : null;
   }
 
   function descargar(ficha) {
@@ -301,7 +342,7 @@
     const d = datos();
     if (revisar(d, false)) return;
     try {
-      ultimaFicha = await armarFicha(d);
+      ultimaFicha = await armarFicha(d, await fotoElegida());
       descargar(ultimaFicha);
       $("jdn-progreso").textContent = "La ficha se descargó. No se guardó en el Drive.";
     } catch (e) {
@@ -319,33 +360,41 @@
     const progreso = $("jdn-progreso");
     boton.disabled = true;
     try {
-      progreso.textContent = "Armando la ficha…";
-      ultimaFicha = await armarFicha(d);
-      const nombre = J.nombreArchivo(d.nombre);
-      const archivos = [{ nombre: ultimaFicha.nombre, tipo: "application/vnd.openxmlformats-officedocument.wordprocessingml.document", base64: base64(ultimaFicha.bytes), ficha: true }];
-
       progreso.textContent = "Preparando las imágenes…";
+      const nombre = J.nombreArchivo(d.nombre);
+      const imagenes = [];
+      let foto = null;
       for (const x of documentosPedidos()) {
         const f = $("f-" + x.clave).files[0];
         if (!f) continue;
         if (f.type === "application/pdf") {
-          archivos.push({ nombre: DOCS[x.clave] + " - " + nombre + ".pdf", tipo: "application/pdf", base64: base64(new Uint8Array(await f.arrayBuffer())) });
+          imagenes.push({ nombre: DOCS[x.clave] + " - " + nombre + ".pdf", tipo: "application/pdf", base64: base64(new Uint8Array(await f.arrayBuffer())) });
         } else {
-          archivos.push({ nombre: DOCS[x.clave] + " - " + nombre + ".jpg", tipo: "image/jpeg", base64: base64(await aJpeg(f)) });
+          const jpg = await aJpeg(f);
+          if (x.clave === "foto") foto = jpg;
+          imagenes.push({ nombre: DOCS[x.clave] + " - " + nombre + ".jpg", tipo: "image/jpeg", base64: base64(jpg.bytes) });
         }
       }
+
+      progreso.textContent = "Armando la ficha…";
+      ultimaFicha = await armarFicha(d, foto);
+      const archivos = [{ nombre: ultimaFicha.nombre, tipo: "application/vnd.openxmlformats-officedocument.wordprocessingml.document", base64: base64(ultimaFicha.bytes), ficha: true }].concat(imagenes);
 
       progreso.textContent = "Guardando en el Drive… (puede tardar un minuto)";
       const r = await llamar("guardar", {
         modo: esAdmin ? "admin" : "publico",
         correo: d.correo,
         persona: nombre,
+        comite: d.comite,
+        rol: d.rol,
+        sexo: d.sexo,
+        resumen: resumen(d),
         archivos,
         privacidad_version: window.LegalVersion.PRIVACIDAD,
       });
       progreso.textContent = "";
       descargar(ultimaFicha);
-      mostrarListo(r, nombre);
+      mostrarListo(d, nombre);
     } catch (e) {
       progreso.textContent = "";
       falta(e.message, null);
@@ -354,26 +403,32 @@
     }
   }
 
-  function mostrarListo(r, nombre) {
+  // La fila de la hoja «Resumen» del comité: lo justo para saber quién ya
+  // mandó su ficha y cómo ubicarlo.
+  function resumen(d) {
+    const cat = d.rol === "entrenador" ? null : J.categoria(d.nacimiento);
+    return {
+      nombre: d.nombre,
+      rol: d.rol === "entrenador" ? "Entrenador(a)" : (d.condicion === "paratleta" ? "Paratleta" : "Atleta"),
+      sexo: d.sexo === "mujer" ? "Mujer" : "Hombre",
+      categoria: cat ? cat.codigo : "",
+      identificacion: d.identificacion,
+      nacimiento: d.nacimiento,
+      telefono: d.telefono,
+      correo: d.correo,
+      canton: d.canton,
+    };
+  }
+
+  // Lo único que queda por hacer es descargar la ficha: el Drive es de la
+  // academia, y quien administra lo abre por su lado.
+  function mostrarListo(d, nombre) {
     $("jdn-form").hidden = true;
-    $("listo-carpeta-li").hidden = !esAdmin;
-    if (!esAdmin) {
-      // La familia no tiene acceso al Drive de la academia: su ficha es la
-      // que se acaba de descargar.
-      $("listo-pdf-li").hidden = true;
-      $("listo-texto").textContent = "La academia recibió la ficha de " + nombre + " con sus documentos. " +
-        "La ficha llena se descargó en este aparato: imprímela, fírmala a mano (y que la firme también la madre, el padre o el tutor si es menor de edad) y entrégala a la academia.";
-      $("jdn-listo").hidden = false;
-      $("jdn-listo").focus();
-      return;
-    }
-    $("listo-titulo").textContent = "Ficha guardada";
-    $("listo-texto").textContent = "Se creó la carpeta «" + (r.nombre || nombre) + "» en «JDN 2027» con " +
-      (r.archivos || []).length + " archivos. La ficha también se descargó en esta computadora." +
-      (r.pdf ? "" : " (No se armó el PDF: falta agregar el servicio «Drive API» en el Apps Script; la ficha en Word se imprime igual.)");
-    $("listo-carpeta").href = r.carpeta;
-    $("listo-pdf-li").hidden = !r.pdf;
-    if (r.pdf) $("listo-pdf").href = r.pdf;
+    $("listo-titulo").textContent = esAdmin ? "Ficha guardada" : "Ficha enviada";
+    $("listo-texto").textContent = "La academia recibió la ficha de " + nombre + " (" + d.comite + ") con sus documentos. " +
+      "La ficha llena se descargó en este aparato: imprímela y fírmala a mano" +
+      (esMenor() ? " (que la firme también la madre, el padre o el tutor)" : "") +
+      ". Si no se descargó, usa «Descargar la ficha».";
     $("jdn-listo").hidden = false;
     $("jdn-listo").focus();
   }
@@ -400,6 +455,7 @@
     document.querySelectorAll(".jdn-archivo").forEach((i) => i.addEventListener("change", () => vistaPrevia(i)));
     $("jdn-solo-ficha").addEventListener("click", soloFicha);
     $("jdn-mismo-tutor").addEventListener("click", mismoTutor);
+    $("f-telefono").addEventListener("input", soloNumeros);
     $("drive-form").addEventListener("submit", conectar);
     $("listo-descargar").addEventListener("click", () => { if (ultimaFicha) descargar(ultimaFicha); });
     $("jdn-otra").addEventListener("click", otra);
