@@ -165,6 +165,15 @@ L.CAPITULOS.forEach((cap) => {
   });
 });
 
+// Los secretos para Alessandro: una corrección del poema o del nombre del
+// alfil los rompería sin que nadie lo note.
+ok(L.DEDICATORIA.map((v) => v.normalize("NFD")[0].toUpperCase()).join("") === L.SECRETO,
+  `la dedicatoria ya no forma el acróstico ${L.SECRETO}`);
+const letras = (t) => t.toUpperCase().replace(/[^A-Z]/g, "").split("").sort().join("");
+ok(letras(L.NOMBRE_ALFIL) === letras(L.SECRETO), `«${L.NOMBRE_ALFIL}» ya no tiene las mismas letras que ${L.SECRETO}`);
+ok(L.CAPITULOS.every((c) => !/Picudo/.test(JSON.stringify(c))) && JSON.stringify(L.CAPITULOS).includes(L.NOMBRE_ALFIL),
+  `el alfil del cuento no se llama ${L.NOMBRE_ALFIL}`);
+
 // Lo generado.
 const CARPETA = path.join(RAIZ, "material", "peonita");
 const acc = path.join(CARPETA, "peonita-accesible.html");

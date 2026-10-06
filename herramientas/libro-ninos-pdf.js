@@ -364,8 +364,8 @@ const ESTILO = `
   .casilla-marcar { width: 7mm; height: 7mm; border: 2.5px solid #5b4636; border-radius: 1.5mm; flex: none; }
   .raya.larga { min-width: 90mm; }
   /* páginas sueltas */
-  .creditos { padding-top: 120mm; font-size: 11pt; line-height: 1.6; color: #5b4636; }
-  .creditos .dedica { font-size: 15pt; font-style: italic; margin-bottom: 30mm; text-align: center; color: #a61e4d; padding-top: 0; }
+  .creditos { padding-top: 40mm; font-size: 11pt; line-height: 1.6; color: #5b4636; }
+  .creditos .dedica { font-size: 14pt; line-height: 1.7; font-style: italic; margin-bottom: 40mm; text-align: center; color: #a61e4d; padding-top: 0; }
   .creditos h1 { font-size: 16pt; margin: 0 0 2mm; color: #2b2233; }
   .nota h2, .indice h2, .soluciones h2, .final h2 { font-size: 24pt; color: #a61e4d; margin: 0 0 5mm; }
   .nota p { font-size: 13pt; }
@@ -416,7 +416,7 @@ const escenaDiploma = {
 
 const html = `<!doctype html><html lang="es"><head><meta charset="utf-8"><title>${esc(L.TITULO)}</title><style>${ESTILO}</style></head><body>
 <section class="pagina creditos">
-  <p class="dedica">Para todas las niñas y todos los niños<br>que se atreven a dar el primer paso,<br>como Peonita.</p>
+  <p class="dedica">${L.DEDICATORIA.map(esc).join("<br>")}</p>
   <h1>${esc(L.TITULO)}</h1>
   <p>${esc(L.SUBTITULO)}</p>
   <p>Texto e ilustraciones: ${esc(L.AUTOR)}<br>Academia Ajedrez Integral · Costa Rica · ${ANIO}</p>
@@ -583,6 +583,8 @@ o con la letra agrandada: cada dibujo va contado en palabras, cada posición pie
 Las casillas se nombran con una letra de la a a la h, que dice la columna, y un número del 1 al 8, que dice la fila.</p>
 <h2>Para las familias y el personal docente</h2>
 ${L.NOTA_ADULTOS.map((t) => `<p>${esc(t)}</p>`).join("")}
+<h2>Dedicatoria</h2>
+<p>${L.DEDICATORIA.map(esc).join("<br>")}</p>
 <h2>Hola, soy Peonita</h2>
 <p class="dibujo"><strong>El dibujo.</strong> ${esc(PRES.escena.alt)}</p>
 ${PRES.parrafos.map((t) => `<p>${esc(t)}</p>`).join("")}

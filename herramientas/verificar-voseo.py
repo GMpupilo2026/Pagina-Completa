@@ -117,6 +117,7 @@ cortés descortés
 encontré revisé recargué creé comprometí revelé
 dejé llegué terminé
 moví saqué enroqué pensé equivoqué
+ojalá
 quizá
 mamá papá bebé
 dará hará podrá dispondrá será tendrá tendrás vendrá verá verás sabrás habrá saldrá

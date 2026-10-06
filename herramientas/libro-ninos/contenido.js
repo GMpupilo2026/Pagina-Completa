@@ -66,7 +66,29 @@ const NOTA_ADULTOS = [
   "Cada capítulo tiene tres partes: el cuento, un recuadro de «Lo que aprendí» con la idea principal y una página de «¡A jugar!» con retos sencillos. Las soluciones están al final del libro.",
   "Vayan despacio, como Don Lento. Es mejor jugar mucho con la torre sola que aprender todas las piezas en una tarde. Antes de pasar al siguiente capítulo, conviene mover la pieza nueva en el tablero hasta que salga sin pensar.",
   "Feliciten el esfuerzo más que el resultado: «¡qué bien pensaste esa jugada!» enseña más que «¡ganaste!». Y cuando pierdan, que pase igual que en el cuento: se da la mano, se dice «buena partida» y se juega otra.",
-  "Todas las posiciones de este libro se comprobaron con un programa de ajedrez: cada respuesta de las soluciones es correcta y la única posible.",
+];
+
+/* Los secretos para Alessandro, el hijo del autor (ver «Cada cuento lleva un
+   secreto para Alessandro» en docs/decisiones/cursos-y-material.md). No se
+   anuncian en ningún lado del libro: se descubren.
+   - La dedicatoria es un acróstico: la primera letra de cada verso, de arriba
+     hacia abajo, dice ALESSANDRO.
+   - El alfil se llama Don Saleras, que tiene las mismas letras que Alessandro.
+   verificar-libro-ninos.js comprueba los dos: una corrección del poema o del
+   nombre podría romper el secreto sin que nadie lo note. */
+const SECRETO = "ALESSANDRO";
+const NOMBRE_ALFIL = "Don Saleras";
+const DEDICATORIA = [
+  "Aprende despacito, como Don Lento,",
+  "las piezas te esperan en su lugar;",
+  "el tablero es un reino de cuento,",
+  "sesenta y cuatro casillas para jugar.",
+  "Sueña en grande, como Peonita,",
+  "avanza sin miedo, paso a pasito;",
+  "nunca te rindas, aunque cueste un poquito:",
+  "de cada partida algo se aprende.",
+  "Ríe, piensa y da la mano al final,",
+  "ojalá este juego te acompañe siempre.",
 ];
 
 /* ---------------------------------------------------------- capítulos */
@@ -121,7 +143,7 @@ const CAPITULOS = [
         D.corazon(465, 175, 1.3),
     },
     cuento: [
-      "Detrás de Peonita fueron saliendo los demás. Primero, Doña Muralla, la torre; luego Galope, el caballo; después Don Picudo, el alfil; la Dama Estrella, con su corona brillante; y el Rey Sereno, con su crucecita dorada. Al final salieron los ocho peones, en fila, como en una excursión.",
+      "Detrás de Peonita fueron saliendo los demás. Primero, Doña Muralla, la torre; luego Galope, el caballo; después Don Saleras, el alfil; la Dama Estrella, con su corona brillante; y el Rey Sereno, con su crucecita dorada. Al final salieron los ocho peones, en fila, como en una excursión.",
       "Entonces, del otro lado de la caja, se oyó un ruidito. ¡Eran las piezas negras! Peonita se escondió detrás de la torre.",
       "—¿Vienen a pelear? —susurró.",
       "Un peón negro con una bufanda verde se acercó y le sonrió.",
@@ -178,18 +200,18 @@ const CAPITULOS = [
 
   {
     n: 4,
-    titulo: "Don Picudo y sus caminos de colores",
+    titulo: "Don Saleras y sus caminos de colores",
     escena: {
       id: "alfil", fondo: "dia",
-      alt: "Don Picudo, el alfil blanco con su gorro puntiagudo, con cuatro flechas inclinadas que salen de él en diagonal.",
+      alt: "Don Saleras, el alfil blanco con su gorro puntiagudo, con cuatro flechas inclinadas que salen de él en diagonal.",
       contenido: D.pieza("a", "b", 300, 270, 1.15) + D.flecha(360, 150, 470, 60, "#9c36b5") + D.flecha(240, 150, 130, 60, "#9c36b5") +
         D.flecha(370, 225, 470, 245, "#9c36b5") + D.flecha(230, 225, 130, 245, "#9c36b5"),
     },
     cuento: [
-      "La segunda noche le tocó a Don Picudo, el alfil, que tiene un gorro con punta y una rayita en la cabeza.",
+      "La segunda noche le tocó a Don Saleras, el alfil, que tiene un gorro con punta y una rayita en la cabeza.",
       "—Yo camino inclinado —explicó—, por las diagonales. Igual que la torre, avanzo todas las casillas que quiera, si el camino está libre.",
       "Peonita se fijó en algo curioso: el alfil que empezó en una casilla clara siempre seguía en casillas claras. ¡Nunca pisaba una oscura!",
-      "—Así es —sonrió Don Picudo—. Por eso cada bando tiene dos alfiles: uno que pasea por las casillas claras y otro por las oscuras. Somos un equipo.",
+      "—Así es —sonrió Don Saleras—. Por eso cada bando tiene dos alfiles: uno que pasea por las casillas claras y otro por las oscuras. Somos un equipo.",
       "—Al principio de la partida estás encerrado detrás de los peones —dijo Tizón.",
       "—Por eso le pido a algún peón que se mueva —respondió el alfil—. Así se abre mi camino.",
     ],
@@ -608,5 +630,5 @@ const FINAL = [
 ];
 
 module.exports = {
-  AUTOR, TITULO, SUBTITULO, VALOR, NOMBRE, PRESENTACION, NOTA_ADULTOS, CAPITULOS, PROMESAS, CONSEJOS_PARTIDA, FINAL,
+  AUTOR, TITULO, SUBTITULO, VALOR, NOMBRE, PRESENTACION, NOTA_ADULTOS, SECRETO, NOMBRE_ALFIL, DEDICATORIA, CAPITULOS, PROMESAS, CONSEJOS_PARTIDA, FINAL,
 };

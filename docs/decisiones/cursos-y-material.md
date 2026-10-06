@@ -993,6 +993,30 @@ verdad**: el niño tiene que reconocer la torre cuando la vea en un tablero.
 Cada escena lleva su descripción (`alt`), que es también lo que dice la versión
 accesible en lugar del dibujo.
 
+### Cada cuento lleva un secreto para Alessandro
+
+Pedido del autor, **para este cuento y todos los que vengan**: cada libro
+infantil esconde una dedicatoria o un guiño para su hijo Alessandro. Va
+escondido, nunca anunciado en el libro: se descubre. En el de Peonita hay dos:
+
+- **La dedicatoria es un acróstico**: la primera letra de cada uno de sus diez
+  versos, de arriba hacia abajo, dice ALESSANDRO. Sin negritas ni nada que lo
+  delate.
+- **El alfil se llama Don Saleras**, que tiene exactamente las mismas letras
+  que Alessandro (y suena a «salero», tener gracia). Antes era «Don Picudo».
+
+Para los próximos cuentos sirven las mismas ideas u otras parecidas: un
+personaje con su nombre en anagrama o escondido a plena vista («Al…fil
+Sandro»), las iniciales de los capítulos, un acróstico en un poema, una
+posición cuyas piezas dibujan una A. Antes de elegir, se le proponen las
+opciones al autor.
+
+**El verificador del libro comprueba el secreto** (`SECRETO`, `DEDICATORIA` y
+`NOMBRE_ALFIL` en `contenido.js`): corregir una palabra del poema o el nombre
+del personaje lo rompería sin dar ningún error, y nadie lo notaría justo
+porque está escondido. Este archivo y `herramientas/` no se publican
+(`.assetsignore`), así que contarlo acá no lo delata.
+
 ### Lo que lo distingue de los otros libros
 
 - **Se deja imprimir**: las páginas de «¡A jugar!» se pintan y se escriben.

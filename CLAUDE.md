@@ -149,6 +149,11 @@ y hace otra cosa. Estas reglas existen por eso.
   se comprueba con chess.js (y con motor si promete un resultado).
 - **Ningún color se elige a ojo**: el contraste se mide (WCAG AA, contra el
   fondo real) y el color nunca va solo: el dato va también escrito.
+- **Todo cuento o libro infantil lleva un secreto para Alessandro**, el hijo
+  del autor: una dedicatoria en acróstico, un personaje con su nombre en
+  anagrama o algo parecido, escondido y nunca anunciado en el libro, y
+  comprobado por el verificador del libro (ver «Cada cuento lleva un secreto
+  para Alessandro»).
 - Accesibilidad: el foco se ve, un control que abre algo dice si está abierto,
   una tarjeta apagada no lleva `href` pero sí se alcanza con Tab, un emoji de
   título va en `<span aria-hidden="true">`, y todo ejercicio se puede contestar
