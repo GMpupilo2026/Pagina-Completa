@@ -1938,3 +1938,38 @@ salir a 16 kHz en mono), que el worker arranque y que su camino de error
 conteste en vez de quedarse mudo, y que el texto llegue hasta el informe. Si
 Whisper entiende bien el español es lo único que hay que mirar a mano, con una
 grabación de verdad.
+
+## El informe mensual para el CCDR San José
+
+El Comité Cantonal de Deportes y Recreación de San José le pide al entrenador
+un informe técnico cada mes, en Word y con su propia guía: los datos del mes,
+nueve preguntas (atletas, lugar y horarios, etapa del macrociclo, pruebas y
+resultados, lesiones, forma deportiva, requerimientos, otros) y la firma. No
+sale de una pantalla del sitio: lo arma Claude con lo que el entrenador deja
+en una carpeta de Drive. El paso a paso está en
+`.claude/skills/informe-ccdr/SKILL.md`; esto es el porqué.
+
+- **El armador no sabe nada del mes.** `herramientas/informe-ccdr.js` recibe
+  un JSON y saca el Word; los nombres, la asistencia y las fotos son de
+  menores de edad y viven en la carpeta de trabajo de la sesión, nunca en git
+  (`informes-ccdr/` está en `.gitignore` y en `.assetsignore` por si alguien
+  los guarda acá). El verificador lo arma con datos inventados.
+- **Lo que no sale de un dato va en amarillo** (`{"pend": …}`): que no hubo
+  lesiones, lo psicológico, los requerimientos, la sede que no se encontró.
+  El informe lo firma una persona; lo que Claude supuso tiene que verse como
+  supuesto, no como dato. El verificador revisa que el resaltado no se pierda.
+- **chess-results se pide desde la base.** La red de las sesiones no llega a
+  ese sitio; `pg_net` sí (como en «Las posiciones oficiales vienen de
+  chess-results»). Los parámetros van en `params`: con `headers`, el servidor
+  de chess-results contesta 400. La sede no se puede leer, porque está detrás
+  de un botón que pide un postback, así que va como «[completar]».
+- **Las fotos no pasan por la conversación.** El conector de Drive devuelve
+  cada archivo en base64; una foto es demasiado grande para la conversación,
+  así que Claude Code guarda la respuesta en un archivo, y
+  `herramientas/informe-ccdr-fotos.py` lo decodifica y lo achica. Copiar el
+  base64 a mano no es una opción: son cientos de miles de caracteres por
+  foto. Las que traen la marca «Contenido generado por IA» no van a un
+  informe oficial.
+- **Asistencia: sin el cuerpo técnico y sin adivinar.** Un nombre de cuenta de
+  Meet se junta con un atleta solo si la coincidencia es clara; las cuentas de
+  familiares van aparte como «otras cuentas».
