@@ -84,18 +84,24 @@ function acierto(elo, R) {
 function esperado(items, R) {
   return items.reduce((s, it) => s + PUNTOS * acierto(it.elo, R), 0);
 }
-const ELO_MIN = 600, ELO_MAX = 2200, PASO = 100;
-const FUERZAS = [];
-for (let r = ELO_MIN; r <= ELO_MAX; r += PASO) FUERZAS.push(r);
+const PASO = 100;
+const TODAS = [];
+for (let r = 200; r <= 2800; r += PASO) TODAS.push(r);
 
-/* Desde cuántos puntos corresponde cada fuerza: los esperados en el punto
-   medio entre la fuerza y la de abajo. Así cada renglón cubre un tramo y no
-   hay huecos. */
+/* Cada tabla lleva solo las fuerzas que sus posiciones distinguen: las que
+   esperan entre el 5 % y el 95 % de los puntos. Un nivel fácil no separa a un
+   1500 de un 1900 —los dos lo sacan casi entero—, y con la lista fija salían
+   renglones como «592 a 594 → 1500». Desde cuántos puntos corresponde cada
+   fuerza: los esperados en el punto medio entre ella y la de abajo. Así cada
+   renglón cubre un tramo y no hay huecos. */
 function filasTablaPuntos(items, maximo) {
-  const t = FUERZAS.map((r) => ({ r, desde: Math.round(esperado(items, r - PASO / 2)) }));
+  const fuerzas = TODAS.filter((r) => {
+    const e = esperado(items, r);
+    return e >= 0.05 * maximo && e <= 0.95 * maximo;
+  });
+  const t = fuerzas.map((r) => ({ r, desde: Math.round(esperado(items, r - PASO / 2)) }));
   return t.map((f, i) => {
     const hasta = i + 1 < t.length ? t[i + 1].desde - 1 : maximo;
-    if (i > 0 && hasta < f.desde) return "";
     const rango = i === 0 ? `hasta ${hasta}` : i + 1 === t.length ? `${f.desde} o más` : `${f.desde} a ${hasta}`;
     const fuerza = i === 0 ? `${f.r} o menos` : i + 1 === t.length ? `${f.r} o más` : String(f.r);
     return `<tr><td class="num">${rango}</td><td class="num"><strong>${fuerza}</strong></td></tr>`;
@@ -210,7 +216,7 @@ const html = `<!doctype html><html lang="es"><head><meta charset="utf-8">
   table.tabla-fuerza, table.reglas { border-collapse: collapse; width: 100%; margin-top: 3mm; }
   table.tabla-fuerza { width: 100mm; }
   .tabla-fuerza th, .tabla-fuerza td, .reglas th, .reglas td { border-bottom: 1px solid #d9e2ec; padding: 1.2mm 2.5mm; text-align: left; vertical-align: top; }
-  .indice td, .indice th { padding: .7mm 2.5mm; font-size: 9pt; }
+  .indice td, .indice th { padding: .45mm 2.5mm; font-size: 8.5pt; }
   th { font-size: 8pt; text-transform: uppercase; letter-spacing: .04em; color: #627d98; }
   .num { text-align: right; font-variant-numeric: tabular-nums; }
   .tablas { display: flex; gap: 8mm; }
