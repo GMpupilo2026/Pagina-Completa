@@ -51,20 +51,19 @@ const leer = (r) => fs.readFileSync(path.join(RAIZ, r), "utf8");
    ================================================================== */
 
 const MENOR = {
-  condicion: "atleta", comite: "Comité Cantonal de Deportes y Recreación de Montes de Oca", identificacion: "1-2345-0678",
+  condicion: "atleta", identificacion: "1-2345-0678",
   tipoDocumento: "Nacional", nombre: "Sofía Pérez & <Mora>", nacimiento: "2012-03-09", nacionalidad: "Costarricense",
   estadoCivil: "Soltero(a)", telefono: "8888-1234", sexo: "mujer", lateralidad: "Izquierdo", correo: "familia@ejemplo.cr",
   escolaridad: "Secundaria incompleta", provincia: "San José", canton: "Montes de Oca", distrito: "San Pedro",
   direccion: "200 m norte de la iglesia", beneficiarioCedula: "1-1111-1111", beneficiarioNombre: "Ana Mora Solís",
-  parentesco: "Madre", rama: "femenina", pruebas: ["Clásico individual", "Rápido por equipos"],
+  parentesco: "Madre",
   tutorNombre: "Ana Mora Solís", tutorEstadoCivil: "casada", tutorProfesion: "docente", tutorCedula: "1-1111-1111",
-  tutorCondicion: "madre", autorizadoNombre: "Luis Rojas Vega", autorizadoRol: "subdelegado",
+  tutorCondicion: "madre", autorizadoNombre: "Oscar Angulo Cubero", autorizadoRol: "entrenador",
 };
 const MAYOR = Object.assign({}, MENOR, {
-  condicion: "paratleta", nombre: "Carlos Jiménez", nacimiento: "2007-01-20", sexo: "hombre", rama: "abierta",
+  condicion: "paratleta", nombre: "Carlos Jiménez", nacimiento: "2007-01-20", sexo: "hombre",
   tipoDocumento: "Nacionalizado", estadoCivil: "Desconocido", lateralidad: "Derecho", parentesco: "Otros",
   discapacidad: ["Discapacidad visual", "Deterioro en el rango de movimiento pasivo"], perroGuia: "sí", silla: "Eléctrica",
-  pruebas: J.PRUEBAS.slice(),
 });
 ["tutorNombre", "tutorEstadoCivil", "tutorProfesion", "tutorCedula", "tutorCondicion", "autorizadoNombre", "autorizadoRol"]
   .forEach((k) => delete MAYOR[k]);
@@ -125,16 +124,15 @@ async function pruebaFicha() {
   console.log("\n=== Lo que se exige ===");
   igual("la ficha completa de una menor no pide nada más", J.validar(MENOR, HOY), []);
   igual("la de un mayor no pide tutor", J.validar(MAYOR, HOY), []);
-  const sinTutor = Object.assign({}, MENOR, { tutorNombre: "", autorizadoRol: "" });
-  cierto("a una menor sin tutor le falta el tutor y a quién autoriza",
-    J.validar(sinTutor, HOY).some((f) => /padre, madre o tutor/.test(f)) && J.validar(sinTutor, HOY).some((f) => /delegado o subdelegado/.test(f)));
-  cierto("un hombre no entra en la rama femenina",
-    J.validar(Object.assign({}, MAYOR, { rama: "femenina" }), HOY).some((f) => /rama abierta/.test(f)));
+  const sinTutor = Object.assign({}, MENOR, { tutorNombre: "", autorizadoNombre: "" });
+  cierto("a una menor sin tutor le falta el tutor y el entrenador al que autoriza",
+    J.validar(sinTutor, HOY).some((f) => /padre, madre o tutor/.test(f)) && J.validar(sinTutor, HOY).some((f) => /entrenador al que autoriza/.test(f)));
+  igual("no pide comité, rama ni pruebas (son del entrenador)",
+    J.validar(Object.assign({}, MENOR, { comite: "", rama: "", pruebas: [] }), HOY), []);
   cierto("nacer en 2021 no tiene categoría",
     J.validar(Object.assign({}, MENOR, { nacimiento: "2021-02-02" }), HOY).some((f) => /entre 2007 y 2020/.test(f)));
   cierto("un paratleta sin tipo de discapacidad no pasa",
     J.validar(Object.assign({}, MAYOR, { discapacidad: [] }), HOY).some((f) => /discapacidad/.test(f)));
-  cierto("sin pruebas no pasa", J.validar(Object.assign({}, MENOR, { pruebas: [] }), HOY).some((f) => /prueba/.test(f)));
 
   console.log("\n=== La ficha llena (una menor, atleta) ===");
   const plantilla = fs.readFileSync(PLANTILLA);
@@ -156,10 +154,11 @@ async function pruebaFicha() {
   igual("condición", linea(ps, "Mi persona en condición de").slice(0, 50), "Mi persona en condición de (X)atleta (  )paratleta");
   cierto("tutor: nombre, estado civil, profesión, cédula, quién es, la atleta y a quién autoriza",
     linea(ps, "Yo ").startsWith("Yo Ana Mora Solís, mayor, casada, docente, cédula de identidad 1-1111-1111 en mi condición de madre, " +
-      "en mi ejercicio pleno de la patria potestad del atleta Sofía Pérez & <Mora> menor de edad, autorizo a Luis Rojas Vega (subdelegado) para que"),
+      "en mi ejercicio pleno de la patria potestad del atleta Sofía Pérez & <Mora> menor de edad, autorizo a Oscar Angulo Cubero (entrenador) para que"),
     linea(ps, "Yo "));
   igual("1. deporte", linea(ps, "1-"), "1-Indique el deporte en el cual se inscribe: Ajedrez");
-  cierto("2. comité", linea(ps, "2-").endsWith("con el cual se inscribe: " + MENOR.comite));
+  igual("2. el comité queda en blanco para el entrenador", linea(ps, "2-").trim(),
+    "2-Indique el nombre del Comité Cantonal / Concejo de Distrito con el cual se inscribe:");
   igual("4. identificación", linea(ps, "4-").trim(), "4-Número de identificación: 1-2345-0678");
   cierto("5. tipo de documento: solo «Nacional», no «Nacionalizado»",
     /\(X\) Nacional,/.test(linea(ps, "5-")) && (linea(ps, "5-").match(/\(X\)/g) || []).length === 1, linea(ps, "5-"));
@@ -181,10 +180,10 @@ async function pruebaFicha() {
   cierto("18. parentesco: la madre, no el padre", /\(X\) Madre, \( \)Padre/.test(linea(ps, "18-")), linea(ps, "18-"));
   cierto("19. una atleta no marca nada de paratleta",
     !/\(X\)/.test(linea(ps, "Tipo de discapacidad")) && !/\(X\)/.test(linea(ps, "Perro guía")));
-  igual("20. categoría", linea(ps, "Categoría Deportiva"), "Categoría Deportiva (Deporte colectivo o individual): Individual. Ajedrez U-16, rama femenina");
-  igual("recuadro de las pruebas: solo las elegidas",
+  igual("20. categoría", linea(ps, "Categoría Deportiva"), "Categoría Deportiva (Deporte colectivo o individual): Individual. Ajedrez U-16");
+  igual("recuadro de las pruebas: Clásico, Rápido y Relámpago",
     texto(xml.slice(xml.indexOf("<w:txbxContent>"), xml.indexOf("</w:txbxContent>"))),
-    "Ajedrez U-16, rama femenina: Clásico individual, Rápido por equipos.");
+    "Ajedrez U-16: Clásico, Rápido, Relámpago.");
   cierto("la fecha de la firma queda en blanco (se firma a mano)", /^Firmado el día___/.test(linea(ps, "Firmado")));
   igual("en total, 6 «(X)»: condición, documento, estado civil, sexo, lateralidad y parentesco", (ps.join("\n").match(/\(X\)/g) || []).length, 6);
 
@@ -200,8 +199,8 @@ async function pruebaFicha() {
   cierto("19. las dos discapacidades, aunque una esté partida en dos runs",
     /\(X\)Discapacidad visual/.test(disc) && /\(X\) Deterioro en el rango/.test(disc) && (disc.match(/\(X\)/g) || []).length === 2, disc);
   cierto("19. perro guía y silla", /\(X\) sí, \( \) no/.test(linea(ps2, "Perro guía")) && /\(X\) Eléctrica/.test(linea(ps2, "Perro guía")));
-  cierto("20. U-20, rama abierta, las seis pruebas",
-    /Ajedrez U-20, rama abierta$/.test(linea(ps2, "Categoría Deportiva")) &&
+  cierto("20. U-20, con las tres pruebas",
+    /Ajedrez U-20$/.test(linea(ps2, "Categoría Deportiva")) &&
     J.PRUEBAS.every((p) => texto(xml2.slice(xml2.indexOf("<w:txbxContent>"), xml2.indexOf("</w:txbxContent>"))).includes(p)));
 
   let rota = null;
@@ -346,15 +345,15 @@ async function llenarMenor(page) {
   await llenar("#f-canton", "Barva");
   await llenar("#f-distrito", "San Pablo");
   await llenar("#f-direccion", "Del parque 100 m sur");
-  await llenar("#f-comite", "CCDR de Barva");
-  await page.check('input[name="rama"][value="femenina"]');
   await llenar("#f-tutorNombre", "Marta Ruiz Mora");
   await page.selectOption("#f-tutorCondicion", "madre");
   await llenar("#f-tutorCedula", "2-3333-4444");
   await llenar("#f-tutorEstadoCivil", "divorciada");
   await llenar("#f-tutorProfesion", "contadora");
   await llenar("#f-autorizadoNombre", "Pedro Mora");
-  await page.selectOption("#f-autorizadoRol", "delegado");
+  igual("«Que es» trae solo «Entrenador», ya elegido",
+    await page.$$eval("#f-autorizadoRol option", (os) => os.map((o) => o.value + (o.selected ? "*" : ""))), ["entrenador*"]);
+  if (!page.__ya) igual("el ejemplo del entrenador", await page.getAttribute("#f-autorizadoNombre", "placeholder"), "ej. Oscar Angulo Cubero");
   await page.click("#jdn-mismo-tutor");
   if (!page.__ya) igual("«Usar los datos del tutor» llena el beneficiario",
     [await page.inputValue("#f-beneficiarioNombre"), await page.inputValue("#f-beneficiarioCedula"), await page.inputValue("#f-parentesco")],
@@ -431,9 +430,12 @@ async function pruebaPagina(browser) {
   await page.check('input[name="condicion"][value="paratleta"]');
   cierto("paratleta abre su recuadro", await vis(page, "#caja-paratleta"));
   await page.check('input[name="condicion"][value="atleta"]');
-  await page.check('input[name="sexo"][value="hombre"]');
-  cierto("un hombre no puede elegir la rama femenina", await page.isDisabled('input[name="rama"][value="femenina"]'));
-  await page.check('input[name="sexo"][value="mujer"]');
+  cierto("no pide comité, rama ni pruebas (los pone el entrenador)",
+    !(await page.$("#f-comite")) && !(await page.$('input[name="rama"]')) && !(await page.$('input[name="pruebas"]')));
+  cierto("la foto y la cédula dicen que son del atleta",
+    /Fotografía y cédula del atleta/.test(await page.textContent("#jdn-form")) &&
+    /Fotografía del atleta/.test(await page.textContent('label[for="f-foto"]')) &&
+    /Cédula del atleta, frente/.test(await page.textContent('label[for="f-frente"]')));
 
   // Guardar sin llenar: dice qué falta y no llama
   const antes = pedidos.length;
@@ -477,15 +479,15 @@ async function pruebaPagina(browser) {
   const fichaXml = await (await window.ReporteExcel.abrirZip(docx.buffer.slice(docx.byteOffset, docx.byteOffset + docx.byteLength))).texto("word/document.xml");
   const fp = parrafos(fichaXml);
   cierto("la ficha que se manda es la llena: U-12, con su tutora",
-    /Ajedrez U-12, rama femenina$/.test(linea(fp, "Categoría Deportiva")) && /^Yo Marta Ruiz Mora, mayor, divorciada, contadora/.test(linea(fp, "Yo ")));
+    /Ajedrez U-12$/.test(linea(fp, "Categoría Deportiva")) && /^Yo Marta Ruiz Mora, mayor, divorciada, contadora/.test(linea(fp, "Yo ")));
   cierto("al terminar: el PDF para imprimir y la carpeta",
     await vis(page, "#listo-pdf") && (await page.getAttribute("#listo-pdf", "href")) === "https://drive.google.com/pdf" &&
     (await page.getAttribute("#listo-carpeta", "href")) === "https://drive.google.com/carpeta" && !(await vis(page, "#jdn-form")));
   cierto("el foco pasa al aviso de «Ficha guardada»", await page.evaluate(() => document.activeElement && document.activeElement.id === "jdn-listo"));
 
   await page.click("#jdn-otra");
-  cierto("«Llenar otra ficha» limpia todo menos el comité",
-    (await page.inputValue("#f-nombre")) === "" && (await page.inputValue("#f-comite")) === "CCDR de Barva" && await vis(page, "#jdn-form"));
+  cierto("«Llenar otra ficha» deja el formulario limpio",
+    (await page.inputValue("#f-nombre")) === "" && await vis(page, "#jdn-form"));
   cierto("sin errores en la página", errores.length === 0, errores.join(" | "));
   await ctx.close();
 

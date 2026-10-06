@@ -1094,10 +1094,18 @@ lados (o la certificación de nacimiento, si es menor de 12). Verificador:
   lo que mira el ICODER; la edad de hoy no sirve (un nacido en diciembre de
   2010 tiene 15 años y es U-20). Fuera de esos años no se puede guardar.
   - La **edad de hoy** (en hora de Costa Rica) decide otras dos cosas: menor de
-    18 abre los datos del tutor y a quién autoriza (delegado o subdelegado); menor
+    18 abre los datos del tutor y el entrenador al que autoriza; menor
     de 12 pide la certificación de nacimiento en vez de la cédula, como dice la
     nota de la pregunta 3.
-  - Rama: femenina o abierta; un hombre solo la abierta.
+  - **Lo del entrenador no lo llena la familia** (lo pidió el dueño del
+    sitio): ni el Comité Cantonal (pregunta 2), ni la rama, ni las pruebas
+    (la 20 dice «información suministrada por el entrenador»). El comité
+    queda en blanco en la ficha para que lo escriba él; la categoría va sin
+    rama, y las pruebas, siempre «Clásico, Rápido, Relámpago».
+  - **A quien autoriza el tutor es el entrenador**: la plantilla dice
+    «(definir si delegado – subdelegado –)» y la ficha pone «(entrenador)».
+    «Que es» trae solo esa opción, y el nombre lleva de ejemplo «Oscar Angulo
+    Cubero».
 - **La página es pública: la llena la familia, sin cuenta** (lo pidió el
   dueño del sitio). `jdn.html` no está en `academia-cabecera.py`: lleva la
   cabecera de los formularios públicos, como `formulario.html`. Quien
@@ -1146,5 +1154,3 @@ lados (o la certificación de nacimiento, si es menor de 12). Verificador:
   descripción de la carpeta dice quién la guardó, cuándo y qué versión de la
   Política de privacidad aceptó la familia (la casilla de la página; Google
   Drive está en la lista de proveedores).
-- El Comité Cantonal se recuerda en `localStorage` de esa computadora: suele ser
-  el mismo para toda la delegación.

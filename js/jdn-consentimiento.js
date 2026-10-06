@@ -30,10 +30,9 @@
     { codigo: "U-20", edades: "17 a 20 años", desde: 2007, hasta: 2010 },
   ];
 
-  const PRUEBAS = [
-    "Clásico individual", "Relámpago individual", "Rápido individual",
-    "Clásico por equipos", "Relámpago por equipos", "Rápido por equipos",
-  ];
+  // Las pruebas que van en la ficha, siempre las mismas: las elige el
+  // entrenador, no la familia.
+  const PRUEBAS = ["Clásico", "Rápido", "Relámpago"];
 
   // Las opciones de cada pregunta, escritas como en la plantilla (sin «( )»).
   const OPCIONES = {
@@ -51,7 +50,10 @@
     perroGuia: ["sí", "no"],
     silla: ["Convencional", "Deportiva", "Eléctrica"],
     tutorCondicion: ["padre", "madre", "tutor legal"],
-    autorizadoRol: ["delegado", "subdelegado"],
+    // Quien acompaña a la persona menor de edad si tiene que denunciar: el
+    // entrenador. La plantilla dice «delegado – subdelegado»; la academia
+    // inscribe a sus atletas con su entrenador (lo decidió el dueño del sitio).
+    autorizadoRol: ["entrenador"],
   };
 
   /* ------------------------------------------------------------ fechas */
@@ -93,7 +95,6 @@
     const pide = (campo, nombre) => { if (!limpio(d[campo])) f.push(nombre); };
     const elige = (campo, lista, nombre) => { if (!lista.includes(d[campo])) f.push(nombre); };
     elige("condicion", OPCIONES.condicion, "si es atleta o paratleta");
-    pide("comite", "el Comité Cantonal o Concejo de Distrito");
     pide("identificacion", "el número de identificación");
     elige("tipoDocumento", OPCIONES.tipoDocumento, "el tipo de documento");
     pide("nombre", "el nombre y apellidos");
@@ -115,9 +116,6 @@
     pide("beneficiarioCedula", "la cédula del beneficiario de la póliza");
     pide("beneficiarioNombre", "el nombre del beneficiario de la póliza");
     elige("parentesco", OPCIONES.parentesco, "el parentesco del beneficiario");
-    if (!["femenina", "abierta"].includes(d.rama)) f.push("la rama");
-    else if (d.rama === "femenina" && d.sexo === "hombre") f.push("la rama abierta (la femenina es solo para mujeres)");
-    if (!(d.pruebas || []).some((p) => PRUEBAS.includes(p))) f.push("al menos una prueba");
     if (d.condicion === "paratleta") {
       if (!(d.discapacidad || []).some((x) => OPCIONES.discapacidad.includes(x))) f.push("el tipo de discapacidad");
       elige("perroGuia", OPCIONES.perroGuia, "si usa perro guía");
@@ -129,8 +127,7 @@
       pide("tutorProfesion", "la profesión del tutor");
       pide("tutorCedula", "la cédula del tutor");
       elige("tutorCondicion", OPCIONES.tutorCondicion, "si el tutor es padre, madre o tutor legal");
-      pide("autorizadoNombre", "a quién autoriza el tutor (delegado o subdelegado)");
-      elige("autorizadoRol", OPCIONES.autorizadoRol, "si la persona autorizada es delegado o subdelegado");
+      pide("autorizadoNombre", "el entrenador al que autoriza el tutor");
     }
     return f;
   }
@@ -225,7 +222,6 @@
     return xml.slice(0, fin) + runDato(texto).replace('<w:u w:val="single"/>', "") + xml.slice(fin);
   }
 
-  function nombreRama(d) { return d.rama === "femenina" ? "rama femenina" : "rama abierta"; }
 
   // document.xml de la plantilla → el mismo, con los datos de `d`.
   function llenar(xml, d, hoy) {
@@ -245,11 +241,15 @@
       x = poner(x, "en mi condición de (padre- madre-tutor)", "(padre- madre-tutor)", d.tutorCondicion, { reemplaza: true });
       x = poner(x, "patria potestad del atleta", "__________________", d.nombre, { reemplaza: true });
       x = poner(x, "autorizo a ____", "______________ (definir si delegado – subdelegado –)",
-        limpio(d.autorizadoNombre) + " (" + d.autorizadoRol + ")", { reemplaza: true });
+        limpio(d.autorizadoNombre) + " (entrenador)", { reemplaza: true });
     }
 
     x = poner(x, "1-Indique el deporte", "1-Indique el deporte en el cual se inscribe:", "Ajedrez");
-    x = poner(x, "2-Indique el nombre del Comité", "con el cual se inscribe:", d.comite);
+    // El comité, la rama y las pruebas son del entrenador (la pregunta 20 lo
+    // dice: «información suministrada por el entrenador»): la familia no los
+    // llena. El comité queda en blanco para que lo escriba él; las pruebas
+    // van las tres de siempre.
+    if (limpio(d.comite)) x = poner(x, "2-Indique el nombre del Comité", "con el cual se inscribe:", d.comite);
     x = poner(x, "4-Número de identificación", ":", d.identificacion);
     x = marcar(x, "5-Tipo de documento", d.tipoDocumento);
     x = poner(x, "6-Nombre y apellidos", "6-Nombre y apellidos: ", d.nombre);
@@ -278,11 +278,10 @@
       if (OPCIONES.silla.includes(d.silla)) x = marcar(x, "Perro guía", d.silla);
     }
 
-    x = poner(x, "Categoría Deportiva", ":", "Individual. Ajedrez " + (cat ? cat.codigo : "") + ", " + nombreRama(d));
+    x = poner(x, "Categoría Deportiva", ":", "Individual. Ajedrez " + (cat ? cat.codigo : ""));
     x = poner(x, "Deportes de conjunto indicar", ":", "No aplica (ajedrez)");
     x = poner(x, "Nombre del equipo:", "Nombre del equipo:", "No aplica");
-    const pruebas = PRUEBAS.filter((p) => (d.pruebas || []).includes(p));
-    x = enRecuadro(x, "Ajedrez " + (cat ? cat.codigo : "") + ", " + nombreRama(d) + ": " + pruebas.join(", ") + ".");
+    x = enRecuadro(x, "Ajedrez " + (cat ? cat.codigo : "") + ": " + PRUEBAS.join(", ") + ".");
     return x;
   }
 

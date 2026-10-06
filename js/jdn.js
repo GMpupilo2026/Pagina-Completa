@@ -28,7 +28,6 @@
   const FUNCION = window.SUPABASE_URL + "/functions/v1/jdn-drive";
   const PLANTILLA = "material/jdn/consentimiento-jdn-2027.docx";
   const LADO_MAX = 2000;
-  const CLAVE_COMITE = "jdn_comite_v1";
   const DOCS = {
     foto: "Fotografía",
     frente: "Cédula frente",
@@ -166,9 +165,7 @@
     d.condicion = radio("condicion");
     d.sexo = radio("sexo");
     d.lateralidad = radio("lateralidad");
-    d.rama = radio("rama");
     d.perroGuia = radio("perroGuia");
-    d.pruebas = marcadas("pruebas");
     d.discapacidad = marcadas("discapacidad");
     return d;
   }
@@ -178,7 +175,7 @@
   const pideCertificacion = () => { const e = edadDe(); return e != null && e < 12; };
 
   // Lo que depende de otras respuestas: la categoría, el tutor, la
-  // certificación, la rama femenina y la caja de paratleta.
+  // certificación y la caja de paratleta.
   function actualizar() {
     const nac = $("f-nacimiento").value;
     const cat = J.categoria(nac);
@@ -196,11 +193,6 @@
     document.querySelectorAll(".jdn-oblig").forEach((s) => { s.hidden = cert; });
 
     $("caja-paratleta").hidden = radio("condicion") !== "paratleta";
-
-    const fem = document.querySelector('input[name="rama"][value="femenina"]');
-    fem.disabled = radio("sexo") === "hombre";
-    if (fem.disabled && fem.checked) document.querySelector('input[name="rama"][value="abierta"]').checked = true;
-    fem.parentElement.classList.toggle("opacity-50", fem.disabled);
   }
 
   function mismoTutor() {
@@ -351,7 +343,6 @@
         archivos,
         privacidad_version: window.LegalVersion.PRIVACIDAD,
       });
-      try { localStorage.setItem(CLAVE_COMITE, d.comite); } catch (e) { /* sin almacenamiento: no pasa nada */ }
       progreso.textContent = "";
       descargar(ultimaFicha);
       mostrarListo(r, nombre);
@@ -388,9 +379,7 @@
   }
 
   function otra() {
-    const comite = $("f-comite").value;
     $("jdn-form").reset();
-    $("f-comite").value = comite;
     document.querySelectorAll(".jdn-archivo").forEach(vistaPrevia);
     $("jdn-listo").hidden = true;
     $("jdn-form").hidden = false;
@@ -403,9 +392,7 @@
 
   function armar() {
     document.querySelectorAll("select[data-opciones]").forEach((s) => opciones(s, J.OPCIONES[s.dataset.opciones]));
-    casillas($("jdn-pruebas"), "pruebas", J.PRUEBAS, true);
     casillas($("jdn-discapacidad"), "discapacidad", J.OPCIONES.discapacidad, false);
-    try { $("f-comite").value = localStorage.getItem(CLAVE_COMITE) || ""; } catch (e) { /* sin almacenamiento */ }
 
     $("jdn-form").addEventListener("input", actualizar);
     $("jdn-form").addEventListener("change", actualizar);
