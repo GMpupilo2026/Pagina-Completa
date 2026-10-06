@@ -52,6 +52,7 @@ herramientas/planes
 herramientas/plantillas
 herramientas/video
 herramientas/datos
+herramientas/libro-ninos
 
 # El estado local de `wrangler dev`: no es del sitio.
 .wrangler
