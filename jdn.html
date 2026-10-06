@@ -72,7 +72,7 @@
          sobre la plantilla del ICODER) y la guarda en el Drive, en una carpeta
          con el nombre de la persona dentro de «JDN 2027», junto con su foto y su
          cédula (Edge Function jdn-drive y el Apps Script de
-         material/jdn/puente-drive.gs). Es PÚBLICA: la llena la familia sin
+         documentos/jdn/puente-drive.gs). Es PÚBLICA: la llena la familia sin
          cuenta (con el freno de los envíos públicos en la función); quien
          administra ve además «El Drive» y los enlaces a la carpeta. Ver «La
          ficha de los JDN 2027» en docs/decisiones/cuentas-y-formularios.md. -->
@@ -91,7 +91,7 @@
                 <details id="drive-conectar" class="mt-3">
                     <summary class="cursor-pointer text-sm font-semibold text-accent-700 dark:text-accent-400 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Conectar con Drive</summary>
                     <ol class="list-decimal pl-5 mt-3 space-y-1 text-sm text-brand-600 dark:text-brand-200">
-                        <li>Con la cuenta dueña de la carpeta «JDN 2027», abre <a href="https://script.google.com/home/projects/create" target="_blank" rel="noopener" class="underline font-semibold hover:text-accent-600">un proyecto nuevo de Apps Script</a> y pega el <a href="material/jdn/puente-drive.gs" download class="underline font-semibold hover:text-accent-600">código del puente</a> en Código.gs.</li>
+                        <li>Con la cuenta dueña de la carpeta «JDN 2027», abre <a href="https://script.google.com/home/projects/create" target="_blank" rel="noopener" class="underline font-semibold hover:text-accent-600">un proyecto nuevo de Apps Script</a> y pega el <a href="documentos/jdn/puente-drive.gs" download class="underline font-semibold hover:text-accent-600">código del puente</a> en Código.gs.</li>
                         <li>En «Servicios» agrega «Drive API»: es lo que arma el PDF para imprimir.</li>
                         <li>Ejecuta la función <code>configurar</code> y acepta los permisos. En el registro aparece el secreto.</li>
                         <li>«Implementar» → «Nueva implementación» → «Aplicación web». Ejecutar como: tú. Quién tiene acceso: cualquier persona. Copia la URL.</li>

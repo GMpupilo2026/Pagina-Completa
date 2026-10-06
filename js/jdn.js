@@ -26,7 +26,7 @@
   const J = window.JDNConsentimiento;
   const $ = (id) => document.getElementById(id);
   const FUNCION = window.SUPABASE_URL + "/functions/v1/jdn-drive";
-  const PLANTILLA = "material/jdn/consentimiento-jdn-2027.docx";
+  const PLANTILLA = "documentos/jdn/consentimiento-jdn-2027.docx";
   const LADO_MAX = 2000;
   const DOCS = {
     foto: "Fotografía",

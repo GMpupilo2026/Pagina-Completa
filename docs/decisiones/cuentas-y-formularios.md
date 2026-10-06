@@ -1073,7 +1073,7 @@ lados (o la certificación de nacimiento, si es menor de 12). Verificador:
 `node herramientas/verificar-todo.js jdn`.
 
 - **La ficha es la plantilla del ICODER, no una imitación.**
-  `material/jdn/consentimiento-jdn-2027.docx` es el `CONSENTIMIENTO.docx` de la
+  `documentos/jdn/consentimiento-jdn-2027.docx` es el `CONSENTIMIENTO.docx` de la
   carpeta del Drive, byte a byte. `js/jdn-consentimiento.js` abre el ZIP (el
   lector de `js/reporte-excel.js`), escribe en `word/document.xml` y lo vuelve a
   empaquetar (el `Zip` de `js/reporte-docx.js`); las demás partes —el logo, la
@@ -1087,6 +1087,13 @@ lados (o la certificación de nacimiento, si es menor de 12). Verificador:
     «Deterioro en el rango…» van en tres): la marca los salta.
   - **La fecha y las firmas quedan en blanco.** Se firma en papel, a mano; la
     misma ficha dice que una firma pegada como imagen no vale.
+  - **La plantilla y el puente viven en `documentos/jdn/`, no en
+    `material/`.** Todo `material/` lo cierra el worker (`run_worker_first`):
+    es lo que se vende, y solo lo baja quien lo compró o tiene la Academia
+    vigente. Con la plantilla ahí, a una familia sin cuenta le salía «No se
+    pudo leer la plantilla de la ficha». `verificar-jdn.js` no lo veía porque
+    sirve el sitio sin worker; ahora comprueba que nada de lo que baja la
+    página caiga bajo una ruta de `run_worker_first`.
   - Si el ICODER cambia el formulario, se reemplaza el .docx y el llenado
     **falla diciendo qué texto ya no encuentra**, en vez de llenar a medias.
 - **La categoría sale del AÑO de nacimiento**, con la tabla de ajedrez de la
@@ -1129,7 +1136,7 @@ lados (o la certificación de nacimiento, si es menor de 12). Verificador:
     con `delete`: la petición se quedaba esperando una confirmación que nunca
     llegaba, y vencía sin aplicar nada.
 - **El Drive lo toca un Apps Script de la dueña del Drive**
-  (`material/jdn/puente-drive.gs`, publicado como aplicación web «ejecutar
+  (`documentos/jdn/puente-drive.gs`, publicado como aplicación web «ejecutar
   como yo»). Una cuenta de servicio de Google no tiene espacio en «Mi unidad», y
   una llave de Google Cloud en Supabase sería una credencial más que cuidar.
   - La Edge Function `jdn-drive` es la única que le habla, con un secreto. La

@@ -2,7 +2,7 @@
  * 2027 (ICODER), llena con los datos del formulario de jdn.html.
  *
  * LA PLANTILLA ES LA DEL ICODER, NO UNA COPIA ARMADA ACÁ:
- * material/jdn/consentimiento-jdn-2027.docx es el CONSENTIMIENTO.docx de la
+ * documentos/jdn/consentimiento-jdn-2027.docx es el CONSENTIMIENTO.docx de la
  * carpeta «JDN 2027» del Drive, tal cual. Se abre (un .docx es un ZIP), se
  * escriben los datos en su document.xml y se vuelve a empaquetar. Así el
  * documento que se imprime es el oficial, con su logo y su letra; uno «parecido»
