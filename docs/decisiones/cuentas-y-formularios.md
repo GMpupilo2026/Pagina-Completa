@@ -1067,14 +1067,17 @@ promete.
 `jdn.html` (pública: la llena la familia; para quien administra, la tarjeta «Ficha JDN 2027» del grupo
 Administración del panel de la Academia) llena la **ficha de inscripción y
 consentimiento informado de los Juegos Deportivos y Paradeportivos Nacionales
-2027** del ICODER y la guarda en el Drive: por cada persona, una carpeta con su
-nombre dentro de «JDN 2027», con la ficha, la fotografía y la cédula por los dos
-lados (o la certificación de nacimiento, si es menor de 12). Verificador:
+2027** del ICODER, la del atleta o la del entrenador, y la guarda en el Drive
+ordenada por comité: `JDN 2027 / <comité> / <Atletas|Entrenadores> /
+<Mujeres|Hombres> / <persona>`, con la ficha, la fotografía y la cédula por los
+dos lados (o la certificación de nacimiento, si es menor de 12), y una fila en
+la hoja «Resumen - <comité>» de la carpeta del comité. Verificador:
 `node herramientas/verificar-todo.js jdn`.
 
 - **La ficha es la plantilla del ICODER, no una imitación.**
   `documentos/jdn/consentimiento-jdn-2027.docx` es el `CONSENTIMIENTO.docx` de la
-  carpeta del Drive, byte a byte. `js/jdn-consentimiento.js` abre el ZIP (el
+  carpeta del Drive, byte a byte, y `consentimiento-entrenador-jdn-2027.docx` el
+  «Consentimiento Entrenador». `js/jdn-consentimiento.js` abre el ZIP (el
   lector de `js/reporte-excel.js`), escribe en `word/document.xml` y lo vuelve a
   empaquetar (el `Zip` de `js/reporte-docx.js`); las demás partes —el logo, la
   letra Arial Black incrustada— no se tocan. Un formulario «parecido» lo puede
@@ -1084,7 +1087,16 @@ lados (o la certificación de nacimiento, si es menor de 12). Verificador:
     es un cuadro de texto de la plantilla (`w:txbxContent`): escribir en el
     párrafo de abajo quedaba TAPADO por el recuadro, que tiene fondo blanco.
   - Entre «( )» y la opción puede haber cambios de run («( )», « »,
-    «Deterioro en el rango…» van en tres): la marca los salta.
+    «Deterioro en el rango…» van en tres; en la del entrenador, Word partió
+    hasta «(» y «)» en runs distintos): la marca se busca en el TEXTO del
+    párrafo, juntando todos sus `<w:t>`, y la «X» se escribe en el run donde
+    está el «(». Buscarla en el XML fallaba con cada plantilla nueva.
+  - **La fotografía va en el punto 3**, centrada debajo de la pregunta, en un
+    marco de 3,5 × 4,5 cm como máximo y sin deformarse (es la misma foto en
+    JPEG que se guarda aparte). Se agrega como imagen en línea
+    (`word/media/foto-jdn.jpeg`, relación `rIdFotoJdn` y el tipo `jpeg` en
+    `[Content_Types].xml`); los párrafos vacíos que la plantilla dejaba ahí
+    para pegarla a mano se sacan, para que la hoja no se corra.
   - **La fecha y las firmas quedan en blanco.** Se firma en papel, a mano; la
     misma ficha dice que una firma pegada como imagen no vale.
   - **La plantilla y el puente viven en `documentos/jdn/`, no en
@@ -1104,11 +1116,54 @@ lados (o la certificación de nacimiento, si es menor de 12). Verificador:
     18 abre los datos del tutor y el entrenador al que autoriza; menor
     de 12 pide la certificación de nacimiento en vez de la cédula, como dice la
     nota de la pregunta 3.
-  - **Lo del entrenador no lo llena la familia** (lo pidió el dueño del
-    sitio): ni el Comité Cantonal (pregunta 2), ni la rama, ni las pruebas
-    (la 20 dice «información suministrada por el entrenador»). El comité
-    queda en blanco en la ficha para que lo escriba él; la categoría va sin
-    rama, y las pruebas, siempre «Clásico, Rápido, Relámpago».
+  - **El comité que representa sí se pregunta** (lo pidió el dueño del
+    sitio, después de haberlo quitado): va en la pregunta 2 y en «Nombre del
+    equipo» de la 20, y decide la carpeta del Drive. La rama no se pregunta,
+    y el recuadro de las pruebas dice solo «Clásico, Rápido, Relámpago.», sin
+    la categoría (la categoría ya está en su renglón).
+  - El comité se elige de la lista de los 84 comités cantonales («CCDR
+    <cantón>») o se escribe (un Concejo de Distrito, por ejemplo), y el puente
+    busca la carpeta **sin mirar mayúsculas ni tildes**.
+- **Provincia → cantón → distrito, en cascada**: solo se puede elegir un
+  cantón de la provincia elegida y un distrito de ese cantón; cambiar de
+  provincia borra los dos. La lista es la **División Territorial Electoral del
+  TSE** (Decreto 2-2025), el PDF «Provincias, Cantones, Distritos, Barrios»
+  que el dueño del sitio subió a «JDN 2027»: 7 provincias, 84 cantones, 492
+  distritos.
+  - `herramientas/division-territorial-extraer.py <PDF>` la saca a
+    `herramientas/division-territorial-tse.json`, tal cual la escribe el TSE,
+    y se comprueba sola: los distritos de cada cantón, contados por sus
+    encabezados, tienen que dar lo mismo que contados por los códigos de
+    poblado. El PDF escribe «Xl» y «Xll» con ele: sin aceptarla se perdían
+    dos distritos de Turrialba. El texto que da el Drive del mismo PDF viene
+    cortado (llega hasta Alajuela): hay que leer el PDF.
+  - `herramientas/division-territorial-generar.js` escribe
+    `js/division-territorial.js` (no se edita a mano). El TSE escribe todo en
+    mayúsculas y sin tildes: el generador pasa a mayúscula inicial y pone las
+    tildes con su tabla `TILDES`, palabra por palabra; una palabra de la tabla
+    que no está en la lista del TSE lo hace fallar. «de», «del» y «o» van en
+    minúscula, y el artículo solo detrás de «de» («San José de la Montaña»,
+    pero «Valle La Estrella» y «San Isidro de El General»).
+  - Cuando el TSE publique otra división: bajar el PDF nuevo, correr los dos
+    scripts y `verificar-jdn` (que cuenta 7, 84 y 492: se cambian ahí si
+    cambió de verdad).
+- **Atleta o entrenador.** El formulario pregunta primero qué es, y cada uno
+  llena su consentimiento. Al entrenador no se le pide condición
+  (atleta/paratleta), categoría, tutor ni certificación de nacimiento, y su
+  fecha de nacimiento no se limita a 2007–2020. En su ficha se marca
+  «ENTRENADOR(A)» como función, el deporte es Ajedrez y «Deportes de
+  conjunto» dice «No aplica (ajedrez)».
+- **El teléfono son 8 números exactos**: el campo quita lo que no es número
+  mientras se escribe o se pega. Sin `maxlength`: cortaba «8888-1234» pegado
+  en «8888-123» antes de quitarle el guion.
+- **El correo se comprueba contra el DNS** en la Edge Function, además de su
+  forma: el dominio tiene que tener MX (o al menos una dirección, como dice el
+  RFC 5321), y el MX nulo «0 .» dice que no recibe. Se pregunta a
+  `dns.google` con 4 segundos de tope; si no contesta, se deja pasar (un DNS
+  caído no frena una inscripción). Frena «gmial.com» o «hotmail.co», no un
+  buzón que no existe: eso solo se sabe mandando un correo, y la ficha no
+  manda ninguno. El dominio de los alumnos sin correo
+  (`alumno.ajedrez-integral.com`) no vale.
   - **A quien autoriza el tutor es el entrenador**: la plantilla dice
     «(definir si delegado – subdelegado –)» y la ficha pone «(entrenador)».
     «Que es» trae solo esa opción, y el nombre lleva de ejemplo «Oscar Angulo
@@ -1116,15 +1171,17 @@ lados (o la certificación de nacimiento, si es menor de 12). Verificador:
 - **La página es pública: la llena la familia, sin cuenta** (lo pidió el
   dueño del sitio). `jdn.html` no está en `academia-cabecera.py`: lleva la
   cabecera de los formularios públicos, como `formulario.html`. Quien
-  administra ve además «El Drive» (conectar el puente) y, al guardar, los
-  enlaces a la carpeta y al PDF; la familia solo ve que se recibió, y se le
-  descarga la ficha para imprimirla y firmarla.
+  administra ve además «El Drive» (conectar el puente).
+  - **Al terminar, solo se puede descargar la ficha** (o llenar otra), también
+    quien administra: lo pidió el dueño del sitio. La función ya no devuelve
+    los enlaces de la carpeta ni del PDF a nadie; quien administra entra al
+    Drive por su cuenta.
   - Por eso `jdn-drive` va con **`verify_jwt` en false**: una página sin
     sesión no trae JWT de persona. «estado», «conectar» y el «guardar» con
     `modo: "admin"` siguen exigiendo sesión, `aal2` e `is_admin`; el
     «guardar» sin cuenta pasa antes por **`jdn_frenar()`** (por IP, por correo
     y en total, y después el freno de los formularios, que anota el envío),
-    exige el correo y UNA ficha, y nunca devuelve los enlaces del Drive.
+    y exige UNA ficha.
   - **Un envío sin cuenta nunca reemplaza nada**: sus archivos llevan «(enviada
     AAAA-MM-DD HH.MM)» en el nombre. El puente manda a la papelera los que se
     llaman igual, y sin eso cualquiera con el nombre de otra persona podía
@@ -1147,6 +1204,18 @@ lados (o la certificación de nacimiento, si es menor de 12). Verificador:
     Script; no está escrito en ningún archivo.
   - La función comprueba la sesión, el `aal2` y `is_admin` **antes** de leer la
     bóveda: son cédulas de menores de edad.
+  - **La hoja «Resumen - <comité>»** (una hoja de cálculo de Google en la
+    carpeta del comité, que se descarga como Excel) tiene una fila por
+    persona: cuándo, nombre, si es atleta, paratleta o entrenador, sexo,
+    categoría, identificación, nacimiento, teléfono, correo, cantón, cómo
+    llegó y el enlace a su carpeta. Si la persona vuelve a mandar la ficha,
+    se cambia su fila (por la identificación), no se agrega otra. Lo que
+    empieza con «=», «+», «-» o «@» se escribe con un apóstrofo delante: en
+    una hoja de cálculo eso sería una fórmula. Si la hoja falla, los archivos
+    ya quedaron guardados.
+  - Al cambiar el puente, se pega el código nuevo y se publica como «Nueva
+    versión» de la misma implementación (la URL no cambia). La primera vez con
+    la hoja, Google pide el permiso de las hojas de cálculo.
   - Volver a mandar la ficha de la misma persona usa **la misma carpeta** y
     manda a la papelera los archivos con el mismo nombre: nunca quedan dos
     fichas distintas. El `LockService` evita dos carpetas si se manda dos veces

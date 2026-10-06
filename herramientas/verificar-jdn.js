@@ -31,6 +31,7 @@ const RAIZ = path.join(__dirname, "..");
 const CHROME = process.env.CHROME_PATH || "/opt/pw-browsers/chromium-1194/chrome-linux/chrome";
 const BASE = process.env.BASE_URL || "http://localhost:8777";
 const PLANTILLA = path.join(RAIZ, "documentos", "jdn", "consentimiento-jdn-2027.docx");
+const PLANTILLA_ENT = path.join(RAIZ, "documentos", "jdn", "consentimiento-entrenador-jdn-2027.docx");
 const HOY = "2026-10-05";
 
 let fallos = 0;
@@ -51,9 +52,9 @@ const leer = (r) => fs.readFileSync(path.join(RAIZ, r), "utf8");
    ================================================================== */
 
 const MENOR = {
-  condicion: "atleta", identificacion: "1-2345-0678",
+  rol: "atleta", comite: "CCDR Montes de Oca", condicion: "atleta", identificacion: "1-2345-0678",
   tipoDocumento: "Nacional", nombre: "Sofía Pérez & <Mora>", nacimiento: "2012-03-09", nacionalidad: "Costarricense",
-  estadoCivil: "Soltero(a)", telefono: "8888-1234", sexo: "mujer", lateralidad: "Izquierdo", correo: "familia@ejemplo.cr",
+  estadoCivil: "Soltero(a)", telefono: "88881234", sexo: "mujer", lateralidad: "Izquierdo", correo: "familia@ejemplo.cr",
   escolaridad: "Secundaria incompleta", provincia: "San José", canton: "Montes de Oca", distrito: "San Pedro",
   direccion: "200 m norte de la iglesia", beneficiarioCedula: "1-1111-1111", beneficiarioNombre: "Ana Mora Solís",
   parentesco: "Madre",
@@ -127,8 +128,13 @@ async function pruebaFicha() {
   const sinTutor = Object.assign({}, MENOR, { tutorNombre: "", autorizadoNombre: "" });
   cierto("a una menor sin tutor le falta el tutor y el entrenador al que autoriza",
     J.validar(sinTutor, HOY).some((f) => /padre, madre o tutor/.test(f)) && J.validar(sinTutor, HOY).some((f) => /entrenador al que autoriza/.test(f)));
-  igual("no pide comité, rama ni pruebas (son del entrenador)",
-    J.validar(Object.assign({}, MENOR, { comite: "", rama: "", pruebas: [] }), HOY), []);
+  cierto("pide el comité que representa",
+    J.validar(Object.assign({}, MENOR, { comite: "  " }), HOY).some((f) => /comité/.test(f)));
+  cierto("pide si es atleta o entrenador", J.validar(Object.assign({}, MENOR, { rol: "" }), HOY).some((f) => /atleta o entrenador/.test(f)));
+  igual("el teléfono: 8 números exactos", ["88881234", "8888-1234", "8888123", "888812345", "8888 1234", "abcdefgh"].map(J.telefonoValido),
+    [true, false, false, false, false, false]);
+  igual("el correo: con su forma", ["a@b.cr", "nombre.apellido@gmail.com", "a@b", "a b@c.com", "a@@b.com", "a@b.c", "a@b.com,c@d.com"].map(J.correoValido),
+    [true, true, false, false, false, false, false]);
   cierto("nacer en 2021 no tiene categoría",
     J.validar(Object.assign({}, MENOR, { nacimiento: "2021-02-02" }), HOY).some((f) => /entre 2007 y 2020/.test(f)));
   cierto("un paratleta sin tipo de discapacidad no pasa",
@@ -157,8 +163,8 @@ async function pruebaFicha() {
       "en mi ejercicio pleno de la patria potestad del atleta Sofía Pérez & <Mora> menor de edad, autorizo a Oscar Angulo Cubero (entrenador) para que"),
     linea(ps, "Yo "));
   igual("1. deporte", linea(ps, "1-"), "1-Indique el deporte en el cual se inscribe: Ajedrez");
-  igual("2. el comité queda en blanco para el entrenador", linea(ps, "2-").trim(),
-    "2-Indique el nombre del Comité Cantonal / Concejo de Distrito con el cual se inscribe:");
+  igual("2. el comité que representa", linea(ps, "2-").trim(),
+    "2-Indique el nombre del Comité Cantonal / Concejo de Distrito con el cual se inscribe: CCDR Montes de Oca");
   igual("4. identificación", linea(ps, "4-").trim(), "4-Número de identificación: 1-2345-0678");
   cierto("5. tipo de documento: solo «Nacional», no «Nacionalizado»",
     /\(X\) Nacional,/.test(linea(ps, "5-")) && (linea(ps, "5-").match(/\(X\)/g) || []).length === 1, linea(ps, "5-"));
@@ -166,7 +172,7 @@ async function pruebaFicha() {
   igual("7. nacimiento en día/mes/año", linea(ps, "7-"), "7-Fecha de nacimiento formato (día/mes/año): 09/03/2012");
   igual("8. nacionalidad", linea(ps, "8-"), "8-Nacionalidad: Costarricense");
   cierto("9. estado civil", /\(X\) Soltero\(a\)/.test(linea(ps, "9-")) && !/\(X\)/.test(linea(ps, "( ) Unión")));
-  igual("10. teléfono", linea(ps, "10-"), "10-Teléfono del atleta o tutor: 8888-1234");
+  igual("10. teléfono", linea(ps, "10-"), "10-Teléfono del atleta o tutor: 88881234");
   cierto("11. sexo", /\( \) hombre, \(X\) mujer/.test(linea(ps, "11-")));
   cierto("12. lateralidad", /\( \) Derecho, \(X\) Izquierdo/.test(linea(ps, "12-")));
   igual("13. correo", linea(ps, "13-").trim(), "13-Correo electrónico del atleta o tutor: familia@ejemplo.cr");
@@ -181,9 +187,10 @@ async function pruebaFicha() {
   cierto("19. una atleta no marca nada de paratleta",
     !/\(X\)/.test(linea(ps, "Tipo de discapacidad")) && !/\(X\)/.test(linea(ps, "Perro guía")));
   igual("20. categoría", linea(ps, "Categoría Deportiva"), "Categoría Deportiva (Deporte colectivo o individual): Individual. Ajedrez U-16");
-  igual("recuadro de las pruebas: Clásico, Rápido y Relámpago",
+  igual("recuadro de las pruebas: Clásico, Rápido y Relámpago, sin la categoría",
     texto(xml.slice(xml.indexOf("<w:txbxContent>"), xml.indexOf("</w:txbxContent>"))),
-    "Ajedrez U-16: Clásico, Rápido, Relámpago.");
+    "Clásico, Rápido, Relámpago.");
+  igual("20. «Nombre del equipo»: el comité", linea(ps, "Nombre del equipo").trim(), "Nombre del equipo: CCDR Montes de Oca");
   cierto("la fecha de la firma queda en blanco (se firma a mano)", /^Firmado el día___/.test(linea(ps, "Firmado")));
   igual("en total, 6 «(X)»: condición, documento, estado civil, sexo, lateralidad y parentesco", (ps.join("\n").match(/\(X\)/g) || []).length, 6);
 
@@ -203,9 +210,77 @@ async function pruebaFicha() {
     /Ajedrez U-20$/.test(linea(ps2, "Categoría Deportiva")) &&
     J.PRUEBAS.every((p) => texto(xml2.slice(xml2.indexOf("<w:txbxContent>"), xml2.indexOf("</w:txbxContent>"))).includes(p)));
 
+  console.log("\n=== La fotografía en el punto 3 ===");
+  // Un JPEG de verdad no hace falta: Word solo lo abre al pintarlo. Lo que se
+  // comprueba es que el .docx lo apunte bien (relación, tipo y parte).
+  const FOTO = { bytes: Uint8Array.from([0xff, 0xd8, 0xff, 0xe0, 1, 2, 3, 0xff, 0xd9]), ancho: 600, alto: 800 };
+  const zf = await window.ReporteExcel.abrirZip(ab(Buffer.from(await J.generar(plantilla, MENOR, HOY, FOTO))));
+  const xf = await zf.texto("word/document.xml");
+  cierto("bien formado con la foto", bienFormado(xf));
+  igual("la foto queda como parte del .docx, tal cual", Buffer.compare(Buffer.from(await zf.bytes("word/media/foto-jdn.jpeg")), Buffer.from(FOTO.bytes)), 0);
+  cierto("con su relación y el tipo JPEG declarado",
+    /Id="rIdFotoJdn"[^>]*Target="media\/foto-jdn\.jpeg"|Target="media\/foto-jdn\.jpeg"[^>]*Id="rIdFotoJdn"/.test(await zf.texto("word/_rels/document.xml.rels")) &&
+    /Extension="jpeg" ContentType="image\/jpeg"/i.test(await zf.texto("[Content_Types].xml")));
+  const tres = xf.indexOf("otografía y cédula (frente"), cuatro = xf.indexOf("4-Número de identificación");
+  const dibujo = xf.indexOf('r:embed="rIdFotoJdn"');
+  cierto("la foto va entre el punto 3 y el 4, una sola vez", tres >= 0 && dibujo > tres && dibujo < cuatro && xf.split('r:embed="rIdFotoJdn"').length === 2);
+  const ext = xf.slice(dibujo - 2000, dibujo).match(/<wp:extent cx="(\d+)" cy="(\d+)"\/>/);
+  cierto("cabe en 3,5 × 4,5 cm sin deformarse (600 × 800 → 3,375 × 4,5 cm)",
+    ext && +ext[2] === 4.5 * 360000 && Math.abs(+ext[1] / +ext[2] - 600 / 800) < 0.001, ext && ext[0]);
+  igual("sin foto, el .docx no cambia de partes", (await window.ReporteExcel.abrirZip(ab(Buffer.from(llena)))).nombres().includes("word/media/foto-jdn.jpeg"), false);
+
+  console.log("\n=== La ficha del entrenador (su propio consentimiento) ===");
+  const ENT = Object.assign({}, MAYOR, { rol: "entrenador", nombre: "Oscar Angulo Cubero", nacimiento: "1980-04-02", condicion: "",
+    discapacidad: [], perroGuia: "", estadoCivil: "Casado(a)", comite: "CCDR Heredia", sexo: "hombre", parentesco: "Hijos" });
+  igual("un entrenador no pide categoría, tutor ni condición", J.validar(ENT, HOY), []);
+  const xe = await (await window.ReporteExcel.abrirZip(ab(Buffer.from(await J.generar(fs.readFileSync(PLANTILLA_ENT), ENT, HOY, FOTO))))).texto("word/document.xml");
+  const pe = parrafos(xe);
+  cierto("bien formado", bienFormado(xe));
+  cierto("función: ENTRENADOR(A), y solo esa", /^\(X\) ENTRENADOR\(A\)/.test(linea(pe, "(")) && (linea(pe, "(").match(/\(X\)/g) || []).length === 1, linea(pe, "("));
+  igual("1. deporte", linea(pe, "1-").trim(), "1-Indique el deporte en el cual se inscribe: Ajedrez");
+  igual("2. comité", linea(pe, "2-").trim(), "2-Indique el nombre del Comité Cantonal / Concejo de Distrito con el cual se inscribe: CCDR Heredia");
+  igual("4. identificación", linea(pe, "4-").trim(), "4-Número de identificación: 1-2345-0678");
+  igual("6. nombre", linea(pe, "6-").trim(), "6-Nombre y apellidos: Oscar Angulo Cubero");
+  igual("7. nacimiento", linea(pe, "7-").trim(), "7-Fecha de nacimiento formato (día/mes/año): 02/04/1980");
+  cierto("9. casado", /\(X\)Casado\(a\)/.test(linea(pe, "9-")) && (linea(pe, "9-").match(/\(X\)/g) || []).length === 1, linea(pe, "9-"));
+  igual("10. teléfono", linea(pe, "10-").trim(), "10-Teléfono: 88881234");
+  cierto("11. hombre", /\(X\) hombre, \( \) mujer/.test(linea(pe, "11-")), linea(pe, "11-"));
+  igual("13. correo", linea(pe, "13-").trim(), "13-Correo electrónico: familia@ejemplo.cr");
+  cierto("15. provincia, cantón y distrito", /^Provincia: San José\s+Cantón: Montes de Oca\s+Distrito: San Pedro\s*$/.test(linea(pe, "Provincia")), linea(pe, "Provincia"));
+  cierto("18. parentesco: hijos", /\(X\) Hijos/.test(linea(pe, "18-")) && (linea(pe, "18-").match(/\(X\)/g) || []).length === 1, linea(pe, "18-"));
+  igual("«Nombre del equipo»: el comité", linea(pe, "Nombre del equipo").trim(), "Nombre del equipo: CCDR Heredia");
+  cierto("su foto también va en el punto 3", xe.indexOf('r:embed="rIdFotoJdn"') > xe.indexOf("otografía y cédula (frente"));
+  cierto("ninguna línea de la ficha del atleta se coló (tutor, recuadro)", !/patria potestad/.test(xe) && !/Relámpago/.test(xe));
+
   let rota = null;
   try { J.llenar("<w:body><w:p><w:r><w:t>otra cosa</w:t></w:r></w:p></w:body>", MENOR, HOY); } catch (e) { rota = e.message; }
   cierto("si el ICODER cambia la plantilla, avisa qué falta en vez de llenar a medias", rota && /plantilla de la ficha no tiene/.test(rota), rota);
+}
+
+/* ==================================================================
+   1b. Provincias, cantones y distritos (TSE)
+   ================================================================== */
+function pruebaDivision() {
+  console.log("\n=== Provincia, cantón y distrito (División Territorial Electoral del TSE) ===");
+  // js/division-territorial.js es generado: volver a generarlo no lo cambia.
+  const antes = leer("js/division-territorial.js");
+  require("child_process").execFileSync("node", [path.join(__dirname, "division-territorial-generar.js")]);
+  cierto("js/division-territorial.js está al día con su generador (no se editó a mano)", leer("js/division-territorial.js") === antes);
+  const D = require("../js/division-territorial.js");
+  const nC = D.reduce((s, p) => s + p.cantones.length, 0);
+  const nD = D.reduce((s, p) => s + p.cantones.reduce((t, c) => t + c.distritos.length, 0), 0);
+  igual("7 provincias, 84 cantones y 492 distritos", [D.length, nC, nD], [7, 84, 492]);
+  igual("las provincias, en el orden del decreto", D.map((p) => p.provincia),
+    ["San José", "Alajuela", "Cartago", "Heredia", "Guanacaste", "Puntarenas", "Limón"]);
+  cierto("ningún cantón repetido en su provincia, ni distrito en su cantón",
+    D.every((p) => new Set(p.cantones.map((c) => c.canton)).size === p.cantones.length &&
+      p.cantones.every((c) => c.distritos.length && new Set(c.distritos).size === c.distritos.length)));
+  const de = (p, c) => D.find((x) => x.provincia === p).cantones.find((x) => x.canton === c);
+  cierto("con su ortografía: tildes, «de», «de la» y nombres propios",
+    !!de("San José", "Pérez Zeledón") && de("San José", "Pérez Zeledón").distritos[0] === "San Isidro de El General" &&
+    !!de("San José", "Vázquez de Coronado") && de("Heredia", "Barva").distritos.includes("San José de la Montaña") &&
+    de("Limón", "Limón").distritos.includes("Valle La Estrella") && de("San José", "Tibás").distritos.includes("León XIII") &&
+    !!de("Alajuela", "Río Cuarto") && !!de("Puntarenas", "Puerto Jiménez"));
 }
 
 /* ==================================================================
@@ -226,13 +301,23 @@ function pruebaFuncion() {
   cierto("lo único que se puede sin cuenta es «guardar» (estado y conectar son de administración)",
     publico >= 0 && soloAdmin > publico && usuario > soloAdmin);
   const frenoPos = pos(/rpc\("jdn_frenar", \{ p_ip: ipDe\(req\), p_correo: correo \}\)/);
-  const puentePos = ts.indexOf('const r = await alPuente(guardado.url, { secreto: guardado.secreto, accion: "guardar"');
+  const puentePos = ts.search(/const r = await alPuente\(guardado\.url, \{\s*secreto: guardado\.secreto, accion: "guardar"/);
   cierto("sin cuenta: el freno (IP y correo) va ANTES de tocar el Drive, y si frena no sigue",
     frenoPos >= 0 && puentePos > frenoPos && /if \(freno\) return json\(\{ error: freno \}, 429\)/.test(ts));
-  cierto("sin cuenta: exige un correo y UNA ficha", /if \(!\/\^\[\^\\s@\]\+@/.test(ts) && /filter\(\(a\) => a\.ficha\)\.length !== 1/.test(ts));
+  cierto("sin cuenta: exige UNA ficha", /filter\(\(a\) => a\.ficha\)\.length !== 1/.test(ts));
+  const correoPos = pos(/if \(!\(await dominioRecibe\(correo\.split\("@"\)\[1\]\)\)\)/);
+  cierto("el correo: con su forma y un dominio que reciba correo, ANTES del freno y del Drive",
+    /if \(!\/\^\[\^\\s@,;\]\+@/.test(ts) && correoPos >= 0 && frenoPos > correoPos && puentePos > correoPos);
+  cierto("el DNS: NXDOMAIN o el MX nulo dicen que no; si no contesta, se deja pasar",
+    /mx\.Status === 3\) return false/.test(ts) && /\^0\\s\+\\\.\$/.test(ts) && /catch \{\s*return true;/.test(ts) && /AbortSignal\.timeout\(4_000\)/.test(ts));
+  cierto("el dominio de los alumnos sin correo (sin MX a propósito) no vale", /SIN_CORREO = \/\(\^\|\\\.\)alumno\\\.ajedrez-integral\\\.com\$\/i/.test(ts) && /if \(SIN_CORREO\.test\(dominio\)\) return false/.test(ts));
+  cierto("exige el comité, el rol y el sexo (deciden la carpeta)",
+    /Falta el comité que representa/.test(ts) && /ROLES\.has\(rol\)/.test(ts) && /SEXOS\.has\(sexo\)/.test(ts));
+  cierto("el resumen solo lleva los campos de la lista, recortados", /for \(const k of CAMPOS_RESUMEN\) resumen\[k\] = String\(r0\[k\] \?\? ""\)[^\n]*slice\(0, 200\)/.test(ts));
   cierto("sin cuenta: los archivos llevan fecha y hora (el puente no le borra la ficha a nadie)",
     /for \(const a of limpios\) a\.nombre = a\.nombre\.replace\(\/\(\\\.\[a-z\]\+\)\$\/i, ` \(enviada \$\{marca\}\)\$1`\)/.test(ts));
-  cierto("sin cuenta: no devuelve los enlaces del Drive", /if \(publico\) return json\(\{ ok: true \}\);/.test(ts));
+  cierto("a nadie le devuelve los enlaces del Drive (solo se descarga la ficha)",
+    /return json\(\{ ok: true \}\);\s*\}\s*return json\(\{ error: "Acción desconocida" \}/.test(ts) && !/carpeta: r\.carpeta, nombre/.test(ts));
   cierto("«guardar» exige la versión de la política aceptada", /accion === "guardar"[\s\S]*privacidad_version[\s\S]*\\d\{4\}-\\d\{2\}-\\d\{2\}/.test(ts));
   cierto("solo deja pasar la ficha, JPEG y PDF", /TIPOS = new Set\(\[\s*"application\/vnd\.openxmlformats-officedocument\.wordprocessingml\.document",\s*"image\/jpeg",\s*"application\/pdf",?\s*\]\)/.test(ts));
   cierto("solo conecta con una aplicación web de Apps Script", /URL_SCRIPT = \/\^https:\\\/\\\/script\\\.google\\\.com/.test(ts));
@@ -258,7 +343,7 @@ function pruebaFuncion() {
   // la plantilla de la ficha»; con el sitio servido sin worker, aquí no se veía.
   const cerradas = (JSON.parse(leer("wrangler.jsonc").replace(/^\s*\/\/.*$/gm, "")).assets || {}).run_worker_first || [];
   const deLaPagina = [
-    (leer("js/jdn.js").match(/const PLANTILLA = "([^"]+)"/) || [])[1],
+    ...[...((leer("js/jdn.js").match(/const PLANTILLA = \{[\s\S]*?\};/) || [""])[0]).matchAll(/"([^"]+\.docx)"/g)].map((m) => m[1]),
     (leer("jdn.html").match(/href="([^"]*puente-drive\.gs)"/) || [])[1],
   ];
   for (const ruta of deLaPagina) {
@@ -270,7 +355,16 @@ function pruebaFuncion() {
   const gs = leer("documentos/jdn/puente-drive.gs");
   cierto("compara el secreto antes de abrir el Drive", gs.indexOf("mismoSecreto(pedido.secreto") < gs.indexOf("DriveApp.getFolderById(CARPETA_JDN)", gs.indexOf("function doPost")));
   cierto("guarda dentro de «JDN 2027»", /CARPETA_JDN = "15YupRymnvhqmSCbD6OLL-Vvpn_g65FMg"/.test(gs));
-  cierto("una carpeta por persona, la misma si se vuelve a mandar", /getFoldersByName\(nombre\)[\s\S]{0,80}hasNext\(\) \? existentes\.next\(\) : raiz\.createFolder\(nombre\)/.test(gs));
+  cierto("por comité / Atletas o Entrenadores / Mujeres u Hombres / persona",
+    /carpetaComite = subcarpeta\(raiz, comite\)/.test(gs) &&
+    /carpetaRol = subcarpeta\(carpetaComite, pedido\.rol === "entrenador" \? "Entrenadores" : "Atletas"\)/.test(gs) &&
+    /carpetaSexo = subcarpeta\(carpetaRol, pedido\.sexo === "mujer" \? "Mujeres" : "Hombres"\)/.test(gs));
+  cierto("una carpeta por persona, la misma si se vuelve a mandar", /carpetaSexo\.getFoldersByName\(nombre\)[\s\S]{0,80}hasNext\(\) \? existentes\.next\(\) : carpetaSexo\.createFolder\(nombre\)/.test(gs));
+  cierto("el comité se encuentra aunque cambien mayúsculas o tildes", /normalize\("NFD"\)/.test(gs) && /clave\(h\.getName\(\)\) === buscada/.test(gs));
+  cierto("la hoja «Resumen» del comité: una fila por identificación, y lo escrito no se vuelve fórmula",
+    /"Resumen - " \+ carpetaComite\.getName\(\)/.test(gs) && /clave\(ids\[i\]\[0\]\) === clave\(resumen\.identificacion\)/.test(gs) &&
+    /\^\[=\+\\-@\]/.test(gs) && /COLUMNAS\.map\(function \(c\) \{ return celda\(/.test(gs));
+  cierto("si la hoja falla, los archivos ya quedaron guardados", gs.indexOf("anotar(carpetaComite, pedido") > gs.lastIndexOf("carpeta.createFile(blob)") && /catch \(err\) \{\s*hojaError/.test(gs));
   cierto("lo que se reemplaza va a la papelera (no quedan dos fichas)", /getFilesByName\(nombreArchivo\)[\s\S]{0,80}setTrashed\(true\)/.test(gs));
   cierto("en el puente no hay ningún secreto escrito", !/SECRETO\s*=\s*"[^"]+"/.test(gs) && /getScriptProperties\(\)\.getProperty\("SECRETO"\)/.test(gs));
 }
@@ -345,7 +439,9 @@ const vis = (page, sel) => page.evaluate((s) => { const e = document.querySelect
 // Una menor de 12, con su tutora (los mismos datos en las dos puertas).
 async function llenarMenor(page) {
   const llenar = async (sel, v) => page.fill(sel, v);
+  await page.check('input[name="rol"][value="atleta"]');
   await page.check('input[name="condicion"][value="atleta"]');
+  await llenar("#f-comite", "CCDR Barva");
   await llenar("#f-nombre", "Valeria Solano Ruiz");
   await llenar("#f-identificacion", "1-2222-3333");
   await page.selectOption("#f-tipoDocumento", "Nacional");
@@ -354,11 +450,12 @@ async function llenarMenor(page) {
   await page.check('input[name="sexo"][value="mujer"]');
   await page.check('input[name="lateralidad"][value="Derecho"]');
   await llenar("#f-escolaridad", "Primaria incompleta");
-  await llenar("#f-telefono", "8888-0000");
+  await llenar("#f-telefono", "8888-0000x9");
+  if (!page.__ya) igual("el teléfono solo deja números, y 8 (con guion y de más, se limpia)", await page.inputValue("#f-telefono"), "88880000");
   await llenar("#f-correo", "casa@ejemplo.cr");
   await page.selectOption("#f-provincia", "Heredia");
-  await llenar("#f-canton", "Barva");
-  await llenar("#f-distrito", "San Pablo");
+  await page.selectOption("#f-canton", "Barva");
+  await page.selectOption("#f-distrito", "San Pablo");
   await llenar("#f-direccion", "Del parque 100 m sur");
   await llenar("#f-tutorNombre", "Marta Ruiz Mora");
   await page.selectOption("#f-tutorCondicion", "madre");
@@ -402,9 +499,13 @@ async function pruebaPagina(browser) {
     const g = pedidos.find((x) => x.body.action === "guardar");
     cierto(quien + ": manda por la puerta pública, sin token, con el correo",
       g && g.body.modo === "publico" && g.auth === null && g.body.correo === "casa@ejemplo.cr", JSON.stringify(g && { modo: g.body.modo, auth: g.auth }));
-    cierto(quien + ": al terminar dice que la imprima y la firme, sin enlaces al Drive",
-      /imprímela, fírmala a mano/.test(await page.textContent("#listo-texto")) &&
-      !(await vis(page, "#listo-carpeta")) && !(await vis(page, "#listo-pdf")));
+    cierto(quien + ": manda el comité, el rol y el sexo (deciden la carpeta) y la fila del resumen",
+      g && g.body.comite === "CCDR Barva" && g.body.rol === "atleta" && g.body.sexo === "mujer" &&
+      g.body.resumen.categoria === "U-12" && g.body.resumen.rol === "Atleta" && g.body.resumen.telefono === "88880000",
+      JSON.stringify(g && [g.body.comite, g.body.rol, g.body.sexo, g.body.resumen]));
+    cierto(quien + ": al terminar dice que la imprima y la firme, y solo deja descargarla u otra",
+      /imprímela y fírmala a mano/.test(await page.textContent("#listo-texto")) &&
+      await page.$$eval("#jdn-listo a, #jdn-listo button", (es) => es.filter((e) => e.checkVisibility()).map((e) => e.textContent.trim()).join("|")) === "Descargar la ficha|Llenar otra ficha");
     cierto(quien + ": sin errores en la página", errores.length === 0, errores.join(" | "));
     await ctx.close();
   }
@@ -445,12 +546,31 @@ async function pruebaPagina(browser) {
   await page.check('input[name="condicion"][value="paratleta"]');
   cierto("paratleta abre su recuadro", await vis(page, "#caja-paratleta"));
   await page.check('input[name="condicion"][value="atleta"]');
-  cierto("no pide comité, rama ni pruebas (los pone el entrenador)",
-    !(await page.$("#f-comite")) && !(await page.$('input[name="rama"]')) && !(await page.$('input[name="pruebas"]')));
+  cierto("pide el comité, y no la rama ni las pruebas",
+    await vis(page, "#f-comite") && !(await page.$('input[name="rama"]')) && !(await page.$('input[name="pruebas"]')));
   cierto("la foto y la cédula dicen que son del atleta",
     /Fotografía y cédula del atleta/.test(await page.textContent("#jdn-form")) &&
     /Fotografía del atleta/.test(await page.textContent('label[for="f-foto"]')) &&
     /Cédula del atleta, frente/.test(await page.textContent('label[for="f-frente"]')));
+
+  // Provincia → cantón → distrito: solo lo de la provincia y el cantón elegidos.
+  cierto("antes de la provincia, el cantón y el distrito están apagados",
+    await page.isDisabled("#f-canton") && await page.isDisabled("#f-distrito"));
+  igual("la provincia trae las siete", (await page.$$eval("#f-provincia option", (os) => os.map((o) => o.value))).filter(Boolean).length, 7);
+  await page.selectOption("#f-provincia", "Heredia");
+  igual("Heredia: sus 10 cantones, y el distrito sigue apagado",
+    [(await page.$$eval("#f-canton option", (os) => os.map((o) => o.value))).filter(Boolean).length, await page.isDisabled("#f-distrito")], [10, true]);
+  await page.selectOption("#f-canton", "Barva");
+  igual("Barva: sus distritos",
+    (await page.$$eval("#f-distrito option", (os) => os.map((o) => o.value))).filter(Boolean),
+    ["Barva", "San Pedro", "San Pablo", "San Roque", "Santa Lucía", "San José de la Montaña", "Puente Salas"]);
+  await page.selectOption("#f-distrito", "San Pablo");
+  await page.selectOption("#f-provincia", "Limón");
+  cierto("cambiar de provincia borra el cantón y el distrito elegidos",
+    (await page.inputValue("#f-canton")) === "" && (await page.inputValue("#f-distrito")) === "" && await page.isDisabled("#f-distrito") &&
+    !(await page.$$eval("#f-canton option", (os) => os.map((o) => o.value))).includes("Barva"));
+  igual("el comité se puede elegir de los 84 comités cantonales",
+    [await page.$$eval("#lista-comites option", (os) => os.length), await page.getAttribute("#f-comite", "list")], [84, "lista-comites"]);
 
   // Guardar sin llenar: dice qué falta y no llama
   const antes = pedidos.length;
@@ -493,11 +613,15 @@ async function pruebaPagina(browser) {
   const docx = Buffer.from(g.body.archivos[0].base64, "base64");
   const fichaXml = await (await window.ReporteExcel.abrirZip(docx.buffer.slice(docx.byteOffset, docx.byteOffset + docx.byteLength))).texto("word/document.xml");
   const fp = parrafos(fichaXml);
-  cierto("la ficha que se manda es la llena: U-12, con su tutora",
-    /Ajedrez U-12$/.test(linea(fp, "Categoría Deportiva")) && /^Yo Marta Ruiz Mora, mayor, divorciada, contadora/.test(linea(fp, "Yo ")));
-  cierto("al terminar: el PDF para imprimir y la carpeta",
-    await vis(page, "#listo-pdf") && (await page.getAttribute("#listo-pdf", "href")) === "https://drive.google.com/pdf" &&
-    (await page.getAttribute("#listo-carpeta", "href")) === "https://drive.google.com/carpeta" && !(await vis(page, "#jdn-form")));
+  cierto("la ficha que se manda es la llena: U-12, con su tutora y su comité",
+    /Ajedrez U-12$/.test(linea(fp, "Categoría Deportiva")) && /^Yo Marta Ruiz Mora, mayor, divorciada, contadora/.test(linea(fp, "Yo ")) &&
+    linea(fp, "Nombre del equipo").trim() === "Nombre del equipo: CCDR Barva");
+  const zipFicha = await window.ReporteExcel.abrirZip(docx.buffer.slice(docx.byteOffset, docx.byteOffset + docx.byteLength));
+  cierto("y lleva adentro la misma foto que se guarda (en JPEG)",
+    await zipFicha.bytes("word/media/foto-jdn.jpeg").then((m) => !!m && Buffer.compare(Buffer.from(m), foto) === 0, () => false) &&
+    fichaXml.includes('r:embed="rIdFotoJdn"'));
+  cierto("al terminar, tampoco quien administra recibe enlaces al Drive: solo descargar",
+    (await page.$$("#jdn-listo a")).length === 0 && await vis(page, "#listo-descargar") && !(await vis(page, "#jdn-form")));
   cierto("el foco pasa al aviso de «Ficha guardada»", await page.evaluate(() => document.activeElement && document.activeElement.id === "jdn-listo"));
 
   await page.click("#jdn-otra");
@@ -505,6 +629,40 @@ async function pruebaPagina(browser) {
     (await page.inputValue("#f-nombre")) === "" && await vis(page, "#jdn-form"));
   cierto("sin errores en la página", errores.length === 0, errores.join(" | "));
   await ctx.close();
+
+  // Un entrenador: su consentimiento, sin categoría, tutor ni condición.
+  {
+    const { ctx, page, pedidos, errores } = await abrir(browser, { tablas: PERFILES }, () => [200, { ok: true }]);
+    page.__ya = true;
+    await llenarMenor(page);
+    await page.check('input[name="rol"][value="entrenador"]');
+    await page.fill("#f-nombre", "Pedro Mora Vega");
+    await page.fill("#f-nacimiento", "1985-02-03");
+    await page.check('input[name="sexo"][value="hombre"]');
+    cierto("entrenador: sin categoría, condición, tutor ni certificación",
+      !(await vis(page, "#caja-categoria")) && !(await vis(page, "#caja-condicion")) && !(await vis(page, "#caja-tutor")) &&
+      !(await vis(page, "#caja-certificacion")) && !(await vis(page, "#jdn-mismo-tutor")));
+    cierto("entrenador: la fecha de nacimiento no se limita a 2007-2020", (await page.getAttribute("#f-nacimiento", "min")) === null);
+    cierto("entrenador: la foto y la cédula dicen «del entrenador»",
+      /Fotografía del entrenador/.test(await page.textContent('label[for="f-foto"]')) && /Cédula del entrenador, frente/.test(await page.textContent('label[for="f-frente"]')));
+    await page.setInputFiles("#f-foto", { name: "foto.png", mimeType: "image/png", buffer: await pngDePrueba(page) });
+    await page.setInputFiles("#f-frente", { name: "f.png", mimeType: "image/png", buffer: await pngDePrueba(page) });
+    await page.setInputFiles("#f-reverso", { name: "r.png", mimeType: "image/png", buffer: await pngDePrueba(page) });
+    await page.check("#jdn-acepto");
+    const descarga = page.waitForEvent("download", { timeout: 8000 }).catch(() => null);
+    await page.click("#jdn-guardar");
+    const bajada = await descarga;
+    if (!bajada) console.log("      (error en la página: " + await page.textContent("#jdn-error") + ")");
+    igual("entrenador: se descarga su ficha", bajada && bajada.suggestedFilename(), "Ficha entrenador JDN 2027 - Pedro Mora Vega.docx");
+    const g = pedidos.find((x) => x.body.action === "guardar");
+    const b = g && Buffer.from(g.body.archivos[0].base64, "base64");
+    const xe = b ? await (await window.ReporteExcel.abrirZip(b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength))).texto("word/document.xml") : "";
+    cierto("entrenador: manda su consentimiento (no el del atleta), con rol, sexo y comité",
+      g && g.body.rol === "entrenador" && g.body.sexo === "hombre" && g.body.resumen.rol === "Entrenador(a)" && g.body.resumen.categoria === "" &&
+      /\(X\) ENTRENADOR\(A\)/.test(texto(xe)) && !/patria potestad/.test(xe));
+    cierto("entrenador: sin errores en la página", errores.length === 0, errores.join(" | "));
+    await ctx.close();
+  }
 
   // La sesión cerrada en otro aparato: la función contesta 401 aunque el token parezca bueno.
   {
@@ -524,6 +682,7 @@ async function pruebaPagina(browser) {
 
 (async () => {
   await pruebaFicha();
+  pruebaDivision();
   pruebaFuncion();
   if (process.argv.includes("--sin-navegador")) return terminar();
   const browser = await chromium.launch({ executablePath: fs.existsSync(CHROME) ? CHROME : undefined });

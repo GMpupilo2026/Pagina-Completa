@@ -109,7 +109,7 @@ def es_futuro(b):
 BLANCA = set("""
 más además después jamás quizás atrás detrás través compás interés inglés francés país
 así aquí allí ahí allá acá está están estás esté estés japonés portugués marqués revés dirá
-demás porqué comité subcomité josé café caché también según razón bebé qué holandés escocés parís danés
+demás porqué comité comités subcomité josé café caché también según razón bebé qué holandés escocés parís danés
 aperturasmás
 elistá andrés valdés josué prevé noé carné
 empecé aprendí entendí leí tomé repasé jugué estudié olvidé
@@ -191,7 +191,11 @@ def archivos():
             # borrarlas, así que sin esto la revisión falla o no según lo que
             # uno tenga instalado en ese momento.
             and not f.startswith("node_modules" + os.sep)
-            and not f.endswith(".min.js")]
+            and not f.endswith(".min.js")
+            # La lista de provincias, cantones y distritos del TSE (generada
+            # por herramientas/division-territorial-generar.js): son nombres
+            # de lugares —Poás, Tibás, Sarapiquí—, no prosa que alguien escribe.
+            and f != os.path.join("js", "division-territorial.js")]
 
 def hallazgos(ruta):
     """Devuelve [(palabra, contexto)] del voseo que quede en el archivo."""

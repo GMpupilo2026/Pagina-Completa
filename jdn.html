@@ -81,7 +81,7 @@
             <h1 class="font-serif text-3xl font-bold text-brand-800 dark:text-white mb-1"><span aria-hidden="true">🏅</span> Ficha de los JDN 2027</h1>
             <p class="text-brand-500 dark:text-brand-300 mb-6">
                 La ficha de inscripción y consentimiento de los Juegos Deportivos Nacionales 2027 (ICODER), para ajedrez.
-                Llénala con los datos de quien se inscribe y agrega su fotografía y su cédula. Al enviarla, la academia la recibe y a ti se te descarga la ficha llena, lista para imprimir y firmar a mano.
+                Sirve para atletas y para entrenadores: cada uno tiene su consentimiento. Llénala con los datos de quien se inscribe y agrega su fotografía y su cédula. Al enviarla, la academia la recibe y a ti se te descarga la ficha llena, lista para imprimir y firmar a mano.
             </p>
 
             <!-- La conexión con el Drive -->
@@ -118,7 +118,20 @@
                 <fieldset class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6">
                     <legend class="font-serif text-lg font-bold text-brand-800 dark:text-white px-1">La persona</legend>
                     <div class="grid sm:grid-cols-2 gap-4 mt-2">
-                        <div class="sm:col-span-2">
+                        <div>
+                            <p id="et-rol" class="text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Es *</p>
+                            <div role="radiogroup" aria-labelledby="et-rol" class="flex flex-wrap gap-4 text-sm py-2">
+                                <label class="flex items-center gap-2"><input type="radio" name="rol" value="atleta" checked class="h-4 w-4 text-accent-500 focus:ring-accent-500"> Atleta</label>
+                                <label class="flex items-center gap-2"><input type="radio" name="rol" value="entrenador" class="h-4 w-4 text-accent-500 focus:ring-accent-500"> Entrenador(a)</label>
+                            </div>
+                        </div>
+                        <div>
+                            <label for="f-comite" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Comité que representa *</label>
+                            <input id="f-comite" name="comite" type="text" autocomplete="off" list="lista-comites" placeholder="ej. CCDR San José" aria-describedby="ayuda-comite" class="jdn-campo w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none">
+                            <datalist id="lista-comites"></datalist>
+                            <p id="ayuda-comite" class="text-xs text-brand-500 dark:text-brand-300 mt-1">El comité cantonal de deportes por el que compite: elígelo de la lista o escríbelo. Va en «Nombre del equipo» de la ficha.</p>
+                        </div>
+                        <div id="caja-condicion" class="sm:col-span-2">
                             <p id="et-condicion" class="text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Se inscribe como *</p>
                             <div role="radiogroup" aria-labelledby="et-condicion" class="flex flex-wrap gap-4 text-sm">
                                 <label class="flex items-center gap-2"><input type="radio" name="condicion" value="atleta" checked class="h-4 w-4 text-accent-500 focus:ring-accent-500"> Atleta</label>
@@ -141,7 +154,7 @@
                             <label for="f-nacimiento" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Fecha de nacimiento *</label>
                             <input id="f-nacimiento" name="nacimiento" type="date" min="2007-01-01" max="2020-12-31" aria-describedby="jdn-categoria" class="jdn-campo w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none">
                         </div>
-                        <div>
+                        <div id="caja-categoria">
                             <p class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Categoría</p>
                             <p id="jdn-categoria" role="status" class="text-sm font-semibold text-brand-700 dark:text-brand-100 py-2">Escribe la fecha de nacimiento.</p>
                         </div>
@@ -177,12 +190,14 @@
                             </datalist>
                         </div>
                         <div>
-                            <label for="f-telefono" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Teléfono del atleta o tutor *</label>
-                            <input id="f-telefono" name="telefono" type="tel" autocomplete="off" class="jdn-campo w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none">
+                            <label for="f-telefono" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Teléfono *</label>
+                            <input id="f-telefono" name="telefono" type="tel" inputmode="numeric" pattern="[0-9]{8}" autocomplete="off" placeholder="ej. 88881234" aria-describedby="ayuda-telefono" class="jdn-campo w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none">
+                            <p id="ayuda-telefono" class="text-xs text-brand-500 dark:text-brand-300 mt-1">8 números, sin guiones ni espacios. Si es menor de edad, el de la madre, el padre o el tutor.</p>
                         </div>
                         <div class="sm:col-span-2">
-                            <label for="f-correo" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Correo del atleta o tutor *</label>
-                            <input id="f-correo" name="correo" type="email" autocomplete="off" class="jdn-campo w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none">
+                            <label for="f-correo" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Correo electrónico *</label>
+                            <input id="f-correo" name="correo" type="email" autocomplete="off" placeholder="ej. nombre@gmail.com" aria-describedby="ayuda-correo" class="jdn-campo w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none">
+                            <p id="ayuda-correo" class="text-xs text-brand-500 dark:text-brand-300 mt-1">Uno que se revise: se comprueba que el dominio reciba correo.</p>
                         </div>
                     </div>
                 </fieldset>
@@ -193,16 +208,16 @@
                         <div>
                             <label for="f-provincia" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Provincia *</label>
                             <select id="f-provincia" name="provincia" class="jdn-campo w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none">
-                                <option value="">Elige…</option><option>San José</option><option>Alajuela</option><option>Cartago</option><option>Heredia</option><option>Guanacaste</option><option>Puntarenas</option><option>Limón</option>
+                                <option value="">Elige…</option>
                             </select>
                         </div>
                         <div>
                             <label for="f-canton" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Cantón *</label>
-                            <input id="f-canton" name="canton" type="text" class="jdn-campo w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none">
+                            <select id="f-canton" name="canton" disabled class="jdn-campo w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none disabled:opacity-60"><option value="">Primero la provincia</option></select>
                         </div>
                         <div>
                             <label for="f-distrito" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Distrito *</label>
-                            <input id="f-distrito" name="distrito" type="text" class="jdn-campo w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none">
+                            <select id="f-distrito" name="distrito" disabled class="jdn-campo w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none disabled:opacity-60"><option value="">Primero el cantón</option></select>
                         </div>
                         <div class="sm:col-span-3">
                             <label for="f-direccion" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Dirección exacta *</label>
@@ -291,21 +306,21 @@
                 </fieldset>
 
                 <fieldset class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6">
-                    <legend class="font-serif text-lg font-bold text-brand-800 dark:text-white px-1">Fotografía y cédula del atleta</legend>
-                    <p class="text-sm text-brand-500 dark:text-brand-300 mt-2">A color (no en blanco y negro). Se guardan en JPEG, como las pide el ICODER.</p>
+                    <legend class="font-serif text-lg font-bold text-brand-800 dark:text-white px-1">Fotografía y cédula <span class="jdn-quien">del atleta</span></legend>
+                    <p class="text-sm text-brand-500 dark:text-brand-300 mt-2">A color (no en blanco y negro). Se guardan en JPEG, como las pide el ICODER, y la fotografía va también en la ficha.</p>
                     <div class="grid sm:grid-cols-3 gap-4 mt-3">
                         <div data-doc="foto">
-                            <label for="f-foto" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Fotografía del atleta *</label>
+                            <label for="f-foto" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Fotografía <span class="jdn-quien">del atleta</span> *</label>
                             <input id="f-foto" type="file" accept="image/*" class="jdn-archivo block w-full text-sm">
                             <img alt="" hidden class="jdn-vista mt-2 max-h-32 rounded-lg border border-brand-200 dark:border-brand-700">
                         </div>
                         <div data-doc="frente">
-                            <label for="f-frente" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Cédula del atleta, frente <span class="jdn-oblig">*</span></label>
+                            <label for="f-frente" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Cédula <span class="jdn-quien">del atleta</span>, frente <span class="jdn-oblig">*</span></label>
                             <input id="f-frente" type="file" accept="image/*" class="jdn-archivo block w-full text-sm">
                             <img alt="" hidden class="jdn-vista mt-2 max-h-32 rounded-lg border border-brand-200 dark:border-brand-700">
                         </div>
                         <div data-doc="reverso">
-                            <label for="f-reverso" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Cédula del atleta, reverso <span class="jdn-oblig">*</span></label>
+                            <label for="f-reverso" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Cédula <span class="jdn-quien">del atleta</span>, reverso <span class="jdn-oblig">*</span></label>
                             <input id="f-reverso" type="file" accept="image/*" class="jdn-archivo block w-full text-sm">
                             <img alt="" hidden class="jdn-vista mt-2 max-h-32 rounded-lg border border-brand-200 dark:border-brand-700">
                         </div>
@@ -339,12 +354,10 @@
             <section id="jdn-listo" hidden tabindex="-1" aria-labelledby="titulo-listo" class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mt-6 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
                 <h2 id="titulo-listo" class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-2"><span aria-hidden="true">✅ </span><span id="listo-titulo">Ficha enviada</span></h2>
                 <p id="listo-texto" class="text-sm text-brand-600 dark:text-brand-200"></p>
-                <ul class="mt-3 space-y-2 text-sm">
-                    <li id="listo-pdf-li" hidden><a id="listo-pdf" target="_blank" rel="noopener" class="font-semibold text-accent-700 dark:text-accent-400 underline">Abrir el PDF para imprimir y firmar</a></li>
-                    <li id="listo-carpeta-li"><a id="listo-carpeta" target="_blank" rel="noopener" class="font-semibold text-accent-700 dark:text-accent-400 underline">Abrir la carpeta en el Drive</a></li>
-                    <li><button type="button" id="listo-descargar" class="font-semibold text-accent-700 dark:text-accent-400 underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Descargar la ficha otra vez (Word)</button></li>
-                </ul>
-                <button type="button" id="jdn-otra" class="mt-4 bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Llenar otra ficha</button>
+                <div class="flex flex-wrap gap-3 mt-4">
+                    <button type="button" id="listo-descargar" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Descargar la ficha</button>
+                    <button type="button" id="jdn-otra" class="border border-brand-200 dark:border-brand-700 hover:border-accent-400 text-brand-700 dark:text-brand-200 font-semibold px-5 py-2.5 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Llenar otra ficha</button>
+                </div>
             </section>
         </div>
     </div>
@@ -371,6 +384,7 @@
     <script src="js/legal-version.js"></script>
     <script src="js/reporte-excel.js"></script>
     <script src="js/reporte-docx.js"></script>
+    <script src="js/division-territorial.js"></script>
     <script src="js/jdn-consentimiento.js"></script>
     <script src="js/jdn.js"></script>
 </body>

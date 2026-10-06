@@ -7,8 +7,21 @@
  * que quien llama administre y entró con su código), con un secreto que vive en
  * las propiedades de este script y en la bóveda de la base.
  *
- * Por cada persona: una carpeta con su nombre dentro de «JDN 2027», con la
- * ficha llena (.docx y, si está el servicio avanzado de Drive, también en PDF
+ * Todo va ordenado por comité:
+ *
+ *   JDN 2027 / <comité> / Atletas      / Mujeres / <persona>
+ *                                      / Hombres / <persona>
+ *                       / Entrenadores / Mujeres / <persona>
+ *                                      / Hombres / <persona>
+ *                       / Resumen - <comité>   (hoja de cálculo)
+ *
+ * El comité lo escribe quien llena la ficha: la carpeta se busca sin mirar
+ * mayúsculas ni tildes, así «ccdr san jose» cae en «CCDR San José». La hoja
+ * «Resumen» tiene una fila por persona (por su número de identificación: si
+ * vuelve a mandar la ficha, se actualiza su fila) para saber quién ya la
+ * mandó; se abre en Excel con «Archivo → Descargar → Microsoft Excel».
+ *
+ * Por cada persona, en su carpeta: la ficha llena (.docx y, si está el servicio avanzado de Drive, también en PDF
  * para imprimir), la fotografía y la cédula por los dos lados. Si la carpeta ya
  * existe (se volvió a mandar la ficha para corregir algo), se usa la misma y
  * los archivos con el mismo nombre se mandan a la papelera antes de subir los
@@ -18,6 +31,9 @@
  * docs/decisiones/cuentas-y-formularios.md, «La ficha de los JDN 2027»):
  *   1. script.google.com → Proyecto nuevo, con la cuenta dueña de «JDN 2027».
  *      Pegar este archivo entero en Código.gs.
+ *      (Si ya estaba instalado: pegar el código nuevo, «Implementar» →
+ *      «Gestionar implementaciones» → editar → Versión: «Nueva versión». La
+ *      URL no cambia. La primera vez pide permiso para las hojas de cálculo.)
  *   2. Servicios (+) → «Drive API» → Agregar. Es lo que arma el PDF; sin él
  *      se guarda solo el .docx.
  *   3. Ejecutar la función `configurar` una vez y aceptar los permisos. En el
@@ -63,6 +79,70 @@ function mismoSecreto(a, b) {
   return d === 0;
 }
 
+// Para comparar nombres de carpeta: sin mayúsculas, tildes ni espacios de más.
+function clave(s) {
+  return String(s || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, " ").trim().toLowerCase();
+}
+
+// La subcarpeta `nombre` de `madre`, igual aunque cambien mayúsculas o tildes;
+// si no está, se crea.
+function subcarpeta(madre, nombre) {
+  var buscada = clave(nombre);
+  var hijas = madre.getFolders();
+  while (hijas.hasNext()) {
+    var h = hijas.next();
+    if (clave(h.getName()) === buscada) return h;
+  }
+  return madre.createFolder(nombre);
+}
+
+// Lo que escribe una persona no se vuelve fórmula en la hoja.
+function celda(v) {
+  v = String(v == null ? "" : v);
+  return /^[=+\-@]/.test(v) ? "'" + v : v;
+}
+
+var COLUMNAS = [
+  ["enviada", "Enviada"], ["nombre", "Nombre"], ["rol", "Es"], ["sexo", "Sexo"],
+  ["categoria", "Categoría"], ["identificacion", "Identificación"], ["nacimiento", "Nacimiento"],
+  ["telefono", "Teléfono"], ["correo", "Correo"], ["canton", "Cantón"], ["nota", "Cómo llegó"],
+];
+
+// La fila de la persona en «Resumen - <comité>»: se agrega, o se cambia si ya
+// estaba (misma identificación).
+function anotar(carpetaComite, resumen, enlace) {
+  var nombreHoja = "Resumen - " + carpetaComite.getName();
+  var hojas = carpetaComite.getFilesByType(MimeType.GOOGLE_SHEETS);
+  var libro = null;
+  while (hojas.hasNext()) {
+    var f = hojas.next();
+    if (f.getName() === nombreHoja) { libro = SpreadsheetApp.openById(f.getId()); break; }
+  }
+  if (!libro) {
+    libro = SpreadsheetApp.create(nombreHoja);
+    DriveApp.getFileById(libro.getId()).moveTo(carpetaComite);
+    var h0 = libro.getSheets()[0];
+    h0.setName("Fichas");
+    h0.appendRow(COLUMNAS.map(function (c) { return c[1]; }).concat(["Carpeta"]));
+    h0.getRange(1, 1, 1, COLUMNAS.length + 1).setFontWeight("bold");
+    h0.setFrozenRows(1);
+  }
+  var hoja = libro.getSheets()[0];
+  var fila = COLUMNAS.map(function (c) { return celda(resumen[c[0]]); }).concat([enlace]);
+  var col = 1 + COLUMNAS.map(function (c) { return c[0]; }).indexOf("identificacion");
+  var ultima = hoja.getLastRow();
+  var donde = 0;
+  if (resumen.identificacion && ultima > 1) {
+    var ids = hoja.getRange(2, col, ultima - 1, 1).getDisplayValues();
+    for (var i = 0; i < ids.length; i++) {
+      if (clave(ids[i][0]) === clave(resumen.identificacion)) { donde = i + 2; break; }
+    }
+  }
+  if (donde) hoja.getRange(donde, 1, 1, fila.length).setValues([fila]);
+  else hoja.appendRow(fila);
+  hoja.autoResizeColumns(1, fila.length);
+}
+
 // Sin lo que un nombre de archivo no acepta, igual que js/jdn-consentimiento.js.
 function nombreLimpio(s) {
   return String(s || "").replace(/\s+/g, " ").trim().replace(/[\\\/:*?"<>|#%]/g, "").slice(0, 120);
@@ -89,8 +169,12 @@ function doPost(e) {
   var candado = LockService.getScriptLock();
   candado.waitLock(30000);
   try {
-    var existentes = raiz.getFoldersByName(nombre);
-    var carpeta = existentes.hasNext() ? existentes.next() : raiz.createFolder(nombre);
+    var comite = nombreLimpio(pedido.comite) || "Sin comité";
+    var carpetaComite = subcarpeta(raiz, comite);
+    var carpetaRol = subcarpeta(carpetaComite, pedido.rol === "entrenador" ? "Entrenadores" : "Atletas");
+    var carpetaSexo = subcarpeta(carpetaRol, pedido.sexo === "mujer" ? "Mujeres" : "Hombres");
+    var existentes = carpetaSexo.getFoldersByName(nombre);
+    var carpeta = existentes.hasNext() ? existentes.next() : carpetaSexo.createFolder(nombre);
     if (pedido.nota) carpeta.setDescription(String(pedido.nota).slice(0, 2000));
 
     var guardados = [];
@@ -125,7 +209,14 @@ function doPost(e) {
         pdf = null;
       }
     }
-    return responder({ ok: true, carpeta: carpeta.getUrl(), nombre: nombre, archivos: guardados, pdf: pdf });
+    // La hoja del comité: si falla, los archivos ya quedaron guardados.
+    var hojaError = null;
+    try {
+      anotar(carpetaComite, pedido.resumen || { nombre: nombre }, carpeta.getUrl());
+    } catch (err) {
+      hojaError = String(err && err.message || err);
+    }
+    return responder({ ok: true, carpeta: carpeta.getUrl(), nombre: nombre, archivos: guardados, pdf: pdf, hojaError: hojaError });
   } finally {
     candado.releaseLock();
   }

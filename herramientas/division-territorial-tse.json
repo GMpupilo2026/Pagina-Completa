@@ -1,0 +1,679 @@
+{
+ "fuente": "TSE, División Territorial Electoral, Decreto 2-2025 (Alcance 15 a La Gaceta 23, 5 de febrero de 2025)",
+ "provincias": {
+  "SAN JOSE": {
+   "SAN JOSE": [
+    "CARMEN",
+    "MERCED",
+    "HOSPITAL",
+    "CATEDRAL",
+    "ZAPOTE",
+    "SAN FRANCISCO DE DOS RIOS",
+    "URUCA",
+    "MATA REDONDA",
+    "PAVAS",
+    "HATILLO",
+    "SAN SEBASTIAN"
+   ],
+   "ESCAZU": [
+    "ESCAZU",
+    "SAN ANTONIO",
+    "SAN RAFAEL"
+   ],
+   "DESAMPARADOS": [
+    "DESAMPARADOS",
+    "SAN MIGUEL",
+    "SAN JUAN DE DIOS",
+    "SAN RAFAEL ARRIBA",
+    "SAN ANTONIO",
+    "FRAILES",
+    "PATARRA",
+    "SAN CRISTOBAL",
+    "ROSARIO",
+    "DAMAS",
+    "SAN RAFAEL ABAJO",
+    "GRAVILIAS",
+    "LOS GUIDO"
+   ],
+   "PURISCAL": [
+    "SANTIAGO",
+    "MERCEDES SUR",
+    "BARBACOAS",
+    "GRIFO ALTO",
+    "SAN RAFAEL",
+    "CANDELARITA",
+    "DESAMPARADITOS",
+    "SAN ANTONIO",
+    "CHIRES"
+   ],
+   "TARRAZU": [
+    "SAN MARCOS",
+    "SAN LORENZO",
+    "SAN CARLOS"
+   ],
+   "ASERRI": [
+    "ASERRI",
+    "TARBACA",
+    "VUELTA DE JORCO",
+    "SAN GABRIEL",
+    "LEGUA",
+    "MONTERREY",
+    "SALITRILLOS"
+   ],
+   "MORA": [
+    "COLON",
+    "GUAYABO",
+    "TABARCIA",
+    "PIEDRAS NEGRAS",
+    "PICAGRES",
+    "JARIS",
+    "QUITIRRISI"
+   ],
+   "GOICOECHEA": [
+    "GUADALUPE",
+    "SAN FRANCISCO",
+    "CALLE BLANCOS",
+    "MATA DE PLATANO",
+    "IPIS",
+    "RANCHO REDONDO",
+    "PURRAL"
+   ],
+   "SANTA ANA": [
+    "SANTA ANA",
+    "SALITRAL",
+    "POZOS",
+    "URUCA",
+    "PIEDADES",
+    "BRASIL"
+   ],
+   "ALAJUELITA": [
+    "ALAJUELITA",
+    "SAN JOSECITO",
+    "SAN ANTONIO",
+    "CONCEPCION",
+    "SAN FELIPE"
+   ],
+   "VAZQUEZ DE CORONADO": [
+    "SAN ISIDRO",
+    "SAN RAFAEL",
+    "DULCE NOMBRE DE JESUS",
+    "PATALILLO",
+    "CASCAJAL"
+   ],
+   "ACOSTA": [
+    "SAN IGNACIO",
+    "GUAITIL",
+    "PALMICHAL",
+    "CANGREJAL",
+    "SABANILLAS"
+   ],
+   "TIBAS": [
+    "SAN JUAN",
+    "CINCO ESQUINAS",
+    "ANSELMO LLORENTE",
+    "LEON XIII",
+    "COLIMA"
+   ],
+   "MORAVIA": [
+    "SAN VICENTE",
+    "SAN JERONIMO",
+    "LA TRINIDAD"
+   ],
+   "MONTES DE OCA": [
+    "SAN PEDRO",
+    "SABANILLA",
+    "MERCEDES",
+    "SAN RAFAEL"
+   ],
+   "TURRUBARES": [
+    "SAN PABLO",
+    "SAN PEDRO",
+    "SAN JUAN DE MATA",
+    "SAN LUIS",
+    "CARARA"
+   ],
+   "DOTA": [
+    "SANTA MARIA",
+    "JARDIN",
+    "COPEY"
+   ],
+   "CURRIDABAT": [
+    "CURRIDABAT",
+    "GRANADILLA",
+    "SANCHEZ",
+    "TIRRASES"
+   ],
+   "PEREZ ZELEDON": [
+    "SAN ISIDRO DE EL GENERAL",
+    "EL GENERAL",
+    "DANIEL FLORES",
+    "RIVAS",
+    "SAN PEDRO",
+    "PLATANARES",
+    "PEJIBAYE",
+    "CAJON",
+    "BARU",
+    "RIO NUEVO",
+    "PARAMO",
+    "LA AMISTAD"
+   ],
+   "LEON CORTES CASTRO": [
+    "SAN PABLO",
+    "SAN ANDRES",
+    "LLANO BONITO",
+    "SAN ISIDRO",
+    "SANTA CRUZ",
+    "SAN ANTONIO"
+   ]
+  },
+  "ALAJUELA": {
+   "ALAJUELA": [
+    "ALAJUELA",
+    "SAN JOSE",
+    "CARRIZAL",
+    "SAN ANTONIO",
+    "GUACIMA",
+    "SAN ISIDRO",
+    "SABANILLA",
+    "SAN RAFAEL",
+    "RIO SEGUNDO",
+    "DESAMPARADOS",
+    "TURRUCARES",
+    "TAMBOR",
+    "GARITA",
+    "SARAPIQUI"
+   ],
+   "SAN RAMON": [
+    "SAN RAMON",
+    "SANTIAGO",
+    "SAN JUAN",
+    "PIEDADES NORTE",
+    "PIEDADES SUR",
+    "SAN RAFAEL",
+    "SAN ISIDRO",
+    "ANGELES",
+    "ALFARO",
+    "VOLIO",
+    "CONCEPCION",
+    "ZAPOTAL",
+    "PEÑAS BLANCAS",
+    "SAN LORENZO"
+   ],
+   "GRECIA": [
+    "GRECIA",
+    "SAN ISIDRO",
+    "SAN JOSE",
+    "SAN ROQUE",
+    "TACARES",
+    "PUENTE DE PIEDRA",
+    "BOLIVAR"
+   ],
+   "SAN MATEO": [
+    "SAN MATEO",
+    "DESMONTE",
+    "JESUS MARIA",
+    "LABRADOR"
+   ],
+   "ATENAS": [
+    "ATENAS",
+    "JESUS",
+    "MERCEDES",
+    "SAN ISIDRO",
+    "CONCEPCION",
+    "SAN JOSE",
+    "SANTA EULALIA",
+    "ESCOBAL"
+   ],
+   "NARANJO": [
+    "NARANJO",
+    "SAN MIGUEL",
+    "SAN JOSE",
+    "CIRRI SUR",
+    "SAN JERONIMO",
+    "SAN JUAN",
+    "EL ROSARIO",
+    "PALMITOS"
+   ],
+   "PALMARES": [
+    "PALMARES",
+    "ZARAGOZA",
+    "BUENOS AIRES",
+    "SANTIAGO",
+    "CANDELARIA",
+    "ESQUIPULAS",
+    "LA GRANJA"
+   ],
+   "POAS": [
+    "SAN PEDRO",
+    "SAN JUAN",
+    "SAN RAFAEL",
+    "CARRILLOS",
+    "SABANA REDONDA"
+   ],
+   "OROTINA": [
+    "OROTINA",
+    "EL MASTATE",
+    "HACIENDA VIEJA",
+    "COYOLAR",
+    "LA CEIBA"
+   ],
+   "SAN CARLOS": [
+    "QUESADA",
+    "FLORENCIA",
+    "BUENAVISTA",
+    "AGUAS ZARCAS",
+    "VENECIA",
+    "PITAL",
+    "LA FORTUNA",
+    "LA TIGRA",
+    "LA PALMERA",
+    "VENADO",
+    "CUTRIS",
+    "MONTERREY",
+    "POCOSOL"
+   ],
+   "ZARCERO": [
+    "ZARCERO",
+    "LAGUNA",
+    "TAPESCO",
+    "GUADALUPE",
+    "PALMIRA",
+    "ZAPOTE",
+    "BRISAS"
+   ],
+   "SARCHI": [
+    "SARCHI NORTE",
+    "SARCHI SUR",
+    "TORO AMARILLO",
+    "SAN PEDRO",
+    "RODRIGUEZ"
+   ],
+   "UPALA": [
+    "UPALA",
+    "AGUAS CLARAS",
+    "SAN JOSE O PIZOTE",
+    "BIJAGUA",
+    "DELICIAS",
+    "DOS RIOS",
+    "YOLILLAL",
+    "CANALETE"
+   ],
+   "LOS CHILES": [
+    "LOS CHILES",
+    "CAÑO NEGRO",
+    "EL AMPARO",
+    "SAN JORGE"
+   ],
+   "GUATUSO": [
+    "SAN RAFAEL",
+    "BUENAVISTA",
+    "COTE",
+    "KATIRA"
+   ],
+   "RIO CUARTO": [
+    "RIO CUARTO",
+    "SANTA RITA",
+    "SANTA ISABEL"
+   ]
+  },
+  "CARTAGO": {
+   "CARTAGO": [
+    "ORIENTAL",
+    "OCCIDENTAL",
+    "CARMEN",
+    "SAN NICOLAS",
+    "AGUACALIENTE O SAN FRANCISCO",
+    "GUADALUPE O ARENILLA",
+    "CORRALILLO",
+    "TIERRA BLANCA",
+    "DULCE NOMBRE",
+    "LLANO GRANDE",
+    "QUEBRADILLA"
+   ],
+   "PARAISO": [
+    "PARAISO",
+    "SANTIAGO",
+    "OROSI",
+    "CACHI",
+    "LLANOS DE SANTA LUCIA",
+    "BIRRISITO"
+   ],
+   "LA UNION": [
+    "TRES RIOS",
+    "SAN DIEGO",
+    "SAN JUAN",
+    "SAN RAFAEL",
+    "CONCEPCION",
+    "DULCE NOMBRE",
+    "SAN RAMON",
+    "RIO AZUL"
+   ],
+   "JIMENEZ": [
+    "JUAN VIÑAS",
+    "TUCURRIQUE",
+    "PEJIBAYE",
+    "LA VICTORIA"
+   ],
+   "TURRIALBA": [
+    "TURRIALBA",
+    "LA SUIZA",
+    "PERALTA",
+    "SANTA CRUZ",
+    "SANTA TERESITA",
+    "PAVONES",
+    "TUIS",
+    "TAYUTIC",
+    "SANTA ROSA",
+    "TRES EQUIS",
+    "LA ISABEL",
+    "EL CHIRRIPO"
+   ],
+   "ALVARADO": [
+    "PACAYAS",
+    "CERVANTES",
+    "CAPELLADES"
+   ],
+   "OREAMUNO": [
+    "SAN RAFAEL",
+    "COT",
+    "POTRERO CERRADO",
+    "CIPRESES",
+    "SANTA ROSA"
+   ],
+   "EL GUARCO": [
+    "EL TEJAR",
+    "SAN ISIDRO",
+    "TOBOSI",
+    "PATIO DE AGUA"
+   ]
+  },
+  "HEREDIA": {
+   "HEREDIA": [
+    "HEREDIA",
+    "MERCEDES",
+    "SAN FRANCISCO",
+    "ULLOA",
+    "VARABLANCA"
+   ],
+   "BARVA": [
+    "BARVA",
+    "SAN PEDRO",
+    "SAN PABLO",
+    "SAN ROQUE",
+    "SANTA LUCIA",
+    "SAN JOSE DE LA MONTAÑA",
+    "PUENTE SALAS"
+   ],
+   "SANTO DOMINGO": [
+    "SANTO DOMINGO",
+    "SAN VICENTE",
+    "SAN MIGUEL",
+    "PARACITO",
+    "SANTO TOMAS",
+    "SANTA ROSA",
+    "TURES",
+    "PARA"
+   ],
+   "SANTA BARBARA": [
+    "SANTA BARBARA",
+    "SAN PEDRO",
+    "SAN JUAN",
+    "JESUS",
+    "SANTO DOMINGO",
+    "PURABA"
+   ],
+   "SAN RAFAEL": [
+    "SAN RAFAEL",
+    "SAN JOSECITO",
+    "SANTIAGO",
+    "LOS ANGELES",
+    "CONCEPCION"
+   ],
+   "SAN ISIDRO": [
+    "SAN ISIDRO",
+    "SAN JOSE",
+    "CONCEPCION",
+    "SAN FRANCISCO"
+   ],
+   "BELEN": [
+    "SAN ANTONIO",
+    "LA RIBERA",
+    "LA ASUNCION"
+   ],
+   "FLORES": [
+    "SAN JOAQUIN",
+    "BARRANTES",
+    "LLORENTE"
+   ],
+   "SAN PABLO": [
+    "SAN PABLO",
+    "RINCON DE SABANILLA"
+   ],
+   "SARAPIQUI": [
+    "PUERTO VIEJO",
+    "LA VIRGEN",
+    "LAS HORQUETAS",
+    "LLANURAS DEL GASPAR",
+    "CUREÑA"
+   ]
+  },
+  "GUANACASTE": {
+   "LIBERIA": [
+    "LIBERIA",
+    "CAÑAS DULCES",
+    "MAYORGA",
+    "NACASCOLO",
+    "CURUBANDE"
+   ],
+   "NICOYA": [
+    "NICOYA",
+    "MANSION",
+    "SAN ANTONIO",
+    "QUEBRADA HONDA",
+    "SAMARA",
+    "NOSARA",
+    "BELEN DE NOSARITA"
+   ],
+   "SANTA CRUZ": [
+    "SANTA CRUZ",
+    "BOLSON",
+    "VEINTISIETE DE ABRIL",
+    "TEMPATE",
+    "CARTAGENA",
+    "CUAJINIQUIL",
+    "DIRIA",
+    "CABO VELAS",
+    "TAMARINDO"
+   ],
+   "BAGACES": [
+    "BAGACES",
+    "LA FORTUNA",
+    "MOGOTE",
+    "RIO NARANJO"
+   ],
+   "CARRILLO": [
+    "FILADELFIA",
+    "PALMIRA",
+    "SARDINAL",
+    "BELEN"
+   ],
+   "CAÑAS": [
+    "CAÑAS",
+    "PALMIRA",
+    "SAN MIGUEL",
+    "BEBEDERO",
+    "POROZAL"
+   ],
+   "ABANGARES": [
+    "LAS JUNTAS",
+    "SIERRA",
+    "SAN JUAN",
+    "COLORADO"
+   ],
+   "TILARAN": [
+    "TILARAN",
+    "QUEBRADA GRANDE",
+    "TRONADORA",
+    "SANTA ROSA",
+    "LIBANO",
+    "TIERRAS MORENAS",
+    "ARENAL",
+    "CABECERAS"
+   ],
+   "NANDAYURE": [
+    "CARMONA",
+    "SANTA RITA",
+    "ZAPOTAL",
+    "SAN PABLO",
+    "PORVENIR",
+    "BEJUCO"
+   ],
+   "LA CRUZ": [
+    "LA CRUZ",
+    "SANTA CECILIA",
+    "LA GARITA",
+    "SANTA ELENA"
+   ],
+   "HOJANCHA": [
+    "HOJANCHA",
+    "MONTE ROMO",
+    "PUERTO CARRILLO",
+    "HUACAS",
+    "MATAMBU"
+   ]
+  },
+  "PUNTARENAS": {
+   "PUNTARENAS": [
+    "PUNTARENAS",
+    "PITAHAYA",
+    "CHOMES",
+    "LEPANTO",
+    "PAQUERA",
+    "MANZANILLO",
+    "GUACIMAL",
+    "BARRANCA",
+    "ISLA DEL COCO",
+    "COBANO",
+    "CHACARITA",
+    "CHIRA",
+    "ACAPULCO",
+    "EL ROBLE",
+    "ARANCIBIA"
+   ],
+   "ESPARZA": [
+    "ESPIRITU SANTO",
+    "SAN JUAN GRANDE",
+    "MACACONA",
+    "SAN RAFAEL",
+    "SAN JERONIMO",
+    "CALDERA"
+   ],
+   "BUENOS AIRES": [
+    "BUENOS AIRES",
+    "VOLCAN",
+    "POTRERO GRANDE",
+    "BORUCA",
+    "PILAS",
+    "COLINAS",
+    "CHANGUENA",
+    "BIOLLEY",
+    "BRUNKA"
+   ],
+   "MONTES DE ORO": [
+    "MIRAMAR",
+    "LA UNION",
+    "SAN ISIDRO"
+   ],
+   "OSA": [
+    "PUERTO CORTES",
+    "PALMAR",
+    "SIERPE",
+    "BAHIA BALLENA",
+    "PIEDRAS BLANCAS",
+    "BAHIA DRAKE"
+   ],
+   "QUEPOS": [
+    "QUEPOS",
+    "SAVEGRE",
+    "NARANJITO"
+   ],
+   "GOLFITO": [
+    "GOLFITO",
+    "GUAYCARA",
+    "PAVON"
+   ],
+   "COTO BRUS": [
+    "SAN VITO",
+    "SABALITO",
+    "AGUABUENA",
+    "LIMONCITO",
+    "PITTIER",
+    "GUTIERREZ BRAUN"
+   ],
+   "PARRITA": [
+    "PARRITA"
+   ],
+   "CORREDORES": [
+    "CORREDOR",
+    "LA CUESTA",
+    "CANOAS",
+    "LAUREL"
+   ],
+   "GARABITO": [
+    "JACO",
+    "TARCOLES",
+    "LAGUNILLAS"
+   ],
+   "MONTEVERDE": [
+    "MONTEVERDE"
+   ],
+   "PUERTO JIMENEZ": [
+    "PUERTO JIMENEZ"
+   ]
+  },
+  "LIMON": {
+   "LIMON": [
+    "LIMON",
+    "VALLE LA ESTRELLA",
+    "RIO BLANCO",
+    "MATAMA"
+   ],
+   "POCOCI": [
+    "GUAPILES",
+    "JIMENEZ",
+    "RITA",
+    "ROXANA",
+    "CARIARI",
+    "COLORADO",
+    "LA COLONIA"
+   ],
+   "SIQUIRRES": [
+    "SIQUIRRES",
+    "PACUARITO",
+    "FLORIDA",
+    "GERMANIA",
+    "EL CAIRO",
+    "ALEGRIA",
+    "REVENTAZON"
+   ],
+   "TALAMANCA": [
+    "BRATSI",
+    "SIXAOLA",
+    "CAHUITA",
+    "TELIRE"
+   ],
+   "MATINA": [
+    "MATINA",
+    "BATAN",
+    "CARRANDI"
+   ],
+   "GUACIMO": [
+    "GUACIMO",
+    "MERCEDES",
+    "POCORA",
+    "RIO JIMENEZ",
+    "DUACARI"
+   ]
+  }
+ }
+}
