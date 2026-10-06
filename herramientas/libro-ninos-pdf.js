@@ -395,6 +395,13 @@ const ESTILO = `
   .diploma .firmas { margin-top: auto; display: flex; justify-content: space-between; gap: 12mm; font-size: 11pt; }
   .diploma .firmas div { flex: 1; border-top: 1.5px solid #5b4636; padding-top: 2mm; }
   .diploma .firmas strong { font-family: "Quicksand"; display: block; font-size: 12pt; }
+  /* La firma de los personajes va arriba de la línea, como hecha a mano; abajo,
+     el nombre impreso. El autor va aparte, abajo al centro con el logo: el
+     logo es el gris de la marca de agua, porque el crema no se ve sobre el
+     fondo crema del diploma. */
+  .diploma .firma-mano { display: block; font-family: "Comic Neue"; font-weight: 700; font-style: italic; font-size: 16pt; color: #1864ab; margin: -11mm 0 3mm; transform: rotate(-5deg); white-space: nowrap; }
+  .diploma .autoria { display: flex; align-items: center; justify-content: center; gap: 2.5mm; margin-top: 7mm; font-family: "Quicksand"; font-weight: 700; font-size: 9.5pt; color: #7a5c3e; }
+  .diploma .autoria img { width: 11mm; height: auto; }
 `;
 
 function soluciones() {
@@ -440,7 +447,8 @@ ${L.CAPITULOS.map(capituloHTML).join("")}
   <p class="sub">${esc(L.DIPLOMA.sub)}</p>
   <div class="nombre"></div>
   <p class="texto">${L.DIPLOMA.texto.map(esc).join("<br>")}</p>
-  <div class="firmas"><div><strong>Fecha</strong></div><div><strong>${esc(L.DIPLOMA.firma)}</strong>${esc(L.AUTOR)}</div></div>
+  <div class="firmas"><div><strong>Fecha</strong></div><div><span class="firma-mano">${esc(L.DIPLOMA.firmaMano)}</span><strong>${esc(L.DIPLOMA.firma)}</strong></div></div>
+  <div class="autoria"><img src="${LOGO_MARCA}" alt="">${esc(L.AUTOR)}</div>
 </section>
 ${soluciones()}
 </body></html>`;

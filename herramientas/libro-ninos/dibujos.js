@@ -236,10 +236,20 @@ function globo(x, y, ancho, texto, cola, opciones) {
     `</g>`;
 }
 
-function guarumo(x, y, s) {
+/* `grabado`: un corazoncito tallado en el tronco con unas letras adentro,
+   chiquito, para encontrarlo con lupa (un secreto para Alessandro; ver
+   «Cada cuento lleva un secreto para Alessandro»). Lleva data-grabado para
+   que el verificador compruebe que sigue ahí. */
+function guarumo(x, y, s, opciones) {
+  const o = opciones || {};
+  const grabado = o.grabado
+    ? `<g data-grabado="${esc(o.grabado)}" transform="translate(0,-34)">` +
+      `<path d="M0,5 C-3,1 -9,1 -8.5,-3.5 C-8,-7.5 -2.5,-8 0,-4 C2.5,-8 8,-7.5 8.5,-3.5 C9,1 3,1 0,5 Z" fill="#b39b7d" stroke="#5b4636" stroke-width="0.9"/>` +
+      `<text x="0" y="-0.6" text-anchor="middle" font-family="Quicksand, sans-serif" font-weight="700" font-size="4.6" fill="#3b2a1e">${esc(o.grabado)}</text></g>`
+    : "";
   return `<g transform="translate(${x},${y}) scale(${s || 1})">` +
     `<path d="M-6,0 L-4,-150 L4,-150 L6,0 Z" fill="#c8b59a" stroke="#7a6248" stroke-width="2"/>` +
-    `<path d="M-4,-60 H4 M-4,-100 H4" stroke="#7a6248" stroke-width="2"/>` +
+    `<path d="M-4,-60 H4 M-4,-100 H4" stroke="#7a6248" stroke-width="2"/>` + grabado +
     [[-48, -150], [0, -172], [48, -150], [-26, -125], [26, -125]].map(([dx, dy]) =>
       `<g transform="translate(${dx},${dy})">` +
       [0, 60, 120, 180, 240, 300].map((a) => `<ellipse cx="0" cy="-15" rx="8" ry="18" transform="rotate(${a})" fill="#51cf66" stroke="#2b8a3e" stroke-width="1.5"/>`).join("") +

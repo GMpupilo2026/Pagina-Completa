@@ -656,6 +656,7 @@ const DIPLOMA = {
   titulo: "Diploma de ajedrez",
   sub: "El reino de las 64 casillas reconoce a",
   firma: "Peonita y Don Lento",
+  firmaMano: "Peonita ♥ Don Lento",
   texto: ["porque aprendió a mover todas las piezas, a dar jaque mate", "y a jugar con la cabeza y con el corazón."],
 };
 

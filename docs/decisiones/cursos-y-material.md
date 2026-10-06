@@ -1096,6 +1096,11 @@ porque está escondido. Este archivo y `herramientas/` no se publican
   diagrama dice qué son los puntos.
 - Con un solo diagrama, el diagrama y «Lo que aprendí» van lado a lado: si no,
   el recuadro quedaba solo en una página casi vacía.
+- **El diploma** lleva la firma de los personajes arriba de la línea, como
+  hecha a mano («Peonita ♥ Don Lento»), y su nombre impreso abajo. El autor va
+  aparte, abajo al centro y en pequeño, junto al logo gris de la marca de agua
+  (el crema no se ve sobre el fondo crema). Es el mismo diseño de los diplomas
+  que se le hacen a mano a quien termina un libro.
 - Comparte con «Ponte a prueba» el cierre (`lib/pdf-armar.js`) y el
   `describir()` de la versión accesible. Va en `admin.html#materiales` y se
   comparte igual; sin pruebas como cuestionario, esa sección no aparece.
@@ -1111,8 +1116,14 @@ travieso, se lleva las piezas que nadie cuida; Peonita y Tizón aprenden un
 truco por capítulo, le ganan el torneo y se vuelve su amigo. Vuelve Don
 Saleras, el alfil, a enseñar la clavada.
 
-**El secreto para Alessandro son los títulos**: las iniciales de los diez
-capítulos, leídas de arriba hacia abajo en el índice, dicen ALESSANDRO.
+**Los secretos para Alessandro**: las iniciales de los diez títulos, leídas
+de arriba hacia abajo en el índice, dicen ALESSANDRO. Y en el capítulo 1, en
+el tronco del árbol donde Peonita se esconde para espiar a Don Pillo, hay un
+corazoncito grabado con «ALE» adentro (`guarumo(…, { grabado })` de
+`dibujos.js`). Impreso mide unos 2 mm: se encuentra con lupa, como buscan los
+trucos Peonita y Tizón. La descripción del dibujo dice que hay un corazón
+grabado, pero no qué dice. El verificador comprueba que el árbol siga
+teniéndolo (`data-grabado`).
 
 ### En un libro de trucos, la respuesta tiene que ser LA jugada
 

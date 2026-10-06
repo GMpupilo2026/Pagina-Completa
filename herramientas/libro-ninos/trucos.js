@@ -18,7 +18,10 @@
  *
  * El secreto para Alessandro (ver «Cada cuento lleva un secreto para
  * Alessandro» en docs/decisiones/cursos-y-material.md): las iniciales de los
- * diez títulos, de arriba hacia abajo en el índice, dicen ALESSANDRO.
+ * diez títulos, de arriba hacia abajo en el índice, dicen ALESSANDRO. Y en
+ * el capítulo 1, en el tronco del árbol donde se esconde Peonita, hay un
+ * corazoncito grabado con «ALE» adentro, tan chiquito que hay que buscarlo
+ * con lupa.
  */
 "use strict";
 const D = require("./dibujos.js");
@@ -31,7 +34,7 @@ const TITULO_PDF = "Peonita, Tizon y los trucos del bosque";
 const SUBTITULO = "Un cuento para aprender los primeros trucos del ajedrez";
 const ASUNTO = "Cuento para que ninas y ninos aprendan los primeros trucos tacticos del ajedrez";
 const SECRETO = "ALESSANDRO";
-const SECRETOS = [{ tipo: "acrostico-titulos" }];
+const SECRETOS = [{ tipo: "acrostico-titulos" }, { tipo: "grabado", texto: "ALE" }];
 
 const TAPA = {
   arriba: "Peonita, Tizón", medio: "y los trucos del", abajo: "bosque",
@@ -80,8 +83,8 @@ const CAPITULOS = [
     titulo: "Atención: piezas sin cuidar",
     escena: {
       id: "pillo", fondo: "noche",
-      alt: "De noche, en el bosque, un mapache con antifaz se lleva una torre blanca bajo el brazo. Peonita lo ve desde atrás de un árbol, con cara de sorpresa.",
-      contenido: D.guarumo(90, 250, 0.85) + D.mapache(380, 292, 0.95) + D.pieza("t", "b", 450, 245, 0.45, { cara: "sorpresa" }) +
+      alt: "De noche, en el bosque, un mapache con antifaz se lleva una torre blanca bajo el brazo. Peonita lo ve desde atrás de un árbol, con cara de sorpresa. En el tronco del árbol hay un corazoncito grabado.",
+      contenido: D.guarumo(90, 250, 0.85, { grabado: "ALE" }) + D.mapache(380, 292, 0.95) + D.pieza("t", "b", 450, 245, 0.45, { cara: "sorpresa" }) +
         D.pieza("p", "b", 175, 292, 0.8, { mono: true, cara: "sorpresa" }) + D.estrella(250, 60, 8) + D.estrella(330, 40, 6),
     },
     cuento: [
@@ -431,6 +434,7 @@ const DIPLOMA = {
   titulo: "Diploma de detective de trucos",
   sub: "Peonita, Tizón y Don Pillo reconocen a",
   firma: "Peonita, Tizón y Don Pillo",
+  firmaMano: "Peonita ♥ Tizón ♥ Don Pillo",
   texto: ["porque aprendió a encontrar horquillas, clavadas, enfiladas y descubiertas,", "y a mirar siempre qué quiere hacer su amigo antes de jugar."],
 };
 

@@ -223,6 +223,9 @@ const letras = (t) => t.normalize("NFD").toUpperCase().replace(/[^A-Z]/g, "").sp
   } else if (sec.tipo === "anagrama") {
     ok(letras(sec.nombre) === letras(L.SECRETO), `${L.SLUG}: «${sec.nombre}» ya no tiene las mismas letras que ${L.SECRETO}`);
     ok(JSON.stringify(L.CAPITULOS).includes(sec.nombre), `${L.SLUG}: «${sec.nombre}» ya no aparece en el cuento`);
+  } else if (sec.tipo === "grabado") {
+    ok(L.SECRETO.startsWith(sec.texto), `${L.SLUG}: el grabado «${sec.texto}» no es parte de ${L.SECRETO}`);
+    ok(L.CAPITULOS.some((c) => c.escena.contenido.includes(`data-grabado="${sec.texto}"`)), `${L.SLUG}: ya no hay ningún árbol con el grabado «${sec.texto}»`);
   } else {
     fallos.push(`${L.SLUG}: secreto de tipo desconocido (${sec.tipo})`);
   }
