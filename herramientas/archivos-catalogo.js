@@ -57,6 +57,7 @@ const TITULOS = {
   "material/fichas-de-estudio/fichas-de-estudio-cartas.pdf": "Fichas de estudio — cartas para recortar",
   "material/guia-del-profesor/guia-del-profesor.pdf": "Guía del profesor — manual",
   "material/guia-del-profesor/guia-del-profesor-presentacion.pdf": "Guía del profesor — presentación",
+  "material/peonita/peonita.pdf": "Peonita y el reino de las 64 casillas — el cuento ilustrado",
   "cursos/recursos/formacion-ajedrez/08-prueba-final.pdf": "Prueba final teórica",
   "cursos/recursos/formacion-ajedrez/08-torneo-real-evaluacion-formularios.pdf": "Formularios y lista de cotejo del torneo",
   "instrucciones-adaptadas.pdf": "Instrucciones adaptadas (para quien ve poco o no ve)",
@@ -82,6 +83,7 @@ const LIBROS = {
   "examen-de-arbitraje": "Examen de arbitraje",
   "fichas-de-estudio": "Fichas de estudio",
   "guia-del-profesor": "Guía del profesor",
+  "peonita": "Peonita y el reino de las 64 casillas",
 };
 
 function tituloDe(ruta) {

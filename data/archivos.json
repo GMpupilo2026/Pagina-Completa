@@ -23,7 +23,7 @@
     "nombre": "Formación docente"
    }
   ],
-  "total": 433,
+  "total": 434,
   "material": [
    {
     "ruta": "material/diagnostico-de-nivel/diagnostico-de-nivel.pdf",
@@ -80,6 +80,13 @@
     "tipo": "otro",
     "kb": 2933,
     "libro": "Mide tu fuerza"
+   },
+   {
+    "ruta": "material/peonita/peonita.pdf",
+    "titulo": "Peonita y el reino de las 64 casillas — el cuento ilustrado",
+    "tipo": "otro",
+    "kb": 1495,
+    "libro": "Peonita y el reino de las 64 casillas"
    },
    {
     "ruta": "material/ponte-a-prueba/ponte-a-prueba.pdf",
@@ -6630,7 +6637,7 @@
     "nombre": "Formación docente"
    }
   ],
-  "total": 192,
+  "total": 193,
   "material": [
    {
     "ruta": "material/fichas-de-estudio/fichas-de-estudio-accesible.html",
@@ -6652,6 +6659,13 @@
     "tipo": "accesible",
     "kb": 347,
     "libro": "Mide tu fuerza"
+   },
+   {
+    "ruta": "material/peonita/peonita-accesible.html",
+    "titulo": "Peonita y el reino de las 64 casillas",
+    "tipo": "accesible",
+    "kb": 45,
+    "libro": "Peonita y el reino de las 64 casillas"
    },
    {
     "ruta": "material/ponte-a-prueba/ponte-a-prueba-accesible.html",

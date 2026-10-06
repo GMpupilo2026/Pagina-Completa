@@ -395,13 +395,21 @@
 
     ant.addEventListener("click", () => mostrar(indice - 1));
     sig.addEventListener("click", () => mostrar(indice + 1));
-    cerrar.addEventListener("click", () => d.close());
-    d.addEventListener("close", () => {
+    // Cerrar limpia y devuelve el foco en el acto. El evento «close» llega un
+    // momento después: si el foco volviera recién ahí, le quitaría el foco a lo
+    // que la persona ya eligió entre tanto. (Con Esc, el navegador cierra solo
+    // y queda el evento.)
+    function alCerrar() {
+      if (!volverA && !cuerpo.firstChild) return;
       turno++;
       soltar();
       cuerpo.replaceChildren();
-      if (volverA && volverA.isConnected) volverA.focus();
-    });
+      const v = volverA;
+      volverA = null;
+      if (v && v.isConnected) v.focus();
+    }
+    cerrar.addEventListener("click", () => { d.close(); alCerrar(); });
+    d.addEventListener("close", alCerrar);
     // Con las flechas del teclado (fuera de un campo o del visor) se pasa de archivo.
     d.addEventListener("keydown", (e) => {
       if (e.target.closest("input, select, textarea, iframe")) return;

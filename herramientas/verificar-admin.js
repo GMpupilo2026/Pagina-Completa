@@ -571,16 +571,21 @@ async function pruebaMateriales(browser) {
   const resumen = () => page.textContent("#mat-lista [role=status]");
   const lista = () => page.evaluate(() => Array.from(document.querySelectorAll("#mat-lista article > section:first-of-type ul:first-of-type > li"))
     .filter((li) => li.checkVisibility()).map((li) => li.querySelector("p").textContent));
-  igual("los dos libros, con sus archivos", await page.evaluate(() => Array.from(document.querySelectorAll("#mat-lista article > div:first-child a[href^='material/']")).map((a) => a.getAttribute("href"))),
+  igual("los libros, con sus archivos", await page.evaluate(() => Array.from(document.querySelectorAll("#mat-lista article > div:first-child a[href^='material/']")).map((a) => a.getAttribute("href"))),
     ["material/ponte-a-prueba/ponte-a-prueba.pdf", "material/ponte-a-prueba/ponte-a-prueba-accesible.html",
      "material/ponte-a-prueba/versiones/claves-de-correccion.pdf", "material/ponte-a-prueba/ponte-a-prueba-versiones-accesible.html",
-     "material/mide-tu-fuerza/mide-tu-fuerza.pdf", "material/mide-tu-fuerza/mide-tu-fuerza-accesible.html"]);
+     "material/mide-tu-fuerza/mide-tu-fuerza.pdf", "material/mide-tu-fuerza/mide-tu-fuerza-accesible.html",
+     "material/peonita/peonita.pdf", "material/peonita/peonita-accesible.html"]);
   // El banco de ejercicios no tiene pruebas como cuestionario: solo se
   // comparte. Antes de separarlo, cualquier material sin pruebas pintaba
   // igual el título y «todavía no están en la base».
   igual("el banco de ejercicios se comparte y no tiene sección de pruebas", await page.evaluate(() => {
     const art = document.querySelector("#mat-lista article[aria-labelledby='mat-titulo-mide-tu-fuerza']");
     return [art.querySelectorAll(":scope > section").length, /como cuestionario/.test(art.textContent), !!art.querySelector("#mat-mide-tu-fuerza-buscar")];
+  }), [1, false, true]);
+  igual("el cuento de Peonita tampoco", await page.evaluate(() => {
+    const art = document.querySelector("#mat-lista article[aria-labelledby='mat-titulo-peonita']");
+    return [art.querySelectorAll(":scope > section").length, /como cuestionario/.test(art.textContent), !!art.querySelector("#mat-peonita-buscar")];
   }), [1, false, true]);
   igual("dice con quién está compartido, también con palabras", [await resumen(), await lista()],
     ["Lo tienen: 1 academia, y tú.", ["🏫 Academia Norte"]]);
@@ -645,6 +650,14 @@ async function pruebaMateriales(browser) {
    su marco, la presentación diapositiva por diapositiva, el Word con su
    texto). Lo que se ve se mide con checkVisibility(). Que el JSON esté al día
    con el disco lo cuida verificar-archivos-catalogo.js. */
+/* Un clic como el de una persona, con el botón en el medio de la pantalla:
+   en el borde lo pueden tapar el encabezado fijo o la burbuja de conectados, y
+   Playwright reintenta hasta que se le acaba el tiempo. */
+async function clic(page, selector) {
+  await page.locator(selector).first().evaluate((e) => e.scrollIntoView({ block: "center" }));
+  await page.click(selector);
+}
+
 async function pruebaPdfs(browser) {
   console.log("\n=== Archivos: explorador por carpetas y vista previa ===");
   const todo = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "data", "archivos.json"), "utf8"));
@@ -680,7 +693,7 @@ async function pruebaPdfs(browser) {
 
   // Un curso: sus lecciones, cada una con su material y sus ejercicios.
   const curso0 = catalogo.cursos[0];
-  await page.click("#arch-carpetas-pdf .arch-carpeta[data-carpeta='curso-" + curso0.slug + "']");
+  await clic(page, "#arch-carpetas-pdf .arch-carpeta[data-carpeta='curso-" + curso0.slug + "']");
   const vistoCurso = await page.evaluate(() => {
     const c = document.getElementById("arch-contenido-pdf");
     const b = c.querySelector(".arch-bloque");
@@ -712,7 +725,7 @@ async function pruebaPdfs(browser) {
   // Todos los PDF se alcanzan recorriendo las carpetas.
   const vistos = new Set();
   for (const id of await page.evaluate(() => Array.from(document.querySelectorAll("#arch-carpetas-pdf .arch-carpeta")).map((b) => b.dataset.carpeta))) {
-    await page.click("#arch-carpetas-pdf .arch-carpeta[data-carpeta='" + id + "']");
+    await clic(page, "#arch-carpetas-pdf .arch-carpeta[data-carpeta='" + id + "']");
     (await page.evaluate(() => Array.from(document.querySelectorAll("#arch-contenido-pdf .arch-fila")).map((f) => f.dataset.ruta))).forEach((r) => vistos.add(r));
   }
   igual("recorriendo las carpetas están todos los PDF, cada uno una vez", [vistos.size, rutasDe(catalogo).every((r) => vistos.has(r))], [catalogo.total, true]);
@@ -723,17 +736,17 @@ async function pruebaPdfs(browser) {
   }, [...vistos].filter((_, i) => i % 37 === 0)), []);
 
   // «Bajar los N» de una carpeta baja esos N.
-  await page.click("#arch-carpetas-pdf .arch-carpeta[data-carpeta='curso-" + curso0.slug + "']");
+  await clic(page, "#arch-carpetas-pdf .arch-carpeta[data-carpeta='curso-" + curso0.slug + "']");
   const bajados = [];
   page.on("download", (d) => bajados.push(d.suggestedFilename()));
-  await page.click("#arch-contenido-pdf [data-bajar-grupo]");
+  await clic(page, "#arch-contenido-pdf [data-bajar-grupo]");
   await page.waitForFunction(() => /^Listo/.test(document.querySelector("#arch-contenido-pdf [role=status]").textContent), null, { timeout: 40000 });
   igual("«Bajar los N» de un curso baja esos N", bajados.slice().sort(),
     curso0.lecciones.flatMap((l) => l.archivos).concat(curso0.otros).map((a) => a.ruta.split("/").pop()).sort());
   if (process.env.CAPTURAS) await page.screenshot({ path: path.join(process.env.CAPTURAS, "admin-pdf.png"), fullPage: true });
 
   // La vista previa de un PDF: en su marco, sin salir de la página.
-  await page.click("#arch-contenido-pdf .arch-fila [data-vista]");
+  await clic(page, "#arch-contenido-pdf .arch-fila [data-vista]");
   await page.waitForSelector("#vista-previa[open] iframe", { timeout: 5000 });
   const vp = await page.evaluate(() => {
     const d = document.getElementById("vista-previa");
@@ -762,14 +775,14 @@ async function pruebaPdfs(browser) {
     const filas = Array.from(document.querySelectorAll("#arch-contenido-word .arch-fila")).filter((f) => f.checkVisibility());
     return [filas.map((f) => f.dataset.ruta).sort(), filas.every((f) => f.querySelectorAll("a").length === 1 && f.querySelector("[data-vista]"))];
   }), [rutasDe(todo.word).sort(), true]);
-  await page.click("#arch-contenido-word .arch-fila [data-vista]");
+  await clic(page, "#arch-contenido-word .arch-fila [data-vista]");
   await page.waitForSelector("#vista-previa[open] .vista-contenido p", { timeout: 10000 });
   igual("la vista previa del Word trae su texto (y nada del archivo se ejecuta)", await page.evaluate(() => {
     const c = document.querySelector("#vista-previa .vista-contenido");
     return [/CONSENTIMIENTO INFORMADO/.test(c.textContent), c.querySelectorAll("script, iframe").length, document.getElementById("vista-previa-abrir").checkVisibility()];
   }), [true, 0, false]);
   if (process.env.CAPTURAS) await page.screenshot({ path: path.join(process.env.CAPTURAS, "admin-word.png") });
-  await page.click("#vista-previa-cerrar");
+  await clic(page, "#vista-previa-cerrar");
 
   await page.focus("#arch-ficha-word");
   await page.keyboard.press("ArrowRight");
@@ -782,7 +795,7 @@ async function pruebaPdfs(browser) {
   const pres = todo.presentaciones;
   const vistasPres = new Set();
   for (const id of await page.evaluate(() => Array.from(document.querySelectorAll("#arch-carpetas-presentaciones .arch-carpeta")).map((b) => b.dataset.carpeta))) {
-    await page.click("#arch-carpetas-presentaciones .arch-carpeta[data-carpeta='" + id + "']");
+    await clic(page, "#arch-carpetas-presentaciones .arch-carpeta[data-carpeta='" + id + "']");
     (await page.evaluate(() => Array.from(document.querySelectorAll("#arch-contenido-presentaciones .arch-fila")).map((f) => f.dataset.ruta))).forEach((r) => vistasPres.add(r));
   }
   igual("Presentaciones: recorriendo las carpetas están todas, una vez", [vistasPres.size, rutasDe(pres).every((r) => vistasPres.has(r))], [pres.total, true]);
@@ -791,8 +804,8 @@ async function pruebaPdfs(browser) {
     pres.cursos.map((c) => c.titulo));
   // La presentación de una lección con imágenes (los diagramas del curso).
   const mapa = pres.cursos.find((c) => c.slug === "el-mapa-de-los-finales");
-  await page.click("#arch-carpetas-presentaciones .arch-carpeta[data-carpeta='curso-el-mapa-de-los-finales']");
-  await page.click("#arch-contenido-presentaciones .arch-fila [data-vista]");
+  await clic(page, "#arch-carpetas-presentaciones .arch-carpeta[data-carpeta='curso-el-mapa-de-los-finales']");
+  await clic(page, "#arch-contenido-presentaciones .arch-fila [data-vista]");
   await page.waitForSelector("#vista-previa[open] .vista-diapositiva", { timeout: 15000 });
   const rutaPres = mapa.lecciones[0].archivos[0].ruta;
   const zip = fs.readFileSync(path.join(__dirname, "..", rutaPres)).toString("latin1");
@@ -807,7 +820,7 @@ async function pruebaPdfs(browser) {
     [enArchivo, "Diapositiva 1 de " + enArchivo, true, true, true]);
   if (process.env.CAPTURAS) await page.screenshot({ path: path.join(process.env.CAPTURAS, "admin-presentaciones.png") });
   if (process.env.CAPTURAS) await page.locator("#vista-previa .vista-diapositiva:has(img)").first().screenshot({ path: path.join(process.env.CAPTURAS, "admin-diapositiva.png") });
-  await page.click("#vista-previa-cerrar");
+  await clic(page, "#vista-previa-cerrar");
   // El evento «close» llega un momento después de cerrar.
   await page.waitForFunction(() => !document.querySelector("#vista-previa img"), null, { timeout: 3000 }).catch(() => {});
   igual("al cerrar, las imágenes se sueltan (no quedan en memoria)", await page.evaluate(() =>
@@ -819,7 +832,7 @@ async function pruebaPdfs(browser) {
   const acc = todo.accesibles;
   const vistasAcc = new Set();
   for (const id of await page.evaluate(() => Array.from(document.querySelectorAll("#arch-carpetas-accesibles .arch-carpeta")).map((b) => b.dataset.carpeta))) {
-    await page.click("#arch-carpetas-accesibles .arch-carpeta[data-carpeta='" + id + "']");
+    await clic(page, "#arch-carpetas-accesibles .arch-carpeta[data-carpeta='" + id + "']");
     (await page.evaluate(() => Array.from(document.querySelectorAll("#arch-contenido-accesibles .arch-fila")).map((f) => f.dataset.ruta))).forEach((r) => vistasAcc.add(r));
   }
   igual("Versiones accesibles: recorriendo las carpetas están todas, una vez", [vistasAcc.size, rutasDe(acc).every((r) => vistasAcc.has(r))], [acc.total, true]);
@@ -827,14 +840,14 @@ async function pruebaPdfs(browser) {
     document.querySelector("#arch-carpetas-accesibles .arch-carpeta").click();
     return document.querySelector("#arch-contenido-accesibles .arch-fila p").textContent;
   }), acc.material[0].titulo);
-  await page.click("#arch-contenido-accesibles .arch-fila [data-vista]");
+  await clic(page, "#arch-contenido-accesibles .arch-fila [data-vista]");
   await page.waitForSelector("#vista-previa[open] iframe", { timeout: 5000 });
   igual("la vista previa la muestra en un marco sin programas, y se puede abrir aparte", await page.evaluate(() => {
     const f = document.querySelector("#vista-previa iframe");
     return [f.getAttribute("src"), f.getAttribute("sandbox"), document.getElementById("vista-previa-abrir").checkVisibility(),
       document.querySelector("#arch-contenido-accesibles .arch-fila a[target='_blank']") !== null];
   }), [acc.material[0].ruta, "allow-same-origin allow-popups", true, true]);
-  await page.click("#vista-previa-cerrar");
+  await clic(page, "#vista-previa-cerrar");
 
   await page.focus("#arch-ficha-accesibles");
   await page.keyboard.press("ArrowRight");
@@ -871,7 +884,7 @@ async function pruebaPdfs(browser) {
     return t ? [document.querySelector("#vista-previa .vista-contenido h3").textContent,
       Array.from(t.querySelectorAll("tr")).map((tr) => Array.from(tr.children).map((td) => td.textContent)), t.querySelectorAll("b").length] : "sin tabla";
   }), ["Hoja: Notas", [["Alumno", "Puntos"], ["<b>Ana</b>", "42"]], 0]);
-  await page.click("#vista-previa-cerrar");
+  await clic(page, "#vista-previa-cerrar");
   igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
   await ctx.close();
 }
