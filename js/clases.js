@@ -1751,7 +1751,10 @@
             document.getElementById("session-status-open").classList.toggle("hidden", !openSession);
             document.getElementById("session-status-closed").classList.toggle("hidden", !!openSession);
             document.getElementById("closed-status-hint").textContent = isTeacher
-                ? "No hace falta apretar nada: la clase se abre sola al entrar a Sesión en vivo, en cuanto llegue un alumno o mandes una posición."
+                /* La clase ya no se abre sola cuando llega un alumno: la abre
+                   el profe (ver «La sesión en vivo se abre cuando el profesor
+                   la abre»). Este texto decía lo contrario. */
+                ? "Hasta que la abras, tus alumnos no pueden entrar. Ábrela aquí con «Iniciar clase», o dentro de la Sesión en vivo con «Abrir la clase» o al mandar una posición."
                 : "";
 
             /* La tarjeta entera solo aparece cuando tiene algo que decir: hay

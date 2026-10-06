@@ -521,6 +521,13 @@ async function pruebaProfesora(browser) {
       "#tile-grid [href='lector-planilla.html'], #tile-grid [href='tienda.html'], #tile-grid [href='novedades.html']").length), "0");
   /* La guía del profesor sí es suya: va en «Tu cuenta», con el «?» de cada
      página. Ver «El «?» de la guía, para el equipo docente». */
+  /* La clase ya no se abre sola cuando llega un alumno (ver «La sesión en
+     vivo se abre cuando el profesor la abre»): el texto de la tarjeta lo
+     decía igual, y un entrenador nuevo esperaba a que se abriera. */
+  igual("sin clase abierta, la tarjeta dice que la abre ella y cómo", await page.evaluate(() => {
+    const t = document.getElementById("closed-status-hint").textContent;
+    return [/sola/.test(t), /Iniciar clase/.test(t), /no pueden entrar/.test(t)];
+  }), [false, true, true]);
   igual("«Tu cuenta»: configuración, la guía del profesor y logros",
     grupo(grupos, "Tu cuenta").tiles.map((t) => t.enlace),
     ["configuracion.html", "guia-del-profesor-accesible.html", "logros.html"]);

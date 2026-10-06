@@ -409,10 +409,22 @@ const PAGINAS = [
   { slug: "login", url: "/login.html", espera: "form, input[type=password]", sesion: false },
   { slug: "panel", url: "/clases.html", espera: "#tile-grid" },
   { slug: "sesion", url: "/sesion.html", espera: "#board, .board" },
+  /* La clase con «¿Qué quieres hacer?» buscando: lo que la lámina del
+     buscador cuenta es la lista que sale, no el campo vacío. */
+  { slug: "clase-buscar", url: "/sesion.html", espera: "#buscar-herramienta-campo",
+    antes: () => {
+      const c = document.getElementById("buscar-herramienta-campo");
+      if (!c) return;
+      c.scrollIntoView({ block: "start" });
+      c.value = "pregunta";
+      c.dispatchEvent(new Event("input"));
+    } },
   { slug: "planes", url: "/planes.html", espera: "main" },
   { slug: "tareas", url: "/tareas.html", espera: "main" },
   { slug: "examenes", url: "/examenes.html", espera: "main" },
   { slug: "informes", url: "/informes.html", espera: "main" },
+  /* El informe de UN alumno, con «Con este alumno» arriba. */
+  { slug: "informe-alumno", url: "/informes.html?alumno=demo-a1", espera: "#informe-acciones a" },
   { slug: "cursos-academia", url: "/cursos/academia/index.html", espera: "main" },
   { slug: "entreno", url: "/entreno/index.html", espera: "main" },
   { slug: "estudio", url: "/entreno/estudio.html", espera: "main" },
@@ -477,6 +489,11 @@ async function capturar(navegador, pagina) {
      vivo en «Cargando…» para siempre, sin ningún error. */
 
   if (pagina.sesion !== false) {
+    /* Una sesión guardada en el navegador: sin ella, la guardia del <head>
+       (ver «Sin sesión, al login antes de bajar nada») no deja cargar la
+       página y la captura se queda esperando. Solo en las páginas con sesión:
+       el login se fotografía como lo ve quien todavía no entró. */
+    await require("./lib/playwright-con-sesion").sembrar(ctx);
     const yo = pagina.quien === "admin" ? ADMIN : PROFE;
     await ctx.route("**/js/supabase-client.js", (r) =>
       r.fulfill({ status: 200, contentType: "application/javascript", body: clienteFalso({ yo }) }));
