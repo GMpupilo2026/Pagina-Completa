@@ -38,6 +38,8 @@ const VIGILADAS = [
   "vision_personas",
   // Un reconocimiento de la academia: quién dio (o anuló) cada certificado.
   "certificados",
+  // Con quién se comparte cada material de clase (admin.html#materiales).
+  "material_compartido",
 ];
 
 let fallos = 0;
