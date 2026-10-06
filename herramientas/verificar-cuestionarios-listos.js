@@ -116,7 +116,10 @@ igual("todas se pueden jugar desde la posición inicial", ilegales, []);
 
 console.log("\n=== Lo que se siembra ===");
 const s = sql();
-igual("el SQL borra los listos y siembra un nivel por sentencia", [(s.match(/delete from public\.cuestionarios where listo;/g) || []).length,
+// Borra SOLO los listos de la Academia: los de un material (las versiones de
+// «Ponte a prueba») tienen su propia semilla, y las tareas que apuntan a ellos
+// quedarían colgando.
+igual("el SQL borra los listos (no los de un material) y siembra un nivel por sentencia", [(s.match(/delete from public\.cuestionarios where listo and material is null;/g) || []).length,
   (s.match(/insert into public\.cuestionarios/g) || []).length], [1, 3]);
 igual("ningún texto rompe el entrecomillado del SQL (dos $q$ por título y dos por preguntas)", s.split("$q$").length - 1, 30 * 4);
 igual("fuente con la correcta primero: tres o más opciones y a lo sumo cuatro",

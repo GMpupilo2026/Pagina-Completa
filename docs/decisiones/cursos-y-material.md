@@ -844,3 +844,157 @@ cualquiera compruebe, sin cuenta, que es auténtico.
   leer la tabla; el alumno no se lo da a sí mismo; un profe ajeno, tampoco; con
   el curso a medias, «lleva 1 de 20 lecciones»; completo, sale; otro alumno no
   lo ve; anon lo comprueba con el código; queda en la bitácora; anulado, lo dice.
+
+## El libro «Ponte a prueba»
+
+Un libro de examen de Oscar Angulo Cubero: 180 posiciones en seis pruebas de
+30 para medirse uno mismo, con soluciones, planilla de puntos, tablas que pasan
+los puntos a una fuerza en Elo —total y por categoría— y una guía de qué
+entrenar según lo que salga flojo. Lo arman dos scripts:
+
+- `herramientas/libro-examen-generar.js` escribe el banco,
+  `material/ponte-a-prueba/banco.js` (no se edita a mano);
+- `herramientas/libro-examen-pdf.js` escribe
+  `material/ponte-a-prueba/ponte-a-prueba.pdf` y su versión accesible.
+
+Lo revisa `verificar-libro-examen.js`.
+
+### Tomado de un libro ajeno como referencia, no copiado
+
+El dueño pidió un libro «basado» en *Chess Exam and Training Guide* y *Chess
+Exam: Tactics*, de Igor Khmelnitsky, «como si lo hiciera yo». Traducir esos
+libros y ponerles otra firma es publicar la obra de otro con nuestro nombre,
+y eso no se hace. Se tomó el **método**, que no es de nadie:
+
+- dos preguntas por posición: cómo queda y cuál es la jugada. Encontrar la
+  jugada sin saber adónde lleva vale menos que encontrarla entendiéndola;
+- crédito parcial y negativo, para que adivinar no sume;
+- cada posición suma a varias categorías, y la comparación entre categorías
+  es lo que dice qué entrenar;
+- una guía de entrenamiento por categoría.
+
+Las posiciones, los textos, las categorías, los puntos y las tablas son
+propios. Ninguna posición sale de esos libros.
+
+### Las posiciones y los puntos los decide el motor
+
+- Salen de la base abierta de Lichess (CC0), con los mismos filtros de calidad
+  que el diagnóstico, y pasan por el MISMO análisis de Stockfish
+  (`analizar()` de `diagnostico-lichess.js`, que ahora se exporta): una sola
+  jugada buena y tres opciones que tientan y fallan. Ninguna repite un
+  ejercicio del diagnóstico: el mismo ejercicio en las dos pruebas mediría
+  memoria.
+- La pregunta 1 tiene cuatro respuestas fijas: mate a la fuerza, más de 4
+  peones, de 2 a 4, menos de 2. Primero se probó «ganan / ventaja / igualdad /
+  negras mejor», y en un banco de ejercicios 154 de 180 tenían la misma
+  respuesta: contestar siempre «ganan» sacaba casi todo sin leer nada. Con
+  los cortes nuevos la más repetida queda en 74. Cerca de un corte la vecina
+  vale 2 y no 1: ahí dos lecturas son razonables.
+- En la pregunta 2 la buena vale 5, una que deja a las blancas mejor 1, una que
+  deja escapar la ventaja 0 y una que pierde −1, según lo que dice el motor de
+  cada una.
+- La dificultad es el rating de Lichess menos 710: el descuento de las
+  preguntas de opción con tablero más el corrimiento que midió la calibración
+  del diagnóstico.
+
+### Las seis pruebas son parejas
+
+Cada grupo de origen (apertura, táctica, ataque, cálculo, defensa, finales)
+aporta 30 posiciones de cinco tramos de dificultad, y se reparten de a una por
+prueba. Así cada prueba trae 5 de cada grupo de todas las dificultades y sirve
+sola como examen corto, con su propia tabla. Las seis juntas dan la fuerza por
+categoría.
+
+### Las tablas salen de la curva del Elo, no de un muestreo
+
+No hay todavía gente que haya hecho el libro, así que la tabla de puntos a
+fuerza se calcula: para una fuerza R, cada posición se acierta con probabilidad
+0,25 + 0,75 / (1 + 10^((elo − R)/400)), y al fallar se cobra el promedio de las
+otras opciones. Cuando se junten resultados reales conviene recalibrar como
+se hizo con el diagnóstico.
+
+### En la plataforma
+
+El banco es la fuente «Libro “Ponte a prueba”» de `examenes.html`
+(`ExamenBanco.armar({ fuente: "libro", prueba })`), entera o prueba por prueba.
+Se toma la pregunta de la jugada como `opcion_tablero` y vale la buena: el
+examen de la plataforma califica bien o mal, sin crédito parcial. La pregunta
+de la evaluación queda guardada en el banco por si un día se quiere usar.
+
+**El banco vive en `material/ponte-a-prueba/banco.js`, no en `js/`.** Trae
+las respuestas: en `js/` lo bajaba cualquiera, y «elegir con quién se
+comparte» no habría significado nada. Detrás del candado de `material/` el
+worker solo se lo sirve a quien puede bajar el material; a los demás les
+contesta 403, el script no carga y `examenes.js` no ofrece la fuente.
+
+### El PDF
+
+Lleva tapa, marca de agua con el logo, firma del autor y protección, como el
+libro del diagnóstico, con el código compartido en `herramientas/lib/pdf-armar.js`.
+A diferencia de aquel, **se deja imprimir**: es un examen que se contesta en
+papel. Vive en `material/ponte-a-prueba/`, detrás del candado del worker:
+lo baja administración y aquellos con quienes se comparte (ver «Los
+materiales de clase»). Para venderlo suelto falta darlo de alta como producto
+de la tienda.
+
+## Los materiales de clase
+
+`admin.html#materiales` («Materiales de clases») junta los materiales para dar
+clase —hoy, «Ponte a prueba»— y dice **con quién se comparte cada uno**: una
+persona, una academia entera o todos los profesores. Lo pinta
+`js/admin-materiales.js`; lo prueba `verificar-admin.js`.
+
+### Quién lo ve lo decide la base
+
+- `material_compartido` guarda con quién: una fila por persona, academia o
+  «todos los profesores» (una sola de las tres, por `check`), con índices
+  únicos parciales para no repetir. Solo la lee administración y no tiene
+  política de escritura: la escribe `material_compartir()`, que exige
+  `soy_admin()`. Reparte accesos, así que lleva `interno.auditar` y va en
+  `VIGILADAS` de `verificar-auditoria.js`.
+- `interno.material_compartido_conmigo(producto)` contesta por quien llama:
+  la persona, un miembro de la academia o quien la supervisa, o un profesor
+  si se compartió con todos.
+- `puede_bajar()` —la que pregunta el worker para `material/<producto>/`— lo
+  suma. Así el PDF, la versión accesible y el banco quedan detrás del mismo
+  candado. El worker guarda la respuesta 5 minutos: dejar de compartir tarda
+  eso en cerrarse del todo.
+- Compartir con una academia incluye a sus alumnos (pueden bajar el libro y
+  hacerlo en papel); con «todos los profesores», no.
+
+### Las pruebas como cuestionario, en tres versiones
+
+`herramientas/libro-examen-cuestionarios.js` arma, para cada una de las seis
+pruebas, tres versiones (A, B y C) de 20 preguntas: las 30 posiciones se
+reparten en tres tandas de 10 que **no se repiten**, cada una con la misma
+mezcla de dificultad, y cada posición trae sus dos preguntas (cuánto ganan y
+cuál es la jugada). Las opciones de la jugada se barajan distinto en cada
+versión. Así un grupo no recibe el mismo examen que otro.
+
+Son cuestionarios **listos** (sin dueño) con `material = 'ponte-a-prueba'`. La
+política de `cuestionarios` deja leer un listo con material solo a quien
+`puede_bajar()` ese material; los listos de siempre (`material` nulo) siguen
+igual. El SQL actualiza por título y no borra, para no dejar colgadas las
+tareas que apuntan a una versión; y la semilla de los listos de la Academia
+(`cuestionarios-listos.js`) borra solo `where listo and material is null`.
+
+### Cada alumno, su orden
+
+En `cuestionario-tarea.html` las preguntas y las opciones se ven en un orden
+propio de cada alumno —y otro cada vez que lo vuelve a contestar—, sacado de
+una semilla (renglón, alumno, intento). Así no se pasan las respuestas por letra
+y repetirlo para practicar no es repetir de memoria. La base no se entera: se
+manda cada respuesta con el número ORIGINAL de la opción, en el orden
+original, y se califica igual que siempre. No se barajan las opciones de dos
+(«Verdadero / Falso») ni las que dicen «todas», «ninguna», «ambas» o
+«anterior», ni el orden de las preguntas si alguna habla de la «anterior»: ahí
+el lugar es parte de la pregunta. Lo prueba `verificar-cuestionario-tarea.js`
+(«Cada alumno, su orden»), contestando por el texto de la opción.
+
+### Cómo se aplicó
+
+La sesión que lo armó no podía escribir en la base, así que la migración y la
+semilla se aplicaron en el editor SQL, en una transacción, anotando la
+migración en `supabase_migrations.schema_migrations` con el mismo texto del
+archivo: así el punto de restauración coincide igual que si la hubiera
+aplicado el CLI.

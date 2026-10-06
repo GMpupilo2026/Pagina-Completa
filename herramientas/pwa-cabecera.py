@@ -35,8 +35,8 @@ FIN = "<!-- app: fin -->"
 # Estas quedan fuera: no son páginas del sitio.
 #   - inscripcion.html tiene su propio diseño y su propio CSS;
 #   - offline.html ya las trae escritas a mano (es la que se enseña sin red);
-#   - libro-de-diagnostico-accesible.html, guia-del-profesor-accesible.html y
-#     fichas-de-estudio-accesible.html son
+#   - libro-de-diagnostico-accesible.html, guia-del-profesor-accesible.html,
+#     fichas-de-estudio-accesible.html y ponte-a-prueba-accesible.html son
 #     documentos que se descargan y se abren sueltos, hasta por correo y sin
 #     red: declarar un manifest que no va a poder cargar es peor que no
 #     declararlo. Esta lista tiene que decir lo mismo que la de
@@ -47,7 +47,8 @@ FIN = "<!-- app: fin -->"
 FUERA = {"inscripcion.html", "offline.html", "formulario.html",
          "libro-de-diagnostico-accesible.html",
          "guia-del-profesor-accesible.html",
-         "fichas-de-estudio-accesible.html"}
+         "fichas-de-estudio-accesible.html",
+         "ponte-a-prueba-accesible.html"}
 CARPETAS_FUERA = ("cursos/recursos/", "cursos/protegido/", "material/", "herramientas/", "node_modules/")
 
 

@@ -81,6 +81,7 @@
                                     <li><a href="#novedades" data-ir="novedades" class="admin-nav flex items-center gap-3 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-semibold text-brand-100 hover:bg-brand-800 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true" class="w-5 text-center">📣</span><span>Avisos internos</span></a></li>
                                     <li><a href="#torneos" data-ir="torneos" class="admin-nav flex items-center gap-3 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-semibold text-brand-100 hover:bg-brand-800 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true" class="w-5 text-center">🏆</span><span>Salas de torneos</span></a></li>
                                     <li><a href="#proyectos" data-ir="proyectos" class="admin-nav flex items-center gap-3 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-semibold text-brand-100 hover:bg-brand-800 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true" class="w-5 text-center">📁</span><span>Proyectos</span></a></li>
+                                    <li><a href="#materiales" data-ir="materiales" class="admin-nav flex items-center gap-3 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-semibold text-brand-100 hover:bg-brand-800 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true" class="w-5 text-center">📚</span><span>Materiales de clases</span></a></li>
                                     <li><a href="#preparacion" data-ir="preparacion" class="admin-nav flex items-center gap-3 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-semibold text-brand-100 hover:bg-brand-800 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true" class="w-5 text-center">🔭</span><span>Preparación de rivales</span></a></li>
                                     <li><a href="#auditoria" data-ir="auditoria" class="admin-nav flex items-center gap-3 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-semibold text-brand-100 hover:bg-brand-800 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true" class="w-5 text-center">🧾</span><span>Registro de cambios</span></a></li>
                                 </ul>
@@ -506,6 +507,20 @@
                     <div id="proy-lista" class="space-y-8"></div>
                 </section>
 
+                <!-- ===== Materiales de clases =====
+                     Los materiales para dar clase (hoy, el libro «Ponte a prueba») y con
+                     quién se comparte cada uno: una persona, una academia o todos los
+                     profesores. Lo decide la base (material_compartir(), y puede_bajar()
+                     para descargarlo); lo pinta js/admin-materiales.js. Ver «Los
+                     materiales de clase» en docs/decisiones/cursos-y-material.md. -->
+                <section data-seccion="materiales" aria-labelledby="titulo-materiales" hidden>
+                    <h2 id="titulo-materiales" class="font-serif text-2xl font-bold text-brand-800 dark:text-white mb-1">Materiales de clases</h2>
+                    <p class="text-sm text-brand-500 dark:text-brand-300 mb-5">Los libros y bancos de preguntas para dar clase. Elige con quién compartes cada uno: solo esas personas pueden bajarlo, usar sus versiones como cuestionario y armar exámenes con sus preguntas. Tú lo tienes siempre.</p>
+                    <p id="mat-cargando" class="text-sm text-brand-500 dark:text-brand-300">Cargando los materiales…</p>
+                    <p id="mat-error" hidden role="alert" class="text-sm font-semibold text-red-700 dark:text-red-300"></p>
+                    <div id="mat-lista" class="space-y-8"></div>
+                </section>
+
                 <!-- ===== Preparación de rivales =====
                      A qué profesores se les activa preparacion-rivales.html. La
                      lista la escribe activar_preparacion_rivales() en la base;
@@ -555,6 +570,7 @@
     <script src="js/hora-cr.js"></script>
     <script src="js/admin-proyectos.js"></script>
     <script src="js/admin-preparacion.js"></script>
+    <script src="js/admin-materiales.js"></script>
     <script src="js/admin-auditoria.js"></script>
     <script src="js/pendientes.js"></script>
     <script src="js/foto-perfil.js"></script>

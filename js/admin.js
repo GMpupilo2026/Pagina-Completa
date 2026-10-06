@@ -36,7 +36,7 @@
          * para que atrás/adelante y un enlace guardado lleven a la misma.
          * Todo lo que ya estaba sigue con sus mismos ids: solo cambia qué se ve.
          */
-        const SECCIONES = ["inicio", "cuentas", "crear", "profesores", "supervisores", "equipos", "novedades", "torneos", "proyectos", "preparacion", "auditoria"];
+        const SECCIONES = ["inicio", "cuentas", "crear", "profesores", "supervisores", "equipos", "novedades", "torneos", "proyectos", "materiales", "preparacion", "auditoria"];
 
         function seccionDelEnlace() {
             const h = location.hash.replace("#", "");
@@ -62,6 +62,8 @@
             });
             // El registro de cambios se pide al abrirlo, no al entrar al panel.
             if (nombre === "auditoria" && window.AdminAuditoria) AdminAuditoria.abrir();
+            // Con quién se comparte cada material: también se pide al abrirlo.
+            if (nombre === "materiales" && window.AdminMateriales) AdminMateriales.abrir();
             if (!(opciones && opciones.sinHistoria) && location.hash !== "#" + nombre) {
                 history.pushState(null, "", "#" + nombre);
             }
@@ -2239,6 +2241,7 @@
             pintarInicio();
             if (window.AdminProyectos) AdminProyectos.pintar();
             if (window.AdminPreparacion) AdminPreparacion.pintar();
+            if (window.AdminMateriales) AdminMateriales.pintar();
         }
 
         document.getElementById("asignar-btn").addEventListener("click", asignarLote);
@@ -2340,6 +2343,7 @@
             // se le asigna. Recibe la lista de cuentas ya cargada.
             if (window.AdminProyectos) AdminProyectos.iniciar(() => allUsers);
             if (window.AdminPreparacion) AdminPreparacion.iniciar(() => allUsers);
+            if (window.AdminMateriales) AdminMateriales.iniciar(() => allUsers);
             if (window.AdminAuditoria) AdminAuditoria.iniciar(() => allUsers);
             document.getElementById("app").classList.remove("hidden");
             irA(seccionDelEnlace() || "inicio", { sinHistoria: true });

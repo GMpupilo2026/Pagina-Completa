@@ -617,7 +617,10 @@ const cuestionarios = () => LISTOS.map((c) => ({ titulo: c.titulo, nivel: c.nive
 function sql() {
   const partes = [
     "-- Generado por herramientas/cuestionarios-listos.js: no se edita a mano.",
-    "delete from public.cuestionarios where listo;",
+    // Los listos que salen de un material (las versiones de «Ponte a prueba»,
+    // herramientas/libro-examen-cuestionarios.js) tienen su propia semilla: este
+    // delete no los toca.
+    "delete from public.cuestionarios where listo and material is null;",
   ];
   ["inicial", "intermedio", "avanzado"].forEach((nivel) => {
     const filas = cuestionarios().filter((c) => c.nivel === nivel).map((c) => "($q$" + c.titulo + "$q$, $q$"
