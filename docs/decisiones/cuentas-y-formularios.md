@@ -1157,6 +1157,10 @@ la hoja «Resumen - <comité>» de la carpeta del comité. Verificador:
   pixelada y una cédula sin datos): bien recortadas, solo la tarjeta o de los
   hombros hacia arriba, sin mesa ni dedos alrededor. El Comité Cantonal
   rechaza las que no vienen así, y explicarlo con palabras no alcanzaba.
+- **A quien es menor de 12 se le dice dónde comprar la certificación de
+  nacimiento**: el enlace al sitio de certificaciones del TSE
+  (`consulta.tse.go.cr/appcdi`) va en la ayuda del campo, que solo aparece
+  con esa edad.
 - **El beneficiario de la póliza es otra persona**: con la misma cédula
   (aunque cambien los guiones) o el mismo nombre (sin mirar tildes ni
   mayúsculas) que quien se inscribe, la ficha no se arma.
