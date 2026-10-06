@@ -2012,3 +2012,31 @@ zona, si un día se saca con `toISOString()` sin el comentario
 fecha). Comprobado rompiéndolo a propósito: quitarle la zona a un formato de
 `cobros.js` o del informe a la casa, sacar `hora-cr.js` de `tareas.html` y
 agregar un `toISOString().slice(0, 10)` lo hacen fallar cada uno.
+
+## El token de una Edge Function se pide en el momento
+
+El 6 de octubre, crear una cuenta desde `admin.html` decía solo «Error
+desconocido». Los registros de Supabase mostraban `POST | 401` en
+`admin-manage-users` sin que la función llegara a correr: la puerta de
+Supabase rechazaba el token antes. La página guardaba `session` al cargar y
+llamaba con `Bearer ${session.access_token}`; ese token vence a la hora, y
+supabase-js lo renueva por dentro sin que la variable se entere. Con el panel
+abierto más de una hora, toda llamada a una función fallaba. Y el 401 de la
+puerta trae `{ message: "Invalid JWT" }`, no `{ error }`, así que la pantalla
+no tenía nada que decir.
+
+- Toda llamada a una Edge Function pide el token en el momento con
+  `window.tokenDeSesion()` (`js/token-sesion.js`), que lee `getSession()`: esa
+  sí trae la sesión renovada. Ya lo hacían `tokenFresco()` de `js/cobros.js` y
+  `js/informes.js`; ahora también admin, admin-jugador, coordinación,
+  formularios, solicitudes y el lector de planilla.
+- El mensaje sale de `window.errorDeFuncion(res, cuerpo)`: el `error` de la
+  función si lo hay; si no, un 401 dice que la sesión venció, y cualquier otro
+  dice el código. Nunca «Error desconocido».
+- `js/token-sesion.js` va aparte de `js/supabase-client.js` a propósito: los
+  verificadores cambian ese archivo por su doble, y lo que viviera ahí
+  desaparecería con él.
+
+`verificar-token-sesion.js` falla si un archivo de `js/` vuelve a mandar
+`session.access_token` o si una página usa el ayudante sin cargar
+`js/token-sesion.js` después del cliente.

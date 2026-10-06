@@ -27,7 +27,7 @@
            ocr-scoresheet) vive en js/planilla-ocr.js: la usa también «Anota tu
            partida» de «Tus propios errores». */
         const { tryParseMove, forceMatchLegalMove, reconstructMoveTokens } = window.PlanillaOcr;
-        const runOcr = (file) => PlanillaOcr.leerFoto(file, session.access_token);
+        const runOcr = async (file) => PlanillaOcr.leerFoto(file, await window.tokenDeSesion());
 
         /* ============================================================
            Estado del procesamiento jugada por jugada

@@ -962,13 +962,13 @@ async function enviarAlta() {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
-                "Authorization": `Bearer ${session.access_token}`,
+                "Authorization": `Bearer ${await window.tokenDeSesion()}`,
                 "apikey": window.SUPABASE_ANON_KEY,
             },
             body: JSON.stringify(cuerpo),
         });
-        const out = await res.json();
-        if (!res.ok || !out.ok) throw new Error(out.error || "No se pudo crear la cuenta");
+        const out = await res.json().catch(() => ({}));
+        if (!res.ok || !out.ok) throw new Error(res.ok ? (out.error || "No se pudo crear la cuenta") : window.errorDeFuncion(res, out));
 
         // La pantalla dice lo que de verdad pasó, no "listo" a secas: si ya
         // tenía cuenta no salió ninguna invitación, y conviene saberlo. Solo
