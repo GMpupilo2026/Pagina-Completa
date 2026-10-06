@@ -17,6 +17,10 @@
  *     puntos       casillas adonde puede ir la pieza: un punto en el centro
  *     capturas     casillas donde come: un aro alrededor de la pieza
  *     estrellas    casillas con una estrella (la meta de un ejercicio)
+ *     flechas      [[desde, hasta], …]: una flecha entre dos casillas (el
+ *                  truco de un cuento: la horquilla, la clavada…). Azul
+ *                  #123e7c, medido: 8,6:1 contra la casilla clara de madera y
+ *                  4,1:1 contra la oscura.
  */
 const fs = require("fs");
 const path = require("path");
@@ -136,6 +140,19 @@ function tablero(fen, opciones) {
         const [x, y] = xy(sq);
         s.push('<circle cx="' + (x + celda / 2) + '" cy="' + (y + celda / 2) + '" r="' + (celda * 0.45) +
                '" fill="none" stroke="#7f1d1d" stroke-width="1.1"/>');
+    });
+    (opciones.flechas || []).forEach(([a, b]) => {
+        const [x1, y1] = xy(a), [x2, y2] = xy(b);
+        const cx1 = x1 + celda / 2, cy1 = y1 + celda / 2, cx2 = x2 + celda / 2, cy2 = y2 + celda / 2;
+        const ang = Math.atan2(cy2 - cy1, cx2 - cx1), punta = celda * 0.42;
+        // La línea termina donde empieza la punta, para que no la tape.
+        const fx = cx2 - Math.cos(ang) * punta * 0.8, fy = cy2 - Math.sin(ang) * punta * 0.8;
+        const p1 = [cx2 - punta * Math.cos(ang - 0.45), cy2 - punta * Math.sin(ang - 0.45)];
+        const p2 = [cx2 - punta * Math.cos(ang + 0.45), cy2 - punta * Math.sin(ang + 0.45)];
+        s.push('<line x1="' + cx1.toFixed(2) + '" y1="' + cy1.toFixed(2) + '" x2="' + fx.toFixed(2) + '" y2="' + fy.toFixed(2) +
+               '" stroke="#123e7c" stroke-width="' + (celda * 0.13).toFixed(2) + '" stroke-linecap="round" opacity="0.9"/>');
+        s.push('<polygon points="' + cx2.toFixed(2) + "," + cy2.toFixed(2) + " " + p1.map((v) => v.toFixed(2)).join(",") + " " +
+               p2.map((v) => v.toFixed(2)).join(",") + '" fill="#123e7c" opacity="0.9"/>');
     });
     s.push("</svg>");
     return s.join("");

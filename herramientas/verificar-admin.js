@@ -575,7 +575,8 @@ async function pruebaMateriales(browser) {
     ["material/ponte-a-prueba/ponte-a-prueba.pdf", "material/ponte-a-prueba/ponte-a-prueba-accesible.html",
      "material/ponte-a-prueba/versiones/claves-de-correccion.pdf", "material/ponte-a-prueba/ponte-a-prueba-versiones-accesible.html",
      "material/mide-tu-fuerza/mide-tu-fuerza.pdf", "material/mide-tu-fuerza/mide-tu-fuerza-accesible.html",
-     "material/peonita/peonita.pdf", "material/peonita/peonita-accesible.html"]);
+     "material/peonita/peonita.pdf", "material/peonita/peonita-accesible.html",
+     "material/peonita-trucos/peonita-trucos.pdf", "material/peonita-trucos/peonita-trucos-accesible.html"]);
   // El banco de ejercicios no tiene pruebas como cuestionario: solo se
   // comparte. Antes de separarlo, cualquier material sin pruebas pintaba
   // igual el título y «todavía no están en la base».

@@ -14,6 +14,8 @@
  *                   mono: true (el moño de Peonita), bufanda: true (Tizón),
  *                   espejo: true (mira para el otro lado) }
  *   perezoso(x, y, escala)    Don Lento colgado de su rama
+ *   mapache(x, y, escala, opciones)   Don Pillo, el mapache travieso del
+ *       segundo cuento; (x, y) son sus patas. opciones: { cara, espejo }
  *   escena({ fondo, piso, contenido })   lienzo de 600 × 320
  */
 "use strict";
@@ -147,6 +149,45 @@ function perezoso(x, y, escala, opciones) {
     `<ellipse cx="80" cy="99" rx="5.5" ry="3.8" fill="#3b2f2a"/>` +
     `<path d="M70,105 Q80,113 90,105" fill="none" stroke="#3b2f2a" stroke-width="2.6" stroke-linecap="round"/>` +
     `</g>`;
+}
+
+/* Don Pillo: un mapache gris con su antifaz negro y la cola a rayas. */
+function mapache(x, y, escala, opciones) {
+  const o = opciones || {};
+  const s = escala || 1;
+  const giro = o.espejo ? " translate(160,0) scale(-1,1)" : "";
+  const boca = o.cara === "triste"
+    ? `<path d="M72,92 Q80,86 88,92" fill="none" stroke="#2b2233" stroke-width="2.6" stroke-linecap="round"/>`
+    : `<path d="M70,90 Q80,99 90,90" fill="none" stroke="#2b2233" stroke-width="2.6" stroke-linecap="round"/>`;
+  return `<g transform="translate(${(x - 80 * s).toFixed(1)},${(y - 180 * s).toFixed(1)}) scale(${s})${giro}">` +
+    `<ellipse cx="80" cy="178" rx="52" ry="5" fill="#000" opacity=".12"/>` +
+    // la cola a rayas, detrás
+    `<path d="M112,150 C150,140 160,100 146,70 C140,96 128,120 104,132 Z" fill="#9aa5b1" stroke="#3e4a56" stroke-width="3" stroke-linejoin="round"/>` +
+    `<path d="M150,82 L138,90 M154,100 L132,108 M150,120 L122,124" stroke="#3e4a56" stroke-width="7" stroke-linecap="round"/>` +
+    // cuerpo y patas
+    `<ellipse cx="80" cy="132" rx="38" ry="42" fill="#9aa5b1" stroke="#3e4a56" stroke-width="3"/>` +
+    `<ellipse cx="80" cy="142" rx="24" ry="28" fill="#d5dbe1"/>` +
+    `<ellipse cx="62" cy="174" rx="12" ry="6" fill="#3e4a56"/><ellipse cx="98" cy="174" rx="12" ry="6" fill="#3e4a56"/>` +
+    // cabeza
+    `<path d="M44,52 L40,26 L62,42 Z M116,52 L120,26 L98,42 Z" fill="#9aa5b1" stroke="#3e4a56" stroke-width="3" stroke-linejoin="round"/>` +
+    `<ellipse cx="80" cy="70" rx="40" ry="32" fill="#9aa5b1" stroke="#3e4a56" stroke-width="3"/>` +
+    `<path d="M80,96 C66,96 58,88 58,80 L102,80 C102,88 94,96 80,96 Z" fill="#f1f3f5"/>` +
+    // el antifaz
+    `<path d="M42,66 C52,54 70,58 80,66 C90,58 108,54 118,66 C110,80 92,80 80,72 C68,80 50,80 42,66 Z" fill="#2b2233"/>` +
+    `<circle cx="64" cy="67" r="6" fill="#fff"/><circle cx="96" cy="67" r="6" fill="#fff"/>` +
+    `<circle cx="65" cy="68" r="3.4" fill="#2b2233"/><circle cx="97" cy="68" r="3.4" fill="#2b2233"/>` +
+    `<circle cx="64" cy="66.5" r="1.2" fill="#fff"/><circle cx="96" cy="66.5" r="1.2" fill="#fff"/>` +
+    `<ellipse cx="80" cy="82" rx="5" ry="3.6" fill="#2b2233"/>` + boca +
+    `<circle cx="56" cy="86" r="4.5" fill="#ff8fab" opacity=".7"/><circle cx="104" cy="86" r="4.5" fill="#ff8fab" opacity=".7"/>` +
+    `</g>`;
+}
+
+/* Una lupa: para buscar los trucos escondidos en el tablero. */
+function lupa(x, y, s, angulo) {
+  return `<g transform="translate(${x},${y}) rotate(${angulo || -30}) scale(${s || 1})">` +
+    `<rect x="-5" y="22" width="10" height="34" rx="4" fill="#8d5524" stroke="#5b3a1e" stroke-width="2"/>` +
+    `<circle cx="0" cy="0" r="24" fill="#e7f5ff" fill-opacity=".55" stroke="#495057" stroke-width="6"/>` +
+    `<path d="M-12,-8 Q-8,-16 2,-17" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round"/></g>`;
 }
 
 /* ---------------------------------------------------------- utilería */
@@ -306,5 +347,5 @@ function piezaSola(tipo, color, opciones) {
 }
 
 module.exports = {
-  pieza, perezoso, escena, piezaSola, estrella, corazon, flecha, globo, guarumo, nube, caja, corona, mango, trofeo, confeti, piso, FONDOS,
+  pieza, perezoso, mapache, lupa, escena, piezaSola, estrella, corazon, flecha, globo, guarumo, nube, caja, corona, mango, trofeo, confeti, piso, FONDOS,
 };

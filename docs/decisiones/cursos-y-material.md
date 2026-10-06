@@ -1000,7 +1000,7 @@ archivo, y protección (`herramientas/lib/pdf-armar.js`). **Se deja
 imprimir**: es un cuaderno de trabajo. Vive en `material/mide-tu-fuerza/`,
 detrás del candado del worker, y se comparte desde `admin.html#materiales`.
 
-## El libro de Peonita, para los más pequeños
+## Los cuentos de Peonita, para los más pequeños
 
 *Peonita y el reino de las 64 casillas*, de Oscar Angulo Cubero: un cuento
 ilustrado para que niñas y niños de 4 a 8 años aprendan a jugar. Peonita, un
@@ -1012,11 +1012,14 @@ de apertura y las reglas del buen jugador), cada uno con su ilustración, «Lo
 que aprendí» y una página de «¡A jugar!»; al final, el diploma y las
 soluciones.
 
-- `herramientas/libro-ninos/contenido.js` tiene el cuento, los ejercicios y
-  **sus respuestas escritas a mano**; `herramientas/libro-ninos/dibujos.js`,
-  los personajes y las escenas; `herramientas/libro-ninos-pdf.js` lo pone en
-  papel: `material/peonita/peonita.pdf` y `peonita-accesible.html`.
-- Lo revisa `verificar-libro-ninos.js`.
+- Cada cuento es un módulo de `herramientas/libro-ninos/` (`peonita.js`,
+  `trucos.js`; la lista está en `libros.js`) con el cuento, los ejercicios y
+  **sus respuestas escritas a mano**, la tapa, el final, el diploma y sus
+  secretos. `dibujos.js` tiene los personajes y las escenas, y
+  `herramientas/libro-ninos-pdf.js` los pone en papel **con una sola
+  maqueta**: `material/<slug>/<slug>.pdf` y `<slug>-accesible.html`.
+- Los revisa `verificar-libro-ninos.js`, todos. Un cuento nuevo se suma a
+  `libros.js` y entra solo al generador y al verificador.
 
 ### Tomado de un libro ajeno como referencia, no copiado
 
@@ -1075,7 +1078,7 @@ posición cuyas piezas dibujan una A. Antes de elegir, se le proponen las
 opciones al autor.
 
 **El verificador del libro comprueba el secreto** (`SECRETO`, `DEDICATORIA` y
-`NOMBRE_ALFIL` en `contenido.js`): corregir una palabra del poema o el nombre
+`SECRETOS` de cada libro): corregir una palabra del poema o el nombre
 del personaje lo rompería sin dar ningún error, y nadie lo notaría justo
 porque está escondido. Este archivo y `herramientas/` no se publican
 (`.assetsignore`), así que contarlo acá no lo delata.
@@ -1097,11 +1100,54 @@ porque está escondido. Este archivo y `herramientas/` no se publican
   `describir()` de la versión accesible. Va en `admin.html#materiales` y se
   comparte igual; sin pruebas como cuestionario, esa sección no aparece.
 
+### El segundo cuento: los trucos del bosque
+
+*Peonita, Tizón y los trucos del bosque*: los primeros trucos de la táctica
+para quien ya sabe mover las piezas (la pieza sin cuidar, la horquilla del
+caballo, el ataque doble de la dama, la horquilla de peón, la clavada, la
+enfilada, el mate del pasillo, el ataque a la descubierta, mirar qué quiere
+el otro y un repaso). La historia: en una excursión, Don Pillo, un mapache
+travieso, se lleva las piezas que nadie cuida; Peonita y Tizón aprenden un
+truco por capítulo, le ganan el torneo y se vuelve su amigo. Vuelve Don
+Saleras, el alfil, a enseñar la clavada.
+
+**El secreto para Alessandro son los títulos**: las iniciales de los diez
+capítulos, leídas de arriba hacia abajo en el índice, dicen ALESSANDRO.
+
+### En un libro de trucos, la respuesta tiene que ser LA jugada
+
+Un ejercicio de táctica promete que hay un truco y que es ese. El CI no tiene
+Stockfish, así que `herramientas/lib/tactica.js` es un buscador chiquito con
+chess.js: negamax con poda alfa-beta a cuatro medias jugadas, contando
+material, y al final solo capturas hasta que la posición se calma (si no,
+contaría como ganada una pieza que se pierde enseguida). Alcanza para
+posiciones de iniciación, que es lo que trae un cuento. Con él se comprueba:
+
+- `gana`: la jugada de la respuesta es la **única** que gana al menos
+  `minimo` puntos;
+- `amenaza`: con el turno de las negras, la jugada que dice la respuesta es
+  la única de Tizón que gana `minimo` (la posición con ese turno también tiene
+  que ser legal);
+- `defensa`: cada jugada que propone la solución deja a las negras sin nada
+  que gane `minimo`.
+
+Rompió cuatro posiciones que parecían buenas a ojo. La torre que se come un
+caballo sin cuidar también amenazaba mate del pasillo, así que había dos
+respuestas. En dos horquillas de peón, la pieza atacada se salvaba **dando
+jaque**, y después se salvaba la otra. Y en una descubierta, la dama negra
+tapaba el jaque dando jaque a su vez. Además, el buscador tenía un error
+propio: chess.js da tablas con rey y caballo contra rey, y entonces la torre
+que se comía la horquilla «valía 0». Para contar material, solo el ahogado
+es tablas.
+
+Las flechas de los diagramas (`flechas` en `lib/tablero-svg.js`) son azules
+#123e7c: 8,6:1 contra la casilla clara y 4,1:1 contra la oscura.
+
 ## Los materiales de clase
 
 `admin.html#materiales` («Materiales de clases») junta los materiales para dar
-clase —hoy, «Ponte a prueba», el banco de ejercicios «Mide tu fuerza» y el
-libro de Peonita— y dice **con quién se comparte cada uno**: una
+clase —hoy, «Ponte a prueba», el banco de ejercicios «Mide tu fuerza» y los
+cuentos de Peonita— y dice **con quién se comparte cada uno**: una
 persona, una academia entera o todos los profesores. Lo pinta
 `js/admin-materiales.js`; lo prueba `verificar-admin.js`.
 
