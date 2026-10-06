@@ -30,6 +30,9 @@ herramientas/.cache-lichess.json
 # Caché del análisis de Stockfish de herramientas/tipos-generar.js.
 herramientas/.cache-tipos.json
 
+# Caché del análisis de Stockfish de herramientas/libro-examen-generar.js.
+herramientas/.cache-libro-examen.json
+
 # Los datos del informe mensual del CCDR San José (herramientas/informe-ccdr.js):
 # nombres de menores de edad, asistencia y fotos. Se trabajan fuera del
 # repositorio; esta línea es por si alguien los guarda acá por descuido.

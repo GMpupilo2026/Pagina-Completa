@@ -18,7 +18,7 @@
     permisos: ["profiles", "profile_teachers", "equipos", "equipo_alumnos", "equipo_entrenadores",
       "coordinador_profesores", "coordinador_funciones_quitadas", "supervisor_cuentas", "verificacion_en_dos_pasos"],
     acceso: ["academias", "academia_miembros", "academia_ia", "preparacion_rivales_profesores",
-      "acceso_config", "paquetes_acceso", "paquete_alumnos", "pruebas_gratis"],
+      "acceso_config", "paquetes_acceso", "paquete_alumnos", "pruebas_gratis", "material_compartido"],
     cobros: ["planes_cobro", "suscripciones", "cobros", "pagos"],
   };
 
@@ -40,6 +40,7 @@
     paquetes_acceso: ["Paquete de acceso creado", "Paquete de acceso cambiado", "Paquete de acceso borrado"],
     paquete_alumnos: ["Alumno sumado a un paquete", "Alumno de un paquete cambiado", "Alumno sacado de un paquete"],
     pruebas_gratis: ["Prueba gratis creada", "Prueba gratis cambiada", "Prueba gratis borrada"],
+    material_compartido: ["Material de clase compartido", "Material de clase cambiado", "Material de clase dejado de compartir"],
     planes_cobro: ["Plan de cobro creado", "Plan de cobro cambiado", "Plan de cobro borrado"],
     suscripciones: ["Alumno suscrito a un plan", "Suscripción cambiada", "Suscripción quitada"],
     cobros: ["Cobro emitido", "Cobro cambiado", "Cobro borrado"],

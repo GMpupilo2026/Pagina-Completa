@@ -150,7 +150,17 @@ const FUENTES = [
   { valor: "areas",     texto: "Áreas sueltas" },
   { valor: "linea",     texto: "Ejecutar una apertura o defensa" },
   { valor: "arbitraje", texto: "Reglamento (arbitraje)" },
+  { valor: "libro",     texto: "Libro «Ponte a prueba»" },
 ];
+
+/* El libro se ofrece solo si su banco cargó: vive en material/ponte-a-prueba/,
+   y el worker se lo sirve únicamente a quien puede bajar ese material
+   (administración, quien lo compró o con quien se compartió). A los demás el
+   archivo les contesta 403 y la opción no aparece. */
+function fuentesDisponibles() {
+  const conLibro = Array.isArray(window.LIBRO_EXAMEN_ITEMS) && window.LIBRO_EXAMEN_ITEMS.length > 0;
+  return FUENTES.filter((f) => f.valor !== "libro" || conLibro);
+}
 
 let bloques = [];
 let seqBloque = 0;
@@ -168,6 +178,11 @@ function opcionesDeCual(b) {
     return cursosCatalogo.filter((c) => conPreguntas.includes(c.slug))
       .map((c) => ({ valor: c.slug, texto: c.label }));
   }
+  if (b.fuente === "libro") {
+    const n = (window.LIBRO_EXAMEN && window.LIBRO_EXAMEN.PRUEBAS) || 0;
+    return [{ valor: "", texto: "Las seis pruebas" }].concat(
+      Array.from({ length: n }, (_, i) => ({ valor: String(i + 1), texto: "Prueba " + (i + 1) })));
+  }
   if (b.fuente === "linea") {
     return ((window.AperturasLineas && window.AperturasLineas.LINEAS) || []).map((l) => ({
       valor: l.id,
@@ -182,6 +197,7 @@ function opcionesDelBloque(b) {
     fuente: b.fuente,
     curso: b.fuente === "curso" ? b.cual : null,
     linea_id: b.fuente === "linea" ? b.cual : null,
+    prueba: b.fuente === "libro" ? b.cual : null,
     areas: b.fuente === "areas" ? b.areas.slice() : [],
     cantidad: Math.max(1, b.cantidad || 1),
     dificultad: { min: b.difMin, max: b.difMax },
@@ -198,6 +214,7 @@ function nombreDeBloque(b) {
   if (b.fuente === "curso") return op ? op.texto : "un curso";
   if (b.fuente === "linea") return op ? op.texto.split(" — ")[0] : "una apertura";
   if (b.fuente === "arbitraje") return "reglamento";
+  if (b.fuente === "libro") return "Ponte a prueba" + (b.cual ? ", prueba " + b.cual : "");
   return b.areas.length ? b.areas.join(", ") : "todas las áreas";
 }
 
@@ -233,7 +250,7 @@ function pintarBloque(b) {
   // Fila de arriba: sobre qué, y cuál.
   const arriba = document.createElement("div");
   arriba.className = "grid gap-3 sm:grid-cols-2";
-  arriba.appendChild(sel(`b${b.id}-fuente`, "Sobre qué", FUENTES, b.fuente, (v) => {
+  arriba.appendChild(sel(`b${b.id}-fuente`, "Sobre qué", fuentesDisponibles(), b.fuente, (v) => {
     b.fuente = v;
     const ops = opcionesDeCual(b);
     b.cual = ops.length ? ops[0].valor : "";

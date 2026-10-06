@@ -239,13 +239,19 @@ async function pruebaAlumna(browser) {
   const p = a.page;
   await p.waitForSelector("#cq-preguntas li", { timeout: 10000 });
   igual("el título y cuántas preguntas", [await p.textContent("#cq-titulo"), (await p.textContent("#cq-sub")).split(".")[0]], ["🎯 El tablero", "2 preguntas"]);
-  igual("las preguntas, cada una con su enunciado escrito", await p.evaluate(() => [...document.querySelectorAll("#cq-preguntas legend")].map((l) => l.textContent)),
-    ["Pregunta 1 de 2: ¿Cuántas casillas tiene el tablero?", "Pregunta 2 de 2: ¿Quién tiene la oposición?"]);
-  igual("solo la que trae posición lleva tablero, y se ve", await p.evaluate(() => [...document.querySelectorAll("#cq-preguntas li")].map((li) => {
-    const t = li.querySelector(".grid-cols-8"); return t ? [t.children.length, t.checkVisibility()] : null; })), [null, [64, true]]);
+  /* Cada alumno las ve en su propio orden (ver «Cada alumno, su orden» más
+     abajo), así que acá se mira cada pregunta por lo que es, no por su lugar:
+     la numeración sí va 1, 2… en el orden en que se ven. */
+  igual("las preguntas, cada una con su enunciado escrito y numeradas en orden", await p.evaluate(() => {
+    const ls = [...document.querySelectorAll("#cq-preguntas legend")].map((l) => l.textContent);
+    return [ls.map((t) => t.split(":")[0]), ls.map((t) => t.slice(t.indexOf(":") + 2)).sort()];
+  }), [["Pregunta 1 de 2", "Pregunta 2 de 2"], ["¿Cuántas casillas tiene el tablero?", "¿Quién tiene la oposición?"]]);
+  igual("solo la que trae posición lleva tablero, y se ve", await p.evaluate(() => [...document.querySelectorAll("#cq-preguntas li")]
+    .sort((a, b) => a.dataset.pregunta - b.dataset.pregunta).map((li) => {
+      const t = li.querySelector(".grid-cols-8"); return t ? [t.children.length, t.checkVisibility()] : null; })), [null, [64, true]]);
   igual("ninguna opción viene marcada, y dice cuántas faltan", [await p.evaluate(() => document.querySelectorAll("#cq-preguntas input:checked").length), await p.textContent("#cq-faltan")],
     [0, "Te faltan 2 preguntas de 2."]);
-  await p.getByLabel("B. 64").check();
+  await p.getByLabel(/^[A-D]\. 64$/).check();
   igual("contar las que faltan", await p.textContent("#cq-faltan"), "Te falta 1 pregunta de 2.");
   await p.click("#cq-entregar");
   await p.waitForFunction(() => window.__llamadas.some((l) => l.rpc === "contestar_cuestionario_de_tarea"), null, { timeout: 5000 });
@@ -255,7 +261,9 @@ async function pruebaAlumna(browser) {
   await p.waitForFunction(() => document.getElementById("cq-resultado").checkVisibility(), null, { timeout: 5000 });
   igual("el resultado, con el foco ahí", [await p.textContent("#cq-resultado-titulo"), await p.evaluate(() => document.activeElement.id)],
     ["Acertaste 1 de 2", "cq-resultado-titulo"]);
-  igual("cada pregunta dice, escrito, si estuvo bien y cuál era la correcta", await p.evaluate(() => [...document.querySelectorAll("#cq-preguntas .cq-marca")].map((m) => m.checkVisibility() && m.textContent)),
+  // «Las negras / Las blancas» son dos opciones: esas no se barajan, la B es la B.
+  igual("cada pregunta dice, escrito, si estuvo bien y cuál era la correcta", await p.evaluate(() => [...document.querySelectorAll("#cq-preguntas li")]
+    .sort((a, b) => a.dataset.pregunta - b.dataset.pregunta).map((li) => { const m = li.querySelector(".cq-marca"); return m.checkVisibility() && m.textContent; })),
     ["✓ Bien.", "Sin contestar. La correcta era: B. Las blancas"]);
   igual("ya no se puede cambiar lo entregado, y la barra de entregar no queda vacía flotando", [await p.evaluate(() => [...document.querySelectorAll("#cq-preguntas input")].every((i) => i.disabled)), await seVe(p, "#cq-barra")],
     [true, false]);
@@ -276,11 +284,60 @@ async function pruebaAlumna(browser) {
   await b.ctx.close();
 }
 
+/* ---------- Cada alumno, su orden ----------
+   Ocho preguntas de cuatro opciones: dos alumnas las ven en otro orden, y la
+   que vuelve a contestarlo también. Lo que NO puede cambiar es lo que llega a
+   la base: contestando todo bien por el TEXTO de la opción, se tienen que
+   mandar los números originales, en el orden original. Si el orden visto se
+   colara en lo mandado, la página se vería perfecta y calificaría mal. Y una
+   opción «Todas las anteriores» se queda donde estaba. */
+const OCHO = Array.from({ length: 8 }, (_, i) => P(`Pregunta número ${i + 1}`,
+  i === 7 ? ["Uno", "Dos", "Tres", "Todas las anteriores"] : [`${i}-a`, `${i}-b`, `${i}-c`, `${i}-d`], (i * 3) % 4));
+const datosOcho = (yo) => {
+  const d = datosDe(yo);
+  d.renglones["it-8"] = { titulo: "Ocho", preguntas: copia(OCHO) };
+  return d;
+};
+
+async function vistaDe(browser, yo) {
+  const a = await abrir(browser, "/cuestionario-tarea.html?c=l-8&tarea=t-8&item=it-8", datosOcho(yo));
+  await a.page.waitForSelector("#cq-preguntas li", { timeout: 10000 });
+  const vista = () => a.page.evaluate(() => [...document.querySelectorAll("#cq-preguntas li")].map((li) =>
+    li.dataset.pregunta + ":" + [...li.querySelectorAll("label span")].map((s) => s.textContent.slice(3)).join("|")).join(" / "));
+  return { a, vista };
+}
+
+async function pruebaOrden(browser) {
+  console.log("\n=== Cada alumno, su orden ===");
+  const ana = await vistaDe(browser, "a-1");
+  const luis = await vistaDe(browser, "a-2");
+  const deAna = await ana.vista();
+  igual("dos alumnas ven el mismo cuestionario en distinto orden", deAna !== await luis.vista(), true);
+  igual("la opción «Todas las anteriores» queda última", await ana.a.page.evaluate(() =>
+    [...document.querySelector('#cq-preguntas li[data-pregunta="7"]').querySelectorAll("label span")].map((s) => s.textContent)),
+    ["A. Uno", "B. Dos", "C. Tres", "D. Todas las anteriores"]);
+  // Contesta todo bien eligiendo por el TEXTO de la correcta.
+  for (let i = 0; i < 8; i++) {
+    const q = OCHO[i];
+    await ana.a.page.locator(`#cq-preguntas li[data-pregunta="${i}"] label`).filter({ hasText: q.opciones[q.correcta] }).first().click();
+  }
+  await ana.a.page.click("#cq-entregar");
+  await ana.a.page.waitForFunction(() => document.getElementById("cq-resultado").checkVisibility(), null, { timeout: 5000 });
+  igual("a la base llegan los números ORIGINALES, en el orden original", await ana.a.page.evaluate(() =>
+    window.__llamadas.find((l) => l.rpc === "contestar_cuestionario_de_tarea").args.p_respuestas), OCHO.map((q) => q.correcta));
+  igual("y la base lo califica todo bien", await ana.a.page.textContent("#cq-resultado-titulo"), "Acertaste 8 de 8");
+  await ana.a.page.click("#cq-otra-vez");
+  igual("al contestarlo otra vez, cambia el orden", (await ana.vista()) !== deAna, true);
+  igual("sin errores en consola", ana.a.errores.concat(luis.a.errores), []);
+  await ana.a.ctx.close(); await luis.a.ctx.close();
+}
+
 (async () => {
   const browser = await chromium.launch({ executablePath: CHROME });
   try {
     await pruebaProfe(browser);
     await pruebaAlumna(browser);
+    await pruebaOrden(browser);
   } catch (e) {
     console.log("  ✗ la prueba se cayó: " + (e && e.stack || e));
     fallos += 1;

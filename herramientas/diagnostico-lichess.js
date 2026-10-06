@@ -369,4 +369,7 @@ async function main() {
   console.log(`\n${items.length} ítems escritos (${items.filter((i) => i.tipo === "jugada").length} de mover, ${items.filter((i) => i.tipo !== "jugada").length} de opción). Descartadas por el motor: ${desc}.`);
   console.log(cuenta);
 }
-main();
+/* El análisis lo comparte herramientas/libro-examen-generar.js: las mismas
+   reglas para decidir que una posición tiene UNA sola respuesta buena. */
+module.exports = { analizar, elegirDistractores, sanEs, lineaEs, valor, motivo, jugar, uciAMov, refutacion, PROFUNDIDAD };
+if (require.main === module) main();

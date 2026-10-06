@@ -738,6 +738,30 @@ async function main() {
     ok(/repetida/.test(await p.textContent("#e-minimo")),
       "cuando se quitan repetidas hay que decirlo, no dejar el examen más corto en silencio");
 
+    // EL LIBRO «PONTE A PRUEBA» es una fuente más, entera o prueba por
+    // prueba. Pidiendo la prueba 4, todas las preguntas tienen que ser de
+    // esa prueba: si el filtro se perdiera, el examen saldría igual de
+    // largo y con posiciones de otras pruebas, sin ningún aviso.
+    await p.click("#e-agregar-bloque");
+    await p.waitForSelector("#b4-fuente", { timeout: 4000 });
+    await p.selectOption("#b4-fuente", "libro");
+    await p.waitForSelector("#b4-cual", { timeout: 4000 });
+    await p.selectOption("#b4-cual", "4");
+    await p.waitForTimeout(300);
+    ok(/Hay 30 para elegir/.test(await p.textContent("#b4-hay")),
+      `la prueba 4 del libro debería ofrecer 30 posiciones y dice "${await p.textContent("#b4-hay")}"`);
+    await p.fill("#b4-cantidad", "6");
+    await p.dispatchEvent("#b4-cantidad", "input");
+    await p.waitForTimeout(300);
+    const delLibro = await p.evaluate(() => prevision.items.filter((i) => i.banco === "libro")
+      .map((i) => (window.LIBRO_EXAMEN_ITEMS.find((x) => x.id === i.item_id) || {}).prueba));
+    ok(delLibro.length === 6 && delLibro.every((n) => n === 4),
+      `del libro se pidieron 6 de la prueba 4 y salieron de ${JSON.stringify(delLibro)}`);
+    await p.evaluate(() => {
+      document.querySelector('[data-bloque="4"] .quitar-bloque').click();
+    });
+    await p.waitForTimeout(200);
+
     // Se deja un solo bloque para el envío de abajo.
     await p.evaluate(() => {
       document.querySelector('[data-bloque="3"] .quitar-bloque').click();

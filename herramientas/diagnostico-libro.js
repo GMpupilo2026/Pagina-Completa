@@ -605,88 +605,14 @@ if (process.argv.includes("--solo-accesible")) process.exit(0);
   console.log("PDF listo:", destino);
 })();
 
-/* Tapa y cuerpo salen de dos impresiones distintas (la tapa no lleva márgenes ni
-   pie), así que se pegan acá; de paso se estampa la marca de agua sobre cada
-   página del cuerpo. La tapa no la lleva: ya tiene el logo en grande y su propio
-   sello de uso docente. */
-function unir(tapa, cuerpo, marca, destino) {
-  const { execFileSync } = require("child_process");
-  const guion = `
-import sys, zlib
-from pypdf import PdfReader, PdfWriter
-from pypdf.generic import StreamObject, NameObject
-tapa, cuerpo, marca, destino = sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4]
-escritor = PdfWriter()
-for archivo in (tapa, cuerpo):
-    escritor.append_pages_from_reader(PdfReader(archivo))
-sello = PdfReader(marca).pages[0]
-for n, pagina in enumerate(escritor.pages):
-    if n == 0:
-        continue
-    pagina.merge_page(sello, over=True)
-
-# Estampar deja el contenido de cada página SIN comprimir. Se vuelve a
-# comprimir a mano...
-for pagina in escritor.pages:
-    flujo = StreamObject()
-    flujo._data = zlib.compress(pagina.get_contents().get_data(), 9)
-    flujo[NameObject("/Filter")] = NameObject("/FlateDecode")
-    pagina[NameObject("/Contents")] = escritor._add_object(flujo)
-escritor.write(destino)
-
-# ...y se clona el resultado, que es lo que de verdad tira los flujos viejos:
-# quedan sueltos pero el escritor los sigue guardando, y clonar solo copia lo
-# que cuelga del catálogo.
-PdfWriter(clone_from=destino).write(destino)
-print("marca de agua en", len(escritor.pages) - 1, "páginas")
-`;
-  try {
-    console.log(String(execFileSync("python3", ["-c", guion, tapa, cuerpo, marca, destino], { stdio: ["ignore", "pipe", "pipe"] })).trim());
-  } catch (e) {
-    console.error("\nNo se pudieron unir tapa y cuerpo. Falta pypdf: pip install pypdf");
-    console.error(String(e.stderr || "").trim().split("\n").slice(-3).join("\n"));
-    process.exit(1);
-  }
-}
-
-/* Chromium no sabe proteger el PDF, así que el archivo se vuelve a escribir con
-   pypdf: sin contraseña de apertura (se abre normal) pero sin permiso de copiar,
-   editar ni imprimir. Se deja habilitada la extracción de texto para lectores de
-   pantalla: bloquearla dejaría el libro fuera del alcance de quien lo lee así, y
-   no es lo que se quiere evitar. */
+/* Pegar tapa y cuerpo, estampar la marca de agua y proteger el archivo:
+   herramientas/lib/pdf-armar.js, que comparte con el libro «Ponte a prueba».
+   Este no deja imprimir: trae las respuestas a la vista. */
+const { unir, proteger: protegerPdf } = require("./lib/pdf-armar.js");
 function proteger(archivo) {
-  const { execFileSync } = require("child_process");
-  const guion = `
-import sys
-from pypdf import PdfReader, PdfWriter
-from pypdf.constants import UserAccessPermissions
-
-archivo, clave, autor = sys.argv[1], sys.argv[2], sys.argv[3]
-escritor = PdfWriter()
-escritor.append_pages_from_reader(PdfReader(archivo))
-escritor.add_metadata({
-    "/Title": "Libro del diagnostico de nivel - banco de preguntas",
-    "/Author": autor,
-    "/Subject": "Diagnostico de nivel de ajedrez - material de uso docente",
-    "/Creator": "Ajedrez Integral",
-    "/Producer": "Ajedrez Integral",
-})
-escritor.encrypt(
-    user_password="",
-    owner_password=clave,
-    permissions_flag=UserAccessPermissions.EXTRACT_TEXT_AND_GRAPHICS,
-    algorithm="AES-256",
-)
-with open(archivo, "wb") as f:
-    escritor.write(f)
-`;
-  try {
-    execFileSync("python3", ["-c", guion, archivo, CLAVE_PROPIETARIO, AUTOR], { stdio: ["ignore", "pipe", "pipe"] });
-  } catch (e) {
-    console.error("\nNo se pudo proteger el PDF. Falta pypdf: pip install pypdf");
-    console.error(String(e.stderr || "").trim().split("\n").slice(-3).join("\n"));
-    fs.unlinkSync(archivo);   // mejor sin archivo que con uno sin proteger
-    process.exit(1);
-  }
-  console.log("Protegido: se abre sin contraseña, no se puede copiar ni imprimir.");
+  protegerPdf(archivo, {
+    clave: CLAVE_PROPIETARIO, autor: AUTOR, imprimir: false,
+    titulo: "Libro del diagnostico de nivel - banco de preguntas",
+    asunto: "Diagnostico de nivel de ajedrez - material de uso docente",
+  });
 }
