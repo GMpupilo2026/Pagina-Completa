@@ -1,0 +1,6638 @@
+{
+ "_comentario": "Lo genera herramientas/archivos-catalogo.js. No se edita a mano.",
+ "pdf": {
+  "niveles": [
+   {
+    "id": "principiante",
+    "nombre": "Principiante"
+   },
+   {
+    "id": "intermedio",
+    "nombre": "Intermedio"
+   },
+   {
+    "id": "avanzado",
+    "nombre": "Avanzado"
+   },
+   {
+    "id": "competicion",
+    "nombre": "Competición"
+   },
+   {
+    "id": "formacion-docente",
+    "nombre": "Formación docente"
+   }
+  ],
+  "total": 437,
+  "material": [
+   {
+    "ruta": "material/diagnostico-de-nivel/diagnostico-de-nivel.pdf",
+    "titulo": "Diagnóstico de nivel — la prueba",
+    "tipo": "otro",
+    "kb": 450,
+    "libro": "Diagnóstico de nivel"
+   },
+   {
+    "ruta": "material/examen-de-arbitraje/examen-de-arbitraje.pdf",
+    "titulo": "Examen de arbitraje — banco de preguntas",
+    "tipo": "otro",
+    "kb": 1650,
+    "libro": "Examen de arbitraje"
+   },
+   {
+    "ruta": "material/fichas-de-estudio/fichas-de-estudio-cartas.pdf",
+    "titulo": "Fichas de estudio — cartas para recortar",
+    "tipo": "otro",
+    "kb": 2595,
+    "libro": "Fichas de estudio"
+   },
+   {
+    "ruta": "material/fichas-de-estudio/fichas-de-estudio-libro.pdf",
+    "titulo": "Fichas de estudio — libro",
+    "tipo": "otro",
+    "kb": 22302,
+    "libro": "Fichas de estudio"
+   },
+   {
+    "ruta": "material/guia-del-profesor/guia-del-profesor-presentacion.pdf",
+    "titulo": "Guía del profesor — presentación",
+    "tipo": "otro",
+    "kb": 6401,
+    "libro": "Guía del profesor"
+   },
+   {
+    "ruta": "material/guia-del-profesor/guia-del-profesor.pdf",
+    "titulo": "Guía del profesor — manual",
+    "tipo": "otro",
+    "kb": 4637,
+    "libro": "Guía del profesor"
+   },
+   {
+    "ruta": "material/libro-de-diagnostico/libro-de-diagnostico.pdf",
+    "titulo": "Libro del diagnóstico de nivel — banco de preguntas",
+    "tipo": "otro",
+    "kb": 2497,
+    "libro": "Libro del diagnóstico de nivel"
+   },
+   {
+    "ruta": "material/mide-tu-fuerza-2/mide-tu-fuerza-2.pdf",
+    "titulo": "Mide tu fuerza 2",
+    "tipo": "otro",
+    "kb": 2985,
+    "libro": "Mide tu fuerza 2"
+   },
+   {
+    "ruta": "material/mide-tu-fuerza-3/mide-tu-fuerza-3.pdf",
+    "titulo": "Mide tu fuerza 3",
+    "tipo": "otro",
+    "kb": 2964,
+    "libro": "Mide tu fuerza 3"
+   },
+   {
+    "ruta": "material/mide-tu-fuerza-4/mide-tu-fuerza-4.pdf",
+    "titulo": "Mide tu fuerza 4",
+    "tipo": "otro",
+    "kb": 2995,
+    "libro": "Mide tu fuerza 4"
+   },
+   {
+    "ruta": "material/mide-tu-fuerza-5/mide-tu-fuerza-5.pdf",
+    "titulo": "Mide tu fuerza 5",
+    "tipo": "otro",
+    "kb": 2996,
+    "libro": "Mide tu fuerza 5"
+   },
+   {
+    "ruta": "material/mide-tu-fuerza/mide-tu-fuerza.pdf",
+    "titulo": "Mide tu fuerza — banco de ejercicios tácticos",
+    "tipo": "otro",
+    "kb": 2938,
+    "libro": "Mide tu fuerza"
+   },
+   {
+    "ruta": "material/ponte-a-prueba/ponte-a-prueba.pdf",
+    "titulo": "Ponte a prueba — examen y guía de entrenamiento",
+    "tipo": "otro",
+    "kb": 2123,
+    "libro": "Ponte a prueba"
+   },
+   {
+    "ruta": "material/ponte-a-prueba/versiones/claves-de-correccion.pdf",
+    "titulo": "Claves de corrección de las 18 versiones (para el profe)",
+    "tipo": "otro",
+    "kb": 350,
+    "libro": "Ponte a prueba"
+   },
+   {
+    "ruta": "material/ponte-a-prueba/versiones/prueba-1-version-a.pdf",
+    "titulo": "Prueba 1, versión A (cuadernillo para imprimir)",
+    "tipo": "otro",
+    "kb": 354,
+    "libro": "Ponte a prueba"
+   },
+   {
+    "ruta": "material/ponte-a-prueba/versiones/prueba-1-version-b.pdf",
+    "titulo": "Prueba 1, versión B (cuadernillo para imprimir)",
+    "tipo": "otro",
+    "kb": 356,
+    "libro": "Ponte a prueba"
+   },
+   {
+    "ruta": "material/ponte-a-prueba/versiones/prueba-1-version-c.pdf",
+    "titulo": "Prueba 1, versión C (cuadernillo para imprimir)",
+    "tipo": "otro",
+    "kb": 358,
+    "libro": "Ponte a prueba"
+   },
+   {
+    "ruta": "material/ponte-a-prueba/versiones/prueba-2-version-a.pdf",
+    "titulo": "Prueba 2, versión A (cuadernillo para imprimir)",
+    "tipo": "otro",
+    "kb": 358,
+    "libro": "Ponte a prueba"
+   },
+   {
+    "ruta": "material/ponte-a-prueba/versiones/prueba-2-version-b.pdf",
+    "titulo": "Prueba 2, versión B (cuadernillo para imprimir)",
+    "tipo": "otro",
+    "kb": 354,
+    "libro": "Ponte a prueba"
+   },
+   {
+    "ruta": "material/ponte-a-prueba/versiones/prueba-2-version-c.pdf",
+    "titulo": "Prueba 2, versión C (cuadernillo para imprimir)",
+    "tipo": "otro",
+    "kb": 353,
+    "libro": "Ponte a prueba"
+   },
+   {
+    "ruta": "material/ponte-a-prueba/versiones/prueba-3-version-a.pdf",
+    "titulo": "Prueba 3, versión A (cuadernillo para imprimir)",
+    "tipo": "otro",
+    "kb": 361,
+    "libro": "Ponte a prueba"
+   },
+   {
+    "ruta": "material/ponte-a-prueba/versiones/prueba-3-version-b.pdf",
+    "titulo": "Prueba 3, versión B (cuadernillo para imprimir)",
+    "tipo": "otro",
+    "kb": 352,
+    "libro": "Ponte a prueba"
+   },
+   {
+    "ruta": "material/ponte-a-prueba/versiones/prueba-3-version-c.pdf",
+    "titulo": "Prueba 3, versión C (cuadernillo para imprimir)",
+    "tipo": "otro",
+    "kb": 357,
+    "libro": "Ponte a prueba"
+   },
+   {
+    "ruta": "material/ponte-a-prueba/versiones/prueba-4-version-a.pdf",
+    "titulo": "Prueba 4, versión A (cuadernillo para imprimir)",
+    "tipo": "otro",
+    "kb": 360,
+    "libro": "Ponte a prueba"
+   },
+   {
+    "ruta": "material/ponte-a-prueba/versiones/prueba-4-version-b.pdf",
+    "titulo": "Prueba 4, versión B (cuadernillo para imprimir)",
+    "tipo": "otro",
+    "kb": 356,
+    "libro": "Ponte a prueba"
+   },
+   {
+    "ruta": "material/ponte-a-prueba/versiones/prueba-4-version-c.pdf",
+    "titulo": "Prueba 4, versión C (cuadernillo para imprimir)",
+    "tipo": "otro",
+    "kb": 354,
+    "libro": "Ponte a prueba"
+   },
+   {
+    "ruta": "material/ponte-a-prueba/versiones/prueba-5-version-a.pdf",
+    "titulo": "Prueba 5, versión A (cuadernillo para imprimir)",
+    "tipo": "otro",
+    "kb": 348,
+    "libro": "Ponte a prueba"
+   },
+   {
+    "ruta": "material/ponte-a-prueba/versiones/prueba-5-version-b.pdf",
+    "titulo": "Prueba 5, versión B (cuadernillo para imprimir)",
+    "tipo": "otro",
+    "kb": 360,
+    "libro": "Ponte a prueba"
+   },
+   {
+    "ruta": "material/ponte-a-prueba/versiones/prueba-5-version-c.pdf",
+    "titulo": "Prueba 5, versión C (cuadernillo para imprimir)",
+    "tipo": "otro",
+    "kb": 353,
+    "libro": "Ponte a prueba"
+   },
+   {
+    "ruta": "material/ponte-a-prueba/versiones/prueba-6-version-a.pdf",
+    "titulo": "Prueba 6, versión A (cuadernillo para imprimir)",
+    "tipo": "otro",
+    "kb": 356,
+    "libro": "Ponte a prueba"
+   },
+   {
+    "ruta": "material/ponte-a-prueba/versiones/prueba-6-version-b.pdf",
+    "titulo": "Prueba 6, versión B (cuadernillo para imprimir)",
+    "tipo": "otro",
+    "kb": 352,
+    "libro": "Ponte a prueba"
+   },
+   {
+    "ruta": "material/ponte-a-prueba/versiones/prueba-6-version-c.pdf",
+    "titulo": "Prueba 6, versión C (cuadernillo para imprimir)",
+    "tipo": "otro",
+    "kb": 356,
+    "libro": "Ponte a prueba"
+   }
+  ],
+  "cursos": [
+   {
+    "slug": "fundamentos-del-ajedrez",
+    "titulo": "Fundamentos del Ajedrez",
+    "nivel": "principiante",
+    "lecciones": [
+     {
+      "numero": 1,
+      "titulo": "El tablero y la notación algebraica",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/fundamentos-del-ajedrez/01-el-tablero-y-la-notacion-algebraica-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 159
+       },
+       {
+        "ruta": "cursos/recursos/fundamentos-del-ajedrez/01-el-tablero-y-la-notacion-algebraica-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 4
+       }
+      ]
+     },
+     {
+      "numero": 2,
+      "titulo": "Movimiento de las piezas: peón, caballo, alfil",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/fundamentos-del-ajedrez/02-movimiento-de-las-piezas-peon-caballo-alfil-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 175
+       },
+       {
+        "ruta": "cursos/recursos/fundamentos-del-ajedrez/02-movimiento-de-las-piezas-peon-caballo-alfil-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 4
+       }
+      ]
+     },
+     {
+      "numero": 3,
+      "titulo": "Movimiento de las piezas: torre, dama, rey",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/fundamentos-del-ajedrez/03-movimiento-de-las-piezas-torre-dama-rey-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 175
+       },
+       {
+        "ruta": "cursos/recursos/fundamentos-del-ajedrez/03-movimiento-de-las-piezas-torre-dama-rey-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 4
+       }
+      ]
+     },
+     {
+      "numero": 4,
+      "titulo": "Jaque, jaque mate y ahogado",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/fundamentos-del-ajedrez/04-jaque-jaque-mate-y-ahogado-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 183
+       },
+       {
+        "ruta": "cursos/recursos/fundamentos-del-ajedrez/04-jaque-jaque-mate-y-ahogado-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 4
+       }
+      ]
+     },
+     {
+      "numero": 5,
+      "titulo": "Valor relativo de las piezas",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/fundamentos-del-ajedrez/05-valor-relativo-de-las-piezas-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 159
+       },
+       {
+        "ruta": "cursos/recursos/fundamentos-del-ajedrez/05-valor-relativo-de-las-piezas-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 4
+       }
+      ]
+     },
+     {
+      "numero": 6,
+      "titulo": "Enroque corto y largo: cuándo y por qué",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/fundamentos-del-ajedrez/06-enroque-corto-y-largo-cuando-y-por-que-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 158
+       },
+       {
+        "ruta": "cursos/recursos/fundamentos-del-ajedrez/06-enroque-corto-y-largo-cuando-y-por-que-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 4
+       }
+      ]
+     },
+     {
+      "numero": 7,
+      "titulo": "Captura al paso y coronación de peones",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/fundamentos-del-ajedrez/07-captura-al-paso-y-coronacion-de-peones-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 188
+       },
+       {
+        "ruta": "cursos/recursos/fundamentos-del-ajedrez/07-captura-al-paso-y-coronacion-de-peones-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 4
+       }
+      ]
+     },
+     {
+      "numero": 8,
+      "titulo": "Piezas que se defienden entre sí",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/fundamentos-del-ajedrez/08-piezas-que-se-defienden-entre-si-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 155
+       },
+       {
+        "ruta": "cursos/recursos/fundamentos-del-ajedrez/08-piezas-que-se-defienden-entre-si-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 4
+       }
+      ]
+     },
+     {
+      "numero": 9,
+      "titulo": "Los tres principios de la apertura",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/fundamentos-del-ajedrez/09-los-tres-principios-de-la-apertura-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 159
+       },
+       {
+        "ruta": "cursos/recursos/fundamentos-del-ajedrez/09-los-tres-principios-de-la-apertura-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 4
+       }
+      ]
+     },
+     {
+      "numero": 10,
+      "titulo": "Errores comunes de apertura",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/fundamentos-del-ajedrez/10-errores-comunes-de-apertura-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 156
+       },
+       {
+        "ruta": "cursos/recursos/fundamentos-del-ajedrez/10-errores-comunes-de-apertura-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 4
+       }
+      ]
+     },
+     {
+      "numero": 11,
+      "titulo": "Mate con dos torres y con dama y rey",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/fundamentos-del-ajedrez/11-mate-con-dos-torres-y-con-dama-y-rey-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 191
+       },
+       {
+        "ruta": "cursos/recursos/fundamentos-del-ajedrez/11-mate-con-dos-torres-y-con-dama-y-rey-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 4
+       }
+      ]
+     },
+     {
+      "numero": 12,
+      "titulo": "Partida final: aplica lo aprendido",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/fundamentos-del-ajedrez/12-partida-final-aplica-lo-aprendido-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 158
+       },
+       {
+        "ruta": "cursos/recursos/fundamentos-del-ajedrez/12-partida-final-aplica-lo-aprendido-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 4
+       }
+      ]
+     }
+    ],
+    "otros": []
+   },
+   {
+    "slug": "aperturas-y-defensas",
+    "titulo": "Aperturas y Defensas",
+    "nivel": "intermedio",
+    "lecciones": [
+     {
+      "numero": 1,
+      "titulo": "Apertura Española",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/aperturas-y-defensas/01-apertura-espanola-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 159
+       },
+       {
+        "ruta": "cursos/recursos/aperturas-y-defensas/01-apertura-espanola-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 4
+       }
+      ]
+     },
+     {
+      "numero": 2,
+      "titulo": "Defensa Siciliana: variante Najdorf",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/aperturas-y-defensas/02-defensa-siciliana-variante-najdorf-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 158
+       },
+       {
+        "ruta": "cursos/recursos/aperturas-y-defensas/02-defensa-siciliana-variante-najdorf-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 4
+       }
+      ]
+     },
+     {
+      "numero": 3,
+      "titulo": "Defensa Francesa: estructura de peones y plan típico",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/aperturas-y-defensas/03-defensa-francesa-estructura-de-peones-y-plan-tipico-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 185
+       },
+       {
+        "ruta": "cursos/recursos/aperturas-y-defensas/03-defensa-francesa-estructura-de-peones-y-plan-tipico-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 4
+       }
+      ]
+     },
+     {
+      "numero": 4,
+      "titulo": "Defensa Caro-Kann: solidez para negras",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/aperturas-y-defensas/04-defensa-caro-kann-solidez-para-negras-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 157
+       },
+       {
+        "ruta": "cursos/recursos/aperturas-y-defensas/04-defensa-caro-kann-solidez-para-negras-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 4
+       }
+      ]
+     },
+     {
+      "numero": 5,
+      "titulo": "Gambito de Dama: aceptado vs. rehusado",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/aperturas-y-defensas/05-gambito-de-dama-aceptado-vs-rehusado-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 159
+       },
+       {
+        "ruta": "cursos/recursos/aperturas-y-defensas/05-gambito-de-dama-aceptado-vs-rehusado-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 4
+       }
+      ]
+     },
+     {
+      "numero": 6,
+      "titulo": "Defensa Nimzoindia",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/aperturas-y-defensas/06-defensa-nimzoindia-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 159
+       },
+       {
+        "ruta": "cursos/recursos/aperturas-y-defensas/06-defensa-nimzoindia-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 4
+       }
+      ]
+     },
+     {
+      "numero": 7,
+      "titulo": "Defensa India de Rey",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/aperturas-y-defensas/07-defensa-india-de-rey-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 156
+       },
+       {
+        "ruta": "cursos/recursos/aperturas-y-defensas/07-defensa-india-de-rey-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 4
+       }
+      ]
+     },
+     {
+      "numero": 8,
+      "titulo": "Defensa Eslava",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/aperturas-y-defensas/08-defensa-eslava-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 157
+       },
+       {
+        "ruta": "cursos/recursos/aperturas-y-defensas/08-defensa-eslava-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 4
+       }
+      ]
+     },
+     {
+      "numero": 9,
+      "titulo": "Apertura Italiana y variantes modernas",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/aperturas-y-defensas/09-apertura-italiana-y-variantes-modernas-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 157
+       },
+       {
+        "ruta": "cursos/recursos/aperturas-y-defensas/09-apertura-italiana-y-variantes-modernas-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 4
+       }
+      ]
+     },
+     {
+      "numero": 10,
+      "titulo": "Apertura Inglesa",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/aperturas-y-defensas/10-apertura-inglesa-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 157
+       },
+       {
+        "ruta": "cursos/recursos/aperturas-y-defensas/10-apertura-inglesa-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 4
+       }
+      ]
+     },
+     {
+      "numero": 11,
+      "titulo": "Sistema Réti",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/aperturas-y-defensas/11-sistema-reti-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 156
+       },
+       {
+        "ruta": "cursos/recursos/aperturas-y-defensas/11-sistema-reti-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 4
+       }
+      ]
+     },
+     {
+      "numero": 12,
+      "titulo": "Gambito Evans",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/aperturas-y-defensas/12-gambito-evans-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 156
+       },
+       {
+        "ruta": "cursos/recursos/aperturas-y-defensas/12-gambito-evans-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 3
+       }
+      ]
+     },
+     {
+      "numero": 13,
+      "titulo": "Cómo elegir un repertorio según tu estilo",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/aperturas-y-defensas/13-como-elegir-un-repertorio-segun-tu-estilo-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 157
+       },
+       {
+        "ruta": "cursos/recursos/aperturas-y-defensas/13-como-elegir-un-repertorio-segun-tu-estilo-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 4
+       }
+      ]
+     },
+     {
+      "numero": 14,
+      "titulo": "Transposiciones",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/aperturas-y-defensas/14-transposiciones-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 157
+       },
+       {
+        "ruta": "cursos/recursos/aperturas-y-defensas/14-transposiciones-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 4
+       }
+      ]
+     },
+     {
+      "numero": 15,
+      "titulo": "Preparación contra rivales específicos",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/aperturas-y-defensas/15-preparacion-contra-rivales-especificos-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 157
+       },
+       {
+        "ruta": "cursos/recursos/aperturas-y-defensas/15-preparacion-contra-rivales-especificos-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 4
+       }
+      ]
+     },
+     {
+      "numero": 16,
+      "titulo": "Partida comentada: aperturas en la práctica",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/aperturas-y-defensas/16-partida-comentada-aperturas-en-la-practica-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 154
+       },
+       {
+        "ruta": "cursos/recursos/aperturas-y-defensas/16-partida-comentada-aperturas-en-la-practica-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 3
+       }
+      ]
+     }
+    ],
+    "otros": []
+   },
+   {
+    "slug": "calculo-y-visualizacion",
+    "titulo": "Cálculo y Visualización",
+    "nivel": "intermedio",
+    "lecciones": [
+     {
+      "numero": 1,
+      "titulo": "El árbol de variantes",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/calculo-y-visualizacion/01-el-arbol-de-variantes-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 153
+       },
+       {
+        "ruta": "cursos/recursos/calculo-y-visualizacion/01-el-arbol-de-variantes-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 4
+       }
+      ]
+     },
+     {
+      "numero": 2,
+      "titulo": "Visualización sin mover piezas",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/calculo-y-visualizacion/02-visualizacion-sin-mover-piezas-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 152
+       },
+       {
+        "ruta": "cursos/recursos/calculo-y-visualizacion/02-visualizacion-sin-mover-piezas-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 4
+       }
+      ]
+     },
+     {
+      "numero": 3,
+      "titulo": "Jugadas candidatas",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/calculo-y-visualizacion/03-jugadas-candidatas-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 154
+       },
+       {
+        "ruta": "cursos/recursos/calculo-y-visualizacion/03-jugadas-candidatas-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 4
+       }
+      ]
+     },
+     {
+      "numero": 4,
+      "titulo": "Calcular capturas en cadena",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/calculo-y-visualizacion/04-calcular-capturas-en-cadena-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 149
+       },
+       {
+        "ruta": "cursos/recursos/calculo-y-visualizacion/04-calcular-capturas-en-cadena-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 3
+       }
+      ]
+     },
+     {
+      "numero": 5,
+      "titulo": "Jaques y amenazas forzadas",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/calculo-y-visualizacion/05-jaques-y-amenazas-forzadas-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 153
+       },
+       {
+        "ruta": "cursos/recursos/calculo-y-visualizacion/05-jaques-y-amenazas-forzadas-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 4
+       }
+      ]
+     },
+     {
+      "numero": 6,
+      "titulo": "Detectar las jugadas intermedias (zwischenzug)",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/calculo-y-visualizacion/06-detectar-las-jugadas-intermedias-zwischenzug-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 158
+       },
+       {
+        "ruta": "cursos/recursos/calculo-y-visualizacion/06-detectar-las-jugadas-intermedias-zwischenzug-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 4
+       }
+      ]
+     },
+     {
+      "numero": 7,
+      "titulo": "Verificación final",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/calculo-y-visualizacion/07-verificacion-final-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 154
+       },
+       {
+        "ruta": "cursos/recursos/calculo-y-visualizacion/07-verificacion-final-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 3
+       }
+      ]
+     },
+     {
+      "numero": 8,
+      "titulo": "Ajedrez a la ciega",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/calculo-y-visualizacion/08-ajedrez-a-la-ciega-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 153
+       },
+       {
+        "ruta": "cursos/recursos/calculo-y-visualizacion/08-ajedrez-a-la-ciega-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 4
+       }
+      ]
+     },
+     {
+      "numero": 9,
+      "titulo": "Calcular bajo presión de tiempo",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/calculo-y-visualizacion/09-calcular-bajo-presion-de-tiempo-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 156
+       },
+       {
+        "ruta": "cursos/recursos/calculo-y-visualizacion/09-calcular-bajo-presion-de-tiempo-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 3
+       }
+      ]
+     },
+     {
+      "numero": 10,
+      "titulo": "Sesión práctica cronometrada",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/calculo-y-visualizacion/10-sesion-practica-cronometrada-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 154
+       },
+       {
+        "ruta": "cursos/recursos/calculo-y-visualizacion/10-sesion-practica-cronometrada-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 3
+       }
+      ]
+     }
+    ],
+    "otros": []
+   },
+   {
+    "slug": "finales-practicos",
+    "titulo": "Finales Prácticos",
+    "nivel": "intermedio",
+    "lecciones": [
+     {
+      "numero": 1,
+      "titulo": "La regla del cuadrado y el peón pasado",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/finales-practicos/01-la-regla-del-cuadrado-y-el-peon-pasado-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 179
+       },
+       {
+        "ruta": "cursos/recursos/finales-practicos/01-la-regla-del-cuadrado-y-el-peon-pasado-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 4
+       }
+      ]
+     },
+     {
+      "numero": 2,
+      "titulo": "Oposición de reyes",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/finales-practicos/02-oposicion-de-reyes-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 186
+       },
+       {
+        "ruta": "cursos/recursos/finales-practicos/02-oposicion-de-reyes-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 4
+       }
+      ]
+     },
+     {
+      "numero": 3,
+      "titulo": "Finales de rey y peón: posiciones críticas",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/finales-practicos/03-finales-de-rey-y-peon-posiciones-criticas-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 186
+       },
+       {
+        "ruta": "cursos/recursos/finales-practicos/03-finales-de-rey-y-peon-posiciones-criticas-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 4
+       }
+      ]
+     },
+     {
+      "numero": 4,
+      "titulo": "Ruptura de peones",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/finales-practicos/04-ruptura-de-peones-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 183
+       },
+       {
+        "ruta": "cursos/recursos/finales-practicos/04-ruptura-de-peones-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 4
+       }
+      ]
+     },
+     {
+      "numero": 5,
+      "titulo": "La posición de Lucena",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/finales-practicos/05-la-posicion-de-lucena-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 189
+       },
+       {
+        "ruta": "cursos/recursos/finales-practicos/05-la-posicion-de-lucena-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 4
+       }
+      ]
+     },
+     {
+      "numero": 6,
+      "titulo": "La posición de Philidor",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/finales-practicos/06-la-posicion-de-philidor-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 189
+       },
+       {
+        "ruta": "cursos/recursos/finales-practicos/06-la-posicion-de-philidor-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 4
+       }
+      ]
+     },
+     {
+      "numero": 7,
+      "titulo": "Torres activas",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/finales-practicos/07-torres-activas-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 156
+       },
+       {
+        "ruta": "cursos/recursos/finales-practicos/07-torres-activas-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 4
+       }
+      ]
+     },
+     {
+      "numero": 8,
+      "titulo": "Finales de torres con varios peones",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/finales-practicos/08-finales-de-torres-con-varios-peones-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 186
+       },
+       {
+        "ruta": "cursos/recursos/finales-practicos/08-finales-de-torres-con-varios-peones-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 3
+       }
+      ]
+     },
+     {
+      "numero": 9,
+      "titulo": "Finales de alfiles del mismo color",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/finales-practicos/09-finales-de-alfiles-del-mismo-color-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 188
+       },
+       {
+        "ruta": "cursos/recursos/finales-practicos/09-finales-de-alfiles-del-mismo-color-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 4
+       }
+      ]
+     },
+     {
+      "numero": 10,
+      "titulo": "Finales de alfiles de distinto color",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/finales-practicos/10-finales-de-alfiles-de-distinto-color-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 188
+       },
+       {
+        "ruta": "cursos/recursos/finales-practicos/10-finales-de-alfiles-de-distinto-color-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 4
+       }
+      ]
+     },
+     {
+      "numero": 11,
+      "titulo": "Finales de caballo contra alfil",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/finales-practicos/11-finales-de-caballo-contra-alfil-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 188
+       },
+       {
+        "ruta": "cursos/recursos/finales-practicos/11-finales-de-caballo-contra-alfil-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 3
+       }
+      ]
+     },
+     {
+      "numero": 12,
+      "titulo": "Finales de dama contra peón coronando",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/finales-practicos/12-finales-de-dama-contra-peon-coronando-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 189
+       },
+       {
+        "ruta": "cursos/recursos/finales-practicos/12-finales-de-dama-contra-peon-coronando-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 4
+       }
+      ]
+     },
+     {
+      "numero": 13,
+      "titulo": "Conversión de ventaja material",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/finales-practicos/13-conversion-de-ventaja-material-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 156
+       },
+       {
+        "ruta": "cursos/recursos/finales-practicos/13-conversion-de-ventaja-material-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 4
+       }
+      ]
+     },
+     {
+      "numero": 14,
+      "titulo": "Partida final comentada",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/finales-practicos/14-partida-final-comentada-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 156
+       },
+       {
+        "ruta": "cursos/recursos/finales-practicos/14-partida-final-comentada-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 3
+       }
+      ]
+     }
+    ],
+    "otros": []
+   },
+   {
+    "slug": "partidas-modelo",
+    "titulo": "Partidas modelo del ajedrez moderno",
+    "nivel": "intermedio",
+    "lecciones": [
+     {
+      "numero": 1,
+      "titulo": "¡A sacar las piezas! A. Chernin – J. van der Wiel",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/partidas-modelo/01-a-sacar-las-piezas-a-chernin-j-van-der-wiel-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 189
+       },
+       {
+        "ruta": "cursos/recursos/partidas-modelo/01-partida-01-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 85
+       }
+      ]
+     },
+     {
+      "numero": 2,
+      "titulo": "El rey en el centro A. Jálifman – E. Svéshnikov",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/partidas-modelo/02-el-rey-en-el-centro-a-jalifman-e-sveshnikov-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 192
+       },
+       {
+        "ruta": "cursos/recursos/partidas-modelo/02-partida-02-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 85
+       }
+      ]
+     },
+     {
+      "numero": 3,
+      "titulo": "Dominio eficaz del centro K. Aséiev – N. Rashkovski",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/partidas-modelo/03-dominio-eficaz-del-centro-k-aseiev-n-rashkovski-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 183
+       },
+       {
+        "ruta": "cursos/recursos/partidas-modelo/03-partida-03-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 94
+       }
+      ]
+     },
+     {
+      "numero": 4,
+      "titulo": "Un centro de peones sobreexpandido J. van der Wiel – R. Vaganián",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/partidas-modelo/04-un-centro-de-peones-sobreexpandido-j-van-der-wiel-r-vaganian-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 194
+       },
+       {
+        "ruta": "cursos/recursos/partidas-modelo/04-partida-04-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 93
+       }
+      ]
+     },
+     {
+      "numero": 5,
+      "titulo": "El juego moderno de gambito T. Markowski – A. Onishchuk",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/partidas-modelo/05-el-juego-moderno-de-gambito-t-markowski-a-onishchuk-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 191
+       },
+       {
+        "ruta": "cursos/recursos/partidas-modelo/05-partida-05-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 102
+       }
+      ]
+     },
+     {
+      "numero": null,
+      "titulo": "Examen del bloque 1: apertura",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/partidas-modelo/06-examen-del-bloque-1-apertura-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 154
+       },
+       {
+        "ruta": "cursos/recursos/partidas-modelo/31-examen-apertura-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 129
+       }
+      ]
+     },
+     {
+      "numero": 6,
+      "titulo": "Ideas básicas en el ataque G. Kaspárov – N. Short",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/partidas-modelo/06-ideas-basicas-en-el-ataque-g-kasparov-n-short-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 186
+       },
+       {
+        "ruta": "cursos/recursos/partidas-modelo/06-partida-06-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 98
+       }
+      ]
+     },
+     {
+      "numero": 7,
+      "titulo": "Incorporar las fuerzas de reserva G. Kaspárov – A. Kárpov",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/partidas-modelo/07-incorporar-las-fuerzas-de-reserva-g-kasparov-a-karpov-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 192
+       },
+       {
+        "ruta": "cursos/recursos/partidas-modelo/07-partida-07-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 101
+       }
+      ]
+     },
+     {
+      "numero": 8,
+      "titulo": "Sacrificios típicos A. Shírov – D. Reinderman",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/partidas-modelo/08-sacrificios-tipicos-a-shirov-d-reinderman-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 188
+       },
+       {
+        "ruta": "cursos/recursos/partidas-modelo/08-partida-08-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 91
+       }
+      ]
+     },
+     {
+      "numero": 9,
+      "titulo": "El ataque con oleada de sacrificios J. Nunn – I. Nataf",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/partidas-modelo/09-el-ataque-con-oleada-de-sacrificios-j-nunn-i-nataf-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 190
+       },
+       {
+        "ruta": "cursos/recursos/partidas-modelo/09-partida-09-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 100
+       }
+      ]
+     },
+     {
+      "numero": 10,
+      "titulo": "Enroques en flancos opuestos J. Nunn – C. Ward",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/partidas-modelo/10-enroques-en-flancos-opuestos-j-nunn-c-ward-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 187
+       },
+       {
+        "ruta": "cursos/recursos/partidas-modelo/10-partida-10-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 94
+       }
+      ]
+     },
+     {
+      "numero": 11,
+      "titulo": "La gran diagonal J. Timman – J. Polgar",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/partidas-modelo/11-la-gran-diagonal-j-timman-j-polgar-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 188
+       },
+       {
+        "ruta": "cursos/recursos/partidas-modelo/11-partida-11-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 86
+       }
+      ]
+     },
+     {
+      "numero": 12,
+      "titulo": "Que no cunda el pánico M. Rõtšagov – Z. Lanka",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/partidas-modelo/12-que-no-cunda-el-panico-m-rotsagov-z-lanka-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 192
+       },
+       {
+        "ruta": "cursos/recursos/partidas-modelo/12-partida-12-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 85
+       }
+      ]
+     },
+     {
+      "numero": 13,
+      "titulo": "El sacrificio defensivo B. Lalić – A. Jálifman",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/partidas-modelo/13-el-sacrificio-defensivo-b-lalic-a-jalifman-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 187
+       },
+       {
+        "ruta": "cursos/recursos/partidas-modelo/13-partida-13-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 89
+       }
+      ]
+     },
+     {
+      "numero": 14,
+      "titulo": "Defensa y contraataque Bu Xiangzhi – Ye Jiangchuan",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/partidas-modelo/14-defensa-y-contraataque-bu-xiangzhi-ye-jiangchuan-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 187
+       },
+       {
+        "ruta": "cursos/recursos/partidas-modelo/14-partida-14-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 85
+       }
+      ]
+     },
+     {
+      "numero": 15,
+      "titulo": "Defensa a ultranza V. Krámnik – V. Anand",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/partidas-modelo/15-defensa-a-ultranza-v-kramnik-v-anand-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 190
+       },
+       {
+        "ruta": "cursos/recursos/partidas-modelo/15-partida-15-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 93
+       }
+      ]
+     },
+     {
+      "numero": 16,
+      "titulo": "Mala estructura de peones G. Kaspárov – I. Sokolov",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/partidas-modelo/16-mala-estructura-de-peones-g-kasparov-i-sokolov-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 190
+       },
+       {
+        "ruta": "cursos/recursos/partidas-modelo/16-partida-16-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 86
+       }
+      ]
+     },
+     {
+      "numero": 17,
+      "titulo": "Ventaja de espacio A. Kárpov – Z. Ribli",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/partidas-modelo/17-ventaja-de-espacio-a-karpov-z-ribli-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 189
+       },
+       {
+        "ruta": "cursos/recursos/partidas-modelo/17-partida-17-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 93
+       }
+      ]
+     },
+     {
+      "numero": 18,
+      "titulo": "Puestos avanzados J. Piket – I. Smirin",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/partidas-modelo/18-puestos-avanzados-j-piket-i-smirin-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 189
+       },
+       {
+        "ruta": "cursos/recursos/partidas-modelo/18-partida-18-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 98
+       }
+      ]
+     },
+     {
+      "numero": 19,
+      "titulo": "Columnas abiertas N. Short – J. Timman",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/partidas-modelo/19-columnas-abiertas-n-short-j-timman-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 188
+       },
+       {
+        "ruta": "cursos/recursos/partidas-modelo/19-partida-19-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 99
+       }
+      ]
+     },
+     {
+      "numero": 20,
+      "titulo": "Complejo de casillas débiles G. Kaspárov – A. Shírov",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/partidas-modelo/20-complejo-de-casillas-debiles-g-kasparov-a-shirov-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 190
+       },
+       {
+        "ruta": "cursos/recursos/partidas-modelo/20-partida-20-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 87
+       }
+      ]
+     },
+     {
+      "numero": 21,
+      "titulo": "Ataque al flanco de dama A. Yermolinsky – L. Christiansen",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/partidas-modelo/21-ataque-al-flanco-de-dama-a-yermolinsky-l-christiansen-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 193
+       },
+       {
+        "ruta": "cursos/recursos/partidas-modelo/21-partida-21-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 85
+       }
+      ]
+     },
+     {
+      "numero": 22,
+      "titulo": "Pareja de alfiles M. Gúrevich – N. Miezis",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/partidas-modelo/22-pareja-de-alfiles-m-gurevich-n-miezis-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 187
+       },
+       {
+        "ruta": "cursos/recursos/partidas-modelo/22-partida-22-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 86
+       }
+      ]
+     },
+     {
+      "numero": 23,
+      "titulo": "El alfil malo M. Stean – G. Sax",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/partidas-modelo/23-el-alfil-malo-m-stean-g-sax-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 187
+       },
+       {
+        "ruta": "cursos/recursos/partidas-modelo/23-partida-23-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 93
+       }
+      ]
+     },
+     {
+      "numero": 24,
+      "titulo": "La cadena de peones P. San Segundo – V. Topálov",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/partidas-modelo/24-la-cadena-de-peones-p-san-segundo-v-topalov-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 191
+       },
+       {
+        "ruta": "cursos/recursos/partidas-modelo/24-partida-24-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 94
+       }
+      ]
+     },
+     {
+      "numero": 25,
+      "titulo": "Explotación del peón dama aislado G. Kamsky – A. Kárpov",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/partidas-modelo/25-explotacion-del-peon-dama-aislado-g-kamsky-a-karpov-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 189
+       },
+       {
+        "ruta": "cursos/recursos/partidas-modelo/25-partida-25-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 95
+       }
+      ]
+     },
+     {
+      "numero": 26,
+      "titulo": "Triunfo del peón dama aislado G. Kamsky – N. Short",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/partidas-modelo/26-triunfo-del-peon-dama-aislado-g-kamsky-n-short-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 191
+       },
+       {
+        "ruta": "cursos/recursos/partidas-modelo/26-partida-26-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 88
+       }
+      ]
+     },
+     {
+      "numero": 27,
+      "titulo": "Sacrificios posicionales J. Lautier – A. Shírov",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/partidas-modelo/27-sacrificios-posicionales-j-lautier-a-shirov-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 188
+       },
+       {
+        "ruta": "cursos/recursos/partidas-modelo/27-partida-27-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 91
+       }
+      ]
+     },
+     {
+      "numero": null,
+      "titulo": "Examen de los bloques 2-4: medio juego",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/partidas-modelo/29-examen-de-los-bloques-2-4-medio-juego-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 148
+       },
+       {
+        "ruta": "cursos/recursos/partidas-modelo/32-examen-medio-juego-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 198
+       }
+      ]
+     },
+     {
+      "numero": 28,
+      "titulo": "El rey activo V. Smyslov – G. Sax",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/partidas-modelo/28-el-rey-activo-v-smyslov-g-sax-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 192
+       },
+       {
+        "ruta": "cursos/recursos/partidas-modelo/28-partida-28-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 67
+       }
+      ]
+     },
+     {
+      "numero": 29,
+      "titulo": "El poder de los peones pasados V. Krámnik – P. Svídler",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/partidas-modelo/29-el-poder-de-los-peones-pasados-v-kramnik-p-svidler-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 191
+       },
+       {
+        "ruta": "cursos/recursos/partidas-modelo/29-partida-29-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 81
+       }
+      ]
+     },
+     {
+      "numero": 30,
+      "titulo": "La torre en séptima E. Handoko – Xu Jun",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/partidas-modelo/30-la-torre-en-septima-e-handoko-xu-jun-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 187
+       },
+       {
+        "ruta": "cursos/recursos/partidas-modelo/30-partida-30-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 74
+       }
+      ]
+     },
+     {
+      "numero": null,
+      "titulo": "Examen del bloque 5 y repaso general",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/partidas-modelo/33-examen-del-bloque-5-y-repaso-general-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 149
+       },
+       {
+        "ruta": "cursos/recursos/partidas-modelo/33-examen-final-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 128
+       }
+      ]
+     }
+    ],
+    "otros": []
+   },
+   {
+    "slug": "estrategia-y-tactica",
+    "titulo": "Estrategia y Táctica",
+    "nivel": "avanzado",
+    "lecciones": [
+     {
+      "numero": 1,
+      "titulo": "Clavadas: absolutas y relativas",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/estrategia-y-tactica/01-clavadas-absolutas-y-relativas-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 159
+       },
+       {
+        "ruta": "cursos/recursos/estrategia-y-tactica/01-clavadas-absolutas-y-relativas-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 4
+       }
+      ]
+     },
+     {
+      "numero": 2,
+      "titulo": "Horquillas de caballo y de peón",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/estrategia-y-tactica/02-horquillas-de-caballo-y-de-peon-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 178
+       },
+       {
+        "ruta": "cursos/recursos/estrategia-y-tactica/02-horquillas-de-caballo-y-de-peon-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 4
+       }
+      ]
+     },
+     {
+      "numero": 3,
+      "titulo": "Ataques a la descubierta y jaques dobles",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/estrategia-y-tactica/03-ataques-a-la-descubierta-y-jaques-dobles-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 157
+       },
+       {
+        "ruta": "cursos/recursos/estrategia-y-tactica/03-ataques-a-la-descubierta-y-jaques-dobles-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 4
+       }
+      ]
+     },
+     {
+      "numero": 4,
+      "titulo": "Rayos X y desviaciones",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/estrategia-y-tactica/04-rayos-x-y-desviaciones-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 156
+       },
+       {
+        "ruta": "cursos/recursos/estrategia-y-tactica/04-rayos-x-y-desviaciones-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 4
+       }
+      ]
+     },
+     {
+      "numero": 5,
+      "titulo": "Sacrificios de despeje y de destrucción",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/estrategia-y-tactica/05-sacrificios-de-despeje-y-de-destruccion-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 154
+       },
+       {
+        "ruta": "cursos/recursos/estrategia-y-tactica/05-sacrificios-de-despeje-y-de-destruccion-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 4
+       }
+      ]
+     },
+     {
+      "numero": 6,
+      "titulo": "Cómo calcular variantes sin mover las piezas",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/estrategia-y-tactica/06-como-calcular-variantes-sin-mover-las-piezas-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 155
+       },
+       {
+        "ruta": "cursos/recursos/estrategia-y-tactica/06-como-calcular-variantes-sin-mover-las-piezas-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 4
+       }
+      ]
+     },
+     {
+      "numero": 7,
+      "titulo": "Combinaciones de dos y tres jugadas",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/estrategia-y-tactica/07-combinaciones-de-dos-y-tres-jugadas-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 156
+       },
+       {
+        "ruta": "cursos/recursos/estrategia-y-tactica/07-combinaciones-de-dos-y-tres-jugadas-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 4
+       }
+      ]
+     },
+     {
+      "numero": 8,
+      "titulo": "Sacrificios en h7/h2",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/estrategia-y-tactica/08-sacrificios-en-h7-h2-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 158
+       },
+       {
+        "ruta": "cursos/recursos/estrategia-y-tactica/08-sacrificios-en-h7-h2-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 4
+       }
+      ]
+     },
+     {
+      "numero": 9,
+      "titulo": "Combinaciones con promoción de peón",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/estrategia-y-tactica/09-combinaciones-con-promocion-de-peon-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 157
+       },
+       {
+        "ruta": "cursos/recursos/estrategia-y-tactica/09-combinaciones-con-promocion-de-peon-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 3
+       }
+      ]
+     },
+     {
+      "numero": 10,
+      "titulo": "Cálculo bajo presión de tiempo",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/estrategia-y-tactica/10-calculo-bajo-presion-de-tiempo-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 154
+       },
+       {
+        "ruta": "cursos/recursos/estrategia-y-tactica/10-calculo-bajo-presion-de-tiempo-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 4
+       }
+      ]
+     },
+     {
+      "numero": 11,
+      "titulo": "Peones débiles",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/estrategia-y-tactica/11-peones-debiles-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 156
+       },
+       {
+        "ruta": "cursos/recursos/estrategia-y-tactica/11-peones-debiles-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 4
+       }
+      ]
+     },
+     {
+      "numero": 12,
+      "titulo": "Casillas débiles y piezas dominantes",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/estrategia-y-tactica/12-casillas-debiles-y-piezas-dominantes-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 154
+       },
+       {
+        "ruta": "cursos/recursos/estrategia-y-tactica/12-casillas-debiles-y-piezas-dominantes-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 4
+       }
+      ]
+     },
+     {
+      "numero": 13,
+      "titulo": "La pareja de alfiles",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/estrategia-y-tactica/13-la-pareja-de-alfiles-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 155
+       },
+       {
+        "ruta": "cursos/recursos/estrategia-y-tactica/13-la-pareja-de-alfiles-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 4
+       }
+      ]
+     },
+     {
+      "numero": 14,
+      "titulo": "Columnas y diagonales abiertas",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/estrategia-y-tactica/14-columnas-y-diagonales-abiertas-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 156
+       },
+       {
+        "ruta": "cursos/recursos/estrategia-y-tactica/14-columnas-y-diagonales-abiertas-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 4
+       }
+      ]
+     },
+     {
+      "numero": 15,
+      "titulo": "Planificación de medio juego",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/estrategia-y-tactica/15-planificacion-de-medio-juego-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 158
+       },
+       {
+        "ruta": "cursos/recursos/estrategia-y-tactica/15-planificacion-de-medio-juego-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 4
+       }
+      ]
+     },
+     {
+      "numero": 16,
+      "titulo": "Ataque al rey que no enrocó",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/estrategia-y-tactica/16-ataque-al-rey-que-no-enroco-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 157
+       },
+       {
+        "ruta": "cursos/recursos/estrategia-y-tactica/16-ataque-al-rey-que-no-enroco-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 4
+       }
+      ]
+     },
+     {
+      "numero": 17,
+      "titulo": "Ataque al enroque contrario",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/estrategia-y-tactica/17-ataque-al-enroque-contrario-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 156
+       },
+       {
+        "ruta": "cursos/recursos/estrategia-y-tactica/17-ataque-al-enroque-contrario-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 3
+       }
+      ]
+     },
+     {
+      "numero": 18,
+      "titulo": "El sacrificio posicional a largo plazo",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/estrategia-y-tactica/18-el-sacrificio-posicional-a-largo-plazo-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 157
+       },
+       {
+        "ruta": "cursos/recursos/estrategia-y-tactica/18-el-sacrificio-posicional-a-largo-plazo-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 3
+       }
+      ]
+     },
+     {
+      "numero": 19,
+      "titulo": "Defensa activa",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/estrategia-y-tactica/19-defensa-activa-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 156
+       },
+       {
+        "ruta": "cursos/recursos/estrategia-y-tactica/19-defensa-activa-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 4
+       }
+      ]
+     },
+     {
+      "numero": 20,
+      "titulo": "Partida magistral comentada",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/estrategia-y-tactica/20-partida-magistral-comentada-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 148
+       },
+       {
+        "ruta": "cursos/recursos/estrategia-y-tactica/20-partida-magistral-comentada-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 3
+       }
+      ]
+     }
+    ],
+    "otros": []
+   },
+   {
+    "slug": "el-mapa-de-los-finales",
+    "titulo": "El mapa de los finales",
+    "nivel": "avanzado",
+    "lecciones": [
+     {
+      "numero": null,
+      "titulo": "Examen de diagnóstico",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/el-mapa-de-los-finales/01-examen-de-diagnostico-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 179
+       },
+       {
+        "ruta": "cursos/recursos/el-mapa-de-los-finales/00-examen-de-diagnostico-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 113
+       }
+      ]
+     },
+     {
+      "numero": 1,
+      "titulo": "Rey y peón contra rey",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/el-mapa-de-los-finales/01-rey-y-peon-contra-rey-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 188
+       },
+       {
+        "ruta": "cursos/recursos/el-mapa-de-los-finales/01-rey-y-peon-contra-rey-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 97
+       }
+      ]
+     },
+     {
+      "numero": 2,
+      "titulo": "El peón de torre y los rincones del alfil",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/el-mapa-de-los-finales/02-el-peon-de-torre-y-los-rincones-del-alfil-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 189
+       },
+       {
+        "ruta": "cursos/recursos/el-mapa-de-los-finales/02-peon-de-torre-y-rincones-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 85
+       }
+      ]
+     },
+     {
+      "numero": 3,
+      "titulo": "Torre contra caballo",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/el-mapa-de-los-finales/03-torre-contra-caballo-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 185
+       },
+       {
+        "ruta": "cursos/recursos/el-mapa-de-los-finales/03-torre-contra-caballo-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 83
+       }
+      ]
+     },
+     {
+      "numero": 4,
+      "titulo": "Dos peones contra rey y peones bloqueados",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/el-mapa-de-los-finales/04-dos-peones-contra-rey-y-peones-bloqueados-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 190
+       },
+       {
+        "ruta": "cursos/recursos/el-mapa-de-los-finales/04-dos-peones-contra-rey-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 99
+       }
+      ]
+     },
+     {
+      "numero": 5,
+      "titulo": "Peones pasados y las maniobras del rey con doble objetivo",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/el-mapa-de-los-finales/05-peones-pasados-y-las-maniobras-del-rey-con-doble-objetivo-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 191
+       },
+       {
+        "ruta": "cursos/recursos/el-mapa-de-los-finales/05-peones-pasados-y-doble-objetivo-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 102
+       }
+      ]
+     },
+     {
+      "numero": 6,
+      "titulo": "Triangulación, peón de alfil y la lucha contra dos peones pasados",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/el-mapa-de-los-finales/06-triangulacion-peon-de-alfil-y-la-lucha-contra-dos-peones-pas-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 191
+       },
+       {
+        "ruta": "cursos/recursos/el-mapa-de-los-finales/06-triangulacion-y-mayorias-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 98
+       }
+      ]
+     },
+     {
+      "numero": 7,
+      "titulo": "Peón pasado defendido, alejado, doblado y rupturas",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/el-mapa-de-los-finales/07-peon-pasado-defendido-alejado-doblado-y-rupturas-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 190
+       },
+       {
+        "ruta": "cursos/recursos/el-mapa-de-los-finales/07-peon-pasado-defendido-y-rupturas-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 90
+       }
+      ]
+     },
+     {
+      "numero": 8,
+      "titulo": "Caballo contra peón",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/el-mapa-de-los-finales/08-caballo-contra-peon-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 191
+       },
+       {
+        "ruta": "cursos/recursos/el-mapa-de-los-finales/08-caballo-contra-peon-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 96
+       }
+      ]
+     },
+     {
+      "numero": 9,
+      "titulo": "Dama contra peón",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/el-mapa-de-los-finales/09-dama-contra-peon-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 193
+       },
+       {
+        "ruta": "cursos/recursos/el-mapa-de-los-finales/09-dama-contra-peon-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 108
+       }
+      ]
+     },
+     {
+      "numero": 10,
+      "titulo": "Torre contra peón (I): contar, cortar y rodear",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/el-mapa-de-los-finales/10-torre-contra-peon-i-contar-cortar-y-rodear-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 191
+       },
+       {
+        "ruta": "cursos/recursos/el-mapa-de-los-finales/10-torre-contra-peon-i-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 95
+       }
+      ]
+     },
+     {
+      "numero": 11,
+      "titulo": "Torre contra peón (II): peones de caballo y torre",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/el-mapa-de-los-finales/11-torre-contra-peon-ii-peones-de-caballo-y-torre-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 191
+       },
+       {
+        "ruta": "cursos/recursos/el-mapa-de-los-finales/11-torre-contra-peon-ii-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 97
+       }
+      ]
+     },
+     {
+      "numero": 12,
+      "titulo": "Torre contra dos peones",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/el-mapa-de-los-finales/12-torre-contra-dos-peones-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 187
+       },
+       {
+        "ruta": "cursos/recursos/el-mapa-de-los-finales/12-torre-contra-dos-peones-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 92
+       }
+      ]
+     },
+     {
+      "numero": 13,
+      "titulo": "Alfil y peón contra alfil del mismo color",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/el-mapa-de-los-finales/13-alfil-y-peon-contra-alfil-del-mismo-color-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 192
+       },
+       {
+        "ruta": "cursos/recursos/el-mapa-de-los-finales/13-alfil-y-peon-contra-alfil-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 88
+       }
+      ]
+     },
+     {
+      "numero": 14,
+      "titulo": "Alfil contra caballo con un peón",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/el-mapa-de-los-finales/14-alfil-contra-caballo-con-un-peon-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 194
+       },
+       {
+        "ruta": "cursos/recursos/el-mapa-de-los-finales/14-alfil-contra-caballo-con-peon-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 97
+       }
+      ]
+     },
+     {
+      "numero": 15,
+      "titulo": "Alfiles de distinto color (I): peones ligados",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/el-mapa-de-los-finales/15-alfiles-de-distinto-color-i-peones-ligados-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 194
+       },
+       {
+        "ruta": "cursos/recursos/el-mapa-de-los-finales/15-alfiles-de-distinto-color-i-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 99
+       }
+      ]
+     },
+     {
+      "numero": 16,
+      "titulo": "Alfiles de distinto color (II): peones separados",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/el-mapa-de-los-finales/16-alfiles-de-distinto-color-ii-peones-separados-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 194
+       },
+       {
+        "ruta": "cursos/recursos/el-mapa-de-los-finales/16-alfiles-de-distinto-color-ii-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 96
+       }
+      ]
+     },
+     {
+      "numero": 17,
+      "titulo": "Philidor, Lucena y el lado largo",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/el-mapa-de-los-finales/17-philidor-lucena-y-el-lado-largo-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 192
+       },
+       {
+        "ruta": "cursos/recursos/el-mapa-de-los-finales/17-philidor-y-lucena-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 86
+       }
+      ]
+     },
+     {
+      "numero": 18,
+      "titulo": "Kling y Horwitz y el peón central en sexta",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/el-mapa-de-los-finales/18-kling-y-horwitz-y-el-peon-central-en-sexta-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 193
+       },
+       {
+        "ruta": "cursos/recursos/el-mapa-de-los-finales/18-kling-horwitz-y-peon-en-sexta-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 94
+       }
+      ]
+     },
+     {
+      "numero": 19,
+      "titulo": "Los cortes: vertical y horizontal",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/el-mapa-de-los-finales/19-los-cortes-vertical-y-horizontal-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 193
+       },
+       {
+        "ruta": "cursos/recursos/el-mapa-de-los-finales/19-cortes-vertical-y-horizontal-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 95
+       }
+      ]
+     },
+     {
+      "numero": 20,
+      "titulo": "El peón de torre y la defensa de Vancura",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/el-mapa-de-los-finales/20-el-peon-de-torre-y-la-defensa-de-vancura-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 192
+       },
+       {
+        "ruta": "cursos/recursos/el-mapa-de-los-finales/20-peon-de-torre-y-vancura-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 101
+       }
+      ]
+     },
+     {
+      "numero": 21,
+      "titulo": "Torre y dos peones contra torre (I)",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/el-mapa-de-los-finales/21-torre-y-dos-peones-contra-torre-i-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 195
+       },
+       {
+        "ruta": "cursos/recursos/el-mapa-de-los-finales/21-torre-y-dos-peones-i-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 99
+       }
+      ]
+     },
+     {
+      "numero": 22,
+      "titulo": "Torre y dos peones contra torre (II)",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/el-mapa-de-los-finales/22-torre-y-dos-peones-contra-torre-ii-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 193
+       },
+       {
+        "ruta": "cursos/recursos/el-mapa-de-los-finales/22-torre-y-dos-peones-ii-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 96
+       }
+      ]
+     },
+     {
+      "numero": 23,
+      "titulo": "El mate de alfil y caballo y torre y alfil contra torre",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/el-mapa-de-los-finales/23-el-mate-de-alfil-y-caballo-y-torre-y-alfil-contra-torre-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 194
+       },
+       {
+        "ruta": "cursos/recursos/el-mapa-de-los-finales/23-mate-de-alfil-y-caballo-y-torre-y-alfil-contra-torre-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 118
+       }
+      ]
+     },
+     {
+      "numero": 24,
+      "titulo": "Torre y peón contra alfil y dama contra torre y peón",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/el-mapa-de-los-finales/24-torre-y-peon-contra-alfil-y-dama-contra-torre-y-peon-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 195
+       },
+       {
+        "ruta": "cursos/recursos/el-mapa-de-los-finales/24-torre-y-peon-contra-alfil-y-dama-contra-torre-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 110
+       }
+      ]
+     },
+     {
+      "numero": null,
+      "titulo": "Examen final",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/el-mapa-de-los-finales/26-examen-final-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 148
+       },
+       {
+        "ruta": "cursos/recursos/el-mapa-de-los-finales/25-examen-final-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 132
+       }
+      ]
+     },
+     {
+      "numero": null,
+      "titulo": "Apéndice: fortalezas",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/el-mapa-de-los-finales/27-apendice-fortalezas-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 154
+       }
+      ]
+     }
+    ],
+    "otros": []
+   },
+   {
+    "slug": "estrategia-en-el-final",
+    "titulo": "Estrategia en el final",
+    "nivel": "avanzado",
+    "lecciones": [
+     {
+      "numero": 1,
+      "titulo": "Primero el rey",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/estrategia-en-el-final/01-primero-el-rey-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 158
+       },
+       {
+        "ruta": "cursos/recursos/estrategia-en-el-final/01-primero-el-rey-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 5
+       }
+      ]
+     },
+     {
+      "numero": 2,
+      "titulo": "La oposición y las casillas críticas",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/estrategia-en-el-final/02-la-oposicion-y-las-casillas-criticas-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 185
+       },
+       {
+        "ruta": "cursos/recursos/estrategia-en-el-final/02-la-oposicion-y-las-casillas-criticas-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 5
+       }
+      ]
+     },
+     {
+      "numero": 3,
+      "titulo": "La ruta del rey",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/estrategia-en-el-final/03-la-ruta-del-rey-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 187
+       },
+       {
+        "ruta": "cursos/recursos/estrategia-en-el-final/03-la-ruta-del-rey-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 5
+       }
+      ]
+     },
+     {
+      "numero": 4,
+      "titulo": "Incursiones y refugio",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/estrategia-en-el-final/04-incursiones-y-refugio-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 159
+       },
+       {
+        "ruta": "cursos/recursos/estrategia-en-el-final/04-incursiones-y-refugio-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 5
+       }
+      ]
+     },
+     {
+      "numero": 5,
+      "titulo": "El peón pasado",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/estrategia-en-el-final/05-el-peon-pasado-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 180
+       },
+       {
+        "ruta": "cursos/recursos/estrategia-en-el-final/05-el-peon-pasado-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 5
+       }
+      ]
+     },
+     {
+      "numero": 6,
+      "titulo": "Mayorías y el pasado exterior",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/estrategia-en-el-final/06-mayorias-y-el-pasado-exterior-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 158
+       },
+       {
+        "ruta": "cursos/recursos/estrategia-en-el-final/06-mayorias-y-el-pasado-exterior-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 5
+       }
+      ]
+     },
+     {
+      "numero": 7,
+      "titulo": "Rupturas de peones",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/estrategia-en-el-final/07-rupturas-de-peones-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 184
+       },
+       {
+        "ruta": "cursos/recursos/estrategia-en-el-final/07-rupturas-de-peones-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 5
+       }
+      ]
+     },
+     {
+      "numero": 8,
+      "titulo": "Debilidades que no se mueven",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/estrategia-en-el-final/08-debilidades-que-no-se-mueven-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 157
+       },
+       {
+        "ruta": "cursos/recursos/estrategia-en-el-final/08-debilidades-que-no-se-mueven-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 5
+       }
+      ]
+     },
+     {
+      "numero": 9,
+      "titulo": "La torre activa",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/estrategia-en-el-final/09-la-torre-activa-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 158
+       },
+       {
+        "ruta": "cursos/recursos/estrategia-en-el-final/09-la-torre-activa-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 5
+       }
+      ]
+     },
+     {
+      "numero": 10,
+      "titulo": "La torre y el peón pasado",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/estrategia-en-el-final/10-la-torre-y-el-peon-pasado-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 189
+       },
+       {
+        "ruta": "cursos/recursos/estrategia-en-el-final/10-la-torre-y-el-peon-pasado-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 5
+       }
+      ]
+     },
+     {
+      "numero": 11,
+      "titulo": "Alfil contra caballo",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/estrategia-en-el-final/11-alfil-contra-caballo-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 188
+       },
+       {
+        "ruta": "cursos/recursos/estrategia-en-el-final/11-alfil-contra-caballo-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 5
+       }
+      ]
+     },
+     {
+      "numero": 12,
+      "titulo": "Alfiles de distinto color",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/estrategia-en-el-final/12-alfiles-de-distinto-color-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 189
+       },
+       {
+        "ruta": "cursos/recursos/estrategia-en-el-final/12-alfiles-de-distinto-color-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 5
+       }
+      ]
+     },
+     {
+      "numero": 13,
+      "titulo": "El cambio que decide",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/estrategia-en-el-final/13-el-cambio-que-decide-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 159
+       },
+       {
+        "ruta": "cursos/recursos/estrategia-en-el-final/13-el-cambio-que-decide-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 5
+       }
+      ]
+     },
+     {
+      "numero": 14,
+      "titulo": "Zugzwang, triangulación y espera",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/estrategia-en-el-final/14-zugzwang-triangulacion-y-espera-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 187
+       },
+       {
+        "ruta": "cursos/recursos/estrategia-en-el-final/14-zugzwang-triangulacion-y-espera-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 5
+       }
+      ]
+     },
+     {
+      "numero": 15,
+      "titulo": "Profilaxis: quitarle el plan",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/estrategia-en-el-final/15-profilaxis-quitarle-el-plan-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 159
+       },
+       {
+        "ruta": "cursos/recursos/estrategia-en-el-final/15-profilaxis-quitarle-el-plan-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 5
+       }
+      ]
+     },
+     {
+      "numero": 16,
+      "titulo": "Convertir: las dos debilidades",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/estrategia-en-el-final/16-convertir-las-dos-debilidades-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 158
+       },
+       {
+        "ruta": "cursos/recursos/estrategia-en-el-final/16-convertir-las-dos-debilidades-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 5
+       }
+      ]
+     }
+    ],
+    "otros": []
+   },
+   {
+    "slug": "desequilibrios-de-material",
+    "titulo": "Desequilibrios de material",
+    "nivel": "avanzado",
+    "lecciones": [
+     {
+      "numero": 1,
+      "titulo": "El valor relativo de las piezas",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/desequilibrios-de-material/01-el-valor-relativo-de-las-piezas-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 164
+       },
+       {
+        "ruta": "cursos/recursos/desequilibrios-de-material/01-valor-relativo-de-las-piezas-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 133
+       }
+      ]
+     },
+     {
+      "numero": 2,
+      "titulo": "Alfil contra caballo: cuándo manda el caballo",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/desequilibrios-de-material/02-alfil-contra-caballo-cuando-manda-el-caballo-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 183
+       },
+       {
+        "ruta": "cursos/recursos/desequilibrios-de-material/02-alfil-contra-caballo-el-caballo-fuerte-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 105
+       }
+      ]
+     },
+     {
+      "numero": 3,
+      "titulo": "Alfil contra caballo: cuando el alfil domina",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/desequilibrios-de-material/03-alfil-contra-caballo-cuando-el-alfil-domina-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 184
+       },
+       {
+        "ruta": "cursos/recursos/desequilibrios-de-material/03-alfil-contra-caballo-el-alfil-que-domina-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 87
+       }
+      ]
+     },
+     {
+      "numero": 4,
+      "titulo": "Alfiles de distinto color: iniciativa y complejo de color",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/desequilibrios-de-material/04-alfiles-de-distinto-color-iniciativa-y-complejo-de-color-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 192
+       },
+       {
+        "ruta": "cursos/recursos/desequilibrios-de-material/04-alfiles-de-distinto-color-iniciativa-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 102
+       }
+      ]
+     },
+     {
+      "numero": 5,
+      "titulo": "Alfiles de distinto color: convertir una ventaja mínima",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/desequilibrios-de-material/05-alfiles-de-distinto-color-convertir-una-ventaja-minima-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 192
+       },
+       {
+        "ruta": "cursos/recursos/desequilibrios-de-material/05-alfiles-de-distinto-color-convertir-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 131
+       }
+      ]
+     },
+     {
+      "numero": 6,
+      "titulo": "La pareja de alfiles en el final",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/desequilibrios-de-material/06-la-pareja-de-alfiles-en-el-final-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 160
+       },
+       {
+        "ruta": "cursos/recursos/desequilibrios-de-material/06-pareja-de-alfiles-en-el-final-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 113
+       }
+      ]
+     },
+     {
+      "numero": 7,
+      "titulo": "La pareja de alfiles en el medio juego",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/desequilibrios-de-material/07-la-pareja-de-alfiles-en-el-medio-juego-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 160
+       },
+       {
+        "ruta": "cursos/recursos/desequilibrios-de-material/07-pareja-de-alfiles-en-el-medio-juego-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 167
+       }
+      ]
+     },
+     {
+      "numero": 8,
+      "titulo": "Torre contra dos piezas menores: coordinación",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/desequilibrios-de-material/08-torre-contra-dos-piezas-menores-coordinacion-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 175
+       },
+       {
+        "ruta": "cursos/recursos/desequilibrios-de-material/08-torre-contra-dos-piezas-menores-i-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 114
+       }
+      ]
+     },
+     {
+      "numero": 9,
+      "titulo": "Torre contra dos piezas menores: el rey y los peones pasados",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/desequilibrios-de-material/09-torre-contra-dos-piezas-menores-el-rey-y-los-peones-pasados-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 190
+       },
+       {
+        "ruta": "cursos/recursos/desequilibrios-de-material/09-torre-contra-dos-piezas-menores-ii-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 114
+       }
+      ]
+     },
+     {
+      "numero": 10,
+      "titulo": "Sacrificios de peón: estabilidad y peones pasados",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/desequilibrios-de-material/10-sacrificios-de-peon-estabilidad-y-peones-pasados-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 191
+       },
+       {
+        "ruta": "cursos/recursos/desequilibrios-de-material/10-sacrificios-de-peon-estabilidad-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 138
+       }
+      ]
+     },
+     {
+      "numero": 11,
+      "titulo": "Sacrificios de peón: ventaja de desarrollo y estructura",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/desequilibrios-de-material/11-sacrificios-de-peon-ventaja-de-desarrollo-y-estructura-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 161
+       },
+       {
+        "ruta": "cursos/recursos/desequilibrios-de-material/11-sacrificios-de-peon-planes-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 150
+       }
+      ]
+     },
+     {
+      "numero": 12,
+      "titulo": "Sacrificios de calidad: el caballo dominante",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/desequilibrios-de-material/12-sacrificios-de-calidad-el-caballo-dominante-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 161
+       },
+       {
+        "ruta": "cursos/recursos/desequilibrios-de-material/12-sacrificios-de-calidad-i-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 148
+       }
+      ]
+     },
+     {
+      "numero": 13,
+      "titulo": "Sacrificios de calidad: iniciativa y ataque",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/desequilibrios-de-material/13-sacrificios-de-calidad-iniciativa-y-ataque-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 160
+       },
+       {
+        "ruta": "cursos/recursos/desequilibrios-de-material/13-sacrificios-de-calidad-ii-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 165
+       }
+      ]
+     },
+     {
+      "numero": 14,
+      "titulo": "Sacrificios de calidad: defensa y contrajuego",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/desequilibrios-de-material/14-sacrificios-de-calidad-defensa-y-contrajuego-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 161
+       },
+       {
+        "ruta": "cursos/recursos/desequilibrios-de-material/14-sacrificios-de-calidad-iii-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 110
+       }
+      ]
+     },
+     {
+      "numero": 15,
+      "titulo": "Sacrificios de pieza por peones",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/desequilibrios-de-material/15-sacrificios-de-pieza-por-peones-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 160
+       },
+       {
+        "ruta": "cursos/recursos/desequilibrios-de-material/15-sacrificios-de-pieza-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 173
+       }
+      ]
+     },
+     {
+      "numero": 16,
+      "titulo": "Dama contra piezas: el modo supervivencia",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/desequilibrios-de-material/16-dama-contra-piezas-el-modo-supervivencia-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 183
+       },
+       {
+        "ruta": "cursos/recursos/desequilibrios-de-material/16-dama-contra-piezas-modo-supervivencia-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 138
+       }
+      ]
+     },
+     {
+      "numero": 17,
+      "titulo": "Dama contra piezas: cuándo gana cada bando",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/desequilibrios-de-material/17-dama-contra-piezas-cuando-gana-cada-bando-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 181
+       },
+       {
+        "ruta": "cursos/recursos/desequilibrios-de-material/17-dama-contra-piezas-cuando-gana-la-dama-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 120
+       }
+      ]
+     },
+     {
+      "numero": 18,
+      "titulo": "Desequilibrios en la práctica I",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/desequilibrios-de-material/18-desequilibrios-en-la-practica-i-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 179
+       },
+       {
+        "ruta": "cursos/recursos/desequilibrios-de-material/18-desequilibrios-en-la-practica-i-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 118
+       }
+      ]
+     },
+     {
+      "numero": 19,
+      "titulo": "Desequilibrios en la práctica II",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/desequilibrios-de-material/19-desequilibrios-en-la-practica-ii-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 179
+       },
+       {
+        "ruta": "cursos/recursos/desequilibrios-de-material/19-desequilibrios-en-la-practica-ii-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 126
+       }
+      ]
+     },
+     {
+      "numero": null,
+      "titulo": "Examen final: treinta ejercicios",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/desequilibrios-de-material/20-examen-final-treinta-ejercicios-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 155
+       },
+       {
+        "ruta": "cursos/recursos/desequilibrios-de-material/20-examen-final-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 221
+       }
+      ]
+     }
+    ],
+    "otros": []
+   },
+   {
+    "slug": "preparacion-para-torneos",
+    "titulo": "Preparación para Torneos",
+    "nivel": "competicion",
+    "lecciones": [
+     {
+      "numero": 1,
+      "titulo": "Cómo construir un repertorio sólido",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/preparacion-para-torneos/01-como-construir-un-repertorio-solido-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 156
+       },
+       {
+        "ruta": "cursos/recursos/preparacion-para-torneos/01-como-construir-un-repertorio-solido-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 4
+       }
+      ]
+     },
+     {
+      "numero": 2,
+      "titulo": "Preparación contra un rival específico",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/preparacion-para-torneos/02-preparacion-contra-un-rival-especifico-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 156
+       },
+       {
+        "ruta": "cursos/recursos/preparacion-para-torneos/02-preparacion-contra-un-rival-especifico-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 4
+       }
+      ]
+     },
+     {
+      "numero": 3,
+      "titulo": "Uso de bases de datos de partidas",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/preparacion-para-torneos/03-uso-de-bases-de-datos-de-partidas-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 153
+       },
+       {
+        "ruta": "cursos/recursos/preparacion-para-torneos/03-uso-de-bases-de-datos-de-partidas-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 4
+       }
+      ]
+     },
+     {
+      "numero": 4,
+      "titulo": "Actualizar el repertorio tras un torneo",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/preparacion-para-torneos/04-actualizar-el-repertorio-tras-un-torneo-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 156
+       },
+       {
+        "ruta": "cursos/recursos/preparacion-para-torneos/04-actualizar-el-repertorio-tras-un-torneo-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 3
+       }
+      ]
+     },
+     {
+      "numero": 5,
+      "titulo": "Gestión del reloj",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/preparacion-para-torneos/05-gestion-del-reloj-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 157
+       },
+       {
+        "ruta": "cursos/recursos/preparacion-para-torneos/05-gestion-del-reloj-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 4
+       }
+      ]
+     },
+     {
+      "numero": 6,
+      "titulo": "Cuándo pensar mucho y cuándo jugar rápido",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/preparacion-para-torneos/06-cuando-pensar-mucho-y-cuando-jugar-rapido-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 157
+       },
+       {
+        "ruta": "cursos/recursos/preparacion-para-torneos/06-cuando-pensar-mucho-y-cuando-jugar-rapido-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 3
+       }
+      ]
+     },
+     {
+      "numero": 7,
+      "titulo": "Decisiones bajo presión de tiempo (zeitnot)",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/preparacion-para-torneos/07-decisiones-bajo-presion-de-tiempo-zeitnot-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 157
+       },
+       {
+        "ruta": "cursos/recursos/preparacion-para-torneos/07-decisiones-bajo-presion-de-tiempo-zeitnot-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 4
+       }
+      ]
+     },
+     {
+      "numero": 8,
+      "titulo": "Cómo comportarte tras un error",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/preparacion-para-torneos/08-como-comportarte-tras-un-error-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 154
+       },
+       {
+        "ruta": "cursos/recursos/preparacion-para-torneos/08-como-comportarte-tras-un-error-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 4
+       }
+      ]
+     },
+     {
+      "numero": 9,
+      "titulo": "Psicología de la competencia",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/preparacion-para-torneos/09-psicologia-de-la-competencia-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 148
+       },
+       {
+        "ruta": "cursos/recursos/preparacion-para-torneos/09-psicologia-de-la-competencia-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 4
+       }
+      ]
+     },
+     {
+      "numero": 10,
+      "titulo": "Rutinas antes y durante la partida",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/preparacion-para-torneos/10-rutinas-antes-y-durante-la-partida-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 156
+       },
+       {
+        "ruta": "cursos/recursos/preparacion-para-torneos/10-rutinas-antes-y-durante-la-partida-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 4
+       }
+      ]
+     },
+     {
+      "numero": 11,
+      "titulo": "Rivales incómodos o intimidantes",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/preparacion-para-torneos/11-rivales-incomodos-o-intimidantes-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 147
+       },
+       {
+        "ruta": "cursos/recursos/preparacion-para-torneos/11-rivales-incomodos-o-intimidantes-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 4
+       }
+      ]
+     },
+     {
+      "numero": 12,
+      "titulo": "Descanso y alimentación durante un torneo largo",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/preparacion-para-torneos/12-descanso-y-alimentacion-durante-un-torneo-largo-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 156
+       },
+       {
+        "ruta": "cursos/recursos/preparacion-para-torneos/12-descanso-y-alimentacion-durante-un-torneo-largo-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 4
+       }
+      ]
+     },
+     {
+      "numero": 13,
+      "titulo": "Análisis post-partida",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/preparacion-para-torneos/13-analisis-post-partida-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 149
+       },
+       {
+        "ruta": "cursos/recursos/preparacion-para-torneos/13-analisis-post-partida-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 4
+       }
+      ]
+     },
+     {
+      "numero": 14,
+      "titulo": "Uso de un motor de análisis",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/preparacion-para-torneos/14-uso-de-un-motor-de-analisis-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 154
+       },
+       {
+        "ruta": "cursos/recursos/preparacion-para-torneos/14-uso-de-un-motor-de-analisis-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 4
+       }
+      ]
+     },
+     {
+      "numero": 15,
+      "titulo": "Bitácora de errores recurrentes",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/preparacion-para-torneos/15-bitacora-de-errores-recurrentes-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 158
+       },
+       {
+        "ruta": "cursos/recursos/preparacion-para-torneos/15-bitacora-de-errores-recurrentes-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 4
+       }
+      ]
+     },
+     {
+      "numero": 16,
+      "titulo": "Cómo estudiar tus partidas perdidas",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/preparacion-para-torneos/16-como-estudiar-tus-partidas-perdidas-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 149
+       },
+       {
+        "ruta": "cursos/recursos/preparacion-para-torneos/16-como-estudiar-tus-partidas-perdidas-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 4
+       }
+      ]
+     },
+     {
+      "numero": 17,
+      "titulo": "Simulacro de torneo",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/preparacion-para-torneos/17-simulacro-de-torneo-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 148
+       },
+       {
+        "ruta": "cursos/recursos/preparacion-para-torneos/17-simulacro-de-torneo-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 4
+       }
+      ]
+     },
+     {
+      "numero": 18,
+      "titulo": "Plan de estudio personalizado",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/preparacion-para-torneos/18-plan-de-estudio-personalizado-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 156
+       },
+       {
+        "ruta": "cursos/recursos/preparacion-para-torneos/18-plan-de-estudio-personalizado-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 3
+       }
+      ]
+     }
+    ],
+    "otros": []
+   },
+   {
+    "slug": "formacion-ajedrez",
+    "titulo": "Formación Ajedrez",
+    "nivel": "formacion-docente",
+    "lecciones": [
+     {
+      "numero": 1,
+      "titulo": "Encuadre del curso y reglas básicas del ajedrez",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/formacion-ajedrez/01-encuadre-y-reglas-basicas-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 14
+       },
+       {
+        "ruta": "cursos/recursos/formacion-ajedrez/01-encuadre-y-reglas-basicas-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 6
+       }
+      ]
+     },
+     {
+      "numero": 2,
+      "titulo": "Reglas de competición",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/formacion-ajedrez/02-reglas-de-competicion-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 13
+       },
+       {
+        "ruta": "cursos/recursos/formacion-ajedrez/02-reglas-de-competicion-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 6
+       }
+      ]
+     },
+     {
+      "numero": 3,
+      "titulo": "Apéndices de las Leyes de Ajedrez y normativa de los Juegos Deportivos Estudiantiles",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/formacion-ajedrez/03-apendices-y-normativa-jde-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 12
+       },
+       {
+        "ruta": "cursos/recursos/formacion-ajedrez/03-apendices-y-normativa-jde-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 5
+       }
+      ]
+     },
+     {
+      "numero": 4,
+      "titulo": "Sistemas de emparejamiento para torneos",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/formacion-ajedrez/04-sistemas-de-emparejamiento-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 11
+       },
+       {
+        "ruta": "cursos/recursos/formacion-ajedrez/04-sistemas-de-emparejamiento-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 5
+       }
+      ]
+     },
+     {
+      "numero": 5,
+      "titulo": "Uso, configuración y control del reloj de ajedrez",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/formacion-ajedrez/05-uso-y-control-del-reloj-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 11
+       },
+       {
+        "ruta": "cursos/recursos/formacion-ajedrez/05-uso-y-control-del-reloj-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 5
+       }
+      ]
+     },
+     {
+      "numero": 6,
+      "titulo": "Resolución de casos en grupos y experiencias regionales",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/formacion-ajedrez/06-resolucion-de-casos-en-grupos-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 11
+       },
+       {
+        "ruta": "cursos/recursos/formacion-ajedrez/06-resolucion-de-casos-en-grupos-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 5
+       }
+      ]
+     },
+     {
+      "numero": 7,
+      "titulo": "Talleres prácticos y simulacros de arbitraje",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/formacion-ajedrez/07-talleres-y-simulacros-de-arbitraje-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 10
+       },
+       {
+        "ruta": "cursos/recursos/formacion-ajedrez/07-talleres-y-simulacros-de-arbitraje-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 4
+       }
+      ]
+     },
+     {
+      "numero": 8,
+      "titulo": "Torneo real, evaluación final y certificación · Sesión presencial, 5 horas",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/formacion-ajedrez/08-torneo-real-evaluacion-formularios.pdf",
+        "titulo": "Formularios y lista de cotejo del torneo",
+        "tipo": "otro",
+        "kb": 4
+       },
+       {
+        "ruta": "cursos/recursos/formacion-ajedrez/08-prueba-final.pdf",
+        "titulo": "Prueba final teórica",
+        "tipo": "otro",
+        "kb": 14
+       }
+      ]
+     }
+    ],
+    "otros": []
+   },
+   {
+    "slug": "arbitro-nacional",
+    "titulo": "Árbitro Nacional",
+    "nivel": "formacion-docente",
+    "lecciones": [
+     {
+      "numero": 1,
+      "titulo": "Cuándo una jugada queda completada, y qué obliga a jugar la pieza tocada",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/arbitro-nacional/01-cuando-una-jugada-queda-completada-y-que-obliga-a-jugar-la-pieza-tocada-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 7
+       }
+      ]
+     },
+     {
+      "numero": 2,
+      "titulo": "Jaque, jaque mate, ahogado y posición muerta: lo que termina la partida sin que nadie reclame",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/arbitro-nacional/02-jaque-jaque-mate-ahogado-y-posicion-muerta-lo-que-termina-la-partida-sin-que-nadie-reclame-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 7
+       }
+      ]
+     },
+     {
+      "numero": 3,
+      "titulo": "Puesta en marcha, incrementos y las obligaciones que cambian con el control de tiempo",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/arbitro-nacional/03-puesta-en-marcha-incrementos-y-las-obligaciones-que-cambian-con-el-control-de-tiempo-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 6
+       }
+      ]
+     },
+     {
+      "numero": 4,
+      "titulo": "La caída de la bandera: qué comprobar antes de decidir un reclamo",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/arbitro-nacional/04-la-caida-de-la-bandera-que-comprobar-antes-de-decidir-un-reclamo-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 6
+       }
+      ]
+     },
+     {
+      "numero": 5,
+      "titulo": "Jugada ilegal: cuándo queda completada y cómo se sanciona",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/arbitro-nacional/05-jugada-ilegal-cuando-queda-completada-y-como-se-sanciona-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 7
+       }
+      ]
+     },
+     {
+      "numero": 6,
+      "titulo": "Piezas mal colocadas y otras incidencias de mesa",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/arbitro-nacional/06-piezas-mal-colocadas-y-otras-incidencias-de-mesa-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 7
+       }
+      ]
+     },
+     {
+      "numero": 7,
+      "titulo": "La obligación de anotar y sus excepciones",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/arbitro-nacional/07-la-obligacion-de-anotar-y-sus-excepciones-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 6
+       }
+      ]
+     },
+     {
+      "numero": 8,
+      "titulo": "Reclamos de tablas: triple repetición y la regla de las 50 jugadas",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/arbitro-nacional/08-reclamos-de-tablas-triple-repeticion-y-la-regla-de-las-50-jugadas-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 7
+       }
+      ]
+     },
+     {
+      "numero": 9,
+      "titulo": "Dispositivos electrónicos, ayuda externa y la escala de sanciones",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/arbitro-nacional/09-dispositivos-electronicos-ayuda-externa-y-la-escala-de-sanciones-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 7
+       }
+      ]
+     },
+     {
+      "numero": 10,
+      "titulo": "Los deberes y poderes de la persona árbitra",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/arbitro-nacional/10-los-deberes-y-poderes-de-la-persona-arbitra-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 7
+       }
+      ]
+     },
+     {
+      "numero": 11,
+      "titulo": "Ajedrez rápido: qué cambia y qué sigue igual respecto al control clásico",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/arbitro-nacional/11-ajedrez-rapido-que-cambia-y-que-sigue-igual-respecto-al-control-clasico-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 7
+       }
+      ]
+     },
+     {
+      "numero": 12,
+      "titulo": "Ajedrez relámpago: cuándo el árbitro decide sin que nadie reclame",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/arbitro-nacional/12-ajedrez-relampago-cuando-el-arbitro-decide-sin-que-nadie-reclame-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 7
+       }
+      ]
+     },
+     {
+      "numero": 13,
+      "titulo": "El sistema suizo: los principios del sistema holandés (Dutch)",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/arbitro-nacional/13-el-sistema-suizo-los-principios-del-sistema-holandes-dutch-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 7
+       }
+      ]
+     },
+     {
+      "numero": 14,
+      "titulo": "Desempates: Buchholz, Sonneborn-Berger y cuándo usar cada uno",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/arbitro-nacional/14-desempates-buchholz-sonneborn-berger-y-cuando-usar-cada-uno-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 6
+       }
+      ]
+     },
+     {
+      "numero": 15,
+      "titulo": "La carrera de árbitro: de árbitro nacional a árbitro internacional",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/arbitro-nacional/15-la-carrera-de-arbitro-de-arbitro-nacional-a-arbitro-internacional-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 6
+       }
+      ]
+     },
+     {
+      "numero": 16,
+      "titulo": "Ética, imparcialidad y el informe del árbitro",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/arbitro-nacional/16-etica-imparcialidad-y-el-informe-del-arbitro-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 7
+       }
+      ]
+     },
+     {
+      "numero": 17,
+      "titulo": "Señales de alerta y el protocolo de revisión, sin acusar a ciegas",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/arbitro-nacional/17-senales-de-alerta-y-el-protocolo-de-revision-sin-acusar-a-ciegas-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 7
+       }
+      ]
+     }
+    ],
+    "otros": []
+   }
+  ],
+  "sueltos": [
+   {
+    "ruta": "instrucciones-adaptadas.pdf",
+    "titulo": "Instrucciones adaptadas (para quien ve poco o no ve)",
+    "tipo": "otro",
+    "kb": 25
+   }
+  ]
+ },
+ "word": {
+  "total": 2,
+  "grupos": [
+   {
+    "carpeta": "documentos/jdn",
+    "titulo": "Juegos Deportivos Nacionales 2027",
+    "archivos": [
+     {
+      "ruta": "documentos/jdn/consentimiento-entrenador-jdn-2027.docx",
+      "titulo": "Consentimiento informado JDN 2027 — entrenador",
+      "tipo": "otro",
+      "kb": 68
+     },
+     {
+      "ruta": "documentos/jdn/consentimiento-jdn-2027.docx",
+      "titulo": "Consentimiento informado JDN 2027 — atleta",
+      "tipo": "otro",
+      "kb": 76
+     }
+    ]
+   }
+  ]
+ },
+ "excel": {
+  "total": 0,
+  "grupos": []
+ },
+ "presentaciones": {
+  "niveles": [
+   {
+    "id": "principiante",
+    "nombre": "Principiante"
+   },
+   {
+    "id": "intermedio",
+    "nombre": "Intermedio"
+   },
+   {
+    "id": "avanzado",
+    "nombre": "Avanzado"
+   },
+   {
+    "id": "competicion",
+    "nombre": "Competición"
+   },
+   {
+    "id": "formacion-docente",
+    "nombre": "Formación docente"
+   }
+  ],
+  "total": 203,
+  "material": [],
+  "cursos": [
+   {
+    "slug": "fundamentos-del-ajedrez",
+    "titulo": "Fundamentos del Ajedrez",
+    "nivel": "principiante",
+    "lecciones": [
+     {
+      "numero": 1,
+      "titulo": "El tablero y la notación algebraica",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/fundamentos-del-ajedrez/01-el-tablero-y-la-notacion-algebraica.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 70
+       }
+      ]
+     },
+     {
+      "numero": 2,
+      "titulo": "Movimiento de las piezas: peón, caballo, alfil",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/fundamentos-del-ajedrez/02-movimiento-de-las-piezas-peon-caballo-alfil.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 70
+       }
+      ]
+     },
+     {
+      "numero": 3,
+      "titulo": "Movimiento de las piezas: torre, dama, rey",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/fundamentos-del-ajedrez/03-movimiento-de-las-piezas-torre-dama-rey.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 69
+       }
+      ]
+     },
+     {
+      "numero": 4,
+      "titulo": "Jaque, jaque mate y ahogado",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/fundamentos-del-ajedrez/04-jaque-jaque-mate-y-ahogado.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 69
+       }
+      ]
+     },
+     {
+      "numero": 5,
+      "titulo": "Valor relativo de las piezas",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/fundamentos-del-ajedrez/05-valor-relativo-de-las-piezas.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 69
+       }
+      ]
+     },
+     {
+      "numero": 6,
+      "titulo": "Enroque corto y largo: cuándo y por qué",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/fundamentos-del-ajedrez/06-enroque-corto-y-largo-cuando-y-por-que.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 69
+       }
+      ]
+     },
+     {
+      "numero": 7,
+      "titulo": "Captura al paso y coronación de peones",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/fundamentos-del-ajedrez/07-captura-al-paso-y-coronacion-de-peones.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 68
+       }
+      ]
+     },
+     {
+      "numero": 8,
+      "titulo": "Piezas que se defienden entre sí",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/fundamentos-del-ajedrez/08-piezas-que-se-defienden-entre-si.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 68
+       }
+      ]
+     },
+     {
+      "numero": 9,
+      "titulo": "Los tres principios de la apertura",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/fundamentos-del-ajedrez/09-los-tres-principios-de-la-apertura.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 68
+       }
+      ]
+     },
+     {
+      "numero": 10,
+      "titulo": "Errores comunes de apertura",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/fundamentos-del-ajedrez/10-errores-comunes-de-apertura.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 68
+       }
+      ]
+     },
+     {
+      "numero": 11,
+      "titulo": "Mate con dos torres y con dama y rey",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/fundamentos-del-ajedrez/11-mate-con-dos-torres-y-con-dama-y-rey.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 68
+       }
+      ]
+     },
+     {
+      "numero": 12,
+      "titulo": "Partida final: aplica lo aprendido",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/fundamentos-del-ajedrez/12-partida-final-aplica-lo-aprendido.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 68
+       }
+      ]
+     }
+    ],
+    "otros": []
+   },
+   {
+    "slug": "aperturas-y-defensas",
+    "titulo": "Aperturas y Defensas",
+    "nivel": "intermedio",
+    "lecciones": [
+     {
+      "numero": 1,
+      "titulo": "Apertura Española",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/aperturas-y-defensas/01-apertura-espanola.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 68
+       }
+      ]
+     },
+     {
+      "numero": 2,
+      "titulo": "Defensa Siciliana: variante Najdorf",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/aperturas-y-defensas/02-defensa-siciliana-variante-najdorf.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 68
+       }
+      ]
+     },
+     {
+      "numero": 3,
+      "titulo": "Defensa Francesa: estructura de peones y plan típico",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/aperturas-y-defensas/03-defensa-francesa-estructura-de-peones-y-plan-tipico.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 69
+       }
+      ]
+     },
+     {
+      "numero": 4,
+      "titulo": "Defensa Caro-Kann: solidez para negras",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/aperturas-y-defensas/04-defensa-caro-kann-solidez-para-negras.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 68
+       }
+      ]
+     },
+     {
+      "numero": 5,
+      "titulo": "Gambito de Dama: aceptado vs. rehusado",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/aperturas-y-defensas/05-gambito-de-dama-aceptado-vs-rehusado.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 68
+       }
+      ]
+     },
+     {
+      "numero": 6,
+      "titulo": "Defensa Nimzoindia",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/aperturas-y-defensas/06-defensa-nimzoindia.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 68
+       }
+      ]
+     },
+     {
+      "numero": 7,
+      "titulo": "Defensa India de Rey",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/aperturas-y-defensas/07-defensa-india-de-rey.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 68
+       }
+      ]
+     },
+     {
+      "numero": 8,
+      "titulo": "Defensa Eslava",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/aperturas-y-defensas/08-defensa-eslava.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 68
+       }
+      ]
+     },
+     {
+      "numero": 9,
+      "titulo": "Apertura Italiana y variantes modernas",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/aperturas-y-defensas/09-apertura-italiana-y-variantes-modernas.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 68
+       }
+      ]
+     },
+     {
+      "numero": 10,
+      "titulo": "Apertura Inglesa",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/aperturas-y-defensas/10-apertura-inglesa.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 68
+       }
+      ]
+     },
+     {
+      "numero": 11,
+      "titulo": "Sistema Réti",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/aperturas-y-defensas/11-sistema-reti.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 68
+       }
+      ]
+     },
+     {
+      "numero": 12,
+      "titulo": "Gambito Evans",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/aperturas-y-defensas/12-gambito-evans.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 67
+       }
+      ]
+     },
+     {
+      "numero": 13,
+      "titulo": "Cómo elegir un repertorio según tu estilo",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/aperturas-y-defensas/13-como-elegir-un-repertorio-segun-tu-estilo.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 68
+       }
+      ]
+     },
+     {
+      "numero": 14,
+      "titulo": "Transposiciones",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/aperturas-y-defensas/14-transposiciones.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 68
+       }
+      ]
+     },
+     {
+      "numero": 15,
+      "titulo": "Preparación contra rivales específicos",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/aperturas-y-defensas/15-preparacion-contra-rivales-especificos.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 68
+       }
+      ]
+     },
+     {
+      "numero": 16,
+      "titulo": "Partida comentada: aperturas en la práctica",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/aperturas-y-defensas/16-partida-comentada-aperturas-en-la-practica.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 67
+       }
+      ]
+     }
+    ],
+    "otros": []
+   },
+   {
+    "slug": "calculo-y-visualizacion",
+    "titulo": "Cálculo y Visualización",
+    "nivel": "intermedio",
+    "lecciones": [
+     {
+      "numero": 1,
+      "titulo": "El árbol de variantes",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/calculo-y-visualizacion/01-el-arbol-de-variantes.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 68
+       }
+      ]
+     },
+     {
+      "numero": 2,
+      "titulo": "Visualización sin mover piezas",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/calculo-y-visualizacion/02-visualizacion-sin-mover-piezas.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 68
+       }
+      ]
+     },
+     {
+      "numero": 3,
+      "titulo": "Jugadas candidatas",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/calculo-y-visualizacion/03-jugadas-candidatas.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 68
+       }
+      ]
+     },
+     {
+      "numero": 4,
+      "titulo": "Calcular capturas en cadena",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/calculo-y-visualizacion/04-calcular-capturas-en-cadena.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 67
+       }
+      ]
+     },
+     {
+      "numero": 5,
+      "titulo": "Jaques y amenazas forzadas",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/calculo-y-visualizacion/05-jaques-y-amenazas-forzadas.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 68
+       }
+      ]
+     },
+     {
+      "numero": 6,
+      "titulo": "Detectar las jugadas intermedias (zwischenzug)",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/calculo-y-visualizacion/06-detectar-las-jugadas-intermedias-zwischenzug.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 68
+       }
+      ]
+     },
+     {
+      "numero": 7,
+      "titulo": "Verificación final",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/calculo-y-visualizacion/07-verificacion-final.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 67
+       }
+      ]
+     },
+     {
+      "numero": 8,
+      "titulo": "Ajedrez a la ciega",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/calculo-y-visualizacion/08-ajedrez-a-la-ciega.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 68
+       }
+      ]
+     },
+     {
+      "numero": 9,
+      "titulo": "Calcular bajo presión de tiempo",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/calculo-y-visualizacion/09-calcular-bajo-presion-de-tiempo.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 67
+       }
+      ]
+     },
+     {
+      "numero": 10,
+      "titulo": "Sesión práctica cronometrada",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/calculo-y-visualizacion/10-sesion-practica-cronometrada.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 67
+       }
+      ]
+     }
+    ],
+    "otros": []
+   },
+   {
+    "slug": "finales-practicos",
+    "titulo": "Finales Prácticos",
+    "nivel": "intermedio",
+    "lecciones": [
+     {
+      "numero": 1,
+      "titulo": "La regla del cuadrado y el peón pasado",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/finales-practicos/01-la-regla-del-cuadrado-y-el-peon-pasado.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 68
+       }
+      ]
+     },
+     {
+      "numero": 2,
+      "titulo": "Oposición de reyes",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/finales-practicos/02-oposicion-de-reyes.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 68
+       }
+      ]
+     },
+     {
+      "numero": 3,
+      "titulo": "Finales de rey y peón: posiciones críticas",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/finales-practicos/03-finales-de-rey-y-peon-posiciones-criticas.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 68
+       }
+      ]
+     },
+     {
+      "numero": 4,
+      "titulo": "Ruptura de peones",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/finales-practicos/04-ruptura-de-peones.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 68
+       }
+      ]
+     },
+     {
+      "numero": 5,
+      "titulo": "La posición de Lucena",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/finales-practicos/05-la-posicion-de-lucena.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 68
+       }
+      ]
+     },
+     {
+      "numero": 6,
+      "titulo": "La posición de Philidor",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/finales-practicos/06-la-posicion-de-philidor.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 68
+       }
+      ]
+     },
+     {
+      "numero": 7,
+      "titulo": "Torres activas",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/finales-practicos/07-torres-activas.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 68
+       }
+      ]
+     },
+     {
+      "numero": 8,
+      "titulo": "Finales de torres con varios peones",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/finales-practicos/08-finales-de-torres-con-varios-peones.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 67
+       }
+      ]
+     },
+     {
+      "numero": 9,
+      "titulo": "Finales de alfiles del mismo color",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/finales-practicos/09-finales-de-alfiles-del-mismo-color.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 68
+       }
+      ]
+     },
+     {
+      "numero": 10,
+      "titulo": "Finales de alfiles de distinto color",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/finales-practicos/10-finales-de-alfiles-de-distinto-color.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 68
+       }
+      ]
+     },
+     {
+      "numero": 11,
+      "titulo": "Finales de caballo contra alfil",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/finales-practicos/11-finales-de-caballo-contra-alfil.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 67
+       }
+      ]
+     },
+     {
+      "numero": 12,
+      "titulo": "Finales de dama contra peón coronando",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/finales-practicos/12-finales-de-dama-contra-peon-coronando.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 68
+       }
+      ]
+     },
+     {
+      "numero": 13,
+      "titulo": "Conversión de ventaja material",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/finales-practicos/13-conversion-de-ventaja-material.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 68
+       }
+      ]
+     },
+     {
+      "numero": 14,
+      "titulo": "Partida final comentada",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/finales-practicos/14-partida-final-comentada.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 67
+       }
+      ]
+     }
+    ],
+    "otros": []
+   },
+   {
+    "slug": "partidas-modelo",
+    "titulo": "Partidas modelo del ajedrez moderno",
+    "nivel": "intermedio",
+    "lecciones": [
+     {
+      "numero": 1,
+      "titulo": "¡A sacar las piezas! A. Chernin – J. van der Wiel",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/partidas-modelo/01-partida-01.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 222
+       }
+      ]
+     },
+     {
+      "numero": 2,
+      "titulo": "El rey en el centro A. Jálifman – E. Svéshnikov",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/partidas-modelo/02-partida-02.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 232
+       }
+      ]
+     },
+     {
+      "numero": 3,
+      "titulo": "Dominio eficaz del centro K. Aséiev – N. Rashkovski",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/partidas-modelo/03-partida-03.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 286
+       }
+      ]
+     },
+     {
+      "numero": 4,
+      "titulo": "Un centro de peones sobreexpandido J. van der Wiel – R. Vaganián",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/partidas-modelo/04-partida-04.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 256
+       }
+      ]
+     },
+     {
+      "numero": 5,
+      "titulo": "El juego moderno de gambito T. Markowski – A. Onishchuk",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/partidas-modelo/05-partida-05.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 296
+       }
+      ]
+     },
+     {
+      "numero": 6,
+      "titulo": "Ideas básicas en el ataque G. Kaspárov – N. Short",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/partidas-modelo/06-partida-06.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 287
+       }
+      ]
+     },
+     {
+      "numero": 7,
+      "titulo": "Incorporar las fuerzas de reserva G. Kaspárov – A. Kárpov",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/partidas-modelo/07-partida-07.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 323
+       }
+      ]
+     },
+     {
+      "numero": 8,
+      "titulo": "Sacrificios típicos A. Shírov – D. Reinderman",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/partidas-modelo/08-partida-08.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 260
+       }
+      ]
+     },
+     {
+      "numero": 9,
+      "titulo": "El ataque con oleada de sacrificios J. Nunn – I. Nataf",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/partidas-modelo/09-partida-09.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 318
+       }
+      ]
+     },
+     {
+      "numero": 10,
+      "titulo": "Enroques en flancos opuestos J. Nunn – C. Ward",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/partidas-modelo/10-partida-10.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 259
+       }
+      ]
+     },
+     {
+      "numero": 11,
+      "titulo": "La gran diagonal J. Timman – J. Polgar",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/partidas-modelo/11-partida-11.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 233
+       }
+      ]
+     },
+     {
+      "numero": 12,
+      "titulo": "Que no cunda el pánico M. Rõtšagov – Z. Lanka",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/partidas-modelo/12-partida-12.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 221
+       }
+      ]
+     },
+     {
+      "numero": 13,
+      "titulo": "El sacrificio defensivo B. Lalić – A. Jálifman",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/partidas-modelo/13-partida-13.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 262
+       }
+      ]
+     },
+     {
+      "numero": 14,
+      "titulo": "Defensa y contraataque Bu Xiangzhi – Ye Jiangchuan",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/partidas-modelo/14-partida-14.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 208
+       }
+      ]
+     },
+     {
+      "numero": 15,
+      "titulo": "Defensa a ultranza V. Krámnik – V. Anand",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/partidas-modelo/15-partida-15.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 251
+       }
+      ]
+     },
+     {
+      "numero": 16,
+      "titulo": "Mala estructura de peones G. Kaspárov – I. Sokolov",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/partidas-modelo/16-partida-16.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 213
+       }
+      ]
+     },
+     {
+      "numero": 17,
+      "titulo": "Ventaja de espacio A. Kárpov – Z. Ribli",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/partidas-modelo/17-partida-17.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 261
+       }
+      ]
+     },
+     {
+      "numero": 18,
+      "titulo": "Puestos avanzados J. Piket – I. Smirin",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/partidas-modelo/18-partida-18.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 320
+       }
+      ]
+     },
+     {
+      "numero": 19,
+      "titulo": "Columnas abiertas N. Short – J. Timman",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/partidas-modelo/19-partida-19.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 313
+       }
+      ]
+     },
+     {
+      "numero": 20,
+      "titulo": "Complejo de casillas débiles G. Kaspárov – A. Shírov",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/partidas-modelo/20-partida-20.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 215
+       }
+      ]
+     },
+     {
+      "numero": 21,
+      "titulo": "Ataque al flanco de dama A. Yermolinsky – L. Christiansen",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/partidas-modelo/21-partida-21.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 224
+       }
+      ]
+     },
+     {
+      "numero": 22,
+      "titulo": "Pareja de alfiles M. Gúrevich – N. Miezis",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/partidas-modelo/22-partida-22.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 247
+       }
+      ]
+     },
+     {
+      "numero": 23,
+      "titulo": "El alfil malo M. Stean – G. Sax",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/partidas-modelo/23-partida-23.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 256
+       }
+      ]
+     },
+     {
+      "numero": 24,
+      "titulo": "La cadena de peones P. San Segundo – V. Topálov",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/partidas-modelo/24-partida-24.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 269
+       }
+      ]
+     },
+     {
+      "numero": 25,
+      "titulo": "Explotación del peón dama aislado G. Kamsky – A. Kárpov",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/partidas-modelo/25-partida-25.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 258
+       }
+      ]
+     },
+     {
+      "numero": 26,
+      "titulo": "Triunfo del peón dama aislado G. Kamsky – N. Short",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/partidas-modelo/26-partida-26.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 234
+       }
+      ]
+     },
+     {
+      "numero": 27,
+      "titulo": "Sacrificios posicionales J. Lautier – A. Shírov",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/partidas-modelo/27-partida-27.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 264
+       }
+      ]
+     },
+     {
+      "numero": 28,
+      "titulo": "El rey activo V. Smyslov – G. Sax",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/partidas-modelo/28-partida-28.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 176
+       }
+      ]
+     },
+     {
+      "numero": 29,
+      "titulo": "El poder de los peones pasados V. Krámnik – P. Svídler",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/partidas-modelo/29-partida-29.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 220
+       }
+      ]
+     },
+     {
+      "numero": 30,
+      "titulo": "La torre en séptima E. Handoko – Xu Jun",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/partidas-modelo/30-partida-30.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 172
+       }
+      ]
+     }
+    ],
+    "otros": []
+   },
+   {
+    "slug": "estrategia-y-tactica",
+    "titulo": "Estrategia y Táctica",
+    "nivel": "avanzado",
+    "lecciones": [
+     {
+      "numero": 1,
+      "titulo": "Clavadas: absolutas y relativas",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/estrategia-y-tactica/01-clavadas-absolutas-y-relativas.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 68
+       }
+      ]
+     },
+     {
+      "numero": 2,
+      "titulo": "Horquillas de caballo y de peón",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/estrategia-y-tactica/02-horquillas-de-caballo-y-de-peon.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 68
+       }
+      ]
+     },
+     {
+      "numero": 3,
+      "titulo": "Ataques a la descubierta y jaques dobles",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/estrategia-y-tactica/03-ataques-a-la-descubierta-y-jaques-dobles.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 68
+       }
+      ]
+     },
+     {
+      "numero": 4,
+      "titulo": "Rayos X y desviaciones",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/estrategia-y-tactica/04-rayos-x-y-desviaciones.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 68
+       }
+      ]
+     },
+     {
+      "numero": 5,
+      "titulo": "Sacrificios de despeje y de destrucción",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/estrategia-y-tactica/05-sacrificios-de-despeje-y-de-destruccion.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 68
+       }
+      ]
+     },
+     {
+      "numero": 6,
+      "titulo": "Cómo calcular variantes sin mover las piezas",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/estrategia-y-tactica/06-como-calcular-variantes-sin-mover-las-piezas.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 68
+       }
+      ]
+     },
+     {
+      "numero": 7,
+      "titulo": "Combinaciones de dos y tres jugadas",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/estrategia-y-tactica/07-combinaciones-de-dos-y-tres-jugadas.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 68
+       }
+      ]
+     },
+     {
+      "numero": 8,
+      "titulo": "Sacrificios en h7/h2",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/estrategia-y-tactica/08-sacrificios-en-h7-h2.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 68
+       }
+      ]
+     },
+     {
+      "numero": 9,
+      "titulo": "Combinaciones con promoción de peón",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/estrategia-y-tactica/09-combinaciones-con-promocion-de-peon.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 67
+       }
+      ]
+     },
+     {
+      "numero": 10,
+      "titulo": "Cálculo bajo presión de tiempo",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/estrategia-y-tactica/10-calculo-bajo-presion-de-tiempo.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 68
+       }
+      ]
+     },
+     {
+      "numero": 11,
+      "titulo": "Peones débiles",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/estrategia-y-tactica/11-peones-debiles.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 69
+       }
+      ]
+     },
+     {
+      "numero": 12,
+      "titulo": "Casillas débiles y piezas dominantes",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/estrategia-y-tactica/12-casillas-debiles-y-piezas-dominantes.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 68
+       }
+      ]
+     },
+     {
+      "numero": 13,
+      "titulo": "La pareja de alfiles",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/estrategia-y-tactica/13-la-pareja-de-alfiles.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 68
+       }
+      ]
+     },
+     {
+      "numero": 14,
+      "titulo": "Columnas y diagonales abiertas",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/estrategia-y-tactica/14-columnas-y-diagonales-abiertas.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 68
+       }
+      ]
+     },
+     {
+      "numero": 15,
+      "titulo": "Planificación de medio juego",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/estrategia-y-tactica/15-planificacion-de-medio-juego.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 68
+       }
+      ]
+     },
+     {
+      "numero": 16,
+      "titulo": "Ataque al rey que no enrocó",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/estrategia-y-tactica/16-ataque-al-rey-que-no-enroco.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 68
+       }
+      ]
+     },
+     {
+      "numero": 17,
+      "titulo": "Ataque al enroque contrario",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/estrategia-y-tactica/17-ataque-al-enroque-contrario.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 67
+       }
+      ]
+     },
+     {
+      "numero": 18,
+      "titulo": "El sacrificio posicional a largo plazo",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/estrategia-y-tactica/18-el-sacrificio-posicional-a-largo-plazo.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 67
+       }
+      ]
+     },
+     {
+      "numero": 19,
+      "titulo": "Defensa activa",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/estrategia-y-tactica/19-defensa-activa.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 68
+       }
+      ]
+     },
+     {
+      "numero": 20,
+      "titulo": "Partida magistral comentada",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/estrategia-y-tactica/20-partida-magistral-comentada.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 67
+       }
+      ]
+     }
+    ],
+    "otros": []
+   },
+   {
+    "slug": "el-mapa-de-los-finales",
+    "titulo": "El mapa de los finales",
+    "nivel": "avanzado",
+    "lecciones": [
+     {
+      "numero": 1,
+      "titulo": "Rey y peón contra rey",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/el-mapa-de-los-finales/01-rey-y-peon-contra-rey.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 271
+       }
+      ]
+     },
+     {
+      "numero": 2,
+      "titulo": "El peón de torre y los rincones del alfil",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/el-mapa-de-los-finales/02-peon-de-torre-y-rincones.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 126
+       }
+      ]
+     },
+     {
+      "numero": 3,
+      "titulo": "Torre contra caballo",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/el-mapa-de-los-finales/03-torre-contra-caballo.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 143
+       }
+      ]
+     },
+     {
+      "numero": 4,
+      "titulo": "Dos peones contra rey y peones bloqueados",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/el-mapa-de-los-finales/04-dos-peones-contra-rey.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 210
+       }
+      ]
+     },
+     {
+      "numero": 5,
+      "titulo": "Peones pasados y las maniobras del rey con doble objetivo",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/el-mapa-de-los-finales/05-peones-pasados-y-doble-objetivo.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 293
+       }
+      ]
+     },
+     {
+      "numero": 6,
+      "titulo": "Triangulación, peón de alfil y la lucha contra dos peones pasados",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/el-mapa-de-los-finales/06-triangulacion-y-mayorias.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 269
+       }
+      ]
+     },
+     {
+      "numero": 7,
+      "titulo": "Peón pasado defendido, alejado, doblado y rupturas",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/el-mapa-de-los-finales/07-peon-pasado-defendido-y-rupturas.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 198
+       }
+      ]
+     },
+     {
+      "numero": 8,
+      "titulo": "Caballo contra peón",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/el-mapa-de-los-finales/08-caballo-contra-peon.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 228
+       }
+      ]
+     },
+     {
+      "numero": 9,
+      "titulo": "Dama contra peón",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/el-mapa-de-los-finales/09-dama-contra-peon.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 298
+       }
+      ]
+     },
+     {
+      "numero": 10,
+      "titulo": "Torre contra peón (I): contar, cortar y rodear",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/el-mapa-de-los-finales/10-torre-contra-peon-i.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 243
+       }
+      ]
+     },
+     {
+      "numero": 11,
+      "titulo": "Torre contra peón (II): peones de caballo y torre",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/el-mapa-de-los-finales/11-torre-contra-peon-ii.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 243
+       }
+      ]
+     },
+     {
+      "numero": 12,
+      "titulo": "Torre contra dos peones",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/el-mapa-de-los-finales/12-torre-contra-dos-peones.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 217
+       }
+      ]
+     },
+     {
+      "numero": 13,
+      "titulo": "Alfil y peón contra alfil del mismo color",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/el-mapa-de-los-finales/13-alfil-y-peon-contra-alfil.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 158
+       }
+      ]
+     },
+     {
+      "numero": 14,
+      "titulo": "Alfil contra caballo con un peón",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/el-mapa-de-los-finales/14-alfil-contra-caballo-con-peon.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 258
+       }
+      ]
+     },
+     {
+      "numero": 15,
+      "titulo": "Alfiles de distinto color (I): peones ligados",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/el-mapa-de-los-finales/15-alfiles-de-distinto-color-i.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 277
+       }
+      ]
+     },
+     {
+      "numero": 16,
+      "titulo": "Alfiles de distinto color (II): peones separados",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/el-mapa-de-los-finales/16-alfiles-de-distinto-color-ii.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 189
+       }
+      ]
+     },
+     {
+      "numero": 17,
+      "titulo": "Philidor, Lucena y el lado largo",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/el-mapa-de-los-finales/17-philidor-y-lucena.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 128
+       }
+      ]
+     },
+     {
+      "numero": 18,
+      "titulo": "Kling y Horwitz y el peón central en sexta",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/el-mapa-de-los-finales/18-kling-horwitz-y-peon-en-sexta.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 162
+       }
+      ]
+     },
+     {
+      "numero": 19,
+      "titulo": "Los cortes: vertical y horizontal",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/el-mapa-de-los-finales/19-cortes-vertical-y-horizontal.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 205
+       }
+      ]
+     },
+     {
+      "numero": 20,
+      "titulo": "El peón de torre y la defensa de Vancura",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/el-mapa-de-los-finales/20-peon-de-torre-y-vancura.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 180
+       }
+      ]
+     },
+     {
+      "numero": 21,
+      "titulo": "Torre y dos peones contra torre (I)",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/el-mapa-de-los-finales/21-torre-y-dos-peones-i.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 271
+       }
+      ]
+     },
+     {
+      "numero": 22,
+      "titulo": "Torre y dos peones contra torre (II)",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/el-mapa-de-los-finales/22-torre-y-dos-peones-ii.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 214
+       }
+      ]
+     },
+     {
+      "numero": 23,
+      "titulo": "El mate de alfil y caballo y torre y alfil contra torre",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/el-mapa-de-los-finales/23-mate-de-alfil-y-caballo-y-torre-y-alfil-contra-torre.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 352
+       }
+      ]
+     },
+     {
+      "numero": 24,
+      "titulo": "Torre y peón contra alfil y dama contra torre y peón",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/el-mapa-de-los-finales/24-torre-y-peon-contra-alfil-y-dama-contra-torre.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 282
+       }
+      ]
+     }
+    ],
+    "otros": []
+   },
+   {
+    "slug": "estrategia-en-el-final",
+    "titulo": "Estrategia en el final",
+    "nivel": "avanzado",
+    "lecciones": [
+     {
+      "numero": 1,
+      "titulo": "Primero el rey",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/estrategia-en-el-final/01-primero-el-rey.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 2,
+      "titulo": "La oposición y las casillas críticas",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/estrategia-en-el-final/02-la-oposicion-y-las-casillas-criticas.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 3,
+      "titulo": "La ruta del rey",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/estrategia-en-el-final/03-la-ruta-del-rey.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 4,
+      "titulo": "Incursiones y refugio",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/estrategia-en-el-final/04-incursiones-y-refugio.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 5,
+      "titulo": "El peón pasado",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/estrategia-en-el-final/05-el-peon-pasado.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 6,
+      "titulo": "Mayorías y el pasado exterior",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/estrategia-en-el-final/06-mayorias-y-el-pasado-exterior.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 7,
+      "titulo": "Rupturas de peones",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/estrategia-en-el-final/07-rupturas-de-peones.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 8,
+      "titulo": "Debilidades que no se mueven",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/estrategia-en-el-final/08-debilidades-que-no-se-mueven.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 9,
+      "titulo": "La torre activa",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/estrategia-en-el-final/09-la-torre-activa.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 10,
+      "titulo": "La torre y el peón pasado",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/estrategia-en-el-final/10-la-torre-y-el-peon-pasado.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 11,
+      "titulo": "Alfil contra caballo",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/estrategia-en-el-final/11-alfil-contra-caballo.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 12,
+      "titulo": "Alfiles de distinto color",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/estrategia-en-el-final/12-alfiles-de-distinto-color.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 13,
+      "titulo": "El cambio que decide",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/estrategia-en-el-final/13-el-cambio-que-decide.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 14,
+      "titulo": "Zugzwang, triangulación y espera",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/estrategia-en-el-final/14-zugzwang-triangulacion-y-espera.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 15,
+      "titulo": "Profilaxis: quitarle el plan",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/estrategia-en-el-final/15-profilaxis-quitarle-el-plan.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 16,
+      "titulo": "Convertir: las dos debilidades",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/estrategia-en-el-final/16-convertir-las-dos-debilidades.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     }
+    ],
+    "otros": []
+   },
+   {
+    "slug": "desequilibrios-de-material",
+    "titulo": "Desequilibrios de material",
+    "nivel": "avanzado",
+    "lecciones": [
+     {
+      "numero": 1,
+      "titulo": "El valor relativo de las piezas",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/desequilibrios-de-material/01-valor-relativo-de-las-piezas.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 1084
+       }
+      ]
+     },
+     {
+      "numero": 2,
+      "titulo": "Alfil contra caballo: cuándo manda el caballo",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/desequilibrios-de-material/02-alfil-contra-caballo-el-caballo-fuerte.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 354
+       }
+      ]
+     },
+     {
+      "numero": 3,
+      "titulo": "Alfil contra caballo: cuando el alfil domina",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/desequilibrios-de-material/03-alfil-contra-caballo-el-alfil-que-domina.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 362
+       }
+      ]
+     },
+     {
+      "numero": 4,
+      "titulo": "Alfiles de distinto color: iniciativa y complejo de color",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/desequilibrios-de-material/04-alfiles-de-distinto-color-iniciativa.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 435
+       }
+      ]
+     },
+     {
+      "numero": 5,
+      "titulo": "Alfiles de distinto color: convertir una ventaja mínima",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/desequilibrios-de-material/05-alfiles-de-distinto-color-convertir.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 520
+       }
+      ]
+     },
+     {
+      "numero": 6,
+      "titulo": "La pareja de alfiles en el final",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/desequilibrios-de-material/06-pareja-de-alfiles-en-el-final.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 525
+       }
+      ]
+     },
+     {
+      "numero": 7,
+      "titulo": "La pareja de alfiles en el medio juego",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/desequilibrios-de-material/07-pareja-de-alfiles-en-el-medio-juego.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 758
+       }
+      ]
+     },
+     {
+      "numero": 8,
+      "titulo": "Torre contra dos piezas menores: coordinación",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/desequilibrios-de-material/08-torre-contra-dos-piezas-menores-i.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 462
+       }
+      ]
+     },
+     {
+      "numero": 9,
+      "titulo": "Torre contra dos piezas menores: el rey y los peones pasados",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/desequilibrios-de-material/09-torre-contra-dos-piezas-menores-ii.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 485
+       }
+      ]
+     },
+     {
+      "numero": 10,
+      "titulo": "Sacrificios de peón: estabilidad y peones pasados",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/desequilibrios-de-material/10-sacrificios-de-peon-estabilidad.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 555
+       }
+      ]
+     },
+     {
+      "numero": 11,
+      "titulo": "Sacrificios de peón: ventaja de desarrollo y estructura",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/desequilibrios-de-material/11-sacrificios-de-peon-planes.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 762
+       }
+      ]
+     },
+     {
+      "numero": 12,
+      "titulo": "Sacrificios de calidad: el caballo dominante",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/desequilibrios-de-material/12-sacrificios-de-calidad-i.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 712
+       }
+      ]
+     },
+     {
+      "numero": 13,
+      "titulo": "Sacrificios de calidad: iniciativa y ataque",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/desequilibrios-de-material/13-sacrificios-de-calidad-ii.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 751
+       }
+      ]
+     },
+     {
+      "numero": 14,
+      "titulo": "Sacrificios de calidad: defensa y contrajuego",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/desequilibrios-de-material/14-sacrificios-de-calidad-iii.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 358
+       }
+      ]
+     },
+     {
+      "numero": 15,
+      "titulo": "Sacrificios de pieza por peones",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/desequilibrios-de-material/15-sacrificios-de-pieza.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 844
+       }
+      ]
+     },
+     {
+      "numero": 16,
+      "titulo": "Dama contra piezas: el modo supervivencia",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/desequilibrios-de-material/16-dama-contra-piezas-modo-supervivencia.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 668
+       }
+      ]
+     },
+     {
+      "numero": 17,
+      "titulo": "Dama contra piezas: cuándo gana cada bando",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/desequilibrios-de-material/17-dama-contra-piezas-cuando-gana-la-dama.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 525
+       }
+      ]
+     },
+     {
+      "numero": 18,
+      "titulo": "Desequilibrios en la práctica I",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/desequilibrios-de-material/18-desequilibrios-en-la-practica-i.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 521
+       }
+      ]
+     },
+     {
+      "numero": 19,
+      "titulo": "Desequilibrios en la práctica II",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/desequilibrios-de-material/19-desequilibrios-en-la-practica-ii.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 597
+       }
+      ]
+     }
+    ],
+    "otros": []
+   },
+   {
+    "slug": "preparacion-para-torneos",
+    "titulo": "Preparación para Torneos",
+    "nivel": "competicion",
+    "lecciones": [
+     {
+      "numero": 1,
+      "titulo": "Cómo construir un repertorio sólido",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/preparacion-para-torneos/01-como-construir-un-repertorio-solido.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 68
+       }
+      ]
+     },
+     {
+      "numero": 2,
+      "titulo": "Preparación contra un rival específico",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/preparacion-para-torneos/02-preparacion-contra-un-rival-especifico.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 68
+       }
+      ]
+     },
+     {
+      "numero": 3,
+      "titulo": "Uso de bases de datos de partidas",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/preparacion-para-torneos/03-uso-de-bases-de-datos-de-partidas.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 68
+       }
+      ]
+     },
+     {
+      "numero": 4,
+      "titulo": "Actualizar el repertorio tras un torneo",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/preparacion-para-torneos/04-actualizar-el-repertorio-tras-un-torneo.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 67
+       }
+      ]
+     },
+     {
+      "numero": 5,
+      "titulo": "Gestión del reloj",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/preparacion-para-torneos/05-gestion-del-reloj.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 68
+       }
+      ]
+     },
+     {
+      "numero": 6,
+      "titulo": "Cuándo pensar mucho y cuándo jugar rápido",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/preparacion-para-torneos/06-cuando-pensar-mucho-y-cuando-jugar-rapido.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 67
+       }
+      ]
+     },
+     {
+      "numero": 7,
+      "titulo": "Decisiones bajo presión de tiempo (zeitnot)",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/preparacion-para-torneos/07-decisiones-bajo-presion-de-tiempo-zeitnot.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 68
+       }
+      ]
+     },
+     {
+      "numero": 8,
+      "titulo": "Cómo comportarte tras un error",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/preparacion-para-torneos/08-como-comportarte-tras-un-error.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 68
+       }
+      ]
+     },
+     {
+      "numero": 9,
+      "titulo": "Psicología de la competencia",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/preparacion-para-torneos/09-psicologia-de-la-competencia.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 68
+       }
+      ]
+     },
+     {
+      "numero": 10,
+      "titulo": "Rutinas antes y durante la partida",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/preparacion-para-torneos/10-rutinas-antes-y-durante-la-partida.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 68
+       }
+      ]
+     },
+     {
+      "numero": 11,
+      "titulo": "Rivales incómodos o intimidantes",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/preparacion-para-torneos/11-rivales-incomodos-o-intimidantes.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 68
+       }
+      ]
+     },
+     {
+      "numero": 12,
+      "titulo": "Descanso y alimentación durante un torneo largo",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/preparacion-para-torneos/12-descanso-y-alimentacion-durante-un-torneo-largo.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 68
+       }
+      ]
+     },
+     {
+      "numero": 13,
+      "titulo": "Análisis post-partida",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/preparacion-para-torneos/13-analisis-post-partida.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 68
+       }
+      ]
+     },
+     {
+      "numero": 14,
+      "titulo": "Uso de un motor de análisis",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/preparacion-para-torneos/14-uso-de-un-motor-de-analisis.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 68
+       }
+      ]
+     },
+     {
+      "numero": 15,
+      "titulo": "Bitácora de errores recurrentes",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/preparacion-para-torneos/15-bitacora-de-errores-recurrentes.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 68
+       }
+      ]
+     },
+     {
+      "numero": 16,
+      "titulo": "Cómo estudiar tus partidas perdidas",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/preparacion-para-torneos/16-como-estudiar-tus-partidas-perdidas.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 68
+       }
+      ]
+     },
+     {
+      "numero": 17,
+      "titulo": "Simulacro de torneo",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/preparacion-para-torneos/17-simulacro-de-torneo.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 68
+       }
+      ]
+     },
+     {
+      "numero": 18,
+      "titulo": "Plan de estudio personalizado",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/preparacion-para-torneos/18-plan-de-estudio-personalizado.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 67
+       }
+      ]
+     }
+    ],
+    "otros": []
+   },
+   {
+    "slug": "formacion-ajedrez",
+    "titulo": "Formación Ajedrez",
+    "nivel": "formacion-docente",
+    "lecciones": [
+     {
+      "numero": 1,
+      "titulo": "Encuadre del curso y reglas básicas del ajedrez",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/formacion-ajedrez/01-encuadre-y-reglas-basicas.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 79
+       }
+      ]
+     },
+     {
+      "numero": 2,
+      "titulo": "Reglas de competición",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/formacion-ajedrez/02-reglas-de-competicion.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 69
+       }
+      ]
+     },
+     {
+      "numero": 3,
+      "titulo": "Apéndices de las Leyes de Ajedrez y normativa de los Juegos Deportivos Estudiantiles",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/formacion-ajedrez/03-apendices-y-normativa-jde.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 58
+       }
+      ]
+     },
+     {
+      "numero": 4,
+      "titulo": "Sistemas de emparejamiento para torneos",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/formacion-ajedrez/04-sistemas-de-emparejamiento.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 58
+       }
+      ]
+     },
+     {
+      "numero": 5,
+      "titulo": "Uso, configuración y control del reloj de ajedrez",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/formacion-ajedrez/05-uso-y-control-del-reloj.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 61
+       }
+      ]
+     },
+     {
+      "numero": 6,
+      "titulo": "Resolución de casos en grupos y experiencias regionales",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/formacion-ajedrez/06-resolucion-de-casos-en-grupos.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 56
+       }
+      ]
+     },
+     {
+      "numero": 7,
+      "titulo": "Talleres prácticos y simulacros de arbitraje",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/formacion-ajedrez/07-talleres-y-simulacros-de-arbitraje.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 55
+       }
+      ]
+     }
+    ],
+    "otros": []
+   },
+   {
+    "slug": "arbitro-nacional",
+    "titulo": "Árbitro Nacional",
+    "nivel": "formacion-docente",
+    "lecciones": [
+     {
+      "numero": 1,
+      "titulo": "Cuándo una jugada queda completada, y qué obliga a jugar la pieza tocada",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/arbitro-nacional/01-cuando-una-jugada-queda-completada-y-que-obliga-a-jugar-la-pieza-tocada.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 36
+       }
+      ]
+     },
+     {
+      "numero": 2,
+      "titulo": "Jaque, jaque mate, ahogado y posición muerta: lo que termina la partida sin que nadie reclame",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/arbitro-nacional/02-jaque-jaque-mate-ahogado-y-posicion-muerta-lo-que-termina-la-partida-sin-que-nadie-reclame.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 36
+       }
+      ]
+     },
+     {
+      "numero": 3,
+      "titulo": "Puesta en marcha, incrementos y las obligaciones que cambian con el control de tiempo",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/arbitro-nacional/03-puesta-en-marcha-incrementos-y-las-obligaciones-que-cambian-con-el-control-de-tiempo.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 36
+       }
+      ]
+     },
+     {
+      "numero": 4,
+      "titulo": "La caída de la bandera: qué comprobar antes de decidir un reclamo",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/arbitro-nacional/04-la-caida-de-la-bandera-que-comprobar-antes-de-decidir-un-reclamo.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 36
+       }
+      ]
+     },
+     {
+      "numero": 5,
+      "titulo": "Jugada ilegal: cuándo queda completada y cómo se sanciona",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/arbitro-nacional/05-jugada-ilegal-cuando-queda-completada-y-como-se-sanciona.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 36
+       }
+      ]
+     },
+     {
+      "numero": 6,
+      "titulo": "Piezas mal colocadas y otras incidencias de mesa",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/arbitro-nacional/06-piezas-mal-colocadas-y-otras-incidencias-de-mesa.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 36
+       }
+      ]
+     },
+     {
+      "numero": 7,
+      "titulo": "La obligación de anotar y sus excepciones",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/arbitro-nacional/07-la-obligacion-de-anotar-y-sus-excepciones.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 36
+       }
+      ]
+     },
+     {
+      "numero": 8,
+      "titulo": "Reclamos de tablas: triple repetición y la regla de las 50 jugadas",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/arbitro-nacional/08-reclamos-de-tablas-triple-repeticion-y-la-regla-de-las-50-jugadas.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 36
+       }
+      ]
+     },
+     {
+      "numero": 9,
+      "titulo": "Dispositivos electrónicos, ayuda externa y la escala de sanciones",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/arbitro-nacional/09-dispositivos-electronicos-ayuda-externa-y-la-escala-de-sanciones.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 36
+       }
+      ]
+     },
+     {
+      "numero": 10,
+      "titulo": "Los deberes y poderes de la persona árbitra",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/arbitro-nacional/10-los-deberes-y-poderes-de-la-persona-arbitra.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 36
+       }
+      ]
+     },
+     {
+      "numero": 11,
+      "titulo": "Ajedrez rápido: qué cambia y qué sigue igual respecto al control clásico",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/arbitro-nacional/11-ajedrez-rapido-que-cambia-y-que-sigue-igual-respecto-al-control-clasico.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 36
+       }
+      ]
+     },
+     {
+      "numero": 12,
+      "titulo": "Ajedrez relámpago: cuándo el árbitro decide sin que nadie reclame",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/arbitro-nacional/12-ajedrez-relampago-cuando-el-arbitro-decide-sin-que-nadie-reclame.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 36
+       }
+      ]
+     },
+     {
+      "numero": 13,
+      "titulo": "El sistema suizo: los principios del sistema holandés (Dutch)",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/arbitro-nacional/13-el-sistema-suizo-los-principios-del-sistema-holandes-dutch.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 36
+       }
+      ]
+     },
+     {
+      "numero": 14,
+      "titulo": "Desempates: Buchholz, Sonneborn-Berger y cuándo usar cada uno",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/arbitro-nacional/14-desempates-buchholz-sonneborn-berger-y-cuando-usar-cada-uno.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 36
+       }
+      ]
+     },
+     {
+      "numero": 15,
+      "titulo": "La carrera de árbitro: de árbitro nacional a árbitro internacional",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/arbitro-nacional/15-la-carrera-de-arbitro-de-arbitro-nacional-a-arbitro-internacional.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 36
+       }
+      ]
+     },
+     {
+      "numero": 16,
+      "titulo": "Ética, imparcialidad y el informe del árbitro",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/arbitro-nacional/16-etica-imparcialidad-y-el-informe-del-arbitro.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 36
+       }
+      ]
+     },
+     {
+      "numero": 17,
+      "titulo": "Señales de alerta y el protocolo de revisión, sin acusar a ciegas",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/arbitro-nacional/17-senales-de-alerta-y-el-protocolo-de-revision-sin-acusar-a-ciegas.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 36
+       }
+      ]
+     }
+    ],
+    "otros": []
+   }
+  ],
+  "sueltos": []
+ }
+}

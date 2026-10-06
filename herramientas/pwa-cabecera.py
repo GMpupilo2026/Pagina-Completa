@@ -36,9 +36,10 @@ FIN = "<!-- app: fin -->"
 #   - inscripcion.html tiene su propio diseño y su propio CSS;
 #   - offline.html ya las trae escritas a mano (es la que se enseña sin red);
 #   - libro-de-diagnostico-accesible.html, guia-del-profesor-accesible.html,
-#     fichas-de-estudio-accesible.html, ponte-a-prueba-accesible.html y
-#     y los accesibles de los cinco volúmenes de «Mide tu fuerza»
-#     (mide-tu-fuerza-accesible.html, mide-tu-fuerza-2-accesible.html…) son
+#     fichas-de-estudio-accesible.html, ponte-a-prueba-accesible.html (y la
+#     de sus versiones para imprimir) y los accesibles de los cinco volúmenes
+#     de «Mide tu fuerza» (mide-tu-fuerza-accesible.html,
+#     mide-tu-fuerza-2-accesible.html…) son
 #     documentos que se descargan y se abren sueltos, hasta por correo y sin
 #     red: declarar un manifest que no va a poder cargar es peor que no
 #     declararlo. Esta lista tiene que decir lo mismo que la de
@@ -51,6 +52,7 @@ FUERA = {"inscripcion.html", "offline.html", "formulario.html",
          "guia-del-profesor-accesible.html",
          "fichas-de-estudio-accesible.html",
          "ponte-a-prueba-accesible.html",
+         "ponte-a-prueba-versiones-accesible.html",
          "mide-tu-fuerza-accesible.html",
          "mide-tu-fuerza-2-accesible.html",
          "mide-tu-fuerza-3-accesible.html",
