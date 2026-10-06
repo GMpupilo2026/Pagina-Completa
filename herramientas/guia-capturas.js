@@ -55,10 +55,23 @@ const PANTALLA = { width: 1440, height: 810 };
 /* ==========================================================================
    Las cuentas y los datos de demostración — TODOS inventados
    ========================================================================== */
+/* La guía es del equipo docente, así que las capturas son las de una
+   profesora que da clase y coordina, pero NO administra: con `is_admin` el
+   panel es otro (el de administración) y la captura enseñaría tarjetas que el
+   profesor no tiene. Las pocas páginas que hoy son solo de administración
+   (admin, el examen de arbitraje del equipo, el lector de planilla, los
+   reportes) se fotografían con ADMIN, otra cuenta de mentira (`quien:
+   "admin"` en PAGINAS). Ver «Las capturas de la guía, con la cuenta de quien
+   la lee» en docs/decisiones/cursos-y-material.md. */
 const PROFE = {
   id: "demo-profe", full_name: "Karina Rojas", email: "karina@ejemplo.test",
-  role: "profesor", is_admin: true, es_coordinador: true, grupo: null,
+  role: "profesor", is_admin: false, es_coordinador: true, grupo: null,
   teacher_id: null, invitaciones_max: 20, invitaciones_usadas: 3, elo: null,
+};
+const ADMIN = {
+  id: "demo-admin", full_name: "Laura Méndez", email: "laura@ejemplo.test",
+  role: "profesor", is_admin: true, es_coordinador: true, grupo: null,
+  teacher_id: null, invitaciones_max: 50, invitaciones_usadas: 8, elo: null,
 };
 const ALUMNOS = [
   ["demo-a1", "Sofía Muñoz", "7° B", 1240],
@@ -77,7 +90,7 @@ const hace = (dias) => new Date(Date.now() - dias * 86400000).toISOString();
 const dentro = (dias) => new Date(Date.now() + dias * 86400000).toISOString();
 
 const DEMO = {
-  perfiles: [PROFE].concat(ALUMNOS),
+  perfiles: [PROFE, ADMIN].concat(ALUMNOS),
 
   class_sessions: [0, 2, 5, 9, 14, 21].map((d, i) => ({
     id: "demo-c" + i, created_by: PROFE.id,
@@ -406,13 +419,13 @@ const PAGINAS = [
   { slug: "temas", url: "/entreno/temas.html", espera: "main" },
   { slug: "aperturas", url: "/entreno/aperturas.html", espera: "main" },
   { slug: "diagnostico", url: "/entreno/diagnostico.html", espera: "main", sesion: false },
-  { slug: "arbitraje", url: "/arbitraje.html", espera: "main" },
+  { slug: "arbitraje", url: "/arbitraje.html", espera: "main", quien: "admin" },
   { slug: "juegos", url: "/juegos.html", espera: "main" },
   { slug: "torneos", url: "/torneos.html", espera: "main" },
   { slug: "partidas", url: "/partidas.html", espera: "main" },
   { slug: "logros", url: "/logros.html", espera: "main" },
   { slug: "bot", url: "/bot.html", espera: "main", sesion: false },
-  { slug: "lector-planilla", url: "/lector-planilla.html", espera: "main" },
+  { slug: "lector-planilla", url: "/lector-planilla.html", espera: "main", quien: "admin" },
   { slug: "formularios", url: "/formularios.html", espera: "main" },
   { slug: "cobros", url: "/cobros.html", espera: "main" },
   /* El reporte pinta su vista previa a partir del periodo del formulario, que
@@ -422,9 +435,9 @@ const PAGINAS = [
   /* El informe se pinta al apretar «Traer»: la página abre con el formulario y
      la vista previa vacía, y una captura de eso no enseña lo que el apartado
      está contando. Las fechas ya vienen puestas (el mes en curso). */
-  { slug: "reportes", url: "/reportes.html", espera: "main",
+  { slug: "reportes", url: "/reportes.html", espera: "main", quien: "admin",
     antes: () => { const b = document.getElementById("traer"); if (b) b.click(); } },
-  { slug: "admin", url: "/admin.html", espera: "main" },
+  { slug: "admin", url: "/admin.html", espera: "main", quien: "admin" },
   { slug: "configuracion", url: "/configuracion.html", espera: "main" },
 ];
 
@@ -464,8 +477,12 @@ async function capturar(navegador, pagina) {
      vivo en «Cargando…» para siempre, sin ningún error. */
 
   if (pagina.sesion !== false) {
+    const yo = pagina.quien === "admin" ? ADMIN : PROFE;
     await ctx.route("**/js/supabase-client.js", (r) =>
-      r.fulfill({ status: 200, contentType: "application/javascript", body: clienteFalso() }));
+      r.fulfill({ status: 200, contentType: "application/javascript", body: clienteFalso({ yo }) }));
+    /* El recorrido del profesor nuevo (js/recorrido-profe.js) sale la primera
+       vez y taparía la esquina del panel: la profesora de mentira ya lo vio. */
+    await ctx.addInitScript((id) => { try { localStorage.setItem("recorrido_profe_v1:" + id, "1"); } catch (e) {} }, yo.id);
   }
 
   const page = await ctx.newPage();
@@ -525,7 +542,7 @@ async function capturar(navegador, pagina) {
 /* Se exporta para poder depurar una página suelta con EL MISMO doble que usan
    las capturas: uno escrito aparte para depurar se separa del de verdad y se
    termina arreglando un problema que no existe. */
-module.exports = { clienteFalso, capturar, PAGINAS, DEMO, PROFE, ALUMNOS };
+module.exports = { clienteFalso, capturar, PAGINAS, DEMO, PROFE, ADMIN, ALUMNOS };
 if (require.main !== module) return;
 
 (async () => {
