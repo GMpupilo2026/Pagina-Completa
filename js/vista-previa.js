@@ -3,6 +3,8 @@
  *
  *   - PDF: el visor del navegador, en un marco (el archivo es del mismo sitio:
  *     frame-src 'self' y X-Frame-Options SAMEORIGIN lo dejan).
+ *   - Página (.html, las versiones accesibles): en un marco, sin sus programas
+ *     (sandbox sin allow-scripts).
  *   - Presentación (.pptx), Word (.docx) y Excel (.xlsx): son un .zip con XML
  *     adentro. Se abre acá mismo —DecompressionStream("deflate-raw") del
  *     navegador, sin librerías: la CSP no deja traerlas— y se pinta lo que
@@ -440,7 +442,7 @@
     $("vista-previa-anterior").hidden = $("vista-previa-siguiente").hidden = lista.length < 2;
     const abrir = $("vista-previa-abrir");
     abrir.href = a.ruta;
-    abrir.hidden = ext !== "pdf";
+    abrir.hidden = ext !== "pdf" && ext !== "html";
     const bajar = $("vista-previa-bajar");
     bajar.href = a.ruta;
     bajar.setAttribute("download", nombreArchivo(a.ruta));
@@ -450,9 +452,11 @@
     caja.scrollTop = 0;
     const estado = $("vista-previa-estado");
 
-    if (ext === "pdf") {
+    if (ext === "pdf" || ext === "html") {
       const marco = el("iframe", "w-full h-full min-h-[70vh] rounded-lg border border-brand-200 dark:border-brand-700 bg-white");
-      marco.src = a.ruta + "#view=FitH";
+      // Una página se ve sin sus programas: para leerla no hacen falta.
+      if (ext === "html") marco.setAttribute("sandbox", "allow-same-origin allow-popups");
+      marco.src = a.ruta + (ext === "pdf" ? "#view=FitH" : "");
       marco.title = "Vista previa: " + (a.titulo || nombreArchivo(a.ruta));
       caja.append(marco);
       estado.textContent = "Vista previa de " + (a.titulo || nombreArchivo(a.ruta)) + ".";

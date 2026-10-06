@@ -637,7 +637,7 @@ async function pruebaMateriales(browser) {
   await ctx.close();
 }
 
-/* ============ admin.html · Archivos: todos los PDF, Word, Excel y presentaciones ============
+/* ============ admin.html · Archivos: PDF, Word, Excel, presentaciones y versiones accesibles ============
    La lista es data/archivos.json (herramientas/archivos-catalogo.js, leído del
    disco): acá se mira que la pantalla muestre TODOS, cada tipo en su ficha y
    cada uno en su carpeta; que buscar busque en toda la ficha; que «Bajar los
@@ -658,11 +658,11 @@ async function pruebaPdfs(browser) {
   await irA(page, "archivos");
   await page.waitForSelector("#arch-contenido-pdf .arch-fila", { timeout: 10000 });
 
-  igual("cuatro fichas, cada una con cuántos tiene, y se abre en PDF", await page.evaluate(() =>
+  igual("cinco fichas, cada una con cuántos tiene, y se abre en PDF", await page.evaluate(() =>
     Array.from(document.querySelectorAll("#arch-fichas [role=tab]")).map((b) => b.textContent.trim() + (b.getAttribute("aria-selected") === "true" ? " *" : ""))),
-    ["📕 PDF (" + catalogo.total + ") *", "📝 Word (" + todo.word.total + ")", "📊 Excel (" + todo.excel.total + ")", "📽️ Presentaciones (" + todo.presentaciones.total + ")"]);
+    ["📕 PDF (" + catalogo.total + ") *", "📝 Word (" + todo.word.total + ")", "📊 Excel (" + todo.excel.total + ")", "📽️ Presentaciones (" + todo.presentaciones.total + ")", "♿ Versiones accesibles (" + todo.accesibles.total + ")"]);
   igual("solo se ve la ficha de PDF", await page.evaluate(() =>
-    ["pdf", "word", "excel", "presentaciones"].filter((t) => document.getElementById("arch-panel-" + t).checkVisibility())), ["pdf"]);
+    ["pdf", "word", "excel", "presentaciones", "accesibles"].filter((t) => document.getElementById("arch-panel-" + t).checkVisibility())), ["pdf"]);
 
   // Las carpetas: los libros, los cursos por nivel en el orden del catálogo, lo suelto.
   const lado = await page.evaluate(() => Array.from(document.querySelectorAll("#arch-carpetas-pdf > p")).map((p) => [p.textContent,
@@ -756,7 +756,7 @@ async function pruebaPdfs(browser) {
   await page.keyboard.press("ArrowRight");
   igual("la flecha pasa a Word, con el foco y solo esa ficha a la vista", await page.evaluate(() => [
     document.activeElement.id, document.getElementById("arch-ficha-word").getAttribute("aria-selected"),
-    ["pdf", "word", "excel", "presentaciones"].filter((t) => document.getElementById("arch-panel-" + t).checkVisibility())]),
+    ["pdf", "word", "excel", "presentaciones", "accesibles"].filter((t) => document.getElementById("arch-panel-" + t).checkVisibility())]),
     ["arch-ficha-word", "true", ["word"]]);
   igual("están todos los Word, por carpeta, con vista previa y para bajar (no «Abrir»)", await page.evaluate(() => {
     const filas = Array.from(document.querySelectorAll("#arch-contenido-word .arch-fila")).filter((f) => f.checkVisibility());
@@ -813,7 +813,30 @@ async function pruebaPdfs(browser) {
   igual("al cerrar, las imágenes se sueltan (no quedan en memoria)", await page.evaluate(() =>
     document.querySelectorAll("#vista-previa img").length), 0);
 
+  // Las versiones accesibles: por curso y lección, y se ven en un marco sin sus programas.
   await page.focus("#arch-ficha-presentaciones");
+  await page.keyboard.press("ArrowRight");
+  const acc = todo.accesibles;
+  const vistasAcc = new Set();
+  for (const id of await page.evaluate(() => Array.from(document.querySelectorAll("#arch-carpetas-accesibles .arch-carpeta")).map((b) => b.dataset.carpeta))) {
+    await page.click("#arch-carpetas-accesibles .arch-carpeta[data-carpeta='" + id + "']");
+    (await page.evaluate(() => Array.from(document.querySelectorAll("#arch-contenido-accesibles .arch-fila")).map((f) => f.dataset.ruta))).forEach((r) => vistasAcc.add(r));
+  }
+  igual("Versiones accesibles: recorriendo las carpetas están todas, una vez", [vistasAcc.size, rutasDe(acc).every((r) => vistasAcc.has(r))], [acc.total, true]);
+  igual("con su nombre del <title>, sin repetir «versión accesible»", await page.evaluate(() => {
+    document.querySelector("#arch-carpetas-accesibles .arch-carpeta").click();
+    return document.querySelector("#arch-contenido-accesibles .arch-fila p").textContent;
+  }), acc.material[0].titulo);
+  await page.click("#arch-contenido-accesibles .arch-fila [data-vista]");
+  await page.waitForSelector("#vista-previa[open] iframe", { timeout: 5000 });
+  igual("la vista previa la muestra en un marco sin programas, y se puede abrir aparte", await page.evaluate(() => {
+    const f = document.querySelector("#vista-previa iframe");
+    return [f.getAttribute("src"), f.getAttribute("sandbox"), document.getElementById("vista-previa-abrir").checkVisibility(),
+      document.querySelector("#arch-contenido-accesibles .arch-fila a[target='_blank']") !== null];
+  }), [acc.material[0].ruta, "allow-same-origin allow-popups", true, true]);
+  await page.click("#vista-previa-cerrar");
+
+  await page.focus("#arch-ficha-accesibles");
   await page.keyboard.press("ArrowRight");
   igual("y desde la última, la flecha vuelve a PDF", await page.evaluate(() => document.activeElement.id), "arch-ficha-pdf");
 

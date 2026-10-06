@@ -25,15 +25,18 @@
     material: "Material de estudio",
     ejercicios: "Ejercicios",
     presentacion: "Presentación",
+    accesible: "Versión accesible",
     otro: "Otro",
   };
-  const FICHAS = ["pdf", "word", "excel", "presentaciones"];
-  const NOMBRE_FICHA = { pdf: "PDF", word: "Word", excel: "Excel", presentaciones: "presentaciones" };
+  const FICHAS = ["pdf", "word", "excel", "presentaciones", "accesibles"];
+  // Cómo se nombra cada ficha dentro de una frase («Buscar en …», «Carpetas de …»).
+  const EN_FRASE = { pdf: "los PDF", word: "los Word", excel: "los Excel", presentaciones: "las presentaciones", accesibles: "las versiones accesibles" };
   const VACIO = {
     pdf: "Todavía no hay ningún PDF en la plataforma.",
     word: "Todavía no hay ningún documento de Word en la plataforma.",
     excel: "Todavía no hay ningún Excel guardado en la plataforma. Los que se bajan desde las páginas (por ejemplo, el mes de cada profesor en Supervisión o los reportes) se arman en el momento con los datos de ese día, así que no viven acá. Cuando se suba uno, aparece en esta ficha.",
     presentaciones: "Todavía no hay ninguna presentación en la plataforma.",
+    accesibles: "Todavía no hay ninguna versión accesible en la plataforma.",
   };
 
   const BOTON = "inline-flex items-center gap-1 rounded-lg bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-3 py-1.5 text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 disabled:opacity-60";
@@ -67,19 +70,23 @@
   const plural = (n, uno, varios) => n + " " + (n === 1 ? uno : varios);
   const nombreArchivo = (ruta) => ruta.split("/").pop();
   const esPresentacion = (a) => /\.(pptx?|odp)$/i.test(a.ruta);
+  const esAccesible = (a) => /-accesible\.html$/i.test(a.ruta);
+  // Lo que el navegador abre solo (y por eso lleva «Abrir»): un PDF o una página.
+  const seAbre = (a) => /\.(pdf|html)$/i.test(a.ruta);
 
   /* «3 PDF», «3 presentaciones» o «3 archivos», según lo que haya en la lista. */
   function cuantos(lista) {
     const n = lista.length;
     if (lista.every((a) => /\.pdf$/i.test(a.ruta))) return n + " PDF";
     if (lista.every(esPresentacion)) return n + (n === 1 ? " presentación" : " presentaciones");
+    if (lista.every(esAccesible)) return n + (n === 1 ? " versión accesible" : " versiones accesibles");
     return n + (n === 1 ? " archivo" : " archivos");
   }
 
   /* «Bajar los 9», «Bajar las 12», «Bajar el PDF». */
   function textoBajar(lista) {
     const n = lista.length;
-    const fem = lista.every(esPresentacion);
+    const fem = lista.every(esPresentacion) || lista.every(esAccesible);
     const art = n === 1 ? (fem ? "la" : "el") : (fem ? "las" : "los");
     return "📥 Bajar " + art + " " + (n === 1 ? cuantos(lista).replace(/^1 /, "") : String(n));
   }
@@ -200,7 +207,7 @@
     ver.addEventListener("click", () => VistaPrevia.abrir(lista.map((x) => ({ ruta: x.ruta, titulo: x.nombre + " — " + x.camino })), i));
     botones.append(ver);
     // Un Word, un Excel o una presentación no se abren en el navegador: se bajan.
-    if (/\.pdf$/i.test(a.ruta)) {
+    if (seAbre(a)) {
       const abrir = el("a", ENLACE);
       abrir.href = a.ruta;
       abrir.target = "_blank";
@@ -233,12 +240,13 @@
 
     caja.append(el("p", "text-sm font-semibold text-brand-600 dark:text-brand-200 mb-4",
       cuantos(todos) + " en total · " + tamano(sumaKb(todos)) + " · " + plural(carpetas[tipo].length, "carpeta", "carpetas") + "."
-      + (tipo === "presentaciones" ? " Se ven acá mismo; para editarlas, bájalas y ábrelas en PowerPoint, Keynote o Google Presentaciones." : "")));
+      + (tipo === "presentaciones" ? " Se ven acá mismo; para editarlas, bájalas y ábrelas en PowerPoint, Keynote o Google Presentaciones." : "")
+      + (tipo === "accesibles" ? " Son el mismo material en una página sin imágenes, para leer con lector de pantalla o con letra grande." : "")));
 
     // Buscar en toda la ficha (y, en PDF, mostrar solo un tipo).
     const barra = el("div", "flex flex-wrap items-end gap-3 mb-5");
     const cajaBuscar = el("div", "w-full sm:w-80");
-    const lb = el("label", ETIQUETA, "Buscar en " + (tipo === "presentaciones" ? "las presentaciones" : "los " + NOMBRE_FICHA[tipo]));
+    const lb = el("label", ETIQUETA, "Buscar en " + EN_FRASE[tipo]);
     lb.htmlFor = "arch-buscar-" + tipo;
     const buscar = el("input", CAMPO);
     buscar.type = "search";
@@ -264,7 +272,7 @@
     const rejilla = el("div", "lg:grid lg:grid-cols-[17rem_minmax(0,1fr)] lg:gap-6 items-start");
     // En la computadora, la lista de carpetas; en el celular, un selector.
     const lado = el("nav", "hidden lg:block bg-white dark:bg-brand-900 rounded-2xl shadow-md p-3 lg:sticky lg:top-28 max-h-[calc(100vh-8rem)] overflow-y-auto");
-    lado.setAttribute("aria-label", "Carpetas de " + (tipo === "presentaciones" ? "presentaciones" : NOMBRE_FICHA[tipo]));
+    lado.setAttribute("aria-label", "Carpetas de " + EN_FRASE[tipo]);
     lado.id = "arch-carpetas-" + tipo;
     const cajaSel = el("div", "lg:hidden mb-4");
     const ls = el("label", ETIQUETA, "Carpeta");

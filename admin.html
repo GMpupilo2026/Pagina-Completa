@@ -523,7 +523,7 @@
                 </section>
 
                 <!-- ===== Archivos =====
-                     Todos los PDF, Word, Excel y presentaciones del sitio, una ficha por
+                     Todos los PDF, Word, Excel, presentaciones y versiones accesibles del sitio, una ficha por
                      tipo. Cada ficha es un explorador: las carpetas a la izquierda (los
                      libros, los cursos por nivel, lo suelto) y lo de la elegida a la
                      derecha, lección por lección; cada archivo con su vista previa
@@ -534,7 +534,7 @@
                      «La sección Archivos» en docs/decisiones/cursos-y-material.md. -->
                 <section data-seccion="archivos" aria-labelledby="titulo-archivos" hidden>
                     <h2 id="titulo-archivos" class="font-serif text-2xl font-bold text-brand-800 dark:text-white mb-1">Archivos</h2>
-                    <p class="text-sm text-brand-500 dark:text-brand-300 mb-5">Todos los PDF, Word, Excel y presentaciones que hay en la plataforma, en una ficha por tipo y ordenados por carpeta: los libros, cada curso con sus lecciones y lo suelto. Míralos sin bajarlos con «👁 Vista previa», o bájalos de a uno o la carpeta entera. Cuando se crea uno nuevo, aparece aquí solo.</p>
+                    <p class="text-sm text-brand-500 dark:text-brand-300 mb-5">Todos los PDF, Word, Excel, presentaciones y versiones accesibles que hay en la plataforma, en una ficha por tipo y ordenados por carpeta: los libros, cada curso con sus lecciones y lo suelto. Míralos sin bajarlos con «👁 Vista previa», o bájalos de a uno o la carpeta entera. Cuando se crea uno nuevo, aparece aquí solo.</p>
                     <p id="arch-cargando" class="text-sm text-brand-500 dark:text-brand-300">Cargando la lista de archivos…</p>
                     <p id="arch-error" hidden role="alert" class="text-sm font-semibold text-red-700 dark:text-red-300"></p>
                     <div id="arch-fichas" hidden role="tablist" aria-label="Tipo de archivo" class="flex flex-wrap gap-2 mb-6">
@@ -542,6 +542,7 @@
                         <button type="button" role="tab" id="arch-ficha-word" data-ficha="word" aria-controls="arch-panel-word" aria-selected="false" tabindex="-1" class="px-4 py-2 rounded-lg text-sm font-semibold border border-brand-200 dark:border-brand-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 bg-white dark:bg-brand-900 text-brand-700 dark:text-brand-100"><span aria-hidden="true">📝 </span>Word (<span id="arch-cuenta-word">…</span>)</button>
                         <button type="button" role="tab" id="arch-ficha-excel" data-ficha="excel" aria-controls="arch-panel-excel" aria-selected="false" tabindex="-1" class="px-4 py-2 rounded-lg text-sm font-semibold border border-brand-200 dark:border-brand-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 bg-white dark:bg-brand-900 text-brand-700 dark:text-brand-100"><span aria-hidden="true">📊 </span>Excel (<span id="arch-cuenta-excel">…</span>)</button>
                         <button type="button" role="tab" id="arch-ficha-presentaciones" data-ficha="presentaciones" aria-controls="arch-panel-presentaciones" aria-selected="false" tabindex="-1" class="px-4 py-2 rounded-lg text-sm font-semibold border border-brand-200 dark:border-brand-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 bg-white dark:bg-brand-900 text-brand-700 dark:text-brand-100"><span aria-hidden="true">📽️ </span>Presentaciones (<span id="arch-cuenta-presentaciones">…</span>)</button>
+                        <button type="button" role="tab" id="arch-ficha-accesibles" data-ficha="accesibles" aria-controls="arch-panel-accesibles" aria-selected="false" tabindex="-1" class="px-4 py-2 rounded-lg text-sm font-semibold border border-brand-200 dark:border-brand-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 bg-white dark:bg-brand-900 text-brand-700 dark:text-brand-100"><span aria-hidden="true">♿ </span>Versiones accesibles (<span id="arch-cuenta-accesibles">…</span>)</button>
                     </div>
                     <div id="arch-panel-pdf" data-ficha-panel="pdf" role="tabpanel" aria-labelledby="arch-ficha-pdf">
                         <div id="arch-lista-pdf"></div>
@@ -554,6 +555,9 @@
                     </div>
                     <div id="arch-panel-presentaciones" data-ficha-panel="presentaciones" role="tabpanel" aria-labelledby="arch-ficha-presentaciones" hidden>
                         <div id="arch-lista-presentaciones"></div>
+                    </div>
+                    <div id="arch-panel-accesibles" data-ficha-panel="accesibles" role="tabpanel" aria-labelledby="arch-ficha-accesibles" hidden>
+                        <div id="arch-lista-accesibles"></div>
                     </div>
                 </section>
 
