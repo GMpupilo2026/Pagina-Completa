@@ -79,6 +79,7 @@
  *                                                    algo más ancho)
  *   volumen 5: las 20 siguientes que no tomó ningún volumen anterior, en orden
  *              de calidad (ver la cabecera de su archivo de candidatas)
+ *   volumen 6: igual que el 5, con un cuarto filtro solo para los temas raros
  */
 "use strict";
 const fs = require("fs");

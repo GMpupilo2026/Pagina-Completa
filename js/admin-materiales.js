@@ -1,5 +1,5 @@
 /* Los materiales de clase en admin.html#materiales: cada material (el libro
- * «Ponte a prueba» y los cinco volúmenes del banco de ejercicios «Mide
+ * «Ponte a prueba» y los seis volúmenes del banco de ejercicios «Mide
  * tu fuerza»), con sus
  * sub-fichas —las pruebas y sus versiones como cuestionario, si las tiene— y
  * CON QUIÉN se comparte.
@@ -94,6 +94,17 @@
       archivos: [
         { href: "material/mide-tu-fuerza-5/mide-tu-fuerza-5.pdf", texto: "📥 El libro en PDF" },
         { href: "material/mide-tu-fuerza-5/mide-tu-fuerza-5-accesible.html", texto: "♿ Versión accesible" },
+      ],
+    },
+    {
+      producto: "mide-tu-fuerza-6",
+      emoji: "📒",
+      titulo: "Mide tu fuerza · Volumen 6",
+      autor: "Oscar Angulo Cubero",
+      resumen: "Sexto volumen del banco de ejercicios tácticos: la misma forma que los anteriores (45 tests de 8, los mismos 15 temas y tres niveles, con su tiempo, sus puntos y la fuerza en Elo) y 360 posiciones todas nuevas, ninguna repetida de los volúmenes 1 a 5.",
+      archivos: [
+        { href: "material/mide-tu-fuerza-6/mide-tu-fuerza-6.pdf", texto: "📥 El libro en PDF" },
+        { href: "material/mide-tu-fuerza-6/mide-tu-fuerza-6-accesible.html", texto: "♿ Versión accesible" },
       ],
     },
   ];

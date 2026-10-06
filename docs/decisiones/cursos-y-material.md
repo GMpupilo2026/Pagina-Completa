@@ -939,7 +939,7 @@ de la tienda.
 
 ## El banco de ejercicios «Mide tu fuerza»
 
-Un libro de tests tácticos de Oscar Angulo Cubero, en cinco volúmenes de 360
+Un libro de tests tácticos de Oscar Angulo Cubero, en seis volúmenes de 360
 posiciones en 45 tests de 8 cada uno; cada test de **un solo tema** (ataque doble, ataque a la descubierta,
 jaque doble, clavada, enfilada, desviación, atracción, interferencia, despeje,
 eliminación del defensor, rayos X, jugada intermedia, pieza atrapada, jugada
@@ -987,12 +987,21 @@ siempre, después el del 4 y, solo donde todavía faltan (los temas raros), un
 tercero (Popularity ≥ 75, NbPlays ≥ 200, RatingDeviation ≤ 100). La consulta
 cuenta lo que tomó cada volumen anterior, y el archivo de candidatas lo
 confirma: ninguna repetida. Con eso los rayos X difíciles quedan en 16 y el
-resto lo completa el nivel vecino; un sexto volumen ya tendría que cambiar de
-temas o de forma.
+resto lo completa el nivel vecino.
 
-Cada tapa lleva «Volumen N» y su propio color (verde, vino, azul, morado y
-café; el contraste del texto se midió contra el más claro de cada degradado:
-6,5 o más, AA).
+El 6 se armó igual que el 5, pero eligiendo los identificadores aquí: se
+bajaron, por tema y nivel, los primeros 150 en orden de calidad y se
+descartaron los que ya eran candidatas de los volúmenes 1 a 5. Hizo falta un
+**cuarto filtro** (Popularity ≥ 70, NbPlays ≥ 100, RatingDeviation ≤ 110), y
+solo en los temas raros: de 891 candidatas, 720 son del filtro de siempre y
+49 del cuarto (jaque doble, rayos X e interferencia). Ahí la base ya está
+prácticamente agotada: **un séptimo volumen igual no se puede hacer** sin
+bajar todavía más la calidad de esos temas; tendría que cambiarlos o cambiar
+de forma.
+
+Cada tapa lleva «Volumen N» y su propio color (verde, vino, azul, morado, café
+y gris pizarra; el contraste del texto se midió contra el más claro de cada
+degradado: 5,7 o más, AA).
 
 ### Tomado de un libro ajeno como referencia, no copiado
 
@@ -1046,7 +1055,7 @@ detrás del candado del worker, y se comparte desde `admin.html#materiales`.
 ## Los materiales de clase
 
 `admin.html#materiales` («Materiales de clases») junta los materiales para dar
-clase —hoy, «Ponte a prueba» y los cinco volúmenes del banco de ejercicios «Mide
+clase —hoy, «Ponte a prueba» y los seis volúmenes del banco de ejercicios «Mide
 tu fuerza»— y
 dice **con quién se comparte cada uno**: una
 persona, una academia entera o todos los profesores. Lo pinta

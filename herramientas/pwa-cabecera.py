@@ -37,7 +37,7 @@ FIN = "<!-- app: fin -->"
 #   - offline.html ya las trae escritas a mano (es la que se enseña sin red);
 #   - libro-de-diagnostico-accesible.html, guia-del-profesor-accesible.html,
 #     fichas-de-estudio-accesible.html, ponte-a-prueba-accesible.html (y la
-#     de sus versiones para imprimir) y los accesibles de los cinco volúmenes
+#     de sus versiones para imprimir) y los accesibles de los seis volúmenes
 #     de «Mide tu fuerza» (mide-tu-fuerza-accesible.html,
 #     mide-tu-fuerza-2-accesible.html…) son
 #     documentos que se descargan y se abren sueltos, hasta por correo y sin
@@ -57,7 +57,8 @@ FUERA = {"inscripcion.html", "offline.html", "formulario.html",
          "mide-tu-fuerza-2-accesible.html",
          "mide-tu-fuerza-3-accesible.html",
          "mide-tu-fuerza-4-accesible.html",
-         "mide-tu-fuerza-5-accesible.html"}
+         "mide-tu-fuerza-5-accesible.html",
+         "mide-tu-fuerza-6-accesible.html"}
 CARPETAS_FUERA = ("cursos/recursos/", "cursos/protegido/", "material/", "herramientas/", "node_modules/")
 
 

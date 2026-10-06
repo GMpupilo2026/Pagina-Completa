@@ -217,7 +217,7 @@ function servidorPropio() {
              "guia-del-profesor-accesible.html", "fichas-de-estudio-accesible.html",
              "ponte-a-prueba-accesible.html", "ponte-a-prueba-versiones-accesible.html", "mide-tu-fuerza-accesible.html", "mide-tu-fuerza-2-accesible.html",
              "mide-tu-fuerza-3-accesible.html", "mide-tu-fuerza-4-accesible.html",
-             "mide-tu-fuerza-5-accesible.html"].includes(e.name)) continue;
+             "mide-tu-fuerza-5-accesible.html", "mide-tu-fuerza-6-accesible.html"].includes(e.name)) continue;
         paginas.push(rel);
       }
     }
