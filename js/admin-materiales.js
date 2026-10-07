@@ -1,6 +1,6 @@
 /* Los materiales de clase en admin.html#materiales: cada material (el libro
- * «Ponte a prueba», el banco de ejercicios «Mide tu fuerza» y los cuentos
- * de Peonita), con sus
+ * «Ponte a prueba», el banco de ejercicios «Mide tu fuerza», el libro «Rompe
+ * el estancamiento» y los cuentos de Peonita), con sus
  * sub-fichas —las pruebas y sus versiones como cuestionario, si las tiene— y
  * CON QUIÉN se comparte.
  *
@@ -50,6 +50,17 @@
       archivos: [
         { href: "material/mide-tu-fuerza/mide-tu-fuerza.pdf", texto: "📥 El libro en PDF" },
         { href: "material/mide-tu-fuerza/mide-tu-fuerza-accesible.html", texto: "♿ Versión accesible" },
+      ],
+    },
+    {
+      producto: "rompe-el-estancamiento",
+      emoji: "📙",
+      titulo: "Rompe el estancamiento",
+      autor: "Oscar Angulo Cubero",
+      resumen: "El libro del curso del mismo nombre: las siete familias de errores que frenan a un jugador de 1400 a 2100, una lección por error con su ejemplo comentado y su tarea, 80 ejercicios con soluciones y la ficha de errores para imprimir.",
+      archivos: [
+        { href: "material/rompe-el-estancamiento/rompe-el-estancamiento.pdf", texto: "📥 El libro en PDF" },
+        { href: "material/rompe-el-estancamiento/rompe-el-estancamiento-accesible.html", texto: "♿ Versión accesible" },
       ],
     },
     {
