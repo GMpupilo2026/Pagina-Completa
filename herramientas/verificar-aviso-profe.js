@@ -132,6 +132,18 @@ async function pruebaProfe(browser) {
   igual("pide los lectores de ESE aviso",
     await r.page.evaluate(() => window.__consultas.filter((c) => c.tabla === "lectores_de_aviso").map((c) => c.args)), [{ p_aviso: "av-1" }]);
 
+  /* Plegado: es para un día puntual, y abierto ocupaba media pantalla antes de
+     las herramientas. Ver «El panel del profe, más corto». */
+  igual("el formulario arranca plegado, y el botón lo dice",
+    [await r.page.evaluate(() => document.getElementById("aviso-texto").checkVisibility()), await r.page.getAttribute("#aviso-abrir", "aria-expanded")],
+    [false, "false"]);
+  igual("pero sus últimos avisos se ven sin abrir nada", await r.page.evaluate(() => document.getElementById("aviso-lista").checkVisibility()), true);
+  await r.page.click("#aviso-abrir");
+  igual("al abrirlo se ve, lo dice y el foco queda para escribir",
+    [await r.page.evaluate(() => document.getElementById("aviso-texto").checkVisibility()), await r.page.getAttribute("#aviso-abrir", "aria-expanded"),
+     await r.page.evaluate(() => document.activeElement.id)],
+    [true, "true", "aviso-texto"]);
+
   // Vacío: no se manda nada y se dice por qué.
   await r.page.click("#aviso-mandar");
   igual("sin texto no se manda, y dice por qué",

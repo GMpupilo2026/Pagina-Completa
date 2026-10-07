@@ -426,9 +426,14 @@
                cuenta» va en tarjetas chicas. La clase en vivo, que es lo del
                día, no se pliega. Ver «El panel del profe, con la misma mano»
                en docs/decisiones/paneles.md. */
+            /* «Aprender» y «Jugar y competir» no son para dar clase: arrancan
+               cerrados también en la computadora, y así lo de sus alumnos y sus
+               clases queda junto, sin tener que bajar. Ver «El panel del profe,
+               más corto» en docs/decisiones/paneles.md. */
             const grupos = PANEL_DOCENTE.map((g) => ({
                 title: g.title, id: g.id, destacado: !!g.destacado,
                 plegable: !g.destacado && g.title !== "Tu cuenta",
+                cerrado: g.title === "Aprender" || g.title === "Jugar y competir",
                 compacto: g.title === "Tu cuenta",
                 tiles: g.hrefs.map((h) => todas.find((t) => t.href === h)).filter((t) => t && usadas.add(t)),
             })).filter((g) => g.tiles.length);
@@ -1264,7 +1269,7 @@
                 tilesGrid.style.display = abierto || campoBusqueda.value.trim() ? "" : "none";
             };
             section.dataset.plegable = "1";
-            poner(guardado !== undefined ? !!guardado : !enCelular());
+            poner(guardado !== undefined ? !!guardado : !(enCelular() || group.cerrado));
             boton.addEventListener("click", () => {
                 const abierto = section.dataset.abierto !== "1";
                 poner(abierto);
@@ -1618,6 +1623,93 @@
                     : "No hay ninguna clase en curso ahora mismo.";
                 document.getElementById("start-session-controls").classList.toggle("hidden", !isTeacher);
             }
+            pintarProximaDelProfe();
+        }
+
+        /* ---------- Tu próxima clase, también para el profe ----------
+           El alumno ve cuándo es su próxima clase; el profe, que es quien
+           puso el horario, no lo veía en ningún lado de su panel. Ahora la
+           tarjeta de «Iniciar clase» lo dice («Tu próxima clase: Grupo 7B,
+           mañana a las 4:00 p. m.») y, a la hora de la clase, deja el título
+           ya escrito: abrirla es un solo toque. Sin horario, lo invita a
+           ponerlo. Su horario lo lee él mismo (la RLS de horario_clases), así
+           que no hace falta ninguna función nueva. Solo a quien da clase, en
+           su propio panel: quien administra no da clase, y mirando a otra
+           persona no es su horario. */
+        let horarioProfe = null;
+        const ANTES_DE_LA_CLASE_MS = 15 * 60000;
+        function proximaDelHorario(filas, ahora) {
+            const hoy = HoraCR.hoy();
+            let mejor = null;
+            for (let d = 0; d <= 7; d++) {
+                const dia = HoraCR.sumarDias(hoy, d);
+                const dow = new Date(dia + "T12:00:00Z").getUTCDay();
+                filas.forEach((h) => {
+                    if (h.dia_semana !== dow || (h.desde && h.desde > dia) || (h.hasta && h.hasta < dia)) return;
+                    // Costa Rica no tiene horario de verano: siempre es UTC−6.
+                    const inicio = new Date(dia + "T" + String(h.hora).slice(0, 5) + ":00-06:00");
+                    const fin = new Date(inicio.getTime() + (h.duracion_min || 60) * 60000);
+                    if (fin > ahora && (!mejor || inicio < mejor.inicio)) mejor = { h: h, inicio: inicio, fin: fin };
+                });
+            }
+            return mejor;
+        }
+        async function pintarProximaDelProfe() {
+            const linea = document.getElementById("profe-proxima");
+            if (!linea) return;
+            if (openSession || profile.role !== "profesor" || profile._persona || profile._modo_vista) { linea.hidden = true; return; }
+            if (!horarioProfe) {
+                try {
+                    const { data, error } = await sb.from("horario_clases")
+                        .select("id, dia_semana, hora, duracion_min, grupo, subgrupo_id, titulo, modalidad, desde, hasta")
+                        .eq("profesor_id", profile.id);
+                    if (error) return;
+                    horarioProfe = { filas: data || [], subgrupos: {} };
+                    if (horarioProfe.filas.some((h) => h.subgrupo_id && !h.titulo)) {
+                        const { data: sg } = await sb.rpc("mis_subgrupos");
+                        (sg || []).forEach((x) => { horarioProfe.subgrupos[x.id] = x.nombre; });
+                    }
+                } catch (e) { return; }
+            }
+            const ahora = new Date();
+            const prox = proximaDelHorario(horarioProfe.filas, ahora);
+            const enlace = (texto) => {
+                const a = document.createElement("a");
+                a.href = "asistencia.html#horario";
+                a.className = "font-semibold text-accent-700 dark:text-accent-400 underline focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 rounded";
+                a.textContent = texto;
+                return a;
+            };
+            const icono = (e) => { const s = document.createElement("span"); s.setAttribute("aria-hidden", "true"); s.textContent = e + " "; return s; };
+            linea.replaceChildren();
+            if (!horarioProfe.filas.length) {
+                linea.append(icono("🗓️"), "¿Das clase en días fijos? Ponlos en tu horario y aquí te decimos cuándo te toca. ", enlace("Poner mi horario"));
+                linea.hidden = false;
+                return;
+            }
+            if (!prox) { linea.hidden = true; return; }
+            const h = prox.h;
+            const nombre = (h.titulo && h.titulo.trim())
+                || (h.subgrupo_id && horarioProfe.subgrupos[h.subgrupo_id])
+                || (h.grupo ? "Grupo " + h.grupo : "");
+            const donde = h.modalidad === "en_linea" ? "en línea" : "presencial";
+            const fuerte = document.createElement("strong");
+            fuerte.className = "font-semibold text-brand-800 dark:text-white";
+            if (prox.inicio.getTime() - ANTES_DE_LA_CLASE_MS <= ahora.getTime()) {
+                fuerte.textContent = "Te toca clase ahora" + (nombre ? ": " + nombre : "");
+                linea.append(icono("🔔"), fuerte, ", " + (prox.inicio <= ahora ? "hasta las " + FORMATO_HORA_CR.format(prox.fin) : "a las " + FORMATO_HORA_CR.format(prox.inicio)) + ", " + donde + ". Toca «Iniciar clase» y tus alumnos ya pueden entrar.");
+                // El título ya escrito, si no escribió otro: abrirla es un toque.
+                const titulo = document.getElementById("new-session-title");
+                if (titulo && !titulo.value.trim() && nombre) titulo.value = nombre;
+            } else {
+                const dia = FORMATO_DIA_CR.format(prox.inicio);
+                const cuando = dia === FORMATO_DIA_CR.format(ahora) ? "hoy"
+                    : dia === HoraCR.sumarDias(HoraCR.hoy(), 1) ? "mañana"
+                    : "el " + FORMATO_SEMANA_CR.format(prox.inicio);
+                fuerte.textContent = "Tu próxima clase" + (nombre ? ": " + nombre : "");
+                linea.append(icono("🗓️"), fuerte, ", " + cuando + " a las " + FORMATO_HORA_CR.format(prox.inicio) + ", " + donde + ". ", enlace("Ver tu horario"));
+            }
+            linea.hidden = false;
         }
 
         // ---------- Logro: récord de "Racha táctica" (puzzle_rush_scores) ----------
@@ -2099,6 +2191,16 @@
             const boton = document.getElementById("aviso-mandar");
             if (!avisoArmado) {
                 avisoArmado = true;
+                /* El formulario va plegado: se abre con «Escribir un aviso», que
+                   dice si está abierto, y el foco va directo a escribir. */
+                const abrir = document.getElementById("aviso-abrir");
+                abrir.addEventListener("click", () => {
+                    const abierto = abrir.getAttribute("aria-expanded") !== "true";
+                    abrir.setAttribute("aria-expanded", String(abierto));
+                    abrir.textContent = abierto ? "Cerrar" : "Escribir un aviso";
+                    document.getElementById("aviso-form").hidden = !abierto;
+                    if (abierto) texto.focus();
+                });
                 try {
                     const [g, sg] = await Promise.all([sb.rpc("grupos_de_mis_alumnos"), sb.rpc("mis_subgrupos")]);
                     const grupos = ((g && g.data) || []).filter((x) => x.grupo);
