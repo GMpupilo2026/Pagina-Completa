@@ -662,8 +662,11 @@ async function pruebaCupoInvitaciones(browser) {
     await page.evaluate(() => { window.__cancelarAvisos = false; window.__avisos = []; });
     await page.evaluate(() => [...document.querySelectorAll("#tile-grid [aria-disabled=true]")]
       .find((el) => /Crear cuenta de alumno/.test(el.textContent)).focus());
+    // Se espera a que la dirección CAMBIE ("commit"), no a que precios.html
+    // termine de cargar: en el CI, con las cuatro tandas a la vez, la carga
+    // entera pasó de los 10 s y la prueba falló sin que nada estuviera roto.
     await Promise.all([
-      page.waitForURL(/precios\.html#t-paquetes/, { timeout: 10000 }).catch(() => {}),
+      page.waitForURL(/precios\.html#t-paquetes/, { waitUntil: "commit", timeout: 20000 }).catch(() => {}),
       page.keyboard.press("Enter"),
     ]);
     cierto("con Enter y «Ver los planes», va a los paquetes de precios.html: " + page.url(),
