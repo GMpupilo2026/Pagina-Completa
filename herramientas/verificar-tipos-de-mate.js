@@ -1,11 +1,10 @@
-/* Comprueba los bancos de los dos libros «Los tipos de mate» —el cuaderno
- * (material/tipos-de-mate/banco.json) y la edición compacta
- * (banco-compacto.json)— y la versión accesible del cuaderno.
+/* Comprueba el banco del libro «Los tipos de mate»
+ * (material/tipos-de-mate/banco.json) y su versión accesible.
  *
  * Lo que se rompe acá no da error: un ejercicio con dos soluciones se imprime
  * igual y el alumno que da la otra se la ponen mala; un capítulo que se quedó
  * sin un ejercicio no lo echa de menos nadie. Por eso, contra las fuentes:
- *   - 19 figuras, 8 ejercicios cada una (24 en la compacta), sin repetir ninguno;
+ *   - 19 figuras, 24 ejercicios cada una (las dos hojas), sin repetir ninguno;
  *   - cada ejercicio es uno de «Ejercicios por tema» (entreno/data/temas.json)
  *     con la misma FEN, la misma solución y la figura de su capítulo;
  *   - cada uno tiene UNA sola solución (revisar() del banco: chess.js por
@@ -18,7 +17,7 @@
 const fs = require("fs");
 const path = require("path");
 const { Chess } = require("chess.js");
-const { revisar, ORDEN, EDICIONES } = require("./tipos-de-mate-banco.js");
+const { revisar, ORDEN, EDICION } = require("./tipos-de-mate-banco.js");
 
 const RAIZ = path.join(__dirname, "..");
 const CARPETA = path.join(RAIZ, "material", "tipos-de-mate");
@@ -56,10 +55,9 @@ function banco(edicion) {
   return { capitulos, ids };
 }
 
-const { capitulos, ids } = banco(EDICIONES.cuaderno);
-banco(EDICIONES.compacta);
+const { capitulos, ids } = banco(EDICION);
 
-console.log("=== La versión accesible del cuaderno ===");
+console.log("=== La versión accesible ===");
 const acc = fs.readFileSync(path.join(CARPETA, "tipos-de-mate-accesible.html"), "utf8");
 cierto("trae todos los capítulos", capitulos.every((c) => acc.includes(`Capítulo ${c.n}: `)));
 cierto("trae los " + ids.length + " ejercicios y sus soluciones", ids.every((_, i) => acc.includes(`<h4>Ejercicio ${i + 1}:`) && acc.includes(`<li>Ejercicio ${i + 1}:`)));

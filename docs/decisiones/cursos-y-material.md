@@ -1000,14 +1000,22 @@ archivo, y protección (`herramientas/lib/pdf-armar.js`). **Se deja
 imprimir**: es un cuaderno de trabajo. Vive en `material/mide-tu-fuerza/`,
 detrás del candado del worker, y se comparte desde `admin.html#materiales`.
 
-## El cuaderno «Los tipos de mate», para imprimir (y su edición compacta)
+## El cuaderno «Los tipos de mate», para imprimir
 
 Un libro para darles a los alumnos: las 19 figuras de mate que Lichess
-reconoce (del pasillo a Vuković), cada una con su explicación, su diagrama
-modelo y 8 ejercicios, las soluciones al final y una planilla de avance. Es de
-los entrenadores **Oscar Angulo Cubero y Sebastian Mora Chavarria**: los dos
-van en la tapa, en los datos del archivo y en el pie de cada página.
+reconoce (del pasillo a Vuković), **cada una en dos hojas** —la explicación
+corta con su diagrama modelo y 8 ejercicios en la primera, 16 en la segunda,
+con tableros de 41 mm, 4 por fila—, las soluciones al final en tres columnas
+y una planilla de avance. Es de los entrenadores **Oscar Angulo Cubero y
+Sebastian Mora Chavarria**: los dos van en la tapa, en los datos del archivo
+y en el pie de cada página.
 
+- **Uno solo.** Primero fue un cuaderno de tableros grandes (4 por hoja) y 8
+  ejercicios por figura; después se pidió «otro con los tableros más pequeños,
+  que cada tema sea solo de 2 hojas», y al final «solo ocupo 1 pdf». Quedó el
+  de dos hojas: 24 ejercicios por figura (12 de mate en 1 y 12 de mate en 2).
+  El verificador del PDF cuenta las hojas de cada capítulo: un texto que crece
+  y empuja una fila a una tercera hoja no da ningún error.
 - **Los ejercicios son los que ya estaban revisados**, los de «Ejercicios por
   tema» (`entreno/data/temas.json`, de Lichess, CC0, con cada solución
   reproducida al armarlo). No se buscaron posiciones nuevas. La explicación y
@@ -1018,26 +1026,14 @@ van en la tapa, en los datos del archivo y en el pie de cada página.
   línea, y en papel un ejercicio con dos soluciones se corrige mal. En mate en
   1, una sola jugada da mate; en mate en 2, no hay mate en 1, una sola primera
   jugada lo fuerza y hay mate contra CADA respuesta. Por fuerza bruta, sin
-  motor: alcanza con 1 y 2 jugadas. El pasillo casi no tiene mates en 1 así (hay
-  dos piezas que dan mate en la fila), y se completa con mates en 2.
+  motor: alcanza con 1 y 2 jugadas. Si de un tipo no alcanzan (el pasillo casi
+  no tiene mates en 1 así: hay dos piezas que dan mate en la fila; la coz casi
+  no tiene mates en 2), se completa con el otro.
 - **Elegir tarda un par de minutos**, por eso la selección se guarda:
   `herramientas/tipos-de-mate-banco.js` escribe `material/tipos-de-mate/banco.json`
   (no se edita a mano) y `herramientas/tipos-de-mate-pdf.js` arma el PDF y
   `tipos-de-mate-accesible.html`. Se cierra como «Mide tu fuerza»: tapa, logo de
   marca de agua en cada página del cuerpo, protegido y se deja imprimir.
-- Lo comprueban `verificar-tipos-de-mate.js` (cada ejercicio es de
-  `temas.json` y de su figura, con una sola solución; la versión accesible) y
-  `verificar-tipos-de-mate-pdf.py` (protección, los dos entrenadores en la tapa
-  y en el pie de cada página, marca de agua, capítulos y ejercicios).
-- **Dos ediciones del mismo libro.** El cuaderno, con tableros grandes (4 por
-  hoja) y 8 ejercicios por figura, y la **edición compacta**
-  (`tipos-de-mate-compacto.pdf`, `--compacta`), que se pidió con «cada tema
-  de solo 2 hojas»: tableros de 41 mm, 4 por fila, y 24 ejercicios por figura
-  —la explicación corta y 8 en la primera hoja, 16 en la segunda—. Su banco es
-  `banco-compacto.json` (12 y 12), elegido aparte. El verificador del PDF
-  cuenta las hojas de cada capítulo: un texto que crece y empuja una fila a la
-  tercera hoja no da ningún error. La versión accesible es solo la del
-  cuaderno: sin imágenes, el tamaño de los tableros no cambia nada.
 - La tapa lleva a los dos entrenadores de pie, con los brazos cruzados, y el
   logo de Ajedrez Integral en el medio (el emblema de `img/logo-marca.png` con
   el nombre escrito, como en el encabezado del sitio). Salen de una foto de
@@ -1046,6 +1042,11 @@ van en la tapa, en los datos del archivo y en el pie de cada página.
   así la camisa blanca, encerrada por el saco, queda. Cada uno va a la misma
   escala (`MM_POR_PX`), para que ninguno quede más alto de lo que es. Viven en
   `herramientas/datos/tipos-de-mate/`, que no se publica: solo van dentro del PDF.
+- Lo comprueban `verificar-tipos-de-mate.js` (cada ejercicio es de
+  `temas.json` y de su figura, con una sola solución; la versión accesible) y
+  `verificar-tipos-de-mate-pdf.py` (protección, los dos entrenadores en la tapa
+  y en el pie de cada página, marca de agua, capítulos, ejercicios y las dos
+  hojas por capítulo).
 - Se comparte desde `admin.html#materiales` como los demás (producto
   `tipos-de-mate`).
 

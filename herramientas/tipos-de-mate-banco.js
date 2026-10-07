@@ -1,14 +1,11 @@
 /* ===== El banco del libro «Los tipos de mate» =====
  *
- * Arma los bancos de los dos libros para imprimir de los entrenadores Oscar
- * Angulo Cubero y Sebastian Mora Chavarria, una figura de mate por capítulo,
- * con su explicación y su diagrama modelo:
- *   - material/tipos-de-mate/banco.json, el cuaderno: 8 ejercicios por figura
- *     (4 de mate en 1 y 4 de mate en 2);
- *   - material/tipos-de-mate/banco-compacto.json, la edición compacta: cada
- *     figura en dos hojas, con tableros chicos y 24 ejercicios (12 y 12).
- * Si de un tipo no alcanzan (el pasillo casi no tiene mates en 1 que pasen),
- * se completa con el otro. Lo leen herramientas/tipos-de-mate-pdf.js y
+ * Arma material/tipos-de-mate/banco.json, el banco del libro para imprimir de
+ * los entrenadores Oscar Angulo Cubero y Sebastian Mora Chavarria: una figura
+ * de mate por capítulo, con su explicación, su diagrama modelo y 24 ejercicios
+ * (12 de mate en 1 y 12 de mate en 2), que caben en dos hojas. Si de un tipo
+ * no alcanzan (el pasillo casi no tiene mates en 1 que pasen), se completa con
+ * el otro. Lo leen herramientas/tipos-de-mate-pdf.js y
  * herramientas/verificar-tipos-de-mate.js. Elegir es determinista: sale igual
  * en cada corrida mientras no cambien sus fuentes.
  *
@@ -49,11 +46,9 @@ global.window = global.window || {};
 require(path.join(RAIZ, "js/fichas-estudio.js"));
 const FICHAS = global.window.FichasEstudio.FICHAS;
 
-/* Las dos ediciones: cuántos de cada tipo por figura, y en qué archivo. */
-const EDICIONES = {
-  cuaderno: { archivo: "banco.json", mateIn1: 4, mateIn2: 4 },
-  compacta: { archivo: "banco-compacto.json", mateIn1: 12, mateIn2: 12 },
-};
+/* Cuántos de cada tipo por figura. Hubo una edición con 4 y 4 en tableros
+   grandes; se pidió una sola, la de dos hojas por tema. */
+const EDICION = { archivo: "banco.json", mateIn1: 12, mateIn2: 12 };
 
 /* El orden del libro: de los mates que más se ven a los que piden juntar más
    piezas. No sale del rating: el mate del pasillo es el primero que hay que
@@ -203,7 +198,7 @@ function cuartos(lista, n) {
   return salida;
 }
 
-// Cada ejercicio se comprueba una vez aunque lo miren las dos ediciones.
+// Cada ejercicio se comprueba una vez aunque se mire dos veces.
 const revisado = new Map();
 function pasa(p, tipo) {
   const k = p.id + "|" + tipo;
@@ -211,7 +206,7 @@ function pasa(p, tipo) {
   return revisado.get(k);
 }
 
-function armar(edicion = EDICIONES.cuaderno) {
+function armar(edicion = EDICION) {
   const nombres = Object.fromEntries(TEMAS.groups.flatMap((g) => g.themes).map((t) => [t.key, t]));
   const usados = new Set();
   const capitulos = ORDEN.map((clave, i) => {
@@ -264,19 +259,17 @@ function armar(edicion = EDICIONES.cuaderno) {
   return capitulos;
 }
 
-module.exports = { armar, revisar, mates1, fuerzanMate2, ORDEN, EDICIONES };
+module.exports = { armar, revisar, mates1, fuerzanMate2, ORDEN, EDICION };
 
-/* Corrido directo, escribe las dos selecciones en material/tipos-de-mate/,
-   que es lo que leen el PDF y el verificador (elegir tarda unos minutos: la
-   fuerza bruta de los mates en 2 con chess.js). No se editan a mano.
+/* Corrido directo, escribe la selección en material/tipos-de-mate/banco.json,
+   que es lo que leen el PDF y el verificador (elegir tarda un par de minutos:
+   la fuerza bruta de los mates en 2 con chess.js). No se edita a mano.
 
        node herramientas/tipos-de-mate-banco.js */
 if (require.main === module) {
-  for (const edicion of Object.values(EDICIONES)) {
-    const capitulos = armar(edicion);
-    const destino = path.join(RAIZ, "material", "tipos-de-mate", edicion.archivo);
-    fs.mkdirSync(path.dirname(destino), { recursive: true });
-    fs.writeFileSync(destino, JSON.stringify({ capitulos }, null, 1) + "\n");
-    console.log(`${capitulos.length} capítulos · ${capitulos.reduce((s, c) => s + c.ejercicios.length, 0)} ejercicios → ${destino}`);
-  }
+  const capitulos = armar();
+  const destino = path.join(RAIZ, "material", "tipos-de-mate", EDICION.archivo);
+  fs.mkdirSync(path.dirname(destino), { recursive: true });
+  fs.writeFileSync(destino, JSON.stringify({ capitulos }, null, 1) + "\n");
+  console.log(`${capitulos.length} capítulos · ${capitulos.reduce((s, c) => s + c.ejercicios.length, 0)} ejercicios → ${destino}`);
 }

@@ -1,12 +1,10 @@
-"""Comprueba los PDF de «Los tipos de mate»: el cuaderno
-(material/tipos-de-mate/tipos-de-mate.pdf) y la edición compacta
-(tipos-de-mate-compacto.pdf).
+"""Comprueba el PDF de «Los tipos de mate»: material/tipos-de-mate/tipos-de-mate.pdf.
 
 Lo que se rompe acá no da error en pantalla. Un PDF sin proteger se baja igual;
 una marca de agua que solo se estampa en la primera página se ve perfecta hasta
 que alguien pasa a la segunda; un capítulo que se quedó fuera del libro no lo
 echa de menos nadie hasta que alguien lo busca. Por eso se comprueba contra el
-banco de cada uno (banco.json y banco-compacto.json).
+banco (material/tipos-de-mate/banco.json).
 
   - que el PDF esté cifrado, se abra sin contraseña y deje imprimir (es un
     cuaderno de trabajo: se contesta en papel) pero no modificar;
@@ -16,7 +14,8 @@ banco de cada uno (banco.json y banco-compacto.json).
   - que tenga la marca de agua (el logo) en TODAS las páginas;
   - que estén los 19 capítulos, todos los ejercicios con sus soluciones y la
     planilla de avance;
-  - que en la compacta cada capítulo ocupe DOS hojas, que es lo que promete.
+  - que cada capítulo ocupe DOS hojas, que es lo que promete: un texto que
+    crece y empuja una fila de tableros a una tercera hoja no da ningún error.
 
     pip install pypdf && python3 herramientas/verificar-tipos-de-mate-pdf.py
 """
@@ -28,7 +27,7 @@ RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CARPETA = os.path.join(RAIZ, "material", "tipos-de-mate")
 AUTORES = ("Oscar Angulo Cubero", "Sebastian Mora Chavarria")
 PIE = "Entrenadores Oscar Angulo Cubero y Sebastian Mora Chavarria"
-EDICIONES = (("tipos-de-mate.pdf", "banco.json", False), ("tipos-de-mate-compacto.pdf", "banco-compacto.json", True))
+EDICIONES = (("tipos-de-mate.pdf", "banco.json", True),)
 
 try:
     from pypdf import PdfReader
@@ -69,7 +68,7 @@ def revisar(nombre, banco, compacta):
     EJERCICIOS = sum(len(c["ejercicios"]) for c in CAPITULOS)
     print(f"=== {nombre} ===")
     if not os.path.exists(PDF):
-        mal(f"{nombre}: no existe. Se genera con: node herramientas/tipos-de-mate-pdf.js" + (" --compacta" if compacta else ""))
+        mal(f"{nombre}: no existe. Se genera con: node herramientas/tipos-de-mate-pdf.js")
         return
 
     lector = PdfReader(PDF)
