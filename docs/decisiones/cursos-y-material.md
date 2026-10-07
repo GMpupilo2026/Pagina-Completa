@@ -1029,6 +1029,11 @@ van en la tapa, en los datos del archivo y en el pie de cada página.
   `temas.json` y de su figura, con una sola solución; la versión accesible) y
   `verificar-tipos-de-mate-pdf.py` (protección, los dos entrenadores en la tapa
   y en el pie de cada página, marca de agua, capítulos y ejercicios).
+- La tapa lleva a los dos entrenadores, cada uno con su foto en un círculo, y
+  el logo de Ajedrez Integral en el medio (el emblema de `img/logo-marca.png`
+  con el nombre escrito, como en el encabezado del sitio). Las caras están
+  recortadas de una foto de ellos dos y viven en `herramientas/datos/tipos-de-mate/`,
+  que no se publica: solo van dentro del PDF.
 - Se comparte desde `admin.html#materiales` como los demás (producto
   `tipos-de-mate`).
 

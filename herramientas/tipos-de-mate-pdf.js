@@ -48,8 +48,14 @@ const ANIO = 2026;
 function incrustar(relativo) {
   return "data:image/png;base64," + fs.readFileSync(path.join(RAIZ, relativo)).toString("base64");
 }
-const LOGO_CREMA = incrustar("img/logo-oscar-angulo.png");
 const LOGO_MARCA = incrustar("img/logo-oscar-angulo-marca.png");
+// El emblema del caballo: con «Ajedrez Integral» escrito al lado es el logo
+// del sitio (así está en el encabezado de index.html).
+const EMBLEMA = incrustar("img/logo-marca.png");
+/* Las caras de los dos entrenadores, recortadas de una foto de ellos dos.
+   Viven en herramientas/datos/, que no se publica: solo van dentro del PDF. */
+const FOTOS = ["oscar-angulo-cubero", "sebastian-mora-chavarria"].map((n) =>
+  "data:image/jpeg;base64," + fs.readFileSync(path.join(__dirname, "datos", "tipos-de-mate", n + ".jpg")).toString("base64"));
 
 function esc(t) {
   return String(t).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
@@ -246,6 +252,13 @@ ${CAPITULOS.map((c) => explicacion(c) + ejercicios(c)).join("")}
 </body></html>`;
 
 /* ---------------------------------------------------------- la tapa */
+function persona(i) {
+  const [nombre, ...apellidos] = AUTORES[i].split(" ");
+  const corte = apellidos.length > 1 ? `${esc(nombre + " " + apellidos[0])}<br>${esc(apellidos.slice(1).join(" "))}` : esc(AUTORES[i]);
+  return `<div class="persona"><div class="cara"><img src="${FOTOS[i]}" alt="${esc(AUTORES[i])}"></div>
+    <p class="autor">${corte}</p><p class="rol">Entrenador</p></div>`;
+}
+
 const htmlPortada = `<!doctype html><html lang="es"><head><meta charset="utf-8">
 <title>Los tipos de mate</title>
 <style>
@@ -277,10 +290,17 @@ const htmlPortada = `<!doctype html><html lang="es"><head><meta charset="utf-8">
   .cifra { border-left: .8mm solid rgba(240,180,41,.55); padding-left: 4mm; }
   .cifra .n { display: block; font-size: 21pt; font-weight: 700; color: #ffffff; line-height: 1.1; }
   .cifra .q { display: block; font-size: 8pt; letter-spacing: .12em; text-transform: uppercase; color: #e3b8c2; margin-top: 1mm; }
-  .logo { display: block; width: 86mm; height: auto; margin: 10mm 0 0; }
   .pie-tapa { margin-top: auto; }
-  .rol { font-size: 8.5pt; letter-spacing: .18em; text-transform: uppercase; color: #f0b429; margin: 0 0 1.5mm; }
-  .autor { font-size: 16pt; font-weight: 700; color: #ffffff; margin: 0; line-height: 1.35; }
+  /* Los dos entrenadores, uno a cada lado, y el logo de Ajedrez Integral en el medio. */
+  .equipo { display: flex; justify-content: space-between; align-items: center; }
+  .persona, .casa { flex: none; width: 52mm; text-align: center; }
+  .cara { width: 44mm; height: 44mm; border-radius: 50%; overflow: hidden; border: 1.2mm solid #f0b429; margin: 0 auto; }
+  .cara img { display: block; width: 100%; height: 100%; object-fit: cover; }
+  .autor { margin: 3mm 0 0; font-size: 11pt; font-weight: 700; color: #ffffff; line-height: 1.25; }
+  .rol { margin: 1mm 0 0; font-size: 7pt; letter-spacing: .18em; text-transform: uppercase; color: #f0b429; }
+  .casa img { display: block; width: 34mm; margin: 0 auto 2mm; }
+  .casa .nombre { font-size: 17pt; font-weight: 700; color: #ffffff; line-height: 1.1; margin: 0; }
+  .casa .nombre span { color: #f0b429; }
   .editorial { margin: 7mm 0 0; padding-top: 4mm; border-top: 1px solid rgba(227,184,194,.3);
       font-size: 8.5pt; color: #e3b8c2; display: flex; justify-content: space-between; gap: 6mm; }
 </style>
@@ -300,11 +320,13 @@ const htmlPortada = `<!doctype html><html lang="es"><head><meta charset="utf-8">
         <div class="cifra"><span class="n">${TOTAL}</span><span class="q">ejercicios</span></div>
         <div class="cifra"><span class="n">1 y 2</span><span class="q">jugadas</span></div>
       </div>
-      <img class="logo" src="${LOGO_CREMA}" alt="Oscar Angulo Cubero · Profesional de Ajedrez">
     </div>
     <div class="pie-tapa">
-      <p class="rol">Entrenadores</p>
-      <p class="autor">${esc(AUTORES[0])}<br>${esc(AUTORES[1])}</p>
+      <div class="equipo">
+        ${persona(0)}
+        <div class="casa"><img src="${EMBLEMA}" alt=""><p class="nombre">Ajedrez <span>Integral</span></p></div>
+        ${persona(1)}
+      </div>
       <div class="editorial"><span>Academia Ajedrez Integral</span><span>${ANIO}</span></div>
     </div>
   </div>
