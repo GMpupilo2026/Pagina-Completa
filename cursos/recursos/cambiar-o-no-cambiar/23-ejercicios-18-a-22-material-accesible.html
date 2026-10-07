@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ejercicios 18 a 22 — Cambiar o no cambiar — material de estudio</title>
+<meta name="robots" content="noindex">
+<meta name="author" content="Oscar Angulo Cubero">
+<meta name="description" content="Material de estudio en formato accesible de la lección 23 del curso Cambiar o no cambiar.">
+<style>
+  /* Sin imágenes y sin columnas a propósito: esta versión está hecha para
+     lectores de pantalla y para quien necesita agrandar mucho el texto. */
+  body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+         font-size: 1.15rem; line-height: 1.8; color: #102a43; background: #ffffff;
+         max-width: 42rem; margin: 0 auto; padding: 1.5rem 1rem 4rem; }
+  h1 { font-size: 1.7rem; line-height: 1.3; }
+  h2 { font-size: 1.3rem; margin-top: 2.5rem; border-bottom: 2px solid #102a43; padding-bottom: .3rem; }
+  h3 { font-size: 1.1rem; margin-top: 1.8rem; }
+  a { color: #8a4a00; }
+  dt { font-weight: 700; margin-top: 1rem; }
+  dd { margin: .3rem 0 0; }
+  .posicion { border: 2px solid #243b53; border-radius: .5rem; padding: 1rem; margin: 1rem 0; }
+  .respuesta { background: #f0f4f8; border-left: 4px solid #102a43; padding: .6rem .9rem; }
+  footer { margin-top: 3rem; border-top: 2px solid #102a43; padding-top: 1rem; font-size: .95rem; }
+  /* La vuelta a la plataforma. Este archivo se abre solo, en su propia
+     pestaña: sin estos enlaces no hay forma de regresar al curso salvo el
+     botón "atrás" del navegador, que con lector de pantalla no siempre está
+     a mano. Van arriba y abajo: el documento es largo y quien termina de
+     leerlo no tendría que subir de nuevo para salir. */
+  .volver { margin: 0 0 1.5rem; font-size: 1rem; }
+  footer .volver { margin: 1rem 0 0; }
+  .volver a { display: inline-block; padding: .2rem 0; }
+  @media (prefers-color-scheme: dark) {
+    body { background: #0a1f33; color: #f0f4f8; }
+    h2, footer { border-color: #f0b429; }
+    a { color: #f0b429; }
+    .posicion { border-color: #829ab1; }
+    .respuesta { background: #102a43; border-color: #f0b429; }
+  }
+</style>
+</head>
+<body>
+<nav class="volver" aria-label="Volver a la plataforma">
+  <a href="../../academia/cambiar-o-no-cambiar.html">← Volver al curso Cambiar o no cambiar</a>
+  ·
+  <a href="../../../clases.html">Panel de Academia</a>
+</nav>
+<header>
+  <p>Cambiar o no cambiar · Lección 23</p>
+  <h1>Ejercicios 18 a 22</h1>
+  <p>Material de estudio en formato accesible. Autor: Oscar Angulo Cubero, Ajedrez Integral.</p>
+  <p>Esta versión dice en palabras todo lo que en el cuadernillo en PDF está dibujado: cada
+     posición viene descrita pieza por pieza, así que no hace falta ver ninguna imagen.</p>
+</header>
+
+<h2>1. De qué trata esta lección</h2>
+
+<p>Los últimos ejercicios son de partidas de Fischer, Karpov y Spassky, entre otros. En varios de ellos la decisión es cambiar damas o no, y en otro es renunciar a una ventaja (el peón aislado del rival) para ganar otra (su rey expuesto). Son los más difíciles del curso.</p>
+
+
+<h2>2. Conceptos clave</h2>
+<dl>
+  <dt>Jaque, mate y ahogado</dt>
+  <dd>Jaque es atacar al rey; mate es atacarlo sin que tenga salida; ahogado es que NO esté atacado y aun así no tenga ninguna jugada legal, y eso son tablas.</dd>
+  <dd><strong>El error de siempre:</strong> Buscar el jaque en vez del mate. Dar jaques sueltos deja al rey rival mejor colocado y gasta tiempo. Y en finales ganados, empujar sin mirar: entregar el ahogado es la forma más cara de no ganar.</dd>
+  <dd><strong>Para verlo:</strong> Rey y dama contra rey solo: si el rey negro está en a8 y pones la dama en b6, no hay jaque, pero tampoco hay jugada legal. Es ahogado y la partida queda en tablas con dama de más.</dd>
+  <dt>La coronación y el peón pasado</dt>
+  <dd>Un peón que llega a la octava fila se cambia por dama, torre, alfil o caballo, a elección y sin importar las piezas que ya haya en el tablero. Un peón pasado es el que no tiene peones rivales delante ni en las columnas vecinas.</dd>
+  <dd><strong>El error de siempre:</strong> Coronar siempre dama. Hay posiciones en que la dama ahoga al rival y la torre gana, y otras en que el caballo da un jaque que la dama no da. Coronar en algo que no es dama tiene nombre —subpromoción— y decide partidas.</dd>
+  <dd><strong>Para verlo:</strong> Con peón en g7 y el rey negro encerrado, coronar dama puede ser ahogado; coronar torre da mate en dos. Vale la pena mirar antes de apretar.</dd>
+  <dt>La captura al paso</dt>
+  <dd>Cuando un peón avanza dos casillas y cae al lado de un peón rival, ese peón rival puede capturarlo como si hubiera avanzado una sola. Solo en la jugada inmediatamente siguiente.</dd>
+  <dd><strong>El error de siempre:</strong> No usarla porque no se conoce, o intentarla una jugada tarde. El derecho se pierde si no se ejerce de inmediato: no se guarda para después.</dd>
+  <dd><strong>Para verlo:</strong> Peón blanco en e5, el negro juega d7-d5. El blanco puede jugar eva captura david 6 y su peón termina en d6, como si el negro solo hubiera avanzado una. El peón de d5 se retira del tablero.</dd>
+</dl>
+
+<h2>3. Ejemplos del curso</h2>
+<div class="posicion">
+  <h3>Posición 1: Ejercicio 18. Raúl Sanguinetti – Robert Fischer, Santiago de Chile 1959. Juegan las blancas, con más espacio pero sin terminar el desarrollo. ¿Cuál es el mejor plan?</h3>
+  
+  <p>Piezas blancas: rey en e1; dama en d2; torres en b1, h1; alfiles en f1, g5; caballos en c3, g3; peones en a2, b2, d5, e4, f3, g4, h2.</p>
+  <p>Piezas negras: rey en g8; dama en b4; torres en a8, f8; alfiles en d7, g7; caballos en c5, f6; peones en a7, b7, d6, e5, f7, g6, h7.</p>
+  <p>Juegan las blancas.</p>
+  
+  <p>La línea, jugada por jugada: 14. caballo bella 5, dama captura david 2 jaque, 15. rey captura david 2, alfil captura bella 5, 16. alfil captura bella 5, anna 6, 17. alfil eva 2, torre felix cesar 8, 18. torre bella cesar 1, caballo eva 8, 19. torre cesar 2</p>
+  <p>Resultado: Posición para jugar</p>
+  <p>14. caballo bella 5 fuerza el cambio de damas: después de 14… dama captura david 2 jaque, 15. rey captura david 2 el rey blanco queda muy seguro en d2 y además el caballo en b5 obliga a las negras a cambiar su buen alfil de casillas blancas. Con las damas fuera, la ventaja de espacio pesa más que la falta de desarrollo. El motor pone 14. caballo bella 5 entre las mejores, junto a 14. hector 4. (Stockfish 17 a profundidad 22: caballo bella 5 es la que elige el motor (+1,3); alfil captura felix 6 da −1,0.)</p>
+  <p>Posición en notación FEN, por si la quieres cargar en un programa: r4rk1/pp1b1pbp/3p1np1/2nPp1B1/1q2P1P1/2N2PN1/PP1Q3P/1R2KB1R w K - 0 14</p>
+</div>
+<div class="posicion">
+  <h3>Posición 2: Ejercicio 19. Anatoly Karpov – Boris Spassky, Match de Candidatos, Leningrado 1974. Juegan las blancas. No todos los cambios les convienen. ¿Cuál es la jugada correcta?</h3>
+  
+  <p>Piezas blancas: rey en g1; dama en f1; torres en a1, f2; alfiles en e3, f3; caballo en c3; peones en a4, b2, c2, e4, g2, h3.</p>
+  <p>Piezas negras: rey en g8; dama en c8; torres en a8, f8; alfil en e7; caballos en b4, d7; peones en a5, c6, e5, f7, g6, h7.</p>
+  <p>Juegan las blancas.</p>
+  
+  <p>La línea, jugada por jugada: 18. alfil gustav 4, hector 5, 19. alfil captura david 7, dama captura david 7, 20. dama cesar 4, alfil hector 4, 21. torre david 2, dama eva 7, 22. torre felix 1, torre felix david 8, 23. caballo bella 1, dama bella 7, 24. rey hector 2, rey gustav 7, 25. cesar 3, caballo anna 6, 26. torre eva 2, torre felix 8, 27. caballo david 2, alfil david 8, 28. caballo felix 3, felix 6, 29. torre david 2</p>
+  <p>Resultado: Posición para jugar</p>
+  <p>18. alfil gustav 4 cambia el alfil de f3, que no tenía buena casilla, por el caballo de d7; así el alfil de e7 ya no puede ir a c5 a cambiar el mejor alfil blanco, el de e3. Karpov siguió con el retroceso 23. caballo bella 1, el caballo pasó a d2 y f3, y las blancas evitaron los cambios que aliviaban a las negras. El motor lo da como la mejor. (Stockfish 17 a profundidad 22: alfil gustav 4 es la que elige el motor (+1,0).)</p>
+  <p>Posición en notación FEN, por si la quieres cargar en un programa: r1q2rk1/3nbp1p/2p3p1/p3p3/Pn2P3/2N1BB1P/1PP2RP1/R4QK1 w - - 0 18</p>
+</div>
+<div class="posicion">
+  <h3>Posición 3: Ejercicio 20. Anatoly Karpov – Garry Kasparov, Match por el Campeonato del Mundo, Moscú 1985. Juegan las blancas. Las negras tienen un peón aislado, pero sus alfiles están activos y dominan la columna c. ¿Qué haces?</h3>
+  
+  <p>Piezas blancas: rey en g1; dama en b1; torres en d2, f1; alfil en e2; caballo en d4; peones en a2, b2, e3, f2, g2, h2.</p>
+  <p>Piezas negras: rey en g8; dama en b6; torres en c7, c8; alfiles en e6, f6; peones en a7, b7, d5, f7, g7, h6.</p>
+  <p>Juegan las blancas.</p>
+  
+  <p>La línea, jugada por jugada: 21. caballo captura eva 6, felix captura eva 6, 22. alfil gustav 4, torre cesar 4, 23. hector 3, dama cesar 6, 24. dama david 3, rey hector 8, 25. torre felix david 1, anna 5, 26. bella 3, torre cesar 3, 27. dama eva 2, torre felix 8, 28. alfil hector 5, bella 5, 29. alfil gustav 6, alfil david 8, 30. alfil david 3</p>
+  <p>Resultado: Posición para jugar</p>
+  <p>21. caballo captura eva 6 renuncia a bloquear el peón aislado para cambiar el alfil activo de e6 y obligar a … felix captura eva 6: el rey negro queda abierto, sobre todo por el avance …h6 que ya se hizo. Karpov lo aprovechó con alfil gustav 4, h3 y el alfil y la dama hacia g6: una transformación de la ventaja, de una debilidad de peones a un rey expuesto. El motor la ve como la mejor; la natural 21. alfil gustav 4 pierde material. (Stockfish 17 a profundidad 22: caballo captura eva 6 es la que elige el motor (+0,2); alfil gustav 4 da −5,2.)</p>
+  <p>Posición en notación FEN, por si la quieres cargar en un programa: 2r3k1/ppr2pp1/1q2bb1p/3p4/3N4/4P3/PP1RBPPP/1Q3RK1 w - - 0 21</p>
+</div>
+
+<h2>4. Ejercicios</h2>
+<ol>
+  <li>Da mate con rey y dama contra rey solo en menos de diez jugadas, empezando con el rey negro en el centro. Hazlo tres veces sin ahogarlo.</li>
+  <li>Arma tres posiciones de ahogado distintas y anótalas. Verlas te enseña a olerlas cuando vas ganando.</li>
+  <li>Pon un peón blanco en cada columna, por turnos, con el rey negro a distintas distancias, y decide con la regla del cuadrado si corona. Después compruébalo jugando.</li>
+  <li>Busca en tus partidas una posición donde tuviste peón pasado y no lo usaste. Casi siempre hay una.</li>
+  <li>Arma la posición del ejemplo y juégala en las dos direcciones. Repítela hasta que la veas sin pensar.</li>
+  <li>En tus próximas tres partidas, cada vez que tu rival avance dos casillas al lado de uno de tus peones, párate a mirar si te conviene la captura al paso.</li>
+</ol>
+
+<h2>5. Preguntas con su respuesta</h2>
+<p>Contesta en voz alta antes de seguir leyendo: la respuesta viene justo después de cada pregunta.</p>
+<ol>
+  <li>
+    <p>¿Cuáles son las tres maneras de salir de un jaque?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Mover el rey, capturar la pieza que da jaque o interponer una pieza en el camino. Contra un jaque de caballo la interposición no existe: solo mover o capturar.</p>
+  </li>
+  <li>
+    <p>¿Por qué el ahogado son tablas y no derrota?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Porque quien está ahogado no está en jaque: no se le puede dar mate. La regla premia al que se quedó sin jugadas, y por eso es un recurso defensivo real.</p>
+  </li>
+  <li>
+    <p>¿Cómo se evita el ahogado en un final de dama contra rey?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Acercando el rey propio antes de cerrar la jaula, y dejando siempre al rey rival una casilla mientras no sea mate. La regla práctica: si vas a encerrarlo, que sea con el rey cerca.</p>
+  </li>
+  <li>
+    <p>¿Un rey puede quedar al lado del otro?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> No. Un rey no puede moverse a una casilla atacada, y el otro rey ataca las suyas. Por eso los reyes nunca se tocan.</p>
+  </li>
+  <li>
+    <p>¿Un peón puede coronar en una pieza que ya está en el tablero?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Sí. Se pueden tener dos, tres o nueve damas: la regla no limita cuántas piezas iguales hay.</p>
+  </li>
+  <li>
+    <p>¿Qué hace peligroso a un peón pasado?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Que nadie lo puede frenar con peones: hay que gastarle una pieza. Una pieza atada a vigilar un peón vale la mitad, y por eso el peón pasado gana finales.</p>
+  </li>
+  <li>
+    <p>¿Qué es un peón pasado lejano y por qué gana?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> El que está en el ala contraria a donde están los reyes. Obliga al rey rival a correr a pararlo, y mientras tanto el propio rey se come los peones del otro lado.</p>
+  </li>
+  <li>
+    <p>¿Cuál es la regla del cuadrado?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Traza un cuadrado entre el peón y su casilla de coronación: si el rey defensor puede entrar en ese cuadrado en su jugada, atrapa al peón; si no, corona solo. Si el peón todavía no se movió, cuenta desde la tercera fila.</p>
+  </li>
+  <li>
+    <p>¿Se puede capturar al paso un peón que avanzó una sola casilla?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> No. Solo cuando el avance fue de dos casillas desde su posición inicial.</p>
+  </li>
+  <li>
+    <p>¿Se puede dejar para la jugada siguiente?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> No. Si no se captura de inmediato, el derecho se pierde para siempre sobre ese peón.</p>
+  </li>
+  <li>
+    <p>¿Un peón puede capturar al paso una pieza que no sea peón?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> No. La captura al paso es únicamente peón contra peón.</p>
+  </li>
+  <li>
+    <p>¿Por qué existe esta regla?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Cuando se permitió el avance de dos casillas, un peón podía pasar de largo ante un peón rival sin darle la oportunidad de capturarlo. La regla devuelve esa oportunidad.</p>
+  </li>
+</ol>
+
+<h2>6. Fuentes</h2>
+<ul>
+  <li>Texto de la lección: curso «Cambiar o no cambiar» de Ajedrez Integral, de Oscar Angulo Cubero.</li>
+  <li>Conceptos, preguntas y ejercicios de este cuadernillo: material didáctico de Ajedrez Integral, de Oscar Angulo Cubero.</li>
+  <li>Posiciones: archivo de posiciones del propio curso, verificadas jugada por jugada con chess.js y evaluadas con el motor Stockfish que el sitio usa.</li>
+</ul>
+<h3>Para seguir leyendo</h3>
+<p>Obras de referencia sobre estos temas. Este material no reproduce texto de ellas: se listan como lectura recomendada, no como origen de lo que aquí se dice.</p>
+<ul>
+  <li>Irving Chernev, «Logical Chess: Move by Move» (Batsford, 1957).</li>
+  <li>José Raúl Capablanca, «Fundamentos del ajedrez» (1921).</li>
+  <li>Leyes del Ajedrez de la FIDE, FIDE Handbook, capítulo E.I.01.</li>
+</ul>
+
+<footer>
+  <p>© 2026 Oscar Angulo Cubero · Ajedrez Integral. Material de uso docente para alumnos de la Academia.</p>
+  <p>No se autoriza su reproducción ni su distribución fuera de ella.</p>
+<p class="volver">
+  <a href="../../academia/cambiar-o-no-cambiar.html">← Volver al curso Cambiar o no cambiar</a>
+  ·
+  <a href="../../../clases.html">Panel de Academia</a>
+</p>
+</footer>
+</body>
+</html>

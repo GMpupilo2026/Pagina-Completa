@@ -57,6 +57,7 @@ window.ExamenBanco = (function () {
     "preparacion-para-torneos": ["maestria", "calculo"],
     "rompe-el-estancamiento": ["estrategia", "calculo", "tactica"],
     "ganar-con-poco": ["estrategia", "finales"],
+    "cambiar-o-no-cambiar": ["estrategia", "material"],
   };
 
   /* Un sorteo que se puede repetir: con la misma semilla sale el mismo
