@@ -669,7 +669,16 @@ async function pruebaCupoInvitaciones(browser) {
       page.waitForURL(/precios\.html#t-paquetes/, { waitUntil: "commit", timeout: 20000 }).catch(() => {}),
       page.keyboard.press("Enter"),
     ]);
-    cierto("con Enter y «Ver los planes», va a los paquetes de precios.html: " + page.url(),
+    // Si no llegó, lo que hace falta para saber por qué: dónde quedó el foco,
+    // qué avisos salieron y qué diálogos siguen abiertos.
+    const porQue = /precios\.html#t-paquetes$/.test(page.url()) ? "" : " | " + await page.evaluate(() => {
+      const f = document.activeElement;
+      return "foco: " + (f ? f.tagName + (f.id ? "#" + f.id : "") + " «" + (f.textContent || "").trim().slice(0, 40) + "»" : "ninguno") +
+        " | avisos: " + JSON.stringify(window.__avisos || []) +
+        " | diálogos abiertos: " + document.querySelectorAll("dialog[open]").length +
+        " | recorrido: " + !!document.getElementById("recorrido-profe");
+    }).catch((e) => "sin diagnóstico: " + e.message);
+    cierto("con Enter y «Ver los planes», va a los paquetes de precios.html: " + page.url() + porQue,
       /precios\.html#t-paquetes$/.test(page.url()));
     igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
     await ctx.close();
