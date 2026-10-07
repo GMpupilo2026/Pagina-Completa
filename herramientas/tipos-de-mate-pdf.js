@@ -347,6 +347,8 @@ const htmlMarca = `<!doctype html><html lang="es"><head><meta charset="utf-8">
    dichas, que es como se entienden con lector de pantalla. */
 function accesible() {
   const oido = (t) => N.textoHablado(t, "espanol");
+  // Los textos de las fichas traen jugadas escritas («Dg8+»): acá van dichas.
+  const dicho = (t) => esc(oido(t));
   const caps = CAPITULOS.map((c) => {
     const d = describir(c.modelo.fen);
     const ejs = c.ejercicios.map((ej) => {
@@ -356,13 +358,13 @@ function accesible() {
         <span class="fen">FEN: ${esc(ej.fen)}</span></p></article>`;
     }).join("");
     return `<section><h2>Capítulo ${c.n}: ${esc(c.titulo)}</h2>
-      <p><em>${esc(c.subtitulo)}.</em> ${esc(c.resumen)}</p>
+      <p><em>${dicho(c.subtitulo)}.</em> ${dicho(c.resumen)}</p>
       <h3>El mate modelo</h3>
       <p class="posicion">Piezas blancas: ${esc(d.blancas)}. Piezas negras: ${esc(d.negras)}.
       La última jugada fue ${esc(oido(N.sanEspanol(c.modelo.jugada)))}.</p>
-      ${c.diagrama ? `<p>${esc(c.diagrama)}</p>` : ""}
-      <h3>La idea</h3><ul>${c.centro.map((t) => `<li>${esc(t)}</li>`).join("")}</ul>
-      ${c.bloques.map((b, i) => `<h3>${NOMBRES_BLOQUES[i]}</h3><ul>${b.map((t) => `<li>${esc(t)}</li>`).join("")}</ul>`).join("")}
+      ${c.diagrama ? `<p>${dicho(c.diagrama)}</p>` : ""}
+      <h3>La idea</h3><ul>${c.centro.map((t) => `<li>${dicho(t)}</li>`).join("")}</ul>
+      ${c.bloques.map((b, i) => `<h3>${NOMBRES_BLOQUES[i]}</h3><ul>${b.map((t) => `<li>${dicho(t)}</li>`).join("")}</ul>`).join("")}
       <h3>Ejercicios</h3>${ejs}</section>`;
   }).join("");
   const sols = CAPITULOS.map((c) => `<h3>${c.n}. ${esc(c.titulo)}</h3><ul>${c.ejercicios.map((ej) =>
