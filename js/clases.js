@@ -207,54 +207,9 @@
            página ya trae el selector de tema; ahora Informes es una tarjeta.
            Ver «El panel de quien supervisa, sin caminos repetidos» en
            docs/decisiones/paneles.md. */
-        const SUPERVISOR_GROUPS = [
-            /* Lo primero, a pedido del dueño de la Academia: lo que se hace
-               todos los días con la gente de la academia —dar de alta una
-               cuenta y corregir las que ya están— a un golpe de vista. «Cuenta
-               nueva» abre formularios.html ya con la caja de «＋ Alumno nuevo»
-               abierta (?alta=1); «Cuentas» es la ficha de coordinacion.html:
-               nombre, grupo, correo o usuario, profesores, rol y reenviar el
-               acceso. */
-            { title: "Mi academia", tiles: [
-                { emoji: "➕", label: "Cuenta nueva", desc: "Da de alta a un alumno: le llega su acceso por correo, o entra con un usuario si no tiene", href: "formularios.html?alta=1" },
-                { emoji: "✏️", label: "Cuentas", desc: "Corrige todos los datos de las cuentas a tu cargo: nombre, grupo, correo, profesores y rol, y reenvía el acceso", href: "coordinacion.html" },
-                { emoji: "📝", label: "Solicitudes de la Academia", desc: "Quien pidió unirse: aprobar crea la cuenta", href: "solicitudes.html" },
-                /* Su academia: quién está, su número y su correo, y qué puede
-                   hacer cada coordinador. */
-                { emoji: "🏫", label: "Tu academia", desc: "Quién está en tu academia, sus datos de contacto y qué puede hacer cada coordinador", href: "academias.html" },
-            ] },
-            /* Supervisar es, sobre todo, supervisar a los profesores: va antes
-               que el detalle de los estudiantes. */
-            { title: "Tus profesores", tiles: [
-                { emoji: "🧑‍🏫", label: "Supervisión de profesores", desc: "Qué hizo cada profesor en el mes —clases, tareas, exámenes— y su informe mensual", href: "supervision.html" },
-                { emoji: "⭐", label: "Satisfacción del alumnado", desc: "Qué opinan los estudiantes de cada profesor y quién dice que se va", href: "satisfaccion.html" },
-                /* Las cifras del mes de su academia en una fila: clases,
-                   alumnos, informes y cobros pendientes (sin nada de IA). */
-                { emoji: "📊", label: "Tablero de tu academia", desc: "Clases y horas del mes, alumnos que entrenaron, informes enviados y cobros pendientes", href: "tablero-academias.html" },
-                { emoji: "📄", label: "Reportes de actividades", desc: "El informe de lo que pasó en clase en un periodo, en Word y PDF", href: "reportes.html" },
-            ] },
-            { title: "Tus estudiantes", tiles: [
-                /* UNA tarjeta para Informes: adentro se elige el tema
-                   (asistencia, diagnóstico, cursos, mates, táctica…). */
-                { emoji: "📈", label: "Informes de tus estudiantes", desc: "Todos tus estudiantes a cargo, y arriba en la página eliges el tema: asistencia, diagnóstico, cursos, lo que entrenan…", href: "informes.html" },
-                { emoji: "🩺", label: "Justificaciones de ausencia", desc: "Por qué faltó cada uno a clase, con sus documentos, para aceptarla o no", href: "justificaciones.html" },
-                /* Su propio enlace del diagnóstico para gente sin cuenta: lo
-                   que se hace por él le llega solo a quien supervisa. Es un
-                   tema de Informes, pero no es mirar a sus estudiantes: es
-                   repartir un enlace. */
-                { emoji: "🌐", label: "Diagnóstico de visitantes", desc: "Tu enlace para que alguien sin cuenta mida su nivel, y los resultados que te llegan", href: "informes.html?tema=diagnostico-publico" },
-            ] },
-            { title: "Cobros y formularios", tiles: [
-                { emoji: "💳", label: "Cobros", desc: "Mensualidades, pagos y morosidad de tus estudiantes", href: "cobros.html" },
-                /* Los cupos que compró su academia: los reparte ella entre sus
-                   miembros. Sin un paquete de su academia, la página se lo dice. */
-                { emoji: "🎟️", label: "Cupos de tu academia", desc: "Reparte entre los alumnos de tu academia los cupos de acceso que compró", href: "accesos.html" },
-                { emoji: "📋", label: "Formularios de inscripción", desc: "Arma un formulario, compártelo por enlace y baja las respuestas", href: "formularios.html" },
-            ] },
-            { title: "Tu cuenta", tiles: [
-                { emoji: "⚙️", label: "Configuración", desc: "Tu perfil y contraseña", href: "configuracion.html" },
-            ] },
-        ];
+        /* La lista vive en js/paginas-supervisor.js: supervisor.html reparte
+           las mismas páginas en sus pestañas. */
+        const SUPERVISOR_GROUPS = window.PaginasSupervisor.GRUPOS;
 
         /* ---------- El panel de quien ADMINISTRA ----------
            Quien administra NO DA CLASE: se encarga de que toda la empresa vaya
@@ -323,70 +278,12 @@
            hay algo. Su panel ya tiene la franja del primer paso y «Tu semana»;
            un «todo al día» de todos los días deja de leerse (la lección de la
            franja: con todo al día no se dice nada). */
-        const URGENTE_SUPERVISOR = ["solicitudes", "justificaciones", "informesSinLeer", "recibosSinEntregar", "seVan", "morosos"];
+        const URGENTE_SUPERVISOR = window.Pendientes ? Pendientes.DE_SUPERVISOR : [];
+        /* La tarjeta la arma js/pendientes.js (Pendientes.pintar): la misma
+           que usa la página de supervisión (supervisor.html). */
         async function cargarUrgente(claves, opciones) {
-            const op = opciones || {};
-            const caja = document.getElementById("urgente-panel");
-            if (!caja || !window.Pendientes || !claves.length) return;
-            if (!op.soloSiHayAlgo) caja.hidden = false;
-            const conteos = await Pendientes.contarEnLaBase(sb, claves, { yo: profile.id });
-            const defs = claves.map((c) => Pendientes.EN_LA_BASE.find((d) => d.clave === c));
-            const lista = document.getElementById("urgente-panel-lista");
-            lista.replaceChildren();
-            // Lo urgente primero, después lo de vigilar; cada grupo en su orden.
-            const conAlgo = defs.filter((d) => conteos[d.clave] !== 0)
-                .sort((a, b) => (a.nivel === "urgente" ? 0 : 1) - (b.nivel === "urgente" ? 0 : 1));
-            conAlgo.forEach((d) => {
-                const n = conteos[d.clave];
-                const urgente = d.nivel === "urgente" && n !== null;
-                const li = document.createElement("li");
-                li.dataset.pendiente = d.clave;
-                const a = document.createElement("a");
-                a.href = d.href;
-                a.className = "flex items-center gap-3 py-2.5 rounded hover:bg-brand-50 dark:hover:bg-brand-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
-                const icono = document.createElement("span");
-                icono.className = "text-xl shrink-0";
-                icono.setAttribute("aria-hidden", "true");
-                icono.textContent = d.emoji;
-                const texto = document.createElement("span");
-                texto.className = "min-w-0 flex-1 text-sm text-brand-800 dark:text-white";
-                // El nivel va escrito, no solo en el color.
-                const nivel = document.createElement("span");
-                nivel.className = "block text-xs font-bold uppercase tracking-wide " + (urgente ? "text-accent-700 dark:text-accent-400" : "text-brand-500 dark:text-brand-300");
-                nivel.textContent = n === null ? "No se pudo revisar" : urgente ? "Urgente" : "A vigilar";
-                const frase = document.createElement("span");
-                frase.className = "block";
-                if (n === null) {
-                    frase.textContent = d.alDia + ": no se pudo contar. Ábrelo para revisarlo.";
-                } else if (d.sinNumero) {
-                    frase.textContent = d.titulo(n);
-                } else {
-                    const num = document.createElement("strong");
-                    num.textContent = n.toLocaleString("es-CR");
-                    frase.append(num, document.createTextNode(" " + d.titulo(n)));
-                }
-                texto.append(nivel, frase);
-                const ir = document.createElement("span");
-                ir.className = "shrink-0 text-xs font-semibold text-accent-700 dark:text-accent-400";
-                ir.textContent = d.accion + " →";
-                a.append(icono, texto, ir);
-                li.appendChild(a);
-                lista.appendChild(li);
-            });
-            const alDia = defs.filter((d) => conteos[d.clave] === 0).map((d) => d.alDia);
-            const pieAlDia = document.getElementById("urgente-panel-al-dia");
-            pieAlDia.hidden = !alDia.length;
-            pieAlDia.textContent = alDia.length ? "✓ Al día: " + alDia.join(" · ") + "." : "";
-            const urgentes = conAlgo.filter((d) => d.nivel === "urgente" && conteos[d.clave] > 0).length;
-            if (op.soloSiHayAlgo) {
-                caja.hidden = !conAlgo.length;
-                pieAlDia.hidden = true;
-            }
-            document.getElementById("urgente-panel-estado").textContent = !conAlgo.length
-                ? "Nada esperando: todo al día."
-                : urgentes
-                    ? (urgentes === 1 ? "1 cosa urgente: alguien está esperando." : urgentes + " cosas urgentes: alguien está esperando.")
-                    : "Nada urgente. Lo de abajo es para tenerlo a la vista.";
+            if (!window.Pendientes) return;
+            await Pendientes.pintar(sb, claves, Object.assign({ yo: profile.id, prefijo: "urgente-panel" }, opciones || {}));
         }
 
         /* Quien supervisa y nada más: si además administra, manda su panel de
@@ -416,21 +313,13 @@
                 inac.className = "text-2xl font-bold " + (f && f.inactivos > 0 ? "text-red-600 dark:text-red-400" : "text-brand-800 dark:text-white");
                 return;
             }
-            const conteo = async (rol) => {
-                const { data } = await sb.rpc("mi_gente", { p_busqueda: null, p_rol: rol, p_limite: 1, p_desde: 0 });
-                return data && data.length ? Number(data[0].total) : 0;
-            };
-            const [nAlumnos, nProfes, idsRes, inacRes] = await Promise.all([
-                conteo("alumno"), conteo("profesor"),
-                sb.rpc("mis_supervisados"),
-                sb.rpc("informes_inactivos", { p_dias: 4 }),
-            ]);
-            const aCargo = new Set((idsRes.data || []).map((x) => (typeof x === "string" ? x : x.mis_supervisados)));
-            const inactivos = (inacRes.data || []).filter((a) => aCargo.has(a.id)).length;
+            // Lo cuenta js/pendientes.js, igual que en supervisor.html.
+            const n = await Pendientes.aCargo(sb);
+            const nAlumnos = n.alumnos || 0, nProfes = n.profesores || 0, inactivos = n.inactivos;
             document.getElementById("sup-alumnos").textContent = String(nAlumnos);
             document.getElementById("sup-profes").textContent = String(nProfes);
             const inac = document.getElementById("sup-inactivos");
-            inac.textContent = idsRes.error || inacRes.error ? "—" : String(inactivos);
+            inac.textContent = inactivos === null ? "—" : String(inactivos);
             inac.className = "text-2xl font-bold " + (inactivos > 0 ? "text-red-600 dark:text-red-400" : "text-brand-800 dark:text-white");
             const aviso = document.getElementById("sup-aviso");
             if (profile._admin_real && !profile._persona) {
@@ -4042,6 +3931,16 @@
                pinta el suyo, entero, y nada de la clase en vivo ni del
                registro de clases — no da clase. */
             if (esSupervisorSolo()) {
+                /* Quien supervisa tiene su propia página, supervisor.html (ver
+                   «La página de supervisión» en docs/decisiones/paneles.md): al
+                   entrar a su panel va directo ahí. Con ?buscar= (el Ctrl + K
+                   de otra página) llega ya buscando. Este panel de tarjetas
+                   queda para quien administra cuando mira el de un supervisor. */
+                if (!profile._persona && !profile._admin_real) {
+                    const buscado = new URLSearchParams(location.search).get("buscar");
+                    location.replace("supervisor.html" + (buscado ? "?buscar=" + encodeURIComponent(buscado) : ""));
+                    return;
+                }
                 if (!profile._persona) document.getElementById("panel-subtitulo").textContent = "Primero lo urgente; después, tus profesores y tus estudiantes.";
                 TILE_GROUPS.splice(0, TILE_GROUPS.length, ...SUPERVISOR_GROUPS);
                 renderTiles();

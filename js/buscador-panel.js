@@ -1,14 +1,24 @@
-/* Ctrl + K en admin.html: buscar en todo el panel.
+/* Ctrl + K en los paneles con pestañas: admin.html y supervisor.html.
 
    En las demás páginas de la Academia, Ctrl + K lleva al buscador del panel
-   (js/atajo-buscar.js). Acá abre el suyo, sin salir de la página, y
+   (js/atajo-buscar.js). En estos dos abre el suyo, sin salir de la página, y
    encuentra tres cosas:
-     - personas: abre su ficha (lo que más se hace en este panel);
+     - personas: abre su ficha (lo que más se hace en estos paneles);
      - secciones del panel: lleva a la sección;
-     - páginas de quien administra (js/paginas-admin.js): abre la página.
+     - páginas: abre la página.
    Sin nada escrito enseña las secciones y las páginas, que es el mapa
    entero del panel en una lista. Ver «El panel de Administración en seis
-   secciones» en docs/decisiones/paneles.md.
+   secciones» y «La página de supervisión» en docs/decisiones/paneles.md.
+
+   Cada panel le dice qué buscar en window.PanelBuscador:
+     secciones()        → [{ id, titulo, grupo }]
+     irA(id)            → abre esa sección
+     personas(texto)    → [{ titulo, detalle, ir }] (o una promesa: la lista
+                          de supervisión la busca la base)
+     paginas()          → [{ label, desc, href, grupo }]
+   Con ?buscar=… en la dirección se abre ya buscando eso: así llega el
+   Ctrl + K de las otras páginas cuando el panel de la Academia lleva a
+   supervisor.html.
 
    Todo lo que se pinta es texto: los nombres los escribe la gente, y van
    por textContent. */
@@ -31,64 +41,55 @@
         return String(t == null ? "" : t).normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
     }
 
-    // Las secciones salen de los enlaces del propio menú: si se agrega una
-    // sección con su enlace, el buscador ya la encuentra.
+    function cfg() { return window.PanelBuscador || {}; }
+
     function secciones() {
-        const vistas = new Map();
-        const grupos = (window.AdminPanel && AdminPanel.grupos) || [];
-        const nombreGrupo = (seccion) => (grupos.find((g) => g.secciones.includes(seccion)) || {}).nombre || "";
-        document.querySelectorAll(".admin-nav[data-ir], .admin-grupo[data-ir]").forEach((a) => {
-            const id = a.dataset.ir;
-            // De una pestaña con varias secciones vale la sección, no la pestaña.
-            if (a.classList.contains("admin-grupo") && document.querySelector('.admin-nav[data-ir="' + id + '"]')) return;
-            if (vistas.has(id)) return;
-            const texto = a.textContent.replace(/[＋+]/g, "").replace(/\d+$/, "").trim();
-            const grupo = nombreGrupo(id);
-            vistas.set(id, {
-                tipo: "seccion",
-                titulo: texto,
-                detalle: grupo && grupo !== texto ? "Sección · " + grupo : "Sección del panel",
-                clave: sinTildes(texto + " " + grupo),
-                ir: () => { AdminPanel.irA(id); window.scrollTo({ top: 0 }); },
-            });
-        });
-        return [...vistas.values()];
+        const lista = cfg().secciones ? cfg().secciones() : [];
+        return lista.map((x) => ({
+            tipo: "seccion",
+            titulo: x.titulo,
+            detalle: x.grupo && x.grupo !== x.titulo ? "Sección · " + x.grupo : "Sección del panel",
+            clave: sinTildes(x.titulo + " " + (x.grupo || "")),
+            ir: () => { cfg().irA(x.id); window.scrollTo({ top: 0 }); },
+        }));
     }
 
     function paginas() {
-        if (!window.PaginasAdmin) return [];
-        const fuera = [];
-        PaginasAdmin.GRUPOS.forEach((g) => g.tiles.forEach((t) => {
-            if (t.href === "admin.html") return;
-            fuera.push({
-                tipo: "pagina",
-                titulo: t.label,
-                detalle: "Página · " + t.desc,
-                clave: sinTildes(t.label + " " + t.desc + " " + g.title),
-                href: t.href,
-            });
+        const lista = cfg().paginas ? cfg().paginas() : [];
+        return lista.map((t) => ({
+            tipo: "pagina",
+            titulo: t.label,
+            detalle: "Página · " + t.desc,
+            clave: sinTildes(t.label + " " + t.desc + " " + (t.grupo || "")),
+            href: t.href,
         }));
-        return fuera;
     }
 
-    function personas(texto) {
-        if (!texto || !window.AdminPanel) return [];
-        const rol = { alumno: "Estudiante", profesor: "Profesor" };
-        return AdminPanel.personas()
-            .filter((u) => sinTildes(u.full_name).includes(texto) || sinTildes(u.email).includes(texto) || sinTildes(u.grupo).includes(texto))
-            .slice(0, MAX_PERSONAS)
-            .map((u) => ({
-                tipo: "persona",
-                titulo: u.full_name || u.email,
-                detalle: [rol[u.role] || u.role, u.grupo, u.email].filter(Boolean).join(" · "),
-                ir: () => AdminPanel.abrirFicha(u.id),
-            }));
+    async function personas(texto) {
+        if (!texto || !cfg().personas) return [];
+        try {
+            const lista = await cfg().personas(texto);
+            return (lista || []).slice(0, MAX_PERSONAS).map((p) => Object.assign({ tipo: "persona" }, p));
+        } catch (_) { return []; }
     }
 
-    function buscar() {
-        const texto = sinTildes(campo.value.trim());
+    // La búsqueda de personas puede llegar tarde (la base): la que llega
+    // después de otra tecla se tira.
+    let turno = 0;
+    async function buscar() {
+        const mio = ++turno;
+        const crudo = campo.value.trim();
+        const texto = sinTildes(crudo);
         const coincide = (x) => !texto || texto.split(/\s+/).every((p) => x.clave.includes(p));
-        resultados = personas(texto).concat(secciones().filter(coincide), paginas().filter(coincide));
+        const fijos = secciones().filter(coincide).concat(paginas().filter(coincide));
+        // Primero lo que ya está a mano; las personas se suman cuando llegan.
+        resultados = fijos;
+        elegido = 0;
+        pintar();
+        if (!texto) return;
+        const gente = await personas(crudo);
+        if (mio !== turno || !abierto()) return;
+        resultados = gente.concat(fijos);
         elegido = 0;
         pintar();
     }
@@ -188,5 +189,9 @@
         abrir(sel);
     });
 
-    window.AdminBuscador = { abrir, cerrar };
+    // Llegando con ?buscar=… (el Ctrl + K de otra página), ya buscando.
+    const pedido = new URLSearchParams(location.search).get("buscar");
+    if (pedido) window.addEventListener("load", () => setTimeout(() => abrir(pedido.slice(0, 80)), 0));
+
+    window.BuscadorPanel = { abrir, cerrar };
 })();

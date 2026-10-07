@@ -373,7 +373,7 @@ async function pruebaUnaSolaPuerta(browser) {
     hrefs.filter((h) => !fs.existsSync(path.join(RAIZ, h.split("?")[0]))), []);
   igual("el panel de la Academia arma su lista con la MISMA (una sola copia)",
     /const ADMIN_GROUPS = window\.PaginasAdmin\.GRUPOS;/.test(fs.readFileSync(path.join(RAIZ, "js", "clases.js"), "utf8"))
-      && /<script src="js\/paginas-admin\.js"><\/script>\s*<script src="js\/clases\.js"><\/script>/.test(fs.readFileSync(path.join(RAIZ, "clases.html"), "utf8")), true);
+      && /<script src="js\/paginas-admin\.js"><\/script>(\s*<script src="js\/[a-z-]+\.js"><\/script>)*\s*<script src="js\/clases\.js"><\/script>/.test(fs.readFileSync(path.join(RAIZ, "clases.html"), "utf8")), true);
 
   /* Fuera de las tarjetas de páginas, de «Lo urgente» (lleva a donde se
      resuelve cada cosa) y de lo que es contenido de una sección (las salas,

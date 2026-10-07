@@ -4,12 +4,14 @@
    Lo que se rompe acá se rompe callado, así que se mira desde afuera, en un
    navegador de verdad:
 
-   - que al supervisor se le pinte SU panel —sus profesores, el informe de sus
-     estudiantes, sus cuentas, cobros y formularios— y NADA de entrenar, jugar
-     o dar clase (un enlace a un ejercicio que se cuela ahí no da ningún error:
-     el panel se ve igual de bien y deja de ser administrativo);
-   - que arriba vaya «Lo urgente», contado en la base, y que cada destino
-     esté UNA sola vez (antes quince tarjetas abrían informes.html);
+   - que al supervisor el panel de la Academia lo lleve a SU página,
+     supervisor.html: cinco pestañas con sus profesores, sus estudiantes, sus
+     cuentas (con la ficha de Coordinación al costado) y sus cobros, y NADA de
+     entrenar, jugar o dar clase (un enlace a un ejercicio que se cuela ahí no
+     da ningún error: la página se ve igual de bien y deja de ser
+     administrativa);
+   - que arriba vaya «Lo urgente», contado en la base, y que cada página
+     esté UNA sola vez, en la pestaña de su tema;
    - que el conteo de «sin entrenar» cuente SOLO a sus estudiantes a cargo, y
      no a los compañeros que la RLS de profiles también le deja ver;
    - que el administrador, en «modo estudiante / profesor / supervisor», vea el
@@ -56,81 +58,216 @@ const CON_MODO = (modo) => ({
 
 const PROHIBIDOS = /^(entreno\/|juegos|torneos|tv|tablero\.html|logros|sesion|tareas|examenes|articulos|cursos\/|partidas|planes|asistencia)/;
 
-async function pruebaSupervisor(browser) {
-  console.log("\n=== El panel de quien supervisa ===");
-  const datos = { rpc: {
-    mi_gente: [{ total: 12 }],
-    mis_supervisados: ["u-ana", "u-luis"],
-    // u-otro es un "compañero" que la RLS le deja ver, pero no está a su cargo.
-    informes_inactivos: [{ id: "u-ana" }, { id: "u-otro" }],
-    justificaciones_pendientes: 2,
-    cobros_morosos: [],
-    respuestas_satisfaccion: [{ id: "e-1", seguir: "no" }],
-  },
-  solicitudes_academia: [],
-  /* Los recibos de su academia: uno por revisar y entregar, uno ya mandado
-     por correo y uno anulado. Solo el primero es pendiente. */
-  recibos: [
-    { id: "r-1", estado: "emitido", entrega: null },
-    { id: "r-2", estado: "emitido", entrega: "correo" },
-    { id: "r-3", estado: "anulado", entrega: null },
-  ],
-  /* Dos informes mensuales enviados sin leer, uno ya leído, y uno SUYO (quien
-     supervisa también es profesor): ese no cuenta. */
-  informes_profesor: [
-    { id: "i-1", profesor_id: "u-karina", estado: "enviado", leido_at: null },
-    { id: "i-2", profesor_id: "u-luis-p", estado: "enviado", leido_at: null },
-    { id: "i-3", profesor_id: "u-karina", estado: "enviado", leido_at: "2026-09-02T10:00:00Z" },
-    { id: "i-4", profesor_id: "u-sup", estado: "enviado", leido_at: null },
-  ] };
-  const { page, ctx, errores } = await panel(browser, [SUP], SUP.id, null, datos);
-  await page.waitForFunction(() => document.getElementById("sup-inactivos").textContent !== "—", null, { timeout: 10000 });
-  const g = await page.evaluate(LEER);
-  igual("grupos del supervisor", g.grupos, ["Mi academia", "Tus profesores", "Tus estudiantes", "Cobros y formularios", "Tu cuenta"]);
-  igual("«Mi academia» lleva a",
-        await page.evaluate(() => [...Array.from(document.querySelectorAll("#tile-grid section"))
-          .find((s) => s.querySelector("h2").textContent === "Mi academia")
-          .querySelectorAll("a[href]")].map((a) => a.getAttribute("href"))),
-        ["formularios.html?alta=1", "coordinacion.html", "solicitudes.html", "academias.html"]);
-  const repetidos = g.enlaces.filter((h, i) => g.enlaces.indexOf(h) !== i);
-  igual("ningún destino dos veces en el panel", repetidos, []);
-  /* Una sola puerta a Informes: el tema se elige adentro. Antes eran quince
-     tarjetas, una por tema. Solo el diagnóstico de visitantes tiene la suya,
-     porque no es mirar a sus estudiantes sino repartir su enlace. */
-  igual("Informes, una sola tarjeta (más el enlace de visitantes)",
-        g.enlaces.filter((h) => h.startsWith("informes.html")), ["informes.html", "informes.html?tema=diagnostico-publico"]);
-  igual("rótulo", g.badge, "🧭 Supervisor");
-  const colados = g.enlaces.filter((h) => PROHIBIDOS.test(h));
-  igual("ningún acceso a entrenar, jugar ni dar clase", colados, []);
+/* ====================== supervisor.html ======================
+   Quien supervisa tiene su propia página, con cinco pestañas, la ficha de
+   cada persona al costado y Ctrl + K. Lo que se rompe callado: que el panel
+   de la Academia no lo lleve ahí (o lleve también a quien administra mirando
+   «como supervisor»), que «Lo urgente» cuente otra cosa, que una página se
+   repita o se cuele un acceso a entrenar o jugar, que la ficha guarde a otra
+   persona, o que una tarjeta de Informes pida un tema que no existe. */
+const fs = require("fs");
+const path = require("path");
+const RAIZ = path.join(__dirname, "..");
 
-  /* «Lo urgente», arriba de sus números: lo que alguien espera primero, lo
-     de vigilar después, contado en la base. Sus informes propios no cuentan,
-     y los que no entrenan no se repiten (son el número de al lado). */
-  await page.waitForFunction(() => !/Revisando/.test(document.getElementById("urgente-panel-estado").textContent), null, { timeout: 10000 });
-  igual("«Lo urgente» se ve y va antes que sus números",
-        await page.evaluate(() => {
-          const u = document.getElementById("urgente-panel");
-          return u.checkVisibility() && !!(u.compareDocumentPosition(document.getElementById("progreso-supervisor")) & Node.DOCUMENT_POSITION_FOLLOWING);
-        }), true);
+function datosDeSupervision() {
+  const gente = [
+    { id: "u-ana", full_name: "Ana Rojas", email: "ana@x.cr", role: "alumno", grupo: "7B", profesores: [{ id: "u-profe", nombre: "Karina Rojas" }], total: 12 },
+    { id: "u-beto", full_name: "Beto Mora", email: "beto@alumno.ajedrez-integral.com", role: "alumno", grupo: "7B", profesores: [], total: 12 },
+    { id: "u-profe", full_name: "Karina Rojas", email: "karina@x.cr", role: "profesor", grupo: null, alumnos: 18, subgrupos: 2, total: 12 },
+  ];
+  return {
+    clase_abierta: true,   // Karina (u-profe) está dando clase
+    rpc: {
+      mi_gente: gente,
+      mis_supervisados: ["u-ana", "u-luis"],
+      // u-otro es un "compañero" que la RLS le deja ver, pero no está a su cargo.
+      informes_inactivos: [{ id: "u-ana" }, { id: "u-otro" }],
+      justificaciones_pendientes: 2,
+      cobros_morosos: [],
+      respuestas_satisfaccion: [{ id: "e-1", seguir: "no" }],
+      resumen_profesores_supervisados: [{ id: "u-profe", nombre: "Karina Rojas", grupo: null, informe_id: "i-1", leido_at: null, comentado: false,
+        actividad: { clases_en_linea: 10, clases_presenciales: 2, minutos_clase: 900, tareas_puestas: 4, alumnos_activos: 12, alumnos: 18 } }],
+    },
+    solicitudes_academia: [],
+    recibos: [
+      { id: "r-1", estado: "emitido", entrega: null },
+      { id: "r-2", estado: "emitido", entrega: "correo" },
+    ],
+    informes_profesor: [
+      { id: "i-1", profesor_id: "u-karina", estado: "enviado", leido_at: null },
+      { id: "i-2", profesor_id: "u-luis-p", estado: "enviado", leido_at: null },
+      { id: "i-4", profesor_id: "u-sup", estado: "enviado", leido_at: null },
+    ],
+  };
+}
+
+async function paginaSupervisor(browser, extra, url) {
+  const r = await panel(browser, [SUP], SUP.id, Object.assign({ viewport: { width: 1280, height: 900 } }, extra || {}), datosDeSupervision());
+  if (url) await r.page.goto(BASE + url, { waitUntil: "networkidle" });
+  await r.page.waitForURL(/supervisor\.html/, { timeout: 10000 });
+  await r.page.waitForFunction(() => document.getElementById("app") && !document.getElementById("app").hidden, null, { timeout: 15000 });
+  await r.page.waitForFunction(() => !/Revisando/.test(document.getElementById("urgente-sup-estado").textContent), null, { timeout: 10000 });
+  await r.page.waitForFunction(() => document.querySelectorAll("#prof-lista tr").length > 0 && document.querySelectorAll("#sup-lista tr").length > 0, null, { timeout: 10000 });
+  return r;
+}
+
+const SECCION_VISIBLE = () => Array.from(document.querySelectorAll("[data-seccion]")).filter((s) => s.checkVisibility()).map((s) => s.dataset.seccion);
+
+async function pruebaSupervisor(browser) {
+  console.log("\n=== La página de quien supervisa ===");
+  const { page, ctx, errores } = await paginaSupervisor(browser);
+  igual("el panel de la Academia lo lleva a su página", new URL(page.url()).pathname, "/supervisor.html");
+  igual("cinco pestañas, en este orden",
+        await page.evaluate(() => Array.from(document.querySelectorAll(".sup-pestana")).map((a) => a.dataset.ir + ":" + a.firstChild.textContent.trim())),
+        ["inicio:Inicio", "personas:Personas", "profesores:Profesores", "estudiantes:Estudiantes", "cobros:Cobros y accesos"]);
+  igual("al entrar se ve SOLO Inicio", await page.evaluate(SECCION_VISIBLE), ["inicio"]);
+  igual("rótulo de la pestaña marcada", await page.getAttribute('.sup-pestana[aria-current="page"]', "data-ir"), "inicio");
+
+  /* «Lo urgente»: lo que alguien espera primero, lo de vigilar después,
+     contado en la base. Sus informes propios no cuentan. */
   igual("lo que tiene algo, lo urgente primero y el nivel escrito",
-        await page.evaluate(() => Array.from(document.querySelectorAll("#urgente-panel-lista li")).filter((li) => li.checkVisibility())
+        await page.evaluate(() => Array.from(document.querySelectorAll("#urgente-sup-lista li")).filter((li) => li.checkVisibility())
           .map((li) => li.dataset.pendiente + " · " + li.querySelector("a > span:nth-child(2)").innerText.replace(/\s+/g, " ").trim() + " → " + li.querySelector("a").getAttribute("href"))),
         ["justificaciones · URGENTE 2 justificaciones de ausencia por revisar → justificaciones.html",
          "informesSinLeer · URGENTE 2 informes mensuales de tus profesores sin leer → supervision.html",
          "recibosSinEntregar · URGENTE 1 recibo de pago por revisar y entregar → cobros.html#recibos",
          "seVan · A VIGILAR 1 alumno dijo este mes que no sigue → satisfaccion.html"]);
-  igual("lo que está en cero se dice", await page.textContent("#urgente-panel-al-dia"), "✓ Al día: Solicitudes de ingreso · Pagos al día.");
-  igual("el resumen lo cuenta", await page.textContent("#urgente-panel-estado"), "3 cosas urgentes: alguien está esperando.");
+  igual("lo que está en cero se dice", await page.textContent("#urgente-sup-al-dia"), "✓ Al día: Solicitudes de ingreso · Pagos al día.");
+  igual("la pestaña Inicio lleva cuántas cosas urgentes hay", await page.textContent("#nav-urgentes"), "3");
   igual("los informes se cuentan en la base, sin los suyos",
         await page.evaluate(() => window.__consultas.filter((c) => c.tabla === "informes_profesor").map((c) => [c.count, !!c.head, c.eq.estado, c.neq && c.neq.profesor_id])),
         [[true, true, "enviado", "u-sup"]]);
-  igual("«sin entrenar» cuenta solo a los suyos", await page.textContent("#sup-inactivos"), "1");
-  igual("estudiantes a cargo (de mi_gente)", await page.textContent("#sup-alumnos"), "12");
-  igual("el registro de clases no se le pinta",
-        await page.evaluate(() => document.getElementById("registro-clases").checkVisibility()), false);
-  igual("sin franja de modo de vista (no administra)", g.barra, false);
+  igual("«sin entrenar» cuenta solo a los suyos", await page.textContent("#sup-n-inactivos"), "1");
+  igual("estudiantes a cargo (de mi_gente)", await page.textContent("#sup-n-alumnos"), "12");
+  igual("ahora mismo: quién está dando clase, con «Mirar la clase»",
+        await page.evaluate(() => Array.from(document.querySelectorAll("#sup-ahora li")).map((li) => li.querySelector("span").textContent + " → " + li.querySelector("a").getAttribute("href"))),
+        ["Karina Rojas → sesion.html?observar=u-profe"]);
+
+  /* Las páginas: se recorren las pestañas como una persona. Cada página con
+     `zona` de js/paginas-supervisor.js sale una vez, en su pestaña, y a un
+     archivo que existe; nada de entrenar, jugar ni dar clase. */
+  const vistas = [];
+  for (const t of ["inicio", "personas", "profesores", "estudiantes", "cobros"]) {
+    await page.click('.sup-pestana[data-ir="' + t + '"]');
+    igual("la pestaña " + t + " enseña solo su sección", await page.evaluate(SECCION_VISIBLE), [t]);
+    vistas.push(...await page.evaluate((z) => Array.from(document.querySelectorAll("a[data-pagina]")).filter((a) => a.checkVisibility()).map((a) => z + " " + a.getAttribute("href")), t));
+  }
+  const esperadas = await page.evaluate(() => {
+    const fuera = [];
+    PaginasSupervisor.GRUPOS.forEach((g) => g.tiles.forEach((t) => { if (t.zona) fuera.push(t.zona + " " + t.href); }));
+    return fuera;
+  });
+  const temas = vistas.filter((v) => /^estudiantes informes\.html\?tema=/.test(v) && v !== "estudiantes informes.html?tema=diagnostico-publico");
+  igual("cada página de quien supervisa sale en la pestaña de su tema",
+        vistas.filter((v) => !temas.includes(v)).sort(), esperadas.slice().sort());
+  const hrefs = vistas.map((v) => v.split(" ")[1]);
+  igual("ninguna sale dos veces", hrefs.filter((h, i) => hrefs.indexOf(h) !== i), []);
+  igual("todas llevan a un archivo que existe", hrefs.filter((h) => !fs.existsSync(path.join(RAIZ, h.split("?")[0].split("#")[0]))), []);
+  igual("ningún acceso a entrenar, jugar ni dar clase", hrefs.filter((h) => PROHIBIDOS.test(h)), []);
+  /* Un tema que informes.html no tiene lleva al resumen general sin decir
+     nada: cada tarjeta de Estudiantes se mira contra su selector. */
+  const opciones = (fs.readFileSync(path.join(RAIZ, "informes.html"), "utf8").match(/<option value="[a-z-]+"/g) || []).map((o) => o.slice(15, -1));
+  igual("las tarjetas de Estudiantes piden temas que Informes tiene",
+        temas.map((v) => v.split("tema=")[1]).filter((t) => !opciones.includes(t)), []);
+  igual("y son varias (un tema por tarjeta)", temas.length >= 5, true);
+  igual("el panel de la Academia arma su lista con la MISMA (una sola copia)",
+        /const SUPERVISOR_GROUPS = window\.PaginasSupervisor\.GRUPOS;/.test(fs.readFileSync(path.join(RAIZ, "js", "clases.js"), "utf8")), true);
+
+  // Cobros: los números de su academia, nunca un cero falso.
+  await page.click('.sup-pestana[data-ir="cobros"]');
+  igual("cobros: saldos vencidos y recibos por entregar, contados en la base",
+        await page.evaluate(() => Array.from(document.querySelectorAll("#cob-numeros a")).map((a) => a.querySelector("span").textContent + " " + a.getAttribute("href"))),
+        ["0 cobros.html", "1 cobros.html#recibos"]);
+
+  // La dirección lleva la pestaña.
+  await page.goto(BASE + "/supervisor.html#profesores", { waitUntil: "networkidle" });
+  await page.waitForFunction(() => !document.getElementById("app").hidden, null, { timeout: 15000 });
+  igual("supervisor.html#profesores abre Profesores", await page.evaluate(SECCION_VISIBLE), ["profesores"]);
   igual("sin errores en consola", errores, []);
   await ctx.close();
+}
+
+async function pruebaFichasDeSupervision(browser) {
+  console.log("\n=== Supervisión: la ficha de cada persona y de cada profesor ===");
+  const { page, ctx, errores } = await paginaSupervisor(browser);
+  await page.click('.sup-pestana[data-ir="personas"]');
+  igual("la lista dice quién es cada uno, y quién no tiene profesor",
+        await page.evaluate(() => Array.from(document.querySelectorAll("#sup-lista tr")).map((tr) => Array.from(tr.children).slice(0, 4).map((td) => td.innerText.replace(/\s+/g, " ").trim()).join(" | "))),
+        ["Ana Rojas ana@x.cr | Estudiante | 7B | Karina Rojas",
+         "Beto Mora beto@alumno.ajedrez-integral.com | Estudiante | 7B | Sin profesor",
+         "Karina Rojas karina@x.cr 🔴 Dando clase ahora | Profesor | — | 18 alumnos"]);
+  await page.click('#sup-lista .persona-abrir[aria-label="Abrir la ficha de Ana Rojas"]');
+  await page.waitForFunction(() => document.getElementById("ficha-persona").checkVisibility(), null, { timeout: 5000 });
+  igual("se abre su ficha al costado, con el foco en su nombre",
+        await page.evaluate(() => [document.getElementById("ficha-titulo").textContent, document.activeElement.id]), ["Ana Rojas", "ficha-titulo"]);
+  igual("es la ficha de Coordinación: sus datos, con qué entra y sus profesores",
+        await page.evaluate(() => Array.from(document.querySelectorAll("#ficha-cuerpo h3")).filter((h) => h.checkVisibility()).map((h) => h.textContent)),
+        ["Sus datos", "Con qué entra", "Sus profesores"]);
+  igual("con reenviar el acceso y su informe",
+        await page.evaluate(() => [Array.from(document.querySelectorAll("#ficha-cuerpo button")).some((b) => /Reenviar acceso/.test(b.textContent)),
+          document.querySelector("#ficha-cuerpo a[href^='informes.html']").getAttribute("href")]),
+        [true, "informes.html?alumno=u-ana"]);
+  // Guardar el nombre va por la función de la base, con ESTA persona.
+  await page.fill("#ficha-cuerpo input", "Ana Rojas Mora");
+  await page.click("#ficha-cuerpo button:text-is('Guardar')");
+  await page.waitForFunction(() => window.__consultas.some((c) => c.tabla === "coord_guardar_cuenta"), null, { timeout: 5000 });
+  igual("guardar el nombre va a coord_guardar_cuenta con esta persona",
+        await page.evaluate(() => { const c = window.__consultas.filter((x) => x.tabla === "coord_guardar_cuenta").pop(); return [c.args.p_persona, c.args.p_nombre]; }),
+        ["u-ana", "Ana Rojas Mora"]);
+  igual("y la fila de atrás dice el nombre nuevo",
+        await page.evaluate(() => document.querySelector('#sup-lista tr[data-persona="u-ana"] .persona-abrir').textContent), "Ana Rojas Mora");
+  await page.keyboard.press("Escape");
+  igual("Escape la cierra y el foco vuelve a su fila",
+        await page.evaluate(() => [document.getElementById("ficha-persona").checkVisibility(), document.activeElement.classList.contains("persona-abrir")]),
+        [false, true]);
+
+  // El profesor: su mes, su informe en supervision.html y su clase en vivo.
+  await page.click('.sup-pestana[data-ir="profesores"]');
+  igual("la tabla dice el mes de cada profesor",
+        await page.evaluate(() => Array.from(document.querySelectorAll("#prof-lista tr")).map((tr) => Array.from(tr.children).map((td) => td.innerText.replace(/\s+/g, " ").trim()).join(" | "))),
+        ["Karina Rojas | 12 (15 h) | 12 de 18 | 📨 Enviado · sin leer | 🔴 Mirar la clase"]);
+  await page.click("#prof-lista .profesor-abrir");
+  await page.waitForFunction(() => document.getElementById("ficha-titulo").textContent === "Karina Rojas", null, { timeout: 5000 });
+  igual("su ficha lleva a leer su informe, a su panel y a su clase",
+        await page.evaluate(() => Array.from(document.querySelectorAll("#ficha-cuerpo a[href]")).map((a) => a.getAttribute("href"))),
+        ["sesion.html?observar=u-profe", "supervision.html?profesor=u-profe", "clases.html?ver_como=u-profe"]);
+  await page.keyboard.press("Escape");
+  igual("sin errores en consola", errores, []);
+  await ctx.close();
+}
+
+async function pruebaBuscadorSupervision(browser) {
+  console.log("\n=== Supervisión: Ctrl + K y el que llega buscando ===");
+  const { page, ctx, errores } = await paginaSupervisor(browser);
+  igual("no carga el atajo que lleva a clases.html",
+        await page.evaluate(() => !!document.querySelector('script[src$="atajo-buscar.js"]')), false);
+  await page.keyboard.press("Control+k");
+  igual("Ctrl + K lo abre acá mismo", await page.evaluate(() => [document.getElementById("buscador").checkVisibility(), document.activeElement.id]), [true, "buscador-campo"]);
+  await page.fill("#buscador-campo", "ana");
+  await page.waitForFunction(() => { const li = document.querySelector("#buscador-lista [role=option]"); return li && li.dataset.tipo === "persona"; }, null, { timeout: 5000 });
+  igual("las personas las busca la base (mi_gente), con lo escrito",
+        await page.evaluate(() => window.__consultas.filter((c) => c.tabla === "mi_gente" && c.args && c.args.p_busqueda === "ana").length > 0), true);
+  await page.keyboard.press("Enter");
+  await page.waitForFunction(() => document.getElementById("ficha-persona").checkVisibility(), null, { timeout: 5000 });
+  igual("Enter abre su ficha", await page.textContent("#ficha-titulo"), "Ana Rojas");
+  await page.keyboard.press("Escape");
+  await page.keyboard.press("Control+k");
+  await page.fill("#buscador-campo", "reportes");
+  // (El doble de mi_gente no filtra por lo escrito: se mira entre las páginas.)
+  await page.waitForTimeout(300);
+  igual("encuentra también las páginas",
+        await page.evaluate(() => Array.from(document.querySelectorAll('#buscador-lista [data-tipo="pagina"]')).map((li) => li.querySelector("span span").textContent)),
+        ["Reportes de actividades"]);
+  await page.keyboard.press("Escape");
+  igual("sin errores en consola", errores, []);
+  await ctx.close();
+
+  // El Ctrl + K de otra página manda a clases.html?buscar=: llega buscando.
+  const r = await paginaSupervisor(browser, null, "/clases.html?buscar=Beto");
+  igual("clases.html?buscar= lo lleva a su página con la búsqueda", new URL(r.page.url()).search, "?buscar=Beto");
+  await r.page.waitForFunction(() => document.getElementById("buscador").checkVisibility(), null, { timeout: 5000 });
+  igual("y el buscador abierto con lo que buscaba", await r.page.inputValue("#buscador-campo"), "Beto");
+  await r.ctx.close();
 }
 
 async function pruebaModosDelAdmin(browser) {
@@ -341,6 +478,8 @@ async function pruebaBitacora(browser) {
   const browser = await chromium.launch({ executablePath: CHROME });
   try {
     await pruebaSupervisor(browser);
+    await pruebaFichasDeSupervision(browser);
+    await pruebaBuscadorSupervision(browser);
     await pruebaModosDelAdmin(browser);
     await pruebaAdminSupervisores(browser);
     await pruebaBitacora(browser);
