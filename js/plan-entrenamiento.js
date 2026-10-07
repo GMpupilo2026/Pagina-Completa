@@ -180,6 +180,7 @@ window.PlanEntrenamiento = (function () {
         { texto: 'Habilidades: Elige a tiempo', href: 'entreno/tipos.html#tiempo' },
         { texto: 'Curso: Rompe el estancamiento', href: 'cursos/rompe-el-estancamiento.html' },
         { texto: 'Curso: Ganar con poco', href: 'cursos/ganar-con-poco.html' },
+        { texto: 'Curso: Cambiar o no cambiar', href: 'cursos/cambiar-o-no-cambiar.html' },
       ],
     },
     {

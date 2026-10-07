@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ejercicios 13 a 17 — Cambiar o no cambiar — material de estudio</title>
+<meta name="robots" content="noindex">
+<meta name="author" content="Oscar Angulo Cubero">
+<meta name="description" content="Material de estudio en formato accesible de la lección 22 del curso Cambiar o no cambiar.">
+<style>
+  /* Sin imágenes y sin columnas a propósito: esta versión está hecha para
+     lectores de pantalla y para quien necesita agrandar mucho el texto. */
+  body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+         font-size: 1.15rem; line-height: 1.8; color: #102a43; background: #ffffff;
+         max-width: 42rem; margin: 0 auto; padding: 1.5rem 1rem 4rem; }
+  h1 { font-size: 1.7rem; line-height: 1.3; }
+  h2 { font-size: 1.3rem; margin-top: 2.5rem; border-bottom: 2px solid #102a43; padding-bottom: .3rem; }
+  h3 { font-size: 1.1rem; margin-top: 1.8rem; }
+  a { color: #8a4a00; }
+  dt { font-weight: 700; margin-top: 1rem; }
+  dd { margin: .3rem 0 0; }
+  .posicion { border: 2px solid #243b53; border-radius: .5rem; padding: 1rem; margin: 1rem 0; }
+  .respuesta { background: #f0f4f8; border-left: 4px solid #102a43; padding: .6rem .9rem; }
+  footer { margin-top: 3rem; border-top: 2px solid #102a43; padding-top: 1rem; font-size: .95rem; }
+  /* La vuelta a la plataforma. Este archivo se abre solo, en su propia
+     pestaña: sin estos enlaces no hay forma de regresar al curso salvo el
+     botón "atrás" del navegador, que con lector de pantalla no siempre está
+     a mano. Van arriba y abajo: el documento es largo y quien termina de
+     leerlo no tendría que subir de nuevo para salir. */
+  .volver { margin: 0 0 1.5rem; font-size: 1rem; }
+  footer .volver { margin: 1rem 0 0; }
+  .volver a { display: inline-block; padding: .2rem 0; }
+  @media (prefers-color-scheme: dark) {
+    body { background: #0a1f33; color: #f0f4f8; }
+    h2, footer { border-color: #f0b429; }
+    a { color: #f0b429; }
+    .posicion { border-color: #829ab1; }
+    .respuesta { background: #102a43; border-color: #f0b429; }
+  }
+</style>
+</head>
+<body>
+<nav class="volver" aria-label="Volver a la plataforma">
+  <a href="../../academia/cambiar-o-no-cambiar.html">← Volver al curso Cambiar o no cambiar</a>
+  ·
+  <a href="../../../clases.html">Panel de Academia</a>
+</nav>
+<header>
+  <p>Cambiar o no cambiar · Lección 22</p>
+  <h1>Ejercicios 13 a 17</h1>
+  <p>Material de estudio en formato accesible. Autor: Oscar Angulo Cubero, Ajedrez Integral.</p>
+  <p>Esta versión dice en palabras todo lo que en el cuadernillo en PDF está dibujado: cada
+     posición viene descrita pieza por pieza, así que no hace falta ver ninguna imagen.</p>
+</header>
+
+<h2>1. De qué trata esta lección</h2>
+
+<p>Aquí aparecen dos ideas que se repiten mucho en la práctica: impedir que el rival se quite de encima su pieza mala, y cambiar la pieza que defiende una casilla débil para ocuparla después. El último ejercicio pide comparar tres jugadas posibles; calcula cada una hasta que veas qué piezas quedan.</p>
+
+
+<h2>2. Conceptos clave</h2>
+<dl>
+  <dt>Casillas débiles y puestos avanzados</dt>
+  <dd>Una casilla es débil cuando ningún peón rival la puede volver a controlar. Si además está en campo rival y la puedes defender con un peón, es un puesto avanzado: el mejor lugar para un caballo.</dd>
+  <dd><strong>El error de siempre:</strong> Mover peones sin preguntar qué casilla se abandona para siempre. Cada peón que avanza deja detrás casillas que no vuelven a estar cubiertas.</dd>
+  <dd><strong>Para verlo:</strong> Un caballo en d5 defendido por un peón en e4, con el rival sin peones en c ni e, es una pieza que no se puede echar. Suele valer más que una torre.</dd>
+</dl>
+
+<h2>3. Ejemplos del curso</h2>
+<div class="posicion">
+  <h3>Posición 1: Ejercicio 13. Murray Chandler – Ian Rogers, Wellington 1986. Juegan las blancas. ¿Pueden evitar que las negras cambien los alfiles de casillas blancas con … alfil anna 6?</h3>
+  
+  <p>Piezas blancas: rey en e1; dama en d1; torres en a1, h1; alfiles en d2, f1; caballos en c3, f3; peones en a2, b2, c2, d4, e5, f2, g2, h2.</p>
+  <p>Piezas negras: rey en e8; dama en d7; torres en a8, h8; alfiles en c8, f8; caballos en b8, g8; peones en a7, b6, c7, d5, e6, f7, g7, h7.</p>
+  <p>Juegan las blancas.</p>
+  
+  <p>La línea, jugada por jugada: 7. alfil bella 5, cesar 6, 8. alfil anna 4, anna 5, 9. anna 3, alfil anna 6, 10. caballo eva 2, caballo eva 7, 11. Enroque corto, alfil captura eva 2, 12. dama captura eva 2, bella 5, 13. alfil bella 3, anna 4, 14. alfil anna 2, caballo cesar 8, 15. caballo eva 1, caballo anna 6, 16. caballo david 3, caballo bella 6, 17. torre anna eva 1, caballo cesar 4</p>
+  <p>Resultado: Posición para jugar</p>
+  <p>7. alfil bella 5 saca el alfil antes de que llegue … alfil anna 6 y obliga a las negras a gastar jugadas (…c6 y …a5) para echarlo. Con 8. alfil anna 4 y 13. alfil bella 3 el alfil sigue vivo y las negras tienen que entregar su alfil «malo» por un caballo. El motor encuentra jugadas un poco más fuertes, como 7. hector 4; la idea de la partida es la que enseña el ejercicio: no dejar que el rival se quite de encima su pieza mala. (Stockfish 17 a profundidad 22: alfil bella 5 está entre las mejores (+0,9; el motor prefiere apenas h4, +1,2).)</p>
+  <p>Posición en notación FEN, por si la quieres cargar en un programa: rnb1kbnr/p1pq1ppp/1p2p3/3pP3/3P4/2N2N2/PPPB1PPP/R2QKB1R w KQkq - 0 7</p>
+</div>
+<div class="posicion">
+  <h3>Posición 2: Ejercicio 14. Gata Kamsky – Valery Salov, Semifinal de Candidatos, Sanghi Nagar 1995. Juegan las blancas. ¿Cuál es el mejor plan?</h3>
+  
+  <p>Piezas blancas: rey en g1; dama en d1; torres en c1, f1; alfiles en d3, h4; caballos en c3, d4; peones en b2, e3, f2, g2, h2.</p>
+  <p>Piezas negras: rey en g8; dama en d8; torres en a8, f8; alfiles en b4, b7; caballos en d7, f6; peones en a6, e6, f7, g7, h6.</p>
+  <p>Juegan las blancas.</p>
+  
+  <p>La línea, jugada por jugada: 19. alfil eva 4, dama bella 8, 20. caballo cesar 6, alfil captura cesar 6, 21. alfil captura cesar 6</p>
+  <p>Resultado: Posición para jugar</p>
+  <p>19. alfil eva 4 ofrece cambiar el alfil de b7, la única pieza negra que cuida c6. Si se cambia, el caballo blanco salta a c6 sin que nadie lo desaloje. Cambiar al defensor de una casilla débil es una forma clásica de ganarla. Ojo con el cambio equivocado: 19. caballo captura eva 6 entrega material y no sirve para nada. (Stockfish 17 a profundidad 22: alfil eva 4 es la que elige el motor (+0,1); caballo captura eva 6 da −2,7.)</p>
+  <p>Posición en notación FEN, por si la quieres cargar en un programa: r2q1rk1/1b1n1pp1/p3pn1p/8/1b1N3B/2NBP3/1P3PPP/2RQ1RK1 w - - 0 19</p>
+</div>
+<div class="posicion">
+  <h3>Posición 3: Ejercicio 15. Pablo Ricardi – Jaime Sunye Neto, Panamericano de Cascavel 1996. Juegan las blancas. ¿Cuál es el mejor plan?</h3>
+  
+  <p>Piezas blancas: rey en c1; dama en d4; torres en d1, h1; alfiles en e3, f1; caballo en c3; peones en a2, b2, c2, e4, f3, g4, h4.</p>
+  <p>Piezas negras: rey en g8; dama en d8; torres en a8, f8; alfiles en c8, e7; caballo en d7; peones en a6, b5, d6, e6, f7, g7, h7.</p>
+  <p>Juegan las blancas.</p>
+  
+  <p>La línea, jugada por jugada: 13. alfil gustav 5, felix 6, 14. alfil felix 4, caballo eva 5, 15. caballo david 5, alfil bella 7, 16. caballo captura eva 7 jaque, dama captura eva 7, 17. alfil eva 2, torre anna david 8, 18. dama bella 6</p>
+  <p>Resultado: Posición para jugar</p>
+  <p>13. alfil gustav 5 provoca el cambio del alfil de casillas negras de las negras, el que defiende d6. Después de 13… felix 6, 14. alfil felix 4, caballo eva 5, 15. caballo david 5 las blancas cambian el caballo por el alfil de e7 y el peón de d6 queda sin su defensor; con 18. dama bella 6 la ventaja es clara. El motor también propone 13. gustav 5, más directo; el plan del cambio en e7 es igual de bueno para entender la posición. (Stockfish 17 a profundidad 22: el motor prefiere g5 (+0,9) a alfil gustav 5 (+0,5).)</p>
+  <p>Posición en notación FEN, por si la quieres cargar en un programa: r1bq1rk1/3nbppp/p2pp3/1p6/3QP1PP/2N1BP2/PPP5/2KR1B1R w - - 0 13</p>
+</div>
+
+<h2>4. Ejercicios</h2>
+<ol>
+  <li>En tres partidas tuyas, marca en la jugada 15 todas las casillas débiles de los dos bandos.</li>
+  <li>Arma una posición con un caballo en un puesto avanzado y juégala desde el lado que lo sufre: busca cómo cambiarlo.</li>
+</ol>
+
+<h2>5. Preguntas con su respuesta</h2>
+<p>Contesta en voz alta antes de seguir leyendo: la respuesta viene justo después de cada pregunta.</p>
+<ol>
+  <li>
+    <p>¿Cómo se sabe si una casilla es débil?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Se mira si algún peón rival puede llegar a controlarla alguna vez. Si ninguno puede, es débil de forma permanente.</p>
+  </li>
+  <li>
+    <p>¿Por qué el caballo es la mejor pieza para un puesto avanzado?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Porque desde una casilla fija ataca ocho, no necesita líneas abiertas y no se le puede echar con piezas menores si está bien defendido.</p>
+  </li>
+  <li>
+    <p>¿Qué hacer si el rival tiene un puesto avanzado?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Cambiar la pieza que lo ocupa, aunque cueste el par de alfiles, o tapar las líneas por donde ese puesto hace daño.</p>
+  </li>
+  <li>
+    <p>¿Qué es un agujero?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> La misma idea vista desde el otro lado: una casilla en el propio campo que los peones ya no pueden cubrir. Fianchettar y después cambiar el alfil suele dejar agujeros alrededor del rey.</p>
+  </li>
+</ol>
+
+<h2>6. Fuentes</h2>
+<ul>
+  <li>Texto de la lección: curso «Cambiar o no cambiar» de Ajedrez Integral, de Oscar Angulo Cubero.</li>
+  <li>Conceptos, preguntas y ejercicios de este cuadernillo: material didáctico de Ajedrez Integral, de Oscar Angulo Cubero.</li>
+  <li>Posiciones: archivo de posiciones del propio curso, verificadas jugada por jugada con chess.js y evaluadas con el motor Stockfish que el sitio usa.</li>
+</ul>
+<h3>Para seguir leyendo</h3>
+<p>Obras de referencia sobre estos temas. Este material no reproduce texto de ellas: se listan como lectura recomendada, no como origen de lo que aquí se dice.</p>
+<ul>
+  <li>Aron Nimzowitsch, «Mi sistema» (1925).</li>
+  <li>Andrew Soltis, «Pawn Structure Chess» (1976).</li>
+  <li>Herman Grooten, «Chess Strategy for Club Players» (New in Chess, 2009).</li>
+</ul>
+
+<footer>
+  <p>© 2026 Oscar Angulo Cubero · Ajedrez Integral. Material de uso docente para alumnos de la Academia.</p>
+  <p>No se autoriza su reproducción ni su distribución fuera de ella.</p>
+<p class="volver">
+  <a href="../../academia/cambiar-o-no-cambiar.html">← Volver al curso Cambiar o no cambiar</a>
+  ·
+  <a href="../../../clases.html">Panel de Academia</a>
+</p>
+</footer>
+</body>
+</html>
