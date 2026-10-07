@@ -1620,3 +1620,44 @@ plataforma lo ofrece como juego con niveles.
   `check` con la lista de actividades, y el nombre de cada sección de tiempo
   vive también en la Edge Function `informes-encargados`. Sumarla pide una
   migración y desplegar esa función: queda para cuando se quiera.
+
+## Ajedrez 4×8
+
+`ajedrez-4x8.html` (tarjeta en Juegos) es ajedrez en medio tablero: cuatro
+columnas (a–d) y las ocho filas. Cada bando tiene torre, rey, dama y caballo
+en a1–d1 (y a8–d8) y cuatro peones delante; todo lo demás es ajedrez —el peón
+avanza dos, captura al paso y corona; mate, ahogado, triple repetición,
+cincuenta jugadas y material insuficiente—, menos el enroque. Se juega contra
+la computadora (Fácil, Medio, Difícil) o contra alguien al lado, con reloj o
+sin él. Nació como una página suelta que el dueño armó aparte y se trajo al
+sitio con sus piezas compartidas.
+
+- **Las reglas viven en `js/ajedrez-4x8-motor.js`**, sin DOM, y se comprueban
+  contra chess.js, no contra sí mismas: en un 8×8 con las columnas e–h vacías,
+  las jugadas legales que no salen de a–d son exactamente las de este juego
+  (una pieza que va de a–d a a–d no pasa por e–h, y sin nada allá nadie da
+  jaque desde allá). El verificador juega 400 partidas al azar y compara cada
+  posición: jugadas, SAN y jaque. El «#» no se compara: en 8×8 el rey tiene
+  escapatorias por la columna e.
+- **La partida se presenta como una de chess.js** (`get`, `moves`, `move`,
+  `turn`, `in_check`, `history`, `undo`). Con eso el teclado del tablero, el
+  recuadro de comandos, la coronación y la posición en palabras son los del
+  resto del sitio, sin copias. Las casillas e–h contestan «vacía».
+- **`js/tablero-accesible.js` aprendió tableros que no son cuadrados**
+  (`columnas: 4`). Deducía el lado con la raíz del número de casillas, y la de
+  32 no es entera: las flechas no movían nada, sin ningún error.
+- **No guarda nada en la cuenta.** Es un juego del aparato: no hay sala ni
+  base, y el reloj se mide con `performance.now()` (el reloj que «no se fía del
+  navegador» es el de las salas en línea, donde hay alguien del otro lado). El
+  tiempo cuenta como «partidas» (`TIEMPO_ACTIVIDAD`). Sumarlo a
+  `training_progress` o a los logros pide una migración por el `check` de
+  actividades.
+- Contra la computadora, «Deshacer» devuelve también su respuesta; si no, le
+  vuelve a tocar y contesta lo mismo al instante. En el celular el reloj y el
+  aviso van arriba del tablero, que es el doble de alto que de ancho y los
+  tapaba.
+
+**Al tocar el motor o la página, correr `node herramientas/verificar-todo.js
+ajedrez-4x8`.** Está probado que falla de verdad: quitando la captura al paso
+saltan dos comprobaciones, y montando el tablero sin `columnas: 4`, las dos de
+las flechas.

@@ -130,6 +130,17 @@ window.TableroAccesible = (function () {
       var l = Math.round(Math.sqrt(n));
       return l * l === n ? l : 0;
     }
+    /* Columnas y filas del tablero tal como se ve. Casi todos son cuadrados y
+       se deducen de cuántas casillas hay; uno que no lo es (el Ajedrez 4×8:
+       cuatro columnas y ocho filas) lo dice con `columnas`. Sin esto, la raíz
+       de 32 no es entera y las flechas no movían nada, sin ningún error. */
+    function medidas() {
+      var n = casillas().length;
+      var c = Number(cfg.columnas) || 0;
+      if (c > 0 && n % c === 0) return { c: c, f: n / c };
+      var l = lado();
+      return l ? { c: l, f: l } : null;
+    }
     function juego() {
       try { return typeof cfg.juego === "function" ? cfg.juego() : null; } catch (e) { return null; }
     }
@@ -242,25 +253,25 @@ window.TableroAccesible = (function () {
       return cs[i] ? cs[i].dataset.square : null;
     }
     function mover(dFila, dCol) {
-      var l = lado();
-      if (!l) return;
+      var m = medidas();
+      if (!m) return;
       var i = indiceDe(enfocada);
       if (i < 0) return;
-      var f = Math.floor(i / l), c = i % l;
-      var nf = Math.min(l - 1, Math.max(0, f + dFila));
-      var nc = Math.min(l - 1, Math.max(0, c + dCol));
+      var f = Math.floor(i / m.c), c = i % m.c;
+      var nf = Math.min(m.f - 1, Math.max(0, f + dFila));
+      var nc = Math.min(m.c - 1, Math.max(0, c + dCol));
       if (nf === f && nc === c) return;
-      enfocar(porIndice(nf * l + nc));
+      enfocar(porIndice(nf * m.c + nc));
     }
     function irABorde(que) {
-      var l = lado();
-      if (!l) return;
+      var m = medidas();
+      if (!m) return;
       var i = indiceDe(enfocada);
-      var f = Math.floor(i / l), c = i % l;
-      if (que === "inicioFila") enfocar(porIndice(f * l));
-      else if (que === "finFila") enfocar(porIndice(f * l + l - 1));
+      var f = Math.floor(i / m.c), c = i % m.c;
+      if (que === "inicioFila") enfocar(porIndice(f * m.c));
+      else if (que === "finFila") enfocar(porIndice(f * m.c + m.c - 1));
       else if (que === "arriba") enfocar(porIndice(c));
-      else if (que === "abajo") enfocar(porIndice((l - 1) * l + c));
+      else if (que === "abajo") enfocar(porIndice((m.f - 1) * m.c + c));
     }
 
     // --------------------------------------------------------- los atajos
@@ -344,12 +355,12 @@ window.TableroAccesible = (function () {
       [1, -1, "abajo a la izquierda"], [1, 1, "abajo a la derecha"],
     ];
     function vecina(sq, dFila, dCol) {
-      var l = lado();
+      var m = medidas();
       var i = indiceDe(sq);
-      if (i < 0 || !l) return null;
-      var f = Math.floor(i / l) + dFila, c = (i % l) + dCol;
-      if (f < 0 || f >= l || c < 0 || c >= l) return null;
-      return porIndice(f * l + c);
+      if (i < 0 || !m) return null;
+      var f = Math.floor(i / m.c) + dFila, c = (i % m.c) + dCol;
+      if (f < 0 || f >= m.f || c < 0 || c >= m.c) return null;
+      return porIndice(f * m.c + c);
     }
     function decirAlrededor(sq, modo) {
       var dirs = modo === "lado" ? DIRS.slice(0, 4) : DIRS;
@@ -453,16 +464,16 @@ window.TableroAccesible = (function () {
       if ("kqrbnp".indexOf(min) >= 0) { e.preventDefault(); saltarA(min, k === min); return; }
       if (e.code && e.code.indexOf("Digit") === 0) {
         var d = parseInt(e.code.slice(5), 10);
-        var l = lado();
-        if (!(d >= 1 && d <= l)) return;
+        var md = medidas();
+        if (!md || !(d >= 1 && d <= (e.shiftKey ? md.c : md.f))) return;
         e.preventDefault();
         var i = indiceDe(sq);
-        var f = Math.floor(i / l), c = i % l;
+        var f = Math.floor(i / md.c), c = i % md.c;
         // Sin shift, el número es la FILA del tablero tal como se ve: la de
         // abajo es la 1. Con shift, la columna, contada desde la izquierda.
         // Tampoco acá: el foco que llega a la casilla ya la anuncia.
-        if (e.shiftKey) enfocar(porIndice(f * l + (d - 1)));
-        else enfocar(porIndice((l - d) * l + c));
+        if (e.shiftKey) enfocar(porIndice(f * md.c + (d - 1)));
+        else enfocar(porIndice((md.f - d) * md.c + c));
       }
     });
 

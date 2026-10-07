@@ -76,7 +76,7 @@ PAGINAS = [
     "entreno/visualizacion.html", "entreno/aperturas.html", "entreno/sin-internet.html",
     "entreno/precision-posicional.html", "entreno/tipos.html", "entreno/finales.html",
     "entreno/memoria.html",
-    "sonar.html", "batalla-naval.html",
+    "sonar.html", "batalla-naval.html", "ajedrez-4x8.html",
     "cursos/academia/aperturas-y-defensas.html",
     "cursos/academia/arbitro-nacional.html",
     "cursos/academia/calculo-y-visualizacion.html",
@@ -500,6 +500,7 @@ TIEMPO_ACTIVIDAD = {
     "crazyhouse.html": "partidas", "cartas.html": "partidas",
     "duelo.html": "partidas", "variante.html": "partidas", "relevo.html": "partidas",
     "cuatro-jugadores.html": "partidas",
+    "ajedrez-4x8.html": "partidas",
     "torneo.html": "torneos",
     "examen.html": "examen",
     "plan-rival.html": "preparacion",
@@ -670,6 +671,7 @@ NOMBRE_Y_PADRE = {
     "partida-perdida.html": ("La partida perdida", "juegos.html"),
     "sonar.html": ("El Sonar", "juegos.html"),
     "batalla-naval.html": ("Batalla naval", "juegos.html"),
+    "ajedrez-4x8.html": ("Ajedrez 4×8", "juegos.html"),
     # Las páginas de entrenamiento cuelgan del panel, no del hub: el alumno
     # entra a cada una por su tarjeta del panel y nunca pasa por
     # entreno/index.html; unas migas que lo mandaban ahí lo dejaban en un
