@@ -50,6 +50,7 @@ const NO_MIRAR = new Set([".git", ".github", "node_modules", "herramientas", "do
 const TITULOS = {
   "material/ponte-a-prueba/ponte-a-prueba.pdf": "Ponte a prueba — examen y guía de entrenamiento",
   "material/mide-tu-fuerza/mide-tu-fuerza.pdf": "Mide tu fuerza — banco de ejercicios tácticos",
+  "material/rompe-el-estancamiento/rompe-el-estancamiento.pdf": "Rompe el estancamiento — los errores que frenan tu progreso",
   "material/diagnostico-de-nivel/diagnostico-de-nivel.pdf": "Diagnóstico de nivel — la prueba",
   "material/libro-de-diagnostico/libro-de-diagnostico.pdf": "Libro del diagnóstico de nivel — banco de preguntas",
   "material/examen-de-arbitraje/examen-de-arbitraje.pdf": "Examen de arbitraje — banco de preguntas",
@@ -79,6 +80,7 @@ const PATRONES = [
 const LIBROS = {
   "ponte-a-prueba": "Ponte a prueba",
   "mide-tu-fuerza": "Mide tu fuerza",
+  "rompe-el-estancamiento": "Rompe el estancamiento",
   "diagnostico-de-nivel": "Diagnóstico de nivel",
   "libro-de-diagnostico": "Libro del diagnóstico de nivel",
   "examen-de-arbitraje": "Examen de arbitraje",
