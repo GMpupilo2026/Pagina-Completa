@@ -218,8 +218,8 @@ async function main() {
 
     // La misma semilla da el mismo examen: si no, no se podría rearmar
     // el examen de alguien ni comprobar nada dos veces.
-    const a = JSON.stringify(B.armar({ fuente: "curso", curso: "finales-practicos", cantidad: 5, semilla: 7 }));
-    const b = JSON.stringify(B.armar({ fuente: "curso", curso: "finales-practicos", cantidad: 5, semilla: 7 }));
+    const a = JSON.stringify(B.armar({ fuente: "curso", curso: "el-mapa-de-los-finales", cantidad: 5, semilla: 7 }));
+    const b = JSON.stringify(B.armar({ fuente: "curso", curso: "el-mapa-de-los-finales", cantidad: 5, semilla: 7 }));
     ok(a === b, "con la misma semilla el examen sale distinto");
 
     // Un curso sin preguntas se DICE, no devuelve un examen vacío.

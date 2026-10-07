@@ -142,9 +142,9 @@ const DEMO = {
        estudiado no se inventa: va sin él. */
     informes_cursos_alumnos: ALUMNOS.slice(0, 3).map((a, i) => ({
       student_id: a.id,
-      slug: ["el-mapa-de-los-finales", "estrategia-en-el-final", "partidas-modelo"][i],
-      titulo: ["El mapa de los finales", "Estrategia en el final", "Partidas modelo del ajedrez moderno"][i],
-      total: [27, 16, 33][i], hechos: [9, 6, 12][i], ultimo_titulo: null, ultima_fecha: hace(i + 1),
+      slug: ["el-mapa-de-los-finales", "desequilibrios-de-material", "partidas-modelo"][i],
+      titulo: ["El mapa de los finales", "Desequilibrios de material", "Partidas modelo del ajedrez moderno"][i],
+      total: [27, 20, 33][i], hechos: [9, 6, 12][i], ultimo_titulo: null, ultima_fecha: hace(i + 1),
     })),
     informes_diagnosticos_alumnos: ALUMNOS.slice(0, 3).map((a, i) => ({
       student_id: a.id, nivel: ["Básico", "Intermedio", "Avanzado"][i],

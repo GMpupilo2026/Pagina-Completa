@@ -390,14 +390,6 @@
      "plan": {
       "lecciones": [
        {
-        "curso": "finales-practicos",
-        "titulo": "La regla del cuadrado y el peón pasado"
-       },
-       {
-        "curso": "finales-practicos",
-        "titulo": "Oposición de reyes"
-       },
-       {
         "curso": "el-mapa-de-los-finales",
         "titulo": "Rey y peón contra rey"
        }
@@ -456,14 +448,6 @@
      },
      "plan": {
       "lecciones": [
-       {
-        "curso": "finales-practicos",
-        "titulo": "Finales de rey y peón: posiciones críticas"
-       },
-       {
-        "curso": "estrategia-en-el-final",
-        "titulo": "La oposición y las casillas críticas"
-       },
        {
         "curso": "el-mapa-de-los-finales",
         "titulo": "Triangulación, peón de alfil"
@@ -537,10 +521,6 @@
        {
         "curso": "el-mapa-de-los-finales",
         "titulo": "Peones pasados y las maniobras del rey"
-       },
-       {
-        "curso": "finales-practicos",
-        "titulo": "Ruptura de peones"
        }
       ],
       "posiciones": [
@@ -612,10 +592,6 @@
      "plan": {
       "lecciones": [
        {
-        "curso": "finales-practicos",
-        "titulo": "La posición de Philidor"
-       },
-       {
         "curso": "el-mapa-de-los-finales",
         "titulo": "Philidor, Lucena y el lado largo"
        }
@@ -681,10 +657,6 @@
      },
      "plan": {
       "lecciones": [
-       {
-        "curso": "finales-practicos",
-        "titulo": "La posición de Lucena"
-       },
        {
         "curso": "el-mapa-de-los-finales",
         "titulo": "Torre contra peón (I)"
@@ -755,10 +727,6 @@
      },
      "plan": {
       "lecciones": [
-       {
-        "curso": "finales-practicos",
-        "titulo": "Finales de alfiles de distinto color"
-       },
        {
         "curso": "el-mapa-de-los-finales",
         "titulo": "Alfiles de distinto color (I)"
@@ -891,24 +859,7 @@
       "sitio": "Cálculo y visualización: lección 1 «El árbol de variantes», lección 3 «Jugadas candidatas», lección 5 «Jaques y amenazas forzadas» y lección 7 «Verificación final». Práctica: Habilidad «Descarte» (qué candidatas pierden) y Entreno «Visualización» como tarea."
      },
      "plan": {
-      "lecciones": [
-       {
-        "curso": "calculo-y-visualizacion",
-        "titulo": "El árbol de variantes"
-       },
-       {
-        "curso": "calculo-y-visualizacion",
-        "titulo": "Jugadas candidatas"
-       },
-       {
-        "curso": "calculo-y-visualizacion",
-        "titulo": "Jaques y amenazas forzadas"
-       },
-       {
-        "curso": "calculo-y-visualizacion",
-        "titulo": "Verificación final"
-       }
-      ],
+      "lecciones": [],
       "posiciones": [
        {
         "fuente": "tema",
@@ -966,20 +917,7 @@
       "sitio": "Estrategia y táctica: lección 1 «Clavadas absolutas y relativas», lección 2 «Horquillas de caballo y de peón» y lección 3 «Ataques a la descubierta y jaques dobles». Para armar la serie: «Ejercicios por tema» del Entreno. Para principiantes: «Practicar» y «Desafíos»."
      },
      "plan": {
-      "lecciones": [
-       {
-        "curso": "estrategia-y-tactica",
-        "titulo": "Clavadas"
-       },
-       {
-        "curso": "estrategia-y-tactica",
-        "titulo": "Horquillas de caballo y de peón"
-       },
-       {
-        "curso": "estrategia-y-tactica",
-        "titulo": "Ataques a la descubierta"
-       }
-      ],
+      "lecciones": [],
       "posiciones": [
        {
         "fuente": "tema",
@@ -1037,28 +975,8 @@
       "sitio": "Estrategia en el final, lección 15 «Profilaxis: quitarle el plan» y lección 16 «Convertir las dos debilidades». Habilidades «¿Qué quiere el rival?» y «Constrúyela tú». Partidas cortas para principiantes: curso Partidas modelo."
      },
      "plan": {
-      "lecciones": [
-       {
-        "curso": "estrategia-en-el-final",
-        "titulo": "Profilaxis"
-       },
-       {
-        "curso": "estrategia-en-el-final",
-        "titulo": "Convertir"
-       }
-      ],
-      "posiciones": [
-       {
-        "fuente": "estrategia",
-        "titulo": "La ruta del rey",
-        "n": 1
-       },
-       {
-        "fuente": "estrategia",
-        "titulo": "Rupturas de peones",
-        "n": 1
-       }
-      ]
+      "lecciones": [],
+      "posiciones": []
      }
     },
     {
@@ -1096,16 +1014,7 @@
       "sitio": "Curso Fundamentos del ajedrez: sus 10 lecciones (del tablero a los errores comunes de apertura) son una secuencia lista para un taller de principiantes, con presentación, material y ejercicios. Para practicar con los participantes: Entreno «Aprende», «Practicar» y «Desafíos»."
      },
      "plan": {
-      "lecciones": [
-       {
-        "curso": "fundamentos-del-ajedrez",
-        "titulo": "Los tres principios de la apertura"
-       },
-       {
-        "curso": "fundamentos-del-ajedrez",
-        "titulo": "Mate con dos torres"
-       }
-      ],
+      "lecciones": [],
       "posiciones": [
        {
         "fuente": "mate",
@@ -1323,10 +1232,6 @@
      "instrucciones": "Repasa la regla del cuadrado y practica rey y peón. Para descansar, dos partidas de Batalla naval.",
      "items": [
       {
-       "curso": "finales-practicos",
-       "leccion": 1
-      },
-      {
        "herramienta": "tipos",
        "recorte": "peones",
        "cantidad": 10,
@@ -1348,10 +1253,6 @@
      "instrucciones": "Estudia las posiciones críticas y gana o salva dos finales contra la máquina.",
      "items": [
       {
-       "curso": "finales-practicos",
-       "leccion": 3
-      },
-      {
        "herramienta": "finales",
        "recorte": null,
        "cantidad": 2,
@@ -1372,14 +1273,6 @@
      "titulo": "Semana 3 · Philidor y Lucena",
      "instrucciones": "Lucena para ganar, Philidor para salvarte. Practícalos contra la máquina.",
      "items": [
-      {
-       "curso": "finales-practicos",
-       "leccion": 6
-      },
-      {
-       "curso": "finales-practicos",
-       "leccion": 5
-      },
       {
        "herramienta": "finales",
        "recorte": null,
@@ -1470,10 +1363,6 @@
        "recorte": "amenaza",
        "cantidad": 10,
        "meta": null
-      },
-      {
-       "curso": "estrategia-en-el-final",
-       "leccion": 15
       }
      ]
     },
@@ -1961,14 +1850,6 @@
      "plan": {
       "lecciones": [
        {
-        "curso": "estrategia-y-tactica",
-        "titulo": "Sacrificios en h7/h2"
-       },
-       {
-        "curso": "estrategia-y-tactica",
-        "titulo": "Sacrificios de despeje y de destrucción"
-       },
-       {
         "curso": "partidas-modelo",
         "titulo": "Sacrificios típicos"
        }
@@ -2026,10 +1907,6 @@
        {
         "curso": "partidas-modelo",
         "titulo": "Ideas básicas en el ataque"
-       },
-       {
-        "curso": "estrategia-y-tactica",
-        "titulo": "Ataque al enroque contrario"
        }
       ],
       "posiciones": [
@@ -2091,10 +1968,6 @@
        {
         "curso": "partidas-modelo",
         "titulo": "Defensa y contraataque"
-       },
-       {
-        "curso": "estrategia-y-tactica",
-        "titulo": "Defensa activa"
        }
       ],
       "posiciones": [
@@ -2142,20 +2015,7 @@
       "sitio": "Cálculo y visualización, lecciones 1 «El árbol de variantes», 2 «Visualización sin mover piezas» y 3 «Jugadas candidatas». Estrategia y táctica, lección 7 «Combinaciones de dos y tres jugadas». En casa: Entreno «Visualización»."
      },
      "plan": {
-      "lecciones": [
-       {
-        "curso": "calculo-y-visualizacion",
-        "titulo": "El árbol de variantes"
-       },
-       {
-        "curso": "calculo-y-visualizacion",
-        "titulo": "Visualización sin mover piezas"
-       },
-       {
-        "curso": "estrategia-y-tactica",
-        "titulo": "Combinaciones de dos y tres jugadas"
-       }
-      ],
+      "lecciones": [],
       "posiciones": [
        {
         "fuente": "tema",
@@ -2312,20 +2172,7 @@
       "sitio": "Finales prácticos: lección 5 «La posición de Lucena», lección 6 «La posición de Philidor» y lección 7 «Torres activas». Práctica: Finales contra la máquina (Lucena, Philidor y Vancura). Cuestionario listo «Finales de torre»."
      },
      "plan": {
-      "lecciones": [
-       {
-        "curso": "finales-practicos",
-        "titulo": "La posición de Lucena"
-       },
-       {
-        "curso": "finales-practicos",
-        "titulo": "La posición de Philidor"
-       },
-       {
-        "curso": "finales-practicos",
-        "titulo": "Torres activas"
-       }
-      ],
+      "lecciones": [],
       "posiciones": [
        {
         "fuente": "mapa",
@@ -2488,16 +2335,7 @@
       "sitio": "Curso Fundamentos del ajedrez: sus 10 lecciones son una secuencia lista para un taller de principiantes, con presentación, material y ejercicios. Para practicar con los participantes: Entreno «Aprende», «Practicar» y «Desafíos»."
      },
      "plan": {
-      "lecciones": [
-       {
-        "curso": "fundamentos-del-ajedrez",
-        "titulo": "Los tres principios de la apertura"
-       },
-       {
-        "curso": "fundamentos-del-ajedrez",
-        "titulo": "Piezas que se defienden entre sí"
-       }
-      ],
+      "lecciones": [],
       "posiciones": [
        {
         "fuente": "tema",
@@ -2732,10 +2570,6 @@
      "instrucciones": "Repasa los sacrificios en h7 y ataca el enroque corto.",
      "items": [
       {
-       "curso": "estrategia-y-tactica",
-       "leccion": 8
-      },
-      {
        "herramienta": "temas",
        "recorte": "enroque-corto",
        "cantidad": 10,
@@ -2806,14 +2640,6 @@
      "titulo": "Semana 5 · Finales de torre",
      "instrucciones": "Lucena y Philidor, y tres finales contra la máquina.",
      "items": [
-      {
-       "curso": "finales-practicos",
-       "leccion": 5
-      },
-      {
-       "curso": "finales-practicos",
-       "leccion": 6
-      },
       {
        "herramienta": "finales",
        "recorte": null,
@@ -3275,24 +3101,7 @@
       "sitio": "Fundamentos del ajedrez: lección 9 «Los tres principios de la apertura», lección 10 «Errores comunes de apertura» y lección 6 «Enroque corto y largo». Aperturas y defensas, lección 9 «Apertura italiana y variantes modernas». Para casa: Entreno «Aperturas y celadas» y «Estudio»."
      },
      "plan": {
-      "lecciones": [
-       {
-        "curso": "fundamentos-del-ajedrez",
-        "titulo": "Los tres principios de la apertura"
-       },
-       {
-        "curso": "fundamentos-del-ajedrez",
-        "titulo": "Errores comunes de apertura"
-       },
-       {
-        "curso": "fundamentos-del-ajedrez",
-        "titulo": "Enroque corto y largo"
-       },
-       {
-        "curso": "aperturas-y-defensas",
-        "titulo": "Apertura Italiana"
-       }
-      ],
+      "lecciones": [],
       "posiciones": [
        {
         "fuente": "linea",
@@ -3395,16 +3204,7 @@
       "sitio": "Finales prácticos, lección 1 «La regla del cuadrado y el peón pasado». Estrategia en el final, lección 1 «Primero el rey». Práctica: Habilidad «Rey y peón»."
      },
      "plan": {
-      "lecciones": [
-       {
-        "curso": "finales-practicos",
-        "titulo": "La regla del cuadrado y el peón pasado"
-       },
-       {
-        "curso": "estrategia-en-el-final",
-        "titulo": "Primero el rey"
-       }
-      ],
+      "lecciones": [],
       "posiciones": [
        {
         "fuente": "mapa",
@@ -3451,16 +3251,7 @@
       "sitio": "Finales prácticos, lección 2 «Oposición de reyes» y lección 3 «Finales de rey y peón: posiciones críticas». Práctica: Habilidad «Rey y peón»."
      },
      "plan": {
-      "lecciones": [
-       {
-        "curso": "finales-practicos",
-        "titulo": "Oposición de reyes"
-       },
-       {
-        "curso": "finales-practicos",
-        "titulo": "Finales de rey y peón: posiciones críticas"
-       }
-      ],
+      "lecciones": [],
       "posiciones": [
        {
         "fuente": "mapa",
@@ -3514,20 +3305,7 @@
       "sitio": "Estrategia en el final, lección 5 «El peón pasado» y lección 6 «Mayorías y el pasado exterior». Finales prácticos, lección 4 «Ruptura de peones». Entreno «Desafíos» (carrera a la coronación)."
      },
      "plan": {
-      "lecciones": [
-       {
-        "curso": "estrategia-en-el-final",
-        "titulo": "El peón pasado"
-       },
-       {
-        "curso": "estrategia-en-el-final",
-        "titulo": "Mayorías y el pasado exterior"
-       },
-       {
-        "curso": "finales-practicos",
-        "titulo": "Ruptura de peones"
-       }
-      ],
+      "lecciones": [],
       "posiciones": [
        {
         "fuente": "mapa",
@@ -3588,16 +3366,7 @@
       "sitio": "Fundamentos del ajedrez, lección 4 «Jaque, jaque mate y ahogado». Entreno «Mates» (mates en 1, 2 y 3) y «Practicar» (patrones de mate). Cuestionarios listos «Mates básicos» (inicial) y «Mates con nombre» (intermedio)."
      },
      "plan": {
-      "lecciones": [
-       {
-        "curso": "fundamentos-del-ajedrez",
-        "titulo": "Jaque, jaque mate y ahogado"
-       },
-       {
-        "curso": "fundamentos-del-ajedrez",
-        "titulo": "Mate con dos torres"
-       }
-      ],
+      "lecciones": [],
       "posiciones": [
        {
         "fuente": "mate",
@@ -3785,20 +3554,7 @@
       "sitio": "Estrategia y táctica: lección 1 «Clavadas absolutas y relativas», lección 2 «Horquillas de caballo y de peón» y lección 3 «Ataques a la descubierta y jaques dobles». «Ejercicios por tema» para armar la serie. Cuestionarios listos «La clavada y la enfilada» y «Horquillas y dobles ataques»."
      },
      "plan": {
-      "lecciones": [
-       {
-        "curso": "estrategia-y-tactica",
-        "titulo": "Clavadas"
-       },
-       {
-        "curso": "estrategia-y-tactica",
-        "titulo": "Horquillas de caballo y de peón"
-       },
-       {
-        "curso": "estrategia-y-tactica",
-        "titulo": "Ataques a la descubierta"
-       }
-      ],
+      "lecciones": [],
       "posiciones": [
        {
         "fuente": "tema",
@@ -3856,16 +3612,7 @@
       "sitio": "Curso Fundamentos del ajedrez: sus 10 lecciones son una secuencia lista para un taller de principiantes, con presentación, material y ejercicios. Para practicar con los participantes: Entreno «Aprende», «Practicar» y «Desafíos»."
      },
      "plan": {
-      "lecciones": [
-       {
-        "curso": "fundamentos-del-ajedrez",
-        "titulo": "Movimiento de las piezas: peón, caballo, alfil"
-       },
-       {
-        "curso": "fundamentos-del-ajedrez",
-        "titulo": "Valor relativo de las piezas"
-       }
-      ],
+      "lecciones": [],
       "posiciones": [
        {
         "fuente": "tema",
@@ -4066,10 +3813,6 @@
      "instrucciones": "Estudia la lección de los principios y aprende la italiana. Para descansar, Batalla naval.",
      "items": [
       {
-       "curso": "fundamentos-del-ajedrez",
-       "leccion": 9
-      },
-      {
        "herramienta": "aperturas",
        "recorte": "italiana-giuoco",
        "cantidad": 1,
@@ -4091,10 +3834,6 @@
      "instrucciones": "Estudia los errores comunes, contesta el cuestionario y aprende a parar el mate del pastor.",
      "items": [
       {
-       "curso": "fundamentos-del-ajedrez",
-       "leccion": 10
-      },
-      {
        "herramienta": "cuestionario",
        "cuestionario": "Principios de la apertura"
       },
@@ -4113,14 +3852,6 @@
      "titulo": "Semana 3 · El cuadrado y la oposición",
      "instrucciones": "Las dos primeras lecciones de finales, rey y peón, y los confites del caballo.",
      "items": [
-      {
-       "curso": "finales-practicos",
-       "leccion": 1
-      },
-      {
-       "curso": "finales-practicos",
-       "leccion": 2
-      },
       {
        "herramienta": "tipos",
        "recorte": "peones",
@@ -4142,10 +3873,6 @@
      "titulo": "Semana 4 · Repaso para la Evaluación 5",
      "instrucciones": "Las posiciones críticas, rey y peón y el cuestionario de finales.",
      "items": [
-      {
-       "curso": "finales-practicos",
-       "leccion": 3
-      },
       {
        "herramienta": "tipos",
        "recorte": "peones",

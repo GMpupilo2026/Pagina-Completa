@@ -673,23 +673,10 @@
         // El contenido no viaja por Supabase: se pide directo a cursos/protegido/<curso>.html,
         // igual que hace js/curso-academia.js con el panel de Academia. ----------
         const CLASS_LESSON_CATALOG = [
-            { slug: "fundamentos-del-ajedrez", titulo: "Fundamentos del Ajedrez" },
-            { slug: "aperturas-y-defensas", titulo: "Aperturas y Defensas" },
-            { slug: "calculo-y-visualizacion", titulo: "Cálculo y Visualización" },
-            { slug: "estrategia-y-tactica", titulo: "Estrategia y Táctica" },
             { slug: "desequilibrios-de-material", titulo: "Desequilibrios de material" },
-            { slug: "finales-practicos", titulo: "Finales Prácticos" },
             { slug: "el-mapa-de-los-finales", titulo: "El mapa de los finales" },
-            { slug: "estrategia-en-el-final", titulo: "Estrategia en el final" },
             { slug: "partidas-modelo", titulo: "Partidas modelo del ajedrez moderno" },
-            { slug: "preparacion-para-torneos", titulo: "Preparación para Torneos" },
         ];
-        // Los escondidos (js/cursos-ocultos.js) no se ofrecen en clase: el worker no se los sirve.
-        if (window.CursosOcultos) {
-            for (let i = CLASS_LESSON_CATALOG.length - 1; i >= 0; i--) {
-                if (CursosOcultos.es(CLASS_LESSON_CATALOG[i].slug)) CLASS_LESSON_CATALOG.splice(i, 1);
-            }
-        }
         const leccionesPorCurso = {}; // slug -> [{titulo}, ...] en caché, una vez pedidas
 
         // Un <details> de nivel superior (con su propio <summary>) es una lección; se

@@ -59,31 +59,9 @@ const SUPABASE_ANON_KEY =
 const COOKIE = "ai_sesion_cursos";
 const PROTEGIDO = /^\/(cursos\/(protegido|recursos)|material)\//;
 
-// Los cursos escondidos a alumnos y profesores (ver «Los cursos escondidos» en
-// docs/decisiones/cursos-y-material.md). Es la misma lista de
-// js/cursos-ocultos.js, que decide qué se pinta; verificar-worker.js comprueba
-// que no se separen. Para estos, el acceso a la Academia no basta: su
-// contenido y su material los baja administración o quien compró ese material.
-const OCULTOS = new Set([
-  "fundamentos-del-ajedrez",
-  "aperturas-y-defensas",
-  "calculo-y-visualizacion",
-  "finales-practicos",
-  "estrategia-y-tactica",
-  "preparacion-para-torneos",
-]);
-
-// El curso escondido al que pertenece la dirección, o "".
-function cursoOculto(pathname) {
-  const m = pathname.match(/^\/cursos\/(?:protegido\/(?:data\/)?|recursos\/)([a-z0-9-]+)/);
-  return m && OCULTOS.has(m[1]) ? m[1] : "";
-}
-
 // Qué hay que preguntar para esa dirección. Los cursos (protegido/) se abren
 // con el acceso a la Academia; lo que se vende suelto, con su compra.
 function queSePregunta(pathname) {
-  const oculto = cursoOculto(pathname);
-  if (oculto) return { producto: oculto, bastaAcceso: false };
   let m = pathname.match(/^\/cursos\/recursos\/([a-z0-9-]+)\//);
   if (m) return { producto: m[1], bastaAcceso: true };
   m = pathname.match(/^\/material\/([a-z0-9-]+)\//);
@@ -251,15 +229,11 @@ function negar(request, url, veredicto) {
   const esPagina = request.headers.get("Sec-Fetch-Mode") === "navigate" ||
     /text\/html/.test(request.headers.get("Accept") || "");
   if (!esPagina) {
-    return new Response(veredicto === "sin_acceso" ? (cursoOculto(url.pathname) ? "Curso no disponible" : suelto ? "Este material se compra aparte" : "Acceso a la Academia no vigente") : "Hace falta iniciar sesión",
+    return new Response(veredicto === "sin_acceso" ? (suelto ? "Este material se compra aparte" : "Acceso a la Academia no vigente") : "Hace falta iniciar sesión",
       { status: estado, headers: { ...cabeceras, "Content-Type": "text/plain; charset=utf-8" } });
   }
   const portada = portadaDelCurso(url.pathname);
-  const cuerpo = veredicto === "sin_acceso" && cursoOculto(url.pathname)
-    ? `<h1>Este curso no está disponible</h1>
-<p>Por ahora este curso no está abierto en la Academia. En tu panel están los cursos que puedes estudiar.</p>
-<p><a class="boton" href="/cursos/academia/index.html">Ver mis cursos</a></p>`
-    : veredicto === "sin_acceso" && suelto
+  const cuerpo = veredicto === "sin_acceso" && suelto
     ? `<h1>Este material se compra aparte</h1>
 <p>Lo pueden abrir las cuentas que lo compraron. Si ya lo compraste, escríbenos por WhatsApp al +506 8309-2291 y lo dejamos asociado a tu cuenta.</p>
 <p><a class="boton" href="https://wa.me/50683092291">Escribir por WhatsApp</a></p>`

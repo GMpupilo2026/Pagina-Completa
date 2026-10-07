@@ -45,10 +45,10 @@ async function cargarWorker() {
 
   console.log("=== Lo normal pasa de largo ===");
   {
-    const r = await pedir("https://ajedrez-integral.com/cursos/finales-practicos.html");
+    const r = await pedir("https://ajedrez-integral.com/cursos/el-mapa-de-los-finales.html");
     igual("una dirección cualquiera se sirve, no se redirige", r.estado, 200);
     igual("y se le pide tal cual a los archivos", r.aArchivos,
-      "https://ajedrez-integral.com/cursos/finales-practicos.html");
+      "https://ajedrez-integral.com/cursos/el-mapa-de-los-finales.html");
   }
 
   console.log("\n=== www manda al dominio sin www ===");
@@ -60,9 +60,9 @@ async function cargarWorker() {
   {
     // Lo que más se rompe en estas redirecciones: perder lo que va después del
     // dominio y mandar a todo el mundo a la portada.
-    const r = await pedir("https://www.ajedrez-integral.com/cursos/finales-practicos.html?de=whatsapp#tema3");
+    const r = await pedir("https://www.ajedrez-integral.com/cursos/el-mapa-de-los-finales.html?de=whatsapp#tema3");
     igual("se conserva la dirección completa, con sus parámetros", r.destino,
-      "https://ajedrez-integral.com/cursos/finales-practicos.html?de=whatsapp#tema3");
+      "https://ajedrez-integral.com/cursos/el-mapa-de-los-finales.html?de=whatsapp#tema3");
   }
   {
     const r = await pedir("https://ajedrez-integral.com/");
@@ -227,33 +227,12 @@ async function cargarWorker() {
     igual("pero ni así pasa un token que no es de este proyecto", r3.estado, 401);
   }
   {
-    // Los cursos escondidos: la lista del worker es la de js/cursos-ocultos.js.
-    // Si se separan, uno se pinta escondido y se sigue bajando (o al revés).
-    const delCliente = (fs.readFileSync(path.join(raiz, "js", "cursos-ocultos.js"), "utf8").match(/var SLUGS = \[([^\]]*)\]/) || [])[1] || "";
-    const delWorker = (fuenteWorker.match(/const OCULTOS = new Set\(\[([^\]]*)\]/) || [])[1] || "";
-    const lista = (t) => (t.match(/"[a-z0-9-]+"/g) || []).sort().join(",");
-    igual("los cursos escondidos son los mismos en el worker y en el navegador", lista(delWorker), lista(delCliente));
-    igual("y la lista no está vacía", lista(delCliente).length > 0, true);
-
-    contesta = () => new Response("false", { status: 200 });
-    const r = await abrir("/cursos/protegido/fundamentos-del-ajedrez.html", { cookie: token() });
-    igual("el contenido de un curso escondido pregunta puede_bajar()", (r.preguntas[0] || {}).u, URL_SB + "/rest/v1/rpc/puede_bajar");
-    igual("sin que el acceso a la Academia baste", (r.preguntas[0] || {}).opciones && r.preguntas[0].opciones.body,
-      JSON.stringify({ p_producto: "fundamentos-del-ajedrez", p_basta_acceso: false }));
-    igual("y a quien no es de administración no se le sirve", r.estado + "/" + r.aArchivos, "403/false");
-    const d = await abrir("/cursos/recursos/preparacion-para-torneos/01.pdf", { cookie: token() });
-    igual("su material tampoco, aunque tenga el acceso vigente", d.estado + "/" + (d.preguntas[0] || {}).opciones.body,
-      "403/" + JSON.stringify({ p_producto: "preparacion-para-torneos", p_basta_acceso: false }));
-    const n = await abrir("/cursos/protegido/finales-practicos.html", { cookie: token(), pagina: true });
-    igual("como página dice que el curso no está disponible", n.cuerpo.includes("no está disponible") && n.cuerpo.includes("/cursos/academia/index.html"), true);
     contesta = () => new Response("true", { status: 200 });
-    const a = await abrir("/cursos/protegido/estrategia-y-tactica.html", { cookie: token() });
-    igual("administración (puede_bajar dice que sí) lo sigue abriendo", a.estado + "/" + a.aArchivos, "200/true");
     const v = await abrir("/cursos/protegido/el-mapa-de-los-finales.html", { cookie: token() });
-    igual("un curso que no está escondido sigue con acceso_vigente()", (v.preguntas[0] || {}).u, URL_SB + "/rest/v1/rpc/acceso_vigente");
+    igual("el contenido de un curso pregunta acceso_vigente()", (v.preguntas[0] || {}).u, URL_SB + "/rest/v1/rpc/acceso_vigente");
   }
   {
-    const r = await abrir("/cursos/finales-practicos.html");
+    const r = await abrir("/cursos/el-mapa-de-los-finales.html");
     igual("la portada del curso sigue pública", r.estado + "/" + r.preguntas.length, "200/0");
     const r2 = await abrir("/cursos.html");
     igual("y el catálogo", r2.estado, 200);

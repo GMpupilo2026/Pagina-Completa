@@ -58,9 +58,13 @@ igual("las mismas secciones, con el mismo nombre, emoji y unidad",
   Object.keys(JS).sort().map((k) => [k, JSON.parse(JSON.stringify(JS[k]))]));
 
 const catalogo = JSON.parse(fs.readFileSync(path.join(RAIZ, "herramientas/cursos/catalogo.json"), "utf8")).cursos;
-const titulos = {};
-catalogo.forEach((c) => { titulos[c.slug] = c.titulo; });
-igual("el correo nombra los cursos como el catálogo", TS.TITULOS, titulos);
+// Cada curso del catálogo, con el mismo título. La tabla del correo puede
+// traer de más: los cursos borrados en octubre de 2026 siguen ahí para que el
+// avance viejo de un alumno no salga con su identificador (ver «Los cursos
+// borrados» en docs/decisiones/cursos-y-material.md).
+const titulos = {}, enElCorreo = {};
+catalogo.forEach((c) => { titulos[c.slug] = c.titulo; enElCorreo[c.slug] = TS.TITULOS[c.slug]; });
+igual("el correo nombra los cursos como el catálogo", enElCorreo, titulos);
 
 console.log("-- Cada página que cuenta tiempo cuenta en una sección con nombre");
 // Lo que la base junta (ver public.tiempo_por_seccion): el tiempo de la

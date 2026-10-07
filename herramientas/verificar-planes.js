@@ -62,7 +62,7 @@ const ITEMS = [
   { id: "it-2", plan_id: "pl-1", orden: 1, tipo: "nota", titulo: "Recordar",
     fen: null, pregunta: null, curso: null, leccion: null, nota: "Preguntar quién jugó el fin de semana." },
   { id: "it-3", plan_id: "pl-1", orden: 2, tipo: "leccion", titulo: "El cuadrado",
-    fen: null, pregunta: null, curso: "finales-practicos", leccion: 2, nota: null },
+    fen: null, pregunta: null, curso: "el-mapa-de-los-finales", leccion: 2, nota: null },
 ];
 
 function clienteFalso(datos, usuarioId) {

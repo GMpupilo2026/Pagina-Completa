@@ -12,7 +12,7 @@ Arma:
   cursos/formacion-ajedrez.html            portada y temario — público
   cursos/protegido/formacion-ajedrez.html  fragmento con las 8 sesiones completas
   cursos/academia/formacion-ajedrez.html   página de Academia (clonada de
-                                            cursos/academia/fundamentos-del-ajedrez.html)
+                                            cursos/academia/arbitro-nacional.html)
   cursos/recursos/formacion-ajedrez/       por sesión 1-7: cuadernillo de repaso
                                             (PDF), presentación (.pptx) y
                                             ejercicios (PDF); la sesión 8 trae en
@@ -48,8 +48,8 @@ import re
 import subprocess
 
 RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-MOLDE_PORTADA = os.path.join(RAIZ, "cursos", "finales-practicos.html")
-MOLDE_ACADEMIA = os.path.join(RAIZ, "cursos", "academia", "fundamentos-del-ajedrez.html")
+MOLDE_PORTADA = os.path.join(RAIZ, "cursos", "arbitro-nacional.html")
+MOLDE_ACADEMIA = os.path.join(RAIZ, "cursos", "academia", "arbitro-nacional.html")
 DATOS = os.path.join(RAIZ, "herramientas", "cursos", "formacion-ajedrez.json")
 PRUEBA_FINAL = os.path.join(RAIZ, "herramientas", "cursos", "formacion-ajedrez-prueba-final.json")
 
@@ -147,7 +147,7 @@ def portada(curso):
 
     salida, n = re.subn(r'<article class="pt-8 pb-16">.*?</article>', lambda m: articulo, base, flags=re.S)
     assert n == 1, "no encontré el <article> del molde de portada — revisar MOLDE_PORTADA"
-    salida, n = re.subn(re.escape("<title>Finales Prácticos — Ajedrez Integral</title>"),
+    salida, n = re.subn(re.escape("<title>Árbitro Nacional — Ajedrez Integral</title>"),
                         lambda m: "<title>%s — Ajedrez Integral</title>" % escapar(titulo), salida)
     assert n == 1, "no encontré el <title> del molde de portada"
     descripcion_meta = "Temario completo del curso %s: %s" % (titulo, curso["resumen"])
@@ -381,7 +381,7 @@ def academia(curso):
 
     salida, n = re.subn(r'<article class="pt-8 pb-16">.*?</article>', lambda m: articulo, base, flags=re.S)
     assert n == 1, "no encontré el <article> del molde de academia — revisar MOLDE_ACADEMIA"
-    salida, n = re.subn(re.escape("<title>Academia · Fundamentos del Ajedrez — Ajedrez Integral</title>"),
+    salida, n = re.subn(re.escape("<title>Academia · Árbitro Nacional — Ajedrez Integral</title>"),
                         lambda m: "<title>Academia · %s — Ajedrez Integral</title>" % escapar(titulo), salida)
     assert n == 1, "no encontré el <title> del molde de academia"
     salida = re.sub(r'<meta name="description" content="[^"]*">',

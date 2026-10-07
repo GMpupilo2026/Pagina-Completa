@@ -77,19 +77,12 @@ PAGINAS = [
     "entreno/precision-posicional.html", "entreno/tipos.html", "entreno/finales.html",
     "entreno/memoria.html",
     "sonar.html", "batalla-naval.html",
-    "cursos/academia/aperturas-y-defensas.html",
     "cursos/academia/arbitro-nacional.html",
-    "cursos/academia/calculo-y-visualizacion.html",
     "cursos/academia/desequilibrios-de-material.html",
     "cursos/academia/el-mapa-de-los-finales.html",
-    "cursos/academia/estrategia-en-el-final.html",
-    "cursos/academia/estrategia-y-tactica.html",
-    "cursos/academia/finales-practicos.html",
     "cursos/academia/formacion-ajedrez.html",
-    "cursos/academia/fundamentos-del-ajedrez.html",
     "cursos/academia/index.html",
     "cursos/academia/partidas-modelo.html",
-    "cursos/academia/preparacion-para-torneos.html",
 ]
 
 HEADER_RE = re.compile(r'<header id="header"[\s\S]*?</header>')

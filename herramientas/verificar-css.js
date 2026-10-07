@@ -34,8 +34,7 @@ const PAGINAS = [
     "/crazyhouse.html", "/cartas.html", "/duelo.html", "/niebla.html", "/estandar.html",
     "/variante.html", "/cuatro-jugadores.html", "/partidas.html", "/torneo.html", "/torneos.html",
     "/lector-planilla.html", "/racha-tactica.html", "/concentracion.html", "/ciegos.html",
-    "/articulos/la-clavada.html", "/cursos/fundamentos-del-ajedrez.html",
-    "/cursos/el-mapa-de-los-finales.html", "/cursos/academia/index.html",
+    "/articulos/la-clavada.html", "/cursos/el-mapa-de-los-finales.html", "/cursos/academia/index.html",
     "/entreno/index.html", "/entreno/diagnostico.html", "/entreno/mates.html", "/entreno/aperturas.html",
     "/entreno/aprender.html", "/entreno/estudio.html", "/entreno/4x4.html",
     // entreno/tactica.html ya no se abre: sus ejercicios viven dentro de
