@@ -106,7 +106,7 @@ def es_futuro(b):
     else: return False
     return r.endswith(("ar", "er", "ir")) and len(r) > 3
 
-BLANCA = set("""
+BLANCA = set("""canadá 
 más además después jamás quizás atrás detrás través compás interés inglés francés país
 así aquí allí ahí allá acá está están estás esté estés japonés portugués marqués revés dirá
 demás porqué comité comités subcomité josé café caché también según razón bebé qué holandés escocés parís danés
@@ -116,7 +116,7 @@ empecé aprendí entendí leí tomé repasé jugué estudié olvidé
 cortés descortés
 encontré revisé recargué creé comprometí revelé
 dejé llegué terminé
-moví saqué enroqué pensé equivoqué
+moví saqué enroqué pensé equivoqué encerré
 ojalá
 quizá
 mamá papá bebé
@@ -125,6 +125,7 @@ pondrá querrá irá
 mantendrá obtendrá supondrá intervendrá transpondrá traspondrá podrás
 hincapié azerí canadá calviá buxadé
 recibiré
+estrés poincaré
 """.split())
 
 # Las presentaciones (.pptx) y los documentos (.docx) de cursos/recursos/ son

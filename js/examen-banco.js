@@ -56,6 +56,10 @@ window.ExamenBanco = (function () {
     "desequilibrios-de-material": ["material", "estrategia"],
     "preparacion-para-torneos": ["maestria", "calculo"],
     "rompe-el-estancamiento": ["estrategia", "calculo", "tactica"],
+    "ganar-con-poco": ["estrategia", "finales"],
+    "cambiar-o-no-cambiar": ["estrategia", "material"],
+    "ideas-que-ganan-partidas": ["estrategia", "tactica", "finales"],
+    "los-cimientos-del-ajedrez": ["tactica", "finales", "estrategia", "calculo", "apertura"],
     "las-mil-y-una-lecciones-de-ajedrez": ["estrategia", "tactica", "finales"],
   };
 

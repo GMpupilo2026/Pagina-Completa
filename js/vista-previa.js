@@ -5,6 +5,7 @@
  *     frame-src 'self' y X-Frame-Options SAMEORIGIN lo dejan).
  *   - Página (.html, las versiones accesibles): en un marco, sin sus programas
  *     (sandbox sin allow-scripts).
+ *   - Imagen: entera, sobre un damero (para ver lo transparente).
  *   - Presentación (.pptx), Word (.docx) y Excel (.xlsx): son un .zip con XML
  *     adentro. Se abre acá mismo —DecompressionStream("deflate-raw") del
  *     navegador, sin librerías: la CSP no deja traerlas— y se pinta lo que
@@ -409,7 +410,11 @@
       if (v && v.isConnected) v.focus();
     }
     cerrar.addEventListener("click", () => { d.close(); alCerrar(); });
-    d.addEventListener("close", alCerrar);
+    // Si entre el cierre y su evento se volvió a abrir (otro archivo), el
+    // «close» llega tarde: limpiaría la vista nueva y la dejaría en «Abriendo
+    // el archivo…» para siempre. Con el diálogo abierto, ese evento ya no es de
+    // este cierre.
+    d.addEventListener("close", () => { if (!d.open) alCerrar(); });
     // Con las flechas del teclado (fuera de un campo o del visor) se pasa de archivo.
     d.addEventListener("keydown", (e) => {
       if (e.target.closest("input, select, textarea, iframe")) return;
@@ -450,7 +455,8 @@
     $("vista-previa-anterior").hidden = $("vista-previa-siguiente").hidden = lista.length < 2;
     const abrir = $("vista-previa-abrir");
     abrir.href = a.ruta;
-    abrir.hidden = ext !== "pdf" && ext !== "html";
+    const esImagen = /^(png|jpe?g|gif|webp|avif|svg|ico)$/.test(ext);
+    abrir.hidden = ext !== "pdf" && ext !== "html" && !esImagen;
     const bajar = $("vista-previa-bajar");
     bajar.href = a.ruta;
     bajar.setAttribute("download", nombreArchivo(a.ruta));
@@ -460,6 +466,20 @@
     caja.scrollTop = 0;
     const estado = $("vista-previa-estado");
 
+    if (esImagen) {
+      // La imagen entera, sobre un damero para que se note lo transparente
+      // (un logo blanco sobre blanco no se vería). Como <img>, un SVG no corre
+      // ningún programa.
+      const marco = el("div", "flex items-center justify-center min-h-[60vh] rounded-lg border border-brand-200 dark:border-brand-700 p-4");
+      marco.style.background = "repeating-conic-gradient(#d9e2ec 0% 25%, #f0f4f8 0% 50%) 50% / 24px 24px";
+      const img = el("img", "max-w-full max-h-[75vh] object-contain");
+      img.src = a.ruta;
+      img.alt = a.titulo || nombreArchivo(a.ruta);
+      marco.append(img);
+      caja.append(marco);
+      estado.textContent = "Vista previa de " + (a.titulo || nombreArchivo(a.ruta)) + ".";
+      return;
+    }
     if (ext === "pdf" || ext === "html") {
       const marco = el("iframe", "w-full h-full min-h-[70vh] rounded-lg border border-brand-200 dark:border-brand-700 bg-white");
       // Una página se ve sin sus programas: para leerla no hacen falta.

@@ -6,4 +6,5 @@
 module.exports = [
   require("./peonita.js"),
   require("./trucos.js"),
+  require("./rey.js"),
 ];

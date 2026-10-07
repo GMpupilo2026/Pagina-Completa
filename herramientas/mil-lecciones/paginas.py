@@ -51,7 +51,7 @@ def navegar(s, ant, sig):
     assert k1 == 1 and k2 == 1
     return s
 
-ANT = ('rompe-el-estancamiento', 'Rompe el estancamiento')
+ANT = ('ideas-que-ganan-partidas', 'Ideas que ganan partidas')
 SIG = ('calculo-y-visualizacion', 'Cálculo y Visualización')
 
 def comun(s):

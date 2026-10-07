@@ -1,0 +1,834 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Ideas que ganan partidas — versión accesible</title>
+<style>
+  :root { color-scheme: light dark; }
+  body { max-width: 42rem; margin: 0 auto; padding: 1.5rem 1rem 4rem; background: #fff; color: #10202e;
+         font-family: Georgia, "Times New Roman", serif; font-size: 1.15rem; line-height: 1.8; }
+  h1 { font-size: 1.9rem; line-height: 1.25; }
+  h2 { font-size: 1.45rem; margin-top: 2.5rem; border-bottom: 2px solid #10202e; padding-bottom: .3rem; }
+  h3 { font-size: 1.2rem; margin: 2rem 0 .3rem; font-family: system-ui, sans-serif; }
+  h4 { font-size: 1.05rem; margin: 1.4rem 0 .3rem; font-family: system-ui, sans-serif; }
+  article { border-top: 1px solid #c9d4de; padding-top: .3rem; }
+  .posicion { background: #f1f5f8; padding: .7rem .9rem; }
+  .fen { display: block; font-family: ui-monospace, monospace; font-size: .85em; word-break: break-all; }
+  .comprobado { font-size: .92em; color: #3b4d5c; }
+  footer { margin-top: 3rem; border-top: 1px solid #c9d4de; padding-top: 1rem; font-size: .95rem; }
+  @media (prefers-color-scheme: dark) {
+    body { background: #10202e; color: #eef3f7; }
+    h2 { border-color: #eef3f7; }
+    .posicion { background: #1b3145; }
+    .comprobado { color: #b8c7d4; }
+    article, footer { border-color: #3b5165; }
+  }
+</style>
+</head><body>
+<h1>Ideas que ganan partidas</h1>
+<p>Libro de Oscar Angulo Cubero. Es el mismo contenido del libro en PDF, escrito para leerse con lector de pantalla o con
+la letra agrandada: las posiciones van contadas pieza por pieza y con su FEN, las jugadas van dichas, y no hay
+ninguna imagen.</p>
+<p>Seis capítulos: el ataque al rey enrocado, el rey en el centro y los enroques opuestos, las piezas, los peones, la
+táctica que sostiene el plan y los finales que hay que saber. Cada lección trae su idea, un ejemplo de partida real con
+la solución y una tarea. Al final de cada capítulo hay ocho ejercicios; al final del libro, 24 ejercicios
+mixtos y las soluciones de los 72.</p>
+<p>Las posiciones son de la base abierta de ejercicios de Lichess (dominio público) y se comprobaron con Stockfish:
+cada una tiene una sola jugada buena.</p>
+<section><h2>Capítulo 1: El ataque al rey enrocado</h2>
+      <section><h3>Lección 1: Cuándo se puede atacar al rey</h3>
+      <p><em>Un ataque al enroque no se decide por ganas: se decide contando cuántas piezas tuyas llegan y cuántas del rival defienden.</em></p>
+      <p>El enroque protege al rey con tres peones y, casi siempre, con un caballo en f6 (f3) y algún alfil. Atacar esa posición con dos piezas contra cuatro defensores es regalar tiempo: el ataque se apaga y las piezas que fueron a atacar quedan lejos de todo lo demás. La pregunta antes de lanzarse no es si el rey rival se ve débil, sino si tienes más fuerzas cerca de él que las que el rival puede traer a tiempo.</p><p>Cuenta así: las piezas que en una o dos jugadas pueden atacar las casillas vecinas del rey, contra las que pueden defenderlas en el mismo tiempo. Si la cuenta te favorece, el ataque tiene sentido y muchas veces hay un golpe que lo resuelve. Si no, primero hay que traer más piezas o alejar a los defensores: cambiar el caballo de f6, desviar un alfil, ocupar una columna que lleve al rey.</p><p>Las señales que invitan a atacar se repiten: un caballo defensor que se fue, peones del enroque que avanzaron, la dama rival lejos, piezas propias apuntando al flanco del rey. Cuando se juntan dos o tres, conviene buscar con cuidado, porque casi siempre hay algo concreto.</p>
+      <h4>Ejemplo de la lección 1</h4>
+      <p>El rey rival está enrocado y hay un ataque que funciona. Cuenta primero atacantes y defensores.</p>
+      <p class="posicion"><strong>La posición.</strong> Juegan las blancas. Piezas blancas: rey en g1; torres en e6, f1; alfil en f4; peones en a2, b2, c4, d5, g2, h2. Piezas negras: rey en g8; torres en a8, f7; alfil en d8; peones en a7, b7, c7, d6, g7, h7.
+      Las negras acaban de jugar … torre felix 7.
+      <span class="fen">FEN: r2b2k1/ppp2rpp/3pR3/3P4/2P2B2/8/PP4PP/5RK1 w - - 2 21</span></p>
+      <p><strong>Solución.</strong> 21. torre eva 8 jaque, torre felix 8, 22. torre captura felix 8 jaque, rey captura felix 8, 23. alfil captura david 6 jaque. Es un jaque doble: el rey tiene que moverse y no alcanza a tapar nada. Antes de jugarla, cuenta tú mismo las piezas que llegan al rey y las que pueden defenderlo: así se reconoce cuándo el ataque está maduro.</p>
+      <p class="comprobado">Ejercicio 0eUUp de la base abierta de Lichess (CC0), rating 1312. Stockfish 16 a profundidad 18: torre eva 8 jaque es la mejor (+4,0) y la segunda queda en +0,2.</p>
+      <p><strong>Para practicar.</strong> En tus próximas cinco partidas, cada vez que pienses en atacar al rey, cuenta en voz baja atacantes y defensores antes de mover. Anota cuántas veces la cuenta te daba ventaja y cuántas atacaste igual.</p>
+    </section><section><h3>Lección 2: El sacrificio del alfil en h7</h3>
+      <p><em>El sacrificio clásico contra el enroque: el alfil toma en h7 (h2) con jaque, y detrás entran el caballo y la dama.</em></p>
+      <p>Es probablemente el sacrificio más conocido del ajedrez, y también uno de los que más se juega mal. El alfil de d3 toma en h7 con jaque, el rey toma el alfil, y el caballo salta a g5 con jaque mientras la dama se prepara para entrar por h5 o por h7. Cuando funciona, el rey queda sin defensores en dos o tres jugadas; cuando no, se perdió una pieza a cambio de un peón.</p><p>Las condiciones que suelen hacerlo posible son tres: que el caballo pueda llegar a g5 sin que lo tomen, que la dama pueda llegar rápido a la columna h, y que el rival no tenga un caballo en f6 que defienda h7. Un peón en e5 que echó al caballo de f6 es la señal clásica. Pero las condiciones son una guía, no una garantía: cada vez hay que calcular las respuestas del rey, que puede volver a g8, ir a g6 o a h6.</p><p>La regla práctica es no sacrificar por costumbre. Antes de tomar en h7, revisa la variante en la que el rey sale hacia g6: muchas veces es la que salva al defensor, y es la que menos se mira.</p>
+      <h4>Ejemplo de la lección 2</h4>
+      <p>El alfil puede tomar el peón que protege al rey, y con jaque.</p>
+      <p class="posicion"><strong>La posición.</strong> Juegan las blancas. Piezas blancas: rey en e1; dama en d1; torres en a1, h1; alfiles en c1, d3; caballos en b1, f3; peones en a2, c3, d4, e5, f2, g2, h2. Piezas negras: rey en g8; dama en d8; torres en a8, f8; alfiles en b6, c8; caballos en c6, e7; peones en a7, b7, d5, e6, f7, g7, h7.
+      Las negras acaban de jugar … caballo bella cesar 6.
+      <span class="fen">FEN: r1bq1rk1/pp2nppp/1bn1p3/3pP3/3P4/2PB1N2/P4PPP/RNBQK2R w KQ - 1 9</span></p>
+      <p><strong>Solución.</strong> 9. alfil captura hector 7 jaque, rey captura hector 7, 10. caballo gustav 5 jaque. Es una atracción: se arrastra a una pieza (a menudo el rey) a una casilla fatal. El alfil toma en h7 (h2) con jaque: el peón que cubría al rey desaparece y el resto de las piezas entra por esa puerta.</p>
+      <p class="comprobado">Ejercicio 1tJp9 de la base abierta de Lichess (CC0), rating 1585. Stockfish 16 a profundidad 18: alfil captura hector 7 jaque es la mejor (+5,1) y la segunda queda en +0,6.</p>
+      <p><strong>Para practicar.</strong> Busca en tus partidas o en una base de datos tres sacrificios en h7 y, en cada uno, escribe dónde estaba el caballo, dónde la dama y por qué el rey no podía escapar por g6.</p>
+    </section><section><h3>Lección 3: Romper el techo: los sacrificios en g7 y h6</h3>
+      <p><em>Los peones del enroque son el techo del rey. A veces una pieza se entrega para romperlos y dejar al rey a la intemperie.</em></p>
+      <p>Cuando el ataque llega al enroque y el rival ya defendió lo suficiente para que ninguna jugada tranquila funcione, el último recurso es la demolición: entregar una pieza por uno de los peones que cubren al rey. Un alfil en h6, una torre o una dama en g7, un caballo que toma en h6 con jaque. Se pierde material, pero el rey queda sin techo y las piezas que quedan atacan casillas que ya nadie defiende.</p><p>La demolición solo funciona si después del sacrificio queda algo con qué seguir. La pregunta no es «¿cuánto entrego?» sino «¿qué piezas mías llegan al rey una vez que el peón ya no está?». Si la respuesta es la dama y una torre, el sacrificio suele valer; si es una pieza sola, casi nunca.</p><p>Mira también la defensa más tranquila del rival: no tomar la pieza. A veces el defensor deja el alfil en h6 y se refugia, y el atacante queda con una pieza encerrada y un peón de menos. Calcula esa variante antes de entregar nada.</p>
+      <h4>Ejemplo de la lección 3</h4>
+      <p>Una pieza puede tomar un peón del enroque aunque el rival pueda capturarla.</p>
+      <p class="posicion"><strong>La posición.</strong> Juegan las blancas. Piezas blancas: rey en g1; dama en d5; torre en e6; peones en a5, c4, f2, g2, h2. Piezas negras: rey en h8; dama en f7; alfil en b8; caballo en c6; peones en a6, b7, c5, d6, e5, g7, h6.
+      Las negras acaban de jugar … dama felix 7.
+      <span class="fen">FEN: 1b5k/1p3qp1/p1npR2p/P1pQp3/2P5/8/5PPP/6K1 w - - 7 39</span></p>
+      <p><strong>Solución.</strong> 39. torre captura hector 6 jaque, rey gustav 8, 40. torre hector 8 jaque, rey captura hector 8, 41. dama captura felix 7. Es una desviación: se aleja al defensor de lo que defendía. La pieza se entrega por un peón de g7 o h6 (g2 o h3): lo que vale no es lo que se lleva, sino el rey que queda sin techo.</p>
+      <p class="comprobado">Ejercicio 0yjuV de la base abierta de Lichess (CC0), rating 1355. Stockfish 16 a profundidad 18: torre captura hector 6 jaque es la mejor (+5,5) y la segunda queda en -3,0.</p>
+      <p><strong>Para practicar.</strong> Toma una posición tuya de ataque al enroque y anota, para cada peón del enroque rival, qué pieza tuya podría tomarlo y qué piezas entrarían después. Así se entrena a ver la demolición antes de que el rival la impida.</p>
+    </section><section><h3>Lección 4: Las piezas mayores entran al ataque</h3>
+      <p><em>Los ataques se preparan con piezas menores y peones, pero los mates los dan casi siempre la dama y las torres.</em></p>
+      <p>En el ataque al rey cada pieza tiene su trabajo. Los peones abren líneas, los caballos y alfiles fuerzan debilidades, y al final son la dama y las torres las que entran por la columna o la fila que quedó abierta. Un ataque con piezas menores solamente rara vez termina en mate: sirve para preparar, no para rematar.</p><p>Por eso el momento clave del ataque es cuando las piezas mayores llegan al flanco del rey. Una torre que pasa por la tercera fila (la sexta si juegas con negras) para ir a la columna g o h, una dama que se suma a la diagonal, dos torres dobladas en una columna que se acaba de abrir. Cuando eso pasa, la defensa tiene muy pocas jugadas.</p><p>Antes de atacar, entonces, pregúntate por dónde van a entrar la dama y las torres. Si no hay una columna, fila o diagonal que las lleve al rey, el ataque todavía no está listo, por más amenazas que veas.</p>
+      <h4>Ejemplo de la lección 4</h4>
+      <p>La dama o una torre puede entrar al ataque con fuerza decisiva.</p>
+      <p class="posicion"><strong>La posición.</strong> Juegan las blancas. Piezas blancas: rey en b1; dama en d2; torres en d1, h1; caballo en f3; peones en a2, b2, e5, f2, g2, h4. Piezas negras: rey en g8; dama en e6; torres en d8, f8; caballo en b6; peones en a7, b7, c5, f7, g7, h6.
+      Las negras acaban de jugar … torre anna david 8.
+      <span class="fen">FEN: 3r1rk1/pp3pp1/1n2q2p/2p1P3/7P/5N2/PP1Q1PP1/1K1R3R w - - 2 19</span></p>
+      <p><strong>Solución.</strong> 19. dama captura david 8, torre captura david 8, 20. torre captura david 8 jaque, rey hector 7, 21. caballo gustav 5 jaque, hector captura gustav 5, 22. hector captura gustav 5 jaque, rey gustav 6, 23. torre david 6. Es un ataque a la descubierta: al moverse una pieza, se destapa otra. La jugada buena es de la dama o de una torre: la pieza mayor llega al rey por una línea que ya nadie cubría.</p>
+      <p class="comprobado">Ejercicio 2vk7U de la base abierta de Lichess (CC0), rating 1493. Stockfish 16 a profundidad 18: dama captura david 8 es la mejor (+4,8) y la segunda queda en -1,1.</p>
+      <p><strong>Para practicar.</strong> En tus partidas de ataque, marca en qué jugada entró por primera vez una pieza mayor al flanco del rey. Fíjate si antes de eso el ataque ya era peligroso o solo parecía serlo.</p>
+    </section><section><h3>Lección 5: La última fila sin aire</h3>
+      <p><em>Un rey encerrado detrás de sus propios peones puede recibir mate en su primera fila. Reconocerlo gana partidas, y olvidarlo las pierde.</em></p>
+      <p>Después de enrocar, el rey queda en g1 (g8) con los peones de f, g y h delante. Mientras esos peones no se mueven, el rey no tiene casillas de escape hacia adelante, y una torre o una dama que llega a la primera fila da mate sin más. Es el mate más frecuente en partidas entre aficionados, y también uno de los que más se cuela en partidas de jugadores fuertes.</p><p>Para aprovecharlo, el atacante busca sacar de la primera fila a las piezas que la defienden: las desvía con un sacrificio, las cambia o las ata a otra tarea. Muchas veces la jugada decisiva no es la del mate, sino la anterior, la que obliga al defensor a irse.</p><p>Para defenderse, la receta es vieja y sencilla: darle aire al rey con h3 o g3 (h6 o g6) en un momento tranquilo, antes de que haga falta. Cuesta un tiempo, pero quita para siempre una de las armas más fuertes del rival.</p>
+      <h4>Ejemplo de la lección 5</h4>
+      <p>El rey rival no tiene casillas de escape en su última fila.</p>
+      <p class="posicion"><strong>La posición.</strong> Juegan las negras. Piezas blancas: rey en g1; dama en b7; torres en a1, h6; peones en a2, b2, c3, g2, h2. Piezas negras: rey en f8; dama en e5; torre en e8; alfil en d3; peones en a7, c4, g5.
+      Las blancas acaban de jugar Dama captura bella 7.
+      <span class="fen">FEN: 4rk2/pQ6/7R/4q1p1/2p5/2Pb4/PP4PP/R5K1 b - - 0 31</span></p>
+      <p><strong>Solución.</strong> 31… dama eva 3 jaque, 32. rey hector 1, dama eva 1 jaque, 33. torre captura eva 1, torre captura eva 1 jaque mate. El golpe va a la última fila, donde el rey no tiene salida. La línea termina con mate en la última fila: el rey quedó encerrado detrás de sus propios peones.</p>
+      <p class="comprobado">Ejercicio 12rIE de la base abierta de Lichess (CC0), rating 1388. Stockfish 16 a profundidad 18: dama eva 3 jaque es la mejor (mate en 3) y la segunda queda en -4,0.</p>
+      <p><strong>Para practicar.</strong> Revisa tus últimas diez partidas y busca los momentos en que tu rey no tenía casillas de escape. Anota si el rival podía aprovecharlo y si te diste cuenta a tiempo.</p>
+    </section><section><h3>Lección 6: Los mates de patrón</h3>
+      <p><em>Hay mates que se repiten con el mismo dibujo: el ahogado, el árabe, el de Anastasia, el del pasillo. Conocerlos de vista ahorra cálculo.</em></p>
+      <p>Muchos ataques terminan siempre igual. El caballo que da mate a un rey rodeado por sus propias piezas (el mate ahogado), la torre y el caballo que encierran al rey en la esquina (el árabe), la torre y el caballo contra el rey en la columna h (el de Anastasia), los dos alfiles cruzados (el de Boden). Son dibujos: una vez que se aprenden, se reconocen en la posición antes de calcular nada.</p><p>Esa es su utilidad práctica. Quien conoce los patrones no busca el mate jugada por jugada: ve que la posición se parece a uno de ellos y busca solo cómo llegar. El cálculo se vuelve corto y seguro, porque se sabe adónde va.</p><p>Para aprenderlos sirve más repetir que leer. Arma cada mate en un tablero vacío, con las piezas mínimas, y después búscalo en posiciones con más piezas. El día que aparezca en una partida tuya, lo vas a ver.</p>
+      <h4>Ejemplo de la lección 6</h4>
+      <p>Hay un mate de dibujo conocido escondido en la posición.</p>
+      <p class="posicion"><strong>La posición.</strong> Juegan las negras. Piezas blancas: rey en g1; dama en d5; torres en f1, f2; peones en a3, c4, g2. Piezas negras: rey en b8; dama en c5; torre en g8; caballo en d4; peones en a5, b7, c7, e5.
+      Las blancas acaban de jugar Dama david 5.
+      <span class="fen">FEN: 1k4r1/1pp5/8/p1qQp3/2Pn4/P7/5RP1/5RK1 b - - 2 38</span></p>
+      <p><strong>Solución.</strong> 38… caballo eva 2 jaque, 39. rey hector 2, torre hector 8 jaque mate. Todo gira en torno a una clavada: la pieza clavada no puede defender. El mate final tiene un dibujo con nombre propio: reconocerlo hace corto el cálculo.</p>
+      <p class="comprobado">Ejercicio 35JUo de la base abierta de Lichess (CC0), rating 1484. Stockfish 16 a profundidad 18: caballo eva 2 jaque es la mejor (mate en 2) y la segunda queda en -1,2.</p>
+      <p><strong>Para practicar.</strong> Arma en un tablero vacío cinco mates de patrón con las piezas mínimas: ahogado, árabe, Anastasia, Boden y el de la última fila. Después resuelve diez ejercicios de mate y nombra el patrón de cada uno.</p>
+    </section>
+      <h3>Ejercicios del capítulo 1</h3>
+      <p>Ocho posiciones de partidas reales, de la más fácil a la más difícil. Cada una tiene una sola jugada que funciona. Las soluciones están al final.</p>
+      <article><h4>Ejercicio 1</h4><p>Pista: Cuenta atacantes y defensores alrededor del rey: si sobran los tuyos, hay algo.</p><p class="posicion"><strong>La posición.</strong> Juegan las blancas. Piezas blancas: rey en g1; dama en h6; torres en a1, e1; caballo en f3; peones en a2, b2, c3, d4, g2, g3, h3. Piezas negras: rey en g8; dama en d8; torres en c8, f8; caballos en c6, e4; peones en a5, b5, d5, e6, f7.
+      Las negras acaban de jugar … caballo eva 4.
+      <span class="fen">FEN: 2rq1rk1/5p2/2n1p2Q/pp1p4/3Pn3/2P2NPP/PP4P1/R3R1K1 w - - 1 19</span></p></article><article><h4>Ejercicio 2</h4><p>Pista: El peón de h7 (h2) es el único defensor de esa casilla. ¿Qué pasa si se lo quitas con jaque?</p><p class="posicion"><strong>La posición.</strong> Juegan las negras. Piezas blancas: rey en g1; dama en b7; torres en c1, e1; alfil en b2; caballos en c3, f3; peones en a2, b3, d2, f2, g2, h2. Piezas negras: rey en g8; dama en e7; torres en a8, f8; alfil en c7; caballo en b4; peones en a6, e6, f7, g7, h6.
+      Las blancas acaban de jugar Dama captura bella 7.
+      <span class="fen">FEN: r4rk1/1Qb1qpp1/p3p2p/8/1n6/1PN2N2/PB1P1PPP/2R1R1K1 b - - 0 20</span></p></article><article><h4>Ejercicio 3</h4><p>Pista: Los peones del enroque son el techo del rey. Romper uno puede valer una pieza.</p><p class="posicion"><strong>La posición.</strong> Juegan las negras. Piezas blancas: rey en h1; dama en d2; torres en d1, f1; alfiles en e3, f3; peones en a2, b4, c5, d5, f2, g2, h3. Piezas negras: rey en g8; dama en h4; torres en e8, f8; alfil en g7; caballo en f4; peones en a7, b7, c7, d6, e5, g6, h7.
+      Las blancas acaban de jugar Cesar 5.
+      <span class="fen">FEN: 4rrk1/ppp3bp/3p2p1/2PPp3/1P3n1q/4BB1P/P2Q1PP1/3R1R1K b - - 0 19</span></p></article><article><h4>Ejercicio 4</h4><p>Pista: Los peones del enroque son el techo del rey. Romper uno puede valer una pieza.</p><p class="posicion"><strong>La posición.</strong> Juegan las blancas. Piezas blancas: rey en b1; dama en c3; torres en e3, h1; peones en a2, b2, c2, d3, f2, g2, g3. Piezas negras: rey en g6; dama en d7; torres en a8, e7; peones en a7, b6, c5, d6, f5, g5, h6.
+      Las negras acaban de jugar … rey gustav 6.
+      <span class="fen">FEN: r7/p2qr3/1p1p2kp/2p2pp1/8/2QPR1P1/PPP2PP1/1K5R w - - 6 27</span></p></article><article><h4>Ejercicio 5</h4><p>Pista: El peón de h7 (h2) es el único defensor de esa casilla. ¿Qué pasa si se lo quitas con jaque?</p><p class="posicion"><strong>La posición.</strong> Juegan las blancas. Piezas blancas: rey en e1; dama en d1; torres en a1, h1; alfiles en d3, e7; caballo en c3; peones en a2, b2, c2, d4, g2, h2. Piezas negras: rey en g8; dama en d8; torres en a8, f8; alfil en c8; caballos en c6, f2; peones en a7, b7, d5, e6, f7, g7, h7.
+      Las negras acaban de jugar … caballo captura felix 2.
+      <span class="fen">FEN: r1bq1rk1/pp2Bppp/2n1p3/3p4/3P4/2NB4/PPP2nPP/R2QK2R w KQ - 0 11</span></p></article><article><h4>Ejercicio 6</h4><p>Pista: Cuenta atacantes y defensores alrededor del rey: si sobran los tuyos, hay algo.</p><p class="posicion"><strong>La posición.</strong> Juegan las blancas. Piezas blancas: rey en e1; dama en h2; torres en c1, h1; alfiles en d3, d4; peones en a3, b4, c2, f3, g4. Piezas negras: rey en g8; dama en d7; torres en c8, f7; alfil en g7; caballo en d5; peones en a6, b5, d6, e7, g6, h7.
+      Las negras acaban de jugar … caballo captura david 5.
+      <span class="fen">FEN: 2r3k1/3qprbp/p2p2p1/1p1n4/1P1B2P1/P2B1P2/2P4Q/2R1K2R w K - 0 22</span></p></article><article><h4>Ejercicio 7</h4><p>Pista: El peón de h7 (h2) es el único defensor de esa casilla. ¿Qué pasa si se lo quitas con jaque?</p><p class="posicion"><strong>La posición.</strong> Juegan las negras. Piezas blancas: rey en g1; dama en d1; torres en a1, f1; alfiles en c1, g2; caballo en c3; peones en a2, b2, c4, e2, f2, h2, h4. Piezas negras: rey en e8; dama en d8; torre en a8; alfiles en c8, d6; caballos en c6, g4; peones en a7, b7, c7, f7, g7.
+      Las blancas acaban de jugar Gustav captura hector 4.
+      <span class="fen">FEN: r1bqk3/ppp2pp1/2nb4/8/2P3nP/2N5/PP2PPBP/R1BQ1RK1 b q - 0 11</span></p></article><article><h4>Ejercicio 8</h4><p>Pista: Cuenta atacantes y defensores alrededor del rey: si sobran los tuyos, hay algo.</p><p class="posicion"><strong>La posición.</strong> Juegan las blancas. Piezas blancas: rey en g1; dama en c2; torre en e1; peones en a2, b2, c3, d4, f3, g2, h3. Piezas negras: rey en g8; dama en g3; alfil en f5; caballo en g5; peones en a7, c4, c6, d5, f7, g7, h6.
+      Las negras acaban de jugar … alfil captura felix 5.
+      <span class="fen">FEN: 6k1/p4pp1/2p4p/3p1bn1/2pP4/2P2PqP/PPQ3P1/4R1K1 w - - 0 27</span></p></article>
+    </section><section><h2>Capítulo 2: El rey en el centro y los enroques opuestos</h2>
+      <section><h3>Lección 7: Castigar al rey que no enrocó</h3>
+      <p><em>Un rey que se queda en el centro con las columnas abriéndose es un blanco. El tiempo para atacarlo es ahora, no dentro de tres jugadas.</em></p>
+      <p>El rey en el centro no es un problema mientras el centro está cerrado. Se vuelve un problema cuando las columnas d y e se abren y las piezas rivales pueden llegar a ellas. Entonces cada jugada que el rey tarda en enrocar es una jugada que el atacante usa para traer una torre, abrir una línea o impedir el enroque para siempre.</p><p>El atacante tiene que actuar rápido y casi siempre con algún sacrificio, porque la ventaja es de tiempo, no de material: si deja pasar dos jugadas, el rey enroca y la ventaja desaparece. Por eso en estas posiciones se entrega un peón para abrir la columna e, o una pieza para que el rey no pueda moverse.</p><p>La señal para el defensor es la contraria: si tu rey todavía está en el centro y el rival está abriendo líneas, enrocar o cerrar el centro es más urgente que ganar un peón.</p>
+      <h4>Ejemplo de la lección 7</h4>
+      <p>El rey rival sigue en el centro, y hay una forma de castigarlo.</p>
+      <p class="posicion"><strong>La posición.</strong> Juegan las blancas. Piezas blancas: rey en g1; dama en c8; torres en c1, e1; peones en a2, b2, f2, h2. Piezas negras: rey en e8; dama en d8; torres en f4, h8; alfil en e5; peones en b5, b7, d5, f5, f6, g7, h7.
+      Las negras acaban de jugar … dama david 8.
+      <span class="fen">FEN: 2Qqk2r/1p4pp/5p2/1p1pbp2/5r2/8/PP3P1P/2R1R1K1 w k - 2 24</span></p>
+      <p><strong>Solución.</strong> 24. dama eva 6 jaque, rey felix 8, 25. torre cesar 8, dama captura cesar 8, 26. dama captura cesar 8 jaque, rey felix 7, 27. dama captura hector 8. Es una enfilada: la pieza de adelante se va y cae la de atrás. El rey rival seguía en las columnas del centro: la jugada buena abre o aprovecha una línea antes de que se esconda.</p>
+      <p class="comprobado">Ejercicio 2XhlY de la base abierta de Lichess (CC0), rating 1609. Stockfish 16 a profundidad 18: dama eva 6 jaque es la mejor (+5,0) y la segunda queda en 0,0.</p>
+      <p><strong>Para practicar.</strong> Revisa tus partidas en las que uno de los dos reyes no enrocó antes de la jugada 12. Anota quién aprovechó (o no) esa demora y con qué jugada.</p>
+    </section><section><h3>Lección 8: El punto débil de f7</h3>
+      <p><em>Al empezar la partida, f7 (f2) solo lo defiende el rey. Es la casilla que más golpes recibe en la apertura.</em></p>
+      <p>En la posición inicial, el peón de f7 está protegido solamente por el rey. Por eso las primeras amenazas de mate de la historia —el mate del pastor, el ataque con el alfil en c4 y el caballo en g5— apuntan ahí. Con el paso de las jugadas el punto se defiende mejor, pero mientras el rey no enroca sigue siendo un blanco.</p><p>Los golpes en f7 suelen tener dos formas: un sacrificio de alfil o de caballo que saca al rey de su casa y lo deja en medio del tablero, o una doble amenaza en la que f7 es uno de los dos objetivos. En ambos casos el atacante necesita que la dama o una torre pueda seguir rápido.</p><p>Para el que defiende, la regla es mirar f7 cada vez que una pieza rival lo ataca de nuevo: contar atacantes y defensores ahí es tan importante como mirar el centro.</p>
+      <h4>Ejemplo de la lección 8</h4>
+      <p>El golpe va a la casilla más débil al principio de la partida.</p>
+      <p class="posicion"><strong>La posición.</strong> Juegan las negras. Piezas blancas: rey en e1; dama en d1; torres en a1, h1; alfiles en f1, f4; caballos en b1, g1; peones en a2, b2, c3, e2, e7, f2, g2, h2. Piezas negras: rey en e8; dama en d8; torres en a8, h8; alfiles en c5, c8; caballo en c6; peones en a7, b7, c7, f7, g7, h7.
+      Las blancas acaban de jugar David captura eva 7.
+      <span class="fen">FEN: r1bqk2r/ppp1Pppp/2n5/2b5/5B2/2P5/PP2PPPP/RN1QKBNR b KQkq - 0 6</span></p>
+      <p><strong>Solución.</strong> 6… alfil captura felix 2 jaque, 7. rey captura felix 2, dama captura david 1. Es una desviación: se aleja al defensor de lo que defendía. El ataque apunta a f7 (f2), la casilla que al principio solo defiende el rey.</p>
+      <p class="comprobado">Ejercicio 1yuqX de la base abierta de Lichess (CC0), rating 1479. Stockfish 16 a profundidad 18: alfil captura felix 2 jaque es la mejor (+4,3) y la segunda queda en -4,1.</p>
+      <p><strong>Para practicar.</strong> Juega diez partidas rápidas con la consigna de mirar f7 (o f2) antes de cada jugada de la apertura. Anota cuántas veces el rival lo atacó y cuántas lo tuviste en cuenta.</p>
+    </section><section><h3>Lección 9: La ventaja de desarrollo se usa o se pierde</h3>
+      <p><em>Tener más piezas en juego que el rival es una ventaja que dura pocas jugadas. Si no se convierte en algo concreto, se esfuma.</em></p>
+      <p>Cuando el rival gasta tiempos en la apertura —mueve dos veces la misma pieza, sale a cazar peones con la dama, retrasa el enroque— uno termina con más piezas desarrolladas. Esa ventaja es real pero no dura: en cuanto el rival termine de sacar sus piezas, desaparece. La pregunta entonces es cómo convertirla en algo que se quede.</p><p>Hay tres maneras clásicas: abrir el centro para que las piezas activas lleguen al rey, ganar material con una amenaza que el rival no tiene tiempo de parar, o impedir que el rival enroque. Las tres piden jugar con decisión, muchas veces entregando un peón para abrir líneas.</p><p>El error típico es seguir desarrollando con tranquilidad cuando ya no hay nada más que desarrollar. En ese momento hay que buscar el golpe.</p>
+      <h4>Ejemplo de la lección 9</h4>
+      <p>Todavía es la apertura y una de las partes tiene más piezas en juego: hay que usarlo ya.</p>
+      <p class="posicion"><strong>La posición.</strong> Juegan las blancas. Piezas blancas: rey en e1; dama en d3; torres en a1, h1; alfiles en c1, f1; caballos en b1, e5; peones en a2, b2, c2, f2, g2, h2. Piezas negras: rey en e8; dama en d8; torres en a8, h8; alfiles en c8, f8; caballos en b8, f6; peones en a7, b7, c7, e6, f7, g7, h7.
+      Las negras acaban de jugar … caballo felix 6.
+      <span class="fen">FEN: rnbqkb1r/ppp2ppp/4pn2/4N3/8/3Q4/PPP2PPP/RNB1KB1R w KQkq - 1 6</span></p>
+      <p><strong>Solución.</strong> 6. dama captura david 8 jaque, rey captura david 8, 7. caballo captura felix 7 jaque, rey eva 8, 8. caballo captura hector 8. Es una horquilla: una pieza ataca dos objetivos a la vez. La posición sale de la apertura: la ventaja de tiempo se convierte en algo concreto con esta jugada.</p>
+      <p class="comprobado">Ejercicio 1ghMX de la base abierta de Lichess (CC0), rating 1373. Stockfish 16 a profundidad 18: dama captura david 8 jaque es la mejor (+3,7) y la segunda queda en -0,8.</p>
+      <p><strong>Para practicar.</strong> En tus partidas, marca la jugada en que tuviste dos o más piezas desarrolladas de ventaja. Revisa con el motor si había un golpe ahí, y anota si lo buscaste.</p>
+    </section><section><h3>Lección 10: Sacar al rey de su casa</h3>
+      <p><em>Un jaque con sacrificio puede obligar al rey a salir al medio del tablero, donde ya no tiene quién lo defienda.</em></p>
+      <p>Hay ataques que no buscan dar mate al rey donde está, sino obligarlo a salir. Se entrega una pieza con jaque, el rey tiene que tomarla y queda una o dos casillas más adelante, lejos de sus peones y de sus defensores. Desde ahí, las piezas atacantes lo persiguen con jaques hasta el mate o hasta ganar más de lo que costó.</p><p>La extracción funciona cuando las piezas que quedan pueden seguir con jaques o amenazas. Un rey afuera con tiempo para volver no es un rey perdido; un rey afuera al que le llueven jaques sí. Antes de sacrificar, entonces, mira cuántas piezas pueden dar el jaque siguiente.</p><p>Es una de las ideas más espectaculares del ajedrez y una de las más concretas: no se juega por intuición, se calcula hasta el final.</p>
+      <h4>Ejemplo de la lección 10</h4>
+      <p>Una pieza se puede entregar con jaque para atraer al rey afuera.</p>
+      <p class="posicion"><strong>La posición.</strong> Juegan las blancas. Piezas blancas: rey en g1; dama en c5; torre en e8; caballo en h5; peones en b4, f2, g3, h2. Piezas negras: rey en h7; dama en f3; torre en d4; caballo en c6; peones en a6, b7, d5, f7, g6, h6.
+      Las negras acaban de jugar … dama felix 3.
+      <span class="fen">FEN: 4R3/1p3p1k/p1n3pp/2Qp3N/1P1r4/5qP1/5P1P/6K1 w - - 4 37</span></p>
+      <p><strong>Solución.</strong> 37. torre hector 8 jaque, rey captura hector 8, 38. dama felix 8 jaque, rey hector 7, 39. dama gustav 7 jaque mate. Es una atracción: se arrastra a una pieza (a menudo el rey) a una casilla fatal. La jugada da jaque y el rey puede tomar la pieza: si lo hace, queda fuera de su casa y a merced del resto.</p>
+      <p class="comprobado">Ejercicio 1bOdm de la base abierta de Lichess (CC0), rating 1602. Stockfish 16 a profundidad 18: torre hector 8 jaque es la mejor (mate en 3) y la segunda queda en -5,1.</p>
+      <p><strong>Para practicar.</strong> Resuelve diez ejercicios de ataque y en cada uno pregúntate primero: ¿qué pasaría si el rey tuviera que tomar una pieza en la casilla de al lado? A veces esa pregunta muestra la solución.</p>
+    </section><section><h3>Lección 11: Enroques opuestos: la carrera</h3>
+      <p><em>Cuando los reyes están en flancos distintos, los dos atacan con los peones. Gana quien llegue primero, y cada tiempo cuenta.</em></p>
+      <p>Con los reyes enrocados en flancos opuestos, la partida cambia de carácter. Cada bando puede lanzar sus peones contra el rey rival sin debilitar el propio, y el medio juego se vuelve una carrera: quien abra primero las líneas contra el otro rey suele ganar.</p><p>En esa carrera, una jugada defensiva es casi siempre un tiempo perdido. Vale más un peón que avanza contra el rey rival que una pieza que defiende el propio, y muchas veces se entrega material solo para abrir una columna un tiempo antes. Lo que se cuenta no son los peones, sino las jugadas que faltan para que cada ataque llegue.</p><p>Antes de cada jugada, cuenta: ¿cuántas jugadas faltan para mi primera amenaza seria? ¿Y para la suya? Si estás atrás, defenderte con una jugada que además frena su ataque puede ser lo único que sirve.</p>
+      <h4>Ejemplo de la lección 11</h4>
+      <p>Los reyes están en flancos distintos: hay una jugada que llega primero.</p>
+      <p class="posicion"><strong>La posición.</strong> Juegan las negras. Piezas blancas: rey en b3; dama en c3; torres en a1, g1; caballo en d2; peones en a2, c4, e4, f5, h2. Piezas negras: rey en g8; dama en a5; torre en d8; alfil en d7; peones en a7, b7, c7, f7, g6, h7.
+      Las blancas acaban de jugar Dama cesar 3.
+      <span class="fen">FEN: 3r2k1/pppb1p1p/6p1/q4P2/2P1P3/1KQ5/P2N3P/R5R1 b - - 2 28</span></p>
+      <p><strong>Solución.</strong> 28… alfil anna 4 jaque, 29. rey bella 2, torre captura david 2 jaque, 30. dama captura david 2, dama captura david 2 jaque. Es un ataque a la descubierta: al moverse una pieza, se destapa otra. Los reyes están en flancos opuestos: la jugada buena es la que hace que el propio ataque llegue antes.</p>
+      <p class="comprobado">Ejercicio 2jpNp de la base abierta de Lichess (CC0), rating 1615. Stockfish 16 a profundidad 18: alfil anna 4 jaque es la mejor (+6,3) y la segunda queda en -3,8.</p>
+      <p><strong>Para practicar.</strong> Juega tres partidas de entrenamiento con enroques opuestos (por ejemplo, contra la Siciliana Dragón o con el enroque largo en la Caro-Kann). Después de cada una, cuenta cuántas jugadas tardó cada ataque en abrir una columna.</p>
+    </section><section><h3>Lección 12: Defenderse a tiempo</h3>
+      <p><em>No todo ataque se gana atacando. A veces la jugada buena es la que para la amenaza del rival antes de que exista.</em></p>
+      <p>Saber atacar sin saber defender es jugar la mitad del ajedrez. Cuando el rival amenaza algo, la primera pregunta no es cómo seguir con lo propio, sino qué pasa si no se hace nada. Muchas partidas se pierden por no hacerse esa pregunta una sola vez.</p><p>La defensa buena casi nunca es pasiva. La jugada que para la amenaza y al mismo tiempo trae una pieza al juego, o cambia al atacante más peligroso, o crea una amenaza propia, vale el doble. Y en las posiciones de ataque mutuo, defender con un tiempo puede dar vuelta la carrera.</p><p>En estas posiciones suele haber una sola jugada que aguanta. Encontrarla pide jugar primero por el rival: ver su amenaza entera, hasta el final, y recién después buscar cómo pararla.</p>
+      <h4>Ejemplo de la lección 12</h4>
+      <p>Primero mira qué amenaza el rival: hay una sola jugada buena.</p>
+      <p class="posicion"><strong>La posición.</strong> Juegan las blancas. Piezas blancas: rey en g1; torres en f2, f6; alfil en e2; caballo en h4; peones en c4, d5. Piezas negras: rey en g8; torres en a8, f8; alfil en d7; caballo en e4; peones en b4, c5, d6, e5, f7.
+      Las negras acaban de jugar … caballo eva 4.
+      <span class="fen">FEN: r4rk1/3b1p2/3p1R2/2pPp3/1pP1n2N/8/4BR2/6K1 w - - 4 36</span></p>
+      <p><strong>Solución.</strong> 36. torre gustav 2 jaque, rey hector 7, 37. alfil david 3, torre anna 1 jaque, 38. rey hector 2. Todo gira en torno a una clavada: la pieza clavada no puede defender. La jugada buena para la amenaza del rival: todas las demás la dejan pasar o empeoran la posición.</p>
+      <p class="comprobado">Ejercicio 2HqSP de la base abierta de Lichess (CC0), rating 1429. Stockfish 16 a profundidad 18: torre gustav 2 jaque es la mejor (+3,7) y la segunda queda en -5,1.</p>
+      <p><strong>Para practicar.</strong> Antes de cada jugada de tu próxima partida lenta, escribe en la planilla, con una letra, qué amenaza el rival (o una raya si no amenaza nada). Al final, revisa cuántas veces la viste a tiempo.</p>
+    </section>
+      <h3>Ejercicios del capítulo 2</h3>
+      <p>Ocho posiciones de partidas reales, de la más fácil a la más difícil. Cada una tiene una sola jugada que funciona. Las soluciones están al final.</p>
+      <article><h4>Ejercicio 9</h4><p>Pista: Tienes más piezas en juego que el rival. Ese tiempo hay que usarlo ahora.</p><p class="posicion"><strong>La posición.</strong> Juegan las negras. Piezas blancas: rey en e1; dama en e2; torres en a1, h1; alfiles en c1, f1; caballo en c3; peones en a2, b2, c4, e4, f2, g2, h2. Piezas negras: rey en e8; dama en f6; torres en a8, h8; alfiles en c8, d4; caballo en b8; peones en a7, b7, c6, d7, f7, g7, h7.
+      Las blancas acaban de jugar Dama eva 2.
+      <span class="fen">FEN: rnb1k2r/pp1p1ppp/2p2q2/8/2PbP3/2N5/PP2QPPP/R1B1KB1R b KQkq - 1 9</span></p></article><article><h4>Ejercicio 10</h4><p>Pista: La casilla f7 (f2) solo la defiende el rey. Es el punto más débil al empezar.</p><p class="posicion"><strong>La posición.</strong> Juegan las negras. Piezas blancas: rey en e1; torres en c5, f2; alfil en f6; peones en a5, e3, g3, h2. Piezas negras: rey en d7; torres en a2, g6; alfil en c6; peones en a6, c7, d5, h7.
+      Las blancas acaban de jugar Rey eva 1.
+      <span class="fen">FEN: 8/2pk3p/p1b2Br1/P1Rp4/8/4P1P1/r4R1P/4K3 b - - 2 46</span></p></article><article><h4>Ejercicio 11</h4><p>Pista: El rey rival sigue en el centro: abre líneas antes de que se esconda.</p><p class="posicion"><strong>La posición.</strong> Juegan las blancas. Piezas blancas: rey en e1; dama en d1; torres en a1, h1; alfil en f4; caballos en b1, g1; peones en a2, b2, f2, g2, h2. Piezas negras: rey en e8; dama en d8; torres en a8, h8; alfil en d6; caballos en b8, e5; peones en a7, b7, c5, e6, g7, h7.
+      Las negras acaban de jugar … felix captura eva 6.
+      <span class="fen">FEN: rn1qk2r/pp4pp/3bp3/2p1n3/5B2/8/PP3PPP/RN1QK1NR w KQkq - 0 12</span></p></article><article><h4>Ejercicio 12</h4><p>Pista: Tienes más piezas en juego que el rival. Ese tiempo hay que usarlo ahora.</p><p class="posicion"><strong>La posición.</strong> Juegan las blancas. Piezas blancas: rey en g1; dama en d1; torres en a1, f1; alfil en e2; caballos en d2, f3; peones en a2, b2, d5, e4, f2, g2, h2. Piezas negras: rey en g8; dama en d8; torres en a8, e8; alfiles en c8, e3; caballos en c6, d7; peones en a7, b7, c7, d6, f7, g7, h7.
+      Las negras acaban de jugar … alfil captura eva 3.
+      <span class="fen">FEN: r1bqr1k1/pppn1ppp/2np4/3P4/4P3/4bN2/PP1NBPPP/R2Q1RK1 w - - 0 12</span></p></article><article><h4>Ejercicio 13</h4><p>Pista: La casilla f7 (f2) solo la defiende el rey. Es el punto más débil al empezar.</p><p class="posicion"><strong>La posición.</strong> Juegan las blancas. Piezas blancas: rey en e1; dama en c4; torres en a1, h1; alfil en c1; caballos en c3, g5; peones en a2, b2, c2, e4, f2, g2, h2. Piezas negras: rey en e8; dama en c7; torres en a8, h8; alfiles en c8, f8; caballo en g8; peones en a6, c6, d6, e5, f7, g7, h6.
+      Las negras acaban de jugar … hector 6.
+      <span class="fen">FEN: r1b1kbnr/2q2pp1/p1pp3p/4p1N1/2Q1P3/2N5/PPP2PPP/R1B1K2R w KQkq - 0 10</span></p></article><article><h4>Ejercicio 14</h4><p>Pista: El rey rival sigue en el centro: abre líneas antes de que se esconda.</p><p class="posicion"><strong>La posición.</strong> Juegan las blancas. Piezas blancas: rey en e1; dama en h3; torres en a1, h1; alfiles en d1, d2; peones en a3, c4, e4, f2, f5, g6. Piezas negras: rey en f8; dama en d8; torres en b6, b7; alfiles en c8, g7; caballo en e5; peones en a6, c5, d4.
+      Las negras acaban de jugar … rey felix 8.
+      <span class="fen">FEN: 2bq1k2/1r4b1/pr4P1/2p1nP2/2PpP3/P6Q/3B1P2/R2BK2R w KQ - 5 30</span></p></article><article><h4>Ejercicio 15</h4><p>Pista: La casilla f7 (f2) solo la defiende el rey. Es el punto más débil al empezar.</p><p class="posicion"><strong>La posición.</strong> Juegan las negras. Piezas blancas: rey en e1; dama en d1; torres en a1, h1; alfiles en b2, e2; caballo en c3; peones en a2, b3, c2, d4, f2, g2, h3. Piezas negras: rey en g8; dama en e7; torres en a8, e8; alfil en d6; caballo en g4; peones en a7, b7, d5, f7, g6, h7.
+      Las blancas acaban de jugar Hector 3.
+      <span class="fen">FEN: r3r1k1/pp2qp1p/3b2p1/3p4/3P2n1/1PN4P/PBP1BPP1/R2QK2R b KQ - 0 15</span></p></article><article><h4>Ejercicio 16</h4><p>Pista: El rey rival sigue en el centro: abre líneas antes de que se esconda.</p><p class="posicion"><strong>La posición.</strong> Juegan las negras. Piezas blancas: rey en e1; dama en e6; torres en c1, h8; caballo en f4; peones en a2, b2, c2, f3, g4. Piezas negras: rey en c8; dama en f6; torre en d8; alfil en f8; caballo en d5; peones en a7, b6, c6, g6, g7.
+      Las blancas acaban de jugar Dama eva 6 jaque.
+      <span class="fen">FEN: 2kr1b1R/p5p1/1pp1Qqp1/3n4/5NP1/5P2/PPP5/2R1K3 b - - 1 22</span></p></article>
+    </section><section><h2>Capítulo 3: Las piezas en su sitio</h2>
+      <section><h3>Lección 13: La torre en la séptima</h3>
+      <p><em>Una torre que llega a la séptima fila ataca los peones desde atrás y encierra al rey en la octava. Vale casi un peón.</em></p>
+      <p>La séptima fila es donde están los peones del rival antes de moverse, y donde ninguna pieza menor los defiende bien. Una torre que llega ahí ataca varios peones a la vez, desde atrás, y además encierra al rey en su última fila. Por eso los entrenadores repiten que una torre en la séptima vale casi un peón.</p><p>Para llegar, la torre necesita una columna abierta. El camino habitual es ocupar la columna, doblar torres si hace falta y entrar cuando el rival ya no puede cubrir todas las casillas de entrada. Dos torres en la séptima suelen ser decisivas: atacan todo y amenazan mate.</p><p>El defensor tiene que impedir la entrada o cambiar la torre que entra. Dejarla instalada esperando que no pase nada casi nunca funciona.</p>
+      <h4>Ejemplo de la lección 13</h4>
+      <p>Una torre puede llegar a la séptima fila con efecto inmediato.</p>
+      <p class="posicion"><strong>La posición.</strong> Juegan las negras. Piezas blancas: rey en f2; torres en c7, e2; peones en a3, b2, c3, f3, g2, h2. Piezas negras: rey en f8; torres en c8, d2; peones en b6, c6, d6, g7, h7.
+      Las blancas acaban de jugar Torre captura cesar 7.
+      <span class="fen">FEN: 2r2k2/2R3pp/1ppp4/8/8/P1P2P2/1P1rRKPP/8 b - - 0 26</span></p>
+      <p><strong>Solución.</strong> 26… torre captura eva 2 jaque, 27. rey captura eva 2, torre captura cesar 7. Hay una jugada intermedia: antes de lo obvio, algo más fuerte. La torre llega a la séptima (la segunda, si juegas con negras): desde ahí ataca lo que nadie defiende bien.</p>
+      <p class="comprobado">Ejercicio 2K2IX de la base abierta de Lichess (CC0), rating 1279. Stockfish 16 a profundidad 18: torre captura eva 2 jaque es la mejor (+5,3) y la segunda queda en -1,8.</p>
+      <p><strong>Para practicar.</strong> En tus próximas partidas, marca cada vez que una torre (tuya o del rival) llegó a la séptima. Anota qué ganó o qué amenazó en las tres jugadas siguientes.</p>
+    </section><section><h3>Lección 14: El caballo y la doble amenaza</h3>
+      <p><em>El caballo es la pieza de las horquillas: ataca en todas direcciones a la vez y nadie lo puede bloquear.</em></p>
+      <p>El caballo tiene una forma de moverse que no se parece a ninguna otra, y eso lo hace la pieza ideal para atacar dos cosas a la vez. Desde una casilla central ataca hasta ocho casillas, y como salta, ninguna pieza puede ponerse en medio. La horquilla de caballo al rey y la dama es la primera táctica que aprende cualquier jugador, y sigue ganando partidas en todos los niveles.</p><p>Las horquillas casi nunca aparecen solas: se preparan. Se obliga a dos piezas a ponerse a un salto de caballo de una misma casilla, con un jaque o un cambio, y después el caballo cae ahí. Por eso, cuando dos piezas rivales están a distancia de caballo entre sí, conviene buscar cómo llegar a la casilla que las ataca a ambas.</p><p>El caballo también rinde en casillas fuertes: una casilla avanzada, protegida por un peón y que ningún peón rival puede atacar. Desde ahí controla el juego y espera el momento de saltar.</p>
+      <h4>Ejemplo de la lección 14</h4>
+      <p>El caballo puede atacar dos objetivos a la vez.</p>
+      <p class="posicion"><strong>La posición.</strong> Juegan las blancas. Piezas blancas: rey en g1; dama en g2; torres en d1, e1; caballo en f5; peones en a2, c4, f6, h3. Piezas negras: rey en g8; dama en c8; torres en d8, f2; alfil en b6; peones en a7, f7, g6, h7.
+      Las negras acaban de jugar … torre captura felix 2.
+      <span class="fen">FEN: 2qr2k1/p4p1p/1b3Pp1/5N2/2P5/7P/P4rQ1/3RR1K1 w - - 0 26</span></p>
+      <p><strong>Solución.</strong> 26. caballo eva 7 jaque, rey felix 8, 27. caballo captura cesar 8, torre captura gustav 2 jaque, 28. rey captura gustav 2. Es una horquilla: una pieza ataca dos objetivos a la vez. La jugada es del caballo, y la línea gana material con una doble amenaza que no se puede parar.</p>
+      <p class="comprobado">Ejercicio 25UOh de la base abierta de Lichess (CC0), rating 1645. Stockfish 16 a profundidad 18: caballo eva 7 jaque es la mejor (+4,5) y la segunda queda en -4,8.</p>
+      <p><strong>Para practicar.</strong> Busca en tus partidas los momentos en que dos piezas rivales estaban a un salto de caballo de la misma casilla. Anota si podías llegar a esa casilla y en cuántas jugadas.</p>
+    </section><section><h3>Lección 15: El alfil y las diagonales abiertas</h3>
+      <p><em>El alfil trabaja de lejos. En una diagonal abierta clava, enfila y descubre ataques desde el otro lado del tablero.</em></p>
+      <p>Un alfil bien puesto se nota poco hasta que actúa. Desde su casilla mira una diagonal entera, a veces de punta a punta del tablero, y todo lo que se pone en ella queda bajo su fuego. Por eso es la pieza de las clavadas y de las enfiladas: ataca una pieza que no se puede mover porque detrás hay otra más valiosa.</p><p>La diferencia entre un alfil bueno y uno malo la deciden los peones. Un alfil cuyos peones propios están en casillas de su mismo color queda encerrado detrás de ellos; uno cuyos peones están en el otro color tiene las diagonales libres. Al elegir dónde poner los peones, piensa también en tu alfil.</p><p>Cuando tengas un alfil en una diagonal larga, mírala entera, hasta la última casilla: muchas veces lo que decide está del otro lado del tablero.</p>
+      <h4>Ejemplo de la lección 15</h4>
+      <p>El alfil puede aprovechar una línea entera.</p>
+      <p class="posicion"><strong>La posición.</strong> Juegan las blancas. Piezas blancas: rey en e1; dama en g6; torres en d1, h1; alfil en e7; caballo en c6; peones en b2, b3, c2, f3, g3, h4. Piezas negras: rey en g8; dama en e8; torres en a8, h8; alfiles en d7, f6; peones en a6, b5, c7, e5, g7, h6.
+      Las negras acaban de jugar … dama eva 8.
+      <span class="fen">FEN: r3q1kr/2pbB1p1/p1N2bQp/1p2p3/7P/1P3PP1/1PP5/3RK2R w K - 6 24</span></p>
+      <p><strong>Solución.</strong> 24. alfil captura felix 6, dama captura gustav 6, 25. caballo eva 7 jaque, rey hector 7, 26. caballo captura gustav 6. Es una horquilla: una pieza ataca dos objetivos a la vez. La jugada es del alfil, que trabaja desde lejos: lo que gana se ve recién al mirar la línea entera.</p>
+      <p class="comprobado">Ejercicio 2tT48 de la base abierta de Lichess (CC0), rating 1590. Stockfish 16 a profundidad 18: alfil captura felix 6 es la mejor (+3,4) y la segunda queda en -3,7.</p>
+      <p><strong>Para practicar.</strong> En una partida tuya, toma cada alfil al final de la apertura y anota qué diagonales tenía libres y cuáles le cerraban sus propios peones. Compara cómo le fue a cada uno en el resto de la partida.</p>
+    </section><section><h3>Lección 16: La dama: la jugada tranquila</h3>
+      <p><em>La dama no gana siempre con jaques. A veces la jugada decisiva es un movimiento silencioso que crea dos amenazas.</em></p>
+      <p>Como la dama es la pieza más fuerte, se tiende a usarla para dar jaques y capturar. Pero muchas de sus mejores jugadas son tranquilas: un movimiento sin jaque ni captura que la pone en una casilla desde donde amenaza dos cosas a la vez, o que se suma a un ataque que todavía no tiene suficiente fuerza.</p><p>Estas jugadas cuestan de ver porque no obligan nada: el rival puede responder lo que quiera. Pero si la dama quedó amenazando dos cosas, ninguna respuesta las para a las dos. Buscarlas pide preguntarse, en cada posición, qué casillas de la dama atacan más de un objetivo.</p><p>También vale lo contrario: una dama lejos del juego, cazando peones en un flanco, es una pieza menos en la defensa. Antes de mandarla lejos, mira cuánto tarda en volver.</p>
+      <h4>Ejemplo de la lección 16</h4>
+      <p>No hay jaque ni captura que sirva: la dama gana con una jugada tranquila.</p>
+      <p class="posicion"><strong>La posición.</strong> Juegan las negras. Piezas blancas: rey en g2; dama en d5; torre en f2; alfil en b2; caballo en d2; peones en a2, b3, g3, h2. Piezas negras: rey en g8; dama en b6; torres en f7, f8; peones en a7, b7, d4, g7, h7.
+      Las blancas acaban de jugar Torre captura felix 2.
+      <span class="fen">FEN: 5rk1/pp3rpp/1q6/3Q4/3p4/1P4P1/PB1N1RKP/8 b - - 0 26</span></p>
+      <p><strong>Solución.</strong> 26… dama cesar 6, 27. torre felix 5, dama captura david 5 jaque, 28. torre captura david 5, torre felix 2 jaque, 29. rey hector 3, torre captura david 2. Es una horquilla: una pieza ataca dos objetivos a la vez. La dama se mueve sin dar jaque ni capturar, y aun así el rival no puede parar todo lo que amenaza.</p>
+      <p class="comprobado">Ejercicio 2QnPY de la base abierta de Lichess (CC0), rating 1567. Stockfish 16 a profundidad 18: dama cesar 6 es la mejor (+4,2) y la segunda queda en 0,0.</p>
+      <p><strong>Para practicar.</strong> En diez ejercicios de táctica, antes de mirar jaques y capturas, prueba primero las jugadas tranquilas de la dama. Anota cuántas veces la solución era una de ellas.</p>
+    </section><section><h3>Lección 17: La pieza sin casillas</h3>
+      <p><em>Una pieza que se mete en territorio rival puede quedarse sin salida. Atraparla es ganar material sin combinaciones.</em></p>
+      <p>Las piezas necesitan casillas. Un alfil que se mete en a7 a comer un peón, un caballo que salta a la orilla del tablero, una dama que entra a la base del rival: todos pueden quedarse sin una sola casilla segura a la que volver. Cuando eso pasa, basta con atacarlos para ganarlos.</p><p>Para cazar una pieza hay que mirar sus salidas, no solo la pieza. Cuántas casillas tiene, cuáles están atacadas, cuál se le puede quitar con un peón. A veces la jugada que la atrapa es un simple avance de peón que le corta la retirada.</p><p>Al revés, antes de meter una pieza en territorio rival, cuenta sus casillas de vuelta. Una pieza encerrada vale menos que el peón que fue a buscar.</p>
+      <h4>Ejemplo de la lección 17</h4>
+      <p>Una pieza rival se quedó con muy pocas casillas.</p>
+      <p class="posicion"><strong>La posición.</strong> Juegan las blancas. Piezas blancas: rey en e1; dama en d1; torres en a1, h1; alfiles en c1, g2; caballo en e4; peones en a2, b2, c2, d3, f2, g4, h3. Piezas negras: rey en e8; dama en h4; torres en a8, h8; alfiles en f8, g6; caballo en c6; peones en a7, b7, c5, d6, e6, f7, g7, h7.
+      Las negras acaban de jugar … dama captura hector 4.
+      <span class="fen">FEN: r3kb1r/pp3ppp/2npp1b1/2p5/4N1Pq/3P3P/PPP2PB1/R1BQK2R w KQkq - 0 11</span></p>
+      <p><strong>Solución.</strong> 11. alfil gustav 5, alfil captura eva 4, 12. alfil captura hector 4. Una pieza rival queda atrapada, sin casilla adonde ir. La pieza rival no tiene adónde ir: la jugada buena la ataca o le quita la última salida.</p>
+      <p class="comprobado">Ejercicio 1r5Zh de la base abierta de Lichess (CC0), rating 1431. Stockfish 16 a profundidad 18: alfil gustav 5 es la mejor (+4,2) y la segunda queda en -1,2.</p>
+      <p><strong>Para practicar.</strong> En tus partidas, busca las piezas (tuyas o del rival) que en algún momento tuvieron una sola casilla segura. Anota si alguien se dio cuenta y qué pasó después.</p>
+    </section><section><h3>Lección 18: El sacrificio de calidad</h3>
+      <p><em>Entregar una torre por un alfil o un caballo es mal negocio en papel. En el tablero, a veces es la mejor jugada.</em></p>
+      <p>La torre vale más que una pieza menor, más o menos dos peones de diferencia. Pero ese valor es un promedio: una torre sin columnas abiertas vale menos, y un caballo instalado en una casilla fuerte vale más. Cuando la torre propia no tiene futuro y la pieza menor del rival es la que sostiene su posición, entregar la calidad puede mejorar las cosas.</p><p>Las razones habituales son tres: eliminar una pieza clave del rival (el alfil que defiende las casillas del rey, el caballo que bloquea un peón pasado), romper la estructura de peones del rey enemigo, o quedarse con una pieza menor dominante y peones pasados a cambio. En todos los casos lo que se gana es posicional o de ataque, no material.</p><p>Para decidir, compara las piezas que quedan, no las que se van: si después del cambio tus piezas son mejores que las suyas, la calidad suele estar bien entregada.</p>
+      <h4>Ejemplo de la lección 18</h4>
+      <p>La torre se puede entregar a cambio de algo que vale menos en papel.</p>
+      <p class="posicion"><strong>La posición.</strong> Juegan las blancas. Piezas blancas: rey en g1; dama en c2; torres en d1, e1; alfil en d2; caballos en c3, h4; peones en a3, b2, f2, g2, h3. Piezas negras: rey en h8; dama en h5; torres en a8, f8; alfiles en e6, e7; caballo en e5; peones en a6, b5, c7, f6, g7, h6.
+      Las negras acaban de jugar … dama hector 5.
+      <span class="fen">FEN: r4r1k/2p1b1p1/p3bp1p/1p2n2q/7N/P1N4P/1PQB1PP1/3RR1K1 w - - 2 21</span></p>
+      <p><strong>Solución.</strong> 21. torre captura eva 5, felix captura eva 5, 22. caballo gustav 6 jaque, rey gustav 8, 23. caballo captura eva 7 jaque. Es una horquilla: una pieza ataca dos objetivos a la vez. La torre se entrega: se cambia por una pieza menor o queda donde una pieza de menos valor la puede tomar. Lo que queda después vale más que la diferencia de material.</p>
+      <p class="comprobado">Ejercicio 11MuH de la base abierta de Lichess (CC0), rating 1583. Stockfish 16 a profundidad 18: torre captura eva 5 es la mejor (+3,9) y la segunda queda en -0,3.</p>
+      <p><strong>Para practicar.</strong> Busca en una base de datos cinco partidas con un sacrificio de calidad y escribe, en cada una, qué pieza del rival desapareció y por qué era importante.</p>
+    </section>
+      <h3>Ejercicios del capítulo 3</h3>
+      <p>Ocho posiciones de partidas reales, de la más fácil a la más difícil. Cada una tiene una sola jugada que funciona. Las soluciones están al final.</p>
+      <article><h4>Ejercicio 17</h4><p>Pista: El caballo ataca dos cosas a la vez: busca la casilla.</p><p class="posicion"><strong>La posición.</strong> Juegan las blancas. Piezas blancas: rey en g1; dama en f5; alfil en e6; caballo en g5; peones en a4, b2, d4, e3, e5, g2, h2. Piezas negras: rey en h8; dama en e7; torre en h6; alfil en b4; caballo en f8; peones en a5, b7, c4, c6, g7, h5.
+      Las negras acaban de jugar … caballo felix 8.
+      <span class="fen">FEN: 5n1k/1p2q1p1/2p1B2r/p3PQNp/PbpP4/4P3/1P4PP/6K1 w - - 9 31</span></p></article><article><h4>Ejercicio 18</h4><p>Pista: El alfil trabaja de lejos: mira la diagonal entera, hasta el final.</p><p class="posicion"><strong>La posición.</strong> Juegan las blancas. Piezas blancas: rey en g1; dama en c4; torres en a1, f1; alfiles en e6, g5; peones en a2, b2, c2, d4, g2, h2. Piezas negras: rey en b8; dama en d6; torres en d8, h8; alfil en g6; caballos en d7, f6; peones en a7, b7, c6, g7, h7.
+      Las negras acaban de jugar … dama captura david 6.
+      <span class="fen">FEN: 1k1r3r/pp1n2pp/2pqBnb1/6B1/2QP4/8/PPP3PP/R4RK1 w - - 0 16</span></p></article><article><h4>Ejercicio 19</h4><p>Pista: Una torre en la séptima ataca peones y encierra al rey.</p><p class="posicion"><strong>La posición.</strong> Juegan las negras. Piezas blancas: rey en h1; dama en g5; torres en d1, f1; alfil en b3; caballo en f6; peones en a2, b2, f4, g2, h2. Piezas negras: rey en g7; dama en c5; torres en a8, h8; alfil en c6; caballo en e5; peones en a7, b7, e6, f7, g6.
+      Las blancas acaban de jugar Rey hector 1.
+      <span class="fen">FEN: r6r/pp3pk1/2b1pNp1/2q1n1Q1/5P2/1B6/PP4PP/3R1R1K b - - 4 25</span></p></article><article><h4>Ejercicio 20</h4><p>Pista: El alfil trabaja de lejos: mira la diagonal entera, hasta el final.</p><p class="posicion"><strong>La posición.</strong> Juegan las blancas. Piezas blancas: rey en g1; dama en d1; torres en a1, f1; alfiles en d2, f3; caballo en e2; peones en a3, b2, c2, d4, f2, g2, h3. Piezas negras: rey en g8; dama en f5; torres en a8, e8; alfil en d6; caballos en d7, e4; peones en a7, b7, c6, d5, f7, g7, h7.
+      Las negras acaban de jugar … caballo eva 4.
+      <span class="fen">FEN: r3r1k1/pp1n1ppp/2pb4/3p1q2/3Pn3/P4B1P/1PPBNPP1/R2Q1RK1 w - - 4 15</span></p></article><article><h4>Ejercicio 21</h4><p>Pista: El caballo ataca dos cosas a la vez: busca la casilla.</p><p class="posicion"><strong>La posición.</strong> Juegan las blancas. Piezas blancas: rey en e1; dama en d1; torres en a1, h1; alfil en c1; caballos en c3, e6; peones en a2, b2, c2, f2, g2, h2. Piezas negras: rey en e8; dama en d7; torres en a8, h8; alfil en f8; caballos en d5, f6; peones en a7, b7, c7, e4, e7, f5, g7, h7.
+      Las negras acaban de jugar … caballo bella captura david 5.
+      <span class="fen">FEN: r3kb1r/pppqp1pp/4Nn2/3n1p2/4p3/2N5/PPP2PPP/R1BQK2R w KQkq - 0 10</span></p></article><article><h4>Ejercicio 22</h4><p>Pista: Una torre en la séptima ataca peones y encierra al rey.</p><p class="posicion"><strong>La posición.</strong> Juegan las blancas. Piezas blancas: rey en d1; torre en e1; alfiles en d3, f4; caballos en a5, c3; peones en a2, b2, f2, g2, h2. Piezas negras: rey en c7; torres en a8, h8; alfil en d6; caballos en d4, f6; peones en a7, c5, f5, g7, h7.
+      Las negras acaban de jugar … alfil david 6.
+      <span class="fen">FEN: r6r/p1k3pp/3b1n2/N1p2p2/3n1B2/2NB4/PP3PPP/3KR3 w - - 4 18</span></p></article><article><h4>Ejercicio 23</h4><p>Pista: Una torre en la séptima ataca peones y encierra al rey.</p><p class="posicion"><strong>La posición.</strong> Juegan las blancas. Piezas blancas: rey en g1; dama en e2; torres en d1, f1; caballo en c6; peones en a2, c5, g2, h2. Piezas negras: rey en g8; dama en b7; torres en f7, f8; caballo en d5; peones en a7, b6, e5, g6, h7.
+      Las negras acaban de jugar … caballo captura david 5.
+      <span class="fen">FEN: 5rk1/pq3r1p/1pN3p1/2Pnp3/8/8/P3Q1PP/3R1RK1 w - - 0 28</span></p></article><article><h4>Ejercicio 24</h4><p>Pista: El caballo ataca dos cosas a la vez: busca la casilla.</p><p class="posicion"><strong>La posición.</strong> Juegan las negras. Piezas blancas: rey en d1; dama en f3; torre en f7; alfil en e2; peones en a2, b3, c2, e5, g4, h3. Piezas negras: rey en b8; dama en c5; torre en c8; caballo en e4; peones en a6, c3, d5, e6.
+      Las blancas acaban de jugar Rey david 1.
+      <span class="fen">FEN: 1kr5/5R2/p3p3/2qpP3/4n1P1/1Pp2Q1P/P1P1B3/3K4 b - - 2 36</span></p></article>
+    </section><section><h2>Capítulo 4: Los peones deciden</h2>
+      <section><h3>Lección 19: El peón pasado hay que empujarlo</h3>
+      <p><em>Un peón pasado avanzado obliga al rival a usar piezas para frenarlo. Cuanto más avanza, más vale.</em></p>
+      <p>Un peón pasado es el que no tiene peones rivales delante ni en las columnas vecinas: nada lo frena salvo las piezas. Por eso su valor crece con cada paso. En su casilla inicial es un peón más; en la sexta fila obliga al rival a vigilarlo con una pieza; en la séptima puede valer tanto como una torre.</p><p>La regla vieja dice que los peones pasados hay que empujarlos, y tiene razón: un pasado quieto es un blanco, uno que avanza es una amenaza. El momento de empujar es cuando el avance gana un tiempo, desvía a un defensor o abre camino a otra pieza.</p><p>Muchas veces la jugada decisiva de un final o de un medio juego es justamente un avance de peón: tranquilo, sin jaque, pero imposible de frenar.</p>
+      <h4>Ejemplo de la lección 19</h4>
+      <p>Hay un peón avanzado que puede decidir la partida.</p>
+      <p class="posicion"><strong>La posición.</strong> Juegan las negras. Piezas blancas: rey en g6; dama en f1; peón en h5. Piezas negras: rey en a1; peones en a3, b2.
+      Las blancas acaban de jugar Dama felix 1 jaque.
+      <span class="fen">FEN: 8/8/6K1/7P/8/p7/1p6/k4Q2 b - - 7 56</span></p>
+      <p><strong>Solución.</strong> 56… bella 1 corona dama jaque, 57. dama captura bella 1 jaque, rey captura bella 1, 58. hector 6, anna 2, 59. rey gustav 7, anna 1 corona dama jaque. El peón avanzado decide: hay que empujarlo o aprovecharlo a tiempo. La jugada es del peón: su avance pide más de lo que el rival puede dar para frenarlo.</p>
+      <p class="comprobado">Ejercicio 0lARS de la base abierta de Lichess (CC0), rating 1321. Stockfish 16 a profundidad 18: bella 1 corona dama jaque es la mejor (+34,9) y la segunda queda en -0,0.</p>
+      <p><strong>Para practicar.</strong> Juega desde posiciones con un peón pasado en la sexta fila (una por ejemplo de tus partidas) contra un compañero o la computadora, primero con ese peón y después contra él. Anota qué piezas hicieron falta para frenarlo.</p>
+    </section><section><h3>Lección 20: Los últimos metros hasta coronar</h3>
+      <p><em>Coronar casi nunca es empujar y ya: hay que quitar del camino la pieza que vigila la casilla de coronación.</em></p>
+      <p>Cuando un peón llega a la séptima fila, todo se concentra en una casilla: la de coronación. El defensor la vigila con lo que puede —una torre detrás, un alfil en la diagonal, el rey al lado— y el atacante tiene que sacar a ese vigilante del camino. Ahí aparecen las desviaciones, las interferencias y los sacrificios que solo se entienden pensando en esa casilla.</p><p>La técnica pide mirar la casilla de coronación como si fuera el rey: ¿quién la defiende?, ¿puedo cambiarlo, desviarlo, cortarle la línea? Muchas veces se entrega una pieza entera solo para que el peón llegue un tiempo antes.</p><p>Y no olvides la coronación en otra pieza: a veces la dama ahoga al rey o se pierde, y un caballo con jaque es lo que gana.</p>
+      <h4>Ejemplo de la lección 20</h4>
+      <p>Un peón está cerca de coronar: hay que despejarle el camino.</p>
+      <p class="posicion"><strong>La posición.</strong> Juegan las negras. Piezas blancas: rey en f4; dama en h8; torre en b1; peones en a3, e4. Piezas negras: rey en g6; alfil en e6; peones en f6, g2, h2.
+      Las blancas acaban de jugar Dama hector 8.
+      <span class="fen">FEN: 7Q/8/4bpk1/8/4PK2/P7/6pp/1R6 b - - 1 50</span></p>
+      <p><strong>Solución.</strong> 50… gustav 1 corona dama, 51. torre captura gustav 1 jaque, hector captura gustav 1 corona dama, 52. dama eva 8 jaque, alfil felix 7. El peón avanzado decide: hay que empujarlo o aprovecharlo a tiempo. La línea termina con un peón que corona: la jugada buena quita a quien lo frenaba.</p>
+      <p class="comprobado">Ejercicio 26Lkb de la base abierta de Lichess (CC0), rating 1295. Stockfish 16 a profundidad 18: gustav 1 corona dama es la mejor (+3,5) y la segunda queda en -6,6.</p>
+      <p><strong>Para practicar.</strong> Resuelve diez ejercicios de coronación y, en cada uno, antes de mover, escribe qué pieza rival vigila la casilla de coronación y cómo se la puede quitar.</p>
+    </section><section><h3>Lección 21: La ruptura de peones</h3>
+      <p><em>Las posiciones cerradas se abren con un golpe de peón. Elegir cuál y cuándo es buena parte del plan.</em></p>
+      <p>En el medio juego, los peones fijan el carácter de la posición: con el centro cerrado, las piezas maniobran detrás de ellos; con el centro abierto, el juego es directo. La ruptura es el avance de peón que cambia eso: abre una columna, rompe una cadena, ataca la base de la estructura rival.</p><p>Cada estructura tiene sus rupturas típicas. En las posiciones de la Francesa se rompe con c5 y f6; en las de la India de rey, con f5 por un lado y c5 por el otro; contra un peón aislado se presiona hasta que no pueda avanzar. Conocer las rupturas de las estructuras que juegas es conocer los planes de esas aperturas.</p><p>Antes de romper, prepara: las piezas tienen que estar listas para aprovechar las líneas que se abren. Una ruptura prematura abre el juego para el rival.</p>
+      <h4>Ejemplo de la lección 21</h4>
+      <p>En pleno medio juego, la jugada buena es de un peón.</p>
+      <p class="posicion"><strong>La posición.</strong> Juegan las blancas. Piezas blancas: rey en h1; dama en e4; torre en f1; alfil en a4; peones en a2, e5, f5, g2, h2. Piezas negras: rey en e7; dama en b6; torres en a8, d4; alfil en c3; peones en a7, f7, g7, h7.
+      Las negras acaban de jugar … torre david 4.
+      <span class="fen">FEN: r7/p3kppp/1q6/4PP2/B2rQ3/2b5/P5PP/5R1K w - - 1 24</span></p>
+      <p><strong>Solución.</strong> 24. felix 6 jaque, gustav captura felix 6, 25. eva captura felix 6 jaque. Es un jaque doble: el rey tiene que moverse y no alcanza a tapar nada. La jugada buena es un movimiento de peón: abre líneas o gana espacio en el momento justo.</p>
+      <p class="comprobado">Ejercicio 3RUBS de la base abierta de Lichess (CC0), rating 1371. Stockfish 16 a profundidad 18: f6+ es la mejor (+5,0) y la segunda queda en 0,0.</p>
+      <p><strong>Para practicar.</strong> Elige la estructura de peones más frecuente en tus partidas con blancas y otra con negras. Para cada una, escribe sus dos rupturas típicas y busca en tus partidas si las jugaste en el momento justo.</p>
+    </section><section><h3>Lección 22: Entregar un peón para abrir el juego</h3>
+      <p><em>Un peón ofrecido puede abrir una columna, desviar una pieza o ganar el tiempo que le falta al ataque.</em></p>
+      <p>Un peón es la unidad más chica del ajedrez, y por eso es la que más fácil se entrega. Se ofrece para abrir una columna contra el rey, para sacar a un defensor de su casilla, para despejarle la diagonal a un alfil o para ganar el tiempo que le falta al ataque. El rival lo toma y, a cambio, queda con una posición peor.</p><p>La clave es que lo que se gana no es material: es tiempo, espacio o líneas abiertas. Por eso estas jugadas se miden por lo que pasa después, no por la cuenta de peones. Si después de que el rival toma tus piezas entran con fuerza, el peón estaba bien entregado.</p><p>Del otro lado, aceptar todo lo que se ofrece es una forma rápida de perder: antes de tomar un peón, pregúntate qué se abre cuando lo tomas.</p>
+      <h4>Ejemplo de la lección 22</h4>
+      <p>Un peón se puede entregar, y el rival puede tomarlo.</p>
+      <p class="posicion"><strong>La posición.</strong> Juegan las blancas. Piezas blancas: rey en g1; dama en h4; torres en d1, g4; peones en a2, b3, c2, f5, g2, h2. Piezas negras: rey en g8; dama en e7; torres en a8, e8; peones en a6, c5, d4, e3, f7, g7, h7.
+      Las negras acaban de jugar … dama eva 7.
+      <span class="fen">FEN: r3r1k1/4qppp/p7/2p2P2/3p2RQ/1P2p3/P1P3PP/3R2K1 w - - 1 30</span></p>
+      <p><strong>Solución.</strong> 30. felix 6, dama felix 8, 31. torre captura gustav 7 jaque, dama captura gustav 7, 32. felix captura gustav 7. El peón avanzado decide: hay que empujarlo o aprovecharlo a tiempo. El peón se ofrece en una casilla donde el rival lo puede tomar: lo que importa es lo que abre.</p>
+      <p class="comprobado">Ejercicio 3P3ul de la base abierta de Lichess (CC0), rating 1604. Stockfish 16 a profundidad 18: f6 es la mejor (+3,8) y la segunda queda en -0,6.</p>
+      <p><strong>Para practicar.</strong> Revisa tus partidas y marca los peones que tomaste en la apertura y el medio juego. Para cada uno, anota qué se abrió para el rival al tomarlo y si valió la pena.</p>
+    </section><section><h3>Lección 23: Finales de peones: contar antes de mover</h3>
+      <p><em>En un final de solo reyes y peones, cada tiempo decide. Se juega contando, no adivinando.</em></p>
+      <p>Los finales de peones son los más concretos del ajedrez: no hay piezas que compensen un error, y una sola jugada de más o de menos cambia el resultado. Por eso se juegan contando. Cuántas jugadas tarda cada peón en coronar, cuántas el rey en atraparlo, quién llega primero.</p><p>Las herramientas son pocas y hay que saberlas de memoria: la regla del cuadrado para saber si el rey alcanza a un peón, la oposición para pelear casillas con el rey, el peón pasado alejado que distrae al rey rival, la ruptura de peones que crea un pasado de la nada.</p><p>Antes de cambiar las últimas piezas y entrar en un final de peones, cuenta. Es la decisión más irreversible de la partida: una vez que se cambia, ya no hay vuelta atrás.</p>
+      <h4>Ejemplo de la lección 23</h4>
+      <p>Final de reyes y peones: cuenta los tiempos.</p>
+      <p class="posicion"><strong>La posición.</strong> Juegan las negras. Piezas blancas: rey en f4; peones en b2, c3, d4, e5, g2, g4. Piezas negras: rey en f6; peones en a4, b5, c6, d6, h6.
+      Las blancas acaban de jugar Eva 5 jaque.
+      <span class="fen">FEN: 8/8/2pp1k1p/1p2P3/p2P1KP1/2P5/1P4P1/8 b - - 0 37</span></p>
+      <p><strong>Solución.</strong> 37… david captura eva 5 jaque, 38. david captura eva 5 jaque, rey eva 6, 39. rey eva 4, cesar 5, 40. gustav 3, bella 4. La clave es una jugada tranquila: sin jaque ni captura, pero sin defensa. En el tablero solo hay reyes y peones: la jugada buena sale de contar quién llega primero.</p>
+      <p class="comprobado">Ejercicio 2M12b de la base abierta de Lichess (CC0), rating 1365. Stockfish 16 a profundidad 18: david captura eva 5 jaque es la mejor (+4,0) y la segunda queda en 0,0.</p>
+      <p><strong>Para practicar.</strong> Repasa la regla del cuadrado y la oposición en un tablero vacío. Después juega desde cinco finales de peones contra la computadora, contando los tiempos antes de cada jugada.</p>
+    </section><section><h3>Lección 24: Frenar al peón pasado</h3>
+      <p><em>Contra un peón pasado avanzado, lo primero es bloquearlo. Todo lo demás viene después.</em></p>
+      <p>Si el rival tiene un peón pasado avanzado, la defensa empieza por la casilla que tiene delante. Una pieza que se pone ahí —idealmente un caballo, que bloquea sin perder actividad— lo detiene para siempre. Mientras no se bloquee, cada jugada es un riesgo.</p><p>Las defensas típicas son tres: bloquear la casilla de delante, atacar el peón desde atrás con una torre, o llevar el rey hacia él. Cuál conviene depende de la posición, pero las tres tienen algo en común: se hacen antes de buscar contrajuego. Un peón en la séptima no espera a que termines tu ataque.</p><p>Muchas veces hay una sola jugada que llega a tiempo. Encontrarla pide contar: cuántas jugadas le faltan al peón para coronar y cuántas a tus piezas para frenarlo.</p>
+      <h4>Ejemplo de la lección 24</h4>
+      <p>El rival tiene un peón muy avanzado: hay una sola jugada buena.</p>
+      <p class="posicion"><strong>La posición.</strong> Juegan las negras. Piezas blancas: rey en b6; torre en c5; peones en a6, f2, g2, h3. Piezas negras: rey en d4; torre en a8; peones en f5, g5, h5.
+      Las blancas acaban de jugar Rey bella 6.
+      <span class="fen">FEN: r7/8/PK6/2R2ppp/3k4/7P/5PP1/8 b - - 4 51</span></p>
+      <p><strong>Solución.</strong> 51… torre captura anna 6 jaque, 52. rey bella 5, torre anna 5 jaque, 53. rey captura anna 5, rey captura cesar 5. Es una desviación: se aleja al defensor de lo que defendía. El rival tenía un peón muy avanzado: solo una jugada es buena, y es la que llega a tiempo.</p>
+      <p class="comprobado">Ejercicio 2SZAc de la base abierta de Lichess (CC0), rating 1580. Stockfish 16 a profundidad 18: torre captura anna 6 jaque es la mejor (+4,6) y la segunda queda en -4,9.</p>
+      <p><strong>Para practicar.</strong> Juega posiciones de final contra la computadora en las que el rival tiene un peón pasado en su quinta o sexta fila. Anota qué pieza usaste para frenarlo y en qué jugada lo bloqueaste.</p>
+    </section>
+      <h3>Ejercicios del capítulo 4</h3>
+      <p>Ocho posiciones de partidas reales, de la más fácil a la más difícil. Cada una tiene una sola jugada que funciona. Las soluciones están al final.</p>
+      <article><h4>Ejercicio 25</h4><p>Pista: Un peón pasado avanzado vale casi una pieza: empújalo.</p><p class="posicion"><strong>La posición.</strong> Juegan las negras. Piezas blancas: rey en f4; torre en d4; peones en b2, b4, c3, f2, h5. Piezas negras: rey en f7; torre en e7; peones en a6, b7, f6, g3.
+      Las blancas acaban de jugar Rey felix 4.
+      <span class="fen">FEN: 8/1p2rk2/p4p2/7P/1P1R1K2/2P3p1/1P3P2/8 b - - 1 55</span></p></article><article><h4>Ejercicio 26</h4><p>Pista: Un golpe de peón abre las líneas que tus piezas necesitan.</p><p class="posicion"><strong>La posición.</strong> Juegan las negras. Piezas blancas: rey en g1; dama en f2; torres en a1, c1; alfil en e2; caballo en d2; peones en a2, b3, c4, f4, g2, h2. Piezas negras: rey en g7; dama en d4; torres en b8, f8; alfil en d7; peones en a7, c6, e4, f5, g6, h7.
+      Las blancas acaban de jugar Dama felix 2.
+      <span class="fen">FEN: 1r3r2/p2b2kp/2p3p1/5p2/2PqpP2/1P6/P2NBQPP/R1R3K1 b - - 1 21</span></p></article><article><h4>Ejercicio 27</h4><p>Pista: El peón está cerca de la última fila. ¿Qué hay que quitar del camino?</p><p class="posicion"><strong>La posición.</strong> Juegan las blancas. Piezas blancas: rey en d8; torre en c1; peón en d7. Piezas negras: rey en b6; torre en e2; peón en a2.
+      Las negras acaban de jugar … rey bella 6.
+      <span class="fen">FEN: 3K4/3P4/1k6/8/8/8/p3r3/2R5 w - - 15 71</span></p></article><article><h4>Ejercicio 28</h4><p>Pista: El peón está cerca de la última fila. ¿Qué hay que quitar del camino?</p><p class="posicion"><strong>La posición.</strong> Juegan las blancas. Piezas blancas: rey en c7; torre en h5; peón en b7. Piezas negras: rey en g8; torre en b2; peones en g4, h2.
+      Las negras acaban de jugar … hector 2.
+      <span class="fen">FEN: 6k1/1PK5/8/7R/6p1/8/1r5p/8 w - - 0 45</span></p></article><article><h4>Ejercicio 29</h4><p>Pista: Un peón pasado avanzado vale casi una pieza: empújalo.</p><p class="posicion"><strong>La posición.</strong> Juegan las blancas. Piezas blancas: rey en g1; alfil en h6; peones en a2, d5, e5, f6, h2. Piezas negras: rey en h8; torre en c3; peones en a3, c4, e4, e6, f7, h5, h7.
+      Las negras acaban de jugar … torre captura cesar 3.
+      <span class="fen">FEN: 7k/5p1p/4pP1B/3PP2p/2p1p3/p1r5/P6P/6K1 w - - 0 38</span></p></article><article><h4>Ejercicio 30</h4><p>Pista: Un golpe de peón abre las líneas que tus piezas necesitan.</p><p class="posicion"><strong>La posición.</strong> Juegan las negras. Piezas blancas: rey en g1; dama en e5; torres en a1, d1; alfil en g5; peones en a2, c2, c3, f3, g2, h3. Piezas negras: rey en g8; dama en d7; torres en f7, f8; alfil en e7; peones en a6, c5, d6, g7, h7.
+      Las blancas acaban de jugar Dama captura eva 5.
+      <span class="fen">FEN: 5rk1/3qbrpp/p2p4/2p1Q1B1/8/2P2P1P/P1P3P1/R2R2K1 b - - 0 21</span></p></article><article><h4>Ejercicio 31</h4><p>Pista: El peón está cerca de la última fila. ¿Qué hay que quitar del camino?</p><p class="posicion"><strong>La posición.</strong> Juegan las negras. Piezas blancas: rey en g1; torre en c6; peones en d6, e5, f2, f3, h3. Piezas negras: rey en g8; torre en a2; peones en b3, f7, g6, h7.
+      Las blancas acaban de jugar David 6.
+      <span class="fen">FEN: 6k1/5p1p/2RP2p1/4P3/8/1p3P1P/r4P2/6K1 b - - 0 28</span></p></article><article><h4>Ejercicio 32</h4><p>Pista: Un peón pasado avanzado vale casi una pieza: empújalo.</p><p class="posicion"><strong>La posición.</strong> Juegan las blancas. Piezas blancas: rey en g1; caballo en e5; peones en a2, b2, c4, d5. Piezas negras: rey en f4; caballo en e3; peones en a7, b6, g2, h4.
+      Las negras acaban de jugar … hector 4.
+      <span class="fen">FEN: 8/p7/1p6/3PN3/2P2k1p/4n3/PP4p1/6K1 w - - 0 42</span></p></article>
+    </section><section><h2>Capítulo 5: La táctica que sostiene el plan</h2>
+      <section><h3>Lección 25: La desviación</h3>
+      <p><em>Si una pieza rival defiende algo importante, obligarla a irse deja eso sin defensa.</em></p>
+      <p>Muchas posiciones se sostienen con una sola pieza: la torre que cubre la última fila, la dama que defiende un caballo y un peón a la vez, el alfil que tapa la diagonal del rey. La desviación consiste en obligar a esa pieza a irse —con un jaque, una amenaza o un sacrificio que tiene que aceptar— para que lo que defendía quede colgando.</p><p>Para encontrarla, la pregunta es: ¿qué pieza del rival está trabajando de más? Una pieza que defiende dos cosas no puede defender las dos si se la ataca por una de ellas. A esa pieza hay que hacerle una oferta que no pueda rechazar.</p><p>La desviación es la táctica estratégica por excelencia: casi siempre aparece cuando una posición ya está mejor y hay que convertirla.</p>
+      <h4>Ejemplo de la lección 25</h4>
+      <p>Una pieza rival sostiene todo: hay que obligarla a irse.</p>
+      <p class="posicion"><strong>La posición.</strong> Juegan las negras. Piezas blancas: rey en g1; dama en d7; torres en a1, f1; alfil en e2; caballo en e5; peones en a2, b2, c3, g2, h2. Piezas negras: rey en g8; dama en h4; torres en f4, f8; alfil en b7; caballo en e4; peones en a7, b6, c5, d5, h7.
+      Las blancas acaban de jugar Dama david 7.
+      <span class="fen">FEN: 5rk1/pb1Q3p/1p6/2ppN3/4nr1q/2P5/PP2B1PP/R4RK1 b - - 1 27</span></p>
+      <p><strong>Solución.</strong> 27… torre captura felix 1 jaque, 28. alfil captura felix 1, dama felix 2 jaque, 29. rey hector 1, dama captura felix 1 jaque, 30. torre captura felix 1, torre captura felix 1 jaque mate. El golpe va a la última fila, donde el rey no tiene salida. La pieza que defendía tuvo que irse, y lo que cubría quedó sin defensa.</p>
+      <p class="comprobado">Ejercicio 0RHWa de la base abierta de Lichess (CC0), rating 1472. Stockfish 16 a profundidad 18: torre captura felix 1 jaque es la mejor (mate en 4) y la segunda queda en -0,2.</p>
+      <p><strong>Para practicar.</strong> En diez posiciones de tus partidas, señala para cada pieza del rival qué está defendiendo. Las que defienden dos cosas son las candidatas a la desviación.</p>
+    </section><section><h3>Lección 26: Quitar al defensor</h3>
+      <p><em>Si una pieza defiende algo, cambiarla o capturarla deja eso a merced del ataque.</em></p>
+      <p>Es la idea más directa del ajedrez: si algo está defendido por una sola pieza, se elimina esa pieza. Se cambia el caballo que cubre h7, se toma el alfil que defiende la casilla de coronación, se entrega una torre por la pieza que sostenía todo. Después del cambio, lo que estaba defendido ya no lo está.</p><p>La diferencia con la desviación es que acá el defensor no se va: desaparece. Por eso estas jugadas suelen ser capturas, a veces con aparente pérdida de material, que se justifican por lo que se gana en la jugada siguiente.</p><p>Al calcular, mira siempre quién defiende el punto que quieres atacar. Si es una sola pieza, la pregunta siguiente es si la puedes eliminar.</p>
+      <h4>Ejemplo de la lección 26</h4>
+      <p>Hay una pieza rival que defiende algo importante, y se la puede eliminar.</p>
+      <p class="posicion"><strong>La posición.</strong> Juegan las negras. Piezas blancas: rey en g1; dama en b3; alfil en a6; caballo en c5; peones en b4, d4, e3, f2, g2, h2. Piezas negras: rey en g8; dama en d6; caballos en e4, e7; peones en d5, e6, f7, g7, h7.
+      Las blancas acaban de jugar Alfil captura anna 6.
+      <span class="fen">FEN: 6k1/4nppp/B2qp3/2Np4/1P1Pn3/1Q2P3/5PPP/6K1 b - - 0 22</span></p>
+      <p><strong>Solución.</strong> 22… caballo captura cesar 5, 23. bella captura cesar 5, dama captura anna 6. Hay una jugada intermedia: antes de lo obvio, algo más fuerte. La jugada elimina al defensor: lo que cubría queda a merced de la jugada siguiente.</p>
+      <p class="comprobado">Ejercicio 2Eueb de la base abierta de Lichess (CC0), rating 1337. Stockfish 16 a profundidad 18: caballo captura cesar 5 es la mejor (+3,2) y la segunda queda en -2,1.</p>
+      <p><strong>Para practicar.</strong> Resuelve diez ejercicios de táctica preguntándote primero: ¿qué casilla quiero atacar y quién la defiende? Anota en cuántos la solución empezaba por eliminar al defensor.</p>
+    </section><section><h3>Lección 27: La interferencia</h3>
+      <p><em>Poner una pieza entre dos piezas rivales que se defienden corta su comunicación.</em></p>
+      <p>Las piezas de largo alcance —torres, alfiles, la dama— se defienden a distancia. Una torre en la primera fila cuida a otra en la octava por la columna; un alfil cubre una casilla de coronación desde el otro lado del tablero. La interferencia es poner una pieza propia en medio de esa línea para cortarla.</p><p>La pieza que interfiere muchas veces se pierde, pero no importa: al cortar la línea, una de las dos piezas rivales queda sin defensa, o la casilla que vigilaban queda libre. Es una táctica difícil de ver porque la jugada no ataca nada directamente.</p><p>Para encontrarla, traza las líneas por las que se defienden las piezas rivales y busca una casilla en medio a la que pueda llegar una pieza tuya.</p>
+      <h4>Ejemplo de la lección 27</h4>
+      <p>Dos piezas rivales se defienden por una línea que se puede cortar.</p>
+      <p class="posicion"><strong>La posición.</strong> Juegan las blancas. Piezas blancas: rey en g1; dama en d4; torre en e1; caballo en c3; peones en a2, b2, c2, f3, g3, h2. Piezas negras: rey en f7; dama en d7; torres en a8, h8; alfil en g7; peones en a7, b5, d6, g6, h7.
+      Las negras acaban de jugar … alfil gustav 7.
+      <span class="fen">FEN: r6r/p2q1kbp/3p2p1/1p6/3Q4/2N2PP1/PPP4P/4R1K1 w - - 4 25</span></p>
+      <p><strong>Solución.</strong> 25. dama david 5 jaque, rey felix 8, 26. dama captura anna 8 jaque. Es una interferencia: una pieza se mete entre la defensora y lo que defiende. Una pieza se mete en la línea entre dos piezas rivales y corta su defensa.</p>
+      <p class="comprobado">Ejercicio 32oY9 de la base abierta de Lichess (CC0), rating 1493. Stockfish 16 a profundidad 18: dama david 5 jaque es la mejor (+5,1) y la segunda queda en -4,4.</p>
+      <p><strong>Para practicar.</strong> En cinco posiciones de tus partidas, dibuja (o imagina) las líneas por las que se defienden las piezas largas del rival. Busca si alguna casilla de esas líneas estaba al alcance de una pieza tuya.</p>
+    </section><section><h3>Lección 28: La clavada</h3>
+      <p><em>Una pieza que no se puede mover sin dejar algo peor detrás está paralizada. La clavada se aprovecha atacándola más.</em></p>
+      <p>Una clavada es un ataque a una pieza que tiene detrás otra más valiosa, o al rey. Si es al rey, la pieza clavada no se puede mover; si es a otra pieza, moverla cuesta material. En los dos casos queda paralizada, y una pieza paralizada no defiende nada.</p><p>La regla para aprovecharla es atacar la pieza clavada con más fuerzas: un peón que la ataca, otra pieza que se suma. Como no puede escapar, el rival tiene que defenderla, y eso le cuesta tiempo y piezas. Muchas veces la clavada se gana con un simple avance de peón.</p><p>Y el que está clavado tiene que preguntarse cuanto antes cómo salir: quitar la pieza de atrás, interponer otra o contraatacar. Una clavada que dura muchas jugadas casi siempre termina mal.</p>
+      <h4>Ejemplo de la lección 28</h4>
+      <p>Hay una pieza que no se puede mover sin dejar algo detrás.</p>
+      <p class="posicion"><strong>La posición.</strong> Juegan las blancas. Piezas blancas: rey en e1; dama en a4; torres en a1, h1; alfil en c1; caballo en b5; peones en a2, d5, f2, g2, h2. Piezas negras: rey en e8; dama en d7; torres en a8, h8; alfil en f8; caballo en f6; peones en a6, b7, e7, f7, g6, h7.
+      Las negras acaban de jugar … dama captura david 7.
+      <span class="fen">FEN: r3kb1r/1p1qpp1p/p4np1/1N1P4/Q7/8/P4PPP/R1B1K2R w KQkq - 0 15</span></p>
+      <p><strong>Solución.</strong> 15. caballo cesar 7 jaque, rey david 8, 16. dama captura david 7 jaque, rey captura david 7, 17. caballo captura anna 8. Es un ataque a la descubierta: al moverse una pieza, se destapa otra. En la línea aparece una clavada: una pieza que no puede moverse sin dejar algo más valioso detrás.</p>
+      <p class="comprobado">Ejercicio 16rjh de la base abierta de Lichess (CC0), rating 1309. Stockfish 16 a profundidad 18: caballo cesar 7 jaque es la mejor (+4,6) y la segunda queda en -2,7.</p>
+      <p><strong>Para practicar.</strong> En tus próximas partidas, cada vez que una pieza quede clavada, anota cuántas jugadas duró la clavada y quién la aprovechó.</p>
+    </section><section><h3>Lección 29: Despejar el camino</h3>
+      <p><em>A veces una pieza propia estorba. Sacarla con ganancia de tiempo deja libre la casilla o la línea que hacía falta.</em></p>
+      <p>No siempre el obstáculo es del rival. A veces la casilla que necesita la dama está ocupada por un caballo propio, o la línea que llevaría la torre al rey está tapada por un alfil propio. El despeje consiste en sacar esa pieza del medio, idealmente con un jaque, una captura o una amenaza, para que el rival no tenga tiempo de reaccionar.</p><p>Es una idea difícil de ver porque obliga a pensar al revés: no en qué hace la pieza que se mueve, sino en qué libera. La pregunta útil es: ¿qué jugada fuerte tendría si esta pieza mía no estuviera ahí?</p><p>Cuando la respuesta es una jugada ganadora, falta solo encontrar cómo quitar la pieza con fuerza: a veces se sacrifica, a veces da jaque, a veces simplemente ataca algo.</p>
+      <h4>Ejemplo de la lección 29</h4>
+      <p>Una pieza propia estorba: hay que sacarla con fuerza.</p>
+      <p class="posicion"><strong>La posición.</strong> Juegan las blancas. Piezas blancas: rey en g1; dama en h4; torre en h2; peones en a2, b2, c3, f2. Piezas negras: rey en g7; dama en f3; torre en e8; caballo en f1; peones en a7, c6, f7, g6.
+      Las negras acaban de jugar … rey gustav 7.
+      <span class="fen">FEN: 4r3/p4pk1/2p3p1/8/7Q/2P2q2/PP3P1R/5nK1 w - - 2 31</span></p>
+      <p><strong>Solución.</strong> 31. dama david 4 jaque, dama felix 6, 32. torre hector 7 jaque, rey captura hector 7, 33. dama captura felix 6. Es una desviación: se aleja al defensor de lo que defendía. La idea es despejar: una pieza sale del camino, muchas veces con ganancia de tiempo, y la casilla o la línea que queda libre es la que decide.</p>
+      <p class="comprobado">Ejercicio 1srCZ de la base abierta de Lichess (CC0), rating 1637. Stockfish 16 a profundidad 18: dama david 4 jaque es la mejor (+4,6) y la segunda queda en 0,0.</p>
+      <p><strong>Para practicar.</strong> En diez ejercicios de táctica, antes de buscar la solución, pregúntate qué pieza tuya estorba. Anota en cuántos la respuesta era la clave.</p>
+    </section><section><h3>Lección 30: La enfilada y los rayos X</h3>
+      <p><em>Dos piezas rivales en la misma línea son un blanco: se ataca la de adelante y se gana la de atrás.</em></p>
+      <p>La enfilada es una clavada al revés: la pieza de adelante es la más valiosa, y cuando se aparta, la de atrás queda a merced del atacante. Un jaque de torre al rey con la dama detrás en la misma columna, un alfil que ataca a la dama con una torre detrás en la diagonal. El rival tiene que mover la de adelante y pierde la otra.</p><p>Los rayos X son el mismo principio aplicado a la defensa: una pieza sigue actuando a través de otra, como si no estuviera. Una torre defiende una casilla aunque haya una torre rival en el medio, porque si esa torre toma, la propia recaptura.</p><p>Las dos ideas piden mirar las líneas enteras, no solo hasta la primera pieza. Cuando dos piezas rivales comparten fila, columna o diagonal, busca cómo atacarlas por esa línea.</p>
+      <h4>Ejemplo de la lección 30</h4>
+      <p>Dos piezas rivales están en la misma línea.</p>
+      <p class="posicion"><strong>La posición.</strong> Juegan las negras. Piezas blancas: rey en e7; torres en a7, f1; caballo en f3. Piezas negras: rey en g8; torres en b5, f4; peón en a3.
+      Las blancas acaban de jugar Rey eva 7.
+      <span class="fen">FEN: 6k1/R3K3/8/1r6/5r2/p4N2/8/5R2 b - - 4 50</span></p>
+      <p><strong>Solución.</strong> 50… torre felix 7 jaque, 51. rey david 6, torre captura anna 7. Es una enfilada: la pieza de adelante se va y cae la de atrás. Las dos piezas rivales estaban en la misma línea: se ataca una y se gana lo que hay detrás.</p>
+      <p class="comprobado">Ejercicio 00coU de la base abierta de Lichess (CC0), rating 1472. Stockfish 16 a profundidad 18: torre felix 7 jaque es la mejor (+4,7) y la segunda queda en +0,2.</p>
+      <p><strong>Para practicar.</strong> En cinco partidas tuyas, busca los momentos en que dos piezas del rival quedaron en la misma línea. Anota si había una enfilada y si la viste.</p>
+    </section>
+      <h3>Ejercicios del capítulo 5</h3>
+      <p>Ocho posiciones de partidas reales, de la más fácil a la más difícil. Cada una tiene una sola jugada que funciona. Las soluciones están al final.</p>
+      <article><h4>Ejercicio 33</h4><p>Pista: Pon una pieza entre dos piezas rivales que se defienden.</p><p class="posicion"><strong>La posición.</strong> Juegan las blancas. Piezas blancas: rey en g1; dama en f1; torres en a1, e1; alfiles en c1, d3; peones en a2, b2, c2, d2, f2, g3, h2. Piezas negras: rey en f8; dama en d4; torres en a8, h8; alfiles en d6, g4; peones en a7, b7, c6, c7, f7, g7, h7.
+      Las negras acaban de jugar … dama david 4.
+      <span class="fen">FEN: r4k1r/ppp2ppp/2pb4/8/3q2b1/3B2P1/PPPP1P1P/R1B1RQK1 w - - 1 14</span></p></article><article><h4>Ejercicio 34</h4><p>Pista: Toma la pieza que defiende, y lo que defendía queda colgando.</p><p class="posicion"><strong>La posición.</strong> Juegan las negras. Piezas blancas: rey en b2; torres en c1, e1; alfil en e4; caballo en c3; peones en a4, b5, d3, d5, f5, g4, h3. Piezas negras: rey en d6; torres en c7, c8; alfil en e8; caballo en b6; peones en a5, f6, g5, h6.
+      Las blancas acaban de jugar Torre hector eva 1.
+      <span class="fen">FEN: 2r1b3/2r5/1n1k1p1p/pP1P1Pp1/P3B1P1/2NP3P/1K6/2R1R3 b - - 2 34</span></p></article><article><h4>Ejercicio 35</h4><p>Pista: Una pieza rival sostiene todo. ¿Puedes obligarla a irse?</p><p class="posicion"><strong>La posición.</strong> Juegan las negras. Piezas blancas: rey en c1; dama en c2; torre en f6; alfil en d3; peones en a2, b2, c4, d4, d5, g7. Piezas negras: rey en g8; dama en g3; torre en b8; alfil en b4; peones en a5, g4.
+      Las blancas acaban de jugar Torre captura felix 6.
+      <span class="fen">FEN: 1r4k1/6P1/5R2/p2P4/1bPP2p1/3B2q1/PPQ5/2K5 b - - 0 34</span></p></article><article><h4>Ejercicio 36</h4><p>Pista: Pon una pieza entre dos piezas rivales que se defienden.</p><p class="posicion"><strong>La posición.</strong> Juegan las blancas. Piezas blancas: rey en f1; dama en e6; torre en e2; alfil en e4; peones en a4, c4, d5, f5. Piezas negras: rey en h8; dama en g7; torre en g4; alfil en e5; peones en a7, b6, c7, d6.
+      Las negras acaban de jugar … rey hector 8.
+      <span class="fen">FEN: 7k/p1p3q1/1p1pQ3/3PbP2/P1P1B1r1/8/4R3/5K2 w - - 3 45</span></p></article><article><h4>Ejercicio 37</h4><p>Pista: Toma la pieza que defiende, y lo que defendía queda colgando.</p><p class="posicion"><strong>La posición.</strong> Juegan las blancas. Piezas blancas: rey en g1; dama en h6; torres en f1, g3; caballo en c3; peones en a2, b2, c2, e4, f2, g2, h2. Piezas negras: rey en g8; dama en e7; torres en a8, f8; alfiles en b4, f5; caballos en c4, g4; peones en a7, b7, c6, e5, f6.
+      Las negras acaban de jugar … alfil captura felix 5.
+      <span class="fen">FEN: r4rk1/pp2q3/2p2p1Q/4pb2/1bn1P1n1/2N3R1/PPP2PPP/5RK1 w - - 0 17</span></p></article><article><h4>Ejercicio 38</h4><p>Pista: Una pieza rival sostiene todo. ¿Puedes obligarla a irse?</p><p class="posicion"><strong>La posición.</strong> Juegan las blancas. Piezas blancas: rey en f4; peones en a3, b2, c2, d4. Piezas negras: rey en f6; peones en a6, b6, d5, e4.
+      Las negras acaban de jugar … anna 6.
+      <span class="fen">FEN: 8/8/pp3k2/3p4/3PpK2/P7/1PP5/8 w - - 0 37</span></p></article><article><h4>Ejercicio 39</h4><p>Pista: Una pieza rival sostiene todo. ¿Puedes obligarla a irse?</p><p class="posicion"><strong>La posición.</strong> Juegan las negras. Piezas blancas: rey en g1; dama en b2; torres en b3, e1; alfil en d2; peones en a2, c5, e5, g2, h2. Piezas negras: rey en g8; dama en c4; torre en f8; caballo en c3; peones en a7, d4, e6, g7, h7.
+      Las blancas acaban de jugar Alfil david 2.
+      <span class="fen">FEN: 5rk1/p5pp/4p3/2P1P3/2qp4/1Rn5/PQ1B2PP/4R1K1 b - - 2 28</span></p></article><article><h4>Ejercicio 40</h4><p>Pista: Toma la pieza que defiende, y lo que defendía queda colgando.</p><p class="posicion"><strong>La posición.</strong> Juegan las blancas. Piezas blancas: rey en c1; torres en g5, h6; alfil en c4; peones en a3, b2, c2, h2. Piezas negras: rey en d4; torres en e7, f8; alfil en b7; peones en a7, e3, f4, f7.
+      Las negras acaban de jugar … rey david 4.
+      <span class="fen">FEN: 5r2/pb2rp2/7R/6R1/2Bk1p2/P3p3/1PP4P/2K5 w - - 4 31</span></p></article>
+    </section><section><h2>Capítulo 6: Los finales que hay que saber</h2>
+      <section><h3>Lección 31: Finales de torre: la torre activa</h3>
+      <p><em>Son los finales más frecuentes. Se ganan y se salvan con la actividad de la torre y del rey, más que con los peones.</em></p>
+      <p>Casi la mitad de los finales que se juegan son de torres, y casi todos se deciden por lo mismo: la actividad. Una torre que ataca peones, que corta al rey rival o que se pone detrás de un pasado vale mucho más que una que defiende pasivamente. Una torre activa con un peón de menos suele salvar; una pasiva con un peón de más a veces no gana.</p><p>Las reglas son pocas: la torre va detrás de los peones pasados (propios y ajenos), el rey se activa apenas se cambian las damas, y antes que defender un peón conviene contraatacar otro. Conocer las posiciones de Lucena y de Philidor es el piso mínimo para jugar estos finales sin regalar medio punto.</p><p>En la práctica, el error más caro es la pasividad: poner la torre a defender un peón y dejar que la torre rival haga lo que quiera.</p>
+      <h4>Ejemplo de la lección 31</h4>
+      <p>Final de torres: busca la jugada más activa.</p>
+      <p class="posicion"><strong>La posición.</strong> Juegan las blancas. Piezas blancas: rey en h2; torre en a7; peones en d6, e3, f2, g3, h3. Piezas negras: rey en f8; torre en a1; peones en a6, b5, f6, g7, h6.
+      Las negras acaban de jugar … rey felix 8.
+      <span class="fen">FEN: 5k2/R5p1/p2P1p1p/1p6/8/4P1PP/5P1K/r7 w - - 1 40</span></p>
+      <p><strong>Solución.</strong> 40. torre anna 8 jaque, rey felix 7, 41. david 7. El peón avanzado decide: hay que empujarlo o aprovecharlo a tiempo. En el tablero solo hay torres, reyes y peones: la jugada buena es la que da actividad o la aprovecha.</p>
+      <p class="comprobado">Ejercicio 2msgm de la base abierta de Lichess (CC0), rating 1620. Stockfish 16 a profundidad 18: torre anna 8 jaque es la mejor (+4,7) y la segunda queda en +0,3.</p>
+      <p><strong>Para practicar.</strong> Repasa las posiciones de Lucena y de Philidor hasta poder jugarlas contra la computadora sin errores. Después revisa tus últimos finales de torres y marca cuándo tu torre estuvo activa y cuándo pasiva.</p>
+    </section><section><h3>Lección 32: Finales de alfiles</h3>
+      <p><em>Con alfiles del mismo color, el rey y los peones deciden. Con alfiles de distinto color, las tablas se acercan.</em></p>
+      <p>Los finales de alfiles tienen dos caras. Cuando los alfiles son del mismo color, pelean por las mismas casillas, y gana quien tenga el rey más activo y los peones mejor puestos: en las casillas del color contrario al de su alfil, para que el alfil los complemente. Un peón de más suele alcanzar para ganar.</p><p>Cuando los alfiles son de distinto color, cada uno domina casillas que el otro no puede tocar, y el bando que defiende puede bloquear los peones rivales en casillas de su color. Por eso incluso con dos peones de menos muchas veces son tablas. El atacante necesita peones pasados en los dos flancos, bien separados.</p><p>Saber de cuál de los dos tipos es el final que tienes delante es lo primero: cambia todo el plan.</p>
+      <h4>Ejemplo de la lección 32</h4>
+      <p>Final de alfiles: ¿de qué color son y quién domina las casillas?</p>
+      <p class="posicion"><strong>La posición.</strong> Juegan las negras. Piezas blancas: rey en d3; alfil en g3; peones en a4, b3, d4, f2, f3, h2. Piezas negras: rey en b6; alfil en e7; peones en a7, b5, d5, g6, h7.
+      Las blancas acaban de jugar Anna 4.
+      <span class="fen">FEN: 8/p3b2p/1k4p1/1p1p4/P2P4/1P1K1PB1/5P1P/8 b - - 0 45</span></p>
+      <p><strong>Solución.</strong> 45… bella captura anna 4, 46. bella captura anna 4, rey anna 5, 47. alfil bella 8, anna 6, 48. rey cesar 3, rey captura anna 4. La clave es una jugada tranquila: sin jaque ni captura, pero sin defensa. Solo quedan alfiles, reyes y peones: la jugada buena sale de pensar en las casillas que cada alfil puede tocar.</p>
+      <p class="comprobado">Ejercicio 14y0L de la base abierta de Lichess (CC0), rating 1486. Stockfish 16 a profundidad 18: bella captura anna 4 es la mejor (+3,9) y la segunda queda en +0,2.</p>
+      <p><strong>Para practicar.</strong> Juega contra la computadora dos finales de alfiles, uno del mismo color y otro de distinto color, con un peón de ventaja. Anota qué plan usaste en cada uno y cuál pudiste ganar.</p>
+    </section><section><h3>Lección 33: Alfil contra caballo</h3>
+      <p><em>El alfil prefiere peones en los dos flancos y posiciones abiertas; el caballo, peones en un solo flanco y casillas fijas.</em></p>
+      <p>La pelea entre alfil y caballo es de las más instructivas del ajedrez. El alfil es de largo alcance: rinde más con peones en los dos flancos, porque puede atender los dos lados a la vez. El caballo es lento pero llega a todas las casillas: rinde más con todos los peones en un solo flanco y con casillas fuertes donde instalarse.</p><p>Los peones deciden casi siempre. Si los peones del bando del alfil están en casillas de su color, el alfil queda malo y el caballo suele ganar; si los peones del rival están fijos en casillas del color del alfil, son blancos fáciles. Al llegar a un final así, lo primero es mirar los peones.</p><p>Y como en todo final, el rey es una pieza más: el que llega primero al centro o a los peones rivales suele decidir.</p>
+      <h4>Ejemplo de la lección 33</h4>
+      <p>Un bando tiene alfil y el otro caballo: ¿quién está mejor y por qué?</p>
+      <p class="posicion"><strong>La posición.</strong> Juegan las blancas. Piezas blancas: rey en e4; caballo en e5; peones en a4, c5. Piezas negras: rey en f6; alfil en h4; peones en a5, e6, g6.
+      Las negras acaban de jugar … alfil captura hector 4.
+      <span class="fen">FEN: 8/8/4pkp1/p1P1N3/P3K2b/8/8/8 w - - 0 47</span></p>
+      <p><strong>Solución.</strong> 47. cesar 6, alfil gustav 3, 48. cesar 7, alfil captura eva 5, 49. cesar 8 corona dama. El peón avanzado decide: hay que empujarlo o aprovecharlo a tiempo. En el tablero solo quedan un alfil, un caballo, los reyes y los peones: la jugada buena aprovecha lo que una pieza puede y la otra no.</p>
+      <p class="comprobado">Ejercicio 1ABiI de la base abierta de Lichess (CC0), rating 1528. Stockfish 16 a profundidad 18: c6 es la mejor (+5,5) y la segunda queda en 0,0.</p>
+      <p><strong>Para practicar.</strong> Juega dos finales de alfil contra caballo contra la computadora, uno con peones en los dos flancos y otro con peones en un solo flanco. Juega cada uno con las dos piezas y compara.</p>
+    </section><section><h3>Lección 34: Finales de damas</h3>
+      <p><em>Con damas, el rey nunca está del todo seguro. Los jaques y el peón pasado más avanzado deciden.</em></p>
+      <p>Los finales de damas son los más tácticos de todos los finales. La dama sola puede dar jaques desde cualquier lado, así que el rey nunca está del todo seguro, y una serie de jaques puede terminar en tablas por jaque perpetuo o en la captura de una pieza. Por eso se juegan calculando.</p><p>Las reglas generales ayudan: el peón pasado más avanzado vale más que cualquier otra cosa, el rey del bando fuerte busca refugio cerca de su peón, y la dama centralizada defiende y ataca a la vez. Pero lo que decide casi siempre es concreto: un jaque que gana la dama, una coronación con jaque, una enfilada.</p><p>Antes de cada jugada, revisa todos los jaques: los tuyos y los del rival.</p>
+      <h4>Ejemplo de la lección 34</h4>
+      <p>Final de damas: revisa todos los jaques.</p>
+      <p class="posicion"><strong>La posición.</strong> Juegan las negras. Piezas blancas: rey en g2; dama en f3; peones en f2, h4. Piezas negras: rey en g6; dama en d5; peones en f5, g5.
+      Las blancas acaban de jugar Dama felix 3.
+      <span class="fen">FEN: 8/8/6k1/3q1pp1/7P/5Q2/5PK1/8 b - - 4 50</span></p>
+      <p><strong>Solución.</strong> 50… dama captura felix 3 jaque, 51. rey captura felix 3, gustav captura hector 4.  Solo quedan damas, reyes y peones: la jugada buena sale de mirar todos los jaques y todas las coronaciones.</p>
+      <p class="comprobado">Ejercicio 0XUee de la base abierta de Lichess (CC0), rating 1549. Stockfish 16 a profundidad 18: dama captura felix 3 jaque es la mejor (+7,1) y la segunda queda en 0,0.</p>
+      <p><strong>Para practicar.</strong> Juega contra la computadora tres finales de dama y peón contra dama. Anota cuántos jaques tuviste que esquivar y dónde escondiste a tu rey.</p>
+    </section><section><h3>Lección 35: El zugzwang</h3>
+      <p><em>Hay posiciones en las que mover es perder. La jugada buena deja al rival sin una jugada que no empeore las cosas.</em></p>
+      <p>En la mayoría de las posiciones, tener que mover es una ventaja: siempre hay algo útil que hacer. Pero en algunas, sobre todo en los finales, cualquier jugada empeora la posición. Eso es el zugzwang: la obligación de mover cuando moverse perjudica.</p><p>Aprovecharlo pide una jugada que no hace nada en apariencia —un movimiento de rey, una pieza que pierde un tiempo— pero que le pasa el turno al rival justo cuando no le conviene. En los finales de peones es la base de la oposición; en los de piezas, aparece cuando el defensor tiene todas sus piezas en su mejor casilla y no puede mejorarlas.</p><p>Para verlo, pregúntate: si el rival tuviera que mover ahora mismo, ¿tendría alguna jugada buena? Si la respuesta es no, busca cómo pasarle el turno.</p>
+      <h4>Ejemplo de la lección 35</h4>
+      <p>A veces lo mejor es pasarle el turno al rival.</p>
+      <p class="posicion"><strong>La posición.</strong> Juegan las blancas. Piezas blancas: rey en c4; peones en b4, f4, g3. Piezas negras: rey en d6; peones en a6, f5, g4.
+      Las negras acaban de jugar … rey david 6.
+      <span class="fen">FEN: 8/8/p2k4/5p2/1PK2Pp1/6P1/8/8 w - - 7 63</span></p>
+      <p><strong>Solución.</strong> 63. rey david 4, rey cesar 6, 64. rey eva 5. Es un zugzwang: al rival le toca mover y cualquier jugada lo empeora. Después de esta jugada, cualquier respuesta del rival empeora su posición: eso es el zugzwang.</p>
+      <p class="comprobado">Ejercicio 3FN1D de la base abierta de Lichess (CC0), rating 1392. Stockfish 16 a profundidad 18: rey david 4 es la mejor (+5,2) y la segunda queda en 0,0.</p>
+      <p><strong>Para practicar.</strong> Estudia la oposición y el triángulo del rey en los finales de peones. Después resuelve cinco ejercicios de zugzwang y, en cada uno, escribe qué jugada buena le quitaste al rival.</p>
+    </section><section><h3>Lección 36: Tu plan de estudio</h3>
+      <p><em>Cómo usar este curso para que las ideas aparezcan en tus partidas: repasar, aplicarlas y anotar cuáles te faltan.</em></p>
+      <p>Las ideas de este curso no se aprenden leyéndolas una vez. Se aprenden viéndolas muchas veces, hasta que aparecen solas cuando la posición las pide. Por eso el libro del curso trae, además de los ejemplos, ejercicios por capítulo y ejercicios mezclados sin decir de qué idea son: en la partida nadie avisa qué idea toca.</p><p>El método que proponemos es sencillo. Una semana por capítulo: lee las lecciones, resuelve los ejemplos en el tablero antes de ver la solución y después los ejercicios del capítulo en el libro. Al final, los ejercicios mezclados, una tanda por día. Anota en cuáles fallas y a qué idea pertenecían.</p><p>Esa lista es tu plan: las ideas que más se repiten entre tus errores son las que tienes que volver a estudiar, con tus propias partidas como material. Llévasela a tu profesor; con ella se arma un entrenamiento a tu medida.</p>
+      
+      <p><strong>Para practicar.</strong> Haz los ejercicios mezclados del libro y arma una lista con las ideas de los que fallaste. Repasa esas lecciones y vuelve a hacer los ejercicios un mes después para ver si la lista se achicó.</p>
+    </section>
+      <h3>Ejercicios del capítulo 6</h3>
+      <p>Ocho posiciones de partidas reales, de la más fácil a la más difícil. Cada una tiene una sola jugada que funciona. Las soluciones están al final.</p>
+      <article><h4>Ejercicio 41</h4><p>Pista: En los finales de torre manda la actividad: torre y rey activos.</p><p class="posicion"><strong>La posición.</strong> Juegan las negras. Piezas blancas: rey en d2; torre en b3; peones en a2, g3, h2. Piezas negras: rey en g8; torre en b6; peones en a3, g7, h6.
+      Las blancas acaban de jugar Rey david 2.
+      <span class="fen">FEN: 6k1/6p1/1r5p/8/8/pR4P1/P2K3P/8 b - - 11 53</span></p></article><article><h4>Ejercicio 42</h4><p>Pista: Alfil contra caballo: decide quién tiene peones en los dos flancos.</p><p class="posicion"><strong>La posición.</strong> Juegan las blancas. Piezas blancas: rey en f6; caballo en f7; peón en g5. Piezas negras: rey en h5; alfil en g4; peón en h4.
+      Las negras acaban de jugar … alfil gustav 4.
+      <span class="fen">FEN: 8/5N2/5K2/6Pk/6bp/8/8/8 w - - 1 63</span></p></article><article><h4>Ejercicio 43</h4><p>Pista: En los finales de alfiles, las casillas del color de tu alfil son tuyas.</p><p class="posicion"><strong>La posición.</strong> Juegan las negras. Piezas blancas: rey en f2; alfil en f3; peones en b3, d4, e5, g5, h4. Piezas negras: rey en f7; alfil en h3; peones en a5, b4, e6, g6, h5.
+      Las blancas acaban de jugar Alfil captura felix 3.
+      <span class="fen">FEN: 8/5k2/4p1p1/p3P1Pp/1p1P3P/1P3B1b/5K2/8 b - - 0 45</span></p></article><article><h4>Ejercicio 44</h4><p>Pista: En los finales de alfiles, las casillas del color de tu alfil son tuyas.</p><p class="posicion"><strong>La posición.</strong> Juegan las negras. Piezas blancas: rey en d5; alfil en d3; peones en b5, e4, h2. Piezas negras: rey en f4; alfil en f3; peones en f5, h4.
+      Las blancas acaban de jugar Bella 5.
+      <span class="fen">FEN: 8/8/8/1P1K1p2/4Pk1p/3B1b2/7P/8 b - - 0 38</span></p></article><article><h4>Ejercicio 45</h4><p>Pista: Alfil contra caballo: decide quién tiene peones en los dos flancos.</p><p class="posicion"><strong>La posición.</strong> Juegan las blancas. Piezas blancas: rey en g3; alfil en b6; peones en a5, e4, f2, f4, h3. Piezas negras: rey en e6; caballo en c7; peones en a6, c3, f6, g7, h7.
+      Las negras acaban de jugar … caballo cesar 7.
+      <span class="fen">FEN: 8/2n3pp/pB2kp2/P7/4PP2/2p3KP/5P2/8 w - - 1 33</span></p></article><article><h4>Ejercicio 46</h4><p>Pista: En los finales de torre manda la actividad: torre y rey activos.</p><p class="posicion"><strong>La posición.</strong> Juegan las blancas. Piezas blancas: rey en g6; torre en c3; peones en f4, h4. Piezas negras: rey en g4; torre en g3; peones en f5, h5.
+      Las negras acaban de jugar … torre captura gustav 3.
+      <span class="fen">FEN: 8/8/6K1/5p1p/5PkP/2R3r1/8/8 w - - 0 55</span></p></article><article><h4>Ejercicio 47</h4><p>Pista: En los finales de alfiles, las casillas del color de tu alfil son tuyas.</p><p class="posicion"><strong>La posición.</strong> Juegan las negras. Piezas blancas: rey en e3; alfil en d3; peones en g5, h5. Piezas negras: rey en d5; alfil en f5; peones en c3, h7.
+      Las blancas acaban de jugar Alfil david 3.
+      <span class="fen">FEN: 8/7p/8/3k1bPP/8/2pBK3/8/8 b - - 2 53</span></p></article><article><h4>Ejercicio 48</h4><p>Pista: En los finales de torre manda la actividad: torre y rey activos.</p><p class="posicion"><strong>La posición.</strong> Juegan las blancas. Piezas blancas: rey en e4; torre en g3; peones en f5, h4. Piezas negras: rey en e7; torre en b7; peones en a4, b3, e5, f6, h6.
+      Las negras acaban de jugar … bella 3.
+      <span class="fen">FEN: 8/1r2k3/5p1p/4pP2/p3K2P/1p4R1/8/8 w - - 0 52</span></p></article>
+    </section>
+<section><h2>Planilla de repaso</h2>
+<p>Lleva una lista con las 35 ideas del libro, una por lección. Para cada una anota cuándo entendiste el
+ejemplo, qué ejercicios de esa idea fallaste y cuándo la repasaste: una semana después y un mes después. Las ideas que
+más se repiten entre tus errores son las que hay que volver a estudiar.</p>
+</section>
+<section><h2>Ejercicios mixtos</h2>
+<p>Posiciones de todos los capítulos, sin decir qué idea toca, de la más fácil a la más difícil.</p>
+<article><h4>Ejercicio 49</h4><p class="posicion"><strong>La posición.</strong> Juegan las blancas. Piezas blancas: rey en g1; dama en g3; torres en f1, f2; peones en a2, b2, c3, d4, g2, h3. Piezas negras: rey en g8; dama en e4; torres en f7, f8; peones en a7, b6, c6, d5, g7, h6.
+      Las negras acaban de jugar … dama captura eva 4.
+      <span class="fen">FEN: 5rk1/p4rp1/1pp4p/3p4/3Pq3/2P3QP/PP3RP1/5RK1 w - - 0 27</span></p></article><article><h4>Ejercicio 50</h4><p class="posicion"><strong>La posición.</strong> Juegan las negras. Piezas blancas: rey en e1; torre en b3; alfil en d1; caballo en f2; peones en b5, e4, f3. Piezas negras: rey en f4; torre en c2; peones en a7, b7, e5, f6, h2.
+      Las blancas acaban de jugar Alfil david 1.
+      <span class="fen">FEN: 8/pp6/5p2/1P2p3/4Pk2/1R3P2/2r2N1p/3BK3 b - - 5 71</span></p></article><article><h4>Ejercicio 51</h4><p class="posicion"><strong>La posición.</strong> Juegan las blancas. Piezas blancas: rey en g1; dama en f2; torres en a1, f3; alfil en d3; peones en c4, g2, h2. Piezas negras: rey en g8; dama en c3; torres en b8, f8; caballo en f6; peones en a6, b7, e6, f7, g7, h7.
+      Las negras acaban de jugar … dama captura cesar 3.
+      <span class="fen">FEN: 1r3rk1/1p3ppp/p3pn2/8/2P5/2qB1R2/5QPP/R5K1 w - - 0 19</span></p></article><article><h4>Ejercicio 52</h4><p class="posicion"><strong>La posición.</strong> Juegan las negras. Piezas blancas: rey en h2; dama en e3; torres en a1, g1; alfil en f3; peones en a2, b2, c3, d5, f2, f5. Piezas negras: rey en g8; torres en f6, g7; caballo en f4; peones en a6, b7, c7, d6, e5, g4, h7.
+      Las blancas acaban de jugar Rey captura hector 2.
+      <span class="fen">FEN: 6k1/1pp3rp/p2p1r2/3PpP2/5np1/2P1QB2/PP3P1K/R5R1 b - - 0 30</span></p></article><article><h4>Ejercicio 53</h4><p class="posicion"><strong>La posición.</strong> Juegan las blancas. Piezas blancas: rey en g1; dama en h5; torres en d3, e1; peones en a3, b4, c3, f2, g2, h2. Piezas negras: rey en e8; dama en b3; torres en d8, f7; caballo en e7; peones en a7, b6, c7, e5, f6.
+      Las negras acaban de jugar … torre david 8.
+      <span class="fen">FEN: 3rk3/p1p1nr2/1p3p2/4p2Q/1P6/PqPR4/5PPP/4R1K1 w - - 4 31</span></p></article><article><h4>Ejercicio 54</h4><p class="posicion"><strong>La posición.</strong> Juegan las negras. Piezas blancas: rey en g1; dama en c4; torres en a1, e2; alfil en d5; caballo en f3; peones en a4, b3, f2, g2, h2. Piezas negras: rey en h8; dama en f6; torres en b8, e8; alfil en d6; peones en b4, b7, c5, g7.
+      Las blancas acaban de jugar Torre captura eva 2.
+      <span class="fen">FEN: 1r2r2k/1p4p1/3b1q2/2pB4/PpQ5/1P3N2/4RPPP/R5K1 b - - 0 28</span></p></article><article><h4>Ejercicio 55</h4><p class="posicion"><strong>La posición.</strong> Juegan las negras. Piezas blancas: rey en g1; dama en d2; torres en a1, f1; alfil en b5; peones en a5, b4, c3, f4, g2, h2. Piezas negras: rey en c8; dama en e5; torres en g8, h8; alfil en h3; peones en a7, b7, d5, f6, f7, h7.
+      Las blancas acaban de jugar Felix 4.
+      <span class="fen">FEN: 2k3rr/pp3p1p/5p2/PB1pq3/1P3P2/2P4b/3Q2PP/R4RK1 b - f3 0 22</span></p></article><article><h4>Ejercicio 56</h4><p class="posicion"><strong>La posición.</strong> Juegan las blancas. Piezas blancas: rey en e3; dama en b3; torre en d7; alfil en a6; peones en a2, e4, f3. Piezas negras: rey en g8; dama en h3; torres en f8, g2; peones en a7, b6, e5, f7, g7, h7.
+      Las negras acaban de jugar … eva 5.
+      <span class="fen">FEN: 5rk1/p2R1ppp/Bp6/4p3/4P3/1Q2KP1q/P5r1/8 w - - 0 32</span></p></article><article><h4>Ejercicio 57</h4><p class="posicion"><strong>La posición.</strong> Juegan las negras. Piezas blancas: rey en h1; dama en d2; torres en c1, f1; caballo en d4; peones en a2, b3, c4, d5, g2, h3. Piezas negras: rey en g8; dama en f4; torres en e3, e8; peones en a7, b6, c5, f2, f7, g6, h7.
+      Las blancas acaban de jugar Caballo captura david 4.
+      <span class="fen">FEN: 4r1k1/p4p1p/1p4p1/2pP4/2PN1q2/1P2r2P/P2Q1pP1/2R2R1K b - - 0 30</span></p></article><article><h4>Ejercicio 58</h4><p class="posicion"><strong>La posición.</strong> Juegan las negras. Piezas blancas: rey en g1; dama en h3; torres en a1, e1; caballo en c3; peones en a2, b2, c2, e5, g2. Piezas negras: rey en e7; dama en h4; torres en d8, f4; peones en a6, c6, e6, f5, f7, h6.
+      Las blancas acaban de jugar Dama hector 3.
+      <span class="fen">FEN: 3r4/4kp2/p1p1p2p/4Pp2/5r1q/2N4Q/PPP3P1/R3R1K1 b - - 1 25</span></p></article><article><h4>Ejercicio 59</h4><p class="posicion"><strong>La posición.</strong> Juegan las negras. Piezas blancas: rey en g1; dama en d4; torres en a1, d1; alfiles en c1, c4; caballo en b1; peones en a2, b2, e3, f2, g2, h2. Piezas negras: rey en g8; dama en d8; torres en a8, f8; alfiles en c8, d6; caballo en f6; peones en a7, b7, e4, f7, g7, h7.
+      Las blancas acaban de jugar Torre david 1.
+      <span class="fen">FEN: r1bq1rk1/pp3ppp/3b1n2/8/2BQp3/4P3/PP3PPP/RNBR2K1 b - - 2 12</span></p></article><article><h4>Ejercicio 60</h4><p class="posicion"><strong>La posición.</strong> Juegan las blancas. Piezas blancas: rey en g1; dama en h3; torres en a1, f3; alfiles en b2, d3; peones en a3, b4, c2, d2, e3, f4, g5, h2. Piezas negras: rey en g8; dama en c7; torres en c8, f8; alfil en e7; caballos en d7, e4; peones en a7, b7, c5, d5, e6, f7, g6, h7.
+      Las negras acaban de jugar … caballo eva 4.
+      <span class="fen">FEN: 2r2rk1/ppqnbp1p/4p1p1/2pp2P1/1P2nP2/P2BPR1Q/1BPP3P/R5K1 w - - 1 18</span></p></article><article><h4>Ejercicio 61</h4><p class="posicion"><strong>La posición.</strong> Juegan las blancas. Piezas blancas: rey en g1; dama en e1; torre en a1; alfiles en b3, c1; caballo en b1; peones en a2, b2, c2, d2, g2, h2. Piezas negras: rey en e7; dama en d8; torres en a8, h8; alfiles en f3, f8; caballo en g8; peones en a7, b7, c7, e5, g7, h7.
+      Las negras acaban de jugar … alfil captura felix 3.
+      <span class="fen">FEN: r2q1bnr/ppp1k1pp/8/4p3/8/1B3b2/PPPP2PP/RNB1Q1K1 w - - 0 12</span></p></article><article><h4>Ejercicio 62</h4><p class="posicion"><strong>La posición.</strong> Juegan las blancas. Piezas blancas: rey en g1; dama en g6; torre en e1; alfil en d2; caballo en e4; peones en a4, c3, d4, g2, h2. Piezas negras: rey en f8; dama en f5; torre en e8; alfiles en g4, g7; peones en a7, c7, d6, f4, h6.
+      Las negras acaban de jugar … dama felix 5.
+      <span class="fen">FEN: 4rk2/p1p3b1/3p2Qp/5q2/P2PNpb1/2P5/3B2PP/4R1K1 w - - 1 27</span></p></article><article><h4>Ejercicio 63</h4><p class="posicion"><strong>La posición.</strong> Juegan las blancas. Piezas blancas: rey en g1; dama en a2; torres en c7, e1; alfiles en a5, f1; peones en a3, b5, d4, e3, f2, g3. Piezas negras: rey en g8; dama en h3; torres en f8, h6; alfil en f3; caballo en g4; peones en a7, b7, e4, f7, g7, h7.
+      Las negras acaban de jugar … dama captura hector 3.
+      <span class="fen">FEN: 5rk1/ppR2ppp/7r/BP6/3Pp1n1/P3PbPq/Q4P2/4RBK1 w - - 0 26</span></p></article><article><h4>Ejercicio 64</h4><p class="posicion"><strong>La posición.</strong> Juegan las blancas. Piezas blancas: rey en g1; dama en d5; torre en f1; alfiles en e6, f4; peones en a2, c3, d4, e3, f2, g2, h2. Piezas negras: rey en e8; dama en d3; torres en a8, h8; alfil en f8; caballos en c6, f6; peones en a7, b7, c4, f7, g6, h7.
+      Las negras acaban de jugar … caballo felix 6.
+      <span class="fen">FEN: r3kb1r/pp3p1p/2n1Bnp1/3Q4/2pP1B2/2PqP3/P4PPP/5RK1 w kq - 1 18</span></p></article><article><h4>Ejercicio 65</h4><p class="posicion"><strong>La posición.</strong> Juegan las negras. Piezas blancas: rey en g1; dama en h6; torres en c1, f1; caballo en g5; peones en a2, b2, d4, e3, f2, g2, h2. Piezas negras: rey en g8; dama en f7; torres en c8, f8; alfil en b7; caballo en d7; peones en a7, b6, d5, e6.
+      Las blancas acaban de jugar Caballo gustav 5.
+      <span class="fen">FEN: 2r2rk1/pb1n1q2/1p2p2Q/3p2N1/3P4/4P3/PP3PPP/2R2RK1 b - - 4 20</span></p></article><article><h4>Ejercicio 66</h4><p class="posicion"><strong>La posición.</strong> Juegan las blancas. Piezas blancas: rey en g1; dama en g4; torre en h5; alfil en e4; peones en a2, b3, c4, e3, f2, g2, g3. Piezas negras: rey en h8; dama en e7; torre en f8; alfil en f6; peones en a5, b6, c7, d6, f7, g7, h6.
+      Las negras acaban de jugar … torre felix 8.
+      <span class="fen">FEN: 5r1k/2p1qpp1/1p1p1b1p/p6R/2P1B1Q1/1P2P1P1/P4PP1/6K1 w - - 7 40</span></p></article><article><h4>Ejercicio 67</h4><p class="posicion"><strong>La posición.</strong> Juegan las blancas. Piezas blancas: rey en h1; dama en g4; torres en a1, f1; alfiles en c1, h5; caballo en d2; peones en a2, b2, c3, d3, e5, f4, g2, h2. Piezas negras: rey en e8; dama en c7; torres en d8, h8; alfiles en f8, h7; caballos en c6, h4; peones en a7, b7, c5, d5, e6, f7, g7, h6.
+      Las negras acaban de jugar … caballo captura hector 4.
+      <span class="fen">FEN: 3rkb1r/ppq2ppb/2n1p2p/2ppP2B/5PQn/2PP4/PP1N2PP/R1B2R1K w k - 0 16</span></p></article><article><h4>Ejercicio 68</h4><p class="posicion"><strong>La posición.</strong> Juegan las blancas. Piezas blancas: rey en g1; dama en d1; torres en a1, f1; alfiles en d3, e7; peones en a2, b2, e3, e5, f2, g2, h2. Piezas negras: rey en g8; dama en d8; torres en a8, f8; alfil en b7; caballo en c3; peones en a6, b5, c7, e6, f7, g7, h7.
+      Las negras acaban de jugar … caballo captura cesar 3.
+      <span class="fen">FEN: r2q1rk1/1bp1Bppp/p3p3/1p2P3/8/2nBP3/PP3PPP/R2Q1RK1 w - - 0 14</span></p></article><article><h4>Ejercicio 69</h4><p class="posicion"><strong>La posición.</strong> Juegan las blancas. Piezas blancas: rey en h2; dama en c5; alfil en e4; peones en c7, g3, h4. Piezas negras: rey en f6; dama en a6; alfil en e6; peones en f7, g6, h5.
+      Las negras acaban de jugar … dama anna 6.
+      <span class="fen">FEN: 8/2P2p2/q3bkp1/2Q4p/4B2P/6P1/7K/8 w - - 1 54</span></p></article><article><h4>Ejercicio 70</h4><p class="posicion"><strong>La posición.</strong> Juegan las negras. Piezas blancas: rey en g1; dama en e2; torres en c2, f1; alfil en b2; caballo en f3; peones en a3, b4, d4, e3, f2, g2, h3. Piezas negras: rey en g8; dama en h4; torres en f8, g5; alfil en d6; peones en a6, b5, c7, d5, g6, g7, h5.
+      Las blancas acaban de jugar Caballo felix 3.
+      <span class="fen">FEN: 5rk1/2p3p1/p2b2p1/1p1p2rp/1P1P3q/P3PN1P/1BR1QPP1/5RK1 b - - 4 28</span></p></article><article><h4>Ejercicio 71</h4><p class="posicion"><strong>La posición.</strong> Juegan las negras. Piezas blancas: rey en e1; dama en c4; torre en a1; alfil en c1; peones en a2, b2, c2, d3, e4, g3. Piezas negras: rey en g6; torres en a8, h8; alfil en f8; caballo en d4; peones en a6, b7, c6, e5, g7, h7.
+      Las blancas acaban de jugar David 3.
+      <span class="fen">FEN: r4b1r/1p4pp/p1p3k1/4p3/2QnP3/3P2P1/PPP5/R1B1K3 b Q - 0 18</span></p></article><article><h4>Ejercicio 72</h4><p class="posicion"><strong>La posición.</strong> Juegan las blancas. Piezas blancas: rey en g1; dama en c2; torres en c1, f1; alfil en b2; caballos en e2, e5; peones en a2, b3, d4, g2, h2. Piezas negras: rey en g8; dama en d8; torres en a8, f8; alfiles en c8, d6; caballos en e4, g6; peones en a7, b7, c6, g7, h7.
+      Las negras acaban de jugar … caballo captura eva 4.
+      <span class="fen">FEN: r1bq1rk1/pp4pp/2pb2n1/4N3/3Pn3/1P6/PBQ1N1PP/2R2RK1 w - - 0 19</span></p></article>
+</section>
+<section><h2>Soluciones</h2>
+<article><h4>Solución del ejercicio 1</h4>
+      <p>19. torre captura eva 4, david captura eva 4, 20. caballo gustav 5, dama captura gustav 5, 21. dama captura gustav 5 jaque</p>
+      <p>Hay un sacrificio: se entrega material para ganar más. Cuenta atacantes y defensores alrededor del rey: si sobran los tuyos, hay algo.</p>
+      <p class="comprobado">Ejercicio 13M4a de la base abierta de Lichess (CC0), rating 1450. Stockfish 16 a profundidad 18: torre captura eva 4 es la mejor (+5,9) y la segunda queda en -0,8.</p></article><article><h4>Solución del ejercicio 2</h4>
+      <p>20… alfil captura hector 2 jaque, 21. rey captura hector 2, dama captura bella 7</p>
+      <p>Es un ataque a la descubierta: al moverse una pieza, se destapa otra. El peón de h7 (h2) es el único defensor de esa casilla. ¿Qué pasa si se lo quitas con jaque?</p>
+      <p class="comprobado">Ejercicio 1v2LH de la base abierta de Lichess (CC0), rating 1551. Stockfish 16 a profundidad 18: alfil captura hector 2 jaque es la mejor (+4,4) y la segunda queda en -3,5.</p></article><article><h4>Solución del ejercicio 3</h4>
+      <p>19… caballo captura hector 3, 20. gustav 3, caballo captura felix 2 jaque, 21. rey gustav 2, dama hector 3 jaque</p>
+      <p>Es un jaque doble: el rey tiene que moverse y no alcanza a tapar nada. Los peones del enroque son el techo del rey. Romper uno puede valer una pieza.</p>
+      <p class="comprobado">Ejercicio 0uIwA de la base abierta de Lichess (CC0), rating 1615. Stockfish 16 a profundidad 18: caballo captura hector 3 es la mejor (+5,6) y la segunda queda en +0,5.</p></article><article><h4>Solución del ejercicio 4</h4>
+      <p>27. torre captura hector 6 jaque, rey captura hector 6, 28. dama felix 6 jaque</p>
+      <p>Es una atracción: se arrastra a una pieza (a menudo el rey) a una casilla fatal. Los peones del enroque son el techo del rey. Romper uno puede valer una pieza.</p>
+      <p class="comprobado">Ejercicio 2W0uC de la base abierta de Lichess (CC0), rating 1693. Stockfish 16 a profundidad 18: torre captura hector 6 jaque es la mejor (+6,2) y la segunda queda en -0,0.</p></article><article><h4>Solución del ejercicio 5</h4>
+      <p>11. alfil captura hector 7 jaque, rey captura hector 7, 12. dama hector 5 jaque, rey gustav 8, 13. alfil captura david 8</p>
+      <p>Es una atracción: se arrastra a una pieza (a menudo el rey) a una casilla fatal. El peón de h7 (h2) es el único defensor de esa casilla. ¿Qué pasa si se lo quitas con jaque?</p>
+      <p class="comprobado">Ejercicio 2347F de la base abierta de Lichess (CC0), rating 1907. Stockfish 16 a profundidad 18: alfil captura hector 7 jaque es la mejor (+4,5) y la segunda queda en -1,4.</p></article><article><h4>Solución del ejercicio 6</h4>
+      <p>22. dama captura hector 7 jaque, rey felix 8, 23. dama hector 8 jaque, alfil captura hector 8, 24. torre captura hector 8 jaque mate</p>
+      <p>Hay un sacrificio: se entrega material para ganar más. Cuenta atacantes y defensores alrededor del rey: si sobran los tuyos, hay algo.</p>
+      <p class="comprobado">Ejercicio 2kQXT de la base abierta de Lichess (CC0), rating 1918. Stockfish 16 a profundidad 18: dama captura hector 7 jaque es la mejor (mate en 3) y la segunda queda en -1,8.</p></article><article><h4>Solución del ejercicio 7</h4>
+      <p>11… alfil captura hector 2 jaque, 12. rey hector 1, dama captura hector 4, 13. alfil gustav 5, dama captura gustav 5</p>
+      <p>Hay una jugada intermedia: antes de lo obvio, algo más fuerte. El peón de h7 (h2) es el único defensor de esa casilla. ¿Qué pasa si se lo quitas con jaque?</p>
+      <p class="comprobado">Ejercicio 2rUgy de la base abierta de Lichess (CC0), rating 2188. Stockfish 16 a profundidad 18: alfil captura hector 2 jaque es la mejor (+5,8) y la segunda queda en -0,3.</p></article><article><h4>Solución del ejercicio 8</h4>
+      <p>27. torre eva 8 jaque, rey hector 7, 28. dama captura felix 5 jaque, gustav 6, 29. dama gustav 4</p>
+      <p>Hay una jugada intermedia: antes de lo obvio, algo más fuerte. Cuenta atacantes y defensores alrededor del rey: si sobran los tuyos, hay algo.</p>
+      <p class="comprobado">Ejercicio 1XH1f de la base abierta de Lichess (CC0), rating 2294. Stockfish 16 a profundidad 18: torre eva 8 jaque es la mejor (+3,2) y la segunda queda en -4,9.</p></article><article><h4>Solución del ejercicio 9</h4>
+      <p>9… alfil captura cesar 3 jaque, 10. bella captura cesar 3, dama captura cesar 3 jaque, 11. dama david 2, dama captura anna 1</p>
+      <p>Es una horquilla: una pieza ataca dos objetivos a la vez. Tienes más piezas en juego que el rival. Ese tiempo hay que usarlo ahora.</p>
+      <p class="comprobado">Ejercicio 35eKV de la base abierta de Lichess (CC0), rating 1299. Stockfish 16 a profundidad 18: alfil captura cesar 3 jaque es la mejor (+3,9) y la segunda queda en +0,1.</p></article><article><h4>Solución del ejercicio 10</h4>
+      <p>46… torre captura felix 2, 47. rey captura felix 2, torre captura felix 6 jaque</p>
+      <p>Es una atracción: se arrastra a una pieza (a menudo el rey) a una casilla fatal. La casilla f7 (f2) solo la defiende el rey. Es el punto más débil al empezar.</p>
+      <p class="comprobado">Ejercicio 2RjqT de la base abierta de Lichess (CC0), rating 1604. Stockfish 16 a profundidad 18: torre captura felix 2 es la mejor (+5,1) y la segunda queda en -0,1.</p></article><article><h4>Solución del ejercicio 11</h4>
+      <p>12. alfil captura eva 5, alfil captura eva 5, 13. dama hector 5 jaque, gustav 6, 14. dama captura eva 5</p>
+      <p>Es una horquilla: una pieza ataca dos objetivos a la vez. El rey rival sigue en el centro: abre líneas antes de que se esconda.</p>
+      <p class="comprobado">Ejercicio 29Jkd de la base abierta de Lichess (CC0), rating 1606. Stockfish 16 a profundidad 18: alfil captura eva 5 es la mejor (+4,1) y la segunda queda en -0,8.</p></article><article><h4>Solución del ejercicio 12</h4>
+      <p>12. david captura cesar 6, alfil bella 6, 13. cesar captura david 7</p>
+      <p>El peón avanzado decide: hay que empujarlo o aprovecharlo a tiempo. Tienes más piezas en juego que el rival. Ese tiempo hay que usarlo ahora.</p>
+      <p class="comprobado">Ejercicio 3KZue de la base abierta de Lichess (CC0), rating 1759. Stockfish 16 a profundidad 18: david captura cesar 6 es la mejor (+3,6) y la segunda queda en -0,0.</p></article><article><h4>Solución del ejercicio 13</h4>
+      <p>10. caballo captura felix 7, dama captura felix 7, 11. dama captura cesar 6 jaque, dama david 7, 12. dama captura anna 8</p>
+      <p>Es una horquilla: una pieza ataca dos objetivos a la vez. La casilla f7 (f2) solo la defiende el rey. Es el punto más débil al empezar.</p>
+      <p class="comprobado">Ejercicio 2F3P4 de la base abierta de Lichess (CC0), rating 1833. Stockfish 16 a profundidad 18: caballo captura felix 7 es la mejor (+3,8) y la segunda queda en -1,1.</p></article><article><h4>Solución del ejercicio 14</h4>
+      <p>30. dama hector 8 jaque, alfil captura hector 8, 31. torre captura hector 8 jaque, rey gustav 7, 32. torre captura david 8</p>
+      <p>Es una enfilada: la pieza de adelante se va y cae la de atrás. El rey rival sigue en el centro: abre líneas antes de que se esconda.</p>
+      <p class="comprobado">Ejercicio 2BKlU de la base abierta de Lichess (CC0), rating 1914. Stockfish 16 a profundidad 18: dama hector 8 jaque es la mejor (+3,1) y la segunda queda en +0,2.</p></article><article><h4>Solución del ejercicio 15</h4>
+      <p>15… caballo captura felix 2, 16. rey captura felix 2, dama eva 3 jaque, 17. rey felix 1, alfil gustav 3</p>
+      <p>Es una atracción: se arrastra a una pieza (a menudo el rey) a una casilla fatal. La casilla f7 (f2) solo la defiende el rey. Es el punto más débil al empezar.</p>
+      <p class="comprobado">Ejercicio 01UsT de la base abierta de Lichess (CC0), rating 2093. Stockfish 16 a profundidad 18: caballo captura felix 2 es la mejor (+3,0) y la segunda queda en -3,4.</p></article><article><h4>Solución del ejercicio 16</h4>
+      <p>22… dama captura eva 6 jaque, 23. caballo captura eva 6, alfil bella 4 jaque, 24. cesar 3, torre captura hector 8</p>
+      <p>Es un ataque a la descubierta: al moverse una pieza, se destapa otra. El rey rival sigue en el centro: abre líneas antes de que se esconda.</p>
+      <p class="comprobado">Ejercicio 0LmCW de la base abierta de Lichess (CC0), rating 2164. Stockfish 16 a profundidad 18: dama captura eva 6 jaque es la mejor (+4,6) y la segunda queda en -4,9.</p></article><article><h4>Solución del ejercicio 17</h4>
+      <p>31. caballo felix 7 jaque, rey gustav 8, 32. caballo captura hector 6 jaque, rey hector 8, 33. caballo felix 7 jaque</p>
+      <p>Es un jaque doble: el rey tiene que moverse y no alcanza a tapar nada. El caballo ataca dos cosas a la vez: busca la casilla.</p>
+      <p class="comprobado">Ejercicio 2L0cj de la base abierta de Lichess (CC0), rating 1331. Stockfish 16 a profundidad 18: caballo felix 7 jaque es la mejor (+5,0) y la segunda queda en -1,0.</p></article><article><h4>Solución del ejercicio 18</h4>
+      <p>16. alfil felix 4, dama captura felix 4, 17. torre captura felix 4</p>
+      <p>Todo gira en torno a una clavada: la pieza clavada no puede defender. El alfil trabaja de lejos: mira la diagonal entera, hasta el final.</p>
+      <p class="comprobado">Ejercicio 106yW de la base abierta de Lichess (CC0), rating 1399. Stockfish 16 a profundidad 18: alfil felix 4 es la mejor (+4,3) y la segunda queda en -3,0.</p></article><article><h4>Solución del ejercicio 19</h4>
+      <p>25… torre captura hector 2 jaque, 26. rey captura hector 2, torre hector 8 jaque, 27. caballo hector 5 jaque, torre captura hector 5 jaque, 28. dama captura hector 5, gustav captura hector 5</p>
+      <p>Es una horquilla: una pieza ataca dos objetivos a la vez. Una torre en la séptima ataca peones y encierra al rey.</p>
+      <p class="comprobado">Ejercicio 1LK8D de la base abierta de Lichess (CC0), rating 1639. Stockfish 16 a profundidad 18: torre captura hector 2 jaque es la mejor (+4,9) y la segunda queda en -1,4.</p></article><article><h4>Solución del ejercicio 20</h4>
+      <p>15. alfil gustav 4, dama gustav 6, 16. alfil captura david 7, torre eva 7, 17. alfil gustav 4</p>
+      <p>Es una enfilada: la pieza de adelante se va y cae la de atrás. El alfil trabaja de lejos: mira la diagonal entera, hasta el final.</p>
+      <p class="comprobado">Ejercicio 0B136 de la base abierta de Lichess (CC0), rating 1737. Stockfish 16 a profundidad 18: alfil gustav 4 es la mejor (+3,4) y la segunda queda en -0,3.</p></article><article><h4>Solución del ejercicio 21</h4>
+      <p>10. caballo captura david 5, caballo captura david 5, 11. dama captura david 5, dama captura david 5, 12. caballo captura cesar 7 jaque, rey felix 7, 13. caballo captura david 5</p>
+      <p>Es una horquilla: una pieza ataca dos objetivos a la vez. El caballo ataca dos cosas a la vez: busca la casilla.</p>
+      <p class="comprobado">Ejercicio 1ag85 de la base abierta de Lichess (CC0), rating 1924. Stockfish 16 a profundidad 18: caballo captura david 5 es la mejor (+3,2) y la segunda queda en -3,5.</p></article><article><h4>Solución del ejercicio 22</h4>
+      <p>18. torre eva 7 jaque, rey david 8, 19. alfil captura david 6</p>
+      <p>Todo gira en torno a una clavada: la pieza clavada no puede defender. Una torre en la séptima ataca peones y encierra al rey.</p>
+      <p class="comprobado">Ejercicio 2w52V de la base abierta de Lichess (CC0), rating 2017. Stockfish 16 a profundidad 18: torre eva 7 jaque es la mejor (+5,4) y la segunda queda en -1,3.</p></article><article><h4>Solución del ejercicio 23</h4>
+      <p>28. torre captura felix 7, dama captura felix 7, 29. torre captura david 5</p>
+      <p>Hay una jugada intermedia: antes de lo obvio, algo más fuerte. Una torre en la séptima ataca peones y encierra al rey.</p>
+      <p class="comprobado">Ejercicio 1eP7U de la base abierta de Lichess (CC0), rating 2083. Stockfish 16 a profundidad 18: torre captura felix 7 es la mejor (+3,8) y la segunda queda en -0,3.</p></article><article><h4>Solución del ejercicio 24</h4>
+      <p>36… caballo gustav 5, 37. dama felix 2, caballo captura felix 7, 38. dama captura cesar 5, torre captura cesar 5</p>
+      <p>Es una horquilla: una pieza ataca dos objetivos a la vez. El caballo ataca dos cosas a la vez: busca la casilla.</p>
+      <p class="comprobado">Ejercicio 1WNxd de la base abierta de Lichess (CC0), rating 2532. Stockfish 16 a profundidad 18: caballo gustav 5 es la mejor (+4,5) y la segunda queda en -0,9.</p></article><article><h4>Solución del ejercicio 25</h4>
+      <p>55… gustav captura felix 2, 56. torre david 1, torre eva 1</p>
+      <p>El peón avanzado decide: hay que empujarlo o aprovecharlo a tiempo. Un peón pasado avanzado vale casi una pieza: empújalo.</p>
+      <p class="comprobado">Ejercicio 2S2mo de la base abierta de Lichess (CC0), rating 1532. Stockfish 16 a profundidad 18: gustav captura felix 2 es la mejor (+5,8) y la segunda queda en -0,7.</p></article><article><h4>Solución del ejercicio 26</h4>
+      <p>21… eva 3, 22. dama gustav 3, eva captura david 2 jaque</p>
+      <p>Es un ataque a la descubierta: al moverse una pieza, se destapa otra. Un golpe de peón abre las líneas que tus piezas necesitan.</p>
+      <p class="comprobado">Ejercicio 1U30e de la base abierta de Lichess (CC0), rating 1588. Stockfish 16 a profundidad 18: e3 es la mejor (+4,7) y la segunda queda en -4,3.</p></article><article><h4>Solución del ejercicio 27</h4>
+      <p>71. rey cesar 8, torre david 2, 72. david 8 corona dama jaque, torre captura david 8 jaque, 73. rey captura david 8, rey bella 5, 74. torre anna 1, rey bella 4, 75. torre captura anna 2</p>
+      <p>Es un despeje: la pieza se aparta para abrirle la línea o la casilla a otra. El peón está cerca de la última fila. ¿Qué hay que quitar del camino?</p>
+      <p class="comprobado">Ejercicio 3BzAn de la base abierta de Lichess (CC0), rating 1639. Stockfish 16 a profundidad 18: rey cesar 8 es la mejor (+5,1) y la segunda queda en 0,0.</p></article><article><h4>Solución del ejercicio 28</h4>
+      <p>45. torre captura hector 2, torre captura hector 2, 46. bella 8 corona dama jaque</p>
+      <p>Es una desviación: se aleja al defensor de lo que defendía. El peón está cerca de la última fila. ¿Qué hay que quitar del camino?</p>
+      <p class="comprobado">Ejercicio 2ch3I de la base abierta de Lichess (CC0), rating 1687. Stockfish 16 a profundidad 18: torre captura hector 2 es la mejor (+3,0) y la segunda queda en -2,8.</p></article><article><h4>Solución del ejercicio 29</h4>
+      <p>38. david captura eva 6, felix captura eva 6, 39. felix 7</p>
+      <p>El peón avanzado decide: hay que empujarlo o aprovecharlo a tiempo. Un peón pasado avanzado vale casi una pieza: empújalo.</p>
+      <p class="comprobado">Ejercicio 2hGL0 de la base abierta de Lichess (CC0), rating 1729. Stockfish 16 a profundidad 18: david captura eva 6 es la mejor (+4,7) y la segunda queda en -5,0.</p></article><article><h4>Solución del ejercicio 30</h4>
+      <p>21… david captura eva 5, 22. torre captura david 7, alfil captura gustav 5</p>
+      <p>Se captura al defensor y lo que defendía queda colgado. Un golpe de peón abre las líneas que tus piezas necesitan.</p>
+      <p class="comprobado">Ejercicio 24X3L de la base abierta de Lichess (CC0), rating 1768. Stockfish 16 a profundidad 18: david captura eva 5 es la mejor (+4,5) y la segunda queda en -0,2.</p></article><article><h4>Solución del ejercicio 31</h4>
+      <p>28… bella 2, 29. david 7, bella 1 corona dama jaque, 30. rey gustav 2, torre david 2, 31. torre cesar 8 jaque, rey gustav 7, 32. david 8 corona dama, torre captura david 8</p>
+      <p>El peón avanzado decide: hay que empujarlo o aprovecharlo a tiempo. El peón está cerca de la última fila. ¿Qué hay que quitar del camino?</p>
+      <p class="comprobado">Ejercicio 2qLf9 de la base abierta de Lichess (CC0), rating 2068. Stockfish 16 a profundidad 18: b2 es la mejor (+3,7) y la segunda queda en 0,0.</p></article><article><h4>Solución del ejercicio 32</h4>
+      <p>42. david 6, rey gustav 3, 43. david 7, hector 3, 44. caballo felix 3, rey captura felix 3, 45. david 8 corona dama</p>
+      <p>La clave es una jugada tranquila: sin jaque ni captura, pero sin defensa. Un peón pasado avanzado vale casi una pieza: empújalo.</p>
+      <p class="comprobado">Ejercicio 2EgIj de la base abierta de Lichess (CC0), rating 2208. Stockfish 16 a profundidad 18: d6 es la mejor (+4,2) y la segunda queda en 0,0.</p></article><article><h4>Solución del ejercicio 33</h4>
+      <p>14. torre eva 4, dama felix 6, 15. torre captura gustav 4</p>
+      <p>Es una interferencia: una pieza se mete entre la defensora y lo que defiende. Pon una pieza entre dos piezas rivales que se defienden.</p>
+      <p class="comprobado">Ejercicio 0XVJf de la base abierta de Lichess (CC0), rating 1482. Stockfish 16 a profundidad 18: torre eva 4 es la mejor (+3,5) y la segunda queda en +0,6.</p></article><article><h4>Solución del ejercicio 34</h4>
+      <p>34… torre captura cesar 3, 35. torre captura cesar 3, caballo captura anna 4 jaque, 36. rey bella 3, caballo captura cesar 3</p>
+      <p>Es una horquilla: una pieza ataca dos objetivos a la vez. Toma la pieza que defiende, y lo que defendía queda colgando.</p>
+      <p class="comprobado">Ejercicio 2TEGK de la base abierta de Lichess (CC0), rating 1510. Stockfish 16 a profundidad 18: torre captura cesar 3 es la mejor (+3,8) y la segunda queda en -2,6.</p></article><article><h4>Solución del ejercicio 35</h4>
+      <p>34… dama eva 1 jaque, 35. dama david 1, alfil david 2 jaque, 36. rey cesar 2, torre captura bella 2 jaque, 37. rey captura bella 2, dama captura david 1</p>
+      <p>Es un ataque a la descubierta: al moverse una pieza, se destapa otra. Una pieza rival sostiene todo. ¿Puedes obligarla a irse?</p>
+      <p class="comprobado">Ejercicio 3NYtV de la base abierta de Lichess (CC0), rating 1619. Stockfish 16 a profundidad 18: dama eva 1 jaque es la mejor (+6,1) y la segunda queda en -2,5.</p></article><article><h4>Solución del ejercicio 36</h4>
+      <p>45. dama eva 8 jaque, dama gustav 8, 46. dama hector 5 jaque, rey gustav 7, 47. dama captura gustav 4 jaque</p>
+      <p>Es una interferencia: una pieza se mete entre la defensora y lo que defiende. Pon una pieza entre dos piezas rivales que se defienden.</p>
+      <p class="comprobado">Ejercicio 20CdR de la base abierta de Lichess (CC0), rating 1811. Stockfish 16 a profundidad 18: dama eva 8 jaque es la mejor (+5,3) y la segunda queda en 0,0.</p></article><article><h4>Solución del ejercicio 37</h4>
+      <p>17. eva captura felix 5, dama hector 7, 18. torre captura gustav 4 jaque, rey hector 8, 19. dama captura hector 7 jaque</p>
+      <p>Es una horquilla: una pieza ataca dos objetivos a la vez. Toma la pieza que defiende, y lo que defendía queda colgando.</p>
+      <p class="comprobado">Ejercicio 2LGyi de la base abierta de Lichess (CC0), rating 1928. Stockfish 16 a profundidad 18: eva captura felix 5 es la mejor (+3,2) y la segunda queda en -3,9.</p></article><article><h4>Solución del ejercicio 38</h4>
+      <p>37. cesar 4, david captura cesar 4, 38. rey captura eva 4, rey eva 6, 39. david 5 jaque</p>
+      <p>Es una desviación: se aleja al defensor de lo que defendía. Una pieza rival sostiene todo. ¿Puedes obligarla a irse?</p>
+      <p class="comprobado">Ejercicio 0FQU8 de la base abierta de Lichess (CC0), rating 2041. Stockfish 16 a profundidad 18: c4 es la mejor (+3,8) y la segunda queda en 0,0.</p></article><article><h4>Solución del ejercicio 39</h4>
+      <p>28… dama felix 1 jaque, 29. torre captura felix 1, caballo eva 2 jaque, 30. rey hector 1, torre captura felix 1 jaque mate</p>
+      <p>El golpe va a la última fila, donde el rey no tiene salida. Una pieza rival sostiene todo. ¿Puedes obligarla a irse?</p>
+      <p class="comprobado">Ejercicio 2ufXl de la base abierta de Lichess (CC0), rating 2149. Stockfish 16 a profundidad 18: dama felix 1 jaque es la mejor (mate en 3) y la segunda queda en -4,7.</p></article><article><h4>Solución del ejercicio 40</h4>
+      <p>31. torre david 6 jaque, rey eva 4, 32. alfil david 3 jaque, rey felix 3, 33. torre felix 6, torre eva 4, 34. torre gustav 3 jaque, rey felix 2, 35. alfil captura eva 4, alfil captura eva 4, 36. torre captura felix 4 jaque, rey eva 2, 37. torre captura eva 4</p>
+      <p>Es una horquilla: una pieza ataca dos objetivos a la vez. Toma la pieza que defiende, y lo que defendía queda colgando.</p>
+      <p class="comprobado">Ejercicio 2ngFz de la base abierta de Lichess (CC0), rating 2526. Stockfish 16 a profundidad 18: torre david 6 jaque es la mejor (+4,6) y la segunda queda en -4,2.</p></article><article><h4>Solución del ejercicio 41</h4>
+      <p>53… torre captura bella 3, 54. anna captura bella 3, anna 2</p>
+      <p>El peón avanzado decide: hay que empujarlo o aprovecharlo a tiempo. En los finales de torre manda la actividad: torre y rey activos.</p>
+      <p class="comprobado">Ejercicio 2YJBp de la base abierta de Lichess (CC0), rating 1252. Stockfish 16 a profundidad 18: torre captura bella 3 es la mejor (+5,7) y la segunda queda en 0,0.</p></article><article><h4>Solución del ejercicio 42</h4>
+      <p>63. gustav 6, alfil eva 6, 64. gustav 7, alfil captura felix 7, 65. rey captura felix 7</p>
+      <p>El peón avanzado decide: hay que empujarlo o aprovecharlo a tiempo. Alfil contra caballo: decide quién tiene peones en los dos flancos.</p>
+      <p class="comprobado">Ejercicio 2Pubi de la base abierta de Lichess (CC0), rating 1277. Stockfish 16 a profundidad 18: g6 es la mejor (+7,3) y la segunda queda en 0,0.</p></article><article><h4>Solución del ejercicio 43</h4>
+      <p>45… anna 4, 46. bella captura anna 4, bella 3, 47. anna 5, bella 2</p>
+      <p>El peón avanzado decide: hay que empujarlo o aprovecharlo a tiempo. En los finales de alfiles, las casillas del color de tu alfil son tuyas.</p>
+      <p class="comprobado">Ejercicio 20YMB de la base abierta de Lichess (CC0), rating 1543. Stockfish 16 a profundidad 18: a4 es la mejor (+4,4) y la segunda queda en -0,1.</p></article><article><h4>Solución del ejercicio 44</h4>
+      <p>38… felix captura eva 4, 39. alfil felix 1, eva 3 jaque, 40. rey cesar 5, eva 2, 41. alfil captura eva 2, alfil captura eva 2</p>
+      <p>Es un ataque a la descubierta: al moverse una pieza, se destapa otra. En los finales de alfiles, las casillas del color de tu alfil son tuyas.</p>
+      <p class="comprobado">Ejercicio 1RLkb de la base abierta de Lichess (CC0), rating 1672. Stockfish 16 a profundidad 18: felix captura eva 4 es la mejor (+4,7) y la segunda queda en 0,0.</p></article><article><h4>Solución del ejercicio 45</h4>
+      <p>33. alfil captura cesar 7, cesar 2, 34. felix 5 jaque, rey eva 7, 35. alfil felix 4</p>
+      <p>Es un despeje: la pieza se aparta para abrirle la línea o la casilla a otra. Alfil contra caballo: decide quién tiene peones en los dos flancos.</p>
+      <p class="comprobado">Ejercicio 1y3KM de la base abierta de Lichess (CC0), rating 1753. Stockfish 16 a profundidad 18: alfil captura cesar 7 es la mejor (+3,8) y la segunda queda en -1,8.</p></article><article><h4>Solución del ejercicio 46</h4>
+      <p>55. torre captura gustav 3 jaque, rey captura gustav 3, 56. rey gustav 5, rey felix 3, 57. rey captura felix 5</p>
+      <p>Es un zugzwang: al rival le toca mover y cualquier jugada lo empeora. En los finales de torre manda la actividad: torre y rey activos.</p>
+      <p class="comprobado">Ejercicio 2THDK de la base abierta de Lichess (CC0), rating 1934. Stockfish 16 a profundidad 18: torre captura gustav 3 jaque es la mejor (+8,2) y la segunda queda en -0,1.</p></article><article><h4>Solución del ejercicio 47</h4>
+      <p>53… cesar 2, 54. alfil captura cesar 2, alfil captura cesar 2, 55. gustav 6, hector 6</p>
+      <p>Hay un rayo X: la pieza actúa a través de otra que está en medio. En los finales de alfiles, las casillas del color de tu alfil son tuyas.</p>
+      <p class="comprobado">Ejercicio 0ENcl de la base abierta de Lichess (CC0), rating 2292. Stockfish 16 a profundidad 18: c2 es la mejor (+4,4) y la segunda queda en +0,0.</p></article><article><h4>Solución del ejercicio 48</h4>
+      <p>52. torre gustav 7 jaque, rey david 6, 53. torre captura bella 7, rey cesar 6, 54. torre bella 8</p>
+      <p>Es una enfilada: la pieza de adelante se va y cae la de atrás. En los finales de torre manda la actividad: torre y rey activos.</p>
+      <p class="comprobado">Ejercicio 1zhwS de la base abierta de Lichess (CC0), rating 2306. Stockfish 16 a profundidad 18: torre gustav 7 jaque es la mejor (+4,7) y la segunda queda en -7,0.</p></article><article><h4>Solución del ejercicio 49</h4>
+      <p>27. torre captura felix 7, torre captura felix 7, 28. dama bella 8 jaque, rey hector 7, 29. torre captura felix 7</p>
+      <p>Es una desviación: se aleja al defensor de lo que defendía. La dama y las torres son las que dan el mate: ¿por dónde entran?</p>
+      <p class="comprobado">Ejercicio 2U4qv de la base abierta de Lichess (CC0), rating 1274. Stockfish 16 a profundidad 18: torre captura felix 7 es la mejor (+6,0) y la segunda queda en 0,0.</p></article><article><h4>Solución del ejercicio 50</h4>
+      <p>71… torre captura felix 2, 72. rey captura felix 2, hector 1 corona dama</p>
+      <p>El peón avanzado decide: hay que empujarlo o aprovecharlo a tiempo. La casilla f7 (f2) solo la defiende el rey. Es el punto más débil al empezar.</p>
+      <p class="comprobado">Ejercicio 2XnWW de la base abierta de Lichess (CC0), rating 1304. Stockfish 16 a profundidad 18: torre captura felix 2 es la mejor (+3,0) y la segunda queda en -1,1.</p></article><article><h4>Solución del ejercicio 51</h4>
+      <p>19. alfil captura hector 7 jaque, caballo captura hector 7, 20. torre captura cesar 3</p>
+      <p>Es un ataque a la descubierta: al moverse una pieza, se destapa otra. El peón de h7 (h2) es el único defensor de esa casilla. ¿Qué pasa si se lo quitas con jaque?</p>
+      <p class="comprobado">Ejercicio 0YQva de la base abierta de Lichess (CC0), rating 1319. Stockfish 16 a profundidad 18: alfil captura hector 7 jaque es la mejor (+5,1) y la segunda queda en -3,6.</p></article><article><h4>Solución del ejercicio 52</h4>
+      <p>30… torre hector 6 jaque, 31. rey gustav 3, torre hector 3 jaque mate</p>
+      <p>Es mate en dos: la primera jugada no deja defensa. Hay un mate de dibujo conocido. Busca el jaque que lo deja armado.</p>
+      <p class="comprobado">Ejercicio 2vIkr de la base abierta de Lichess (CC0), rating 1327. Stockfish 16 a profundidad 18: torre hector 6 jaque es la mejor (mate en 2) y la segunda queda en -3,4.</p></article><article><h4>Solución del ejercicio 53</h4>
+      <p>31. dama hector 8 jaque, torre felix 8, 32. torre captura david 8 jaque, rey captura david 8, 33. dama captura felix 8 jaque</p>
+      <p>Es una atracción: se arrastra a una pieza (a menudo el rey) a una casilla fatal. El rey rival sigue en el centro: abre líneas antes de que se esconda.</p>
+      <p class="comprobado">Ejercicio 0WOvq de la base abierta de Lichess (CC0), rating 1347. Stockfish 16 a profundidad 18: dama hector 8 jaque es la mejor (+5,7) y la segunda queda en -2,6.</p></article><article><h4>Solución del ejercicio 54</h4>
+      <p>28… dama captura anna 1 jaque, 29. caballo eva 1, dama captura eva 1 jaque, 30. torre captura eva 1, torre captura eva 1 jaque</p>
+      <p>Hay un rayo X: la pieza actúa a través de otra que está en medio. Cuenta atacantes y defensores alrededor del rey: si sobran los tuyos, hay algo.</p>
+      <p class="comprobado">Ejercicio 2Llf8 de la base abierta de Lichess (CC0), rating 1558. Stockfish 16 a profundidad 18: dama captura anna 1 jaque es la mejor (+5,9) y la segunda queda en -0,7.</p></article><article><h4>Solución del ejercicio 55</h4>
+      <p>22… torre captura gustav 2 jaque, 23. dama captura gustav 2, dama eva 3 jaque, 24. torre felix 2, alfil captura gustav 2</p>
+      <p>Es una horquilla: una pieza ataca dos objetivos a la vez. Los peones del enroque son el techo del rey. Romper uno puede valer una pieza.</p>
+      <p class="comprobado">Ejercicio 1JwhQ de la base abierta de Lichess (CC0), rating 1572. Stockfish 16 a profundidad 18: torre captura gustav 2 jaque es la mejor (+5,8) y la segunda queda en -2,1.</p></article><article><h4>Solución del ejercicio 56</h4>
+      <p>32. dama captura felix 7 jaque, torre captura felix 7, 33. torre david 8 jaque, torre felix 8, 34. alfil cesar 4 jaque, dama eva 6, 35. alfil captura eva 6 jaque, rey hector 8, 36. torre captura felix 8 jaque mate</p>
+      <p>El golpe va a la última fila, donde el rey no tiene salida. El rey no tiene casillas de escape: mira su última fila.</p>
+      <p class="comprobado">Ejercicio 29Ejv de la base abierta de Lichess (CC0), rating 1600. Stockfish 16 a profundidad 18: dama captura felix 7 jaque es la mejor (mate en 5) y la segunda queda en -7,4.</p></article><article><h4>Solución del ejercicio 57</h4>
+      <p>30… torre captura hector 3 jaque, 31. gustav captura hector 3, dama captura david 2</p>
+      <p>Es un ataque a la descubierta: al moverse una pieza, se destapa otra. Los peones del enroque son el techo del rey. Romper uno puede valer una pieza.</p>
+      <p class="comprobado">Ejercicio 2ipr0 de la base abierta de Lichess (CC0), rating 1664. Stockfish 16 a profundidad 18: torre captura hector 3 jaque es la mejor (+5,4) y la segunda queda en +0,1.</p></article><article><h4>Solución del ejercicio 58</h4>
+      <p>25… dama felix 2 jaque, 26. rey hector 1, torre hector 4, 27. dama captura hector 4 jaque, dama captura hector 4 jaque</p>
+      <p>Todo gira en torno a una clavada: la pieza clavada no puede defender. La dama y las torres son las que dan el mate: ¿por dónde entran?</p>
+      <p class="comprobado">Ejercicio 3GTJE de la base abierta de Lichess (CC0), rating 1680. Stockfish 16 a profundidad 18: dama felix 2 jaque es la mejor (+5,4) y la segunda queda en -0,9.</p></article><article><h4>Solución del ejercicio 59</h4>
+      <p>12… alfil captura hector 2 jaque, 13. rey captura hector 2, caballo gustav 4 jaque, 14. rey gustav 1, dama hector 4</p>
+      <p>Es una atracción: se arrastra a una pieza (a menudo el rey) a una casilla fatal. El peón de h7 (h2) es el único defensor de esa casilla. ¿Qué pasa si se lo quitas con jaque?</p>
+      <p class="comprobado">Ejercicio 372v3 de la base abierta de Lichess (CC0), rating 1685. Stockfish 16 a profundidad 18: alfil captura hector 2 jaque es la mejor (+3,7) y la segunda queda en +0,4.</p></article><article><h4>Solución del ejercicio 60</h4>
+      <p>18. dama captura hector 7 jaque, rey captura hector 7, 19. torre hector 3 jaque, rey gustav 8, 20. torre hector 8 jaque mate</p>
+      <p>Es una atracción: se arrastra a una pieza (a menudo el rey) a una casilla fatal. Cuenta atacantes y defensores alrededor del rey: si sobran los tuyos, hay algo.</p>
+      <p class="comprobado">Ejercicio 1VToK de la base abierta de Lichess (CC0), rating 1699. Stockfish 16 a profundidad 18: dama captura hector 7 jaque es la mejor (mate en 3) y la segunda queda en +0,0.</p></article><article><h4>Solución del ejercicio 61</h4>
+      <p>12. dama captura eva 5 jaque, rey david 7, 13. dama eva 6 jaque mate</p>
+      <p>Es mate en dos: la primera jugada no deja defensa. Hay un mate de dibujo conocido. Busca el jaque que lo deja armado.</p>
+      <p class="comprobado">Ejercicio 2ciHU de la base abierta de Lichess (CC0), rating 1699. Stockfish 16 a profundidad 18: dama captura eva 5 jaque es la mejor (mate en 2) y la segunda queda en -0,9.</p></article><article><h4>Solución del ejercicio 62</h4>
+      <p>27. dama captura eva 8 jaque, rey captura eva 8, 28. caballo captura david 6 jaque, rey david 7, 29. caballo captura felix 5</p>
+      <p>Es un jaque doble: el rey tiene que moverse y no alcanza a tapar nada. El rey rival sigue en el centro: abre líneas antes de que se esconda.</p>
+      <p class="comprobado">Ejercicio 1tIu5 de la base abierta de Lichess (CC0), rating 1798. Stockfish 16 a profundidad 18: dama captura eva 8 jaque es la mejor (+5,5) y la segunda queda en -0,5.</p></article><article><h4>Solución del ejercicio 63</h4>
+      <p>26. dama captura felix 7 jaque, torre captura felix 7, 27. torre cesar 8 jaque, torre felix 8, 28. alfil cesar 4 jaque, torre eva 6, 29. alfil captura eva 6 jaque, rey hector 8, 30. torre captura felix 8 jaque mate</p>
+      <p>El golpe va a la última fila, donde el rey no tiene salida. El rey no tiene casillas de escape: mira su última fila.</p>
+      <p class="comprobado">Ejercicio 2QOON de la base abierta de Lichess (CC0), rating 1839. Stockfish 16 a profundidad 18: dama captura felix 7 jaque es la mejor (mate en 5) y la segunda queda en recibe mate en 6.</p></article><article><h4>Solución del ejercicio 64</h4>
+      <p>18. alfil captura felix 7 jaque, rey eva 7, 19. dama eva 6 jaque, rey david 8, 20. dama captura felix 6 jaque</p>
+      <p>Es una desviación: se aleja al defensor de lo que defendía. La casilla f7 (f2) solo la defiende el rey. Es el punto más débil al empezar.</p>
+      <p class="comprobado">Ejercicio 2frXU de la base abierta de Lichess (CC0), rating 2007. Stockfish 16 a profundidad 18: alfil captura felix 7 jaque es la mejor (+7,4) y la segunda queda en -5,7.</p></article><article><h4>Solución del ejercicio 65</h4>
+      <p>20… dama captura felix 2 jaque, 21. rey hector 1, dama captura felix 1 jaque, 22. torre captura felix 1, torre captura felix 1 jaque mate</p>
+      <p>El golpe va a la última fila, donde el rey no tiene salida. El rey no tiene casillas de escape: mira su última fila.</p>
+      <p class="comprobado">Ejercicio 2mbuQ de la base abierta de Lichess (CC0), rating 2051. Stockfish 16 a profundidad 18: dama captura felix 2 jaque es la mejor (mate en 3) y la segunda queda en -2,0.</p></article><article><h4>Solución del ejercicio 66</h4>
+      <p>40. torre captura hector 6 jaque, gustav captura hector 6, 41. dama felix 5, dama captura eva 4, 42. dama captura eva 4</p>
+      <p>Hay un sacrificio: se entrega material para ganar más. Los peones del enroque son el techo del rey. Romper uno puede valer una pieza.</p>
+      <p class="comprobado">Ejercicio 2wKNb de la base abierta de Lichess (CC0), rating 2059. Stockfish 16 a profundidad 18: torre captura hector 6 jaque es la mejor (+4,5) y la segunda queda en +0,1.</p></article><article><h4>Solución del ejercicio 67</h4>
+      <p>16. dama captura eva 6 jaque, alfil eva 7, 17. dama captura felix 7 jaque, rey david 7, 18. alfil gustav 4 jaque, alfil felix 5, 19. alfil captura felix 5 jaque</p>
+      <p>Todo gira en torno a una clavada: la pieza clavada no puede defender. La casilla f7 (f2) solo la defiende el rey. Es el punto más débil al empezar.</p>
+      <p class="comprobado">Ejercicio 0uwtt de la base abierta de Lichess (CC0), rating 2066. Stockfish 16 a profundidad 18: dama captura eva 6 jaque es la mejor (+5,1) y la segunda queda en -1,7.</p></article><article><h4>Solución del ejercicio 68</h4>
+      <p>14. alfil captura hector 7 jaque, rey captura hector 7, 15. dama hector 5 jaque</p>
+      <p>Es una atracción: se arrastra a una pieza (a menudo el rey) a una casilla fatal. El peón de h7 (h2) es el único defensor de esa casilla. ¿Qué pasa si se lo quitas con jaque?</p>
+      <p class="comprobado">Ejercicio 25yIx de la base abierta de Lichess (CC0), rating 2068. Stockfish 16 a profundidad 18: alfil captura hector 7 jaque es la mejor (+5,2) y la segunda queda en +0,1.</p></article><article><h4>Solución del ejercicio 69</h4>
+      <p>54. dama david 4 jaque, rey eva 7, 55. dama david 8 jaque mate</p>
+      <p>Es mate en dos: la primera jugada no deja defensa. Hay un mate de dibujo conocido. Busca el jaque que lo deja armado.</p>
+      <p class="comprobado">Ejercicio 303H6 de la base abierta de Lichess (CC0), rating 2088. Stockfish 16 a profundidad 18: dama david 4 jaque es la mejor (mate en 2) y la segunda queda en +0,5.</p></article><article><h4>Solución del ejercicio 70</h4>
+      <p>28… dama captura hector 3, 29. gustav 3, alfil captura gustav 3, 30. felix captura gustav 3, torre captura gustav 3 jaque</p>
+      <p>Todo gira en torno a una clavada: la pieza clavada no puede defender. La dama y las torres son las que dan el mate: ¿por dónde entran?</p>
+      <p class="comprobado">Ejercicio 1vmbL de la base abierta de Lichess (CC0), rating 2107. Stockfish 16 a profundidad 18: dama captura hector 3 es la mejor (+5,6) y la segunda queda en -1,5.</p></article><article><h4>Solución del ejercicio 71</h4>
+      <p>18… bella 5, 19. dama cesar 3, alfil bella 4, 20. dama captura bella 4, caballo captura cesar 2 jaque, 21. rey david 2, caballo captura bella 4</p>
+      <p>Es una horquilla: una pieza ataca dos objetivos a la vez. El rey rival sigue en el centro: abre líneas antes de que se esconda.</p>
+      <p class="comprobado">Ejercicio 0rtaZ de la base abierta de Lichess (CC0), rating 2134. Stockfish 16 a profundidad 18: b5 es la mejor (+5,6) y la segunda queda en -1,4.</p></article><article><h4>Solución del ejercicio 72</h4>
+      <p>19. dama cesar 4 jaque, rey hector 8, 20. torre captura felix 8 jaque, dama captura felix 8, 21. caballo felix 7 jaque</p>
+      <p>Es una desviación: se aleja al defensor de lo que defendía. Cuenta atacantes y defensores alrededor del rey: si sobran los tuyos, hay algo.</p>
+      <p class="comprobado">Ejercicio 2i7ZP de la base abierta de Lichess (CC0), rating 2386. Stockfish 16 a profundidad 18: dama cesar 4 jaque es la mejor (+4,3) y la segunda queda en -0,2.</p></article>
+</section>
+<footer>
+  <p>Oscar Angulo Cubero · Academia Ajedrez Integral · 2026.</p>
+  <p>El texto es propio. Las posiciones son de la base abierta de ejercicios de Lichess (CC0), comprobadas con Stockfish 16.</p>
+</footer>
+</body></html>

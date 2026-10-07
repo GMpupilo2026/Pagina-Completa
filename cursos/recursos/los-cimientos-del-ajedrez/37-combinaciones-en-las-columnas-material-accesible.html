@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Combinaciones en las columnas — Los cimientos del ajedrez — material de estudio</title>
+<meta name="robots" content="noindex">
+<meta name="author" content="Oscar Angulo Cubero">
+<meta name="description" content="Material de estudio en formato accesible de la lección 37 del curso Los cimientos del ajedrez.">
+<style>
+  /* Sin imágenes y sin columnas a propósito: esta versión está hecha para
+     lectores de pantalla y para quien necesita agrandar mucho el texto. */
+  body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+         font-size: 1.15rem; line-height: 1.8; color: #102a43; background: #ffffff;
+         max-width: 42rem; margin: 0 auto; padding: 1.5rem 1rem 4rem; }
+  h1 { font-size: 1.7rem; line-height: 1.3; }
+  h2 { font-size: 1.3rem; margin-top: 2.5rem; border-bottom: 2px solid #102a43; padding-bottom: .3rem; }
+  h3 { font-size: 1.1rem; margin-top: 1.8rem; }
+  a { color: #8a4a00; }
+  dt { font-weight: 700; margin-top: 1rem; }
+  dd { margin: .3rem 0 0; }
+  .posicion { border: 2px solid #243b53; border-radius: .5rem; padding: 1rem; margin: 1rem 0; }
+  .respuesta { background: #f0f4f8; border-left: 4px solid #102a43; padding: .6rem .9rem; }
+  footer { margin-top: 3rem; border-top: 2px solid #102a43; padding-top: 1rem; font-size: .95rem; }
+  /* La vuelta a la plataforma. Este archivo se abre solo, en su propia
+     pestaña: sin estos enlaces no hay forma de regresar al curso salvo el
+     botón "atrás" del navegador, que con lector de pantalla no siempre está
+     a mano. Van arriba y abajo: el documento es largo y quien termina de
+     leerlo no tendría que subir de nuevo para salir. */
+  .volver { margin: 0 0 1.5rem; font-size: 1rem; }
+  footer .volver { margin: 1rem 0 0; }
+  .volver a { display: inline-block; padding: .2rem 0; }
+  @media (prefers-color-scheme: dark) {
+    body { background: #0a1f33; color: #f0f4f8; }
+    h2, footer { border-color: #f0b429; }
+    a { color: #f0b429; }
+    .posicion { border-color: #829ab1; }
+    .respuesta { background: #102a43; border-color: #f0b429; }
+  }
+</style>
+</head>
+<body>
+<nav class="volver" aria-label="Volver a la plataforma">
+  <a href="../../academia/los-cimientos-del-ajedrez.html">← Volver al curso Los cimientos del ajedrez</a>
+  ·
+  <a href="../../../clases.html">Panel de Academia</a>
+</nav>
+<header>
+  <p>Los cimientos del ajedrez · Lección 37</p>
+  <h1>Combinaciones en las columnas</h1>
+  <p>Material de estudio en formato accesible. Autor: Oscar Angulo Cubero, Ajedrez Integral.</p>
+  <p>Esta versión dice en palabras todo lo que en el cuadernillo en PDF está dibujado: cada
+     posición viene descrita pieza por pieza, así que no hace falta ver ninguna imagen.</p>
+</header>
+
+<h2>1. De qué trata esta lección</h2>
+
+<p>Cuando dos piezas rivales quedan en la misma columna o fila, una torre o una dama puede atacarlas a la vez. Si la pieza de adelante es la más valiosa, como el rey o la dama, tiene que apartarse y deja expuesta la de atrás: eso es la enfilada. Si la de adelante es la menos valiosa, está clavada: no se puede mover sin perder la de atrás. Y los rayos X son la misma idea en defensa o ataque: una torre que actúa a través de otra pieza, como si esta no estuviera.</p>
+<p>Las señales: el rey o la dama rival en una columna o fila abierta, una torre rival sin defensa en la misma línea, o dos piezas pesadas del rival alineadas. Busca también tus propias torres dobladas: la de atrás empuja a la de adelante y suma fuerza en la casilla de entrada. Cada vez que el rival deja dos piezas en la misma línea y tú tienes una pieza mayor que puede llegar ahí, mira las capturas y los jaques en esa línea.</p>
+<p>El error típico de la enfilada es no comprobar qué pasa con la pieza que da el golpe: si la pieza de atrás está defendida y vale menos que tu torre, el negocio sale mal. Antes de jugarla, cuenta: qué ganas, qué te pueden comer y si el rival puede interponer algo con jaque. En la clavada, el error es apurarse a comer la pieza clavada cuando conviene más atacarla con otra pieza, porque no se puede ir.</p>
+
+
+<h2>2. Conceptos clave</h2>
+<dl>
+  <dt>La enfilada</dt>
+  <dd>Es la clavada al revés: la pieza valiosa está delante y, al moverse, deja expuesta a la de atrás. Se ataca al rey o a la dama y se gana lo que estaba detrás.</dd>
+  <dd><strong>El error de siempre:</strong> Confundirla con la clavada. En la clavada la pieza de adelante no se puede mover; en la enfilada se mueve obligada y por eso pierde. Nombrar bien lo que ves es la mitad de calcularlo.</dd>
+  <dd><strong>Para verlo:</strong> Rey negro en g8, torre negra en g1 y alfil blanco que llega a la diagonal larga: el rey tiene que salir del jaque y la torre cae.</dd>
+  <dt>Jaque, mate y ahogado</dt>
+  <dd>Jaque es atacar al rey; mate es atacarlo sin que tenga salida; ahogado es que NO esté atacado y aun así no tenga ninguna jugada legal, y eso son tablas.</dd>
+  <dd><strong>El error de siempre:</strong> Buscar el jaque en vez del mate. Dar jaques sueltos deja al rey rival mejor colocado y gasta tiempo. Y en finales ganados, empujar sin mirar: entregar el ahogado es la forma más cara de no ganar.</dd>
+  <dd><strong>Para verlo:</strong> Rey y dama contra rey solo: si el rey negro está en a8 y pones la dama en b6, no hay jaque, pero tampoco hay jugada legal. Es ahogado y la partida queda en tablas con dama de más.</dd>
+  <dt>La clavada</dt>
+  <dd>Una pieza queda clavada cuando no puede moverse porque detrás de ella hay algo más valioso. Si detrás está el rey, la clavada es absoluta y la pieza legalmente no se puede mover; si detrás hay una dama o una torre, es relativa y moverse solo cuesta material.</dd>
+  <dd><strong>El error de siempre:</strong> Creer que una pieza clavada defiende. No defiende nada: si la pieza que defiende está clavada contra su rey, no puede capturar. Ese es el motor de media táctica de club.</dd>
+  <dd><strong>Para verlo:</strong> En la Española, alfil bella 5 clava el caballo de c6 contra el rey solo mientras no haya nada en el medio. La respuesta a6 gana tiempo justamente para deshacerla.</dd>
+</dl>
+
+<h2>3. Ejemplos del curso</h2>
+<div class="posicion">
+  <h3>Posición 1: Hay piezas rivales en la misma columna o fila: ¿cuál está delante y cuál detrás? Juegan las blancas; el rival acaba de jugar … eva captura david 4.</h3>
+  
+  <p>Piezas blancas: rey en c1; torre en d1; alfil en b6; caballo en c7; peones en a2, c2, c3, f2, g3, h2.</p>
+  <p>Piezas negras: rey en f6; torre en h8; alfiles en b7, f8; caballo en b8; peones en a6, d4, d6, g5, h7.</p>
+  <p>Juegan las blancas.</p>
+  
+  <p>La línea, jugada por jugada: 24. alfil captura david 4 jaque, rey felix 7, 25. alfil captura hector 8</p>
+  <p>Resultado: Ganan blancas</p>
+  <p>24. alfil captura david 4 jaque, rey felix 7, 25. alfil captura hector 8. Es una enfilada: la pieza de adelante se va y cae la de atrás. Mira cómo la pieza de adelante tiene que moverse o quedarse clavada, y la de atrás paga el precio. (Ejercicio 0WSgB de la base abierta de Lichess (CC0), rating 1103. Stockfish 16 a profundidad 18: alfil captura david 4 jaque es la mejor (+4,5) y la segunda queda en -2,7.)</p>
+  <p>Posición en notación FEN, por si la quieres cargar en un programa: 1n3b1r/1bN4p/pB1p1k2/6p1/3p4/2P3P1/P1P2P1P/2KR4 w - - 0 24</p>
+</div>
+
+<h2>4. Ejercicios</h2>
+<ol>
+  <li>Arma cinco finales de torre y rey y busca en cada uno la enfilada que gana la torre rival.</li>
+  <li>Toma diez ejercicios mezclados de clavada y enfilada y clasifícalos antes de resolverlos.</li>
+  <li>Da mate con rey y dama contra rey solo en menos de diez jugadas, empezando con el rey negro en el centro. Hazlo tres veces sin ahogarlo.</li>
+  <li>Arma tres posiciones de ahogado distintas y anótalas. Verlas te enseña a olerlas cuando vas ganando.</li>
+  <li>En tus tres últimas partidas, busca todas las clavadas que hubo, tuyas y del rival, y anota si se aprovecharon.</li>
+  <li>Arma una posición donde un peón esté defendido solo por una pieza clavada, y encuentra la captura que gana.</li>
+</ol>
+
+<h2>5. Preguntas con su respuesta</h2>
+<p>Contesta en voz alta antes de seguir leyendo: la respuesta viene justo después de cada pregunta.</p>
+<ol>
+  <li>
+    <p>¿En qué se diferencian clavada y enfilada?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> En el orden. Clavada: valiosa detrás, la de adelante no puede moverse. Enfilada: valiosa adelante, se mueve y cae la de atrás.</p>
+  </li>
+  <li>
+    <p>¿Qué piezas enfilan?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Las mismas que clavan: alfil, torre y dama. Necesitan una línea con dos piezas rivales en fila.</p>
+  </li>
+  <li>
+    <p>¿Cómo se defiende una enfilada?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Moviendo la pieza de adelante de modo que siga tapando la línea, interponiendo, o capturando la pieza que enfila.</p>
+  </li>
+  <li>
+    <p>¿Por qué es tan frecuente en finales de torre?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Porque quedan pocas piezas, las líneas están abiertas y el rey no se puede esconder detrás de nada.</p>
+  </li>
+  <li>
+    <p>¿Cuáles son las tres maneras de salir de un jaque?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Mover el rey, capturar la pieza que da jaque o interponer una pieza en el camino. Contra un jaque de caballo la interposición no existe: solo mover o capturar.</p>
+  </li>
+  <li>
+    <p>¿Por qué el ahogado son tablas y no derrota?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Porque quien está ahogado no está en jaque: no se le puede dar mate. La regla premia al que se quedó sin jugadas, y por eso es un recurso defensivo real.</p>
+  </li>
+  <li>
+    <p>¿Cómo se evita el ahogado en un final de dama contra rey?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Acercando el rey propio antes de cerrar la jaula, y dejando siempre al rey rival una casilla mientras no sea mate. La regla práctica: si vas a encerrarlo, que sea con el rey cerca.</p>
+  </li>
+  <li>
+    <p>¿Un rey puede quedar al lado del otro?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> No. Un rey no puede moverse a una casilla atacada, y el otro rey ataca las suyas. Por eso los reyes nunca se tocan.</p>
+  </li>
+  <li>
+    <p>¿Qué piezas pueden clavar?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Solo las de línea: alfil, torre y dama. El caballo no clava nunca, porque su salto no deja una línea detrás.</p>
+  </li>
+  <li>
+    <p>¿Cómo se rompe una clavada?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Moviendo la pieza de atrás, interponiendo otra, echando a la pieza que clava con un peón, o capturándola.</p>
+  </li>
+  <li>
+    <p>¿Por qué la clavada absoluta es más fuerte?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Porque la pieza clavada no se puede mover ni aunque quiera: la regla lo impide. En la relativa, siempre existe la opción de moverse y pagar.</p>
+  </li>
+  <li>
+    <p>Tienes un caballo clavado contra tu rey defendiendo un peón. ¿Está defendido el peón?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> No. El caballo no puede capturar sin dejar a su rey en jaque, así que el peón está colgando aunque parezca defendido.</p>
+  </li>
+</ol>
+
+<h2>6. Fuentes</h2>
+<ul>
+  <li>Texto de la lección: curso «Los cimientos del ajedrez» de Ajedrez Integral, de Oscar Angulo Cubero.</li>
+  <li>Conceptos, preguntas y ejercicios de este cuadernillo: material didáctico de Ajedrez Integral, de Oscar Angulo Cubero.</li>
+  <li>Posiciones: archivo de posiciones del propio curso, verificadas jugada por jugada con chess.js y evaluadas con el motor Stockfish que el sitio usa.</li>
+</ul>
+<h3>Para seguir leyendo</h3>
+<p>Obras de referencia sobre estos temas. Este material no reproduce texto de ellas: se listan como lectura recomendada, no como origen de lo que aquí se dice.</p>
+<ul>
+  <li>Martin Weteschnik, «Chess Tactics from Scratch» (Quality Chess, 2012).</li>
+  <li>Fred Reinfeld, «1001 Brilliant Ways to Checkmate» (1955).</li>
+  <li>Jacob Aagaard, «Calculation» — serie Grandmaster Preparation (Quality Chess, 2012).</li>
+  <li>Irving Chernev, «Logical Chess: Move by Move» (Batsford, 1957).</li>
+  <li>José Raúl Capablanca, «Fundamentos del ajedrez» (1921).</li>
+</ul>
+
+<footer>
+  <p>© 2026 Oscar Angulo Cubero · Ajedrez Integral. Material de uso docente para alumnos de la Academia.</p>
+  <p>No se autoriza su reproducción ni su distribución fuera de ella.</p>
+<p class="volver">
+  <a href="../../academia/los-cimientos-del-ajedrez.html">← Volver al curso Los cimientos del ajedrez</a>
+  ·
+  <a href="../../../clases.html">Panel de Academia</a>
+</p>
+</footer>
+</body>
+</html>

@@ -16,8 +16,10 @@
  *   perezoso(x, y, escala)    Don Lento colgado de su rama
  *   mapache(x, y, escala, opciones)   Don Pillo, el mapache travieso del
  *       segundo cuento; (x, y) son sus patas. opciones: { cara, espejo }
+ *   panda(x, y, escala, opciones)   Sandro, el osito panda del tercer cuento
  *   escena({ fondo, piso, contenido, sol })   lienzo de 600 × 320; sol: "bebe"
- *       cambia el sol de esa escena de día por la carita de Alessandro
+ *       (libro 2) o "gatea" (libro 3) cambia el sol de esa escena de día por
+ *       la carita de Alessandro
  */
 "use strict";
 
@@ -183,6 +185,46 @@ function mapache(x, y, escala, opciones) {
     `</g>`;
 }
 
+/* Sandro, el osito panda viajero del tercer cuento, con su mochila y su
+   mapa. Es un cachorro: cabeza grande y cuerpo chiquito. Se llama Sandro por
+   Alessandro (ver «Cada cuento lleva un secreto para Alessandro"). (x, y) son
+   sus patas. */
+function panda(x, y, escala, opciones) {
+  const o = opciones || {};
+  const s = escala || 1;
+  const giro = o.espejo ? " translate(160,0) scale(-1,1)" : "";
+  return `<g transform="translate(${(x - 80 * s).toFixed(1)},${(y - 180 * s).toFixed(1)}) scale(${s})${giro}">` +
+    `<ellipse cx="80" cy="178" rx="50" ry="5" fill="#000" opacity=".12"/>` +
+    `<rect x="94" y="112" width="26" height="32" rx="7" fill="#e8590c" stroke="#7a2e05" stroke-width="3"/><path d="M97,119 H117" stroke="#7a2e05" stroke-width="2.5"/>` +
+    `<ellipse cx="80" cy="140" rx="32" ry="34" fill="#fff" stroke="#2b2233" stroke-width="3"/>` +
+    `<path d="M52,124 C48,136 52,152 60,160 L68,152 C62,144 61,132 63,124 Z" fill="#2b2233"/>` +
+    `<path d="M108,124 C112,136 108,152 100,160 L92,152 C98,144 99,132 97,124 Z" fill="#2b2233"/>` +
+    `<path d="M72,116 L94,148" stroke="#7a2e05" stroke-width="5" stroke-linecap="round"/>` +
+    `<ellipse cx="64" cy="173" rx="12" ry="7" fill="#2b2233"/><ellipse cx="96" cy="173" rx="12" ry="7" fill="#2b2233"/>` +
+    `<circle cx="44" cy="38" r="16" fill="#2b2233"/><circle cx="116" cy="38" r="16" fill="#2b2233"/>` +
+    `<ellipse cx="80" cy="72" rx="44" ry="38" fill="#fff" stroke="#2b2233" stroke-width="3"/>` +
+    `<ellipse cx="64" cy="68" rx="11" ry="14" transform="rotate(-25 64 68)" fill="#2b2233"/><ellipse cx="96" cy="68" rx="11" ry="14" transform="rotate(25 96 68)" fill="#2b2233"/>` +
+    (o.cara === "dormida"
+      ? `<path d="M60,69 Q65,73 70,69 M90,69 Q95,73 100,69" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/>`
+      : `<circle cx="65" cy="67" r="5" fill="#fff"/><circle cx="95" cy="67" r="5" fill="#fff"/><circle cx="66" cy="68" r="3" fill="#2b2233"/><circle cx="96" cy="68" r="3" fill="#2b2233"/><circle cx="65" cy="66.5" r="1.1" fill="#fff"/><circle cx="95" cy="66.5" r="1.1" fill="#fff"/>`) +
+    `<ellipse cx="80" cy="84" rx="6" ry="4.4" fill="#2b2233"/>` +
+    `<path d="M71,92 Q80,100 89,92" fill="none" stroke="#2b2233" stroke-width="2.6" stroke-linecap="round"/>` +
+    `<circle cx="56" cy="88" r="4.5" fill="#ff8fab" opacity=".7"/><circle cx="104" cy="88" r="4.5" fill="#ff8fab" opacity=".7"/>` +
+    `<g transform="translate(28,128) rotate(-12) scale(0.8)"><rect x="0" y="0" width="30" height="22" rx="2" fill="#fff3bf" stroke="#b07d00" stroke-width="2"/>` +
+    `<path d="M10,0 V22 M20,0 V22" stroke="#e8c97a" stroke-width="1.5"/><path d="M4,16 Q12,6 18,12 T26,6" fill="none" stroke="#e03131" stroke-width="1.6" stroke-dasharray="2 2"/></g>` +
+    `</g>`;
+}
+
+/* Un volcán con su humito, como el Arenal. (x, y) es el centro de su base. */
+function volcan(x, y, s) {
+  return `<g transform="translate(${x},${y}) scale(${s || 1})">` +
+    `<path d="M-120,0 L-30,-120 Q0,-128 30,-120 L120,0 Z" fill="#8d6e63" stroke="#5d4037" stroke-width="3" stroke-linejoin="round"/>` +
+    `<path d="M-120,0 C-90,-30 -70,-40 -50,-46 L50,-46 C70,-40 90,-30 120,0 Z" fill="#69db7c" opacity=".9"/>` +
+    `<path d="M-30,-120 Q0,-110 30,-120" fill="none" stroke="#5d4037" stroke-width="3"/>` +
+    `<g fill="#f1f3f5" opacity=".95"><circle cx="0" cy="-140" r="14"/><circle cx="16" cy="-160" r="18"/><circle cx="-6" cy="-182" r="16"/><circle cx="18" cy="-198" r="12"/></g>` +
+    `</g>`;
+}
+
 /* Una lupa: para buscar los trucos escondidos en el tablero. */
 function lupa(x, y, s, angulo) {
   return `<g transform="translate(${x},${y}) rotate(${angulo || -30}) scale(${s || 1})">` +
@@ -343,12 +385,26 @@ function solBebe(cx, cy) {
     `</g></g>`;
 }
 
+/* El sol del tercer cuento: Alessandro un poco más grande (ya gatea). La
+   misma carita con su gorrito de orejitas, con dos dientitos y las manitas
+   saludando. Cada cuento nuevo lo dibuja un poco más grande. */
+function solGatea(cx, cy) {
+  const PIEL = "#f6c9b3", PIEL_L = "#d99a80";
+  return solBebe(cx, cy).replace("</g></g>", "</g>" +
+    `<rect x="${cx - 2.6}" y="${cy + 17.5}" width="2.4" height="2.6" rx=".6" fill="#fff"/><rect x="${cx + 0.4}" y="${cy + 17.5}" width="2.4" height="2.6" rx=".6" fill="#fff"/>` +
+    `<ellipse cx="${cx - 40}" cy="${cy + 6}" rx="7" ry="8" transform="rotate(-20 ${cx - 40} ${cy + 6})" fill="${PIEL}" stroke="${PIEL_L}" stroke-width="1.3"/>` +
+    `<ellipse cx="${cx + 40}" cy="${cy + 2}" rx="7" ry="8" transform="rotate(20 ${cx + 40} ${cy + 2})" fill="${PIEL}" stroke="${PIEL_L}" stroke-width="1.3"/>` +
+    `<path d="M${cx + 46},${cy - 8} q4,-3 7,0 M${cx + 48},${cy - 13} q4,-3 7,0" fill="none" stroke="#fcc419" stroke-width="2" stroke-linecap="round"/>` +
+    "</g>");
+}
+
 /* ---------------------------------------------------------- fondos */
 const FONDOS = {
   dia: (def) =>
     `<defs><linearGradient id="cielo-dia" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#a5d8ff"/><stop offset="1" stop-color="#e7f5ff"/></linearGradient></defs>` +
     `<rect width="600" height="320" fill="url(#cielo-dia)"/>` +
     (def && def.sol === "bebe" ? solBebe(74, 66) :
+      def && def.sol === "gatea" ? solGatea(74, 66) :
       `<g>${[0, 45, 90, 135, 180, 225, 270, 315].map((a) => `<path d="M70,60 L70,18" transform="rotate(${a} 70 60)" stroke="#fcc419" stroke-width="5" stroke-linecap="round"/>`).join("")}</g>` +
       `<circle cx="70" cy="60" r="28" fill="#ffd43b" stroke="#fab005" stroke-width="3"/>`) +
     nube(250, 55, 1) + nube(440, 85, 0.8) +
@@ -393,11 +449,31 @@ function escena(def) {
     `</svg>`;
 }
 
+/* La medalla de cada diploma de la colección (ver «Los diplomas se
+   coleccionan»): una moneda dorada con su cinta y el dibujo del libro.
+   icono: "torre" | "lupa" | "corona" | "?" (el próximo libro, que todavía no salió).
+   Lienzo de 100 × 130. */
+function medalla(icono, opciones) {
+  const o = opciones || {};
+  const oro = o.apagada ? "#dee2e6" : "#ffd43b", borde = o.apagada ? "#adb5bd" : "#b07d00", cinta = o.apagada ? "#ced4da" : "#e03131";
+  let dibujo;
+  if (icono === "torre") dibujo = pieza("t", "b", 50, 82, 0.36);
+  else if (icono === "lupa") dibujo = lupa(46, 50, 0.85, -35);
+  else if (icono === "corona") dibujo = corona(50, 58, 0.95);
+  else dibujo = `<text x="50" y="66" text-anchor="middle" font-family="Quicksand, sans-serif" font-weight="700" font-size="40" fill="${borde}">?</text>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 130" aria-hidden="true">` +
+    `<path d="M30,78 L18,126 L34,116 L44,128 L50,84 Z" fill="${cinta}" stroke="${o.apagada ? "#adb5bd" : "#a61e1e"}" stroke-width="2" stroke-linejoin="round"/>` +
+    `<path d="M70,78 L82,126 L66,116 L56,128 L50,84 Z" fill="${cinta}" stroke="${o.apagada ? "#adb5bd" : "#a61e1e"}" stroke-width="2" stroke-linejoin="round"/>` +
+    `<circle cx="50" cy="50" r="40" fill="${oro}" stroke="${borde}" stroke-width="4"/>` +
+    `<circle cx="50" cy="50" r="32" fill="none" stroke="${borde}" stroke-width="1.5" stroke-dasharray="3 3"/>` +
+    dibujo + `</svg>`;
+}
+
 /* Una pieza suelta, para «une cada pieza con su nombre» y la tapa. */
 function piezaSola(tipo, color, opciones) {
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 145" aria-hidden="true">${pieza(tipo, color, 50, 142, 1, opciones)}</svg>`;
 }
 
 module.exports = {
-  pieza, perezoso, mapache, lupa, escena, piezaSola, estrella, corazon, flecha, globo, guarumo, nube, caja, corona, mango, trofeo, confeti, piso, FONDOS,
+  pieza, perezoso, mapache, panda, volcan, lupa, medalla, escena, piezaSola, estrella, corazon, flecha, globo, guarumo, nube, caja, corona, mango, trofeo, confeti, piso, FONDOS,
 };

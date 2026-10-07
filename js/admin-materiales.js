@@ -1,6 +1,8 @@
 /* Los materiales de clase en admin.html#materiales: cada material (el libro
- * «Ponte a prueba», el banco de ejercicios «Mide tu fuerza», el libro «Rompe
- * el estancamiento» y los cuentos de Peonita), con sus
+ * «Ponte a prueba», los diez volúmenes del banco de ejercicios «Mide tu fuerza»,
+ * los libros «Rompe el estancamiento», «Ganar con poco», «Cambiar o no cambiar»,
+ * «Ideas que ganan partidas» y «Los cimientos del ajedrez», los cuentos de Peonita y
+ * «Coachess en resumen»), con sus
  * sub-fichas —las pruebas y sus versiones como cuestionario, si las tiene— y
  * CON QUIÉN se comparte.
  *
@@ -53,6 +55,105 @@
       ],
     },
     {
+      producto: "mide-tu-fuerza-2",
+      emoji: "📘",
+      titulo: "Mide tu fuerza · Volumen 2",
+      autor: "Oscar Angulo Cubero",
+      resumen: "Segundo volumen del banco de ejercicios tácticos: la misma forma que el primero (45 tests de 8, los mismos 15 temas y tres niveles, con su tiempo, sus puntos y la fuerza en Elo) y 360 posiciones todas nuevas, ninguna repetida del volumen 1. Sirve para seguir entrenando y para volver a medir sin que cuente la memoria.",
+      archivos: [
+        { href: "material/mide-tu-fuerza-2/mide-tu-fuerza-2.pdf", texto: "📥 El libro en PDF" },
+        { href: "material/mide-tu-fuerza-2/mide-tu-fuerza-2-accesible.html", texto: "♿ Versión accesible" },
+      ],
+    },
+    {
+      producto: "mide-tu-fuerza-3",
+      emoji: "📙",
+      titulo: "Mide tu fuerza · Volumen 3",
+      autor: "Oscar Angulo Cubero",
+      resumen: "Tercer volumen del banco de ejercicios tácticos: la misma forma que los anteriores (45 tests de 8, los mismos 15 temas y tres niveles, con su tiempo, sus puntos y la fuerza en Elo) y 360 posiciones todas nuevas, ninguna repetida de los volúmenes 1 y 2.",
+      archivos: [
+        { href: "material/mide-tu-fuerza-3/mide-tu-fuerza-3.pdf", texto: "📥 El libro en PDF" },
+        { href: "material/mide-tu-fuerza-3/mide-tu-fuerza-3-accesible.html", texto: "♿ Versión accesible" },
+      ],
+    },
+    {
+      producto: "mide-tu-fuerza-4",
+      emoji: "📓",
+      titulo: "Mide tu fuerza · Volumen 4",
+      autor: "Oscar Angulo Cubero",
+      resumen: "Cuarto volumen del banco de ejercicios tácticos: la misma forma que los anteriores (45 tests de 8, los mismos 15 temas y tres niveles, con su tiempo, sus puntos y la fuerza en Elo) y 360 posiciones todas nuevas, ninguna repetida de los volúmenes 1, 2 y 3.",
+      archivos: [
+        { href: "material/mide-tu-fuerza-4/mide-tu-fuerza-4.pdf", texto: "📥 El libro en PDF" },
+        { href: "material/mide-tu-fuerza-4/mide-tu-fuerza-4-accesible.html", texto: "♿ Versión accesible" },
+      ],
+    },
+    {
+      producto: "mide-tu-fuerza-5",
+      emoji: "📔",
+      titulo: "Mide tu fuerza · Volumen 5",
+      autor: "Oscar Angulo Cubero",
+      resumen: "Quinto volumen del banco de ejercicios tácticos: la misma forma que los anteriores (45 tests de 8, los mismos 15 temas y tres niveles, con su tiempo, sus puntos y la fuerza en Elo) y 360 posiciones todas nuevas, ninguna repetida de los volúmenes 1 a 4.",
+      archivos: [
+        { href: "material/mide-tu-fuerza-5/mide-tu-fuerza-5.pdf", texto: "📥 El libro en PDF" },
+        { href: "material/mide-tu-fuerza-5/mide-tu-fuerza-5-accesible.html", texto: "♿ Versión accesible" },
+      ],
+    },
+    {
+      producto: "mide-tu-fuerza-6",
+      emoji: "📒",
+      titulo: "Mide tu fuerza · Volumen 6",
+      autor: "Oscar Angulo Cubero",
+      resumen: "Sexto volumen del banco de ejercicios tácticos: la misma forma que los anteriores (45 tests de 8, los mismos 15 temas y tres niveles, con su tiempo, sus puntos y la fuerza en Elo) y 360 posiciones todas nuevas, ninguna repetida de los volúmenes 1 a 5.",
+      archivos: [
+        { href: "material/mide-tu-fuerza-6/mide-tu-fuerza-6.pdf", texto: "📥 El libro en PDF" },
+        { href: "material/mide-tu-fuerza-6/mide-tu-fuerza-6-accesible.html", texto: "♿ Versión accesible" },
+      ],
+    },
+    {
+      producto: "mide-tu-fuerza-7",
+      emoji: "📕",
+      titulo: "Mide tu fuerza · Volumen 7",
+      autor: "Oscar Angulo Cubero",
+      resumen: "Séptimo volumen del banco de ejercicios tácticos: la forma de los anteriores (45 tests de 8 en tres niveles, con su tiempo, sus puntos y la fuerza en Elo), 360 posiciones todas nuevas y tres temas nuevos —mate en dos, mate en tres y sacrificio— en lugar del jaque doble, los rayos X y la interferencia.",
+      archivos: [
+        { href: "material/mide-tu-fuerza-7/mide-tu-fuerza-7.pdf", texto: "📥 El libro en PDF" },
+        { href: "material/mide-tu-fuerza-7/mide-tu-fuerza-7-accesible.html", texto: "♿ Versión accesible" },
+      ],
+    },
+    {
+      producto: "mide-tu-fuerza-8",
+      emoji: "📗",
+      titulo: "Mide tu fuerza · Volumen 8",
+      autor: "Oscar Angulo Cubero",
+      resumen: "Octavo volumen del banco de ejercicios tácticos: los mismos temas del volumen 7 (con mate en dos, mate en tres y sacrificio), 45 tests de 8 en tres niveles, con su tiempo, sus puntos y la fuerza en Elo, y 360 posiciones todas nuevas, ninguna repetida de los volúmenes 1 a 7.",
+      archivos: [
+        { href: "material/mide-tu-fuerza-8/mide-tu-fuerza-8.pdf", texto: "📥 El libro en PDF" },
+        { href: "material/mide-tu-fuerza-8/mide-tu-fuerza-8-accesible.html", texto: "♿ Versión accesible" },
+      ],
+    },
+    {
+      producto: "mide-tu-fuerza-9",
+      emoji: "📘",
+      titulo: "Mide tu fuerza · Volumen 9",
+      autor: "Oscar Angulo Cubero",
+      resumen: "Noveno volumen del banco de ejercicios tácticos: los mismos temas del volumen 7 (con mate en dos, mate en tres y sacrificio), 45 tests de 8 en tres niveles, con su tiempo, sus puntos y la fuerza en Elo, y 360 posiciones todas nuevas, ninguna repetida de los volúmenes 1 a 8.",
+      archivos: [
+        { href: "material/mide-tu-fuerza-9/mide-tu-fuerza-9.pdf", texto: "📥 El libro en PDF" },
+        { href: "material/mide-tu-fuerza-9/mide-tu-fuerza-9-accesible.html", texto: "♿ Versión accesible" },
+      ],
+    },
+    {
+      producto: "mide-tu-fuerza-10",
+      emoji: "📙",
+      titulo: "Mide tu fuerza · Volumen 10",
+      autor: "Oscar Angulo Cubero",
+      resumen: "Décimo volumen del banco de ejercicios tácticos: los mismos temas del volumen 7 (con mate en dos, mate en tres y sacrificio), 45 tests de 8 en tres niveles, con su tiempo, sus puntos y la fuerza en Elo, y 360 posiciones todas nuevas, ninguna repetida de los volúmenes 1 a 9.",
+      archivos: [
+        { href: "material/mide-tu-fuerza-10/mide-tu-fuerza-10.pdf", texto: "📥 El libro en PDF" },
+        { href: "material/mide-tu-fuerza-10/mide-tu-fuerza-10-accesible.html", texto: "♿ Versión accesible" },
+      ],
+    },
+    {
       producto: "rompe-el-estancamiento",
       emoji: "📙",
       titulo: "Rompe el estancamiento",
@@ -61,6 +162,50 @@
       archivos: [
         { href: "material/rompe-el-estancamiento/rompe-el-estancamiento.pdf", texto: "📥 El libro en PDF" },
         { href: "material/rompe-el-estancamiento/rompe-el-estancamiento-accesible.html", texto: "♿ Versión accesible" },
+      ],
+    },
+    {
+      producto: "ganar-con-poco",
+      emoji: "📗",
+      titulo: "Ganar con poco",
+      autor: "Oscar Angulo Cubero",
+      resumen: "El libro del curso del mismo nombre: cómo ver, sumar y cobrar las ventajas pequeñas —piezas, peones, cambios, finales, paciencia y defensa—, una lección por idea con su ejemplo comentado y su tarea, dieciocho partidas completas con sus momentos clave, 72 ejercicios con soluciones y el cuaderno de ventajas para imprimir.",
+      archivos: [
+        { href: "material/ganar-con-poco/ganar-con-poco.pdf", texto: "📥 El libro en PDF" },
+        { href: "material/ganar-con-poco/ganar-con-poco-accesible.html", texto: "♿ Versión accesible" },
+      ],
+    },
+    {
+      producto: "cambiar-o-no-cambiar",
+      emoji: "📒",
+      titulo: "Cambiar o no cambiar",
+      autor: "Oscar Angulo Cubero",
+      resumen: "El libro del curso del mismo nombre: el cambio de piezas en la estrategia, una lección por idea con su partida modelo de gran maestro, 22 ejercicios de partidas reales con soluciones y las 33 partidas completas.",
+      archivos: [
+        { href: "material/cambiar-o-no-cambiar/cambiar-o-no-cambiar.pdf", texto: "📥 El libro en PDF" },
+        { href: "material/cambiar-o-no-cambiar/cambiar-o-no-cambiar-accesible.html", texto: "♿ Versión accesible" },
+      ],
+    },
+    {
+      producto: "ideas-que-ganan-partidas",
+      emoji: "📘",
+      titulo: "Ideas que ganan partidas",
+      autor: "Oscar Angulo Cubero",
+      resumen: "El libro del curso del mismo nombre: las ideas de medio juego y de final que deciden partidas —el ataque al enroque, el rey en el centro, las piezas, los peones, la táctica que sostiene el plan y los finales—, una lección por idea con su ejemplo comentado y su tarea, 72 ejercicios con soluciones y la planilla de repaso para imprimir.",
+      archivos: [
+        { href: "material/ideas-que-ganan-partidas/ideas-que-ganan-partidas.pdf", texto: "📥 El libro en PDF" },
+        { href: "material/ideas-que-ganan-partidas/ideas-que-ganan-partidas-accesible.html", texto: "♿ Versión accesible" },
+      ],
+    },
+    {
+      producto: "los-cimientos-del-ajedrez",
+      emoji: "🧱",
+      titulo: "Los cimientos del ajedrez",
+      autor: "Oscar Angulo Cubero",
+      resumen: "El libro del curso del mismo nombre: 72 lecciones en tres niveles —táctica, finales, juego posicional, cálculo y aperturas— con partidas clásicas comentadas, cuatro ejercicios por lección y un repaso por nivel, con soluciones.",
+      archivos: [
+        { href: "material/los-cimientos-del-ajedrez/los-cimientos-del-ajedrez.pdf", texto: "📥 El libro en PDF" },
+        { href: "material/los-cimientos-del-ajedrez/los-cimientos-del-ajedrez-accesible.html", texto: "♿ Versión accesible" },
       ],
     },
     {
@@ -83,6 +228,28 @@
       archivos: [
         { href: "material/peonita-trucos/peonita-trucos.pdf", texto: "📥 El libro en PDF" },
         { href: "material/peonita-trucos/peonita-trucos-accesible.html", texto: "♿ Versión accesible" },
+      ],
+    },
+    {
+      producto: "peonita-rey",
+      emoji: "👑",
+      titulo: "Peonita y el rey escondido",
+      autor: "Oscar Angulo Cubero",
+      resumen: "El tercer cuento de Peonita: el Rey Carbón se esconde en el volcán y, con Sandro, un osito panda viajero, Peonita y Tizón aprenden a atraparlo con los primeros jaques mate (la torre en la orilla, la escalera de las dos torres, la caja y el beso de la dama, la torre con su rey), a no ahogarlo y los primeros mates en dos. Nueve capítulos con «¡A jugar!», el diploma y las soluciones. Se puede imprimir.",
+      archivos: [
+        { href: "material/peonita-rey/peonita-rey.pdf", texto: "📥 El libro en PDF" },
+        { href: "material/peonita-rey/peonita-rey-accesible.html", texto: "♿ Versión accesible" },
+      ],
+    },
+    {
+      producto: "coachess-resumen",
+      emoji: "🧭",
+      titulo: "Coachess en resumen",
+      autor: "Oscar Angulo Cubero (resumen del libro de Daniel Muñoz Sánchez)",
+      resumen: "Lo más importante de «Coachess», de Daniel Muñoz: lo que el ajedrez enseña para decidir mejor, manejar el tiempo, trabajar con más sentido y aprender de las derrotas. Veinte capítulos con su idea, el ejemplo del tablero, los estudios que cita y consejos prácticos; los veinte consejos del autor y preguntas para conversar. Se puede imprimir.",
+      archivos: [
+        { href: "material/coachess-resumen/coachess-resumen.pdf", texto: "📥 El libro en PDF" },
+        { href: "material/coachess-resumen/coachess-resumen-accesible.html", texto: "♿ Versión accesible" },
       ],
     },
   ];
