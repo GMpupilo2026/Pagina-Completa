@@ -41,6 +41,7 @@ FIN = "<!-- app: fin -->"
 #     de «Mide tu fuerza» (mide-tu-fuerza-accesible.html,
 #     mide-tu-fuerza-2-accesible.html…), rompe-el-estancamiento-accesible.html,
 #     ganar-con-poco-accesible.html, cambiar-o-no-cambiar-accesible.html,
+#     ideas-que-ganan-partidas-accesible.html,
 #     peonita-accesible.html, peonita-trucos-accesible.html y
 #     coachess-resumen-accesible.html son
 #     documentos que se descargan y se abren sueltos, hasta por correo y sin
@@ -68,7 +69,7 @@ FUERA = {"inscripcion.html", "offline.html", "formulario.html",
          "mide-tu-fuerza-10-accesible.html",
          "rompe-el-estancamiento-accesible.html",
          "ganar-con-poco-accesible.html",
-         "cambiar-o-no-cambiar-accesible.html",
+         "cambiar-o-no-cambiar-accesible.html", "ideas-que-ganan-partidas-accesible.html",
          "peonita-accesible.html",
          "peonita-trucos-accesible.html",
          "coachess-resumen-accesible.html"}
