@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-/* Arma data/archivos.json: la lista de TODOS los PDF, Word, Excel y
- * presentaciones del sitio, ordenada para la sección «Archivos» de admin.html (la pinta
+/* Arma data/archivos.json: la lista de TODOS los PDF, Word, Excel,
+ * presentaciones y versiones accesibles del sitio, ordenada para la sección «Archivos» de admin.html (la pinta
  * js/admin-archivos.js, una ficha por tipo).
  *
  * La lista no se escribe a mano: se lee del disco. Un archivo nuevo (un curso,
@@ -17,7 +17,8 @@
  *     (cursos/protegido/<curso>.html, un <details> por lección). Lo que la
  *     página no enlaza va en «Otros archivos del curso».
  *   - Sueltos: los PDF fuera de esas dos carpetas (hoy, la raíz).
- * Las presentaciones (.pptx) se ordenan igual que los PDF. Los Word y los
+ * Las presentaciones (.pptx) y las versiones accesibles (*-accesible.html) se
+ * ordenan igual que los PDF. Los Word y los
  * Excel van por carpeta (el nombre, de CARPETAS).
  *
  *   node herramientas/archivos-catalogo.js   escribe data/archivos.json
@@ -36,6 +37,8 @@ const TIPOS = {
   word: /\.(docx?|odt)$/i,
   excel: /\.(xlsx|xlsm|xls|ods)$/i,
   presentaciones: /\.(pptx?|odp)$/i,
+  // Las versiones accesibles: un HTML sin imágenes, para leer con lector de pantalla.
+  accesibles: /-accesible\.html$/i,
 };
 
 // Lo que no se publica (.assetsignore) ni es del sitio: ahí no se busca.
@@ -55,6 +58,8 @@ const TITULOS = {
   "material/fichas-de-estudio/fichas-de-estudio-cartas.pdf": "Fichas de estudio — cartas para recortar",
   "material/guia-del-profesor/guia-del-profesor.pdf": "Guía del profesor — manual",
   "material/guia-del-profesor/guia-del-profesor-presentacion.pdf": "Guía del profesor — presentación",
+  "material/peonita/peonita.pdf": "Peonita y el reino de las 64 casillas — el cuento ilustrado",
+  "material/peonita-trucos/peonita-trucos.pdf": "Peonita, Tizón y los trucos del bosque — el cuento ilustrado",
   "cursos/recursos/formacion-ajedrez/08-prueba-final.pdf": "Prueba final teórica",
   "cursos/recursos/formacion-ajedrez/08-torneo-real-evaluacion-formularios.pdf": "Formularios y lista de cotejo del torneo",
   "instrucciones-adaptadas.pdf": "Instrucciones adaptadas (para quien ve poco o no ve)",
@@ -81,11 +86,19 @@ const LIBROS = {
   "examen-de-arbitraje": "Examen de arbitraje",
   "fichas-de-estudio": "Fichas de estudio",
   "guia-del-profesor": "Guía del profesor",
+  "peonita": "Peonita y el reino de las 64 casillas",
+  "peonita-trucos": "Peonita, Tizón y los trucos del bosque",
 };
 
 function tituloDe(ruta) {
   if (TITULOS[ruta]) return TITULOS[ruta];
   for (const [re, f] of PATRONES) { const m = ruta.match(re); if (m) return f(m); }
+  // Un HTML trae su nombre en el <title> (sin «— versión accesible»: en su
+  // ficha todas lo son).
+  if (/\.html$/i.test(ruta)) {
+    const m = fs.readFileSync(path.join(RAIZ, ruta), "utf8").match(/<title>([^<]+)<\/title>/i);
+    if (m) return textoPlano(m[1]).replace(/\s*[—-]\s*versi[oó]n accesible$/i, "");
+  }
   return nombreDelArchivo(ruta);
 }
 
@@ -122,6 +135,7 @@ function tipoDe(archivo) {
   if (/-material\.pdf$/i.test(archivo)) return "material";
   if (/-ejercicios\.pdf$/i.test(archivo)) return "ejercicios";
   if (TIPOS.presentaciones.test(archivo)) return "presentacion";
+  if (TIPOS.accesibles.test(archivo)) return "accesible";
   return "otro";
 }
 
@@ -165,7 +179,7 @@ const enDisco = (tipo) => buscar(RAIZ, "", [], TIPOS[tipo]).sort((a, b) => a.loc
 
 /* Los PDF y las presentaciones: muchos y de los cursos, así que van ordenados
    (libros y material, cursos por lección, sueltos). */
-const NOMBRE_EN_LECCION = { material: "Material de estudio", ejercicios: "Ejercicios", presentacion: "Presentación" };
+const NOMBRE_EN_LECCION = { material: "Material de estudio", ejercicios: "Ejercicios", presentacion: "Presentación", accesible: "Material accesible" };
 
 function armarOrdenado(tipo) {
   const todos = enDisco(tipo);
@@ -239,6 +253,7 @@ function armar() {
     word: armarPorCarpeta("word"),
     excel: armarPorCarpeta("excel"),
     presentaciones: armarOrdenado("presentaciones"),
+    accesibles: armarOrdenado("accesibles"),
   };
 }
 
@@ -251,7 +266,7 @@ if (require.main === module) {
   const d = armar();
   console.log(`data/archivos.json: ${d.pdf.total} PDF (${d.pdf.material.length} de material, `
     + `${d.pdf.cursos.length} cursos, ${d.pdf.sueltos.length} sueltos), ${d.word.total} Word, ${d.excel.total} Excel, `
-    + `${d.presentaciones.total} presentaciones.`);
+    + `${d.presentaciones.total} presentaciones, ${d.accesibles.total} versiones accesibles.`);
 }
 
 module.exports = { armar, texto, enDisco, TIPOS, SALIDA, RAIZ };
