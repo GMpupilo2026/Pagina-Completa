@@ -7,8 +7,8 @@
   "resumen": "El cambio de piezas en la estrategia: qué cambiar, qué conservar y por qué, con 33 partidas de grandes maestros y 22 ejercicios de partidas reales.",
   "descripcion_larga": "Cada cambio de piezas transforma la partida: unas piezas salen del tablero y otras se quedan con más o menos trabajo. Saber cuál cambiar y cuál conservar es una de las habilidades que más separan al jugador de club del maestro. Este curso recorre las reglas clásicas de Rubinstein y Capablanca (cambiar la mejor pieza del rival, dejarle la mala, no cambiar con más espacio), la lucha entre alfiles y caballos, el cambio de damas y de torres, y los cambios paradójicos de la técnica moderna, con partidas modelo de Steinitz a Kasparov. Termina con 22 ejercicios de partidas de grandes maestros, cada uno comprobado con Stockfish. Toma como guía el libro «El cambio de piezas» del Maestro Internacional Diego Valerga.",
   "anterior": {
-    "href": "rompe-el-estancamiento.html",
-    "titulo": "Rompe el estancamiento"
+    "href": "ganar-con-poco.html",
+    "titulo": "Ganar con poco"
   },
   "siguiente": {
     "href": "calculo-y-visualizacion.html",
