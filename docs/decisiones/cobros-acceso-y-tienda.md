@@ -1004,8 +1004,9 @@ de activar y sin la comprobación de `is_admin`, salta.
 
 `tienda.html` es el catálogo de venta de lo que este repositorio ya produjo:
 los doce cursos con su material de clase y los cinco libros y guías. **Cada
-material vale ₡5.000**, y los seis módulos del anuncio —«¿Eres entrenador de
-ajedrez?»— son la forma en que se presenta el paquete completo.
+material vale ₡5.000** —salvo uno, abajo—, y los seis módulos del anuncio
+—«¿Eres entrenador de ajedrez?»— son la forma en que se presenta el paquete
+completo.
 
 **Hoy solo la ve quien administra**, a propósito: está montada entera para
 poder revisarla antes de abrirla, no para vender todavía. El candado es
@@ -1039,6 +1040,34 @@ quede distinta.
   portada pública, un libro es su primer archivo) en vez de escribirse
   diecisiete veces, donde el que se olvidara quedaría con un botón que no lleva
   a ninguna parte.
+
+### Un material con su propio precio: «Una clase al día»
+
+El dueño pidió poner en la tienda «Una clase al día» (entonces «Las mil y una
+lecciones de ajedrez») y
+calcularle el precio. A ₡5.000 habría valido lo mismo que un curso de diez
+lecciones, y son 360. El precio **no se puso a ojo: sale de las dos reglas que
+la tienda ya tenía**. Son doce bloques, cada uno del tamaño de un curso grande
+del catálogo (de 6 a 58 lecciones, 30 en promedio; los demás cursos traen de 10
+a 36) y con su tomo del libro: doce materiales a `PRECIO` son ₡60.000, y con
+`DESCUENTO_PACK` (el 40 % de llevarse muchos juntos), **₡36.000**: ₡100 por
+lección, contra unos ₡290 de los demás cursos.
+
+- **El precio se calcula en el catálogo**, con `PRECIO` y `DESCUENTO_PACK`: si
+  el dueño cambia cualquiera de los dos, este se mueve solo. Un producto puede
+  traer `precio`; sin él, vale `PRECIO` (`precioDe()`).
+- **Todo lo que sumaba «cuántos × PRECIO» pasó a sumar el precio de cada uno**:
+  el suelto del paquete, la barra de la selección y el mensaje de WhatsApp. El
+  verificador elige este curso en la prueba de la selección, porque con dos a
+  ₡5.000 la cuenta vieja pasaba igual (se comprobó rompiéndola).
+- La frase «cada material, por su cuenta, a ₡5.000» pasó a decir «desde», con
+  el más barato (`precioMinimo()`).
+- Va en el módulo 4, «Comprensión, criterio y partidas modelo». **El paquete
+  completo subió de ₡54.000 a ₡76.000** (₡126.000 por separado): entra al
+  sistema completo como todo producto, porque fuera de los módulos se vendería
+  algo que el paquete no entrega.
+- Sus piezas son sus doce tomos y sus doce versiones accesibles
+  (`tomos`, `tomosAccesibles`), contadas contra el disco como las demás.
 
 ### Lo que se rompe callado acá, y lo caro que sale
 

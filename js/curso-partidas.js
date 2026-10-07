@@ -41,7 +41,7 @@
       .then((d) => { data = d; return d; });
     return dataPromise;
   }
-  // Un curso grande ("Las mil y una lecciones", casi 2000 partidas) no cabe en
+  // Un curso grande ("Una clase al día", casi 2000 partidas) no cabe en
   // un solo archivo: su <slug>.json trae en "trozos" de qué archivo sale cada
   // partida o ejercicio (data/<slug>/<trozo>.json) y se baja solo el de la
   // lección abierta.

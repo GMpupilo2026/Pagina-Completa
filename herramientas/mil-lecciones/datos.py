@@ -1,12 +1,12 @@
 # Pasa lo armado (ext/armado.json) y lo que dijo Stockfish (ext/motor.json) a
-# los datos del curso: cursos/protegido/data/las-mil-y-una-lecciones-de-ajedrez.json (índice)
-# y cursos/protegido/data/las-mil-y-una-lecciones-de-ajedrez/lNNN.json (las partidas de cada
+# los datos del curso: cursos/protegido/data/una-clase-al-dia.json (índice)
+# y cursos/protegido/data/una-clase-al-dia/lNNN.json (las partidas de cada
 # clase). Esos archivos son la única copia: el libro sale de ellos.
 import sys, json, os, re, chess
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from temas import BLOQUES
 RAIZ = sys.argv[1]
-SLUG = 'las-mil-y-una-lecciones-de-ajedrez'
+SLUG = 'una-clase-al-dia'
 A = json.load(open('ext/armado.json'))
 M = json.load(open('ext/motor.json'))
 E_ORIG = json.load(open('ext/ejercicios.json'))
@@ -127,7 +127,7 @@ if __name__ == '__main__':
                       ensure_ascii=False, separators=(',', ':'))
             lecs.append({'n': n, 'clase': l['n'], 'archivo': archivo, 'titulo': leccion['titulo']})
         bloques.append({'n': bi + 1, 'clave': c, 'titulo': tit, 'desc': desc, 'lecciones': lecs})
-    indice = {'curso': {'slug': SLUG, 'titulo': 'Las mil y una lecciones de ajedrez', 'nivel': 'Avanzado',
+    indice = {'curso': {'slug': SLUG, 'titulo': 'Una clase al día', 'nivel': 'Avanzado',
                         'autor_original': 'MI Ángel Martín', 'fuente': 'Las Mil y una Lecciones de Ajedrez (EDAMI, 2011)',
                         'bloques': bloques},
               'trozos': trozos, 'partidas': {}, 'ejercicios': {}, 'quizzes': {},

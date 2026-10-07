@@ -683,7 +683,7 @@
             { slug: "cambiar-o-no-cambiar", titulo: "Cambiar o no cambiar" },
             { slug: "ideas-que-ganan-partidas", titulo: "Ideas que ganan partidas" },
             { slug: "los-cimientos-del-ajedrez", titulo: "Los cimientos del ajedrez" },
-            { slug: "las-mil-y-una-lecciones-de-ajedrez", titulo: "Las mil y una lecciones de ajedrez" },
+            { slug: "una-clase-al-dia", titulo: "Una clase al día" },
             { slug: "finales-practicos", titulo: "Finales Prácticos" },
             { slug: "el-mapa-de-los-finales", titulo: "El mapa de los finales" },
             { slug: "estrategia-en-el-final", titulo: "Estrategia en el final" },

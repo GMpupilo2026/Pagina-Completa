@@ -1,8 +1,8 @@
-# Escribe cursos/protegido/las-mil-y-una-lecciones-de-ajedrez.html (las lecciones completas)
+# Escribe cursos/protegido/una-clase-al-dia.html (las lecciones completas)
 # desde los datos del curso.
 import sys, json, os, html, re
 RAIZ = sys.argv[1]
-SLUG = 'las-mil-y-una-lecciones-de-ajedrez'
+SLUG = 'una-clase-al-dia'
 BASE = os.path.join(RAIZ, 'cursos/protegido/data')
 IDX = json.load(open(os.path.join(BASE, SLUG + '.json')))
 ES = {'K': 'R', 'Q': 'D', 'R': 'T', 'B': 'A', 'N': 'C'}
@@ -51,7 +51,7 @@ def leccion(L, d):
     return ''.join(h)
 
 if __name__ == '__main__':
-    out = ['<div class="bg-brand-50 dark:bg-brand-800 rounded-xl p-5"><p class="%s"><strong>Cómo usar este curso.</strong> Son las 360 clases de «Las Mil y una Lecciones de Ajedrez», del MI Ángel Martín, ordenadas por tema en doce bloques. Cada lección explica una idea con partidas de maestros: recórrelas leyendo el comentario de cada jugada (flechas o ← → en el teclado), pulsa <em>Adivinar las jugadas clave</em> para ponerte a prueba y, si quieres, sigue cualquier posición contra el motor. Muchas lecciones traen además ejercicios de táctica y un «Repaso y práctica» para resolver en el tablero.</p><p class="%s mt-2 text-xs">Las jugadas de cada partida se leyeron del libro y se comprobaron una por una con python-chess; los momentos clave y los ejercicios, con Stockfish 16. Las jugadas subrayadas tienen comentario; las jugadas en naranja son momentos clave.</p></div>' % (P, P)]
+    out = ['<div class="bg-brand-50 dark:bg-brand-800 rounded-xl p-5"><p class="%s"><strong>Cómo usar este curso.</strong> Son 360 clases, una para cada día, ordenadas por tema en doce bloques: con una al día, en un año recorres todo el ajedrez, del ataque al rey a los finales. Lo que mejora no es lo que se estudia un fin de semana, sino lo que se repasa todos los días. Cada lección explica una idea con partidas de maestros: recórrelas leyendo el comentario de cada jugada (flechas o ← → en el teclado), pulsa <em>Adivinar las jugadas clave</em> para ponerte a prueba y, si quieres, sigue cualquier posición contra el motor. Muchas lecciones traen además ejercicios de táctica y un «Repaso y práctica» para resolver en el tablero.</p><p class="%s mt-2 text-xs">Las jugadas de cada partida se leyeron del libro y se comprobaron una por una con python-chess; los momentos clave y los ejercicios, con Stockfish 16. Las jugadas subrayadas tienen comentario; las jugadas en naranja son momentos clave.</p></div>' % (P, P)]
     for b in IDX['curso']['bloques']:
         out.append('<div><h4 class="font-serif text-base font-bold text-brand-800 dark:text-white mb-2 mt-6">Bloque %d · %s</h4><p class="text-xs text-brand-450 dark:text-brand-350 mb-2">%s</p><div class="space-y-2">' % (b['n'], e(b['titulo']), e(b['desc'])))
         for l in b['lecciones']:

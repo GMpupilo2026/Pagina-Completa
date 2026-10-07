@@ -50,7 +50,7 @@ function leccionesDeLaBase() {
       for (const m of bloque.matchAll(/\('([a-z0-9-]+)',\s*'[^']*',\s*(\d+)\)/g)) total[m[1]] = Number(m[2]);
     }
     // Un curso que cambió de slug («mil-y-una-lecciones» pasó a
-    // «las-mil-y-una-lecciones-de-ajedrez») se lleva su total.
+    // «una-clase-al-dia») se lleva su total.
     for (const m of sql.matchAll(/update interno\.curso_lecciones set slug = '([a-z0-9-]+)' where slug = '([a-z0-9-]+)'/g)) {
       if (m[2] in total) { total[m[1]] = total[m[2]]; delete total[m[2]]; }
     }

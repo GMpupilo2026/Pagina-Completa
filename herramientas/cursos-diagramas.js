@@ -84,7 +84,7 @@ const CURSOS = [
       alt: "El sacrificio del alfil en h7, ejemplo del curso: juegan las blancas, el peón de e5 ya echó al caballo de f6 y el alfil de d3 toma en h7 con jaque." },
     // Sus partidas están repartidas en un archivo por clase: la tarjeta toma el
     // sacrificio 13.Axe5! de la primera (Browne – Quinteros, Wijk aan Zee 1974).
-    { slug: "las-mil-y-una-lecciones-de-ajedrez", desde: ["las-mil-y-una-lecciones-de-ajedrez/l001",
+    { slug: "una-clase-al-dia", desde: ["una-clase-al-dia/l001",
         (d) => ({ fen: d.partidas["ml001-1"].moves[d.partidas["ml001-1"].claves[1].ply - 1].fen })],
       destacar: ["e5"],
       alt: "El sacrificio Axe5 de Browne contra Quinteros: con las piezas negras sin desarrollar, el alfil se entrega para abrir la columna e contra el rey en el centro." },
