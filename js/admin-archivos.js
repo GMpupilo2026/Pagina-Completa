@@ -28,15 +28,16 @@
     accesible: "Versión accesible",
     otro: "Otro",
   };
-  const FICHAS = ["pdf", "word", "excel", "presentaciones", "accesibles"];
+  const FICHAS = ["pdf", "word", "excel", "presentaciones", "accesibles", "imagenes"];
   // Cómo se nombra cada ficha dentro de una frase («Buscar en …», «Carpetas de …»).
-  const EN_FRASE = { pdf: "los PDF", word: "los Word", excel: "los Excel", presentaciones: "las presentaciones", accesibles: "las versiones accesibles" };
+  const EN_FRASE = { pdf: "los PDF", word: "los Word", excel: "los Excel", presentaciones: "las presentaciones", accesibles: "las versiones accesibles", imagenes: "las imágenes" };
   const VACIO = {
     pdf: "Todavía no hay ningún PDF en la plataforma.",
     word: "Todavía no hay ningún documento de Word en la plataforma.",
     excel: "Todavía no hay ningún Excel guardado en la plataforma. Los que se bajan desde las páginas (por ejemplo, el mes de cada profesor en Supervisión o los reportes) se arman en el momento con los datos de ese día, así que no viven acá. Cuando se suba uno, aparece en esta ficha.",
     presentaciones: "Todavía no hay ninguna presentación en la plataforma.",
     accesibles: "Todavía no hay ninguna versión accesible en la plataforma.",
+    imagenes: "Todavía no hay ninguna imagen en la plataforma.",
   };
 
   const BOTON = "inline-flex items-center gap-1 rounded-lg bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-3 py-1.5 text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 disabled:opacity-60";
@@ -72,7 +73,8 @@
   const esPresentacion = (a) => /\.(pptx?|odp)$/i.test(a.ruta);
   const esAccesible = (a) => /-accesible\.html$/i.test(a.ruta);
   // Lo que el navegador abre solo (y por eso lleva «Abrir»): un PDF o una página.
-  const seAbre = (a) => /\.(pdf|html)$/i.test(a.ruta);
+  const esImagen = (a) => /\.(png|jpe?g|gif|webp|avif|svg|ico)$/i.test(a.ruta);
+  const seAbre = (a) => /\.(pdf|html)$/i.test(a.ruta) || esImagen(a);
 
   /* «3 PDF», «3 presentaciones» o «3 archivos», según lo que haya en la lista. */
   function cuantos(lista) {
@@ -80,13 +82,14 @@
     if (lista.every((a) => /\.pdf$/i.test(a.ruta))) return n + " PDF";
     if (lista.every(esPresentacion)) return n + (n === 1 ? " presentación" : " presentaciones");
     if (lista.every(esAccesible)) return n + (n === 1 ? " versión accesible" : " versiones accesibles");
+    if (lista.every(esImagen)) return n + (n === 1 ? " imagen" : " imágenes");
     return n + (n === 1 ? " archivo" : " archivos");
   }
 
   /* «Bajar los 9», «Bajar las 12», «Bajar el PDF». */
   function textoBajar(lista) {
     const n = lista.length;
-    const fem = lista.every(esPresentacion) || lista.every(esAccesible);
+    const fem = lista.every(esPresentacion) || lista.every(esAccesible) || lista.every(esImagen);
     const art = n === 1 ? (fem ? "la" : "el") : (fem ? "las" : "los");
     return "📥 Bajar " + art + " " + (n === 1 ? cuantos(lista).replace(/^1 /, "") : String(n));
   }
@@ -130,7 +133,7 @@
   }
 
   function carpetasPorCarpeta(f) {
-    return f.grupos.map((g, i) => ({ id: "carpeta-" + i, grupo: "Carpetas", titulo: g.titulo, ruta: g.carpeta,
+    return f.grupos.map((g, i) => ({ id: "carpeta-" + i, grupo: g.grupo || "Carpetas", titulo: g.titulo, ruta: g.carpeta,
       bloques: [{ titulo: null, archivos: g.archivos.map((a) => conNombre(a, a.titulo, g.titulo)) }] }));
   }
 
@@ -220,6 +223,16 @@
     bajar.setAttribute("download", nombreArchivo(a.ruta));
     bajar.append(el("span", null, "📥 Bajar"), el("span", "sr-only", " " + etiqueta));
     botones.append(bajar);
+    if (esImagen(a)) {
+      // La miniatura: se pide recién cuando la fila se ve (loading=lazy). El
+      // nombre ya dice qué es, así que el lector de pantalla no la repite.
+      const mini = el("img", "arch-mini w-14 h-14 shrink-0 rounded-md border border-brand-200 dark:border-brand-700 object-contain bg-brand-100 dark:bg-brand-800");
+      mini.src = a.ruta;
+      mini.alt = "";
+      mini.loading = "lazy";
+      mini.decoding = "async";
+      li.append(mini);
+    }
     li.append(izq, botones);
     return li;
   }

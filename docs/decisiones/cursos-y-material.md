@@ -1522,11 +1522,11 @@ aplicado el CLI.
 
 ## La sección Archivos
 
-`admin.html#archivos` junta **todos** los PDF, Word, Excel, presentaciones y
-versiones accesibles del sitio para que quien administra los abra o los baje
-sin ir curso por curso. Va **una ficha por tipo** (pestañas PDF, Word, Excel,
-Presentaciones y Versiones accesibles, con cuántos hay en cada una; se pasa de
-una a otra también con las flechas del teclado).
+`admin.html#archivos` junta **todos** los PDF, Word, Excel, presentaciones,
+versiones accesibles e imágenes del sitio para que quien administra los abra o
+los baje sin ir curso por curso. Va **una ficha por tipo** (pestañas PDF, Word,
+Excel, Presentaciones, Versiones accesibles e Imágenes, con cuántos hay en cada
+una; se pasa de una a otra también con las flechas del teclado).
 
 Cada ficha es un **explorador**: a la izquierda las carpetas, agrupadas (los
 libros, uno por carpeta; los cursos por nivel, en el orden del catálogo; lo
@@ -1558,6 +1558,17 @@ PDF. Fuera de los cursos, su nombre sale del `<title>` de la página, sin el
 «— versión accesible» final (en su ficha todas lo son). Llevan «Abrir» como
 los PDF, y en la vista previa se ven en un marco con `sandbox` sin
 `allow-scripts`: no traen programas y para leerlas no hacen falta.
+
+Las imágenes (`.png`, `.jpg`, `.gif`, `.webp`, `.avif`, `.svg`, `.ico`; hoy
+615) van por carpeta, en dos grupos: los ejercicios de Entrenamiento por nivel
+y lo del sitio (portadas de los cursos, capturas de la guía, logos, íconos de
+la app, ejemplos del formulario de los JDN). Cada fila lleva su miniatura
+(`loading="lazy"`: se pide recién cuando se ve; `alt=""` porque el nombre ya
+está escrito al lado), y la vista previa la muestra entera sobre un damero,
+para que un logo blanco o transparente se note. Lo que `.assetsignore` deja
+fuera del despliegue (como `img/redes`) no se ofrece: el generador lee ese
+archivo y salta sus rutas sin comodines, porque un enlace a algo que no se
+publica da 404.
 
 Los Word (`.docx`, `.doc`, `.odt`) y los Excel (`.xlsx`, `.xlsm`, `.xls`,
 `.ods`) son pocos y sueltos: van por carpeta, con el nombre de `CARPETAS` en el
