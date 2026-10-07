@@ -183,22 +183,23 @@ async function juzgarEjemplo(motor, fen, sol) {
 
 /* ---------- las fuentes ---------- */
 function yaUsadas() {
-  /* Cada banco se carga en su propia ventana: los diez volúmenes de «Mide tu
-     fuerza» usan el mismo nombre global y uno pisaría al otro. */
+  /* Todas las posiciones de los demás libros del sitio: el diagnóstico y cada
+     material/<libro>/banco.js, cada uno en su propia ventana (los diez
+     volúmenes de «Mide tu fuerza» usan el mismo nombre global y uno pisaría al
+     otro). Se leen todos, no una lista: un libro nuevo queda excluido solo. */
   const items = [];
-  const cargar = (rel, nombre) => {
+  const cargar = (rel) => {
     const w = {};
     new Function("window", fs.readFileSync(path.join(RAIZ, rel), "utf8"))(w);
-    (w[nombre] || []).forEach((i) => items.push(i));
+    Object.values(w).filter(Array.isArray).forEach((lista) => lista.forEach((i) => i && items.push(i)));
   };
-  cargar("js/diagnostico-items.js", "DIAGNOSTICO_ITEMS");
-  cargar("material/ponte-a-prueba/banco.js", "LIBRO_EXAMEN_ITEMS");
-  fs.readdirSync(path.join(RAIZ, "material")).filter((d) => /^mide-tu-fuerza(-\d+)?$/.test(d))
-    .forEach((d) => cargar(`material/${d}/banco.js`, "MIDE_TU_FUERZA_ITEMS"));
-  cargar("material/rompe-el-estancamiento/banco.js", "ROMPE_EL_ESTANCAMIENTO_ITEMS");
+  cargar("js/diagnostico-items.js");
+  fs.readdirSync(path.join(RAIZ, "material"))
+    .filter((d) => d !== SLUG && fs.existsSync(path.join(RAIZ, "material", d, "banco.js")))
+    .forEach((d) => cargar(`material/${d}/banco.js`));
   return {
     lichess: new Set(items.map((i) => i.lichess).filter(Boolean)),
-    fens: new Set(items.map((i) => (i.fen || "").split(" ").slice(0, 4).join(" "))),
+    fens: new Set(items.filter((i) => i.fen).map((i) => i.fen.split(" ").slice(0, 4).join(" "))),
   };
 }
 const md5 = (s) => crypto.createHash("md5").update(s).digest("hex");

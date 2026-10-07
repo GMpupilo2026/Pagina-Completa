@@ -91,6 +91,8 @@ PAGINAS = [
     "cursos/academia/partidas-modelo.html",
     "cursos/academia/preparacion-para-torneos.html",
     "cursos/academia/rompe-el-estancamiento.html",
+    "cursos/academia/ganar-con-poco.html",
+    "cursos/academia/cambiar-o-no-cambiar.html",
     "cursos/academia/los-cimientos-del-ajedrez.html",
 ]
 

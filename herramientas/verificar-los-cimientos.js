@@ -38,19 +38,20 @@ const SLUG = "los-cimientos-del-ajedrez";
 const fallos = [];
 const ok = (cond, msg) => { if (!cond) fallos.push(msg); };
 
-/* Cada banco en su propia ventana: los diez volúmenes de «Mide tu fuerza» usan
-   el mismo nombre global y uno pisaría al otro. */
+/* Todos los demás libros del sitio, cada uno en su propia ventana: los diez
+   volúmenes de «Mide tu fuerza» usan el mismo nombre global y uno pisaría al
+   otro. Se leen todos los material/<libro>/banco.js, no una lista. */
 const otrosItems = [];
-const cargar = (f, nombre) => {
+const cargar = (f, todo) => {
   const w = {};
   new Function("window", fs.readFileSync(path.join(RAIZ, f), "utf8"))(w);
-  return nombre ? (w[nombre] || []).forEach((i) => otrosItems.push(i)) : w;
+  if (todo) Object.values(w).filter(Array.isArray).forEach((l) => l.forEach((i) => i && otrosItems.push(i)));
+  return w;
 };
-cargar("js/diagnostico-items.js", "DIAGNOSTICO_ITEMS");
-cargar("material/ponte-a-prueba/banco.js", "LIBRO_EXAMEN_ITEMS");
-fs.readdirSync(path.join(RAIZ, "material")).filter((d) => /^mide-tu-fuerza(-\d+)?$/.test(d))
-  .forEach((d) => cargar(`material/${d}/banco.js`, "MIDE_TU_FUERZA_ITEMS"));
-cargar("material/rompe-el-estancamiento/banco.js", "ROMPE_EL_ESTANCAMIENTO_ITEMS");
+cargar("js/diagnostico-items.js", true);
+fs.readdirSync(path.join(RAIZ, "material"))
+  .filter((d) => d !== SLUG && fs.existsSync(path.join(RAIZ, "material", d, "banco.js")))
+  .forEach((d) => cargar(`material/${d}/banco.js`, true));
 const win = cargar(`material/${SLUG}/banco.js`);
 
 const LIBRO = win.LOS_CIMIENTOS;
@@ -65,7 +66,7 @@ const clave = (fen) => fen.split(" ").slice(0, 4).join(" ");
 
 /* ---------- el banco ---------- */
 const otrasLichess = new Set(otrosItems.map((i) => i.lichess).filter(Boolean));
-const otrasFen = new Set(otrosItems.map((i) => clave(i.fen || "")));
+const otrasFen = new Set(otrosItems.filter((i) => i.fen).map((i) => clave(i.fen)));
 /* Las posiciones de las partidas, tal como quedan después de la jugada del rival. */
 const deLasPartidas = new Map();
 PARTIDAS.concat(BASE).forEach((p) => {

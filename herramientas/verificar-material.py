@@ -84,7 +84,7 @@ CURSOS = [
     "fundamentos-del-ajedrez", "finales-practicos", "estrategia-y-tactica",
     "aperturas-y-defensas", "calculo-y-visualizacion", "desequilibrios-de-material",
     "el-mapa-de-los-finales", "estrategia-en-el-final", "partidas-modelo",
-    "preparacion-para-torneos", "rompe-el-estancamiento", "los-cimientos-del-ajedrez",
+    "preparacion-para-torneos", "rompe-el-estancamiento", "ganar-con-poco", "cambiar-o-no-cambiar", "los-cimientos-del-ajedrez",
 ]
 
 total_lecciones = total_paginas = con_ejemplo = 0
