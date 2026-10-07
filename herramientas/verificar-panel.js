@@ -663,7 +663,10 @@ async function pruebaCupoInvitaciones(browser) {
     await page.evaluate(() => [...document.querySelectorAll("#tile-grid [aria-disabled=true]")]
       .find((el) => /Crear cuenta de alumno/.test(el.textContent)).focus());
     await Promise.all([
-      page.waitForURL(/precios\.html#t-paquetes/, { timeout: 10000 }).catch(() => {}),
+      // Basta con que la navegación ARRANQUE («commit»): esperar a que
+      // precios.html termine de cargar dependía de lo cargado que estuviera el
+      // CI, y en el PR #765 se pasó dos veces de los 10 s.
+      page.waitForURL(/precios\.html#t-paquetes/, { timeout: 20000, waitUntil: "commit" }).catch(() => {}),
       page.keyboard.press("Enter"),
     ]);
     cierto("con Enter y «Ver los planes», va a los paquetes de precios.html: " + page.url(),
