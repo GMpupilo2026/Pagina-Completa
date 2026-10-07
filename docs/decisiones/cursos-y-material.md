@@ -939,8 +939,8 @@ de la tienda.
 
 ## El banco de ejercicios «Mide tu fuerza»
 
-Un libro de tests tácticos de Oscar Angulo Cubero: 360 posiciones en 45 tests
-de 8, cada test de **un solo tema** (ataque doble, ataque a la descubierta,
+Un libro de tests tácticos de Oscar Angulo Cubero, en diez volúmenes de 360
+posiciones en 45 tests de 8 cada uno; cada test de **un solo tema** (ataque doble, ataque a la descubierta,
 jaque doble, clavada, enfilada, desviación, atracción, interferencia, despeje,
 eliminación del defensor, rayos X, jugada intermedia, pieza atrapada, jugada
 tranquila y el peón avanzado), en tres niveles. Lo arman dos scripts, como
@@ -950,6 +950,83 @@ tranquila y el peón avanzado), en tres niveles. Lo arman dos scripts, como
 comprueban `verificar-mide-tu-fuerza.js` (el banco y lo accesible) y
 `verificar-mide-tu-fuerza-pdf.py` (protección, autor, marca de agua en cada
 página y que estén los 45 tests).
+
+### Los volúmenes
+
+Cada volumen tiene **la misma forma** (los mismos 15 temas, los tres niveles,
+los tiempos y los puntos) y **posiciones distintas**: el volumen 2 sirve para
+seguir entrenando y para volver a medir sin que la memoria cuente (y los
+siguientes, una vez más cada uno). El 1 vive
+en `material/mide-tu-fuerza/` y cada siguiente en su propia carpeta
+(`material/mide-tu-fuerza-2/`), que es también **su propio material**: se
+comparte aparte en `admin.html#materiales`, y `puede_bajar()` lo decide por
+carpeta como cualquier otro. Los dos scripts y los dos verificadores reciben el
+volumen (`node herramientas/mide-tu-fuerza-generar.js 2`,
+`node herramientas/mide-tu-fuerza-pdf.js 2`) y los verificadores recorren todos
+los que tengan banco. Un volumen nuevo es: sus candidatas, correr los dos
+scripts con su número y agregarlo en `MATERIALES` de `js/admin-materiales.js`
+(y su accesible en las listas de `verificar-pwa.js` y `pwa-cabecera.py`). Su
+PDF nuevo entra también en la sección «Archivos»: después de generarlo se
+corre `node herramientas/archivos-catalogo.js`, o `verificar-archivos-catalogo`
+falla en el CI (pasó con el volumen 6).
+
+Las candidatas del 2 son las 20 siguientes de cada tema y nivel en la misma
+consulta (`k between 21 and 40`). El generador descarta además las que ya están
+en otro volumen. Los rayos X y los jaques dobles difíciles casi no existen en
+la base (16 y 22 en total): al 2 se le agregaron las candidatas de esos temas
+que el 1 no usó, y lo que aún falta lo completa el nivel vecino. Las del 3 son
+las 20 siguientes (`k between 41 and 60`); ahí los rayos X y jaques dobles
+difíciles ya se agotaron, y esos tests se completan con el nivel vecino.
+
+Para el 4 (`k between 61 and 80`) los temas raros ya no daban 20 con los
+filtros de siempre. Ahí, **y solo ahí**, se completa hasta 20 con un filtro
+algo más ancho (Popularity ≥ 80, NbPlays ≥ 400, RatingDeviation ≤ 90): son
+ejercicios igual de comprobados por Stockfish, con un rating medido con menos
+intentos.
+
+El 5 toma, de cada tema y nivel, las 20 siguientes que no tomó ningún volumen
+anterior, **en orden de calidad**: primero lo que queda con el filtro de
+siempre, después el del 4 y, solo donde todavía faltan (los temas raros), un
+tercero (Popularity ≥ 75, NbPlays ≥ 200, RatingDeviation ≤ 100). La consulta
+cuenta lo que tomó cada volumen anterior, y el archivo de candidatas lo
+confirma: ninguna repetida. Con eso los rayos X difíciles quedan en 16 y el
+resto lo completa el nivel vecino.
+
+El 6 se armó igual que el 5, pero eligiendo los identificadores aquí: se
+bajaron, por tema y nivel, los primeros 150 en orden de calidad y se
+descartaron los que ya eran candidatas de los volúmenes 1 a 5. Hizo falta un
+**cuarto filtro** (Popularity ≥ 70, NbPlays ≥ 100, RatingDeviation ≤ 110), y
+solo en los temas raros: de 891 candidatas, 720 son del filtro de siempre y
+49 del cuarto (jaque doble, rayos X e interferencia). Ahí la base ya está
+prácticamente agotada: un séptimo volumen igual no se podía hacer sin bajar
+todavía más la calidad de esos temas.
+
+Por eso el **7 cambia tres temas** (lo decidió el dueño del repo): jaque doble,
+rayos X e interferencia se cambian por **mate en dos, mate en tres y
+sacrificio** (`CAMBIOS_DESDE_7` y `temasDe()` en el generador; cada uno entra
+en el lugar del que sale). Los tres tienen cientos de posiciones con el filtro
+de siempre. El sacrificio se toma solo si no tiene mate ni ninguno de los
+otros temas del libro, para que no se cruce con los demás tests; los mates no
+se habían usado nunca, porque los otros temas excluyen las posiciones con
+mate. En los otros doce temas siguen las 20 siguientes; solo cuatro casilleros
+del tercer nivel (eliminación del defensor, enfilada, jugada intermedia y
+pieza atrapada) se completaron con los filtros más anchos: 66 de 900. Cada
+banco guarda sus propios temas y el verificador comprueba que sean los de su
+volumen.
+
+El 8 lleva los temas del 7 y las 20 siguientes de cada casillero en orden de
+calidad: 820 del filtro de siempre y 80 de los cuatro casilleros agotados del
+tercer nivel (jugada intermedia, enfilada y pieza atrapada con el filtro 2;
+eliminación del defensor con el 3). El 9 se armó igual, con la misma
+proporción (820 y 80). El 10 ya necesitó un quinto casillero con filtro ancho
+(despeje del tercer nivel): 800 del filtro de siempre, 78 del 2, 19 del 3 y 3
+del 4, todas del tercer nivel. Un undécimo volumen con estos temas tendría el
+tercer nivel cada vez más lleno de posiciones de los filtros 3 y 4: lo sano
+sería cambiar otros temas, como se hizo en el 7.
+
+Cada tapa lleva «Volumen N» y su propio color (verde, vino, azul, morado, café,
+gris pizarra, ciruela, oliva, petróleo y óxido; el contraste del texto se midió
+contra el más claro de cada degradado: 5,7 o más, AA).
 
 ### Tomado de un libro ajeno como referencia, no copiado
 
@@ -1188,11 +1265,99 @@ es tablas.
 Las flechas de los diagramas (`flechas` en `lib/tablero-svg.js`) son azules
 #123e7c: 8,6:1 contra la casilla clara y 4,1:1 contra la oscura.
 
+## El curso y el libro «Rompe el estancamiento»
+
+Un curso (36 lecciones en ocho bloques) y su libro, de Oscar Angulo Cubero,
+para el jugador de 1400 a 2100 que lleva meses en el mismo Elo: las siete
+familias de errores que lo frenan (jugar sin plan, usar mal los conceptos,
+leer la posición a medias, cambiar sin preguntarse qué cambia, calcular con
+agujeros, olvidarse del rival y la cabeza que juega en contra) y un método
+para encontrar los propios con una ficha de errores.
+
+### Tomado de un libro ajeno como referencia, no copiado
+
+El dueño pidió un curso «similar» a *Blinda tu ajedrez* (Herraiz y Muñoz,
+2020), con un libro nuevo en PDF. Ese libro tiene derechos de autor y prohíbe
+reproducirlo, así que se tomó **la idea y nada más**: ordenar por familias los
+errores que repiten los jugadores estancados y corregirlos de a uno, con la
+partida propia como fuente. Ni el texto, ni los ejemplos, ni los ejercicios,
+ni los títulos salen de ahí; el título tampoco es el suyo. Las lecciones están
+escritas para esto, en tuteo.
+
+### Las posiciones: de Lichess, comprobadas con Stockfish
+
+`herramientas/rompe-el-estancamiento-generar.js` hace lo mismo que el de «Mide
+tu fuerza»: candidatas de la base abierta de Lichess
+(`herramientas/datos/rompe-el-estancamiento-candidatas.txt`, la consulta está
+en su cabecera), el MISMO `analizar()` del diagnóstico (una sola jugada
+buena), y ninguna repetida del diagnóstico, «Ponte a prueba» ni «Mide tu
+fuerza». Cada familia pide los temas de Lichess que la muestran
+(`TEMAS_CAPITULO`: la jugada intermedia para el cálculo, la jugada defensiva
+para pensar por el rival, el final de peones para los cambios…).
+
+- **Lo que la lección dice de su ejemplo se comprueba en la posición**, no
+  solo en la etiqueta de Lichess (`cumple()`): las etiquetas miran la solución
+  entera y la lección habla de la primera jugada. La jugada «tranquila» no da
+  jaque ni captura, la que «entrega material» deja la pieza al alcance del
+  rival, el «final de peones» no tiene piezas.
+- Casi todas las de «jugada defensiva» resultaron **conservar una ventaja**,
+  no salvar una partida perdida: el texto de esas lecciones dice «solo una
+  jugada conserva la ventaja», que es lo que el motor comprobó, y no «todo lo
+  demás pierde».
+- **El ejemplo de cada lección es la misma posición en el curso y en el
+  libro**: el generador escribe el banco del libro
+  (`material/rompe-el-estancamiento/banco.js`) y el campo `diagramas` de
+  `herramientas/cursos/rompe-el-estancamiento.json` en la misma corrida. El
+  resto de ese JSON (el texto, y `tema`, `pregunta` y `enlace` de cada lección)
+  es a mano.
+
+### Cómo se regenera
+
+    STOCKFISH=/usr/games/stockfish node herramientas/rompe-el-estancamiento-generar.js
+    node herramientas/curso-posiciones.js rompe-el-estancamiento
+    python3 herramientas/curso-generar.py rompe-el-estancamiento
+    CHROME_PATH=… node herramientas/curso-material-generar.js rompe-el-estancamiento
+    node herramientas/curso-material-enlazar.js
+    node herramientas/rompe-el-estancamiento-pdf.js
+
+**`curso-generar.py` reescribe el fragmento protegido sin los enlaces del
+material de estudio**: después de correrlo hay que volver a correr el
+enlazador, o las 36 lecciones se quedan sin su cuadernillo sin que nada falle
+en pantalla. `curso-generar.py` además se puso al día con los colores de
+contraste que ya tenían las portadas (`dark:text-brand-300`,
+`text-brand-450 dark:text-brand-350`, `text-accent-700 dark:text-accent-400`):
+generaba los viejos.
+
+Lo comprueban `verificar-rompe-el-estancamiento.js` (el banco, que el ejemplo
+del curso sea el del libro y que lo que dice la lección sea cierto en la
+posición, y la versión accesible) y `verificar-rompe-el-estancamiento-pdf.py`
+(protección, autor, marca de agua en cada página, los ocho capítulos, las 36
+lecciones, los 80 ejercicios y la ficha de errores).
+
+### Dónde quedó dado de alta
+
+En el catálogo (nivel Avanzado, entre «Desequilibrios de material» y
+«Cálculo y Visualización», con su diagrama), en «Mis cursos» de la Academia, en
+el material de la clase en vivo, en exámenes por curso, en el plan de
+entrenamiento del área de estrategia y en `interno.curso_lecciones` para su
+certificado (`20261006222049_curso_rompe_el_estancamiento.sql`). El libro está
+en `admin.html#materiales` (se comparte como los otros dos) y en «Archivos».
+
+- **No está en la tienda**: venderlo, y en qué módulo del sistema completo,
+  es una decisión de precio del dueño.
+- **El correo a la casa lo nombra sin tocar la Edge Function**:
+  `informes-encargados` nombra un curso que no está en su `TITULOS_CURSOS`
+  desde el slug, y «rompe-el-estancamiento» da justo «Rompe el estancamiento».
+  Sumarlo a la tabla obligaba a redesplegar la función solo para escribir lo
+  mismo. `verificar-tiempo-secciones.js` ya no exige que la tabla tenga todos
+  los cursos: comprueba el nombre que el correo **muestra** para cada curso del
+  catálogo, y que lo que la tabla sí nombra coincida con el catálogo.
+
 ## Los materiales de clase
 
 `admin.html#materiales` («Materiales de clases») junta los materiales para dar
-clase —hoy, «Ponte a prueba», el banco de ejercicios «Mide tu fuerza» y los
-cuentos de Peonita— y dice **con quién se comparte cada uno**: una
+clase —hoy, «Ponte a prueba», los diez volúmenes del banco de ejercicios «Mide
+tu fuerza», el libro «Rompe el estancamiento» y los cuentos de Peonita— y dice **con quién se comparte cada uno**: una
 persona, una academia entera o todos los profesores. Lo pinta
 `js/admin-materiales.js`; lo prueba `verificar-admin.js`.
 
@@ -1282,10 +1447,21 @@ aplicado el CLI.
 
 ## La sección Archivos
 
-`admin.html#archivos` junta **todos** los PDF, Word, Excel y presentaciones del
-sitio para que quien administra los abra o los baje sin ir curso por curso. Va
-**una ficha por tipo** (pestañas PDF, Word, Excel y Presentaciones, con cuántos
-hay en cada una; se pasa de una a otra también con las flechas del teclado).
+`admin.html#archivos` junta **todos** los PDF, Word, Excel, presentaciones,
+versiones accesibles e imágenes del sitio para que quien administra los abra o
+los baje sin ir curso por curso. Va **una ficha por tipo** (pestañas PDF, Word,
+Excel, Presentaciones, Versiones accesibles e Imágenes, con cuántos hay en cada
+una; se pasa de una a otra también con las flechas del teclado).
+
+Cada ficha es un **explorador**: a la izquierda las carpetas, agrupadas (los
+libros, uno por carpeta; los cursos por nivel, en el orden del catálogo; lo
+suelto al final), cada una con cuántos archivos trae; a la derecha lo de la
+carpeta elegida, lección por lección, con «Bajar los N» de la carpeta. Primero
+era una sola lista larguísima con todos los cursos plegados uno debajo de otro:
+para llegar a una lección había que bajar, abrir y volver a bajar. En el
+celular las carpetas son un selector. El buscador busca en **toda la ficha**
+(no solo en la carpeta elegida) y muestra lo que coincide carpeta por carpeta;
+elegir una carpeta lo limpia.
 
 Los PDF (hoy 433) van en tres grupos: **Libros y material**
 (`material/<carpeta>/`, un bloque por libro con el nombre de `LIBROS`), **Cursos** (`cursos/recursos/<curso>/`, por nivel y en
@@ -1301,6 +1477,24 @@ Las presentaciones (`.pptx`, `.ppt`, `.odp`; hoy 203, una por lección) se
 ordenan igual que los PDF —por nivel, curso y lección, leídas de la misma
 página del curso— y solo se bajan.
 
+Las versiones accesibles (`*-accesible.html`: el mismo material en una página
+sin imágenes, para lector de pantalla; hoy 192) también se ordenan como los
+PDF. Fuera de los cursos, su nombre sale del `<title>` de la página, sin el
+«— versión accesible» final (en su ficha todas lo son). Llevan «Abrir» como
+los PDF, y en la vista previa se ven en un marco con `sandbox` sin
+`allow-scripts`: no traen programas y para leerlas no hacen falta.
+
+Las imágenes (`.png`, `.jpg`, `.gif`, `.webp`, `.avif`, `.svg`, `.ico`; hoy
+615) van por carpeta, en dos grupos: los ejercicios de Entrenamiento por nivel
+y lo del sitio (portadas de los cursos, capturas de la guía, logos, íconos de
+la app, ejemplos del formulario de los JDN). Cada fila lleva su miniatura
+(`loading="lazy"`: se pide recién cuando se ve; `alt=""` porque el nombre ya
+está escrito al lado), y la vista previa la muestra entera sobre un damero,
+para que un logo blanco o transparente se note. Lo que `.assetsignore` deja
+fuera del despliegue (como `img/redes`) no se ofrece: el generador lee ese
+archivo y salta sus rutas sin comodines, porque un enlace a algo que no se
+publica da 404.
+
 Los Word (`.docx`, `.doc`, `.odt`) y los Excel (`.xlsx`, `.xlsm`, `.xls`,
 `.ods`) son pocos y sueltos: van por carpeta, con el nombre de `CARPETAS` en el
 generador, y solo se bajan (el navegador no los abre). Hoy hay dos Word (los
@@ -1308,6 +1502,31 @@ consentimientos de los JDN 2027) y **ningún Excel guardado**: los Excel de la
 plataforma (el mes de cada profesor en Supervisión, los reportes) se arman en
 el navegador con los datos del momento, así que no son archivos del sitio. La
 ficha lo dice en vez de quedar vacía.
+
+### La vista previa
+
+Cada archivo trae **«👁 Vista previa»**: una ventana encima de la página
+(`<dialog>` con `showModal()`, que encierra el foco; Esc la cierra y el foco
+vuelve al botón), con «Anterior» y «Siguiente» para recorrer la carpeta (o lo
+encontrado) sin cerrarla. La pinta `js/vista-previa.js`:
+
+- **PDF**: el visor del navegador en un marco. Es del mismo sitio, así que
+  `frame-src 'self'` y `X-Frame-Options: SAMEORIGIN` lo dejan; se probó en
+  Chrome con las cabeceras de `_headers` puestas (también `object-src 'none'`)
+  y el visor se muestra.
+- **Presentación, Word y Excel**: son un `.zip` con XML adentro, y no se
+  pueden mandar a un visor de afuera (Office en línea pide una dirección
+  pública, y estos archivos están detrás del candado del worker). Se abren en
+  el navegador mismo: un lector de `.zip` de cincuenta líneas con
+  `DecompressionStream("deflate-raw")` —sin librerías: la CSP no deja traerlas— y
+  `DOMParser` para el XML. La presentación se arma **diapositiva por
+  diapositiva**, con su fondo, cada texto e imagen en su lugar y tamaño (las
+  medidas en EMU pasadas a porcentajes, la letra en `cqw` para que escale con
+  la lámina); el Word, con su texto, negritas, tablas e imágenes; el Excel, hoja
+  por hoja (las primeras 300 filas). Lo viejo (`.ppt`, `.doc`, `.xls`) se dice y
+  se ofrece bajar.
+- Todo texto del archivo entra por `textContent`, y las imágenes van como
+  `blob:` (que `img-src` permite) y se sueltan al cerrar.
 
 - **La lista no se escribe a mano.** La arma `herramientas/archivos-catalogo.js`
   leyendo el disco y la deja en `data/archivos.json`; la pantalla

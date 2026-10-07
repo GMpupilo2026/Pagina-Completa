@@ -1,0 +1,905 @@
+# Candidatas del volumen 5 de «Mide tu fuerza» (herramientas/mide-tu-fuerza-generar.js 5).
+# Base abierta de ejercicios de Lichess (CC0), tabla «Ejercicios Lichess» de
+# Supabase. Una por línea: tema|nivel|id|FEN|jugadas|rating|temas.
+# Las 20 siguientes de cada tema y nivel que los volúmenes 1 a 4 no tomaron, en
+# orden de calidad: primero las del filtro de siempre (k > 80), después las del
+# filtro algo más ancho del volumen 4 (Popularity >= 80, NbPlays >= 400,
+# RatingDeviation <= 90) y, solo donde aún faltan (los temas raros), un tercer
+# filtro: Popularity >= 75, NbPlays >= 200, RatingDeviation <= 100. Pasan por el
+# mismo Stockfish que las demás.
+advancedPawn|1|0pBpq|6k1/3r1p2/p7/5Np1/2p5/3p3P/Pr3PP1/3RR1K1 w - - 0 40|e1e4 c4c3 e4c4 c3c2|1486|advancedPawn advantage endgame master short
+advancedPawn|1|0RO5e|8/5kpp/1P6/2KP1p2/5P2/B4b2/7P/4r3 b - - 0 36|f7e8 b6b7 e1b1 a3b4|1534|advancedPawn crushing defensiveMove endgame short
+advancedPawn|1|29pBB|7R/8/8/4K3/6k1/4P1p1/8/5r2 w - - 2 63|e3e4 g3g2 h8g8 g4f3 g8g2 f3g2|1362|advancedPawn crushing defensiveMove endgame long rookEndgame
+advancedPawn|1|1oMGL|8/5pk1/p3p1p1/Pp1p2P1/1P1P4/2n2P2/3K4/5B2 b - - 1 44|c3a2 f1b5 a6b5 a5a6 a2b4 a6a7 b4c6 a7a8q|1565|advancedPawn crushing endgame promotion sacrifice veryLong
+advancedPawn|1|0AMm5|8/5p2/8/4P2k/5P1p/3K2p1/6R1/8 w - - 4 48|d3e3 h5g4 g2b2 h4h3 b2b8 h3h2|1643|advancedPawn advantage endgame long rookEndgame
+advancedPawn|1|1DMG9|2r5/p5kP/bp1p2pQ/3Ppr2/2q5/2P2P2/P4K2/2R4R b - - 1 30|g7f6 h7h8q c8h8 h6h8 f6e7 h1h7 f5f7 h7f7|1356|advancedPawn crushing middlegame promotion veryLong
+advancedPawn|1|0r4pt|5k2/rR6/P4p2/4p1p1/6P1/4qP1P/2R3K1/8 b - - 5 41|a7b7 a6b7 e3a7 c2c8 f8e7 b7b8q a7b8 c8b8|1473|advancedPawn crushing endgame exposedKing promotion queenRookEndgame veryLong
+advancedPawn|1|2qNIw|7r/1P4p1/2Pnk3/4pp1P/p1p5/P3K1P1/8/3R4 b - - 0 50|h8b8 c6c7 b8b7 d1d6 e6d6 c7c8q|1588|advancedPawn advantage endgame long promotion
+advancedPawn|1|03DB8|6k1/4R3/2r2K1p/8/5P1N/3p4/P5P1/8 w - - 2 38|e7e6 c6e6 f6e6 d3d2 h4f5 d2d1q|1307|advancedPawn crushing endgame long promotion
+advancedPawn|1|0gRQ6|8/6pk/p4bp1/1p1Pr2p/2p1p3/2P1P3/PP6/2KR2R1 b - - 1 37|f6g5 g1g5 e5g5 d5d6 g5f5 d6d7|1566|advancedPawn crushing endgame long sacrifice
+advancedPawn|1|2P47f|8/8/2k2K2/8/p5P1/8/1p6/7R w - - 0 55|g4g5 a4a3 g5g6 a3a2 g6g7 a2a1q|1351|advancedPawn crushing endgame long promotion rookEndgame
+advancedPawn|1|0l6Ml|8/8/1p3PKb/7P/pk6/8/8/8 b - - 0 46|h6f8 h5h6 a4a3 h6h7 a3a2 h7h8q a2a1q h8f8|1427|advancedPawn bishopEndgame crushing endgame promotion veryLong
+advancedPawn|1|2mKOj|r4rk1/pp4p1/2n1p1PB/1B1p3Q/3P3P/q1P5/P4n2/1K4R1 b - - 0 21|g7h6 h5h6 a3e7 g6g7|1447|advancedPawn crushing middlegame short
+advancedPawn|1|36ItM|8/7p/8/2p5/1p6/2p1p1kP/2B3P1/5K2 w - - 0 42|c2h7 b4b3 f1e2 c3c2 h7c2 b3c2|1592|advancedPawn bishopEndgame crushing endgame long
+advancedPawn|1|1Qunh|7r/pR3Bpp/2p1Pk2/8/4P3/2P5/P1P3rP/2K5 b - - 0 23|g2h2 e4e5 f6e5 e6e7|1576|advancedPawn advantage endgame master short
+advancedPawn|1|0isS2|8/8/p7/5kpp/2KP4/7P/P7/8 w - - 0 46|c4c5 g5g4 h3g4 h5g4 d4d5 g4g3 d5d6 g3g2 d6d7 g2g1q|1447|advancedPawn crushing endgame pawnEndgame promotion veryLong
+advancedPawn|1|1prtT|8/1Kp1p2P/p7/4bk2/1P6/P7/8/8 b - - 2 43|a6a5 b4a5 f5g6 a5a6 g6h7 a6a7|1331|advancedPawn bishopEndgame crushing endgame long
+advancedPawn|1|2YJBp|6k1/6p1/1r5p/8/8/pR4P1/P3K2P/8 w - - 10 53|e2d2 b6b3 a2b3 a3a2|1252|advancedPawn crushing endgame master rookEndgame short
+advancedPawn|1|1dB3I|8/8/1P1N4/2n4p/6k1/6P1/2K5/8 b - - 6 63|g4g3 d6e4 c5e4 b6b7|1326|advancedPawn crushing endgame knightEndgame sacrifice short
+advancedPawn|1|3HTgM|8/8/2kp4/8/p2K4/1p6/1Pb2R2/8 w - - 0 51|d4c4 a4a3 b2a3 b3b2 c4c3 b2b1q|1627|advancedPawn crushing endgame long promotion
+advancedPawn|2|2c4Ot|r1bq1rk1/4bppp/3p1n2/1p2pPP1/3nP3/1PN4P/PB1Q4/1K1R1BNR b - - 0 15|b5b4 g5f6 b4c3 f6e7|1660|advancedPawn advantage middlegame short
+advancedPawn|2|2jUsM|8/8/8/p1K5/8/1pp5/7R/1k6 w - - 8 59|c5c4 c3c2 h2h1 b1b2 h1e1 a5a4|1915|advancedPawn crushing defensiveMove endgame long master rookEndgame
+advancedPawn|2|0mE92|r3r1k1/pp2pp1p/6pB/2pPp3/b1B5/P2P1Q1P/2q2PP1/R5K1 b - - 1 18|b7b5 d5d6 b5c4 d6e7 c2d2 h6d2|1858|advancedPawn crushing long middlegame sacrifice
+advancedPawn|2|3Mj6D|8/8/1KP5/4k1p1/5nP1/8/7p/7B b - - 0 49|e5d6 c6c7 f4d5 h1d5 d6d5 c7c8q|1781|advancedPawn crushing endgame long master promotion
+advancedPawn|2|1bZaa|7k/5Qp1/7p/3pP3/3Pp3/pqP1P2P/6PK/8 w - - 0 35|e5e6 b3b8 h2g1 a3a2 f7f1 b8b1 e6e7 b1f1|1824|advancedPawn crushing endgame queenEndgame veryLong
+advancedPawn|2|00rL0|5q2/3r4/P1k2p1p/1p2pNp1/2b1P1P1/2P2P1P/3r2BK/R5Q1 b - - 4 40|f8c5 g1c5 c6c5 a6a7 d7a7 a1a7 c4f1 f5e3 f1g2 e3g2|1654|advancedPawn advantage middlegame veryLong
+advancedPawn|2|3HvbA|5rk1/3P1n2/p1P3p1/3Qp2p/3qP1R1/1P6/P6K/8 b - - 0 50|h5g4 d5d4 e5d4 c6c7 d4d3 c7c8q|1978|advancedPawn advantage endgame long promotion
+advancedPawn|2|1YX6c|3r1k2/p4p2/P6p/1qp1P1pN/3n4/Rp4QP/5RP1/7K w - - 0 37|h3h4 b3b2 f2b2 b5b2|1988|advancedPawn advantage middlegame short
+advancedPawn|2|1nVOQ|3qkb1r/2r2Rpp/2n1p3/1Q2N3/8/2P1p3/PP4PP/RN4K1 w k - 0 17|f7c7 d8d1 b5f1 e3e2 c7c8 c6d8|1754|advancedPawn crushing defensiveMove long middlegame
+advancedPawn|2|1eJuj|8/3kBp2/3P1P1p/1p2p1bP/n1p1K3/8/2P1B3/8 b - - 2 44|g5f4 e2g4 d7c6 d6d7 a4c3 e4f3|1752|advancedPawn crushing endgame long master
+advancedPawn|2|0ia8e|2r3k1/4R1p1/3p3p/3P4/2r2B2/P2p3P/5P2/R4K2 w - - 0 30|f4d6 c4c1 a1c1 c8c1 e7e1 d3d2 e1d1 c1d1|1862|advancedPawn advantage endgame veryLong
+advancedPawn|2|0Tzuf|6k1/5R2/4p3/p3P3/PpPrq2p/1P1p3P/3Q2P1/5K2 w - - 1 43|d2f2 e4e2 f2e2 d3e2 f1e1 g8f7|1763|advancedPawn crushing endgame long master
+advancedPawn|2|0jUlA|8/1k6/1p6/2PK4/1p6/8/8/8 w - - 0 53|c5b6 b4b3 d5d4 b3b2|1655|advancedPawn crushing endgame pawnEndgame short
+advancedPawn|2|1HRSo|8/7p/p4p2/P7/1P1k4/2pp3P/3B1KP1/8 w - - 0 43|f2e1 c3d2 e1d2 d4c4 b4b5 c4b5|1783|advancedPawn crushing endgame long
+advancedPawn|2|1TBQ5|5rk1/6pp/2P1p3/8/P3pq2/B7/5nPP/3Q1RK1 b - - 0 33|f2d1 f1f4 f8f4 c6c7|1940|advancedPawn crushing endgame short
+advancedPawn|2|0kmQz|5rk1/1P2bppp/3p4/B1nPp3/4P3/p4P1P/2K2P2/1R6 b - - 0 28|a3a2 b7b8q a2b1q b8b1|1734|advancedPawn advantage endgame promotion short
+advancedPawn|2|2HX30|1k6/p1r1q3/QpB3n1/PP1p1p2/3P2pp/4PN1P/5PP1/6K1 b - - 0 28|e7a3 a5b6 a3a6 b6c7 b8c7 b5a6|1687|advancedPawn crushing endgame long queensideAttack sacrifice
+advancedPawn|2|0V9by|8/7R/8/8/5p2/4pkp1/8/4K3 w - - 0 53|h7g7 f3g2 g7a7 f4f3 a7f7 f3f2|1967|advancedPawn crushing endgame long rookEndgame
+advancedPawn|2|2s8iz|8/K7/8/P2B4/5k2/5np1/8/8 w - - 1 50|a5a6 g3g2 a7b7 g2g1q a6a7 g1g7|1936|advancedPawn crushing endgame long promotion
+advancedPawn|2|0qeZg|8/5p2/4p3/p2NPpP1/P1pP1k2/2P5/6K1/4b3 b - - 0 51|e6d5 e5e6 f7e6 g5g6 e1c3 g6g7 c3d4 g7g8q|1739|advancedPawn advantage bishopEndgame endgame promotion sacrifice veryLong
+advancedPawn|3|1kcWW|5r2/4r1k1/6p1/8/3p4/1P2p1P1/P1P1R3/1K2R3 w - - 2 40|c2c3 d4d3 e2e3 e7e3 e1e3 f8f1 b1b2 d3d2|2200|advancedPawn advantage endgame rookEndgame veryLong
+advancedPawn|3|1qxOp|8/1R1bk3/1K4pp/P4p2/1p2nP2/6P1/7P/8 b - - 1 40|e7d6 a5a6 d7c6 a6a7 c6b7 b6b7|2100|advancedPawn crushing endgame long sacrifice
+advancedPawn|3|2lfyC|3r3k/1b1r1p1p/p7/1p3p1Q/3Np3/2P3qP/PPB2R2/R5K1 w - - 1 34|g1f1 e4e3 h5f5 g3f2 f5f2 e3f2|2075|advancedPawn crushing exposedKing long master middlegame
+advancedPawn|3|16rUi|5Q2/R2b3k/1Nq2pp1/4n2p/7P/8/4pPP1/6K1 w - - 5 42|a7d7 c6d7 b6d7 e2e1q g1h2 e5g4|2163|advancedPawn crushing endgame long master promotion
+advancedPawn|3|1ejzN|r4rk1/2qb1pp1/p1n1p3/3pP1BP/PppP4/2P5/2P1BP2/R2QK2R b KQ - 0 21|b4c3 h5h6 f7f6 h6g7|2057|advancedPawn advantage middlegame short
+advancedPawn|3|0Q6VW|3r4/6p1/1P1P4/2Pk2p1/1K6/5P1P/6P1/8 b - - 0 50|d8c8 d6d7 c8d8 b4b5 d8d7 c5c6|2161|advancedPawn crushing endgame long rookEndgame
+advancedPawn|3|2UYQV|r1b1r1k1/pp1nBpbn/2pP2pp/4p3/N1P1P3/q2B1N1P/P5P1/R2Q1R1K b - - 0 17|d7c5 d6d7 e8e7 d7d8q|2267|advancedPawn crushing master middlegame promotion short
+advancedPawn|3|0Svoc|8/p4p2/2k4P/2p3R1/8/5N2/Pq3PK1/8 b - - 0 28|c5c4 f3e5 c6b7 h6h7|2073|advancedPawn crushing endgame master short
+advancedPawn|3|3037t|8/6k1/p5P1/1p2R3/2p2P2/2P5/7r/5K2 w - - 0 42|e5g5 b5b4 c3b4 c4c3 g5c5 c3c2|2162|advancedPawn crushing endgame long rookEndgame
+advancedPawn|3|382nu|8/p4ppp/k2P1n2/5q2/8/7P/PPr2BB1/3R1RK1 b - - 12 34|f6e4 d6d7 c2f2 d7d8q f2g2 g1g2|2203|advancedPawn crushing long master middlegame promotion
+advancedPawn|3|0sQZg|2Rr1k2/pp1P2pp/8/1P1Q4/P3p1qr/5pP1/5P2/5RK1 b - - 5 36|f8e7 d5e5 e7f7 e5e8 d8e8 d7e8q|2191|advancedPawn crushing endgame exposedKing long promotion
+advancedPawn|3|2k7Dx|3k4/7R/5Kp1/p5P1/Pp1bp2P/1B5r/2P5/8 w - - 0 37|f6g6 h3b3 c2b3 e4e3 h7f7 e3e2|2104|advancedPawn crushing endgame long sacrifice
+advancedPawn|3|39GDL|8/5R2/1p4P1/1Pp3P1/8/r7/1pK3k1/8 b - - 0 62|a3b3 c2b1 c5c4 g6g7 c4c3 f7c7 b3a3 c7c3|2068|advancedPawn crushing endgame rookEndgame veryLong
+advancedPawn|3|0SmPb|8/8/2p1r3/R7/1P4pk/1KP5/P7/8 w - - 4 41|b3c4 g4g3 a5a8 g3g2 a8g8 e6e4 c4d3 e4g4 g8g4 h4g4|2399|advancedPawn crushing endgame rookEndgame veryLong
+advancedPawn|3|0dZe5|5r1k/2R5/p2P2pp/7n/1p6/1P1pr2P/6BK/3R4 b - - 0 42|e3e2 d6d7 e2c2 c7c2 d3c2 d7d8q f8d8 d1d8|2148|advancedPawn advantage endgame promotion veryLong
+advancedPawn|3|0kZnK|6k1/Nb3pp1/1p1P3p/2q5/5Q2/1B5P/P3rPP1/6K1 b - - 0 26|c5e5 f4e5 e2e5 d6d7|2214|advancedPawn crushing endgame short
+advancedPawn|3|2nyF1|4kr2/5p1R/4pQ2/5P2/2Pp4/p7/PqP3P1/2K5 w - - 1 36|c1d1 d4d3 f6b2 a3b2|2257|advancedPawn crushing endgame master short
+advancedPawn|3|3189L|2r2r1k/3N1p1p/p7/qp2pP2/2n5/1Q1p1P2/PPP1R1PP/2K2B1R w - - 0 25|d7f8 d3e2 f1e2 a5d2|2089|advancedPawn advantage middlegame short
+advancedPawn|3|0843V|4kb2/8/5P2/P3K2p/7P/1p6/b7/2B5 b - - 1 50|f8h6 a5a6 e8f7 a6a7 h6c1 a7a8q|2411|advancedPawn advantage bishopEndgame endgame long promotion
+advancedPawn|3|0u0Mi|8/8/2K1p2p/1p2P3/p1p2Pk1/P1P3P1/8/8 w - - 1 68|c6d6 b5b4 a3b4 a4a3 b4b5 a3a2 b5b6 a2a1q|2102|advancedPawn crushing endgame pawnEndgame promotion veryLong
+attraction|1|0wXAZ|8/8/4n2B/pk1p2p1/2pP2P1/2P5/1PK5/8 w - - 4 42|b2b3 c4b3 c2b3 a5a4|1255|attraction crushing endgame short
+attraction|1|2ubHP|2k3r1/ppp4p/1bn5/5Nq1/3PP3/1Q4P1/PP5P/R6K b - - 2 25|c6d4 b3g8 g5g8 f5e7 c8b8 e7g8|1619|advantage attraction fork long middlegame sacrifice
+attraction|1|2VR76|8/p4kp1/1p4p1/2n3Pp/2P2P2/1Pr3NP/P3R1K1/8 w - - 3 43|e2d2 c3g3 g2g3 c5e4 g3f3 e4d2|1438|advantage attraction endgame fork long sacrifice
+attraction|1|3OOve|8/b4pkp/6p1/8/q7/7P/3Q2PK/5R2 w - - 6 50|d2f4 a4f4 f1f4 a7b8 g2g3 b8f4|1416|attraction crushing endgame long pin
+attraction|1|075Q6|r5k1/pbp3pp/3p1r1q/2p2p2/2P1p3/4P1P1/P4P1P/1R1QRBK1 b - - 1 20|a8b8 b1b7 b8b7 d1d5 f6f7 d5b7|1374|attraction crushing fork long middlegame sacrifice
+attraction|1|08iRv|5r2/4R3/2pp4/p3b1kp/4P3/1P4P1/P1P1KN1P/8 w - - 0 37|e7a7 f8f2 e2f2 e5d4 f2g2 d4a7|1464|advantage attraction endgame exposedKing fork long sacrifice
+attraction|1|05ovL|r3r1k1/1bp2p2/1p4pp/p3n3/Pb2NP1q/1P1P4/2P1Q1BP/B2R1RK1 b - - 0 22|e5g4 e2g4 h4g4 e4f6 g8f8 f6g4 b7g2 g1g2|1579|attraction crushing fork master middlegame sacrifice veryLong
+attraction|1|0zKj0|8/6p1/5pkp/r2np3/P1Q5/5K2/5PP1/8 w - - 2 37|f3e4 a5a4 c4a4 d5c3 e4d3 c3a4|1320|attraction crushing endgame fork long pin sacrifice
+attraction|1|0l871|3q2k1/1p3p2/1p3npp/1N1pQ3/5P2/P1P3PP/1P3K2/8 w - - 5 38|b5d6 d8d6 e5d6 f6e4 f2e3 e4d6|1453|advantage attraction endgame fork long sacrifice
+attraction|1|3Le03|1r3q2/5k1p/p3Rbp1/3p1p2/P2p1P2/1P1P4/2PBQ2P/7K b - - 2 31|b8b7 e6f6 f7f6 e2e5 f6f7 e5d5|1352|attraction crushing endgame long sacrifice
+attraction|1|0tzRZ|R7/8/P4kp1/5p2/8/7P/2p2PPK/2r5 w - - 0 35|a6a7 c1h1 h2h1 c2c1q|1372|advancedPawn advantage attraction endgame promotion rookEndgame short
+attraction|1|0SHnp|8/1pp1R1k1/1p6/6p1/3p1n2/P2P1N1q/1PP5/4R1K1 b - - 4 41|g7h6 e7h7 h6h7 f3g5 h7g6 g5h3|1562|advantage attraction deflection endgame fork long sacrifice
+attraction|1|21V5l|7r/Rpk2p1p/2p5/4p1p1/1q1rP3/1P6/1PQ2PPP/2R3K1 b - - 9 22|c7b6 a7b7 b6b7 c2c6 b7b8 c6c7|1608|attraction crushing endgame long sacrifice
+attraction|1|0fo9N|5k2/5p1p/2P5/1P6/8/P1qp4/6PP/1Q5K w - - 0 38|b5b6 d3d2 b1g1 c3c1 b6b7 c1g1 h1g1 d2d1q|1630|advancedPawn attraction crushing endgame master promotion queenEndgame veryLong
+attraction|1|2uakt|r4r2/3R1Pk1/4R1pp/1p2P3/p2p4/8/6PP/6K1 b - - 0 34|a8d8 d7d8 f8d8 e6e8 g7f7 e8d8|1389|attraction crushing endgame long rookEndgame
+attraction|1|1QkJ5|r4rk1/1pp2ppp/1p1p4/4nNq1/4P3/P1B3P1/1PP4P/R2Q1BK1 w - - 2 19|c3d2 g5d2 d1d2 e5f3 g1g2 f3d2|1559|advantage attraction fork long master middlegame sacrifice
+attraction|1|0kxPK|1r4r1/3P2k1/4p3/5p2/3P4/2P2Q1P/1Pq3P1/5R1K b - - 0 36|b8b2 f3g3 g7f7 g3g8 f7g8 d7d8q|1400|advancedPawn attraction crushing endgame exposedKing long promotion
+attraction|1|10YmM|4r2k/6pp/3b1p2/p7/P2P1n2/1BP2Q2/1P3PPq/R4KN1 w - - 0 29|a1e1 e8e1 f1e1 h2g1|1315|advantage attraction middlegame short
+attraction|1|11zA3|3r2k1/5p1p/4p3/4P1p1/p1RN1nPP/P7/1P3P2/6K1 w - - 0 31|h4g5 d8d4 c4d4 f4e2 g1g2 e2d4|1359|advantage attraction endgame fork long sacrifice
+attraction|1|0f3WL|r4rk1/ppp2ppp/8/3q4/2Qn1P2/8/PPbN1NPP/R1BK1B1R w - - 0 14|c4c2 d4c2 d1c2 d5c5|1595|advantage attraction master middlegame short
+attraction|2|2IwMq|r2q3r/4ppk1/2p4P/pp1pn1p1/6P1/P1N1P3/1PP1Q3/2KR3R b - - 0 20|h8h6 h1h6 g7h6 e2h2 h6g6 h2e5|1713|attraction crushing fork long middlegame
+attraction|2|0LiJU|2r2rk1/pb1nq3/1b3pPQ/4p3/4P3/8/4BP1P/B2R1RK1 b - - 0 33|e7g7 h6g7 g8g7 d1d7 g7g6 d7b7|1713|attraction crushing exposedKing fork long middlegame
+attraction|2|1mbYB|r4rk1/2q3pp/8/1p3p2/1Pp1R3/2P1P1P1/4B1P1/R2Q2K1 b - - 0 23|f5e4 a1a8 f8a8 d1d5 g8f8 d5a8|1922|attraction crushing endgame fork long
+attraction|2|1AMbW|r1b5/pp4kn/2p1B2P/6p1/3qNrQ1/2R5/PP3P2/5RK1 b - - 0 29|g7h6 c3h3 h6g7 h3h7 g7h7 g4h5 h7g7 h5g5|1885|attraction crushing middlegame sacrifice veryLong
+attraction|2|2HAEG|4R3/3r2pp/4kr2/4p3/8/4R1PP/5PK1/8 b - - 17 43|d7e7 e3e5 e6e5 e8e7 e5f5 e7g7|1869|attraction crushing deflection endgame long rookEndgame
+attraction|2|2c5g0|2k3Q1/1pp3pp/p7/7n/3P3q/P3P3/1P1B1r1P/2R4K b - - 1 23|h4d8 c1c7 c8c7 d2a5 b7b6 a5b6 c7b6 g8d8|1738|attraction crushing deflection endgame pin queensideAttack sacrifice veryLong
+attraction|2|0uqx1|r7/p1pk4/2p1p1Q1/3qp3/8/2KPb3/PPP4P/R4R2 w - - 4 23|g6e4 d5a5 e4b4 e3d2 c3d2 a5b4|1957|advantage attraction deflection endgame long
+attraction|2|0GTCx|r1b1k1nN/4p2p/p5p1/1p6/4Pq2/P1NR3P/1PP2PP1/1K5R b q - 2 18|f4e5 d3d8 e8d8 h8f7 d8e8 f7e5|1819|advantage attraction fork long middlegame sacrifice
+attraction|2|36JPh|r1bq1r2/1p3pk1/p1n3p1/2bN1Pp1/8/3B3Q/PPP2P1P/R1B2RK1 b - - 0 15|d8d5 c1g5 f8h8 g5f6 g7f6 h3h8|2035|advantage attraction deflection long middlegame
+attraction|2|2W0uC|r7/p2qrk2/1p1p3p/2p2pp1/8/2QPR1P1/PPP2PP1/1K5R b - - 5 26|f7g6 h1h6 g6h6 c3f6|1693|attraction crushing endgame sacrifice short
+attraction|2|3U7AU|4r3/p4rk1/1p6/2p2pP1/4q3/7Q/6RP/3R3K b - - 1 30|e8h8 h3c3 g7g8 d1d8 f7f8 d8f8 g8f8 c3h8|1701|attraction crushing endgame exposedKing veryLong
+attraction|2|0kBjC|r1b1r1k1/pp1nppb1/1q1p2Bp/2pP4/2P2BnP/1P3N2/P2NQPP1/R3R1K1 b - - 0 15|g7a1 g6f7 g8f7 e2e6|1674|advantage attraction kingsideAttack middlegame sacrifice short
+attraction|2|1merh|1rb1k2r/3nppbp/p1np2p1/q7/3PP2P/P1N1BP2/1P1Q2P1/R3KBNR w KQk - 1 12|d4d5 b8b2 d2b2 g7c3 e3d2 c3b2|1650|attraction crushing exposedKing fork long middlegame
+attraction|2|0aX6a|6k1/pp3r2/3pNb2/3Pn2p/1P2Pp2/5PqP/P3Q1B1/2R3K1 w - - 3 34|e2f2 g3f2 g1f2 e5d3|1691|attraction crushing kingsideAttack master middlegame short
+attraction|2|0LzE7|5rk1/3qp3/3p4/4b1pp/pB2Pn2/P3Q2P/5PP1/2R2RK1 w - - 0 28|f2f3 e5d4 e3d4 f4e2 g1h2 e2d4|1828|advantage attraction fork long middlegame pin sacrifice
+attraction|2|1V9hO|r7/p4kpQ/b1p1pq1p/2p5/1P3n2/P4R1P/5PP1/1B2R1K1 w - - 4 28|g2g3 f4h3 g1g2 f6f3 g2f3 h3g5|1727|advantage attraction discoveredAttack kingsideAttack long middlegame sacrifice
+attraction|2|31ISf|8/1q4kp/p2p2p1/1p2ppN1/4b3/1P2Q2P/r4PP1/2R3K1 b - - 3 28|e4g2 c1c7 b7c7 g5e6 g7f7 e6c7|1700|advantage attraction endgame fork long sacrifice
+attraction|2|2Mx0u|r1b1kb1r/pp3pp1/4pq1p/3pN2Q/3n1P2/3B2P1/PP1N1P1P/R3K2R b KQkq - 0 12|f8d6 e5f7 f6f7 d3g6 e8g8 g6f7|1775|advantage attackingF2F7 attraction fork long middlegame pin sacrifice
+attraction|2|0WwYG|5r2/p1r2knR/1p1Q2p1/3P1p2/2Pn4/1P1B1qP1/P7/6KR b - - 2 36|c7e7 h7g7 f7g7 d6e7 f8f7 e7e5|1826|advantage attraction deflection long middlegame
+attraction|2|2VdBI|1rr3k1/6pp/1q3p2/4p3/2bp1P2/P5P1/3Q2BP/R1R4K b - - 2 36|b6b2 d2b2 b8b2 c1c4 c8c4 g2d5 g8f8 d5c4|1927|advantage attraction fork middlegame sacrifice veryLong
+attraction|3|1ewZ4|4B3/8/8/pPb4P/P4p1k/5Kp1/8/8 w - - 5 57|h5h6 h4h3 f3e4 g3g2 h6h7 c5d4 e4d4 g2g1q|2340|advancedPawn attraction bishopEndgame crushing endgame promotion quietMove veryLong
+attraction|3|3TuDf|1k1r2r1/ppp1np1p/8/3p1Q2/1P1P3q/2P2K2/P2NRp2/R1B2B2 w - - 2 26|f5h3 h4f6 f3e3 g8g3 h3g3 e7f5 e3f2 f5g3|2519|attraction crushing discoveredAttack discoveredCheck exposedKing fork master middlegame sacrifice veryLong
+attraction|3|1BpoW|r2q1rk1/ppp2ppp/2np4/4P1N1/2BP2b1/8/PP1Q1PPP/R3R1K1 b - - 3 13|h7h6 g5f7 f8f7 c4f7 g8f7 d2f4|2161|attraction crushing kingsideAttack long middlegame
+attraction|3|1N18m|5rk1/1p3p1p/2p3pQ/2Npq3/7P/6RK/6P1/8 b - - 3 29|d5d4 h6f8 g8f8 c5d7 f8e7 d7e5|2068|advantage attraction endgame fork long sacrifice
+attraction|3|0ohTO|3b4/pp4k1/2q3p1/2p1p2P/P3N1P1/1b1P2N1/5Q2/5K2 b - - 0 31|c5c4 h5h6 g7g8 h6h7 g8h7 f2f7 h7h8 f7f8|2085|advancedPawn attraction crushing endgame veryLong
+attraction|3|0D9xG|2rb4/8/2P2k2/1K1P1p2/5B2/8/7P/8 b - - 8 50|d8c7 f4c7 c8c7 d5d6 c7g7 c6c7|2159|advancedPawn attraction crushing endgame long master
+attraction|3|1PVsn|k1r3r1/pp3p1p/1R3pq1/8/Q7/5nB1/PP3PPP/5R1K b - - 3 24|f3d2 b6b7 a8b7 a4b5 b7a8 b5d5|2195|attraction crushing long middlegame queensideAttack sacrifice
+attraction|3|1RBHJ|3r1rk1/Q5pp/1p6/2qb1p2/8/5BP1/PP2P2P/3RR1K1 w - - 1 28|g1h1 d5f3 e2f3 c5f2 a7a4 d8d2 d1d2 f2e1 h1g2 e1d2|2442|attraction collinearMove crushing deflection fork middlegame veryLong
+attraction|3|2xVTj|5rk1/p1p4p/2p3q1/3pR1B1/3P2B1/3b4/PP3rP1/R1Q3K1 w - - 0 26|g5e3 f2g2 g1g2 g6g4 g2h2 g4h4|2480|attraction crushing kingsideAttack long middlegame
+attraction|3|0sox9|6r1/1p5k/2p2p1p/2PqpPr1/1P6/7R/4Q1PP/3R3K b - - 2 31|g5g2 h3h6 h7h6 e2e3 g2g5 d1d5 c6d5 h2h4 h6h5 h4g5|2178|attraction crushing endgame pin sacrifice veryLong
+attraction|3|0aNmc|r6k/2RR2p1/7p/4ppq1/1Q2n3/7P/5PP1/6K1 w - - 6 38|d7g7 a8a1 g1h2 g5f4 g7g3 a1h1 h2h1 e4g3 f2g3 f4b4|2266|attraction crushing discoveredAttack endgame veryLong
+attraction|3|07e02|2q2r2/3kp3/p1ppn1Q1/N1P3b1/1P6/5p1b/PB2P2P/1R1R3K w - - 0 33|e2f3 h3g2 h1g2 e6f4 g2h1 f4g6|2229|advantage attraction fork long middlegame sacrifice
+attraction|3|2sSiu|3b2k1/p4pp1/1pbNp2p/q7/8/2P5/PPQ2PPP/1B4K1 b - - 1 25|a5e5 c2h7 g8f8 h7h8 f8e7 h8d8 e7d8 d6f7 d8c7 f7e5|2100|attraction crushing deflection endgame fork sacrifice veryLong
+attraction|3|17zOQ|r4rk1/1R5p/p3p1p1/5n2/4N1Q1/3q4/P4PPP/5RK1 w - - 1 23|e4g5 d3f1 g1f1 f5e3 f1e2 e3g4|2050|advantage attraction long middlegame pin sacrifice
+attraction|3|1uat2|r1bq2rk/pp3p1p/8/3Pp3/4Nb2/1B6/PP3PPP/R2Q1RK1 w - - 0 18|d5d6 f4h2 g1h2 d8h4 h2g1 g8g2 g1g2 c8h3|2406|advantage attraction fork middlegame sacrifice veryLong
+attraction|3|2BqZ0|5rk1/p6p/1p2pPp1/2p1P3/2n2B2/2Pr2P1/P4PK1/3R3R b - - 4 28|f8d8 f6f7 g8f7 h1h7 f7g8 d1h1|2222|advancedPawn attraction crushing defensiveMove deflection endgame kingsideAttack long
+attraction|3|0Rpef|r1b1k2r/4npbp/p5p1/3p3P/1Q1N1q2/8/PPP2PP1/1K2RB1R b kq - 3 17|c8e6 b4a4 e6d7 e1e7 e8e7 d4c6 d7c6 a4f4|2329|attraction crushing discoveredAttack middlegame sacrifice veryLong
+attraction|3|03N7A|r3q2r/1Q4p1/p2kPp1p/3pb3/6P1/N1p5/PP6/3R1RK1 b - - 1 24|e8c6 d1d5 d6d5 f1d1 e5d4 d1d4 d5d4 b7c6|2321|advantage attraction deflection middlegame pin sacrifice veryLong
+attraction|3|1caD2|5bk1/Q7/3p2p1/2pPp1q1/2N1P3/3P1Prp/1P3RB1/R5K1 w - - 0 33|a7d7 g3g2 g1f1 g2f2 f1f2 g5g2 f2e1 h3h2|2128|advancedPawn attraction crushing exposedKing kingsideAttack master middlegame veryLong
+attraction|3|2kS8w|r7/p3kp1p/2q5/2pn1p2/2N3r1/1P2P3/P4PPP/R2Q1RK1 w - - 2 20|c4e5 g4g2 g1h1 g2h2 h1h2 c6h6|2102|attraction crushing kingsideAttack long middlegame sacrifice
+capturingDefender|1|10PhQ|r3r1k1/1bq4p/p3pbp1/1pp1N3/8/2P2N2/PP2QPPP/3R1RK1 w - - 0 21|d1d7 b7f3 e2f3 c7e5|1547|advantage capturingDefender master middlegame short
+capturingDefender|1|33qLP|2r2rk1/1p2Rpbp/p4np1/3P4/R7/1qN2Q1P/1P3PP1/2B3K1 w - - 0 18|d5d6 c8c3 b2c3 b3a4|1293|advantage capturingDefender master middlegame short
+capturingDefender|1|0ZLYK|6k1/5pp1/2r4p/3q4/2N5/1Q4PP/2R2P1K/8 w - - 3 45|c4a5 d5b3 a5b3 c6c2|1407|advantage capturingDefender endgame pin short
+capturingDefender|1|1l8V0|1rr3k1/pbR2ppp/8/3p4/P2P4/1P2PP2/3K2PP/2R5 b - - 0 21|g8f8 c7b7 b8b7 c1c8|1324|capturingDefender crushing deflection discoveredAttack endgame short
+capturingDefender|1|0AInO|r2qkbnr/pp3ppp/2n1p3/3p3b/3P4/2PB1N1P/PP3PP1/RNBQK2R w KQkq - 1 8|c1g5 h5f3 d1f3 d8g5|1466|advantage capturingDefender opening short
+capturingDefender|1|2bVpF|5rk1/pppr1ppp/2n3b1/2b1p3/4n1P1/PB2BN1P/1PPNKP2/R4R2 b - - 6 15|f8d8 d2e4 g6e4 e3c5|1644|advantage capturingDefender middlegame short
+capturingDefender|1|1NkrI|r1Q2rk1/p3ppb1/1n1p3p/8/3PN2B/4P3/P1p2PPP/R1R3K1 b - - 0 24|a8c8 h4e7 f8e8 e4d6 e8e7 d6c8|1585|capturingDefender crushing fork long middlegame
+capturingDefender|1|0tkA3|3r1rk1/1p3pp1/p1n1bq1p/3p4/8/2PQ1N1P/PPB2PP1/R3R1K1 b - - 4 18|f6g6 d3g6 f7g6 e1e6|1512|capturingDefender crushing middlegame short
+capturingDefender|1|1JzbR|r2rnbk1/pbq2pp1/4p2p/2p1P2Q/2P1NP1P/1P1p2R1/PB4P1/1BR4K w - - 0 23|b1d3 d8d3 g3d3 b7e4|1521|advantage capturingDefender middlegame short
+capturingDefender|1|2mffk|8/5pk1/6p1/1q1p3p/1b1P1P1P/1Q1N2P1/6K1/8 b - - 1 43|b5c4 b3c4 d5c4 d3b4|1472|capturingDefender crushing endgame master short
+capturingDefender|1|1dWEJ|8/1p3p1k/pn3npp/2qP4/8/2N2QBP/PP4PK/8 b - - 5 35|b6d5 c3d5 c5d5 f3f6|1330|advantage capturingDefender endgame short
+capturingDefender|1|3Rl2X|3r1rk1/ppp2p2/6p1/2nN2qp/2P1P1b1/5Q2/PP2BPPP/R2R2K1 w - - 1 21|f3e3 g5e3 d5e3 g4e2 d1d8 f8d8|1345|advantage capturingDefender long middlegame
+capturingDefender|1|2vefn|r4rk1/1p1bb1pp/pq2p1n1/2p2pB1/3n3P/P1NP1NP1/1PP2PB1/2KRQ2R w - - 1 15|h4h5 d4f3 g2f3 e7g5|1542|capturingDefender crushing middlegame short
+capturingDefender|1|11Xni|r4rk1/p3ppbp/1p3np1/3p2B1/3Pn1b1/1PPN1N2/P3BPPP/2R2RK1 w - - 4 17|h2h3 g4f3 e2f3 e4g5|1504|capturingDefender crushing middlegame short
+capturingDefender|1|0Zaza|r3k2r/ppqnbppp/2b1p3/4P3/8/2PB1N2/P2B1PPP/R2QR1K1 w kq - 1 14|d2g5 c6f3 d1f3 e7g5|1546|capturingDefender crushing master middlegame short
+capturingDefender|1|0V9h0|Q2qk2r/5ppp/4p2n/p1B5/PP3P2/3P4/2r3PP/R4RK1 w k - 2 21|a8a5 d8a5 b4a5 c2c5|1561|advantage capturingDefender master middlegame short
+capturingDefender|1|3739b|r6k/1b3pp1/p1q1Nb1p/5P2/2p1rB2/2P4Q/2P3PP/3R1R1K w - - 2 29|d1d6 e4f4 e6f4 c6d6|1576|advantage capturingDefender middlegame short
+capturingDefender|1|1dbb2|r1b1r2k/pp4bp/5qp1/1B2np2/3Np3/2P4P/PPQ2PPB/R3R1K1 b - - 2 22|c8d7 h2e5 e8e5 b5d7|1509|capturingDefender crushing middlegame short
+capturingDefender|1|2xnXg|r1b1r1k1/pp2np1p/2pB1bp1/8/2B5/2N5/PP2RPPP/3R2K1 b - - 7 16|c8d7 d6e7 e8e7 e2e7 f6e7 d1d7|1281|capturingDefender crushing long middlegame
+capturingDefender|1|1orjh|8/6p1/pBp5/Pr1b1k2/3Rp3/1p4KP/1PrR1PP1/8 b - - 10 38|d5c4 d2c2 b3c2 d4c4|1486|capturingDefender crushing endgame short
+capturingDefender|2|1ZufB|8/4p2k/2pqNnp1/5n1p/3P3P/2Q4R/1PK5/4r3 w - - 0 29|c3e1 d6e6 e1e6 f5d4 c2d2 d4e6|1798|advantage attraction capturingDefender endgame fork long sacrifice
+capturingDefender|2|31TzJ|1r5r/5pk1/3pb1p1/pRpNb3/P1B1P1Pq/2P2Q1P/6K1/5R2 w - - 6 29|d5b6 b8b6 b5b6 e6c4|1905|capturingDefender crushing middlegame short
+capturingDefender|2|371vx|r4rk1/p4ppp/bp6/n1pP4/P1Pq4/R7/2PNB1PP/3Q1R1K b - - 4 18|a6c4 d2c4 a5c4 d1d4 c5d4 e2c4|2046|advantage capturingDefender discoveredAttack long middlegame
+capturingDefender|2|2Qp0l|2rq1rk1/5ppp/pb6/8/Q3p1b1/4PN2/PP1B1PPP/2RR2K1 w - - 0 19|a4e4 c8c1 d1c1 g4f3 g2f3 d8d2|1886|advantage capturingDefender long middlegame
+capturingDefender|2|1PivO|r2r2k1/p3Rpbp/1pq3p1/2p5/8/P1P2P2/Q2B2PP/1R5K b - - 3 24|c6d5 e7e8 g7f8 a2d5 d8d5 e8a8|1829|advantage capturingDefender long middlegame
+capturingDefender|2|2Uc5O|r4rk1/ppp2p1p/2nb1p2/3q4/6b1/P2BPN2/2PP1PPP/RN1Q1RK1 w - - 0 12|d3e2 g4f3 e2f3 d5e5 g2g3 e5a1|1884|advantage capturingDefender fork long middlegame
+capturingDefender|2|0vO0K|4r1k1/ppb3pp/2p3q1/3p2n1/1P1P1pP1/2P2P1P/P2Q1BKN/5R2 w - - 0 29|h3h4 g5f3 h2f3 g6g4|1818|capturingDefender crushing deflection discoveredAttack middlegame short
+capturingDefender|2|1UNkC|r4rk1/p3b3/1p3qbQ/3pR1N1/1n1P4/4B3/PP3PPP/R5K1 b - - 10 21|g6f5 h6f6 e7f6 e5f5|1783|advantage capturingDefender middlegame short
+capturingDefender|2|0NYfj|2k2r2/ppp1pp2/4rn1R/4N1p1/2P3P1/3P4/P1P2PP1/2KR4 w - - 1 19|d1e1 e6e5 e1e5 f6g4 h6e6 f7e6|1962|advantage capturingDefender endgame fork long
+capturingDefender|2|0iIJO|r1b2rk1/1pb1q1pp/p1p1p3/3pNnP1/P2P4/8/1PP1NPP1/R1Q1KB1R w KQ - 1 17|g2g4 f5d4 e2d4 c7e5|1831|capturingDefender crushing middlegame short
+capturingDefender|2|0piiZ|2r1r1k1/2Pq3p/1p1Qp1p1/p2pP3/5PB1/8/6PP/2R3K1 b - - 3 30|e8e7 d6d7 e7d7 g4e6 g8f8 e6d7|1710|attraction capturingDefender crushing endgame fork long
+capturingDefender|2|2PjUT|r2qk2r/pp2bppp/2n1pn2/3p2B1/3P2b1/P1N5/1PQNPPPP/R3KB1R b KQkq - 3 9|c6d4 c2a4 d4c6 g5f6 e7f6 a4g4|1675|advantage capturingDefender fork long opening
+capturingDefender|2|0lKYx|3r3k/p1pB2pp/8/3QPp1b/1r6/5P1q/PP5B/R4RK1 w - - 0 22|e5e6 b4b2 f1f2 b2f2 g1f2 h3h2|1926|attraction capturingDefender crushing kingsideAttack long middlegame
+capturingDefender|2|2p7eS|4r1k1/4b2p/p5b1/2r5/2P1R3/1P4R1/P5BP/6K1 b - - 2 38|c5g5 e4e7 e8e7 g3g5|1793|capturingDefender crushing master middlegame short
+capturingDefender|2|0BsuS|r3k1r1/1p1n3p/p1pq1p2/P2p3b/N2P2n1/1Q2PNP1/1P2BP2/R4RK1 w q - 1 18|b3d3 g4f2 f1f2 d6g3 g1f1 h5f3|1907|capturingDefender crushing kingsideAttack long middlegame
+capturingDefender|2|2LY1M|6k1/pppbbr2/2n1p3/3pP1qp/P2P2p1/2P3B1/1PQN1PP1/4RRK1 w - - 0 23|f2f4 g4f3 f1f3 f7f3 d2f3 g5g3|1733|advantage capturingDefender enPassant long middlegame
+capturingDefender|2|1ag85|r3kb1r/pppqp1pp/4Nn2/3P1p2/1n2p3/2N5/PPP2PPP/R1BQK2R b KQkq - 1 9|b4d5 c3d5 f6d5 d1d5 d7d5 e6c7 e8f7 c7d5|1924|advantage attraction capturingDefender deflection fork opening sacrifice veryLong
+capturingDefender|2|1WS2n|2kr1bnr/ppp2ppp/8/5b2/1n5q/2NNB3/PPP1B1PP/R3Q1KR b - - 5 12|f8e7 e1h4 e7h4 d3b4|1662|advantage capturingDefender opening short
+capturingDefender|2|0hAjY|5k2/1p2p1bp/pN1r2p1/3Ppp2/4n3/3BB2P/P4PP1/2R4K w - - 4 24|e3c5 e4c5 c1c5 d6b6|1669|advantage capturingDefender middlegame short
+capturingDefender|2|1Y8T2|8/4k3/1p2p2n/1P1pp2p/2PP1K1P/4N3/8/8 w - - 0 41|f4e5 h6g4 e5f4 g4e3 f4e3 d5c4|1785|capturingDefender crushing endgame knightEndgame long
+capturingDefender|3|0M70f|1k1r3r/pp2bppp/2npqn2/3Np1B1/2Q1P3/1R3N2/PP3PPP/2K4R b - - 8 15|f6d5 e4d5 c6a5 d5e6 a5c4 g5e7|2267|advantage capturingDefender fork long middlegame
+capturingDefender|3|2lqLu|4rr1k/p2b3p/3p1qnP/2pB1p2/3n1P2/2QPN2N/PP6/2K1RR2 w - - 1 27|h3g5 g6f4 f1f4 f6g5 f4d4 c5d4|2092|capturingDefender crushing long master middlegame
+capturingDefender|3|0aBQR|r1bq1rk1/ppp1nppp/1b6/1P4N1/5p2/1BPP1Q2/P4PPP/RN3RK1 b - - 1 15|e7g6 f3h5 h7h6 g5f7 f8f7 h5g6|2085|capturingDefender crushing long opening pin
+capturingDefender|3|1jDHb|4rr1k/1b2q1pp/p1pb3n/1p6/5PP1/2NPBB1P/PPP1Q2K/R4R2 w - - 2 22|a1e1 e7e3 e2e3 e8e3 e1e3 d6f4 h2g2 f4e3|2190|advantage attraction capturingDefender fork middlegame pin veryLong
+capturingDefender|3|2lgsf|8/3N4/4kb2/5pp1/2p1p1P1/4P3/5P2/3K4 w - - 0 53|d7f6 e6f6 d1d2 f5g4|2080|capturingDefender crushing endgame short
+capturingDefender|3|2t9f6|5rk1/1p2q1n1/2p1b2Q/p2p2R1/3P1N2/4P2P/PP3P2/2K5 b - - 6 27|e6f5 f4h5 f8f7 h5g7 f7g7 g5f5|2280|advantage capturingDefender long middlegame
+capturingDefender|3|2olKB|7r/p2q2k1/2n2pB1/1pPp3P/2nP1Bb1/P1P2p2/2Q4K/R5R1 w - - 0 33|c2f5 d7f5 g6f5 h8h5 h2g3 g4f5|2372|advantage capturingDefender exposedKing fork long middlegame
+capturingDefender|3|2Tkli|rn1q1r1k/p3b1pp/bpn1B3/3pP3/3P4/5NP1/PP2N2P/R1BQ1RK1 w - - 1 16|f1f2 f8f3 f2f3 a6e2 d1e2 c6d4|2121|advantage capturingDefender deflection long opening
+capturingDefender|3|3AKam|2r2k2/4pN1p/3p2p1/pp6/1b2PPP1/1BrRQ2P/1qP1K3/3R4 w - - 1 25|f4f5 c3b3 d3b3 b2c2|2325|capturingDefender crushing middlegame pin short
+capturingDefender|3|27Lko|1k1r4/1pp3p1/p4p1P/2r5/P2n4/6P1/1KP2RB1/7R b - - 0 32|d4f5 f2f5 c5f5 h6g7 f5g5 h1h8 g5g7 h8d8|2107|advancedPawn advantage capturingDefender endgame veryLong
+capturingDefender|3|2Ii8q|8/6pk/2r4p/4Qp2/1p3P2/1P3R1P/2q3P1/6K1 w - - 7 37|g1h2 c6g6 f3g3 g6g3 h2g3 c2b3|2443|attraction capturingDefender crushing endgame long
+capturingDefender|3|0IuWe|r1k2b1r/1ppb2p1/p2q3p/3N4/2P5/1P3Q2/P4PPP/3R1RK1 b - - 6 19|d7e6 d5f4 d6c6 f3c6 b7c6 f4e6|2282|advantage capturingDefender long middlegame
+capturingDefender|3|09sDb|3r1rk1/5ppp/p1p5/5q2/1P1bn3/P1P4P/4NPP1/R2QR1K1 w - - 0 21|e2d4 f5f2 g1h1 e4c3 d1f3 f2d4|2226|advantage capturingDefender long middlegame
+capturingDefender|3|1d7QC|6k1/1p3pp1/2p3n1/B2n4/P1QPr3/1P5P/5KP1/8 w - - 1 32|a5c3 g6e5 d4e5 e4c4 b3c4 d5c3|2267|advantage capturingDefender endgame long
+capturingDefender|3|0KjJp|8/3R4/2n2kp1/1p3p1p/2bP4/8/7P/rB3RK1 w - - 3 33|d7d6 f6e7 d6c6 c4f1 g1f1 a1b1|2095|attraction capturingDefender crushing defensiveMove endgame long master
+capturingDefender|3|16UOX|6r1/p7/bpp1k3/3pPp2/3P1P2/2PNR3/PP2KRP1/7r w - - 13 36|e3h3 h1h3 g2h3 g8g3 f2f3 g3f3 e2f3 a6d3|2123|advantage capturingDefender endgame veryLong
+capturingDefender|3|3PMax|2Rr2k1/5pb1/4p1p1/3r3p/3P3P/q3BQP1/5PK1/2R5 b - - 8 30|g7d4 f3d5 e6d5 c8d8|2145|capturingDefender crushing master masterVsMaster middlegame pin short
+capturingDefender|3|30uOF|3r1kr1/p2nRp1p/2pq2p1/8/2P5/5QP1/P1P2PKP/4R3 b - - 13 23|d7f6 e7e6 d6e6 e1e6 f7e6 f3f6|2220|advantage capturingDefender long middlegame
+capturingDefender|3|2IHbr|r1b1k1r1/4qpPp/pn2p1p1/Qp1pP3/3P2P1/8/2R1B2P/1N3RK1 b q - 3 28|a8b8 a5b6 b8b6 c2c8 e7d8 c8d8 e8d8 f1f7|2167|advantage capturingDefender deflection middlegame sacrifice veryLong
+capturingDefender|3|16pF3|k3r1r1/8/4p3/q2nR3/P2P1pp1/1QP5/1P3P2/4R1K1 b - - 0 37|a5a6 e5e6 e8e6 b3d5|2108|advantage capturingDefender middlegame short
+clearance|1|07xSs|r1b1qrk1/ppp2p1p/2n2p2/2P5/Q3p3/2N5/PPP2PPP/3RKB1R w K - 0 12|a4e4 e8e4 c3e4 f8e8 f2f3 f6f5|1559|advantage clearance long middlegame pin
+clearance|1|1szQf|2r3k1/1bq1bpp1/p3pn1p/1p1pN3/1P1P4/P2QP1N1/2B2PPP/2R3K1 b - - 4 22|c7c3 d3c3 c8c3 c2h7 g8h7 c1c3|1511|clearance crushing discoveredAttack long middlegame
+clearance|1|0RMsO|6k1/1P2n1pp/B7/3bPp2/2pr1P2/8/6PP/R5K1 b - - 0 26|e7c6 a6b5 c6b8 a1a8 d5b7 a8b8|1335|clearance crushing endgame long pin
+clearance|1|0KQgE|8/2p4r/1p6/3RpP2/P5Pp/5k1K/P7/8 b - - 0 48|e5e4 f5f6 e4e3 d5f5|1498|clearance crushing endgame rookEndgame short
+clearance|1|2YjQ3|2b2rk1/6pp/p4p2/B1p1pn2/P2p4/8/1qPQ1PPP/1R3RK1 b - - 1 27|b2a3 b1a1 a3b2 f1b1 b2b1 a1b1|1489|advantage clearance long middlegame trappedPiece
+clearance|1|2ntLu|6k1/5r1p/5pp1/QP1qp3/3p4/7P/5PP1/R5K1 b - - 1 31|f7b7 a5a8 g8g7 a1a7 b7a7 a8d5|1451|clearance crushing endgame long pin
+clearance|1|2Ki7l|r3r2k/pp1npQbp/2p2np1/1q4N1/3P4/2P3N1/PP2RPPP/R1B3K1 w - - 1 16|e2e7 e8e7 f7e7 a8e8|1589|clearance crushing middlegame short
+clearance|1|2C16x|2rr4/5pk1/p3p1p1/1p2P2q/4RQ2/2P2P2/P4KP1/2R5 b - - 2 31|h5h6 f4f6 g7f8 e4h4 h6h4 f6h4|1359|clearance crushing endgame long
+clearance|1|1LRuJ|8/p1p2rk1/1pP3q1/3PQ1p1/8/8/P7/4R1K1 b - - 5 40|g6f6 e5f6 f7f6 e1e7 g7g6 e7c7|1371|clearance crushing endgame exposedKing long
+clearance|1|35H22|r3r1k1/p1R2p1p/1p4p1/3Rpb2/8/P5P1/1P1KPPBP/8 w - - 0 23|d5e5 a8d8 e5d5 d8d5 g2d5 e8d8 d2e3 d8d5|1495|advantage clearance endgame master pin veryLong
+clearance|1|24fZT|r3k1nr/ppq2pb1/2n5/4p1B1/2B1P1Q1/8/PPP2PPP/R4RK1 b kq - 0 14|g7f6 g5f6 g8f6 g4g7 e8c8 g7f6|1449|clearance crushing fork long middlegame
+clearance|1|11a6E|1k3r2/pp4p1/6q1/3p4/3P4/4Q3/PP3P2/K3R3 b - - 1 30|g6e4 e3g3 e4f4 e1e8 f8e8 g3f4|1334|clearance crushing deflection endgame long pin
+clearance|1|34XqB|4nrk1/2q2rp1/p4bQ1/1p2pP2/6R1/3B3P/PPPB2RK/8 w - - 7 29|h3h4 e5e4 d2f4 f6e5 f4e5 c7e5|1354|advantage clearance discoveredAttack discoveredCheck long middlegame
+clearance|1|2x8Bs|4r1k1/pp4p1/2p2nQp/3p4/7q/3B1PP1/P1P4P/3R3K b - - 0 24|h4d4 g6e8 f6e8 d3h7 g8h7 d1d4|1411|advantage clearance discoveredAttack endgame long master sacrifice
+clearance|1|0njIk|8/6p1/R7/4k1PP/8/5PK1/p7/r7 w - - 0 42|h5h6 a1g1 g3f2 a2a1q|1567|advancedPawn clearance crushing endgame promotion rookEndgame short
+clearance|1|35MX6|1r4k1/p4pp1/RbN1p2p/1P1q4/Q7/7P/5PP1/6K1 b - - 11 35|b8b7 a6b6 a7b6 a4a8 g8h7 a8b7|1624|advantage clearance endgame fork long sacrifice
+clearance|1|3S8u2|1r1r2k1/7p/p5p1/PpN3q1/1Q1pPp2/5P1b/R5PP/3R2K1 w - - 0 33|d1d4 d8d4 b4d4 b8d8 d4a1 g5c5|1570|clearance crushing long middlegame pin
+clearance|1|0zmZP|2RQ4/p4ppk/4p2p/3p4/3P4/q3P2P/Pr3PP1/6K1 b - - 7 27|a3a2 d8h8 h7g6 c8g8|1517|clearance crushing endgame master short
+clearance|1|15bdl|r1b2rk1/1p2npp1/1b1q1n1p/p2pp3/5P2/P1PP3P/BP2N1PN/R1BQ1R1K b - - 0 15|b6c7 f4e5 d6e5 c1f4|1561|clearance crushing opening short
+clearance|1|0odui|3r4/2p2pk1/1pP3pp/1P6/P2q1p2/7P/2Q2PP1/4R1K1 w - - 1 32|e1e7 d4a1 g1h2 d8d1 e7f7 g7f7|1608|advantage clearance endgame long master quietMove
+clearance|2|1y1jQ|4r1k1/p1q3pb/1rp1ppn1/3p3R/2P3Q1/P1BPP2P/4KP2/6R1 b - - 3 27|b6a6 h5h7 c7f7 g4h5 g6f4 e3f4 f7h5 h7h5|1868|advantage clearance middlegame veryLong
+clearance|2|3HgVp|5k1b/5p1p/p1b1p3/1p3p1N/1PP4P/1B1r4/P4PP1/2R3K1 b - - 0 30|f5f4 c4b5 c6b5 c1c8 f8e7 c8h8|1650|clearance crushing endgame long skewer
+clearance|2|1Asoj|r4b1r/ppk1pQ2/n1p1Pp1p/3p4/7P/2N2R2/PPP5/2qR1KN1 b - - 5 21|c1c2 c3d5 c6d5 f3c3 c2c3 b2c3|1824|advantage clearance fork long middlegame sacrifice
+clearance|2|0zgzJ|3rk2r/4p3/1p2Pn2/5p2/2Q1q1p1/2P5/PP2BPPb/3R1R1K b k - 4 25|d8d1 c4c8 d1d8 e2b5 e8f8 c8d8 f8g7 d8e7 g7g6 e7f7 g6h6 f7f6|1786|clearance crushing deflection middlegame veryLong
+clearance|2|0Aq3m|6R1/5r2/1p1kq1R1/p6P/8/8/P4PK1/8 b - - 3 42|f7f6 g6f6 e6f6 g8g6 d6e7 g6f6|1712|attraction clearance crushing endgame long pin queenRookEndgame
+clearance|2|33vk5|r3kb1r/p1pq1ppp/bpnppn2/1N6/3P1B2/P2BPP2/1PP3PP/R2QK1NR w KQkq - 1 9|b5c7 d7c7 d3a6 b6b5 a6b5 c7a5 e1f2 a5b5|1732|advantage clearance exposedKing fork opening quietMove veryLong
+clearance|2|3Nvam|2r3k1/1p3ppp/p4P2/4p3/2q1P2P/2PRQ3/P1P5/1K6 b - - 0 24|g7f6 e3h6 c4e4 d3g3|1896|advantage clearance endgame short
+clearance|2|2aKoX|3r2k1/b2bqpp1/3pp3/1p4PN/4P3/1PNn1Q2/P5P1/2R2R1K b - - 3 26|d3c1 h5f6 g7f6 g5f6 e7f8 f3g4 g8h7 f1f3 f8h6 f3h3|2027|clearance crushing master middlegame pin quietMove sacrifice veryLong
+clearance|2|31JmQ|r5kr/1b4pp/ppn3q1/2p3N1/P6Q/3P4/1PP2PPP/R3R1K1 b - - 2 22|c6a5 e1e6 g6f5 a1e1|1907|advantage clearance defensiveMove master middlegame short
+clearance|2|3RlHG|2r5/p4pk1/6p1/4P2p/1p1PQPqP/2r1R1P1/P4RK1/8 w - - 2 35|e5e6 c3e3 e4e3 c8c3 e3c3 b4c3|1804|clearance crushing endgame long
+clearance|2|3TjAi|r3k2r/pppbqppp/8/3p3Q/3P4/2PBb3/P1P2PPP/4RRK1 b kq - 1 12|e3f2 g1f2 d7e6 e1e6 e7e6 f1e1 e6e1 f2e1|1823|advantage clearance hangingPiece master middlegame pin veryLong
+clearance|2|1pIWV|1r6/4nqk1/4p1p1/p3Pp2/P1p2P1Q/2P4R/6PK/8 b - - 7 43|e7g8 h4h8 g7f8 h3h7 f7h7 h8h7|1747|advantage clearance endgame long
+clearance|2|1f1jX|8/3pk1p1/1rb3pp/R3P3/Pn1P4/8/5PPP/1R4K1 w - - 0 29|a5b5 c6b5 b1b4 b6c6|1687|advantage clearance defensiveMove endgame short
+clearance|2|1GgJu|r1bqk2r/pp2pp1p/6p1/3n2Q1/1P1b4/8/P2B1PPP/3RKBNR b Kkq - 1 12|d4f6 f1b5 e8f8 g5d5 d8d5 d2h6 f6g7 h6g7 f8g7 d1d5|1981|advantage clearance opening sacrifice veryLong
+clearance|2|1nKE1|3R4/pbk2r1p/1p2q3/2p3B1/7P/2Q3R1/PPP1r1P1/6K1 b - - 2 35|e2g2 g3g2 b7g2 c3g3 c7b7 g3g2|1674|advantage clearance fork long middlegame
+clearance|2|1Nq5e|4r1k1/1pp3p1/p2p4/8/8/q6P/5QPK/5R2 b - - 1 32|e8e5 f2f7 g8h7 f1f4 a3e3 f4h4|1985|clearance crushing endgame long quietMove
+clearance|2|3KiG7|1rb3k1/2pp2p1/1p5p/p3P3/8/PPBP1Bq1/1QP5/5RK1 w - - 0 23|f3g2 c8b7 f1f2 b8f8 f2f8 g8f8|1733|clearance crushing long middlegame pin
+clearance|2|143cU|2Q1n1k1/q4ppp/Br1p4/1P1Pp3/8/5P2/6PP/2R4K b - - 9 27|b6b8 c8b8 a7b8 c1c8 b8c8 a6c8|1653|clearance crushing endgame long pin sacrifice
+clearance|2|1sxpa|1k1r1b1r/pp1n2pp/3PB3/4p3/P7/5Q2/3q1PPP/1R3RK1 b - - 1 20|d7c5 b1b7 c5b7 f1b1|1903|clearance crushing middlegame pin sacrifice short
+clearance|2|1FXCF|3rr2k/P5pp/8/4q3/8/1Q6/3p1PPP/R4RK1 w - - 1 30|h2h3 e5a1 f1a1 e8e1 a1e1 d2e1q|1970|advancedPawn advantage clearance endgame long promotion sacrifice
+clearance|3|39CO5|4r1k1/6b1/p5B1/2pPp3/bqPp1n1B/7P/5QP1/5RKN b - - 0 28|f4g6 f2f7 g8h7 f1f5 b4b1 g1h2|2518|advantage clearance defensiveMove fork long middlegame
+clearance|3|1RlpI|8/5kp1/p2rpn1p/8/R7/4P1P1/Q2qBP1P/6K1 w - - 5 36|e2a6 d2e1 g1g2 d6d2 a2d2 e1d2|2142|advantage clearance endgame long
+clearance|3|3ITYW|rnbqk1nr/pp4bp/2p2p2/3pP1p1/3P1p2/3B1N1P/PPP3P1/RNBQ1RK1 b kq - 1 8|g8e7 e5f6 g7f6 f3g5 f6g5 d1h5|2165|advantage clearance long opening sacrifice
+clearance|3|1HaAK|1r3rk1/4Qppp/p7/q7/6b1/N1pR1N2/1PP2PPP/1K5R w - - 2 20|a3c4 b8b2 c4b2 f8b8 d3d8 b8d8|2258|clearance crushing long middlegame sacrifice
+clearance|3|2HfpR|5k2/pp3rp1/2p5/2P3RP/4q2K/4P1PQ/PP6/8 w - - 7 42|g5g4 g7g5 h5g6 f7h7 g6h7 e4h7 h4g5 h7h3|2091|advantage clearance deflection endgame pin sacrifice skewer veryLong xRayAttack
+clearance|3|13pW9|1r6/5pk1/p3b2p/3RP1p1/3Q4/2P3BP/1q3PP1/6K1 w - - 2 35|d5d6 b2a1 d4d1 b8b1 d1b1 a1b1|2315|clearance crushing endgame long pin
+clearance|3|2Ev8V|1k6/1q1p1p2/2bPp3/1pQ1Pp1p/1RP4P/8/1P4r1/R5K1 w - - 0 39|g1f1 g2h2 c4b5 c6g2 f1e1 h2h1 e1d2 h1a1|2374|clearance crushing endgame exposedKing skewer veryLong
+clearance|3|01Xw1|r2q1r2/3b1pk1/p2p1n2/npp1pPN1/4P1PQ/PBPP3P/2P5/R4RK1 b - - 2 19|f8h8 g5e6 d7e6 h4g5 g7f8 f5e6|2059|clearance crushing intermezzo long middlegame sacrifice
+clearance|3|0qODZ|R7/7p/2p5/3p4/pk6/7P/1Pb3P1/6K1 w - - 2 46|g1f2 b4b3 a8b8 b3a2 f2e3 c2b3|2182|clearance crushing defensiveMove endgame long
+clearance|3|1ZQsc|3r2k1/1p3rpp/1pp5/8/2P1R3/PPqP3P/4Q1P1/4R1K1 b - - 2 32|c3b3 e4e8 d8e8 e2e8 f7f8 e8e6 g8h8 e6f7 b3a3 e1e8|2085|clearance crushing endgame pin veryLong
+clearance|3|04ACF|r4rk1/ppbb2pp/2p1p3/2Pp4/3PpR2/2N1P3/PPQ1B1PP/R1B1q1K1 w - - 4 16|f4f1 f8f1 e2f1 a8f8 c2e2 f8f1 e2f1 c7h2 g1h2 e1f1|2221|clearance crushing deflection kingsideAttack middlegame veryLong
+clearance|3|027Wr|5k2/8/1b2P3/p2K4/1p3P1p/2p4P/P7/2B5 b - - 0 39|f8e7 f4f5 b6d8 c1g5 e7e8 f5f6 d8f6 g5f6|2102|bishopEndgame clearance crushing endgame exposedKing quietMove veryLong
+clearance|3|1Noiq|6k1/5p2/4p2p/1pP3p1/4P3/3b2P1/p4PPK/2R5 w - - 1 39|c5c6 b5b4 c6c7 d3a6 c7c8q a6c8|2208|advantage clearance endgame long quietMove
+clearance|3|2XmqW|6k1/R1r1qp2/1p4bp/3rp1p1/QP6/2P2PP1/4B1P1/R5K1 b - - 0 28|e7d8 a7c7 d8c7 a4e8 g8g7 a1a8|2118|clearance crushing defensiveMove long master middlegame
+clearance|3|32ahe|r1b1k2r/1p1pbpp1/4p3/p1p5/2n2BB1/PqN4P/1P2QPP1/1R3RK1 b kq - 1 19|c4a3 b2a3 b3c3 f4e5 c3a3 b1a1 a3b4 f1b1|2181|advantage clearance middlegame veryLong
+clearance|3|1hMfu|r1bqkr2/pppp2Qp/3n4/3P1p2/4n3/2P5/P2N1PPP/R1B1R1K1 b q - 1 14|d8h4 d2e4 d6e4 c1g5|2348|clearance crushing opening short
+clearance|3|2RyZW|8/5kPR/p7/P7/rp2p2P/4K3/8/8 w - - 0 40|e3e4 b4b3 e4e3 a4b4 h7h8 f7g7 h8d8 b3b2|2428|advancedPawn clearance crushing discoveredAttack discoveredCheck endgame rookEndgame veryLong
+clearance|3|1m3oO|r2r3k/p4Rpp/2pbQ1p1/3p4/3P2B1/2N3qP/PP2R3/7K w - - 10 32|f7d7 d8f8 d7f7 f8f7 e6f7 a8f8|2059|advantage clearance long middlegame quietMove
+clearance|3|1yJGR|r5k1/ppp1qppp/2n5/8/2P5/2Q2N2/PP2rPPP/4RRK1 b - - 1 15|a8e8 e1e2 e7e2 f1e1 c6d4 g1h1 e2e1 f3e1|2416|advantage clearance middlegame veryLong
+clearance|3|01DwE|6k1/5pb1/p1p1p1pp/P1Bq4/2bP1Q2/1rP1RN1P/5PP1/6K1 b - - 0 23|d5f5 f4f5 g6f5 f3d2 f5f4 e3f3|2158|advantage clearance fork long middlegame
+deflection|1|0hDGr|6k1/5pp1/2p4p/p2qP3/Q2P4/P5P1/3r1P1P/2R3K1 w - - 0 36|a4c6 d2d1 c1d1 d5c6|1336|advantage deflection endgame short
+deflection|1|2Q7nc|8/pp1n2k1/3R1npp/8/P4P1P/5KP1/4r3/B7 b - - 2 39|e2a2 d6d7 g7f8 a1f6|1382|crushing deflection endgame pin short
+deflection|1|01Jpm|3R4/8/p5pp/2B5/5b1P/P3p3/8/3K1k2 w - - 2 46|d8f8 e3e2 d1c2 e2e1q f8f4 f1g2|1373|advancedPawn advantage defensiveMove deflection endgame long promotion
+deflection|1|1BSd2|4R3/5p1k/5qpp/3p4/1P2Q3/5P1P/5PPK/3r4 w - - 0 33|e4c2 f6f4 g2g3 f4f3 c2d1 f3d1|1348|crushing deflection endgame long
+deflection|1|2MJ5e|r2r1k2/6pQ/5pBp/1p1p4/1P3PP1/p1P1q3/P2n4/K1R4R b - - 5 35|d2e4 h7h8 f8e7 h8g7 e7d6 g6e4|1537|advantage deflection long middlegame
+deflection|1|36eFZ|8/3k4/8/3P1Np1/1R2K1P1/7P/rp6/8 w - - 1 65|d5d6 a2a4 b4a4 b2b1q e4e5 b1b5 e5f6 b5a4|1359|advancedPawn crushing deflection endgame fork master pin promotion veryLong
+deflection|1|0H1fJ|5R2/p2p3p/1p1r4/k5r1/1q6/4P3/P1R1QK1P/5N2 w - - 11 38|e2e1 g5g2 f2g2 b4e1|1542|advantage deflection middlegame short
+deflection|1|0HAGP|r1bqrk2/ppp3pQ/2n4p/8/8/4P3/PP4PP/RN2R1K1 b - - 0 21|d8d5 e1f1 f8e7 h7g7|1576|advantage deflection middlegame short
+deflection|1|2R8lL|R7/5pkp/4p1p1/2bp2q1/1P3n2/2PB4/2Q2PPP/6K1 w - - 1 30|d3f1 f4h3 g1h1 h3f2 c2f2 c5f2|1360|crushing deflection endgame long pin
+deflection|1|1IY3I|7r/1qkr3p/5pp1/1pQ5/3p4/3P1N1P/1P3PP1/R5K1 b - - 0 31|b7c6 a1a7 c7b8 c5c6|1361|crushing deflection endgame short
+deflection|1|07HmS|8/1r6/8/3N4/p1P1p1p1/2K2kB1/P4P2/8 w - - 0 54|d5f6 e4e3 f2e3 f3g3|1439|crushing deflection endgame short
+deflection|1|22vla|8/3R2kp/6p1/8/1p4q1/p7/r3N1P1/3QK3 b - - 3 38|g7h6 d1c1 g4g5 d7h7 h6h7 c1g5|1517|crushing deflection endgame long pin
+deflection|1|07fq1|8/2pR2pk/6q1/5p2/8/2P2Q1P/r5P1/7K w - - 0 38|d7c7 a2a1 h1h2 g6d6 f3g3 a1h1 h2h1 d6g3|1400|crushing deflection endgame fork veryLong
+deflection|1|0efkg|3kr3/pQpq2bp/2n5/2Bp1pp1/3P1p2/1P3N1P/6P1/R5K1 b - - 3 26|e8e2 b7a8 d7c8 a8c6|1577|advantage deflection middlegame short
+deflection|1|1sNoO|8/5R2/3B4/2P1p1P1/3k1p2/4n2P/r4PK1/8 w - - 1 41|g2f3 e5e4 f3f4 a2f2 f4g3 f2f7|1356|crushing deflection endgame exposedKing long skewer
+deflection|1|3H9PM|r2q2k1/1p3p1p/4r1p1/1PP1b3/3p4/P2Q3P/1B3PP1/R2R2K1 w - - 0 22|b2d4 e5d4 d3d4 e6e1 d1e1 d8d4|1442|advantage deflection long middlegame
+deflection|1|2IVQT|r2qrbk1/5ppb/p1n2n1p/1ppppN2/4P3/2PPN1QP/PPB2PP1/R1B1R1K1 b - - 1 20|d5d4 f5h6 g8h8 h6f7|1256|crushing deflection kingsideAttack middlegame pin short
+deflection|1|2YKQm|5k1r/1p3p2/3bb1pp/p2NN3/3P4/5QPP/5P1K/2r5 b - - 0 27|f8g7 f3f6 g7h7 e5f7|1418|crushing deflection middlegame short
+deflection|1|3MURv|r4rk1/ppp2p1p/2n3p1/2q3N1/3bR3/8/PP3PPP/RNBQ2K1 w - - 1 15|d1e1 d4f2 e1f2 c5c1 e4e1 c1g5|1333|advantage deflection fork long middlegame
+deflection|1|2SZAc|r7/8/P7/1KR2ppp/3k4/7P/5PP1/8 w - - 3 51|b5b6 a8a6 b6b5 a6a5 b5a5 d4c5|1580|crushing deflection endgame long rookEndgame
+deflection|2|3TvZF|3r2k1/R1R3p1/7p/5p2/5P2/8/3r1KPP/8 w - - 8 35|f2g3 d8d3 g3h4 d2g2|1819|crushing deflection endgame rookEndgame short
+deflection|2|2Osn0|r3r1k1/ppp2pp1/1b1p2n1/3N3p/1PP2BqP/6P1/P3NPK1/R2QR3 w - - 3 19|f2f3 g6h4 g2h2 h4f3|1927|crushing deflection middlegame pin short
+deflection|2|0s1bI|4r1k1/p5b1/5r2/2pPp1QP/1p2q1N1/8/PP3P2/R5K1 b - - 1 33|e4f5 g4h6 f6h6 g5f5|1803|advantage deflection fork middlegame short
+deflection|2|2H5Ms|6k1/5ppp/p2N2n1/1pq5/8/1B2r1QP/PPP3P1/3R3K w - - 0 30|g3f2 e3h3 h1g1 h3h1 g1h1 c5f2 b3f7 g8f8|1654|advantage deflection middlegame veryLong
+deflection|2|0YLmi|2kr3r/ppb2p2/5p2/3p4/3N4/2P1P1Pb/P4PBq/R1RQ1K2 w - - 7 23|d1f3 h2h1 f1e2 h1g2 f3g2 h3g2|1747|advantage deflection long master middlegame pin
+deflection|2|1JFcd|r7/2pk1p2/p3N3/3pP1P1/3P4/b3BQ2/n1qNK3/6R1 b - - 0 28|d7e6 f3f6 e6d7 f6f7 d7c6 f7e6 c6b7 e6d5|1835|crushing deflection middlegame veryLong
+deflection|2|24Ohm|r1b4r/pp2q3/2pk1R2/3pn1Pp/7P/1P1BP1Q1/P1P4P/1R4K1 b - - 3 23|d6c7 f6f7 e7f7 g3e5|1905|advantage deflection middlegame pin sacrifice short
+deflection|2|2LbmJ|4r1k1/N1pb1ppp/1p1r1n2/q7/P3P3/2NPQ2P/1PPK1PP1/R6R w - - 1 20|a7b5 f6e4 d2c1 e4c3|1926|advantage deflection middlegame pin short
+deflection|2|1m0Rf|6k1/pbq1r1pp/1p1N1p2/2p4P/8/P1P5/1B1QnKP1/4R3 b - - 7 30|e7d7 d2e2 c7d6 e2e8 d6f8 e8d7|1656|crushing deflection long middlegame
+deflection|2|1etPP|r4rk1/p3qp1p/1p4p1/2p1bb2/2B5/4BQ2/P4PPP/2R1R1K1 b - - 1 18|e5g7 e3c5 e7c5 c4f7 g8h8 c1c5|2011|advantage deflection discoveredAttack long master middlegame
+deflection|2|0c2vN|1k1r1r2/Npp1n1pp/3b2n1/6N1/3p4/8/PPP3PP/R1B2RK1 w - - 1 18|a7b5 d6h2 g1h2 f8f1|1660|crushing deflection kingsideAttack middlegame short
+deflection|2|0yq0C|8/1p3B1p/1p1k1p2/3Pb2P/P7/1P1RK1r1/8/8 w - - 1 41|e3e4 f6f5 e4f5 g3d3|1736|crushing deflection endgame short
+deflection|2|3C6BG|1r2k2r/2p1n3/1p1pqbp1/pP2p1B1/P1P2p1P/3P3P/3QPPB1/1R3RK1 w k - 0 22|e2e3 f6g5 h4g5 f4f3 g2f3 e6h3|1959|advantage deflection long master middlegame
+deflection|2|1BhHj|r7/pp2R2Q/1qk1pN2/3pP3/P1pP4/2P5/1P6/R2K1r2 w - - 1 33|d1c2 b6b3 c2d2 b3b2 h7c2 f1f2|1964|crushing deflection fork long middlegame
+deflection|2|13kA8|8/pp3r1k/3p2pb/PRpP1r1p/4p3/4BP1P/1PP3P1/4R1K1 w - - 0 25|f3e4 f5f1 e1f1 h6e3 g1h2 f7f1|1986|advantage deflection endgame kingsideAttack long master masterVsMaster sacrifice
+deflection|2|2kVhu|6k1/2p2pb1/p2p4/1p4p1/1Pq2p2/5P1R/P3r1P1/1Q1K3R b - - 7 37|e2g2 h3h8 g7h8 b1h7 g8f8 h7h8 f8e7 h1e1|1680|advantage deflection endgame sacrifice veryLong
+deflection|2|24SwP|7r/kp4p1/4p1p1/3q1pP1/Pp1P1P2/1P2QR1P/1K6/8 w - - 5 37|f3f2 h8h3 e3h3 d5d4 b2b1 d4f2|1695|crushing deflection endgame fork long sacrifice
+deflection|2|2wZM5|3r2k1/1p3pp1/p1q3p1/4P3/2P5/1P2Q1P1/P6P/4R2K w - - 1 34|e3e4 d8d1 e1d1 c6e4|1696|crushing deflection endgame master short
+deflection|2|2j7hY|r1bq1rk1/ppp3bN/3p2p1/3P4/2P2p2/5Q2/P1B2PPP/1R2R1K1 b - - 0 19|g8h7 f3h5 h7g8 c2g6|1704|advantage deflection middlegame pin short
+deflection|2|3Tizi|3r1rk1/ppp2ppp/2nb4/5N2/8/4P2q/PPP2R2/RNBQ2K1 w - - 2 15|d1f3 d6h2 f2h2 h3f3|1722|crushing deflection kingsideAttack middlegame short
+deflection|3|2E2p9|8/4R2p/p1p5/8/4Rk2/P6r/1r6/6K1 b - - 9 41|f4g3 e4e3 g3g4 e7g7 g4f4 e3h3|2056|advantage deflection endgame long rookEndgame
+deflection|3|0NviY|2r3k1/1b1p1p1p/1p2p1pB/pP2P3/2q2P2/2N3P1/P2Q3P/4R1K1 w - - 3 27|c3e2 c4e4 e2d4 e4h1 g1f2 h1h2|2085|advantage deflection kingsideAttack long middlegame
+deflection|3|08flf|1r1r2k1/p5pp/Q2Rp3/4p3/1P6/P3P2P/2q1KPP1/6NR w - - 3 26|e2f3 d8f8 f3g3 c2g6 g3h2 f8f2|2418|crushing deflection long middlegame
+deflection|3|2a8CD|7r/p1p1kpp1/2Q1p3/4q3/5RP1/2NP3p/PPP4K/R1B5 w - - 1 22|h2g1 h3h2 g1f2 h2h1q c6h1 h8h1|2069|advancedPawn advantage deflection kingsideAttack long middlegame promotion
+deflection|3|0iWFo|8/3b1k2/2p2P2/1pP5/1P5B/6K1/3b2B1/8 w - - 1 55|g2f3 d2e1 g3f4 e1h4 f4e5 h4g3|2197|bishopEndgame crushing deflection endgame long skewer
+deflection|3|2bzrp|3qb3/p2r1pkp/1p4p1/2p5/3pRQ2/PB1P3P/1PP2PP1/6K1 b - - 13 30|d7e7 f4g5 f7f6 g5d5 d8d5 e4e7 g7f8 e7e8 f8e8 b3d5|2358|advantage deflection endgame fork sacrifice veryLong
+deflection|3|3Jgbd|6k1/p5p1/P3p3/5n2/3PpP2/7P/4Q1P1/2q2NK1 w - - 7 37|g2g4 f5g3 e2f2 e4e3 f2e3 c1f1 g1h2 f1e2 e3e2 g3e2|2171|crushing deflection endgame exposedKing pin veryLong
+deflection|3|2AzZp|2r3k1/3q1ppp/8/1N6/1pQPn3/4P3/1P4PP/3K1R1R w - - 3 28|f1f7 d7g4 c4e2 c8c1 d1c1 g4e2|2177|crushing deflection exposedKing long middlegame
+deflection|3|0iJa6|2q1r1k1/5pb1/p5pp/8/Ppn5/2P1BP2/1PQ1B1PP/3R2K1 w - - 1 31|e3d4 b4b3 c2b3 e8e2|2168|crushing deflection middlegame short
+deflection|3|3N7eC|2r2rk1/7p/p4qp1/3PpN2/1p2PnR1/4QP2/Pn6/6RK b - - 1 28|h7h5 g4g6 f4g6 e3h6 g8f7 h6h7 f7e8 g1g6 c8c1 h1h2|2371|crushing defensiveMove deflection exposedKing kingsideAttack middlegame sacrifice veryLong
+deflection|3|2g5jV|r1b4k/pp3r2/4Nq2/3p3n/8/3B2Q1/PPP2P1P/RN3RK1 w - - 1 20|g3g5 f7g7 e6g7 f6g5|2083|advantage deflection middlegame pin short
+deflection|3|3Fo1E|2kr3r/1pp2ppp/p1n2n2/1N3q2/Q2P1b2/4BB2/PP3PPP/2R2RK1 b - - 0 14|a6b5 a4a8 c8d7 a8b7|2330|advantage deflection master middlegame queensideAttack short
+deflection|3|1h2iX|r2r4/4R2k/6q1/6p1/1n6/p2Q4/Rb4PP/7K b - - 0 36|h7h6 d3h3 g6h5 e7e6 h6g7 h3h5 d8d1 h5d1|2364|crushing deflection middlegame veryLong
+deflection|3|1PGyD|4r1k1/p2q2p1/1p6/2p1nr1P/P1PpN1Bb/3P1p1P/2P1QP2/5KRR w - - 0 31|e2d2 e5c4 d3c4 e8e4 g4f5 d7f5|2264|crushing deflection discoveredAttack long middlegame
+deflection|3|2hzcv|1R6/p1p2rpk/3p2q1/4prp1/2P1Q2P/3P1P2/P4R2/6K1 b - - 1 28|g5g4 h4h5 f5h5 b8h8 h7h8 e4g6|2230|advantage deflection endgame long
+deflection|3|0ddkd|8/5k2/p7/1p2p2P/nP2KpP1/P4P2/2P5/8 b - - 4 40|f7e6 h5h6 e6f6 g4g5 f6g6 e4e5|2297|crushing deflection endgame knightEndgame long
+deflection|3|1e4zG|8/6b1/5kP1/5P2/6PK/8/8/8 b - - 0 50|f6e5 h4g5 g7h8 g5h6 e5f6 h6h7 h8g7 g4g5 f6f5 h7g7|2204|bishopEndgame crushing deflection endgame veryLong zugzwang
+deflection|3|2z3TJ|8/5p2/p1k1b1p1/1p2P1N1/2pK1PP1/P7/1P6/8 b - - 0 34|a6a5 g5e6 f7e6 a3a4 b5a4 d4c4|2431|crushing deflection endgame long
+deflection|3|3Luac|r3r1k1/pp6/1b2n2q/4Q1N1/2pB1P2/P1Pb3R/6PP/R6K b - - 1 30|e6g5 e5d5 h6e6 d5g5|2199|advantage deflection kingsideAttack middlegame short
+deflection|3|2Ucnb|2r3k1/7p/p2pp1p1/1p4q1/1P2bN2/P3Q2P/1b4R1/5RK1 b - - 1 28|g5e5 g2b2 e5b2 e3e4|2126|advantage deflection master middlegame short
+discoveredAttack|1|05Hk5|1k2r1nr/1p4pp/p4p2/5B2/3q2b1/8/PPPQN1PP/R3KR2 w Q - 2 17|d2d4 e8e2 e1d1 e2e4 d1d2 e4d4|1306|advantage discoveredAttack discoveredCheck exposedKing long middlegame
+discoveredAttack|1|3CEcX|6k1/pb4b1/1p1p2pp/1Pp1p2P/2P1Prq1/8/P3QPB1/1R2R1K1 b - - 5 25|b7e4 e2g4 f4g4 e1e4|1500|crushing discoveredAttack middlegame short
+discoveredAttack|1|3PscG|3r1rk1/2p2pp1/4p1q1/7p/1P1PnP2/P5P1/1B1R3P/4RQ1K w - - 0 35|d2c2 e4g3 h2g3 g6c2|1384|advantage discoveredAttack middlegame short
+discoveredAttack|1|1IGG0|8/5ppk/4p2p/8/5Q2/1P2PN1P/P4qP1/5n1K b - - 5 37|f1e3 f3g5 h6g5 f4f2|1361|crushing discoveredAttack endgame master short
+discoveredAttack|1|1WNVc|5r1k/1pqnB1pp/p3R1p1/3Q4/2pP1bP1/2P4P/PP3PK1/8 b - - 6 26|f8e8 e7d6 f4d6 e6e8|1310|crushing discoveredAttack kingsideAttack middlegame short
+discoveredAttack|1|0wfpZ|rnb1kb1r/1ppp1pp1/p3p3/6p1/3PNq2/3B4/PPP2PPP/R2QK1NR b KQkq - 3 8|d7d5 g2g3 f4f5 e4d6 f8d6 d3f5|1593|advantage discoveredAttack long opening
+discoveredAttack|1|1G5wv|rr5k/6p1/4P2p/2q3b1/8/2B3P1/p1Q2PBP/R5K1 b - - 0 42|a8a3 c3g7 h8g7 c2c5 b8b1 g2f1|1633|crushing defensiveMove discoveredAttack long middlegame
+discoveredAttack|1|2nmeD|4r3/1p5p/p2pNkp1/2pP2P1/2P4P/P3R3/1P1p1r2/3K4 b - - 0 33|f6f5 e6g7 f5f4 e3e8|1372|crushing discoveredAttack endgame fork short
+discoveredAttack|1|2Dd2s|8/8/r3p2R/3k4/5p2/2P1K2P/6P1/8 w - - 0 41|e3f4 e6e5 f4g5 a6h6|1418|crushing discoveredAttack endgame rookEndgame short
+discoveredAttack|1|0gV4s|5k2/6b1/1p4p1/6p1/5pP1/2P4P/r1B2PK1/2R5 b - - 1 33|g7c3 c2b3 a2a3 c1c3|1483|advantage discoveredAttack endgame master short
+discoveredAttack|1|3GjTi|3r1rk1/1pp2ppp/p1pq1n2/4p3/3bP3/P1NPB1QP/1PP2PP1/1R3RK1 w - - 4 14|e3h6 f6h5 g3g5 d6h6 g5h6 g7h6|1482|advantage discoveredAttack long middlegame
+discoveredAttack|1|16rjh|r2qkb1r/1p1Npp1p/p4np1/1N1P4/Q7/8/P4PPP/R1B1K2R b KQkq - 0 14|d8d7 b5c7 e8d8 a4d7 d8d7 c7a8|1309|advantage discoveredAttack long middlegame pin
+discoveredAttack|1|0TOI9|6k1/r4qbn/3p3B/p1p1p3/7P/2P2P2/PPQ5/2K3R1 w - - 4 28|h6g7 f7f4 c1b1 a7g7|1368|advantage discoveredAttack endgame short
+discoveredAttack|1|1vZgs|r5k1/p4p1p/1p2n1p1/2pQ3q/5Pn1/PP4P1/3R3P/4R1K1 b - - 0 26|a8d8 d5h5 g6h5 d2d8 e6d8 e1e8|1472|crushing discoveredAttack kingsideAttack long master middlegame
+discoveredAttack|1|3F6iu|r1b2rk1/ppq2ppp/4pn2/2b1n3/2N5/P5P1/1PQ1PPBP/RNB2RK1 w - - 1 12|c4e5 c5f2 f1f2 c7c2|1497|advantage discoveredAttack opening short
+discoveredAttack|1|3SX7k|8/p4bk1/1p2qb2/4n3/1PpQ1pP1/P1P2P1p/1B6/4R1KB w - - 4 36|d4f4 e5f3 h1f3 e6e1|1396|crushing discoveredAttack middlegame short
+discoveredAttack|1|2dh2o|r1kr4/1pp3pp/p3b3/8/3n1BP1/P7/1PP1B2P/2KR3R w - - 1 21|h1e1 d4e2 e1e2 d8d1 c1d1 e6g4 d1d2 g4e2|1436|crushing discoveredAttack middlegame pin queensideAttack veryLong
+discoveredAttack|1|0S2XL|r1bq1rk1/pp1p1ppp/1bn1pn2/8/3NP3/1NP1B3/PP2QPPP/R3KB1R b KQ - 8 9|f6e4 d4c6 b7c6 e3b6 a7b6 e2e4|1349|advantage discoveredAttack long opening
+discoveredAttack|1|06CXU|r7/1b1qR3/pp3kr1/2p2p1Q/2p5/1P6/P4PP1/5RK1 w - - 0 29|e7d7 g6g2 g1h1 g2g5 d7b7 g5h5|1293|advantage discoveredAttack endgame long
+discoveredAttack|1|0kSw5|5rk1/Q2R1p2/p3nqp1/3B3p/1p2P2P/1P4P1/P4PK1/8 w - - 2 35|a7a6 e6f4 g3f4 f6a6|1260|crushing discoveredAttack endgame short
+discoveredAttack|2|3PLdg|1r2r1k1/p1p2p1p/2Qb3q/3N2p1/3P4/5N2/PP3PPP/R4RK1 w - - 0 17|a1e1 d6h2 f3h2 h6c6 d5e7 e8e7|1997|advantage discoveredAttack long middlegame
+discoveredAttack|2|3GYLK|3rr1k1/5ppp/p7/6b1/R3p3/1QP2qP1/1PN2P1P/4R1K1 w - - 1 31|c2d4 d8d4 a4d4 e4e3 b3c2 e3f2 c2f2 e8e1 f2e1 g5e3 e1e3 f3e3|1814|advancedPawn crushing discoveredAttack fork middlegame sacrifice veryLong
+discoveredAttack|2|1vgXa|3r2k1/8/5bpp/4p3/Q1pqPp2/1p1P1P1P/pP4PK/R2R4 w - - 4 38|a4c4 d4c4 d3c4 d8d1 a1d1 f6e7|1813|crushing defensiveMove discoveredAttack endgame long
+discoveredAttack|2|0vMvT|4r1k1/pp3pp1/8/2pP4/2P5/PPQ2NP1/4qn2/4R2K w - - 2 34|h1g2 f2d1 e1e2 e8e2 g2f1 d1c3|1933|crushing discoveredAttack discoveredCheck endgame long
+discoveredAttack|2|08tTk|1rr3k1/3bppbp/p2p1np1/8/1q1BPP2/1PN3PP/P2Q2BK/2R2R2 w - - 1 19|d2e3 f6g4 h3g4 g7d4 c3d5 d4e3|1703|crushing discoveredAttack long middlegame
+discoveredAttack|2|2CCfy|2k1r3/2p2pp1/1p1p2b1/pP1P3p/P1P4P/2RNr1N1/3K2P1/5R2 w - - 0 31|f1e1 e3d3 c3d3 e8e1 d2e1 g6d3|1664|advantage discoveredAttack long middlegame
+discoveredAttack|2|0V9XZ|2kr3r/pp3ppp/2p1p2n/q7/3b2B1/2N5/PPPB1PPP/R2Q1RK1 w - - 0 14|c3e2 d4f2 f1f2 d8d2 g4e6 f7e6|1995|advantage discoveredAttack long middlegame
+discoveredAttack|2|006fF|r1b4r/pp1k2pp/2nb2q1/1B1p2B1/3p3Q/8/PPP2PPP/3RR1K1 b - - 5 17|h7h6 h4g4 d7c7 g5d8 h8d8 g4g6|1731|advantage discoveredAttack exposedKing long middlegame
+discoveredAttack|2|1Rpmt|rnRQ1b1r/1p3kpp/4p3/Pp1p4/1P2nP2/8/3Bp1PP/2R3K1 w - - 2 23|c8b8 f8c5 c1c5 h8d8|1778|advantage discoveredAttack middlegame short
+discoveredAttack|2|1QH2G|8/pp2r1kp/3p2p1/2pB2P1/5R2/1P2q3/P6P/5R1K b - - 2 34|e3e5 f4f7 e7f7 f1f7 g7g8 f7f5|1903|crushing discoveredAttack discoveredCheck endgame long
+discoveredAttack|2|1Fg8B|3r1rk1/pp2n2p/1qp1b1p1/1P2Np2/P3P3/4N2P/2P1BKP1/R3Q2R w - - 0 26|e4f5 e7f5 e1c3 f5e3|2028|crushing discoveredAttack discoveredCheck master masterVsMaster middlegame short
+discoveredAttack|2|1PoQh|2r3k1/5p1p/6p1/p7/N3Q2P/1P1p2P1/P1q2P2/4R1K1 w - - 0 41|a4b6 d3d2 b6c8 c2e4 e1e4 d2d1q|1724|advancedPawn advantage discoveredAttack endgame long promotion
+discoveredAttack|2|0UMfF|2kr2r1/ppp1bp2/2p2n1p/8/N2PP1p1/1P3P2/PBP2P1P/R2R2K1 w - - 0 16|e4e5 g4f3 g1f1 f6g4|1730|crushing discoveredAttack discoveredCheck kingsideAttack middlegame short
+discoveredAttack|2|1Pydo|2r2rk1/pb2bppp/2q1p3/2pn4/4N3/BP2P1P1/P1Q2PBP/2R2RK1 b - - 9 18|d5b4 a3b4 c5b4 e4f6 e7f6 g2c6|1937|crushing discoveredAttack long middlegame
+discoveredAttack|2|2zZVg|q3r1k1/p3rp1p/3Qb1p1/2p3N1/2p5/2P5/PP3PPP/1R2R1K1 w - - 0 20|d6c5 e6h3 f2f3 e7e1 b1e1 e8e1|1922|crushing discoveredAttack kingsideAttack long middlegame
+discoveredAttack|2|2JUBY|r6k/ppp2p1p/3p2r1/1B2p3/4P2q/3PP1Rb/PPP2Q1P/6RK b - - 10 20|a8g8 g3g6 g8g6 f2h4|1722|crushing discoveredAttack middlegame short
+discoveredAttack|2|2ipr0|4r1k1/p4p1p/1p4p1/1NpP4/2Pb1q2/1P2r2P/P2Q1pP1/2R2R1K w - - 8 30|b5d4 e3h3 g2h3 f4d2|1664|crushing discoveredAttack kingsideAttack middlegame short
+discoveredAttack|2|1EGyq|r1b2rk1/pp1pppbp/1q3np1/8/2PQP3/4BP2/PP4PP/RN2KB1R b KQ - 0 10|f6e4 d4g7 g8g7 e3b6 a7b6 f3e4|1832|advantage discoveredAttack long opening
+discoveredAttack|2|2r6HK|2k4r/1pPr1p2/p2q1b2/P2n2pp/3PQp2/5B2/1P4PP/R1BR3K b - - 1 22|d6c7 e4f5 c7d8 f3d5|1913|advantage discoveredAttack middlegame short
+discoveredAttack|2|1gtHy|rn3rk1/pp3ppp/3p4/q1p2b2/2PPn3/P2BP3/1B1N1PPP/1R1QK2R b K - 7 13|e4f2 e1f2 f5d3 d2b3 a5d8 d1d3|1664|advantage discoveredAttack long middlegame
+discoveredAttack|3|0bR69|r2r2k1/1pq2ppp/p1bb1n2/3p4/1P1Nn3/P1N1P2P/2BB1PP1/2RQ1RK1 w - - 1 17|c3d5 d6h2 g1h1 d8d5|2236|advantage discoveredAttack middlegame short
+discoveredAttack|3|0g8oD|r1bq1rk1/2p2p2/pbnp1n2/1p4B1/3PP3/1B3Q2/PP3PPP/RN3RK1 b - - 1 14|g8g7 e4e5 d6e5 f3c6|2290|advantage discoveredAttack middlegame short
+discoveredAttack|3|1RTsC|r1br4/4kpbp/p1q1pnp1/1p2Q1B1/8/2NP4/PP3PPP/2R2RK1 b - - 1 20|h7h6 c3e4 h6g5 c1c6|2096|advantage discoveredAttack middlegame short
+discoveredAttack|3|2obY3|2q1brk1/p4ppp/4p3/1p2N1b1/1P1P4/P2BPQ1P/6P1/5R1K b - - 4 21|g5f6 f3e4 g7g6 f1f6|2260|crushing discoveredAttack middlegame short
+discoveredAttack|3|230x9|2r2r1k/1pBQ2bp/p5p1/7q/3p4/1P2P2P/P5P1/2R2RK1 b - - 2 24|d4e3 c7e5 h5e5 c1c8|2146|crushing discoveredAttack middlegame short
+discoveredAttack|3|1u1e8|5rk1/1pq1bppp/p4n2/4p3/4P3/1PNrBRQ1/1P4PP/5RK1 b - - 1 19|g8h8 e3h6 f8g8 f3d3|2079|advantage discoveredAttack middlegame short
+discoveredAttack|3|3ABtJ|2rr2k1/3Rb3/1pn5/p3Pp2/1P3Bp1/P5Pp/2NR1P1P/6K1 w - - 0 29|b4b5 d8d7 d2d7 c6e5 f4e5 c8c2|2127|advantage discoveredAttack long middlegame
+discoveredAttack|3|34Iew|r1b1q1r1/ppknn2p/2pb4/3p4/3P3N/2NB1Q2/PPP2PPP/R1B1K2R w KQ - 3 13|c1f4 e7g6 c3e2 g6f4|2149|advantage discoveredAttack discoveredCheck middlegame short
+discoveredAttack|3|0UcJT|rn1q1rk1/pb3ppp/1p2pb2/8/3NP3/1PB3P1/P4PBP/R2Q1RK1 b - - 0 13|b8c6 e4e5 c6d4 g2b7 f6e5 b7a8|2125|advantage discoveredAttack long master middlegame
+discoveredAttack|3|2FNya|2R5/p5pk/1p5p/3p1p1q/3Pp1nP/1N2PnP1/PP3PK1/3Q4 w - - 1 26|b3d2 g4e3 f2e3 f3h4 g3h4 h5d1|2145|crushing discoveredAttack endgame long
+discoveredAttack|3|0WvLn|3rr1k1/p2n1pp1/1pp1q2p/4b3/B3N2P/2P2P2/PPQ2P2/1K1RR3 b - - 3 21|e5f4 e4g5 h6g5 e1e6|2263|advantage discoveredAttack master middlegame short
+discoveredAttack|3|2Gsae|2kr3r/pp4p1/2qbp3/5p1p/4R1b1/3P1N1P/PPP2PP1/R1BQ2K1 w - - 0 14|e4c4 c6c4 d3c4 d6h2 g1h2 d8d1|2069|advantage discoveredAttack long middlegame sacrifice
+discoveredAttack|3|1LEAC|2r2r1k/p3qp1p/bp4p1/4P3/1P2p1QP/Pn4P1/1B3PB1/R2R2K1 b - - 2 23|b3a1 e5e6 h8g8 d1d7|2180|crushing discoveredAttack discoveredCheck master middlegame short
+discoveredAttack|3|2Ittx|2r2r2/1b1qn1p1/p3pPk1/1p4N1/3P2Q1/2P5/5PPP/1R3RK1 b - - 0 20|f8f6 g5e6 g6f7 g4g7|2176|crushing discoveredAttack discoveredCheck middlegame short
+discoveredAttack|3|0sBdy|3r1rk1/ppqn1ppb/6Np/3B2bP/8/4P1N1/PP1Q2P1/R4RK1 b - - 2 21|c7g3 f1f7 h7g6 f7f3|2522|collinearMove crushing discoveredAttack discoveredCheck middlegame sacrifice short
+discoveredAttack|3|2fVlv|5rk1/2p4p/4p1p1/1PnBNpq1/8/2r2PnP/Q4RP1/4R1K1 b - - 0 30|e6d5 a2d5 g8g7 d5d4 c3c1 e5d3 g5f6 d4f6|2194|advantage discoveredAttack discoveredCheck kingsideAttack middlegame veryLong
+discoveredAttack|3|18t8b|rn1qkb1r/pp2pppp/8/3n4/2B3b1/5N2/PP1P1PPP/RNBQK2R b KQkq - 3 7|e7e6 d1a4 b8c6 c4d5 d8d5 a4g4|2182|advantage discoveredAttack long opening
+discoveredAttack|3|0wGr2|6rr/pp2k3/1q1pP3/5p1p/2B2Pn1/1P6/P5Q1/R1B2R1K w - - 1 25|g2g1 b6c6 g1g2 g4f2 f1f2 g8g2|2079|advantage discoveredAttack exposedKing kingsideAttack long middlegame pin
+discoveredAttack|3|02Plz|7k/q3r1b1/4N1pp/5p2/7P/1Q2P1P1/8/3R2K1 w - - 2 36|e6g7 e7e3 d1d8 e3e8 g1g2 e8d8|2170|advantage discoveredAttack discoveredCheck endgame exposedKing long
+discoveredAttack|3|05LmX|7k/8/5PRp/1pr5/4K3/8/8/8 b - - 0 51|c5c6 g6h6 h8g8 f6f7 g8f7 h6c6|2133|advancedPawn crushing discoveredAttack endgame exposedKing long rookEndgame
+doubleCheck|1|1Hc1j|r1b2qk1/pp5p/1bp3P1/3pp3/2P1N3/3P4/P1P2P1P/R2QK1R1 b Q - 0 19|d5e4 g6h7 g8h8 g1g8 h8h7 g8f8|1491|advancedPawn crushing discoveredCheck doubleCheck fork long middlegame
+doubleCheck|1|39nN6|2r1k2r/3q2b1/p2pN1p1/1p1Pn3/8/P5R1/1nP5/2KRQBB1 w k - 0 25|c1b2 e5d3 b2b1 d3e1 e6g7 d7g7|1584|advantage discoveredCheck doubleCheck long middlegame
+doubleCheck|1|2Im5d|r2q1r1k/4Np1p/p2p2pN/1bp5/4Pp1Q/1P1P4/2P3PP/R6K b - - 2 27|f7f6 e7g6 h7g6 h6f7 h8g7 f7d8|1366|advantage discoveredCheck doubleCheck kingsideAttack long middlegame sacrifice
+doubleCheck|1|0gL0R|r1b4r/ppp1nk1p/3p1Np1/1qb3Q1/5B2/2P5/PP3PPP/R3R1K1 b - - 3 15|h7h6 e1e7 f7e7 f6d5 e7d7 g5e7|1451|advantage attraction discoveredCheck doubleCheck long middlegame sacrifice
+doubleCheck|1|0B4Lr|4qrk1/pb2RNbp/1p2Q1p1/7n/1Pr2P2/2P5/P5PP/2B2RK1 b - - 2 25|e8e7 f7h6 g8h8 e6e7|1620|advantage discoveredCheck doubleCheck intermezzo kingsideAttack middlegame short
+doubleCheck|1|2ehNY|3b3k/8/p2q3N/Pp2p3/1P6/5p1Q/5P2/7K b - - 0 47|d6g6 h6f7 h8g7 f7d8|1404|advantage discoveredCheck doubleCheck endgame short
+doubleCheck|1|1LoS5|r4r1k/ppp3pp/1b3n2/4Q3/3P3N/P1P3N1/1Pq3PP/R4RK1 w - - 5 23|f1f2 c2f2 g1f2 f6g4 f2e2 g4e5|1582|advantage attraction discoveredCheck doubleCheck fork long middlegame sacrifice
+doubleCheck|1|1TGrQ|8/6k1/3p1n1q/p1pPpQn1/2P1P1Pr/6Rp/P6P/1r1B1R1K b - - 2 30|g5e4 g4g5 h6h7 g5f6|1338|advantage discoveredCheck doubleCheck fork master middlegame short
+doubleCheck|1|1iuuK|6rk/3Q4/3N1q2/p1pPp2p/P3Pb1p/1PR2P2/8/7K b - - 0 41|h4h3 d6f7 h8h7 f7g5|1278|advantage discoveredCheck doubleCheck endgame master short
+doubleCheck|1|2Zwmp|8/7k/p2R3P/2pNp3/1p1nP3/1P1P1n1P/P1P2Pr1/2K5 b - - 1 27|g2f2 d5f6 h7h6 f6g4 h6g5 g4f2|1383|crushing discoveredCheck doubleCheck endgame exposedKing fork long
+doubleCheck|1|3NLmf|r2q1b1r/p1pb1kpp/2p5/3NQ3/8/4P3/PP3PPP/R3KBNR w KQ - 1 15|d5c7 f8b4 e1d1 d7g4 d1c2 d8d2|1332|advantage discoveredCheck doubleCheck long opening
+doubleCheck|1|0kJ5F|2k2b1r/ppp3pp/2n5/2q2r2/5B2/2PP1RNP/PPQ3P1/R5K1 w - - 4 20|d3d4 c6d4 c2e4 d4f3|1352|advantage discoveredCheck doubleCheck kingsideAttack middlegame short
+doubleCheck|1|07ECu|r3k2r/ppp2pp1/3p1nqp/4p3/2B1P1b1/3PBN2/PPP1QP1K/R5R1 w kq - 10 17|h2g2 g4f3 g2f3 g6h5 f3g3 h5e2|1403|attraction crushing deflection discoveredCheck doubleCheck long middlegame skewer
+doubleCheck|1|0jeaG|8/1p6/3k1r1p/3pRrp1/p1pP4/P1P5/1P3P2/4RK2 b - - 1 38|f5e5 d4e5 d6e7 e5f6|1291|advantage discoveredCheck doubleCheck endgame fork rookEndgame short
+doubleCheck|1|066ld|7r/6p1/3p4/4p1P1/R1Nnk3/2r5/5P1p/R6K b - - 1 45|d4f5 c4d6 e4f3 d6f5|1252|advantage deflection discoveredCheck doubleCheck endgame short
+doubleCheck|1|3DT8m|r1b4Q/p1pkqp1p/2pb1n2/3p4/8/1P2p3/PBPP2PP/RN2K1NR w KQ - 1 11|h8f6 e3d2 e1d2 d6b4 c2c3 e7f6|1539|advancedPawn attraction crushing discoveredCheck doubleCheck interference long middlegame
+doubleCheck|1|3KwUA|RnRr4/1P1nk3/5p1p/6p1/3KP3/5P2/6PP/8 w - - 0 39|d4d5 d7b6 d5c5 b6c8 b7c8b d8c8|1308|crushing discoveredCheck doubleCheck endgame fork long
+doubleCheck|1|3PYpT|r1bq1r2/ppp1ppbk/2np2p1/7P/3P4/2PB4/PP3PP1/RN1QK2R b KQ - 0 10|c8f5 h5g6 h7g8 d3f5|1534|advantage discoveredCheck doubleCheck middlegame short
+doubleCheck|1|2L0cj|7k/1p1nq1p1/2p1B2r/p3PQNp/PbpP4/4P3/1P4PP/6K1 b - - 8 30|d7f8 g5f7 h8g8 f7h6 g8h8 h6f7|1331|crushing discoveredCheck doubleCheck fork long middlegame
+doubleCheck|1|24gpd|4rqk1/p6p/1p3rp1/3p2Nn/2pP4/5P2/PPP3Q1/1K3R1R b - - 7 27|g8g7 h1h5 g6h5 g5e6 g7h8 e6f8|1330|advantage discoveredCheck doubleCheck long middlegame sacrifice
+doubleCheck|2|27Rqo|2k5/pp6/2n5/2N5/3Pp1q1/2P3bp/PP4Q1/5RK1 w - - 0 29|g2c2 g3f2 g1f2 g4g2 f2e3 g2c2|1807|attraction crushing discoveredCheck doubleCheck endgame exposedKing long sacrifice skewer
+doubleCheck|2|3FRRX|r1b2R2/pp4pk/1bp5/3p2p1/3n2N1/2N4P/PPP3P1/5RK1 w - - 4 27|c3a4 d4e2 g1h2 b6c7|1757|advantage discoveredCheck doubleCheck middlegame short
+doubleCheck|2|2oPvA|r1b1kb1r/pp1np1pp/4Nn2/2p1q3/2B5/4B3/PPP2PPP/RN1QK2R b KQkq - 0 11|d7b6 d1d8 e8f7 e6g5|1996|crushing discoveredCheck doubleCheck opening short
+doubleCheck|2|1aMFG|3k1r2/pp6/2rPn3/5qN1/7Q/P1N2p2/1PP5/1K4R1 b - - 1 35|f3f2 g5e6 d8c8 d6d7 c8d7 e6f8|2035|advancedPawn advantage attraction discoveredCheck doubleCheck exposedKing long middlegame
+doubleCheck|2|2PYiQ|r1b3r1/pp3k2/3Np2p/8/7Q/8/PqP2PPP/5RK1 b - - 15 27|f7g7 h4e7 g7h8 d6f7 h8h7 f7g5|1662|crushing discoveredCheck doubleCheck long middlegame
+doubleCheck|2|2yTX2|rnbqk2r/ppp2ppp/3p4/4p3/2B1P1n1/3P1N2/PPP1Q1PP/RN3RK1 b kq - 2 9|h7h6 c4f7 e8f7 f3e5 f7g8 e5g4|1814|advantage attackingF2F7 attraction discoveredCheck doubleCheck long opening
+doubleCheck|2|3T6fC|8/1k2N2p/pp1p4/1n1Qp3/1P6/2q4P/5PPK/8 b - - 8 42|b7a7 e7c6 a7b7 c6a5 b7c7 d5b7 c7d8 a5c6 c3c6 b7c6|1935|crushing discoveredCheck doubleCheck endgame veryLong
+doubleCheck|2|2ts7l|r4rk1/pp1bq1pp/5n2/1B1pn3/5B2/2N5/PP3PPP/R2QK2R w KQ - 0 14|b5d7 e5d3 e1f1 d3f4|2019|crushing discoveredCheck doubleCheck middlegame short
+doubleCheck|2|2IeFK|r4rk1/5ppp/3q2P1/pppN3P/3b4/P2P4/BPP5/1K1R3R b - - 0 24|f7g6 d5e7 g8h8 e7g6 d6g6 h5g6|1855|advantage discoveredCheck doubleCheck kingsideAttack long middlegame pin
+doubleCheck|2|06VoP|2r2rk1/5pp1/p1qp3p/4pP1N/1p6/1P4PK/PP5P/R2Q4 b - - 4 31|f8d8 d1g4 g7g6 f5g6 d6d5 g6f7|1788|advancedPawn advantage discoveredCheck doubleCheck endgame kingsideAttack long
+doubleCheck|2|2f8xv|5kr1/8/4RB2/2p2pp1/5P2/1P1bP1KR/3r4/8 w - - 0 42|h3h7 g5f4 g3f4 g8g4 f4e5 g4e4|1892|attraction crushing discoveredCheck doubleCheck endgame long master
+doubleCheck|2|1RSYX|4r1k1/p4pp1/1p1R4/5q1p/4p1n1/2N1B1PK/PP3P2/3Q4 w - - 2 28|d6d5 g4f2 h3g2 f2d1|1755|crushing discoveredCheck doubleCheck fork middlegame short
+doubleCheck|2|28GXf|5r1r/1pNb2pp/p2P2k1/2q5/2B1Q2P/8/PPP3P1/3K3R b - - 2 25|d7f5 h4h5 g6g5 e4h4 g5h6 h4f4 g7g5 h5g6|1834|crushing discoveredAttack discoveredCheck doubleCheck enPassant exposedKing middlegame veryLong
+doubleCheck|2|3KA9e|7r/pp3kp1/3p1r2/3Pp3/2P1N1Q1/1P2q2p/P6K/5R2 w - - 2 30|e4f6 e3d2 h2h1 d2g2 g4g2 h3g2 h1g2 g7f6|1989|advancedPawn advantage discoveredCheck doubleCheck endgame exposedKing fork veryLong
+doubleCheck|2|0weRI|2r2rk1/pp3p2/1q3n1p/3pN1p1/3n4/2N3P1/PP3QPP/R4RK1 w - - 2 18|f2f6 d4f3 g1h1 b6f6|1906|advantage discoveredCheck doubleCheck interference intermezzo middlegame short
+doubleCheck|2|30FjX|r2qr1k1/pppn2bp/3ppnp1/5PN1/4P3/2N5/PPP1Q1PP/R1B2RK1 b - - 0 12|e6f5 e2c4 d6d5 c3d5 d7e5 d5f6|1951|advantage discoveredCheck doubleCheck kingsideAttack long opening
+doubleCheck|2|1dFKC|r1b1k2r/pp2ppbp/6p1/q1p1Pn2/1nPp1B2/3P1N1P/PP1NQPP1/R3KB1R w KQkq - 1 11|d2b3 b4d3 e1d1 d3f4 b3a5 f4e2|2009|advantage discoveredCheck doubleCheck long middlegame
+doubleCheck|2|2xnnm|r3r3/p3P1bk/n2p2Np/2p2Q2/1p2P3/2q3P1/5PBP/4R1K1 b - - 0 32|c3f6 g6f8 h7g8 f5h7 g8f7 e4e5|1783|advantage discoveredCheck doubleCheck long master middlegame
+doubleCheck|2|2ofz9|1r2k2r/5pp1/pq1Np2p/2QnP3/5Pb1/8/PP4PP/2R2RK1 b - - 7 24|e8e7 d6c8 e7d7 c8b6|1718|crushing doubleCheck fork middlegame short
+doubleCheck|2|18bOl|4rk1r/pp2npbp/2pQ2p1/1qB5/N7/8/PP3PPP/4R1K1 b - - 3 20|b5a4 e1e7 g7b2 e7e8 f8g7 e8h8|1946|crushing doubleCheck long middlegame
+doubleCheck|3|1LsXi|r2q1k1r/1ppbn1p1/p6p/2BQPP2/7b/2P5/PP4PP/RN3RK1 b - - 8 19|b7b6 f5f6 g7f6 e5f6 b6c5 f6e7|2064|advancedPawn advantage discoveredCheck doubleCheck long opening pin
+doubleCheck|3|0PvRs|r5nr/pq4b1/kn1QR2p/1p4p1/1P6/2P5/P4PPP/R1B3K1 b - - 2 27|g8f6 a2a4 b7d7 a4b5 a6b7 e6e7|2054|advantage discoveredCheck doubleCheck long middlegame pin
+doubleCheck|3|2EMQ2|q5k1/p2r1p2/1p4p1/1Rb4p/2Pn1P1P/PQ2RNP1/4P1K1/8 w - - 1 32|b3d1 d4f3 d1d7 f3h4|2504|crushing discoveredCheck doubleCheck master middlegame short
+doubleCheck|3|0VYdU|r2qk2r/1bp2p2/p3RP2/3P2B1/nbBQ4/8/P1p2PPP/2KR4 b kq - 0 18|f7e6 f6f7 e8d7 d5e6|2075|advancedPawn crushing discoveredCheck doubleCheck intermezzo middlegame short
+doubleCheck|3|2Y0rf|2r5/7p/p3r3/1p3N2/3RnP2/6Pk/2P1pK1P/4R3 w - - 1 38|f2e2 e4g3 e2d2 e6e1|2089|advantage discoveredAttack discoveredCheck doubleCheck endgame short
+doubleCheck|3|0hhsw|4R3/6rk/8/1P1p1p2/3P2q1/3Q2p1/P4P2/1R4K1 w - - 0 37|b1e1 g3f2 g1f2 g4g2 f2e3 g7g3 e3f4 g2f2|2299|advancedPawn attraction crushing discoveredCheck doubleCheck endgame veryLong
+doubleCheck|3|0TwhF|2r5/2rk1p1Q/pq2pP2/1p1p4/3n3p/P6P/1P2N1P1/2R2RK1 w - - 0 26|h7f7 d7d6 c1c7 d4e2 g1h2 b6c7|2432|advantage discoveredCheck doubleCheck long middlegame sacrifice
+doubleCheck|3|24iDy|5rk1/pq3ppp/1p2p3/2p1P3/2P5/4QnP1/PP3P1P/3R1RK1 w - - 2 22|g1g2 f3e1 g2h3 b7g2|2109|crushing discoveredCheck doubleCheck endgame short
+doubleCheck|3|20kN8|3Q4/1b4rp/2p1k1q1/3p1p2/1P6/4P1pP/P4P2/2R2RK1 w - - 0 34|d8h4 g3f2 g1f2 g6g2 f2e1 g2b2|2509|advancedPawn advantage attraction discoveredCheck doubleCheck endgame long
+doubleCheck|3|2i5aB|3k3r/1pp1b1p1/p2p2q1/3P4/1P5p/2N2QP1/P1P2P1n/4RRK1 w - - 0 23|g1h2 h4g3 h2g2 g3f2|2078|advancedPawn advantage discoveredAttack discoveredCheck doubleCheck master middlegame short
+doubleCheck|3|2ZG72|r2qkb1r/p4ppp/b3Nn2/2p5/8/8/PPP2PPP/RNBQR1K1 b kq - 0 11|d8d1 e6g7 e8d7 e1d1|2140|advantage discoveredCheck doubleCheck intermezzo opening short
+doubleCheck|3|1nrqf|r6k/ppp4p/2n2p1Q/6p1/2BP1q2/N1P1r2P/PP4K1/R6R w - - 8 22|h1f1 e3g3 g2h2 g3h3 h2h3 g5g4 h3g2 f4h6|2391|advantage attraction discoveredAttack discoveredCheck doubleCheck middlegame sacrifice veryLong
+doubleCheck|3|1i7cV|2rq1rk1/pb1n1ppR/1p2p3/4N3/1b1PNn2/1P1B4/PB3PPP/R2Q2K1 b - - 0 18|g8h7 e4g5 h7g8 d3h7 g8h8 e5f7 f8f7 g5f7 h8h7 f7d8|2431|crushing deflection discoveredCheck doubleCheck fork middlegame veryLong
+doubleCheck|3|1IMNt|r1b1k2r/ppp1qppp/2n5/3p4/1bPPn3/2N2N2/PP1B1PPP/R2QKB1R w KQkq - 5 9|c3d5 e4d2 d5e7 d2f3|2197|crushing discoveredAttack discoveredCheck doubleCheck opening sacrifice short
+doubleCheck|3|0CFSa|r1q1r1k1/ppp3p1/5p1p/3RR3/2Q3P1/1PP4P/1PP5/6K1 b - - 0 21|e8e5 d5d8 g8h7 c4g8 h7g6 d8c8 a8c8 g8c8|2091|crushing discoveredCheck doubleCheck endgame veryLong
+doubleCheck|3|2VDtX|r5k1/7p/pp2q1p1/2p1n3/3pN3/PP1Pb3/1B5Q/1K3R2 b - - 0 32|e5d3 e4f6 g8f8 f6h7|2164|advantage deflection discoveredCheck doubleCheck middlegame short
+doubleCheck|3|1916b|r3kbr1/pp3p2/3p1p2/2p5/2P1P2p/3P1QPq/PP1N3P/R4RK1 w q - 0 21|f3f6 h4g3 f6f7 e8d8 d2f3 g3h2|2117|advancedPawn crushing discoveredCheck doubleCheck kingsideAttack long middlegame
+doubleCheck|3|2mRSe|6k1/p5Bp/1p5P/4pp2/3q1p2/4nP1Q/P4KP1/4R3 w - - 2 43|g7e5 e3g4 f2e2 d4e3|2172|crushing doubleCheck endgame short
+doubleCheck|3|2Klx0|3r1rk1/ppp2ppp/3b4/3Bn3/2P2q2/5P1P/PBP2P2/1R1Q2RK b - - 4 17|e5c4 g1g7 g8h8 g7g8 h8g8 d1g1|2063|advantage attraction discoveredCheck doubleCheck kingsideAttack long middlegame sacrifice
+doubleCheck|3|0xUvN|r3k1nr/ppp1qppp/2n5/8/3PN1bR/5Np1/PPP1Q1B1/R1B1K3 b Qkq - 0 11|e7h4 e4f6 e8f8 f6d7 g4d7 f3h4 a8e8 c1e3|2368|advantage defensiveMove discoveredCheck doubleCheck middlegame veryLong
+fork|1|1tACw|r7/4kpp1/p1rbB2p/1p5b/3P4/1P1R1N1P/P4PP1/5RK1 b - - 0 22|e7e6 d4d5 e6d7 d5c6|1403|crushing fork middlegame short
+fork|1|02PPX|6k1/1p2npp1/p4bqp/8/P7/4BN1P/1P3PP1/3Q2K1 b - - 0 26|f6b2 d1d8 g8h7 d8e7 g6b1 g1h2|1253|crushing defensiveMove endgame fork long
+fork|1|0Oz0A|rk2r3/1pR2p1p/p4Rb1/6N1/3n4/6BP/PP4P1/6K1 w - - 1 23|g5f7 d4e2 g1h2 e2g3 c7b7 b8b7|1339|advantage fork long middlegame
+fork|1|0d5tb|r4rk1/p1p2pp1/1p3np1/3P1q2/1PN1R3/2N1Q3/P4P2/4R1K1 w - - 4 25|e4e5 f5g4 e3g3 g4c4|1288|advantage fork master middlegame short
+fork|1|3Tau3|r2q1rk1/pp1n1ppp/2pb1n2/4p3/3P4/1P1B1QNP/PBP2PP1/R3K2R w KQ - 0 12|g3f5 e5e4 d3e4 f6e4|1550|advantage fork master middlegame short
+fork|1|26f1C|r1b1k2r/pp3ppp/5q2/1nb5/8/2N5/PP2QPPP/R3K1NR b KQkq - 1 12|c8e6 e2b5 e6d7 b5c5|1524|advantage fork hangingPiece middlegame short
+fork|1|26MIu|5R2/p2k4/6p1/3B3p/5B2/1P1n3K/5r2/8 w - - 3 38|f4h6 f2f8 h6f8 d3f4 h3h4 f4d5|1428|crushing endgame exposedKing fork long
+fork|1|36NiJ|1r4k1/p6p/b1p1p1p1/2Np2q1/3P1rNn/1P5P/P4PP1/R1Q2RK1 b - - 8 20|a6f1 c5e6 f4g4 e6g5 g4g2 g1f1|1641|advantage fork long master middlegame
+fork|1|1P46y|r3k2r/5p2/pqn1p1pp/1pp1P3/4P1B1/P4Q2/1PP2RPP/R5K1 b kq - 3 21|c6e5 f3f6 e8g8 f6e5|1398|advantage fork middlegame short
+fork|1|2PoL2|6k1/1p2R2R/3p3B/2pP4/2PbB1K1/6rP/8/6r1 w - - 0 38|g4h4 d4f6 h6g5 f6g5|1436|crushing fork middlegame short
+fork|1|22BYO|r5k1/pp3p1p/6p1/5bq1/8/1B2RQPn/PP3PKP/8 b - - 0 26|f5d7 f3f7 g8h8 f7d7|1610|crushing fork middlegame short
+fork|1|2LGfB|8/3Q1pk1/6p1/5q2/2B5/3P2K1/7P/3n4 b - - 2 45|d1e3 d7d4 f5f6 d4e3|1321|advantage endgame fork master short
+fork|1|07PDT|3rr1k1/pp3np1/2qp1p1p/2pN1R2/P3P3/1P6/2K1Q1PP/R7 b - - 0 26|e8e5 f5e5 f7e5 d5e7 g8h7 e7c6|1571|crushing fork long middlegame
+fork|1|2tYPB|8/1pb3pk/p5qp/2P2p2/1P2pn2/P3Q1NP/3B1PP1/6K1 w - - 0 38|e3d4 g6g3 f2g3 f4e2 g1f2 e2d4|1470|advantage endgame fork long sacrifice
+fork|1|2GmDl|r3r1k1/ppb1qppp/2p5/2PP4/5PQ1/1P2p2P/PB4P1/R4RK1 b - - 0 21|f7f6 d5d6 c7d6 c5d6|1459|advantage fork middlegame short
+fork|1|1IhnF|r3kbnr/1pp2ppp/p1np1q2/8/2BPPB2/3Q1b2/PPP3PP/RN3RK1 w kq - 0 9|d3f3 f6d4 g1h1 d4c4|1544|advantage fork opening short
+fork|1|1WQ9r|8/4kP2/4B3/2P5/p5P1/4p3/P4r2/3K4 w - - 1 34|e6d5 f2d2 d1e1 d2d5 f7f8q e7f8|1532|crushing endgame fork long
+fork|1|24hLp|rn2rk2/p4p2/1pp2qp1/6N1/2P2P1Q/PRP1n1P1/7P/4R1K1 b - - 1 23|f6g7 g5h7 f8g8 h7f6 g7f6 h4f6|1490|crushing fork long middlegame
+fork|1|0RvEq|4r1k1/1p2rppp/p7/1q1p4/8/2P2Q2/PP3RPP/3R2K1 w - - 10 24|d1d5 e7e1 f2f1 e1f1 f3f1 b5d5|1522|crushing endgame fork long
+fork|1|0pVVz|6k1/p3pp1p/1p4p1/1B1p4/4nP2/q1b1P3/P3Q1PP/2R1B1K1 w - - 8 25|e1c3 a3c1 c3e1 e4c3 e2d2 c1d2 e1d2 c3b5|1540|advantage endgame fork hangingPiece veryLong
+fork|2|1ZA80|r3r1k1/pp3pp1/2p2q1p/5Bn1/8/5P2/PPQ3PP/4RR1K b - - 0 21|e8e5 e1e5 f6e5 f3f4 e5e7 f4g5|1676|advantage fork long middlegame
+fork|2|1djiO|8/3B2p1/7k/2N3p1/1nPK2P1/1p2r3/b2R4/8 b - - 5 52|e3g3 d2h2 h6g6 d7e8 g6f6 c5e4 f6e7 e4g3|1947|crushing endgame fork veryLong
+fork|2|3DrGC|8/p7/1pp1PR2/8/3k2bP/1P4b1/P2K4/8 b - - 5 39|g3d6 e6e7 d6e7 f6f4 d4e5 f4g4|1676|advancedPawn advantage endgame fork long master
+fork|2|0d6T9|8/5p1k/p2p2p1/4p3/1p2Pn1p/1P2qP1P/P1R3PK/B4B1N w - - 2 34|h1f2 e3e1 a1e5 d6e5|1821|advantage endgame fork master short
+fork|2|2hzx6|5r1k/1p4pp/p2pQ3/3P4/8/1Pq1bNP1/P4RKP/8 w - - 10 32|e6d6 e3c5 d6e6 c5f2|1820|advantage endgame fork short
+fork|2|2v3fU|rn1q1rk1/pp2bppp/2p1b3/4p3/2P5/1P2P1P1/PB3PBP/R2QK1NR w KQ - 1 11|b2e5 d8a5 e1f1 a5e5|1975|crushing fork opening short
+fork|2|2tJYB|1r3rk1/5pp1/p2pn2p/1pp1p1q1/2B1PPP1/PPP3P1/7Q/3R1R1K b - - 0 25|g5g4 c4e2 g4g6 f4f5 g6g5 f5e6|1851|advantage fork long middlegame
+fork|2|0XVcD|3N4/1R6/1p3k2/1P6/2r1p1P1/5n2/3pK3/8 b - - 1 61|c4d4 b7b6 f6e7 d8c6 e7d7 c6d4 d2d1q e2d1|1923|crushing endgame exposedKing fork veryLong
+fork|2|388zI|r1bqkb1r/ppp2pp1/2np3p/8/2BQP3/2N5/PPP2PPP/R1B2RK1 w kq - 1 9|d4d5 c8e6 d5b5 a7a6 b5a4 b7b5 c4b5 a6b5|1854|advantage fork opening veryLong
+fork|2|0RF7U|rn1q1rk1/2pp2p1/bp1bp2p/p2P1p2/P1B1n3/1PPQPN1P/5PP1/RNB1K2R b KQ - 2 12|e6d5 d3d5 g8h7 d5a8 a6c4 b3c4|1808|advantage fork long middlegame
+fork|2|0TG2D|r1b2rk1/pp2npbp/1q2p1p1/n1pp1PN1/4P1B1/2P5/PP1P2PP/RNBQ1R1K b - - 0 11|d5e4 f5f6 g7f6 f1f6|1658|advantage fork middlegame short
+fork|2|1X1kv|2r1r1k1/5pb1/3q2p1/pp2p1N1/5n1P/P4QB1/1PN5/1K2R3 b - - 1 32|f4d3 f3f7 g8h8 f7e8 c8e8 g5f7 h8g8 f7d6|1697|advantage fork middlegame sacrifice veryLong
+fork|2|2MRtd|7k/5Bp1/1q5p/p3QP2/2p3Pb/2P4P/P3RP2/3r2K1 w - - 1 29|g1g2 b6b7 e2e4 b7f7|1707|advantage endgame fork short
+fork|2|02HTm|5k2/p2n1ppp/4p3/1Q2n3/8/4q3/PP4PP/5R1K b - - 0 24|e5g4 b5b4 e3c5 b4g4|2023|advantage endgame fork short
+fork|2|3LPCo|r4rk1/3q1pp1/p2pbn1p/1p6/1Q1P4/P2BPN2/1P3PPP/2R2RK1 w - - 2 21|c1c3 f6d5 b4a5 d5c3|1710|advantage fork middlegame short
+fork|2|2CBmR|7k/7p/p1pq2pN/3p4/4nRQ1/7P/PrP3PK/8 b - - 2 26|b2b7 g4c8 h8g7 c8b7 g7h6 b7f7|2013|crushing endgame fork long
+fork|2|3Oake|4r1k1/p4pp1/3Q3p/3P3n/1P1B2bP/6P1/R4PBK/3q4 w - - 2 28|d4c3 d1b3 a2a7 b3c3|1856|advantage fork master middlegame short
+fork|2|0158C|3r3k/1Qp3p1/p4q1p/8/3n4/5N2/PPP2PPP/2K1R3 w - - 1 23|f3d4 f6d4 a2a3 d4d2 c1b1 d2e1|1686|crushing endgame fork long
+fork|2|174Rj|8/pp1qk1n1/2pN1pr1/2P4r/3P1Q1p/4P2P/PP3RP1/6K1 b - - 4 33|d7h3 f4e4 h3e6 e4g6|1669|advantage fork middlegame short
+fork|2|1C6eF|2b1r1k1/p4p2/1q4pQ/2pp4/8/P5R1/2B2PP1/6K1 b - - 1 30|b6f6 c2g6 f7g6 g3g6 f6g6 h6g6|1709|advantage endgame fork long
+fork|3|2brSN|r3r1k1/pp3p1p/3p1bp1/q1nP1b2/8/2N2N2/PP1QBPPP/R4RK1 b - - 8 16|c5e4 c3e4 a5d2 e4f6 g8h8 f3d2|2078|advantage fork long middlegame sacrifice
+fork|3|09EGC|5k2/5pp1/1p2p2p/p2qP3/1r3B2/Q7/5PPP/4R1K1 w - - 0 32|e1b1 d5e4 b1c1 e4f4|2272|crushing endgame fork master short
+fork|3|1I8md|6r1/1k3p2/1p1pp3/8/q2bP1n1/1N4N1/PP2QPP1/2R3K1 w - - 0 28|c1c4 a4c4 e2c4 d4f2 g1f1 g4e3 f1f2 e3c4|2484|advantage fork middlegame sacrifice veryLong
+fork|3|0FuUq|r3r1k1/pq3ppp/2p5/2pn4/3pN3/3P1Q2/PPP2PPP/R3R1K1 w - - 6 19|e4c5 e8e1 a1e1 b7b4 e1e2 b4c5|2087|advantage fork long middlegame
+fork|3|2kyNN|Nnbk3r/1p1p1p2/p2Q3p/4p3/5p2/5P2/1q2PNPP/3K1B1R b - - 3 21|b8c6 d6f6 d8e8 a8c7 e8f8 f6h8|2117|crushing fork long middlegame
+fork|3|0dzUx|rn2k2r/1b3ppp/p2pp3/qp6/7B/1Bn2N2/PPP1QPPP/R3K2R w KQkq - 0 13|b2c3 a5c3 e2d2 c3a1 e1e2 b7f3|2110|crushing fork long middlegame
+fork|3|2PkJ8|r7/ppp1Q1pp/2bpR3/5q1k/3P3P/1P6/PK3P2/R7 w - - 7 24|a1g1 f5f2 b2a3 f2g1 e7f7 h5h4|2110|advantage endgame fork long
+fork|3|0Jr2f|1k2rr2/1pp4R/p7/3P1n2/PPP5/N7/3Qn1PP/5R1K w - - 9 33|a4a5 f5g3 h2g3 e2g3 h1h2 g3f1 h2g1 f1d2|2084|advantage fork middlegame sacrifice veryLong
+fork|3|2SfdE|2r3k1/1p2q1pp/p4p2/3p4/3Pp3/6Q1/PP1K1R1P/R7 w - - 2 31|a1c1 e4e3 g3e3 e7e3 d2e3 c8c1|2054|advantage endgame exposedKing fork long
+fork|3|3EwwU|r3k1nr/pp3pQ1/4p3/8/3Bp2q/2P4P/PP3P2/R4RK1 b kq - 2 20|e8c8 g7h8 g8h6 d4f6 d8h8 f6h4|2158|advantage fork long middlegame
+fork|3|2gEZM|6k1/pp3pb1/3N3p/3Pn3/8/4BQ2/Pqr3PP/4R1K1 w - - 2 25|f3h3 b2b4 h3g3 b4d6|2342|crushing fork master middlegame short
+fork|3|0H7vi|r2r2k1/3qbp1p/4p1p1/p5N1/1pPnQP2/1P2B3/P5PP/R4RK1 w - - 0 21|a1d1 d4e2 g1f2 e2c3 d1d7 c3e4 g5e4 d8d7|2066|advantage fork middlegame veryLong
+fork|3|3KrKu|2k5/2P1R3/2KP3p/8/5n2/1N6/p1r4P/8 w - - 5 63|c6b6 f4d5 b6b5 d5e7 d6e7 c2e2|2407|crushing endgame fork long master
+fork|3|1Kchr|3r2k1/pp3pbp/4b1p1/q2Pp3/3n4/1B1Q1NBP/PP3PP1/2R3K1 b - - 0 22|e6d5 f3d4 e5d4 g3c7 d8c8 c7a5 c8c1 b3d1|2431|advantage defensiveMove fork master middlegame veryLong
+fork|3|0htkQ|r1bq1rk1/1p3pb1/p3p1p1/2p3Np/2n1Q2P/P1BP4/1PP2PP1/R4RK1 w - - 0 15|c3g7 c4d6 e4e5 f7f6 g7f6 f8f6|2350|advantage fork long middlegame
+fork|3|20VNW|8/p3rPkp/1p3np1/2p1NP2/1PP3P1/P7/2q4P/4RR1K b - - 0 32|f6g4 f5f6 g4f6 f1f6 e7f7 f6f7|2181|crushing endgame fork long
+fork|3|1hoRY|8/R7/2p2rkP/2p5/6B1/3r2PK/PP6/8 b - - 0 36|f6f1 g4e2 f1h1 h3g2 d3d2 g2h1|2207|advantage endgame fork long
+fork|3|2gsZi|r2r2k1/3qbpp1/ppn2n1p/3p4/1P1N4/P3PN2/1B3PPP/2RQK2R b K - 10 18|a8c8 c1c6 c8c6 f3e5 c6c7 e5d7|2201|crushing fork long middlegame sacrifice
+fork|3|0p9wR|rn1qr1k1/pb2bppp/1p1p1n2/3pp3/4P3/2NBBN1P/PPPQ1PP1/R4RK1 w - - 0 11|c3d5 b7d5 e4d5 e5e4 d3b5 e4f3|2053|advantage fork long middlegame
+fork|3|2zVrg|5b2/R6p/4p1p1/2N1Pk2/6P1/7P/3r4/6K1 b - - 0 34|f5g5 c5e6 g5h4 e6f8 h4g3 a7a3|2130|crushing endgame fork long
+interference|1|07YoN|6rk/1p6/p7/3N4/3Pp3/2P1P2p/Pn2KRrR/8 b - - 3 39|b2d3 h2h3 h8g7 f2g2|1348|crushing endgame interference short
+interference|1|0Ue00|1r3rk1/1b4pp/p1pNp3/2p2p2/2Pq4/3P2Q1/PP3PPP/R4RK1 w - - 1 19|f1e1 f5f4 g3g4 d4d6 g4e6 d6e6|1546|crushing interference long middlegame
+interference|1|0PXsL|r3rk2/5p1Q/p1p1q1p1/1p1n4/6P1/P6P/1PP2P2/4RRK1 b - - 1 28|e6e1 h7h8 f8e7 f1e1 e7d7 e1e8|1398|advantage endgame interference intermezzo long
+interference|1|2viic|r1br2k1/5pbp/p1p1p1p1/q2P4/4P3/4BP2/P3N1PP/1R1Q1RK1 b - - 0 16|c6d5 e3b6 a5a2 b6d8|1476|advantage fork interference middlegame short
+interference|1|004Ud|r1bqk2r/p3Bppp/3p4/1ppn4/4P3/4Q3/PPP2PPP/2KR1B1R b kq - 0 11|d5e7 f1b5 c8d7 d1d6 d7b5 d6d8|1612|advantage interference long middlegame
+interference|1|1GPli|5rk1/4qppp/p5n1/P1p1p1PQ/4P3/3P3R/1r4PP/5RK1 b - - 1 24|f7f5 h5h7 g8f7 f1f5 f7e8 h7g6|1436|crushing deflection fork interference long middlegame
+interference|1|01u7X|3r2k1/4qp2/4r1pp/1p6/pP5P/4bRP1/P1B1Q1PK/5R2 w - - 1 30|h2h1 d8d2 e2b5 d2c2|1489|advantage interference middlegame short
+interference|1|2dvGm|r2q1rk1/1b2bppp/p1n1pn2/1p1p4/3P1B2/4PN1P/PP1NBPP1/2RQ1RK1 b - - 1 13|c6a5 f4c7 d8e8 c7a5|1403|crushing interference master opening short
+interference|1|1nDy5|r4rk1/1q4p1/3p4/4p1NQ/3n4/7P/2P2P2/5RK1 b - - 2 25|f8f6 h5h7 g8f8 h7h8 f8e7 h8g7 e7d8 g7b7|1332|crushing deflection interference middlegame skewer veryLong
+interference|1|2X6gm|8/p6p/1p6/2p1kR2/2PpP2P/3r2r1/P6K/5R2 b - - 2 32|e5e4 f1f4 e4e3 h2g3|1567|advantage endgame interference master rookEndgame short
+interference|1|070UR|4r1k1/pq2npbp/6p1/2P5/1P6/P3B2P/3Q1P2/2R3K1 b - - 0 25|e7d5 c5c6 b7c7 d2d5 e8e3 f2e3|1525|advantage interference long master middlegame
+interference|1|3FXTN|1k3b1r/ppp1p1p1/3rNn1q/5Q2/8/2NP2Pp/PPP2P1P/R4RK1 w - - 4 17|c3b5 d6d5 f5f3 d5b5|1377|advantage interference middlegame short
+interference|1|30kkB|8/1r3ppp/8/k2p3n/3P4/3R1P2/1P2rP1P/2KB1R2 b - - 6 32|e2b2 d3a3 a5b5 c1b2|1569|crushing endgame interference short
+interference|1|2PzFM|2r2qk1/1b5p/pn1p2p1/1p1Pp1N1/1P1n4/PB6/3Q1PPP/3RR1K1 w - - 2 26|b3a2 c8c2 d2e3 c2a2|1460|advantage interference middlegame short
+interference|1|193sW|1k1r3r/pp4b1/4p2p/1b1qP3/1N1p1Q2/1P5R/P2B3P/1K2R3 b - - 2 32|d5g2 h3g3 g2h2 g3g7 h2f4 d2f4|1419|advantage interference long middlegame
+interference|1|1QMo6|5rk1/6p1/p3R1pq/1p1p1r2/3P4/2PQ1N2/PP3PPb/R4K2 w - - 3 24|a1e1 f5f3 g2f3 h6h3 f1e2 h3e6|1328|advantage interference long middlegame sacrifice
+interference|1|0vn0T|1r1nr1k1/3q2p1/4p1B1/p2p4/2pP4/b1P2QP1/4RP1P/4R1K1 b - - 2 29|e8f8 f3h5 f8f6 h5h7 g8f8 h7h8 f8e7 h8g7 e7d6 g7f6|1626|advantage deflection interference kingsideAttack middlegame veryLong
+interference|1|1Hgcj|7k/1p3qp1/1Qp4p/8/8/1KP2P2/PP4PP/8 w - - 17 36|b3a4 f7a2 a4b4 a2b2|1383|crushing endgame interference queenEndgame short
+interference|1|1YGgf|r1b1rbk1/pp3qp1/2pp3p/3n4/1P1P3N/P2QP3/3N1PPP/R1B2RK1 w - - 5 18|h4g6 c8f5 e3e4 f5g6|1353|crushing interference opening short
+interference|1|0MMDn|1n1r4/1R6/2p1kp2/1n2p3/5PNN/6P1/3r4/4RK2 b - - 0 37|d2d1 f4f5 e6d6 e1d1|1362|crushing interference master middlegame short
+interference|2|3EBCi|2rnr1k1/ppp2ppp/4b3/3N4/4B3/P4P2/1PP3PP/1K1R3R w - - 5 23|d1d2 f7f5 e4d3 e6d5 d3f5 d5e6|1868|crushing interference long middlegame
+interference|2|2rjWp|1n1r2k1/3r1ppp/p2b2b1/4p1q1/3N4/1P2PQPP/PB3PB1/R4RK1 w - - 0 19|d4c6 e5e4 f3e2 b8c6|1763|advantage interference middlegame short
+interference|2|2O9d8|r4rk1/3q1p1p/3b4/p1pp4/3Nn1p1/3QP3/PPPB1PPP/R2R2K1 w - - 0 19|d4b5 c5c4 d3e2 d7b5 e2g4 g8h8|1905|advantage interference long middlegame
+interference|2|3NAC5|r1b2rk1/pp2b2p/4p3/2Pp1pp1/1q1Pn3/4PP1P/1BQNB1P1/R3K2R b KQ - 0 18|e4d2 b2c3 b4b3 c2d2|1901|advantage interference intermezzo middlegame short
+interference|2|1x02B|r6r/p1pk1p1p/3bpq2/5p2/2PR4/4BQ2/PP4PP/2K4R b - - 0 17|d7e7 d4d6 c7d6 f3b7 e7f8 b7a8|1874|crushing interference long master middlegame sacrifice
+interference|2|1Jcqv|rn1qkb1r/p2bpppp/8/1B6/3pn3/8/PPPPQPPP/R1B1K1NR w KQkq - 0 9|e2e4 d7b5 e4a8 b5c6 a8a7 c6g2|1669|advantage interference long opening sacrifice
+interference|2|1ErNw|4r1k1/2q1rpp1/p6p/1pnb4/2p5/P1P1BP1P/1PQ3P1/RB2R1K1 b - - 2 26|e7e3 c2h7 g8f8 h7h8 f8e7 e1e3 d5e6 h8g7|1691|advantage interference kingsideAttack middlegame veryLong
+interference|2|1HCSa|2r1b1k1/ppBr2pp/5b2/Q7/8/8/P4PPP/4R1K1 w - - 11 23|c7g3 f6c3 a5f5 c3e1 f5e6 g8h8|1706|advantage defensiveMove fork interference long middlegame
+interference|2|0EO68|2r1k2r/5pp1/p3p2p/6q1/PpnPP3/3Q4/1PB2P1P/1R3R1K b k - 2 21|c4d2 f2f4 g5f6 d3d2|2008|crushing interference master masterVsMaster middlegame short
+interference|2|1UwQc|6k1/2pb1pp1/7p/P2P4/1p6/5P2/2P2B1q/R2Q1K2 w - - 0 32|a5a6 d7b5 f1e1 h2e5 e1d2 e5c3 d2c1 c3a1|1807|advantage endgame exposedKing interference veryLong
+interference|2|0v55q|4rk2/pppq2p1/2pb1p1r/7p/2Q5/1BN5/PPP2PPP/3R2K1 b - - 2 18|b7b5 c4g8 f8e7 g8g7 e7d8 g7h6|1922|advantage deflection fork interference long middlegame
+interference|2|1ltKx|1r6/p3kp2/4pNpp/1q3P2/rPpp2R1/P6P/K1P3Q1/1R6 w - - 1 34|f6e4 a4a3 a2a3 b5a6 a3b2 b8b4 b2c1 a6a3|1952|attraction crushing deflection discoveredAttack interference middlegame sacrifice veryLong
+interference|2|01mvq|4r1k1/pp3ppp/1q4b1/1Nb3B1/2Q5/2P4P/PP3PP1/R5K1 w - - 1 24|g5h4 e8e4 b5d4 e4h4|1669|crushing interference middlegame short
+interference|2|1Ghju|2k1r3/p1p2p1p/2R5/8/8/8/PPQ1KPP1/7q w - - 3 29|e2d2 h1e1 d2d3 e1e4 d3c3 e4c6|1875|crushing endgame exposedKing interference long master
+interference|2|210Ev|r2qk2r/1p1nbppp/p2p1nb1/2pPp1B1/P1P5/2NBPN2/1P3PPP/R2QK2R w KQkq - 3 10|e1g1 e5e4 g5f6 d7f6 f3d2 e4d3|2017|advantage fork interference long middlegame
+interference|2|1iCEp|7k/pR4R1/2p4p/2P1K2q/1P2p3/P3P3/6P1/8 w - - 5 39|e5d6 h5d5 d6c7 h8g7|1696|advantage endgame interference master queenRookEndgame short
+interference|2|2rMvQ|1r4k1/2R4p/p3p3/8/5p2/N1P5/b4PPP/6K1 w - - 0 32|f2f3 b8b3 a3c4 b3c3 c7c8 g8g7|1976|advantage endgame interference long
+interference|2|36k33|3qkr2/3pbpQp/r7/p7/Pp1pPP2/1P2RN2/2P3PP/5RK1 w - - 0 21|f3d4 e7f6 g7h6 f6d4 h6a6 d4e3|1734|advantage interference long middlegame pin
+interference|2|1Xd0K|8/pq4k1/3R1Rp1/2p3Pr/4P3/2P3Q1/6P1/r5K1 w - - 3 31|g1f2 b7b2 f2e3 b2c3|1711|crushing endgame interference short
+interference|2|2MfiD|7k/pp1b2p1/5r1p/4R2q/1P1p4/8/P4PQ1/4R1K1 b - - 1 35|h5f7 e5e7 f7g6 e7d7|1886|crushing endgame interference master short
+interference|3|1zXux|6k1/pQ4p1/2p4p/3pBnq1/P2Pb3/4P3/1P4PP/5BK1 b - - 0 27|f5e3 b7b8 g8h7 e5f4 g5h5 f4e3|2095|crushing endgame interference long
+interference|3|1M4Vb|rn1q1r2/pp3pp1/3b2k1/2p2bN1/3p4/5Q2/PPP2PPP/R1B1R1K1 b - - 5 14|b8c6 h2h4 d8d7 h4h5 g6h6 g5e6 h6h7 f3f5|2526|advantage discoveredAttack discoveredCheck exposedKing interference middlegame quietMove veryLong
+interference|3|1mnyp|6r1/8/8/8/6R1/3k1pK1/5P2/8 b - - 0 74|g8f8 g4f4 f8d8 g3f3|2231|advantage endgame interference master rookEndgame short
+interference|3|06CAz|r1b1r1k1/ppp1pp1p/5bpP/8/2Pq4/2NB1Q2/PP5P/R1B1K2R w KQ - 1 14|c1f4 e7e5 f4e3 d4d3|2294|advantage interference middlegame short
+interference|3|1pxqM|6k1/ppq3pQ/2p4p/2Pp2b1/3P2P1/3B3P/PP4K1/8 b - - 5 31|g8f8 d3g6 c7d7 h7h8 f8e7 h8g7|2089|crushing deflection endgame interference long quietMove
+interference|3|2MxuQ|r3k2r/ppp3pp/2n2pb1/3qp3/1b4P1/P1PP1NBP/1P3P2/RN1QK2R w KQkq - 0 14|c3b4 c6d4 b1d2 g6d3|2260|advantage interference middlegame short
+interference|3|230Nf|r2qk2r/pQ2bb2/n1p3p1/5p2/8/3P4/PP1P1PPP/RNB1R1K1 b kq - 0 16|a6c5 e1e7 d8e7 b7a8 e8d7 a8a7 d7e6 a7e7|2125|advantage deflection exposedKing interference opening veryLong
+interference|3|0zIWq|r4r1k/1pp1q1pp/p1n5/4P3/PP1p2nN/1QPP4/3N2PP/R4RK1 w - - 0 18|h4f5 e7e5 d2f3 e5f5|2160|crushing interference middlegame short
+interference|3|002LF|7r/p2q1pk1/1pp3p1/8/6P1/4Q3/PP1R1P1r/5KN1 b - - 0 38|d7g4 e3e5 f7f6 e5c7 g7h6 c7h2|2184|advantage endgame interference long
+interference|3|09Lz2|8/1pk2pr1/p1p1q3/8/3QBP2/P2R2P1/8/1r2KR2 w - - 4 38|e1d2 e6a2 d2e3 g7g3 e4f3 g3f3 e3f3 b1f1 f3g3 a2d5 d4d5 c6d5|2300|advantage attraction exposedKing interference middlegame veryLong
+interference|3|0VevU|3r3k/6pp/5p2/3q1P2/1pr2P2/6P1/P1QpR2P/3R1K2 w - - 2 46|c2d2 d5h1 f1f2 h1h2 f2f3 h2h5|2205|crushing endgame exposedKing interference long
+interference|3|1FmO1|r6r/p4k2/1p3p2/1N2bN2/4p2P/3p1p1B/PP6/5K1R b - - 1 34|a8c8 b5d6 f7f8 d6c8|2221|advantage fork interference master middlegame short
+interference|3|30826|3q4/5R2/k2pQ3/1pbNp3/p3P2r/P2P2B1/1P4P1/7K w - - 0 33|g3h4 d8h4 e6h3 h4e1 f7f1 e1f1 h1h2 c5g1 h2g3 f1d3 g3h4 d3e4|2182|crushing endgame interference veryLong
+interference|3|2VBIl|4kr2/1p2r2R/3pqpp1/2p5/5P2/Q7/PPP2P2/2K4R b - - 7 29|e7h7 a3a8 e8f7 a8b7|2148|crushing endgame interference short
+interference|3|11oX1|r4rk1/pppbb3/n6p/5p2/3Pp1pN/6BP/PPP1BPP1/2KR3R w - - 0 19|h3g4 e7g5 c1b1 f5f4 g3h2 g5h4|2351|advantage interference long middlegame
+interference|3|0AFgI|5rk1/pp6/2pb1q2/3p2p1/3P3p/2P1Q1P1/PP1NNnKP/5R2 b - - 1 26|h4g3 e2g3 d6f4 e3f2|2411|advantage capturingDefender interference middlegame short
+interference|3|0nRCv|Q4rk1/2pnppbp/p4np1/1p2q3/8/1B1P4/PPP3PP/RNB2R1K w - - 1 14|a8a6 f6g4 c1f4 g4f2 h1g1 e5f4|2314|advantage interference kingsideAttack long middlegame
+interference|3|2Obaf|2r2rk1/pp2Bpp1/4p3/8/3pQ3/3R3P/1qPK1P2/7R w - - 0 23|e7f8 b2c2 d2e1 c2b1 e1e2 c8c2 e2f3 b1h1|2495|crushing endgame interference veryLong
+interference|3|0aZ38|4r1k1/pp3ppp/2n2n2/7q/1PPp2b1/P2B1N2/3B1PPP/R2Q2K1 w - - 0 17|h2h3 g4f3 d1f3 h5f3 g2f3 c6e5 d3e2 d4d3 e2d1 e5c4|2276|advantage interference master middlegame veryLong
+interference|3|0pRPF|r2br3/p2q2kn/1p2b3/3pP1p1/3P1B2/3B1Q2/PPR2KP1/7R b - - 1 31|e6f5 e5e6 e8e6 d3f5|2211|crushing interference middlegame short
+intermezzo|1|3Gt28|r3r1k1/ppp1qpb1/3p1npp/3N2B1/2P1P3/3Q3P/PP3PP1/R4RK1 b - - 1 15|e7e4 d5f6 g7f6 d3e4 e8e4 g5f6|1642|advantage fork intermezzo long middlegame
+intermezzo|1|39V7o|rn1q1r2/4ppkp/3p2p1/p1pP1b2/1pP1n2N/1P1QP3/P3NPPP/1R2KB1R b K - 3 13|e4f2 h4f5 g6f5 e1f2|1561|advantage intermezzo middlegame short
+intermezzo|1|1PR0x|8/p3k3/1p3R1P/3p4/3B2PK/2Pb4/PP6/6r1 w - - 3 44|f6b6 g1h1 h4g5 a7b6|1444|advantage endgame intermezzo master short
+intermezzo|1|22tD9|3rk1r1/4nR1p/2p5/6q1/3PQ3/1P6/P1P3PP/5RK1 b - - 0 26|d8d4 f7e7 g5e7 e4d4|1491|crushing intermezzo middlegame short
+intermezzo|1|1qGjY|r3r1k1/p4pbp/2n2np1/1p1Np3/4P3/2Pq1R2/PP4PP/R1B1Q1K1 b - - 1 17|d3e4 d5f6 g7f6 e1e4|1385|advantage fork intermezzo middlegame short
+intermezzo|1|0N8GY|5r2/p2q4/6k1/P2pP3/2pPp1pp/2P1B1r1/6Q1/1R3RK1 w - - 1 41|g2g3 f8f1 b1f1 h4g3|1536|advantage endgame intermezzo master short
+intermezzo|1|3O8sO|r3k2r/ppp2pbp/5n2/2Pq1p2/1P1B4/4P3/P4PPP/RN1QK2R w KQkq - 0 15|d4f6 d5d1 e1d1 g7f6 b1c3 f6c3|1416|advantage intermezzo long middlegame
+intermezzo|1|0fjVL|5rk1/p2b1p2/6pp/2p5/7P/P2BP3/5PP1/3R2K1 w - - 0 28|d3g6 d7a4 d1c1 f7g6|1644|advantage endgame intermezzo short
+intermezzo|1|0Ub2T|2kr3r/pppq1ppp/2n5/3np3/6b1/P1BP1N2/1PPQBPPP/2KR3R w - - 0 12|c3e5 g4f3 e2f3 c6e5|1418|advantage capturingDefender intermezzo middlegame short
+intermezzo|1|0qrCn|r1bqk2r/pppnbpp1/3ppn1p/8/3PP2B/2N5/PPPQ1PPP/2KR1BNR b kq - 1 7|f6e4 h4e7 d8e7 c3e4|1470|advantage intermezzo master opening short
+intermezzo|1|1yzai|r5k1/1p4bp/p2p2p1/3Ppr2/1P1p4/P2P1Q1P/5PP1/R1q1R1K1 w - - 0 19|f3f5 c1e1 a1e1 g6f5|1379|crushing endgame intermezzo kingsideAttack short
+intermezzo|1|1ecig|r1b2rk1/ppp1qppp/2np1n2/b2B2Q1/4P3/2P2N2/PB3PPP/RN3RK1 b - - 1 11|f6e4 g5e7 c6e7 d5e4|1557|advantage capturingDefender intermezzo opening short
+intermezzo|1|35q9w|r2r3k/6p1/2Q2p1p/2PP4/8/pq4PP/R3RP1K/8 b - - 3 40|b3d5 e2e8 h8h7 c6d5 d8d5 e8a8|1424|crushing endgame intermezzo long
+intermezzo|1|2yC60|r1bq1rk1/pp2bppp/2Npp3/8/2B1n3/P1N1B3/1PP2PPP/R2Q1RK1 b - - 0 10|e4c3 c6e7 d8e7 b2c3|1554|crushing intermezzo opening short
+intermezzo|1|1r9AK|q2n1r1k/4QBp1/7p/8/P5PP/5RK1/5P2/8 b - - 0 40|f8f7 e7e8 h8h7 f3f7|1357|crushing endgame intermezzo master short
+intermezzo|1|1pIOE|3rr1k1/pp3bp1/7p/3pR3/3P3Q/2q3P1/P4PBP/4R1K1 b - - 4 28|e8e5 h4d8 g8h7 e1e5 c3c1 g2f1|1547|crushing hangingPiece intermezzo long middlegame
+intermezzo|1|1HRJE|5rk1/1p4pp/8/pBP5/P2Rb1P1/5P2/1P3Q1K/2q5 b - - 4 31|e4f3 b5c4 g8h8 f2f3|1462|advantage endgame intermezzo short
+intermezzo|1|0Ag9s|rr4k1/2p1q2p/2Qp2p1/1NpPpp2/2P1P3/P4P2/6PP/4R1K1 b - - 0 26|b8b5 c6a8 g8g7 c4b5|1590|crushing endgame hangingPiece intermezzo master short
+intermezzo|1|0Lc8R|1r5k/7p/6p1/1B3b2/P3r3/2R4P/4p1P1/4R1K1 w - - 0 36|e1e2 b8b5 e2e4 b5b1 g1f2 f5e4|1640|crushing endgame intermezzo long sacrifice
+intermezzo|1|0G4JF|r4rk1/4pp1p/p2p2N1/1p2b3/4b3/P1P4P/1P1N1PP1/3R1RK1 b - - 0 21|e4g2 g6e7 g8h8 g1g2|1472|crushing intermezzo middlegame short
+intermezzo|2|3OV6z|r3k2r/1p1n1ppp/1bP1bq2/p2np3/P1B5/2PP1Q2/4NPPP/RNB2RK1 b kq - 0 13|f6f3 c6d7 e6d7 g2f3|1665|advancedPawn advantage intermezzo middlegame short
+intermezzo|2|3D6tp|r1b1k2r/1p3ppp/p1n1pn2/3pq3/3N4/P1Q1BP2/1PP3PP/2KR1B1R b kq - 2 12|e8g8 d4c6 e5c3 c6e7 g8h8 b2c3|1669|crushing intermezzo long opening sacrifice
+intermezzo|2|086wp|3rr1k1/p4pp1/2b4p/2q5/2p5/P1Q1P1NP/5PP1/R1R3K1 w - - 0 28|c3c4 d8d1 g1h2 c5c4 c1c4 d1a1|1742|advantage intermezzo long middlegame
+intermezzo|2|0pG46|5rk1/p6p/2p3p1/2Q5/2P1P1P1/1P4b1/P3KNq1/5R2 b - - 2 31|g3f2 c5f8 g8f8 f1f2 g2f2 e2f2|1832|advantage attraction endgame fork intermezzo long
+intermezzo|2|2nZpk|r2qbrk1/pp2b1n1/2p1p2Q/2PpPP1p/1P1P2p1/P1N5/4B2P/R1B2RK1 b - - 2 22|g7f5 h6e6 g8g7 f1f5|1751|crushing intermezzo kingsideAttack middlegame short
+intermezzo|2|1X7t7|3r3r/3k1Npp/Bp2qn2/2bb4/P7/6BP/1Q3PP1/R4RK1 w - - 1 26|f7d8 e6e4 b2b5 d7d8 g3c7 d8c7 b5c5 b6c5|1989|crushing intermezzo middlegame veryLong
+intermezzo|2|0GzQa|r4rk1/pp4pp/2bp4/Qq6/2NP4/4P3/P5PP/R4RK1 w - - 4 22|a5b5 f8f1 a1f1 c6b5 c4d6 b5f1|1666|advantage intermezzo long master middlegame
+intermezzo|2|1OUDX|2r1r1k1/p4ppp/1pp5/3p4/Q2P2P1/3q1P1P/PP4K1/2R1R3 w - - 4 25|a4c6 e8e2 g2g3 c8c6|2037|collinearMove crushing endgame intermezzo short
+intermezzo|2|18aTy|4rq1k/p1nb2pp/2pb2n1/1p6/3PN3/PBNQ3P/1PP3P1/R1B3K1 w - - 3 22|e4d6 e8e1 g1h2 f8d6|1721|crushing intermezzo middlegame short
+intermezzo|2|367yy|2rqk2r/1b2bpp1/p3pn1p/3p4/Np1N2PP/1P1BQP2/P1P5/2KR3R b k - 2 18|f6d7 d4e6 f7e6 d3g6 e8f8 e3e6|1944|advantage intermezzo long middlegame sacrifice
+intermezzo|2|1zj0x|3r2k1/pp1q3p/6p1/8/2Q5/1P6/P1P5/1K4R1 b - - 3 34|d7d5 g1d1 d5c4 d1d8 g8f7 b3c4|1674|crushing endgame intermezzo long pin sacrifice skewer
+intermezzo|2|0yUuR|5rk1/6pp/3q1n2/p1PpNp2/1r5Q/3R4/P4PPP/4R1K1 b - - 0 30|d6e5 h4b4 a5b4 e1e5|1691|advantage intermezzo middlegame short
+intermezzo|2|0a6tO|5rk1/pp1nr1p1/1q5p/3pPB2/8/2PQ2P1/PP4PK/1R2R3 b - - 0 29|d7e5 d3d5 g8h8 e1e5 e7e5 d5e5|1742|crushing intermezzo kingsideAttack long middlegame
+intermezzo|2|0l6Ko|rn3rk1/pp1bbppp/3p1q2/1Bp1p3/P2P4/2P2N2/1P3PPP/R1BQR1K1 b - - 0 12|c5d4 c1g5 f6e6 f3d4 e7g5 d4e6|1944|crushing intermezzo long opening
+intermezzo|2|043gg|2r1r1k1/pp3ppp/2n5/1B1p4/3Pq3/2Q5/PP3PPP/R3R1K1 b - - 1 18|e4d4 e1e8 c8e8 c3d4 c6d4 b5e8|1987|crushing intermezzo kingsideAttack long middlegame
+intermezzo|2|0iX8B|r1r3k1/pbp2pb1/3p3p/1NpP1q2/5B2/5Q1P/PPP3P1/R3R1K1 w - - 5 24|f4d6 f5f3 g2f3 c7d6|1655|crushing intermezzo middlegame short
+intermezzo|2|2gVDB|r2q1rk1/1pp2pp1/p1n4p/3pN2n/3P1Bb1/2PBP3/P1Q2PPP/R4RK1 w - - 6 15|f4h6 c6e5 d4e5 g7h6|1791|advantage intermezzo middlegame short
+intermezzo|2|2mz1m|2r1k2r/pp1b1ppp/4p3/1n1p4/3P4/R3PN1P/3NBPP1/4K2R w Kk - 1 17|e2b5 c8c1 e1e2 d7b5|1665|crushing intermezzo middlegame short
+intermezzo|2|1IS8Q|r3kbnr/pp1q1ppp/2n5/8/3p4/5NPb/PP1PNPBP/R1BQ1RK1 w kq - 0 11|f3d4 h3g2 g1g2 c6d4 e2d4 d7d4|1748|advantage intermezzo long opening
+intermezzo|2|1A8oM|r1r3k1/1b4bp/q1nBp1p1/p1RpP3/Pp6/1Q3NN1/1P3PPP/3R2K1 b - - 0 23|c6e5 c5c8 a8c8 d6e5|1902|advantage intermezzo middlegame short
+intermezzo|3|1SupE|r3kb1r/pp1q1ppp/3Pbn2/1N2p1N1/Q1Bn4/8/PP3PPP/R1B1K2R b KQkq - 4 11|e6c4 b5c7 e8d8 a4c4|2076|advantage fork intermezzo middlegame pin short
+intermezzo|3|3Jljr|r1b4r/ppB2kpp/5p2/1B6/1q1pn3/2N5/1P3PPP/2RQ1RK1 b - - 3 17|e4c3 d1h5 g7g6 b2c3 g6h5 c3b4|2069|crushing intermezzo long middlegame
+intermezzo|3|2xPT2|1r1q3r/2p1kp2/3pb3/pB6/Pp3R1p/4Q2P/1PPK1P2/6R1 w - - 4 30|f4h4 b8b5 a4b5 h8h4|2275|advantage intermezzo middlegame short
+intermezzo|3|38QxJ|4r2k/2q2pp1/p1p5/1p5N/8/2Q1P2b/PP4P1/3R3K b - - 0 33|c7e5 d1d8 h3g2 h1g1 e5c3 d8e8 h8h7 b2c3|2219|advantage endgame intermezzo sacrifice veryLong
+intermezzo|3|2lf0f|r1b3r1/ppp5/2n1pk2/4Np1B/1Q1P2p1/4P3/PP2KPqP/6RR b - - 3 19|g2g1 e5c6 b7c6 h1g1|2069|advantage intermezzo middlegame short
+intermezzo|3|0PSpy|rn2kb1r/1b3ppp/pq2pn2/1p1P4/2pN1B2/1BN5/PPP2PPP/R2QR1K1 b kq - 1 12|f6d5 d4e6 f7e6 c3d5 b7d5 d1d5|2191|crushing intermezzo long opening pin
+intermezzo|3|26HSA|8/p1pkrN1p/2p5/3p1n2/6b1/1P1QP3/P1PN1Pq1/R3KR2 w Q - 1 21|f7g5 f5e3 f2e3 g2g3 f1f2 e7e3 e1f1 e3d3|2266|advantage fork intermezzo middlegame sacrifice veryLong
+intermezzo|3|2cqKV|r4kr1/1pp2p2/p1np1B2/4p2p/1PB1Pbb1/P1NP1N1q/2P1QK2/R5R1 b - - 8 22|g4f3 g1g8 f8g8 e2f3 h3f3 f2f3|2065|advantage intermezzo long middlegame
+intermezzo|3|1lLi6|R4nk1/1p3p2/2b3p1/4P2p/1p1Bp3/4P1PP/3r1P2/5BK1 b - - 2 32|g8g7 e5e6 d2d4 e6e7 f8e6 e3d4|2126|advancedPawn advantage discoveredAttack discoveredCheck endgame intermezzo long master sacrifice
+intermezzo|3|2YvF0|r3k2r/ppqnbpp1/3p3p/nNp5/8/1QP2N2/PP3PPP/R1B1R1K1 b kq - 3 15|a5b3 b5c7 e8d8 a2b3 d8c7 e1e7|2080|crushing fork hangingPiece intermezzo long middlegame
+intermezzo|3|1OBu8|6k1/1p1r2p1/2p1b2p/p1P1p3/P3Pp2/1P3PqP/2PQ2P1/1N1R2K1 w - - 0 31|d2e1 e6h3 e1g3 d7d1 g1f2 f4g3|2133|crushing endgame fork intermezzo long pin sacrifice
+intermezzo|3|0lcZa|r2r1b2/1bq2pk1/ppn1pNp1/4P2p/P1Bp1PP1/B1P4Q/7P/2R2RK1 w - - 0 22|g4h5 f8a3 h5g6 d8h8 h3g4 f7g6|2361|advantage intermezzo long middlegame
+intermezzo|3|2vP1i|3r2k1/pb1nqpbp/1pn1p1p1/1Np1P3/2P5/1P4P1/PB2QPBP/3RN1K1 b - - 4 19|d7e5 d1d8 e7d8 b2e5 c6e5 g2b7|2088|crushing intermezzo long middlegame
+intermezzo|3|1XmGQ|3r1rk1/p5p1/4p3/4qp1Q/1pppB2R/8/PP5P/5RK1 b - - 2 26|e5f6 e4f5 e6f5 h5h7 g8f7 f1f5|2452|crushing intermezzo long middlegame pin sacrifice
+intermezzo|3|2YscM|2kr2r1/pbpp1p1n/np2p3/2P1P2p/3PN2q/P2B1Q2/1P5P/R1B2R1K b - - 0 17|b6c5 d3a6 b7a6 e4c5 c7c6 c5a6|2292|advantage capturingDefender intermezzo long middlegame
+intermezzo|3|1eUF5|6k1/5pbp/r2q2p1/2RPp3/NQ2P3/1p6/1P3PPP/6K1 b - - 2 28|a6a4 c5c8 g7f8 b4a4|2119|crushing endgame intermezzo short
+intermezzo|3|17DXJ|r2q1rk1/pb2bppp/1p2pn2/2pp2N1/3PnPN1/P1PBP2Q/1P4PP/R1B2RK1 b - - 12 15|e4g5 g4f6 g7f6 f4g5|2064|crushing intermezzo kingsideAttack middlegame short
+intermezzo|3|0UuOM|1k6/1bp4p/1p3Br1/pP6/P3n3/4q1P1/2Q2RPP/5R1K w - - 5 36|f2e2 e4g3 h2g3 g6h6 f6h4 e3g3 f1f8 b8a7 e2e4 b7e4|2236|crushing intermezzo middlegame pin sacrifice veryLong
+intermezzo|3|1xTeu|rn3rk1/1b5p/p3p1B1/1p1q4/3P4/2P1P3/P1Q3PP/R4RK1 b - - 0 17|f8f1 a1f1 d5g2 c2g2 b7g2 g6f7 g8f8 g1g2|2104|advantage intermezzo middlegame veryLong
+intermezzo|3|16EXP|8/1p2Q3/1kp5/p2p4/2qP4/2P3P1/1b1B3P/4K3 b - - 1 35|b2c3 e7c5 b6c7 d2c3|2068|advantage endgame intermezzo master short
+pin|1|0uYmi|r2q1r2/1pp3pk/p2p3p/4pb1n/P1BP1nP1/2P1B2P/2PQ1P1N/R3R1K1 w - - 1 17|g4f5 d8g5 h2g4 f4h3|1493|advantage kingsideAttack middlegame pin short
+pin|1|0ackv|8/5r1k/1bp1pq2/2Np2p1/1P1P4/4P1QP/R6K/8 w - - 0 37|a2g2 b6c7 g3c7 f7c7|1527|crushing endgame master pin short
+pin|1|0Rgxa|r7/pp5k/8/2p5/3q3P/P7/1P4Q1/5RK1 w - - 2 38|f1f2 a8g8 g2g8 h7g8|1387|crushing endgame pin short
+pin|1|3Pl6R|1r4k1/p1q4p/3RQ1p1/p7/4P3/P7/1P3r2/1K1R4 b - - 8 35|c7f7 d6d8 b8d8 d1d8 g8g7 d8d7|1561|crushing endgame long pin
+pin|1|1T3vD|5k1N/pp2q1p1/2p4p/3r1bN1/2Qb1R1P/3P4/PP4PK/8 b - - 0 23|e7e5 h8g6 f8g8 g6e5|1508|advantage middlegame pin short
+pin|1|355yG|8/1R3pk1/4p3/3pP1Np/P2P4/r1b4P/6PK/8 b - - 0 36|c3d4 g5e6 g7g6 e6d4|1627|crushing endgame pin short
+pin|1|1XkrW|r2rn1k1/ppq2pbp/3p2p1/4p1P1/3nPPBP/PPN5/1BPQ4/2KR3R w - - 0 19|c3d5 d4b3 c1b1 b3d2|1261|crushing middlegame pin queensideAttack short
+pin|1|2JW8Y|2k2b1r/pp3pp1/1qp1p2p/1r2P2P/5B2/1Q4N1/PP3PP1/2KR3R w - - 2 18|b3c2 b5c5 g3e4 c5c2|1432|advantage middlegame pin queensideAttack short
+pin|1|27FLh|r3k2r/pppqb1pp/2p1bB2/6N1/3P4/8/PPP3PP/RN1Q1RK1 b kq - 0 12|e7f6 g5e6 d7e6 f1e1 f6d4 g1h1|1583|advantage defensiveMove long middlegame pin
+pin|1|1eTpb|3k3r/1bp1p2p/1p4B1/p7/6P1/2P5/P1P4R/2K5 b - - 0 24|b7c8 h2d2 c8d7 g6f5 e7e6 f5e6 d8e7 e6d7|1387|advantage endgame pin veryLong
+pin|1|1NZ5o|4r1k1/1p1b2p1/p7/8/1P3q2/7P/1QB2PP1/1N4K1 b - - 0 30|f4c4 c2b3 e8e1 g1h2 c4b3 b2b3|1261|advantage endgame long pin
+pin|1|2ogjI|r1bqk1nr/p1pn2bp/1p3pp1/4p3/4P2B/2N5/PPPQ1PPP/R3KBNR w KQkq - 0 9|e1c1 g7h6 f2f4 h6f4 d2f4 e5f4|1375|advantage long opening pin
+pin|1|0aInf|2rbr1k1/1b4pp/p1pP1n2/1p6/3BPP2/1P3K1P/P2N4/2R3R1 b - - 0 32|c6c5 d4f6 d8f6 d6d7|1555|advancedPawn advantage middlegame pin short
+pin|1|0fjMi|6r1/k1q2p2/Pbp3r1/4p3/4P3/1Q4Pp/1PP1N2B/5R1K b - - 0 31|g6d6 f1f7 d6d7 f7d7 c7d7 b3g8 d7d1 e2g1|1495|advantage middlegame pin veryLong
+pin|1|1aLDM|rnb1kb1r/pp1q1ppp/3pp3/8/1NBN4/8/PPPQ1PPP/R4RK1 b kq - 1 13|d6d5 c4b5 b8c6 b4c6 b7c6 b5c6|1564|crushing long middlegame pin
+pin|1|1HRXb|4r1k1/3bpp1p/3p2p1/2pP4/1q6/R2P2P1/Pb3PBP/1QB3K1 w - - 1 29|b1b2 b4e1 g2f1 d7h3 b2e2 e1c1|1288|advantage long middlegame pin
+pin|1|2NnQt|7k/6p1/1p3r1p/p7/q1pR4/2K1B3/4QP2/8 w - - 0 44|e2c4 f6c6 c4c6 a4c6|1477|crushing endgame pin short
+pin|1|02MOC|r2q2k1/ppp3pp/8/1BQN1r2/8/8/PP1P1P1P/n1B3K1 b - - 0 19|d8d5 b5c4 d5c4 c5c4|1292|advantage middlegame pin short
+pin|1|2Phvs|r5k1/ppbb1rpp/3q4/P1pp2B1/1P1N4/2PQ1N1P/2K3B1/4R2R w - - 0 27|d4e2 d7f5 d3f5 f7f5|1542|advantage middlegame pin short
+pin|1|31WAM|r2q1rk1/pp3pp1/5n1p/3pn3/1P2p2B/P1N5/2P2PPP/R2QR1K1 w - - 0 16|c3d5 d8d5 h4f6 d5d1 a1d1 g7f6|1425|advantage long middlegame pin
+pin|2|2b5Cs|8/5k1p/1p3pp1/p1pb4/P7/3Pq3/2P2R1P/3QK3 w - - 4 36|f2e2 e3g1 e1d2 g1d1 d2d1 d5f3 d1d2 f3e2|1788|crushing endgame exposedKing pin veryLong
+pin|2|1zQzA|6k1/pNRr1pp1/1p1Pp2p/8/1P2bP2/8/1P4PP/7K b - - 2 32|e4c6 c7c6 d7b7 c6c7 b7b8 d6d7 b8d8 c7c8 g8f8 c8d8|1835|advancedPawn crushing endgame pin veryLong
+pin|2|3KS7P|r2q1rk1/1pp1npp1/p2pbn1p/2b1p3/4P2N/1BPP2NP/PP3PP1/R1BQK2R b KQ - 3 11|e7g6 h4g6 e6b3 d1b3|1821|advantage opening pin short
+pin|2|1JgmJ|8/1k1r1p1p/p1qB2n1/QpP5/4p3/2P3P1/7P/1R4K1 b - - 3 38|g6e7 c3c4 d7d6 c5d6|1834|advantage endgame pin short
+pin|2|2nfT5|r4n2/4R3/p1pP1k2/1p3qr1/3P4/5p2/PPPQ2PP/2K4R b - - 3 31|g5g2 d2h6 f8g6 h6g7 f6g5 e7e5|1732|crushing exposedKing long middlegame pin
+pin|2|2hb6P|r5k1/1p2n1p1/p2qpr1p/3pN3/8/2PQ4/PP4PP/4RRK1 b - - 5 21|e7c6 f1f6 c6e5 d3g3|1759|advantage middlegame pin short
+pin|2|2YHjf|2r3k1/5rpp/1P3p2/p2Bp3/3p1P2/6PP/8/1R4K1 b - - 1 38|e5f4 b6b7 c8b8 b1c1|1807|advancedPawn crushing defensiveMove endgame pin short
+pin|2|2vQ2k|6k1/5pp1/4p2p/1qPp3P/1R1P2P1/6K1/r4P2/3BQn2 w - - 2 44|g3h3 b5d3 h3g2 f1e3|1924|crushing endgame pin short
+pin|2|29as6|3r3k/pp4p1/3b2rp/8/1PPR4/P5p1/5P1P/1N3RK1 w - - 0 27|f2g3 d6c5 f1f8 d8f8|1671|advantage endgame pin short
+pin|2|0931l|3rr1k1/ppp3p1/2nq3p/2Rbpp2/P6P/3P1NP1/1P2PPBK/2QR4 b - - 2 18|d6f6 c5d5 d8d5 c1c4|1926|advantage middlegame pin sacrifice short
+pin|2|3QEgz|2r3k1/p4pp1/1p1Qpn2/5q1p/P1B2P2/1P2PP2/7P/3R2K1 b - - 0 26|h5h4 d6d8 c8d8 d1d8 g8h7 c4d3 f5d3 d8d3|1812|advantage endgame pin sacrifice veryLong
+pin|2|0jgvV|3q1rk1/1p3pp1/3p1b2/8/p3N1Q1/8/PPr3PP/1R3RK1 b - - 1 22|f6b2 b1b2 c2b2 e4f6 d8f6 f1f6|1704|advantage long middlegame pin sacrifice
+pin|2|35aad|r4rk1/pp3pqn/1np3b1/8/3P1Q1N/1BP3P1/PP4P1/4RRK1 b - - 8 23|a8e8 e1e8 f8e8 h4g6 b6d5 b3d5|1896|advantage long middlegame pin
+pin|2|1b46g|rn1q1k2/p1p1b1r1/1p1p1pBp/8/3P4/3Q1b2/PPP2PPP/RN2R1K1 w - - 2 15|g2f3 d8e8 g1h1 e8g6 d3g6 g7g6|1938|crushing long middlegame pin
+pin|2|0NEiH|5rk1/p1r1qppp/1p2p3/4n3/3RP3/1P4P1/P3QPBP/R5K1 w - - 1 22|f2f4 e7c5 a1d1 e5c6 e2c4 c6d4|1961|crushing long middlegame pin
+pin|2|37dXH|r3qrk1/ppbn2pp/2pp1pb1/8/1PPQPP2/P5N1/1B2B1PP/R2R2K1 w - - 1 21|e2g4 c7b6 c4c5 d7c5|1910|advantage middlegame pin short
+pin|2|19A0Q|7k/7p/p6b/P2n4/1pN5/1P3P2/3prPKP/3R2R1 w - - 4 38|c4d2 d5e3 g2h3 e3d1|1780|advantage endgame pin short
+pin|2|3Q5Ja|q2r2k1/1Q3pp1/4p2p/2R1P3/3P4/7P/2P2PP1/rR4K1 w - - 3 31|c5c7 d8b8 b7b8 a8b8 b1a1 b8c7|1964|advantage endgame long master pin
+pin|2|2Mdfc|3rr3/ppbbRpk1/n1pp2pp/8/8/1NPP1B2/PPN2PPP/4R1K1 b - - 7 23|d7e6 e1e6 e8e7 e6e7|1792|crushing middlegame pin short
+pin|2|07dRY|r4rk1/1pp3p1/p1n1q2p/3p4/3P1p1N/2P1P3/PPQ1KP2/6RR w - - 0 20|g1g7 g8g7 h1g1 g7f7 c2h7 f7e8|1727|crushing hangingPiece long middlegame pin
+pin|3|02XE2|2q3rk/pp2bpp1/n1p4p/5P1Q/1P2NP2/2P5/P6P/6RK b - - 4 27|e7f8 e4g5 c8f5 g5f7 f5f7 h5f7|2124|advantage kingsideAttack long middlegame pin
+pin|3|2jB8r|k2rr3/ppq2pp1/2b1p2p/2p1P3/n1P1BP2/2B4P/PP2Q1P1/1K1RR3 w - - 3 23|c3d2 c7b6 b2b3 c6e4 e2e4 d8d2 d1d2 a4c3 b1b2 c3e4|2170|advantage fork master middlegame pin sacrifice veryLong
+pin|3|1SFS3|6k1/B6p/1p1N1bp1/5p2/pp6/4P2P/1K3PP1/8 w - - 2 37|b2a2 b4b3 a2a3 f6e7 a7b8 b6b5|2084|crushing defensiveMove endgame long pin
+pin|3|2sQhz|2r2rk1/pppn1ppp/2b4q/7N/3P2Q1/3B4/PP3PPP/R3R1K1 b - - 0 19|d7f6 h5f6 h6f6 d4d5 c6d5 g4h5 g7g6 h5d5|2325|advantage kingsideAttack master middlegame pin veryLong
+pin|3|2Pg70|k2Q1b2/p3n3/8/B4p2/6p1/P3P3/2qN1Pb1/1R2KBr1 b - - 1 25|e7c8 a5c7 g1f1 e1e2 c2c7 d8c7|2273|crushing long middlegame pin quietMove sacrifice
+pin|3|0vPqI|8/2k4p/3p2pP/5p2/8/8/1P1RqPP1/2K5 b - - 3 39|e2c4 d2c2 c4c5 b2b4 c7d7 b4c5|2108|crushing defensiveMove endgame long pin queenRookEndgame
+pin|3|2ru1q|R5r1/3k4/bp2pp2/3p4/P2P3r/3PQ1Pq/1P3P1P/2R3K1 w - - 3 34|a8g8 h3h2 g1f1 h4e4|2286|crushing endgame pin short
+pin|3|2djmu|2r2k1r/1p1p1ppp/pq3b2/4p3/3nP1Q1/2N5/PPP2PPP/2KR1B1R w - - 0 13|g4d7 f6g5 c1b1 c8c3 d1d4 e5d4|2073|crushing long middlegame pin queensideAttack
+pin|3|0nart|1r3rk1/p2p3p/2p1p3/2PnPpp1/q4P2/P2Q1KN1/6PP/1RB4R w - - 0 24|g3e2 a4e4 d3e4 f5e4 f3e4 b8b1|2120|advantage long master middlegame pin
+pin|3|3CwXG|4k3/p3q1p1/4p3/8/1P5r/2rpPQ1P/P2K1R2/6R1 b - - 1 26|h4c4 f3h5 e8d8 h5h8 d8d7 g1g7|2318|crushing endgame exposedKing long pin
+pin|3|1CNzz|7k/ppq3pp/2p3r1/7Q/3Br3/2P5/PP3PB1/5RK1 w - - 5 28|g1h1 e4d4 c3d4 g6h6 h5h6 g7h6|2209|advantage long middlegame pin sacrifice
+pin|3|1yjO5|3r1rk1/pppq1ppp/2n3n1/2b3B1/2B5/2P2R2/PP1N2PP/4RQ1K b - - 9 18|d8e8 f3f7 f8f7 f1f7 d7f7 e1e8|2194|advantage kingsideAttack long middlegame pin sacrifice
+pin|3|3KhFw|1R6/8/3p2pk/4p3/8/4n3/PQP5/1KB1q2r b - - 3 41|h6g7 b2b7 g7f6 b8f8 f6g5 b7g2|2181|crushing endgame long pin
+pin|3|0XsFq|r1b1k2r/ppp2p1p/2n4R/1B1pQ3/3Pn3/4P3/PPP2Pq1/RN2K1N1 b Qkq - 0 10|c8e6 h6e6 f7e6 e5h8 e8d7 h8h7|2421|advantage long middlegame pin
+pin|3|325dU|3r4/7k/p1nNp1b1/5p1p/p4PpP/P3r1P1/1P1R2BK/3R4 b - - 1 32|c6e7 d6c4 d8d2 d1d2 e3e1 d2d7 h7g8 d7e7|2357|crushing master middlegame pin veryLong
+pin|3|1xsiT|r6k/1b2pr2/3pq3/1p3NQP/4P3/1P3PR1/pKP5/3R4 w - - 2 33|d1g1 e6e5 c2c3 b5b4|2193|advantage middlegame pin short
+pin|3|145tV|r1b3k1/pp4r1/2p5/3p3Q/3P4/2P3b1/PP1N2P1/R6K w - - 2 27|a1f1 c8g4 h5h6 g7h7|2166|advantage master middlegame pin short
+pin|3|0cDnQ|r1b1qrk1/ppp5/4pbB1/6B1/2Pn2P1/8/P4P2/RQ2K2R b KQ - 0 18|e8c6 g6h7 g8f7 b1g6 f7e7 g6g7 f8f7 g5f6|2055|crushing exposedKing kingsideAttack middlegame pin veryLong
+pin|3|1r8tw|1r2r2k/2p3pp/1pB2p2/5q2/3P4/1NP5/PPK2P1P/R2Q4 w - - 1 25|c2c1 f5f2 c6e8 b8e8 b3d2 e8e1|2177|advantage long middlegame pin
+pin|3|3OEdP|3r1r1k/pp2R1pp/8/4bq2/2Q1N3/8/PPP2PP1/R4K2 w - - 1 22|f2f3 d8d4 c4e6 f5e6 e7e6 d4e4|2130|crushing long middlegame pin
+quietMove|1|2eRhc|4rr1k/pp4b1/7p/4p3/3pQ3/P7/1P3qPP/1R1R1B1K b - - 1 23|b7b6 f1d3 f2f5 e4f5 f8f5 d3f5|1390|advantage long middlegame quietMove
+quietMove|1|15LpT|r5k1/6p1/n3p2p/3p1p2/P1qP1P2/2N1P1P1/5K1P/R3Q3 w - - 4 29|a1c1 a6b4 c3e2 b4d3|1435|crushing endgame quietMove short
+quietMove|1|3SaUI|7r/5pk1/4p1p1/3p4/5Q2/PpP5/1P2q3/K4R2 b - - 2 35|h8f8 f4f6 g7g8 f1h1 e2h5 h1h5|1462|advantage endgame long quietMove
+quietMove|1|02H8O|8/p7/3Pk3/1p2P2q/2p5/6Q1/PP4PK/8 w - - 5 56|g3h3 h5h3 h2h3 b5b4 h3g4 c4c3|1595|crushing endgame long queenEndgame quietMove
+quietMove|1|17CM1|8/8/1pr2p2/1R3kpp/4p3/2P1K1P1/P6P/8 b - - 1 36|c6c5 b5c5 b6c5 a2a4 f5e5 a4a5|1515|crushing defensiveMove endgame long quietMove rookEndgame
+quietMove|1|1dVpv|rn1r2k1/pp2bpp1/5np1/2pPq3/2B3P1/2N4P/PP1B1P2/R2Q1RK1 w - - 0 17|d2e3 e7d6 f1e1 e5h2|1373|crushing middlegame quietMove short
+quietMove|1|0hvZ5|1Q6/4r1pk/2q4p/3R1p2/2p2N2/4P2P/2b2PP1/6K1 b - - 0 37|c2e4 d5d8 e7e8 d8e8 c6e8 b8e8|1544|crushing endgame long quietMove
+quietMove|1|14h8J|8/8/p3p1k1/5Pp1/1P6/3K4/P7/8 b - - 0 38|e6f5 a2a4 g6f6 b4b5 a6b5 a4a5 g5g4 a5a6|1588|crushing endgame pawnEndgame quietMove veryLong
+quietMove|1|1UkiQ|8/8/p2pk3/2p1rR1p/1pP1P2P/1P1K4/P7/8 w - - 3 46|f5e5 e6e5 d3e3 a6a5 e3f3 e5d4 f3f4 d4c3 f4f5 c3b2 f5e6 b2a2|1631|advantage endgame quietMove veryLong zugzwang
+quietMove|1|1KW2a|5rk1/5ppp/p7/1pbqP3/3p4/P2QB1P1/1P3P1P/3R2K1 w - - 4 24|e3d4 f8d8 d4c5 d5d3 d1d3 d8d3|1467|advantage endgame long quietMove
+quietMove|1|10qIR|8/8/8/1p2kp2/P7/4pP2/4K3/8 w - - 0 42|a4b5 f5f4 b5b6 e5d6 b6b7 d6c7 b7b8r c7b8|1573|crushing endgame pawnEndgame quietMove veryLong
+quietMove|1|0ieKO|4r1k1/p1p3pp/5p1q/2p5/P1P5/3P1P1b/2P2BP1/1R1Q3K w - - 0 23|g2h3 h6h3 h1g1 e8e5 f3f4 e5h5 d1h5 h3h5 b1b8 g8f7|1509|advantage endgame quietMove veryLong
+quietMove|1|0NJma|8/5pp1/2p5/pp1pP3/5Pk1/1PK3Pr/P1P5/6R1 b - - 4 28|h3g3 g1g3 g4g3 f4f5 g3g4 e5e6|1481|advantage endgame long quietMove rookEndgame
+quietMove|1|0jWTn|2kr3r/pp3R2/2pp3p/4p3/4P3/3P3q/PPPQ1P2/2K3R1 b - - 0 17|h3e6 g1g7 d8d7 f7d7 e6d7 g7d7|1368|advantage endgame long quietMove
+quietMove|1|2GAkL|6k1/2p2pp1/1rBp3p/3Pp1b1/1p2P3/1R3P2/6PP/6K1 b - - 7 34|g5e3 b3e3 b4b3 e3e1 b3b2 e1b1|1554|advantage endgame hangingPiece long quietMove
+quietMove|1|14y0L|8/p3b2p/1k4p1/1p1p4/3P4/PP1K1PB1/5P1P/8 w - - 4 45|a3a4 b5a4 b3a4 b6a5 g3b8 a7a6 d3c3 a5a4|1486|bishopEndgame crushing endgame master quietMove veryLong
+quietMove|1|05VzD|8/5k2/4pNp1/pp1pP2n/2pP3P/P1P5/1P6/5K2 w - - 0 36|f6h5 g6h5 f1e2 f7g6 e2e3 g6f5 a3a4 b5a4 e3f3 a4a3 b2a3 a5a4 f3e3 f5g4|1468|crushing endgame quietMove veryLong zugzwang
+quietMove|1|0KMKj|8/pp6/2p1kp2/2P1p3/1P2P1K1/P2P4/8/8 b - - 0 43|b7b6 c5b6 a7b6 a3a4 b6b5 a4a5|1465|crushing defensiveMove endgame long pawnEndgame quietMove
+quietMove|1|0zalH|8/8/8/p4K1p/P7/6kP/8/8 w - - 4 56|f5g5 h5h4 g5f5 g3h3 f5f4 h3g2|1353|crushing endgame long pawnEndgame quietMove
+quietMove|1|3OP18|6k1/2N2p2/p5pp/Pp2Q3/1b1n4/1bp4P/5PP1/6K1 w - - 0 40|e5d4 c3c2 d4e3 b4a3 c7a6 c2c1q e3c1 a3c1|1465|advancedPawn advantage endgame promotion quietMove veryLong
+quietMove|2|1LTX0|1N5k/3R2p1/3Qp2p/1p6/r2b1P2/6BP/3q2PK/8 w - - 2 43|b8c6 a4a2 d6f8 h8h7 f8g7 d4g7 d7d2 a2d2|2000|crushing middlegame quietMove veryLong
+quietMove|2|3KfyA|3k1r2/pR6/2n5/2p1p1Q1/3p4/P2P4/1PP2q2/1K6 b - - 1 31|d8c8 g5g7 f2g1 g7g1 f8f1 g1f1|1781|crushing endgame long quietMove
+quietMove|2|0Rf08|4b3/5pk1/PR4p1/1p2p2p/4P2P/3p2P1/4rK2/R7 w - - 2 38|f2f3 e8d7 g3g4 d7g4|1799|crushing endgame quietMove short
+quietMove|2|2meqO|8/kp6/p3P3/6R1/1r6/5K2/8/8 b - - 0 41|b4b6 g5e5 b6c6 e6e7|1744|advancedPawn crushing endgame quietMove rookEndgame short
+quietMove|2|1v9nP|8/6p1/p3k1p1/2p2pP1/P1Pp1B2/1P1P1P2/2K2b2/8 b - - 0 32|f2e3 f4e3 d4e3 f3f4 e3e2 c2d2 e2e1r d2e1|2022|bishopEndgame crushing endgame quietMove veryLong
+quietMove|2|30rOf|rqb2r2/4npbk/p1npp1p1/1p1P2Bp/2B1P2P/N1P5/3QNPP1/RR4K1 b - - 0 18|c6e5 g5e7 f8e8 e7g5 e5c4 a3c4|1821|advantage hangingPiece long master middlegame quietMove
+quietMove|2|2Hmlr|r1b2rk1/ppp2ppp/1n1bp3/8/8/1BP1BN2/PPP1KPPP/R2R4 b - - 8 11|c8d7 c3c4 b6a4 c4c5 a4c5 e3c5 d7b5 c2c4 b5c4 b3c4|2039|advantage middlegame quietMove veryLong
+quietMove|2|26g6n|8/p5p1/1p4p1/1PP1p3/P3k2P/6K1/8/8 b - - 0 36|b6c5 a4a5 c5c4 b5b6 a7b6 a5a6|1889|crushing endgame long master pawnEndgame quietMove
+quietMove|2|3LET6|3k3r/2r1bpp1/p1Pp3p/2p5/B1Pp1B2/P2b4/R4PPP/4R1K1 b - - 5 22|d3c4 a2b2 c4b5 a4b5 a6b5 b2b5|1826|advantage long middlegame quietMove
+quietMove|2|0HMj5|6k1/p3bpp1/Pp2p1np/1Pp5/2P5/1N1KPN1P/5PP1/8 b - - 2 24|f7f6 b3a5 b6a5 b5b6|1919|crushing endgame quietMove sacrifice short
+quietMove|2|30qBr|7R/1r5p/1P1k2pK/2p5/8/5P2/6P1/8 w - - 0 58|h8h7 b7h7 h6h7 c5c4 f3f4 c4c3|1672|crushing endgame long master quietMove rookEndgame
+quietMove|2|0pDTj|8/8/p6p/1p1k1pp1/PP1P1P2/3K2P1/6P1/8 w - - 0 59|a4a5 g5g4 d3c3 d5e4 d4d5 e4d5|1805|crushing endgame long pawnEndgame quietMove zugzwang
+quietMove|2|3LuzB|3k3r/1p3ppp/p7/2p4q/3p1bb1/2NQ2P1/PPP2P1P/R4RK1 w - - 0 21|g3f4 g4f3 c3e4 h5h3 d3f3 h3f3|1898|advantage long middlegame quietMove
+quietMove|2|28ljQ|8/5p2/P7/3Rk3/2P3pp/6r1/7K/8 b - - 1 71|e5e6 d5a5 g3d3 a6a7|1835|advancedPawn advantage endgame quietMove rookEndgame short
+quietMove|2|34BJm|5rk1/5p1p/2p1pQp1/p1Np4/2qP2P1/2PK3P/5P2/7R w - - 2 23|d3c2 c4e2 c2c1 f8b8 f6e5 e2b2|1723|crushing endgame long quietMove
+quietMove|2|1SrRy|R7/3q1pk1/2p1r1p1/7p/3P1Q1P/6P1/5P1K/8 b - - 23 54|e6f6 f4b8 f6f2 h2g1|2006|crushing endgame master quietMove short
+quietMove|2|3Ophl|5r2/1p3p1k/p2BpPp1/3p2Qp/1P1P4/2r5/1q5P/5RK1 b - - 3 30|f8c8 d6f4 c3g3 h2g3 b2d4 f4e3|1929|crushing endgame long quietMove
+quietMove|2|23Isv|1R3rk1/p3bp2/2p1p2p/3nP1pB/2pP4/5QB1/q1P2P1P/6K1 b - - 0 23|f8b8 f3f7 g8h8 h5g6 a2a1 g1g2 d5e3 f2e3|1709|crushing middlegame quietMove veryLong
+quietMove|2|1tImH|8/5k2/8/2BK2p1/1p2P3/1Pb2p1P/8/8 w - - 4 44|e4e5 c3e1 e5e6 f7e8 d5c4 f3f2 c5f2 e1f2|1685|advancedPawn bishopEndgame crushing defensiveMove endgame quietMove veryLong
+quietMove|2|2DfYv|8/5p2/4b1p1/1p5p/1P1P1k2/3B1P2/5K2/8 b - - 1 42|e6c4 d3c4 b5c4 b4b5 c4c3 f2e2 c3c2 e2d2|1797|bishopEndgame crushing endgame quietMove veryLong
+quietMove|3|08Q0S|8/1p6/1P5R/3Kp1p1/2r2b2/2k5/1R6/8 w - - 2 43|b2c2 c3c2 d5c4 e5e4 h6h7 e4e3|2118|crushing endgame long quietMove
+quietMove|3|141jt|8/5K2/6pk/5p2/4p2p/4P2P/5PP1/8 w - - 4 56|g2g3 h4g3 f2g3 g6g5 f7e6 f5f4|2269|crushing endgame long pawnEndgame quietMove
+quietMove|3|0fUKN|8/5p2/8/p2KPk1p/5p2/1P6/6PP/8 w - - 0 44|h2h3 h5h4 d5d4 f4f3 g2f3 f5f4|2096|crushing endgame long master pawnEndgame quietMove
+quietMove|3|2QklV|6k1/5ppp/p3p3/1rPp4/1P6/4P3/5PPP/1R4K1 b - - 0 25|a6a5 c5c6 a5b4 c6c7 b5c5 b1a1 g8f8 a1a8|2194|advancedPawn crushing endgame quietMove rookEndgame veryLong
+quietMove|3|0L5Lt|8/8/2p5/1p6/8/4k1K1/PPP5/8 w - - 4 48|b2b3 b5b4 g3g4 e3d2 g4f5 d2c2|2139|crushing endgame long pawnEndgame quietMove
+quietMove|3|1lP46|8/8/8/6k1/r5p1/PR4K1/8/8 b - - 3 57|a4f4 b3b5 f4f5 a3a4 g5g6 b5f5 g6f5 a4a5|2228|crushing defensiveMove endgame quietMove rookEndgame veryLong
+quietMove|3|2fL5C|8/8/3pK3/1B4p1/Pk1pPb2/3P4/8/8 w - - 3 58|e6d5 g5g4 e4e5 g4g3 d5e4 g3g2|2249|advancedPawn bishopEndgame crushing endgame long quietMove
+quietMove|3|0jLTi|8/8/5pp1/7p/1Pk1K3/7P/5P2/8 b - - 2 46|c4b4 e4d5 g6g5 d5e6 g5g4 h3h4 b4c3 e6f6|2375|crushing endgame pawnEndgame quietMove veryLong
+quietMove|3|1FCdw|4r3/8/P1R5/5k1p/6r1/1P6/1B4P1/6K1 b - - 0 41|g4g6 c6g6 f5g6 b3b4 e8a8 b4b5|2474|crushing defensiveMove endgame long quietMove
+quietMove|3|2zpOS|3Q4/5ppk/7p/8/2P1r3/2R3PP/4qP1K/8 w - - 11 55|d8d3 e2f2 h2h1 f7f5 c3c1 e4e2 d3e2 f2e2|2219|crushing endgame quietMove veryLong
+quietMove|3|2ai0j|8/1p3pp1/pPk3p1/P7/3K1P2/6PP/8/8 b - - 0 38|c6b5 d4d5 b5a5 d5c5 f7f6 g3g4 g6g5 f4f5 a5a4 c5d6 a6a5 d6c7|2352|crushing endgame pawnEndgame quietMove veryLong zugzwang
+quietMove|3|0gCsF|8/1p6/p7/k4K1p/6PP/8/8/8 b - - 0 45|b7b5 g4g5 b5b4 f5e4 b4b3 e4d3|2320|crushing defensiveMove endgame long pawnEndgame quietMove
+quietMove|3|1hiOP|5Q2/1k2K3/p1p5/3p4/P1bP4/2P5/4p3/4r3 w - - 0 46|e7d7 e1b1 f8c8 b7a7|2164|crushing endgame quietMove short
+quietMove|3|31MVo|6k1/8/8/3pqp2/1p5p/2rQ1P2/P1B3PP/6NK w - - 4 29|d3f5 e5f5 c2f5 d5d4 g1e2 c3e3|2322|crushing endgame long quietMove
+quietMove|3|1rWjV|8/p3R3/1p1K3p/6k1/2P3P1/1P6/6r1/8 b - - 4 38|g2g4 e7g7 g5h4 g7g4 h4g4 b3b4 b6b5 c4c5|2158|crushing defensiveMove endgame quietMove rookEndgame veryLong
+quietMove|3|38ED5|8/p7/1pp5/5p2/1P3N2/5Kp1/P6k/8 w - - 0 43|a2a4 c6c5 f4e2 g3g2 b4c5 b6c5 f3f4 c5c4 f4f5 c4c3|2350|advancedPawn crushing endgame knightEndgame quietMove veryLong
+quietMove|3|0pCRg|8/8/4p2k/p1p4p/3pPP1K/PP6/2P5/8 b - - 0 40|h6g6 a3a4 g6h6 f4f5|2108|crushing endgame pawnEndgame quietMove short zugzwang
+quietMove|3|20WMy|8/8/3p2k1/p1pP2pp/P1P1K3/5P2/7P/8 w - - 1 38|f3f4 g5g4 f4f5 g6g5 f5f6 g5f6|2054|crushing defensiveMove endgame long pawnEndgame quietMove zugzwang
+quietMove|3|1AZvL|2r2rk1/ppq1p1b1/b3P3/5N2/3p1RP1/2N3Q1/PPP2K2/7R b - - 1 30|d4c3 g3h2 c7f4 h2f4 f8f5 g4f5|2155|crushing long middlegame quietMove
+quietMove|3|2qe0m|r4rk1/5p2/3q2p1/p1pp2P1/2np2P1/5Q2/PPP2PK1/R6R b - - 1 24|d6e6 f3h3 e6e4 g2g1|2188|crushing defensiveMove middlegame quietMove short
+skewer|1|3JtzP|8/rp5p/p1k1p1pP/P1PpPpP1/3PbP2/1RK5/8/8 b - - 10 44|a7a8 b3b6 c6c7 b6e6|1295|crushing endgame short skewer
+skewer|1|1qXRg|3r1k2/pQ4p1/7p/2p5/4p3/1KN2P2/PP5q/R7 w - - 0 29|b7e4 d8b8 b3c4 b8b4 c4c5 b4e4|1388|crushing endgame exposedKing long skewer
+skewer|1|0tt7a|7r/1p3p2/p1b2kp1/4p3/4P3/1P1Q4/P1P5/2K5 b - - 2 35|h8h4 d3d8 f6g7 d8h4|1486|crushing endgame short skewer
+skewer|1|0KLSa|4Q3/2k5/8/8/8/P4pP1/1r1K4/8 w - - 1 44|d2e3 b2e2 e3f3 e2e8|1472|crushing endgame queenRookEndgame short skewer
+skewer|1|0HxVS|r4k1r/p1q2p2/4pQpP/8/1p1P4/2P5/PP6/2KB3R b - - 2 28|b4c3 f6h8 f8e7 h8a8 c3b2 c1b2|1596|crushing endgame hangingPiece long skewer
+skewer|1|1ShoR|r3k3/ppp2pb1/2n1pq2/3p4/3P4/2P2p1r/PPQ2P1P/R1B1KNR1 b Qq - 3 16|e8c8 c1g5 c6d4 c3d4 f6d4 g5d8|1577|advantage long middlegame skewer
+skewer|1|02CX1|6k1/p3b1p1/1p6/7R/2P5/KP4B1/P3rPPP/8 w - - 1 29|a3a4 e2a2 a4b5 a2a5 b5c6 a5h5|1453|crushing endgame long skewer
+skewer|1|0qHcX|1B6/p1Q5/6qk/3p2b1/2pPb1P1/P3P3/1P1K4/8 b - - 1 38|g6g7 c7h2 h6g6 h2h5 g6f6 b8e5 f6e7 e5g7|1563|crushing endgame exposedKing skewer veryLong
+skewer|1|0szbs|8/8/8/3pk3/6pp/r7/2KN2P1/5R2 w - - 0 61|d2b3 a3a2 c2d3 a2g2|1358|advantage endgame short skewer
+skewer|1|0hDAp|b4rk1/5ppp/p7/3p1q2/1Pp5/5B1P/P2Q1PP1/4R1K1 b - - 0 24|f8c8 f3g4 f5f6 g4c8|1320|advantage endgame short skewer
+skewer|1|09hlU|3r2k1/4bpp1/p1Pq3p/8/4B3/Pp2n2P/1P2QPP1/2R3K1 w - - 0 30|e2e3 e7g5 e3b3 g5c1|1639|advantage endgame short skewer
+skewer|1|2EVrU|2r3k1/5p2/1p2q1p1/p7/2p4Q/5P1R/5PK1/8 b - - 1 37|e6e5 h4h7 g8f8 h7h8 e5h8 h3h8 f8e7 h8c8|1575|advantage endgame skewer veryLong
+skewer|1|2Omrh|1R6/1P4k1/8/6p1/6p1/6P1/1r6/6K1 b - - 2 60|g7f7 b8h8 b2b7 h8h7 f7f6 h7b7|1620|crushing endgame exposedKing long quietMove rookEndgame skewer
+skewer|1|3Chjz|8/8/6kb/1R6/5pKp/8/8/8 b - - 7 62|g6f6 b5b6 f6e5 b6h6|1421|crushing endgame short skewer
+skewer|1|3L410|r1b1k2r/pNp2p2/4pnp1/8/2P4p/5B2/PP3P2/3RK2R b Kkq - 0 16|a8b8 d1d8 e8e7 d8h8 c8b7 h8b8|1529|advantage long middlegame skewer
+skewer|1|0uo1z|8/5NR1/4pP2/3p4/3P3k/3K4/5r2/3b4 w - - 3 44|g7g6 d1c2 d3e3 c2g6|1406|crushing endgame master masterVsMaster short skewer
+skewer|1|3Lu96|r3kb1r/p1p1p1pp/b1p2p2/8/q2P4/1PB1QN2/P4PPP/2R1K2R b Kkq - 0 15|a4a2 c1a1 a2b3 a1a6|1294|advantage master middlegame short skewer
+skewer|1|066PI|2r2rk1/p2b1ppp/4pb2/q7/1p6/1QN3P1/PP2PPBP/R2R2K1 w - - 0 19|c3e4 d7a4 e4f6 g7f6 b3f3 a4d1|1436|advantage long master middlegame skewer
+skewer|1|27LB8|3k4/8/P1K4p/4p1bB/4P3/R4P2/8/2r5 w - - 1 48|c6d6 g5e7 d6e5 e7a3|1434|advantage endgame short skewer
+skewer|1|1ZBPH|r7/2q1rpk1/p1pb1pp1/8/4P3/1P2QN1P/P4PP1/R3R1K1 w - - 4 25|a1c1 d6f4 e3e2 f4c1|1569|advantage middlegame short skewer
+skewer|2|18XmC|7r/8/1p6/p2krp2/P5p1/1PR5/6P1/3R2K1 b - - 3 49|d5e4 c3c4 e4e3 d1e1 e3d2 e1e5|1832|crushing endgame long rookEndgame skewer
+skewer|2|03zfX|1rb2rk1/p1q2pnp/2pp1Q2/1p4P1/4P3/1P3NNP/P7/1K1R3R w - - 5 27|d1d6 g7e8 d6c6 c7g3|1925|crushing fork middlegame short skewer
+skewer|2|2ngkJ|8/8/P3N2b/3pPkp1/1P1P4/3R1K2/7r/8 w - - 1 59|b4b5 g5g4 f3g3 h2h3 g3g2 h3d3|1817|crushing endgame exposedKing long master skewer
+skewer|2|14Yvl|r2q2k1/ppp4p/3p2R1/3Pp3/2P1QrP1/5P2/PP2K3/R7 b - - 0 20|h7g6 e4g6 g8f8 a1h1 d8f6 g6f6 f4f6 h1h8 f8e7 h8a8|1776|advantage endgame exposedKing master quietMove skewer veryLong
+skewer|2|0egr4|r3r3/ppp2kpQ/3p4/3P4/3b4/5Pq1/PPPPB1P1/R1B2K1R w - - 1 23|h7h4 e8h8 h4d4 h8h1|1856|crushing middlegame short skewer
+skewer|2|0zjai|8/p7/Pb6/1P1k3p/8/3K4/8/4B3 w - - 1 48|d3c3 b6a5 c3d3 a5e1 b5b6 e1f2 b6b7 f2g3|1924|bishopEndgame crushing defensiveMove endgame skewer veryLong
+skewer|2|0hoON|r4k2/pp1q2bp/6p1/8/2QPR3/P1P4P/1P3PP1/6K1 b - - 0 24|a8e8 e4f4 f8e7 f4f7 e7d8 f7d7|1775|crushing endgame exposedKing fork long skewer
+skewer|2|2YS17|6Q1/8/7P/8/4q3/2k5/6K1/8 w - - 1 68|g2h3 e4h1 h3g3 h1g1 g3f4 g1g8|1740|crushing endgame exposedKing long queenEndgame skewer
+skewer|2|11Yjn|8/6p1/1p1bk2p/p1p2p1P/P1P5/5KP1/3B4/8 b - - 0 39|e6e5 d2c3 e5e6 c3g7|1997|advantage bishopEndgame endgame short skewer
+skewer|2|0DSUI|r7/4Npbk/5n1p/4pNpP/4P3/4BP2/1p4r1/1K1R3R w - - 3 30|d1d2 g2d2 e3d2 a8a1 b1b2 a1h1|1828|crushing exposedKing long middlegame skewer
+skewer|2|3JVRM|3r1k1n/5p1Q/1p3Rp1/pB1b4/8/P3R1K1/1P4rP/8 w - - 0 34|g3h4 g6g5 h4h5 g2h2 h5g5 h2h7|2020|advantage long middlegame skewer
+skewer|2|1B4Hj|r3k2r/pp4pp/2p1Q1b1/3p2q1/6P1/8/PPP5/1K1R1B1R b kq - 0 17|g5e7 e6g6 h7g6 h1h8 e8d7 h8a8|1866|advantage exposedKing long middlegame skewer
+skewer|2|35zZZ|r4rk1/2p3bp/1p1p2q1/p3pp2/P1N1n3/1P4PP/2P1N2K/R1B1QR2 w - - 0 22|e2c3 e4c3 e1c3 e5e4 c3e1 g7a1|1660|advantage discoveredAttack long middlegame quietMove skewer
+skewer|2|2U8x4|8/pb3k2/1p2p2R/5p1P/1P1r1P2/P7/4BK2/8 b - - 0 31|d4f4 f2g3 f4e4 e2f3 e4e3 h6h7 f7g8 h7b7|1901|advantage defensiveMove endgame skewer veryLong
+skewer|2|0rVsK|8/7P/6K1/2R5/5kpr/8/8/8 b - - 0 61|g4g3 c5c4 f4f3 c4h4|1668|crushing endgame master rookEndgame short skewer
+skewer|2|0bSn6|r2r2k1/p4p1p/2p1bQ2/5p2/5N2/q2B4/P1P3PP/R6K b - - 7 22|d8d6 f4h5 g8f8 f6h8 f8e7 h8a8|1840|crushing long middlegame quietMove skewer
+skewer|2|0JxjD|r3kr2/pp2qbQp/2np4/2p3N1/2npP3/6BP/P5P1/R4RK1 b q - 0 22|f7g6 f1f8 e7f8 g7b7|1953|advantage middlegame short skewer
+skewer|2|1U6a5|3r2k1/p7/1p5p/6p1/1PpB4/2P2qP1/PQ2KP1n/3R4 w - - 2 36|e2e1 d8e8 e1d2 e8e2 d2c1 e2b2|1753|crushing endgame long skewer
+skewer|2|1h3DM|r2q3k/1b1pn1pp/p2Bp2r/1p2Pp2/5P1b/1BN3P1/PPPQ3P/3R1RK1 w - - 1 20|g3h4 h6g6 g1f2 g6g2 f2e1 g2d2|1825|advantage long middlegame skewer
+skewer|2|2mXSK|3R4/p1p5/1p3k2/7p/8/P1P5/1PB2qb1/2K5 b - - 3 32|h5h4 d8f8 f6e5 f8f2 h4h3 f2f5|1878|crushing endgame long skewer
+skewer|3|000qP|8/7R/8/5p2/4bk1P/8/2r2K2/6R1 w - - 7 51|f2f1 f4f3 f1e1 c2c1 e1d2 c1g1|2172|crushing endgame exposedKing long skewer
+skewer|3|0Adck|1k2R3/p5q1/1p1p1b2/PPpP1p2/2Pn4/5Prr/3Q2P1/R2B2K1 b - - 1 29|b8c7 a5b6 c7d7 a1a7 d7e8 a7g7 g3g7 b6b7 g7b7 g2h3|2210|advancedPawn crushing discoveredAttack middlegame skewer veryLong
+skewer|3|1Hiy5|2k3nr/ppp5/4p3/2b5/3rP3/2N3P1/PP1B2P1/R2R2K1 w - - 1 19|g1f1 d4d2 d1d2 h8h1 f1e2 h1a1|2146|advantage long middlegame sacrifice skewer
+skewer|3|0fs0Q|8/5pk1/5n1p/P7/1P1P4/7p/6r1/R1R2K2 w - - 0 45|a5a6 f6e4 a1a3 e4d2 f1e1 h3h2 a3h3 d2f3 e1f1 g2g1 f1f2 g1c1|2285|advancedPawn advantage endgame exposedKing quietMove skewer veryLong
+skewer|3|09eed|1rb1k3/4bpp1/p1pp4/q4PP1/8/1PPB4/P2Q4/1NK4R b - - 0 22|c8f5 h1h8 e8d7 h8b8|2098|advantage middlegame short skewer
+skewer|3|0FZC7|6r1/1kb2p2/1p6/2p2R2/2P2p1p/5P2/1PR2KPP/2N4r w - - 11 42|f5f7 h4h3 g2h3 h1h2 f2f1 h2c2|2146|crushing endgame long skewer
+skewer|3|1f713|r2q1r2/2p2pk1/p2p2pR/1p6/4PPP1/2P1B3/P1P1K1P1/7R b - - 2 24|d8e7 e3d4 f7f6 h6h7 g7g8 h7e7|2204|crushing endgame long skewer
+skewer|3|1PKXX|5r2/p3r1p1/3b3k/3B2Np/3P1qnP/2P4Q/PP3P2/R2K1R2 w - - 3 29|h3d3 g4e3 f2e3 f4f1 d3f1 f8f1 d1c2 f1a1|2097|advantage exposedKing middlegame skewer veryLong
+skewer|3|32ARu|7r/2R5/pp2rp2/3ppk1p/P6P/3P1R2/1P3P1K/8 b - - 2 32|f5g4 h2g2 h8g8 f3g3 g4f4 g3g8|2105|crushing endgame long rookEndgame skewer
+skewer|3|2H5Ry|8/6Rp/8/p7/r1pk4/7P/5KP1/8 b - - 0 38|c4c3 g7g4 d4d3 g4a4 c3c2 a4a1 d3c3 a1a5|2389|crushing endgame rookEndgame skewer veryLong
+skewer|3|1hiyu|r3r1k1/1Q3ppp/2p2nn1/3p4/1B6/pP1BPP2/1qP2P1P/3R2RK w - - 1 24|d1a1 a8b8 b7c6 b8b4|2229|advantage master middlegame short skewer
+skewer|3|0NVC5|2r1k2r/1q3p2/p2Rp1bp/1p2Q3/8/2P3P1/PP4PK/5R2 b k - 2 25|e8e7 d6e6 f7e6 e5g7 e7d6 g7b7|2074|crushing fork long middlegame sacrifice skewer
+skewer|3|2rbjg|8/1n6/p2k4/1p1P1p1B/1K5P/6P1/8/8 b - - 0 46|d6d5 h5f3 d5e5 f3b7 f5f4 g3g4|2233|crushing defensiveMove endgame long skewer
+skewer|3|2rj6k|8/1p6/p3k1K1/PbPp1p2/3P4/4P3/8/7R w - - 3 50|h1h5 b5e8 g6h6 e8h5 h6h5 f5f4 h5g4 f4e3|2256|crushing endgame skewer veryLong
+skewer|3|1WT9W|r5r1/1p2pk2/1q1p1pp1/p2P4/2P5/1P3R2/P1B3PP/4Q2K b - - 2 25|g8g7 e1e6 f7e8 f3h3 e8d8 h3h8 d8c7 h8a8|2226|crushing endgame quietMove skewer veryLong
+skewer|3|33P7Z|r4rk1/1b2pp1p/p5p1/1p1qb3/3BB1Q1/2P2P1P/PP4n1/R4RK1 b - - 1 19|g2e3 d4e3 d5d8 e4b7|2163|advantage hangingPiece middlegame short skewer
+skewer|3|11P23|6k1/1p4pp/p2pp3/3n4/3P2q1/PP2B3/2Q4P/R6K w - - 2 28|e3f2 g4f3 h1g1 d5f4 g1f1 f3g2 f1e1 g2h1 e1d2 h1a1|2302|advantage endgame quietMove skewer veryLong
+skewer|3|2bSqR|7R/8/p1P5/P3rk2/4p3/4K3/5P1p/8 b - - 1 51|e5a5 c6c7 a5c5 h8h5 f5f6 h5c5|2235|advancedPawn crushing endgame long rookEndgame skewer
+skewer|3|27MRf|2rq1k2/p4p2/1p4p1/5p2/2n2P2/P1Pp3Q/K6P/3R2R1 b - - 6 26|d8d5 h3h8 f8e7 h8c8 c4d6 c3c4|2215|advantage endgame long skewer
+skewer|3|3GiIC|2R5/4r1pp/1p3p2/p3pk2/3q1P2/7Q/PP4PP/7K b - - 8 32|f5f4 c8c4 d4c4 h3h4 f4f5 h4c4|2088|advantage endgame long pin sacrifice skewer
+trappedPiece|1|0rqhL|2kr3r/pp1n4/2p1pn2/P2q1p2/1P1P1Bp1/5P2/2P1B1P1/R2Q1RK1 b - - 0 20|h8h7 c2c4 g4f3 c4d5|1415|crushing middlegame short trappedPiece
+trappedPiece|1|2p0Xa|8/p2r1q1k/2p1n1p1/5pQp/2P5/1PB1R1PP/P4PK1/8 w - - 10 38|g5h4 g6g5 e3e6 g5h4|1595|crushing endgame short trappedPiece
+trappedPiece|1|2daBE|r1bq1r2/1p2kp1Q/p5p1/2p1nn2/P3N3/N1P5/BP4PP/R4RK1 w - - 3 20|a1e1 f8h8 e4g5 h8h7|1371|advantage master middlegame short trappedPiece
+trappedPiece|1|0fmmZ|3r1r2/3b2bk/2p2ppp/p7/4P3/1NN3Q1/PPP2qPP/R3R2K b - - 2 22|f2c2 e1e2 c2e2 c3e2|1615|advantage middlegame short trappedPiece
+trappedPiece|1|2SaEa|2k1q2r/1p1r4/p1p1n1p1/2P2nBp/6Q1/P2P4/BP3PPP/4RRK1 w - - 0 25|g4h3 e6g5 e1e8 h8e8 h3f5 g6f5|1324|crushing long middlegame trappedPiece
+trappedPiece|1|20qsK|r1b2rk1/pp1n1pbp/3p1np1/q2P4/8/P1N2N1P/1P2BPP1/R1BQ1RK1 b - - 0 12|d7b6 b2b4 b6d5 b4a5|1365|advantage opening short trappedPiece
+trappedPiece|1|1Gs0P|r2r2k1/5pp1/3p2bp/1p1Pp1q1/p1p1P1P1/P1P2P1P/1PBN2Q1/5RK1 b - - 0 29|f7f6 f3f4 e5f4 d2f3 g5e5 f3e5|1498|advantage long middlegame trappedPiece
+trappedPiece|1|2RLdr|r1b1kb1r/1p3p1p/p1n3p1/3qP2n/Q2N4/7P/PP1BBPP1/R3K2R b KQkq - 0 16|d5g2 e2f3 g2f3 d4f3|1501|advantage middlegame pin short trappedPiece
+trappedPiece|1|1K9MZ|8/p4pkp/bp2p1p1/8/2P3N1/1P1r1P2/P5PP/4K2R b K - 0 24|d3c3 e1d2 c3c4 b3c4|1560|crushing endgame short trappedPiece
+trappedPiece|1|1vHP7|1br2rk1/p4pp1/4p3/6P1/3Pb1q1/2P1B2R/PP3QPP/5RK1 b - - 6 23|e4f5 h3h4 g4h4 f2h4|1635|crushing middlegame short trappedPiece
+trappedPiece|1|2btUZ|rnb1kb1r/1p3ppp/pq1ppn2/6B1/3NP3/P1N5/1PP1BPPP/R2QK2R b KQkq - 0 8|b6b2 c3a4 b2a1 d1a1|1537|crushing opening short trappedPiece
+trappedPiece|1|30oMY|r2q1rk1/pp4pp/3p1b2/2pNpP2/4P3/5P2/PPPB2QP/3K2R1 b - - 3 19|f8f7 d5f6 d8f6 d2g5 f6g5 g2g5|1482|advantage kingsideAttack long middlegame pin trappedPiece
+trappedPiece|1|0YBFh|r4rk1/2pbqppp/p1np1n2/1p6/3NP3/1B6/PPP2PPP/R1BQ1RK1 w - - 0 12|f2f3 c6d4 d1d4 c7c5 d4f2 c5c4 b3c4 b5c4|1305|advantage middlegame trappedPiece veryLong
+trappedPiece|1|0Pgue|r4rk1/3bppbp/pq1p1np1/1p6/3NPP2/P1NB4/1PP3PP/R1BQR2K b - - 0 14|b6d4 c1e3 d4c3 b2c3|1587|advantage middlegame short trappedPiece
+trappedPiece|1|3IMqX|r4rk1/1p3p2/p2qb2p/2ppn1p1/8/P1NP2P1/BPP2P1P/R2QR1K1 w - - 1 19|d1h5 e6g4 e1e5 g4h5|1352|crushing middlegame short trappedPiece
+trappedPiece|1|2FiZV|2rr4/2pnqkpp/4b3/p1p2p2/P1P1pQ2/BP4PP/4PP2/3RRNK1 w - - 8 27|f1e3 g7g5 e3f5 g5f4 f5e7 f7e7|1482|advantage long middlegame trappedPiece
+trappedPiece|1|0BCEU|r3k2r/pppb1ppp/8/n2P4/2P2p2/2Q2N2/PP1Nq2P/R5KR b kq - 1 16|e8g8 a1e1 e2e1 f3e1|1533|advantage middlegame short trappedPiece
+trappedPiece|1|14LmQ|r4rk1/ppp3p1/1bnp3p/4p1q1/4Pp2/2PP4/PP1BQPK1/RN1BR3 w - - 0 18|g2f1 f4f3 d2g5 f3e2 e1e2 h6g5|1415|advancedPawn advantage long middlegame trappedPiece
+trappedPiece|1|2RPtu|3r1rk1/pp3p1p/2b1pPp1/7q/3P1R2/3BN1Q1/PP4PP/6K1 b - - 6 23|e6e5 f4h4 h5h4 g3h4|1360|crushing middlegame short trappedPiece
+trappedPiece|1|0Hfon|rn1q1k1r/p1pbp3/1p1p1n1p/3P2pQ/2PP1p2/2NB2B1/PP3PPP/R4RK1 w - - 2 14|h5f3 d7g4 f3g4 f6g4|1450|crushing middlegame short trappedPiece
+trappedPiece|2|0WqKP|1k1r1bnr/ppp3pp/8/4Q3/2q5/8/PPP1NPPP/2KR3R b - - 0 16|d8d1 h1d1 f8e7 e5g7 a7a5 g7h8|1724|advantage long middlegame trappedPiece
+trappedPiece|2|1x8v3|4r3/2p2p2/3p1q1k/p2P1Pp1/P1P5/5QRP/4r1P1/5R1K w - - 6 34|g3g4 e8e3 f3e2 e3e2|1704|crushing endgame master short trappedPiece
+trappedPiece|2|2eAz3|r3k1r1/1p2np1p/p1pp1Bp1/2b5/2q1P3/P1N2PRP/1PQ2P2/R3K3 b Qq - 3 18|d6d5 b2b3 c4d4 f6d4|1946|crushing middlegame short trappedPiece
+trappedPiece|2|0pIpa|r1b4Q/pp1nqkbp/2p2np1/3P2B1/8/2NP4/PPP1BPPP/R3K2R w KQ - 1 12|g5f6 d7f6 h8g7 f7g7|1801|advantage middlegame short trappedPiece
+trappedPiece|2|0AJz9|8/4k3/2B5/r2p4/3Pp3/4P1P1/5PK1/8 w - - 5 84|c6b7 e7d7 g3g4 d7c7 g2g3 c7b7|1965|crushing endgame long trappedPiece
+trappedPiece|2|26S0W|8/5K1n/6p1/7p/p1k4P/6P1/1P6/2N5 b - - 19 60|g6g5 f7g7 g5h4 g3h4 h7g5 h4g5|2043|crushing endgame knightEndgame long master masterVsMaster trappedPiece
+trappedPiece|2|1WtUm|r2qk2r/ppp2pp1/2nbbn1p/1B1p2Q1/8/1P2P3/P1PP1PPP/RNB1K1NR w KQkq - 0 8|g5g7 h8h7 b5c6 b7c6 g7g3 d6g3|2042|crushing long opening trappedPiece
+trappedPiece|2|1R0eN|rnbq1k2/pp3pb1/6p1/3R1n2/2B2Q2/2N5/PP3PPP/2K4R b - - 0 16|d8d5 c3d5 g7h6 f4h6 f5h6 d5c7 b8c6 c7a8|1930|advantage hangingPiece middlegame trappedPiece veryLong
+trappedPiece|2|0PBwv|r3r1k1/pp3pbp/2ppbnp1/4q3/4P3/P1N1BB1P/1PP2PP1/R1QR2K1 b - - 3 14|d6d5 e3f4 e5c3 b2c3|1715|crushing middlegame short trappedPiece
+trappedPiece|2|2QuiE|2k4r/1b1qnQ2/pRn1p1rP/3pP3/5P2/P1N5/2P3P1/2B1KB1R w K - 1 19|h6h7 c6d8 b6d6 d8f7 d6d7 c8d7|1929|advantage long master middlegame trappedPiece
+trappedPiece|2|0gYs1|r3r1k1/pp3ppp/2pq1pn1/3b4/3P4/2PB4/PP1QNPPP/4RRK1 w - - 0 15|a2a3 d5g2 d3g6 g2f1 g6f7 g8f7|2045|crushing long master middlegame trappedPiece
+trappedPiece|2|0wrns|3r2k1/3b1pp1/p6p/1p1p2r1/1P4P1/P2B3P/2P2P2/R1R3K1 b - - 0 30|d8e8 f2f4 g5g6 d3g6|1710|crushing endgame short trappedPiece
+trappedPiece|2|0FGVb|8/6p1/4pkp1/5p2/R6P/4KPP1/6r1/8 b - - 0 44|g2g3 e3f2 g3h3 f2g2 h3h4 a4h4|1730|crushing endgame long rookEndgame trappedPiece
+trappedPiece|2|0rHLH|r5k1/p2r1ppp/1p1Bp3/4Pn2/1Q6/P6P/q4PP1/2RR2K1 b - - 0 24|a8d8 d1d2 a2d2 b4d2|1699|advantage middlegame short trappedPiece
+trappedPiece|2|2OBnc|5r1k/5pp1/2p2r1p/1p3Nq1/p1n1P3/P1P1P2P/1P2Q1P1/1B2R2K b - - 10 29|g7g6 h3h4 g5h5 g2g4 f6f5 g4h5|1760|advantage long middlegame trappedPiece
+trappedPiece|2|37C8E|r1b1k2r/p3ppbp/2p3p1/3nP3/8/2N2Q1P/PqPB2P1/2R1KB1R b Kkq - 2 15|e8g8 c1b1 b2c2 f1d3 c2c3 d2c3|1815|advantage long master middlegame trappedPiece
+trappedPiece|2|0sLks|2kr4/pp4qp/2pPp1n1/2Pp1r1Q/3P4/1P3NPP/P7/4RRK1 w - - 5 25|h5g4 h7h5 g4f5 e6f5|1780|advantage master middlegame short trappedPiece
+trappedPiece|2|025gx|5r1k/2b1Npp1/1p2p2p/1qn5/3Q4/P7/3R1PPP/3R2K1 w - - 0 26|d2b2 b5e8 e7d5 e6d5|1970|advantage middlegame short trappedPiece
+trappedPiece|2|2c87v|r1bq1rk1/pp3ppp/2n1pb1B/4N3/2B1NP2/2p3Q1/PP4PP/R4K2 b - - 1 15|g8h8 e4f6 d8f6 h6g5 f6f5 c4d3 c6e5 d3f5|1905|advantage master middlegame trappedPiece veryLong
+trappedPiece|2|0War5|k2r4/p1Qbb1p1/1p2pnpr/5q1p/3P3P/2P2NB1/PP1N1PP1/2KRR3 w - - 6 22|f3e5 d8c8 e5c6 c8c7|1914|advantage middlegame short trappedPiece
+trappedPiece|3|0YwJT|2r1qr1k/6p1/p3pp1p/3p4/3PnBQ1/2P1R2P/2P2PP1/4R1K1 w - - 1 25|f2f3 h6h5 g4h4 g7g5 f3e4 g5h4|2185|advantage fork long middlegame trappedPiece
+trappedPiece|3|21yNp|r1b1kb1r/ppp2Npp/8/3np3/2P4q/8/P1PP1PPP/RNBQK2R w KQkq - 1 9|c4d5 c8g4 d1g4 h4g4|2163|advantage opening short trappedPiece
+trappedPiece|3|0EJgJ|8/8/1p6/4p3/P2b1p1p/3R1P1P/2k1K1P1/8 w - - 0 40|d3a3 d4c3 a3a2 c2b3 e2d3 b3a2 d3c3 a2a3 a4a5 b6a5|2387|crushing defensiveMove endgame master quietMove trappedPiece veryLong
+trappedPiece|3|0UJ2S|k3r3/pR3Q2/2n1q2p/6p1/5p2/P1B4P/1PP2P2/1K6 w - - 1 28|f7c7 e8e7 c7c6 e6c6|2099|advantage endgame short trappedPiece
+trappedPiece|3|06xqS|r1b1kb1r/pppp1ppp/5n2/1BP5/8/q7/P2B1PPP/1R1QK1NR b Kkq - 0 11|c7c6 d1e2 f8e7 d2b4 a3b4 b1b4|2156|advantage long opening pin trappedPiece
+trappedPiece|3|2HzPR|2kr1r2/p1q1pNb1/1pp2n2/2p4p/4P1bP/2NPB3/1PP2QP1/R3K2R w KQ - 7 19|e3f4 e7e5 f7d8 e5f4 d8c6 c7c6|2055|advantage long master masterVsMaster middlegame sacrifice trappedPiece
+trappedPiece|3|3TkRK|8/1p6/1k3n2/3p1N1p/1P3p2/2Pr1P1P/2R2K2/8 b - - 3 37|b6b5 f2e2 d3c3 c2c3|2056|advantage endgame short trappedPiece
+trappedPiece|3|24dW9|1q3r2/1p2bpk1/p1n1p1p1/4P1Np/1P1r1Q1P/P4R2/5PPB/4R1K1 w - - 5 31|f4f6 g7g8 f6f7 f8f7|2320|crushing defensiveMove master middlegame short trappedPiece
+trappedPiece|3|0k5nO|r4rk1/pp2qppp/1b4b1/3NP3/5B2/P6P/1P2B1P1/2R2Q1K b - - 2 19|e7h4 d5f6 g7f6 g2g3 h4g5 f4g5|2201|advantage long middlegame sacrifice trappedPiece
+trappedPiece|3|3LcAt|r1b1r1k1/p4ppp/1p1b4/3n4/4n2q/PP1N2N1/1B1P1PPP/1BRQ1RK1 w - - 5 20|d1f3 c8g4 f3g4 h4g4|2103|advantage opening short trappedPiece
+trappedPiece|3|3CcSg|1r3bk1/5p1p/4p1p1/q7/P3P3/4BP2/Q5PP/1R4K1 w - - 1 31|b1a1 a5c3 e3f2 b8b2 a2b2 c3b2|2169|advantage endgame long trappedPiece
+trappedPiece|3|02K3C|r1b1kb1r/pp2pppp/2n2n2/3P4/2B5/q4N2/P2B1PPP/1R1QK2R b Kkq - 2 11|c8g4 d5c6 b7c6 d2b4 a3b4 b1b4|2055|crushing long opening trappedPiece
+trappedPiece|3|0fK5w|8/4qp1k/p2p2b1/1p2r3/4PQ1r/1P2R1RP/P4PBK/8 w - - 3 36|f4f3 g6h5 f3f5 e5f5|2132|crushing middlegame short trappedPiece
+trappedPiece|3|3E5nG|4rrk1/6pp/p2p1q2/Q1pR1p2/4p3/P4N2/1P3PPP/R5K1 w - - 0 25|f3d2 f6e6 a5a6 e6d5|2184|advantage middlegame short trappedPiece
+trappedPiece|3|1xwDa|r4rk1/ppp1npp1/3pb2p/5q2/3P3P/P1P1BN2/2BQ1PP1/R5K1 b - - 9 21|f5f6 e3g5 h6g5 h4g5 f6f3 g2f3|2084|advantage long middlegame sacrifice trappedPiece
+trappedPiece|3|39a93|r4rk1/ppp2ppp/2n2q1n/2bPp1NQ/2B3b1/3P4/PPP2PPP/RNB2RK1 w - - 1 9|h5h4 c6d4 h2h3 d4f5 h4g4 h6g4|2454|advantage long middlegame trappedPiece
+trappedPiece|3|3TTyF|r4rk1/1b1nqppp/p4n2/Bp1pp3/4P3/2NB1P1P/PPP3P1/R2QR1K1 w - - 0 17|e4d5 e7c5 g1h1 b5b4 a5b4 c5b4|2089|advantage long middlegame trappedPiece
+trappedPiece|3|1I59i|2rr2k1/pp2nqpp/3Rpp2/8/4P1Q1/1P6/PB3PPP/R5K1 w - - 1 22|g4e6 f7e6 d6e6 g8f7 e6e7 f7e7|2059|crushing long middlegame trappedPiece
+trappedPiece|3|2INFh|3qkb1r/2pb1ppp/2Q2n2/r3p3/3p4/4P3/PP1P1PPP/R1BNKBNR w KQk - 1 12|c6f3 e5e4 f3g3 f6h5 e3d4 h5g3|2342|advantage long opening trappedPiece
+trappedPiece|3|0xcfV|r4rk1/pp3pbp/2b3pq/2pN4/3n2P1/2NP2QP/PPP3B1/2R2R1K b - - 10 19|a8e8 g4g5 h6h5 d5f4 d4f5 f4h5 f5g3 h5g3|2064|crushing middlegame trappedPiece veryLong
+xRayAttack|1|05UmM|1q4k1/4ppbp/6p1/3P4/2r1N2P/3Q2P1/2p2P2/2R3K1 b - - 1 30|b8b1 c1b1 c2b1r d3b1|1565|crushing endgame master short xRayAttack
+xRayAttack|1|0hEAF|3r4/5pk1/p4n1p/1p3Bp1/1P4P1/P2pR2P/2qQ1PK1/8 w - - 5 35|e3d3 c2d2 d3d2 d8d2|1306|crushing endgame short xRayAttack
+xRayAttack|1|2F5ah|1rb1k2r/1p4Qp/5p1n/p3n3/8/6PP/PPP2qBK/4R2R b k - 2 25|h8g8 e1e5 f6e5 g7e5|1291|advantage middlegame short xRayAttack
+xRayAttack|1|3JB18|4Q3/6q1/5k1p/5pp1/1P2p3/3r4/6PP/2R3K1 b - - 3 36|g7d7 c1c6 d7c6 e8c6|1316|advantage endgame short xRayAttack
+xRayAttack|1|1PP12|2r2rk1/p1R2ppp/bp6/3P2q1/4P3/4NQ2/PP4PP/2R3K1 w - - 4 23|e3f5 g5c1 c7c1 c8c1 g1f2 c1f1 f2e3 f1f3|1284|crushing kingsideAttack middlegame skewer veryLong xRayAttack
+xRayAttack|1|33faj|3r1rk1/5pp1/4p3/1q2P1pQ/p2p4/P6P/1P3RP1/5R1K w - - 0 29|f2f7 b5f1 f7f1 f8f1|1480|crushing endgame short xRayAttack
+xRayAttack|1|2i9rK|1k2r3/1bpp3p/1p6/1N6/8/7B/PPPRprPP/2K1R3 w - - 2 22|h3d7 f2f1 d2e2 f1e1 e2e1 e8e1|1279|advantage long middlegame xRayAttack
+xRayAttack|1|3TjyB|3r3r/1Qpkn1pp/1pnq1pb1/1B6/6P1/7P/PP3P2/R2R2K1 b - - 1 22|e7d5 b5c6 d6c6 d1d5 c6d5 b7d5|1341|crushing long middlegame xRayAttack
+xRayAttack|1|2RBEf|4r2r/ppp3k1/3p3b/3P1P2/4q3/6PR/PPPQN3/2K4R w - - 1 27|h3h6 e4h1 h6h1 h8h1 d2d1 h1d1|1555|advantage long master middlegame queensideAttack xRayAttack
+xRayAttack|1|2ndWT|7k/p5rp/4p3/1pQ5/4bP2/2P4P/PP1r1R2/5RK1 w - - 1 29|g1h2 g7g2 f2g2 d2g2|1284|advantage endgame short xRayAttack
+xRayAttack|1|3434g|4qk1r/rbRQbppp/p3p3/P2p4/3P4/4B3/3N1PPP/1R4K1 w - - 3 21|c7b7 e8d7 b7d7 a7d7|1273|advantage middlegame short xRayAttack
+xRayAttack|1|0UDxf|2r3k1/5p2/p3p3/1prp4/3q4/P2b1RP1/3Q1PBP/2R3K1 w - - 0 36|c1c5 d4a1 d2c1 a1c1 c5c1 c8c1|1549|crushing long middlegame xRayAttack
+xRayAttack|1|13Zid|5r2/6k1/p2b1rpp/1p6/2pPRPq1/P5P1/1P2Q1K1/1B1R4 b - - 6 38|f6f4 e2g4 f4g4 e4g4|1613|advantage middlegame short xRayAttack
+xRayAttack|1|0hBQW|2rr2k1/pb3pp1/1p3n1p/3p4/3N4/qP1BP3/P1R1QPPP/2R3K1 w - - 1 19|d3f5 a3c1 c2c1 c8c1|1543|advantage master masterVsMaster middlegame short xRayAttack
+xRayAttack|1|2xESR|r1b2q2/1pp5/pk1p1pQr/3P4/4PRn1/2N5/PPP3PP/R1B3K1 w - - 3 18|f4f6 f8f6 g6f6 h6f6|1455|advantage middlegame short xRayAttack
+xRayAttack|1|1DsTJ|r1r3k1/5pp1/4p1p1/3p4/p3n3/qP1QPN1P/P1R2PP1/5RK1 w - - 0 22|f1c1 a3c1 c2c1 c8c1|1530|crushing middlegame short xRayAttack
+xRayAttack|1|20iVQ|4k3/p1p5/2pp1pp1/4rn2/8/1PP5/PQ1RbqPP/1K2R3 w - - 0 28|d2e2 f2e1 e2e1 e5e1 b2c1 e1c1|1552|crushing endgame long queensideAttack xRayAttack
+xRayAttack|1|2EYWo|4r1k1/1p4n1/p3p3/2N1Pppp/4b3/1BB5/PPP2PPP/3qQ1K1 b - - 5 28|e4c2 e1d1 c2d1 b3d1|1374|crushing middlegame short xRayAttack
+xRayAttack|1|1sqXf|r1b1r1k1/pp2Bpbp/6p1/q2P4/4P3/2PB1Q2/P4PPP/R3K2R w KQ - 1 14|e7b4 g7c3 b4c3 a5c3 e1e2 c3b2|1551|crushing fork long middlegame xRayAttack
+xRayAttack|1|34Ti5|8/p4r1k/5qp1/5r1p/2PQ4/2P1p3/P5RP/5R1K w - - 0 32|d4f6 f5f1 f6f1 f7f1 g2g1 e3e2|1604|advancedPawn crushing endgame fork long queenRookEndgame xRayAttack
+xRayAttack|2|1KTm0|rn1qkb1r/ppp1npp1/4p2p/3pNb2/3P1B2/3BP3/PPP2PPP/RN1QK2R b KQkq - 1 6|f7f6 d1h5 g7g6 e5g6 f5g6 d3g6 e7g6 h5g6|1719|advantage exposedKing opening veryLong xRayAttack
+xRayAttack|2|1c4Fc|3rk2r/pq3ppp/4pn2/1N1P4/Ppp5/6P1/1P2PP1P/R2Q1RK1 b k - 0 16|d8d5 b5d6 d5d6 d1d6|1999|advantage fork middlegame short xRayAttack
+xRayAttack|2|1ZIkf|r3k2r/1Qp1q1pp/p1p1b3/2P5/8/4PR2/PP4PP/R5K1 b - - 4 19|e8d7 a1d1 e6d5 d1d5 c6d5 b7d5|1772|crushing long middlegame xRayAttack
+xRayAttack|2|0JOGi|5k2/p2qpp2/1p6/2p5/2P1PP2/3r2Rb/P6Q/2R3K1 w - - 0 28|h2h3 d7h3 g3h3 d3h3|1660|advantage endgame master short xRayAttack
+xRayAttack|2|0acJU|2rr2k1/1p3p1p/p2pp1p1/8/2P1b1q1/2P1B3/P2R1QBP/3R2K1 w - - 0 24|d2d6 g4d1 d6d1 d8d1 g2f1 e4d3|1792|advantage kingsideAttack long middlegame xRayAttack
+xRayAttack|2|1aevl|4rk2/pp3pp1/7p/3q4/3b1Q2/7P/P1P3P1/3R1B1K b - - 2 23|d4e5 f4b4 e5d6 b4d6 d5d6 d1d6 e8e1 h1g1|1736|crushing defensiveMove endgame veryLong xRayAttack
+xRayAttack|2|3FqQV|5r1k/R3Nqbp/1B1Q2p1/2p5/1p2P3/3b1P2/6PP/6K1 b - - 0 28|g7d4 d6d4 c5d4 b6d4|1944|advantage master middlegame sacrifice short xRayAttack
+xRayAttack|2|0Gp7N|5rk1/1pr5/p5BQ/8/3q4/P1n3N1/6PP/5R1K b - - 1 30|d4g7 g6h7 g8h8 f1f8 g7f8 h6f8|1840|crushing deflection exposedKing long middlegame xRayAttack
+xRayAttack|2|1ynVl|3r4/2r1kp1p/2p3p1/1p2P3/1PnN4/p2R2PK/P6P/4R3 b - - 0 34|d8d5 d4c6 e7e6 c6d8 d5d8 d3d8|1805|advantage endgame long master xRayAttack
+xRayAttack|2|0Eg30|3r2k1/3Prp2/1Q4p1/6p1/5b2/P3Bb2/1PBR1Pqp/1K2R3 b - - 2 32|e7d7 b6d8 d7d8 d2d8 g8g7 e3d4|1745|crushing long master middlegame xRayAttack
+xRayAttack|2|250Xo|r2qnr1k/1pp3bb/p2p3B/3P4/2P5/2N4P/PP1Q2P1/4RRK1 b - - 1 18|d8d7 f1f8 g7f8 h6f8|1745|advantage kingsideAttack middlegame short xRayAttack
+xRayAttack|2|0EtJW|3q4/3r1r1p/pQR3pk/3N3n/P4p1P/5P2/1P3P2/3R2K1 b - - 0 28|d7d5 b6d8 d5d8 d1d8|1759|crushing middlegame short xRayAttack
+xRayAttack|2|33NZe|3r1rk1/p1b2bpp/8/2P5/NP4q1/P5P1/1B1R1PQ1/R5K1 w - - 3 26|a1d1 g4d1 d2d1 d8d1|1677|crushing kingsideAttack middlegame short xRayAttack
+xRayAttack|2|2dpZZ|r1b2rk1/ppp2ppp/8/8/2QN4/P1P1q3/P5PP/R4R1K b - - 0 18|c7c6 a1e1 c8e6 d4e6 e3e6 e1e6|1965|advantage long middlegame xRayAttack
+xRayAttack|2|0LjvG|4r1k1/1p1b1p2/6p1/1PRp2q1/3P3p/5B1P/P1Q2PP1/4rRK1 w - - 1 30|c5d5 e1f1 g1f1 d7b5 d5b5 g5b5|1876|advantage attraction kingsideAttack long middlegame xRayAttack
+xRayAttack|2|2WLgJ|3r4/1pk2p2/8/2NP3p/5P1b/P4n2/2N1Q1Kr/R7 w - - 2 37|g2f1 f3d2 e2d2 h2d2|2035|crushing middlegame short xRayAttack
+xRayAttack|2|2rkP4|3r3k/1p4pp/2n4q/8/3Q4/P4PPP/1B4K1/2R5 w - - 1 28|c1c6 h6d2 d4d2 d8d2 g2f1 b7c6|1822|advantage endgame fork long xRayAttack
+xRayAttack|2|2VCag|8/8/2pk1r2/2pn4/8/P1PP2QP/1P3pP1/4qR1K b - - 3 35|d6d7 f1e1 f2e1q g3e1|1692|crushing endgame short xRayAttack
+xRayAttack|2|3CP9m|3r2k1/1b5p/2rPq1p1/Q4p2/PpPRpP2/1P5B/7P/3R2K1 b - - 0 32|c6d6 a5d8 d6d8 d4d8|1752|advantage kingsideAttack master middlegame short xRayAttack
+xRayAttack|2|2O4qJ|1kr5/1pq5/p1b1P3/2Rp1P1p/1P1PP2P/P5K1/8/2Q5 w - - 1 41|c1f4 c8g8 g3f3 d5e4 f3e3 g8g3 f4g3 c7g3|1741|crushing endgame veryLong xRayAttack
+xRayAttack|3|3QClr|r1b1kb1r/p4ppp/2p1pn2/3P4/8/4B3/q2N1PPP/1R1QKB1R b Kkq - 0 12|c6d5 d1c1 c8d7 b1a1 f8a3 c1a3 a2a3 a1a3|2486|advantage opening veryLong xRayAttack
+xRayAttack|3|2FvPc|5rk1/3R2pp/8/1Q1bq3/1P1p4/P2P2P1/3n1PK1/5R2 w - - 4 29|d7d5 e5e2 d5f5 e2f1 g2h2 d2f3 f5f3 f8f3 b5c4 f3f7|2237|crushing endgame veryLong xRayAttack
+xRayAttack|3|3N00W|4r1k1/p4pp1/3q3p/b2p4/1p2r3/1BP1BQ1P/PP1K1PP1/R3R3 w - - 0 26|e3d4 b4c3 d4c3 e4d4 d2c1 e8e1 c3e1 a5e1|2111|advantage deflection discoveredAttack middlegame pin veryLong xRayAttack
+xRayAttack|3|2Y2MX|5Q2/kpr2p1P/p7/5q2/8/2n2N2/P5P1/K1R5 b - - 0 38|f5f6 h7h8q c3a4 c1c3 f6c3 h8c3|2320|advancedPawn advantage defensiveMove endgame long promotion xRayAttack
+xRayAttack|3|2sAUe|r1bq1rk1/p1p2pp1/1p1b1n1p/4n3/4N2B/1B2PN2/PP3PPP/R2QK2R b KQ - 1 12|d6e7 f3e5 f6e4 d1d8 e7d8 h4d8|2492|advantage hangingPiece long opening xRayAttack
+xRayAttack|3|1dTjX|3r2k1/pR3Rpp/2p1rb2/8/8/2N5/PPP3PP/2K5 w - - 1 22|b7d7 f6g5 c1d1 e6d6 d7d6 d8d6|2164|advantage endgame long xRayAttack
+xRayAttack|3|3C4re|4rbk1/1p3pB1/p1pp4/3P3p/1PP1N1q1/P4nP1/4QP1P/4R2K b - - 0 28|f3e1 e4f6 g8g7 f6h5 g4h5 e2h5|2531|advantage fork long middlegame sacrifice xRayAttack
+xRayAttack|3|1WOYF|2br2k1/6p1/p1B1p2p/1p2P3/1Pp4P/P1K2R2/6P1/8 b - - 0 34|d8f8 f3f8 g8f8 a3a4 b5a4 c6a4|2185|advantage endgame long xRayAttack
+xRayAttack|3|3PZam|5r1k/6pp/3b2p1/p2P1q2/1pQ5/1P5P/P3RPP1/2B3K1 w - - 3 38|c1e3 f8c8 g2g4 f5b1 e3c1 b1c1 c4c1 c8c1|2347|advantage endgame veryLong xRayAttack
+xRayAttack|3|2sgzT|1r2r3/3bRpkp/p2p1np1/qp1P4/2PQ4/1PN3P1/P4PBP/4R1K1 w - - 2 22|c3e4 a5e1 g2f1 e1e4 e7e4 e8e4|2175|crushing hangingPiece kingsideAttack long master middlegame xRayAttack
+xRayAttack|3|23YuP|1k5r/1p6/p7/8/4pqPb/2PPR3/PP3P2/R4QK1 w - - 0 28|e3e4 f4f3 f1g2 h4f2 g1f1 h8h1 g2h1 f3h1 f1f2 h1a1|2365|advantage endgame skewer veryLong xRayAttack
+xRayAttack|3|0QlIH|rn1Rnr1k/p3N2p/b5p1/1pp5/4P3/1B6/PPP2PPP/4R1K1 b - - 3 26|a6b7 b3d5 b8a6 d8a8 b7a8 d5a8|2240|crushing long middlegame xRayAttack
+xRayAttack|3|3Hv24|4r1k1/1b1q2pp/4Nn2/p1p3Q1/1p2R3/8/PPP1R1PP/6K1 w - - 5 27|e6g7 d7d1 e2e1 d1e1 e4e1 e8e1 g1f2 f6e4 f2e1 e4g5|2308|advantage fork middlegame veryLong xRayAttack
+xRayAttack|3|1tYCI|r2q1rk1/pp5p/2b1P1p1/5pb1/2PB1Q2/1P1P4/P2N2PP/R4RK1 w - - 2 21|f4e5 g5f6 e6e7 d8d4 e5d4 f6d4|2132|crushing long middlegame xRayAttack
+xRayAttack|3|1yG9x|r3r1k1/p5pp/5p2/1p1n1P2/1q1p1R2/1P1Q3P/P5PN/2R3K1 w - - 2 22|f4d4 d5f4 d4f4 b4f4|2503|advantage middlegame short xRayAttack
+xRayAttack|3|2mWIB|3R4/8/8/5pp1/1P1r4/1k3Q1P/6K1/3q4 b - - 3 61|b3b2 f3d1 d4d1 d8d1|2097|crushing endgame short xRayAttack

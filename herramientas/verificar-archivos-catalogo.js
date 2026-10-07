@@ -1,15 +1,15 @@
 #!/usr/bin/env node
 /*
  * La lista de admin.html#archivos (data/archivos.json) está al día con el
- * disco: todos los PDF, Word, Excel y presentaciones del sitio. No necesita
- * red ni navegador.
+ * disco: todos los PDF, Word, Excel, presentaciones, versiones accesibles e
+ * imágenes del sitio. No necesita red ni navegador.
  *
  * La sección promete TODOS los archivos, también los que se creen después. La
  * lista la arma herramientas/archivos-catalogo.js leyendo el disco, pero un
  * generador que nadie corre no promete nada: el archivo nuevo no aparece y no
  * da ningún error. Por eso esto falla en el CI —y dice cuál falta— hasta que
  * se vuelva a generar. Comprueba, para cada ficha (PDF, Word, Excel,
- * presentaciones):
+ * presentaciones, versiones accesibles, imágenes):
  *   - cada archivo del sitio está una sola vez, y cada uno de la lista existe;
  *   - data/archivos.json es lo que el generador arma hoy (sin mirar el peso);
  *   - cada lección de un curso trae algo, y nada de un curso cae en «sueltos».
@@ -28,7 +28,7 @@ const guardado = fs.existsSync(SALIDA) ? JSON.parse(fs.readFileSync(SALIDA, "utf
 ok(guardado, "data/archivos.json existe");
 if (!guardado) process.exit(1);
 
-const NOMBRE = { pdf: "PDF", word: "Word", excel: "Excel", presentaciones: "Presentaciones" };
+const NOMBRE = { pdf: "PDF", word: "Word", excel: "Excel", presentaciones: "Presentaciones", accesibles: "Versiones accesibles", imagenes: "Imágenes" };
 function rutasDe(tipo, d) {
   const f = d[tipo];
   if (!f) return [];
@@ -53,7 +53,7 @@ for (const tipo of Object.keys(TIPOS)) {
   ok(guardado[tipo] && guardado[tipo].total === disco.size, `el total dice ${guardado[tipo] && guardado[tipo].total} y hay ${disco.size}`);
 }
 
-for (const tipo of ["pdf", "presentaciones"]) {
+for (const tipo of ["pdf", "presentaciones", "accesibles"]) {
   console.log(`\n${NOMBRE[tipo]}, en su lugar`);
   const f = guardado[tipo];
   ok(f.sueltos.every((a) => !a.ruta.startsWith("cursos/") && !a.ruta.startsWith("material/")),

@@ -1,6 +1,6 @@
 /* Los materiales de clase en admin.html#materiales: cada material (el libro
- * «Ponte a prueba», el banco de ejercicios «Mide tu fuerza» y los cuentos
- * de Peonita), con sus
+ * «Ponte a prueba», los diez volúmenes del banco de ejercicios «Mide tu fuerza»,
+ * el libro «Rompe el estancamiento» y los cuentos de Peonita), con sus
  * sub-fichas —las pruebas y sus versiones como cuestionario, si las tiene— y
  * CON QUIÉN se comparte.
  *
@@ -50,6 +50,116 @@
       archivos: [
         { href: "material/mide-tu-fuerza/mide-tu-fuerza.pdf", texto: "📥 El libro en PDF" },
         { href: "material/mide-tu-fuerza/mide-tu-fuerza-accesible.html", texto: "♿ Versión accesible" },
+      ],
+    },
+    {
+      producto: "mide-tu-fuerza-2",
+      emoji: "📘",
+      titulo: "Mide tu fuerza · Volumen 2",
+      autor: "Oscar Angulo Cubero",
+      resumen: "Segundo volumen del banco de ejercicios tácticos: la misma forma que el primero (45 tests de 8, los mismos 15 temas y tres niveles, con su tiempo, sus puntos y la fuerza en Elo) y 360 posiciones todas nuevas, ninguna repetida del volumen 1. Sirve para seguir entrenando y para volver a medir sin que cuente la memoria.",
+      archivos: [
+        { href: "material/mide-tu-fuerza-2/mide-tu-fuerza-2.pdf", texto: "📥 El libro en PDF" },
+        { href: "material/mide-tu-fuerza-2/mide-tu-fuerza-2-accesible.html", texto: "♿ Versión accesible" },
+      ],
+    },
+    {
+      producto: "mide-tu-fuerza-3",
+      emoji: "📙",
+      titulo: "Mide tu fuerza · Volumen 3",
+      autor: "Oscar Angulo Cubero",
+      resumen: "Tercer volumen del banco de ejercicios tácticos: la misma forma que los anteriores (45 tests de 8, los mismos 15 temas y tres niveles, con su tiempo, sus puntos y la fuerza en Elo) y 360 posiciones todas nuevas, ninguna repetida de los volúmenes 1 y 2.",
+      archivos: [
+        { href: "material/mide-tu-fuerza-3/mide-tu-fuerza-3.pdf", texto: "📥 El libro en PDF" },
+        { href: "material/mide-tu-fuerza-3/mide-tu-fuerza-3-accesible.html", texto: "♿ Versión accesible" },
+      ],
+    },
+    {
+      producto: "mide-tu-fuerza-4",
+      emoji: "📓",
+      titulo: "Mide tu fuerza · Volumen 4",
+      autor: "Oscar Angulo Cubero",
+      resumen: "Cuarto volumen del banco de ejercicios tácticos: la misma forma que los anteriores (45 tests de 8, los mismos 15 temas y tres niveles, con su tiempo, sus puntos y la fuerza en Elo) y 360 posiciones todas nuevas, ninguna repetida de los volúmenes 1, 2 y 3.",
+      archivos: [
+        { href: "material/mide-tu-fuerza-4/mide-tu-fuerza-4.pdf", texto: "📥 El libro en PDF" },
+        { href: "material/mide-tu-fuerza-4/mide-tu-fuerza-4-accesible.html", texto: "♿ Versión accesible" },
+      ],
+    },
+    {
+      producto: "mide-tu-fuerza-5",
+      emoji: "📔",
+      titulo: "Mide tu fuerza · Volumen 5",
+      autor: "Oscar Angulo Cubero",
+      resumen: "Quinto volumen del banco de ejercicios tácticos: la misma forma que los anteriores (45 tests de 8, los mismos 15 temas y tres niveles, con su tiempo, sus puntos y la fuerza en Elo) y 360 posiciones todas nuevas, ninguna repetida de los volúmenes 1 a 4.",
+      archivos: [
+        { href: "material/mide-tu-fuerza-5/mide-tu-fuerza-5.pdf", texto: "📥 El libro en PDF" },
+        { href: "material/mide-tu-fuerza-5/mide-tu-fuerza-5-accesible.html", texto: "♿ Versión accesible" },
+      ],
+    },
+    {
+      producto: "mide-tu-fuerza-6",
+      emoji: "📒",
+      titulo: "Mide tu fuerza · Volumen 6",
+      autor: "Oscar Angulo Cubero",
+      resumen: "Sexto volumen del banco de ejercicios tácticos: la misma forma que los anteriores (45 tests de 8, los mismos 15 temas y tres niveles, con su tiempo, sus puntos y la fuerza en Elo) y 360 posiciones todas nuevas, ninguna repetida de los volúmenes 1 a 5.",
+      archivos: [
+        { href: "material/mide-tu-fuerza-6/mide-tu-fuerza-6.pdf", texto: "📥 El libro en PDF" },
+        { href: "material/mide-tu-fuerza-6/mide-tu-fuerza-6-accesible.html", texto: "♿ Versión accesible" },
+      ],
+    },
+    {
+      producto: "mide-tu-fuerza-7",
+      emoji: "📕",
+      titulo: "Mide tu fuerza · Volumen 7",
+      autor: "Oscar Angulo Cubero",
+      resumen: "Séptimo volumen del banco de ejercicios tácticos: la forma de los anteriores (45 tests de 8 en tres niveles, con su tiempo, sus puntos y la fuerza en Elo), 360 posiciones todas nuevas y tres temas nuevos —mate en dos, mate en tres y sacrificio— en lugar del jaque doble, los rayos X y la interferencia.",
+      archivos: [
+        { href: "material/mide-tu-fuerza-7/mide-tu-fuerza-7.pdf", texto: "📥 El libro en PDF" },
+        { href: "material/mide-tu-fuerza-7/mide-tu-fuerza-7-accesible.html", texto: "♿ Versión accesible" },
+      ],
+    },
+    {
+      producto: "mide-tu-fuerza-8",
+      emoji: "📗",
+      titulo: "Mide tu fuerza · Volumen 8",
+      autor: "Oscar Angulo Cubero",
+      resumen: "Octavo volumen del banco de ejercicios tácticos: los mismos temas del volumen 7 (con mate en dos, mate en tres y sacrificio), 45 tests de 8 en tres niveles, con su tiempo, sus puntos y la fuerza en Elo, y 360 posiciones todas nuevas, ninguna repetida de los volúmenes 1 a 7.",
+      archivos: [
+        { href: "material/mide-tu-fuerza-8/mide-tu-fuerza-8.pdf", texto: "📥 El libro en PDF" },
+        { href: "material/mide-tu-fuerza-8/mide-tu-fuerza-8-accesible.html", texto: "♿ Versión accesible" },
+      ],
+    },
+    {
+      producto: "mide-tu-fuerza-9",
+      emoji: "📘",
+      titulo: "Mide tu fuerza · Volumen 9",
+      autor: "Oscar Angulo Cubero",
+      resumen: "Noveno volumen del banco de ejercicios tácticos: los mismos temas del volumen 7 (con mate en dos, mate en tres y sacrificio), 45 tests de 8 en tres niveles, con su tiempo, sus puntos y la fuerza en Elo, y 360 posiciones todas nuevas, ninguna repetida de los volúmenes 1 a 8.",
+      archivos: [
+        { href: "material/mide-tu-fuerza-9/mide-tu-fuerza-9.pdf", texto: "📥 El libro en PDF" },
+        { href: "material/mide-tu-fuerza-9/mide-tu-fuerza-9-accesible.html", texto: "♿ Versión accesible" },
+      ],
+    },
+    {
+      producto: "mide-tu-fuerza-10",
+      emoji: "📙",
+      titulo: "Mide tu fuerza · Volumen 10",
+      autor: "Oscar Angulo Cubero",
+      resumen: "Décimo volumen del banco de ejercicios tácticos: los mismos temas del volumen 7 (con mate en dos, mate en tres y sacrificio), 45 tests de 8 en tres niveles, con su tiempo, sus puntos y la fuerza en Elo, y 360 posiciones todas nuevas, ninguna repetida de los volúmenes 1 a 9.",
+      archivos: [
+        { href: "material/mide-tu-fuerza-10/mide-tu-fuerza-10.pdf", texto: "📥 El libro en PDF" },
+        { href: "material/mide-tu-fuerza-10/mide-tu-fuerza-10-accesible.html", texto: "♿ Versión accesible" },
+      ],
+    },
+    {
+      producto: "rompe-el-estancamiento",
+      emoji: "📙",
+      titulo: "Rompe el estancamiento",
+      autor: "Oscar Angulo Cubero",
+      resumen: "El libro del curso del mismo nombre: las siete familias de errores que frenan a un jugador de 1400 a 2100, una lección por error con su ejemplo comentado y su tarea, 80 ejercicios con soluciones y la ficha de errores para imprimir.",
+      archivos: [
+        { href: "material/rompe-el-estancamiento/rompe-el-estancamiento.pdf", texto: "📥 El libro en PDF" },
+        { href: "material/rompe-el-estancamiento/rompe-el-estancamiento-accesible.html", texto: "♿ Versión accesible" },
       ],
     },
     {

@@ -50,7 +50,7 @@ const CURSOS = [
   "fundamentos-del-ajedrez", "finales-practicos", "estrategia-y-tactica",
   "aperturas-y-defensas", "calculo-y-visualizacion", "desequilibrios-de-material",
   "el-mapa-de-los-finales", "estrategia-en-el-final", "partidas-modelo",
-  "preparacion-para-torneos",
+  "preparacion-para-torneos", "rompe-el-estancamiento",
 ];
 // De qué habla cada curso, para cuando una lección no engancha con ningún
 // concepto por palabras clave: se le dan los de su área.
@@ -60,6 +60,7 @@ const AREA_DEL_CURSO = {
   "calculo-y-visualizacion": "tactica", "desequilibrios-de-material": "estrategia",
   "el-mapa-de-los-finales": "finales", "estrategia-en-el-final": "finales",
   "partidas-modelo": "estrategia", "preparacion-para-torneos": "competicion",
+  "rompe-el-estancamiento": "estrategia",
 };
 
 // ------------------------------------------------------------------ ayudas

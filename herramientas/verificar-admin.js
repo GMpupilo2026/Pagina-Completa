@@ -575,15 +575,26 @@ async function pruebaMateriales(browser) {
     ["material/ponte-a-prueba/ponte-a-prueba.pdf", "material/ponte-a-prueba/ponte-a-prueba-accesible.html",
      "material/ponte-a-prueba/versiones/claves-de-correccion.pdf", "material/ponte-a-prueba/ponte-a-prueba-versiones-accesible.html",
      "material/mide-tu-fuerza/mide-tu-fuerza.pdf", "material/mide-tu-fuerza/mide-tu-fuerza-accesible.html",
+     "material/mide-tu-fuerza-2/mide-tu-fuerza-2.pdf", "material/mide-tu-fuerza-2/mide-tu-fuerza-2-accesible.html",
+     "material/mide-tu-fuerza-3/mide-tu-fuerza-3.pdf", "material/mide-tu-fuerza-3/mide-tu-fuerza-3-accesible.html",
+     "material/mide-tu-fuerza-4/mide-tu-fuerza-4.pdf", "material/mide-tu-fuerza-4/mide-tu-fuerza-4-accesible.html",
+     "material/mide-tu-fuerza-5/mide-tu-fuerza-5.pdf", "material/mide-tu-fuerza-5/mide-tu-fuerza-5-accesible.html",
+     "material/mide-tu-fuerza-6/mide-tu-fuerza-6.pdf", "material/mide-tu-fuerza-6/mide-tu-fuerza-6-accesible.html",
+     "material/mide-tu-fuerza-7/mide-tu-fuerza-7.pdf", "material/mide-tu-fuerza-7/mide-tu-fuerza-7-accesible.html",
+     "material/mide-tu-fuerza-8/mide-tu-fuerza-8.pdf", "material/mide-tu-fuerza-8/mide-tu-fuerza-8-accesible.html",
+     "material/mide-tu-fuerza-9/mide-tu-fuerza-9.pdf", "material/mide-tu-fuerza-9/mide-tu-fuerza-9-accesible.html",
+     "material/mide-tu-fuerza-10/mide-tu-fuerza-10.pdf", "material/mide-tu-fuerza-10/mide-tu-fuerza-10-accesible.html",
+     "material/rompe-el-estancamiento/rompe-el-estancamiento.pdf", "material/rompe-el-estancamiento/rompe-el-estancamiento-accesible.html",
      "material/peonita/peonita.pdf", "material/peonita/peonita-accesible.html",
      "material/peonita-trucos/peonita-trucos.pdf", "material/peonita-trucos/peonita-trucos-accesible.html"]);
   // El banco de ejercicios no tiene pruebas como cuestionario: solo se
   // comparte. Antes de separarlo, cualquier material sin pruebas pintaba
   // igual el título y «todavía no están en la base».
-  igual("el banco de ejercicios se comparte y no tiene sección de pruebas", await page.evaluate(() => {
-    const art = document.querySelector("#mat-lista article[aria-labelledby='mat-titulo-mide-tu-fuerza']");
-    return [art.querySelectorAll(":scope > section").length, /como cuestionario/.test(art.textContent), !!art.querySelector("#mat-mide-tu-fuerza-buscar")];
-  }), [1, false, true]);
+  igual("cada volumen del banco de ejercicios se comparte aparte y no tiene sección de pruebas", await page.evaluate(() =>
+    ["mide-tu-fuerza", "mide-tu-fuerza-2", "mide-tu-fuerza-3", "mide-tu-fuerza-4", "mide-tu-fuerza-5", "mide-tu-fuerza-6", "mide-tu-fuerza-7", "mide-tu-fuerza-8", "mide-tu-fuerza-9", "mide-tu-fuerza-10"].map((p) => {
+      const art = document.querySelector("#mat-lista article[aria-labelledby='mat-titulo-" + p + "']");
+      return [art.querySelectorAll(":scope > section").length, /como cuestionario/.test(art.textContent), !!art.querySelector("#mat-" + p + "-buscar")];
+    })), Array(10).fill([1, false, true]));
   igual("el cuento de Peonita tampoco", await page.evaluate(() => {
     const art = document.querySelector("#mat-lista article[aria-labelledby='mat-titulo-peonita']");
     return [art.querySelectorAll(":scope > section").length, /como cuestionario/.test(art.textContent), !!art.querySelector("#mat-peonita-buscar")];
@@ -643,121 +654,285 @@ async function pruebaMateriales(browser) {
   await ctx.close();
 }
 
-/* ============ admin.html · Archivos: todos los PDF, Word, Excel y presentaciones ============
+/* ============ admin.html · Archivos: PDF, Word, Excel, presentaciones y versiones accesibles ============
    La lista es data/archivos.json (herramientas/archivos-catalogo.js, leído del
    disco): acá se mira que la pantalla muestre TODOS, cada tipo en su ficha y
-   en su lugar, que buscar y filtrar escondan de verdad (checkVisibility) y que
-   «Bajar los N» baje N. Que el JSON esté al día con el disco lo cuida
-   verificar-archivos-catalogo.js. */
+   cada uno en su carpeta; que buscar busque en toda la ficha; que «Bajar los
+   N» baje N; y que la vista previa muestre el archivo sin bajarlo (el PDF en
+   su marco, la presentación diapositiva por diapositiva, el Word con su
+   texto). Lo que se ve se mide con checkVisibility(). Que el JSON esté al día
+   con el disco lo cuida verificar-archivos-catalogo.js. */
+/* Un clic como el de una persona, con el botón en el medio de la pantalla:
+   en el borde lo pueden tapar el encabezado fijo o la burbuja de conectados, y
+   Playwright reintenta hasta que se le acaba el tiempo. */
+async function clic(page, selector) {
+  await page.locator(selector).first().evaluate((e) => e.scrollIntoView({ block: "center" }));
+  await page.click(selector);
+}
+
 async function pruebaPdfs(browser) {
-  console.log("\n=== Archivos: PDF, Word, Excel y presentaciones, ordenados, para abrir o bajar ===");
+  console.log("\n=== Archivos: explorador por carpetas y vista previa ===");
   const todo = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "data", "archivos.json"), "utf8"));
   const catalogo = todo.pdf;
+  const rutasDe = (f) => f.cursos
+    ? f.material.concat(f.sueltos, ...f.cursos.map((c) => c.lecciones.flatMap((l) => l.archivos).concat(c.otros))).map((a) => a.ruta)
+    : f.grupos.flatMap((g) => g.archivos).map((a) => a.ruta);
   const { page, ctx, errores } = await abrir(browser, "/admin.html", ADMIN, { acceptDownloads: true });
   await page.goto(BASE + "/admin.html", { waitUntil: "networkidle" });
   await page.waitForSelector("#app:not(.hidden)", { timeout: 20000 });
   await irA(page, "archivos");
-  await page.waitForSelector("#pdf-lista .pdf-fila", { state: "attached", timeout: 10000 });
-  igual("cuatro fichas, cada una con cuántos tiene, y se abre en PDF", await page.evaluate(() =>
+  await page.waitForSelector("#arch-contenido-pdf .arch-fila", { timeout: 10000 });
+
+  igual("seis fichas, cada una con cuántos tiene, y se abre en PDF", await page.evaluate(() =>
     Array.from(document.querySelectorAll("#arch-fichas [role=tab]")).map((b) => b.textContent.trim() + (b.getAttribute("aria-selected") === "true" ? " *" : ""))),
-    ["📕 PDF (" + catalogo.total + ") *", "📝 Word (" + todo.word.total + ")", "📊 Excel (" + todo.excel.total + ")", "📽️ Presentaciones (" + todo.presentaciones.total + ")"]);
+    ["📕 PDF (" + catalogo.total + ") *", "📝 Word (" + todo.word.total + ")", "📊 Excel (" + todo.excel.total + ")", "📽️ Presentaciones (" + todo.presentaciones.total + ")", "♿ Versiones accesibles (" + todo.accesibles.total + ")", "🖼️ Imágenes (" + todo.imagenes.total + ")"]);
   igual("solo se ve la ficha de PDF", await page.evaluate(() =>
-    ["pdf", "word", "excel", "presentaciones"].filter((t) => document.getElementById("arch-panel-" + t).checkVisibility())), ["pdf"]);
-  igual("están todos los PDF, cada uno una vez", await page.evaluate(() => {
-    const rutas = Array.from(document.querySelectorAll("#pdf-lista .pdf-fila a[download]")).map((a) => a.getAttribute("href"));
-    return [rutas.length, new Set(rutas).size];
-  }), [catalogo.total, catalogo.total]);
-  igual("el resumen dice cuántos son", new RegExp("^" + catalogo.total + " PDF en total").test(await page.textContent("#pdf-resumen")), true);
-  igual("primero los libros, después los cursos, después los sueltos", await page.evaluate(() =>
-    Array.from(document.querySelectorAll("#pdf-lista h3")).map((h) => h.textContent.trim())),
-    ["📕 Libros y material", "🎓 Cursos", "📄 Otros PDF del sitio"]);
-  igual("los cursos, por nivel y en el orden del catálogo", await page.evaluate(() =>
-    Array.from(document.querySelectorAll("#pdf-lista .pdf-curso summary")).map((s) => s.firstElementChild.textContent.replace("▸", ""))),
-    catalogo.cursos.map((c) => c.titulo));
-  igual("los cursos empiezan plegados: se ven los libros, no las 400 filas", await page.evaluate(() =>
-    Array.from(document.querySelectorAll("#pdf-lista .pdf-fila")).filter((f) => f.checkVisibility()).length),
-    catalogo.material.length + catalogo.sueltos.length);
-  await page.click("#pdf-lista .pdf-curso summary");
-  const leccion = await page.evaluate(() => {
-    const l = document.querySelector("#pdf-lista .pdf-curso[open] .pdf-leccion");
-    return [l.querySelector("p").textContent, Array.from(l.querySelectorAll(".pdf-fila p:first-child")).map((p) => p.textContent)];
+    ["pdf", "word", "excel", "presentaciones", "accesibles", "imagenes"].filter((t) => document.getElementById("arch-panel-" + t).checkVisibility())), ["pdf"]);
+
+  // Las carpetas: los libros, los cursos por nivel en el orden del catálogo, lo suelto.
+  const lado = await page.evaluate(() => Array.from(document.querySelectorAll("#arch-carpetas-pdf > p")).map((p) => [p.textContent,
+    Array.from(p.nextElementSibling.querySelectorAll(".arch-carpeta")).map((b) => b.firstElementChild.textContent)]));
+  igual("primero los libros, uno por carpeta", lado[0], ["Libros y material", [...new Set(catalogo.material.map((a) => a.libro))]]);
+  igual("después los cursos, por nivel y en el orden del catálogo",
+    lado.filter(([g]) => /^Cursos · /.test(g)).flatMap(([, cs]) => cs), catalogo.cursos.map((c) => c.titulo));
+  igual("y al final lo suelto", lado[lado.length - 1][0], "Otros");
+  igual("cada carpeta dice cuántos trae, y entre todas suman todos los PDF", await page.evaluate(() =>
+    Array.from(document.querySelectorAll("#arch-carpetas-pdf .arch-carpeta")).reduce((s, b) => s + Number(b.lastElementChild.textContent), 0)), catalogo.total);
+  igual("la primera carpeta viene elegida, marcada y dicha", await page.evaluate(() => {
+    const b = document.querySelector("#arch-carpetas-pdf [aria-current='true']");
+    return [b && b.firstElementChild.textContent, document.querySelector("#arch-contenido-pdf h3").textContent];
+  }), [catalogo.material[0].libro, catalogo.material[0].libro]);
+
+  // Un curso: sus lecciones, cada una con su material y sus ejercicios.
+  const curso0 = catalogo.cursos[0];
+  await clic(page, "#arch-carpetas-pdf .arch-carpeta[data-carpeta='curso-" + curso0.slug + "']");
+  const vistoCurso = await page.evaluate(() => {
+    const c = document.getElementById("arch-contenido-pdf");
+    const b = c.querySelector(".arch-bloque");
+    return [c.querySelector("h3").textContent, document.activeElement === c.querySelector("h3"),
+      b.querySelector("h4").textContent, Array.from(b.querySelectorAll(".arch-fila p:first-child")).map((p) => p.textContent),
+      c.querySelectorAll(".arch-fila").length];
   });
-  igual("abrir un curso muestra cada lección con su material y sus ejercicios", leccion,
-    ["1. " + catalogo.cursos[0].lecciones[0].titulo, ["Material de estudio", "Ejercicios"]]);
-  igual("el enlace de cada PDF existe en el sitio", await page.evaluate(async () => {
-    const rutas = Array.from(document.querySelectorAll("#pdf-lista a[download]")).map((a) => a.getAttribute("href")).filter((_, i) => i % 37 === 0);
+  igual("elegir un curso lo muestra lección por lección, con el foco en su título", vistoCurso,
+    [curso0.titulo, true, "1. " + curso0.lecciones[0].titulo, ["Material de estudio", "Ejercicios"],
+      curso0.lecciones.reduce((s, l) => s + l.archivos.length, 0) + curso0.otros.length]);
+  igual("en el celular, el mismo explorador es un selector de carpeta", await page.evaluate(() =>
+    [document.getElementById("arch-carpeta-pdf").checkVisibility(), document.getElementById("arch-carpetas-pdf").checkVisibility()]), [false, true]);
+
+  // Buscar busca en TODA la ficha, sin tildes ni mayúsculas.
+  await page.fill("#arch-buscar-pdf", "LUCENA");
+  const conLucena = await page.evaluate(() => Array.from(document.querySelectorAll("#arch-contenido-pdf .arch-fila")).filter((f) => f.checkVisibility()).map((f) => f.dataset.ruta));
+  igual("buscar encuentra en todas las carpetas, no solo en la elegida",
+    conLucena.length > 0 && conLucena.every((r) => /lucena/.test(r)) && conLucena.some((r) => !r.includes(curso0.slug)), true);
+  await page.fill("#arch-buscar-pdf", "zzzz no existe");
+  igual("si nada coincide, se dice", await page.locator("#arch-contenido-pdf .arch-vacio").isVisible(), true);
+  await page.fill("#arch-buscar-pdf", "");
+  await page.selectOption("#arch-filtro-pdf", "ejercicios");
+  igual("«Solo ejercicios» deja solo ejercicios en la carpeta", await page.evaluate(() => {
+    const v = Array.from(document.querySelectorAll("#arch-contenido-pdf .arch-fila")).filter((f) => f.checkVisibility());
+    return v.length > 0 && v.every((f) => f.dataset.tipo === "ejercicios");
+  }), true);
+  await page.selectOption("#arch-filtro-pdf", "todos");
+
+  // Todos los PDF se alcanzan recorriendo las carpetas.
+  const vistos = new Set();
+  for (const id of await page.evaluate(() => Array.from(document.querySelectorAll("#arch-carpetas-pdf .arch-carpeta")).map((b) => b.dataset.carpeta))) {
+    await clic(page, "#arch-carpetas-pdf .arch-carpeta[data-carpeta='" + id + "']");
+    (await page.evaluate(() => Array.from(document.querySelectorAll("#arch-contenido-pdf .arch-fila")).map((f) => f.dataset.ruta))).forEach((r) => vistos.add(r));
+  }
+  igual("recorriendo las carpetas están todos los PDF, cada uno una vez", [vistos.size, rutasDe(catalogo).every((r) => vistos.has(r))], [catalogo.total, true]);
+  igual("el enlace de cada PDF existe en el sitio", await page.evaluate(async (rutas) => {
     const malos = [];
     for (const r of rutas) { const x = await fetch(r, { method: "HEAD" }); if (!x.ok) malos.push(r + " " + x.status); }
     return malos;
-  }), []);
+  }, [...vistos].filter((_, i) => i % 37 === 0)), []);
 
-  await page.fill("#pdf-buscar", "lucena");
-  const conLucena = await page.evaluate(() => Array.from(document.querySelectorAll("#pdf-lista .pdf-fila")).filter((f) => f.checkVisibility())
-    .map((f) => f.querySelector("a[download]").getAttribute("href")));
-  igual("buscar (sin tildes ni mayúsculas) abre el curso y deja solo lo que coincide",
-    conLucena.length > 0 && conLucena.every((r) => /lucena/.test(r)) && conLucena.length < catalogo.total, true);
-  await page.fill("#pdf-buscar", "");
-  await page.selectOption("#pdf-tipo", "ejercicios");
-  igual("«Solo ejercicios» deja solo ejercicios", await page.evaluate(() => {
-    const v = Array.from(document.querySelectorAll("#pdf-lista .pdf-fila")).filter((f) => f.checkVisibility());
-    return v.length > 0 && v.every((f) => f.dataset.tipo === "ejercicios") && !document.querySelector("[aria-labelledby='pdf-titulo-material']").checkVisibility();
-  }), true);
-  await page.selectOption("#pdf-tipo", "todos");
-  await page.fill("#pdf-buscar", "zzzz no existe");
-  igual("si nada coincide, se dice", await page.locator("#pdf-vacio").isVisible(), true);
-  await page.fill("#pdf-buscar", "");
-
+  // «Bajar los N» de una carpeta baja esos N.
+  await clic(page, "#arch-carpetas-pdf .arch-carpeta[data-carpeta='curso-" + curso0.slug + "']");
   const bajados = [];
   page.on("download", (d) => bajados.push(d.suggestedFilename()));
-  await page.click("[aria-labelledby='pdf-titulo-material'] button");
-  await page.waitForFunction(() => /^Listo/.test(document.querySelector("[aria-labelledby='pdf-titulo-material'] [role=status]").textContent), null, { timeout: 30000 });
-  igual("«Bajar los N» de libros baja esos N", bajados.slice().sort(),
-    catalogo.material.map((a) => a.ruta.split("/").pop()).sort());
+  await clic(page, "#arch-contenido-pdf [data-bajar-grupo]");
+  await page.waitForFunction(() => /^Listo/.test(document.querySelector("#arch-contenido-pdf [role=status]").textContent), null, { timeout: 40000 });
+  igual("«Bajar los N» de un curso baja esos N", bajados.slice().sort(),
+    curso0.lecciones.flatMap((l) => l.archivos).concat(curso0.otros).map((a) => a.ruta.split("/").pop()).sort());
   if (process.env.CAPTURAS) await page.screenshot({ path: path.join(process.env.CAPTURAS, "admin-pdf.png"), fullPage: true });
+
+  // La vista previa de un PDF: en su marco, sin salir de la página.
+  await clic(page, "#arch-contenido-pdf .arch-fila [data-vista]");
+  await page.waitForSelector("#vista-previa[open] iframe", { timeout: 5000 });
+  const vp = await page.evaluate(() => {
+    const d = document.getElementById("vista-previa");
+    return [d.matches(":modal"), document.getElementById("vista-previa-titulo").textContent,
+      d.querySelector("iframe").getAttribute("src"), document.getElementById("vista-previa-abrir").checkVisibility(),
+      document.getElementById("vista-previa-anterior").disabled, document.activeElement.id];
+  });
+  const primero = curso0.lecciones[0].archivos[0];
+  igual("👁 abre la vista previa encima de la página, con el PDF en su marco", vp,
+    [true, "Material de estudio — " + curso0.titulo + " › 1. " + curso0.lecciones[0].titulo, primero.ruta + "#view=FitH", true, true, "vista-previa-cerrar"]);
+  await page.click("#vista-previa-siguiente");
+  igual("«Siguiente» pasa al siguiente archivo de la lista", await page.evaluate(() => document.querySelector("#vista-previa iframe").getAttribute("src")),
+    curso0.lecciones[0].archivos[1].ruta + "#view=FitH");
+  await page.keyboard.press("Escape");
+  igual("Esc la cierra y el foco vuelve al botón que la abrió", await page.evaluate(() =>
+    [document.getElementById("vista-previa").open, document.activeElement.hasAttribute("data-vista")]), [false, true]);
 
   // Word: con la flecha del teclado, como cualquier grupo de pestañas.
   await page.focus("#arch-ficha-pdf");
   await page.keyboard.press("ArrowRight");
   igual("la flecha pasa a Word, con el foco y solo esa ficha a la vista", await page.evaluate(() => [
     document.activeElement.id, document.getElementById("arch-ficha-word").getAttribute("aria-selected"),
-    ["pdf", "word", "excel", "presentaciones"].filter((t) => document.getElementById("arch-panel-" + t).checkVisibility())]),
+    ["pdf", "word", "excel", "presentaciones", "accesibles", "imagenes"].filter((t) => document.getElementById("arch-panel-" + t).checkVisibility())]),
     ["arch-ficha-word", "true", ["word"]]);
-  const words = todo.word.grupos.flatMap((g) => g.archivos.map((a) => a.ruta));
-  igual("están todos los Word, por carpeta, y solo se bajan (no se «abren»)", await page.evaluate(() => {
-    const filas = Array.from(document.querySelectorAll("#arch-lista-word .pdf-fila")).filter((f) => f.checkVisibility());
-    return [filas.map((f) => f.querySelector("a[download]").getAttribute("href")).sort(),
-      filas.every((f) => f.querySelectorAll("a").length === 1)];
-  }), [words.slice().sort(), true]);
-  igual("cada carpeta con su nombre", await page.evaluate(() =>
-    Array.from(document.querySelectorAll("#arch-lista-word h3")).map((h) => h.textContent.replace("📁 ", ""))),
-    todo.word.grupos.map((g) => g.titulo));
+  igual("están todos los Word, por carpeta, con vista previa y para bajar (no «Abrir»)", await page.evaluate(() => {
+    const filas = Array.from(document.querySelectorAll("#arch-contenido-word .arch-fila")).filter((f) => f.checkVisibility());
+    return [filas.map((f) => f.dataset.ruta).sort(), filas.every((f) => f.querySelectorAll("a").length === 1 && f.querySelector("[data-vista]"))];
+  }), [rutasDe(todo.word).sort(), true]);
+  await clic(page, "#arch-contenido-word .arch-fila [data-vista]");
+  await page.waitForSelector("#vista-previa[open] .vista-contenido p", { timeout: 10000 });
+  igual("la vista previa del Word trae su texto (y nada del archivo se ejecuta)", await page.evaluate(() => {
+    const c = document.querySelector("#vista-previa .vista-contenido");
+    return [/CONSENTIMIENTO INFORMADO/.test(c.textContent), c.querySelectorAll("script, iframe").length, document.getElementById("vista-previa-abrir").checkVisibility()];
+  }), [true, 0, false]);
   if (process.env.CAPTURAS) await page.screenshot({ path: path.join(process.env.CAPTURAS, "admin-word.png") });
+  await clic(page, "#vista-previa-cerrar");
+
+  await page.focus("#arch-ficha-word");
   await page.keyboard.press("ArrowRight");
   const excelTexto = await page.evaluate(() => document.getElementById("arch-panel-excel").checkVisibility() && document.getElementById("arch-lista-excel").textContent);
   igual("Excel: lo que hay, o se dice que todavía no hay ninguno",
     todo.excel.total ? (excelTexto.match(/\.xls/g) || []).length >= todo.excel.total : /Todavía no hay ningún Excel/.test(excelTexto), true);
+
+  // Presentaciones: por curso y lección, y la vista previa diapositiva por diapositiva.
   await page.keyboard.press("ArrowRight");
   const pres = todo.presentaciones;
-  const rutasPres = pres.material.concat(pres.sueltos, ...pres.cursos.map((c) => c.lecciones.flatMap((l) => l.archivos).concat(c.otros))).map((a) => a.ruta);
-  igual("Presentaciones: están todas, una vez, y solo se bajan", await page.evaluate(() => {
-    const p = document.getElementById("arch-panel-presentaciones");
-    const filas = Array.from(p.querySelectorAll(".pdf-fila"));
-    return [p.checkVisibility(), filas.map((f) => f.querySelector("a[download]").getAttribute("href")).sort(),
-      filas.every((f) => f.querySelectorAll("a").length === 1)];
-  }).then(([ve, rutas, soloBajar]) => [ve, rutas.length, JSON.stringify(rutas) === JSON.stringify(rutasPres.slice().sort()), soloBajar]),
-  [true, rutasPres.length, true, true]);
-  igual("por curso, en el orden del catálogo, plegados", await page.evaluate(() =>
-    Array.from(document.querySelectorAll("#arch-lista-presentaciones .pdf-curso")).map((d) => d.querySelector("summary").firstElementChild.textContent.replace("▸", "") + (d.open ? " (abierto)" : ""))),
+  const vistasPres = new Set();
+  for (const id of await page.evaluate(() => Array.from(document.querySelectorAll("#arch-carpetas-presentaciones .arch-carpeta")).map((b) => b.dataset.carpeta))) {
+    await clic(page, "#arch-carpetas-presentaciones .arch-carpeta[data-carpeta='" + id + "']");
+    (await page.evaluate(() => Array.from(document.querySelectorAll("#arch-contenido-presentaciones .arch-fila")).map((f) => f.dataset.ruta))).forEach((r) => vistasPres.add(r));
+  }
+  igual("Presentaciones: recorriendo las carpetas están todas, una vez", [vistasPres.size, rutasDe(pres).every((r) => vistasPres.has(r))], [pres.total, true]);
+  igual("por curso, en el orden del catálogo", await page.evaluate(() =>
+    Array.from(document.querySelectorAll("#arch-carpetas-presentaciones .arch-carpeta")).map((b) => b.firstElementChild.textContent)),
     pres.cursos.map((c) => c.titulo));
-  await page.click("#arch-lista-presentaciones .pdf-curso summary");
-  igual("cada lección con su presentación", await page.evaluate(() => {
-    const l = document.querySelector("#arch-lista-presentaciones .pdf-curso[open] .pdf-leccion");
-    return [l.querySelector("p").textContent, l.querySelector(".pdf-fila p").textContent];
-  }), ["1. " + pres.cursos[0].lecciones[0].titulo, "Presentación"]);
+  // La presentación de una lección con imágenes (los diagramas del curso).
+  const mapa = pres.cursos.find((c) => c.slug === "el-mapa-de-los-finales");
+  await clic(page, "#arch-carpetas-presentaciones .arch-carpeta[data-carpeta='curso-el-mapa-de-los-finales']");
+  await clic(page, "#arch-contenido-presentaciones .arch-fila [data-vista]");
+  await page.waitForSelector("#vista-previa[open] .vista-diapositiva", { timeout: 15000 });
+  const rutaPres = mapa.lecciones[0].archivos[0].ruta;
+  const zip = fs.readFileSync(path.join(__dirname, "..", rutaPres)).toString("latin1");
+  const enArchivo = new Set(zip.match(/ppt\/slides\/slide\d+\.xml/g)).size;
+  const diap = await page.evaluate(() => {
+    const d = Array.from(document.querySelectorAll("#vista-previa .vista-diapositiva"));
+    return [d.length, d[0].getAttribute("aria-label"), document.querySelector("#vista-previa .vista-contenido").textContent.includes("Contenido"),
+      document.querySelectorAll("#vista-previa .vista-diapositiva img[src^='blob:']").length > 0,
+      Array.from(document.querySelectorAll("#vista-previa .vista-diapositiva img")).every((i) => i.complete && i.naturalWidth > 0)];
+  });
+  igual("la presentación se ve diapositiva por diapositiva, con su texto y sus imágenes", diap,
+    [enArchivo, "Diapositiva 1 de " + enArchivo, true, true, true]);
   if (process.env.CAPTURAS) await page.screenshot({ path: path.join(process.env.CAPTURAS, "admin-presentaciones.png") });
+  if (process.env.CAPTURAS) await page.locator("#vista-previa .vista-diapositiva:has(img)").first().screenshot({ path: path.join(process.env.CAPTURAS, "admin-diapositiva.png") });
+  await clic(page, "#vista-previa-cerrar");
+  // El evento «close» llega un momento después de cerrar.
+  await page.waitForFunction(() => !document.querySelector("#vista-previa img"), null, { timeout: 3000 }).catch(() => {});
+  igual("al cerrar, las imágenes se sueltan (no quedan en memoria)", await page.evaluate(() =>
+    document.querySelectorAll("#vista-previa img").length), 0);
+
+  // Las versiones accesibles: por curso y lección, y se ven en un marco sin sus programas.
   await page.focus("#arch-ficha-presentaciones");
   await page.keyboard.press("ArrowRight");
+  const acc = todo.accesibles;
+  const vistasAcc = new Set();
+  for (const id of await page.evaluate(() => Array.from(document.querySelectorAll("#arch-carpetas-accesibles .arch-carpeta")).map((b) => b.dataset.carpeta))) {
+    await clic(page, "#arch-carpetas-accesibles .arch-carpeta[data-carpeta='" + id + "']");
+    (await page.evaluate(() => Array.from(document.querySelectorAll("#arch-contenido-accesibles .arch-fila")).map((f) => f.dataset.ruta))).forEach((r) => vistasAcc.add(r));
+  }
+  igual("Versiones accesibles: recorriendo las carpetas están todas, una vez", [vistasAcc.size, rutasDe(acc).every((r) => vistasAcc.has(r))], [acc.total, true]);
+  igual("con su nombre del <title>, sin repetir «versión accesible»", await page.evaluate(() => {
+    document.querySelector("#arch-carpetas-accesibles .arch-carpeta").click();
+    return document.querySelector("#arch-contenido-accesibles .arch-fila p").textContent;
+  }), acc.material[0].titulo);
+  await clic(page, "#arch-contenido-accesibles .arch-fila [data-vista]");
+  await page.waitForSelector("#vista-previa[open] iframe", { timeout: 5000 });
+  igual("la vista previa la muestra en un marco sin programas, y se puede abrir aparte", await page.evaluate(() => {
+    const f = document.querySelector("#vista-previa iframe");
+    return [f.getAttribute("src"), f.getAttribute("sandbox"), document.getElementById("vista-previa-abrir").checkVisibility(),
+      document.querySelector("#arch-contenido-accesibles .arch-fila a[target='_blank']") !== null];
+  }), [acc.material[0].ruta, "allow-same-origin allow-popups", true, true]);
+  await clic(page, "#vista-previa-cerrar");
+
+  // Las imágenes: por carpeta, cada una con su miniatura, y se ven enteras.
+  await page.focus("#arch-ficha-accesibles");
+  await page.keyboard.press("ArrowRight");
+  const imgs = todo.imagenes;
+  igual("Imágenes: las carpetas en su orden y agrupadas", await page.evaluate(() =>
+    Array.from(document.querySelectorAll("#arch-carpetas-imagenes > p")).map((p) => [p.textContent,
+      Array.from(p.nextElementSibling.querySelectorAll(".arch-carpeta")).map((b) => b.firstElementChild.textContent)])),
+    [...new Set(imgs.grupos.map((g) => g.grupo))].map((gr) => [gr, imgs.grupos.filter((g) => g.grupo === gr).map((g) => g.titulo)]));
+  const vistasImg = new Set();
+  for (const id of await page.evaluate(() => Array.from(document.querySelectorAll("#arch-carpetas-imagenes .arch-carpeta")).map((b) => b.dataset.carpeta))) {
+    await clic(page, "#arch-carpetas-imagenes .arch-carpeta[data-carpeta='" + id + "']");
+    (await page.evaluate(() => Array.from(document.querySelectorAll("#arch-contenido-imagenes .arch-fila")).map((f) => f.dataset.ruta))).forEach((r) => vistasImg.add(r));
+  }
+  igual("recorriendo las carpetas están todas, una vez", [vistasImg.size, rutasDe(imgs).every((r) => vistasImg.has(r))], [imgs.total, true]);
+  igual("nada de lo que no se publica (img/redes)", [...vistasImg].some((r) => r.startsWith("img/redes/")), false);
+  await clic(page, "#arch-carpetas-imagenes .arch-carpeta[data-carpeta='carpeta-" + imgs.grupos.findIndex((g) => g.carpeta === "img/cursos") + "']");
+  await page.waitForFunction(() => {
+    const m = document.querySelector("#arch-contenido-imagenes .arch-mini");
+    return m && m.complete && m.naturalWidth > 0;
+  }, null, { timeout: 5000 });
+  igual("cada fila con su miniatura (sin repetir el nombre al lector) y se puede abrir aparte", await page.evaluate(() => {
+    const f = document.querySelector("#arch-contenido-imagenes .arch-fila");
+    const m = f.querySelector(".arch-mini");
+    return [m.getAttribute("src") === f.dataset.ruta, m.getAttribute("alt"), m.loading, f.querySelector("a[target='_blank']") !== null];
+  }), [true, "", "lazy", true]);
+  if (process.env.CAPTURAS) await page.screenshot({ path: path.join(process.env.CAPTURAS, "admin-imagenes.png") });
+  await clic(page, "#arch-contenido-imagenes .arch-fila [data-vista]");
+  await page.waitForSelector("#vista-previa[open] img", { timeout: 5000 });
+  await page.waitForFunction(() => { const i = document.querySelector("#vista-previa img"); return i.complete && i.naturalWidth > 0; }, null, { timeout: 5000 });
+  const cursoImg = imgs.grupos.find((g) => g.carpeta === "img/cursos").archivos[0];
+  igual("la vista previa la muestra entera, con su nombre como texto alternativo", await page.evaluate(() => {
+    const i = document.querySelector("#vista-previa img");
+    return [i.getAttribute("src"), i.getAttribute("alt").startsWith("Portada: "), document.getElementById("vista-previa-abrir").checkVisibility()];
+  }), [cursoImg.ruta, true, true]);
+  await clic(page, "#vista-previa-cerrar");
+
+  await page.focus("#arch-ficha-imagenes");
+  await page.keyboard.press("ArrowRight");
   igual("y desde la última, la flecha vuelve a PDF", await page.evaluate(() => document.activeElement.id), "arch-ficha-pdf");
+
+  // El Excel (hoy no hay ninguno en el sitio): uno de prueba, con su hoja.
+  await page.evaluate(async () => {
+    // Un .xlsx mínimo armado con la compresión «stored» (método 0).
+    const archivos = {
+      "xl/workbook.xml": '<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="Notas" sheetId="1" r:id="rId1"/></sheets></workbook>',
+      "xl/_rels/workbook.xml.rels": '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Target="worksheets/sheet1.xml"/></Relationships>',
+      "xl/sharedStrings.xml": '<sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><si><t>Alumno</t></si><si><t>&lt;b&gt;Ana&lt;/b&gt;</t></si></sst>',
+      "xl/worksheets/sheet1.xml": '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData><row r="1"><c r="A1" t="s"><v>0</v></c><c r="B1" t="inlineStr"><is><t>Puntos</t></is></c></row><row r="2"><c r="A2" t="s"><v>1</v></c><c r="B2"><v>42</v></c></row></sheetData></worksheet>',
+    };
+    const enc = new TextEncoder();
+    const partes = [], central = [];
+    let off = 0;
+    const u16 = (n) => [n & 255, (n >> 8) & 255], u32 = (n) => [n & 255, (n >> 8) & 255, (n >> 16) & 255, (n >>> 24) & 255];
+    for (const [nombre, texto] of Object.entries(archivos)) {
+      const n = enc.encode(nombre), d = enc.encode(texto);
+      const loc = [...u32(0x04034b50), ...u16(20), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ...u32(d.length), ...u32(d.length), ...u16(n.length), 0, 0];
+      partes.push(new Uint8Array(loc), n, d);
+      central.push(new Uint8Array([...u32(0x02014b50), 20, 0, ...u16(20), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ...u32(d.length), ...u32(d.length), ...u16(n.length), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ...u32(off)]), n);
+      off += loc.length + n.length + d.length;
+    }
+    const tamCentral = central.reduce((s, x) => s + x.length, 0);
+    const fin = new Uint8Array([...u32(0x06054b50), 0, 0, 0, 0, ...u16(4), ...u16(4), ...u32(tamCentral), ...u32(off), 0, 0]);
+    const url = URL.createObjectURL(new Blob([...partes, ...central, fin]));
+    window.VistaPrevia.abrir([{ ruta: url, ext: "xlsx", titulo: "Notas de prueba" }], 0);
+  });
+  await page.waitForFunction(() => document.querySelector("#vista-previa .vista-contenido table, #vista-previa-cuerpo a[download]"), null, { timeout: 5000 });
+  igual("un Excel se ve con sus hojas y celdas, y el texto va como texto", await page.evaluate(() => {
+    const t = document.querySelector("#vista-previa .vista-contenido table");
+    return t ? [document.querySelector("#vista-previa .vista-contenido h3").textContent,
+      Array.from(t.querySelectorAll("tr")).map((tr) => Array.from(tr.children).map((td) => td.textContent)), t.querySelectorAll("b").length] : "sin tabla";
+  }), ["Hoja: Notas", [["Alumno", "Puntos"], ["<b>Ana</b>", "42"]], 0]);
+  await clic(page, "#vista-previa-cerrar");
   igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
   await ctx.close();
 }
