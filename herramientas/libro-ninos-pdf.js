@@ -183,6 +183,11 @@ function preguntaDe(e) {
     case "casilla": return { q: e.pregunta, a: LINEA() };
     case "gana": return { q: e.pregunta || "Juegan las blancas. ¿Qué jugada hace el truco?", a: LINEA() };
     case "amenaza": return { q: e.pregunta || "Le toca a Peonita, pero antes mira: ¿qué jugada quiere hacer Tizón?", a: LINEA() };
+    case "mate2": return { q: e.pregunta || "Juegan las blancas y dan jaque mate en dos jugadas. ¿Cuál es la primera?", a: LINEA("1.ª jugada:") };
+    case "elige": {
+      const [x, y] = Object.keys(e.opciones);
+      return { q: e.pregunta || `Juegan las blancas. Una de estas jugadas da jaque mate y la otra ahoga al rey. ¿Cuál da mate: ${x} o ${y}?`, a: `<p class="opciones">${Object.keys(e.opciones).map((j) => `<span class="caja-op">${esc(j)}</span>`).join("")}</p>` };
+    }
     default: return { q: e.pregunta, a: LINEA() };
   }
 }
@@ -235,6 +240,7 @@ function nombreCorto(letra) { return UN[letra]; }
 function solucion(e) {
   const p = e.casilla ? piezaEn(e.fen, e.casilla) : null;
   const expl = e.explica ? " " + e.explica : "";
+  if (e.solucion) return e.solucion;
   switch (e.tipo) {
     case "tableros": return "El tablero A: tiene la casilla clara abajo, a la derecha.";
     case "colorear": return "Quedan pintadas a1, c1, e1, g1, b2, d2… una sí y una no, como un piso de baldosas.";
@@ -257,7 +263,7 @@ function solucion(e) {
     case "salida": return `${conMayuscula(e.respuesta)}.` + expl;
     case "mate": {
       const pieza = { k: "el rey", q: "la dama", r: "la torre", b: "el alfil", n: "el caballo", p: "el peón" }[LETRA_ESP[e.respuesta[0]] || "p"];
-      return `${e.respuesta}: ${pieza} va a ${e.respuesta.slice(-2)} y da jaque mate.`;
+      return `${e.respuesta}: ${pieza} va a ${e.respuesta.slice(-2)} y da jaque mate.` + expl;
     }
     case "final": return { mate: "Jaque mate.", ahogado: "Ahogado: la partida termina en tablas.", ninguno: "Ninguno de los dos: la partida sigue." }[e.respuesta] + expl;
     case "enroque": return (e.respuesta ? "Sí." : "No.") + expl;
@@ -269,6 +275,8 @@ function solucion(e) {
     case "suma": return `${e.respuesta} puntos: 8 peones (8), 2 caballos (6), 2 alfiles (6), 2 torres (10) y la dama (9).`;
     case "gana": return `${e.respuesta}.` + expl;
     case "amenaza": return `Tizón quiere jugar ${e.respuesta}.` + expl;
+    case "mate2": return `${e.respuesta}.` + expl;
+    case "elige": return `${e.respuesta} da jaque mate.` + expl;
     default: return e.respuesta;
   }
 }
@@ -571,12 +579,12 @@ function accesible() {
     <h2>Capítulo ${c.n}. ${esc(c.titulo)}</h2>
     <p class="dibujo"><strong>El dibujo.</strong> ${esc(c.escena.alt)}</p>
     ${c.cuento.map((t) => `<p>${esc(t)}</p>`).join("")}
-    ${c.muestras.map((m) => `<div class="diagrama"><p><strong>Diagrama.</strong> ${esc(m.pie)}</p>${posicionEnPalabras(m.fen, [
+    ${c.muestras.map((m) => `<div class="diagrama"><p><strong>Diagrama.</strong> ${esc(N.textoHablado(m.pie, "espanol"))}</p>${posicionEnPalabras(m.fen, [
       m.casilla ? `Puede ir a: ${lista(destinos(m.fen, m.casilla))}.` : "",
       m.flechas && m.flechas.length ? `${m.flechas.length === 1 ? "La flecha va" : "Las flechas van"} ${lista(m.flechas.map(([x, y]) => `de ${x} a ${y}`))}.` : "",
     ].filter(Boolean).join(" "))}</div>`).join("")}
     <h3>Lo que aprendí</h3><ul>${c.aprendi.map((t) => `<li>${esc(t)}</li>`).join("")}</ul>
-    <h3>¡A jugar!</h3><ol>${c.ejercicios.map((e) => `<li>${e.fen ? posicionEnPalabras(e.fen) : ""}<p>${esc(preguntaAccesible(e))}</p></li>`).join("")}</ol>
+    <h3>¡A jugar!</h3><ol>${c.ejercicios.map((e) => `<li>${e.fen ? posicionEnPalabras(e.fen) : ""}<p>${esc(N.textoHablado(preguntaAccesible(e), "espanol"))}</p></li>`).join("")}</ol>
   </section>`).join("");
   return `<!doctype html><html lang="es"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">

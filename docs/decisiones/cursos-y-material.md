@@ -1090,7 +1090,7 @@ que aprendí» y una página de «¡A jugar!»; al final, el diploma y las
 soluciones.
 
 - Cada cuento es un módulo de `herramientas/libro-ninos/` (`peonita.js`,
-  `trucos.js`; la lista está en `libros.js`) con el cuento, los ejercicios y
+  `trucos.js`, `rey.js`; la lista está en `libros.js`) con el cuento, los ejercicios y
   **sus respuestas escritas a mano**, la tapa, el final, el diploma y sus
   secretos. `dibujos.js` tiene los personajes y las escenas, y
   `herramientas/libro-ninos-pdf.js` los pone en papel **con una sola
@@ -1148,16 +1148,16 @@ escondido, nunca anunciado en el libro: se descubre. En el de Peonita hay dos:
 - **El alfil se llama Don Saleras**, que tiene exactamente las mismas letras
   que Alessandro (y suena a «salero», tener gracia). Antes era «Don Picudo».
 
-**Lo que ya está decidido para los próximos cuentos** (pedido del autor):
+**Lo que ya está decidido para los próximos cuentos** (pedido del autor; el
+libro 3 ya trae los tres primeros):
 
-- **Un personaje que se llama Sandro**, un animalito del bosque que sale de
-  visita en algún capítulo.
+- **Un personaje que se llama Sandro** (en el libro 3, un osito panda viajero).
 - **Un mensaje en las soluciones**: en un capítulo, las primeras letras de
   las respuestas, leídas en orden, forman ALE.
 - **El sol que crece con él**: en el libro 2 el sol de una escena es
   Alessandro de bebé; en cada libro nuevo, un sol lo muestra un poco más
-  grande (gateando, dando sus primeros pasos…). Uno solo por libro, a la
-  mitad del cuento, como en el libro 2.
+  grande (en el 3, con dientitos y saludando; después, dando sus primeros
+  pasos…). Uno solo por libro, a la mitad del cuento.
 - Y cada libro, además, su secreto propio. El verificador comprueba todos.
 
 Para los próximos cuentos sirven además las mismas ideas u otras parecidas: un
@@ -1198,8 +1198,8 @@ porque está escondido. Este archivo y `herramientas/` no se publican
 
 Cada cuento cierra con su diploma, y los diplomas forman una colección:
 cada uno lleva su número y su nombre (n.º 1 «Explorador del reino», n.º 2
-«Detective de trucos»…) y su medalla (`medalla()` de `dibujos.js`: una torre,
-una lupa…). La medalla del libro va grande sobre el dibujo, y abajo hay una
+«Detective de trucos», n.º 3 «Cazador de reyes»…) y su medalla (`medalla()`
+de `dibujos.js`: una torre, una lupa, una corona…). La medalla del libro va grande sobre el dibujo, y abajo hay una
 fila «Mi colección» con las medallas de todos los libros de `libros.js` (la
 de ese diploma, resaltada) y un «?» para el próximo, para que el niño vea lo
 que tiene y lo que le falta. El número sale de `DIPLOMA.numero` y el
@@ -1235,6 +1235,49 @@ y no en todos. Se dibujó en vez de pegar la foto, para que tenga el estilo del
 libro y porque la foto de un niño no debe ir dentro de un PDF que se comparte
 y se descarga. La foto no está en el repositorio. El verificador comprueba que
 haya exactamente un sol de bebé y que sea de día.
+
+### El tercer cuento: el rey escondido
+
+*Peonita y el rey escondido*: los primeros jaques mate (la torre en la
+orilla, la escalera de las dos torres, la caja y el beso de la dama, la torre
+con su rey), el ahogado como el error de quien va ganando y los primeros
+mates en dos. La historia: en un paseo al volcán, el Rey Carbón, el rey negro,
+se cansa de que lo persigan y se esconde; solo vuelve si lo atrapan con un
+jaque mate. Lo buscan con Sandro, un osito panda viajero con mochila y mapa
+(un mapa con cuadritos, como un tablero). Diploma n.º 3, «Cazador de reyes»,
+con una corona.
+
+**Los secretos para Alessandro**, los tres que se habían decidido:
+
+- **Sandro**, el osito panda (`panda()` de `dibujos.js`). Primero se dibujó
+  un oso grande; el autor lo quiso más chiquito y quedó un cachorro, cabezón
+  y de cuerpo pequeño. El verificador comprueba que el nombre sea el final de
+  ALESSANDRO y que siga en el cuento (`personaje`).
+- **ALE en las soluciones** del capítulo 6, «El beso de la dama»: las tres
+  respuestas empiezan con «Al lado…», «La dama…» y «En e7…». Esas frases van
+  escritas a mano (`solucion` del ejercicio) y el verificador comprueba las
+  iniciales y que cada frase nombre la jugada de la respuesta
+  (`acrostico-soluciones`).
+- **El sol del capítulo 5** es Alessandro un poco más grande que en el libro
+  2: la misma carita con dos dientitos y las manitas saludando (`solGatea()`,
+  con `sol: "gatea"`). El verificador comprueba que sea el único sol distinto
+  del libro y que sea de día.
+
+**Dos tipos de ejercicio nuevos**, comprobados con chess.js (sin el buscador
+de material, que acá no hace falta: es mate o no es):
+
+- `mate2`: la respuesta es la **única** primera jugada que, conteste lo que
+  conteste el negro, deja un mate en una, y no hay ningún mate en una desde
+  el principio. Las posiciones salieron de una búsqueda al azar con esa misma
+  regla (pocas piezas, el rey negro en la orilla) y se eligieron a mano las
+  que se explican bien: la mitad empieza con una jugada tranquila del rey,
+  que es justo lo que enseña el capítulo de la torre con su rey.
+- `elige`: dos jugadas, una que da mate y otra que ahoga; `opciones` dice qué
+  deja cada una y el verificador lo comprueba.
+
+Los mates en una también se buscaron así, porque a ojo es fácil dejar dos:
+con la dama en la orilla, casi siempre hay otro mate por la otra columna o
+por la diagonal.
 
 ### En un libro de trucos, la respuesta tiene que ser LA jugada
 

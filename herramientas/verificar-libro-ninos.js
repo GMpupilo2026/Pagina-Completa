@@ -14,7 +14,12 @@
  *   - el nombre de una casilla: que la estrella esté donde dice la respuesta;
  *   - los trucos (gana, amenaza, defensa): con el buscador de
  *     lib/tactica.js, que la jugada de la respuesta sea la ÚNICA que gana el
- *     material que promete, y que cada defensa propuesta la evite de verdad.
+ *     material que promete, y que cada defensa propuesta la evite de verdad;
+ *   - mate en dos: que la jugada escrita sea la ÚNICA primera jugada que deja
+ *     un mate en una para cada respuesta del negro (y que no haya mate en una);
+ *   - elegir entre dos jugadas: lo que deja cada una (mate, ahogado…).
+ * Si un ejercicio trae su propia frase de solución, tiene que nombrar la
+ * jugada de la respuesta.
  * Una posición de juego (con los dos reyes) además tiene que ser legal: que
  * no esté en jaque el rey del que NO mueve.
  *
@@ -96,6 +101,22 @@ function turnoDelOtro(fen) {
   return p.join(" ");
 }
 
+const matesEnUna = (fen) => new Chess(fen).moves().filter((m) => { const h = new Chess(fen); h.move(m); return h.in_checkmate(); });
+/* ¿Esta primera jugada da mate en dos, conteste lo que conteste el negro? */
+function mateEnDos(fen, jugada) {
+  const h = new Chess(fen);
+  h.move(jugada);
+  if (h.in_checkmate() || h.in_stalemate()) return false;
+  return h.moves().every((r) => { const k = new Chess(h.fen()); k.move(r); return matesEnUna(k.fen()).length > 0; });
+}
+function queDeja(fen, jugada) {
+  const h = new Chess(fen);
+  const san = h.moves().find((x) => enEspanol(x) === sinJaque(jugada));
+  if (!san) return "ilegal";
+  h.move(san);
+  return h.in_checkmate() ? "mate" : h.in_stalemate() ? "ahogado" : h.in_check() ? "jaque" : "nada";
+}
+
 function formasDeSalir(g) {
   const formas = new Set();
   g.moves({ verbose: true }).forEach((m) => {
@@ -124,6 +145,7 @@ L.CAPITULOS.forEach((cap) => {
 
   cap.ejercicios.forEach((e, i) => {
     const donde = `${L.SLUG}, capítulo ${cap.n}, ejercicio ${i + 1} (${e.tipo})`;
+    if (e.solucion) ok(typeof e.respuesta === "string" && e.solucion.includes(e.respuesta), `${donde}: la frase de la solución no nombra la respuesta ${e.respuesta}`);
     if (["tableros", "colorear", "unir", "promesas", "partida"].includes(e.tipo)) return;
     if (e.tipo === "puntos") {
       const sumas = e.grupos.map((gr) => valor(gr.piezas));
@@ -182,6 +204,16 @@ L.CAPITULOS.forEach((cap) => {
         const dice = g.in_checkmate() ? "mate" : g.in_stalemate() ? "ahogado" : "ninguno";
         ok(dice === e.respuesta, `${donde}: es ${dice}, no ${e.respuesta}`); break;
       }
+      case "mate2": {
+        ok(!matesEnUna(e.fen).length, `${donde}: ya hay mate en una (${matesEnUna(e.fen).map(enEspanol)})`);
+        const primeras = g.moves().filter((m) => mateEnDos(e.fen, m));
+        ok(primeras.length === 1, `${donde}: hay ${primeras.length} primeras jugadas que dan mate en dos (${primeras.map(enEspanol)})`);
+        ok(primeras.length && enEspanol(primeras[0]) === sinJaque(e.respuesta), `${donde}: el mate en dos empieza con ${primeras.map(enEspanol)}, no con ${e.respuesta}`); break;
+      }
+      case "elige": {
+        Object.entries(e.opciones).forEach(([j, deja]) => { const r = queDeja(e.fen, j); ok(r === deja, `${donde}: ${j} deja ${r}, no ${deja}`); });
+        ok(e.opciones[e.respuesta] === "mate", `${donde}: la respuesta ${e.respuesta} no es la opción que da mate`); break;
+      }
       case "enroque": ok(g.moves().includes("O-O") === e.respuesta, `${donde}: el enroque corto ${g.moves().includes("O-O") ? "sí" : "no"} se puede`); break;
       case "gana": trucoUnico(e.fen, e.respuesta, e.minimo, donde); break;
       case "amenaza": {
@@ -224,10 +256,22 @@ const letras = (t) => t.normalize("NFD").toUpperCase().replace(/[^A-Z]/g, "").sp
   } else if (sec.tipo === "anagrama") {
     ok(letras(sec.nombre) === letras(L.SECRETO), `${L.SLUG}: «${sec.nombre}» ya no tiene las mismas letras que ${L.SECRETO}`);
     ok(JSON.stringify(L.CAPITULOS).includes(sec.nombre), `${L.SLUG}: «${sec.nombre}» ya no aparece en el cuento`);
-  } else if (sec.tipo === "sol-bebe") {
-    const conSol = L.CAPITULOS.filter((c) => c.escena.sol === "bebe");
-    ok(conSol.length === 1 && (conSol[0].escena.fondo || "dia") === "dia", `${L.SLUG}: tiene que haber un solo sol de bebé, en una escena de día (hay ${conSol.length})`);
-    ok(conSol.length !== 1 || D.escena(conSol[0].escena).includes('data-secreto="sol-bebe"'), `${L.SLUG}: la escena del sol de bebé ya no lo dibuja`);
+  } else if (sec.tipo === "sol-bebe" || sec.tipo === "sol-gatea") {
+    // El sol que es Alessandro: uno solo por libro, en una escena de día.
+    const cual = sec.tipo.slice(4);
+    const conSol = L.CAPITULOS.filter((c) => c.escena.sol);
+    ok(conSol.length === 1 && conSol[0].escena.sol === cual && (conSol[0].escena.fondo || "dia") === "dia", `${L.SLUG}: tiene que haber un solo sol «${cual}», en una escena de día (hay ${conSol.length} escenas con un sol distinto)`);
+    ok(conSol.length !== 1 || D.escena(conSol[0].escena).includes('data-secreto="sol-bebe"'), `${L.SLUG}: la escena del sol ya no dibuja a Alessandro`);
+  } else if (sec.tipo === "personaje") {
+    ok(L.SECRETO.toUpperCase().endsWith(sec.nombre.toUpperCase()), `${L.SLUG}: «${sec.nombre}» ya no es parte de ${L.SECRETO}`);
+    ok(L.CAPITULOS.some((c) => c.cuento.some((t) => t.includes(sec.nombre))), `${L.SLUG}: «${sec.nombre}» ya no aparece en el cuento`);
+  } else if (sec.tipo === "acrostico-soluciones") {
+    // Las soluciones de un capítulo, de arriba hacia abajo, empiezan con las
+    // letras del secreto: tienen que ser frases escritas (`solucion`).
+    const cap = L.CAPITULOS.find((c) => c.n === sec.capitulo);
+    ok(cap && cap.ejercicios.every((e) => e.solucion), `${L.SLUG}: las soluciones del capítulo ${sec.capitulo} tienen que ir escritas a mano para formar ${sec.texto}`);
+    ok(cap && cap.ejercicios.map((e) => inicial(e.solucion || "?")).join("") === sec.texto, `${L.SLUG}: las soluciones del capítulo ${sec.capitulo} ya no empiezan con ${sec.texto}`);
+    ok(L.SECRETO.startsWith(sec.texto), `${L.SLUG}: «${sec.texto}» no es parte de ${L.SECRETO}`);
   } else if (sec.tipo === "grabado") {
     ok(L.SECRETO.startsWith(sec.texto), `${L.SLUG}: el grabado «${sec.texto}» no es parte de ${L.SECRETO}`);
     ok(L.CAPITULOS.some((c) => c.escena.contenido.includes(`data-grabado="${sec.texto}"`)), `${L.SLUG}: ya no hay ningún árbol con el grabado «${sec.texto}»`);

@@ -116,7 +116,7 @@ empecé aprendí entendí leí tomé repasé jugué estudié olvidé
 cortés descortés
 encontré revisé recargué creé comprometí revelé
 dejé llegué terminé
-moví saqué enroqué pensé equivoqué
+moví saqué enroqué pensé equivoqué encerré
 ojalá
 quizá
 mamá papá bebé
