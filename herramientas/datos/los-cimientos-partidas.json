@@ -2263,7 +2263,7 @@
   "id": "t2c8-2",
   "leccion": 32,
   "rol": "ejercicio",
-  "idea": "El truco de Nxe5 y d4 recupera la pieza; la trampa negra se vuelve en contra.",
+  "idea": "El truco de Cxe5 y d4 recupera la pieza; la trampa negra se vuelve en contra.",
   "partida": {
    "blancas": "Réti",
    "negras": "Dunkelblum",
@@ -2286,7 +2286,7 @@
   "id": "t2c8-4",
   "leccion": 32,
   "rol": "ejercicio",
-  "idea": "Capturar el peón de g2 cuesta la torre tras Be4.",
+  "idea": "Capturar el peón de g2 cuesta la torre tras Ae4.",
   "partida": {
    "blancas": "Keres",
    "negras": "Petrovs",

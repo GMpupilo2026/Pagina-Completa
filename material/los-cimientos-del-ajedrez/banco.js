@@ -3571,7 +3571,7 @@ window.LOS_CIMIENTOS_ITEMS = [
     uso: 'ejercicio',
     leccion: 32,
     nivel: 2,
-    explica: 'Capturar el peón de g2 cuesta la torre tras Be4.',
+    explica: 'Capturar el peón de g2 cuesta la torre tras Ae4.',
     comprobado: 'Partida Keres–Petrovs, Campeonato de Estonia, Tallin 1933. Stockfish 16 a profundidad 18: Ae4 es la mejor (+3,9) y la segunda queda en -1,5.',
     n: 166,
   },

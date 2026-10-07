@@ -392,7 +392,7 @@ function accesible() {
       ${ejs.map((it, i) => `<h4>Ejemplo${ejs.length > 1 ? " " + (i + 1) : ""} de la lección ${l.n}</h4>
       <p>${esc(oido(l.pregunta || ""))}</p>
       ${posicion(it)}
-      <p><strong>Solución.</strong> ${esc(oido(it.linea))}. ${it.explica ? esc(it.explica.replace(/\.?$/, ".")) + " " : ""}${esc(oido(l.enlace || ""))}</p>
+      <p><strong>Solución.</strong> ${esc(oido(it.linea))}. ${it.explica ? esc(oido(it.explica.replace(/\.?$/, "."))) + " " : ""}${esc(oido(l.enlace || ""))}</p>
       <p class="comprobado">${esc(oido(it.comprobado))}</p>`).join("")}
       <p><strong>Para practicar.</strong> ${esc(oido(l.practica))}</p>
       <h4>Ejercicios de la lección ${l.n}</h4>
@@ -402,7 +402,7 @@ function accesible() {
   const ejercicioA = (it, conPista) => `<article><h5>Ejercicio ${it.num}</h5>${conPista && pista(it) ? `<p>Pista: ${esc(oido(pista(it)))}</p>` : ""}${posicion(it)}</article>`;
   const solucionA = (it) => `<article><h4>Solución del ejercicio ${it.num}</h4>
       <p>${esc(oido(it.linea))}</p>
-      <p>${it.explica ? esc(it.explica.replace(/\.?$/, ".")) + " " : ""}${it.uso === "repaso" ? `Tema: ${esc(POR_N[it.leccion].titulo)}, lección ${it.leccion}.` : esc(oido(POR_N[it.leccion].enlace))}</p>
+      <p>${it.explica ? esc(oido(it.explica.replace(/\.?$/, "."))) + " " : ""}${it.uso === "repaso" ? `Tema: ${esc(POR_N[it.leccion].titulo)}, lección ${it.leccion}.` : esc(oido(POR_N[it.leccion].enlace))}</p>
       <p class="comprobado">${esc(oido(it.comprobado))}</p></article>`;
 
   const niveles = CURSO.bloques.map((b) => `<section><h2>Nivel ${b.n}: ${esc(b.titulo)}</h2>
