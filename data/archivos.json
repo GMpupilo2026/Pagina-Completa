@@ -4765,6 +4765,7 @@
    {
     "carpeta": "documentos/jdn",
     "titulo": "Juegos Deportivos Nacionales 2027",
+    "grupo": "Carpetas",
     "archivos": [
      {
       "ruta": "documentos/jdn/consentimiento-entrenador-jdn-2027.docx",
@@ -10692,6 +10693,3764 @@
     "titulo": "Guía del profesor",
     "tipo": "accesible",
     "kb": 106
+   }
+  ]
+ },
+ "imagenes": {
+  "total": 615,
+  "grupos": [
+   {
+    "carpeta": "entreno/img/facil",
+    "titulo": "Nivel fácil",
+    "grupo": "Ejercicios de Entrenamiento",
+    "archivos": [
+     {
+      "ruta": "entreno/img/facil/facil-001.jpg",
+      "titulo": "Ejercicio 1",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/facil/facil-002.jpg",
+      "titulo": "Ejercicio 2",
+      "tipo": "otro",
+      "kb": 17
+     },
+     {
+      "ruta": "entreno/img/facil/facil-003.jpg",
+      "titulo": "Ejercicio 3",
+      "tipo": "otro",
+      "kb": 18
+     },
+     {
+      "ruta": "entreno/img/facil/facil-004.jpg",
+      "titulo": "Ejercicio 4",
+      "tipo": "otro",
+      "kb": 17
+     },
+     {
+      "ruta": "entreno/img/facil/facil-005.jpg",
+      "titulo": "Ejercicio 5",
+      "tipo": "otro",
+      "kb": 18
+     },
+     {
+      "ruta": "entreno/img/facil/facil-006.jpg",
+      "titulo": "Ejercicio 6",
+      "tipo": "otro",
+      "kb": 18
+     },
+     {
+      "ruta": "entreno/img/facil/facil-007.jpg",
+      "titulo": "Ejercicio 7",
+      "tipo": "otro",
+      "kb": 18
+     },
+     {
+      "ruta": "entreno/img/facil/facil-008.jpg",
+      "titulo": "Ejercicio 8",
+      "tipo": "otro",
+      "kb": 18
+     },
+     {
+      "ruta": "entreno/img/facil/facil-009.jpg",
+      "titulo": "Ejercicio 9",
+      "tipo": "otro",
+      "kb": 18
+     },
+     {
+      "ruta": "entreno/img/facil/facil-010.jpg",
+      "titulo": "Ejercicio 10",
+      "tipo": "otro",
+      "kb": 18
+     },
+     {
+      "ruta": "entreno/img/facil/facil-011.jpg",
+      "titulo": "Ejercicio 11",
+      "tipo": "otro",
+      "kb": 18
+     },
+     {
+      "ruta": "entreno/img/facil/facil-012.jpg",
+      "titulo": "Ejercicio 12",
+      "tipo": "otro",
+      "kb": 18
+     },
+     {
+      "ruta": "entreno/img/facil/facil-013.jpg",
+      "titulo": "Ejercicio 13",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/facil/facil-014.jpg",
+      "titulo": "Ejercicio 14",
+      "tipo": "otro",
+      "kb": 18
+     },
+     {
+      "ruta": "entreno/img/facil/facil-015.jpg",
+      "titulo": "Ejercicio 15",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/facil/facil-016.jpg",
+      "titulo": "Ejercicio 16",
+      "tipo": "otro",
+      "kb": 18
+     },
+     {
+      "ruta": "entreno/img/facil/facil-017.jpg",
+      "titulo": "Ejercicio 17",
+      "tipo": "otro",
+      "kb": 18
+     },
+     {
+      "ruta": "entreno/img/facil/facil-018.jpg",
+      "titulo": "Ejercicio 18",
+      "tipo": "otro",
+      "kb": 18
+     },
+     {
+      "ruta": "entreno/img/facil/facil-019.jpg",
+      "titulo": "Ejercicio 19",
+      "tipo": "otro",
+      "kb": 18
+     },
+     {
+      "ruta": "entreno/img/facil/facil-020.jpg",
+      "titulo": "Ejercicio 20",
+      "tipo": "otro",
+      "kb": 18
+     },
+     {
+      "ruta": "entreno/img/facil/facil-021.jpg",
+      "titulo": "Ejercicio 21",
+      "tipo": "otro",
+      "kb": 18
+     },
+     {
+      "ruta": "entreno/img/facil/facil-022.jpg",
+      "titulo": "Ejercicio 22",
+      "tipo": "otro",
+      "kb": 18
+     },
+     {
+      "ruta": "entreno/img/facil/facil-023.jpg",
+      "titulo": "Ejercicio 23",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/facil/facil-024.jpg",
+      "titulo": "Ejercicio 24",
+      "tipo": "otro",
+      "kb": 18
+     },
+     {
+      "ruta": "entreno/img/facil/facil-025.jpg",
+      "titulo": "Ejercicio 25",
+      "tipo": "otro",
+      "kb": 18
+     },
+     {
+      "ruta": "entreno/img/facil/facil-026.jpg",
+      "titulo": "Ejercicio 26",
+      "tipo": "otro",
+      "kb": 18
+     },
+     {
+      "ruta": "entreno/img/facil/facil-027.jpg",
+      "titulo": "Ejercicio 27",
+      "tipo": "otro",
+      "kb": 18
+     },
+     {
+      "ruta": "entreno/img/facil/facil-028.jpg",
+      "titulo": "Ejercicio 28",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/facil/facil-029.jpg",
+      "titulo": "Ejercicio 29",
+      "tipo": "otro",
+      "kb": 18
+     },
+     {
+      "ruta": "entreno/img/facil/facil-030.jpg",
+      "titulo": "Ejercicio 30",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/facil/facil-031.jpg",
+      "titulo": "Ejercicio 31",
+      "tipo": "otro",
+      "kb": 18
+     },
+     {
+      "ruta": "entreno/img/facil/facil-032.jpg",
+      "titulo": "Ejercicio 32",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/facil/facil-033.jpg",
+      "titulo": "Ejercicio 33",
+      "tipo": "otro",
+      "kb": 18
+     },
+     {
+      "ruta": "entreno/img/facil/facil-034.jpg",
+      "titulo": "Ejercicio 34",
+      "tipo": "otro",
+      "kb": 18
+     },
+     {
+      "ruta": "entreno/img/facil/facil-035.jpg",
+      "titulo": "Ejercicio 35",
+      "tipo": "otro",
+      "kb": 18
+     },
+     {
+      "ruta": "entreno/img/facil/facil-036.jpg",
+      "titulo": "Ejercicio 36",
+      "tipo": "otro",
+      "kb": 18
+     },
+     {
+      "ruta": "entreno/img/facil/facil-037.jpg",
+      "titulo": "Ejercicio 37",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/facil/facil-038.jpg",
+      "titulo": "Ejercicio 38",
+      "tipo": "otro",
+      "kb": 18
+     },
+     {
+      "ruta": "entreno/img/facil/facil-039.jpg",
+      "titulo": "Ejercicio 39",
+      "tipo": "otro",
+      "kb": 18
+     },
+     {
+      "ruta": "entreno/img/facil/facil-040.jpg",
+      "titulo": "Ejercicio 40",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/facil/facil-041.jpg",
+      "titulo": "Ejercicio 41",
+      "tipo": "otro",
+      "kb": 18
+     },
+     {
+      "ruta": "entreno/img/facil/facil-042.jpg",
+      "titulo": "Ejercicio 42",
+      "tipo": "otro",
+      "kb": 18
+     },
+     {
+      "ruta": "entreno/img/facil/facil-043.jpg",
+      "titulo": "Ejercicio 43",
+      "tipo": "otro",
+      "kb": 18
+     },
+     {
+      "ruta": "entreno/img/facil/facil-044.jpg",
+      "titulo": "Ejercicio 44",
+      "tipo": "otro",
+      "kb": 18
+     },
+     {
+      "ruta": "entreno/img/facil/facil-045.jpg",
+      "titulo": "Ejercicio 45",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/facil/facil-046.jpg",
+      "titulo": "Ejercicio 46",
+      "tipo": "otro",
+      "kb": 18
+     },
+     {
+      "ruta": "entreno/img/facil/facil-047.jpg",
+      "titulo": "Ejercicio 47",
+      "tipo": "otro",
+      "kb": 18
+     },
+     {
+      "ruta": "entreno/img/facil/facil-048.jpg",
+      "titulo": "Ejercicio 48",
+      "tipo": "otro",
+      "kb": 18
+     },
+     {
+      "ruta": "entreno/img/facil/facil-049.jpg",
+      "titulo": "Ejercicio 49",
+      "tipo": "otro",
+      "kb": 18
+     },
+     {
+      "ruta": "entreno/img/facil/facil-050.jpg",
+      "titulo": "Ejercicio 50",
+      "tipo": "otro",
+      "kb": 18
+     },
+     {
+      "ruta": "entreno/img/facil/facil-051.jpg",
+      "titulo": "Ejercicio 51",
+      "tipo": "otro",
+      "kb": 18
+     },
+     {
+      "ruta": "entreno/img/facil/facil-052.jpg",
+      "titulo": "Ejercicio 52",
+      "tipo": "otro",
+      "kb": 18
+     },
+     {
+      "ruta": "entreno/img/facil/facil-053.jpg",
+      "titulo": "Ejercicio 53",
+      "tipo": "otro",
+      "kb": 18
+     },
+     {
+      "ruta": "entreno/img/facil/facil-054.jpg",
+      "titulo": "Ejercicio 54",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/facil/facil-055.jpg",
+      "titulo": "Ejercicio 55",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/facil/facil-056.jpg",
+      "titulo": "Ejercicio 56",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/facil/facil-057.jpg",
+      "titulo": "Ejercicio 57",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/facil/facil-058.jpg",
+      "titulo": "Ejercicio 58",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/facil/facil-059.jpg",
+      "titulo": "Ejercicio 59",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/facil/facil-060.jpg",
+      "titulo": "Ejercicio 60",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/facil/facil-061.jpg",
+      "titulo": "Ejercicio 61",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/facil/facil-062.jpg",
+      "titulo": "Ejercicio 62",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/facil/facil-063.jpg",
+      "titulo": "Ejercicio 63",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/facil/facil-064.jpg",
+      "titulo": "Ejercicio 64",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/facil/facil-065.jpg",
+      "titulo": "Ejercicio 65",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/facil/facil-066.jpg",
+      "titulo": "Ejercicio 66",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/facil/facil-067.jpg",
+      "titulo": "Ejercicio 67",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/facil/facil-068.jpg",
+      "titulo": "Ejercicio 68",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/facil/facil-069.jpg",
+      "titulo": "Ejercicio 69",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/facil/facil-070.jpg",
+      "titulo": "Ejercicio 70",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/facil/facil-071.jpg",
+      "titulo": "Ejercicio 71",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/facil/facil-072.jpg",
+      "titulo": "Ejercicio 72",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/facil/facil-073.jpg",
+      "titulo": "Ejercicio 73",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/facil/facil-074.jpg",
+      "titulo": "Ejercicio 74",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/facil/facil-075.jpg",
+      "titulo": "Ejercicio 75",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/facil/facil-076.jpg",
+      "titulo": "Ejercicio 76",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/facil/facil-077.jpg",
+      "titulo": "Ejercicio 77",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/facil/facil-078.jpg",
+      "titulo": "Ejercicio 78",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/facil/facil-079.jpg",
+      "titulo": "Ejercicio 79",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/facil/facil-080.jpg",
+      "titulo": "Ejercicio 80",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/facil/facil-081.jpg",
+      "titulo": "Ejercicio 81",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/facil/facil-082.jpg",
+      "titulo": "Ejercicio 82",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/facil/facil-083.jpg",
+      "titulo": "Ejercicio 83",
+      "tipo": "otro",
+      "kb": 18
+     },
+     {
+      "ruta": "entreno/img/facil/facil-084.jpg",
+      "titulo": "Ejercicio 84",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/facil/facil-085.jpg",
+      "titulo": "Ejercicio 85",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/facil/facil-086.jpg",
+      "titulo": "Ejercicio 86",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/facil/facil-087.jpg",
+      "titulo": "Ejercicio 87",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/facil/facil-088.jpg",
+      "titulo": "Ejercicio 88",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/facil/facil-089.jpg",
+      "titulo": "Ejercicio 89",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/facil/facil-090.jpg",
+      "titulo": "Ejercicio 90",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/facil/facil-091.jpg",
+      "titulo": "Ejercicio 91",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/facil/facil-092.jpg",
+      "titulo": "Ejercicio 92",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/facil/facil-093.jpg",
+      "titulo": "Ejercicio 93",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/facil/facil-094.jpg",
+      "titulo": "Ejercicio 94",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/facil/facil-095.jpg",
+      "titulo": "Ejercicio 95",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/facil/facil-096.jpg",
+      "titulo": "Ejercicio 96",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/facil/facil-097.jpg",
+      "titulo": "Ejercicio 97",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/facil/facil-098.jpg",
+      "titulo": "Ejercicio 98",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/facil/facil-099.jpg",
+      "titulo": "Ejercicio 99",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/facil/facil-100.jpg",
+      "titulo": "Ejercicio 100",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/facil/facil-101.jpg",
+      "titulo": "Ejercicio 101",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/facil/facil-102.jpg",
+      "titulo": "Ejercicio 102",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/facil/facil-103.jpg",
+      "titulo": "Ejercicio 103",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/facil/facil-104.jpg",
+      "titulo": "Ejercicio 104",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/facil/facil-105.jpg",
+      "titulo": "Ejercicio 105",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/facil/facil-106.jpg",
+      "titulo": "Ejercicio 106",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/facil/facil-107.jpg",
+      "titulo": "Ejercicio 107",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/facil/facil-108.jpg",
+      "titulo": "Ejercicio 108",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/facil/facil-109.jpg",
+      "titulo": "Ejercicio 109",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/facil/facil-110.jpg",
+      "titulo": "Ejercicio 110",
+      "tipo": "otro",
+      "kb": 18
+     },
+     {
+      "ruta": "entreno/img/facil/facil-111.jpg",
+      "titulo": "Ejercicio 111",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/facil/facil-112.jpg",
+      "titulo": "Ejercicio 112",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/facil/facil-113.jpg",
+      "titulo": "Ejercicio 113",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/facil/facil-114.jpg",
+      "titulo": "Ejercicio 114",
+      "tipo": "otro",
+      "kb": 18
+     },
+     {
+      "ruta": "entreno/img/facil/facil-115.jpg",
+      "titulo": "Ejercicio 115",
+      "tipo": "otro",
+      "kb": 18
+     },
+     {
+      "ruta": "entreno/img/facil/facil-116.jpg",
+      "titulo": "Ejercicio 116",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/facil/facil-117.jpg",
+      "titulo": "Ejercicio 117",
+      "tipo": "otro",
+      "kb": 18
+     },
+     {
+      "ruta": "entreno/img/facil/facil-118.jpg",
+      "titulo": "Ejercicio 118",
+      "tipo": "otro",
+      "kb": 18
+     },
+     {
+      "ruta": "entreno/img/facil/facil-119.jpg",
+      "titulo": "Ejercicio 119",
+      "tipo": "otro",
+      "kb": 18
+     },
+     {
+      "ruta": "entreno/img/facil/facil-120.jpg",
+      "titulo": "Ejercicio 120",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/facil/facil-121.jpg",
+      "titulo": "Ejercicio 121",
+      "tipo": "otro",
+      "kb": 18
+     },
+     {
+      "ruta": "entreno/img/facil/facil-122.jpg",
+      "titulo": "Ejercicio 122",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/facil/facil-123.jpg",
+      "titulo": "Ejercicio 123",
+      "tipo": "otro",
+      "kb": 18
+     },
+     {
+      "ruta": "entreno/img/facil/facil-124.jpg",
+      "titulo": "Ejercicio 124",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/facil/facil-125.jpg",
+      "titulo": "Ejercicio 125",
+      "tipo": "otro",
+      "kb": 18
+     },
+     {
+      "ruta": "entreno/img/facil/facil-126.jpg",
+      "titulo": "Ejercicio 126",
+      "tipo": "otro",
+      "kb": 18
+     },
+     {
+      "ruta": "entreno/img/facil/facil-127.jpg",
+      "titulo": "Ejercicio 127",
+      "tipo": "otro",
+      "kb": 18
+     },
+     {
+      "ruta": "entreno/img/facil/facil-128.jpg",
+      "titulo": "Ejercicio 128",
+      "tipo": "otro",
+      "kb": 18
+     },
+     {
+      "ruta": "entreno/img/facil/facil-129.jpg",
+      "titulo": "Ejercicio 129",
+      "tipo": "otro",
+      "kb": 18
+     },
+     {
+      "ruta": "entreno/img/facil/facil-130.jpg",
+      "titulo": "Ejercicio 130",
+      "tipo": "otro",
+      "kb": 18
+     },
+     {
+      "ruta": "entreno/img/facil/facil-131.jpg",
+      "titulo": "Ejercicio 131",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/facil/facil-132.jpg",
+      "titulo": "Ejercicio 132",
+      "tipo": "otro",
+      "kb": 18
+     },
+     {
+      "ruta": "entreno/img/facil/facil-133.jpg",
+      "titulo": "Ejercicio 133",
+      "tipo": "otro",
+      "kb": 19
+     }
+    ]
+   },
+   {
+    "carpeta": "entreno/img/intermedio",
+    "titulo": "Nivel intermedio",
+    "grupo": "Ejercicios de Entrenamiento",
+    "archivos": [
+     {
+      "ruta": "entreno/img/intermedio/intermedio-001.jpg",
+      "titulo": "Ejercicio 1",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-002.jpg",
+      "titulo": "Ejercicio 2",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-003.jpg",
+      "titulo": "Ejercicio 3",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-004.jpg",
+      "titulo": "Ejercicio 4",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-005.jpg",
+      "titulo": "Ejercicio 5",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-006.jpg",
+      "titulo": "Ejercicio 6",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-007.jpg",
+      "titulo": "Ejercicio 7",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-008.jpg",
+      "titulo": "Ejercicio 8",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-009.jpg",
+      "titulo": "Ejercicio 9",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-010.jpg",
+      "titulo": "Ejercicio 10",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-011.jpg",
+      "titulo": "Ejercicio 11",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-012.jpg",
+      "titulo": "Ejercicio 12",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-013.jpg",
+      "titulo": "Ejercicio 13",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-014.jpg",
+      "titulo": "Ejercicio 14",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-015.jpg",
+      "titulo": "Ejercicio 15",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-016.jpg",
+      "titulo": "Ejercicio 16",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-017.jpg",
+      "titulo": "Ejercicio 17",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-018.jpg",
+      "titulo": "Ejercicio 18",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-019.jpg",
+      "titulo": "Ejercicio 19",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-020.jpg",
+      "titulo": "Ejercicio 20",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-021.jpg",
+      "titulo": "Ejercicio 21",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-022.jpg",
+      "titulo": "Ejercicio 22",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-023.jpg",
+      "titulo": "Ejercicio 23",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-024.jpg",
+      "titulo": "Ejercicio 24",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-025.jpg",
+      "titulo": "Ejercicio 25",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-026.jpg",
+      "titulo": "Ejercicio 26",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-027.jpg",
+      "titulo": "Ejercicio 27",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-028.jpg",
+      "titulo": "Ejercicio 28",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-029.jpg",
+      "titulo": "Ejercicio 29",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-030.jpg",
+      "titulo": "Ejercicio 30",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-031.jpg",
+      "titulo": "Ejercicio 31",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-032.jpg",
+      "titulo": "Ejercicio 32",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-033.jpg",
+      "titulo": "Ejercicio 33",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-034.jpg",
+      "titulo": "Ejercicio 34",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-035.jpg",
+      "titulo": "Ejercicio 35",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-036.jpg",
+      "titulo": "Ejercicio 36",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-037.jpg",
+      "titulo": "Ejercicio 37",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-038.jpg",
+      "titulo": "Ejercicio 38",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-039.jpg",
+      "titulo": "Ejercicio 39",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-040.jpg",
+      "titulo": "Ejercicio 40",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-041.jpg",
+      "titulo": "Ejercicio 41",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-042.jpg",
+      "titulo": "Ejercicio 42",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-043.jpg",
+      "titulo": "Ejercicio 43",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-044.jpg",
+      "titulo": "Ejercicio 44",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-045.jpg",
+      "titulo": "Ejercicio 45",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-046.jpg",
+      "titulo": "Ejercicio 46",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-047.jpg",
+      "titulo": "Ejercicio 47",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-048.jpg",
+      "titulo": "Ejercicio 48",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-049.jpg",
+      "titulo": "Ejercicio 49",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-050.jpg",
+      "titulo": "Ejercicio 50",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-051.jpg",
+      "titulo": "Ejercicio 51",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-052.jpg",
+      "titulo": "Ejercicio 52",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-053.jpg",
+      "titulo": "Ejercicio 53",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-054.jpg",
+      "titulo": "Ejercicio 54",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-055.jpg",
+      "titulo": "Ejercicio 55",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-056.jpg",
+      "titulo": "Ejercicio 56",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-057.jpg",
+      "titulo": "Ejercicio 57",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-058.jpg",
+      "titulo": "Ejercicio 58",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-059.jpg",
+      "titulo": "Ejercicio 59",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-060.jpg",
+      "titulo": "Ejercicio 60",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-061.jpg",
+      "titulo": "Ejercicio 61",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-062.jpg",
+      "titulo": "Ejercicio 62",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-063.jpg",
+      "titulo": "Ejercicio 63",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-064.jpg",
+      "titulo": "Ejercicio 64",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-065.jpg",
+      "titulo": "Ejercicio 65",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-066.jpg",
+      "titulo": "Ejercicio 66",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-067.jpg",
+      "titulo": "Ejercicio 67",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-068.jpg",
+      "titulo": "Ejercicio 68",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-069.jpg",
+      "titulo": "Ejercicio 69",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-070.jpg",
+      "titulo": "Ejercicio 70",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-071.jpg",
+      "titulo": "Ejercicio 71",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-072.jpg",
+      "titulo": "Ejercicio 72",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-073.jpg",
+      "titulo": "Ejercicio 73",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-074.jpg",
+      "titulo": "Ejercicio 74",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-075.jpg",
+      "titulo": "Ejercicio 75",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-076.jpg",
+      "titulo": "Ejercicio 76",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-077.jpg",
+      "titulo": "Ejercicio 77",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-078.jpg",
+      "titulo": "Ejercicio 78",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-079.jpg",
+      "titulo": "Ejercicio 79",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-080.jpg",
+      "titulo": "Ejercicio 80",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-081.jpg",
+      "titulo": "Ejercicio 81",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-082.jpg",
+      "titulo": "Ejercicio 82",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-083.jpg",
+      "titulo": "Ejercicio 83",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-084.jpg",
+      "titulo": "Ejercicio 84",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-085.jpg",
+      "titulo": "Ejercicio 85",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-086.jpg",
+      "titulo": "Ejercicio 86",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-087.jpg",
+      "titulo": "Ejercicio 87",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-088.jpg",
+      "titulo": "Ejercicio 88",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-089.jpg",
+      "titulo": "Ejercicio 89",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-090.jpg",
+      "titulo": "Ejercicio 90",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-091.jpg",
+      "titulo": "Ejercicio 91",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-092.jpg",
+      "titulo": "Ejercicio 92",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-093.jpg",
+      "titulo": "Ejercicio 93",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-094.jpg",
+      "titulo": "Ejercicio 94",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-095.jpg",
+      "titulo": "Ejercicio 95",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-096.jpg",
+      "titulo": "Ejercicio 96",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-097.jpg",
+      "titulo": "Ejercicio 97",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-098.jpg",
+      "titulo": "Ejercicio 98",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-099.jpg",
+      "titulo": "Ejercicio 99",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-100.jpg",
+      "titulo": "Ejercicio 100",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-101.jpg",
+      "titulo": "Ejercicio 101",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-102.jpg",
+      "titulo": "Ejercicio 102",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-103.jpg",
+      "titulo": "Ejercicio 103",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-104.jpg",
+      "titulo": "Ejercicio 104",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-105.jpg",
+      "titulo": "Ejercicio 105",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-106.jpg",
+      "titulo": "Ejercicio 106",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-107.jpg",
+      "titulo": "Ejercicio 107",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-108.jpg",
+      "titulo": "Ejercicio 108",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-109.jpg",
+      "titulo": "Ejercicio 109",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-110.jpg",
+      "titulo": "Ejercicio 110",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-111.jpg",
+      "titulo": "Ejercicio 111",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-112.jpg",
+      "titulo": "Ejercicio 112",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-113.jpg",
+      "titulo": "Ejercicio 113",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-114.jpg",
+      "titulo": "Ejercicio 114",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-115.jpg",
+      "titulo": "Ejercicio 115",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-116.jpg",
+      "titulo": "Ejercicio 116",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-117.jpg",
+      "titulo": "Ejercicio 117",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-118.jpg",
+      "titulo": "Ejercicio 118",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-119.jpg",
+      "titulo": "Ejercicio 119",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-120.jpg",
+      "titulo": "Ejercicio 120",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-121.jpg",
+      "titulo": "Ejercicio 121",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-122.jpg",
+      "titulo": "Ejercicio 122",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-123.jpg",
+      "titulo": "Ejercicio 123",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-124.jpg",
+      "titulo": "Ejercicio 124",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-125.jpg",
+      "titulo": "Ejercicio 125",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-126.jpg",
+      "titulo": "Ejercicio 126",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-127.jpg",
+      "titulo": "Ejercicio 127",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-128.jpg",
+      "titulo": "Ejercicio 128",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-129.jpg",
+      "titulo": "Ejercicio 129",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-130.jpg",
+      "titulo": "Ejercicio 130",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-131.jpg",
+      "titulo": "Ejercicio 131",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-132.jpg",
+      "titulo": "Ejercicio 132",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-133.jpg",
+      "titulo": "Ejercicio 133",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-134.jpg",
+      "titulo": "Ejercicio 134",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-135.jpg",
+      "titulo": "Ejercicio 135",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-136.jpg",
+      "titulo": "Ejercicio 136",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-137.jpg",
+      "titulo": "Ejercicio 137",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-138.jpg",
+      "titulo": "Ejercicio 138",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-139.jpg",
+      "titulo": "Ejercicio 139",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-140.jpg",
+      "titulo": "Ejercicio 140",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-141.jpg",
+      "titulo": "Ejercicio 141",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-142.jpg",
+      "titulo": "Ejercicio 142",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-143.jpg",
+      "titulo": "Ejercicio 143",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/intermedio/intermedio-144.jpg",
+      "titulo": "Ejercicio 144",
+      "tipo": "otro",
+      "kb": 19
+     }
+    ]
+   },
+   {
+    "carpeta": "entreno/img/avanzado",
+    "titulo": "Nivel avanzado",
+    "grupo": "Ejercicios de Entrenamiento",
+    "archivos": [
+     {
+      "ruta": "entreno/img/avanzado/avanzado-001.jpg",
+      "titulo": "Ejercicio 1",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-002.jpg",
+      "titulo": "Ejercicio 2",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-003.jpg",
+      "titulo": "Ejercicio 3",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-004.jpg",
+      "titulo": "Ejercicio 4",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-005.jpg",
+      "titulo": "Ejercicio 5",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-006.jpg",
+      "titulo": "Ejercicio 6",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-007.jpg",
+      "titulo": "Ejercicio 7",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-008.jpg",
+      "titulo": "Ejercicio 8",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-009.jpg",
+      "titulo": "Ejercicio 9",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-010.jpg",
+      "titulo": "Ejercicio 10",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-011.jpg",
+      "titulo": "Ejercicio 11",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-012.jpg",
+      "titulo": "Ejercicio 12",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-013.jpg",
+      "titulo": "Ejercicio 13",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-014.jpg",
+      "titulo": "Ejercicio 14",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-015.jpg",
+      "titulo": "Ejercicio 15",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-016.jpg",
+      "titulo": "Ejercicio 16",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-017.jpg",
+      "titulo": "Ejercicio 17",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-018.jpg",
+      "titulo": "Ejercicio 18",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-019.jpg",
+      "titulo": "Ejercicio 19",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-020.jpg",
+      "titulo": "Ejercicio 20",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-021.jpg",
+      "titulo": "Ejercicio 21",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-022.jpg",
+      "titulo": "Ejercicio 22",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-023.jpg",
+      "titulo": "Ejercicio 23",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-024.jpg",
+      "titulo": "Ejercicio 24",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-025.jpg",
+      "titulo": "Ejercicio 25",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-026.jpg",
+      "titulo": "Ejercicio 26",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-027.jpg",
+      "titulo": "Ejercicio 27",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-028.jpg",
+      "titulo": "Ejercicio 28",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-029.jpg",
+      "titulo": "Ejercicio 29",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-030.jpg",
+      "titulo": "Ejercicio 30",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-031.jpg",
+      "titulo": "Ejercicio 31",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-032.jpg",
+      "titulo": "Ejercicio 32",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-033.jpg",
+      "titulo": "Ejercicio 33",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-034.jpg",
+      "titulo": "Ejercicio 34",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-035.jpg",
+      "titulo": "Ejercicio 35",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-036.jpg",
+      "titulo": "Ejercicio 36",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-037.jpg",
+      "titulo": "Ejercicio 37",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-038.jpg",
+      "titulo": "Ejercicio 38",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-039.jpg",
+      "titulo": "Ejercicio 39",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-040.jpg",
+      "titulo": "Ejercicio 40",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-041.jpg",
+      "titulo": "Ejercicio 41",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-042.jpg",
+      "titulo": "Ejercicio 42",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-043.jpg",
+      "titulo": "Ejercicio 43",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-044.jpg",
+      "titulo": "Ejercicio 44",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-045.jpg",
+      "titulo": "Ejercicio 45",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-046.jpg",
+      "titulo": "Ejercicio 46",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-047.jpg",
+      "titulo": "Ejercicio 47",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-048.jpg",
+      "titulo": "Ejercicio 48",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-049.jpg",
+      "titulo": "Ejercicio 49",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-050.jpg",
+      "titulo": "Ejercicio 50",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-051.jpg",
+      "titulo": "Ejercicio 51",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-052.jpg",
+      "titulo": "Ejercicio 52",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-053.jpg",
+      "titulo": "Ejercicio 53",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-054.jpg",
+      "titulo": "Ejercicio 54",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-055.jpg",
+      "titulo": "Ejercicio 55",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-056.jpg",
+      "titulo": "Ejercicio 56",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-057.jpg",
+      "titulo": "Ejercicio 57",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-058.jpg",
+      "titulo": "Ejercicio 58",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-059.jpg",
+      "titulo": "Ejercicio 59",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-060.jpg",
+      "titulo": "Ejercicio 60",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-061.jpg",
+      "titulo": "Ejercicio 61",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-062.jpg",
+      "titulo": "Ejercicio 62",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-063.jpg",
+      "titulo": "Ejercicio 63",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-064.jpg",
+      "titulo": "Ejercicio 64",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-065.jpg",
+      "titulo": "Ejercicio 65",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-066.jpg",
+      "titulo": "Ejercicio 66",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-067.jpg",
+      "titulo": "Ejercicio 67",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-068.jpg",
+      "titulo": "Ejercicio 68",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-069.jpg",
+      "titulo": "Ejercicio 69",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-070.jpg",
+      "titulo": "Ejercicio 70",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-071.jpg",
+      "titulo": "Ejercicio 71",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-072.jpg",
+      "titulo": "Ejercicio 72",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-073.jpg",
+      "titulo": "Ejercicio 73",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-074.jpg",
+      "titulo": "Ejercicio 74",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-075.jpg",
+      "titulo": "Ejercicio 75",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-076.jpg",
+      "titulo": "Ejercicio 76",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-077.jpg",
+      "titulo": "Ejercicio 77",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-078.jpg",
+      "titulo": "Ejercicio 78",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-079.jpg",
+      "titulo": "Ejercicio 79",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-080.jpg",
+      "titulo": "Ejercicio 80",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-081.jpg",
+      "titulo": "Ejercicio 81",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-082.jpg",
+      "titulo": "Ejercicio 82",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-083.jpg",
+      "titulo": "Ejercicio 83",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-084.jpg",
+      "titulo": "Ejercicio 84",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-085.jpg",
+      "titulo": "Ejercicio 85",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-086.jpg",
+      "titulo": "Ejercicio 86",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-087.jpg",
+      "titulo": "Ejercicio 87",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-088.jpg",
+      "titulo": "Ejercicio 88",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-089.jpg",
+      "titulo": "Ejercicio 89",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-090.jpg",
+      "titulo": "Ejercicio 90",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-091.jpg",
+      "titulo": "Ejercicio 91",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-092.jpg",
+      "titulo": "Ejercicio 92",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-093.jpg",
+      "titulo": "Ejercicio 93",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-094.jpg",
+      "titulo": "Ejercicio 94",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-095.jpg",
+      "titulo": "Ejercicio 95",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-096.jpg",
+      "titulo": "Ejercicio 96",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-097.jpg",
+      "titulo": "Ejercicio 97",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-098.jpg",
+      "titulo": "Ejercicio 98",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-099.jpg",
+      "titulo": "Ejercicio 99",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-100.jpg",
+      "titulo": "Ejercicio 100",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-101.jpg",
+      "titulo": "Ejercicio 101",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-102.jpg",
+      "titulo": "Ejercicio 102",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-103.jpg",
+      "titulo": "Ejercicio 103",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-104.jpg",
+      "titulo": "Ejercicio 104",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-105.jpg",
+      "titulo": "Ejercicio 105",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-106.jpg",
+      "titulo": "Ejercicio 106",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-107.jpg",
+      "titulo": "Ejercicio 107",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-108.jpg",
+      "titulo": "Ejercicio 108",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-109.jpg",
+      "titulo": "Ejercicio 109",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-110.jpg",
+      "titulo": "Ejercicio 110",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-111.jpg",
+      "titulo": "Ejercicio 111",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-112.jpg",
+      "titulo": "Ejercicio 112",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-113.jpg",
+      "titulo": "Ejercicio 113",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-114.jpg",
+      "titulo": "Ejercicio 114",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-115.jpg",
+      "titulo": "Ejercicio 115",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-116.jpg",
+      "titulo": "Ejercicio 116",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-117.jpg",
+      "titulo": "Ejercicio 117",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-118.jpg",
+      "titulo": "Ejercicio 118",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-119.jpg",
+      "titulo": "Ejercicio 119",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-120.jpg",
+      "titulo": "Ejercicio 120",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-121.jpg",
+      "titulo": "Ejercicio 121",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-122.jpg",
+      "titulo": "Ejercicio 122",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-123.jpg",
+      "titulo": "Ejercicio 123",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-124.jpg",
+      "titulo": "Ejercicio 124",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-125.jpg",
+      "titulo": "Ejercicio 125",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-126.jpg",
+      "titulo": "Ejercicio 126",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-127.jpg",
+      "titulo": "Ejercicio 127",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-128.jpg",
+      "titulo": "Ejercicio 128",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-129.jpg",
+      "titulo": "Ejercicio 129",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-130.jpg",
+      "titulo": "Ejercicio 130",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-131.jpg",
+      "titulo": "Ejercicio 131",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-132.jpg",
+      "titulo": "Ejercicio 132",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-133.jpg",
+      "titulo": "Ejercicio 133",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-134.jpg",
+      "titulo": "Ejercicio 134",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-135.jpg",
+      "titulo": "Ejercicio 135",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-136.jpg",
+      "titulo": "Ejercicio 136",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-137.jpg",
+      "titulo": "Ejercicio 137",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-138.jpg",
+      "titulo": "Ejercicio 138",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-139.jpg",
+      "titulo": "Ejercicio 139",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-140.jpg",
+      "titulo": "Ejercicio 140",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-141.jpg",
+      "titulo": "Ejercicio 141",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/avanzado/avanzado-142.jpg",
+      "titulo": "Ejercicio 142",
+      "tipo": "otro",
+      "kb": 21
+     }
+    ]
+   },
+   {
+    "carpeta": "entreno/img/especialista",
+    "titulo": "Nivel especialista",
+    "grupo": "Ejercicios de Entrenamiento",
+    "archivos": [
+     {
+      "ruta": "entreno/img/especialista/especialista-001.jpg",
+      "titulo": "Ejercicio 1",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-002.jpg",
+      "titulo": "Ejercicio 2",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-003.jpg",
+      "titulo": "Ejercicio 3",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-004.jpg",
+      "titulo": "Ejercicio 4",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-005.jpg",
+      "titulo": "Ejercicio 5",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-006.jpg",
+      "titulo": "Ejercicio 6",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-007.jpg",
+      "titulo": "Ejercicio 7",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-008.jpg",
+      "titulo": "Ejercicio 8",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-009.jpg",
+      "titulo": "Ejercicio 9",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-010.jpg",
+      "titulo": "Ejercicio 10",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-011.jpg",
+      "titulo": "Ejercicio 11",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-012.jpg",
+      "titulo": "Ejercicio 12",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-013.jpg",
+      "titulo": "Ejercicio 13",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-014.jpg",
+      "titulo": "Ejercicio 14",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-015.jpg",
+      "titulo": "Ejercicio 15",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-016.jpg",
+      "titulo": "Ejercicio 16",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-017.jpg",
+      "titulo": "Ejercicio 17",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-018.jpg",
+      "titulo": "Ejercicio 18",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-019.jpg",
+      "titulo": "Ejercicio 19",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-020.jpg",
+      "titulo": "Ejercicio 20",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-021.jpg",
+      "titulo": "Ejercicio 21",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-022.jpg",
+      "titulo": "Ejercicio 22",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-023.jpg",
+      "titulo": "Ejercicio 23",
+      "tipo": "otro",
+      "kb": 22
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-024.jpg",
+      "titulo": "Ejercicio 24",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-025.jpg",
+      "titulo": "Ejercicio 25",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-026.jpg",
+      "titulo": "Ejercicio 26",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-027.jpg",
+      "titulo": "Ejercicio 27",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-028.jpg",
+      "titulo": "Ejercicio 28",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-029.jpg",
+      "titulo": "Ejercicio 29",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-030.jpg",
+      "titulo": "Ejercicio 30",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-031.jpg",
+      "titulo": "Ejercicio 31",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-032.jpg",
+      "titulo": "Ejercicio 32",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-033.jpg",
+      "titulo": "Ejercicio 33",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-034.jpg",
+      "titulo": "Ejercicio 34",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-035.jpg",
+      "titulo": "Ejercicio 35",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-036.jpg",
+      "titulo": "Ejercicio 36",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-037.jpg",
+      "titulo": "Ejercicio 37",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-038.jpg",
+      "titulo": "Ejercicio 38",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-039.jpg",
+      "titulo": "Ejercicio 39",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-040.jpg",
+      "titulo": "Ejercicio 40",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-041.jpg",
+      "titulo": "Ejercicio 41",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-042.jpg",
+      "titulo": "Ejercicio 42",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-043.jpg",
+      "titulo": "Ejercicio 43",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-044.jpg",
+      "titulo": "Ejercicio 44",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-045.jpg",
+      "titulo": "Ejercicio 45",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-046.jpg",
+      "titulo": "Ejercicio 46",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-047.jpg",
+      "titulo": "Ejercicio 47",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-048.jpg",
+      "titulo": "Ejercicio 48",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-049.jpg",
+      "titulo": "Ejercicio 49",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-050.jpg",
+      "titulo": "Ejercicio 50",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-051.jpg",
+      "titulo": "Ejercicio 51",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-052.jpg",
+      "titulo": "Ejercicio 52",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-053.jpg",
+      "titulo": "Ejercicio 53",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-054.jpg",
+      "titulo": "Ejercicio 54",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-055.jpg",
+      "titulo": "Ejercicio 55",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-056.jpg",
+      "titulo": "Ejercicio 56",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-057.jpg",
+      "titulo": "Ejercicio 57",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-058.jpg",
+      "titulo": "Ejercicio 58",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-059.jpg",
+      "titulo": "Ejercicio 59",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-060.jpg",
+      "titulo": "Ejercicio 60",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-061.jpg",
+      "titulo": "Ejercicio 61",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-062.jpg",
+      "titulo": "Ejercicio 62",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-063.jpg",
+      "titulo": "Ejercicio 63",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-064.jpg",
+      "titulo": "Ejercicio 64",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-065.jpg",
+      "titulo": "Ejercicio 65",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-066.jpg",
+      "titulo": "Ejercicio 66",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-067.jpg",
+      "titulo": "Ejercicio 67",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-068.jpg",
+      "titulo": "Ejercicio 68",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-069.jpg",
+      "titulo": "Ejercicio 69",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-070.jpg",
+      "titulo": "Ejercicio 70",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-071.jpg",
+      "titulo": "Ejercicio 71",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-072.jpg",
+      "titulo": "Ejercicio 72",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-073.jpg",
+      "titulo": "Ejercicio 73",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-074.jpg",
+      "titulo": "Ejercicio 74",
+      "tipo": "otro",
+      "kb": 22
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-075.jpg",
+      "titulo": "Ejercicio 75",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-076.jpg",
+      "titulo": "Ejercicio 76",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-077.jpg",
+      "titulo": "Ejercicio 77",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-078.jpg",
+      "titulo": "Ejercicio 78",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-079.jpg",
+      "titulo": "Ejercicio 79",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-080.jpg",
+      "titulo": "Ejercicio 80",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-081.jpg",
+      "titulo": "Ejercicio 81",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-082.jpg",
+      "titulo": "Ejercicio 82",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-083.jpg",
+      "titulo": "Ejercicio 83",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-084.jpg",
+      "titulo": "Ejercicio 84",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-085.jpg",
+      "titulo": "Ejercicio 85",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-086.jpg",
+      "titulo": "Ejercicio 86",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-087.jpg",
+      "titulo": "Ejercicio 87",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-088.jpg",
+      "titulo": "Ejercicio 88",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-089.jpg",
+      "titulo": "Ejercicio 89",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-090.jpg",
+      "titulo": "Ejercicio 90",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-091.jpg",
+      "titulo": "Ejercicio 91",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-092.jpg",
+      "titulo": "Ejercicio 92",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-093.jpg",
+      "titulo": "Ejercicio 93",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-094.jpg",
+      "titulo": "Ejercicio 94",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-095.jpg",
+      "titulo": "Ejercicio 95",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-096.jpg",
+      "titulo": "Ejercicio 96",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-097.jpg",
+      "titulo": "Ejercicio 97",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-098.jpg",
+      "titulo": "Ejercicio 98",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-099.jpg",
+      "titulo": "Ejercicio 99",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-100.jpg",
+      "titulo": "Ejercicio 100",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-101.jpg",
+      "titulo": "Ejercicio 101",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-102.jpg",
+      "titulo": "Ejercicio 102",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-103.jpg",
+      "titulo": "Ejercicio 103",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-104.jpg",
+      "titulo": "Ejercicio 104",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-105.jpg",
+      "titulo": "Ejercicio 105",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-106.jpg",
+      "titulo": "Ejercicio 106",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-107.jpg",
+      "titulo": "Ejercicio 107",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-108.jpg",
+      "titulo": "Ejercicio 108",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-109.jpg",
+      "titulo": "Ejercicio 109",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-110.jpg",
+      "titulo": "Ejercicio 110",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-111.jpg",
+      "titulo": "Ejercicio 111",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-112.jpg",
+      "titulo": "Ejercicio 112",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-113.jpg",
+      "titulo": "Ejercicio 113",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-114.jpg",
+      "titulo": "Ejercicio 114",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-115.jpg",
+      "titulo": "Ejercicio 115",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-116.jpg",
+      "titulo": "Ejercicio 116",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-117.jpg",
+      "titulo": "Ejercicio 117",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-118.jpg",
+      "titulo": "Ejercicio 118",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-119.jpg",
+      "titulo": "Ejercicio 119",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-120.jpg",
+      "titulo": "Ejercicio 120",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-121.jpg",
+      "titulo": "Ejercicio 121",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-122.jpg",
+      "titulo": "Ejercicio 122",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-123.jpg",
+      "titulo": "Ejercicio 123",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-124.jpg",
+      "titulo": "Ejercicio 124",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-125.jpg",
+      "titulo": "Ejercicio 125",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-126.jpg",
+      "titulo": "Ejercicio 126",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-127.jpg",
+      "titulo": "Ejercicio 127",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-128.jpg",
+      "titulo": "Ejercicio 128",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-129.jpg",
+      "titulo": "Ejercicio 129",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-130.jpg",
+      "titulo": "Ejercicio 130",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-131.jpg",
+      "titulo": "Ejercicio 131",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-132.jpg",
+      "titulo": "Ejercicio 132",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-133.jpg",
+      "titulo": "Ejercicio 133",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-134.jpg",
+      "titulo": "Ejercicio 134",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-135.jpg",
+      "titulo": "Ejercicio 135",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-136.jpg",
+      "titulo": "Ejercicio 136",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-137.jpg",
+      "titulo": "Ejercicio 137",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-138.jpg",
+      "titulo": "Ejercicio 138",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-139.jpg",
+      "titulo": "Ejercicio 139",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "entreno/img/especialista/especialista-140.jpg",
+      "titulo": "Ejercicio 140",
+      "tipo": "otro",
+      "kb": 21
+     }
+    ]
+   },
+   {
+    "carpeta": "img/cursos",
+    "titulo": "Portadas de los cursos",
+    "grupo": "El sitio",
+    "archivos": [
+     {
+      "ruta": "img/cursos/aperturas-y-defensas.svg",
+      "titulo": "Portada: Aperturas y Defensas",
+      "tipo": "otro",
+      "kb": 14
+     },
+     {
+      "ruta": "img/cursos/arbitro-nacional.svg",
+      "titulo": "Portada: Árbitro Nacional",
+      "tipo": "otro",
+      "kb": 6
+     },
+     {
+      "ruta": "img/cursos/calculo-y-visualizacion.svg",
+      "titulo": "Portada: Cálculo y Visualización",
+      "tipo": "otro",
+      "kb": 14
+     },
+     {
+      "ruta": "img/cursos/desequilibrios-de-material.svg",
+      "titulo": "Portada: Desequilibrios de material",
+      "tipo": "otro",
+      "kb": 10
+     },
+     {
+      "ruta": "img/cursos/el-mapa-de-los-finales.svg",
+      "titulo": "Portada: El mapa de los finales",
+      "tipo": "otro",
+      "kb": 7
+     },
+     {
+      "ruta": "img/cursos/estrategia-en-el-final.svg",
+      "titulo": "Portada: Estrategia en el final",
+      "tipo": "otro",
+      "kb": 6
+     },
+     {
+      "ruta": "img/cursos/estrategia-y-tactica.svg",
+      "titulo": "Portada: Estrategia y Táctica",
+      "tipo": "otro",
+      "kb": 14
+     },
+     {
+      "ruta": "img/cursos/finales-practicos.svg",
+      "titulo": "Portada: Finales Prácticos",
+      "tipo": "otro",
+      "kb": 8
+     },
+     {
+      "ruta": "img/cursos/formacion-ajedrez.svg",
+      "titulo": "Portada: Formación Ajedrez",
+      "tipo": "otro",
+      "kb": 6
+     },
+     {
+      "ruta": "img/cursos/fundamentos-del-ajedrez.svg",
+      "titulo": "Portada: Fundamentos del Ajedrez",
+      "tipo": "otro",
+      "kb": 7
+     },
+     {
+      "ruta": "img/cursos/partidas-modelo.svg",
+      "titulo": "Portada: Partidas modelo del ajedrez moderno",
+      "tipo": "otro",
+      "kb": 14
+     },
+     {
+      "ruta": "img/cursos/preparacion-para-torneos.svg",
+      "titulo": "Portada: Preparación para Torneos",
+      "tipo": "otro",
+      "kb": 14
+     },
+     {
+      "ruta": "img/cursos/rompe-el-estancamiento.svg",
+      "titulo": "Portada: Rompe el estancamiento",
+      "tipo": "otro",
+      "kb": 8
+     }
+    ]
+   },
+   {
+    "carpeta": "img/guia",
+    "titulo": "Capturas de la guía del profesor",
+    "grupo": "El sitio",
+    "archivos": [
+     {
+      "ruta": "img/guia/admin.jpg",
+      "titulo": "Captura: Admin",
+      "tipo": "otro",
+      "kb": 174
+     },
+     {
+      "ruta": "img/guia/aperturas.jpg",
+      "titulo": "Captura: Aperturas",
+      "tipo": "otro",
+      "kb": 117
+     },
+     {
+      "ruta": "img/guia/arbitraje.jpg",
+      "titulo": "Captura: Arbitraje",
+      "tipo": "otro",
+      "kb": 179
+     },
+     {
+      "ruta": "img/guia/bot.jpg",
+      "titulo": "Captura: Bot",
+      "tipo": "otro",
+      "kb": 134
+     },
+     {
+      "ruta": "img/guia/clase-buscar.jpg",
+      "titulo": "Captura: Clase buscar",
+      "tipo": "otro",
+      "kb": 165
+     },
+     {
+      "ruta": "img/guia/cobros.jpg",
+      "titulo": "Captura: Cobros",
+      "tipo": "otro",
+      "kb": 134
+     },
+     {
+      "ruta": "img/guia/configuracion.jpg",
+      "titulo": "Captura: Configuracion",
+      "tipo": "otro",
+      "kb": 126
+     },
+     {
+      "ruta": "img/guia/cursos-academia.jpg",
+      "titulo": "Captura: Cursos academia",
+      "tipo": "otro",
+      "kb": 142
+     },
+     {
+      "ruta": "img/guia/diagnostico.jpg",
+      "titulo": "Captura: Diagnostico",
+      "tipo": "otro",
+      "kb": 155
+     },
+     {
+      "ruta": "img/guia/entreno.jpg",
+      "titulo": "Captura: Entreno",
+      "tipo": "otro",
+      "kb": 120
+     },
+     {
+      "ruta": "img/guia/estudio.jpg",
+      "titulo": "Captura: Estudio",
+      "tipo": "otro",
+      "kb": 168
+     },
+     {
+      "ruta": "img/guia/examenes.jpg",
+      "titulo": "Captura: Examenes",
+      "tipo": "otro",
+      "kb": 113
+     },
+     {
+      "ruta": "img/guia/formularios.jpg",
+      "titulo": "Captura: Formularios",
+      "tipo": "otro",
+      "kb": 100
+     },
+     {
+      "ruta": "img/guia/informe-alumno.jpg",
+      "titulo": "Captura: Informe alumno",
+      "tipo": "otro",
+      "kb": 125
+     },
+     {
+      "ruta": "img/guia/informes.jpg",
+      "titulo": "Captura: Informes",
+      "tipo": "otro",
+      "kb": 126
+     },
+     {
+      "ruta": "img/guia/juegos.jpg",
+      "titulo": "Captura: Juegos",
+      "tipo": "otro",
+      "kb": 135
+     },
+     {
+      "ruta": "img/guia/lector-planilla.jpg",
+      "titulo": "Captura: Lector planilla",
+      "tipo": "otro",
+      "kb": 112
+     },
+     {
+      "ruta": "img/guia/login.jpg",
+      "titulo": "Captura: Login",
+      "tipo": "otro",
+      "kb": 74
+     },
+     {
+      "ruta": "img/guia/logros.jpg",
+      "titulo": "Captura: Logros",
+      "tipo": "otro",
+      "kb": 126
+     },
+     {
+      "ruta": "img/guia/panel.jpg",
+      "titulo": "Captura: Panel",
+      "tipo": "otro",
+      "kb": 121
+     },
+     {
+      "ruta": "img/guia/partidas.jpg",
+      "titulo": "Captura: Partidas",
+      "tipo": "otro",
+      "kb": 114
+     },
+     {
+      "ruta": "img/guia/planes.jpg",
+      "titulo": "Captura: Planes",
+      "tipo": "otro",
+      "kb": 88
+     },
+     {
+      "ruta": "img/guia/reportes.jpg",
+      "titulo": "Captura: Reportes",
+      "tipo": "otro",
+      "kb": 136
+     },
+     {
+      "ruta": "img/guia/sesion.jpg",
+      "titulo": "Captura: Sesion",
+      "tipo": "otro",
+      "kb": 174
+     },
+     {
+      "ruta": "img/guia/tareas.jpg",
+      "titulo": "Captura: Tareas",
+      "tipo": "otro",
+      "kb": 118
+     },
+     {
+      "ruta": "img/guia/temas.jpg",
+      "titulo": "Captura: Temas",
+      "tipo": "otro",
+      "kb": 153
+     },
+     {
+      "ruta": "img/guia/torneos.jpg",
+      "titulo": "Captura: Torneos",
+      "tipo": "otro",
+      "kb": 94
+     }
+    ]
+   },
+   {
+    "carpeta": "img",
+    "titulo": "Logos, fotos y marca",
+    "grupo": "El sitio",
+    "archivos": [
+     {
+      "ruta": "img/favicon.svg",
+      "titulo": "Ícono de la pestaña (favicon)",
+      "tipo": "otro",
+      "kb": 5
+     },
+     {
+      "ruta": "img/logo-completo-claro.png",
+      "titulo": "Logo completo, para fondo claro",
+      "tipo": "otro",
+      "kb": 6
+     },
+     {
+      "ruta": "img/logo-completo-oscuro.png",
+      "titulo": "Logo completo, para fondo oscuro",
+      "tipo": "otro",
+      "kb": 7
+     },
+     {
+      "ruta": "img/logo-marca.png",
+      "titulo": "Logo del encabezado",
+      "tipo": "otro",
+      "kb": 11
+     },
+     {
+      "ruta": "img/logo-oscar-angulo-marca.png",
+      "titulo": "Logo de Oscar Angulo (marca de agua)",
+      "tipo": "otro",
+      "kb": 34
+     },
+     {
+      "ruta": "img/logo-oscar-angulo.png",
+      "titulo": "Logo de Oscar Angulo",
+      "tipo": "otro",
+      "kb": 76
+     },
+     {
+      "ruta": "img/og-ajedrez-integral.jpg",
+      "titulo": "Imagen para compartir en redes (vista previa de los enlaces)",
+      "tipo": "otro",
+      "kb": 91
+     },
+     {
+      "ruta": "img/oscar-avatar-160.jpg",
+      "titulo": "Foto de Oscar Angulo (pequeña)",
+      "tipo": "otro",
+      "kb": 7
+     },
+     {
+      "ruta": "img/oscar-avatar.jpg",
+      "titulo": "Foto de Oscar Angulo",
+      "tipo": "otro",
+      "kb": 60
+     }
+    ]
+   },
+   {
+    "carpeta": "img/app",
+    "titulo": "Íconos de la app",
+    "grupo": "El sitio",
+    "archivos": [
+     {
+      "ruta": "img/app/apple-touch-icon.png",
+      "titulo": "Ícono para iPhone y iPad",
+      "tipo": "otro",
+      "kb": 9
+     },
+     {
+      "ruta": "img/app/icon-192.png",
+      "titulo": "Ícono de la app, 192 px",
+      "tipo": "otro",
+      "kb": 8
+     },
+     {
+      "ruta": "img/app/icon-512-maskable.png",
+      "titulo": "Ícono de la app, 512 px (adaptable)",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "img/app/icon-512.png",
+      "titulo": "Ícono de la app, 512 px",
+      "tipo": "otro",
+      "kb": 25
+     }
+    ]
+   },
+   {
+    "carpeta": "img/jdn",
+    "titulo": "Ejemplos del formulario de los JDN",
+    "grupo": "El sitio",
+    "archivos": [
+     {
+      "ruta": "img/jdn/ejemplo-cedula-frente.jpg",
+      "titulo": "Ejemplo: cédula de frente",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "img/jdn/ejemplo-cedula-reverso.jpg",
+      "titulo": "Ejemplo: cédula por detrás",
+      "tipo": "otro",
+      "kb": 13
+     },
+     {
+      "ruta": "img/jdn/ejemplo-fotografia.jpg",
+      "titulo": "Ejemplo: la fotografía",
+      "tipo": "otro",
+      "kb": 18
+     }
+    ]
    }
   ]
  }
