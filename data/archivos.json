@@ -23,7 +23,7 @@
     "nombre": "Formación docente"
    }
   ],
-  "total": 874,
+  "total": 875,
   "material": [
    {
     "ruta": "material/cambiar-o-no-cambiar/cambiar-o-no-cambiar.pdf",
@@ -180,17 +180,24 @@
     "libro": "Mide tu fuerza"
    },
    {
+    "ruta": "material/peonita-rey/peonita-rey.pdf",
+    "titulo": "Peonita y el rey escondido — el cuento ilustrado",
+    "tipo": "otro",
+    "kb": 1197,
+    "libro": "Peonita y el rey escondido"
+   },
+   {
     "ruta": "material/peonita-trucos/peonita-trucos.pdf",
     "titulo": "Peonita, Tizón y los trucos del bosque — el cuento ilustrado",
     "tipo": "otro",
-    "kb": 1205,
+    "kb": 1221,
     "libro": "Peonita, Tizón y los trucos del bosque"
    },
    {
     "ruta": "material/peonita/peonita.pdf",
     "titulo": "Peonita y el reino de las 64 casillas — el cuento ilustrado",
     "tipo": "otro",
-    "kb": 1569,
+    "kb": 1589,
     "libro": "Peonita y el reino de las 64 casillas"
    },
    {
@@ -13180,7 +13187,7 @@
     "nombre": "Formación docente"
    }
   ],
-  "total": 421,
+  "total": 422,
   "material": [
    {
     "ruta": "material/cambiar-o-no-cambiar/cambiar-o-no-cambiar-accesible.html",
@@ -13300,6 +13307,13 @@
     "tipo": "accesible",
     "kb": 347,
     "libro": "Mide tu fuerza"
+   },
+   {
+    "ruta": "material/peonita-rey/peonita-rey-accesible.html",
+    "titulo": "Peonita y el rey escondido",
+    "tipo": "accesible",
+    "kb": 32,
+    "libro": "Peonita y el rey escondido"
    },
    {
     "ruta": "material/peonita-trucos/peonita-trucos-accesible.html",

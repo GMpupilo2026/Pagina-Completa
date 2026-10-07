@@ -183,6 +183,11 @@ function preguntaDe(e) {
     case "casilla": return { q: e.pregunta, a: LINEA() };
     case "gana": return { q: e.pregunta || "Juegan las blancas. ¿Qué jugada hace el truco?", a: LINEA() };
     case "amenaza": return { q: e.pregunta || "Le toca a Peonita, pero antes mira: ¿qué jugada quiere hacer Tizón?", a: LINEA() };
+    case "mate2": return { q: e.pregunta || "Juegan las blancas y dan jaque mate en dos jugadas. ¿Cuál es la primera?", a: LINEA("1.ª jugada:") };
+    case "elige": {
+      const [x, y] = Object.keys(e.opciones);
+      return { q: e.pregunta || `Juegan las blancas. Una de estas jugadas da jaque mate y la otra ahoga al rey. ¿Cuál da mate: ${x} o ${y}?`, a: `<p class="opciones">${Object.keys(e.opciones).map((j) => `<span class="caja-op">${esc(j)}</span>`).join("")}</p>` };
+    }
     default: return { q: e.pregunta, a: LINEA() };
   }
 }
@@ -235,6 +240,7 @@ function nombreCorto(letra) { return UN[letra]; }
 function solucion(e) {
   const p = e.casilla ? piezaEn(e.fen, e.casilla) : null;
   const expl = e.explica ? " " + e.explica : "";
+  if (e.solucion) return e.solucion;
   switch (e.tipo) {
     case "tableros": return "El tablero A: tiene la casilla clara abajo, a la derecha.";
     case "colorear": return "Quedan pintadas a1, c1, e1, g1, b2, d2… una sí y una no, como un piso de baldosas.";
@@ -257,7 +263,7 @@ function solucion(e) {
     case "salida": return `${conMayuscula(e.respuesta)}.` + expl;
     case "mate": {
       const pieza = { k: "el rey", q: "la dama", r: "la torre", b: "el alfil", n: "el caballo", p: "el peón" }[LETRA_ESP[e.respuesta[0]] || "p"];
-      return `${e.respuesta}: ${pieza} va a ${e.respuesta.slice(-2)} y da jaque mate.`;
+      return `${e.respuesta}: ${pieza} va a ${e.respuesta.slice(-2)} y da jaque mate.` + expl;
     }
     case "final": return { mate: "Jaque mate.", ahogado: "Ahogado: la partida termina en tablas.", ninguno: "Ninguno de los dos: la partida sigue." }[e.respuesta] + expl;
     case "enroque": return (e.respuesta ? "Sí." : "No.") + expl;
@@ -269,6 +275,8 @@ function solucion(e) {
     case "suma": return `${e.respuesta} puntos: 8 peones (8), 2 caballos (6), 2 alfiles (6), 2 torres (10) y la dama (9).`;
     case "gana": return `${e.respuesta}.` + expl;
     case "amenaza": return `Tizón quiere jugar ${e.respuesta}.` + expl;
+    case "mate2": return `${e.respuesta}.` + expl;
+    case "elige": return `${e.respuesta} da jaque mate.` + expl;
     default: return e.respuesta;
   }
 }
@@ -392,7 +400,7 @@ const ESTILO = `
   .diploma .nombre { border-bottom: 2px solid #5b4636; height: 14mm; margin: 4mm 10mm 6mm; }
   .diploma .texto { font-size: 15pt; line-height: 1.6; }
   .diploma .dibujo svg { width: 100%; height: auto; }
-  .diploma .firmas { margin-top: auto; display: flex; justify-content: space-between; gap: 12mm; font-size: 11pt; }
+  .diploma .firmas { margin-top: auto; padding-top: 14mm; display: flex; justify-content: space-between; gap: 12mm; font-size: 11pt; }
   .diploma .firmas div { flex: 1; border-top: 1.5px solid #5b4636; padding-top: 2mm; }
   .diploma .firmas strong { font-family: "Quicksand"; display: block; font-size: 12pt; }
   /* La firma de los personajes va arriba de la línea, como hecha a mano; abajo,
@@ -402,7 +410,26 @@ const ESTILO = `
   .diploma .firma-mano { display: block; font-family: "Comic Neue"; font-weight: 700; font-style: italic; font-size: 16pt; color: #1864ab; margin: -11mm 0 3mm; transform: rotate(-5deg); white-space: nowrap; }
   .diploma .autoria { display: flex; align-items: center; justify-content: center; gap: 2.5mm; margin-top: 7mm; font-family: "Quicksand"; font-weight: 700; font-size: 9.5pt; color: #7a5c3e; }
   .diploma .autoria img { width: 11mm; height: auto; }
+  /* La colección: cada diploma con su número y su medalla, la de este libro
+     en grande sobre el dibujo, y abajo la fila con todas (la de este libro
+     resaltada) y un «?» para el próximo. */
+  .diploma .medalla-grande { position: absolute; top: 6mm; right: 8mm; width: 26mm; transform: rotate(8deg); }
+  .diploma .medalla-grande svg { width: 26mm; height: auto; }
+  .diploma .coleccion-n { font-family: "Quicksand"; font-weight: 700; font-size: 11pt; color: #9a4f00; letter-spacing: .04em; text-transform: uppercase; margin: 5mm 0 0; }
+  .diploma .coleccion { display: flex; align-items: flex-end; justify-content: center; gap: 3mm; margin-top: 6mm; font-family: "Quicksand"; font-weight: 700; font-size: 9.5pt; color: #5b4636; }
+  .diploma .coleccion-t { align-self: center; margin-right: 1mm; }
+  .diploma .coleccion figure { margin: 0; text-align: center; font-size: 7.5pt; line-height: 1.15; width: 18mm; }
+  .diploma .coleccion figure svg { width: 9mm; height: auto; margin: 0 auto 1mm; }
+  .diploma .coleccion figure.esta svg { width: 12mm; }
+  .diploma .coleccion figure.esta { color: #a61e4d; }
 `;
+
+/* La fila de «Mi colección» del diploma: un lugar por libro de libros.js, en
+   orden, y uno más con «?» para el próximo cuento. */
+function coleccion() {
+  return LIBROS.map((l) => `<figure class="${l === L ? "esta" : ""}">${D.medalla(l.DIPLOMA.medalla)}<figcaption>n.º ${l.DIPLOMA.numero}<br>${esc(l.DIPLOMA.nombre)}</figcaption></figure>`).join("") +
+    `<figure>${D.medalla("?", { apagada: true })}<figcaption>n.º ${LIBROS.length + 1}<br>¡El próximo!</figcaption></figure>`;
+}
 
 function soluciones() {
   return `<section class="soluciones"><h2>Soluciones</h2>
@@ -433,7 +460,7 @@ function cuerpo() {
 <section class="pagina indice">
   <h2>Los capítulos</h2>
   <ol>${L.CAPITULOS.map((c) => `<li><span class="n">${c.n}</span>${esc(c.titulo)}</li>`).join("")}
-  <li><span class="n">★</span>Mi diploma de ajedrez</li><li><span class="n">✓</span>Soluciones</li></ol>
+  <li><span class="n">★</span>Mi diploma n.º ${L.DIPLOMA.numero}: ${esc(L.DIPLOMA.nombre)}</li><li><span class="n">✓</span>Soluciones</li></ol>
 </section>
 ${L.CAPITULOS.map(capituloHTML).join("")}
 <section class="capitulo final">
@@ -443,11 +470,14 @@ ${L.CAPITULOS.map(capituloHTML).join("")}
 </section>
 <section class="diploma">
   <div class="dibujo">${D.escena(L.ESCENA_DIPLOMA)}</div>
-  <h2>${esc(L.DIPLOMA.titulo)}</h2>
+  <div class="medalla-grande">${D.medalla(L.DIPLOMA.medalla)}</div>
+  <p class="coleccion-n">Colección de diplomas de Peonita · Diploma n.º ${L.DIPLOMA.numero}</p>
+  <h2>${esc(L.DIPLOMA.nombre)}</h2>
   <p class="sub">${esc(L.DIPLOMA.sub)}</p>
   <div class="nombre"></div>
   <p class="texto">${L.DIPLOMA.texto.map(esc).join("<br>")}</p>
   <div class="firmas"><div><strong>Fecha</strong></div><div><span class="firma-mano">${esc(L.DIPLOMA.firmaMano)}</span><strong>${esc(L.DIPLOMA.firma)}</strong></div></div>
+  <div class="coleccion"><span class="coleccion-t">Mi colección:</span>${coleccion()}</div>
   <div class="autoria"><img src="${LOGO_MARCA}" alt="">${esc(L.AUTOR)}</div>
 </section>
 ${soluciones()}
@@ -549,12 +579,12 @@ function accesible() {
     <h2>Capítulo ${c.n}. ${esc(c.titulo)}</h2>
     <p class="dibujo"><strong>El dibujo.</strong> ${esc(c.escena.alt)}</p>
     ${c.cuento.map((t) => `<p>${esc(t)}</p>`).join("")}
-    ${c.muestras.map((m) => `<div class="diagrama"><p><strong>Diagrama.</strong> ${esc(m.pie)}</p>${posicionEnPalabras(m.fen, [
+    ${c.muestras.map((m) => `<div class="diagrama"><p><strong>Diagrama.</strong> ${esc(N.textoHablado(m.pie, "espanol"))}</p>${posicionEnPalabras(m.fen, [
       m.casilla ? `Puede ir a: ${lista(destinos(m.fen, m.casilla))}.` : "",
       m.flechas && m.flechas.length ? `${m.flechas.length === 1 ? "La flecha va" : "Las flechas van"} ${lista(m.flechas.map(([x, y]) => `de ${x} a ${y}`))}.` : "",
     ].filter(Boolean).join(" "))}</div>`).join("")}
     <h3>Lo que aprendí</h3><ul>${c.aprendi.map((t) => `<li>${esc(t)}</li>`).join("")}</ul>
-    <h3>¡A jugar!</h3><ol>${c.ejercicios.map((e) => `<li>${e.fen ? posicionEnPalabras(e.fen) : ""}<p>${esc(preguntaAccesible(e))}</p></li>`).join("")}</ol>
+    <h3>¡A jugar!</h3><ol>${c.ejercicios.map((e) => `<li>${e.fen ? posicionEnPalabras(e.fen) : ""}<p>${esc(N.textoHablado(preguntaAccesible(e), "espanol"))}</p></li>`).join("")}</ol>
   </section>`).join("");
   return `<!doctype html><html lang="es"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">

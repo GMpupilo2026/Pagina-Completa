@@ -231,6 +231,17 @@
       ],
     },
     {
+      producto: "peonita-rey",
+      emoji: "👑",
+      titulo: "Peonita y el rey escondido",
+      autor: "Oscar Angulo Cubero",
+      resumen: "El tercer cuento de Peonita: el Rey Carbón se esconde en el volcán y, con Sandro, un osito panda viajero, Peonita y Tizón aprenden a atraparlo con los primeros jaques mate (la torre en la orilla, la escalera de las dos torres, la caja y el beso de la dama, la torre con su rey), a no ahogarlo y los primeros mates en dos. Nueve capítulos con «¡A jugar!», el diploma y las soluciones. Se puede imprimir.",
+      archivos: [
+        { href: "material/peonita-rey/peonita-rey.pdf", texto: "📥 El libro en PDF" },
+        { href: "material/peonita-rey/peonita-rey-accesible.html", texto: "♿ Versión accesible" },
+      ],
+    },
+    {
       producto: "coachess-resumen",
       emoji: "🧭",
       titulo: "Coachess en resumen",

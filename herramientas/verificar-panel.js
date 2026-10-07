@@ -662,6 +662,9 @@ async function pruebaCupoInvitaciones(browser) {
     await page.evaluate(() => { window.__cancelarAvisos = false; window.__avisos = []; });
     await page.evaluate(() => [...document.querySelectorAll("#tile-grid [aria-disabled=true]")]
       .find((el) => /Crear cuenta de alumno/.test(el.textContent)).focus());
+    // Se espera a que la dirección CAMBIE ("commit"), no a que precios.html
+    // termine de cargar: en el CI, con las cuatro tandas a la vez, la carga
+    // entera pasó de los 10 s y la prueba falló sin que nada estuviera roto.
     await Promise.all([
       // Basta con que la navegación ARRANQUE («commit»): esperar a que
       // precios.html termine de cargar dependía de lo cargado que estuviera el
@@ -669,7 +672,16 @@ async function pruebaCupoInvitaciones(browser) {
       page.waitForURL(/precios\.html#t-paquetes/, { timeout: 20000, waitUntil: "commit" }).catch(() => {}),
       page.keyboard.press("Enter"),
     ]);
-    cierto("con Enter y «Ver los planes», va a los paquetes de precios.html: " + page.url(),
+    // Si no llegó, lo que hace falta para saber por qué: dónde quedó el foco,
+    // qué avisos salieron y qué diálogos siguen abiertos.
+    const porQue = /precios\.html#t-paquetes$/.test(page.url()) ? "" : " | " + await page.evaluate(() => {
+      const f = document.activeElement;
+      return "foco: " + (f ? f.tagName + (f.id ? "#" + f.id : "") + " «" + (f.textContent || "").trim().slice(0, 40) + "»" : "ninguno") +
+        " | avisos: " + JSON.stringify(window.__avisos || []) +
+        " | diálogos abiertos: " + document.querySelectorAll("dialog[open]").length +
+        " | recorrido: " + !!document.getElementById("recorrido-profe");
+    }).catch((e) => "sin diagnóstico: " + e.message);
+    cierto("con Enter y «Ver los planes», va a los paquetes de precios.html: " + page.url() + porQue,
       /precios\.html#t-paquetes$/.test(page.url()));
     igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
     await ctx.close();

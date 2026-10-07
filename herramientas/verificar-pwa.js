@@ -221,7 +221,7 @@ function servidorPropio() {
              "mide-tu-fuerza-7-accesible.html", "mide-tu-fuerza-8-accesible.html",
              "mide-tu-fuerza-9-accesible.html", "mide-tu-fuerza-10-accesible.html",
              "rompe-el-estancamiento-accesible.html", "ganar-con-poco-accesible.html", "cambiar-o-no-cambiar-accesible.html", "ideas-que-ganan-partidas-accesible.html", "los-cimientos-del-ajedrez-accesible.html", "peonita-accesible.html", "peonita-trucos-accesible.html",
-             "coachess-resumen-accesible.html"].includes(e.name)) continue;
+             "coachess-resumen-accesible.html", "peonita-rey-accesible.html"].includes(e.name)) continue;
         paginas.push(rel);
       }
     }

@@ -591,6 +591,7 @@ async function pruebaMateriales(browser) {
      "material/los-cimientos-del-ajedrez/los-cimientos-del-ajedrez.pdf", "material/los-cimientos-del-ajedrez/los-cimientos-del-ajedrez-accesible.html",
      "material/peonita/peonita.pdf", "material/peonita/peonita-accesible.html",
      "material/peonita-trucos/peonita-trucos.pdf", "material/peonita-trucos/peonita-trucos-accesible.html",
+     "material/peonita-rey/peonita-rey.pdf", "material/peonita-rey/peonita-rey-accesible.html",
      "material/coachess-resumen/coachess-resumen.pdf", "material/coachess-resumen/coachess-resumen-accesible.html"]);
   // El banco de ejercicios no tiene pruebas como cuestionario: solo se
   // comparte. Antes de separarlo, cualquier material sin pruebas pintaba
