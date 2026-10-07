@@ -61,32 +61,8 @@
         // vuelve a Archivos si ahí se estaba, no a la primera.
         const ultimaDeGrupo = new Map();
 
-        // Una tarjeta por página: a dónde lleva y qué es, como en el panel de
-        // la Academia. El texto es nuestro (paginas-admin.js), pero igual va
-        // por textContent.
-        function tarjetaPagina(t) {
-            const li = document.createElement("li");
-            const a = document.createElement("a");
-            a.href = t.href;
-            a.dataset.pagina = t.href;
-            a.className = "flex h-full items-start gap-3 rounded-xl bg-white dark:bg-brand-900 border border-brand-100 dark:border-brand-800 p-4 hover:border-accent-400 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
-            const icono = document.createElement("span");
-            icono.className = "text-2xl leading-none shrink-0";
-            icono.setAttribute("aria-hidden", "true");
-            icono.textContent = t.emoji;
-            const texto = document.createElement("span");
-            texto.className = "min-w-0";
-            const titulo = document.createElement("span");
-            titulo.className = "block font-semibold text-brand-800 dark:text-white";
-            titulo.textContent = t.label;
-            const desc = document.createElement("span");
-            desc.className = "block text-sm text-brand-500 dark:text-brand-300 mt-0.5";
-            desc.textContent = t.desc;
-            texto.append(titulo, desc);
-            a.append(icono, texto);
-            li.appendChild(a);
-            return li;
-        }
+        // Una tarjeta por página: js/tarjeta-pagina.js (también la usa supervisor.html).
+        const tarjetaPagina = (t) => TarjetaPagina(t);
 
         function pintarPaginas() {
             if (!window.PaginasAdmin) return;
@@ -722,7 +698,7 @@
                     profesoresPorAlumno.set(u.id, lista);
                     pintarCuentas();
                     renderProfesores();
-                    if (fichaAbierta === u.id) {
+                    if (FichaLateral.abierta() === u.id) {
                         refrescarFicha();
                         document.querySelector("#ficha-cuerpo select[aria-label^='Agregar un profesor']")?.focus();
                     }
@@ -892,8 +868,8 @@
         /* La ficha, al costado. Se arma de nuevo cada vez que se abre y cada
            vez que la lista se vuelve a cargar (un cambio de rol, una cuenta
            borrada), así nunca enseña datos viejos. */
-        let fichaAbierta = null;          // id de la persona
-        let focoAntesDeLaFicha = null;
+        /* El panel al costado (abrir, cerrar, el foco y el teclado) es
+           js/ficha-lateral.js, el mismo de supervisor.html; acá se llena. */
 
         function campoFicha(etiqueta, control, ayuda) {
             const caja = document.createElement("div");
@@ -932,40 +908,27 @@
 
         const CLASE_CAMPO = "w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
 
-        function cerrarFicha() {
-            if (fichaAbierta === null) return;
-            const id = fichaAbierta;
-            fichaAbierta = null;
-            document.getElementById("ficha-persona").hidden = true;
-            document.getElementById("ficha-velo").hidden = true;
-            document.getElementById("ficha-cuerpo").replaceChildren();
-            document.body.classList.remove("overflow-hidden");
-            // El foco vuelve a donde estaba; si la lista se repintó mientras
-            // tanto (se cambió algo), al nombre de esa persona en la lista nueva.
-            const fila = document.querySelector('#users-body tr[data-persona="' + CSS.escape(id) + '"] .persona-abrir');
-            if (focoAntesDeLaFicha && document.contains(focoAntesDeLaFicha)) focoAntesDeLaFicha.focus();
-            else if (fila) fila.focus();
-            else document.getElementById("user-search").focus();
-            focoAntesDeLaFicha = null;
-        }
+        function cerrarFicha() { FichaLateral.cerrar(); }
 
         function abrirFicha(id) {
             const u = allUsers.find((x) => x.id === id);
             if (!u) { cerrarFicha(); return; }
-            const yaEstaba = fichaAbierta === id;
-            if (fichaAbierta === null) focoAntesDeLaFicha = document.activeElement;
-            fichaAbierta = id;
-            pintarFicha(u);
-            document.getElementById("ficha-persona").hidden = false;
-            document.getElementById("ficha-velo").hidden = false;
-            document.body.classList.add("overflow-hidden");
-            if (!yaEstaba) document.getElementById("ficha-titulo").focus();
+            FichaLateral.abrir({
+                clave: id,
+                titulo: nombreDe(u),
+                pintar: () => pintarFicha(u),
+                // Si la lista se repintó mientras tanto (se cambió algo), el
+                // foco vuelve al nombre de esa persona en la lista nueva.
+                foco: () => document.querySelector('#users-body tr[data-persona="' + CSS.escape(id) + '"] .persona-abrir')
+                    || document.getElementById("user-search"),
+            });
         }
 
         // Después de volver a cargar las cuentas: la ficha abierta se rehace
         // con la persona como quedó (o se cierra, si ya no está).
         function refrescarFicha() {
-            if (fichaAbierta !== null) abrirFicha(fichaAbierta);
+            const id = FichaLateral.abierta();
+            if (id !== null) abrirFicha(id);
         }
 
         function pintarFicha(u) {
@@ -1237,37 +1200,42 @@
             }
         }
 
-        document.getElementById("ficha-cerrar").addEventListener("click", cerrarFicha);
-        document.getElementById("ficha-velo").addEventListener("click", cerrarFicha);
-        document.addEventListener("keydown", (e) => {
-            if (fichaAbierta === null) return;
-            // Con un aviso de js/avisos.js encima (un <dialog> modal), las
-            // teclas son de él: Escape lo cierra a él, no a la ficha.
-            if (document.querySelector("dialog[open]")) return;
-            if (e.key === "Escape") {
-                e.preventDefault();
-                cerrarFicha();
-                return;
-            }
-            // El foco no se escapa de la ficha con Tab: es un diálogo.
-            if (e.key === "Tab") {
-                const ficha = document.getElementById("ficha-persona");
-                const enfocables = [...ficha.querySelectorAll("a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex='0']")]
-                    .filter((el) => el.checkVisibility ? el.checkVisibility() : el.offsetParent !== null);
-                if (!enfocables.length) return;
-                const primero = enfocables[0], ultimo = enfocables[enfocables.length - 1];
-                if (!ficha.contains(document.activeElement)) { e.preventDefault(); primero.focus(); }
-                else if (e.shiftKey && document.activeElement === primero) { e.preventDefault(); ultimo.focus(); }
-                else if (!e.shiftKey && document.activeElement === ultimo) { e.preventDefault(); primero.focus(); }
-            }
-        });
+        window.AdminPanel = { abrirFicha, irA, grupos: GRUPOS_ADMIN };
 
-        // Lo que usa el buscador de Ctrl + K (js/admin-buscador.js).
-        window.AdminPanel = {
-            personas: () => allUsers,
-            abrirFicha,
+        /* Lo que encuentra Ctrl + K (js/buscador-panel.js). Las secciones salen
+           de los enlaces del propio menú: si se agrega una sección con su
+           enlace, el buscador ya la encuentra. */
+        window.PanelBuscador = {
+            secciones() {
+                const vistas = new Map();
+                document.querySelectorAll(".admin-nav[data-ir], .admin-grupo[data-ir]").forEach((a) => {
+                    const id = a.dataset.ir;
+                    // De una pestaña con varias secciones vale la sección, no la pestaña.
+                    if (a.classList.contains("admin-grupo") && document.querySelector('.admin-nav[data-ir="' + id + '"]')) return;
+                    if (vistas.has(id)) return;
+                    vistas.set(id, { id, titulo: a.textContent.replace(/[＋+]/g, "").replace(/\d+$/, "").trim(), grupo: grupoDeSeccion(id).nombre });
+                });
+                return [...vistas.values()];
+            },
             irA,
-            grupos: GRUPOS_ADMIN,
+            personas(texto) {
+                const t = sinTildes(texto);
+                return allUsers
+                    .filter((u) => sinTildes(u.full_name).includes(t) || sinTildes(u.email).includes(t) || sinTildes(u.grupo).includes(t))
+                    .slice(0, 6)
+                    .map((u) => ({
+                        titulo: u.full_name || u.email,
+                        detalle: [NOMBRE_ROL[u.role] || u.role, u.grupo, u.email].filter(Boolean).join(" · "),
+                        ir: () => abrirFicha(u.id),
+                    }));
+            },
+            paginas() {
+                const fuera = [];
+                if (window.PaginasAdmin) PaginasAdmin.GRUPOS.forEach((g) => g.tiles.forEach((t) => {
+                    if (t.href !== "admin.html") fuera.push({ label: t.label, desc: t.desc, href: t.href, grupo: g.title });
+                }));
+                return fuera;
+            },
         };
 
         /* «Usuario y contraseña»: para que un alumno pueda entrar sin abrir

@@ -63,7 +63,7 @@ PAGINAS = [
     "examen.html", "examenes.html",
     "planes.html", "proyecto.html", "cuestionarios.html", "cuestionario-tarea.html", "racha-tactica.html", "reportes.html", "sesion.html",
     "coordinacion.html", "subgrupos.html", "alumno-nuevo.html", "tareas.html",
-    "informe-mensual.html", "supervision.html", "academias.html", "tablero-academias.html",
+    "informe-mensual.html", "supervision.html", "supervisor.html", "academias.html", "tablero-academias.html",
     "novedades.html", "repasar-clases.html",
     "tienda.html", "accesos.html",
     "encuesta-profesor.html", "satisfaccion.html", "encuestas-curso.html",
@@ -210,7 +210,7 @@ AYUDA_GUIA = {
     "admin.html": "administracion", "inscripciones.html": "administracion",
     "accesos.html": "administracion",
     "asistencia.html": "clase-en-vivo", "subgrupos.html": "tareas",
-    "informe-mensual.html": "supervision", "supervision.html": "supervision",
+    "informe-mensual.html": "supervision", "supervision.html": "supervision", "supervisor.html": "supervision",
     "academias.html": "supervision", "tablero-academias.html": "supervision",
     # Las del día a día del profe que la guía ya cuenta (ver «El «?» de la
     # guía, para el equipo docente»).
@@ -642,6 +642,7 @@ NOMBRE_Y_PADRE = {
     "tareas.html": ("Tareas", "clases.html"),
     "informe-mensual.html": ("Informe mensual", "clases.html"),
     "supervision.html": ("Supervisión", "clases.html"),
+    "supervisor.html": ("Panel de supervisión", "clases.html"),
     "academias.html": ("Academias", "clases.html"),
     "tablero-academias.html": ("Tablero por academia", "clases.html"),
     "tienda.html": ("Tienda", "clases.html"),
@@ -767,12 +768,12 @@ def poner_migas(ruta, s):
 
 
 # El Ctrl + K de toda la Academia (js/atajo-buscar.js): lleva al buscador del
-# panel. No va en clases.html ni en admin.html (cada una tiene el suyo), ni en sesion.html (salir de la
+# panel. No va en clases.html, admin.html ni supervisor.html (cada una tiene el suyo), ni en sesion.html (salir de la
 # clase tiene que cerrar antes la asistencia) ni en examen.html (salir del
 # examen lo congela): ver la cabecera de ese archivo.
 ATAJO_INICIO = "<!-- atajo: inicio -->"
 ATAJO_FIN = "<!-- atajo: fin -->"
-SIN_ATAJO = {"clases.html", "admin.html", "sesion.html", "examen.html"}
+SIN_ATAJO = {"clases.html", "admin.html", "supervisor.html", "sesion.html", "examen.html"}
 
 
 def poner_atajo(ruta, s):
