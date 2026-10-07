@@ -1985,8 +1985,10 @@ entrenamiento del área de estrategia, en «Archivos» y en
   `TITULOS_CURSOS` desde el slug, y este da justo el título del catálogo; con
   `mil-y-una-lecciones` decía «Mil y una lecciones» y
   `verificar-tiempo-secciones.js` lo atrapó. Cambiar el slug evitó redesplegar
-  la función solo para escribir el nombre. **No está en la tienda**:
-venderlo es una decisión de precio del dueño.
+  la función solo para escribir el nombre.
+- **En la tienda vale ₡36.000**: el precio de doce materiales (sus doce
+  bloques) con el descuento del paquete. Ver «Un material con su propio
+  precio: «Las mil y una lecciones»» en `cobros-acceso-y-tienda.md`.
 
 ## Los materiales de clase
 

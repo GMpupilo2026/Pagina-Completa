@@ -76,7 +76,12 @@ const TERMINACION = {
   accesibles: "-material-accesible.html",
   ejercicios: "-ejercicios.pdf",
   presentaciones: ".pptx",
+  // «Las mil y una lecciones» no trae cuadernillos por lección: trae su libro
+  // en doce tomos, uno por bloque, cada uno en PDF y accesible.
+  tomos: /^tomo-\d+\.pdf$/,
+  tomosAccesibles: /^tomo-\d+-accesible\.html$/,
 };
+const encaja = (f, suf) => (suf instanceof RegExp ? suf.test(f) : f.endsWith(suf));
 
 function pruebaCatalogo() {
   console.log("\n=== El catálogo contra el disco ===");
@@ -98,7 +103,7 @@ function pruebaCatalogo() {
     if (!p.carpeta) continue;
     const hay = fs.readdirSync(path.join(RAIZ, p.carpeta));
     for (const [clave, suf] of Object.entries(TERMINACION)) {
-      const real = hay.filter((f) => f.endsWith(suf)).length;
+      const real = hay.filter((f) => encaja(f, suf)).length;
       const dicho = p.piezas[clave] || 0;
       if (real !== dicho) mentiras.push(`${p.id}.${clave}: dice ${dicho}, hay ${real}`);
     }
@@ -151,6 +156,13 @@ function pruebaCatalogo() {
 
   // -------- las cuentas no se contradicen
   igual("el precio de cada material", T.PRECIO, 5000);
+  /* El precio propio de «Las mil y una lecciones» no está escrito: son doce
+     materiales (sus doce bloques) con el descuento del paquete. */
+  igual("«Las mil y una lecciones» vale doce materiales con el descuento del paquete",
+    T.precioDe(T.producto("las-mil-y-una-lecciones-de-ajedrez")),
+    Math.round((12 * T.PRECIO * (1 - T.DESCUENTO_PACK)) / 1000) * 1000);
+  igual("y el suelto suma el precio de cada uno, no «cuántos × PRECIO»",
+    T.precioSuelto(), T.PRODUCTOS.reduce((a, p) => a + T.precioDe(p), 0));
   cierto("el paquete cuesta menos que comprarlo suelto", T.precioPack() < T.precioSuelto(),
     T.moneda(T.precioPack()) + " vs " + T.moneda(T.precioSuelto()));
   igual("y el ahorro que anuncia es exactamente la resta",
@@ -308,7 +320,7 @@ async function pruebaAdmin(browser) {
      preguntas o páginas, así que el módulo de los libros prometía cientos de
      «archivos» que eran páginas de dos PDF. */
   const archivosEnDisco = (p) => p.carpeta
-    ? fs.readdirSync(path.join(RAIZ, p.carpeta)).filter((f) => Object.values(TERMINACION).some((suf) => f.endsWith(suf))).length
+    ? fs.readdirSync(path.join(RAIZ, p.carpeta)).filter((f) => Object.values(TERMINACION).some((suf) => encaja(f, suf))).length
     : (p.archivos || []).filter((a) => fs.existsSync(path.join(RAIZ, a))).length;
   igual("el pie de cada módulo cuenta archivos de verdad, no páginas ni preguntas",
     await page.evaluate(() => [...document.querySelectorAll("#modulos article")].map((a) => parseInt(a.querySelector("p:last-child").textContent.split(" archivos")[0].replace(/\D/g, ""), 10))),
@@ -325,8 +337,11 @@ async function pruebaAdmin(browser) {
   igual("se pintan los " + T.PRODUCTOS.length + " materiales",
     await page.evaluate(() => document.querySelectorAll("#productos article").length), T.PRODUCTOS.length);
   const precios = await page.evaluate(() => [...document.querySelectorAll("#productos article")].map((a) => a.querySelector("p.font-serif").textContent));
-  cierto("todos a " + T.moneda(T.PRECIO) + ", el precio del catálogo",
-    precios.every((p) => p === T.moneda(T.PRECIO)), [...new Set(precios)].join(" / "));
+  /* Cada ficha con SU precio: casi todas a PRECIO, y la que trae el suyo
+     («Las mil y una lecciones») con el de ella. Un precio de ficha distinto
+     del que se cobra en el mensaje es lo que descubre quien ya pagó. */
+  igual("cada ficha con el precio del catálogo",
+    precios, T.PRODUCTOS.map((p) => T.moneda(T.precioDe(p))));
 
   // -------- el filtro
   await page.click('.filtro-tienda[data-cat="libro"]');
@@ -340,11 +355,15 @@ async function pruebaAdmin(browser) {
   igual("la barra de la selección arranca escondida",
     await page.evaluate(() => document.getElementById("barra-seleccion").checkVisibility()), false);
 
-  await page.evaluate(() => { document.querySelectorAll("#productos .boton-elegir")[0].click(); document.querySelectorAll("#productos .boton-elegir")[2].click(); });
+  /* Uno a PRECIO y el que trae su propio precio: con dos a PRECIO, un total
+     calculado como «cuántos × PRECIO» pasaba igual. */
+  const segundo = T.PRODUCTOS.findIndex((p) => p.precio);
+  const totalDos = T.precioDe(T.PRODUCTOS[0]) + T.precioDe(T.PRODUCTOS[segundo]);
+  await page.evaluate((k) => { document.querySelectorAll("#productos .boton-elegir")[0].click(); document.querySelectorAll("#productos .boton-elegir")[k].click(); }, segundo);
   await page.waitForTimeout(200);
   igual("con dos elegidos se destapa y dice el total",
     await page.evaluate(() => [document.getElementById("barra-seleccion").checkVisibility(), document.getElementById("sel-total").textContent]),
-    [true, T.moneda(2 * T.PRECIO)]);
+    [true, T.moneda(totalDos)]);
   /* El estado va ESCRITO en el botón, no solo en el borde: un color solo no
      se distingue con daltonismo ni se anuncia con lector de pantalla. */
   igual("y el botón del material elegido lo dice con todas las letras",
@@ -374,13 +393,13 @@ async function pruebaAdmin(browser) {
   cierto("el pedido sale por wa.me CON código de país",
     pedido.startsWith("https://wa.me/50683092291?text="),
     "salió: " + pedido.slice(0, 60));
-  const esperados = [T.PRODUCTOS[0].titulo, T.PRODUCTOS[2].titulo];
+  const esperados = [T.PRODUCTOS[0].titulo, T.PRODUCTOS[segundo].titulo];
   cierto("y lleva exactamente los dos materiales elegidos",
     esperados.every((t) => pedido.includes(t)) &&
     !T.PRODUCTOS.filter((p) => !esperados.includes(p.titulo)).some((p) => pedido.includes(p.titulo)),
     pedido);
   cierto("con el mismo total que decía la barra",
-    pedido.includes("Total: " + T.moneda(2 * T.PRECIO)), pedido);
+    pedido.includes("Total: " + T.moneda(totalDos)), pedido);
 
   // -------- quitar todo
   await page.click("#sel-limpiar");
