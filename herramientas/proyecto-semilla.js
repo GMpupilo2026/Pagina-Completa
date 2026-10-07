@@ -59,7 +59,6 @@ const falla = (m) => errores.push(m);
 
 // ------------------------------------------------------------------ bancos
 const mapa = leerJSON("cursos/protegido/data/el-mapa-de-los-finales.json");
-const estrategia = leerJSON("cursos/protegido/data/estrategia-en-el-final.json");
 const temas = leerJSON("entreno/data/temas.json");
 const mates = leerJSON("entreno/data/mates.json");
 const lineas = lineasDeAperturas();
@@ -116,11 +115,6 @@ function posicionesDe(spec, contexto) {
         const ds = (f.diagramas || []).slice(spec.desde || 0, (spec.desde || 0) + spec.n);
         if (ds.length < spec.n) falla(contexto + ": «" + spec.titulo + "» no tiene " + spec.n + " diagramas desde el " + (spec.desde || 0));
         return ds.map((d) => conPaso(posicion(d.titulo || f.titulo, d.fen, chuletaDeDiagrama(d)), pasoDeDiagrama(d, f)));
-    }
-    if (spec.fuente === "estrategia") {
-        const f = estrategia.finales.find((x) => x.titulo === spec.titulo);
-        if (!f) { falla(contexto + ": no hay «" + spec.titulo + "» en Estrategia en el final"); return []; }
-        return (f.diagramas || []).slice(0, spec.n).map((d) => conPaso(posicion(d.titulo || f.titulo, d.fen, chuletaDeDiagrama(d)), pasoDeDiagrama(d, f)));
     }
     if (spec.fuente === "tema") {
         const elegidos = ejerciciosDeTema(temas, spec.tema, spec.n, spec.desde || 0);

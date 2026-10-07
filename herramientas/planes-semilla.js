@@ -5,7 +5,6 @@
  * verificó con motor o con chess.js:
  *
  *   cursos/protegido/data/el-mapa-de-los-finales.json   240 diagramas, 12 capítulos
- *   cursos/protegido/data/estrategia-en-el-final.json     6 diagramas
  *   js/aperturas-lineas.js                               40 líneas (466 jugadas)
  *   entreno/data/temas.json                           7.008 ejercicios de Lichess
  *   entreno/data/mates.json                              mates en 1, 2 y 3
@@ -85,21 +84,6 @@ function planesDeFinales() {
              "Del curso «Los 100 finales». Las posiciones están verificadas con motor.",
              items);
     }
-}
-
-// ================================================================= ESTRATEGIA
-
-function planesDeEstrategia() {
-    const est = leerJSON("cursos/protegido/data/estrategia-en-el-final.json");
-    est.finales.forEach((f) => {
-        const items = (f.diagramas || []).slice(0, 6).map((d) =>
-            posicion(d.titulo || f.titulo, d.fen, chuletaDeDiagrama(d)));
-        if (items.filter(Boolean).length) {
-            items.unshift(nota("La idea de hoy", f.titulo + ". Es una clase de técnica: primero la idea, después la posición."));
-        }
-        plan("Estrategia · " + f.titulo,
-             "Del curso «Estrategia en el final».", items);
-    });
 }
 
 // ================================================================== APERTURAS
@@ -258,7 +242,6 @@ function aSQL(planes) {
 // ======================================================================= main
 
 planesDeFinales();
-planesDeEstrategia();
 planesDeAperturas();
 planesDeTactica();
 planesDeMates();

@@ -7,12 +7,12 @@
   "resumen": "Un programa en tres niveles para el jugador de club que quiere bases sólidas: táctica, finales, juego posicional, cálculo y aperturas, tema por tema, con las partidas clásicas que mejor los muestran.",
   "descripcion_larga": "Setenta y dos lecciones en tres niveles, ordenadas como se aprende de verdad: cada tema se presenta, se reconoce en partidas reales y se practica, y vuelve más adelante un escalón más arriba. Táctica (los dibujos de mate, el ataque doble, la clavada, la descubierta, el molino, los sacrificios), finales (la oposición, dama contra peón, el mate con alfil y caballo, las fortalezas, dama contra torre), juego posicional y estrategia (el valor de las piezas, las columnas, los puestos avanzados, los peones débiles, el peón pasado), cálculo (mate en dos y en tres, variantes forzadas) y aperturas (las reglas, los gambitos, las trampas, las partidas abiertas y semiabiertas). Los ejemplos son partidas de maestros y de torneos reales, y cada posición está comprobada con motor.",
   "anterior": {
-    "href": "fundamentos-del-ajedrez.html",
-    "titulo": "Fundamentos del Ajedrez"
+    "href": "arbitro-nacional.html",
+    "titulo": "Árbitro Nacional"
   },
   "siguiente": {
-    "href": "aperturas-y-defensas.html",
-    "titulo": "Aperturas y Defensas"
+    "href": "partidas-modelo.html",
+    "titulo": "Partidas modelo del ajedrez moderno"
   },
   "bloques": [
     {

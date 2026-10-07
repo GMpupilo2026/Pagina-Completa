@@ -45,16 +45,9 @@ window.ExamenBanco = (function () {
      Un curso que no esté acá no se puede examinar por curso — y se
      dice, en vez de devolver cero preguntas en silencio. */
   const AREAS_DEL_CURSO = {
-    "fundamentos-del-ajedrez": ["reglas", "material"],
-    "aperturas-y-defensas": ["apertura"],
-    "calculo-y-visualizacion": ["calculo", "tactica"],
-    "finales-practicos": ["finales"],
     "partidas-modelo": ["estrategia"],
-    "estrategia-y-tactica": ["estrategia", "tactica"],
     "el-mapa-de-los-finales": ["finales"],
-    "estrategia-en-el-final": ["finales", "estrategia"],
     "desequilibrios-de-material": ["material", "estrategia"],
-    "preparacion-para-torneos": ["maestria", "calculo"],
     "rompe-el-estancamiento": ["estrategia", "calculo", "tactica"],
     "ganar-con-poco": ["estrategia", "finales"],
     "cambiar-o-no-cambiar": ["estrategia", "material"],

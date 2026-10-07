@@ -436,7 +436,6 @@ verificó, y `herramientas/planes-semilla.js` es lo único que las arma:
 | de dónde | qué sale |
 |---|---|
 | `cursos/protegido/data/el-mapa-de-los-finales.json` | 240 diagramas, 12 capítulos |
-| `cursos/protegido/data/estrategia-en-el-final.json` | 6 diagramas |
 | `js/aperturas-lineas.js` | las 40 líneas |
 | `entreno/data/temas.json` | los ejercicios de Lichess |
 | `entreno/data/mates.json` | mate en 1, 2 y 3 |

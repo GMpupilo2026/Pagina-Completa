@@ -47,19 +47,16 @@ const CONCEPTOS = JSON.parse(fs.readFileSync(path.join(__dirname, "material", "c
 const LECTURAS = JSON.parse(fs.readFileSync(path.join(__dirname, "material", "lecturas.json"), "utf8"));
 
 const CURSOS = [
-  "fundamentos-del-ajedrez", "finales-practicos", "estrategia-y-tactica",
-  "aperturas-y-defensas", "calculo-y-visualizacion", "desequilibrios-de-material",
-  "el-mapa-de-los-finales", "estrategia-en-el-final", "partidas-modelo",
-  "preparacion-para-torneos", "rompe-el-estancamiento", "ganar-con-poco", "cambiar-o-no-cambiar", "ideas-que-ganan-partidas", "los-cimientos-del-ajedrez",
+  "desequilibrios-de-material", "el-mapa-de-los-finales", "partidas-modelo",
+  "rompe-el-estancamiento", "ganar-con-poco", "cambiar-o-no-cambiar",
+  "ideas-que-ganan-partidas", "los-cimientos-del-ajedrez",
 ];
 // De qué habla cada curso, para cuando una lección no engancha con ningún
 // concepto por palabras clave: se le dan los de su área.
 const AREA_DEL_CURSO = {
-  "fundamentos-del-ajedrez": "fundamentos", "finales-practicos": "finales",
-  "estrategia-y-tactica": "tactica", "aperturas-y-defensas": "aperturas",
-  "calculo-y-visualizacion": "tactica", "desequilibrios-de-material": "estrategia",
-  "el-mapa-de-los-finales": "finales", "estrategia-en-el-final": "finales",
-  "partidas-modelo": "estrategia", "preparacion-para-torneos": "competicion",
+  "desequilibrios-de-material": "estrategia",
+  "el-mapa-de-los-finales": "finales",
+  "partidas-modelo": "estrategia",
   "rompe-el-estancamiento": "estrategia",
   "ganar-con-poco": "estrategia",
   "cambiar-o-no-cambiar": "estrategia",

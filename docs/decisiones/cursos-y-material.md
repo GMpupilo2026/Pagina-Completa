@@ -128,41 +128,44 @@ vigente) lo abre con un enlace firmado de pocos minutos**, nunca haciendo
 público el bucket, y la política que lo permita pregunta lo mismo que el
 worker (`puede_bajar()`).
 
-### Los cursos escondidos
+### Los cursos borrados
 
-Seis cursos están **escondidos a alumnos y profesores** (octubre de 2026, a
-pedido del dueño): Fundamentos del Ajedrez, Aperturas y Defensas, Cálculo y
-Visualización, Finales Prácticos, Estrategia y Táctica y Preparación para
-Torneos. Siguen en el repositorio y quien administra los sigue abriendo, para
-revisarlos o terminarlos. La lista vive en **dos lugares que tienen que decir
-lo mismo** (`verificar-worker.js` lo comprueba):
+En octubre de 2026, a pedido del dueño, se **borraron** siete cursos:
+Fundamentos del Ajedrez, Aperturas y Defensas, Cálculo y Visualización,
+Finales Prácticos, Estrategia y Táctica, Estrategia en el final y Preparación
+para Torneos. Seis de ellos venían de estar escondidos a alumnos y profesores
+(`js/cursos-ocultos.js` y la lista `OCULTOS` de `worker.js`); ese mecanismo
+existía solo para ellos y se fue con ellos.
 
-- `js/cursos-ocultos.js` decide qué se **pinta**: «Mis cursos» les quita la
-  tarjeta (vienen con `hidden` en el HTML para que no se asomen mientras se
-  pregunta quién mira; a administración se le muestran con «Escondido a
-  alumnos y profesores»), la página del curso dice que no está disponible sin
-  pedir el contenido, y los enlaces «curso anterior / siguiente» que llevan a
-  uno escondido se van. Tampoco se ofrecen en el material de la clase
-  (`sesion.js`), en tareas y exámenes (`MaterialPlataforma.cursos()`), ni en
-  «Sigue con tu curso» o el «Continuar» de Informes. En la clase, tareas y
-  exámenes se esconden **también para administración**: quien administra no da
-  clase. Con «Ver como: profesor» o «alumno» `AccesoAdmin.esAdmin()` dice que
-  no, así que los ve escondidos como ellos.
-- `worker.js` (`OCULTOS`) decide qué se **baja**: para esos cursos,
-  `cursos/protegido/` y `cursos/recursos/` preguntan
-  `puede_bajar(curso, false)`: el acceso a la Academia no basta, pasan
-  administración y quien compró ese material en la tienda (pagó por él). La
-  página de 403 dice «Este curso no está disponible».
-- Los recursos de esos cursos se sacaron del plan de entrenamiento
-  (`js/plan-entrenamiento.js`): mandaban a una portada de un curso que el
-  alumno no puede abrir. Si un curso se vuelve a abrir, se quita de las dos
-  listas y se le devuelve su renglón al plan.
-- **Lo que queda igual a propósito**: las portadas públicas (`cursos/<curso>.html`,
-  el catálogo `cursos.html`) y la tienda no se tocaron, y el avance que un
-  alumno ya tenía en esos cursos sigue en sus informes: es historia, no se
-  borra.
+Se fueron sus portadas, sus fragmentos protegidos, su material de
+`cursos/recursos/`, sus tarjetas, sus productos de la tienda (que quedó en
+cuatro módulos) y sus lecciones y posiciones en el proyecto Campeones
+Colegiales y en los planes de arranque. Los enlaces «curso anterior /
+siguiente» se cerraron en anillo con los que quedan, en el orden del catálogo
+(`herramientas/cursos/catalogo.json`), y del último se vuelve al primero.
+`js/cursos-ocultos.js` ya no existe: una página nueva de curso no lo carga.
+`curso-generar.py` y
+`curso-generar-formacion.py` clonan ahora `arbitro-nacional.html`, que tenía el
+mismo armazón que el molde de antes.
 
-`node herramientas/verificar-todo.js cursos-ocultos worker` lo comprueba.
+**Lo que quedó a propósito**, porque es historia o vive en la base:
+
+- El avance que un alumno ya tenía en esos cursos (`training_progress`) no se
+  borró. Para que no le lleve a una página que no existe, «Sigue con tu curso»
+  (`clases.js`) y el «Continuar» de Informes solo ofrecen cursos que están en
+  `herramientas/cursos/catalogo.json` (vía `MaterialPlataforma.cursos()`).
+- Los planes de clase ya sembrados en la base (49 renglones de `plan_items`)
+  siguen ahí: tocar la base es otra decisión.
+- Las filas de esos cursos en `interno.curso_lecciones` (de las que sale el
+  certificado) tienen que irse con una migración; mientras sigan, el
+  verificador de certificados las nombra en `SIN_CURSO`. Ninguno tenía un
+  certificado emitido.
+- `supabase/functions/informes-encargados/informe-html.ts` sigue sabiendo el
+  nombre de esos cursos, para que el informe a la casa no muestre un
+  identificador donde había avance viejo, y porque cambiarlo pide volver a
+  desplegar la función.
+- Los textos guía de cada clase del proyecto (`sitio`, `detalle`) todavía
+  pueden nombrar alguno de esos cursos: son la guía escrita del profesor.
 
 ### «Marcar lección como estudiada» nunca guardó nada
 
@@ -488,12 +491,8 @@ deletrea y no se entiende.
 
 ### Lo que queda por hacer
 
-De las 186 lecciones, **92 traen posiciones de ejemplo**. Las que no son sobre
-todo de `calculo-y-visualizacion`, `preparacion-para-torneos`,
-`estrategia-y-tactica` y `aperturas-y-defensas`: el fondo de posiciones
-verificadas es casi todo de finales y de desequilibrios, y no hay de dónde
-prestarles. Cuando esos cursos tengan su archivo de posiciones, la corrida se
-repite y las toman solas.
+Desde que se borraron siete cursos (ver «Los cursos borrados»), el material
+generado cubre los cursos de la lista `CURSOS` de `herramientas/curso-material.js`.
 
 ## La guía del profesor
 

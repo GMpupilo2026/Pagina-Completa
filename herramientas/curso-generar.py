@@ -18,7 +18,7 @@ reescribe es el artículo.
 Cómo se corre (las dos bibliotecas no son parte del sitio, se instalan aparte):
 
     pip install python-pptx reportlab
-    python3 herramientas/curso-generar.py estrategia-en-el-final
+    python3 herramientas/curso-generar.py <slug>     # lee herramientas/cursos/<slug>.json
 
 Después hay que agregar a mano la tarjeta del curso en cursos.html — es lo
 único que no se genera, porque el orden de las tarjetas es una decisión
@@ -30,7 +30,7 @@ import re
 import sys
 
 RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-MOLDE = os.path.join(RAIZ, "cursos", "finales-practicos.html")   # de aquí sale el armazón
+MOLDE = os.path.join(RAIZ, "cursos", "arbitro-nacional.html")   # de aquí sale el armazón
 
 # Paleta del sitio (tailwind.config de cada página)
 AZUL_950, AZUL_900, AZUL_800 = "0A1F33", "102A43", "243B53"
@@ -143,14 +143,14 @@ def portada(curso):
         siguiente_href=curso["siguiente"]["href"], siguiente_titulo=escapar(curso["siguiente"]["titulo"]))
 
     salida = re.sub(r'<article class="pt-8 pb-16">.*?</article>', lambda m: articulo, base, flags=re.S)
-    salida = salida.replace("<title>Finales Prácticos — Ajedrez Integral</title>",
+    salida = salida.replace("<title>Árbitro Nacional — Ajedrez Integral</title>",
                             "<title>%s — Ajedrez Integral</title>" % escapar(titulo))
     descripcion_meta = "Temario completo del curso %s: %s" % (titulo, curso["resumen"])
     salida = re.sub(r'<meta name="description" content="[^"]*">',
                     '<meta name="description" content="%s">' % escapar(descripcion_meta), salida, count=1)
-    # El molde (finales-practicos.html) trae SU PROPIO canonical/og — clonarlo
+    # El molde (arbitro-nacional.html) trae SU PROPIO canonical/og — clonarlo
     # sin corregirlos deja el curso nuevo compartiéndose con la miniatura y la
-    # descripción de "Finales Prácticos", sin que nada avise.
+    # descripción de "Árbitro Nacional", sin que nada avise.
     salida = re.sub(r'<link rel="canonical" href="[^"]*">',
                     '<link rel="canonical" href="https://ajedrez-integral.com/cursos/%s.html">' % slug, salida)
     salida = re.sub(r'<meta property="og:title" content="[^"]*">',
@@ -427,4 +427,6 @@ def main(slug):
 
 
 if __name__ == "__main__":
-    main(sys.argv[1] if len(sys.argv) > 1 else "estrategia-en-el-final")
+    if len(sys.argv) < 2:
+        sys.exit("Uso: python3 herramientas/curso-generar.py <slug>   (lee herramientas/cursos/<slug>.json)")
+    main(sys.argv[1])

@@ -249,8 +249,8 @@ function servidorPropio() {
 
   // --- lo que NO debe guardarse
   const prohibidas = [
-    "/cursos/protegido/finales-practicos.html",
-    "/cursos/recursos/finales-practicos/01-la-regla-del-cuadrado-y-el-peon-pasado-material.pdf",
+    "/cursos/protegido/el-mapa-de-los-finales.html",
+    "/cursos/recursos/el-mapa-de-los-finales/01-examen-de-diagnostico-material.pdf",
   ];
   for (const ruta of prohibidas) {
     await pagina.evaluate(async (u) => { try { await fetch(u); } catch (e) {} }, ruta);

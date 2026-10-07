@@ -16,7 +16,7 @@
  * el propio Stockfish del sitio: ver herramientas/verificador-motor.html.
  *
  *     npm install chess.js@0.10.3
- *     node herramientas/curso-posiciones.js estrategia-en-el-final
+ *     node herramientas/curso-posiciones.js <slug>   # lee herramientas/cursos/<slug>.json
  */
 const fs = require("fs");
 const path = require("path");
@@ -103,4 +103,8 @@ function main(slug) {
   console.log("cursos/protegido/data/" + slug + ".json · " + total + " posiciones en " + finales.length + " lecciones");
 }
 
-main(process.argv[2] || "estrategia-en-el-final");
+if (!process.argv[2]) {
+  console.error("Uso: node herramientas/curso-posiciones.js <slug>   (lee herramientas/cursos/<slug>.json)");
+  process.exit(1);
+}
+main(process.argv[2]);

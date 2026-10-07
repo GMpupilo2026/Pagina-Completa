@@ -52,7 +52,7 @@ def navegar(s, ant, sig):
     return s
 
 ANT = ('ideas-que-ganan-partidas', 'Ideas que ganan partidas')
-SIG = ('calculo-y-visualizacion', 'Cálculo y Visualización')
+SIG = ('formacion-ajedrez', 'Formación Ajedrez')
 
 def comun(s):
     s = s.replace(VIEJO_T, TITULO).replace(VIEJO_D, DESC).replace('partidas-modelo', SLUG)

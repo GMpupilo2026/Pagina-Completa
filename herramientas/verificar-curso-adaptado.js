@@ -91,7 +91,7 @@ async function abrirCurso(browser, curso, adaptado, ciega) {
 
 async function pruebaEncabezados(browser) {
   console.log("\n=== Los encabezados del curso ===");
-  const { page, ctx, errores } = await abrirCurso(browser, "estrategia-en-el-final", false);
+  const { page, ctx, errores } = await abrirCurso(browser, "desequilibrios-de-material", false);
 
   const niveles = await page.evaluate(() =>
     Array.from(document.querySelectorAll("main h1, main h2, main h3, main h4, main h5, main h6"))
@@ -141,7 +141,7 @@ async function pruebaEncabezados(browser) {
 async function pruebaMaterial(browser) {
   console.log("\n=== El material, en cada modo ===");
   for (const adaptado of [false, true]) {
-    const { page, ctx } = await abrirCurso(browser, "estrategia-en-el-final", adaptado);
+    const { page, ctx } = await abrirCurso(browser, "desequilibrios-de-material", adaptado);
     const m = await page.evaluate(() => {
       const enlaces = Array.from(document.querySelectorAll("#course-content-body a[href]"));
       const visible = (a) => getComputedStyle(a).display !== "none";
@@ -655,29 +655,8 @@ async function pruebaPartidasCiega(browser) {
   await ctx.close();
 }
 
-/* La lección 1 de Fundamentos enseñaba la notación inglesa («K=rey, Q=dama…
-   Nf3») y el resto del sitio usa la española: quien aprende con esa lección
-   escribe «Nf3» en el recuadro. Que no vuelva, ni en la lección ni en su
-   material accesible (que se genera de ella). */
-function pruebaNotacionEspanola() {
-  console.log("\n=== Fundamentos, lección 1: la notación en español ===");
-  const frag = fs.readFileSync(path.join(RAIZ, "cursos/protegido/fundamentos-del-ajedrez.html"), "utf8");
-  const leccion = (frag.match(/<details[^>]*>\s*<summary[^>]*>1\. El tablero[\s\S]*?<\/details>/) || [""])[0];
-  const accesible = fs.readFileSync(path.join(RAIZ, "cursos/recursos/fundamentos-del-ajedrez/01-el-tablero-y-la-notacion-algebraica-material-accesible.html"), "utf8");
-  const INGLES = /\b[KQBN][a-h]?x?[a-h][1-8]\b|\bK\s*=\s*rey\b(?![^.]*inglés)/;
-  [["la lección", leccion], ["su material accesible", accesible]].forEach(([nombre, texto]) => {
-    const sinEtiquetas = texto.replace(/<[^>]+>/g, " ");
-    // La mención a la notación inglesa va en la frase que dice «inglés».
-    const frases = sinEtiquetas.split(/(?<=\.)\s/).filter((f) => !/inglés/.test(f));
-    const mala = frases.find((f) => INGLES.test(f));
-    igual("Fundamentos 1 · " + nombre + " no enseña jugadas en notación inglesa", mala ? mala.trim().slice(0, 120) : "ninguna", "ninguna");
-    igual("Fundamentos 1 · " + nombre + " enseña las letras en español (C = caballo, Cf3)", /C = caballo/.test(sinEtiquetas) && /\bCf3\b/.test(sinEtiquetas), true);
-  });
-}
-
 (async () => {
   pruebaPlurales();
-  pruebaNotacionEspanola();
   pruebaSinVideos();
   pruebaSinTemarioDuplicado();
   const browser = await chromium.launch({ executablePath: CHROME });

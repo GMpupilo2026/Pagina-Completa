@@ -81,10 +81,9 @@ def imagenes(pagina, visto=None):
     return total
 
 CURSOS = [
-    "fundamentos-del-ajedrez", "finales-practicos", "estrategia-y-tactica",
-    "aperturas-y-defensas", "calculo-y-visualizacion", "desequilibrios-de-material",
-    "el-mapa-de-los-finales", "estrategia-en-el-final", "partidas-modelo",
-    "preparacion-para-torneos", "rompe-el-estancamiento", "ganar-con-poco", "cambiar-o-no-cambiar", "ideas-que-ganan-partidas", "los-cimientos-del-ajedrez",
+    "desequilibrios-de-material", "el-mapa-de-los-finales", "partidas-modelo",
+    "rompe-el-estancamiento", "ganar-con-poco", "cambiar-o-no-cambiar",
+    "ideas-que-ganan-partidas", "los-cimientos-del-ajedrez",
 ]
 
 total_lecciones = total_paginas = con_ejemplo = 0

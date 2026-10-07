@@ -59,8 +59,8 @@ const TAREAS_ALUMNA = [
         material_label: "Coordenadas", material_href: "entreno/coordenadas.html",
         filtro_clave: null, filtro_label: null, leccion: null,
         meta_tipo: "minutos", meta_cantidad: 10, hecho: 12, cumplido: true },
-      { id: "i-curso", orden: 2, material_tipo: "curso", material_slug: "fundamentos-del-ajedrez",
-        material_label: "Fundamentos del Ajedrez", material_href: "cursos/academia/fundamentos-del-ajedrez.html",
+      { id: "i-curso", orden: 2, material_tipo: "curso", material_slug: "el-mapa-de-los-finales",
+        material_label: "El mapa de los finales", material_href: "cursos/academia/el-mapa-de-los-finales.html",
         filtro_clave: null, filtro_label: null, leccion: 3,
         meta_tipo: "completar", meta_cantidad: null, hecho: 0, cumplido: false },
     ],
@@ -515,7 +515,7 @@ async function main() {
       `falta el renglón del tema con su cantidad: ${JSON.stringify(renglones)}`);
     ok(renglones.some((t) => /Hacer 10 minutos de Coordenadas/.test(t)),
       `falta el renglón de minutos: ${JSON.stringify(renglones)}`);
-    ok(renglones.some((t) => /Estudiar la lección 3 de Fundamentos/.test(t)),
+    ok(renglones.some((t) => /Estudiar la lección 3 de El mapa de los finales/.test(t)),
       `falta el renglón del curso con su lección: ${JSON.stringify(renglones)}`);
 
     // El avance que muestra es el que vino de la base, no uno recalculado acá.

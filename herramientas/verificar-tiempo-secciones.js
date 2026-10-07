@@ -73,9 +73,13 @@ catalogo.forEach((c) => { titulos[c.slug] = c.titulo; });
 // sumarlo obligaría a volver a desplegar la función solo para escribir lo
 // mismo. Lo que no puede pasar es que el correo muestre un nombre distinto
 // del catálogo: un nombre viejo en la tabla, o un slug que no da el título.
+// Y puede traer de más: los cursos borrados en octubre de 2026 siguen ahí para
+// que el avance viejo de un alumno no salga con su identificador (ver «Los
+// cursos borrados» en docs/decisiones/cursos-y-material.md).
+const enCatalogo = Object.keys(TS.TITULOS).filter((k) => k in titulos);
 igual("lo que la tabla nombra, lo nombra como el catálogo",
-  Object.keys(TS.TITULOS).map((k) => [k, TS.TITULOS[k]]),
-  Object.keys(TS.TITULOS).map((k) => [k, titulos[k]]));
+  enCatalogo.map((k) => [k, TS.TITULOS[k]]),
+  enCatalogo.map((k) => [k, titulos[k]]));
 const nombraMal = catalogo.filter((c) => !TS.html[2].includes(escHtml("Curso: " + c.titulo))).map((c) => c.slug);
 igual("el correo muestra cada curso con el nombre del catálogo", nombraMal, []);
 

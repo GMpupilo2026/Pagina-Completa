@@ -10,7 +10,7 @@
  *    se leen y se creen. Por eso `piezas` se cuenta contra el disco, que es la
  *    misma regla que el resultado de cada posición de un curso, verificado con
  *    motor y no a ojo.
- *  - Un curso fuera de los seis módulos (el "sistema completo" no lo entrega)
+ *  - Un curso fuera de los módulos (el "sistema completo" no lo entrega)
  *    o metido en dos (se cobra dos veces). Las dos cosas se ven perfectas.
  *  - Un precio que dice una cosa en la ficha y otra en el mensaje de WhatsApp.
  *    Quien lo lee manda el mensaje y se entera después.

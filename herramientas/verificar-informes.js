@@ -64,7 +64,7 @@ const CARLA = {
   mate1: 0, mate2: 0, mate3: 0, tactica: 0, concentracion: 0, cursos_temas: 0,
 };
 const CURSOS_ANA = [
-  { student_id: "a-1", slug: "finales-practicos", titulo: "Finales prácticos", total: 8, hechos: 3, ultimo_titulo: "La oposición", ultima_fecha: "2026-09-09T10:00:00Z" },
+  { student_id: "a-1", slug: "el-mapa-de-los-finales", titulo: "El mapa de los finales", total: 8, hechos: 3, ultimo_titulo: "La oposición", ultima_fecha: "2026-09-09T10:00:00Z" },
   { student_id: "a-1", slug: "tactica-basica", titulo: "Táctica básica", total: 0, hechos: 1, ultimo_titulo: "La horquilla", ultima_fecha: "2026-09-08T10:00:00Z" },
 ];
 const RESPUESTAS = [
@@ -698,7 +698,7 @@ async function pruebaProfesor(browser) {
       .map((d) => d.textContent.replace(/\s+/g, " "));
     return [
       t.length,
-      t[0].includes("Finales prácticos3/8 · 38%"),
+      t[0].includes("El mapa de los finales3/8 · 38%"),
       t[0].includes("Último tema estudiado: La oposición (09 sept 2026)"),
       t[1].includes("Táctica básica1/1 · 100%"),
       t[1].includes("Último tema estudiado: La horquilla (08 sept 2026)"),
@@ -2083,8 +2083,8 @@ async function pruebaFotos(browser) {
    que falta que su profe lo confirme. */
 async function pruebaCertificados(browser) {
   console.log("\n=== Certificados de curso ===");
-  const completo = { student_id: "a-1", slug: "finales-practicos", titulo: "Finales prácticos", total: 14, hechos: 14, ultimo_titulo: "Repaso", ultima_fecha: "2026-09-20T10:00:00Z" };
-  const aMedias = { student_id: "a-1", slug: "estrategia-y-tactica", titulo: "Estrategia y Táctica", total: 20, hechos: 7, ultimo_titulo: "Peones", ultima_fecha: "2026-09-19T10:00:00Z" };
+  const completo = { student_id: "a-1", slug: "el-mapa-de-los-finales", titulo: "El mapa de los finales", total: 14, hechos: 14, ultimo_titulo: "Repaso", ultima_fecha: "2026-09-20T10:00:00Z" };
+  const aMedias = { student_id: "a-1", slug: "desequilibrios-de-material", titulo: "Desequilibrios de material", total: 20, hechos: 7, ultimo_titulo: "Peones", ultima_fecha: "2026-09-19T10:00:00Z" };
   const datos = (certificados, propio) => ({
     rpc: {
       informes_resumen_alumnos: [ANA], informes_cursos_alumnos: [completo, aMedias], informes_entreno_modulos: [MODULOS_ANA],
@@ -2119,17 +2119,17 @@ async function pruebaCertificados(browser) {
   await page.evaluate(() => [...document.querySelectorAll("#cursos-report-body button")].find((x) => /Dar certificado/.test(x.textContent)).click());
   await page.waitForFunction(() => document.querySelector('#cursos-report-body a[href^="certificado.html"]'));
   igual("pide el certificado de ESTE alumno y ESTE curso", JSON.stringify(await page.evaluate(() => window.__rpcArgs.filter((a) => a[0] === "emitir_certificado").map((a) => a[1]))),
-    JSON.stringify([{ p_alumno: "a-1", p_curso: "finales-practicos" }]));
-  igual("después de confirmar", await page.evaluate(() => window.__avisos.some((t) => /¿Darle el certificado de «Finales prácticos»\?/.test(t))), "true");
+    JSON.stringify([{ p_alumno: "a-1", p_curso: "el-mapa-de-los-finales" }]));
+  igual("después de confirmar", await page.evaluate(() => window.__avisos.some((t) => /¿Darle el certificado de «El mapa de los finales»\?/.test(t))), "true");
   f = await fila(page, 0);
   igual("y queda «Ver certificado» con su código", [f.enlace, f.dar, /Certificado dado/.test(f.texto)].join(","), "certificado.html?c=abcdef1234,false,true");
   igual("sin errores (dar certificado)", errores.join(" | "), "");
   await page.close();
 
   ({ page, errores } = await abrirAna([
-    { student_id: "a-1", curso: "finales-practicos", codigo: "1111111111", anulado_at: "2026-09-01T00:00:00Z" },
-    { student_id: "a-2", curso: "finales-practicos", codigo: "2222222222", anulado_at: null },
-    { student_id: "a-1", curso: "finales-practicos", codigo: "0123456789", anulado_at: null },
+    { student_id: "a-1", curso: "el-mapa-de-los-finales", codigo: "1111111111", anulado_at: "2026-09-01T00:00:00Z" },
+    { student_id: "a-2", curso: "el-mapa-de-los-finales", codigo: "2222222222", anulado_at: null },
+    { student_id: "a-1", curso: "el-mapa-de-los-finales", codigo: "0123456789", anulado_at: null },
   ]));
   f = await fila(page, 0);
   igual("con uno vigente: «Ver certificado» (ni el anulado ni el de otra alumna)", [f.enlace, f.dar].join(","), "certificado.html?c=0123456789,false");
@@ -2142,7 +2142,7 @@ async function pruebaCertificados(browser) {
   f = await fila(page, 0);
   igual("el alumno sin certificado: falta que su profe lo confirme", [f.dar, f.enlace, /Cuando tu profe lo confirme/.test(f.texto)].join(","), "false,,true");
   await page.close();
-  ({ page, errores } = await abrir(browser, datos([{ student_id: "a-1", curso: "finales-practicos", codigo: "0123456789", anulado_at: null }], true), "a-1"));
+  ({ page, errores } = await abrir(browser, datos([{ student_id: "a-1", curso: "el-mapa-de-los-finales", codigo: "0123456789", anulado_at: null }], true), "a-1"));
   await page.waitForFunction(() => document.querySelector('#cursos-report-body a[href^="certificado.html"]'));
   f = await fila(page, 0);
   igual("el alumno con certificado: lo ve, y no puede anularlo", [f.enlace, /Anular/.test(f.texto)].join(","), "certificado.html?c=0123456789,false");

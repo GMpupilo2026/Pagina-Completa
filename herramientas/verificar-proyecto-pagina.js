@@ -54,7 +54,7 @@ const SESIONES = [
     detalle: { objetivo: "Comprobar.", bloques: [], divertido: "Niebla de Guerra.", sitio: "Exámenes." } },
 ];
 const ITEMS = [
-  { material_tipo: "curso", material_slug: "finales-practicos", material_label: "Finales Prácticos", material_href: "cursos/academia/finales-practicos.html", filtro_clave: "", filtro_label: "", leccion: "1", actividades: [], meta_tipo: "completar", meta_cantidad: null },
+  { material_tipo: "curso", material_slug: "el-mapa-de-los-finales", material_label: "El mapa de los finales", material_href: "cursos/academia/el-mapa-de-los-finales.html", filtro_clave: "", filtro_label: "", leccion: "1", actividades: [], meta_tipo: "completar", meta_cantidad: null },
   { material_tipo: "herramienta", material_slug: "batalla-naval", material_label: "Batalla naval", material_href: "batalla-naval.html", filtro_clave: "", filtro_label: "", leccion: "", actividades: ["batalla-naval"], meta_tipo: "cantidad", meta_cantidad: 2 },
 ];
 /* El plan de la clase 2, como lo arma herramientas/proyecto-semilla.js: las
@@ -63,7 +63,7 @@ const PLAN_ITEMS = [
   { plan_id: "plan-2", orden: 0, tipo: "nota", titulo: "🔥 1. Calentamiento · 15 min", nota: "Para qué: activar el cálculo.\n1. Saluda.\n2. Da los ejercicios de abajo." },
   { plan_id: "plan-2", orden: 1, tipo: "posicion", titulo: "Calentamiento · Ejercicio 1 de 1 · Final de torres 41", pregunta: "① 📥 Al tablero. ② Pregunta: «¿Mejor jugada?» ③ ⏳ 3 min. ④ Respuesta: Solución: Txe3+." },
   { plan_id: "plan-2", orden: 2, tipo: "nota", titulo: "📘 2. Contenido · 55 min", nota: "1. Di el objetivo.\n2. Explica la lección <b>de abajo</b>." },
-  { plan_id: "plan-2", orden: 3, tipo: "leccion", titulo: "Finales Prácticos · 2. Oposición de reyes", curso: "finales-practicos", leccion: 1 },
+  { plan_id: "plan-2", orden: 3, tipo: "leccion", titulo: "El mapa de los finales · 2. Oposición de reyes", curso: "el-mapa-de-los-finales", leccion: 1 },
   { plan_id: "plan-2", orden: 4, tipo: "posicion", titulo: "Contenido · Ejercicio 1 de 1 · La oposición", pregunta: "② Pregunta: «¿Ganan?» ③ ⏳ 3 min. ④ Respuesta: Tablas." },
   { plan_id: "plan-2", orden: 5, tipo: "nota", titulo: "🎉 3. Actividad recreativa · 30 min", nota: "Qué es: La clase juega.\n1. Abre «La clase juega».\n2. Que voten." },
   { plan_id: "plan-2", orden: 6, tipo: "nota", titulo: "✅ 4. Cierre · 12 min", nota: "1. Pregunta de salida.\n2. Terminar clase." },
@@ -178,7 +178,7 @@ const visible = (page, sel) => page.evaluate((s) => { const e = document.querySe
         [[false, false], [false, true], [true, false]]);
       igual("cada una con su momento divertido", clases.map((c) => c.divertido), [true, true, true]);
       igual("y su plan: verlo, darlo en la clase en vivo y la lección del contenido", clases[1].enlaces, [["📋 Ver el plan", "planes.html?plan=plan-2"], ["▶️ Dar esta clase", "sesion.html?plan=plan-2"],
-        ["📖 Lección: Finales Prácticos · 2. Oposición de reyes", "cursos/academia/finales-practicos.html"]]);
+        ["📖 Lección: El mapa de los finales · 2. Oposición de reyes", "cursos/academia/el-mapa-de-los-finales.html"]]);
       igual("la clase muestra su paso a paso en las cinco partes, en orden", clases[1].partes,
         ["🔥 1. Calentamiento · 15 min", "📘 2. Contenido · 55 min", "🎉 3. Actividad recreativa · 30 min", "✅ 4. Cierre · 12 min", "📨 5. Tarea · 8 min"]);
       igual("con cada ejercicio y su respuesta, debajo de su parte", clases[1].ejercicios, [true, true]);

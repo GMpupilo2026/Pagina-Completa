@@ -19,8 +19,8 @@
   "duracion_texto": "40 horas en total: 8 sesiones de 5 horas (7 virtuales sincrónicas por Microsoft Teams y 1 presencial de cierre), cada una con su cronograma, contenido con ejemplos y casos, presentación, práctica, quiz y tarea.",
   "unidad": "sesiones",
   "anterior": {
-    "href": "preparacion-para-torneos.html",
-    "titulo": "Preparación para Torneos"
+    "href": "una-clase-al-dia.html",
+    "titulo": "Una clase al día"
   },
   "siguiente": {
     "href": "arbitro-nacional.html",

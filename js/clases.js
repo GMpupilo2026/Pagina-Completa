@@ -3018,11 +3018,20 @@
         // datos ya los cuenta informes_cursos_alumnos() (un renglón por alumno y
         // curso empezado, con el total, lo hecho y el último tema): acá solo se
         // elige cuál mostrar.
+        // ¿Sigue el curso en el catálogo? Si el catálogo no carga, no se descarta ninguno.
+        async function cursosQueExisten() {
+            const lista = window.MaterialPlataforma ? await MaterialPlataforma.cursos() : [];
+            const slugs = new Set(lista.map((c) => c.slug));
+            return (slug) => !slugs.size || slugs.has(slug);
+        }
+
         async function cargarSeguirCurso() {
             const { data, error } = await sb.rpc("informes_cursos_alumnos");
             if (error || !data || !data.length) return;
+            // Un curso que ya no existe (se borró del sitio) no se puede retomar.
+            const existe = await cursosQueExisten();
             const mios = data.filter((c) => (!c.student_id || c.student_id === alumnoDelPanel()) && c.hechos > 0 && c.hechos < c.total
-                && !(window.CursosOcultos && CursosOcultos.es(c.slug)));   // uno escondido no se puede retomar
+                && existe(c.slug));
             if (!mios.length) return;   // sin ningún curso a medias no hay nada que retomar
             mios.sort((a, b) => new Date(b.ultima_fecha || 0) - new Date(a.ultima_fecha || 0));
             const c = mios[0];

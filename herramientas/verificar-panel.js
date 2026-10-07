@@ -1332,8 +1332,8 @@ const CURSOS_ANA = [
     ultimo_titulo: "La clavada", ultima_fecha: new Date(Date.now() - 2 * 86400000).toISOString() },
   { student_id: "u-ana", slug: "el-mapa-de-los-finales", titulo: "El mapa de los finales", total: 15, hechos: 3,
     ultimo_titulo: "Oposición", ultima_fecha: new Date(Date.now() - 30 * 86400000).toISOString() },
-  // Uno escondido (js/cursos-ocultos.js), más reciente que todos: no se puede
-  // retomar, así que no se ofrece.
+  // Uno que ya no está en el catálogo (se borró del sitio), más reciente que
+  // todos: no se puede retomar, así que no se ofrece.
   { student_id: "u-ana", slug: "finales-practicos", titulo: "Finales prácticos", total: 14, hechos: 4,
     ultimo_titulo: "Oposición", ultima_fecha: new Date(Date.now() - 86400000).toISOString() },
   { student_id: "u-ana", slug: "partidas-modelo", titulo: "Partidas modelo", total: 12, hechos: 12,

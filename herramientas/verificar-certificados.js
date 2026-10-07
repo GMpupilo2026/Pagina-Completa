@@ -76,8 +76,13 @@ function estatico() {
   // Una fila que la base tiene sin curso publicado: «cambio-o-no-cambio» lo
   // dio de alta otra sesión y nunca se publicó (ver «Hubo otro curso del mismo
   // tema a la vez»). No da certificado porque ninguna página lo pide; si se
-  // borra con su migración, se saca de acá.
-  const SIN_CURSO = ["cambio-o-no-cambio"];
+  // borra con su migración, se saca de acá. Lo mismo los siete cursos que se
+  // borraron del sitio en octubre de 2026 (ver «Los cursos borrados»): ninguno
+  // tiene un certificado emitido, y siguen en interno.curso_lecciones hasta que
+  // se aplique la migración que los quita.
+  const SIN_CURSO = ["cambio-o-no-cambio",
+    "fundamentos-del-ajedrez", "aperturas-y-defensas", "calculo-y-visualizacion", "finales-practicos",
+    "estrategia-y-tactica", "estrategia-en-el-final", "preparacion-para-torneos"];
   igual("las filas sin curso no están en el catálogo", SIN_CURSO.filter((s) => catalogo.includes(s)), []);
   SIN_CURSO.forEach((slug) => delete base[slug]);
   igual("la base conoce exactamente los cursos del catálogo", Object.keys(base).sort(), catalogo);

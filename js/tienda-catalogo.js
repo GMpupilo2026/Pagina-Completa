@@ -14,7 +14,7 @@
  *              y el fallo lo descubre quien ya pagó otra cosa.
  *   PRODUCTOS  qué se vende. Cada uno apunta a ARCHIVOS QUE EXISTEN y dice
  *              cuántas piezas trae.
- *   MODULOS    cómo se PRESENTA el sistema completo (los seis del anuncio).
+ *   MODULOS    cómo se PRESENTA el sistema completo (los cuatro del anuncio).
  *              Un módulo no es un producto: es un grupo de productos, y por
  *              eso solo guarda sus ids.
  *   BONOS      lo que se suma al sistema completo y no se vende suelto.
@@ -29,7 +29,7 @@
  *    Por eso `piezas` se compara contra el disco, no se escribe a ojo — la
  *    misma regla que el resultado de cada posición de un curso, que se
  *    verifica con motor.
- *  - Un curso que queda fuera de los seis módulos, o metido en dos. Fuera, se
+ *  - Un curso que queda fuera de los módulos, o metido en dos. Fuera, se
  *    vende dentro del "sistema completo" algo que el sistema no entrega;
  *    metido en dos, se cobra lo mismo dos veces. Las dos cosas se ven
  *    perfectas en pantalla.
@@ -69,51 +69,7 @@ window.TiendaCatalogo = (function () {
      compra— y `resumen` lo que es. Los dos hacen falta: un catálogo que solo
      dice qué es no vende nada, y uno que solo promete no se puede sostener. */
   const PRODUCTOS = [
-    /* ---- Los doce cursos, cada uno con su material de clase ---- */
-    {
-      id: "fundamentos-del-ajedrez",
-      categoria: "curso",
-      emoji: "♟️",
-      titulo: "Fundamentos del Ajedrez",
-      nivel: "Principiante",
-      gancho: "Tu primer trimestre, resuelto: doce clases listas para dar mañana.",
-      resumen: "El tablero, la notación, el movimiento de cada pieza, el valor del material y los primeros mates. Es por donde entra todo alumno nuevo.",
-      carpeta: "cursos/recursos/fundamentos-del-ajedrez",
-      piezas: { cuadernillos: 12, ejercicios: 12, presentaciones: 12, accesibles: 12 },
-    },
-    {
-      id: "aperturas-y-defensas",
-      categoria: "curso",
-      emoji: "🚪",
-      titulo: "Aperturas y Defensas",
-      nivel: "Intermedio",
-      gancho: "Se acabó el «juega lo que sepas» en las primeras diez jugadas.",
-      resumen: "Española, Italiana, Siciliana, Gambito de Dama y Defensa Francesa, cada una con su idea, su plan y sus partidas modelo.",
-      carpeta: "cursos/recursos/aperturas-y-defensas",
-      piezas: { cuadernillos: 16, ejercicios: 16, presentaciones: 16, accesibles: 16 },
-    },
-    {
-      id: "calculo-y-visualizacion",
-      categoria: "curso",
-      emoji: "🧠",
-      titulo: "Cálculo y Visualización",
-      nivel: "Intermedio",
-      gancho: "Para el alumno que ve la jugada y no ve la respuesta.",
-      resumen: "Ver dos y tres jugadas adelante sin mover las piezas: candidatas, orden de cálculo y el hábito de mirar la respuesta del rival antes de decidir.",
-      carpeta: "cursos/recursos/calculo-y-visualizacion",
-      piezas: { cuadernillos: 10, ejercicios: 10, presentaciones: 10, accesibles: 10 },
-    },
-    {
-      id: "finales-practicos",
-      categoria: "curso",
-      emoji: "🏁",
-      titulo: "Finales Prácticos",
-      nivel: "Intermedio",
-      gancho: "Los finales que de verdad aparecen en el torneo del sábado.",
-      resumen: "Rey y peón, torre contra peón, la oposición y la regla del cuadrado. Lo que decide media tabla de resultados y casi nadie estudia.",
-      carpeta: "cursos/recursos/finales-practicos",
-      piezas: { cuadernillos: 14, ejercicios: 14, presentaciones: 14, accesibles: 14 },
-    },
+    /* ---- Los cursos, cada uno con su material de clase ---- */
     {
       id: "partidas-modelo",
       categoria: "curso",
@@ -124,17 +80,6 @@ window.TiendaCatalogo = (function () {
       resumen: "Partidas comentadas jugada por jugada, de las que se abren en el tablero y se entienden sin que el profesor tenga que rellenar los huecos.",
       carpeta: "cursos/recursos/partidas-modelo",
       piezas: { cuadernillos: 33, ejercicios: 33, presentaciones: 30, accesibles: 33 },
-    },
-    {
-      id: "estrategia-y-tactica",
-      categoria: "curso",
-      emoji: "🎯",
-      titulo: "Estrategia y Táctica",
-      nivel: "Avanzado",
-      gancho: "Del golpe suelto al plan que lo prepara.",
-      resumen: "Clavada, horquilla, enfilada y desviación por un lado; columnas, casillas débiles y estructura de peones por el otro — y cómo se sostienen entre sí.",
-      carpeta: "cursos/recursos/estrategia-y-tactica",
-      piezas: { cuadernillos: 20, ejercicios: 20, presentaciones: 20, accesibles: 20 },
     },
     {
       id: "el-mapa-de-los-finales",
@@ -148,17 +93,6 @@ window.TiendaCatalogo = (function () {
       piezas: { cuadernillos: 27, ejercicios: 26, presentaciones: 24, accesibles: 27 },
     },
     {
-      id: "estrategia-en-el-final",
-      categoria: "curso",
-      emoji: "👑",
-      titulo: "Estrategia en el final",
-      nivel: "Avanzado",
-      gancho: "Cuando quedan pocas piezas y hay que saber qué hacer, no qué mover.",
-      resumen: "El rey activo, el peón pasado lejano, la torre detrás del peón y el zugzwang: las ideas que convierten una posición igual en un punto.",
-      carpeta: "cursos/recursos/estrategia-en-el-final",
-      piezas: { cuadernillos: 16, ejercicios: 16, presentaciones: 16, accesibles: 16 },
-    },
-    {
       id: "desequilibrios-de-material",
       categoria: "curso",
       emoji: "⚖️",
@@ -168,17 +102,6 @@ window.TiendaCatalogo = (function () {
       resumen: "Calidad, pareja de alfiles, dama contra dos torres y las compensaciones que no se cuentan en puntos. Con la teoría y las posiciones para practicarla.",
       carpeta: "cursos/recursos/desequilibrios-de-material",
       piezas: { cuadernillos: 20, ejercicios: 20, presentaciones: 19, accesibles: 20 },
-    },
-    {
-      id: "preparacion-para-torneos",
-      categoria: "curso",
-      emoji: "🏆",
-      titulo: "Preparación para Torneos",
-      nivel: "Competición",
-      gancho: "Lo que hay que trabajar las tres semanas antes del torneo.",
-      resumen: "Repertorio, control del reloj, qué comer, cómo se prepara al rival y qué hacer después de perder en la segunda ronda. La parte que no se enseña en el tablero.",
-      carpeta: "cursos/recursos/preparacion-para-torneos",
-      piezas: { cuadernillos: 18, ejercicios: 18, presentaciones: 18, accesibles: 18 },
     },
     {
       id: "formacion-ajedrez",
@@ -292,7 +215,7 @@ window.TiendaCatalogo = (function () {
     },
   ];
 
-  /* ======================= Los seis módulos =======================
+  /* ======================= Los cuatro módulos =======================
      Es la presentación del sistema completo, no otra lista de material: cada
      módulo solo guarda los ids de los productos que ya están arriba. Así el
      anuncio no puede prometer un curso que el catálogo no tiene.
@@ -303,41 +226,27 @@ window.TiendaCatalogo = (function () {
   const MODULOS = [
     {
       numero: 1,
-      titulo: "Biblioteca completa de lecciones",
-      promesa: "Planes listos para todos los niveles",
-      detalle: "Por donde entra cada alumno nuevo, con la clase escrita, sus ejercicios y su presentación.",
-      productos: ["fundamentos-del-ajedrez"],
+      titulo: "Técnica de finales",
+      promesa: "Guías claras y prácticas para cada etapa",
+      detalle: "Las últimas diez jugadas, que son las que deciden la partida.",
+      productos: ["el-mapa-de-los-finales", "fichas-de-estudio"],
     },
     {
       numero: 2,
-      titulo: "Entrenamiento de táctica y cálculo",
-      promesa: "Táctica paso a paso, para mejorar de verdad",
-      detalle: "El golpe, el plan que lo prepara y el hábito de calcular antes de mover.",
-      productos: ["estrategia-y-tactica", "calculo-y-visualizacion"],
-    },
-    {
-      numero: 3,
-      titulo: "Aperturas y técnica de finales",
-      promesa: "Guías claras y prácticas para cada etapa",
-      detalle: "Las primeras diez jugadas y las últimas diez, que son las dos que deciden la partida.",
-      productos: ["aperturas-y-defensas", "finales-practicos", "el-mapa-de-los-finales", "estrategia-en-el-final", "fichas-de-estudio"],
-    },
-    {
-      numero: 4,
       titulo: "Comprensión, criterio y partidas modelo",
       promesa: "Construye hábitos de pensamiento en tus jugadores",
       detalle: "Cómo se juzga una posición cuando el material no está igual, y partidas donde eso se ve pasar.",
       productos: ["partidas-modelo", "desequilibrios-de-material", "una-clase-al-dia"],
     },
     {
-      numero: 5,
-      titulo: "Estrategia de torneo y competición",
+      numero: 3,
+      titulo: "Reglamento y competición",
       promesa: "Prepara a tus jugadores para el torneo de verdad",
-      detalle: "Las tres semanas antes, el reloj, el reglamento y qué se hace después de una derrota.",
-      productos: ["preparacion-para-torneos", "arbitro-nacional"],
+      detalle: "El reglamento, el reloj y los reclamos: lo que hay que saber cuando se juega en serio.",
+      productos: ["arbitro-nacional"],
     },
     {
-      numero: 6,
+      numero: 4,
       titulo: "Planificación de temporada y gestión de alumnos",
       promesa: "Planifica, enseña, mide y crece, todo en un solo lugar",
       detalle: "Con qué se forma a quien va a dar la clase, y con qué se mide y se reporta lo que aprendieron.",
@@ -364,7 +273,7 @@ window.TiendaCatalogo = (function () {
     {
       emoji: "👐",
       titulo: "Todo el material en versión accesible",
-      detalle: "186 cuadernillos en HTML sin una sola imagen, con cada posición contada pieza por pieza. Para el alumno que ve poco o no ve — y ningún otro material del mercado se lo da.",
+      detalle: "80 cuadernillos en HTML sin una sola imagen, con cada posición contada pieza por pieza. Para el alumno que ve poco o no ve — y ningún otro material del mercado se lo da.",
     },
     {
       emoji: "🖥️",
