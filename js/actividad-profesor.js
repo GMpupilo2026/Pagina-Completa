@@ -130,5 +130,14 @@ window.ActividadProfesor = (function () {
         });
     }
 
-    return { CAMPOS, hoyCR, textoMes, meses, mesPorOmision, horas, valor, tarjetas, fecha };
+    /* El estado del informe mensual de un profesor (una fila de
+       resumen_profesores_supervisados). Va ESCRITO, no solo con un color. */
+    function estadoInforme(f) {
+        if (!f.informe_id) return { texto: "⏳ Sin enviar", clase: "bg-brand-100 text-brand-600 dark:bg-brand-800 dark:text-brand-300" };
+        if (f.comentado) return { texto: "💬 Enviado · ya le comentaste", clase: "bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-300" };
+        if (f.leido_at) return { texto: "✅ Enviado · leído", clase: "bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-300" };
+        return { texto: "📨 Enviado · sin leer", clase: "bg-accent-50 text-accent-700 dark:bg-brand-800 dark:text-accent-400" };
+    }
+
+    return { CAMPOS, hoyCR, textoMes, meses, mesPorOmision, horas, valor, tarjetas, fecha, estadoInforme };
 })();

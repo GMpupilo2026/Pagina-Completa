@@ -40,13 +40,9 @@ function el(tag, clase, texto) {
    (ver «Los avisos son de la página, no del navegador»). */
 function avisar(texto, malo) { Avisos.avisar(texto, { tipo: malo ? "error" : "ok" }); }
 
-/* El estado del informe va ESCRITO, no solo con un color. */
-function estadoInforme(f) {
-    if (!f.informe_id) return { texto: "⏳ Sin enviar", clase: "bg-brand-100 text-brand-600 dark:bg-brand-800 dark:text-brand-300" };
-    if (f.comentado) return { texto: "💬 Enviado · ya le comentaste", clase: "bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-300" };
-    if (f.leido_at) return { texto: "✅ Enviado · leído", clase: "bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-300" };
-    return { texto: "📨 Enviado · sin leer", clase: "bg-accent-50 text-accent-700 dark:bg-brand-800 dark:text-accent-400" };
-}
+/* El estado del informe: ActividadProfesor.estadoInforme (lo usa también
+   la pestaña Profesores de supervisor.html). */
+const estadoInforme = (f) => ActividadProfesor.estadoInforme(f);
 
 async function cargar() {
     const abiertas = await sb.from("class_sessions").select("created_by").is("ended_at", null);
@@ -332,6 +328,14 @@ async function init() {
     sel.addEventListener("change", () => elegirMes(sel.value));
     document.getElementById("app").classList.remove("hidden");
     await elegirMes(pedido);
+    /* supervision.html?profesor=<id> llega desde la ficha del profesor de
+       supervisor.html: se va directo a su tarjeta, marcada. */
+    const deUno = new URLSearchParams(location.search).get("profesor");
+    const suya = deUno && document.querySelector('#lista li[data-profesor="' + CSS.escape(deUno) + '"]');
+    if (suya) {
+        suya.classList.add("ring-2", "ring-accent-400");
+        suya.scrollIntoView({ block: "start" });
+    }
 }
 
 init();

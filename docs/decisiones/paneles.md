@@ -1338,7 +1338,7 @@ una maqueta navegable, la aprobó, y se construyó así:
     administra**: cada página está una vez en cada uno de sus dos paneles, que
     leen la misma lista. Dentro de `admin.html` sigue habiendo una sola puerta
     a cada cosa, y eso es lo que comprueba el verificador.
-- **Ctrl + K busca en todo el panel sin salir** (`js/admin-buscador.js`):
+- **Ctrl + K busca en todo el panel sin salir** (`js/buscador-panel.js`):
   personas (abre su ficha), secciones (lleva a ella) y páginas (las abre),
   sin tildes y también por lo que hace cada página («mensualidades» encuentra
   Cobros). Sin nada escrito, enseña las secciones y las páginas: es el mapa
@@ -1547,7 +1547,72 @@ de Administración en seis secciones».)
   Academia y se consultan seguido: en el tema `diagnostico` había que bajar a
   buscarlos.
 
+### La página de supervisión
+
+Después del panel de administración, el dueño pidió «la misma revisión» para
+quien supervisa. Su panel era el de la Academia con «Lo urgente», tres números
+y dieciséis tarjetas en cinco grupos; corregir una cuenta mandaba a
+Coordinación y ver cómo iba un profesor, a Supervisión. Se le armó una
+maqueta, la aprobó y eligió que fuera **una página propia**: `supervisor.html`
+(`js/supervisor.js`).
+
+- **Al entrar, el panel de la Academia lo lleva ahí** (`esSupervisorSolo()` en
+  `js/clases.js`, con `location.replace`). Con `?buscar=` (el Ctrl + K de otra
+  página) llega buscando: el buscador se abre con eso. El panel de tarjetas
+  (`SUPERVISOR_GROUPS`) queda para quien administra cuando mira el de un
+  supervisor (`_persona` o «Ver como: supervisor»): ahí no se redirige.
+- **Cinco pestañas**, con la dirección en la pestaña (`supervisor.html#profesores`):
+  - **Inicio**: «Esperan por ti» (`Pendientes.pintar`, la misma tarjeta del
+    panel de la Academia, ahora en `js/pendientes.js`), «A tu cargo»
+    (`Pendientes.aCargo`: estudiantes, profesores y los suyos sin entrenar;
+    cada número lleva a esa gente) y «Ahora mismo»: quién de su gente está
+    dando clase, con «Mirar la clase». La pestaña lleva cuántas cosas urgentes
+    hay.
+  - **Personas**: su gente, de la base y de a 50 (`mi_gente`), con la ficha al
+    costado. **La ficha es la de Coordinación**: se sacó de `js/coordinacion.js`
+    a `js/cuenta-coordinacion.js` (`CuentaCoord.botones` y `montarFicha`), y
+    las dos páginas la usan. Lo que se guarda va por las mismas `coord_*` y
+    Edge Functions, que deciden el alcance.
+  - **Profesores**: el mes de cada uno en una tabla (clases, alumnos que
+    entrenaron, el estado del informe, si está en clase), de
+    `resumen_profesores_supervisados()`, lo mismo que lee `supervision.html`.
+    Su ficha trae sus números (`ActividadProfesor.tarjetas`) y lleva a leer y
+    comentar el informe en `supervision.html?profesor=<id>`, que abre en su
+    tarjeta. El estado del informe (`ActividadProfesor.estadoInforme`) se
+    sacó de `supervision.js` para no escribirlo dos veces.
+  - **Estudiantes**: una tarjeta por tema de Informes (asistencia, sin
+    entrenar, diagnóstico, cursos, táctica, habilidades). El panel de la
+    Academia dejó UNA tarjeta a Informes porque la página ya trae su selector;
+    acá cada tema es una puerta a la vista, que es lo que se pidió. Cada
+    `?tema=` se comprueba contra el selector de `informes.html`.
+  - **Cobros y accesos**: saldos vencidos y recibos por entregar, contados en
+    la base (un conteo que falla dice «no se pudo contar», nunca cero).
+- **Las páginas de quien supervisa son UNA lista**, `js/paginas-supervisor.js`:
+  el panel de la Academia arma `SUPERVISOR_GROUPS` con ella y
+  `supervisor.html` las pone debajo de su pestaña según `zona`. `panel`
+  cambia cómo se llama una ahí: «Cuentas» es la pestaña Personas misma, así
+  que de Coordinación queda lo que solo está allá, los equipos.
+- **Lo que comparte con `admin.html`**: la ficha lateral (`js/ficha-lateral.js`:
+  abrir, cerrar, el foco que no se escapa y que vuelve a la fila), la tarjeta
+  de página (`js/tarjeta-pagina.js`) y Ctrl + K (`js/buscador-panel.js`, antes
+  `admin-buscador.js`): cada panel le dice qué buscar en
+  `window.PanelBuscador`. Acá las personas las busca la base (`mi_gente` con
+  lo escrito), no la lista que está pintada. `supervisor.html` va en
+  `SIN_ATAJO`.
+- Lo prueban `pruebaSupervisor`, `pruebaFichasDeSupervision` y
+  `pruebaBuscadorSupervision` en `verificar-supervisor.js`: que el panel lo
+  lleve ahí, las pestañas, lo urgente contado en la base y sin sus propios
+  informes, «sin entrenar» solo de los suyos, quién está en clase, cada página
+  una vez en su pestaña y a un archivo que existe, nada de entrenar ni jugar,
+  los temas de Informes, la ficha (guarda a esa persona y el foco vuelve) y
+  Ctrl + K, también llegando con `?buscar=`. Probado rompiéndolo: sin la
+  redirección o con un tema que no existe, salta.
+
 ### El panel de quien supervisa, sin caminos repetidos
+
+(El panel de tarjetas que sigue es el que ve hoy quien administra al mirar el
+de un supervisor. Quien supervisa entra a su página: ver «La página de
+supervisión».)
 
 Lo mismo que en administración, pedido por el dueño para el panel de quien
 supervisa (`SUPERVISOR_GROUPS` y `cargarUrgenteSupervisor()` de

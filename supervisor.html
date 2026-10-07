@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8"><!-- guardia: inicio --><script>(function(){try{if(window.sb||localStorage.getItem("sb-bgtijpimpcokxatxxbki-auth-token"))return;}catch(e){return;}try{window.stop()}catch(e){}var p=location.pathname.replace(/^\/+/,'');if(!p||/\/$/.test(p))p+='index.html';else if(!/\.html$/.test(p))p+='.html';location.replace('/login.html?next='+encodeURIComponent(p));})();</script><!-- guardia: fin -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="img/favicon.svg">
+    <title>Supervisión — Ajedrez Integral</title>
+    <meta name="description" content="Lo que espera por ti, tu gente, el mes de tus profesores, cómo van tus estudiantes y los cobros de tu academia.">
+    <meta name="robots" content="noindex">
+    <!-- Tailwind compilado: lo genera herramientas/css-construir.js.
+         Antes venía del CDN, que baja ~400 KB de JavaScript y compila el CSS
+         dentro del navegador en cada visita. -->
+    <link rel="stylesheet" href="css/tailwind.css">
+    <link rel="stylesheet" href="css/styles.css">
+    <!-- oscuro: inicio --><script>(function(){try{var t=localStorage.getItem('theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.classList.add('dark');}catch(e){}})();</script><!-- oscuro: fin -->
+    <script src="js/adaptive-mode.js"></script>
+
+
+
+<!-- app: inicio --><meta name="theme-color" content="#102a43"><link rel="manifest" href="/manifest.json"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Ajedrez"><script src="js/errores.js"></script><script src="js/pwa.js" defer></script><script src="js/navegacion.js" defer></script><!-- app: fin --><!-- fuentes: inicio --><link rel="stylesheet" href="css/fuentes.css"><!-- fuentes: fin --><!-- tema: inicio --><script>(function(){try{var l=localStorage.getItem('plataforma_letra_v1');if(l&&/^[a-z]{2,24}$/.test(l)&&l!=='tema')document.documentElement.setAttribute('data-letra',l);var t=localStorage.getItem('plataforma_tema_v1');if(!t||!/^[a-z]{2,24}$/.test(t)||t==='clasico')return;document.documentElement.setAttribute('data-tema',t);var b=getComputedStyle(document.documentElement).getPropertyValue('--c-brand-800').trim();var m=document.querySelector('meta[name="theme-color"]');if(b&&m)m.setAttribute('content','rgb('+b.replace(/\s+/g,',')+')');}catch(e){}})();</script><!-- tema: fin --></head>
+<body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-accent-500 focus:text-brand-900 focus:font-semibold focus:px-4 focus:py-2 focus:rounded-lg">Saltar al contenido principal</a>
+    <header id="header" class="sticky top-0 z-50 bg-brand-800 shadow-lg transition-all duration-300"><nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Academia"><div class="flex items-center justify-between min-h-[4rem] md:min-h-[5rem] py-2"><a id="marca-enlace" href="clases.html" class="flex items-center gap-2 text-white min-w-0"><img src="/img/logo-marca.png" alt="" width="78" height="48" class="h-10 md:h-12 w-auto shrink-0"><span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span><span class="sr-only"> — panel de la Academia</span></a><div class="flex items-center gap-2"><a id="ayuda-guia" href="guia-del-profesor-accesible.html#cap-14" target="_blank" rel="noopener" class="hidden text-white font-bold text-lg w-9 h-9 items-center justify-center rounded-lg border border-white/40 hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Ayuda: capítulo «Supervisión y academias» de la guía del profesor (se abre en otra pestaña)" title="Guía del profesor: Supervisión y academias"><span aria-hidden="true">?</span></a><button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro"><span id="theme-icon" aria-hidden="true">☀️</span></button></div></div></nav></header><!-- migas: inicio --><div class="bg-brand-900"><nav id="migas" aria-label="Estás en" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 text-sm"><ol class="flex flex-wrap items-center gap-x-2 gap-y-1"><li class="flex items-center gap-2"><a href="clases.html" class="text-brand-200 underline underline-offset-2 hover:text-accent-400 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">🏛️ </span>Academia</a></li><li class="flex items-center gap-2"><span aria-hidden="true" class="text-brand-400">›</span><span aria-current="page" class="font-semibold text-white">Panel de supervisión</span></li></ol></nav></div><!-- migas: fin -->
+    <main id="main-content">
+
+    <div id="loading" role="status" class="min-h-[50vh] flex flex-col items-center justify-center gap-3 px-4 text-center text-brand-500 dark:text-brand-300"><span aria-hidden="true" class="w-8 h-8 rounded-full border-4 border-brand-200 dark:border-brand-700 border-t-accent-500 animate-spin motion-reduce:animate-none"></span><p class="text-sm">Cargando…</p></div>
+
+    <div id="denied" hidden class="pt-20 min-h-[60vh] flex items-center justify-center px-4">
+        <div class="text-center max-w-md">
+            <p class="text-5xl mb-3" aria-hidden="true">🔒</p>
+            <h1 class="font-serif text-2xl font-bold text-brand-800 dark:text-white mb-2">Esto es para quien supervisa</h1>
+            <p class="text-brand-500 dark:text-brand-300">Si te toca supervisar y no puedes entrar, pídele a quien administra que te marque como supervisora o supervisor.</p>
+            <a href="clases.html" class="inline-block mt-4 text-accent-700 dark:text-accent-400 font-semibold underline">← Volver al panel</a>
+        </div>
+    </div>
+
+    <div id="app" hidden>
+        <!-- La página de quien supervisa, en cinco pestañas: lo que espera y
+             lo que pasa ahora (Inicio), su gente con la ficha de cada uno
+             (Personas), el mes de cada profesor (Profesores), cómo van los
+             estudiantes por tema (Estudiantes) y la plata de su academia
+             (Cobros y accesos). Antes era el panel de la Academia con dieciséis
+             tarjetas, y corregir una cuenta o ver a un profesor mandaba a otra
+             página. Ver «La página de supervisión» en docs/decisiones/paneles.md. -->
+        <div class="bg-brand-900">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
+                <div class="flex flex-wrap items-end justify-between gap-4">
+                    <div class="min-w-0">
+                        <h1 id="sup-saludo" class="font-serif text-2xl sm:text-3xl font-bold text-white">Supervisión</h1>
+                        <p class="text-sm text-brand-200 mt-1"><span id="sup-fecha"></span><span id="sup-academia" class="font-semibold text-accent-400 ml-2"></span></p>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+                        <!-- Buscar a una persona: escribir lleva a «Personas» con lo
+                             escrito. Ctrl + K abre el buscador de todo el panel. -->
+                        <div class="relative flex-1 sm:w-80">
+                            <label for="sup-buscar" class="sr-only">Buscar a una persona de tu gente</label>
+                            <input id="sup-buscar" type="search" placeholder="🔍 Buscar a una persona" class="w-full pl-4 pr-20 py-2.5 rounded-xl bg-brand-800 text-white placeholder:text-brand-300 border border-brand-700 text-sm focus:ring-2 focus:ring-accent-400 outline-none">
+                            <button type="button" id="abrir-buscador" class="absolute right-2 top-1/2 -translate-y-1/2 rounded-md border border-brand-600 px-2 py-0.5 text-xs text-brand-200 hover:text-white hover:border-accent-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400" aria-label="Buscar en todo el panel (Ctrl + K)" title="Buscar en todo el panel: personas, secciones y páginas">Ctrl K</button>
+                        </div>
+                        <!-- Dar de alta es la caja de siempre (js/alta-alumno.js), ya abierta. -->
+                        <a href="formularios.html?alta=1" id="sup-cuenta-nueva" class="shrink-0 bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2.5 rounded-xl text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-900">＋ Cuenta nueva</a>
+                    </div>
+                </div>
+                <nav aria-label="Secciones de supervisión" class="mt-5 -mb-px">
+                    <ul class="flex gap-1 overflow-x-auto">
+                        <li><a href="#inicio" data-ir="inicio" class="sup-pestana inline-flex items-center gap-2 whitespace-nowrap px-4 py-3 text-sm font-semibold border-b-4 border-transparent text-brand-200 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent-400 rounded-t-lg">Inicio<span id="nav-urgentes" hidden class="rounded-full bg-accent-500 text-brand-900 text-xs font-bold px-2 py-0.5"></span></a></li>
+                        <li><a href="#personas" data-ir="personas" class="sup-pestana inline-flex items-center gap-2 whitespace-nowrap px-4 py-3 text-sm font-semibold border-b-4 border-transparent text-brand-200 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent-400 rounded-t-lg">Personas</a></li>
+                        <li><a href="#profesores" data-ir="profesores" class="sup-pestana inline-flex items-center gap-2 whitespace-nowrap px-4 py-3 text-sm font-semibold border-b-4 border-transparent text-brand-200 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent-400 rounded-t-lg">Profesores</a></li>
+                        <li><a href="#estudiantes" data-ir="estudiantes" class="sup-pestana inline-flex items-center gap-2 whitespace-nowrap px-4 py-3 text-sm font-semibold border-b-4 border-transparent text-brand-200 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent-400 rounded-t-lg">Estudiantes</a></li>
+                        <li><a href="#cobros" data-ir="cobros" class="sup-pestana inline-flex items-center gap-2 whitespace-nowrap px-4 py-3 text-sm font-semibold border-b-4 border-transparent text-brand-200 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent-400 rounded-t-lg">Cobros y accesos</a></li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-16">
+            <p id="sup-aviso" hidden class="mb-6 rounded-xl px-4 py-3 text-sm bg-accent-50 dark:bg-brand-900 text-brand-700 dark:text-brand-200"></p>
+
+            <!-- ===== Inicio ===== -->
+            <section data-seccion="inicio" aria-labelledby="titulo-inicio" hidden>
+                <h2 id="titulo-inicio" class="sr-only">Inicio</h2>
+                <div class="grid gap-6 lg:grid-cols-5">
+                    <!-- Lo que alguien espera, contado en la base (js/pendientes.js). -->
+                    <div id="urgente-sup" class="lg:col-span-3 bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6">
+                        <h3 class="font-serif text-xl font-bold text-brand-800 dark:text-white">Esperan por ti</h3>
+                        <p id="urgente-sup-estado" role="status" class="text-sm text-brand-500 dark:text-brand-300">Revisando los pendientes…</p>
+                        <ul id="urgente-sup-lista" class="mt-3 divide-y divide-brand-100 dark:divide-brand-800"></ul>
+                        <p id="urgente-sup-al-dia" hidden class="mt-3 pt-3 border-t border-brand-100 dark:border-brand-800 text-xs text-brand-500 dark:text-brand-300"></p>
+                    </div>
+                    <!-- Cada número lleva a esa gente: un número que no lleva a
+                         nadie obliga a ir a buscarlos. -->
+                    <div class="lg:col-span-2 bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6">
+                        <h3 class="font-serif text-xl font-bold text-brand-800 dark:text-white mb-3">A tu cargo</h3>
+                        <ul class="divide-y divide-brand-100 dark:divide-brand-800">
+                            <li><a href="#personas" data-ir="personas" data-rol="alumno" class="flex items-center gap-4 py-3 rounded hover:bg-brand-50 dark:hover:bg-brand-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span id="sup-n-alumnos" class="w-14 text-right text-2xl font-bold tabular-nums text-brand-800 dark:text-white">—</span><span class="flex-1 text-sm text-brand-700 dark:text-brand-200">Estudiantes</span><span class="text-xs font-semibold text-accent-700 dark:text-accent-400">Ver →</span></a></li>
+                            <li><a href="#profesores" data-ir="profesores" class="flex items-center gap-4 py-3 rounded hover:bg-brand-50 dark:hover:bg-brand-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span id="sup-n-profes" class="w-14 text-right text-2xl font-bold tabular-nums text-brand-800 dark:text-white">—</span><span class="flex-1 text-sm text-brand-700 dark:text-brand-200">Profesores</span><span class="text-xs font-semibold text-accent-700 dark:text-accent-400">Ver →</span></a></li>
+                            <li><a href="informes.html?tema=inactivos" class="flex items-center gap-4 py-3 rounded hover:bg-brand-50 dark:hover:bg-brand-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span id="sup-n-inactivos" class="w-14 text-right text-2xl font-bold tabular-nums text-brand-800 dark:text-white">—</span><span class="flex-1 text-sm text-brand-700 dark:text-brand-200">Sin entrenar hace 4 días o más</span><span class="text-xs font-semibold text-accent-700 dark:text-accent-400">Ver quiénes →</span></a></li>
+                        </ul>
+                    </div>
+                </div>
+                <!-- Quién de su gente está dando clase: es cuando se puede ir a mirar. -->
+                <div class="mt-6 bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6">
+                    <h3 class="font-serif text-xl font-bold text-brand-800 dark:text-white">Ahora mismo</h3>
+                    <p id="sup-ahora-vacio" class="text-sm text-brand-500 dark:text-brand-300 mt-1">Revisando quién está dando clase…</p>
+                    <ul id="sup-ahora" class="mt-2 divide-y divide-brand-100 dark:divide-brand-800"></ul>
+                </div>
+            </section>
+
+            <!-- ===== Personas ===== -->
+            <section data-seccion="personas" aria-labelledby="titulo-personas" hidden>
+                <div class="flex flex-wrap items-end justify-between gap-3 mb-4">
+                    <div>
+                        <h2 id="titulo-personas" class="font-serif text-2xl font-bold text-brand-800 dark:text-white">Personas</h2>
+                        <p id="sup-cuenta" class="text-sm text-brand-500 dark:text-brand-300 mt-1" aria-live="polite"></p>
+                    </div>
+                    <div>
+                        <label for="sup-rol" class="sr-only">Quiénes</label>
+                        <select id="sup-rol" class="px-3 py-2 rounded-lg bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                            <option value="">Todas las cuentas</option>
+                            <option value="alumno">Estudiantes</option>
+                            <option value="profesor">Profesores</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <caption class="sr-only">Las cuentas a tu cargo</caption>
+                        <thead>
+                            <tr class="text-left text-brand-450 dark:text-brand-350 border-b border-brand-100 dark:border-brand-800">
+                                <th scope="col" class="py-3 px-4 font-semibold">Persona</th>
+                                <th scope="col" class="py-3 pr-3 font-semibold">Rol</th>
+                                <th scope="col" class="py-3 pr-3 font-semibold">Grupo</th>
+                                <th scope="col" class="py-3 pr-3 font-semibold">Profesores</th>
+                                <th scope="col" class="py-3 pr-4 font-semibold text-right"><span class="sr-only">Ficha</span></th>
+                            </tr>
+                        </thead>
+                        <tbody id="sup-lista"></tbody>
+                    </table>
+                </div>
+                <p id="sup-vacio" hidden class="mt-4 text-sm text-brand-500 dark:text-brand-300">Ninguna cuenta coincide con eso.</p>
+                <div class="mt-4 text-center">
+                    <button type="button" id="sup-mas" hidden class="text-sm font-semibold text-accent-700 dark:text-accent-400 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 rounded">Ver más cuentas</button>
+                </div>
+            </section>
+
+            <!-- ===== Profesores ===== -->
+            <section data-seccion="profesores" aria-labelledby="titulo-profesores" hidden>
+                <div class="flex flex-wrap items-end justify-between gap-3 mb-4">
+                    <div>
+                        <h2 id="titulo-profesores" class="font-serif text-2xl font-bold text-brand-800 dark:text-white">Tus profesores</h2>
+                        <p id="prof-resumen" class="text-sm text-brand-500 dark:text-brand-300 mt-1" aria-live="polite"></p>
+                    </div>
+                    <div>
+                        <label for="prof-mes" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Mes</label>
+                        <select id="prof-mes" class="px-3 py-2 rounded-lg bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></select>
+                    </div>
+                </div>
+                <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <caption class="sr-only">El mes de cada profesor a tu cargo</caption>
+                        <thead>
+                            <tr class="text-left text-brand-450 dark:text-brand-350 border-b border-brand-100 dark:border-brand-800">
+                                <th scope="col" class="py-3 px-4 font-semibold">Profesor</th>
+                                <th scope="col" class="py-3 pr-3 font-semibold">Clases</th>
+                                <th scope="col" class="py-3 pr-3 font-semibold">Alumnos que entrenaron</th>
+                                <th scope="col" class="py-3 pr-3 font-semibold">Informe del mes</th>
+                                <th scope="col" class="py-3 pr-4 font-semibold">Ahora</th>
+                            </tr>
+                        </thead>
+                        <tbody id="prof-lista"></tbody>
+                    </table>
+                </div>
+                <p id="prof-vacio" hidden class="mt-4 text-sm text-brand-500 dark:text-brand-300"></p>
+            </section>
+
+            <!-- ===== Estudiantes ===== -->
+            <section data-seccion="estudiantes" aria-labelledby="titulo-estudiantes" hidden>
+                <h2 id="titulo-estudiantes" class="font-serif text-2xl font-bold text-brand-800 dark:text-white mb-1">Tus estudiantes</h2>
+                <p class="text-sm text-brand-500 dark:text-brand-300 mb-5">Cómo van, por tema: cada tarjeta abre Informes ya en ese tema, con todos tus estudiantes a cargo.</p>
+                <ul id="est-temas" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-3"></ul>
+            </section>
+
+            <!-- ===== Cobros y accesos ===== -->
+            <section data-seccion="cobros" aria-labelledby="titulo-cobros" hidden>
+                <h2 id="titulo-cobros" class="font-serif text-2xl font-bold text-brand-800 dark:text-white mb-1">Cobros y accesos</h2>
+                <p class="text-sm text-brand-500 dark:text-brand-300 mb-5">Lo de tu academia: mensualidades, recibos y los cupos de acceso que compró.</p>
+                <ul id="cob-numeros" class="grid sm:grid-cols-2 gap-3 mb-6"></ul>
+            </section>
+
+            <!-- Las páginas del tema de la pestaña abierta (js/paginas-supervisor.js):
+                 cada página tiene su lugar al lado de lo suyo. -->
+            <section id="paginas-zona" aria-labelledby="paginas-zona-titulo" hidden class="mt-10 pt-6 border-t border-brand-200 dark:border-brand-800">
+                <h2 id="paginas-zona-titulo" class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-3">Otras páginas</h2>
+                <ul id="paginas-zona-lista" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-3"></ul>
+            </section>
+        </div>
+    </div>
+
+    <!-- La ficha de una persona o de un profesor, al costado (js/ficha-lateral.js). -->
+    <div id="ficha-velo" hidden class="fixed inset-0 z-[60] bg-brand-950/50"></div>
+    <aside id="ficha-persona" role="dialog" aria-modal="true" aria-labelledby="ficha-titulo" hidden class="fixed inset-y-0 right-0 z-[61] w-full sm:w-[32rem] bg-white dark:bg-brand-900 shadow-2xl flex flex-col">
+        <div class="flex items-start gap-3 px-5 py-4 border-b border-brand-100 dark:border-brand-800">
+            <div class="min-w-0 flex-1">
+                <h2 id="ficha-titulo" tabindex="-1" class="font-serif text-xl font-bold text-brand-800 dark:text-white break-words focus:outline-none"></h2>
+                <p id="ficha-sub" class="text-sm text-brand-500 dark:text-brand-300 mt-0.5"></p>
+            </div>
+            <button type="button" id="ficha-cerrar" class="shrink-0 w-9 h-9 rounded-lg text-xl text-brand-500 dark:text-brand-300 hover:bg-brand-50 dark:hover:bg-brand-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400" aria-label="Cerrar la ficha">✕</button>
+        </div>
+        <div id="ficha-cuerpo" class="flex-1 overflow-y-auto px-5 py-5 space-y-6"></div>
+    </aside>
+
+    <!-- Ctrl + K: buscar en todo el panel (js/buscador-panel.js). -->
+    <div id="buscador-velo" hidden class="fixed inset-0 z-[70] bg-brand-950/50"></div>
+    <div id="buscador" role="dialog" aria-modal="true" aria-label="Buscar en el panel" hidden class="fixed left-1/2 top-[12vh] -translate-x-1/2 z-[71] w-[calc(100%-2rem)] max-w-xl rounded-2xl bg-white dark:bg-brand-900 shadow-2xl border border-brand-100 dark:border-brand-800 overflow-hidden">
+        <label for="buscador-campo" class="sr-only">Busca una persona, una sección o una página</label>
+        <input id="buscador-campo" type="search" autocomplete="off" role="combobox" aria-expanded="true" aria-controls="buscador-lista" aria-autocomplete="list" placeholder="Busca una persona, una sección o una página…" class="w-full px-5 py-4 text-base bg-transparent border-b border-brand-100 dark:border-brand-800 outline-none text-brand-800 dark:text-white">
+        <ul id="buscador-lista" role="listbox" aria-label="Lo que se encontró" class="max-h-[55vh] overflow-y-auto p-2"></ul>
+        <p id="buscador-estado" role="status" class="sr-only"></p>
+    </div>
+
+    </main>
+
+    <footer class="bg-brand-900 text-brand-300 py-8"><div class="max-w-7xl mx-auto px-4 text-center text-sm"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p><!-- legal: inicio --><p class="mt-2"><a href="privacidad.html" class="underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Política de privacidad</a> <span aria-hidden="true">·</span> <a href="terminos.html" class="underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Términos y condiciones</a></p><!-- legal: fin --></div></footer>
+    <script src="js/vendor/supabase.js"></script>
+    <script src="js/supabase-client.js"></script>
+    <script src="js/token-sesion.js"></script>
+    <script src="js/avisos.js"></script>
+    <script src="js/hora-cr.js"></script>
+    <script src="js/funciones-coordinacion.js"></script>
+    <script src="js/usuario-alumno.js"></script>
+    <script src="js/contrasena-alumno.js"></script>
+    <script src="js/cuenta-coordinacion.js"></script>
+    <script src="js/actividad-profesor.js"></script>
+    <script src="js/pendientes.js"></script>
+    <script src="js/paginas-supervisor.js"></script>
+    <script src="js/tarjeta-pagina.js"></script>
+    <script src="js/ficha-lateral.js"></script>
+    <script src="js/supervisor.js"></script>
+    <script src="js/buscador-panel.js"></script>
+<!-- burbuja: inicio --><script src="js/burbuja-en-linea.js" defer></script><!-- burbuja: fin --><!-- juego-aviso: inicio --><script src="js/juego-aviso.js" defer></script><!-- juego-aviso: fin --><!-- aviso-profe: inicio --><script src="js/aviso-profe.js" defer></script><!-- aviso-profe: fin --><!-- tanda: inicio --><script src="js/tanda-diez.js" defer></script><!-- tanda: fin --><!-- acceso: inicio --><script src="js/acceso-vigente.js" defer></script><!-- acceso: fin --><!-- modo-vista: inicio --><script src="js/modo-vista.js" defer></script><!-- modo-vista: fin --><!-- marca: inicio --><script src="js/marca-academia.js" defer></script><!-- marca: fin --><!-- ayuda: inicio --><script src="js/ayuda-guia.js" defer></script><!-- ayuda: fin --></body>
