@@ -1561,6 +1561,12 @@ maqueta, la aprobó y eligió que fuera **una página propia**: `supervisor.html
   página) llega buscando: el buscador se abre con eso. El panel de tarjetas
   (`SUPERVISOR_GROUPS`) queda para quien administra cuando mira el de un
   supervisor (`_persona` o «Ver como: supervisor»): ahí no se redirige.
+- **«Ver como» de quien supervisa pasó a las fichas.** En su panel tenía un
+  selector con sus profesores y coordinadores; ahora la ficha de cada uno
+  (Personas y Profesores) trae «👁 Ver su panel →», que es
+  `clases.html?ver_como=<id>`, el mismo enlace de `supervision.html`: solo
+  fija a alguien de la lista que da la base, y «Volver a mi vista» lo trae de
+  nuevo a `supervisor.html`. Lo prueba `verificar-ver-como.js`.
 - **Cinco pestañas**, con la dirección en la pestaña (`supervisor.html#profesores`):
   - **Inicio**: «Esperan por ti» (`Pendientes.pintar`, la misma tarjeta del
     panel de la Academia, ahora en `js/pendientes.js`), «A tu cargo»

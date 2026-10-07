@@ -14,8 +14,9 @@
      tiene (funciones_coordinador_de con su id);
    - que no se pinte nada de dar clase (abrir una clase desde ahí la abriría a
      nombre de quien mira) y que la franja diga de quién es el panel;
-   - que clases.html?ver_como=<id> (el «Ver su panel» de supervision.html) solo
-     fije a alguien que está en la lista;
+   - que clases.html?ver_como=<id> (el «Ver su panel» de supervision.html y
+     de las fichas de supervisor.html) solo fije a alguien que está en la
+     lista, y que sin nadie fijado quien supervisa vaya a su página;
    - que una persona guardada por OTRA cuenta, o que ya no está en la lista,
      no le cambie nada a quien entra;
    - que el panel de un supervisor pida sus tres números a
@@ -84,26 +85,32 @@ const LEER = () => ({
   guardada: localStorage.getItem("ver_como_persona_v1"),
 });
 
+/* Quien supervisa entra a su página, supervisor.html (ver «La página de
+   supervisión»): ya no ve el selector en su panel, sino «Ver su panel» en la
+   ficha de cada profesor o coordinador. Ese enlace es clases.html?ver_como=,
+   el mismo de supervision.html, que solo fija a alguien de la lista que da
+   la base (personas_para_ver_como). */
 async function pruebaSelector(browser) {
-  console.log("\n=== El supervisor en su vista: el selector sale de la base ===");
-  const { page, ctx, errores } = await panel(browser, [SUP], SUP.id, null, DATOS);
-  const opciones = await page.evaluate(() => {
-    const s = document.getElementById("ver-como-persona");
-    return s && s.checkVisibility() ? Array.from(s.querySelectorAll("optgroup")).map((g) =>
-      g.label + ": " + Array.from(g.children).map((o) => o.textContent).join(", ")) : null;
-  });
-  igual("coordinadores y profesores, agrupados", opciones, ["Coordinadores: 👁 Carla Mora", "Profesores: 👁 Karina Rojas"]);
-  igual("el selector tiene su etiqueta", await page.evaluate(() =>
-    document.querySelector('label[for="ver-como-persona"]').textContent), "Ver como:");
-  igual("sin franja en su vista", (await page.evaluate(LEER)).barra, null);
+  console.log("\n=== El supervisor en su página: «Ver su panel» desde la ficha ===");
+  const datos = Object.assign({}, DATOS, { rpc: Object.assign({}, DATOS.rpc, {
+    mi_gente: [{ id: "u-karina", full_name: "Karina Rojas", email: "karina@x.cr", role: "profesor", grupo: null, alumnos: 49, subgrupos: 0, total: 1 }],
+  }) });
+  const { page, ctx, errores } = await panel(browser, [SUP], SUP.id, null, datos);
+  await page.waitForURL(/supervisor\.html/, { timeout: 10000 });
+  igual("su panel lo lleva a su página", new URL(page.url()).pathname, "/supervisor.html");
+  igual("ahí no hay selector «Ver como»", await page.evaluate(() => !!document.getElementById("ver-como-persona")), false);
+  await page.click('.sup-pestana[data-ir="personas"]');
+  await page.waitForSelector('#sup-lista .persona-abrir[aria-label="Abrir la ficha de Karina Rojas"]', { timeout: 10000 });
+  await page.click('#sup-lista .persona-abrir[aria-label="Abrir la ficha de Karina Rojas"]');
+  const ver = page.locator("#ficha-cuerpo a[href^='clases.html?ver_como=']");
+  igual("la ficha de un profesor ofrece «Ver su panel»", await ver.getAttribute("href"), "clases.html?ver_como=u-karina");
   await Promise.all([
-    page.waitForNavigation({ waitUntil: "networkidle" }),
-    page.selectOption("#ver-como-persona", "u-karina"),
+    page.waitForURL(/clases\.html$/, { timeout: 15000 }),
+    ver.click(),
   ]);
-  await page.waitForSelector("#app:not(.hidden)");
   await page.waitForSelector("#modo-vista-barra", { timeout: 10000 });
   const g = await page.evaluate(LEER);
-  igual("al elegir a Karina se recarga con su panel", g.badge, "👁 Profesor");
+  igual("al tocarlo se ve el panel de Karina", g.badge, "👁 Profesor");
   igual("guarda a Karina a nombre de quien la eligió",
         JSON.parse(g.guardada), { id: "u-karina", nombre: "Karina Rojas", es_coordinador: false, tipo: "profesor", de: "u-sup" });
   igual("sin errores en consola", errores, []);
@@ -138,10 +145,9 @@ async function pruebaCoordinadora(browser) {
     page.waitForNavigation({ waitUntil: "networkidle" }),
     page.click("#modo-vista-barra button"),
   ]);
-  await page.waitForSelector("#app:not(.hidden)");
-  const g2 = await page.evaluate(LEER);
-  igual("«Volver a mi vista» vuelve al panel de supervisor", g2.badge, "🧭 Supervisor");
-  igual("y deja de estar guardada", g2.guardada, null);
+  await page.waitForURL(/supervisor\.html/, { timeout: 10000 });
+  igual("«Volver a mi vista» vuelve a su página de supervisión", new URL(page.url()).pathname, "/supervisor.html");
+  igual("y deja de estar guardada", await page.evaluate(() => localStorage.getItem("ver_como_persona_v1")), null);
   await ctx.close();
 }
 
@@ -165,9 +171,7 @@ async function pruebaGuardas(browser) {
   {
     // Guardada por otra cuenta en la misma computadora.
     const { page, ctx } = await panel(browser, [SUP], SUP.id, CON_PERSONA(PERSONAS[1], "u-otra"), DATOS);
-    const g = await page.evaluate(LEER);
-    igual("guardada por otra cuenta: sigue su panel de supervisor", g.badge, "🧭 Supervisor");
-    igual("guardada por otra cuenta: sin franja", g.barra, null);
+    igual("guardada por otra cuenta: sigue a su página de supervisión", new URL(page.url()).pathname, "/supervisor.html");
     await ctx.close();
   }
   {
@@ -184,27 +188,34 @@ async function pruebaGuardas(browser) {
     // Alguien que ya no está a su cargo: se vuelve a la vista propia.
     const fuera = { id: "u-fuera", nombre: "Ya No", es_coordinador: false };
     const { page, ctx } = await panel(browser, [SUP], SUP.id, CON_PERSONA(fuera, SUP.id), DATOS);
-    await page.waitForSelector("#sup-alumnos", { timeout: 10000 });
-    const g = await page.evaluate(LEER);
-    igual("ya no está en la lista: vuelve al panel de supervisor", g.badge, "🧭 Supervisor");
-    igual("ya no está en la lista: se borra", g.guardada, null);
-    igual("ya no está en la lista: nunca se le pidió su panel", g.rpcs.some((r) => r.startsWith("panel_profesor_de")), false);
+    await page.waitForURL(/supervisor\.html/, { timeout: 10000 });
+    igual("ya no está en la lista: vuelve a su página de supervisión", new URL(page.url()).pathname, "/supervisor.html");
+    igual("ya no está en la lista: se borra", await page.evaluate(() => localStorage.getItem("ver_como_persona_v1")), null);
+    igual("ya no está en la lista: nunca se le pidió su panel",
+          await page.evaluate(() => window.__consultas.some((c) => c.tabla === "panel_profesor_de")), false);
     await ctx.close();
   }
 }
 
 async function pruebaEnlace(browser) {
   console.log("\n=== clases.html?ver_como=<id> (el «Ver su panel» de Supervisión) ===");
-  for (const [id, esperado] of [["u-karina", "👁 Profesor"], ["u-ajeno", "🧭 Supervisor"]]) {
+  for (const [id, esperado] of [["u-karina", "👁 Profesor"], ["u-ajeno", "supervisor.html"]]) {
     const { page, ctx } = await panel(browser, [SUP], SUP.id, null, DATOS);
     await Promise.all([
       page.waitForNavigation({ waitUntil: "networkidle" }).catch(() => {}),
       page.goto(BASE + "/clases.html?ver_como=" + id, { waitUntil: "networkidle" }),
     ]);
+    if (esperado === "supervisor.html") {
+      // Alguien que no está en su lista: no se fija nada, y va a su página.
+      await page.waitForURL(/supervisor\.html/, { timeout: 10000 });
+      igual("?ver_como=" + id + ": no se fija y va a su página", new URL(page.url()).pathname, "/supervisor.html");
+      await ctx.close();
+      continue;
+    }
     await page.waitForSelector("#app:not(.hidden)", { timeout: 20000 });
     const g = await page.evaluate(LEER);
     igual("?ver_como=" + id, g.badge, esperado);
-    if (esperado !== "🧭 Supervisor") igual("?ver_como=" + id + ": la dirección queda limpia",
+    igual("?ver_como=" + id + ": la dirección queda limpia",
           await page.evaluate(() => location.search), "");
     await ctx.close();
   }
@@ -297,10 +308,10 @@ async function pruebaAdminMiraEstudiante(browser) {
 async function pruebaSupervisorNoMiraEstudiantes(browser) {
   console.log("\n=== Un estudiante guardado no le cambia nada a quien solo supervisa ===");
   const { page, ctx } = await panel(browser, [SUP], SUP.id, CON_PERSONA(ALUMNO_B, SUP.id), DATOS);
-  const g = await page.evaluate(LEER);
-  igual("sigue su panel de supervisor", g.badge, "🧭 Supervisor");
-  igual("sin franja", g.barra, null);
-  igual("nunca pidió las tareas del estudiante", g.rpcs.some((r) => r.startsWith("tareas_con_avance")), false);
+  await page.waitForURL(/supervisor\.html/, { timeout: 10000 });
+  igual("sigue a su página de supervisión", new URL(page.url()).pathname, "/supervisor.html");
+  igual("nunca pidió las tareas del estudiante",
+        await page.evaluate(() => window.__consultas.some((c) => c.tabla === "tareas_con_avance")), false);
   await ctx.close();
 }
 
