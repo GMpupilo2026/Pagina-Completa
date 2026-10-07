@@ -666,7 +666,10 @@ async function pruebaCupoInvitaciones(browser) {
     // termine de cargar: en el CI, con las cuatro tandas a la vez, la carga
     // entera pasó de los 10 s y la prueba falló sin que nada estuviera roto.
     await Promise.all([
-      page.waitForURL(/precios\.html#t-paquetes/, { waitUntil: "commit", timeout: 20000 }).catch(() => {}),
+      // Basta con que la navegación ARRANQUE («commit»): esperar a que
+      // precios.html termine de cargar dependía de lo cargado que estuviera el
+      // CI, y en el PR #765 se pasó dos veces de los 10 s.
+      page.waitForURL(/precios\.html#t-paquetes/, { timeout: 20000, waitUntil: "commit" }).catch(() => {}),
       page.keyboard.press("Enter"),
     ]);
     // Si no llegó, lo que hace falta para saber por qué: dónde quedó el foco,
