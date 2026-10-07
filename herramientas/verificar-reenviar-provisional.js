@@ -87,7 +87,8 @@ cierto("se despliega con la bienvenida (funciones-armar.js)",
   /"reenviar-acceso": \[[^\]]*"invitacion-email\.ts"[^\]]*"marca-correo\.ts"/.test(armar));
 
 console.log("\nLas pantallas dicen lo que salió");
-for (const pagina of ["admin", "coordinacion", "informes"]) {
+// El reenvío de Coordinación y de supervisor.html vive en cuenta-coordinacion.js.
+for (const pagina of ["admin", "cuenta-coordinacion", "informes"]) {
   const js = fs.readFileSync(path.join(RAIZ, "js", pagina + ".js"), "utf8");
   cierto(pagina + ".js distingue la contraseña provisional del enlace",
     /\.modo === "provisional"/.test(js) && /contraseña provisional nueva/.test(js));
