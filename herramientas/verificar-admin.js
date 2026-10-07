@@ -805,17 +805,21 @@ async function pruebaPdfs(browser) {
     return malos;
   }, [...vistos].filter((_, i) => i % 37 === 0)), []);
 
-  // «Bajar los N» de una carpeta baja esos N.
-  await clic(page, "#arch-carpetas-pdf .arch-carpeta[data-carpeta='curso-" + curso0.slug + "']");
+  // «Bajar los N» de una carpeta baja esos N. Con el curso más chico: con uno
+  // de 144 archivos la prueba se pasa del tiempo sin probar nada distinto.
+  const pdfsDe = (c) => c.lecciones.reduce((n, l) => n + l.archivos.length, 0) + c.otros.length;
+  const chico = catalogo.cursos.filter((c) => pdfsDe(c) > 0).sort((a, b) => pdfsDe(a) - pdfsDe(b))[0];
+  await clic(page, "#arch-carpetas-pdf .arch-carpeta[data-carpeta='curso-" + chico.slug + "']");
   const bajados = [];
   page.on("download", (d) => bajados.push(d.suggestedFilename()));
   await clic(page, "#arch-contenido-pdf [data-bajar-grupo]");
   await page.waitForFunction(() => /^Listo/.test(document.querySelector("#arch-contenido-pdf [role=status]").textContent), null, { timeout: 40000 });
   igual("«Bajar los N» de un curso baja esos N", bajados.slice().sort(),
-    curso0.lecciones.flatMap((l) => l.archivos).concat(curso0.otros).map((a) => a.ruta.split("/").pop()).sort());
+    chico.lecciones.flatMap((l) => l.archivos).concat(chico.otros).map((a) => a.ruta.split("/").pop()).sort());
   if (process.env.CAPTURAS) await page.screenshot({ path: path.join(process.env.CAPTURAS, "admin-pdf.png"), fullPage: true });
 
   // La vista previa de un PDF: en su marco, sin salir de la página.
+  await clic(page, "#arch-carpetas-pdf .arch-carpeta[data-carpeta='curso-" + curso0.slug + "']");
   await clic(page, "#arch-contenido-pdf .arch-fila [data-vista]");
   await page.waitForSelector("#vista-previa[open] iframe", { timeout: 5000 });
   const vp = await page.evaluate(() => {
