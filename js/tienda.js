@@ -63,7 +63,7 @@
             document.getElementById("sello-modulos").textContent = T.MODULOS.length;
             document.getElementById("sello-bonos").textContent = T.BONOS.length;
             document.getElementById("bonos-cuantos").textContent = T.BONOS.length;
-            document.getElementById("precio-suelto-frase").textContent = T.moneda(T.PRECIO);
+            document.getElementById("precio-suelto-frase").textContent = T.moneda(T.precioMinimo());
             document.getElementById("pack-suelto").textContent = T.moneda(T.precioSuelto());
             document.getElementById("pack-precio").textContent = T.moneda(T.precioPack());
             document.getElementById("pack-ahorro").textContent = T.moneda(T.ahorroPack());
@@ -220,6 +220,8 @@
                 laminas: ["lámina", "láminas"],
                 fichas: ["ficha", "fichas"],
                 cartas: ["carta para recortar", "cartas para recortar"],
+                tomos: ["tomo del libro (PDF)", "tomos del libro (PDF)"],
+                tomosAccesibles: ["tomo en versión accesible", "tomos en versión accesible"],
             };
             Object.entries(p.piezas || {}).forEach(([clave, n]) => {
                 if (!n) return;                       // cero no se pinta: "0 versiones accesibles" es ruido
@@ -235,7 +237,7 @@
 
             const precio = document.createElement("p");
             precio.className = "font-serif text-2xl font-bold text-brand-800 dark:text-white";
-            precio.textContent = T.moneda(T.PRECIO);
+            precio.textContent = T.moneda(T.precioDe(p));
 
             const boton = document.createElement("button");
             boton.type = "button";
@@ -296,7 +298,13 @@
             document.body.style.paddingBottom = barra.offsetHeight + "px";
             document.getElementById("sel-conteo").textContent =
                 elegidos.size + (elegidos.size === 1 ? " material elegido ·" : " materiales elegidos ·");
-            document.getElementById("sel-total").textContent = T.moneda(elegidos.size * T.PRECIO);
+            document.getElementById("sel-total").textContent = T.moneda(totalElegidos());
+        }
+
+        /* La suma de lo elegido, cada uno con SU precio: con uno que no vale
+           PRECIO, «cuántos × PRECIO» cobraba otra cosa que la que dice la ficha. */
+        function totalElegidos() {
+            return T.PRODUCTOS.filter((p) => elegidos.has(p.id)).reduce((a, p) => a + T.precioDe(p), 0);
         }
 
         function limpiarSeleccion() {
@@ -324,8 +332,8 @@
         document.getElementById("sel-limpiar").addEventListener("click", limpiarSeleccion);
         document.getElementById("sel-pedir").addEventListener("click", () => {
             const lineas = T.PRODUCTOS.filter((p) => elegidos.has(p.id))
-                .map((p) => p.titulo + " — " + T.moneda(T.PRECIO));
-            pedir(lineas.length === 1 ? "Este material:" : "Estos " + lineas.length + " materiales:", lineas, elegidos.size * T.PRECIO);
+                .map((p) => p.titulo + " — " + T.moneda(T.precioDe(p)));
+            pedir(lineas.length === 1 ? "Este material:" : "Estos " + lineas.length + " materiales:", lineas, totalElegidos());
         });
         document.getElementById("pack-comprar").addEventListener("click", () => {
             pedir("EL SISTEMA COMPLETO — los " + T.MODULOS.length + " módulos y los " + T.BONOS.length + " bonos:",

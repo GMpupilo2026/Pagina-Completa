@@ -674,6 +674,12 @@
         // igual que hace js/curso-academia.js con el panel de Academia. ----------
         const CLASS_LESSON_CATALOG = [
             { slug: "desequilibrios-de-material", titulo: "Desequilibrios de material" },
+            { slug: "rompe-el-estancamiento", titulo: "Rompe el estancamiento" },
+            { slug: "ganar-con-poco", titulo: "Ganar con poco" },
+            { slug: "cambiar-o-no-cambiar", titulo: "Cambiar o no cambiar" },
+            { slug: "ideas-que-ganan-partidas", titulo: "Ideas que ganan partidas" },
+            { slug: "los-cimientos-del-ajedrez", titulo: "Los cimientos del ajedrez" },
+            { slug: "una-clase-al-dia", titulo: "Una clase al día" },
             { slug: "el-mapa-de-los-finales", titulo: "El mapa de los finales" },
             { slug: "partidas-modelo", titulo: "Partidas modelo del ajedrez moderno" },
         ];

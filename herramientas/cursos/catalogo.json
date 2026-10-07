@@ -53,6 +53,17 @@
   ],
   "cursos": [
     {
+      "slug": "los-cimientos-del-ajedrez",
+      "titulo": "Los cimientos del ajedrez",
+      "nivel": "intermedio",
+      "resumen": "Táctica, finales, juego posicional, cálculo y aperturas en tres niveles de 24 lecciones, con las partidas clásicas que mejor muestran cada tema.",
+      "lecciones": 72,
+      "alt": "Primer ejemplo del curso, de la partida Lasker–Meyer, Praga 1900: las dos torres blancas, dobladas en la columna d, salen a cazar al rey negro con jaques.",
+      "precio": "",
+      "duracion": "",
+      "modalidad": ""
+    },
+    {
       "slug": "partidas-modelo",
       "titulo": "Partidas modelo del ajedrez moderno",
       "nivel": "intermedio",
@@ -81,6 +92,61 @@
       "resumen": "Alfil contra caballo, alfiles de distinto color, pareja de alfiles y los sacrificios de peón, calidad, pieza y dama en sesenta partidas modelo.",
       "lecciones": 19,
       "alt": "Material parejo en puntos y posición desnivelada: el tipo de desequilibrio que estudia el curso.",
+      "precio": "",
+      "duracion": "",
+      "modalidad": ""
+    },
+    {
+      "slug": "rompe-el-estancamiento",
+      "titulo": "Rompe el estancamiento",
+      "nivel": "avanzado",
+      "resumen": "Las siete familias de errores que frenan a un jugador de 1400 a 2100 —plan, conceptos, cambios, cálculo, el rival y la cabeza— y un método para corregir las tuyas.",
+      "lecciones": 36,
+      "alt": "Final de torres del primer ejemplo del curso: juegan las negras y la jugada que gana es un avance tranquilo del peón de a, sin jaque ni captura.",
+      "precio": "",
+      "duracion": "",
+      "modalidad": ""
+    },
+    {
+      "slug": "ganar-con-poco",
+      "titulo": "Ganar con poco",
+      "nivel": "avanzado",
+      "resumen": "Cómo ver, sumar y cobrar las ventajas pequeñas —piezas, peones, cambios, finales y paciencia—, con dieciocho partidas comentadas que se ganaron así.",
+      "lecciones": 44,
+      "alt": "Primer ejemplo del curso: juegan las negras y la jugada que gana es tranquila, una torre que baja a e1 sin dar jaque ni capturar.",
+      "precio": "",
+      "duracion": "",
+      "modalidad": ""
+    },
+    {
+      "slug": "cambiar-o-no-cambiar",
+      "titulo": "Cambiar o no cambiar",
+      "nivel": "avanzado",
+      "resumen": "El cambio de piezas en la estrategia: qué cambiar, qué conservar y por qué, de Rubinstein y Capablanca a la técnica moderna, con 33 partidas de grandes maestros y 22 ejercicios.",
+      "lecciones": 23,
+      "alt": "Posición de Rubinstein contra Salwe, de 1908: juegan las blancas y el alfil va a c5 para cambiar el alfil negro que cuida las casillas oscuras.",
+      "precio": "",
+      "duracion": "",
+      "modalidad": ""
+    },
+    {
+      "slug": "ideas-que-ganan-partidas",
+      "titulo": "Ideas que ganan partidas",
+      "nivel": "avanzado",
+      "resumen": "El ataque al enroque, el rey en el centro, las piezas, los peones, la táctica que sostiene el plan y los finales: las ideas que deciden partidas, cada una con una posición real comprobada con motor.",
+      "lecciones": 36,
+      "alt": "El sacrificio del alfil en h7, ejemplo del curso: juegan las blancas, el peón de e5 ya echó al caballo de f6 y el alfil de d3 toma en h7 con jaque.",
+      "precio": "",
+      "duracion": "",
+      "modalidad": ""
+    },
+    {
+      "slug": "una-clase-al-dia",
+      "titulo": "Una clase al día",
+      "nivel": "avanzado",
+      "resumen": "360 clases para mejorar un poco cada día, por tema: ataque al rey, estructuras de peones, piezas, juego posicional, sacrificios y finales, con casi dos mil partidas comentadas jugada a jugada.",
+      "lecciones": 360,
+      "alt": "El sacrificio Axe5 de Browne contra Quinteros: con las piezas negras sin desarrollar, el alfil se entrega para abrir la columna e contra el rey en el centro.",
       "precio": "",
       "duracion": "",
       "modalidad": ""

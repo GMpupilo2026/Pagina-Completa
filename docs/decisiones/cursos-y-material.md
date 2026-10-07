@@ -141,9 +141,10 @@ Se fueron sus portadas, sus fragmentos protegidos, su material de
 `cursos/recursos/`, sus tarjetas, sus productos de la tienda (que quedó en
 cuatro módulos) y sus lecciones y posiciones en el proyecto Campeones
 Colegiales y en los planes de arranque. Los enlaces «curso anterior /
-siguiente» se cerraron en anillo con los que quedan: El mapa de los finales →
-Partidas modelo → Desequilibrios de material → Formación Ajedrez → Árbitro
-Nacional → El mapa de los finales. `curso-generar.py` y
+siguiente» se cerraron en anillo con los que quedan, en el orden del catálogo
+(`herramientas/cursos/catalogo.json`), y del último se vuelve al primero.
+`js/cursos-ocultos.js` ya no existe: una página nueva de curso no lo carga.
+`curso-generar.py` y
 `curso-generar-formacion.py` clonan ahora `arbitro-nacional.html`, que tenía el
 mismo armazón que el molde de antes.
 
@@ -154,8 +155,11 @@ mismo armazón que el molde de antes.
   (`clases.js`) y el «Continuar» de Informes solo ofrecen cursos que están en
   `herramientas/cursos/catalogo.json` (vía `MaterialPlataforma.cursos()`).
 - Los planes de clase ya sembrados en la base (49 renglones de `plan_items`)
-  y las filas de los cursos en la migración de certificados siguen ahí: tocar
-  la base es otra decisión.
+  siguen ahí: tocar la base es otra decisión.
+- Las filas de esos cursos en `interno.curso_lecciones` (de las que sale el
+  certificado) tienen que irse con una migración; mientras sigan, el
+  verificador de certificados las nombra en `SIN_CURSO`. Ninguno tenía un
+  certificado emitido.
 - `supabase/functions/informes-encargados/informe-html.ts` sigue sabiendo el
   nombre de esos cursos, para que el informe a la casa no muestre un
   identificador donde había avance viejo, y porque cambiarlo pide volver a
@@ -488,8 +492,7 @@ deletrea y no se entiende.
 ### Lo que queda por hacer
 
 Desde que se borraron siete cursos (ver «Los cursos borrados»), el material
-generado cubre los tres que quedan con material de clase: El mapa de los
-finales, Desequilibrios de material y Partidas modelo.
+generado cubre los cursos de la lista `CURSOS` de `herramientas/curso-material.js`.
 
 ## La guía del profesor
 
@@ -935,8 +938,8 @@ de la tienda.
 
 ## El banco de ejercicios «Mide tu fuerza»
 
-Un libro de tests tácticos de Oscar Angulo Cubero: 360 posiciones en 45 tests
-de 8, cada test de **un solo tema** (ataque doble, ataque a la descubierta,
+Un libro de tests tácticos de Oscar Angulo Cubero, en diez volúmenes de 360
+posiciones en 45 tests de 8 cada uno; cada test de **un solo tema** (ataque doble, ataque a la descubierta,
 jaque doble, clavada, enfilada, desviación, atracción, interferencia, despeje,
 eliminación del defensor, rayos X, jugada intermedia, pieza atrapada, jugada
 tranquila y el peón avanzado), en tres niveles. Lo arman dos scripts, como
@@ -946,6 +949,83 @@ tranquila y el peón avanzado), en tres niveles. Lo arman dos scripts, como
 comprueban `verificar-mide-tu-fuerza.js` (el banco y lo accesible) y
 `verificar-mide-tu-fuerza-pdf.py` (protección, autor, marca de agua en cada
 página y que estén los 45 tests).
+
+### Los volúmenes
+
+Cada volumen tiene **la misma forma** (los mismos 15 temas, los tres niveles,
+los tiempos y los puntos) y **posiciones distintas**: el volumen 2 sirve para
+seguir entrenando y para volver a medir sin que la memoria cuente (y los
+siguientes, una vez más cada uno). El 1 vive
+en `material/mide-tu-fuerza/` y cada siguiente en su propia carpeta
+(`material/mide-tu-fuerza-2/`), que es también **su propio material**: se
+comparte aparte en `admin.html#materiales`, y `puede_bajar()` lo decide por
+carpeta como cualquier otro. Los dos scripts y los dos verificadores reciben el
+volumen (`node herramientas/mide-tu-fuerza-generar.js 2`,
+`node herramientas/mide-tu-fuerza-pdf.js 2`) y los verificadores recorren todos
+los que tengan banco. Un volumen nuevo es: sus candidatas, correr los dos
+scripts con su número y agregarlo en `MATERIALES` de `js/admin-materiales.js`
+(y su accesible en las listas de `verificar-pwa.js` y `pwa-cabecera.py`). Su
+PDF nuevo entra también en la sección «Archivos»: después de generarlo se
+corre `node herramientas/archivos-catalogo.js`, o `verificar-archivos-catalogo`
+falla en el CI (pasó con el volumen 6).
+
+Las candidatas del 2 son las 20 siguientes de cada tema y nivel en la misma
+consulta (`k between 21 and 40`). El generador descarta además las que ya están
+en otro volumen. Los rayos X y los jaques dobles difíciles casi no existen en
+la base (16 y 22 en total): al 2 se le agregaron las candidatas de esos temas
+que el 1 no usó, y lo que aún falta lo completa el nivel vecino. Las del 3 son
+las 20 siguientes (`k between 41 and 60`); ahí los rayos X y jaques dobles
+difíciles ya se agotaron, y esos tests se completan con el nivel vecino.
+
+Para el 4 (`k between 61 and 80`) los temas raros ya no daban 20 con los
+filtros de siempre. Ahí, **y solo ahí**, se completa hasta 20 con un filtro
+algo más ancho (Popularity ≥ 80, NbPlays ≥ 400, RatingDeviation ≤ 90): son
+ejercicios igual de comprobados por Stockfish, con un rating medido con menos
+intentos.
+
+El 5 toma, de cada tema y nivel, las 20 siguientes que no tomó ningún volumen
+anterior, **en orden de calidad**: primero lo que queda con el filtro de
+siempre, después el del 4 y, solo donde todavía faltan (los temas raros), un
+tercero (Popularity ≥ 75, NbPlays ≥ 200, RatingDeviation ≤ 100). La consulta
+cuenta lo que tomó cada volumen anterior, y el archivo de candidatas lo
+confirma: ninguna repetida. Con eso los rayos X difíciles quedan en 16 y el
+resto lo completa el nivel vecino.
+
+El 6 se armó igual que el 5, pero eligiendo los identificadores aquí: se
+bajaron, por tema y nivel, los primeros 150 en orden de calidad y se
+descartaron los que ya eran candidatas de los volúmenes 1 a 5. Hizo falta un
+**cuarto filtro** (Popularity ≥ 70, NbPlays ≥ 100, RatingDeviation ≤ 110), y
+solo en los temas raros: de 891 candidatas, 720 son del filtro de siempre y
+49 del cuarto (jaque doble, rayos X e interferencia). Ahí la base ya está
+prácticamente agotada: un séptimo volumen igual no se podía hacer sin bajar
+todavía más la calidad de esos temas.
+
+Por eso el **7 cambia tres temas** (lo decidió el dueño del repo): jaque doble,
+rayos X e interferencia se cambian por **mate en dos, mate en tres y
+sacrificio** (`CAMBIOS_DESDE_7` y `temasDe()` en el generador; cada uno entra
+en el lugar del que sale). Los tres tienen cientos de posiciones con el filtro
+de siempre. El sacrificio se toma solo si no tiene mate ni ninguno de los
+otros temas del libro, para que no se cruce con los demás tests; los mates no
+se habían usado nunca, porque los otros temas excluyen las posiciones con
+mate. En los otros doce temas siguen las 20 siguientes; solo cuatro casilleros
+del tercer nivel (eliminación del defensor, enfilada, jugada intermedia y
+pieza atrapada) se completaron con los filtros más anchos: 66 de 900. Cada
+banco guarda sus propios temas y el verificador comprueba que sean los de su
+volumen.
+
+El 8 lleva los temas del 7 y las 20 siguientes de cada casillero en orden de
+calidad: 820 del filtro de siempre y 80 de los cuatro casilleros agotados del
+tercer nivel (jugada intermedia, enfilada y pieza atrapada con el filtro 2;
+eliminación del defensor con el 3). El 9 se armó igual, con la misma
+proporción (820 y 80). El 10 ya necesitó un quinto casillero con filtro ancho
+(despeje del tercer nivel): 800 del filtro de siempre, 78 del 2, 19 del 3 y 3
+del 4, todas del tercer nivel. Un undécimo volumen con estos temas tendría el
+tercer nivel cada vez más lleno de posiciones de los filtros 3 y 4: lo sano
+sería cambiar otros temas, como se hizo en el 7.
+
+Cada tapa lleva «Volumen N» y su propio color (verde, vino, azul, morado, café,
+gris pizarra, ciruela, oliva, petróleo y óxido; el contraste del texto se midió
+contra el más claro de cada degradado: 5,7 o más, AA).
 
 ### Tomado de un libro ajeno como referencia, no copiado
 
@@ -996,7 +1076,7 @@ archivo, y protección (`herramientas/lib/pdf-armar.js`). **Se deja
 imprimir**: es un cuaderno de trabajo. Vive en `material/mide-tu-fuerza/`,
 detrás del candado del worker, y se comparte desde `admin.html#materiales`.
 
-## El libro de Peonita, para los más pequeños
+## Los cuentos de Peonita, para los más pequeños
 
 *Peonita y el reino de las 64 casillas*, de Oscar Angulo Cubero: un cuento
 ilustrado para que niñas y niños de 4 a 8 años aprendan a jugar. Peonita, un
@@ -1008,11 +1088,14 @@ de apertura y las reglas del buen jugador), cada uno con su ilustración, «Lo
 que aprendí» y una página de «¡A jugar!»; al final, el diploma y las
 soluciones.
 
-- `herramientas/libro-ninos/contenido.js` tiene el cuento, los ejercicios y
-  **sus respuestas escritas a mano**; `herramientas/libro-ninos/dibujos.js`,
-  los personajes y las escenas; `herramientas/libro-ninos-pdf.js` lo pone en
-  papel: `material/peonita/peonita.pdf` y `peonita-accesible.html`.
-- Lo revisa `verificar-libro-ninos.js`.
+- Cada cuento es un módulo de `herramientas/libro-ninos/` (`peonita.js`,
+  `trucos.js`, `rey.js`; la lista está en `libros.js`) con el cuento, los ejercicios y
+  **sus respuestas escritas a mano**, la tapa, el final, el diploma y sus
+  secretos. `dibujos.js` tiene los personajes y las escenas, y
+  `herramientas/libro-ninos-pdf.js` los pone en papel **con una sola
+  maqueta**: `material/<slug>/<slug>.pdf` y `<slug>-accesible.html`.
+- Los revisa `verificar-libro-ninos.js`, todos. Un cuento nuevo se suma a
+  `libros.js` y entra solo al generador y al verificador.
 
 ### Tomado de un libro ajeno como referencia, no copiado
 
@@ -1064,14 +1147,26 @@ escondido, nunca anunciado en el libro: se descubre. En el de Peonita hay dos:
 - **El alfil se llama Don Saleras**, que tiene exactamente las mismas letras
   que Alessandro (y suena a «salero», tener gracia). Antes era «Don Picudo».
 
-Para los próximos cuentos sirven las mismas ideas u otras parecidas: un
+**Lo que ya está decidido para los próximos cuentos** (pedido del autor; el
+libro 3 ya trae los tres primeros):
+
+- **Un personaje que se llama Sandro** (en el libro 3, un osito panda viajero).
+- **Un mensaje en las soluciones**: en un capítulo, las primeras letras de
+  las respuestas, leídas en orden, forman ALE.
+- **El sol que crece con él**: en el libro 2 el sol de una escena es
+  Alessandro de bebé; en cada libro nuevo, un sol lo muestra un poco más
+  grande (en el 3, con dientitos y saludando; después, dando sus primeros
+  pasos…). Uno solo por libro, a la mitad del cuento.
+- Y cada libro, además, su secreto propio. El verificador comprueba todos.
+
+Para los próximos cuentos sirven además las mismas ideas u otras parecidas: un
 personaje con su nombre en anagrama o escondido a plena vista («Al…fil
 Sandro»), las iniciales de los capítulos, un acróstico en un poema, una
 posición cuyas piezas dibujan una A. Antes de elegir, se le proponen las
 opciones al autor.
 
 **El verificador del libro comprueba el secreto** (`SECRETO`, `DEDICATORIA` y
-`NOMBRE_ALFIL` en `contenido.js`): corregir una palabra del poema o el nombre
+`SECRETOS` de cada libro): corregir una palabra del poema o el nombre
 del personaje lo rompería sin dar ningún error, y nadie lo notaría justo
 porque está escondido. Este archivo y `herramientas/` no se publican
 (`.assetsignore`), así que contarlo acá no lo delata.
@@ -1089,15 +1184,836 @@ porque está escondido. Este archivo y `herramientas/` no se publican
   diagrama dice qué son los puntos.
 - Con un solo diagrama, el diagrama y «Lo que aprendí» van lado a lado: si no,
   el recuadro quedaba solo en una página casi vacía.
+- **El diploma** lleva la firma de los personajes arriba de la línea, como
+  hecha a mano («Peonita ♥ Don Lento»), y su nombre impreso abajo. El autor va
+  aparte, abajo al centro y en pequeño, junto al logo gris de la marca de agua
+  (el crema no se ve sobre el fondo crema). Es el mismo diseño de los diplomas
+  que se le hacen a mano a quien termina un libro.
 - Comparte con «Ponte a prueba» el cierre (`lib/pdf-armar.js`) y el
   `describir()` de la versión accesible. Va en `admin.html#materiales` y se
   comparte igual; sin pruebas como cuestionario, esa sección no aparece.
 
+### Los diplomas se coleccionan
+
+Cada cuento cierra con su diploma, y los diplomas forman una colección:
+cada uno lleva su número y su nombre (n.º 1 «Explorador del reino», n.º 2
+«Detective de trucos», n.º 3 «Cazador de reyes»…) y su medalla (`medalla()`
+de `dibujos.js`: una torre, una lupa, una corona…). La medalla del libro va grande sobre el dibujo, y abajo hay una
+fila «Mi colección» con las medallas de todos los libros de `libros.js` (la
+de ese diploma, resaltada) y un «?» para el próximo, para que el niño vea lo
+que tiene y lo que le falta. El número sale de `DIPLOMA.numero` y el
+verificador comprueba que sea el lugar del libro en `libros.js` y que no se
+repita ninguna medalla. Un libro nuevo lleva su número, su nombre y su
+medalla, y los diplomas de los anteriores lo suman solos al regenerarse.
+
+### El segundo cuento: los trucos del bosque
+
+*Peonita, Tizón y los trucos del bosque*: los primeros trucos de la táctica
+para quien ya sabe mover las piezas (la pieza sin cuidar, la horquilla del
+caballo, el ataque doble de la dama, la horquilla de peón, la clavada, la
+enfilada, el mate del pasillo, el ataque a la descubierta, mirar qué quiere
+el otro y un repaso). La historia: en una excursión, Don Pillo, un mapache
+travieso, se lleva las piezas que nadie cuida; Peonita y Tizón aprenden un
+truco por capítulo, le ganan el torneo y se vuelve su amigo. Vuelve Don
+Saleras, el alfil, a enseñar la clavada.
+
+**Los secretos para Alessandro**: las iniciales de los diez títulos, leídas
+de arriba hacia abajo en el índice, dicen ALESSANDRO. Y en el capítulo 1, en
+el tronco del árbol donde Peonita se esconde para espiar a Don Pillo, hay un
+corazoncito grabado con «ALE» adentro (`guarumo(…, { grabado })` de
+`dibujos.js`). Impreso mide unos 2 mm: se encuentra con lupa, como buscan los
+trucos Peonita y Tizón. La descripción del dibujo dice que hay un corazón
+grabado, pero no qué dice. El verificador comprueba que el árbol siga
+teniéndolo (`data-grabado`).
+
+A la mitad del libro, en el capítulo 5, **el sol es Alessandro de bebé**: una
+carita con su gorrito tejido de orejitas, dibujada a partir de una foto que
+mandó el autor (`solBebe()` de `dibujos.js`, que sale con `sol: "bebe"` en la
+escena). Es el único sol así de los dos libros: el autor lo quiso en uno solo
+y no en todos. Se dibujó en vez de pegar la foto, para que tenga el estilo del
+libro y porque la foto de un niño no debe ir dentro de un PDF que se comparte
+y se descarga. La foto no está en el repositorio. El verificador comprueba que
+haya exactamente un sol de bebé y que sea de día.
+
+### El tercer cuento: el rey escondido
+
+*Peonita y el rey escondido*: los primeros jaques mate (la torre en la
+orilla, la escalera de las dos torres, la caja y el beso de la dama, la torre
+con su rey), el ahogado como el error de quien va ganando y los primeros
+mates en dos. La historia: en un paseo al volcán, el Rey Carbón, el rey negro,
+se cansa de que lo persigan y se esconde; solo vuelve si lo atrapan con un
+jaque mate. Lo buscan con Sandro, un osito panda viajero con mochila y mapa
+(un mapa con cuadritos, como un tablero). Diploma n.º 3, «Cazador de reyes»,
+con una corona.
+
+**Los secretos para Alessandro**, los tres que se habían decidido:
+
+- **Sandro**, el osito panda (`panda()` de `dibujos.js`). Primero se dibujó
+  un oso grande; el autor lo quiso más chiquito y quedó un cachorro, cabezón
+  y de cuerpo pequeño. El verificador comprueba que el nombre sea el final de
+  ALESSANDRO y que siga en el cuento (`personaje`).
+- **ALE en las soluciones** del capítulo 6, «El beso de la dama»: las tres
+  respuestas empiezan con «Al lado…», «La dama…» y «En e7…». Esas frases van
+  escritas a mano (`solucion` del ejercicio) y el verificador comprueba las
+  iniciales y que cada frase nombre la jugada de la respuesta
+  (`acrostico-soluciones`).
+- **El sol del capítulo 5** es Alessandro un poco más grande que en el libro
+  2: la misma carita con dos dientitos y las manitas saludando (`solGatea()`,
+  con `sol: "gatea"`). El verificador comprueba que sea el único sol distinto
+  del libro y que sea de día.
+
+**Dos tipos de ejercicio nuevos**, comprobados con chess.js (sin el buscador
+de material, que acá no hace falta: es mate o no es):
+
+- `mate2`: la respuesta es la **única** primera jugada que, conteste lo que
+  conteste el negro, deja un mate en una, y no hay ningún mate en una desde
+  el principio. Las posiciones salieron de una búsqueda al azar con esa misma
+  regla (pocas piezas, el rey negro en la orilla) y se eligieron a mano las
+  que se explican bien: la mitad empieza con una jugada tranquila del rey,
+  que es justo lo que enseña el capítulo de la torre con su rey.
+- `elige`: dos jugadas, una que da mate y otra que ahoga; `opciones` dice qué
+  deja cada una y el verificador lo comprueba.
+
+Los mates en una también se buscaron así, porque a ojo es fácil dejar dos:
+con la dama en la orilla, casi siempre hay otro mate por la otra columna o
+por la diagonal.
+
+### En un libro de trucos, la respuesta tiene que ser LA jugada
+
+Un ejercicio de táctica promete que hay un truco y que es ese. El CI no tiene
+Stockfish, así que `herramientas/lib/tactica.js` es un buscador chiquito con
+chess.js: negamax con poda alfa-beta a cuatro medias jugadas, contando
+material, y al final solo capturas hasta que la posición se calma (si no,
+contaría como ganada una pieza que se pierde enseguida). Alcanza para
+posiciones de iniciación, que es lo que trae un cuento. Con él se comprueba:
+
+- `gana`: la jugada de la respuesta es la **única** que gana al menos
+  `minimo` puntos;
+- `amenaza`: con el turno de las negras, la jugada que dice la respuesta es
+  la única de Tizón que gana `minimo` (la posición con ese turno también tiene
+  que ser legal);
+- `defensa`: cada jugada que propone la solución deja a las negras sin nada
+  que gane `minimo`.
+
+Rompió cuatro posiciones que parecían buenas a ojo. La torre que se come un
+caballo sin cuidar también amenazaba mate del pasillo, así que había dos
+respuestas. En dos horquillas de peón, la pieza atacada se salvaba **dando
+jaque**, y después se salvaba la otra. Y en una descubierta, la dama negra
+tapaba el jaque dando jaque a su vez. Además, el buscador tenía un error
+propio: chess.js da tablas con rey y caballo contra rey, y entonces la torre
+que se comía la horquilla «valía 0». Para contar material, solo el ahogado
+es tablas.
+
+Las flechas de los diagramas (`flechas` en `lib/tablero-svg.js`) son azules
+#123e7c: 8,6:1 contra la casilla clara y 4,1:1 contra la oscura.
+
+## El curso y el libro «Rompe el estancamiento»
+
+Un curso (36 lecciones en ocho bloques) y su libro, de Oscar Angulo Cubero,
+para el jugador de 1400 a 2100 que lleva meses en el mismo Elo: las siete
+familias de errores que lo frenan (jugar sin plan, usar mal los conceptos,
+leer la posición a medias, cambiar sin preguntarse qué cambia, calcular con
+agujeros, olvidarse del rival y la cabeza que juega en contra) y un método
+para encontrar los propios con una ficha de errores.
+
+### Tomado de un libro ajeno como referencia, no copiado
+
+El dueño pidió un curso «similar» a *Blinda tu ajedrez* (Herraiz y Muñoz,
+2020), con un libro nuevo en PDF. Ese libro tiene derechos de autor y prohíbe
+reproducirlo, así que se tomó **la idea y nada más**: ordenar por familias los
+errores que repiten los jugadores estancados y corregirlos de a uno, con la
+partida propia como fuente. Ni el texto, ni los ejemplos, ni los ejercicios,
+ni los títulos salen de ahí; el título tampoco es el suyo. Las lecciones están
+escritas para esto, en tuteo.
+
+### Las posiciones: de Lichess, comprobadas con Stockfish
+
+`herramientas/rompe-el-estancamiento-generar.js` hace lo mismo que el de «Mide
+tu fuerza»: candidatas de la base abierta de Lichess
+(`herramientas/datos/rompe-el-estancamiento-candidatas.txt`, la consulta está
+en su cabecera), el MISMO `analizar()` del diagnóstico (una sola jugada
+buena), y ninguna repetida del diagnóstico, «Ponte a prueba» ni «Mide tu
+fuerza». Cada familia pide los temas de Lichess que la muestran
+(`TEMAS_CAPITULO`: la jugada intermedia para el cálculo, la jugada defensiva
+para pensar por el rival, el final de peones para los cambios…).
+
+- **Lo que la lección dice de su ejemplo se comprueba en la posición**, no
+  solo en la etiqueta de Lichess (`cumple()`): las etiquetas miran la solución
+  entera y la lección habla de la primera jugada. La jugada «tranquila» no da
+  jaque ni captura, la que «entrega material» deja la pieza al alcance del
+  rival, el «final de peones» no tiene piezas.
+- Casi todas las de «jugada defensiva» resultaron **conservar una ventaja**,
+  no salvar una partida perdida: el texto de esas lecciones dice «solo una
+  jugada conserva la ventaja», que es lo que el motor comprobó, y no «todo lo
+  demás pierde».
+- **El ejemplo de cada lección es la misma posición en el curso y en el
+  libro**: el generador escribe el banco del libro
+  (`material/rompe-el-estancamiento/banco.js`) y el campo `diagramas` de
+  `herramientas/cursos/rompe-el-estancamiento.json` en la misma corrida. El
+  resto de ese JSON (el texto, y `tema`, `pregunta` y `enlace` de cada lección)
+  es a mano.
+
+### Cómo se regenera
+
+    STOCKFISH=/usr/games/stockfish node herramientas/rompe-el-estancamiento-generar.js
+    node herramientas/curso-posiciones.js rompe-el-estancamiento
+    python3 herramientas/curso-generar.py rompe-el-estancamiento
+    CHROME_PATH=… node herramientas/curso-material-generar.js rompe-el-estancamiento
+    node herramientas/curso-material-enlazar.js
+    node herramientas/rompe-el-estancamiento-pdf.js
+
+**`curso-generar.py` reescribe el fragmento protegido sin los enlaces del
+material de estudio**: después de correrlo hay que volver a correr el
+enlazador, o las 36 lecciones se quedan sin su cuadernillo sin que nada falle
+en pantalla. `curso-generar.py` además se puso al día con los colores de
+contraste que ya tenían las portadas (`dark:text-brand-300`,
+`text-brand-450 dark:text-brand-350`, `text-accent-700 dark:text-accent-400`):
+generaba los viejos.
+
+Lo comprueban `verificar-rompe-el-estancamiento.js` (el banco, que el ejemplo
+del curso sea el del libro y que lo que dice la lección sea cierto en la
+posición, y la versión accesible) y `verificar-rompe-el-estancamiento-pdf.py`
+(protección, autor, marca de agua en cada página, los ocho capítulos, las 36
+lecciones, los 80 ejercicios y la ficha de errores).
+
+### Dónde quedó dado de alta
+
+En el catálogo (nivel Avanzado, entre «Desequilibrios de material» y
+«Cálculo y Visualización», con su diagrama), en «Mis cursos» de la Academia, en
+el material de la clase en vivo, en exámenes por curso, en el plan de
+entrenamiento del área de estrategia y en `interno.curso_lecciones` para su
+certificado (`20261006222049_curso_rompe_el_estancamiento.sql`). El libro está
+en `admin.html#materiales` (se comparte como los otros dos) y en «Archivos».
+
+- **No está en la tienda**: venderlo, y en qué módulo del sistema completo,
+  es una decisión de precio del dueño.
+- **El correo a la casa lo nombra sin tocar la Edge Function**:
+  `informes-encargados` nombra un curso que no está en su `TITULOS_CURSOS`
+  desde el slug, y «rompe-el-estancamiento» da justo «Rompe el estancamiento».
+  Sumarlo a la tabla obligaba a redesplegar la función solo para escribir lo
+  mismo. `verificar-tiempo-secciones.js` ya no exige que la tabla tenga todos
+  los cursos: comprueba el nombre que el correo **muestra** para cada curso del
+  catálogo, y que lo que la tabla sí nombra coincida con el catálogo.
+
+## El libro «Coachess en resumen»
+
+El dueño pidió, desde una carpeta de su Drive («Desarrollo personal»), un
+resumen de lo más importante de *Coachess: inteligencia del ajedrez para tu
+desarrollo personal y profesional* (Daniel Muñoz Sánchez, 2022) y un libro con
+ese resumen. Quedó como material de clase, en
+`material/coachess-resumen/`: el PDF (30 páginas, se puede imprimir) y su
+versión accesible.
+
+### Un resumen atribuido, no una copia
+
+El original tiene derechos de autor y prohíbe reproducirlo. A diferencia de
+«Rompe el estancamiento» o «Mide tu fuerza», que tomaron solo la idea y
+llevan otro título, este libro **es** un resumen y lo dice: el autor del
+original va en la tapa, en el pie de cada página, en los datos del archivo, en
+la versión accesible y en «Sobre este resumen». Lo que no se toma es el texto:
+ningún párrafo está copiado, todo está escrito aparte y en tuteo, y las citas
+textuales se limitan a los epígrafes breves de jugadores y escritores.
+
+- **Los estudios van como el autor los cuenta**, sin volver a comprobarlos, y
+  el libro lo avisa en «Antes de empezar». Lo que el original dice de
+  suplementos y dosis no se pasó: se nombra el tema y se manda al médico.
+- **Las partidas se describen, no se dibujan.** Los ejemplos (Ivanchuk–Shirov
+  1996, Van Wely–Kamsky 1996, Aronian–Navara 2008…) van contados como en el
+  libro, sin diagrama: un diagrama sería una posición que habría que sacar de
+  la partida y comprobar, y el resumen no lo necesita.
+- No lleva el secreto para Alessandro: no es un cuento ni un libro infantil.
+
+### Cómo se regenera
+
+El texto vive en `herramientas/libros/coachess-resumen.js` (el mismo para el
+PDF y la versión accesible) y lo pone en papel:
+
+    node herramientas/coachess-resumen-pdf.js
+
+Se cierra como los otros libros (`herramientas/lib/pdf-armar.js`: tapa, marca
+de agua en cada página, PDF protegido). Lo revisa
+`verificar-coachess-resumen.py`: protección, quién resumió y de quién es el
+original (en los datos del archivo, en la tapa y en el texto), la marca de
+agua, los veinte capítulos y los veinte consejos en el PDF y en la versión
+accesible, y que esta no traiga imágenes ni scripts.
+
+Está en `admin.html#materiales` (se comparte como los demás) y en «Archivos».
+No está en la tienda: venderlo sería vender un resumen de un libro ajeno.
+
+## El curso y el libro «Ganar con poco»
+
+Un curso (44 lecciones en ocho bloques) y su libro, de Oscar Angulo Cubero,
+sobre cómo se ganan las partidas que parecen tablas: ver las ventajas
+pequeñas (una pieza mejor, una casilla, un peón débil, un peón pasado, una
+torre activa, el rey más cerca, un tiempo), no regalarlas, sumarlas sin apuro
+y cobrarlas en el final. Seis capítulos —ver lo que no se ve, piezas buenas y
+malas, los peones, cambiar para ganar, la técnica en el final, paciencia y
+defensa—, un séptimo con las dieciocho partidas del libro de Leyva y un octavo
+con el método: el cuaderno de ventajas.
+
+### Tomado de un libro ajeno como referencia, no copiado
+
+El dueño pidió «un libro y un curso» con *Ventajas microscópicas* (Héctor
+Leyva Paneque, 2004; edición electrónica de 2014), que dejó en una carpeta de
+su Drive. Ese libro tiene derechos de autor y prohíbe reproducirlo o tratarlo
+informáticamente, así que se hizo lo mismo que con «Rompe el estancamiento»:
+se tomó **la idea y nada más** —ganar sumando ventajas pequeñas, casi
+invisibles, en vez de esperar una combinación—, que además es de toda la
+tradición del ajedrez posicional. Ni el texto, ni las partidas comentadas que
+trae ese libro, ni su selección, ni los ejemplos, ni el título salen de ahí.
+Las lecciones están escritas para esto, en tuteo.
+
+Después el dueño pidió «usa las partidas del libro» y dijo que tiene permiso
+sobre él. Con eso se agregó el capítulo 7, **las dieciocho partidas** que
+comenta Leyva (Andersson–Potkin, Petrosian–Botvinnik, Capablanca–Yates…), y
+aun así se tomaron solo las **jugadas**, que son los hechos de cada partida:
+los comentarios, los títulos de las lecciones y los momentos clave son
+propios.
+
+### Las partidas del libro (capítulo 7)
+
+- **Las jugadas salen del PDF y se comprueban una por una con chess.js**
+  (`herramientas/datos/ganar-con-poco-partidas.pgn`). En el libro la línea
+  principal va en renglones propios («12. Cf3  Cc6», «12 ... Cc6») y las
+  variantes, pegadas dentro del comentario («12.Cf3»): así se separan. Una
+  jugada falta en el texto porque va en un diagrama: la 12 de Kárpov–Krámnik.
+  Se probaron todas las parejas de jugadas posibles y **12.Axe4 h6 es la única
+  que deja legal el resto de la partida**; la lección lo dice.
+- **Los momentos clave los elige el motor, no el libro**
+  (`herramientas/ganar-con-poco-partidas.js`): una jugada del bando que ganó,
+  la mejor a profundidad 16 y al menos medio peón mejor que la segunda. Si el
+  texto pide un momento que no cumple, el script no escribe nada.
+  Kaspárov–X3D Fritz se quedó sin ninguno —su mejor jugada saca 0,48 de
+  ventaja a la segunda— y la lección explica que esa partida se gana con muchas
+  jugadas buenas y ninguna única.
+- Lo que dice cada comentario se miró en la posición (qué pieza ataca, qué
+  casilla queda sin peón que la cuide, si el peón queda pasado). Dos frases del
+  primer borrador no lo eran —«los peones en un solo flanco» en Kárpov–Krámnik y
+  «con las damas en el tablero» en Andersson–Potkin— y se corrigieron.
+- El curso las muestra con el visor de «Desequilibrios de material»
+  (`js/curso-partidas.js`): `curso-generar.py` pone un `cp-partida` en la
+  lección que trae `"partida"`, y la página de la Academia carga el visor. El
+  libro trae cada partida entera con sus momentos clave en diagrama.
+
+### Las posiciones: de Lichess, comprobadas con Stockfish
+
+`herramientas/ganar-con-poco-generar.js` es el generador de «Rompe el
+estancamiento» con otros temas: los de la **técnica**, no los de la táctica
+(finales de torres, alfiles, caballos, damas y peones, la jugada tranquila,
+el peón avanzado, la coronación, la pieza atrapada, el zugzwang y la jugada
+defensiva). Las candidatas están en
+`herramientas/datos/ganar-con-poco-candidatas.txt` (la consulta, en su
+cabecera); pasan por el MISMO `analizar()` del diagnóstico (una sola jugada
+buena) y ninguna repite una del diagnóstico ni de **ningún** banco de
+`material/`: se leen todos, cada uno aparte. La primera versión tenía la
+lista escrita a mano y, al mezclar `main`, doce posiciones resultaron estar
+también en los volúmenes 2 a 10 de «Mide tu fuerza», que llegaron en paralelo
+(y además usan el mismo nombre de variable, así que leídos juntos uno pisa al
+otro).
+
+- **Lo que la lección dice de su ejemplo se comprueba en la posición**
+  (`cumple()`, que el verificador vuelve a usar): el «final de torres» no tiene
+  más que torres, reyes y peones, y hay torre de los dos lados (lo mismo con
+  alfiles, caballos y damas); la jugada «tranquila» no da jaque ni captura; el
+  zugzwang de «pasar el turno» empieza sin capturar. La primera corrida, sin
+  esa última regla, le dio a la lección del zugzwang un ejemplo cuya solución
+  era comerse una torre: la etiqueta de Lichess miraba la línea entera.
+- Los ejemplos de Lichess son a veces más tácticos de lo que la lección
+  promete (un final de damas que se gana cambiando las damas). Por eso el
+  `enlace` de las lecciones de finales dice lo que el motor comprobó —que la
+  jugada es la única que conserva la ventaja— y no cómo se gana.
+- **El ejemplo de cada lección es la misma posición en el curso y en el
+  libro**, como en «Rompe el estancamiento».
+
+### Cómo se regenera
+
+    STOCKFISH=/usr/games/stockfish node herramientas/ganar-con-poco-generar.js
+    node herramientas/curso-posiciones.js ganar-con-poco
+    STOCKFISH=/usr/games/stockfish node herramientas/ganar-con-poco-partidas.js --analizar
+    node herramientas/ganar-con-poco-partidas.js      # DESPUÉS de curso-posiciones.js
+    python3 herramientas/curso-generar.py ganar-con-poco
+    CHROME_PATH=… node herramientas/curso-material-generar.js ganar-con-poco
+    node herramientas/curso-material-enlazar.js
+    CHROMIUM=… node herramientas/ganar-con-poco-pdf.js
+
+`curso-posiciones.js` reescribe el archivo de datos entero: si se corre y no se
+vuelve a correr `ganar-con-poco-partidas.js`, el capítulo 7 queda sin partidas
+(el verificador lo dice).
+
+Lo comprueban `verificar-ganar-con-poco.js` (el banco, que el ejemplo del
+curso sea el del libro y que lo que dice la lección sea cierto en la
+posición; que el curso y el libro traigan las jugadas del PGN y los mismos
+momentos clave, del bando que ganó; y la versión accesible) y
+`verificar-ganar-con-poco-pdf.py` (protección, autor, marca de agua en cada
+página, los ocho capítulos, las 44 lecciones, los 72 ejercicios y el cuaderno
+de ventajas).
+
+### Dónde quedó dado de alta
+
+En el catálogo (nivel Avanzado, después de «Rompe el estancamiento», con su
+diagrama), en «Mis cursos» de la Academia, en el material de la clase en vivo,
+en exámenes por curso (estrategia y finales), en el plan de entrenamiento del
+área de estrategia y en `interno.curso_lecciones` para su certificado
+(`20261007032207_curso_ganar_con_poco.sql`, y
+`20261007042932_curso_ganar_con_poco_partidas.sql` al sumar las 18 partidas:
+44 lecciones). El libro está en
+`admin.html#materiales` (se comparte como los otros) y en «Archivos». Como
+«Rompe el estancamiento», no está en la tienda, y el correo a la casa lo
+nombra desde el slug.
+
+## El curso y el libro «Cambiar o no cambiar»
+
+Un curso (23 lecciones en cinco bloques) y su libro, de Oscar Angulo Cubero,
+sobre el cambio de piezas en la estrategia: las bases (qué cambia cuando
+cambias, cambiar la mejor pieza del rival, dejarle la mala, la táctica al
+servicio del cambio, el espacio), alfiles y caballos, damas y torres, los
+cambios paradójicos y la técnica moderna, y un bloque con 22 ejercicios.
+
+### Sobre el libro de Diego Valerga: las partidas y los ejercicios, no el texto
+
+El dueño pidió el curso y el libro «de este contenido», con «los ejercicios
+del libro»: el cuadernillo *El cambio de piezas. Transformaciones en la
+estrategia de la partida* (MI Diego Valerga, Álvarez Castillo Editor, 2005),
+que tiene derechos de autor. Se tomó de ahí **lo que son hechos**: las
+jugadas de las partidas modelo y las posiciones de los 22 ejercicios (la
+posición de una partida no es de nadie), además del orden general de los
+temas. **El texto, las explicaciones, las preguntas y las pistas son
+propios**; los comentarios y las soluciones de Valerga no se copian. El libro
+se cita como fuente en el curso, en el PDF y en la versión accesible.
+
+- **Las 33 partidas** (`herramientas/datos/cambiar-o-no-cambiar-partidas.json`)
+  se pasaron del texto escaneado del PDF (OCR con muchos errores: S por 5,
+  l por 1, la e y la c confundidas) a SAN, mirando la imagen de la página
+  cuando el texto no alcanzaba, y se jugaron enteras con chess.js. Cada
+  diagrama del libro se comparó pieza por pieza con la posición de chess.js en
+  su jugada. Las que el libro empieza desde un diagrama traen su
+  `fen_inicial`, leída casilla por casilla.
+- **Malakhov–Markowski (Aeroflot 2004) quedó afuera**: su diagrama impreso
+  pone los caballos donde las jugadas siguientes no se pueden hacer, y elegir
+  otra posición sería inventarla. **Khalifman–Meister se corta antes de la
+  jugada 38**: el libro imprime 38.Rc3, que hace ilegal lo que sigue.
+- **Los 22 ejercicios** (`herramientas/datos/cambiar-o-no-cambiar-ejercicios.json`)
+  se leyeron de sus diagramas (recortes a 300 ppp). Lo que confirma que se
+  leyeron bien es que **la línea de la partida se juega entera desde la
+  FEN**: entre 5 y 25 medias jugadas legales por ejercicio. Por eso
+  `verificar-cambiar-o-no-cambiar.js` exige al menos tres.
+
+### Lo que dice el motor, escrito aunque no le dé la razón a la partida
+
+Son posiciones de estrategia: no tienen una sola jugada que gana, y el curso
+no puede prometer «ganan blancas». Por eso:
+
+- en el visor del curso van con resultado **«*»** (`js/finales-100.js` lo
+  muestra como «Juegan blancas/negras» y la práctica contra el motor no
+  espera un final teórico: dice si ganaste, empataste o perdiste);
+- el generador pasa cada ejemplo y cada ejercicio por Stockfish (a
+  profundidad 22) y **escribe al pie lo que opina el motor de la jugada de la
+  partida**: si es la que elige, si está entre las mejores o si prefiere otra,
+  y cómo quedan las jugadas que el ejercicio compara (`comparar`). Casi todas
+  son la primera o muy cerca; en tres el motor de hoy no está de acuerdo con
+  el comentario clásico (ejercicios 4, 6 y 8) y el texto lo dice: en el 6,
+  por ejemplo, la simplificación que se jugó es justamente la que prefiere el
+  motor, y la «mejor» que se recomendaba sale bastante peor.
+- En el ejercicio 12 la solución es la jugada buena (17.Axf6) y no la de la
+  partida (17.Axd5?); lo que siguió en la partida va aparte (`partida_siguio`).
+
+### Cómo se regenera
+
+    STOCKFISH=/usr/games/stockfish node herramientas/cambiar-o-no-cambiar-generar.js
+    node herramientas/curso-posiciones.js cambiar-o-no-cambiar
+    python3 herramientas/curso-generar.py cambiar-o-no-cambiar
+    CHROME_PATH=… node herramientas/curso-material-generar.js cambiar-o-no-cambiar
+    node herramientas/curso-material-enlazar.js
+    CHROMIUM=… node herramientas/cambiar-o-no-cambiar-pdf.js
+
+El texto del curso (`herramientas/cursos/cambiar-o-no-cambiar.json`) es a
+mano; cada lección dice qué momento de qué partida usa (`ejemplos`: partida,
+ply, cuántas medias jugadas mostrar) y el bloque 5 qué ejercicios lleva. El
+generador escribe el campo `diagramas` de ese JSON y el banco del libro
+(`material/cambiar-o-no-cambiar/banco.js`) en la misma corrida: el ejemplo de
+cada lección es la misma posición en el curso y en el libro. Lo comprueban
+`verificar-cambiar-o-no-cambiar.js` (las partidas jugada por jugada, los 22
+ejercicios, que cada ejemplo salga de su partida en ese momento y sea el mismo
+en el curso y en el libro, el «*» y la nota del motor, la versión accesible) y
+`verificar-cambiar-o-no-cambiar-pdf.py` (protección, autor, la cita de
+Valerga, marca de agua en cada página, capítulos, lecciones, ejercicios y
+partidas).
+
+### Hubo otro curso del mismo tema a la vez
+
+La misma tarea se pidió en dos sesiones. La otra armó «¿Cambio o no cambio?»
+(rama `claude/busy-albattani-m90ezd`, sin mergear) con posiciones de Lichess,
+porque no pudo bajar el PDF y dejó pendientes los 22 ejercicios. El dueño
+eligió publicar solo este, que sigue el libro de cerca. Esa otra sesión
+también dejó en la base la fila `cambio-o-no-cambio` de
+`interno.curso_lecciones` (migración `curso_cambio_o_no_cambio`); no tiene
+página ni certificado que la use. La migración se guardó después en
+`supabase/` tal cual se aplicó (sin ella, la huella del punto de restauración
+no coincidía con la base), y `verificar-certificados.js` tiene esa fila en
+`SIN_CURSO`: la base la conoce y el catálogo no. Borrarla es una línea
+(`delete from interno.curso_lecciones where slug = 'cambio-o-no-cambio'`);
+si se borra, su migración se guarda y la fila sale de `SIN_CURSO`.
+
+Siete migraciones del mismo día (de «Ganar con poco» a «Las mil y una
+lecciones») estaban guardadas con un salto de línea final que la base no
+tiene: la huella se calcula sobre el texto exacto, así que se guardan sin él.
+
+### Dónde quedó dado de alta
+
+En el catálogo (Avanzado, entre «Ganar con poco» y «Cálculo y
+Visualización», con el diagrama de Rubinstein–Salwe), en «Mis cursos» de la
+Academia, en el material de la clase en vivo, en exámenes por curso
+(estrategia y material), en el plan de entrenamiento del área de estrategia y
+en `interno.curso_lecciones` para su certificado
+(`20261007041806_curso_cambiar_o_no_cambiar.sql`). El libro está en
+`admin.html#materiales` (se comparte como los otros) y en «Archivos». Como
+«Rompe el estancamiento», no está en la tienda, y el correo a la casa lo
+nombra desde su slug («cambiar-o-no-cambiar» → «Cambiar o no cambiar»).
+## El curso y el libro «Los cimientos del ajedrez»
+
+Un curso de 72 lecciones en tres niveles de 24 y su libro, de Oscar Angulo
+Cubero, para el jugador de club que todavía está armando sus bases (hasta unos
+1500 de Elo): táctica, finales, juego posicional, estrategia, cálculo y
+aperturas, alternados como en un entrenamiento de verdad. Cada lección trae su
+idea, uno o dos ejemplos de partidas reales, una tarea y cuatro ejercicios; el
+libro suma un repaso de doce posiciones al final de cada nivel.
+
+### Tomado de un libro ajeno como referencia: el temario y las partidas
+
+El dueño pidió un curso y un libro «con esta información»: los cuatro tomos de
+*El método Yusupov — Fundamentos* (Artur Yusupov, La Casa del Ajedrez), en una
+carpeta de su Drive, y después «toma las partidas del libro». Esos libros
+tienen derechos de autor y prohíben reproducirlos, así que se tomaron dos
+cosas y nada más:
+
+- **El orden de los temas**: los 72 capítulos de los tomos 1 a 3 (el 4 es solo
+  ejercicios de repaso de los mismos temas). Los títulos de las lecciones son
+  los nombres de los temas («La clavada», «La oposición»), no los del libro.
+- **Las partidas que cita**, que son hechos: quién jugó contra quién, dónde,
+  cuándo y qué jugadas. Ni el texto, ni los comentarios, ni los diagramas, ni
+  los estudios compuestos (esos sí son obra de su autor) salen de ahí.
+
+El texto de las lecciones es propio, en tuteo. El libro lo dice en su página
+final: el orden de los temas y buena parte de las partidas siguen el programa
+de *El método Yusupov*, que se tomó como referencia. El título tampoco es el
+suyo.
+
+### Las partidas del método: buscadas en una base pública, no copiadas
+
+**La herramienta de Drive solo entrega el texto de las primeras ~80 páginas de
+cada PDF**, sin los diagramas (son imágenes): los capítulos 1 a 8 de cada
+tomo. Bajar el PDF entero no se pudo (el mensaje es demasiado grande para la
+herramienta y el contenedor no llega a Drive directo). Por eso:
+
+- De ese texto, que es OCR con las piezas destrozadas («tlf3» es Cf3, «Wh2» es
+  Dh2), se sacó para cada partida citada: los jugadores, el lugar, el año y la
+  jugada que muestra, con las siguientes como confirmación. Lo hicieron tres
+  agentes, uno por tomo, sin copiar ni una frase del libro.
+- Cada partida se buscó por jugadores y año —o por lugar, año y jugadas, si el
+  OCR se comió los nombres— en una base pública de PGN (la colección
+  `rozim/ChessData` de GitHub: PgnMentor, ChessNostalgia, Bundesliga; 1,29
+  millones de partidas). La posición es la de esa partida justo antes de la
+  jugada que el libro muestra, y solo se acepta si la jugada de la partida es
+  la que dice el libro (y, cuando la numeración del libro no es la de la
+  partida, si coinciden también las siguientes).
+- Las partidas que el libro da completas desde la jugada 1 se arman con
+  chess.js, y Stockfish elige el momento clave: la primera jugada que castiga
+  un error del rival.
+- Una «partida» sin ningún jugador es una línea de muestra del libro, no una
+  partida jugada: no entra.
+- De 283 citas se ubicaron 95 (las demás no están en la base o el OCR no dejó
+  leerlas): quedaron en `herramientas/datos/los-cimientos-partidas.json`. Las
+  que pasan el motor son 42 posiciones del libro: 30 ejemplos, en 19 lecciones
+  (hasta dos por lección), y 12 ejercicios.
+  **Los capítulos 9 a 24 de cada tomo no tienen partidas del método** porque
+  su texto no llegó; si el dueño sube los tomos partidos en PDF más chicos,
+  se pueden sumar con el mismo camino.
+
+### Las otras posiciones: Lichess y más partidas reales
+
+- La base abierta de ejercicios de Lichess (CC0), con los filtros de calidad de
+  siempre. Cada lección pide lo que la muestra (`herramientas/datos/los-cimientos-temario.py`
+  arma la consulta, una por nivel) y lo que el temario promete se comprueba en
+  la posición (`FILTRO` del generador: la pieza que mueve, el sacrificio, la
+  torre a la séptima…), antes de gastar motor.
+- **Lichess no tiene ni un ejercicio de tablas** en la tabla (ningún
+  `equality`), y casi ninguno de los finales teóricos. Para el ahogado, el
+  jaque perpetuo, dama contra peón, dama contra torre, alfil y caballo,
+  caballo contra peón, alfil contra peones y el alfil equivocado, se minaron
+  partidas reales de la misma base de PGN: las que terminaron en ahogado o en
+  jaque perpetuo, y la primera vez que aparece cada material. Están en
+  `herramientas/datos/los-cimientos-base.json`.
+
+### Lo que decide el motor
+
+Todo pasa por Stockfish 16 a profundidad 18 (`herramientas/lib/motor-uci.js`):
+
+- **Un ejemplo** queda si la jugada de la partida es la mejor o vale lo mismo
+  (60 centipeones de tolerancia): es para entender la idea, no tiene por qué
+  ser la única.
+- **Un ejercicio** queda si tiene UNA sola jugada buena: si gana, la segunda no
+  gana; en las lecciones de tablas, la solución salva y la segunda pierde. La
+  de ahogado, además, termina en ahogado en la partida.
+- **Las fortalezas** (lección 30) no tienen de dónde salir como tablas: ni
+  Lichess ni el minado traen fortalezas. Sus ejercicios son «la única que
+  aguanta» (`AGUANTAR`): la solución no pierde y cualquier otra jugada empeora
+  mucho. Es lo que el motor comprueba, y lo que la lección pide.
+- **En los finales teóricos de la base** (dama contra peón, el alfil
+  equivocado…) vale ganar o, si en la posición no hay cómo, la única jugada que
+  salva: la dama contra peón de alfil en séptima es justamente eso.
+- **El material que promete el título se comprueba en la posición que se ve**:
+  Lichess filtra por la de antes de la jugada del rival, y esa jugada a veces
+  corona (el «dama contra peón» quedaba dama contra dama).
+- Ninguna repite una posición del diagnóstico, «Ponte a prueba», los diez
+  volúmenes de «Mide tu fuerza» ni «Rompe el estancamiento» (los volúmenes de
+  «Mide tu fuerza» usan el mismo nombre global: se cargan cada uno en su
+  propia ventana, o uno pisaría al otro).
+- Los ejemplos de cada lección son los mismos en el curso y en el libro: el
+  generador escribe el banco y el campo `diagramas` del curso en la misma
+  corrida.
+
+### Cómo se regenera
+
+    STOCKFISH=/usr/games/stockfish node herramientas/los-cimientos-generar.js
+    node herramientas/curso-posiciones.js los-cimientos-del-ajedrez
+    python3 herramientas/curso-generar.py los-cimientos-del-ajedrez
+    CHROME_PATH=… node herramientas/curso-material-generar.js los-cimientos-del-ajedrez
+    node herramientas/curso-material-enlazar.js
+    node herramientas/los-cimientos-pdf.js
+
+Las candidatas de partidas ya están en el repositorio; el camino desde el texto
+de los tomos hasta ellas (los agentes, el buscador en la base de PGN y el
+minado) fue de una vez y no vive en `herramientas/`, porque depende de un PDF
+y de una base de 850 MB que no están en el repositorio. Lo comprueban
+`verificar-los-cimientos.js` (el banco, que cada posición de partida sea de
+verdad la de su partida, que los ejemplos del curso sean los del libro, que lo
+que promete cada lección sea cierto en la posición, y la versión accesible) y
+`verificar-los-cimientos-pdf.py` (protección, autor, marca de agua en cada
+página, los tres niveles, las 72 lecciones, el repaso, todos los ejercicios y
+de dónde salen las posiciones).
+
+### Dónde quedó dado de alta
+
+En el catálogo (nivel Intermedio, entre «Fundamentos del Ajedrez» y
+«Aperturas y Defensas», con su diagrama), en «Mis cursos» de la Academia, en el
+material de la clase en vivo, en exámenes por curso, en el plan de
+entrenamiento del área de táctica y en `interno.curso_lecciones` para su
+certificado (`20261007043501_curso_los_cimientos_del_ajedrez.sql`). El libro
+está en `admin.html#materiales` (se comparte como los otros) y en «Archivos».
+No está en la tienda: venderlo es una decisión de precio del dueño.
+
+## El curso y el libro «Ideas que ganan partidas»
+
+Un curso (36 lecciones en seis capítulos) y su libro, de Oscar Angulo Cubero,
+para el jugador que ya sabe jugar y quiere reconocer qué idea funciona en la
+posición que tiene delante: el ataque al rey enrocado, el rey en el centro y
+los enroques opuestos, las piezas en su sitio, los peones, la táctica que
+sostiene el plan y los finales que hay que saber. La última lección es el plan
+de estudio y no lleva ejemplo.
+
+### Tomado de una colección ajena como referencia, no copiado
+
+El dueño pidió «crear libro y curso» desde una carpeta de Drive con *Las mil
+y una lecciones de ajedrez* (MI Ángel Martín, ebooks de EDAMI): 360 lecciones
+de medio juego y finales, con derechos de autor. Se tomó **el temario y nada
+más**: qué ideas de medio juego y de final vale la pena enseñar (el sacrificio
+en h7, la demolición del enroque, la séptima fila, el sacrificio de calidad,
+los peones pasados, los finales de torre, alfil contra caballo…), que no son
+de nadie. Ni el texto, ni las partidas, ni los ejercicios, ni los títulos
+salen de ahí; el título del curso tampoco es el suyo. El PDF no se guarda en
+el repositorio.
+
+### Cada lección pide una idea, y la idea se comprueba en la posición
+
+`herramientas/ideas-que-ganan-partidas-generar.js` sigue el camino de «Rompe
+el estancamiento» (candidatas de Lichess, el MISMO `analizar()` del
+diagnóstico, una sola jugada buena, ninguna repetida del diagnóstico ni de ningún banco de `material/`),
+con una diferencia: cada lección no pide un tema de Lichess sino una **idea**
+(`CRITERIOS`), y la idea se mira en la posición y en la primera jugada, no en
+la etiqueta. El «sacrificio del alfil en h7» es un alfil que toma en h7 (h2)
+con jaque; la «demolición», una pieza que toma un peón de g7 o h6 donde el
+rival la puede capturar; la «torre en la séptima», una torre que llega ahí;
+el final de «alfil contra caballo», uno donde no hay otra pieza. Las
+etiquetas de Lichess miran la solución entera y la lección habla de la
+primera jugada: con la etiqueta sola, el ejemplo de «el caballo y la doble
+amenaza» podía empezar con una jugada de torre.
+
+- **Las candidatas no se bajaron de nuevo**: salen de las que ya estaban en
+  `herramientas/datos/*-candidatas.txt` (las de los otros libros que no se
+  usaron) más las de mate en la última fila, que ahí casi no había (la
+  consulta está en la cabecera del generador). `--armar` las vuelve a juntar
+  en `herramientas/datos/ideas-que-ganan-partidas-candidatas.txt`: de cada
+  idea y cada nivel, las 18 primeras que cumplen el criterio.
+- **Los textos dicen solo lo que se comprobó.** Donde la idea es una
+  etiqueta de Lichess que no se puede mirar en la primera jugada (la
+  desviación, la clavada, los mates de patrón), la lección dice «la línea
+  termina en…» o «la idea es…», no «esta jugada desvía…». Las de defensa
+  dicen «solo una jugada es buena», que es lo que el motor comprobó, y no
+  «todo lo demás pierde».
+- **El ejemplo de cada lección es la misma posición en el curso y en el
+  libro**, como en «Rompe el estancamiento»: el generador escribe el banco y
+  el campo `diagramas` del JSON del curso en la misma corrida.
+
+### Cómo se regenera
+
+    node herramientas/ideas-que-ganan-partidas-generar.js --armar    # solo si cambian las fuentes
+    STOCKFISH=/usr/games/stockfish node herramientas/ideas-que-ganan-partidas-generar.js
+    node herramientas/curso-posiciones.js ideas-que-ganan-partidas
+    python3 herramientas/curso-generar.py ideas-que-ganan-partidas
+    CHROME_PATH=… node herramientas/curso-material-generar.js ideas-que-ganan-partidas
+    node herramientas/curso-material-enlazar.js
+    node herramientas/ideas-que-ganan-partidas-pdf.js
+
+Igual que con «Rompe el estancamiento», después de `curso-generar.py` hay que
+volver a correr el enlazador.
+
+Lo comprueban `verificar-ideas-que-ganan-partidas.js` (el banco, que la idea
+de cada posición se vea en la posición con el mismo `CRITERIOS` del
+generador, que el ejemplo del curso sea el del libro y la versión accesible)
+y `verificar-ideas-que-ganan-partidas-pdf.py` (protección, autor, marca de
+agua en cada página, los seis capítulos, las 36 lecciones, los 72 ejercicios
+y la planilla de repaso).
+
+### Dónde quedó dado de alta
+
+En el catálogo (nivel Avanzado, después de «Cambiar o no cambiar», con
+su diagrama), en la cadena de cursos (entre «Cambiar o no cambiar» y «Cálculo y
+Visualización»), en «Mis cursos» de la Academia, en el material de la clase en
+vivo, en exámenes por curso (estrategia, táctica y finales), en el plan de
+entrenamiento del área de estrategia y en `interno.curso_lecciones` para su
+certificado (`20261007043228_curso_ideas_que_ganan_partidas.sql`). El libro
+está en `admin.html#materiales` y en «Archivos». No está en la tienda, por lo
+mismo que «Rompe el estancamiento»; y el correo a la casa lo nombra desde el
+slug sin tocar la Edge Function.
+
+## El curso y el libro «Una clase al día»
+
+Se publicó primero como «Las mil y una lecciones de ajedrez», el título del
+libro original, y el dueño pidió **un nombre propio de la Academia, sin el del
+autor, que invite a estudiar**: «Una clase al día» (360 clases, un año con una
+por día). El nombre, las descripciones, la tienda y la portada de los tomos
+hablan del hábito; **el crédito no se quitó**: el autor y el libro original
+siguen al pie del temario público y de las lecciones, en «Sobre este libro», en la última página y el pie de cada tomo, y en
+los datos del PDF (`verificar-mil-lecciones-pdf.py` lo exige). Publicar el
+texto de alguien con permiso no es hacerlo pasar por propio. Los programas
+siguen llamándose `mil-lecciones` porque leen ese libro.
+
+Las 360 clases que el MI Ángel Martín escribió para la escuela EDAMI entre 2000
+y 2007, reunidas en «Las Mil y una Lecciones de Ajedrez» (EDAMI, 2011; un PDF
+de 2170 páginas). **El dueño tiene permiso para publicarlas**, así que aquí sí
+va el texto del autor y sus partidas, a diferencia de «Rompe el estancamiento»
+o «Mide tu fuerza», que tomaron solo la idea. El crédito va en la portada, en
+cada tomo y al pie de la página del curso. Lo único cambiado del texto: el
+vocabulario de España que choca en Costa Rica («ordenador» → «computadora»), y
+el enroque escrito con letra O, como en el resto del sitio.
+
+Son un curso (nivel Avanzado, 360 lecciones en doce bloques por tema) y un
+libro en doce tomos, uno por bloque, con su versión accesible.
+
+### De dónde sale cada cosa
+
+Todo lo hace `herramientas/mil-lecciones/` (su `LEEME.md` dice el orden) desde
+el PDF original, que **no está en el repositorio**. Lo que sale son los datos
+del curso, y esos sí son la única copia: el libro se arma de ellos, no del PDF.
+
+- **El texto del PDF viene revuelto.** `pdftotext` mezcla las dos columnas y
+  los recuadros. PyMuPDF da cada bloque con su lugar en la página; ordenado por
+  columna y altura queda en orden de lectura, con una marca donde va cada
+  diagrama.
+- **Las partidas no se copian: se juegan.** El texto mezcla la línea principal,
+  las variantes entre corchetes —que a veces el original abre y no cierra— y
+  jugadas citadas en la prosa («se había jugado 9.0-0-0 d6 10.Dg3…», sin
+  corchetes). El lector busca la lectura que junta más jugadas de la línea
+  principal **y llega al resultado**: una variante que se cuela se atasca
+  antes del «1-0». Cada jugada pasa por python-chess; la que no es legal no
+  entra. Así salieron 1989 partidas (146 857 jugadas) y el 96 % llega a su
+  resultado; las demás se cortan donde el texto deja de dar jugadas legales.
+- **Los diagramas son imágenes, y se reconocen.** Los que caen dentro de una
+  partida ya leída dicen qué posición muestran: con 1700 de ellos se aprendió
+  cómo se ve cada pieza (99,7 % de casillas bien). Una partida que empieza en un
+  diagrama (un final desde la jugada 28) o un ejercicio **solo se acepta si sus
+  jugadas son legales desde la posición reconocida**: un error del
+  reconocedor casi siempre deja alguna jugada imposible.
+- **Los momentos para adivinar los eligió el autor y los confirmó Stockfish.**
+  Son las jugadas con «!» de la línea principal que Stockfish 16 deja a 0,3
+  peones de la mejor o menos (4999); las que empatan con ella valen como
+  alternativa. La pista no se inventa: dice qué pieza mueve y si captura o da
+  jaque.
+- **Los ejercicios**: las clases a partir de la 250 traen tres de táctica y un
+  «Repaso y práctica», con la solución en la clase siguiente. Quedaron 411 de
+  510: el de táctica tiene que ganar (+1,5 o más según Stockfish) y su solución
+  no puede quedar a más de medio peón de la mejor jugada. Los que no cumplían
+  —el diagrama mal reconocido, o una solución que el motor refuta— no se
+  muestran.
+- **Los bloques salen del título de cada clase** (`temas.py`): el libro las
+  ordena por fecha, y el curso por tema. Dentro de cada bloque van en el orden
+  del libro, y cada lección dice de qué clase viene.
+
+### Un curso que no cabe en un archivo
+
+`js/curso-partidas.js` bajaba un solo JSON con todas las partidas del curso.
+Este pesa 29 MB. Ahora `cursos/protegido/data/una-clase-al-dia.json` es un
+índice de 76 KB con `trozos` —de qué archivo sale cada partida o ejercicio— y
+el visor baja `data/una-clase-al-dia/lNNN.json` recién cuando se abre esa
+lección (`cargarTrozos`). Los cursos de un solo archivo siguen igual: sin
+`trozos`, no cambia nada. El worker protege esa carpeta como el resto de
+`protegido/data/`: su expresión ya toma el primer nombre después de `data/`
+como el curso.
+
+La página protegida (las 360 lecciones con su texto) pesa 2,4 MB, 440 KB
+comprimida: es la que monta `curso-academia.js` de una vez.
+
+### El libro, en doce tomos
+
+`herramientas/mil-lecciones-pdf.js` arma `cursos/recursos/una-clase-al-dia/tomo-NN.pdf`
+y `tomo-NN-accesible.html`: un tomo por bloque, porque un solo PDF pasaría de
+2000 páginas y el tomo es lo que se lleva a la clase. Van en `cursos/recursos/`
+y no en `material/` **a propósito**: son el material del curso, y los baja quien
+tiene el curso; en `material/` solo los bajaría la persona con quien
+administración compartió el libro. Cada lección enlaza su tomo y su lección en
+el accesible (`#leccion-N`).
+
+- Antes de imprimir, cada partida se vuelve a jugar entera con chess.js y cada
+  FEN guardada tiene que ser la que sale (sin la casilla al paso: python-chess
+  solo la escribe si la captura es posible).
+- Los diagramas se dibujan de nuevo con `lib/tablero-svg.js` **en las mismas
+  jugadas donde el libro original ponía los suyos**.
+- Se cierra como los demás libros (tapa, marca de agua en cada página, PDF
+  protegido que deja imprimir); el autor del archivo es el MI Ángel Martín.
+
+Lo comprueban `verificar-mil-lecciones.js` (sin navegador: las 1989 partidas se
+juegan enteras, cada momento clave y cada ejercicio, que la página monte
+exactamente lo que hay en los datos y que cada tomo tenga sus lecciones) y
+`verificar-mil-lecciones-pdf.py` (protección, autor, permiso, marca de agua en
+todas las páginas y todas las lecciones de cada tomo).
+
+### Dónde quedó dado de alta
+
+En el catálogo (Avanzado, después de «Rompe el estancamiento», con su
+diagrama: el 13.Axe5! de Browne – Quinteros), entre «Rompe el estancamiento» y
+«Cálculo y Visualización» en la navegación entre cursos, en «Mis cursos», en el
+material de la clase en vivo, en exámenes por curso, en el plan de
+entrenamiento del área de estrategia, en «Archivos» y en
+`interno.curso_lecciones` para su certificado
+(`20261007110911_curso_mil_y_una_lecciones.sql` y
+`20261007114143_curso_las_mil_y_una_lecciones_slug.sql`).
+
+- **El slug sigue al nombre**: `una-clase-al-dia` (antes
+  `mil-y-una-lecciones` y `las-mil-y-una-lecciones-de-ajedrez`, con una
+  migración `update … set slug` cada vez, que `verificar-certificados.js` lee).
+  El correo a la casa (`informes-encargados`) nombra desde el slug un curso que
+  no está en su `TITULOS_CURSOS`, y desde este saldría «Una clase al dia», sin
+  tilde: por eso va en la tabla y la función se volvió a desplegar
+  (`verificar-tiempo-secciones.js` lo atrapa).
+- **En la tienda vale ₡36.000**: el precio de doce materiales (sus doce
+  bloques) con el descuento del paquete. Ver «Un material con su propio
+  precio: «Una clase al día»» en `cobros-acceso-y-tienda.md`.
+
 ## Los materiales de clase
 
 `admin.html#materiales` («Materiales de clases») junta los materiales para dar
-clase —hoy, «Ponte a prueba», el banco de ejercicios «Mide tu fuerza» y el
-libro de Peonita— y dice **con quién se comparte cada uno**: una
+clase —hoy, «Ponte a prueba», los diez volúmenes del banco de ejercicios «Mide
+tu fuerza», los libros «Rompe el estancamiento», «Ganar con poco», «Cambiar o no cambiar» e «Ideas que ganan partidas», los cuentos de Peonita y «Coachess en resumen»— y dice **con quién se comparte cada uno**: una
 persona, una academia entera o todos los profesores. Lo pinta
 `js/admin-materiales.js`; lo prueba `verificar-admin.js`.
 
@@ -1187,10 +2103,21 @@ aplicado el CLI.
 
 ## La sección Archivos
 
-`admin.html#archivos` junta **todos** los PDF, Word, Excel y presentaciones del
-sitio para que quien administra los abra o los baje sin ir curso por curso. Va
-**una ficha por tipo** (pestañas PDF, Word, Excel y Presentaciones, con cuántos
-hay en cada una; se pasa de una a otra también con las flechas del teclado).
+`admin.html#archivos` junta **todos** los PDF, Word, Excel, presentaciones,
+versiones accesibles e imágenes del sitio para que quien administra los abra o
+los baje sin ir curso por curso. Va **una ficha por tipo** (pestañas PDF, Word,
+Excel, Presentaciones, Versiones accesibles e Imágenes, con cuántos hay en cada
+una; se pasa de una a otra también con las flechas del teclado).
+
+Cada ficha es un **explorador**: a la izquierda las carpetas, agrupadas (los
+libros, uno por carpeta; los cursos por nivel, en el orden del catálogo; lo
+suelto al final), cada una con cuántos archivos trae; a la derecha lo de la
+carpeta elegida, lección por lección, con «Bajar los N» de la carpeta. Primero
+era una sola lista larguísima con todos los cursos plegados uno debajo de otro:
+para llegar a una lección había que bajar, abrir y volver a bajar. En el
+celular las carpetas son un selector. El buscador busca en **toda la ficha**
+(no solo en la carpeta elegida) y muestra lo que coincide carpeta por carpeta;
+elegir una carpeta lo limpia.
 
 Los PDF (hoy 433) van en tres grupos: **Libros y material**
 (`material/<carpeta>/`, un bloque por libro con el nombre de `LIBROS`), **Cursos** (`cursos/recursos/<curso>/`, por nivel y en
@@ -1206,6 +2133,24 @@ Las presentaciones (`.pptx`, `.ppt`, `.odp`; hoy 203, una por lección) se
 ordenan igual que los PDF —por nivel, curso y lección, leídas de la misma
 página del curso— y solo se bajan.
 
+Las versiones accesibles (`*-accesible.html`: el mismo material en una página
+sin imágenes, para lector de pantalla; hoy 192) también se ordenan como los
+PDF. Fuera de los cursos, su nombre sale del `<title>` de la página, sin el
+«— versión accesible» final (en su ficha todas lo son). Llevan «Abrir» como
+los PDF, y en la vista previa se ven en un marco con `sandbox` sin
+`allow-scripts`: no traen programas y para leerlas no hacen falta.
+
+Las imágenes (`.png`, `.jpg`, `.gif`, `.webp`, `.avif`, `.svg`, `.ico`; hoy
+615) van por carpeta, en dos grupos: los ejercicios de Entrenamiento por nivel
+y lo del sitio (portadas de los cursos, capturas de la guía, logos, íconos de
+la app, ejemplos del formulario de los JDN). Cada fila lleva su miniatura
+(`loading="lazy"`: se pide recién cuando se ve; `alt=""` porque el nombre ya
+está escrito al lado), y la vista previa la muestra entera sobre un damero,
+para que un logo blanco o transparente se note. Lo que `.assetsignore` deja
+fuera del despliegue (como `img/redes`) no se ofrece: el generador lee ese
+archivo y salta sus rutas sin comodines, porque un enlace a algo que no se
+publica da 404.
+
 Los Word (`.docx`, `.doc`, `.odt`) y los Excel (`.xlsx`, `.xlsm`, `.xls`,
 `.ods`) son pocos y sueltos: van por carpeta, con el nombre de `CARPETAS` en el
 generador, y solo se bajan (el navegador no los abre). Hoy hay dos Word (los
@@ -1213,6 +2158,31 @@ consentimientos de los JDN 2027) y **ningún Excel guardado**: los Excel de la
 plataforma (el mes de cada profesor en Supervisión, los reportes) se arman en
 el navegador con los datos del momento, así que no son archivos del sitio. La
 ficha lo dice en vez de quedar vacía.
+
+### La vista previa
+
+Cada archivo trae **«👁 Vista previa»**: una ventana encima de la página
+(`<dialog>` con `showModal()`, que encierra el foco; Esc la cierra y el foco
+vuelve al botón), con «Anterior» y «Siguiente» para recorrer la carpeta (o lo
+encontrado) sin cerrarla. La pinta `js/vista-previa.js`:
+
+- **PDF**: el visor del navegador en un marco. Es del mismo sitio, así que
+  `frame-src 'self'` y `X-Frame-Options: SAMEORIGIN` lo dejan; se probó en
+  Chrome con las cabeceras de `_headers` puestas (también `object-src 'none'`)
+  y el visor se muestra.
+- **Presentación, Word y Excel**: son un `.zip` con XML adentro, y no se
+  pueden mandar a un visor de afuera (Office en línea pide una dirección
+  pública, y estos archivos están detrás del candado del worker). Se abren en
+  el navegador mismo: un lector de `.zip` de cincuenta líneas con
+  `DecompressionStream("deflate-raw")` —sin librerías: la CSP no deja traerlas— y
+  `DOMParser` para el XML. La presentación se arma **diapositiva por
+  diapositiva**, con su fondo, cada texto e imagen en su lugar y tamaño (las
+  medidas en EMU pasadas a porcentajes, la letra en `cqw` para que escale con
+  la lámina); el Word, con su texto, negritas, tablas e imágenes; el Excel, hoja
+  por hoja (las primeras 300 filas). Lo viejo (`.ppt`, `.doc`, `.xls`) se dice y
+  se ofrece bajar.
+- Todo texto del archivo entra por `textContent`, y las imágenes van como
+  `blob:` (que `img-src` permite) y se sueltan al cerrar.
 
 - **La lista no se escribe a mano.** La arma `herramientas/archivos-catalogo.js`
   leyendo el disco y la deja en `data/archivos.json`; la pantalla

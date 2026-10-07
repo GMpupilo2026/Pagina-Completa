@@ -79,7 +79,7 @@ def portada(curso):
         inicio = bloque["lecciones"][0]["n"]
         items = "".join(
             '\n                        <li class="text-brand-600 dark:text-brand-300">%s'
-            '<span class="block text-xs text-brand-400 dark:text-brand-500 mt-0.5">%s</span></li>'
+            '<span class="block text-xs text-brand-450 dark:text-brand-350 mt-0.5">%s</span></li>'
             % (escapar(l["titulo"]), escapar(l["resumen"]))
             for l in bloque["lecciones"])
         bloques_html.append(
@@ -91,18 +91,18 @@ def portada(curso):
 
     articulo = '''    <article class="pt-8 pb-16">
         <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-            <a href="../cursos.html" class="inline-flex items-center gap-1 text-sm text-brand-500 dark:text-brand-400 hover:text-accent-500 transition-colors mb-4"><span aria-hidden="true">←</span> Volver a Cursos</a>
-            <span class="text-xs text-accent-600 font-semibold uppercase tracking-wide">{nivel}</span>
+            <a href="../cursos.html" class="inline-flex items-center gap-1 text-sm text-brand-500 dark:text-brand-300 hover:text-accent-500 transition-colors mb-4"><span aria-hidden="true">←</span> Volver a Cursos</a>
+            <span class="text-xs text-accent-700 dark:text-accent-400 font-semibold uppercase tracking-wide">{nivel}</span>
             <h1 class="font-serif text-3xl md:text-4xl font-bold text-brand-800 dark:text-white mt-2 mb-3">{titulo}</h1>
-            <p class="text-brand-500 dark:text-brand-400 mb-6">{resumen}</p>
+            <p class="text-brand-500 dark:text-brand-300 mb-6">{resumen}</p>
             <div aria-hidden="true" class="h-48 bg-gradient-to-br {gradiente} rounded-2xl flex items-center justify-center text-7xl mb-6">{emoji}</div>
 
             <p class="text-brand-600 dark:text-brand-300 mb-8">{descripcion_larga}</p>
 
             <div class="flex flex-wrap items-center gap-4 mb-10 bg-white dark:bg-brand-900 rounded-xl shadow-md p-5">
                 <div class="flex-1 min-w-[180px]">
-                    <p class="text-sm text-brand-500 dark:text-brand-400"><strong class="text-brand-800 dark:text-white">{total} lecciones</strong> · {nivel}</p>
-                    <p class="text-xs text-brand-400 dark:text-brand-500 mt-0.5">Cada lección con su presentación y su PDF de ejercicios para imprimir.</p>
+                    <p class="text-sm text-brand-500 dark:text-brand-300"><strong class="text-brand-800 dark:text-white">{total} lecciones</strong> · {nivel}</p>
+                    <p class="text-xs text-brand-450 dark:text-brand-350 mt-0.5">Cada lección con su presentación y su PDF de ejercicios para imprimir.</p>
                 </div>
             </div>
 
@@ -124,8 +124,8 @@ def portada(curso):
             </section>
 
             <nav aria-label="Navegación entre cursos" class="mt-10 flex items-center justify-between border-t border-brand-100 dark:border-brand-800 pt-6">
-                <a href="{anterior_href}" class="text-sm text-brand-500 dark:text-brand-400 hover:text-accent-500 transition-colors" aria-label="Curso anterior: {anterior_titulo}"><span aria-hidden="true">←</span> {anterior_titulo}</a>
-                <a href="{siguiente_href}" class="text-sm text-brand-500 dark:text-brand-400 hover:text-accent-500 transition-colors text-right" aria-label="Siguiente curso: {siguiente_titulo}">{siguiente_titulo} <span aria-hidden="true">→</span></a>
+                <a href="{anterior_href}" class="text-sm text-brand-500 dark:text-brand-300 hover:text-accent-500 transition-colors" aria-label="Curso anterior: {anterior_titulo}"><span aria-hidden="true">←</span> {anterior_titulo}</a>
+                <a href="{siguiente_href}" class="text-sm text-brand-500 dark:text-brand-300 hover:text-accent-500 transition-colors text-right" aria-label="Siguiente curso: {siguiente_titulo}">{siguiente_titulo} <span aria-hidden="true">→</span></a>
             </nav>
         </div>
     </article>'''.format(
@@ -206,6 +206,22 @@ def diagramas_html(leccion):
     return "".join(salida)
 
 
+def partida_html(leccion):
+    """La partida comentada de la lección, si la tiene ("partida": su id).
+
+    El tablero, las jugadas con sus comentarios, los momentos clave para
+    adivinar la jugada y la práctica contra el motor los pone
+    js/curso-partidas.js (el visor de "Desequilibrios de material") a partir
+    del campo `partidas` de cursos/protegido/data/<slug>.json. Acá solo va el
+    hueco con su id; la página de la Academia tiene que cargar ese visor.
+    """
+    if not leccion.get("partida"):
+        return ""
+    return ('<div class="cp-partida" data-id="%s">'
+            '<p class="text-xs text-brand-400">Activa JavaScript para recorrer la partida jugada a jugada.</p>'
+            "</div>" % escapar(leccion["partida"]))
+
+
 # ---------------------------------------------------- fragmento con lecciones
 def protegido(curso):
     slug = curso["slug"]
@@ -219,6 +235,7 @@ def protegido(curso):
             arch = archivo_base(l)
             cuerpo = "".join("<p>%s</p>" % escapar(p) for p in l["parrafos"])
             cuerpo += diagramas_html(l)
+            cuerpo += partida_html(l)
             cuerpo += "<p><strong>Practica:</strong> %s</p>" % escapar(l["practica"])
             botones = (boton.format(slug=slug, arch=arch, suf=".pptx", texto="📊 Descargar presentación") +
                        boton.format(slug=slug, arch=arch, suf="-ejercicios.pdf", texto="📄 Descargar ejercicios (PDF)"))

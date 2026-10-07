@@ -1,9 +1,14 @@
 /* ===== El banco del libro «Mide tu fuerza» =====
  *
- * Arma material/mide-tu-fuerza/banco.js: el banco de ejercicios tácticos de
- * Oscar Angulo Cubero, 360 posiciones en 45 tests temáticos de 8, en tres
- * niveles. El mismo banco sirve para el libro impreso
- * (herramientas/mide-tu-fuerza-pdf.js) y para su versión accesible.
+ * Arma el banco de cada volumen del libro de ejercicios tácticos de Oscar
+ * Angulo Cubero: 360 posiciones en 45 tests temáticos de 8, en tres niveles.
+ * El volumen 1 va en material/mide-tu-fuerza/banco.js y cada uno de los
+ * siguientes en su propia carpeta (material/mide-tu-fuerza-2/banco.js…), que es
+ * también su propio material para compartir. El mismo banco sirve para el
+ * libro impreso (herramientas/mide-tu-fuerza-pdf.js) y su versión accesible.
+ *
+ * Todos los volúmenes tienen la misma forma (los mismos temas, niveles y
+ * tiempos) y posiciones distintas: ninguna se repite entre volúmenes.
  *
  * El MÉTODO toma como referencia los libros de tests por tema (cada test, un
  * solo motivo táctico; ocho posiciones; tiempo fijo; 5 puntos por posición;
@@ -14,7 +19,8 @@
  *     abierta de ejercicios de Lichess (CC0), la tabla «Ejercicios Lichess» de
  *     Supabase, con filtros de calidad (Popularity ≥ 85, NbPlays ≥ 1000,
  *     RatingDeviation ≤ 80). Las candidatas están en
- *     herramientas/datos/mide-tu-fuerza-candidatas.txt.
+ *     herramientas/datos/mide-tu-fuerza-candidatas.txt (volumen 1) y
+ *     mide-tu-fuerza-N-candidatas.txt (volumen N).
  *   - Ninguna se cree a ciegas: pasan por el MISMO análisis de Stockfish que
  *     el diagnóstico y «Ponte a prueba» (analizar() de
  *     herramientas/diagnostico-lichess.js), que solo deja las que tienen UNA
@@ -22,7 +28,8 @@
  *     combinaciones promete que hay una, y si la posición solo empata, quien
  *     busca el golpe busca algo que no está.
  *   - Ninguna repite una pregunta del diagnóstico ni una posición de «Ponte a
- *     prueba»: el mismo ejercicio en dos pruebas mediría memoria.
+ *     prueba», ni una de otro volumen: el mismo ejercicio en dos pruebas
+ *     mediría memoria.
  *   - El tema de cada test es el que Lichess le puso a la posición. Si tiene
  *     varios, manda el más raro (el orden de TEMAS en la consulta): un jaque
  *     doble casi siempre es también un ataque a la descubierta, y al revés no.
@@ -31,15 +38,16 @@
  *     midió su calibración (380). Acá se contesta igual: sin opciones, con la
  *     jugada y la línea.
  *
- * El banco vive en material/mide-tu-fuerza/ y no en js/: trae las respuestas,
+ * El banco vive en material/ y no en js/: trae las respuestas,
  * y así lo sirve el worker solo a quien puede bajar el material (administración
  * o con quien se compartió desde admin.html#materiales).
  *
- * NO se edita material/mide-tu-fuerza/banco.js a mano: se vuelve a correr esto.
+ * NO se edita a mano el banco.js de ningún volumen: se vuelve a correr esto.
  *
  * Cómo se corre (hace falta Stockfish: apt install stockfish):
  *
- *   STOCKFISH=/usr/games/stockfish node herramientas/mide-tu-fuerza-generar.js
+ *   STOCKFISH=/usr/games/stockfish node herramientas/mide-tu-fuerza-generar.js      # volumen 1
+ *   STOCKFISH=/usr/games/stockfish node herramientas/mide-tu-fuerza-generar.js 2    # volumen 2 (y 3…)
  *
  * El análisis queda en herramientas/.cache-mide-tu-fuerza.json (fuera del
  * repositorio) para no repetirlo.
@@ -62,7 +70,19 @@
  *       and e."Rating" between 1250 and 2549
  *   ), n as (select *, row_number() over (partition by tema, banda order by md5(id)) k
  *            from c where tema is not null)
- *   select … from n where k <= 20
+ *   select … from n where k <= 20                 -- volumen 1
+ *   select … from n where k between 21 and 40     -- volumen 2
+ *   select … from n where k between 41 and 60     -- volumen 3
+ *   select … from n where k between 61 and 80     -- volumen 4 (ver su archivo:
+ *                                                    los temas que ya no tenían 20
+ *                                                    se completan con un filtro
+ *                                                    algo más ancho)
+ *   volumen 5: las 20 siguientes que no tomó ningún volumen anterior, en orden
+ *              de calidad (ver la cabecera de su archivo de candidatas)
+ *   volumen 6: igual que el 5, con un cuarto filtro solo para los temas raros
+ *   volumen 7: tres temas nuevos (ver CAMBIOS_DESDE_7) y, en los demás, las
+ *              20 siguientes con el filtro de siempre
+ *   volúmenes 8 a 10: los temas del 7, las 20 siguientes en orden de calidad
  */
 "use strict";
 const fs = require("fs");
@@ -72,9 +92,25 @@ const { Motor } = require("./lib/motor-uci");
 const L = require("./diagnostico-lichess.js");
 
 const RAIZ = path.join(__dirname, "..");
-const CANDIDATAS = path.join(__dirname, "datos", "mide-tu-fuerza-candidatas.txt");
 const CACHE = path.join(__dirname, ".cache-mide-tu-fuerza.json");
-const SALIDA = path.join(RAIZ, "material", "mide-tu-fuerza", "banco.js");
+
+/* El producto de cada volumen: la carpeta de material/ y el nombre que usa
+   la base para compartirlo (admin.html#materiales). */
+function producto(volumen) {
+  return volumen === 1 ? "mide-tu-fuerza" : `mide-tu-fuerza-${volumen}`;
+}
+function banco(volumen) {
+  return path.join(RAIZ, "material", producto(volumen), "banco.js");
+}
+/* Los volúmenes que ya tienen banco, en orden. */
+function volumenes() {
+  const v = [];
+  for (let n = 1; fs.existsSync(banco(n)); n++) v.push(n);
+  return v;
+}
+const VOLUMEN = +(process.argv[2] || 1);
+const CANDIDATAS = path.join(__dirname, "datos", `${producto(VOLUMEN)}-candidatas.txt`);
+const SALIDA = banco(VOLUMEN);
 const MOTOR = process.env.STOCKFISH || "/usr/games/stockfish";
 
 const POR_TEST = 8;
@@ -130,6 +166,26 @@ const TEMAS = [
     pista: "Cuenta cuántas jugadas le faltan al peón para coronar y quién lo puede frenar: ¿puedes quitar a ese guardián?" },
 ];
 
+/* Desde el volumen 7 cambian tres temas. Jaque doble, rayos X e
+   interferencia se agotaron en la base (en el volumen 6 ya hizo falta un
+   cuarto filtro, y no quedaba casi nada): se cambian por tres temas con
+   cientos de posiciones de calidad. Cada uno entra en el lugar del que sale,
+   así el libro sigue yendo de lo más conocido a lo más fino. */
+const CAMBIOS_DESDE_7 = {
+  doubleCheck: { id: "mateIn2", nombre: "Mate en dos",
+    idea: "Una jugada que no deja defensa y, sea cual sea la respuesta, mate a la siguiente. Muchas veces la primera jugada es un sacrificio o una jugada tranquila que quita la última casilla al rey.",
+    pista: "Antes de dar jaque, mira las casillas de escape del rey: a veces el golpe es la jugada que las tapa." },
+  xRayAttack: { id: "mateIn3", nombre: "Mate en tres",
+    idea: "Tres jugadas que obligan: cada una deja al rival con una sola respuesta, o con varias que pierden igual. Hay que ver la posición final antes de empezar.",
+    pista: "Busca primero la posición de mate (qué pieza da el mate y en qué casilla) y después cómo llevar al rey o a tus piezas hasta ahí." },
+  interference: { id: "sacrifice", nombre: "El sacrificio",
+    idea: "Se entrega material —un peón, una pieza, la calidad o hasta la dama— para conseguir algo que vale más: abrir al rey, ganar más material unas jugadas después o un ataque que no se puede parar.",
+    pista: "Si una captura o un jaque parece imposible porque pierde material, calcula igual: ¿qué gana el rival y qué ganas tú tres jugadas después?" },
+};
+function temasDe(volumen) {
+  return volumen >= 7 ? TEMAS.map((t) => CAMBIOS_DESDE_7[t.id] || t) : TEMAS;
+}
+
 /* Tres niveles, como tres tomos. El tiempo de cada test sale de la
    dificultad: con 8 posiciones, 4, 5 y 6 minutos por posición. Se escribe
    en el banco para que el libro y quien lo use en clase digan lo mismo. */
@@ -144,7 +200,14 @@ function yaUsadas() {
   const w = {};
   new Function("window", fs.readFileSync(path.join(RAIZ, "js", "diagnostico-items.js"), "utf8"))(w);
   new Function("window", fs.readFileSync(path.join(RAIZ, "material", "ponte-a-prueba", "banco.js"), "utf8"))(w);
-  return new Set((w.DIAGNOSTICO_ITEMS || []).concat(w.LIBRO_EXAMEN_ITEMS || []).map((i) => i.lichess).filter(Boolean));
+  const usadas = (w.DIAGNOSTICO_ITEMS || []).concat(w.LIBRO_EXAMEN_ITEMS || []).map((i) => i.lichess).filter(Boolean);
+  // Las de los otros volúmenes: cada volumen trae posiciones nuevas.
+  volumenes().filter((v) => v !== VOLUMEN).forEach((v) => {
+    const o = {};
+    new Function("window", fs.readFileSync(banco(v), "utf8"))(o);
+    o.MIDE_TU_FUERZA_ITEMS.forEach((i) => usadas.push(i.lichess));
+  });
+  return new Set(usadas);
 }
 
 function leerCandidatas() {
@@ -190,7 +253,7 @@ function elegir(cands, cache) {
   const usadas = new Set();
   const tests = [];
   NIVELES.forEach((nivel) => {
-    TEMAS.forEach((tema) => {
+    temasDe(VOLUMEN).forEach((tema) => {
       const buenas = cands
         .filter((x) => x.tema === tema.id)
         .map((x) => ({ x, a: cache[x.c[2]] }))
@@ -264,12 +327,12 @@ async function main() {
   });
 
   const cuerpo = items.map((it) => "  {\n" + Object.keys(it).map((k) => `    ${k}: ${js(it[k])},`).join("\n") + "\n  },").join("\n");
-  const texto = `/* ===== El banco del libro «Mide tu fuerza», de Oscar Angulo Cubero =====
+  const texto = `/* ===== El banco del libro «Mide tu fuerza», volumen ${VOLUMEN}, de Oscar Angulo Cubero =====
  *
  * GENERADO por herramientas/mide-tu-fuerza-generar.js — no se edita a mano.
  *
  * ${items.length} posiciones de la base abierta de Lichess (CC0), comprobadas con
- * Stockfish, en ${tests.length} tests temáticos de ${POR_TEST} (${TEMAS.length} temas en ${NIVELES.length} niveles).
+ * Stockfish, en ${tests.length} tests temáticos de ${POR_TEST} (${temasDe(VOLUMEN).length} temas en ${NIVELES.length} niveles).
  * Cada posición se contesta con la jugada y la línea; la buena vale 5 puntos.
  * Lo usan el libro impreso (herramientas/mide-tu-fuerza-pdf.js) y su versión
  * accesible. Vive detrás del candado de material/: trae las respuestas, y solo
@@ -277,10 +340,12 @@ async function main() {
  */
 window.MIDE_TU_FUERZA = {
   TITULO: 'Mide tu fuerza',
+  VOLUMEN: ${VOLUMEN},
+  PRODUCTO: '${producto(VOLUMEN)}',
   AUTOR: 'Oscar Angulo Cubero',
   POR_TEST: ${POR_TEST},
   PUNTOS: 5,
-  TEMAS: ${js(TEMAS)},
+  TEMAS: ${js(temasDe(VOLUMEN))},
   NIVELES: ${js(NIVELES)},
 };
 window.MIDE_TU_FUERZA_ITEMS = [
@@ -305,4 +370,4 @@ ${cuerpo}
 }
 
 if (require.main === module) main().catch((e) => { console.error(e.message); process.exit(1); });
-module.exports = { TEMAS, NIVELES, DESCUENTO_LICHESS, POR_TEST };
+module.exports = { TEMAS, temasDe, NIVELES, DESCUENTO_LICHESS, POR_TEST, producto, banco, volumenes };

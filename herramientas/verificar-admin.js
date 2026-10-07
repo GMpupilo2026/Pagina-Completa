@@ -10,8 +10,9 @@
 
    Cuatro cosas, por cuatro peligros distintos:
 
-   1. UNA SOLA PUERTA. Que admin.html no vuelva a traer atajos a las páginas
-      que ya están en el panel de la Academia, ni una sección repetida.
+   1. SEIS PESTAÑAS. Que cada sección cuelgue de una pestaña, que cada
+      página de quien administra salga una vez en la de su tema, y que la
+      ficha de cada persona y Ctrl + K hagan lo suyo.
 
    2. LAS CUENTAS. Que buscar encuentre sin importar las tildes, que el filtro
       de rol funcione —incluido "sin profesor asignado", que no es un rol pero
@@ -315,50 +316,88 @@ async function pruebaAuditoria(browser) {
   await ctx.close();
 }
 
-/* ====================== admin.html · una sola puerta ======================
-   Quien administra tiene dos pantallas: el panel de la Academia (clases.html),
-   con TODAS las páginas, y ésta, con lo que se maneja adentro. Había una
-   segunda lista de páginas acá («Herramientas»), un «Ver como» repetido, los
-   números de la plataforma repetidos en Inicio y una sección («Quién cubre a
-   quién») que repetía supervisores y coordinadores. Esta prueba cuida que no
-   vuelvan: lo que se repite se desordena, y la gente se pierde. */
+/* ====================== admin.html · seis pestañas ======================
+   El dueño pidió un panel «más eficiente y fácil de usar», con orden lógico:
+   había trece secciones en un menú y unas veinte páginas que solo estaban en
+   el panel de la Academia. Ahora son seis pestañas por tema, cada sección
+   cuelga de una, y cada página de quien administra sale en la pestaña de su
+   tema, UNA vez. Lo que se rompe callado: una sección que no se alcanza desde
+   ningún lado, una página que sale dos veces o en ninguna, un enlace a un
+   archivo que no existe, y que vuelvan los atajos o «Ver como» repetidos. */
 async function pruebaUnaSolaPuerta(browser) {
-  console.log("\n=== Una sola puerta para cada cosa ===");
+  console.log("\n=== Seis pestañas, y cada cosa en una ===");
   const { page, ctx, errores } = await abrir(browser, "/admin.html", ADMIN);
   await page.goto(BASE + "/admin.html", { waitUntil: "networkidle" });
   await page.waitForSelector("#app:not(.hidden)", { timeout: 20000 });
-  igual("el menú, por grupos y sin repetir",
-    await page.evaluate(() => Array.from(document.querySelectorAll("nav[aria-label='Secciones de administración'] ul")).map((ul) =>
-      document.getElementById(ul.getAttribute("aria-labelledby")).textContent + ": " + Array.from(ul.querySelectorAll("a")).map((a) => a.dataset.ir).join(", "))),
-    ["Hoy: inicio", "Supervisión y coordinación: supervisores, profesores, equipos", "Personas: cuentas, crear", "La plataforma: novedades, torneos, proyectos, materiales, archivos, preparacion, auditoria"]);
-  igual("cada sección del menú existe y hay una por entrada",
+  igual("arriba van seis pestañas, en este orden",
+    await page.evaluate(() => Array.from(document.querySelectorAll(".admin-grupo")).map((a) => a.dataset.grupo + ":" + a.firstChild.textContent.trim())),
+    ["inicio:Inicio", "personas:Personas", "organizacion:Organización", "contenido:Contenido", "cobros:Cobros y accesos", "informes:Informes"]);
+  igual("las secciones de cada pestaña",
+    await page.evaluate(() => Array.from(document.querySelectorAll("[data-subnav]")).map((ul) =>
+      ul.dataset.subnav + ": " + Array.from(ul.querySelectorAll("a")).map((a) => a.dataset.ir).join(", "))),
+    ["organizacion: profesores, supervisores, equipos, preparacion", "contenido: materiales, archivos, proyectos, torneos, novedades", "informes: informes, auditoria"]);
+  igual("cada sección se alcanza con un enlace del menú, y ninguna sobra ni falta",
     await page.evaluate(() => {
-      const menu = Array.from(document.querySelectorAll(".admin-nav")).map((a) => a.dataset.ir).sort();
+      const menu = new Set(Array.from(document.querySelectorAll(".admin-nav[data-ir], .admin-grupo[data-ir]")).map((a) => a.dataset.ir));
       const secciones = Array.from(document.querySelectorAll("[data-seccion]")).map((s) => s.dataset.seccion).sort();
-      return JSON.stringify(menu) === JSON.stringify(secciones) && new Set(menu).size === menu.length;
+      const subtabs = Array.from(document.querySelectorAll(".admin-nav")).map((a) => a.dataset.ir);
+      return JSON.stringify([...menu].sort()) === JSON.stringify(secciones) && new Set(subtabs).size === subtabs.length;
     }), true);
-  igual("sin atajos a páginas, sin «Ver como», sin números repetidos en Inicio",
+  igual("«Crear cuenta» tiene una sola puerta: el botón de arriba",
+    await page.evaluate(() => Array.from(document.querySelectorAll('[data-ir="crear"]')).map((a) => a.closest("nav") ? "en un menú" : "arriba")), ["arriba"]);
+  igual("sin atajos sueltos, sin «Ver como», sin números repetidos en Inicio",
     await page.evaluate(() => ["atajos", "inicio-numeros", "inicio-rapidos", "inicio-mando", "nav-sin-profesor", "profesores-badge"]
       .filter((id) => document.getElementById(id)).concat(document.querySelector("[data-modo-vista]") ? ["data-modo-vista"] : [])), []);
-  /* Fuera de «Lo urgente» (que lleva a donde se resuelve cada cosa) y de «Ver
-     su panel», la página enlaza a otras páginas solo para decir dónde están
-     todas: el panel de la Academia. */
-  igual("las páginas se abren desde el panel de la Academia, no desde acá",
+
+  /* Las páginas: se recorren las pestañas como una persona y se juntan las
+     tarjetas que salen. Tienen que ser exactamente las de js/paginas-admin.js
+     con `zona`, cada una una vez, y cada una a un archivo que existe. */
+  const vistas = [];
+  for (const g of ["inicio", "personas", "organizacion", "contenido", "cobros", "informes"]) {
+    await page.click('.admin-grupo[data-grupo="' + g + '"]');
+    vistas.push(...await page.evaluate((grupo) => Array.from(document.querySelectorAll("a[data-pagina]"))
+      .filter((a) => a.checkVisibility()).map((a) => grupo + " " + a.getAttribute("href")), g));
+  }
+  const esperadas = await page.evaluate(() => {
+    const fuera = [];
+    PaginasAdmin.GRUPOS.forEach((g) => g.tiles.forEach((t) => { if (t.zona) fuera.push(t.zona + " " + t.href); }));
+    return fuera;
+  });
+  igual("cada página de quien administra sale en la pestaña de su tema",
+    vistas.slice().sort(), esperadas.slice().sort());
+  const hrefs = vistas.map((v) => v.split(" ")[1]);
+  igual("y ninguna sale dos veces", new Set(hrefs).size === hrefs.length, true);
+  igual("las páginas de siempre siguen ahí",
+    ["cobros.html", "accesos.html", "informes.html", "solicitudes.html", "academias.html", "supervision.html", "novedades.html"].every((h) => hrefs.includes(h)), true);
+  igual("todas llevan a un archivo que existe",
+    hrefs.filter((h) => !fs.existsSync(path.join(RAIZ, h.split("?")[0]))), []);
+  igual("el panel de la Academia arma su lista con la MISMA (una sola copia)",
+    /const ADMIN_GROUPS = window\.PaginasAdmin\.GRUPOS;/.test(fs.readFileSync(path.join(RAIZ, "js", "clases.js"), "utf8"))
+      && /<script src="js\/paginas-admin\.js"><\/script>\s*<script src="js\/clases\.js"><\/script>/.test(fs.readFileSync(path.join(RAIZ, "clases.html"), "utf8")), true);
+
+  /* Fuera de las tarjetas de páginas, de «Lo urgente» (lleva a donde se
+     resuelve cada cosa) y de lo que es contenido de una sección (las salas,
+     los proyectos, los materiales), la página no enlaza a otras. */
+  igual("ningún otro enlace suelto a otras páginas",
     await page.evaluate(() => Array.from(document.querySelectorAll("#app a[href]"))
-      .filter((a) => !a.closest("#urgentes") && !a.closest("[data-seccion='torneos']") && !a.closest("[data-seccion='preparacion']")
-        /* La ficha de cada grupo de un proyecto abre SU página (proyecto.html?grupo=): es el contenido del grupo, no otra puerta. */
-        && !a.closest("[data-seccion='proyectos']")
-        /* Cada material abre SUS archivos y sus versiones como cuestionario: es el material, no otra puerta. */
-        && !a.closest("[data-seccion='materiales']")
+      .filter((a) => !a.dataset.pagina && !a.closest("#urgentes") && !a.closest("[data-seccion='torneos']") && !a.closest("[data-seccion='preparacion']")
+        && !a.closest("[data-seccion='proyectos']") && !a.closest("[data-seccion='materiales']")
         && !/ver_como=/.test(a.getAttribute("href")) && /\.html/.test(a.getAttribute("href")))
-      .map((a) => a.getAttribute("href"))), ["clases.html"]);
+      .map((a) => a.getAttribute("href"))), []);
   igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
   await ctx.close();
 }
 
-/* Ir a una sección del panel como una persona: con el menú de la izquierda. */
+/* Ir a una sección del panel como una persona: la pestaña de arriba y, si
+   tiene varias secciones, la de abajo. «Crear cuenta» es el botón de arriba. */
 async function irA(page, seccion) {
-  await page.click('.admin-nav[data-ir="' + seccion + '"]');
+  if (seccion === "crear") {
+    await page.click('.admin-nav[data-ir="crear"]');
+  } else {
+    const grupo = await page.evaluate((s) => window.AdminPanel.grupos.find((g) => g.secciones.includes(s)).id, seccion);
+    await page.click('.admin-grupo[data-grupo="' + grupo + '"]');
+    if (await page.$('.subnav-pestana[data-ir="' + seccion + '"]')) await page.click('.subnav-pestana[data-ir="' + seccion + '"]');
+  }
   await page.waitForFunction((s) => {
     const sec = document.querySelector('[data-seccion="' + s + '"]');
     return sec && sec.checkVisibility();
@@ -379,8 +418,8 @@ async function pruebaSecciones(browser) {
     Array.from(document.querySelectorAll("[data-seccion]")).filter((s) => s.checkVisibility()).map((s) => s.dataset.seccion));
 
   igual("al entrar se ve SOLO «Inicio»", await visibles(), ["inicio"]);
-  igual("y el menú lo marca como la página actual",
-    await page.getAttribute('.admin-nav[aria-current="page"]', "data-ir"), "inicio");
+  igual("y la pestaña de arriba lo marca",
+    await page.getAttribute('.admin-grupo[aria-current="true"]', "data-grupo"), "inicio");
   igual("el saludo lleva el nombre de quien entra",
     /^(Buenos días|Buenas tardes|Buenas noches), Oscar$/.test(await page.textContent("#admin-saludo")), true);
 
@@ -405,6 +444,19 @@ async function pruebaSecciones(browser) {
   // mandando, Ana (que tiene profesora) no saldría y no se sabría por qué.
   await irA(page, "equipos");
   igual("el menú cambia de sección", await visibles(), ["equipos"]);
+  igual("la pestaña es Organización y debajo se ven SUS secciones",
+    [await page.getAttribute('.admin-grupo[aria-current="true"]', "data-grupo"),
+     await page.evaluate(() => Array.from(document.querySelectorAll("[data-subnav]")).filter((u) => u.checkVisibility()).map((u) => u.dataset.subnav))],
+    ["organizacion", ["organizacion"]]);
+  igual("y la de Equipos queda marcada",
+    await page.getAttribute('.subnav-pestana[aria-current="page"]', "data-ir"), "equipos");
+  igual("debajo, las otras páginas de Organización",
+    await page.evaluate(() => document.getElementById("paginas-zona").checkVisibility()
+      && document.getElementById("paginas-zona-titulo").textContent), "Otras páginas de Organización");
+  // Volver a una pestaña lleva a la última sección abierta en ella.
+  await page.click('.admin-grupo[data-grupo="inicio"]');
+  await page.click('.admin-grupo[data-grupo="organizacion"]');
+  igual("volver a Organización vuelve a Equipos, donde se estaba", await visibles(), ["equipos"]);
   await page.fill("#user-search", "ramirez");
   await page.waitForFunction(() => /1 cuenta/.test(document.getElementById("users-summary").textContent), { timeout: 10000 });
   igual("buscar desde otra sección lleva a Cuentas con lo encontrado", await visibles(), ["cuentas"]);
@@ -575,14 +627,32 @@ async function pruebaMateriales(browser) {
     ["material/ponte-a-prueba/ponte-a-prueba.pdf", "material/ponte-a-prueba/ponte-a-prueba-accesible.html",
      "material/ponte-a-prueba/versiones/claves-de-correccion.pdf", "material/ponte-a-prueba/ponte-a-prueba-versiones-accesible.html",
      "material/mide-tu-fuerza/mide-tu-fuerza.pdf", "material/mide-tu-fuerza/mide-tu-fuerza-accesible.html",
-     "material/peonita/peonita.pdf", "material/peonita/peonita-accesible.html"]);
+     "material/mide-tu-fuerza-2/mide-tu-fuerza-2.pdf", "material/mide-tu-fuerza-2/mide-tu-fuerza-2-accesible.html",
+     "material/mide-tu-fuerza-3/mide-tu-fuerza-3.pdf", "material/mide-tu-fuerza-3/mide-tu-fuerza-3-accesible.html",
+     "material/mide-tu-fuerza-4/mide-tu-fuerza-4.pdf", "material/mide-tu-fuerza-4/mide-tu-fuerza-4-accesible.html",
+     "material/mide-tu-fuerza-5/mide-tu-fuerza-5.pdf", "material/mide-tu-fuerza-5/mide-tu-fuerza-5-accesible.html",
+     "material/mide-tu-fuerza-6/mide-tu-fuerza-6.pdf", "material/mide-tu-fuerza-6/mide-tu-fuerza-6-accesible.html",
+     "material/mide-tu-fuerza-7/mide-tu-fuerza-7.pdf", "material/mide-tu-fuerza-7/mide-tu-fuerza-7-accesible.html",
+     "material/mide-tu-fuerza-8/mide-tu-fuerza-8.pdf", "material/mide-tu-fuerza-8/mide-tu-fuerza-8-accesible.html",
+     "material/mide-tu-fuerza-9/mide-tu-fuerza-9.pdf", "material/mide-tu-fuerza-9/mide-tu-fuerza-9-accesible.html",
+     "material/mide-tu-fuerza-10/mide-tu-fuerza-10.pdf", "material/mide-tu-fuerza-10/mide-tu-fuerza-10-accesible.html",
+     "material/rompe-el-estancamiento/rompe-el-estancamiento.pdf", "material/rompe-el-estancamiento/rompe-el-estancamiento-accesible.html",
+     "material/ganar-con-poco/ganar-con-poco.pdf", "material/ganar-con-poco/ganar-con-poco-accesible.html",
+     "material/cambiar-o-no-cambiar/cambiar-o-no-cambiar.pdf", "material/cambiar-o-no-cambiar/cambiar-o-no-cambiar-accesible.html",
+     "material/ideas-que-ganan-partidas/ideas-que-ganan-partidas.pdf", "material/ideas-que-ganan-partidas/ideas-que-ganan-partidas-accesible.html",
+     "material/los-cimientos-del-ajedrez/los-cimientos-del-ajedrez.pdf", "material/los-cimientos-del-ajedrez/los-cimientos-del-ajedrez-accesible.html",
+     "material/peonita/peonita.pdf", "material/peonita/peonita-accesible.html",
+     "material/peonita-trucos/peonita-trucos.pdf", "material/peonita-trucos/peonita-trucos-accesible.html",
+     "material/peonita-rey/peonita-rey.pdf", "material/peonita-rey/peonita-rey-accesible.html",
+     "material/coachess-resumen/coachess-resumen.pdf", "material/coachess-resumen/coachess-resumen-accesible.html"]);
   // El banco de ejercicios no tiene pruebas como cuestionario: solo se
   // comparte. Antes de separarlo, cualquier material sin pruebas pintaba
   // igual el título y «todavía no están en la base».
-  igual("el banco de ejercicios se comparte y no tiene sección de pruebas", await page.evaluate(() => {
-    const art = document.querySelector("#mat-lista article[aria-labelledby='mat-titulo-mide-tu-fuerza']");
-    return [art.querySelectorAll(":scope > section").length, /como cuestionario/.test(art.textContent), !!art.querySelector("#mat-mide-tu-fuerza-buscar")];
-  }), [1, false, true]);
+  igual("cada volumen del banco de ejercicios se comparte aparte y no tiene sección de pruebas", await page.evaluate(() =>
+    ["mide-tu-fuerza", "mide-tu-fuerza-2", "mide-tu-fuerza-3", "mide-tu-fuerza-4", "mide-tu-fuerza-5", "mide-tu-fuerza-6", "mide-tu-fuerza-7", "mide-tu-fuerza-8", "mide-tu-fuerza-9", "mide-tu-fuerza-10"].map((p) => {
+      const art = document.querySelector("#mat-lista article[aria-labelledby='mat-titulo-" + p + "']");
+      return [art.querySelectorAll(":scope > section").length, /como cuestionario/.test(art.textContent), !!art.querySelector("#mat-" + p + "-buscar")];
+    })), Array(10).fill([1, false, true]));
   igual("el cuento de Peonita tampoco", await page.evaluate(() => {
     const art = document.querySelector("#mat-lista article[aria-labelledby='mat-titulo-peonita']");
     return [art.querySelectorAll(":scope > section").length, /como cuestionario/.test(art.textContent), !!art.querySelector("#mat-peonita-buscar")];
@@ -642,121 +712,299 @@ async function pruebaMateriales(browser) {
   await ctx.close();
 }
 
-/* ============ admin.html · Archivos: todos los PDF, Word, Excel y presentaciones ============
+/* ============ admin.html · Archivos: PDF, Word, Excel, presentaciones y versiones accesibles ============
    La lista es data/archivos.json (herramientas/archivos-catalogo.js, leído del
    disco): acá se mira que la pantalla muestre TODOS, cada tipo en su ficha y
-   en su lugar, que buscar y filtrar escondan de verdad (checkVisibility) y que
-   «Bajar los N» baje N. Que el JSON esté al día con el disco lo cuida
-   verificar-archivos-catalogo.js. */
+   cada uno en su carpeta; que buscar busque en toda la ficha; que «Bajar los
+   N» baje N; y que la vista previa muestre el archivo sin bajarlo (el PDF en
+   su marco, la presentación diapositiva por diapositiva, el Word con su
+   texto). Lo que se ve se mide con checkVisibility(). Que el JSON esté al día
+   con el disco lo cuida verificar-archivos-catalogo.js. */
+/* Un clic como el de una persona, con el botón en el medio de la pantalla:
+   en el borde lo pueden tapar el encabezado fijo o la burbuja de conectados, y
+   Playwright reintenta hasta que se le acaba el tiempo. */
+async function clic(page, selector) {
+  await page.locator(selector).first().evaluate((e) => e.scrollIntoView({ block: "center" }));
+  await page.click(selector);
+}
+
 async function pruebaPdfs(browser) {
-  console.log("\n=== Archivos: PDF, Word, Excel y presentaciones, ordenados, para abrir o bajar ===");
+  console.log("\n=== Archivos: explorador por carpetas y vista previa ===");
   const todo = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "data", "archivos.json"), "utf8"));
   const catalogo = todo.pdf;
+  const rutasDe = (f) => f.cursos
+    ? f.material.concat(f.sueltos, ...f.cursos.map((c) => c.lecciones.flatMap((l) => l.archivos).concat(c.otros))).map((a) => a.ruta)
+    : f.grupos.flatMap((g) => g.archivos).map((a) => a.ruta);
   const { page, ctx, errores } = await abrir(browser, "/admin.html", ADMIN, { acceptDownloads: true });
   await page.goto(BASE + "/admin.html", { waitUntil: "networkidle" });
   await page.waitForSelector("#app:not(.hidden)", { timeout: 20000 });
   await irA(page, "archivos");
-  await page.waitForSelector("#pdf-lista .pdf-fila", { state: "attached", timeout: 10000 });
-  igual("cuatro fichas, cada una con cuántos tiene, y se abre en PDF", await page.evaluate(() =>
+  await page.waitForSelector("#arch-contenido-pdf .arch-fila", { timeout: 10000 });
+
+  igual("seis fichas, cada una con cuántos tiene, y se abre en PDF", await page.evaluate(() =>
     Array.from(document.querySelectorAll("#arch-fichas [role=tab]")).map((b) => b.textContent.trim() + (b.getAttribute("aria-selected") === "true" ? " *" : ""))),
-    ["📕 PDF (" + catalogo.total + ") *", "📝 Word (" + todo.word.total + ")", "📊 Excel (" + todo.excel.total + ")", "📽️ Presentaciones (" + todo.presentaciones.total + ")"]);
+    ["📕 PDF (" + catalogo.total + ") *", "📝 Word (" + todo.word.total + ")", "📊 Excel (" + todo.excel.total + ")", "📽️ Presentaciones (" + todo.presentaciones.total + ")", "♿ Versiones accesibles (" + todo.accesibles.total + ")", "🖼️ Imágenes (" + todo.imagenes.total + ")"]);
   igual("solo se ve la ficha de PDF", await page.evaluate(() =>
-    ["pdf", "word", "excel", "presentaciones"].filter((t) => document.getElementById("arch-panel-" + t).checkVisibility())), ["pdf"]);
-  igual("están todos los PDF, cada uno una vez", await page.evaluate(() => {
-    const rutas = Array.from(document.querySelectorAll("#pdf-lista .pdf-fila a[download]")).map((a) => a.getAttribute("href"));
-    return [rutas.length, new Set(rutas).size];
-  }), [catalogo.total, catalogo.total]);
-  igual("el resumen dice cuántos son", new RegExp("^" + catalogo.total + " PDF en total").test(await page.textContent("#pdf-resumen")), true);
-  igual("primero los libros, después los cursos, después los sueltos", await page.evaluate(() =>
-    Array.from(document.querySelectorAll("#pdf-lista h3")).map((h) => h.textContent.trim())),
-    ["📕 Libros y material", "🎓 Cursos", "📄 Otros PDF del sitio"]);
-  igual("los cursos, por nivel y en el orden del catálogo", await page.evaluate(() =>
-    Array.from(document.querySelectorAll("#pdf-lista .pdf-curso summary")).map((s) => s.firstElementChild.textContent.replace("▸", ""))),
-    catalogo.cursos.map((c) => c.titulo));
-  igual("los cursos empiezan plegados: se ven los libros, no las 400 filas", await page.evaluate(() =>
-    Array.from(document.querySelectorAll("#pdf-lista .pdf-fila")).filter((f) => f.checkVisibility()).length),
-    catalogo.material.length + catalogo.sueltos.length);
-  await page.click("#pdf-lista .pdf-curso summary");
-  const leccion = await page.evaluate(() => {
-    const l = document.querySelector("#pdf-lista .pdf-curso[open] .pdf-leccion");
-    return [l.querySelector("p").textContent, Array.from(l.querySelectorAll(".pdf-fila p:first-child")).map((p) => p.textContent)];
+    ["pdf", "word", "excel", "presentaciones", "accesibles", "imagenes"].filter((t) => document.getElementById("arch-panel-" + t).checkVisibility())), ["pdf"]);
+
+  // Las carpetas: los libros, los cursos por nivel en el orden del catálogo, lo suelto.
+  const lado = await page.evaluate(() => Array.from(document.querySelectorAll("#arch-carpetas-pdf > p")).map((p) => [p.textContent,
+    Array.from(p.nextElementSibling.querySelectorAll(".arch-carpeta")).map((b) => b.firstElementChild.textContent)]));
+  igual("primero los libros, uno por carpeta", lado[0], ["Libros y material", [...new Set(catalogo.material.map((a) => a.libro))]]);
+  igual("después los cursos, por nivel y en el orden del catálogo",
+    lado.filter(([g]) => /^Cursos · /.test(g)).flatMap(([, cs]) => cs), catalogo.cursos.map((c) => c.titulo));
+  igual("y al final lo suelto", lado[lado.length - 1][0], "Otros");
+  igual("cada carpeta dice cuántos trae, y entre todas suman todos los PDF", await page.evaluate(() =>
+    Array.from(document.querySelectorAll("#arch-carpetas-pdf .arch-carpeta")).reduce((s, b) => s + Number(b.lastElementChild.textContent), 0)), catalogo.total);
+  igual("la primera carpeta viene elegida, marcada y dicha", await page.evaluate(() => {
+    const b = document.querySelector("#arch-carpetas-pdf [aria-current='true']");
+    return [b && b.firstElementChild.textContent, document.querySelector("#arch-contenido-pdf h3").textContent];
+  }), [catalogo.material[0].libro, catalogo.material[0].libro]);
+
+  // Un curso: sus lecciones, cada una con su material y sus ejercicios.
+  const curso0 = catalogo.cursos[0];
+  await clic(page, "#arch-carpetas-pdf .arch-carpeta[data-carpeta='curso-" + curso0.slug + "']");
+  const vistoCurso = await page.evaluate(() => {
+    const c = document.getElementById("arch-contenido-pdf");
+    const b = c.querySelector(".arch-bloque");
+    return [c.querySelector("h3").textContent, document.activeElement === c.querySelector("h3"),
+      b.querySelector("h4").textContent, Array.from(b.querySelectorAll(".arch-fila p:first-child")).map((p) => p.textContent),
+      c.querySelectorAll(".arch-fila").length];
   });
-  igual("abrir un curso muestra cada lección con su material y sus ejercicios", leccion,
-    ["1. " + catalogo.cursos[0].lecciones[0].titulo, ["Material de estudio", "Ejercicios"]]);
-  igual("el enlace de cada PDF existe en el sitio", await page.evaluate(async () => {
-    const rutas = Array.from(document.querySelectorAll("#pdf-lista a[download]")).map((a) => a.getAttribute("href")).filter((_, i) => i % 37 === 0);
+  igual("elegir un curso lo muestra lección por lección, con el foco en su título", vistoCurso,
+    [curso0.titulo, true, "1. " + curso0.lecciones[0].titulo, ["Material de estudio", "Ejercicios"],
+      curso0.lecciones.reduce((s, l) => s + l.archivos.length, 0) + curso0.otros.length]);
+  igual("en el celular, el mismo explorador es un selector de carpeta", await page.evaluate(() =>
+    [document.getElementById("arch-carpeta-pdf").checkVisibility(), document.getElementById("arch-carpetas-pdf").checkVisibility()]), [false, true]);
+
+  // Buscar busca en TODA la ficha, sin tildes ni mayúsculas.
+  await page.fill("#arch-buscar-pdf", "LUCENA");
+  const conLucena = await page.evaluate(() => Array.from(document.querySelectorAll("#arch-contenido-pdf .arch-fila")).filter((f) => f.checkVisibility()).map((f) => f.dataset.ruta));
+  igual("buscar encuentra en todas las carpetas, no solo en la elegida",
+    conLucena.length > 0 && conLucena.every((r) => /lucena/.test(r)) && conLucena.some((r) => !r.includes(curso0.slug)), true);
+  await page.fill("#arch-buscar-pdf", "zzzz no existe");
+  igual("si nada coincide, se dice", await page.locator("#arch-contenido-pdf .arch-vacio").isVisible(), true);
+  await page.fill("#arch-buscar-pdf", "");
+  await page.selectOption("#arch-filtro-pdf", "ejercicios");
+  igual("«Solo ejercicios» deja solo ejercicios en la carpeta", await page.evaluate(() => {
+    const v = Array.from(document.querySelectorAll("#arch-contenido-pdf .arch-fila")).filter((f) => f.checkVisibility());
+    return v.length > 0 && v.every((f) => f.dataset.tipo === "ejercicios");
+  }), true);
+  await page.selectOption("#arch-filtro-pdf", "todos");
+
+  // Todos los PDF se alcanzan recorriendo las carpetas.
+  const vistos = new Set();
+  for (const id of await page.evaluate(() => Array.from(document.querySelectorAll("#arch-carpetas-pdf .arch-carpeta")).map((b) => b.dataset.carpeta))) {
+    await clic(page, "#arch-carpetas-pdf .arch-carpeta[data-carpeta='" + id + "']");
+    (await page.evaluate(() => Array.from(document.querySelectorAll("#arch-contenido-pdf .arch-fila")).map((f) => f.dataset.ruta))).forEach((r) => vistos.add(r));
+  }
+  igual("recorriendo las carpetas están todos los PDF, cada uno una vez", [vistos.size, rutasDe(catalogo).every((r) => vistos.has(r))], [catalogo.total, true]);
+  igual("el enlace de cada PDF existe en el sitio", await page.evaluate(async (rutas) => {
     const malos = [];
     for (const r of rutas) { const x = await fetch(r, { method: "HEAD" }); if (!x.ok) malos.push(r + " " + x.status); }
     return malos;
-  }), []);
+  }, [...vistos].filter((_, i) => i % 37 === 0)), []);
 
-  await page.fill("#pdf-buscar", "lucena");
-  const conLucena = await page.evaluate(() => Array.from(document.querySelectorAll("#pdf-lista .pdf-fila")).filter((f) => f.checkVisibility())
-    .map((f) => f.querySelector("a[download]").getAttribute("href")));
-  igual("buscar (sin tildes ni mayúsculas) abre el curso y deja solo lo que coincide",
-    conLucena.length > 0 && conLucena.every((r) => /lucena/.test(r)) && conLucena.length < catalogo.total, true);
-  await page.fill("#pdf-buscar", "");
-  await page.selectOption("#pdf-tipo", "ejercicios");
-  igual("«Solo ejercicios» deja solo ejercicios", await page.evaluate(() => {
-    const v = Array.from(document.querySelectorAll("#pdf-lista .pdf-fila")).filter((f) => f.checkVisibility());
-    return v.length > 0 && v.every((f) => f.dataset.tipo === "ejercicios") && !document.querySelector("[aria-labelledby='pdf-titulo-material']").checkVisibility();
-  }), true);
-  await page.selectOption("#pdf-tipo", "todos");
-  await page.fill("#pdf-buscar", "zzzz no existe");
-  igual("si nada coincide, se dice", await page.locator("#pdf-vacio").isVisible(), true);
-  await page.fill("#pdf-buscar", "");
-
+  // «Bajar los N» de una carpeta baja esos N.
+  await clic(page, "#arch-carpetas-pdf .arch-carpeta[data-carpeta='curso-" + curso0.slug + "']");
   const bajados = [];
   page.on("download", (d) => bajados.push(d.suggestedFilename()));
-  await page.click("[aria-labelledby='pdf-titulo-material'] button");
-  await page.waitForFunction(() => /^Listo/.test(document.querySelector("[aria-labelledby='pdf-titulo-material'] [role=status]").textContent), null, { timeout: 30000 });
-  igual("«Bajar los N» de libros baja esos N", bajados.slice().sort(),
-    catalogo.material.map((a) => a.ruta.split("/").pop()).sort());
+  await clic(page, "#arch-contenido-pdf [data-bajar-grupo]");
+  await page.waitForFunction(() => /^Listo/.test(document.querySelector("#arch-contenido-pdf [role=status]").textContent), null, { timeout: 40000 });
+  igual("«Bajar los N» de un curso baja esos N", bajados.slice().sort(),
+    curso0.lecciones.flatMap((l) => l.archivos).concat(curso0.otros).map((a) => a.ruta.split("/").pop()).sort());
   if (process.env.CAPTURAS) await page.screenshot({ path: path.join(process.env.CAPTURAS, "admin-pdf.png"), fullPage: true });
+
+  // La vista previa de un PDF: en su marco, sin salir de la página.
+  await clic(page, "#arch-contenido-pdf .arch-fila [data-vista]");
+  await page.waitForSelector("#vista-previa[open] iframe", { timeout: 5000 });
+  const vp = await page.evaluate(() => {
+    const d = document.getElementById("vista-previa");
+    return [d.matches(":modal"), document.getElementById("vista-previa-titulo").textContent,
+      d.querySelector("iframe").getAttribute("src"), document.getElementById("vista-previa-abrir").checkVisibility(),
+      document.getElementById("vista-previa-anterior").disabled, document.activeElement.id];
+  });
+  const primero = curso0.lecciones[0].archivos[0];
+  igual("👁 abre la vista previa encima de la página, con el PDF en su marco", vp,
+    [true, "Material de estudio — " + curso0.titulo + " › 1. " + curso0.lecciones[0].titulo, primero.ruta + "#view=FitH", true, true, "vista-previa-cerrar"]);
+  await page.click("#vista-previa-siguiente");
+  igual("«Siguiente» pasa al siguiente archivo de la lista", await page.evaluate(() => document.querySelector("#vista-previa iframe").getAttribute("src")),
+    curso0.lecciones[0].archivos[1].ruta + "#view=FitH");
+  await page.keyboard.press("Escape");
+  igual("Esc la cierra y el foco vuelve al botón que la abrió", await page.evaluate(() =>
+    [document.getElementById("vista-previa").open, document.activeElement.hasAttribute("data-vista")]), [false, true]);
 
   // Word: con la flecha del teclado, como cualquier grupo de pestañas.
   await page.focus("#arch-ficha-pdf");
   await page.keyboard.press("ArrowRight");
   igual("la flecha pasa a Word, con el foco y solo esa ficha a la vista", await page.evaluate(() => [
     document.activeElement.id, document.getElementById("arch-ficha-word").getAttribute("aria-selected"),
-    ["pdf", "word", "excel", "presentaciones"].filter((t) => document.getElementById("arch-panel-" + t).checkVisibility())]),
+    ["pdf", "word", "excel", "presentaciones", "accesibles", "imagenes"].filter((t) => document.getElementById("arch-panel-" + t).checkVisibility())]),
     ["arch-ficha-word", "true", ["word"]]);
-  const words = todo.word.grupos.flatMap((g) => g.archivos.map((a) => a.ruta));
-  igual("están todos los Word, por carpeta, y solo se bajan (no se «abren»)", await page.evaluate(() => {
-    const filas = Array.from(document.querySelectorAll("#arch-lista-word .pdf-fila")).filter((f) => f.checkVisibility());
-    return [filas.map((f) => f.querySelector("a[download]").getAttribute("href")).sort(),
-      filas.every((f) => f.querySelectorAll("a").length === 1)];
-  }), [words.slice().sort(), true]);
-  igual("cada carpeta con su nombre", await page.evaluate(() =>
-    Array.from(document.querySelectorAll("#arch-lista-word h3")).map((h) => h.textContent.replace("📁 ", ""))),
-    todo.word.grupos.map((g) => g.titulo));
+  igual("están todos los Word, por carpeta, con vista previa y para bajar (no «Abrir»)", await page.evaluate(() => {
+    const filas = Array.from(document.querySelectorAll("#arch-contenido-word .arch-fila")).filter((f) => f.checkVisibility());
+    return [filas.map((f) => f.dataset.ruta).sort(), filas.every((f) => f.querySelectorAll("a").length === 1 && f.querySelector("[data-vista]"))];
+  }), [rutasDe(todo.word).sort(), true]);
+  await clic(page, "#arch-contenido-word .arch-fila [data-vista]");
+  await page.waitForSelector("#vista-previa[open] .vista-contenido p", { timeout: 10000 });
+  igual("la vista previa del Word trae su texto (y nada del archivo se ejecuta)", await page.evaluate(() => {
+    const c = document.querySelector("#vista-previa .vista-contenido");
+    return [/CONSENTIMIENTO INFORMADO/.test(c.textContent), c.querySelectorAll("script, iframe").length, document.getElementById("vista-previa-abrir").checkVisibility()];
+  }), [true, 0, false]);
   if (process.env.CAPTURAS) await page.screenshot({ path: path.join(process.env.CAPTURAS, "admin-word.png") });
+  await clic(page, "#vista-previa-cerrar");
+
+  await page.focus("#arch-ficha-word");
   await page.keyboard.press("ArrowRight");
   const excelTexto = await page.evaluate(() => document.getElementById("arch-panel-excel").checkVisibility() && document.getElementById("arch-lista-excel").textContent);
   igual("Excel: lo que hay, o se dice que todavía no hay ninguno",
     todo.excel.total ? (excelTexto.match(/\.xls/g) || []).length >= todo.excel.total : /Todavía no hay ningún Excel/.test(excelTexto), true);
+
+  // Presentaciones: por curso y lección, y la vista previa diapositiva por diapositiva.
   await page.keyboard.press("ArrowRight");
   const pres = todo.presentaciones;
-  const rutasPres = pres.material.concat(pres.sueltos, ...pres.cursos.map((c) => c.lecciones.flatMap((l) => l.archivos).concat(c.otros))).map((a) => a.ruta);
-  igual("Presentaciones: están todas, una vez, y solo se bajan", await page.evaluate(() => {
-    const p = document.getElementById("arch-panel-presentaciones");
-    const filas = Array.from(p.querySelectorAll(".pdf-fila"));
-    return [p.checkVisibility(), filas.map((f) => f.querySelector("a[download]").getAttribute("href")).sort(),
-      filas.every((f) => f.querySelectorAll("a").length === 1)];
-  }).then(([ve, rutas, soloBajar]) => [ve, rutas.length, JSON.stringify(rutas) === JSON.stringify(rutasPres.slice().sort()), soloBajar]),
-  [true, rutasPres.length, true, true]);
-  igual("por curso, en el orden del catálogo, plegados", await page.evaluate(() =>
-    Array.from(document.querySelectorAll("#arch-lista-presentaciones .pdf-curso")).map((d) => d.querySelector("summary").firstElementChild.textContent.replace("▸", "") + (d.open ? " (abierto)" : ""))),
+  const vistasPres = new Set();
+  for (const id of await page.evaluate(() => Array.from(document.querySelectorAll("#arch-carpetas-presentaciones .arch-carpeta")).map((b) => b.dataset.carpeta))) {
+    await clic(page, "#arch-carpetas-presentaciones .arch-carpeta[data-carpeta='" + id + "']");
+    (await page.evaluate(() => Array.from(document.querySelectorAll("#arch-contenido-presentaciones .arch-fila")).map((f) => f.dataset.ruta))).forEach((r) => vistasPres.add(r));
+  }
+  igual("Presentaciones: recorriendo las carpetas están todas, una vez", [vistasPres.size, rutasDe(pres).every((r) => vistasPres.has(r))], [pres.total, true]);
+  igual("por curso, en el orden del catálogo", await page.evaluate(() =>
+    Array.from(document.querySelectorAll("#arch-carpetas-presentaciones .arch-carpeta")).map((b) => b.firstElementChild.textContent)),
     pres.cursos.map((c) => c.titulo));
-  await page.click("#arch-lista-presentaciones .pdf-curso summary");
-  igual("cada lección con su presentación", await page.evaluate(() => {
-    const l = document.querySelector("#arch-lista-presentaciones .pdf-curso[open] .pdf-leccion");
-    return [l.querySelector("p").textContent, l.querySelector(".pdf-fila p").textContent];
-  }), ["1. " + pres.cursos[0].lecciones[0].titulo, "Presentación"]);
+  // La presentación de una lección con imágenes (los diagramas del curso).
+  const mapa = pres.cursos.find((c) => c.slug === "el-mapa-de-los-finales");
+  await clic(page, "#arch-carpetas-presentaciones .arch-carpeta[data-carpeta='curso-el-mapa-de-los-finales']");
+  await clic(page, "#arch-contenido-presentaciones .arch-fila [data-vista]");
+  await page.waitForSelector("#vista-previa[open] .vista-diapositiva", { timeout: 15000 });
+  const rutaPres = mapa.lecciones[0].archivos[0].ruta;
+  const zip = fs.readFileSync(path.join(__dirname, "..", rutaPres)).toString("latin1");
+  const enArchivo = new Set(zip.match(/ppt\/slides\/slide\d+\.xml/g)).size;
+  const diap = await page.evaluate(() => {
+    const d = Array.from(document.querySelectorAll("#vista-previa .vista-diapositiva"));
+    return [d.length, d[0].getAttribute("aria-label"), document.querySelector("#vista-previa .vista-contenido").textContent.includes("Contenido"),
+      document.querySelectorAll("#vista-previa .vista-diapositiva img[src^='blob:']").length > 0,
+      Array.from(document.querySelectorAll("#vista-previa .vista-diapositiva img")).every((i) => i.complete && i.naturalWidth > 0)];
+  });
+  igual("la presentación se ve diapositiva por diapositiva, con su texto y sus imágenes", diap,
+    [enArchivo, "Diapositiva 1 de " + enArchivo, true, true, true]);
   if (process.env.CAPTURAS) await page.screenshot({ path: path.join(process.env.CAPTURAS, "admin-presentaciones.png") });
+  if (process.env.CAPTURAS) await page.locator("#vista-previa .vista-diapositiva:has(img)").first().screenshot({ path: path.join(process.env.CAPTURAS, "admin-diapositiva.png") });
+  await clic(page, "#vista-previa-cerrar");
+  // El evento «close» llega un momento después de cerrar.
+  await page.waitForFunction(() => !document.querySelector("#vista-previa img"), null, { timeout: 3000 }).catch(() => {});
+  igual("al cerrar, las imágenes se sueltan (no quedan en memoria)", await page.evaluate(() =>
+    document.querySelectorAll("#vista-previa img").length), 0);
+
+  // Las versiones accesibles: por curso y lección, y se ven en un marco sin sus programas.
   await page.focus("#arch-ficha-presentaciones");
   await page.keyboard.press("ArrowRight");
+  const acc = todo.accesibles;
+  const vistasAcc = new Set();
+  for (const id of await page.evaluate(() => Array.from(document.querySelectorAll("#arch-carpetas-accesibles .arch-carpeta")).map((b) => b.dataset.carpeta))) {
+    await clic(page, "#arch-carpetas-accesibles .arch-carpeta[data-carpeta='" + id + "']");
+    (await page.evaluate(() => Array.from(document.querySelectorAll("#arch-contenido-accesibles .arch-fila")).map((f) => f.dataset.ruta))).forEach((r) => vistasAcc.add(r));
+  }
+  igual("Versiones accesibles: recorriendo las carpetas están todas, una vez", [vistasAcc.size, rutasDe(acc).every((r) => vistasAcc.has(r))], [acc.total, true]);
+  igual("con su nombre del <title>, sin repetir «versión accesible»", await page.evaluate(() => {
+    document.querySelector("#arch-carpetas-accesibles .arch-carpeta").click();
+    return document.querySelector("#arch-contenido-accesibles .arch-fila p").textContent;
+  }), acc.material[0].titulo);
+  await clic(page, "#arch-contenido-accesibles .arch-fila [data-vista]");
+  await page.waitForSelector("#vista-previa[open] iframe", { timeout: 5000 });
+  igual("la vista previa la muestra en un marco sin programas, y se puede abrir aparte", await page.evaluate(() => {
+    const f = document.querySelector("#vista-previa iframe");
+    return [f.getAttribute("src"), f.getAttribute("sandbox"), document.getElementById("vista-previa-abrir").checkVisibility(),
+      document.querySelector("#arch-contenido-accesibles .arch-fila a[target='_blank']") !== null];
+  }), [acc.material[0].ruta, "allow-same-origin allow-popups", true, true]);
+  await clic(page, "#vista-previa-cerrar");
+
+  // Las imágenes: por carpeta, cada una con su miniatura, y se ven enteras.
+  await page.focus("#arch-ficha-accesibles");
+  await page.keyboard.press("ArrowRight");
+  const imgs = todo.imagenes;
+  igual("Imágenes: las carpetas en su orden y agrupadas", await page.evaluate(() =>
+    Array.from(document.querySelectorAll("#arch-carpetas-imagenes > p")).map((p) => [p.textContent,
+      Array.from(p.nextElementSibling.querySelectorAll(".arch-carpeta")).map((b) => b.firstElementChild.textContent)])),
+    [...new Set(imgs.grupos.map((g) => g.grupo))].map((gr) => [gr, imgs.grupos.filter((g) => g.grupo === gr).map((g) => g.titulo)]));
+  const vistasImg = new Set();
+  for (const id of await page.evaluate(() => Array.from(document.querySelectorAll("#arch-carpetas-imagenes .arch-carpeta")).map((b) => b.dataset.carpeta))) {
+    await clic(page, "#arch-carpetas-imagenes .arch-carpeta[data-carpeta='" + id + "']");
+    (await page.evaluate(() => Array.from(document.querySelectorAll("#arch-contenido-imagenes .arch-fila")).map((f) => f.dataset.ruta))).forEach((r) => vistasImg.add(r));
+  }
+  igual("recorriendo las carpetas están todas, una vez", [vistasImg.size, rutasDe(imgs).every((r) => vistasImg.has(r))], [imgs.total, true]);
+  igual("nada de lo que no se publica (img/redes)", [...vistasImg].some((r) => r.startsWith("img/redes/")), false);
+  await clic(page, "#arch-carpetas-imagenes .arch-carpeta[data-carpeta='carpeta-" + imgs.grupos.findIndex((g) => g.carpeta === "img/cursos") + "']");
+  await page.waitForFunction(() => {
+    const m = document.querySelector("#arch-contenido-imagenes .arch-mini");
+    return m && m.complete && m.naturalWidth > 0;
+  }, null, { timeout: 5000 });
+  igual("cada fila con su miniatura (sin repetir el nombre al lector) y se puede abrir aparte", await page.evaluate(() => {
+    const f = document.querySelector("#arch-contenido-imagenes .arch-fila");
+    const m = f.querySelector(".arch-mini");
+    return [m.getAttribute("src") === f.dataset.ruta, m.getAttribute("alt"), m.loading, f.querySelector("a[target='_blank']") !== null];
+  }), [true, "", "lazy", true]);
+  if (process.env.CAPTURAS) await page.screenshot({ path: path.join(process.env.CAPTURAS, "admin-imagenes.png") });
+  await clic(page, "#arch-contenido-imagenes .arch-fila [data-vista]");
+  await page.waitForSelector("#vista-previa[open] img", { timeout: 5000 });
+  await page.waitForFunction(() => { const i = document.querySelector("#vista-previa img"); return i.complete && i.naturalWidth > 0; }, null, { timeout: 5000 });
+  const cursoImg = imgs.grupos.find((g) => g.carpeta === "img/cursos").archivos[0];
+  igual("la vista previa la muestra entera, con su nombre como texto alternativo", await page.evaluate(() => {
+    const i = document.querySelector("#vista-previa img");
+    return [i.getAttribute("src"), i.getAttribute("alt").startsWith("Portada: "), document.getElementById("vista-previa-abrir").checkVisibility()];
+  }), [cursoImg.ruta, true, true]);
+  await clic(page, "#vista-previa-cerrar");
+
+  await page.focus("#arch-ficha-imagenes");
+  await page.keyboard.press("ArrowRight");
   igual("y desde la última, la flecha vuelve a PDF", await page.evaluate(() => document.activeElement.id), "arch-ficha-pdf");
+
+  // El Excel (hoy no hay ninguno en el sitio): uno de prueba, con su hoja.
+  await page.evaluate(async () => {
+    // Un .xlsx mínimo armado con la compresión «stored» (método 0).
+    const archivos = {
+      "xl/workbook.xml": '<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="Notas" sheetId="1" r:id="rId1"/></sheets></workbook>',
+      "xl/_rels/workbook.xml.rels": '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Target="worksheets/sheet1.xml"/></Relationships>',
+      "xl/sharedStrings.xml": '<sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><si><t>Alumno</t></si><si><t>&lt;b&gt;Ana&lt;/b&gt;</t></si></sst>',
+      "xl/worksheets/sheet1.xml": '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData><row r="1"><c r="A1" t="s"><v>0</v></c><c r="B1" t="inlineStr"><is><t>Puntos</t></is></c></row><row r="2"><c r="A2" t="s"><v>1</v></c><c r="B2"><v>42</v></c></row></sheetData></worksheet>',
+    };
+    const enc = new TextEncoder();
+    const partes = [], central = [];
+    let off = 0;
+    const u16 = (n) => [n & 255, (n >> 8) & 255], u32 = (n) => [n & 255, (n >> 8) & 255, (n >> 16) & 255, (n >>> 24) & 255];
+    for (const [nombre, texto] of Object.entries(archivos)) {
+      const n = enc.encode(nombre), d = enc.encode(texto);
+      const loc = [...u32(0x04034b50), ...u16(20), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ...u32(d.length), ...u32(d.length), ...u16(n.length), 0, 0];
+      partes.push(new Uint8Array(loc), n, d);
+      central.push(new Uint8Array([...u32(0x02014b50), 20, 0, ...u16(20), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ...u32(d.length), ...u32(d.length), ...u16(n.length), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ...u32(off)]), n);
+      off += loc.length + n.length + d.length;
+    }
+    const tamCentral = central.reduce((s, x) => s + x.length, 0);
+    const fin = new Uint8Array([...u32(0x06054b50), 0, 0, 0, 0, ...u16(4), ...u16(4), ...u32(tamCentral), ...u32(off), 0, 0]);
+    const url = URL.createObjectURL(new Blob([...partes, ...central, fin]));
+    window.VistaPrevia.abrir([{ ruta: url, ext: "xlsx", titulo: "Notas de prueba" }], 0);
+  });
+  // 15 s y no 5: en el CI, con cuatro tandas a la vez, armar la vista del Excel
+  // a veces pasó de 5 s sin que nada estuviera roto (PR #765).
+  await page.waitForFunction(() => document.querySelector("#vista-previa .vista-contenido table, #vista-previa-cuerpo a[download]"), null, { timeout: 15000 });
+  igual("un Excel se ve con sus hojas y celdas, y el texto va como texto", await page.evaluate(() => {
+    const t = document.querySelector("#vista-previa .vista-contenido table");
+    return t ? [document.querySelector("#vista-previa .vista-contenido h3").textContent,
+      Array.from(t.querySelectorAll("tr")).map((tr) => Array.from(tr.children).map((td) => td.textContent)), t.querySelectorAll("b").length] : "sin tabla";
+  }), ["Hoja: Notas", [["Alumno", "Puntos"], ["<b>Ana</b>", "42"]], 0]);
+  await clic(page, "#vista-previa-cerrar");
+  // Cerrar y abrir otro archivo en el mismo instante: el «close» del cierre
+  // llega después y no puede vaciar la vista nueva (dejaba «Abriendo el
+  // archivo…» para siempre; así falló el CI del PR #765).
+  igual("cerrar y abrir otro enseguida no deja la vista vacía", await page.evaluate(async () => {
+    const svg = URL.createObjectURL(new Blob(['<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10"/>'], { type: "image/svg+xml" }));
+    window.VistaPrevia.abrir([{ ruta: svg, ext: "svg", titulo: "uno" }], 0);
+    document.getElementById("vista-previa-cerrar").click();
+    window.VistaPrevia.abrir([{ ruta: svg, ext: "svg", titulo: "dos" }], 0);
+    await new Promise((r) => setTimeout(r, 300));
+    return [document.getElementById("vista-previa").open, !!document.querySelector("#vista-previa img")];
+  }), [true, true]);
+  await clic(page, "#vista-previa-cerrar");
   igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
   await ctx.close();
 }
@@ -890,7 +1138,7 @@ async function pruebaCuentasDeUnGrupo(browser) {
   igual("se abre con su nombre a la vista", await page.textContent("#users-panel-title"), "7B");
   igual("y solo trae las suyas, de 50 en 50", (await resumen()).trim(), "Mostrando 50 de 401 cuentas.");
   igual("50 filas pintadas, no 401",
-    await page.evaluate(() => document.querySelectorAll("#users-body tr td select[aria-label^='Rol']").length), "50");
+    await page.evaluate(() => document.querySelectorAll("#users-body .persona-abrir").length), "50");
   igual("las fichas se esconden mientras tanto",
     await page.evaluate(() => document.getElementById("grupos-fichas").hidden), "true");
 
@@ -919,7 +1167,7 @@ async function pruebaBuscarEntreGrupos(browser) {
   await page.fill("#user-search", "ramirez");
   await page.waitForFunction(() => /1 cuenta/.test(document.getElementById("users-summary").textContent), { timeout: 10000 });
   igual("buscar «ramirez» encuentra a «Ana Ramírez» aunque no se sepa su grupo",
-    await page.evaluate(() => document.querySelector("#users-body input[type=text]").value), "Ana Ramírez");
+    await page.evaluate(() => document.querySelector("#users-body .persona-abrir").textContent), "Ana Ramírez");
   igual("y el panel se llama por lo que es",
     await page.textContent("#users-panel-title"), "Resultado de la búsqueda");
 
@@ -955,39 +1203,193 @@ async function pruebaBuscarEntreGrupos(browser) {
   await ctx.close();
 }
 
-/* El nombre cortado es con lo que empezó todo esto: se MIDE. */
+/* El nombre cortado es con lo que empezó todo esto: se MIDE. Y la fila ya no
+   es una pared de campos: dice quién es, y lo demás se cambia en su ficha. */
 async function pruebaElNombreNoSeCorta(browser) {
-  console.log("\n=== Que el nombre de la cuenta no se corte ===");
+  console.log("\n=== Que el nombre de la cuenta no se corte, y la fila sea liviana ===");
   const { page, ctx } = await abrir(browser, "/admin.html", ADMIN, { viewport: { width: 1280, height: 900 } });
   await page.goto(BASE + "/admin.html", { waitUntil: "networkidle" });
   await page.waitForSelector("#app:not(.hidden)", { timeout: 20000 });
   // Hay que abrir un grupo: al entrar se ven las fichas, no las cuentas.
   await irA(page, "cuentas");
   await page.click("#grupos-fichas article:first-of-type button");
-  await page.waitForFunction(() => document.querySelectorAll("#users-body input[type=text]").length > 0, { timeout: 10000 });
+  await page.waitForFunction(() => document.querySelectorAll("#users-body .persona-abrir").length > 0, { timeout: 10000 });
 
   const medidas = await page.evaluate(() => {
-    const campo = document.querySelector("#users-body input[type=text]");
-    campo.value = "María Fernanda Ramírez Quesada";
-    return { ancho: campo.getBoundingClientRect().width, cabe: campo.scrollWidth <= campo.clientWidth + 1 };
+    const nombre = document.querySelector("#users-body .persona-abrir");
+    nombre.textContent = "María Fernanda Ramírez Quesada";
+    return { ancho: nombre.getBoundingClientRect().width, cabe: nombre.scrollWidth <= nombre.clientWidth + 1 };
   });
-  igual("un nombre largo cabe entero en su campo", medidas.cabe, "true");
-  if (medidas.ancho < 180) mal("la columna del nombre quedó en " + Math.round(medidas.ancho) + " px: muy angosta");
-  else bien("la columna del nombre mide " + Math.round(medidas.ancho) + " px");
+  igual("un nombre largo se lee entero en la fila", medidas.cabe, "true");
+  if (medidas.ancho < 180) mal("el nombre quedó en " + Math.round(medidas.ancho) + " px: muy angosto");
+  else bien("el nombre mide " + Math.round(medidas.ancho) + " px");
 
-  igual("el correo quedó en la MISMA celda que el nombre, no en una columna aparte",
+  igual("el correo va en la MISMA celda que el nombre, debajo",
+    await page.evaluate(() => !!document.querySelector("#users-body .persona-abrir").closest("td").querySelector(".persona-correo")), "true");
+  igual("la fila tiene 7 columnas y ningún campo para editar: eso es de la ficha",
     await page.evaluate(() => {
-      const td = document.querySelector("#users-body input[type=text]").closest("td");
-      return !!td.querySelector('a[href^="mailto:"]');
+      const fila = document.querySelector("#users-body .persona-abrir").closest("tr");
+      return [fila.querySelectorAll("td").length, fila.querySelectorAll("input:not([type=checkbox]), select").length];
+    }), [7, 0]);
+
+  // En la ficha, el campo del nombre también cabe entero.
+  await page.click("#users-body .persona-abrir");
+  await page.waitForFunction(() => document.getElementById("ficha-persona").checkVisibility(), { timeout: 5000 });
+  igual("y en la ficha, el campo del nombre lo muestra entero",
+    await page.evaluate(() => {
+      const campo = document.querySelector("#ficha-cuerpo input[aria-label^='Nombre de']");
+      campo.value = "María Fernanda Ramírez Quesada";
+      return campo.scrollWidth <= campo.clientWidth + 1;
     }), "true");
-  // Bajó a 7 al juntar el correo con el nombre; la octava es la Visión
-  // (ver «La visión de la persona la marca administración»).
-  igual("la tabla tiene 8 columnas: el correo sin columna propia, y la visión",
-    await page.evaluate(() => {
-      const fila = document.querySelector("#users-body input[type=text]").closest("tr");
-      return fila.querySelectorAll("td").length;
-    }), "8");
 
+  await ctx.close();
+}
+
+/* ====================== admin.html · la ficha de cada persona ======================
+   Todo lo de una persona se cambia en su ficha, al costado. Lo que se rompe
+   callado: que la ficha mande a la Edge Function otra persona (la de la fila
+   de al lado), que no se vea o no se pueda cerrar con el teclado, que el foco
+   se escape detrás de ella, o que tras un cambio la lista siga diciendo lo
+   viejo. */
+async function pruebaFichaDePersona(browser) {
+  console.log("\n=== La ficha de cada persona ===");
+  const { page, ctx, errores } = await abrir(browser, "/admin.html", ADMIN, { viewport: { width: 1280, height: 900 } });
+  await page.goto(BASE + "/admin.html", { waitUntil: "networkidle" });
+  await page.waitForSelector("#app:not(.hidden)", { timeout: 20000 });
+  await page.evaluate(contestarAvisos);
+  await page.fill("#user-search", "ramirez");
+  const nombre = page.locator('#users-body .persona-abrir[aria-label="Abrir la ficha de Ana Ramírez"]');
+  await nombre.waitFor({ timeout: 10000 });
+  igual("la ficha arranca cerrada", await page.evaluate(() => document.getElementById("ficha-persona").checkVisibility()), false);
+  await nombre.click();
+  await page.waitForFunction(() => document.getElementById("ficha-persona").checkVisibility(), { timeout: 5000 });
+  igual("al hacer clic en el nombre se abre SU ficha, y el foco va a su título",
+    await page.evaluate(() => [document.getElementById("ficha-titulo").textContent, document.activeElement.id]), ["Ana Ramírez", "ficha-titulo"]);
+  igual("es un diálogo con nombre",
+    await page.evaluate(() => { const f = document.getElementById("ficha-persona"); return [f.getAttribute("role"), f.getAttribute("aria-modal"), document.getElementById(f.getAttribute("aria-labelledby")).textContent]; }),
+    ["dialog", "true", "Ana Ramírez"]);
+  igual("trae todo lo suyo en bloques",
+    await page.evaluate(() => Array.from(document.querySelectorAll("#ficha-cuerpo h3")).map((h) => h.textContent)),
+    ["Sus datos", "Rol y a cargo", "Cómo entra", "De vez en cuando"]);
+  igual("con nombre, correo, grupo, visión, rol y sus profesores",
+    await page.evaluate(() => ["input[aria-label^='Nombre de']", "a[href^='mailto:']", "input[aria-label^='Grupo de']", "select[aria-label^='Visión de']",
+      "select[aria-label^='Rol de']", "button[aria-label='Quitar a Karina Rojas']"].map((s) => !!document.querySelector("#ficha-cuerpo " + s))), [true, true, true, true, true, true]);
+  igual("y el atajo a su informe",
+    await page.getAttribute("#ficha-cuerpo a[href^='informes.html']", "href"), "informes.html?alumno=u-7");
+
+  // Cambiar el nombre: va a la Edge Function con ESTA persona, y la lista se entera.
+  llamadasDeAdmin.length = 0;
+  await page.fill("#ficha-cuerpo input[aria-label^='Nombre de']", "Ana Ramírez Mora");
+  await page.press("#ficha-cuerpo input[aria-label^='Nombre de']", "Tab");
+  const cambio = await esperarLlamada("update");
+  igual("el nombre se guarda para esta persona", [cambio.target_id, cambio.full_name], ["u-7", "Ana Ramírez Mora"]);
+  await page.waitForFunction(() => /Ana Ramírez Mora/.test(document.getElementById("users-body").textContent), { timeout: 5000 });
+  bien("la fila de la lista dice el nombre nuevo");
+
+  // Quitarle su profesora y volver a ponérsela: la lista completa
+  // (set_teachers) para ESTA persona, y la fila de atrás lo dice.
+  llamadasDeAdmin.length = 0;
+  await page.click("#ficha-cuerpo button[aria-label='Quitar a Karina Rojas']");
+  const sinProfe = await esperarLlamada("set_teachers");
+  igual("quitar un profesor manda la lista sin él", [sinProfe.target_id, sinProfe.teacher_ids], ["u-7", []]);
+  await page.waitForFunction(() => /Sin profesor/.test(document.querySelector('#users-body tr[data-persona="u-7"]').textContent), { timeout: 5000 });
+  bien("la fila dice «Sin profesor»");
+  llamadasDeAdmin.length = 0;
+  await page.selectOption("#ficha-cuerpo select[aria-label^='Agregar un profesor a']", PROFE.id);
+  const profes = await esperarLlamada("set_teachers");
+  igual("sumar un profesor manda la lista con el nuevo", [profes.target_id, profes.teacher_ids], ["u-7", ["u-profe"]]);
+  await page.waitForFunction(() => /Karina Rojas/.test(document.querySelector('#users-body tr[data-persona="u-7"]').textContent), { timeout: 5000 });
+  igual("la ficha sigue abierta y ya tiene a Karina con su ✕",
+    await page.evaluate(() => document.getElementById("ficha-persona").checkVisibility() && !!document.querySelector("#ficha-cuerpo button[aria-label='Quitar a Karina Rojas']")), true);
+
+  // El foco no se escapa con Tab: da la vuelta dentro de la ficha.
+  await page.focus("#ficha-cerrar");
+  await page.keyboard.press("Shift+Tab");
+  igual("Shift + Tab desde el primero da la vuelta al último, dentro de la ficha",
+    await page.evaluate(() => document.getElementById("ficha-persona").contains(document.activeElement)), true);
+
+  // Escape la cierra y el foco vuelve a la fila.
+  await page.keyboard.press("Escape");
+  igual("Escape la cierra",
+    await page.evaluate(() => document.getElementById("ficha-persona").checkVisibility()), false);
+  igual("y el foco vuelve al nombre de la fila",
+    await page.evaluate(() => document.activeElement.classList.contains("persona-abrir")), true);
+
+  // Un profesor: sin selector de profesores, con «Ver su panel».
+  await page.fill("#user-search", "karina");
+  await page.locator('#users-body .persona-abrir[aria-label="Abrir la ficha de Karina Rojas"]').click();
+  await page.waitForFunction(() => document.getElementById("ficha-titulo").textContent === "Karina Rojas", { timeout: 5000 });
+  igual("la ficha de un profesor no ofrece asignarle profesores, y lleva a su panel",
+    await page.evaluate(() => [!!document.querySelector("#ficha-cuerpo select[aria-label^='Agregar un profesor a']"),
+      document.querySelector("#ficha-cuerpo a[href*='ver_como=']")?.getAttribute("href")]),
+    [false, "clases.html?ver_como=u-profe"]);
+  await page.click("#ficha-velo", { position: { x: 20, y: 20 } });
+  igual("un clic afuera también la cierra",
+    await page.evaluate(() => document.getElementById("ficha-persona").checkVisibility()), false);
+
+  // La cuenta propia no se puede borrar ni «hacer administrador» desde su ficha.
+  await page.fill("#user-search", "oscar");
+  await page.locator('#users-body .persona-abrir[aria-label="Abrir la ficha de Oscar Angulo"]').click();
+  await page.waitForFunction(() => document.getElementById("ficha-titulo").textContent === "Oscar Angulo", { timeout: 5000 });
+  igual("en la ficha propia no está «Eliminar la cuenta»",
+    await page.evaluate(() => Array.from(document.querySelectorAll("#ficha-cuerpo button")).some((b) => /Eliminar/.test(b.textContent))), false);
+
+  igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
+  await ctx.close();
+}
+
+/* ====================== admin.html · Ctrl + K ======================
+   El buscador de todo el panel: personas, secciones y páginas, sin salir.
+   Lo que se rompe callado: que Ctrl + K se vaya a clases.html (el atajo del
+   resto de la Academia), que Enter abra otra cosa que la elegida, o que un
+   nombre escrito por alguien se pinte como HTML. */
+async function pruebaBuscador(browser) {
+  console.log("\n=== Ctrl + K: buscar en todo el panel ===");
+  const { page, ctx, errores } = await abrir(browser, "/admin.html", ADMIN, { viewport: { width: 1280, height: 900 } });
+  await page.goto(BASE + "/admin.html", { waitUntil: "networkidle" });
+  await page.waitForSelector("#app:not(.hidden)", { timeout: 20000 });
+  igual("admin.html no carga el atajo que lleva a clases.html",
+    await page.evaluate(() => !!document.querySelector('script[src$="atajo-buscar.js"]')), false);
+  await page.keyboard.press("Control+k");
+  igual("Ctrl + K lo abre acá mismo, con el foco en el campo",
+    await page.evaluate(() => [document.getElementById("buscador").checkVisibility(), document.activeElement.id, /admin\.html/.test(location.href)]),
+    [true, "buscador-campo", true]);
+  igual("sin nada escrito, el mapa del panel: secciones y páginas",
+    await page.evaluate(() => {
+      const tipos = Array.from(document.querySelectorAll("#buscador-lista [role=option]")).map((li) => li.dataset.tipo);
+      return [tipos.includes("seccion"), tipos.includes("pagina"), tipos.includes("persona")];
+    }), [true, true, false]);
+
+  await page.fill("#buscador-campo", "ramirez");
+  igual("una persona sale primero, sin importar las tildes",
+    await page.evaluate(() => { const li = document.querySelector("#buscador-lista [role=option]"); return [li.dataset.tipo, li.querySelector("span span").textContent]; }),
+    ["persona", "Ana Ramírez"]);
+  await page.keyboard.press("Enter");
+  await page.waitForFunction(() => document.getElementById("ficha-persona").checkVisibility(), { timeout: 5000 });
+  igual("Enter abre su ficha y cierra el buscador",
+    await page.evaluate(() => [document.getElementById("ficha-titulo").textContent, document.getElementById("buscador").checkVisibility()]),
+    ["Ana Ramírez", false]);
+  await page.keyboard.press("Escape");
+
+  await page.keyboard.press("Control+k");
+  await page.fill("#buscador-campo", "equipos");
+  await page.keyboard.press("Enter");
+  await page.waitForFunction(() => document.querySelector('[data-seccion="equipos"]').checkVisibility(), { timeout: 5000 });
+  bien("«equipos» + Enter lleva a la sección Equipos");
+
+  await page.keyboard.press("Control+k");
+  await page.fill("#buscador-campo", "mensualidades");
+  igual("busca también en lo que hace cada página",
+    await page.evaluate(() => { const li = document.querySelector("#buscador-lista [role=option]"); return [li.dataset.tipo, li.querySelector("span span").textContent]; }),
+    ["pagina", "Cobros de la Academia"]);
+  await page.keyboard.press("ArrowDown");
+  igual("las flechas mueven la elección y el campo lo anuncia",
+    await page.evaluate(() => document.getElementById("buscador-campo").getAttribute("aria-activedescendant")), "buscador-op-0");
+  await page.keyboard.press("Escape");
+  igual("Escape lo cierra",
+    await page.evaluate(() => document.getElementById("buscador").checkVisibility()), false);
+
+  igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
   await ctx.close();
 }
 
@@ -1019,7 +1421,9 @@ async function pruebaUsuarioYContrasena(browser) {
   await page.evaluate(contestarAvisos);
   await irA(page, "cuentas");
   await page.fill("#user-search", "ramirez");
-  const boton = page.locator('#users-body button[aria-controls="acceso-u-7"]');
+  // Está en su ficha, en «Cómo entra».
+  await page.locator('#users-body .persona-abrir[aria-label="Abrir la ficha de Ana Ramírez"]').click();
+  const boton = page.locator('#ficha-cuerpo button[aria-controls="acceso-u-7"]');
   await boton.waitFor({ timeout: 10000 });
     igual("cerrado, dice que está cerrado", await boton.getAttribute("aria-expanded"), "false");
 
@@ -1053,11 +1457,15 @@ async function pruebaUsuarioYContrasena(browser) {
   igual("el aviso dice el usuario sin el dominio y la contraseña",
     await page.evaluate(() => (window.__avisos || []).some((a) => /«ana\.ramirez2» y la contraseña «caballo482»/.test(a))), "true");
 
-  // Repintar la tabla (otra búsqueda que la encuentra igual) no cierra el panel.
-  await page.fill("#user-search", "ana ramirez");
+  igual("la lista de atrás ya dice el usuario nuevo",
+    await page.evaluate(() => document.querySelector('#users-body tr[data-persona="u-7"] .persona-correo').textContent),
+    "ana.ramirez2@alumno.ajedrez-integral.com");
+  // Cerrar la ficha y volver a abrirla (la lista se repintó) no cierra el panel.
+  await page.keyboard.press("Escape");
+  await page.locator('#users-body .persona-abrir[aria-label="Abrir la ficha de Ana Ramírez"]').click();
   await page.waitForFunction(() => !!document.getElementById("acceso-u-7"), { timeout: 10000 });
-  igual("después de repintar, el panel sigue abierto y lo dice",
-    await page.locator('#users-body button[aria-controls="acceso-u-7"]').getAttribute("aria-expanded"), "true");
+  igual("al volver a abrir su ficha, el panel sigue abierto y lo dice",
+    await page.locator('#ficha-cuerpo button[aria-controls="acceso-u-7"]').getAttribute("aria-expanded"), "true");
 
   igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
   await ctx.close();
@@ -1408,6 +1816,8 @@ async function pruebaVolcarEnUnEquipo(browser) {
     await pruebaCuentasDeUnGrupo(browser);
     await pruebaBuscarEntreGrupos(browser);
     await pruebaElNombreNoSeCorta(browser);
+    await pruebaFichaDePersona(browser);
+    await pruebaBuscador(browser);
     await pruebaUsuarioYContrasena(browser);
     await pruebaInscripciones(browser);
     await pruebaInscripcionesDenegado(browser);

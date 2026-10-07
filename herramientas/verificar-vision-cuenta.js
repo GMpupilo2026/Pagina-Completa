@@ -339,7 +339,7 @@ async function pruebaTodoDesdeElRecuadro(browser) {
 }
 
 async function pruebaAdmin(browser) {
-  console.log("\n=== admin.html: la columna Visión ===");
+  console.log("\n=== admin.html: la visión, en la ficha de la persona ===");
   const { page, ctx } = await abrir(browser, "/admin.html", { __quien: "u-admin" });
   await page.waitForSelector("#app:not(.hidden)", { timeout: 20000 }).catch(() => {});
   await page.evaluate(() => {
@@ -354,9 +354,12 @@ async function pruebaAdmin(browser) {
     if (f) f.click();
     return true;
   });
+  // La visión se marca en la ficha de la persona: se abre desde su fila.
+  await page.waitForSelector('#users-body tr[data-persona="u-ana"] .persona-abrir', { timeout: 10000 }).catch(() => {});
+  await page.click('#users-body tr[data-persona="u-ana"] .persona-abrir').catch(() => {});
   await page.waitForSelector('select[data-vision="u-ana"]', { timeout: 10000 }).catch(() => {});
   const sel = await page.$('select[data-vision="u-ana"]');
-  if (!sel) { cierto("hay un selector de visión en la fila de la alumna", false); await ctx.close(); return; }
+  if (!sel) { cierto("hay un selector de visión en la ficha de la alumna", false); await ctx.close(); return; }
   igual("las tres opciones, dichas por lo que hacen", await page.evaluate(() =>
     Array.from(document.querySelector('select[data-vision="u-ana"]').options).map((o) => o.value + ":" + o.textContent)),
     [":Ve bien", "baja_vision:Baja visión: voz encendida", "ciego:Ciega: todo adaptado"]);

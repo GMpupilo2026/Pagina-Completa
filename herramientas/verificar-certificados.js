@@ -45,9 +45,15 @@ function leccionesDeLaBase() {
   archivos.forEach((f) => {
     const sql = fs.readFileSync(path.join(dir, f), "utf8");
     const i = sql.indexOf("insert into interno.curso_lecciones");
-    if (i < 0) return;
-    const bloque = sql.slice(i, sql.indexOf(";", i));
-    for (const m of bloque.matchAll(/\('([a-z0-9-]+)',\s*'[^']*',\s*(\d+)\)/g)) total[m[1]] = Number(m[2]);
+    if (i >= 0) {
+      const bloque = sql.slice(i, sql.indexOf(";", i));
+      for (const m of bloque.matchAll(/\('([a-z0-9-]+)',\s*'[^']*',\s*(\d+)\)/g)) total[m[1]] = Number(m[2]);
+    }
+    // Un curso que cambió de slug («mil-y-una-lecciones» pasó a
+    // «una-clase-al-dia») se lleva su total.
+    for (const m of sql.matchAll(/update interno\.curso_lecciones set slug = '([a-z0-9-]+)' where slug = '([a-z0-9-]+)'/g)) {
+      if (m[2] in total) { total[m[1]] = total[m[2]]; delete total[m[2]]; }
+    }
   });
   return total;
 }
@@ -67,6 +73,18 @@ function estatico() {
   console.log("\n=== Las lecciones de cada curso, en la base y en la página ===");
   const base = leccionesDeLaBase();
   const catalogo = JSON.parse(fs.readFileSync(path.join(RAIZ, "herramientas", "cursos", "catalogo.json"), "utf8")).cursos.map((c) => c.slug).sort();
+  // Una fila que la base tiene sin curso publicado: «cambio-o-no-cambio» lo
+  // dio de alta otra sesión y nunca se publicó (ver «Hubo otro curso del mismo
+  // tema a la vez»). No da certificado porque ninguna página lo pide; si se
+  // borra con su migración, se saca de acá. Lo mismo los siete cursos que se
+  // borraron del sitio en octubre de 2026 (ver «Los cursos borrados»): ninguno
+  // tiene un certificado emitido, y siguen en interno.curso_lecciones hasta que
+  // se aplique la migración que los quita.
+  const SIN_CURSO = ["cambio-o-no-cambio",
+    "fundamentos-del-ajedrez", "aperturas-y-defensas", "calculo-y-visualizacion", "finales-practicos",
+    "estrategia-y-tactica", "estrategia-en-el-final", "preparacion-para-torneos"];
+  igual("las filas sin curso no están en el catálogo", SIN_CURSO.filter((s) => catalogo.includes(s)), []);
+  SIN_CURSO.forEach((slug) => delete base[slug]);
   igual("la base conoce exactamente los cursos del catálogo", Object.keys(base).sort(), catalogo);
   catalogo.forEach((slug) => igual(`${slug}: lecciones en la base = en la página`, base[slug], leccionesDelCurso(slug)));
 }

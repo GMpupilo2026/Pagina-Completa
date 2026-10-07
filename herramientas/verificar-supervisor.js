@@ -258,7 +258,9 @@ async function pruebaAdminSupervisores(browser) {
   page.on("pageerror", (e) => errores.push(String(e)));
   await page.goto(BASE + "/admin.html", { waitUntil: "networkidle" });
   await page.waitForSelector("#app:not(.hidden)", { timeout: 20000 });
-  // Supervisores es una sección del panel: se llega con el menú de la izquierda.
+  // Supervisores es una sección de la pestaña «Organización»: se llega como
+  // una persona, con la pestaña y después la sección.
+  await page.click('.admin-grupo[data-grupo="organizacion"]');
   await page.click('.admin-nav[data-ir="supervisores"]');
   const tarjetas = await page.$$eval("#sup-lista h3", (hs) => hs.map((h) => h.textContent));
   igual("se lista a la supervisora", tarjetas, ["Marta Solano"]);

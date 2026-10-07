@@ -82,7 +82,13 @@ PAGINAS = [
     "cursos/academia/el-mapa-de-los-finales.html",
     "cursos/academia/formacion-ajedrez.html",
     "cursos/academia/index.html",
+    "cursos/academia/una-clase-al-dia.html",
     "cursos/academia/partidas-modelo.html",
+    "cursos/academia/rompe-el-estancamiento.html",
+    "cursos/academia/ganar-con-poco.html",
+    "cursos/academia/cambiar-o-no-cambiar.html",
+    "cursos/academia/ideas-que-ganan-partidas.html",
+    "cursos/academia/los-cimientos-del-ajedrez.html",
 ]
 
 HEADER_RE = re.compile(r'<header id="header"[\s\S]*?</header>')
@@ -754,12 +760,12 @@ def poner_migas(ruta, s):
 
 
 # El Ctrl + K de toda la Academia (js/atajo-buscar.js): lleva al buscador del
-# panel. No va en clases.html (tiene el suyo), ni en sesion.html (salir de la
+# panel. No va en clases.html ni en admin.html (cada una tiene el suyo), ni en sesion.html (salir de la
 # clase tiene que cerrar antes la asistencia) ni en examen.html (salir del
 # examen lo congela): ver la cabecera de ese archivo.
 ATAJO_INICIO = "<!-- atajo: inicio -->"
 ATAJO_FIN = "<!-- atajo: fin -->"
-SIN_ATAJO = {"clases.html", "sesion.html", "examen.html"}
+SIN_ATAJO = {"clases.html", "admin.html", "sesion.html", "examen.html"}
 
 
 def poner_atajo(ruta, s):

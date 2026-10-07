@@ -18,6 +18,8 @@ const { spawnSync } = require("child_process");
 
 const RAIZ = path.join(__dirname, "..");
 let fallos = 0;
+// Como lo escribe el correo: los títulos con tilde o comillas no cambian, pero un «&» sí.
+const escHtml = (t) => String(t).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 function igual(nombre, salio, esperaba) {
   const a = JSON.stringify(salio), b = JSON.stringify(esperaba);
   if (a === b) console.log("  ✓ " + nombre);
@@ -48,6 +50,12 @@ const ts = spawnSync(process.execPath, ["--experimental-strip-types", "--no-warn
     // Una base de antes de tiempo_por_seccion(): sin `secciones`, los conteos de siempre.
     { alumno: "Ana Rojas", desde: "2026-09-16T00:00:00Z", hasta: "2026-09-23T00:00:00Z", dias_activos: 4,
       minutos_ejercicios: 90, entreno: { "4x4": { cuantos: 12, mejor: null } } },
+    // Un rato en cada curso del catálogo: así se mira el nombre que el correo
+    // MUESTRA, no solo la tabla (ver abajo).
+    { alumno: "Ana Rojas", desde: "2026-09-16T00:00:00Z", hasta: "2026-09-23T00:00:00Z", dias_activos: 4,
+      minutos_ejercicios: 90, entreno: {},
+      secciones: JSON.parse(fs.readFileSync(path.join(RAIZ, "herramientas/cursos/catalogo.json"), "utf8")).cursos
+        .map((c) => ({ seccion: "curso:" + c.slug, minutos: 5, ejercicios: 0 })) },
   ])], { encoding: "utf8" });
 if (ts.status !== 0) { console.log(ts.stderr); process.exit(1); }
 const TS = JSON.parse(ts.stdout);
@@ -58,13 +66,22 @@ igual("las mismas secciones, con el mismo nombre, emoji y unidad",
   Object.keys(JS).sort().map((k) => [k, JSON.parse(JSON.stringify(JS[k]))]));
 
 const catalogo = JSON.parse(fs.readFileSync(path.join(RAIZ, "herramientas/cursos/catalogo.json"), "utf8")).cursos;
-// Cada curso del catálogo, con el mismo título. La tabla del correo puede
-// traer de más: los cursos borrados en octubre de 2026 siguen ahí para que el
-// avance viejo de un alumno no salga con su identificador (ver «Los cursos
-// borrados» en docs/decisiones/cursos-y-material.md).
-const titulos = {}, enElCorreo = {};
-catalogo.forEach((c) => { titulos[c.slug] = c.titulo; enElCorreo[c.slug] = TS.TITULOS[c.slug]; });
-igual("el correo nombra los cursos como el catálogo", enElCorreo, titulos);
+const titulos = {};
+catalogo.forEach((c) => { titulos[c.slug] = c.titulo; });
+// La tabla no tiene por qué traer TODOS los cursos: uno que falta se nombra
+// desde su slug («rompe-el-estancamiento» → «Rompe el estancamiento»), y
+// sumarlo obligaría a volver a desplegar la función solo para escribir lo
+// mismo. Lo que no puede pasar es que el correo muestre un nombre distinto
+// del catálogo: un nombre viejo en la tabla, o un slug que no da el título.
+// Y puede traer de más: los cursos borrados en octubre de 2026 siguen ahí para
+// que el avance viejo de un alumno no salga con su identificador (ver «Los
+// cursos borrados» en docs/decisiones/cursos-y-material.md).
+const enCatalogo = Object.keys(TS.TITULOS).filter((k) => k in titulos);
+igual("lo que la tabla nombra, lo nombra como el catálogo",
+  enCatalogo.map((k) => [k, TS.TITULOS[k]]),
+  enCatalogo.map((k) => [k, titulos[k]]));
+const nombraMal = catalogo.filter((c) => !TS.html[2].includes(escHtml("Curso: " + c.titulo))).map((c) => c.slug);
+igual("el correo muestra cada curso con el nombre del catálogo", nombraMal, []);
 
 console.log("-- Cada página que cuenta tiempo cuenta en una sección con nombre");
 // Lo que la base junta (ver public.tiempo_por_seccion): el tiempo de la

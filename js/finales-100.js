@@ -264,7 +264,7 @@
     el.classList.add("f100-viewer");
     el.innerHTML =
       '<div class="f100-head"><span class="f100-num">' + esc(d.id.replace(/^F(\d+)-(\d+)$/, "Final $1 · diagrama $2").replace(/^EB-/, "Pregunta ").replace(/^EF-/, "Pregunta ").replace(/^FT-/, "Fortaleza ")) + "</span>" +
-      '<span class="f100-res" data-res="' + esc(d.resultado) + '">' + esc(d.examen ? "Juegan " + (d.turno === "w" ? "blancas" : "negras") : RES_TXT[d.resultado] + (d.fin ? " → " + RES_TXT[d.fin] : "")) + "</span></div>" +
+      '<span class="f100-res" data-res="' + esc(d.resultado) + '">' + esc(d.examen || d.resultado === "*" ? "Juegan " + (d.turno === "w" ? "blancas" : "negras") : RES_TXT[d.resultado] + (d.fin ? " → " + RES_TXT[d.fin] : "")) + "</span></div>" +
       '<div class="f100-board" tabindex="0" aria-label="Diagrama"></div>' +
       // La posición escrita NO es región viva: se lee cuando se quiere (o se
       // pide con «posición»); lo que se dice solo en cada paso es la jugada,
@@ -628,6 +628,9 @@
       renderPractice();
     }
     function objetivo() {
+      // «*»: una posición de estrategia de partida real, que no promete un
+      // resultado teórico; se juega para poner en práctica la idea.
+      if (expected === "*") return "llevar a la práctica la idea de la posición";
       if (expected === "½") return human === "w" ? "sostener las tablas contra el motor" : "sostener las tablas contra el motor";
       const winner = expected === "1-0" ? "w" : "b";
       return winner === human ? "ganar la posición" : "resistir (el motor debería ganar; aguanta lo más posible)";
@@ -690,10 +693,11 @@
     }
     function checkEnd() {
       const res = resultOf(); if (!res) return false;
-      const ok = res === expected;
+      const ok = expected === "*" ? (res === "1-0" && human === "w") || (res === "0-1" && human === "b") : res === expected;
       const humanWon = (res === "1-0" && human === "w") || (res === "0-1" && human === "b");
       let txt = "Fin de la partida: " + RES_TXT[res] + ". ";
-      if (expected === "½") txt += res === "½" ? "¡Bien! Sostuviste las tablas, como dice la teoría." : humanWon ? "¡Ganaste! El motor se equivocó en una posición de tablas." : "La teoría dice tablas: repasa la defensa y vuelve a intentarlo.";
+      if (expected === "*") txt += humanWon ? "¡Ganaste la posición!" : res === "½" ? "Tablas: vuelve a mirar la idea de la lección y prueba otra vez." : "El motor ganó: vuelve a mirar la idea de la lección y prueba otra vez.";
+      else if (expected === "½") txt += res === "½" ? "¡Bien! Sostuviste las tablas, como dice la teoría." : humanWon ? "¡Ganaste! El motor se equivocó en una posición de tablas." : "La teoría dice tablas: repasa la defensa y vuelve a intentarlo.";
       else if (ok) txt += humanWon ? "¡Bien! Ganaste la posición como dice la teoría." : "El motor ganó, como dice la teoría. Fíjate cuántas jugadas resististe.";
       else txt += humanWon ? "¡Ganaste una posición que la teoría da por perdida!" : "La teoría dice " + RES_TXT[expected] + ": repasa la línea principal y prueba de nuevo.";
       guardar(d.id, { resultado: res, esperado: expected, jugaste: human, nivel: levelKey(), ok: ok, jugadas: game.history().length, fecha: new Date().toLocaleDateString("en-CA", { timeZone: "America/Costa_Rica" }) });

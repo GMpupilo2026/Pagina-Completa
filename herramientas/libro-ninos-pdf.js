@@ -1,15 +1,15 @@
-/* ===== «Peonita y el reino de las 64 casillas», de Oscar Angulo Cubero =====
+/* ===== Los cuentos de Peonita, de Oscar Angulo Cubero =====
  *
- * Un libro para que niñas y niños de 4 a 8 años aprendan a jugar ajedrez con
- * un cuento: Peonita, un peón blanco, sale de noche de la caja de ajedrez de
- * una escuela y Don Lento, un perezoso del guarumo, le enseña a mover cada
- * pieza. Cada capítulo trae su ilustración, el cuento, «Lo que aprendí» y una
- * página de «¡A jugar!»; al final, el diploma y las soluciones.
+ * Libros para que niñas y niños de 4 a 8 años aprendan ajedrez con un cuento:
+ * Peonita, un peón blanco, y su amigo Tizón aprenden con Don Lento, un
+ * perezoso del guarumo. Cada capítulo trae su ilustración, el cuento, «Lo que
+ * aprendí» y una página de «¡A jugar!»; al final, el diploma y las soluciones.
  *
- * Arma material/peonita/peonita.pdf y peonita-accesible.html. El contenido
- * (cuento, ejercicios y respuestas) vive en herramientas/libro-ninos/contenido.js
- * y los dibujos en herramientas/libro-ninos/dibujos.js: este script solo lo pone
- * en papel. Las respuestas las comprueba verificar-libro-ninos.js con chess.js.
+ * Cada libro es un módulo de herramientas/libro-ninos/ (la lista está en
+ * libros.js) con su cuento, sus ejercicios y respuestas, su tapa y sus
+ * secretos; los dibujos están en dibujos.js. Este script los pone en papel,
+ * todos con la MISMA maqueta: material/<slug>/<slug>.pdf y
+ * <slug>-accesible.html. Las respuestas las comprueba verificar-libro-ninos.js.
  *
  * Se cierra como los otros libros (tapa a página completa, marca de agua con
  * el logo, firma del autor y PDF protegido: herramientas/lib/pdf-armar.js),
@@ -18,7 +18,8 @@
  *
  * Cómo se corre (Node, Chromium por Playwright y pypdf):
  *
- *     node herramientas/libro-ninos-pdf.js
+ *     node herramientas/libro-ninos-pdf.js                   # todos los libros
+ *     node herramientas/libro-ninos-pdf.js peonita-trucos    # uno solo, por su slug
  *     node herramientas/libro-ninos-pdf.js --solo-accesible   # sin PDF ni pypdf
  *
  * Con CHROMIUM=/ruta/al/chrome se le puede indicar un Chromium ya instalado.
@@ -33,11 +34,12 @@ const { describir } = require("./lib/describir-fen.js");
 const { unir, proteger } = require("./lib/pdf-armar.js");
 const N = require("./lib/notacion.js");
 const D = require("./libro-ninos/dibujos.js");
-const L = require("./libro-ninos/contenido.js");
+const LIBROS = require("./libro-ninos/libros.js");
 
 const RAIZ = path.join(__dirname, "..");
-const CARPETA = path.join(RAIZ, "material", "peonita");
-const CLAVE_PROPIETARIO = "peonita-oac-2026";
+/* El libro que se está armando. Las funciones de abajo lo leen de acá: se
+   arma uno por vez. */
+let L;
 const ANIO = 2026;
 
 /* La madera de los tableros del libro. Los contrastes están medidos (WCAG,
@@ -125,7 +127,7 @@ function diagrama(fen, opciones) {
   }
   return tablero(fen, Object.assign({
     colores: MADERA, coordenadas: true, titulo: o.titulo || "Diagrama",
-    destacar: o.casilla ? [o.casilla] : [], estrellas: o.estrellas || [],
+    destacar: o.casilla ? [o.casilla] : [], estrellas: o.estrellas || [], flechas: o.flechas || [],
   }, extra));
 }
 
@@ -179,6 +181,13 @@ function preguntaDe(e) {
     case "enroque": return { q: "¿Puede enrocar corto el rey blanco ahora mismo?", a: SI_NO };
     case "corona": return { q: "El peón llega a la estrella. ¿En qué pieza se puede convertir?", a: LINEA() };
     case "casilla": return { q: e.pregunta, a: LINEA() };
+    case "gana": return { q: e.pregunta || "Juegan las blancas. ¿Qué jugada hace el truco?", a: LINEA() };
+    case "amenaza": return { q: e.pregunta || "Le toca a Peonita, pero antes mira: ¿qué jugada quiere hacer Tizón?", a: LINEA() };
+    case "mate2": return { q: e.pregunta || "Juegan las blancas y dan jaque mate en dos jugadas. ¿Cuál es la primera?", a: LINEA("1.ª jugada:") };
+    case "elige": {
+      const [x, y] = Object.keys(e.opciones);
+      return { q: e.pregunta || `Juegan las blancas. Una de estas jugadas da jaque mate y la otra ahoga al rey. ¿Cuál da mate: ${x} o ${y}?`, a: `<p class="opciones">${Object.keys(e.opciones).map((j) => `<span class="caja-op">${esc(j)}</span>`).join("")}</p>` };
+    }
     default: return { q: e.pregunta, a: LINEA() };
   }
 }
@@ -231,6 +240,7 @@ function nombreCorto(letra) { return UN[letra]; }
 function solucion(e) {
   const p = e.casilla ? piezaEn(e.fen, e.casilla) : null;
   const expl = e.explica ? " " + e.explica : "";
+  if (e.solucion) return e.solucion;
   switch (e.tipo) {
     case "tableros": return "El tablero A: tiene la casilla clara abajo, a la derecha.";
     case "colorear": return "Quedan pintadas a1, c1, e1, g1, b2, d2… una sí y una no, como un piso de baldosas.";
@@ -253,7 +263,7 @@ function solucion(e) {
     case "salida": return `${conMayuscula(e.respuesta)}.` + expl;
     case "mate": {
       const pieza = { k: "el rey", q: "la dama", r: "la torre", b: "el alfil", n: "el caballo", p: "el peón" }[LETRA_ESP[e.respuesta[0]] || "p"];
-      return `${e.respuesta}: ${pieza} va a ${e.respuesta.slice(-2)} y da jaque mate.`;
+      return `${e.respuesta}: ${pieza} va a ${e.respuesta.slice(-2)} y da jaque mate.` + expl;
     }
     case "final": return { mate: "Jaque mate.", ahogado: "Ahogado: la partida termina en tablas.", ninguno: "Ninguno de los dos: la partida sigue." }[e.respuesta] + expl;
     case "enroque": return (e.respuesta ? "Sí." : "No.") + expl;
@@ -263,6 +273,10 @@ function solucion(e) {
     }
     case "cambio": return `${conMayuscula(e.respuesta)}: das ${L.VALOR[e.das]} puntos y recibes ${L.VALOR[e.recibes]}.`;
     case "suma": return `${e.respuesta} puntos: 8 peones (8), 2 caballos (6), 2 alfiles (6), 2 torres (10) y la dama (9).`;
+    case "gana": return `${e.respuesta}.` + expl;
+    case "amenaza": return `Tizón quiere jugar ${e.respuesta}.` + expl;
+    case "mate2": return `${e.respuesta}.` + expl;
+    case "elige": return `${e.respuesta} da jaque mate.` + expl;
     default: return e.respuesta;
   }
 }
@@ -274,7 +288,7 @@ function parrafo(t) {
 }
 
 function muestraHTML(m) {
-  return `<figure class="muestra"><div class="diag">${diagrama(m.fen, { casilla: m.casilla, mostrar: !!m.casilla, titulo: m.pie })}</div><figcaption>${esc(m.pie)}</figcaption></figure>`;
+  return `<figure class="muestra"><div class="diag">${diagrama(m.fen, { casilla: m.casilla, mostrar: !!m.casilla, flechas: m.flechas, titulo: m.pie })}</div><figcaption>${esc(m.pie)}</figcaption></figure>`;
 }
 
 /* Con un solo diagrama, el diagrama y «Lo que aprendí» van lado a lado: así el
@@ -299,7 +313,6 @@ function capituloHTML(c) {
   </section>`;
 }
 
-const PRES = L.PRESENTACION;
 const ESTILO = `
   ${FUENTES}
   @page { size: A4; }
@@ -387,34 +400,47 @@ const ESTILO = `
   .diploma .nombre { border-bottom: 2px solid #5b4636; height: 14mm; margin: 4mm 10mm 6mm; }
   .diploma .texto { font-size: 15pt; line-height: 1.6; }
   .diploma .dibujo svg { width: 100%; height: auto; }
-  .diploma .firmas { margin-top: auto; display: flex; justify-content: space-between; gap: 12mm; font-size: 11pt; }
+  .diploma .firmas { margin-top: auto; padding-top: 14mm; display: flex; justify-content: space-between; gap: 12mm; font-size: 11pt; }
   .diploma .firmas div { flex: 1; border-top: 1.5px solid #5b4636; padding-top: 2mm; }
   .diploma .firmas strong { font-family: "Quicksand"; display: block; font-size: 12pt; }
+  /* La firma de los personajes va arriba de la línea, como hecha a mano; abajo,
+     el nombre impreso. El autor va aparte, abajo al centro con el logo: el
+     logo es el gris de la marca de agua, porque el crema no se ve sobre el
+     fondo crema del diploma. */
+  .diploma .firma-mano { display: block; font-family: "Comic Neue"; font-weight: 700; font-style: italic; font-size: 16pt; color: #1864ab; margin: -11mm 0 3mm; transform: rotate(-5deg); white-space: nowrap; }
+  .diploma .autoria { display: flex; align-items: center; justify-content: center; gap: 2.5mm; margin-top: 7mm; font-family: "Quicksand"; font-weight: 700; font-size: 9.5pt; color: #7a5c3e; }
+  .diploma .autoria img { width: 11mm; height: auto; }
+  /* La colección: cada diploma con su número y su medalla, la de este libro
+     en grande sobre el dibujo, y abajo la fila con todas (la de este libro
+     resaltada) y un «?» para el próximo. */
+  .diploma .medalla-grande { position: absolute; top: 6mm; right: 8mm; width: 26mm; transform: rotate(8deg); }
+  .diploma .medalla-grande svg { width: 26mm; height: auto; }
+  .diploma .coleccion-n { font-family: "Quicksand"; font-weight: 700; font-size: 11pt; color: #9a4f00; letter-spacing: .04em; text-transform: uppercase; margin: 5mm 0 0; }
+  .diploma .coleccion { display: flex; align-items: flex-end; justify-content: center; gap: 3mm; margin-top: 6mm; font-family: "Quicksand"; font-weight: 700; font-size: 9.5pt; color: #5b4636; }
+  .diploma .coleccion-t { align-self: center; margin-right: 1mm; }
+  .diploma .coleccion figure { margin: 0; text-align: center; font-size: 7.5pt; line-height: 1.15; width: 18mm; }
+  .diploma .coleccion figure svg { width: 9mm; height: auto; margin: 0 auto 1mm; }
+  .diploma .coleccion figure.esta svg { width: 12mm; }
+  .diploma .coleccion figure.esta { color: #a61e4d; }
 `;
+
+/* La fila de «Mi colección» del diploma: un lugar por libro de libros.js, en
+   orden, y uno más con «?» para el próximo cuento. */
+function coleccion() {
+  return LIBROS.map((l) => `<figure class="${l === L ? "esta" : ""}">${D.medalla(l.DIPLOMA.medalla)}<figcaption>n.º ${l.DIPLOMA.numero}<br>${esc(l.DIPLOMA.nombre)}</figcaption></figure>`).join("") +
+    `<figure>${D.medalla("?", { apagada: true })}<figcaption>n.º ${LIBROS.length + 1}<br>¡El próximo!</figcaption></figure>`;
+}
 
 function soluciones() {
   return `<section class="soluciones"><h2>Soluciones</h2>
-    <p>Para leerlas con un adulto después de intentarlo. Las casillas se nombran con su letra y su número, como aprendimos en el capítulo 1.</p>
+    <p>Para leerlas con un adulto después de intentarlo. Las casillas se nombran con su letra y su número.</p>
     ${L.CAPITULOS.map((c) => `<h3>Capítulo ${c.n} · ${esc(c.titulo)}</h3><ol>${c.ejercicios.map((e) => `<li>${esc(solucion(e))}</li>`).join("")}</ol>`).join("")}
   </section>`;
 }
 
-const escenaFinal = {
-  id: "final", fondo: "noche",
-  alt: "Todos celebran juntos bajo la luna: Peonita, Tizón, el rey, la dama, la torre, el alfil y el caballo, con confeti de colores. Don Lento sonríe desde su rama.",
-  contenido: D.confeti(5, 50, 600, 320) + D.perezoso(500, 40, 0.5) +
-    [["t", "b"], ["c", "n"], ["r", "b"], ["d", "n"], ["a", "b"]].map(([t, col], i) => D.pieza(t, col, 70 + i * 82, 225, 0.55, { espejo: i > 2 })).join("") +
-    D.pieza("p", "b", 230, 300, 0.8, { mono: true }) + D.pieza("p", "n", 360, 300, 0.8, { bufanda: true, espejo: true }) + D.corazon(295, 205, 1.1),
-};
-
-const escenaDiploma = {
-  id: "diploma", fondo: "dia",
-  alt: "Peonita y Don Lento felicitan a quien recibe el diploma.",
-  contenido: D.perezoso(470, 40, 0.55) + D.pieza("p", "b", 150, 290, 1, { mono: true }) + D.trofeo(300, 280, 1.4) +
-    D.estrella(240, 90, 12) + D.estrella(360, 70, 9) + D.estrella(300, 120, 7),
-};
-
-const html = `<!doctype html><html lang="es"><head><meta charset="utf-8"><title>${esc(L.TITULO)}</title><style>${ESTILO}</style></head><body>
+function cuerpo() {
+  const PRES = L.PRESENTACION;
+  return `<!doctype html><html lang="es"><head><meta charset="utf-8"><title>${esc(L.TITULO)}</title><style>${ESTILO}</style></head><body>
 <section class="pagina creditos">
   <p class="dedica">${L.DEDICATORIA.map(esc).join("<br>")}</p>
   <h1>${esc(L.TITULO)}</h1>
@@ -434,24 +460,29 @@ const html = `<!doctype html><html lang="es"><head><meta charset="utf-8"><title>
 <section class="pagina indice">
   <h2>Los capítulos</h2>
   <ol>${L.CAPITULOS.map((c) => `<li><span class="n">${c.n}</span>${esc(c.titulo)}</li>`).join("")}
-  <li><span class="n">★</span>Mi diploma de ajedrez</li><li><span class="n">✓</span>Soluciones</li></ol>
+  <li><span class="n">★</span>Mi diploma n.º ${L.DIPLOMA.numero}: ${esc(L.DIPLOMA.nombre)}</li><li><span class="n">✓</span>Soluciones</li></ol>
 </section>
 ${L.CAPITULOS.map(capituloHTML).join("")}
 <section class="capitulo final">
-  <header class="cab-cap"><span class="insignia">Fin</span><h2>¡Ya sabes jugar ajedrez!</h2></header>
-  <div class="ilustracion">${D.escena(escenaFinal)}</div>
+  <header class="cab-cap"><span class="insignia">Fin</span><h2>${esc(L.FINAL_TITULO)}</h2></header>
+  <div class="ilustracion">${D.escena(L.ESCENA_FINAL)}</div>
   ${L.FINAL.map((t) => `<p>${esc(t)}</p>`).join("")}
 </section>
 <section class="diploma">
-  <div class="dibujo">${D.escena(escenaDiploma)}</div>
-  <h2>Diploma de ajedrez</h2>
-  <p class="sub">El reino de las 64 casillas reconoce a</p>
+  <div class="dibujo">${D.escena(L.ESCENA_DIPLOMA)}</div>
+  <div class="medalla-grande">${D.medalla(L.DIPLOMA.medalla)}</div>
+  <p class="coleccion-n">Colección de diplomas de Peonita · Diploma n.º ${L.DIPLOMA.numero}</p>
+  <h2>${esc(L.DIPLOMA.nombre)}</h2>
+  <p class="sub">${esc(L.DIPLOMA.sub)}</p>
   <div class="nombre"></div>
-  <p class="texto">porque aprendió a mover todas las piezas, a dar jaque mate<br>y a jugar con la cabeza y con el corazón.</p>
-  <div class="firmas"><div><strong>Fecha</strong></div><div><strong>Peonita y Don Lento</strong>${esc(L.AUTOR)}</div></div>
+  <p class="texto">${L.DIPLOMA.texto.map(esc).join("<br>")}</p>
+  <div class="firmas"><div><strong>Fecha</strong></div><div><span class="firma-mano">${esc(L.DIPLOMA.firmaMano)}</span><strong>${esc(L.DIPLOMA.firma)}</strong></div></div>
+  <div class="coleccion"><span class="coleccion-t">Mi colección:</span>${coleccion()}</div>
+  <div class="autoria"><img src="${LOGO_MARCA}" alt="">${esc(L.AUTOR)}</div>
 </section>
 ${soluciones()}
 </body></html>`;
+}
 
 /* ---------------------------------------------------------- la tapa */
 function tapa() {
@@ -476,11 +507,7 @@ function tapa() {
     <path d="M0,520 C120,470 220,480 320,505 C420,530 500,470 600,490 L600,600 L0,600 Z" fill="#8ce99a"/>
     ${D.guarumo(80, 560, 1.15)}
     ${filas}
-    ${D.perezoso(470, 360, 0.75)}
-    ${D.pieza("t", "b", 95, 720, 0.6)}${D.pieza("c", "n", 505, 720, 0.6, { espejo: true })}
-    ${D.pieza("p", "n", 380, 790, 1.15, { bufanda: true, espejo: true })}
-    ${D.pieza("p", "b", 235, 815, 1.55, { mono: true })}
-    ${D.estrella(60, 470, 10)}${D.estrella(560, 600, 8)}${D.estrella(330, 420, 7)}
+    ${L.TAPA.dibujo}
   </svg>`;
   return `<!doctype html><html lang="es"><head><meta charset="utf-8"><title>${esc(L.TITULO)}</title><style>
   ${FUENTES}
@@ -498,7 +525,7 @@ function tapa() {
   .autor img { display: block; width: 26mm; margin: 0 0 2mm auto; filter: drop-shadow(0 .5mm 1mm rgba(0,0,0,.4)); }
 </style></head><body>
   <div class="fondo">${dibujo}</div>
-  <div class="titulo"><h1>Peonita<span class="chico">y el reino de las</span>64 casillas</h1><p>${esc(L.SUBTITULO)}</p></div>
+  <div class="titulo"><h1>${esc(L.TAPA.arriba)}<span class="chico">${esc(L.TAPA.medio)}</span>${esc(L.TAPA.abajo)}</h1><p>${esc(L.SUBTITULO)}</p></div>
   <div class="autor"><img src="${LOGO}" alt="">${esc(L.AUTOR)}</div>
 </body></html>`;
 }
@@ -547,18 +574,22 @@ function preguntaAccesible(e) {
 }
 
 function accesible() {
+  const PRES = L.PRESENTACION;
   const capitulos = L.CAPITULOS.map((c) => `<section>
     <h2>Capítulo ${c.n}. ${esc(c.titulo)}</h2>
     <p class="dibujo"><strong>El dibujo.</strong> ${esc(c.escena.alt)}</p>
     ${c.cuento.map((t) => `<p>${esc(t)}</p>`).join("")}
-    ${c.muestras.map((m) => `<div class="diagrama"><p><strong>Diagrama.</strong> ${esc(m.pie)}</p>${posicionEnPalabras(m.fen, m.casilla ? `Puede ir a: ${lista(destinos(m.fen, m.casilla))}.` : "")}</div>`).join("")}
+    ${c.muestras.map((m) => `<div class="diagrama"><p><strong>Diagrama.</strong> ${esc(N.textoHablado(m.pie, "espanol"))}</p>${posicionEnPalabras(m.fen, [
+      m.casilla ? `Puede ir a: ${lista(destinos(m.fen, m.casilla))}.` : "",
+      m.flechas && m.flechas.length ? `${m.flechas.length === 1 ? "La flecha va" : "Las flechas van"} ${lista(m.flechas.map(([x, y]) => `de ${x} a ${y}`))}.` : "",
+    ].filter(Boolean).join(" "))}</div>`).join("")}
     <h3>Lo que aprendí</h3><ul>${c.aprendi.map((t) => `<li>${esc(t)}</li>`).join("")}</ul>
-    <h3>¡A jugar!</h3><ol>${c.ejercicios.map((e) => `<li>${e.fen ? posicionEnPalabras(e.fen) : ""}<p>${esc(preguntaAccesible(e))}</p></li>`).join("")}</ol>
+    <h3>¡A jugar!</h3><ol>${c.ejercicios.map((e) => `<li>${e.fen ? posicionEnPalabras(e.fen) : ""}<p>${esc(N.textoHablado(preguntaAccesible(e), "espanol"))}</p></li>`).join("")}</ol>
   </section>`).join("");
   return `<!doctype html><html lang="es"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex">
-<title>Peonita y el reino de las 64 casillas — versión accesible</title>
+<title>${esc(L.TITULO)} — versión accesible</title>
 <style>
   :root { color-scheme: light dark; }
   body { max-width: 42rem; margin: 0 auto; padding: 1.5rem 1rem 4rem; background: #fff; color: #10202e;
@@ -585,12 +616,12 @@ Las casillas se nombran con una letra de la a a la h, que dice la columna, y un 
 ${L.NOTA_ADULTOS.map((t) => `<p>${esc(t)}</p>`).join("")}
 <h2>Dedicatoria</h2>
 <p>${L.DEDICATORIA.map(esc).join("<br>")}</p>
-<h2>Hola, soy Peonita</h2>
+<h2>${esc(PRES.titulo)}</h2>
 <p class="dibujo"><strong>El dibujo.</strong> ${esc(PRES.escena.alt)}</p>
 ${PRES.parrafos.map((t) => `<p>${esc(t)}</p>`).join("")}
 ${capitulos}
-<h2>¡Ya sabes jugar ajedrez!</h2>
-<p class="dibujo"><strong>El dibujo.</strong> ${esc(escenaFinal.alt)}</p>
+<h2>${esc(L.FINAL_TITULO)}</h2>
+<p class="dibujo"><strong>El dibujo.</strong> ${esc(L.ESCENA_FINAL.alt)}</p>
 ${L.FINAL.map((t) => `<p>${esc(t)}</p>`).join("")}
 <h2>Soluciones</h2>
 ${L.CAPITULOS.map((c) => `<h3>Capítulo ${c.n}. ${esc(c.titulo)}</h3><ol>${c.ejercicios.map((e) => `<li>${esc(N.textoHablado(solucion(e), "espanol"))}</li>`).join("")}</ol>`).join("")}
@@ -599,54 +630,68 @@ ${L.CAPITULOS.map((c) => `<h3>Capítulo ${c.n}. ${esc(c.titulo)}</h3><ol>${c.eje
 }
 
 /* ---------------------------------------------------------- generar */
-fs.mkdirSync(CARPETA, { recursive: true });
+const elegidos = process.argv.slice(2).filter((x) => !x.startsWith("--"));
+const aArmar = elegidos.length ? LIBROS.filter((l) => elegidos.includes(l.SLUG)) : LIBROS;
+if (!aArmar.length) { console.error("No hay ningún libro con ese slug. Los libros: " + LIBROS.map((l) => l.SLUG).join(", ")); process.exit(1); }
 const tmp = os.tmpdir();
-const htmlCuerpo = path.join(tmp, "peonita-cuerpo.html");
-const htmlTapa = path.join(tmp, "peonita-tapa.html");
-const htmlSello = path.join(tmp, "peonita-marca.html");
-fs.writeFileSync(htmlCuerpo, html);
-fs.writeFileSync(htmlTapa, tapa());
-fs.writeFileSync(htmlSello, htmlMarca);
-const destinoAccesible = path.join(CARPETA, "peonita-accesible.html");
-fs.writeFileSync(destinoAccesible, accesible());
-console.log(`Maqueta: ${htmlCuerpo}\nAccesible: ${destinoAccesible}`);
-console.log(`${L.CAPITULOS.length} capítulos · ${L.CAPITULOS.reduce((s, c) => s + c.ejercicios.length, 0)} ejercicios`);
+
+function archivos(libro) {
+  const carpeta = path.join(RAIZ, "material", libro.SLUG);
+  return {
+    carpeta,
+    accesible: path.join(carpeta, libro.SLUG + "-accesible.html"),
+    pdf: path.join(carpeta, libro.SLUG + ".pdf"),
+    htmlCuerpo: path.join(tmp, libro.SLUG + "-cuerpo.html"),
+    htmlTapa: path.join(tmp, libro.SLUG + "-tapa.html"),
+    htmlSello: path.join(tmp, libro.SLUG + "-marca.html"),
+  };
+}
+
+for (const libro of aArmar) {
+  L = libro;
+  const a = archivos(libro);
+  fs.mkdirSync(a.carpeta, { recursive: true });
+  fs.writeFileSync(a.htmlCuerpo, cuerpo());
+  fs.writeFileSync(a.htmlTapa, tapa());
+  fs.writeFileSync(a.htmlSello, htmlMarca);
+  fs.writeFileSync(a.accesible, accesible());
+  console.log(`${libro.TITULO}: ${libro.CAPITULOS.length} capítulos · ${libro.CAPITULOS.reduce((s, c) => s + c.ejercicios.length, 0)} ejercicios\n  Maqueta: ${a.htmlCuerpo}\n  Accesible: ${a.accesible}`);
+}
 if (process.argv.includes("--solo-accesible")) process.exit(0);
 
 (async () => {
   const { chromium } = require("playwright");
   const navegador = await chromium.launch(process.env.CHROMIUM ? { executablePath: process.env.CHROMIUM } : {});
-  const destino = path.join(CARPETA, "peonita.pdf");
-  const pdfTapa = path.join(tmp, "peonita-tapa.pdf");
-  const pdfCuerpo = path.join(tmp, "peonita-cuerpo.pdf");
-  const pdfMarca = path.join(tmp, "peonita-marca.pdf");
   const sinMargen = { top: 0, bottom: 0, left: 0, right: 0 };
+  for (const libro of aArmar) {
+    const a = archivos(libro);
+    const pdfTapa = path.join(tmp, libro.SLUG + "-tapa.pdf");
+    const pdfCuerpo = path.join(tmp, libro.SLUG + "-cuerpo.pdf");
+    const pdfMarca = path.join(tmp, libro.SLUG + "-marca.pdf");
 
-  const pTapa = await navegador.newPage();
-  await pTapa.goto("file://" + htmlTapa, { waitUntil: "load" });
-  await pTapa.evaluate(() => document.fonts.ready);
-  await pTapa.pdf({ path: pdfTapa, format: "A4", printBackground: true, margin: sinMargen });
+    const pTapa = await navegador.newPage();
+    await pTapa.goto("file://" + a.htmlTapa, { waitUntil: "load" });
+    await pTapa.evaluate(() => document.fonts.ready);
+    await pTapa.pdf({ path: pdfTapa, format: "A4", printBackground: true, margin: sinMargen });
 
-  const pMarca = await navegador.newPage();
-  await pMarca.goto("file://" + htmlSello, { waitUntil: "load" });
-  await pMarca.pdf({ path: pdfMarca, format: "A4", printBackground: true, margin: sinMargen });
+    const pMarca = await navegador.newPage();
+    await pMarca.goto("file://" + a.htmlSello, { waitUntil: "load" });
+    await pMarca.pdf({ path: pdfMarca, format: "A4", printBackground: true, margin: sinMargen });
 
-  const pagina = await navegador.newPage();
-  await pagina.goto("file://" + htmlCuerpo, { waitUntil: "load" });
-  await pagina.evaluate(() => document.fonts.ready);
-  await pagina.pdf({
-    path: pdfCuerpo, format: "A4", printBackground: true,
-    margin: { top: "14mm", bottom: "15mm", left: "16mm", right: "16mm" },
-    displayHeaderFooter: true,
-    headerTemplate: "<div></div>",
-    footerTemplate: `<div style="width:100%;font-size:7.5pt;color:#7a5c3e;font-family:Arial,sans-serif;padding:0 16mm;display:flex;justify-content:space-between;align-items:center;"><span>Peonita y el reino de las 64 casillas</span><span style="font-weight:700;">${esc(L.AUTOR)}</span><span class="pageNumber"></span></div>`,
-  });
+    const pagina = await navegador.newPage();
+    await pagina.goto("file://" + a.htmlCuerpo, { waitUntil: "load" });
+    await pagina.evaluate(() => document.fonts.ready);
+    await pagina.pdf({
+      path: pdfCuerpo, format: "A4", printBackground: true,
+      margin: { top: "14mm", bottom: "15mm", left: "16mm", right: "16mm" },
+      displayHeaderFooter: true,
+      headerTemplate: "<div></div>",
+      footerTemplate: `<div style="width:100%;font-size:7.5pt;color:#7a5c3e;font-family:Arial,sans-serif;padding:0 16mm;display:flex;justify-content:space-between;align-items:center;"><span>${esc(libro.TITULO)}</span><span style="font-weight:700;">${esc(libro.AUTOR)}</span><span class="pageNumber"></span></div>`,
+    });
+    await Promise.all([pTapa.close(), pMarca.close(), pagina.close()]);
+    unir(pdfTapa, pdfCuerpo, pdfMarca, a.pdf);
+    proteger(a.pdf, { clave: libro.CLAVE, autor: libro.AUTOR, imprimir: true, titulo: libro.TITULO_PDF, asunto: libro.ASUNTO });
+    console.log("PDF listo:", a.pdf);
+  }
   await navegador.close();
-  unir(pdfTapa, pdfCuerpo, pdfMarca, destino);
-  proteger(destino, {
-    clave: CLAVE_PROPIETARIO, autor: L.AUTOR, imprimir: true,
-    titulo: "Peonita y el reino de las 64 casillas",
-    asunto: "Cuento para que ninas y ninos aprendan a jugar ajedrez",
-  });
-  console.log("PDF listo:", destino);
 })();

@@ -5,8 +5,10 @@
  * seleccionar «María Rojas» en una lista y apretar Ctrl + K la busca.
  *
  * Lo pone herramientas/academia-cabecera.py en las páginas de la Academia,
- * menos en tres:
+ * menos en cuatro:
  *   - clases.html, que tiene su propio atajo y lleva al campo sin recargar;
+ *   - admin.html, que tiene el suyo (js/admin-buscador.js): busca personas,
+ *     secciones y páginas sin salir del panel;
  *   - sesion.html, porque salir de la clase en vivo tiene que cerrar antes la
  *     asistencia del alumno (lo hacen sus migas y su logo), y un atajo que
  *     cambia de página por su cuenta se la saltaría;

@@ -82,6 +82,8 @@ def imagenes(pagina, visto=None):
 
 CURSOS = [
     "desequilibrios-de-material", "el-mapa-de-los-finales", "partidas-modelo",
+    "rompe-el-estancamiento", "ganar-con-poco", "cambiar-o-no-cambiar",
+    "ideas-que-ganan-partidas", "los-cimientos-del-ajedrez",
 ]
 
 total_lecciones = total_paginas = con_ejemplo = 0

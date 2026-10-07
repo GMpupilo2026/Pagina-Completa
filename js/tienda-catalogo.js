@@ -42,6 +42,10 @@ window.TiendaCatalogo = (function () {
      páginas o de lecciones. */
   const PRECIO = 5000;
   const MONEDA = "₡";
+  /* Un producto puede traer su propio `precio` cuando no es «un material» del
+     tamaño de los demás. Hoy uno solo: «Una clase al día», que son 360
+     lecciones —lo de doce cursos juntos— y su libro en doce tomos (ver su
+     ficha, abajo). Sin `precio`, vale PRECIO. */
 
   /* El sistema completo NO es la suma de sus partes, y tampoco un número
      suelto: es la suma con un descuento, y las dos cifras se calculan abajo a
@@ -120,6 +124,25 @@ window.TiendaCatalogo = (function () {
       resumen: "Cuándo queda completada una jugada, qué obliga la pieza tocada, el reloj, los reclamos y las tablas — con los talleres para discutirlo en grupo.",
       carpeta: "cursos/recursos/arbitro-nacional",
       piezas: { cuadernillos: 0, ejercicios: 17, presentaciones: 17, accesibles: 0 },
+    },
+
+    /* El precio sale de la misma regla que el resto de la tienda, no a ojo:
+       son doce bloques, cada uno del tamaño de un curso grande del catálogo
+       (de 6 a 58 lecciones, 30 en promedio; los demás cursos traen de 10 a
+       36), y cada bloque con su tomo del libro. Doce materiales a PRECIO son
+       ₡60.000; con el descuento de llevarse muchos juntos (DESCUENTO_PACK),
+       ₡36.000. Son ₡100 por lección, contra unos ₡290 de los demás cursos. */
+    {
+      id: "una-clase-al-dia",
+      categoria: "curso",
+      emoji: "📚",
+      titulo: "Una clase al día",
+      nivel: "Avanzado",
+      precio: Math.round((12 * PRECIO * (1 - DESCUENTO_PACK)) / 1000) * 1000,
+      gancho: "Una clase por día, un año entero: el hábito que te hace subir de nivel sin darte cuenta.",
+      resumen: "360 clases para estudiar una por día, ordenadas por tema: el ataque al rey, las estructuras de peones, las piezas, el juego posicional, los sacrificios y los finales, con casi dos mil partidas comentadas jugada a jugada. Doce bloques, cada uno con su tomo del libro en PDF y en versión accesible.",
+      carpeta: "cursos/recursos/una-clase-al-dia",
+      piezas: { tomos: 12, tomosAccesibles: 12 },
     },
 
     /* ---- Los libros y las guías ---- */
@@ -213,7 +236,7 @@ window.TiendaCatalogo = (function () {
       titulo: "Comprensión, criterio y partidas modelo",
       promesa: "Construye hábitos de pensamiento en tus jugadores",
       detalle: "Cómo se juzga una posición cuando el material no está igual, y partidas donde eso se ve pasar.",
-      productos: ["partidas-modelo", "desequilibrios-de-material"],
+      productos: ["partidas-modelo", "desequilibrios-de-material", "una-clase-al-dia"],
     },
     {
       numero: 3,
@@ -280,8 +303,15 @@ window.TiendaCatalogo = (function () {
   function porCategoria(cat) {
     return PRODUCTOS.filter((p) => p.categoria === cat);
   }
+  function precioDe(p) {
+    return (p && p.precio) || PRECIO;
+  }
+  /* El más barato: «cada material, por su cuenta, desde…». */
+  function precioMinimo() {
+    return Math.min.apply(null, PRODUCTOS.map(precioDe));
+  }
   function precioSuelto() {
-    return PRODUCTOS.length * PRECIO;
+    return PRODUCTOS.reduce((a, p) => a + precioDe(p), 0);
   }
   function precioPack() {
     /* Redondeado al millar para que sea un precio que se pueda decir en voz
@@ -326,6 +356,6 @@ window.TiendaCatalogo = (function () {
     PRECIO, MONEDA, DESCUENTO_PACK,
     PRODUCTOS, MODULOS, BONOS,
     producto, porCategoria,
-    precioSuelto, precioPack, ahorroPack, moneda, piezasDe, archivosDe, totalArchivos, vistaDe,
+    precioDe, precioMinimo, precioSuelto, precioPack, ahorroPack, moneda, piezasDe, archivosDe, totalArchivos, vistaDe,
   };
 })();

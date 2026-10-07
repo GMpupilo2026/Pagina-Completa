@@ -112,6 +112,7 @@ window.PlanEntrenamiento = (function () {
         { texto: 'Ficha: la horquilla', href: 'entreno/estudio.html?ficha=horquilla' },
         { texto: 'Habilidades: ¿Qué quiere el rival?', href: 'entreno/tipos.html#amenaza' },
         { texto: 'Habilidades: Aguanta (la única jugada que defiende)', href: 'entreno/tipos.html#aguanta' },
+        { texto: 'Curso: Los cimientos del ajedrez', href: 'cursos/los-cimientos-del-ajedrez.html' },
       ],
     },
     {
@@ -178,6 +179,11 @@ window.PlanEntrenamiento = (function () {
         { texto: 'Precisión posicional: elegir el plan', href: 'entreno/precision-posicional.html' },
         { texto: 'Habilidades: Remata la ventaja', href: 'entreno/tipos.html#remata' },
         { texto: 'Habilidades: Elige a tiempo', href: 'entreno/tipos.html#tiempo' },
+        { texto: 'Curso: Rompe el estancamiento', href: 'cursos/rompe-el-estancamiento.html' },
+        { texto: 'Curso: Ganar con poco', href: 'cursos/ganar-con-poco.html' },
+        { texto: 'Curso: Cambiar o no cambiar', href: 'cursos/cambiar-o-no-cambiar.html' },
+        { texto: 'Curso: Ideas que ganan partidas', href: 'cursos/ideas-que-ganan-partidas.html' },
+        { texto: 'Curso: Una clase al día', href: 'cursos/una-clase-al-dia.html' },
       ],
     },
     {

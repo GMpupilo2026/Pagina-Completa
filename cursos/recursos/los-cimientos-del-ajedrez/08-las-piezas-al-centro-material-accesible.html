@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Las piezas al centro — Los cimientos del ajedrez — material de estudio</title>
+<meta name="robots" content="noindex">
+<meta name="author" content="Oscar Angulo Cubero">
+<meta name="description" content="Material de estudio en formato accesible de la lección 8 del curso Los cimientos del ajedrez.">
+<style>
+  /* Sin imágenes y sin columnas a propósito: esta versión está hecha para
+     lectores de pantalla y para quien necesita agrandar mucho el texto. */
+  body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+         font-size: 1.15rem; line-height: 1.8; color: #102a43; background: #ffffff;
+         max-width: 42rem; margin: 0 auto; padding: 1.5rem 1rem 4rem; }
+  h1 { font-size: 1.7rem; line-height: 1.3; }
+  h2 { font-size: 1.3rem; margin-top: 2.5rem; border-bottom: 2px solid #102a43; padding-bottom: .3rem; }
+  h3 { font-size: 1.1rem; margin-top: 1.8rem; }
+  a { color: #8a4a00; }
+  dt { font-weight: 700; margin-top: 1rem; }
+  dd { margin: .3rem 0 0; }
+  .posicion { border: 2px solid #243b53; border-radius: .5rem; padding: 1rem; margin: 1rem 0; }
+  .respuesta { background: #f0f4f8; border-left: 4px solid #102a43; padding: .6rem .9rem; }
+  footer { margin-top: 3rem; border-top: 2px solid #102a43; padding-top: 1rem; font-size: .95rem; }
+  /* La vuelta a la plataforma. Este archivo se abre solo, en su propia
+     pestaña: sin estos enlaces no hay forma de regresar al curso salvo el
+     botón "atrás" del navegador, que con lector de pantalla no siempre está
+     a mano. Van arriba y abajo: el documento es largo y quien termina de
+     leerlo no tendría que subir de nuevo para salir. */
+  .volver { margin: 0 0 1.5rem; font-size: 1rem; }
+  footer .volver { margin: 1rem 0 0; }
+  .volver a { display: inline-block; padding: .2rem 0; }
+  @media (prefers-color-scheme: dark) {
+    body { background: #0a1f33; color: #f0f4f8; }
+    h2, footer { border-color: #f0b429; }
+    a { color: #f0b429; }
+    .posicion { border-color: #829ab1; }
+    .respuesta { background: #102a43; border-color: #f0b429; }
+  }
+</style>
+</head>
+<body>
+<nav class="volver" aria-label="Volver a la plataforma">
+  <a href="../../academia/los-cimientos-del-ajedrez.html">← Volver al curso Los cimientos del ajedrez</a>
+  ·
+  <a href="../../../clases.html">Panel de Academia</a>
+</nav>
+<header>
+  <p>Los cimientos del ajedrez · Lección 8</p>
+  <h1>Las piezas al centro</h1>
+  <p>Material de estudio en formato accesible. Autor: Oscar Angulo Cubero, Ajedrez Integral.</p>
+  <p>Esta versión dice en palabras todo lo que en el cuadernillo en PDF está dibujado: cada
+     posición viene descrita pieza por pieza, así que no hace falta ver ninguna imagen.</p>
+</header>
+
+<h2>1. De qué trata esta lección</h2>
+
+<p>El centro es el cruce de caminos del tablero. Desde ahí una pieza llega rápido a cualquier flanco, ataca más casillas y puede cambiar de objetivo en una jugada. La diferencia es muy concreta con el caballo: en el centro controla ocho casillas y en una esquina solo dos. Por eso se dice que un caballo en el borde es un caballo pobre. Con la dama, el alfil y la torre pasa algo parecido: desde el centro ven más y hacen más.</p>
+<p>Cuando no sepas qué hacer, mira dónde está cada una de tus piezas y pregúntate cuál es la más alejada del centro o la que menos casillas controla. Esa es la candidata a mejorar. Las señales de una posición sana son piezas que miran hacia el centro, caballos en las casillas centrales o cerca de ellas y torres en las columnas centrales cuando se abren. Las señales de alarma son piezas en los bordes sin una tarea clara.</p>
+<p>Centralizar no es amontonar piezas en las cuatro casillas del medio. Una pieza central tiene que estar segura: si un peón rival la puede echar con una jugada, quizá no valga la pena instalarla todavía. El error típico es llevar un caballo al borde para atacar algo y dejarlo ahí cuando el ataque termina. Si una pieza tuya ya cumplió su tarea en el costado, el siguiente paso casi siempre es traerla de vuelta al centro.</p>
+
+
+<h2>2. Conceptos clave</h2>
+<dl>
+  <dt>El centro</dt>
+  <dd>Las cuatro casillas del medio —d4, e4, d5, e5— y las que las rodean. Quien las controla mueve sus piezas de un lado al otro del tablero más rápido que el rival.</dd>
+  <dd><strong>El error de siempre:</strong> Confundir ocupar con controlar. Un peón en e4 ocupa; un alfil en g7 y un caballo en f6 controlan e4 sin estar ahí. Las aperturas hipermodernas se basan justamente en eso.</dd>
+  <dd><strong>Para verlo:</strong> Un caballo en e5 ataca ocho casillas; el mismo caballo en a1 ataca dos. Es el mismo caballo y vale cuatro veces menos.</dd>
+  <dt>Cómo hacer un plan</dt>
+  <dd>Un plan es una secuencia corta de jugadas con un objetivo concreto: 'llevar el caballo a d5', 'abrir la columna b', 'cambiar su alfil bueno'. Sale de la posición, no de las ganas.</dd>
+  <dd><strong>El error de siempre:</strong> Jugar sin plan, mirando solo la jugada que sigue. El otro error es enamorarse del plan y no cambiarlo cuando la posición cambia.</dd>
+  <dd><strong>Para verlo:</strong> El método corto: qué material hay, cómo están los reyes, cómo es la estructura, qué pieza mía es la peor. La respuesta a la última pregunta suele ser el plan.</dd>
+  <dt>La coronación y el peón pasado</dt>
+  <dd>Un peón que llega a la octava fila se cambia por dama, torre, alfil o caballo, a elección y sin importar las piezas que ya haya en el tablero. Un peón pasado es el que no tiene peones rivales delante ni en las columnas vecinas.</dd>
+  <dd><strong>El error de siempre:</strong> Coronar siempre dama. Hay posiciones en que la dama ahoga al rival y la torre gana, y otras en que el caballo da un jaque que la dama no da. Coronar en algo que no es dama tiene nombre —subpromoción— y decide partidas.</dd>
+  <dd><strong>Para verlo:</strong> Con peón en g7 y el rey negro encerrado, coronar dama puede ser ahogado; coronar torre da mate en dos. Vale la pena mirar antes de apretar.</dd>
+</dl>
+
+<h2>3. Ejemplos del curso</h2>
+<div class="posicion">
+  <h3>Posición 1: Hay una pieza que mira poco del tablero: busca adónde estaría mejor. Juegan las negras; el rival acaba de jugar caballo felix 2.</h3>
+  
+  <p>Piezas blancas: rey en g2; torres en c2, d1; alfil en f3; caballo en f2; peones en a2, d3, f4, g3.</p>
+  <p>Piezas negras: rey en f7; torres en b7, d8; alfiles en a6, d4; peones en a5, d5, f6, g7.</p>
+  <p>Juegan las negras.</p>
+  
+  <p>La línea, jugada por jugada: 33… torre bella 2, 34. torre captura bella 2, alfil captura bella 2, 35. torre david 2, alfil david 4, 36. caballo hector 3, rey eva 6</p>
+  <p>Resultado: Tablas</p>
+  <p>Tarrasch–Rubinstein, San Sebastián 1912. 33… torre bella 2, 34. torre captura bella 2, alfil captura bella 2, 35. torre david 2, alfil david 4, 36. caballo hector 3, rey eva 6. Alfil fuerte en d4 y rey que entra por el centro tras cambiar torres. Fíjate en que la pieza centralizada controla más casillas y por eso amenaza en varias direcciones a la vez. (Partida Tarrasch–Rubinstein, San Sebastián 1912. Stockfish 16 a profundidad 18: torre bella 2 vale lo mismo que la mejor (+0,3 contra +0,8).)</p>
+  <p>Posición en notación FEN, por si la quieres cargar en un programa: 3r4/1r3kp1/b4p2/p2p4/3b1P2/3P1BP1/P1R2NK1/3R4 b - - 6 33</p>
+</div>
+<div class="posicion">
+  <h3>Posición 2: Hay una pieza que mira poco del tablero: busca adónde estaría mejor. Juegan las blancas; el rival acaba de jugar …b4.</h3>
+  
+  <p>Piezas blancas: rey en g1; dama en h3; torres en a1, f1; alfiles en c2, g5; caballos en c3, e5; peones en a2, b2, d4, e3, f5, g2, h2.</p>
+  <p>Piezas negras: rey en g8; dama en d8; torres en a8, f8; alfiles en b7, e7; caballos en d7, f6; peones en a6, b4, c4, d5, f7, g6, h7.</p>
+  <p>Juegan las blancas.</p>
+  
+  <p>La línea, jugada por jugada: 16. felix captura gustav 6, hector captura gustav 6, 17. dama hector 4, bella captura cesar 3, 18. caballo captura david 7, dama captura david 7, 19. torre captura felix 6</p>
+  <p>Resultado: Ganan blancas</p>
+  <p>Pillsbury–Marco, París (12) 1900. 16. felix captura gustav 6, hector captura gustav 6, 17. dama hector 4, bella captura cesar 3, 18. caballo captura david 7, dama captura david 7, 19. torre captura felix 6. Caballo en e5 apoyado por peones como base del ataque al enroque. Fíjate en que la pieza centralizada controla más casillas y por eso amenaza en varias direcciones a la vez. (Partida Pillsbury–Marco, París (12) 1900. Stockfish 16 a profundidad 18: felix captura gustav 6 es la mejor (+3,5).)</p>
+  <p>Posición en notación FEN, por si la quieres cargar en un programa: r2q1rk1/1b1nbp1p/p4np1/3pNPB1/1ppP4/2N1P2Q/PPB3PP/R4RK1 w - - 0 16</p>
+</div>
+
+<h2>4. Ejercicios</h2>
+<ol>
+  <li>Pon un caballo en el centro y otro en la esquina y cuenta las casillas que ataca cada uno. Hazlo con alfil, torre y dama.</li>
+  <li>En tus tres últimas partidas, marca en qué jugada se resolvió el centro (se abrió, se cerró o se cambió) y qué hiciste después.</li>
+  <li>Para en la jugada 15 de tu próxima partida y escribe tu plan en una frase. Al final, mira si lo cumpliste.</li>
+  <li>Toma cinco posiciones de partidas de maestros en la jugada 20, escribe tu plan, y compáralo con lo que pasó.</li>
+  <li>Pon un peón blanco en cada columna, por turnos, con el rey negro a distintas distancias, y decide con la regla del cuadrado si corona. Después compruébalo jugando.</li>
+  <li>Busca en tus partidas una posición donde tuviste peón pasado y no lo usaste. Casi siempre hay una.</li>
+</ol>
+
+<h2>5. Preguntas con su respuesta</h2>
+<p>Contesta en voz alta antes de seguir leyendo: la respuesta viene justo después de cada pregunta.</p>
+<ol>
+  <li>
+    <p>¿Por qué el centro es más importante que las alas?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Porque desde el centro cada pieza alcanza más casillas y llega antes a los dos lados. Un ataque de flanco se responde con un golpe en el centro.</p>
+  </li>
+  <li>
+    <p>¿Qué es un centro de peones móvil y por qué es peligroso?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Dos peones centrales que pueden avanzar juntos. Al avanzar echan a las piezas rivales y abren líneas para las propias.</p>
+  </li>
+  <li>
+    <p>¿Qué son las aperturas hipermodernas?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Las que dejan al rival ocupar el centro con peones para atacarlo después con piezas desde lejos: India de rey, Grünfeld, Alekhine, Pirc.</p>
+  </li>
+  <li>
+    <p>¿Cuándo conviene cerrar el centro?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Cuando vas a atacar en un flanco. Con el centro cerrado, el rival no puede contragolpear por el medio y el ataque de ala llega.</p>
+  </li>
+  <li>
+    <p>¿Cuál es la pregunta que más rinde en una posición tranquila?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> '¿Cuál es mi peor pieza?' Mejorarla es un plan que casi nunca está mal.</p>
+  </li>
+  <li>
+    <p>¿De qué depende dónde atacar?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> De la estructura de peones: se ataca donde tus peones apuntan. Con la cadena e4-d5 el juego es en el flanco de rey; con d4-e3, en el de dama.</p>
+  </li>
+  <li>
+    <p>¿Cada cuánto se revisa un plan?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Cada vez que el rival hace algo que no esperabas, y siempre después de un cambio de piezas o de un avance de peones.</p>
+  </li>
+  <li>
+    <p>¿Un plan puede ser esperar?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Sí, en posiciones donde cualquier avance debilita. Se mejoran las piezas y se obliga al rival a definir. Se llama maniobrar, y es un plan legítimo.</p>
+  </li>
+  <li>
+    <p>¿Un peón puede coronar en una pieza que ya está en el tablero?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Sí. Se pueden tener dos, tres o nueve damas: la regla no limita cuántas piezas iguales hay.</p>
+  </li>
+  <li>
+    <p>¿Qué hace peligroso a un peón pasado?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Que nadie lo puede frenar con peones: hay que gastarle una pieza. Una pieza atada a vigilar un peón vale la mitad, y por eso el peón pasado gana finales.</p>
+  </li>
+  <li>
+    <p>¿Qué es un peón pasado lejano y por qué gana?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> El que está en el ala contraria a donde están los reyes. Obliga al rey rival a correr a pararlo, y mientras tanto el propio rey se come los peones del otro lado.</p>
+  </li>
+  <li>
+    <p>¿Cuál es la regla del cuadrado?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Traza un cuadrado entre el peón y su casilla de coronación: si el rey defensor puede entrar en ese cuadrado en su jugada, atrapa al peón; si no, corona solo. Si el peón todavía no se movió, cuenta desde la tercera fila.</p>
+  </li>
+</ol>
+
+<h2>6. Fuentes</h2>
+<ul>
+  <li>Texto de la lección: curso «Los cimientos del ajedrez» de Ajedrez Integral, de Oscar Angulo Cubero.</li>
+  <li>Conceptos, preguntas y ejercicios de este cuadernillo: material didáctico de Ajedrez Integral, de Oscar Angulo Cubero.</li>
+  <li>Posiciones: archivo de posiciones del propio curso, verificadas jugada por jugada con chess.js y evaluadas con el motor Stockfish que el sitio usa.</li>
+</ul>
+<h3>Para seguir leyendo</h3>
+<p>Obras de referencia sobre estos temas. Este material no reproduce texto de ellas: se listan como lectura recomendada, no como origen de lo que aquí se dice.</p>
+<ul>
+  <li>Aron Nimzowitsch, «Mi sistema» (1925).</li>
+  <li>Andrew Soltis, «Pawn Structure Chess» (1976).</li>
+  <li>Herman Grooten, «Chess Strategy for Club Players» (New in Chess, 2009).</li>
+  <li>Irving Chernev, «Logical Chess: Move by Move» (Batsford, 1957).</li>
+  <li>José Raúl Capablanca, «Fundamentos del ajedrez» (1921).</li>
+</ul>
+
+<footer>
+  <p>© 2026 Oscar Angulo Cubero · Ajedrez Integral. Material de uso docente para alumnos de la Academia.</p>
+  <p>No se autoriza su reproducción ni su distribución fuera de ella.</p>
+<p class="volver">
+  <a href="../../academia/los-cimientos-del-ajedrez.html">← Volver al curso Los cimientos del ajedrez</a>
+  ·
+  <a href="../../../clases.html">Panel de Academia</a>
+</p>
+</footer>
+</body>
+</html>

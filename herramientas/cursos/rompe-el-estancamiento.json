@@ -1,0 +1,1111 @@
+{
+  "slug": "rompe-el-estancamiento",
+  "titulo": "Rompe el estancamiento",
+  "nivel": "Intermedio · Avanzado",
+  "emoji": "🛡️",
+  "gradiente": "from-brand-700 to-brand-900",
+  "resumen": "Por qué llevas meses en el mismo Elo y qué hacer con eso: las siete familias de errores que frenan a un jugador de 1400 a 2100, cómo reconocerlas en tus partidas y cómo corregirlas una por una.",
+  "descripcion_larga": "Pasado cierto nivel, estudiar más aperturas o hacer más ejercicios ya no sube el Elo: lo que frena es lo que se resta, no lo que falta sumar. Los mismos errores aparecen una y otra vez en las partidas de jugadores de 1400 a 2100 —jugar sin plan, cambiar piezas sin preguntarse qué cambia, calcular a medias, no mirar lo que quiere el rival, jugar con miedo o relajarse con ventaja— y casi nunca son despistes: son hábitos. Este curso los ordena en siete familias, explica cada uno con una posición de partida real comprobada con motor, y termina con un método para encontrar los tuyos en tus propias partidas y llevar la cuenta de cuántas veces vuelven a aparecer.",
+  "anterior": {
+    "href": "desequilibrios-de-material.html",
+    "titulo": "Desequilibrios de material"
+  },
+  "siguiente": {
+    "href": "ganar-con-poco.html",
+    "titulo": "Ganar con poco"
+  },
+  "bloques": [
+    {
+      "n": 1,
+      "titulo": "Jugar con un plan",
+      "lecciones": [
+        {
+          "titulo": "Plan o jugada a jugada",
+          "resumen": "Quien juega jugada a jugada reacciona; quien tiene un plan decide. La diferencia se nota en el medio juego, cuando no hay nada forzado.",
+          "parrafos": [
+            "Jugar jugada a jugada es mirar la posición, buscar una jugada que parezca razonable y hacerla, sin preguntarse hacia dónde va la partida. Funciona mientras hay amenazas concretas: un jaque, una pieza atacada, un cambio obligado. Pero en cuanto la posición se tranquiliza, quien no tiene un plan empieza a mover piezas de un lado a otro, y cada jugada «razonable» deja la posición un poco peor que la anterior.",
+            "Un plan es una idea que une varias jugadas: llevar un caballo a una casilla fuerte, preparar una ruptura de peón, doblar torres en una columna abierta, atacar una debilidad. No hace falta que sea brillante; hace falta que exista. Un plan mediocre bien ejecutado le gana casi siempre a una colección de buenas jugadas sueltas, porque cada jugada del plan suma a la anterior.",
+            "La forma de entrenarlo es simple y molesta: antes de cada jugada en una posición tranquila, di en voz baja qué quieres conseguir en las próximas tres o cuatro jugadas. Si no puedes decirlo, todavía no tienes plan, y lo primero es buscarlo: qué pieza está peor, qué debilidad tiene el rival, qué ruptura te abre el juego. Recién entonces se elige la jugada."
+          ],
+          "practica": "Toma tres partidas tuyas de ritmo lento y marca las jugadas en las que la posición estaba tranquila. En cada una, escribe qué plan tenías. Si en más de la mitad no puedes escribir nada, este es tu primer error a corregir.",
+          "tema": "quietMove",
+          "pregunta": "No hay ningún jaque que gane: la jugada buena es tranquila, y sale de saber qué se quiere.",
+          "enlace": "Fíjate en que la jugada no captura nada: sirve porque está al servicio de una idea, no porque ataque algo en ese momento.",
+          "diagramas": [
+            {
+              "id": "RE-1",
+              "fen": "8/8/8/p5Rp/1r5P/1k3PK1/8/8 b - - 2 46",
+              "turno": "b",
+              "resultado": "0-1",
+              "pregunta": "No hay ningún jaque que gane: la jugada buena es tranquila, y sale de saber qué se quiere. Juegan las negras; el rival acaba de jugar Tg5.",
+              "comentario": "46…a4 47.Txh5 a3 48.Te5 a2. La clave es una jugada tranquila: sin jaque ni captura, pero sin defensa. Fíjate en que la jugada no captura nada: sirve porque está al servicio de una idea, no porque ataque algo en ese momento. (Ejercicio 0jVsL de la base abierta de Lichess (CC0), rating 1263. Stockfish 16 a profundidad 18: a4 es la mejor (+3,4) y la segunda queda en 0,0.)",
+              "linea": [
+                "a4",
+                "Rxh5",
+                "a3",
+                "Re5",
+                "a2"
+              ]
+            }
+          ]
+        },
+        {
+          "titulo": "Un plan concreto, no una intención",
+          "resumen": "«Atacar en el flanco de rey» no es un plan: es un deseo. Un plan dice con qué piezas, por qué casillas y con qué ruptura.",
+          "parrafos": [
+            "Muchos jugadores creen que tienen un plan cuando tienen una intención. «Voy a atacar», «quiero jugar en el centro», «tengo que mejorar mis piezas». Todo eso es cierto y no sirve para elegir una jugada. La señal de que el plan es demasiado vago es que después de decirlo sigues sin saber qué pieza mover.",
+            "Un plan concreto contesta tres preguntas: cuál es el objetivo (una casilla, un peón débil, el rey rival, una columna), qué piezas van a trabajar sobre él y en qué orden llegan. «Llevar el caballo de f3 a f5 por h4, poner la dama en g4 y después abrir con h4-h5» es un plan: se puede ejecutar, y también se puede comprobar si el rival lo puede parar.",
+            "Lo concreto tiene otra ventaja: se puede revisar. Si el rival juega …g6 y el caballo ya no llega a f5, el plan se corrige con una nueva casilla, no se abandona. Con una intención vaga no se nota cuándo dejó de funcionar, y se sigue jugando como si nada hubiera cambiado."
+          ],
+          "practica": "En tus próximas cinco partidas, cada vez que formules un plan, escríbelo en la planilla al lado de la jugada con una sola línea: objetivo, piezas y orden. Al terminar, revisa cuántos planes llegaste a cumplir y por qué se cortaron los demás.",
+          "tema": "quietMove",
+          "pregunta": "La jugada que gana mejora una pieza con un objetivo preciso.",
+          "enlace": "No basta con «mejorar las piezas»: esta jugada va a una casilla concreta por una razón concreta, y por eso no tiene defensa.",
+          "diagramas": [
+            {
+              "id": "RE-2",
+              "fen": "1r3rk1/1p3pp1/1q6/p2p2PQ/8/P7/1bP1R3/4R2K w - - 0 28",
+              "turno": "w",
+              "resultado": "1-0",
+              "pregunta": "La jugada que gana mejora una pieza con un objetivo preciso. Juegan las blancas; el rival acaba de jugar …cxd5.",
+              "comentario": "28.Th2 Dh6 29.gxh6. La clave es una jugada tranquila: sin jaque ni captura, pero sin defensa. No basta con «mejorar las piezas»: esta jugada va a una casilla concreta por una razón concreta, y por eso no tiene defensa. (Ejercicio 2T8eM de la base abierta de Lichess (CC0), rating 1480. Stockfish 16 a profundidad 18: Th2 es la mejor (+5,8) y la segunda queda en -4,5.)",
+              "linea": [
+                "Rh2",
+                "Qh6",
+                "gxh6"
+              ]
+            }
+          ]
+        },
+        {
+          "titulo": "Sin prisa: el plan va por etapas",
+          "resumen": "El error no es el plan, es querer cumplirlo en dos jugadas. Primero se prepara, después se ejecuta.",
+          "parrafos": [
+            "Un plan bueno ejecutado con prisa se vuelve un plan malo. Pasa todo el tiempo: se decide atacar y se empuja el peón de h antes de tener las piezas cerca, se decide romper en el centro y se rompe con el rey todavía en e1. La idea era correcta; el momento no.",
+            "Casi todo plan tiene dos etapas. En la primera se juntan las condiciones: las piezas llegan a sus casillas, el rey se pone a salvo, se quitan las defensas del rival. En la segunda se abre el juego. Abrir antes de tiempo le regala al rival las líneas que uno quería usar. Una buena pregunta antes de la ruptura: si el juego se abre ahora, ¿quién tiene más piezas cerca de donde va a pasar todo?",
+            "En los finales la prisa se paga todavía más caro: un peón que avanza antes de que llegue el rey suele terminar perdido, y una jugada de espera a tiempo gana partidas que el avance directo empata. Calma no es pasividad: es hacer primero lo que no se puede deshacer después."
+          ],
+          "practica": "Busca en tus partidas una ruptura de peón o un ataque que salió mal. Reconstruye la posición y cuenta cuántas piezas tenías cerca y cuántas tenía el rival. Escribe cuál habría sido la jugada de preparación que faltaba.",
+          "tema": "pawnEndgame",
+          "pregunta": "Final de peones: aquí una sola jugada decide, y no siempre es la más rápida.",
+          "enlace": "En los finales de peones cada tiempo cuenta: la jugada buena es la que cuenta bien, no la que se apura.",
+          "diagramas": [
+            {
+              "id": "RE-3",
+              "fen": "4k3/p7/4Kp2/2P1p1p1/P7/5P2/7P/8 b - - 6 46",
+              "turno": "b",
+              "resultado": "0-1",
+              "pregunta": "Final de peones: aquí una sola jugada decide, y no siempre es la más rápida. Juegan las negras; el rival acaba de jugar Re6.",
+              "comentario": "46…g4 47.fxg4 e4 48.Rxf6 e3. La clave es una jugada tranquila: sin jaque ni captura, pero sin defensa. En los finales de peones cada tiempo cuenta: la jugada buena es la que cuenta bien, no la que se apura. (Ejercicio 10hcN de la base abierta de Lichess (CC0), rating 1578. Stockfish 16 a profundidad 18: g4 es la mejor (+3,2) y la segunda queda en -6,2.)",
+              "linea": [
+                "g4",
+                "fxg4",
+                "e4",
+                "Kxf6",
+                "e3"
+              ]
+            }
+          ]
+        },
+        {
+          "titulo": "Un plan, no tres",
+          "resumen": "Tres planes a medias valen menos que uno terminado. Las piezas tienen que trabajar juntas, hacia el mismo lado.",
+          "parrafos": [
+            "Otro hábito que frena es cambiar de idea cada pocas jugadas: un avance en el flanco de dama, después una maniobra en el centro, después un intento de ataque al rey. Cada idea deja piezas en casillas que solo servían para ella, y al final ninguna de las tres llega a nada. El rival, en cambio, tuvo tiempo de reorganizarse.",
+            "Las piezas rinden cuando colaboran. Una torre en la columna abierta vale más si el caballo controla la casilla de entrada; un ataque al rey funciona si llegan tres piezas, no si llega una por turno. Antes de abrir un segundo frente pregúntate si el primero ya se agotó o si solo te aburriste de él.",
+            "Hay una excepción famosa: cuando un plan obliga al rival a defender un lado, abrir otro frente lejos puede ser decisivo. Pero eso es un plan con dos etapas, pensado desde el principio, no tres ideas sueltas. La diferencia es si el cambio de frente lo decides tú o te lo impone el aburrimiento."
+          ],
+          "practica": "Repasa una partida perdida y anota, jugada por jugada, en qué sector del tablero trabajaba cada una de tus jugadas (flanco de dama, centro, flanco de rey). Si el sector cambia más de tres veces sin un motivo forzado, tus planes están dispersos.",
+          "tema": "clearance",
+          "pregunta": "Una pieza tuya estorba a otra: sacarla de en medio es lo que hace trabajar a las dos juntas.",
+          "enlace": "Es el ejemplo más claro de colaboración: una pieza se aparta, con ganancia de tiempo, para que otra pueda hacer su trabajo.",
+          "diagramas": [
+            {
+              "id": "RE-4",
+              "fen": "2kr1r2/p1pn1R2/1p1pQ2p/8/2PP3N/2q3P1/P5PP/5R1K b - - 0 23",
+              "turno": "b",
+              "resultado": "0-1",
+              "pregunta": "Una pieza tuya estorba a otra: sacarla de en medio es lo que hace trabajar a las dos juntas. Juegan las negras; el rival acaba de jugar Dxe6.",
+              "comentario": "23…Txf7 24.Dxf7 Tf8 25.Dxf8+ Cxf8. Es un despeje: la pieza se aparta para abrirle la línea o la casilla a otra. Es el ejemplo más claro de colaboración: una pieza se aparta, con ganancia de tiempo, para que otra pueda hacer su trabajo. (Ejercicio 1xOmS de la base abierta de Lichess (CC0), rating 1391. Stockfish 16 a profundidad 18: Txf7 es la mejor (+4,3) y la segunda queda en -0,7.)",
+              "linea": [
+                "Rxf7",
+                "Qxf7",
+                "Rf8",
+                "Qxf8+",
+                "Nxf8"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "n": 2,
+      "titulo": "Los conceptos que sí sirven",
+      "lecciones": [
+        {
+          "titulo": "Lo básico que falta",
+          "resumen": "Antes de buscar ideas finas, repasa las que se saltaron: desarrollo, rey seguro, centro, piezas sin defensa.",
+          "parrafos": [
+            "Muchos jugadores de club estudian estructuras sofisticadas y variantes de apertura de veinte jugadas, y siguen perdiendo partidas por las cosas de siempre: un rey que se quedó en el centro, una pieza sin defender, un desarrollo que nunca terminó. No es falta de talento: es que esos conceptos se aprendieron rápido, de chicos o de un video, y nunca se volvieron automáticos.",
+            "La prueba es fácil de hacer. Toma tus últimas diez derrotas y busca la primera jugada en la que la evaluación cambió de verdad. En una buena parte de ellas el motivo será básico: el rey sin enrocar con el centro abierto, una pieza que quedó colgando, un caballo en el borde sin futuro. Esos errores no se arreglan con más teoría, se arreglan con revisar lo básico cada jugada.",
+            "Una lista corta antes de cada jugada ayuda mucho: ¿qué piezas tengo sin defender?, ¿está seguro mi rey?, ¿tengo alguna pieza que no hace nada? Al principio cansa; después de unas semanas se vuelve una mirada de dos segundos, y es la diferencia entre perder por un descuido y obligar al rival a ganarte."
+          ],
+          "practica": "Revisa tus últimas diez derrotas y clasifica la jugada decisiva: ¿fue un concepto básico (rey, desarrollo, pieza sin defender) o algo más fino? Si más de la mitad son básicos, dedica las próximas dos semanas a ejercicios de piezas sin defensa y seguridad del rey.",
+          "tema": "exposedKing",
+          "pregunta": "El rey rival quedó sin protección: el concepto más básico de todos, y el que más partidas decide.",
+          "enlace": "Un rey sin peones delante ni piezas cerca es un concepto de los primeros que se aprenden, y aquí decide la partida.",
+          "diagramas": [
+            {
+              "id": "RE-5",
+              "fen": "4k3/1p2r1b1/p1p3pp/2q5/4P3/1Q4P1/PPP2P1P/3R2K1 w - - 9 23",
+              "turno": "w",
+              "resultado": "1-0",
+              "pregunta": "El rey rival quedó sin protección: el concepto más básico de todos, y el que más partidas decide. Juegan las blancas; el rival acaba de jugar …Re8.",
+              "comentario": "23.Dg8+ Af8 24.Dxg6+ Tf7 25.De6+. Es una enfilada: la pieza de adelante se va y cae la de atrás. Un rey sin peones delante ni piezas cerca es un concepto de los primeros que se aprenden, y aquí decide la partida. (Ejercicio 283ff de la base abierta de Lichess (CC0), rating 1567. Stockfish 16 a profundidad 18: Dg8+ es la mejor (+3,6) y la segunda queda en -1,8.)",
+              "linea": [
+                "Qg8+",
+                "Bf8",
+                "Qxg6+",
+                "Rf7",
+                "Qe6+"
+              ]
+            }
+          ]
+        },
+        {
+          "titulo": "Las reglas tienen excepciones",
+          "resumen": "«No muevas dos veces la misma pieza», «no saques la dama temprano»: las reglas sirven hasta que la posición concreta dice otra cosa.",
+          "parrafos": [
+            "El extremo opuesto a no saber los conceptos es aplicarlos sin mirar. Las reglas generales —desarrolla antes de atacar, no cambies tu alfil bueno, el caballo en el borde es malo, no hagas jugadas de peón delante de tu rey— son promedios: describen lo que pasa en la mayoría de las posiciones. En la tuya, la de hoy, puede pasar otra cosa.",
+            "El jugador rígido descarta jugadas sin calcularlas porque «van contra la regla». Así deja pasar el sacrificio que gana, el caballo en el borde que justamente ataca lo que importa, la dama que sale temprano porque el rival dejó un peón sin defender. Y el rival que conoce las excepciones gana con jugadas que a ti ni se te ocurrieron.",
+            "La salida no es olvidar las reglas, es usarlas como preguntas: «esta jugada va contra el desarrollo; ¿qué gano a cambio?». Si la respuesta es algo concreto —material, un ataque que no se puede parar, una debilidad permanente—, la excepción manda. Si la respuesta es «nada», la regla tenía razón."
+          ],
+          "practica": "Busca en tus partidas una jugada que descartaste «por principio» y analízala con el motor. Anota si era buena o no, y por qué. Repite con tres partidas: vas a encontrar al menos una excepción que se te escapó.",
+          "tema": "sacrifice",
+          "pregunta": "La jugada que gana entrega material: va contra la regla de «no regales nada», y es la mejor.",
+          "enlace": "Según el conteo de material es una mala jugada; según la posición concreta, es la única que gana. Así se ve una excepción.",
+          "diagramas": [
+            {
+              "id": "RE-6",
+              "fen": "3rr1k1/1pp2pp1/5q1p/8/1QPp4/3P2Pb/PP2BP2/R3R1K1 b - - 0 22",
+              "turno": "b",
+              "resultado": "0-1",
+              "pregunta": "La jugada que gana entrega material: va contra la regla de «no regales nada», y es la mejor. Juegan las negras; el rival acaba de jugar Dxb4.",
+              "comentario": "22…Txe2 23.Txe2 Df3. Hay un sacrificio: se entrega material para ganar más. Según el conteo de material es una mala jugada; según la posición concreta, es la única que gana. Así se ve una excepción. (Ejercicio 3P7FK de la base abierta de Lichess (CC0), rating 1422. Stockfish 16 a profundidad 18: Txe2 es la mejor (+6,1) y la segunda queda en +1,1.)",
+              "linea": [
+                "Rxe2",
+                "Rxe2",
+                "Qf3"
+              ]
+            }
+          ]
+        },
+        {
+          "titulo": "El factor que manda",
+          "resumen": "En cada posición hay muchos factores, pero uno pesa más que los demás. Encontrarlo ordena todo el pensamiento.",
+          "parrafos": [
+            "Un jugador de club suele ver muchas cosas en una posición: el peón doblado, la columna abierta, el alfil malo, la ventaja de desarrollo, el rey un poco débil. El problema es que las ve todas con el mismo peso, y entonces no sabe por dónde empezar. Elige una jugada que mejora un poco cada cosa y no cambia nada de lo importante.",
+            "En casi toda posición hay un factor que manda. Si un rey está expuesto, eso pesa más que cualquier peón doblado. Si un peón pasado está a dos casillas de coronar, nada más importa. Si un bando va muy adelantado en desarrollo, lo urgente es abrir antes de que el otro se ponga al día. Los factores dinámicos —rey, desarrollo, iniciativa— suelen mandar sobre los estáticos —estructura, alfiles—, porque se pierden si no se usan ya.",
+            "Antes de buscar jugadas, haz la pregunta en voz alta: «¿qué es lo más importante en esta posición?». La respuesta te dice qué jugadas mirar primero. Con la práctica, la pregunta se contesta sola en segundos, y deja de pasar que el plan correcto estaba ahí y no lo viste porque estabas mirando el peón de a."
+          ],
+          "practica": "En cinco posiciones de tus partidas, escribe tres factores que veas y ordénalos de más a menos importante, antes de mirar el motor. Después compara con la jugada que recomienda: casi siempre trabaja sobre el primero de tu lista, o sobre uno que no viste.",
+          "tema": "exposedKing",
+          "pregunta": "De todo lo que hay en el tablero, una sola cosa importa: dónde está el rey rival.",
+          "enlace": "Hay muchas cosas que mirar en la posición, pero el factor que manda es la seguridad del rey; por eso la jugada buena va directo a él.",
+          "diagramas": [
+            {
+              "id": "RE-7",
+              "fen": "r7/2p2r1k/1p1pR2b/5q2/1B3Q2/P6P/5P2/4K3 w - - 0 41",
+              "turno": "w",
+              "resultado": "1-0",
+              "pregunta": "De todo lo que hay en el tablero, una sola cosa importa: dónde está el rey rival. Juegan las blancas; el rival acaba de jugar …Axh6.",
+              "comentario": "41.Dxh6+ Rg8 42.Tg6+ Dxg6 43.Dxg6+. Hay muchas cosas que mirar en la posición, pero el factor que manda es la seguridad del rey; por eso la jugada buena va directo a él. (Ejercicio 0N87n de la base abierta de Lichess (CC0), rating 1325. Stockfish 16 a profundidad 18: Dxh6+ es la mejor (+4,9) y la segunda queda en -3,8.)",
+              "linea": [
+                "Qxh6+",
+                "Kg8",
+                "Rg6+",
+                "Qxg6",
+                "Qxg6+"
+              ]
+            }
+          ]
+        },
+        {
+          "titulo": "¿Dónde está la ventaja?",
+          "resumen": "Tener ventaja no alcanza: hay que saber en qué consiste. Según dónde esté, se juega de una forma o de otra.",
+          "parrafos": [
+            "«Estoy mejor» es una frase que se dice mucho y se entiende poco. Mejor ¿por qué? No es lo mismo ir arriba en material, tener mejor estructura, tener más espacio o tener la iniciativa. Cada ventaja pide un tratamiento distinto, y aplicar el de otra es la forma más común de dejarla escapar.",
+            "Con ventaja de material, conviene cambiar piezas y simplificar: cada cambio hace pesar más la pieza o el peón de más. Con ventaja de desarrollo o iniciativa, pasa lo contrario: hay que abrir y atacar ya, porque esa ventaja se gasta con el tiempo. Con ventaja estructural, se juega lento: se fijan las debilidades del rival y se las ataca con calma, porque no se van a ir a ningún lado.",
+            "El error típico es jugar una posición dinámica como si fuera estática: con tres piezas más desarrolladas, el jugador se dedica a mejorar un alfil, y cuando termina el rival ya se puso al día. O al revés: con un peón de más en el final, se lanza a un ataque que no hacía falta y le devuelve el juego al rival. Saber dónde está tu ventaja te dice cuánto tiempo tienes."
+          ],
+          "practica": "Busca dos partidas en las que tuviste ventaja y no ganaste. Escribe en qué consistía la ventaja (material, desarrollo, estructura, rey) y qué hiciste con ella. Si el tratamiento no coincidía con el tipo de ventaja, ahí está el error.",
+          "tema": "deflection",
+          "pregunta": "Una pieza rival hace todo el trabajo de defensa: ahí está la ventaja, y hay que saber verla.",
+          "enlace": "La ventaja no está en el material sino en que una sola pieza rival sostiene la defensa; desviarla convierte esa ventaja en algo concreto.",
+          "diagramas": [
+            {
+              "id": "RE-8",
+              "fen": "2k3r1/pp2pn2/2np4/2p5/5PN1/P2P1K2/1PP5/R4R2 b - - 2 26",
+              "turno": "b",
+              "resultado": "0-1",
+              "pregunta": "Una pieza rival hace todo el trabajo de defensa: ahí está la ventaja, y hay que saber verla. Juegan las negras; el rival acaba de jugar Rf3.",
+              "comentario": "26…Cd4+ 27.Rf2 Txg4. Es una desviación: se aleja al defensor de lo que defendía. La ventaja no está en el material sino en que una sola pieza rival sostiene la defensa; desviarla convierte esa ventaja en algo concreto. (Ejercicio 2UQNN de la base abierta de Lichess (CC0), rating 1407. Stockfish 16 a profundidad 18: Cd4+ es la mejor (+3,7) y la segunda queda en -1,8.)",
+              "linea": [
+                "Nd4+",
+                "Kf2",
+                "Rxg4"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "n": 3,
+      "titulo": "Leer la posición más allá de las jugadas",
+      "lecciones": [
+        {
+          "titulo": "Lo simple contra lo complicado",
+          "resumen": "Cuando hay un camino claro, no hace falta el brillante. Y cuando vas peor, complicar es tu mejor defensa.",
+          "parrafos": [
+            "Muchos jugadores tienen un estilo y lo aplican siempre: los que aman las complicaciones las buscan aunque vayan ganando, y los que prefieren lo seguro simplifican aunque estén perdidos. Las dos cosas cuestan puntos. La elección entre lo simple y lo complicado no es de gusto: depende de cómo está la partida.",
+            "Con ventaja clara, lo simple gana. Cambiar piezas, quitar el contrajuego, ir a un final técnico: cada simplificación le quita al rival oportunidades de encontrar un recurso. Un ataque espectacular puede ganar más rápido, pero también puede fallar por una sola jugada que no viste. Cuando vas peor, es al revés: lo simple te lleva a una derrota tranquila, y lo complicado le pide al rival que encuentre la jugada justa varias veces seguidas.",
+            "La pregunta que ordena la decisión es: «¿quién se beneficia si la posición se aclara?». Si eres tú, aclara. Si es el rival, mantén la tensión, evita los cambios y busca posiciones donde haya que calcular. El reloj también cuenta: con poco tiempo, el rival se equivoca más en lo complicado."
+          ],
+          "practica": "Busca en tus partidas una ventaja que se escapó en complicaciones innecesarias, y una partida perdida en la que simplificaste estando peor. Escribe para cada una qué camino era el correcto y por qué.",
+          "tema": "pawnEndgame",
+          "pregunta": "El camino más simple, un final de peones, también es el que gana, si se cuenta bien.",
+          "enlace": "Con todo cambiado ya no hay complicaciones: queda contar tiempos, y quien cuenta bien gana sin riesgo.",
+          "diagramas": [
+            {
+              "id": "RE-9",
+              "fen": "8/2p3K1/p1p4p/8/1k6/7P/5P2/8 w - - 0 35",
+              "turno": "w",
+              "resultado": "1-0",
+              "pregunta": "El camino más simple, un final de peones, también es el que gana, si se cuenta bien. Juegan las blancas; el rival acaba de jugar …Rxb4.",
+              "comentario": "35.f4 a5 36.f5 c5 37.f6. La clave es una jugada tranquila: sin jaque ni captura, pero sin defensa. Con todo cambiado ya no hay complicaciones: queda contar tiempos, y quien cuenta bien gana sin riesgo. (Ejercicio 17Hf8 de la base abierta de Lichess (CC0), rating 1535. Stockfish 16 a profundidad 18: f4 es la mejor (+3,3) y la segunda queda en -1,7.)",
+              "linea": [
+                "f4",
+                "a5",
+                "f5",
+                "c5",
+                "f6"
+              ]
+            }
+          ]
+        },
+        {
+          "titulo": "Dinámica contra estática",
+          "resumen": "Lo estático dura (estructura, material); lo dinámico se gasta (iniciativa, desarrollo). Hay que saber cuál usar ahora.",
+          "parrafos": [
+            "Los factores estáticos de una posición son los que no cambian si nadie hace nada: el material, la estructura de peones, una casilla débil, un alfil malo. Los dinámicos son los que valen ahora y se pierden después: una ventaja de desarrollo, la iniciativa, piezas activas, un rey todavía en el centro. El jugador que no distingue unos de otros toma decisiones a ciegas.",
+            "Cuando tienes ventajas dinámicas, el tiempo juega en tu contra: cada jugada lenta le da al rival la oportunidad de terminar su desarrollo o de enrocar. Por eso a veces se entrega material, un factor estático, para no perder lo dinámico. Con ventajas estáticas pasa lo contrario: puedes esperar, porque la debilidad del rival seguirá ahí en veinte jugadas.",
+            "Muchas partidas se deciden por una mala conversión: el jugador tenía la iniciativa y la gastó en ganar un peón, y con el peón de más quedó una posición pasiva donde el rival se defendía cómodo. O tenía una estructura muy superior y se lanzó a un ataque que le dio al rival justamente lo que necesitaba: juego activo."
+          ],
+          "practica": "Elige una partida tuya con mucha táctica y marca, en cinco momentos, quién tenía las ventajas dinámicas y quién las estáticas. Mira si tus jugadas respetaban esa diferencia o la contradecían.",
+          "tema": "sacrifice",
+          "pregunta": "Se entrega material (un factor estático) a cambio de algo que vale más ahora mismo.",
+          "enlace": "El material de menos es un factor estático; la actividad que se gana es dinámica, y en esta posición vale más.",
+          "diagramas": [
+            {
+              "id": "RE-10",
+              "fen": "r1b2rk1/pp3p1p/1n2p1p1/8/4N1n1/4B1Pq/PPB1QP2/R4RK1 w - - 2 20",
+              "turno": "w",
+              "resultado": "1-0",
+              "pregunta": "Se entrega material (un factor estático) a cambio de algo que vale más ahora mismo. Juegan las blancas; el rival acaba de jugar …Cg4.",
+              "comentario": "20.Dxg4 Dxg4 21.Cf6+ Rh8 22.Cxg4. Es una horquilla: una pieza ataca dos objetivos a la vez. El material de menos es un factor estático; la actividad que se gana es dinámica, y en esta posición vale más. (Ejercicio 34QhP de la base abierta de Lichess (CC0), rating 1458. Stockfish 16 a profundidad 18: Dxg4 es la mejor (+4,7) y la segunda queda en -3,9.)",
+              "linea": [
+                "Qxg4",
+                "Qxg4",
+                "Nf6+",
+                "Kh8",
+                "Nxg4"
+              ]
+            }
+          ]
+        },
+        {
+          "titulo": "No des jugadas por hechas",
+          "resumen": "«Recaptura y listo», «tiene que retirar»: la jugada que das por segura es justo la que el rival no está obligado a hacer.",
+          "parrafos": [
+            "Un error muy frecuente del cálculo de club no es calcular mal: es no calcular una jugada porque «es obvia». Cambias piezas y das por hecho que el rival recaptura; atacas una pieza y das por hecho que la retira; das un jaque y das por hecho la única respuesta que viste. En cada caso, el rival tiene otras opciones, y una de ellas puede ser mejor.",
+            "La jugada intermedia es el ejemplo clásico: en vez de recapturar, el rival da un jaque o crea una amenaza mayor, y recaptura después, en mejores condiciones. Lo mismo pasa con las piezas atacadas que no se retiran sino que contraatacan, o con los cambios que el rival rechaza. Lo que parece forzado casi nunca lo es del todo.",
+            "La corrección es concreta: en cada línea que calculas, después de tu jugada, haz una lista corta de las respuestas del rival que sean jaques, capturas o amenazas, aunque parezcan raras. Muchas veces se descartan en un segundo; la que no se descarta es la que te iba a ganar la partida."
+          ],
+          "practica": "En tus próximas partidas, cada vez que calcules un cambio, busca a propósito un jaque o una amenaza del rival antes de recapturar. Anota en la planilla con un signo «!» las veces que existía. Haz lo mismo en las tuyas: busca la jugada intermedia antes de recapturar.",
+          "tema": "intermezzo",
+          "pregunta": "Lo obvio parece una recaptura o una retirada, pero hay algo más fuerte antes.",
+          "enlace": "Quien dio por hecho la jugada obvia se encontró con una jugada intermedia: primero algo más fuerte, y lo obvio después.",
+          "diagramas": [
+            {
+              "id": "RE-11",
+              "fen": "2r3k1/1p4pp/2br1p2/1N6/8/P2PKP2/1P4PP/2R4R b - - 0 27",
+              "turno": "b",
+              "resultado": "0-1",
+              "pregunta": "Lo obvio parece una recaptura o una retirada, pero hay algo más fuerte antes. Juegan las negras; el rival acaba de jugar Cxb5.",
+              "comentario": "27…Te8+ 28.Rf2 Axb5. Hay una jugada intermedia: antes de lo obvio, algo más fuerte. Quien dio por hecho la jugada obvia se encontró con una jugada intermedia: primero algo más fuerte, y lo obvio después. (Ejercicio 30JV8 de la base abierta de Lichess (CC0), rating 1356. Stockfish 16 a profundidad 18: Te8+ es la mejor (+4,1) y la segunda queda en -2,1.)",
+              "linea": [
+                "Re8+",
+                "Kf2",
+                "Bxb5"
+              ]
+            }
+          ]
+        },
+        {
+          "titulo": "Hazle difícil la vida al rival",
+          "resumen": "No juegues esperando que el rival se equivoque: juega para que tenga que encontrar la única. Y cuando la única es tuya, encuéntrala.",
+          "parrafos": [
+            "Hay jugadas que solo funcionan si el rival se equivoca: amenazas fáciles de parar, trampas que un jugador atento ve, sacrificios que se refutan con una jugada natural. Jugarlas es esperar un regalo, y cuando el regalo no llega la posición quedó peor. Contra rivales de tu mismo nivel o mejores, eso se paga casi siempre.",
+            "La alternativa es jugar las jugadas que obligan al rival a jugar bien: posiciones donde cada respuesta natural pierde y solo una precisa aguanta. No hace falta que sean ganadoras; basta con que sean difíciles. Así el error del rival, si llega, llega porque la posición lo empujó, no por casualidad.",
+            "Y al revés: cuando es el rival quien te pone ese problema, la tarea es encontrar la única. Esas posiciones se reconocen porque todo parece perder; ahí, antes de rendirse o de jugar lo primero que salva una pieza, conviene buscar con calma la jugada defensiva que nadie espera."
+          ],
+          "practica": "Busca en tus partidas una jugada tuya que «tenía una trampa» y comprueba con el motor qué pasaba si el rival respondía bien. Si la posición quedaba peor, anota qué jugada te habría dejado mejor sin depender de su error.",
+          "tema": "defensiveMove",
+          "pregunta": "El rival acaba de plantear un problema: de todas las jugadas, solo una conserva la ventaja.",
+          "enlace": "Así se ve, del otro lado, una posición que obliga a jugar bien: las jugadas naturales dejan escapar la ventaja y solo una precisa la conserva.",
+          "diagramas": [
+            {
+              "id": "RE-12",
+              "fen": "8/3R1N2/p1p5/2k5/4pq2/5p2/PP1R4/5K2 b - - 3 43",
+              "turno": "b",
+              "resultado": "0-1",
+              "pregunta": "El rival acaba de plantear un problema: de todas las jugadas, solo una conserva la ventaja. Juegan las negras; el rival acaba de jugar Cf7.",
+              "comentario": "43…e3 44.Tc2+ Rb6 45.Cd6 e2+. Es una jugada defensiva precisa: la única que sostiene la posición. Así se ve, del otro lado, una posición que obliga a jugar bien: las jugadas naturales dejan escapar la ventaja y solo una precisa la conserva. (Ejercicio 30ZBU de la base abierta de Lichess (CC0), rating 1301. Stockfish 16 a profundidad 18: e3 es la mejor (+4,1) y la segunda queda en 0,0.)",
+              "linea": [
+                "e3",
+                "Rc2+",
+                "Kb6",
+                "Nd6",
+                "e2+"
+              ]
+            }
+          ]
+        },
+        {
+          "titulo": "Mira hacia dónde va la partida",
+          "resumen": "Además de la jugada de ahora, imagina la posición de dentro de cinco jugadas: ¿qué va a quedar en el tablero?",
+          "parrafos": [
+            "Calcular es ver jugadas concretas; visualizar el futuro de la posición es otra cosa: es imaginar cómo va a estar la partida cuando terminen los cambios que ya se ven venir. ¿Qué piezas van a quedar? ¿Qué estructura? ¿Quién va a tener el peón pasado, el rey activo, la columna abierta? Esa imagen es la que decide si un cambio te conviene.",
+            "Muchos jugadores evalúan solo la posición del final de la variante que calcularon, y la evalúan contando material. Pero la partida no se termina ahí: si al final de la línea vas con el mismo material y el rival tiene un peón pasado que nadie frena, la línea es mala aunque «no pierdas nada». Mirar más allá es preguntarse qué pasa después.",
+            "El hábito se entrena al revés de lo habitual: antes de calcular, imagina cómo te gustaría que quedara la posición dentro de diez jugadas, y después busca las jugadas que llevan ahí. Es la forma en que piensan los jugadores fuertes, y la razón por la que muchas veces juegan rápido: ya saben adónde quieren ir."
+          ],
+          "practica": "En cinco partidas tuyas, detente antes de cada serie de cambios y dibuja en un papel la posición que crees que va a quedar. Después compara con la que quedó de verdad y con lo que dice el motor de ella.",
+          "tema": "veryLong",
+          "pregunta": "La línea que gana es larga: hay que ver dónde termina, no solo cómo empieza.",
+          "enlace": "La jugada buena solo se entiende al final de la línea: hay que imaginar la posición que queda, no solo la de ahora.",
+          "diagramas": [
+            {
+              "id": "RE-13",
+              "fen": "r2kr3/p1p1BQ1p/1p1q2p1/3b4/8/2P5/PPP2PPP/R3R1K1 b - - 0 18",
+              "turno": "b",
+              "resultado": "0-1",
+              "pregunta": "La línea que gana es larga: hay que ver dónde termina, no solo cómo empieza. Juegan las negras; el rival acaba de jugar Axe7+.",
+              "comentario": "18…Txe7 19.Df8+ Rd7 20.Dxe7+ Dxe7 21.Txe7+ Rxe7. La jugada buena solo se entiende al final de la línea: hay que imaginar la posición que queda, no solo la de ahora. (Ejercicio 0hXbD de la base abierta de Lichess (CC0), rating 1442. Stockfish 16 a profundidad 18: Txe7 es la mejor (+3,9) y la segunda queda en -5,7.)",
+              "linea": [
+                "Rxe7",
+                "Qf8+",
+                "Kd7",
+                "Qxe7+",
+                "Qxe7",
+                "Rxe7+",
+                "Kxe7"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "n": 4,
+      "titulo": "Cambios y transformaciones",
+      "lecciones": [
+        {
+          "titulo": "El cambio mal entendido",
+          "resumen": "Cambiar piezas no es neutral: cada cambio le da algo a uno de los dos. Cambiar «para tranquilizar» suele dárselo al rival.",
+          "parrafos": [
+            "Hay jugadores que cambian piezas cada vez que pueden, para que la posición se calme. Otros nunca cambian, porque «hay que mantener la tensión». Las dos actitudes tienen el mismo defecto: tratan los cambios como si fueran iguales, cuando cada cambio altera la posición de una forma distinta.",
+            "Después de un cambio puede cambiar quién controla una columna, quién tiene la pareja de alfiles, qué pieza queda en una buena casilla y cuál en una mala, si un rey queda expuesto o protegido, si el final que queda es ganable o no. Antes de cambiar, la pregunta no es «¿pierdo material?» sino «¿qué queda después, y a quién le conviene?».",
+            "Una guía práctica: cambia las piezas activas del rival y las tuyas pasivas; no cambies tu mejor pieza por la peor del rival; si vas adelante en material, los cambios te ayudan; si te estás defendiendo de un ataque, cambiar a los atacantes suele ser lo mejor que puedes hacer."
+          ],
+          "practica": "En tus últimas cinco partidas, marca cada cambio de piezas y escribe al lado quién quedó mejor después del cambio, y por qué. Mira si alguno lo hiciste solo por tranquilidad.",
+          "tema": "pawnEndgame",
+          "pregunta": "Ya está todo cambiado: lo que queda es un final de peones, y en él se ve si el cambio convenía.",
+          "enlace": "Un final de peones es el resultado último de cambiar todo: aquí se cobra (o se paga) cada decisión de cambiar que se tomó antes.",
+          "diagramas": [
+            {
+              "id": "RE-14",
+              "fen": "8/4pp2/1p4p1/1k6/4K1P1/4P2P/8/8 w - - 0 43",
+              "turno": "w",
+              "resultado": "1-0",
+              "pregunta": "Ya está todo cambiado: lo que queda es un final de peones, y en él se ve si el cambio convenía. Juegan las blancas; el rival acaba de jugar …Rxb5.",
+              "comentario": "43.h4 Rc4 44.h5. La clave es una jugada tranquila: sin jaque ni captura, pero sin defensa. Un final de peones es el resultado último de cambiar todo: aquí se cobra (o se paga) cada decisión de cambiar que se tomó antes. (Ejercicio 0KYr1 de la base abierta de Lichess (CC0), rating 1638. Stockfish 16 a profundidad 18: h4 es la mejor (+3,8) y la segunda queda en -2,3.)",
+              "linea": [
+                "h4",
+                "Kc4",
+                "h5"
+              ]
+            }
+          ]
+        },
+        {
+          "titulo": "Cada cambio se mira solo",
+          "resumen": "Que el último cambio haya sido bueno no hace bueno al siguiente. La posición se vuelve a evaluar después de cada uno.",
+          "parrafos": [
+            "Cuando se empieza a cambiar, cuesta parar. Se cambia una pieza, sale bien, y se sigue cambiando por inercia, como si el primer cambio hubiera decidido que la simplificación era el camino. Pero cada cambio deja una posición nueva, y en esa posición nueva el siguiente cambio puede ser exactamente el error.",
+            "El caso típico es el paso a un final de peones. Con piezas en el tablero, ir con un peón de más es una buena ventaja. Al cambiar la última pieza, todo depende de una sola cosa: si el rey llega a tiempo, si hay oposición, si el peón pasado está lejos. Un cambio de más puede convertir un final ganado en tablas, o en derrota. Lo mismo pasa al revés: el cambio que nadie quería hacer es a veces el único que gana.",
+            "La regla es sencilla y se olvida mucho: después de cada cambio, vuelve a evaluar la posición como si la vieras por primera vez. Y antes de entrar en un final de peones, cuéntalo hasta el final: es el único tipo de final que se puede calcular entero, y no hay vuelta atrás."
+          ],
+          "practica": "Juega contra el motor del sitio diez finales de torre y peones donde vas con un peón de más. Antes de cambiar las torres, escribe si el final de peones que queda gana o no, y comprueba jugándolo.",
+          "tema": "zugzwang",
+          "pregunta": "Aquí lo que decide es que al rival le toque mover: cualquier jugada suya lo empeora.",
+          "enlace": "En posiciones así de simplificadas, una sola jugada cambia la evaluación; por eso cada cambio previo había que contarlo aparte.",
+          "diagramas": [
+            {
+              "id": "RE-15",
+              "fen": "8/1p6/1P1k2p1/P1pb1p1p/2B2P1P/2K3P1/8/8 b - - 1 46",
+              "turno": "b",
+              "resultado": "0-1",
+              "pregunta": "Aquí lo que decide es que al rival le toque mover: cualquier jugada suya lo empeora. Juegan las negras; el rival acaba de jugar Ac4.",
+              "comentario": "46…Axc4 47.Rxc4 Rc6 48.a6 bxa6. Es un zugzwang: al rival le toca mover y cualquier jugada lo empeora. En posiciones así de simplificadas, una sola jugada cambia la evaluación; por eso cada cambio previo había que contarlo aparte. (Ejercicio 2vlyU de la base abierta de Lichess (CC0), rating 1580. Stockfish 16 a profundidad 18: Axc4 es la mejor (+4,7) y la segunda queda en -4,0.)",
+              "linea": [
+                "Bxc4",
+                "Kxc4",
+                "Kc6",
+                "a6",
+                "bxa6"
+              ]
+            }
+          ]
+        },
+        {
+          "titulo": "Cuando la estructura cambia",
+          "resumen": "Un cambio de peones transforma la partida entera: abre columnas, crea debilidades nuevas y cambia qué piezas son buenas.",
+          "parrafos": [
+            "Los peones son lo más permanente del tablero: no vuelven atrás. Por eso un cambio de peones, una ruptura o un avance cambian la partida mucho más que un cambio de piezas. Después de una ruptura central, el alfil que era malo puede pasar a ser bueno, la columna cerrada se abre y el rey que estaba seguro deja de estarlo.",
+            "El error frecuente es empujar o cambiar peones sin pensar en la nueva estructura. Se juega …d5 «para liberarse», se cambian los peones, y lo que queda es un peón aislado que el rival va a atacar durante cuarenta jugadas. O se avanza en el flanco de rey para atacar, y cuando el ataque se corta quedan agujeros que ya no se pueden tapar.",
+            "Antes de cualquier jugada de peón, haz el ejercicio de imaginar la estructura después: qué casillas quedan débiles, qué columnas se abren, qué peones quedan aislados o pasados. Y luego pregúntate a cuál de los dos le sirve esa estructura nueva. Muchas veces el rival estaba esperando justamente esa ruptura."
+          ],
+          "practica": "Elige tres partidas y marca la primera ruptura de peones de cada una. Dibuja la estructura de antes y la de después, y escribe a quién favorecía el cambio. Compara con el resultado de la partida.",
+          "tema": "clearance",
+          "pregunta": "Una pieza se aparta y la posición cambia de golpe: se abren líneas que estaban cerradas.",
+          "enlace": "Al apartarse la pieza que tapaba, las líneas se abren y la posición se transforma: lo que estaba cerrado deja de estarlo.",
+          "diagramas": [
+            {
+              "id": "RE-16",
+              "fen": "1br3k1/p4pp1/1p5p/8/1Pq5/P4NP1/4QP1P/4R1K1 w - - 2 31",
+              "turno": "w",
+              "resultado": "1-0",
+              "pregunta": "Una pieza se aparta y la posición cambia de golpe: se abren líneas que estaban cerradas. Juegan las blancas; el rival acaba de jugar …Dc4.",
+              "comentario": "31.Dxc4 Txc4 32.Te8+ Rh7 33.Txb8. Es una horquilla: una pieza ataca dos objetivos a la vez. Al apartarse la pieza que tapaba, las líneas se abren y la posición se transforma: lo que estaba cerrado deja de estarlo. (Ejercicio 0bBpO de la base abierta de Lichess (CC0), rating 1453. Stockfish 16 a profundidad 18: Dxc4 es la mejor (+4,5) y la segunda queda en +0,1.)",
+              "linea": [
+                "Qxc4",
+                "Rxc4",
+                "Re8+",
+                "Kh7",
+                "Rxb8"
+              ]
+            }
+          ]
+        },
+        {
+          "titulo": "Cuando cambia el carácter de la posición",
+          "resumen": "Una posición tranquila puede volverse táctica en una jugada. Reconocer ese momento cambia cómo hay que pensar.",
+          "parrafos": [
+            "No se piensa igual en una posición cerrada y maniobrera que en una abierta, llena de piezas activas y reyes expuestos. En la primera se buscan planes y se puede jugar con calma; en la segunda cada jugada se calcula, porque un descuido se castiga enseguida. El problema es que la partida pasa de una a otra, a veces en una sola jugada.",
+            "Una ruptura, un sacrificio o un cambio en el centro pueden convertir una posición posicional en una táctica. El jugador que no lo nota sigue jugando «de memoria», con jugadas de maniobra, cuando ya hacía falta calcular. Y al revés: después de una tormenta táctica, la posición se calma y quien sigue buscando golpes que ya no existen pierde el tiempo y empeora su posición.",
+            "Un buen hábito es preguntarse, después de cada jugada del rival que abra líneas o cambie material: «¿la posición sigue siendo del mismo tipo?». Si la respuesta es no, cambia de modo de pensar: de plan a cálculo, o de cálculo a plan."
+          ],
+          "practica": "En una partida tuya que se volvió táctica, busca la jugada exacta en que cambió el carácter de la posición. Mira si tus jugadas de antes y de después se adaptaron, o si seguiste pensando igual.",
+          "tema": "sacrifice",
+          "pregunta": "La posición parece tranquila, pero una entrega de material la vuelve táctica de golpe.",
+          "enlace": "Con una sola jugada la posición pasa de tranquila a táctica: quien no nota ese cambio sigue jugando como antes y pierde.",
+          "diagramas": [
+            {
+              "id": "RE-17",
+              "fen": "r4qk1/1b1p2p1/1p2p3/p2nP1p1/3P4/P2B4/1PQ1N1PP/5RK1 b - - 1 20",
+              "turno": "b",
+              "resultado": "0-1",
+              "pregunta": "La posición parece tranquila, pero una entrega de material la vuelve táctica de golpe. Juegan las negras; el rival acaba de jugar Tf1.",
+              "comentario": "20…Dxf1+ 21.Rxf1 Ce3+ 22.Rg1 Cxc2. Es una horquilla: una pieza ataca dos objetivos a la vez. Con una sola jugada la posición pasa de tranquila a táctica: quien no nota ese cambio sigue jugando como antes y pierde. (Ejercicio 0yaFE de la base abierta de Lichess (CC0), rating 1401. Stockfish 16 a profundidad 18: Dxf1+ es la mejor (+4,2) y la segunda queda en -2,4.)",
+              "linea": [
+                "Qxf1+",
+                "Kxf1",
+                "Ne3+",
+                "Kg1",
+                "Nxc2"
+              ]
+            }
+          ]
+        },
+        {
+          "titulo": "Cuando cambia la tendencia",
+          "resumen": "La partida que iba bien puede empezar a ir mal sin un error grande. Detectar a tiempo que el viento cambió salva puntos.",
+          "parrafos": [
+            "Las partidas tienen tendencias: hay momentos en que la posición va mejorando para un lado, jugada a jugada, aunque la evaluación todavía diga que está pareja. El jugador que tenía la iniciativa empieza a quedarse sin ideas, el que se defendía empieza a activar sus piezas. Nadie cometió un error grande, pero el viento cambió.",
+            "Quien no lo nota sigue jugando como si fuera el que manda: busca ataques que ya no funcionan y deja de cuidar su propia posición. Cuando quiere reaccionar, el rival ya tiene la iniciativa y un ataque en marcha. Muchas derrotas «inexplicables» empiezan ahí: no en el error final, sino diez jugadas antes, cuando no se reconoció que había que pasar a la defensa.",
+            "Para detectarlo, cada cierto número de jugadas haz un balance honesto: ¿mis piezas están mejor o peor que hace cinco jugadas? ¿Y las del rival? Si la respuesta es que el rival mejora y tú no, cambia de actitud: consolida, cambia sus piezas activas, defiende antes de que haga falta."
+          ],
+          "practica": "Revisa con el motor dos partidas que perdiste sin un error grave. Busca el momento en que la evaluación empezó a bajar de a poco y anota qué estabas intentando hacer en ese momento.",
+          "tema": "defensiveMove",
+          "pregunta": "La partida puede darse vuelta: solo una jugada conserva lo que tienes.",
+          "enlace": "Es el momento en que la tendencia puede cambiar: con cualquier otra jugada la ventaja se escapa; con esta, se conserva.",
+          "diagramas": [
+            {
+              "id": "RE-18",
+              "fen": "8/8/4pk2/7r/2p2PpK/2P5/P6P/8 w - - 0 51",
+              "turno": "w",
+              "resultado": "1-0",
+              "pregunta": "La partida puede darse vuelta: solo una jugada conserva lo que tienes. Juegan las blancas; el rival acaba de jugar …Txh5+.",
+              "comentario": "51.Rxh5 Rf5 52.a4. Es una jugada defensiva precisa: la única que sostiene la posición. Es el momento en que la tendencia puede cambiar: con cualquier otra jugada la ventaja se escapa; con esta, se conserva. (Ejercicio 2Gudr de la base abierta de Lichess (CC0), rating 1379. Stockfish 16 a profundidad 18: Rxh5 es la mejor (+4,2) y la segunda queda en -7,0.)",
+              "linea": [
+                "Kxh5",
+                "Kf5",
+                "a4"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "n": 5,
+      "titulo": "Cálculo y visualización",
+      "lecciones": [
+        {
+          "titulo": "Los errores de cálculo más comunes",
+          "resumen": "Casi todos los errores de cálculo son de los mismos tres tipos: líneas cortadas antes de tiempo, piezas que «se mueven solas» y evaluaciones apuradas.",
+          "parrafos": [
+            "Cuando se analiza una partida perdida por un error de cálculo, el error casi nunca es no haber visto la línea: es haberla visto mal. Hay tres formas típicas. La primera es cortar la variante justo antes de la jugada importante, con un «y estoy mejor» que nadie comprobó. La segunda es imaginar mal la posición: una pieza que en la cabeza ya se movió, o que sigue en una casilla de la que salió hace dos jugadas. La tercera es evaluar el final de la línea a la ligera, contando solo el material.",
+            "Para la primera, la regla es no detener el cálculo en una posición donde todavía hay jaques, capturas o amenazas: la línea termina cuando la posición se calma. Para la segunda ayuda nombrar las casillas al calcular, en voz baja: «el caballo ya no está en f3, está en g5», en lugar de solo imaginar el dibujo.",
+            "La tercera se arregla con una pregunta al final de cada línea: además del material, ¿cómo están los reyes, qué piezas están activas, quién tiene la iniciativa? Una línea que gana un peón y deja tu rey desnudo no es una buena línea."
+          ],
+          "practica": "Toma tres errores de cálculo de tus partidas y clasifícalos: ¿cortaste la línea antes de tiempo, imaginaste mal la posición o evaluaste mal el final? Si un tipo se repite, ese es el que hay que entrenar.",
+          "tema": "veryLong",
+          "pregunta": "La línea es larga: hay que llegar hasta el final sin cortar antes de tiempo.",
+          "enlace": "Quien corta la línea en la segunda o tercera jugada no ve por qué gana: la clave aparece al final de la variante.",
+          "diagramas": [
+            {
+              "id": "RE-19",
+              "fen": "8/8/p2PQp2/1p4p1/2p4q/P1k5/6PK/8 w - - 1 61",
+              "turno": "w",
+              "resultado": "1-0",
+              "pregunta": "La línea es larga: hay que llegar hasta el final sin cortar antes de tiempo. Juegan las blancas; el rival acaba de jugar …Dh4+.",
+              "comentario": "61.Dh3+ Rb2 62.Dxh4 gxh4 63.d7 c3 64.d8=D. El peón avanzado decide: hay que empujarlo o aprovecharlo a tiempo. Quien corta la línea en la segunda o tercera jugada no ve por qué gana: la clave aparece al final de la variante. (Ejercicio 1Ome1 de la base abierta de Lichess (CC0), rating 1593. Stockfish 16 a profundidad 18: Dh3+ es la mejor (+3,4) y la segunda queda en -2,6.)",
+              "linea": [
+                "Qh3+",
+                "Kb2",
+                "Qxh4",
+                "gxh4",
+                "d7",
+                "c3",
+                "d8=Q"
+              ]
+            }
+          ]
+        },
+        {
+          "titulo": "La precipitación",
+          "resumen": "Ver una buena jugada y hacerla enseguida es el error más caro: muchas veces había una mejor, o la buena tenía un agujero.",
+          "parrafos": [
+            "La precipitación tiene una forma muy reconocible: se ve una jugada que parece ganar, el corazón se acelera, y la mano la hace antes de que la cabeza termine de revisarla. A veces sale bien. Muchas veces había una jugada todavía mejor al lado, o la jugada «ganadora» tenía una respuesta que no se miró.",
+            "Los jugadores fuertes tienen un hábito sencillo: cuando ven una buena jugada, se sientan sobre las manos y buscan otra. Si la primera era la mejor, se pierde un minuto. Si no lo era, se gana una partida. También revisan la jugada elegida una última vez antes de hacerla, con una sola pregunta: «¿qué me contesta el rival?».",
+            "La precipitación es peor cuando se va ganando y cuando hay poco tiempo, que es justamente cuando más cara sale. Una jugada tranquila que deja al rival sin defensa suele ser más fuerte que el jaque o la captura que saltan a la vista, y precisamente esas son las que la prisa no deja ver."
+          ],
+          "practica": "Durante una semana, en cada partida, cada vez que veas una jugada que te entusiasme, obliga a tu cabeza a buscar una alternativa antes de hacerla. Anota cuántas veces la alternativa era mejor.",
+          "tema": "quietMove",
+          "pregunta": "Los jaques y las capturas saltan a la vista, pero la jugada que gana es tranquila.",
+          "enlace": "Es lo que la prisa no deja ver: la jugada fuerte no da jaque ni captura, y solo aparece si uno se detiene a buscar algo más que lo obvio.",
+          "diagramas": [
+            {
+              "id": "RE-20",
+              "fen": "rn1q1rk1/p1p2p2/1p1p2pQ/8/2Pp4/3b2P1/PP3PP1/2KR4 w - - 0 18",
+              "turno": "w",
+              "resultado": "1-0",
+              "pregunta": "Los jaques y las capturas saltan a la vista, pero la jugada que gana es tranquila. Juegan las blancas; el rival acaba de jugar …Axd3.",
+              "comentario": "18.Th1 Dg5+ 19.Dxg5. La clave es una jugada tranquila: sin jaque ni captura, pero sin defensa. Es lo que la prisa no deja ver: la jugada fuerte no da jaque ni captura, y solo aparece si uno se detiene a buscar algo más que lo obvio. (Ejercicio 0dTpN de la base abierta de Lichess (CC0), rating 1509. Stockfish 16 a profundidad 18: Th1 es la mejor (+3,8) y la segunda queda en -8,2.)",
+              "linea": [
+                "Rh1",
+                "Qg5+",
+                "Qxg5"
+              ]
+            }
+          ]
+        },
+        {
+          "titulo": "La jugada intermedia que no viste",
+          "resumen": "Entre dos jugadas «obligadas» casi siempre cabe otra. Buscarla, para ti y para el rival, es un hábito que se entrena.",
+          "parrafos": [
+            "La jugada intermedia es una jugada que se intercala en medio de una secuencia que parecía obligada: en lugar de recapturar, un jaque; en lugar de retirar la pieza atacada, una amenaza mayor. Es uno de los recursos más fáciles de pasar por alto, porque el cerebro calcula las secuencias como bloques: «yo cambio, él recaptura».",
+            "Omitirlas cuesta por los dos lados. Por el tuyo, dejas pasar jugadas que ganaban material o mejoraban tu posición. Por el del rival, calculas una línea que crees forzada y él encuentra la intermedia que la desarma. En los dos casos el problema es el mismo: la secuencia no se revisó jugada por jugada.",
+            "El hábito que lo corrige: en cada punto de una línea donde el rival «tiene que» hacer algo, pregúntate si tiene un jaque, una captura o una amenaza más fuerte. Y cuando tú tengas que recapturar, antes de hacerlo, mira si tienes algo mejor. La mayoría de las veces no lo hay; cuando lo hay, cambia la partida."
+          ],
+          "practica": "Resuelve diez ejercicios con el tema «jugada intermedia» en Entrenamiento. En cada uno, antes de buscar la solución, escribe cuál era la jugada «obvia» que había que dejar para después.",
+          "tema": "intermezzo",
+          "pregunta": "Parece que hay que recapturar o retirar algo, pero antes cabe una jugada más fuerte.",
+          "enlace": "La secuencia parecía obligada, pero entre jugada y jugada cabe otra más fuerte: eso es una jugada intermedia.",
+          "diagramas": [
+            {
+              "id": "RE-21",
+              "fen": "5rk1/1qRn1ppp/p2pbb2/1p6/1P1BPP2/P6P/3N2P1/1B1Q1RK1 b - - 0 22",
+              "turno": "b",
+              "resultado": "0-1",
+              "pregunta": "Parece que hay que recapturar o retirar algo, pero antes cabe una jugada más fuerte. Juegan las negras; el rival acaba de jugar Txc7.",
+              "comentario": "22…Axd4+ 23.Rh1 Dxc7. Hay una jugada intermedia: antes de lo obvio, algo más fuerte. La secuencia parecía obligada, pero entre jugada y jugada cabe otra más fuerte: eso es una jugada intermedia. (Ejercicio 0NgNm de la base abierta de Lichess (CC0), rating 1285. Stockfish 16 a profundidad 18: Axd4+ es la mejor (+4,4) y la segunda queda en -0,3.)",
+              "linea": [
+                "Bxd4+",
+                "Kh1",
+                "Qxc7"
+              ]
+            }
+          ]
+        },
+        {
+          "titulo": "El orden de las jugadas",
+          "resumen": "Las mismas jugadas en otro orden pueden ganar o perder. Elegir cuál va primero es parte del cálculo.",
+          "parrafos": [
+            "Muchas combinaciones tienen dos o tres jugadas que hay que hacer, y el jugador ve las tres pero no se pregunta en qué orden. Hace la que primero se le ocurrió, y descubre que el rival tenía una defensa que el orden correcto le quitaba. No le faltó ver la idea: le faltó ordenarla.",
+            "El orden importa por varias razones. Una jugada con jaque deja menos opciones al rival que una sin jaque, así que suele ir primero. Una pieza que atrae al rey a una casilla mala tiene que llegar antes del golpe que aprovecha esa casilla. Y a veces el orden decide qué piezas quedan en el tablero: cambiar primero una pieza u otra deja finales distintos.",
+            "Para elegir el orden, compara las respuestas del rival en cada caso: si empiezo con A, ¿qué puede hacer? ¿Y si empiezo con B? Gana el orden que le deja menos opciones. Con la práctica se vuelve natural empezar por las jugadas más forzadas: jaques, capturas, amenazas de mate."
+          ],
+          "practica": "En los próximos ejercicios de combinación que resuelvas, cuando encuentres la idea, escribe al menos dos órdenes posibles de las jugadas y comprueba cuál funciona. Anota cuántas veces el orden equivocado fallaba.",
+          "tema": "attraction",
+          "pregunta": "Primero hay que llevar una pieza rival a una casilla mala; el golpe viene después, y en ese orden.",
+          "enlace": "La idea tiene dos partes y el orden importa: primero se atrae a la pieza rival, y recién entonces se cobra.",
+          "diagramas": [
+            {
+              "id": "RE-22",
+              "fen": "8/5p1k/1R2p1pp/5q2/3p4/1n3QPP/1r3PK1/4R3 b - - 1 36",
+              "turno": "b",
+              "resultado": "0-1",
+              "pregunta": "Primero hay que llevar una pieza rival a una casilla mala; el golpe viene después, y en ese orden. Juegan las negras; el rival acaba de jugar Df3.",
+              "comentario": "36…Dxf3+ 37.Rxf3 Cd2+. Es una atracción: se arrastra a una pieza (a menudo el rey) a una casilla fatal. La idea tiene dos partes y el orden importa: primero se atrae a la pieza rival, y recién entonces se cobra. (Ejercicio 2up56 de la base abierta de Lichess (CC0), rating 1505. Stockfish 16 a profundidad 18: Dxf3+ es la mejor (+4,8) y la segunda queda en -0,1.)",
+              "linea": [
+                "Qxf3+",
+                "Kxf3",
+                "Nd2+"
+              ]
+            }
+          ]
+        },
+        {
+          "titulo": "Defender lo difícil",
+          "resumen": "Defender también se calcula: buscar la única jugada, el contraataque o el sacrificio que salva, en vez de esperar el golpe.",
+          "parrafos": [
+            "Los jugadores de club calculan mucho mejor cuando atacan que cuando defienden. Defendiendo, se tiende a la pasividad: se mueve el rey a una esquina, se tapan los jaques uno por uno, y se espera. El cálculo se apaga justo cuando más hace falta, porque en una posición defensiva hay pocas jugadas buenas y muchas que pierden.",
+            "Defender bien es buscar activamente. Las armas del defensor son el contraataque (una amenaza propia que obliga al rival a detenerse), el cambio de las piezas atacantes, la devolución de material para quitar la iniciativa y, a veces, la jugada tranquila que cubre todo. Ninguna aparece si uno se limita a reaccionar.",
+            "Un método útil: cuando el rival te ataca, haz la lista de sus amenazas concretas, y después busca la jugada que para la más grave y además hace algo. Si ninguna jugada para todas, busca la que obliga al rival a responder: un jaque, una amenaza a su rey o a una pieza. Mientras el rival tenga que contestar, no está atacando."
+          ],
+          "practica": "Juega desde posiciones peores contra el motor del sitio (Práctica, con ventaja para el motor) y fíjate en cuántas jugadas defensivas fueron activas y cuántas pasivas. Busca después con el análisis si había defensas más activas.",
+          "tema": "defensiveMove",
+          "pregunta": "El rival amenaza algo: hay que encontrar la jugada que lo para y conserva la ventaja.",
+          "enlace": "Defender no es esperar: aquí lo pasivo deja escapar la ventaja, y solo una jugada calculada conserva la posición.",
+          "diagramas": [
+            {
+              "id": "RE-23",
+              "fen": "r1b1k1r1/ppppqp2/1bn2n2/4P1B1/2BP4/8/PP3PPP/RN1QK2R w KQq - 1 12",
+              "turno": "w",
+              "resultado": "½",
+              "pregunta": "El rival amenaza algo: hay que encontrar la jugada que lo para y conserva la ventaja. Juegan las blancas; el rival acaba de jugar …Tg8.",
+              "comentario": "12.Axf6 Db4+ 13.Cd2. Es una jugada defensiva precisa: la única que sostiene la posición. Defender no es esperar: aquí lo pasivo deja escapar la ventaja, y solo una jugada calculada conserva la posición. (Ejercicio 1tcof de la base abierta de Lichess (CC0), rating 1640. Stockfish 16 a profundidad 18: Axf6 es la mejor (+2,3) y la segunda queda en -2,3.)",
+              "linea": [
+                "Bxf6",
+                "Qb4+",
+                "Nd2"
+              ]
+            }
+          ]
+        },
+        {
+          "titulo": "Ver más lejos",
+          "resumen": "La visualización se entrena: mantener la posición en la cabeza varias jugadas sin que las piezas se muevan solas.",
+          "parrafos": [
+            "La profundidad del cálculo no depende de la inteligencia, sino de una habilidad que se entrena: mantener la posición en la cabeza mientras las piezas se mueven. Cuando esa imagen se borra o se mezcla, la línea se corta, o se sigue calculando con una posición que ya no es la real.",
+            "Hay ejercicios clásicos para mejorarla. Leer una partida comentada sin tablero e intentar seguirla. Ponerse una posición, mirar la solución de un ejercicio de cuatro o cinco jugadas, y jugarla mentalmente antes de moverla en el tablero. Jugar partidas a la ciega contra alguien más débil, o contra el motor del sitio. Al principio cuesta mucho; después de unas semanas, la diferencia en el cálculo se nota.",
+            "La otra mitad de ver lejos es ver poco pero bien: calcular pocas líneas, las forzadas, hasta el final, en vez de muchas a medias. Un jugador que calcula tres líneas a seis jugadas juega mejor que uno que mira diez líneas a dos."
+          ],
+          "practica": "Haz diez ejercicios largos (de cinco jugadas o más) sin mover las piezas: calcula la solución completa, escríbela, y recién después comprueba en el tablero. Anota en qué jugada se te borró la posición cuando falles.",
+          "tema": "veryLong",
+          "pregunta": "Para ver por qué gana, hay que llevar la posición en la cabeza varias jugadas.",
+          "enlace": "Esta línea no se ve en el tablero: se ve en la cabeza, manteniendo la posición mientras las piezas se mueven.",
+          "diagramas": [
+            {
+              "id": "RE-24",
+              "fen": "3rr2k/ppp3pp/2n2p2/2b5/5Q1N/1BP4P/PP3PP1/3R2K1 b - - 0 24",
+              "turno": "b",
+              "resultado": "0-1",
+              "pregunta": "Para ver por qué gana, hay que llevar la posición en la cabeza varias jugadas. Juegan las negras; el rival acaba de jugar Txd1.",
+              "comentario": "24…Txd1+ 25.Axd1 Te1+ 26.Rh2 Ad6 27.Dxd6 cxd6. Es una horquilla: una pieza ataca dos objetivos a la vez. Esta línea no se ve en el tablero: se ve en la cabeza, manteniendo la posición mientras las piezas se mueven. (Ejercicio 0Y04I de la base abierta de Lichess (CC0), rating 1486. Stockfish 16 a profundidad 18: Txd1+ es la mejor (+4,7) y la segunda queda en -5,3.)",
+              "linea": [
+                "Rxd1+",
+                "Bxd1",
+                "Re1+",
+                "Kh2",
+                "Bd6",
+                "Qxd6",
+                "cxd6"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "n": 6,
+      "titulo": "Pensar también por el rival",
+      "lecciones": [
+        {
+          "titulo": "¿Qué quiere tu rival?",
+          "resumen": "La pregunta que más partidas salva: antes de tu jugada, ¿qué haría el rival si le tocara mover ahora?",
+          "parrafos": [
+            "La mayoría de los jugadores de club pasan casi todo su tiempo pensando en sus propias ideas. Buscan su plan, su ataque, su golpe, y miran la posición del rival solo cuando hay una amenaza evidente. Así se pierden las partidas en las que el rival tenía un plan tranquilo que nadie le discutió.",
+            "La pregunta profiláctica es simple: «si ahora fuera el turno del rival, ¿qué jugaría?». Contestarla obliga a ponerse del otro lado del tablero y ver la posición con sus ojos. A veces la respuesta es una amenaza directa; otras veces, una maniobra que en cuatro jugadas le daría una posición excelente. Saberlo cambia qué jugada eliges.",
+            "La profilaxis no es jugar a la defensiva: es elegir, entre tus buenas jugadas, la que además le quita algo al rival. Muchas veces una jugada que mejora tu posición y le impide la suya existe; solo hay que haberse hecho la pregunta para encontrarla."
+          ],
+          "practica": "En tus próximas tres partidas, antes de cada jugada en posiciones tranquilas, escribe con una palabra qué quiere hacer el rival. Al final, revisa si tu jugada tenía en cuenta esa idea.",
+          "tema": "defensiveMove",
+          "pregunta": "Antes de buscar tu jugada, mira qué amenaza el rival: la respuesta te dice cuál hay que hacer.",
+          "enlace": "Solo quien miró primero lo que quería el rival encuentra esta jugada: es la que para su idea y conserva la ventaja.",
+          "diagramas": [
+            {
+              "id": "RE-25",
+              "fen": "8/5p2/p4pp1/1pR2p2/5P1k/r1P4P/6K1/8 w - - 1 38",
+              "turno": "w",
+              "resultado": "1-0",
+              "pregunta": "Antes de buscar tu jugada, mira qué amenaza el rival: la respuesta te dice cuál hay que hacer. Juegan las blancas; el rival acaba de jugar …Rh4.",
+              "comentario": "38.Tc8 Ta2+ 39.Rf3 Tf2+ 40.Rxf2. La clave es una jugada tranquila: sin jaque ni captura, pero sin defensa. Solo quien miró primero lo que quería el rival encuentra esta jugada: es la que para su idea y conserva la ventaja. (Ejercicio 0IqIt de la base abierta de Lichess (CC0), rating 1306. Stockfish 16 a profundidad 18: Tc8 es la mejor (+5,2) y la segunda queda en -4,7.)",
+              "linea": [
+                "Rc8",
+                "Ra2+",
+                "Kf3",
+                "Rf2+",
+                "Kxf2"
+              ]
+            }
+          ]
+        },
+        {
+          "titulo": "Amenazas: cuáles son reales",
+          "resumen": "No toda amenaza hay que pararla, ni toda jugada del rival es una amenaza. Medir cada una evita el pánico y la ceguera.",
+          "parrafos": [
+            "Ante las amenazas del rival, el jugador de club suele cometer uno de dos errores. O no las ve, porque estaba pensando en lo suyo, o las ve todas como si fueran graves y se defiende de cosas que no hacía falta defender, perdiendo el tiempo que necesitaba para su propio plan.",
+            "Gestionar una amenaza es medirla: ¿qué pasa si la ignoro? Si el rival gana material o da mate, hay que pararla. Si solo mejora un poco su posición, a veces es mejor seguir con lo propio, sobre todo si tu plan es más rápido. Y si la amenaza tiene una respuesta que además te mejora, esa es la jugada.",
+            "También existe la amenaza escondida: la que no está ahora pero aparece después de un cambio, de una jugada intermedia o de que una pieza tuya se mueva. Muchas piezas se pierden porque el jugador la movió de una casilla donde, sin saberlo, estaba defendiendo algo. Antes de mover una pieza, pregúntate qué deja de defender."
+          ],
+          "practica": "Resuelve diez ejercicios de «jugada defensiva» en Entrenamiento. Antes de cada uno, escribe cuál es la amenaza del rival y qué pasa si la ignoras. Solo después busca la jugada.",
+          "tema": "defensiveMove",
+          "pregunta": "El rival amenaza algo concreto. Mide la amenaza: ¿qué pasa si no haces nada?",
+          "enlace": "La amenaza aquí es real, y hay una sola forma de pararla sin perder la ventaja: medirla antes de responder es lo que hace encontrar la jugada justa.",
+          "diagramas": [
+            {
+              "id": "RE-26",
+              "fen": "8/2k5/1p3KP1/5B2/8/8/1r6/8 w - - 1 57",
+              "turno": "w",
+              "resultado": "1-0",
+              "pregunta": "El rival amenaza algo concreto. Mide la amenaza: ¿qué pasa si no haces nada? Juegan las blancas; el rival acaba de jugar …Tb2.",
+              "comentario": "57.g7 Tg2 58.Ag6. Es un despeje: la pieza se aparta para abrirle la línea o la casilla a otra. La amenaza aquí es real, y hay una sola forma de pararla sin perder la ventaja: medirla antes de responder es lo que hace encontrar la jugada justa. (Ejercicio 15BTp de la base abierta de Lichess (CC0), rating 1338. Stockfish 16 a profundidad 18: g7 es la mejor (+5,1) y la segunda queda en 0,0.)",
+              "linea": [
+                "g7",
+                "Rg2",
+                "Bg6"
+              ]
+            }
+          ]
+        },
+        {
+          "titulo": "¿Qué cambió con su última jugada?",
+          "resumen": "Cada jugada del rival cambia algo: abre una línea, deja de defender algo, prepara una idea. Mirarlo es lo primero.",
+          "parrafos": [
+            "Cuando el rival juega, lo natural es volver a pensar en el propio plan. Pero cada jugada del rival cambió la posición, y casi siempre de varias formas: la pieza que movió ahora ataca casillas nuevas, dejó de defender las de antes y a veces abrió una línea para otra pieza que estaba detrás.",
+            "La revisión toma diez segundos y se puede hacer siempre igual: ¿qué ataca ahora la pieza que se movió?, ¿qué dejó de defender?, ¿se abrió alguna línea?, ¿hay una amenaza nueva? Con esas cuatro preguntas se ven la mayoría de las trampas y también la mayoría de los errores del rival, que es donde están los puntos fáciles.",
+            "Saltarse esa revisión es la causa de muchos de los «despistes» que después lamentamos. No es falta de nivel: es que la cabeza pasa directamente a lo suyo. Convertir esa mirada en una costumbre es de las cosas que más rápido suben el Elo."
+          ],
+          "practica": "Juega cinco partidas rápidas (15 minutos) obligándote, después de cada jugada del rival, a contestar las cuatro preguntas en silencio. Anota cuántas veces encontraste una amenaza o una oportunidad que no habrías visto.",
+          "tema": "defensiveMove",
+          "pregunta": "La última jugada del rival trae una idea escondida: hay que verla y contestarla.",
+          "enlace": "La última jugada del rival cambió algo importante; quien la mira con cuidado encuentra la respuesta precisa.",
+          "diagramas": [
+            {
+              "id": "RE-27",
+              "fen": "r4rk1/1pp2ppp/1n6/p1b1p3/3nP3/PPNP1BPq/5P2/R1BQ1RK1 w - - 0 16",
+              "turno": "w",
+              "resultado": "½",
+              "pregunta": "La última jugada del rival trae una idea escondida: hay que verla y contestarla. Juegan las blancas; el rival acaba de jugar …Dxh3.",
+              "comentario": "16.Ag4 Ce2+ 17.Dxe2 Dxg3+ 18.Rh1 Dh4+ 19.Rg2. Es una jugada defensiva precisa: la única que sostiene la posición. La última jugada del rival cambió algo importante; quien la mira con cuidado encuentra la respuesta precisa. (Ejercicio 2pZcV de la base abierta de Lichess (CC0), rating 1556. Stockfish 16 a profundidad 18: Ag4 es la mejor (+2,6) y la segunda queda en -1,6.)",
+              "linea": [
+                "Bg4",
+                "Ne2+",
+                "Qxe2",
+                "Qxg3+",
+                "Kh1",
+                "Qh4+",
+                "Kg2"
+              ]
+            }
+          ]
+        },
+        {
+          "titulo": "Quitarle jugadas al rival",
+          "resumen": "A veces lo más fuerte es no hacer nada nuevo: dejar al rival sin jugadas útiles y que cada movimiento suyo empeore su posición.",
+          "parrafos": [
+            "La profilaxis llevada al extremo es el zugzwang: una posición en la que cualquier jugada del rival empeora su situación. No es solo un tema de finales de peones; en el medio juego también existen posiciones donde el rival no tiene un plan útil, y lo mejor es quitarle las pocas jugadas buenas que le quedan antes de pasar a la acción.",
+            "Quien piensa solo en sus propias jugadas no aprovecha esas posiciones. Busca una acción inmediata, abre el juego antes de tiempo y le devuelve al rival lo que no tenía: algo que hacer. En cambio, una jugada de espera bien elegida, o una que bloquea la última ruptura del rival, lo deja sin recursos.",
+            "Para reconocer estas posiciones, mira la lista de jugadas útiles del rival. Si es corta, pregúntate si puedes quitarle esas pocas. Si lo logras, la partida suele ganarse sola, porque el rival tendrá que mover algo que no quería mover."
+          ],
+          "practica": "Juega desde el Entrenamiento de finales diez posiciones de rey y peones con la idea de zugzwang. En cada una, antes de mover, escribe qué jugadas útiles tiene el rival y cuál de las tuyas se las quita.",
+          "tema": "zugzwang",
+          "pregunta": "El rival casi no tiene jugadas buenas. La jugada justa le quita las que le quedan.",
+          "enlace": "Cuando al rival le toque mover, cualquier jugada lo empeorará: más que atacar, la jugada buena le quita las opciones.",
+          "diagramas": [
+            {
+              "id": "RE-28",
+              "fen": "8/8/8/3n4/B3k3/3p4/1P1K4/8 w - - 0 50",
+              "turno": "w",
+              "resultado": "1-0",
+              "pregunta": "El rival casi no tiene jugadas buenas. La jugada justa le quita las que le quedan. Juegan las blancas; el rival acaba de jugar …d3.",
+              "comentario": "50.Ac6 Rd4 51.Axd5 Rxd5 52.Rxd3 Rc5 53.Rc3 Rb5 54.Rb3. Es un zugzwang: al rival le toca mover y cualquier jugada lo empeora. Cuando al rival le toque mover, cualquier jugada lo empeorará: más que atacar, la jugada buena le quita las opciones. (Ejercicio 1qs2e de la base abierta de Lichess (CC0), rating 1562. Stockfish 16 a profundidad 18: Ac6 es la mejor (+6,8) y la segunda queda en 0,0.)",
+              "linea": [
+                "Bc6",
+                "Kd4",
+                "Bxd5",
+                "Kxd5",
+                "Kxd3",
+                "Kc5",
+                "Kc3",
+                "Kb5",
+                "Kb3"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "n": 7,
+      "titulo": "La cabeza en la partida",
+      "lecciones": [
+        {
+          "titulo": "El miedo",
+          "resumen": "Ver fantasmas, no atreverse con la jugada buena, ofrecer tablas en una posición mejor: el miedo también se juega.",
+          "parrafos": [
+            "El miedo en ajedrez casi nunca se nota como miedo. Se nota como prudencia: «mejor no arriesgar», «esta jugada es más segura», «no me voy a meter en eso». Y así se dejan pasar sacrificios correctos, ataques que estaban maduros y finales ganados que se aceptan como tablas. El rival, sobre todo si tiene más Elo, suele recibir más respeto del que merece su posición.",
+            "Una señal clara es ver amenazas que no existen: se calcula una línea, aparece una defensa «posible» del rival, y sin comprobarla se descarta todo. Otra señal es preferir siempre la jugada que conserva el material, aunque la que lo entrega gane. El miedo no elige por la posición: elige por lo que podría salir mal.",
+            "Lo que ayuda es separar la decisión del resultado. Si el cálculo dice que la jugada es buena y no encuentras la refutación, hazla. A veces saldrá mal, y será una buena lección; muchas más veces saldrá bien, y la siguiente decisión valiente costará menos. Contra un rival de más nivel, juega la posición, no el Elo."
+          ],
+          "practica": "Busca en tus partidas una jugada que no te atreviste a hacer y comprueba con el motor si era buena. Haz una lista de esas jugadas durante un mes: casi siempre tienen algo en común.",
+          "tema": "sacrifice",
+          "pregunta": "La jugada buena da miedo: entrega material. Comprueba si de verdad hay algo que temer.",
+          "enlace": "La jugada asusta porque entrega material, pero calculada hasta el final no tiene refutación: aquí el miedo habría costado la partida.",
+          "diagramas": [
+            {
+              "id": "RE-29",
+              "fen": "1b6/8/P7/2B5/8/6kp/8/7K w - - 3 53",
+              "turno": "w",
+              "resultado": "1-0",
+              "pregunta": "La jugada buena da miedo: entrega material. Comprueba si de verdad hay algo que temer. Juegan las blancas; el rival acaba de jugar …Rg3.",
+              "comentario": "53.Ad6+ Axd6 54.a7. El peón avanzado decide: hay que empujarlo o aprovecharlo a tiempo. La jugada asusta porque entrega material, pero calculada hasta el final no tiene refutación: aquí el miedo habría costado la partida. (Ejercicio 30fX7 de la base abierta de Lichess (CC0), rating 1558. Stockfish 16 a profundidad 18: Ad6+ es la mejor (+5,1) y la segunda queda en 0,0.)",
+              "linea": [
+                "Bd6+",
+                "Bxd6",
+                "a7"
+              ]
+            }
+          ]
+        },
+        {
+          "titulo": "El sentido del peligro",
+          "resumen": "Hay posiciones donde algo está por pasar. Detectar a tiempo que tu rey o tus piezas corren peligro evita la mitad de las derrotas.",
+          "parrafos": [
+            "El sentido del peligro es la capacidad de notar, antes de calcular nada, que la posición tiene algo raro: muchas piezas rivales cerca de tu rey, una diagonal abierta que apunta a tu enroque, una pieza tuya sin casillas, una fila de atrás sin salida. Los jugadores fuertes no lo tienen por talento: lo desarrollaron perdiendo partidas por eso y aprendiendo a reconocer las señales.",
+            "El error contrario al miedo es la confianza: seguir con el propio plan como si nada pasara mientras el rival acumula fuerzas. Muchas derrotas empiezan con una jugada que no tenía nada de malo en sí, salvo que llegaba una jugada tarde: hacía falta defender, y se siguió atacando.",
+            "Algunas señales que conviene aprender de memoria: tres o más piezas rivales apuntando a tu rey, peones de tu enroque que se adelantaron, una pieza tuya sin defensa en una línea donde el rival tiene una pieza de largo alcance, la última fila sin una casilla de escape. Cuando aparece una, antes de seguir con tu plan, mira qué podría hacer el rival."
+          ],
+          "practica": "Revisa tus últimas cinco derrotas y busca la jugada en la que el peligro ya se veía (piezas rivales cerca de tu rey, una línea abierta). Escribe cuántas jugadas antes del desastre estaba la señal.",
+          "tema": "defensiveMove",
+          "pregunta": "Hay peligro en el tablero: encuentra la jugada que lo neutraliza antes de que sea tarde.",
+          "enlace": "Las señales de peligro estaban en el tablero; quien las nota a tiempo encuentra la única jugada que conserva la posición.",
+          "diagramas": [
+            {
+              "id": "RE-30",
+              "fen": "r3k2r/2p1bppp/pq6/1p2Q3/8/2NP1bN1/PPP3PP/R1B3K1 w kq - 2 19",
+              "turno": "w",
+              "resultado": "½",
+              "pregunta": "Hay peligro en el tablero: encuentra la jugada que lo neutraliza antes de que sea tarde. Juegan las blancas; el rival acaba de jugar …Db6+.",
+              "comentario": "19.Ae3 Df6 20.Dxf6 Axf6 21.gxf3. Es una jugada defensiva precisa: la única que sostiene la posición. Las señales de peligro estaban en el tablero; quien las nota a tiempo encuentra la única jugada que conserva la posición. (Ejercicio 1PA8f de la base abierta de Lichess (CC0), rating 1632. Stockfish 16 a profundidad 18: Ae3 es la mejor (+2,4) y la segunda queda en -1,3.)",
+              "linea": [
+                "Be3",
+                "Qf6",
+                "Qxf6",
+                "Bxf6",
+                "gxf3"
+              ]
+            }
+          ]
+        },
+        {
+          "titulo": "El materialismo",
+          "resumen": "Contar peones no es evaluar una posición. Agarrar todo lo que se ofrece, y no entregar nunca nada, cuesta partidas.",
+          "parrafos": [
+            "El materialismo es una forma de pensar que mide todo en peones: si gano material, la jugada es buena; si lo pierdo, es mala. Funciona en muchas posiciones, porque el material importa. Pero lleva a dos errores muy concretos: aceptar cualquier peón que se ofrece aunque la posición se derrumbe, y no entregar nunca material aunque la entrega gane.",
+            "Un peón agarrado con la dama mientras las demás piezas siguen en casa puede costar la partida: el rival gana tiempos, abre líneas y ataca a un rey que todavía no enrocó. Y al revés: un sacrificio de calidad que deja una pieza dominante, o un peón entregado para abrir una columna hacia el rey, valen muchas veces más que el material que cuestan.",
+            "La corrección es evaluar después de contar: ¿qué pasa con mis piezas y con mi rey si agarro esto?, ¿qué gano en actividad si entrego aquello? Si la respuesta es más fuerte que la diferencia de material, manda la posición."
+          ],
+          "practica": "Busca en tus partidas un peón que agarraste y que te costó la iniciativa, y un sacrificio que no hiciste. Analízalos con el motor y anota cuánto valía cada cosa.",
+          "tema": "sacrifice",
+          "pregunta": "Contando material, esta jugada no tiene sentido. Mirando la posición, es la mejor.",
+          "enlace": "El conteo de material dice que se pierde algo; la posición dice que se gana mucho más. Aquí manda la posición.",
+          "diagramas": [
+            {
+              "id": "RE-31",
+              "fen": "6rk/5b1p/1pp2p2/1N1np3/p7/P3PB2/1Br2P1P/Q2R1K2 b - - 2 35",
+              "turno": "b",
+              "resultado": "0-1",
+              "pregunta": "Contando material, esta jugada no tiene sentido. Mirando la posición, es la mejor. Juegan las negras; el rival acaba de jugar Rf1.",
+              "comentario": "35…Cxe3+ 36.fxe3 Ac4+ 37.Ae2 Axe2+. Es una horquilla: una pieza ataca dos objetivos a la vez. El conteo de material dice que se pierde algo; la posición dice que se gana mucho más. Aquí manda la posición. (Ejercicio 2Rsrp de la base abierta de Lichess (CC0), rating 1300. Stockfish 16 a profundidad 18: Cxe3+ es la mejor (+6,2) y la segunda queda en -1,9.)",
+              "linea": [
+                "Nxe3+",
+                "fxe3",
+                "Bc4+",
+                "Be2",
+                "Bxe2+"
+              ]
+            }
+          ]
+        },
+        {
+          "titulo": "El conformismo",
+          "resumen": "Aceptar tablas en una posición mejor, conformarse con ganar un peón cuando había mate: también se pierde por quedarse corto.",
+          "parrafos": [
+            "El conformismo es quedarse con lo primero que alcanza. Se ve una jugada que gana un peón y se juega, aunque al lado hubiera una que ganaba la partida. Se llega a una posición cómoda y se ofrecen tablas, aunque el rival es quien tiene los problemas. Se juega «para no perder» contra alguien de más Elo, y se le regala la iniciativa.",
+            "No es lo mismo que la prudencia. Prudencia es elegir lo seguro cuando lo ambicioso es dudoso; conformismo es elegir lo seguro cuando lo ambicioso es claramente mejor, por comodidad. La diferencia se nota en el análisis posterior: el conformista encuentra muchas jugadas «que también ganaban más».",
+            "Para combatirlo, cuando encuentres una buena jugada pregúntate si hay algo más fuerte, especialmente si tu rival tiene el rey expuesto o sus piezas descoordinadas. Y en las posiciones mejores, sigue jugando: la mayoría de las partidas ganadas se ganan por insistir en posiciones que el rival ya creía empatadas."
+          ],
+          "practica": "Revisa diez partidas con el motor buscando momentos en los que ganaste algo pero había una jugada mucho más fuerte. Anota si fue por no verla o por no buscarla.",
+          "tema": "exposedKing",
+          "pregunta": "Hay una jugada que gana algo, y otra que gana mucho más contra un rey sin protección.",
+          "enlace": "Con el rey rival así de expuesto, conformarse con menos es regalar puntos: la jugada fuerte va directo a él.",
+          "diagramas": [
+            {
+              "id": "RE-32",
+              "fen": "2r4k/R7/8/4N2p/3P4/2P1p2P/1r4P1/5K2 w - - 0 37",
+              "turno": "w",
+              "resultado": "1-0",
+              "pregunta": "Hay una jugada que gana algo, y otra que gana mucho más contra un rey sin protección. Juegan las blancas; el rival acaba de jugar …Txb2.",
+              "comentario": "37.Cg6+ Rg8 38.Ce7+ Rf8 39.Cxc8. Es una horquilla: una pieza ataca dos objetivos a la vez. Con el rey rival así de expuesto, conformarse con menos es regalar puntos: la jugada fuerte va directo a él. (Ejercicio 0NLXb de la base abierta de Lichess (CC0), rating 1468. Stockfish 16 a profundidad 18: Cg6+ es la mejor (+5,0) y la segunda queda en -1,6.)",
+              "linea": [
+                "Ng6+",
+                "Kg8",
+                "Ne7+",
+                "Kf8",
+                "Nxc8"
+              ]
+            }
+          ]
+        },
+        {
+          "titulo": "La relajación con ventaja",
+          "resumen": "La partida no se gana cuando se consigue la ventaja: se gana cuando se termina. Relajarse antes es la forma más dolorosa de perder.",
+          "parrafos": [
+            "Cuando se consigue una ventaja grande, algo en la cabeza se apaga. Se empieza a jugar más rápido, se calcula menos, se piensa en el resultado y en la siguiente ronda. Y es justo el momento en que el rival, que ya no tiene nada que perder, empieza a buscar trucos. Muchas posiciones ganadas se pierden ahí, por una jugada hecha con la cabeza en otra parte.",
+            "La relajación tiene un patrón: se juega la jugada obvia sin mirar la respuesta del rival, se deja una pieza sin defender porque «ya está ganado», se olvida el contraataque contra el propio rey. El rival no necesita jugar bien; solo necesita que tú dejes de hacerlo durante una jugada.",
+            "La solución es tratar la posición ganada como una tarea nueva, con su propio plan: quitar el contrajuego, cambiar las piezas activas del rival, cuidar el propio rey, y recién después avanzar. Y seguir revisando, en cada jugada, qué amenaza el rival. La partida termina cuando el rival abandona, no antes."
+          ],
+          "practica": "Busca en tus partidas una ventaja grande que no se convirtió. Marca la jugada exacta en que la ventaja empezó a bajar y anota qué estabas pensando en ese momento, si lo recuerdas.",
+          "tema": "quietMove",
+          "pregunta": "La ventaja está, pero falta rematarla: la jugada que gana no es la más obvia.",
+          "enlace": "Con la partida ganada, la tentación es jugar cualquier cosa; la jugada que remata exige seguir pensando con la misma calma.",
+          "diagramas": [
+            {
+              "id": "RE-33",
+              "fen": "8/8/2B3r1/3Pk1p1/P5K1/6P1/8/8 w - - 3 52",
+              "turno": "w",
+              "resultado": "1-0",
+              "pregunta": "La ventaja está, pero falta rematarla: la jugada que gana no es la más obvia. Juegan las blancas; el rival acaba de jugar …Tg6.",
+              "comentario": "52.a5 Tg7 53.a6. La clave es una jugada tranquila: sin jaque ni captura, pero sin defensa. Con la partida ganada, la tentación es jugar cualquier cosa; la jugada que remata exige seguir pensando con la misma calma. (Ejercicio 2PCQF de la base abierta de Lichess (CC0), rating 1377. Stockfish 16 a profundidad 18: a5 es la mejor (+3,1) y la segunda queda en +0,0.)",
+              "linea": [
+                "a5",
+                "Rg7",
+                "a6"
+              ]
+            }
+          ]
+        },
+        {
+          "titulo": "El primer error no es el último",
+          "resumen": "Después de equivocarse, lo peor es seguir jugando con la cabeza en el error. Un error se corrige; dos seguidos, casi nunca.",
+          "parrafos": [
+            "Pocas partidas se pierden por un solo error. Lo que suele pasar es otra cosa: se comete un error, el jugador se da cuenta, se enoja o se angustia, y en las jugadas siguientes juega peor que antes, con prisa por recuperar lo perdido o con la sensación de que ya no hay nada que hacer. El segundo error, casi siempre, es el que decide.",
+            "Después de un error, la posición nueva no es la que tenías antes, pero tampoco es una derrota. Muchas veces sigue habiendo recursos: la posición quedó peor, no perdida. La tarea es evaluarla de nuevo, con calma, como si te la dieran para resolver, y buscar la mejor jugada de esa posición, no la que «arregla» el error.",
+            "Un hábito útil: cuando te des cuenta de un error, levántate un momento si el ritmo lo permite, respira, y vuelve al tablero con una sola pregunta: «¿cuál es la mejor jugada aquí?». Defender bien una posición peor es una de las habilidades que más puntos dan a largo plazo."
+          ],
+          "practica": "En tus partidas perdidas, busca el primer error y mira qué pasó en las cinco jugadas siguientes. Anota si jugaste mejor o peor que antes. Si el patrón se repite, entrena con posiciones peores contra el motor.",
+          "tema": "defensiveMove",
+          "pregunta": "Después de un error, propio o del rival, cuenta la mejor jugada de la posición nueva: aquí hay una sola que conserva la ventaja.",
+          "enlace": "Evaluar con calma la posición nueva, sin pensar en lo que pasó antes, es lo que permite encontrar esta jugada.",
+          "diagramas": [
+            {
+              "id": "RE-34",
+              "fen": "4r1k1/ppp1br1p/n2pQ1p1/3P4/PPP1Pq2/4R3/1B3PBP/1R4K1 b - - 5 27",
+              "turno": "b",
+              "resultado": "0-1",
+              "pregunta": "Después de un error, propio o del rival, cuenta la mejor jugada de la posición nueva: aquí hay una sola que conserva la ventaja. Juegan las negras; el rival acaba de jugar Te3.",
+              "comentario": "27…Dxf2+ 28.Rh1 Dxe3 29.Tf1 Tf8. Es una horquilla: una pieza ataca dos objetivos a la vez. Evaluar con calma la posición nueva, sin pensar en lo que pasó antes, es lo que permite encontrar esta jugada. (Ejercicio 17stN de la base abierta de Lichess (CC0), rating 1405. Stockfish 16 a profundidad 18: Dxf2+ es la mejor (+3,5) y la segunda queda en -0,1.)",
+              "linea": [
+                "Qxf2+",
+                "Kh1",
+                "Qxe3",
+                "Rf1",
+                "Rf8"
+              ]
+            }
+          ]
+        },
+        {
+          "titulo": "Decidir con poco tiempo",
+          "resumen": "Los apuros de tiempo no se arreglan jugando más rápido al final, sino gastando mejor el reloj al principio.",
+          "parrafos": [
+            "Muchos jugadores pierden posiciones buenas en los últimos minutos. Lo atribuyen al reloj, pero el problema suele estar mucho antes: veinte minutos en la jugada 12 buscando la jugada perfecta en una posición donde había tres buenas, o una apertura que no se conocía y se jugó con mucho tiempo. El apuro de tiempo es la factura de decisiones anteriores.",
+            "La primera corrección es repartir el tiempo: más para las posiciones críticas (cuando hay que elegir un plan, antes de un cambio importante, cuando el rival tiene amenazas) y menos para las jugadas naturales. Si dos jugadas te parecen igual de buenas después de pensar un rato, probablemente lo sean: elige una y sigue.",
+            "Cuando el apuro ya llegó, conviene tener reglas simples: jugar seguro, mantener las piezas defendidas, no abrir la posición si no hace falta, mirar siempre los jaques y capturas del rival antes de mover. Con poco tiempo, el golpe táctico sencillo vale más que el plan profundo."
+          ],
+          "practica": "Anota en la planilla el tiempo que te queda cada diez jugadas durante tres partidas. Busca dónde se fue la mayor parte y si esas posiciones eran de verdad las críticas.",
+          "tema": "deflection",
+          "pregunta": "Con poco tiempo, lo que hay que ver es el golpe sencillo: una pieza rival sostiene todo.",
+          "enlace": "Es el tipo de golpe que hay que ver rápido cuando el reloj aprieta: una pieza rival tiene demasiado trabajo, y se la desvía.",
+          "diagramas": [
+            {
+              "id": "RE-35",
+              "fen": "8/2RQ2bk/p1p3rp/q4p1n/P4P2/7P/2P1NRP1/6K1 b - - 3 37",
+              "turno": "b",
+              "resultado": "0-1",
+              "pregunta": "Con poco tiempo, lo que hay que ver es el golpe sencillo: una pieza rival sostiene todo. Juegan las negras; el rival acaba de jugar Dd7.",
+              "comentario": "37…De1+ 38.Tf1 Dxe2. Es una desviación: se aleja al defensor de lo que defendía. Es el tipo de golpe que hay que ver rápido cuando el reloj aprieta: una pieza rival tiene demasiado trabajo, y se la desvía. (Ejercicio 33vTh de la base abierta de Lichess (CC0), rating 1397. Stockfish 16 a profundidad 18: De1+ es la mejor (+5,2) y la segunda queda en +0,4.)",
+              "linea": [
+                "Qe1+",
+                "Rf1",
+                "Qxe2"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "n": 8,
+      "titulo": "Tu propio método",
+      "lecciones": [
+        {
+          "titulo": "Tu ficha de errores",
+          "resumen": "Cómo analizar tus partidas para encontrar tus errores repetidos, anotarlos por familia y medir si están desapareciendo.",
+          "parrafos": [
+            "Todo lo de este curso sirve poco si se queda en general. Cada jugador tiene sus errores favoritos: hay quien se precipita, quien no mira al rival, quien se relaja con ventaja. El último paso es encontrar los tuyos, y para eso hay una sola fuente confiable: tus propias partidas, analizadas con honestidad.",
+            "El método es este. Después de cada partida lenta, analízala primero sin motor y después con él. Busca los dos o tres momentos en que la evaluación cambió de verdad, y para cada uno decide a qué familia de errores pertenece: plan, conceptos, lectura de la posición, cambios, cálculo, el rival o la cabeza. Anótalo en tu ficha, con la fecha y una línea de explicación.",
+            "Después de diez o quince partidas, la ficha te dice algo que ningún libro puede decirte: qué familia se repite en ti. Esa es la que hay que trabajar primero, con las lecciones y ejercicios de su bloque. Y la ficha sirve también para medir: si en los próximos meses esa familia aparece menos, vas bien; si no cambia, hay que cambiar el entrenamiento. Así se rompe el estancamiento: sabiendo qué restar."
+          ],
+          "practica": "Arma tu ficha de errores con las siete familias del curso y analiza con ella tus diez últimas partidas lentas. Llévale la ficha a tu profesor: con ella se puede armar un plan de entrenamiento hecho a tu medida."
+        }
+      ]
+    }
+  ]
+}

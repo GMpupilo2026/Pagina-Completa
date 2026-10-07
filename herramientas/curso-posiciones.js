@@ -28,7 +28,9 @@ catch (e) { console.error("Falta chess.js: npm install chess.js@0.10.3"); proces
 
 const ES = { K: "R", Q: "D", R: "T", B: "A", N: "C" };
 const esSan = (san) => san.replace(/^([KQRBN])/, (m, p) => ES[p]).replace(/=([QRBN])/, (m, p) => "=" + ES[p]);
-const TEXTO = { "1-0": "Ganan blancas", "0-1": "Ganan negras", "½": "Tablas" };
+// «*»: posición de estrategia que no promete un resultado (el visor muestra
+// quién juega y la práctica no espera un final teórico).
+const TEXTO = { "1-0": "Ganan blancas", "0-1": "Ganan negras", "½": "Tablas", "*": "Posición para jugar" };
 
 function expandir(diag, fallos) {
   const g = new Chess();

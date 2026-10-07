@@ -48,12 +48,20 @@ const LECTURAS = JSON.parse(fs.readFileSync(path.join(__dirname, "material", "le
 
 const CURSOS = [
   "desequilibrios-de-material", "el-mapa-de-los-finales", "partidas-modelo",
+  "rompe-el-estancamiento", "ganar-con-poco", "cambiar-o-no-cambiar",
+  "ideas-que-ganan-partidas", "los-cimientos-del-ajedrez",
 ];
 // De qué habla cada curso, para cuando una lección no engancha con ningún
 // concepto por palabras clave: se le dan los de su área.
 const AREA_DEL_CURSO = {
-  "desequilibrios-de-material": "estrategia", "el-mapa-de-los-finales": "finales",
+  "desequilibrios-de-material": "estrategia",
+  "el-mapa-de-los-finales": "finales",
   "partidas-modelo": "estrategia",
+  "rompe-el-estancamiento": "estrategia",
+  "ganar-con-poco": "estrategia",
+  "cambiar-o-no-cambiar": "estrategia",
+  "ideas-que-ganan-partidas": "estrategia",
+  "los-cimientos-del-ajedrez": "tactica",
 };
 
 // ------------------------------------------------------------------ ayudas
