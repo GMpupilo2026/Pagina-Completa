@@ -23,7 +23,7 @@
     "nombre": "Formación docente"
    }
   ],
-  "total": 873,
+  "total": 874,
   "material": [
    {
     "ruta": "material/cambiar-o-no-cambiar/cambiar-o-no-cambiar.pdf",
@@ -31,6 +31,13 @@
     "tipo": "otro",
     "kb": 1301,
     "libro": "Cambiar o no cambiar"
+   },
+   {
+    "ruta": "material/coachess-resumen/coachess-resumen.pdf",
+    "titulo": "Coachess en resumen — el ajedrez para tu desarrollo personal y profesional",
+    "tipo": "otro",
+    "kb": 913,
+    "libro": "Coachess en resumen"
    },
    {
     "ruta": "material/diagnostico-de-nivel/diagnostico-de-nivel.pdf",
@@ -13173,7 +13180,7 @@
     "nombre": "Formación docente"
    }
   ],
-  "total": 420,
+  "total": 421,
   "material": [
    {
     "ruta": "material/cambiar-o-no-cambiar/cambiar-o-no-cambiar-accesible.html",
@@ -13181,6 +13188,13 @@
     "tipo": "accesible",
     "kb": 146,
     "libro": "Cambiar o no cambiar"
+   },
+   {
+    "ruta": "material/coachess-resumen/coachess-resumen-accesible.html",
+    "titulo": "Coachess en resumen",
+    "tipo": "accesible",
+    "kb": 62,
+    "libro": "Coachess en resumen"
    },
    {
     "ruta": "material/fichas-de-estudio/fichas-de-estudio-accesible.html",

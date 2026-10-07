@@ -590,7 +590,8 @@ async function pruebaMateriales(browser) {
      "material/ideas-que-ganan-partidas/ideas-que-ganan-partidas.pdf", "material/ideas-que-ganan-partidas/ideas-que-ganan-partidas-accesible.html",
      "material/los-cimientos-del-ajedrez/los-cimientos-del-ajedrez.pdf", "material/los-cimientos-del-ajedrez/los-cimientos-del-ajedrez-accesible.html",
      "material/peonita/peonita.pdf", "material/peonita/peonita-accesible.html",
-     "material/peonita-trucos/peonita-trucos.pdf", "material/peonita-trucos/peonita-trucos-accesible.html"]);
+     "material/peonita-trucos/peonita-trucos.pdf", "material/peonita-trucos/peonita-trucos-accesible.html",
+     "material/coachess-resumen/coachess-resumen.pdf", "material/coachess-resumen/coachess-resumen-accesible.html"]);
   // El banco de ejercicios no tiene pruebas como cuestionario: solo se
   // comparte. Antes de separarlo, cualquier material sin pruebas pintaba
   // igual el título y «todavía no están en la base».
@@ -930,12 +931,26 @@ async function pruebaPdfs(browser) {
     const url = URL.createObjectURL(new Blob([...partes, ...central, fin]));
     window.VistaPrevia.abrir([{ ruta: url, ext: "xlsx", titulo: "Notas de prueba" }], 0);
   });
-  await page.waitForFunction(() => document.querySelector("#vista-previa .vista-contenido table, #vista-previa-cuerpo a[download]"), null, { timeout: 5000 });
+  // 15 s y no 5: en el CI, con cuatro tandas a la vez, armar la vista del Excel
+  // a veces pasó de 5 s sin que nada estuviera roto (PR #765).
+  await page.waitForFunction(() => document.querySelector("#vista-previa .vista-contenido table, #vista-previa-cuerpo a[download]"), null, { timeout: 15000 });
   igual("un Excel se ve con sus hojas y celdas, y el texto va como texto", await page.evaluate(() => {
     const t = document.querySelector("#vista-previa .vista-contenido table");
     return t ? [document.querySelector("#vista-previa .vista-contenido h3").textContent,
       Array.from(t.querySelectorAll("tr")).map((tr) => Array.from(tr.children).map((td) => td.textContent)), t.querySelectorAll("b").length] : "sin tabla";
   }), ["Hoja: Notas", [["Alumno", "Puntos"], ["<b>Ana</b>", "42"]], 0]);
+  await clic(page, "#vista-previa-cerrar");
+  // Cerrar y abrir otro archivo en el mismo instante: el «close» del cierre
+  // llega después y no puede vaciar la vista nueva (dejaba «Abriendo el
+  // archivo…» para siempre; así falló el CI del PR #765).
+  igual("cerrar y abrir otro enseguida no deja la vista vacía", await page.evaluate(async () => {
+    const svg = URL.createObjectURL(new Blob(['<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10"/>'], { type: "image/svg+xml" }));
+    window.VistaPrevia.abrir([{ ruta: svg, ext: "svg", titulo: "uno" }], 0);
+    document.getElementById("vista-previa-cerrar").click();
+    window.VistaPrevia.abrir([{ ruta: svg, ext: "svg", titulo: "dos" }], 0);
+    await new Promise((r) => setTimeout(r, 300));
+    return [document.getElementById("vista-previa").open, !!document.querySelector("#vista-previa img")];
+  }), [true, true]);
   await clic(page, "#vista-previa-cerrar");
   igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
   await ctx.close();

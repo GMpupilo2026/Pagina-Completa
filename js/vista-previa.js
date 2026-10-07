@@ -410,7 +410,11 @@
       if (v && v.isConnected) v.focus();
     }
     cerrar.addEventListener("click", () => { d.close(); alCerrar(); });
-    d.addEventListener("close", alCerrar);
+    // Si entre el cierre y su evento se volvió a abrir (otro archivo), el
+    // «close» llega tarde: limpiaría la vista nueva y la dejaría en «Abriendo
+    // el archivo…» para siempre. Con el diálogo abierto, ese evento ya no es de
+    // este cierre.
+    d.addEventListener("close", () => { if (!d.open) alCerrar(); });
     // Con las flechas del teclado (fuera de un campo o del visor) se pasa de archivo.
     d.addEventListener("keydown", (e) => {
       if (e.target.closest("input, select, textarea, iframe")) return;

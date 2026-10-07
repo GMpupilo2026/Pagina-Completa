@@ -1,7 +1,8 @@
 /* Los materiales de clase en admin.html#materiales: cada material (el libro
  * «Ponte a prueba», los diez volúmenes del banco de ejercicios «Mide tu fuerza»,
  * los libros «Rompe el estancamiento», «Ganar con poco», «Cambiar o no cambiar»,
- * «Ideas que ganan partidas» y «Los cimientos del ajedrez», y los cuentos de Peonita), con sus
+ * «Ideas que ganan partidas» y «Los cimientos del ajedrez», los cuentos de Peonita y
+ * «Coachess en resumen»), con sus
  * sub-fichas —las pruebas y sus versiones como cuestionario, si las tiene— y
  * CON QUIÉN se comparte.
  *
@@ -227,6 +228,17 @@
       archivos: [
         { href: "material/peonita-trucos/peonita-trucos.pdf", texto: "📥 El libro en PDF" },
         { href: "material/peonita-trucos/peonita-trucos-accesible.html", texto: "♿ Versión accesible" },
+      ],
+    },
+    {
+      producto: "coachess-resumen",
+      emoji: "🧭",
+      titulo: "Coachess en resumen",
+      autor: "Oscar Angulo Cubero (resumen del libro de Daniel Muñoz Sánchez)",
+      resumen: "Lo más importante de «Coachess», de Daniel Muñoz: lo que el ajedrez enseña para decidir mejor, manejar el tiempo, trabajar con más sentido y aprender de las derrotas. Veinte capítulos con su idea, el ejemplo del tablero, los estudios que cita y consejos prácticos; los veinte consejos del autor y preguntas para conversar. Se puede imprimir.",
+      archivos: [
+        { href: "material/coachess-resumen/coachess-resumen.pdf", texto: "📥 El libro en PDF" },
+        { href: "material/coachess-resumen/coachess-resumen-accesible.html", texto: "♿ Versión accesible" },
       ],
     },
   ];
