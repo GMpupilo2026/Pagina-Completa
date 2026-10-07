@@ -1071,7 +1071,19 @@ escondido, nunca anunciado en el libro: se descubre. En el de Peonita hay dos:
 - **El alfil se llama Don Saleras**, que tiene exactamente las mismas letras
   que Alessandro (y suena a «salero», tener gracia). Antes era «Don Picudo».
 
-Para los próximos cuentos sirven las mismas ideas u otras parecidas: un
+**Lo que ya está decidido para los próximos cuentos** (pedido del autor):
+
+- **Un personaje que se llama Sandro**, un animalito del bosque que sale de
+  visita en algún capítulo.
+- **Un mensaje en las soluciones**: en un capítulo, las primeras letras de
+  las respuestas, leídas en orden, forman ALE.
+- **El sol que crece con él**: en el libro 2 el sol de una escena es
+  Alessandro de bebé; en cada libro nuevo, un sol lo muestra un poco más
+  grande (gateando, dando sus primeros pasos…). Uno solo por libro, a la
+  mitad del cuento, como en el libro 2.
+- Y cada libro, además, su secreto propio. El verificador comprueba todos.
+
+Para los próximos cuentos sirven además las mismas ideas u otras parecidas: un
 personaje con su nombre en anagrama o escondido a plena vista («Al…fil
 Sandro»), las iniciales de los capítulos, un acróstico en un poema, una
 posición cuyas piezas dibujan una A. Antes de elegir, se le proponen las
@@ -1104,6 +1116,19 @@ porque está escondido. Este archivo y `herramientas/` no se publican
 - Comparte con «Ponte a prueba» el cierre (`lib/pdf-armar.js`) y el
   `describir()` de la versión accesible. Va en `admin.html#materiales` y se
   comparte igual; sin pruebas como cuestionario, esa sección no aparece.
+
+### Los diplomas se coleccionan
+
+Cada cuento cierra con su diploma, y los diplomas forman una colección:
+cada uno lleva su número y su nombre (n.º 1 «Explorador del reino», n.º 2
+«Detective de trucos»…) y su medalla (`medalla()` de `dibujos.js`: una torre,
+una lupa…). La medalla del libro va grande sobre el dibujo, y abajo hay una
+fila «Mi colección» con las medallas de todos los libros de `libros.js` (la
+de ese diploma, resaltada) y un «?» para el próximo, para que el niño vea lo
+que tiene y lo que le falta. El número sale de `DIPLOMA.numero` y el
+verificador comprueba que sea el lugar del libro en `libros.js` y que no se
+repita ninguna medalla. Un libro nuevo lleva su número, su nombre y su
+medalla, y los diplomas de los anteriores lo suman solos al regenerarse.
 
 ### El segundo cuento: los trucos del bosque
 

@@ -432,11 +432,13 @@ const ESCENA_DIPLOMA = {
     D.trofeo(320, 280, 1.3) + D.estrella(250, 80, 12) + D.estrella(380, 60, 9),
 };
 const DIPLOMA = {
-  titulo: "Diploma de detective de trucos",
+  numero: 2,
+  nombre: "Detective de trucos",
+  medalla: "lupa",
   sub: "Peonita, Tizón y Don Pillo reconocen a",
   firma: "Peonita, Tizón y Don Pillo",
   firmaMano: "Peonita ♥ Tizón ♥ Don Pillo",
-  texto: ["porque aprendió a encontrar horquillas, clavadas, enfiladas y descubiertas,", "y a mirar siempre qué quiere hacer su amigo antes de jugar."],
+  texto: ["porque aprendió a encontrar horquillas, clavadas y enfiladas,", "y a mirar siempre qué quiere hacer su amigo."],
 };
 
 const FINAL = [

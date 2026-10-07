@@ -392,7 +392,7 @@ const ESTILO = `
   .diploma .nombre { border-bottom: 2px solid #5b4636; height: 14mm; margin: 4mm 10mm 6mm; }
   .diploma .texto { font-size: 15pt; line-height: 1.6; }
   .diploma .dibujo svg { width: 100%; height: auto; }
-  .diploma .firmas { margin-top: auto; display: flex; justify-content: space-between; gap: 12mm; font-size: 11pt; }
+  .diploma .firmas { margin-top: auto; padding-top: 14mm; display: flex; justify-content: space-between; gap: 12mm; font-size: 11pt; }
   .diploma .firmas div { flex: 1; border-top: 1.5px solid #5b4636; padding-top: 2mm; }
   .diploma .firmas strong { font-family: "Quicksand"; display: block; font-size: 12pt; }
   /* La firma de los personajes va arriba de la línea, como hecha a mano; abajo,
@@ -402,7 +402,26 @@ const ESTILO = `
   .diploma .firma-mano { display: block; font-family: "Comic Neue"; font-weight: 700; font-style: italic; font-size: 16pt; color: #1864ab; margin: -11mm 0 3mm; transform: rotate(-5deg); white-space: nowrap; }
   .diploma .autoria { display: flex; align-items: center; justify-content: center; gap: 2.5mm; margin-top: 7mm; font-family: "Quicksand"; font-weight: 700; font-size: 9.5pt; color: #7a5c3e; }
   .diploma .autoria img { width: 11mm; height: auto; }
+  /* La colección: cada diploma con su número y su medalla, la de este libro
+     en grande sobre el dibujo, y abajo la fila con todas (la de este libro
+     resaltada) y un «?» para el próximo. */
+  .diploma .medalla-grande { position: absolute; top: 6mm; right: 8mm; width: 26mm; transform: rotate(8deg); }
+  .diploma .medalla-grande svg { width: 26mm; height: auto; }
+  .diploma .coleccion-n { font-family: "Quicksand"; font-weight: 700; font-size: 11pt; color: #9a4f00; letter-spacing: .04em; text-transform: uppercase; margin: 5mm 0 0; }
+  .diploma .coleccion { display: flex; align-items: flex-end; justify-content: center; gap: 3mm; margin-top: 6mm; font-family: "Quicksand"; font-weight: 700; font-size: 9.5pt; color: #5b4636; }
+  .diploma .coleccion-t { align-self: center; margin-right: 1mm; }
+  .diploma .coleccion figure { margin: 0; text-align: center; font-size: 7.5pt; line-height: 1.15; width: 18mm; }
+  .diploma .coleccion figure svg { width: 9mm; height: auto; margin: 0 auto 1mm; }
+  .diploma .coleccion figure.esta svg { width: 12mm; }
+  .diploma .coleccion figure.esta { color: #a61e4d; }
 `;
+
+/* La fila de «Mi colección» del diploma: un lugar por libro de libros.js, en
+   orden, y uno más con «?» para el próximo cuento. */
+function coleccion() {
+  return LIBROS.map((l) => `<figure class="${l === L ? "esta" : ""}">${D.medalla(l.DIPLOMA.medalla)}<figcaption>n.º ${l.DIPLOMA.numero}<br>${esc(l.DIPLOMA.nombre)}</figcaption></figure>`).join("") +
+    `<figure>${D.medalla("?", { apagada: true })}<figcaption>n.º ${LIBROS.length + 1}<br>¡El próximo!</figcaption></figure>`;
+}
 
 function soluciones() {
   return `<section class="soluciones"><h2>Soluciones</h2>
@@ -433,7 +452,7 @@ function cuerpo() {
 <section class="pagina indice">
   <h2>Los capítulos</h2>
   <ol>${L.CAPITULOS.map((c) => `<li><span class="n">${c.n}</span>${esc(c.titulo)}</li>`).join("")}
-  <li><span class="n">★</span>Mi diploma de ajedrez</li><li><span class="n">✓</span>Soluciones</li></ol>
+  <li><span class="n">★</span>Mi diploma n.º ${L.DIPLOMA.numero}: ${esc(L.DIPLOMA.nombre)}</li><li><span class="n">✓</span>Soluciones</li></ol>
 </section>
 ${L.CAPITULOS.map(capituloHTML).join("")}
 <section class="capitulo final">
@@ -443,11 +462,14 @@ ${L.CAPITULOS.map(capituloHTML).join("")}
 </section>
 <section class="diploma">
   <div class="dibujo">${D.escena(L.ESCENA_DIPLOMA)}</div>
-  <h2>${esc(L.DIPLOMA.titulo)}</h2>
+  <div class="medalla-grande">${D.medalla(L.DIPLOMA.medalla)}</div>
+  <p class="coleccion-n">Colección de diplomas de Peonita · Diploma n.º ${L.DIPLOMA.numero}</p>
+  <h2>${esc(L.DIPLOMA.nombre)}</h2>
   <p class="sub">${esc(L.DIPLOMA.sub)}</p>
   <div class="nombre"></div>
   <p class="texto">${L.DIPLOMA.texto.map(esc).join("<br>")}</p>
   <div class="firmas"><div><strong>Fecha</strong></div><div><span class="firma-mano">${esc(L.DIPLOMA.firmaMano)}</span><strong>${esc(L.DIPLOMA.firma)}</strong></div></div>
+  <div class="coleccion"><span class="coleccion-t">Mi colección:</span>${coleccion()}</div>
   <div class="autoria"><img src="${LOGO_MARCA}" alt="">${esc(L.AUTOR)}</div>
 </section>
 ${soluciones()}

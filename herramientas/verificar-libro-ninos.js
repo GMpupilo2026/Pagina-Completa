@@ -254,6 +254,10 @@ ok(fs.existsSync(path.join(CARPETA, L.SLUG + ".pdf")), `falta material/${L.SLUG}
 }
 
 LIBROS.forEach(verificarLibro);
+// Los diplomas se coleccionan: el n.º de cada uno es su lugar en libros.js y
+// cada medalla es distinta.
+LIBROS.forEach((l, i) => ok(l.DIPLOMA.numero === i + 1, `${l.SLUG}: su diploma dice n.º ${l.DIPLOMA.numero} y es el libro ${i + 1} de la colección`));
+ok(new Set(LIBROS.map((l) => l.DIPLOMA.medalla)).size === LIBROS.length, "dos diplomas tienen la misma medalla");
 ok(new Set(LIBROS.map((l) => l.SLUG)).size === LIBROS.length, "dos libros tienen el mismo slug");
 
 if (fallos.length) {

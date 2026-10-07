@@ -653,7 +653,9 @@ const ESCENA_DIPLOMA = {
     D.estrella(240, 90, 12) + D.estrella(360, 70, 9) + D.estrella(300, 120, 7),
 };
 const DIPLOMA = {
-  titulo: "Diploma de ajedrez",
+  numero: 1,                       // su lugar en la colección: el de libros.js
+  nombre: "Explorador del reino",
+  medalla: "torre",
   sub: "El reino de las 64 casillas reconoce a",
   firma: "Peonita y Don Lento",
   firmaMano: "Peonita ♥ Don Lento",

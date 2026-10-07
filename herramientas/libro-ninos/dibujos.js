@@ -393,11 +393,30 @@ function escena(def) {
     `</svg>`;
 }
 
+/* La medalla de cada diploma de la colección (ver «Los diplomas se
+   coleccionan»): una moneda dorada con su cinta y el dibujo del libro.
+   icono: "torre" | "lupa" | "?" (el próximo libro, que todavía no salió).
+   Lienzo de 100 × 130. */
+function medalla(icono, opciones) {
+  const o = opciones || {};
+  const oro = o.apagada ? "#dee2e6" : "#ffd43b", borde = o.apagada ? "#adb5bd" : "#b07d00", cinta = o.apagada ? "#ced4da" : "#e03131";
+  let dibujo;
+  if (icono === "torre") dibujo = pieza("t", "b", 50, 82, 0.36);
+  else if (icono === "lupa") dibujo = lupa(46, 50, 0.85, -35);
+  else dibujo = `<text x="50" y="66" text-anchor="middle" font-family="Quicksand, sans-serif" font-weight="700" font-size="40" fill="${borde}">?</text>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 130" aria-hidden="true">` +
+    `<path d="M30,78 L18,126 L34,116 L44,128 L50,84 Z" fill="${cinta}" stroke="${o.apagada ? "#adb5bd" : "#a61e1e"}" stroke-width="2" stroke-linejoin="round"/>` +
+    `<path d="M70,78 L82,126 L66,116 L56,128 L50,84 Z" fill="${cinta}" stroke="${o.apagada ? "#adb5bd" : "#a61e1e"}" stroke-width="2" stroke-linejoin="round"/>` +
+    `<circle cx="50" cy="50" r="40" fill="${oro}" stroke="${borde}" stroke-width="4"/>` +
+    `<circle cx="50" cy="50" r="32" fill="none" stroke="${borde}" stroke-width="1.5" stroke-dasharray="3 3"/>` +
+    dibujo + `</svg>`;
+}
+
 /* Una pieza suelta, para «une cada pieza con su nombre» y la tapa. */
 function piezaSola(tipo, color, opciones) {
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 145" aria-hidden="true">${pieza(tipo, color, 50, 142, 1, opciones)}</svg>`;
 }
 
 module.exports = {
-  pieza, perezoso, mapache, lupa, escena, piezaSola, estrella, corazon, flecha, globo, guarumo, nube, caja, corona, mango, trofeo, confeti, piso, FONDOS,
+  pieza, perezoso, mapache, lupa, medalla, escena, piezaSola, estrella, corazon, flecha, globo, guarumo, nube, caja, corona, mango, trofeo, confeti, piso, FONDOS,
 };
