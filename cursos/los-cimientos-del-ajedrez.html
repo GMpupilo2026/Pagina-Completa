@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="../img/favicon.svg">
+    <title>Los cimientos del ajedrez — Ajedrez Integral</title>
+    <!-- datos estructurados: los genera herramientas/datos-estructurados.py -->
+    <script type="application/ld+json">{"@context":"https://schema.org","@type":"Course","@id":"https://ajedrez-integral.com/cursos/finales-practicos.html#curso","name":"Finales Prácticos","description":"Temario completo del curso de Finales Prácticos: finales de peones, torres, alfiles de distinto color y conversión de ventaja.","url":"https://ajedrez-integral.com/cursos/finales-practicos.html","inLanguage":"es-CR","image":"https://ajedrez-integral.com/img/og-ajedrez-integral.jpg","provider":{"@type":"Organization","@id":"https://ajedrez-integral.com/#organizacion","name":"Ajedrez Integral","url":"https://ajedrez-integral.com/","logo":"https://ajedrez-integral.com/img/logo-oscar-angulo.png","image":"https://ajedrez-integral.com/img/og-ajedrez-integral.jpg","description":"Academia de ajedrez con clases en vivo, entrenamiento interactivo y seguimiento del progreso, para escuelas, colegios y familias.","areaServed":"CR","founder":{"@type":"Person","name":"Oscar Angulo Cubero","jobTitle":"Entrenador FIDE y Árbitro Internacional","url":"https://ajedrez-integral.com/sobre-oscar.html"},"sameAs":["https://wa.me/50683092291"]}}</script>
+    <meta name="description" content="Temario completo del curso Los cimientos del ajedrez: Un programa en tres niveles para el jugador de club que quiere bases sólidas: táctica, finales, juego posicional, cálculo y aperturas, tema por tema, con las partidas clásicas que mejor los muestran.">
+    <link rel="canonical" href="https://ajedrez-integral.com/cursos/los-cimientos-del-ajedrez.html">
+    <!-- Para cuando alguien pega el enlace en WhatsApp, que es por donde se comparte esto. -->
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Ajedrez Integral">
+    <meta property="og:locale" content="es_CR">
+    <meta property="og:title" content="Los cimientos del ajedrez — Ajedrez Integral">
+    <meta property="og:description" content="Temario completo del curso Los cimientos del ajedrez: Un programa en tres niveles para el jugador de club que quiere bases sólidas: táctica, finales, juego posicional, cálculo y aperturas, tema por tema, con las partidas clásicas que mejor los muestran.">
+    <meta property="og:url" content="https://ajedrez-integral.com/cursos/los-cimientos-del-ajedrez.html">
+    <meta property="og:image" content="https://ajedrez-integral.com/img/og-ajedrez-integral.jpg">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="Ajedrez Integral — clases de ajedrez en vivo, no solo videos. ajedrez-integral.com">
+    <meta name="twitter:card" content="summary_large_image">
+    <!-- Tailwind compilado: lo genera herramientas/css-construir.js.
+         Antes venía del CDN, que baja ~400 KB de JavaScript y compila el CSS
+         dentro del navegador en cada visita. -->
+    <link rel="stylesheet" href="../css/tailwind.css">
+    <link rel="stylesheet" href="../css/styles.css">
+    <!-- oscuro: inicio --><script>(function(){try{var t=localStorage.getItem('theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.classList.add('dark');}catch(e){}})();</script><!-- oscuro: fin -->
+    <script src="../js/adaptive-mode.js"></script>
+    <link rel="stylesheet" href="../css/finales-100.css">
+
+
+<!-- app: inicio --><meta name="theme-color" content="#102a43"><link rel="manifest" href="/manifest.json"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Ajedrez"><script src="../js/errores.js"></script><script src="../js/pwa.js" defer></script><script src="../js/navegacion.js" defer></script><!-- app: fin --><!-- fuentes: inicio --><link rel="stylesheet" href="../css/fuentes.css"><!-- fuentes: fin --><!-- tema: inicio --><script>(function(){try{var l=localStorage.getItem('plataforma_letra_v1');if(l&&/^[a-z]{2,24}$/.test(l)&&l!=='tema')document.documentElement.setAttribute('data-letra',l);var t=localStorage.getItem('plataforma_tema_v1');if(!t||!/^[a-z]{2,24}$/.test(t)||t==='clasico')return;document.documentElement.setAttribute('data-tema',t);var b=getComputedStyle(document.documentElement).getPropertyValue('--c-brand-800').trim();var m=document.querySelector('meta[name="theme-color"]');if(b&&m)m.setAttribute('content','rgb('+b.replace(/\s+/g,',')+')');}catch(e){}})();</script><!-- tema: fin --></head>
+<body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-accent-500 focus:text-brand-900 focus:font-semibold focus:px-4 focus:py-2 focus:rounded-lg">Saltar al contenido principal</a>
+    <header id="header" class="sticky top-0 z-50 bg-brand-800 shadow-lg transition-all duration-300">
+        <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Navegación principal">
+            <div class="flex items-center justify-between min-h-[4rem] md:min-h-[5rem] py-2">
+                <a href="../index.html" class="flex items-center gap-2 text-white"><img src="/img/logo-marca.png" alt="" width="78" height="48" class="h-10 md:h-12 w-auto shrink-0"><span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span></a>
+                <ul class="hidden lg:flex items-center gap-8 text-brand-100 font-medium">
+                    <li><a href="../index.html" class="hover:text-accent-400 transition-colors">Inicio</a></li>
+                    <li><a href="../cursos.html" class="hover:text-accent-400 text-accent-400 transition-colors">Cursos</a></li>
+                    <li><a href="../articulos.html" class="hover:text-accent-400 transition-colors">Artículos</a></li>
+                    <li><a href="../tablero.html" class="hover:text-accent-400 transition-colors">Jugar contra el profe</a></li>
+                    <li><a href="../clases.html" class="hover:text-accent-400 transition-colors">Academia</a></li>
+                    <li><a href="../precios.html" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg transition-colors">Inscríbete</a></li>
+                </ul>
+                <div class="flex items-center gap-2 sm:gap-3">
+                    <button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro">
+                        <span id="theme-icon" aria-hidden="true">☀️</span>
+                    </button>
+                    <button id="menu-toggle" class="lg:hidden text-white text-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Abrir menú" aria-expanded="false" aria-controls="mobile-menu">
+                        <svg id="icon-open" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                        <svg id="icon-close" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+            </div>
+        </nav>
+        <div id="mobile-menu" class="lg:hidden hidden bg-brand-800 border-t border-brand-700">
+            <ul class="px-4 py-4 space-y-3 text-brand-100 font-medium">
+                <li><a href="../index.html" class="block py-2 hover:text-accent-400">Inicio</a></li>
+                <li><a href="../cursos.html" class="block py-2 text-accent-400">Cursos</a></li>
+                <li><a href="../articulos.html" class="block py-2 hover:text-accent-400">Artículos</a></li>
+                <li><a href="../tablero.html" class="block py-2 hover:text-accent-400">Jugar contra el profe</a></li>
+                <li><a href="../clases.html" class="block py-2 hover:text-accent-400">Academia</a></li>
+                <li><a href="../precios.html" class="block py-2 bg-accent-500 text-brand-900 font-semibold px-4 rounded-lg text-center">Inscríbete</a></li>
+            </ul>
+        </div>
+    </header>
+
+    <main id="main-content">
+        <article class="pt-8 pb-16">
+        <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+            <a href="../cursos.html" class="inline-flex items-center gap-1 text-sm text-brand-500 dark:text-brand-300 hover:text-accent-500 transition-colors mb-4"><span aria-hidden="true">←</span> Volver a Cursos</a>
+            <span class="text-xs text-accent-700 dark:text-accent-400 font-semibold uppercase tracking-wide">Intermedio</span>
+            <h1 class="font-serif text-3xl md:text-4xl font-bold text-brand-800 dark:text-white mt-2 mb-3">Los cimientos del ajedrez</h1>
+            <p class="text-brand-500 dark:text-brand-300 mb-6">Un programa en tres niveles para el jugador de club que quiere bases sólidas: táctica, finales, juego posicional, cálculo y aperturas, tema por tema, con las partidas clásicas que mejor los muestran.</p>
+            <div aria-hidden="true" class="h-48 bg-gradient-to-br from-brand-700 to-brand-900 rounded-2xl flex items-center justify-center text-7xl mb-6">🧱</div>
+
+            <p class="text-brand-600 dark:text-brand-300 mb-8">Setenta y dos lecciones en tres niveles, ordenadas como se aprende de verdad: cada tema se presenta, se reconoce en partidas reales y se practica, y vuelve más adelante un escalón más arriba. Táctica (los dibujos de mate, el ataque doble, la clavada, la descubierta, el molino, los sacrificios), finales (la oposición, dama contra peón, el mate con alfil y caballo, las fortalezas, dama contra torre), juego posicional y estrategia (el valor de las piezas, las columnas, los puestos avanzados, los peones débiles, el peón pasado), cálculo (mate en dos y en tres, variantes forzadas) y aperturas (las reglas, los gambitos, las trampas, las partidas abiertas y semiabiertas). Los ejemplos son partidas de maestros y de torneos reales, y cada posición está comprobada con motor.</p>
+
+            <div class="flex flex-wrap items-center gap-4 mb-10 bg-white dark:bg-brand-900 rounded-xl shadow-md p-5">
+                <div class="flex-1 min-w-[180px]">
+                    <p class="text-sm text-brand-500 dark:text-brand-300"><strong class="text-brand-800 dark:text-white">72 lecciones</strong> · Intermedio</p>
+                    <p class="text-xs text-brand-450 dark:text-brand-350 mt-0.5">Cada lección con su presentación y su PDF de ejercicios para imprimir.</p>
+                </div>
+            </div>
+
+            <h2 class="font-serif text-2xl font-bold text-brand-800 dark:text-white mb-6">Temario del curso</h2>
+            <div class="space-y-8">
+                <div>
+                    <h3 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-3">Bloque 1 · Las primeras herramientas</h3>
+                    <ol start="1" class="space-y-2 list-decimal pl-5 marker:text-accent-600 marker:font-semibold">
+                        <li class="text-brand-600 dark:text-brand-300">Los mates de siempre<span class="block text-xs text-brand-450 dark:text-brand-350 mt-0.5">Los mates básicos se repiten en miles de partidas: el del pasillo, la dama apoyada junto al rey y la escalera de torres. Reconocerlos al vuelo es el primer paso.</span></li>
+                        <li class="text-brand-600 dark:text-brand-300">Más dibujos de mate<span class="block text-xs text-brand-450 dark:text-brand-350 mt-0.5">Caballo y dama, alfil y torre, alfil y dama en la diagonal larga: aprende las parejas de piezas que dan mate juntas y en qué casillas se encuentran.</span></li>
+                        <li class="text-brand-600 dark:text-brand-300">Las reglas de la apertura<span class="block text-xs text-brand-450 dark:text-brand-350 mt-0.5">Centro, desarrollo y rey seguro: tres reglas que bastan para salir bien de la apertura sin saber teoría de memoria.</span></li>
+                        <li class="text-brand-600 dark:text-brand-300">Finales de peones: lo básico<span class="block text-xs text-brand-450 dark:text-brand-350 mt-0.5">La regla del cuadrado, el rey delante del peón y las casillas clave: lo mínimo para saber si un final de rey y peón se gana o es tablas.</span></li>
+                        <li class="text-brand-600 dark:text-brand-300">El jaque doble<span class="block text-xs text-brand-450 dark:text-brand-350 mt-0.5">Dos piezas dan jaque a la vez y la única defensa es mover el rey. Aprende de dónde sale y por qué es tan devastador.</span></li>
+                        <li class="text-brand-600 dark:text-brand-300">Cuánto vale cada pieza<span class="block text-xs text-brand-450 dark:text-brand-350 mt-0.5">El valor 1-3-3-5-9 sirve para decidir cambios, pero tiene excepciones: la pareja de alfiles, las piezas activas y los peones que corren.</span></li>
+                        <li class="text-brand-600 dark:text-brand-300">El ataque a la descubierta<span class="block text-xs text-brand-450 dark:text-brand-350 mt-0.5">Una pieza se aparta y destapa el ataque de otra que estaba detrás. Si además la que se mueve amenaza algo, el rival no puede atender las dos cosas.</span></li>
+                        <li class="text-brand-600 dark:text-brand-300">Las piezas al centro<span class="block text-xs text-brand-450 dark:text-brand-350 mt-0.5">Una pieza en el centro controla más casillas y llega antes a cualquier lado del tablero. Aprende a centralizar y a desconfiar del borde.</span></li>
+                        <li class="text-brand-600 dark:text-brand-300">Mate en dos<span class="block text-xs text-brand-450 dark:text-brand-350 mt-0.5">Para resolver un mate en dos hay que revisar todas las respuestas del rival, no solo la que uno espera. Aprende un método ordenado.</span></li>
+                        <li class="text-brand-600 dark:text-brand-300">La oposición<span class="block text-xs text-brand-450 dark:text-brand-350 mt-0.5">Dos reyes frente a frente con una casilla en medio: quien no tiene que mover gana la pelea. La oposición decide muchos finales de peones.</span></li>
+                        <li class="text-brand-600 dark:text-brand-300">La clavada<span class="block text-xs text-brand-450 dark:text-brand-350 mt-0.5">Una pieza no puede moverse porque detrás de ella hay algo más valioso. Aprende a crear clavadas y a aprovecharlas.</span></li>
+                        <li class="text-brand-600 dark:text-brand-300">El ataque doble<span class="block text-xs text-brand-450 dark:text-brand-350 mt-0.5">Una sola jugada ataca dos cosas a la vez y el rival solo puede salvar una. Es el golpe táctico más frecuente en las partidas de club.</span></li>
+                        <li class="text-brand-600 dark:text-brand-300">Cómo se gana con material de más<span class="block text-xs text-brand-450 dark:text-brand-350 mt-0.5">Tener una pieza o un peón de más no gana solo. Aprende a simplificar, a quitarle juego al rival y a no apurarte.</span></li>
+                        <li class="text-brand-600 dark:text-brand-300">Columnas abiertas y casillas fuertes<span class="block text-xs text-brand-450 dark:text-brand-350 mt-0.5">Las torres necesitan columnas abiertas y los caballos, casillas que ningún peón pueda atacar. Aprende a encontrarlas y ocuparlas.</span></li>
+                        <li class="text-brand-600 dark:text-brand-300">La combinación<span class="block text-xs text-brand-450 dark:text-brand-350 mt-0.5">Una combinación es una serie de jugadas forzadas, casi siempre con un sacrificio, que consigue algo concreto. Aprende a ver cuándo aparece.</span></li>
+                        <li class="text-brand-600 dark:text-brand-300">Dama contra peón<span class="block text-xs text-brand-450 dark:text-brand-350 mt-0.5">La dama le gana a un peón en séptima con un método de jaques y clavadas. La excepción son los peones de alfil y de torre.</span></li>
+                        <li class="text-brand-600 dark:text-brand-300">El ahogado que salva<span class="block text-xs text-brand-450 dark:text-brand-350 mt-0.5">Cuando el rey no tiene jugadas legales y no está en jaque, la partida es tablas. Aprende a usarlo para salvar posiciones perdidas y a evitarlo cuando ganas.</span></li>
+                        <li class="text-brand-600 dark:text-brand-300">Las variantes forzadas<span class="block text-xs text-brand-450 dark:text-brand-350 mt-0.5">Jaques, capturas y amenazas reducen las respuestas del rival y permiten calcular lejos. Aprende a seguir una línea forzada hasta el final.</span></li>
+                        <li class="text-brand-600 dark:text-brand-300">El peón que corona<span class="block text-xs text-brand-450 dark:text-brand-350 mt-0.5">Un peón pasado avanzado es una amenaza constante. Aprende a abrirle el camino con desvíos, sacrificios y a veces una coronación en pieza menor.</span></li>
+                        <li class="text-brand-600 dark:text-brand-300">Los puntos débiles<span class="block text-xs text-brand-450 dark:text-brand-350 mt-0.5">Peones aislados, doblados o retrasados, casillas sin defensa cerca del rey y el punto f7: aprende a encontrar debilidades y a atacarlas.</span></li>
+                        <li class="text-brand-600 dark:text-brand-300">Combinaciones con peones<span class="block text-xs text-brand-450 dark:text-brand-350 mt-0.5">El peón también da golpes: horquillas, rupturas y avances con amenaza. Aprende a usar la pieza más barata como arma táctica.</span></li>
+                        <li class="text-brand-600 dark:text-brand-300">El alfil equivocado<span class="block text-xs text-brand-450 dark:text-brand-350 mt-0.5">Con un peón de torre, un alfil y su rey no siempre ganan: si el alfil no domina la casilla de coronación y el rey rival llega a la esquina, es tablas.</span></li>
+                        <li class="text-brand-600 dark:text-brand-300">El mate de la coz<span class="block text-xs text-brand-450 dark:text-brand-350 mt-0.5">El caballo da mate a un rey rodeado por sus propias piezas, sin casillas de escape. Aprende el patrón y la entrega de dama que lo prepara.</span></li>
+                        <li class="text-brand-600 dark:text-brand-300">Los gambitos<span class="block text-xs text-brand-450 dark:text-brand-350 mt-0.5">En un gambito se entrega un peón a cambio de desarrollo, centro o ataque. Aprende cuándo vale la pena y cómo enfrentarlo.</span></li>
+                    </ol>
+                </div>
+                <div>
+                    <h3 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-3">Bloque 2 · Del patrón al plan</h3>
+                    <ol start="25" class="space-y-2 list-decimal pl-5 marker:text-accent-600 marker:font-semibold">
+                        <li class="text-brand-600 dark:text-brand-300">El molino<span class="block text-xs text-brand-450 dark:text-brand-350 mt-0.5">Un jaque a la descubierta que se repite: la torre da jaque, se aparta descubriendo otro jaque, come algo y vuelve. Aprende a armarlo y a cobrar lo más valioso.</span></li>
+                        <li class="text-brand-600 dark:text-brand-300">Los peones débiles<span class="block text-xs text-brand-450 dark:text-brand-350 mt-0.5">Un peón que ningún otro peón puede defender se convierte en blanco fijo. Aprende a reconocer los aislados, retrasados y doblados, y a atacarlos con varias piezas.</span></li>
+                        <li class="text-brand-600 dark:text-brand-300">La última fila<span class="block text-xs text-brand-450 dark:text-brand-350 mt-0.5">Un rey encerrado detrás de sus propios peones se queda sin casillas. Aprende a ver el mate del pasillo, a desviar a quien defiende la fila y a prevenirlo a tiempo.</span></li>
+                        <li class="text-brand-600 dark:text-brand-300">Aprovechar las debilidades del rey<span class="block text-xs text-brand-450 dark:text-brand-350 mt-0.5">Un rey con huecos en su enroque es una debilidad que dura toda la partida. Aprende a leer esas casillas y a llevar piezas antes de atacar.</span></li>
+                        <li class="text-brand-600 dark:text-brand-300">La séptima fila<span class="block text-xs text-brand-450 dark:text-brand-350 mt-0.5">Una torre en la séptima fila ataca peones que no se han movido y encierra al rey. Aprende cuándo entrar y qué hacer con dos torres ahí.</span></li>
+                        <li class="text-brand-600 dark:text-brand-300">Las fortalezas<span class="block text-xs text-brand-450 dark:text-brand-350 mt-0.5">A veces el bando con menos material arma una posición que el otro no puede romper. Aprende a reconocer una fortaleza para salvar finales y para no regalar los ganados.</span></li>
+                        <li class="text-brand-600 dark:text-brand-300">La cuña de peón<span class="block text-xs text-brand-450 dark:text-brand-350 mt-0.5">Un peón propio clavado en el campo del rey rival le quita casillas y sostiene el mate. Aprende a instalarlo, a aprovecharlo y a no soltarlo.</span></li>
+                        <li class="text-brand-600 dark:text-brand-300">Las trampas de apertura<span class="block text-xs text-brand-450 dark:text-brand-350 mt-0.5">Las trampas de apertura castigan las jugadas naturales que no miran lo que pasa. Aprende por qué funcionan para no caer y para reconocerlas aunque no te las sepas de memoria.</span></li>
+                        <li class="text-brand-600 dark:text-brand-300">Cómo usar una trampa: la pieza atrapada<span class="block text-xs text-brand-450 dark:text-brand-350 mt-0.5">Una pieza que se mete donde no tiene salida puede quedar atrapada. Aprende a tender esa trampa sin arriesgar nada y a cobrarla cuando el rival cae.</span></li>
+                        <li class="text-brand-600 dark:text-brand-300">Combinaciones de ahogado<span class="block text-xs text-brand-450 dark:text-brand-350 mt-0.5">Cuando estás perdido, el ahogado es una salvación legal. Aprende a buscarlo entregando tus últimas piezas, y a no regalarlo cuando vas ganando.</span></li>
+                        <li class="text-brand-600 dark:text-brand-300">La columna semiabierta<span class="block text-xs text-brand-450 dark:text-brand-350 mt-0.5">Una columna sin peones tuyos pero con uno del rival es una vía de ataque directa. Aprende a presionar ese peón y a convertir la presión en ventaja.</span></li>
+                        <li class="text-brand-600 dark:text-brand-300">Mate con alfil y caballo<span class="block text-xs text-brand-450 dark:text-brand-350 mt-0.5">El mate más difícil de los básicos: el rey solo se puede ahogar en la esquina del color del alfil. Aprende el método por etapas para darlo antes de las 50 jugadas.</span></li>
+                        <li class="text-brand-600 dark:text-brand-300">Combinaciones en las columnas<span class="block text-xs text-brand-450 dark:text-brand-350 mt-0.5">Las columnas y filas abiertas permiten atacar dos piezas alineadas a la vez. Aprende la enfilada, la clavada en columna y los rayos X.</span></li>
+                        <li class="text-brand-600 dark:text-brand-300">Los puestos avanzados<span class="block text-xs text-brand-450 dark:text-brand-350 mt-0.5">Una casilla en el campo rival que ningún peón contrario puede atacar es un hogar perfecto para una pieza. Aprende a encontrarla y a ocuparla con la pieza correcta.</span></li>
+                        <li class="text-brand-600 dark:text-brand-300">Combinaciones en las diagonales<span class="block text-xs text-brand-450 dark:text-brand-350 mt-0.5">Los alfiles y la dama actúan de lejos por las diagonales. Aprende a ver clavadas, descubiertas y ataques al enroque que nacen en una diagonal.</span></li>
+                        <li class="text-brand-600 dark:text-brand-300">Finales elementales de torre<span class="block text-xs text-brand-450 dark:text-brand-350 mt-0.5">Los finales de torre son los más frecuentes. Aprende las dos posiciones que lo ordenan todo: Lucena para ganar y Philidor para hacer tablas.</span></li>
+                        <li class="text-brand-600 dark:text-brand-300">Combinaciones con caballos<span class="block text-xs text-brand-450 dark:text-brand-350 mt-0.5">El caballo salta y ataca en todas direcciones a la vez. Aprende la horquilla, el jaque doble y el mate de la coz, y las señales que los anuncian.</span></li>
+                        <li class="text-brand-600 dark:text-brand-300">Desarrollar las piezas<span class="block text-xs text-brand-450 dark:text-brand-350 mt-0.5">La apertura se gana sacando las piezas rápido y bien. Aprende los principios del desarrollo y cómo castigar al rival que se queda atrás.</span></li>
+                        <li class="text-brand-600 dark:text-brand-300">El jaque perpetuo<span class="block text-xs text-brand-450 dark:text-brand-350 mt-0.5">Cuando estás perdido, una serie de jaques que no termina salva la partida. Aprende a buscar el perpetuo y, cuando vas ganando, a no dejar que te lo den.</span></li>
+                        <li class="text-brand-600 dark:text-brand-300">Mate en dos: los candidatos<span class="block text-xs text-brand-450 dark:text-brand-350 mt-0.5">Un mate en dos se resuelve con orden: primero las jugadas candidatas, después todas las respuestas del rival. Aprende a no detenerte en la primera idea.</span></li>
+                        <li class="text-brand-600 dark:text-brand-300">Combinaciones con piezas mayores<span class="block text-xs text-brand-450 dark:text-brand-350 mt-0.5">Damas y torres son las piezas que más golpes dan. Aprende los ataques dobles de dama, las torres dobladas y las entregas de material que terminan en mate.</span></li>
+                        <li class="text-brand-600 dark:text-brand-300">Las piezas trabajan juntas<span class="block text-xs text-brand-450 dark:text-brand-350 mt-0.5">Una pieza sola no hace nada; varias que apuntan al mismo objetivo deciden la partida. Aprende a reconocer piezas desconectadas y a mejorar la peor.</span></li>
+                        <li class="text-brand-600 dark:text-brand-300">El caballo que se entrega<span class="block text-xs text-brand-450 dark:text-brand-350 mt-0.5">Un caballo sacrificado puede abrir el rey rival, desviar a un defensor o despejar una casilla. Aprende cuándo vale la pena entregarlo y qué tiene que venir después.</span></li>
+                        <li class="text-brand-600 dark:text-brand-300">El zugzwang<span class="block text-xs text-brand-450 dark:text-brand-350 mt-0.5">A veces la peor desgracia es tener que mover. Aprende a reconocer el zugzwang en los finales y a usar la oposición y la triangulación para provocarlo.</span></li>
+                    </ol>
+                </div>
+                <div>
+                    <h3 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-3">Bloque 3 · La coordinación de las piezas</h3>
+                    <ol start="49" class="space-y-2 list-decimal pl-5 marker:text-accent-600 marker:font-semibold">
+                        <li class="text-brand-600 dark:text-brand-300">Combinaciones con alfiles<span class="block text-xs text-brand-450 dark:text-brand-350 mt-0.5">El alfil golpea desde lejos y por sorpresa. Aprende a ver las diagonales que llevan al rey, las clavadas y los descubiertos que solo él puede dar.</span></li>
+                        <li class="text-brand-600 dark:text-brand-300">Las diagonales<span class="block text-xs text-brand-450 dark:text-brand-350 mt-0.5">Una diagonal abierta es para el alfil lo que una columna abierta para la torre. Aprende a abrirlas, ocuparlas y cerrarlas a tiempo.</span></li>
+                        <li class="text-brand-600 dark:text-brand-300">El sacrificio de dama<span class="block text-xs text-brand-450 dark:text-brand-350 mt-0.5">Entregar la pieza más fuerte parece una locura, pero a veces es la única forma de dar mate o coronar. Aprende cuándo vale la pena.</span></li>
+                        <li class="text-brand-600 dark:text-brand-300">Cambiar hacia un final de peones<span class="block text-xs text-brand-450 dark:text-brand-350 mt-0.5">Cambiar la última pieza para entrar en un final de peones es una decisión que no tiene vuelta atrás. Aprende a contar antes de hacerlo.</span></li>
+                        <li class="text-brand-600 dark:text-brand-300">Convertir la ventaja<span class="block text-xs text-brand-450 dark:text-brand-350 mt-0.5">Tener ventaja no es ganar. Aprende a transformar un peón de más o una posición mejor en una victoria sin darle oportunidades al rival.</span></li>
+                        <li class="text-brand-600 dark:text-brand-300">Dama y caballo al ataque<span class="block text-xs text-brand-450 dark:text-brand-350 mt-0.5">Dama y caballo son la pareja de ataque más peligrosa contra el rey. Aprende sus mates típicos y cómo se coordinan.</span></li>
+                        <li class="text-brand-600 dark:text-brand-300">Las partidas abiertas<span class="block text-xs text-brand-450 dark:text-brand-350 mt-0.5">Después de 1.e4 e5 el juego se abre rápido. Aprende las ideas que comparten la Italiana, la Española, la Escocesa y sus parientes.</span></li>
+                        <li class="text-brand-600 dark:text-brand-300">Dama y torre al ataque<span class="block text-xs text-brand-450 dark:text-brand-350 mt-0.5">Dama y torre juntas en una columna o una fila dan algunos de los mates más directos. Aprende a doblarlas y a usarlas contra el rey.</span></li>
+                        <li class="text-brand-600 dark:text-brand-300">Variantes forzadas más largas<span class="block text-xs text-brand-450 dark:text-brand-350 mt-0.5">Cuando cada jugada es un jaque, una captura o una amenaza, puedes calcular lejos. Aprende a seguir una línea forzada sin perderte.</span></li>
+                        <li class="text-brand-600 dark:text-brand-300">Dama y alfil al ataque<span class="block text-xs text-brand-450 dark:text-brand-350 mt-0.5">Dama y alfil en la misma diagonal forman una batería que apunta al rey. Aprende a armarla y a reconocer sus mates.</span></li>
+                        <li class="text-brand-600 dark:text-brand-300">Las ventajas que no se ven<span class="block text-xs text-brand-450 dark:text-brand-350 mt-0.5">No toda ventaja es material. Aprende a reconocer la casilla fuerte, la pieza mala del rival, el espacio y el tiempo como ventajas reales.</span></li>
+                        <li class="text-brand-600 dark:text-brand-300">Alfil contra peones<span class="block text-xs text-brand-450 dark:text-brand-350 mt-0.5">Un alfil puede frenar peones desde lejos, pero solo controla casillas de un color. Aprende cuándo los para y cuándo lo superan.</span></li>
+                        <li class="text-brand-600 dark:text-brand-300">Dama y peón juntos<span class="block text-xs text-brand-450 dark:text-brand-350 mt-0.5">Un peón avanzado cerca del rey rival es el mejor aliado de la dama. Aprende los mates y amenazas que salen de esta pareja.</span></li>
+                        <li class="text-brand-600 dark:text-brand-300">Al ataque<span class="block text-xs text-brand-450 dark:text-brand-350 mt-0.5">Un ataque al rey no se improvisa: necesita motivos, piezas cerca y líneas abiertas. Aprende cuándo lanzarlo y cómo sostenerlo.</span></li>
+                        <li class="text-brand-600 dark:text-brand-300">Torre y alfil<span class="block text-xs text-brand-450 dark:text-brand-350 mt-0.5">Torre y alfil se coordinan en líneas rectas y diagonales para cerrar al rey. Aprende sus mates típicos y sus trucos de final.</span></li>
+                        <li class="text-brand-600 dark:text-brand-300">Caballo contra peón<span class="block text-xs text-brand-450 dark:text-brand-350 mt-0.5">Un caballo puede frenar a un peón si se coloca delante, pero sufre contra el peón de torre. Aprende las reglas de este final.</span></li>
+                        <li class="text-brand-600 dark:text-brand-300">Torre y caballo<span class="block text-xs text-brand-450 dark:text-brand-350 mt-0.5">Torre y caballo forman una pareja menos evidente pero muy eficaz contra el rey. Aprende sus redes de mate y sus ataques dobles.</span></li>
+                        <li class="text-brand-600 dark:text-brand-300">Las partidas semiabiertas<span class="block text-xs text-brand-450 dark:text-brand-350 mt-0.5">Cuando las negras responden a 1.e4 con algo distinto de 1…e5, la lucha se desequilibra. Aprende las ideas de la Siciliana, la Francesa y la Caro-Kann.</span></li>
+                        <li class="text-brand-600 dark:text-brand-300">Combinaciones de coronación<span class="block text-xs text-brand-450 dark:text-brand-350 mt-0.5">Un peón a punto de coronar justifica casi cualquier sacrificio. Aprende a desviar, interferir y abrir paso hasta la casilla final.</span></li>
+                        <li class="text-brand-600 dark:text-brand-300">Mate en tres<span class="block text-xs text-brand-450 dark:text-brand-350 mt-0.5">Encontrar un mate en tres exige ver más allá de la primera jugada obvia. Aprende un método ordenado para calcularlo.</span></li>
+                        <li class="text-brand-600 dark:text-brand-300">Redes de mate en el final<span class="block text-xs text-brand-450 dark:text-brand-350 mt-0.5">Con poco material también se da mate. Aprende a reconocer cuándo un rey activo en el final se mete en una red.</span></li>
+                        <li class="text-brand-600 dark:text-brand-300">El peón pasado<span class="block text-xs text-brand-450 dark:text-brand-350 mt-0.5">Un peón pasado es una amenaza constante que crece a medida que se simplifica la partida. Aprende a crearlo, empujarlo y frenarlo.</span></li>
+                        <li class="text-brand-600 dark:text-brand-300">Columnas: interferencia y rayos X<span class="block text-xs text-brand-450 dark:text-brand-350 mt-0.5">Una pieza que se mete en la línea de otra puede cortar una defensa; una pieza que mira a través de otra tiene más alcance del que parece.</span></li>
+                        <li class="text-brand-600 dark:text-brand-300">Dama contra torre<span class="block text-xs text-brand-450 dark:text-brand-350 mt-0.5">Dama contra torre se gana en general, pero exige técnica y paciencia. Aprende el plan para ganarlo y los recursos de quien defiende.</span></li>
+                    </ol>
+                </div>
+            </div>
+
+            <section aria-labelledby="academia-invite" class="mt-12 rounded-2xl bg-brand-800 dark:bg-brand-900 p-6 md:p-8 text-center shadow-lg">
+                <p class="text-accent-400 text-xs font-semibold uppercase tracking-wide">Contenido completo</p>
+                <h2 id="academia-invite" class="font-serif text-2xl font-bold text-white mt-2 mb-3">Este curso se estudia en Ajedrez Integral</h2>
+                <p class="text-brand-200 text-sm max-w-2xl mx-auto mb-2">Cada lección desarrollada por completo: la idea explicada, las posiciones con su línea jugada a jugada y práctica contra el motor (Stockfish, en tu propio navegador), la tarea para practicarla, la presentación y el PDF de ejercicios para imprimir.</p>
+                <p class="text-brand-200 text-sm max-w-2xl mx-auto mb-6">Las 72 lecciones completas están dentro del panel de Ajedrez Integral, en orden y con tu línea de progreso: cada lección se abre al terminar la anterior, y tu profesor ve hasta dónde llegaste.</p>
+                <div class="flex flex-wrap justify-center gap-3">
+                    <a href="../precios.html" class="inline-block bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-6 py-2.5 rounded-lg transition-colors">💬 Inscribirme en Ajedrez Integral</a>
+                    <a href="../login.html?next=cursos/academia/los-cimientos-del-ajedrez.html" class="inline-block border border-brand-400 hover:border-accent-400 text-white font-semibold px-6 py-2.5 rounded-lg transition-colors">Ya soy alumno: iniciar sesión →</a>
+                </div>
+                <p class="text-brand-200 text-sm mt-5">¿No sabes qué nivel tienes? <a href="../entreno/diagnostico.html" class="text-accent-400 hover:text-accent-300 font-semibold underline">Haz el diagnóstico de nivel gratis</a> (20 minutos, sin cuenta) y el profesor ve tu resultado.</p>
+            </section>
+
+            <nav aria-label="Navegación entre cursos" class="mt-10 flex items-center justify-between border-t border-brand-100 dark:border-brand-800 pt-6">
+                <a href="fundamentos-del-ajedrez.html" class="text-sm text-brand-500 dark:text-brand-300 hover:text-accent-500 transition-colors" aria-label="Curso anterior: Fundamentos del Ajedrez"><span aria-hidden="true">←</span> Fundamentos del Ajedrez</a>
+                <a href="aperturas-y-defensas.html" class="text-sm text-brand-500 dark:text-brand-300 hover:text-accent-500 transition-colors text-right" aria-label="Siguiente curso: Aperturas y Defensas">Aperturas y Defensas <span aria-hidden="true">→</span></a>
+            </nav>
+        </div>
+    </article>
+    </main>
+
+    <footer class="bg-brand-900 text-brand-300 py-8"><div class="max-w-7xl mx-auto px-4 text-center text-sm"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p><!-- legal: inicio --><p class="mt-2"><a href="../privacidad.html" class="underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Política de privacidad</a> <span aria-hidden="true">·</span> <a href="../terminos.html" class="underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Términos y condiciones</a></p><!-- legal: fin --></div></footer>
+    <script src="../js/main.js"></script>
+</body>
+</html>

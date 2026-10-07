@@ -81,7 +81,12 @@ const DE_LA_BASE = {
   "caballo-peon": ["caballo-peon"], "alfil-peones": ["alfil-peones"], "alfil-malo": ["alfil-erroneo?"],
 };
 /* Las lecciones de tablas: la solución salva, no gana. */
-const SALVAR = new Set(["ahogado", "ahogado2", "perpetuo", "fortaleza"]);
+const SALVAR = new Set(["ahogado", "ahogado2", "perpetuo"]);
+/* La de fortalezas: Lichess no tiene ejercicios de tablas, y sus «jugadas
+   defensivas» casi siempre conservan una ventaja. Lo que se le pide es que la
+   solución SOSTENGA la posición (no pierde) y que cualquier otra jugada la
+   empeore mucho: la única que aguanta. */
+const AGUANTAR = new Set(["fortaleza"]);
 
 /* ---------- lo que cada lección le pide a la posición ----------
    Las etiquetas de Lichess miran la solución entera; la lección habla de la
@@ -114,8 +119,17 @@ const FILTRO = {
   molino: (a) => jugadas(a.fen, a.linea).filter((m, i) => i % 2 === 0 && m.san.includes("+")).length >= 2,
   "come-peon": (a) => jugadas(a.fen, [a.sol])[0].captured === "p",
   septima: (a) => { const m = jugadas(a.fen, [a.sol])[0]; return m.piece === "r" && m.to[1] === (m.color === "w" ? "7" : "2"); },
-  "cambia-a-peones": (a) => !soloPeones(a.fen) && jugadas(a.fen, a.linea).some((m) => soloPeones(m.fenTras)),
+  /* O cambia piezas hasta un final de peones, o ya es el final de peones al
+     que se llegó cambiando: Lichess casi no trae de las primeras. */
+  "cambia-a-peones": (a) => soloPeones(a.fen) || jugadas(a.fen, a.linea).some((m) => soloPeones(m.fenTras)),
 };
+/* El material que promete el título, en la posición que se ve (Lichess
+   filtra por la de antes de la jugada del rival, que a veces corona). */
+const piezas = (fen, color) => fen.split(" ")[0].replace(/[^a-zA-Z]/g, "").split("")
+  .filter((c) => (color === "w" ? c === c.toUpperCase() : c === c.toLowerCase())).map((c) => c.toUpperCase()).filter((c) => c !== "K").sort().join("");
+const materialEs = (fen, prueba) => prueba(piezas(fen, "w"), piezas(fen, "b")) || prueba(piezas(fen, "b"), piezas(fen, "w"));
+FILTRO["dama-peon"] = (a) => materialEs(a.fen, (x, y) => x === "Q" && /^P+$/.test(y));
+FILTRO["dama-torre"] = (a) => materialEs(a.fen, (x, y) => /^P*Q$/.test(x) && /^P*R$/.test(y));
 for (const par of ["QN", "QR", "QB", "QP", "RB", "RN"]) {
   FILTRO["piezas:" + par] = (a) => {
     const mias = jugadas(a.fen, a.linea).filter((m, i) => i % 2 === 0).map((m) => m.piece.toUpperCase());
@@ -127,7 +141,7 @@ for (const par of ["QN", "QR", "QB", "QP", "RB", "RN"]) {
 const mejorQue = (x, y) => x - y;
 /* Una sola jugada buena: la de la solución es la primera del motor, y la
    segunda no alcanza (si gana, la segunda no gana; si salva, la segunda pierde). */
-async function juzgar(motor, fen, sol, salvar) {
+async function juzgar(motor, fen, sol, salvar, aguantar) {
   const top = await motor.analizar(fen, 3, PROF);
   if (!top.length) return { descarte: "sin análisis" };
   if (!sol) sol = top[0].uci;
@@ -140,6 +154,9 @@ async function juzgar(motor, fen, sol, salvar) {
   const mate2 = top[1] && top[1].mate !== null && top[1].mate > 0 ? top[1].mate : null;
   if (esMate) {
     if (top[0].mate === 2 ? mate2 !== null && mate2 <= 2 : mate2 !== null) return { descarte: "otra jugada también da mate" };
+  } else if (aguantar) {
+    if (v1 < -150) return { descarte: "la solución no aguanta" };
+    if (v2 > v1 - 250) return { descarte: "la segunda también aguanta" };
   } else if (salvar) {
     if (Math.abs(v1) > 100) return { descarte: "no es una posición de tablas" };
     if (v2 > -250) return { descarte: "la segunda también salva" };
@@ -147,7 +164,7 @@ async function juzgar(motor, fen, sol, salvar) {
     if (!gana) return { descarte: "la solución no gana" };
     if (v2 > 150) return { descarte: `la segunda también gana (${L.valor(v2)})` };
   }
-  return { sol, v1, v2, gana: gana || esMate, esMate, mateEn: esMate ? top[0].mate : null, pv: top[0].pv };
+  return { sol, v1, v2, gana: aguantar ? false : gana || esMate, esMate, mateEn: esMate ? top[0].mate : null, pv: top[0].pv };
 }
 /* El ejemplo de una lección: la jugada de la partida tiene que ser la mejor o
    valer lo mismo (60 centipeones de tolerancia). No hace falta que sea única. */
@@ -202,7 +219,11 @@ function leerLichess(usadas) {
     .filter(Boolean);
 }
 function leerPartidas() {
-  return JSON.parse(fs.readFileSync(PARTIDAS, "utf8")).map((p) => Object.assign(p, { fuente: "libro", id: p.id }));
+  /* Una «partida» sin ningún jugador es una línea de muestra del libro, no
+     una partida jugada: no entra. */
+  return JSON.parse(fs.readFileSync(PARTIDAS, "utf8"))
+    .filter((p) => p.partida && (p.partida.blancas || p.partida.negras))
+    .map((p) => Object.assign(p, { fuente: "libro", id: p.id }));
 }
 function leerBase() {
   return JSON.parse(fs.readFileSync(BASE, "utf8")).map((b, i) => Object.assign(b, { fuente: "base", id: b.id || "pgn-" + md5(b.fen).slice(0, 8) }));
@@ -231,6 +252,7 @@ async function analizarTodo(tareas) {
 
 /* ---------- el ítem ---------- */
 const BANDO = { w: "las blancas", b: "las negras" };
+const mayuscula = (t) => (t ? t.charAt(0).toUpperCase() + t.slice(1) : "");
 function apellido(nombre) {
   if (!nombre) return null;
   const n = String(nombre).trim();
@@ -307,21 +329,29 @@ async function main() {
   const base = leerBase();
 
   const tareas = [];
-  lichess.forEach((c) => tareas.push({ clave: "lx:" + c.id + (SALVAR.has(c.clave) ? ":s" : ""), hacer: (m) => juzgar(m, c.fen, c.sol, SALVAR.has(c.clave)) }));
+  const sufijo = (clave) => (SALVAR.has(clave) ? ":s" : AGUANTAR.has(clave) ? ":a" : "");
+  lichess.forEach((c) => tareas.push({ clave: "lx:" + c.id + sufijo(c.clave), hacer: (m) => juzgar(m, c.fen, c.sol, SALVAR.has(c.clave), AGUANTAR.has(c.clave)) }));
   partidas.forEach((p) => {
     if (p.rol === "ejemplo") tareas.push({ clave: "ej:" + p.id, hacer: (m) => juzgarEjemplo(m, p.fen, p.sol) });
     else tareas.push({ clave: "pr:" + p.id + (SALVAR.has(porN[p.leccion].clave) ? ":s" : ""), hacer: (m) => juzgar(m, p.fen, p.sol, SALVAR.has(porN[p.leccion].clave)) });
   });
+  /* En los finales teóricos vale ganar o, si no hay cómo, la única jugada que
+     salva (dama contra peón de alfil en séptima, el alfil equivocado…). */
+  const claveBase = (b) => "pg:" + b.id + (b.tipo === "ahogado" || b.tipo === "perpetuo" ? ":s" : ":gs");
   base.forEach((b) => {
     const salvar = b.tipo === "ahogado" || b.tipo === "perpetuo";
-    tareas.push({ clave: "pg:" + b.id + (salvar ? ":s" : ""), hacer: (m) => juzgar(m, b.fen, b.sol, salvar) });
+    tareas.push({ clave: claveBase(b), hacer: async (m) => {
+      if (salvar) return juzgar(m, b.fen, b.sol, true);
+      const a = await juzgar(m, b.fen, b.sol, false);
+      return a.descarte === "la solución no gana" ? juzgar(m, b.fen, b.sol, true) : a;
+    } });
   });
   const cache = await analizarTodo(tareas);
   if (process.argv.includes("--solo-analisis")) return;
 
-  const resLichess = (c) => cache["lx:" + c.id + (SALVAR.has(c.clave) ? ":s" : "")];
+  const resLichess = (c) => cache["lx:" + c.id + sufijo(c.clave)];
   const resPartida = (p) => cache[(p.rol === "ejemplo" ? "ej:" : "pr:") + p.id + (p.rol !== "ejemplo" && SALVAR.has(porN[p.leccion].clave) ? ":s" : "")];
-  const resBase = (b) => cache["pg:" + b.id + (b.tipo === "ahogado" || b.tipo === "perpetuo" ? ":s" : "")];
+  const resBase = (b) => cache[claveBase(b)];
 
   const posUsadas = new Set();
   const libre = (fen) => !posUsadas.has(clavePos(fen)) && !usadas.fens.has(clavePos(fen));
@@ -353,7 +383,7 @@ async function main() {
       const a = resPartida(p);
       if (ejemplos.length >= EJEMPLOS_MAX || !a || a.descarte || !libre(p.fen)) return;
       tomar(p.fen);
-      ejemplos.push(comoItem(p, a, { largo: 7, campos: { uso: "ejemplo", leccion: l.n, nivel: l.nivel, explica: p.idea || "", comprobado: comprobado(p, a, "ejemplo") } }));
+      ejemplos.push(comoItem(p, a, { largo: 7, campos: { uso: "ejemplo", leccion: l.n, nivel: l.nivel, explica: mayuscula(p.idea), comprobado: comprobado(p, a, "ejemplo") } }));
     });
     /* Si el método no trae ninguna que sirva, un ejemplo de las otras fuentes. */
     if (!ejemplos.length) {
@@ -376,7 +406,7 @@ async function main() {
       const a = resPartida(p);
       if (ejercicios.length >= POR_LECCION || !a || a.descarte || !libre(p.fen)) return;
       tomar(p.fen);
-      ejercicios.push(comoItem(p, a, { campos: { uso: "ejercicio", leccion: l.n, nivel: l.nivel, explica: p.idea || "", comprobado: comprobado(p, a, "ejercicio") } }));
+      ejercicios.push(comoItem(p, a, { campos: { uso: "ejercicio", leccion: l.n, nivel: l.nivel, explica: mayuscula(p.idea), comprobado: comprobado(p, a, "ejercicio") } }));
     });
     base.filter(sirveBase(l)).forEach((b) => {
       if (ejercicios.length >= POR_LECCION || !libre(b.fen)) return;
@@ -393,15 +423,16 @@ async function main() {
       const a = resLichess(c);
       ejercicios.push(comoItem(c, a, { campos: { uso: "ejercicio", leccion: l.n, nivel: l.nivel, explica: L.motivo(c.temas), comprobado: comprobado(c, a, "ejercicio") } }));
     }
+    if (ejercicios.length < POR_LECCION && process.env.SOLO_FALTAN) { console.log(`FALTAN ${l.n} ${l.clave}: ${ejercicios.length}`); continue; }
     if (ejercicios.length < POR_LECCION) throw new Error(`La lección ${l.n} (${l.clave}) tiene ${ejercicios.length} ejercicios y hacen falta ${POR_LECCION}: hay que bajar más candidatas.`);
     ejercicios.sort((x, y) => (x.elo || 0) - (y.elo || 0)).forEach((e) => items.push(e));
-    informe.push(`${l.n} ${l.clave}: ${ejemplos.map((e) => e.origen).join("+") || "sin ejemplo"} · ejercicios ${ejercicios.map((e) => e.origen[0]).join("")}`);
+    informe.push(`${l.n} ${l.clave}: ${ejemplos.map((e) => e.origen).join("+") || "sin ejemplo"} · ejercicios ${ejercicios.map((e) => ({ libro: "m", base: "b", lichess: "l" })[e.origen]).join("")}`);
   }
 
   /* 3. El repaso de cada nivel: posiciones que sobraron de sus lecciones, de
         todos los temas, sin decir cuál. Solo de las que ganan. */
   for (const nivel of [1, 2, 3]) {
-    const lecs = LECC.filter((l) => l.nivel === nivel && !SALVAR.has(l.clave));
+    const lecs = LECC.filter((l) => l.nivel === nivel && !SALVAR.has(l.clave) && !AGUANTAR.has(l.clave));
     const repaso = [];
     let vuelta = 0;
     while (repaso.length < REPASO && vuelta < 10) {
@@ -439,6 +470,7 @@ async function main() {
   }
   const limpio = JSON.parse(JSON.stringify(curso));
   limpio.bloques.forEach((b) => b.lecciones.forEach((l) => { delete l.nivel; delete l.n; }));
+  if (process.env.SOLO_FALTAN) return;
   fs.writeFileSync(CURSO, JSON.stringify(limpio, null, 2) + "\n");
 
   const cuerpo = items.map((it) => {
@@ -476,4 +508,4 @@ ${cuerpo}
 }
 
 if (require.main === module) main().catch((e) => { console.error(e.stack || e.message); process.exit(1); });
-module.exports = { FILTRO, DE_LA_BASE, SALVAR, juzgar, juzgarEjemplo };
+module.exports = { FILTRO, DE_LA_BASE, SALVAR, AGUANTAR, juzgar, juzgarEjemplo };

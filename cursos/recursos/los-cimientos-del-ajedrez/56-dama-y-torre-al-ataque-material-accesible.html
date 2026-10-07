@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dama y torre al ataque — Los cimientos del ajedrez — material de estudio</title>
+<meta name="robots" content="noindex">
+<meta name="author" content="Oscar Angulo Cubero">
+<meta name="description" content="Material de estudio en formato accesible de la lección 56 del curso Los cimientos del ajedrez.">
+<style>
+  /* Sin imágenes y sin columnas a propósito: esta versión está hecha para
+     lectores de pantalla y para quien necesita agrandar mucho el texto. */
+  body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+         font-size: 1.15rem; line-height: 1.8; color: #102a43; background: #ffffff;
+         max-width: 42rem; margin: 0 auto; padding: 1.5rem 1rem 4rem; }
+  h1 { font-size: 1.7rem; line-height: 1.3; }
+  h2 { font-size: 1.3rem; margin-top: 2.5rem; border-bottom: 2px solid #102a43; padding-bottom: .3rem; }
+  h3 { font-size: 1.1rem; margin-top: 1.8rem; }
+  a { color: #8a4a00; }
+  dt { font-weight: 700; margin-top: 1rem; }
+  dd { margin: .3rem 0 0; }
+  .posicion { border: 2px solid #243b53; border-radius: .5rem; padding: 1rem; margin: 1rem 0; }
+  .respuesta { background: #f0f4f8; border-left: 4px solid #102a43; padding: .6rem .9rem; }
+  footer { margin-top: 3rem; border-top: 2px solid #102a43; padding-top: 1rem; font-size: .95rem; }
+  /* La vuelta a la plataforma. Este archivo se abre solo, en su propia
+     pestaña: sin estos enlaces no hay forma de regresar al curso salvo el
+     botón "atrás" del navegador, que con lector de pantalla no siempre está
+     a mano. Van arriba y abajo: el documento es largo y quien termina de
+     leerlo no tendría que subir de nuevo para salir. */
+  .volver { margin: 0 0 1.5rem; font-size: 1rem; }
+  footer .volver { margin: 1rem 0 0; }
+  .volver a { display: inline-block; padding: .2rem 0; }
+  @media (prefers-color-scheme: dark) {
+    body { background: #0a1f33; color: #f0f4f8; }
+    h2, footer { border-color: #f0b429; }
+    a { color: #f0b429; }
+    .posicion { border-color: #829ab1; }
+    .respuesta { background: #102a43; border-color: #f0b429; }
+  }
+</style>
+</head>
+<body>
+<nav class="volver" aria-label="Volver a la plataforma">
+  <a href="../../academia/los-cimientos-del-ajedrez.html">← Volver al curso Los cimientos del ajedrez</a>
+  ·
+  <a href="../../../clases.html">Panel de Academia</a>
+</nav>
+<header>
+  <p>Los cimientos del ajedrez · Lección 56</p>
+  <h1>Dama y torre al ataque</h1>
+  <p>Material de estudio en formato accesible. Autor: Oscar Angulo Cubero, Ajedrez Integral.</p>
+  <p>Esta versión dice en palabras todo lo que en el cuadernillo en PDF está dibujado: cada
+     posición viene descrita pieza por pieza, así que no hace falta ver ninguna imagen.</p>
+</header>
+
+<h2>1. De qué trata esta lección</h2>
+
+<p>Dama y torre son las dos piezas pesadas, y juntas tienen una fuerza enorme en líneas rectas. Dobladas en una columna abierta presionan hasta el fondo del campo rival; en la séptima o en la octava fila pueden barrer todo lo que encuentran. Contra un rey con pocas casillas, la dama apoyada por la torre da mate de muchas formas: en la última fila, en la columna h, en la casilla g7 o al lado del rey.</p>
+<p>Las señales son líneas abiertas que llegan al rey: una columna sin peones frente al enroque, una fila de atrás sin protección, un peón de h o de g que ya se movió. Si tu torre puede llegar a esa línea y tu dama puede apoyarla, el ataque está listo. Otro indicio es el rey rival en el centro con las columnas d o e abiertas: dama y torre ahí lo atrapan antes de que se ponga a salvo.</p>
+<p>La técnica básica es doblar: primero la torre y detrás la dama, o al revés, según quién deba llegar a la casilla final. Un truco frecuente es sacrificar la torre en la casilla clave para que la dama entre con mate, o dar jaque con la dama para que la torre llegue a tiempo. El error típico es lanzar el ataque con una sola pieza pesada: el rival la cambia o la espanta y la segunda llega tarde.</p>
+
+
+<h2>2. Conceptos clave</h2>
+<dl>
+  <dt>Jaque, mate y ahogado</dt>
+  <dd>Jaque es atacar al rey; mate es atacarlo sin que tenga salida; ahogado es que NO esté atacado y aun así no tenga ninguna jugada legal, y eso son tablas.</dd>
+  <dd><strong>El error de siempre:</strong> Buscar el jaque en vez del mate. Dar jaques sueltos deja al rey rival mejor colocado y gasta tiempo. Y en finales ganados, empujar sin mirar: entregar el ahogado es la forma más cara de no ganar.</dd>
+  <dd><strong>Para verlo:</strong> Rey y dama contra rey solo: si el rey negro está en a8 y pones la dama en b6, no hay jaque, pero tampoco hay jugada legal. Es ahogado y la partida queda en tablas con dama de más.</dd>
+  <dt>Columnas abiertas y torres</dt>
+  <dd>Una columna sin peones es el camino de las torres. Una columna semiabierta —sin peones propios pero con uno rival— es por donde se ataca ese peón.</dd>
+  <dd><strong>El error de siempre:</strong> Poner la torre en la columna abierta y no hacer nada más. La columna es un medio: sirve para entrar a la séptima fila, para cambiar las torres rivales o para presionar un peón concreto.</dd>
+  <dd><strong>Para verlo:</strong> Dos torres dobladas en la séptima fila se llaman 'los cerdos en la séptima' y suelen ganar solas: comen peones y el rey rival no puede salir.</dd>
+  <dt>El mate del pasillo</dt>
+  <dd>El rey enrocado queda encerrado por sus propios peones y una torre o dama entra en la última fila a dar mate. Es la debilidad más común de todas las partidas de club.</dd>
+  <dd><strong>El error de siempre:</strong> No hacer el hueco. Una jugadita de peón —h6, h3, g3— cuesta un tiempo y quita de la partida una familia entera de tácticas. Hacerlo en el momento correcto es de las mejores costumbres que se pueden tomar.</dd>
+  <dd><strong>Para verlo:</strong> Torre blanca que llega a e8 con el rey negro en g8 y peones en f7, g7 y h7: mate. Si el peón estuviera en h6, el rey sale por h7 y no pasa nada.</dd>
+</dl>
+
+<h2>3. Ejemplos del curso</h2>
+<div class="posicion">
+  <h3>Posición 1: ¿Por qué línea pueden llegar juntas la dama y la torre hasta el rey? Juegan las negras; el rival acaba de jugar torre hector 2.</h3>
+  
+  <p>Piezas blancas: rey en h1; dama en c2; torres en a1, h2; peones en a2, c5.</p>
+  <p>Piezas negras: rey en g8; dama en h3; torre en f6; peones en f7, g7, h6.</p>
+  <p>Juegan las negras.</p>
+  
+  <p>La línea, jugada por jugada: 39… torre felix 1 jaque, 40. torre captura felix 1, dama captura felix 1 jaque mate</p>
+  <p>Resultado: Ganan negras</p>
+  <p>39… torre felix 1 jaque, 40. torre captura felix 1, dama captura felix 1 jaque mate. Es mate en dos: la primera jugada no deja defensa. Dama y torre trabajan en la misma línea: una abre el camino y la otra entra a rematar. (Ejercicio 1jL8s de la base abierta de Lichess (CC0), rating 974. Stockfish 16 a profundidad 18: torre felix 1 jaque es la mejor (mate en 2) y la segunda queda en -3,0.)</p>
+  <p>Posición en notación FEN, por si la quieres cargar en un programa: 6k1/5pp1/5r1p/2P5/8/7q/P1Q4R/R6K b - - 3 39</p>
+</div>
+
+<h2>4. Ejercicios</h2>
+<ol>
+  <li>Da mate con rey y dama contra rey solo en menos de diez jugadas, empezando con el rey negro en el centro. Hazlo tres veces sin ahogarlo.</li>
+  <li>Arma tres posiciones de ahogado distintas y anótalas. Verlas te enseña a olerlas cuando vas ganando.</li>
+  <li>Busca cinco partidas donde el ganador doblara torres en una columna y anota qué hizo después de doblarlas.</li>
+  <li>Arma un final de dos torres contra dos torres con una columna abierta y juégalo: verás por qué la casilla de entrada decide.</li>
+  <li>Revisa tus partidas perdidas y cuenta cuántas terminaron en la última fila. El número suele sorprender.</li>
+  <li>Arma cinco posiciones con la última fila débil y busca en cada una la desviación que da mate.</li>
+</ol>
+
+<h2>5. Preguntas con su respuesta</h2>
+<p>Contesta en voz alta antes de seguir leyendo: la respuesta viene justo después de cada pregunta.</p>
+<ol>
+  <li>
+    <p>¿Cuáles son las tres maneras de salir de un jaque?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Mover el rey, capturar la pieza que da jaque o interponer una pieza en el camino. Contra un jaque de caballo la interposición no existe: solo mover o capturar.</p>
+  </li>
+  <li>
+    <p>¿Por qué el ahogado son tablas y no derrota?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Porque quien está ahogado no está en jaque: no se le puede dar mate. La regla premia al que se quedó sin jugadas, y por eso es un recurso defensivo real.</p>
+  </li>
+  <li>
+    <p>¿Cómo se evita el ahogado en un final de dama contra rey?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Acercando el rey propio antes de cerrar la jaula, y dejando siempre al rey rival una casilla mientras no sea mate. La regla práctica: si vas a encerrarlo, que sea con el rey cerca.</p>
+  </li>
+  <li>
+    <p>¿Un rey puede quedar al lado del otro?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> No. Un rey no puede moverse a una casilla atacada, y el otro rey ataca las suyas. Por eso los reyes nunca se tocan.</p>
+  </li>
+  <li>
+    <p>¿Por qué la séptima fila es tan fuerte?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Porque ahí están los peones que no se movieron y el rey rival. Una torre en la séptima ataca material y encierra al rey a la vez.</p>
+  </li>
+  <li>
+    <p>¿Quién gana una columna abierta disputada?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Quien pueda doblar torres primero, o quien tenga una casilla de entrada. Si nadie puede entrar, la columna no vale nada y se cambian todas las torres.</p>
+  </li>
+  <li>
+    <p>¿Qué hace la torre detrás de un peón pasado?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Lo empuja. La regla de Tarrasch: las torres van detrás del peón pasado, el propio y el del rival.</p>
+  </li>
+  <li>
+    <p>¿Cuándo conviene una columna semiabierta?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Cuando el peón rival que está en ella no puede avanzar y no lo defiende otro peón. Entonces es un blanco fijo, que es lo que las piezas saben atacar.</p>
+  </li>
+  <li>
+    <p>¿Qué es 'hacerle el hueco al rey'?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Avanzar un peón del enroque —normalmente el de la torre— para que el rey tenga una casilla de escape en la segunda fila.</p>
+  </li>
+  <li>
+    <p>¿Cuál es el riesgo de hacer el hueco demasiado pronto?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Que debilita el enroque y regala un tiempo. Se hace cuando la última fila ya es una amenaza real, no por costumbre en la jugada 12.</p>
+  </li>
+  <li>
+    <p>¿Cómo se defiende la última fila sin mover peones?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Dejando una torre en ella, o una pieza que pueda interponerse. Cuidado: si esa pieza está sobrecargada, la defensa es de mentira.</p>
+  </li>
+  <li>
+    <p>¿Por qué tantas combinaciones terminan en la última fila?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Porque la debilidad es permanente: los peones del enroque no vuelven atrás. Cualquier desviación del defensor la convierte en mate.</p>
+  </li>
+</ol>
+
+<h2>6. Fuentes</h2>
+<ul>
+  <li>Texto de la lección: curso «Los cimientos del ajedrez» de Ajedrez Integral, de Oscar Angulo Cubero.</li>
+  <li>Conceptos, preguntas y ejercicios de este cuadernillo: material didáctico de Ajedrez Integral, de Oscar Angulo Cubero.</li>
+  <li>Posiciones: archivo de posiciones del propio curso, verificadas jugada por jugada con chess.js y evaluadas con el motor Stockfish que el sitio usa.</li>
+</ul>
+<h3>Para seguir leyendo</h3>
+<p>Obras de referencia sobre estos temas. Este material no reproduce texto de ellas: se listan como lectura recomendada, no como origen de lo que aquí se dice.</p>
+<ul>
+  <li>Irving Chernev, «Logical Chess: Move by Move» (Batsford, 1957).</li>
+  <li>José Raúl Capablanca, «Fundamentos del ajedrez» (1921).</li>
+  <li>Leyes del Ajedrez de la FIDE, FIDE Handbook, capítulo E.I.01.</li>
+  <li>Aron Nimzowitsch, «Mi sistema» (1925).</li>
+  <li>Andrew Soltis, «Pawn Structure Chess» (1976).</li>
+</ul>
+
+<footer>
+  <p>© 2026 Oscar Angulo Cubero · Ajedrez Integral. Material de uso docente para alumnos de la Academia.</p>
+  <p>No se autoriza su reproducción ni su distribución fuera de ella.</p>
+<p class="volver">
+  <a href="../../academia/los-cimientos-del-ajedrez.html">← Volver al curso Los cimientos del ajedrez</a>
+  ·
+  <a href="../../../clases.html">Panel de Academia</a>
+</p>
+</footer>
+</body>
+</html>

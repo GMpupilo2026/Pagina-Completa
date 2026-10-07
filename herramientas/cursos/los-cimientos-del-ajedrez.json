@@ -32,7 +32,37 @@
           "area": "Táctica",
           "clave": "mate1",
           "pregunta": "El rey rival tiene muy pocas casillas libres: busca la pieza que se las quita todas.",
-          "enlace": "Fíjate en que el mate funciona porque las propias piezas o peones del rival le cierran la salida al rey."
+          "enlace": "Fíjate en que el mate funciona porque las propias piezas o peones del rival le cierran la salida al rey.",
+          "diagramas": [
+            {
+              "id": "LC-1-1",
+              "fen": "6k1/8/p7/r1r2Pp1/3R2Pp/1p6/1P4P1/3R2K1 w - - 0 35",
+              "turno": "w",
+              "resultado": "1-0",
+              "pregunta": "El rey rival tiene muy pocas casillas libres: busca la pieza que se las quita todas. Juegan las blancas; el rival acaba de jugar …Txa5.",
+              "comentario": "Lasker–Meyer, Praga 1900. 35.Td8+ Rg7 36.T1d7+ Rf6 37.Tf8+ Re5 38.Te8+. Mate por líneas abiertas: dos torres empujan al rey hasta la banda. Fíjate en que el mate funciona porque las propias piezas o peones del rival le cierran la salida al rey. (Partida Lasker–Meyer, Praga 1900. Stockfish 16 a profundidad 18: Td8+ es la mejor (mate en 6).)",
+              "linea": [
+                "Rd8+",
+                "Kg7",
+                "R1d7+",
+                "Kf6",
+                "Rf8+",
+                "Ke5",
+                "Re8+"
+              ]
+            },
+            {
+              "id": "LC-1-2",
+              "fen": "r2r2k1/pb6/1p2pQ2/n1qP4/2P5/8/P4PPP/3RR1K1 w - - 5 28",
+              "turno": "w",
+              "resultado": "1-0",
+              "pregunta": "El rey rival tiene muy pocas casillas libres: busca la pieza que se las quita todas. Juegan las blancas; el rival acaba de jugar …Rg8.",
+              "comentario": "Jussupow–Schlosser, Bundesliga, Passau 1997. 28.Te5. Amenaza de jaque en g5 y mate con torre y dama por columnas abiertas. Fíjate en que el mate funciona porque las propias piezas o peones del rival le cierran la salida al rey. (Partida Jussupow–Schlosser, Bundesliga, Passau 1997. Stockfish 16 a profundidad 18: Te5 vale lo mismo que la mejor (mate en 8 contra mate en 19).)",
+              "linea": [
+                "Re5"
+              ]
+            }
+          ]
         },
         {
           "titulo": "Más dibujos de mate",
@@ -46,7 +76,41 @@
           "area": "Táctica",
           "clave": "mate2",
           "pregunta": "Dos de tus piezas trabajan juntas cerca del rey rival: encuentra cómo se complementan.",
-          "enlace": "Fíjate en que ninguna de las dos piezas da mate sola: una quita las casillas y la otra da el golpe."
+          "enlace": "Fíjate en que ninguna de las dos piezas da mate sola: una quita las casillas y la otra da el golpe.",
+          "diagramas": [
+            {
+              "id": "LC-2-1",
+              "fen": "r1b2rk1/pppp1ppp/8/2b1P3/2B3nq/5N2/PP3PPP/RNBQR1K1 b - - 2 11",
+              "turno": "b",
+              "resultado": "0-1",
+              "pregunta": "Dos de tus piezas trabajan juntas cerca del rey rival: encuentra cómo se complementan. Juegan las negras; el rival acaba de jugar Cf3.",
+              "comentario": "Aficionado–Greco, Europa 1620. 11…Dxf2+ 12.Rh1 Dg1+ 13.Cxg1 Cf2#. Mate de Greco: mate ahogado con caballo en f2 tras sacrificar la dama. Fíjate en que ninguna de las dos piezas da mate sola: una quita las casillas y la otra da el golpe. (Partida Aficionado–Greco, Europa 1620. Stockfish 16 a profundidad 18: Dxf2+ es la mejor (mate en 3).)",
+              "linea": [
+                "Qxf2+",
+                "Kh1",
+                "Qg1+",
+                "Nxg1",
+                "Nf2#"
+              ]
+            },
+            {
+              "id": "LC-2-2",
+              "fen": "r1bq1rk1/ppp2ppp/2n5/6N1/2BPp3/2P5/P4PPP/R1BQ2K1 w - - 2 13",
+              "turno": "w",
+              "resultado": "1-0",
+              "pregunta": "Dos de tus piezas trabajan juntas cerca del rey rival: encuentra cómo se complementan. Juegan las blancas; el rival acaba de jugar …O-O.",
+              "comentario": "Greco–Aficionado, Europa 1620. 13.Dh5 h6 14.Cxf7 Df6 15.Cxh6+ Rh8 16.Cf7+. Ataque a f7 y h7 a la vez con dama, alfil y caballo tras sacrificio de calidad. Fíjate en que ninguna de las dos piezas da mate sola: una quita las casillas y la otra da el golpe. (Partida Greco–Aficionado, Europa 1620. Stockfish 16 a profundidad 18: Dh5 es la mejor (+3,9).)",
+              "linea": [
+                "Qh5",
+                "h6",
+                "Nxf7",
+                "Qf6",
+                "Nxh6+",
+                "Kh8",
+                "Nf7+"
+              ]
+            }
+          ]
         },
         {
           "titulo": "Las reglas de la apertura",
@@ -60,7 +124,43 @@
           "area": "Aperturas",
           "clave": "apertura",
           "pregunta": "Uno de los bandos se saltó una regla de la apertura: busca cómo hacérselo pagar.",
-          "enlace": "Fíjate en que la ventaja nace de un tiempo perdido o de un rey que se quedó en el centro, no de una jugada brillante."
+          "enlace": "Fíjate en que la ventaja nace de un tiempo perdido o de un rey que se quedó en el centro, no de una jugada brillante.",
+          "diagramas": [
+            {
+              "id": "LC-3-1",
+              "fen": "r1bqr3/ppp2k1p/6p1/n2p4/3pP3/3Q1P2/PPP3PP/RNB1K2R b KQ - 2 13",
+              "turno": "b",
+              "resultado": "½",
+              "pregunta": "Uno de los bandos se saltó una regla de la apertura: busca cómo hacérselo pagar. Juegan las negras; el rival acaba de jugar Dd3.",
+              "comentario": "Meek–Morphy, Mobile 1855. 13…dxe4 14.fxe4 Dh4+ 15.g3 Txe4+ 16.Rf2 Te7. Castigo a mover dos veces la misma pieza: Morphy desarrolla todo y ataca. Fíjate en que la ventaja nace de un tiempo perdido o de un rey que se quedó en el centro, no de una jugada brillante. (Partida Meek–Morphy, Mobile 1855. Stockfish 16 a profundidad 18: dxe4 es la mejor (+2,7).)",
+              "linea": [
+                "dxe4",
+                "fxe4",
+                "Qh4+",
+                "g3",
+                "Rxe4+",
+                "Kf2",
+                "Re7"
+              ]
+            },
+            {
+              "id": "LC-3-2",
+              "fen": "r1b1r3/ppp2k1p/6p1/2QpP3/3p3q/8/PPP3PP/RNB2K1R b - - 2 13",
+              "turno": "b",
+              "resultado": "0-1",
+              "pregunta": "Uno de los bandos se saltó una regla de la apertura: busca cómo hacérselo pagar. Juegan las negras; el rival acaba de jugar Rf1.",
+              "comentario": "Chernov–Oplackin, URSS 1972. 13…Txe5 14.Dxc7+ Re6 15.Ad2 Ad7 16.Dc5 Ab5+. Misma apertura que Meek-Morphy: el retraso en desarrollo se paga con mate. Fíjate en que la ventaja nace de un tiempo perdido o de un rey que se quedó en el centro, no de una jugada brillante. (Partida Chernov–Oplackin, URSS 1972. Stockfish 16 a profundidad 18: Txe5 es la mejor (+4,7).)",
+              "linea": [
+                "Rxe5",
+                "Qxc7+",
+                "Ke6",
+                "Bd2",
+                "Bd7",
+                "Qc5",
+                "Bb5+"
+              ]
+            }
+          ]
         },
         {
           "titulo": "Finales de peones: lo básico",
@@ -74,7 +174,26 @@
           "area": "Finales",
           "clave": "peones1",
           "pregunta": "Es un final de reyes y peones: cuenta los tiempos antes de mover.",
-          "enlace": "Fíjate en que todo depende de contar bien: un solo tiempo de diferencia separa la victoria de las tablas."
+          "enlace": "Fíjate en que todo depende de contar bien: un solo tiempo de diferencia separa la victoria de las tablas.",
+          "diagramas": [
+            {
+              "id": "LC-4",
+              "fen": "8/8/8/6p1/7k/8/6K1/8 b - - 1 58",
+              "turno": "b",
+              "resultado": "0-1",
+              "pregunta": "Es un final de reyes y peones: cuenta los tiempos antes de mover. Juegan las negras; el rival acaba de jugar Rg2.",
+              "comentario": "Maroczy–Marshall, Montecarlo 1903. 58…Rg4 59.Rh2 Rf3 60.Rh3 g4+ 61.Rh2 Rf2. Peón de caballo: ganar la oposición evitando las trampas de ahogado. Fíjate en que todo depende de contar bien: un solo tiempo de diferencia separa la victoria de las tablas. (Partida Maroczy–Marshall, Montecarlo 1903. Stockfish 16 a profundidad 18: Rg4 es la mejor (+35,1).)",
+              "linea": [
+                "Kg4",
+                "Kh2",
+                "Kf3",
+                "Kh3",
+                "g4+",
+                "Kh2",
+                "Kf2"
+              ]
+            }
+          ]
         },
         {
           "titulo": "El jaque doble",
@@ -88,7 +207,31 @@
           "area": "Táctica",
           "clave": "jaquedoble",
           "pregunta": "Hay una pieza tuya en medio de una línea que apunta al rey: busca adónde llevarla.",
-          "enlace": "Fíjate en que el rival solo puede mover el rey, porque no hay forma de capturar o tapar dos jaques a la vez."
+          "enlace": "Fíjate en que el rival solo puede mover el rey, porque no hay forma de capturar o tapar dos jaques a la vez.",
+          "diagramas": [
+            {
+              "id": "LC-5-1",
+              "fen": "rn1qkbnr/ppp2ppp/8/8/4Np2/5b2/PPPPQ1PP/R1B1KB1R w KQkq - 0 7",
+              "turno": "w",
+              "resultado": "1-0",
+              "pregunta": "Hay una pieza tuya en medio de una línea que apunta al rey: busca adónde llevarla. Juegan las blancas; el rival acaba de jugar …Axf3.",
+              "comentario": "Meek–Aficionado, EE. UU. 1855. 7.Cf6#. Mate por jaque doble con caballo y dama en la columna e. Fíjate en que el rival solo puede mover el rey, porque no hay forma de capturar o tapar dos jaques a la vez. (Partida Meek–Aficionado, EE. UU. 1855. Stockfish 16 a profundidad 18: Cf6# es la mejor (mate en 1).)",
+              "linea": [
+                "Nf6#"
+              ]
+            },
+            {
+              "id": "LC-5-2",
+              "fen": "r1b1q1kr/ppNnb1pp/5n2/8/3P4/8/PPP2PPP/R1BQKB1R b KQ - 0 10",
+              "turno": "b",
+              "resultado": "0-1",
+              "pregunta": "Hay una pieza tuya en medio de una línea que apunta al rey: busca adónde llevarla. Juegan las negras; el rival acaba de jugar Cxc7.",
+              "comentario": "Lohmann–Teschner, Cto. Alemania Federal, Bad Pyrmont 1950. 10…Ab4#. Jaque doble de alfil y dama que da mate tras un descuido. Fíjate en que el rival solo puede mover el rey, porque no hay forma de capturar o tapar dos jaques a la vez. (Partida Lohmann–Teschner, Cto. Alemania Federal, Bad Pyrmont 1950. Stockfish 16 a profundidad 18: Ab4# es la mejor (mate en 1).)",
+              "linea": [
+                "Bb4#"
+              ]
+            }
+          ]
         },
         {
           "titulo": "Cuánto vale cada pieza",
@@ -102,7 +245,43 @@
           "area": "Juego posicional",
           "clave": "valor",
           "pregunta": "Hay un cambio posible sobre el tablero: decide si conviene mirando algo más que los puntos.",
-          "enlace": "Fíjate en que la cuenta 1-3-3-5-9 es el punto de partida; lo que decide es lo activa que queda cada pieza después."
+          "enlace": "Fíjate en que la cuenta 1-3-3-5-9 es el punto de partida; lo que decide es lo activa que queda cada pieza después.",
+          "diagramas": [
+            {
+              "id": "LC-6-1",
+              "fen": "n1r1n1k1/1pr1q1pp/p3p3/P1NpNp2/3P1P2/1QR1P3/1P3P1P/2R2K2 w - - 3 24",
+              "turno": "w",
+              "resultado": "½",
+              "pregunta": "Hay un cambio posible sobre el tablero: decide si conviene mirando algo más que los puntos. Juegan las blancas; el rival acaba de jugar …Ce8.",
+              "comentario": "Taimanov–Lisitsin, Leningrado 1949. 24.Cxb7 Txb7 25.Dxb7 Dxb7 26.Txc8 Rf8 27.Tb8. Piezas activas permiten una combinación contra piezas negras mal coordinadas. Fíjate en que la cuenta 1-3-3-5-9 es el punto de partida; lo que decide es lo activa que queda cada pieza después. (Partida Taimanov–Lisitsin, Leningrado 1949. Stockfish 16 a profundidad 18: Cxb7 es la mejor (+2,7).)",
+              "linea": [
+                "Nxb7",
+                "Rxb7",
+                "Qxb7",
+                "Qxb7",
+                "Rxc8",
+                "Kf8",
+                "Rb8"
+              ]
+            },
+            {
+              "id": "LC-6-2",
+              "fen": "8/5pp1/4n1k1/5r1p/8/3Q4/5P1K/8 b - - 3 48",
+              "turno": "b",
+              "resultado": "½",
+              "pregunta": "Hay un cambio posible sobre el tablero: decide si conviene mirando algo más que los puntos. Juegan las negras; el rival acaba de jugar Dd3.",
+              "comentario": "Nunn–Jussupow, Linares 1988. 48…Cg5 49.Rg3 Cf3 50.De4 Ce5 51.Dc2 Cg4. Torre y caballo contra dama con el juego en un solo flanco. Fíjate en que la cuenta 1-3-3-5-9 es el punto de partida; lo que decide es lo activa que queda cada pieza después. (Partida Nunn–Jussupow, Linares 1988. Stockfish 16 a profundidad 18: Cg5 vale lo mismo que la mejor (+1,3 contra +1,8).)",
+              "linea": [
+                "Ng5",
+                "Kg3",
+                "Nf3",
+                "Qe4",
+                "Ne5",
+                "Qc2",
+                "Ng4"
+              ]
+            }
+          ]
         },
         {
           "titulo": "El ataque a la descubierta",
@@ -116,7 +295,37 @@
           "area": "Táctica",
           "clave": "descubierta",
           "pregunta": "Una de tus piezas tapa una línea importante: piensa qué pasa si se aparta.",
-          "enlace": "Fíjate en que el golpe sale de dos ataques a la vez: el de la pieza que se mueve y el de la que queda destapada."
+          "enlace": "Fíjate en que el golpe sale de dos ataques a la vez: el de la pieza que se mueve y el de la que queda destapada.",
+          "diagramas": [
+            {
+              "id": "LC-7-1",
+              "fen": "r1b1kb1r/pp1n1ppp/2p1p3/q2p2B1/2PPn3/2NBPN2/PPQ2PPP/R3K2R b KQkq - 4 8",
+              "turno": "b",
+              "resultado": "0-1",
+              "pregunta": "Una de tus piezas tapa una línea importante: piensa qué pasa si se aparta. Juegan las negras; el rival acaba de jugar Ad3.",
+              "comentario": "Karff–Graf-Stevenson, Moscú 1955. 8…Cxg5 9.Cxg5 dxc4 10.Axc4 Dxg5. Ataque descubierto en la quinta fila que gana el caballo de g5. Fíjate en que el golpe sale de dos ataques a la vez: el de la pieza que se mueve y el de la que queda destapada. (Partida Karff–Graf-Stevenson, Moscú 1955. Stockfish 16 a profundidad 18: Cxg5 es la mejor (+3,4).)",
+              "linea": [
+                "Nxg5",
+                "Nxg5",
+                "dxc4",
+                "Bxc4",
+                "Qxg5"
+              ]
+            },
+            {
+              "id": "LC-7-2",
+              "fen": "5k2/pb2q3/1p6/2rPB3/4Q3/1P2R3/P1r3PP/6K1 w - - 0 32",
+              "turno": "w",
+              "resultado": "1-0",
+              "pregunta": "Una de tus piezas tapa una línea importante: piensa qué pasa si se aparta. Juegan las blancas; el rival acaba de jugar …Rxf8.",
+              "comentario": "Zukertort–Blackburne, Londres 1883. 32.Ag7+ Rg8 33.Dxe7. Jaque descubierto que gana la dama. Fíjate en que el golpe sale de dos ataques a la vez: el de la pieza que se mueve y el de la que queda destapada. (Partida Zukertort–Blackburne, Londres 1883. Stockfish 16 a profundidad 18: Ag7+ es la mejor (mate en 15).)",
+              "linea": [
+                "Bg7+",
+                "Kg8",
+                "Qxe7"
+              ]
+            }
+          ]
         },
         {
           "titulo": "Las piezas al centro",
@@ -131,7 +340,43 @@
           "clave": "centro",
           "js": "centro",
           "pregunta": "Hay una pieza que mira poco del tablero: busca adónde estaría mejor.",
-          "enlace": "Fíjate en que la pieza centralizada controla más casillas y por eso amenaza en varias direcciones a la vez."
+          "enlace": "Fíjate en que la pieza centralizada controla más casillas y por eso amenaza en varias direcciones a la vez.",
+          "diagramas": [
+            {
+              "id": "LC-8-1",
+              "fen": "3r4/1r3kp1/b4p2/p2p4/3b1P2/3P1BP1/P1R2NK1/3R4 b - - 6 33",
+              "turno": "b",
+              "resultado": "½",
+              "pregunta": "Hay una pieza que mira poco del tablero: busca adónde estaría mejor. Juegan las negras; el rival acaba de jugar Cf2.",
+              "comentario": "Tarrasch–Rubinstein, San Sebastián 1912. 33…Tb2 34.Txb2 Axb2 35.Td2 Ad4 36.Ch3 Re6. Alfil fuerte en d4 y rey que entra por el centro tras cambiar torres. Fíjate en que la pieza centralizada controla más casillas y por eso amenaza en varias direcciones a la vez. (Partida Tarrasch–Rubinstein, San Sebastián 1912. Stockfish 16 a profundidad 18: Tb2 vale lo mismo que la mejor (+0,3 contra +0,8).)",
+              "linea": [
+                "Rb2",
+                "Rxb2",
+                "Bxb2",
+                "Rd2",
+                "Bd4",
+                "Nh3",
+                "Ke6"
+              ]
+            },
+            {
+              "id": "LC-8-2",
+              "fen": "r2q1rk1/1b1nbp1p/p4np1/3pNPB1/1ppP4/2N1P2Q/PPB3PP/R4RK1 w - - 0 16",
+              "turno": "w",
+              "resultado": "1-0",
+              "pregunta": "Hay una pieza que mira poco del tablero: busca adónde estaría mejor. Juegan las blancas; el rival acaba de jugar …b4.",
+              "comentario": "Pillsbury–Marco, París (12) 1900. 16.fxg6 hxg6 17.Dh4 bxc3 18.Cxd7 Dxd7 19.Txf6. Caballo en e5 apoyado por peones como base del ataque al enroque. Fíjate en que la pieza centralizada controla más casillas y por eso amenaza en varias direcciones a la vez. (Partida Pillsbury–Marco, París (12) 1900. Stockfish 16 a profundidad 18: fxg6 es la mejor (+3,5).)",
+              "linea": [
+                "fxg6",
+                "hxg6",
+                "Qh4",
+                "bxc3",
+                "Nxd7",
+                "Qxd7",
+                "Rxf6"
+              ]
+            }
+          ]
         },
         {
           "titulo": "Mate en dos",
@@ -145,7 +390,22 @@
           "area": "Cálculo",
           "clave": "mate-dos",
           "pregunta": "Hay mate en dos jugadas: encuéntralo y revisa todas las defensas.",
-          "enlace": "Fíjate en que la primera jugada funciona porque deja al rival sin ninguna respuesta que evite el mate, no solo sin la más natural."
+          "enlace": "Fíjate en que la primera jugada funciona porque deja al rival sin ninguna respuesta que evite el mate, no solo sin la más natural.",
+          "diagramas": [
+            {
+              "id": "LC-9",
+              "fen": "Qn2k2r/p1p2ppp/8/2b1p3/3q4/6P1/PPPP1P1P/R1B1K1NR b KQk - 0 10",
+              "turno": "b",
+              "resultado": "0-1",
+              "pregunta": "Hay mate en dos jugadas: encuéntralo y revisa todas las defensas. Juegan las negras; el rival acaba de jugar Dxa8.",
+              "comentario": "10…Dxf2+ 11.Rd1 Df1#. Es mate en dos: la primera jugada no deja defensa. Fíjate en que la primera jugada funciona porque deja al rival sin ninguna respuesta que evite el mate, no solo sin la más natural. (Ejercicio 23sLX de la base abierta de Lichess (CC0), rating 943. Stockfish 16 a profundidad 18: Dxf2+ es la mejor (mate en 2) y la segunda queda en -4,4.)",
+              "linea": [
+                "Qxf2+",
+                "Kd1",
+                "Qf1#"
+              ]
+            }
+          ]
         },
         {
           "titulo": "La oposición",
@@ -159,7 +419,22 @@
           "area": "Finales",
           "clave": "oposicion",
           "pregunta": "Los reyes están cerca uno del otro: decide quién tiene la oposición antes de mover.",
-          "enlace": "Fíjate en que gana el rey que deja al otro con el turno: la jugada buena se elige contando casillas, no avanzando por instinto."
+          "enlace": "Fíjate en que gana el rey que deja al otro con el turno: la jugada buena se elige contando casillas, no avanzando por instinto.",
+          "diagramas": [
+            {
+              "id": "LC-10",
+              "fen": "8/8/P7/8/8/2p4p/4K1k1/8 w - - 0 49",
+              "turno": "w",
+              "resultado": "1-0",
+              "pregunta": "Los reyes están cerca uno del otro: decide quién tiene la oposición antes de mover. Juegan las blancas; el rival acaba de jugar …h3.",
+              "comentario": "49.a7 c2 50.a8=D+. El peón avanzado decide: hay que empujarlo o aprovecharlo a tiempo. Fíjate en que gana el rey que deja al otro con el turno: la jugada buena se elige contando casillas, no avanzando por instinto. (Ejercicio 39Wzw de la base abierta de Lichess (CC0), rating 958. Stockfish 16 a profundidad 18: a7 es la mejor (+34,9) y la segunda queda en 0,0.)",
+              "linea": [
+                "a7",
+                "c2",
+                "a8=Q+"
+              ]
+            }
+          ]
         },
         {
           "titulo": "La clavada",
@@ -173,7 +448,22 @@
           "area": "Táctica",
           "clave": "clavada",
           "pregunta": "Dos piezas del rival están en la misma línea: busca cómo aprovecharlo.",
-          "enlace": "Fíjate en que la pieza clavada no puede apartarse sin dejar algo más valioso a merced del ataque."
+          "enlace": "Fíjate en que la pieza clavada no puede apartarse sin dejar algo más valioso a merced del ataque.",
+          "diagramas": [
+            {
+              "id": "LC-11",
+              "fen": "N1bk1b1r/pp1p1pp1/5n1p/8/4q3/2Q1B3/PP3PPP/R3KB1R b KQ - 1 13",
+              "turno": "b",
+              "resultado": "0-1",
+              "pregunta": "Dos piezas del rival están en la misma línea: busca cómo aprovecharlo. Juegan las negras; el rival acaba de jugar Ae3.",
+              "comentario": "13…Ab4 14.O-O-O Axc3. Todo gira en torno a una clavada: la pieza clavada no puede defender. Fíjate en que la pieza clavada no puede apartarse sin dejar algo más valioso a merced del ataque. (Ejercicio 0YWYB de la base abierta de Lichess (CC0), rating 1105. Stockfish 16 a profundidad 18: Ab4 es la mejor (+4,3) y la segunda queda en -2,8.)",
+              "linea": [
+                "Bb4",
+                "O-O-O",
+                "Bxc3"
+              ]
+            }
+          ]
         },
         {
           "titulo": "El ataque doble",
@@ -187,7 +477,22 @@
           "area": "Táctica",
           "clave": "doble",
           "pregunta": "Hay piezas del rival que no se defienden bien: busca cómo atacar dos cosas a la vez.",
-          "enlace": "Fíjate en que el rival solo puede atender una amenaza por jugada, y la otra queda servida."
+          "enlace": "Fíjate en que el rival solo puede atender una amenaza por jugada, y la otra queda servida.",
+          "diagramas": [
+            {
+              "id": "LC-12",
+              "fen": "2k4r/ppp5/2np1Rp1/4p3/4B2p/2PP4/PP1KQ3/5Nq1 b - - 1 28",
+              "turno": "b",
+              "resultado": "0-1",
+              "pregunta": "Hay piezas del rival que no se defienden bien: busca cómo atacar dos cosas a la vez. Juegan las negras; el rival acaba de jugar Tf6.",
+              "comentario": "28…Dg5+ 29.Rd1 Dxf6. Es una horquilla: una pieza ataca dos objetivos a la vez. Fíjate en que el rival solo puede atender una amenaza por jugada, y la otra queda servida. (Ejercicio 25y61 de la base abierta de Lichess (CC0), rating 972. Stockfish 16 a profundidad 18: Dg5+ es la mejor (+5,1) y la segunda queda en -0,9.)",
+              "linea": [
+                "Qg5+",
+                "Kd1",
+                "Qxf6"
+              ]
+            }
+          ]
         },
         {
           "titulo": "Cómo se gana con material de más",
@@ -201,7 +506,22 @@
           "area": "Juego posicional",
           "clave": "convertir",
           "pregunta": "Vas con material de más: busca la forma más segura de acercarte a la victoria.",
-          "enlace": "Fíjate en que la jugada buena reduce el juego del rival antes de buscar más ganancia."
+          "enlace": "Fíjate en que la jugada buena reduce el juego del rival antes de buscar más ganancia.",
+          "diagramas": [
+            {
+              "id": "LC-13",
+              "fen": "4r1k1/1Rp3p1/r4q1p/4pp2/P1P5/3P2P1/4PPKP/R1Q5 b - - 4 25",
+              "turno": "b",
+              "resultado": "0-1",
+              "pregunta": "Vas con material de más: busca la forma más segura de acercarte a la victoria. Juegan las negras; el rival acaba de jugar Dc1.",
+              "comentario": "25…Dc6+ 26.Rg1 Dxb7. Es una horquilla: una pieza ataca dos objetivos a la vez. Fíjate en que la jugada buena reduce el juego del rival antes de buscar más ganancia. (Ejercicio 1jjJV de la base abierta de Lichess (CC0), rating 972. Stockfish 16 a profundidad 18: Dc6+ es la mejor (+4,7) y la segunda queda en -2,2.)",
+              "linea": [
+                "Qc6+",
+                "Kg1",
+                "Qxb7"
+              ]
+            }
+          ]
         },
         {
           "titulo": "Columnas abiertas y casillas fuertes",
@@ -216,7 +536,22 @@
           "clave": "columnas",
           "js": "pieza:R",
           "pregunta": "Hay una columna abierta o una casilla que ningún peón puede atacar: piensa quién la aprovecha.",
-          "enlace": "Fíjate en que la pieza que ocupa la columna o la casilla fuerte trabaja sin que el rival pueda echarla con facilidad."
+          "enlace": "Fíjate en que la pieza que ocupa la columna o la casilla fuerte trabaja sin que el rival pueda echarla con facilidad.",
+          "diagramas": [
+            {
+              "id": "LC-14",
+              "fen": "r1b3k1/pp4pp/5q2/1N1pp1r1/1P6/P6Q/5PPP/2R2RK1 w - - 0 21",
+              "turno": "w",
+              "resultado": "1-0",
+              "pregunta": "Hay una columna abierta o una casilla que ningún peón puede atacar: piensa quién la aprovecha. Juegan las blancas; el rival acaba de jugar …e5.",
+              "comentario": "21.Txc8+ Txc8 22.Dxc8+. Fíjate en que la pieza que ocupa la columna o la casilla fuerte trabaja sin que el rival pueda echarla con facilidad. (Ejercicio 2HJ0k de la base abierta de Lichess (CC0), rating 1102. Stockfish 16 a profundidad 18: Txc8+ es la mejor (+5,2) y la segunda queda en -0,9.)",
+              "linea": [
+                "Rxc8+",
+                "Rxc8",
+                "Qxc8+"
+              ]
+            }
+          ]
         },
         {
           "titulo": "La combinación",
@@ -231,7 +566,22 @@
           "clave": "combinacion",
           "js": "sacrificio",
           "pregunta": "Hay varios puntos débiles en el campo rival: busca la secuencia forzada que los une.",
-          "enlace": "Fíjate en que cada jugada de la combinación deja al rival sin alternativas, y por eso el material entregado se recupera."
+          "enlace": "Fíjate en que cada jugada de la combinación deja al rival sin alternativas, y por eso el material entregado se recupera.",
+          "diagramas": [
+            {
+              "id": "LC-15",
+              "fen": "1r3k2/3B1pp1/3p1b2/pPp4p/P7/5P1P/1P2QP1q/4RK2 w - - 6 31",
+              "turno": "w",
+              "resultado": "1-0",
+              "pregunta": "Hay varios puntos débiles en el campo rival: busca la secuencia forzada que los une. Juegan las blancas; el rival acaba de jugar …Dh2.",
+              "comentario": "31.De8+ Txe8 32.Txe8#. Hay un sacrificio: se entrega material para ganar más. Fíjate en que cada jugada de la combinación deja al rival sin alternativas, y por eso el material entregado se recupera. (Ejercicio 34YEH de la base abierta de Lichess (CC0), rating 936. Stockfish 16 a profundidad 18: De8+ es la mejor (mate en 2) y la segunda queda en +0,4.)",
+              "linea": [
+                "Qe8+",
+                "Rxe8",
+                "Rxe8#"
+              ]
+            }
+          ]
         },
         {
           "titulo": "Dama contra peón",
@@ -245,7 +595,27 @@
           "area": "Finales",
           "clave": "dama-peon",
           "pregunta": "La dama tiene que parar un peón a punto de coronar: busca la jugada que gana tiempo.",
-          "enlace": "Fíjate en que el método funciona porque el rey rival termina tapando su propio peón, y eso da tiempo para acercar el rey."
+          "enlace": "Fíjate en que el método funciona porque el rey rival termina tapando su propio peón, y eso da tiempo para acercar el rey.",
+          "diagramas": [
+            {
+              "id": "LC-16",
+              "fen": "8/6Kp/8/7k/6Q1/8/8/8 b - - 0 66",
+              "turno": "b",
+              "resultado": "½",
+              "pregunta": "La dama tiene que parar un peón a punto de coronar: busca la jugada que gana tiempo. Juegan las negras; el rival acaba de jugar Dxg4+.",
+              "comentario": "Gligoric–Hodgson, Sochi 1986. 66…Rxg4 67.Rxh7 Rf3 68.Rg8 Rg3 69.Rf7 Rg2. Fíjate en que el método funciona porque el rey rival termina tapando su propio peón, y eso da tiempo para acercar el rey. (Partida Gligoric–Hodgson, Sochi 1986. Stockfish 16 a profundidad 18: Rxg4 es la mejor (0,0) y la segunda queda en recibe mate en 0.)",
+              "linea": [
+                "Kxg4",
+                "Kxh7",
+                "Kf3",
+                "Kg8",
+                "Kg3",
+                "Kf7",
+                "Kg2"
+              ]
+            }
+          ],
+          "js": "dama-peon"
         },
         {
           "titulo": "El ahogado que salva",
@@ -260,7 +630,21 @@
           "clave": "ahogado",
           "js": "ahogado",
           "pregunta": "El rey de uno de los bandos está muy encerrado: piensa si eso puede salvar la partida.",
-          "enlace": "Fíjate en que el recurso funciona porque al rey no le queda ninguna jugada legal y no está en jaque."
+          "enlace": "Fíjate en que el recurso funciona porque al rey no le queda ninguna jugada legal y no está en jaque.",
+          "diagramas": [
+            {
+              "id": "LC-17",
+              "fen": "6k1/7P/6K1/8/8/8/8/8 b - - 0 122",
+              "turno": "b",
+              "resultado": "½",
+              "pregunta": "El rey de uno de los bandos está muy encerrado: piensa si eso puede salvar la partida. Juegan las negras; el rival acaba de jugar h7+.",
+              "comentario": "Safarli–Gurevich, Konya TUR 2012. 122…Rh8 123.Rh6. Fíjate en que el recurso funciona porque al rey no le queda ninguna jugada legal y no está en jaque. (Partida Safarli–Gurevich, Konya TUR 2012. Stockfish 16 a profundidad 18: Rh8 es la mejor (0,0) y la segunda queda en recibe mate en 8.)",
+              "linea": [
+                "Kh8",
+                "Kh6"
+              ]
+            }
+          ]
         },
         {
           "titulo": "Las variantes forzadas",
@@ -274,7 +658,24 @@
           "area": "Cálculo",
           "clave": "forzadas",
           "pregunta": "Hay jaques y capturas en el aire: sigue la línea forzada hasta el final antes de decidir.",
-          "enlace": "Fíjate en que la línea se puede calcular porque cada jugada deja al rival una sola respuesta razonable."
+          "enlace": "Fíjate en que la línea se puede calcular porque cada jugada deja al rival una sola respuesta razonable.",
+          "diagramas": [
+            {
+              "id": "LC-18",
+              "fen": "2r1k1r1/6p1/2q1p1P1/p3Pp1P/Q2p1P2/2p5/8/RR5K w - - 4 36",
+              "turno": "w",
+              "resultado": "1-0",
+              "pregunta": "Hay jaques y capturas en el aire: sigue la línea forzada hasta el final antes de decidir. Juegan las blancas; el rival acaba de jugar …Dc6+.",
+              "comentario": "36.Dxc6+ Txc6 37.Tb8+ Rd7 38.Txg8. Es una enfilada: la pieza de adelante se va y cae la de atrás. Fíjate en que la línea se puede calcular porque cada jugada deja al rival una sola respuesta razonable. (Ejercicio 1iMLh de la base abierta de Lichess (CC0), rating 934. Stockfish 16 a profundidad 18: Dxc6+ es la mejor (+4,8) y la segunda queda en -4,7.)",
+              "linea": [
+                "Qxc6+",
+                "Rxc6",
+                "Rb8+",
+                "Kd7",
+                "Rxg8"
+              ]
+            }
+          ]
         },
         {
           "titulo": "El peón que corona",
@@ -288,7 +689,22 @@
           "area": "Táctica",
           "clave": "promocion",
           "pregunta": "Hay un peón a punto de coronar: busca cómo quitarle de encima lo que lo detiene.",
-          "enlace": "Fíjate en que el peón corona porque la pieza que lo vigilaba fue desviada o no llega a tiempo."
+          "enlace": "Fíjate en que el peón corona porque la pieza que lo vigilaba fue desviada o no llega a tiempo.",
+          "diagramas": [
+            {
+              "id": "LC-19",
+              "fen": "2R5/5kpp/8/1K6/1P6/p1p4P/8/8 b - - 1 40",
+              "turno": "b",
+              "resultado": "0-1",
+              "pregunta": "Hay un peón a punto de coronar: busca cómo quitarle de encima lo que lo detiene. Juegan las negras; el rival acaba de jugar Rb5.",
+              "comentario": "40…a2 41.Txc3 a1=D. El peón avanzado decide: hay que empujarlo o aprovecharlo a tiempo. Fíjate en que el peón corona porque la pieza que lo vigilaba fue desviada o no llega a tiempo. (Ejercicio 07lMV de la base abierta de Lichess (CC0), rating 1063. Stockfish 16 a profundidad 18: a2 es la mejor (+4,3) y la segunda queda en -6,9.)",
+              "linea": [
+                "a2",
+                "Rxc3",
+                "a1=Q"
+              ]
+            }
+          ]
         },
         {
           "titulo": "Los puntos débiles",
@@ -302,7 +718,22 @@
           "area": "Juego posicional",
           "clave": "debiles",
           "pregunta": "El rival tiene un punto que le cuesta defender: busca cómo presionarlo.",
-          "enlace": "Fíjate en que el ataque funciona porque la debilidad no se puede defender con peones y las piezas no alcanzan."
+          "enlace": "Fíjate en que el ataque funciona porque la debilidad no se puede defender con peones y las piezas no alcanzan.",
+          "diagramas": [
+            {
+              "id": "LC-20",
+              "fen": "r2qkb1r/1p1n1ppp/8/p7/P1B5/1Q1PpP1P/1P3P2/R4RK1 w kq - 0 18",
+              "turno": "w",
+              "resultado": "1-0",
+              "pregunta": "El rival tiene un punto que le cuesta defender: busca cómo presionarlo. Juegan las blancas; el rival acaba de jugar …dxe3.",
+              "comentario": "18.Axf7+ Re7 19.De6#. Es mate en dos: la primera jugada no deja defensa. Fíjate en que el ataque funciona porque la debilidad no se puede defender con peones y las piezas no alcanzan. (Ejercicio 0rG84 de la base abierta de Lichess (CC0), rating 839. Stockfish 16 a profundidad 18: Axf7+ es la mejor (mate en 2) y la segunda queda en -2,5.)",
+              "linea": [
+                "Bxf7+",
+                "Ke7",
+                "Qe6#"
+              ]
+            }
+          ]
         },
         {
           "titulo": "Combinaciones con peones",
@@ -317,7 +748,20 @@
           "clave": "peon-comb",
           "js": "pieza:P",
           "pregunta": "Tus peones tienen más fuerza de lo que parece: busca qué puede hacer uno de ellos.",
-          "enlace": "Fíjate en que el golpe lo da la pieza más barata, y por eso al rival cualquier cambio le sale caro."
+          "enlace": "Fíjate en que el golpe lo da la pieza más barata, y por eso al rival cualquier cambio le sale caro.",
+          "diagramas": [
+            {
+              "id": "LC-21",
+              "fen": "2kr3r/pp6/2b1p1N1/2p2p2/7P/2NP1pb1/PPP5/R1BQ1BK1 b - - 0 27",
+              "turno": "b",
+              "resultado": "0-1",
+              "pregunta": "Tus peones tienen más fuerza de lo que parece: busca qué puede hacer uno de ellos. Juegan las negras; el rival acaba de jugar Rxg1.",
+              "comentario": "27…f2#. El peón avanzado decide: hay que empujarlo o aprovecharlo a tiempo. Fíjate en que el golpe lo da la pieza más barata, y por eso al rival cualquier cambio le sale caro. (Ejercicio 1e3JM de la base abierta de Lichess (CC0), rating 1000. Stockfish 16 a profundidad 18: f2# es la mejor (mate en 1) y la segunda queda en -3,2.)",
+              "linea": [
+                "f2#"
+              ]
+            }
+          ]
         },
         {
           "titulo": "El alfil equivocado",
@@ -331,7 +775,26 @@
           "area": "Finales",
           "clave": "alfil-malo",
           "pregunta": "Final de alfil y peones: mira de qué color es la casilla de coronación y dónde puede refugiarse el rey.",
-          "enlace": "Fíjate en el color de la casilla de coronación: decide si el alfil sirve para echar al rey de la esquina o no."
+          "enlace": "Fíjate en el color de la casilla de coronación: decide si el alfil sirve para echar al rey de la esquina o no.",
+          "diagramas": [
+            {
+              "id": "LC-22",
+              "fen": "8/8/8/4P3/4k1K1/1B6/8/8 b - - 0 64",
+              "turno": "b",
+              "resultado": "½",
+              "pregunta": "Final de alfil y peones: mira de qué color es la casilla de coronación y dónde puede refugiarse el rey. Juegan las negras; el rival acaba de jugar fxe5.",
+              "comentario": "Artemiev–Shirov, Moscow RUS 2017. 64…Rxe5 65.Rg5 Rd4 66.Ac4 Re3 67.Rg6 Rd2. Fíjate en el color de la casilla de coronación: decide si el alfil sirve para echar al rey de la esquina o no. (Partida Artemiev–Shirov, Moscow RUS 2017. Stockfish 16 a profundidad 18: Rxe5 es la mejor (+0,3) y la segunda queda en -34,5.)",
+              "linea": [
+                "Kxe5",
+                "Kg5",
+                "Kd4",
+                "Bc4",
+                "Ke3",
+                "Kg6",
+                "Kd2"
+              ]
+            }
+          ]
         },
         {
           "titulo": "El mate de la coz",
@@ -345,7 +808,20 @@
           "area": "Táctica",
           "clave": "coz",
           "pregunta": "El rey rival está rodeado por sus propias piezas: piensa qué pieza puede llegar sin que la tapen.",
-          "enlace": "Fíjate en que el mate funciona porque las piezas que rodean al rey son suyas y le quitan todas las salidas."
+          "enlace": "Fíjate en que el mate funciona porque las piezas que rodean al rey son suyas y le quitan todas las salidas.",
+          "diagramas": [
+            {
+              "id": "LC-23",
+              "fen": "r2qkb1r/1ppbnp1p/p1np2p1/3Np3/B3P3/5N2/PPPP1PPP/R1BQ1RK1 w kq - 0 8",
+              "turno": "w",
+              "resultado": "1-0",
+              "pregunta": "El rey rival está rodeado por sus propias piezas: piensa qué pieza puede llegar sin que la tapen. Juegan las blancas; el rival acaba de jugar …g6.",
+              "comentario": "8.Cf6#. Es un mate de la coz: el rey queda encerrado por sus propias piezas. Fíjate en que el mate funciona porque las piezas que rodean al rey son suyas y le quitan todas las salidas. (Ejercicio 2a0tR de la base abierta de Lichess (CC0), rating 901. Stockfish 16 a profundidad 18: Cf6# es la mejor (mate en 1) y la segunda queda en +2,0.)",
+              "linea": [
+                "Nf6#"
+              ]
+            }
+          ]
         },
         {
           "titulo": "Los gambitos",
@@ -359,7 +835,20 @@
           "area": "Aperturas",
           "clave": "gambito",
           "pregunta": "Uno de los bandos entregó material en la apertura: decide si su compensación es real y cómo aprovecharla.",
-          "enlace": "Fíjate en que lo que se recibe a cambio del peón son tiempos, y esos tiempos hay que usarlos de inmediato."
+          "enlace": "Fíjate en que lo que se recibe a cambio del peón son tiempos, y esos tiempos hay que usarlos de inmediato.",
+          "diagramas": [
+            {
+              "id": "LC-24",
+              "fen": "r2qkr2/pppb1pQp/5b1B/4p3/2B1n3/2P4P/PP3PP1/RN3RK1 w q - 3 14",
+              "turno": "w",
+              "resultado": "1-0",
+              "pregunta": "Uno de los bandos entregó material en la apertura: decide si su compensación es real y cómo aprovecharla. Juegan las blancas; el rival acaba de jugar …Af6.",
+              "comentario": "14.Dxf8#. Fíjate en que lo que se recibe a cambio del peón son tiempos, y esos tiempos hay que usarlos de inmediato. (Ejercicio 0hzam de la base abierta de Lichess (CC0), rating 1097. Stockfish 16 a profundidad 18: Dxf8# es la mejor (mate en 1) y la segunda queda en +1,2.)",
+              "linea": [
+                "Qxf8#"
+              ]
+            }
+          ]
         }
       ]
     },
@@ -381,7 +870,26 @@
           "clave": "molino",
           "js": "molino",
           "pregunta": "El rey rival casi no tiene casillas: ¿qué pieza tuya puede dar jaque una y otra vez?",
-          "enlace": "Mira cómo cada jaque obliga al rey a moverse y la otra pieza aprovecha esa jugada para comer: esa es la rueda del molino."
+          "enlace": "Mira cómo cada jaque obliga al rey a moverse y la otra pieza aprovecha esa jugada para comer: esa es la rueda del molino.",
+          "diagramas": [
+            {
+              "id": "LC-25",
+              "fen": "r3rnk1/pb3pp1/3pp2p/1q4BQ/1P1P4/4N1R1/P4PPP/4R1K1 w - - 4 25",
+              "turno": "w",
+              "resultado": "1-0",
+              "pregunta": "El rey rival casi no tiene casillas: ¿qué pieza tuya puede dar jaque una y otra vez? Juegan las blancas; el rival acaba de jugar …Db5.",
+              "comentario": "Torre Repetto–Lasker, Moscú 1925. 25.Af6 Dxh5 26.Txg7+ Rh8 27.Txf7+ Rg8 28.Tg7+. Molino clásico: sacrificio de dama y torre y alfil barren la séptima fila. Mira cómo cada jaque obliga al rey a moverse y la otra pieza aprovecha esa jugada para comer: esa es la rueda del molino. (Partida Torre Repetto–Lasker, Moscú 1925. Stockfish 16 a profundidad 18: Af6 es la mejor (+4,9).)",
+              "linea": [
+                "Bf6",
+                "Qxh5",
+                "Rxg7+",
+                "Kh8",
+                "Rxf7+",
+                "Kg8",
+                "Rg7+"
+              ]
+            }
+          ]
         },
         {
           "titulo": "Los peones débiles",
@@ -396,7 +904,26 @@
           "clave": "peon-debil",
           "js": "come-peon",
           "pregunta": "Hay un peón que ningún otro peón puede defender: ¿cómo lo atacas o lo bloqueas?",
-          "enlace": "Fíjate en que el peón débil no se puede mover ni recibir ayuda de otro peón: las piezas del rival quedan atadas a cuidarlo."
+          "enlace": "Fíjate en que el peón débil no se puede mover ni recibir ayuda de otro peón: las piezas del rival quedan atadas a cuidarlo.",
+          "diagramas": [
+            {
+              "id": "LC-26",
+              "fen": "4kn2/3pn2p/1pr5/5p2/5N2/P2RB3/5PPP/3K4 w - - 11 33",
+              "turno": "w",
+              "resultado": "½",
+              "pregunta": "Hay un peón que ningún otro peón puede defender: ¿cómo lo atacas o lo bloqueas? Juegan las blancas; el rival acaba de jugar …Re8.",
+              "comentario": "Averbakh–Taimanov, Campeonato de la URSS, Moscú 1948. 33.Tb3 Cc8 34.Tb5 Tc3 35.Te5+ Ce6 36.Cxe6. Final: dos islotes contra cuatro peones aislados; la torre los va recogiendo. Fíjate en que el peón débil no se puede mover ni recibir ayuda de otro peón: las piezas del rival quedan atadas a cuidarlo. (Partida Averbakh–Taimanov, Campeonato de la URSS, Moscú 1948. Stockfish 16 a profundidad 18: Tb3 es la mejor (+1,2).)",
+              "linea": [
+                "Rb3",
+                "Nc8",
+                "Rb5",
+                "Rc3",
+                "Re5+",
+                "Ne6",
+                "Nxe6"
+              ]
+            }
+          ]
         },
         {
           "titulo": "La última fila",
@@ -410,7 +937,37 @@
           "area": "Táctica",
           "clave": "ultima-fila",
           "pregunta": "El rey rival no tiene casillas de escape: ¿quién defiende su última fila?",
-          "enlace": "Mira cómo la pieza que cuidaba la última fila tiene que dejarla, y en ese momento el rey queda encerrado por sus propios peones."
+          "enlace": "Mira cómo la pieza que cuidaba la última fila tiene que dejarla, y en ese momento el rey queda encerrado por sus propios peones.",
+          "diagramas": [
+            {
+              "id": "LC-27-1",
+              "fen": "6k1/1p3ppp/1PbNp3/3rP1q1/2Q5/8/5PPP/1R4K1 w - - 2 33",
+              "turno": "w",
+              "resultado": "1-0",
+              "pregunta": "El rey rival no tiene casillas de escape: ¿quién defiende su última fila? Juegan las blancas; el rival acaba de jugar …Ac6.",
+              "comentario": "Sliwa–Stoltz, Bucarest 1953. 33.Dxc6 bxc6 34.b7 Dd8 35.b8=D Td1+ 36.Txd1. Combinación de coronación aprovechando la última fila. Mira cómo la pieza que cuidaba la última fila tiene que dejarla, y en ese momento el rey queda encerrado por sus propios peones. (Partida Sliwa–Stoltz, Bucarest 1953. Stockfish 16 a profundidad 18: Dxc6 es la mejor (+3,8).)",
+              "linea": [
+                "Qxc6",
+                "bxc6",
+                "b7",
+                "Qd8",
+                "b8=Q",
+                "Rd1+",
+                "Rxd1"
+              ]
+            },
+            {
+              "id": "LC-27-2",
+              "fen": "r2r2k1/2q2ppp/8/pp1RP3/8/1pP1Q3/1P3PPP/3R2K1 w - - 0 23",
+              "turno": "w",
+              "resultado": "1-0",
+              "pregunta": "El rey rival no tiene casillas de escape: ¿quién defiende su última fila? Juegan las blancas; el rival acaba de jugar …cxb3.",
+              "comentario": "Minic–Honfi, Vrnjacka Banja 1966. 23.Da7. Sacrificio de dama para desviar a las piezas que guardan la última fila. Mira cómo la pieza que cuidaba la última fila tiene que dejarla, y en ese momento el rey queda encerrado por sus propios peones. (Partida Minic–Honfi, Vrnjacka Banja 1966. Stockfish 16 a profundidad 18: Da7 es la mejor (+5,9).)",
+              "linea": [
+                "Qa7"
+              ]
+            }
+          ]
         },
         {
           "titulo": "Aprovechar las debilidades del rey",
@@ -424,7 +981,43 @@
           "area": "Juego posicional",
           "clave": "rey-expuesto",
           "pregunta": "El enroque rival tiene huecos: ¿qué pieza tuya puede llegar primero a ellos?",
-          "enlace": "Fíjate en que el golpe entra justo por las casillas que los peones del enroque ya no pueden cuidar."
+          "enlace": "Fíjate en que el golpe entra justo por las casillas que los peones del enroque ya no pueden cuidar.",
+          "diagramas": [
+            {
+              "id": "LC-28-1",
+              "fen": "r1bqkb1r/5p1p/p2p2p1/2pPp3/Pp2P3/3B4/1PPN1PPP/R2Q1RK1 w kq - 0 12",
+              "turno": "w",
+              "resultado": "½",
+              "pregunta": "El enroque rival tiene huecos: ¿qué pieza tuya puede llegar primero a ellos? Juegan las blancas; el rival acaba de jugar …fxe5.",
+              "comentario": "Jussupow–Miles, Bugojno 1986. 12.a5 Ah6 13.Cc4 O-O 14.c3 bxc3 15.bxc3. Crear un puesto avanzado y atacar el peón débil de a6; luego una segunda debilidad. Fíjate en que el golpe entra justo por las casillas que los peones del enroque ya no pueden cuidar. (Partida Jussupow–Miles, Bugojno 1986. Stockfish 16 a profundidad 18: a5 es la mejor (+0,9).)",
+              "linea": [
+                "a5",
+                "Bh6",
+                "Nc4",
+                "O-O",
+                "c3",
+                "bxc3",
+                "bxc3"
+              ]
+            },
+            {
+              "id": "LC-28-2",
+              "fen": "3rr1k1/pp3pp1/2n2q1p/2p1p3/2P1Q3/2P1PB2/P4PPP/3RR1K1 w - - 2 18",
+              "turno": "w",
+              "resultado": "½",
+              "pregunta": "El enroque rival tiene huecos: ¿qué pieza tuya puede llegar primero a ellos? Juegan las blancas; el rival acaba de jugar …Tad8.",
+              "comentario": "Botvinnik–Chekhover, Leningrado 1938. 18.Td5 b6 19.Ted1 Ca5 20.h3 Txd5 21.Txd5. Dominio de la casilla d5 y caballo rival fuera de juego. Fíjate en que el golpe entra justo por las casillas que los peones del enroque ya no pueden cuidar. (Partida Botvinnik–Chekhover, Leningrado 1938. Stockfish 16 a profundidad 18: Td5 es la mejor (+0,5).)",
+              "linea": [
+                "Rd5",
+                "b6",
+                "Red1",
+                "Na5",
+                "h3",
+                "Rxd5",
+                "Rxd5"
+              ]
+            }
+          ]
         },
         {
           "titulo": "La séptima fila",
@@ -439,7 +1032,26 @@
           "clave": "septima",
           "js": "septima",
           "pregunta": "Hay una columna que lleva hasta la séptima fila del rival: ¿qué ganas si tu torre llega ahí?",
-          "enlace": "Mira cómo la torre en la séptima ataca lo que no puede defenderse y deja al rey rival encerrado detrás."
+          "enlace": "Mira cómo la torre en la séptima ataca lo que no puede defenderse y deja al rey rival encerrado detrás.",
+          "diagramas": [
+            {
+              "id": "LC-29",
+              "fen": "r4k1r/pn3pb1/1p2p1pn/2p1P2p/2P2P1B/2N2N2/PP4PP/2KR3R w - - 0 17",
+              "turno": "w",
+              "resultado": "1-0",
+              "pregunta": "Hay una columna que lleva hasta la séptima fila del rival: ¿qué ganas si tu torre llega ahí? Juegan las blancas; el rival acaba de jugar …Cxb7.",
+              "comentario": "Nimzowitsch–Duhm, Hannover 1926. 17.Td7 Tb8 18.Thd1 Rg8 19.Ae7 Cf5 20.Cg5. Torres dobladas en séptima con caballo y alfil hasta el mate. Mira cómo la torre en la séptima ataca lo que no puede defenderse y deja al rey rival encerrado detrás. (Partida Nimzowitsch–Duhm, Hannover 1926. Stockfish 16 a profundidad 18: Td7 es la mejor (+4,8).)",
+              "linea": [
+                "Rd7",
+                "Rb8",
+                "Rhd1",
+                "Kg8",
+                "Be7",
+                "Nf5",
+                "Ng5"
+              ]
+            }
+          ]
         },
         {
           "titulo": "Las fortalezas",
@@ -453,7 +1065,24 @@
           "area": "Finales",
           "clave": "fortaleza",
           "pregunta": "Tienes menos material: ¿hay una posición donde el rival ya no pueda entrar?",
-          "enlace": "Fíjate en que el bando con más material no puede romper: las casillas de entrada están cerradas y el rey defensor no se mueve de su sitio."
+          "enlace": "Fíjate en que el bando con más material no puede romper: las casillas de entrada están cerradas y el rey defensor no se mueve de su sitio.",
+          "diagramas": [
+            {
+              "id": "LC-30",
+              "fen": "6k1/3B3p/1p1bb1p1/3p1p2/1P1P4/1pP2P2/4N1PP/6K1 w - - 0 31",
+              "turno": "w",
+              "resultado": "½",
+              "pregunta": "Tienes menos material: ¿hay una posición donde el rival ya no pueda entrar? Juegan las blancas; el rival acaba de jugar …cxb3.",
+              "comentario": "31.Axe6+ Rg7 32.Axd5 b2 33.Aa2. Hay algo sin defender, y hay que verlo antes que el rival. Fíjate en que el bando con más material no puede romper: las casillas de entrada están cerradas y el rey defensor no se mueve de su sitio. (Ejercicio 21fnf de la base abierta de Lichess (CC0), rating 992. Stockfish 16 a profundidad 18: Axe6+ es la mejor (+5,2) y la segunda queda en -4,2.)",
+              "linea": [
+                "Bxe6+",
+                "Kg7",
+                "Bxd5",
+                "b2",
+                "Ba2"
+              ]
+            }
+          ]
         },
         {
           "titulo": "La cuña de peón",
@@ -467,7 +1096,26 @@
           "area": "Táctica",
           "clave": "cuna",
           "pregunta": "Hay un peón tuyo muy cerca del rey rival: ¿qué casilla sostiene y quién puede usarla?",
-          "enlace": "Mira cómo el peón avanzado sostiene la casilla del mate y le quita al rey las salidas que le quedaban."
+          "enlace": "Mira cómo el peón avanzado sostiene la casilla del mate y le quita al rey las salidas que le quedaban.",
+          "diagramas": [
+            {
+              "id": "LC-31",
+              "fen": "r4r1k/1pq1bp1p/p1bp1np1/4pP2/4P3/P1N1B1Q1/1PP1B1PP/R4R1K w - - 2 17",
+              "turno": "w",
+              "resultado": "½",
+              "pregunta": "Hay un peón tuyo muy cerca del rey rival: ¿qué casilla sostiene y quién puede usarla? Juegan las blancas; el rival acaba de jugar …Rh8.",
+              "comentario": "Jussupow–Sveshnikov, Ashjabad 1978. 17.Ag5 Cxe4 18.Cxe4 Axe4 19.f6 Ad8 20.Ad3. Sacrificar un peón para clavar una cuña en f6 y atacar al rey. Mira cómo el peón avanzado sostiene la casilla del mate y le quita al rey las salidas que le quedaban. (Partida Jussupow–Sveshnikov, Ashjabad 1978. Stockfish 16 a profundidad 18: Ag5 es la mejor (+1,2).)",
+              "linea": [
+                "Bg5",
+                "Nxe4",
+                "Nxe4",
+                "Bxe4",
+                "f6",
+                "Bd8",
+                "Bd3"
+              ]
+            }
+          ]
         },
         {
           "titulo": "Las trampas de apertura",
@@ -481,7 +1129,26 @@
           "area": "Aperturas",
           "clave": "trampa",
           "pregunta": "Algo parece gratis en la apertura: ¿por qué te lo están dejando?",
-          "enlace": "Fíjate en qué principio se rompió: una casilla débil, una pieza clavada o una dama lejos de casa. Esa es la puerta por la que entra la trampa."
+          "enlace": "Fíjate en qué principio se rompió: una casilla débil, una pieza clavada o una dama lejos de casa. Esa es la puerta por la que entra la trampa.",
+          "diagramas": [
+            {
+              "id": "LC-32",
+              "fen": "rnbqk1nr/ppp2ppp/8/4P3/1BP5/4p3/PP3PPP/RN1QKBNR b KQkq - 0 6",
+              "turno": "b",
+              "resultado": "0-1",
+              "pregunta": "Algo parece gratis en la apertura: ¿por qué te lo están dejando? Juegan las negras; el rival acaba de jugar Axb4.",
+              "comentario": "Biever–Cassidy, Münchenstein 1959. 6…exf2+ 7.Re2 fxg1=C+ 8.Re1 Dh4+ 9.Rd2 Cc6. Contragambito Albin: la trampa clásica con coronación en caballo. Fíjate en qué principio se rompió: una casilla débil, una pieza clavada o una dama lejos de casa. Esa es la puerta por la que entra la trampa. (Partida Biever–Cassidy, Münchenstein 1959. Stockfish 16 a profundidad 18: exf2+ es la mejor (+5,9).)",
+              "linea": [
+                "exf2+",
+                "Ke2",
+                "fxg1=N+",
+                "Ke1",
+                "Qh4+",
+                "Kd2",
+                "Nc6"
+              ]
+            }
+          ]
         },
         {
           "titulo": "Cómo usar una trampa: la pieza atrapada",
@@ -495,7 +1162,43 @@
           "area": "Aperturas",
           "clave": "atrapada",
           "pregunta": "Una pieza rival está lejos de su campo: ¿le queda alguna casilla para volver?",
-          "enlace": "Mira cómo la pieza que se fue a comer se queda sin salida, y la trampa no le costó nada a quien la tendió."
+          "enlace": "Mira cómo la pieza que se fue a comer se queda sin salida, y la trampa no le costó nada a quien la tendió.",
+          "diagramas": [
+            {
+              "id": "LC-33-1",
+              "fen": "7k/p5p1/2pNb2p/8/q4n2/6QP/P5P1/1rB2R1K w - - 4 33",
+              "turno": "w",
+              "resultado": "½",
+              "pregunta": "Una pieza rival está lejos de su campo: ¿le queda alguna casilla para volver? Juegan las blancas; el rival acaba de jugar …Tb1.",
+              "comentario": "Chigorin–Marco, Viena 1898. 33.Rh2 Txc1 34.Txc1 Ce2 35.De5 Cxc1 36.Ce8. Una jugada fuerte que además esconde una trampa táctica. Mira cómo la pieza que se fue a comer se queda sin salida, y la trampa no le costó nada a quien la tendió. (Partida Chigorin–Marco, Viena 1898. Stockfish 16 a profundidad 18: Rh2 es la mejor (+1,6).)",
+              "linea": [
+                "Kh2",
+                "Rxc1",
+                "Rxc1",
+                "Ne2",
+                "Qe5",
+                "Nxc1",
+                "Ne8"
+              ]
+            },
+            {
+              "id": "LC-33-2",
+              "fen": "2kr1b1r/1p4p1/1qn1pn2/pBpp3p/P2P1B1P/2N1P3/1PP1QP2/R3K2R w KQ - 2 15",
+              "turno": "w",
+              "resultado": "½",
+              "pregunta": "Una pieza rival está lejos de su campo: ¿le queda alguna casilla para volver? Juegan las blancas; el rival acaba de jugar …O-O-O.",
+              "comentario": "Nimzowitsch–Alekhine, Vilnius 1912. 15.O-O-O Ad6 16.Axd6 Txd6 17.Ad3 c4 18.Ag6. Enroque natural ligado a una trampa con mate de alfil. Mira cómo la pieza que se fue a comer se queda sin salida, y la trampa no le costó nada a quien la tendió. (Partida Nimzowitsch–Alekhine, Vilnius 1912. Stockfish 16 a profundidad 18: O-O-O es la mejor (+1,0).)",
+              "linea": [
+                "O-O-O",
+                "Bd6",
+                "Bxd6",
+                "Rxd6",
+                "Bd3",
+                "c4",
+                "Bg6"
+              ]
+            }
+          ]
         },
         {
           "titulo": "Combinaciones de ahogado",
@@ -510,7 +1213,23 @@
           "clave": "ahogado2",
           "js": "ahogado",
           "pregunta": "Tu rey está casi sin casillas: ¿qué pasa si te quedas sin nada que mover?",
-          "enlace": "Fíjate en que el bando que estaba perdido se queda sin ninguna jugada legal sin estar en jaque: eso es tablas."
+          "enlace": "Fíjate en que el bando que estaba perdido se queda sin ninguna jugada legal sin estar en jaque: eso es tablas.",
+          "diagramas": [
+            {
+              "id": "LC-34",
+              "fen": "1k6/3P4/8/4K3/8/8/8/8 b - - 0 83",
+              "turno": "b",
+              "resultado": "½",
+              "pregunta": "Tu rey está casi sin casillas: ¿qué pasa si te quedas sin nada que mover? Juegan las negras; el rival acaba de jugar Rxe5.",
+              "comentario": "Jones–Le Quang Liem, chess.com INT 2020. 83…Rc7 84.Re6 Rd8 85.Rd6. Fíjate en que el bando que estaba perdido se queda sin ninguna jugada legal sin estar en jaque: eso es tablas. (Partida Jones–Le Quang Liem, chess.com INT 2020. Stockfish 16 a profundidad 18: Rc7 es la mejor (0,0) y la segunda queda en recibe mate en 8.)",
+              "linea": [
+                "Kc7",
+                "Ke6",
+                "Kd8",
+                "Kd6"
+              ]
+            }
+          ]
         },
         {
           "titulo": "La columna semiabierta",
@@ -525,7 +1244,24 @@
           "clave": "semiabierta",
           "js": "pieza:R",
           "pregunta": "Hay una columna con un solo peón, del rival: ¿cuántas piezas tuyas pueden atacarlo?",
-          "enlace": "Mira cómo las piezas mayores apuntan al peón de la columna semiabierta y el rival se queda sin defensores suficientes."
+          "enlace": "Mira cómo las piezas mayores apuntan al peón de la columna semiabierta y el rival se queda sin defensores suficientes.",
+          "diagramas": [
+            {
+              "id": "LC-35",
+              "fen": "2r3k1/1p1b1pp1/1p3rq1/1P1p3p/P2N4/5P2/5QP1/2R1R1K1 w - h6 0 34",
+              "turno": "w",
+              "resultado": "1-0",
+              "pregunta": "Hay una columna con un solo peón, del rival: ¿cuántas piezas tuyas pueden atacarlo? Juegan las blancas; el rival acaba de jugar …h5.",
+              "comentario": "34.Txc8+ Axc8 35.Te8+ Rh7 36.Txc8. Es una horquilla: una pieza ataca dos objetivos a la vez. Mira cómo las piezas mayores apuntan al peón de la columna semiabierta y el rival se queda sin defensores suficientes. (Ejercicio 1thjO de la base abierta de Lichess (CC0), rating 1147. Stockfish 16 a profundidad 18: Txc8+ es la mejor (+3,1) y la segunda queda en -0,9.)",
+              "linea": [
+                "Rxc8+",
+                "Bxc8",
+                "Re8+",
+                "Kh7",
+                "Rxc8"
+              ]
+            }
+          ]
         },
         {
           "titulo": "Mate con alfil y caballo",
@@ -539,7 +1275,26 @@
           "area": "Finales",
           "clave": "alfil-caballo",
           "pregunta": "Solo hay dos esquinas donde este mate funciona: ¿cuál le toca al rey rival?",
-          "enlace": "Fíjate en que el rey defensor termina en una esquina del color del alfil: en las otras, el mate no existe."
+          "enlace": "Fíjate en que el rey defensor termina en una esquina del color del alfil: en las otras, el mate no existe.",
+          "diagramas": [
+            {
+              "id": "LC-36",
+              "fen": "8/8/8/3n1bK1/2k5/8/8/8 w - - 0 102",
+              "turno": "w",
+              "resultado": "½",
+              "pregunta": "Solo hay dos esquinas donde este mate funciona: ¿cuál le toca al rey rival? Juegan las blancas; el rival acaba de jugar …Axf5.",
+              "comentario": "Lautier–Van Wely, Khanty Mansyisk RUS 2005. 102.Rxf5 Ce7+ 103.Rf4 Cg6+ 104.Rg4 Ce7 105.Rf3. Fíjate en que el rey defensor termina en una esquina del color del alfil: en las otras, el mate no existe. (Partida Lautier–Van Wely, Khanty Mansyisk RUS 2005. Stockfish 16 a profundidad 18: Rxf5 es la mejor (+0,3) y la segunda queda en -2,8.)",
+              "linea": [
+                "Kxf5",
+                "Ne7+",
+                "Kf4",
+                "Ng6+",
+                "Kg4",
+                "Ne7",
+                "Kf3"
+              ]
+            }
+          ]
         },
         {
           "titulo": "Combinaciones en las columnas",
@@ -553,7 +1308,22 @@
           "area": "Táctica",
           "clave": "enfilada",
           "pregunta": "Hay piezas rivales en la misma columna o fila: ¿cuál está delante y cuál detrás?",
-          "enlace": "Mira cómo la pieza de adelante tiene que moverse o quedarse clavada, y la de atrás paga el precio."
+          "enlace": "Mira cómo la pieza de adelante tiene que moverse o quedarse clavada, y la de atrás paga el precio.",
+          "diagramas": [
+            {
+              "id": "LC-37",
+              "fen": "1n3b1r/1bN4p/pB1p1k2/6p1/3p4/2P3P1/P1P2P1P/2KR4 w - - 0 24",
+              "turno": "w",
+              "resultado": "1-0",
+              "pregunta": "Hay piezas rivales en la misma columna o fila: ¿cuál está delante y cuál detrás? Juegan las blancas; el rival acaba de jugar …exd4.",
+              "comentario": "24.Axd4+ Rf7 25.Axh8. Es una enfilada: la pieza de adelante se va y cae la de atrás. Mira cómo la pieza de adelante tiene que moverse o quedarse clavada, y la de atrás paga el precio. (Ejercicio 0WSgB de la base abierta de Lichess (CC0), rating 1103. Stockfish 16 a profundidad 18: Axd4+ es la mejor (+4,5) y la segunda queda en -2,7.)",
+              "linea": [
+                "Bxd4+",
+                "Kf7",
+                "Bxh8"
+              ]
+            }
+          ]
         },
         {
           "titulo": "Los puestos avanzados",
@@ -568,7 +1338,22 @@
           "clave": "puesto",
           "js": "pieza:N",
           "pregunta": "Hay una casilla en el campo rival que ningún peón puede atacar: ¿qué pieza tuya la aprovecha mejor?",
-          "enlace": "Fíjate en que la pieza instalada no puede ser echada por ningún peón: desde ahí controla el juego y el rival tiene que gastar una pieza para cambiarla."
+          "enlace": "Fíjate en que la pieza instalada no puede ser echada por ningún peón: desde ahí controla el juego y el rival tiene que gastar una pieza para cambiarla.",
+          "diagramas": [
+            {
+              "id": "LC-38",
+              "fen": "6rk/2R2Qpr/p6q/4P3/5N2/6bP/P5P1/7K w - - 2 39",
+              "turno": "w",
+              "resultado": "1-0",
+              "pregunta": "Hay una casilla en el campo rival que ningún peón puede atacar: ¿qué pieza tuya la aprovecha mejor? Juegan las blancas; el rival acaba de jugar …Ag3.",
+              "comentario": "39.Cg6+ Dxg6 40.Dxg6. Fíjate en que la pieza instalada no puede ser echada por ningún peón: desde ahí controla el juego y el rival tiene que gastar una pieza para cambiarla. (Ejercicio 04lJt de la base abierta de Lichess (CC0), rating 1029. Stockfish 16 a profundidad 18: Cg6+ es la mejor (+4,0) y la segunda queda en -5,2.)",
+              "linea": [
+                "Ng6+",
+                "Qxg6",
+                "Qxg6"
+              ]
+            }
+          ]
         },
         {
           "titulo": "Combinaciones en las diagonales",
@@ -583,7 +1368,22 @@
           "clave": "diagonal",
           "js": "pieza:B",
           "pregunta": "Hay un alfil apuntando de lejos: ¿qué hay en su diagonal, aunque esté tapada?",
-          "enlace": "Mira cómo la diagonal se abre de golpe y el alfil o la dama golpean algo que estaba lejos."
+          "enlace": "Mira cómo la diagonal se abre de golpe y el alfil o la dama golpean algo que estaba lejos.",
+          "diagramas": [
+            {
+              "id": "LC-39",
+              "fen": "5Rnk/1pp4b/p3B3/3pP3/3P4/2Pnb1P1/PP5P/RN5K b - - 0 30",
+              "turno": "b",
+              "resultado": "0-1",
+              "pregunta": "Hay un alfil apuntando de lejos: ¿qué hay en su diagonal, aunque esté tapada? Juegan las negras; el rival acaba de jugar g3.",
+              "comentario": "30…Ae4+ 31.Tf3 Axf3#. Es mate en dos: la primera jugada no deja defensa. Mira cómo la diagonal se abre de golpe y el alfil o la dama golpean algo que estaba lejos. (Ejercicio 0ih47 de la base abierta de Lichess (CC0), rating 949. Stockfish 16 a profundidad 18: Ae4+ es la mejor (mate en 2) y la segunda queda en -4,8.)",
+              "linea": [
+                "Be4+",
+                "Rf3",
+                "Bxf3#"
+              ]
+            }
+          ]
         },
         {
           "titulo": "Finales elementales de torre",
@@ -597,7 +1397,24 @@
           "area": "Finales",
           "clave": "torre",
           "pregunta": "Es un final de torres: ¿dónde está cada rey respecto del peón?",
-          "enlace": "Fíjate en el papel de la torre: corta al rey rival, da jaques o se interpone. Esa es la diferencia entre ganar y hacer tablas."
+          "enlace": "Fíjate en el papel de la torre: corta al rey rival, da jaques o se interpone. Esa es la diferencia entre ganar y hacer tablas.",
+          "diagramas": [
+            {
+              "id": "LC-40",
+              "fen": "1K4k1/6r1/p7/P7/2R5/8/8/8 w - - 1 55",
+              "turno": "w",
+              "resultado": "1-0",
+              "pregunta": "Es un final de torres: ¿dónde está cada rey respecto del peón? Juegan las blancas; el rival acaba de jugar …Rg8.",
+              "comentario": "55.Tc8+ Rf7 56.Tc7+ Rf6 57.Txg7. Fíjate en el papel de la torre: corta al rey rival, da jaques o se interpone. Esa es la diferencia entre ganar y hacer tablas. (Ejercicio 2n98u de la base abierta de Lichess (CC0), rating 915. Stockfish 16 a profundidad 18: Tc8+ es la mejor (+35,5) y la segunda queda en +0,3.)",
+              "linea": [
+                "Rc8+",
+                "Kf7",
+                "Rc7+",
+                "Kf6",
+                "Rxg7"
+              ]
+            }
+          ]
         },
         {
           "titulo": "Combinaciones con caballos",
@@ -612,7 +1429,22 @@
           "clave": "caballo",
           "js": "pieza:N",
           "pregunta": "Hay un caballo cerca de piezas rivales valiosas: ¿a qué casillas puede saltar?",
-          "enlace": "Mira cómo el caballo ataca dos piezas a la vez desde una casilla donde nadie puede taparlo."
+          "enlace": "Mira cómo el caballo ataca dos piezas a la vez desde una casilla donde nadie puede taparlo.",
+          "diagramas": [
+            {
+              "id": "LC-41",
+              "fen": "8/8/6p1/pk1N4/3K2PP/8/8/1b6 w - - 4 54",
+              "turno": "w",
+              "resultado": "1-0",
+              "pregunta": "Hay un caballo cerca de piezas rivales valiosas: ¿a qué casillas puede saltar? Juegan las blancas; el rival acaba de jugar …Rb5.",
+              "comentario": "54.Cc3+ Rc6 55.Cxb1. Es una horquilla: una pieza ataca dos objetivos a la vez. Mira cómo el caballo ataca dos piezas a la vez desde una casilla donde nadie puede taparlo. (Ejercicio 1aiIq de la base abierta de Lichess (CC0), rating 905. Stockfish 16 a profundidad 18: Cc3+ es la mejor (+6,1) y la segunda queda en +0,1.)",
+              "linea": [
+                "Nc3+",
+                "Kc6",
+                "Nxb1"
+              ]
+            }
+          ]
         },
         {
           "titulo": "Desarrollar las piezas",
@@ -626,7 +1458,22 @@
           "area": "Aperturas",
           "clave": "desarrollo",
           "pregunta": "Mira cuántas piezas tiene fuera cada bando: ¿quién va adelante en el desarrollo?",
-          "enlace": "Fíjate en que el bando con más piezas activas castiga al que se quedó atrás antes de que este pueda terminar de desarrollarse."
+          "enlace": "Fíjate en que el bando con más piezas activas castiga al que se quedó atrás antes de que este pueda terminar de desarrollarse.",
+          "diagramas": [
+            {
+              "id": "LC-42",
+              "fen": "r1bqk2r/pp2pp1p/2np1bp1/1B6/3PP3/4BN1P/PP3PP1/R2QK2R b KQkq - 1 11",
+              "turno": "b",
+              "resultado": "0-1",
+              "pregunta": "Mira cuántas piezas tiene fuera cada bando: ¿quién va adelante en el desarrollo? Juegan las negras; el rival acaba de jugar Ab5.",
+              "comentario": "11…Da5+ 12.Rf1 Dxb5+. Es una horquilla: una pieza ataca dos objetivos a la vez. Fíjate en que el bando con más piezas activas castiga al que se quedó atrás antes de que este pueda terminar de desarrollarse. (Ejercicio 1Luyr de la base abierta de Lichess (CC0), rating 1019. Stockfish 16 a profundidad 18: Da5+ es la mejor (+4,2) y la segunda queda en -0,5.)",
+              "linea": [
+                "Qa5+",
+                "Kf1",
+                "Qxb5+"
+              ]
+            }
+          ]
         },
         {
           "titulo": "El jaque perpetuo",
@@ -641,7 +1488,26 @@
           "clave": "perpetuo",
           "js": "perpetuo",
           "pregunta": "Estás en problemas, pero el rey rival tiene poca protección: ¿hasta dónde llegan tus jaques?",
-          "enlace": "Mira cómo cada jaque obliga al rey a moverse y siempre hay otro jaque esperando: el rival no puede salir de la rueda."
+          "enlace": "Mira cómo cada jaque obliga al rey a moverse y siempre hay otro jaque esperando: el rival no puede salir de la rueda.",
+          "diagramas": [
+            {
+              "id": "LC-43",
+              "fen": "6k1/5p2/7p/1p1q3r/1R6/6P1/5P2/Q5K1 w - - 1 56",
+              "turno": "w",
+              "resultado": "½",
+              "pregunta": "Estás en problemas, pero el rey rival tiene poca protección: ¿hasta dónde llegan tus jaques? Juegan las blancas; el rival acaba de jugar …Th5.",
+              "comentario": "Gyimesi–Smirin, Gothenburg SWE 2005. 56.Tg4+ Rf8 57.Da3+ Re8 58.Tg8+ Rd7 59.Da7+. Mira cómo cada jaque obliga al rey a moverse y siempre hay otro jaque esperando: el rival no puede salir de la rueda. (Partida Gyimesi–Smirin, Gothenburg SWE 2005. Stockfish 16 a profundidad 18: Tg4+ es la mejor (-0,1) y la segunda queda en -3,6.)",
+              "linea": [
+                "Rg4+",
+                "Kf8",
+                "Qa3+",
+                "Ke8",
+                "Rg8+",
+                "Kd7",
+                "Qa7+"
+              ]
+            }
+          ]
         },
         {
           "titulo": "Mate en dos: los candidatos",
@@ -655,7 +1521,22 @@
           "area": "Cálculo",
           "clave": "mate-dos2",
           "pregunta": "Mate en dos: ¿cuáles son tus candidatas y qué puede contestar el rival a cada una?",
-          "enlace": "Fíjate en que la jugada buena deja al rival sin ninguna defensa: contra cualquier respuesta hay un mate."
+          "enlace": "Fíjate en que la jugada buena deja al rival sin ninguna defensa: contra cualquier respuesta hay un mate.",
+          "diagramas": [
+            {
+              "id": "LC-44",
+              "fen": "7k/p3q1pp/8/2pQ4/2P5/P6P/6P1/7K w - - 1 33",
+              "turno": "w",
+              "resultado": "1-0",
+              "pregunta": "Mate en dos: ¿cuáles son tus candidatas y qué puede contestar el rival a cada una? Juegan las blancas; el rival acaba de jugar …De7.",
+              "comentario": "33.Da8+ Dd8 34.Dxd8#. El golpe va a la última fila, donde el rey no tiene salida. Fíjate en que la jugada buena deja al rival sin ninguna defensa: contra cualquier respuesta hay un mate. (Ejercicio 34sNs de la base abierta de Lichess (CC0), rating 935. Stockfish 16 a profundidad 18: Da8+ es la mejor (mate en 2) y la segunda queda en +0,1.)",
+              "linea": [
+                "Qa8+",
+                "Qd8",
+                "Qxd8#"
+              ]
+            }
+          ]
         },
         {
           "titulo": "Combinaciones con piezas mayores",
@@ -670,7 +1551,24 @@
           "clave": "mayores",
           "js": "pieza:QR",
           "pregunta": "Las piezas mayores están activas: ¿hay algún jaque o ataque doble que golpee dos cosas a la vez?",
-          "enlace": "Mira cómo la dama o la torre golpean dos objetivos a la vez, o cómo la entrega de una abre el camino de la otra."
+          "enlace": "Mira cómo la dama o la torre golpean dos objetivos a la vez, o cómo la entrega de una abre el camino de la otra.",
+          "diagramas": [
+            {
+              "id": "LC-45",
+              "fen": "5rk1/1B1P3p/1p4p1/p3b3/Q2p4/B6P/P2q1PP1/3R2K1 b - - 1 25",
+              "turno": "b",
+              "resultado": "0-1",
+              "pregunta": "Las piezas mayores están activas: ¿hay algún jaque o ataque doble que golpee dos cosas a la vez? Juegan las negras; el rival acaba de jugar Td1.",
+              "comentario": "25…Dxf2+ 26.Rh1 Df1+ 27.Txf1 Txf1#. Hay un sacrificio: se entrega material para ganar más. Mira cómo la dama o la torre golpean dos objetivos a la vez, o cómo la entrega de una abre el camino de la otra. (Ejercicio 23ezF de la base abierta de Lichess (CC0), rating 1107. Stockfish 16 a profundidad 18: Dxf2+ es la mejor (mate en 3) y la segunda queda en -6,8.)",
+              "linea": [
+                "Qxf2+",
+                "Kh1",
+                "Qf1+",
+                "Rxf1",
+                "Rxf1#"
+              ]
+            }
+          ]
         },
         {
           "titulo": "Las piezas trabajan juntas",
@@ -684,7 +1582,24 @@
           "area": "Juego posicional",
           "clave": "coordinar",
           "pregunta": "Mira dónde está cada pieza: ¿cuáles trabajan juntas y cuál está sola?",
-          "enlace": "Fíjate en cómo las piezas que apuntan al mismo objetivo se apoyan entre ellas, y en que la pieza suelta es la que sufre el golpe."
+          "enlace": "Fíjate en cómo las piezas que apuntan al mismo objetivo se apoyan entre ellas, y en que la pieza suelta es la que sufre el golpe.",
+          "diagramas": [
+            {
+              "id": "LC-46",
+              "fen": "8/6kp/3qp1p1/1pp1Q3/3n4/P6P/1P3P2/4R1K1 b - - 6 35",
+              "turno": "b",
+              "resultado": "0-1",
+              "pregunta": "Mira dónde está cada pieza: ¿cuáles trabajan juntas y cuál está sola? Juegan las negras; el rival acaba de jugar De5+.",
+              "comentario": "35…Dxe5 36.Txe5 Cf3+ 37.Rf1 Cxe5. Es una horquilla: una pieza ataca dos objetivos a la vez. Fíjate en cómo las piezas que apuntan al mismo objetivo se apoyan entre ellas, y en que la pieza suelta es la que sufre el golpe. (Ejercicio 0APD2 de la base abierta de Lichess (CC0), rating 1105. Stockfish 16 a profundidad 18: Dxe5 es la mejor (+5,4) y la segunda queda en -5,7.)",
+              "linea": [
+                "Qxe5",
+                "Rxe5",
+                "Nf3+",
+                "Kf1",
+                "Nxe5"
+              ]
+            }
+          ]
         },
         {
           "titulo": "El caballo que se entrega",
@@ -699,7 +1614,22 @@
           "clave": "caballo2",
           "js": "sac:N",
           "pregunta": "El rey rival tiene pocos defensores: ¿qué casilla de su enroque se abre si entregas una pieza?",
-          "enlace": "Mira cómo el caballo entregado abre el camino para que las demás piezas lleguen al rey: el valor está en lo que entra después."
+          "enlace": "Mira cómo el caballo entregado abre el camino para que las demás piezas lleguen al rey: el valor está en lo que entra después.",
+          "diagramas": [
+            {
+              "id": "LC-47",
+              "fen": "r4rk1/5pb1/1q2b2p/5Qp1/3pN3/3B3P/1PP3P1/R3B2K w - - 6 25",
+              "turno": "w",
+              "resultado": "1-0",
+              "pregunta": "El rey rival tiene pocos defensores: ¿qué casilla de su enroque se abre si entregas una pieza? Juegan las blancas; el rival acaba de jugar …Ae6.",
+              "comentario": "25.Cf6+ Axf6 26.Dh7#. Hay un sacrificio: se entrega material para ganar más. Mira cómo el caballo entregado abre el camino para que las demás piezas lleguen al rey: el valor está en lo que entra después. (Ejercicio 0gAkg de la base abierta de Lichess (CC0), rating 1041. Stockfish 16 a profundidad 18: Cf6+ es la mejor (mate en 2) y la segunda queda en -5,1.)",
+              "linea": [
+                "Nf6+",
+                "Bxf6",
+                "Qh7#"
+              ]
+            }
+          ]
         },
         {
           "titulo": "El zugzwang",
@@ -713,7 +1643,24 @@
           "area": "Finales",
           "clave": "zugzwang",
           "pregunta": "Juegue quien juegue, alguien va a tener que ceder: ¿a quién le conviene que le toque mover?",
-          "enlace": "Fíjate en que la jugada buena no ataca nada: deja al rival con el turno y cualquier cosa que haga empeora su posición."
+          "enlace": "Fíjate en que la jugada buena no ataca nada: deja al rival con el turno y cualquier cosa que haga empeora su posición.",
+          "diagramas": [
+            {
+              "id": "LC-48",
+              "fen": "8/8/3k1p1p/1p4p1/1P2P1P1/3K3P/8/8 w - - 5 54",
+              "turno": "w",
+              "resultado": "1-0",
+              "pregunta": "Juegue quien juegue, alguien va a tener que ceder: ¿a quién le conviene que le toque mover? Juegan las blancas; el rival acaba de jugar …Rd6.",
+              "comentario": "54.Rd4 Rc6 55.e5 fxe5+ 56.Rxe5. Es un zugzwang: al rival le toca mover y cualquier jugada lo empeora. Fíjate en que la jugada buena no ataca nada: deja al rival con el turno y cualquier cosa que haga empeora su posición. (Ejercicio 2MSJo de la base abierta de Lichess (CC0), rating 955. Stockfish 16 a profundidad 18: Rd4 es la mejor (+4,1) y la segunda queda en 0,0.)",
+              "linea": [
+                "Kd4",
+                "Kc6",
+                "e5",
+                "fxe5+",
+                "Kxe5"
+              ]
+            }
+          ]
         }
       ]
     },
@@ -735,7 +1682,22 @@
           "clave": "alfil-comb",
           "js": "pieza:B",
           "pregunta": "Sigue las diagonales de los alfiles hasta el final: ¿qué hay detrás de lo que las tapa?",
-          "enlace": "El golpe sale de una diagonal que ya estaba ahí: la combinación solo la abre o la aprovecha en el momento justo."
+          "enlace": "El golpe sale de una diagonal que ya estaba ahí: la combinación solo la abre o la aprovecha en el momento justo.",
+          "diagramas": [
+            {
+              "id": "LC-49",
+              "fen": "r1b2rk1/1p4p1/1qpbp2p/p2n1p1P/3P3B/P2B1N2/1PPQ1PP1/2KR3R b - - 1 16",
+              "turno": "b",
+              "resultado": "0-1",
+              "pregunta": "Sigue las diagonales de los alfiles hasta el final: ¿qué hay detrás de lo que las tapa? Juegan las negras; el rival acaba de jugar Ah4.",
+              "comentario": "16…Af4 17.Dxf4 Cxf4. Todo gira en torno a una clavada: la pieza clavada no puede defender. El golpe sale de una diagonal que ya estaba ahí: la combinación solo la abre o la aprovecha en el momento justo. (Ejercicio 2R1fW de la base abierta de Lichess (CC0), rating 1236. Stockfish 16 a profundidad 18: Af4 es la mejor (+4,5) y la segunda queda en -0,2.)",
+              "linea": [
+                "Bf4",
+                "Qxf4",
+                "Nxf4"
+              ]
+            }
+          ]
         },
         {
           "titulo": "Las diagonales",
@@ -750,7 +1712,22 @@
           "clave": "diag-est",
           "js": "pieza:B",
           "pregunta": "¿Qué diagonal es la importante aquí, y quién puede ocuparla o cerrarla?",
-          "enlace": "La jugada buena gira alrededor de una diagonal: abrirla para el alfil propio o quitársela al del rival."
+          "enlace": "La jugada buena gira alrededor de una diagonal: abrirla para el alfil propio o quitársela al del rival.",
+          "diagramas": [
+            {
+              "id": "LC-50",
+              "fen": "2rq1rk1/1b1n1ppp/p2p4/1p6/4P3/PBb3QP/1BP2PP1/3R1RK1 w - - 0 19",
+              "turno": "w",
+              "resultado": "1-0",
+              "pregunta": "¿Qué diagonal es la importante aquí, y quién puede ocuparla o cerrarla? Juegan las blancas; el rival acaba de jugar …Axc3.",
+              "comentario": "19.Axc3 Txc3 20.Dxc3. La jugada buena gira alrededor de una diagonal: abrirla para el alfil propio o quitársela al del rival. (Ejercicio 1kXuX de la base abierta de Lichess (CC0), rating 1064. Stockfish 16 a profundidad 18: Axc3 es la mejor (+3,4) y la segunda queda en -3,7.)",
+              "linea": [
+                "Bxc3",
+                "Rxc3",
+                "Qxc3"
+              ]
+            }
+          ]
         },
         {
           "titulo": "El sacrificio de dama",
@@ -765,7 +1742,26 @@
           "clave": "sac-dama",
           "js": "sac:Q",
           "pregunta": "¿Qué podrían hacer tus otras piezas si la dama desapareciera del tablero?",
-          "enlace": "La dama se entrega porque lo que viene después es forzado: las piezas que quedan hacen el resto."
+          "enlace": "La dama se entrega porque lo que viene después es forzado: las piezas que quedan hacen el resto.",
+          "diagramas": [
+            {
+              "id": "LC-51",
+              "fen": "3rr1k1/pb2qp1p/1pnn2p1/2p5/N2pP3/1P1P2P1/P1NQ1PBP/1R1R2K1 b - - 2 20",
+              "turno": "b",
+              "resultado": "½",
+              "pregunta": "¿Qué podrían hacer tus otras piezas si la dama desapareciera del tablero? Juegan las negras; el rival acaba de jugar Cc2.",
+              "comentario": "Smyslov–Tal, Moscow 1964. 20…f5 21.exf5 Ce5 22.f4 Cf3+ 23.Axf3 Axf3. Sacrificio posicional de dama a cambio de torre y piezas muy activas. La dama se entrega porque lo que viene después es forzado: las piezas que quedan hacen el resto. (Partida Smyslov–Tal, Moscow 1964. Stockfish 16 a profundidad 18: f5 es la mejor (+1,1).)",
+              "linea": [
+                "f5",
+                "exf5",
+                "Ne5",
+                "f4",
+                "Nf3+",
+                "Bxf3",
+                "Bxf3"
+              ]
+            }
+          ]
         },
         {
           "titulo": "Cambiar hacia un final de peones",
@@ -780,7 +1776,26 @@
           "clave": "a-peones",
           "js": "cambia-a-peones",
           "pregunta": "Si se cambian las piezas que quedan, ¿quién gana el final de peones?",
-          "enlace": "La decisión importante es entrar en el final de peones: el cambio es bueno porque ese final se gana, y se sabe contando."
+          "enlace": "La decisión importante es entrar en el final de peones: el cambio es bueno porque ese final se gana, y se sabe contando.",
+          "diagramas": [
+            {
+              "id": "LC-52",
+              "fen": "8/p7/8/2pk2K1/5P2/8/P7/8 b - f3 0 50",
+              "turno": "b",
+              "resultado": "0-1",
+              "pregunta": "Si se cambian las piezas que quedan, ¿quién gana el final de peones? Juegan las negras; el rival acaba de jugar f4.",
+              "comentario": "50…c4 51.f5 c3 52.f6 c2 53.f7 c1=D+. La clave es una jugada tranquila: sin jaque ni captura, pero sin defensa. La decisión importante es entrar en el final de peones: el cambio es bueno porque ese final se gana, y se sabe contando. (Ejercicio 1GDsp de la base abierta de Lichess (CC0), rating 801. Stockfish 16 a profundidad 18: c4 es la mejor (+4,2) y la segunda queda en 0,0.)",
+              "linea": [
+                "c4",
+                "f5",
+                "c3",
+                "f6",
+                "c2",
+                "f7",
+                "c1=Q+"
+              ]
+            }
+          ]
         },
         {
           "titulo": "Convertir la ventaja",
@@ -794,7 +1809,22 @@
           "area": "Juego posicional",
           "clave": "convertir2",
           "pregunta": "Tienes ventaja: ¿cuál es la forma más segura de acercarla a la victoria?",
-          "enlace": "La jugada no busca brillar: quita contrajuego o simplifica, y deja la ventaja más fácil de cobrar."
+          "enlace": "La jugada no busca brillar: quita contrajuego o simplifica, y deja la ventaja más fácil de cobrar.",
+          "diagramas": [
+            {
+              "id": "LC-53",
+              "fen": "8/6k1/p3pn2/BqQ3K1/1P6/P3P1P1/5P1P/8 b - - 2 47",
+              "turno": "b",
+              "resultado": "0-1",
+              "pregunta": "Tienes ventaja: ¿cuál es la forma más segura de acercarla a la victoria? Juegan las negras; el rival acaba de jugar Dc5.",
+              "comentario": "47…Ce4+ 48.Rf4 Cxc5. Es una horquilla: una pieza ataca dos objetivos a la vez. La jugada no busca brillar: quita contrajuego o simplifica, y deja la ventaja más fácil de cobrar. (Ejercicio 2g2QK de la base abierta de Lichess (CC0), rating 974. Stockfish 16 a profundidad 18: Ce4+ es la mejor (+5,3) y la segunda queda en -4,9.)",
+              "linea": [
+                "Ne4+",
+                "Kf4",
+                "Nxc5"
+              ]
+            }
+          ]
         },
         {
           "titulo": "Dama y caballo al ataque",
@@ -809,7 +1839,43 @@
           "clave": "dama-caballo",
           "js": "piezas:QN",
           "pregunta": "¿Qué casillas cerca del rey controla ya el caballo, y adónde puede llegar la dama?",
-          "enlace": "El caballo cubre lo que la dama no alcanza: juntos cierran las casillas del rey hasta el mate."
+          "enlace": "El caballo cubre lo que la dama no alcanza: juntos cierran las casillas del rey hasta el mate.",
+          "diagramas": [
+            {
+              "id": "LC-54-1",
+              "fen": "r4k2/1p3pp1/1p3b2/1Qp1q3/3pP1n1/3P2P1/P2B1PBr/1R2R1K1 b - e3 0 25",
+              "turno": "b",
+              "resultado": "0-1",
+              "pregunta": "¿Qué casillas cerca del rey controla ya el caballo, y adónde puede llegar la dama? Juegan las negras; el rival acaba de jugar e4.",
+              "comentario": "Vaganian–Yusupov. 25…Dh5 26.Rf1 Txg2 27.Rxg2 Dh2+ 28.Rf3 Ce5+. Ataque típico de dama y caballo con la torre delante de la dama en la columna h. El caballo cubre lo que la dama no alcanza: juntos cierran las casillas del rey hasta el mate. (Partida Vaganian–Yusupov. Stockfish 16 a profundidad 18: Dh5 es la mejor (+7,2).)",
+              "linea": [
+                "Qh5",
+                "Kf1",
+                "Rxg2",
+                "Kxg2",
+                "Qh2+",
+                "Kf3",
+                "Ne5+"
+              ]
+            },
+            {
+              "id": "LC-54-2",
+              "fen": "b4n2/4qpkp/3p1p2/1p1Pp2P/4P3/1NP2QP1/2B2P1K/8 w - - 1 32",
+              "turno": "w",
+              "resultado": "½",
+              "pregunta": "¿Qué casillas cerca del rey controla ya el caballo, y adónde puede llegar la dama? Juegan las blancas; el rival acaba de jugar …Cf8.",
+              "comentario": "Keres–Gligoric, Zúrich 1959. 32.Ad3 Dd7 33.De2 f5 34.Axb5 Dc8 35.c4. Eliminar al defensor de g5 para que el caballo se sume al ataque de la dama. El caballo cubre lo que la dama no alcanza: juntos cierran las casillas del rey hasta el mate. (Partida Keres–Gligoric, Zúrich 1959. Stockfish 16 a profundidad 18: Ad3 vale lo mismo que la mejor (+2,5 contra +3,0).)",
+              "linea": [
+                "Bd3",
+                "Qd7",
+                "Qe2",
+                "f5",
+                "Bxb5",
+                "Qc8",
+                "c4"
+              ]
+            }
+          ]
         },
         {
           "titulo": "Las partidas abiertas",
@@ -823,7 +1889,20 @@
           "area": "Aperturas",
           "clave": "abiertas",
           "pregunta": "Es una partida abierta: ¿qué hace falta primero, desarrollar, abrir el centro o atacar f7?",
-          "enlace": "Lo que pasa en el ejemplo sale de las ideas comunes de 1.e4 e5: desarrollo rápido, el centro que se abre y el punto débil junto al rey."
+          "enlace": "Lo que pasa en el ejemplo sale de las ideas comunes de 1.e4 e5: desarrollo rápido, el centro que se abre y el punto débil junto al rey.",
+          "diagramas": [
+            {
+              "id": "LC-55",
+              "fen": "r1b1kb1r/ppp2pp1/2np4/4pP1p/2B1P1nq/2NP3P/PPP3P1/R1BQ1KNR b kq - 2 8",
+              "turno": "b",
+              "resultado": "0-1",
+              "pregunta": "Es una partida abierta: ¿qué hace falta primero, desarrollar, abrir el centro o atacar f7? Juegan las negras; el rival acaba de jugar Rf1.",
+              "comentario": "8…Df2#. Lo que pasa en el ejemplo sale de las ideas comunes de 1.e4 e5: desarrollo rápido, el centro que se abre y el punto débil junto al rey. (Ejercicio 35QMr de la base abierta de Lichess (CC0), rating 847. Stockfish 16 a profundidad 18: Df2# es la mejor (mate en 1) y la segunda queda en -0,8.)",
+              "linea": [
+                "Qf2#"
+              ]
+            }
+          ]
         },
         {
           "titulo": "Dama y torre al ataque",
@@ -838,7 +1917,22 @@
           "clave": "dama-torre-at",
           "js": "piezas:QR",
           "pregunta": "¿Por qué línea pueden llegar juntas la dama y la torre hasta el rey?",
-          "enlace": "Dama y torre trabajan en la misma línea: una abre el camino y la otra entra a rematar."
+          "enlace": "Dama y torre trabajan en la misma línea: una abre el camino y la otra entra a rematar.",
+          "diagramas": [
+            {
+              "id": "LC-56",
+              "fen": "6k1/5pp1/5r1p/2P5/8/7q/P1Q4R/R6K b - - 3 39",
+              "turno": "b",
+              "resultado": "0-1",
+              "pregunta": "¿Por qué línea pueden llegar juntas la dama y la torre hasta el rey? Juegan las negras; el rival acaba de jugar Th2.",
+              "comentario": "39…Tf1+ 40.Txf1 Dxf1#. Es mate en dos: la primera jugada no deja defensa. Dama y torre trabajan en la misma línea: una abre el camino y la otra entra a rematar. (Ejercicio 1jL8s de la base abierta de Lichess (CC0), rating 974. Stockfish 16 a profundidad 18: Tf1+ es la mejor (mate en 2) y la segunda queda en -3,0.)",
+              "linea": [
+                "Rf1+",
+                "Rxf1",
+                "Qxf1#"
+              ]
+            }
+          ]
         },
         {
           "titulo": "Variantes forzadas más largas",
@@ -852,7 +1946,26 @@
           "area": "Cálculo",
           "clave": "forzadas2",
           "pregunta": "¿Hay una secuencia en la que el rival no tenga elección en cada jugada?",
-          "enlace": "La solución es una línea forzada: cada jugada deja al rival una sola respuesta, y por eso se puede calcular hasta el final."
+          "enlace": "La solución es una línea forzada: cada jugada deja al rival una sola respuesta, y por eso se puede calcular hasta el final.",
+          "diagramas": [
+            {
+              "id": "LC-57",
+              "fen": "r1b2r1k/5p1p/p4p2/1p2Pp2/1P1Q4/6R1/q1P3PP/2K1R3 w - - 2 22",
+              "turno": "w",
+              "resultado": "1-0",
+              "pregunta": "¿Hay una secuencia en la que el rival no tenga elección en cada jugada? Juegan las blancas; el rival acaba de jugar …Rh8.",
+              "comentario": "Aagaard–NN, Estocolmo 2004. 22.Dh4 Da1+ 23.Rd2 Td8+ 24.Re2 Dxe5+ 25.Rf1. Calcular una variante forzada con jaques y sacrificios hasta el mate en la Francesa. La solución es una línea forzada: cada jugada deja al rival una sola respuesta, y por eso se puede calcular hasta el final. (Partida Aagaard–NN, Estocolmo 2004. Stockfish 16 a profundidad 18: Dh4 es la mejor (+5,7).)",
+              "linea": [
+                "Qh4",
+                "Qa1+",
+                "Kd2",
+                "Rd8+",
+                "Ke2",
+                "Qxe5+",
+                "Kf1"
+              ]
+            }
+          ]
         },
         {
           "titulo": "Dama y alfil al ataque",
@@ -867,7 +1980,22 @@
           "clave": "dama-alfil",
           "js": "piezas:QB",
           "pregunta": "¿Hacia qué casilla junto al rey apuntan juntos la dama y el alfil?",
-          "enlace": "La dama y el alfil en la misma diagonal suman su fuerza sobre una casilla: el ataque sale de esa batería."
+          "enlace": "La dama y el alfil en la misma diagonal suman su fuerza sobre una casilla: el ataque sale de esa batería.",
+          "diagramas": [
+            {
+              "id": "LC-58",
+              "fen": "3r3Q/pp2k3/3qpp2/6p1/4B3/1P5P/P2p2P1/7K w - - 4 37",
+              "turno": "w",
+              "resultado": "1-0",
+              "pregunta": "¿Hacia qué casilla junto al rey apuntan juntos la dama y el alfil? Juegan las blancas; el rival acaba de jugar …Re7.",
+              "comentario": "37.Dg7+ Re8 38.Ag6#. Es mate en dos: la primera jugada no deja defensa. La dama y el alfil en la misma diagonal suman su fuerza sobre una casilla: el ataque sale de esa batería. (Ejercicio 20x1E de la base abierta de Lichess (CC0), rating 1305. Stockfish 16 a profundidad 18: Dg7+ es la mejor (mate en 2) y la segunda queda en 0,0.)",
+              "linea": [
+                "Qg7+",
+                "Ke8",
+                "Bg6#"
+              ]
+            }
+          ]
         },
         {
           "titulo": "Las ventajas que no se ven",
@@ -881,7 +2009,26 @@
           "area": "Juego posicional",
           "clave": "ventajas",
           "pregunta": "El material está parejo: ¿qué ventaja que no se cuenta tiene uno de los dos bandos?",
-          "enlace": "La jugada aprovecha una ventaja que no aparece en el conteo de material, y la vuelve concreta."
+          "enlace": "La jugada aprovecha una ventaja que no aparece en el conteo de material, y la vuelve concreta.",
+          "diagramas": [
+            {
+              "id": "LC-59",
+              "fen": "8/8/3p2p1/p3k1K1/P1p4P/8/1P6/8 w - - 2 51",
+              "turno": "w",
+              "resultado": "1-0",
+              "pregunta": "El material está parejo: ¿qué ventaja que no se cuenta tiene uno de los dos bandos? Juegan las blancas; el rival acaba de jugar …Re5.",
+              "comentario": "51.Rxg6 Re4 52.h5 d5 53.h6 d4 54.h7. La clave es una jugada tranquila: sin jaque ni captura, pero sin defensa. La jugada aprovecha una ventaja que no aparece en el conteo de material, y la vuelve concreta. (Ejercicio 1iRVV de la base abierta de Lichess (CC0), rating 960. Stockfish 16 a profundidad 18: Rxg6 es la mejor (+3,9) y la segunda queda en -5,2.)",
+              "linea": [
+                "Kxg6",
+                "Ke4",
+                "h5",
+                "d5",
+                "h6",
+                "d4",
+                "h7"
+              ]
+            }
+          ]
         },
         {
           "titulo": "Alfil contra peones",
@@ -895,7 +2042,26 @@
           "area": "Finales",
           "clave": "alfil-peones",
           "pregunta": "¿Por casillas de qué color tienen que pasar los peones, y llega el alfil a cortarlas?",
-          "enlace": "El final se decide por las casillas que el alfil puede cubrir: llega a la diagonal justa o los peones pasan por donde no alcanza."
+          "enlace": "El final se decide por las casillas que el alfil puede cubrir: llega a la diagonal justa o los peones pasan por donde no alcanza.",
+          "diagramas": [
+            {
+              "id": "LC-60",
+              "fen": "8/2K5/p7/8/2B5/8/5pk1/8 b - - 0 72",
+              "turno": "b",
+              "resultado": "0-1",
+              "pregunta": "¿Por casillas de qué color tienen que pasar los peones, y llega el alfil a cortarlas? Juegan las negras; el rival acaba de jugar Rxc7.",
+              "comentario": "Van Wely–Boyer, Porticcio FRA 2019. 72…a5 73.Rd6 a4 74.Re5 a3 75.Rd4 a2. El final se decide por las casillas que el alfil puede cubrir: llega a la diagonal justa o los peones pasan por donde no alcanza. (Partida Van Wely–Boyer, Porticcio FRA 2019. Stockfish 16 a profundidad 18: a5 es la mejor (+5,1) y la segunda queda en +0,4.)",
+              "linea": [
+                "a5",
+                "Kd6",
+                "a4",
+                "Ke5",
+                "a3",
+                "Kd4",
+                "a2"
+              ]
+            }
+          ]
         },
         {
           "titulo": "Dama y peón juntos",
@@ -910,7 +2076,22 @@
           "clave": "dama-peon-at",
           "js": "piezas:QP",
           "pregunta": "¿Qué casillas cerca del rey cubre el peón avanzado, y puede llegar la dama a alguna?",
-          "enlace": "El peón avanzado cierra casillas al rey y la dama aprovecha justo esas casillas para rematar."
+          "enlace": "El peón avanzado cierra casillas al rey y la dama aprovecha justo esas casillas para rematar.",
+          "diagramas": [
+            {
+              "id": "LC-61",
+              "fen": "4r3/pR1n1pk1/5n2/q2p2p1/3P2Pp/3BPP2/P1Q1NP2/6K1 b - - 2 25",
+              "turno": "b",
+              "resultado": "0-1",
+              "pregunta": "¿Qué casillas cerca del rey cubre el peón avanzado, y puede llegar la dama a alguna? Juegan las negras; el rival acaba de jugar Tb7.",
+              "comentario": "25…De1+ 26.Rg2 h3+. El peón avanzado cierra casillas al rey y la dama aprovecha justo esas casillas para rematar. (Ejercicio 0Dwkb de la base abierta de Lichess (CC0), rating 1085. Stockfish 16 a profundidad 18: De1+ es la mejor (+6,1) y la segunda queda en -1,5.)",
+              "linea": [
+                "Qe1+",
+                "Kg2",
+                "h3+"
+              ]
+            }
+          ]
         },
         {
           "titulo": "Al ataque",
@@ -924,7 +2105,20 @@
           "area": "Estrategia",
           "clave": "ataque",
           "pregunta": "¿Hay motivos para atacar al rey: piezas cerca, peones débiles, líneas que se abren?",
-          "enlace": "El ataque funciona porque se dan sus condiciones: más atacantes que defensores y una línea por donde entrar."
+          "enlace": "El ataque funciona porque se dan sus condiciones: más atacantes que defensores y una línea por donde entrar.",
+          "diagramas": [
+            {
+              "id": "LC-62",
+              "fen": "2R2rk1/1b3ppp/4pn2/p2q4/P2p4/1B1P2N1/1P3PPP/3Q1RK1 b - - 0 23",
+              "turno": "b",
+              "resultado": "0-1",
+              "pregunta": "¿Hay motivos para atacar al rey: piezas cerca, peones débiles, líneas que se abren? Juegan las negras; el rival acaba de jugar Txc8.",
+              "comentario": "23…Dxg2#. El ataque funciona porque se dan sus condiciones: más atacantes que defensores y una línea por donde entrar. (Ejercicio 2mxoi de la base abierta de Lichess (CC0), rating 955. Stockfish 16 a profundidad 18: Dxg2# es la mejor (mate en 1) y la segunda queda en -4,7.)",
+              "linea": [
+                "Qxg2#"
+              ]
+            }
+          ]
         },
         {
           "titulo": "Torre y alfil",
@@ -939,7 +2133,24 @@
           "clave": "torre-alfil",
           "js": "piezas:RB",
           "pregunta": "¿A qué casillas puede escapar el rey, y cuáles de ellas cubre ya el alfil?",
-          "enlace": "Torre y alfil se reparten el trabajo: uno corta las casillas de escape y el otro da el golpe."
+          "enlace": "Torre y alfil se reparten el trabajo: uno corta las casillas de escape y el otro da el golpe.",
+          "diagramas": [
+            {
+              "id": "LC-63",
+              "fen": "k3r3/p6q/1p6/3p1pP1/1B1P4/P3R1n1/1P6/3R2K1 w - - 0 33",
+              "turno": "w",
+              "resultado": "1-0",
+              "pregunta": "¿A qué casillas puede escapar el rey, y cuáles de ellas cubre ya el alfil? Juegan las blancas; el rival acaba de jugar …Cxg3.",
+              "comentario": "33.Txe8+ Rb7 34.Te7+ Dxe7 35.Axe7. Es una horquilla: una pieza ataca dos objetivos a la vez. Torre y alfil se reparten el trabajo: uno corta las casillas de escape y el otro da el golpe. (Ejercicio 2ZvDk de la base abierta de Lichess (CC0), rating 969. Stockfish 16 a profundidad 18: Txe8+ es la mejor (+5,8) y la segunda queda en -6,3.)",
+              "linea": [
+                "Rxe8+",
+                "Kb7",
+                "Re7+",
+                "Qxe7",
+                "Bxe7"
+              ]
+            }
+          ]
         },
         {
           "titulo": "Caballo contra peón",
@@ -953,7 +2164,26 @@
           "area": "Finales",
           "clave": "caballo-peon",
           "pregunta": "¿Llega el caballo a alguna casilla por delante del peón antes de que corone?",
-          "enlace": "El final se decide por el camino del caballo: si alcanza una casilla delante del peón, lo para; si no, el peón pasa."
+          "enlace": "El final se decide por el camino del caballo: si alcanza una casilla delante del peón, lo para; si no, el peón pasa.",
+          "diagramas": [
+            {
+              "id": "LC-64",
+              "fen": "8/8/2k2P2/6K1/8/3n3P/8/8 w - - 0 58",
+              "turno": "w",
+              "resultado": "1-0",
+              "pregunta": "¿Llega el caballo a alguna casilla por delante del peón antes de que corone? Juegan las blancas; el rival acaba de jugar …Rxc6.",
+              "comentario": "Jakovenko–Navara, Rio (Achaia) GRE 2013. 58.f7 Cc5 59.Rf6 Cd7+ 60.Re7 Ce5 61.f8=D. El final se decide por el camino del caballo: si alcanza una casilla delante del peón, lo para; si no, el peón pasa. (Partida Jakovenko–Navara, Rio (Achaia) GRE 2013. Stockfish 16 a profundidad 18: f7 es la mejor (+7,1) y la segunda queda en +0,4.)",
+              "linea": [
+                "f7",
+                "Nc5",
+                "Kf6",
+                "Nd7+",
+                "Ke7",
+                "Ne5",
+                "f8=Q"
+              ]
+            }
+          ]
         },
         {
           "titulo": "Torre y caballo",
@@ -968,7 +2198,22 @@
           "clave": "torre-caballo",
           "js": "piezas:RN",
           "pregunta": "¿Qué casillas del rey controla el caballo, y por qué línea puede entrar la torre?",
-          "enlace": "El caballo cierra las salidas que la torre no puede cubrir, y la torre llega por una línea abierta para terminar."
+          "enlace": "El caballo cierra las salidas que la torre no puede cubrir, y la torre llega por una línea abierta para terminar.",
+          "diagramas": [
+            {
+              "id": "LC-65",
+              "fen": "2RR4/5Npk/1p2p2p/p7/Pn2P3/1P3qPK/8/8 w - - 0 36",
+              "turno": "w",
+              "resultado": "1-0",
+              "pregunta": "¿Qué casillas del rey controla el caballo, y por qué línea puede entrar la torre? Juegan las blancas; el rival acaba de jugar …Dxf3.",
+              "comentario": "36.Th8+ Rg6 37.Ce5+. El caballo cierra las salidas que la torre no puede cubrir, y la torre llega por una línea abierta para terminar. (Ejercicio 3PxDC de la base abierta de Lichess (CC0), rating 1066. Stockfish 16 a profundidad 18: Th8+ es la mejor (+9,9) y la segunda queda en -5,2.)",
+              "linea": [
+                "Rh8+",
+                "Kg6",
+                "Ne5+"
+              ]
+            }
+          ]
         },
         {
           "titulo": "Las partidas semiabiertas",
@@ -982,7 +2227,20 @@
           "area": "Aperturas",
           "clave": "semiabiertas",
           "pregunta": "¿Qué estructura de peones dejó la apertura, y cuál es la ruptura de cada bando?",
-          "enlace": "El ejemplo sigue el plan que da la estructura de la apertura: cada bando juega en el flanco y con la ruptura que le corresponden."
+          "enlace": "El ejemplo sigue el plan que da la estructura de la apertura: cada bando juega en el flanco y con la ruptura que le corresponden.",
+          "diagramas": [
+            {
+              "id": "LC-66",
+              "fen": "rn3r1k/pp3p1p/2p1pp2/3q4/6R1/5Q1P/PPP2PP1/1R4K1 w - - 4 19",
+              "turno": "w",
+              "resultado": "1-0",
+              "pregunta": "¿Qué estructura de peones dejó la apertura, y cuál es la ruptura de cada bando? Juegan las blancas; el rival acaba de jugar …Rh8.",
+              "comentario": "19.Dxf6#. El ejemplo sigue el plan que da la estructura de la apertura: cada bando juega en el flanco y con la ruptura que le corresponden. (Ejercicio 0qt4k de la base abierta de Lichess (CC0), rating 924. Stockfish 16 a profundidad 18: Dxf6# es la mejor (mate en 1) y la segunda queda en -2,8.)",
+              "linea": [
+                "Qxf6#"
+              ]
+            }
+          ]
         },
         {
           "titulo": "Combinaciones de coronación",
@@ -996,7 +2254,22 @@
           "area": "Táctica",
           "clave": "coronar",
           "pregunta": "¿Qué pieza le impide coronar al peón, y cómo se puede quitar de en medio?",
-          "enlace": "La combinación tiene un solo objetivo, la casilla de coronación: todo lo demás sirve para dejarle el camino libre al peón."
+          "enlace": "La combinación tiene un solo objetivo, la casilla de coronación: todo lo demás sirve para dejarle el camino libre al peón.",
+          "diagramas": [
+            {
+              "id": "LC-67",
+              "fen": "8/8/6P1/8/4B3/1kp5/5K2/r7 w - - 2 47",
+              "turno": "w",
+              "resultado": "1-0",
+              "pregunta": "¿Qué pieza le impide coronar al peón, y cómo se puede quitar de en medio? Juegan las blancas; el rival acaba de jugar …Rb3.",
+              "comentario": "47.g7 Rb4 48.g8=D. El peón avanzado decide: hay que empujarlo o aprovecharlo a tiempo. La combinación tiene un solo objetivo, la casilla de coronación: todo lo demás sirve para dejarle el camino libre al peón. (Ejercicio 3TB9V de la base abierta de Lichess (CC0), rating 960. Stockfish 16 a profundidad 18: g7 es la mejor (+5,0) y la segunda queda en -0,0.)",
+              "linea": [
+                "g7",
+                "Kb4",
+                "g8=Q"
+              ]
+            }
+          ]
         },
         {
           "titulo": "Mate en tres",
@@ -1010,7 +2283,24 @@
           "area": "Cálculo",
           "clave": "mate-tres",
           "pregunta": "¿Cómo quedaría el rey en el mate final, y qué te falta para llegar ahí?",
-          "enlace": "El mate sale de tres jugadas que cierran todas las salidas del rey, sin importar cómo se defienda."
+          "enlace": "El mate sale de tres jugadas que cierran todas las salidas del rey, sin importar cómo se defienda.",
+          "diagramas": [
+            {
+              "id": "LC-68",
+              "fen": "6k1/p2n1pp1/4bn1p/Q2p4/3P4/B2B4/q1r2PPP/5NK1 w - - 0 28",
+              "turno": "w",
+              "resultado": "1-0",
+              "pregunta": "¿Cómo quedaría el rey en el mate final, y qué te falta para llegar ahí? Juegan las blancas; el rival acaba de jugar …Dxa2.",
+              "comentario": "28.Dd8+ Ce8 29.Dxe8+ Cf8 30.Dxf8#. Fuerza el mate: la primera jugada no deja defensa. El mate sale de tres jugadas que cierran todas las salidas del rey, sin importar cómo se defienda. (Ejercicio 1P2D6 de la base abierta de Lichess (CC0), rating 877. Stockfish 16 a profundidad 18: Dd8+ es la mejor (mate en 3) y la segunda queda en -5,7.)",
+              "linea": [
+                "Qd8+",
+                "Ne8",
+                "Qxe8+",
+                "Nf8",
+                "Qxf8#"
+              ]
+            }
+          ]
         },
         {
           "titulo": "Redes de mate en el final",
@@ -1024,7 +2314,22 @@
           "area": "Táctica",
           "clave": "red-final",
           "pregunta": "¿Cuántas casillas libres le quedan al rey, y quién puede quitarle las últimas?",
-          "enlace": "Con poco material también hay mate: el rey activo se metió en un lugar del que ya no puede salir."
+          "enlace": "Con poco material también hay mate: el rey activo se metió en un lugar del que ya no puede salir.",
+          "diagramas": [
+            {
+              "id": "LC-69",
+              "fen": "2r3k1/pp1R3R/4P1p1/1p6/5P2/8/PP2r1PP/6K1 b - - 0 23",
+              "turno": "b",
+              "resultado": "0-1",
+              "pregunta": "¿Cuántas casillas libres le quedan al rey, y quién puede quitarle las últimas? Juegan las negras; el rival acaba de jugar Txh7.",
+              "comentario": "23…Tc1+ 24.Td1 Txd1#. Es mate en dos: la primera jugada no deja defensa. Con poco material también hay mate: el rey activo se metió en un lugar del que ya no puede salir. (Ejercicio 2IqRo de la base abierta de Lichess (CC0), rating 891. Stockfish 16 a profundidad 18: Tc1+ es la mejor (mate en 2) y la segunda queda en -4,4.)",
+              "linea": [
+                "Rc1+",
+                "Rd1",
+                "Rxd1#"
+              ]
+            }
+          ]
         },
         {
           "titulo": "El peón pasado",
@@ -1038,7 +2343,22 @@
           "area": "Juego posicional",
           "clave": "pasado",
           "pregunta": "¿Quién tiene un peón pasado, y qué hace falta para empujarlo o para frenarlo?",
-          "enlace": "La jugada gira alrededor del peón pasado: lo empuja con apoyo o lo bloquea antes de que sea tarde."
+          "enlace": "La jugada gira alrededor del peón pasado: lo empuja con apoyo o lo bloquea antes de que sea tarde.",
+          "diagramas": [
+            {
+              "id": "LC-70",
+              "fen": "6k1/5pp1/1q2p2p/P2p3P/3p4/R1r3P1/P1PK1P2/8 w - - 0 28",
+              "turno": "w",
+              "resultado": "1-0",
+              "pregunta": "¿Quién tiene un peón pasado, y qué hace falta para empujarlo o para frenarlo? Juegan las blancas; el rival acaba de jugar …Dxb6.",
+              "comentario": "28.axb6 Txa3 29.b7. El peón avanzado decide: hay que empujarlo o aprovecharlo a tiempo. La jugada gira alrededor del peón pasado: lo empuja con apoyo o lo bloquea antes de que sea tarde. (Ejercicio 1rHWw de la base abierta de Lichess (CC0), rating 949. Stockfish 16 a profundidad 18: axb6 es la mejor (+4,1) y la segunda queda en -5,8.)",
+              "linea": [
+                "axb6",
+                "Rxa3",
+                "b7"
+              ]
+            }
+          ]
         },
         {
           "titulo": "Columnas: interferencia y rayos X",
@@ -1052,7 +2372,24 @@
           "area": "Táctica",
           "clave": "interferencia",
           "pregunta": "¿Qué línea une a las piezas importantes, y qué pasa si algo se mete en medio o se aparta?",
-          "enlace": "El golpe ocurre en una línea: una pieza la corta para anular una defensa o actúa a través de otra para ganar fuerza."
+          "enlace": "El golpe ocurre en una línea: una pieza la corta para anular una defensa o actúa a través de otra para ganar fuerza.",
+          "diagramas": [
+            {
+              "id": "LC-71",
+              "fen": "3r2k1/1r1P1pp1/7p/8/8/8/6PP/2RR3K w - - 1 35",
+              "turno": "w",
+              "resultado": "1-0",
+              "pregunta": "¿Qué línea une a las piezas importantes, y qué pasa si algo se mete en medio o se aparta? Juegan las blancas; el rival acaba de jugar …Tb7.",
+              "comentario": "35.Tc8 Txd7 36.Txd8+ Txd8 37.Txd8+. Hay un rayo X: la pieza actúa a través de otra que está en medio. El golpe ocurre en una línea: una pieza la corta para anular una defensa o actúa a través de otra para ganar fuerza. (Ejercicio 069H6 de la base abierta de Lichess (CC0), rating 949. Stockfish 16 a profundidad 18: Tc8 es la mejor (+5,6) y la segunda queda en -0,0.)",
+              "linea": [
+                "Rc8",
+                "Rxd7",
+                "Rxd8+",
+                "Rxd8",
+                "Rxd8+"
+              ]
+            }
+          ]
         },
         {
           "titulo": "Dama contra torre",
@@ -1066,7 +2403,27 @@
           "area": "Finales",
           "clave": "dama-torre",
           "pregunta": "¿Está la torre lejos de su rey, o pegada a él y bien protegida?",
-          "enlace": "La técnica se apoya en dos ideas: empujar al rey al borde y aprovechar cada vez que la torre se separa de él."
+          "enlace": "La técnica se apoya en dos ideas: empujar al rey al borde y aprovechar cada vez que la torre se separa de él.",
+          "diagramas": [
+            {
+              "id": "LC-72",
+              "fen": "7R/8/8/8/8/6k1/1K6/6q1 w - - 0 80",
+              "turno": "w",
+              "resultado": "½",
+              "pregunta": "¿Está la torre lejos de su rey, o pegada a él y bien protegida? Juegan las blancas; el rival acaba de jugar …g1=D.",
+              "comentario": "Mamedyarov–Dominguez Perez, Zagreb CRO 2022. 80.Tg8+ Rf2 81.Txg1 Rxg1 82.Ra3 Rf2 83.Rb4. La técnica se apoya en dos ideas: empujar al rey al borde y aprovechar cada vez que la torre se separa de él. (Partida Mamedyarov–Dominguez Perez, Zagreb CRO 2022. Stockfish 16 a profundidad 18: Tg8+ es la mejor (0,0) y la segunda queda en -2,9.)",
+              "linea": [
+                "Rg8+",
+                "Kf2",
+                "Rxg1",
+                "Kxg1",
+                "Ka3",
+                "Kf2",
+                "Kb4"
+              ]
+            }
+          ],
+          "js": "dama-torre"
         }
       ]
     }

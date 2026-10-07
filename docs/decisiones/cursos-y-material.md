@@ -1378,8 +1378,12 @@ herramienta y el contenedor no llega a Drive directo). Por eso:
 - Las partidas que el libro da completas desde la jugada 1 se arman con
   chess.js, y Stockfish elige el momento clave: la primera jugada que castiga
   un error del rival.
+- Una «partida» sin ningún jugador es una línea de muestra del libro, no una
+  partida jugada: no entra.
 - De 283 citas se ubicaron 95 (las demás no están en la base o el OCR no dejó
-  leerlas): quedaron en `herramientas/datos/los-cimientos-partidas.json`.
+  leerlas): quedaron en `herramientas/datos/los-cimientos-partidas.json`. Las
+  que pasan el motor son 42 posiciones del libro: 30 ejemplos, en 19 lecciones
+  (hasta dos por lección), y 12 ejercicios.
   **Los capítulos 9 a 24 de cada tomo no tienen partidas del método** porque
   su texto no llegó; si el dueño sube los tomos partidos en PDF más chicos,
   se pueden sumar con el mismo camino.
@@ -1409,6 +1413,16 @@ Todo pasa por Stockfish 16 a profundidad 18 (`herramientas/lib/motor-uci.js`):
 - **Un ejercicio** queda si tiene UNA sola jugada buena: si gana, la segunda no
   gana; en las lecciones de tablas, la solución salva y la segunda pierde. La
   de ahogado, además, termina en ahogado en la partida.
+- **Las fortalezas** (lección 30) no tienen de dónde salir como tablas: ni
+  Lichess ni el minado traen fortalezas. Sus ejercicios son «la única que
+  aguanta» (`AGUANTAR`): la solución no pierde y cualquier otra jugada empeora
+  mucho. Es lo que el motor comprueba, y lo que la lección pide.
+- **En los finales teóricos de la base** (dama contra peón, el alfil
+  equivocado…) vale ganar o, si en la posición no hay cómo, la única jugada que
+  salva: la dama contra peón de alfil en séptima es justamente eso.
+- **El material que promete el título se comprueba en la posición que se ve**:
+  Lichess filtra por la de antes de la jugada del rival, y esa jugada a veces
+  corona (el «dama contra peón» quedaba dama contra dama).
 - Ninguna repite una posición del diagnóstico, «Ponte a prueba», los diez
   volúmenes de «Mide tu fuerza» ni «Rompe el estancamiento» (los volúmenes de
   «Mide tu fuerza» usan el mismo nombre global: se cargan cada uno en su

@@ -31,7 +31,7 @@
 const fs = require("fs");
 const path = require("path");
 const { Chess } = require("chess.js");
-const { DE_LA_BASE, SALVAR } = require("./los-cimientos-generar.js");
+const { DE_LA_BASE, SALVAR, FILTRO } = require("./los-cimientos-generar.js");
 
 const RAIZ = path.join(__dirname, "..");
 const SLUG = "los-cimientos-del-ajedrez";
@@ -122,8 +122,8 @@ CURSO.bloques.forEach((b) => b.lecciones.forEach((l) => {
       ok(g.in_stalemate(), `${id}: la lección es de ahogado y la línea no termina en ahogado`);
     }
     if (l.clave === "peones1" || l.clave === "oposicion") ok(soloPeones(it.fen), `${id}: dice «final de peones» y hay piezas`);
-    if (l.clave === "dama-peon") ok(/^(K?Q?k?p+|k?q?K?P+)$/i.test(material(it.fen)) && /q/i.test(material(it.fen)), `${id}: dice «dama contra peón» y el material es ${material(it.fen)}`);
-    if (l.clave === "dama-torre") ok(/q/i.test(material(it.fen)) && /r/i.test(material(it.fen)), `${id}: dice «dama contra torre» y el material es ${material(it.fen)}`);
+    if (l.clave === "dama-peon") ok(FILTRO["dama-peon"](it), `${id}: dice «dama contra peón» y el material es ${material(it.fen)}`);
+    if (l.clave === "dama-torre") ok(FILTRO["dama-torre"](it), `${id}: dice «dama contra torre» y el material es ${material(it.fen)}`);
   });
 }));
 ok(n === 72, `el curso tiene ${n} lecciones y deberían ser 72`);
