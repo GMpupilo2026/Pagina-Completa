@@ -93,6 +93,7 @@ PAGINAS = [
     "cursos/academia/rompe-el-estancamiento.html",
     "cursos/academia/ganar-con-poco.html",
     "cursos/academia/cambiar-o-no-cambiar.html",
+    "cursos/academia/ideas-que-ganan-partidas.html",
 ]
 
 HEADER_RE = re.compile(r'<header id="header"[\s\S]*?</header>')

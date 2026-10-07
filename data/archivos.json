@@ -23,7 +23,7 @@
     "nombre": "Formación docente"
    }
   ],
-  "total": 655,
+  "total": 728,
   "material": [
    {
     "ruta": "material/cambiar-o-no-cambiar/cambiar-o-no-cambiar.pdf",
@@ -80,6 +80,13 @@
     "tipo": "otro",
     "kb": 4637,
     "libro": "Guía del profesor"
+   },
+   {
+    "ruta": "material/ideas-que-ganan-partidas/ideas-que-ganan-partidas.pdf",
+    "titulo": "Ideas que ganan partidas — ataque, estructura y finales",
+    "tipo": "otro",
+    "kb": 1698,
+    "libro": "Ideas que ganan partidas"
    },
    {
     "ruta": "material/libro-de-diagnostico/libro-de-diagnostico.pdf",
@@ -5303,6 +5310,662 @@
     "otros": []
    },
    {
+    "slug": "ideas-que-ganan-partidas",
+    "titulo": "Ideas que ganan partidas",
+    "nivel": "avanzado",
+    "lecciones": [
+     {
+      "numero": 1,
+      "titulo": "Cuándo se puede atacar al rey",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/01-cuando-se-puede-atacar-al-rey-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 187
+       },
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/01-cuando-se-puede-atacar-al-rey-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 6
+       }
+      ]
+     },
+     {
+      "numero": 2,
+      "titulo": "El sacrificio del alfil en h7",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/02-el-sacrificio-del-alfil-en-h7-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 193
+       },
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/02-el-sacrificio-del-alfil-en-h7-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 6
+       }
+      ]
+     },
+     {
+      "numero": 3,
+      "titulo": "Romper el techo: los sacrificios en g7 y h6",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/03-romper-el-techo-los-sacrificios-en-g7-y-h6-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 193
+       },
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/03-romper-el-techo-los-sacrificios-en-g7-y-h6-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 6
+       }
+      ]
+     },
+     {
+      "numero": 4,
+      "titulo": "Las piezas mayores entran al ataque",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/04-las-piezas-mayores-entran-al-ataque-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 192
+       },
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/04-las-piezas-mayores-entran-al-ataque-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 5
+       }
+      ]
+     },
+     {
+      "numero": 5,
+      "titulo": "La última fila sin aire",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/05-la-ultima-fila-sin-aire-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 191
+       },
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/05-la-ultima-fila-sin-aire-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 5
+       }
+      ]
+     },
+     {
+      "numero": 6,
+      "titulo": "Los mates de patrón",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/06-los-mates-de-patron-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 190
+       },
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/06-los-mates-de-patron-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 5
+       }
+      ]
+     },
+     {
+      "numero": 7,
+      "titulo": "Castigar al rey que no enrocó",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/07-castigar-al-rey-que-no-enroco-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 191
+       },
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/07-castigar-al-rey-que-no-enroco-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 5
+       }
+      ]
+     },
+     {
+      "numero": 8,
+      "titulo": "El punto débil de f7",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/08-el-punto-debil-de-f7-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 191
+       },
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/08-el-punto-debil-de-f7-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 5
+       }
+      ]
+     },
+     {
+      "numero": 9,
+      "titulo": "La ventaja de desarrollo se usa o se pierde",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/09-la-ventaja-de-desarrollo-se-usa-o-se-pierde-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 193
+       },
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/09-la-ventaja-de-desarrollo-se-usa-o-se-pierde-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 5
+       }
+      ]
+     },
+     {
+      "numero": 10,
+      "titulo": "Sacar al rey de su casa",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/10-sacar-al-rey-de-su-casa-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 191
+       },
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/10-sacar-al-rey-de-su-casa-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 5
+       }
+      ]
+     },
+     {
+      "numero": 11,
+      "titulo": "Enroques opuestos: la carrera",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/11-enroques-opuestos-la-carrera-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 191
+       },
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/11-enroques-opuestos-la-carrera-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 5
+       }
+      ]
+     },
+     {
+      "numero": 12,
+      "titulo": "Defenderse a tiempo",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/12-defenderse-a-tiempo-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 190
+       },
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/12-defenderse-a-tiempo-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 5
+       }
+      ]
+     },
+     {
+      "numero": 13,
+      "titulo": "La torre en la séptima",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/13-la-torre-en-la-septima-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 189
+       },
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/13-la-torre-en-la-septima-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 5
+       }
+      ]
+     },
+     {
+      "numero": 14,
+      "titulo": "El caballo y la doble amenaza",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/14-el-caballo-y-la-doble-amenaza-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 192
+       },
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/14-el-caballo-y-la-doble-amenaza-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 5
+       }
+      ]
+     },
+     {
+      "numero": 15,
+      "titulo": "El alfil y las diagonales abiertas",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/15-el-alfil-y-las-diagonales-abiertas-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 192
+       },
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/15-el-alfil-y-las-diagonales-abiertas-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 5
+       }
+      ]
+     },
+     {
+      "numero": 16,
+      "titulo": "La dama: la jugada tranquila",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/16-la-dama-la-jugada-tranquila-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 192
+       },
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/16-la-dama-la-jugada-tranquila-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 5
+       }
+      ]
+     },
+     {
+      "numero": 17,
+      "titulo": "La pieza sin casillas",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/17-la-pieza-sin-casillas-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 187
+       },
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/17-la-pieza-sin-casillas-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 5
+       }
+      ]
+     },
+     {
+      "numero": 18,
+      "titulo": "El sacrificio de calidad",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/18-el-sacrificio-de-calidad-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 193
+       },
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/18-el-sacrificio-de-calidad-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 5
+       }
+      ]
+     },
+     {
+      "numero": 19,
+      "titulo": "El peón pasado hay que empujarlo",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/19-el-peon-pasado-hay-que-empujarlo-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 188
+       },
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/19-el-peon-pasado-hay-que-empujarlo-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 5
+       }
+      ]
+     },
+     {
+      "numero": 20,
+      "titulo": "Los últimos metros hasta coronar",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/20-los-ultimos-metros-hasta-coronar-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 191
+       },
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/20-los-ultimos-metros-hasta-coronar-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 5
+       }
+      ]
+     },
+     {
+      "numero": 21,
+      "titulo": "La ruptura de peones",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/21-la-ruptura-de-peones-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 189
+       },
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/21-la-ruptura-de-peones-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 5
+       }
+      ]
+     },
+     {
+      "numero": 22,
+      "titulo": "Entregar un peón para abrir el juego",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/22-entregar-un-peon-para-abrir-el-juego-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 190
+       },
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/22-entregar-un-peon-para-abrir-el-juego-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 5
+       }
+      ]
+     },
+     {
+      "numero": 23,
+      "titulo": "Finales de peones: contar antes de mover",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/23-finales-de-peones-contar-antes-de-mover-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 186
+       },
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/23-finales-de-peones-contar-antes-de-mover-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 5
+       }
+      ]
+     },
+     {
+      "numero": 24,
+      "titulo": "Frenar al peón pasado",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/24-frenar-al-peon-pasado-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 187
+       },
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/24-frenar-al-peon-pasado-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 5
+       }
+      ]
+     },
+     {
+      "numero": 25,
+      "titulo": "La desviación",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/25-la-desviacion-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 193
+       },
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/25-la-desviacion-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 5
+       }
+      ]
+     },
+     {
+      "numero": 26,
+      "titulo": "Quitar al defensor",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/26-quitar-al-defensor-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 191
+       },
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/26-quitar-al-defensor-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 5
+       }
+      ]
+     },
+     {
+      "numero": 27,
+      "titulo": "La interferencia",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/27-la-interferencia-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 191
+       },
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/27-la-interferencia-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 5
+       }
+      ]
+     },
+     {
+      "numero": 28,
+      "titulo": "La clavada",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/28-la-clavada-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 191
+       },
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/28-la-clavada-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 5
+       }
+      ]
+     },
+     {
+      "numero": 29,
+      "titulo": "Despejar el camino",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/29-despejar-el-camino-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 191
+       },
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/29-despejar-el-camino-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 5
+       }
+      ]
+     },
+     {
+      "numero": 30,
+      "titulo": "La enfilada y los rayos X",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/30-la-enfilada-y-los-rayos-x-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 188
+       },
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/30-la-enfilada-y-los-rayos-x-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 5
+       }
+      ]
+     },
+     {
+      "numero": 31,
+      "titulo": "Finales de torre: la torre activa",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/31-finales-de-torre-la-torre-activa-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 188
+       },
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/31-finales-de-torre-la-torre-activa-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 5
+       }
+      ]
+     },
+     {
+      "numero": 32,
+      "titulo": "Finales de alfiles",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/32-finales-de-alfiles-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 188
+       },
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/32-finales-de-alfiles-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 5
+       }
+      ]
+     },
+     {
+      "numero": 33,
+      "titulo": "Alfil contra caballo",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/33-alfil-contra-caballo-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 189
+       },
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/33-alfil-contra-caballo-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 5
+       }
+      ]
+     },
+     {
+      "numero": 34,
+      "titulo": "Finales de damas",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/34-finales-de-damas-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 190
+       },
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/34-finales-de-damas-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 5
+       }
+      ]
+     },
+     {
+      "numero": 35,
+      "titulo": "El zugzwang",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/35-el-zugzwang-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 186
+       },
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/35-el-zugzwang-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 5
+       }
+      ]
+     },
+     {
+      "numero": 36,
+      "titulo": "Tu plan de estudio",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/36-tu-plan-de-estudio-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 159
+       },
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/36-tu-plan-de-estudio-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 5
+       }
+      ]
+     }
+    ],
+    "otros": []
+   },
+   {
     "slug": "preparacion-para-torneos",
     "titulo": "Preparación para Torneos",
     "nivel": "competicion",
@@ -6059,7 +6722,7 @@
     "nombre": "Formación docente"
    }
   ],
-  "total": 307,
+  "total": 343,
   "material": [],
   "cursos": [
    {
@@ -9334,6 +9997,446 @@
     "otros": []
    },
    {
+    "slug": "ideas-que-ganan-partidas",
+    "titulo": "Ideas que ganan partidas",
+    "nivel": "avanzado",
+    "lecciones": [
+     {
+      "numero": 1,
+      "titulo": "Cuándo se puede atacar al rey",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/01-cuando-se-puede-atacar-al-rey.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 2,
+      "titulo": "El sacrificio del alfil en h7",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/02-el-sacrificio-del-alfil-en-h7.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 3,
+      "titulo": "Romper el techo: los sacrificios en g7 y h6",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/03-romper-el-techo-los-sacrificios-en-g7-y-h6.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 4,
+      "titulo": "Las piezas mayores entran al ataque",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/04-las-piezas-mayores-entran-al-ataque.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 5,
+      "titulo": "La última fila sin aire",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/05-la-ultima-fila-sin-aire.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 6,
+      "titulo": "Los mates de patrón",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/06-los-mates-de-patron.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 7,
+      "titulo": "Castigar al rey que no enrocó",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/07-castigar-al-rey-que-no-enroco.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 8,
+      "titulo": "El punto débil de f7",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/08-el-punto-debil-de-f7.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 9,
+      "titulo": "La ventaja de desarrollo se usa o se pierde",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/09-la-ventaja-de-desarrollo-se-usa-o-se-pierde.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 10,
+      "titulo": "Sacar al rey de su casa",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/10-sacar-al-rey-de-su-casa.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 11,
+      "titulo": "Enroques opuestos: la carrera",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/11-enroques-opuestos-la-carrera.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 12,
+      "titulo": "Defenderse a tiempo",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/12-defenderse-a-tiempo.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 13,
+      "titulo": "La torre en la séptima",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/13-la-torre-en-la-septima.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 14,
+      "titulo": "El caballo y la doble amenaza",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/14-el-caballo-y-la-doble-amenaza.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 15,
+      "titulo": "El alfil y las diagonales abiertas",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/15-el-alfil-y-las-diagonales-abiertas.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 16,
+      "titulo": "La dama: la jugada tranquila",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/16-la-dama-la-jugada-tranquila.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 17,
+      "titulo": "La pieza sin casillas",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/17-la-pieza-sin-casillas.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 18,
+      "titulo": "El sacrificio de calidad",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/18-el-sacrificio-de-calidad.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 19,
+      "titulo": "El peón pasado hay que empujarlo",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/19-el-peon-pasado-hay-que-empujarlo.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 20,
+      "titulo": "Los últimos metros hasta coronar",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/20-los-ultimos-metros-hasta-coronar.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 21,
+      "titulo": "La ruptura de peones",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/21-la-ruptura-de-peones.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 22,
+      "titulo": "Entregar un peón para abrir el juego",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/22-entregar-un-peon-para-abrir-el-juego.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 23,
+      "titulo": "Finales de peones: contar antes de mover",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/23-finales-de-peones-contar-antes-de-mover.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 24,
+      "titulo": "Frenar al peón pasado",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/24-frenar-al-peon-pasado.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 25,
+      "titulo": "La desviación",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/25-la-desviacion.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 26,
+      "titulo": "Quitar al defensor",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/26-quitar-al-defensor.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 27,
+      "titulo": "La interferencia",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/27-la-interferencia.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 28,
+      "titulo": "La clavada",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/28-la-clavada.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 29,
+      "titulo": "Despejar el camino",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/29-despejar-el-camino.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 30,
+      "titulo": "La enfilada y los rayos X",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/30-la-enfilada-y-los-rayos-x.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 31,
+      "titulo": "Finales de torre: la torre activa",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/31-finales-de-torre-la-torre-activa.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 32,
+      "titulo": "Finales de alfiles",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/32-finales-de-alfiles.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 33,
+      "titulo": "Alfil contra caballo",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/33-alfil-contra-caballo.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 34,
+      "titulo": "Finales de damas",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/34-finales-de-damas.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 35,
+      "titulo": "El zugzwang",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/35-el-zugzwang.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 36,
+      "titulo": "Tu plan de estudio",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/36-tu-plan-de-estudio.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     }
+    ],
+    "otros": []
+   },
+   {
     "slug": "preparacion-para-torneos",
     "titulo": "Preparación para Torneos",
     "nivel": "competicion",
@@ -9887,7 +10990,7 @@
     "nombre": "Formación docente"
    }
   ],
-  "total": 310,
+  "total": 347,
   "material": [
    {
     "ruta": "material/cambiar-o-no-cambiar/cambiar-o-no-cambiar-accesible.html",
@@ -9909,6 +11012,13 @@
     "tipo": "accesible",
     "kb": 210,
     "libro": "Ganar con poco"
+   },
+   {
+    "ruta": "material/ideas-que-ganan-partidas/ideas-que-ganan-partidas-accesible.html",
+    "titulo": "Ideas que ganan partidas",
+    "tipo": "accesible",
+    "kb": 156,
+    "libro": "Ideas que ganan partidas"
    },
    {
     "ruta": "material/libro-de-diagnostico/libro-de-diagnostico-accesible.html",
@@ -13380,6 +14490,446 @@
     "otros": []
    },
    {
+    "slug": "ideas-que-ganan-partidas",
+    "titulo": "Ideas que ganan partidas",
+    "nivel": "avanzado",
+    "lecciones": [
+     {
+      "numero": 1,
+      "titulo": "Cuándo se puede atacar al rey",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/01-cuando-se-puede-atacar-al-rey-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 12
+       }
+      ]
+     },
+     {
+      "numero": 2,
+      "titulo": "El sacrificio del alfil en h7",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/02-el-sacrificio-del-alfil-en-h7-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 13
+       }
+      ]
+     },
+     {
+      "numero": 3,
+      "titulo": "Romper el techo: los sacrificios en g7 y h6",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/03-romper-el-techo-los-sacrificios-en-g7-y-h6-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 13
+       }
+      ]
+     },
+     {
+      "numero": 4,
+      "titulo": "Las piezas mayores entran al ataque",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/04-las-piezas-mayores-entran-al-ataque-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 13
+       }
+      ]
+     },
+     {
+      "numero": 5,
+      "titulo": "La última fila sin aire",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/05-la-ultima-fila-sin-aire-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 12
+       }
+      ]
+     },
+     {
+      "numero": 6,
+      "titulo": "Los mates de patrón",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/06-los-mates-de-patron-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 12
+       }
+      ]
+     },
+     {
+      "numero": 7,
+      "titulo": "Castigar al rey que no enrocó",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/07-castigar-al-rey-que-no-enroco-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 12
+       }
+      ]
+     },
+     {
+      "numero": 8,
+      "titulo": "El punto débil de f7",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/08-el-punto-debil-de-f7-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 12
+       }
+      ]
+     },
+     {
+      "numero": 9,
+      "titulo": "La ventaja de desarrollo se usa o se pierde",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/09-la-ventaja-de-desarrollo-se-usa-o-se-pierde-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 12
+       }
+      ]
+     },
+     {
+      "numero": 10,
+      "titulo": "Sacar al rey de su casa",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/10-sacar-al-rey-de-su-casa-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 12
+       }
+      ]
+     },
+     {
+      "numero": 11,
+      "titulo": "Enroques opuestos: la carrera",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/11-enroques-opuestos-la-carrera-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 12
+       }
+      ]
+     },
+     {
+      "numero": 12,
+      "titulo": "Defenderse a tiempo",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/12-defenderse-a-tiempo-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 12
+       }
+      ]
+     },
+     {
+      "numero": 13,
+      "titulo": "La torre en la séptima",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/13-la-torre-en-la-septima-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 12
+       }
+      ]
+     },
+     {
+      "numero": 14,
+      "titulo": "El caballo y la doble amenaza",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/14-el-caballo-y-la-doble-amenaza-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 12
+       }
+      ]
+     },
+     {
+      "numero": 15,
+      "titulo": "El alfil y las diagonales abiertas",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/15-el-alfil-y-las-diagonales-abiertas-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 12
+       }
+      ]
+     },
+     {
+      "numero": 16,
+      "titulo": "La dama: la jugada tranquila",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/16-la-dama-la-jugada-tranquila-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 12
+       }
+      ]
+     },
+     {
+      "numero": 17,
+      "titulo": "La pieza sin casillas",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/17-la-pieza-sin-casillas-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 10
+       }
+      ]
+     },
+     {
+      "numero": 18,
+      "titulo": "El sacrificio de calidad",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/18-el-sacrificio-de-calidad-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 13
+       }
+      ]
+     },
+     {
+      "numero": 19,
+      "titulo": "El peón pasado hay que empujarlo",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/19-el-peon-pasado-hay-que-empujarlo-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 12
+       }
+      ]
+     },
+     {
+      "numero": 20,
+      "titulo": "Los últimos metros hasta coronar",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/20-los-ultimos-metros-hasta-coronar-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 13
+       }
+      ]
+     },
+     {
+      "numero": 21,
+      "titulo": "La ruptura de peones",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/21-la-ruptura-de-peones-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 12
+       }
+      ]
+     },
+     {
+      "numero": 22,
+      "titulo": "Entregar un peón para abrir el juego",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/22-entregar-un-peon-para-abrir-el-juego-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 13
+       }
+      ]
+     },
+     {
+      "numero": 23,
+      "titulo": "Finales de peones: contar antes de mover",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/23-finales-de-peones-contar-antes-de-mover-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 12
+       }
+      ]
+     },
+     {
+      "numero": 24,
+      "titulo": "Frenar al peón pasado",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/24-frenar-al-peon-pasado-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 12
+       }
+      ]
+     },
+     {
+      "numero": 25,
+      "titulo": "La desviación",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/25-la-desviacion-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 12
+       }
+      ]
+     },
+     {
+      "numero": 26,
+      "titulo": "Quitar al defensor",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/26-quitar-al-defensor-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 13
+       }
+      ]
+     },
+     {
+      "numero": 27,
+      "titulo": "La interferencia",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/27-la-interferencia-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 12
+       }
+      ]
+     },
+     {
+      "numero": 28,
+      "titulo": "La clavada",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/28-la-clavada-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 12
+       }
+      ]
+     },
+     {
+      "numero": 29,
+      "titulo": "Despejar el camino",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/29-despejar-el-camino-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 12
+       }
+      ]
+     },
+     {
+      "numero": 30,
+      "titulo": "La enfilada y los rayos X",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/30-la-enfilada-y-los-rayos-x-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 12
+       }
+      ]
+     },
+     {
+      "numero": 31,
+      "titulo": "Finales de torre: la torre activa",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/31-finales-de-torre-la-torre-activa-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 12
+       }
+      ]
+     },
+     {
+      "numero": 32,
+      "titulo": "Finales de alfiles",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/32-finales-de-alfiles-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 12
+       }
+      ]
+     },
+     {
+      "numero": 33,
+      "titulo": "Alfil contra caballo",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/33-alfil-contra-caballo-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 12
+       }
+      ]
+     },
+     {
+      "numero": 34,
+      "titulo": "Finales de damas",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/34-finales-de-damas-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 12
+       }
+      ]
+     },
+     {
+      "numero": 35,
+      "titulo": "El zugzwang",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/35-el-zugzwang-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 12
+       }
+      ]
+     },
+     {
+      "numero": 36,
+      "titulo": "Tu plan de estudio",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ideas-que-ganan-partidas/36-tu-plan-de-estudio-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 11
+       }
+      ]
+     }
+    ],
+    "otros": []
+   },
+   {
     "slug": "preparacion-para-torneos",
     "titulo": "Preparación para Torneos",
     "nivel": "competicion",
@@ -13614,7 +15164,7 @@
   ]
  },
  "imagenes": {
-  "total": 617,
+  "total": 618,
   "grupos": [
    {
     "carpeta": "entreno/img/facil",
@@ -17074,6 +18624,12 @@
       "titulo": "Portada: Ganar con poco",
       "tipo": "otro",
       "kb": 10
+     },
+     {
+      "ruta": "img/cursos/ideas-que-ganan-partidas.svg",
+      "titulo": "Portada: Ideas que ganan partidas",
+      "tipo": "otro",
+      "kb": 14
      },
      {
       "ruta": "img/cursos/partidas-modelo.svg",

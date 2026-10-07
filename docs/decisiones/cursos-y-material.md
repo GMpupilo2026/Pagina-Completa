@@ -1549,11 +1549,95 @@ en `interno.curso_lecciones` para su certificado
 «Rompe el estancamiento», no está en la tienda, y el correo a la casa lo
 nombra desde su slug («cambiar-o-no-cambiar» → «Cambiar o no cambiar»).
 
+## El curso y el libro «Ideas que ganan partidas»
+
+Un curso (36 lecciones en seis capítulos) y su libro, de Oscar Angulo Cubero,
+para el jugador que ya sabe jugar y quiere reconocer qué idea funciona en la
+posición que tiene delante: el ataque al rey enrocado, el rey en el centro y
+los enroques opuestos, las piezas en su sitio, los peones, la táctica que
+sostiene el plan y los finales que hay que saber. La última lección es el plan
+de estudio y no lleva ejemplo.
+
+### Tomado de una colección ajena como referencia, no copiado
+
+El dueño pidió «crear libro y curso» desde una carpeta de Drive con *Las mil
+y una lecciones de ajedrez* (MI Ángel Martín, ebooks de EDAMI): 360 lecciones
+de medio juego y finales, con derechos de autor. Se tomó **el temario y nada
+más**: qué ideas de medio juego y de final vale la pena enseñar (el sacrificio
+en h7, la demolición del enroque, la séptima fila, el sacrificio de calidad,
+los peones pasados, los finales de torre, alfil contra caballo…), que no son
+de nadie. Ni el texto, ni las partidas, ni los ejercicios, ni los títulos
+salen de ahí; el título del curso tampoco es el suyo. El PDF no se guarda en
+el repositorio.
+
+### Cada lección pide una idea, y la idea se comprueba en la posición
+
+`herramientas/ideas-que-ganan-partidas-generar.js` sigue el camino de «Rompe
+el estancamiento» (candidatas de Lichess, el MISMO `analizar()` del
+diagnóstico, una sola jugada buena, ninguna repetida del diagnóstico ni de ningún banco de `material/`),
+con una diferencia: cada lección no pide un tema de Lichess sino una **idea**
+(`CRITERIOS`), y la idea se mira en la posición y en la primera jugada, no en
+la etiqueta. El «sacrificio del alfil en h7» es un alfil que toma en h7 (h2)
+con jaque; la «demolición», una pieza que toma un peón de g7 o h6 donde el
+rival la puede capturar; la «torre en la séptima», una torre que llega ahí;
+el final de «alfil contra caballo», uno donde no hay otra pieza. Las
+etiquetas de Lichess miran la solución entera y la lección habla de la
+primera jugada: con la etiqueta sola, el ejemplo de «el caballo y la doble
+amenaza» podía empezar con una jugada de torre.
+
+- **Las candidatas no se bajaron de nuevo**: salen de las que ya estaban en
+  `herramientas/datos/*-candidatas.txt` (las de los otros libros que no se
+  usaron) más las de mate en la última fila, que ahí casi no había (la
+  consulta está en la cabecera del generador). `--armar` las vuelve a juntar
+  en `herramientas/datos/ideas-que-ganan-partidas-candidatas.txt`: de cada
+  idea y cada nivel, las 18 primeras que cumplen el criterio.
+- **Los textos dicen solo lo que se comprobó.** Donde la idea es una
+  etiqueta de Lichess que no se puede mirar en la primera jugada (la
+  desviación, la clavada, los mates de patrón), la lección dice «la línea
+  termina en…» o «la idea es…», no «esta jugada desvía…». Las de defensa
+  dicen «solo una jugada es buena», que es lo que el motor comprobó, y no
+  «todo lo demás pierde».
+- **El ejemplo de cada lección es la misma posición en el curso y en el
+  libro**, como en «Rompe el estancamiento»: el generador escribe el banco y
+  el campo `diagramas` del JSON del curso en la misma corrida.
+
+### Cómo se regenera
+
+    node herramientas/ideas-que-ganan-partidas-generar.js --armar    # solo si cambian las fuentes
+    STOCKFISH=/usr/games/stockfish node herramientas/ideas-que-ganan-partidas-generar.js
+    node herramientas/curso-posiciones.js ideas-que-ganan-partidas
+    python3 herramientas/curso-generar.py ideas-que-ganan-partidas
+    CHROME_PATH=… node herramientas/curso-material-generar.js ideas-que-ganan-partidas
+    node herramientas/curso-material-enlazar.js
+    node herramientas/ideas-que-ganan-partidas-pdf.js
+
+Igual que con «Rompe el estancamiento», después de `curso-generar.py` hay que
+volver a correr el enlazador.
+
+Lo comprueban `verificar-ideas-que-ganan-partidas.js` (el banco, que la idea
+de cada posición se vea en la posición con el mismo `CRITERIOS` del
+generador, que el ejemplo del curso sea el del libro y la versión accesible)
+y `verificar-ideas-que-ganan-partidas-pdf.py` (protección, autor, marca de
+agua en cada página, los seis capítulos, las 36 lecciones, los 72 ejercicios
+y la planilla de repaso).
+
+### Dónde quedó dado de alta
+
+En el catálogo (nivel Avanzado, después de «Cambiar o no cambiar», con
+su diagrama), en la cadena de cursos (entre «Cambiar o no cambiar» y «Cálculo y
+Visualización»), en «Mis cursos» de la Academia, en el material de la clase en
+vivo, en exámenes por curso (estrategia, táctica y finales), en el plan de
+entrenamiento del área de estrategia y en `interno.curso_lecciones` para su
+certificado (`20261007043228_curso_ideas_que_ganan_partidas.sql`). El libro
+está en `admin.html#materiales` y en «Archivos». No está en la tienda, por lo
+mismo que «Rompe el estancamiento»; y el correo a la casa lo nombra desde el
+slug sin tocar la Edge Function.
+
 ## Los materiales de clase
 
 `admin.html#materiales` («Materiales de clases») junta los materiales para dar
 clase —hoy, «Ponte a prueba», los diez volúmenes del banco de ejercicios «Mide
-tu fuerza», los libros «Rompe el estancamiento», «Ganar con poco» y «Cambiar o no cambiar» y los cuentos de Peonita— y dice **con quién se comparte cada uno**: una
+tu fuerza», los libros «Rompe el estancamiento», «Ganar con poco», «Cambiar o no cambiar» e «Ideas que ganan partidas» y los cuentos de Peonita— y dice **con quién se comparte cada uno**: una
 persona, una academia entera o todos los profesores. Lo pinta
 `js/admin-materiales.js`; lo prueba `verificar-admin.js`.
 
