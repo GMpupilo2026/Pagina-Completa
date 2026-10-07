@@ -23,7 +23,7 @@
     "nombre": "Formación docente"
    }
   ],
-  "total": 435,
+  "total": 436,
   "material": [
    {
     "ruta": "material/diagnostico-de-nivel/diagnostico-de-nivel.pdf",
@@ -229,10 +229,17 @@
     "libro": "Ponte a prueba"
    },
    {
+    "ruta": "material/tipos-de-mate/tipos-de-mate-compacto.pdf",
+    "titulo": "Los tipos de mate — edición compacta (dos hojas por tema)",
+    "tipo": "otro",
+    "kb": 2864,
+    "libro": "Los tipos de mate"
+   },
+   {
     "ruta": "material/tipos-de-mate/tipos-de-mate.pdf",
     "titulo": "Los tipos de mate — cuaderno de ejercicios",
     "tipo": "otro",
-    "kb": 1702,
+    "kb": 2305,
     "libro": "Los tipos de mate"
    }
   ],

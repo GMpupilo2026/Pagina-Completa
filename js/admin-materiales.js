@@ -58,9 +58,10 @@
       emoji: "♚",
       titulo: "Los tipos de mate",
       autor: "Oscar Angulo Cubero y Sebastian Mora Chavarria",
-      resumen: "Cuaderno para imprimir y dar a los alumnos: las 19 figuras de mate (pasillo, coz, hombreras, Anastasia, árabe, Boden y trece más), cada una explicada con su diagrama modelo y 8 ejercicios de mate en 1 y en 2, con una sola solución cada uno. Soluciones al final y planilla de avance. Se puede imprimir.",
+      resumen: "Cuaderno para imprimir y dar a los alumnos: las 19 figuras de mate (pasillo, coz, hombreras, Anastasia, árabe, Boden y trece más), cada una explicada con su diagrama modelo y 8 ejercicios de mate en 1 y en 2, con una sola solución cada uno. La edición compacta trae cada figura en dos hojas, con tableros chicos y 24 ejercicios. Soluciones al final y planilla de avance. Se pueden imprimir.",
       archivos: [
         { href: "material/tipos-de-mate/tipos-de-mate.pdf", texto: "📥 El libro en PDF" },
+        { href: "material/tipos-de-mate/tipos-de-mate-compacto.pdf", texto: "📥 Edición compacta (dos hojas por tema)" },
         { href: "material/tipos-de-mate/tipos-de-mate-accesible.html", texto: "♿ Versión accesible" },
       ],
     },

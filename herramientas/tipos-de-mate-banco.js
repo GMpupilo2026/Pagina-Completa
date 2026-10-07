@@ -1,12 +1,16 @@
 /* ===== El banco del libro «Los tipos de mate» =====
  *
- * Arma material/tipos-de-mate/banco.json: los 19 capítulos del libro para
- * imprimir de los entrenadores Oscar Angulo Cubero y Sebastian Mora
- * Chavarria. Una figura de mate por capítulo, con su explicación, su diagrama
- * modelo y 8 ejercicios (4 de mate en 1 y 4 de mate en 2; el pasillo, con
- * más mates en 2). Lo leen herramientas/tipos-de-mate-pdf.js (el PDF y la
- * versión accesible) y herramientas/verificar-tipos-de-mate.js. Elegir es
- * determinista: sale igual en cada corrida mientras no cambien sus fuentes.
+ * Arma los bancos de los dos libros para imprimir de los entrenadores Oscar
+ * Angulo Cubero y Sebastian Mora Chavarria, una figura de mate por capítulo,
+ * con su explicación y su diagrama modelo:
+ *   - material/tipos-de-mate/banco.json, el cuaderno: 8 ejercicios por figura
+ *     (4 de mate en 1 y 4 de mate en 2);
+ *   - material/tipos-de-mate/banco-compacto.json, la edición compacta: cada
+ *     figura en dos hojas, con tableros chicos y 24 ejercicios (12 y 12).
+ * Si de un tipo no alcanzan (el pasillo casi no tiene mates en 1 que pasen),
+ * se completa con el otro. Lo leen herramientas/tipos-de-mate-pdf.js y
+ * herramientas/verificar-tipos-de-mate.js. Elegir es determinista: sale igual
+ * en cada corrida mientras no cambien sus fuentes.
  *
  * De dónde sale cada cosa —ninguna posición se inventa—:
  *   - Los ejercicios, de entreno/data/temas.json: los ejercicios de Lichess
@@ -30,7 +34,7 @@
  * Lichess solo garantiza su línea; esto garantiza el ejercicio.
  *
  * Qué ejercicios: de cada figura, los que pasan el filtro se ordenan por
- * rating de Lichess y se toman de cuatro puntos repartidos (los cuartos), para
+ * rating de Lichess y se toman de puntos repartidos (los cuartos, si son cuatro), para
  * que cada capítulo vaya de fácil a difícil. Un ejercicio que Lichess puso en
  * dos figuras se usa una sola vez.
  */
@@ -45,7 +49,11 @@ global.window = global.window || {};
 require(path.join(RAIZ, "js/fichas-estudio.js"));
 const FICHAS = global.window.FichasEstudio.FICHAS;
 
-const POR_TIPO = { mateIn1: 4, mateIn2: 4 };
+/* Las dos ediciones: cuántos de cada tipo por figura, y en qué archivo. */
+const EDICIONES = {
+  cuaderno: { archivo: "banco.json", mateIn1: 4, mateIn2: 4 },
+  compacta: { archivo: "banco-compacto.json", mateIn1: 12, mateIn2: 12 },
+};
 
 /* El orden del libro: de los mates que más se ven a los que piden juntar más
    piezas. No sale del rating: el mate del pasillo es el primero que hay que
@@ -195,7 +203,15 @@ function cuartos(lista, n) {
   return salida;
 }
 
-function armar() {
+// Cada ejercicio se comprueba una vez aunque lo miren las dos ediciones.
+const revisado = new Map();
+function pasa(p, tipo) {
+  const k = p.id + "|" + tipo;
+  if (!revisado.has(k)) revisado.set(k, !revisar({ fen: p.fen, solucion: p.solution, tipo }));
+  return revisado.get(k);
+}
+
+function armar(edicion = EDICIONES.cuaderno) {
   const nombres = Object.fromEntries(TEMAS.groups.flatMap((g) => g.themes).map((t) => [t.key, t]));
   const usados = new Set();
   const capitulos = ORDEN.map((clave, i) => {
@@ -217,24 +233,24 @@ function armar() {
     }
 
     /* Si de un tipo no alcanzan (el pasillo casi no tiene mates en 1 que
-       pasen: casi siempre hay dos torres que dan mate), se completa con el
-       otro. */
-    const ejercicios = [];
-    let falta = 0;
-    for (const tipo of Object.keys(POR_TIPO)) {
-      const buenos = todos
+       pasen: casi siempre hay dos torres que dan mate; la coz, al revés, casi
+       no tiene mates en 2), se completa con el otro. */
+    const buenos = {};
+    for (const tipo of ["mateIn1", "mateIn2"]) {
+      buenos[tipo] = todos
         .filter((p) => p.themes.includes(tipo) && !usados.has(p.id))
         .sort((a, b) => a.rating - b.rating || (a.id < b.id ? -1 : 1))
-        .filter((p) => !revisar({ fen: p.fen, solucion: p.solution, tipo }));
-      const quiero = POR_TIPO[tipo] + falta;
-      const elegidos = cuartos(buenos, quiero);
-      falta = quiero - elegidos.length;
-      elegidos.forEach((p) => {
-        usados.add(p.id);
-        ejercicios.push({ id: p.id, fen: p.fen, solucion: p.solution, tipo, rating: p.rating, juegan: p.fen.split(" ")[1], partida: p.game });
-      });
+        .filter((p) => pasa(p, tipo));
     }
-    if (falta > 0) throw new Error(`${clave}: faltan ${falta} ejercicios`);
+    const total = edicion.mateIn1 + edicion.mateIn2;
+    const n1 = Math.min(buenos.mateIn1.length, edicion.mateIn1 + Math.max(0, edicion.mateIn2 - buenos.mateIn2.length));
+    const n2 = total - n1;
+    if (n2 > buenos.mateIn2.length) throw new Error(`${clave}: no alcanzan los ejercicios`);
+    const ejercicios = [];
+    [["mateIn1", n1], ["mateIn2", n2]].forEach(([tipo, n]) => cuartos(buenos[tipo], n).forEach((p) => {
+      usados.add(p.id);
+      ejercicios.push({ id: p.id, fen: p.fen, solucion: p.solution, tipo, rating: p.rating, juegan: p.fen.split(" ")[1], partida: p.game });
+    }));
     return {
       n: i + 1, clave, lichess: nombres[clave] ? nombres[clave].name : clave,
       titulo: texto.titulo, subtitulo: texto.subtitulo, resumen: texto.resumen,
@@ -248,17 +264,19 @@ function armar() {
   return capitulos;
 }
 
-module.exports = { armar, revisar, mates1, fuerzanMate2, ORDEN, POR_TIPO };
+module.exports = { armar, revisar, mates1, fuerzanMate2, ORDEN, EDICIONES };
 
-/* Corrido directo, escribe la selección en material/tipos-de-mate/banco.json,
-   que es lo que leen el PDF y el verificador (elegir tarda un par de minutos:
-   la fuerza bruta de los mates en 2 con chess.js). No se edita a mano.
+/* Corrido directo, escribe las dos selecciones en material/tipos-de-mate/,
+   que es lo que leen el PDF y el verificador (elegir tarda unos minutos: la
+   fuerza bruta de los mates en 2 con chess.js). No se editan a mano.
 
        node herramientas/tipos-de-mate-banco.js */
 if (require.main === module) {
-  const capitulos = armar();
-  const destino = path.join(RAIZ, "material", "tipos-de-mate", "banco.json");
-  fs.mkdirSync(path.dirname(destino), { recursive: true });
-  fs.writeFileSync(destino, JSON.stringify({ capitulos }, null, 1) + "\n");
-  console.log(`${capitulos.length} capítulos · ${capitulos.reduce((s, c) => s + c.ejercicios.length, 0)} ejercicios → ${destino}`);
+  for (const edicion of Object.values(EDICIONES)) {
+    const capitulos = armar(edicion);
+    const destino = path.join(RAIZ, "material", "tipos-de-mate", edicion.archivo);
+    fs.mkdirSync(path.dirname(destino), { recursive: true });
+    fs.writeFileSync(destino, JSON.stringify({ capitulos }, null, 1) + "\n");
+    console.log(`${capitulos.length} capítulos · ${capitulos.reduce((s, c) => s + c.ejercicios.length, 0)} ejercicios → ${destino}`);
+  }
 }

@@ -1000,7 +1000,7 @@ archivo, y protección (`herramientas/lib/pdf-armar.js`). **Se deja
 imprimir**: es un cuaderno de trabajo. Vive en `material/mide-tu-fuerza/`,
 detrás del candado del worker, y se comparte desde `admin.html#materiales`.
 
-## El cuaderno «Los tipos de mate», para imprimir
+## El cuaderno «Los tipos de mate», para imprimir (y su edición compacta)
 
 Un libro para darles a los alumnos: las 19 figuras de mate que Lichess
 reconoce (del pasillo a Vuković), cada una con su explicación, su diagrama
@@ -1029,11 +1029,23 @@ van en la tapa, en los datos del archivo y en el pie de cada página.
   `temas.json` y de su figura, con una sola solución; la versión accesible) y
   `verificar-tipos-de-mate-pdf.py` (protección, los dos entrenadores en la tapa
   y en el pie de cada página, marca de agua, capítulos y ejercicios).
-- La tapa lleva a los dos entrenadores, cada uno con su foto en un círculo, y
-  el logo de Ajedrez Integral en el medio (el emblema de `img/logo-marca.png`
-  con el nombre escrito, como en el encabezado del sitio). Las caras están
-  recortadas de una foto de ellos dos y viven en `herramientas/datos/tipos-de-mate/`,
-  que no se publica: solo van dentro del PDF.
+- **Dos ediciones del mismo libro.** El cuaderno, con tableros grandes (4 por
+  hoja) y 8 ejercicios por figura, y la **edición compacta**
+  (`tipos-de-mate-compacto.pdf`, `--compacta`), que se pidió con «cada tema
+  de solo 2 hojas»: tableros de 41 mm, 4 por fila, y 24 ejercicios por figura
+  —la explicación corta y 8 en la primera hoja, 16 en la segunda—. Su banco es
+  `banco-compacto.json` (12 y 12), elegido aparte. El verificador del PDF
+  cuenta las hojas de cada capítulo: un texto que crece y empuja una fila a la
+  tercera hoja no da ningún error. La versión accesible es solo la del
+  cuaderno: sin imágenes, el tamaño de los tableros no cambia nada.
+- La tapa lleva a los dos entrenadores de pie, con los brazos cruzados, y el
+  logo de Ajedrez Integral en el medio (el emblema de `img/logo-marca.png` con
+  el nombre escrito, como en el encabezado del sitio). Salen de una foto de
+  ellos dos con el fondo de cuadritos pegado en la imagen (no era
+  transparente): se quitó llenando desde los bordes lo gris o blanco sin color,
+  así la camisa blanca, encerrada por el saco, queda. Cada uno va a la misma
+  escala (`MM_POR_PX`), para que ninguno quede más alto de lo que es. Viven en
+  `herramientas/datos/tipos-de-mate/`, que no se publica: solo van dentro del PDF.
 - Se comparte desde `admin.html#materiales` como los demás (producto
   `tipos-de-mate`).
 

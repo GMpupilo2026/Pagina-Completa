@@ -1,10 +1,11 @@
-/* Comprueba el banco del libro «Los tipos de mate»
- * (material/tipos-de-mate/banco.json) y su versión accesible.
+/* Comprueba los bancos de los dos libros «Los tipos de mate» —el cuaderno
+ * (material/tipos-de-mate/banco.json) y la edición compacta
+ * (banco-compacto.json)— y la versión accesible del cuaderno.
  *
  * Lo que se rompe acá no da error: un ejercicio con dos soluciones se imprime
  * igual y el alumno que da la otra se la ponen mala; un capítulo que se quedó
  * sin un ejercicio no lo echa de menos nadie. Por eso, contra las fuentes:
- *   - 19 figuras, 8 ejercicios cada una, sin repetir ninguno;
+ *   - 19 figuras, 8 ejercicios cada una (24 en la compacta), sin repetir ninguno;
  *   - cada ejercicio es uno de «Ejercicios por tema» (entreno/data/temas.json)
  *     con la misma FEN, la misma solución y la figura de su capítulo;
  *   - cada uno tiene UNA sola solución (revisar() del banco: chess.js por
@@ -17,11 +18,10 @@
 const fs = require("fs");
 const path = require("path");
 const { Chess } = require("chess.js");
-const { revisar, ORDEN } = require("./tipos-de-mate-banco.js");
+const { revisar, ORDEN, EDICIONES } = require("./tipos-de-mate-banco.js");
 
 const RAIZ = path.join(__dirname, "..");
 const CARPETA = path.join(RAIZ, "material", "tipos-de-mate");
-const { capitulos } = JSON.parse(fs.readFileSync(path.join(CARPETA, "banco.json"), "utf8"));
 const TEMAS = JSON.parse(fs.readFileSync(path.join(RAIZ, "entreno/data/temas.json"), "utf8"));
 
 let fallos = 0;
@@ -30,27 +30,36 @@ function cierto(que, ok) {
   if (!ok) fallos++;
 }
 
-console.log("=== Los tipos de mate: el banco ===");
-cierto("19 figuras, en el orden del libro", capitulos.map((c) => c.clave).join() === ORDEN.join());
-cierto("8 ejercicios por figura", capitulos.every((c) => c.ejercicios.length === 8));
-const ids = capitulos.flatMap((c) => c.ejercicios.map((e) => e.id));
-cierto("ningún ejercicio se repite", new Set(ids).size === ids.length);
-cierto("numerados del 1 al " + ids.length, capitulos.flatMap((c) => c.ejercicios.map((e) => e.n)).every((n, i) => n === i + 1));
+function banco(edicion) {
+  const { capitulos } = JSON.parse(fs.readFileSync(path.join(CARPETA, edicion.archivo), "utf8"));
+  const porCap = edicion.mateIn1 + edicion.mateIn2;
+  console.log(`=== Los tipos de mate: ${edicion.archivo} ===`);
+  cierto("19 figuras, en el orden del libro", capitulos.map((c) => c.clave).join() === ORDEN.join());
+  cierto(`${porCap} ejercicios por figura`, capitulos.every((c) => c.ejercicios.length === porCap));
+  const ids = capitulos.flatMap((c) => c.ejercicios.map((e) => e.id));
+  cierto("ningún ejercicio se repite", new Set(ids).size === ids.length);
+  cierto("numerados del 1 al " + ids.length, capitulos.flatMap((c) => c.ejercicios.map((e) => e.n)).every((n, i) => n === i + 1));
 
-const ajenos = [], dudosos = [];
-capitulos.forEach((c) => c.ejercicios.forEach((e) => {
-  const p = TEMAS.puzzles[e.id];
-  if (!p || p.fen !== e.fen || p.solution.join() !== e.solucion.join() || !p.themes.includes(c.clave) || !p.themes.includes(e.tipo)
-      || !TEMAS.themes[c.clave].includes(e.id)) ajenos.push(e.n);
-  const porque = revisar(e);
-  if (porque) dudosos.push(`${e.n} (${porque})`);
-}));
-cierto("cada ejercicio es de «Ejercicios por tema», de su figura" + (ajenos.length ? ": " + ajenos.join(", ") : ""), !ajenos.length);
-cierto("cada ejercicio tiene una sola solución, comprobada con chess.js" + (dudosos.length ? ": " + dudosos.join("; ") : ""), !dudosos.length);
-cierto("el modelo de cada figura es mate", capitulos.every((c) => new Chess(c.modelo.fen).in_checkmate()));
-cierto("cada figura tiene su explicación entera", capitulos.every((c) => c.titulo && c.resumen && c.centro.length && c.bloques.length === 4));
+  const ajenos = [], dudosos = [];
+  capitulos.forEach((c) => c.ejercicios.forEach((e) => {
+    const p = TEMAS.puzzles[e.id];
+    if (!p || p.fen !== e.fen || p.solution.join() !== e.solucion.join() || !p.themes.includes(c.clave) || !p.themes.includes(e.tipo)
+        || !TEMAS.themes[c.clave].includes(e.id)) ajenos.push(e.n);
+    const porque = revisar(e);
+    if (porque) dudosos.push(`${e.n} (${porque})`);
+  }));
+  cierto("cada ejercicio es de «Ejercicios por tema», de su figura" + (ajenos.length ? ": " + ajenos.join(", ") : ""), !ajenos.length);
+  cierto("cada ejercicio tiene una sola solución, comprobada con chess.js" + (dudosos.length ? ": " + dudosos.join("; ") : ""), !dudosos.length);
+  cierto("el modelo de cada figura es mate", capitulos.every((c) => new Chess(c.modelo.fen).in_checkmate()));
+  cierto("cada figura tiene su explicación entera", capitulos.every((c) => c.titulo && c.resumen && c.centro.length && c.bloques.length === 4));
+  console.log();
+  return { capitulos, ids };
+}
 
-console.log("\n=== La versión accesible ===");
+const { capitulos, ids } = banco(EDICIONES.cuaderno);
+banco(EDICIONES.compacta);
+
+console.log("=== La versión accesible del cuaderno ===");
 const acc = fs.readFileSync(path.join(CARPETA, "tipos-de-mate-accesible.html"), "utf8");
 cierto("trae todos los capítulos", capitulos.every((c) => acc.includes(`Capítulo ${c.n}: `)));
 cierto("trae los " + ids.length + " ejercicios y sus soluciones", ids.every((_, i) => acc.includes(`<h4>Ejercicio ${i + 1}:`) && acc.includes(`<li>Ejercicio ${i + 1}:`)));

@@ -1,12 +1,17 @@
 /* ===== El libro «Los tipos de mate», para imprimir y dar a los alumnos =====
  *
- * Arma material/tipos-de-mate/tipos-de-mate.pdf: las 19 figuras de mate que
- * hay que reconocer, cada una con su explicación, su diagrama modelo y 8
- * ejercicios, las soluciones al final y una planilla para anotar el avance.
+ * Arma los dos libros de las 19 figuras de mate que hay que reconocer, cada
+ * una con su explicación y su diagrama modelo, las soluciones al final y una
+ * planilla para anotar el avance:
+ *   - material/tipos-de-mate/tipos-de-mate.pdf, el cuaderno: tableros grandes,
+ *     4 por hoja, y 8 ejercicios por figura (con su versión accesible);
+ *   - material/tipos-de-mate/tipos-de-mate-compacto.pdf, la edición compacta
+ *     (--compacta): cada figura en DOS hojas, con tableros chicos y 24
+ *     ejercicios —8 en la hoja de la explicación y 16 en la siguiente—.
  * Es de los entrenadores Oscar Angulo Cubero y Sebastian Mora Chavarria, y
  * los dos van en la tapa y en el pie de cada página.
  *
- * Todo sale de material/tipos-de-mate/banco.json, que arma
+ * Todo sale de material/tipos-de-mate/banco.json (y banco-compacto.json), que arma
  * herramientas/tipos-de-mate-banco.js con los ejercicios ya revisados de
  * «Ejercicios por tema» y las fichas de Estudio: este script no decide nada
  * de ajedrez, solo lo pone en papel.
@@ -19,6 +24,7 @@
  * Cómo se corre (Node, Chromium por Playwright y pypdf):
  *
  *     node herramientas/tipos-de-mate-pdf.js
+ *     node herramientas/tipos-de-mate-pdf.js --compacta
  *     node herramientas/tipos-de-mate-pdf.js --solo-accesible   # sin PDF ni pypdf
  *
  * Con CHROMIUM=/ruta/al/chrome se le puede indicar un Chromium ya instalado.
@@ -35,10 +41,16 @@ const { describir } = require("./lib/describir-fen.js");
 const N = require("./lib/notacion.js");
 const { unir, proteger } = require("./lib/pdf-armar.js");
 
+const COMPACTA = process.argv.includes("--compacta");
+const ED = COMPACTA
+  ? { banco: "banco-compacto.json", pdf: "tipos-de-mate-compacto", accesible: false, eyebrow: "Cuaderno de ejercicios · edición compacta" }
+  : { banco: "banco.json", pdf: "tipos-de-mate", accesible: true, eyebrow: "Cuaderno de ejercicios" };
 const CARPETA = path.join(RAIZ, "material", "tipos-de-mate");
-const { capitulos: CAPITULOS } = JSON.parse(fs.readFileSync(path.join(CARPETA, "banco.json"), "utf8"));
+const { capitulos: CAPITULOS } = JSON.parse(fs.readFileSync(path.join(CARPETA, ED.banco), "utf8"));
 const EJERCICIOS = CAPITULOS.flatMap((c) => c.ejercicios);
 const TOTAL = EJERCICIOS.length;
+const POR_CAP = CAPITULOS[0].ejercicios.length;
+if (!CAPITULOS.every((c) => c.ejercicios.length === POR_CAP)) throw new Error("Las figuras no tienen todas los mismos ejercicios.");
 
 const AUTORES = ["Oscar Angulo Cubero", "Sebastian Mora Chavarria"];
 const ENTRENADORES = `Entrenadores ${AUTORES[0]} y ${AUTORES[1]}`;
@@ -52,10 +64,17 @@ const LOGO_MARCA = incrustar("img/logo-oscar-angulo-marca.png");
 // El emblema del caballo: con «Ajedrez Integral» escrito al lado es el logo
 // del sitio (así está en el encabezado de index.html).
 const EMBLEMA = incrustar("img/logo-marca.png");
-/* Las caras de los dos entrenadores, recortadas de una foto de ellos dos.
-   Viven en herramientas/datos/, que no se publica: solo van dentro del PDF. */
-const FOTOS = ["oscar-angulo-cubero", "sebastian-mora-chavarria"].map((n) =>
-  "data:image/jpeg;base64," + fs.readFileSync(path.join(__dirname, "datos", "tipos-de-mate", n + ".jpg")).toString("base64"));
+/* Los dos entrenadores con los brazos cruzados, recortados (sin fondo) de una
+   foto de ellos dos y separados para poner el logo en el medio. Viven en
+   herramientas/datos/, que no se publica: solo van dentro del PDF. Las dos
+   salen de la misma foto, así que se dibujan a la misma escala: cada una con
+   su alto en pixeles por MM_POR_PX, para que ninguno quede más alto de lo que es. */
+const MM_POR_PX = 0.138;
+const FOTOS = ["oscar-angulo-cubero", "sebastian-mora-chavarria"].map((n) => {
+  const archivo = path.join(__dirname, "datos", "tipos-de-mate", n + ".png");
+  const datos = fs.readFileSync(archivo);
+  return { src: "data:image/png;base64," + datos.toString("base64"), alto: datos.readUInt32BE(20) * MM_POR_PX };
+});
 
 function esc(t) {
   return String(t).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
@@ -122,6 +141,46 @@ function ejercicios(c) {
   </div>`).join("");
 }
 
+/* La edición compacta: la figura entera en dos hojas. En la primera, la
+   explicación corta (el modelo chico, la idea, cuándo aparece y cómo no
+   recibirlo) y 8 ejercicios; en la segunda, 16 más. */
+function diagramaChico(ej) {
+  return `<div class="ejercicio chico">
+    <p class="cabecera"><span class="num">${ej.n}</span> <span class="turno ${ej.juegan}">Juegan las ${BANDO[ej.juegan]}</span> <span class="cuantos">${CUANTOS[ej.tipo]}</span></p>
+    ${tablero(ej.fen, { coordenadas: true, titulo: `Ejercicio ${ej.n}. Juegan las ${BANDO[ej.juegan]}. ${CUANTOS[ej.tipo]}.` })}
+    <p class="respuesta"><span class="raya"></span></p>
+  </div>`;
+}
+
+function capituloCompacto(c) {
+  const m = c.modelo;
+  const pie = c.diagrama || `Así queda el mate: ${N.sanEspanol(m.jugada)}.`;
+  const [primera, segunda] = [c.ejercicios.slice(0, 8), c.ejercicios.slice(8)];
+  return `<div class="pagina capitulo compacto">
+    <p class="eyebrow">Capítulo ${c.n} de ${CAPITULOS.length}</p>
+    <h2 class="titulo">${esc(c.titulo)} <span class="sub-titulo">${esc(c.subtitulo)}</span></h2>
+    <div class="figura">
+      <div class="modelo">
+        ${tablero(m.fen, { coordenadas: true, destacar: m.destacar, titulo: `${c.titulo}: el mate modelo.` })}
+      </div>
+      <div class="texto">
+        <p class="resumen">${esc(c.resumen)}</p>
+        <p class="pie-diagrama">${esc(pie)}</p>
+        <div class="bloques">
+          <div class="bloque"><h3>La idea</h3><ul>${c.centro.map((t) => `<li>${esc(t)}</li>`).join("")}</ul></div>
+          <div class="bloque"><h3>${NOMBRES_BLOQUES[2]}</h3><ul>${c.bloques[2].map((t) => `<li>${esc(t)}</li>`).join("")}</ul></div>
+        </div>
+      </div>
+    </div>
+    <p class="sigue">Capítulo ${c.n} · ${esc(c.titulo)} · ejercicios ${primera[0].n} a ${c.ejercicios[c.ejercicios.length - 1].n}. Escribe la solución completa: en los mates en 2, también la respuesta del rival.</p>
+    <div class="rejilla-chica">${primera.map(diagramaChico).join("")}</div>
+  </div>
+  <div class="pagina compacto">
+    <p class="sigue">Capítulo ${c.n} · ${esc(c.titulo)} · ejercicios ${segunda[0].n} a ${segunda[segunda.length - 1].n}</p>
+    <div class="rejilla-chica">${segunda.map(diagramaChico).join("")}</div>
+  </div>`;
+}
+
 function soluciones(c) {
   return `<section class="soluciones-cap">
     <h3>${c.n}. ${esc(c.titulo)}</h3>
@@ -134,10 +193,10 @@ const indice = `<table class="reglas indice"><tr><th class="num">Cap.</th><th>Fi
 </table>`;
 
 const planilla = `<table class="planilla">
-  <tr><th>Cap.</th><th>Figura</th><th>Mates en 1<br>bien</th><th>Mates en 2<br>bien</th><th>Total<br>(de 8)</th><th>Fecha</th><th class="comentario">Lo que me costó</th></tr>
+  <tr><th>Cap.</th><th>Figura</th><th>Mates en 1<br>bien</th><th>Mates en 2<br>bien</th><th>Total<br>(de ${POR_CAP})</th><th>Fecha</th><th class="comentario">Lo que me costó</th></tr>
   ${CAPITULOS.map((c) => {
     const en1 = c.ejercicios.filter((e) => e.tipo === "mateIn1").length;
-    return `<tr><td class="num">${c.n}</td><td class="tema-c">${esc(c.titulo)}</td><td>&nbsp;&nbsp;/ ${en1}</td><td>&nbsp;&nbsp;/ ${8 - en1}</td><td class="total"></td><td></td><td></td></tr>`;
+    return `<tr><td class="num">${c.n}</td><td class="tema-c">${esc(c.titulo)}</td><td>&nbsp;&nbsp;/ ${en1}</td><td>&nbsp;&nbsp;/ ${POR_CAP - en1}</td><td class="total"></td><td></td><td></td></tr>`;
   }).join("")}
 </table>`;
 
@@ -196,6 +255,30 @@ const html = `<!doctype html><html lang="es"><head><meta charset="utf-8">
   .planilla td.total { background: #fffaf0; }
   .planilla th.comentario { width: 48mm; }
   ol.habitos li { margin-bottom: 1.8mm; }
+
+  /* La edición compacta: tableros de 40 mm, cuatro por fila. */
+  .compacto h2.titulo { font-size: 16pt; }
+  .compacto .sub-titulo { font-size: 10.5pt; font-weight: 400; font-style: italic; color: #486581; margin-left: 2mm; }
+  .compacto .figura { gap: 6mm; margin: 3mm 0 3mm; }
+  .compacto .modelo { width: 56mm; }
+  .compacto .modelo svg { width: 56mm; }
+  .compacto .texto { flex: 1; }
+  .compacto .resumen { font-size: 10pt; margin: 0 0 1.5mm; }
+  .compacto .pie-diagrama { margin: 0 0 3mm; }
+  .compacto .bloques { gap: 3mm 5mm; }
+  .compacto .bloque { font-size: 8.5pt; }
+  .compacto li { margin-bottom: .6mm; }
+  .rejilla-chica { display: grid; grid-template-columns: repeat(4, 1fr); column-gap: 5mm; row-gap: 4mm; }
+  .ejercicio.chico svg { width: 41mm; }
+  .chico .cabecera { font-size: 6.5pt; margin-bottom: 1mm; white-space: nowrap; }
+  .chico .cabecera .num { font-size: 9.5pt; min-width: 6mm; }
+  .chico .turno { padding: 0 1mm; border-width: .3mm; }
+  .chico .cuantos { margin-left: 1mm; }
+  .chico .respuesta { margin-top: 3.5mm; }
+  .soluciones-varias { column-count: ${COMPACTA ? 3 : 1}; column-gap: 6mm; }
+  .compacto-sol .solucion { font-size: 7.5pt; margin-bottom: .5mm; }
+  .compacto-sol .solucion .num { min-width: 7mm; }
+  .compacto-sol h3 { font-size: 9pt; margin-top: 2mm; }
 </style>
 </head><body>
 
@@ -206,8 +289,11 @@ const html = `<!doctype html><html lang="es"><head><meta charset="utf-8">
   libro junta las <strong>${CAPITULOS.length} figuras de mate</strong> que más se repiten para que las aprendas a reconocer.</p>
   <p>Cada capítulo trae una figura: primero <strong>la explicación</strong>, con el mate modelo en el diagrama (la
   pieza que da el mate y el rey van marcados), cuándo aparece, cómo se da y cómo no recibirlo tú. Después,
-  <strong>8 ejercicios</strong> de esa figura, de más fácil a más difícil: primero los mates en 1 y después los
+  <strong>${POR_CAP} ejercicios</strong> de esa figura, de más fácil a más difícil: primero los mates en 1 y después los
   mates en 2. En total son <strong>${TOTAL} ejercicios</strong>. Las soluciones están al final del libro.</p>
+  ${COMPACTA ? `<p>En esta <strong>edición compacta</strong> cada figura ocupa solo dos hojas: la explicación corta y los
+  primeros 8 ejercicios en la primera, y 16 más en la segunda. Los tableros son chicos para que quepan más: si te
+  cuesta ver una posición, ponla en un tablero de verdad.</p>` : ""}
 
   <h3 style="margin-top:6mm">Cómo trabajar cada capítulo</h3>
   <ol class="habitos">
@@ -230,19 +316,19 @@ const html = `<!doctype html><html lang="es"><head><meta charset="utf-8">
   ${indice}
 </div>
 
-${CAPITULOS.map((c) => explicacion(c) + ejercicios(c)).join("")}
+${CAPITULOS.map((c) => COMPACTA ? capituloCompacto(c) : explicacion(c) + ejercicios(c)).join("")}
 
-<div class="pagina">
+<div class="pagina${COMPACTA ? " compacto-sol" : ""}">
   <h2 class="titulo">Soluciones</h2>
   <p class="sigue">Cada número es el del ejercicio. En los mates en 2 va la defensa más dura del rival: si responde
   otra cosa, también hay mate en la jugada siguiente. Si tu primera jugada es otra, vuelve a la posición: casi
   siempre se le escapa una casilla al rey o el rival puede tapar el jaque.</p>
-  ${CAPITULOS.map(soluciones).join("")}
+  <div class="soluciones-varias">${CAPITULOS.map(soluciones).join("")}</div>
 </div>
 
 <div class="pagina">
   <h2 class="titulo">Mi planilla de avance</h2>
-  <p class="sigue">Una línea por capítulo. Si un capítulo te sale con menos de 6, vuelve a hacerlo dentro de una semana.</p>
+  <p class="sigue">Una línea por capítulo. Si un capítulo te sale con menos de ${Math.round(POR_CAP * 0.75)}, vuelve a hacerlo dentro de una semana.</p>
   ${planilla}
   <div class="nota" style="margin-top:6mm"><strong>${esc(ENTRENADORES)}</strong> · Academia Ajedrez Integral, ${ANIO}.
   Los ejercicios salen de la base abierta de ejercicios de Lichess (dominio público, CC0); cada solución lleva el
@@ -253,10 +339,10 @@ ${CAPITULOS.map((c) => explicacion(c) + ejercicios(c)).join("")}
 
 /* ---------------------------------------------------------- la tapa */
 function persona(i) {
-  const [nombre, ...apellidos] = AUTORES[i].split(" ");
-  const corte = apellidos.length > 1 ? `${esc(nombre + " " + apellidos[0])}<br>${esc(apellidos.slice(1).join(" "))}` : esc(AUTORES[i]);
-  return `<div class="persona"><div class="cara"><img src="${FOTOS[i]}" alt="${esc(AUTORES[i])}"></div>
-    <p class="autor">${corte}</p><p class="rol">Entrenador</p></div>`;
+  return `<div class="persona p${i}"><img src="${FOTOS[i].src}" alt="${esc(AUTORES[i])}" style="height:${FOTOS[i].alto.toFixed(1)}mm"></div>`;
+}
+function nombre(i) {
+  return `<div class="nombre-p p${i}"><p class="autor">${esc(AUTORES[i])}</p><p class="rol">Entrenador</p></div>`;
 }
 
 const htmlPortada = `<!doctype html><html lang="es"><head><meta charset="utf-8">
@@ -290,19 +376,27 @@ const htmlPortada = `<!doctype html><html lang="es"><head><meta charset="utf-8">
   .cifra { border-left: .8mm solid rgba(240,180,41,.55); padding-left: 4mm; }
   .cifra .n { display: block; font-size: 21pt; font-weight: 700; color: #ffffff; line-height: 1.1; }
   .cifra .q { display: block; font-size: 8pt; letter-spacing: .12em; text-transform: uppercase; color: #e3b8c2; margin-top: 1mm; }
-  .pie-tapa { margin-top: auto; }
-  /* Los dos entrenadores, uno a cada lado, y el logo de Ajedrez Integral en el medio. */
-  .equipo { display: flex; justify-content: space-between; align-items: center; }
-  .persona, .casa { flex: none; width: 52mm; text-align: center; }
-  .cara { width: 44mm; height: 44mm; border-radius: 50%; overflow: hidden; border: 1.2mm solid #f0b429; margin: 0 auto; }
-  .cara img { display: block; width: 100%; height: 100%; object-fit: cover; }
-  .autor { margin: 3mm 0 0; font-size: 11pt; font-weight: 700; color: #ffffff; line-height: 1.25; }
+  /* Los dos entrenadores de pie, uno a cada lado y cortados por el borde de
+     abajo, y el logo de Ajedrez Integral en el medio. Los nombres van sobre
+     una sombra, para que se lean encima de la ropa. */
+  .equipo { position: absolute; left: 7mm; right: 0; bottom: 0; height: 125mm; z-index: 3; }
+  .persona { position: absolute; bottom: 0; }
+  .persona img { display: block; width: auto; }
+  .persona.p0 { left: 12mm; }
+  .persona.p1 { right: 12mm; }
+  .sombra { position: absolute; left: 0; right: 0; bottom: 0; height: 34mm;
+      background: linear-gradient(180deg, rgba(34,9,15,0) 0%, rgba(34,9,15,.88) 60%, rgba(34,9,15,.95) 100%); }
+  .nombre-p { position: absolute; bottom: 7mm; width: 70mm; text-align: center; }
+  .nombre-p.p0 { left: 3mm; }
+  .nombre-p.p1 { right: 3mm; }
+  .autor { margin: 0; font-size: 12pt; font-weight: 700; color: #ffffff; line-height: 1.25; }
   .rol { margin: 1mm 0 0; font-size: 7pt; letter-spacing: .18em; text-transform: uppercase; color: #f0b429; }
-  .casa img { display: block; width: 34mm; margin: 0 auto 2mm; }
+  .casa { position: absolute; left: 50%; bottom: 46mm; transform: translateX(-50%); width: 56mm; text-align: center; }
+  .casa img { display: block; width: 36mm; margin: 0 auto 2mm; }
   .casa .nombre { font-size: 17pt; font-weight: 700; color: #ffffff; line-height: 1.1; margin: 0; }
   .casa .nombre span { color: #f0b429; }
-  .editorial { margin: 7mm 0 0; padding-top: 4mm; border-top: 1px solid rgba(227,184,194,.3);
-      font-size: 8.5pt; color: #e3b8c2; display: flex; justify-content: space-between; gap: 6mm; }
+  .casa .anio { margin: 2mm 0 0; font-size: 8pt; letter-spacing: .14em; color: #e3b8c2; }
+  .hoja .centro { margin: 16mm 0 0; }
 </style>
 </head><body>
   <div class="fondo"><div class="tablero-fondo"></div><div class="brillo"></div></div>
@@ -310,7 +404,7 @@ const htmlPortada = `<!doctype html><html lang="es"><head><meta charset="utf-8">
   <div class="hoja">
     <p class="marca-casa">&#9822; Ajedrez Integral</p>
     <div class="centro">
-      <p class="eyebrow">Cuaderno de ejercicios</p>
+      <p class="eyebrow">${esc(ED.eyebrow)}</p>
       <h1>Los tipos<span class="segunda">de mate</span></h1>
       <div class="filete"></div>
       <p class="sub">Las figuras de mate que hay que reconocer, del pasillo a Vuković: cada una explicada con su
@@ -321,14 +415,12 @@ const htmlPortada = `<!doctype html><html lang="es"><head><meta charset="utf-8">
         <div class="cifra"><span class="n">1 y 2</span><span class="q">jugadas</span></div>
       </div>
     </div>
-    <div class="pie-tapa">
-      <div class="equipo">
-        ${persona(0)}
-        <div class="casa"><img src="${EMBLEMA}" alt=""><p class="nombre">Ajedrez <span>Integral</span></p></div>
-        ${persona(1)}
-      </div>
-      <div class="editorial"><span>Academia Ajedrez Integral</span><span>${ANIO}</span></div>
-    </div>
+  </div>
+  <div class="equipo">
+    ${persona(0)}${persona(1)}
+    <div class="sombra"></div>
+    ${nombre(0)}${nombre(1)}
+    <div class="casa"><img src="${EMBLEMA}" alt=""><p class="nombre">Ajedrez <span>Integral</span></p><p class="anio">ACADEMIA · ${ANIO}</p></div>
   </div>
 </body></html>`;
 
@@ -421,25 +513,30 @@ EJERCICIOS.forEach((ej) => {
 
 fs.mkdirSync(CARPETA, { recursive: true });
 const tmp = os.tmpdir();
-const htmlTemporal = path.join(tmp, "tipos-de-mate-cuerpo.html");
-const htmlPortadaTemporal = path.join(tmp, "tipos-de-mate-tapa.html");
-const htmlMarcaTemporal = path.join(tmp, "tipos-de-mate-marca.html");
+const htmlTemporal = path.join(tmp, `${ED.pdf}-cuerpo.html`);
+const htmlPortadaTemporal = path.join(tmp, `${ED.pdf}-tapa.html`);
+const htmlMarcaTemporal = path.join(tmp, `${ED.pdf}-marca.html`);
 fs.writeFileSync(htmlTemporal, html);
 fs.writeFileSync(htmlPortadaTemporal, htmlPortada);
 fs.writeFileSync(htmlMarcaTemporal, htmlMarca);
-const destinoAccesible = path.join(CARPETA, "tipos-de-mate-accesible.html");
-fs.writeFileSync(destinoAccesible, accesible());
-console.log(`Maqueta: ${htmlTemporal}\nAccesible: ${destinoAccesible}`);
+// La versión accesible es la del cuaderno: la compacta trae lo mismo con
+// tableros más chicos, que en una lista sin imágenes no cambia nada.
+if (ED.accesible) {
+  const destinoAccesible = path.join(CARPETA, "tipos-de-mate-accesible.html");
+  fs.writeFileSync(destinoAccesible, accesible());
+  console.log(`Accesible: ${destinoAccesible}`);
+}
+console.log(`Maqueta: ${htmlTemporal}`);
 console.log(`${CAPITULOS.length} figuras · ${TOTAL} ejercicios`);
 if (process.argv.includes("--solo-accesible")) process.exit(0);
 
 (async () => {
   const { chromium } = require("playwright");
   const navegador = await chromium.launch(process.env.CHROMIUM ? { executablePath: process.env.CHROMIUM } : {});
-  const destino = path.join(CARPETA, "tipos-de-mate.pdf");
-  const tapa = path.join(tmp, "tipos-de-mate-tapa.pdf");
-  const cuerpo = path.join(tmp, "tipos-de-mate-cuerpo.pdf");
-  const marca = path.join(tmp, "tipos-de-mate-marca.pdf");
+  const destino = path.join(CARPETA, `${ED.pdf}.pdf`);
+  const tapa = path.join(tmp, `${ED.pdf}-tapa.pdf`);
+  const cuerpo = path.join(tmp, `${ED.pdf}-cuerpo.pdf`);
+  const marca = path.join(tmp, `${ED.pdf}-marca.pdf`);
   const sinMargen = { top: 0, bottom: 0, left: 0, right: 0 };
 
   const pTapa = await navegador.newPage();
@@ -463,7 +560,7 @@ if (process.argv.includes("--solo-accesible")) process.exit(0);
   unir(tapa, cuerpo, marca, destino);
   proteger(destino, {
     clave: CLAVE_PROPIETARIO, autor: `${AUTORES[0]} y ${AUTORES[1]}`, imprimir: true,
-    titulo: "Los tipos de mate - cuaderno de ejercicios de ajedrez",
+    titulo: COMPACTA ? "Los tipos de mate - edicion compacta" : "Los tipos de mate - cuaderno de ejercicios de ajedrez",
     asunto: "Las figuras de mate explicadas, con ejercicios de mate en 1 y en 2",
   });
   console.log("PDF listo:", destino);

@@ -575,7 +575,7 @@ async function pruebaMateriales(browser) {
     ["material/ponte-a-prueba/ponte-a-prueba.pdf", "material/ponte-a-prueba/ponte-a-prueba-accesible.html",
      "material/ponte-a-prueba/versiones/claves-de-correccion.pdf", "material/ponte-a-prueba/ponte-a-prueba-versiones-accesible.html",
      "material/mide-tu-fuerza/mide-tu-fuerza.pdf", "material/mide-tu-fuerza/mide-tu-fuerza-accesible.html",
-     "material/tipos-de-mate/tipos-de-mate.pdf", "material/tipos-de-mate/tipos-de-mate-accesible.html",
+     "material/tipos-de-mate/tipos-de-mate.pdf", "material/tipos-de-mate/tipos-de-mate-compacto.pdf", "material/tipos-de-mate/tipos-de-mate-accesible.html",
      "material/peonita/peonita.pdf", "material/peonita/peonita-accesible.html"]);
   // El banco de ejercicios no tiene pruebas como cuestionario: solo se
   // comparte. Antes de separarlo, cualquier material sin pruebas pintaba
