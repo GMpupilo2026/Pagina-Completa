@@ -1,6 +1,6 @@
 /* Los materiales de clase en admin.html#materiales: cada material (el libro
  * «Ponte a prueba», los diez volúmenes del banco de ejercicios «Mide tu fuerza»
- * y el cuento «Peonita y el reino de las 64 casillas»), con sus
+ * y los cuentos de Peonita), con sus
  * sub-fichas —las pruebas y sus versiones como cuestionario, si las tiene— y
  * CON QUIÉN se comparte.
  *
@@ -160,6 +160,17 @@
       archivos: [
         { href: "material/peonita/peonita.pdf", texto: "📥 El libro en PDF" },
         { href: "material/peonita/peonita-accesible.html", texto: "♿ Versión accesible" },
+      ],
+    },
+    {
+      producto: "peonita-trucos",
+      emoji: "🦝",
+      titulo: "Peonita, Tizón y los trucos del bosque",
+      autor: "Oscar Angulo Cubero",
+      resumen: "El segundo cuento de Peonita, para quien ya sabe mover las piezas: con Don Pillo, un mapache travieso, aprende los primeros trucos (la pieza sin cuidar, la horquilla, el ataque doble, la clavada, la enfilada, el mate del pasillo y el ataque a la descubierta) y a mirar qué quiere hacer el otro. Diez capítulos con «¡A jugar!», el diploma y las soluciones. Se puede imprimir.",
+      archivos: [
+        { href: "material/peonita-trucos/peonita-trucos.pdf", texto: "📥 El libro en PDF" },
+        { href: "material/peonita-trucos/peonita-trucos-accesible.html", texto: "♿ Versión accesible" },
       ],
     },
   ];

@@ -14,7 +14,10 @@
  *                   mono: true (el moño de Peonita), bufanda: true (Tizón),
  *                   espejo: true (mira para el otro lado) }
  *   perezoso(x, y, escala)    Don Lento colgado de su rama
- *   escena({ fondo, piso, contenido })   lienzo de 600 × 320
+ *   mapache(x, y, escala, opciones)   Don Pillo, el mapache travieso del
+ *       segundo cuento; (x, y) son sus patas. opciones: { cara, espejo }
+ *   escena({ fondo, piso, contenido, sol })   lienzo de 600 × 320; sol: "bebe"
+ *       cambia el sol de esa escena de día por la carita de Alessandro
  */
 "use strict";
 
@@ -149,6 +152,45 @@ function perezoso(x, y, escala, opciones) {
     `</g>`;
 }
 
+/* Don Pillo: un mapache gris con su antifaz negro y la cola a rayas. */
+function mapache(x, y, escala, opciones) {
+  const o = opciones || {};
+  const s = escala || 1;
+  const giro = o.espejo ? " translate(160,0) scale(-1,1)" : "";
+  const boca = o.cara === "triste"
+    ? `<path d="M72,92 Q80,86 88,92" fill="none" stroke="#2b2233" stroke-width="2.6" stroke-linecap="round"/>`
+    : `<path d="M70,90 Q80,99 90,90" fill="none" stroke="#2b2233" stroke-width="2.6" stroke-linecap="round"/>`;
+  return `<g transform="translate(${(x - 80 * s).toFixed(1)},${(y - 180 * s).toFixed(1)}) scale(${s})${giro}">` +
+    `<ellipse cx="80" cy="178" rx="52" ry="5" fill="#000" opacity=".12"/>` +
+    // la cola a rayas, detrás
+    `<path d="M112,150 C150,140 160,100 146,70 C140,96 128,120 104,132 Z" fill="#9aa5b1" stroke="#3e4a56" stroke-width="3" stroke-linejoin="round"/>` +
+    `<path d="M150,82 L138,90 M154,100 L132,108 M150,120 L122,124" stroke="#3e4a56" stroke-width="7" stroke-linecap="round"/>` +
+    // cuerpo y patas
+    `<ellipse cx="80" cy="132" rx="38" ry="42" fill="#9aa5b1" stroke="#3e4a56" stroke-width="3"/>` +
+    `<ellipse cx="80" cy="142" rx="24" ry="28" fill="#d5dbe1"/>` +
+    `<ellipse cx="62" cy="174" rx="12" ry="6" fill="#3e4a56"/><ellipse cx="98" cy="174" rx="12" ry="6" fill="#3e4a56"/>` +
+    // cabeza
+    `<path d="M44,52 L40,26 L62,42 Z M116,52 L120,26 L98,42 Z" fill="#9aa5b1" stroke="#3e4a56" stroke-width="3" stroke-linejoin="round"/>` +
+    `<ellipse cx="80" cy="70" rx="40" ry="32" fill="#9aa5b1" stroke="#3e4a56" stroke-width="3"/>` +
+    `<path d="M80,96 C66,96 58,88 58,80 L102,80 C102,88 94,96 80,96 Z" fill="#f1f3f5"/>` +
+    // el antifaz
+    `<path d="M42,66 C52,54 70,58 80,66 C90,58 108,54 118,66 C110,80 92,80 80,72 C68,80 50,80 42,66 Z" fill="#2b2233"/>` +
+    `<circle cx="64" cy="67" r="6" fill="#fff"/><circle cx="96" cy="67" r="6" fill="#fff"/>` +
+    `<circle cx="65" cy="68" r="3.4" fill="#2b2233"/><circle cx="97" cy="68" r="3.4" fill="#2b2233"/>` +
+    `<circle cx="64" cy="66.5" r="1.2" fill="#fff"/><circle cx="96" cy="66.5" r="1.2" fill="#fff"/>` +
+    `<ellipse cx="80" cy="82" rx="5" ry="3.6" fill="#2b2233"/>` + boca +
+    `<circle cx="56" cy="86" r="4.5" fill="#ff8fab" opacity=".7"/><circle cx="104" cy="86" r="4.5" fill="#ff8fab" opacity=".7"/>` +
+    `</g>`;
+}
+
+/* Una lupa: para buscar los trucos escondidos en el tablero. */
+function lupa(x, y, s, angulo) {
+  return `<g transform="translate(${x},${y}) rotate(${angulo || -30}) scale(${s || 1})">` +
+    `<rect x="-5" y="22" width="10" height="34" rx="4" fill="#8d5524" stroke="#5b3a1e" stroke-width="2"/>` +
+    `<circle cx="0" cy="0" r="24" fill="#e7f5ff" fill-opacity=".55" stroke="#495057" stroke-width="6"/>` +
+    `<path d="M-12,-8 Q-8,-16 2,-17" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round"/></g>`;
+}
+
 /* ---------------------------------------------------------- utilería */
 function estrella(x, y, r, color) {
   const pts = [];
@@ -195,10 +237,20 @@ function globo(x, y, ancho, texto, cola, opciones) {
     `</g>`;
 }
 
-function guarumo(x, y, s) {
+/* `grabado`: un corazoncito tallado en el tronco con unas letras adentro,
+   chiquito, para encontrarlo con lupa (un secreto para Alessandro; ver
+   «Cada cuento lleva un secreto para Alessandro»). Lleva data-grabado para
+   que el verificador compruebe que sigue ahí. */
+function guarumo(x, y, s, opciones) {
+  const o = opciones || {};
+  const grabado = o.grabado
+    ? `<g data-grabado="${esc(o.grabado)}" transform="translate(0,-34)">` +
+      `<path d="M0,5 C-3,1 -9,1 -8.5,-3.5 C-8,-7.5 -2.5,-8 0,-4 C2.5,-8 8,-7.5 8.5,-3.5 C9,1 3,1 0,5 Z" fill="#b39b7d" stroke="#5b4636" stroke-width="0.9"/>` +
+      `<text x="0" y="-0.6" text-anchor="middle" font-family="Quicksand, sans-serif" font-weight="700" font-size="4.6" fill="#3b2a1e">${esc(o.grabado)}</text></g>`
+    : "";
   return `<g transform="translate(${x},${y}) scale(${s || 1})">` +
     `<path d="M-6,0 L-4,-150 L4,-150 L6,0 Z" fill="#c8b59a" stroke="#7a6248" stroke-width="2"/>` +
-    `<path d="M-4,-60 H4 M-4,-100 H4" stroke="#7a6248" stroke-width="2"/>` +
+    `<path d="M-4,-60 H4 M-4,-100 H4" stroke="#7a6248" stroke-width="2"/>` + grabado +
     [[-48, -150], [0, -172], [48, -150], [-26, -125], [26, -125]].map(([dx, dy]) =>
       `<g transform="translate(${dx},${dy})">` +
       [0, 60, 120, 180, 240, 300].map((a) => `<ellipse cx="0" cy="-15" rx="8" ry="18" transform="rotate(${a})" fill="#51cf66" stroke="#2b8a3e" stroke-width="1.5"/>`).join("") +
@@ -251,13 +303,54 @@ function confeti(semilla, cuantos, ancho, alto) {
   return out;
 }
 
+/* El sol de una sola escena del segundo cuento (`sol: "bebe"`): Alessandro de
+   bebé, con su gorrito tejido de orejitas, dibujado a partir de una foto que
+   mandó el autor. La foto no está en el repositorio ni en el libro: se
+   dibuja, no se pega (ver «Cada cuento lleva un secreto para Alessandro»).
+   data-secreto le deja al verificador comprobar que sigue ahí. */
+function solBebe(cx, cy) {
+  const PIEL = "#f6c9b3", PIEL_L = "#d99a80", GORRO = "#efe3cf", GORRO_L = "#b9a382";
+  const rayos = [0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330].map((a) =>
+    `<path d="M${cx},${cy} L${cx},${cy - 50}" transform="rotate(${a} ${cx} ${cy})" stroke="#fcc419" stroke-width="${a % 60 ? 3.5 : 5}" stroke-linecap="round"/>`).join("");
+  let puntos = "";
+  for (let f = 0; f < 4; f++) for (let c = -4; c <= 4; c++) {
+    const x = cx + c * 5 + (f % 2) * 2.5, y = cy - 24 + f * 4.6;
+    if (Math.hypot((x - cx) / 24, (y - (cy - 4)) / 24) < 1 && y < cy - 6) puntos += `<path d="M${x - 1.6},${y - 1.1} L${x},${y + 0.9} L${x + 1.6},${y - 1.1}" fill="none" stroke="#c9b38f" stroke-width="0.8" stroke-linecap="round"/>`;
+  }
+  return `<g data-secreto="sol-bebe">` + rayos +
+    `<circle cx="${cx}" cy="${cy}" r="36" fill="#ffd43b" stroke="#fab005" stroke-width="3"/>` +
+    `<g transform="translate(${cx} ${cy}) scale(0.95) translate(${-cx} ${-cy})">` +
+    // las orejas y la cara
+    `<ellipse cx="${cx - 23}" cy="${cy + 6}" rx="4.5" ry="6" fill="${PIEL}" stroke="${PIEL_L}" stroke-width="1.2"/>` +
+    `<ellipse cx="${cx + 23}" cy="${cy + 6}" rx="4.5" ry="6" fill="${PIEL}" stroke="${PIEL_L}" stroke-width="1.2"/>` +
+    `<ellipse cx="${cx}" cy="${cy + 6}" rx="23" ry="22" fill="${PIEL}" stroke="${PIEL_L}" stroke-width="1.4"/>` +
+    // el gorrito tejido con sus dos orejitas
+    `<path d="M${cx - 12},${cy - 26} C${cx - 16},${cy - 38} ${cx - 10},${cy - 46} ${cx - 5},${cy - 43} C${cx - 2},${cy - 40} ${cx - 3},${cy - 32} ${cx - 2},${cy - 27} Z" fill="${GORRO}" stroke="${GORRO_L}" stroke-width="1.4"/>` +
+    `<path d="M${cx + 2},${cy - 27} C${cx + 3},${cy - 33} ${cx + 4},${cy - 41} ${cx + 8},${cy - 43} C${cx + 13},${cy - 45} ${cx + 17},${cy - 37} ${cx + 12},${cy - 26} Z" fill="${GORRO}" stroke="${GORRO_L}" stroke-width="1.4"/>` +
+    `<path d="M${cx - 26},${cy} C${cx - 27},${cy - 22} ${cx - 15},${cy - 30} ${cx},${cy - 30} C${cx + 15},${cy - 30} ${cx + 27},${cy - 22} ${cx + 26},${cy} Z" fill="${GORRO}" stroke="${GORRO_L}" stroke-width="1.5"/>` +
+    puntos +
+    `<path d="M${cx - 27},${cy - 4} Q${cx},${cy - 9} ${cx + 27},${cy - 4} L${cx + 27},${cy + 2} Q${cx},${cy - 3} ${cx - 27},${cy + 2} Z" fill="#e8dac2" stroke="${GORRO_L}" stroke-width="1.2"/>` +
+    // cejitas, ojos grandes, nariz, boca riéndose y cachetes
+    `<path d="M${cx - 13},${cy + 4} Q${cx - 9},${cy + 2} ${cx - 5},${cy + 4} M${cx + 5},${cy + 4} Q${cx + 9},${cy + 2} ${cx + 13},${cy + 4}" fill="none" stroke="#b07a5e" stroke-width="1" stroke-linecap="round"/>` +
+    `<ellipse cx="${cx - 9}" cy="${cy + 9}" rx="4.2" ry="4.6" fill="#fff"/><ellipse cx="${cx + 9}" cy="${cy + 9}" rx="4.2" ry="4.6" fill="#fff"/>` +
+    `<circle cx="${cx - 8.6}" cy="${cy + 9.4}" r="3.3" fill="#3d4a5c"/><circle cx="${cx + 9.4}" cy="${cy + 9.4}" r="3.3" fill="#3d4a5c"/>` +
+    `<circle cx="${cx - 8.6}" cy="${cy + 9.6}" r="1.8" fill="#1d2430"/><circle cx="${cx + 9.4}" cy="${cy + 9.6}" r="1.8" fill="#1d2430"/>` +
+    `<circle cx="${cx - 9.8}" cy="${cy + 8}" r="1.1" fill="#fff"/><circle cx="${cx + 8.2}" cy="${cy + 8}" r="1.1" fill="#fff"/>` +
+    `<path d="M${cx - 1.5},${cy + 14} Q${cx},${cy + 16} ${cx + 1.5},${cy + 14}" fill="none" stroke="#c98a70" stroke-width="1" stroke-linecap="round"/>` +
+    `<path d="M${cx - 7},${cy + 18} Q${cx},${cy + 30} ${cx + 7},${cy + 18} Q${cx},${cy + 20.5} ${cx - 7},${cy + 18} Z" fill="#a83c3c" stroke="#8a2c2c" stroke-width="0.8"/>` +
+    `<ellipse cx="${cx}" cy="${cy + 24.5}" rx="3.6" ry="2" fill="#f28c9c"/>` +
+    `<circle cx="${cx - 16}" cy="${cy + 16}" r="4.5" fill="#ff9e9e" opacity=".45"/><circle cx="${cx + 16}" cy="${cy + 16}" r="4.5" fill="#ff9e9e" opacity=".45"/>` +
+    `</g></g>`;
+}
+
 /* ---------------------------------------------------------- fondos */
 const FONDOS = {
-  dia: () =>
+  dia: (def) =>
     `<defs><linearGradient id="cielo-dia" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#a5d8ff"/><stop offset="1" stop-color="#e7f5ff"/></linearGradient></defs>` +
     `<rect width="600" height="320" fill="url(#cielo-dia)"/>` +
-    `<g>${[0, 45, 90, 135, 180, 225, 270, 315].map((a) => `<path d="M70,60 L70,18" transform="rotate(${a} 70 60)" stroke="#fcc419" stroke-width="5" stroke-linecap="round"/>`).join("")}</g>` +
-    `<circle cx="70" cy="60" r="28" fill="#ffd43b" stroke="#fab005" stroke-width="3"/>` +
+    (def && def.sol === "bebe" ? solBebe(74, 66) :
+      `<g>${[0, 45, 90, 135, 180, 225, 270, 315].map((a) => `<path d="M70,60 L70,18" transform="rotate(${a} 70 60)" stroke="#fcc419" stroke-width="5" stroke-linecap="round"/>`).join("")}</g>` +
+      `<circle cx="70" cy="60" r="28" fill="#ffd43b" stroke="#fab005" stroke-width="3"/>`) +
     nube(250, 55, 1) + nube(440, 85, 0.8) +
     `<path d="M0,230 C90,180 170,190 260,215 C350,240 450,175 600,205 L600,320 L0,320 Z" fill="#8ce99a"/>` +
     `<path d="M0,255 C120,225 240,250 340,240 C450,228 520,245 600,238 L600,320 L0,320 Z" fill="#69db7c"/>`,
@@ -295,7 +388,7 @@ function escena(def) {
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 320" role="img" aria-label="${esc(def.alt)}">` +
     `<clipPath id="recorte-${def.id}"><rect width="600" height="320" rx="22"/></clipPath>` +
     `<g clip-path="url(#recorte-${def.id})">` +
-    FONDOS[def.fondo || "dia"]() + (def.piso === false ? "" : piso()) + def.contenido + `</g>` +
+    FONDOS[def.fondo || "dia"](def) + (def.piso === false ? "" : piso()) + def.contenido + `</g>` +
     `<rect x="1.5" y="1.5" width="597" height="317" rx="22" fill="none" stroke="#6b4a2e" stroke-width="3"/>` +
     `</svg>`;
 }
@@ -306,5 +399,5 @@ function piezaSola(tipo, color, opciones) {
 }
 
 module.exports = {
-  pieza, perezoso, escena, piezaSola, estrella, corazon, flecha, globo, guarumo, nube, caja, corona, mango, trofeo, confeti, piso, FONDOS,
+  pieza, perezoso, mapache, lupa, escena, piezaSola, estrella, corazon, flecha, globo, guarumo, nube, caja, corona, mango, trofeo, confeti, piso, FONDOS,
 };
