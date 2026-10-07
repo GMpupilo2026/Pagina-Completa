@@ -1251,11 +1251,85 @@ en `admin.html#materiales` (se comparte como los otros dos) y en «Archivos».
   los cursos: comprueba el nombre que el correo **muestra** para cada curso del
   catálogo, y que lo que la tabla sí nombra coincida con el catálogo.
 
+## El curso y el libro «Ganar con poco»
+
+Un curso (26 lecciones en siete bloques) y su libro, de Oscar Angulo Cubero,
+sobre cómo se ganan las partidas que parecen tablas: ver las ventajas
+pequeñas (una pieza mejor, una casilla, un peón débil, un peón pasado, una
+torre activa, el rey más cerca, un tiempo), no regalarlas, sumarlas sin apuro
+y cobrarlas en el final. Seis capítulos —ver lo que no se ve, piezas buenas y
+malas, los peones, cambiar para ganar, la técnica en el final, paciencia y
+defensa— y un séptimo con el método: el cuaderno de ventajas.
+
+### Tomado de un libro ajeno como referencia, no copiado
+
+El dueño pidió «un libro y un curso» con *Ventajas microscópicas* (Héctor
+Leyva Paneque, 2004; edición electrónica de 2014), que dejó en una carpeta de
+su Drive. Ese libro tiene derechos de autor y prohíbe reproducirlo o tratarlo
+informáticamente, así que se hizo lo mismo que con «Rompe el estancamiento»:
+se tomó **la idea y nada más** —ganar sumando ventajas pequeñas, casi
+invisibles, en vez de esperar una combinación—, que además es de toda la
+tradición del ajedrez posicional. Ni el texto, ni las partidas comentadas que
+trae ese libro, ni su selección, ni los ejemplos, ni el título salen de ahí.
+Las lecciones están escritas para esto, en tuteo.
+
+### Las posiciones: de Lichess, comprobadas con Stockfish
+
+`herramientas/ganar-con-poco-generar.js` es el generador de «Rompe el
+estancamiento» con otros temas: los de la **técnica**, no los de la táctica
+(finales de torres, alfiles, caballos, damas y peones, la jugada tranquila,
+el peón avanzado, la coronación, la pieza atrapada, el zugzwang y la jugada
+defensiva). Las candidatas están en
+`herramientas/datos/ganar-con-poco-candidatas.txt` (la consulta, en su
+cabecera); pasan por el MISMO `analizar()` del diagnóstico (una sola jugada
+buena) y ninguna repite una del diagnóstico, «Ponte a prueba», «Mide tu
+fuerza» ni «Rompe el estancamiento».
+
+- **Lo que la lección dice de su ejemplo se comprueba en la posición**
+  (`cumple()`, que el verificador vuelve a usar): el «final de torres» no tiene
+  más que torres, reyes y peones, y hay torre de los dos lados (lo mismo con
+  alfiles, caballos y damas); la jugada «tranquila» no da jaque ni captura; el
+  zugzwang de «pasar el turno» empieza sin capturar. La primera corrida, sin
+  esa última regla, le dio a la lección del zugzwang un ejemplo cuya solución
+  era comerse una torre: la etiqueta de Lichess miraba la línea entera.
+- Los ejemplos de Lichess son a veces más tácticos de lo que la lección
+  promete (un final de damas que se gana cambiando las damas). Por eso el
+  `enlace` de las lecciones de finales dice lo que el motor comprobó —que la
+  jugada es la única que conserva la ventaja— y no cómo se gana.
+- **El ejemplo de cada lección es la misma posición en el curso y en el
+  libro**, como en «Rompe el estancamiento».
+
+### Cómo se regenera
+
+    STOCKFISH=/usr/games/stockfish node herramientas/ganar-con-poco-generar.js
+    node herramientas/curso-posiciones.js ganar-con-poco
+    python3 herramientas/curso-generar.py ganar-con-poco
+    CHROME_PATH=… node herramientas/curso-material-generar.js ganar-con-poco
+    node herramientas/curso-material-enlazar.js
+    CHROMIUM=… node herramientas/ganar-con-poco-pdf.js
+
+Lo comprueban `verificar-ganar-con-poco.js` (el banco, que el ejemplo del
+curso sea el del libro y que lo que dice la lección sea cierto en la
+posición, y la versión accesible) y `verificar-ganar-con-poco-pdf.py`
+(protección, autor, marca de agua en cada página, los siete capítulos, las 26
+lecciones, los 72 ejercicios y el cuaderno de ventajas).
+
+### Dónde quedó dado de alta
+
+En el catálogo (nivel Avanzado, después de «Rompe el estancamiento», con su
+diagrama), en «Mis cursos» de la Academia, en el material de la clase en vivo,
+en exámenes por curso (estrategia y finales), en el plan de entrenamiento del
+área de estrategia y en `interno.curso_lecciones` para su certificado
+(`20261007032207_curso_ganar_con_poco.sql`). El libro está en
+`admin.html#materiales` (se comparte como los otros) y en «Archivos». Como
+«Rompe el estancamiento», no está en la tienda, y el correo a la casa lo
+nombra desde el slug.
+
 ## Los materiales de clase
 
 `admin.html#materiales` («Materiales de clases») junta los materiales para dar
-clase —hoy, «Ponte a prueba», el banco de ejercicios «Mide tu fuerza», el libro
-«Rompe el estancamiento» y los cuentos de Peonita— y dice **con quién se comparte cada uno**: una
+clase —hoy, «Ponte a prueba», el banco de ejercicios «Mide tu fuerza», los libros
+«Rompe el estancamiento» y «Ganar con poco» y los cuentos de Peonita— y dice **con quién se comparte cada uno**: una
 persona, una academia entera o todos los profesores. Lo pinta
 `js/admin-materiales.js`; lo prueba `verificar-admin.js`.
 

@@ -216,7 +216,7 @@ function servidorPropio() {
         if (["inscripcion.html", "formulario.html", "libro-de-diagnostico-accesible.html",
              "guia-del-profesor-accesible.html", "fichas-de-estudio-accesible.html",
              "ponte-a-prueba-accesible.html", "ponte-a-prueba-versiones-accesible.html", "mide-tu-fuerza-accesible.html",
-             "rompe-el-estancamiento-accesible.html", "peonita-accesible.html", "peonita-trucos-accesible.html"].includes(e.name)) continue;
+             "rompe-el-estancamiento-accesible.html", "ganar-con-poco-accesible.html", "peonita-accesible.html", "peonita-trucos-accesible.html"].includes(e.name)) continue;
         paginas.push(rel);
       }
     }

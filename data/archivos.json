@@ -23,7 +23,7 @@
     "nombre": "Formación docente"
    }
   ],
-  "total": 508,
+  "total": 561,
   "material": [
    {
     "ruta": "material/diagnostico-de-nivel/diagnostico-de-nivel.pdf",
@@ -52,6 +52,13 @@
     "tipo": "otro",
     "kb": 22302,
     "libro": "Fichas de estudio"
+   },
+   {
+    "ruta": "material/ganar-con-poco/ganar-con-poco.pdf",
+    "titulo": "Ganar con poco — el arte de las ventajas pequeñas",
+    "tipo": "otro",
+    "kb": 1386,
+    "libro": "Ganar con poco"
    },
    {
     "ruta": "material/guia-del-profesor/guia-del-profesor-presentacion.pdf",
@@ -3991,6 +3998,482 @@
     "otros": []
    },
    {
+    "slug": "ganar-con-poco",
+    "titulo": "Ganar con poco",
+    "nivel": "avanzado",
+    "lecciones": [
+     {
+      "numero": 1,
+      "titulo": "Las ventajas que no se ven",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ganar-con-poco/01-las-ventajas-que-no-se-ven-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 190
+       },
+       {
+        "ruta": "cursos/recursos/ganar-con-poco/01-las-ventajas-que-no-se-ven-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 6
+       }
+      ]
+     },
+     {
+      "numero": 2,
+      "titulo": "La pieza que no tiene casillas",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ganar-con-poco/02-la-pieza-que-no-tiene-casillas-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 192
+       },
+       {
+        "ruta": "cursos/recursos/ganar-con-poco/02-la-pieza-que-no-tiene-casillas-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 5
+       }
+      ]
+     },
+     {
+      "numero": 3,
+      "titulo": "Un tiempo también es una ventaja",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ganar-con-poco/03-un-tiempo-tambien-es-una-ventaja-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 189
+       },
+       {
+        "ruta": "cursos/recursos/ganar-con-poco/03-un-tiempo-tambien-es-una-ventaja-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 5
+       }
+      ]
+     },
+     {
+      "numero": 4,
+      "titulo": "Primero, no dar nada",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ganar-con-poco/04-primero-no-dar-nada-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 188
+       },
+       {
+        "ruta": "cursos/recursos/ganar-con-poco/04-primero-no-dar-nada-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 5
+       }
+      ]
+     },
+     {
+      "numero": 5,
+      "titulo": "La peor pieza manda",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ganar-con-poco/05-la-peor-pieza-manda-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 180
+       },
+       {
+        "ruta": "cursos/recursos/ganar-con-poco/05-la-peor-pieza-manda-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 5
+       }
+      ]
+     },
+     {
+      "numero": 6,
+      "titulo": "Alfil bueno, alfil malo",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ganar-con-poco/06-alfil-bueno-alfil-malo-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 186
+       },
+       {
+        "ruta": "cursos/recursos/ganar-con-poco/06-alfil-bueno-alfil-malo-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 5
+       }
+      ]
+     },
+     {
+      "numero": 7,
+      "titulo": "El caballo y sus casillas",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ganar-con-poco/07-el-caballo-y-sus-casillas-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 185
+       },
+       {
+        "ruta": "cursos/recursos/ganar-con-poco/07-el-caballo-y-sus-casillas-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 5
+       }
+      ]
+     },
+     {
+      "numero": 8,
+      "titulo": "La torre activa",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ganar-con-poco/08-la-torre-activa-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 187
+       },
+       {
+        "ruta": "cursos/recursos/ganar-con-poco/08-la-torre-activa-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 5
+       }
+      ]
+     },
+     {
+      "numero": 9,
+      "titulo": "El rey también juega",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ganar-con-poco/09-el-rey-tambien-juega-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 187
+       },
+       {
+        "ruta": "cursos/recursos/ganar-con-poco/09-el-rey-tambien-juega-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 5
+       }
+      ]
+     },
+     {
+      "numero": 10,
+      "titulo": "El peón pasado",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ganar-con-poco/10-el-peon-pasado-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 188
+       },
+       {
+        "ruta": "cursos/recursos/ganar-con-poco/10-el-peon-pasado-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 5
+       }
+      ]
+     },
+     {
+      "numero": 11,
+      "titulo": "Empujar a tiempo",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ganar-con-poco/11-empujar-a-tiempo-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 189
+       },
+       {
+        "ruta": "cursos/recursos/ganar-con-poco/11-empujar-a-tiempo-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 5
+       }
+      ]
+     },
+     {
+      "numero": 12,
+      "titulo": "La mayoría de peones",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ganar-con-poco/12-la-mayoria-de-peones-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 186
+       },
+       {
+        "ruta": "cursos/recursos/ganar-con-poco/12-la-mayoria-de-peones-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 5
+       }
+      ]
+     },
+     {
+      "numero": 13,
+      "titulo": "Una debilidad se ataca, no se gana de golpe",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ganar-con-poco/13-una-debilidad-se-ataca-no-se-gana-de-golpe-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 188
+       },
+       {
+        "ruta": "cursos/recursos/ganar-con-poco/13-una-debilidad-se-ataca-no-se-gana-de-golpe-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 5
+       }
+      ]
+     },
+     {
+      "numero": 14,
+      "titulo": "Qué piezas cambiar",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ganar-con-poco/14-que-piezas-cambiar-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 188
+       },
+       {
+        "ruta": "cursos/recursos/ganar-con-poco/14-que-piezas-cambiar-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 5
+       }
+      ]
+     },
+     {
+      "numero": 15,
+      "titulo": "Pasar a un final que se gana",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ganar-con-poco/15-pasar-a-un-final-que-se-gana-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 186
+       },
+       {
+        "ruta": "cursos/recursos/ganar-con-poco/15-pasar-a-un-final-que-se-gana-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 5
+       }
+      ]
+     },
+     {
+      "numero": 16,
+      "titulo": "Las dos debilidades",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ganar-con-poco/16-las-dos-debilidades-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 186
+       },
+       {
+        "ruta": "cursos/recursos/ganar-con-poco/16-las-dos-debilidades-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 5
+       }
+      ]
+     },
+     {
+      "numero": 17,
+      "titulo": "El zugzwang",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ganar-con-poco/17-el-zugzwang-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 188
+       },
+       {
+        "ruta": "cursos/recursos/ganar-con-poco/17-el-zugzwang-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 5
+       }
+      ]
+     },
+     {
+      "numero": 18,
+      "titulo": "Finales de torres",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ganar-con-poco/18-finales-de-torres-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 188
+       },
+       {
+        "ruta": "cursos/recursos/ganar-con-poco/18-finales-de-torres-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 5
+       }
+      ]
+     },
+     {
+      "numero": 19,
+      "titulo": "Finales de alfiles",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ganar-con-poco/19-finales-de-alfiles-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 187
+       },
+       {
+        "ruta": "cursos/recursos/ganar-con-poco/19-finales-de-alfiles-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 5
+       }
+      ]
+     },
+     {
+      "numero": 20,
+      "titulo": "Finales de caballos",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ganar-con-poco/20-finales-de-caballos-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 187
+       },
+       {
+        "ruta": "cursos/recursos/ganar-con-poco/20-finales-de-caballos-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 5
+       }
+      ]
+     },
+     {
+      "numero": 21,
+      "titulo": "Finales de damas",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ganar-con-poco/21-finales-de-damas-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 188
+       },
+       {
+        "ruta": "cursos/recursos/ganar-con-poco/21-finales-de-damas-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 5
+       }
+      ]
+     },
+     {
+      "numero": 22,
+      "titulo": "No apurarse",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ganar-con-poco/22-no-apurarse-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 192
+       },
+       {
+        "ruta": "cursos/recursos/ganar-con-poco/22-no-apurarse-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 5
+       }
+      ]
+     },
+     {
+      "numero": 23,
+      "titulo": "Quitarle el contrajuego",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ganar-con-poco/23-quitarle-el-contrajuego-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 191
+       },
+       {
+        "ruta": "cursos/recursos/ganar-con-poco/23-quitarle-el-contrajuego-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 5
+       }
+      ]
+     },
+     {
+      "numero": 24,
+      "titulo": "Cuando el rival aprieta",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ganar-con-poco/24-cuando-el-rival-aprieta-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 192
+       },
+       {
+        "ruta": "cursos/recursos/ganar-con-poco/24-cuando-el-rival-aprieta-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 5
+       }
+      ]
+     },
+     {
+      "numero": 25,
+      "titulo": "Pasar el turno",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ganar-con-poco/25-pasar-el-turno-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 187
+       },
+       {
+        "ruta": "cursos/recursos/ganar-con-poco/25-pasar-el-turno-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 5
+       }
+      ]
+     },
+     {
+      "numero": 26,
+      "titulo": "Tu cuaderno de ventajas",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ganar-con-poco/26-tu-cuaderno-de-ventajas-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 158
+       },
+       {
+        "ruta": "cursos/recursos/ganar-con-poco/26-tu-cuaderno-de-ventajas-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 5
+       }
+      ]
+     }
+    ],
+    "otros": []
+   },
+   {
     "slug": "preparacion-para-torneos",
     "titulo": "Preparación para Torneos",
     "nivel": "competicion",
@@ -4746,7 +5229,7 @@
     "nombre": "Formación docente"
    }
   ],
-  "total": 239,
+  "total": 265,
   "material": [],
   "cursos": [
    {
@@ -7194,6 +7677,326 @@
     "otros": []
    },
    {
+    "slug": "ganar-con-poco",
+    "titulo": "Ganar con poco",
+    "nivel": "avanzado",
+    "lecciones": [
+     {
+      "numero": 1,
+      "titulo": "Las ventajas que no se ven",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ganar-con-poco/01-las-ventajas-que-no-se-ven.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 2,
+      "titulo": "La pieza que no tiene casillas",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ganar-con-poco/02-la-pieza-que-no-tiene-casillas.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 3,
+      "titulo": "Un tiempo también es una ventaja",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ganar-con-poco/03-un-tiempo-tambien-es-una-ventaja.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 4,
+      "titulo": "Primero, no dar nada",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ganar-con-poco/04-primero-no-dar-nada.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 5,
+      "titulo": "La peor pieza manda",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ganar-con-poco/05-la-peor-pieza-manda.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 6,
+      "titulo": "Alfil bueno, alfil malo",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ganar-con-poco/06-alfil-bueno-alfil-malo.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 7,
+      "titulo": "El caballo y sus casillas",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ganar-con-poco/07-el-caballo-y-sus-casillas.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 8,
+      "titulo": "La torre activa",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ganar-con-poco/08-la-torre-activa.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 9,
+      "titulo": "El rey también juega",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ganar-con-poco/09-el-rey-tambien-juega.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 10,
+      "titulo": "El peón pasado",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ganar-con-poco/10-el-peon-pasado.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 11,
+      "titulo": "Empujar a tiempo",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ganar-con-poco/11-empujar-a-tiempo.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 12,
+      "titulo": "La mayoría de peones",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ganar-con-poco/12-la-mayoria-de-peones.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 13,
+      "titulo": "Una debilidad se ataca, no se gana de golpe",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ganar-con-poco/13-una-debilidad-se-ataca-no-se-gana-de-golpe.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 14,
+      "titulo": "Qué piezas cambiar",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ganar-con-poco/14-que-piezas-cambiar.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 15,
+      "titulo": "Pasar a un final que se gana",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ganar-con-poco/15-pasar-a-un-final-que-se-gana.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 16,
+      "titulo": "Las dos debilidades",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ganar-con-poco/16-las-dos-debilidades.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 17,
+      "titulo": "El zugzwang",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ganar-con-poco/17-el-zugzwang.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 18,
+      "titulo": "Finales de torres",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ganar-con-poco/18-finales-de-torres.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 19,
+      "titulo": "Finales de alfiles",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ganar-con-poco/19-finales-de-alfiles.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 20,
+      "titulo": "Finales de caballos",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ganar-con-poco/20-finales-de-caballos.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 21,
+      "titulo": "Finales de damas",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ganar-con-poco/21-finales-de-damas.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 22,
+      "titulo": "No apurarse",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ganar-con-poco/22-no-apurarse.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 23,
+      "titulo": "Quitarle el contrajuego",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ganar-con-poco/23-quitarle-el-contrajuego.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 24,
+      "titulo": "Cuando el rival aprieta",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ganar-con-poco/24-cuando-el-rival-aprieta.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 25,
+      "titulo": "Pasar el turno",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ganar-con-poco/25-pasar-el-turno.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 26,
+      "titulo": "Tu cuaderno de ventajas",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ganar-con-poco/26-tu-cuaderno-de-ventajas.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     }
+    ],
+    "otros": []
+   },
+   {
     "slug": "preparacion-para-torneos",
     "titulo": "Preparación para Torneos",
     "nivel": "competicion",
@@ -7747,7 +8550,7 @@
     "nombre": "Formación docente"
    }
   ],
-  "total": 231,
+  "total": 258,
   "material": [
    {
     "ruta": "material/fichas-de-estudio/fichas-de-estudio-accesible.html",
@@ -7755,6 +8558,13 @@
     "tipo": "accesible",
     "kb": 547,
     "libro": "Fichas de estudio"
+   },
+   {
+    "ruta": "material/ganar-con-poco/ganar-con-poco-accesible.html",
+    "titulo": "Ganar con poco",
+    "tipo": "accesible",
+    "kb": 131,
+    "libro": "Ganar con poco"
    },
    {
     "ruta": "material/libro-de-diagnostico/libro-de-diagnostico-accesible.html",
@@ -10329,6 +11139,326 @@
         "titulo": "Material accesible",
         "tipo": "accesible",
         "kb": 10
+       }
+      ]
+     }
+    ],
+    "otros": []
+   },
+   {
+    "slug": "ganar-con-poco",
+    "titulo": "Ganar con poco",
+    "nivel": "avanzado",
+    "lecciones": [
+     {
+      "numero": 1,
+      "titulo": "Las ventajas que no se ven",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ganar-con-poco/01-las-ventajas-que-no-se-ven-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 13
+       }
+      ]
+     },
+     {
+      "numero": 2,
+      "titulo": "La pieza que no tiene casillas",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ganar-con-poco/02-la-pieza-que-no-tiene-casillas-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 13
+       }
+      ]
+     },
+     {
+      "numero": 3,
+      "titulo": "Un tiempo también es una ventaja",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ganar-con-poco/03-un-tiempo-tambien-es-una-ventaja-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 12
+       }
+      ]
+     },
+     {
+      "numero": 4,
+      "titulo": "Primero, no dar nada",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ganar-con-poco/04-primero-no-dar-nada-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 12
+       }
+      ]
+     },
+     {
+      "numero": 5,
+      "titulo": "La peor pieza manda",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ganar-con-poco/05-la-peor-pieza-manda-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 8
+       }
+      ]
+     },
+     {
+      "numero": 6,
+      "titulo": "Alfil bueno, alfil malo",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ganar-con-poco/06-alfil-bueno-alfil-malo-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 12
+       }
+      ]
+     },
+     {
+      "numero": 7,
+      "titulo": "El caballo y sus casillas",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ganar-con-poco/07-el-caballo-y-sus-casillas-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 12
+       }
+      ]
+     },
+     {
+      "numero": 8,
+      "titulo": "La torre activa",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ganar-con-poco/08-la-torre-activa-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 12
+       }
+      ]
+     },
+     {
+      "numero": 9,
+      "titulo": "El rey también juega",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ganar-con-poco/09-el-rey-tambien-juega-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 13
+       }
+      ]
+     },
+     {
+      "numero": 10,
+      "titulo": "El peón pasado",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ganar-con-poco/10-el-peon-pasado-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 12
+       }
+      ]
+     },
+     {
+      "numero": 11,
+      "titulo": "Empujar a tiempo",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ganar-con-poco/11-empujar-a-tiempo-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 13
+       }
+      ]
+     },
+     {
+      "numero": 12,
+      "titulo": "La mayoría de peones",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ganar-con-poco/12-la-mayoria-de-peones-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 12
+       }
+      ]
+     },
+     {
+      "numero": 13,
+      "titulo": "Una debilidad se ataca, no se gana de golpe",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ganar-con-poco/13-una-debilidad-se-ataca-no-se-gana-de-golpe-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 12
+       }
+      ]
+     },
+     {
+      "numero": 14,
+      "titulo": "Qué piezas cambiar",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ganar-con-poco/14-que-piezas-cambiar-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 13
+       }
+      ]
+     },
+     {
+      "numero": 15,
+      "titulo": "Pasar a un final que se gana",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ganar-con-poco/15-pasar-a-un-final-que-se-gana-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 13
+       }
+      ]
+     },
+     {
+      "numero": 16,
+      "titulo": "Las dos debilidades",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ganar-con-poco/16-las-dos-debilidades-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 12
+       }
+      ]
+     },
+     {
+      "numero": 17,
+      "titulo": "El zugzwang",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ganar-con-poco/17-el-zugzwang-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 12
+       }
+      ]
+     },
+     {
+      "numero": 18,
+      "titulo": "Finales de torres",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ganar-con-poco/18-finales-de-torres-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 12
+       }
+      ]
+     },
+     {
+      "numero": 19,
+      "titulo": "Finales de alfiles",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ganar-con-poco/19-finales-de-alfiles-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 12
+       }
+      ]
+     },
+     {
+      "numero": 20,
+      "titulo": "Finales de caballos",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ganar-con-poco/20-finales-de-caballos-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 12
+       }
+      ]
+     },
+     {
+      "numero": 21,
+      "titulo": "Finales de damas",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ganar-con-poco/21-finales-de-damas-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 12
+       }
+      ]
+     },
+     {
+      "numero": 22,
+      "titulo": "No apurarse",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ganar-con-poco/22-no-apurarse-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 12
+       }
+      ]
+     },
+     {
+      "numero": 23,
+      "titulo": "Quitarle el contrajuego",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ganar-con-poco/23-quitarle-el-contrajuego-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 12
+       }
+      ]
+     },
+     {
+      "numero": 24,
+      "titulo": "Cuando el rival aprieta",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ganar-con-poco/24-cuando-el-rival-aprieta-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 13
+       }
+      ]
+     },
+     {
+      "numero": 25,
+      "titulo": "Pasar el turno",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ganar-con-poco/25-pasar-el-turno-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 12
+       }
+      ]
+     },
+     {
+      "numero": 26,
+      "titulo": "Tu cuaderno de ventajas",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/ganar-con-poco/26-tu-cuaderno-de-ventajas-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 11
        }
       ]
      }
