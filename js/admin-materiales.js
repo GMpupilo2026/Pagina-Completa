@@ -1,6 +1,6 @@
 /* Los materiales de clase en admin.html#materiales: cada material (el libro
  * «Ponte a prueba», los diez volúmenes del banco de ejercicios «Mide tu fuerza»,
- * el libro «Rompe el estancamiento» y los cuentos de Peonita), con sus
+ * los libros «Rompe el estancamiento» y «Ganar con poco» y los cuentos de Peonita), con sus
  * sub-fichas —las pruebas y sus versiones como cuestionario, si las tiene— y
  * CON QUIÉN se comparte.
  *
@@ -160,6 +160,17 @@
       archivos: [
         { href: "material/rompe-el-estancamiento/rompe-el-estancamiento.pdf", texto: "📥 El libro en PDF" },
         { href: "material/rompe-el-estancamiento/rompe-el-estancamiento-accesible.html", texto: "♿ Versión accesible" },
+      ],
+    },
+    {
+      producto: "ganar-con-poco",
+      emoji: "📗",
+      titulo: "Ganar con poco",
+      autor: "Oscar Angulo Cubero",
+      resumen: "El libro del curso del mismo nombre: cómo ver, sumar y cobrar las ventajas pequeñas —piezas, peones, cambios, finales, paciencia y defensa—, una lección por idea con su ejemplo comentado y su tarea, dieciocho partidas completas con sus momentos clave, 72 ejercicios con soluciones y el cuaderno de ventajas para imprimir.",
+      archivos: [
+        { href: "material/ganar-con-poco/ganar-con-poco.pdf", texto: "📥 El libro en PDF" },
+        { href: "material/ganar-con-poco/ganar-con-poco-accesible.html", texto: "♿ Versión accesible" },
       ],
     },
     {
