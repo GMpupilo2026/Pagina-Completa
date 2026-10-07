@@ -25,8 +25,9 @@
  *     herramientas/diagnostico-lichess.js), que solo deja las que tienen UNA
  *     jugada buena. Las de ataque además tienen que ganar (+3 o mate); las de
  *     defensa (defensiveMove) basta con que conserven lo que hay.
- *   - Ninguna repite una del diagnóstico, de «Ponte a prueba», de «Mide tu
- *     fuerza» ni de «Rompe el estancamiento».
+ *   - Ninguna repite una del diagnóstico ni de otro libro de material/
+ *     («Ponte a prueba», los diez volúmenes de «Mide tu fuerza», «Rompe el
+ *     estancamiento»…).
  *   - Los temas son los de la técnica, no los de la táctica: finales de cada
  *     pieza, jugadas tranquilas, peones pasados, piezas atrapadas, zugzwang.
  *     Cada capítulo pide los que muestran su idea (TEMAS_CAPITULO), y lo que
@@ -106,15 +107,23 @@ const PISTA = {
 };
 
 /* ---------- leer las candidatas ---------- */
+/* Las posiciones que ya usa otro libro: el diagnóstico y TODOS los bancos de
+   material/ (cada uno en su propia ventana: los volúmenes de «Mide tu fuerza»
+   usan el mismo nombre de variable y uno pisaría al otro). Una lista fija se
+   quedó atrás cuando llegaron los volúmenes 2 a 10. */
 function yaUsadas() {
-  const w = {};
-  new Function("window", fs.readFileSync(path.join(RAIZ, "js", "diagnostico-items.js"), "utf8"))(w);
-  new Function("window", fs.readFileSync(path.join(RAIZ, "material", "ponte-a-prueba", "banco.js"), "utf8"))(w);
-  new Function("window", fs.readFileSync(path.join(RAIZ, "material", "mide-tu-fuerza", "banco.js"), "utf8"))(w);
-  new Function("window", fs.readFileSync(path.join(RAIZ, "material", "rompe-el-estancamiento", "banco.js"), "utf8"))(w);
-  return new Set([].concat(w.DIAGNOSTICO_ITEMS || [], w.LIBRO_EXAMEN_ITEMS || [], w.MIDE_TU_FUERZA_ITEMS || [],
-    w.ROMPE_EL_ESTANCAMIENTO_ITEMS || [])
-    .map((i) => i.lichess).filter(Boolean));
+  const usadas = new Set();
+  const sumar = (archivo) => {
+    const w = {};
+    new Function("window", fs.readFileSync(archivo, "utf8"))(w);
+    Object.values(w).forEach((v) => { if (Array.isArray(v)) v.forEach((i) => i && i.lichess && usadas.add(i.lichess)); });
+  };
+  sumar(path.join(RAIZ, "js", "diagnostico-items.js"));
+  fs.readdirSync(path.join(RAIZ, "material")).forEach((d) => {
+    const f = path.join(RAIZ, "material", d, "banco.js");
+    if (d !== "ganar-con-poco" && fs.existsSync(f)) sumar(f);
+  });
+  return usadas;
 }
 
 function leerCandidatas() {
@@ -351,4 +360,4 @@ ${cuerpo}
 }
 
 if (require.main === module) main().catch((e) => { console.error(e.message); process.exit(1); });
-module.exports = { TEMAS_CAPITULO, PISTA, DESCUENTO_LICHESS, cumple };
+module.exports = { TEMAS_CAPITULO, PISTA, DESCUENTO_LICHESS, cumple, yaUsadas };

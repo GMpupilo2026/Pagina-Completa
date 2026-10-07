@@ -97,41 +97,31 @@
     {
      "id": "GP-3",
      "idx": 0,
-     "fen": "6k1/5p2/3p1Bp1/2pP4/2b1PKP1/5P2/p3q3/R7 w - - 0 53",
-     "turno": "w",
-     "titulo": "La jugada buena no ataca nada de inmediato, pero llega una jugada antes que el rival. Juegan las blancas; el rival acaba de jugar …hxg6.",
-     "resultado": "1-0",
-     "resultado_texto": "Ganan blancas",
-     "linea": "53.Rh1 Qd2+ 54.Kg3 Qe1+ 55.Rxe1",
-     "linea_es": "53.Th1 Dd2+ 54.Rg3 De1+ 55.Txe1",
+     "fen": "5r1k/1p3pp1/p3b3/Q7/4q3/P2pB2P/1P1R1PP1/6K1 b - - 0 25",
+     "turno": "b",
+     "titulo": "La jugada buena no ataca nada de inmediato, pero llega una jugada antes que el rival. Juegan las negras; el rival acaba de jugar Txd2.",
+     "resultado": "0-1",
+     "resultado_texto": "Ganan negras",
+     "linea": "25...Bd5 26.f3 Qxe3+",
+     "linea_es": "25...Ad5 26.f3 Dxe3+",
      "jugadas": [
       {
-       "san": "Rh1",
-       "uci": "a1h1",
-       "fen": "6k1/5p2/3p1Bp1/2pP4/2b1PKP1/5P2/p3q3/7R b - - 1 53"
+       "san": "Bd5",
+       "uci": "e6d5",
+       "fen": "5r1k/1p3pp1/p7/Q2b4/4q3/P2pB2P/1P1R1PP1/6K1 w - - 1 26"
       },
       {
-       "san": "Qd2+",
-       "uci": "e2d2",
-       "fen": "6k1/5p2/3p1Bp1/2pP4/2b1PKP1/5P2/p2q4/7R w - - 2 54"
+       "san": "f3",
+       "uci": "f2f3",
+       "fen": "5r1k/1p3pp1/p7/Q2b4/4q3/P2pBP1P/1P1R2P1/6K1 b - - 0 26"
       },
       {
-       "san": "Kg3",
-       "uci": "f4g3",
-       "fen": "6k1/5p2/3p1Bp1/2pP4/2b1P1P1/5PK1/p2q4/7R b - - 3 54"
-      },
-      {
-       "san": "Qe1+",
-       "uci": "d2e1",
-       "fen": "6k1/5p2/3p1Bp1/2pP4/2b1P1P1/5PK1/p7/4q2R w - - 4 55"
-      },
-      {
-       "san": "Rxe1",
-       "uci": "h1e1",
-       "fen": "6k1/5p2/3p1Bp1/2pP4/2b1P1P1/5PK1/p7/4R3 b - - 0 55"
+       "san": "Qxe3+",
+       "uci": "e4e3",
+       "fen": "5r1k/1p3pp1/p7/Q2b4/8/P2pqP1P/1P1R2P1/6K1 w - - 0 27"
       }
      ],
-     "comentario": "53.Th1 Dd2+ 54.Rg3 De1+ 55.Txe1. La clave es una jugada tranquila: sin jaque ni captura, pero sin defensa. No hay jaque ni captura: la jugada gana porque llega a tiempo, y el rival ya no alcanza a responder. (Ejercicio 0Sqrl de la base abierta de Lichess (CC0), rating 1413. Stockfish 16 a profundidad 18: Th1 es la mejor (+5,4) y la segunda queda en -5,9.)",
+     "comentario": "25…Ad5 26.f3 Dxe3+. La clave es una jugada tranquila: sin jaque ni captura, pero sin defensa. No hay jaque ni captura: la jugada gana porque llega a tiempo, y el rival ya no alcanza a responder. (Ejercicio 07wdS de la base abierta de Lichess (CC0), rating 1613. Stockfish 16 a profundidad 18: Ad5 es la mejor (+5,7) y la segunda queda en +0,1.)",
      "clave": true,
      "marcas": []
     }
@@ -437,41 +427,31 @@
     {
      "id": "GP-10",
      "idx": 0,
-     "fen": "8/5k2/3p3R/2n2B2/7P/2p1PKP1/8/3r4 b - - 2 38",
+     "fen": "8/8/6p1/PK1N4/6bP/1p6/k7/8 b - - 0 57",
      "turno": "b",
-     "titulo": "Hay un peón muy avanzado en el tablero. La jugada buena gira alrededor de él. Juegan las negras; el rival acaba de jugar Rf3.",
+     "titulo": "Hay un peón muy avanzado en el tablero. La jugada buena gira alrededor de él. Juegan las negras; el rival acaba de jugar a5.",
      "resultado": "0-1",
      "resultado_texto": "Ganan negras",
-     "linea": "38...Rf1+ 39.Kg4 Rxf5 40.Kxf5 c2",
-     "linea_es": "38...Tf1+ 39.Rg4 Txf5 40.Rxf5 c2",
+     "linea": "57...b2 58.Nc3+ Kb3",
+     "linea_es": "57...b2 58.Cc3+ Rb3",
      "jugadas": [
       {
-       "san": "Rf1+",
-       "uci": "d1f1",
-       "fen": "8/5k2/3p3R/2n2B2/7P/2p1PKP1/8/5r2 w - - 3 39"
+       "san": "b2",
+       "uci": "b3b2",
+       "fen": "8/8/6p1/PK1N4/6bP/8/kp6/8 w - - 0 58"
       },
       {
-       "san": "Kg4",
-       "uci": "f3g4",
-       "fen": "8/5k2/3p3R/2n2B2/6KP/2p1P1P1/8/5r2 b - - 4 39"
+       "san": "Nc3+",
+       "uci": "d5c3",
+       "fen": "8/8/6p1/PK6/6bP/2N5/kp6/8 b - - 1 58"
       },
       {
-       "san": "Rxf5",
-       "uci": "f1f5",
-       "fen": "8/5k2/3p3R/2n2r2/6KP/2p1P1P1/8/8 w - - 0 40"
-      },
-      {
-       "san": "Kxf5",
-       "uci": "g4f5",
-       "fen": "8/5k2/3p3R/2n2K2/7P/2p1P1P1/8/8 b - - 0 40"
-      },
-      {
-       "san": "c2",
-       "uci": "c3c2",
-       "fen": "8/5k2/3p3R/2n2K2/7P/4P1P1/2p5/8 w - - 0 41"
+       "san": "Kb3",
+       "uci": "a2b3",
+       "fen": "8/8/6p1/PK6/6bP/1kN5/1p6/8 w - - 2 59"
       }
      ],
-     "comentario": "38…Tf1+ 39.Rg4 Txf5 40.Rxf5 c2. El peón avanzado decide: hay que empujarlo o aprovecharlo a tiempo. Fíjate en el peón avanzado: la ventaja no está en el material de hoy, sino en lo que ese peón amenaza ser. (Ejercicio 0iVWb de la base abierta de Lichess (CC0), rating 1601. Stockfish 16 a profundidad 18: Tf1+ es la mejor (+4,6) y la segunda queda en +0,1.)",
+     "comentario": "57…b2 58.Cc3+ Rb3. Es una jugada defensiva precisa: la única que sostiene la posición. Fíjate en el peón avanzado: la ventaja no está en el material de hoy, sino en lo que ese peón amenaza ser. (Ejercicio 0r1nZ de la base abierta de Lichess (CC0), rating 1488. Stockfish 16 a profundidad 18: b2 es la mejor (+4,8) y la segunda queda en +1,3.)",
      "clave": true,
      "marcas": []
     }
@@ -587,31 +567,41 @@
     {
      "id": "GP-13",
      "idx": 0,
-     "fen": "5r1k/1p3pp1/p3b3/Q7/4q3/P2pB2P/1P1R1PP1/6K1 b - - 0 25",
+     "fen": "6k1/pp3pqp/8/3p2pP/PP2p1P1/4Pn2/4QP2/2R4K b - - 1 36",
      "turno": "b",
-     "titulo": "No hay golpe que gane de inmediato: la jugada buena es tranquila y deja al rival sin forma de defender todo. Juegan las negras; el rival acaba de jugar Txd2.",
+     "titulo": "No hay golpe que gane de inmediato: la jugada buena es tranquila y deja al rival sin forma de defender todo. Juegan las negras; el rival acaba de jugar Tc1.",
      "resultado": "0-1",
      "resultado_texto": "Ganan negras",
-     "linea": "25...Bd5 26.f3 Qxe3+",
-     "linea_es": "25...Ad5 26.f3 Dxe3+",
+     "linea": "36...Qe5 37.Qxf3 exf3 38.Rc8+ Kg7",
+     "linea_es": "36...De5 37.Dxf3 exf3 38.Tc8+ Rg7",
      "jugadas": [
       {
-       "san": "Bd5",
-       "uci": "e6d5",
-       "fen": "5r1k/1p3pp1/p7/Q2b4/4q3/P2pB2P/1P1R1PP1/6K1 w - - 1 26"
+       "san": "Qe5",
+       "uci": "g7e5",
+       "fen": "6k1/pp3p1p/8/3pq1pP/PP2p1P1/4Pn2/4QP2/2R4K w - - 2 37"
       },
       {
-       "san": "f3",
-       "uci": "f2f3",
-       "fen": "5r1k/1p3pp1/p7/Q2b4/4q3/P2pBP1P/1P1R2P1/6K1 b - - 0 26"
+       "san": "Qxf3",
+       "uci": "e2f3",
+       "fen": "6k1/pp3p1p/8/3pq1pP/PP2p1P1/4PQ2/5P2/2R4K b - - 0 37"
       },
       {
-       "san": "Qxe3+",
-       "uci": "e4e3",
-       "fen": "5r1k/1p3pp1/p7/Q2b4/8/P2pqP1P/1P1R2P1/6K1 w - - 0 27"
+       "san": "exf3",
+       "uci": "e4f3",
+       "fen": "6k1/pp3p1p/8/3pq1pP/PP4P1/4Pp2/5P2/2R4K w - - 0 38"
+      },
+      {
+       "san": "Rc8+",
+       "uci": "c1c8",
+       "fen": "2R3k1/pp3p1p/8/3pq1pP/PP4P1/4Pp2/5P2/7K b - - 1 38"
+      },
+      {
+       "san": "Kg7",
+       "uci": "g8g7",
+       "fen": "2R5/pp3pkp/8/3pq1pP/PP4P1/4Pp2/5P2/7K w - - 2 39"
       }
      ],
-     "comentario": "25…Ad5 26.f3 Dxe3+. La clave es una jugada tranquila: sin jaque ni captura, pero sin defensa. La jugada no captura ni da jaque: suma un atacante más, o le quita un defensor al rival, y con eso alcanza. (Ejercicio 07wdS de la base abierta de Lichess (CC0), rating 1613. Stockfish 16 a profundidad 18: Ad5 es la mejor (+5,7) y la segunda queda en +0,1.)",
+     "comentario": "36…De5 37.Dxf3 exf3 38.Tc8+ Rg7. La clave es una jugada tranquila: sin jaque ni captura, pero sin defensa. La jugada no captura ni da jaque: suma un atacante más, o le quita un defensor al rival, y con eso alcanza. (Ejercicio 2cBgW de la base abierta de Lichess (CC0), rating 1311. Stockfish 16 a profundidad 18: De5 es la mejor (+6,3) y la segunda queda en 0,0.)",
      "clave": true,
      "marcas": []
     }
@@ -827,31 +817,61 @@
     {
      "id": "GP-18",
      "idx": 0,
-     "fen": "8/2p4r/1p6/3R1P2/P3p1Pp/5k1K/P7/8 w - - 0 49",
+     "fen": "R7/8/8/2p4p/2Pk3P/P4p2/3r1p2/5K2 w - - 2 36",
      "turno": "w",
-     "titulo": "Final de torres. Antes de mover, mira las tres cosas: qué torre está activa, dónde está cada peón pasado y qué rey está cortado. Juegan las blancas; el rival acaba de jugar …e4.",
+     "titulo": "Final de torres. Antes de mover, mira las tres cosas: qué torre está activa, dónde está cada peón pasado y qué rey está cortado. Juegan las blancas; el rival acaba de jugar …Rd4.",
      "resultado": "1-0",
      "resultado_texto": "Ganan blancas",
-     "linea": "49.f6 e3 50.Rf5+",
-     "linea_es": "49.f6 e3 50.Tf5+",
+     "linea": "36.Rd8+ Kc3 37.Rxd2 Kxd2 38.a4 Kd3 39.a5 Kxc4 40.a6",
+     "linea_es": "36.Td8+ Rc3 37.Txd2 Rxd2 38.a4 Rd3 39.a5 Rxc4 40.a6",
      "jugadas": [
       {
-       "san": "f6",
-       "uci": "f5f6",
-       "fen": "8/2p4r/1p3P2/3R4/P3p1Pp/5k1K/P7/8 b - - 0 49"
+       "san": "Rd8+",
+       "uci": "a8d8",
+       "fen": "3R4/8/8/2p4p/2Pk3P/P4p2/3r1p2/5K2 b - - 3 36"
       },
       {
-       "san": "e3",
-       "uci": "e4e3",
-       "fen": "8/2p4r/1p3P2/3R4/P5Pp/4pk1K/P7/8 w - - 0 50"
+       "san": "Kc3",
+       "uci": "d4c3",
+       "fen": "3R4/8/8/2p4p/2P4P/P1k2p2/3r1p2/5K2 w - - 4 37"
       },
       {
-       "san": "Rf5+",
-       "uci": "d5f5",
-       "fen": "8/2p4r/1p3P2/5R2/P5Pp/4pk1K/P7/8 b - - 1 50"
+       "san": "Rxd2",
+       "uci": "d8d2",
+       "fen": "8/8/8/2p4p/2P4P/P1k2p2/3R1p2/5K2 b - - 0 37"
+      },
+      {
+       "san": "Kxd2",
+       "uci": "c3d2",
+       "fen": "8/8/8/2p4p/2P4P/P4p2/3k1p2/5K2 w - - 0 38"
+      },
+      {
+       "san": "a4",
+       "uci": "a3a4",
+       "fen": "8/8/8/2p4p/P1P4P/5p2/3k1p2/5K2 b - - 0 38"
+      },
+      {
+       "san": "Kd3",
+       "uci": "d2d3",
+       "fen": "8/8/8/2p4p/P1P4P/3k1p2/5p2/5K2 w - - 1 39"
+      },
+      {
+       "san": "a5",
+       "uci": "a4a5",
+       "fen": "8/8/8/P1p4p/2P4P/3k1p2/5p2/5K2 b - - 0 39"
+      },
+      {
+       "san": "Kxc4",
+       "uci": "d3c4",
+       "fen": "8/8/8/P1p4p/2k4P/5p2/5p2/5K2 w - - 0 40"
+      },
+      {
+       "san": "a6",
+       "uci": "a5a6",
+       "fen": "8/8/P7/2p4p/2k4P/5p2/5p2/5K2 b - - 0 40"
       }
      ],
-     "comentario": "49.f6 e3 50.Tf5+. Es un despeje: la pieza se aparta para abrirle la línea o la casilla a otra. Con solo torres en el tablero, la ventaja pequeña se cobra con precisión: la jugada buena es la única que no la deja escapar. (Ejercicio 0KQgE de la base abierta de Lichess (CC0), rating 1498. Stockfish 16 a profundidad 18: f6 es la mejor (+4,4) y la segunda queda en +0,6.)",
+     "comentario": "36.Td8+ Rc3 37.Txd2 Rxd2 38.a4 Rd3 39.a5 Rxc4 40.a6. La clave es una jugada tranquila: sin jaque ni captura, pero sin defensa. Con solo torres en el tablero, la ventaja pequeña se cobra con precisión: la jugada buena es la única que no la deja escapar. (Ejercicio 3HeX2 de la base abierta de Lichess (CC0), rating 1340. Stockfish 16 a profundidad 18: Td8+ es la mejor (+4,1) y la segunda queda en -2,6.)",
      "clave": true,
      "marcas": []
     }
@@ -987,41 +1007,31 @@
     {
      "id": "GP-22",
      "idx": 0,
-     "fen": "6k1/pp3pqp/8/3p2pP/PP2p1P1/4Pn2/4QP2/2R4K b - - 1 36",
-     "turno": "b",
-     "titulo": "No hay que forzar nada: la jugada buena es tranquila, sin jaque ni captura, y aun así no tiene respuesta. Juegan las negras; el rival acaba de jugar Tc1.",
-     "resultado": "0-1",
-     "resultado_texto": "Ganan negras",
-     "linea": "36...Qe5 37.Qxf3 exf3 38.Rc8+ Kg7",
-     "linea_es": "36...De5 37.Dxf3 exf3 38.Tc8+ Rg7",
+     "fen": "1n2k1nr/3p1ppp/1qbQp3/4P3/8/1p6/1PPB1PPP/4KBNR w Kk - 2 14",
+     "turno": "w",
+     "titulo": "No hay que forzar nada: la jugada buena es tranquila, sin jaque ni captura, y aun así no tiene respuesta. Juegan las blancas; el rival acaba de jugar …Db6.",
+     "resultado": "1-0",
+     "resultado_texto": "Ganan blancas",
+     "linea": "14.Bb4 Qxb4+ 15.Qxb4",
+     "linea_es": "14.Ab4 Dxb4+ 15.Dxb4",
      "jugadas": [
       {
-       "san": "Qe5",
-       "uci": "g7e5",
-       "fen": "6k1/pp3p1p/8/3pq1pP/PP2p1P1/4Pn2/4QP2/2R4K w - - 2 37"
+       "san": "Bb4",
+       "uci": "d2b4",
+       "fen": "1n2k1nr/3p1ppp/1qbQp3/4P3/1B6/1p6/1PP2PPP/4KBNR b Kk - 3 14"
       },
       {
-       "san": "Qxf3",
-       "uci": "e2f3",
-       "fen": "6k1/pp3p1p/8/3pq1pP/PP2p1P1/4PQ2/5P2/2R4K b - - 0 37"
+       "san": "Qxb4+",
+       "uci": "b6b4",
+       "fen": "1n2k1nr/3p1ppp/2bQp3/4P3/1q6/1p6/1PP2PPP/4KBNR w Kk - 0 15"
       },
       {
-       "san": "exf3",
-       "uci": "e4f3",
-       "fen": "6k1/pp3p1p/8/3pq1pP/PP4P1/4Pp2/5P2/2R4K w - - 0 38"
-      },
-      {
-       "san": "Rc8+",
-       "uci": "c1c8",
-       "fen": "2R3k1/pp3p1p/8/3pq1pP/PP4P1/4Pp2/5P2/7K b - - 1 38"
-      },
-      {
-       "san": "Kg7",
-       "uci": "g8g7",
-       "fen": "2R5/pp3pkp/8/3pq1pP/PP4P1/4Pp2/5P2/7K w - - 2 39"
+       "san": "Qxb4",
+       "uci": "d6b4",
+       "fen": "1n2k1nr/3p1ppp/2b1p3/4P3/1Q6/1p6/1PP2PPP/4KBNR b Kk - 0 15"
       }
      ],
-     "comentario": "36…De5 37.Dxf3 exf3 38.Tc8+ Rg7. La clave es una jugada tranquila: sin jaque ni captura, pero sin defensa. La jugada no fuerza nada: mejora lo propio, y el rival descubre que ya no tiene una buena respuesta. (Ejercicio 2cBgW de la base abierta de Lichess (CC0), rating 1311. Stockfish 16 a profundidad 18: De5 es la mejor (+6,3) y la segunda queda en 0,0.)",
+     "comentario": "14.Ab4 Dxb4+ 15.Dxb4. La clave es una jugada tranquila: sin jaque ni captura, pero sin defensa. La jugada no fuerza nada: mejora lo propio, y el rival descubre que ya no tiene una buena respuesta. (Ejercicio 1c4Rd de la base abierta de Lichess (CC0), rating 1544. Stockfish 16 a profundidad 18: Ab4 es la mejor (+6,0) y la segunda queda en +0,7.)",
      "clave": true,
      "marcas": []
     }
@@ -10482,7 +10492,7 @@
   "gp-p8": {
    "id": "gp-p8",
    "titulo": "Spassky – Petrosian: los peones de d5 y e5",
-   "blancas": "Borís Spassky",
+   "blancas": "Boris Spassky",
    "negras": "Tigran Petrosian",
    "evento": "Match por el campeonato del mundo, Moscú 1966 (19.ª partida)",
    "resultado": "1-0",

@@ -4,9 +4,10 @@
  *
  * Lo que comprueba, porque nada de esto da error si se rompe —el curso se ve
  * y el libro se imprime igual—:
- *   - ninguna posición repetida, ni una que ya esté en el diagnóstico, en
- *     «Ponte a prueba», en «Mide tu fuerza» o en «Rompe el estancamiento»
- *     (el mismo ejercicio en dos libros mediría memoria);
+ *   - ninguna posición repetida, ni una que ya esté en el diagnóstico o en
+ *     cualquier otro banco de material/ (los diez volúmenes de «Mide tu
+ *     fuerza», «Ponte a prueba», «Rompe el estancamiento»…): el mismo
+ *     ejercicio en dos libros mediría memoria;
  *   - cada FEN es legal y la última jugada marcada la hizo el rival;
  *   - la solución guardada es legal, es la primera jugada de la línea, y la
  *     línea entera se puede jugar;
@@ -28,7 +29,7 @@
 const fs = require("fs");
 const path = require("path");
 const { Chess } = require("chess.js");
-const { DESCUENTO_LICHESS, TEMAS_CAPITULO, cumple } = require("./ganar-con-poco-generar.js");
+const { DESCUENTO_LICHESS, TEMAS_CAPITULO, cumple, yaUsadas } = require("./ganar-con-poco-generar.js");
 
 const RAIZ = path.join(__dirname, "..");
 const fallos = [];
@@ -50,9 +51,8 @@ const INGLES = { R: "K", D: "Q", T: "R", A: "B", C: "N" };
 const aIngles = (san) => san.replace(/^[RDTAC]/, (c) => INGLES[c]).replace(/=([DTAC])/, (_, c) => "=" + INGLES[c]);
 
 /* ---------- el banco ---------- */
-const otras = new Set([].concat(win.DIAGNOSTICO_ITEMS || [], win.LIBRO_EXAMEN_ITEMS || [], win.MIDE_TU_FUERZA_ITEMS || [],
-  win.ROMPE_EL_ESTANCAMIENTO_ITEMS || [])
-  .map((i) => i.lichess).filter(Boolean));
+// Las del diagnóstico y las de todos los otros bancos de material/, cada uno leído aparte.
+const otras = yaUsadas();
 const vistas = new Set();
 ITEMS.forEach((it) => {
   const id = `posición ${it.n} (${it.id})`;

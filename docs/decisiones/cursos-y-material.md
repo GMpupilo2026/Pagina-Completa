@@ -939,8 +939,8 @@ de la tienda.
 
 ## El banco de ejercicios «Mide tu fuerza»
 
-Un libro de tests tácticos de Oscar Angulo Cubero: 360 posiciones en 45 tests
-de 8, cada test de **un solo tema** (ataque doble, ataque a la descubierta,
+Un libro de tests tácticos de Oscar Angulo Cubero, en diez volúmenes de 360
+posiciones en 45 tests de 8 cada uno; cada test de **un solo tema** (ataque doble, ataque a la descubierta,
 jaque doble, clavada, enfilada, desviación, atracción, interferencia, despeje,
 eliminación del defensor, rayos X, jugada intermedia, pieza atrapada, jugada
 tranquila y el peón avanzado), en tres niveles. Lo arman dos scripts, como
@@ -950,6 +950,83 @@ tranquila y el peón avanzado), en tres niveles. Lo arman dos scripts, como
 comprueban `verificar-mide-tu-fuerza.js` (el banco y lo accesible) y
 `verificar-mide-tu-fuerza-pdf.py` (protección, autor, marca de agua en cada
 página y que estén los 45 tests).
+
+### Los volúmenes
+
+Cada volumen tiene **la misma forma** (los mismos 15 temas, los tres niveles,
+los tiempos y los puntos) y **posiciones distintas**: el volumen 2 sirve para
+seguir entrenando y para volver a medir sin que la memoria cuente (y los
+siguientes, una vez más cada uno). El 1 vive
+en `material/mide-tu-fuerza/` y cada siguiente en su propia carpeta
+(`material/mide-tu-fuerza-2/`), que es también **su propio material**: se
+comparte aparte en `admin.html#materiales`, y `puede_bajar()` lo decide por
+carpeta como cualquier otro. Los dos scripts y los dos verificadores reciben el
+volumen (`node herramientas/mide-tu-fuerza-generar.js 2`,
+`node herramientas/mide-tu-fuerza-pdf.js 2`) y los verificadores recorren todos
+los que tengan banco. Un volumen nuevo es: sus candidatas, correr los dos
+scripts con su número y agregarlo en `MATERIALES` de `js/admin-materiales.js`
+(y su accesible en las listas de `verificar-pwa.js` y `pwa-cabecera.py`). Su
+PDF nuevo entra también en la sección «Archivos»: después de generarlo se
+corre `node herramientas/archivos-catalogo.js`, o `verificar-archivos-catalogo`
+falla en el CI (pasó con el volumen 6).
+
+Las candidatas del 2 son las 20 siguientes de cada tema y nivel en la misma
+consulta (`k between 21 and 40`). El generador descarta además las que ya están
+en otro volumen. Los rayos X y los jaques dobles difíciles casi no existen en
+la base (16 y 22 en total): al 2 se le agregaron las candidatas de esos temas
+que el 1 no usó, y lo que aún falta lo completa el nivel vecino. Las del 3 son
+las 20 siguientes (`k between 41 and 60`); ahí los rayos X y jaques dobles
+difíciles ya se agotaron, y esos tests se completan con el nivel vecino.
+
+Para el 4 (`k between 61 and 80`) los temas raros ya no daban 20 con los
+filtros de siempre. Ahí, **y solo ahí**, se completa hasta 20 con un filtro
+algo más ancho (Popularity ≥ 80, NbPlays ≥ 400, RatingDeviation ≤ 90): son
+ejercicios igual de comprobados por Stockfish, con un rating medido con menos
+intentos.
+
+El 5 toma, de cada tema y nivel, las 20 siguientes que no tomó ningún volumen
+anterior, **en orden de calidad**: primero lo que queda con el filtro de
+siempre, después el del 4 y, solo donde todavía faltan (los temas raros), un
+tercero (Popularity ≥ 75, NbPlays ≥ 200, RatingDeviation ≤ 100). La consulta
+cuenta lo que tomó cada volumen anterior, y el archivo de candidatas lo
+confirma: ninguna repetida. Con eso los rayos X difíciles quedan en 16 y el
+resto lo completa el nivel vecino.
+
+El 6 se armó igual que el 5, pero eligiendo los identificadores aquí: se
+bajaron, por tema y nivel, los primeros 150 en orden de calidad y se
+descartaron los que ya eran candidatas de los volúmenes 1 a 5. Hizo falta un
+**cuarto filtro** (Popularity ≥ 70, NbPlays ≥ 100, RatingDeviation ≤ 110), y
+solo en los temas raros: de 891 candidatas, 720 son del filtro de siempre y
+49 del cuarto (jaque doble, rayos X e interferencia). Ahí la base ya está
+prácticamente agotada: un séptimo volumen igual no se podía hacer sin bajar
+todavía más la calidad de esos temas.
+
+Por eso el **7 cambia tres temas** (lo decidió el dueño del repo): jaque doble,
+rayos X e interferencia se cambian por **mate en dos, mate en tres y
+sacrificio** (`CAMBIOS_DESDE_7` y `temasDe()` en el generador; cada uno entra
+en el lugar del que sale). Los tres tienen cientos de posiciones con el filtro
+de siempre. El sacrificio se toma solo si no tiene mate ni ninguno de los
+otros temas del libro, para que no se cruce con los demás tests; los mates no
+se habían usado nunca, porque los otros temas excluyen las posiciones con
+mate. En los otros doce temas siguen las 20 siguientes; solo cuatro casilleros
+del tercer nivel (eliminación del defensor, enfilada, jugada intermedia y
+pieza atrapada) se completaron con los filtros más anchos: 66 de 900. Cada
+banco guarda sus propios temas y el verificador comprueba que sean los de su
+volumen.
+
+El 8 lleva los temas del 7 y las 20 siguientes de cada casillero en orden de
+calidad: 820 del filtro de siempre y 80 de los cuatro casilleros agotados del
+tercer nivel (jugada intermedia, enfilada y pieza atrapada con el filtro 2;
+eliminación del defensor con el 3). El 9 se armó igual, con la misma
+proporción (820 y 80). El 10 ya necesitó un quinto casillero con filtro ancho
+(despeje del tercer nivel): 800 del filtro de siempre, 78 del 2, 19 del 3 y 3
+del 4, todas del tercer nivel. Un undécimo volumen con estos temas tendría el
+tercer nivel cada vez más lleno de posiciones de los filtros 3 y 4: lo sano
+sería cambiar otros temas, como se hizo en el 7.
+
+Cada tapa lleva «Volumen N» y su propio color (verde, vino, azul, morado, café,
+gris pizarra, ciruela, oliva, petróleo y óxido; el contraste del texto se midió
+contra el más claro de cada degradado: 5,7 o más, AA).
 
 ### Tomado de un libro ajeno como referencia, no copiado
 
@@ -1253,13 +1330,14 @@ en `admin.html#materiales` (se comparte como los otros dos) y en «Archivos».
 
 ## El curso y el libro «Ganar con poco»
 
-Un curso (26 lecciones en siete bloques) y su libro, de Oscar Angulo Cubero,
+Un curso (44 lecciones en ocho bloques) y su libro, de Oscar Angulo Cubero,
 sobre cómo se ganan las partidas que parecen tablas: ver las ventajas
 pequeñas (una pieza mejor, una casilla, un peón débil, un peón pasado, una
 torre activa, el rey más cerca, un tiempo), no regalarlas, sumarlas sin apuro
 y cobrarlas en el final. Seis capítulos —ver lo que no se ve, piezas buenas y
 malas, los peones, cambiar para ganar, la técnica en el final, paciencia y
-defensa— y un séptimo con el método: el cuaderno de ventajas.
+defensa—, un séptimo con las dieciocho partidas del libro de Leyva y un octavo
+con el método: el cuaderno de ventajas.
 
 ### Tomado de un libro ajeno como referencia, no copiado
 
@@ -1273,6 +1351,38 @@ tradición del ajedrez posicional. Ni el texto, ni las partidas comentadas que
 trae ese libro, ni su selección, ni los ejemplos, ni el título salen de ahí.
 Las lecciones están escritas para esto, en tuteo.
 
+Después el dueño pidió «usa las partidas del libro» y dijo que tiene permiso
+sobre él. Con eso se agregó el capítulo 7, **las dieciocho partidas** que
+comenta Leyva (Andersson–Potkin, Petrosian–Botvinnik, Capablanca–Yates…), y
+aun así se tomaron solo las **jugadas**, que son los hechos de cada partida:
+los comentarios, los títulos de las lecciones y los momentos clave son
+propios.
+
+### Las partidas del libro (capítulo 7)
+
+- **Las jugadas salen del PDF y se comprueban una por una con chess.js**
+  (`herramientas/datos/ganar-con-poco-partidas.pgn`). En el libro la línea
+  principal va en renglones propios («12. Cf3  Cc6», «12 ... Cc6») y las
+  variantes, pegadas dentro del comentario («12.Cf3»): así se separan. Una
+  jugada falta en el texto porque va en un diagrama: la 12 de Kárpov–Krámnik.
+  Se probaron todas las parejas de jugadas posibles y **12.Axe4 h6 es la única
+  que deja legal el resto de la partida**; la lección lo dice.
+- **Los momentos clave los elige el motor, no el libro**
+  (`herramientas/ganar-con-poco-partidas.js`): una jugada del bando que ganó,
+  la mejor a profundidad 16 y al menos medio peón mejor que la segunda. Si el
+  texto pide un momento que no cumple, el script no escribe nada.
+  Kaspárov–X3D Fritz se quedó sin ninguno —su mejor jugada saca 0,48 de
+  ventaja a la segunda— y la lección explica que esa partida se gana con muchas
+  jugadas buenas y ninguna única.
+- Lo que dice cada comentario se miró en la posición (qué pieza ataca, qué
+  casilla queda sin peón que la cuide, si el peón queda pasado). Dos frases del
+  primer borrador no lo eran —«los peones en un solo flanco» en Kárpov–Krámnik y
+  «con las damas en el tablero» en Andersson–Potkin— y se corrigieron.
+- El curso las muestra con el visor de «Desequilibrios de material»
+  (`js/curso-partidas.js`): `curso-generar.py` pone un `cp-partida` en la
+  lección que trae `"partida"`, y la página de la Academia carga el visor. El
+  libro trae cada partida entera con sus momentos clave en diagrama.
+
 ### Las posiciones: de Lichess, comprobadas con Stockfish
 
 `herramientas/ganar-con-poco-generar.js` es el generador de «Rompe el
@@ -1282,8 +1392,12 @@ el peón avanzado, la coronación, la pieza atrapada, el zugzwang y la jugada
 defensiva). Las candidatas están en
 `herramientas/datos/ganar-con-poco-candidatas.txt` (la consulta, en su
 cabecera); pasan por el MISMO `analizar()` del diagnóstico (una sola jugada
-buena) y ninguna repite una del diagnóstico, «Ponte a prueba», «Mide tu
-fuerza» ni «Rompe el estancamiento».
+buena) y ninguna repite una del diagnóstico ni de **ningún** banco de
+`material/`: se leen todos, cada uno aparte. La primera versión tenía la
+lista escrita a mano y, al mezclar `main`, doce posiciones resultaron estar
+también en los volúmenes 2 a 10 de «Mide tu fuerza», que llegaron en paralelo
+(y además usan el mismo nombre de variable, así que leídos juntos uno pisa al
+otro).
 
 - **Lo que la lección dice de su ejemplo se comprueba en la posición**
   (`cumple()`, que el verificador vuelve a usar): el «final de torres» no tiene
@@ -1303,16 +1417,24 @@ fuerza» ni «Rompe el estancamiento».
 
     STOCKFISH=/usr/games/stockfish node herramientas/ganar-con-poco-generar.js
     node herramientas/curso-posiciones.js ganar-con-poco
+    STOCKFISH=/usr/games/stockfish node herramientas/ganar-con-poco-partidas.js --analizar
+    node herramientas/ganar-con-poco-partidas.js      # DESPUÉS de curso-posiciones.js
     python3 herramientas/curso-generar.py ganar-con-poco
     CHROME_PATH=… node herramientas/curso-material-generar.js ganar-con-poco
     node herramientas/curso-material-enlazar.js
     CHROMIUM=… node herramientas/ganar-con-poco-pdf.js
 
+`curso-posiciones.js` reescribe el archivo de datos entero: si se corre y no se
+vuelve a correr `ganar-con-poco-partidas.js`, el capítulo 7 queda sin partidas
+(el verificador lo dice).
+
 Lo comprueban `verificar-ganar-con-poco.js` (el banco, que el ejemplo del
 curso sea el del libro y que lo que dice la lección sea cierto en la
-posición, y la versión accesible) y `verificar-ganar-con-poco-pdf.py`
-(protección, autor, marca de agua en cada página, los siete capítulos, las 26
-lecciones, los 72 ejercicios y el cuaderno de ventajas).
+posición; que el curso y el libro traigan las jugadas del PGN y los mismos
+momentos clave, del bando que ganó; y la versión accesible) y
+`verificar-ganar-con-poco-pdf.py` (protección, autor, marca de agua en cada
+página, los ocho capítulos, las 44 lecciones, los 72 ejercicios y el cuaderno
+de ventajas).
 
 ### Dónde quedó dado de alta
 
@@ -1320,7 +1442,9 @@ En el catálogo (nivel Avanzado, después de «Rompe el estancamiento», con su
 diagrama), en «Mis cursos» de la Academia, en el material de la clase en vivo,
 en exámenes por curso (estrategia y finales), en el plan de entrenamiento del
 área de estrategia y en `interno.curso_lecciones` para su certificado
-(`20261007032207_curso_ganar_con_poco.sql`). El libro está en
+(`20261007032207_curso_ganar_con_poco.sql`, y
+`20261007042932_curso_ganar_con_poco_partidas.sql` al sumar las 18 partidas:
+44 lecciones). El libro está en
 `admin.html#materiales` (se comparte como los otros) y en «Archivos». Como
 «Rompe el estancamiento», no está en la tienda, y el correo a la casa lo
 nombra desde el slug.
@@ -1328,8 +1452,8 @@ nombra desde el slug.
 ## Los materiales de clase
 
 `admin.html#materiales` («Materiales de clases») junta los materiales para dar
-clase —hoy, «Ponte a prueba», el banco de ejercicios «Mide tu fuerza», los libros
-«Rompe el estancamiento» y «Ganar con poco» y los cuentos de Peonita— y dice **con quién se comparte cada uno**: una
+clase —hoy, «Ponte a prueba», los diez volúmenes del banco de ejercicios «Mide
+tu fuerza», los libros «Rompe el estancamiento» y «Ganar con poco» y los cuentos de Peonita— y dice **con quién se comparte cada uno**: una
 persona, una academia entera o todos los profesores. Lo pinta
 `js/admin-materiales.js`; lo prueba `verificar-admin.js`.
 
@@ -1419,11 +1543,11 @@ aplicado el CLI.
 
 ## La sección Archivos
 
-`admin.html#archivos` junta **todos** los PDF, Word, Excel, presentaciones y
-versiones accesibles del sitio para que quien administra los abra o los baje
-sin ir curso por curso. Va **una ficha por tipo** (pestañas PDF, Word, Excel,
-Presentaciones y Versiones accesibles, con cuántos hay en cada una; se pasa de
-una a otra también con las flechas del teclado).
+`admin.html#archivos` junta **todos** los PDF, Word, Excel, presentaciones,
+versiones accesibles e imágenes del sitio para que quien administra los abra o
+los baje sin ir curso por curso. Va **una ficha por tipo** (pestañas PDF, Word,
+Excel, Presentaciones, Versiones accesibles e Imágenes, con cuántos hay en cada
+una; se pasa de una a otra también con las flechas del teclado).
 
 Cada ficha es un **explorador**: a la izquierda las carpetas, agrupadas (los
 libros, uno por carpeta; los cursos por nivel, en el orden del catálogo; lo
@@ -1455,6 +1579,17 @@ PDF. Fuera de los cursos, su nombre sale del `<title>` de la página, sin el
 «— versión accesible» final (en su ficha todas lo son). Llevan «Abrir» como
 los PDF, y en la vista previa se ven en un marco con `sandbox` sin
 `allow-scripts`: no traen programas y para leerlas no hacen falta.
+
+Las imágenes (`.png`, `.jpg`, `.gif`, `.webp`, `.avif`, `.svg`, `.ico`; hoy
+615) van por carpeta, en dos grupos: los ejercicios de Entrenamiento por nivel
+y lo del sitio (portadas de los cursos, capturas de la guía, logos, íconos de
+la app, ejemplos del formulario de los JDN). Cada fila lleva su miniatura
+(`loading="lazy"`: se pide recién cuando se ve; `alt=""` porque el nombre ya
+está escrito al lado), y la vista previa la muestra entera sobre un damero,
+para que un logo blanco o transparente se note. Lo que `.assetsignore` deja
+fuera del despliegue (como `img/redes`) no se ofrece: el generador lee ese
+archivo y salta sus rutas sin comodines, porque un enlace a algo que no se
+publica da 404.
 
 Los Word (`.docx`, `.doc`, `.odt`) y los Excel (`.xlsx`, `.xlsm`, `.xls`,
 `.ods`) son pocos y sueltos: van por carpeta, con el nombre de `CARPETAS` en el

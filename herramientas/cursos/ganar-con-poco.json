@@ -90,17 +90,15 @@
           "diagramas": [
             {
               "id": "GP-3",
-              "fen": "6k1/5p2/3p1Bp1/2pP4/2b1PKP1/5P2/p3q3/R7 w - - 0 53",
-              "turno": "w",
-              "resultado": "1-0",
-              "pregunta": "La jugada buena no ataca nada de inmediato, pero llega una jugada antes que el rival. Juegan las blancas; el rival acaba de jugar …hxg6.",
-              "comentario": "53.Th1 Dd2+ 54.Rg3 De1+ 55.Txe1. La clave es una jugada tranquila: sin jaque ni captura, pero sin defensa. No hay jaque ni captura: la jugada gana porque llega a tiempo, y el rival ya no alcanza a responder. (Ejercicio 0Sqrl de la base abierta de Lichess (CC0), rating 1413. Stockfish 16 a profundidad 18: Th1 es la mejor (+5,4) y la segunda queda en -5,9.)",
+              "fen": "5r1k/1p3pp1/p3b3/Q7/4q3/P2pB2P/1P1R1PP1/6K1 b - - 0 25",
+              "turno": "b",
+              "resultado": "0-1",
+              "pregunta": "La jugada buena no ataca nada de inmediato, pero llega una jugada antes que el rival. Juegan las negras; el rival acaba de jugar Txd2.",
+              "comentario": "25…Ad5 26.f3 Dxe3+. La clave es una jugada tranquila: sin jaque ni captura, pero sin defensa. No hay jaque ni captura: la jugada gana porque llega a tiempo, y el rival ya no alcanza a responder. (Ejercicio 07wdS de la base abierta de Lichess (CC0), rating 1613. Stockfish 16 a profundidad 18: Ad5 es la mejor (+5,7) y la segunda queda en +0,1.)",
               "linea": [
-                "Rh1",
-                "Qd2+",
-                "Kg3",
-                "Qe1+",
-                "Rxe1"
+                "Bd5",
+                "f3",
+                "Qxe3+"
               ]
             }
           ]
@@ -310,17 +308,15 @@
           "diagramas": [
             {
               "id": "GP-10",
-              "fen": "8/5k2/3p3R/2n2B2/7P/2p1PKP1/8/3r4 b - - 2 38",
+              "fen": "8/8/6p1/PK1N4/6bP/1p6/k7/8 b - - 0 57",
               "turno": "b",
               "resultado": "0-1",
-              "pregunta": "Hay un peón muy avanzado en el tablero. La jugada buena gira alrededor de él. Juegan las negras; el rival acaba de jugar Rf3.",
-              "comentario": "38…Tf1+ 39.Rg4 Txf5 40.Rxf5 c2. El peón avanzado decide: hay que empujarlo o aprovecharlo a tiempo. Fíjate en el peón avanzado: la ventaja no está en el material de hoy, sino en lo que ese peón amenaza ser. (Ejercicio 0iVWb de la base abierta de Lichess (CC0), rating 1601. Stockfish 16 a profundidad 18: Tf1+ es la mejor (+4,6) y la segunda queda en +0,1.)",
+              "pregunta": "Hay un peón muy avanzado en el tablero. La jugada buena gira alrededor de él. Juegan las negras; el rival acaba de jugar a5.",
+              "comentario": "57…b2 58.Cc3+ Rb3. Es una jugada defensiva precisa: la única que sostiene la posición. Fíjate en el peón avanzado: la ventaja no está en el material de hoy, sino en lo que ese peón amenaza ser. (Ejercicio 0r1nZ de la base abierta de Lichess (CC0), rating 1488. Stockfish 16 a profundidad 18: b2 es la mejor (+4,8) y la segunda queda en +1,3.)",
               "linea": [
-                "Rf1+",
-                "Kg4",
-                "Rxf5",
-                "Kxf5",
-                "c2"
+                "b2",
+                "Nc3+",
+                "Kb3"
               ]
             }
           ]
@@ -400,15 +396,17 @@
           "diagramas": [
             {
               "id": "GP-13",
-              "fen": "5r1k/1p3pp1/p3b3/Q7/4q3/P2pB2P/1P1R1PP1/6K1 b - - 0 25",
+              "fen": "6k1/pp3pqp/8/3p2pP/PP2p1P1/4Pn2/4QP2/2R4K b - - 1 36",
               "turno": "b",
               "resultado": "0-1",
-              "pregunta": "No hay golpe que gane de inmediato: la jugada buena es tranquila y deja al rival sin forma de defender todo. Juegan las negras; el rival acaba de jugar Txd2.",
-              "comentario": "25…Ad5 26.f3 Dxe3+. La clave es una jugada tranquila: sin jaque ni captura, pero sin defensa. La jugada no captura ni da jaque: suma un atacante más, o le quita un defensor al rival, y con eso alcanza. (Ejercicio 07wdS de la base abierta de Lichess (CC0), rating 1613. Stockfish 16 a profundidad 18: Ad5 es la mejor (+5,7) y la segunda queda en +0,1.)",
+              "pregunta": "No hay golpe que gane de inmediato: la jugada buena es tranquila y deja al rival sin forma de defender todo. Juegan las negras; el rival acaba de jugar Tc1.",
+              "comentario": "36…De5 37.Dxf3 exf3 38.Tc8+ Rg7. La clave es una jugada tranquila: sin jaque ni captura, pero sin defensa. La jugada no captura ni da jaque: suma un atacante más, o le quita un defensor al rival, y con eso alcanza. (Ejercicio 2cBgW de la base abierta de Lichess (CC0), rating 1311. Stockfish 16 a profundidad 18: De5 es la mejor (+6,3) y la segunda queda en 0,0.)",
               "linea": [
-                "Bd5",
-                "f3",
-                "Qxe3+"
+                "Qe5",
+                "Qxf3",
+                "exf3",
+                "Rc8+",
+                "Kg7"
               ]
             }
           ]
@@ -560,15 +558,21 @@
           "diagramas": [
             {
               "id": "GP-18",
-              "fen": "8/2p4r/1p6/3R1P2/P3p1Pp/5k1K/P7/8 w - - 0 49",
+              "fen": "R7/8/8/2p4p/2Pk3P/P4p2/3r1p2/5K2 w - - 2 36",
               "turno": "w",
               "resultado": "1-0",
-              "pregunta": "Final de torres. Antes de mover, mira las tres cosas: qué torre está activa, dónde está cada peón pasado y qué rey está cortado. Juegan las blancas; el rival acaba de jugar …e4.",
-              "comentario": "49.f6 e3 50.Tf5+. Es un despeje: la pieza se aparta para abrirle la línea o la casilla a otra. Con solo torres en el tablero, la ventaja pequeña se cobra con precisión: la jugada buena es la única que no la deja escapar. (Ejercicio 0KQgE de la base abierta de Lichess (CC0), rating 1498. Stockfish 16 a profundidad 18: f6 es la mejor (+4,4) y la segunda queda en +0,6.)",
+              "pregunta": "Final de torres. Antes de mover, mira las tres cosas: qué torre está activa, dónde está cada peón pasado y qué rey está cortado. Juegan las blancas; el rival acaba de jugar …Rd4.",
+              "comentario": "36.Td8+ Rc3 37.Txd2 Rxd2 38.a4 Rd3 39.a5 Rxc4 40.a6. La clave es una jugada tranquila: sin jaque ni captura, pero sin defensa. Con solo torres en el tablero, la ventaja pequeña se cobra con precisión: la jugada buena es la única que no la deja escapar. (Ejercicio 3HeX2 de la base abierta de Lichess (CC0), rating 1340. Stockfish 16 a profundidad 18: Td8+ es la mejor (+4,1) y la segunda queda en -2,6.)",
               "linea": [
-                "f6",
-                "e3",
-                "Rf5+"
+                "Rd8+",
+                "Kc3",
+                "Rxd2",
+                "Kxd2",
+                "a4",
+                "Kd3",
+                "a5",
+                "Kxc4",
+                "a6"
               ]
             }
           ]
@@ -678,17 +682,15 @@
           "diagramas": [
             {
               "id": "GP-22",
-              "fen": "6k1/pp3pqp/8/3p2pP/PP2p1P1/4Pn2/4QP2/2R4K b - - 1 36",
-              "turno": "b",
-              "resultado": "0-1",
-              "pregunta": "No hay que forzar nada: la jugada buena es tranquila, sin jaque ni captura, y aun así no tiene respuesta. Juegan las negras; el rival acaba de jugar Tc1.",
-              "comentario": "36…De5 37.Dxf3 exf3 38.Tc8+ Rg7. La clave es una jugada tranquila: sin jaque ni captura, pero sin defensa. La jugada no fuerza nada: mejora lo propio, y el rival descubre que ya no tiene una buena respuesta. (Ejercicio 2cBgW de la base abierta de Lichess (CC0), rating 1311. Stockfish 16 a profundidad 18: De5 es la mejor (+6,3) y la segunda queda en 0,0.)",
+              "fen": "1n2k1nr/3p1ppp/1qbQp3/4P3/8/1p6/1PPB1PPP/4KBNR w Kk - 2 14",
+              "turno": "w",
+              "resultado": "1-0",
+              "pregunta": "No hay que forzar nada: la jugada buena es tranquila, sin jaque ni captura, y aun así no tiene respuesta. Juegan las blancas; el rival acaba de jugar …Db6.",
+              "comentario": "14.Ab4 Dxb4+ 15.Dxb4. La clave es una jugada tranquila: sin jaque ni captura, pero sin defensa. La jugada no fuerza nada: mejora lo propio, y el rival descubre que ya no tiene una buena respuesta. (Ejercicio 1c4Rd de la base abierta de Lichess (CC0), rating 1544. Stockfish 16 a profundidad 18: Ab4 es la mejor (+6,0) y la segunda queda en +0,7.)",
               "linea": [
-                "Qe5",
-                "Qxf3",
-                "exf3",
-                "Rc8+",
-                "Kg7"
+                "Bb4",
+                "Qxb4+",
+                "Qxb4"
               ]
             }
           ]
@@ -859,7 +861,7 @@
         },
         {
           "titulo": "Spassky – Petrosian: los peones de d5 y e5",
-          "resumen": "Borís Spassky contra Tigran Petrosian, Match por el campeonato del mundo, Moscú 1966 (19.ª partida). Presión constante sobre peones fijos.",
+          "resumen": "Boris Spassky contra Tigran Petrosian, Match por el campeonato del mundo, Moscú 1966 (19.ª partida). Presión constante sobre peones fijos.",
           "parrafos": [
             "Petrosian propone cambiar las damas, y Spassky lo aprovecha: sin damas, empieza una presión lenta y constante sobre los peones negros del centro. Cada cambio de piezas deja a las negras un poco más pasivas, hasta que la defensa no alcanza.",
             "Recórrela jugada a jugada en el tablero (Defensa Francesa; ganan las blancas). En los momentos clave el visor te pide que encuentres la jugada antes de verla: todas están comprobadas con Stockfish, y en cada una la jugada de la partida es la mejor por al menos medio peón. Lo que hay que llevarse: Un cambio de piezas mal elegido puede dejar las piezas propias pasivas para el resto de la partida. Un peón fijo en el centro es un blanco que no se puede mover. En el final, la presión sostenida pesa más que un golpe."

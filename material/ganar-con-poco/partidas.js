@@ -1242,7 +1242,7 @@ window.GANAR_CON_POCO_PARTIDAS = [
   "id": "gp-p8",
   "titulo": "Spassky – Petrosian: los peones de d5 y e5",
   "tema": "Presión constante sobre peones fijos",
-  "blancas": "Borís Spassky",
+  "blancas": "Boris Spassky",
   "negras": "Tigran Petrosian",
   "evento": "Match por el campeonato del mundo, Moscú 1966 (19.ª partida)",
   "resultado": "1-0",
