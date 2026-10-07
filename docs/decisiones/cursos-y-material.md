@@ -1328,6 +1328,125 @@ en `admin.html#materiales` (se comparte como los otros dos) y en «Archivos».
   los cursos: comprueba el nombre que el correo **muestra** para cada curso del
   catálogo, y que lo que la tabla sí nombra coincida con el catálogo.
 
+## El curso y el libro «Los cimientos del ajedrez»
+
+Un curso de 72 lecciones en tres niveles de 24 y su libro, de Oscar Angulo
+Cubero, para el jugador de club que todavía está armando sus bases (hasta unos
+1500 de Elo): táctica, finales, juego posicional, estrategia, cálculo y
+aperturas, alternados como en un entrenamiento de verdad. Cada lección trae su
+idea, uno o dos ejemplos de partidas reales, una tarea y cuatro ejercicios; el
+libro suma un repaso de doce posiciones al final de cada nivel.
+
+### Tomado de un libro ajeno como referencia: el temario y las partidas
+
+El dueño pidió un curso y un libro «con esta información»: los cuatro tomos de
+*El método Yusupov — Fundamentos* (Artur Yusupov, La Casa del Ajedrez), en una
+carpeta de su Drive, y después «toma las partidas del libro». Esos libros
+tienen derechos de autor y prohíben reproducirlos, así que se tomaron dos
+cosas y nada más:
+
+- **El orden de los temas**: los 72 capítulos de los tomos 1 a 3 (el 4 es solo
+  ejercicios de repaso de los mismos temas). Los títulos de las lecciones son
+  los nombres de los temas («La clavada», «La oposición»), no los del libro.
+- **Las partidas que cita**, que son hechos: quién jugó contra quién, dónde,
+  cuándo y qué jugadas. Ni el texto, ni los comentarios, ni los diagramas, ni
+  los estudios compuestos (esos sí son obra de su autor) salen de ahí.
+
+El texto de las lecciones es propio, en tuteo. El libro lo dice en su página
+final: el orden de los temas y buena parte de las partidas siguen el programa
+de *El método Yusupov*, que se tomó como referencia. El título tampoco es el
+suyo.
+
+### Las partidas del método: buscadas en una base pública, no copiadas
+
+**La herramienta de Drive solo entrega el texto de las primeras ~80 páginas de
+cada PDF**, sin los diagramas (son imágenes): los capítulos 1 a 8 de cada
+tomo. Bajar el PDF entero no se pudo (el mensaje es demasiado grande para la
+herramienta y el contenedor no llega a Drive directo). Por eso:
+
+- De ese texto, que es OCR con las piezas destrozadas («tlf3» es Cf3, «Wh2» es
+  Dh2), se sacó para cada partida citada: los jugadores, el lugar, el año y la
+  jugada que muestra, con las siguientes como confirmación. Lo hicieron tres
+  agentes, uno por tomo, sin copiar ni una frase del libro.
+- Cada partida se buscó por jugadores y año —o por lugar, año y jugadas, si el
+  OCR se comió los nombres— en una base pública de PGN (la colección
+  `rozim/ChessData` de GitHub: PgnMentor, ChessNostalgia, Bundesliga; 1,29
+  millones de partidas). La posición es la de esa partida justo antes de la
+  jugada que el libro muestra, y solo se acepta si la jugada de la partida es
+  la que dice el libro (y, cuando la numeración del libro no es la de la
+  partida, si coinciden también las siguientes).
+- Las partidas que el libro da completas desde la jugada 1 se arman con
+  chess.js, y Stockfish elige el momento clave: la primera jugada que castiga
+  un error del rival.
+- De 283 citas se ubicaron 95 (las demás no están en la base o el OCR no dejó
+  leerlas): quedaron en `herramientas/datos/los-cimientos-partidas.json`.
+  **Los capítulos 9 a 24 de cada tomo no tienen partidas del método** porque
+  su texto no llegó; si el dueño sube los tomos partidos en PDF más chicos,
+  se pueden sumar con el mismo camino.
+
+### Las otras posiciones: Lichess y más partidas reales
+
+- La base abierta de ejercicios de Lichess (CC0), con los filtros de calidad de
+  siempre. Cada lección pide lo que la muestra (`herramientas/datos/los-cimientos-temario.py`
+  arma la consulta, una por nivel) y lo que el temario promete se comprueba en
+  la posición (`FILTRO` del generador: la pieza que mueve, el sacrificio, la
+  torre a la séptima…), antes de gastar motor.
+- **Lichess no tiene ni un ejercicio de tablas** en la tabla (ningún
+  `equality`), y casi ninguno de los finales teóricos. Para el ahogado, el
+  jaque perpetuo, dama contra peón, dama contra torre, alfil y caballo,
+  caballo contra peón, alfil contra peones y el alfil equivocado, se minaron
+  partidas reales de la misma base de PGN: las que terminaron en ahogado o en
+  jaque perpetuo, y la primera vez que aparece cada material. Están en
+  `herramientas/datos/los-cimientos-base.json`.
+
+### Lo que decide el motor
+
+Todo pasa por Stockfish 16 a profundidad 18 (`herramientas/lib/motor-uci.js`):
+
+- **Un ejemplo** queda si la jugada de la partida es la mejor o vale lo mismo
+  (60 centipeones de tolerancia): es para entender la idea, no tiene por qué
+  ser la única.
+- **Un ejercicio** queda si tiene UNA sola jugada buena: si gana, la segunda no
+  gana; en las lecciones de tablas, la solución salva y la segunda pierde. La
+  de ahogado, además, termina en ahogado en la partida.
+- Ninguna repite una posición del diagnóstico, «Ponte a prueba», los diez
+  volúmenes de «Mide tu fuerza» ni «Rompe el estancamiento» (los volúmenes de
+  «Mide tu fuerza» usan el mismo nombre global: se cargan cada uno en su
+  propia ventana, o uno pisaría al otro).
+- Los ejemplos de cada lección son los mismos en el curso y en el libro: el
+  generador escribe el banco y el campo `diagramas` del curso en la misma
+  corrida.
+
+### Cómo se regenera
+
+    STOCKFISH=/usr/games/stockfish node herramientas/los-cimientos-generar.js
+    node herramientas/curso-posiciones.js los-cimientos-del-ajedrez
+    python3 herramientas/curso-generar.py los-cimientos-del-ajedrez
+    CHROME_PATH=… node herramientas/curso-material-generar.js los-cimientos-del-ajedrez
+    node herramientas/curso-material-enlazar.js
+    node herramientas/los-cimientos-pdf.js
+
+Las candidatas de partidas ya están en el repositorio; el camino desde el texto
+de los tomos hasta ellas (los agentes, el buscador en la base de PGN y el
+minado) fue de una vez y no vive en `herramientas/`, porque depende de un PDF
+y de una base de 850 MB que no están en el repositorio. Lo comprueban
+`verificar-los-cimientos.js` (el banco, que cada posición de partida sea de
+verdad la de su partida, que los ejemplos del curso sean los del libro, que lo
+que promete cada lección sea cierto en la posición, y la versión accesible) y
+`verificar-los-cimientos-pdf.py` (protección, autor, marca de agua en cada
+página, los tres niveles, las 72 lecciones, el repaso, todos los ejercicios y
+de dónde salen las posiciones).
+
+### Dónde quedó dado de alta
+
+En el catálogo (nivel Intermedio, entre «Fundamentos del Ajedrez» y
+«Aperturas y Defensas», con su diagrama), en «Mis cursos» de la Academia, en el
+material de la clase en vivo, en exámenes por curso, en el plan de
+entrenamiento del área de táctica y en `interno.curso_lecciones` para su
+certificado (`20261007043501_curso_los_cimientos_del_ajedrez.sql`). El libro
+está en `admin.html#materiales` (se comparte como los otros) y en «Archivos».
+No está en la tienda: venderlo es una decisión de precio del dueño.
+
 ## Los materiales de clase
 
 `admin.html#materiales` («Materiales de clases») junta los materiales para dar

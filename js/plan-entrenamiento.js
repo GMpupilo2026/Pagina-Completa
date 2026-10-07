@@ -112,6 +112,7 @@ window.PlanEntrenamiento = (function () {
         { texto: 'Ficha: la horquilla', href: 'entreno/estudio.html?ficha=horquilla' },
         { texto: 'Habilidades: ¿Qué quiere el rival?', href: 'entreno/tipos.html#amenaza' },
         { texto: 'Habilidades: Aguanta (la única jugada que defiende)', href: 'entreno/tipos.html#aguanta' },
+        { texto: 'Curso: Los cimientos del ajedrez', href: 'cursos/los-cimientos-del-ajedrez.html' },
       ],
     },
     {

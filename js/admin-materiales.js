@@ -1,6 +1,7 @@
 /* Los materiales de clase en admin.html#materiales: cada material (el libro
  * «Ponte a prueba», los diez volúmenes del banco de ejercicios «Mide tu fuerza»,
- * el libro «Rompe el estancamiento» y los cuentos de Peonita), con sus
+ * los libros «Rompe el estancamiento» y «Los cimientos del ajedrez» y los
+ * cuentos de Peonita), con sus
  * sub-fichas —las pruebas y sus versiones como cuestionario, si las tiene— y
  * CON QUIÉN se comparte.
  *
@@ -160,6 +161,17 @@
       archivos: [
         { href: "material/rompe-el-estancamiento/rompe-el-estancamiento.pdf", texto: "📥 El libro en PDF" },
         { href: "material/rompe-el-estancamiento/rompe-el-estancamiento-accesible.html", texto: "♿ Versión accesible" },
+      ],
+    },
+    {
+      producto: "los-cimientos-del-ajedrez",
+      emoji: "🧱",
+      titulo: "Los cimientos del ajedrez",
+      autor: "Oscar Angulo Cubero",
+      resumen: "El libro del curso del mismo nombre: 72 lecciones en tres niveles —táctica, finales, juego posicional, cálculo y aperturas— con partidas clásicas comentadas, cuatro ejercicios por lección y un repaso por nivel, con soluciones.",
+      archivos: [
+        { href: "material/los-cimientos-del-ajedrez/los-cimientos-del-ajedrez.pdf", texto: "📥 El libro en PDF" },
+        { href: "material/los-cimientos-del-ajedrez/los-cimientos-del-ajedrez-accesible.html", texto: "♿ Versión accesible" },
       ],
     },
     {

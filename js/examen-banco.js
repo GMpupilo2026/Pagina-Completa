@@ -56,6 +56,7 @@ window.ExamenBanco = (function () {
     "desequilibrios-de-material": ["material", "estrategia"],
     "preparacion-para-torneos": ["maestria", "calculo"],
     "rompe-el-estancamiento": ["estrategia", "calculo", "tactica"],
+    "los-cimientos-del-ajedrez": ["tactica", "finales", "estrategia", "calculo", "apertura"],
   };
 
   /* Un sorteo que se puede repetir: con la misma semilla sale el mismo
