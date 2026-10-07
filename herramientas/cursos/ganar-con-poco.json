@@ -1,0 +1,991 @@
+{
+  "slug": "ganar-con-poco",
+  "titulo": "Ganar con poco",
+  "nivel": "Intermedio · Avanzado",
+  "emoji": "🔍",
+  "gradiente": "from-accent-700 to-brand-900",
+  "resumen": "Cómo se ganan las partidas que parecen tablas: ver las ventajas pequeñas que casi nadie ve, sumarlas una por una y convertirlas en un punto entero con técnica y paciencia.",
+  "descripcion_larga": "La mayoría de las partidas entre jugadores parejos no se deciden con una combinación brillante: se deciden porque uno de los dos fue juntando ventajas pequeñas —un alfil un poco mejor, una casilla débil, una torre más activa, un tiempo de más en el final— hasta que la posición del otro ya no aguantó. Este curso enseña a ver esas ventajas, a no regalarlas, a sumarlas sin apuro y a transformarlas en un final ganado. Cada lección explica una idea con una posición de partida real comprobada con motor, después se ven dieciocho partidas completas que se ganaron así, comentadas jugada a jugada, y el curso termina con un método para encontrar en tus propias partidas las ventajas que dejaste pasar.",
+  "anterior": {
+    "href": "rompe-el-estancamiento.html",
+    "titulo": "Rompe el estancamiento"
+  },
+  "siguiente": {
+    "href": "ideas-que-ganan-partidas.html",
+    "titulo": "Ideas que ganan partidas"
+  },
+  "bloques": [
+    {
+      "n": 1,
+      "titulo": "Ver lo que no se ve",
+      "lecciones": [
+        {
+          "titulo": "Las ventajas que no se ven",
+          "resumen": "Una ventaja no es solo un peón de más: también lo es una pieza mejor, una casilla, un tiempo o un rey más cerca del centro.",
+          "parrafos": [
+            "Cuando se pregunta quién está mejor, casi todos cuentan material. Si el material está igual, la respuesta suele ser «está pareja», y la partida sigue sin rumbo. Pero entre dos posiciones con el mismo material puede haber una diferencia enorme: un alfil que muerde contra uno que choca con sus propios peones, una torre en la columna abierta contra una que mira una pared, un caballo instalado en una casilla de la que nadie lo puede echar.",
+            "Esas diferencias no ganan solas y por eso cuesta verlas: ninguna amenaza nada en este momento. Su valor aparece después, cuando las piezas se cambian, cuando el final llega, cuando el rival tiene que elegir qué defender. Un jugador que solo ve el material se entera de que estaba peor cuando ya no hay remedio; uno que ve las ventajas pequeñas sabe desde antes hacia dónde llevar la partida.",
+            "Para empezar a verlas basta con una lista corta en cada posición tranquila: ¿qué pieza de cada bando está peor?, ¿hay alguna casilla que un bando pueda ocupar y el otro no pueda disputar?, ¿quién tiene peones débiles?, ¿qué rey estaría mejor en un final? Si en todas las respuestas sale el mismo bando, ese bando tiene la ventaja, aunque el material esté igual."
+          ],
+          "practica": "Toma tres partidas tuyas que terminaron en tablas o que perdiste sin ver por qué. En la jugada 20 de cada una, responde las cuatro preguntas de la lección. ¿Alguno de los dos bandos tenía ya una ventaja pequeña que nadie aprovechó?",
+          "tema": "quietMove",
+          "pregunta": "No hay un jaque ni una captura que gane: la ventaja está en la posición, y la jugada buena la aprovecha en silencio.",
+          "enlace": "Fíjate en que la jugada no captura nada ni da jaque: gana porque aprovecha algo de la posición que ya estaba ahí.",
+          "diagramas": [
+            {
+              "id": "GP-1",
+              "fen": "4r3/1ppR4/p5pk/7p/3P4/6QP/PPP3PK/5q2 b - - 6 32",
+              "turno": "b",
+              "resultado": "0-1",
+              "pregunta": "No hay un jaque ni una captura que gane: la ventaja está en la posición, y la jugada buena la aprovecha en silencio. Juegan las negras; el rival acaba de jugar Dg3.",
+              "comentario": "32…Te1 33.Dxe1 Dxe1. La clave es una jugada tranquila: sin jaque ni captura, pero sin defensa. Fíjate en que la jugada no captura nada ni da jaque: gana porque aprovecha algo de la posición que ya estaba ahí. (Ejercicio 17uHj de la base abierta de Lichess (CC0), rating 1345. Stockfish 16 a profundidad 18: Te1 es la mejor (+4,4) y la segunda queda en -1,9.)",
+              "linea": [
+                "Re1",
+                "Qxe1",
+                "Qxe1"
+              ]
+            }
+          ]
+        },
+        {
+          "titulo": "La pieza que no tiene casillas",
+          "resumen": "Una pieza sin casillas no es una pieza: es un problema. Encontrarla, en tu bando o en el del rival, es el primer paso de cualquier plan.",
+          "parrafos": [
+            "Toda pieza vale lo que hace. Un alfil encerrado detrás de sus peones vale menos que un caballo bien puesto; una torre que no tiene columna vale menos que un alfil activo. Las tablas de valores (3, 3, 5, 9) son un promedio: en cada posición concreta, una pieza puede valer bastante más o bastante menos.",
+            "Cuando una pieza rival se queda con pocas casillas, hay dos formas de aprovecharlo. La primera es quitarle las que le quedan y ganarla, que es lo que pasa en los ejemplos más llamativos. La segunda, más frecuente, es dejarla donde está: mientras esa pieza no juegue, tú juegas con una pieza de más en el resto del tablero, y esa ventaja se nota en cada plan.",
+            "La pregunta «¿cuál es la peor pieza de cada bando?» es de las más útiles del ajedrez. Para la tuya, la tarea es mejorarla, aunque tarde tres jugadas. Para la del rival, la tarea es asegurarte de que siga mala: cada jugada que le impide salir vale tanto como una jugada que mejora una pieza propia."
+          ],
+          "practica": "En tus próximas cinco partidas lentas, cada diez jugadas anota cuál es la peor pieza de cada bando. Al terminar, revisa: ¿mejoraste la tuya?, ¿dejaste salir la del rival?",
+          "tema": "trappedPiece",
+          "pregunta": "Una pieza rival se quedó con muy pocas casillas. Busca la jugada que le quita las que le quedan.",
+          "enlace": "La pieza no se pierde por una combinación: se pierde porque ya estaba mal puesta, y la jugada buena solo lo aprovecha.",
+          "diagramas": [
+            {
+              "id": "GP-2",
+              "fen": "r3k2r/ppbn1ppp/2p1p3/5b2/4N2q/3P1B1P/PPP1QPP1/R1B2RK1 w kq - 2 15",
+              "turno": "w",
+              "resultado": "1-0",
+              "pregunta": "Una pieza rival se quedó con muy pocas casillas. Busca la jugada que le quita las que le quedan. Juegan las blancas; el rival acaba de jugar …Ac7.",
+              "comentario": "15.Ag5 Axe4 16.Axh4. Una pieza rival queda atrapada, sin casilla adonde ir. La pieza no se pierde por una combinación: se pierde porque ya estaba mal puesta, y la jugada buena solo lo aprovecha. (Ejercicio 2mRC9 de la base abierta de Lichess (CC0), rating 1448. Stockfish 16 a profundidad 18: Ag5 es la mejor (+5,5) y la segunda queda en +0,4.)",
+              "linea": [
+                "Bg5",
+                "Bxe4",
+                "Bxh4"
+              ]
+            }
+          ]
+        },
+        {
+          "titulo": "Un tiempo también es una ventaja",
+          "resumen": "Una jugada de más, en el momento justo, vale tanto como un peón: decide quién llega primero.",
+          "parrafos": [
+            "En la apertura un tiempo es una pieza más desarrollada. En el final, un tiempo es el rey que llega primero a la casilla clave o el peón que corona antes. En el medio juego, un tiempo es poder hacer tu plan una jugada antes de que el rival haga el suyo. Por eso los jugadores fuertes cuidan los tiempos como cuidan el material.",
+            "Se pierden tiempos de muchas formas: moviendo dos veces la misma pieza sin necesidad, atacando una pieza que igual quería moverse, jugando una amenaza que el rival contesta mejorando su posición. Cada una de esas jugadas parece inofensiva; juntas, le regalan al rival la iniciativa.",
+            "Antes de una jugada que «gana un tiempo» conviene preguntarse si de verdad lo gana: si la pieza atacada se va a una casilla mejor, el tiempo lo ganó el rival. Y antes de una jugada lenta, la pregunta es la contraria: ¿qué hace el rival con la jugada que le das?"
+          ],
+          "practica": "Analiza una partida tuya y marca las jugadas que no hicieron nada: piezas que fueron y volvieron, amenazas que el rival contestó mejorando. Cuéntalas. Si son más de tres, en la próxima partida pregúntate antes de cada jugada qué mejora.",
+          "tema": "quietMove",
+          "pregunta": "La jugada buena no ataca nada de inmediato, pero llega una jugada antes que el rival.",
+          "enlace": "No hay jaque ni captura: la jugada gana porque llega a tiempo, y el rival ya no alcanza a responder.",
+          "diagramas": [
+            {
+              "id": "GP-3",
+              "fen": "5r1k/1p3pp1/p3b3/Q7/4q3/P2pB2P/1P1R1PP1/6K1 b - - 0 25",
+              "turno": "b",
+              "resultado": "0-1",
+              "pregunta": "La jugada buena no ataca nada de inmediato, pero llega una jugada antes que el rival. Juegan las negras; el rival acaba de jugar Txd2.",
+              "comentario": "25…Ad5 26.f3 Dxe3+. La clave es una jugada tranquila: sin jaque ni captura, pero sin defensa. No hay jaque ni captura: la jugada gana porque llega a tiempo, y el rival ya no alcanza a responder. (Ejercicio 07wdS de la base abierta de Lichess (CC0), rating 1613. Stockfish 16 a profundidad 18: Ad5 es la mejor (+5,7) y la segunda queda en +0,1.)",
+              "linea": [
+                "Bd5",
+                "f3",
+                "Qxe3+"
+              ]
+            }
+          ]
+        },
+        {
+          "titulo": "Primero, no dar nada",
+          "resumen": "La ventaja pequeña se gana sobre todo con los errores pequeños del rival. Para eso, lo primero es no cometerlos tú.",
+          "parrafos": [
+            "Hay una verdad incómoda en las partidas que se ganan con poco: el ganador casi nunca hizo nada espectacular. Lo que hizo fue no regalar nada durante cuarenta jugadas, mientras el rival regalaba una casilla aquí, un tiempo allá, un peón débil más tarde. La técnica empieza por la defensa propia.",
+            "No dar nada significa revisar, antes de cada jugada, qué deja tu jugada: qué casilla se debilita, qué pieza queda sin defensa, qué columna se abre para el rival. Un peón que avanza no vuelve atrás, y la casilla que deja de cuidar queda débil para siempre. Muchas posiciones parejas se pierden por un avance de peón que no hacía falta.",
+            "Esta lección cuesta porque no tiene brillo: es la costumbre de mirar también lo que el rival quiere hacer. Pero es la que más puntos suma. Contra un rival que no regala nada, hasta el mejor jugador tiene que conformarse con tablas; contra uno que regala poco a poco, la partida se gana sola."
+          ],
+          "practica": "En tus próximas partidas, antes de cada avance de peón, di en voz baja qué casilla deja de cuidar ese peón. Si no lo sabes, no lo muevas todavía.",
+          "tema": "defensiveMove",
+          "pregunta": "Antes de pensar en ganar, mira qué amenaza el rival. Solo una jugada conserva lo que tienes.",
+          "enlace": "Primero hay que ver lo que amenaza el rival: la jugada buena lo resuelve, y todas las demás dejan escapar la ventaja.",
+          "diagramas": [
+            {
+              "id": "GP-4",
+              "fen": "8/8/4nkp1/1N1R4/p5K1/r3p1P1/7P/8 w - - 0 49",
+              "turno": "w",
+              "resultado": "1-0",
+              "pregunta": "Antes de pensar en ganar, mira qué amenaza el rival. Solo una jugada conserva lo que tienes. Juegan las blancas; el rival acaba de jugar …e3.",
+              "comentario": "49.Cxa3 e2 50.Cc2. Hay algo sin defender, y hay que verlo antes que el rival. Primero hay que ver lo que amenaza el rival: la jugada buena lo resuelve, y todas las demás dejan escapar la ventaja. (Ejercicio 0HbWu de la base abierta de Lichess (CC0), rating 1563. Stockfish 16 a profundidad 18: Cxa3 es la mejor (+5,1) y la segunda queda en -3,8.)",
+              "linea": [
+                "Nxa3",
+                "e2",
+                "Nc2"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "n": 2,
+      "titulo": "Piezas buenas y piezas malas",
+      "lecciones": [
+        {
+          "titulo": "La peor pieza manda",
+          "resumen": "Mejorar tu peor pieza es casi siempre un buen plan, y empeorar la del rival, también.",
+          "parrafos": [
+            "Cuando no sabes qué jugar en una posición tranquila, hay un plan que casi nunca falla: busca tu peor pieza y llévala a una casilla mejor. Puede tardar tres o cuatro jugadas, y no importa: una pieza que pasa de no hacer nada a participar cambia el equilibrio de toda la posición.",
+            "Lo mismo vale al revés. Si una pieza rival está mal, tu plan puede ser que siga mal: cerrarle la diagonal, quitarle la casilla a la que quería ir, cambiar la pieza que podría liberarla. Muchas partidas de los grandes jugadores posicionales se ganan así: una pieza rival queda fuera de juego desde la jugada 15 y nunca vuelve.",
+            "Ojo con la tentación de cambiar la pieza mala del rival: si la cambias, le haces un favor. Una pieza mala se deja en el tablero; la que se cambia es la buena del rival, la que defiende o la que podría venir a ayudar."
+          ],
+          "practica": "Toma una posición tranquila de una partida tuya y escribe un plan de tres jugadas solo para mejorar tu peor pieza. Después compáralo con lo que jugaste. ¿Mejoró esa pieza en algún momento?",
+          "tema": "trappedPiece",
+          "pregunta": "Una pieza rival está tan mal que ya no tiene salida. Encuentra cómo aprovecharlo.",
+          "enlace": "Esta pieza estaba mal desde antes; la jugada buena solo le cobra al rival el no haberla mejorado a tiempo.",
+          "diagramas": [
+            {
+              "id": "GP-5",
+              "fen": "3r3k/5rp1/7p/1pB2p2/1Pp1pR2/P4P2/6PP/4R1K1 b - - 0 39",
+              "turno": "b",
+              "resultado": "0-1",
+              "pregunta": "Una pieza rival está tan mal que ya no tiene salida. Encuentra cómo aprovecharlo. Juegan las negras; el rival acaba de jugar f3.",
+              "comentario": "39…g5 40.Txf5 Txf5. Una pieza rival queda atrapada, sin casilla adonde ir. Esta pieza estaba mal desde antes; la jugada buena solo le cobra al rival el no haberla mejorado a tiempo. (Ejercicio 2jElr de la base abierta de Lichess (CC0), rating 1602. Stockfish 16 a profundidad 18: g5 es la mejor (+3,2) y la segunda queda en -3,0.)",
+              "linea": [
+                "g5",
+                "Rxf5",
+                "Rxf5"
+              ]
+            }
+          ]
+        },
+        {
+          "titulo": "Alfil bueno, alfil malo",
+          "resumen": "Un alfil es bueno o malo según el color de sus propios peones, y esa diferencia decide muchos finales.",
+          "parrafos": [
+            "Un alfil solo camina por casillas de un color. Si tus peones están fijos en casillas de ese mismo color, el alfil tropieza con ellos: tiene poco espacio y además no puede defender las casillas del otro color, que quedan débiles. Ese es el alfil malo. El alfil bueno es el que tiene sus peones en el color contrario: se mueve libre y ataca los peones rivales que quedan en su color.",
+            "En el medio juego, un alfil malo puede ser útil, porque defiende a sus peones. En el final la diferencia se vuelve enorme: con alfiles del mismo color, el bando del alfil bueno suele tener una ventaja pequeña pero duradera, y el rey entra por las casillas que el alfil malo no puede cuidar.",
+            "De ahí sale un consejo práctico: cuando tengas un solo alfil, pon tus peones en casillas del color contrario. Y cuando el rival tenga el alfil malo, fija sus peones en ese color: cada peón que lo encierra es una ventaja pequeña que ya no se va."
+          ],
+          "practica": "Busca en tus partidas un final con un alfil de cada lado. Marca en qué color tenía cada uno sus peones. ¿Ganó el del alfil bueno? Si perdiste con el alfil malo, ¿en qué jugada pusiste los peones en su color?",
+          "tema": "bishopEndgame",
+          "pregunta": "Es un final de alfiles: solo quedan los reyes, los alfiles y los peones. Mira qué casillas cuida cada alfil.",
+          "enlace": "Fíjate en que no queda ninguna otra pieza que los alfiles: en un final así, la ventaja se cobra con una sola jugada precisa.",
+          "diagramas": [
+            {
+              "id": "GP-6",
+              "fen": "4b1B1/4k3/6p1/p3KpP1/p7/2P5/2P2P2/8 b - - 5 40",
+              "turno": "b",
+              "resultado": "0-1",
+              "pregunta": "Es un final de alfiles: solo quedan los reyes, los alfiles y los peones. Mira qué casillas cuida cada alfil. Juegan las negras; el rival acaba de jugar Re5.",
+              "comentario": "40…Af7 41.Axf7 Rxf7. Fíjate en que no queda ninguna otra pieza que los alfiles: en un final así, la ventaja se cobra con una sola jugada precisa. (Ejercicio 1kH80 de la base abierta de Lichess (CC0), rating 1614. Stockfish 16 a profundidad 18: Af7 es la mejor (+4,7) y la segunda queda en +0,1.)",
+              "linea": [
+                "Bf7",
+                "Bxf7",
+                "Kxf7"
+              ]
+            }
+          ]
+        },
+        {
+          "titulo": "El caballo y sus casillas",
+          "resumen": "El caballo necesita puntos de apoyo; con ellos vale más que un alfil, sin ellos vale menos.",
+          "parrafos": [
+            "El caballo es la pieza más lenta del tablero: para cruzarlo de un lado a otro necesita cuatro o cinco saltos. Por eso vale más en posiciones cerradas y con peones en un solo flanco, y menos en posiciones abiertas con peones en los dos flancos, donde un alfil llega a todas partes en una jugada.",
+            "Lo que hace fuerte a un caballo es un punto de apoyo: una casilla avanzada, defendida por un peón propio, de la que ningún peón rival lo puede echar. Un caballo en esa casilla controla todo a su alrededor y obliga al rival a vigilarlo con sus piezas. Encontrar esa casilla y llevar el caballo hasta ahí es un plan completo.",
+            "En los finales de caballos se juega casi como en los de peones: cuenta tiempos. El caballo no puede perder un tiempo como el rey o la torre, y eso decide más de un zugzwang. Antes de mover, cuenta cuántos saltos necesita cada caballo para llegar a donde importa."
+          ],
+          "practica": "En tus partidas con caballos, busca la mejor casilla para cada uno: avanzada, defendida por un peón y sin peones rivales que la ataquen. ¿Llegó alguno a esa casilla?",
+          "tema": "knightEndgame",
+          "pregunta": "Es un final de caballos: no hay más piezas que caballos, reyes y peones. Cuenta los saltos.",
+          "enlace": "Con solo caballos en el tablero, la ventaja se cobra con precisión: la jugada buena es la única que la conserva.",
+          "diagramas": [
+            {
+              "id": "GP-7",
+              "fen": "8/2N5/2n3k1/P5pp/8/1P6/8/6K1 w - - 1 51",
+              "turno": "w",
+              "resultado": "1-0",
+              "pregunta": "Es un final de caballos: no hay más piezas que caballos, reyes y peones. Cuenta los saltos. Juegan las blancas; el rival acaba de jugar …Cc6.",
+              "comentario": "51.a6 Rf5 52.b4 Cxb4 53.a7. La clave es una jugada tranquila: sin jaque ni captura, pero sin defensa. Con solo caballos en el tablero, la ventaja se cobra con precisión: la jugada buena es la única que la conserva. (Ejercicio 274PM de la base abierta de Lichess (CC0), rating 1572. Stockfish 16 a profundidad 18: a6 es la mejor (+4,4) y la segunda queda en -0,1.)",
+              "linea": [
+                "a6",
+                "Kf5",
+                "b4",
+                "Nxb4",
+                "a7"
+              ]
+            }
+          ]
+        },
+        {
+          "titulo": "La torre activa",
+          "resumen": "Una torre que ataca vale mucho más que una que defiende. En los finales de torres, la actividad pesa más que un peón.",
+          "parrafos": [
+            "La torre necesita columnas abiertas y filas libres. En el medio juego, la ventaja pequeña más típica es tener una torre en la única columna abierta: desde ahí entra a la séptima fila, ataca los peones desde atrás y obliga a las piezas rivales a quedarse defendiendo.",
+            "En los finales de torres la regla es todavía más fuerte: una torre activa compensa muchas veces un peón de menos, y una torre pasiva, atada a defender un peón, puede perder un final con material igual. Los jugadores con técnica prefieren entregar un peón antes que dejar su torre en una casilla pasiva.",
+            "Dos reglas sencillas ayudan mucho. Primero, la torre va detrás de los peones pasados, propios o rivales: detrás de uno propio lo empuja, detrás de uno rival lo frena desde lejos. Segundo, una torre en la séptima fila rival vale casi un peón: ataca los peones que no avanzaron y encierra al rey en su última fila."
+          ],
+          "practica": "Revisa tus últimos tres finales de torres. Para cada uno, marca en qué momento tu torre pasó a defender. ¿Había una forma de mantenerla activa, aunque costara un peón?",
+          "tema": "rookEndgame",
+          "pregunta": "Es un final de torres: solo quedan torres, reyes y peones. ¿Dónde molesta más tu torre?",
+          "enlace": "No queda nada más que torres y peones: aquí la ventaja se cobra con una sola jugada, y las demás la dejan escapar.",
+          "diagramas": [
+            {
+              "id": "GP-8",
+              "fen": "8/7p/K1k1p1p1/P1r1R3/8/8/8/8 w - - 0 42",
+              "turno": "w",
+              "resultado": "1-0",
+              "pregunta": "Es un final de torres: solo quedan torres, reyes y peones. ¿Dónde molesta más tu torre? Juegan las blancas; el rival acaba de jugar …Txc5.",
+              "comentario": "42.Txc5+ Rxc5 43.Rb7 e5 44.a6 e4 45.a7 e3 46.a8=D. El peón avanzado decide: hay que empujarlo o aprovecharlo a tiempo. No queda nada más que torres y peones: aquí la ventaja se cobra con una sola jugada, y las demás la dejan escapar. (Ejercicio 2V4SF de la base abierta de Lichess (CC0), rating 1509. Stockfish 16 a profundidad 18: Txc5+ es la mejor (+4,7) y la segunda queda en 0,0.)",
+              "linea": [
+                "Rxc5+",
+                "Kxc5",
+                "Kb7",
+                "e5",
+                "a6",
+                "e4",
+                "a7",
+                "e3",
+                "a8=Q"
+              ]
+            }
+          ]
+        },
+        {
+          "titulo": "El rey también juega",
+          "resumen": "En el final, el rey deja de esconderse y pasa a ser una pieza fuerte: el que llega primero al centro suele ganar.",
+          "parrafos": [
+            "Durante el medio juego el rey se protege, porque cualquier ataque lo puede alcanzar. Pero cuando las damas se cambian y quedan pocas piezas, el peligro desaparece y el rey se transforma: vale más o menos lo mismo que una pieza menor, y es la única que puede ir al frente a pelear con los peones rivales sin miedo a que la cambien.",
+            "Por eso, en la transición al final, una de las ventajas pequeñas más importantes es tener el rey más cerca del centro. Un rey en e3 contra uno en g8 es casi un peón de diferencia: llega antes a apoyar un peón pasado, a frenar el rival o a comerse los peones que quedaron atrás.",
+            "La costumbre que hay que crear es simple: apenas se cambian las damas, pregúntate dónde quiere estar tu rey y empieza a caminar. Muchos finales parejos se pierden porque uno de los dos movió peones mientras el otro activaba su rey."
+          ],
+          "practica": "Busca en tus partidas los momentos en que se cambiaron las damas. Cuenta cuántas jugadas tardaste en mover tu rey hacia el centro, y cuántas tardó tu rival. ¿Ganó el más rápido?",
+          "tema": "pawnEndgame",
+          "pregunta": "Solo quedan reyes y peones: el rey es la pieza que decide. Cuenta tiempos antes de mover.",
+          "enlace": "Sin ninguna pieza en el tablero, el rey es la pieza más fuerte, y un solo tiempo decide quién gana.",
+          "diagramas": [
+            {
+              "id": "GP-9",
+              "fen": "8/8/p1p3p1/P4p2/1P3P1K/2k5/6PP/8 b - - 1 49",
+              "turno": "b",
+              "resultado": "0-1",
+              "pregunta": "Solo quedan reyes y peones: el rey es la pieza que decide. Cuenta tiempos antes de mover. Juegan las negras; el rival acaba de jugar Rh4.",
+              "comentario": "49…Rxb4 50.Rg5 c5 51.g4 c4. La clave es una jugada tranquila: sin jaque ni captura, pero sin defensa. Sin ninguna pieza en el tablero, el rey es la pieza más fuerte, y un solo tiempo decide quién gana. (Ejercicio 38yIr de la base abierta de Lichess (CC0), rating 1451. Stockfish 16 a profundidad 18: Rxb4 es la mejor (+4,0) y la segunda queda en -3,0.)",
+              "linea": [
+                "Kxb4",
+                "Kg5",
+                "c5",
+                "g4",
+                "c4"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "n": 3,
+      "titulo": "Los peones deciden",
+      "lecciones": [
+        {
+          "titulo": "El peón pasado",
+          "resumen": "Un peón pasado es una ventaja que crece sola: cuantas más piezas se cambian, más vale.",
+          "parrafos": [
+            "Un peón pasado es el que no tiene peones rivales delante ni en las columnas de al lado: ningún peón lo puede frenar, y solo las piezas rivales pueden impedir que corone. Mientras hay muchas piezas en el tablero es una ventaja pequeña; a medida que se cambian, se vuelve la ventaja más grande que hay.",
+            "Por eso el bando con el peón pasado quiere cambiar piezas, y el otro quiere mantenerlas: cada cambio deja menos defensores para frenarlo. Un peón pasado también ata a una pieza rival a vigilarlo, y esa pieza deja de hacer otra cosa. Aunque no avance, el peón pasado ya está trabajando.",
+            "Hay una frase vieja del ajedrez que sigue siendo verdad: los peones pasados hay que empujarlos. No a ciegas, pero sí con la idea clara de que cada paso adelante obliga al rival a dedicarle más fuerzas, y de que un peón pasado frenado a tiempo en su casilla de bloqueo vale mucho menos."
+          ],
+          "practica": "En tus próximas partidas, cada vez que aparezca un peón pasado (tuyo o rival), anota qué pieza lo frena. ¿Se cambió esa pieza? ¿Quién ganó el final?",
+          "tema": "advancedPawn",
+          "pregunta": "Hay un peón muy avanzado en el tablero. La jugada buena gira alrededor de él.",
+          "enlace": "Fíjate en el peón avanzado: la ventaja no está en el material de hoy, sino en lo que ese peón amenaza ser.",
+          "diagramas": [
+            {
+              "id": "GP-10",
+              "fen": "8/8/6p1/PK1N4/6bP/1p6/k7/8 b - - 0 57",
+              "turno": "b",
+              "resultado": "0-1",
+              "pregunta": "Hay un peón muy avanzado en el tablero. La jugada buena gira alrededor de él. Juegan las negras; el rival acaba de jugar a5.",
+              "comentario": "57…b2 58.Cc3+ Rb3. Es una jugada defensiva precisa: la única que sostiene la posición. Fíjate en el peón avanzado: la ventaja no está en el material de hoy, sino en lo que ese peón amenaza ser. (Ejercicio 0r1nZ de la base abierta de Lichess (CC0), rating 1488. Stockfish 16 a profundidad 18: b2 es la mejor (+4,8) y la segunda queda en +1,3.)",
+              "linea": [
+                "b2",
+                "Nc3+",
+                "Kb3"
+              ]
+            }
+          ]
+        },
+        {
+          "titulo": "Empujar a tiempo",
+          "resumen": "Coronar es cuestión de contar: cuántas jugadas faltan, quién llega primero y qué pasa si el rival llega antes.",
+          "parrafos": [
+            "Cuando hay peones a punto de coronar, la intuición sirve poco y contar sirve mucho. ¿Cuántas jugadas le faltan a mi peón? ¿Cuántas al del rival? ¿Su rey alcanza a entrar en el cuadrado de mi peón? ¿Corona con jaque alguno de los dos? Cada una de esas preguntas tiene una respuesta exacta, y una sola de diferencia decide el resultado.",
+            "La regla del cuadrado ahorra mucho cálculo: dibuja mentalmente un cuadrado desde el peón hasta la fila de coronación; si el rey rival puede entrar en él en su turno, alcanza al peón. Si no puede, el peón corona solo. Es una ventaja pequeña que se ve en dos segundos y que muchos jugadores calculan jugada por jugada, con errores.",
+            "Empujar a tiempo también significa no empujar antes de tiempo: un peón que avanza solo, sin apoyo, puede quedar bloqueado o caer. La técnica es preparar el avance, con el rey o con una torre detrás, y empujar cuando el rival ya no puede frenarlo."
+          ],
+          "practica": "Haz cinco ejercicios de carreras de peones contando sin mover las piezas: escribe primero en qué jugada corona cada bando, y después compruébalo. La meta es acertar sin dudar.",
+          "tema": "promotion",
+          "pregunta": "Todo pasa por la coronación. Cuenta cuántas jugadas le faltan a cada peón antes de mover.",
+          "enlace": "La línea termina en una coronación: la jugada buena sale de contar bien quién llega primero.",
+          "diagramas": [
+            {
+              "id": "GP-11",
+              "fen": "r2k1r2/1pp2Ppp/p1n5/3p4/3P4/2P4P/P1P3P1/4RRK1 w - - 1 19",
+              "turno": "w",
+              "resultado": "1-0",
+              "pregunta": "Todo pasa por la coronación. Cuenta cuántas jugadas le faltan a cada peón antes de mover. Juegan las blancas; el rival acaba de jugar …Tf8.",
+              "comentario": "19.Te8+ Txe8 20.f8=D Txf8 21.Txf8+ Rd7 22.Txa8. Es una enfilada: la pieza de adelante se va y cae la de atrás. La línea termina en una coronación: la jugada buena sale de contar bien quién llega primero. (Ejercicio 32LjT de la base abierta de Lichess (CC0), rating 1498. Stockfish 16 a profundidad 18: Te8+ es la mejor (+3,3) y la segunda queda en -3,3.)",
+              "linea": [
+                "Re8+",
+                "Rxe8",
+                "f8=Q",
+                "Rxf8",
+                "Rxf8+",
+                "Kd7",
+                "Rxa8"
+              ]
+            }
+          ]
+        },
+        {
+          "titulo": "La mayoría de peones",
+          "resumen": "Donde tienes más peones que el rival, tienes un peón pasado en potencia. Movilizar esa mayoría es un plan.",
+          "parrafos": [
+            "Si en un flanco tienes tres peones contra dos, tarde o temprano de ahí saldrá un peón pasado: basta con avanzar la mayoría y cambiar los peones que se cruzan. Esa es una de las ventajas pequeñas más claras del ajedrez, porque se puede ver desde el medio juego, mucho antes de que el peón pasado exista.",
+            "La mayoría que más vale es la que está lejos del rey rival. Un peón pasado en el flanco contrario obliga al rey rival a ir hasta allá a frenarlo, y mientras tanto tu rey entra por el otro lado a comerse los peones que quedaron. Es el mecanismo típico de muchos finales de peones: el peón pasado lejano no corona, pero se lleva al rey rival y con eso alcanza.",
+            "Para movilizar una mayoría, el peón que va adelante es el que no tiene contrario: el candidato. Los demás lo apoyan. Avanzar primero el peón equivocado puede dejar la mayoría trabada, y la ventaja desaparece."
+          ],
+          "practica": "En tus partidas, al llegar al final, cuenta los peones de cada flanco. ¿Quién tenía una mayoría y dónde? ¿Se movilizó? Anota qué peón avanzó primero.",
+          "tema": "pawnEndgame",
+          "pregunta": "Es un final de peones: cuenta tiempos y mira dónde está la mayoría de cada bando.",
+          "enlace": "En un final de peones no hay piezas que arreglen un error: un solo tiempo, o un peón bien movilizado, decide.",
+          "diagramas": [
+            {
+              "id": "GP-12",
+              "fen": "8/p7/2k3pp/2P2p2/P2K3P/8/6P1/8 w - - 0 34",
+              "turno": "w",
+              "resultado": "1-0",
+              "pregunta": "Es un final de peones: cuenta tiempos y mira dónde está la mayoría de cada bando. Juegan las blancas; el rival acaba de jugar …h6.",
+              "comentario": "34.Re5 Rxc5 35.Rf6. En un final de peones no hay piezas que arreglen un error: un solo tiempo, o un peón bien movilizado, decide. (Ejercicio 14nEZ de la base abierta de Lichess (CC0), rating 1520. Stockfish 16 a profundidad 18: Re5 es la mejor (+5,5) y la segunda queda en +0,0.)",
+              "linea": [
+                "Ke5",
+                "Kxc5",
+                "Kf6"
+              ]
+            }
+          ]
+        },
+        {
+          "titulo": "Una debilidad se ataca, no se gana de golpe",
+          "resumen": "Un peón débil no cae al primer ataque: se fija, se ataca con más piezas de las que lo defienden, y cae solo.",
+          "parrafos": [
+            "Un peón aislado, uno doblado o uno retrasado en una columna abierta son debilidades: no pueden ser defendidos por otros peones y obligan a las piezas a cuidarlos. Pero rara vez se ganan en una jugada. El rival tiene tiempo de defenderlos, y si lo atacas con prisa, lo defiende y la ventaja se queda en nada.",
+            "La técnica es otra. Primero, fijar el peón: que no pueda avanzar ni cambiarse. Después, atacarlo con más piezas de las que lo pueden defender. Y si el rival logra defenderlo con todo, aprovechar que sus piezas están atadas para atacar en otro lado: el peón débil hizo su trabajo aunque no caiga.",
+            "Esta paciencia es lo que más cuesta entre los 1500 y los 2000 puntos: se ve el peón débil, se ataca dos veces, el rival lo defiende dos veces, y se cambia de plan. El jugador con técnica, en cambio, busca una tercera pieza que ataque, o una jugada tranquila que le quite al rival una de sus defensas."
+          ],
+          "practica": "Busca en tus partidas un peón débil del rival. Cuenta cuántas piezas lo atacaron y cuántas lo defendieron en cada momento. ¿Hubo algún momento en que los atacantes fueron más?",
+          "tema": "quietMove",
+          "pregunta": "No hay golpe que gane de inmediato: la jugada buena es tranquila y deja al rival sin forma de defender todo.",
+          "enlace": "La jugada no captura ni da jaque: suma un atacante más, o le quita un defensor al rival, y con eso alcanza.",
+          "diagramas": [
+            {
+              "id": "GP-13",
+              "fen": "6k1/pp3pqp/8/3p2pP/PP2p1P1/4Pn2/4QP2/2R4K b - - 1 36",
+              "turno": "b",
+              "resultado": "0-1",
+              "pregunta": "No hay golpe que gane de inmediato: la jugada buena es tranquila y deja al rival sin forma de defender todo. Juegan las negras; el rival acaba de jugar Tc1.",
+              "comentario": "36…De5 37.Dxf3 exf3 38.Tc8+ Rg7. La clave es una jugada tranquila: sin jaque ni captura, pero sin defensa. La jugada no captura ni da jaque: suma un atacante más, o le quita un defensor al rival, y con eso alcanza. (Ejercicio 2cBgW de la base abierta de Lichess (CC0), rating 1311. Stockfish 16 a profundidad 18: De5 es la mejor (+6,3) y la segunda queda en 0,0.)",
+              "linea": [
+                "Qe5",
+                "Qxf3",
+                "exf3",
+                "Rc8+",
+                "Kg7"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "n": 4,
+      "titulo": "Cambiar para ganar",
+      "lecciones": [
+        {
+          "titulo": "Qué piezas cambiar",
+          "resumen": "Cambiar piezas no es neutral: cada cambio deja una posición distinta, mejor para uno de los dos.",
+          "parrafos": [
+            "Cuando tienes una ventaja pequeña, cambiar piezas suele ayudar: con menos piezas, el rival tiene menos recursos para complicar y tu ventaja pesa más. Pero no da igual qué piezas se cambian. Cambiar tu pieza mala por la buena del rival es ganar en el cambio; cambiar tu pieza buena por la mala del rival es perder, aunque el material quede igual.",
+            "La pregunta antes de cada cambio es qué queda después. ¿Queda tu alfil bueno contra su alfil malo? ¿Queda un final de peones que se gana o uno que se tabla? ¿Desaparece la pieza que defendía su debilidad? Un cambio bien elegido convierte una ventaja pequeña en una ventaja ganadora; uno mal elegido la borra.",
+            "Hay también cambios que conviene evitar. Si estás mejor, no cambies la pieza que más trabaja; si estás peor, busca cambiar las piezas que atacan y no las que defienden. Y recuerda que el final de peones es definitivo: antes de entrar en él, cuéntalo hasta el final."
+          ],
+          "practica": "Revisa tres partidas tuyas y marca todos los cambios de piezas. Para cada uno, escribe qué pieza buena y qué pieza mala quedó en el tablero. ¿Algún cambio ayudó al rival?",
+          "tema": "pawnEndgame",
+          "pregunta": "Ya se cambiaron todas las piezas y quedó un final de peones. Cuenta bien: aquí no hay vuelta atrás.",
+          "enlace": "Este es el final al que llevan muchos cambios: sin piezas, la ventaja pequeña se vuelve exacta, y una sola jugada decide.",
+          "diagramas": [
+            {
+              "id": "GP-14",
+              "fen": "8/2k1p3/1p2P3/1Pp5/2P2PK1/7p/8/8 w - - 0 51",
+              "turno": "w",
+              "resultado": "1-0",
+              "pregunta": "Ya se cambiaron todas las piezas y quedó un final de peones. Cuenta bien: aquí no hay vuelta atrás. Juegan las blancas; el rival acaba de jugar …h3.",
+              "comentario": "51.Rxh3 Rd6 52.f5 Re5 53.Rg4. La clave es una jugada tranquila: sin jaque ni captura, pero sin defensa. Este es el final al que llevan muchos cambios: sin piezas, la ventaja pequeña se vuelve exacta, y una sola jugada decide. (Ejercicio 2QgVs de la base abierta de Lichess (CC0), rating 1549. Stockfish 16 a profundidad 18: Rxh3 es la mejor (+4,8) y la segunda queda en -0,2.)",
+              "linea": [
+                "Kxh3",
+                "Kd6",
+                "f5",
+                "Ke5",
+                "Kg4"
+              ]
+            }
+          ]
+        },
+        {
+          "titulo": "Pasar a un final que se gana",
+          "resumen": "La forma más segura de cobrar una ventaja pequeña es llevar la partida a un final donde esa ventaja decide.",
+          "parrafos": [
+            "Muchas ventajas pequeñas no alcanzan para ganar en el medio juego, porque el rival tiene piezas para defenderse y para crear contrajuego. Pero esas mismas ventajas, en el final, se vuelven decisivas: un rey más activo, un peón pasado, una mayoría en un flanco. El arte está en elegir el momento de la transición.",
+            "Para elegir bien hay que conocer los finales que resultan. Un final de torres con un peón de más se gana a menudo, pero no siempre; un final de peones con un peón de más casi siempre se gana; un final de alfiles de distinto color con un peón de más suele ser tablas. Saber esto antes de cambiar evita muchas desilusiones.",
+            "Por eso estudiar finales no es solo para el final de la partida: es para el medio juego. Quien sabe qué finales se ganan puede dirigir la partida hacia ellos desde la jugada 25; quien no lo sabe, cambia las piezas que le ofrecen y descubre después que el final era tablas."
+          ],
+          "practica": "Cuando en una partida tengas una ventaja pequeña, escribe antes de cada cambio qué final quedaría si se cambiara todo. Al terminar, compara lo que escribiste con lo que pasó.",
+          "tema": "pawnEndgame",
+          "pregunta": "Final de peones: el material está casi igual, pero un bando llega primero. Cuenta los tiempos.",
+          "enlace": "Es el final donde las ventajas pequeñas se cobran: aquí no hay piezas para defenderse, solo cuenta llegar a tiempo.",
+          "diagramas": [
+            {
+              "id": "GP-15",
+              "fen": "8/8/8/p5p1/2Pk2P1/P7/2K5/8 b - - 2 53",
+              "turno": "b",
+              "resultado": "0-1",
+              "pregunta": "Final de peones: el material está casi igual, pero un bando llega primero. Cuenta los tiempos. Juegan las negras; el rival acaba de jugar Rc2.",
+              "comentario": "53…Rxc4 54.Rb2 a4 55.Rc2 Rd4. La clave es una jugada tranquila: sin jaque ni captura, pero sin defensa. Es el final donde las ventajas pequeñas se cobran: aquí no hay piezas para defenderse, solo cuenta llegar a tiempo. (Ejercicio 1qUzo de la base abierta de Lichess (CC0), rating 1578. Stockfish 16 a profundidad 18: Rxc4 es la mejor (+5,5) y la segunda queda en -0,0.)",
+              "linea": [
+                "Kxc4",
+                "Kb2",
+                "a4",
+                "Kc2",
+                "Kd4"
+              ]
+            }
+          ]
+        },
+        {
+          "titulo": "Las dos debilidades",
+          "resumen": "Una sola debilidad se defiende; dos debilidades lejos una de otra, casi nunca.",
+          "parrafos": [
+            "Este es uno de los principios más importantes de la técnica. Si el rival tiene una sola debilidad, puede llevar todas sus piezas a defenderla, y aunque quede pasivo, aguanta. Pero si tiene dos, en lados distintos del tablero, sus piezas no alcanzan para cuidar las dos a la vez: cuando corren a defender una, cae la otra.",
+            "Por eso, cuando atacas una debilidad y el rival la defiende bien, el plan no es insistir: es crear una segunda. Puede ser un peón pasado en el otro flanco, una ruptura que deje un peón aislado, o la amenaza de entrar con el rey por el otro lado. Con dos frentes abiertos, la defensa se rompe sola.",
+            "La forma de jugar es ir y volver: atacar una debilidad hasta que el rival la defienda con todo, pasar a la otra hasta que las piezas rivales vayan para allá, y volver a la primera. Cada viaje cuesta tiempo al rival, y en algún momento no llega."
+          ],
+          "practica": "En una partida tuya donde tuviste algo de ventaja y no ganaste, busca la debilidad principal del rival. Después busca dónde podías haber creado una segunda. Escribe el plan en tres pasos.",
+          "tema": "rookEndgame",
+          "pregunta": "Final de torres: solo quedan torres, reyes y peones. Mira qué puede defender el rival y qué no.",
+          "enlace": "Con solo torres en el tablero, el que defiende no alcanza a cuidarlo todo: la jugada buena lo aprovecha, y las demás dejan escapar la ventaja.",
+          "diagramas": [
+            {
+              "id": "GP-16",
+              "fen": "8/1pR2pr1/k6p/P2pK3/1P1P4/5P2/8/8 b - - 5 37",
+              "turno": "b",
+              "resultado": "0-1",
+              "pregunta": "Final de torres: solo quedan torres, reyes y peones. Mira qué puede defender el rival y qué no. Juegan las negras; el rival acaba de jugar Re5.",
+              "comentario": "37…f6+ 38.Rxf6 Txc7. Es un ataque a la descubierta: al moverse una pieza, se destapa otra. Con solo torres en el tablero, el que defiende no alcanza a cuidarlo todo: la jugada buena lo aprovecha, y las demás dejan escapar la ventaja. (Ejercicio 0oi5E de la base abierta de Lichess (CC0), rating 1454. Stockfish 16 a profundidad 18: f6+ es la mejor (+4,0) y la segunda queda en -0,8.)",
+              "linea": [
+                "f6+",
+                "Kxf6",
+                "Rxc7"
+              ]
+            }
+          ]
+        },
+        {
+          "titulo": "El zugzwang",
+          "resumen": "A veces la mejor jugada es no hacer nada: dejar que el rival tenga que mover y empeorar su posición.",
+          "parrafos": [
+            "Zugzwang es una palabra alemana para una situación muy ajedrecística: el bando que mueve está obligado a hacerlo, y cualquier jugada lo empeora. Si pudiera pasar el turno, aguantaría; como no puede, pierde. Pasa sobre todo en los finales, cuando quedan pocas piezas y cada una cumple una sola función.",
+            "El zugzwang es la herramienta más fina para cobrar una ventaja pequeña. Cuando el rival está defendiendo todo con lo justo, no hace falta atacar más: basta con hacer una jugada que no cambie nada y dejar que él tenga que mover una pieza que estaba defendiendo algo. Las jugadas de espera, la oposición entre los reyes y la triangulación son sus formas más comunes.",
+            "Para verlo hay que preguntarse no solo qué quiero hacer yo, sino qué haría el rival si le tocara mover. Si la respuesta es «nada bueno», la jugada correcta puede ser la más tranquila del tablero."
+          ],
+          "practica": "Estudia tres posiciones de oposición entre reyes en finales de peones hasta que puedas explicarlas sin mirar. Después busca en tus partidas un final donde una jugada de espera habría ganado.",
+          "tema": "zugzwang",
+          "pregunta": "El rival defiende todo con lo justo. ¿Qué jugada lo obliga a mover algo que no quiere?",
+          "enlace": "El rival no pierde por un ataque: pierde porque le toca mover, y cualquier cosa que haga suelta algo.",
+          "diagramas": [
+            {
+              "id": "GP-17",
+              "fen": "8/1p6/p1pk4/P4p1p/1P1P1P1P/2K5/8/8 w - - 3 37",
+              "turno": "w",
+              "resultado": "1-0",
+              "pregunta": "El rival defiende todo con lo justo. ¿Qué jugada lo obliga a mover algo que no quiere? Juegan las blancas; el rival acaba de jugar …Rd6.",
+              "comentario": "37.Rc4 Rd7 38.Rc5 Re6 39.Rb6 Rd6 40.Rxb7. Es un zugzwang: al rival le toca mover y cualquier jugada lo empeora. El rival no pierde por un ataque: pierde porque le toca mover, y cualquier cosa que haga suelta algo. (Ejercicio 0v3Rb de la base abierta de Lichess (CC0), rating 1307. Stockfish 16 a profundidad 18: Rc4 es la mejor (+4,0) y la segunda queda en 0,0.)",
+              "linea": [
+                "Kc4",
+                "Kd7",
+                "Kc5",
+                "Ke6",
+                "Kb6",
+                "Kd6",
+                "Kxb7"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "n": 5,
+      "titulo": "La técnica en el final",
+      "lecciones": [
+        {
+          "titulo": "Finales de torres",
+          "resumen": "Son los finales más frecuentes y los que más medios puntos regalan. Tres ideas resuelven la mayoría.",
+          "parrafos": [
+            "Se dice que todos los finales de torres son tablas, y es una exageración con algo de verdad: la torre es tan activa que el bando con desventaja casi siempre encuentra recursos. Por eso ganarlos con un peón de más exige técnica, y por eso tantas partidas ganadas terminan en tablas por un descuido en el final de torres.",
+            "Tres ideas resuelven la mayoría. Primero, la actividad: la torre que ataca vale más que la que defiende, y el rey propio tiene que acercarse a los peones. Segundo, la posición de la torre respecto de los peones pasados: detrás, no delante. Tercero, cortar al rey rival: una torre en una columna o fila que el rey rival no puede cruzar vale tanto como un peón.",
+            "Además conviene saber de memoria dos posiciones básicas, la de Lucena (cómo se gana con torre y peón) y la de Philidor (cómo se defiende). No son teoría para expertos: aparecen en partidas de todos los niveles, y quien las sabe gana o salva puntos que otros pierden."
+          ],
+          "practica": "Aprende las posiciones de Lucena y de Philidor hasta poder jugarlas contra la computadora sin equivocarte. Después revisa tus finales de torres y marca dónde aparecieron ideas de una o de otra.",
+          "tema": "rookEndgame",
+          "pregunta": "Final de torres. Antes de mover, mira las tres cosas: qué torre está activa, dónde está cada peón pasado y qué rey está cortado.",
+          "enlace": "Con solo torres en el tablero, la ventaja pequeña se cobra con precisión: la jugada buena es la única que no la deja escapar.",
+          "diagramas": [
+            {
+              "id": "GP-18",
+              "fen": "R7/8/8/2p4p/2Pk3P/P4p2/3r1p2/5K2 w - - 2 36",
+              "turno": "w",
+              "resultado": "1-0",
+              "pregunta": "Final de torres. Antes de mover, mira las tres cosas: qué torre está activa, dónde está cada peón pasado y qué rey está cortado. Juegan las blancas; el rival acaba de jugar …Rd4.",
+              "comentario": "36.Td8+ Rc3 37.Txd2 Rxd2 38.a4 Rd3 39.a5 Rxc4 40.a6. La clave es una jugada tranquila: sin jaque ni captura, pero sin defensa. Con solo torres en el tablero, la ventaja pequeña se cobra con precisión: la jugada buena es la única que no la deja escapar. (Ejercicio 3HeX2 de la base abierta de Lichess (CC0), rating 1340. Stockfish 16 a profundidad 18: Td8+ es la mejor (+4,1) y la segunda queda en -2,6.)",
+              "linea": [
+                "Rd8+",
+                "Kc3",
+                "Rxd2",
+                "Kxd2",
+                "a4",
+                "Kd3",
+                "a5",
+                "Kxc4",
+                "a6"
+              ]
+            }
+          ]
+        },
+        {
+          "titulo": "Finales de alfiles",
+          "resumen": "Con alfiles del mismo color pesa el alfil bueno y el rey activo; con alfiles de distinto color, casi todo tiende a tablas.",
+          "parrafos": [
+            "En los finales de alfiles del mismo color, las ventajas pequeñas son muy claras: el alfil bueno contra el malo, el rey que entra por las casillas que el alfil rival no cuida, los peones fijos en el color equivocado. Son finales de paciencia, donde el bando mejor va acercando el rey y el otro solo puede esperar.",
+            "Con alfiles de distinto color todo cambia: cada alfil controla casillas que el otro nunca puede disputar, y el bando que defiende puede bloquear los peones en el color de su alfil y quedarse quieto. Por eso son el final de tablas por excelencia, incluso con dos peones de menos. Para ganarlos hacen falta peones pasados lejos uno de otro.",
+            "La lección práctica sirve en los dos sentidos: si estás mejor, piensa dos veces antes de entrar en un final de alfiles de distinto color; si estás peor, búscalo, porque es una de las mejores defensas que tiene el ajedrez."
+          ],
+          "practica": "Revisa tus finales con alfiles: ¿eran del mismo color o de distinto color? ¿El resultado fue el que dice la lección? Si no, busca el momento en que alguien se equivocó.",
+          "tema": "bishopEndgame",
+          "pregunta": "Final de alfiles: mira de qué color es cada alfil y en qué casillas están los peones.",
+          "enlace": "Con solo alfiles en el tablero, cada tiempo y cada casilla cuentan: la jugada buena es la única que conserva la ventaja.",
+          "diagramas": [
+            {
+              "id": "GP-19",
+              "fen": "8/3k1p2/5Pp1/5P2/p2K2bB/P7/8/8 w - - 0 49",
+              "turno": "w",
+              "resultado": "1-0",
+              "pregunta": "Final de alfiles: mira de qué color es cada alfil y en qué casillas están los peones. Juegan las blancas; el rival acaba de jugar …Axg4.",
+              "comentario": "49.fxg6 fxg6 50.f7. El peón avanzado decide: hay que empujarlo o aprovecharlo a tiempo. Con solo alfiles en el tablero, cada tiempo y cada casilla cuentan: la jugada buena es la única que conserva la ventaja. (Ejercicio 1dAvV de la base abierta de Lichess (CC0), rating 1298. Stockfish 16 a profundidad 18: fxg6 es la mejor (+5,9) y la segunda queda en -0,0.)",
+              "linea": [
+                "fxg6",
+                "fxg6",
+                "f7"
+              ]
+            }
+          ]
+        },
+        {
+          "titulo": "Finales de caballos",
+          "resumen": "Los finales de caballos se parecen a los de peones: cuentan los tiempos y un peón de más suele alcanzar.",
+          "parrafos": [
+            "Los finales de caballos tienen fama de difíciles, pero siguen reglas bastante claras. Un peón de más suele ser suficiente para ganar, porque el caballo, a diferencia de la torre o del alfil, no puede frenar a un peón pasado desde lejos: tiene que ir hasta él.",
+            "Por eso un peón pasado lejano es todavía más fuerte en estos finales que en otros: el caballo que va a frenarlo deja todo lo demás sin cuidar. Y por eso los reyes son tan importantes: un rey activo ayuda a su caballo a frenar peones y a ganar los del rival.",
+            "Hay que cuidar un detalle: el caballo puede dar jaques dobles y horquillas en cualquier momento. Antes de cada jugada en un final de caballos, revisa qué casillas quedan al alcance del caballo rival, sobre todo las que atacan a tu rey y a una pieza o peón a la vez."
+          ],
+          "practica": "Juega contra la computadora diez finales de caballo y tres peones contra caballo y dos peones, en el mismo flanco y en flancos distintos. Anota en cuáles ganaste y qué los diferenciaba.",
+          "tema": "knightEndgame",
+          "pregunta": "Final de caballos: antes de mover, cuenta los saltos y mira qué horquillas tiene cada caballo.",
+          "enlace": "Con solo caballos en el tablero, el que cuenta mejor gana: la jugada buena es la única que conserva la ventaja.",
+          "diagramas": [
+            {
+              "id": "GP-20",
+              "fen": "8/4Pkp1/p2K4/1p1p4/4n3/2P3Np/PP6/8 w - - 2 42",
+              "turno": "w",
+              "resultado": "1-0",
+              "pregunta": "Final de caballos: antes de mover, cuenta los saltos y mira qué horquillas tiene cada caballo. Juegan las blancas; el rival acaba de jugar …Ce4+.",
+              "comentario": "42.Cxe4 dxe4 43.Rd7. Es una jugada defensiva precisa: la única que sostiene la posición. Con solo caballos en el tablero, el que cuenta mejor gana: la jugada buena es la única que conserva la ventaja. (Ejercicio 1oIpG de la base abierta de Lichess (CC0), rating 1447. Stockfish 16 a profundidad 18: Cxe4 es la mejor (+4,7) y la segunda queda en -2,9.)",
+              "linea": [
+                "Nxe4",
+                "dxe4",
+                "Kd7"
+              ]
+            }
+          ]
+        },
+        {
+          "titulo": "Finales de damas",
+          "resumen": "En los finales de damas, primero se esconde el rey propio de los jaques; después se empuja el peón.",
+          "parrafos": [
+            "Los finales de damas son los más largos y los más traicioneros: la dama rival puede dar jaques desde cualquier lado y, si el rey propio no tiene refugio, la partida termina en jaque perpetuo aunque tengas dos peones de más. Por eso la primera pregunta no es cómo avanzo el peón, sino dónde se esconde mi rey.",
+            "La técnica habitual es usar el peón pasado como escudo: el rey camina junto a él y se protege detrás, y cuando la dama rival se queda sin jaques, el peón avanza un paso más. Cada paso es lento, pero seguro. Apurar el peón sin cuidar al rey es la forma más común de tirar un final de damas ganado.",
+            "En estos finales también vale la centralización: una dama en el centro controla muchas casillas y corta los jaques rivales. Y como los cálculos son largos, conviene tener una regla simple: antes de mover el peón, revisa todos los jaques que tiene la dama rival."
+          ],
+          "practica": "Juega contra la computadora un final de dama y peón contra dama, con el peón en la sexta fila. Anota cuántos jaques tuviste que esquivar antes de coronar.",
+          "tema": "queenEndgame",
+          "pregunta": "Final de damas: antes de mover, revisa todos los jaques y todos los cambios que hay en la posición.",
+          "enlace": "Con damas en el tablero hay que revisar cada jaque y cada cambio antes de mover: la jugada buena es la única que conserva la ventaja.",
+          "diagramas": [
+            {
+              "id": "GP-21",
+              "fen": "8/6p1/2p3k1/1p1p4/3Q4/P1Pq3P/6PK/8 b - - 0 52",
+              "turno": "b",
+              "resultado": "0-1",
+              "pregunta": "Final de damas: antes de mover, revisa todos los jaques y todos los cambios que hay en la posición. Juegan las negras; el rival acaba de jugar Dxd4.",
+              "comentario": "52…Dxd4 53.cxd4 Rf5. Es una jugada defensiva precisa: la única que sostiene la posición. Con damas en el tablero hay que revisar cada jaque y cada cambio antes de mover: la jugada buena es la única que conserva la ventaja. (Ejercicio 2HuZV de la base abierta de Lichess (CC0), rating 1332. Stockfish 16 a profundidad 18: Dxd4 es la mejor (+4,1) y la segunda queda en 0,0.)",
+              "linea": [
+                "Qxd4",
+                "cxd4",
+                "Kf5"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "n": 6,
+      "titulo": "Paciencia y defensa",
+      "lecciones": [
+        {
+          "titulo": "No apurarse",
+          "resumen": "Una ventaja pequeña no se pierde por esperar: se pierde por querer cobrarla antes de tiempo.",
+          "parrafos": [
+            "Es la tentación más común cuando se tiene algo de ventaja: forzar las cosas, abrir la posición, ir a buscar el punto ya. Pero una ventaja pequeña no suele aguantar una apertura apresurada; lo que hace es abrirle líneas también al rival, y la ventaja se diluye en el caos.",
+            "Los jugadores con técnica hacen lo contrario: mejoran todas sus piezas antes de abrir. Si el rival no puede hacer nada útil, no hay prisa; cada jugada de mejora suma, y cuando todas las piezas están en su mejor lugar, la ruptura llega con mucha más fuerza. Se dice que cuando el rival no tiene contrajuego, no hay que apurarse.",
+            "La señal para saber si puedes esperar es mirar al rival: si no tiene ningún plan activo, tu ventaja no se va a ir. Si tiene un plan que va a funcionar en tres jugadas, entonces sí hay que actuar. Esperar no es quedarse quieto: es elegir el momento."
+          ],
+          "practica": "En una partida tuya donde tuviste ventaja y la perdiste, busca la jugada en la que abriste la posición o cambiaste de plan. ¿Tenía el rival algún contrajuego en ese momento? Si no, escribe qué piezas tuyas podías mejorar antes.",
+          "tema": "quietMove",
+          "pregunta": "No hay que forzar nada: la jugada buena es tranquila, sin jaque ni captura, y aun así no tiene respuesta.",
+          "enlace": "La jugada no fuerza nada: mejora lo propio, y el rival descubre que ya no tiene una buena respuesta.",
+          "diagramas": [
+            {
+              "id": "GP-22",
+              "fen": "1n2k1nr/3p1ppp/1qbQp3/4P3/8/1p6/1PPB1PPP/4KBNR w Kk - 2 14",
+              "turno": "w",
+              "resultado": "1-0",
+              "pregunta": "No hay que forzar nada: la jugada buena es tranquila, sin jaque ni captura, y aun así no tiene respuesta. Juegan las blancas; el rival acaba de jugar …Db6.",
+              "comentario": "14.Ab4 Dxb4+ 15.Dxb4. La clave es una jugada tranquila: sin jaque ni captura, pero sin defensa. La jugada no fuerza nada: mejora lo propio, y el rival descubre que ya no tiene una buena respuesta. (Ejercicio 1c4Rd de la base abierta de Lichess (CC0), rating 1544. Stockfish 16 a profundidad 18: Ab4 es la mejor (+6,0) y la segunda queda en +0,7.)",
+              "linea": [
+                "Bb4",
+                "Qxb4+",
+                "Qxb4"
+              ]
+            }
+          ]
+        },
+        {
+          "titulo": "Quitarle el contrajuego",
+          "resumen": "La mitad de la técnica es impedir lo que el rival quiere hacer. Una ventaja sin contrajuego rival se gana sola.",
+          "parrafos": [
+            "Cuando un bando tiene una ventaja pequeña, el otro casi siempre tiene una sola esperanza: un contrajuego. Puede ser un ataque al rey, un peón pasado propio, una ruptura que abre la posición. Si ese contrajuego desaparece, la ventaja pequeña se vuelve grande, porque el rival queda esperando sin poder hacer nada.",
+            "Por eso los grandes jugadores posicionales dedican muchas jugadas a la profilaxis: preguntarse qué quiere hacer el rival y evitarlo antes de que pase. Puede ser un peón que impide una ruptura, un rey que se aparta de un futuro jaque, una pieza que vuelve a cuidar una casilla. Son jugadas sin brillo que valen muchos puntos.",
+            "La pregunta que hay que entrenar es: si fuera mi rival, ¿qué jugaría ahora? Si la respuesta te preocupa, la mejor jugada probablemente sea impedirlo. Si no te preocupa, entonces sí, sigue con tu plan."
+          ],
+          "practica": "Durante una semana, en cada partida lenta, haz la pregunta de la profilaxis en cada posición tranquila y anota la respuesta. Revisa al final cuántas veces cambió la jugada que ibas a hacer.",
+          "tema": "defensiveMove",
+          "pregunta": "El rival tiene una amenaza escondida. Encuentra la única jugada que la quita y conserva lo que tienes.",
+          "enlace": "Es una jugada de profilaxis: no ataca nada, pero le quita al rival la única idea que tenía, y la posición sigue siendo tuya.",
+          "diagramas": [
+            {
+              "id": "GP-23",
+              "fen": "7k/2q3p1/6Q1/5N2/5P2/7P/4r1PK/8 w - - 3 58",
+              "turno": "w",
+              "resultado": "1-0",
+              "pregunta": "El rival tiene una amenaza escondida. Encuentra la única jugada que la quita y conserva lo que tienes. Juegan las blancas; el rival acaba de jugar …Dc7.",
+              "comentario": "58.Dh5+ Rg8 59.Dxe2 Dxf4+ 60.Cg3. Es una horquilla: una pieza ataca dos objetivos a la vez. Es una jugada de profilaxis: no ataca nada, pero le quita al rival la única idea que tenía, y la posición sigue siendo tuya. (Ejercicio 1pIxY de la base abierta de Lichess (CC0), rating 1638. Stockfish 16 a profundidad 18: Dh5+ es la mejor (+5,0) y la segunda queda en +0,2.)",
+              "linea": [
+                "Qh5+",
+                "Kg8",
+                "Qxe2",
+                "Qxf4+",
+                "Ng3"
+              ]
+            }
+          ]
+        },
+        {
+          "titulo": "Cuando el rival aprieta",
+          "resumen": "También se gana con poco desde la defensa: aguantar con precisión hasta que el rival se pase de la raya.",
+          "parrafos": [
+            "Las ventajas pequeñas no son solo del que ataca. Cuando el rival tiene la iniciativa, la defensa precisa también es una forma de juntar ventajas: cada ataque que no funciona le deja al atacante algún peón adelantado, alguna pieza lejos, algún tiempo gastado. Si aguantas, esas pequeñas concesiones quedan del lado de la cuenta del rival.",
+            "Defender bien es encontrar la única jugada que sostiene la posición, sin pánico y sin regalar más de lo necesario. A veces es devolver material para cortar el ataque; a veces es una jugada tranquila que cubre la casilla clave. Lo que casi nunca funciona es la defensa pasiva que solo espera.",
+            "La costumbre útil es preguntarse, en cada jugada del rival, qué amenaza y cuántas jugadas lo paran. Si hay una sola, hay que encontrarla aunque cueste tiempo. Muchos ataques que parecían ganadores terminan en un final peor para el atacante, porque el defensor no se apuró."
+          ],
+          "practica": "Busca en tus partidas una que hayas perdido después de recibir un ataque. Encuentra con el motor la jugada que salvaba la posición. ¿Por qué no la viste? Anota si fue por apuro, por miedo o porque no miraste la amenaza.",
+          "tema": "defensiveMove",
+          "pregunta": "El rival aprieta. Juega primero por él: ¿qué amenaza? Solo una jugada lo para.",
+          "enlace": "Es una defensa precisa: no se aguanta con cualquier jugada, sino con la única que cubre lo que el rival amenaza.",
+          "diagramas": [
+            {
+              "id": "GP-24",
+              "fen": "r1k1r3/pbpn1Q2/1p2p3/7R/3q1B2/P4P1P/2P3P1/4R1K1 w - - 0 28",
+              "turno": "w",
+              "resultado": "1-0",
+              "pregunta": "El rival aprieta. Juega primero por él: ¿qué amenaza? Solo una jugada lo para. Juegan las blancas; el rival acaba de jugar …Dxd4+.",
+              "comentario": "28.Ae3 Tf8 29.Dxf8+ Cxf8 30.Axd4. Es una jugada defensiva precisa: la única que sostiene la posición. Es una defensa precisa: no se aguanta con cualquier jugada, sino con la única que cubre lo que el rival amenaza. (Ejercicio 0blu0 de la base abierta de Lichess (CC0), rating 1452. Stockfish 16 a profundidad 18: Ae3 es la mejor (+5,8) y la segunda queda en -2,7.)",
+              "linea": [
+                "Be3",
+                "Rf8",
+                "Qxf8+",
+                "Nxf8",
+                "Bxd4"
+              ]
+            }
+          ]
+        },
+        {
+          "titulo": "Pasar el turno",
+          "resumen": "En las posiciones muy tensas, una jugada de espera puede ser la más fuerte del tablero.",
+          "parrafos": [
+            "Hay posiciones en que los dos bandos están en equilibrio frágil: cada pieza tiene una tarea, y quien mueve primero algo importante pierde. En esas posiciones la mejor jugada no es la más activa, sino la que no cambia nada: un peón de un paso, un rey que va y vuelve, una torre que se corre una casilla sin dejar de hacer su trabajo.",
+            "Es la idea del zugzwang aplicada a la técnica: si tus piezas están bien y las del rival también, pero el rival tiene menos jugadas útiles, una jugada de espera lo obliga a romper su propia posición. Los jugadores impacientes nunca encuentran estas jugadas, porque buscan siempre algo que hacer.",
+            "Para reconocer el momento, mira las jugadas que le quedan al rival: si todas las útiles empeoran algo, tu tarea es solo no estropear lo tuyo y darle el turno."
+          ],
+          "practica": "Estudia la idea de la triangulación del rey en los finales de peones: busca un ejemplo y explícalo en voz alta. Después busca en tus partidas una posición donde una jugada de espera habría puesto al rival en apuros.",
+          "tema": "zugzwang",
+          "pregunta": "Todo está en equilibrio y quien mueve pierde algo. ¿Qué jugada le pasa el problema al rival?",
+          "enlace": "La jugada no ataca nada nuevo: deja al rival con el turno, y cualquier cosa que haga empeora su posición.",
+          "diagramas": [
+            {
+              "id": "GP-25",
+              "fen": "8/8/8/pp6/4k1p1/P1P3P1/1P2K3/8 b - - 3 53",
+              "turno": "b",
+              "resultado": "0-1",
+              "pregunta": "Todo está en equilibrio y quien mueve pierde algo. ¿Qué jugada le pasa el problema al rival? Juegan las negras; el rival acaba de jugar Re2.",
+              "comentario": "53…a4 54.b3 axb3. Es un zugzwang: al rival le toca mover y cualquier jugada lo empeora. La jugada no ataca nada nuevo: deja al rival con el turno, y cualquier cosa que haga empeora su posición. (Ejercicio 02kQm de la base abierta de Lichess (CC0), rating 1573. Stockfish 16 a profundidad 18: a4 es la mejor (+5,8) y la segunda queda en -5,6.)",
+              "linea": [
+                "a4",
+                "b3",
+                "axb3"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "n": 7,
+      "titulo": "Las partidas del libro",
+      "lecciones": [
+        {
+          "titulo": "Andersson – Potkin: la pieza activa manda",
+          "resumen": "Ulf Andersson contra Vladimir Potkin, Estambul, 2003. Piezas activas contra piezas pasivas.",
+          "parrafos": [
+            "Una Catalana tranquila, con el material igualado durante casi toda la partida. Ulf Andersson no busca ningún golpe: cambia lo que le conviene, deja a su caballo en la casilla d3, desde donde cuida y ataca a la vez, y gana un peón del flanco de dama que queda pasado. Después viene la parte más instructiva: un final largo de torre y caballo en el que las blancas mejoran de a poco, repiten jugadas para ganar tiempo en el reloj y empujan el peón pasado cuando el rival ya no puede hacer nada.",
+            "Recórrela jugada a jugada en el tablero (Apertura Catalana; ganan las blancas). En los momentos clave el visor te pide que encuentres la jugada antes de verla: todas están comprobadas con Stockfish, y en cada una la jugada de la partida es la mejor por al menos medio peón. Lo que hay que llevarse: Con el material igual, la diferencia la hace qué piezas trabajan y cuáles solo defienden. Un peón pasado en el flanco de dama, lejos de los reyes, vale cada vez más a medida que se cambian piezas. En un final ganado no hay apuro: se puede repetir jugadas para ordenar las ideas antes del paso decisivo."
+          ],
+          "practica": "Antes de cambiar piezas, pregúntate cuál queda activa y cuál pasiva después del cambio. Cuando tengas un peón pasado lejos de los reyes, lleva tu torre a apoyarlo y tu rey al centro.",
+          "partida": "gp-p1"
+        },
+        {
+          "titulo": "Petrosian – Botvinnik: el peón débil de e6",
+          "resumen": "Tigran Petrosian contra Mijaíl Botvinnik, Match por el campeonato del mundo, Moscú 1963 (5.ª partida). Una debilidad y el rey en el centro.",
+          "parrafos": [
+            "Petrosian cambia las damas temprano: pierde el enroque, pero a cambio deja a las negras con un peón débil en e6. Sin damas, el rey ya no corre peligro y se convierte en una pieza más. Las blancas fijan los peones del flanco de dama, centralizan el rey y, cuando la posición lo pide, devuelven material para mantener sus piezas activas. Es una de las partidas más citadas para mostrar cómo una sola debilidad, bien explotada, alcanza para ganar.",
+            "Recórrela jugada a jugada en el tablero (Defensa Grunfeld; ganan las blancas). En los momentos clave el visor te pide que encuentres la jugada antes de verla: todas están comprobadas con Stockfish, y en cada una la jugada de la partida es la mejor por al menos medio peón. Lo que hay que llevarse: Un peón aislado o retrasado obliga al rival a defenderlo con piezas, que dejan de hacer otra cosa. Sin damas, el rey es una pieza de ataque: el que lo lleva antes al centro suele mandar. Es mejor tener las piezas activas con el material igual que un peón de más con las piezas pasivas."
+          ],
+          "practica": "Cuando cambies damas, piensa enseguida adónde va tu rey. Fija los peones del rival antes de atacarlos: un peón fijo no puede escaparse ni cambiarse.",
+          "partida": "gp-p2"
+        },
+        {
+          "titulo": "Matulović – Botvinnik: las casillas que deja un peón",
+          "resumen": "Milan Matulović contra Mijaíl Botvinnik, Belgrado, 1969. Una red de casillas débiles.",
+          "parrafos": [
+            "Un avance de peón de la apertura, hecho para cuidar una sola casilla, deja débiles varias casillas del mismo color. Botvinnik las ocupa una por una con sus piezas, cambia la pieza blanca más activa cuando puede y lleva la partida a un final donde su caballo y su rey entran por las casillas que ningún peón blanco puede cuidar.",
+            "Recórrela jugada a jugada en el tablero (Defensa Pirc; ganan las negras). En los momentos clave el visor te pide que encuentres la jugada antes de verla: todas están comprobadas con Stockfish, y en cada una la jugada de la partida es la mejor por al menos medio peón. Lo que hay que llevarse: Cada avance de peón deja casillas que ya no podrá defender: hay que saber cuáles. Un caballo apoyado por un peón, en una casilla que ningún peón rival puede atacar, vale más que una torre pasiva. Cambiar la pieza más activa del rival suele ser un buen negocio."
+          ],
+          "practica": "Antes de avanzar un peón, di qué casillas deja de cuidar. Busca en la posición del rival una casilla que ningún peón suyo pueda atacar, y lleva ahí un caballo.",
+          "partida": "gp-p3"
+        },
+        {
+          "titulo": "Kárpov – Krámnik: torre y caballo contra torre y alfil",
+          "resumen": "Anatoli Kárpov contra Vladímir Krámnik, Viena, 1996. Cuando el caballo vale más que el alfil.",
+          "parrafos": [
+            "Se suele decir que torre y alfil son mejores que torre y caballo. Kárpov muestra la excepción: con el centro abierto, su caballo encuentra casillas, su rey se mete entre los peones negros y la ventaja pequeña de la apertura se convierte, de a poco, en un final ganado. La jugada 12 no viene escrita en el libro (va en un diagrama): 12.Axe4 h6 es la única pareja de jugadas que deja legal el resto de la partida.",
+            "Recórrela jugada a jugada en el tablero (Defensa Eslava; ganan las blancas). En los momentos clave el visor te pide que encuentres la jugada antes de verla: todas están comprobadas con Stockfish, y en cada una la jugada de la partida es la mejor por al menos medio peón. Lo que hay que llevarse: Las reglas sobre el valor de las piezas son promedios: la posición concreta manda. Con el rey activo y el caballo bien apoyado, la torre y el caballo pueden más que la torre y el alfil. La ventaja pequeña del medio juego se cobra en el final, con el rey."
+          ],
+          "practica": "Cuando cambies piezas menores, piensa en qué final queda: caballo o alfil, ¿cuál tendrá más casillas? En el final de torres y piezas menores, lleva el rey hacia los peones del rival.",
+          "partida": "gp-p4"
+        },
+        {
+          "titulo": "Sálov – Short: las casillas negras",
+          "resumen": "Valeri Sálov contra Nigel Short, Barcelona, 1989. Debilidades de un color.",
+          "parrafos": [
+            "En una Holandesa con la estructura «stonewall», las blancas cambian los alfiles de casillas negras y las casillas de ese color quedan débiles en el campo negro. Sálov pone sus caballos ahí, aprieta el peón de e6 con las torres y, como pasa siempre, las negras crean nuevas debilidades al tapar las que ya tenían. La partida termina con un final técnico de dama contra torre, que las blancas ganan sin apuro.",
+            "Recórrela jugada a jugada en el tablero (Defensa Holandesa; ganan las blancas). En los momentos clave el visor te pide que encuentres la jugada antes de verla: todas están comprobadas con Stockfish, y en cada una la jugada de la partida es la mejor por al menos medio peón. Lo que hay que llevarse: Cuando se cambia el alfil que cuidaba un color, todas las casillas de ese color se vuelven débiles. Limitar las piezas del rival vale tanto como darles libertad a las propias. Al defender una debilidad suelen aparecer otras: el que defiende siempre llega tarde."
+          ],
+          "practica": "Si tu rival cambia su alfil bueno, busca las casillas de ese color para tus caballos. Aprende la técnica de dama contra torre: aparece más de lo que parece.",
+          "partida": "gp-p5"
+        },
+        {
+          "titulo": "Kamsky – Lautier: la mejor estructura de peones",
+          "resumen": "Gata Kamsky contra Joël Lautier, Las Palmas, 1994. Peones sanos contra peones débiles.",
+          "parrafos": [
+            "Una Española en la que las negras quedan con peones doblados. No hay nada que ganar de inmediato: Kamsky mantiene la tensión, lleva los caballos a casillas donde molestan y espera. La peor estructura de las negras obliga a sus piezas a defender, y cuando la posición se abre, la diferencia de actividad decide.",
+            "Recórrela jugada a jugada en el tablero (Apertura Española; ganan las blancas). En los momentos clave el visor te pide que encuentres la jugada antes de verla: todas están comprobadas con Stockfish, y en cada una la jugada de la partida es la mejor por al menos medio peón. Lo que hay que llevarse: Una estructura de peones peor obliga a las piezas a defender, y una pieza que defiende no ataca. No hace falta cambiar en el centro si la tensión molesta más al rival que a ti. Un caballo centralizado puede abrirle una fila o columna a una torre."
+          ],
+          "practica": "Mira tus peones doblados o aislados: ¿qué pieza tuya está atada a defenderlos? Antes de cambiar en el centro, pregúntate a quién alivia el cambio.",
+          "partida": "gp-p6"
+        },
+        {
+          "titulo": "Portisch – Beliavsky: la mayoría del flanco de dama",
+          "resumen": "Lajos Portisch contra Alexander Beliavsky, Tilburg, 1981. Mayoría de peones y columna abierta.",
+          "parrafos": [
+            "En una Eslava, Portisch consigue una mayoría de peones en el flanco de dama, una torre en la columna c y una dama centralizada. Es una ventaja pequeña, pero sin contrajuego para las negras: las blancas la empujan hasta tener un peón pasado y, con el cambio de damas a la vista, la partida se decide.",
+            "Recórrela jugada a jugada en el tablero (Defensa Eslava; ganan las blancas). En los momentos clave el visor te pide que encuentres la jugada antes de verla: todas están comprobadas con Stockfish, y en cada una la jugada de la partida es la mejor por al menos medio peón. Lo que hay que llevarse: Una mayoría de peones es un peón pasado que todavía no nació. Un caballo en una casilla que ningún peón puede atacar es una espina en el campo rival. Con un peón pasado, cambiar damas suele favorecer al que lo tiene."
+          ],
+          "practica": "Cuenta los peones de cada flanco al salir de la apertura: ¿dónde tienes la mayoría? Si tienes un peón pasado, busca cambiar las piezas que pueden frenarlo.",
+          "partida": "gp-p7"
+        },
+        {
+          "titulo": "Spassky – Petrosian: los peones de d5 y e5",
+          "resumen": "Boris Spassky contra Tigran Petrosian, Match por el campeonato del mundo, Moscú 1966 (19.ª partida). Presión constante sobre peones fijos.",
+          "parrafos": [
+            "Petrosian propone cambiar las damas, y Spassky lo aprovecha: sin damas, empieza una presión lenta y constante sobre los peones negros del centro. Cada cambio de piezas deja a las negras un poco más pasivas, hasta que la defensa no alcanza.",
+            "Recórrela jugada a jugada en el tablero (Defensa Francesa; ganan las blancas). En los momentos clave el visor te pide que encuentres la jugada antes de verla: todas están comprobadas con Stockfish, y en cada una la jugada de la partida es la mejor por al menos medio peón. Lo que hay que llevarse: Un cambio de piezas mal elegido puede dejar las piezas propias pasivas para el resto de la partida. Un peón fijo en el centro es un blanco que no se puede mover. En el final, la presión sostenida pesa más que un golpe."
+          ],
+          "practica": "Antes de proponer un cambio de damas, imagina qué piezas quedan y cuáles serán pasivas. Cuando ataques un peón fijo, suma atacantes uno por uno, sin apuro.",
+          "partida": "gp-p8"
+        },
+        {
+          "titulo": "Fischer – Portisch: de una ventaja ligera a una decisiva",
+          "resumen": "Robert Fischer contra Lajos Portisch, Estocolmo, 1962. Ir sumando ventajas.",
+          "parrafos": [
+            "Fischer muestra aquí una de sus virtudes: tomar una ventaja ligera, convertirla en clara y después en decisiva, sin saltarse ningún paso. Los cambios llevan a un final de torres en el que el rey blanco es más activo, y desde ahí todo es técnica.",
+            "Recórrela jugada a jugada en el tablero (Defensa Caro Kan; ganan las blancas). En los momentos clave el visor te pide que encuentres la jugada antes de verla: todas están comprobadas con Stockfish, y en cada una la jugada de la partida es la mejor por al menos medio peón. Lo que hay que llevarse: Una ventaja ligera no se cobra de golpe: se convierte, paso a paso, en una ventaja mayor. En el final de torres, el rey activo vale casi un peón. La torre que ataca peones desde el costado obliga al rival a defenderse con todo."
+          ],
+          "practica": "Después de una partida ganada, marca en qué jugadas tu ventaja creció: ¿qué hiciste en cada una? En tus finales de torres, ¿tu rey estuvo más activo que el del rival?",
+          "partida": "gp-p9"
+        },
+        {
+          "titulo": "Krámnik – Deep Fritz: técnica contra la máquina",
+          "resumen": "Vladímir Krámnik contra Deep Fritz, Brains in Bahrain, Manama 2002. La técnica impecable.",
+          "parrafos": [
+            "Krámnik juega contra uno de los programas más fuertes de su época como contra un ser humano: posiciones sencillas, pocas complicaciones y una ventaja pequeña que no se escapa. Le quita casillas a las piezas negras, ataca lo que no se puede defender bien y lleva la partida a un final donde su rey es más activo.",
+            "Recórrela jugada a jugada en el tablero (Gambito de dama rehusado; ganan las blancas). En los momentos clave el visor te pide que encuentres la jugada antes de verla: todas están comprobadas con Stockfish, y en cada una la jugada de la partida es la mejor por al menos medio peón. Lo que hay que llevarse: Contra un rival que calcula muy bien, conviene que la posición no dependa del cálculo. Una jugada de peón que le quita casillas a las piezas rivales también es una ventaja. Atacar dos veces lo que está defendido dos veces mantiene al rival atado."
+          ],
+          "practica": "Si tu rival es muy táctico, busca posiciones sencillas y sin golpes. Antes de atacar, mira qué casillas puedes quitarle al rival.",
+          "partida": "gp-p10"
+        },
+        {
+          "titulo": "Yusúpov – Rozentalis: el alfil y el rey activo",
+          "resumen": "Artur Yusúpov contra Eduardas Rozentalis, Alemania, 1995. Alfil contra caballo en el final.",
+          "parrafos": [
+            "En una Nimzoindia, la partida llega a un final de torre y alfil contra torre y caballo. Yusúpov tiene el rey más activo y un alfil que, con peones en los dos flancos, llega más rápido que el caballo. La ventaja crece de a poco hasta que los peones negros empiezan a caer.",
+            "Recórrela jugada a jugada en el tablero (Defensa Nimzoindia; ganan las blancas). En los momentos clave el visor te pide que encuentres la jugada antes de verla: todas están comprobadas con Stockfish, y en cada una la jugada de la partida es la mejor por al menos medio peón. Lo que hay que llevarse: Con peones en los dos flancos, el alfil suele ser mejor que el caballo. Una pieza que tapa a otra más valiosa queda atada. El rey activo decide los finales de piezas."
+          ],
+          "practica": "En tus finales de alfil contra caballo, mira si hay peones en los dos flancos. Busca piezas rivales que estén tapando a otras más valiosas: son un blanco.",
+          "partida": "gp-p11"
+        },
+        {
+          "titulo": "Kaspárov – X3D Fritz: espacio y una casilla débil",
+          "resumen": "Garri Kaspárov contra X3D Fritz, Match hombre contra máquina, 2003. Ganar espacio y crear una casilla débil.",
+          "parrafos": [
+            "Kaspárov, conocido por su ajedrez de ataque, juega aquí una partida de pura estrategia. Cierra el centro temprano, gana espacio en el flanco de dama con sus peones y después entrega un peón para conseguir una casilla débil en el campo negro y debilitar el peón de c6. La máquina no encuentra nada que hacer y la ventaja crece sin un solo golpe táctico.",
+            "Recórrela jugada a jugada en el tablero (Defensa Eslava; ganan las blancas). Esta partida no tiene momentos para adivinar la jugada: ninguna jugada blanca es la mejor por más de medio peón, porque la ventaja se construye con muchas jugadas buenas y ninguna única. Por eso es tan instructiva. Lo que hay que llevarse: El espacio ganado con peones encierra a las piezas rivales. A veces se entrega un peón para conseguir una casilla débil permanente. Contra un rival que calcula muy bien, conviene cerrar la posición."
+          ],
+          "practica": "Si tienes más espacio en un flanco, no cambies piezas: deja que las del rival se estorben. Busca casillas en el campo rival que ningún peón pueda defender.",
+          "partida": "gp-p12"
+        },
+        {
+          "titulo": "Palavandishvili – Keres: las torres por la sexta fila",
+          "resumen": "Palavandishvili contra Paul Keres, Tiflis, 1946. Torres activas sin columnas abiertas.",
+          "parrafos": [
+            "En la posición no hay columnas abiertas, y las torres parecen no tener nada que hacer. Keres encuentra otra vía: lleva sus torres a la sexta fila y desde ahí pasan de un flanco al otro. Es una ventaja pequeña, pero dura: mientras las torres negras se mueven libres, las blancas tienen que defender.",
+            "Recórrela jugada a jugada en el tablero (Defensa Nimzoindia; ganan las negras). En los momentos clave el visor te pide que encuentres la jugada antes de verla: todas están comprobadas con Stockfish, y en cada una la jugada de la partida es la mejor por al menos medio peón. Lo que hay que llevarse: Sin columnas abiertas, una torre puede activarse por una fila. Cambiar el único alfil del rival puede dejar sus peones sin defensa. Una ventaja de actividad, si el rival no la iguala, crece sola."
+          ],
+          "practica": "Cuando tus torres no tengan columnas, busca una fila libre. Antes de cambiar un alfil, mira qué peones quedan en su color.",
+          "partida": "gp-p13"
+        },
+        {
+          "titulo": "Rubinstein – Grünfeld: paciencia en el final",
+          "resumen": "Akiba Rubinstein contra Ernst Grünfeld, Karlsbad, 1929. El arte del final.",
+          "parrafos": [
+            "Rubinstein, uno de los mejores jugadores de finales de la historia, convierte una ventaja pequeña en un final de damas y alfiles de distinto color, y después en uno de alfiles con peones en los dos flancos. Cada fase se juega sin apuro: primero se fijan los peones del rival, después se activa el rey y al final se empuja el peón pasado.",
+            "Recórrela jugada a jugada en el tablero (Defensa India de Dama; ganan las blancas). En los momentos clave el visor te pide que encuentres la jugada antes de verla: todas están comprobadas con Stockfish, y en cada una la jugada de la partida es la mejor por al menos medio peón. Lo que hay que llevarse: Con damas en el tablero, los alfiles de distinto color favorecen al que ataca. Un peón que fija a otro le quita casillas al rey y a las piezas rivales. En el final de alfiles, el que frena el peón pasado del rival y empuja el propio gana."
+          ],
+          "practica": "Juega finales contra la computadora y anota en cuántas jugadas activaste tu rey. En tus finales de alfiles, mira de qué color son las casillas de los peones pasados.",
+          "partida": "gp-p14"
+        },
+        {
+          "titulo": "Capablanca – Yates: los caballos de Capablanca",
+          "resumen": "José Raúl Capablanca contra Frederick Yates, Nueva York, 1924. Simplificar y tomar la iniciativa.",
+          "parrafos": [
+            "Capablanca hace lo que lo hizo famoso: simplifica la posición, toma la iniciativa y juega con una claridad que parece fácil. Sus caballos buscan los peones débiles del flanco de dama y, con cada cambio, la ventaja crece hasta ser decisiva.",
+            "Recórrela jugada a jugada en el tablero (Defensa India del Rey; ganan las blancas). En los momentos clave el visor te pide que encuentres la jugada antes de verla: todas están comprobadas con Stockfish, y en cada una la jugada de la partida es la mejor por al menos medio peón. Lo que hay que llevarse: Simplificar no es ir a tablas: es quedarse con las piezas que trabajan. Dos caballos bien coordinados atacan muchas casillas a la vez. Un ataque doble con un caballo sale de tenerlo cerca de las piezas rivales."
+          ],
+          "practica": "En tus partidas, antes de cada cambio, di qué pieza buena te queda después. Busca casillas desde las que un caballo ataque dos piezas a la vez.",
+          "partida": "gp-p15"
+        },
+        {
+          "titulo": "Nóvikov – García: recoger la cuerda de a poco",
+          "resumen": "Igor Nóvikov contra Guillermo García, Camagüey, 1987. Mejorar poco a poco desde la defensa.",
+          "parrafos": [
+            "Guillermo García, uno de los grandes talentos del ajedrez cubano, conduce las negras. Durante muchas jugadas defiende las amenazas del rival y, en cada pausa, mejora un poco su posición. La ventaja llega sola: un caballo metido en el campo blanco, el cambio de damas en el momento justo y un rey que avanza en el final.",
+            "Recórrela jugada a jugada en el tablero (Defensa Bogoindia; ganan las negras). En los momentos clave el visor te pide que encuentres la jugada antes de verla: todas están comprobadas con Stockfish, y en cada una la jugada de la partida es la mejor por al menos medio peón. Lo que hay que llevarse: Defenderse bien también es acumular ventajas: cada ataque fallido le cuesta algo al atacante. Un caballo en el campo rival ata a las piezas que lo vigilan. El cambio de damas conviene al que tiene las piezas mejor puestas."
+          ],
+          "practica": "Revisa una partida en la que defendiste mucho tiempo: ¿mejoraste tus piezas en las pausas? Cuando ofrezcas el cambio de damas, mira qué piezas quedan y quién las tiene mejor.",
+          "partida": "gp-p16"
+        },
+        {
+          "titulo": "Nikolić – Van der Wiel: el peón débil de f4",
+          "resumen": "Predrag Nikolić contra John van der Wiel, Olimpiada de Novi Sad, 1990. Atacar una debilidad con el rey.",
+          "parrafos": [
+            "Predrag Nikolić, conocido por su juego posicional, gana un peón en el medio juego y lleva la partida a un final de torres y alfiles. Ahí su rey se acerca a los peones negros, la torre se activa y el peón de f4 de las negras termina cayendo.",
+            "Recórrela jugada a jugada en el tablero (Defensa India de Dama; ganan las blancas). En los momentos clave el visor te pide que encuentres la jugada antes de verla: todas están comprobadas con Stockfish, y en cada una la jugada de la partida es la mejor por al menos medio peón. Lo que hay que llevarse: El rey es la mejor pieza para atacar peones en el final. Con más actividad, un peón de ventaja crece hasta ser decisivo. Las torres activas obligan a las del rival a defender."
+          ],
+          "practica": "En tus finales, marca qué peones rivales puede atacar tu rey. Antes de cambiar torres, mira cuál de las dos está más activa.",
+          "partida": "gp-p17"
+        },
+        {
+          "titulo": "Leyva – Pineda: el peón pasado de c",
+          "resumen": "Héctor Leyva contra B. Pineda, San Salvador, 2000. Un peón pasado y el alfil.",
+          "parrafos": [
+            "La partida del propio Héctor Leyva, autor del libro de donde salen estas partidas. Las blancas tienen más espacio en el flanco de dama y un peón pasado en la columna c; su alfil acompaña el avance y la torre entra a la séptima. Cuando el peón llega, la ventaja es decisiva.",
+            "Recórrela jugada a jugada en el tablero (Defensa Eslava; ganan las blancas). En los momentos clave el visor te pide que encuentres la jugada antes de verla: todas están comprobadas con Stockfish, y en cada una la jugada de la partida es la mejor por al menos medio peón. Lo que hay que llevarse: Un peón pasado apoyado por una torre en la séptima fila es muy difícil de frenar. Un alfil que ataca a la pieza que frena el peón le abre el camino. En la técnica, cada jugada prepara la siguiente."
+          ],
+          "practica": "Cuando tengas un peón pasado, mira qué pieza rival lo frena y cómo puedes atacarla. Pon tu torre detrás o al costado del peón pasado, no delante.",
+          "partida": "gp-p18"
+        }
+      ]
+    },
+    {
+      "n": 8,
+      "titulo": "Tu propio método",
+      "lecciones": [
+        {
+          "titulo": "Tu cuaderno de ventajas",
+          "resumen": "Cómo revisar tus partidas para encontrar las ventajas pequeñas que tuviste, las que regalaste y las que dejaste pasar.",
+          "parrafos": [
+            "Las ventajas pequeñas son difíciles de ver en la partida porque nada las anuncia. La forma de entrenar el ojo es mirarlas después, con calma, en tus propias partidas: cuáles tuviste, cuáles regalaste y cuáles el rival te dejó y no aprovechaste. Eso es el cuaderno de ventajas.",
+            "El método es este. Después de cada partida lenta, busca los momentos tranquilos, sin amenazas concretas, y para cada uno anota qué ventaja pequeña tenía cada bando: pieza mejor, casilla, peón débil, peón pasado, rey activo, columna abierta, tiempo. Después pásala por el motor y mira si la evaluación se fue moviendo hacia el bando de las ventajas. Casi siempre lo hace.",
+            "Después de diez o quince partidas, el cuaderno te dice qué ventajas ves bien y cuáles no ves nunca. Esas son las lecciones a repasar. Y sirve también para medir: si en unos meses las ventajas que antes regalabas aparecen menos, vas bien. Así se aprende a ganar con poco: mirando con lupa lo que antes no se veía."
+          ],
+          "practica": "Arma tu cuaderno de ventajas con los siete tipos de ventaja del libro y analiza con él tus diez últimas partidas lentas. Llévaselo a tu profesor: con él se puede armar un plan de entrenamiento hecho a tu medida."
+        }
+      ]
+    }
+  ]
+}

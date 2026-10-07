@@ -31,9 +31,8 @@
  *     herramientas/diagnostico-lichess.js), que solo deja las que tienen UNA
  *     jugada buena. Las de ataque además tienen que ganar (+3 o mate); las de
  *     defensa basta con que salven, porque lo que enseñan es aguantar.
- *   - Ninguna repite una del diagnóstico, de «Ponte a prueba», de «Mide tu
- *     fuerza» ni de «Rompe el estancamiento»: el mismo ejercicio en dos libros
- *     mediría memoria.
+ *   - Ninguna repite una del diagnóstico ni de ningún otro banco de
+ *     material/: el mismo ejercicio en dos libros mediría memoria.
  *
  * LAS CANDIDATAS (herramientas/datos/ideas-que-ganan-partidas-candidatas.txt)
  * salen de las que ya se bajaron de esa tabla para los otros libros
@@ -223,18 +222,23 @@ const PISTA = {
   zugzwang: "A veces lo mejor es dejar que el rival se ahogue: ¿qué jugada le quita las buenas?",
 };
 
-function bancoDe(archivo, global) {
-  const w = {};
-  new Function("window", fs.readFileSync(path.join(RAIZ, archivo), "utf8"))(w);
-  return w[global] || [];
-}
+/* Las posiciones que ya usa otro libro: el diagnóstico y TODOS los bancos de
+   material/ (cada uno en su propia ventana: los volúmenes de «Mide tu fuerza»
+   usan el mismo nombre de variable y uno pisaría al otro). Una lista fija se
+   queda atrás cuando llega un libro nuevo. */
 function yaUsadas() {
-  return new Set([].concat(
-    bancoDe("js/diagnostico-items.js", "DIAGNOSTICO_ITEMS"),
-    bancoDe("material/ponte-a-prueba/banco.js", "LIBRO_EXAMEN_ITEMS"),
-    bancoDe("material/mide-tu-fuerza/banco.js", "MIDE_TU_FUERZA_ITEMS"),
-    bancoDe("material/rompe-el-estancamiento/banco.js", "ROMPE_EL_ESTANCAMIENTO_ITEMS"),
-  ).map((i) => i.lichess).filter(Boolean));
+  const usadas = new Set();
+  const sumar = (archivo) => {
+    const w = {};
+    new Function("window", fs.readFileSync(archivo, "utf8"))(w);
+    Object.values(w).forEach((v) => { if (Array.isArray(v)) v.forEach((i) => i && i.lichess && usadas.add(i.lichess)); });
+  };
+  sumar(path.join(RAIZ, "js", "diagnostico-items.js"));
+  fs.readdirSync(path.join(RAIZ, "material")).forEach((d) => {
+    const f = path.join(RAIZ, "material", d, "banco.js");
+    if (d !== "ideas-que-ganan-partidas" && fs.existsSync(f)) sumar(f);
+  });
+  return usadas;
 }
 
 const md5 = (s) => crypto.createHash("md5").update(s).digest("hex");
@@ -485,4 +489,4 @@ ${cuerpo}
 }
 
 if (require.main === module) main().catch((e) => { console.error(e.message); process.exit(1); });
-module.exports = { IDEAS_CAPITULO, CRITERIOS, PISTA, DESCUENTO_LICHESS, datos, datosDe };
+module.exports = { yaUsadas, IDEAS_CAPITULO, CRITERIOS, PISTA, DESCUENTO_LICHESS, datos, datosDe };

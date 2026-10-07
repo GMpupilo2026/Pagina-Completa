@@ -56,6 +56,7 @@ window.ExamenBanco = (function () {
     "desequilibrios-de-material": ["material", "estrategia"],
     "preparacion-para-torneos": ["maestria", "calculo"],
     "rompe-el-estancamiento": ["estrategia", "calculo", "tactica"],
+    "ganar-con-poco": ["estrategia", "finales"],
     "ideas-que-ganan-partidas": ["estrategia", "tactica", "finales"],
   };
 

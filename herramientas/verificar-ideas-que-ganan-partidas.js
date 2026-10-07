@@ -4,9 +4,9 @@
  *
  * Lo que comprueba, porque nada de esto da error si se rompe —el curso se ve
  * y el libro se imprime igual—:
- *   - ninguna posición repetida, ni una que ya esté en el diagnóstico, en
- *     «Ponte a prueba», en «Mide tu fuerza» o en «Rompe el estancamiento» (el
- *     mismo ejercicio en dos libros mediría memoria);
+ *   - ninguna posición repetida, ni una que ya esté en el diagnóstico o en
+ *     cualquier otro banco de material/ (el mismo ejercicio en dos libros
+ *     mediría memoria);
  *   - cada FEN es legal y la última jugada marcada la hizo el rival;
  *   - la solución guardada es legal, es la primera jugada de la línea, y la
  *     línea entera se puede jugar;
@@ -28,7 +28,7 @@
 const fs = require("fs");
 const path = require("path");
 const { Chess } = require("chess.js");
-const { DESCUENTO_LICHESS, IDEAS_CAPITULO, CRITERIOS, datosDe } = require("./ideas-que-ganan-partidas-generar.js");
+const { DESCUENTO_LICHESS, IDEAS_CAPITULO, CRITERIOS, datosDe, yaUsadas } = require("./ideas-que-ganan-partidas-generar.js");
 
 const RAIZ = path.join(__dirname, "..");
 const fallos = [];
@@ -36,10 +36,6 @@ const ok = (cond, msg) => { if (!cond) fallos.push(msg); };
 
 const win = {};
 const cargar = (f) => new Function("window", fs.readFileSync(path.join(RAIZ, f), "utf8"))(win);
-cargar("js/diagnostico-items.js");
-cargar("material/ponte-a-prueba/banco.js");
-cargar("material/mide-tu-fuerza/banco.js");
-cargar("material/rompe-el-estancamiento/banco.js");
 cargar("material/ideas-que-ganan-partidas/banco.js");
 
 const LIBRO = win.IDEAS_QUE_GANAN;
@@ -50,14 +46,13 @@ const INGLES = { R: "K", D: "Q", T: "R", A: "B", C: "N" };
 const aIngles = (san) => san.replace(/^[RDTAC]/, (c) => INGLES[c]).replace(/=([DTAC])/, (_, c) => "=" + INGLES[c]);
 
 /* ---------- el banco ---------- */
-const otras = new Set([].concat(win.DIAGNOSTICO_ITEMS || [], win.LIBRO_EXAMEN_ITEMS || [], win.MIDE_TU_FUERZA_ITEMS || [],
-  win.ROMPE_EL_ESTANCAMIENTO_ITEMS || []).map((i) => i.lichess).filter(Boolean));
+const otras = yaUsadas();
 const vistas = new Set();
 ITEMS.forEach((it) => {
   const id = `posición ${it.n} (${it.id})`;
   ok(!vistas.has(it.lichess), `${id}: repetida`);
   vistas.add(it.lichess);
-  ok(!otras.has(it.lichess), `${id}: ya está en el diagnóstico o en otro libro`);
+  ok(!otras.has(it.lichess), `${id}: ya está en el diagnóstico o en otro banco de material/`);
   ok(it.elo === it.rating - DESCUENTO_LICHESS, `${id}: la dificultad no sale del rating`);
   const g = new Chess();
   ok(g.load(it.fen), `${id}: la FEN no carga`);

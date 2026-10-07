@@ -206,6 +206,22 @@ def diagramas_html(leccion):
     return "".join(salida)
 
 
+def partida_html(leccion):
+    """La partida comentada de la lección, si la tiene ("partida": su id).
+
+    El tablero, las jugadas con sus comentarios, los momentos clave para
+    adivinar la jugada y la práctica contra el motor los pone
+    js/curso-partidas.js (el visor de "Desequilibrios de material") a partir
+    del campo `partidas` de cursos/protegido/data/<slug>.json. Acá solo va el
+    hueco con su id; la página de la Academia tiene que cargar ese visor.
+    """
+    if not leccion.get("partida"):
+        return ""
+    return ('<div class="cp-partida" data-id="%s">'
+            '<p class="text-xs text-brand-400">Activa JavaScript para recorrer la partida jugada a jugada.</p>'
+            "</div>" % escapar(leccion["partida"]))
+
+
 # ---------------------------------------------------- fragmento con lecciones
 def protegido(curso):
     slug = curso["slug"]
@@ -219,6 +235,7 @@ def protegido(curso):
             arch = archivo_base(l)
             cuerpo = "".join("<p>%s</p>" % escapar(p) for p in l["parrafos"])
             cuerpo += diagramas_html(l)
+            cuerpo += partida_html(l)
             cuerpo += "<p><strong>Practica:</strong> %s</p>" % escapar(l["practica"])
             botones = (boton.format(slug=slug, arch=arch, suf=".pptx", texto="📊 Descargar presentación") +
                        boton.format(slug=slug, arch=arch, suf="-ejercicios.pdf", texto="📄 Descargar ejercicios (PDF)"))

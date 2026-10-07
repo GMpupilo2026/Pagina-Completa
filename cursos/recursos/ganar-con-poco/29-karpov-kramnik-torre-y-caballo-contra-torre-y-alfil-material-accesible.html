@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kárpov – Krámnik: torre y caballo contra torre y alfil — Ganar con poco — material de estudio</title>
+<meta name="robots" content="noindex">
+<meta name="author" content="Oscar Angulo Cubero">
+<meta name="description" content="Material de estudio en formato accesible de la lección 29 del curso Ganar con poco.">
+<style>
+  /* Sin imágenes y sin columnas a propósito: esta versión está hecha para
+     lectores de pantalla y para quien necesita agrandar mucho el texto. */
+  body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+         font-size: 1.15rem; line-height: 1.8; color: #102a43; background: #ffffff;
+         max-width: 42rem; margin: 0 auto; padding: 1.5rem 1rem 4rem; }
+  h1 { font-size: 1.7rem; line-height: 1.3; }
+  h2 { font-size: 1.3rem; margin-top: 2.5rem; border-bottom: 2px solid #102a43; padding-bottom: .3rem; }
+  h3 { font-size: 1.1rem; margin-top: 1.8rem; }
+  a { color: #8a4a00; }
+  dt { font-weight: 700; margin-top: 1rem; }
+  dd { margin: .3rem 0 0; }
+  .posicion { border: 2px solid #243b53; border-radius: .5rem; padding: 1rem; margin: 1rem 0; }
+  .respuesta { background: #f0f4f8; border-left: 4px solid #102a43; padding: .6rem .9rem; }
+  footer { margin-top: 3rem; border-top: 2px solid #102a43; padding-top: 1rem; font-size: .95rem; }
+  /* La vuelta a la plataforma. Este archivo se abre solo, en su propia
+     pestaña: sin estos enlaces no hay forma de regresar al curso salvo el
+     botón "atrás" del navegador, que con lector de pantalla no siempre está
+     a mano. Van arriba y abajo: el documento es largo y quien termina de
+     leerlo no tendría que subir de nuevo para salir. */
+  .volver { margin: 0 0 1.5rem; font-size: 1rem; }
+  footer .volver { margin: 1rem 0 0; }
+  .volver a { display: inline-block; padding: .2rem 0; }
+  @media (prefers-color-scheme: dark) {
+    body { background: #0a1f33; color: #f0f4f8; }
+    h2, footer { border-color: #f0b429; }
+    a { color: #f0b429; }
+    .posicion { border-color: #829ab1; }
+    .respuesta { background: #102a43; border-color: #f0b429; }
+  }
+</style>
+</head>
+<body>
+<nav class="volver" aria-label="Volver a la plataforma">
+  <a href="../../academia/ganar-con-poco.html">← Volver al curso Ganar con poco</a>
+  ·
+  <a href="../../../clases.html">Panel de Academia</a>
+</nav>
+<header>
+  <p>Ganar con poco · Lección 29</p>
+  <h1>Kárpov – Krámnik: torre y caballo contra torre y alfil</h1>
+  <p>Material de estudio en formato accesible. Autor: Oscar Angulo Cubero, Ajedrez Integral.</p>
+  <p>Esta versión dice en palabras todo lo que en el cuadernillo en PDF está dibujado: cada
+     posición viene descrita pieza por pieza, así que no hace falta ver ninguna imagen.</p>
+</header>
+
+<h2>1. De qué trata esta lección</h2>
+
+<p>Se suele decir que torre y alfil son mejores que torre y caballo. Kárpov muestra la excepción: con el centro abierto, su caballo encuentra casillas, su rey se mete entre los peones negros y la ventaja pequeña de la apertura se convierte, de a poco, en un final ganado. La jugada 12 no viene escrita en el libro (va en un diagrama): 12. alfil captura eva 4, hector 6 es la única pareja de jugadas que deja legal el resto de la partida.</p>
+<p>Recórrela jugada a jugada en el tablero (Defensa Eslava; ganan las blancas). En los momentos clave el visor te pide que encuentres la jugada antes de verla: todas están comprobadas con Stockfish, y en cada una la jugada de la partida es la mejor por al menos medio peón. Lo que hay que llevarse: Las reglas sobre el valor de las piezas son promedios: la posición concreta manda. Con el rey activo y el caballo bien apoyado, la torre y el caballo pueden más que la torre y el alfil. La ventaja pequeña del medio juego se cobra en el final, con el rey.</p>
+
+
+<h2>2. Conceptos clave</h2>
+<dl>
+  <dt>El centro</dt>
+  <dd>Las cuatro casillas del medio —d4, e4, d5, e5— y las que las rodean. Quien las controla mueve sus piezas de un lado al otro del tablero más rápido que el rival.</dd>
+  <dd><strong>El error de siempre:</strong> Confundir ocupar con controlar. Un peón en e4 ocupa; un alfil en g7 y un caballo en f6 controlan e4 sin estar ahí. Las aperturas hipermodernas se basan justamente en eso.</dd>
+  <dd><strong>Para verlo:</strong> Un caballo en e5 ataca ocho casillas; el mismo caballo en a1 ataca dos. Es el mismo caballo y vale cuatro veces menos.</dd>
+  <dt>El rey activo en el final</dt>
+  <dd>Cuando se van las damas, el rey deja de ser un problema y se vuelve una pieza de ataque que vale más o menos como una pieza menor. En el final se lleva al centro.</dd>
+  <dd><strong>El error de siempre:</strong> Seguir escondiendo el rey por costumbre. La jugada más común que falta en los finales de club es simplemente acercar el rey.</dd>
+  <dd><strong>Para verlo:</strong> En un final de torres con peones parejos, el bando cuyo rey llega antes al centro suele ganar un peón sin hacer nada más. No es táctica: es geografía.</dd>
+  <dt>Desarrollo y tiempo</dt>
+  <dd>Sacar cada pieza a una casilla donde trabaje, y hacerlo rápido. Un tiempo es una jugada: moverse dos veces con la misma pieza en la apertura regala uno.</dd>
+  <dd><strong>El error de siempre:</strong> Sacar la dama temprano. La dama es la pieza más valiosa y por eso la más fácil de echar: cada jaque que le dan al rival lo desarrolla a él y a ti te cuesta una jugada.</dd>
+  <dd><strong>Para verlo:</strong> Tres principios que resuelven casi toda apertura: un peón al centro, las piezas menores antes que las mayores, y enrocar. Lo que sobre, para después.</dd>
+</dl>
+
+<h2>3. Ejemplos del curso</h2>
+<div class="posicion">
+  <h3>Posición 1: Después de 33. rey gustav 2</h3>
+  
+  <p>Piezas blancas: rey en g2; torre en d7; caballo en e3; peones en a2, b4, f2, g3, h2.</p>
+  <p>Piezas negras: rey en g6; torre en c1; alfil en c7; peones en a6, b5, f6, f7, h6.</p>
+  <p>Juegan las negras.</p>
+  
+  
+  
+  <p>Sin damas, el rey se pone en marcha.</p>
+  <p>Posición en notación FEN, por si la quieres cargar en un programa: 8/2bR1p2/p4pkp/1p6/1P6/4N1P1/P4PKP/2r5 b - - 6 33</p>
+</div>
+
+<h2>4. Ejercicios</h2>
+<ol>
+  <li>Pon un caballo en el centro y otro en la esquina y cuenta las casillas que ataca cada uno. Hazlo con alfil, torre y dama.</li>
+  <li>En tus tres últimas partidas, marca en qué jugada se resolvió el centro (se abrió, se cerró o se cambió) y qué hiciste después.</li>
+  <li>Toma tres finales tuyos y cuenta en qué jugada moviste el rey por primera vez. Compáralo con el rival.</li>
+  <li>Juega cinco finales de peones parejos poniéndote como única regla acercar el rey antes que tocar un peón.</li>
+  <li>Juega tres partidas contándote los tiempos en voz alta: cada vez que muevas dos veces una pieza, anótalo.</li>
+  <li>Toma diez partidas de grandes maestros y cuenta en qué jugada terminaron de desarrollar. El número es más bajo de lo que crees.</li>
+</ol>
+
+<h2>5. Preguntas con su respuesta</h2>
+<p>Contesta en voz alta antes de seguir leyendo: la respuesta viene justo después de cada pregunta.</p>
+<ol>
+  <li>
+    <p>¿Por qué el centro es más importante que las alas?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Porque desde el centro cada pieza alcanza más casillas y llega antes a los dos lados. Un ataque de flanco se responde con un golpe en el centro.</p>
+  </li>
+  <li>
+    <p>¿Qué es un centro de peones móvil y por qué es peligroso?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Dos peones centrales que pueden avanzar juntos. Al avanzar echan a las piezas rivales y abren líneas para las propias.</p>
+  </li>
+  <li>
+    <p>¿Qué son las aperturas hipermodernas?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Las que dejan al rival ocupar el centro con peones para atacarlo después con piezas desde lejos: India de rey, Grünfeld, Alekhine, Pirc.</p>
+  </li>
+  <li>
+    <p>¿Cuándo conviene cerrar el centro?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Cuando vas a atacar en un flanco. Con el centro cerrado, el rival no puede contragolpear por el medio y el ataque de ala llega.</p>
+  </li>
+  <li>
+    <p>¿Cuándo empieza el final a efectos del rey?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Cuando ya no hay damas ni suficiente material para un ataque de mate. A partir de ahí el rey camina.</p>
+  </li>
+  <li>
+    <p>¿Cuánto vale el rey como pieza de ataque?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Como referencia, algo más que una pieza menor: unos cuatro puntos. No se cambia, pero come peones como cualquiera.</p>
+  </li>
+  <li>
+    <p>¿Qué es la 'zona de las tablas' en finales de torre?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> La idea de que muchos finales de torre con un peón menos se salvan si el rey defensor llega delante del peón. Llegar con el rey vale más que el peón.</p>
+  </li>
+  <li>
+    <p>¿Conviene cambiar piezas cuando tienes un peón de más?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Sí, piezas; no peones. Con menos piezas la ventaja material pesa más, pero sin peones no hay con qué ganar.</p>
+  </li>
+  <li>
+    <p>¿Por qué los caballos antes que los alfiles?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Porque su mejor casilla casi siempre se sabe de entrada (f3 y c3, f6 y c6), mientras que la del alfil depende de cómo se acomoden los peones.</p>
+  </li>
+  <li>
+    <p>¿Qué es una ventaja de desarrollo y cómo se aprovecha?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Tener más piezas jugando. Se aprovecha abriendo líneas y atacando rápido: si la posición se cierra o se cambian piezas, la ventaja se evapora.</p>
+  </li>
+  <li>
+    <p>¿Cuántos tiempos vale un peón en la apertura?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Como referencia, unos tres. Por eso un gambito que entrega un peón por tres jugadas de desarrollo está en equilibrio.</p>
+  </li>
+  <li>
+    <p>¿Es malo mover dos veces la misma pieza en la apertura?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> En general sí, pero no es una ley: si la segunda jugada gana algo o mejora mucho la pieza, vale la pena. Los principios ceden ante el cálculo concreto.</p>
+  </li>
+</ol>
+
+<h2>6. Fuentes</h2>
+<ul>
+  <li>Texto de la lección: curso «Ganar con poco» de Ajedrez Integral, de Oscar Angulo Cubero.</li>
+  <li>Conceptos, preguntas y ejercicios de este cuadernillo: material didáctico de Ajedrez Integral, de Oscar Angulo Cubero.</li>
+  <li>Posiciones: archivo de posiciones del propio curso, verificadas jugada por jugada con chess.js y evaluadas con el motor Stockfish que el sitio usa.</li>
+</ul>
+<h3>Para seguir leyendo</h3>
+<p>Obras de referencia sobre estos temas. Este material no reproduce texto de ellas: se listan como lectura recomendada, no como origen de lo que aquí se dice.</p>
+<ul>
+  <li>Aron Nimzowitsch, «Mi sistema» (1925).</li>
+  <li>Andrew Soltis, «Pawn Structure Chess» (1976).</li>
+  <li>Herman Grooten, «Chess Strategy for Club Players» (New in Chess, 2009).</li>
+  <li>Mark Dvoretsky, «Dvoretsky's Endgame Manual» (Russell Enterprises, 2003).</li>
+  <li>Karsten Müller y Frank Lamprecht, «Fundamental Chess Endings» (Gambit, 2001).</li>
+</ul>
+
+<footer>
+  <p>© 2026 Oscar Angulo Cubero · Ajedrez Integral. Material de uso docente para alumnos de la Academia.</p>
+  <p>No se autoriza su reproducción ni su distribución fuera de ella.</p>
+<p class="volver">
+  <a href="../../academia/ganar-con-poco.html">← Volver al curso Ganar con poco</a>
+  ·
+  <a href="../../../clases.html">Panel de Academia</a>
+</p>
+</footer>
+</body>
+</html>

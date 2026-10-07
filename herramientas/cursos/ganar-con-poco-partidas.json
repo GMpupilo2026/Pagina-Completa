@@ -1,0 +1,612 @@
+{
+  "_comentario": "Lo escrito a mano de cada partida del capítulo 7 de «Ganar con poco»: las jugadas salen de herramientas/datos/ganar-con-poco-partidas.pgn y los momentos clave los confirma Stockfish (herramientas/ganar-con-poco-partidas.js). Texto propio.",
+  "partidas": [
+    {
+      "n": 1,
+      "evento": "Estambul, 2003",
+      "titulo": "Andersson – Potkin: la pieza activa manda",
+      "tema": "Piezas activas contra piezas pasivas",
+      "resumen": "Una Catalana tranquila, con el material igualado durante casi toda la partida. Ulf Andersson no busca ningún golpe: cambia lo que le conviene, deja a su caballo en la casilla d3, desde donde cuida y ataca a la vez, y gana un peón del flanco de dama que queda pasado. Después viene la parte más instructiva: un final largo de torre y caballo en el que las blancas mejoran de a poco, repiten jugadas para ganar tiempo en el reloj y empujan el peón pasado cuando el rival ya no puede hacer nada.",
+      "ideas": [
+        "Con el material igual, la diferencia la hace qué piezas trabajan y cuáles solo defienden.",
+        "Un peón pasado en el flanco de dama, lejos de los reyes, vale cada vez más a medida que se cambian piezas.",
+        "En un final ganado no hay apuro: se puede repetir jugadas para ordenar las ideas antes del paso decisivo."
+      ],
+      "lecciones": [
+        "Antes de cambiar piezas, pregúntate cuál queda activa y cuál pasiva después del cambio.",
+        "Cuando tengas un peón pasado lejos de los reyes, lleva tu torre a apoyarlo y tu rey al centro."
+      ],
+      "claves": [
+        {
+          "ply": 39,
+          "pregunta": "El caballo blanco de c5 está bien puesto, pero puede estar mejor. ¿Adónde lo llevarías?",
+          "pista": "Busca una casilla desde la que el caballo ataque algo y además quede firme en el centro.",
+          "explicacion": "20.Cd3 ataca la dama de e5 y deja al caballo en una casilla central desde la que vigila b4, c5, e5 y f4. Esta casilla será su base durante casi toda la partida."
+        },
+        {
+          "ply": 59,
+          "pregunta": "¿Cómo aprovechan las blancas la presión que tienen en el flanco de dama?",
+          "pista": "Mira qué peón negro quedó sin defensa.",
+          "explicacion": "30.Dxa5 gana un peón, y además el peón blanco de a4 queda pasado: ningún peón negro puede frenarlo."
+        },
+        {
+          "ply": 127,
+          "pregunta": "Final de torres con un peón de más. ¿Dónde pondrías la torre?",
+          "pista": "La torre está delante del peón de b5: ¿le estorba?",
+          "explicacion": "64.Tc7 le deja libre la columna b al peón, que ahora puede avanzar, y la torre sigue en la séptima fila atacando el peón de f7."
+        }
+      ],
+      "comentarios": {
+        "39": "El caballo encuentra su casilla: d3.",
+        "59": "Las blancas ganan un peón y queda un peón pasado en la columna a."
+      }
+    },
+    {
+      "n": 2,
+      "evento": "Match por el campeonato del mundo, Moscú 1963 (5.ª partida)",
+      "titulo": "Petrosian – Botvinnik: el peón débil de e6",
+      "tema": "Una debilidad y el rey en el centro",
+      "resumen": "Petrosian cambia las damas temprano: pierde el enroque, pero a cambio deja a las negras con un peón débil en e6. Sin damas, el rey ya no corre peligro y se convierte en una pieza más. Las blancas fijan los peones del flanco de dama, centralizan el rey y, cuando la posición lo pide, devuelven material para mantener sus piezas activas. Es una de las partidas más citadas para mostrar cómo una sola debilidad, bien explotada, alcanza para ganar.",
+      "ideas": [
+        "Un peón aislado o retrasado obliga al rival a defenderlo con piezas, que dejan de hacer otra cosa.",
+        "Sin damas, el rey es una pieza de ataque: el que lo lleva antes al centro suele mandar.",
+        "Es mejor tener las piezas activas con el material igual que un peón de más con las piezas pasivas."
+      ],
+      "lecciones": [
+        "Cuando cambies damas, piensa enseguida adónde va tu rey.",
+        "Fija los peones del rival antes de atacarlos: un peón fijo no puede escaparse ni cambiarse."
+      ],
+      "claves": [
+        {
+          "ply": 47,
+          "pregunta": "¿Cómo mejoran las blancas su flanco de dama?",
+          "pista": "Un avance de peón puede quitarle casillas a las piezas negras.",
+          "explicacion": "24.b5 deja fijos los peones negros del flanco de dama y le quita la casilla c6 a las piezas negras."
+        },
+        {
+          "ply": 69,
+          "pregunta": "¿Qué pieza blanca todavía puede mejorar?",
+          "pista": "En el final, el rey no se esconde.",
+          "explicacion": "35.Rd4 lleva el rey al centro, junto a las casillas d5 y e5, donde apoya al caballo y presiona los peones negros."
+        }
+      ],
+      "comentarios": {
+        "47": "Los peones del flanco de dama quedan fijos.",
+        "69": "El rey blanco entra en juego."
+      }
+    },
+    {
+      "n": 3,
+      "evento": "Belgrado, 1969",
+      "titulo": "Matulović – Botvinnik: las casillas que deja un peón",
+      "tema": "Una red de casillas débiles",
+      "resumen": "Un avance de peón de la apertura, hecho para cuidar una sola casilla, deja débiles varias casillas del mismo color. Botvinnik las ocupa una por una con sus piezas, cambia la pieza blanca más activa cuando puede y lleva la partida a un final donde su caballo y su rey entran por las casillas que ningún peón blanco puede cuidar.",
+      "ideas": [
+        "Cada avance de peón deja casillas que ya no podrá defender: hay que saber cuáles.",
+        "Un caballo apoyado por un peón, en una casilla que ningún peón rival puede atacar, vale más que una torre pasiva.",
+        "Cambiar la pieza más activa del rival suele ser un buen negocio."
+      ],
+      "lecciones": [
+        "Antes de avanzar un peón, di qué casillas deja de cuidar.",
+        "Busca en la posición del rival una casilla que ningún peón suyo pueda atacar, y lleva ahí un caballo."
+      ],
+      "claves": [
+        {
+          "ply": 52,
+          "pregunta": "Las casillas negras del campo blanco están débiles. ¿Dónde se instala el caballo de b5?",
+          "pista": "Busca una casilla apoyada por un peón negro.",
+          "explicacion": "26…Cc3 instala el caballo en una casilla apoyada por el peón de d4, de la que ningún peón blanco puede echarlo, y ataca la torre de e2 y los peones de a4 y e4."
+        },
+        {
+          "ply": 90,
+          "pregunta": "El caballo negro está lejos, en b1. ¿Cómo vuelve al juego con ganancia de tiempo?",
+          "pista": "Mira qué peón blanco del flanco de dama no tiene defensa.",
+          "explicacion": "45…Ca3 devuelve el caballo al juego atacando el peón de c2, que ninguna pieza blanca defiende."
+        }
+      ],
+      "comentarios": {
+        "52": "El caballo negro llega a c3 y ya no se va."
+      }
+    },
+    {
+      "n": 4,
+      "evento": "Viena, 1996",
+      "titulo": "Kárpov – Krámnik: torre y caballo contra torre y alfil",
+      "tema": "Cuando el caballo vale más que el alfil",
+      "resumen": "Se suele decir que torre y alfil son mejores que torre y caballo. Kárpov muestra la excepción: con el centro abierto, su caballo encuentra casillas, su rey se mete entre los peones negros y la ventaja pequeña de la apertura se convierte, de a poco, en un final ganado. La jugada 12 no viene escrita en el libro (va en un diagrama): 12.Axe4 h6 es la única pareja de jugadas que deja legal el resto de la partida.",
+      "ideas": [
+        "Las reglas sobre el valor de las piezas son promedios: la posición concreta manda.",
+        "Con el rey activo y el caballo bien apoyado, la torre y el caballo pueden más que la torre y el alfil.",
+        "La ventaja pequeña del medio juego se cobra en el final, con el rey."
+      ],
+      "lecciones": [
+        "Cuando cambies piezas menores, piensa en qué final queda: caballo o alfil, ¿cuál tendrá más casillas?",
+        "En el final de torres y piezas menores, lleva el rey hacia los peones del rival."
+      ],
+      "claves": [
+        {
+          "ply": 29,
+          "pregunta": "Hay dos formas de recuperar el peón de d4. ¿Cuál conserva la ventaja?",
+          "pista": "Piensa en qué pieza tiene que quedarse cuidando el rey y cuál se gana una buena diagonal.",
+          "explicacion": "15.Axd4 recupera el peón con el alfil: el caballo se queda en f3 y el alfil queda centralizado en d4, apuntando al peón de g7."
+        },
+        {
+          "ply": 65,
+          "pregunta": "Ya se cambiaron las damas. ¿Qué hace el rey blanco?",
+          "pista": "La torre negra está en la primera fila.",
+          "explicacion": "33.Rg2 saca el rey de la primera fila, donde la torre negra lo molesta, y lo acerca al centro."
+        },
+        {
+          "ply": 81,
+          "pregunta": "El rey blanco puede ser la pieza decisiva. ¿Hacia dónde va?",
+          "pista": "Los peones negros están en el flanco de rey.",
+          "explicacion": "41.Rg4 mete el rey en el flanco de rey, rumbo a f5 y h5, para atacar los peones negros de cerca."
+        }
+      ],
+      "comentarios": {
+        "65": "Sin damas, el rey se pone en marcha."
+      }
+    },
+    {
+      "n": 5,
+      "evento": "Barcelona, 1989",
+      "titulo": "Sálov – Short: las casillas negras",
+      "tema": "Debilidades de un color",
+      "resumen": "En una Holandesa con la estructura «stonewall», las blancas cambian los alfiles de casillas negras y las casillas de ese color quedan débiles en el campo negro. Sálov pone sus caballos ahí, aprieta el peón de e6 con las torres y, como pasa siempre, las negras crean nuevas debilidades al tapar las que ya tenían. La partida termina con un final técnico de dama contra torre, que las blancas ganan sin apuro.",
+      "ideas": [
+        "Cuando se cambia el alfil que cuidaba un color, todas las casillas de ese color se vuelven débiles.",
+        "Limitar las piezas del rival vale tanto como darles libertad a las propias.",
+        "Al defender una debilidad suelen aparecer otras: el que defiende siempre llega tarde."
+      ],
+      "lecciones": [
+        "Si tu rival cambia su alfil bueno, busca las casillas de ese color para tus caballos.",
+        "Aprende la técnica de dama contra torre: aparece más de lo que parece."
+      ],
+      "claves": [
+        {
+          "ply": 75,
+          "pregunta": "El peón de e6 está débil. ¿Cómo aumentan la presión las blancas?",
+          "pista": "Hay dos torres y una sola columna.",
+          "explicacion": "38.Tde1 dobla las torres en la columna e, contra el peón débil de e6."
+        },
+        {
+          "ply": 107,
+          "pregunta": "Final de torre y caballo. ¿Qué hace el rey blanco?",
+          "pista": "El rey tiene que seguir cuidando el caballo de f4 y acercarse a sus peones.",
+          "explicacion": "54.Re3 lleva el rey hacia el centro: sigue defendiendo el caballo de f4 y se acerca a d3, junto a los peones del flanco de dama."
+        }
+      ],
+      "comentarios": {
+        "75": "Las dos torres contra el peón de e6."
+      }
+    },
+    {
+      "n": 6,
+      "evento": "Las Palmas, 1994",
+      "titulo": "Kamsky – Lautier: la mejor estructura de peones",
+      "tema": "Peones sanos contra peones débiles",
+      "resumen": "Una Española en la que las negras quedan con peones doblados. No hay nada que ganar de inmediato: Kamsky mantiene la tensión, lleva los caballos a casillas donde molestan y espera. La peor estructura de las negras obliga a sus piezas a defender, y cuando la posición se abre, la diferencia de actividad decide.",
+      "ideas": [
+        "Una estructura de peones peor obliga a las piezas a defender, y una pieza que defiende no ataca.",
+        "No hace falta cambiar en el centro si la tensión molesta más al rival que a ti.",
+        "Un caballo centralizado puede abrirle una fila o columna a una torre."
+      ],
+      "lecciones": [
+        "Mira tus peones doblados o aislados: ¿qué pieza tuya está atada a defenderlos?",
+        "Antes de cambiar en el centro, pregúntate a quién alivia el cambio."
+      ],
+      "claves": [
+        {
+          "ply": 17,
+          "pregunta": "¿Cambiar en e5 o seguir desarrollando?",
+          "pista": "Piensa a quién le conviene que se aclare el centro.",
+          "explicacion": "9.Cbd2 desarrolla la última pieza menor y mantiene la tensión: cambiar en e5 habría aliviado a las negras."
+        },
+        {
+          "ply": 41,
+          "pregunta": "¿Adónde va el caballo de b3?",
+          "pista": "Busca una casilla desde la que ataque dos cosas.",
+          "explicacion": "21.Cc4 ataca el alfil de b6 y el peón de e5."
+        },
+        {
+          "ply": 77,
+          "pregunta": "¿Cómo aumentan las blancas la presión sobre el peón de c7?",
+          "pista": "El caballo de e7 le tapa la séptima fila a la torre.",
+          "explicacion": "39.Cd5 centraliza el caballo, que ataca c7, y le abre la séptima a la torre de f7: el peón de c7 queda atacado dos veces y solo lo defiende el rey."
+        }
+      ],
+      "comentarios": {
+        "77": "Caballo y torre contra c7."
+      }
+    },
+    {
+      "n": 7,
+      "evento": "Tilburg, 1981",
+      "titulo": "Portisch – Beliavsky: la mayoría del flanco de dama",
+      "tema": "Mayoría de peones y columna abierta",
+      "resumen": "En una Eslava, Portisch consigue una mayoría de peones en el flanco de dama, una torre en la columna c y una dama centralizada. Es una ventaja pequeña, pero sin contrajuego para las negras: las blancas la empujan hasta tener un peón pasado y, con el cambio de damas a la vista, la partida se decide.",
+      "ideas": [
+        "Una mayoría de peones es un peón pasado que todavía no nació.",
+        "Un caballo en una casilla que ningún peón puede atacar es una espina en el campo rival.",
+        "Con un peón pasado, cambiar damas suele favorecer al que lo tiene."
+      ],
+      "lecciones": [
+        "Cuenta los peones de cada flanco al salir de la apertura: ¿dónde tienes la mayoría?",
+        "Si tienes un peón pasado, busca cambiar las piezas que pueden frenarlo."
+      ],
+      "claves": [
+        {
+          "ply": 27,
+          "pregunta": "¿Dónde estaría mejor el caballo de b5?",
+          "pista": "Busca una casilla que ningún peón negro pueda atacar.",
+          "explicacion": "14.Cd6 instala el caballo en una casilla a la que ningún peón negro llega, y ataca el alfil de f5."
+        },
+        {
+          "ply": 83,
+          "pregunta": "¿Cómo convierte Portisch su peón pasado de c5?",
+          "pista": "Con damas en el tablero, el rival tiene recursos. ¿Y sin ellas?",
+          "explicacion": "42.Db6 ataca la dama de c7 y ofrece el cambio: con las damas fuera, el peón pasado de c5 es imparable."
+        }
+      ],
+      "comentarios": {
+        "27": "El caballo se instala en d6."
+      }
+    },
+    {
+      "n": 8,
+      "evento": "Match por el campeonato del mundo, Moscú 1966 (19.ª partida)",
+      "titulo": "Spassky – Petrosian: los peones de d5 y e5",
+      "tema": "Presión constante sobre peones fijos",
+      "resumen": "Petrosian propone cambiar las damas, y Spassky lo aprovecha: sin damas, empieza una presión lenta y constante sobre los peones negros del centro. Cada cambio de piezas deja a las negras un poco más pasivas, hasta que la defensa no alcanza.",
+      "ideas": [
+        "Un cambio de piezas mal elegido puede dejar las piezas propias pasivas para el resto de la partida.",
+        "Un peón fijo en el centro es un blanco que no se puede mover.",
+        "En el final, la presión sostenida pesa más que un golpe."
+      ],
+      "lecciones": [
+        "Antes de proponer un cambio de damas, imagina qué piezas quedan y cuáles serán pasivas.",
+        "Cuando ataques un peón fijo, suma atacantes uno por uno, sin apuro."
+      ],
+      "claves": [
+        {
+          "ply": 85,
+          "pregunta": "¿Con qué pieza capturan las blancas en c4?",
+          "pista": "Hay que elegir la pieza que queda mejor después.",
+          "explicacion": "43.Axc4 se lleva el caballo de c4 con el alfil."
+        },
+        {
+          "ply": 99,
+          "pregunta": "¿Cómo se suma un atacante más contra el peón de e4?",
+          "pista": "Busca una pieza que todavía no lo ataca.",
+          "explicacion": "50.Cd2 lleva el caballo a atacar el peón de e4."
+        }
+      ],
+      "comentarios": {
+        "99": "Un atacante más contra e4."
+      }
+    },
+    {
+      "n": 9,
+      "evento": "Estocolmo, 1962",
+      "titulo": "Fischer – Portisch: de una ventaja ligera a una decisiva",
+      "tema": "Ir sumando ventajas",
+      "resumen": "Fischer muestra aquí una de sus virtudes: tomar una ventaja ligera, convertirla en clara y después en decisiva, sin saltarse ningún paso. Los cambios llevan a un final de torres en el que el rey blanco es más activo, y desde ahí todo es técnica.",
+      "ideas": [
+        "Una ventaja ligera no se cobra de golpe: se convierte, paso a paso, en una ventaja mayor.",
+        "En el final de torres, el rey activo vale casi un peón.",
+        "La torre que ataca peones desde el costado obliga al rival a defenderse con todo."
+      ],
+      "lecciones": [
+        "Después de una partida ganada, marca en qué jugadas tu ventaja creció: ¿qué hiciste en cada una?",
+        "En tus finales de torres, ¿tu rey estuvo más activo que el del rival?"
+      ],
+      "claves": [
+        {
+          "ply": 15,
+          "pregunta": "El caballo de g5 está atacado. ¿Adónde va?",
+          "pista": "Busca una casilla central.",
+          "explicacion": "8.Ce4 pone el caballo en el centro, desde donde controla d6 y f6."
+        },
+        {
+          "ply": 77,
+          "pregunta": "Final de torres. ¿Qué hace el rey blanco?",
+          "pista": "Hay un peón negro sin defensa cerca del rey blanco.",
+          "explicacion": "39.Rf4 lanza el rey sobre el peón de f5, que ninguna pieza negra defiende."
+        },
+        {
+          "ply": 103,
+          "pregunta": "¿Adónde apunta la torre blanca ahora?",
+          "pista": "Mira los peones negros del flanco de dama.",
+          "explicacion": "52.Tb7 pasa a atacar el peón de b5."
+        }
+      ],
+      "comentarios": {
+        "77": "El rey blanco entra en acción."
+      }
+    },
+    {
+      "n": 10,
+      "evento": "Brains in Bahrain, Manama 2002",
+      "titulo": "Krámnik – Deep Fritz: técnica contra la máquina",
+      "tema": "La técnica impecable",
+      "resumen": "Krámnik juega contra uno de los programas más fuertes de su época como contra un ser humano: posiciones sencillas, pocas complicaciones y una ventaja pequeña que no se escapa. Le quita casillas a las piezas negras, ataca lo que no se puede defender bien y lleva la partida a un final donde su rey es más activo.",
+      "ideas": [
+        "Contra un rival que calcula muy bien, conviene que la posición no dependa del cálculo.",
+        "Una jugada de peón que le quita casillas a las piezas rivales también es una ventaja.",
+        "Atacar dos veces lo que está defendido dos veces mantiene al rival atado."
+      ],
+      "lecciones": [
+        "Si tu rival es muy táctico, busca posiciones sencillas y sin golpes.",
+        "Antes de atacar, mira qué casillas puedes quitarle al rival."
+      ],
+      "claves": [
+        {
+          "ply": 29,
+          "pregunta": "¿Qué casilla central les conviene quitar a las piezas negras?",
+          "pista": "El caballo de f6 y el alfil de d5 miran la misma casilla.",
+          "explicacion": "15.f3 le quita la casilla e4 al caballo de f6 y al alfil de d5."
+        },
+        {
+          "ply": 51,
+          "pregunta": "¿Cómo se aumenta la presión sobre el caballo de d7?",
+          "pista": "Ya lo ataca la torre de d6.",
+          "explicacion": "26.Ab5 ataca el caballo de d7 por segunda vez: las negras tienen que dedicar dos piezas a defenderlo."
+        },
+        {
+          "ply": 93,
+          "pregunta": "Final de torres. ¿Hacia dónde va el rey blanco?",
+          "pista": "Mira los peones negros del flanco de dama.",
+          "explicacion": "47.Rb5 lleva el rey junto a los peones negros de a5 y b4."
+        }
+      ],
+      "comentarios": {
+        "93": "El rey blanco va por los peones."
+      }
+    },
+    {
+      "n": 11,
+      "evento": "Alemania, 1995",
+      "titulo": "Yusúpov – Rozentalis: el alfil y el rey activo",
+      "tema": "Alfil contra caballo en el final",
+      "resumen": "En una Nimzoindia, la partida llega a un final de torre y alfil contra torre y caballo. Yusúpov tiene el rey más activo y un alfil que, con peones en los dos flancos, llega más rápido que el caballo. La ventaja crece de a poco hasta que los peones negros empiezan a caer.",
+      "ideas": [
+        "Con peones en los dos flancos, el alfil suele ser mejor que el caballo.",
+        "Una pieza que tapa a otra más valiosa queda atada.",
+        "El rey activo decide los finales de piezas."
+      ],
+      "lecciones": [
+        "En tus finales de alfil contra caballo, mira si hay peones en los dos flancos.",
+        "Busca piezas rivales que estén tapando a otras más valiosas: son un blanco."
+      ],
+      "claves": [
+        {
+          "ply": 75,
+          "pregunta": "¿Cómo molestan las blancas al caballo de c5?",
+          "pista": "Detrás del caballo hay una pieza más valiosa.",
+          "explicacion": "38.Ab4 ataca el caballo de c5, que tapa a la torre de d6."
+        }
+      ],
+      "comentarios": {
+        "75": "El alfil apunta al caballo y a la torre."
+      }
+    },
+    {
+      "n": 12,
+      "evento": "Match hombre contra máquina, 2003",
+      "titulo": "Kaspárov – X3D Fritz: espacio y una casilla débil",
+      "tema": "Ganar espacio y crear una casilla débil",
+      "resumen": "Kaspárov, conocido por su ajedrez de ataque, juega aquí una partida de pura estrategia. Cierra el centro temprano, gana espacio en el flanco de dama con sus peones y después entrega un peón para conseguir una casilla débil en el campo negro y debilitar el peón de c6. La máquina no encuentra nada que hacer y la ventaja crece sin un solo golpe táctico.",
+      "ideas": [
+        "El espacio ganado con peones encierra a las piezas rivales.",
+        "A veces se entrega un peón para conseguir una casilla débil permanente.",
+        "Contra un rival que calcula muy bien, conviene cerrar la posición."
+      ],
+      "lecciones": [
+        "Si tienes más espacio en un flanco, no cambies piezas: deja que las del rival se estorben.",
+        "Busca casillas en el campo rival que ningún peón pueda defender."
+      ],
+      "claves": [],
+      "comentarios": {
+        "15": "Con 8.b5 las blancas siguen ganando espacio en el flanco de dama."
+      }
+    },
+    {
+      "n": 13,
+      "evento": "Tiflis, 1946",
+      "titulo": "Palavandishvili – Keres: las torres por la sexta fila",
+      "tema": "Torres activas sin columnas abiertas",
+      "resumen": "En la posición no hay columnas abiertas, y las torres parecen no tener nada que hacer. Keres encuentra otra vía: lleva sus torres a la sexta fila y desde ahí pasan de un flanco al otro. Es una ventaja pequeña, pero dura: mientras las torres negras se mueven libres, las blancas tienen que defender.",
+      "ideas": [
+        "Sin columnas abiertas, una torre puede activarse por una fila.",
+        "Cambiar el único alfil del rival puede dejar sus peones sin defensa.",
+        "Una ventaja de actividad, si el rival no la iguala, crece sola."
+      ],
+      "lecciones": [
+        "Cuando tus torres no tengan columnas, busca una fila libre.",
+        "Antes de cambiar un alfil, mira qué peones quedan en su color."
+      ],
+      "claves": [
+        {
+          "ply": 70,
+          "pregunta": "¿Qué pieza blanca conviene cambiar?",
+          "pista": "Las blancas tienen un solo alfil.",
+          "explicacion": "35…Ag4 ofrece el cambio del único alfil blanco, que es el que defiende las casillas claras."
+        }
+      ],
+      "comentarios": {
+        "70": "Las negras buscan cambiar el alfil blanco."
+      }
+    },
+    {
+      "n": 14,
+      "evento": "Karlsbad, 1929",
+      "titulo": "Rubinstein – Grünfeld: paciencia en el final",
+      "tema": "El arte del final",
+      "resumen": "Rubinstein, uno de los mejores jugadores de finales de la historia, convierte una ventaja pequeña en un final de damas y alfiles de distinto color, y después en uno de alfiles con peones en los dos flancos. Cada fase se juega sin apuro: primero se fijan los peones del rival, después se activa el rey y al final se empuja el peón pasado.",
+      "ideas": [
+        "Con damas en el tablero, los alfiles de distinto color favorecen al que ataca.",
+        "Un peón que fija a otro le quita casillas al rey y a las piezas rivales.",
+        "En el final de alfiles, el que frena el peón pasado del rival y empuja el propio gana."
+      ],
+      "lecciones": [
+        "Juega finales contra la computadora y anota en cuántas jugadas activaste tu rey.",
+        "En tus finales de alfiles, mira de qué color son las casillas de los peones pasados."
+      ],
+      "claves": [
+        {
+          "ply": 85,
+          "pregunta": "¿Cómo aumentan las blancas su ventaja en el flanco de rey?",
+          "pista": "Un avance de peón puede fijar los peones negros.",
+          "explicacion": "43.g5 fija el peón de g6 y les quita las casillas f6 y h6 al rey y a la dama negros."
+        },
+        {
+          "ply": 119,
+          "pregunta": "Final de alfiles. ¿Cómo se frena el peón negro de c3?",
+          "pista": "El alfil puede vigilar la casilla por la que pasa el peón.",
+          "explicacion": "60.Ad3 vigila la casilla c2, por donde tiene que pasar el peón de c3, y defiende el peón de e4."
+        }
+      ],
+      "comentarios": {
+        "85": "Los peones negros quedan fijos."
+      }
+    },
+    {
+      "n": 15,
+      "evento": "Nueva York, 1924",
+      "titulo": "Capablanca – Yates: los caballos de Capablanca",
+      "tema": "Simplificar y tomar la iniciativa",
+      "resumen": "Capablanca hace lo que lo hizo famoso: simplifica la posición, toma la iniciativa y juega con una claridad que parece fácil. Sus caballos buscan los peones débiles del flanco de dama y, con cada cambio, la ventaja crece hasta ser decisiva.",
+      "ideas": [
+        "Simplificar no es ir a tablas: es quedarse con las piezas que trabajan.",
+        "Dos caballos bien coordinados atacan muchas casillas a la vez.",
+        "Un ataque doble con un caballo sale de tenerlo cerca de las piezas rivales."
+      ],
+      "lecciones": [
+        "En tus partidas, antes de cada cambio, di qué pieza buena te queda después.",
+        "Busca casillas desde las que un caballo ataque dos piezas a la vez."
+      ],
+      "claves": [
+        {
+          "ply": 43,
+          "pregunta": "¿Adónde va el caballo de c5?",
+          "pista": "Busca un peón negro del flanco de dama.",
+          "explicacion": "22.C5a4 ataca el peón de b6."
+        },
+        {
+          "ply": 79,
+          "pregunta": "¿Cómo atacan las blancas dos piezas a la vez?",
+          "pista": "Un caballo puede atacar dos cosas desde una misma casilla.",
+          "explicacion": "40.Cc3 ataca a la vez la torre de b5 y el caballo de d5."
+        },
+        {
+          "ply": 135,
+          "pregunta": "¿Cómo sigue el ataque blanco?",
+          "pista": "Un jaque puede abrir líneas a otra pieza.",
+          "explicacion": "68.Ce8+ da jaque y le deja libre la columna d a la torre."
+        }
+      ],
+      "comentarios": {
+        "79": "Un caballo ataca dos piezas."
+      }
+    },
+    {
+      "n": 16,
+      "evento": "Camagüey, 1987",
+      "titulo": "Nóvikov – García: recoger la cuerda de a poco",
+      "tema": "Mejorar poco a poco desde la defensa",
+      "resumen": "Guillermo García, uno de los grandes talentos del ajedrez cubano, conduce las negras. Durante muchas jugadas defiende las amenazas del rival y, en cada pausa, mejora un poco su posición. La ventaja llega sola: un caballo metido en el campo blanco, el cambio de damas en el momento justo y un rey que avanza en el final.",
+      "ideas": [
+        "Defenderse bien también es acumular ventajas: cada ataque fallido le cuesta algo al atacante.",
+        "Un caballo en el campo rival ata a las piezas que lo vigilan.",
+        "El cambio de damas conviene al que tiene las piezas mejor puestas."
+      ],
+      "lecciones": [
+        "Revisa una partida en la que defendiste mucho tiempo: ¿mejoraste tus piezas en las pausas?",
+        "Cuando ofrezcas el cambio de damas, mira qué piezas quedan y quién las tiene mejor."
+      ],
+      "claves": [
+        {
+          "ply": 86,
+          "pregunta": "¿Cómo aprovechan las negras que su caballo esté metido en el campo blanco?",
+          "pista": "La dama puede centralizarse y ofrecer un cambio.",
+          "explicacion": "43…De4 centraliza la dama y ofrece el cambio: con menos piezas, el caballo de g3 pesa más."
+        },
+        {
+          "ply": 108,
+          "pregunta": "Final de caballo contra alfil. ¿Qué hace el rey negro?",
+          "pista": "El rey se acerca a los peones blancos del flanco de rey.",
+          "explicacion": "54…Rh5 lleva el rey hacia g4, junto a los peones blancos."
+        }
+      ],
+      "comentarios": {
+        "86": "La dama negra se centraliza."
+      }
+    },
+    {
+      "n": 17,
+      "evento": "Olimpiada de Novi Sad, 1990",
+      "titulo": "Nikolić – Van der Wiel: el peón débil de f4",
+      "tema": "Atacar una debilidad con el rey",
+      "resumen": "Predrag Nikolić, conocido por su juego posicional, gana un peón en el medio juego y lleva la partida a un final de torres y alfiles. Ahí su rey se acerca a los peones negros, la torre se activa y el peón de f4 de las negras termina cayendo.",
+      "ideas": [
+        "El rey es la mejor pieza para atacar peones en el final.",
+        "Con más actividad, un peón de ventaja crece hasta ser decisivo.",
+        "Las torres activas obligan a las del rival a defender."
+      ],
+      "lecciones": [
+        "En tus finales, marca qué peones rivales puede atacar tu rey.",
+        "Antes de cambiar torres, mira cuál de las dos está más activa."
+      ],
+      "claves": [
+        {
+          "ply": 31,
+          "pregunta": "¿Cómo aprovechan las blancas la debilidad de e6?",
+          "pista": "La dama puede tomar algo.",
+          "explicacion": "16.Dxe6 captura el peón de e6."
+        },
+        {
+          "ply": 53,
+          "pregunta": "Final de torres y alfiles. ¿Qué hace el rey blanco?",
+          "pista": "Hay un peón negro avanzado cerca del rey.",
+          "explicacion": "27.Rf3 lleva el rey a atacar el peón de f4."
+        }
+      ],
+      "comentarios": {
+        "53": "El rey va por el peón de f4."
+      }
+    },
+    {
+      "n": 18,
+      "evento": "San Salvador, 2000",
+      "titulo": "Leyva – Pineda: el peón pasado de c",
+      "tema": "Un peón pasado y el alfil",
+      "resumen": "La partida del propio Héctor Leyva, autor del libro de donde salen estas partidas. Las blancas tienen más espacio en el flanco de dama y un peón pasado en la columna c; su alfil acompaña el avance y la torre entra a la séptima. Cuando el peón llega, la ventaja es decisiva.",
+      "ideas": [
+        "Un peón pasado apoyado por una torre en la séptima fila es muy difícil de frenar.",
+        "Un alfil que ataca a la pieza que frena el peón le abre el camino.",
+        "En la técnica, cada jugada prepara la siguiente."
+      ],
+      "lecciones": [
+        "Cuando tengas un peón pasado, mira qué pieza rival lo frena y cómo puedes atacarla.",
+        "Pon tu torre detrás o al costado del peón pasado, no delante."
+      ],
+      "claves": [
+        {
+          "ply": 85,
+          "pregunta": "¿Cómo molestan las blancas a la torre de d7?",
+          "pista": "El alfil de d1 todavía no juega.",
+          "explicacion": "43.Aa4 ataca la torre de d7."
+        },
+        {
+          "ply": 91,
+          "pregunta": "¿Cuándo avanza el peón pasado de c5?",
+          "pista": "La torre de b7 ya controla la casilla de adelante.",
+          "explicacion": "46.c6 empuja el peón pasado, con la torre de b7 cuidando la casilla c7."
+        }
+      ],
+      "comentarios": {
+        "91": "El peón pasado avanza."
+      }
+    }
+  ]
+}
