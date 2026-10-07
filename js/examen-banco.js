@@ -58,6 +58,7 @@ window.ExamenBanco = (function () {
     "rompe-el-estancamiento": ["estrategia", "calculo", "tactica"],
     "ganar-con-poco": ["estrategia", "finales"],
     "cambiar-o-no-cambiar": ["estrategia", "material"],
+    "ideas-que-ganan-partidas": ["estrategia", "tactica", "finales"],
     "los-cimientos-del-ajedrez": ["tactica", "finales", "estrategia", "calculo", "apertura"],
   };
 

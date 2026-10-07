@@ -182,6 +182,7 @@ window.PlanEntrenamiento = (function () {
         { texto: 'Curso: Rompe el estancamiento', href: 'cursos/rompe-el-estancamiento.html' },
         { texto: 'Curso: Ganar con poco', href: 'cursos/ganar-con-poco.html' },
         { texto: 'Curso: Cambiar o no cambiar', href: 'cursos/cambiar-o-no-cambiar.html' },
+        { texto: 'Curso: Ideas que ganan partidas', href: 'cursos/ideas-que-ganan-partidas.html' },
       ],
     },
     {

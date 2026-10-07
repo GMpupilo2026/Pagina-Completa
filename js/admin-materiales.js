@@ -1,7 +1,7 @@
 /* Los materiales de clase en admin.html#materiales: cada material (el libro
  * «Ponte a prueba», los diez volúmenes del banco de ejercicios «Mide tu fuerza»,
- * los libros «Rompe el estancamiento», «Ganar con poco», «Cambiar o no cambiar»
- * y «Los cimientos del ajedrez», y los cuentos de Peonita), con sus
+ * los libros «Rompe el estancamiento», «Ganar con poco», «Cambiar o no cambiar»,
+ * «Ideas que ganan partidas» y «Los cimientos del ajedrez», y los cuentos de Peonita), con sus
  * sub-fichas —las pruebas y sus versiones como cuestionario, si las tiene— y
  * CON QUIÉN se comparte.
  *
@@ -183,6 +183,17 @@
       archivos: [
         { href: "material/cambiar-o-no-cambiar/cambiar-o-no-cambiar.pdf", texto: "📥 El libro en PDF" },
         { href: "material/cambiar-o-no-cambiar/cambiar-o-no-cambiar-accesible.html", texto: "♿ Versión accesible" },
+      ],
+    },
+    {
+      producto: "ideas-que-ganan-partidas",
+      emoji: "📘",
+      titulo: "Ideas que ganan partidas",
+      autor: "Oscar Angulo Cubero",
+      resumen: "El libro del curso del mismo nombre: las ideas de medio juego y de final que deciden partidas —el ataque al enroque, el rey en el centro, las piezas, los peones, la táctica que sostiene el plan y los finales—, una lección por idea con su ejemplo comentado y su tarea, 72 ejercicios con soluciones y la planilla de repaso para imprimir.",
+      archivos: [
+        { href: "material/ideas-que-ganan-partidas/ideas-que-ganan-partidas.pdf", texto: "📥 El libro en PDF" },
+        { href: "material/ideas-que-ganan-partidas/ideas-que-ganan-partidas-accesible.html", texto: "♿ Versión accesible" },
       ],
     },
     {

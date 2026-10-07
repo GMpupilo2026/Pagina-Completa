@@ -196,6 +196,17 @@
       "modalidad": ""
     },
     {
+      "slug": "ideas-que-ganan-partidas",
+      "titulo": "Ideas que ganan partidas",
+      "nivel": "avanzado",
+      "resumen": "El ataque al enroque, el rey en el centro, las piezas, los peones, la táctica que sostiene el plan y los finales: las ideas que deciden partidas, cada una con una posición real comprobada con motor.",
+      "lecciones": 36,
+      "alt": "El sacrificio del alfil en h7, ejemplo del curso: juegan las blancas, el peón de e5 ya echó al caballo de f6 y el alfil de d3 toma en h7 con jaque.",
+      "precio": "",
+      "duracion": "",
+      "modalidad": ""
+    },
+    {
       "slug": "preparacion-para-torneos",
       "titulo": "Preparación para Torneos",
       "nivel": "competicion",
