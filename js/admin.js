@@ -864,7 +864,7 @@
                     if (nombres.length) {
                         tdTeacher.textContent = nombres.join(", ");
                     } else {
-                        tdTeacher.innerHTML = '<span class="inline-block rounded-full bg-accent-50 dark:bg-brand-800 text-accent-800 dark:text-accent-300 px-2 py-0.5 text-xs font-semibold">Sin profesor</span>';
+                        tdTeacher.innerHTML = '<span class="inline-block rounded-full bg-accent-50 dark:bg-brand-800 text-accent-700 dark:text-accent-300 px-2 py-0.5 text-xs font-semibold">Sin profesor</span>';
                     }
                 } else {
                     tdTeacher.innerHTML = '<span class="text-xs text-brand-450 dark:text-brand-350">—</span>';
