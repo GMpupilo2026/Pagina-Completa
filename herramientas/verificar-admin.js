@@ -571,17 +571,23 @@ async function pruebaMateriales(browser) {
   const resumen = () => page.textContent("#mat-lista [role=status]");
   const lista = () => page.evaluate(() => Array.from(document.querySelectorAll("#mat-lista article > section:first-of-type ul:first-of-type > li"))
     .filter((li) => li.checkVisibility()).map((li) => li.querySelector("p").textContent));
-  igual("los tres libros, con sus archivos", await page.evaluate(() => Array.from(document.querySelectorAll("#mat-lista article > div:first-child a[href^='material/']")).map((a) => a.getAttribute("href"))),
+  igual("los libros, con sus archivos", await page.evaluate(() => Array.from(document.querySelectorAll("#mat-lista article > div:first-child a[href^='material/']")).map((a) => a.getAttribute("href"))),
     ["material/ponte-a-prueba/ponte-a-prueba.pdf", "material/ponte-a-prueba/ponte-a-prueba-accesible.html",
      "material/ponte-a-prueba/versiones/claves-de-correccion.pdf", "material/ponte-a-prueba/ponte-a-prueba-versiones-accesible.html",
      "material/mide-tu-fuerza/mide-tu-fuerza.pdf", "material/mide-tu-fuerza/mide-tu-fuerza-accesible.html",
-     "material/rompe-el-estancamiento/rompe-el-estancamiento.pdf", "material/rompe-el-estancamiento/rompe-el-estancamiento-accesible.html"]);
+     "material/rompe-el-estancamiento/rompe-el-estancamiento.pdf", "material/rompe-el-estancamiento/rompe-el-estancamiento-accesible.html",
+     "material/peonita/peonita.pdf", "material/peonita/peonita-accesible.html",
+     "material/peonita-trucos/peonita-trucos.pdf", "material/peonita-trucos/peonita-trucos-accesible.html"]);
   // El banco de ejercicios no tiene pruebas como cuestionario: solo se
   // comparte. Antes de separarlo, cualquier material sin pruebas pintaba
   // igual el título y «todavía no están en la base».
   igual("el banco de ejercicios se comparte y no tiene sección de pruebas", await page.evaluate(() => {
     const art = document.querySelector("#mat-lista article[aria-labelledby='mat-titulo-mide-tu-fuerza']");
     return [art.querySelectorAll(":scope > section").length, /como cuestionario/.test(art.textContent), !!art.querySelector("#mat-mide-tu-fuerza-buscar")];
+  }), [1, false, true]);
+  igual("el cuento de Peonita tampoco", await page.evaluate(() => {
+    const art = document.querySelector("#mat-lista article[aria-labelledby='mat-titulo-peonita']");
+    return [art.querySelectorAll(":scope > section").length, /como cuestionario/.test(art.textContent), !!art.querySelector("#mat-peonita-buscar")];
   }), [1, false, true]);
   igual("dice con quién está compartido, también con palabras", [await resumen(), await lista()],
     ["Lo tienen: 1 academia, y tú.", ["🏫 Academia Norte"]]);

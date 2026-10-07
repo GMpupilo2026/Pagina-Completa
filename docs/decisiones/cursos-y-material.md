@@ -1000,6 +1000,169 @@ archivo, y protección (`herramientas/lib/pdf-armar.js`). **Se deja
 imprimir**: es un cuaderno de trabajo. Vive en `material/mide-tu-fuerza/`,
 detrás del candado del worker, y se comparte desde `admin.html#materiales`.
 
+## Los cuentos de Peonita, para los más pequeños
+
+*Peonita y el reino de las 64 casillas*, de Oscar Angulo Cubero: un cuento
+ilustrado para que niñas y niños de 4 a 8 años aprendan a jugar. Peonita, un
+peón blanco, sale de noche de la caja de ajedrez de una escuela tica, y Don
+Lento, un perezoso del guarumo de la ventana, le enseña a mover cada pieza.
+Quince capítulos (el tablero y el nombre de las casillas, las piezas una por
+una, el valor, jaque, mate, ahogado, enroque y captura al paso, tres consejos
+de apertura y las reglas del buen jugador), cada uno con su ilustración, «Lo
+que aprendí» y una página de «¡A jugar!»; al final, el diploma y las
+soluciones.
+
+- Cada cuento es un módulo de `herramientas/libro-ninos/` (`peonita.js`,
+  `trucos.js`; la lista está en `libros.js`) con el cuento, los ejercicios y
+  **sus respuestas escritas a mano**, la tapa, el final, el diploma y sus
+  secretos. `dibujos.js` tiene los personajes y las escenas, y
+  `herramientas/libro-ninos-pdf.js` los pone en papel **con una sola
+  maqueta**: `material/<slug>/<slug>.pdf` y `<slug>-accesible.html`.
+- Los revisa `verificar-libro-ninos.js`, todos. Un cuento nuevo se suma a
+  `libros.js` y entra solo al generador y al verificador.
+
+### Tomado de un libro ajeno como referencia, no copiado
+
+El dueño lo pidió «como» *El maravilloso mundo del ajedrez escolar*, de Carlos
+Salgado Allaria (un cuento con una peona que aprende con su profe, y
+actividades entre capítulo y capítulo). Ese libro tiene licencia Creative
+Commons **sin obra derivada**: adaptarlo, aunque se cambien los nombres, es
+justo lo que la licencia no deja. Se tomó el **tipo de libro**, que no es de
+nadie (cuento + idea principal + actividades, para leer acompañado), y todo lo
+demás es propio: la historia, los personajes, los textos, los dibujos y los
+ejercicios. Ninguno sale de ahí.
+
+### Las respuestas se escriben a mano y las comprueba chess.js
+
+Cada ejercicio trae su `respuesta` escrita en el contenido, y el verificador
+la **vuelve a calcular desde la posición** sin usar nada del generador: cuántas
+casillas alcanza la pieza, cuál es la única que puede comer, si el rey está en
+jaque, cuál es la única forma de salir del jaque (huir, tapar o comer), que el
+mate en una sea UNO solo y el escrito, mate/ahogado/ninguno, si el enroque
+corto es legal, los saltos del caballo, los puntos de cada grupo. Si el
+generador calculara las respuestas, el verificador estaría comprobando el
+cálculo contra sí mismo. Una posición con los dos reyes además tiene que ser
+legal (el rey del que no mueve, fuera de jaque).
+
+Las posiciones para aprender a mover una pieza llevan esa pieza sola, sin
+reyes (como en cualquier libro de iniciación). chess.js 0.10.3 las carga y les
+cuenta las jugadas igual; los puntos de «puede ir» los saca el generador de
+chess.js, nunca se dibujan a mano.
+
+### Los dibujos son SVG escritos en el repositorio
+
+Sin imágenes de afuera: el libro se vuelve a generar igual en cualquier
+máquina, nadie tiene que pedir permiso por una ilustración, y cada personaje se
+ve igual en todos los capítulos. Las piezas son personajes (ojos, cachetes,
+el moño de Peonita, la bufanda de Tizón) pero con la **silueta de la pieza de
+verdad**: el niño tiene que reconocer la torre cuando la vea en un tablero.
+Cada escena lleva su descripción (`alt`), que es también lo que dice la versión
+accesible en lugar del dibujo.
+
+### Cada cuento lleva un secreto para Alessandro
+
+Pedido del autor, **para este cuento y todos los que vengan**: cada libro
+infantil esconde una dedicatoria o un guiño para su hijo Alessandro. Va
+escondido, nunca anunciado en el libro: se descubre. En el de Peonita hay dos:
+
+- **La dedicatoria es un acróstico**: la primera letra de cada uno de sus diez
+  versos, de arriba hacia abajo, dice ALESSANDRO. Sin negritas ni nada que lo
+  delate.
+- **El alfil se llama Don Saleras**, que tiene exactamente las mismas letras
+  que Alessandro (y suena a «salero», tener gracia). Antes era «Don Picudo».
+
+Para los próximos cuentos sirven las mismas ideas u otras parecidas: un
+personaje con su nombre en anagrama o escondido a plena vista («Al…fil
+Sandro»), las iniciales de los capítulos, un acróstico en un poema, una
+posición cuyas piezas dibujan una A. Antes de elegir, se le proponen las
+opciones al autor.
+
+**El verificador del libro comprueba el secreto** (`SECRETO`, `DEDICATORIA` y
+`SECRETOS` de cada libro): corregir una palabra del poema o el nombre
+del personaje lo rompería sin dar ningún error, y nadie lo notaría justo
+porque está escondido. Este archivo y `herramientas/` no se publican
+(`.assetsignore`), así que contarlo acá no lo delata.
+
+### Lo que lo distingue de los otros libros
+
+- **Se deja imprimir**: las páginas de «¡A jugar!» se pintan y se escriben.
+- **La marca de agua va al 7 %, no al 11 %**: va encima de ilustraciones de
+  colores y a la opacidad de los otros libros ensuciaba los dibujos.
+- Los diagramas son de madera y no azules (`colores` de `lib/tablero-svg.js`),
+  con dos marcas nuevas: un punto donde la pieza puede ir y un aro donde puede
+  comer. **Los colores se midieron** contra las dos casillas: el primer verde
+  daba 1,7:1 en la casilla oscura y el punto casi no se veía en la mitad de
+  las casillas; el de ahora da 4,1:1 (el aro, 3,9:1). Y el pie de cada
+  diagrama dice qué son los puntos.
+- Con un solo diagrama, el diagrama y «Lo que aprendí» van lado a lado: si no,
+  el recuadro quedaba solo en una página casi vacía.
+- **El diploma** lleva la firma de los personajes arriba de la línea, como
+  hecha a mano («Peonita ♥ Don Lento»), y su nombre impreso abajo. El autor va
+  aparte, abajo al centro y en pequeño, junto al logo gris de la marca de agua
+  (el crema no se ve sobre el fondo crema). Es el mismo diseño de los diplomas
+  que se le hacen a mano a quien termina un libro.
+- Comparte con «Ponte a prueba» el cierre (`lib/pdf-armar.js`) y el
+  `describir()` de la versión accesible. Va en `admin.html#materiales` y se
+  comparte igual; sin pruebas como cuestionario, esa sección no aparece.
+
+### El segundo cuento: los trucos del bosque
+
+*Peonita, Tizón y los trucos del bosque*: los primeros trucos de la táctica
+para quien ya sabe mover las piezas (la pieza sin cuidar, la horquilla del
+caballo, el ataque doble de la dama, la horquilla de peón, la clavada, la
+enfilada, el mate del pasillo, el ataque a la descubierta, mirar qué quiere
+el otro y un repaso). La historia: en una excursión, Don Pillo, un mapache
+travieso, se lleva las piezas que nadie cuida; Peonita y Tizón aprenden un
+truco por capítulo, le ganan el torneo y se vuelve su amigo. Vuelve Don
+Saleras, el alfil, a enseñar la clavada.
+
+**Los secretos para Alessandro**: las iniciales de los diez títulos, leídas
+de arriba hacia abajo en el índice, dicen ALESSANDRO. Y en el capítulo 1, en
+el tronco del árbol donde Peonita se esconde para espiar a Don Pillo, hay un
+corazoncito grabado con «ALE» adentro (`guarumo(…, { grabado })` de
+`dibujos.js`). Impreso mide unos 2 mm: se encuentra con lupa, como buscan los
+trucos Peonita y Tizón. La descripción del dibujo dice que hay un corazón
+grabado, pero no qué dice. El verificador comprueba que el árbol siga
+teniéndolo (`data-grabado`).
+
+A la mitad del libro, en el capítulo 5, **el sol es Alessandro de bebé**: una
+carita con su gorrito tejido de orejitas, dibujada a partir de una foto que
+mandó el autor (`solBebe()` de `dibujos.js`, que sale con `sol: "bebe"` en la
+escena). Es el único sol así de los dos libros: el autor lo quiso en uno solo
+y no en todos. Se dibujó en vez de pegar la foto, para que tenga el estilo del
+libro y porque la foto de un niño no debe ir dentro de un PDF que se comparte
+y se descarga. La foto no está en el repositorio. El verificador comprueba que
+haya exactamente un sol de bebé y que sea de día.
+
+### En un libro de trucos, la respuesta tiene que ser LA jugada
+
+Un ejercicio de táctica promete que hay un truco y que es ese. El CI no tiene
+Stockfish, así que `herramientas/lib/tactica.js` es un buscador chiquito con
+chess.js: negamax con poda alfa-beta a cuatro medias jugadas, contando
+material, y al final solo capturas hasta que la posición se calma (si no,
+contaría como ganada una pieza que se pierde enseguida). Alcanza para
+posiciones de iniciación, que es lo que trae un cuento. Con él se comprueba:
+
+- `gana`: la jugada de la respuesta es la **única** que gana al menos
+  `minimo` puntos;
+- `amenaza`: con el turno de las negras, la jugada que dice la respuesta es
+  la única de Tizón que gana `minimo` (la posición con ese turno también tiene
+  que ser legal);
+- `defensa`: cada jugada que propone la solución deja a las negras sin nada
+  que gane `minimo`.
+
+Rompió cuatro posiciones que parecían buenas a ojo. La torre que se come un
+caballo sin cuidar también amenazaba mate del pasillo, así que había dos
+respuestas. En dos horquillas de peón, la pieza atacada se salvaba **dando
+jaque**, y después se salvaba la otra. Y en una descubierta, la dama negra
+tapaba el jaque dando jaque a su vez. Además, el buscador tenía un error
+propio: chess.js da tablas con rey y caballo contra rey, y entonces la torre
+que se comía la horquilla «valía 0». Para contar material, solo el ahogado
+es tablas.
+
+Las flechas de los diagramas (`flechas` en `lib/tablero-svg.js`) son azules
+#123e7c: 8,6:1 contra la casilla clara y 4,1:1 contra la oscura.
+
 ## El curso y el libro «Rompe el estancamiento»
 
 Un curso (36 lecciones en ocho bloques) y su libro, de Oscar Angulo Cubero,
@@ -1091,9 +1254,8 @@ en `admin.html#materiales` (se comparte como los otros dos) y en «Archivos».
 ## Los materiales de clase
 
 `admin.html#materiales` («Materiales de clases») junta los materiales para dar
-clase —hoy, «Ponte a prueba», el banco de ejercicios «Mide tu fuerza» y el
-libro «Rompe el estancamiento»— y
-dice **con quién se comparte cada uno**: una
+clase —hoy, «Ponte a prueba», el banco de ejercicios «Mide tu fuerza», el libro
+«Rompe el estancamiento» y los cuentos de Peonita— y dice **con quién se comparte cada uno**: una
 persona, una academia entera o todos los profesores. Lo pinta
 `js/admin-materiales.js`; lo prueba `verificar-admin.js`.
 

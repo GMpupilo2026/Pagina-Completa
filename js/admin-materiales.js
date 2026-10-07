@@ -1,6 +1,6 @@
 /* Los materiales de clase en admin.html#materiales: cada material (el libro
- * «Ponte a prueba», el banco de ejercicios «Mide tu fuerza» y el libro «Rompe
- * el estancamiento»), con sus
+ * «Ponte a prueba», el banco de ejercicios «Mide tu fuerza», el libro «Rompe
+ * el estancamiento» y los cuentos de Peonita), con sus
  * sub-fichas —las pruebas y sus versiones como cuestionario, si las tiene— y
  * CON QUIÉN se comparte.
  *
@@ -61,6 +61,28 @@
       archivos: [
         { href: "material/rompe-el-estancamiento/rompe-el-estancamiento.pdf", texto: "📥 El libro en PDF" },
         { href: "material/rompe-el-estancamiento/rompe-el-estancamiento-accesible.html", texto: "♿ Versión accesible" },
+      ],
+    },
+    {
+      producto: "peonita",
+      emoji: "🧸",
+      titulo: "Peonita y el reino de las 64 casillas",
+      autor: "Oscar Angulo Cubero",
+      resumen: "Un cuento ilustrado para que niñas y niños de 4 a 8 años aprendan a jugar ajedrez: Peonita, un peón blanco, aprende con Don Lento a mover cada pieza, el jaque, el mate, el ahogado y el enroque. Quince capítulos con «Lo que aprendí» y una página de «¡A jugar!», el diploma y las soluciones. Se puede imprimir.",
+      archivos: [
+        { href: "material/peonita/peonita.pdf", texto: "📥 El libro en PDF" },
+        { href: "material/peonita/peonita-accesible.html", texto: "♿ Versión accesible" },
+      ],
+    },
+    {
+      producto: "peonita-trucos",
+      emoji: "🦝",
+      titulo: "Peonita, Tizón y los trucos del bosque",
+      autor: "Oscar Angulo Cubero",
+      resumen: "El segundo cuento de Peonita, para quien ya sabe mover las piezas: con Don Pillo, un mapache travieso, aprende los primeros trucos (la pieza sin cuidar, la horquilla, el ataque doble, la clavada, la enfilada, el mate del pasillo y el ataque a la descubierta) y a mirar qué quiere hacer el otro. Diez capítulos con «¡A jugar!», el diploma y las soluciones. Se puede imprimir.",
+      archivos: [
+        { href: "material/peonita-trucos/peonita-trucos.pdf", texto: "📥 El libro en PDF" },
+        { href: "material/peonita-trucos/peonita-trucos-accesible.html", texto: "♿ Versión accesible" },
       ],
     },
   ];
