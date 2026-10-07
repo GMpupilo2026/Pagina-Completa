@@ -45,9 +45,15 @@ function leccionesDeLaBase() {
   archivos.forEach((f) => {
     const sql = fs.readFileSync(path.join(dir, f), "utf8");
     const i = sql.indexOf("insert into interno.curso_lecciones");
-    if (i < 0) return;
-    const bloque = sql.slice(i, sql.indexOf(";", i));
-    for (const m of bloque.matchAll(/\('([a-z0-9-]+)',\s*'[^']*',\s*(\d+)\)/g)) total[m[1]] = Number(m[2]);
+    if (i >= 0) {
+      const bloque = sql.slice(i, sql.indexOf(";", i));
+      for (const m of bloque.matchAll(/\('([a-z0-9-]+)',\s*'[^']*',\s*(\d+)\)/g)) total[m[1]] = Number(m[2]);
+    }
+    // Un curso que cambió de slug («mil-y-una-lecciones» pasó a
+    // «las-mil-y-una-lecciones-de-ajedrez») se lleva su total.
+    for (const m of sql.matchAll(/update interno\.curso_lecciones set slug = '([a-z0-9-]+)' where slug = '([a-z0-9-]+)'/g)) {
+      if (m[2] in total) { total[m[1]] = total[m[2]]; delete total[m[2]]; }
+    }
   });
   return total;
 }

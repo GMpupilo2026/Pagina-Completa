@@ -23,7 +23,7 @@
     "nombre": "Formación docente"
    }
   ],
-  "total": 508,
+  "total": 520,
   "material": [
    {
     "ruta": "material/diagnostico-de-nivel/diagnostico-de-nivel.pdf",
@@ -3991,6 +3991,158 @@
     "otros": []
    },
    {
+    "slug": "las-mil-y-una-lecciones-de-ajedrez",
+    "titulo": "Las mil y una lecciones de ajedrez",
+    "nivel": "avanzado",
+    "lecciones": [
+     {
+      "numero": 1,
+      "titulo": "El Desarrollo",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/las-mil-y-una-lecciones-de-ajedrez/tomo-01.pdf",
+        "titulo": "Tomo 1 del libro: De la apertura al medio juego",
+        "tipo": "otro",
+        "kb": 1961
+       }
+      ]
+     },
+     {
+      "numero": 18,
+      "titulo": "Ataque al rey sin enrocar (1). La ruptura central",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/las-mil-y-una-lecciones-de-ajedrez/tomo-02.pdf",
+        "titulo": "Tomo 2 del libro: El ataque al rey en el centro",
+        "tipo": "otro",
+        "kb": 2038
+       }
+      ]
+     },
+     {
+      "numero": 35,
+      "titulo": "Ataque al enroque. El sacrificio Axh6",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/las-mil-y-una-lecciones-de-ajedrez/tomo-03.pdf",
+        "titulo": "Tomo 3 del libro: El ataque al enroque",
+        "tipo": "otro",
+        "kb": 5315
+       }
+      ]
+     },
+     {
+      "numero": 93,
+      "titulo": "Ataques con enroques en flancos opuestos",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/las-mil-y-una-lecciones-de-ajedrez/tomo-04.pdf",
+        "titulo": "Tomo 4 del libro: Enroques en flancos opuestos",
+        "tipo": "otro",
+        "kb": 1648
+       }
+      ]
+     },
+     {
+      "numero": 105,
+      "titulo": "El alfil malo (1)",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/las-mil-y-una-lecciones-de-ajedrez/tomo-05.pdf",
+        "titulo": "Tomo 5 del libro: Las piezas y su valor",
+        "tipo": "otro",
+        "kb": 4348
+       }
+      ]
+     },
+     {
+      "numero": 152,
+      "titulo": "Los peones doblados",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/las-mil-y-una-lecciones-de-ajedrez/tomo-06.pdf",
+        "titulo": "Tomo 6 del libro: Las debilidades de peones",
+        "tipo": "otro",
+        "kb": 3826
+       }
+      ]
+     },
+     {
+      "numero": 194,
+      "titulo": "El centro cerrado y el ataque por el flanco",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/las-mil-y-una-lecciones-de-ajedrez/tomo-07.pdf",
+        "titulo": "Tomo 7 del libro: Estructuras centrales y cadenas de peones",
+        "tipo": "otro",
+        "kb": 3736
+       }
+      ]
+     },
+     {
+      "numero": 231,
+      "titulo": "El peón pasado",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/las-mil-y-una-lecciones-de-ajedrez/tomo-08.pdf",
+        "titulo": "Tomo 8 del libro: Peones pasados y mayorías",
+        "tipo": "otro",
+        "kb": 2861
+       }
+      ]
+     },
+     {
+      "numero": 259,
+      "titulo": "Las columnas abiertas",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/las-mil-y-una-lecciones-de-ajedrez/tomo-09.pdf",
+        "titulo": "Tomo 9 del libro: El juego posicional",
+        "tipo": "otro",
+        "kb": 5166
+       }
+      ]
+     },
+     {
+      "numero": 313,
+      "titulo": "El sacrificio posicional de la calidad (1)",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/las-mil-y-una-lecciones-de-ajedrez/tomo-10.pdf",
+        "titulo": "Tomo 10 del libro: Los sacrificios posicionales",
+        "tipo": "otro",
+        "kb": 2420
+       }
+      ]
+     },
+     {
+      "numero": 334,
+      "titulo": "Torre contra alfil y caballo",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/las-mil-y-una-lecciones-de-ajedrez/tomo-11.pdf",
+        "titulo": "Tomo 11 del libro: Desequilibrios de material",
+        "tipo": "otro",
+        "kb": 1292
+       }
+      ]
+     },
+     {
+      "numero": 340,
+      "titulo": "Finales de torre. 4 peones contra 3 en el mismo flanco",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/las-mil-y-una-lecciones-de-ajedrez/tomo-12.pdf",
+        "titulo": "Tomo 12 del libro: Los finales",
+        "tipo": "otro",
+        "kb": 1973
+       }
+      ]
+     }
+    ],
+    "otros": []
+   },
+   {
     "slug": "preparacion-para-torneos",
     "titulo": "Preparación para Torneos",
     "nivel": "competicion",
@@ -7747,7 +7899,7 @@
     "nombre": "Formación docente"
    }
   ],
-  "total": 231,
+  "total": 243,
   "material": [
    {
     "ruta": "material/fichas-de-estudio/fichas-de-estudio-accesible.html",
@@ -10334,6 +10486,86 @@
      }
     ],
     "otros": []
+   },
+   {
+    "slug": "las-mil-y-una-lecciones-de-ajedrez",
+    "titulo": "Las mil y una lecciones de ajedrez",
+    "nivel": "avanzado",
+    "lecciones": [],
+    "otros": [
+     {
+      "ruta": "cursos/recursos/las-mil-y-una-lecciones-de-ajedrez/tomo-01-accesible.html",
+      "titulo": "Las mil y una lecciones de ajedrez, tomo 1",
+      "tipo": "accesible",
+      "kb": 481
+     },
+     {
+      "ruta": "cursos/recursos/las-mil-y-una-lecciones-de-ajedrez/tomo-02-accesible.html",
+      "titulo": "Las mil y una lecciones de ajedrez, tomo 2",
+      "tipo": "accesible",
+      "kb": 563
+     },
+     {
+      "ruta": "cursos/recursos/las-mil-y-una-lecciones-de-ajedrez/tomo-03-accesible.html",
+      "titulo": "Las mil y una lecciones de ajedrez, tomo 3",
+      "tipo": "accesible",
+      "kb": 1932
+     },
+     {
+      "ruta": "cursos/recursos/las-mil-y-una-lecciones-de-ajedrez/tomo-04-accesible.html",
+      "titulo": "Las mil y una lecciones de ajedrez, tomo 4",
+      "tipo": "accesible",
+      "kb": 367
+     },
+     {
+      "ruta": "cursos/recursos/las-mil-y-una-lecciones-de-ajedrez/tomo-05-accesible.html",
+      "titulo": "Las mil y una lecciones de ajedrez, tomo 5",
+      "tipo": "accesible",
+      "kb": 1787
+     },
+     {
+      "ruta": "cursos/recursos/las-mil-y-una-lecciones-de-ajedrez/tomo-06-accesible.html",
+      "titulo": "Las mil y una lecciones de ajedrez, tomo 6",
+      "tipo": "accesible",
+      "kb": 1460
+     },
+     {
+      "ruta": "cursos/recursos/las-mil-y-una-lecciones-de-ajedrez/tomo-07-accesible.html",
+      "titulo": "Las mil y una lecciones de ajedrez, tomo 7",
+      "tipo": "accesible",
+      "kb": 1275
+     },
+     {
+      "ruta": "cursos/recursos/las-mil-y-una-lecciones-de-ajedrez/tomo-08-accesible.html",
+      "titulo": "Las mil y una lecciones de ajedrez, tomo 8",
+      "tipo": "accesible",
+      "kb": 993
+     },
+     {
+      "ruta": "cursos/recursos/las-mil-y-una-lecciones-de-ajedrez/tomo-09-accesible.html",
+      "titulo": "Las mil y una lecciones de ajedrez, tomo 9",
+      "tipo": "accesible",
+      "kb": 2026
+     },
+     {
+      "ruta": "cursos/recursos/las-mil-y-una-lecciones-de-ajedrez/tomo-10-accesible.html",
+      "titulo": "Las mil y una lecciones de ajedrez, tomo 10",
+      "tipo": "accesible",
+      "kb": 694
+     },
+     {
+      "ruta": "cursos/recursos/las-mil-y-una-lecciones-de-ajedrez/tomo-11-accesible.html",
+      "titulo": "Las mil y una lecciones de ajedrez, tomo 11",
+      "tipo": "accesible",
+      "kb": 231
+     },
+     {
+      "ruta": "cursos/recursos/las-mil-y-una-lecciones-de-ajedrez/tomo-12-accesible.html",
+      "titulo": "Las mil y una lecciones de ajedrez, tomo 12",
+      "tipo": "accesible",
+      "kb": 681
+     }
+    ]
    },
    {
     "slug": "preparacion-para-torneos",

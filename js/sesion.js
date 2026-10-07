@@ -679,6 +679,7 @@
             { slug: "estrategia-y-tactica", titulo: "Estrategia y Táctica" },
             { slug: "desequilibrios-de-material", titulo: "Desequilibrios de material" },
             { slug: "rompe-el-estancamiento", titulo: "Rompe el estancamiento" },
+            { slug: "las-mil-y-una-lecciones-de-ajedrez", titulo: "Las mil y una lecciones de ajedrez" },
             { slug: "finales-practicos", titulo: "Finales Prácticos" },
             { slug: "el-mapa-de-los-finales", titulo: "El mapa de los finales" },
             { slug: "estrategia-en-el-final", titulo: "Estrategia en el final" },
