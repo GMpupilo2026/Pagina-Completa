@@ -1,6 +1,6 @@
-/* El contenido del libro «Peonita y el reino de las 64 casillas», de Oscar
- * Angulo Cubero: el cuento, lo que aprende el niño en cada capítulo y los
- * ejercicios de «¡A jugar!».
+/* El primer cuento de Peonita: «Peonita y el reino de las 64 casillas», de
+ * Oscar Angulo Cubero. El cuento, lo que aprende el niño en cada capítulo, los
+ * ejercicios de «¡A jugar!», la tapa, el final y el diploma.
  *
  * Vive aparte de la maqueta (herramientas/libro-ninos-pdf.js) porque lo leen
  * dos: el generador, que lo pone en papel, y herramientas/verificar-libro-ninos.js,
@@ -36,9 +36,21 @@
 "use strict";
 const D = require("./dibujos.js");
 
+const SLUG = "peonita";                     // material/peonita/peonita.pdf
+const CLAVE = "peonita-oac-2026";           // la clave de propietario del PDF
 const AUTOR = "Oscar Angulo Cubero";
 const TITULO = "Peonita y el reino de las 64 casillas";
+const TITULO_PDF = TITULO;
 const SUBTITULO = "Un cuento para aprender a jugar ajedrez";
+const ASUNTO = "Cuento para que ninas y ninos aprendan a jugar ajedrez";
+const TAPA = {
+  arriba: "Peonita", medio: "y el reino de las", abajo: "64 casillas",
+  dibujo: D.perezoso(470, 360, 0.75) +
+    D.pieza("t", "b", 95, 720, 0.6) + D.pieza("c", "n", 505, 720, 0.6, { espejo: true }) +
+    D.pieza("p", "n", 380, 790, 1.15, { bufanda: true, espejo: true }) +
+    D.pieza("p", "b", 235, 815, 1.55, { mono: true }) +
+    D.estrella(60, 470, 10) + D.estrella(560, 600, 8) + D.estrella(330, 420, 7),
+};
 
 /* Lo que vale cada pieza, en puntos. El rey no tiene precio. */
 const VALOR = { P: 1, C: 3, A: 3, T: 5, D: 9 };
@@ -46,6 +58,7 @@ const NOMBRE = { P: "peón", C: "caballo", A: "alfil", T: "torre", D: "dama", R:
 
 /* ---------------------------------------------------------- presentación */
 const PRESENTACION = {
+  titulo: "Hola, soy Peonita",
   escena: {
     id: "hola", fondo: "dia",
     alt: "Peonita, un peón blanco con un moño rosado, saluda sonriente. A su lado, colgado de una rama, Don Lento el perezoso la mira con sus anteojos redondos.",
@@ -78,6 +91,7 @@ const NOTA_ADULTOS = [
    nombre podría romper el secreto sin que nadie lo note. */
 const SECRETO = "ALESSANDRO";
 const NOMBRE_ALFIL = "Don Saleras";
+const SECRETOS = [{ tipo: "acrostico-dedicatoria" }, { tipo: "anagrama", nombre: NOMBRE_ALFIL }];
 const DEDICATORIA = [
   "Aprende despacito, como Don Lento,",
   "las piezas te esperan en su lugar;",
@@ -624,11 +638,34 @@ const CONSEJOS_PARTIDA = [
   "Al final di la mano y dije «buena partida».",
 ];
 
+const FINAL_TITULO = "¡Ya sabes jugar ajedrez!";
+const ESCENA_FINAL = {
+  id: "final", fondo: "noche",
+  alt: "Todos celebran juntos bajo la luna: Peonita, Tizón, el rey, la dama, la torre, el alfil y el caballo, con confeti de colores. Don Lento sonríe desde su rama.",
+  contenido: D.confeti(5, 50, 600, 320) + D.perezoso(500, 40, 0.5) +
+    [["t", "b"], ["c", "n"], ["r", "b"], ["d", "n"], ["a", "b"]].map(([t, col], i) => D.pieza(t, col, 70 + i * 82, 225, 0.55, { espejo: i > 2 })).join("") +
+    D.pieza("p", "b", 230, 300, 0.8, { mono: true }) + D.pieza("p", "n", 360, 300, 0.8, { bufanda: true, espejo: true }) + D.corazon(295, 205, 1.1),
+};
+const ESCENA_DIPLOMA = {
+  id: "diploma", fondo: "dia",
+  alt: "Peonita y Don Lento felicitan a quien recibe el diploma.",
+  contenido: D.perezoso(470, 40, 0.55) + D.pieza("p", "b", 150, 290, 1, { mono: true }) + D.trofeo(300, 280, 1.4) +
+    D.estrella(240, 90, 12) + D.estrella(360, 70, 9) + D.estrella(300, 120, 7),
+};
+const DIPLOMA = {
+  titulo: "Diploma de ajedrez",
+  sub: "El reino de las 64 casillas reconoce a",
+  firma: "Peonita y Don Lento",
+  firmaMano: "Peonita ♥ Don Lento",
+  texto: ["porque aprendió a mover todas las piezas, a dar jaque mate", "y a jugar con la cabeza y con el corazón."],
+};
+
 const FINAL = [
   "¡Felicidades! Llegaste al final del libro. Ahora sabes cómo se mueve cada pieza, qué es el jaque, el jaque mate y el ahogado, y conoces los secretos del enroque y de la captura al paso.",
   "Lo más importante ya lo sabes también: el ajedrez se juega con la cabeza y con el corazón. Juega mucho, piensa despacito como Don Lento y comparte con tus amigos lo que aprendiste, como Peonita y Tizón.",
 ];
 
 module.exports = {
-  AUTOR, TITULO, SUBTITULO, VALOR, NOMBRE, PRESENTACION, NOTA_ADULTOS, SECRETO, NOMBRE_ALFIL, DEDICATORIA, CAPITULOS, PROMESAS, CONSEJOS_PARTIDA, FINAL,
+  SLUG, CLAVE, AUTOR, TITULO, TITULO_PDF, SUBTITULO, ASUNTO, TAPA, FINAL_TITULO, ESCENA_FINAL, ESCENA_DIPLOMA, DIPLOMA,
+  VALOR, NOMBRE, PRESENTACION, NOTA_ADULTOS, SECRETO, SECRETOS, NOMBRE_ALFIL, DEDICATORIA, CAPITULOS, PROMESAS, CONSEJOS_PARTIDA, FINAL,
 };

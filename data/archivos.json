@@ -23,7 +23,7 @@
     "nombre": "Formación docente"
    }
   ],
-  "total": 434,
+  "total": 435,
   "material": [
    {
     "ruta": "material/diagnostico-de-nivel/diagnostico-de-nivel.pdf",
@@ -82,10 +82,17 @@
     "libro": "Mide tu fuerza"
    },
    {
+    "ruta": "material/peonita-trucos/peonita-trucos.pdf",
+    "titulo": "Peonita, Tizón y los trucos del bosque — el cuento ilustrado",
+    "tipo": "otro",
+    "kb": 1205,
+    "libro": "Peonita, Tizón y los trucos del bosque"
+   },
+   {
     "ruta": "material/peonita/peonita.pdf",
     "titulo": "Peonita y el reino de las 64 casillas — el cuento ilustrado",
     "tipo": "otro",
-    "kb": 1495,
+    "kb": 1569,
     "libro": "Peonita y el reino de las 64 casillas"
    },
    {
@@ -6637,7 +6644,7 @@
     "nombre": "Formación docente"
    }
   ],
-  "total": 193,
+  "total": 194,
   "material": [
    {
     "ruta": "material/fichas-de-estudio/fichas-de-estudio-accesible.html",
@@ -6659,6 +6666,13 @@
     "tipo": "accesible",
     "kb": 347,
     "libro": "Mide tu fuerza"
+   },
+   {
+    "ruta": "material/peonita-trucos/peonita-trucos-accesible.html",
+    "titulo": "Peonita, Tizón y los trucos del bosque",
+    "tipo": "accesible",
+    "kb": 32,
+    "libro": "Peonita, Tizón y los trucos del bosque"
    },
    {
     "ruta": "material/peonita/peonita-accesible.html",
