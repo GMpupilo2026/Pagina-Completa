@@ -1,6 +1,6 @@
 /* Los materiales de clase en admin.html#materiales: cada material (el libro
- * «Ponte a prueba» y los diez volúmenes del banco de ejercicios «Mide
- * tu fuerza»), con sus
+ * «Ponte a prueba», los diez volúmenes del banco de ejercicios «Mide tu fuerza»
+ * y el cuento «Peonita y el reino de las 64 casillas»), con sus
  * sub-fichas —las pruebas y sus versiones como cuestionario, si las tiene— y
  * CON QUIÉN se comparte.
  *
@@ -149,6 +149,17 @@
       archivos: [
         { href: "material/mide-tu-fuerza-10/mide-tu-fuerza-10.pdf", texto: "📥 El libro en PDF" },
         { href: "material/mide-tu-fuerza-10/mide-tu-fuerza-10-accesible.html", texto: "♿ Versión accesible" },
+      ],
+    },
+    {
+      producto: "peonita",
+      emoji: "🧸",
+      titulo: "Peonita y el reino de las 64 casillas",
+      autor: "Oscar Angulo Cubero",
+      resumen: "Un cuento ilustrado para que niñas y niños de 4 a 8 años aprendan a jugar ajedrez: Peonita, un peón blanco, aprende con Don Lento a mover cada pieza, el jaque, el mate, el ahogado y el enroque. Quince capítulos con «Lo que aprendí» y una página de «¡A jugar!», el diploma y las soluciones. Se puede imprimir.",
+      archivos: [
+        { href: "material/peonita/peonita.pdf", texto: "📥 El libro en PDF" },
+        { href: "material/peonita/peonita-accesible.html", texto: "♿ Versión accesible" },
       ],
     },
   ];

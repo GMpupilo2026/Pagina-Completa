@@ -23,7 +23,7 @@
     "nombre": "Formación docente"
    }
   ],
-  "total": 442,
+  "total": 443,
   "material": [
    {
     "ruta": "material/diagnostico-de-nivel/diagnostico-de-nivel.pdf",
@@ -143,6 +143,13 @@
     "tipo": "otro",
     "kb": 2938,
     "libro": "Mide tu fuerza"
+   },
+   {
+    "ruta": "material/peonita/peonita.pdf",
+    "titulo": "Peonita",
+    "tipo": "otro",
+    "kb": 1495,
+    "libro": "Peonita"
    },
    {
     "ruta": "material/ponte-a-prueba/ponte-a-prueba.pdf",

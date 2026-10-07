@@ -583,7 +583,8 @@ async function pruebaMateriales(browser) {
      "material/mide-tu-fuerza-7/mide-tu-fuerza-7.pdf", "material/mide-tu-fuerza-7/mide-tu-fuerza-7-accesible.html",
      "material/mide-tu-fuerza-8/mide-tu-fuerza-8.pdf", "material/mide-tu-fuerza-8/mide-tu-fuerza-8-accesible.html",
      "material/mide-tu-fuerza-9/mide-tu-fuerza-9.pdf", "material/mide-tu-fuerza-9/mide-tu-fuerza-9-accesible.html",
-     "material/mide-tu-fuerza-10/mide-tu-fuerza-10.pdf", "material/mide-tu-fuerza-10/mide-tu-fuerza-10-accesible.html"]);
+     "material/mide-tu-fuerza-10/mide-tu-fuerza-10.pdf", "material/mide-tu-fuerza-10/mide-tu-fuerza-10-accesible.html",
+     "material/peonita/peonita.pdf", "material/peonita/peonita-accesible.html"]);
   // El banco de ejercicios no tiene pruebas como cuestionario: solo se
   // comparte. Antes de separarlo, cualquier material sin pruebas pintaba
   // igual el título y «todavía no están en la base».
@@ -592,6 +593,10 @@ async function pruebaMateriales(browser) {
       const art = document.querySelector("#mat-lista article[aria-labelledby='mat-titulo-" + p + "']");
       return [art.querySelectorAll(":scope > section").length, /como cuestionario/.test(art.textContent), !!art.querySelector("#mat-" + p + "-buscar")];
     })), Array(10).fill([1, false, true]));
+  igual("el cuento de Peonita tampoco", await page.evaluate(() => {
+    const art = document.querySelector("#mat-lista article[aria-labelledby='mat-titulo-peonita']");
+    return [art.querySelectorAll(":scope > section").length, /como cuestionario/.test(art.textContent), !!art.querySelector("#mat-peonita-buscar")];
+  }), [1, false, true]);
   igual("dice con quién está compartido, también con palabras", [await resumen(), await lista()],
     ["Lo tienen: 1 academia, y tú.", ["🏫 Academia Norte"]]);
 
