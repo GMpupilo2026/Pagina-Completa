@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>La jugada que obliga al cambio — ¿Cambio o no cambio? — material de estudio</title>
+<meta name="robots" content="noindex">
+<meta name="author" content="Oscar Angulo Cubero">
+<meta name="description" content="Material de estudio en formato accesible de la lección 4 del curso ¿Cambio o no cambio?.">
+<style>
+  /* Sin imágenes y sin columnas a propósito: esta versión está hecha para
+     lectores de pantalla y para quien necesita agrandar mucho el texto. */
+  body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+         font-size: 1.15rem; line-height: 1.8; color: #102a43; background: #ffffff;
+         max-width: 42rem; margin: 0 auto; padding: 1.5rem 1rem 4rem; }
+  h1 { font-size: 1.7rem; line-height: 1.3; }
+  h2 { font-size: 1.3rem; margin-top: 2.5rem; border-bottom: 2px solid #102a43; padding-bottom: .3rem; }
+  h3 { font-size: 1.1rem; margin-top: 1.8rem; }
+  a { color: #8a4a00; }
+  dt { font-weight: 700; margin-top: 1rem; }
+  dd { margin: .3rem 0 0; }
+  .posicion { border: 2px solid #243b53; border-radius: .5rem; padding: 1rem; margin: 1rem 0; }
+  .respuesta { background: #f0f4f8; border-left: 4px solid #102a43; padding: .6rem .9rem; }
+  footer { margin-top: 3rem; border-top: 2px solid #102a43; padding-top: 1rem; font-size: .95rem; }
+  /* La vuelta a la plataforma. Este archivo se abre solo, en su propia
+     pestaña: sin estos enlaces no hay forma de regresar al curso salvo el
+     botón "atrás" del navegador, que con lector de pantalla no siempre está
+     a mano. Van arriba y abajo: el documento es largo y quien termina de
+     leerlo no tendría que subir de nuevo para salir. */
+  .volver { margin: 0 0 1.5rem; font-size: 1rem; }
+  footer .volver { margin: 1rem 0 0; }
+  .volver a { display: inline-block; padding: .2rem 0; }
+  @media (prefers-color-scheme: dark) {
+    body { background: #0a1f33; color: #f0f4f8; }
+    h2, footer { border-color: #f0b429; }
+    a { color: #f0b429; }
+    .posicion { border-color: #829ab1; }
+    .respuesta { background: #102a43; border-color: #f0b429; }
+  }
+</style>
+</head>
+<body>
+<nav class="volver" aria-label="Volver a la plataforma">
+  <a href="../../academia/cambio-o-no-cambio.html">← Volver al curso ¿Cambio o no cambio?</a>
+  ·
+  <a href="../../../clases.html">Panel de Academia</a>
+</nav>
+<header>
+  <p>¿Cambio o no cambio? · Lección 4</p>
+  <h1>La jugada que obliga al cambio</h1>
+  <p>Material de estudio en formato accesible. Autor: Oscar Angulo Cubero, Ajedrez Integral.</p>
+  <p>Esta versión dice en palabras todo lo que en el cuadernillo en PDF está dibujado: cada
+     posición viene descrita pieza por pieza, así que no hace falta ver ninguna imagen.</p>
+</header>
+
+<h2>1. De qué trata esta lección</h2>
+
+<p>Un cambio que te conviene es un cambio que al rival no le conviene, así que no va a aceptarlo de buena gana: va a mover la pieza, a defenderla con otra o a cambiar en otra casilla donde le vaya mejor. La técnica consiste en preparar el cambio de modo que esquivarlo cueste más que aceptarlo.</p>
+<p>Hay tres formas habituales. La primera es ofrecer el cambio con una amenaza: si el rival no cambia, pierde otra cosa. La segunda es clavar o atacar la pieza que querías cambiar, para que no tenga adónde ir. La tercera es la jugada tranquila que quita la última casilla de escape o la última defensa, y deja el cambio como única salida.</p>
+<p>Este tipo de jugada es difícil de ver porque no captura nada: es la que se juega antes del cambio. Cuando sepas qué cambio quieres, no te preguntes solo «¿puedo cambiar ya?», sino «¿qué jugada deja al rival sin otra cosa que cambiar?».</p>
+
+
+<h2>2. Conceptos clave</h2>
+<dl>
+  <dt>La iniciativa</dt>
+  <dd>Tenerla es obligar: el rival contesta a lo que tú haces en vez de hacer lo suyo. No es material y no dura para siempre: o se convierte en algo o se pierde.</dd>
+  <dd><strong>El error de siempre:</strong> Soltarla por comer un peón. Perder dos tiempos por un peón devuelve el turno al rival justo cuando estaba obligado, y la ventaja se desarma.</dd>
+  <dd><strong>Para verlo:</strong> En un gambito aceptado, el que entregó el peón tiene iniciativa: cada jugada suya es una amenaza, y el rival no alcanza a desarrollar. Si la iniciativa se apaga, queda un peón menos y nada más.</dd>
+  <dt>El valor de las piezas</dt>
+  <dd>Peón 1, caballo y alfil 3, torre 5, dama 9. El rey no tiene valor de cambio porque no se puede entregar. Son números de referencia, no una verdad: sirven para decidir cambios rápido, no para juzgar una posición.</dd>
+  <dd><strong>El error de siempre:</strong> Tratar los números como si fueran exactos. Un caballo clavado en el borde vale menos que un peón pasado a punto de coronar, y la calidad (torre por pieza menor) se entrega todos los días cuando la pieza menor domina una casilla fuerte.</dd>
+  <dd><strong>Para verlo:</strong> Dos piezas menores (6) contra una torre y un peón (6) están igualadas en el papel; en la práctica las dos piezas suelen ser mejores en el medio juego, porque hacen dos trabajos a la vez, y peores en el final, donde la torre corre.</dd>
+  <dt>La clavada</dt>
+  <dd>Una pieza queda clavada cuando no puede moverse porque detrás de ella hay algo más valioso. Si detrás está el rey, la clavada es absoluta y la pieza legalmente no se puede mover; si detrás hay una dama o una torre, es relativa y moverse solo cuesta material.</dd>
+  <dd><strong>El error de siempre:</strong> Creer que una pieza clavada defiende. No defiende nada: si la pieza que defiende está clavada contra su rey, no puede capturar. Ese es el motor de media táctica de club.</dd>
+  <dd><strong>Para verlo:</strong> En la Española, alfil bella 5 clava el caballo de c6 contra el rey solo mientras no haya nada en el medio. La respuesta a6 gana tiempo justamente para deshacerla.</dd>
+</dl>
+
+<h2>3. Ejemplos del curso</h2>
+<div class="posicion">
+  <h3>Posición 1: No hay una captura que gane ya. Busca la jugada que deja al rival sin otra salida que un cambio que te conviene. Juegan las blancas; el rival acaba de jugar …b6.</h3>
+  
+  <p>Piezas blancas: rey en h1; dama en e4; torres en b1, d1; alfil en f1; peones en a3, b2, g2, h2.</p>
+  <p>Piezas negras: rey en h8; dama en f2; torres en e8, f8; alfil en g7; peones en a7, b6, d4, e5, h6.</p>
+  <p>Juegan las blancas.</p>
+  
+  <p>La línea, jugada por jugada: 24. alfil david 3, dama felix 5, 25. dama captura felix 5, torre captura felix 5, 26. alfil captura felix 5</p>
+  <p>Resultado: Ganan blancas</p>
+  <p>24. alfil david 3, dama felix 5, 25. dama captura felix 5, torre captura felix 5, 26. alfil captura felix 5. En la línea se cambian las damas. La clave es una jugada tranquila: sin jaque ni captura, pero sin defensa. La primera jugada no se lleva nada: deja preparado el cambio, y el rival ya no lo puede evitar. (Ejercicio 2eRhc de la base abierta de Lichess (CC0), rating 1390. Stockfish 16 a profundidad 18: alfil david 3 es la mejor (+5,3) y la segunda queda en -0,8.)</p>
+  <p>Posición en notación FEN, por si la quieres cargar en un programa: 4rr1k/p5b1/1p5p/4p3/3pQ3/P7/1P3qPP/1R1R1B1K w - - 0 24</p>
+</div>
+
+<h2>4. Ejercicios</h2>
+<ol>
+  <li>Revisa una partida tuya y marca en cada jugada quién estaba obligando. Vas a ver el momento exacto en que se te escapó.</li>
+  <li>Juega tres partidas con el compromiso de no comer ningún peón lateral mientras tengas amenazas que hacer.</li>
+  <li>Anota diez cambios de tu última partida y di, en cada uno, si ganaste o perdiste material y si la posición mejoró o empeoró. Vas a encontrar cambios parejos que fueron buenos y cambios parejos que fueron malos.</li>
+  <li>Arma en el tablero torre y dos peones contra dos caballos y juégala contra alguien. Cuenta quién gana en cinco intentos.</li>
+  <li>En tus tres últimas partidas, busca todas las clavadas que hubo, tuyas y del rival, y anota si se aprovecharon.</li>
+  <li>Arma una posición donde un peón esté defendido solo por una pieza clavada, y encuentra la captura que gana.</li>
+</ol>
+
+<h2>5. Preguntas con su respuesta</h2>
+<p>Contesta en voz alta antes de seguir leyendo: la respuesta viene justo después de cada pregunta.</p>
+<ol>
+  <li>
+    <p>¿Cómo se sabe si tienes la iniciativa?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Mira las últimas cinco jugadas del rival: si todas fueron respuestas a algo tuyo, la tienes.</p>
+  </li>
+  <li>
+    <p>¿Iniciativa es lo mismo que ataque?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> No. El ataque va contra el rey; la iniciativa es obligar al rival en cualquier parte del tablero. Un ataque casi siempre nace de una iniciativa que se mantuvo.</p>
+  </li>
+  <li>
+    <p>¿Cómo se defiende quien no la tiene?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Cambiando piezas, devolviendo material para desactivar amenazas y buscando un golpe en el centro. Defender pasivo y esperar rara vez funciona.</p>
+  </li>
+  <li>
+    <p>¿Por qué se dice que la iniciativa es del que mueve?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Porque mover primero es un derecho: las blancas empiezan con medio tiempo de ventaja y toda la teoría de aperturas es una discusión sobre si eso alcanza para algo.</p>
+  </li>
+  <li>
+    <p>¿Cuánto vale la calidad y qué significa 'ganar la calidad'?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Unos dos puntos: cambiar una pieza menor (3) por una torre (5). Ganar la calidad es quedarse con la torre a cambio de un caballo o un alfil.</p>
+  </li>
+  <li>
+    <p>¿Por qué el rey no tiene valor en la tabla?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Porque no se puede cambiar ni perder: si cae, se acaba la partida. En el final sí se le calcula una fuerza de ataque parecida a la de una pieza menor, pero eso es otra cosa.</p>
+  </li>
+  <li>
+    <p>Tienes dama por torre y alfil. ¿Estás mejor?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> En el papel sí (9 contra 8), pero depende: con las dos piezas coordinadas y el rey rival abierto, la dama sola puede quedar peor. La tabla decide cambios, no partidas.</p>
+  </li>
+  <li>
+    <p>¿Cuándo tres peones compensan una pieza menor?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Cuando están conectados, avanzados y el rival no tiene cómo frenarlos; sobre todo en finales. En el medio juego, con las piezas puestas, la pieza suele valer más.</p>
+  </li>
+  <li>
+    <p>¿Qué piezas pueden clavar?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Solo las de línea: alfil, torre y dama. El caballo no clava nunca, porque su salto no deja una línea detrás.</p>
+  </li>
+  <li>
+    <p>¿Cómo se rompe una clavada?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Moviendo la pieza de atrás, interponiendo otra, echando a la pieza que clava con un peón, o capturándola.</p>
+  </li>
+  <li>
+    <p>¿Por qué la clavada absoluta es más fuerte?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Porque la pieza clavada no se puede mover ni aunque quiera: la regla lo impide. En la relativa, siempre existe la opción de moverse y pagar.</p>
+  </li>
+  <li>
+    <p>Tienes un caballo clavado contra tu rey defendiendo un peón. ¿Está defendido el peón?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> No. El caballo no puede capturar sin dejar a su rey en jaque, así que el peón está colgando aunque parezca defendido.</p>
+  </li>
+</ol>
+
+<h2>6. Fuentes</h2>
+<ul>
+  <li>Texto de la lección: curso «¿Cambio o no cambio?» de Ajedrez Integral, de Oscar Angulo Cubero.</li>
+  <li>Conceptos, preguntas y ejercicios de este cuadernillo: material didáctico de Ajedrez Integral, de Oscar Angulo Cubero.</li>
+  <li>Posiciones: archivo de posiciones del propio curso, verificadas jugada por jugada con chess.js y evaluadas con el motor Stockfish que el sitio usa.</li>
+</ul>
+<h3>Para seguir leyendo</h3>
+<p>Obras de referencia sobre estos temas. Este material no reproduce texto de ellas: se listan como lectura recomendada, no como origen de lo que aquí se dice.</p>
+<ul>
+  <li>Aron Nimzowitsch, «Mi sistema» (1925).</li>
+  <li>Andrew Soltis, «Pawn Structure Chess» (1976).</li>
+  <li>Herman Grooten, «Chess Strategy for Club Players» (New in Chess, 2009).</li>
+  <li>Irving Chernev, «Logical Chess: Move by Move» (Batsford, 1957).</li>
+  <li>José Raúl Capablanca, «Fundamentos del ajedrez» (1921).</li>
+</ul>
+
+<footer>
+  <p>© 2026 Oscar Angulo Cubero · Ajedrez Integral. Material de uso docente para alumnos de la Academia.</p>
+  <p>No se autoriza su reproducción ni su distribución fuera de ella.</p>
+<p class="volver">
+  <a href="../../academia/cambio-o-no-cambio.html">← Volver al curso ¿Cambio o no cambio?</a>
+  ·
+  <a href="../../../clases.html">Panel de Academia</a>
+</p>
+</footer>
+</body>
+</html>

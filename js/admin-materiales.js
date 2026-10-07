@@ -1,6 +1,6 @@
 /* Los materiales de clase en admin.html#materiales: cada material (el libro
- * «Ponte a prueba», el banco de ejercicios «Mide tu fuerza», el libro «Rompe
- * el estancamiento» y los cuentos de Peonita), con sus
+ * «Ponte a prueba», el banco de ejercicios «Mide tu fuerza», los libros «Rompe
+ * el estancamiento» y «¿Cambio o no cambio?» y los cuentos de Peonita), con sus
  * sub-fichas —las pruebas y sus versiones como cuestionario, si las tiene— y
  * CON QUIÉN se comparte.
  *
@@ -61,6 +61,17 @@
       archivos: [
         { href: "material/rompe-el-estancamiento/rompe-el-estancamiento.pdf", texto: "📥 El libro en PDF" },
         { href: "material/rompe-el-estancamiento/rompe-el-estancamiento-accesible.html", texto: "♿ Versión accesible" },
+      ],
+    },
+    {
+      producto: "cambio-o-no-cambio",
+      emoji: "📗",
+      titulo: "¿Cambio o no cambio?",
+      autor: "Oscar Angulo Cubero",
+      resumen: "El libro del curso del mismo nombre: el cambio de piezas como decisión, en seis capítulos con su ejemplo comentado y su tarea en cada lección, 64 ejercicios con soluciones y la tarjeta de las cinco preguntas antes de cambiar.",
+      archivos: [
+        { href: "material/cambio-o-no-cambio/cambio-o-no-cambio.pdf", texto: "📥 El libro en PDF" },
+        { href: "material/cambio-o-no-cambio/cambio-o-no-cambio-accesible.html", texto: "♿ Versión accesible" },
       ],
     },
     {

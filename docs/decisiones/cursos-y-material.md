@@ -1251,11 +1251,113 @@ en `admin.html#materiales` (se comparte como los otros dos) y en «Archivos».
   los cursos: comprueba el nombre que el correo **muestra** para cada curso del
   catálogo, y que lo que la tabla sí nombra coincida con el catálogo.
 
+## El curso y el libro «¿Cambio o no cambio?»
+
+Un curso (24 lecciones en seis bloques) y su libro, de Oscar Angulo Cubero,
+sobre el cambio de piezas como decisión: qué se va y qué queda, alfiles y
+caballos, damas y torres, los cambios que llevan a un final, defenderse con
+los cambios y los cambios paradójicos, con un método de cinco preguntas antes
+de cambiar (la última lección, y la tarjeta para recortar del libro).
+
+### Tomado de un libro ajeno como referencia, no copiado
+
+El dueño pidió un curso y un libro «de este contenido»: el cuadernillo *El
+cambio de piezas. Transformaciones en la estrategia de la partida* (Diego
+Valerga, Álvarez Castillo Editor, 2005), que tiene derechos de autor. Igual que
+con «Rompe el estancamiento», se tomó **el tema y nada más**: el cambio de
+piezas como decisión estratégica y su orden general (reglas clásicas, piezas
+menores, piezas pesadas, cambios paradójicos). Ni el texto, ni los ejemplos, ni
+los comentarios, ni el título salen de ahí; las lecciones están escritas para
+esto, en tuteo.
+
+**Los 22 ejercicios del libro todavía no están.** El dueño pidió después usar
+también los ejercicios del libro (posiciones de partidas de grandes maestros:
+la posición de una partida es un dato, no texto con derechos; los comentarios
+y las soluciones de Valerga sí lo son, y no se copian). Pero sus diagramas son
+imágenes dentro del PDF y desde la sesión no se pudo bajar el archivo (8,7 MB:
+el conector de Drive corta la respuesta y la red del entorno no deja entrar a
+drive.google.com). **No se reconstruyeron de memoria**: una posición «de la
+partida tal» que no se leyó del diagrama sería una posición inventada. Cuando
+se puedan leer (fotos de las páginas 55 a 60, o el dominio permitido en la
+red), van como un capítulo aparte, con cada posición comprobada con Stockfish
+y la solución escrita de nuevo.
+
+### Las posiciones: de Lichess, comprobadas con Stockfish y con el cambio contado
+
+`herramientas/cambio-o-no-cambio-generar.js` es el mismo método que el de
+«Rompe el estancamiento»: candidatas de la base abierta de Lichess
+(`herramientas/datos/cambio-o-no-cambio-candidatas.txt`, la consulta en su
+cabecera), el MISMO `analizar()` del diagnóstico (una sola jugada buena), y
+ninguna repetida del diagnóstico ni de los otros tres libros.
+
+Lo nuevo es que **lo que la lección dice del cambio se cuenta en la línea de
+la solución** (`cambios()`), porque Lichess no tiene una etiqueta de «cambio»:
+
+- un CAMBIO es una captura contestada en la misma casilla por una captura de
+  una pieza de la misma clase (dama por dama, torre por torre, alfil o caballo
+  por alfil o caballo), en cualquier orden de bandos;
+- cada lección y cada capítulo llevan su regla (`exige`): `cambio`,
+  `cambio-q`, `cambio-r`, `cambio-m`, `cambio-pesada`, `a-peones` (y al final
+  de la línea solo quedan reyes y peones), `cambio-tranquila` (y la primera
+  jugada no captura ni da jaque), `sin-cambio` (podía cambiar una pieza por
+  otra igual y en toda la línea nadie se lleva una pieza de su clase),
+  `sin-cambio-damas` y `distinto-color`;
+- los 24 mixtos piden una **decisión de cambio**: o la línea cambia piezas, o
+  pudiendo cambiar no cambia.
+
+Lo que el filtro rompió: «La torre activa no se cambia» salió primero con una
+línea que terminaba en …Txf2+ (la recaptura quedaba fuera de la línea, así que
+«no había cambio»); por eso `sin-cambio` no admite ninguna captura de una
+pieza de su clase. Y el comentario de una jugada con jaque decía «La clave es
+una jugada tranquila»: la etiqueta `quietMove` de Lichess mira la solución
+entera. `motivo()` saca esa etiqueta, y la de sacrificio, cuando la primera
+jugada las desmiente.
+
+Tres lecciones de defensa (`defensiveMove`) dicen «solo una jugada **conserva
+la ventaja**» y llevan `gana: true`, que el generador exige al elegir su
+ejemplo: como en «Rompe el estancamiento», casi todas las de jugada defensiva
+resultaron conservar una ventaja, no salvar una partida perdida.
+
+### Cómo se regenera
+
+    STOCKFISH=/usr/games/stockfish node herramientas/cambio-o-no-cambio-generar.js
+    node herramientas/curso-posiciones.js cambio-o-no-cambio
+    python3 herramientas/curso-generar.py cambio-o-no-cambio
+    CHROME_PATH=… node herramientas/curso-material-generar.js cambio-o-no-cambio
+    node herramientas/curso-material-enlazar.js
+    CHROMIUM=… node herramientas/cambio-o-no-cambio-pdf.js
+
+`node herramientas/cambio-o-no-cambio-generar.js --cuantas` muestra cuántas
+posiciones buenas hay por tema y regla, para ver si una lección nueva tiene con
+qué. Lo comprueban `verificar-cambio-o-no-cambio.js` (el banco, que el ejemplo
+del curso sea el del libro, que cada regla de cambio se cumpla contada otra vez
+desde la FEN, que las cinco preguntas de la tarjeta sean las de la lección, y
+la versión accesible) y `verificar-cambio-o-no-cambio-pdf.py` (protección,
+autor, marca de agua en cada página, los seis capítulos, las 24 lecciones, los
+64 ejercicios, la tarjeta y la planilla de cambios).
+
+### Dónde quedó dado de alta
+
+En el catálogo (Avanzado, entre «Rompe el estancamiento» y «Cálculo y
+Visualización», con el diagrama del cambio de damas de la lección 9), en «Mis
+cursos» de la Academia, en el material de la clase en vivo, en exámenes por
+curso, en el plan de entrenamiento del área de estrategia y en
+`interno.curso_lecciones` para su certificado
+(`20261007033339_curso_cambio_o_no_cambio.sql`). El libro está en
+`admin.html#materiales` y en «Archivos». No está en la tienda (decisión de
+precio del dueño).
+
+- **El correo a la casa sí necesitó la Edge Function**: el título lleva signos
+  de pregunta, y desde el slug saldría «Cambio o no cambio». Se sumó a
+  `TITULOS_CURSOS` de `informes-encargados` y se volvió a desplegar (versión
+  25), comprobando que lo desplegado sea idéntico al repositorio archivo por
+  archivo.
+
 ## Los materiales de clase
 
 `admin.html#materiales` («Materiales de clases») junta los materiales para dar
 clase —hoy, «Ponte a prueba», el banco de ejercicios «Mide tu fuerza», el libro
-«Rompe el estancamiento» y los cuentos de Peonita— y dice **con quién se comparte cada uno**: una
+«Rompe el estancamiento», «¿Cambio o no cambio?» y los cuentos de Peonita— y dice **con quién se comparte cada uno**: una
 persona, una academia entera o todos los profesores. Lo pinta
 `js/admin-materiales.js`; lo prueba `verificar-admin.js`.
 

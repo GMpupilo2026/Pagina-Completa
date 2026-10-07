@@ -576,6 +576,7 @@ async function pruebaMateriales(browser) {
      "material/ponte-a-prueba/versiones/claves-de-correccion.pdf", "material/ponte-a-prueba/ponte-a-prueba-versiones-accesible.html",
      "material/mide-tu-fuerza/mide-tu-fuerza.pdf", "material/mide-tu-fuerza/mide-tu-fuerza-accesible.html",
      "material/rompe-el-estancamiento/rompe-el-estancamiento.pdf", "material/rompe-el-estancamiento/rompe-el-estancamiento-accesible.html",
+     "material/cambio-o-no-cambio/cambio-o-no-cambio.pdf", "material/cambio-o-no-cambio/cambio-o-no-cambio-accesible.html",
      "material/peonita/peonita.pdf", "material/peonita/peonita-accesible.html",
      "material/peonita-trucos/peonita-trucos.pdf", "material/peonita-trucos/peonita-trucos-accesible.html"]);
   // El banco de ejercicios no tiene pruebas como cuestionario: solo se

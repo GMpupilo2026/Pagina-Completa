@@ -1,0 +1,778 @@
+{
+  "slug": "cambio-o-no-cambio",
+  "titulo": "¿Cambio o no cambio?",
+  "nivel": "Intermedio · Avanzado",
+  "emoji": "⚖️",
+  "gradiente": "from-brand-700 to-brand-900",
+  "resumen": "Cada cambio de piezas transforma la partida: qué se va, qué queda y quién sale ganando. Cuándo conviene cambiar, cuándo no, y cómo usar los cambios para atacar, para ganar un final y para defenderte.",
+  "descripcion_larga": "Cambiar piezas parece la jugada más simple del ajedrez, y es una de las decisiones que más partidas define. Un cambio no le quita lo mismo a los dos bandos: se lleva una pieza que trabajaba o una que estorbaba, deja un final ganado o uno perdido, alivia al que se defiende o le abre el camino al que ataca. Las reglas de siempre —con ventaja de material se cambian piezas, el que tiene más espacio no cambia, el alfil malo se cambia— sirven de punto de partida, pero cada una tiene excepciones, y quien las aplica sin mirar la posición pierde partidas que tenía ganadas. Este curso enseña a decidir: qué pieza vale más por lo que hace y no por sus puntos, cuándo un cambio de damas o de torres te acerca a ganar, cómo contar un final de peones antes de llegar a él, cómo simplificar para salvar una partida difícil y por qué a veces lo correcto es cambiar tu mejor pieza. Cada lección trae una posición de partida real comprobada con motor, en la que el cambio —o la decisión de no hacerlo— es lo que decide.",
+  "anterior": {
+    "href": "rompe-el-estancamiento.html",
+    "titulo": "Rompe el estancamiento"
+  },
+  "siguiente": {
+    "href": "calculo-y-visualizacion.html",
+    "titulo": "Cálculo y Visualización"
+  },
+  "bloques": [
+    {
+      "n": 1,
+      "titulo": "Qué se va y qué queda",
+      "lecciones": [
+        {
+          "titulo": "Un cambio transforma la posición",
+          "resumen": "Cambiar no es neutro: después de cada cambio la partida es otra, y la pregunta es si esa otra partida te conviene.",
+          "parrafos": [
+            "Cuando dos piezas iguales se van del tablero, el material sigue igual y por eso muchos jugadores creen que no pasó nada. Pasó mucho. Se fue una pieza tuya con todo lo que hacía —defender, atacar, controlar casillas— y se fue una pieza rival con todo lo que hacía ella. Si la tuya trabajaba poco y la suya era la que sostenía su posición, saliste ganando aunque el contador de puntos diga empate.",
+            "Por eso la pregunta correcta antes de cambiar no es «¿pierdo material?», sino «¿cómo queda la posición después?». ¿Quién tiene ahora las piezas activas? ¿Qué casillas quedaron sin dueño? ¿Qué peones quedaron débiles, qué columnas se abrieron, qué rey quedó más expuesto? Un cambio puede convertir una ventaja pequeña en una grande, o borrar en una jugada la ventaja que costó veinte.",
+            "Este curso entero es una forma de contestar esa pregunta. En cada lección vas a ver un tipo de cambio —de piezas menores, de damas, de torres, hacia un final— y lo que conviene mirar antes de hacerlo. La primera regla es la más simple: nunca cambies por cambiar. Cambia porque lo que queda te sirve."
+          ],
+          "practica": "En tus tres últimas partidas lentas, marca cada cambio de piezas que hiciste. Para cada uno, escribe en una línea qué hacía tu pieza y qué hacía la del rival. ¿Cuántos cambios hiciste solo porque se podía?",
+          "tema": "capturingDefender",
+          "exige": "cambio",
+          "pregunta": "La jugada buena empieza un cambio. Antes de buscarla, pregúntate qué pieza rival te conviene que desaparezca.",
+          "enlace": "El cambio no gana por el material que se lleva, sino por lo que la pieza rival dejaba de hacer al irse.",
+          "diagramas": [
+            {
+              "id": "CC-1",
+              "fen": "r7/ppp2kb1/2n2np1/6B1/2pqp1bQ/2N5/PPP2PPP/R4RK1 w - - 4 14",
+              "turno": "w",
+              "resultado": "1-0",
+              "pregunta": "La jugada buena empieza un cambio. Antes de buscarla, pregúntate qué pieza rival te conviene que desaparezca. Juegan las blancas; el rival acaba de jugar …Ag7.",
+              "comentario": "14.Axf6 Dxf6 15.Dxg4. En la línea se cambian una pieza menor por otra. Se captura al defensor y lo que defendía queda colgado. El cambio no gana por el material que se lleva, sino por lo que la pieza rival dejaba de hacer al irse. (Ejercicio 1v1IS de la base abierta de Lichess (CC0), rating 1332. Stockfish 16 a profundidad 18: Axf6 es la mejor (+3,7) y la segunda queda en -0,7.)",
+              "linea": [
+                "Bxf6",
+                "Qxf6",
+                "Qxg4"
+              ]
+            }
+          ]
+        },
+        {
+          "titulo": "Con material de más, cambia piezas",
+          "resumen": "La regla clásica: el que tiene ventaja de material busca cambiar piezas, porque cada cambio hace más grande su ventaja relativa.",
+          "parrafos": [
+            "Un peón de más con todas las piezas en el tablero es una ventaja discreta: el rival tiene con qué crear amenazas, buscar ataque o bloquear. El mismo peón de más en un final de peones suele ser una partida ganada. La razón es aritmética: cuantas menos piezas quedan, más pesa la diferencia. Ocho contra siete se parece; dos contra uno, no.",
+            "Por eso la regla dice que el bando con material de más cambia piezas, y sobre todo la dama, que es la pieza con la que el rival más puede complicar. Ojo: la regla dice piezas, no peones. Cambiar peones le acerca al rival a las tablas, porque con menos peones hay menos con qué coronar, y hay finales con una pieza de más que no se ganan si no quedan peones.",
+            "La forma práctica de usar la regla es ofrecer cambios con ganancia: poner una pieza enfrente de la del rival de modo que, si no cambia, pierda algo, y si cambia, quede un final que ganas. El que va abajo en material evita los cambios; tu trabajo es dejarlo sin esa opción."
+          ],
+          "practica": "Cuando tengas un peón de más, cuenta cuántas piezas quedan en el tablero cada cinco jugadas. Si el número no baja, te estás perdiendo oportunidades de cambiar. Repasa la partida buscando el momento en que se podía forzar un cambio.",
+          "tema": "queenEndgame",
+          "exige": "a-peones",
+          "pregunta": "Hay un cambio que deja un final de peones ganado. ¿Puedes forzarlo?",
+          "enlace": "Las damas se van y lo que queda es un final de peones en el que la ventaja ya no se puede discutir.",
+          "diagramas": [
+            {
+              "id": "CC-2",
+              "fen": "Q7/7p/4p2p/5k2/P2p3P/8/5PK1/3q4 w - - 2 43",
+              "turno": "w",
+              "resultado": "1-0",
+              "pregunta": "Hay un cambio que deja un final de peones ganado. ¿Puedes forzarlo? Juegan las blancas; el rival acaba de jugar …Rf5.",
+              "comentario": "43.Df3+ Dxf3+ 44.Rxf3 e5 45.a5 e4+ 46.Re2. En la línea se cambian las damas, y queda un final de peones. Es una jugada defensiva precisa: la única que sostiene la posición. Las damas se van y lo que queda es un final de peones en el que la ventaja ya no se puede discutir. (Ejercicio 0rTVx de la base abierta de Lichess (CC0), rating 1536. Stockfish 16 a profundidad 18: Df3+ es la mejor (+4,4) y la segunda queda en 0,0.)",
+              "linea": [
+                "Qf3+",
+                "Qxf3+",
+                "Kxf3",
+                "e5",
+                "a5",
+                "e4+",
+                "Ke2"
+              ]
+            }
+          ]
+        },
+        {
+          "titulo": "Cambiar al defensor",
+          "resumen": "Muchas posiciones las sostiene una sola pieza. Si la cambias, lo que defendía queda sin dueño.",
+          "parrafos": [
+            "En casi toda posición difícil hay una pieza que hace el trabajo duro: el caballo que tapa la entrada al rey, el alfil que defiende un peón débil, la torre que cuida la última fila. Mientras esa pieza esté, la defensa aguanta. El cambio es la forma más limpia de quitarla, porque no cuesta material: das una pieza igual y te llevas la que importaba.",
+            "Para encontrar al defensor, hazte la pregunta al revés: ¿qué podría ganar yo si una pieza rival no estuviera? Si la respuesta es «un peón», «la calidad» o «mate», ya sabes qué pieza te conviene cambiar. Después busca con qué pieza tuya la puedes cambiar y en qué orden, porque a veces el cambio tiene que ir con jaque o con una amenaza para que el rival no pueda esquivarlo.",
+            "Fíjate en que aquí el valor de las piezas en puntos no dice nada. Un caballo por un alfil es un cambio parejo en el papel, pero si el caballo rival era el único defensor de su rey, el cambio vale una partida."
+          ],
+          "practica": "En los ejercicios de este bloque, antes de buscar la jugada, nombra en voz alta la pieza rival que sostiene la posición. Si no la encuentras en un minuto, mira qué casillas y piezas defiende cada una de las suyas.",
+          "tema": "capturingDefender",
+          "exige": "cambio-m",
+          "pregunta": "En la línea buena se cambia una pieza menor por otra. ¿Cuál te conviene sacar del tablero?",
+          "enlace": "Se cambia una pieza menor por otra, y lo que la pieza rival defendía queda sin dueño.",
+          "diagramas": [
+            {
+              "id": "CC-3",
+              "fen": "rn2r2k/1p1b1ppB/2p5/q3n1B1/p1PR4/2P2N1P/P1Q3P1/2K4R b - - 1 22",
+              "turno": "b",
+              "resultado": "0-1",
+              "pregunta": "En la línea buena se cambia una pieza menor por otra. ¿Cuál te conviene sacar del tablero? Juegan las negras; el rival acaba de jugar Td4.",
+              "comentario": "22…Cxf3 23.gxf3 Dxg5+. En la línea se cambian una pieza menor por otra. Es un ataque a la descubierta: al moverse una pieza, se destapa otra. Se cambia una pieza menor por otra, y lo que la pieza rival defendía queda sin dueño. (Ejercicio 0R4YX de la base abierta de Lichess (CC0), rating 1615. Stockfish 16 a profundidad 18: Cxf3 es la mejor (+4,3) y la segunda queda en -2,0.)",
+              "linea": [
+                "Nxf3",
+                "gxf3",
+                "Qxg5+"
+              ]
+            }
+          ]
+        },
+        {
+          "titulo": "La jugada que obliga al cambio",
+          "resumen": "Si el cambio te conviene, el rival lo va a evitar. A veces hace falta una jugada previa que no le deje otra.",
+          "parrafos": [
+            "Un cambio que te conviene es un cambio que al rival no le conviene, así que no va a aceptarlo de buena gana: va a mover la pieza, a defenderla con otra o a cambiar en otra casilla donde le vaya mejor. La técnica consiste en preparar el cambio de modo que esquivarlo cueste más que aceptarlo.",
+            "Hay tres formas habituales. La primera es ofrecer el cambio con una amenaza: si el rival no cambia, pierde otra cosa. La segunda es clavar o atacar la pieza que querías cambiar, para que no tenga adónde ir. La tercera es la jugada tranquila que quita la última casilla de escape o la última defensa, y deja el cambio como única salida.",
+            "Este tipo de jugada es difícil de ver porque no captura nada: es la que se juega antes del cambio. Cuando sepas qué cambio quieres, no te preguntes solo «¿puedo cambiar ya?», sino «¿qué jugada deja al rival sin otra cosa que cambiar?»."
+          ],
+          "practica": "Cuando en una partida veas un cambio que te convenga y el rival lo esquive, anótalo. Después, con el análisis, busca si había una jugada previa que lo obligaba. Con el tiempo vas a empezar a verla antes.",
+          "tema": "quietMove",
+          "exige": "cambio-tranquila",
+          "pregunta": "No hay una captura que gane ya. Busca la jugada que deja al rival sin otra salida que un cambio que te conviene.",
+          "enlace": "La primera jugada no se lleva nada: deja preparado el cambio, y el rival ya no lo puede evitar.",
+          "diagramas": [
+            {
+              "id": "CC-4",
+              "fen": "4rr1k/p5b1/1p5p/4p3/3pQ3/P7/1P3qPP/1R1R1B1K w - - 0 24",
+              "turno": "w",
+              "resultado": "1-0",
+              "pregunta": "No hay una captura que gane ya. Busca la jugada que deja al rival sin otra salida que un cambio que te conviene. Juegan las blancas; el rival acaba de jugar …b6.",
+              "comentario": "24.Ad3 Df5 25.Dxf5 Txf5 26.Axf5. En la línea se cambian las damas. La clave es una jugada tranquila: sin jaque ni captura, pero sin defensa. La primera jugada no se lleva nada: deja preparado el cambio, y el rival ya no lo puede evitar. (Ejercicio 2eRhc de la base abierta de Lichess (CC0), rating 1390. Stockfish 16 a profundidad 18: Ad3 es la mejor (+5,3) y la segunda queda en -0,8.)",
+              "linea": [
+                "Bd3",
+                "Qf5",
+                "Qxf5",
+                "Rxf5",
+                "Bxf5"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "n": 2,
+      "titulo": "Alfiles y caballos",
+      "lecciones": [
+        {
+          "titulo": "Alfil contra caballo: quién manda",
+          "resumen": "Valen lo mismo en puntos y casi nunca lo mismo en el tablero. Lo decide la estructura de peones.",
+          "parrafos": [
+            "El alfil y el caballo valen unos tres puntos cada uno, y de ahí sale la idea de que cambiar uno por otro es indiferente. No lo es casi nunca. El alfil es una pieza de largo alcance: le gustan las posiciones abiertas, los peones en los dos flancos y las diagonales libres. El caballo es lento pero salta: le gustan las posiciones cerradas, las casillas fijas que ningún peón puede atacar y los peones de un solo flanco.",
+            "Antes de cambiar un alfil por un caballo, o al revés, mira la estructura y adivina cómo va a ser la partida dentro de diez jugadas. Si se van a abrir líneas y los peones van a quedar repartidos, el alfil va a mandar. Si la posición se va a cerrar, o si hay una casilla central donde un caballo no se puede desalojar, el caballo va a ser mejor.",
+            "La pareja de alfiles merece un aviso aparte: dos alfiles juntos cubren casillas de los dos colores y suelen valer más que alfil y caballo. Regalarla sin necesidad, cambiando uno de tus alfiles por un caballo, es uno de los cambios que más ventaja se le escapa al jugador de club."
+          ],
+          "practica": "Juega desde la misma posición de final dos partidas de entrenamiento: una con alfil contra caballo y peones en los dos flancos, otra con los peones en un solo flanco. Anota quién estuvo más cómodo en cada una.",
+          "tema": "bishopEndgame",
+          "pregunta": "Es un final de alfiles: el alcance del alfil decide.",
+          "enlace": "Fíjate en las casillas que controla cada alfil: el que tiene objetivos de su color es el que manda.",
+          "diagramas": [
+            {
+              "id": "CC-5",
+              "fen": "8/8/p1p3p1/5p1p/kBp2P1P/2P1KP2/8/8 b - - 7 46",
+              "turno": "b",
+              "resultado": "0-1",
+              "pregunta": "Es un final de alfiles: el alcance del alfil decide. Juegan las negras; el rival acaba de jugar Re3.",
+              "comentario": "46…a5 47.Af8 Rb3 48.Rd4 a4 49.Ae7 a3 50.Axa3 Rxa3. La clave es una jugada tranquila: sin jaque ni captura, pero sin defensa. Fíjate en las casillas que controla cada alfil: el que tiene objetivos de su color es el que manda. (Ejercicio 1BALq de la base abierta de Lichess (CC0), rating 1511. Stockfish 16 a profundidad 18: a5 es la mejor (+3,5) y la segunda queda en -4,6.)",
+              "linea": [
+                "a5",
+                "Bf8",
+                "Kb3",
+                "Kd4",
+                "a4",
+                "Be7",
+                "a3",
+                "Bxa3",
+                "Kxa3"
+              ]
+            }
+          ]
+        },
+        {
+          "titulo": "El caballo que se cambia a tiempo",
+          "resumen": "En un final con caballos, el cambio correcto deja un final de peones; el incorrecto, un caballo que no llega.",
+          "parrafos": [
+            "Los finales de caballos se parecen mucho a los de peones: el caballo es lento y no puede ganar tiempos a distancia como una torre o un alfil. Por eso, en estos finales, el cambio de caballos es casi siempre la decisión más importante, y conviene hacerlo con la cuenta del final de peones ya hecha.",
+            "La pregunta es concreta: si se van los caballos, ¿quién gana el final de peones? Si eres tú, busca el cambio; muchas veces se puede forzar ofreciendo el caballo en una casilla donde el rival tiene que tomarlo o perder un peón. Si no eres tú, evita el cambio a toda costa, aunque tengas que dejar tu caballo en una casilla peor.",
+            "El error típico es cambiar «para simplificar» sin contar. En un final de peones no hay piezas que salven nada: un tiempo de más o de menos decide, y la cuenta hay que hacerla antes del cambio, no después."
+          ],
+          "practica": "En los ejercicios de final de caballos, antes de mover, escribe quién gana el final de peones si se cambian los caballos. Después resuelve y comprueba si tu cuenta era la correcta.",
+          "tema": "knightEndgame",
+          "exige": "cambio-m",
+          "pregunta": "En la línea buena se cambian los caballos. ¿Cómo fuerzas el cambio que te conviene?",
+          "enlace": "Se cambian las piezas menores y el final que queda ya no tiene defensa.",
+          "diagramas": [
+            {
+              "id": "CC-6",
+              "fen": "1n6/1P3kpp/2n1p3/N7/P3P3/2P1K2P/6P1/8 w - - 2 39",
+              "turno": "w",
+              "resultado": "1-0",
+              "pregunta": "En la línea buena se cambian los caballos. ¿Cómo fuerzas el cambio que te conviene? Juegan las blancas; el rival acaba de jugar …Cec6.",
+              "comentario": "39.Cxc6 Cxc6 40.a5 Re8 41.a6. En la línea se cambian una pieza menor por otra. Se cambian las piezas menores y el final que queda ya no tiene defensa. (Ejercicio 1hrAx de la base abierta de Lichess (CC0), rating 1311. Stockfish 16 a profundidad 18: Cxc6 es la mejor (+5,1) y la segunda queda en -0,6.)",
+              "linea": [
+                "Nxc6",
+                "Nxc6",
+                "a5",
+                "Ke8",
+                "a6"
+              ]
+            }
+          ]
+        },
+        {
+          "titulo": "El alfil malo: cambiarlo o usarlo",
+          "resumen": "Un alfil encerrado por sus propios peones es candidato a cambio. Pero a veces es el que defiende lo que importa.",
+          "parrafos": [
+            "Se llama alfil malo al que tiene sus propios peones fijos en casillas de su mismo color: los peones le tapan las diagonales y él queda reducido a defenderlos. La recomendación clásica es cambiarlo por el alfil bueno del rival, o por un caballo activo, y quedarse con una pieza que trabaje.",
+            "La recomendación es buena, pero no automática. Un alfil malo que defiende peones débiles es, justamente por eso, una pieza útil: si lo cambias, los peones que cuidaba pueden quedar sin defensa. Y un alfil malo puede volverse bueno si los peones cambian de casilla o si sale por delante de ellos, fuera de la cadena.",
+            "La pregunta, otra vez, es qué hace la pieza. Si el alfil solo mira peones propios y no defiende nada esencial, búscale un cambio. Si es el que sostiene tu estructura, antes de cambiarlo asegúrate de que lo que queda sin él aguanta."
+          ],
+          "practica": "Busca en tus partidas una posición con un alfil que llamarías malo. Escribe qué defendía y qué pasaba si se cambiaba. Comprueba con el motor si tu juicio coincide con la evaluación.",
+          "tema": "bishopEndgame",
+          "pregunta": "Final de alfiles: mira de qué color son las casillas de los peones antes de decidir.",
+          "enlace": "Los peones fijos en casillas del color de un alfil lo vuelven débil o fuerte según de qué lado estén.",
+          "diagramas": [
+            {
+              "id": "CC-7",
+              "fen": "8/8/P3P1p1/2b5/6k1/3K4/5p2/8 w - - 0 42",
+              "turno": "w",
+              "resultado": "1-0",
+              "pregunta": "Final de alfiles: mira de qué color son las casillas de los peones antes de decidir. Juegan las blancas; el rival acaba de jugar …f2.",
+              "comentario": "42.Re2 Rg3 43.Rf1. Los peones fijos en casillas del color de un alfil lo vuelven débil o fuerte según de qué lado estén. (Ejercicio 3Ny4Q de la base abierta de Lichess (CC0), rating 1485. Stockfish 16 a profundidad 18: Re2 es la mejor (+3,6) y la segunda queda en -36,5.)",
+              "linea": [
+                "Ke2",
+                "Kg3",
+                "Kf1"
+              ]
+            }
+          ]
+        },
+        {
+          "titulo": "Alfiles de distinto color",
+          "resumen": "En el final, son la gran esperanza del que se defiende. En el medio juego, la gran arma del que ataca.",
+          "parrafos": [
+            "Cuando a cada bando le queda un alfil y corren por casillas de distinto color, pasa algo curioso: ninguno de los dos alfiles puede disputarle casillas al otro. En el final, eso favorece al que se defiende, porque puede bloquear los peones rivales en casillas de su color y el alfil contrario no tiene cómo echarlo. Muchos finales con uno y hasta dos peones de menos son tablas por esa razón.",
+            "En el medio juego, la misma propiedad funciona al revés: el que ataca con su alfil sobre casillas que el alfil rival no puede cubrir tiene, en la práctica, una pieza de más en el ataque. Por eso el defensor con alfiles de distinto color quiere cambiar damas y torres, y el atacante quiere conservarlas.",
+            "Antes de un cambio que deje alfiles de distinto color, pregúntate en cuál de las dos situaciones vas a quedar. Si estás ganando un final, ese cambio puede regalar las tablas. Si estás defendiendo, puede ser tu salvación."
+          ],
+          "practica": "Juega desde un final de alfiles de distinto color con un peón de más, una vez de cada lado. Anota qué casillas usó el bando que se defendía para bloquear.",
+          "tema": "bishopEndgame",
+          "exige": "distinto-color",
+          "pregunta": "Hay alfiles de distinto color. Fíjate en qué casillas puede cubrir cada uno y en cuáles no.",
+          "enlace": "Cada alfil manda en su color y el otro no puede discutírselo: la jugada buena aprovecha justo esas casillas.",
+          "diagramas": [
+            {
+              "id": "CC-8",
+              "fen": "5b2/p3k2K/1p4Bp/1P2p2P/2Pp4/3P4/8/8 w - - 2 97",
+              "turno": "w",
+              "resultado": "1-0",
+              "pregunta": "Hay alfiles de distinto color. Fíjate en qué casillas puede cubrir cada uno y en cuáles no. Juegan las blancas; el rival acaba de jugar …Re7.",
+              "comentario": "97.Rg8 a5 98.bxa6. Cada alfil manda en su color y el otro no puede discutírselo: la jugada buena aprovecha justo esas casillas. (Ejercicio 2gmkP de la base abierta de Lichess (CC0), rating 1401. Stockfish 16 a profundidad 18: Rg8 es la mejor (+6,1) y la segunda queda en +0,2.)",
+              "linea": [
+                "Kg8",
+                "a5",
+                "bxa6"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "n": 3,
+      "titulo": "Damas y torres",
+      "lecciones": [
+        {
+          "titulo": "Cambiar las damas",
+          "resumen": "El cambio de damas cambia la partida entera: se acaban los ataques al rey y empieza otra pelea.",
+          "parrafos": [
+            "Ningún cambio transforma tanto una partida como el de damas. Con damas, el rey tiene que estar seguro y las amenazas pueden venir de cualquier lado. Sin damas, el rey se vuelve una pieza activa, los ataques directos casi desaparecen y lo que cuenta es la estructura de peones, las piezas activas y el final que se viene.",
+            "Te conviene cambiar damas cuando tu rey está más expuesto que el del rival, cuando tienes ventaja de material o una mejor estructura, o cuando la dama rival es más activa que la tuya. No te conviene cuando tu ataque depende de ella, cuando el final que queda es peor para ti o cuando el rival es el que está expuesto.",
+            "Muchas veces el cambio de damas se ofrece con una amenaza: la dama se pone enfrente de la rival en una casilla donde, si no se cambia, algo cae. Y muchas otras el rival lo ofrece para quitarte la iniciativa: ahí la pregunta es si puedes esquivarlo sin perder tiempo."
+          ],
+          "practica": "Durante una semana, cada vez que en tus partidas se cambien las damas, anota quién lo propuso y si esa persona terminó mejor o peor. Vas a descubrir si cambias damas por convicción o por costumbre.",
+          "tema": "queenEndgame",
+          "exige": "cambio-q",
+          "pregunta": "La línea buena termina con las damas fuera del tablero. ¿Cómo lo fuerzas?",
+          "enlace": "Sin damas, la ventaja que quedaba escondida aparece entera en el final.",
+          "diagramas": [
+            {
+              "id": "CC-9",
+              "fen": "8/6pk/8/4p2p/3qP3/P1K1Q3/1P6/8 w - - 1 43",
+              "turno": "w",
+              "resultado": "1-0",
+              "pregunta": "La línea buena termina con las damas fuera del tablero. ¿Cómo lo fuerzas? Juegan las blancas; el rival acaba de jugar …Dd4+.",
+              "comentario": "43.Dxd4 exd4+ 44.Rxd4 h4 45.Re3. En la línea se cambian las damas, y queda un final de peones. Es una jugada defensiva precisa: la única que sostiene la posición. Sin damas, la ventaja que quedaba escondida aparece entera en el final. (Ejercicio 2yN82 de la base abierta de Lichess (CC0), rating 1362. Stockfish 16 a profundidad 18: Dxd4 es la mejor (+5,5) y la segunda queda en -43,9.)",
+              "linea": [
+                "Qxd4",
+                "exd4+",
+                "Kxd4",
+                "h4",
+                "Ke3"
+              ]
+            }
+          ]
+        },
+        {
+          "titulo": "La dama que no se cambia",
+          "resumen": "Cuando la dama es la que ataca o la que sostiene la defensa, ofrecerle un cambio es regalar la partida.",
+          "parrafos": [
+            "Así como hay posiciones en las que cambiar damas gana, hay otras en las que cambiarlas tira a la basura todo lo conseguido. Si tu dama es la pieza que presiona al rey rival, el cambio le devuelve la tranquilidad. Si tu dama es la que tapa la entrada a tu rey, el cambio deja la puerta abierta.",
+            "La tentación del cambio viene muchas veces de un falso alivio: la dama rival molesta, se ofrece el cambio y uno respira. Antes de hacerlo, mira el final que queda. Si en ese final tus peones son peores, tu rey está más lejos o las piezas rivales son más activas, la molestia de la dama era el mal menor.",
+            "La jugada que esquiva un cambio sin perder tiempo es una de las más finas del medio juego: mantiene la tensión y obliga al rival a seguir resolviendo problemas."
+          ],
+          "practica": "En tus partidas, busca un momento en que podías cambiar damas y no lo hiciste, o lo hiciste. Analiza con el motor el final que quedaba en las dos opciones.",
+          "tema": [
+            "quietMove",
+            "trappedPiece",
+            "advancedPawn",
+            "defensiveMove",
+            "capturingDefender",
+            "rookEndgame"
+          ],
+          "exige": "sin-cambio-damas",
+          "pregunta": "Las dos damas están en el tablero y podías cambiar una pieza por otra igual. La jugada buena no cambia: ¿qué hace en su lugar?",
+          "enlace": "El cambio estaba ahí, pero no era lo mejor: la jugada buena conserva las piezas que trabajan.",
+          "diagramas": [
+            {
+              "id": "CC-10",
+              "fen": "2r3k1/1p2pp1p/r2p2p1/p1qP4/P1Q5/1P6/1P3PPP/2R2RK1 w - - 5 21",
+              "turno": "w",
+              "resultado": "1-0",
+              "pregunta": "Las dos damas están en el tablero y podías cambiar una pieza por otra igual. La jugada buena no cambia: ¿qué hace en su lugar? Juegan las blancas; el rival acaba de jugar …Tc8.",
+              "comentario": "21.Df4 Dxc1 22.Txc1. La clave es una jugada tranquila: sin jaque ni captura, pero sin defensa. El cambio estaba ahí, pero no era lo mejor: la jugada buena conserva las piezas que trabajan. (Ejercicio 2TSGs de la base abierta de Lichess (CC0), rating 1990. Stockfish 16 a profundidad 18: Df4 es la mejor (+4,6) y la segunda queda en +0,1.)",
+              "linea": [
+                "Qf4",
+                "Qxc1",
+                "Rxc1"
+              ]
+            }
+          ]
+        },
+        {
+          "titulo": "Una torre por otra",
+          "resumen": "El cambio de torres decide quién se queda con la columna abierta, y a veces quién gana el final.",
+          "parrafos": [
+            "Las torres se cambian casi siempre en una columna abierta: dos torres enfrentadas, una de ellas captura y la otra recaptura. Quién termina dueño de la columna depende de cuántas piezas apoyan a cada lado, así que antes de entrar en esa pelea conviene contar: si tienes dos torres dobladas contra una, la columna será tuya después del cambio.",
+            "En los finales, el cambio de torres tiene otro peso: muchas veces es el paso a un final de peones. Un final de torres con un peón de más puede ser tablas; el mismo peón de más sin torres puede ganar solo. Y al revés: si el final de peones que queda es perdido, la torre que te queda vale más que cualquier simplificación.",
+            "La regla práctica es contar dos cosas antes de cambiar torres: quién se queda con la columna y quién gana el final que queda sin ellas."
+          ],
+          "practica": "En los ejercicios de este bloque, cada vez que haya torres enfrentadas, cuenta en voz alta cuántas piezas apoyan cada una antes de buscar la jugada.",
+          "tema": "rookEndgame",
+          "exige": "cambio-r",
+          "pregunta": "En la línea buena se cambian las torres. Cuenta antes qué final queda.",
+          "enlace": "Las torres se van y el final que queda ya está decidido: la cuenta se hizo antes del cambio.",
+          "diagramas": [
+            {
+              "id": "CC-11",
+              "fen": "3k4/3R2Rp/4p1p1/8/3P4/2P4P/1rr5/5K2 b - - 9 32",
+              "turno": "b",
+              "resultado": "0-1",
+              "pregunta": "En la línea buena se cambian las torres. Cuenta antes qué final queda. Juegan las negras; el rival acaba de jugar Td7+.",
+              "comentario": "32…Rc8 33.Tc7+ Rb8 34.Tb7+ Txb7 35.Txb7+ Rxb7. En la línea se cambian las torres. Las torres se van y el final que queda ya está decidido: la cuenta se hizo antes del cambio. (Ejercicio 33KTZ de la base abierta de Lichess (CC0), rating 1406. Stockfish 16 a profundidad 18: Rc8 es la mejor (+7,3) y la segunda queda en 0,0.)",
+              "linea": [
+                "Kc8",
+                "Rc7+",
+                "Kb8",
+                "Rb7+",
+                "Rxb7",
+                "Rxb7+",
+                "Kxb7"
+              ]
+            }
+          ]
+        },
+        {
+          "titulo": "La torre activa no se cambia",
+          "resumen": "Una torre activa vale más que una pasiva. Cambiarla por la pasiva del rival es devolverle la ventaja.",
+          "parrafos": [
+            "En los finales de torres hay una idea que pesa más que un peón: la actividad. Una torre que ataca peones desde atrás, que corta al rey rival o que se instala en la séptima fila hace muchísimo más que una torre que solo defiende. Por eso el bando con la torre activa casi nunca quiere cambiarla, aunque el cambio parezca simplificar.",
+            "El bando con la torre pasiva, en cambio, sí quiere cambiar: es su forma de librarse de la presión. Cuando el rival te ofrece un cambio de torres, mira cuál de las dos es la buena. Si es la tuya, busca una casilla donde siga activa y no se pueda cambiar.",
+            "Esta idea vale también en el medio juego con cualquier pieza: si tu pieza es claramente más activa que la que el rival te ofrece cambiar, no le hagas el favor."
+          ],
+          "practica": "Revisa un final de torres de alguna partida tuya y marca en cada momento cuál torre era la activa. ¿Hubo un cambio que le devolvió la actividad al rival?",
+          "tema": "rookEndgame",
+          "exige": "sin-cambio",
+          "pregunta": "Podías cambiar una pieza por otra igual. La jugada buena no cambia y conserva la actividad.",
+          "enlace": "El cambio aliviaba al rival; la jugada buena mantiene la pieza activa en su lugar.",
+          "diagramas": [
+            {
+              "id": "CC-12",
+              "fen": "1R5r/2P5/8/8/8/3k4/1p6/3K4 w - - 3 59",
+              "turno": "w",
+              "resultado": "1-0",
+              "pregunta": "Podías cambiar una pieza por otra igual. La jugada buena no cambia y conserva la actividad. Juegan las blancas; el rival acaba de jugar …Rd3.",
+              "comentario": "59.Td8+ Re3 60.Rc2 b1=D+ 61.Rxb1. El cambio aliviaba al rival; la jugada buena mantiene la pieza activa en su lugar. (Ejercicio 1uVdA de la base abierta de Lichess (CC0), rating 2202. Stockfish 16 a profundidad 18: Td8+ es la mejor (+35,4) y la segunda queda en 0,0.)",
+              "linea": [
+                "Rd8+",
+                "Ke3",
+                "Kc2",
+                "b1=Q+",
+                "Kxb1"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "n": 4,
+      "titulo": "Cambiar hacia el final",
+      "lecciones": [
+        {
+          "titulo": "El final de peones: cuenta antes de cambiar",
+          "resumen": "Es el final al que llevan todos los cambios, y el único en el que no hay segunda oportunidad.",
+          "parrafos": [
+            "Cuando se cambia la última pieza, la partida pasa a un final de peones, y en un final de peones casi no hay posiciones dudosas: o se gana, o se entabla, o se pierde, y la diferencia suele ser un solo tiempo. Por eso el cambio que lleva a un final de peones es el más definitivo de todos.",
+            "Hay que llegar con la cuenta hecha. Las preguntas son siempre las mismas: ¿quién tiene un peón pasado o puede crearlo? ¿Qué rey llega antes al centro o a los peones rivales? ¿Quién tiene más tiempos de reserva, esas jugadas de peón que se pueden hacer para no tener que mover el rey? ¿Hay oposición y quién la tiene?",
+            "Si no puedes contestar esas preguntas antes del cambio, no cambies todavía. Una pieza en el tablero da margen de error; sin piezas, el error se paga entero."
+          ],
+          "practica": "Haz cada día un final de peones de los ejercicios de este bloque, contando tiempos en voz alta antes de mover. Si te equivocas, vuelve a contar desde el principio, sin mirar la solución.",
+          "tema": "pawnEndgame",
+          "pregunta": "Final de peones: cuenta los tiempos de cada rey antes de mover.",
+          "enlace": "Un solo tiempo decide: la jugada buena es la que lo gana.",
+          "diagramas": [
+            {
+              "id": "CC-13",
+              "fen": "8/8/8/p3pk1p/7P/P3KP2/8/8 b - - 0 48",
+              "turno": "b",
+              "resultado": "0-1",
+              "pregunta": "Final de peones: cuenta los tiempos de cada rey antes de mover. Juegan las negras; el rival acaba de jugar a3.",
+              "comentario": "48…a4 49.Re2 Rf4 50.Rf2 e4 51.fxe4 Rxe4. Es un zugzwang: al rival le toca mover y cualquier jugada lo empeora. Un solo tiempo decide: la jugada buena es la que lo gana. (Ejercicio 206zZ de la base abierta de Lichess (CC0), rating 1451. Stockfish 16 a profundidad 18: a4 es la mejor (+4,5) y la segunda queda en 0,0.)",
+              "linea": [
+                "a4",
+                "Ke2",
+                "Kf4",
+                "Kf2",
+                "e4",
+                "fxe4",
+                "Kxe4"
+              ]
+            }
+          ]
+        },
+        {
+          "titulo": "Cambiar para que el rey entre",
+          "resumen": "Cuando se van las torres, el rey se vuelve la pieza más fuerte. El cambio le abre la puerta.",
+          "parrafos": [
+            "En el medio juego el rey se esconde; en el final, sale a pelear. Muchas veces lo que impide que tu rey entre en la posición rival es una torre que corta el camino o que amenaza jaques desde lejos. Si cambias esa torre, el rey pasa, y un rey activo contra uno pasivo suele decidir el final.",
+            "Por eso, en finales de torres, la pregunta «¿cambio las torres?» va unida a «¿qué rey es más activo después?». Si tu rey está más cerca del centro o de los peones rivales, el final de peones suele ser tuyo. Si el rey rival es el activo, el cambio le hace el trabajo.",
+            "La forma de forzar el cambio es la de siempre: ofrecer la torre en una casilla donde el rival no pueda rechazarla sin perder algo, por ejemplo cortándole el rey o atacando un peón."
+          ],
+          "practica": "En los ejercicios de final de torres, antes de mover, señala con el dedo en el tablero el camino que haría tu rey si se cambian las torres. Si el camino está libre, busca el cambio.",
+          "tema": "rookEndgame",
+          "exige": "a-peones",
+          "pregunta": "Hay un cambio de torres que deja un final de peones ganado. ¿Cómo lo fuerzas?",
+          "enlace": "Sin torres, el rey activo entra y el final de peones ya no tiene defensa.",
+          "diagramas": [
+            {
+              "id": "CC-14",
+              "fen": "8/8/5R2/7P/6k1/2K5/P1P2pr1/8 b - - 0 54",
+              "turno": "b",
+              "resultado": "0-1",
+              "pregunta": "Hay un cambio de torres que deja un final de peones ganado. ¿Cómo lo fuerzas? Juegan las negras; el rival acaba de jugar h5.",
+              "comentario": "54…Tg3+ 55.Rd4 Tf3 56.Txf3 Rxf3. En la línea se cambian las torres, y queda un final de peones. Sin torres, el rey activo entra y el final de peones ya no tiene defensa. (Ejercicio 0MfrO de la base abierta de Lichess (CC0), rating 1571. Stockfish 16 a profundidad 18: Tg3+ es la mejor (+4,8) y la segunda queda en +0,0.)",
+              "linea": [
+                "Rg3+",
+                "Kd4",
+                "Rf3",
+                "Rxf3",
+                "Kxf3"
+              ]
+            }
+          ]
+        },
+        {
+          "titulo": "Cambiar para coronar",
+          "resumen": "Un peón avanzado vale más que su punto: a veces la pieza que hay que cambiar es la que le estorba.",
+          "parrafos": [
+            "Un peón en sexta o séptima fila ya no vale un punto: vale casi una pieza, porque obliga al rival a tener siempre algo vigilando la casilla de coronación. Muchas veces, la forma más rápida de ganar es cambiar justo esa pieza que vigila, aunque sea la mejor del rival y aunque el cambio parezca desigual.",
+            "Fíjate en que aquí el cálculo es corto y concreto: si la pieza que bloquea o controla la casilla de coronación desaparece, ¿llega el peón? Si llega, el cambio gana, sin importar si diste una torre por un alfil o la dama por una torre.",
+            "Y al revés, cuando te defiendes de un peón avanzado, tu pieza bloqueadora es la que menos se cambia. Cuidarla vale más que cualquier peón."
+          ],
+          "practica": "Cada vez que veas un peón pasado en sexta o séptima, sea tuyo o del rival, pregúntate qué pieza lo detiene. Si se cambiara esa pieza, ¿coronaría?",
+          "tema": "advancedPawn",
+          "exige": "cambio",
+          "pregunta": "Hay un peón muy avanzado. ¿Qué pieza le estorba, y cómo te la sacas de encima con un cambio?",
+          "enlace": "Después del cambio, el peón avanzado pesa más que cualquier pieza: ya no hay quién lo detenga a tiempo.",
+          "diagramas": [
+            {
+              "id": "CC-15",
+              "fen": "8/3p1RP1/p1b1p3/1pP5/6rk/P3K3/8/8 w - - 3 46",
+              "turno": "w",
+              "resultado": "1-0",
+              "pregunta": "Hay un peón muy avanzado. ¿Qué pieza le estorba, y cómo te la sacas de encima con un cambio? Juegan las blancas; el rival acaba de jugar …Rh4.",
+              "comentario": "46.Tf4 e5 47.Txg4+ Rxg4 48.g8=D+. En la línea se cambian las torres. Todo gira en torno a una clavada: la pieza clavada no puede defender. Después del cambio, el peón avanzado pesa más que cualquier pieza: ya no hay quién lo detenga a tiempo. (Ejercicio 3MyjL de la base abierta de Lichess (CC0), rating 1298. Stockfish 16 a profundidad 18: Tf4 es la mejor (+4,8) y la segunda queda en -6,0.)",
+              "linea": [
+                "Rf4",
+                "e5",
+                "Rxg4+",
+                "Kxg4",
+                "g8=Q+"
+              ]
+            }
+          ]
+        },
+        {
+          "titulo": "Transformar una ventaja en otra",
+          "resumen": "Una ventaja no se cobra siempre igual. A veces hay que cambiarla por otra más fácil de ganar.",
+          "parrafos": [
+            "Las ventajas cambian de forma. Una iniciativa se puede convertir en material, un material de más en un final ganado, una buena estructura en un peón pasado. Cada cambio de piezas es una oportunidad de transformar lo que tienes en algo más fácil de cobrar.",
+            "La pregunta útil es: ¿qué ventaja tengo y cuál me resultaría más simple de ganar? Si tienes la iniciativa pero el rival amenaza con consolidarse, quizá convenga cambiarla por un peón seguro. Si tienes un peón de más pero mucha presión rival, quizá convenga devolver algo para cambiar las piezas peligrosas y quedarte con un final limpio.",
+            "Los jugadores fuertes no se aferran a la forma de su ventaja: la transforman cuando hace falta, y casi siempre lo hacen con un cambio."
+          ],
+          "practica": "Revisa una partida en la que tenías ventaja y no ganaste. Busca el momento en que podías transformarla en un final simple con un cambio. ¿Qué te impidió hacerlo?",
+          "tema": "queenEndgame",
+          "exige": "a-peones",
+          "pregunta": "La ventaja se puede cobrar de una forma más simple: con un cambio que deja un final de peones.",
+          "enlace": "La ventaja con damas se convierte en un final de peones sin discusión: la misma ventaja, mucho más fácil de ganar.",
+          "diagramas": [
+            {
+              "id": "CC-16",
+              "fen": "2k5/p1p5/2P4p/5Kp1/1P2Q3/2Pqp3/P5PP/8 b - - 1 34",
+              "turno": "b",
+              "resultado": "0-1",
+              "pregunta": "La ventaja se puede cobrar de una forma más simple: con un cambio que deja un final de peones. Juegan las negras; el rival acaba de jugar De4.",
+              "comentario": "34…Dxe4+ 35.Rxe4 e2. En la línea se cambian las damas, y queda un final de peones. El peón avanzado decide: hay que empujarlo o aprovecharlo a tiempo. La ventaja con damas se convierte en un final de peones sin discusión: la misma ventaja, mucho más fácil de ganar. (Ejercicio 2IfUl de la base abierta de Lichess (CC0), rating 1260. Stockfish 16 a profundidad 18: Dxe4+ es la mejor (+5,3) y la segunda queda en -3,8.)",
+              "linea": [
+                "Qxe4+",
+                "Kxe4",
+                "e2"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "n": 5,
+      "titulo": "Defenderse con los cambios",
+      "lecciones": [
+        {
+          "titulo": "Simplificar para aguantar",
+          "resumen": "El que se defiende quiere menos piezas en el tablero: cada cambio es una amenaza menos.",
+          "parrafos": [
+            "La regla del bando con ventaja tiene su espejo: el que se defiende busca cambios. Cada pieza rival que desaparece es una pieza menos que puede atacar, y cada cambio acerca la partida a un final donde muchas veces hay recursos de tablas que en el medio juego no existen.",
+            "Pero no cualquier cambio sirve. El defensor quiere cambiar las piezas que atacan, no las que defienden; quiere cambiar piezas, pero no siempre peones; y quiere llegar a finales que se puedan sostener, como los de alfiles de distinto color o los de torres con pocos peones. Simplificar hacia un final de peones perdido es simplificar hacia la derrota.",
+            "Defenderse bien es buscar la jugada que salva, no la que gana. Muchas veces es una sola, y casi nunca es la que uno quiere hacer."
+          ],
+          "practica": "En tu próxima partida difícil, antes de cada jugada, pregúntate qué pieza rival es la más peligrosa y si hay una forma de cambiarla. Después de la partida, revisa si lo lograste.",
+          "tema": "defensiveMove",
+          "exige": "cambio",
+          "pregunta": "Primero hay que parar lo que quiere el rival. Solo una jugada conserva la ventaja, y lleva a un cambio.",
+          "enlace": "Con el cambio se acaba lo que amenazaba el rival y la ventaja sigue en pie; cualquier otra jugada la deja escapar.",
+          "diagramas": [
+            {
+              "id": "CC-17",
+              "fen": "r3k2r/1pp1n1pp/p1p2p2/4p2Q/1b1qP3/1PNP4/PBP2PPP/R3R1K1 b kq - 2 12",
+              "turno": "b",
+              "resultado": "0-1",
+              "pregunta": "Primero hay que parar lo que quiere el rival. Solo una jugada conserva la ventaja, y lleva a un cambio. Juegan las negras; el rival acaba de jugar Dh5+.",
+              "comentario": "12…g6 13.Dh6 Axc3 14.Axc3 Dxc3. En la línea se cambian una pieza menor por otra. Es una jugada defensiva precisa: la única que sostiene la posición. Con el cambio se acaba lo que amenazaba el rival y la ventaja sigue en pie; cualquier otra jugada la deja escapar. (Ejercicio 35DZy de la base abierta de Lichess (CC0), rating 1554. Stockfish 16 a profundidad 18: g6 es la mejor (+3,8) y la segunda queda en +0,2.)",
+              "linea": [
+                "g6",
+                "Qh6",
+                "Bxc3",
+                "Bxc3",
+                "Qxc3"
+              ]
+            }
+          ],
+          "gana": true
+        },
+        {
+          "titulo": "Cambiar la pieza que ataca",
+          "resumen": "En un ataque, casi siempre hay una pieza que hace el trabajo. Si te la puedes cambiar, el ataque se apaga.",
+          "parrafos": [
+            "Un ataque contra el rey rara vez lo hacen todas las piezas por igual. Suele haber una que es la clave: la dama que amenaza mate, el alfil que apunta al enroque, el caballo instalado cerca del rey. Si esa pieza desaparece, las demás no alcanzan.",
+            "Defenderse cambiando esa pieza es más eficaz que tapar amenazas una por una. Busca con qué pieza tuya puedes ponerte enfrente de ella, aunque tengas que dar algo de calidad o un peón. Un ataque sin su pieza clave es un ataque que ya no asusta.",
+            "Del lado del atacante, la lección es la contraria: tu pieza clave no se cambia. Si el rival te la ofrece, busca una casilla donde siga atacando."
+          ],
+          "practica": "En los ejercicios de defensa, señala primero la pieza rival más peligrosa. Si la jugada que salva no la cambia, explica qué hace en su lugar.",
+          "tema": "defensiveMove",
+          "exige": "cambio-pesada",
+          "pregunta": "Primero hay que parar lo que quiere el rival. Solo una jugada conserva la ventaja, y en su línea se cambian piezas pesadas.",
+          "enlace": "Se cambia una pieza pesada, se apaga el contrajuego y la ventaja queda intacta.",
+          "diagramas": [
+            {
+              "id": "CC-18",
+              "fen": "5R2/8/p1p2kp1/3p4/3P1r2/P1P2p2/BP6/2K5 b - - 3 39",
+              "turno": "b",
+              "resultado": "0-1",
+              "pregunta": "Primero hay que parar lo que quiere el rival. Solo una jugada conserva la ventaja, y en su línea se cambian piezas pesadas. Juegan las negras; el rival acaba de jugar Tf8+.",
+              "comentario": "39…Rg5 40.Txf4 Rxf4 41.Rd2 Rg3. En la línea se cambian las torres. Es una jugada defensiva precisa: la única que sostiene la posición. Se cambia una pieza pesada, se apaga el contrajuego y la ventaja queda intacta. (Ejercicio 0Twlj de la base abierta de Lichess (CC0), rating 1307. Stockfish 16 a profundidad 18: Rg5 es la mejor (+3,3) y la segunda queda en -6,6.)",
+              "linea": [
+                "Kg5",
+                "Rxf4",
+                "Kxf4",
+                "Kd2",
+                "Kg3"
+              ]
+            }
+          ],
+          "gana": true
+        },
+        {
+          "titulo": "Defender sin cambiar",
+          "resumen": "No siempre el cambio salva. A veces la única defensa es una jugada que deja todo como está.",
+          "parrafos": [
+            "La regla de que el defensor busca cambios tiene sus trampas. Hay cambios que abren una columna para las torres rivales, que dejan un peón débil o que llevan a un final perdido. En esas posiciones la defensa correcta no simplifica: refuerza, tapa o espera.",
+            "La señal para desconfiar de un cambio defensivo es que te alivia ahora pero te deja peor después. Mira la posición que queda: si tus peones son más débiles, si el rey rival entra o si las piezas que quedan del rival son mejores que las tuyas, el cambio no era la salvación.",
+            "Las jugadas defensivas que no cambian nada son de las más difíciles de encontrar, porque no se ven como jugadas. Pero muchas veces son las únicas."
+          ],
+          "practica": "Busca en tus partidas un cambio que hiciste para defenderte y que terminó mal. Analiza qué otra jugada tenías.",
+          "tema": "defensiveMove",
+          "exige": "sin-cambio",
+          "pregunta": "Podías cambiar una pieza por otra igual, pero ese no es el camino: solo una jugada conserva la ventaja.",
+          "enlace": "El cambio parecía aliviar, pero la jugada buena es otra: defenderse no siempre es simplificar.",
+          "diagramas": [
+            {
+              "id": "CC-19",
+              "fen": "5k2/7P/p3N1R1/5p2/2b2P2/3p2P1/7r/3K4 b - - 1 47",
+              "turno": "b",
+              "resultado": "0-1",
+              "pregunta": "Podías cambiar una pieza por otra igual, pero ese no es el camino: solo una jugada conserva la ventaja. Juegan las negras; el rival acaba de jugar Ce6+.",
+              "comentario": "47…Rf7 48.h8=C+ Txh8. Es una jugada defensiva precisa: la única que sostiene la posición. El cambio parecía aliviar, pero la jugada buena es otra: defenderse no siempre es simplificar. (Ejercicio 1hdjX de la base abierta de Lichess (CC0), rating 1955. Stockfish 16 a profundidad 18: Rf7 es la mejor (+5,4) y la segunda queda en +0,1.)",
+              "linea": [
+                "Kf7",
+                "h8=N+",
+                "Rxh8"
+              ]
+            }
+          ],
+          "gana": true
+        },
+        {
+          "titulo": "Una pieza encerrada vale menos",
+          "resumen": "El valor de una pieza lo da lo que puede hacer. Una pieza sin casillas vale lo que el rival quiera pagar por ella.",
+          "parrafos": [
+            "Una torre vale cinco puntos cuando tiene columnas; encerrada detrás de sus peones vale mucho menos. Un alfil vale tres cuando tiene diagonales; atrapado en una esquina, puede perderse por un peón. El valor en puntos es un promedio: el valor real depende de las casillas que tiene la pieza.",
+            "Esto pesa en cada decisión de cambio. Si una pieza tuya quedó encerrada, cambiarla por una activa del rival es un buen negocio aunque el papel diga que perdiste material. Si una pieza rival quedó atrapada, no la cambies: es mejor ganarla, o dejarla ahí mirando cómo juegan las demás.",
+            "Y antes de llevar una pieza a una casilla lejana, pregúntate si tiene por dónde volver. Una pieza sin salida es una pieza que el rival te puede cobrar cuando quiera."
+          ],
+          "practica": "En tus partidas, marca las piezas que en algún momento se quedaron con una o dos casillas. ¿Qué pasó con ellas después?",
+          "tema": "trappedPiece",
+          "pregunta": "Hay una pieza con muy pocas casillas. ¿Cómo lo aprovechas?",
+          "enlace": "La pieza vale lo que puede hacer: sin casillas, no vale sus puntos.",
+          "diagramas": [
+            {
+              "id": "CC-20",
+              "fen": "r4rk1/pp2npb1/3p1qp1/4pP1p/4P3/2PB2QP/PP4P1/RNB3K1 w - - 4 17",
+              "turno": "w",
+              "resultado": "1-0",
+              "pregunta": "Hay una pieza con muy pocas casillas. ¿Cómo lo aprovechas? Juegan las blancas; el rival acaba de jugar …Ce7.",
+              "comentario": "17.Ag5 Dxg5 18.Dxg5. Una pieza rival queda atrapada, sin casilla adonde ir. La pieza vale lo que puede hacer: sin casillas, no vale sus puntos. (Ejercicio 0aIwq de la base abierta de Lichess (CC0), rating 1493. Stockfish 16 a profundidad 18: Ag5 es la mejor (+5,2) y la segunda queda en -1,7.)",
+              "linea": [
+                "Bg5",
+                "Qxg5",
+                "Qxg5"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "n": 6,
+      "titulo": "Los cambios paradójicos",
+      "lecciones": [
+        {
+          "titulo": "Cambiar tu mejor pieza",
+          "resumen": "Parece absurdo, pero a veces la pieza que más trabaja es la que conviene cambiar, porque se lleva a la mejor del rival.",
+          "parrafos": [
+            "La regla dice que no se cambia la pieza buena por la mala del rival. Pero hay posiciones en las que tu mejor pieza puede cambiarse por la mejor del rival, y lo que queda en el tablero te favorece. Lo que importa no es la pieza que entregas, sino la diferencia entre lo que queda de cada lado.",
+            "El caso típico: tienes un caballo excelente y el rival un alfil que defiende todo. Si cambias el caballo por ese alfil, pierdes tu mejor pieza, pero el rival pierde a su único defensor y tus otras piezas entran. El cambio paradójico se reconoce porque lo que queda después es mejor para ti que lo que había antes, aunque cada pieza por separado diga lo contrario.",
+            "Para verlo hay que dejar de pensar pieza por pieza y pensar en la posición entera después del cambio."
+          ],
+          "practica": "Cuando analices tus partidas con motor, presta atención a los cambios que el motor sugiere y que tú no habrías hecho. Pregúntate qué ve: casi siempre es lo que queda después.",
+          "tema": "capturingDefender",
+          "exige": "cambio",
+          "pregunta": "El cambio que gana se lleva una pieza que el rival necesitaba.",
+          "enlace": "Lo que cuenta no es la pieza que se entrega, sino lo que queda después: el rival se quedó sin la pieza que sostenía su posición.",
+          "diagramas": [
+            {
+              "id": "CC-21",
+              "fen": "2kr3r/p1p1n1pp/3b2q1/4Bb2/3P1Q2/2N5/PPP3PP/4RRK1 w - - 7 18",
+              "turno": "w",
+              "resultado": "1-0",
+              "pregunta": "El cambio que gana se lleva una pieza que el rival necesitaba. Juegan las blancas; el rival acaba de jugar …Dg6.",
+              "comentario": "18.Axd6 Dxd6 19.Dxd6 Txd6 20.Txe7. En la línea se cambian una pieza menor por otra y las damas. Se captura al defensor y lo que defendía queda colgado. Lo que cuenta no es la pieza que se entrega, sino lo que queda después: el rival se quedó sin la pieza que sostenía su posición. (Ejercicio 1S1al de la base abierta de Lichess (CC0), rating 1634. Stockfish 16 a profundidad 18: Axd6 es la mejor (+3,0) y la segunda queda en -0,7.)",
+              "linea": [
+                "Bxd6",
+                "Qxd6",
+                "Qxd6",
+                "Rxd6",
+                "Rxe7"
+              ]
+            }
+          ]
+        },
+        {
+          "titulo": "Con ventaja, a veces no se cambia",
+          "resumen": "La regla de cambiar con ventaja tiene una excepción importante: cuando el cambio le quita al rival sus problemas.",
+          "parrafos": [
+            "Tienes ventaja y el rival te ofrece un cambio. La regla dice que lo aceptes. Pero si el rival está apretado, con piezas pasivas y sin jugadas útiles, cada cambio le da aire. Su problema era la falta de espacio para tantas piezas; si se van piezas, el problema desaparece.",
+            "Lo mismo pasa cuando tu ventaja es dinámica: un ataque, una iniciativa, un desarrollo mejor. Esas ventajas viven de las piezas. Si las cambias, el ataque se apaga y la iniciativa se evapora antes de convertirse en algo concreto.",
+            "La pregunta para decidir es siempre la misma: ¿el cambio le quita un problema al rival o se lo agrava? Si se lo quita, busca otra jugada, aunque la regla diga lo contrario."
+          ],
+          "practica": "Busca una partida tuya en la que el rival estaba apretado y se liberó con cambios. ¿En qué momento pudiste evitarlos?",
+          "tema": "quietMove",
+          "exige": "sin-cambio",
+          "pregunta": "Podías cambiar una pieza por otra igual. La jugada que gana mantiene la tensión.",
+          "enlace": "El cambio aliviaba al rival; la jugada tranquila mantiene sus problemas y decide.",
+          "diagramas": [
+            {
+              "id": "CC-22",
+              "fen": "1r3rk1/5ppp/1RQ5/4p3/8/2P1B3/1P2qPPP/2K4R b - - 4 22",
+              "turno": "b",
+              "resultado": "0-1",
+              "pregunta": "Podías cambiar una pieza por otra igual. La jugada que gana mantiene la tensión. Juegan las negras; el rival acaba de jugar Tb6.",
+              "comentario": "22…Ta8 23.De4 Ta1+ 24.Db1 Txb1+. La clave es una jugada tranquila: sin jaque ni captura, pero sin defensa. El cambio aliviaba al rival; la jugada tranquila mantiene sus problemas y decide. (Ejercicio 0ZRCk de la base abierta de Lichess (CC0), rating 1853. Stockfish 16 a profundidad 18: Ta8 es la mejor (+3,6) y la segunda queda en -4,2.)",
+              "linea": [
+                "Ra8",
+                "Qe4",
+                "Ra1+",
+                "Qb1",
+                "Rxb1+"
+              ]
+            }
+          ]
+        },
+        {
+          "titulo": "Devolver material para cambiar",
+          "resumen": "A veces conviene devolver parte de la ventaja para cambiar las piezas que todavía podían complicar.",
+          "parrafos": [
+            "Tener más material no sirve de nada si el rival tiene un ataque o una amenaza que no puedes parar. En esos casos, devolver un peón o la calidad para cambiar las piezas peligrosas puede ser la forma más segura de ganar: tienes un poco menos, pero ya no hay nada que temer.",
+            "El razonamiento es frío: ¿con cuánto material de más gano el final que queda? Si la respuesta es «con menos de lo que tengo ahora», no hace falta conservar todo. Lo importante es que el final que queda se gane sin riesgo.",
+            "Los jugadores que no saben devolver material sufren con ventaja: defienden cada peón como si fuera el último y terminan dejando que el rival cree complicaciones. Saber devolver es una forma de saber cambiar."
+          ],
+          "practica": "En una partida en la que tenías material de más y sufriste, busca si había un momento en que devolver algo te llevaba a un final simple y ganado.",
+          "tema": "advancedPawn",
+          "exige": "cambio-pesada",
+          "pregunta": "La línea que gana pasa por un cambio de piezas pesadas. ¿Cómo lo consigues?",
+          "enlace": "Con las piezas pesadas cambiadas, el peón avanzado decide: lo que queda se gana.",
+          "diagramas": [
+            {
+              "id": "CC-23",
+              "fen": "8/8/3R3p/p5p1/3R2P1/8/3rp1KP/3k4 b - - 7 59",
+              "turno": "b",
+              "resultado": "0-1",
+              "pregunta": "La línea que gana pasa por un cambio de piezas pesadas. ¿Cómo lo consigues? Juegan las negras; el rival acaba de jugar Ted4.",
+              "comentario": "59…e1=D+ 60.Txd2+ Dxd2+ 61.Txd2+ Rxd2. En la línea se cambian las torres, y queda un final de peones. Es un ataque a la descubierta: al moverse una pieza, se destapa otra. Con las piezas pesadas cambiadas, el peón avanzado decide: lo que queda se gana. (Ejercicio 1K1Fv de la base abierta de Lichess (CC0), rating 1318. Stockfish 16 a profundidad 18: e1=D+ es la mejor (+6,9) y la segunda queda en -0,8.)",
+              "linea": [
+                "e1=Q+",
+                "Rxd2+",
+                "Qxd2+",
+                "Rxd2+",
+                "Kxd2"
+              ]
+            }
+          ]
+        },
+        {
+          "titulo": "Antes de cambiar, cinco preguntas",
+          "resumen": "Un método para no cambiar por costumbre: cinco preguntas que se hacen en treinta segundos.",
+          "parrafos": [
+            "Todo lo de este curso se resume en una idea: el cambio es una decisión, no un trámite. Para que deje de ser un trámite, sirve tener una lista corta de preguntas que se hacen antes de cada cambio importante. No hace falta hacerlas en cada jugada; basta con los cambios que transforman la posición: damas, torres, la última pieza menor.",
+            "Las cinco preguntas son estas. Uno: ¿qué hacía mi pieza y qué hacía la del rival? Dos: ¿quién queda con las piezas más activas? Tres: ¿qué pasa con la estructura de peones y con los reyes? Cuatro: ¿qué final queda si se siguen cambiando piezas, y quién lo gana? Cinco: ¿el cambio le quita un problema al rival o me quita uno a mí?",
+            "Si las cinco respuestas te favorecen, cambia sin miedo. Si alguna no, piénsalo dos veces. Con el tiempo, las preguntas se vuelven automáticas, y el cambio de piezas pasa de ser una costumbre a ser un arma."
+          ],
+          "practica": "Copia las cinco preguntas en una tarjeta y tenla a mano en tus próximas diez partidas lentas. Después de cada partida, revisa los cambios que hiciste y anota qué pregunta te faltó hacer. Llévale la tarjeta a tu profesor: con ella se ve qué tipo de cambio te cuesta más."
+        }
+      ]
+    }
+  ]
+}

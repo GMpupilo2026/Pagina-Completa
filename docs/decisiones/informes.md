@@ -804,6 +804,9 @@ Detalles que importan:
   título («rompe-el-estancamiento» → «Rompe el estancamiento»): el correo lo
   nombra así, y el verificador mira el nombre que el correo muestra para cada
   curso del catálogo (ver «Dónde quedó dado de alta» en cursos-y-material.md).
+  Si el slug NO da el título («cambio-o-no-cambio» daría «Cambio o no cambio»,
+  sin los signos de pregunta), sí va en la tabla, y hay que volver a desplegar
+  la función.
 - Sin `secciones` (una base de antes), el correo cae a los conteos de siempre.
 - **«Preparación de rivales»** (`preparacion`) cuenta el tiempo en
   `plan-rival.html` y las líneas del plan que el alumno jugó de memoria (ver

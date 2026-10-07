@@ -23,8 +23,15 @@
     "nombre": "Formación docente"
    }
   ],
-  "total": 508,
+  "total": 557,
   "material": [
+   {
+    "ruta": "material/cambio-o-no-cambio/cambio-o-no-cambio.pdf",
+    "titulo": "¿Cambio o no cambio? — el cambio de piezas como decisión",
+    "tipo": "otro",
+    "kb": 1385,
+    "libro": "¿Cambio o no cambio?"
+   },
    {
     "ruta": "material/diagnostico-de-nivel/diagnostico-de-nivel.pdf",
     "titulo": "Diagnóstico de nivel — la prueba",
@@ -3991,6 +3998,446 @@
     "otros": []
    },
    {
+    "slug": "cambio-o-no-cambio",
+    "titulo": "¿Cambio o no cambio?",
+    "nivel": "avanzado",
+    "lecciones": [
+     {
+      "numero": 1,
+      "titulo": "Un cambio transforma la posición",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/cambio-o-no-cambio/01-un-cambio-transforma-la-posicion-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 193
+       },
+       {
+        "ruta": "cursos/recursos/cambio-o-no-cambio/01-un-cambio-transforma-la-posicion-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 6
+       }
+      ]
+     },
+     {
+      "numero": 2,
+      "titulo": "Con material de más, cambia piezas",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/cambio-o-no-cambio/02-con-material-de-mas-cambia-piezas-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 190
+       },
+       {
+        "ruta": "cursos/recursos/cambio-o-no-cambio/02-con-material-de-mas-cambia-piezas-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 6
+       }
+      ]
+     },
+     {
+      "numero": 3,
+      "titulo": "Cambiar al defensor",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/cambio-o-no-cambio/03-cambiar-al-defensor-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 193
+       },
+       {
+        "ruta": "cursos/recursos/cambio-o-no-cambio/03-cambiar-al-defensor-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 6
+       }
+      ]
+     },
+     {
+      "numero": 4,
+      "titulo": "La jugada que obliga al cambio",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/cambio-o-no-cambio/04-la-jugada-que-obliga-al-cambio-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 191
+       },
+       {
+        "ruta": "cursos/recursos/cambio-o-no-cambio/04-la-jugada-que-obliga-al-cambio-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 5
+       }
+      ]
+     },
+     {
+      "numero": 5,
+      "titulo": "Alfil contra caballo: quién manda",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/cambio-o-no-cambio/05-alfil-contra-caballo-quien-manda-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 189
+       },
+       {
+        "ruta": "cursos/recursos/cambio-o-no-cambio/05-alfil-contra-caballo-quien-manda-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 6
+       }
+      ]
+     },
+     {
+      "numero": 6,
+      "titulo": "El caballo que se cambia a tiempo",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/cambio-o-no-cambio/06-el-caballo-que-se-cambia-a-tiempo-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 187
+       },
+       {
+        "ruta": "cursos/recursos/cambio-o-no-cambio/06-el-caballo-que-se-cambia-a-tiempo-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 5
+       }
+      ]
+     },
+     {
+      "numero": 7,
+      "titulo": "El alfil malo: cambiarlo o usarlo",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/cambio-o-no-cambio/07-el-alfil-malo-cambiarlo-o-usarlo-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 188
+       },
+       {
+        "ruta": "cursos/recursos/cambio-o-no-cambio/07-el-alfil-malo-cambiarlo-o-usarlo-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 5
+       }
+      ]
+     },
+     {
+      "numero": 8,
+      "titulo": "Alfiles de distinto color",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/cambio-o-no-cambio/08-alfiles-de-distinto-color-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 187
+       },
+       {
+        "ruta": "cursos/recursos/cambio-o-no-cambio/08-alfiles-de-distinto-color-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 5
+       }
+      ]
+     },
+     {
+      "numero": 9,
+      "titulo": "Cambiar las damas",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/cambio-o-no-cambio/09-cambiar-las-damas-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 189
+       },
+       {
+        "ruta": "cursos/recursos/cambio-o-no-cambio/09-cambiar-las-damas-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 5
+       }
+      ]
+     },
+     {
+      "numero": 10,
+      "titulo": "La dama que no se cambia",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/cambio-o-no-cambio/10-la-dama-que-no-se-cambia-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 190
+       },
+       {
+        "ruta": "cursos/recursos/cambio-o-no-cambio/10-la-dama-que-no-se-cambia-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 5
+       }
+      ]
+     },
+     {
+      "numero": 11,
+      "titulo": "Una torre por otra",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/cambio-o-no-cambio/11-una-torre-por-otra-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 189
+       },
+       {
+        "ruta": "cursos/recursos/cambio-o-no-cambio/11-una-torre-por-otra-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 5
+       }
+      ]
+     },
+     {
+      "numero": 12,
+      "titulo": "La torre activa no se cambia",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/cambio-o-no-cambio/12-la-torre-activa-no-se-cambia-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 188
+       },
+       {
+        "ruta": "cursos/recursos/cambio-o-no-cambio/12-la-torre-activa-no-se-cambia-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 5
+       }
+      ]
+     },
+     {
+      "numero": 13,
+      "titulo": "El final de peones: cuenta antes de cambiar",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/cambio-o-no-cambio/13-el-final-de-peones-cuenta-antes-de-cambiar-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 185
+       },
+       {
+        "ruta": "cursos/recursos/cambio-o-no-cambio/13-el-final-de-peones-cuenta-antes-de-cambiar-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 5
+       }
+      ]
+     },
+     {
+      "numero": 14,
+      "titulo": "Cambiar para que el rey entre",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/cambio-o-no-cambio/14-cambiar-para-que-el-rey-entre-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 188
+       },
+       {
+        "ruta": "cursos/recursos/cambio-o-no-cambio/14-cambiar-para-que-el-rey-entre-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 5
+       }
+      ]
+     },
+     {
+      "numero": 15,
+      "titulo": "Cambiar para coronar",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/cambio-o-no-cambio/15-cambiar-para-coronar-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 189
+       },
+       {
+        "ruta": "cursos/recursos/cambio-o-no-cambio/15-cambiar-para-coronar-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 5
+       }
+      ]
+     },
+     {
+      "numero": 16,
+      "titulo": "Transformar una ventaja en otra",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/cambio-o-no-cambio/16-transformar-una-ventaja-en-otra-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 189
+       },
+       {
+        "ruta": "cursos/recursos/cambio-o-no-cambio/16-transformar-una-ventaja-en-otra-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 5
+       }
+      ]
+     },
+     {
+      "numero": 17,
+      "titulo": "Simplificar para aguantar",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/cambio-o-no-cambio/17-simplificar-para-aguantar-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 191
+       },
+       {
+        "ruta": "cursos/recursos/cambio-o-no-cambio/17-simplificar-para-aguantar-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 5
+       }
+      ]
+     },
+     {
+      "numero": 18,
+      "titulo": "Cambiar la pieza que ataca",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/cambio-o-no-cambio/18-cambiar-la-pieza-que-ataca-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 189
+       },
+       {
+        "ruta": "cursos/recursos/cambio-o-no-cambio/18-cambiar-la-pieza-que-ataca-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 5
+       }
+      ]
+     },
+     {
+      "numero": 19,
+      "titulo": "Defender sin cambiar",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/cambio-o-no-cambio/19-defender-sin-cambiar-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 189
+       },
+       {
+        "ruta": "cursos/recursos/cambio-o-no-cambio/19-defender-sin-cambiar-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 5
+       }
+      ]
+     },
+     {
+      "numero": 20,
+      "titulo": "Una pieza encerrada vale menos",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/cambio-o-no-cambio/20-una-pieza-encerrada-vale-menos-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 192
+       },
+       {
+        "ruta": "cursos/recursos/cambio-o-no-cambio/20-una-pieza-encerrada-vale-menos-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 5
+       }
+      ]
+     },
+     {
+      "numero": 21,
+      "titulo": "Cambiar tu mejor pieza",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/cambio-o-no-cambio/21-cambiar-tu-mejor-pieza-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 189
+       },
+       {
+        "ruta": "cursos/recursos/cambio-o-no-cambio/21-cambiar-tu-mejor-pieza-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 5
+       }
+      ]
+     },
+     {
+      "numero": 22,
+      "titulo": "Con ventaja, a veces no se cambia",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/cambio-o-no-cambio/22-con-ventaja-a-veces-no-se-cambia-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 190
+       },
+       {
+        "ruta": "cursos/recursos/cambio-o-no-cambio/22-con-ventaja-a-veces-no-se-cambia-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 5
+       }
+      ]
+     },
+     {
+      "numero": 23,
+      "titulo": "Devolver material para cambiar",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/cambio-o-no-cambio/23-devolver-material-para-cambiar-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 188
+       },
+       {
+        "ruta": "cursos/recursos/cambio-o-no-cambio/23-devolver-material-para-cambiar-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 5
+       }
+      ]
+     },
+     {
+      "numero": 24,
+      "titulo": "Antes de cambiar, cinco preguntas",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/cambio-o-no-cambio/24-antes-de-cambiar-cinco-preguntas-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 187
+       },
+       {
+        "ruta": "cursos/recursos/cambio-o-no-cambio/24-antes-de-cambiar-cinco-preguntas-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 5
+       }
+      ]
+     }
+    ],
+    "otros": []
+   },
+   {
     "slug": "preparacion-para-torneos",
     "titulo": "Preparación para Torneos",
     "nivel": "competicion",
@@ -4746,7 +5193,7 @@
     "nombre": "Formación docente"
    }
   ],
-  "total": 239,
+  "total": 263,
   "material": [],
   "cursos": [
    {
@@ -7194,6 +7641,302 @@
     "otros": []
    },
    {
+    "slug": "cambio-o-no-cambio",
+    "titulo": "¿Cambio o no cambio?",
+    "nivel": "avanzado",
+    "lecciones": [
+     {
+      "numero": 1,
+      "titulo": "Un cambio transforma la posición",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/cambio-o-no-cambio/01-un-cambio-transforma-la-posicion.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 2,
+      "titulo": "Con material de más, cambia piezas",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/cambio-o-no-cambio/02-con-material-de-mas-cambia-piezas.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 3,
+      "titulo": "Cambiar al defensor",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/cambio-o-no-cambio/03-cambiar-al-defensor.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 4,
+      "titulo": "La jugada que obliga al cambio",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/cambio-o-no-cambio/04-la-jugada-que-obliga-al-cambio.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 5,
+      "titulo": "Alfil contra caballo: quién manda",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/cambio-o-no-cambio/05-alfil-contra-caballo-quien-manda.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 6,
+      "titulo": "El caballo que se cambia a tiempo",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/cambio-o-no-cambio/06-el-caballo-que-se-cambia-a-tiempo.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 7,
+      "titulo": "El alfil malo: cambiarlo o usarlo",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/cambio-o-no-cambio/07-el-alfil-malo-cambiarlo-o-usarlo.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 8,
+      "titulo": "Alfiles de distinto color",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/cambio-o-no-cambio/08-alfiles-de-distinto-color.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 9,
+      "titulo": "Cambiar las damas",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/cambio-o-no-cambio/09-cambiar-las-damas.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 10,
+      "titulo": "La dama que no se cambia",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/cambio-o-no-cambio/10-la-dama-que-no-se-cambia.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 11,
+      "titulo": "Una torre por otra",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/cambio-o-no-cambio/11-una-torre-por-otra.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 12,
+      "titulo": "La torre activa no se cambia",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/cambio-o-no-cambio/12-la-torre-activa-no-se-cambia.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 13,
+      "titulo": "El final de peones: cuenta antes de cambiar",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/cambio-o-no-cambio/13-el-final-de-peones-cuenta-antes-de-cambiar.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 14,
+      "titulo": "Cambiar para que el rey entre",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/cambio-o-no-cambio/14-cambiar-para-que-el-rey-entre.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 15,
+      "titulo": "Cambiar para coronar",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/cambio-o-no-cambio/15-cambiar-para-coronar.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 16,
+      "titulo": "Transformar una ventaja en otra",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/cambio-o-no-cambio/16-transformar-una-ventaja-en-otra.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 17,
+      "titulo": "Simplificar para aguantar",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/cambio-o-no-cambio/17-simplificar-para-aguantar.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 18,
+      "titulo": "Cambiar la pieza que ataca",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/cambio-o-no-cambio/18-cambiar-la-pieza-que-ataca.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 19,
+      "titulo": "Defender sin cambiar",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/cambio-o-no-cambio/19-defender-sin-cambiar.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 20,
+      "titulo": "Una pieza encerrada vale menos",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/cambio-o-no-cambio/20-una-pieza-encerrada-vale-menos.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 21,
+      "titulo": "Cambiar tu mejor pieza",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/cambio-o-no-cambio/21-cambiar-tu-mejor-pieza.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 22,
+      "titulo": "Con ventaja, a veces no se cambia",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/cambio-o-no-cambio/22-con-ventaja-a-veces-no-se-cambia.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 23,
+      "titulo": "Devolver material para cambiar",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/cambio-o-no-cambio/23-devolver-material-para-cambiar.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 24,
+      "titulo": "Antes de cambiar, cinco preguntas",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/cambio-o-no-cambio/24-antes-de-cambiar-cinco-preguntas.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     }
+    ],
+    "otros": []
+   },
+   {
     "slug": "preparacion-para-torneos",
     "titulo": "Preparación para Torneos",
     "nivel": "competicion",
@@ -7747,8 +8490,15 @@
     "nombre": "Formación docente"
    }
   ],
-  "total": 231,
+  "total": 256,
   "material": [
+   {
+    "ruta": "material/cambio-o-no-cambio/cambio-o-no-cambio-accesible.html",
+    "titulo": "¿Cambio o no cambio?",
+    "tipo": "accesible",
+    "kb": 121,
+    "libro": "¿Cambio o no cambio?"
+   },
    {
     "ruta": "material/fichas-de-estudio/fichas-de-estudio-accesible.html",
     "titulo": "Fichas de estudio",
@@ -10329,6 +11079,302 @@
         "titulo": "Material accesible",
         "tipo": "accesible",
         "kb": 10
+       }
+      ]
+     }
+    ],
+    "otros": []
+   },
+   {
+    "slug": "cambio-o-no-cambio",
+    "titulo": "¿Cambio o no cambio?",
+    "nivel": "avanzado",
+    "lecciones": [
+     {
+      "numero": 1,
+      "titulo": "Un cambio transforma la posición",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/cambio-o-no-cambio/01-un-cambio-transforma-la-posicion-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 13
+       }
+      ]
+     },
+     {
+      "numero": 2,
+      "titulo": "Con material de más, cambia piezas",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/cambio-o-no-cambio/02-con-material-de-mas-cambia-piezas-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 13
+       }
+      ]
+     },
+     {
+      "numero": 3,
+      "titulo": "Cambiar al defensor",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/cambio-o-no-cambio/03-cambiar-al-defensor-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 13
+       }
+      ]
+     },
+     {
+      "numero": 4,
+      "titulo": "La jugada que obliga al cambio",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/cambio-o-no-cambio/04-la-jugada-que-obliga-al-cambio-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 13
+       }
+      ]
+     },
+     {
+      "numero": 5,
+      "titulo": "Alfil contra caballo: quién manda",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/cambio-o-no-cambio/05-alfil-contra-caballo-quien-manda-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 12
+       }
+      ]
+     },
+     {
+      "numero": 6,
+      "titulo": "El caballo que se cambia a tiempo",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/cambio-o-no-cambio/06-el-caballo-que-se-cambia-a-tiempo-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 12
+       }
+      ]
+     },
+     {
+      "numero": 7,
+      "titulo": "El alfil malo: cambiarlo o usarlo",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/cambio-o-no-cambio/07-el-alfil-malo-cambiarlo-o-usarlo-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 12
+       }
+      ]
+     },
+     {
+      "numero": 8,
+      "titulo": "Alfiles de distinto color",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/cambio-o-no-cambio/08-alfiles-de-distinto-color-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 12
+       }
+      ]
+     },
+     {
+      "numero": 9,
+      "titulo": "Cambiar las damas",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/cambio-o-no-cambio/09-cambiar-las-damas-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 13
+       }
+      ]
+     },
+     {
+      "numero": 10,
+      "titulo": "La dama que no se cambia",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/cambio-o-no-cambio/10-la-dama-que-no-se-cambia-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 13
+       }
+      ]
+     },
+     {
+      "numero": 11,
+      "titulo": "Una torre por otra",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/cambio-o-no-cambio/11-una-torre-por-otra-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 12
+       }
+      ]
+     },
+     {
+      "numero": 12,
+      "titulo": "La torre activa no se cambia",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/cambio-o-no-cambio/12-la-torre-activa-no-se-cambia-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 12
+       }
+      ]
+     },
+     {
+      "numero": 13,
+      "titulo": "El final de peones: cuenta antes de cambiar",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/cambio-o-no-cambio/13-el-final-de-peones-cuenta-antes-de-cambiar-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 12
+       }
+      ]
+     },
+     {
+      "numero": 14,
+      "titulo": "Cambiar para que el rey entre",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/cambio-o-no-cambio/14-cambiar-para-que-el-rey-entre-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 12
+       }
+      ]
+     },
+     {
+      "numero": 15,
+      "titulo": "Cambiar para coronar",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/cambio-o-no-cambio/15-cambiar-para-coronar-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 13
+       }
+      ]
+     },
+     {
+      "numero": 16,
+      "titulo": "Transformar una ventaja en otra",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/cambio-o-no-cambio/16-transformar-una-ventaja-en-otra-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 13
+       }
+      ]
+     },
+     {
+      "numero": 17,
+      "titulo": "Simplificar para aguantar",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/cambio-o-no-cambio/17-simplificar-para-aguantar-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 12
+       }
+      ]
+     },
+     {
+      "numero": 18,
+      "titulo": "Cambiar la pieza que ataca",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/cambio-o-no-cambio/18-cambiar-la-pieza-que-ataca-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 12
+       }
+      ]
+     },
+     {
+      "numero": 19,
+      "titulo": "Defender sin cambiar",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/cambio-o-no-cambio/19-defender-sin-cambiar-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 12
+       }
+      ]
+     },
+     {
+      "numero": 20,
+      "titulo": "Una pieza encerrada vale menos",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/cambio-o-no-cambio/20-una-pieza-encerrada-vale-menos-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 13
+       }
+      ]
+     },
+     {
+      "numero": 21,
+      "titulo": "Cambiar tu mejor pieza",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/cambio-o-no-cambio/21-cambiar-tu-mejor-pieza-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 11
+       }
+      ]
+     },
+     {
+      "numero": 22,
+      "titulo": "Con ventaja, a veces no se cambia",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/cambio-o-no-cambio/22-con-ventaja-a-veces-no-se-cambia-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 12
+       }
+      ]
+     },
+     {
+      "numero": 23,
+      "titulo": "Devolver material para cambiar",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/cambio-o-no-cambio/23-devolver-material-para-cambiar-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 13
+       }
+      ]
+     },
+     {
+      "numero": 24,
+      "titulo": "Antes de cambiar, cinco preguntas",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/cambio-o-no-cambio/24-antes-de-cambiar-cinco-preguntas-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 13
        }
       ]
      }

@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Una torre por otra — ¿Cambio o no cambio? — material de estudio</title>
+<meta name="robots" content="noindex">
+<meta name="author" content="Oscar Angulo Cubero">
+<meta name="description" content="Material de estudio en formato accesible de la lección 11 del curso ¿Cambio o no cambio?.">
+<style>
+  /* Sin imágenes y sin columnas a propósito: esta versión está hecha para
+     lectores de pantalla y para quien necesita agrandar mucho el texto. */
+  body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+         font-size: 1.15rem; line-height: 1.8; color: #102a43; background: #ffffff;
+         max-width: 42rem; margin: 0 auto; padding: 1.5rem 1rem 4rem; }
+  h1 { font-size: 1.7rem; line-height: 1.3; }
+  h2 { font-size: 1.3rem; margin-top: 2.5rem; border-bottom: 2px solid #102a43; padding-bottom: .3rem; }
+  h3 { font-size: 1.1rem; margin-top: 1.8rem; }
+  a { color: #8a4a00; }
+  dt { font-weight: 700; margin-top: 1rem; }
+  dd { margin: .3rem 0 0; }
+  .posicion { border: 2px solid #243b53; border-radius: .5rem; padding: 1rem; margin: 1rem 0; }
+  .respuesta { background: #f0f4f8; border-left: 4px solid #102a43; padding: .6rem .9rem; }
+  footer { margin-top: 3rem; border-top: 2px solid #102a43; padding-top: 1rem; font-size: .95rem; }
+  /* La vuelta a la plataforma. Este archivo se abre solo, en su propia
+     pestaña: sin estos enlaces no hay forma de regresar al curso salvo el
+     botón "atrás" del navegador, que con lector de pantalla no siempre está
+     a mano. Van arriba y abajo: el documento es largo y quien termina de
+     leerlo no tendría que subir de nuevo para salir. */
+  .volver { margin: 0 0 1.5rem; font-size: 1rem; }
+  footer .volver { margin: 1rem 0 0; }
+  .volver a { display: inline-block; padding: .2rem 0; }
+  @media (prefers-color-scheme: dark) {
+    body { background: #0a1f33; color: #f0f4f8; }
+    h2, footer { border-color: #f0b429; }
+    a { color: #f0b429; }
+    .posicion { border-color: #829ab1; }
+    .respuesta { background: #102a43; border-color: #f0b429; }
+  }
+</style>
+</head>
+<body>
+<nav class="volver" aria-label="Volver a la plataforma">
+  <a href="../../academia/cambio-o-no-cambio.html">← Volver al curso ¿Cambio o no cambio?</a>
+  ·
+  <a href="../../../clases.html">Panel de Academia</a>
+</nav>
+<header>
+  <p>¿Cambio o no cambio? · Lección 11</p>
+  <h1>Una torre por otra</h1>
+  <p>Material de estudio en formato accesible. Autor: Oscar Angulo Cubero, Ajedrez Integral.</p>
+  <p>Esta versión dice en palabras todo lo que en el cuadernillo en PDF está dibujado: cada
+     posición viene descrita pieza por pieza, así que no hace falta ver ninguna imagen.</p>
+</header>
+
+<h2>1. De qué trata esta lección</h2>
+
+<p>Las torres se cambian casi siempre en una columna abierta: dos torres enfrentadas, una de ellas captura y la otra recaptura. Quién termina dueño de la columna depende de cuántas piezas apoyan a cada lado, así que antes de entrar en esa pelea conviene contar: si tienes dos torres dobladas contra una, la columna será tuya después del cambio.</p>
+<p>En los finales, el cambio de torres tiene otro peso: muchas veces es el paso a un final de peones. Un final de torres con un peón de más puede ser tablas; el mismo peón de más sin torres puede ganar solo. Y al revés: si el final de peones que queda es perdido, la torre que te queda vale más que cualquier simplificación.</p>
+<p>La regla práctica es contar dos cosas antes de cambiar torres: quién se queda con la columna y quién gana el final que queda sin ellas.</p>
+
+
+<h2>2. Conceptos clave</h2>
+<dl>
+  <dt>Columnas abiertas y torres</dt>
+  <dd>Una columna sin peones es el camino de las torres. Una columna semiabierta —sin peones propios pero con uno rival— es por donde se ataca ese peón.</dd>
+  <dd><strong>El error de siempre:</strong> Poner la torre en la columna abierta y no hacer nada más. La columna es un medio: sirve para entrar a la séptima fila, para cambiar las torres rivales o para presionar un peón concreto.</dd>
+  <dd><strong>Para verlo:</strong> Dos torres dobladas en la séptima fila se llaman 'los cerdos en la séptima' y suelen ganar solas: comen peones y el rey rival no puede salir.</dd>
+  <dt>La estructura de peones</dt>
+  <dd>Los peones son los únicos que no vuelven atrás, así que su forma decide el carácter de la partida: dónde están las casillas fuertes, por dónde se ataca y qué final conviene.</dd>
+  <dd><strong>El error de siempre:</strong> Cambiar piezas sin mirar qué estructura queda. Los cambios llevan al final, y el final lo gana quien tenga la mejor estructura, no quien tuviera mejores piezas hace diez jugadas.</dd>
+  <dd><strong>Para verlo:</strong> Una cadena de peones apunta en una dirección: e4-d5 apunta al flanco de rey. La regla es atacar la base de la cadena, no la punta, porque la base es la que sostiene todo.</dd>
+  <dt>La torre detrás del peón pasado</dt>
+  <dd>Regla de Tarrasch: las torres van detrás de los peones pasados, del propio y del rival. Detrás del propio lo empujan y su radio de acción crece al avanzar; detrás del rival lo frenan sin quedarse encerradas.</dd>
+  <dd><strong>El error de siempre:</strong> Poner la torre delante del peón propio. Ahí lo tapa: el peón no puede avanzar sin que la torre se mueva, y la torre queda de portero en vez de jugar.</dd>
+  <dd><strong>Para verlo:</strong> Torre en a1 con peón propio en a4: a medida que el peón avanza, la torre sigue controlando toda la columna. Torre en a8 con el mismo peón: cada avance obliga a mover la torre.</dd>
+</dl>
+
+<h2>3. Ejemplos del curso</h2>
+<div class="posicion">
+  <h3>Posición 1: En la línea buena se cambian las torres. Cuenta antes qué final queda. Juegan las negras; el rival acaba de jugar torre david 7 jaque.</h3>
+  
+  <p>Piezas blancas: rey en f1; torres en d7, g7; peones en c3, d4, h3.</p>
+  <p>Piezas negras: rey en d8; torres en b2, c2; peones en e6, g6, h7.</p>
+  <p>Juegan las negras.</p>
+  
+  <p>La línea, jugada por jugada: 32… rey cesar 8, 33. torre cesar 7 jaque, rey bella 8, 34. torre bella 7 jaque, torre captura bella 7, 35. torre captura bella 7 jaque, rey captura bella 7</p>
+  <p>Resultado: Ganan negras</p>
+  <p>32… rey cesar 8, 33. torre cesar 7 jaque, rey bella 8, 34. torre bella 7 jaque, torre captura bella 7, 35. torre captura bella 7 jaque, rey captura bella 7. En la línea se cambian las torres. Las torres se van y el final que queda ya está decidido: la cuenta se hizo antes del cambio. (Ejercicio 33KTZ de la base abierta de Lichess (CC0), rating 1406. Stockfish 16 a profundidad 18: rey cesar 8 es la mejor (+7,3) y la segunda queda en 0,0.)</p>
+  <p>Posición en notación FEN, por si la quieres cargar en un programa: 3k4/3R2Rp/4p1p1/8/3P4/2P4P/1rr5/5K2 b - - 9 32</p>
+</div>
+
+<h2>4. Ejercicios</h2>
+<ol>
+  <li>Busca cinco partidas donde el ganador doblara torres en una columna y anota qué hizo después de doblarlas.</li>
+  <li>Arma un final de dos torres contra dos torres con una columna abierta y juégalo: verás por qué la casilla de entrada decide.</li>
+  <li>Dibuja la estructura de peones —solo los peones— de tus tres últimas partidas en la jugada 20 y di qué plan pedía cada una.</li>
+  <li>Arma en el tablero un peón aislado en d4 con las piezas de los dos bandos y juégalo desde los dos lados.</li>
+  <li>Arma el mismo final con la torre delante y detrás del peón y juega los dos. La diferencia se ve en tres jugadas.</li>
+  <li>Practica cortar al rey a una, dos y tres columnas y anota desde cuál empieza a ganarse.</li>
+</ol>
+
+<h2>5. Preguntas con su respuesta</h2>
+<p>Contesta en voz alta antes de seguir leyendo: la respuesta viene justo después de cada pregunta.</p>
+<ol>
+  <li>
+    <p>¿Por qué la séptima fila es tan fuerte?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Porque ahí están los peones que no se movieron y el rey rival. Una torre en la séptima ataca material y encierra al rey a la vez.</p>
+  </li>
+  <li>
+    <p>¿Quién gana una columna abierta disputada?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Quien pueda doblar torres primero, o quien tenga una casilla de entrada. Si nadie puede entrar, la columna no vale nada y se cambian todas las torres.</p>
+  </li>
+  <li>
+    <p>¿Qué hace la torre detrás de un peón pasado?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Lo empuja. La regla de Tarrasch: las torres van detrás del peón pasado, el propio y el del rival.</p>
+  </li>
+  <li>
+    <p>¿Cuándo conviene una columna semiabierta?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Cuando el peón rival que está en ella no puede avanzar y no lo defiende otro peón. Entonces es un blanco fijo, que es lo que las piezas saben atacar.</p>
+  </li>
+  <li>
+    <p>¿Qué es un peón retrasado y por qué es débil?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> El que quedó atrás de sus vecinos y no puede avanzar sin perderse. Es débil porque hay que defenderlo con piezas y la casilla de delante queda para el rival.</p>
+  </li>
+  <li>
+    <p>¿Los peones doblados son siempre malos?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> No. Pierden movilidad y no se defienden entre ellos, pero abren una columna y controlan casillas nuevas. En posiciones de ataque suelen valer la pena.</p>
+  </li>
+  <li>
+    <p>¿Qué es un peón aislado y qué da a cambio?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> El que no tiene peones vecinos. Es débil en el final, pero en el medio juego da una columna abierta, espacio y dos buenas casillas para las piezas.</p>
+  </li>
+  <li>
+    <p>¿Qué son los peones colgantes?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Dos peones juntos sin vecinos, normalmente c y d. Mientras avanzan juntos son fuerza; si se les obliga a avanzar uno solo, se vuelven dos debilidades.</p>
+  </li>
+  <li>
+    <p>¿Por qué vale también contra el peón del rival?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Porque desde atrás la torre lo frena sin bloquearse a sí misma, y si el peón avanza, la torre gana casillas en vez de perderlas.</p>
+  </li>
+  <li>
+    <p>¿Hay excepciones?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Sí: cuando la torre delante del peón corta al rey rival, o cuando el peón está a un paso de coronar y bloquearlo es lo único que hay. Es una regla práctica, no una ley.</p>
+  </li>
+  <li>
+    <p>¿Qué es 'cortar al rey'?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Poner la torre en una columna o fila que el rey rival no puede cruzar. Cortar al rey a tres columnas suele ganar; a una, casi nunca.</p>
+  </li>
+  <li>
+    <p>¿Por qué los finales de torre son tan tablíferos?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Porque la torre defiende de lejos, da jaques sin acercarse y un peón de más muchas veces no alcanza. Se dice que todos los finales de torre son tablas, y es una broma con bastante verdad.</p>
+  </li>
+</ol>
+
+<h2>6. Fuentes</h2>
+<ul>
+  <li>Texto de la lección: curso «¿Cambio o no cambio?» de Ajedrez Integral, de Oscar Angulo Cubero.</li>
+  <li>Conceptos, preguntas y ejercicios de este cuadernillo: material didáctico de Ajedrez Integral, de Oscar Angulo Cubero.</li>
+  <li>Posiciones: archivo de posiciones del propio curso, verificadas jugada por jugada con chess.js y evaluadas con el motor Stockfish que el sitio usa.</li>
+</ul>
+<h3>Para seguir leyendo</h3>
+<p>Obras de referencia sobre estos temas. Este material no reproduce texto de ellas: se listan como lectura recomendada, no como origen de lo que aquí se dice.</p>
+<ul>
+  <li>Aron Nimzowitsch, «Mi sistema» (1925).</li>
+  <li>Andrew Soltis, «Pawn Structure Chess» (1976).</li>
+  <li>Herman Grooten, «Chess Strategy for Club Players» (New in Chess, 2009).</li>
+  <li>Mark Dvoretsky, «Dvoretsky's Endgame Manual» (Russell Enterprises, 2003).</li>
+  <li>Karsten Müller y Frank Lamprecht, «Fundamental Chess Endings» (Gambit, 2001).</li>
+</ul>
+
+<footer>
+  <p>© 2026 Oscar Angulo Cubero · Ajedrez Integral. Material de uso docente para alumnos de la Academia.</p>
+  <p>No se autoriza su reproducción ni su distribución fuera de ella.</p>
+<p class="volver">
+  <a href="../../academia/cambio-o-no-cambio.html">← Volver al curso ¿Cambio o no cambio?</a>
+  ·
+  <a href="../../../clases.html">Panel de Academia</a>
+</p>
+</footer>
+</body>
+</html>

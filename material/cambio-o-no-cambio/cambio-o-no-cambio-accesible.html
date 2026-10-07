@@ -1,0 +1,660 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>¿Cambio o no cambio? — versión accesible</title>
+<style>
+  :root { color-scheme: light dark; }
+  body { max-width: 42rem; margin: 0 auto; padding: 1.5rem 1rem 4rem; background: #fff; color: #10202e;
+         font-family: Georgia, "Times New Roman", serif; font-size: 1.15rem; line-height: 1.8; }
+  h1 { font-size: 1.9rem; line-height: 1.25; }
+  h2 { font-size: 1.45rem; margin-top: 2.5rem; border-bottom: 2px solid #10202e; padding-bottom: .3rem; }
+  h3 { font-size: 1.2rem; margin: 2rem 0 .3rem; font-family: system-ui, sans-serif; }
+  h4 { font-size: 1.05rem; margin: 1.4rem 0 .3rem; font-family: system-ui, sans-serif; }
+  article { border-top: 1px solid #c9d4de; padding-top: .3rem; }
+  .posicion { background: #f1f5f8; padding: .7rem .9rem; }
+  .fen { display: block; font-family: ui-monospace, monospace; font-size: .85em; word-break: break-all; }
+  .comprobado { font-size: .92em; color: #3b4d5c; }
+  footer { margin-top: 3rem; border-top: 1px solid #c9d4de; padding-top: 1rem; font-size: .95rem; }
+  @media (prefers-color-scheme: dark) {
+    body { background: #10202e; color: #eef3f7; }
+    h2 { border-color: #eef3f7; }
+    .posicion { background: #1b3145; }
+    .comprobado { color: #b8c7d4; }
+    article, footer { border-color: #3b5165; }
+  }
+</style>
+</head><body>
+<h1>¿Cambio o no cambio?</h1>
+<p>Libro de Oscar Angulo Cubero. Es el mismo contenido del libro en PDF, escrito para leerse con lector de pantalla o con
+la letra agrandada: las posiciones van contadas pieza por pieza y con su FEN, las jugadas van dichas, y no hay
+ninguna imagen.</p>
+<p>Seis capítulos sobre el cambio de piezas como decisión: qué se va y qué queda, alfiles y caballos, damas y torres,
+los cambios que llevan a un final, los que sirven para defenderse y los cambios paradójicos, con un método de cinco
+preguntas para decidir. Cada lección trae su idea, un ejemplo de partida real con la solución y una tarea. Al final
+de los primeros cinco capítulos hay ocho ejercicios; al final del libro, 24 ejercicios mixtos y las soluciones de los 64.</p>
+<p>Las posiciones son de la base abierta de ejercicios de Lichess (dominio público) y se comprobaron con Stockfish:
+cada una tiene una sola jugada buena.</p>
+<section><h2>Capítulo 1: Qué se va y qué queda</h2>
+      <section><h3>Lección 1: Un cambio transforma la posición</h3>
+      <p><em>Cambiar no es neutro: después de cada cambio la partida es otra, y la pregunta es si esa otra partida te conviene.</em></p>
+      <p>Cuando dos piezas iguales se van del tablero, el material sigue igual y por eso muchos jugadores creen que no pasó nada. Pasó mucho. Se fue una pieza tuya con todo lo que hacía —defender, atacar, controlar casillas— y se fue una pieza rival con todo lo que hacía ella. Si la tuya trabajaba poco y la suya era la que sostenía su posición, saliste ganando aunque el contador de puntos diga empate.</p><p>Por eso la pregunta correcta antes de cambiar no es «¿pierdo material?», sino «¿cómo queda la posición después?». ¿Quién tiene ahora las piezas activas? ¿Qué casillas quedaron sin dueño? ¿Qué peones quedaron débiles, qué columnas se abrieron, qué rey quedó más expuesto? Un cambio puede convertir una ventaja pequeña en una grande, o borrar en una jugada la ventaja que costó veinte.</p><p>Este curso entero es una forma de contestar esa pregunta. En cada lección vas a ver un tipo de cambio —de piezas menores, de damas, de torres, hacia un final— y lo que conviene mirar antes de hacerlo. La primera regla es la más simple: nunca cambies por cambiar. Cambia porque lo que queda te sirve.</p>
+      <h4>Ejemplo de la lección 1</h4>
+      <p>La jugada buena empieza un cambio. Antes de buscarla, pregúntate qué pieza rival te conviene que desaparezca.</p>
+      <p class="posicion"><strong>La posición.</strong> Juegan las blancas. Piezas blancas: rey en g1; dama en h4; torres en a1, f1; alfil en g5; caballo en c3; peones en a2, b2, c2, f2, g2, h2. Piezas negras: rey en f7; dama en d4; torre en a8; alfiles en g4, g7; caballos en c6, f6; peones en a7, b7, c4, c7, e4, g6.
+      Las negras acaban de jugar … alfil gustav 7.
+      <span class="fen">FEN: r7/ppp2kb1/2n2np1/6B1/2pqp1bQ/2N5/PPP2PPP/R4RK1 w - - 4 14</span></p>
+      <p><strong>Solución.</strong> 14. alfil captura felix 6, dama captura felix 6, 15. dama captura gustav 4. En la línea se cambian una pieza menor por otra. Se captura al defensor y lo que defendía queda colgado. El cambio no gana por el material que se lleva, sino por lo que la pieza rival dejaba de hacer al irse.</p>
+      <p class="comprobado">Ejercicio 1v1IS de la base abierta de Lichess (CC0), rating 1332. Stockfish 16 a profundidad 18: alfil captura felix 6 es la mejor (+3,7) y la segunda queda en -0,7.</p>
+      <p><strong>Para practicar.</strong> En tus tres últimas partidas lentas, marca cada cambio de piezas que hiciste. Para cada uno, escribe en una línea qué hacía tu pieza y qué hacía la del rival. ¿Cuántos cambios hiciste solo porque se podía?</p>
+    </section><section><h3>Lección 2: Con material de más, cambia piezas</h3>
+      <p><em>La regla clásica: el que tiene ventaja de material busca cambiar piezas, porque cada cambio hace más grande su ventaja relativa.</em></p>
+      <p>Un peón de más con todas las piezas en el tablero es una ventaja discreta: el rival tiene con qué crear amenazas, buscar ataque o bloquear. El mismo peón de más en un final de peones suele ser una partida ganada. La razón es aritmética: cuantas menos piezas quedan, más pesa la diferencia. Ocho contra siete se parece; dos contra uno, no.</p><p>Por eso la regla dice que el bando con material de más cambia piezas, y sobre todo la dama, que es la pieza con la que el rival más puede complicar. Ojo: la regla dice piezas, no peones. Cambiar peones le acerca al rival a las tablas, porque con menos peones hay menos con qué coronar, y hay finales con una pieza de más que no se ganan si no quedan peones.</p><p>La forma práctica de usar la regla es ofrecer cambios con ganancia: poner una pieza enfrente de la del rival de modo que, si no cambia, pierda algo, y si cambia, quede un final que ganas. El que va abajo en material evita los cambios; tu trabajo es dejarlo sin esa opción.</p>
+      <h4>Ejemplo de la lección 2</h4>
+      <p>Hay un cambio que deja un final de peones ganado. ¿Puedes forzarlo?</p>
+      <p class="posicion"><strong>La posición.</strong> Juegan las blancas. Piezas blancas: rey en g2; dama en a8; peones en a4, f2, h4. Piezas negras: rey en f5; dama en d1; peones en d4, e6, h6, h7.
+      Las negras acaban de jugar … rey felix 5.
+      <span class="fen">FEN: Q7/7p/4p2p/5k2/P2p3P/8/5PK1/3q4 w - - 2 43</span></p>
+      <p><strong>Solución.</strong> 43. dama felix 3 jaque, dama captura felix 3 jaque, 44. rey captura felix 3, eva 5, 45. anna 5, eva 4 jaque, 46. rey eva 2. En la línea se cambian las damas, y queda un final de peones. Es una jugada defensiva precisa: la única que sostiene la posición. Las damas se van y lo que queda es un final de peones en el que la ventaja ya no se puede discutir.</p>
+      <p class="comprobado">Ejercicio 0rTVx de la base abierta de Lichess (CC0), rating 1536. Stockfish 16 a profundidad 18: dama felix 3 jaque es la mejor (+4,4) y la segunda queda en 0,0.</p>
+      <p><strong>Para practicar.</strong> Cuando tengas un peón de más, cuenta cuántas piezas quedan en el tablero cada cinco jugadas. Si el número no baja, te estás perdiendo oportunidades de cambiar. Repasa la partida buscando el momento en que se podía forzar un cambio.</p>
+    </section><section><h3>Lección 3: Cambiar al defensor</h3>
+      <p><em>Muchas posiciones las sostiene una sola pieza. Si la cambias, lo que defendía queda sin dueño.</em></p>
+      <p>En casi toda posición difícil hay una pieza que hace el trabajo duro: el caballo que tapa la entrada al rey, el alfil que defiende un peón débil, la torre que cuida la última fila. Mientras esa pieza esté, la defensa aguanta. El cambio es la forma más limpia de quitarla, porque no cuesta material: das una pieza igual y te llevas la que importaba.</p><p>Para encontrar al defensor, hazte la pregunta al revés: ¿qué podría ganar yo si una pieza rival no estuviera? Si la respuesta es «un peón», «la calidad» o «mate», ya sabes qué pieza te conviene cambiar. Después busca con qué pieza tuya la puedes cambiar y en qué orden, porque a veces el cambio tiene que ir con jaque o con una amenaza para que el rival no pueda esquivarlo.</p><p>Fíjate en que aquí el valor de las piezas en puntos no dice nada. Un caballo por un alfil es un cambio parejo en el papel, pero si el caballo rival era el único defensor de su rey, el cambio vale una partida.</p>
+      <h4>Ejemplo de la lección 3</h4>
+      <p>En la línea buena se cambia una pieza menor por otra. ¿Cuál te conviene sacar del tablero?</p>
+      <p class="posicion"><strong>La posición.</strong> Juegan las negras. Piezas blancas: rey en c1; dama en c2; torres en d4, h1; alfiles en g5, h7; caballo en f3; peones en a2, c3, c4, g2, h3. Piezas negras: rey en h8; dama en a5; torres en a8, e8; alfil en d7; caballos en b8, e5; peones en a4, b7, c6, f7, g7.
+      Las blancas acaban de jugar Torre david 4.
+      <span class="fen">FEN: rn2r2k/1p1b1ppB/2p5/q3n1B1/p1PR4/2P2N1P/P1Q3P1/2K4R b - - 1 22</span></p>
+      <p><strong>Solución.</strong> 22… caballo captura felix 3, 23. gustav captura felix 3, dama captura gustav 5 jaque. En la línea se cambian una pieza menor por otra. Es un ataque a la descubierta: al moverse una pieza, se destapa otra. Se cambia una pieza menor por otra, y lo que la pieza rival defendía queda sin dueño.</p>
+      <p class="comprobado">Ejercicio 0R4YX de la base abierta de Lichess (CC0), rating 1615. Stockfish 16 a profundidad 18: caballo captura felix 3 es la mejor (+4,3) y la segunda queda en -2,0.</p>
+      <p><strong>Para practicar.</strong> En los ejercicios de este bloque, antes de buscar la jugada, nombra en voz alta la pieza rival que sostiene la posición. Si no la encuentras en un minuto, mira qué casillas y piezas defiende cada una de las suyas.</p>
+    </section><section><h3>Lección 4: La jugada que obliga al cambio</h3>
+      <p><em>Si el cambio te conviene, el rival lo va a evitar. A veces hace falta una jugada previa que no le deje otra.</em></p>
+      <p>Un cambio que te conviene es un cambio que al rival no le conviene, así que no va a aceptarlo de buena gana: va a mover la pieza, a defenderla con otra o a cambiar en otra casilla donde le vaya mejor. La técnica consiste en preparar el cambio de modo que esquivarlo cueste más que aceptarlo.</p><p>Hay tres formas habituales. La primera es ofrecer el cambio con una amenaza: si el rival no cambia, pierde otra cosa. La segunda es clavar o atacar la pieza que querías cambiar, para que no tenga adónde ir. La tercera es la jugada tranquila que quita la última casilla de escape o la última defensa, y deja el cambio como única salida.</p><p>Este tipo de jugada es difícil de ver porque no captura nada: es la que se juega antes del cambio. Cuando sepas qué cambio quieres, no te preguntes solo «¿puedo cambiar ya?», sino «¿qué jugada deja al rival sin otra cosa que cambiar?».</p>
+      <h4>Ejemplo de la lección 4</h4>
+      <p>No hay una captura que gane ya. Busca la jugada que deja al rival sin otra salida que un cambio que te conviene.</p>
+      <p class="posicion"><strong>La posición.</strong> Juegan las blancas. Piezas blancas: rey en h1; dama en e4; torres en b1, d1; alfil en f1; peones en a3, b2, g2, h2. Piezas negras: rey en h8; dama en f2; torres en e8, f8; alfil en g7; peones en a7, b6, d4, e5, h6.
+      Las negras acaban de jugar … bella 6.
+      <span class="fen">FEN: 4rr1k/p5b1/1p5p/4p3/3pQ3/P7/1P3qPP/1R1R1B1K w - - 0 24</span></p>
+      <p><strong>Solución.</strong> 24. alfil david 3, dama felix 5, 25. dama captura felix 5, torre captura felix 5, 26. alfil captura felix 5. En la línea se cambian las damas. La clave es una jugada tranquila: sin jaque ni captura, pero sin defensa. La primera jugada no se lleva nada: deja preparado el cambio, y el rival ya no lo puede evitar.</p>
+      <p class="comprobado">Ejercicio 2eRhc de la base abierta de Lichess (CC0), rating 1390. Stockfish 16 a profundidad 18: alfil david 3 es la mejor (+5,3) y la segunda queda en -0,8.</p>
+      <p><strong>Para practicar.</strong> Cuando en una partida veas un cambio que te convenga y el rival lo esquive, anótalo. Después, con el análisis, busca si había una jugada previa que lo obligaba. Con el tiempo vas a empezar a verla antes.</p>
+    </section>
+      <h3>Ejercicios del capítulo 1</h3>
+      <p>Ocho posiciones de partidas reales, de la más fácil a la más difícil. Cada una tiene una sola jugada que funciona. Las soluciones están al final.</p>
+      <article><h4>Ejercicio 1</h4><p>Pista: Una pieza rival defiende todo. ¿Qué pasa si la cambias?</p><p class="posicion"><strong>La posición.</strong> Juegan las blancas. Piezas blancas: rey en g1; dama en c2; torres en c7, f1; peones en f3, g2, h2. Piezas negras: rey en g8; dama en f5; torres en d7, f8; caballo en g6; peones en a6, e5, g7, h6.
+      Las negras acaban de jugar … torre captura david 7.
+      <span class="fen">FEN: 5rk1/2Rr2p1/p5np/4pq2/8/5P2/2Q3PP/5RK1 w - - 0 31</span></p></article><article><h4>Ejercicio 2</h4><p>Pista: Con damas, el rey nunca está tranquilo. ¿Te conviene que se vayan?</p><p class="posicion"><strong>La posición.</strong> Juegan las negras. Piezas blancas: rey en h3; dama en e4; peones en f4, g2, h4. Piezas negras: rey en f6; dama en c5; peones en b6, g7, h6.
+      Las blancas acaban de jugar Dama eva 4.
+      <span class="fen">FEN: 8/6p1/1p3k1p/2q5/4QP1P/7K/6P1/8 b - - 3 51</span></p></article><article><h4>Ejercicio 3</h4><p>Pista: No hay captura que gane ya: busca la jugada tranquila que obliga al cambio que te sirve.</p><p class="posicion"><strong>La posición.</strong> Juegan las negras. Piezas blancas: rey en g1; torres en b3, c1; alfil en e3; peones en b2, f2, g2, h2. Piezas negras: rey en g8; torres en a8, c8; peones en a6, b5, e6, f7, g7, h7.
+      Las blancas acaban de jugar Torre cesar 1.
+      <span class="fen">FEN: r1r3k1/5ppp/p3p3/1p6/8/1R2B3/1P3PPP/2R3K1 b - - 2 21</span></p></article><article><h4>Ejercicio 4</h4><p>Pista: Una pieza rival defiende todo. ¿Qué pasa si la cambias?</p><p class="posicion"><strong>La posición.</strong> Juegan las blancas. Piezas blancas: rey en g1; torre en b6; alfil en g5; peones en f3, g2, h4. Piezas negras: rey en g8; torre en c4; caballo en d4; peones en c5, e6, f7, g6.
+      Las negras acaban de jugar … caballo david 4.
+      <span class="fen">FEN: 6k1/5p2/1R2p1p1/2p3B1/2rn3P/5P2/6P1/6K1 w - - 1 38</span></p></article><article><h4>Ejercicio 5</h4><p>Pista: No hay captura que gane ya: busca la jugada tranquila que obliga al cambio que te sirve.</p><p class="posicion"><strong>La posición.</strong> Juegan las blancas. Piezas blancas: rey en h1; dama en e2; torre en f1; alfil en e3; caballos en c2, h3; peones en a4, b5, c3, d4, g2, h2. Piezas negras: rey en c8; dama en h4; torre en f7; alfil en a7; caballos en g3, g4; peones en a6, b7, c7, e5, e6, g7, h6.
+      Las negras acaban de jugar … caballo gustav 3 jaque.
+      <span class="fen">FEN: 2k5/bpp2rp1/p3p2p/1P2p3/P2P2nq/2P1B1nN/2N1Q1PP/5R1K w - - 4 25</span></p></article><article><h4>Ejercicio 6</h4><p>Pista: Con damas, el rey nunca está tranquilo. ¿Te conviene que se vayan?</p><p class="posicion"><strong>La posición.</strong> Juegan las negras. Piezas blancas: rey en h3; dama en g8; peones en f4, g3, h2. Piezas negras: rey en f6; dama en e4; peones en b4, g5, h7.
+      Las blancas acaban de jugar Rey hector 3.
+      <span class="fen">FEN: 6Q1/7p/5k2/6p1/1p2qP2/6PK/7P/8 b - - 2 42</span></p></article><article><h4>Ejercicio 7</h4><p>Pista: Una pieza rival defiende todo. ¿Qué pasa si la cambias?</p><p class="posicion"><strong>La posición.</strong> Juegan las negras. Piezas blancas: rey en g1; dama en d1; torres en a1, f1; alfiles en c1, e2; caballos en c3, e5; peones en a2, b2, c2, e4, f2, g2, h2. Piezas negras: rey en e8; dama en d8; torres en a8, h8; alfiles en b4, g4; caballos en d4, f6; peones en a7, b7, c7, f7, g7, h7.
+      Las blancas acaban de jugar Caballo captura eva 5.
+      <span class="fen">FEN: r2qk2r/ppp2ppp/5n2/4N3/1b1nP1b1/2N5/PPP1BPPP/R1BQ1RK1 b kq - 0 9</span></p></article><article><h4>Ejercicio 8</h4><p>Pista: No hay captura que gane ya: busca la jugada tranquila que obliga al cambio que te sirve.</p><p class="posicion"><strong>La posición.</strong> Juegan las negras. Piezas blancas: rey en g1; dama en d5; torre en f1; peones en a2, b3, c4, e3, f2, g2, h3. Piezas negras: rey en g8; dama en d7; torre en d8; peones en b7, d2, f5, g6, h7.
+      Las blancas acaban de jugar Dama david 5 jaque.
+      <span class="fen">FEN: 3r2k1/1p1q3p/6p1/3Q1p2/2P5/1P2P2P/P2p1PP1/5RK1 b - - 1 31</span></p></article>
+    </section><section><h2>Capítulo 2: Alfiles y caballos</h2>
+      <section><h3>Lección 5: Alfil contra caballo: quién manda</h3>
+      <p><em>Valen lo mismo en puntos y casi nunca lo mismo en el tablero. Lo decide la estructura de peones.</em></p>
+      <p>El alfil y el caballo valen unos tres puntos cada uno, y de ahí sale la idea de que cambiar uno por otro es indiferente. No lo es casi nunca. El alfil es una pieza de largo alcance: le gustan las posiciones abiertas, los peones en los dos flancos y las diagonales libres. El caballo es lento pero salta: le gustan las posiciones cerradas, las casillas fijas que ningún peón puede atacar y los peones de un solo flanco.</p><p>Antes de cambiar un alfil por un caballo, o al revés, mira la estructura y adivina cómo va a ser la partida dentro de diez jugadas. Si se van a abrir líneas y los peones van a quedar repartidos, el alfil va a mandar. Si la posición se va a cerrar, o si hay una casilla central donde un caballo no se puede desalojar, el caballo va a ser mejor.</p><p>La pareja de alfiles merece un aviso aparte: dos alfiles juntos cubren casillas de los dos colores y suelen valer más que alfil y caballo. Regalarla sin necesidad, cambiando uno de tus alfiles por un caballo, es uno de los cambios que más ventaja se le escapa al jugador de club.</p>
+      <h4>Ejemplo de la lección 5</h4>
+      <p>Es un final de alfiles: el alcance del alfil decide.</p>
+      <p class="posicion"><strong>La posición.</strong> Juegan las negras. Piezas blancas: rey en e3; alfil en b4; peones en c3, f3, f4, h4. Piezas negras: rey en a4; peones en a6, c4, c6, f5, g6, h5.
+      Las blancas acaban de jugar Rey eva 3.
+      <span class="fen">FEN: 8/8/p1p3p1/5p1p/kBp2P1P/2P1KP2/8/8 b - - 7 46</span></p>
+      <p><strong>Solución.</strong> 46… anna 5, 47. alfil felix 8, rey bella 3, 48. rey david 4, anna 4, 49. alfil eva 7, anna 3, 50. alfil captura anna 3, rey captura anna 3. La clave es una jugada tranquila: sin jaque ni captura, pero sin defensa. Fíjate en las casillas que controla cada alfil: el que tiene objetivos de su color es el que manda.</p>
+      <p class="comprobado">Ejercicio 1BALq de la base abierta de Lichess (CC0), rating 1511. Stockfish 16 a profundidad 18: a5 es la mejor (+3,5) y la segunda queda en -4,6.</p>
+      <p><strong>Para practicar.</strong> Juega desde la misma posición de final dos partidas de entrenamiento: una con alfil contra caballo y peones en los dos flancos, otra con los peones en un solo flanco. Anota quién estuvo más cómodo en cada una.</p>
+    </section><section><h3>Lección 6: El caballo que se cambia a tiempo</h3>
+      <p><em>En un final con caballos, el cambio correcto deja un final de peones; el incorrecto, un caballo que no llega.</em></p>
+      <p>Los finales de caballos se parecen mucho a los de peones: el caballo es lento y no puede ganar tiempos a distancia como una torre o un alfil. Por eso, en estos finales, el cambio de caballos es casi siempre la decisión más importante, y conviene hacerlo con la cuenta del final de peones ya hecha.</p><p>La pregunta es concreta: si se van los caballos, ¿quién gana el final de peones? Si eres tú, busca el cambio; muchas veces se puede forzar ofreciendo el caballo en una casilla donde el rival tiene que tomarlo o perder un peón. Si no eres tú, evita el cambio a toda costa, aunque tengas que dejar tu caballo en una casilla peor.</p><p>El error típico es cambiar «para simplificar» sin contar. En un final de peones no hay piezas que salven nada: un tiempo de más o de menos decide, y la cuenta hay que hacerla antes del cambio, no después.</p>
+      <h4>Ejemplo de la lección 6</h4>
+      <p>En la línea buena se cambian los caballos. ¿Cómo fuerzas el cambio que te conviene?</p>
+      <p class="posicion"><strong>La posición.</strong> Juegan las blancas. Piezas blancas: rey en e3; caballo en a5; peones en a4, b7, c3, e4, g2, h3. Piezas negras: rey en f7; caballos en b8, c6; peones en e6, g7, h7.
+      Las negras acaban de jugar … caballo eva cesar 6.
+      <span class="fen">FEN: 1n6/1P3kpp/2n1p3/N7/P3P3/2P1K2P/6P1/8 w - - 2 39</span></p>
+      <p><strong>Solución.</strong> 39. caballo captura cesar 6, caballo captura cesar 6, 40. anna 5, rey eva 8, 41. anna 6. En la línea se cambian una pieza menor por otra. Se cambian las piezas menores y el final que queda ya no tiene defensa.</p>
+      <p class="comprobado">Ejercicio 1hrAx de la base abierta de Lichess (CC0), rating 1311. Stockfish 16 a profundidad 18: caballo captura cesar 6 es la mejor (+5,1) y la segunda queda en -0,6.</p>
+      <p><strong>Para practicar.</strong> En los ejercicios de final de caballos, antes de mover, escribe quién gana el final de peones si se cambian los caballos. Después resuelve y comprueba si tu cuenta era la correcta.</p>
+    </section><section><h3>Lección 7: El alfil malo: cambiarlo o usarlo</h3>
+      <p><em>Un alfil encerrado por sus propios peones es candidato a cambio. Pero a veces es el que defiende lo que importa.</em></p>
+      <p>Se llama alfil malo al que tiene sus propios peones fijos en casillas de su mismo color: los peones le tapan las diagonales y él queda reducido a defenderlos. La recomendación clásica es cambiarlo por el alfil bueno del rival, o por un caballo activo, y quedarse con una pieza que trabaje.</p><p>La recomendación es buena, pero no automática. Un alfil malo que defiende peones débiles es, justamente por eso, una pieza útil: si lo cambias, los peones que cuidaba pueden quedar sin defensa. Y un alfil malo puede volverse bueno si los peones cambian de casilla o si sale por delante de ellos, fuera de la cadena.</p><p>La pregunta, otra vez, es qué hace la pieza. Si el alfil solo mira peones propios y no defiende nada esencial, búscale un cambio. Si es el que sostiene tu estructura, antes de cambiarlo asegúrate de que lo que queda sin él aguanta.</p>
+      <h4>Ejemplo de la lección 7</h4>
+      <p>Final de alfiles: mira de qué color son las casillas de los peones antes de decidir.</p>
+      <p class="posicion"><strong>La posición.</strong> Juegan las blancas. Piezas blancas: rey en d3; peones en a6, e6. Piezas negras: rey en g4; alfil en c5; peones en f2, g6.
+      Las negras acaban de jugar … felix 2.
+      <span class="fen">FEN: 8/8/P3P1p1/2b5/6k1/3K4/5p2/8 w - - 0 42</span></p>
+      <p><strong>Solución.</strong> 42. rey eva 2, rey gustav 3, 43. rey felix 1.  Los peones fijos en casillas del color de un alfil lo vuelven débil o fuerte según de qué lado estén.</p>
+      <p class="comprobado">Ejercicio 3Ny4Q de la base abierta de Lichess (CC0), rating 1485. Stockfish 16 a profundidad 18: rey eva 2 es la mejor (+3,6) y la segunda queda en -36,5.</p>
+      <p><strong>Para practicar.</strong> Busca en tus partidas una posición con un alfil que llamarías malo. Escribe qué defendía y qué pasaba si se cambiaba. Comprueba con el motor si tu juicio coincide con la evaluación.</p>
+    </section><section><h3>Lección 8: Alfiles de distinto color</h3>
+      <p><em>En el final, son la gran esperanza del que se defiende. En el medio juego, la gran arma del que ataca.</em></p>
+      <p>Cuando a cada bando le queda un alfil y corren por casillas de distinto color, pasa algo curioso: ninguno de los dos alfiles puede disputarle casillas al otro. En el final, eso favorece al que se defiende, porque puede bloquear los peones rivales en casillas de su color y el alfil contrario no tiene cómo echarlo. Muchos finales con uno y hasta dos peones de menos son tablas por esa razón.</p><p>En el medio juego, la misma propiedad funciona al revés: el que ataca con su alfil sobre casillas que el alfil rival no puede cubrir tiene, en la práctica, una pieza de más en el ataque. Por eso el defensor con alfiles de distinto color quiere cambiar damas y torres, y el atacante quiere conservarlas.</p><p>Antes de un cambio que deje alfiles de distinto color, pregúntate en cuál de las dos situaciones vas a quedar. Si estás ganando un final, ese cambio puede regalar las tablas. Si estás defendiendo, puede ser tu salvación.</p>
+      <h4>Ejemplo de la lección 8</h4>
+      <p>Hay alfiles de distinto color. Fíjate en qué casillas puede cubrir cada uno y en cuáles no.</p>
+      <p class="posicion"><strong>La posición.</strong> Juegan las blancas. Piezas blancas: rey en h7; alfil en g6; peones en b5, c4, d3, h5. Piezas negras: rey en e7; alfil en f8; peones en a7, b6, d4, e5, h6.
+      Las negras acaban de jugar … rey eva 7.
+      <span class="fen">FEN: 5b2/p3k2K/1p4Bp/1P2p2P/2Pp4/3P4/8/8 w - - 2 97</span></p>
+      <p><strong>Solución.</strong> 97. rey gustav 8, anna 5, 98. bella captura anna 6.  Cada alfil manda en su color y el otro no puede discutírselo: la jugada buena aprovecha justo esas casillas.</p>
+      <p class="comprobado">Ejercicio 2gmkP de la base abierta de Lichess (CC0), rating 1401. Stockfish 16 a profundidad 18: rey gustav 8 es la mejor (+6,1) y la segunda queda en +0,2.</p>
+      <p><strong>Para practicar.</strong> Juega desde un final de alfiles de distinto color con un peón de más, una vez de cada lado. Anota qué casillas usó el bando que se defendía para bloquear.</p>
+    </section>
+      <h3>Ejercicios del capítulo 2</h3>
+      <p>Ocho posiciones de partidas reales, de la más fácil a la más difícil. Cada una tiene una sola jugada que funciona. Las soluciones están al final.</p>
+      <article><h4>Ejercicio 9</h4><p>Pista: Una pieza rival defiende todo. ¿Qué pasa si la cambias?</p><p class="posicion"><strong>La posición.</strong> Juegan las negras. Piezas blancas: rey en g1; dama en d2; torres en a1, e1; alfiles en c4, h2; caballo en e5; peones en a3, b2, c3, d4, f2, g2, h3. Piezas negras: rey en g8; dama en d8; torres en a8, f8; alfiles en e6, g7; caballo en h5; peones en a4, b7, c6, e7, f7, g6, h7.
+      Las blancas acaban de jugar Alfil cesar 4.
+      <span class="fen">FEN: r2q1rk1/1p2ppbp/2p1b1p1/4N2n/p1BP4/P1P4P/1P1Q1PPB/R3R1K1 b - - 2 23</span></p></article><article><h4>Ejercicio 10</h4><p>Pista: Mira de qué color son las casillas de los peones y de los alfiles antes de mover.</p><p class="posicion"><strong>La posición.</strong> Juegan las negras. Piezas blancas: rey en c5; alfil en c6; peones en b4, c3, f3, g2, h2. Piezas negras: rey en f6; alfil en e8; peones en b5, e5, f5, g6, h6.
+      Las blancas acaban de jugar Alfil cesar 6.
+      <span class="fen">FEN: 4b3/8/2B2kpp/1pK1pp2/1P6/2P2P2/6PP/8 b - - 3 36</span></p></article><article><h4>Ejercicio 11</h4><p>Pista: Un caballo menos cambia todo el final: ¿quién gana si se van los caballos?</p><p class="posicion"><strong>La posición.</strong> Juegan las negras. Piezas blancas: rey en d2; caballo en c5; peones en b4, f4, g4, h3. Piezas negras: rey en e4; caballo en a4; peones en b5, f6, f7, h7.
+      Las blancas acaban de jugar Caballo cesar 5 jaque.
+      <span class="fen">FEN: 8/5p1p/5p2/1pN5/nP2kPP1/7P/3K4/8 b - - 2 44</span></p></article><article><h4>Ejercicio 12</h4><p>Pista: Mira de qué color son las casillas de los peones y de los alfiles antes de mover.</p><p class="posicion"><strong>La posición.</strong> Juegan las negras. Piezas blancas: rey en d4; alfil en b5; peones en a4, c3, f4. Piezas negras: rey en d6; alfil en d7; peones en a5, d5, f7.
+      Las blancas acaban de jugar Alfil bella 5.
+      <span class="fen">FEN: 8/3b1p2/3k4/pB1p4/P2K1P2/2P5/8/8 b - - 2 38</span></p></article><article><h4>Ejercicio 13</h4><p>Pista: Una pieza rival defiende todo. ¿Qué pasa si la cambias?</p><p class="posicion"><strong>La posición.</strong> Juegan las negras. Piezas blancas: rey en h1; dama en e3; torres en f1, h4; alfil en e2; caballo en f3; peones en a3, b2, f2, g2, h2. Piezas negras: rey en g8; dama en e7; torres en f8, g6; alfil en b7; peones en a6, b5, d6, e6, g7, h7.
+      Las blancas acaban de jugar Rey hector 1.
+      <span class="fen">FEN: 5rk1/1b2q1pp/p2pp1r1/1p6/7R/P3QN2/1P2BPPP/5R1K b - - 9 27</span></p></article><article><h4>Ejercicio 14</h4><p>Pista: Un caballo menos cambia todo el final: ¿quién gana si se van los caballos?</p><p class="posicion"><strong>La posición.</strong> Juegan las blancas. Piezas blancas: rey en e3; caballo en d2; peones en c4, e5, f4, g3. Piezas negras: rey en c3; caballo en b3; peones en c5, d6, e7, g4, h5.
+      Las negras acaban de jugar … caballo captura bella 3.
+      <span class="fen">FEN: 8/4p3/3p4/2p1P2p/2P2Pp1/1nk1K1P1/3N4/8 w - - 0 58</span></p></article><article><h4>Ejercicio 15</h4><p>Pista: Mira de qué color son las casillas de los peones y de los alfiles antes de mover.</p><p class="posicion"><strong>La posición.</strong> Juegan las blancas. Piezas blancas: rey en e3; alfil en e2; peones en b4, c3, e4, g3, h2. Piezas negras: rey en e5; alfil en c4; peones en a6, b5, c7, g5, h6.
+      Las negras acaban de jugar … alfil cesar 4.
+      <span class="fen">FEN: 8/2p5/p6p/1p2k1p1/1Pb1P3/2P1K1P1/4B2P/8 w - - 5 36</span></p></article><article><h4>Ejercicio 16</h4><p>Pista: Un caballo menos cambia todo el final: ¿quién gana si se van los caballos?</p><p class="posicion"><strong>La posición.</strong> Juegan las negras. Piezas blancas: rey en g3; caballo en g5; peones en f4, h4. Piezas negras: rey en f6; caballo en e6; peones en g6, h5.
+      Las blancas acaban de jugar Caballo gustav 5.
+      <span class="fen">FEN: 8/8/4nkp1/6Np/5P1P/6K1/8/8 b - - 3 53</span></p></article>
+    </section><section><h2>Capítulo 3: Damas y torres</h2>
+      <section><h3>Lección 9: Cambiar las damas</h3>
+      <p><em>El cambio de damas cambia la partida entera: se acaban los ataques al rey y empieza otra pelea.</em></p>
+      <p>Ningún cambio transforma tanto una partida como el de damas. Con damas, el rey tiene que estar seguro y las amenazas pueden venir de cualquier lado. Sin damas, el rey se vuelve una pieza activa, los ataques directos casi desaparecen y lo que cuenta es la estructura de peones, las piezas activas y el final que se viene.</p><p>Te conviene cambiar damas cuando tu rey está más expuesto que el del rival, cuando tienes ventaja de material o una mejor estructura, o cuando la dama rival es más activa que la tuya. No te conviene cuando tu ataque depende de ella, cuando el final que queda es peor para ti o cuando el rival es el que está expuesto.</p><p>Muchas veces el cambio de damas se ofrece con una amenaza: la dama se pone enfrente de la rival en una casilla donde, si no se cambia, algo cae. Y muchas otras el rival lo ofrece para quitarte la iniciativa: ahí la pregunta es si puedes esquivarlo sin perder tiempo.</p>
+      <h4>Ejemplo de la lección 9</h4>
+      <p>La línea buena termina con las damas fuera del tablero. ¿Cómo lo fuerzas?</p>
+      <p class="posicion"><strong>La posición.</strong> Juegan las blancas. Piezas blancas: rey en c3; dama en e3; peones en a3, b2, e4. Piezas negras: rey en h7; dama en d4; peones en e5, g7, h5.
+      Las negras acaban de jugar … dama david 4 jaque.
+      <span class="fen">FEN: 8/6pk/8/4p2p/3qP3/P1K1Q3/1P6/8 w - - 1 43</span></p>
+      <p><strong>Solución.</strong> 43. dama captura david 4, eva captura david 4 jaque, 44. rey captura david 4, hector 4, 45. rey eva 3. En la línea se cambian las damas, y queda un final de peones. Es una jugada defensiva precisa: la única que sostiene la posición. Sin damas, la ventaja que quedaba escondida aparece entera en el final.</p>
+      <p class="comprobado">Ejercicio 2yN82 de la base abierta de Lichess (CC0), rating 1362. Stockfish 16 a profundidad 18: dama captura david 4 es la mejor (+5,5) y la segunda queda en -43,9.</p>
+      <p><strong>Para practicar.</strong> Durante una semana, cada vez que en tus partidas se cambien las damas, anota quién lo propuso y si esa persona terminó mejor o peor. Vas a descubrir si cambias damas por convicción o por costumbre.</p>
+    </section><section><h3>Lección 10: La dama que no se cambia</h3>
+      <p><em>Cuando la dama es la que ataca o la que sostiene la defensa, ofrecerle un cambio es regalar la partida.</em></p>
+      <p>Así como hay posiciones en las que cambiar damas gana, hay otras en las que cambiarlas tira a la basura todo lo conseguido. Si tu dama es la pieza que presiona al rey rival, el cambio le devuelve la tranquilidad. Si tu dama es la que tapa la entrada a tu rey, el cambio deja la puerta abierta.</p><p>La tentación del cambio viene muchas veces de un falso alivio: la dama rival molesta, se ofrece el cambio y uno respira. Antes de hacerlo, mira el final que queda. Si en ese final tus peones son peores, tu rey está más lejos o las piezas rivales son más activas, la molestia de la dama era el mal menor.</p><p>La jugada que esquiva un cambio sin perder tiempo es una de las más finas del medio juego: mantiene la tensión y obliga al rival a seguir resolviendo problemas.</p>
+      <h4>Ejemplo de la lección 10</h4>
+      <p>Las dos damas están en el tablero y podías cambiar una pieza por otra igual. La jugada buena no cambia: ¿qué hace en su lugar?</p>
+      <p class="posicion"><strong>La posición.</strong> Juegan las blancas. Piezas blancas: rey en g1; dama en c4; torres en c1, f1; peones en a4, b2, b3, d5, f2, g2, h2. Piezas negras: rey en g8; dama en c5; torres en a6, c8; peones en a5, b7, d6, e7, f7, g6, h7.
+      Las negras acaban de jugar … torre cesar 8.
+      <span class="fen">FEN: 2r3k1/1p2pp1p/r2p2p1/p1qP4/P1Q5/1P6/1P3PPP/2R2RK1 w - - 5 21</span></p>
+      <p><strong>Solución.</strong> 21. dama felix 4, dama captura cesar 1, 22. torre captura cesar 1. La clave es una jugada tranquila: sin jaque ni captura, pero sin defensa. El cambio estaba ahí, pero no era lo mejor: la jugada buena conserva las piezas que trabajan.</p>
+      <p class="comprobado">Ejercicio 2TSGs de la base abierta de Lichess (CC0), rating 1990. Stockfish 16 a profundidad 18: dama felix 4 es la mejor (+4,6) y la segunda queda en +0,1.</p>
+      <p><strong>Para practicar.</strong> En tus partidas, busca un momento en que podías cambiar damas y no lo hiciste, o lo hiciste. Analiza con el motor el final que quedaba en las dos opciones.</p>
+    </section><section><h3>Lección 11: Una torre por otra</h3>
+      <p><em>El cambio de torres decide quién se queda con la columna abierta, y a veces quién gana el final.</em></p>
+      <p>Las torres se cambian casi siempre en una columna abierta: dos torres enfrentadas, una de ellas captura y la otra recaptura. Quién termina dueño de la columna depende de cuántas piezas apoyan a cada lado, así que antes de entrar en esa pelea conviene contar: si tienes dos torres dobladas contra una, la columna será tuya después del cambio.</p><p>En los finales, el cambio de torres tiene otro peso: muchas veces es el paso a un final de peones. Un final de torres con un peón de más puede ser tablas; el mismo peón de más sin torres puede ganar solo. Y al revés: si el final de peones que queda es perdido, la torre que te queda vale más que cualquier simplificación.</p><p>La regla práctica es contar dos cosas antes de cambiar torres: quién se queda con la columna y quién gana el final que queda sin ellas.</p>
+      <h4>Ejemplo de la lección 11</h4>
+      <p>En la línea buena se cambian las torres. Cuenta antes qué final queda.</p>
+      <p class="posicion"><strong>La posición.</strong> Juegan las negras. Piezas blancas: rey en f1; torres en d7, g7; peones en c3, d4, h3. Piezas negras: rey en d8; torres en b2, c2; peones en e6, g6, h7.
+      Las blancas acaban de jugar Torre david 7 jaque.
+      <span class="fen">FEN: 3k4/3R2Rp/4p1p1/8/3P4/2P4P/1rr5/5K2 b - - 9 32</span></p>
+      <p><strong>Solución.</strong> 32… rey cesar 8, 33. torre cesar 7 jaque, rey bella 8, 34. torre bella 7 jaque, torre captura bella 7, 35. torre captura bella 7 jaque, rey captura bella 7. En la línea se cambian las torres. Las torres se van y el final que queda ya está decidido: la cuenta se hizo antes del cambio.</p>
+      <p class="comprobado">Ejercicio 33KTZ de la base abierta de Lichess (CC0), rating 1406. Stockfish 16 a profundidad 18: rey cesar 8 es la mejor (+7,3) y la segunda queda en 0,0.</p>
+      <p><strong>Para practicar.</strong> En los ejercicios de este bloque, cada vez que haya torres enfrentadas, cuenta en voz alta cuántas piezas apoyan cada una antes de buscar la jugada.</p>
+    </section><section><h3>Lección 12: La torre activa no se cambia</h3>
+      <p><em>Una torre activa vale más que una pasiva. Cambiarla por la pasiva del rival es devolverle la ventaja.</em></p>
+      <p>En los finales de torres hay una idea que pesa más que un peón: la actividad. Una torre que ataca peones desde atrás, que corta al rey rival o que se instala en la séptima fila hace muchísimo más que una torre que solo defiende. Por eso el bando con la torre activa casi nunca quiere cambiarla, aunque el cambio parezca simplificar.</p><p>El bando con la torre pasiva, en cambio, sí quiere cambiar: es su forma de librarse de la presión. Cuando el rival te ofrece un cambio de torres, mira cuál de las dos es la buena. Si es la tuya, busca una casilla donde siga activa y no se pueda cambiar.</p><p>Esta idea vale también en el medio juego con cualquier pieza: si tu pieza es claramente más activa que la que el rival te ofrece cambiar, no le hagas el favor.</p>
+      <h4>Ejemplo de la lección 12</h4>
+      <p>Podías cambiar una pieza por otra igual. La jugada buena no cambia y conserva la actividad.</p>
+      <p class="posicion"><strong>La posición.</strong> Juegan las blancas. Piezas blancas: rey en d1; torre en b8; peón en c7. Piezas negras: rey en d3; torre en h8; peón en b2.
+      Las negras acaban de jugar … rey david 3.
+      <span class="fen">FEN: 1R5r/2P5/8/8/8/3k4/1p6/3K4 w - - 3 59</span></p>
+      <p><strong>Solución.</strong> 59. torre david 8 jaque, rey eva 3, 60. rey cesar 2, bella 1 corona dama jaque, 61. rey captura bella 1.  El cambio aliviaba al rival; la jugada buena mantiene la pieza activa en su lugar.</p>
+      <p class="comprobado">Ejercicio 1uVdA de la base abierta de Lichess (CC0), rating 2202. Stockfish 16 a profundidad 18: torre david 8 jaque es la mejor (+35,4) y la segunda queda en 0,0.</p>
+      <p><strong>Para practicar.</strong> Revisa un final de torres de alguna partida tuya y marca en cada momento cuál torre era la activa. ¿Hubo un cambio que le devolvió la actividad al rival?</p>
+    </section>
+      <h3>Ejercicios del capítulo 3</h3>
+      <p>Ocho posiciones de partidas reales, de la más fácil a la más difícil. Cada una tiene una sola jugada que funciona. Las soluciones están al final.</p>
+      <article><h4>Ejercicio 17</h4><p>Pista: Antes de cambiar las torres, cuenta el final de peones que queda.</p><p class="posicion"><strong>La posición.</strong> Juegan las blancas. Piezas blancas: rey en f6; torre en f4; peón en g7. Piezas negras: rey en c5; torre en g1; peón en b4.
+      Las negras acaban de jugar … bella 4.
+      <span class="fen">FEN: 8/6P1/5K2/2k5/1p3R2/8/8/6r1 w - - 0 67</span></p></article><article><h4>Ejercicio 18</h4><p>Pista: Con damas, el rey nunca está tranquilo. ¿Te conviene que se vayan?</p><p class="posicion"><strong>La posición.</strong> Juegan las blancas. Piezas blancas: rey en g3; dama en d4; peones en f3, g2, h4. Piezas negras: rey en g7; dama en f6; peones en f7, g6, h5.
+      Las negras acaban de jugar … dama felix 6.
+      <span class="fen">FEN: 8/5pk1/5qp1/7p/3Q3P/5PK1/6P1/8 w - - 11 46</span></p></article><article><h4>Ejercicio 19</h4><p>Pista: Hay damas y torres: decide cuál de ellas te sobra y cuál te hace falta.</p><p class="posicion"><strong>La posición.</strong> Juegan las blancas. Piezas blancas: rey en g2; torre en c2; peones en a6, f3, g4, h3. Piezas negras: rey en f8; dama en e3; torre en b7; peones en e5, f6, g5.
+      Las negras acaban de jugar … torre captura bella 7.
+      <span class="fen">FEN: 5k2/1r6/P4p2/4p1p1/6P1/4qP1P/2R3K1/8 w - - 0 42</span></p></article><article><h4>Ejercicio 20</h4><p>Pista: Antes de cambiar las torres, cuenta el final de peones que queda.</p><p class="posicion"><strong>La posición.</strong> Juegan las negras. Piezas blancas: rey en g2; torre en f6; peón en g5. Piezas negras: rey en c5; torre en c6; peón en a4.
+      Las blancas acaban de jugar Torre captura felix 6.
+      <span class="fen">FEN: 8/8/2r2R2/2k3P1/p7/8/6K1/8 b - - 0 45</span></p></article><article><h4>Ejercicio 21</h4><p>Pista: Hay damas y torres: decide cuál de ellas te sobra y cuál te hace falta.</p><p class="posicion"><strong>La posición.</strong> Juegan las blancas. Piezas blancas: rey en h1; torre en f1; peones en d4, e6, g2, h3. Piezas negras: rey en h8; dama en c4; peones en b7, c6, g7, h6.
+      Las negras acaban de jugar … dama cesar 4.
+      <span class="fen">FEN: 7k/1p4p1/2p1P2p/8/2qP4/7P/6P1/5R1K w - - 1 46</span></p></article><article><h4>Ejercicio 22</h4><p>Pista: Con damas, el rey nunca está tranquilo. ¿Te conviene que se vayan?</p><p class="posicion"><strong>La posición.</strong> Juegan las blancas. Piezas blancas: rey en g3; dama en d8; peones en a2, e5, g4, h3. Piezas negras: rey en c5; dama en d4; peones en a7, b7, c6, d5, g5, h6.
+      Las negras acaban de jugar … rey cesar 5.
+      <span class="fen">FEN: 3Q4/pp6/2p4p/2kpP1p1/3q2P1/6KP/P7/8 w - - 7 56</span></p></article><article><h4>Ejercicio 23</h4><p>Pista: Con damas, el rey nunca está tranquilo. ¿Te conviene que se vayan?</p><p class="posicion"><strong>La posición.</strong> Juegan las negras. Piezas blancas: rey en f1; dama en e5; peones en a4, d4, f3. Piezas negras: rey en e7; dama en f6; peones en a5, b6, g7.
+      Las blancas acaban de jugar Dama eva 5 jaque.
+      <span class="fen">FEN: 8/4k1p1/1p3q2/p3Q3/P2P4/5P2/8/5K2 b - - 2 45</span></p></article><article><h4>Ejercicio 24</h4><p>Pista: Antes de cambiar las torres, cuenta el final de peones que queda.</p><p class="posicion"><strong>La posición.</strong> Juegan las blancas. Piezas blancas: rey en c3; torre en f5; peones en a4, b5. Piezas negras: rey en f7; torre en e5; peones en b6, c4, f6.
+      Las negras acaban de jugar … torre eva 5.
+      <span class="fen">FEN: 8/5k2/1p3p2/1P2rR2/P1p5/2K5/8/8 w - - 2 45</span></p></article>
+    </section><section><h2>Capítulo 4: Cambiar hacia el final</h2>
+      <section><h3>Lección 13: El final de peones: cuenta antes de cambiar</h3>
+      <p><em>Es el final al que llevan todos los cambios, y el único en el que no hay segunda oportunidad.</em></p>
+      <p>Cuando se cambia la última pieza, la partida pasa a un final de peones, y en un final de peones casi no hay posiciones dudosas: o se gana, o se entabla, o se pierde, y la diferencia suele ser un solo tiempo. Por eso el cambio que lleva a un final de peones es el más definitivo de todos.</p><p>Hay que llegar con la cuenta hecha. Las preguntas son siempre las mismas: ¿quién tiene un peón pasado o puede crearlo? ¿Qué rey llega antes al centro o a los peones rivales? ¿Quién tiene más tiempos de reserva, esas jugadas de peón que se pueden hacer para no tener que mover el rey? ¿Hay oposición y quién la tiene?</p><p>Si no puedes contestar esas preguntas antes del cambio, no cambies todavía. Una pieza en el tablero da margen de error; sin piezas, el error se paga entero.</p>
+      <h4>Ejemplo de la lección 13</h4>
+      <p>Final de peones: cuenta los tiempos de cada rey antes de mover.</p>
+      <p class="posicion"><strong>La posición.</strong> Juegan las negras. Piezas blancas: rey en e3; peones en a3, f3, h4. Piezas negras: rey en f5; peones en a5, e5, h5.
+      Las blancas acaban de jugar Anna 3.
+      <span class="fen">FEN: 8/8/8/p3pk1p/7P/P3KP2/8/8 b - - 0 48</span></p>
+      <p><strong>Solución.</strong> 48… anna 4, 49. rey eva 2, rey felix 4, 50. rey felix 2, eva 4, 51. felix captura eva 4, rey captura eva 4. Es un zugzwang: al rival le toca mover y cualquier jugada lo empeora. Un solo tiempo decide: la jugada buena es la que lo gana.</p>
+      <p class="comprobado">Ejercicio 206zZ de la base abierta de Lichess (CC0), rating 1451. Stockfish 16 a profundidad 18: a4 es la mejor (+4,5) y la segunda queda en 0,0.</p>
+      <p><strong>Para practicar.</strong> Haz cada día un final de peones de los ejercicios de este bloque, contando tiempos en voz alta antes de mover. Si te equivocas, vuelve a contar desde el principio, sin mirar la solución.</p>
+    </section><section><h3>Lección 14: Cambiar para que el rey entre</h3>
+      <p><em>Cuando se van las torres, el rey se vuelve la pieza más fuerte. El cambio le abre la puerta.</em></p>
+      <p>En el medio juego el rey se esconde; en el final, sale a pelear. Muchas veces lo que impide que tu rey entre en la posición rival es una torre que corta el camino o que amenaza jaques desde lejos. Si cambias esa torre, el rey pasa, y un rey activo contra uno pasivo suele decidir el final.</p><p>Por eso, en finales de torres, la pregunta «¿cambio las torres?» va unida a «¿qué rey es más activo después?». Si tu rey está más cerca del centro o de los peones rivales, el final de peones suele ser tuyo. Si el rey rival es el activo, el cambio le hace el trabajo.</p><p>La forma de forzar el cambio es la de siempre: ofrecer la torre en una casilla donde el rival no pueda rechazarla sin perder algo, por ejemplo cortándole el rey o atacando un peón.</p>
+      <h4>Ejemplo de la lección 14</h4>
+      <p>Hay un cambio de torres que deja un final de peones ganado. ¿Cómo lo fuerzas?</p>
+      <p class="posicion"><strong>La posición.</strong> Juegan las negras. Piezas blancas: rey en c3; torre en f6; peones en a2, c2, h5. Piezas negras: rey en g4; torre en g2; peón en f2.
+      Las blancas acaban de jugar Hector 5.
+      <span class="fen">FEN: 8/8/5R2/7P/6k1/2K5/P1P2pr1/8 b - - 0 54</span></p>
+      <p><strong>Solución.</strong> 54… torre gustav 3 jaque, 55. rey david 4, torre felix 3, 56. torre captura felix 3, rey captura felix 3. En la línea se cambian las torres, y queda un final de peones. Sin torres, el rey activo entra y el final de peones ya no tiene defensa.</p>
+      <p class="comprobado">Ejercicio 0MfrO de la base abierta de Lichess (CC0), rating 1571. Stockfish 16 a profundidad 18: torre gustav 3 jaque es la mejor (+4,8) y la segunda queda en +0,0.</p>
+      <p><strong>Para practicar.</strong> En los ejercicios de final de torres, antes de mover, señala con el dedo en el tablero el camino que haría tu rey si se cambian las torres. Si el camino está libre, busca el cambio.</p>
+    </section><section><h3>Lección 15: Cambiar para coronar</h3>
+      <p><em>Un peón avanzado vale más que su punto: a veces la pieza que hay que cambiar es la que le estorba.</em></p>
+      <p>Un peón en sexta o séptima fila ya no vale un punto: vale casi una pieza, porque obliga al rival a tener siempre algo vigilando la casilla de coronación. Muchas veces, la forma más rápida de ganar es cambiar justo esa pieza que vigila, aunque sea la mejor del rival y aunque el cambio parezca desigual.</p><p>Fíjate en que aquí el cálculo es corto y concreto: si la pieza que bloquea o controla la casilla de coronación desaparece, ¿llega el peón? Si llega, el cambio gana, sin importar si diste una torre por un alfil o la dama por una torre.</p><p>Y al revés, cuando te defiendes de un peón avanzado, tu pieza bloqueadora es la que menos se cambia. Cuidarla vale más que cualquier peón.</p>
+      <h4>Ejemplo de la lección 15</h4>
+      <p>Hay un peón muy avanzado. ¿Qué pieza le estorba, y cómo te la sacas de encima con un cambio?</p>
+      <p class="posicion"><strong>La posición.</strong> Juegan las blancas. Piezas blancas: rey en e3; torre en f7; peones en a3, c5, g7. Piezas negras: rey en h4; torre en g4; alfil en c6; peones en a6, b5, d7, e6.
+      Las negras acaban de jugar … rey hector 4.
+      <span class="fen">FEN: 8/3p1RP1/p1b1p3/1pP5/6rk/P3K3/8/8 w - - 3 46</span></p>
+      <p><strong>Solución.</strong> 46. torre felix 4, eva 5, 47. torre captura gustav 4 jaque, rey captura gustav 4, 48. gustav 8 corona dama jaque. En la línea se cambian las torres. Todo gira en torno a una clavada: la pieza clavada no puede defender. Después del cambio, el peón avanzado pesa más que cualquier pieza: ya no hay quién lo detenga a tiempo.</p>
+      <p class="comprobado">Ejercicio 3MyjL de la base abierta de Lichess (CC0), rating 1298. Stockfish 16 a profundidad 18: torre felix 4 es la mejor (+4,8) y la segunda queda en -6,0.</p>
+      <p><strong>Para practicar.</strong> Cada vez que veas un peón pasado en sexta o séptima, sea tuyo o del rival, pregúntate qué pieza lo detiene. Si se cambiara esa pieza, ¿coronaría?</p>
+    </section><section><h3>Lección 16: Transformar una ventaja en otra</h3>
+      <p><em>Una ventaja no se cobra siempre igual. A veces hay que cambiarla por otra más fácil de ganar.</em></p>
+      <p>Las ventajas cambian de forma. Una iniciativa se puede convertir en material, un material de más en un final ganado, una buena estructura en un peón pasado. Cada cambio de piezas es una oportunidad de transformar lo que tienes en algo más fácil de cobrar.</p><p>La pregunta útil es: ¿qué ventaja tengo y cuál me resultaría más simple de ganar? Si tienes la iniciativa pero el rival amenaza con consolidarse, quizá convenga cambiarla por un peón seguro. Si tienes un peón de más pero mucha presión rival, quizá convenga devolver algo para cambiar las piezas peligrosas y quedarte con un final limpio.</p><p>Los jugadores fuertes no se aferran a la forma de su ventaja: la transforman cuando hace falta, y casi siempre lo hacen con un cambio.</p>
+      <h4>Ejemplo de la lección 16</h4>
+      <p>La ventaja se puede cobrar de una forma más simple: con un cambio que deja un final de peones.</p>
+      <p class="posicion"><strong>La posición.</strong> Juegan las negras. Piezas blancas: rey en f5; dama en e4; peones en a2, b4, c3, c6, g2, h2. Piezas negras: rey en c8; dama en d3; peones en a7, c7, e3, g5, h6.
+      Las blancas acaban de jugar Dama eva 4.
+      <span class="fen">FEN: 2k5/p1p5/2P4p/5Kp1/1P2Q3/2Pqp3/P5PP/8 b - - 1 34</span></p>
+      <p><strong>Solución.</strong> 34… dama captura eva 4 jaque, 35. rey captura eva 4, eva 2. En la línea se cambian las damas, y queda un final de peones. El peón avanzado decide: hay que empujarlo o aprovecharlo a tiempo. La ventaja con damas se convierte en un final de peones sin discusión: la misma ventaja, mucho más fácil de ganar.</p>
+      <p class="comprobado">Ejercicio 2IfUl de la base abierta de Lichess (CC0), rating 1260. Stockfish 16 a profundidad 18: dama captura eva 4 jaque es la mejor (+5,3) y la segunda queda en -3,8.</p>
+      <p><strong>Para practicar.</strong> Revisa una partida en la que tenías ventaja y no ganaste. Busca el momento en que podías transformarla en un final simple con un cambio. ¿Qué te impidió hacerlo?</p>
+    </section>
+      <h3>Ejercicios del capítulo 4</h3>
+      <p>Ocho posiciones de partidas reales, de la más fácil a la más difícil. Cada una tiene una sola jugada que funciona. Las soluciones están al final.</p>
+      <article><h4>Ejercicio 25</h4><p>Pista: Antes de cambiar las torres, cuenta el final de peones que queda.</p><p class="posicion"><strong>La posición.</strong> Juegan las negras. Piezas blancas: rey en f4; torre en g4; peones en a4, b5, c4, c5. Piezas negras: rey en e6; torre en g6; peones en a5, b7, c6.
+      Las blancas acaban de jugar Torre captura gustav 4.
+      <span class="fen">FEN: 8/1p6/2p1k1r1/pPP5/P1P2KR1/8/8/8 b - - 0 41</span></p></article><article><h4>Ejercicio 26</h4><p>Pista: Con damas, el rey nunca está tranquilo. ¿Te conviene que se vayan?</p><p class="posicion"><strong>La posición.</strong> Juegan las negras. Piezas blancas: rey en h3; dama en g6; peones en b4, g3, h4. Piezas negras: rey en d4; dama en e2; peones en b5, f5, h5.
+      Las blancas acaban de jugar Rey hector 3.
+      <span class="fen">FEN: 8/8/6Q1/1p3p1p/1P1k3P/6PK/4q3/8 b - - 6 64</span></p></article><article><h4>Ejercicio 27</h4><p>Pista: Sin piezas, cada tiempo cuenta: calcula el final de peones hasta el final.</p><p class="posicion"><strong>La posición.</strong> Juegan las negras. Piezas blancas: rey en d4; peones en e5, h5. Piezas negras: rey en f6; peones en a5, h6.
+      Las blancas acaban de jugar Eva 5 jaque.
+      <span class="fen">FEN: 8/8/5k1p/p3P2P/3K4/8/8/8 b - - 0 41</span></p></article><article><h4>Ejercicio 28</h4><p>Pista: Antes de cambiar las torres, cuenta el final de peones que queda.</p><p class="posicion"><strong>La posición.</strong> Juegan las negras. Piezas blancas: rey en f2; torre en e1; peones en f4, g4. Piezas negras: rey en d6; torre en e5; peones en d4, f7.
+      Las blancas acaban de jugar Felix 4.
+      <span class="fen">FEN: 8/5p2/3k4/4r3/3p1PP1/8/5K2/4R3 b - - 0 49</span></p></article><article><h4>Ejercicio 29</h4><p>Pista: Con damas, el rey nunca está tranquilo. ¿Te conviene que se vayan?</p><p class="posicion"><strong>La posición.</strong> Juegan las blancas. Piezas blancas: rey en c6; dama en e5; peones en a4, c3, g3, h4. Piezas negras: rey en h6; dama en f8; peones en a7, b6, c5, g6, h5.
+      Las negras acaban de jugar … dama felix 8.
+      <span class="fen">FEN: 5q2/p7/1pK3pk/2p1Q2p/P6P/2P3P1/8/8 w - - 3 50</span></p></article><article><h4>Ejercicio 30</h4><p>Pista: Sin piezas, cada tiempo cuenta: calcula el final de peones hasta el final.</p><p class="posicion"><strong>La posición.</strong> Juegan las blancas. Piezas blancas: rey en b2; peones en d5, e4, f2, f3, h3. Piezas negras: rey en c5; peones en b4, e5, f4, g5, h5.
+      Las negras acaban de jugar … rey cesar 5.
+      <span class="fen">FEN: 8/8/8/2kPp1pp/1p2Pp2/5P1P/1K3P2/8 w - - 4 46</span></p></article><article><h4>Ejercicio 31</h4><p>Pista: Antes de cambiar las torres, cuenta el final de peones que queda.</p><p class="posicion"><strong>La posición.</strong> Juegan las blancas. Piezas blancas: rey en d2; torre en e8; peones en c3, e3. Piezas negras: rey en b6; torre en a6; peones en d5, e6.
+      Las negras acaban de jugar … torre captura anna 6.
+      <span class="fen">FEN: 4R3/8/rk2p3/3p4/8/2P1P3/3K4/8 w - - 0 43</span></p></article><article><h4>Ejercicio 32</h4><p>Pista: Sin piezas, cada tiempo cuenta: calcula el final de peones hasta el final.</p><p class="posicion"><strong>La posición.</strong> Juegan las negras. Piezas blancas: rey en e4; peones en a3, b2, c3, f5, g4. Piezas negras: rey en e6; peones en a6, b5, c4, g7, h7.
+      Las blancas acaban de jugar Felix 5 jaque.
+      <span class="fen">FEN: 8/6pp/p3k3/1p3P2/2p1K1P1/P1P5/1P6/8 b - - 0 42</span></p></article>
+    </section><section><h2>Capítulo 5: Defenderse con los cambios</h2>
+      <section><h3>Lección 17: Simplificar para aguantar</h3>
+      <p><em>El que se defiende quiere menos piezas en el tablero: cada cambio es una amenaza menos.</em></p>
+      <p>La regla del bando con ventaja tiene su espejo: el que se defiende busca cambios. Cada pieza rival que desaparece es una pieza menos que puede atacar, y cada cambio acerca la partida a un final donde muchas veces hay recursos de tablas que en el medio juego no existen.</p><p>Pero no cualquier cambio sirve. El defensor quiere cambiar las piezas que atacan, no las que defienden; quiere cambiar piezas, pero no siempre peones; y quiere llegar a finales que se puedan sostener, como los de alfiles de distinto color o los de torres con pocos peones. Simplificar hacia un final de peones perdido es simplificar hacia la derrota.</p><p>Defenderse bien es buscar la jugada que salva, no la que gana. Muchas veces es una sola, y casi nunca es la que uno quiere hacer.</p>
+      <h4>Ejemplo de la lección 17</h4>
+      <p>Primero hay que parar lo que quiere el rival. Solo una jugada conserva la ventaja, y lleva a un cambio.</p>
+      <p class="posicion"><strong>La posición.</strong> Juegan las negras. Piezas blancas: rey en g1; dama en h5; torres en a1, e1; alfil en b2; caballo en c3; peones en a2, b3, c2, d3, e4, f2, g2, h2. Piezas negras: rey en e8; dama en d4; torres en a8, h8; alfil en b4; caballo en e7; peones en a6, b7, c6, c7, e5, f6, g7, h7.
+      Las blancas acaban de jugar Dama hector 5 jaque.
+      <span class="fen">FEN: r3k2r/1pp1n1pp/p1p2p2/4p2Q/1b1qP3/1PNP4/PBP2PPP/R3R1K1 b kq - 2 12</span></p>
+      <p><strong>Solución.</strong> 12… gustav 6, 13. dama hector 6, alfil captura cesar 3, 14. alfil captura cesar 3, dama captura cesar 3. En la línea se cambian una pieza menor por otra. Es una jugada defensiva precisa: la única que sostiene la posición. Con el cambio se acaba lo que amenazaba el rival y la ventaja sigue en pie; cualquier otra jugada la deja escapar.</p>
+      <p class="comprobado">Ejercicio 35DZy de la base abierta de Lichess (CC0), rating 1554. Stockfish 16 a profundidad 18: g6 es la mejor (+3,8) y la segunda queda en +0,2.</p>
+      <p><strong>Para practicar.</strong> En tu próxima partida difícil, antes de cada jugada, pregúntate qué pieza rival es la más peligrosa y si hay una forma de cambiarla. Después de la partida, revisa si lo lograste.</p>
+    </section><section><h3>Lección 18: Cambiar la pieza que ataca</h3>
+      <p><em>En un ataque, casi siempre hay una pieza que hace el trabajo. Si te la puedes cambiar, el ataque se apaga.</em></p>
+      <p>Un ataque contra el rey rara vez lo hacen todas las piezas por igual. Suele haber una que es la clave: la dama que amenaza mate, el alfil que apunta al enroque, el caballo instalado cerca del rey. Si esa pieza desaparece, las demás no alcanzan.</p><p>Defenderse cambiando esa pieza es más eficaz que tapar amenazas una por una. Busca con qué pieza tuya puedes ponerte enfrente de ella, aunque tengas que dar algo de calidad o un peón. Un ataque sin su pieza clave es un ataque que ya no asusta.</p><p>Del lado del atacante, la lección es la contraria: tu pieza clave no se cambia. Si el rival te la ofrece, busca una casilla donde siga atacando.</p>
+      <h4>Ejemplo de la lección 18</h4>
+      <p>Primero hay que parar lo que quiere el rival. Solo una jugada conserva la ventaja, y en su línea se cambian piezas pesadas.</p>
+      <p class="posicion"><strong>La posición.</strong> Juegan las negras. Piezas blancas: rey en c1; torre en f8; alfil en a2; peones en a3, b2, c3, d4. Piezas negras: rey en f6; torre en f4; peones en a6, c6, d5, f3, g6.
+      Las blancas acaban de jugar Torre felix 8 jaque.
+      <span class="fen">FEN: 5R2/8/p1p2kp1/3p4/3P1r2/P1P2p2/BP6/2K5 b - - 3 39</span></p>
+      <p><strong>Solución.</strong> 39… rey gustav 5, 40. torre captura felix 4, rey captura felix 4, 41. rey david 2, rey gustav 3. En la línea se cambian las torres. Es una jugada defensiva precisa: la única que sostiene la posición. Se cambia una pieza pesada, se apaga el contrajuego y la ventaja queda intacta.</p>
+      <p class="comprobado">Ejercicio 0Twlj de la base abierta de Lichess (CC0), rating 1307. Stockfish 16 a profundidad 18: rey gustav 5 es la mejor (+3,3) y la segunda queda en -6,6.</p>
+      <p><strong>Para practicar.</strong> En los ejercicios de defensa, señala primero la pieza rival más peligrosa. Si la jugada que salva no la cambia, explica qué hace en su lugar.</p>
+    </section><section><h3>Lección 19: Defender sin cambiar</h3>
+      <p><em>No siempre el cambio salva. A veces la única defensa es una jugada que deja todo como está.</em></p>
+      <p>La regla de que el defensor busca cambios tiene sus trampas. Hay cambios que abren una columna para las torres rivales, que dejan un peón débil o que llevan a un final perdido. En esas posiciones la defensa correcta no simplifica: refuerza, tapa o espera.</p><p>La señal para desconfiar de un cambio defensivo es que te alivia ahora pero te deja peor después. Mira la posición que queda: si tus peones son más débiles, si el rey rival entra o si las piezas que quedan del rival son mejores que las tuyas, el cambio no era la salvación.</p><p>Las jugadas defensivas que no cambian nada son de las más difíciles de encontrar, porque no se ven como jugadas. Pero muchas veces son las únicas.</p>
+      <h4>Ejemplo de la lección 19</h4>
+      <p>Podías cambiar una pieza por otra igual, pero ese no es el camino: solo una jugada conserva la ventaja.</p>
+      <p class="posicion"><strong>La posición.</strong> Juegan las negras. Piezas blancas: rey en d1; torre en g6; caballo en e6; peones en f4, g3, h7. Piezas negras: rey en f8; torre en h2; alfil en c4; peones en a6, d3, f5.
+      Las blancas acaban de jugar Caballo eva 6 jaque.
+      <span class="fen">FEN: 5k2/7P/p3N1R1/5p2/2b2P2/3p2P1/7r/3K4 b - - 1 47</span></p>
+      <p><strong>Solución.</strong> 47… rey felix 7, 48. hector 8 corona caballo jaque, torre captura hector 8. Es una jugada defensiva precisa: la única que sostiene la posición. El cambio parecía aliviar, pero la jugada buena es otra: defenderse no siempre es simplificar.</p>
+      <p class="comprobado">Ejercicio 1hdjX de la base abierta de Lichess (CC0), rating 1955. Stockfish 16 a profundidad 18: rey felix 7 es la mejor (+5,4) y la segunda queda en +0,1.</p>
+      <p><strong>Para practicar.</strong> Busca en tus partidas un cambio que hiciste para defenderte y que terminó mal. Analiza qué otra jugada tenías.</p>
+    </section><section><h3>Lección 20: Una pieza encerrada vale menos</h3>
+      <p><em>El valor de una pieza lo da lo que puede hacer. Una pieza sin casillas vale lo que el rival quiera pagar por ella.</em></p>
+      <p>Una torre vale cinco puntos cuando tiene columnas; encerrada detrás de sus peones vale mucho menos. Un alfil vale tres cuando tiene diagonales; atrapado en una esquina, puede perderse por un peón. El valor en puntos es un promedio: el valor real depende de las casillas que tiene la pieza.</p><p>Esto pesa en cada decisión de cambio. Si una pieza tuya quedó encerrada, cambiarla por una activa del rival es un buen negocio aunque el papel diga que perdiste material. Si una pieza rival quedó atrapada, no la cambies: es mejor ganarla, o dejarla ahí mirando cómo juegan las demás.</p><p>Y antes de llevar una pieza a una casilla lejana, pregúntate si tiene por dónde volver. Una pieza sin salida es una pieza que el rival te puede cobrar cuando quiera.</p>
+      <h4>Ejemplo de la lección 20</h4>
+      <p>Hay una pieza con muy pocas casillas. ¿Cómo lo aprovechas?</p>
+      <p class="posicion"><strong>La posición.</strong> Juegan las blancas. Piezas blancas: rey en g1; dama en g3; torre en a1; alfiles en c1, d3; caballo en b1; peones en a2, b2, c3, e4, f5, g2, h3. Piezas negras: rey en g8; dama en f6; torres en a8, f8; alfil en g7; caballo en e7; peones en a7, b7, d6, e5, f7, g6, h5.
+      Las negras acaban de jugar … caballo eva 7.
+      <span class="fen">FEN: r4rk1/pp2npb1/3p1qp1/4pP1p/4P3/2PB2QP/PP4P1/RNB3K1 w - - 4 17</span></p>
+      <p><strong>Solución.</strong> 17. alfil gustav 5, dama captura gustav 5, 18. dama captura gustav 5. Una pieza rival queda atrapada, sin casilla adonde ir. La pieza vale lo que puede hacer: sin casillas, no vale sus puntos.</p>
+      <p class="comprobado">Ejercicio 0aIwq de la base abierta de Lichess (CC0), rating 1493. Stockfish 16 a profundidad 18: alfil gustav 5 es la mejor (+5,2) y la segunda queda en -1,7.</p>
+      <p><strong>Para practicar.</strong> En tus partidas, marca las piezas que en algún momento se quedaron con una o dos casillas. ¿Qué pasó con ellas después?</p>
+    </section>
+      <h3>Ejercicios del capítulo 5</h3>
+      <p>Ocho posiciones de partidas reales, de la más fácil a la más difícil. Cada una tiene una sola jugada que funciona. Las soluciones están al final.</p>
+      <article><h4>Ejercicio 33</h4><p>Pista: Juega por el rival primero: ¿qué amenaza? Solo una jugada lo para.</p><p class="posicion"><strong>La posición.</strong> Juegan las negras. Piezas blancas: rey en e1; dama en g4; torres en a1, h1; alfil en c1; caballos en b1, e6; peones en a2, b2, c2, e4, f2, g2, h2. Piezas negras: rey en d8; dama en c8; torres en a8, h8; alfil en f8; caballos en b8, f6; peones en a7, b7, c7, d6, e5, h7.
+      Las blancas acaban de jugar Caballo eva 6 jaque.
+      <span class="fen">FEN: rnqk1b1r/ppp4p/3pNn2/4p3/4P1Q1/8/PPP2PPP/RNB1K2R b KQ - 2 10</span></p></article><article><h4>Ejercicio 34</h4><p>Pista: Juega por el rival primero: ¿qué amenaza? Solo una jugada lo para.</p><p class="posicion"><strong>La posición.</strong> Juegan las blancas. Piezas blancas: rey en b1; dama en h7; torre en h1; alfil en b5; caballo en g1; peones en a2, b2, c2, c5, f2, g2, h2. Piezas negras: rey en c8; dama en c3; torre en d8; alfiles en g4, h6; caballo en c6; peones en a7, b7, e4, e7, f6.
+      Las negras acaban de jugar … dama captura cesar 3.
+      <span class="fen">FEN: 2kr4/pp2p2Q/2n2p1b/1BP5/4p1b1/2q5/PPP2PPP/1K4NR w - - 0 14</span></p></article><article><h4>Ejercicio 35</h4><p>Pista: Juega por el rival primero: ¿qué amenaza? Solo una jugada lo para.</p><p class="posicion"><strong>La posición.</strong> Juegan las negras. Piezas blancas: rey en e1; dama en g4; torres en a1, g1; alfil en f4; caballo en g6; peones en a3, c2, c3, d4, e3, f2, h6. Piezas negras: rey en g8; dama en e7; torres en a8, f8; alfiles en b7, f6; peones en a6, b5, c4, c7, e6, h7.
+      Las blancas acaban de jugar Caballo captura gustav 6.
+      <span class="fen">FEN: r4rk1/1bp1q2p/p3pbNP/1p6/2pP1BQ1/P1P1P3/2P2P2/R3K1R1 b Q - 0 20</span></p></article><article><h4>Ejercicio 36</h4><p>Pista: Juega por el rival primero: ¿qué amenaza? Solo una jugada lo para.</p><p class="posicion"><strong>La posición.</strong> Juegan las blancas. Piezas blancas: rey en d1; dama en a4; torres en b1, f6; caballo en a5; peones en a2, b2, c3, d4, e3. Piezas negras: rey en d7; dama en c8; torres en d8, h1; alfil en g3; peones en a6, a7, c6, d5, e6, g6.
+      Las negras acaban de jugar … torre hector 1 jaque.
+      <span class="fen">FEN: 2qr4/p2k4/p1p1pRp1/N2p4/Q2P4/2P1P1b1/PP6/1R1K3r w - - 2 24</span></p></article><article><h4>Ejercicio 37</h4><p>Pista: Juega por el rival primero: ¿qué amenaza? Solo una jugada lo para.</p><p class="posicion"><strong>La posición.</strong> Juegan las blancas. Piezas blancas: rey en g1; dama en d1; torres en a1, e1; alfil en c1; caballos en c3, g3; peones en a2, b2, c2, d2, f2, g2, h2. Piezas negras: rey en g8; dama en f4; torres en a8, f8; alfiles en a6, c5; caballos en c6, f6; peones en a7, e4, f7, g7, h7.
+      Las negras acaban de jugar … dama felix 4.
+      <span class="fen">FEN: r4rk1/p4ppp/b1n2n2/2b5/4pq2/2N3N1/PPPP1PPP/R1BQR1K1 w - - 12 13</span></p></article><article><h4>Ejercicio 38</h4><p>Pista: Juega por el rival primero: ¿qué amenaza? Solo una jugada lo para.</p><p class="posicion"><strong>La posición.</strong> Juegan las blancas. Piezas blancas: rey en f2; peones en b5, d3, e2, g3, h2. Piezas negras: rey en f6; alfil en c6; peones en b6, f5, g6, h7.
+      Las negras acaban de jugar … alfil captura cesar 6.
+      <span class="fen">FEN: 8/7p/1pb2kp1/1P3p2/8/3P2P1/4PK1P/8 w - - 0 42</span></p></article><article><h4>Ejercicio 39</h4><p>Pista: Juega por el rival primero: ¿qué amenaza? Solo una jugada lo para.</p><p class="posicion"><strong>La posición.</strong> Juegan las blancas. Piezas blancas: rey en e1; peones en a2, b3, c4. Piezas negras: rey en c3; torre en e2; peones en c5, g4.
+      Las negras acaban de jugar … torre captura eva 2 jaque.
+      <span class="fen">FEN: 8/8/8/2p5/2P3p1/1Pk5/P3r3/4K3 w - - 0 56</span></p></article><article><h4>Ejercicio 40</h4><p>Pista: Juega por el rival primero: ¿qué amenaza? Solo una jugada lo para.</p><p class="posicion"><strong>La posición.</strong> Juegan las negras. Piezas blancas: rey en c1; dama en d3; torres en d1, h1; alfiles en c2, e3; caballo en g5; peones en a2, b3, c4, f2, g3, h2. Piezas negras: rey en g8; dama en c7; torres en d8, f8; alfiles en d6, d7; caballo en e4; peones en a7, b7, c6, f5, g7, h7.
+      Las blancas acaban de jugar Caballo gustav 5.
+      <span class="fen">FEN: 3r1rk1/ppqb2pp/2pb4/5pN1/2P1n3/1P1QB1P1/P1B2P1P/2KR3R b - - 8 19</span></p></article>
+    </section>
+<section><h2>Capítulo 6: Los cambios paradójicos</h2>
+<section><h3>Lección 21: Cambiar tu mejor pieza</h3>
+      <p><em>Parece absurdo, pero a veces la pieza que más trabaja es la que conviene cambiar, porque se lleva a la mejor del rival.</em></p>
+      <p>La regla dice que no se cambia la pieza buena por la mala del rival. Pero hay posiciones en las que tu mejor pieza puede cambiarse por la mejor del rival, y lo que queda en el tablero te favorece. Lo que importa no es la pieza que entregas, sino la diferencia entre lo que queda de cada lado.</p><p>El caso típico: tienes un caballo excelente y el rival un alfil que defiende todo. Si cambias el caballo por ese alfil, pierdes tu mejor pieza, pero el rival pierde a su único defensor y tus otras piezas entran. El cambio paradójico se reconoce porque lo que queda después es mejor para ti que lo que había antes, aunque cada pieza por separado diga lo contrario.</p><p>Para verlo hay que dejar de pensar pieza por pieza y pensar en la posición entera después del cambio.</p>
+      <h4>Ejemplo de la lección 21</h4>
+      <p>El cambio que gana se lleva una pieza que el rival necesitaba.</p>
+      <p class="posicion"><strong>La posición.</strong> Juegan las blancas. Piezas blancas: rey en g1; dama en f4; torres en e1, f1; alfil en e5; caballo en c3; peones en a2, b2, c2, d4, g2, h2. Piezas negras: rey en c8; dama en g6; torres en d8, h8; alfiles en d6, f5; caballo en e7; peones en a7, c7, g7, h7.
+      Las negras acaban de jugar … dama gustav 6.
+      <span class="fen">FEN: 2kr3r/p1p1n1pp/3b2q1/4Bb2/3P1Q2/2N5/PPP3PP/4RRK1 w - - 7 18</span></p>
+      <p><strong>Solución.</strong> 18. alfil captura david 6, dama captura david 6, 19. dama captura david 6, torre captura david 6, 20. torre captura eva 7. En la línea se cambian una pieza menor por otra y las damas. Se captura al defensor y lo que defendía queda colgado. Lo que cuenta no es la pieza que se entrega, sino lo que queda después: el rival se quedó sin la pieza que sostenía su posición.</p>
+      <p class="comprobado">Ejercicio 1S1al de la base abierta de Lichess (CC0), rating 1634. Stockfish 16 a profundidad 18: alfil captura david 6 es la mejor (+3,0) y la segunda queda en -0,7.</p>
+      <p><strong>Para practicar.</strong> Cuando analices tus partidas con motor, presta atención a los cambios que el motor sugiere y que tú no habrías hecho. Pregúntate qué ve: casi siempre es lo que queda después.</p>
+    </section><section><h3>Lección 22: Con ventaja, a veces no se cambia</h3>
+      <p><em>La regla de cambiar con ventaja tiene una excepción importante: cuando el cambio le quita al rival sus problemas.</em></p>
+      <p>Tienes ventaja y el rival te ofrece un cambio. La regla dice que lo aceptes. Pero si el rival está apretado, con piezas pasivas y sin jugadas útiles, cada cambio le da aire. Su problema era la falta de espacio para tantas piezas; si se van piezas, el problema desaparece.</p><p>Lo mismo pasa cuando tu ventaja es dinámica: un ataque, una iniciativa, un desarrollo mejor. Esas ventajas viven de las piezas. Si las cambias, el ataque se apaga y la iniciativa se evapora antes de convertirse en algo concreto.</p><p>La pregunta para decidir es siempre la misma: ¿el cambio le quita un problema al rival o se lo agrava? Si se lo quita, busca otra jugada, aunque la regla diga lo contrario.</p>
+      <h4>Ejemplo de la lección 22</h4>
+      <p>Podías cambiar una pieza por otra igual. La jugada que gana mantiene la tensión.</p>
+      <p class="posicion"><strong>La posición.</strong> Juegan las negras. Piezas blancas: rey en c1; dama en c6; torres en b6, h1; alfil en e3; peones en b2, c3, f2, g2, h2. Piezas negras: rey en g8; dama en e2; torres en b8, f8; peones en e5, f7, g7, h7.
+      Las blancas acaban de jugar Torre bella 6.
+      <span class="fen">FEN: 1r3rk1/5ppp/1RQ5/4p3/8/2P1B3/1P2qPPP/2K4R b - - 4 22</span></p>
+      <p><strong>Solución.</strong> 22… torre anna 8, 23. dama eva 4, torre anna 1 jaque, 24. dama bella 1, torre captura bella 1 jaque. La clave es una jugada tranquila: sin jaque ni captura, pero sin defensa. El cambio aliviaba al rival; la jugada tranquila mantiene sus problemas y decide.</p>
+      <p class="comprobado">Ejercicio 0ZRCk de la base abierta de Lichess (CC0), rating 1853. Stockfish 16 a profundidad 18: torre anna 8 es la mejor (+3,6) y la segunda queda en -4,2.</p>
+      <p><strong>Para practicar.</strong> Busca una partida tuya en la que el rival estaba apretado y se liberó con cambios. ¿En qué momento pudiste evitarlos?</p>
+    </section><section><h3>Lección 23: Devolver material para cambiar</h3>
+      <p><em>A veces conviene devolver parte de la ventaja para cambiar las piezas que todavía podían complicar.</em></p>
+      <p>Tener más material no sirve de nada si el rival tiene un ataque o una amenaza que no puedes parar. En esos casos, devolver un peón o la calidad para cambiar las piezas peligrosas puede ser la forma más segura de ganar: tienes un poco menos, pero ya no hay nada que temer.</p><p>El razonamiento es frío: ¿con cuánto material de más gano el final que queda? Si la respuesta es «con menos de lo que tengo ahora», no hace falta conservar todo. Lo importante es que el final que queda se gane sin riesgo.</p><p>Los jugadores que no saben devolver material sufren con ventaja: defienden cada peón como si fuera el último y terminan dejando que el rival cree complicaciones. Saber devolver es una forma de saber cambiar.</p>
+      <h4>Ejemplo de la lección 23</h4>
+      <p>La línea que gana pasa por un cambio de piezas pesadas. ¿Cómo lo consigues?</p>
+      <p class="posicion"><strong>La posición.</strong> Juegan las negras. Piezas blancas: rey en g2; torres en d4, d6; peones en g4, h2. Piezas negras: rey en d1; torre en d2; peones en a5, e2, g5, h6.
+      Las blancas acaban de jugar Torre eva david 4.
+      <span class="fen">FEN: 8/8/3R3p/p5p1/3R2P1/8/3rp1KP/3k4 b - - 7 59</span></p>
+      <p><strong>Solución.</strong> 59… eva 1 corona dama jaque, 60. torre captura david 2 jaque, dama captura david 2 jaque, 61. torre captura david 2 jaque, rey captura david 2. En la línea se cambian las torres, y queda un final de peones. Es un ataque a la descubierta: al moverse una pieza, se destapa otra. Con las piezas pesadas cambiadas, el peón avanzado decide: lo que queda se gana.</p>
+      <p class="comprobado">Ejercicio 1K1Fv de la base abierta de Lichess (CC0), rating 1318. Stockfish 16 a profundidad 18: eva 1 corona dama jaque es la mejor (+6,9) y la segunda queda en -0,8.</p>
+      <p><strong>Para practicar.</strong> En una partida en la que tenías material de más y sufriste, busca si había un momento en que devolver algo te llevaba a un final simple y ganado.</p>
+    </section><section><h3>Lección 24: Antes de cambiar, cinco preguntas</h3>
+      <p><em>Un método para no cambiar por costumbre: cinco preguntas que se hacen en treinta segundos.</em></p>
+      <p>Todo lo de este curso se resume en una idea: el cambio es una decisión, no un trámite. Para que deje de ser un trámite, sirve tener una lista corta de preguntas que se hacen antes de cada cambio importante. No hace falta hacerlas en cada jugada; basta con los cambios que transforman la posición: damas, torres, la última pieza menor.</p><p>Las cinco preguntas son estas. Uno: ¿qué hacía mi pieza y qué hacía la del rival? Dos: ¿quién queda con las piezas más activas? Tres: ¿qué pasa con la estructura de peones y con los reyes? Cuatro: ¿qué final queda si se siguen cambiando piezas, y quién lo gana? Cinco: ¿el cambio le quita un problema al rival o me quita uno a mí?</p><p>Si las cinco respuestas te favorecen, cambia sin miedo. Si alguna no, piénsalo dos veces. Con el tiempo, las preguntas se vuelven automáticas, y el cambio de piezas pasa de ser una costumbre a ser un arma.</p>
+      
+      <p><strong>Para practicar.</strong> Copia las cinco preguntas en una tarjeta y tenla a mano en tus próximas diez partidas lentas. Después de cada partida, revisa los cambios que hiciste y anota qué pregunta te faltó hacer. Llévale la tarjeta a tu profesor: con ella se ve qué tipo de cambio te cuesta más.</p>
+    </section>
+<h3>La tarjeta de las cinco preguntas</h3>
+<p>Antes de un cambio importante (damas, torres, la última pieza menor), hazte estas cinco preguntas:</p>
+<ol><li>¿Qué hacía mi pieza y qué hacía la del rival?</li><li>¿Quién queda con las piezas más activas?</li><li>¿Qué pasa con la estructura de peones y con los reyes?</li><li>¿Qué final queda si se siguen cambiando piezas, y quién lo gana?</li><li>¿El cambio le quita un problema al rival o me quita uno a mí?</li></ol>
+<p>Si las cinco te favorecen, cambia. Si alguna no, piénsalo dos veces. Después de cada partida lenta, anota los cambios
+importantes que hiciste y qué preguntas te hiciste antes de cada uno: con el tiempo vas a ver cuál se te olvida.</p>
+</section>
+<section><h2>Ejercicios mixtos</h2>
+<p>Posiciones de todos los capítulos, sin decir qué buscar, de la más fácil a la más difícil. En todas hay una decisión de cambio.</p>
+<article><h4>Ejercicio 41</h4><p class="posicion"><strong>La posición.</strong> Juegan las blancas. Piezas blancas: rey en c1; dama en e3; torres en d1, h1; alfiles en d2, f1; caballo en f3; peones en a2, b2, f4, g2, h3. Piezas negras: rey en g8; dama en c5; torres en a8, f8; alfiles en c4, e7; caballo en c6; peones en a7, b7, c7, f7, g7, h7.
+      Las negras acaban de jugar … alfil captura cesar 4.
+      <span class="fen">FEN: r4rk1/ppp1bppp/2n5/2q5/2b2P2/4QN1P/PP1B2P1/2KR1B1R w - - 0 14</span></p></article><article><h4>Ejercicio 42</h4><p class="posicion"><strong>La posición.</strong> Juegan las negras. Piezas blancas: rey en g5; torre en c7; peones en g6, h3. Piezas negras: rey en d5; torre en b4; peones en c2, d6.
+      Las blancas acaban de jugar Rey gustav 5.
+      <span class="fen">FEN: 8/2R5/3p2P1/3k2K1/1r6/7P/2p5/8 b - - 3 55</span></p></article><article><h4>Ejercicio 43</h4><p class="posicion"><strong>La posición.</strong> Juegan las negras. Piezas blancas: rey en h4; dama en d2; peón en g3. Piezas negras: rey en c5; dama en b5; peón en a4.
+      Las blancas acaban de jugar Rey hector 4.
+      <span class="fen">FEN: 8/8/8/1qk5/p6K/6P1/3Q4/8 b - - 25 74</span></p></article><article><h4>Ejercicio 44</h4><p class="posicion"><strong>La posición.</strong> Juegan las blancas. Piezas blancas: rey en e3; torre en e2; caballo en c3; peones en a4, f4, g3, h2. Piezas negras: rey en f7; torre en b2; caballo en d3; peones en c4, c6, d5, g6, h7.
+      Las negras acaban de jugar … torre captura bella 2.
+      <span class="fen">FEN: 8/5k1p/2p3p1/3p4/P1p2P2/2NnK1P1/1r2R2P/8 w - - 0 39</span></p></article><article><h4>Ejercicio 45</h4><p class="posicion"><strong>La posición.</strong> Juegan las negras. Piezas blancas: rey en c7; caballo en c6; peón en b7. Piezas negras: rey en f4; caballo en e5; peón en h2.
+      Las blancas acaban de jugar Bella 7.
+      <span class="fen">FEN: 8/1PK5/2N5/4n3/5k2/8/7p/8 b - - 0 76</span></p></article><article><h4>Ejercicio 46</h4><p class="posicion"><strong>La posición.</strong> Juegan las negras. Piezas blancas: rey en g1; dama en c5; peones en a2, b3, c4, g2, h3. Piezas negras: rey en g7; torre en e4; peones en d3, f7, g6, h5.
+      Las blancas acaban de jugar Dama captura cesar 5.
+      <span class="fen">FEN: 8/5pk1/6p1/2Q4p/2P1r3/1P1p3P/P5P1/6K1 b - - 0 33</span></p></article><article><h4>Ejercicio 47</h4><p class="posicion"><strong>La posición.</strong> Juegan las negras. Piezas blancas: rey en e4; alfil en c6; peón en b5. Piezas negras: rey en c5; alfil en c4; peón en b6.
+      Las blancas acaban de jugar Rey eva 4.
+      <span class="fen">FEN: 8/8/1pB5/1Pk5/2b1K3/8/8/8 b - - 6 40</span></p></article><article><h4>Ejercicio 48</h4><p class="posicion"><strong>La posición.</strong> Juegan las blancas. Piezas blancas: rey en d3; alfil en c7; peones en a3, b4, g5, h4. Piezas negras: rey en d5; caballo en d6; peones en a6, b5, f7, g6.
+      Las negras acaban de jugar … caballo david 6.
+      <span class="fen">FEN: 8/2B2p2/p2n2p1/1p1k2P1/1P5P/P2K4/8/8 w - - 6 49</span></p></article><article><h4>Ejercicio 49</h4><p class="posicion"><strong>La posición.</strong> Juegan las negras. Piezas blancas: rey en g3; alfil en f1; caballo en g4; peones en a4, b5, c4, d5, e4, f3. Piezas negras: rey en h5; alfil en d7; caballo en f4; peones en a7, b6, c5, d6, e5, g6.
+      Las blancas acaban de jugar Caballo gustav 4.
+      <span class="fen">FEN: 8/p2b4/1p1p2p1/1PpPp2k/P1P1PnN1/5PK1/8/5B2 b - - 11 41</span></p></article><article><h4>Ejercicio 50</h4><p class="posicion"><strong>La posición.</strong> Juegan las negras. Piezas blancas: rey en d3; torre en f3; peón en a3. Piezas negras: rey en g6; torre en a6; peón en c6.
+      Las blancas acaban de jugar Rey david 3.
+      <span class="fen">FEN: 8/8/r1p3k1/8/8/P2K1R2/8/8 b - - 2 42</span></p></article><article><h4>Ejercicio 51</h4><p class="posicion"><strong>La posición.</strong> Juegan las blancas. Piezas blancas: rey en b6; dama en c5; peón en b5. Piezas negras: rey en e6; dama en f3; peón en f4.
+      Las negras acaban de jugar … dama captura felix 3.
+      <span class="fen">FEN: 8/8/1K2k3/1PQ5/5p2/5q2/8/8 w - - 0 56</span></p></article><article><h4>Ejercicio 52</h4><p class="posicion"><strong>La posición.</strong> Juegan las negras. Piezas blancas: rey en g2; alfil en b7; caballo en b5; peones en a4, c2, d3, f2, g3, h2. Piezas negras: rey en d6; alfiles en b4, d7; peones en a5, f5, g7, h7.
+      Las blancas acaban de jugar Caballo bella 5 jaque.
+      <span class="fen">FEN: 8/1B1b2pp/3k4/pN3p2/Pb6/3P2P1/2P2PKP/8 b - - 2 36</span></p></article><article><h4>Ejercicio 53</h4><p class="posicion"><strong>La posición.</strong> Juegan las blancas. Piezas blancas: rey en c6; caballo en c5; peón en b4. Piezas negras: rey en f6; caballo en e6; peón en f5.
+      Las negras acaban de jugar … caballo eva 6.
+      <span class="fen">FEN: 8/8/2K1nk2/2N2p2/1P6/8/8/8 w - - 2 53</span></p></article><article><h4>Ejercicio 54</h4><p class="posicion"><strong>La posición.</strong> Juegan las negras. Piezas blancas: rey en h1; torres en a1, g3; caballo en e4; peones en b2, b4, d4, e5, f3, f6, h2. Piezas negras: rey en f8; torres en f4, h4; alfil en b7; peones en c4, e6, f7, g6, h3.
+      Las blancas acaban de jugar Torre anna 1.
+      <span class="fen">FEN: 5k2/1b3p2/4pPp1/4P3/1PpPNr1r/5PRp/1P5P/R6K b - - 2 35</span></p></article><article><h4>Ejercicio 55</h4><p class="posicion"><strong>La posición.</strong> Juegan las blancas. Piezas blancas: rey en g1; dama en g3; torres en c1, f1; alfil en e2; peones en a2, b2, c2, d3, d5, g2, g6, h2. Piezas negras: rey en c8; dama en g5; torres en d8, h8; caballos en d4, g8; peones en a7, b7, c7, d6, e5, g4, h7.
+      Las negras acaban de jugar … caballo david 4.
+      <span class="fen">FEN: 2kr2nr/ppp4p/3p2P1/3Pp1q1/3n2p1/3P2Q1/PPP1B1PP/2R2RK1 w - - 1 17</span></p></article><article><h4>Ejercicio 56</h4><p class="posicion"><strong>La posición.</strong> Juegan las negras. Piezas blancas: rey en h2; dama en e4; torres en a6, c1; alfil en c5; peones en c3, d4, e2, f3, g3, h4. Piezas negras: rey en g8; dama en h5; torres en e8, g6; caballo en e6; peones en b5, c4, e3, f7, g7, h7.
+      Las blancas acaban de jugar Torre captura anna 6.
+      <span class="fen">FEN: 4r1k1/5ppp/R3n1r1/1pB4q/2pPQ2P/2P1pPP1/4P2K/2R5 b - - 0 30</span></p></article><article><h4>Ejercicio 57</h4><p class="posicion"><strong>La posición.</strong> Juegan las blancas. Piezas blancas: rey en c3; alfil en e8; peones en a2, b3. Piezas negras: rey en b5; alfil en c6; peones en a5, c5.
+      Las negras acaban de jugar … alfil cesar 6.
+      <span class="fen">FEN: 4B3/8/2b5/pkp5/8/1PK5/P7/8 w - - 10 55</span></p></article><article><h4>Ejercicio 58</h4><p class="posicion"><strong>La posición.</strong> Juegan las negras. Piezas blancas: rey en b3; torre en a2; peones en c3, c5, d4. Piezas negras: rey en g8; torre en a1; peones en f7, g5.
+      Las blancas acaban de jugar Torre captura anna 2.
+      <span class="fen">FEN: 6k1/5p2/8/2P3p1/3P4/1KP5/R7/r7 b - - 0 39</span></p></article><article><h4>Ejercicio 59</h4><p class="posicion"><strong>La posición.</strong> Juegan las blancas. Piezas blancas: rey en h1; dama en d1; torres en a1, f1; alfil en g5; caballo en g3; peones en a2, b2, c3, f5, g4, h3. Piezas negras: rey en h8; dama en c7; torres en d8, f8; alfil en g7; caballo en e7; peones en a7, b5, c4, d4, e5, g6, h7.
+      Las negras acaban de jugar … david 4.
+      <span class="fen">FEN: 3r1r1k/p1q1n1bp/6p1/1p2pPB1/2pp2P1/2P3NP/PP6/R2Q1R1K w - - 0 25</span></p></article><article><h4>Ejercicio 60</h4><p class="posicion"><strong>La posición.</strong> Juegan las blancas. Piezas blancas: rey en a2; torre en d3; peones en a3, b3, c2, d7. Piezas negras: rey en g7; dama en h2; peones en a7, b6, g6, h7.
+      Las negras acaban de jugar … dama captura hector 2.
+      <span class="fen">FEN: 8/p2P2kp/1p4p1/8/8/PP1R4/K1P4q/8 w - - 0 49</span></p></article><article><h4>Ejercicio 61</h4><p class="posicion"><strong>La posición.</strong> Juegan las blancas. Piezas blancas: rey en d3; caballo en e6; peones en a3, c3, f5, g4. Piezas negras: rey en b7; caballo en f4; peones en b6, c5, f6, g5, h7.
+      Las negras acaban de jugar … caballo felix 4 jaque.
+      <span class="fen">FEN: 8/1k5p/1p2Np2/2p2Pp1/5nP1/P1PK4/8/8 w - - 2 45</span></p></article><article><h4>Ejercicio 62</h4><p class="posicion"><strong>La posición.</strong> Juegan las blancas. Piezas blancas: rey en h5; dama en f2; peón en g5. Piezas negras: rey en f5; dama en f4; peón en e5.
+      Las negras acaban de jugar … dama felix 4.
+      <span class="fen">FEN: 8/8/8/4pkPK/5q2/8/5Q2/8 w - - 9 68</span></p></article><article><h4>Ejercicio 63</h4><p class="posicion"><strong>La posición.</strong> Juegan las negras. Piezas blancas: rey en g3; alfil en h4; peones en e3, g5. Piezas negras: rey en f5; caballo en e5; peones en e4, h5.
+      Las blancas acaban de jugar Rey gustav 3.
+      <span class="fen">FEN: 8/8/8/4nkPp/4p2B/4P1K1/8/8 b - - 3 51</span></p></article><article><h4>Ejercicio 64</h4><p class="posicion"><strong>La posición.</strong> Juegan las blancas. Piezas blancas: rey en g1; dama en e2; torres en a1, e1; alfiles en b3, g5; caballos en c3, e5; peones en a2, b2, d4, f2, g2, h2. Piezas negras: rey en g8; dama en d8; torres en c8, f8; alfiles en c6, e7; caballos en b6, f6; peones en a7, b7, e6, f7, g7, h7.
+      Las negras acaban de jugar … alfil cesar 6.
+      <span class="fen">FEN: 2rq1rk1/pp2bppp/1nb1pn2/4N1B1/3P4/1BN5/PP2QPPP/R3R1K1 w - - 16 15</span></p></article>
+</section>
+<section><h2>Soluciones</h2>
+<article><h4>Solución del ejercicio 1</h4>
+      <p>31. dama captura felix 5, torre captura felix 5, 32. torre captura david 7</p>
+      <p>En la línea se cambian las damas. Hay una jugada intermedia: antes de lo obvio, algo más fuerte. Una pieza rival defiende todo. ¿Qué pasa si la cambias?</p>
+      <p class="comprobado">Ejercicio 2uMUi de la base abierta de Lichess (CC0), rating 1473. Stockfish 16 a profundidad 18: dama captura felix 5 es la mejor (+3,0) y la segunda queda en -5,2.</p></article><article><h4>Solución del ejercicio 2</h4>
+      <p>51… dama felix 5 jaque, 52. dama captura felix 5 jaque, rey captura felix 5</p>
+      <p>En la línea se cambian las damas, y queda un final de peones. Con damas, el rey nunca está tranquilo. ¿Te conviene que se vayan?</p>
+      <p class="comprobado">Ejercicio 1lEBF de la base abierta de Lichess (CC0), rating 1489. Stockfish 16 a profundidad 18: dama felix 5 jaque es la mejor (+5,7) y la segunda queda en +0,3.</p></article><article><h4>Solución del ejercicio 3</h4>
+      <p>21… torre captura cesar 1 jaque, 22. alfil captura cesar 1, torre david 8, 23. hector 4, torre david 1 jaque, 24. rey hector 2, torre captura cesar 1</p>
+      <p>En la línea se cambian las torres. Es una horquilla: una pieza ataca dos objetivos a la vez. No hay captura que gane ya: busca la jugada tranquila que obliga al cambio que te sirve.</p>
+      <p class="comprobado">Ejercicio 1RsiF de la base abierta de Lichess (CC0), rating 1630. Stockfish 16 a profundidad 18: torre captura cesar 1 jaque es la mejor (+3,5) y la segunda queda en -3,4.</p></article><article><h4>Solución del ejercicio 4</h4>
+      <p>38. alfil felix 6, torre bella 4, 39. torre captura bella 4, cesar captura bella 4, 40. alfil captura david 4</p>
+      <p>En la línea se cambian las torres. Se captura al defensor y lo que defendía queda colgado. Una pieza rival defiende todo. ¿Qué pasa si la cambias?</p>
+      <p class="comprobado">Ejercicio 0pxjS de la base abierta de Lichess (CC0), rating 1852. Stockfish 16 a profundidad 18: alfil felix 6 es la mejor (+3,4) y la segunda queda en -0,4.</p></article><article><h4>Solución del ejercicio 5</h4>
+      <p>25. hector captura gustav 3, dama captura gustav 3, 26. alfil gustav 1, torre captura felix 1, 27. dama captura felix 1</p>
+      <p>En la línea se cambian las torres. No hay captura que gane ya: busca la jugada tranquila que obliga al cambio que te sirve.</p>
+      <p class="comprobado">Ejercicio 31r9u de la base abierta de Lichess (CC0), rating 1911. Stockfish 16 a profundidad 18: hector captura gustav 3 es la mejor (+3,0) y la segunda queda en recibe mate en 4.</p></article><article><h4>Solución del ejercicio 6</h4>
+      <p>42… dama eva 6 jaque, 43. dama captura eva 6 jaque, rey captura eva 6</p>
+      <p>En la línea se cambian las damas, y queda un final de peones. Con damas, el rey nunca está tranquilo. ¿Te conviene que se vayan?</p>
+      <p class="comprobado">Ejercicio 1eY42 de la base abierta de Lichess (CC0), rating 2011. Stockfish 16 a profundidad 18: dama eva 6 jaque es la mejor (+4,9) y la segunda queda en +1,0.</p></article><article><h4>Solución del ejercicio 7</h4>
+      <p>9… caballo captura eva 2 jaque, 10. caballo captura eva 2, dama captura david 1, 11. torre captura david 1, alfil captura eva 2</p>
+      <p>En la línea se cambian una pieza menor por otra y las damas. Es un ataque a la descubierta: al moverse una pieza, se destapa otra. Una pieza rival defiende todo. ¿Qué pasa si la cambias?</p>
+      <p class="comprobado">Ejercicio 315pu de la base abierta de Lichess (CC0), rating 2050. Stockfish 16 a profundidad 18: caballo captura eva 2 jaque es la mejor (+4,3) y la segunda queda en -1,4.</p></article><article><h4>Solución del ejercicio 8</h4>
+      <p>31… dama captura david 5, 32. cesar captura david 5, torre cesar 8, 33. torre david 1, torre cesar 1, 34. rey felix 1, torre captura david 1 jaque</p>
+      <p>En la línea se cambian las damas. Todo gira en torno a una clavada: la pieza clavada no puede defender. No hay captura que gane ya: busca la jugada tranquila que obliga al cambio que te sirve.</p>
+      <p class="comprobado">Ejercicio 2i6yb de la base abierta de Lichess (CC0), rating 2265. Stockfish 16 a profundidad 18: dama captura david 5 es la mejor (+5,0) y la segunda queda en -4,5.</p></article><article><h4>Solución del ejercicio 9</h4>
+      <p>23… alfil captura eva 5, 24. torre captura eva 5, alfil captura cesar 4</p>
+      <p>En la línea se cambian una pieza menor por otra. Se captura al defensor y lo que defendía queda colgado. Una pieza rival defiende todo. ¿Qué pasa si la cambias?</p>
+      <p class="comprobado">Ejercicio 1WbrB de la base abierta de Lichess (CC0), rating 1371. Stockfish 16 a profundidad 18: alfil captura eva 5 es la mejor (+3,9) y la segunda queda en -0,4.</p></article><article><h4>Solución del ejercicio 10</h4>
+      <p>36… alfil captura cesar 6, 37. rey captura cesar 6, eva 4, 38. rey captura bella 5, eva 3</p>
+      <p>En la línea se cambian una pieza menor por otra, y queda un final de peones. Mira de qué color son las casillas de los peones y de los alfiles antes de mover.</p>
+      <p class="comprobado">Ejercicio 2p2Sn de la base abierta de Lichess (CC0), rating 1400. Stockfish 16 a profundidad 18: alfil captura cesar 6 es la mejor (+4,0) y la segunda queda en -4,7.</p></article><article><h4>Solución del ejercicio 11</h4>
+      <p>44… caballo captura cesar 5, 45. bella captura cesar 5, rey david 5, 46. rey cesar 3, rey captura cesar 5</p>
+      <p>En la línea se cambian una pieza menor por otra, y queda un final de peones. Un caballo menos cambia todo el final: ¿quién gana si se van los caballos?</p>
+      <p class="comprobado">Ejercicio 3H3ht de la base abierta de Lichess (CC0), rating 1583. Stockfish 16 a profundidad 18: caballo captura cesar 5 es la mejor (+4,5) y la segunda queda en 0,0.</p></article><article><h4>Solución del ejercicio 12</h4>
+      <p>38… alfil captura bella 5, 39. anna captura bella 5, anna 4, 40. cesar 4, anna 3</p>
+      <p>En la línea se cambian una pieza menor por otra, y queda un final de peones. Mira de qué color son las casillas de los peones y de los alfiles antes de mover.</p>
+      <p class="comprobado">Ejercicio 1LVSA de la base abierta de Lichess (CC0), rating 1656. Stockfish 16 a profundidad 18: alfil captura bella 5 es la mejor (+4,0) y la segunda queda en 0,0.</p></article><article><h4>Solución del ejercicio 13</h4>
+      <p>27… alfil captura felix 3, 28. alfil captura felix 3, dama captura hector 4</p>
+      <p>En la línea se cambian una pieza menor por otra. Se captura al defensor y lo que defendía queda colgado. Una pieza rival defiende todo. ¿Qué pasa si la cambias?</p>
+      <p class="comprobado">Ejercicio 2RaPd de la base abierta de Lichess (CC0), rating 1698. Stockfish 16 a profundidad 18: alfil captura felix 3 es la mejor (+3,6) y la segunda queda en -0,3.</p></article><article><h4>Solución del ejercicio 14</h4>
+      <p>58. caballo captura bella 3, rey captura bella 3, 59. eva captura david 6, eva captura david 6, 60. felix 5</p>
+      <p>En la línea se cambian una pieza menor por otra, y queda un final de peones. Es una jugada defensiva precisa: la única que sostiene la posición. Un caballo menos cambia todo el final: ¿quién gana si se van los caballos?</p>
+      <p class="comprobado">Ejercicio 1yeYl de la base abierta de Lichess (CC0), rating 2030. Stockfish 16 a profundidad 18: caballo captura bella 3 es la mejor (+3,9) y la segunda queda en +0,1.</p></article><article><h4>Solución del ejercicio 15</h4>
+      <p>36. alfil captura cesar 4, bella captura cesar 4, 37. gustav 4, rey felix 6, 38. rey david 4</p>
+      <p>En la línea se cambian una pieza menor por otra, y queda un final de peones. Es un zugzwang: al rival le toca mover y cualquier jugada lo empeora. Mira de qué color son las casillas de los peones y de los alfiles antes de mover.</p>
+      <p class="comprobado">Ejercicio 2FGkN de la base abierta de Lichess (CC0), rating 2050. Stockfish 16 a profundidad 18: alfil captura cesar 4 es la mejor (+3,7) y la segunda queda en +0,1.</p></article><article><h4>Solución del ejercicio 16</h4>
+      <p>53… caballo captura gustav 5, 54. felix captura gustav 5 jaque, rey eva 5, 55. rey felix 3, rey felix 5</p>
+      <p>En la línea se cambian una pieza menor por otra, y queda un final de peones. Es un zugzwang: al rival le toca mover y cualquier jugada lo empeora. Un caballo menos cambia todo el final: ¿quién gana si se van los caballos?</p>
+      <p class="comprobado">Ejercicio 2GboY de la base abierta de Lichess (CC0), rating 2119. Stockfish 16 a profundidad 18: caballo captura gustav 5 es la mejor (+6,7) y la segunda queda en +0,1.</p></article><article><h4>Solución del ejercicio 17</h4>
+      <p>67. torre felix 5 jaque, rey cesar 4, 68. torre gustav 5, torre captura gustav 5, 69. rey captura gustav 5</p>
+      <p>En la línea se cambian las torres, y queda un final de peones. Antes de cambiar las torres, cuenta el final de peones que queda.</p>
+      <p class="comprobado">Ejercicio 2BKxG de la base abierta de Lichess (CC0), rating 1448. Stockfish 16 a profundidad 18: torre felix 5 jaque es la mejor (+7,0) y la segunda queda en 0,0.</p></article><article><h4>Solución del ejercicio 18</h4>
+      <p>46. dama captura felix 6 jaque, rey captura felix 6, 47. rey felix 4, rey eva 6, 48. rey gustav 5</p>
+      <p>En la línea se cambian las damas, y queda un final de peones. Es un zugzwang: al rival le toca mover y cualquier jugada lo empeora. Con damas, el rey nunca está tranquilo. ¿Te conviene que se vayan?</p>
+      <p class="comprobado">Ejercicio 0bU2x de la base abierta de Lichess (CC0), rating 1451. Stockfish 16 a profundidad 18: dama captura felix 6 jaque es la mejor (+4,8) y la segunda queda en 0,0.</p></article><article><h4>Solución del ejercicio 19</h4>
+      <p>42. anna captura bella 7, dama anna 7, 43. torre cesar 8 jaque, rey eva 7, 44. bella 8 corona dama, dama captura bella 8, 45. torre captura bella 8</p>
+      <p>En la línea se cambian las damas. El peón avanzado decide: hay que empujarlo o aprovecharlo a tiempo. Hay damas y torres: decide cuál de ellas te sobra y cuál te hace falta.</p>
+      <p class="comprobado">Ejercicio 0r4pt de la base abierta de Lichess (CC0), rating 1473. Stockfish 16 a profundidad 18: anna captura bella 7 es la mejor (+5,8) y la segunda queda en 0,0.</p></article><article><h4>Solución del ejercicio 20</h4>
+      <p>45… torre captura felix 6, 46. gustav captura felix 6, rey david 6, 47. felix 7, rey eva 7, 48. felix 8 corona torre, rey captura felix 8</p>
+      <p>En la línea se cambian las torres, y queda un final de peones. Antes de cambiar las torres, cuenta el final de peones que queda.</p>
+      <p class="comprobado">Ejercicio 1l9zO de la base abierta de Lichess (CC0), rating 1761. Stockfish 16 a profundidad 18: torre captura felix 6 es la mejor (+35,8) y la segunda queda en +0,1.</p></article><article><h4>Solución del ejercicio 21</h4>
+      <p>46. torre felix 8 jaque, rey hector 7, 47. eva 7, dama eva 2, 48. eva 8 corona dama, dama captura eva 8, 49. torre captura eva 8</p>
+      <p>En la línea se cambian las damas. El peón avanzado decide: hay que empujarlo o aprovecharlo a tiempo. Hay damas y torres: decide cuál de ellas te sobra y cuál te hace falta.</p>
+      <p class="comprobado">Ejercicio 2uT1Z de la base abierta de Lichess (CC0), rating 1825. Stockfish 16 a profundidad 18: torre felix 8 jaque es la mejor (+4,3) y la segunda queda en -4,5.</p></article><article><h4>Solución del ejercicio 22</h4>
+      <p>56. dama anna 5 jaque, rey cesar 4, 57. dama anna 4 jaque, rey cesar 3, 58. dama captura david 4 jaque, rey captura david 4, 59. eva 6</p>
+      <p>En la línea se cambian las damas, y queda un final de peones. Con damas, el rey nunca está tranquilo. ¿Te conviene que se vayan?</p>
+      <p class="comprobado">Ejercicio 2tTRW de la base abierta de Lichess (CC0), rating 1831. Stockfish 16 a profundidad 18: dama anna 5 jaque es la mejor (+4,2) y la segunda queda en -0,2.</p></article><article><h4>Solución del ejercicio 23</h4>
+      <p>45… dama captura eva 5, 46. david captura eva 5, gustav 5, 47. rey felix 2, rey eva 6</p>
+      <p>En la línea se cambian las damas, y queda un final de peones. Con damas, el rey nunca está tranquilo. ¿Te conviene que se vayan?</p>
+      <p class="comprobado">Ejercicio 0q5Iq de la base abierta de Lichess (CC0), rating 2143. Stockfish 16 a profundidad 18: dama captura eva 5 es la mejor (+5,1) y la segunda queda en 0,0.</p></article><article><h4>Solución del ejercicio 24</h4>
+      <p>45. torre captura eva 5, felix captura eva 5, 46. anna 5, bella captura anna 5, 47. bella 6</p>
+      <p>En la línea se cambian las torres, y queda un final de peones. Antes de cambiar las torres, cuenta el final de peones que queda.</p>
+      <p class="comprobado">Ejercicio 2grUm de la base abierta de Lichess (CC0), rating 2155. Stockfish 16 a profundidad 18: torre captura eva 5 es la mejor (+5,3) y la segunda queda en 0,0.</p></article><article><h4>Solución del ejercicio 25</h4>
+      <p>41… torre captura gustav 4 jaque, 42. rey captura gustav 4, rey eva 5, 43. rey gustav 5, rey david 4</p>
+      <p>En la línea se cambian las torres, y queda un final de peones. Antes de cambiar las torres, cuenta el final de peones que queda.</p>
+      <p class="comprobado">Ejercicio 2Sd25 de la base abierta de Lichess (CC0), rating 1441. Stockfish 16 a profundidad 18: torre captura gustav 4 jaque es la mejor (+6,2) y la segunda queda en -0,1.</p></article><article><h4>Solución del ejercicio 26</h4>
+      <p>64… dama gustav 4 jaque, 65. dama captura gustav 4 jaque, felix captura gustav 4 jaque</p>
+      <p>En la línea se cambian las damas, y queda un final de peones. Con damas, el rey nunca está tranquilo. ¿Te conviene que se vayan?</p>
+      <p class="comprobado">Ejercicio 18e8b de la base abierta de Lichess (CC0), rating 1444. Stockfish 16 a profundidad 18: dama gustav 4 jaque es la mejor (+6,8) y la segunda queda en +0,7.</p></article><article><h4>Solución del ejercicio 27</h4>
+      <p>41… rey eva 6, 42. rey eva 4, anna 4, 43. rey david 4, anna 3, 44. rey cesar 3, rey captura eva 5</p>
+      <p>La clave es una jugada tranquila: sin jaque ni captura, pero sin defensa. Sin piezas, cada tiempo cuenta: calcula el final de peones hasta el final.</p>
+      <p class="comprobado">Ejercicio 05n4L de la base abierta de Lichess (CC0), rating 1629. Stockfish 16 a profundidad 18: rey eva 6 es la mejor (+7,4) y la segunda queda en +0,1.</p></article><article><h4>Solución del ejercicio 28</h4>
+      <p>49… torre captura eva 1, 50. rey captura eva 1, rey david 5, 51. rey eva 2, rey eva 4, 52. felix 5, rey felix 4, 53. felix 6, rey captura gustav 4</p>
+      <p>En la línea se cambian las torres, y queda un final de peones. Antes de cambiar las torres, cuenta el final de peones que queda.</p>
+      <p class="comprobado">Ejercicio 1Ws47 de la base abierta de Lichess (CC0), rating 1859. Stockfish 16 a profundidad 18: torre captura eva 1 es la mejor (+6,9) y la segunda queda en 0,0.</p></article><article><h4>Solución del ejercicio 29</h4>
+      <p>50. dama felix 4 jaque, dama captura felix 4, 51. gustav captura felix 4</p>
+      <p>En la línea se cambian las damas, y queda un final de peones. Con damas, el rey nunca está tranquilo. ¿Te conviene que se vayan?</p>
+      <p class="comprobado">Ejercicio 2lc0y de la base abierta de Lichess (CC0), rating 1890. Stockfish 16 a profundidad 18: dama felix 4 jaque es la mejor (+4,1) y la segunda queda en +0,3.</p></article><article><h4>Solución del ejercicio 30</h4>
+      <p>46. rey bella 3, rey bella 5, 47. david 6, rey cesar 6, 48. rey captura bella 4, rey captura david 6, 49. rey bella 5</p>
+      <p>Es un zugzwang: al rival le toca mover y cualquier jugada lo empeora. Sin piezas, cada tiempo cuenta: calcula el final de peones hasta el final.</p>
+      <p class="comprobado">Ejercicio 3A4dt de la base abierta de Lichess (CC0), rating 1969. Stockfish 16 a profundidad 18: rey bella 3 es la mejor (+4,1) y la segunda queda en +0,4.</p></article><article><h4>Solución del ejercicio 31</h4>
+      <p>43. torre captura eva 6 jaque, rey bella 5, 44. torre captura anna 6, rey captura anna 6, 45. rey david 3, rey bella 7, 46. rey david 4, rey cesar 6, 47. cesar 4, david captura cesar 4, 48. rey captura cesar 4, rey david 6, 49. rey david 4, rey eva 6, 50. rey eva 4</p>
+      <p>En la línea se cambian las torres, y queda un final de peones. Es un zugzwang: al rival le toca mover y cualquier jugada lo empeora. Antes de cambiar las torres, cuenta el final de peones que queda.</p>
+      <p class="comprobado">Ejercicio 1FblW de la base abierta de Lichess (CC0), rating 2056. Stockfish 16 a profundidad 18: torre captura eva 6 jaque es la mejor (+6,8) y la segunda queda en 0,0.</p></article><article><h4>Solución del ejercicio 32</h4>
+      <p>42… rey felix 6, 43. rey felix 4, hector 6</p>
+      <p>Es una jugada defensiva precisa: la única que sostiene la posición. Sin piezas, cada tiempo cuenta: calcula el final de peones hasta el final.</p>
+      <p class="comprobado">Ejercicio 35ZSi de la base abierta de Lichess (CC0), rating 2071. Stockfish 16 a profundidad 18: rey felix 6 es la mejor (+3,2) y la segunda queda en +0,0.</p></article><article><h4>Solución del ejercicio 33</h4>
+      <p>10… rey eva 7, 11. alfil gustav 5, dama captura eva 6</p>
+      <p>Es una jugada defensiva precisa: la única que sostiene la posición. Juega por el rival primero: ¿qué amenaza? Solo una jugada lo para.</p>
+      <p class="comprobado">Ejercicio 2TCPk de la base abierta de Lichess (CC0), rating 1501. Stockfish 16 a profundidad 18: rey eva 7 es la mejor (+3,2) y la segunda queda en -2,6.</p></article><article><h4>Solución del ejercicio 34</h4>
+      <p>14. bella captura cesar 3, torre david 1 jaque, 15. rey bella 2, alfil cesar 1 jaque, 16. rey bella 3</p>
+      <p>Hay algo sin defender, y hay que verlo antes que el rival. Juega por el rival primero: ¿qué amenaza? Solo una jugada lo para.</p>
+      <p class="comprobado">Ejercicio 2Apo2 de la base abierta de Lichess (CC0), rating 1586. Stockfish 16 a profundidad 18: bella captura cesar 3 es la mejor (+4,4) y la segunda queda en -3,6.</p></article><article><h4>Solución del ejercicio 35</h4>
+      <p>20… hector captura gustav 6, 21. dama captura gustav 6 jaque, rey hector 8</p>
+      <p>Es una jugada defensiva precisa: la única que sostiene la posición. Juega por el rival primero: ¿qué amenaza? Solo una jugada lo para.</p>
+      <p class="comprobado">Ejercicio 39mSw de la base abierta de Lichess (CC0), rating 1632. Stockfish 16 a profundidad 18: hector captura gustav 6 es la mejor (+1,1) y la segunda queda en -6,2.</p></article><article><h4>Solución del ejercicio 36</h4>
+      <p>24. rey cesar 2, torre hector 2 jaque, 25. rey david 3</p>
+      <p>Es una jugada defensiva precisa: la única que sostiene la posición. Juega por el rival primero: ¿qué amenaza? Solo una jugada lo para.</p>
+      <p class="comprobado">Ejercicio 0yX3W de la base abierta de Lichess (CC0), rating 1805. Stockfish 16 a profundidad 18: rey cesar 2 es la mejor (+2,7) y la segunda queda en -2,6.</p></article><article><h4>Solución del ejercicio 37</h4>
+      <p>13. david 4, dama cesar 7, 14. david captura cesar 5, torre anna david 8, 15. alfil david 2</p>
+      <p>Es una jugada defensiva precisa: la única que sostiene la posición. Juega por el rival primero: ¿qué amenaza? Solo una jugada lo para.</p>
+      <p class="comprobado">Ejercicio 3PoFx de la base abierta de Lichess (CC0), rating 1815. Stockfish 16 a profundidad 18: d4 es la mejor (+1,9) y la segunda queda en -2,2.</p></article><article><h4>Solución del ejercicio 38</h4>
+      <p>42. bella captura cesar 6, rey eva 6, 43. david 4, rey david 6, 44. david 5</p>
+      <p>Es una jugada defensiva precisa: la única que sostiene la posición. Juega por el rival primero: ¿qué amenaza? Solo una jugada lo para.</p>
+      <p class="comprobado">Ejercicio 2ePct de la base abierta de Lichess (CC0), rating 1901. Stockfish 16 a profundidad 18: bella captura cesar 6 es la mejor (+3,4) y la segunda queda en -4,9.</p></article><article><h4>Solución del ejercicio 39</h4>
+      <p>56. rey captura eva 2, rey bella 4, 57. anna 4, rey captura bella 3, 58. anna 5</p>
+      <p>Es una jugada defensiva precisa: la única que sostiene la posición. Juega por el rival primero: ¿qué amenaza? Solo una jugada lo para.</p>
+      <p class="comprobado">Ejercicio 25CBt de la base abierta de Lichess (CC0), rating 2069. Stockfish 16 a profundidad 18: rey captura eva 2 es la mejor (+6,0) y la segunda queda en recibe mate en 7.</p></article><article><h4>Solución del ejercicio 40</h4>
+      <p>19… alfil anna 3 jaque, 20. rey bella 1, alfil cesar 8</p>
+      <p>Es una jugada defensiva precisa: la única que sostiene la posición. Juega por el rival primero: ¿qué amenaza? Solo una jugada lo para.</p>
+      <p class="comprobado">Ejercicio 1FspE de la base abierta de Lichess (CC0), rating 2241. Stockfish 16 a profundidad 18: alfil anna 3 jaque es la mejor (+4,3) y la segunda queda en +0,4.</p></article><article><h4>Solución del ejercicio 41</h4>
+      <p>14. dama captura cesar 5, alfil captura cesar 5, 15. alfil captura cesar 4</p>
+      <p>En la línea se cambian las damas. Hay una jugada intermedia: antes de lo obvio, algo más fuerte. Una pieza rival defiende todo. ¿Qué pasa si la cambias?</p>
+      <p class="comprobado">Ejercicio 2I24a de la base abierta de Lichess (CC0), rating 1296. Stockfish 16 a profundidad 18: dama captura cesar 5 es la mejor (+5,0) y la segunda queda en -1,5.</p></article><article><h4>Solución del ejercicio 42</h4>
+      <p>55… torre cesar 4, 56. torre captura cesar 4, rey captura cesar 4, 57. gustav 7, cesar 1 corona dama jaque</p>
+      <p>En la línea se cambian las torres. El peón avanzado decide: hay que empujarlo o aprovecharlo a tiempo. Antes de cambiar las torres, cuenta el final de peones que queda.</p>
+      <p class="comprobado">Ejercicio 3B5Ca de la base abierta de Lichess (CC0), rating 1328. Stockfish 16 a profundidad 18: torre cesar 4 es la mejor (+6,3) y la segunda queda en -5,0.</p></article><article><h4>Solución del ejercicio 43</h4>
+      <p>74… dama bella 4 jaque, 75. dama captura bella 4 jaque, rey captura bella 4</p>
+      <p>En la línea se cambian las damas, y queda un final de peones. Con damas, el rey nunca está tranquilo. ¿Te conviene que se vayan?</p>
+      <p class="comprobado">Ejercicio 2zDZZ de la base abierta de Lichess (CC0), rating 1388. Stockfish 16 a profundidad 18: dama bella 4 jaque es la mejor (+7,4) y la segunda queda en 0,0.</p></article><article><h4>Solución del ejercicio 44</h4>
+      <p>39. torre captura bella 2, caballo captura bella 2, 40. anna 5</p>
+      <p>En la línea se cambian las torres. Es una jugada defensiva precisa: la única que sostiene la posición. Juega por el rival primero: ¿qué amenaza? Solo una jugada lo para.</p>
+      <p class="comprobado">Ejercicio 3Pmm9 de la base abierta de Lichess (CC0), rating 1395. Stockfish 16 a profundidad 18: torre captura bella 2 es la mejor (+4,5) y la segunda queda en -2,9.</p></article><article><h4>Solución del ejercicio 45</h4>
+      <p>76… caballo captura cesar 6, 77. rey captura cesar 6, hector 1 corona dama jaque</p>
+      <p>En la línea se cambian una pieza menor por otra. Es una atracción: se arrastra a una pieza (a menudo el rey) a una casilla fatal. Un caballo menos cambia todo el final: ¿quién gana si se van los caballos?</p>
+      <p class="comprobado">Ejercicio 0kVhB de la base abierta de Lichess (CC0), rating 1430. Stockfish 16 a profundidad 18: caballo captura cesar 6 es la mejor (+6,5) y la segunda queda en +0,6.</p></article><article><h4>Solución del ejercicio 46</h4>
+      <p>33… david 2, 34. dama david 5, torre eva 1 jaque, 35. rey felix 2, david 1 corona dama, 36. dama captura david 1, torre captura david 1</p>
+      <p>En la línea se cambian las damas. El peón avanzado decide: hay que empujarlo o aprovecharlo a tiempo. Hay damas y torres: decide cuál de ellas te sobra y cuál te hace falta.</p>
+      <p class="comprobado">Ejercicio 2TiYL de la base abierta de Lichess (CC0), rating 1502. Stockfish 16 a profundidad 18: d2 es la mejor (+4,5) y la segunda queda en -5,4.</p></article><article><h4>Solución del ejercicio 47</h4>
+      <p>40… alfil captura bella 5, 41. alfil bella 7, alfil cesar 6 jaque, 42. alfil captura cesar 6, rey captura cesar 6, 43. rey david 4, rey bella 5</p>
+      <p>En la línea se cambian una pieza menor por otra, y queda un final de peones. Es una jugada defensiva precisa: la única que sostiene la posición. Mira de qué color son las casillas de los peones y de los alfiles antes de mover.</p>
+      <p class="comprobado">Ejercicio 22hTe de la base abierta de Lichess (CC0), rating 1570. Stockfish 16 a profundidad 18: alfil captura bella 5 es la mejor (+9,7) y la segunda queda en +0,1.</p></article><article><h4>Solución del ejercicio 48</h4>
+      <p>49. alfil captura david 6, rey captura david 6, 50. rey david 4, rey eva 6, 51. rey cesar 5, felix 5, 52. gustav captura felix 6</p>
+      <p>En la línea se cambian una pieza menor por otra, y queda un final de peones. Es un zugzwang: al rival le toca mover y cualquier jugada lo empeora. Después de los cambios, el que tiene que mover pierde. ¿A quién le toca?</p>
+      <p class="comprobado">Ejercicio 2l9qX de la base abierta de Lichess (CC0), rating 1583. Stockfish 16 a profundidad 18: alfil captura david 6 es la mejor (+3,8) y la segunda queda en -2,4.</p></article><article><h4>Solución del ejercicio 49</h4>
+      <p>41… alfil captura gustav 4, 42. felix captura gustav 4 jaque, rey gustav 5, 43. rey felix 3, rey hector 4</p>
+      <p>En la línea se cambian una pieza menor por otra. Es un zugzwang: al rival le toca mover y cualquier jugada lo empeora. Después de los cambios, el que tiene que mover pierde. ¿A quién le toca?</p>
+      <p class="comprobado">Ejercicio 3FSc7 de la base abierta de Lichess (CC0), rating 1672. Stockfish 16 a profundidad 18: alfil captura gustav 4 es la mejor (+4,3) y la segunda queda en +0,7.</p></article><article><h4>Solución del ejercicio 50</h4>
+      <p>42… torre captura anna 3 jaque, 43. rey eva 2, torre captura felix 3, 44. rey captura felix 3, rey felix 5, 45. rey eva 3, rey eva 5, 46. rey david 3, rey david 5, 47. rey cesar 3, rey cesar 5</p>
+      <p>En la línea se cambian las torres, y queda un final de peones. Es un zugzwang: al rival le toca mover y cualquier jugada lo empeora. Antes de cambiar las torres, cuenta el final de peones que queda.</p>
+      <p class="comprobado">Ejercicio 1AGmg de la base abierta de Lichess (CC0), rating 1688. Stockfish 16 a profundidad 18: torre captura anna 3 jaque es la mejor (+7,2) y la segunda queda en -0,0.</p></article><article><h4>Solución del ejercicio 51</h4>
+      <p>56. dama cesar 6 jaque, dama captura cesar 6 jaque, 57. bella captura cesar 6, felix 3, 58. cesar 7, rey david 5, 59. cesar 8 corona dama</p>
+      <p>En la línea se cambian las damas. El peón avanzado decide: hay que empujarlo o aprovecharlo a tiempo. Con damas, el rey nunca está tranquilo. ¿Te conviene que se vayan?</p>
+      <p class="comprobado">Ejercicio 1crNx de la base abierta de Lichess (CC0), rating 1698. Stockfish 16 a profundidad 18: dama cesar 6 jaque es la mejor (+35,2) y la segunda queda en +0,0.</p></article><article><h4>Solución del ejercicio 52</h4>
+      <p>36… alfil captura bella 5, 37. anna captura bella 5, anna 4, 38. bella 6, anna 3</p>
+      <p>En la línea se cambian una pieza menor por otra. No hay captura que gane ya: busca la jugada tranquila que obliga al cambio que te sirve.</p>
+      <p class="comprobado">Ejercicio 0QMZY de la base abierta de Lichess (CC0), rating 1736. Stockfish 16 a profundidad 18: alfil captura bella 5 es la mejor (+3,9) y la segunda queda en -0,2.</p></article><article><h4>Solución del ejercicio 53</h4>
+      <p>53. caballo captura eva 6, rey captura eva 6, 54. bella 5, felix 4, 55. bella 6, felix 3, 56. bella 7, felix 2, 57. bella 8 corona dama, felix 1 corona dama, 58. dama eva 8 jaque, rey felix 6, 59. dama felix 8 jaque, rey eva 5, 60. dama captura felix 1</p>
+      <p>En la línea se cambian una pieza menor por otra. Es una enfilada: la pieza de adelante se va y cae la de atrás. Un caballo menos cambia todo el final: ¿quién gana si se van los caballos?</p>
+      <p class="comprobado">Ejercicio 0F6J3 de la base abierta de Lichess (CC0), rating 1787. Stockfish 16 a profundidad 18: caballo captura eva 6 es la mejor (+35,8) y la segunda queda en +0,0.</p></article><article><h4>Solución del ejercicio 54</h4>
+      <p>35… torre captura felix 3, 36. rey gustav 1, alfil captura eva 4, 37. torre captura felix 3, alfil captura felix 3</p>
+      <p>En la línea se cambian las torres. Se captura al defensor y lo que defendía queda colgado. Una pieza rival defiende todo. ¿Qué pasa si la cambias?</p>
+      <p class="comprobado">Ejercicio 2koy7 de la base abierta de Lichess (CC0), rating 1872. Stockfish 16 a profundidad 18: torre captura felix 3 es la mejor (+3,0) y la segunda queda en -1,8.</p></article><article><h4>Solución del ejercicio 55</h4>
+      <p>17. dama captura gustav 4 jaque, dama captura gustav 4, 18. alfil captura gustav 4 jaque, rey bella 8, 19. gustav 7</p>
+      <p>En la línea se cambian las damas. El peón avanzado decide: hay que empujarlo o aprovecharlo a tiempo. El peón avanzado vale más que su punto: ¿qué pieza le estorba la coronación?</p>
+      <p class="comprobado">Ejercicio 2HZRa de la base abierta de Lichess (CC0), rating 1914. Stockfish 16 a profundidad 18: dama captura gustav 4 jaque es la mejor (+5,0) y la segunda queda en -1,8.</p></article><article><h4>Solución del ejercicio 56</h4>
+      <p>30… caballo cesar 7, 31. dama captura eva 8 jaque, caballo captura eva 8, 32. torre anna 8, torre eva 6</p>
+      <p>Es una jugada defensiva precisa: la única que sostiene la posición. Juega por el rival primero: ¿qué amenaza? Solo una jugada lo para.</p>
+      <p class="comprobado">Ejercicio 0kkd0 de la base abierta de Lichess (CC0), rating 2021. Stockfish 16 a profundidad 18: caballo cesar 7 es la mejor (+2,7) y la segunda queda en 0,0.</p></article><article><h4>Solución del ejercicio 57</h4>
+      <p>55. anna 4 jaque, rey bella 6, 56. alfil captura cesar 6, rey captura cesar 6, 57. rey cesar 4, rey david 6, 58. rey bella 5, rey david 5, 59. rey captura anna 5, cesar 4, 60. bella captura cesar 4 jaque</p>
+      <p>En la línea se cambian una pieza menor por otra, y queda un final de peones. Es un zugzwang: al rival le toca mover y cualquier jugada lo empeora. Mira de qué color son las casillas de los peones y de los alfiles antes de mover.</p>
+      <p class="comprobado">Ejercicio 0Tru5 de la base abierta de Lichess (CC0), rating 2122. Stockfish 16 a profundidad 18: a4+ es la mejor (+6,9) y la segunda queda en +0,1.</p></article><article><h4>Solución del ejercicio 58</h4>
+      <p>39… torre captura anna 2, 40. rey captura anna 2, rey felix 8, 41. rey bella 3, gustav 4</p>
+      <p>En la línea se cambian las torres, y queda un final de peones. Es una jugada defensiva precisa: la única que sostiene la posición. Antes de cambiar las torres, cuenta el final de peones que queda.</p>
+      <p class="comprobado">Ejercicio 0dyJ5 de la base abierta de Lichess (CC0), rating 2133. Stockfish 16 a profundidad 18: torre captura anna 2 es la mejor (+3,8) y la segunda queda en -5,2.</p></article><article><h4>Solución del ejercicio 59</h4>
+      <p>25. felix 6, dama cesar 6 jaque, 26. dama felix 3, dama captura felix 3 jaque, 27. torre captura felix 3</p>
+      <p>En la línea se cambian las damas. Es una horquilla: una pieza ataca dos objetivos a la vez. Juega por el rival primero: ¿qué amenaza? Solo una jugada lo para.</p>
+      <p class="comprobado">Ejercicio 0Q03I de la base abierta de Lichess (CC0), rating 2165. Stockfish 16 a profundidad 18: f6 es la mejor (+1,7) y la segunda queda en -1,4.</p></article><article><h4>Solución del ejercicio 60</h4>
+      <p>49. rey bella 1, dama bella 8, 50. david 8 corona dama, dama captura david 8, 51. torre captura david 8</p>
+      <p>En la línea se cambian las damas. El peón avanzado decide: hay que empujarlo o aprovecharlo a tiempo. Hay damas y torres: decide cuál de ellas te sobra y cuál te hace falta.</p>
+      <p class="comprobado">Ejercicio 3OKQ7 de la base abierta de Lichess (CC0), rating 2213. Stockfish 16 a profundidad 18: rey bella 1 es la mejor (+4,7) y la segunda queda en 0,0.</p></article><article><h4>Solución del ejercicio 61</h4>
+      <p>45. caballo captura felix 4, gustav captura felix 4, 46. gustav 5, rey cesar 7, 47. gustav 6</p>
+      <p>En la línea se cambian una pieza menor por otra, y queda un final de peones. Un caballo menos cambia todo el final: ¿quién gana si se van los caballos?</p>
+      <p class="comprobado">Ejercicio 2N28j de la base abierta de Lichess (CC0), rating 2257. Stockfish 16 a profundidad 18: caballo captura felix 4 es la mejor (+3,9) y la segunda queda en 0,0.</p></article><article><h4>Solución del ejercicio 62</h4>
+      <p>68. dama captura felix 4 jaque, eva captura felix 4, 69. gustav 6, rey eva 6, 70. rey hector 6, rey eva 7, 71. gustav 7, rey felix 7, 72. rey hector 7</p>
+      <p>En la línea se cambian las damas, y queda un final de peones. Es una jugada defensiva precisa: la única que sostiene la posición. Con damas, el rey nunca está tranquilo. ¿Te conviene que se vayan?</p>
+      <p class="comprobado">Ejercicio 28Cp8 de la base abierta de Lichess (CC0), rating 2275. Stockfish 16 a profundidad 18: dama captura felix 4 jaque es la mejor (+35,4) y la segunda queda en +0,1.</p></article><article><h4>Solución del ejercicio 63</h4>
+      <p>51… caballo gustav 6, 52. rey hector 3, caballo captura hector 4, 53. rey captura hector 4, rey gustav 6</p>
+      <p>En la línea se cambian una pieza menor por otra, y queda un final de peones. Es un zugzwang: al rival le toca mover y cualquier jugada lo empeora. Después de los cambios, el que tiene que mover pierde. ¿A quién le toca?</p>
+      <p class="comprobado">Ejercicio 2BVjz de la base abierta de Lichess (CC0), rating 2302. Stockfish 16 a profundidad 18: caballo gustav 6 es la mejor (+7,2) y la segunda queda en +0,1.</p></article><article><h4>Solución del ejercicio 64</h4>
+      <p>15. caballo captura felix 7, torre captura felix 7, 16. dama captura eva 6, alfil eva 8, 17. dama captura eva 7, dama captura eva 7, 18. torre captura eva 7</p>
+      <p>En la línea se cambian las damas. Es un ataque a la descubierta: al moverse una pieza, se destapa otra. Una pieza rival defiende todo. ¿Qué pasa si la cambias?</p>
+      <p class="comprobado">Ejercicio 1jkAh de la base abierta de Lichess (CC0), rating 2304. Stockfish 16 a profundidad 18: caballo captura felix 7 es la mejor (+3,4) y la segunda queda en +0,6.</p></article>
+</section>
+<footer>
+  <p>Oscar Angulo Cubero · Academia Ajedrez Integral · 2026.</p>
+  <p>El texto es propio. Las posiciones son de la base abierta de ejercicios de Lichess (CC0), comprobadas con Stockfish 16.</p>
+</footer>
+</body></html>

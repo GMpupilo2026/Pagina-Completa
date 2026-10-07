@@ -1,0 +1,1135 @@
+{
+ "curso": {
+  "slug": "cambio-o-no-cambio",
+  "titulo": "¿Cambio o no cambio?",
+  "nivel": "Intermedio · Avanzado",
+  "descripcion": "Cada cambio de piezas transforma la partida: qué se va, qué queda y quién sale ganando. Cuándo conviene cambiar, cuándo no, y cómo usar los cambios para atacar, para ganar un final y para defenderte.",
+  "emoji": "⚖️"
+ },
+ "finales": [
+  {
+   "n": 1,
+   "cap": 1,
+   "capitulo": "Qué se va y qué queda",
+   "titulo": "Un cambio transforma la posición",
+   "leccion": 1,
+   "diagramas": [
+    {
+     "id": "CC-1",
+     "idx": 0,
+     "fen": "r7/ppp2kb1/2n2np1/6B1/2pqp1bQ/2N5/PPP2PPP/R4RK1 w - - 4 14",
+     "turno": "w",
+     "titulo": "La jugada buena empieza un cambio. Antes de buscarla, pregúntate qué pieza rival te conviene que desaparezca. Juegan las blancas; el rival acaba de jugar …Ag7.",
+     "resultado": "1-0",
+     "resultado_texto": "Ganan blancas",
+     "linea": "14.Bxf6 Qxf6 15.Qxg4",
+     "linea_es": "14.Axf6 Dxf6 15.Dxg4",
+     "jugadas": [
+      {
+       "san": "Bxf6",
+       "uci": "g5f6",
+       "fen": "r7/ppp2kb1/2n2Bp1/8/2pqp1bQ/2N5/PPP2PPP/R4RK1 b - - 0 14"
+      },
+      {
+       "san": "Qxf6",
+       "uci": "d4f6",
+       "fen": "r7/ppp2kb1/2n2qp1/8/2p1p1bQ/2N5/PPP2PPP/R4RK1 w - - 0 15"
+      },
+      {
+       "san": "Qxg4",
+       "uci": "h4g4",
+       "fen": "r7/ppp2kb1/2n2qp1/8/2p1p1Q1/2N5/PPP2PPP/R4RK1 b - - 0 15"
+      }
+     ],
+     "comentario": "14.Axf6 Dxf6 15.Dxg4. En la línea se cambian una pieza menor por otra. Se captura al defensor y lo que defendía queda colgado. El cambio no gana por el material que se lleva, sino por lo que la pieza rival dejaba de hacer al irse. (Ejercicio 1v1IS de la base abierta de Lichess (CC0), rating 1332. Stockfish 16 a profundidad 18: Axf6 es la mejor (+3,7) y la segunda queda en -0,7.)",
+     "clave": true,
+     "marcas": []
+    }
+   ]
+  },
+  {
+   "n": 2,
+   "cap": 1,
+   "capitulo": "Qué se va y qué queda",
+   "titulo": "Con material de más, cambia piezas",
+   "leccion": 2,
+   "diagramas": [
+    {
+     "id": "CC-2",
+     "idx": 0,
+     "fen": "Q7/7p/4p2p/5k2/P2p3P/8/5PK1/3q4 w - - 2 43",
+     "turno": "w",
+     "titulo": "Hay un cambio que deja un final de peones ganado. ¿Puedes forzarlo? Juegan las blancas; el rival acaba de jugar …Rf5.",
+     "resultado": "1-0",
+     "resultado_texto": "Ganan blancas",
+     "linea": "43.Qf3+ Qxf3+ 44.Kxf3 e5 45.a5 e4+ 46.Ke2",
+     "linea_es": "43.Df3+ Dxf3+ 44.Rxf3 e5 45.a5 e4+ 46.Re2",
+     "jugadas": [
+      {
+       "san": "Qf3+",
+       "uci": "a8f3",
+       "fen": "8/7p/4p2p/5k2/P2p3P/5Q2/5PK1/3q4 b - - 3 43"
+      },
+      {
+       "san": "Qxf3+",
+       "uci": "d1f3",
+       "fen": "8/7p/4p2p/5k2/P2p3P/5q2/5PK1/8 w - - 0 44"
+      },
+      {
+       "san": "Kxf3",
+       "uci": "g2f3",
+       "fen": "8/7p/4p2p/5k2/P2p3P/5K2/5P2/8 b - - 0 44"
+      },
+      {
+       "san": "e5",
+       "uci": "e6e5",
+       "fen": "8/7p/7p/4pk2/P2p3P/5K2/5P2/8 w - - 0 45"
+      },
+      {
+       "san": "a5",
+       "uci": "a4a5",
+       "fen": "8/7p/7p/P3pk2/3p3P/5K2/5P2/8 b - - 0 45"
+      },
+      {
+       "san": "e4+",
+       "uci": "e5e4",
+       "fen": "8/7p/7p/P4k2/3pp2P/5K2/5P2/8 w - - 0 46"
+      },
+      {
+       "san": "Ke2",
+       "uci": "f3e2",
+       "fen": "8/7p/7p/P4k2/3pp2P/8/4KP2/8 b - - 1 46"
+      }
+     ],
+     "comentario": "43.Df3+ Dxf3+ 44.Rxf3 e5 45.a5 e4+ 46.Re2. En la línea se cambian las damas, y queda un final de peones. Es una jugada defensiva precisa: la única que sostiene la posición. Las damas se van y lo que queda es un final de peones en el que la ventaja ya no se puede discutir. (Ejercicio 0rTVx de la base abierta de Lichess (CC0), rating 1536. Stockfish 16 a profundidad 18: Df3+ es la mejor (+4,4) y la segunda queda en 0,0.)",
+     "clave": true,
+     "marcas": []
+    }
+   ]
+  },
+  {
+   "n": 3,
+   "cap": 1,
+   "capitulo": "Qué se va y qué queda",
+   "titulo": "Cambiar al defensor",
+   "leccion": 3,
+   "diagramas": [
+    {
+     "id": "CC-3",
+     "idx": 0,
+     "fen": "rn2r2k/1p1b1ppB/2p5/q3n1B1/p1PR4/2P2N1P/P1Q3P1/2K4R b - - 1 22",
+     "turno": "b",
+     "titulo": "En la línea buena se cambia una pieza menor por otra. ¿Cuál te conviene sacar del tablero? Juegan las negras; el rival acaba de jugar Td4.",
+     "resultado": "0-1",
+     "resultado_texto": "Ganan negras",
+     "linea": "22...Nxf3 23.gxf3 Qxg5+",
+     "linea_es": "22...Cxf3 23.gxf3 Dxg5+",
+     "jugadas": [
+      {
+       "san": "Nxf3",
+       "uci": "e5f3",
+       "fen": "rn2r2k/1p1b1ppB/2p5/q5B1/p1PR4/2P2n1P/P1Q3P1/2K4R w - - 0 23"
+      },
+      {
+       "san": "gxf3",
+       "uci": "g2f3",
+       "fen": "rn2r2k/1p1b1ppB/2p5/q5B1/p1PR4/2P2P1P/P1Q5/2K4R b - - 0 23"
+      },
+      {
+       "san": "Qxg5+",
+       "uci": "a5g5",
+       "fen": "rn2r2k/1p1b1ppB/2p5/6q1/p1PR4/2P2P1P/P1Q5/2K4R w - - 0 24"
+      }
+     ],
+     "comentario": "22…Cxf3 23.gxf3 Dxg5+. En la línea se cambian una pieza menor por otra. Es un ataque a la descubierta: al moverse una pieza, se destapa otra. Se cambia una pieza menor por otra, y lo que la pieza rival defendía queda sin dueño. (Ejercicio 0R4YX de la base abierta de Lichess (CC0), rating 1615. Stockfish 16 a profundidad 18: Cxf3 es la mejor (+4,3) y la segunda queda en -2,0.)",
+     "clave": true,
+     "marcas": []
+    }
+   ]
+  },
+  {
+   "n": 4,
+   "cap": 1,
+   "capitulo": "Qué se va y qué queda",
+   "titulo": "La jugada que obliga al cambio",
+   "leccion": 4,
+   "diagramas": [
+    {
+     "id": "CC-4",
+     "idx": 0,
+     "fen": "4rr1k/p5b1/1p5p/4p3/3pQ3/P7/1P3qPP/1R1R1B1K w - - 0 24",
+     "turno": "w",
+     "titulo": "No hay una captura que gane ya. Busca la jugada que deja al rival sin otra salida que un cambio que te conviene. Juegan las blancas; el rival acaba de jugar …b6.",
+     "resultado": "1-0",
+     "resultado_texto": "Ganan blancas",
+     "linea": "24.Bd3 Qf5 25.Qxf5 Rxf5 26.Bxf5",
+     "linea_es": "24.Ad3 Df5 25.Dxf5 Txf5 26.Axf5",
+     "jugadas": [
+      {
+       "san": "Bd3",
+       "uci": "f1d3",
+       "fen": "4rr1k/p5b1/1p5p/4p3/3pQ3/P2B4/1P3qPP/1R1R3K b - - 1 24"
+      },
+      {
+       "san": "Qf5",
+       "uci": "f2f5",
+       "fen": "4rr1k/p5b1/1p5p/4pq2/3pQ3/P2B4/1P4PP/1R1R3K w - - 2 25"
+      },
+      {
+       "san": "Qxf5",
+       "uci": "e4f5",
+       "fen": "4rr1k/p5b1/1p5p/4pQ2/3p4/P2B4/1P4PP/1R1R3K b - - 0 25"
+      },
+      {
+       "san": "Rxf5",
+       "uci": "f8f5",
+       "fen": "4r2k/p5b1/1p5p/4pr2/3p4/P2B4/1P4PP/1R1R3K w - - 0 26"
+      },
+      {
+       "san": "Bxf5",
+       "uci": "d3f5",
+       "fen": "4r2k/p5b1/1p5p/4pB2/3p4/P7/1P4PP/1R1R3K b - - 0 26"
+      }
+     ],
+     "comentario": "24.Ad3 Df5 25.Dxf5 Txf5 26.Axf5. En la línea se cambian las damas. La clave es una jugada tranquila: sin jaque ni captura, pero sin defensa. La primera jugada no se lleva nada: deja preparado el cambio, y el rival ya no lo puede evitar. (Ejercicio 2eRhc de la base abierta de Lichess (CC0), rating 1390. Stockfish 16 a profundidad 18: Ad3 es la mejor (+5,3) y la segunda queda en -0,8.)",
+     "clave": true,
+     "marcas": []
+    }
+   ]
+  },
+  {
+   "n": 5,
+   "cap": 2,
+   "capitulo": "Alfiles y caballos",
+   "titulo": "Alfil contra caballo: quién manda",
+   "leccion": 5,
+   "diagramas": [
+    {
+     "id": "CC-5",
+     "idx": 0,
+     "fen": "8/8/p1p3p1/5p1p/kBp2P1P/2P1KP2/8/8 b - - 7 46",
+     "turno": "b",
+     "titulo": "Es un final de alfiles: el alcance del alfil decide. Juegan las negras; el rival acaba de jugar Re3.",
+     "resultado": "0-1",
+     "resultado_texto": "Ganan negras",
+     "linea": "46...a5 47.Bf8 Kb3 48.Kd4 a4 49.Be7 a3 50.Bxa3 Kxa3",
+     "linea_es": "46...a5 47.Af8 Rb3 48.Rd4 a4 49.Ae7 a3 50.Axa3 Rxa3",
+     "jugadas": [
+      {
+       "san": "a5",
+       "uci": "a6a5",
+       "fen": "8/8/2p3p1/p4p1p/kBp2P1P/2P1KP2/8/8 w - - 0 47"
+      },
+      {
+       "san": "Bf8",
+       "uci": "b4f8",
+       "fen": "5B2/8/2p3p1/p4p1p/k1p2P1P/2P1KP2/8/8 b - - 1 47"
+      },
+      {
+       "san": "Kb3",
+       "uci": "a4b3",
+       "fen": "5B2/8/2p3p1/p4p1p/2p2P1P/1kP1KP2/8/8 w - - 2 48"
+      },
+      {
+       "san": "Kd4",
+       "uci": "e3d4",
+       "fen": "5B2/8/2p3p1/p4p1p/2pK1P1P/1kP2P2/8/8 b - - 3 48"
+      },
+      {
+       "san": "a4",
+       "uci": "a5a4",
+       "fen": "5B2/8/2p3p1/5p1p/p1pK1P1P/1kP2P2/8/8 w - - 0 49"
+      },
+      {
+       "san": "Be7",
+       "uci": "f8e7",
+       "fen": "8/4B3/2p3p1/5p1p/p1pK1P1P/1kP2P2/8/8 b - - 1 49"
+      },
+      {
+       "san": "a3",
+       "uci": "a4a3",
+       "fen": "8/4B3/2p3p1/5p1p/2pK1P1P/pkP2P2/8/8 w - - 0 50"
+      },
+      {
+       "san": "Bxa3",
+       "uci": "e7a3",
+       "fen": "8/8/2p3p1/5p1p/2pK1P1P/BkP2P2/8/8 b - - 0 50"
+      },
+      {
+       "san": "Kxa3",
+       "uci": "b3a3",
+       "fen": "8/8/2p3p1/5p1p/2pK1P1P/k1P2P2/8/8 w - - 0 51"
+      }
+     ],
+     "comentario": "46…a5 47.Af8 Rb3 48.Rd4 a4 49.Ae7 a3 50.Axa3 Rxa3. La clave es una jugada tranquila: sin jaque ni captura, pero sin defensa. Fíjate en las casillas que controla cada alfil: el que tiene objetivos de su color es el que manda. (Ejercicio 1BALq de la base abierta de Lichess (CC0), rating 1511. Stockfish 16 a profundidad 18: a5 es la mejor (+3,5) y la segunda queda en -4,6.)",
+     "clave": true,
+     "marcas": []
+    }
+   ]
+  },
+  {
+   "n": 6,
+   "cap": 2,
+   "capitulo": "Alfiles y caballos",
+   "titulo": "El caballo que se cambia a tiempo",
+   "leccion": 6,
+   "diagramas": [
+    {
+     "id": "CC-6",
+     "idx": 0,
+     "fen": "1n6/1P3kpp/2n1p3/N7/P3P3/2P1K2P/6P1/8 w - - 2 39",
+     "turno": "w",
+     "titulo": "En la línea buena se cambian los caballos. ¿Cómo fuerzas el cambio que te conviene? Juegan las blancas; el rival acaba de jugar …Cec6.",
+     "resultado": "1-0",
+     "resultado_texto": "Ganan blancas",
+     "linea": "39.Nxc6 Nxc6 40.a5 Ke8 41.a6",
+     "linea_es": "39.Cxc6 Cxc6 40.a5 Re8 41.a6",
+     "jugadas": [
+      {
+       "san": "Nxc6",
+       "uci": "a5c6",
+       "fen": "1n6/1P3kpp/2N1p3/8/P3P3/2P1K2P/6P1/8 b - - 0 39"
+      },
+      {
+       "san": "Nxc6",
+       "uci": "b8c6",
+       "fen": "8/1P3kpp/2n1p3/8/P3P3/2P1K2P/6P1/8 w - - 0 40"
+      },
+      {
+       "san": "a5",
+       "uci": "a4a5",
+       "fen": "8/1P3kpp/2n1p3/P7/4P3/2P1K2P/6P1/8 b - - 0 40"
+      },
+      {
+       "san": "Ke8",
+       "uci": "f7e8",
+       "fen": "4k3/1P4pp/2n1p3/P7/4P3/2P1K2P/6P1/8 w - - 1 41"
+      },
+      {
+       "san": "a6",
+       "uci": "a5a6",
+       "fen": "4k3/1P4pp/P1n1p3/8/4P3/2P1K2P/6P1/8 b - - 0 41"
+      }
+     ],
+     "comentario": "39.Cxc6 Cxc6 40.a5 Re8 41.a6. En la línea se cambian una pieza menor por otra. Se cambian las piezas menores y el final que queda ya no tiene defensa. (Ejercicio 1hrAx de la base abierta de Lichess (CC0), rating 1311. Stockfish 16 a profundidad 18: Cxc6 es la mejor (+5,1) y la segunda queda en -0,6.)",
+     "clave": true,
+     "marcas": []
+    }
+   ]
+  },
+  {
+   "n": 7,
+   "cap": 2,
+   "capitulo": "Alfiles y caballos",
+   "titulo": "El alfil malo: cambiarlo o usarlo",
+   "leccion": 7,
+   "diagramas": [
+    {
+     "id": "CC-7",
+     "idx": 0,
+     "fen": "8/8/P3P1p1/2b5/6k1/3K4/5p2/8 w - - 0 42",
+     "turno": "w",
+     "titulo": "Final de alfiles: mira de qué color son las casillas de los peones antes de decidir. Juegan las blancas; el rival acaba de jugar …f2.",
+     "resultado": "1-0",
+     "resultado_texto": "Ganan blancas",
+     "linea": "42.Ke2 Kg3 43.Kf1",
+     "linea_es": "42.Re2 Rg3 43.Rf1",
+     "jugadas": [
+      {
+       "san": "Ke2",
+       "uci": "d3e2",
+       "fen": "8/8/P3P1p1/2b5/6k1/8/4Kp2/8 b - - 1 42"
+      },
+      {
+       "san": "Kg3",
+       "uci": "g4g3",
+       "fen": "8/8/P3P1p1/2b5/8/6k1/4Kp2/8 w - - 2 43"
+      },
+      {
+       "san": "Kf1",
+       "uci": "e2f1",
+       "fen": "8/8/P3P1p1/2b5/8/6k1/5p2/5K2 b - - 3 43"
+      }
+     ],
+     "comentario": "42.Re2 Rg3 43.Rf1. Los peones fijos en casillas del color de un alfil lo vuelven débil o fuerte según de qué lado estén. (Ejercicio 3Ny4Q de la base abierta de Lichess (CC0), rating 1485. Stockfish 16 a profundidad 18: Re2 es la mejor (+3,6) y la segunda queda en -36,5.)",
+     "clave": true,
+     "marcas": []
+    }
+   ]
+  },
+  {
+   "n": 8,
+   "cap": 2,
+   "capitulo": "Alfiles y caballos",
+   "titulo": "Alfiles de distinto color",
+   "leccion": 8,
+   "diagramas": [
+    {
+     "id": "CC-8",
+     "idx": 0,
+     "fen": "5b2/p3k2K/1p4Bp/1P2p2P/2Pp4/3P4/8/8 w - - 2 97",
+     "turno": "w",
+     "titulo": "Hay alfiles de distinto color. Fíjate en qué casillas puede cubrir cada uno y en cuáles no. Juegan las blancas; el rival acaba de jugar …Re7.",
+     "resultado": "1-0",
+     "resultado_texto": "Ganan blancas",
+     "linea": "97.Kg8 a5 98.bxa6",
+     "linea_es": "97.Rg8 a5 98.bxa6",
+     "jugadas": [
+      {
+       "san": "Kg8",
+       "uci": "h7g8",
+       "fen": "5bK1/p3k3/1p4Bp/1P2p2P/2Pp4/3P4/8/8 b - - 3 97"
+      },
+      {
+       "san": "a5",
+       "uci": "a7a5",
+       "fen": "5bK1/4k3/1p4Bp/pP2p2P/2Pp4/3P4/8/8 w - a6 0 98"
+      },
+      {
+       "san": "bxa6",
+       "uci": "b5a6",
+       "fen": "5bK1/4k3/Pp4Bp/4p2P/2Pp4/3P4/8/8 b - - 0 98"
+      }
+     ],
+     "comentario": "97.Rg8 a5 98.bxa6. Cada alfil manda en su color y el otro no puede discutírselo: la jugada buena aprovecha justo esas casillas. (Ejercicio 2gmkP de la base abierta de Lichess (CC0), rating 1401. Stockfish 16 a profundidad 18: Rg8 es la mejor (+6,1) y la segunda queda en +0,2.)",
+     "clave": true,
+     "marcas": []
+    }
+   ]
+  },
+  {
+   "n": 9,
+   "cap": 3,
+   "capitulo": "Damas y torres",
+   "titulo": "Cambiar las damas",
+   "leccion": 9,
+   "diagramas": [
+    {
+     "id": "CC-9",
+     "idx": 0,
+     "fen": "8/6pk/8/4p2p/3qP3/P1K1Q3/1P6/8 w - - 1 43",
+     "turno": "w",
+     "titulo": "La línea buena termina con las damas fuera del tablero. ¿Cómo lo fuerzas? Juegan las blancas; el rival acaba de jugar …Dd4+.",
+     "resultado": "1-0",
+     "resultado_texto": "Ganan blancas",
+     "linea": "43.Qxd4 exd4+ 44.Kxd4 h4 45.Ke3",
+     "linea_es": "43.Dxd4 exd4+ 44.Rxd4 h4 45.Re3",
+     "jugadas": [
+      {
+       "san": "Qxd4",
+       "uci": "e3d4",
+       "fen": "8/6pk/8/4p2p/3QP3/P1K5/1P6/8 b - - 0 43"
+      },
+      {
+       "san": "exd4+",
+       "uci": "e5d4",
+       "fen": "8/6pk/8/7p/3pP3/P1K5/1P6/8 w - - 0 44"
+      },
+      {
+       "san": "Kxd4",
+       "uci": "c3d4",
+       "fen": "8/6pk/8/7p/3KP3/P7/1P6/8 b - - 0 44"
+      },
+      {
+       "san": "h4",
+       "uci": "h5h4",
+       "fen": "8/6pk/8/8/3KP2p/P7/1P6/8 w - - 0 45"
+      },
+      {
+       "san": "Ke3",
+       "uci": "d4e3",
+       "fen": "8/6pk/8/8/4P2p/P3K3/1P6/8 b - - 1 45"
+      }
+     ],
+     "comentario": "43.Dxd4 exd4+ 44.Rxd4 h4 45.Re3. En la línea se cambian las damas, y queda un final de peones. Es una jugada defensiva precisa: la única que sostiene la posición. Sin damas, la ventaja que quedaba escondida aparece entera en el final. (Ejercicio 2yN82 de la base abierta de Lichess (CC0), rating 1362. Stockfish 16 a profundidad 18: Dxd4 es la mejor (+5,5) y la segunda queda en -43,9.)",
+     "clave": true,
+     "marcas": []
+    }
+   ]
+  },
+  {
+   "n": 10,
+   "cap": 3,
+   "capitulo": "Damas y torres",
+   "titulo": "La dama que no se cambia",
+   "leccion": 10,
+   "diagramas": [
+    {
+     "id": "CC-10",
+     "idx": 0,
+     "fen": "2r3k1/1p2pp1p/r2p2p1/p1qP4/P1Q5/1P6/1P3PPP/2R2RK1 w - - 5 21",
+     "turno": "w",
+     "titulo": "Las dos damas están en el tablero y podías cambiar una pieza por otra igual. La jugada buena no cambia: ¿qué hace en su lugar? Juegan las blancas; el rival acaba de jugar …Tc8.",
+     "resultado": "1-0",
+     "resultado_texto": "Ganan blancas",
+     "linea": "21.Qf4 Qxc1 22.Rxc1",
+     "linea_es": "21.Df4 Dxc1 22.Txc1",
+     "jugadas": [
+      {
+       "san": "Qf4",
+       "uci": "c4f4",
+       "fen": "2r3k1/1p2pp1p/r2p2p1/p1qP4/P4Q2/1P6/1P3PPP/2R2RK1 b - - 6 21"
+      },
+      {
+       "san": "Qxc1",
+       "uci": "c5c1",
+       "fen": "2r3k1/1p2pp1p/r2p2p1/p2P4/P4Q2/1P6/1P3PPP/2q2RK1 w - - 0 22"
+      },
+      {
+       "san": "Rxc1",
+       "uci": "f1c1",
+       "fen": "2r3k1/1p2pp1p/r2p2p1/p2P4/P4Q2/1P6/1P3PPP/2R3K1 b - - 0 22"
+      }
+     ],
+     "comentario": "21.Df4 Dxc1 22.Txc1. La clave es una jugada tranquila: sin jaque ni captura, pero sin defensa. El cambio estaba ahí, pero no era lo mejor: la jugada buena conserva las piezas que trabajan. (Ejercicio 2TSGs de la base abierta de Lichess (CC0), rating 1990. Stockfish 16 a profundidad 18: Df4 es la mejor (+4,6) y la segunda queda en +0,1.)",
+     "clave": true,
+     "marcas": []
+    }
+   ]
+  },
+  {
+   "n": 11,
+   "cap": 3,
+   "capitulo": "Damas y torres",
+   "titulo": "Una torre por otra",
+   "leccion": 11,
+   "diagramas": [
+    {
+     "id": "CC-11",
+     "idx": 0,
+     "fen": "3k4/3R2Rp/4p1p1/8/3P4/2P4P/1rr5/5K2 b - - 9 32",
+     "turno": "b",
+     "titulo": "En la línea buena se cambian las torres. Cuenta antes qué final queda. Juegan las negras; el rival acaba de jugar Td7+.",
+     "resultado": "0-1",
+     "resultado_texto": "Ganan negras",
+     "linea": "32...Kc8 33.Rc7+ Kb8 34.Rb7+ Rxb7 35.Rxb7+ Kxb7",
+     "linea_es": "32...Rc8 33.Tc7+ Rb8 34.Tb7+ Txb7 35.Txb7+ Rxb7",
+     "jugadas": [
+      {
+       "san": "Kc8",
+       "uci": "d8c8",
+       "fen": "2k5/3R2Rp/4p1p1/8/3P4/2P4P/1rr5/5K2 w - - 10 33"
+      },
+      {
+       "san": "Rc7+",
+       "uci": "d7c7",
+       "fen": "2k5/2R3Rp/4p1p1/8/3P4/2P4P/1rr5/5K2 b - - 11 33"
+      },
+      {
+       "san": "Kb8",
+       "uci": "c8b8",
+       "fen": "1k6/2R3Rp/4p1p1/8/3P4/2P4P/1rr5/5K2 w - - 12 34"
+      },
+      {
+       "san": "Rb7+",
+       "uci": "c7b7",
+       "fen": "1k6/1R4Rp/4p1p1/8/3P4/2P4P/1rr5/5K2 b - - 13 34"
+      },
+      {
+       "san": "Rxb7",
+       "uci": "b2b7",
+       "fen": "1k6/1r4Rp/4p1p1/8/3P4/2P4P/2r5/5K2 w - - 0 35"
+      },
+      {
+       "san": "Rxb7+",
+       "uci": "g7b7",
+       "fen": "1k6/1R5p/4p1p1/8/3P4/2P4P/2r5/5K2 b - - 0 35"
+      },
+      {
+       "san": "Kxb7",
+       "uci": "b8b7",
+       "fen": "8/1k5p/4p1p1/8/3P4/2P4P/2r5/5K2 w - - 0 36"
+      }
+     ],
+     "comentario": "32…Rc8 33.Tc7+ Rb8 34.Tb7+ Txb7 35.Txb7+ Rxb7. En la línea se cambian las torres. Las torres se van y el final que queda ya está decidido: la cuenta se hizo antes del cambio. (Ejercicio 33KTZ de la base abierta de Lichess (CC0), rating 1406. Stockfish 16 a profundidad 18: Rc8 es la mejor (+7,3) y la segunda queda en 0,0.)",
+     "clave": true,
+     "marcas": []
+    }
+   ]
+  },
+  {
+   "n": 12,
+   "cap": 3,
+   "capitulo": "Damas y torres",
+   "titulo": "La torre activa no se cambia",
+   "leccion": 12,
+   "diagramas": [
+    {
+     "id": "CC-12",
+     "idx": 0,
+     "fen": "1R5r/2P5/8/8/8/3k4/1p6/3K4 w - - 3 59",
+     "turno": "w",
+     "titulo": "Podías cambiar una pieza por otra igual. La jugada buena no cambia y conserva la actividad. Juegan las blancas; el rival acaba de jugar …Rd3.",
+     "resultado": "1-0",
+     "resultado_texto": "Ganan blancas",
+     "linea": "59.Rd8+ Ke3 60.Kc2 b1=Q+ 61.Kxb1",
+     "linea_es": "59.Td8+ Re3 60.Rc2 b1=D+ 61.Rxb1",
+     "jugadas": [
+      {
+       "san": "Rd8+",
+       "uci": "b8d8",
+       "fen": "3R3r/2P5/8/8/8/3k4/1p6/3K4 b - - 4 59"
+      },
+      {
+       "san": "Ke3",
+       "uci": "d3e3",
+       "fen": "3R3r/2P5/8/8/8/4k3/1p6/3K4 w - - 5 60"
+      },
+      {
+       "san": "Kc2",
+       "uci": "d1c2",
+       "fen": "3R3r/2P5/8/8/8/4k3/1pK5/8 b - - 6 60"
+      },
+      {
+       "san": "b1=Q+",
+       "uci": "b2b1q",
+       "fen": "3R3r/2P5/8/8/8/4k3/2K5/1q6 w - - 0 61"
+      },
+      {
+       "san": "Kxb1",
+       "uci": "c2b1",
+       "fen": "3R3r/2P5/8/8/8/4k3/8/1K6 b - - 0 61"
+      }
+     ],
+     "comentario": "59.Td8+ Re3 60.Rc2 b1=D+ 61.Rxb1. El cambio aliviaba al rival; la jugada buena mantiene la pieza activa en su lugar. (Ejercicio 1uVdA de la base abierta de Lichess (CC0), rating 2202. Stockfish 16 a profundidad 18: Td8+ es la mejor (+35,4) y la segunda queda en 0,0.)",
+     "clave": true,
+     "marcas": []
+    }
+   ]
+  },
+  {
+   "n": 13,
+   "cap": 4,
+   "capitulo": "Cambiar hacia el final",
+   "titulo": "El final de peones: cuenta antes de cambiar",
+   "leccion": 13,
+   "diagramas": [
+    {
+     "id": "CC-13",
+     "idx": 0,
+     "fen": "8/8/8/p3pk1p/7P/P3KP2/8/8 b - - 0 48",
+     "turno": "b",
+     "titulo": "Final de peones: cuenta los tiempos de cada rey antes de mover. Juegan las negras; el rival acaba de jugar a3.",
+     "resultado": "0-1",
+     "resultado_texto": "Ganan negras",
+     "linea": "48...a4 49.Ke2 Kf4 50.Kf2 e4 51.fxe4 Kxe4",
+     "linea_es": "48...a4 49.Re2 Rf4 50.Rf2 e4 51.fxe4 Rxe4",
+     "jugadas": [
+      {
+       "san": "a4",
+       "uci": "a5a4",
+       "fen": "8/8/8/4pk1p/p6P/P3KP2/8/8 w - - 0 49"
+      },
+      {
+       "san": "Ke2",
+       "uci": "e3e2",
+       "fen": "8/8/8/4pk1p/p6P/P4P2/4K3/8 b - - 1 49"
+      },
+      {
+       "san": "Kf4",
+       "uci": "f5f4",
+       "fen": "8/8/8/4p2p/p4k1P/P4P2/4K3/8 w - - 2 50"
+      },
+      {
+       "san": "Kf2",
+       "uci": "e2f2",
+       "fen": "8/8/8/4p2p/p4k1P/P4P2/5K2/8 b - - 3 50"
+      },
+      {
+       "san": "e4",
+       "uci": "e5e4",
+       "fen": "8/8/8/7p/p3pk1P/P4P2/5K2/8 w - - 0 51"
+      },
+      {
+       "san": "fxe4",
+       "uci": "f3e4",
+       "fen": "8/8/8/7p/p3Pk1P/P7/5K2/8 b - - 0 51"
+      },
+      {
+       "san": "Kxe4",
+       "uci": "f4e4",
+       "fen": "8/8/8/7p/p3k2P/P7/5K2/8 w - - 0 52"
+      }
+     ],
+     "comentario": "48…a4 49.Re2 Rf4 50.Rf2 e4 51.fxe4 Rxe4. Es un zugzwang: al rival le toca mover y cualquier jugada lo empeora. Un solo tiempo decide: la jugada buena es la que lo gana. (Ejercicio 206zZ de la base abierta de Lichess (CC0), rating 1451. Stockfish 16 a profundidad 18: a4 es la mejor (+4,5) y la segunda queda en 0,0.)",
+     "clave": true,
+     "marcas": []
+    }
+   ]
+  },
+  {
+   "n": 14,
+   "cap": 4,
+   "capitulo": "Cambiar hacia el final",
+   "titulo": "Cambiar para que el rey entre",
+   "leccion": 14,
+   "diagramas": [
+    {
+     "id": "CC-14",
+     "idx": 0,
+     "fen": "8/8/5R2/7P/6k1/2K5/P1P2pr1/8 b - - 0 54",
+     "turno": "b",
+     "titulo": "Hay un cambio de torres que deja un final de peones ganado. ¿Cómo lo fuerzas? Juegan las negras; el rival acaba de jugar h5.",
+     "resultado": "0-1",
+     "resultado_texto": "Ganan negras",
+     "linea": "54...Rg3+ 55.Kd4 Rf3 56.Rxf3 Kxf3",
+     "linea_es": "54...Tg3+ 55.Rd4 Tf3 56.Txf3 Rxf3",
+     "jugadas": [
+      {
+       "san": "Rg3+",
+       "uci": "g2g3",
+       "fen": "8/8/5R2/7P/6k1/2K3r1/P1P2p2/8 w - - 1 55"
+      },
+      {
+       "san": "Kd4",
+       "uci": "c3d4",
+       "fen": "8/8/5R2/7P/3K2k1/6r1/P1P2p2/8 b - - 2 55"
+      },
+      {
+       "san": "Rf3",
+       "uci": "g3f3",
+       "fen": "8/8/5R2/7P/3K2k1/5r2/P1P2p2/8 w - - 3 56"
+      },
+      {
+       "san": "Rxf3",
+       "uci": "f6f3",
+       "fen": "8/8/8/7P/3K2k1/5R2/P1P2p2/8 b - - 0 56"
+      },
+      {
+       "san": "Kxf3",
+       "uci": "g4f3",
+       "fen": "8/8/8/7P/3K4/5k2/P1P2p2/8 w - - 0 57"
+      }
+     ],
+     "comentario": "54…Tg3+ 55.Rd4 Tf3 56.Txf3 Rxf3. En la línea se cambian las torres, y queda un final de peones. Sin torres, el rey activo entra y el final de peones ya no tiene defensa. (Ejercicio 0MfrO de la base abierta de Lichess (CC0), rating 1571. Stockfish 16 a profundidad 18: Tg3+ es la mejor (+4,8) y la segunda queda en +0,0.)",
+     "clave": true,
+     "marcas": []
+    }
+   ]
+  },
+  {
+   "n": 15,
+   "cap": 4,
+   "capitulo": "Cambiar hacia el final",
+   "titulo": "Cambiar para coronar",
+   "leccion": 15,
+   "diagramas": [
+    {
+     "id": "CC-15",
+     "idx": 0,
+     "fen": "8/3p1RP1/p1b1p3/1pP5/6rk/P3K3/8/8 w - - 3 46",
+     "turno": "w",
+     "titulo": "Hay un peón muy avanzado. ¿Qué pieza le estorba, y cómo te la sacas de encima con un cambio? Juegan las blancas; el rival acaba de jugar …Rh4.",
+     "resultado": "1-0",
+     "resultado_texto": "Ganan blancas",
+     "linea": "46.Rf4 e5 47.Rxg4+ Kxg4 48.g8=Q+",
+     "linea_es": "46.Tf4 e5 47.Txg4+ Rxg4 48.g8=D+",
+     "jugadas": [
+      {
+       "san": "Rf4",
+       "uci": "f7f4",
+       "fen": "8/3p2P1/p1b1p3/1pP5/5Rrk/P3K3/8/8 b - - 4 46"
+      },
+      {
+       "san": "e5",
+       "uci": "e6e5",
+       "fen": "8/3p2P1/p1b5/1pP1p3/5Rrk/P3K3/8/8 w - - 0 47"
+      },
+      {
+       "san": "Rxg4+",
+       "uci": "f4g4",
+       "fen": "8/3p2P1/p1b5/1pP1p3/6Rk/P3K3/8/8 b - - 0 47"
+      },
+      {
+       "san": "Kxg4",
+       "uci": "h4g4",
+       "fen": "8/3p2P1/p1b5/1pP1p3/6k1/P3K3/8/8 w - - 0 48"
+      },
+      {
+       "san": "g8=Q+",
+       "uci": "g7g8q",
+       "fen": "6Q1/3p4/p1b5/1pP1p3/6k1/P3K3/8/8 b - - 0 48"
+      }
+     ],
+     "comentario": "46.Tf4 e5 47.Txg4+ Rxg4 48.g8=D+. En la línea se cambian las torres. Todo gira en torno a una clavada: la pieza clavada no puede defender. Después del cambio, el peón avanzado pesa más que cualquier pieza: ya no hay quién lo detenga a tiempo. (Ejercicio 3MyjL de la base abierta de Lichess (CC0), rating 1298. Stockfish 16 a profundidad 18: Tf4 es la mejor (+4,8) y la segunda queda en -6,0.)",
+     "clave": true,
+     "marcas": []
+    }
+   ]
+  },
+  {
+   "n": 16,
+   "cap": 4,
+   "capitulo": "Cambiar hacia el final",
+   "titulo": "Transformar una ventaja en otra",
+   "leccion": 16,
+   "diagramas": [
+    {
+     "id": "CC-16",
+     "idx": 0,
+     "fen": "2k5/p1p5/2P4p/5Kp1/1P2Q3/2Pqp3/P5PP/8 b - - 1 34",
+     "turno": "b",
+     "titulo": "La ventaja se puede cobrar de una forma más simple: con un cambio que deja un final de peones. Juegan las negras; el rival acaba de jugar De4.",
+     "resultado": "0-1",
+     "resultado_texto": "Ganan negras",
+     "linea": "34...Qxe4+ 35.Kxe4 e2",
+     "linea_es": "34...Dxe4+ 35.Rxe4 e2",
+     "jugadas": [
+      {
+       "san": "Qxe4+",
+       "uci": "d3e4",
+       "fen": "2k5/p1p5/2P4p/5Kp1/1P2q3/2P1p3/P5PP/8 w - - 0 35"
+      },
+      {
+       "san": "Kxe4",
+       "uci": "f5e4",
+       "fen": "2k5/p1p5/2P4p/6p1/1P2K3/2P1p3/P5PP/8 b - - 0 35"
+      },
+      {
+       "san": "e2",
+       "uci": "e3e2",
+       "fen": "2k5/p1p5/2P4p/6p1/1P2K3/2P5/P3p1PP/8 w - - 0 36"
+      }
+     ],
+     "comentario": "34…Dxe4+ 35.Rxe4 e2. En la línea se cambian las damas, y queda un final de peones. El peón avanzado decide: hay que empujarlo o aprovecharlo a tiempo. La ventaja con damas se convierte en un final de peones sin discusión: la misma ventaja, mucho más fácil de ganar. (Ejercicio 2IfUl de la base abierta de Lichess (CC0), rating 1260. Stockfish 16 a profundidad 18: Dxe4+ es la mejor (+5,3) y la segunda queda en -3,8.)",
+     "clave": true,
+     "marcas": []
+    }
+   ]
+  },
+  {
+   "n": 17,
+   "cap": 5,
+   "capitulo": "Defenderse con los cambios",
+   "titulo": "Simplificar para aguantar",
+   "leccion": 17,
+   "diagramas": [
+    {
+     "id": "CC-17",
+     "idx": 0,
+     "fen": "r3k2r/1pp1n1pp/p1p2p2/4p2Q/1b1qP3/1PNP4/PBP2PPP/R3R1K1 b kq - 2 12",
+     "turno": "b",
+     "titulo": "Primero hay que parar lo que quiere el rival. Solo una jugada conserva la ventaja, y lleva a un cambio. Juegan las negras; el rival acaba de jugar Dh5+.",
+     "resultado": "0-1",
+     "resultado_texto": "Ganan negras",
+     "linea": "12...g6 13.Qh6 Bxc3 14.Bxc3 Qxc3",
+     "linea_es": "12...g6 13.Dh6 Axc3 14.Axc3 Dxc3",
+     "jugadas": [
+      {
+       "san": "g6",
+       "uci": "g7g6",
+       "fen": "r3k2r/1pp1n2p/p1p2pp1/4p2Q/1b1qP3/1PNP4/PBP2PPP/R3R1K1 w kq - 0 13"
+      },
+      {
+       "san": "Qh6",
+       "uci": "h5h6",
+       "fen": "r3k2r/1pp1n2p/p1p2ppQ/4p3/1b1qP3/1PNP4/PBP2PPP/R3R1K1 b kq - 1 13"
+      },
+      {
+       "san": "Bxc3",
+       "uci": "b4c3",
+       "fen": "r3k2r/1pp1n2p/p1p2ppQ/4p3/3qP3/1PbP4/PBP2PPP/R3R1K1 w kq - 0 14"
+      },
+      {
+       "san": "Bxc3",
+       "uci": "b2c3",
+       "fen": "r3k2r/1pp1n2p/p1p2ppQ/4p3/3qP3/1PBP4/P1P2PPP/R3R1K1 b kq - 0 14"
+      },
+      {
+       "san": "Qxc3",
+       "uci": "d4c3",
+       "fen": "r3k2r/1pp1n2p/p1p2ppQ/4p3/4P3/1PqP4/P1P2PPP/R3R1K1 w kq - 0 15"
+      }
+     ],
+     "comentario": "12…g6 13.Dh6 Axc3 14.Axc3 Dxc3. En la línea se cambian una pieza menor por otra. Es una jugada defensiva precisa: la única que sostiene la posición. Con el cambio se acaba lo que amenazaba el rival y la ventaja sigue en pie; cualquier otra jugada la deja escapar. (Ejercicio 35DZy de la base abierta de Lichess (CC0), rating 1554. Stockfish 16 a profundidad 18: g6 es la mejor (+3,8) y la segunda queda en +0,2.)",
+     "clave": true,
+     "marcas": []
+    }
+   ]
+  },
+  {
+   "n": 18,
+   "cap": 5,
+   "capitulo": "Defenderse con los cambios",
+   "titulo": "Cambiar la pieza que ataca",
+   "leccion": 18,
+   "diagramas": [
+    {
+     "id": "CC-18",
+     "idx": 0,
+     "fen": "5R2/8/p1p2kp1/3p4/3P1r2/P1P2p2/BP6/2K5 b - - 3 39",
+     "turno": "b",
+     "titulo": "Primero hay que parar lo que quiere el rival. Solo una jugada conserva la ventaja, y en su línea se cambian piezas pesadas. Juegan las negras; el rival acaba de jugar Tf8+.",
+     "resultado": "0-1",
+     "resultado_texto": "Ganan negras",
+     "linea": "39...Kg5 40.Rxf4 Kxf4 41.Kd2 Kg3",
+     "linea_es": "39...Rg5 40.Txf4 Rxf4 41.Rd2 Rg3",
+     "jugadas": [
+      {
+       "san": "Kg5",
+       "uci": "f6g5",
+       "fen": "5R2/8/p1p3p1/3p2k1/3P1r2/P1P2p2/BP6/2K5 w - - 4 40"
+      },
+      {
+       "san": "Rxf4",
+       "uci": "f8f4",
+       "fen": "8/8/p1p3p1/3p2k1/3P1R2/P1P2p2/BP6/2K5 b - - 0 40"
+      },
+      {
+       "san": "Kxf4",
+       "uci": "g5f4",
+       "fen": "8/8/p1p3p1/3p4/3P1k2/P1P2p2/BP6/2K5 w - - 0 41"
+      },
+      {
+       "san": "Kd2",
+       "uci": "c1d2",
+       "fen": "8/8/p1p3p1/3p4/3P1k2/P1P2p2/BP1K4/8 b - - 1 41"
+      },
+      {
+       "san": "Kg3",
+       "uci": "f4g3",
+       "fen": "8/8/p1p3p1/3p4/3P4/P1P2pk1/BP1K4/8 w - - 2 42"
+      }
+     ],
+     "comentario": "39…Rg5 40.Txf4 Rxf4 41.Rd2 Rg3. En la línea se cambian las torres. Es una jugada defensiva precisa: la única que sostiene la posición. Se cambia una pieza pesada, se apaga el contrajuego y la ventaja queda intacta. (Ejercicio 0Twlj de la base abierta de Lichess (CC0), rating 1307. Stockfish 16 a profundidad 18: Rg5 es la mejor (+3,3) y la segunda queda en -6,6.)",
+     "clave": true,
+     "marcas": []
+    }
+   ]
+  },
+  {
+   "n": 19,
+   "cap": 5,
+   "capitulo": "Defenderse con los cambios",
+   "titulo": "Defender sin cambiar",
+   "leccion": 19,
+   "diagramas": [
+    {
+     "id": "CC-19",
+     "idx": 0,
+     "fen": "5k2/7P/p3N1R1/5p2/2b2P2/3p2P1/7r/3K4 b - - 1 47",
+     "turno": "b",
+     "titulo": "Podías cambiar una pieza por otra igual, pero ese no es el camino: solo una jugada conserva la ventaja. Juegan las negras; el rival acaba de jugar Ce6+.",
+     "resultado": "0-1",
+     "resultado_texto": "Ganan negras",
+     "linea": "47...Kf7 48.h8=N+ Rxh8",
+     "linea_es": "47...Rf7 48.h8=C+ Txh8",
+     "jugadas": [
+      {
+       "san": "Kf7",
+       "uci": "f8f7",
+       "fen": "8/5k1P/p3N1R1/5p2/2b2P2/3p2P1/7r/3K4 w - - 2 48"
+      },
+      {
+       "san": "h8=N+",
+       "uci": "h7h8n",
+       "fen": "7N/5k2/p3N1R1/5p2/2b2P2/3p2P1/7r/3K4 b - - 0 48"
+      },
+      {
+       "san": "Rxh8",
+       "uci": "h2h8",
+       "fen": "7r/5k2/p3N1R1/5p2/2b2P2/3p2P1/8/3K4 w - - 0 49"
+      }
+     ],
+     "comentario": "47…Rf7 48.h8=C+ Txh8. Es una jugada defensiva precisa: la única que sostiene la posición. El cambio parecía aliviar, pero la jugada buena es otra: defenderse no siempre es simplificar. (Ejercicio 1hdjX de la base abierta de Lichess (CC0), rating 1955. Stockfish 16 a profundidad 18: Rf7 es la mejor (+5,4) y la segunda queda en +0,1.)",
+     "clave": true,
+     "marcas": []
+    }
+   ]
+  },
+  {
+   "n": 20,
+   "cap": 5,
+   "capitulo": "Defenderse con los cambios",
+   "titulo": "Una pieza encerrada vale menos",
+   "leccion": 20,
+   "diagramas": [
+    {
+     "id": "CC-20",
+     "idx": 0,
+     "fen": "r4rk1/pp2npb1/3p1qp1/4pP1p/4P3/2PB2QP/PP4P1/RNB3K1 w - - 4 17",
+     "turno": "w",
+     "titulo": "Hay una pieza con muy pocas casillas. ¿Cómo lo aprovechas? Juegan las blancas; el rival acaba de jugar …Ce7.",
+     "resultado": "1-0",
+     "resultado_texto": "Ganan blancas",
+     "linea": "17.Bg5 Qxg5 18.Qxg5",
+     "linea_es": "17.Ag5 Dxg5 18.Dxg5",
+     "jugadas": [
+      {
+       "san": "Bg5",
+       "uci": "c1g5",
+       "fen": "r4rk1/pp2npb1/3p1qp1/4pPBp/4P3/2PB2QP/PP4P1/RN4K1 b - - 5 17"
+      },
+      {
+       "san": "Qxg5",
+       "uci": "f6g5",
+       "fen": "r4rk1/pp2npb1/3p2p1/4pPqp/4P3/2PB2QP/PP4P1/RN4K1 w - - 0 18"
+      },
+      {
+       "san": "Qxg5",
+       "uci": "g3g5",
+       "fen": "r4rk1/pp2npb1/3p2p1/4pPQp/4P3/2PB3P/PP4P1/RN4K1 b - - 0 18"
+      }
+     ],
+     "comentario": "17.Ag5 Dxg5 18.Dxg5. Una pieza rival queda atrapada, sin casilla adonde ir. La pieza vale lo que puede hacer: sin casillas, no vale sus puntos. (Ejercicio 0aIwq de la base abierta de Lichess (CC0), rating 1493. Stockfish 16 a profundidad 18: Ag5 es la mejor (+5,2) y la segunda queda en -1,7.)",
+     "clave": true,
+     "marcas": []
+    }
+   ]
+  },
+  {
+   "n": 21,
+   "cap": 6,
+   "capitulo": "Los cambios paradójicos",
+   "titulo": "Cambiar tu mejor pieza",
+   "leccion": 21,
+   "diagramas": [
+    {
+     "id": "CC-21",
+     "idx": 0,
+     "fen": "2kr3r/p1p1n1pp/3b2q1/4Bb2/3P1Q2/2N5/PPP3PP/4RRK1 w - - 7 18",
+     "turno": "w",
+     "titulo": "El cambio que gana se lleva una pieza que el rival necesitaba. Juegan las blancas; el rival acaba de jugar …Dg6.",
+     "resultado": "1-0",
+     "resultado_texto": "Ganan blancas",
+     "linea": "18.Bxd6 Qxd6 19.Qxd6 Rxd6 20.Rxe7",
+     "linea_es": "18.Axd6 Dxd6 19.Dxd6 Txd6 20.Txe7",
+     "jugadas": [
+      {
+       "san": "Bxd6",
+       "uci": "e5d6",
+       "fen": "2kr3r/p1p1n1pp/3B2q1/5b2/3P1Q2/2N5/PPP3PP/4RRK1 b - - 0 18"
+      },
+      {
+       "san": "Qxd6",
+       "uci": "g6d6",
+       "fen": "2kr3r/p1p1n1pp/3q4/5b2/3P1Q2/2N5/PPP3PP/4RRK1 w - - 0 19"
+      },
+      {
+       "san": "Qxd6",
+       "uci": "f4d6",
+       "fen": "2kr3r/p1p1n1pp/3Q4/5b2/3P4/2N5/PPP3PP/4RRK1 b - - 0 19"
+      },
+      {
+       "san": "Rxd6",
+       "uci": "d8d6",
+       "fen": "2k4r/p1p1n1pp/3r4/5b2/3P4/2N5/PPP3PP/4RRK1 w - - 0 20"
+      },
+      {
+       "san": "Rxe7",
+       "uci": "e1e7",
+       "fen": "2k4r/p1p1R1pp/3r4/5b2/3P4/2N5/PPP3PP/5RK1 b - - 0 20"
+      }
+     ],
+     "comentario": "18.Axd6 Dxd6 19.Dxd6 Txd6 20.Txe7. En la línea se cambian una pieza menor por otra y las damas. Se captura al defensor y lo que defendía queda colgado. Lo que cuenta no es la pieza que se entrega, sino lo que queda después: el rival se quedó sin la pieza que sostenía su posición. (Ejercicio 1S1al de la base abierta de Lichess (CC0), rating 1634. Stockfish 16 a profundidad 18: Axd6 es la mejor (+3,0) y la segunda queda en -0,7.)",
+     "clave": true,
+     "marcas": []
+    }
+   ]
+  },
+  {
+   "n": 22,
+   "cap": 6,
+   "capitulo": "Los cambios paradójicos",
+   "titulo": "Con ventaja, a veces no se cambia",
+   "leccion": 22,
+   "diagramas": [
+    {
+     "id": "CC-22",
+     "idx": 0,
+     "fen": "1r3rk1/5ppp/1RQ5/4p3/8/2P1B3/1P2qPPP/2K4R b - - 4 22",
+     "turno": "b",
+     "titulo": "Podías cambiar una pieza por otra igual. La jugada que gana mantiene la tensión. Juegan las negras; el rival acaba de jugar Tb6.",
+     "resultado": "0-1",
+     "resultado_texto": "Ganan negras",
+     "linea": "22...Ra8 23.Qe4 Ra1+ 24.Qb1 Rxb1+",
+     "linea_es": "22...Ta8 23.De4 Ta1+ 24.Db1 Txb1+",
+     "jugadas": [
+      {
+       "san": "Ra8",
+       "uci": "b8a8",
+       "fen": "r4rk1/5ppp/1RQ5/4p3/8/2P1B3/1P2qPPP/2K4R w - - 5 23"
+      },
+      {
+       "san": "Qe4",
+       "uci": "c6e4",
+       "fen": "r4rk1/5ppp/1R6/4p3/4Q3/2P1B3/1P2qPPP/2K4R b - - 6 23"
+      },
+      {
+       "san": "Ra1+",
+       "uci": "a8a1",
+       "fen": "5rk1/5ppp/1R6/4p3/4Q3/2P1B3/1P2qPPP/r1K4R w - - 7 24"
+      },
+      {
+       "san": "Qb1",
+       "uci": "e4b1",
+       "fen": "5rk1/5ppp/1R6/4p3/8/2P1B3/1P2qPPP/rQK4R b - - 8 24"
+      },
+      {
+       "san": "Rxb1+",
+       "uci": "a1b1",
+       "fen": "5rk1/5ppp/1R6/4p3/8/2P1B3/1P2qPPP/1rK4R w - - 0 25"
+      }
+     ],
+     "comentario": "22…Ta8 23.De4 Ta1+ 24.Db1 Txb1+. La clave es una jugada tranquila: sin jaque ni captura, pero sin defensa. El cambio aliviaba al rival; la jugada tranquila mantiene sus problemas y decide. (Ejercicio 0ZRCk de la base abierta de Lichess (CC0), rating 1853. Stockfish 16 a profundidad 18: Ta8 es la mejor (+3,6) y la segunda queda en -4,2.)",
+     "clave": true,
+     "marcas": []
+    }
+   ]
+  },
+  {
+   "n": 23,
+   "cap": 6,
+   "capitulo": "Los cambios paradójicos",
+   "titulo": "Devolver material para cambiar",
+   "leccion": 23,
+   "diagramas": [
+    {
+     "id": "CC-23",
+     "idx": 0,
+     "fen": "8/8/3R3p/p5p1/3R2P1/8/3rp1KP/3k4 b - - 7 59",
+     "turno": "b",
+     "titulo": "La línea que gana pasa por un cambio de piezas pesadas. ¿Cómo lo consigues? Juegan las negras; el rival acaba de jugar Ted4.",
+     "resultado": "0-1",
+     "resultado_texto": "Ganan negras",
+     "linea": "59...e1=Q+ 60.Rxd2+ Qxd2+ 61.Rxd2+ Kxd2",
+     "linea_es": "59...e1=D+ 60.Txd2+ Dxd2+ 61.Txd2+ Rxd2",
+     "jugadas": [
+      {
+       "san": "e1=Q+",
+       "uci": "e2e1q",
+       "fen": "8/8/3R3p/p5p1/3R2P1/8/3r2KP/3kq3 w - - 0 60"
+      },
+      {
+       "san": "Rxd2+",
+       "uci": "d4d2",
+       "fen": "8/8/3R3p/p5p1/6P1/8/3R2KP/3kq3 b - - 0 60"
+      },
+      {
+       "san": "Qxd2+",
+       "uci": "e1d2",
+       "fen": "8/8/3R3p/p5p1/6P1/8/3q2KP/3k4 w - - 0 61"
+      },
+      {
+       "san": "Rxd2+",
+       "uci": "d6d2",
+       "fen": "8/8/7p/p5p1/6P1/8/3R2KP/3k4 b - - 0 61"
+      },
+      {
+       "san": "Kxd2",
+       "uci": "d1d2",
+       "fen": "8/8/7p/p5p1/6P1/8/3k2KP/8 w - - 0 62"
+      }
+     ],
+     "comentario": "59…e1=D+ 60.Txd2+ Dxd2+ 61.Txd2+ Rxd2. En la línea se cambian las torres, y queda un final de peones. Es un ataque a la descubierta: al moverse una pieza, se destapa otra. Con las piezas pesadas cambiadas, el peón avanzado decide: lo que queda se gana. (Ejercicio 1K1Fv de la base abierta de Lichess (CC0), rating 1318. Stockfish 16 a profundidad 18: e1=D+ es la mejor (+6,9) y la segunda queda en -0,8.)",
+     "clave": true,
+     "marcas": []
+    }
+   ]
+  }
+ ],
+ "meta": {
+  "generado": "herramientas/curso-posiciones.js",
+  "posiciones": 23
+ }
+}

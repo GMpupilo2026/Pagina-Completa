@@ -175,6 +175,8 @@ export const TITULOS_CURSOS: Record<string, string> = {
   "el-mapa-de-los-finales": "El mapa de los finales",
   "estrategia-en-el-final": "Estrategia en el final",
   "desequilibrios-de-material": "Desequilibrios de material",
+  // El título lleva signos de pregunta: desde el slug saldría «Cambio o no cambio».
+  "cambio-o-no-cambio": "¿Cambio o no cambio?",
   "preparacion-para-torneos": "Preparación para Torneos",
   "formacion-ajedrez": "Formación Ajedrez",
   "arbitro-nacional": "Árbitro Nacional",

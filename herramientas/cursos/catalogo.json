@@ -163,6 +163,17 @@
       "modalidad": ""
     },
     {
+      "slug": "cambio-o-no-cambio",
+      "titulo": "¿Cambio o no cambio?",
+      "nivel": "avanzado",
+      "resumen": "Cada cambio de piezas transforma la partida. Cuándo conviene cambiar y cuándo no, con alfiles, caballos, damas y torres, hacia el final y para defenderte.",
+      "lecciones": 24,
+      "alt": "Final de damas de una lección del curso: juegan las blancas, las damas están frente a frente y cambiarlas deja un final de peones ganado.",
+      "precio": "",
+      "duracion": "",
+      "modalidad": ""
+    },
+    {
       "slug": "preparacion-para-torneos",
       "titulo": "Preparación para Torneos",
       "nivel": "competicion",
