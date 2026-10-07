@@ -1373,11 +1373,132 @@ accesible, y que esta no traiga imágenes ni scripts.
 Está en `admin.html#materiales` (se comparte como los demás) y en «Archivos».
 No está en la tienda: venderlo sería vender un resumen de un libro ajeno.
 
+## El curso y el libro «Ganar con poco»
+
+Un curso (44 lecciones en ocho bloques) y su libro, de Oscar Angulo Cubero,
+sobre cómo se ganan las partidas que parecen tablas: ver las ventajas
+pequeñas (una pieza mejor, una casilla, un peón débil, un peón pasado, una
+torre activa, el rey más cerca, un tiempo), no regalarlas, sumarlas sin apuro
+y cobrarlas en el final. Seis capítulos —ver lo que no se ve, piezas buenas y
+malas, los peones, cambiar para ganar, la técnica en el final, paciencia y
+defensa—, un séptimo con las dieciocho partidas del libro de Leyva y un octavo
+con el método: el cuaderno de ventajas.
+
+### Tomado de un libro ajeno como referencia, no copiado
+
+El dueño pidió «un libro y un curso» con *Ventajas microscópicas* (Héctor
+Leyva Paneque, 2004; edición electrónica de 2014), que dejó en una carpeta de
+su Drive. Ese libro tiene derechos de autor y prohíbe reproducirlo o tratarlo
+informáticamente, así que se hizo lo mismo que con «Rompe el estancamiento»:
+se tomó **la idea y nada más** —ganar sumando ventajas pequeñas, casi
+invisibles, en vez de esperar una combinación—, que además es de toda la
+tradición del ajedrez posicional. Ni el texto, ni las partidas comentadas que
+trae ese libro, ni su selección, ni los ejemplos, ni el título salen de ahí.
+Las lecciones están escritas para esto, en tuteo.
+
+Después el dueño pidió «usa las partidas del libro» y dijo que tiene permiso
+sobre él. Con eso se agregó el capítulo 7, **las dieciocho partidas** que
+comenta Leyva (Andersson–Potkin, Petrosian–Botvinnik, Capablanca–Yates…), y
+aun así se tomaron solo las **jugadas**, que son los hechos de cada partida:
+los comentarios, los títulos de las lecciones y los momentos clave son
+propios.
+
+### Las partidas del libro (capítulo 7)
+
+- **Las jugadas salen del PDF y se comprueban una por una con chess.js**
+  (`herramientas/datos/ganar-con-poco-partidas.pgn`). En el libro la línea
+  principal va en renglones propios («12. Cf3  Cc6», «12 ... Cc6») y las
+  variantes, pegadas dentro del comentario («12.Cf3»): así se separan. Una
+  jugada falta en el texto porque va en un diagrama: la 12 de Kárpov–Krámnik.
+  Se probaron todas las parejas de jugadas posibles y **12.Axe4 h6 es la única
+  que deja legal el resto de la partida**; la lección lo dice.
+- **Los momentos clave los elige el motor, no el libro**
+  (`herramientas/ganar-con-poco-partidas.js`): una jugada del bando que ganó,
+  la mejor a profundidad 16 y al menos medio peón mejor que la segunda. Si el
+  texto pide un momento que no cumple, el script no escribe nada.
+  Kaspárov–X3D Fritz se quedó sin ninguno —su mejor jugada saca 0,48 de
+  ventaja a la segunda— y la lección explica que esa partida se gana con muchas
+  jugadas buenas y ninguna única.
+- Lo que dice cada comentario se miró en la posición (qué pieza ataca, qué
+  casilla queda sin peón que la cuide, si el peón queda pasado). Dos frases del
+  primer borrador no lo eran —«los peones en un solo flanco» en Kárpov–Krámnik y
+  «con las damas en el tablero» en Andersson–Potkin— y se corrigieron.
+- El curso las muestra con el visor de «Desequilibrios de material»
+  (`js/curso-partidas.js`): `curso-generar.py` pone un `cp-partida` en la
+  lección que trae `"partida"`, y la página de la Academia carga el visor. El
+  libro trae cada partida entera con sus momentos clave en diagrama.
+
+### Las posiciones: de Lichess, comprobadas con Stockfish
+
+`herramientas/ganar-con-poco-generar.js` es el generador de «Rompe el
+estancamiento» con otros temas: los de la **técnica**, no los de la táctica
+(finales de torres, alfiles, caballos, damas y peones, la jugada tranquila,
+el peón avanzado, la coronación, la pieza atrapada, el zugzwang y la jugada
+defensiva). Las candidatas están en
+`herramientas/datos/ganar-con-poco-candidatas.txt` (la consulta, en su
+cabecera); pasan por el MISMO `analizar()` del diagnóstico (una sola jugada
+buena) y ninguna repite una del diagnóstico ni de **ningún** banco de
+`material/`: se leen todos, cada uno aparte. La primera versión tenía la
+lista escrita a mano y, al mezclar `main`, doce posiciones resultaron estar
+también en los volúmenes 2 a 10 de «Mide tu fuerza», que llegaron en paralelo
+(y además usan el mismo nombre de variable, así que leídos juntos uno pisa al
+otro).
+
+- **Lo que la lección dice de su ejemplo se comprueba en la posición**
+  (`cumple()`, que el verificador vuelve a usar): el «final de torres» no tiene
+  más que torres, reyes y peones, y hay torre de los dos lados (lo mismo con
+  alfiles, caballos y damas); la jugada «tranquila» no da jaque ni captura; el
+  zugzwang de «pasar el turno» empieza sin capturar. La primera corrida, sin
+  esa última regla, le dio a la lección del zugzwang un ejemplo cuya solución
+  era comerse una torre: la etiqueta de Lichess miraba la línea entera.
+- Los ejemplos de Lichess son a veces más tácticos de lo que la lección
+  promete (un final de damas que se gana cambiando las damas). Por eso el
+  `enlace` de las lecciones de finales dice lo que el motor comprobó —que la
+  jugada es la única que conserva la ventaja— y no cómo se gana.
+- **El ejemplo de cada lección es la misma posición en el curso y en el
+  libro**, como en «Rompe el estancamiento».
+
+### Cómo se regenera
+
+    STOCKFISH=/usr/games/stockfish node herramientas/ganar-con-poco-generar.js
+    node herramientas/curso-posiciones.js ganar-con-poco
+    STOCKFISH=/usr/games/stockfish node herramientas/ganar-con-poco-partidas.js --analizar
+    node herramientas/ganar-con-poco-partidas.js      # DESPUÉS de curso-posiciones.js
+    python3 herramientas/curso-generar.py ganar-con-poco
+    CHROME_PATH=… node herramientas/curso-material-generar.js ganar-con-poco
+    node herramientas/curso-material-enlazar.js
+    CHROMIUM=… node herramientas/ganar-con-poco-pdf.js
+
+`curso-posiciones.js` reescribe el archivo de datos entero: si se corre y no se
+vuelve a correr `ganar-con-poco-partidas.js`, el capítulo 7 queda sin partidas
+(el verificador lo dice).
+
+Lo comprueban `verificar-ganar-con-poco.js` (el banco, que el ejemplo del
+curso sea el del libro y que lo que dice la lección sea cierto en la
+posición; que el curso y el libro traigan las jugadas del PGN y los mismos
+momentos clave, del bando que ganó; y la versión accesible) y
+`verificar-ganar-con-poco-pdf.py` (protección, autor, marca de agua en cada
+página, los ocho capítulos, las 44 lecciones, los 72 ejercicios y el cuaderno
+de ventajas).
+
+### Dónde quedó dado de alta
+
+En el catálogo (nivel Avanzado, después de «Rompe el estancamiento», con su
+diagrama), en «Mis cursos» de la Academia, en el material de la clase en vivo,
+en exámenes por curso (estrategia y finales), en el plan de entrenamiento del
+área de estrategia y en `interno.curso_lecciones` para su certificado
+(`20261007032207_curso_ganar_con_poco.sql`, y
+`20261007042932_curso_ganar_con_poco_partidas.sql` al sumar las 18 partidas:
+44 lecciones). El libro está en
+`admin.html#materiales` (se comparte como los otros) y en «Archivos». Como
+«Rompe el estancamiento», no está en la tienda, y el correo a la casa lo
+nombra desde el slug.
+
 ## Los materiales de clase
 
 `admin.html#materiales` («Materiales de clases») junta los materiales para dar
 clase —hoy, «Ponte a prueba», los diez volúmenes del banco de ejercicios «Mide
-tu fuerza», el libro «Rompe el estancamiento», los cuentos de Peonita y «Coachess en resumen»— y dice **con quién se comparte cada uno**: una
+tu fuerza», los libros «Rompe el estancamiento» y «Ganar con poco», los cuentos de Peonita y «Coachess en resumen»— y dice **con quién se comparte cada uno**: una
 persona, una academia entera o todos los profesores. Lo pinta
 `js/admin-materiales.js`; lo prueba `verificar-admin.js`.
 
