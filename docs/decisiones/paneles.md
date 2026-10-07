@@ -1291,10 +1291,115 @@ segura de poner en tantas páginas.
 
 `admin.html` es de quien administra. Lo que hace está en las secciones de
 abajo (lo urgente, cuentas, profesores…); cómo se reparte en la pantalla, en
-«El panel de Administración, por secciones», y qué va acá y qué en el panel de
-la Academia, en «Una sola puerta para cada cosa».
+«El panel de Administración en seis secciones» (lo vigente) y, antes, «El
+panel de Administración, por secciones»; qué va acá y qué en el panel de la
+Academia, en «Una sola puerta para cada cosa».
+
+### El panel de Administración en seis secciones
+
+El dueño dijo que no le gustaba el panel: **demasiadas secciones, lo de todos
+los días costaba, se veía recargado y todo estaba esparcido, sin orden
+lógico**. Lo que más hace es manejar cuentas y contenido. Primero se le armó
+una maqueta navegable, la aprobó, y se construyó así:
+
+- **Seis pestañas arriba, por tema**: Inicio (lo urgente), Personas,
+  Organización, Contenido, Cobros y accesos, Informes. Eran trece entradas en
+  un menú a la izquierda. Las secciones de siempre cuelgan de su pestaña
+  (`GRUPOS_ADMIN` de `js/admin.js`), y la que tiene varias las enseña debajo
+  como pastillas: Organización (Profesores y coordinadores, Supervisores,
+  Equipos, Preparación de rivales), Contenido (Materiales, Archivos,
+  Proyectos, Salas de torneos, Avisos internos) e Informes (Informes y
+  resultados, Registro de cambios).
+  - **Cada sección sigue siendo un `<section data-seccion>` con sus mismos
+    ids**, y la dirección sigue llevando su nombre (`admin.html#equipos`):
+    los enlaces guardados y las otras páginas que llevan a una sección
+    (coordinación a `#equipos`, la auditoría a `#materiales`) siguen sirviendo.
+  - **Una pestaña recuerda su última sección**: volver a Contenido vuelve a
+    Archivos si ahí se estaba.
+  - **«＋ Crear cuenta» es un botón de arriba, a la vista en todas las
+    pestañas**, y es su única puerta: no está además en el menú.
+  - Los colores siguen siendo los del sitio (el azul de la marca y el ámbar):
+    la cabecera es `bg-brand-900`, que cambia con el tema de la plataforma.
+- **Las páginas de quien administra están en el panel, cada una en la pestaña
+  de su tema.** Antes `admin.html` no llevaba a ninguna («Una sola puerta»):
+  cobros, informes, solicitudes, academias… estaban solo en el panel de la
+  Academia, y quien administraba iba y volvía para todo. Ahora:
+  - **La lista es UNA, `js/paginas-admin.js`**: el panel de la Academia arma
+    `ADMIN_GROUPS` con ella (`window.PaginasAdmin.GRUPOS`) y `admin.html` la
+    reparte por la `zona` de cada página. Escribirla dos veces era que se
+    fueran separando. Una página nueva de quien administra va ahí, con su
+    `zona`, y sale en las dos pantallas.
+  - Cobros y accesos e Informes son pestañas hechas de esas tarjetas; en
+    Personas, Organización y Contenido salen debajo de la sección, en «Otras
+    páginas de …».
+  - Las que no llevan `zona` no salen en `admin.html`: «Administración» (la
+    página misma) y «Configuración» (la cuenta propia).
+  - **Esto cambia la regla de «Una sola puerta para cada cosa» para quien
+    administra**: cada página está una vez en cada uno de sus dos paneles, que
+    leen la misma lista. Dentro de `admin.html` sigue habiendo una sola puerta
+    a cada cosa, y eso es lo que comprueba el verificador.
+- **Ctrl + K busca en todo el panel sin salir** (`js/admin-buscador.js`):
+  personas (abre su ficha), secciones (lleva a ella) y páginas (las abre),
+  sin tildes y también por lo que hace cada página («mensualidades» encuentra
+  Cobros). Sin nada escrito, enseña las secciones y las páginas: es el mapa
+  del panel. Por eso `admin.html` ya no lleva `js/atajo-buscar.js` (que manda
+  a `clases.html?buscar=`): está en `SIN_ATAJO` de `academia-cabecera.py`,
+  junto a `clases.html`. El botón «Ctrl K» del buscador de arriba lo abre con
+  el mouse o en el celular.
+- **Lo de una persona se hace en su ficha**: ver «La ficha de cada persona».
+- Lo prueban `pruebaUnaSolaPuerta` («Seis pestañas, y cada cosa en una»: las
+  pestañas, que cada sección se alcance y ninguna sobre, que «Crear cuenta»
+  tenga una puerta, que cada página con `zona` salga una vez en su pestaña y
+  lleve a un archivo que existe, que `clases.js` use la misma lista y que no
+  haya otros enlaces sueltos), `pruebaSecciones` (la pestaña marcada, sus
+  secciones debajo, las otras páginas y que vuelva a la última) y
+  `pruebaBuscador` en `verificar-admin.js`. Probado rompiéndolo: una página
+  repetida con otra `zona`, o un `href` mal escrito, saltan.
+
+### La ficha de cada persona
+
+La lista de cuentas era una tabla de **siete columnas de campos editables**
+(nombre, rol, grupo, profesores, visión) más una fila de botones por persona
+(reenviar acceso, usuario y contraseña, quitar foto, quitar verificación,
+hacer administrador, eliminar). Con cincuenta filas era una pared, y lo de una
+misma persona estaba repartido en siete lugares.
+
+- **La fila solo dice quién es**: nombre, correo debajo, rol, grupo, sus
+  profesores (o «Sin profesor», escrito) y cuándo se creó. Ningún campo para
+  editar. El nombre es el botón que abre la ficha («Abrir la ficha de …»); el
+  botón «Abrir ficha» de la punta hace lo mismo con el mouse y no es otra
+  parada del Tab.
+- **La ficha va al costado** (`#ficha-persona`, `role="dialog"`,
+  `aria-modal`), en cuatro bloques: «Sus datos» (nombre, correo, grupo,
+  visión), «Rol y a cargo» (rol, sus profesores, y el atajo a su informe o a
+  su panel), «Cómo entra» (reenviar acceso, usuario y contraseña, quitar la
+  verificación) y «De vez en cuando» (quitar la foto, hacer administrador,
+  eliminar la cuenta). En el celular ocupa toda la pantalla.
+- **Nada de lo que se guarda cambió**: son los mismos `callAdmin`, `rpc` y
+  Edge Functions que tenían los campos de la fila, con sus mismos textos de
+  confirmación. Solo cambió dónde están.
+- **La ficha nunca enseña datos viejos**: se arma de nuevo cada vez que se
+  abre y cada vez que la lista se vuelve a cargar (`refrescarFicha()` al final
+  de `loadUsers()`: un cambio de rol, una cuenta borrada). Un cambio en la
+  ficha repinta la fila de atrás.
+- **El teclado**: al abrir, el foco va al nombre de la persona; Tab no se
+  escapa detrás de la ficha; Escape o un clic afuera la cierran y el foco
+  vuelve al nombre de la fila (al de la lista nueva, si se repintó). Con un
+  aviso de `js/avisos.js` encima, Escape es del aviso.
+- **«Usuario y contraseña» sigue abierto** al cerrar y volver a abrir la ficha
+  de esa persona (`accesoAbierto`), como antes al repintar la tabla.
+- La marca para asignar en lote sigue en la fila: es para muchos a la vez.
+- Lo prueban `pruebaFichaDePersona`, `pruebaElNombreNoSeCorta` (la fila sin
+  campos y con siete columnas, y el nombre entero en la fila y en la ficha) y
+  `pruebaUsuarioYContrasena` en `verificar-admin.js`;
+  `verificar-varios-profesores.js` y `verificar-vision-cuenta.js` cambian
+  profesores y visión desde la ficha. Probado rompiéndolo: si la ficha manda
+  el `target_id` de otra persona o el foco no vuelve, saltan.
 
 ### El panel de Administración, por secciones
+
+(Lo que sigue es el paso anterior, el menú a la izquierda. Hoy son seis
+pestañas: ver «El panel de Administración en seis secciones».)
 
 Era **una sola página larguísima**: el botón de Informes, «Ver como», los
 atajos, cinco tarjetas plegadas (crear cuenta, novedades, profesores,
@@ -1404,7 +1509,9 @@ muchos:
   de alumnos sin profesor, en Inicio, en el menú y en Profesores.
 
 La regla que quedó: **cada pantalla hace lo suyo, y cada destino tiene una sola
-puerta.**
+puerta.** (Para quien administra cambió después: `admin.html` también lleva a
+sus páginas, desde la misma lista que el panel de la Academia. Ver «El panel
+de Administración en seis secciones».)
 
 - **El panel de la Academia (`clases.html`, `ADMIN_GROUPS`) tiene TODAS las
   páginas**, que es donde entra quien administra: Administración (esta

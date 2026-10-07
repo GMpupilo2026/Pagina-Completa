@@ -10,8 +10,9 @@
 
    Cuatro cosas, por cuatro peligros distintos:
 
-   1. UNA SOLA PUERTA. Que admin.html no vuelva a traer atajos a las páginas
-      que ya están en el panel de la Academia, ni una sección repetida.
+   1. SEIS PESTAÑAS. Que cada sección cuelgue de una pestaña, que cada
+      página de quien administra salga una vez en la de su tema, y que la
+      ficha de cada persona y Ctrl + K hagan lo suyo.
 
    2. LAS CUENTAS. Que buscar encuentre sin importar las tildes, que el filtro
       de rol funcione —incluido "sin profesor asignado", que no es un rol pero
@@ -315,50 +316,88 @@ async function pruebaAuditoria(browser) {
   await ctx.close();
 }
 
-/* ====================== admin.html · una sola puerta ======================
-   Quien administra tiene dos pantallas: el panel de la Academia (clases.html),
-   con TODAS las páginas, y ésta, con lo que se maneja adentro. Había una
-   segunda lista de páginas acá («Herramientas»), un «Ver como» repetido, los
-   números de la plataforma repetidos en Inicio y una sección («Quién cubre a
-   quién») que repetía supervisores y coordinadores. Esta prueba cuida que no
-   vuelvan: lo que se repite se desordena, y la gente se pierde. */
+/* ====================== admin.html · seis pestañas ======================
+   El dueño pidió un panel «más eficiente y fácil de usar», con orden lógico:
+   había trece secciones en un menú y unas veinte páginas que solo estaban en
+   el panel de la Academia. Ahora son seis pestañas por tema, cada sección
+   cuelga de una, y cada página de quien administra sale en la pestaña de su
+   tema, UNA vez. Lo que se rompe callado: una sección que no se alcanza desde
+   ningún lado, una página que sale dos veces o en ninguna, un enlace a un
+   archivo que no existe, y que vuelvan los atajos o «Ver como» repetidos. */
 async function pruebaUnaSolaPuerta(browser) {
-  console.log("\n=== Una sola puerta para cada cosa ===");
+  console.log("\n=== Seis pestañas, y cada cosa en una ===");
   const { page, ctx, errores } = await abrir(browser, "/admin.html", ADMIN);
   await page.goto(BASE + "/admin.html", { waitUntil: "networkidle" });
   await page.waitForSelector("#app:not(.hidden)", { timeout: 20000 });
-  igual("el menú, por grupos y sin repetir",
-    await page.evaluate(() => Array.from(document.querySelectorAll("nav[aria-label='Secciones de administración'] ul")).map((ul) =>
-      document.getElementById(ul.getAttribute("aria-labelledby")).textContent + ": " + Array.from(ul.querySelectorAll("a")).map((a) => a.dataset.ir).join(", "))),
-    ["Hoy: inicio", "Supervisión y coordinación: supervisores, profesores, equipos", "Personas: cuentas, crear", "La plataforma: novedades, torneos, proyectos, materiales, archivos, preparacion, auditoria"]);
-  igual("cada sección del menú existe y hay una por entrada",
+  igual("arriba van seis pestañas, en este orden",
+    await page.evaluate(() => Array.from(document.querySelectorAll(".admin-grupo")).map((a) => a.dataset.grupo + ":" + a.firstChild.textContent.trim())),
+    ["inicio:Inicio", "personas:Personas", "organizacion:Organización", "contenido:Contenido", "cobros:Cobros y accesos", "informes:Informes"]);
+  igual("las secciones de cada pestaña",
+    await page.evaluate(() => Array.from(document.querySelectorAll("[data-subnav]")).map((ul) =>
+      ul.dataset.subnav + ": " + Array.from(ul.querySelectorAll("a")).map((a) => a.dataset.ir).join(", "))),
+    ["organizacion: profesores, supervisores, equipos, preparacion", "contenido: materiales, archivos, proyectos, torneos, novedades", "informes: informes, auditoria"]);
+  igual("cada sección se alcanza con un enlace del menú, y ninguna sobra ni falta",
     await page.evaluate(() => {
-      const menu = Array.from(document.querySelectorAll(".admin-nav")).map((a) => a.dataset.ir).sort();
+      const menu = new Set(Array.from(document.querySelectorAll(".admin-nav[data-ir], .admin-grupo[data-ir]")).map((a) => a.dataset.ir));
       const secciones = Array.from(document.querySelectorAll("[data-seccion]")).map((s) => s.dataset.seccion).sort();
-      return JSON.stringify(menu) === JSON.stringify(secciones) && new Set(menu).size === menu.length;
+      const subtabs = Array.from(document.querySelectorAll(".admin-nav")).map((a) => a.dataset.ir);
+      return JSON.stringify([...menu].sort()) === JSON.stringify(secciones) && new Set(subtabs).size === subtabs.length;
     }), true);
-  igual("sin atajos a páginas, sin «Ver como», sin números repetidos en Inicio",
+  igual("«Crear cuenta» tiene una sola puerta: el botón de arriba",
+    await page.evaluate(() => Array.from(document.querySelectorAll('[data-ir="crear"]')).map((a) => a.closest("nav") ? "en un menú" : "arriba")), ["arriba"]);
+  igual("sin atajos sueltos, sin «Ver como», sin números repetidos en Inicio",
     await page.evaluate(() => ["atajos", "inicio-numeros", "inicio-rapidos", "inicio-mando", "nav-sin-profesor", "profesores-badge"]
       .filter((id) => document.getElementById(id)).concat(document.querySelector("[data-modo-vista]") ? ["data-modo-vista"] : [])), []);
-  /* Fuera de «Lo urgente» (que lleva a donde se resuelve cada cosa) y de «Ver
-     su panel», la página enlaza a otras páginas solo para decir dónde están
-     todas: el panel de la Academia. */
-  igual("las páginas se abren desde el panel de la Academia, no desde acá",
+
+  /* Las páginas: se recorren las pestañas como una persona y se juntan las
+     tarjetas que salen. Tienen que ser exactamente las de js/paginas-admin.js
+     con `zona`, cada una una vez, y cada una a un archivo que existe. */
+  const vistas = [];
+  for (const g of ["inicio", "personas", "organizacion", "contenido", "cobros", "informes"]) {
+    await page.click('.admin-grupo[data-grupo="' + g + '"]');
+    vistas.push(...await page.evaluate((grupo) => Array.from(document.querySelectorAll("a[data-pagina]"))
+      .filter((a) => a.checkVisibility()).map((a) => grupo + " " + a.getAttribute("href")), g));
+  }
+  const esperadas = await page.evaluate(() => {
+    const fuera = [];
+    PaginasAdmin.GRUPOS.forEach((g) => g.tiles.forEach((t) => { if (t.zona) fuera.push(t.zona + " " + t.href); }));
+    return fuera;
+  });
+  igual("cada página de quien administra sale en la pestaña de su tema",
+    vistas.slice().sort(), esperadas.slice().sort());
+  const hrefs = vistas.map((v) => v.split(" ")[1]);
+  igual("y ninguna sale dos veces", new Set(hrefs).size === hrefs.length, true);
+  igual("las páginas de siempre siguen ahí",
+    ["cobros.html", "accesos.html", "informes.html", "solicitudes.html", "academias.html", "supervision.html", "novedades.html"].every((h) => hrefs.includes(h)), true);
+  igual("todas llevan a un archivo que existe",
+    hrefs.filter((h) => !fs.existsSync(path.join(RAIZ, h.split("?")[0]))), []);
+  igual("el panel de la Academia arma su lista con la MISMA (una sola copia)",
+    /const ADMIN_GROUPS = window\.PaginasAdmin\.GRUPOS;/.test(fs.readFileSync(path.join(RAIZ, "js", "clases.js"), "utf8"))
+      && /<script src="js\/paginas-admin\.js"><\/script>\s*<script src="js\/clases\.js"><\/script>/.test(fs.readFileSync(path.join(RAIZ, "clases.html"), "utf8")), true);
+
+  /* Fuera de las tarjetas de páginas, de «Lo urgente» (lleva a donde se
+     resuelve cada cosa) y de lo que es contenido de una sección (las salas,
+     los proyectos, los materiales), la página no enlaza a otras. */
+  igual("ningún otro enlace suelto a otras páginas",
     await page.evaluate(() => Array.from(document.querySelectorAll("#app a[href]"))
-      .filter((a) => !a.closest("#urgentes") && !a.closest("[data-seccion='torneos']") && !a.closest("[data-seccion='preparacion']")
-        /* La ficha de cada grupo de un proyecto abre SU página (proyecto.html?grupo=): es el contenido del grupo, no otra puerta. */
-        && !a.closest("[data-seccion='proyectos']")
-        /* Cada material abre SUS archivos y sus versiones como cuestionario: es el material, no otra puerta. */
-        && !a.closest("[data-seccion='materiales']")
+      .filter((a) => !a.dataset.pagina && !a.closest("#urgentes") && !a.closest("[data-seccion='torneos']") && !a.closest("[data-seccion='preparacion']")
+        && !a.closest("[data-seccion='proyectos']") && !a.closest("[data-seccion='materiales']")
         && !/ver_como=/.test(a.getAttribute("href")) && /\.html/.test(a.getAttribute("href")))
-      .map((a) => a.getAttribute("href"))), ["clases.html"]);
+      .map((a) => a.getAttribute("href"))), []);
   igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
   await ctx.close();
 }
 
-/* Ir a una sección del panel como una persona: con el menú de la izquierda. */
+/* Ir a una sección del panel como una persona: la pestaña de arriba y, si
+   tiene varias secciones, la de abajo. «Crear cuenta» es el botón de arriba. */
 async function irA(page, seccion) {
-  await page.click('.admin-nav[data-ir="' + seccion + '"]');
+  if (seccion === "crear") {
+    await page.click('.admin-nav[data-ir="crear"]');
+  } else {
+    const grupo = await page.evaluate((s) => window.AdminPanel.grupos.find((g) => g.secciones.includes(s)).id, seccion);
+    await page.click('.admin-grupo[data-grupo="' + grupo + '"]');
+    if (await page.$('.subnav-pestana[data-ir="' + seccion + '"]')) await page.click('.subnav-pestana[data-ir="' + seccion + '"]');
+  }
   await page.waitForFunction((s) => {
     const sec = document.querySelector('[data-seccion="' + s + '"]');
     return sec && sec.checkVisibility();
@@ -379,8 +418,8 @@ async function pruebaSecciones(browser) {
     Array.from(document.querySelectorAll("[data-seccion]")).filter((s) => s.checkVisibility()).map((s) => s.dataset.seccion));
 
   igual("al entrar se ve SOLO «Inicio»", await visibles(), ["inicio"]);
-  igual("y el menú lo marca como la página actual",
-    await page.getAttribute('.admin-nav[aria-current="page"]', "data-ir"), "inicio");
+  igual("y la pestaña de arriba lo marca",
+    await page.getAttribute('.admin-grupo[aria-current="true"]', "data-grupo"), "inicio");
   igual("el saludo lleva el nombre de quien entra",
     /^(Buenos días|Buenas tardes|Buenas noches), Oscar$/.test(await page.textContent("#admin-saludo")), true);
 
@@ -405,6 +444,19 @@ async function pruebaSecciones(browser) {
   // mandando, Ana (que tiene profesora) no saldría y no se sabría por qué.
   await irA(page, "equipos");
   igual("el menú cambia de sección", await visibles(), ["equipos"]);
+  igual("la pestaña es Organización y debajo se ven SUS secciones",
+    [await page.getAttribute('.admin-grupo[aria-current="true"]', "data-grupo"),
+     await page.evaluate(() => Array.from(document.querySelectorAll("[data-subnav]")).filter((u) => u.checkVisibility()).map((u) => u.dataset.subnav))],
+    ["organizacion", ["organizacion"]]);
+  igual("y la de Equipos queda marcada",
+    await page.getAttribute('.subnav-pestana[aria-current="page"]', "data-ir"), "equipos");
+  igual("debajo, las otras páginas de Organización",
+    await page.evaluate(() => document.getElementById("paginas-zona").checkVisibility()
+      && document.getElementById("paginas-zona-titulo").textContent), "Otras páginas de Organización");
+  // Volver a una pestaña lleva a la última sección abierta en ella.
+  await page.click('.admin-grupo[data-grupo="inicio"]');
+  await page.click('.admin-grupo[data-grupo="organizacion"]');
+  igual("volver a Organización vuelve a Equipos, donde se estaba", await visibles(), ["equipos"]);
   await page.fill("#user-search", "ramirez");
   await page.waitForFunction(() => /1 cuenta/.test(document.getElementById("users-summary").textContent), { timeout: 10000 });
   igual("buscar desde otra sección lleva a Cuentas con lo encontrado", await visibles(), ["cuentas"]);
@@ -1086,7 +1138,7 @@ async function pruebaCuentasDeUnGrupo(browser) {
   igual("se abre con su nombre a la vista", await page.textContent("#users-panel-title"), "7B");
   igual("y solo trae las suyas, de 50 en 50", (await resumen()).trim(), "Mostrando 50 de 401 cuentas.");
   igual("50 filas pintadas, no 401",
-    await page.evaluate(() => document.querySelectorAll("#users-body tr td select[aria-label^='Rol']").length), "50");
+    await page.evaluate(() => document.querySelectorAll("#users-body .persona-abrir").length), "50");
   igual("las fichas se esconden mientras tanto",
     await page.evaluate(() => document.getElementById("grupos-fichas").hidden), "true");
 
@@ -1115,7 +1167,7 @@ async function pruebaBuscarEntreGrupos(browser) {
   await page.fill("#user-search", "ramirez");
   await page.waitForFunction(() => /1 cuenta/.test(document.getElementById("users-summary").textContent), { timeout: 10000 });
   igual("buscar «ramirez» encuentra a «Ana Ramírez» aunque no se sepa su grupo",
-    await page.evaluate(() => document.querySelector("#users-body input[type=text]").value), "Ana Ramírez");
+    await page.evaluate(() => document.querySelector("#users-body .persona-abrir").textContent), "Ana Ramírez");
   igual("y el panel se llama por lo que es",
     await page.textContent("#users-panel-title"), "Resultado de la búsqueda");
 
@@ -1151,39 +1203,193 @@ async function pruebaBuscarEntreGrupos(browser) {
   await ctx.close();
 }
 
-/* El nombre cortado es con lo que empezó todo esto: se MIDE. */
+/* El nombre cortado es con lo que empezó todo esto: se MIDE. Y la fila ya no
+   es una pared de campos: dice quién es, y lo demás se cambia en su ficha. */
 async function pruebaElNombreNoSeCorta(browser) {
-  console.log("\n=== Que el nombre de la cuenta no se corte ===");
+  console.log("\n=== Que el nombre de la cuenta no se corte, y la fila sea liviana ===");
   const { page, ctx } = await abrir(browser, "/admin.html", ADMIN, { viewport: { width: 1280, height: 900 } });
   await page.goto(BASE + "/admin.html", { waitUntil: "networkidle" });
   await page.waitForSelector("#app:not(.hidden)", { timeout: 20000 });
   // Hay que abrir un grupo: al entrar se ven las fichas, no las cuentas.
   await irA(page, "cuentas");
   await page.click("#grupos-fichas article:first-of-type button");
-  await page.waitForFunction(() => document.querySelectorAll("#users-body input[type=text]").length > 0, { timeout: 10000 });
+  await page.waitForFunction(() => document.querySelectorAll("#users-body .persona-abrir").length > 0, { timeout: 10000 });
 
   const medidas = await page.evaluate(() => {
-    const campo = document.querySelector("#users-body input[type=text]");
-    campo.value = "María Fernanda Ramírez Quesada";
-    return { ancho: campo.getBoundingClientRect().width, cabe: campo.scrollWidth <= campo.clientWidth + 1 };
+    const nombre = document.querySelector("#users-body .persona-abrir");
+    nombre.textContent = "María Fernanda Ramírez Quesada";
+    return { ancho: nombre.getBoundingClientRect().width, cabe: nombre.scrollWidth <= nombre.clientWidth + 1 };
   });
-  igual("un nombre largo cabe entero en su campo", medidas.cabe, "true");
-  if (medidas.ancho < 180) mal("la columna del nombre quedó en " + Math.round(medidas.ancho) + " px: muy angosta");
-  else bien("la columna del nombre mide " + Math.round(medidas.ancho) + " px");
+  igual("un nombre largo se lee entero en la fila", medidas.cabe, "true");
+  if (medidas.ancho < 180) mal("el nombre quedó en " + Math.round(medidas.ancho) + " px: muy angosto");
+  else bien("el nombre mide " + Math.round(medidas.ancho) + " px");
 
-  igual("el correo quedó en la MISMA celda que el nombre, no en una columna aparte",
+  igual("el correo va en la MISMA celda que el nombre, debajo",
+    await page.evaluate(() => !!document.querySelector("#users-body .persona-abrir").closest("td").querySelector(".persona-correo")), "true");
+  igual("la fila tiene 7 columnas y ningún campo para editar: eso es de la ficha",
     await page.evaluate(() => {
-      const td = document.querySelector("#users-body input[type=text]").closest("td");
-      return !!td.querySelector('a[href^="mailto:"]');
+      const fila = document.querySelector("#users-body .persona-abrir").closest("tr");
+      return [fila.querySelectorAll("td").length, fila.querySelectorAll("input:not([type=checkbox]), select").length];
+    }), [7, 0]);
+
+  // En la ficha, el campo del nombre también cabe entero.
+  await page.click("#users-body .persona-abrir");
+  await page.waitForFunction(() => document.getElementById("ficha-persona").checkVisibility(), { timeout: 5000 });
+  igual("y en la ficha, el campo del nombre lo muestra entero",
+    await page.evaluate(() => {
+      const campo = document.querySelector("#ficha-cuerpo input[aria-label^='Nombre de']");
+      campo.value = "María Fernanda Ramírez Quesada";
+      return campo.scrollWidth <= campo.clientWidth + 1;
     }), "true");
-  // Bajó a 7 al juntar el correo con el nombre; la octava es la Visión
-  // (ver «La visión de la persona la marca administración»).
-  igual("la tabla tiene 8 columnas: el correo sin columna propia, y la visión",
-    await page.evaluate(() => {
-      const fila = document.querySelector("#users-body input[type=text]").closest("tr");
-      return fila.querySelectorAll("td").length;
-    }), "8");
 
+  await ctx.close();
+}
+
+/* ====================== admin.html · la ficha de cada persona ======================
+   Todo lo de una persona se cambia en su ficha, al costado. Lo que se rompe
+   callado: que la ficha mande a la Edge Function otra persona (la de la fila
+   de al lado), que no se vea o no se pueda cerrar con el teclado, que el foco
+   se escape detrás de ella, o que tras un cambio la lista siga diciendo lo
+   viejo. */
+async function pruebaFichaDePersona(browser) {
+  console.log("\n=== La ficha de cada persona ===");
+  const { page, ctx, errores } = await abrir(browser, "/admin.html", ADMIN, { viewport: { width: 1280, height: 900 } });
+  await page.goto(BASE + "/admin.html", { waitUntil: "networkidle" });
+  await page.waitForSelector("#app:not(.hidden)", { timeout: 20000 });
+  await page.evaluate(contestarAvisos);
+  await page.fill("#user-search", "ramirez");
+  const nombre = page.locator('#users-body .persona-abrir[aria-label="Abrir la ficha de Ana Ramírez"]');
+  await nombre.waitFor({ timeout: 10000 });
+  igual("la ficha arranca cerrada", await page.evaluate(() => document.getElementById("ficha-persona").checkVisibility()), false);
+  await nombre.click();
+  await page.waitForFunction(() => document.getElementById("ficha-persona").checkVisibility(), { timeout: 5000 });
+  igual("al hacer clic en el nombre se abre SU ficha, y el foco va a su título",
+    await page.evaluate(() => [document.getElementById("ficha-titulo").textContent, document.activeElement.id]), ["Ana Ramírez", "ficha-titulo"]);
+  igual("es un diálogo con nombre",
+    await page.evaluate(() => { const f = document.getElementById("ficha-persona"); return [f.getAttribute("role"), f.getAttribute("aria-modal"), document.getElementById(f.getAttribute("aria-labelledby")).textContent]; }),
+    ["dialog", "true", "Ana Ramírez"]);
+  igual("trae todo lo suyo en bloques",
+    await page.evaluate(() => Array.from(document.querySelectorAll("#ficha-cuerpo h3")).map((h) => h.textContent)),
+    ["Sus datos", "Rol y a cargo", "Cómo entra", "De vez en cuando"]);
+  igual("con nombre, correo, grupo, visión, rol y sus profesores",
+    await page.evaluate(() => ["input[aria-label^='Nombre de']", "a[href^='mailto:']", "input[aria-label^='Grupo de']", "select[aria-label^='Visión de']",
+      "select[aria-label^='Rol de']", "button[aria-label='Quitar a Karina Rojas']"].map((s) => !!document.querySelector("#ficha-cuerpo " + s))), [true, true, true, true, true, true]);
+  igual("y el atajo a su informe",
+    await page.getAttribute("#ficha-cuerpo a[href^='informes.html']", "href"), "informes.html?alumno=u-7");
+
+  // Cambiar el nombre: va a la Edge Function con ESTA persona, y la lista se entera.
+  llamadasDeAdmin.length = 0;
+  await page.fill("#ficha-cuerpo input[aria-label^='Nombre de']", "Ana Ramírez Mora");
+  await page.press("#ficha-cuerpo input[aria-label^='Nombre de']", "Tab");
+  const cambio = await esperarLlamada("update");
+  igual("el nombre se guarda para esta persona", [cambio.target_id, cambio.full_name], ["u-7", "Ana Ramírez Mora"]);
+  await page.waitForFunction(() => /Ana Ramírez Mora/.test(document.getElementById("users-body").textContent), { timeout: 5000 });
+  bien("la fila de la lista dice el nombre nuevo");
+
+  // Quitarle su profesora y volver a ponérsela: la lista completa
+  // (set_teachers) para ESTA persona, y la fila de atrás lo dice.
+  llamadasDeAdmin.length = 0;
+  await page.click("#ficha-cuerpo button[aria-label='Quitar a Karina Rojas']");
+  const sinProfe = await esperarLlamada("set_teachers");
+  igual("quitar un profesor manda la lista sin él", [sinProfe.target_id, sinProfe.teacher_ids], ["u-7", []]);
+  await page.waitForFunction(() => /Sin profesor/.test(document.querySelector('#users-body tr[data-persona="u-7"]').textContent), { timeout: 5000 });
+  bien("la fila dice «Sin profesor»");
+  llamadasDeAdmin.length = 0;
+  await page.selectOption("#ficha-cuerpo select[aria-label^='Agregar un profesor a']", PROFE.id);
+  const profes = await esperarLlamada("set_teachers");
+  igual("sumar un profesor manda la lista con el nuevo", [profes.target_id, profes.teacher_ids], ["u-7", ["u-profe"]]);
+  await page.waitForFunction(() => /Karina Rojas/.test(document.querySelector('#users-body tr[data-persona="u-7"]').textContent), { timeout: 5000 });
+  igual("la ficha sigue abierta y ya tiene a Karina con su ✕",
+    await page.evaluate(() => document.getElementById("ficha-persona").checkVisibility() && !!document.querySelector("#ficha-cuerpo button[aria-label='Quitar a Karina Rojas']")), true);
+
+  // El foco no se escapa con Tab: da la vuelta dentro de la ficha.
+  await page.focus("#ficha-cerrar");
+  await page.keyboard.press("Shift+Tab");
+  igual("Shift + Tab desde el primero da la vuelta al último, dentro de la ficha",
+    await page.evaluate(() => document.getElementById("ficha-persona").contains(document.activeElement)), true);
+
+  // Escape la cierra y el foco vuelve a la fila.
+  await page.keyboard.press("Escape");
+  igual("Escape la cierra",
+    await page.evaluate(() => document.getElementById("ficha-persona").checkVisibility()), false);
+  igual("y el foco vuelve al nombre de la fila",
+    await page.evaluate(() => document.activeElement.classList.contains("persona-abrir")), true);
+
+  // Un profesor: sin selector de profesores, con «Ver su panel».
+  await page.fill("#user-search", "karina");
+  await page.locator('#users-body .persona-abrir[aria-label="Abrir la ficha de Karina Rojas"]').click();
+  await page.waitForFunction(() => document.getElementById("ficha-titulo").textContent === "Karina Rojas", { timeout: 5000 });
+  igual("la ficha de un profesor no ofrece asignarle profesores, y lleva a su panel",
+    await page.evaluate(() => [!!document.querySelector("#ficha-cuerpo select[aria-label^='Agregar un profesor a']"),
+      document.querySelector("#ficha-cuerpo a[href*='ver_como=']")?.getAttribute("href")]),
+    [false, "clases.html?ver_como=u-profe"]);
+  await page.click("#ficha-velo", { position: { x: 20, y: 20 } });
+  igual("un clic afuera también la cierra",
+    await page.evaluate(() => document.getElementById("ficha-persona").checkVisibility()), false);
+
+  // La cuenta propia no se puede borrar ni «hacer administrador» desde su ficha.
+  await page.fill("#user-search", "oscar");
+  await page.locator('#users-body .persona-abrir[aria-label="Abrir la ficha de Oscar Angulo"]').click();
+  await page.waitForFunction(() => document.getElementById("ficha-titulo").textContent === "Oscar Angulo", { timeout: 5000 });
+  igual("en la ficha propia no está «Eliminar la cuenta»",
+    await page.evaluate(() => Array.from(document.querySelectorAll("#ficha-cuerpo button")).some((b) => /Eliminar/.test(b.textContent))), false);
+
+  igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
+  await ctx.close();
+}
+
+/* ====================== admin.html · Ctrl + K ======================
+   El buscador de todo el panel: personas, secciones y páginas, sin salir.
+   Lo que se rompe callado: que Ctrl + K se vaya a clases.html (el atajo del
+   resto de la Academia), que Enter abra otra cosa que la elegida, o que un
+   nombre escrito por alguien se pinte como HTML. */
+async function pruebaBuscador(browser) {
+  console.log("\n=== Ctrl + K: buscar en todo el panel ===");
+  const { page, ctx, errores } = await abrir(browser, "/admin.html", ADMIN, { viewport: { width: 1280, height: 900 } });
+  await page.goto(BASE + "/admin.html", { waitUntil: "networkidle" });
+  await page.waitForSelector("#app:not(.hidden)", { timeout: 20000 });
+  igual("admin.html no carga el atajo que lleva a clases.html",
+    await page.evaluate(() => !!document.querySelector('script[src$="atajo-buscar.js"]')), false);
+  await page.keyboard.press("Control+k");
+  igual("Ctrl + K lo abre acá mismo, con el foco en el campo",
+    await page.evaluate(() => [document.getElementById("buscador").checkVisibility(), document.activeElement.id, /admin\.html/.test(location.href)]),
+    [true, "buscador-campo", true]);
+  igual("sin nada escrito, el mapa del panel: secciones y páginas",
+    await page.evaluate(() => {
+      const tipos = Array.from(document.querySelectorAll("#buscador-lista [role=option]")).map((li) => li.dataset.tipo);
+      return [tipos.includes("seccion"), tipos.includes("pagina"), tipos.includes("persona")];
+    }), [true, true, false]);
+
+  await page.fill("#buscador-campo", "ramirez");
+  igual("una persona sale primero, sin importar las tildes",
+    await page.evaluate(() => { const li = document.querySelector("#buscador-lista [role=option]"); return [li.dataset.tipo, li.querySelector("span span").textContent]; }),
+    ["persona", "Ana Ramírez"]);
+  await page.keyboard.press("Enter");
+  await page.waitForFunction(() => document.getElementById("ficha-persona").checkVisibility(), { timeout: 5000 });
+  igual("Enter abre su ficha y cierra el buscador",
+    await page.evaluate(() => [document.getElementById("ficha-titulo").textContent, document.getElementById("buscador").checkVisibility()]),
+    ["Ana Ramírez", false]);
+  await page.keyboard.press("Escape");
+
+  await page.keyboard.press("Control+k");
+  await page.fill("#buscador-campo", "equipos");
+  await page.keyboard.press("Enter");
+  await page.waitForFunction(() => document.querySelector('[data-seccion="equipos"]').checkVisibility(), { timeout: 5000 });
+  bien("«equipos» + Enter lleva a la sección Equipos");
+
+  await page.keyboard.press("Control+k");
+  await page.fill("#buscador-campo", "mensualidades");
+  igual("busca también en lo que hace cada página",
+    await page.evaluate(() => { const li = document.querySelector("#buscador-lista [role=option]"); return [li.dataset.tipo, li.querySelector("span span").textContent]; }),
+    ["pagina", "Cobros de la Academia"]);
+  await page.keyboard.press("ArrowDown");
+  igual("las flechas mueven la elección y el campo lo anuncia",
+    await page.evaluate(() => document.getElementById("buscador-campo").getAttribute("aria-activedescendant")), "buscador-op-0");
+  await page.keyboard.press("Escape");
+  igual("Escape lo cierra",
+    await page.evaluate(() => document.getElementById("buscador").checkVisibility()), false);
+
+  igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
   await ctx.close();
 }
 
@@ -1215,7 +1421,9 @@ async function pruebaUsuarioYContrasena(browser) {
   await page.evaluate(contestarAvisos);
   await irA(page, "cuentas");
   await page.fill("#user-search", "ramirez");
-  const boton = page.locator('#users-body button[aria-controls="acceso-u-7"]');
+  // Está en su ficha, en «Cómo entra».
+  await page.locator('#users-body .persona-abrir[aria-label="Abrir la ficha de Ana Ramírez"]').click();
+  const boton = page.locator('#ficha-cuerpo button[aria-controls="acceso-u-7"]');
   await boton.waitFor({ timeout: 10000 });
     igual("cerrado, dice que está cerrado", await boton.getAttribute("aria-expanded"), "false");
 
@@ -1249,11 +1457,15 @@ async function pruebaUsuarioYContrasena(browser) {
   igual("el aviso dice el usuario sin el dominio y la contraseña",
     await page.evaluate(() => (window.__avisos || []).some((a) => /«ana\.ramirez2» y la contraseña «caballo482»/.test(a))), "true");
 
-  // Repintar la tabla (otra búsqueda que la encuentra igual) no cierra el panel.
-  await page.fill("#user-search", "ana ramirez");
+  igual("la lista de atrás ya dice el usuario nuevo",
+    await page.evaluate(() => document.querySelector('#users-body tr[data-persona="u-7"] .persona-correo').textContent),
+    "ana.ramirez2@alumno.ajedrez-integral.com");
+  // Cerrar la ficha y volver a abrirla (la lista se repintó) no cierra el panel.
+  await page.keyboard.press("Escape");
+  await page.locator('#users-body .persona-abrir[aria-label="Abrir la ficha de Ana Ramírez"]').click();
   await page.waitForFunction(() => !!document.getElementById("acceso-u-7"), { timeout: 10000 });
-  igual("después de repintar, el panel sigue abierto y lo dice",
-    await page.locator('#users-body button[aria-controls="acceso-u-7"]').getAttribute("aria-expanded"), "true");
+  igual("al volver a abrir su ficha, el panel sigue abierto y lo dice",
+    await page.locator('#ficha-cuerpo button[aria-controls="acceso-u-7"]').getAttribute("aria-expanded"), "true");
 
   igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
   await ctx.close();
@@ -1604,6 +1816,8 @@ async function pruebaVolcarEnUnEquipo(browser) {
     await pruebaCuentasDeUnGrupo(browser);
     await pruebaBuscarEntreGrupos(browser);
     await pruebaElNombreNoSeCorta(browser);
+    await pruebaFichaDePersona(browser);
+    await pruebaBuscador(browser);
     await pruebaUsuarioYContrasena(browser);
     await pruebaInscripciones(browser);
     await pruebaInscripcionesDenegado(browser);

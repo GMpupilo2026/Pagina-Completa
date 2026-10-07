@@ -20,23 +20,36 @@
         // versión que se puede ir separando de la primera corrección.
         const FUNCION_CORREOS = `${window.SUPABASE_URL}/functions/v1/correos-alumno`;
 
-        /* Las páginas de administración (informes, cobros, formularios,
-           resultados…) NO tienen atajos acá: están en el panel de la Academia
-           (ADMIN_GROUPS de js/clases.js), que es donde entra quien administra.
-           Aquí había una segunda lista, «Herramientas», con casi las mismas
-           tarjetas: dos caminos al mismo lugar, y dos listas que se iban
-           separando. Ver «Una sola puerta para cada cosa» en
-           docs/decisiones/paneles.md. */
+        /* Las páginas de quien administra (informes, cobros, formularios…)
+           salen de js/paginas-admin.js, la misma lista que pinta el panel de
+           la Academia (ADMIN_GROUPS de js/clases.js): cada una va en la
+           pestaña de su tema. Antes este panel no llevaba a ninguna, y quien
+           administraba iba y volvía del panel de la Academia para todo. */
 
-        /* ================= Las secciones del panel =================
+        /* ================= Las seis pestañas =================
          *
-         * Era una sola página larga: atajos, cuatro tarjetas plegadas y la lista
-         * de cuentas, una debajo de la otra. Ahora el menú de la izquierda
-         * muestra UNA sección, y la dirección lleva su nombre (admin.html#equipos)
-         * para que atrás/adelante y un enlace guardado lleven a la misma.
-         * Todo lo que ya estaba sigue con sus mismos ids: solo cambia qué se ve.
+         * Arriba van seis pestañas por tema y, debajo, las secciones de la
+         * pestaña abierta cuando tiene más de una. Cada sección sigue siendo
+         * un <section data-seccion> con sus mismos ids, y la dirección lleva
+         * su nombre (admin.html#equipos) para que atrás/adelante y un enlace
+         * guardado lleven a la misma. «Crear cuenta» es de Personas, pero su
+         * puerta es el botón de arriba, a la vista en todas las pestañas.
+         * Ver «El panel de Administración en seis secciones» en
+         * docs/decisiones/paneles.md.
          */
-        const SECCIONES = ["inicio", "cuentas", "crear", "profesores", "supervisores", "equipos", "novedades", "torneos", "proyectos", "materiales", "archivos", "preparacion", "auditoria"];
+        const GRUPOS_ADMIN = [
+            { id: "inicio", nombre: "Inicio", secciones: ["inicio"] },
+            { id: "personas", nombre: "Personas", secciones: ["cuentas", "crear"] },
+            { id: "organizacion", nombre: "Organización", secciones: ["profesores", "supervisores", "equipos", "preparacion"] },
+            { id: "contenido", nombre: "Contenido", secciones: ["materiales", "archivos", "proyectos", "torneos", "novedades"] },
+            { id: "cobros", nombre: "Cobros y accesos", secciones: ["cobros"] },
+            { id: "informes", nombre: "Informes", secciones: ["informes", "auditoria"] },
+        ];
+        const SECCIONES = ["inicio", "cuentas", "crear", "profesores", "supervisores", "equipos", "novedades", "torneos", "proyectos", "materiales", "archivos", "preparacion", "auditoria", "cobros", "informes"];
+
+        function grupoDeSeccion(nombre) {
+            return GRUPOS_ADMIN.find((g) => g.secciones.includes(nombre)) || GRUPOS_ADMIN[0];
+        }
 
         function seccionDelEnlace() {
             const h = location.hash.replace("#", "");
@@ -44,22 +57,87 @@
         }
 
         let seccionActual = null;
+        // La última sección abierta de cada pestaña: volver a «Contenido»
+        // vuelve a Archivos si ahí se estaba, no a la primera.
+        const ultimaDeGrupo = new Map();
+
+        // Una tarjeta por página: a dónde lleva y qué es, como en el panel de
+        // la Academia. El texto es nuestro (paginas-admin.js), pero igual va
+        // por textContent.
+        function tarjetaPagina(t) {
+            const li = document.createElement("li");
+            const a = document.createElement("a");
+            a.href = t.href;
+            a.dataset.pagina = t.href;
+            a.className = "flex h-full items-start gap-3 rounded-xl bg-white dark:bg-brand-900 border border-brand-100 dark:border-brand-800 p-4 hover:border-accent-400 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
+            const icono = document.createElement("span");
+            icono.className = "text-2xl leading-none shrink-0";
+            icono.setAttribute("aria-hidden", "true");
+            icono.textContent = t.emoji;
+            const texto = document.createElement("span");
+            texto.className = "min-w-0";
+            const titulo = document.createElement("span");
+            titulo.className = "block font-semibold text-brand-800 dark:text-white";
+            titulo.textContent = t.label;
+            const desc = document.createElement("span");
+            desc.className = "block text-sm text-brand-500 dark:text-brand-300 mt-0.5";
+            desc.textContent = t.desc;
+            texto.append(titulo, desc);
+            a.append(icono, texto);
+            li.appendChild(a);
+            return li;
+        }
+
+        function pintarPaginas() {
+            if (!window.PaginasAdmin) return;
+            document.querySelectorAll("[data-paginas]").forEach((ul) => {
+                ul.replaceChildren(...PaginasAdmin.deZona(ul.dataset.paginas).map(tarjetaPagina));
+            });
+        }
+
+        // Debajo de Personas, Organización y Contenido: las otras páginas de
+        // ese tema. Cobros e Informes las tienen como sección propia.
+        function pintarPaginasDeZona(grupo) {
+            const caja = document.getElementById("paginas-zona");
+            const paginas = window.PaginasAdmin && !["inicio", "cobros", "informes"].includes(grupo.id)
+                ? PaginasAdmin.deZona(grupo.id) : [];
+            caja.hidden = !paginas.length;
+            document.getElementById("paginas-zona-titulo").textContent = "Otras páginas de " + grupo.nombre;
+            document.getElementById("paginas-zona-lista").replaceChildren(...paginas.map(tarjetaPagina));
+        }
 
         function irA(nombre, opciones) {
             if (!SECCIONES.includes(nombre)) return;
             seccionActual = nombre;
+            const grupo = grupoDeSeccion(nombre);
+            ultimaDeGrupo.set(grupo.id, nombre);
             document.querySelectorAll("[data-seccion]").forEach((sec) => {
                 sec.hidden = sec.dataset.seccion !== nombre;
+            });
+            document.querySelectorAll(".admin-grupo").forEach((a) => {
+                const activa = a.dataset.grupo === grupo.id;
+                if (activa) a.setAttribute("aria-current", "true");
+                else a.removeAttribute("aria-current");
+                a.classList.toggle("border-accent-400", activa);
+                a.classList.toggle("text-white", activa);
+                a.classList.toggle("border-transparent", !activa);
+                a.classList.toggle("text-brand-200", !activa);
+            });
+            document.querySelectorAll("[data-subnav]").forEach((ul) => {
+                ul.hidden = ul.dataset.subnav !== grupo.id;
             });
             document.querySelectorAll(".admin-nav").forEach((a) => {
                 const activa = a.dataset.ir === nombre;
                 if (activa) a.setAttribute("aria-current", "page");
                 else a.removeAttribute("aria-current");
-                a.classList.toggle("bg-accent-500", activa);
-                a.classList.toggle("text-brand-900", activa);
-                a.classList.toggle("hover:bg-brand-800", !activa);
-                a.classList.toggle("text-brand-100", !activa);
+                if (!a.classList.contains("subnav-pestana")) return;
+                a.classList.toggle("bg-brand-800", activa);
+                a.classList.toggle("text-white", activa);
+                a.classList.toggle("border-brand-800", activa);
+                a.classList.toggle("bg-white", !activa);
+                a.classList.toggle("text-brand-700", !activa);
             });
+            pintarPaginasDeZona(grupo);
             // El registro de cambios se pide al abrirlo, no al entrar al panel.
             if (nombre === "auditoria" && window.AdminAuditoria) AdminAuditoria.abrir();
             // Con quién se comparte cada material: también se pide al abrirlo.
@@ -73,10 +151,13 @@
 
         document.querySelectorAll("[data-ir]").forEach((a) => a.addEventListener("click", (e) => {
             e.preventDefault();
-            irA(a.dataset.ir);
+            // Una pestaña de arriba vuelve a la última sección que se abrió en ella.
+            const destino = a.dataset.grupo ? (ultimaDeGrupo.get(a.dataset.grupo) || a.dataset.ir) : a.dataset.ir;
+            irA(destino);
             window.scrollTo({ top: 0 });
         }));
         window.addEventListener("popstate", () => irA(seccionDelEnlace() || "inicio", { sinHistoria: true }));
+        pintarPaginas();
 
         // «Buenos días / buenas tardes / buenas noches», en hora de Costa Rica.
         function pintarSaludo(nombre) {
@@ -511,16 +592,16 @@
            campo para corregirlo. Solo para alumnos —la función rechaza el
            correo de una cuenta del equipo docente, que no tiene ese camino
            definido— y ni siquiera se ofrece el lápiz para los demás roles. */
-        function renderCorreoCelda(u) {
+        function renderCorreoCelda(u, alCambiar) {
             const caja = document.createElement("div");
 
             function pintarVista() {
                 caja.innerHTML = "";
                 const fila = document.createElement("div");
-                fila.className = "flex items-center gap-1 px-2";
+                fila.className = "flex items-center gap-2";
                 const correo = document.createElement("a");
                 correo.href = "mailto:" + u.email;
-                correo.className = "text-xs text-brand-450 dark:text-brand-350 hover:text-accent-500 truncate";
+                correo.className = "text-sm text-brand-600 dark:text-brand-200 hover:text-accent-500 break-all";
                 correo.textContent = u.email;
                 correo.title = u.email;          // por si el correo largo se recorta
                 fila.appendChild(correo);
@@ -540,7 +621,7 @@
             function pintarEdicion() {
                 caja.innerHTML = "";
                 const fila = document.createElement("div");
-                fila.className = "flex flex-wrap items-center gap-1 px-2";
+                fila.className = "flex flex-wrap items-center gap-2";
                 const input = document.createElement("input");
                 input.type = "text";
                 input.value = u.email;
@@ -569,6 +650,7 @@
                         const datos = await llamarCorreos({ action: "cuenta", alumno_id: u.id, email: nuevo });
                         u.email = datos.cuenta?.email ?? nuevo;
                         pintarVista();
+                        if (alCambiar) alCambiar();
                     } catch (err) {
                         guardar.disabled = false; cancelar.disabled = false; input.disabled = false;
                         guardar.textContent = "Guardar";
@@ -587,6 +669,7 @@
             }
 
             pintarVista();
+            caja.pintarVista = pintarVista;   // cuando el correo cambia por otro lado (le dieron usuario)
             return caja;
         }
 
@@ -629,6 +712,7 @@
         function renderProfesoresCelda(u, teachers) {
             const caja = document.createElement("div");
             caja.className = "flex flex-wrap items-center gap-1";
+            caja.dataset.profesores = u.id;
             const puestos = profesoresDe(u.id);
             const porId = new Map(teachers.map((t) => [t.id, t]));
 
@@ -638,6 +722,10 @@
                     profesoresPorAlumno.set(u.id, lista);
                     pintarCuentas();
                     renderProfesores();
+                    if (fichaAbierta === u.id) {
+                        refrescarFicha();
+                        document.querySelector("#ficha-cuerpo select[aria-label^='Agregar un profesor']")?.focus();
+                    }
                 } catch (err) {
                     Avisos.avisar("No se pudo cambiar los profesores: " + err.message, { tipo: "error" });
                 }
@@ -677,14 +765,27 @@
             return caja;
         }
 
-        /* Nombre y correo van en UNA sola celda, uno debajo del otro. Eran dos
-           columnas, y con nueve columnas en la tabla al nombre no le quedaba
-           ancho: se cortaba justo el dato por el que uno busca a alguien. El
-           correo va debajo en letra chica, que es como se lee de todas formas. */
+        /* ================= La lista y la ficha de cada persona =================
+         *
+         * La lista era una tabla de siete columnas de campos editables (nombre,
+         * rol, grupo, profesores, visión) y una fila de acciones por persona:
+         * con cincuenta filas era una pared, y cada cosa estaba en otra
+         * columna. Ahora la fila solo DICE quién es (nombre, correo, rol,
+         * grupo, profesores) y se abre su ficha, al costado, donde se cambia
+         * todo lo de esa persona en un mismo lugar. Nada de lo que se guarda
+         * cambió: los mismos callAdmin, rpc y Edge Functions de antes. Ver «La
+         * ficha de cada persona» en docs/decisiones/paneles.md.
+         */
+        const NOMBRE_ROL = { alumno: "Estudiante", profesor: "Profesor" };
+
+        function nombreDe(u) {
+            return u.full_name || u.email;
+        }
+
         function renderRow(u, teachers) {
-                const isSelf = u.id === currentUserId;
                 const tr = document.createElement("tr");
-                tr.className = "border-b border-brand-50 dark:border-brand-800/60 last:border-0 align-middle";
+                tr.className = "border-b border-brand-50 dark:border-brand-800/60 last:border-0 align-middle hover:bg-brand-50/70 dark:hover:bg-brand-800/40";
+                tr.dataset.persona = u.id;
 
                 // Marcar para asignar en lote. Solo los alumnos: a un profesor no
                 // se le asigna profesor.
@@ -696,7 +797,7 @@
                     marca.className = "marca-alumno w-4 h-4 accent-accent-500 cursor-pointer";
                     marca.dataset.id = u.id;
                     marca.checked = marcados.has(u.id);
-                    marca.setAttribute("aria-label", "Marcar a " + (u.full_name || u.email) + " para asignarle profesor");
+                    marca.setAttribute("aria-label", "Marcar a " + nombreDe(u) + " para asignarle profesor");
                     marca.addEventListener("change", () => {
                         if (marca.checked) marcados.add(u.id); else marcados.delete(u.id);
                         pintarBarraDeLote();
@@ -708,36 +809,27 @@
                 const tdCuenta = document.createElement("td");
                 tdCuenta.className = "py-2 pr-3";
                 const nameLine = document.createElement("div");
-                nameLine.className = "flex items-center gap-1";
+                nameLine.className = "flex items-center gap-2 min-w-0";
                 /* Su foto de perfil, si subió una: administración la ve para
                    poder quitar una que no va (ver «La foto de perfil» en
                    permisos-y-roles.md). Las de toda la tabla salen en una
                    lectura y un pedido de firmas: FotoPerfil las junta. */
                 if (u.foto_path && window.FotoPerfil) {
-                    nameLine.appendChild(FotoPerfil.avatar(u.id, u.full_name || u.email, "w-7 h-7 text-xs"));
+                    nameLine.appendChild(FotoPerfil.avatar(u.id, nombreDe(u), "w-7 h-7 text-xs"));
                 }
-                const nameInput = document.createElement("input");
-                nameInput.type = "text";
-                nameInput.value = u.full_name || "";
-                nameInput.placeholder = "(sin nombre)";
-                nameInput.setAttribute("aria-label", "Nombre de " + u.email);
-                nameInput.title = u.full_name || u.email;   // un nombre larguísimo, al menos legible al pasar el mouse
-                nameInput.addEventListener("input", () => { nameInput.title = nameInput.value; });
-                nameInput.className = "w-full px-2 py-1 rounded bg-transparent border border-transparent hover:border-brand-200 dark:hover:border-brand-700 focus:border-accent-500 focus:bg-brand-50 dark:focus:bg-brand-950 outline-none text-sm font-medium";
-                nameInput.addEventListener("change", async () => {
-                    try {
-                        await callAdmin("update", { target_id: u.id, full_name: nameInput.value.trim() });
-                        u.full_name = nameInput.value.trim();
-                    } catch (err) {
-                        Avisos.avisar("No se pudo guardar el nombre: " + err.message, { tipo: "error" });
-                        nameInput.value = u.full_name || "";
-                    }
-                });
-                nameLine.appendChild(nameInput);
+                // El nombre abre la ficha: es lo que uno busca y donde hace clic.
+                const abrir = document.createElement("button");
+                abrir.type = "button";
+                abrir.className = "persona-abrir min-w-0 text-left font-semibold text-brand-800 dark:text-white hover:text-accent-700 dark:hover:text-accent-400 hover:underline underline-offset-2 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
+                abrir.textContent = u.full_name || "(sin nombre)";
+                abrir.title = nombreDe(u);
+                abrir.setAttribute("aria-label", "Abrir la ficha de " + nombreDe(u));
+                abrir.addEventListener("click", () => abrirFicha(u.id));
+                nameLine.appendChild(abrir);
                 if (u.is_admin) {
                     const corona = document.createElement("span");
-                    corona.className = "shrink-0 text-xs font-bold text-accent-700 dark:text-accent-400";
-                    corona.textContent = "👑";
+                    corona.className = "shrink-0 text-xs";
+                    corona.innerHTML = '<span aria-hidden="true">👑</span><span class="sr-only">Administrador</span>';
                     corona.title = "Administrador";
                     nameLine.appendChild(corona);
                 }
@@ -748,245 +840,435 @@
                     candado.title = "Con verificación en dos pasos";
                     nameLine.appendChild(candado);
                 }
-                tdCuenta.append(nameLine, renderCorreoCelda(u));
+                const correo = document.createElement("div");
+                correo.className = "persona-correo text-xs text-brand-450 dark:text-brand-350 truncate max-w-[22rem]";
+                correo.textContent = u.email;
+                correo.title = u.email;
+                tdCuenta.append(nameLine, correo);
 
                 const tdRole = document.createElement("td");
-                tdRole.className = "py-2 pr-3";
-                const roleSelect = document.createElement("select");
-                roleSelect.className = "px-2 py-1 rounded bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm";
-                roleSelect.setAttribute("aria-label", "Rol de " + (u.full_name || u.email));
-                roleSelect.innerHTML = '<option value="alumno">Estudiante</option><option value="profesor">Profesor</option>';
-                roleSelect.value = u.role;
-                roleSelect.addEventListener("change", async () => {
-                    const prev = u.role;
-                    try {
-                        await callAdmin("update", { target_id: u.id, role: roleSelect.value });
-                        u.role = roleSelect.value;
-                        loadUsers();
-                    } catch (err) {
-                        Avisos.avisar("No se pudo cambiar el rol: " + err.message, { tipo: "error" });
-                        roleSelect.value = prev;
-                    }
-                });
-                tdRole.appendChild(roleSelect);
+                tdRole.className = "py-2 pr-3 text-sm";
+                tdRole.textContent = NOMBRE_ROL[u.role] || u.role || "—";
 
                 const tdGrupo = document.createElement("td");
-                tdGrupo.className = "py-2 pr-3";
-                const grupoInput = document.createElement("input");
-                grupoInput.type = "text";
-                grupoInput.value = u.grupo || "";
-                grupoInput.placeholder = "—";
-                grupoInput.setAttribute("aria-label", "Grupo de " + (u.full_name || u.email));
-                grupoInput.className = "w-24 px-2 py-1 rounded bg-transparent border border-transparent hover:border-brand-200 dark:hover:border-brand-700 focus:border-accent-500 focus:bg-brand-50 dark:focus:bg-brand-950 outline-none text-sm";
-                grupoInput.addEventListener("change", async () => {
-                    try {
-                        await callAdmin("update", { target_id: u.id, grupo: grupoInput.value.trim() });
-                        u.grupo = grupoInput.value.trim() || null;
-                    } catch (err) {
-                        Avisos.avisar("No se pudo guardar el grupo: " + err.message, { tipo: "error" });
-                        grupoInput.value = u.grupo || "";
-                    }
-                });
-                tdGrupo.appendChild(grupoInput);
+                tdGrupo.className = "py-2 pr-3 text-sm";
+                tdGrupo.textContent = u.grupo || "—";
 
+                // Los profesores se leen acá y se cambian en la ficha. Un alumno
+                // sin profesor no sale en los informes de nadie: va escrito.
                 const tdTeacher = document.createElement("td");
-                tdTeacher.className = "py-2 pr-3";
+                tdTeacher.className = "py-2 pr-3 text-sm";
                 if (u.role === "alumno") {
-                    tdTeacher.appendChild(renderProfesoresCelda(u, teachers));
+                    const porId = new Map(teachers.map((t) => [t.id, t]));
+                    const nombres = profesoresDe(u.id).map((tid) => porId.has(tid) ? teacherLabel(porId.get(tid)) : "?");
+                    if (nombres.length) {
+                        tdTeacher.textContent = nombres.join(", ");
+                    } else {
+                        tdTeacher.innerHTML = '<span class="inline-block rounded-full bg-accent-50 dark:bg-brand-800 text-accent-800 dark:text-accent-300 px-2 py-0.5 text-xs font-semibold">Sin profesor</span>';
+                    }
                 } else {
                     tdTeacher.innerHTML = '<span class="text-xs text-brand-450 dark:text-brand-350">—</span>';
                 }
 
-                /* Visión: con «Baja visión» se le enciende la voz en toda la
-                   plataforma; con «Ciega», el Modo Adaptado y el panel
-                   adaptado, sin lo que no se puede usar sin ver. Es un dato de
-                   salud: lo ven solo esa persona, administración y sus
-                   profesores (la RLS de vision_personas). */
-                const tdVision = document.createElement("td");
-                tdVision.className = "py-2 pr-3";
-                const visionSelect = document.createElement("select");
-                visionSelect.className = "px-2 py-1 rounded bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm";
-                visionSelect.setAttribute("aria-label", "Visión de " + (u.full_name || u.email));
-                visionSelect.dataset.vision = u.id;
-                visionSelect.innerHTML = '<option value="">Ve bien</option><option value="baja_vision">Baja visión: voz encendida</option><option value="ciego">Ciega: todo adaptado</option>';
-                visionSelect.value = visionPorPersona.get(u.id) || "";
-                visionSelect.addEventListener("change", async () => {
-                    const antes = visionPorPersona.get(u.id) || "";
-                    const nueva = visionSelect.value || null;
-                    const { error } = await sb.rpc("marcar_vision", { p_persona: u.id, p_vision: nueva });
-                    if (error) {
-                        Avisos.avisar("No se pudo guardar la visión: " + error.message, { tipo: "error" });
-                        visionSelect.value = antes;
-                        return;
-                    }
-                    if (nueva) visionPorPersona.set(u.id, nueva); else visionPorPersona.delete(u.id);
-                    const nombre = u.full_name || u.email;
-                    Avisos.avisar(nueva === "ciego"
-                        ? `Listo: la próxima vez que ${nombre} abra la plataforma le sale todo adaptado, con su panel solo con lo que se usa con lector de pantalla.`
-                        : nueva === "baja_vision"
-                        ? `Listo: la próxima vez que ${nombre} abra la plataforma se le enciende la voz en todas las páginas.`
-                        : `Listo: ${nombre} ya no tiene marcada ninguna ayuda de visión.`);
-                });
-                tdVision.appendChild(visionSelect);
-
                 const tdCreated = document.createElement("td");
-                tdCreated.className = "py-2 pr-3 text-brand-450 dark:text-brand-350 text-xs whitespace-nowrap";
+                tdCreated.className = "hidden md:table-cell py-2 pr-3 text-brand-450 dark:text-brand-350 text-xs whitespace-nowrap";
                 tdCreated.textContent = u.created_at ? fmtDate(u.created_at) : "—";
 
                 const tdActions = document.createElement("td");
                 tdActions.className = "py-2 text-right whitespace-nowrap";
+                const fichaBtn = document.createElement("button");
+                fichaBtn.type = "button";
+                fichaBtn.className = "text-xs font-semibold border border-brand-200 dark:border-brand-700 hover:border-accent-400 rounded-lg px-3 py-1.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
+                fichaBtn.textContent = "Abrir ficha";
+                fichaBtn.setAttribute("aria-label", "Abrir la ficha de " + nombreDe(u));
+                fichaBtn.tabIndex = -1;   // el nombre ya es el botón para el teclado: no dos paradas por fila
+                fichaBtn.addEventListener("click", () => abrirFicha(u.id));
+                tdActions.appendChild(fichaBtn);
 
-                const resetBtn = document.createElement("button");
-                resetBtn.type = "button";
-                resetBtn.className = "text-xs text-brand-500 dark:text-brand-300 hover:text-accent-500 hover:underline mr-3";
-                resetBtn.textContent = "Reenviar acceso";
-                resetBtn.addEventListener("click", async () => {
-                    try {
-                        /* Todas las cuentas van por `reenviar-acceso`: con un
-                           usuario de la Academia el enlace sale al correo de
-                           su casa (correo_de_contacto()), y con un correo de
-                           verdad, a ese correo, con nuestro texto y la hora en
-                           el asunto. La plantilla de Supabase («Reset your
-                           password», igual siempre) hacía que Gmail juntara los
-                           correos y la persona abriera uno ya anulado. Solo la
-                           cuenta que administra sigue por admin-manage-users:
-                           reenviar-acceso no la toca. */
-                        if (!u.is_admin) {
-                            const res = await fetch(`${window.SUPABASE_URL}/functions/v1/reenviar-acceso`, {
-                                method: "POST",
-                                headers: {
-                                    "Content-Type": "application/json",
-                                    "Authorization": `Bearer ${await window.tokenDeSesion()}`,
-                                    "apikey": window.SUPABASE_ANON_KEY,
-                                },
-                                body: JSON.stringify({ alumno_id: u.id }),
-                            });
-                            const datos = await res.json().catch(() => ({}));
-                            if (!res.ok || datos.error) throw new Error(window.errorDeFuncion(res, datos));
-                            Avisos.avisar(datos.modo === "provisional"
-                                ? `Le salió su usuario con una contraseña provisional nueva a ${datos.correo_destino || "el correo de su casa"}.`
-                                : `Le salió el enlace para crear su contraseña a ${datos.correo_destino || "el correo de su casa"}.`);
-                            return;
-                        }
-                        const result = await callAdmin("reset_password", { target_id: u.id });
-                        Avisos.avisar(`Correo de acceso enviado a ${result.email}.`);
-                    } catch (err) {
-                        Avisos.avisar("No se pudo enviar: " + err.message, { tipo: "error" });
+                tr.append(tdCuenta, tdRole, tdGrupo, tdTeacher, tdCreated, tdActions);
+                return tr;
+        }
+
+        /* La ficha, al costado. Se arma de nuevo cada vez que se abre y cada
+           vez que la lista se vuelve a cargar (un cambio de rol, una cuenta
+           borrada), así nunca enseña datos viejos. */
+        let fichaAbierta = null;          // id de la persona
+        let focoAntesDeLaFicha = null;
+
+        function campoFicha(etiqueta, control, ayuda) {
+            const caja = document.createElement("div");
+            const lab = document.createElement("p");
+            lab.className = "text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1";
+            lab.textContent = etiqueta;
+            caja.append(lab, control);
+            if (ayuda) {
+                const p = document.createElement("p");
+                p.className = "text-xs text-brand-450 dark:text-brand-350 mt-1";
+                p.textContent = ayuda;
+                caja.appendChild(p);
+            }
+            return caja;
+        }
+
+        function bloqueFicha(titulo) {
+            const sec = document.createElement("section");
+            sec.className = "space-y-4";
+            const h = document.createElement("h3");
+            h.className = "font-serif font-bold text-brand-800 dark:text-white border-b border-brand-100 dark:border-brand-800 pb-1";
+            h.textContent = titulo;
+            sec.appendChild(h);
+            return sec;
+        }
+
+        function botonFicha(texto, peligro) {
+            const b = document.createElement("button");
+            b.type = "button";
+            b.className = peligro
+                ? "text-sm font-semibold text-red-700 dark:text-red-300 border border-red-200 dark:border-red-900 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-lg px-3 py-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"
+                : "text-sm font-semibold border border-brand-200 dark:border-brand-700 hover:border-accent-400 rounded-lg px-3 py-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
+            b.textContent = texto;
+            return b;
+        }
+
+        const CLASE_CAMPO = "w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
+
+        function cerrarFicha() {
+            if (fichaAbierta === null) return;
+            const id = fichaAbierta;
+            fichaAbierta = null;
+            document.getElementById("ficha-persona").hidden = true;
+            document.getElementById("ficha-velo").hidden = true;
+            document.getElementById("ficha-cuerpo").replaceChildren();
+            document.body.classList.remove("overflow-hidden");
+            // El foco vuelve a donde estaba; si la lista se repintó mientras
+            // tanto (se cambió algo), al nombre de esa persona en la lista nueva.
+            const fila = document.querySelector('#users-body tr[data-persona="' + CSS.escape(id) + '"] .persona-abrir');
+            if (focoAntesDeLaFicha && document.contains(focoAntesDeLaFicha)) focoAntesDeLaFicha.focus();
+            else if (fila) fila.focus();
+            else document.getElementById("user-search").focus();
+            focoAntesDeLaFicha = null;
+        }
+
+        function abrirFicha(id) {
+            const u = allUsers.find((x) => x.id === id);
+            if (!u) { cerrarFicha(); return; }
+            const yaEstaba = fichaAbierta === id;
+            if (fichaAbierta === null) focoAntesDeLaFicha = document.activeElement;
+            fichaAbierta = id;
+            pintarFicha(u);
+            document.getElementById("ficha-persona").hidden = false;
+            document.getElementById("ficha-velo").hidden = false;
+            document.body.classList.add("overflow-hidden");
+            if (!yaEstaba) document.getElementById("ficha-titulo").focus();
+        }
+
+        // Después de volver a cargar las cuentas: la ficha abierta se rehace
+        // con la persona como quedó (o se cierra, si ya no está).
+        function refrescarFicha() {
+            if (fichaAbierta !== null) abrirFicha(fichaAbierta);
+        }
+
+        function pintarFicha(u) {
+            const isSelf = u.id === currentUserId;
+            const nombre = nombreDe(u);
+            const teachers = allUsers.filter((x) => x.role === "profesor");
+            document.getElementById("ficha-titulo").textContent = nombre;
+            const sub = [NOMBRE_ROL[u.role] || u.role];
+            if (u.is_admin) sub.push("administra");
+            if (u.grupo) sub.push(u.grupo);
+            if (u.created_at) sub.push("cuenta creada el " + fmtDate(u.created_at));
+            document.getElementById("ficha-sub").textContent = sub.join(" · ");
+            const cuerpo = document.getElementById("ficha-cuerpo");
+            cuerpo.replaceChildren();
+
+            /* ---- Sus datos ---- */
+            const datos = bloqueFicha("Sus datos");
+            const nameInput = document.createElement("input");
+            nameInput.type = "text";
+            nameInput.value = u.full_name || "";
+            nameInput.placeholder = "(sin nombre)";
+            nameInput.setAttribute("aria-label", "Nombre de " + u.email);
+            nameInput.className = CLASE_CAMPO;
+            nameInput.addEventListener("change", async () => {
+                try {
+                    await callAdmin("update", { target_id: u.id, full_name: nameInput.value.trim() });
+                    u.full_name = nameInput.value.trim();
+                    document.getElementById("ficha-titulo").textContent = nombreDe(u);
+                    pintarCuentas();
+                } catch (err) {
+                    Avisos.avisar("No se pudo guardar el nombre: " + err.message, { tipo: "error" });
+                    nameInput.value = u.full_name || "";
+                }
+            });
+            datos.appendChild(campoFicha("Nombre", nameInput));
+
+            const correoCaja = renderCorreoCelda(u, () => pintarCuentas());
+            datos.appendChild(campoFicha("Correo con el que entra", correoCaja));
+
+            const grupoInput = document.createElement("input");
+            grupoInput.type = "text";
+            grupoInput.value = u.grupo || "";
+            grupoInput.placeholder = "Ej: 7° B";
+            grupoInput.setAttribute("aria-label", "Grupo de " + nombre);
+            grupoInput.className = CLASE_CAMPO;
+            grupoInput.addEventListener("change", async () => {
+                try {
+                    await callAdmin("update", { target_id: u.id, grupo: grupoInput.value.trim() });
+                    u.grupo = grupoInput.value.trim() || null;
+                    pintarCuentas();
+                } catch (err) {
+                    Avisos.avisar("No se pudo guardar el grupo: " + err.message, { tipo: "error" });
+                    grupoInput.value = u.grupo || "";
+                }
+            });
+            datos.appendChild(campoFicha("Grupo", grupoInput, "Es solo para ordenar la lista: quién ve a quién lo deciden los profesores asignados."));
+
+            /* Visión: con «Baja visión» se le enciende la voz en toda la
+               plataforma; con «Ciega», el Modo Adaptado y el panel
+               adaptado, sin lo que no se puede usar sin ver. Es un dato de
+               salud: lo ven solo esa persona, administración y sus
+               profesores (la RLS de vision_personas). */
+            const visionSelect = document.createElement("select");
+            visionSelect.className = CLASE_CAMPO;
+            visionSelect.setAttribute("aria-label", "Visión de " + nombre);
+            visionSelect.dataset.vision = u.id;
+            visionSelect.innerHTML = '<option value="">Ve bien</option><option value="baja_vision">Baja visión: voz encendida</option><option value="ciego">Ciega: todo adaptado</option>';
+            visionSelect.value = visionPorPersona.get(u.id) || "";
+            visionSelect.addEventListener("change", async () => {
+                const antes = visionPorPersona.get(u.id) || "";
+                const nueva = visionSelect.value || null;
+                const { error } = await sb.rpc("marcar_vision", { p_persona: u.id, p_vision: nueva });
+                if (error) {
+                    Avisos.avisar("No se pudo guardar la visión: " + error.message, { tipo: "error" });
+                    visionSelect.value = antes;
+                    return;
+                }
+                if (nueva) visionPorPersona.set(u.id, nueva); else visionPorPersona.delete(u.id);
+                const n = nombreDe(u);
+                Avisos.avisar(nueva === "ciego"
+                    ? `Listo: la próxima vez que ${n} abra la plataforma le sale todo adaptado, con su panel solo con lo que se usa con lector de pantalla.`
+                    : nueva === "baja_vision"
+                    ? `Listo: la próxima vez que ${n} abra la plataforma se le enciende la voz en todas las páginas.`
+                    : `Listo: ${n} ya no tiene marcada ninguna ayuda de visión.`);
+            });
+            datos.appendChild(campoFicha("Visión", visionSelect));
+            cuerpo.appendChild(datos);
+
+            /* ---- Rol y a cargo ---- */
+            const cargo = bloqueFicha("Rol y a cargo");
+            const roleSelect = document.createElement("select");
+            roleSelect.className = CLASE_CAMPO;
+            roleSelect.setAttribute("aria-label", "Rol de " + nombre);
+            roleSelect.innerHTML = '<option value="alumno">Estudiante</option><option value="profesor">Profesor</option>';
+            roleSelect.value = u.role;
+            roleSelect.addEventListener("change", async () => {
+                const prev = u.role;
+                try {
+                    await callAdmin("update", { target_id: u.id, role: roleSelect.value });
+                    u.role = roleSelect.value;
+                    loadUsers();
+                } catch (err) {
+                    Avisos.avisar("No se pudo cambiar el rol: " + err.message, { tipo: "error" });
+                    roleSelect.value = prev;
+                }
+            });
+            cargo.appendChild(campoFicha("Rol", roleSelect, "Supervisores, coordinadores y equipos se arman en Organización."));
+            if (u.role === "alumno") {
+                cargo.appendChild(campoFicha("Sus profesores", renderProfesoresCelda(u, teachers),
+                    "Cada profesor lo ve en sus informes, su clase y sus tareas. Sin ninguno, no sale en los informes de nadie."));
+            }
+            // Ir a lo suyo en las otras páginas, sin buscarlo de nuevo.
+            const enlaces = document.createElement("div");
+            enlaces.className = "flex flex-wrap gap-2";
+            const enlace = (texto, href) => {
+                const a = document.createElement("a");
+                a.href = href;
+                a.className = "text-sm font-semibold text-accent-700 dark:text-accent-400 underline underline-offset-2 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
+                a.textContent = texto;
+                enlaces.appendChild(a);
+            };
+            if (u.role === "alumno") enlace("Ver su informe →", "informes.html?alumno=" + encodeURIComponent(u.id));
+            if (u.role === "profesor" && !isSelf) enlace("👁 Ver su panel →", "clases.html?ver_como=" + encodeURIComponent(u.id));
+            if (enlaces.childElementCount) cargo.appendChild(enlaces);
+            cuerpo.appendChild(cargo);
+
+            /* ---- Cómo entra ---- */
+            const entra = bloqueFicha("Cómo entra");
+            const filaEntra = document.createElement("div");
+            filaEntra.className = "flex flex-wrap gap-2";
+            const resetBtn = botonFicha("Reenviar acceso");
+            resetBtn.addEventListener("click", async () => {
+                try {
+                    /* Todas las cuentas van por `reenviar-acceso`: con un
+                       usuario de la Academia el enlace sale al correo de
+                       su casa (correo_de_contacto()), y con un correo de
+                       verdad, a ese correo, con nuestro texto y la hora en
+                       el asunto. La plantilla de Supabase («Reset your
+                       password», igual siempre) hacía que Gmail juntara los
+                       correos y la persona abriera uno ya anulado. Solo la
+                       cuenta que administra sigue por admin-manage-users:
+                       reenviar-acceso no la toca. */
+                    if (!u.is_admin) {
+                        const res = await fetch(`${window.SUPABASE_URL}/functions/v1/reenviar-acceso`, {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json",
+                                "Authorization": `Bearer ${await window.tokenDeSesion()}`,
+                                "apikey": window.SUPABASE_ANON_KEY,
+                            },
+                            body: JSON.stringify({ alumno_id: u.id }),
+                        });
+                        const datos = await res.json().catch(() => ({}));
+                        if (!res.ok || datos.error) throw new Error(window.errorDeFuncion(res, datos));
+                        Avisos.avisar(datos.modo === "provisional"
+                            ? `Le salió su usuario con una contraseña provisional nueva a ${datos.correo_destino || "el correo de su casa"}.`
+                            : `Le salió el enlace para crear su contraseña a ${datos.correo_destino || "el correo de su casa"}.`);
+                        return;
+                    }
+                    const result = await callAdmin("reset_password", { target_id: u.id });
+                    Avisos.avisar(`Correo de acceso enviado a ${result.email}.`);
+                } catch (err) {
+                    Avisos.avisar("No se pudo enviar: " + err.message, { tipo: "error" });
+                }
+            });
+            filaEntra.appendChild(resetBtn);
+
+            let detalleAcceso = null;
+            if (u.role === "alumno") {
+                const accesoBtn = botonFicha("Usuario y contraseña");
+                accesoBtn.setAttribute("aria-label", "Usuario y contraseña de " + nombre);
+                accesoBtn.setAttribute("aria-controls", "acceso-" + u.id);
+                accesoBtn.setAttribute("aria-expanded", accesoAbierto.has(u.id) ? "true" : "false");
+                accesoBtn.addEventListener("click", () => {
+                    if (accesoAbierto.has(u.id)) {
+                        accesoAbierto.delete(u.id);
+                        detalleAcceso?.remove();
+                        detalleAcceso = null;
+                        accesoBtn.setAttribute("aria-expanded", "false");
+                    } else {
+                        accesoAbierto.add(u.id);
+                        detalleAcceso = renderAccesoFila(u, () => { correoCaja.pintarVista(); pintarCuentas(); });
+                        entra.appendChild(detalleAcceso);
+                        accesoBtn.setAttribute("aria-expanded", "true");
+                        detalleAcceso.querySelector("input")?.focus();
                     }
                 });
-                tdActions.appendChild(resetBtn);
+                filaEntra.appendChild(accesoBtn);
+            }
 
-                let detalleAcceso = null;
-                if (u.role === "alumno") {
-                    const accesoBtn = document.createElement("button");
-                    accesoBtn.type = "button";
-                    accesoBtn.className = "text-xs text-brand-500 dark:text-brand-300 hover:text-accent-500 hover:underline mr-3";
-                    accesoBtn.textContent = "Usuario y contraseña";
-                    accesoBtn.setAttribute("aria-label", "Usuario y contraseña de " + (u.full_name || u.email));
-                    accesoBtn.setAttribute("aria-controls", "acceso-" + u.id);
-                    accesoBtn.setAttribute("aria-expanded", accesoAbierto.has(u.id) ? "true" : "false");
-                    accesoBtn.addEventListener("click", () => {
-                        if (accesoAbierto.has(u.id)) {
-                            accesoAbierto.delete(u.id);
-                            detalleAcceso?.remove();
-                            detalleAcceso = null;
-                            accesoBtn.setAttribute("aria-expanded", "false");
-                        } else {
-                            accesoAbierto.add(u.id);
-                            detalleAcceso = renderAccesoFila(u);
-                            tr.after(detalleAcceso);
-                            accesoBtn.setAttribute("aria-expanded", "true");
-                            detalleAcceso.querySelector("input")?.focus();
-                        }
-                    });
-                    tdActions.appendChild(accesoBtn);
-                    if (accesoAbierto.has(u.id)) detalleAcceso = renderAccesoFila(u);
-                }
+            /* Quien perdió el celular con la app no puede entrar: se le quita
+               la verificación y entra con su contraseña. La base solo lo deja
+               si quien administra entró con SU código (ver «La verificación
+               en dos pasos» en permisos-y-roles.md). */
+            if (conDosPasos.has(u.id) && !isSelf) {
+                const quitarBtn = botonFicha("Quitar verificación");
+                quitarBtn.addEventListener("click", async () => {
+                    if (!(await Avisos.confirmar("Desde ese momento entra solo con su contraseña, hasta que la vuelva a activar en Configuración. Hazlo solo si te lo pidió esa persona.", { titulo: `¿Quitarle la verificación en dos pasos a ${nombre}?`, aceptar: "Quitar la verificación", peligro: true }))) return;
+                    const { error } = await sb.rpc("quitar_verificacion_en_dos_pasos", { p_persona: u.id });
+                    if (error) { Avisos.avisar("No se pudo quitar: " + error.message, { tipo: "error" }); return; }
+                    conDosPasos.delete(u.id);
+                    Avisos.avisar("Listo: ya entra solo con su contraseña.");
+                    pintarCuentas();
+                    refrescarFicha();
+                });
+                filaEntra.appendChild(quitarBtn);
+            }
+            entra.appendChild(filaEntra);
+            if (u.role === "alumno" && accesoAbierto.has(u.id)) {
+                detalleAcceso = renderAccesoFila(u, () => { correoCaja.pintarVista(); pintarCuentas(); });
+                entra.appendChild(detalleAcceso);
+            }
+            cuerpo.appendChild(entra);
 
-                if (u.foto_path && window.FotoPerfil) {
-                    const fotoBtn = document.createElement("button");
-                    fotoBtn.type = "button";
-                    fotoBtn.className = "text-xs text-brand-500 dark:text-brand-300 hover:text-accent-500 hover:underline mr-3";
-                    fotoBtn.textContent = "Quitar foto";
-                    fotoBtn.setAttribute("aria-label", "Quitar la foto de " + (u.full_name || u.email));
-                    fotoBtn.addEventListener("click", async () => {
-                        if (!(await Avisos.confirmar("En su lugar vuelve la inicial de su nombre. Puede subir otra desde Configuración.", { titulo: `¿Quitar la foto de ${u.full_name || u.email}?`, aceptar: "Quitar la foto", peligro: true }))) return;
-                        try {
-                            await FotoPerfil.quitar(u.id);
-                        } catch (err) {
-                            Avisos.avisar("No se pudo quitar la foto: " + err.message, { tipo: "error" });
-                            return;
-                        }
-                        u.foto_path = null;
-                        Avisos.avisar("Listo: se quitó la foto.");
-                        pintarCuentas();
-                    });
-                    tdActions.appendChild(fotoBtn);
-                }
+            /* ---- De vez en cuando ---- */
+            const otras = bloqueFicha("De vez en cuando");
+            const filaOtras = document.createElement("div");
+            filaOtras.className = "flex flex-wrap gap-2";
+            if (u.foto_path && window.FotoPerfil) {
+                const fotoBtn = botonFicha("Quitar foto");
+                fotoBtn.setAttribute("aria-label", "Quitar la foto de " + nombre);
+                fotoBtn.addEventListener("click", async () => {
+                    if (!(await Avisos.confirmar("En su lugar vuelve la inicial de su nombre. Puede subir otra desde Configuración.", { titulo: `¿Quitar la foto de ${nombre}?`, aceptar: "Quitar la foto", peligro: true }))) return;
+                    try {
+                        await FotoPerfil.quitar(u.id);
+                    } catch (err) {
+                        Avisos.avisar("No se pudo quitar la foto: " + err.message, { tipo: "error" });
+                        return;
+                    }
+                    u.foto_path = null;
+                    Avisos.avisar("Listo: se quitó la foto.");
+                    pintarCuentas();
+                    refrescarFicha();
+                });
+                filaOtras.appendChild(fotoBtn);
+            }
 
-                /* Quien perdió el celular con la app no puede entrar: se le quita
-                   la verificación y entra con su contraseña. La base solo lo deja
-                   si quien administra entró con SU código (ver «La verificación
-                   en dos pasos» en permisos-y-roles.md). */
-                if (conDosPasos.has(u.id) && !isSelf) {
-                    const quitarBtn = document.createElement("button");
-                    quitarBtn.type = "button";
-                    quitarBtn.className = "text-xs text-brand-500 dark:text-brand-300 hover:text-accent-500 hover:underline mr-3";
-                    quitarBtn.textContent = "Quitar verificación";
-                    quitarBtn.addEventListener("click", async () => {
-                        if (!(await Avisos.confirmar("Desde ese momento entra solo con su contraseña, hasta que la vuelva a activar en Configuración. Hazlo solo si te lo pidió esa persona.", { titulo: `¿Quitarle la verificación en dos pasos a ${u.full_name || u.email}?`, aceptar: "Quitar la verificación", peligro: true }))) return;
-                        const { error } = await sb.rpc("quitar_verificacion_en_dos_pasos", { p_persona: u.id });
-                        if (error) { Avisos.avisar("No se pudo quitar: " + error.message, { tipo: "error" }); return; }
-                        conDosPasos.delete(u.id);
-                        Avisos.avisar("Listo: ya entra solo con su contraseña.");
-                        pintarCuentas();
-                    });
-                    tdActions.appendChild(quitarBtn);
-                }
+            // Transferir la administración es de una vez cada tanto.
+            if (!u.is_admin && !isSelf) {
+                const makeAdminBtn = botonFicha("Hacer administrador");
+                makeAdminBtn.addEventListener("click", async () => {
+                    if (!(await Avisos.confirmar(`Perderás tu propio acceso a este panel.`, { titulo: `¿Transferir la administración a ${u.email}?`, aceptar: "Transferir", peligro: true }))) return;
+                    try {
+                        await callAdmin("update", { target_id: u.id, is_admin: true });
+                        loadUsers();
+                    } catch (err) {
+                        Avisos.avisar("No se pudo transferir: " + err.message, { tipo: "error" });
+                    }
+                });
+                filaOtras.appendChild(makeAdminBtn);
+            }
 
-                // Transferir la administración es de una vez cada tanto, no de todos
-                // los días: pasó de tener columna propia a vivir acá. La corona
-                // sigue a la vista, al lado del nombre.
-                if (!u.is_admin && !isSelf) {
-                    const makeAdminBtn = document.createElement("button");
-                    makeAdminBtn.type = "button";
-                    makeAdminBtn.className = "text-xs text-brand-500 dark:text-brand-300 hover:text-accent-500 hover:underline mr-3";
-                    makeAdminBtn.textContent = "Hacer administrador";
-                    makeAdminBtn.addEventListener("click", async () => {
-                        if (!(await Avisos.confirmar(`Perderás tu propio acceso a este panel.`, { titulo: `¿Transferir la administración a ${u.email}?`, aceptar: "Transferir", peligro: true }))) return;
-                        try {
-                            await callAdmin("update", { target_id: u.id, is_admin: true });
-                            loadUsers();
-                        } catch (err) {
-                            Avisos.avisar("No se pudo transferir: " + err.message, { tipo: "error" });
-                        }
-                    });
-                    tdActions.appendChild(makeAdminBtn);
-                }
-
-                if (!isSelf) {
-                    const delBtn = document.createElement("button");
-                    delBtn.type = "button";
-                    delBtn.className = "text-xs text-red-600 dark:text-red-400 hover:underline";
-                    delBtn.textContent = "Eliminar";
-                    delBtn.addEventListener("click", async () => {
-                        if (!(await Avisos.confirmar(`Esta acción no se puede deshacer.`, { titulo: `¿Eliminar la cuenta de ${u.email}?`, aceptar: "Eliminar la cuenta", peligro: true }))) return;
-                        try {
-                            await callAdmin("delete", { target_id: u.id });
-                            loadUsers();
-                        } catch (err) {
-                            Avisos.avisar("No se pudo eliminar: " + err.message, { tipo: "error" });
-                        }
-                    });
-                    tdActions.appendChild(delBtn);
-                }
-
-                tr.append(tdCuenta, tdRole, tdGrupo, tdTeacher, tdVision, tdCreated, tdActions);
-                if (!detalleAcceso) return tr;
-                const ambas = document.createDocumentFragment();
-                ambas.append(tr, detalleAcceso);
-                return ambas;
+            if (!isSelf) {
+                const delBtn = botonFicha("Eliminar la cuenta", true);
+                delBtn.addEventListener("click", async () => {
+                    if (!(await Avisos.confirmar(`Esta acción no se puede deshacer.`, { titulo: `¿Eliminar la cuenta de ${u.email}?`, aceptar: "Eliminar la cuenta", peligro: true }))) return;
+                    try {
+                        await callAdmin("delete", { target_id: u.id });
+                        loadUsers();
+                    } catch (err) {
+                        Avisos.avisar("No se pudo eliminar: " + err.message, { tipo: "error" });
+                    }
+                });
+                filaOtras.appendChild(delBtn);
+            }
+            if (filaOtras.childElementCount) {
+                otras.appendChild(filaOtras);
+                cuerpo.appendChild(otras);
+            }
         }
+
+        document.getElementById("ficha-cerrar").addEventListener("click", cerrarFicha);
+        document.getElementById("ficha-velo").addEventListener("click", cerrarFicha);
+        document.addEventListener("keydown", (e) => {
+            if (fichaAbierta === null) return;
+            // Con un aviso de js/avisos.js encima (un <dialog> modal), las
+            // teclas son de él: Escape lo cierra a él, no a la ficha.
+            if (document.querySelector("dialog[open]")) return;
+            if (e.key === "Escape") {
+                e.preventDefault();
+                cerrarFicha();
+                return;
+            }
+            // El foco no se escapa de la ficha con Tab: es un diálogo.
+            if (e.key === "Tab") {
+                const ficha = document.getElementById("ficha-persona");
+                const enfocables = [...ficha.querySelectorAll("a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex='0']")]
+                    .filter((el) => el.checkVisibility ? el.checkVisibility() : el.offsetParent !== null);
+                if (!enfocables.length) return;
+                const primero = enfocables[0], ultimo = enfocables[enfocables.length - 1];
+                if (!ficha.contains(document.activeElement)) { e.preventDefault(); primero.focus(); }
+                else if (e.shiftKey && document.activeElement === primero) { e.preventDefault(); ultimo.focus(); }
+                else if (!e.shiftKey && document.activeElement === ultimo) { e.preventDefault(); primero.focus(); }
+            }
+        });
+
+        // Lo que usa el buscador de Ctrl + K (js/admin-buscador.js).
+        window.AdminPanel = {
+            personas: () => allUsers,
+            abrirFicha,
+            irA,
+            grupos: GRUPOS_ADMIN,
+        };
 
         /* «Usuario y contraseña»: para que un alumno pueda entrar sin abrir
            ningún correo. Se le da un usuario de la Academia si no lo tiene (o
@@ -1000,15 +1282,10 @@
            contraseña la pone `js/contrasena-alumno.js`, que solo sirve con
            usuario de la Academia: la de quien tiene correo propio es de esa
            persona y la crea con su enlace. */
-        function renderAccesoFila(u) {
-            const tr = document.createElement("tr");
-            tr.className = "border-b border-brand-50 dark:border-brand-800/60 bg-brand-50/60 dark:bg-brand-950/40";
-            const td = document.createElement("td");
-            td.colSpan = 8;
-            td.id = "acceso-" + u.id;
-            td.className = "px-3 py-4";
+        function renderAccesoFila(u, alCambiarCorreo) {
             const caja = document.createElement("div");
-            caja.className = "max-w-xl";
+            caja.id = "acceso-" + u.id;
+            caja.className = "rounded-xl bg-brand-50 dark:bg-brand-950/60 border border-brand-100 dark:border-brand-800 p-4";
             const nombre = u.full_name || u.email;
 
             const titulo = document.createElement("h3");
@@ -1088,9 +1365,8 @@
                            la familia intentando entrar con uno que no es. */
                         u.email = datos.cambiado || u.email;
                         Avisos.avisar("Listo: " + nombre + " entra con el usuario «" + UsuarioAlumno.soloUsuario(u.email) + "». Ahora ponle la contraseña.", { tipo: "ok" });
-                        // La celda del correo de la fila de arriba también cambia.
-                        const correo = tr.previousElementSibling?.querySelector("a[href^='mailto:']");
-                        if (correo) { correo.href = "mailto:" + u.email; correo.textContent = u.email; correo.title = u.email; }
+                        // El correo de la ficha y el de la lista también cambian.
+                        if (alCambiarCorreo) alCambiarCorreo();
                     }
                     pintar();
                 } catch (err) {
@@ -1105,9 +1381,7 @@
             });
 
             pintar();
-            td.appendChild(caja);
-            tr.appendChild(td);
-            return tr;
+            return caja;
         }
 
         // `cuantas` es cuántas CUENTAS hay en el grupo y `alumnosDelGrupo` cuáles de
@@ -1431,7 +1705,7 @@
             const cuantas = total === 1 ? "1 cuenta" : total + " cuentas";
             resumen.textContent = mostradas < total
                 ? "Mostrando " + mostradas + " de " + cuantas + (hayFiltro ? " que coinciden." : ".")
-                : cuantas + (hayFiltro ? " coinciden." : " en este grupo.");
+                : cuantas + (hayFiltro ? (total === 1 ? " coincide." : " coinciden.") : " en este grupo.");
             masBtn.hidden = mostradas >= total;
         }
 
@@ -1446,7 +1720,7 @@
             if (!visibles.length) {
                 const tr = document.createElement("tr");
                 const td = document.createElement("td");
-                td.colSpan = 8;
+                td.colSpan = 7;
                 td.className = "py-6 text-center text-brand-450 dark:text-brand-350";
                 td.textContent = allUsers.length
                     ? "Ninguna cuenta coincide con la búsqueda."
@@ -2212,7 +2486,7 @@
                 // administra las recibe todas.
                 parejas = await traerTodo(() => sb.from("profile_teachers").select("student_id, teacher_id"));
             } catch (err) {
-                body.innerHTML = '<tr><td colspan="8" class="py-4 text-brand-450 dark:text-brand-350">No se pudo cargar la lista de cuentas: ' + escapeHtml(err.message || err) + '</td></tr>';
+                body.innerHTML = '<tr><td colspan="7" class="py-4 text-brand-450 dark:text-brand-350">No se pudo cargar la lista de cuentas: ' + escapeHtml(err.message || err) + '</td></tr>';
                 document.getElementById("users-summary").textContent = "No se pudo cargar la lista de cuentas.";
                 return;
             }
@@ -2241,6 +2515,7 @@
             pintarCuentas();
             pintarBarraDeLote();
             pintarInicio();
+            refrescarFicha();
             if (window.AdminProyectos) AdminProyectos.pintar();
             if (window.AdminPreparacion) AdminPreparacion.pintar();
             if (window.AdminMateriales) AdminMateriales.pintar();
@@ -2299,7 +2574,7 @@
                    viaja en el correo: si el correo no salió, nadie la conoce y
                    hay que decirlo ahora, no cuando la persona no pueda entrar. */
                 if (result.correo_enviado === false) {
-                    msg.textContent = `La cuenta de ${result.email} quedó creada, pero el correo con su contraseña provisional no salió. Usa «Reenviar acceso» en su fila.`;
+                    msg.textContent = `La cuenta de ${result.email} quedó creada, pero el correo con su contraseña provisional no salió. Usa «Reenviar acceso» en su ficha.`;
                     msg.className = "text-xs mt-3 text-red-600 dark:text-red-400";
                 } else {
                     msg.textContent = `Cuenta creada: le llegó a ${result.email} un correo con su usuario y una contraseña provisional.`;
