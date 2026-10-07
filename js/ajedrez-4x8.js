@@ -242,7 +242,7 @@
       });
       return;
     }
-    jugar({ from: desde, to: hasta, promotion: "q" });
+    jugar({ from: desde, to: hasta });
   }
   function tocar(sq) {
     if (!meToca()) {
