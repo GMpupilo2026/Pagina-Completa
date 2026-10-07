@@ -23,13 +23,13 @@
     "nombre": "Formación docente"
    }
   ],
-  "total": 557,
+  "total": 566,
   "material": [
    {
     "ruta": "material/cambio-o-no-cambio/cambio-o-no-cambio.pdf",
     "titulo": "¿Cambio o no cambio? — el cambio de piezas como decisión",
     "tipo": "otro",
-    "kb": 1385,
+    "kb": 1387,
     "libro": "¿Cambio o no cambio?"
    },
    {
@@ -82,10 +82,73 @@
     "libro": "Libro del diagnóstico de nivel"
    },
    {
+    "ruta": "material/mide-tu-fuerza-10/mide-tu-fuerza-10.pdf",
+    "titulo": "Mide tu fuerza 10",
+    "tipo": "otro",
+    "kb": 2968,
+    "libro": "Mide tu fuerza 10"
+   },
+   {
+    "ruta": "material/mide-tu-fuerza-2/mide-tu-fuerza-2.pdf",
+    "titulo": "Mide tu fuerza 2",
+    "tipo": "otro",
+    "kb": 2985,
+    "libro": "Mide tu fuerza 2"
+   },
+   {
+    "ruta": "material/mide-tu-fuerza-3/mide-tu-fuerza-3.pdf",
+    "titulo": "Mide tu fuerza 3",
+    "tipo": "otro",
+    "kb": 2964,
+    "libro": "Mide tu fuerza 3"
+   },
+   {
+    "ruta": "material/mide-tu-fuerza-4/mide-tu-fuerza-4.pdf",
+    "titulo": "Mide tu fuerza 4",
+    "tipo": "otro",
+    "kb": 2995,
+    "libro": "Mide tu fuerza 4"
+   },
+   {
+    "ruta": "material/mide-tu-fuerza-5/mide-tu-fuerza-5.pdf",
+    "titulo": "Mide tu fuerza 5",
+    "tipo": "otro",
+    "kb": 2996,
+    "libro": "Mide tu fuerza 5"
+   },
+   {
+    "ruta": "material/mide-tu-fuerza-6/mide-tu-fuerza-6.pdf",
+    "titulo": "Mide tu fuerza 6",
+    "tipo": "otro",
+    "kb": 2931,
+    "libro": "Mide tu fuerza 6"
+   },
+   {
+    "ruta": "material/mide-tu-fuerza-7/mide-tu-fuerza-7.pdf",
+    "titulo": "Mide tu fuerza 7",
+    "tipo": "otro",
+    "kb": 2956,
+    "libro": "Mide tu fuerza 7"
+   },
+   {
+    "ruta": "material/mide-tu-fuerza-8/mide-tu-fuerza-8.pdf",
+    "titulo": "Mide tu fuerza 8",
+    "tipo": "otro",
+    "kb": 2904,
+    "libro": "Mide tu fuerza 8"
+   },
+   {
+    "ruta": "material/mide-tu-fuerza-9/mide-tu-fuerza-9.pdf",
+    "titulo": "Mide tu fuerza 9",
+    "tipo": "otro",
+    "kb": 2970,
+    "libro": "Mide tu fuerza 9"
+   },
+   {
     "ruta": "material/mide-tu-fuerza/mide-tu-fuerza.pdf",
     "titulo": "Mide tu fuerza — banco de ejercicios tácticos",
     "tipo": "otro",
-    "kb": 2933,
+    "kb": 2938,
     "libro": "Mide tu fuerza"
    },
    {
@@ -4028,7 +4091,7 @@
         "ruta": "cursos/recursos/cambio-o-no-cambio/02-con-material-de-mas-cambia-piezas-material.pdf",
         "titulo": "Material de estudio",
         "tipo": "material",
-        "kb": 190
+        "kb": 189
        },
        {
         "ruta": "cursos/recursos/cambio-o-no-cambio/02-con-material-de-mas-cambia-piezas-ejercicios.pdf",
@@ -4064,7 +4127,7 @@
         "ruta": "cursos/recursos/cambio-o-no-cambio/04-la-jugada-que-obliga-al-cambio-material.pdf",
         "titulo": "Material de estudio",
         "tipo": "material",
-        "kb": 191
+        "kb": 192
        },
        {
         "ruta": "cursos/recursos/cambio-o-no-cambio/04-la-jugada-que-obliga-al-cambio-ejercicios.pdf",
@@ -4154,7 +4217,7 @@
         "ruta": "cursos/recursos/cambio-o-no-cambio/09-cambiar-las-damas-material.pdf",
         "titulo": "Material de estudio",
         "tipo": "material",
-        "kb": 189
+        "kb": 190
        },
        {
         "ruta": "cursos/recursos/cambio-o-no-cambio/09-cambiar-las-damas-ejercicios.pdf",
@@ -4370,7 +4433,7 @@
         "ruta": "cursos/recursos/cambio-o-no-cambio/21-cambiar-tu-mejor-pieza-material.pdf",
         "titulo": "Material de estudio",
         "tipo": "material",
-        "kb": 189
+        "kb": 187
        },
        {
         "ruta": "cursos/recursos/cambio-o-no-cambio/21-cambiar-tu-mejor-pieza-ejercicios.pdf",
@@ -8490,7 +8553,7 @@
     "nombre": "Formación docente"
    }
   ],
-  "total": 256,
+  "total": 265,
   "material": [
    {
     "ruta": "material/cambio-o-no-cambio/cambio-o-no-cambio-accesible.html",
@@ -8514,8 +8577,71 @@
     "libro": "Libro del diagnóstico de nivel"
    },
    {
+    "ruta": "material/mide-tu-fuerza-10/mide-tu-fuerza-10-accesible.html",
+    "titulo": "Mide tu fuerza · Volumen 10",
+    "tipo": "accesible",
+    "kb": 348,
+    "libro": "Mide tu fuerza 10"
+   },
+   {
+    "ruta": "material/mide-tu-fuerza-2/mide-tu-fuerza-2-accesible.html",
+    "titulo": "Mide tu fuerza · Volumen 2",
+    "tipo": "accesible",
+    "kb": 349,
+    "libro": "Mide tu fuerza 2"
+   },
+   {
+    "ruta": "material/mide-tu-fuerza-3/mide-tu-fuerza-3-accesible.html",
+    "titulo": "Mide tu fuerza · Volumen 3",
+    "tipo": "accesible",
+    "kb": 348,
+    "libro": "Mide tu fuerza 3"
+   },
+   {
+    "ruta": "material/mide-tu-fuerza-4/mide-tu-fuerza-4-accesible.html",
+    "titulo": "Mide tu fuerza · Volumen 4",
+    "tipo": "accesible",
+    "kb": 348,
+    "libro": "Mide tu fuerza 4"
+   },
+   {
+    "ruta": "material/mide-tu-fuerza-5/mide-tu-fuerza-5-accesible.html",
+    "titulo": "Mide tu fuerza · Volumen 5",
+    "tipo": "accesible",
+    "kb": 348,
+    "libro": "Mide tu fuerza 5"
+   },
+   {
+    "ruta": "material/mide-tu-fuerza-6/mide-tu-fuerza-6-accesible.html",
+    "titulo": "Mide tu fuerza · Volumen 6",
+    "tipo": "accesible",
+    "kb": 347,
+    "libro": "Mide tu fuerza 6"
+   },
+   {
+    "ruta": "material/mide-tu-fuerza-7/mide-tu-fuerza-7-accesible.html",
+    "titulo": "Mide tu fuerza · Volumen 7",
+    "tipo": "accesible",
+    "kb": 348,
+    "libro": "Mide tu fuerza 7"
+   },
+   {
+    "ruta": "material/mide-tu-fuerza-8/mide-tu-fuerza-8-accesible.html",
+    "titulo": "Mide tu fuerza · Volumen 8",
+    "tipo": "accesible",
+    "kb": 345,
+    "libro": "Mide tu fuerza 8"
+   },
+   {
+    "ruta": "material/mide-tu-fuerza-9/mide-tu-fuerza-9-accesible.html",
+    "titulo": "Mide tu fuerza · Volumen 9",
+    "tipo": "accesible",
+    "kb": 347,
+    "libro": "Mide tu fuerza 9"
+   },
+   {
     "ruta": "material/mide-tu-fuerza/mide-tu-fuerza-accesible.html",
-    "titulo": "Mide tu fuerza",
+    "titulo": "Mide tu fuerza · Volumen 1",
     "tipo": "accesible",
     "kb": 347,
     "libro": "Mide tu fuerza"

@@ -64,19 +64,17 @@
           "diagramas": [
             {
               "id": "CC-2",
-              "fen": "Q7/7p/4p2p/5k2/P2p3P/8/5PK1/3q4 w - - 2 43",
+              "fen": "8/6pk/8/4p2p/3qP3/P1K1Q3/1P6/8 w - - 1 43",
               "turno": "w",
               "resultado": "1-0",
-              "pregunta": "Hay un cambio que deja un final de peones ganado. ¿Puedes forzarlo? Juegan las blancas; el rival acaba de jugar …Rf5.",
-              "comentario": "43.Df3+ Dxf3+ 44.Rxf3 e5 45.a5 e4+ 46.Re2. En la línea se cambian las damas, y queda un final de peones. Es una jugada defensiva precisa: la única que sostiene la posición. Las damas se van y lo que queda es un final de peones en el que la ventaja ya no se puede discutir. (Ejercicio 0rTVx de la base abierta de Lichess (CC0), rating 1536. Stockfish 16 a profundidad 18: Df3+ es la mejor (+4,4) y la segunda queda en 0,0.)",
+              "pregunta": "Hay un cambio que deja un final de peones ganado. ¿Puedes forzarlo? Juegan las blancas; el rival acaba de jugar …Dd4+.",
+              "comentario": "43.Dxd4 exd4+ 44.Rxd4 h4 45.Re3. En la línea se cambian las damas, y queda un final de peones. Es una jugada defensiva precisa: la única que sostiene la posición. Las damas se van y lo que queda es un final de peones en el que la ventaja ya no se puede discutir. (Ejercicio 2yN82 de la base abierta de Lichess (CC0), rating 1362. Stockfish 16 a profundidad 18: Dxd4 es la mejor (+5,5) y la segunda queda en -43,9.)",
               "linea": [
-                "Qf3+",
-                "Qxf3+",
-                "Kxf3",
-                "e5",
-                "a5",
-                "e4+",
-                "Ke2"
+                "Qxd4",
+                "exd4+",
+                "Kxd4",
+                "h4",
+                "Ke3"
               ]
             }
           ]
@@ -126,17 +124,21 @@
           "diagramas": [
             {
               "id": "CC-4",
-              "fen": "4rr1k/p5b1/1p5p/4p3/3pQ3/P7/1P3qPP/1R1R1B1K w - - 0 24",
-              "turno": "w",
-              "resultado": "1-0",
-              "pregunta": "No hay una captura que gane ya. Busca la jugada que deja al rival sin otra salida que un cambio que te conviene. Juegan las blancas; el rival acaba de jugar …b6.",
-              "comentario": "24.Ad3 Df5 25.Dxf5 Txf5 26.Axf5. En la línea se cambian las damas. La clave es una jugada tranquila: sin jaque ni captura, pero sin defensa. La primera jugada no se lleva nada: deja preparado el cambio, y el rival ya no lo puede evitar. (Ejercicio 2eRhc de la base abierta de Lichess (CC0), rating 1390. Stockfish 16 a profundidad 18: Ad3 es la mejor (+5,3) y la segunda queda en -0,8.)",
+              "fen": "r7/2P2ppk/4b2p/4p3/2B1P2P/5qP1/p1Q2P2/R5K1 b - - 5 38",
+              "turno": "b",
+              "resultado": "0-1",
+              "pregunta": "No hay una captura que gane ya. Busca la jugada que deja al rival sin otra salida que un cambio que te conviene. Juegan las negras; el rival acaba de jugar Ac4.",
+              "comentario": "38…Ah3 39.Af1 Axf1 40.Rxf1 Dh1+ 41.Re2 Dxa1 42.c8=D Txc8. En la línea se cambian una pieza menor por otra. Es una enfilada: la pieza de adelante se va y cae la de atrás. La primera jugada no se lleva nada: deja preparado el cambio, y el rival ya no lo puede evitar. (Ejercicio 1QGUe de la base abierta de Lichess (CC0), rating 1458. Stockfish 16 a profundidad 18: Ah3 es la mejor (+4,8) y la segunda queda en -0,1.)",
               "linea": [
-                "Bd3",
-                "Qf5",
-                "Qxf5",
-                "Rxf5",
-                "Bxf5"
+                "Bh3",
+                "Bf1",
+                "Bxf1",
+                "Kxf1",
+                "Qh1+",
+                "Ke2",
+                "Qxa1",
+                "c8=Q",
+                "Rxc8"
               ]
             }
           ]
@@ -291,17 +293,15 @@
           "diagramas": [
             {
               "id": "CC-9",
-              "fen": "8/6pk/8/4p2p/3qP3/P1K1Q3/1P6/8 w - - 1 43",
-              "turno": "w",
-              "resultado": "1-0",
-              "pregunta": "La línea buena termina con las damas fuera del tablero. ¿Cómo lo fuerzas? Juegan las blancas; el rival acaba de jugar …Dd4+.",
-              "comentario": "43.Dxd4 exd4+ 44.Rxd4 h4 45.Re3. En la línea se cambian las damas, y queda un final de peones. Es una jugada defensiva precisa: la única que sostiene la posición. Sin damas, la ventaja que quedaba escondida aparece entera en el final. (Ejercicio 2yN82 de la base abierta de Lichess (CC0), rating 1362. Stockfish 16 a profundidad 18: Dxd4 es la mejor (+5,5) y la segunda queda en -43,9.)",
+              "fen": "2k5/p1p5/2P4p/5Kp1/1P2Q3/2Pqp3/P5PP/8 b - - 1 34",
+              "turno": "b",
+              "resultado": "0-1",
+              "pregunta": "La línea buena termina con las damas fuera del tablero. ¿Cómo lo fuerzas? Juegan las negras; el rival acaba de jugar De4.",
+              "comentario": "34…Dxe4+ 35.Rxe4 e2. En la línea se cambian las damas, y queda un final de peones. El peón avanzado decide: hay que empujarlo o aprovecharlo a tiempo. Sin damas, la ventaja que quedaba escondida aparece entera en el final. (Ejercicio 2IfUl de la base abierta de Lichess (CC0), rating 1260. Stockfish 16 a profundidad 18: Dxe4+ es la mejor (+5,3) y la segunda queda en -3,8.)",
               "linea": [
-                "Qxd4",
-                "exd4+",
-                "Kxd4",
-                "h4",
-                "Ke3"
+                "Qxe4+",
+                "Kxe4",
+                "e2"
               ]
             }
           ]
@@ -522,15 +522,15 @@
           "diagramas": [
             {
               "id": "CC-16",
-              "fen": "2k5/p1p5/2P4p/5Kp1/1P2Q3/2Pqp3/P5PP/8 b - - 1 34",
+              "fen": "8/6p1/1p3k1p/2q5/4QP1P/7K/6P1/8 b - - 3 51",
               "turno": "b",
               "resultado": "0-1",
               "pregunta": "La ventaja se puede cobrar de una forma más simple: con un cambio que deja un final de peones. Juegan las negras; el rival acaba de jugar De4.",
-              "comentario": "34…Dxe4+ 35.Rxe4 e2. En la línea se cambian las damas, y queda un final de peones. El peón avanzado decide: hay que empujarlo o aprovecharlo a tiempo. La ventaja con damas se convierte en un final de peones sin discusión: la misma ventaja, mucho más fácil de ganar. (Ejercicio 2IfUl de la base abierta de Lichess (CC0), rating 1260. Stockfish 16 a profundidad 18: Dxe4+ es la mejor (+5,3) y la segunda queda en -3,8.)",
+              "comentario": "51…Df5+ 52.Dxf5+ Rxf5. En la línea se cambian las damas, y queda un final de peones. La ventaja con damas se convierte en un final de peones sin discusión: la misma ventaja, mucho más fácil de ganar. (Ejercicio 1lEBF de la base abierta de Lichess (CC0), rating 1489. Stockfish 16 a profundidad 18: Df5+ es la mejor (+5,7) y la segunda queda en +0,3.)",
               "linea": [
-                "Qxe4+",
-                "Kxe4",
-                "e2"
+                "Qf5+",
+                "Qxf5+",
+                "Kxf5"
               ]
             }
           ]
@@ -685,17 +685,15 @@
           "diagramas": [
             {
               "id": "CC-21",
-              "fen": "2kr3r/p1p1n1pp/3b2q1/4Bb2/3P1Q2/2N5/PPP3PP/4RRK1 w - - 7 18",
+              "fen": "5rk1/2Rr2p1/p5np/4pq2/8/5P2/2Q3PP/5RK1 w - - 0 31",
               "turno": "w",
               "resultado": "1-0",
-              "pregunta": "El cambio que gana se lleva una pieza que el rival necesitaba. Juegan las blancas; el rival acaba de jugar …Dg6.",
-              "comentario": "18.Axd6 Dxd6 19.Dxd6 Txd6 20.Txe7. En la línea se cambian una pieza menor por otra y las damas. Se captura al defensor y lo que defendía queda colgado. Lo que cuenta no es la pieza que se entrega, sino lo que queda después: el rival se quedó sin la pieza que sostenía su posición. (Ejercicio 1S1al de la base abierta de Lichess (CC0), rating 1634. Stockfish 16 a profundidad 18: Axd6 es la mejor (+3,0) y la segunda queda en -0,7.)",
+              "pregunta": "El cambio que gana se lleva una pieza que el rival necesitaba. Juegan las blancas; el rival acaba de jugar …Txd7.",
+              "comentario": "31.Dxf5 Txf5 32.Txd7. En la línea se cambian las damas. Hay una jugada intermedia: antes de lo obvio, algo más fuerte. Lo que cuenta no es la pieza que se entrega, sino lo que queda después: el rival se quedó sin la pieza que sostenía su posición. (Ejercicio 2uMUi de la base abierta de Lichess (CC0), rating 1473. Stockfish 16 a profundidad 18: Dxf5 es la mejor (+3,0) y la segunda queda en -5,2.)",
               "linea": [
-                "Bxd6",
-                "Qxd6",
-                "Qxd6",
-                "Rxd6",
-                "Rxe7"
+                "Qxf5",
+                "Rxf5",
+                "Rxd7"
               ]
             }
           ]

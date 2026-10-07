@@ -57,51 +57,41 @@
     {
      "id": "CC-2",
      "idx": 0,
-     "fen": "Q7/7p/4p2p/5k2/P2p3P/8/5PK1/3q4 w - - 2 43",
+     "fen": "8/6pk/8/4p2p/3qP3/P1K1Q3/1P6/8 w - - 1 43",
      "turno": "w",
-     "titulo": "Hay un cambio que deja un final de peones ganado. ¿Puedes forzarlo? Juegan las blancas; el rival acaba de jugar …Rf5.",
+     "titulo": "Hay un cambio que deja un final de peones ganado. ¿Puedes forzarlo? Juegan las blancas; el rival acaba de jugar …Dd4+.",
      "resultado": "1-0",
      "resultado_texto": "Ganan blancas",
-     "linea": "43.Qf3+ Qxf3+ 44.Kxf3 e5 45.a5 e4+ 46.Ke2",
-     "linea_es": "43.Df3+ Dxf3+ 44.Rxf3 e5 45.a5 e4+ 46.Re2",
+     "linea": "43.Qxd4 exd4+ 44.Kxd4 h4 45.Ke3",
+     "linea_es": "43.Dxd4 exd4+ 44.Rxd4 h4 45.Re3",
      "jugadas": [
       {
-       "san": "Qf3+",
-       "uci": "a8f3",
-       "fen": "8/7p/4p2p/5k2/P2p3P/5Q2/5PK1/3q4 b - - 3 43"
+       "san": "Qxd4",
+       "uci": "e3d4",
+       "fen": "8/6pk/8/4p2p/3QP3/P1K5/1P6/8 b - - 0 43"
       },
       {
-       "san": "Qxf3+",
-       "uci": "d1f3",
-       "fen": "8/7p/4p2p/5k2/P2p3P/5q2/5PK1/8 w - - 0 44"
+       "san": "exd4+",
+       "uci": "e5d4",
+       "fen": "8/6pk/8/7p/3pP3/P1K5/1P6/8 w - - 0 44"
       },
       {
-       "san": "Kxf3",
-       "uci": "g2f3",
-       "fen": "8/7p/4p2p/5k2/P2p3P/5K2/5P2/8 b - - 0 44"
+       "san": "Kxd4",
+       "uci": "c3d4",
+       "fen": "8/6pk/8/7p/3KP3/P7/1P6/8 b - - 0 44"
       },
       {
-       "san": "e5",
-       "uci": "e6e5",
-       "fen": "8/7p/7p/4pk2/P2p3P/5K2/5P2/8 w - - 0 45"
+       "san": "h4",
+       "uci": "h5h4",
+       "fen": "8/6pk/8/8/3KP2p/P7/1P6/8 w - - 0 45"
       },
       {
-       "san": "a5",
-       "uci": "a4a5",
-       "fen": "8/7p/7p/P3pk2/3p3P/5K2/5P2/8 b - - 0 45"
-      },
-      {
-       "san": "e4+",
-       "uci": "e5e4",
-       "fen": "8/7p/7p/P4k2/3pp2P/5K2/5P2/8 w - - 0 46"
-      },
-      {
-       "san": "Ke2",
-       "uci": "f3e2",
-       "fen": "8/7p/7p/P4k2/3pp2P/8/4KP2/8 b - - 1 46"
+       "san": "Ke3",
+       "uci": "d4e3",
+       "fen": "8/6pk/8/8/4P2p/P3K3/1P6/8 b - - 1 45"
       }
      ],
-     "comentario": "43.Df3+ Dxf3+ 44.Rxf3 e5 45.a5 e4+ 46.Re2. En la línea se cambian las damas, y queda un final de peones. Es una jugada defensiva precisa: la única que sostiene la posición. Las damas se van y lo que queda es un final de peones en el que la ventaja ya no se puede discutir. (Ejercicio 0rTVx de la base abierta de Lichess (CC0), rating 1536. Stockfish 16 a profundidad 18: Df3+ es la mejor (+4,4) y la segunda queda en 0,0.)",
+     "comentario": "43.Dxd4 exd4+ 44.Rxd4 h4 45.Re3. En la línea se cambian las damas, y queda un final de peones. Es una jugada defensiva precisa: la única que sostiene la posición. Las damas se van y lo que queda es un final de peones en el que la ventaja ya no se puede discutir. (Ejercicio 2yN82 de la base abierta de Lichess (CC0), rating 1362. Stockfish 16 a profundidad 18: Dxd4 es la mejor (+5,5) y la segunda queda en -43,9.)",
      "clave": true,
      "marcas": []
     }
@@ -157,41 +147,61 @@
     {
      "id": "CC-4",
      "idx": 0,
-     "fen": "4rr1k/p5b1/1p5p/4p3/3pQ3/P7/1P3qPP/1R1R1B1K w - - 0 24",
-     "turno": "w",
-     "titulo": "No hay una captura que gane ya. Busca la jugada que deja al rival sin otra salida que un cambio que te conviene. Juegan las blancas; el rival acaba de jugar …b6.",
-     "resultado": "1-0",
-     "resultado_texto": "Ganan blancas",
-     "linea": "24.Bd3 Qf5 25.Qxf5 Rxf5 26.Bxf5",
-     "linea_es": "24.Ad3 Df5 25.Dxf5 Txf5 26.Axf5",
+     "fen": "r7/2P2ppk/4b2p/4p3/2B1P2P/5qP1/p1Q2P2/R5K1 b - - 5 38",
+     "turno": "b",
+     "titulo": "No hay una captura que gane ya. Busca la jugada que deja al rival sin otra salida que un cambio que te conviene. Juegan las negras; el rival acaba de jugar Ac4.",
+     "resultado": "0-1",
+     "resultado_texto": "Ganan negras",
+     "linea": "38...Bh3 39.Bf1 Bxf1 40.Kxf1 Qh1+ 41.Ke2 Qxa1 42.c8=Q Rxc8",
+     "linea_es": "38...Ah3 39.Af1 Axf1 40.Rxf1 Dh1+ 41.Re2 Dxa1 42.c8=D Txc8",
      "jugadas": [
       {
-       "san": "Bd3",
-       "uci": "f1d3",
-       "fen": "4rr1k/p5b1/1p5p/4p3/3pQ3/P2B4/1P3qPP/1R1R3K b - - 1 24"
+       "san": "Bh3",
+       "uci": "e6h3",
+       "fen": "r7/2P2ppk/7p/4p3/2B1P2P/5qPb/p1Q2P2/R5K1 w - - 6 39"
       },
       {
-       "san": "Qf5",
-       "uci": "f2f5",
-       "fen": "4rr1k/p5b1/1p5p/4pq2/3pQ3/P2B4/1P4PP/1R1R3K w - - 2 25"
+       "san": "Bf1",
+       "uci": "c4f1",
+       "fen": "r7/2P2ppk/7p/4p3/4P2P/5qPb/p1Q2P2/R4BK1 b - - 7 39"
       },
       {
-       "san": "Qxf5",
-       "uci": "e4f5",
-       "fen": "4rr1k/p5b1/1p5p/4pQ2/3p4/P2B4/1P4PP/1R1R3K b - - 0 25"
+       "san": "Bxf1",
+       "uci": "h3f1",
+       "fen": "r7/2P2ppk/7p/4p3/4P2P/5qP1/p1Q2P2/R4bK1 w - - 0 40"
       },
       {
-       "san": "Rxf5",
-       "uci": "f8f5",
-       "fen": "4r2k/p5b1/1p5p/4pr2/3p4/P2B4/1P4PP/1R1R3K w - - 0 26"
+       "san": "Kxf1",
+       "uci": "g1f1",
+       "fen": "r7/2P2ppk/7p/4p3/4P2P/5qP1/p1Q2P2/R4K2 b - - 0 40"
       },
       {
-       "san": "Bxf5",
-       "uci": "d3f5",
-       "fen": "4r2k/p5b1/1p5p/4pB2/3p4/P7/1P4PP/1R1R3K b - - 0 26"
+       "san": "Qh1+",
+       "uci": "f3h1",
+       "fen": "r7/2P2ppk/7p/4p3/4P2P/6P1/p1Q2P2/R4K1q w - - 1 41"
+      },
+      {
+       "san": "Ke2",
+       "uci": "f1e2",
+       "fen": "r7/2P2ppk/7p/4p3/4P2P/6P1/p1Q1KP2/R6q b - - 2 41"
+      },
+      {
+       "san": "Qxa1",
+       "uci": "h1a1",
+       "fen": "r7/2P2ppk/7p/4p3/4P2P/6P1/p1Q1KP2/q7 w - - 0 42"
+      },
+      {
+       "san": "c8=Q",
+       "uci": "c7c8q",
+       "fen": "r1Q5/5ppk/7p/4p3/4P2P/6P1/p1Q1KP2/q7 b - - 0 42"
+      },
+      {
+       "san": "Rxc8",
+       "uci": "a8c8",
+       "fen": "2r5/5ppk/7p/4p3/4P2P/6P1/p1Q1KP2/q7 w - - 0 43"
       }
      ],
-     "comentario": "24.Ad3 Df5 25.Dxf5 Txf5 26.Axf5. En la línea se cambian las damas. La clave es una jugada tranquila: sin jaque ni captura, pero sin defensa. La primera jugada no se lleva nada: deja preparado el cambio, y el rival ya no lo puede evitar. (Ejercicio 2eRhc de la base abierta de Lichess (CC0), rating 1390. Stockfish 16 a profundidad 18: Ad3 es la mejor (+5,3) y la segunda queda en -0,8.)",
+     "comentario": "38…Ah3 39.Af1 Axf1 40.Rxf1 Dh1+ 41.Re2 Dxa1 42.c8=D Txc8. En la línea se cambian una pieza menor por otra. Es una enfilada: la pieza de adelante se va y cae la de atrás. La primera jugada no se lleva nada: deja preparado el cambio, y el rival ya no lo puede evitar. (Ejercicio 1QGUe de la base abierta de Lichess (CC0), rating 1458. Stockfish 16 a profundidad 18: Ah3 es la mejor (+4,8) y la segunda queda en -0,1.)",
      "clave": true,
      "marcas": []
     }
@@ -407,41 +417,31 @@
     {
      "id": "CC-9",
      "idx": 0,
-     "fen": "8/6pk/8/4p2p/3qP3/P1K1Q3/1P6/8 w - - 1 43",
-     "turno": "w",
-     "titulo": "La línea buena termina con las damas fuera del tablero. ¿Cómo lo fuerzas? Juegan las blancas; el rival acaba de jugar …Dd4+.",
-     "resultado": "1-0",
-     "resultado_texto": "Ganan blancas",
-     "linea": "43.Qxd4 exd4+ 44.Kxd4 h4 45.Ke3",
-     "linea_es": "43.Dxd4 exd4+ 44.Rxd4 h4 45.Re3",
+     "fen": "2k5/p1p5/2P4p/5Kp1/1P2Q3/2Pqp3/P5PP/8 b - - 1 34",
+     "turno": "b",
+     "titulo": "La línea buena termina con las damas fuera del tablero. ¿Cómo lo fuerzas? Juegan las negras; el rival acaba de jugar De4.",
+     "resultado": "0-1",
+     "resultado_texto": "Ganan negras",
+     "linea": "34...Qxe4+ 35.Kxe4 e2",
+     "linea_es": "34...Dxe4+ 35.Rxe4 e2",
      "jugadas": [
       {
-       "san": "Qxd4",
-       "uci": "e3d4",
-       "fen": "8/6pk/8/4p2p/3QP3/P1K5/1P6/8 b - - 0 43"
+       "san": "Qxe4+",
+       "uci": "d3e4",
+       "fen": "2k5/p1p5/2P4p/5Kp1/1P2q3/2P1p3/P5PP/8 w - - 0 35"
       },
       {
-       "san": "exd4+",
-       "uci": "e5d4",
-       "fen": "8/6pk/8/7p/3pP3/P1K5/1P6/8 w - - 0 44"
+       "san": "Kxe4",
+       "uci": "f5e4",
+       "fen": "2k5/p1p5/2P4p/6p1/1P2K3/2P1p3/P5PP/8 b - - 0 35"
       },
       {
-       "san": "Kxd4",
-       "uci": "c3d4",
-       "fen": "8/6pk/8/7p/3KP3/P7/1P6/8 b - - 0 44"
-      },
-      {
-       "san": "h4",
-       "uci": "h5h4",
-       "fen": "8/6pk/8/8/3KP2p/P7/1P6/8 w - - 0 45"
-      },
-      {
-       "san": "Ke3",
-       "uci": "d4e3",
-       "fen": "8/6pk/8/8/4P2p/P3K3/1P6/8 b - - 1 45"
+       "san": "e2",
+       "uci": "e3e2",
+       "fen": "2k5/p1p5/2P4p/6p1/1P2K3/2P5/P3p1PP/8 w - - 0 36"
       }
      ],
-     "comentario": "43.Dxd4 exd4+ 44.Rxd4 h4 45.Re3. En la línea se cambian las damas, y queda un final de peones. Es una jugada defensiva precisa: la única que sostiene la posición. Sin damas, la ventaja que quedaba escondida aparece entera en el final. (Ejercicio 2yN82 de la base abierta de Lichess (CC0), rating 1362. Stockfish 16 a profundidad 18: Dxd4 es la mejor (+5,5) y la segunda queda en -43,9.)",
+     "comentario": "34…Dxe4+ 35.Rxe4 e2. En la línea se cambian las damas, y queda un final de peones. El peón avanzado decide: hay que empujarlo o aprovecharlo a tiempo. Sin damas, la ventaja que quedaba escondida aparece entera en el final. (Ejercicio 2IfUl de la base abierta de Lichess (CC0), rating 1260. Stockfish 16 a profundidad 18: Dxe4+ es la mejor (+5,3) y la segunda queda en -3,8.)",
      "clave": true,
      "marcas": []
     }
@@ -767,31 +767,31 @@
     {
      "id": "CC-16",
      "idx": 0,
-     "fen": "2k5/p1p5/2P4p/5Kp1/1P2Q3/2Pqp3/P5PP/8 b - - 1 34",
+     "fen": "8/6p1/1p3k1p/2q5/4QP1P/7K/6P1/8 b - - 3 51",
      "turno": "b",
      "titulo": "La ventaja se puede cobrar de una forma más simple: con un cambio que deja un final de peones. Juegan las negras; el rival acaba de jugar De4.",
      "resultado": "0-1",
      "resultado_texto": "Ganan negras",
-     "linea": "34...Qxe4+ 35.Kxe4 e2",
-     "linea_es": "34...Dxe4+ 35.Rxe4 e2",
+     "linea": "51...Qf5+ 52.Qxf5+ Kxf5",
+     "linea_es": "51...Df5+ 52.Dxf5+ Rxf5",
      "jugadas": [
       {
-       "san": "Qxe4+",
-       "uci": "d3e4",
-       "fen": "2k5/p1p5/2P4p/5Kp1/1P2q3/2P1p3/P5PP/8 w - - 0 35"
+       "san": "Qf5+",
+       "uci": "c5f5",
+       "fen": "8/6p1/1p3k1p/5q2/4QP1P/7K/6P1/8 w - - 4 52"
       },
       {
-       "san": "Kxe4",
-       "uci": "f5e4",
-       "fen": "2k5/p1p5/2P4p/6p1/1P2K3/2P1p3/P5PP/8 b - - 0 35"
+       "san": "Qxf5+",
+       "uci": "e4f5",
+       "fen": "8/6p1/1p3k1p/5Q2/5P1P/7K/6P1/8 b - - 0 52"
       },
       {
-       "san": "e2",
-       "uci": "e3e2",
-       "fen": "2k5/p1p5/2P4p/6p1/1P2K3/2P5/P3p1PP/8 w - - 0 36"
+       "san": "Kxf5",
+       "uci": "f6f5",
+       "fen": "8/6p1/1p5p/5k2/5P1P/7K/6P1/8 w - - 0 53"
       }
      ],
-     "comentario": "34…Dxe4+ 35.Rxe4 e2. En la línea se cambian las damas, y queda un final de peones. El peón avanzado decide: hay que empujarlo o aprovecharlo a tiempo. La ventaja con damas se convierte en un final de peones sin discusión: la misma ventaja, mucho más fácil de ganar. (Ejercicio 2IfUl de la base abierta de Lichess (CC0), rating 1260. Stockfish 16 a profundidad 18: Dxe4+ es la mejor (+5,3) y la segunda queda en -3,8.)",
+     "comentario": "51…Df5+ 52.Dxf5+ Rxf5. En la línea se cambian las damas, y queda un final de peones. La ventaja con damas se convierte en un final de peones sin discusión: la misma ventaja, mucho más fácil de ganar. (Ejercicio 1lEBF de la base abierta de Lichess (CC0), rating 1489. Stockfish 16 a profundidad 18: Df5+ es la mejor (+5,7) y la segunda queda en +0,3.)",
      "clave": true,
      "marcas": []
     }
@@ -987,41 +987,31 @@
     {
      "id": "CC-21",
      "idx": 0,
-     "fen": "2kr3r/p1p1n1pp/3b2q1/4Bb2/3P1Q2/2N5/PPP3PP/4RRK1 w - - 7 18",
+     "fen": "5rk1/2Rr2p1/p5np/4pq2/8/5P2/2Q3PP/5RK1 w - - 0 31",
      "turno": "w",
-     "titulo": "El cambio que gana se lleva una pieza que el rival necesitaba. Juegan las blancas; el rival acaba de jugar …Dg6.",
+     "titulo": "El cambio que gana se lleva una pieza que el rival necesitaba. Juegan las blancas; el rival acaba de jugar …Txd7.",
      "resultado": "1-0",
      "resultado_texto": "Ganan blancas",
-     "linea": "18.Bxd6 Qxd6 19.Qxd6 Rxd6 20.Rxe7",
-     "linea_es": "18.Axd6 Dxd6 19.Dxd6 Txd6 20.Txe7",
+     "linea": "31.Qxf5 Rxf5 32.Rxd7",
+     "linea_es": "31.Dxf5 Txf5 32.Txd7",
      "jugadas": [
       {
-       "san": "Bxd6",
-       "uci": "e5d6",
-       "fen": "2kr3r/p1p1n1pp/3B2q1/5b2/3P1Q2/2N5/PPP3PP/4RRK1 b - - 0 18"
+       "san": "Qxf5",
+       "uci": "c2f5",
+       "fen": "5rk1/2Rr2p1/p5np/4pQ2/8/5P2/6PP/5RK1 b - - 0 31"
       },
       {
-       "san": "Qxd6",
-       "uci": "g6d6",
-       "fen": "2kr3r/p1p1n1pp/3q4/5b2/3P1Q2/2N5/PPP3PP/4RRK1 w - - 0 19"
+       "san": "Rxf5",
+       "uci": "f8f5",
+       "fen": "6k1/2Rr2p1/p5np/4pr2/8/5P2/6PP/5RK1 w - - 0 32"
       },
       {
-       "san": "Qxd6",
-       "uci": "f4d6",
-       "fen": "2kr3r/p1p1n1pp/3Q4/5b2/3P4/2N5/PPP3PP/4RRK1 b - - 0 19"
-      },
-      {
-       "san": "Rxd6",
-       "uci": "d8d6",
-       "fen": "2k4r/p1p1n1pp/3r4/5b2/3P4/2N5/PPP3PP/4RRK1 w - - 0 20"
-      },
-      {
-       "san": "Rxe7",
-       "uci": "e1e7",
-       "fen": "2k4r/p1p1R1pp/3r4/5b2/3P4/2N5/PPP3PP/5RK1 b - - 0 20"
+       "san": "Rxd7",
+       "uci": "c7d7",
+       "fen": "6k1/3R2p1/p5np/4pr2/8/5P2/6PP/5RK1 b - - 0 32"
       }
      ],
-     "comentario": "18.Axd6 Dxd6 19.Dxd6 Txd6 20.Txe7. En la línea se cambian una pieza menor por otra y las damas. Se captura al defensor y lo que defendía queda colgado. Lo que cuenta no es la pieza que se entrega, sino lo que queda después: el rival se quedó sin la pieza que sostenía su posición. (Ejercicio 1S1al de la base abierta de Lichess (CC0), rating 1634. Stockfish 16 a profundidad 18: Axd6 es la mejor (+3,0) y la segunda queda en -0,7.)",
+     "comentario": "31.Dxf5 Txf5 32.Txd7. En la línea se cambian las damas. Hay una jugada intermedia: antes de lo obvio, algo más fuerte. Lo que cuenta no es la pieza que se entrega, sino lo que queda después: el rival se quedó sin la pieza que sostenía su posición. (Ejercicio 2uMUi de la base abierta de Lichess (CC0), rating 1473. Stockfish 16 a profundidad 18: Dxf5 es la mejor (+3,0) y la segunda queda en -5,2.)",
      "clave": true,
      "marcas": []
     }

@@ -67,7 +67,7 @@ const CURSOS = [
       destacar: ["a5", "a4"],
       alt: "Final de torres del primer ejemplo del curso: juegan las negras y la jugada que gana es un avance tranquilo del peón de a, sin jaque ni captura." },
     { slug: "cambio-o-no-cambio", desde: ["cambio-o-no-cambio",
-        (d) => d.finales.flatMap((f) => f.diagramas).find((x) => x.id === "CC-9")],
+        (d) => d.finales.flatMap((f) => f.diagramas).find((x) => x.id === "CC-2")],
       destacar: ["e3", "d4"],
       alt: "Final de damas de una lección del curso: juegan las blancas, las damas están frente a frente y cambiarlas deja un final de peones ganado." },
     { slug: "preparacion-para-torneos", fen: "r1bq1rk1/pp2ppbp/2np1np1/8/2BNP3/2N1B3/PPP2PPP/R2Q1RK1 w - - 0 1",

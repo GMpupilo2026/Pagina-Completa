@@ -5,7 +5,8 @@
  * Lo que comprueba, porque nada de esto da error si se rompe —el curso se ve
  * y el libro se imprime igual—:
  *   - ninguna posición repetida, ni una que ya esté en el diagnóstico, en
- *     «Ponte a prueba», en «Mide tu fuerza» o en «Rompe el estancamiento»;
+ *     «Ponte a prueba», en los diez volúmenes de «Mide tu fuerza» o en «Rompe
+ *     el estancamiento»;
  *   - cada FEN es legal y la solución guardada es la primera jugada de una
  *     línea que se puede jugar entera;
  *   - cada lección con tema tiene su ejemplo, y el ejemplo del curso
@@ -30,19 +31,14 @@
 const fs = require("fs");
 const path = require("path");
 const { Chess } = require("chess.js");
-const { DESCUENTO_LICHESS, CAPITULOS, cambios, exige } = require("./cambio-o-no-cambio-generar.js");
+const { DESCUENTO_LICHESS, CAPITULOS, cambios, exige, bancosAnteriores } = require("./cambio-o-no-cambio-generar.js");
 
 const RAIZ = path.join(__dirname, "..");
 const fallos = [];
 const ok = (cond, msg) => { if (!cond) fallos.push(msg); };
 
 const win = {};
-const cargar = (f) => new Function("window", fs.readFileSync(path.join(RAIZ, f), "utf8"))(win);
-cargar("js/diagnostico-items.js");
-cargar("material/ponte-a-prueba/banco.js");
-cargar("material/mide-tu-fuerza/banco.js");
-cargar("material/rompe-el-estancamiento/banco.js");
-cargar("material/cambio-o-no-cambio/banco.js");
+new Function("window", fs.readFileSync(path.join(RAIZ, "material/cambio-o-no-cambio/banco.js"), "utf8"))(win);
 
 const LIBRO = win.CAMBIO_O_NO_CAMBIO;
 const ITEMS = win.CAMBIO_O_NO_CAMBIO_ITEMS;
@@ -62,8 +58,8 @@ function ucis(it) {
 }
 
 /* ---------- el banco ---------- */
-const otras = new Set([].concat(win.DIAGNOSTICO_ITEMS || [], win.LIBRO_EXAMEN_ITEMS || [], win.MIDE_TU_FUERZA_ITEMS || [],
-  win.ROMPE_EL_ESTANCAMIENTO_ITEMS || []).map((i) => i.lichess).filter(Boolean));
+// Los diez volúmenes de «Mide tu fuerza» incluidos: se leen igual que en el generador.
+const otras = new Set(bancosAnteriores().map((i) => i.lichess).filter(Boolean));
 const vistas = new Set();
 ITEMS.forEach((it) => {
   const id = `posición ${it.n} (${it.id})`;

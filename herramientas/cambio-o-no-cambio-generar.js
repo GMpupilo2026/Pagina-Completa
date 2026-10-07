@@ -27,8 +27,8 @@
  *     herramientas/diagnostico-lichess.js), que solo deja las que tienen UNA
  *     jugada buena. Las de ataque además tienen que ganar (+3 o mate); las de
  *     defensa (defensiveMove) basta con que salven.
- *   - Ninguna repite una del diagnóstico, de «Ponte a prueba», de «Mide tu
- *     fuerza» ni de «Rompe el estancamiento».
+ *   - Ninguna repite una del diagnóstico, de «Ponte a prueba», de los diez
+ *     volúmenes de «Mide tu fuerza» ni de «Rompe el estancamiento».
  *   - Lo que la lección dice del CAMBIO se comprueba en la línea de la
  *     solución con chess.js, no se cree a la etiqueta (cambios()): «se cambian
  *     las damas» quiere decir que en la línea una dama se come a una dama y la
@@ -188,13 +188,25 @@ function exige(regla, c) {
 }
 
 /* ---------- leer las candidatas ---------- */
+/* Los bancos que ya tienen posiciones de Lichess. «Mide tu fuerza» son diez
+   volúmenes (material/mide-tu-fuerza, mide-tu-fuerza-2 … -10) y todos ponen
+   su lista en la misma variable: se juntan de a uno. */
+function bancosAnteriores() {
+  const archivos = [path.join("js", "diagnostico-items.js"), path.join("material", "ponte-a-prueba", "banco.js"),
+    path.join("material", "rompe-el-estancamiento", "banco.js")]
+    .concat(fs.readdirSync(path.join(RAIZ, "material")).filter((d) => /^mide-tu-fuerza(-\d+)?$/.test(d))
+      .map((d) => path.join("material", d, "banco.js")));
+  const items = [];
+  archivos.forEach((f) => {
+    const w = {};
+    new Function("window", fs.readFileSync(path.join(RAIZ, f), "utf8"))(w);
+    items.push(...[].concat(w.DIAGNOSTICO_ITEMS || [], w.LIBRO_EXAMEN_ITEMS || [], w.MIDE_TU_FUERZA_ITEMS || [],
+      w.ROMPE_EL_ESTANCAMIENTO_ITEMS || []));
+  });
+  return items;
+}
 function yaUsadas() {
-  const w = {};
-  [["js", "diagnostico-items.js"], ["material", "ponte-a-prueba", "banco.js"],
-    ["material", "mide-tu-fuerza", "banco.js"], ["material", "rompe-el-estancamiento", "banco.js"]]
-    .forEach((p) => new Function("window", fs.readFileSync(path.join(RAIZ, ...p), "utf8"))(w));
-  return new Set([].concat(w.DIAGNOSTICO_ITEMS || [], w.LIBRO_EXAMEN_ITEMS || [], w.MIDE_TU_FUERZA_ITEMS || [],
-    w.ROMPE_EL_ESTANCAMIENTO_ITEMS || []).map((i) => i.lichess).filter(Boolean));
+  return new Set(bancosAnteriores().map((i) => i.lichess).filter(Boolean));
 }
 
 function leerCandidatas() {
@@ -463,4 +475,4 @@ ${cuerpo}
 }
 
 if (require.main === module) main().catch((e) => { console.error(e.message); process.exit(1); });
-module.exports = { CAPITULOS, PISTA, DESCUENTO_LICHESS, cambios, exige };
+module.exports = { CAPITULOS, PISTA, DESCUENTO_LICHESS, cambios, exige, bancosAnteriores };

@@ -575,6 +575,15 @@ async function pruebaMateriales(browser) {
     ["material/ponte-a-prueba/ponte-a-prueba.pdf", "material/ponte-a-prueba/ponte-a-prueba-accesible.html",
      "material/ponte-a-prueba/versiones/claves-de-correccion.pdf", "material/ponte-a-prueba/ponte-a-prueba-versiones-accesible.html",
      "material/mide-tu-fuerza/mide-tu-fuerza.pdf", "material/mide-tu-fuerza/mide-tu-fuerza-accesible.html",
+     "material/mide-tu-fuerza-2/mide-tu-fuerza-2.pdf", "material/mide-tu-fuerza-2/mide-tu-fuerza-2-accesible.html",
+     "material/mide-tu-fuerza-3/mide-tu-fuerza-3.pdf", "material/mide-tu-fuerza-3/mide-tu-fuerza-3-accesible.html",
+     "material/mide-tu-fuerza-4/mide-tu-fuerza-4.pdf", "material/mide-tu-fuerza-4/mide-tu-fuerza-4-accesible.html",
+     "material/mide-tu-fuerza-5/mide-tu-fuerza-5.pdf", "material/mide-tu-fuerza-5/mide-tu-fuerza-5-accesible.html",
+     "material/mide-tu-fuerza-6/mide-tu-fuerza-6.pdf", "material/mide-tu-fuerza-6/mide-tu-fuerza-6-accesible.html",
+     "material/mide-tu-fuerza-7/mide-tu-fuerza-7.pdf", "material/mide-tu-fuerza-7/mide-tu-fuerza-7-accesible.html",
+     "material/mide-tu-fuerza-8/mide-tu-fuerza-8.pdf", "material/mide-tu-fuerza-8/mide-tu-fuerza-8-accesible.html",
+     "material/mide-tu-fuerza-9/mide-tu-fuerza-9.pdf", "material/mide-tu-fuerza-9/mide-tu-fuerza-9-accesible.html",
+     "material/mide-tu-fuerza-10/mide-tu-fuerza-10.pdf", "material/mide-tu-fuerza-10/mide-tu-fuerza-10-accesible.html",
      "material/rompe-el-estancamiento/rompe-el-estancamiento.pdf", "material/rompe-el-estancamiento/rompe-el-estancamiento-accesible.html",
      "material/cambio-o-no-cambio/cambio-o-no-cambio.pdf", "material/cambio-o-no-cambio/cambio-o-no-cambio-accesible.html",
      "material/peonita/peonita.pdf", "material/peonita/peonita-accesible.html",
@@ -582,10 +591,11 @@ async function pruebaMateriales(browser) {
   // El banco de ejercicios no tiene pruebas como cuestionario: solo se
   // comparte. Antes de separarlo, cualquier material sin pruebas pintaba
   // igual el título y «todavía no están en la base».
-  igual("el banco de ejercicios se comparte y no tiene sección de pruebas", await page.evaluate(() => {
-    const art = document.querySelector("#mat-lista article[aria-labelledby='mat-titulo-mide-tu-fuerza']");
-    return [art.querySelectorAll(":scope > section").length, /como cuestionario/.test(art.textContent), !!art.querySelector("#mat-mide-tu-fuerza-buscar")];
-  }), [1, false, true]);
+  igual("cada volumen del banco de ejercicios se comparte aparte y no tiene sección de pruebas", await page.evaluate(() =>
+    ["mide-tu-fuerza", "mide-tu-fuerza-2", "mide-tu-fuerza-3", "mide-tu-fuerza-4", "mide-tu-fuerza-5", "mide-tu-fuerza-6", "mide-tu-fuerza-7", "mide-tu-fuerza-8", "mide-tu-fuerza-9", "mide-tu-fuerza-10"].map((p) => {
+      const art = document.querySelector("#mat-lista article[aria-labelledby='mat-titulo-" + p + "']");
+      return [art.querySelectorAll(":scope > section").length, /como cuestionario/.test(art.textContent), !!art.querySelector("#mat-" + p + "-buscar")];
+    })), Array(10).fill([1, false, true]));
   igual("el cuento de Peonita tampoco", await page.evaluate(() => {
     const art = document.querySelector("#mat-lista article[aria-labelledby='mat-titulo-peonita']");
     return [art.querySelectorAll(":scope > section").length, /como cuestionario/.test(art.textContent), !!art.querySelector("#mat-peonita-buscar")];
