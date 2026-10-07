@@ -1,4 +1,4 @@
-/* Comprueba el curso «Las mil y una lecciones de ajedrez» y su libro en doce
+/* Comprueba el curso «Una clase al día» y su libro en doce
  * tomos (sin navegador).
  *
  * Lo que se rompe acá no da ningún error en pantalla: una partida con una
@@ -28,7 +28,7 @@ const path = require("path");
 const { Chess } = require("chess.js");
 
 const RAIZ = path.join(__dirname, "..");
-const SLUG = "las-mil-y-una-lecciones-de-ajedrez";
+const SLUG = "una-clase-al-dia";
 const DATOS = path.join(RAIZ, "cursos/protegido/data");
 const RECURSOS = path.join(RAIZ, "cursos/recursos", SLUG);
 let fallos = 0;

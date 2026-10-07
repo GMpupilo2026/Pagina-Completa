@@ -108,9 +108,9 @@ const PATRONES = [
     return "Portada: " + (c ? c.titulo : nombreDelArchivo(m[1]));
   }],
   [/^img\/guia\/([a-z0-9-]+)\.[a-z]+$/, (m) => "Captura: " + nombreDelArchivo(m[1])],
-  // Los doce tomos del libro «Las mil y una lecciones», uno por bloque del curso.
-  [/^cursos\/recursos\/las-mil-y-una-lecciones-de-ajedrez\/tomo-(\d+)\.pdf$/, (m) => {
-    const b = JSON.parse(fs.readFileSync(path.join(RAIZ, "cursos/protegido/data/las-mil-y-una-lecciones-de-ajedrez.json"), "utf8"))
+  // Los doce tomos del libro «Una clase al día», uno por bloque del curso.
+  [/^cursos\/recursos\/una-clase-al-dia\/tomo-(\d+)\.pdf$/, (m) => {
+    const b = JSON.parse(fs.readFileSync(path.join(RAIZ, "cursos/protegido/data/una-clase-al-dia.json"), "utf8"))
       .curso.bloques.find((x) => x.n === Number(m[1]));
     return `Tomo ${Number(m[1])} del libro${b ? ": " + b.titulo : ""}`;
   }],

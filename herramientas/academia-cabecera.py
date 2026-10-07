@@ -88,7 +88,7 @@ PAGINAS = [
     "cursos/academia/formacion-ajedrez.html",
     "cursos/academia/fundamentos-del-ajedrez.html",
     "cursos/academia/index.html",
-    "cursos/academia/las-mil-y-una-lecciones-de-ajedrez.html",
+    "cursos/academia/una-clase-al-dia.html",
     "cursos/academia/partidas-modelo.html",
     "cursos/academia/preparacion-para-torneos.html",
     "cursos/academia/rompe-el-estancamiento.html",

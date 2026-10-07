@@ -1041,9 +1041,10 @@ quede distinta.
   diecisiete veces, donde el que se olvidara quedaría con un botón que no lleva
   a ninguna parte.
 
-### Un material con su propio precio: «Las mil y una lecciones»
+### Un material con su propio precio: «Una clase al día»
 
-El dueño pidió poner en la tienda «Las mil y una lecciones de ajedrez» y
+El dueño pidió poner en la tienda «Una clase al día» (entonces «Las mil y una
+lecciones de ajedrez») y
 calcularle el precio. A ₡5.000 habría valido lo mismo que un curso de diez
 lecciones, y son 360. El precio **no se puso a ojo: sale de las dos reglas que
 la tienda ya tenía**. Son doce bloques, cada uno del tamaño de un curso grande

@@ -43,7 +43,7 @@ window.TiendaCatalogo = (function () {
   const PRECIO = 5000;
   const MONEDA = "₡";
   /* Un producto puede traer su propio `precio` cuando no es «un material» del
-     tamaño de los demás. Hoy uno solo: «Las mil y una lecciones», que son 360
+     tamaño de los demás. Hoy uno solo: «Una clase al día», que son 360
      lecciones —lo de doce cursos juntos— y su libro en doce tomos (ver su
      ficha, abajo). Sin `precio`, vale PRECIO. */
 
@@ -210,15 +210,15 @@ window.TiendaCatalogo = (function () {
        ₡60.000; con el descuento de llevarse muchos juntos (DESCUENTO_PACK),
        ₡36.000. Son ₡100 por lección, contra unos ₡290 de los demás cursos. */
     {
-      id: "las-mil-y-una-lecciones-de-ajedrez",
+      id: "una-clase-al-dia",
       categoria: "curso",
       emoji: "📚",
-      titulo: "Las mil y una lecciones de ajedrez",
+      titulo: "Una clase al día",
       nivel: "Avanzado",
       precio: Math.round((12 * PRECIO * (1 - DESCUENTO_PACK)) / 1000) * 1000,
-      gancho: "Un año entero de clases de un maestro internacional, ordenado por tema y listo para el tablero.",
-      resumen: "Las 360 clases del MI Ángel Martín (EDAMI), publicadas con permiso: el ataque al rey, las estructuras de peones, las piezas, el juego posicional, los sacrificios y los finales, con casi dos mil partidas comentadas jugada a jugada. Doce bloques, cada uno con su tomo del libro en PDF y en versión accesible.",
-      carpeta: "cursos/recursos/las-mil-y-una-lecciones-de-ajedrez",
+      gancho: "Una clase por día, un año entero: el hábito que te hace subir de nivel sin darte cuenta.",
+      resumen: "360 clases para estudiar una por día, ordenadas por tema: el ataque al rey, las estructuras de peones, las piezas, el juego posicional, los sacrificios y los finales, con casi dos mil partidas comentadas jugada a jugada. Doce bloques, cada uno con su tomo del libro en PDF y en versión accesible.",
+      carpeta: "cursos/recursos/una-clase-al-dia",
       piezas: { tomos: 12, tomosAccesibles: 12 },
     },
 
@@ -327,7 +327,7 @@ window.TiendaCatalogo = (function () {
       titulo: "Comprensión, criterio y partidas modelo",
       promesa: "Construye hábitos de pensamiento en tus jugadores",
       detalle: "Cómo se juzga una posición cuando el material no está igual, y partidas donde eso se ve pasar.",
-      productos: ["partidas-modelo", "desequilibrios-de-material", "las-mil-y-una-lecciones-de-ajedrez"],
+      productos: ["partidas-modelo", "desequilibrios-de-material", "una-clase-al-dia"],
     },
     {
       numero: 5,

@@ -175,6 +175,8 @@ export const TITULOS_CURSOS: Record<string, string> = {
   "el-mapa-de-los-finales": "El mapa de los finales",
   "estrategia-en-el-final": "Estrategia en el final",
   "desequilibrios-de-material": "Desequilibrios de material",
+  // Lleva tilde: desde el slug saldría «Una clase al dia».
+  "una-clase-al-dia": "Una clase al día",
   "preparacion-para-torneos": "Preparación para Torneos",
   "formacion-ajedrez": "Formación Ajedrez",
   "arbitro-nacional": "Árbitro Nacional",

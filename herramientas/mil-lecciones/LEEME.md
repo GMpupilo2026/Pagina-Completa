@@ -1,15 +1,15 @@
 # Cómo se leyó «Las Mil y una Lecciones de Ajedrez»
 
 Estos programas convierten el PDF del libro del MI Ángel Martín (EDAMI, 2011;
-2170 páginas, 360 clases) en los datos del curso «Las mil y una lecciones de
+2170 páginas, 360 clases) en los datos del curso «Una clase al día de
 ajedrez». **El PDF no está en el repositorio**: es del dueño, que tiene permiso
 para publicarlo. Los datos que salen de aquí sí, y son la única copia:
-`cursos/protegido/data/las-mil-y-una-lecciones-de-ajedrez.json` y
-`cursos/protegido/data/las-mil-y-una-lecciones-de-ajedrez/lNNN.json`. El libro en doce tomos
+`cursos/protegido/data/una-clase-al-dia.json` y
+`cursos/protegido/data/una-clase-al-dia/lNNN.json`. El libro en doce tomos
 (`herramientas/mil-lecciones-pdf.js`) sale de esos datos, no del PDF.
 
 El porqué de cada decisión está en `docs/decisiones/cursos-y-material.md`,
-sección «El curso y el libro «Las mil y una lecciones de ajedrez»».
+sección «El curso y el libro «Una clase al día»».
 
 Hace falta `pip install pymupdf chess==1.10.0 numpy pillow` y Stockfish 16 en
 `/usr/games/stockfish`. Todo se corre desde una carpeta de trabajo **fuera del

@@ -1878,7 +1878,17 @@ está en `admin.html#materiales` y en «Archivos». No está en la tienda, por l
 mismo que «Rompe el estancamiento»; y el correo a la casa lo nombra desde el
 slug sin tocar la Edge Function.
 
-## El curso y el libro «Las mil y una lecciones de ajedrez»
+## El curso y el libro «Una clase al día»
+
+Se publicó primero como «Las mil y una lecciones de ajedrez», el título del
+libro original, y el dueño pidió **un nombre propio de la Academia, sin el del
+autor, que invite a estudiar**: «Una clase al día» (360 clases, un año con una
+por día). El nombre, las descripciones, la tienda y la portada de los tomos
+hablan del hábito; **el crédito no se quitó**: el autor y el libro original
+siguen al pie del temario público y de las lecciones, en «Sobre este libro», en la última página y el pie de cada tomo, y en
+los datos del PDF (`verificar-mil-lecciones-pdf.py` lo exige). Publicar el
+texto de alguien con permiso no es hacerlo pasar por propio. Los programas
+siguen llamándose `mil-lecciones` porque leen ese libro.
 
 Las 360 clases que el MI Ángel Martín escribió para la escuela EDAMI entre 2000
 y 2007, reunidas en «Las Mil y una Lecciones de Ajedrez» (EDAMI, 2011; un PDF
@@ -1934,9 +1944,9 @@ del curso, y esos sí son la única copia: el libro se arma de ellos, no del PDF
 ### Un curso que no cabe en un archivo
 
 `js/curso-partidas.js` bajaba un solo JSON con todas las partidas del curso.
-Este pesa 29 MB. Ahora `cursos/protegido/data/las-mil-y-una-lecciones-de-ajedrez.json` es un
+Este pesa 29 MB. Ahora `cursos/protegido/data/una-clase-al-dia.json` es un
 índice de 76 KB con `trozos` —de qué archivo sale cada partida o ejercicio— y
-el visor baja `data/las-mil-y-una-lecciones-de-ajedrez/lNNN.json` recién cuando se abre esa
+el visor baja `data/una-clase-al-dia/lNNN.json` recién cuando se abre esa
 lección (`cargarTrozos`). Los cursos de un solo archivo siguen igual: sin
 `trozos`, no cambia nada. El worker protege esa carpeta como el resto de
 `protegido/data/`: su expresión ya toma el primer nombre después de `data/`
@@ -1947,7 +1957,7 @@ comprimida: es la que monta `curso-academia.js` de una vez.
 
 ### El libro, en doce tomos
 
-`herramientas/mil-lecciones-pdf.js` arma `cursos/recursos/las-mil-y-una-lecciones-de-ajedrez/tomo-NN.pdf`
+`herramientas/mil-lecciones-pdf.js` arma `cursos/recursos/una-clase-al-dia/tomo-NN.pdf`
 y `tomo-NN-accesible.html`: un tomo por bloque, porque un solo PDF pasaría de
 2000 páginas y el tomo es lo que se lleva a la clase. Van en `cursos/recursos/`
 y no en `material/` **a propósito**: son el material del curso, y los baja quien
@@ -1980,15 +1990,16 @@ entrenamiento del área de estrategia, en «Archivos» y en
 (`20261007110911_curso_mil_y_una_lecciones.sql` y
 `20261007114143_curso_las_mil_y_una_lecciones_slug.sql`).
 
-- **El slug es largo a propósito**: `las-mil-y-una-lecciones-de-ajedrez`. El
-  correo a la casa (`informes-encargados`) nombra un curso que no está en su
-  `TITULOS_CURSOS` desde el slug, y este da justo el título del catálogo; con
-  `mil-y-una-lecciones` decía «Mil y una lecciones» y
-  `verificar-tiempo-secciones.js` lo atrapó. Cambiar el slug evitó redesplegar
-  la función solo para escribir el nombre.
+- **El slug sigue al nombre**: `una-clase-al-dia` (antes
+  `mil-y-una-lecciones` y `las-mil-y-una-lecciones-de-ajedrez`, con una
+  migración `update … set slug` cada vez, que `verificar-certificados.js` lee).
+  El correo a la casa (`informes-encargados`) nombra desde el slug un curso que
+  no está en su `TITULOS_CURSOS`, y desde este saldría «Una clase al dia», sin
+  tilde: por eso va en la tabla y la función se volvió a desplegar
+  (`verificar-tiempo-secciones.js` lo atrapa).
 - **En la tienda vale ₡36.000**: el precio de doce materiales (sus doce
   bloques) con el descuento del paquete. Ver «Un material con su propio
-  precio: «Las mil y una lecciones»» en `cobros-acceso-y-tienda.md`.
+  precio: «Una clase al día»» en `cobros-acceso-y-tienda.md`.
 
 ## Los materiales de clase
 

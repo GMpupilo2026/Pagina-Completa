@@ -1,5 +1,5 @@
-"""Comprueba los doce tomos del libro «Las mil y una lecciones de ajedrez»:
-cursos/recursos/las-mil-y-una-lecciones-de-ajedrez/tomo-NN.pdf.
+"""Comprueba los doce tomos del libro «Una clase al día»:
+cursos/recursos/una-clase-al-dia/tomo-NN.pdf.
 
 Lo que se rompe acá no da error en pantalla. Un PDF sin proteger se baja igual;
 una marca de agua que solo se estampa en la primera página se ve perfecta hasta
@@ -22,7 +22,7 @@ import os
 import sys
 
 RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-SLUG = "las-mil-y-una-lecciones-de-ajedrez"
+SLUG = "una-clase-al-dia"
 AUTOR = "Ángel Martín"
 INDICE = json.load(open(os.path.join(RAIZ, "cursos", "protegido", "data", SLUG + ".json"), encoding="utf-8"))
 

@@ -1,12 +1,12 @@
-/* ===== El libro «Las mil y una lecciones de ajedrez», en doce tomos =====
+/* ===== El libro «Una clase al día», en doce tomos =====
  *
- * Arma cursos/recursos/las-mil-y-una-lecciones-de-ajedrez/tomo-NN.pdf (uno por bloque del curso) y su
+ * Arma cursos/recursos/una-clase-al-dia/tomo-NN.pdf (uno por bloque del curso) y su
  * versión accesible tomo-NN-accesible.html: las 360 clases del MI Ángel Martín
  * («Las Mil y una Lecciones de Ajedrez», EDAMI, 2011), publicadas con permiso,
  * en el mismo orden por tema que el curso.
  *
  * No decide nada de ajedrez: todo sale de los datos del curso
- * (cursos/protegido/data/las-mil-y-una-lecciones-de-ajedrez/lNNN.json), que son la única
+ * (cursos/protegido/data/una-clase-al-dia/lNNN.json), que son la única
  * copia. Las partidas se comprobaron jugada a jugada al leerlas del libro
  * original (herramientas/mil-lecciones/) y aquí se vuelven a jugar enteras con
  * chess.js antes de imprimir: un tomo con una jugada imposible se imprime igual.
@@ -37,13 +37,13 @@ const { describir } = require("./lib/describir-fen.js");
 const N = require("./lib/notacion.js");
 const { unir, proteger } = require("./lib/pdf-armar.js");
 
-const SLUG = "las-mil-y-una-lecciones-de-ajedrez";
+const SLUG = "una-clase-al-dia";
 const DATOS = path.join(RAIZ, "cursos", "protegido", "data");
 const INDICE = JSON.parse(fs.readFileSync(path.join(DATOS, SLUG + ".json"), "utf8"));
 // En cursos/recursos/ y no en material/: el tomo es el material del curso y lo
 // baja quien tiene el curso (ver «El candado de los cursos está en el servidor»).
 const CARPETA = path.join(RAIZ, "cursos", "recursos", SLUG);
-const TITULO = "Las mil y una lecciones de ajedrez";
+const TITULO = "Una clase al día";
 const AUTOR = "MI Ángel Martín";
 const EDICION = "Oscar Angulo Cubero";
 const CLAVE_PROPIETARIO = "mil-lecciones-oac-2026";
@@ -210,7 +210,8 @@ function cuerpo(b, ds) {
   return `<!doctype html><html lang="es"><head><meta charset="utf-8"><title>${esc(TITULO)} · Tomo ${b.n}</title><style>${CSS}</style></head><body>
 <div>
   <h2 class="titulo">Sobre este libro</h2>
-  <p>Este es el tomo ${b.n} de <strong>${esc(TITULO)}</strong>: las 360 clases que el maestro internacional
+  <p>Este es el tomo ${b.n} de <strong>${esc(TITULO)}</strong>, un libro pensado para leerse de a poco: una
+  clase por día y, al cabo de un año, todo el ajedrez recorrido. Son las 360 clases que el maestro internacional
   ${esc(AUTOR)} escribió para la escuela de ajedrez EDAMI entre 2000 y 2007, reunidas en «Las Mil y una Lecciones de
   Ajedrez» (EDAMI, 2011) y publicadas aquí con permiso. El texto y los comentarios son los suyos; la Academia Ajedrez
   Integral las ordenó por tema en doce bloques, que son los doce tomos, y las convirtió en un curso donde cada partida
@@ -281,8 +282,8 @@ function tapa(b, ds) {
   <div class="hoja">
     <p class="marca-casa">&#9822; Ajedrez Integral</p>
     <div class="centro">
-      <p class="eyebrow">360 clases ordenadas por tema</p>
-      <h1>Las mil y una<span class="segunda">lecciones de ajedrez</span></h1>
+      <p class="eyebrow">360 clases · una para cada día</p>
+      <h1>Una clase<span class="segunda">al día</span></h1>
       <div class="filete"></div>
       <p class="tomo">Tomo ${b.n} de 12</p>
       <p class="bloque">${esc(b.titulo)}</p>
@@ -294,10 +295,10 @@ function tapa(b, ds) {
       </div>
     </div>
     <div class="pie-tapa">
-      <p class="autor">${esc(AUTOR)}</p>
+      <p class="autor">Un poco cada día llega lejos</p>
       <p class="autor-rol">Edición por temas: ${esc(EDICION)} · Academia Ajedrez Integral</p>
       <img class="logo" src="${LOGO_CREMA}" alt="Oscar Angulo Cubero · Profesional de Ajedrez">
-      <div class="editorial"><span>«Las Mil y una Lecciones de Ajedrez», EDAMI, 2011 · publicado con permiso</span><span>${ANIO}</span></div>
+      <div class="editorial"><span>Texto: ${esc(AUTOR)}, «Las Mil y una Lecciones de Ajedrez», EDAMI, 2011 · publicado con permiso</span><span>${ANIO}</span></div>
     </div>
   </div>
 </body></html>`;
@@ -457,7 +458,7 @@ if (soloAccesible) process.exit(0);
     proteger(destino, {
       clave: CLAVE_PROPIETARIO, autor: AUTOR, imprimir: true,
       titulo: `${TITULO} - Tomo ${t.b.n}: ${t.b.titulo}`,
-      asunto: "Las 360 clases del MI Angel Martin (EDAMI) ordenadas por tema, con sus partidas comentadas",
+      asunto: "360 clases de ajedrez ordenadas por tema, una para cada día, con sus partidas comentadas",
     });
     console.log("PDF listo:", destino);
   }

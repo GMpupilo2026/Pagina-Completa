@@ -1,0 +1,1 @@
+update interno.curso_lecciones set slug = 'una-clase-al-dia' where slug = 'las-mil-y-una-lecciones-de-ajedrez';

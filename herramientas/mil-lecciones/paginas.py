@@ -1,13 +1,13 @@
-# Escribe la portada pública (cursos/las-mil-y-una-lecciones-de-ajedrez.html, con el temario)
-# y la página del curso en la Academia (cursos/academia/las-mil-y-una-lecciones-de-ajedrez.html),
+# Escribe la portada pública (cursos/una-clase-al-dia.html, con el temario)
+# y la página del curso en la Academia (cursos/academia/una-clase-al-dia.html),
 # clonando las de «Partidas modelo» para que sean el mismo sitio.
 import sys, json, os, html, re
 RAIZ = sys.argv[1]
-SLUG = 'las-mil-y-una-lecciones-de-ajedrez'
-TITULO = 'Las mil y una lecciones de ajedrez'
+SLUG = 'una-clase-al-dia'
+TITULO = 'Una clase al día'
 NIVEL = 'Avanzado'
 EMOJI = '📖'
-DESC = ('Las 360 clases del MI Ángel Martín ordenadas por tema: el ataque al rey, las estructuras de peones, las piezas, '
+DESC = ('360 clases para mejorar un poco cada día, por tema: el ataque al rey, las estructuras de peones, las piezas, '
         'el juego posicional, los sacrificios y los finales. Casi dos mil partidas comentadas jugada a jugada, con '
         'ejercicios y práctica contra el motor.')
 IDX = json.load(open(os.path.join(RAIZ, 'cursos/protegido/data', SLUG + '.json')))

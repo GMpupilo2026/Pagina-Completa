@@ -76,7 +76,7 @@ const TERMINACION = {
   accesibles: "-material-accesible.html",
   ejercicios: "-ejercicios.pdf",
   presentaciones: ".pptx",
-  // «Las mil y una lecciones» no trae cuadernillos por lección: trae su libro
+  // «Una clase al día» no trae cuadernillos por lección: trae su libro
   // en doce tomos, uno por bloque, cada uno en PDF y accesible.
   tomos: /^tomo-\d+\.pdf$/,
   tomosAccesibles: /^tomo-\d+-accesible\.html$/,
@@ -156,10 +156,10 @@ function pruebaCatalogo() {
 
   // -------- las cuentas no se contradicen
   igual("el precio de cada material", T.PRECIO, 5000);
-  /* El precio propio de «Las mil y una lecciones» no está escrito: son doce
+  /* El precio propio de «Una clase al día» no está escrito: son doce
      materiales (sus doce bloques) con el descuento del paquete. */
-  igual("«Las mil y una lecciones» vale doce materiales con el descuento del paquete",
-    T.precioDe(T.producto("las-mil-y-una-lecciones-de-ajedrez")),
+  igual("«Una clase al día» vale doce materiales con el descuento del paquete",
+    T.precioDe(T.producto("una-clase-al-dia")),
     Math.round((12 * T.PRECIO * (1 - T.DESCUENTO_PACK)) / 1000) * 1000);
   igual("y el suelto suma el precio de cada uno, no «cuántos × PRECIO»",
     T.precioSuelto(), T.PRODUCTOS.reduce((a, p) => a + T.precioDe(p), 0));
@@ -338,7 +338,7 @@ async function pruebaAdmin(browser) {
     await page.evaluate(() => document.querySelectorAll("#productos article").length), T.PRODUCTOS.length);
   const precios = await page.evaluate(() => [...document.querySelectorAll("#productos article")].map((a) => a.querySelector("p.font-serif").textContent));
   /* Cada ficha con SU precio: casi todas a PRECIO, y la que trae el suyo
-     («Las mil y una lecciones») con el de ella. Un precio de ficha distinto
+     («Una clase al día») con el de ella. Un precio de ficha distinto
      del que se cobra en el mensaje es lo que descubre quien ya pagó. */
   igual("cada ficha con el precio del catálogo",
     precios, T.PRODUCTOS.map((p) => T.moneda(T.precioDe(p))));

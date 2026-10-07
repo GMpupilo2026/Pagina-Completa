@@ -7291,8 +7291,8 @@
     "otros": []
    },
    {
-    "slug": "las-mil-y-una-lecciones-de-ajedrez",
-    "titulo": "Las mil y una lecciones de ajedrez",
+    "slug": "una-clase-al-dia",
+    "titulo": "Una clase al día",
     "nivel": "avanzado",
     "lecciones": [
      {
@@ -7300,10 +7300,10 @@
       "titulo": "El Desarrollo",
       "archivos": [
        {
-        "ruta": "cursos/recursos/las-mil-y-una-lecciones-de-ajedrez/tomo-01.pdf",
+        "ruta": "cursos/recursos/una-clase-al-dia/tomo-01.pdf",
         "titulo": "Tomo 1 del libro: De la apertura al medio juego",
         "tipo": "otro",
-        "kb": 1961
+        "kb": 1958
        }
       ]
      },
@@ -7312,10 +7312,10 @@
       "titulo": "Ataque al rey sin enrocar (1). La ruptura central",
       "archivos": [
        {
-        "ruta": "cursos/recursos/las-mil-y-una-lecciones-de-ajedrez/tomo-02.pdf",
+        "ruta": "cursos/recursos/una-clase-al-dia/tomo-02.pdf",
         "titulo": "Tomo 2 del libro: El ataque al rey en el centro",
         "tipo": "otro",
-        "kb": 2038
+        "kb": 2034
        }
       ]
      },
@@ -7324,10 +7324,10 @@
       "titulo": "Ataque al enroque. El sacrificio Axh6",
       "archivos": [
        {
-        "ruta": "cursos/recursos/las-mil-y-una-lecciones-de-ajedrez/tomo-03.pdf",
+        "ruta": "cursos/recursos/una-clase-al-dia/tomo-03.pdf",
         "titulo": "Tomo 3 del libro: El ataque al enroque",
         "tipo": "otro",
-        "kb": 5315
+        "kb": 5306
        }
       ]
      },
@@ -7336,10 +7336,10 @@
       "titulo": "Ataques con enroques en flancos opuestos",
       "archivos": [
        {
-        "ruta": "cursos/recursos/las-mil-y-una-lecciones-de-ajedrez/tomo-04.pdf",
+        "ruta": "cursos/recursos/una-clase-al-dia/tomo-04.pdf",
         "titulo": "Tomo 4 del libro: Enroques en flancos opuestos",
         "tipo": "otro",
-        "kb": 1648
+        "kb": 1645
        }
       ]
      },
@@ -7348,10 +7348,10 @@
       "titulo": "El alfil malo (1)",
       "archivos": [
        {
-        "ruta": "cursos/recursos/las-mil-y-una-lecciones-de-ajedrez/tomo-05.pdf",
+        "ruta": "cursos/recursos/una-clase-al-dia/tomo-05.pdf",
         "titulo": "Tomo 5 del libro: Las piezas y su valor",
         "tipo": "otro",
-        "kb": 4348
+        "kb": 4340
        }
       ]
      },
@@ -7360,10 +7360,10 @@
       "titulo": "Los peones doblados",
       "archivos": [
        {
-        "ruta": "cursos/recursos/las-mil-y-una-lecciones-de-ajedrez/tomo-06.pdf",
+        "ruta": "cursos/recursos/una-clase-al-dia/tomo-06.pdf",
         "titulo": "Tomo 6 del libro: Las debilidades de peones",
         "tipo": "otro",
-        "kb": 3826
+        "kb": 3818
        }
       ]
      },
@@ -7372,10 +7372,10 @@
       "titulo": "El centro cerrado y el ataque por el flanco",
       "archivos": [
        {
-        "ruta": "cursos/recursos/las-mil-y-una-lecciones-de-ajedrez/tomo-07.pdf",
+        "ruta": "cursos/recursos/una-clase-al-dia/tomo-07.pdf",
         "titulo": "Tomo 7 del libro: Estructuras centrales y cadenas de peones",
         "tipo": "otro",
-        "kb": 3736
+        "kb": 3729
        }
       ]
      },
@@ -7384,10 +7384,10 @@
       "titulo": "El peón pasado",
       "archivos": [
        {
-        "ruta": "cursos/recursos/las-mil-y-una-lecciones-de-ajedrez/tomo-08.pdf",
+        "ruta": "cursos/recursos/una-clase-al-dia/tomo-08.pdf",
         "titulo": "Tomo 8 del libro: Peones pasados y mayorías",
         "tipo": "otro",
-        "kb": 2861
+        "kb": 2856
        }
       ]
      },
@@ -7396,10 +7396,10 @@
       "titulo": "Las columnas abiertas",
       "archivos": [
        {
-        "ruta": "cursos/recursos/las-mil-y-una-lecciones-de-ajedrez/tomo-09.pdf",
+        "ruta": "cursos/recursos/una-clase-al-dia/tomo-09.pdf",
         "titulo": "Tomo 9 del libro: El juego posicional",
         "tipo": "otro",
-        "kb": 5166
+        "kb": 5157
        }
       ]
      },
@@ -7408,10 +7408,10 @@
       "titulo": "El sacrificio posicional de la calidad (1)",
       "archivos": [
        {
-        "ruta": "cursos/recursos/las-mil-y-una-lecciones-de-ajedrez/tomo-10.pdf",
+        "ruta": "cursos/recursos/una-clase-al-dia/tomo-10.pdf",
         "titulo": "Tomo 10 del libro: Los sacrificios posicionales",
         "tipo": "otro",
-        "kb": 2420
+        "kb": 2416
        }
       ]
      },
@@ -7420,10 +7420,10 @@
       "titulo": "Torre contra alfil y caballo",
       "archivos": [
        {
-        "ruta": "cursos/recursos/las-mil-y-una-lecciones-de-ajedrez/tomo-11.pdf",
+        "ruta": "cursos/recursos/una-clase-al-dia/tomo-11.pdf",
         "titulo": "Tomo 11 del libro: Desequilibrios de material",
         "tipo": "otro",
-        "kb": 1292
+        "kb": 1289
        }
       ]
      },
@@ -7432,10 +7432,10 @@
       "titulo": "Finales de torre. 4 peones contra 3 en el mismo flanco",
       "archivos": [
        {
-        "ruta": "cursos/recursos/las-mil-y-una-lecciones-de-ajedrez/tomo-12.pdf",
+        "ruta": "cursos/recursos/una-clase-al-dia/tomo-12.pdf",
         "titulo": "Tomo 12 del libro: Los finales",
         "tipo": "otro",
-        "kb": 1973
+        "kb": 1969
        }
       ]
      }
@@ -18172,80 +18172,80 @@
     "otros": []
    },
    {
-    "slug": "las-mil-y-una-lecciones-de-ajedrez",
-    "titulo": "Las mil y una lecciones de ajedrez",
+    "slug": "una-clase-al-dia",
+    "titulo": "Una clase al día",
     "nivel": "avanzado",
     "lecciones": [],
     "otros": [
      {
-      "ruta": "cursos/recursos/las-mil-y-una-lecciones-de-ajedrez/tomo-01-accesible.html",
-      "titulo": "Las mil y una lecciones de ajedrez, tomo 1",
+      "ruta": "cursos/recursos/una-clase-al-dia/tomo-01-accesible.html",
+      "titulo": "Una clase al día, tomo 1",
       "tipo": "accesible",
       "kb": 481
      },
      {
-      "ruta": "cursos/recursos/las-mil-y-una-lecciones-de-ajedrez/tomo-02-accesible.html",
-      "titulo": "Las mil y una lecciones de ajedrez, tomo 2",
+      "ruta": "cursos/recursos/una-clase-al-dia/tomo-02-accesible.html",
+      "titulo": "Una clase al día, tomo 2",
       "tipo": "accesible",
-      "kb": 564
+      "kb": 563
      },
      {
-      "ruta": "cursos/recursos/las-mil-y-una-lecciones-de-ajedrez/tomo-03-accesible.html",
-      "titulo": "Las mil y una lecciones de ajedrez, tomo 3",
+      "ruta": "cursos/recursos/una-clase-al-dia/tomo-03-accesible.html",
+      "titulo": "Una clase al día, tomo 3",
       "tipo": "accesible",
       "kb": 1933
      },
      {
-      "ruta": "cursos/recursos/las-mil-y-una-lecciones-de-ajedrez/tomo-04-accesible.html",
-      "titulo": "Las mil y una lecciones de ajedrez, tomo 4",
+      "ruta": "cursos/recursos/una-clase-al-dia/tomo-04-accesible.html",
+      "titulo": "Una clase al día, tomo 4",
       "tipo": "accesible",
       "kb": 367
      },
      {
-      "ruta": "cursos/recursos/las-mil-y-una-lecciones-de-ajedrez/tomo-05-accesible.html",
-      "titulo": "Las mil y una lecciones de ajedrez, tomo 5",
+      "ruta": "cursos/recursos/una-clase-al-dia/tomo-05-accesible.html",
+      "titulo": "Una clase al día, tomo 5",
       "tipo": "accesible",
-      "kb": 1788
+      "kb": 1787
      },
      {
-      "ruta": "cursos/recursos/las-mil-y-una-lecciones-de-ajedrez/tomo-06-accesible.html",
-      "titulo": "Las mil y una lecciones de ajedrez, tomo 6",
+      "ruta": "cursos/recursos/una-clase-al-dia/tomo-06-accesible.html",
+      "titulo": "Una clase al día, tomo 6",
       "tipo": "accesible",
       "kb": 1461
      },
      {
-      "ruta": "cursos/recursos/las-mil-y-una-lecciones-de-ajedrez/tomo-07-accesible.html",
-      "titulo": "Las mil y una lecciones de ajedrez, tomo 7",
+      "ruta": "cursos/recursos/una-clase-al-dia/tomo-07-accesible.html",
+      "titulo": "Una clase al día, tomo 7",
       "tipo": "accesible",
       "kb": 1275
      },
      {
-      "ruta": "cursos/recursos/las-mil-y-una-lecciones-de-ajedrez/tomo-08-accesible.html",
-      "titulo": "Las mil y una lecciones de ajedrez, tomo 8",
+      "ruta": "cursos/recursos/una-clase-al-dia/tomo-08-accesible.html",
+      "titulo": "Una clase al día, tomo 8",
       "tipo": "accesible",
       "kb": 994
      },
      {
-      "ruta": "cursos/recursos/las-mil-y-una-lecciones-de-ajedrez/tomo-09-accesible.html",
-      "titulo": "Las mil y una lecciones de ajedrez, tomo 9",
+      "ruta": "cursos/recursos/una-clase-al-dia/tomo-09-accesible.html",
+      "titulo": "Una clase al día, tomo 9",
       "tipo": "accesible",
       "kb": 2026
      },
      {
-      "ruta": "cursos/recursos/las-mil-y-una-lecciones-de-ajedrez/tomo-10-accesible.html",
-      "titulo": "Las mil y una lecciones de ajedrez, tomo 10",
+      "ruta": "cursos/recursos/una-clase-al-dia/tomo-10-accesible.html",
+      "titulo": "Una clase al día, tomo 10",
       "tipo": "accesible",
       "kb": 694
      },
      {
-      "ruta": "cursos/recursos/las-mil-y-una-lecciones-de-ajedrez/tomo-11-accesible.html",
-      "titulo": "Las mil y una lecciones de ajedrez, tomo 11",
+      "ruta": "cursos/recursos/una-clase-al-dia/tomo-11-accesible.html",
+      "titulo": "Una clase al día, tomo 11",
       "tipo": "accesible",
       "kb": 231
      },
      {
-      "ruta": "cursos/recursos/las-mil-y-una-lecciones-de-ajedrez/tomo-12-accesible.html",
-      "titulo": "Las mil y una lecciones de ajedrez, tomo 12",
+      "ruta": "cursos/recursos/una-clase-al-dia/tomo-12-accesible.html",
+      "titulo": "Una clase al día, tomo 12",
       "tipo": "accesible",
       "kb": 682
      }
@@ -21954,12 +21954,6 @@
       "kb": 14
      },
      {
-      "ruta": "img/cursos/las-mil-y-una-lecciones-de-ajedrez.svg",
-      "titulo": "Portada: Las mil y una lecciones de ajedrez",
-      "tipo": "otro",
-      "kb": 14
-     },
-     {
       "ruta": "img/cursos/los-cimientos-del-ajedrez.svg",
       "titulo": "Portada: Los cimientos del ajedrez",
       "tipo": "otro",
@@ -21982,6 +21976,12 @@
       "titulo": "Portada: Rompe el estancamiento",
       "tipo": "otro",
       "kb": 8
+     },
+     {
+      "ruta": "img/cursos/una-clase-al-dia.svg",
+      "titulo": "Portada: Una clase al día",
+      "tipo": "otro",
+      "kb": 14
      }
     ]
    },
