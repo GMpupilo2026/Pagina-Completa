@@ -123,6 +123,7 @@ mamá papá bebé
 dará hará podrá dispondrá será tendrá tendrás vendrá verá verás sabrás habrá saldrá
 pondrá querrá irá
 recibiré
+estrés poincaré
 """.split())
 
 # Las presentaciones (.pptx) y los documentos (.docx) de cursos/recursos/ son

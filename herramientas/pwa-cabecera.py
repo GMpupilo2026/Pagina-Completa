@@ -38,8 +38,8 @@ FIN = "<!-- app: fin -->"
 #   - libro-de-diagnostico-accesible.html, guia-del-profesor-accesible.html,
 #     fichas-de-estudio-accesible.html, ponte-a-prueba-accesible.html (y la
 #     de sus versiones para imprimir), mide-tu-fuerza-accesible.html,
-#     rompe-el-estancamiento-accesible.html, peonita-accesible.html y
-#     peonita-trucos-accesible.html son
+#     rompe-el-estancamiento-accesible.html, peonita-accesible.html,
+#     peonita-trucos-accesible.html y coachess-resumen-accesible.html son
 #     documentos que se descargan y se abren sueltos, hasta por correo y sin
 #     red: declarar un manifest que no va a poder cargar es peor que no
 #     declararlo. Esta lista tiene que decir lo mismo que la de
@@ -56,7 +56,8 @@ FUERA = {"inscripcion.html", "offline.html", "formulario.html",
          "mide-tu-fuerza-accesible.html",
          "rompe-el-estancamiento-accesible.html",
          "peonita-accesible.html",
-         "peonita-trucos-accesible.html"}
+         "peonita-trucos-accesible.html",
+         "coachess-resumen-accesible.html"}
 CARPETAS_FUERA = ("cursos/recursos/", "cursos/protegido/", "material/", "herramientas/", "node_modules/")
 
 

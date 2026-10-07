@@ -23,8 +23,15 @@
     "nombre": "Formación docente"
    }
   ],
-  "total": 508,
+  "total": 509,
   "material": [
+   {
+    "ruta": "material/coachess-resumen/coachess-resumen.pdf",
+    "titulo": "Coachess en resumen — el ajedrez para tu desarrollo personal y profesional",
+    "tipo": "otro",
+    "kb": 913,
+    "libro": "Coachess en resumen"
+   },
    {
     "ruta": "material/diagnostico-de-nivel/diagnostico-de-nivel.pdf",
     "titulo": "Diagnóstico de nivel — la prueba",
@@ -7747,8 +7754,15 @@
     "nombre": "Formación docente"
    }
   ],
-  "total": 231,
+  "total": 232,
   "material": [
+   {
+    "ruta": "material/coachess-resumen/coachess-resumen-accesible.html",
+    "titulo": "Coachess en resumen",
+    "tipo": "accesible",
+    "kb": 62,
+    "libro": "Coachess en resumen"
+   },
    {
     "ruta": "material/fichas-de-estudio/fichas-de-estudio-accesible.html",
     "titulo": "Fichas de estudio",

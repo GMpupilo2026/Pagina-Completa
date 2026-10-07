@@ -1251,11 +1251,56 @@ en `admin.html#materiales` (se comparte como los otros dos) y en «Archivos».
   los cursos: comprueba el nombre que el correo **muestra** para cada curso del
   catálogo, y que lo que la tabla sí nombra coincida con el catálogo.
 
+## El libro «Coachess en resumen»
+
+El dueño pidió, desde una carpeta de su Drive («Desarrollo personal»), un
+resumen de lo más importante de *Coachess: inteligencia del ajedrez para tu
+desarrollo personal y profesional* (Daniel Muñoz Sánchez, 2022) y un libro con
+ese resumen. Quedó como material de clase, en
+`material/coachess-resumen/`: el PDF (30 páginas, se puede imprimir) y su
+versión accesible.
+
+### Un resumen atribuido, no una copia
+
+El original tiene derechos de autor y prohíbe reproducirlo. A diferencia de
+«Rompe el estancamiento» o «Mide tu fuerza», que tomaron solo la idea y
+llevan otro título, este libro **es** un resumen y lo dice: el autor del
+original va en la tapa, en el pie de cada página, en los datos del archivo, en
+la versión accesible y en «Sobre este resumen». Lo que no se toma es el texto:
+ningún párrafo está copiado, todo está escrito aparte y en tuteo, y las citas
+textuales se limitan a los epígrafes breves de jugadores y escritores.
+
+- **Los estudios van como el autor los cuenta**, sin volver a comprobarlos, y
+  el libro lo avisa en «Antes de empezar». Lo que el original dice de
+  suplementos y dosis no se pasó: se nombra el tema y se manda al médico.
+- **Las partidas se describen, no se dibujan.** Los ejemplos (Ivanchuk–Shirov
+  1996, Van Wely–Kamsky 1996, Aronian–Navara 2008…) van contados como en el
+  libro, sin diagrama: un diagrama sería una posición que habría que sacar de
+  la partida y comprobar, y el resumen no lo necesita.
+- No lleva el secreto para Alessandro: no es un cuento ni un libro infantil.
+
+### Cómo se regenera
+
+El texto vive en `herramientas/libros/coachess-resumen.js` (el mismo para el
+PDF y la versión accesible) y lo pone en papel:
+
+    node herramientas/coachess-resumen-pdf.js
+
+Se cierra como los otros libros (`herramientas/lib/pdf-armar.js`: tapa, marca
+de agua en cada página, PDF protegido). Lo revisa
+`verificar-coachess-resumen.py`: protección, quién resumió y de quién es el
+original (en los datos del archivo, en la tapa y en el texto), la marca de
+agua, los veinte capítulos y los veinte consejos en el PDF y en la versión
+accesible, y que esta no traiga imágenes ni scripts.
+
+Está en `admin.html#materiales` (se comparte como los demás) y en «Archivos».
+No está en la tienda: venderlo sería vender un resumen de un libro ajeno.
+
 ## Los materiales de clase
 
 `admin.html#materiales` («Materiales de clases») junta los materiales para dar
 clase —hoy, «Ponte a prueba», el banco de ejercicios «Mide tu fuerza», el libro
-«Rompe el estancamiento» y los cuentos de Peonita— y dice **con quién se comparte cada uno**: una
+«Rompe el estancamiento», los cuentos de Peonita y «Coachess en resumen»— y dice **con quién se comparte cada uno**: una
 persona, una academia entera o todos los profesores. Lo pinta
 `js/admin-materiales.js`; lo prueba `verificar-admin.js`.
 
