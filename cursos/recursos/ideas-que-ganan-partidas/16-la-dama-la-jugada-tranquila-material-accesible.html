@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>La dama: la jugada tranquila — ideas-que-ganan-partidas — material de estudio</title>
+<meta name="robots" content="noindex">
+<meta name="author" content="Oscar Angulo Cubero">
+<meta name="description" content="Material de estudio en formato accesible de la lección 16 del curso ideas-que-ganan-partidas.">
+<style>
+  /* Sin imágenes y sin columnas a propósito: esta versión está hecha para
+     lectores de pantalla y para quien necesita agrandar mucho el texto. */
+  body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+         font-size: 1.15rem; line-height: 1.8; color: #102a43; background: #ffffff;
+         max-width: 42rem; margin: 0 auto; padding: 1.5rem 1rem 4rem; }
+  h1 { font-size: 1.7rem; line-height: 1.3; }
+  h2 { font-size: 1.3rem; margin-top: 2.5rem; border-bottom: 2px solid #102a43; padding-bottom: .3rem; }
+  h3 { font-size: 1.1rem; margin-top: 1.8rem; }
+  a { color: #8a4a00; }
+  dt { font-weight: 700; margin-top: 1rem; }
+  dd { margin: .3rem 0 0; }
+  .posicion { border: 2px solid #243b53; border-radius: .5rem; padding: 1rem; margin: 1rem 0; }
+  .respuesta { background: #f0f4f8; border-left: 4px solid #102a43; padding: .6rem .9rem; }
+  footer { margin-top: 3rem; border-top: 2px solid #102a43; padding-top: 1rem; font-size: .95rem; }
+  /* La vuelta a la plataforma. Este archivo se abre solo, en su propia
+     pestaña: sin estos enlaces no hay forma de regresar al curso salvo el
+     botón "atrás" del navegador, que con lector de pantalla no siempre está
+     a mano. Van arriba y abajo: el documento es largo y quien termina de
+     leerlo no tendría que subir de nuevo para salir. */
+  .volver { margin: 0 0 1.5rem; font-size: 1rem; }
+  footer .volver { margin: 1rem 0 0; }
+  .volver a { display: inline-block; padding: .2rem 0; }
+  @media (prefers-color-scheme: dark) {
+    body { background: #0a1f33; color: #f0f4f8; }
+    h2, footer { border-color: #f0b429; }
+    a { color: #f0b429; }
+    .posicion { border-color: #829ab1; }
+    .respuesta { background: #102a43; border-color: #f0b429; }
+  }
+</style>
+</head>
+<body>
+<nav class="volver" aria-label="Volver a la plataforma">
+  <a href="../../academia/ideas-que-ganan-partidas.html">← Volver al curso ideas-que-ganan-partidas</a>
+  ·
+  <a href="../../../clases.html">Panel de Academia</a>
+</nav>
+<header>
+  <p>ideas-que-ganan-partidas · Lección 16</p>
+  <h1>La dama: la jugada tranquila</h1>
+  <p>Material de estudio en formato accesible. Autor: Oscar Angulo Cubero, Ajedrez Integral.</p>
+  <p>Esta versión dice en palabras todo lo que en el cuadernillo en PDF está dibujado: cada
+     posición viene descrita pieza por pieza, así que no hace falta ver ninguna imagen.</p>
+</header>
+
+<h2>1. De qué trata esta lección</h2>
+
+<p>Como la dama es la pieza más fuerte, se tiende a usarla para dar jaques y capturar. Pero muchas de sus mejores jugadas son tranquilas: un movimiento sin jaque ni captura que la pone en una casilla desde donde amenaza dos cosas a la vez, o que se suma a un ataque que todavía no tiene suficiente fuerza.</p>
+<p>Estas jugadas cuestan de ver porque no obligan nada: el rival puede responder lo que quiera. Pero si la dama quedó amenazando dos cosas, ninguna respuesta las para a las dos. Buscarlas pide preguntarse, en cada posición, qué casillas de la dama atacan más de un objetivo.</p>
+<p>También vale lo contrario: una dama lejos del juego, cazando peones en un flanco, es una pieza menos en la defensa. Antes de mandarla lejos, mira cuánto tarda en volver.</p>
+
+
+<h2>2. Conceptos clave</h2>
+<dl>
+  <dt>La iniciativa</dt>
+  <dd>Tenerla es obligar: el rival contesta a lo que tú haces en vez de hacer lo suyo. No es material y no dura para siempre: o se convierte en algo o se pierde.</dd>
+  <dd><strong>El error de siempre:</strong> Soltarla por comer un peón. Perder dos tiempos por un peón devuelve el turno al rival justo cuando estaba obligado, y la ventaja se desarma.</dd>
+  <dd><strong>Para verlo:</strong> En un gambito aceptado, el que entregó el peón tiene iniciativa: cada jugada suya es una amenaza, y el rival no alcanza a desarrollar. Si la iniciativa se apaga, queda un peón menos y nada más.</dd>
+  <dt>La estructura de peones</dt>
+  <dd>Los peones son los únicos que no vuelven atrás, así que su forma decide el carácter de la partida: dónde están las casillas fuertes, por dónde se ataca y qué final conviene.</dd>
+  <dd><strong>El error de siempre:</strong> Cambiar piezas sin mirar qué estructura queda. Los cambios llevan al final, y el final lo gana quien tenga la mejor estructura, no quien tuviera mejores piezas hace diez jugadas.</dd>
+  <dd><strong>Para verlo:</strong> Una cadena de peones apunta en una dirección: e4-d5 apunta al flanco de rey. La regla es atacar la base de la cadena, no la punta, porque la base es la que sostiene todo.</dd>
+  <dt>Jaque, mate y ahogado</dt>
+  <dd>Jaque es atacar al rey; mate es atacarlo sin que tenga salida; ahogado es que NO esté atacado y aun así no tenga ninguna jugada legal, y eso son tablas.</dd>
+  <dd><strong>El error de siempre:</strong> Buscar el jaque en vez del mate. Dar jaques sueltos deja al rey rival mejor colocado y gasta tiempo. Y en finales ganados, empujar sin mirar: entregar el ahogado es la forma más cara de no ganar.</dd>
+  <dd><strong>Para verlo:</strong> Rey y dama contra rey solo: si el rey negro está en a8 y pones la dama en b6, no hay jaque, pero tampoco hay jugada legal. Es ahogado y la partida queda en tablas con dama de más.</dd>
+</dl>
+
+<h2>3. Ejemplos del curso</h2>
+<div class="posicion">
+  <h3>Posición 1: No hay jaque ni captura que sirva: la dama gana con una jugada tranquila. Juegan las negras; el rival acaba de jugar alfil eva 3.</h3>
+  
+  <p>Piezas blancas: rey en e1; dama en c5; torres en a1, h1; alfil en e3; caballo en b1; peones en a2, b2, c3, f4, g3, h2.</p>
+  <p>Piezas negras: rey en g8; dama en h3; torres en a8, f8; alfil en c6; peones en a7, b7, e4, e6, f7, g7, h7.</p>
+  <p>Juegan las negras.</p>
+  
+  <p>La línea, jugada por jugada: 17… dama gustav 2, 18. torre gustav 1, dama captura bella 2, 19. dama anna 3, dama captura anna 1</p>
+  <p>Resultado: Ganan negras</p>
+  <p>17… dama gustav 2, 18. torre gustav 1, dama captura bella 2, 19. dama anna 3, dama captura anna 1. Todo gira en torno a una clavada: la pieza clavada no puede defender. La dama se mueve sin dar jaque ni capturar, y aun así el rival no puede parar todo lo que amenaza. (Ejercicio 0DvcD de la base abierta de Lichess (CC0), rating 1616. Stockfish 16 a profundidad 18: dama gustav 2 es la mejor (+4,2) y la segunda queda en +0,4.)</p>
+  <p>Posición en notación FEN, por si la quieres cargar en un programa: r4rk1/pp3ppp/2b1p3/2Q5/4pP2/2P1B1Pq/PP5P/RN2K2R b KQ - 2 17</p>
+</div>
+
+<h2>4. Ejercicios</h2>
+<ol>
+  <li>Revisa una partida tuya y marca en cada jugada quién estaba obligando. Vas a ver el momento exacto en que se te escapó.</li>
+  <li>Juega tres partidas con el compromiso de no comer ningún peón lateral mientras tengas amenazas que hacer.</li>
+  <li>Dibuja la estructura de peones —solo los peones— de tus tres últimas partidas en la jugada 20 y di qué plan pedía cada una.</li>
+  <li>Arma en el tablero un peón aislado en d4 con las piezas de los dos bandos y juégalo desde los dos lados.</li>
+  <li>Da mate con rey y dama contra rey solo en menos de diez jugadas, empezando con el rey negro en el centro. Hazlo tres veces sin ahogarlo.</li>
+  <li>Arma tres posiciones de ahogado distintas y anótalas. Verlas te enseña a olerlas cuando vas ganando.</li>
+</ol>
+
+<h2>5. Preguntas con su respuesta</h2>
+<p>Contesta en voz alta antes de seguir leyendo: la respuesta viene justo después de cada pregunta.</p>
+<ol>
+  <li>
+    <p>¿Cómo se sabe si tienes la iniciativa?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Mira las últimas cinco jugadas del rival: si todas fueron respuestas a algo tuyo, la tienes.</p>
+  </li>
+  <li>
+    <p>¿Iniciativa es lo mismo que ataque?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> No. El ataque va contra el rey; la iniciativa es obligar al rival en cualquier parte del tablero. Un ataque casi siempre nace de una iniciativa que se mantuvo.</p>
+  </li>
+  <li>
+    <p>¿Cómo se defiende quien no la tiene?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Cambiando piezas, devolviendo material para desactivar amenazas y buscando un golpe en el centro. Defender pasivo y esperar rara vez funciona.</p>
+  </li>
+  <li>
+    <p>¿Por qué se dice que la iniciativa es del que mueve?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Porque mover primero es un derecho: las blancas empiezan con medio tiempo de ventaja y toda la teoría de aperturas es una discusión sobre si eso alcanza para algo.</p>
+  </li>
+  <li>
+    <p>¿Qué es un peón retrasado y por qué es débil?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> El que quedó atrás de sus vecinos y no puede avanzar sin perderse. Es débil porque hay que defenderlo con piezas y la casilla de delante queda para el rival.</p>
+  </li>
+  <li>
+    <p>¿Los peones doblados son siempre malos?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> No. Pierden movilidad y no se defienden entre ellos, pero abren una columna y controlan casillas nuevas. En posiciones de ataque suelen valer la pena.</p>
+  </li>
+  <li>
+    <p>¿Qué es un peón aislado y qué da a cambio?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> El que no tiene peones vecinos. Es débil en el final, pero en el medio juego da una columna abierta, espacio y dos buenas casillas para las piezas.</p>
+  </li>
+  <li>
+    <p>¿Qué son los peones colgantes?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Dos peones juntos sin vecinos, normalmente c y d. Mientras avanzan juntos son fuerza; si se les obliga a avanzar uno solo, se vuelven dos debilidades.</p>
+  </li>
+  <li>
+    <p>¿Cuáles son las tres maneras de salir de un jaque?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Mover el rey, capturar la pieza que da jaque o interponer una pieza en el camino. Contra un jaque de caballo la interposición no existe: solo mover o capturar.</p>
+  </li>
+  <li>
+    <p>¿Por qué el ahogado son tablas y no derrota?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Porque quien está ahogado no está en jaque: no se le puede dar mate. La regla premia al que se quedó sin jugadas, y por eso es un recurso defensivo real.</p>
+  </li>
+  <li>
+    <p>¿Cómo se evita el ahogado en un final de dama contra rey?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Acercando el rey propio antes de cerrar la jaula, y dejando siempre al rey rival una casilla mientras no sea mate. La regla práctica: si vas a encerrarlo, que sea con el rey cerca.</p>
+  </li>
+  <li>
+    <p>¿Un rey puede quedar al lado del otro?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> No. Un rey no puede moverse a una casilla atacada, y el otro rey ataca las suyas. Por eso los reyes nunca se tocan.</p>
+  </li>
+</ol>
+
+<h2>6. Fuentes</h2>
+<ul>
+  <li>Texto de la lección: curso «ideas-que-ganan-partidas» de Ajedrez Integral, de Oscar Angulo Cubero.</li>
+  <li>Conceptos, preguntas y ejercicios de este cuadernillo: material didáctico de Ajedrez Integral, de Oscar Angulo Cubero.</li>
+  <li>Posiciones: archivo de posiciones del propio curso, verificadas jugada por jugada con chess.js y evaluadas con el motor Stockfish que el sitio usa.</li>
+</ul>
+<h3>Para seguir leyendo</h3>
+<p>Obras de referencia sobre estos temas. Este material no reproduce texto de ellas: se listan como lectura recomendada, no como origen de lo que aquí se dice.</p>
+<ul>
+  <li>Aron Nimzowitsch, «Mi sistema» (1925).</li>
+  <li>Andrew Soltis, «Pawn Structure Chess» (1976).</li>
+  <li>Herman Grooten, «Chess Strategy for Club Players» (New in Chess, 2009).</li>
+  <li>Irving Chernev, «Logical Chess: Move by Move» (Batsford, 1957).</li>
+  <li>José Raúl Capablanca, «Fundamentos del ajedrez» (1921).</li>
+</ul>
+
+<footer>
+  <p>© 2026 Oscar Angulo Cubero · Ajedrez Integral. Material de uso docente para alumnos de la Academia.</p>
+  <p>No se autoriza su reproducción ni su distribución fuera de ella.</p>
+<p class="volver">
+  <a href="../../academia/ideas-que-ganan-partidas.html">← Volver al curso ideas-que-ganan-partidas</a>
+  ·
+  <a href="../../../clases.html">Panel de Academia</a>
+</p>
+</footer>
+</body>
+</html>

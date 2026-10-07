@@ -1,0 +1,1093 @@
+{
+  "slug": "ideas-que-ganan-partidas",
+  "titulo": "Ideas que ganan partidas",
+  "nivel": "Intermedio · Avanzado",
+  "emoji": "⚔️",
+  "gradiente": "from-brand-700 to-brand-900",
+  "resumen": "Las ideas de medio juego y de final que deciden partidas —el ataque al enroque, el rey en el centro, las piezas, los peones, la táctica y los finales—, cada una con una posición real comprobada con motor.",
+  "descripcion_larga": "Entre la apertura y el final hay un terreno donde no alcanza con saber las reglas generales: hay que reconocer, en la posición que tienes delante, cuál es la idea que funciona. El sacrificio en h7 que sí sirve, la torre que llega a la séptima, la ruptura de peón que abre el juego, el final de alfil contra caballo que se gana. Este curso reúne esas ideas en seis capítulos —el ataque al rey enrocado, el rey en el centro y los enroques opuestos, las piezas, los peones, la táctica que sostiene el plan y los finales— y explica cada una con una posición de partida real, tomada de la base abierta de Lichess y comprobada con Stockfish: en cada ejemplo hay una sola jugada buena, y lo que la lección dice de ella es cierto en el tablero.",
+  "anterior": {
+    "href": "rompe-el-estancamiento.html",
+    "titulo": "Rompe el estancamiento"
+  },
+  "siguiente": {
+    "href": "calculo-y-visualizacion.html",
+    "titulo": "Cálculo y Visualización"
+  },
+  "bloques": [
+    {
+      "n": 1,
+      "titulo": "El ataque al rey enrocado",
+      "lecciones": [
+        {
+          "titulo": "Cuándo se puede atacar al rey",
+          "resumen": "Un ataque al enroque no se decide por ganas: se decide contando cuántas piezas tuyas llegan y cuántas del rival defienden.",
+          "parrafos": [
+            "El enroque protege al rey con tres peones y, casi siempre, con un caballo en f6 (f3) y algún alfil. Atacar esa posición con dos piezas contra cuatro defensores es regalar tiempo: el ataque se apaga y las piezas que fueron a atacar quedan lejos de todo lo demás. La pregunta antes de lanzarse no es si el rey rival se ve débil, sino si tienes más fuerzas cerca de él que las que el rival puede traer a tiempo.",
+            "Cuenta así: las piezas que en una o dos jugadas pueden atacar las casillas vecinas del rey, contra las que pueden defenderlas en el mismo tiempo. Si la cuenta te favorece, el ataque tiene sentido y muchas veces hay un golpe que lo resuelve. Si no, primero hay que traer más piezas o alejar a los defensores: cambiar el caballo de f6, desviar un alfil, ocupar una columna que lleve al rey.",
+            "Las señales que invitan a atacar se repiten: un caballo defensor que se fue, peones del enroque que avanzaron, la dama rival lejos, piezas propias apuntando al flanco del rey. Cuando se juntan dos o tres, conviene buscar con cuidado, porque casi siempre hay algo concreto."
+          ],
+          "practica": "En tus próximas cinco partidas, cada vez que pienses en atacar al rey, cuenta en voz baja atacantes y defensores antes de mover. Anota cuántas veces la cuenta te daba ventaja y cuántas atacaste igual.",
+          "tema": "concentracion",
+          "pregunta": "El rey rival está enrocado y hay un ataque que funciona. Cuenta primero atacantes y defensores.",
+          "enlace": "Antes de jugarla, cuenta tú mismo las piezas que llegan al rey y las que pueden defenderlo: así se reconoce cuándo el ataque está maduro.",
+          "diagramas": [
+            {
+              "id": "IG-1",
+              "fen": "5rk1/p1p3pp/2N1pq2/2Q5/4p3/4P3/P1Rr1PPP/5RK1 b - - 7 22",
+              "turno": "b",
+              "resultado": "0-1",
+              "pregunta": "El rey rival está enrocado y hay un ataque que funciona. Cuenta primero atacantes y defensores. Juegan las negras; el rival acaba de jugar Tc2.",
+              "comentario": "22…Dxf2+ 23.Txf2 Td1+ 24.Tf1 Tdxf1#. Hay un sacrificio: se entrega material para ganar más. Antes de jugarla, cuenta tú mismo las piezas que llegan al rey y las que pueden defenderlo: así se reconoce cuándo el ataque está maduro. (Ejercicio 18gps de la base abierta de Lichess (CC0), rating 1571. Stockfish 16 a profundidad 18: Dxf2+ es la mejor (mate en 3) y la segunda queda en -5,0.)",
+              "linea": [
+                "Qxf2+",
+                "Rxf2",
+                "Rd1+",
+                "Rf1",
+                "Rdxf1#"
+              ]
+            }
+          ]
+        },
+        {
+          "titulo": "El sacrificio del alfil en h7",
+          "resumen": "El sacrificio clásico contra el enroque: el alfil toma en h7 (h2) con jaque, y detrás entran el caballo y la dama.",
+          "parrafos": [
+            "Es probablemente el sacrificio más conocido del ajedrez, y también uno de los que más se juega mal. El alfil de d3 toma en h7 con jaque, el rey toma el alfil, y el caballo salta a g5 con jaque mientras la dama se prepara para entrar por h5 o por h7. Cuando funciona, el rey queda sin defensores en dos o tres jugadas; cuando no, se perdió una pieza a cambio de un peón.",
+            "Las condiciones que suelen hacerlo posible son tres: que el caballo pueda llegar a g5 sin que lo tomen, que la dama pueda llegar rápido a la columna h, y que el rival no tenga un caballo en f6 que defienda h7. Un peón en e5 que echó al caballo de f6 es la señal clásica. Pero las condiciones son una guía, no una garantía: cada vez hay que calcular las respuestas del rey, que puede volver a g8, ir a g6 o a h6.",
+            "La regla práctica es no sacrificar por costumbre. Antes de tomar en h7, revisa la variante en la que el rey sale hacia g6: muchas veces es la que salva al defensor, y es la que menos se mira."
+          ],
+          "practica": "Busca en tus partidas o en una base de datos tres sacrificios en h7 y, en cada uno, escribe dónde estaba el caballo, dónde la dama y por qué el rey no podía escapar por g6.",
+          "tema": "h7",
+          "pregunta": "El alfil puede tomar el peón que protege al rey, y con jaque.",
+          "enlace": "El alfil toma en h7 (h2) con jaque: el peón que cubría al rey desaparece y el resto de las piezas entra por esa puerta.",
+          "diagramas": [
+            {
+              "id": "IG-2",
+              "fen": "r1bq1rk1/pp2nppp/1bn1p3/3pP3/3P4/2PB1N2/P4PPP/RNBQK2R w KQ - 1 9",
+              "turno": "w",
+              "resultado": "1-0",
+              "pregunta": "El alfil puede tomar el peón que protege al rey, y con jaque. Juegan las blancas; el rival acaba de jugar …Cbc6.",
+              "comentario": "9.Axh7+ Rxh7 10.Cg5+. Es una atracción: se arrastra a una pieza (a menudo el rey) a una casilla fatal. El alfil toma en h7 (h2) con jaque: el peón que cubría al rey desaparece y el resto de las piezas entra por esa puerta. (Ejercicio 1tJp9 de la base abierta de Lichess (CC0), rating 1585. Stockfish 16 a profundidad 18: Axh7+ es la mejor (+5,1) y la segunda queda en +0,6.)",
+              "linea": [
+                "Bxh7+",
+                "Kxh7",
+                "Ng5+"
+              ]
+            }
+          ]
+        },
+        {
+          "titulo": "Romper el techo: los sacrificios en g7 y h6",
+          "resumen": "Los peones del enroque son el techo del rey. A veces una pieza se entrega para romperlos y dejar al rey a la intemperie.",
+          "parrafos": [
+            "Cuando el ataque llega al enroque y el rival ya defendió lo suficiente para que ninguna jugada tranquila funcione, el último recurso es la demolición: entregar una pieza por uno de los peones que cubren al rey. Un alfil en h6, una torre o una dama en g7, un caballo que toma en h6 con jaque. Se pierde material, pero el rey queda sin techo y las piezas que quedan atacan casillas que ya nadie defiende.",
+            "La demolición solo funciona si después del sacrificio queda algo con qué seguir. La pregunta no es «¿cuánto entrego?» sino «¿qué piezas mías llegan al rey una vez que el peón ya no está?». Si la respuesta es la dama y una torre, el sacrificio suele valer; si es una pieza sola, casi nunca.",
+            "Mira también la defensa más tranquila del rival: no tomar la pieza. A veces el defensor deja el alfil en h6 y se refugia, y el atacante queda con una pieza encerrada y un peón de menos. Calcula esa variante antes de entregar nada."
+          ],
+          "practica": "Toma una posición tuya de ataque al enroque y anota, para cada peón del enroque rival, qué pieza tuya podría tomarlo y qué piezas entrarían después. Así se entrena a ver la demolición antes de que el rival la impida.",
+          "tema": "demolicion",
+          "pregunta": "Una pieza puede tomar un peón del enroque aunque el rival pueda capturarla.",
+          "enlace": "La pieza se entrega por un peón de g7 o h6 (g2 o h3): lo que vale no es lo que se lleva, sino el rey que queda sin techo.",
+          "diagramas": [
+            {
+              "id": "IG-3",
+              "fen": "1b5k/1p3qp1/p1npR2p/P1pQp3/2P5/8/5PPP/6K1 w - - 7 39",
+              "turno": "w",
+              "resultado": "1-0",
+              "pregunta": "Una pieza puede tomar un peón del enroque aunque el rival pueda capturarla. Juegan las blancas; el rival acaba de jugar …Df7.",
+              "comentario": "39.Txh6+ Rg8 40.Th8+ Rxh8 41.Dxf7. Es una desviación: se aleja al defensor de lo que defendía. La pieza se entrega por un peón de g7 o h6 (g2 o h3): lo que vale no es lo que se lleva, sino el rey que queda sin techo. (Ejercicio 0yjuV de la base abierta de Lichess (CC0), rating 1355. Stockfish 16 a profundidad 18: Txh6+ es la mejor (+5,5) y la segunda queda en -3,0.)",
+              "linea": [
+                "Rxh6+",
+                "Kg8",
+                "Rh8+",
+                "Kxh8",
+                "Qxf7"
+              ]
+            }
+          ]
+        },
+        {
+          "titulo": "Las piezas mayores entran al ataque",
+          "resumen": "Los ataques se preparan con piezas menores y peones, pero los mates los dan casi siempre la dama y las torres.",
+          "parrafos": [
+            "En el ataque al rey cada pieza tiene su trabajo. Los peones abren líneas, los caballos y alfiles fuerzan debilidades, y al final son la dama y las torres las que entran por la columna o la fila que quedó abierta. Un ataque con piezas menores solamente rara vez termina en mate: sirve para preparar, no para rematar.",
+            "Por eso el momento clave del ataque es cuando las piezas mayores llegan al flanco del rey. Una torre que pasa por la tercera fila (la sexta si juegas con negras) para ir a la columna g o h, una dama que se suma a la diagonal, dos torres dobladas en una columna que se acaba de abrir. Cuando eso pasa, la defensa tiene muy pocas jugadas.",
+            "Antes de atacar, entonces, pregúntate por dónde van a entrar la dama y las torres. Si no hay una columna, fila o diagonal que las lleve al rey, el ataque todavía no está listo, por más amenazas que veas."
+          ],
+          "practica": "En tus partidas de ataque, marca en qué jugada entró por primera vez una pieza mayor al flanco del rey. Fíjate si antes de eso el ataque ya era peligroso o solo parecía serlo.",
+          "tema": "mayores",
+          "pregunta": "La dama o una torre puede entrar al ataque con fuerza decisiva.",
+          "enlace": "La jugada buena es de la dama o de una torre: la pieza mayor llega al rey por una línea que ya nadie cubría.",
+          "diagramas": [
+            {
+              "id": "IG-4",
+              "fen": "r2b2k1/ppp2rpp/3pR3/3P4/2P2B2/8/PP4PP/5RK1 w - - 2 21",
+              "turno": "w",
+              "resultado": "1-0",
+              "pregunta": "La dama o una torre puede entrar al ataque con fuerza decisiva. Juegan las blancas; el rival acaba de jugar …Tf7.",
+              "comentario": "21.Te8+ Tf8 22.Txf8+ Rxf8 23.Axd6+. Es un jaque doble: el rey tiene que moverse y no alcanza a tapar nada. La jugada buena es de la dama o de una torre: la pieza mayor llega al rey por una línea que ya nadie cubría. (Ejercicio 0eUUp de la base abierta de Lichess (CC0), rating 1312. Stockfish 16 a profundidad 18: Te8+ es la mejor (+4,0) y la segunda queda en +0,2.)",
+              "linea": [
+                "Re8+",
+                "Rf8",
+                "Rxf8+",
+                "Kxf8",
+                "Bxd6+"
+              ]
+            }
+          ]
+        },
+        {
+          "titulo": "La última fila sin aire",
+          "resumen": "Un rey encerrado detrás de sus propios peones puede recibir mate en su primera fila. Reconocerlo gana partidas, y olvidarlo las pierde.",
+          "parrafos": [
+            "Después de enrocar, el rey queda en g1 (g8) con los peones de f, g y h delante. Mientras esos peones no se mueven, el rey no tiene casillas de escape hacia adelante, y una torre o una dama que llega a la primera fila da mate sin más. Es el mate más frecuente en partidas entre aficionados, y también uno de los que más se cuela en partidas de jugadores fuertes.",
+            "Para aprovecharlo, el atacante busca sacar de la primera fila a las piezas que la defienden: las desvía con un sacrificio, las cambia o las ata a otra tarea. Muchas veces la jugada decisiva no es la del mate, sino la anterior, la que obliga al defensor a irse.",
+            "Para defenderse, la receta es vieja y sencilla: darle aire al rey con h3 o g3 (h6 o g6) en un momento tranquilo, antes de que haga falta. Cuesta un tiempo, pero quita para siempre una de las armas más fuertes del rival."
+          ],
+          "practica": "Revisa tus últimas diez partidas y busca los momentos en que tu rey no tenía casillas de escape. Anota si el rival podía aprovecharlo y si te diste cuenta a tiempo.",
+          "tema": "octava",
+          "pregunta": "El rey rival no tiene casillas de escape en su última fila.",
+          "enlace": "La línea termina con mate en la última fila: el rey quedó encerrado detrás de sus propios peones.",
+          "diagramas": [
+            {
+              "id": "IG-5",
+              "fen": "4rk2/pQ6/7R/4q1p1/2p5/2Pb4/PP4PP/R5K1 b - - 0 31",
+              "turno": "b",
+              "resultado": "0-1",
+              "pregunta": "El rey rival no tiene casillas de escape en su última fila. Juegan las negras; el rival acaba de jugar Dxb7.",
+              "comentario": "31…De3+ 32.Rh1 De1+ 33.Txe1 Txe1#. El golpe va a la última fila, donde el rey no tiene salida. La línea termina con mate en la última fila: el rey quedó encerrado detrás de sus propios peones. (Ejercicio 12rIE de la base abierta de Lichess (CC0), rating 1388. Stockfish 16 a profundidad 18: De3+ es la mejor (mate en 3) y la segunda queda en -4,0.)",
+              "linea": [
+                "Qe3+",
+                "Kh1",
+                "Qe1+",
+                "Rxe1",
+                "Rxe1#"
+              ]
+            }
+          ]
+        },
+        {
+          "titulo": "Los mates de patrón",
+          "resumen": "Hay mates que se repiten con el mismo dibujo: el ahogado, el árabe, el de Anastasia, el del pasillo. Conocerlos de vista ahorra cálculo.",
+          "parrafos": [
+            "Muchos ataques terminan siempre igual. El caballo que da mate a un rey rodeado por sus propias piezas (el mate ahogado), la torre y el caballo que encierran al rey en la esquina (el árabe), la torre y el caballo contra el rey en la columna h (el de Anastasia), los dos alfiles cruzados (el de Boden). Son dibujos: una vez que se aprenden, se reconocen en la posición antes de calcular nada.",
+            "Esa es su utilidad práctica. Quien conoce los patrones no busca el mate jugada por jugada: ve que la posición se parece a uno de ellos y busca solo cómo llegar. El cálculo se vuelve corto y seguro, porque se sabe adónde va.",
+            "Para aprenderlos sirve más repetir que leer. Arma cada mate en un tablero vacío, con las piezas mínimas, y después búscalo en posiciones con más piezas. El día que aparezca en una partida tuya, lo vas a ver."
+          ],
+          "practica": "Arma en un tablero vacío cinco mates de patrón con las piezas mínimas: ahogado, árabe, Anastasia, Boden y el de la última fila. Después resuelve diez ejercicios de mate y nombra el patrón de cada uno.",
+          "tema": "patrones",
+          "pregunta": "Hay un mate de dibujo conocido escondido en la posición.",
+          "enlace": "El mate final tiene un dibujo con nombre propio: reconocerlo hace corto el cálculo.",
+          "diagramas": [
+            {
+              "id": "IG-6",
+              "fen": "1k4r1/1pp5/8/p1qQp3/2Pn4/P7/5RP1/5RK1 b - - 2 38",
+              "turno": "b",
+              "resultado": "0-1",
+              "pregunta": "Hay un mate de dibujo conocido escondido en la posición. Juegan las negras; el rival acaba de jugar Dd5.",
+              "comentario": "38…Ce2+ 39.Rh2 Th8#. Todo gira en torno a una clavada: la pieza clavada no puede defender. El mate final tiene un dibujo con nombre propio: reconocerlo hace corto el cálculo. (Ejercicio 35JUo de la base abierta de Lichess (CC0), rating 1484. Stockfish 16 a profundidad 18: Ce2+ es la mejor (mate en 2) y la segunda queda en -1,2.)",
+              "linea": [
+                "Ne2+",
+                "Kh2",
+                "Rh8#"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "n": 2,
+      "titulo": "El rey en el centro y los enroques opuestos",
+      "lecciones": [
+        {
+          "titulo": "Castigar al rey que no enrocó",
+          "resumen": "Un rey que se queda en el centro con las columnas abriéndose es un blanco. El tiempo para atacarlo es ahora, no dentro de tres jugadas.",
+          "parrafos": [
+            "El rey en el centro no es un problema mientras el centro está cerrado. Se vuelve un problema cuando las columnas d y e se abren y las piezas rivales pueden llegar a ellas. Entonces cada jugada que el rey tarda en enrocar es una jugada que el atacante usa para traer una torre, abrir una línea o impedir el enroque para siempre.",
+            "El atacante tiene que actuar rápido y casi siempre con algún sacrificio, porque la ventaja es de tiempo, no de material: si deja pasar dos jugadas, el rey enroca y la ventaja desaparece. Por eso en estas posiciones se entrega un peón para abrir la columna e, o una pieza para que el rey no pueda moverse.",
+            "La señal para el defensor es la contraria: si tu rey todavía está en el centro y el rival está abriendo líneas, enrocar o cerrar el centro es más urgente que ganar un peón."
+          ],
+          "practica": "Revisa tus partidas en las que uno de los dos reyes no enrocó antes de la jugada 12. Anota quién aprovechó (o no) esa demora y con qué jugada.",
+          "tema": "reycentro",
+          "pregunta": "El rey rival sigue en el centro, y hay una forma de castigarlo.",
+          "enlace": "El rey rival seguía en las columnas del centro: la jugada buena abre o aprovecha una línea antes de que se esconda.",
+          "diagramas": [
+            {
+              "id": "IG-7",
+              "fen": "r3k2r/1pR1nn2/p2p1Q2/3Pp1q1/4P3/1P6/P4PPP/5RK1 w kq - 1 20",
+              "turno": "w",
+              "resultado": "1-0",
+              "pregunta": "El rey rival sigue en el centro, y hay una forma de castigarlo. Juegan las blancas; el rival acaba de jugar …Dg5.",
+              "comentario": "20.Txe7+ Rd8 21.Txf7+ Dxf6 22.Txf6. Es un ataque a la descubierta: al moverse una pieza, se destapa otra. El rey rival seguía en las columnas del centro: la jugada buena abre o aprovecha una línea antes de que se esconda. (Ejercicio 1KdZW de la base abierta de Lichess (CC0), rating 1623. Stockfish 16 a profundidad 18: Txe7+ es la mejor (+5,3) y la segunda queda en -3,8.)",
+              "linea": [
+                "Rxe7+",
+                "Kd8",
+                "Rxf7+",
+                "Qxf6",
+                "Rxf6"
+              ]
+            }
+          ]
+        },
+        {
+          "titulo": "El punto débil de f7",
+          "resumen": "Al empezar la partida, f7 (f2) solo lo defiende el rey. Es la casilla que más golpes recibe en la apertura.",
+          "parrafos": [
+            "En la posición inicial, el peón de f7 está protegido solamente por el rey. Por eso las primeras amenazas de mate de la historia —el mate del pastor, el ataque con el alfil en c4 y el caballo en g5— apuntan ahí. Con el paso de las jugadas el punto se defiende mejor, pero mientras el rey no enroca sigue siendo un blanco.",
+            "Los golpes en f7 suelen tener dos formas: un sacrificio de alfil o de caballo que saca al rey de su casa y lo deja en medio del tablero, o una doble amenaza en la que f7 es uno de los dos objetivos. En ambos casos el atacante necesita que la dama o una torre pueda seguir rápido.",
+            "Para el que defiende, la regla es mirar f7 cada vez que una pieza rival lo ataca de nuevo: contar atacantes y defensores ahí es tan importante como mirar el centro."
+          ],
+          "practica": "Juega diez partidas rápidas con la consigna de mirar f7 (o f2) antes de cada jugada de la apertura. Anota cuántas veces el rival lo atacó y cuántas lo tuviste en cuenta.",
+          "tema": "f7",
+          "pregunta": "El golpe va a la casilla más débil al principio de la partida.",
+          "enlace": "El ataque apunta a f7 (f2), la casilla que al principio solo defiende el rey.",
+          "diagramas": [
+            {
+              "id": "IG-8",
+              "fen": "r1bqk2r/ppp1Pppp/2n5/2b5/5B2/2P5/PP2PPPP/RN1QKBNR b KQkq - 0 6",
+              "turno": "b",
+              "resultado": "0-1",
+              "pregunta": "El golpe va a la casilla más débil al principio de la partida. Juegan las negras; el rival acaba de jugar dxe7.",
+              "comentario": "6…Axf2+ 7.Rxf2 Dxd1. Es una desviación: se aleja al defensor de lo que defendía. El ataque apunta a f7 (f2), la casilla que al principio solo defiende el rey. (Ejercicio 1yuqX de la base abierta de Lichess (CC0), rating 1479. Stockfish 16 a profundidad 18: Axf2+ es la mejor (+4,3) y la segunda queda en -4,1.)",
+              "linea": [
+                "Bxf2+",
+                "Kxf2",
+                "Qxd1"
+              ]
+            }
+          ]
+        },
+        {
+          "titulo": "La ventaja de desarrollo se usa o se pierde",
+          "resumen": "Tener más piezas en juego que el rival es una ventaja que dura pocas jugadas. Si no se convierte en algo concreto, se esfuma.",
+          "parrafos": [
+            "Cuando el rival gasta tiempos en la apertura —mueve dos veces la misma pieza, sale a cazar peones con la dama, retrasa el enroque— uno termina con más piezas desarrolladas. Esa ventaja es real pero no dura: en cuanto el rival termine de sacar sus piezas, desaparece. La pregunta entonces es cómo convertirla en algo que se quede.",
+            "Hay tres maneras clásicas: abrir el centro para que las piezas activas lleguen al rey, ganar material con una amenaza que el rival no tiene tiempo de parar, o impedir que el rival enroque. Las tres piden jugar con decisión, muchas veces entregando un peón para abrir líneas.",
+            "El error típico es seguir desarrollando con tranquilidad cuando ya no hay nada más que desarrollar. En ese momento hay que buscar el golpe."
+          ],
+          "practica": "En tus partidas, marca la jugada en que tuviste dos o más piezas desarrolladas de ventaja. Revisa con el motor si había un golpe ahí, y anota si lo buscaste.",
+          "tema": "desarrollo",
+          "pregunta": "Todavía es la apertura y una de las partes tiene más piezas en juego: hay que usarlo ya.",
+          "enlace": "La posición sale de la apertura: la ventaja de tiempo se convierte en algo concreto con esta jugada.",
+          "diagramas": [
+            {
+              "id": "IG-9",
+              "fen": "rnbqkb1r/ppp2ppp/4pn2/4N3/8/3Q4/PPP2PPP/RNB1KB1R w KQkq - 1 6",
+              "turno": "w",
+              "resultado": "1-0",
+              "pregunta": "Todavía es la apertura y una de las partes tiene más piezas en juego: hay que usarlo ya. Juegan las blancas; el rival acaba de jugar …Cf6.",
+              "comentario": "6.Dxd8+ Rxd8 7.Cxf7+ Re8 8.Cxh8. Es una horquilla: una pieza ataca dos objetivos a la vez. La posición sale de la apertura: la ventaja de tiempo se convierte en algo concreto con esta jugada. (Ejercicio 1ghMX de la base abierta de Lichess (CC0), rating 1373. Stockfish 16 a profundidad 18: Dxd8+ es la mejor (+3,7) y la segunda queda en -0,8.)",
+              "linea": [
+                "Qxd8+",
+                "Kxd8",
+                "Nxf7+",
+                "Ke8",
+                "Nxh8"
+              ]
+            }
+          ]
+        },
+        {
+          "titulo": "Sacar al rey de su casa",
+          "resumen": "Un jaque con sacrificio puede obligar al rey a salir al medio del tablero, donde ya no tiene quién lo defienda.",
+          "parrafos": [
+            "Hay ataques que no buscan dar mate al rey donde está, sino obligarlo a salir. Se entrega una pieza con jaque, el rey tiene que tomarla y queda una o dos casillas más adelante, lejos de sus peones y de sus defensores. Desde ahí, las piezas atacantes lo persiguen con jaques hasta el mate o hasta ganar más de lo que costó.",
+            "La extracción funciona cuando las piezas que quedan pueden seguir con jaques o amenazas. Un rey afuera con tiempo para volver no es un rey perdido; un rey afuera al que le llueven jaques sí. Antes de sacrificar, entonces, mira cuántas piezas pueden dar el jaque siguiente.",
+            "Es una de las ideas más espectaculares del ajedrez y una de las más concretas: no se juega por intuición, se calcula hasta el final."
+          ],
+          "practica": "Resuelve diez ejercicios de ataque y en cada uno pregúntate primero: ¿qué pasaría si el rey tuviera que tomar una pieza en la casilla de al lado? A veces esa pregunta muestra la solución.",
+          "tema": "extraccion",
+          "pregunta": "Una pieza se puede entregar con jaque para atraer al rey afuera.",
+          "enlace": "La jugada da jaque y el rey puede tomar la pieza: si lo hace, queda fuera de su casa y a merced del resto.",
+          "diagramas": [
+            {
+              "id": "IG-10",
+              "fen": "R3n1k1/5pp1/7p/1b6/1B6/P5PP/5rB1/6K1 b - - 1 33",
+              "turno": "b",
+              "resultado": "0-1",
+              "pregunta": "Una pieza se puede entregar con jaque para atraer al rey afuera. Juegan las negras; el rival acaba de jugar Rg1.",
+              "comentario": "33…Txg2+ 34.Rxg2 Ac6+ 35.Rf2 Axa8. Es una horquilla: una pieza ataca dos objetivos a la vez. La jugada da jaque y el rey puede tomar la pieza: si lo hace, queda fuera de su casa y a merced del resto. (Ejercicio 2fvjC de la base abierta de Lichess (CC0), rating 1332. Stockfish 16 a profundidad 18: Txg2+ es la mejor (+4,3) y la segunda queda en -0,7.)",
+              "linea": [
+                "Rxg2+",
+                "Kxg2",
+                "Bc6+",
+                "Kf2",
+                "Bxa8"
+              ]
+            }
+          ]
+        },
+        {
+          "titulo": "Enroques opuestos: la carrera",
+          "resumen": "Cuando los reyes están en flancos distintos, los dos atacan con los peones. Gana quien llegue primero, y cada tiempo cuenta.",
+          "parrafos": [
+            "Con los reyes enrocados en flancos opuestos, la partida cambia de carácter. Cada bando puede lanzar sus peones contra el rey rival sin debilitar el propio, y el medio juego se vuelve una carrera: quien abra primero las líneas contra el otro rey suele ganar.",
+            "En esa carrera, una jugada defensiva es casi siempre un tiempo perdido. Vale más un peón que avanza contra el rey rival que una pieza que defiende el propio, y muchas veces se entrega material solo para abrir una columna un tiempo antes. Lo que se cuenta no son los peones, sino las jugadas que faltan para que cada ataque llegue.",
+            "Antes de cada jugada, cuenta: ¿cuántas jugadas faltan para mi primera amenaza seria? ¿Y para la suya? Si estás atrás, defenderte con una jugada que además frena su ataque puede ser lo único que sirve."
+          ],
+          "practica": "Juega tres partidas de entrenamiento con enroques opuestos (por ejemplo, contra la Siciliana Dragón o con el enroque largo en la Caro-Kann). Después de cada una, cuenta cuántas jugadas tardó cada ataque en abrir una columna.",
+          "tema": "opuestos",
+          "pregunta": "Los reyes están en flancos distintos: hay una jugada que llega primero.",
+          "enlace": "Los reyes están en flancos opuestos: la jugada buena es la que hace que el propio ataque llegue antes.",
+          "diagramas": [
+            {
+              "id": "IG-11",
+              "fen": "3r2k1/pppb1p1p/6p1/q4P2/2P1P3/1KQ5/P2N3P/R5R1 b - - 2 28",
+              "turno": "b",
+              "resultado": "0-1",
+              "pregunta": "Los reyes están en flancos distintos: hay una jugada que llega primero. Juegan las negras; el rival acaba de jugar Dc3.",
+              "comentario": "28…Aa4+ 29.Rb2 Txd2+ 30.Dxd2 Dxd2+. Es un ataque a la descubierta: al moverse una pieza, se destapa otra. Los reyes están en flancos opuestos: la jugada buena es la que hace que el propio ataque llegue antes. (Ejercicio 2jpNp de la base abierta de Lichess (CC0), rating 1615. Stockfish 16 a profundidad 18: Aa4+ es la mejor (+6,3) y la segunda queda en -3,8.)",
+              "linea": [
+                "Ba4+",
+                "Kb2",
+                "Rxd2+",
+                "Qxd2",
+                "Qxd2+"
+              ]
+            }
+          ]
+        },
+        {
+          "titulo": "Defenderse a tiempo",
+          "resumen": "No todo ataque se gana atacando. A veces la jugada buena es la que para la amenaza del rival antes de que exista.",
+          "parrafos": [
+            "Saber atacar sin saber defender es jugar la mitad del ajedrez. Cuando el rival amenaza algo, la primera pregunta no es cómo seguir con lo propio, sino qué pasa si no se hace nada. Muchas partidas se pierden por no hacerse esa pregunta una sola vez.",
+            "La defensa buena casi nunca es pasiva. La jugada que para la amenaza y al mismo tiempo trae una pieza al juego, o cambia al atacante más peligroso, o crea una amenaza propia, vale el doble. Y en las posiciones de ataque mutuo, defender con un tiempo puede dar vuelta la carrera.",
+            "En estas posiciones suele haber una sola jugada que aguanta. Encontrarla pide jugar primero por el rival: ver su amenaza entera, hasta el final, y recién después buscar cómo pararla."
+          ],
+          "practica": "Antes de cada jugada de tu próxima partida lenta, escribe en la planilla, con una letra, qué amenaza el rival (o una raya si no amenaza nada). Al final, revisa cuántas veces la viste a tiempo.",
+          "tema": "defensa",
+          "pregunta": "Primero mira qué amenaza el rival: hay una sola jugada buena.",
+          "enlace": "La jugada buena para la amenaza del rival: todas las demás la dejan pasar o empeoran la posición.",
+          "diagramas": [
+            {
+              "id": "IG-12",
+              "fen": "r4b2/1pqb1k1Q/p1pp1pp1/4p1p1/4P3/P1NP4/1PP2PPP/R3K2R b KQ - 1 17",
+              "turno": "b",
+              "resultado": "0-1",
+              "pregunta": "Primero mira qué amenaza el rival: hay una sola jugada buena. Juegan las negras; el rival acaba de jugar Dh7+.",
+              "comentario": "17…Ag7 18.h4 Th8 19.Dxh8 Axh8. Es un despeje: la pieza se aparta para abrirle la línea o la casilla a otra. La jugada buena para la amenaza del rival: todas las demás la dejan pasar o empeoran la posición. (Ejercicio 0MP31 de la base abierta de Lichess (CC0), rating 1393. Stockfish 16 a profundidad 18: Ag7 es la mejor (+3,3) y la segunda queda en -5,0.)",
+              "linea": [
+                "Bg7",
+                "h4",
+                "Rh8",
+                "Qxh8",
+                "Bxh8"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "n": 3,
+      "titulo": "Las piezas en su sitio",
+      "lecciones": [
+        {
+          "titulo": "La torre en la séptima",
+          "resumen": "Una torre que llega a la séptima fila ataca los peones desde atrás y encierra al rey en la octava. Vale casi un peón.",
+          "parrafos": [
+            "La séptima fila es donde están los peones del rival antes de moverse, y donde ninguna pieza menor los defiende bien. Una torre que llega ahí ataca varios peones a la vez, desde atrás, y además encierra al rey en su última fila. Por eso los entrenadores repiten que una torre en la séptima vale casi un peón.",
+            "Para llegar, la torre necesita una columna abierta. El camino habitual es ocupar la columna, doblar torres si hace falta y entrar cuando el rival ya no puede cubrir todas las casillas de entrada. Dos torres en la séptima suelen ser decisivas: atacan todo y amenazan mate.",
+            "El defensor tiene que impedir la entrada o cambiar la torre que entra. Dejarla instalada esperando que no pase nada casi nunca funciona."
+          ],
+          "practica": "En tus próximas partidas, marca cada vez que una torre (tuya o del rival) llegó a la séptima. Anota qué ganó o qué amenazó en las tres jugadas siguientes.",
+          "tema": "septima",
+          "pregunta": "Una torre puede llegar a la séptima fila con efecto inmediato.",
+          "enlace": "La torre llega a la séptima (la segunda, si juegas con negras): desde ahí ataca lo que nadie defiende bien.",
+          "diagramas": [
+            {
+              "id": "IG-13",
+              "fen": "4rrk1/1p4pp/1N6/2p5/3n4/5N2/PP1B1KPP/1R6 b - - 0 22",
+              "turno": "b",
+              "resultado": "0-1",
+              "pregunta": "Una torre puede llegar a la séptima fila con efecto inmediato. Juegan las negras; el rival acaba de jugar Cxb6.",
+              "comentario": "22…Te2+ 23.Rg3 Cxf3 24.gxf3 Txd2. Se captura al defensor y lo que defendía queda colgado. La torre llega a la séptima (la segunda, si juegas con negras): desde ahí ataca lo que nadie defiende bien. (Ejercicio 1haNF de la base abierta de Lichess (CC0), rating 1486. Stockfish 16 a profundidad 18: Te2+ es la mejor (+4,5) y la segunda queda en +0,4.)",
+              "linea": [
+                "Re2+",
+                "Kg3",
+                "Nxf3",
+                "gxf3",
+                "Rxd2"
+              ]
+            }
+          ]
+        },
+        {
+          "titulo": "El caballo y la doble amenaza",
+          "resumen": "El caballo es la pieza de las horquillas: ataca en todas direcciones a la vez y nadie lo puede bloquear.",
+          "parrafos": [
+            "El caballo tiene una forma de moverse que no se parece a ninguna otra, y eso lo hace la pieza ideal para atacar dos cosas a la vez. Desde una casilla central ataca hasta ocho casillas, y como salta, ninguna pieza puede ponerse en medio. La horquilla de caballo al rey y la dama es la primera táctica que aprende cualquier jugador, y sigue ganando partidas en todos los niveles.",
+            "Las horquillas casi nunca aparecen solas: se preparan. Se obliga a dos piezas a ponerse a un salto de caballo de una misma casilla, con un jaque o un cambio, y después el caballo cae ahí. Por eso, cuando dos piezas rivales están a distancia de caballo entre sí, conviene buscar cómo llegar a la casilla que las ataca a ambas.",
+            "El caballo también rinde en casillas fuertes: una casilla avanzada, protegida por un peón y que ningún peón rival puede atacar. Desde ahí controla el juego y espera el momento de saltar."
+          ],
+          "practica": "Busca en tus partidas los momentos en que dos piezas rivales estaban a un salto de caballo de la misma casilla. Anota si podías llegar a esa casilla y en cuántas jugadas.",
+          "tema": "caballo",
+          "pregunta": "El caballo puede atacar dos objetivos a la vez.",
+          "enlace": "La jugada es del caballo, y la línea gana material con una doble amenaza que no se puede parar.",
+          "diagramas": [
+            {
+              "id": "IG-14",
+              "fen": "2kr1bnr/ppp1pNpp/8/8/2Pn4/8/PP2NPPP/R1B1K2R b KQ - 0 11",
+              "turno": "b",
+              "resultado": "0-1",
+              "pregunta": "El caballo puede atacar dos objetivos a la vez. Juegan las negras; el rival acaba de jugar Cxf7.",
+              "comentario": "11…Cc2+ 12.Rf1 Td1#. El golpe va a la última fila, donde el rey no tiene salida. La jugada es del caballo, y la línea gana material con una doble amenaza que no se puede parar. (Ejercicio 0orK6 de la base abierta de Lichess (CC0), rating 1292. Stockfish 16 a profundidad 18: Cc2+ es la mejor (mate en 2) y la segunda queda en -3,3.)",
+              "linea": [
+                "Nc2+",
+                "Kf1",
+                "Rd1#"
+              ]
+            }
+          ]
+        },
+        {
+          "titulo": "El alfil y las diagonales abiertas",
+          "resumen": "El alfil trabaja de lejos. En una diagonal abierta clava, enfila y descubre ataques desde el otro lado del tablero.",
+          "parrafos": [
+            "Un alfil bien puesto se nota poco hasta que actúa. Desde su casilla mira una diagonal entera, a veces de punta a punta del tablero, y todo lo que se pone en ella queda bajo su fuego. Por eso es la pieza de las clavadas y de las enfiladas: ataca una pieza que no se puede mover porque detrás hay otra más valiosa.",
+            "La diferencia entre un alfil bueno y uno malo la deciden los peones. Un alfil cuyos peones propios están en casillas de su mismo color queda encerrado detrás de ellos; uno cuyos peones están en el otro color tiene las diagonales libres. Al elegir dónde poner los peones, piensa también en tu alfil.",
+            "Cuando tengas un alfil en una diagonal larga, mírala entera, hasta la última casilla: muchas veces lo que decide está del otro lado del tablero."
+          ],
+          "practica": "En una partida tuya, toma cada alfil al final de la apertura y anota qué diagonales tenía libres y cuáles le cerraban sus propios peones. Compara cómo le fue a cada uno en el resto de la partida.",
+          "tema": "alfil",
+          "pregunta": "El alfil puede aprovechar una línea entera.",
+          "enlace": "La jugada es del alfil, que trabaja desde lejos: lo que gana se ve recién al mirar la línea entera.",
+          "diagramas": [
+            {
+              "id": "IG-15",
+              "fen": "r3q1kr/2pbB1p1/p1N2bQp/1p2p3/7P/1P3PP1/1PP5/3RK2R w K - 6 24",
+              "turno": "w",
+              "resultado": "1-0",
+              "pregunta": "El alfil puede aprovechar una línea entera. Juegan las blancas; el rival acaba de jugar …De8.",
+              "comentario": "24.Axf6 Dxg6 25.Ce7+ Rh7 26.Cxg6. Es una horquilla: una pieza ataca dos objetivos a la vez. La jugada es del alfil, que trabaja desde lejos: lo que gana se ve recién al mirar la línea entera. (Ejercicio 2tT48 de la base abierta de Lichess (CC0), rating 1590. Stockfish 16 a profundidad 18: Axf6 es la mejor (+3,4) y la segunda queda en -3,7.)",
+              "linea": [
+                "Bxf6",
+                "Qxg6",
+                "Ne7+",
+                "Kh7",
+                "Nxg6"
+              ]
+            }
+          ]
+        },
+        {
+          "titulo": "La dama: la jugada tranquila",
+          "resumen": "La dama no gana siempre con jaques. A veces la jugada decisiva es un movimiento silencioso que crea dos amenazas.",
+          "parrafos": [
+            "Como la dama es la pieza más fuerte, se tiende a usarla para dar jaques y capturar. Pero muchas de sus mejores jugadas son tranquilas: un movimiento sin jaque ni captura que la pone en una casilla desde donde amenaza dos cosas a la vez, o que se suma a un ataque que todavía no tiene suficiente fuerza.",
+            "Estas jugadas cuestan de ver porque no obligan nada: el rival puede responder lo que quiera. Pero si la dama quedó amenazando dos cosas, ninguna respuesta las para a las dos. Buscarlas pide preguntarse, en cada posición, qué casillas de la dama atacan más de un objetivo.",
+            "También vale lo contrario: una dama lejos del juego, cazando peones en un flanco, es una pieza menos en la defensa. Antes de mandarla lejos, mira cuánto tarda en volver."
+          ],
+          "practica": "En diez ejercicios de táctica, antes de mirar jaques y capturas, prueba primero las jugadas tranquilas de la dama. Anota cuántas veces la solución era una de ellas.",
+          "tema": "dama",
+          "pregunta": "No hay jaque ni captura que sirva: la dama gana con una jugada tranquila.",
+          "enlace": "La dama se mueve sin dar jaque ni capturar, y aun así el rival no puede parar todo lo que amenaza.",
+          "diagramas": [
+            {
+              "id": "IG-16",
+              "fen": "r4rk1/pp3ppp/2b1p3/2Q5/4pP2/2P1B1Pq/PP5P/RN2K2R b KQ - 2 17",
+              "turno": "b",
+              "resultado": "0-1",
+              "pregunta": "No hay jaque ni captura que sirva: la dama gana con una jugada tranquila. Juegan las negras; el rival acaba de jugar Ae3.",
+              "comentario": "17…Dg2 18.Tg1 Dxb2 19.Da3 Dxa1. Todo gira en torno a una clavada: la pieza clavada no puede defender. La dama se mueve sin dar jaque ni capturar, y aun así el rival no puede parar todo lo que amenaza. (Ejercicio 0DvcD de la base abierta de Lichess (CC0), rating 1616. Stockfish 16 a profundidad 18: Dg2 es la mejor (+4,2) y la segunda queda en +0,4.)",
+              "linea": [
+                "Qg2",
+                "Rg1",
+                "Qxb2",
+                "Qa3",
+                "Qxa1"
+              ]
+            }
+          ]
+        },
+        {
+          "titulo": "La pieza sin casillas",
+          "resumen": "Una pieza que se mete en territorio rival puede quedarse sin salida. Atraparla es ganar material sin combinaciones.",
+          "parrafos": [
+            "Las piezas necesitan casillas. Un alfil que se mete en a7 a comer un peón, un caballo que salta a la orilla del tablero, una dama que entra a la base del rival: todos pueden quedarse sin una sola casilla segura a la que volver. Cuando eso pasa, basta con atacarlos para ganarlos.",
+            "Para cazar una pieza hay que mirar sus salidas, no solo la pieza. Cuántas casillas tiene, cuáles están atacadas, cuál se le puede quitar con un peón. A veces la jugada que la atrapa es un simple avance de peón que le corta la retirada.",
+            "Al revés, antes de meter una pieza en territorio rival, cuenta sus casillas de vuelta. Una pieza encerrada vale menos que el peón que fue a buscar."
+          ],
+          "practica": "En tus partidas, busca las piezas (tuyas o del rival) que en algún momento tuvieron una sola casilla segura. Anota si alguien se dio cuenta y qué pasó después.",
+          "tema": "atrapada",
+          "pregunta": "Una pieza rival se quedó con muy pocas casillas.",
+          "enlace": "La pieza rival no tiene adónde ir: la jugada buena la ataca o le quita la última salida.",
+          "diagramas": [
+            {
+              "id": "IG-17",
+              "fen": "r1bq1rk1/5ppp/3p1n2/ppp1b3/3PP3/1BP1BQ2/PP3PPP/RN2R1K1 b - - 0 15",
+              "turno": "b",
+              "resultado": "0-1",
+              "pregunta": "Una pieza rival se quedó con muy pocas casillas. Juegan las negras; el rival acaba de jugar d4.",
+              "comentario": "15…Ag4 16.dxe5 Axf3. Una pieza rival queda atrapada, sin casilla adonde ir. La pieza rival no tiene adónde ir: la jugada buena la ataca o le quita la última salida. (Ejercicio 0I4Ga de la base abierta de Lichess (CC0), rating 1591. Stockfish 16 a profundidad 18: Ag4 es la mejor (+3,0) y la segunda queda en -1,0.)",
+              "linea": [
+                "Bg4",
+                "dxe5",
+                "Bxf3"
+              ]
+            }
+          ]
+        },
+        {
+          "titulo": "El sacrificio de calidad",
+          "resumen": "Entregar una torre por un alfil o un caballo es mal negocio en papel. En el tablero, a veces es la mejor jugada.",
+          "parrafos": [
+            "La torre vale más que una pieza menor, más o menos dos peones de diferencia. Pero ese valor es un promedio: una torre sin columnas abiertas vale menos, y un caballo instalado en una casilla fuerte vale más. Cuando la torre propia no tiene futuro y la pieza menor del rival es la que sostiene su posición, entregar la calidad puede mejorar las cosas.",
+            "Las razones habituales son tres: eliminar una pieza clave del rival (el alfil que defiende las casillas del rey, el caballo que bloquea un peón pasado), romper la estructura de peones del rey enemigo, o quedarse con una pieza menor dominante y peones pasados a cambio. En todos los casos lo que se gana es posicional o de ataque, no material.",
+            "Para decidir, compara las piezas que quedan, no las que se van: si después del cambio tus piezas son mejores que las suyas, la calidad suele estar bien entregada."
+          ],
+          "practica": "Busca en una base de datos cinco partidas con un sacrificio de calidad y escribe, en cada una, qué pieza del rival desapareció y por qué era importante.",
+          "tema": "calidad",
+          "pregunta": "La torre se puede entregar a cambio de algo que vale menos en papel.",
+          "enlace": "La torre se entrega: se cambia por una pieza menor o queda donde una pieza de menos valor la puede tomar. Lo que queda después vale más que la diferencia de material.",
+          "diagramas": [
+            {
+              "id": "IG-18",
+              "fen": "2kr1r2/1p4p1/p2b3p/2p1Rb2/P1Bp1P2/2P4P/1P1B1KP1/R7 w - - 1 21",
+              "turno": "w",
+              "resultado": "1-0",
+              "pregunta": "La torre se puede entregar a cambio de algo que vale menos en papel. Juegan las blancas; el rival acaba de jugar …Ad6.",
+              "comentario": "21.Txf5 Txf5 22.Ae6+ Rc7 23.Axf5. Es una horquilla: una pieza ataca dos objetivos a la vez. La torre se entrega: se cambia por una pieza menor o queda donde una pieza de menos valor la puede tomar. Lo que queda después vale más que la diferencia de material. (Ejercicio 0TD5k de la base abierta de Lichess (CC0), rating 1607. Stockfish 16 a profundidad 18: Txf5 es la mejor (+4,3) y la segunda queda en -0,6.)",
+              "linea": [
+                "Rxf5",
+                "Rxf5",
+                "Be6+",
+                "Kc7",
+                "Bxf5"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "n": 4,
+      "titulo": "Los peones deciden",
+      "lecciones": [
+        {
+          "titulo": "El peón pasado hay que empujarlo",
+          "resumen": "Un peón pasado avanzado obliga al rival a usar piezas para frenarlo. Cuanto más avanza, más vale.",
+          "parrafos": [
+            "Un peón pasado es el que no tiene peones rivales delante ni en las columnas vecinas: nada lo frena salvo las piezas. Por eso su valor crece con cada paso. En su casilla inicial es un peón más; en la sexta fila obliga al rival a vigilarlo con una pieza; en la séptima puede valer tanto como una torre.",
+            "La regla vieja dice que los peones pasados hay que empujarlos, y tiene razón: un pasado quieto es un blanco, uno que avanza es una amenaza. El momento de empujar es cuando el avance gana un tiempo, desvía a un defensor o abre camino a otra pieza.",
+            "Muchas veces la jugada decisiva de un final o de un medio juego es justamente un avance de peón: tranquilo, sin jaque, pero imposible de frenar."
+          ],
+          "practica": "Juega desde posiciones con un peón pasado en la sexta fila (una por ejemplo de tus partidas) contra un compañero o la computadora, primero con ese peón y después contra él. Anota qué piezas hicieron falta para frenarlo.",
+          "tema": "pasado",
+          "pregunta": "Hay un peón avanzado que puede decidir la partida.",
+          "enlace": "La jugada es del peón: su avance pide más de lo que el rival puede dar para frenarlo.",
+          "diagramas": [
+            {
+              "id": "IG-19",
+              "fen": "8/8/8/3k1BKP/2p5/1p6/8/8 b - - 0 46",
+              "turno": "b",
+              "resultado": "0-1",
+              "pregunta": "Hay un peón avanzado que puede decidir la partida. Juegan las negras; el rival acaba de jugar h5.",
+              "comentario": "46…c3 47.h6 c2 48.Rg6 c1=D. El peón avanzado decide: hay que empujarlo o aprovecharlo a tiempo. La jugada es del peón: su avance pide más de lo que el rival puede dar para frenarlo. (Ejercicio 0eJwd de la base abierta de Lichess (CC0), rating 1572. Stockfish 16 a profundidad 18: c3 es la mejor (+5,1) y la segunda queda en 0,0.)",
+              "linea": [
+                "c3",
+                "h6",
+                "c2",
+                "Kg6",
+                "c1=Q"
+              ]
+            }
+          ]
+        },
+        {
+          "titulo": "Los últimos metros hasta coronar",
+          "resumen": "Coronar casi nunca es empujar y ya: hay que quitar del camino la pieza que vigila la casilla de coronación.",
+          "parrafos": [
+            "Cuando un peón llega a la séptima fila, todo se concentra en una casilla: la de coronación. El defensor la vigila con lo que puede —una torre detrás, un alfil en la diagonal, el rey al lado— y el atacante tiene que sacar a ese vigilante del camino. Ahí aparecen las desviaciones, las interferencias y los sacrificios que solo se entienden pensando en esa casilla.",
+            "La técnica pide mirar la casilla de coronación como si fuera el rey: ¿quién la defiende?, ¿puedo cambiarlo, desviarlo, cortarle la línea? Muchas veces se entrega una pieza entera solo para que el peón llegue un tiempo antes.",
+            "Y no olvides la coronación en otra pieza: a veces la dama ahoga al rey o se pierde, y un caballo con jaque es lo que gana."
+          ],
+          "practica": "Resuelve diez ejercicios de coronación y, en cada uno, antes de mover, escribe qué pieza rival vigila la casilla de coronación y cómo se la puede quitar.",
+          "tema": "coronar",
+          "pregunta": "Un peón está cerca de coronar: hay que despejarle el camino.",
+          "enlace": "La línea termina con un peón que corona: la jugada buena quita a quien lo frenaba.",
+          "diagramas": [
+            {
+              "id": "IG-20",
+              "fen": "7Q/8/4bpk1/8/4PK2/P7/6pp/1R6 b - - 1 50",
+              "turno": "b",
+              "resultado": "0-1",
+              "pregunta": "Un peón está cerca de coronar: hay que despejarle el camino. Juegan las negras; el rival acaba de jugar Dh8.",
+              "comentario": "50…g1=D 51.Txg1+ hxg1=D 52.De8+ Af7. El peón avanzado decide: hay que empujarlo o aprovecharlo a tiempo. La línea termina con un peón que corona: la jugada buena quita a quien lo frenaba. (Ejercicio 26Lkb de la base abierta de Lichess (CC0), rating 1295. Stockfish 16 a profundidad 18: g1=D es la mejor (+3,5) y la segunda queda en -6,6.)",
+              "linea": [
+                "g1=Q",
+                "Rxg1+",
+                "hxg1=Q",
+                "Qe8+",
+                "Bf7"
+              ]
+            }
+          ]
+        },
+        {
+          "titulo": "La ruptura de peones",
+          "resumen": "Las posiciones cerradas se abren con un golpe de peón. Elegir cuál y cuándo es buena parte del plan.",
+          "parrafos": [
+            "En el medio juego, los peones fijan el carácter de la posición: con el centro cerrado, las piezas maniobran detrás de ellos; con el centro abierto, el juego es directo. La ruptura es el avance de peón que cambia eso: abre una columna, rompe una cadena, ataca la base de la estructura rival.",
+            "Cada estructura tiene sus rupturas típicas. En las posiciones de la Francesa se rompe con c5 y f6; en las de la India de rey, con f5 por un lado y c5 por el otro; contra un peón aislado se presiona hasta que no pueda avanzar. Conocer las rupturas de las estructuras que juegas es conocer los planes de esas aperturas.",
+            "Antes de romper, prepara: las piezas tienen que estar listas para aprovechar las líneas que se abren. Una ruptura prematura abre el juego para el rival."
+          ],
+          "practica": "Elige la estructura de peones más frecuente en tus partidas con blancas y otra con negras. Para cada una, escribe sus dos rupturas típicas y busca en tus partidas si las jugaste en el momento justo.",
+          "tema": "ruptura",
+          "pregunta": "En pleno medio juego, la jugada buena es de un peón.",
+          "enlace": "La jugada buena es un movimiento de peón: abre líneas o gana espacio en el momento justo.",
+          "diagramas": [
+            {
+              "id": "IG-21",
+              "fen": "r7/p3kppp/1q6/4PP2/B2rQ3/2b5/P5PP/5R1K w - - 1 24",
+              "turno": "w",
+              "resultado": "1-0",
+              "pregunta": "En pleno medio juego, la jugada buena es de un peón. Juegan las blancas; el rival acaba de jugar …Td4.",
+              "comentario": "24.f6+ gxf6 25.exf6+. Es un jaque doble: el rey tiene que moverse y no alcanza a tapar nada. La jugada buena es un movimiento de peón: abre líneas o gana espacio en el momento justo. (Ejercicio 3RUBS de la base abierta de Lichess (CC0), rating 1371. Stockfish 16 a profundidad 18: f6+ es la mejor (+5,0) y la segunda queda en 0,0.)",
+              "linea": [
+                "f6+",
+                "gxf6",
+                "exf6+"
+              ]
+            }
+          ]
+        },
+        {
+          "titulo": "Entregar un peón para abrir el juego",
+          "resumen": "Un peón ofrecido puede abrir una columna, desviar una pieza o ganar el tiempo que le falta al ataque.",
+          "parrafos": [
+            "Un peón es la unidad más chica del ajedrez, y por eso es la que más fácil se entrega. Se ofrece para abrir una columna contra el rey, para sacar a un defensor de su casilla, para despejarle la diagonal a un alfil o para ganar el tiempo que le falta al ataque. El rival lo toma y, a cambio, queda con una posición peor.",
+            "La clave es que lo que se gana no es material: es tiempo, espacio o líneas abiertas. Por eso estas jugadas se miden por lo que pasa después, no por la cuenta de peones. Si después de que el rival toma tus piezas entran con fuerza, el peón estaba bien entregado.",
+            "Del otro lado, aceptar todo lo que se ofrece es una forma rápida de perder: antes de tomar un peón, pregúntate qué se abre cuando lo tomas."
+          ],
+          "practica": "Revisa tus partidas y marca los peones que tomaste en la apertura y el medio juego. Para cada uno, anota qué se abrió para el rival al tomarlo y si valió la pena.",
+          "tema": "peonsac",
+          "pregunta": "Un peón se puede entregar, y el rival puede tomarlo.",
+          "enlace": "El peón se ofrece en una casilla donde el rival lo puede tomar: lo que importa es lo que abre.",
+          "diagramas": [
+            {
+              "id": "IG-22",
+              "fen": "2B5/7k/pP1p3p/P1p2p2/2P5/3P1pQP/4q3/7K b - - 3 46",
+              "turno": "b",
+              "resultado": "0-1",
+              "pregunta": "Un peón se puede entregar, y el rival puede tomarlo. Juegan las negras; el rival acaba de jugar Rh1.",
+              "comentario": "46…f2 47.Dxf2 Dxf2. El peón avanzado decide: hay que empujarlo o aprovecharlo a tiempo. El peón se ofrece en una casilla donde el rival lo puede tomar: lo que importa es lo que abre. (Ejercicio 2kztb de la base abierta de Lichess (CC0), rating 1486. Stockfish 16 a profundidad 18: f2 es la mejor (+4,1) y la segunda queda en 0,0.)",
+              "linea": [
+                "f2",
+                "Qxf2",
+                "Qxf2"
+              ]
+            }
+          ]
+        },
+        {
+          "titulo": "Finales de peones: contar antes de mover",
+          "resumen": "En un final de solo reyes y peones, cada tiempo decide. Se juega contando, no adivinando.",
+          "parrafos": [
+            "Los finales de peones son los más concretos del ajedrez: no hay piezas que compensen un error, y una sola jugada de más o de menos cambia el resultado. Por eso se juegan contando. Cuántas jugadas tarda cada peón en coronar, cuántas el rey en atraparlo, quién llega primero.",
+            "Las herramientas son pocas y hay que saberlas de memoria: la regla del cuadrado para saber si el rey alcanza a un peón, la oposición para pelear casillas con el rey, el peón pasado alejado que distrae al rey rival, la ruptura de peones que crea un pasado de la nada.",
+            "Antes de cambiar las últimas piezas y entrar en un final de peones, cuenta. Es la decisión más irreversible de la partida: una vez que se cambia, ya no hay vuelta atrás."
+          ],
+          "practica": "Repasa la regla del cuadrado y la oposición en un tablero vacío. Después juega desde cinco finales de peones contra la computadora, contando los tiempos antes de cada jugada.",
+          "tema": "peones",
+          "pregunta": "Final de reyes y peones: cuenta los tiempos.",
+          "enlace": "En el tablero solo hay reyes y peones: la jugada buena sale de contar quién llega primero.",
+          "diagramas": [
+            {
+              "id": "IG-23",
+              "fen": "8/8/8/1kp3P1/8/p1p2K2/P2p4/8 w - - 0 44",
+              "turno": "w",
+              "resultado": "1-0",
+              "pregunta": "Final de reyes y peones: cuenta los tiempos. Juegan las blancas; el rival acaba de jugar …bxc3.",
+              "comentario": "44.Re2 Rc4 45.g6 Rd4 46.g7. El peón avanzado decide: hay que empujarlo o aprovecharlo a tiempo. En el tablero solo hay reyes y peones: la jugada buena sale de contar quién llega primero. (Ejercicio 1fInU de la base abierta de Lichess (CC0), rating 1586. Stockfish 16 a profundidad 18: Re2 es la mejor (+4,4) y la segunda queda en recibe mate en 8.)",
+              "linea": [
+                "Ke2",
+                "Kc4",
+                "g6",
+                "Kd4",
+                "g7"
+              ]
+            }
+          ]
+        },
+        {
+          "titulo": "Frenar al peón pasado",
+          "resumen": "Contra un peón pasado avanzado, lo primero es bloquearlo. Todo lo demás viene después.",
+          "parrafos": [
+            "Si el rival tiene un peón pasado avanzado, la defensa empieza por la casilla que tiene delante. Una pieza que se pone ahí —idealmente un caballo, que bloquea sin perder actividad— lo detiene para siempre. Mientras no se bloquee, cada jugada es un riesgo.",
+            "Las defensas típicas son tres: bloquear la casilla de delante, atacar el peón desde atrás con una torre, o llevar el rey hacia él. Cuál conviene depende de la posición, pero las tres tienen algo en común: se hacen antes de buscar contrajuego. Un peón en la séptima no espera a que termines tu ataque.",
+            "Muchas veces hay una sola jugada que llega a tiempo. Encontrarla pide contar: cuántas jugadas le faltan al peón para coronar y cuántas a tus piezas para frenarlo."
+          ],
+          "practica": "Juega posiciones de final contra la computadora en las que el rival tiene un peón pasado en su quinta o sexta fila. Anota qué pieza usaste para frenarlo y en qué jugada lo bloqueaste.",
+          "tema": "detener",
+          "pregunta": "El rival tiene un peón muy avanzado: hay una sola jugada buena.",
+          "enlace": "El rival tenía un peón muy avanzado: solo una jugada es buena, y es la que llega a tiempo.",
+          "diagramas": [
+            {
+              "id": "IG-24",
+              "fen": "3R4/p6p/P5p1/KP6/1r6/2kp4/8/8 w - - 2 56",
+              "turno": "w",
+              "resultado": "1-0",
+              "pregunta": "El rival tiene un peón muy avanzado: hay una sola jugada buena. Juegan las blancas; el rival acaba de jugar …Tb4.",
+              "comentario": "56.Txd3+ Rc4 57.Td4+ Rxd4 58.Rxb4 g5 59.b6. Es una desviación: se aleja al defensor de lo que defendía. El rival tenía un peón muy avanzado: solo una jugada es buena, y es la que llega a tiempo. (Ejercicio 0gq92 de la base abierta de Lichess (CC0), rating 1568. Stockfish 16 a profundidad 18: Txd3+ es la mejor (+5,0) y la segunda queda en -6,2.)",
+              "linea": [
+                "Rxd3+",
+                "Kc4",
+                "Rd4+",
+                "Kxd4",
+                "Kxb4",
+                "g5",
+                "b6"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "n": 5,
+      "titulo": "La táctica que sostiene el plan",
+      "lecciones": [
+        {
+          "titulo": "La desviación",
+          "resumen": "Si una pieza rival defiende algo importante, obligarla a irse deja eso sin defensa.",
+          "parrafos": [
+            "Muchas posiciones se sostienen con una sola pieza: la torre que cubre la última fila, la dama que defiende un caballo y un peón a la vez, el alfil que tapa la diagonal del rey. La desviación consiste en obligar a esa pieza a irse —con un jaque, una amenaza o un sacrificio que tiene que aceptar— para que lo que defendía quede colgando.",
+            "Para encontrarla, la pregunta es: ¿qué pieza del rival está trabajando de más? Una pieza que defiende dos cosas no puede defender las dos si se la ataca por una de ellas. A esa pieza hay que hacerle una oferta que no pueda rechazar.",
+            "La desviación es la táctica estratégica por excelencia: casi siempre aparece cuando una posición ya está mejor y hay que convertirla."
+          ],
+          "practica": "En diez posiciones de tus partidas, señala para cada pieza del rival qué está defendiendo. Las que defienden dos cosas son las candidatas a la desviación.",
+          "tema": "desviacion",
+          "pregunta": "Una pieza rival sostiene todo: hay que obligarla a irse.",
+          "enlace": "La pieza que defendía tuvo que irse, y lo que cubría quedó sin defensa.",
+          "diagramas": [
+            {
+              "id": "IG-25",
+              "fen": "5rk1/pb1Q3p/1p6/2ppN3/4nr1q/2P5/PP2B1PP/R4RK1 b - - 1 27",
+              "turno": "b",
+              "resultado": "0-1",
+              "pregunta": "Una pieza rival sostiene todo: hay que obligarla a irse. Juegan las negras; el rival acaba de jugar Dd7.",
+              "comentario": "27…Txf1+ 28.Axf1 Df2+ 29.Rh1 Dxf1+ 30.Txf1 Txf1#. El golpe va a la última fila, donde el rey no tiene salida. La pieza que defendía tuvo que irse, y lo que cubría quedó sin defensa. (Ejercicio 0RHWa de la base abierta de Lichess (CC0), rating 1472. Stockfish 16 a profundidad 18: Txf1+ es la mejor (mate en 4) y la segunda queda en -0,2.)",
+              "linea": [
+                "Rxf1+",
+                "Bxf1",
+                "Qf2+",
+                "Kh1",
+                "Qxf1+",
+                "Rxf1",
+                "Rxf1#"
+              ]
+            }
+          ]
+        },
+        {
+          "titulo": "Quitar al defensor",
+          "resumen": "Si una pieza defiende algo, cambiarla o capturarla deja eso a merced del ataque.",
+          "parrafos": [
+            "Es la idea más directa del ajedrez: si algo está defendido por una sola pieza, se elimina esa pieza. Se cambia el caballo que cubre h7, se toma el alfil que defiende la casilla de coronación, se entrega una torre por la pieza que sostenía todo. Después del cambio, lo que estaba defendido ya no lo está.",
+            "La diferencia con la desviación es que acá el defensor no se va: desaparece. Por eso estas jugadas suelen ser capturas, a veces con aparente pérdida de material, que se justifican por lo que se gana en la jugada siguiente.",
+            "Al calcular, mira siempre quién defiende el punto que quieres atacar. Si es una sola pieza, la pregunta siguiente es si la puedes eliminar."
+          ],
+          "practica": "Resuelve diez ejercicios de táctica preguntándote primero: ¿qué casilla quiero atacar y quién la defiende? Anota en cuántos la solución empezaba por eliminar al defensor.",
+          "tema": "defensor",
+          "pregunta": "Hay una pieza rival que defiende algo importante, y se la puede eliminar.",
+          "enlace": "La jugada elimina al defensor: lo que cubría queda a merced de la jugada siguiente.",
+          "diagramas": [
+            {
+              "id": "IG-26",
+              "fen": "6k1/4nppp/B2qp3/2Np4/1P1Pn3/1Q2P3/5PPP/6K1 b - - 0 22",
+              "turno": "b",
+              "resultado": "0-1",
+              "pregunta": "Hay una pieza rival que defiende algo importante, y se la puede eliminar. Juegan las negras; el rival acaba de jugar Axa6.",
+              "comentario": "22…Cxc5 23.bxc5 Dxa6. Hay una jugada intermedia: antes de lo obvio, algo más fuerte. La jugada elimina al defensor: lo que cubría queda a merced de la jugada siguiente. (Ejercicio 2Eueb de la base abierta de Lichess (CC0), rating 1337. Stockfish 16 a profundidad 18: Cxc5 es la mejor (+3,2) y la segunda queda en -2,1.)",
+              "linea": [
+                "Nxc5",
+                "bxc5",
+                "Qxa6"
+              ]
+            }
+          ]
+        },
+        {
+          "titulo": "La interferencia",
+          "resumen": "Poner una pieza entre dos piezas rivales que se defienden corta su comunicación.",
+          "parrafos": [
+            "Las piezas de largo alcance —torres, alfiles, la dama— se defienden a distancia. Una torre en la primera fila cuida a otra en la octava por la columna; un alfil cubre una casilla de coronación desde el otro lado del tablero. La interferencia es poner una pieza propia en medio de esa línea para cortarla.",
+            "La pieza que interfiere muchas veces se pierde, pero no importa: al cortar la línea, una de las dos piezas rivales queda sin defensa, o la casilla que vigilaban queda libre. Es una táctica difícil de ver porque la jugada no ataca nada directamente.",
+            "Para encontrarla, traza las líneas por las que se defienden las piezas rivales y busca una casilla en medio a la que pueda llegar una pieza tuya."
+          ],
+          "practica": "En cinco posiciones de tus partidas, dibuja (o imagina) las líneas por las que se defienden las piezas largas del rival. Busca si alguna casilla de esas líneas estaba al alcance de una pieza tuya.",
+          "tema": "interferencia",
+          "pregunta": "Dos piezas rivales se defienden por una línea que se puede cortar.",
+          "enlace": "Una pieza se mete en la línea entre dos piezas rivales y corta su defensa.",
+          "diagramas": [
+            {
+              "id": "IG-27",
+              "fen": "r6r/p2q1kbp/3p2p1/1p6/3Q4/2N2PP1/PPP4P/4R1K1 w - - 4 25",
+              "turno": "w",
+              "resultado": "1-0",
+              "pregunta": "Dos piezas rivales se defienden por una línea que se puede cortar. Juegan las blancas; el rival acaba de jugar …Ag7.",
+              "comentario": "25.Dd5+ Rf8 26.Dxa8+. Es una interferencia: una pieza se mete entre la defensora y lo que defiende. Una pieza se mete en la línea entre dos piezas rivales y corta su defensa. (Ejercicio 32oY9 de la base abierta de Lichess (CC0), rating 1493. Stockfish 16 a profundidad 18: Dd5+ es la mejor (+5,1) y la segunda queda en -4,4.)",
+              "linea": [
+                "Qd5+",
+                "Kf8",
+                "Qxa8+"
+              ]
+            }
+          ]
+        },
+        {
+          "titulo": "La clavada",
+          "resumen": "Una pieza que no se puede mover sin dejar algo peor detrás está paralizada. La clavada se aprovecha atacándola más.",
+          "parrafos": [
+            "Una clavada es un ataque a una pieza que tiene detrás otra más valiosa, o al rey. Si es al rey, la pieza clavada no se puede mover; si es a otra pieza, moverla cuesta material. En los dos casos queda paralizada, y una pieza paralizada no defiende nada.",
+            "La regla para aprovecharla es atacar la pieza clavada con más fuerzas: un peón que la ataca, otra pieza que se suma. Como no puede escapar, el rival tiene que defenderla, y eso le cuesta tiempo y piezas. Muchas veces la clavada se gana con un simple avance de peón.",
+            "Y el que está clavado tiene que preguntarse cuanto antes cómo salir: quitar la pieza de atrás, interponer otra o contraatacar. Una clavada que dura muchas jugadas casi siempre termina mal."
+          ],
+          "practica": "En tus próximas partidas, cada vez que una pieza quede clavada, anota cuántas jugadas duró la clavada y quién la aprovechó.",
+          "tema": "clavada",
+          "pregunta": "Hay una pieza que no se puede mover sin dejar algo detrás.",
+          "enlace": "En la línea aparece una clavada: una pieza que no puede moverse sin dejar algo más valioso detrás.",
+          "diagramas": [
+            {
+              "id": "IG-28",
+              "fen": "r3kb1r/1p1qpp1p/p4np1/1N1P4/Q7/8/P4PPP/R1B1K2R w KQkq - 0 15",
+              "turno": "w",
+              "resultado": "1-0",
+              "pregunta": "Hay una pieza que no se puede mover sin dejar algo detrás. Juegan las blancas; el rival acaba de jugar …Dxd7.",
+              "comentario": "15.Cc7+ Rd8 16.Dxd7+ Rxd7 17.Cxa8. Es un ataque a la descubierta: al moverse una pieza, se destapa otra. En la línea aparece una clavada: una pieza que no puede moverse sin dejar algo más valioso detrás. (Ejercicio 16rjh de la base abierta de Lichess (CC0), rating 1309. Stockfish 16 a profundidad 18: Cc7+ es la mejor (+4,6) y la segunda queda en -2,7.)",
+              "linea": [
+                "Nc7+",
+                "Kd8",
+                "Qxd7+",
+                "Kxd7",
+                "Nxa8"
+              ]
+            }
+          ]
+        },
+        {
+          "titulo": "Despejar el camino",
+          "resumen": "A veces una pieza propia estorba. Sacarla con ganancia de tiempo deja libre la casilla o la línea que hacía falta.",
+          "parrafos": [
+            "No siempre el obstáculo es del rival. A veces la casilla que necesita la dama está ocupada por un caballo propio, o la línea que llevaría la torre al rey está tapada por un alfil propio. El despeje consiste en sacar esa pieza del medio, idealmente con un jaque, una captura o una amenaza, para que el rival no tenga tiempo de reaccionar.",
+            "Es una idea difícil de ver porque obliga a pensar al revés: no en qué hace la pieza que se mueve, sino en qué libera. La pregunta útil es: ¿qué jugada fuerte tendría si esta pieza mía no estuviera ahí?",
+            "Cuando la respuesta es una jugada ganadora, falta solo encontrar cómo quitar la pieza con fuerza: a veces se sacrifica, a veces da jaque, a veces simplemente ataca algo."
+          ],
+          "practica": "En diez ejercicios de táctica, antes de buscar la solución, pregúntate qué pieza tuya estorba. Anota en cuántos la respuesta era la clave.",
+          "tema": "despeje",
+          "pregunta": "Una pieza propia estorba: hay que sacarla con fuerza.",
+          "enlace": "La idea es despejar: una pieza sale del camino, muchas veces con ganancia de tiempo, y la casilla o la línea que queda libre es la que decide.",
+          "diagramas": [
+            {
+              "id": "IG-29",
+              "fen": "r1b1k2r/pp4pp/1qn1p3/2bpn3/3N4/P1PB1N2/1P4PP/R1BQK2R w KQkq - 0 13",
+              "turno": "w",
+              "resultado": "1-0",
+              "pregunta": "Una pieza propia estorba: hay que sacarla con fuerza. Juegan las blancas; el rival acaba de jugar …Cdxe5.",
+              "comentario": "13.Cxe5 Cxe5 14.Dh5+. Es un despeje: la pieza se aparta para abrirle la línea o la casilla a otra. La idea es despejar: una pieza sale del camino, muchas veces con ganancia de tiempo, y la casilla o la línea que queda libre es la que decide. (Ejercicio 34QQ2 de la base abierta de Lichess (CC0), rating 1437. Stockfish 16 a profundidad 18: Cxe5 es la mejor (+3,9) y la segunda queda en -1,2.)",
+              "linea": [
+                "Nxe5",
+                "Nxe5",
+                "Qh5+"
+              ]
+            }
+          ]
+        },
+        {
+          "titulo": "La enfilada y los rayos X",
+          "resumen": "Dos piezas rivales en la misma línea son un blanco: se ataca la de adelante y se gana la de atrás.",
+          "parrafos": [
+            "La enfilada es una clavada al revés: la pieza de adelante es la más valiosa, y cuando se aparta, la de atrás queda a merced del atacante. Un jaque de torre al rey con la dama detrás en la misma columna, un alfil que ataca a la dama con una torre detrás en la diagonal. El rival tiene que mover la de adelante y pierde la otra.",
+            "Los rayos X son el mismo principio aplicado a la defensa: una pieza sigue actuando a través de otra, como si no estuviera. Una torre defiende una casilla aunque haya una torre rival en el medio, porque si esa torre toma, la propia recaptura.",
+            "Las dos ideas piden mirar las líneas enteras, no solo hasta la primera pieza. Cuando dos piezas rivales comparten fila, columna o diagonal, busca cómo atacarlas por esa línea."
+          ],
+          "practica": "En cinco partidas tuyas, busca los momentos en que dos piezas del rival quedaron en la misma línea. Anota si había una enfilada y si la viste.",
+          "tema": "rayosx",
+          "pregunta": "Dos piezas rivales están en la misma línea.",
+          "enlace": "Las dos piezas rivales estaban en la misma línea: se ataca una y se gana lo que hay detrás.",
+          "diagramas": [
+            {
+              "id": "IG-30",
+              "fen": "6k1/R3K3/8/1r6/5r2/p4N2/8/5R2 b - - 4 50",
+              "turno": "b",
+              "resultado": "0-1",
+              "pregunta": "Dos piezas rivales están en la misma línea. Juegan las negras; el rival acaba de jugar Re7.",
+              "comentario": "50…Tf7+ 51.Rd6 Txa7. Es una enfilada: la pieza de adelante se va y cae la de atrás. Las dos piezas rivales estaban en la misma línea: se ataca una y se gana lo que hay detrás. (Ejercicio 00coU de la base abierta de Lichess (CC0), rating 1472. Stockfish 16 a profundidad 18: Tf7+ es la mejor (+4,7) y la segunda queda en +0,2.)",
+              "linea": [
+                "Rf7+",
+                "Kd6",
+                "Rxa7"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "n": 6,
+      "titulo": "Los finales que hay que saber",
+      "lecciones": [
+        {
+          "titulo": "Finales de torre: la torre activa",
+          "resumen": "Son los finales más frecuentes. Se ganan y se salvan con la actividad de la torre y del rey, más que con los peones.",
+          "parrafos": [
+            "Casi la mitad de los finales que se juegan son de torres, y casi todos se deciden por lo mismo: la actividad. Una torre que ataca peones, que corta al rey rival o que se pone detrás de un pasado vale mucho más que una que defiende pasivamente. Una torre activa con un peón de menos suele salvar; una pasiva con un peón de más a veces no gana.",
+            "Las reglas son pocas: la torre va detrás de los peones pasados (propios y ajenos), el rey se activa apenas se cambian las damas, y antes que defender un peón conviene contraatacar otro. Conocer las posiciones de Lucena y de Philidor es el piso mínimo para jugar estos finales sin regalar medio punto.",
+            "En la práctica, el error más caro es la pasividad: poner la torre a defender un peón y dejar que la torre rival haga lo que quiera."
+          ],
+          "practica": "Repasa las posiciones de Lucena y de Philidor hasta poder jugarlas contra la computadora sin errores. Después revisa tus últimos finales de torres y marca cuándo tu torre estuvo activa y cuándo pasiva.",
+          "tema": "torres",
+          "pregunta": "Final de torres: busca la jugada más activa.",
+          "enlace": "En el tablero solo hay torres, reyes y peones: la jugada buena es la que da actividad o la aprovecha.",
+          "diagramas": [
+            {
+              "id": "IG-31",
+              "fen": "5k2/R5p1/p2P1p1p/1p6/8/4P1PP/5P1K/r7 w - - 1 40",
+              "turno": "w",
+              "resultado": "1-0",
+              "pregunta": "Final de torres: busca la jugada más activa. Juegan las blancas; el rival acaba de jugar …Rf8.",
+              "comentario": "40.Ta8+ Rf7 41.d7. El peón avanzado decide: hay que empujarlo o aprovecharlo a tiempo. En el tablero solo hay torres, reyes y peones: la jugada buena es la que da actividad o la aprovecha. (Ejercicio 2msgm de la base abierta de Lichess (CC0), rating 1620. Stockfish 16 a profundidad 18: Ta8+ es la mejor (+4,7) y la segunda queda en +0,3.)",
+              "linea": [
+                "Ra8+",
+                "Kf7",
+                "d7"
+              ]
+            }
+          ]
+        },
+        {
+          "titulo": "Finales de alfiles",
+          "resumen": "Con alfiles del mismo color, el rey y los peones deciden. Con alfiles de distinto color, las tablas se acercan.",
+          "parrafos": [
+            "Los finales de alfiles tienen dos caras. Cuando los alfiles son del mismo color, pelean por las mismas casillas, y gana quien tenga el rey más activo y los peones mejor puestos: en las casillas del color contrario al de su alfil, para que el alfil los complemente. Un peón de más suele alcanzar para ganar.",
+            "Cuando los alfiles son de distinto color, cada uno domina casillas que el otro no puede tocar, y el bando que defiende puede bloquear los peones rivales en casillas de su color. Por eso incluso con dos peones de menos muchas veces son tablas. El atacante necesita peones pasados en los dos flancos, bien separados.",
+            "Saber de cuál de los dos tipos es el final que tienes delante es lo primero: cambia todo el plan."
+          ],
+          "practica": "Juega contra la computadora dos finales de alfiles, uno del mismo color y otro de distinto color, con un peón de ventaja. Anota qué plan usaste en cada uno y cuál pudiste ganar.",
+          "tema": "alfiles",
+          "pregunta": "Final de alfiles: ¿de qué color son y quién domina las casillas?",
+          "enlace": "Solo quedan alfiles, reyes y peones: la jugada buena sale de pensar en las casillas que cada alfil puede tocar.",
+          "diagramas": [
+            {
+              "id": "IG-32",
+              "fen": "8/p3b2p/1k4p1/1p1p4/P2P4/1P1K1PB1/5P1P/8 b - - 0 45",
+              "turno": "b",
+              "resultado": "0-1",
+              "pregunta": "Final de alfiles: ¿de qué color son y quién domina las casillas? Juegan las negras; el rival acaba de jugar a4.",
+              "comentario": "45…bxa4 46.bxa4 Ra5 47.Ab8 a6 48.Rc3 Rxa4. La clave es una jugada tranquila: sin jaque ni captura, pero sin defensa. Solo quedan alfiles, reyes y peones: la jugada buena sale de pensar en las casillas que cada alfil puede tocar. (Ejercicio 14y0L de la base abierta de Lichess (CC0), rating 1486. Stockfish 16 a profundidad 18: bxa4 es la mejor (+3,9) y la segunda queda en +0,2.)",
+              "linea": [
+                "bxa4",
+                "bxa4",
+                "Ka5",
+                "Bb8",
+                "a6",
+                "Kc3",
+                "Kxa4"
+              ]
+            }
+          ]
+        },
+        {
+          "titulo": "Alfil contra caballo",
+          "resumen": "El alfil prefiere peones en los dos flancos y posiciones abiertas; el caballo, peones en un solo flanco y casillas fijas.",
+          "parrafos": [
+            "La pelea entre alfil y caballo es de las más instructivas del ajedrez. El alfil es de largo alcance: rinde más con peones en los dos flancos, porque puede atender los dos lados a la vez. El caballo es lento pero llega a todas las casillas: rinde más con todos los peones en un solo flanco y con casillas fuertes donde instalarse.",
+            "Los peones deciden casi siempre. Si los peones del bando del alfil están en casillas de su color, el alfil queda malo y el caballo suele ganar; si los peones del rival están fijos en casillas del color del alfil, son blancos fáciles. Al llegar a un final así, lo primero es mirar los peones.",
+            "Y como en todo final, el rey es una pieza más: el que llega primero al centro o a los peones rivales suele decidir."
+          ],
+          "practica": "Juega dos finales de alfil contra caballo contra la computadora, uno con peones en los dos flancos y otro con peones en un solo flanco. Juega cada uno con las dos piezas y compara.",
+          "tema": "alfilcaballo",
+          "pregunta": "Un bando tiene alfil y el otro caballo: ¿quién está mejor y por qué?",
+          "enlace": "En el tablero solo quedan un alfil, un caballo, los reyes y los peones: la jugada buena aprovecha lo que una pieza puede y la otra no.",
+          "diagramas": [
+            {
+              "id": "IG-33",
+              "fen": "8/8/3k3B/8/3pp1p1/n5P1/2P1K3/8 w - - 0 54",
+              "turno": "w",
+              "resultado": "1-0",
+              "pregunta": "Un bando tiene alfil y el otro caballo: ¿quién está mejor y por qué? Juegan las blancas; el rival acaba de jugar …d4.",
+              "comentario": "54.Af8+ Rd5 55.Axa3. Es una enfilada: la pieza de adelante se va y cae la de atrás. En el tablero solo quedan un alfil, un caballo, los reyes y los peones: la jugada buena aprovecha lo que una pieza puede y la otra no. (Ejercicio 1UCwA de la base abierta de Lichess (CC0), rating 1441. Stockfish 16 a profundidad 18: Af8+ es la mejor (+4,9) y la segunda queda en -4,9.)",
+              "linea": [
+                "Bf8+",
+                "Kd5",
+                "Bxa3"
+              ]
+            }
+          ]
+        },
+        {
+          "titulo": "Finales de damas",
+          "resumen": "Con damas, el rey nunca está del todo seguro. Los jaques y el peón pasado más avanzado deciden.",
+          "parrafos": [
+            "Los finales de damas son los más tácticos de todos los finales. La dama sola puede dar jaques desde cualquier lado, así que el rey nunca está del todo seguro, y una serie de jaques puede terminar en tablas por jaque perpetuo o en la captura de una pieza. Por eso se juegan calculando.",
+            "Las reglas generales ayudan: el peón pasado más avanzado vale más que cualquier otra cosa, el rey del bando fuerte busca refugio cerca de su peón, y la dama centralizada defiende y ataca a la vez. Pero lo que decide casi siempre es concreto: un jaque que gana la dama, una coronación con jaque, una enfilada.",
+            "Antes de cada jugada, revisa todos los jaques: los tuyos y los del rival."
+          ],
+          "practica": "Juega contra la computadora tres finales de dama y peón contra dama. Anota cuántos jaques tuviste que esquivar y dónde escondiste a tu rey.",
+          "tema": "damas",
+          "pregunta": "Final de damas: revisa todos los jaques.",
+          "enlace": "Solo quedan damas, reyes y peones: la jugada buena sale de mirar todos los jaques y todas las coronaciones.",
+          "diagramas": [
+            {
+              "id": "IG-34",
+              "fen": "8/8/2Q5/2p5/3P4/3k2K1/8/1q6 w - - 1 46",
+              "turno": "w",
+              "resultado": "1-0",
+              "pregunta": "Final de damas: revisa todos los jaques. Juegan las blancas; el rival acaba de jugar …Rd3.",
+              "comentario": "46.Dg6+ Re3 47.Dxb1. Es una enfilada: la pieza de adelante se va y cae la de atrás. Solo quedan damas, reyes y peones: la jugada buena sale de mirar todos los jaques y todas las coronaciones. (Ejercicio 1cP0o de la base abierta de Lichess (CC0), rating 1443. Stockfish 16 a profundidad 18: Dg6+ es la mejor (+35,1) y la segunda queda en 0,0.)",
+              "linea": [
+                "Qg6+",
+                "Ke3",
+                "Qxb1"
+              ]
+            }
+          ]
+        },
+        {
+          "titulo": "El zugzwang",
+          "resumen": "Hay posiciones en las que mover es perder. La jugada buena deja al rival sin una jugada que no empeore las cosas.",
+          "parrafos": [
+            "En la mayoría de las posiciones, tener que mover es una ventaja: siempre hay algo útil que hacer. Pero en algunas, sobre todo en los finales, cualquier jugada empeora la posición. Eso es el zugzwang: la obligación de mover cuando moverse perjudica.",
+            "Aprovecharlo pide una jugada que no hace nada en apariencia —un movimiento de rey, una pieza que pierde un tiempo— pero que le pasa el turno al rival justo cuando no le conviene. En los finales de peones es la base de la oposición; en los de piezas, aparece cuando el defensor tiene todas sus piezas en su mejor casilla y no puede mejorarlas.",
+            "Para verlo, pregúntate: si el rival tuviera que mover ahora mismo, ¿tendría alguna jugada buena? Si la respuesta es no, busca cómo pasarle el turno."
+          ],
+          "practica": "Estudia la oposición y el triángulo del rey en los finales de peones. Después resuelve cinco ejercicios de zugzwang y, en cada uno, escribe qué jugada buena le quitaste al rival.",
+          "tema": "zugzwang",
+          "pregunta": "A veces lo mejor es pasarle el turno al rival.",
+          "enlace": "Después de esta jugada, cualquier respuesta del rival empeora su posición: eso es el zugzwang.",
+          "diagramas": [
+            {
+              "id": "IG-35",
+              "fen": "8/2p5/p1p1k2p/6p1/PP1K2P1/7P/8/8 w - - 3 42",
+              "turno": "w",
+              "resultado": "1-0",
+              "pregunta": "A veces lo mejor es pasarle el turno al rival. Juegan las blancas; el rival acaba de jugar …Re6.",
+              "comentario": "42.Rc5 Rd7 43.a5 Re8 44.Rxc6. Es un zugzwang: al rival le toca mover y cualquier jugada lo empeora. Después de esta jugada, cualquier respuesta del rival empeora su posición: eso es el zugzwang. (Ejercicio 0LETl de la base abierta de Lichess (CC0), rating 1642. Stockfish 16 a profundidad 18: Rc5 es la mejor (+3,8) y la segunda queda en 0,0.)",
+              "linea": [
+                "Kc5",
+                "Kd7",
+                "a5",
+                "Ke8",
+                "Kxc6"
+              ]
+            }
+          ]
+        },
+        {
+          "titulo": "Tu plan de estudio",
+          "resumen": "Cómo usar este curso para que las ideas aparezcan en tus partidas: repasar, aplicarlas y anotar cuáles te faltan.",
+          "parrafos": [
+            "Las ideas de este curso no se aprenden leyéndolas una vez. Se aprenden viéndolas muchas veces, hasta que aparecen solas cuando la posición las pide. Por eso el libro del curso trae, además de los ejemplos, ejercicios por capítulo y ejercicios mezclados sin decir de qué idea son: en la partida nadie avisa qué idea toca.",
+            "El método que proponemos es sencillo. Una semana por capítulo: lee las lecciones, resuelve los ejemplos en el tablero antes de ver la solución y después los ejercicios del capítulo en el libro. Al final, los ejercicios mezclados, una tanda por día. Anota en cuáles fallas y a qué idea pertenecían.",
+            "Esa lista es tu plan: las ideas que más se repiten entre tus errores son las que tienes que volver a estudiar, con tus propias partidas como material. Llévasela a tu profesor; con ella se arma un entrenamiento a tu medida."
+          ],
+          "practica": "Haz los ejercicios mezclados del libro y arma una lista con las ideas de los que fallaste. Repasa esas lecciones y vuelve a hacer los ejercicios un mes después para ver si la lista se achicó."
+        }
+      ]
+    }
+  ]
+}

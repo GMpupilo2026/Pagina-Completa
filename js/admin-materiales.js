@@ -163,6 +163,17 @@
       ],
     },
     {
+      producto: "ideas-que-ganan-partidas",
+      emoji: "📗",
+      titulo: "Ideas que ganan partidas",
+      autor: "Oscar Angulo Cubero",
+      resumen: "El libro del curso del mismo nombre: las ideas de medio juego y de final que deciden partidas —el ataque al enroque, el rey en el centro, las piezas, los peones, la táctica que sostiene el plan y los finales—, una lección por idea con su ejemplo comentado y su tarea, 72 ejercicios con soluciones y la planilla de repaso para imprimir.",
+      archivos: [
+        { href: "material/ideas-que-ganan-partidas/ideas-que-ganan-partidas.pdf", texto: "📥 El libro en PDF" },
+        { href: "material/ideas-que-ganan-partidas/ideas-que-ganan-partidas-accesible.html", texto: "♿ Versión accesible" },
+      ],
+    },
+    {
       producto: "peonita",
       emoji: "🧸",
       titulo: "Peonita y el reino de las 64 casillas",
