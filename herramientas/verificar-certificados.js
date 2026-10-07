@@ -73,6 +73,13 @@ function estatico() {
   console.log("\n=== Las lecciones de cada curso, en la base y en la página ===");
   const base = leccionesDeLaBase();
   const catalogo = JSON.parse(fs.readFileSync(path.join(RAIZ, "herramientas", "cursos", "catalogo.json"), "utf8")).cursos.map((c) => c.slug).sort();
+  // Una fila que la base tiene sin curso publicado: «cambio-o-no-cambio» lo
+  // dio de alta otra sesión y nunca se publicó (ver «Hubo otro curso del mismo
+  // tema a la vez»). No da certificado porque ninguna página lo pide; si se
+  // borra con su migración, se saca de acá.
+  const SIN_CURSO = ["cambio-o-no-cambio"];
+  igual("las filas sin curso no están en el catálogo", SIN_CURSO.filter((s) => catalogo.includes(s)), []);
+  SIN_CURSO.forEach((slug) => delete base[slug]);
   igual("la base conoce exactamente los cursos del catálogo", Object.keys(base).sort(), catalogo);
   catalogo.forEach((slug) => igual(`${slug}: lecciones en la base = en la página`, base[slug], leccionesDelCurso(slug)));
 }
