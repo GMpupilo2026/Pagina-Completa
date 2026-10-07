@@ -1,7 +1,7 @@
 /* Los materiales de clase en admin.html#materiales: cada material (el libro
  * «Ponte a prueba», los diez volúmenes del banco de ejercicios «Mide tu fuerza»,
- * los libros «Rompe el estancamiento», «Ganar con poco» y «Cambiar o no cambiar»,
- * y los cuentos de Peonita), con sus
+ * los libros «Rompe el estancamiento», «Ganar con poco», «Cambiar o no cambiar»,
+ * «Ideas que ganan partidas» y «Los cimientos del ajedrez», y los cuentos de Peonita), con sus
  * sub-fichas —las pruebas y sus versiones como cuestionario, si las tiene— y
  * CON QUIÉN se comparte.
  *
@@ -194,6 +194,17 @@
       archivos: [
         { href: "material/ideas-que-ganan-partidas/ideas-que-ganan-partidas.pdf", texto: "📥 El libro en PDF" },
         { href: "material/ideas-que-ganan-partidas/ideas-que-ganan-partidas-accesible.html", texto: "♿ Versión accesible" },
+      ],
+    },
+    {
+      producto: "los-cimientos-del-ajedrez",
+      emoji: "🧱",
+      titulo: "Los cimientos del ajedrez",
+      autor: "Oscar Angulo Cubero",
+      resumen: "El libro del curso del mismo nombre: 72 lecciones en tres niveles —táctica, finales, juego posicional, cálculo y aperturas— con partidas clásicas comentadas, cuatro ejercicios por lección y un repaso por nivel, con soluciones.",
+      archivos: [
+        { href: "material/los-cimientos-del-ajedrez/los-cimientos-del-ajedrez.pdf", texto: "📥 El libro en PDF" },
+        { href: "material/los-cimientos-del-ajedrez/los-cimientos-del-ajedrez-accesible.html", texto: "♿ Versión accesible" },
       ],
     },
     {

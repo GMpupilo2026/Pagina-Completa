@@ -23,7 +23,7 @@
     "nombre": "Formación docente"
    }
   ],
-  "total": 729,
+  "total": 874,
   "material": [
    {
     "ruta": "material/cambiar-o-no-cambiar/cambiar-o-no-cambiar.pdf",
@@ -94,6 +94,13 @@
     "tipo": "otro",
     "kb": 2497,
     "libro": "Libro del diagnóstico de nivel"
+   },
+   {
+    "ruta": "material/los-cimientos-del-ajedrez/los-cimientos-del-ajedrez.pdf",
+    "titulo": "Los cimientos del ajedrez — un programa en tres niveles",
+    "tipo": "otro",
+    "kb": 3445,
+    "libro": "Los cimientos del ajedrez"
    },
    {
     "ruta": "material/mide-tu-fuerza-10/mide-tu-fuerza-10.pdf",
@@ -553,6 +560,1310 @@
         "titulo": "Ejercicios",
         "tipo": "ejercicios",
         "kb": 4
+       }
+      ]
+     }
+    ],
+    "otros": []
+   },
+   {
+    "slug": "los-cimientos-del-ajedrez",
+    "titulo": "Los cimientos del ajedrez",
+    "nivel": "intermedio",
+    "lecciones": [
+     {
+      "numero": 1,
+      "titulo": "Los mates de siempre",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/01-los-mates-de-siempre-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 197
+       },
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/01-los-mates-de-siempre-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 6
+       }
+      ]
+     },
+     {
+      "numero": 2,
+      "titulo": "Más dibujos de mate",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/02-mas-dibujos-de-mate-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 201
+       },
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/02-mas-dibujos-de-mate-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 6
+       }
+      ]
+     },
+     {
+      "numero": 3,
+      "titulo": "Las reglas de la apertura",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/03-las-reglas-de-la-apertura-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 202
+       },
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/03-las-reglas-de-la-apertura-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 6
+       }
+      ]
+     },
+     {
+      "numero": 4,
+      "titulo": "Finales de peones: lo básico",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/04-finales-de-peones-lo-basico-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 186
+       },
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/04-finales-de-peones-lo-basico-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 6
+       }
+      ]
+     },
+     {
+      "numero": 5,
+      "titulo": "El jaque doble",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/05-el-jaque-doble-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 198
+       },
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/05-el-jaque-doble-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 6
+       }
+      ]
+     },
+     {
+      "numero": 6,
+      "titulo": "Cuánto vale cada pieza",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/06-cuanto-vale-cada-pieza-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 199
+       },
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/06-cuanto-vale-cada-pieza-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 6
+       }
+      ]
+     },
+     {
+      "numero": 7,
+      "titulo": "El ataque a la descubierta",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/07-el-ataque-a-la-descubierta-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 199
+       },
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/07-el-ataque-a-la-descubierta-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 6
+       }
+      ]
+     },
+     {
+      "numero": 8,
+      "titulo": "Las piezas al centro",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/08-las-piezas-al-centro-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 199
+       },
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/08-las-piezas-al-centro-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 6
+       }
+      ]
+     },
+     {
+      "numero": 9,
+      "titulo": "Mate en dos",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/09-mate-en-dos-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 188
+       },
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/09-mate-en-dos-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 6
+       }
+      ]
+     },
+     {
+      "numero": 10,
+      "titulo": "La oposición",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/10-la-oposicion-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 187
+       },
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/10-la-oposicion-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 6
+       }
+      ]
+     },
+     {
+      "numero": 11,
+      "titulo": "La clavada",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/11-la-clavada-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 192
+       },
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/11-la-clavada-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 6
+       }
+      ]
+     },
+     {
+      "numero": 12,
+      "titulo": "El ataque doble",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/12-el-ataque-doble-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 192
+       },
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/12-el-ataque-doble-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 6
+       }
+      ]
+     },
+     {
+      "numero": 13,
+      "titulo": "Cómo se gana con material de más",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/13-como-se-gana-con-material-de-mas-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 191
+       },
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/13-como-se-gana-con-material-de-mas-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 6
+       }
+      ]
+     },
+     {
+      "numero": 14,
+      "titulo": "Columnas abiertas y casillas fuertes",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/14-columnas-abiertas-y-casillas-fuertes-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 191
+       },
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/14-columnas-abiertas-y-casillas-fuertes-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 6
+       }
+      ]
+     },
+     {
+      "numero": 15,
+      "titulo": "La combinación",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/15-la-combinacion-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 192
+       },
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/15-la-combinacion-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 6
+       }
+      ]
+     },
+     {
+      "numero": 16,
+      "titulo": "Dama contra peón",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/16-dama-contra-peon-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 187
+       },
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/16-dama-contra-peon-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 6
+       }
+      ]
+     },
+     {
+      "numero": 17,
+      "titulo": "El ahogado que salva",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/17-el-ahogado-que-salva-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 186
+       },
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/17-el-ahogado-que-salva-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 6
+       }
+      ]
+     },
+     {
+      "numero": 18,
+      "titulo": "Las variantes forzadas",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/18-las-variantes-forzadas-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 191
+       },
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/18-las-variantes-forzadas-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 6
+       }
+      ]
+     },
+     {
+      "numero": 19,
+      "titulo": "El peón que corona",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/19-el-peon-que-corona-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 187
+       },
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/19-el-peon-que-corona-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 6
+       }
+      ]
+     },
+     {
+      "numero": 20,
+      "titulo": "Los puntos débiles",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/20-los-puntos-debiles-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 192
+       },
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/20-los-puntos-debiles-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 6
+       }
+      ]
+     },
+     {
+      "numero": 21,
+      "titulo": "Combinaciones con peones",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/21-combinaciones-con-peones-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 192
+       },
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/21-combinaciones-con-peones-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 6
+       }
+      ]
+     },
+     {
+      "numero": 22,
+      "titulo": "El alfil equivocado",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/22-el-alfil-equivocado-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 187
+       },
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/22-el-alfil-equivocado-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 6
+       }
+      ]
+     },
+     {
+      "numero": 23,
+      "titulo": "El mate de la coz",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/23-el-mate-de-la-coz-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 192
+       },
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/23-el-mate-de-la-coz-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 6
+       }
+      ]
+     },
+     {
+      "numero": 24,
+      "titulo": "Los gambitos",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/24-los-gambitos-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 193
+       },
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/24-los-gambitos-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 6
+       }
+      ]
+     },
+     {
+      "numero": 25,
+      "titulo": "El molino",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/25-el-molino-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 193
+       },
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/25-el-molino-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 6
+       }
+      ]
+     },
+     {
+      "numero": 26,
+      "titulo": "Los peones débiles",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/26-los-peones-debiles-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 190
+       },
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/26-los-peones-debiles-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 6
+       }
+      ]
+     },
+     {
+      "numero": 27,
+      "titulo": "La última fila",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/27-la-ultima-fila-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 196
+       },
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/27-la-ultima-fila-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 6
+       }
+      ]
+     },
+     {
+      "numero": 28,
+      "titulo": "Aprovechar las debilidades del rey",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/28-aprovechar-las-debilidades-del-rey-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 201
+       },
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/28-aprovechar-las-debilidades-del-rey-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 6
+       }
+      ]
+     },
+     {
+      "numero": 29,
+      "titulo": "La séptima fila",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/29-la-septima-fila-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 191
+       },
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/29-la-septima-fila-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 6
+       }
+      ]
+     },
+     {
+      "numero": 30,
+      "titulo": "Las fortalezas",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/30-las-fortalezas-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 189
+       },
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/30-las-fortalezas-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 6
+       }
+      ]
+     },
+     {
+      "numero": 31,
+      "titulo": "La cuña de peón",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/31-la-cuna-de-peon-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 192
+       },
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/31-la-cuna-de-peon-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 6
+       }
+      ]
+     },
+     {
+      "numero": 32,
+      "titulo": "Las trampas de apertura",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/32-las-trampas-de-apertura-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 193
+       },
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/32-las-trampas-de-apertura-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 7
+       }
+      ]
+     },
+     {
+      "numero": 33,
+      "titulo": "Cómo usar una trampa: la pieza atrapada",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/33-como-usar-una-trampa-la-pieza-atrapada-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 198
+       },
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/33-como-usar-una-trampa-la-pieza-atrapada-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 6
+       }
+      ]
+     },
+     {
+      "numero": 34,
+      "titulo": "Combinaciones de ahogado",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/34-combinaciones-de-ahogado-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 188
+       },
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/34-combinaciones-de-ahogado-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 6
+       }
+      ]
+     },
+     {
+      "numero": 35,
+      "titulo": "La columna semiabierta",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/35-la-columna-semiabierta-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 192
+       },
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/35-la-columna-semiabierta-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 6
+       }
+      ]
+     },
+     {
+      "numero": 36,
+      "titulo": "Mate con alfil y caballo",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/36-mate-con-alfil-y-caballo-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 189
+       },
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/36-mate-con-alfil-y-caballo-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 6
+       }
+      ]
+     },
+     {
+      "numero": 37,
+      "titulo": "Combinaciones en las columnas",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/37-combinaciones-en-las-columnas-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 190
+       },
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/37-combinaciones-en-las-columnas-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 6
+       }
+      ]
+     },
+     {
+      "numero": 38,
+      "titulo": "Los puestos avanzados",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/38-los-puestos-avanzados-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 192
+       },
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/38-los-puestos-avanzados-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 6
+       }
+      ]
+     },
+     {
+      "numero": 39,
+      "titulo": "Combinaciones en las diagonales",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/39-combinaciones-en-las-diagonales-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 189
+       },
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/39-combinaciones-en-las-diagonales-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 6
+       }
+      ]
+     },
+     {
+      "numero": 40,
+      "titulo": "Finales elementales de torre",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/40-finales-elementales-de-torre-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 188
+       },
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/40-finales-elementales-de-torre-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 6
+       }
+      ]
+     },
+     {
+      "numero": 41,
+      "titulo": "Combinaciones con caballos",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/41-combinaciones-con-caballos-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 189
+       },
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/41-combinaciones-con-caballos-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 6
+       }
+      ]
+     },
+     {
+      "numero": 42,
+      "titulo": "Desarrollar las piezas",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/42-desarrollar-las-piezas-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 193
+       },
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/42-desarrollar-las-piezas-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 6
+       }
+      ]
+     },
+     {
+      "numero": 43,
+      "titulo": "El jaque perpetuo",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/43-el-jaque-perpetuo-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 192
+       },
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/43-el-jaque-perpetuo-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 6
+       }
+      ]
+     },
+     {
+      "numero": 44,
+      "titulo": "Mate en dos: los candidatos",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/44-mate-en-dos-los-candidatos-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 188
+       },
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/44-mate-en-dos-los-candidatos-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 6
+       }
+      ]
+     },
+     {
+      "numero": 45,
+      "titulo": "Combinaciones con piezas mayores",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/45-combinaciones-con-piezas-mayores-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 193
+       },
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/45-combinaciones-con-piezas-mayores-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 6
+       }
+      ]
+     },
+     {
+      "numero": 46,
+      "titulo": "Las piezas trabajan juntas",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/46-las-piezas-trabajan-juntas-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 192
+       },
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/46-las-piezas-trabajan-juntas-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 6
+       }
+      ]
+     },
+     {
+      "numero": 47,
+      "titulo": "El caballo que se entrega",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/47-el-caballo-que-se-entrega-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 193
+       },
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/47-el-caballo-que-se-entrega-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 6
+       }
+      ]
+     },
+     {
+      "numero": 48,
+      "titulo": "El zugzwang",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/48-el-zugzwang-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 187
+       },
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/48-el-zugzwang-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 6
+       }
+      ]
+     },
+     {
+      "numero": 49,
+      "titulo": "Combinaciones con alfiles",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/49-combinaciones-con-alfiles-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 193
+       },
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/49-combinaciones-con-alfiles-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 6
+       }
+      ]
+     },
+     {
+      "numero": 50,
+      "titulo": "Las diagonales",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/50-las-diagonales-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 192
+       },
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/50-las-diagonales-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 6
+       }
+      ]
+     },
+     {
+      "numero": 51,
+      "titulo": "El sacrificio de dama",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/51-el-sacrificio-de-dama-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 194
+       },
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/51-el-sacrificio-de-dama-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 6
+       }
+      ]
+     },
+     {
+      "numero": 52,
+      "titulo": "Cambiar hacia un final de peones",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/52-cambiar-hacia-un-final-de-peones-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 187
+       },
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/52-cambiar-hacia-un-final-de-peones-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 6
+       }
+      ]
+     },
+     {
+      "numero": 53,
+      "titulo": "Convertir la ventaja",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/53-convertir-la-ventaja-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 191
+       },
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/53-convertir-la-ventaja-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 6
+       }
+      ]
+     },
+     {
+      "numero": 54,
+      "titulo": "Dama y caballo al ataque",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/54-dama-y-caballo-al-ataque-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 198
+       },
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/54-dama-y-caballo-al-ataque-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 6
+       }
+      ]
+     },
+     {
+      "numero": 55,
+      "titulo": "Las partidas abiertas",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/55-las-partidas-abiertas-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 190
+       },
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/55-las-partidas-abiertas-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 6
+       }
+      ]
+     },
+     {
+      "numero": 56,
+      "titulo": "Dama y torre al ataque",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/56-dama-y-torre-al-ataque-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 189
+       },
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/56-dama-y-torre-al-ataque-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 6
+       }
+      ]
+     },
+     {
+      "numero": 57,
+      "titulo": "Variantes forzadas más largas",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/57-variantes-forzadas-mas-largas-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 192
+       },
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/57-variantes-forzadas-mas-largas-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 6
+       }
+      ]
+     },
+     {
+      "numero": 58,
+      "titulo": "Dama y alfil al ataque",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/58-dama-y-alfil-al-ataque-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 191
+       },
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/58-dama-y-alfil-al-ataque-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 6
+       }
+      ]
+     },
+     {
+      "numero": 59,
+      "titulo": "Las ventajas que no se ven",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/59-las-ventajas-que-no-se-ven-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 187
+       },
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/59-las-ventajas-que-no-se-ven-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 6
+       }
+      ]
+     },
+     {
+      "numero": 60,
+      "titulo": "Alfil contra peones",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/60-alfil-contra-peones-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 186
+       },
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/60-alfil-contra-peones-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 6
+       }
+      ]
+     },
+     {
+      "numero": 61,
+      "titulo": "Dama y peón juntos",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/61-dama-y-peon-juntos-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 191
+       },
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/61-dama-y-peon-juntos-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 6
+       }
+      ]
+     },
+     {
+      "numero": 62,
+      "titulo": "Al ataque",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/62-al-ataque-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 192
+       },
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/62-al-ataque-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 6
+       }
+      ]
+     },
+     {
+      "numero": 63,
+      "titulo": "Torre y alfil",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/63-torre-y-alfil-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 191
+       },
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/63-torre-y-alfil-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 6
+       }
+      ]
+     },
+     {
+      "numero": 64,
+      "titulo": "Caballo contra peón",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/64-caballo-contra-peon-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 189
+       },
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/64-caballo-contra-peon-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 6
+       }
+      ]
+     },
+     {
+      "numero": 65,
+      "titulo": "Torre y caballo",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/65-torre-y-caballo-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 190
+       },
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/65-torre-y-caballo-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 6
+       }
+      ]
+     },
+     {
+      "numero": 66,
+      "titulo": "Las partidas semiabiertas",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/66-las-partidas-semiabiertas-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 190
+       },
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/66-las-partidas-semiabiertas-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 6
+       }
+      ]
+     },
+     {
+      "numero": 67,
+      "titulo": "Combinaciones de coronación",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/67-combinaciones-de-coronacion-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 189
+       },
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/67-combinaciones-de-coronacion-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 6
+       }
+      ]
+     },
+     {
+      "numero": 68,
+      "titulo": "Mate en tres",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/68-mate-en-tres-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 192
+       },
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/68-mate-en-tres-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 6
+       }
+      ]
+     },
+     {
+      "numero": 69,
+      "titulo": "Redes de mate en el final",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/69-redes-de-mate-en-el-final-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 189
+       },
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/69-redes-de-mate-en-el-final-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 6
+       }
+      ]
+     },
+     {
+      "numero": 70,
+      "titulo": "El peón pasado",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/70-el-peon-pasado-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 191
+       },
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/70-el-peon-pasado-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 6
+       }
+      ]
+     },
+     {
+      "numero": 71,
+      "titulo": "Columnas: interferencia y rayos X",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/71-columnas-interferencia-y-rayos-x-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 189
+       },
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/71-columnas-interferencia-y-rayos-x-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 6
+       }
+      ]
+     },
+     {
+      "numero": 72,
+      "titulo": "Dama contra torre",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/72-dama-contra-torre-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 188
+       },
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/72-dama-contra-torre-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 6
        }
       ]
      }
@@ -6729,7 +8040,7 @@
     "nombre": "Formación docente"
    }
   ],
-  "total": 343,
+  "total": 415,
   "material": [],
   "cursos": [
    {
@@ -6878,6 +8189,878 @@
         "titulo": "Presentación",
         "tipo": "presentacion",
         "kb": 68
+       }
+      ]
+     }
+    ],
+    "otros": []
+   },
+   {
+    "slug": "los-cimientos-del-ajedrez",
+    "titulo": "Los cimientos del ajedrez",
+    "nivel": "intermedio",
+    "lecciones": [
+     {
+      "numero": 1,
+      "titulo": "Los mates de siempre",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/01-los-mates-de-siempre.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 2,
+      "titulo": "Más dibujos de mate",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/02-mas-dibujos-de-mate.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 3,
+      "titulo": "Las reglas de la apertura",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/03-las-reglas-de-la-apertura.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 4,
+      "titulo": "Finales de peones: lo básico",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/04-finales-de-peones-lo-basico.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 5,
+      "titulo": "El jaque doble",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/05-el-jaque-doble.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 6,
+      "titulo": "Cuánto vale cada pieza",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/06-cuanto-vale-cada-pieza.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 7,
+      "titulo": "El ataque a la descubierta",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/07-el-ataque-a-la-descubierta.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 8,
+      "titulo": "Las piezas al centro",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/08-las-piezas-al-centro.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 9,
+      "titulo": "Mate en dos",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/09-mate-en-dos.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 10,
+      "titulo": "La oposición",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/10-la-oposicion.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 11,
+      "titulo": "La clavada",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/11-la-clavada.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 12,
+      "titulo": "El ataque doble",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/12-el-ataque-doble.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 13,
+      "titulo": "Cómo se gana con material de más",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/13-como-se-gana-con-material-de-mas.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 14,
+      "titulo": "Columnas abiertas y casillas fuertes",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/14-columnas-abiertas-y-casillas-fuertes.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 15,
+      "titulo": "La combinación",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/15-la-combinacion.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 16,
+      "titulo": "Dama contra peón",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/16-dama-contra-peon.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 17,
+      "titulo": "El ahogado que salva",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/17-el-ahogado-que-salva.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 18,
+      "titulo": "Las variantes forzadas",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/18-las-variantes-forzadas.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 19,
+      "titulo": "El peón que corona",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/19-el-peon-que-corona.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 20,
+      "titulo": "Los puntos débiles",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/20-los-puntos-debiles.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 21,
+      "titulo": "Combinaciones con peones",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/21-combinaciones-con-peones.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 22,
+      "titulo": "El alfil equivocado",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/22-el-alfil-equivocado.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 23,
+      "titulo": "El mate de la coz",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/23-el-mate-de-la-coz.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 24,
+      "titulo": "Los gambitos",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/24-los-gambitos.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 25,
+      "titulo": "El molino",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/25-el-molino.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 26,
+      "titulo": "Los peones débiles",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/26-los-peones-debiles.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 27,
+      "titulo": "La última fila",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/27-la-ultima-fila.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 28,
+      "titulo": "Aprovechar las debilidades del rey",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/28-aprovechar-las-debilidades-del-rey.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 29,
+      "titulo": "La séptima fila",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/29-la-septima-fila.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 30,
+      "titulo": "Las fortalezas",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/30-las-fortalezas.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 31,
+      "titulo": "La cuña de peón",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/31-la-cuna-de-peon.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 32,
+      "titulo": "Las trampas de apertura",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/32-las-trampas-de-apertura.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 33,
+      "titulo": "Cómo usar una trampa: la pieza atrapada",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/33-como-usar-una-trampa-la-pieza-atrapada.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 34,
+      "titulo": "Combinaciones de ahogado",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/34-combinaciones-de-ahogado.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 35,
+      "titulo": "La columna semiabierta",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/35-la-columna-semiabierta.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 36,
+      "titulo": "Mate con alfil y caballo",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/36-mate-con-alfil-y-caballo.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 37,
+      "titulo": "Combinaciones en las columnas",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/37-combinaciones-en-las-columnas.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 38,
+      "titulo": "Los puestos avanzados",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/38-los-puestos-avanzados.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 39,
+      "titulo": "Combinaciones en las diagonales",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/39-combinaciones-en-las-diagonales.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 40,
+      "titulo": "Finales elementales de torre",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/40-finales-elementales-de-torre.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 41,
+      "titulo": "Combinaciones con caballos",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/41-combinaciones-con-caballos.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 42,
+      "titulo": "Desarrollar las piezas",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/42-desarrollar-las-piezas.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 43,
+      "titulo": "El jaque perpetuo",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/43-el-jaque-perpetuo.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 44,
+      "titulo": "Mate en dos: los candidatos",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/44-mate-en-dos-los-candidatos.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 45,
+      "titulo": "Combinaciones con piezas mayores",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/45-combinaciones-con-piezas-mayores.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 46,
+      "titulo": "Las piezas trabajan juntas",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/46-las-piezas-trabajan-juntas.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 47,
+      "titulo": "El caballo que se entrega",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/47-el-caballo-que-se-entrega.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 48,
+      "titulo": "El zugzwang",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/48-el-zugzwang.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 49,
+      "titulo": "Combinaciones con alfiles",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/49-combinaciones-con-alfiles.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 50,
+      "titulo": "Las diagonales",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/50-las-diagonales.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 51,
+      "titulo": "El sacrificio de dama",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/51-el-sacrificio-de-dama.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 52,
+      "titulo": "Cambiar hacia un final de peones",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/52-cambiar-hacia-un-final-de-peones.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 53,
+      "titulo": "Convertir la ventaja",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/53-convertir-la-ventaja.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 54,
+      "titulo": "Dama y caballo al ataque",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/54-dama-y-caballo-al-ataque.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 55,
+      "titulo": "Las partidas abiertas",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/55-las-partidas-abiertas.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 56,
+      "titulo": "Dama y torre al ataque",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/56-dama-y-torre-al-ataque.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 57,
+      "titulo": "Variantes forzadas más largas",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/57-variantes-forzadas-mas-largas.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 58,
+      "titulo": "Dama y alfil al ataque",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/58-dama-y-alfil-al-ataque.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 59,
+      "titulo": "Las ventajas que no se ven",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/59-las-ventajas-que-no-se-ven.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 60,
+      "titulo": "Alfil contra peones",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/60-alfil-contra-peones.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 61,
+      "titulo": "Dama y peón juntos",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/61-dama-y-peon-juntos.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 62,
+      "titulo": "Al ataque",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/62-al-ataque.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 63,
+      "titulo": "Torre y alfil",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/63-torre-y-alfil.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 64,
+      "titulo": "Caballo contra peón",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/64-caballo-contra-peon.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 65,
+      "titulo": "Torre y caballo",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/65-torre-y-caballo.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 66,
+      "titulo": "Las partidas semiabiertas",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/66-las-partidas-semiabiertas.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 67,
+      "titulo": "Combinaciones de coronación",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/67-combinaciones-de-coronacion.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 68,
+      "titulo": "Mate en tres",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/68-mate-en-tres.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 69,
+      "titulo": "Redes de mate en el final",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/69-redes-de-mate-en-el-final.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 70,
+      "titulo": "El peón pasado",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/70-el-peon-pasado.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 71,
+      "titulo": "Columnas: interferencia y rayos X",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/71-columnas-interferencia-y-rayos-x.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 72,
+      "titulo": "Dama contra torre",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/72-dama-contra-torre.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
        }
       ]
      }
@@ -10997,7 +13180,7 @@
     "nombre": "Formación docente"
    }
   ],
-  "total": 348,
+  "total": 421,
   "material": [
    {
     "ruta": "material/cambiar-o-no-cambiar/cambiar-o-no-cambiar-accesible.html",
@@ -11033,6 +13216,13 @@
     "tipo": "accesible",
     "kb": 730,
     "libro": "Libro del diagnóstico de nivel"
+   },
+   {
+    "ruta": "material/los-cimientos-del-ajedrez/los-cimientos-del-ajedrez-accesible.html",
+    "titulo": "Los cimientos del ajedrez",
+    "tipo": "accesible",
+    "kb": 551,
+    "libro": "Los cimientos del ajedrez"
    },
    {
     "ruta": "material/mide-tu-fuerza-10/mide-tu-fuerza-10-accesible.html",
@@ -11294,6 +13484,878 @@
         "titulo": "Material accesible",
         "tipo": "accesible",
         "kb": 11
+       }
+      ]
+     }
+    ],
+    "otros": []
+   },
+   {
+    "slug": "los-cimientos-del-ajedrez",
+    "titulo": "Los cimientos del ajedrez",
+    "nivel": "intermedio",
+    "lecciones": [
+     {
+      "numero": 1,
+      "titulo": "Los mates de siempre",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/01-los-mates-de-siempre-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 14
+       }
+      ]
+     },
+     {
+      "numero": 2,
+      "titulo": "Más dibujos de mate",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/02-mas-dibujos-de-mate-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 14
+       }
+      ]
+     },
+     {
+      "numero": 3,
+      "titulo": "Las reglas de la apertura",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/03-las-reglas-de-la-apertura-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 15
+       }
+      ]
+     },
+     {
+      "numero": 4,
+      "titulo": "Finales de peones: lo básico",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/04-finales-de-peones-lo-basico-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 13
+       }
+      ]
+     },
+     {
+      "numero": 5,
+      "titulo": "El jaque doble",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/05-el-jaque-doble-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 14
+       }
+      ]
+     },
+     {
+      "numero": 6,
+      "titulo": "Cuánto vale cada pieza",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/06-cuanto-vale-cada-pieza-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 15
+       }
+      ]
+     },
+     {
+      "numero": 7,
+      "titulo": "El ataque a la descubierta",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/07-el-ataque-a-la-descubierta-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 14
+       }
+      ]
+     },
+     {
+      "numero": 8,
+      "titulo": "Las piezas al centro",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/08-las-piezas-al-centro-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 14
+       }
+      ]
+     },
+     {
+      "numero": 9,
+      "titulo": "Mate en dos",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/09-mate-en-dos-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 11
+       }
+      ]
+     },
+     {
+      "numero": 10,
+      "titulo": "La oposición",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/10-la-oposicion-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 12
+       }
+      ]
+     },
+     {
+      "numero": 11,
+      "titulo": "La clavada",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/11-la-clavada-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 13
+       }
+      ]
+     },
+     {
+      "numero": 12,
+      "titulo": "El ataque doble",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/12-el-ataque-doble-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 13
+       }
+      ]
+     },
+     {
+      "numero": 13,
+      "titulo": "Cómo se gana con material de más",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/13-como-se-gana-con-material-de-mas-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 13
+       }
+      ]
+     },
+     {
+      "numero": 14,
+      "titulo": "Columnas abiertas y casillas fuertes",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/14-columnas-abiertas-y-casillas-fuertes-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 13
+       }
+      ]
+     },
+     {
+      "numero": 15,
+      "titulo": "La combinación",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/15-la-combinacion-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 13
+       }
+      ]
+     },
+     {
+      "numero": 16,
+      "titulo": "Dama contra peón",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/16-dama-contra-peon-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 13
+       }
+      ]
+     },
+     {
+      "numero": 17,
+      "titulo": "El ahogado que salva",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/17-el-ahogado-que-salva-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 13
+       }
+      ]
+     },
+     {
+      "numero": 18,
+      "titulo": "Las variantes forzadas",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/18-las-variantes-forzadas-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 13
+       }
+      ]
+     },
+     {
+      "numero": 19,
+      "titulo": "El peón que corona",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/19-el-peon-que-corona-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 13
+       }
+      ]
+     },
+     {
+      "numero": 20,
+      "titulo": "Los puntos débiles",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/20-los-puntos-debiles-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 13
+       }
+      ]
+     },
+     {
+      "numero": 21,
+      "titulo": "Combinaciones con peones",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/21-combinaciones-con-peones-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 13
+       }
+      ]
+     },
+     {
+      "numero": 22,
+      "titulo": "El alfil equivocado",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/22-el-alfil-equivocado-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 13
+       }
+      ]
+     },
+     {
+      "numero": 23,
+      "titulo": "El mate de la coz",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/23-el-mate-de-la-coz-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 13
+       }
+      ]
+     },
+     {
+      "numero": 24,
+      "titulo": "Los gambitos",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/24-los-gambitos-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 13
+       }
+      ]
+     },
+     {
+      "numero": 25,
+      "titulo": "El molino",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/25-el-molino-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 13
+       }
+      ]
+     },
+     {
+      "numero": 26,
+      "titulo": "Los peones débiles",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/26-los-peones-debiles-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 13
+       }
+      ]
+     },
+     {
+      "numero": 27,
+      "titulo": "La última fila",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/27-la-ultima-fila-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 14
+       }
+      ]
+     },
+     {
+      "numero": 28,
+      "titulo": "Aprovechar las debilidades del rey",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/28-aprovechar-las-debilidades-del-rey-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 15
+       }
+      ]
+     },
+     {
+      "numero": 29,
+      "titulo": "La séptima fila",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/29-la-septima-fila-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 13
+       }
+      ]
+     },
+     {
+      "numero": 30,
+      "titulo": "Las fortalezas",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/30-las-fortalezas-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 13
+       }
+      ]
+     },
+     {
+      "numero": 31,
+      "titulo": "La cuña de peón",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/31-la-cuna-de-peon-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 13
+       }
+      ]
+     },
+     {
+      "numero": 32,
+      "titulo": "Las trampas de apertura",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/32-las-trampas-de-apertura-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 13
+       }
+      ]
+     },
+     {
+      "numero": 33,
+      "titulo": "Cómo usar una trampa: la pieza atrapada",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/33-como-usar-una-trampa-la-pieza-atrapada-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 14
+       }
+      ]
+     },
+     {
+      "numero": 34,
+      "titulo": "Combinaciones de ahogado",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/34-combinaciones-de-ahogado-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 13
+       }
+      ]
+     },
+     {
+      "numero": 35,
+      "titulo": "La columna semiabierta",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/35-la-columna-semiabierta-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 13
+       }
+      ]
+     },
+     {
+      "numero": 36,
+      "titulo": "Mate con alfil y caballo",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/36-mate-con-alfil-y-caballo-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 13
+       }
+      ]
+     },
+     {
+      "numero": 37,
+      "titulo": "Combinaciones en las columnas",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/37-combinaciones-en-las-columnas-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 13
+       }
+      ]
+     },
+     {
+      "numero": 38,
+      "titulo": "Los puestos avanzados",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/38-los-puestos-avanzados-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 13
+       }
+      ]
+     },
+     {
+      "numero": 39,
+      "titulo": "Combinaciones en las diagonales",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/39-combinaciones-en-las-diagonales-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 13
+       }
+      ]
+     },
+     {
+      "numero": 40,
+      "titulo": "Finales elementales de torre",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/40-finales-elementales-de-torre-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 13
+       }
+      ]
+     },
+     {
+      "numero": 41,
+      "titulo": "Combinaciones con caballos",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/41-combinaciones-con-caballos-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 13
+       }
+      ]
+     },
+     {
+      "numero": 42,
+      "titulo": "Desarrollar las piezas",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/42-desarrollar-las-piezas-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 13
+       }
+      ]
+     },
+     {
+      "numero": 43,
+      "titulo": "El jaque perpetuo",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/43-el-jaque-perpetuo-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 13
+       }
+      ]
+     },
+     {
+      "numero": 44,
+      "titulo": "Mate en dos: los candidatos",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/44-mate-en-dos-los-candidatos-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 13
+       }
+      ]
+     },
+     {
+      "numero": 45,
+      "titulo": "Combinaciones con piezas mayores",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/45-combinaciones-con-piezas-mayores-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 13
+       }
+      ]
+     },
+     {
+      "numero": 46,
+      "titulo": "Las piezas trabajan juntas",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/46-las-piezas-trabajan-juntas-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 13
+       }
+      ]
+     },
+     {
+      "numero": 47,
+      "titulo": "El caballo que se entrega",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/47-el-caballo-que-se-entrega-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 13
+       }
+      ]
+     },
+     {
+      "numero": 48,
+      "titulo": "El zugzwang",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/48-el-zugzwang-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 13
+       }
+      ]
+     },
+     {
+      "numero": 49,
+      "titulo": "Combinaciones con alfiles",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/49-combinaciones-con-alfiles-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 13
+       }
+      ]
+     },
+     {
+      "numero": 50,
+      "titulo": "Las diagonales",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/50-las-diagonales-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 13
+       }
+      ]
+     },
+     {
+      "numero": 51,
+      "titulo": "El sacrificio de dama",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/51-el-sacrificio-de-dama-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 13
+       }
+      ]
+     },
+     {
+      "numero": 52,
+      "titulo": "Cambiar hacia un final de peones",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/52-cambiar-hacia-un-final-de-peones-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 13
+       }
+      ]
+     },
+     {
+      "numero": 53,
+      "titulo": "Convertir la ventaja",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/53-convertir-la-ventaja-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 13
+       }
+      ]
+     },
+     {
+      "numero": 54,
+      "titulo": "Dama y caballo al ataque",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/54-dama-y-caballo-al-ataque-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 14
+       }
+      ]
+     },
+     {
+      "numero": 55,
+      "titulo": "Las partidas abiertas",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/55-las-partidas-abiertas-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 12
+       }
+      ]
+     },
+     {
+      "numero": 56,
+      "titulo": "Dama y torre al ataque",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/56-dama-y-torre-al-ataque-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 12
+       }
+      ]
+     },
+     {
+      "numero": 57,
+      "titulo": "Variantes forzadas más largas",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/57-variantes-forzadas-mas-largas-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 13
+       }
+      ]
+     },
+     {
+      "numero": 58,
+      "titulo": "Dama y alfil al ataque",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/58-dama-y-alfil-al-ataque-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 13
+       }
+      ]
+     },
+     {
+      "numero": 59,
+      "titulo": "Las ventajas que no se ven",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/59-las-ventajas-que-no-se-ven-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 13
+       }
+      ]
+     },
+     {
+      "numero": 60,
+      "titulo": "Alfil contra peones",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/60-alfil-contra-peones-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 13
+       }
+      ]
+     },
+     {
+      "numero": 61,
+      "titulo": "Dama y peón juntos",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/61-dama-y-peon-juntos-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 13
+       }
+      ]
+     },
+     {
+      "numero": 62,
+      "titulo": "Al ataque",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/62-al-ataque-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 12
+       }
+      ]
+     },
+     {
+      "numero": 63,
+      "titulo": "Torre y alfil",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/63-torre-y-alfil-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 13
+       }
+      ]
+     },
+     {
+      "numero": 64,
+      "titulo": "Caballo contra peón",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/64-caballo-contra-peon-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 13
+       }
+      ]
+     },
+     {
+      "numero": 65,
+      "titulo": "Torre y caballo",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/65-torre-y-caballo-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 13
+       }
+      ]
+     },
+     {
+      "numero": 66,
+      "titulo": "Las partidas semiabiertas",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/66-las-partidas-semiabiertas-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 12
+       }
+      ]
+     },
+     {
+      "numero": 67,
+      "titulo": "Combinaciones de coronación",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/67-combinaciones-de-coronacion-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 13
+       }
+      ]
+     },
+     {
+      "numero": 68,
+      "titulo": "Mate en tres",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/68-mate-en-tres-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 13
+       }
+      ]
+     },
+     {
+      "numero": 69,
+      "titulo": "Redes de mate en el final",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/69-redes-de-mate-en-el-final-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 13
+       }
+      ]
+     },
+     {
+      "numero": 70,
+      "titulo": "El peón pasado",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/70-el-peon-pasado-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 13
+       }
+      ]
+     },
+     {
+      "numero": 71,
+      "titulo": "Columnas: interferencia y rayos X",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/71-columnas-interferencia-y-rayos-x-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 13
+       }
+      ]
+     },
+     {
+      "numero": 72,
+      "titulo": "Dama contra torre",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/los-cimientos-del-ajedrez/72-dama-contra-torre-material-accesible.html",
+        "titulo": "Material accesible",
+        "tipo": "accesible",
+        "kb": 13
        }
       ]
      }
@@ -15178,7 +18240,7 @@
   ]
  },
  "imagenes": {
-  "total": 618,
+  "total": 619,
   "grupos": [
    {
     "carpeta": "entreno/img/facil",
@@ -18644,6 +21706,12 @@
       "titulo": "Portada: Ideas que ganan partidas",
       "tipo": "otro",
       "kb": 14
+     },
+     {
+      "ruta": "img/cursos/los-cimientos-del-ajedrez.svg",
+      "titulo": "Portada: Los cimientos del ajedrez",
+      "tipo": "otro",
+      "kb": 8
      },
      {
       "ruta": "img/cursos/partidas-modelo.svg",

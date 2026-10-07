@@ -106,7 +106,7 @@ def es_futuro(b):
     else: return False
     return r.endswith(("ar", "er", "ir")) and len(r) > 3
 
-BLANCA = set("""
+BLANCA = set("""canadá 
 más además después jamás quizás atrás detrás través compás interés inglés francés país
 así aquí allí ahí allá acá está están estás esté estés japonés portugués marqués revés dirá
 demás porqué comité comités subcomité josé café caché también según razón bebé qué holandés escocés parís danés
