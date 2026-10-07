@@ -682,6 +682,7 @@
             { slug: "ganar-con-poco", titulo: "Ganar con poco" },
             { slug: "cambiar-o-no-cambiar", titulo: "Cambiar o no cambiar" },
             { slug: "ideas-que-ganan-partidas", titulo: "Ideas que ganan partidas" },
+            { slug: "los-cimientos-del-ajedrez", titulo: "Los cimientos del ajedrez" },
             { slug: "finales-practicos", titulo: "Finales Prácticos" },
             { slug: "el-mapa-de-los-finales", titulo: "El mapa de los finales" },
             { slug: "estrategia-en-el-final", titulo: "Estrategia en el final" },

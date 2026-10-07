@@ -42,7 +42,7 @@ FIN = "<!-- app: fin -->"
 #     mide-tu-fuerza-2-accesible.html…), rompe-el-estancamiento-accesible.html,
 #     ganar-con-poco-accesible.html, cambiar-o-no-cambiar-accesible.html,
 #     ideas-que-ganan-partidas-accesible.html,
-#     peonita-accesible.html y
+#     los-cimientos-del-ajedrez-accesible.html, peonita-accesible.html y
 #     peonita-trucos-accesible.html son
 #     documentos que se descargan y se abren sueltos, hasta por correo y sin
 #     red: declarar un manifest que no va a poder cargar es peor que no
@@ -70,6 +70,7 @@ FUERA = {"inscripcion.html", "offline.html", "formulario.html",
          "rompe-el-estancamiento-accesible.html",
          "ganar-con-poco-accesible.html",
          "cambiar-o-no-cambiar-accesible.html", "ideas-que-ganan-partidas-accesible.html",
+         "los-cimientos-del-ajedrez-accesible.html",
          "peonita-accesible.html",
          "peonita-trucos-accesible.html"}
 CARPETAS_FUERA = ("cursos/recursos/", "cursos/protegido/", "material/", "herramientas/", "node_modules/")

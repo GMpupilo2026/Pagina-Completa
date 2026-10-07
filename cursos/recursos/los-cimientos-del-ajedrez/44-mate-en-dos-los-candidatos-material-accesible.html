@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mate en dos: los candidatos — Los cimientos del ajedrez — material de estudio</title>
+<meta name="robots" content="noindex">
+<meta name="author" content="Oscar Angulo Cubero">
+<meta name="description" content="Material de estudio en formato accesible de la lección 44 del curso Los cimientos del ajedrez.">
+<style>
+  /* Sin imágenes y sin columnas a propósito: esta versión está hecha para
+     lectores de pantalla y para quien necesita agrandar mucho el texto. */
+  body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+         font-size: 1.15rem; line-height: 1.8; color: #102a43; background: #ffffff;
+         max-width: 42rem; margin: 0 auto; padding: 1.5rem 1rem 4rem; }
+  h1 { font-size: 1.7rem; line-height: 1.3; }
+  h2 { font-size: 1.3rem; margin-top: 2.5rem; border-bottom: 2px solid #102a43; padding-bottom: .3rem; }
+  h3 { font-size: 1.1rem; margin-top: 1.8rem; }
+  a { color: #8a4a00; }
+  dt { font-weight: 700; margin-top: 1rem; }
+  dd { margin: .3rem 0 0; }
+  .posicion { border: 2px solid #243b53; border-radius: .5rem; padding: 1rem; margin: 1rem 0; }
+  .respuesta { background: #f0f4f8; border-left: 4px solid #102a43; padding: .6rem .9rem; }
+  footer { margin-top: 3rem; border-top: 2px solid #102a43; padding-top: 1rem; font-size: .95rem; }
+  /* La vuelta a la plataforma. Este archivo se abre solo, en su propia
+     pestaña: sin estos enlaces no hay forma de regresar al curso salvo el
+     botón "atrás" del navegador, que con lector de pantalla no siempre está
+     a mano. Van arriba y abajo: el documento es largo y quien termina de
+     leerlo no tendría que subir de nuevo para salir. */
+  .volver { margin: 0 0 1.5rem; font-size: 1rem; }
+  footer .volver { margin: 1rem 0 0; }
+  .volver a { display: inline-block; padding: .2rem 0; }
+  @media (prefers-color-scheme: dark) {
+    body { background: #0a1f33; color: #f0f4f8; }
+    h2, footer { border-color: #f0b429; }
+    a { color: #f0b429; }
+    .posicion { border-color: #829ab1; }
+    .respuesta { background: #102a43; border-color: #f0b429; }
+  }
+</style>
+</head>
+<body>
+<nav class="volver" aria-label="Volver a la plataforma">
+  <a href="../../academia/los-cimientos-del-ajedrez.html">← Volver al curso Los cimientos del ajedrez</a>
+  ·
+  <a href="../../../clases.html">Panel de Academia</a>
+</nav>
+<header>
+  <p>Los cimientos del ajedrez · Lección 44</p>
+  <h1>Mate en dos: los candidatos</h1>
+  <p>Material de estudio en formato accesible. Autor: Oscar Angulo Cubero, Ajedrez Integral.</p>
+  <p>Esta versión dice en palabras todo lo que en el cuadernillo en PDF está dibujado: cada
+     posición viene descrita pieza por pieza, así que no hace falta ver ninguna imagen.</p>
+</header>
+
+<h2>1. De qué trata esta lección</h2>
+
+<p>Resolver un mate en dos no es adivinar la jugada brillante, sino ordenar la búsqueda. Primero se hace la lista de jugadas candidatas: los jaques, las capturas y las amenazas fuertes. Pero en los problemas de mate en dos, y en muchas partidas, la jugada buena es tranquila: no da jaque ni captura, sino que crea una amenaza imparable o deja al rival en una posición donde cualquier cosa que haga permite el mate. Por eso, después de los jaques, hay que mirar también las jugadas silenciosas.</p>
+<p>Para cada candidata, haz la segunda parte del trabajo: escribe mentalmente todas las respuestas del rival, no solo la que te gusta. Una jugada es la solución solo si contra cada respuesta tienes un mate. Las señales de que la clave es tranquila son estas: el rey rival ya casi no tiene casillas, los jaques le abren salidas y el rival tiene pocas piezas con jugadas útiles. Mira qué piezas rivales están defendiendo algo y qué pasaría si tuvieran que moverse.</p>
+<p>El error típico es encontrar un mate contra la defensa más natural y jugar sin mirar las otras. En la partida, eso se paga con una pieza sacrificada que no da mate. La disciplina es aburrida pero funciona: lista de candidatas, todas las respuestas, una refutación basta para descartar. Si un jaque no funciona porque el rey escapa, pregúntate qué jugada tranquila le quita esa casilla antes. Muchas veces esa es la solución.</p>
+
+
+<h2>2. Conceptos clave</h2>
+<dl>
+  <dt>Jaque, mate y ahogado</dt>
+  <dd>Jaque es atacar al rey; mate es atacarlo sin que tenga salida; ahogado es que NO esté atacado y aun así no tenga ninguna jugada legal, y eso son tablas.</dd>
+  <dd><strong>El error de siempre:</strong> Buscar el jaque en vez del mate. Dar jaques sueltos deja al rey rival mejor colocado y gasta tiempo. Y en finales ganados, empujar sin mirar: entregar el ahogado es la forma más cara de no ganar.</dd>
+  <dd><strong>Para verlo:</strong> Rey y dama contra rey solo: si el rey negro está en a8 y pones la dama en b6, no hay jaque, pero tampoco hay jugada legal. Es ahogado y la partida queda en tablas con dama de más.</dd>
+  <dt>La iniciativa</dt>
+  <dd>Tenerla es obligar: el rival contesta a lo que tú haces en vez de hacer lo suyo. No es material y no dura para siempre: o se convierte en algo o se pierde.</dd>
+  <dd><strong>El error de siempre:</strong> Soltarla por comer un peón. Perder dos tiempos por un peón devuelve el turno al rival justo cuando estaba obligado, y la ventaja se desarma.</dd>
+  <dd><strong>Para verlo:</strong> En un gambito aceptado, el que entregó el peón tiene iniciativa: cada jugada suya es una amenaza, y el rival no alcanza a desarrollar. Si la iniciativa se apaga, queda un peón menos y nada más.</dd>
+  <dt>La mayoría de peones</dt>
+  <dd>Tener más peones que el rival en un flanco. De una mayoría sana sale un peón pasado, y de un peón pasado sale una partida ganada.</dd>
+  <dd><strong>El error de siempre:</strong> Avanzar primero el peón que no tiene rival enfrente. Se avanza primero el peón candidato —el que no tiene un peón rival directamente delante—, apoyado por los otros.</dd>
+  <dd><strong>Para verlo:</strong> Peones blancos en a2, b2 y c2 contra peones negros en a7 y b7: el candidato es el de c. Se juega c4-c5 y detrás vienen los otros dos.</dd>
+</dl>
+
+<h2>3. Ejemplos del curso</h2>
+<div class="posicion">
+  <h3>Posición 1: Mate en dos: ¿cuáles son tus candidatas y qué puede contestar el rival a cada una? Juegan las blancas; el rival acaba de jugar … dama eva 7.</h3>
+  
+  <p>Piezas blancas: rey en h1; dama en d5; peones en a3, c4, g2, h3.</p>
+  <p>Piezas negras: rey en h8; dama en e7; peones en a7, c5, g7, h7.</p>
+  <p>Juegan las blancas.</p>
+  
+  <p>La línea, jugada por jugada: 33. dama anna 8 jaque, dama david 8, 34. dama captura david 8 jaque mate</p>
+  <p>Resultado: Ganan blancas</p>
+  <p>33. dama anna 8 jaque, dama david 8, 34. dama captura david 8 jaque mate. El golpe va a la última fila, donde el rey no tiene salida. Fíjate en que la jugada buena deja al rival sin ninguna defensa: contra cualquier respuesta hay un mate. (Ejercicio 34sNs de la base abierta de Lichess (CC0), rating 935. Stockfish 16 a profundidad 18: dama anna 8 jaque es la mejor (mate en 2) y la segunda queda en +0,1.)</p>
+  <p>Posición en notación FEN, por si la quieres cargar en un programa: 7k/p3q1pp/8/2pQ4/2P5/P6P/6P1/7K w - - 1 33</p>
+</div>
+
+<h2>4. Ejercicios</h2>
+<ol>
+  <li>Da mate con rey y dama contra rey solo en menos de diez jugadas, empezando con el rey negro en el centro. Hazlo tres veces sin ahogarlo.</li>
+  <li>Arma tres posiciones de ahogado distintas y anótalas. Verlas te enseña a olerlas cuando vas ganando.</li>
+  <li>Revisa una partida tuya y marca en cada jugada quién estaba obligando. Vas a ver el momento exacto en que se te escapó.</li>
+  <li>Juega tres partidas con el compromiso de no comer ningún peón lateral mientras tengas amenazas que hacer.</li>
+  <li>Arma la mayoría del ejemplo y saca el peón pasado tres veces, contando las jugadas que te toma.</li>
+  <li>Revisa tus partidas y busca una donde tuvieras mayoría en un flanco y no la usaras.</li>
+</ol>
+
+<h2>5. Preguntas con su respuesta</h2>
+<p>Contesta en voz alta antes de seguir leyendo: la respuesta viene justo después de cada pregunta.</p>
+<ol>
+  <li>
+    <p>¿Cuáles son las tres maneras de salir de un jaque?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Mover el rey, capturar la pieza que da jaque o interponer una pieza en el camino. Contra un jaque de caballo la interposición no existe: solo mover o capturar.</p>
+  </li>
+  <li>
+    <p>¿Por qué el ahogado son tablas y no derrota?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Porque quien está ahogado no está en jaque: no se le puede dar mate. La regla premia al que se quedó sin jugadas, y por eso es un recurso defensivo real.</p>
+  </li>
+  <li>
+    <p>¿Cómo se evita el ahogado en un final de dama contra rey?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Acercando el rey propio antes de cerrar la jaula, y dejando siempre al rey rival una casilla mientras no sea mate. La regla práctica: si vas a encerrarlo, que sea con el rey cerca.</p>
+  </li>
+  <li>
+    <p>¿Un rey puede quedar al lado del otro?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> No. Un rey no puede moverse a una casilla atacada, y el otro rey ataca las suyas. Por eso los reyes nunca se tocan.</p>
+  </li>
+  <li>
+    <p>¿Cómo se sabe si tienes la iniciativa?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Mira las últimas cinco jugadas del rival: si todas fueron respuestas a algo tuyo, la tienes.</p>
+  </li>
+  <li>
+    <p>¿Iniciativa es lo mismo que ataque?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> No. El ataque va contra el rey; la iniciativa es obligar al rival en cualquier parte del tablero. Un ataque casi siempre nace de una iniciativa que se mantuvo.</p>
+  </li>
+  <li>
+    <p>¿Cómo se defiende quien no la tiene?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Cambiando piezas, devolviendo material para desactivar amenazas y buscando un golpe en el centro. Defender pasivo y esperar rara vez funciona.</p>
+  </li>
+  <li>
+    <p>¿Por qué se dice que la iniciativa es del que mueve?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Porque mover primero es un derecho: las blancas empiezan con medio tiempo de ventaja y toda la teoría de aperturas es una discusión sobre si eso alcanza para algo.</p>
+  </li>
+  <li>
+    <p>¿Qué es el peón candidato?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> El de la mayoría que no tiene un peón rival en su misma columna. Es el que va a llegar a ser pasado, y por eso avanza primero.</p>
+  </li>
+  <li>
+    <p>¿Por qué la mayoría en el flanco de dama suele ser mejor?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Porque los reyes normalmente están en el flanco de rey, así que el peón pasado nace lejos del rey rival: es el peón pasado lejano.</p>
+  </li>
+  <li>
+    <p>¿Qué es una mayoría inválida?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Una donde los peones están doblados o tan trabados que no puede salir un pasado. Tres peones contra dos con dos doblados no es mayoría de nada.</p>
+  </li>
+  <li>
+    <p>¿Cómo se frena una mayoría rival?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Bloqueando el candidato con una pieza y, si se puede, cambiando peones para que la mayoría deje de serlo.</p>
+  </li>
+</ol>
+
+<h2>6. Fuentes</h2>
+<ul>
+  <li>Texto de la lección: curso «Los cimientos del ajedrez» de Ajedrez Integral, de Oscar Angulo Cubero.</li>
+  <li>Conceptos, preguntas y ejercicios de este cuadernillo: material didáctico de Ajedrez Integral, de Oscar Angulo Cubero.</li>
+  <li>Posiciones: archivo de posiciones del propio curso, verificadas jugada por jugada con chess.js y evaluadas con el motor Stockfish que el sitio usa.</li>
+</ul>
+<h3>Para seguir leyendo</h3>
+<p>Obras de referencia sobre estos temas. Este material no reproduce texto de ellas: se listan como lectura recomendada, no como origen de lo que aquí se dice.</p>
+<ul>
+  <li>Irving Chernev, «Logical Chess: Move by Move» (Batsford, 1957).</li>
+  <li>José Raúl Capablanca, «Fundamentos del ajedrez» (1921).</li>
+  <li>Leyes del Ajedrez de la FIDE, FIDE Handbook, capítulo E.I.01.</li>
+  <li>Aron Nimzowitsch, «Mi sistema» (1925).</li>
+  <li>Andrew Soltis, «Pawn Structure Chess» (1976).</li>
+</ul>
+
+<footer>
+  <p>© 2026 Oscar Angulo Cubero · Ajedrez Integral. Material de uso docente para alumnos de la Academia.</p>
+  <p>No se autoriza su reproducción ni su distribución fuera de ella.</p>
+<p class="volver">
+  <a href="../../academia/los-cimientos-del-ajedrez.html">← Volver al curso Los cimientos del ajedrez</a>
+  ·
+  <a href="../../../clases.html">Panel de Academia</a>
+</p>
+</footer>
+</body>
+</html>
