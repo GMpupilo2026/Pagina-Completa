@@ -1647,8 +1647,17 @@ La misma tarea se pidió en dos sesiones. La otra armó «¿Cambio o no cambio?�
 porque no pudo bajar el PDF y dejó pendientes los 22 ejercicios. El dueño
 eligió publicar solo este, que sigue el libro de cerca. Esa otra sesión
 también dejó en la base la fila `cambio-o-no-cambio` de
-`interno.curso_lecciones` (migración `curso_cambio_o_no_cambio`, que no está
-en `supabase/`); no tiene página ni certificado que la use.
+`interno.curso_lecciones` (migración `curso_cambio_o_no_cambio`); no tiene
+página ni certificado que la use. La migración se guardó después en
+`supabase/` tal cual se aplicó (sin ella, la huella del punto de restauración
+no coincidía con la base), y `verificar-certificados.js` tiene esa fila en
+`SIN_CURSO`: la base la conoce y el catálogo no. Borrarla es una línea
+(`delete from interno.curso_lecciones where slug = 'cambio-o-no-cambio'`);
+si se borra, su migración se guarda y la fila sale de `SIN_CURSO`.
+
+Siete migraciones del mismo día (de «Ganar con poco» a «Las mil y una
+lecciones») estaban guardadas con un salto de línea final que la base no
+tiene: la huella se calcula sobre el texto exacto, así que se guardan sin él.
 
 ### Dónde quedó dado de alta
 
