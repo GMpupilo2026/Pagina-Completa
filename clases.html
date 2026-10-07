@@ -176,6 +176,9 @@
                             <button id="start-session-btn" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2 rounded-lg transition-colors text-sm whitespace-nowrap">Iniciar clase</button>
                         </div>
                     </div>
+                    <!-- Su próxima clase, de su horario (asistencia.html → «Tu horario»).
+                         Ver «Tu próxima clase, también para el profe». -->
+                    <p id="profe-proxima" hidden class="mt-3 text-sm text-brand-700 dark:text-brand-200"></p>
                 </div>
             </div>
 
@@ -374,9 +377,15 @@
                  alumno tiene que marcar como leída, y quiénes lo leyeron.
                  Ver pintarAvisoAlumnos() y js/aviso-profe.js. ===== -->
             <section id="aviso-alumnos" hidden aria-labelledby="aviso-alumnos-titulo" class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-10">
-                <h2 id="aviso-alumnos-titulo" class="font-serif text-lg font-bold text-brand-800 dark:text-white"><span aria-hidden="true">📣 </span>Aviso a tus alumnos</h2>
-                <p class="text-sm text-brand-600 dark:text-brand-300 mt-1">Les sale en una ventana que no pueden cerrar hasta marcarlo como leído, en la página de la Academia que abran. Aquí ves quién lo leyó.</p>
-                <form id="aviso-form" class="mt-4 space-y-3" novalidate>
+                <!-- Plegado: es para un día puntual, no para todos los días, y
+                     abierto ocupaba media pantalla antes de las herramientas.
+                     Ver «El panel del profe, más corto». -->
+                <div class="flex flex-wrap items-center justify-between gap-3">
+                    <h2 id="aviso-alumnos-titulo" class="font-serif text-lg font-bold text-brand-800 dark:text-white"><span aria-hidden="true">📣 </span>Aviso a tus alumnos</h2>
+                    <button id="aviso-abrir" type="button" aria-expanded="false" aria-controls="aviso-form" class="rounded-lg px-4 py-2 text-sm font-semibold border border-accent-500 text-brand-800 dark:text-white hover:bg-accent-50 dark:hover:bg-brand-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Escribir un aviso</button>
+                </div>
+                <form id="aviso-form" hidden class="mt-4 space-y-3" novalidate>
+                    <p class="text-sm text-brand-600 dark:text-brand-300">Les sale en una ventana que no pueden cerrar hasta marcarlo como leído, en la página de la Academia que abran. Abajo ves quién lo leyó.</p>
                     <div>
                         <label for="aviso-para" class="block text-sm font-semibold text-brand-800 dark:text-white mb-1">Para</label>
                         <select id="aviso-para" class="w-full sm:w-auto rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 text-brand-800 dark:text-white px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">

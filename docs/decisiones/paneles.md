@@ -1646,6 +1646,51 @@ su lugar y sin caminos repetidos.
   `pruebaCoordinadorRecortado` en `verificar-panel.js`. Rompiendo a propósito
   el filtro `soloAlumno` o dando el informe por enviado, saltan.
 
+### El panel del profe, más corto
+
+El pedido: que el trabajo del profe sea más fácil y menos enredado, que sienta
+la plataforma simple y no quiera irse a probar otras. Medido en la
+computadora, sus herramientas («Tus alumnos», «Tus clases») empezaban recién a
+~1800 px: arriba iba, siempre abierto, el formulario de «Aviso a tus
+alumnos», y abajo dos grupos que no son para dar clase.
+
+- **El aviso va plegado.** Queda el título, el botón «Escribir un aviso»
+  (`aria-expanded`, lleva el foco al texto) y, sin abrir nada, sus últimos
+  avisos con quién los leyó, que es lo que se vuelve a mirar. Mandar un aviso
+  es de un día puntual; tenerlo abierto le cobraba media pantalla todos los
+  días.
+- **«Aprender» y «Jugar y competir» arrancan cerrados también en la
+  computadora** (`cerrado` en `ordenarPanelDocente()`), y se recuerda si los
+  abre (`panel_grupos_abiertos_v1`, la misma clave de siempre). Así lo de sus
+  alumnos y sus clases queda junto. La página bajó de 4128 a 3505 px.
+- Lo prueban `pruebaPlegables` (`verificar-panel.js`) y
+  `verificar-aviso-profe.js`.
+
+### Tu próxima clase, también para el profe
+
+El alumno veía cuándo era su próxima clase; el profe, que es quien puso el
+horario, no lo veía en ningún lado de su panel. Ahora la tarjeta de «Iniciar
+clase» lo dice (`#profe-proxima`, `pintarProximaDelProfe()` en
+`js/clases.js`):
+
+- «Tu próxima clase: Grupo 7B, mañana a las 4:00 p. m., presencial. Ver tu
+  horario». El nombre es el título de la clase, o su subgrupo
+  (`mis_subgrupos()`), o «Grupo X».
+- **Desde 15 minutos antes y mientras dura**: «Te toca clase ahora…» y el
+  título de la clase **ya escrito** en el campo (si no escribió otro): abrirla
+  es un solo toque.
+- **Sin horario, lo invita a ponerlo** (`asistencia.html#horario`): sin él
+  tampoco funcionan la ficha de asistencia llena ni «Tu próxima clase» del
+  alumno.
+- Su horario lo lee él mismo por la RLS de `horario_clases`, así que no hizo
+  falta ninguna función nueva; la cuenta de cuándo toca se hace en el
+  navegador con los días de `HoraCR` (Costa Rica es siempre UTC−6) y mira
+  una semana, igual que `mi_proxima_clase()`.
+- **Solo a quien da clase (`role === "profesor"`), en su propio panel** y sin
+  clase abierta: quien administra no da clase, y mirando a otra persona no es
+  su horario.
+- Lo prueba `pruebaProximaDelProfe` en `verificar-panel.js`.
+
 ### El recorrido del profesor nuevo
 
 El panel del profesor está ordenado (grupos por lo que se viene a hacer,
