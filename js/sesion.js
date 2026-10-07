@@ -679,6 +679,7 @@
             { slug: "estrategia-y-tactica", titulo: "Estrategia y Táctica" },
             { slug: "desequilibrios-de-material", titulo: "Desequilibrios de material" },
             { slug: "rompe-el-estancamiento", titulo: "Rompe el estancamiento" },
+            { slug: "cambiar-o-no-cambiar", titulo: "Cambiar o no cambiar" },
             { slug: "finales-practicos", titulo: "Finales Prácticos" },
             { slug: "el-mapa-de-los-finales", titulo: "El mapa de los finales" },
             { slug: "estrategia-en-el-final", titulo: "Estrategia en el final" },

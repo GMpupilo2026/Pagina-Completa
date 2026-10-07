@@ -220,7 +220,7 @@ function servidorPropio() {
              "mide-tu-fuerza-5-accesible.html", "mide-tu-fuerza-6-accesible.html",
              "mide-tu-fuerza-7-accesible.html", "mide-tu-fuerza-8-accesible.html",
              "mide-tu-fuerza-9-accesible.html", "mide-tu-fuerza-10-accesible.html",
-             "rompe-el-estancamiento-accesible.html", "peonita-accesible.html", "peonita-trucos-accesible.html"].includes(e.name)) continue;
+             "rompe-el-estancamiento-accesible.html", "cambiar-o-no-cambiar-accesible.html", "peonita-accesible.html", "peonita-trucos-accesible.html"].includes(e.name)) continue;
         paginas.push(rel);
       }
     }

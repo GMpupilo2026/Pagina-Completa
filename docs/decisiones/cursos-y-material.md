@@ -1328,11 +1328,111 @@ en `admin.html#materiales` (se comparte como los otros dos) y en «Archivos».
   los cursos: comprueba el nombre que el correo **muestra** para cada curso del
   catálogo, y que lo que la tabla sí nombra coincida con el catálogo.
 
+## El curso y el libro «Cambiar o no cambiar»
+
+Un curso (23 lecciones en cinco bloques) y su libro, de Oscar Angulo Cubero,
+sobre el cambio de piezas en la estrategia: las bases (qué cambia cuando
+cambias, cambiar la mejor pieza del rival, dejarle la mala, la táctica al
+servicio del cambio, el espacio), alfiles y caballos, damas y torres, los
+cambios paradójicos y la técnica moderna, y un bloque con 22 ejercicios.
+
+### Sobre el libro de Diego Valerga: las partidas y los ejercicios, no el texto
+
+El dueño pidió el curso y el libro «de este contenido», con «los ejercicios
+del libro»: el cuadernillo *El cambio de piezas. Transformaciones en la
+estrategia de la partida* (MI Diego Valerga, Álvarez Castillo Editor, 2005),
+que tiene derechos de autor. Se tomó de ahí **lo que son hechos**: las
+jugadas de las partidas modelo y las posiciones de los 22 ejercicios (la
+posición de una partida no es de nadie), además del orden general de los
+temas. **El texto, las explicaciones, las preguntas y las pistas son
+propios**; los comentarios y las soluciones de Valerga no se copian. El libro
+se cita como fuente en el curso, en el PDF y en la versión accesible.
+
+- **Las 33 partidas** (`herramientas/datos/cambiar-o-no-cambiar-partidas.json`)
+  se pasaron del texto escaneado del PDF (OCR con muchos errores: S por 5,
+  l por 1, la e y la c confundidas) a SAN, mirando la imagen de la página
+  cuando el texto no alcanzaba, y se jugaron enteras con chess.js. Cada
+  diagrama del libro se comparó pieza por pieza con la posición de chess.js en
+  su jugada. Las que el libro empieza desde un diagrama traen su
+  `fen_inicial`, leída casilla por casilla.
+- **Malakhov–Markowski (Aeroflot 2004) quedó afuera**: su diagrama impreso
+  pone los caballos donde las jugadas siguientes no se pueden hacer, y elegir
+  otra posición sería inventarla. **Khalifman–Meister se corta antes de la
+  jugada 38**: el libro imprime 38.Rc3, que hace ilegal lo que sigue.
+- **Los 22 ejercicios** (`herramientas/datos/cambiar-o-no-cambiar-ejercicios.json`)
+  se leyeron de sus diagramas (recortes a 300 ppp). Lo que confirma que se
+  leyeron bien es que **la línea de la partida se juega entera desde la
+  FEN**: entre 5 y 25 medias jugadas legales por ejercicio. Por eso
+  `verificar-cambiar-o-no-cambiar.js` exige al menos tres.
+
+### Lo que dice el motor, escrito aunque no le dé la razón a la partida
+
+Son posiciones de estrategia: no tienen una sola jugada que gana, y el curso
+no puede prometer «ganan blancas». Por eso:
+
+- en el visor del curso van con resultado **«*»** (`js/finales-100.js` lo
+  muestra como «Juegan blancas/negras» y la práctica contra el motor no
+  espera un final teórico: dice si ganaste, empataste o perdiste);
+- el generador pasa cada ejemplo y cada ejercicio por Stockfish (a
+  profundidad 22) y **escribe al pie lo que opina el motor de la jugada de la
+  partida**: si es la que elige, si está entre las mejores o si prefiere otra,
+  y cómo quedan las jugadas que el ejercicio compara (`comparar`). Casi todas
+  son la primera o muy cerca; en tres el motor de hoy no está de acuerdo con
+  el comentario clásico (ejercicios 4, 6 y 8) y el texto lo dice: en el 6,
+  por ejemplo, la simplificación que se jugó es justamente la que prefiere el
+  motor, y la «mejor» que se recomendaba sale bastante peor.
+- En el ejercicio 12 la solución es la jugada buena (17.Axf6) y no la de la
+  partida (17.Axd5?); lo que siguió en la partida va aparte (`partida_siguio`).
+
+### Cómo se regenera
+
+    STOCKFISH=/usr/games/stockfish node herramientas/cambiar-o-no-cambiar-generar.js
+    node herramientas/curso-posiciones.js cambiar-o-no-cambiar
+    python3 herramientas/curso-generar.py cambiar-o-no-cambiar
+    CHROME_PATH=… node herramientas/curso-material-generar.js cambiar-o-no-cambiar
+    node herramientas/curso-material-enlazar.js
+    CHROMIUM=… node herramientas/cambiar-o-no-cambiar-pdf.js
+
+El texto del curso (`herramientas/cursos/cambiar-o-no-cambiar.json`) es a
+mano; cada lección dice qué momento de qué partida usa (`ejemplos`: partida,
+ply, cuántas medias jugadas mostrar) y el bloque 5 qué ejercicios lleva. El
+generador escribe el campo `diagramas` de ese JSON y el banco del libro
+(`material/cambiar-o-no-cambiar/banco.js`) en la misma corrida: el ejemplo de
+cada lección es la misma posición en el curso y en el libro. Lo comprueban
+`verificar-cambiar-o-no-cambiar.js` (las partidas jugada por jugada, los 22
+ejercicios, que cada ejemplo salga de su partida en ese momento y sea el mismo
+en el curso y en el libro, el «*» y la nota del motor, la versión accesible) y
+`verificar-cambiar-o-no-cambiar-pdf.py` (protección, autor, la cita de
+Valerga, marca de agua en cada página, capítulos, lecciones, ejercicios y
+partidas).
+
+### Hubo otro curso del mismo tema a la vez
+
+La misma tarea se pidió en dos sesiones. La otra armó «¿Cambio o no cambio?»
+(rama `claude/busy-albattani-m90ezd`, sin mergear) con posiciones de Lichess,
+porque no pudo bajar el PDF y dejó pendientes los 22 ejercicios. El dueño
+eligió publicar solo este, que sigue el libro de cerca. Esa otra sesión
+también dejó en la base la fila `cambio-o-no-cambio` de
+`interno.curso_lecciones` (migración `curso_cambio_o_no_cambio`, que no está
+en `supabase/`); no tiene página ni certificado que la use.
+
+### Dónde quedó dado de alta
+
+En el catálogo (Avanzado, entre «Rompe el estancamiento» y «Cálculo y
+Visualización», con el diagrama de Rubinstein–Salwe), en «Mis cursos» de la
+Academia, en el material de la clase en vivo, en exámenes por curso
+(estrategia y material), en el plan de entrenamiento del área de estrategia y
+en `interno.curso_lecciones` para su certificado
+(`20261007041806_curso_cambiar_o_no_cambiar.sql`). El libro está en
+`admin.html#materiales` (se comparte como los otros) y en «Archivos». Como
+«Rompe el estancamiento», no está en la tienda, y el correo a la casa lo
+nombra desde su slug («cambiar-o-no-cambiar» → «Cambiar o no cambiar»).
+
 ## Los materiales de clase
 
 `admin.html#materiales` («Materiales de clases») junta los materiales para dar
 clase —hoy, «Ponte a prueba», los diez volúmenes del banco de ejercicios «Mide
-tu fuerza», el libro «Rompe el estancamiento» y los cuentos de Peonita— y dice **con quién se comparte cada uno**: una
+tu fuerza», los libros «Rompe el estancamiento» y «Cambiar o no cambiar» y los cuentos de Peonita— y dice **con quién se comparte cada uno**: una
 persona, una academia entera o todos los profesores. Lo pinta
 `js/admin-materiales.js`; lo prueba `verificar-admin.js`.
 

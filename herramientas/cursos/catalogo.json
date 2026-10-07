@@ -163,6 +163,17 @@
       "modalidad": ""
     },
     {
+      "slug": "cambiar-o-no-cambiar",
+      "titulo": "Cambiar o no cambiar",
+      "nivel": "avanzado",
+      "resumen": "El cambio de piezas en la estrategia: qué cambiar, qué conservar y por qué, de Rubinstein y Capablanca a la técnica moderna, con 33 partidas de grandes maestros y 22 ejercicios.",
+      "lecciones": 23,
+      "alt": "Posición de Rubinstein contra Salwe, de 1908: juegan las blancas y el alfil va a c5 para cambiar el alfil negro que cuida las casillas oscuras.",
+      "precio": "",
+      "duracion": "",
+      "modalidad": ""
+    },
+    {
       "slug": "preparacion-para-torneos",
       "titulo": "Preparación para Torneos",
       "nivel": "competicion",

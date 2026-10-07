@@ -1,6 +1,7 @@
 /* Los materiales de clase en admin.html#materiales: cada material (el libro
  * «Ponte a prueba», los diez volúmenes del banco de ejercicios «Mide tu fuerza»,
- * el libro «Rompe el estancamiento» y los cuentos de Peonita), con sus
+ * los libros «Rompe el estancamiento» y «Cambiar o no cambiar», y los cuentos
+ * de Peonita), con sus
  * sub-fichas —las pruebas y sus versiones como cuestionario, si las tiene— y
  * CON QUIÉN se comparte.
  *
@@ -160,6 +161,17 @@
       archivos: [
         { href: "material/rompe-el-estancamiento/rompe-el-estancamiento.pdf", texto: "📥 El libro en PDF" },
         { href: "material/rompe-el-estancamiento/rompe-el-estancamiento-accesible.html", texto: "♿ Versión accesible" },
+      ],
+    },
+    {
+      producto: "cambiar-o-no-cambiar",
+      emoji: "📗",
+      titulo: "Cambiar o no cambiar",
+      autor: "Oscar Angulo Cubero",
+      resumen: "El libro del curso del mismo nombre: el cambio de piezas en la estrategia, una lección por idea con su partida modelo de gran maestro, 22 ejercicios de partidas reales con soluciones y las 33 partidas completas.",
+      archivos: [
+        { href: "material/cambiar-o-no-cambiar/cambiar-o-no-cambiar.pdf", texto: "📥 El libro en PDF" },
+        { href: "material/cambiar-o-no-cambiar/cambiar-o-no-cambiar-accesible.html", texto: "♿ Versión accesible" },
       ],
     },
     {

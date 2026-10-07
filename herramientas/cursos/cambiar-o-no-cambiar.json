@@ -1,0 +1,1703 @@
+{
+  "slug": "cambiar-o-no-cambiar",
+  "titulo": "Cambiar o no cambiar",
+  "nivel": "Intermedio · Avanzado",
+  "emoji": "🔁",
+  "gradiente": "from-brand-700 to-brand-900",
+  "resumen": "El cambio de piezas en la estrategia: qué cambiar, qué conservar y por qué, con 33 partidas de grandes maestros y 22 ejercicios de partidas reales.",
+  "descripcion_larga": "Cada cambio de piezas transforma la partida: unas piezas salen del tablero y otras se quedan con más o menos trabajo. Saber cuál cambiar y cuál conservar es una de las habilidades que más separan al jugador de club del maestro. Este curso recorre las reglas clásicas de Rubinstein y Capablanca (cambiar la mejor pieza del rival, dejarle la mala, no cambiar con más espacio), la lucha entre alfiles y caballos, el cambio de damas y de torres, y los cambios paradójicos de la técnica moderna, con partidas modelo de Steinitz a Kasparov. Termina con 22 ejercicios de partidas de grandes maestros, cada uno comprobado con Stockfish. Toma como guía el libro «El cambio de piezas» del Maestro Internacional Diego Valerga.",
+  "anterior": {
+    "href": "rompe-el-estancamiento.html",
+    "titulo": "Rompe el estancamiento"
+  },
+  "siguiente": {
+    "href": "calculo-y-visualizacion.html",
+    "titulo": "Cálculo y Visualización"
+  },
+  "bloques": [
+    {
+      "n": 1,
+      "titulo": "Las bases del cambio",
+      "lecciones": [
+        {
+          "titulo": "¿Qué cambia cuando cambias?",
+          "resumen": "Un cambio no es un trámite: cada pieza que sale del tablero se lleva un trabajo, y lo que importa es quién se queda con las piezas que trabajan.",
+          "parrafos": [
+            "Las primeras reglas que se aprenden miden las piezas en puntos: el caballo vale tres, la torre cinco. Con esa cuenta, un caballo por un alfil es un cambio «igual» y no hay nada que pensar. Pero una pieza no vale por su nombre, sino por lo que hace en esa posición: el alfil que defiende todas tus casillas negras vale mucho más que tres puntos, y el que está encerrado detrás de sus peones vale bastante menos.",
+            "Por eso, antes de cambiar, la pregunta no es «¿es parejo?», sino «¿qué cambia en la posición?». Qué casillas quedan sin defensor, qué peones quedan débiles o fijos, qué piezas quedan en el tablero y si esas piezas tienen buen futuro. Un cambio parejo en puntos puede dejar una posición muy desigual.",
+            "La primera partida modelo es de Akiba Rubinstein, uno de los grandes maestros de la técnica. Primero cambia un caballo para dejar al rival con un peón retrasado, y después cambia los alfiles de casillas negras para que las casillas c5 y d4 queden sin nadie que las cuide. Ninguno de los dos cambios gana material: los dos ganan casillas."
+          ],
+          "practica": "En tu próxima partida lenta, cada vez que vayas a cambiar una pieza, escribe en la planilla una palabra: qué gana el cambio (una casilla, un peón débil, una pieza mala del rival, tiempo). Si no puedes escribir nada, piénsalo otra vez.",
+          "ejemplos": [
+            {
+              "partida": "rubinstein-salwe-1908",
+              "ply": 28,
+              "plies": 14,
+              "pregunta": "Juegan las blancas. Los peones negros de c6 y d5 están fijos en casillas blancas. ¿Qué cambio aprovecha eso?",
+              "comentario": "15.Ac5 ofrece cambiar el alfil de casillas negras de las negras, el único que podía cuidar c5 y d4. Después del cambio, las blancas se reagrupan sin prisa (16.Tf2, 18.Dd4, 21.Cc5) y ocupan esas casillas con sus piezas. El cambio no gana material: gana casillas."
+            }
+          ],
+          "diagramas": [
+            {
+              "id": "CC-1",
+              "fen": "r4rk1/p3bppp/2p1bn2/1q1p4/N7/4BPP1/PP2P1BP/2RQ1RK1 w - - 1 15",
+              "turno": "w",
+              "resultado": "*",
+              "pregunta": "Akiba Rubinstein – Georg Salwe, Lodz 1908. Juegan las blancas. Los peones negros de c6 y d5 están fijos en casillas blancas. ¿Qué cambio aprovecha eso?",
+              "comentario": "15.Ac5 ofrece cambiar el alfil de casillas negras de las negras, el único que podía cuidar c5 y d4. Después del cambio, las blancas se reagrupan sin prisa (16.Tf2, 18.Dd4, 21.Cc5) y ocupan esas casillas con sus piezas. El cambio no gana material: gana casillas. (Stockfish 17 a profundidad 22: Ac5 está entre las mejores (0,0; el motor prefiere apenas Cc5, +0,2).)",
+              "linea": [
+                "Bc5",
+                "Rfe8",
+                "Rf2",
+                "Nd7",
+                "Bxe7",
+                "Rxe7",
+                "Qd4",
+                "Ree8",
+                "Bf1",
+                "Rec8",
+                "e3",
+                "Qb7",
+                "Nc5",
+                "Nxc5"
+              ]
+            }
+          ]
+        },
+        {
+          "titulo": "Cambia su mejor pieza",
+          "resumen": "Si una pieza del rival hace mucho más que las demás, el cambio que más te conviene suele ser justo ese: sacarla del tablero.",
+          "parrafos": [
+            "En casi todas las posiciones hay una pieza que sostiene el juego de un bando: el alfil de la gran diagonal, el caballo instalado en una casilla fuerte, la torre en la única columna abierta. Si la cambias, lo que queda del rival suele ser bastante más fácil de enfrentar, aunque el cambio sea parejo en puntos.",
+            "Para encontrarla, recorre las piezas del rival y pregúntate de cada una: «si desapareciera, ¿qué perdería?». La que más le haría falta es tu objetivo. A veces se cambia por una pieza tuya que no hace nada; otras veces vale la pena dar una pieza buena.",
+            "En la partida de ejemplo, Rubinstein ofrece cambiar el alfil blanco de b2, que dominaba la gran diagonal. Después del cambio la casilla c3 queda débil, y con los cambios siguientes las negras llegan a un final donde los peones doblados de las blancas deciden."
+          ],
+          "practica": "Toma una partida tuya reciente y, en tres momentos del medio juego, marca cuál era la mejor pieza del rival. ¿Intentaste cambiarla alguna vez?",
+          "ejemplos": [
+            {
+              "partida": "cohn-rubinstein-1909",
+              "ply": 23,
+              "plies": 12,
+              "pregunta": "Juegan las negras. ¿Cuál es la pieza blanca que más trabaja, y cómo la puedes cambiar?",
+              "comentario": "12…Ae5 ofrece el cambio del alfil de b2, la mejor pieza blanca. Tras 13.Axe5 Cxe5 las negras dominan la columna c y la casilla c3 queda floja. Después de 16…Cxc4 y 18…Ce4 las negras siguen cambiando sin miedo: cada simplificación acerca el final donde los peones doblados de las blancas en la columna f pesan."
+            }
+          ],
+          "diagramas": [
+            {
+              "id": "CC-2",
+              "fen": "r6r/pp2kppp/2nbpn2/8/1PB3b1/P3PN2/1B1NKPPP/R6R b - - 6 12",
+              "turno": "b",
+              "resultado": "*",
+              "pregunta": "Erich Cohn – Akiba Rubinstein, San Petersburgo 1909. Juegan las negras. ¿Cuál es la pieza blanca que más trabaja, y cómo la puedes cambiar?",
+              "comentario": "12…Ae5 ofrece el cambio del alfil de b2, la mejor pieza blanca. Tras 13.Axe5 Cxe5 las negras dominan la columna c y la casilla c3 queda floja. Después de 16…Cxc4 y 18…Ce4 las negras siguen cambiando sin miedo: cada simplificación acerca el final donde los peones doblados de las blancas en la columna f pesan. (Stockfish 17 a profundidad 22: Ae5 es la que elige el motor (−0,2).)",
+              "linea": [
+                "Be5",
+                "Bxe5",
+                "Nxe5",
+                "Rhc1",
+                "Rac8",
+                "Bb3",
+                "Rhd8",
+                "Nc4",
+                "Nxc4",
+                "Rxc4",
+                "Rxc4",
+                "Bxc4"
+              ]
+            }
+          ]
+        },
+        {
+          "titulo": "Que le quede su pieza mala",
+          "resumen": "Cuando una pieza del rival queda fuera de juego, cambia todas las demás: cuanto menos material quede, más pesa la pieza que no juega.",
+          "parrafos": [
+            "Si el rival tiene una pieza encerrada, en la práctica juegas con una pieza de más. Pero con el tablero lleno esa ventaja se diluye: las otras piezas del rival pueden crear amenazas que te distraigan. Al cambiar las piezas que sí juegan, la pieza mala queda como lo único que le queda, y la diferencia se vuelve decisiva.",
+            "La regla tiene una contraparte: no cambies la pieza mala del rival. Si puede ofrecerte el cambio, evítalo; si la puedes dejar encerrada para siempre, mejor que quitarla del tablero.",
+            "José Raúl Capablanca lo mostró contra Winter: después de 10.Cd5, encerró el alfil blanco de h4 con …g5 y cambió el caballo, el alfil y las damas. En el final, el alfil de g3 siguió mirando una pared de peones mientras las negras abrían el flanco de dama."
+          ],
+          "practica": "Busca en tus partidas una pieza rival que haya quedado encerrada. ¿Cambiaste las otras piezas para aprovecharla, o la dejaste salir?",
+          "ejemplos": [
+            {
+              "partida": "winter-capablanca-1919",
+              "ply": 23,
+              "plies": 12,
+              "pregunta": "Juegan las negras. El alfil blanco de g3 quedó encerrado detrás del peón de e5 y del de g5. ¿Qué cambios le convienen a las negras?",
+              "comentario": "12…Ag4 prepara el cambio del caballo de f3 y luego el de damas: 13.h3 Axf3 14.Dxf3 Dxf3 15.gxf3 f6. Con las damas fuera, al blanco solo le queda una pieza menor, y es la que no juega. Capablanca llevó el rey al centro y abrió el flanco de dama con …a5, …b5 y …c4."
+            }
+          ],
+          "diagramas": [
+            {
+              "id": "CC-3",
+              "fen": "r1b2rk1/ppp2p2/3b1q1p/2p1p1p1/4P3/3P1NB1/PPP2PPP/R2Q1RK1 b - - 1 12",
+              "turno": "b",
+              "resultado": "*",
+              "pregunta": "William Winter – José Raúl Capablanca, Hastings 1919. Juegan las negras. El alfil blanco de g3 quedó encerrado detrás del peón de e5 y del de g5. ¿Qué cambios le convienen a las negras?",
+              "comentario": "12…Ag4 prepara el cambio del caballo de f3 y luego el de damas: 13.h3 Axf3 14.Dxf3 Dxf3 15.gxf3 f6. Con las damas fuera, al blanco solo le queda una pieza menor, y es la que no juega. Capablanca llevó el rey al centro y abrió el flanco de dama con …a5, …b5 y …c4. (Stockfish 17 a profundidad 22: Ag4 es la que elige el motor (−0,4).)",
+              "linea": [
+                "Bg4",
+                "h3",
+                "Bxf3",
+                "Qxf3",
+                "Qxf3",
+                "gxf3",
+                "f6",
+                "Kg2",
+                "a5",
+                "a4",
+                "Kf7",
+                "Rh1"
+              ]
+            }
+          ]
+        },
+        {
+          "titulo": "Todo menos el alfil malo",
+          "resumen": "Una ventaja chica pero estable crece con cada cambio, siempre que no cambies la pieza que la sostiene.",
+          "parrafos": [
+            "Hay posiciones donde la ventaja no es material ni de ataque: es que una pieza del rival no tiene futuro. Esa clase de ventaja no se esfuma con los cambios; al revés, se agranda. Con menos piezas en el tablero, el rival tiene menos formas de compensar su pieza mala.",
+            "El cuidado está en el orden: hay que cambiar todo lo demás, pero no dejar que el rival libere su pieza mala con una ruptura de peones ni que la cambie por una de las tuyas. Por eso muchas jugadas del bando que tiene la ventaja son de prevención: impedir el avance que le daría aire.",
+            "Anatoly Karpov contra Joël Lautier es un ejemplo perfecto. Con 18.Af3 impidió que las negras liberaran su alfil con …c5, y después cambió las torres, las damas y hasta entregó un peón: el final de alfiles quedó ganado porque el alfil negro siguió encerrado en a8."
+          ],
+          "practica": "Cuando tengas una ventaja de este tipo, antes de cada cambio pregúntate: ¿después de este cambio, la pieza mala del rival sigue siendo mala? Si la respuesta es sí, cambia.",
+          "ejemplos": [
+            {
+              "partida": "karpov-lautier-1992",
+              "ply": 34,
+              "plies": 14,
+              "pregunta": "Juegan las blancas. El alfil negro de b7 está encerrado por sus propios peones y las negras quieren liberarlo con …c5. ¿Qué haces?",
+              "comentario": "18.Af3 ofrece cambiar los alfiles en la gran diagonal: si las negras lo aceptan, se quitan el problema pero las blancas quedan mejor; si no, su alfil se tiene que esconder en a8. Después llegan los cambios de torres (19.Txd8 y 20…Txd1+) y Karpov no se preocupa por simplificar: lo único que importa es que el alfil de a8 siga sin jugar."
+            }
+          ],
+          "diagramas": [
+            {
+              "id": "CC-4",
+              "fen": "3rr1k1/pbq2ppp/1pp1p3/4P3/2P1Q3/7P/PP2BPP1/R2R2K1 w - - 1 18",
+              "turno": "w",
+              "resultado": "*",
+              "pregunta": "Anatoly Karpov – Joël Lautier, Biel 1992. Juegan las blancas. El alfil negro de b7 está encerrado por sus propios peones y las negras quieren liberarlo con …c5. ¿Qué haces?",
+              "comentario": "18.Af3 ofrece cambiar los alfiles en la gran diagonal: si las negras lo aceptan, se quitan el problema pero las blancas quedan mejor; si no, su alfil se tiene que esconder en a8. Después llegan los cambios de torres (19.Txd8 y 20…Txd1+) y Karpov no se preocupa por simplificar: lo único que importa es que el alfil de a8 siga sin jugar. (Stockfish 17 a profundidad 22: Af3 es la que elige el motor (+0,5).)",
+              "linea": [
+                "Bf3",
+                "Ba8",
+                "Rxd8",
+                "Rxd8",
+                "Rd1",
+                "Rxd1+",
+                "Bxd1",
+                "Qd8",
+                "Bf3",
+                "Qd2",
+                "b3",
+                "Qxa2",
+                "b4",
+                "Qa1+"
+              ]
+            }
+          ]
+        },
+        {
+          "titulo": "Cambia las activas, encierra las pasivas",
+          "resumen": "No hace falta cambiar las piezas malas del rival: alcanza con dejarlas sin casillas y cambiar las que sí podrían ayudarlas.",
+          "parrafos": [
+            "Un rival con dos o tres piezas mal colocadas suele intentar dos cosas: cambiar esas piezas o reactivarlas. Tu trabajo es impedir las dos. Las piezas activas del rival son las que pueden ayudar a las pasivas (abriendo líneas, cubriendo casillas), así que conviene cambiarlas primero.",
+            "Después, en vez de buscar más cambios, a veces lo mejor es cerrar: poner los peones de forma que las piezas malas del rival no tengan nunca una casilla. Una pieza encerrada para siempre es casi como una pieza de menos.",
+            "En la partida de ejemplo, Viswanathan Anand cambió el alfil negro de c5, la única pieza negra activa, y cerró el flanco de dama con c4. El caballo negro de a7 y el alfil de g6 quedaron como espectadores."
+          ],
+          "practica": "Mira la última partida que ganaste: ¿había piezas del rival que nunca entraron en juego? ¿Fue por casualidad o por algo que hiciste?",
+          "ejemplos": [
+            {
+              "partida": "anand-adams-2000",
+              "ply": 32,
+              "plies": 12,
+              "pregunta": "Juegan las blancas. El caballo negro de a7 y el alfil de g6 están mal. ¿Cuál es la pieza negra que conviene cambiar?",
+              "comentario": "17.Ae3 ofrece el cambio del alfil de c5, la única pieza negra activa. Tras 17…Axe3 18.Cxe3 las blancas siguen con 20.c4: aceptan un hueco en d4 a cambio de que el caballo de a7 no tenga casillas. Cambiar la pieza activa y encerrar la pasiva fue el plan de toda la partida."
+            }
+          ],
+          "diagramas": [
+            {
+              "id": "CC-5",
+              "fen": "1rq2rk1/n1p2ppp/p2p1nb1/P1b1p3/B1N1P1P1/2PP1N1P/5P2/R1BQ1RK1 w - - 3 17",
+              "turno": "w",
+              "resultado": "*",
+              "pregunta": "Viswanathan Anand – Michael Adams, Campeonato Mundial FIDE, Nueva Delhi 2000. Juegan las blancas. El caballo negro de a7 y el alfil de g6 están mal. ¿Cuál es la pieza negra que conviene cambiar?",
+              "comentario": "17.Ae3 ofrece el cambio del alfil de c5, la única pieza negra activa. Tras 17…Axe3 18.Cxe3 las blancas siguen con 20.c4: aceptan un hueco en d4 a cambio de que el caballo de a7 no tenga casillas. Cambiar la pieza activa y encerrar la pasiva fue el plan de toda la partida. (Stockfish 17 a profundidad 22: Ae3 es la que elige el motor (+0,3).)",
+              "linea": [
+                "Be3",
+                "Bxe3",
+                "Nxe3",
+                "c6",
+                "Qd2",
+                "Qc7",
+                "c4",
+                "c5",
+                "Nh4",
+                "Kh8",
+                "g5",
+                "Nh5"
+              ]
+            }
+          ]
+        },
+        {
+          "titulo": "La táctica al servicio del cambio",
+          "resumen": "Muchas veces el cambio que quieres no se puede hacer directamente. Un pequeño golpe táctico lo fuerza.",
+          "parrafos": [
+            "Saber qué cambio te conviene es la mitad del trabajo; la otra mitad es lograrlo, porque el rival no te lo va a regalar. Ahí entra la táctica: un sacrificio momentáneo, un jaque intermedio o una clavada que obliga a una serie de capturas y deja en el tablero justo lo que querías.",
+            "Para encontrar esos golpes hay que mirar la posición final que se busca y calcular hacia atrás: ¿qué serie de capturas termina ahí? Cuando las capturas se encadenan, cada jugada del rival es forzada, y eso hace el cálculo más corto de lo que parece.",
+            "Capablanca contra Vidmar es un clásico: 16.Cfxe5 parece entregar una pieza, pero la serie de cambios que sigue termina en un final donde las blancas tienen la pareja de alfiles y los peones negros quedan expuestos."
+          ],
+          "practica": "Cuando encuentres una posición final que te gusta (por ejemplo, un final sin damas con mejor estructura), cuenta cuántas capturas forzadas te faltan para llegar a ella. Practícalo con las partidas modelo de esta lección.",
+          "ejemplos": [
+            {
+              "partida": "capablanca-vidmar-1927",
+              "ply": 30,
+              "plies": 12,
+              "pregunta": "Juegan las blancas. ¿Hay una forma de forzar cambios que te dejen un final mejor?",
+              "comentario": "16.Cfxe5 parece entregar una pieza, pero si 16…dxe5 el avance 17.d6 ataca a la vez la dama de c7 y el alfil de e7. Vidmar jugó 16…Aa6, y después de 17.Ab3 dxe5 18.d6 Axd6 19.Dxd6 Dxd6 20.Cxd6 la serie de cambios deja a las blancas con la pareja de alfiles en un final sin damas, con los peones negros del flanco de dama débiles."
+            }
+          ],
+          "diagramas": [
+            {
+              "id": "CC-6",
+              "fen": "r1bn1rk1/2q1bppp/3p1n2/p1pPp3/PpN1P3/2P2N1P/1PB2PP1/R1BQR1K1 w - - 0 16",
+              "turno": "w",
+              "resultado": "*",
+              "pregunta": "José Raúl Capablanca – Milan Vidmar, Nueva York 1927. Juegan las blancas. ¿Hay una forma de forzar cambios que te dejen un final mejor?",
+              "comentario": "16.Cfxe5 parece entregar una pieza, pero si 16…dxe5 el avance 17.d6 ataca a la vez la dama de c7 y el alfil de e7. Vidmar jugó 16…Aa6, y después de 17.Ab3 dxe5 18.d6 Axd6 19.Dxd6 Dxd6 20.Cxd6 la serie de cambios deja a las blancas con la pareja de alfiles en un final sin damas, con los peones negros del flanco de dama débiles. (Stockfish 17 a profundidad 22: el motor prefiere Ae3 (+1,5) a Cfxe5 (+1,1).)",
+              "linea": [
+                "Nfxe5",
+                "Ba6",
+                "Bb3",
+                "dxe5",
+                "d6",
+                "Bxd6",
+                "Qxd6",
+                "Qxd6",
+                "Nxd6",
+                "Nb7",
+                "Nxb7",
+                "Bxb7"
+              ]
+            }
+          ]
+        },
+        {
+          "titulo": "El espacio no se cambia",
+          "resumen": "Con más espacio conviene mantener las piezas; con menos, conviene cambiarlas. El bando apretado respira con cada cambio.",
+          "parrafos": [
+            "Tener más espacio significa tener más casillas para mover las piezas. Al rival, con menos espacio, sus piezas se le estorban unas a otras. Cada cambio le quita a él una pieza que no tenía dónde poner, y a ti una que sí: por eso el bando con más espacio debe evitar los cambios y el bando apretado debe buscarlos.",
+            "Esto lleva a decisiones que parecen raras: renunciar al enroque para no cambiar un alfil, dar un rodeo con una pieza para no ofrecer un cambio, o mover la dama a una casilla menos activa para que el rival no la pueda cambiar.",
+            "Alexander Alekhine contra Capablanca prefirió 10.Rf1, perdiendo el enroque, antes que tapar el jaque con 10.Ad2, que cambiaba los alfiles y aliviaba a las negras. En la otra partida, Karpov, con menos espacio, buscó desde el principio cambiar damas contra Spassky."
+          ],
+          "practica": "En tus partidas, cuando tengas más espacio, cuenta los cambios que hiciste. Si fueron muchos, revisa si alguno era evitable.",
+          "ejemplos": [
+            {
+              "partida": "alekhine-capablanca-1938",
+              "ply": 18,
+              "plies": 12,
+              "pregunta": "Juegan las blancas, que tienen más espacio. Las negras acaban de dar jaque con …Ab4+. ¿Tapas con el alfil o mueves el rey?",
+              "comentario": "10.Rf1 renuncia al enroque para no cambiar los alfiles de casillas negras: 10.Ad2 aliviaba a las negras, que tienen poco espacio. Con 11.a3, 12.b4 y 15.Ca4 las blancas siguen ganando terreno en el flanco de dama, sin cambiar nada."
+            },
+            {
+              "partida": "spassky-karpov-1974",
+              "ply": 0,
+              "plies": 14,
+              "pregunta": "Juegan las negras, con menos espacio. ¿Qué cambio les conviene buscar?",
+              "comentario": "18…Df5 ofrece el cambio de damas. Spassky lo esquiva con 19.De2, pero el plan con 25.Cd2 le permite a Karpov cambiar damas más tarde (25…Dxe2), y sin damas el peón de d6 deja de ser una fuerza para volverse una debilidad."
+            }
+          ],
+          "diagramas": [
+            {
+              "id": "CC-7a",
+              "fen": "r1b1k2r/pp1n1ppp/1qn1p3/3pP3/1b1P4/3B1N2/PP2NPPP/R1BQK2R w KQkq - 1 10",
+              "turno": "w",
+              "resultado": "*",
+              "pregunta": "Alexander Alekhine – José Raúl Capablanca, Torneo AVRO, Países Bajos 1938. Juegan las blancas, que tienen más espacio. Las negras acaban de dar jaque con …Ab4+. ¿Tapas con el alfil o mueves el rey?",
+              "comentario": "10.Rf1 renuncia al enroque para no cambiar los alfiles de casillas negras: 10.Ad2 aliviaba a las negras, que tienen poco espacio. Con 11.a3, 12.b4 y 15.Ca4 las blancas siguen ganando terreno en el flanco de dama, sin cambiar nada. (Stockfish 17 a profundidad 22: Rf1 es la que elige el motor (+0,6).)",
+              "linea": [
+                "Kf1",
+                "Be7",
+                "a3",
+                "Nf8",
+                "b4",
+                "Bd7",
+                "Be3",
+                "Nd8",
+                "Nc3",
+                "a5",
+                "Na4",
+                "Qa7"
+              ]
+            },
+            {
+              "id": "CC-7b",
+              "fen": "3rr1k1/pp1nbpp1/2p1p1p1/q7/2PPQ3/PP3N2/1B3PPP/3RR1K1 b - - 0 18",
+              "turno": "b",
+              "resultado": "*",
+              "pregunta": "Boris Spassky – Anatoly Karpov, Leningrado (semifinal de Candidatos) 1974. Juegan las negras, con menos espacio. ¿Qué cambio les conviene buscar?",
+              "comentario": "18…Df5 ofrece el cambio de damas. Spassky lo esquiva con 19.De2, pero el plan con 25.Cd2 le permite a Karpov cambiar damas más tarde (25…Dxe2), y sin damas el peón de d6 deja de ser una fuerza para volverse una debilidad. (Stockfish 17 a profundidad 22: Df5 es la que elige el motor (0,0).)",
+              "linea": [
+                "Qf5",
+                "Qe2",
+                "g5",
+                "h3",
+                "g4",
+                "hxg4",
+                "Qxg4",
+                "d5",
+                "cxd5",
+                "cxd5",
+                "e5",
+                "d6",
+                "Bf6",
+                "Nd2"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "n": 2,
+      "titulo": "Alfiles y caballos",
+      "lecciones": [
+        {
+          "titulo": "La pareja de alfiles",
+          "resumen": "Los dos alfiles juntos cubren casillas de los dos colores y trabajan a distancia. Para que se luzcan hay que abrir la posición y quitarle casillas a las piezas del rival.",
+          "parrafos": [
+            "Hoy casi todos los grandes maestros prefieren el alfil al caballo en la mayoría de las posiciones, y la pareja de alfiles contra alfil y caballo es una ventaja real. Pero no gana sola: hay que darle trabajo. Los alfiles necesitan diagonales abiertas, y el plan suele ser avanzar los peones para quitarle casillas al caballo rival y abrir líneas.",
+            "Con la pareja, no hay apuro por cambiar. Solo se devuelve un alfil cuando el cambio deja algo concreto: un final de peones ganado, una pieza rival activa que desaparece, un rey que entra.",
+            "Wilhelm Steinitz, el primer campeón del mundo, fue quien mostró la técnica de la pareja de alfiles. Contra Englisch, primero quitó casillas al caballo de b3 con …b6 y …c5, y solo al final cambió alfiles para llegar a un final de peones ganado."
+          ],
+          "practica": "Juega desde la posición del ejemplo contra el motor, con la pareja de alfiles. El objetivo es no cambiar ningún alfil antes de que el caballo rival se quede sin casillas.",
+          "ejemplos": [
+            {
+              "partida": "englisch-steinitz-1883",
+              "ply": 0,
+              "plies": 14,
+              "pregunta": "Juegan las negras, con los dos alfiles. ¿Cómo se aprovechan?",
+              "comentario": "17…b6 y …c5 le quitan al caballo de b3 todas sus casillas de salida. Las negras siguen ganando terreno con …f6, …Rf7 y …g5, y no cambian nada mientras no les sirva. Solo más tarde cambian los alfiles, uno por uno, cuando el final que queda está ganado."
+            }
+          ],
+          "diagramas": [
+            {
+              "id": "CC-8",
+              "fen": "3rr1k1/ppp2pbp/6p1/8/6b1/1NP1B3/PP3PPP/R4RK1 b - - 0 17",
+              "turno": "b",
+              "resultado": "*",
+              "pregunta": "Berthold Englisch – Wilhelm Steinitz, Londres 1883. Juegan las negras, con los dos alfiles. ¿Cómo se aprovechan?",
+              "comentario": "17…b6 y …c5 le quitan al caballo de b3 todas sus casillas de salida. Las negras siguen ganando terreno con …f6, …Rf7 y …g5, y no cambian nada mientras no les sirva. Solo más tarde cambian los alfiles, uno por uno, cuando el final que queda está ganado. (Stockfish 17 a profundidad 22: b6 es la que elige el motor (−0,2).)",
+              "linea": [
+                "b6",
+                "h3",
+                "Be6",
+                "Rfd1",
+                "c5",
+                "Bg5",
+                "f6",
+                "Bf4",
+                "Kf7",
+                "f3",
+                "g5",
+                "Rxd8",
+                "Rxd8",
+                "Be3"
+              ]
+            }
+          ]
+        },
+        {
+          "titulo": "Cuando el caballo vale más",
+          "resumen": "En una posición cerrada, con casillas fuertes y sin diagonales, el caballo puede ser mejor que el alfil. Entonces vale la pena entregar la pareja.",
+          "parrafos": [
+            "El caballo no depende de las diagonales: salta. Por eso es la pieza de las posiciones cerradas, con cadenas de peones trabadas. Y necesita puestos: casillas fuertes, defendidas por un peón propio, donde ningún peón rival lo pueda echar.",
+            "Si tienes caballo contra alfil, tu plan es cerrar la posición y poner tus peones en casillas que el alfil rival no pueda atacar. Si tienes el alfil, tu plan es el contrario: abrir. Antes de cambiar un alfil por un caballo, pregúntate cuál de esos dos planes se va a poder cumplir.",
+            "Bobby Fischer contra Spassky, en el Campeonato Mundial de 1972, dio su alfil por el caballo de c3, cerró la posición y aceptó peones doblados para que los alfiles blancos no tuvieran nada que atacar. Su caballo terminó siendo la pieza más fuerte del tablero."
+          ],
+          "practica": "En tus partidas, cuando cambies un alfil por un caballo, anota si la posición estaba abierta o cerrada. Después de diez partidas, mira si los cambios te salieron bien en un tipo de posición y mal en el otro.",
+          "ejemplos": [
+            {
+              "partida": "spassky-fischer-1972",
+              "ply": 11,
+              "plies": 12,
+              "pregunta": "Juegan las negras. ¿Te conviene dar el alfil de b4 por el caballo de c3?",
+              "comentario": "6…Axc3+ 7.bxc3 entrega la pareja de alfiles, pero deja a las blancas con peones doblados en la columna c. Fischer sigue con …d6 y …e5 para cerrar el centro: con la posición trabada, los alfiles blancos no encuentran diagonales y los caballos negros sí encuentran casillas."
+            },
+            {
+              "partida": "ivanchuk-kasparov-1991",
+              "ply": 16,
+              "plies": 12,
+              "pregunta": "Juegan las blancas. ¿Conviene entregar el alfil de g5 por el caballo de f6?",
+              "comentario": "9.Axf6 le da la pareja de alfiles a las negras, pero les deja peones doblados y una posición que se va a cerrar. Ivanchuk juega c4, Cc3 y prepara b4: busca casillas para sus caballos en el flanco de dama, donde los alfiles negros no tienen trabajo."
+            }
+          ],
+          "diagramas": [
+            {
+              "id": "CC-9a",
+              "fen": "r1bqk2r/pp1p1ppp/2n1pn2/2p5/1bPP4/2NBPN2/PP3PPP/R1BQK2R b KQkq - 2 6",
+              "turno": "b",
+              "resultado": "*",
+              "pregunta": "Boris Spassky – Robert Fischer, Reikiavik (Campeonato Mundial) 1972. Juegan las negras. ¿Te conviene dar el alfil de b4 por el caballo de c3?",
+              "comentario": "6…Axc3+ 7.bxc3 entrega la pareja de alfiles, pero deja a las blancas con peones doblados en la columna c. Fischer sigue con …d6 y …e5 para cerrar el centro: con la posición trabada, los alfiles blancos no encuentran diagonales y los caballos negros sí encuentran casillas. (Stockfish 17 a profundidad 22: Axc3+ es la que elige el motor (+0,2).)",
+              "linea": [
+                "Bxc3+",
+                "bxc3",
+                "d6",
+                "e4",
+                "e5",
+                "d5",
+                "Ne7",
+                "Nh4",
+                "h6",
+                "f4",
+                "Ng6",
+                "Nxg6"
+              ]
+            },
+            {
+              "id": "CC-9b",
+              "fen": "r2qkb1r/1p1bppp1/p2p1n1p/6B1/3QP3/5N2/PPP2PPP/RN3RK1 w kq - 0 9",
+              "turno": "w",
+              "resultado": "*",
+              "pregunta": "Vassily Ivanchuk – Garry Kasparov, Linares 1991. Juegan las blancas. ¿Conviene entregar el alfil de g5 por el caballo de f6?",
+              "comentario": "9.Axf6 le da la pareja de alfiles a las negras, pero les deja peones doblados y una posición que se va a cerrar. Ivanchuk juega c4, Cc3 y prepara b4: busca casillas para sus caballos en el flanco de dama, donde los alfiles negros no tienen trabajo. (Stockfish 17 a profundidad 22: Axf6 es la que elige el motor (+0,6).)",
+              "linea": [
+                "Bxf6",
+                "gxf6",
+                "c4",
+                "e6",
+                "Nc3",
+                "Rc8",
+                "Kh1",
+                "h5",
+                "a4",
+                "h4",
+                "h3",
+                "Be7"
+              ]
+            }
+          ]
+        },
+        {
+          "titulo": "El alfil malo de toda la vida",
+          "resumen": "Un alfil es malo cuando sus propios peones están fijos en casillas de su color. Contra él, cambia su alfil bueno y las damas.",
+          "parrafos": [
+            "El alfil malo clásico es el que ve casi todo su camino tapado por sus propios peones, fijos en casillas de su color. Las casillas del otro color quedan sin defensa: nadie las puede cuidar con un alfil.",
+            "Si el rival tiene un alfil malo, el cambio que buscas es el de su alfil bueno. Sin él, las casillas del otro color quedan para tus piezas. Y si además cambias las damas, el alfil malo queda condenado a defender peones en el final.",
+            "Peter Leko lo hizo contra Vallejo: con 16.Ac5 cambió el alfil bueno de las negras, enseguida las damas, y en el final las negras quedaron con un alfil de casillas blancas que no podía hacer otra cosa que defender."
+          ],
+          "practica": "En una posición tuya con alfil malo, haz la lista de las casillas del otro color cerca de tu rey y de tus peones. ¿Quién las cuida? Esa es la lista de lo que el rival va a atacar.",
+          "ejemplos": [
+            {
+              "partida": "leko-vallejo-2003",
+              "ply": 30,
+              "plies": 12,
+              "pregunta": "Juegan las blancas. ¿Qué cambio deja a las negras con un alfil malo?",
+              "comentario": "16.Ac5 ofrece el cambio del alfil de d6, el bueno de las negras. Tras 16…Axc5 17.Dxc5 Dxc5 18.Cxc5 también se fueron las damas, y a las negras les queda el alfil de c8, que tiene que cuidar peones. Con 19.a4 las blancas atacan el flanco de dama, donde ese alfil no alcanza."
+            }
+          ],
+          "diagramas": [
+            {
+              "id": "CC-10",
+              "fen": "1rb2rk1/2qp1ppp/p2bpnn1/1p6/3BP3/1NN2P2/PPP2QPP/1K1R1B1R w - - 10 16",
+              "turno": "w",
+              "resultado": "*",
+              "pregunta": "Peter Leko – Francisco Vallejo Pons, Linares 2003. Juegan las blancas. ¿Qué cambio deja a las negras con un alfil malo?",
+              "comentario": "16.Ac5 ofrece el cambio del alfil de d6, el bueno de las negras. Tras 16…Axc5 17.Dxc5 Dxc5 18.Cxc5 también se fueron las damas, y a las negras les queda el alfil de c8, que tiene que cuidar peones. Con 19.a4 las blancas atacan el flanco de dama, donde ese alfil no alcanza. (Stockfish 17 a profundidad 22: el motor prefiere h4 (+0,9) a Ac5 (+0,3).)",
+              "linea": [
+                "Bc5",
+                "Bxc5",
+                "Qxc5",
+                "Qxc5",
+                "Nxc5",
+                "Rb6",
+                "a4",
+                "Rc6",
+                "Nd3",
+                "bxa4",
+                "Nxa4",
+                "d5"
+              ]
+            }
+          ]
+        },
+        {
+          "titulo": "El alfil malo que sirve",
+          "resumen": "Un alfil «malo» que defiende sus peones puede ser una pieza valiosa. A veces conviene quedarse con él y entregar el alfil bueno.",
+          "parrafos": [
+            "La regla del alfil malo es útil, pero tiene una trampa: el alfil «malo» es justamente el que defiende a sus peones. Si esos peones son tus debilidades, ese alfil puede ser imprescindible, y el «bueno» puede sobrar.",
+            "La pregunta correcta no es cuál de tus alfiles es bueno, sino cuál de tus alfiles hace falta. Si el bueno se puede cambiar por algo valioso del rival, como su caballo centralizado, y el malo queda defendiendo, el cambio puede ser excelente.",
+            "Jan Timman, contra Browne, entregó su alfil de casillas negras por el caballo de d4 y se quedó con el alfil de casillas blancas, el que defendía el peón de d5. Los peones blancos quedaron débiles y el final de torres resultó incómodo para las blancas."
+          ],
+          "practica": "La próxima vez que tengas que decidir entre dos alfiles, no pienses «bueno» o «malo»: escribe qué defiende cada uno y qué atacaría cada uno. Quédate con el que más trabajo tenga.",
+          "ejemplos": [
+            {
+              "partida": "browne-timman-1980",
+              "ply": 1,
+              "plies": 12,
+              "pregunta": "Juegan las negras. El caballo blanco acaba de llegar a d4. ¿Cuál de tus alfiles entregas?",
+              "comentario": "26…Axd4 da el alfil «bueno» de casillas negras y deja en el tablero el de e6, que cuida el peón de d5. Después de 27.exd4 los peones blancos de d4 y a2 quedan débiles, y la torre negra los ataca por la columna b. Cuando las blancas cambian los alfiles con 30.Axe6, el peón que llega a e6 sigue cuidando d5."
+            }
+          ],
+          "diagramas": [
+            {
+              "id": "CC-11",
+              "fen": "3r2k1/p4p1p/Bb2b1p1/3p4/3N4/4P3/P1R2PPP/6K1 b - - 1 26",
+              "turno": "b",
+              "resultado": "*",
+              "pregunta": "Walter Browne – Jan Timman, Buenos Aires 1980. Juegan las negras. El caballo blanco acaba de llegar a d4. ¿Cuál de tus alfiles entregas?",
+              "comentario": "26…Axd4 da el alfil «bueno» de casillas negras y deja en el tablero el de e6, que cuida el peón de d5. Después de 27.exd4 los peones blancos de d4 y a2 quedan débiles, y la torre negra los ataca por la columna b. Cuando las blancas cambian los alfiles con 30.Axe6, el peón que llega a e6 sigue cuidando d5. (Stockfish 17 a profundidad 22: Axd4 es la que elige el motor (−0,2).)",
+              "linea": [
+                "Bxd4",
+                "exd4",
+                "Rb8",
+                "Kf1",
+                "Rb4",
+                "Bc8",
+                "a5",
+                "Bxe6",
+                "fxe6",
+                "Rd2",
+                "Ra4",
+                "Ke2"
+              ]
+            }
+          ]
+        },
+        {
+          "titulo": "Alfiles de distinto color",
+          "resumen": "Con alfiles de distinto color, el final tiende a las tablas y el medio juego favorece al que ataca. Todo depende de qué más quede en el tablero.",
+          "parrafos": [
+            "Los alfiles de distinto color tienen fama de tablas, y es merecida en los finales de alfil solo: el bando que defiende pone sus peones en el color de su alfil y el otro alfil no los puede atacar. Pero esa fama engaña.",
+            "Con damas y torres, el atacante juega como con una pieza de más sobre las casillas que el alfil rival no cubre: cada ataque con su alfil no se puede contestar con el alfil del otro. Y aun en el final, dos peones pasados bien separados o unidos y apoyados por el rey pueden ser imparables.",
+            "Por eso la decisión de cambiar o no las otras piezas es la más importante de estas posiciones. Miguel Najdorf, contra Rossetto, aceptó el cambio de torres solo cuando le dejaba dos peones pasados unidos que el alfil blanco no podía frenar."
+          ],
+          "practica": "Busca en tus partidas un final con alfiles de distinto color. ¿Cambiaste las torres? ¿Te dejó un final de tablas o uno ganado? Revisa si había otra forma de cambiar.",
+          "ejemplos": [
+            {
+              "partida": "rossetto-najdorf-1962",
+              "ply": 14,
+              "plies": 12,
+              "pregunta": "Juegan las negras, con alfiles de distinto color. ¿Te conviene cambiar las torres?",
+              "comentario": "28…Tf4+ acepta el cambio de torres, pero en f4: después de 29.Txf4 gxf4 30.g3 fxg3+ 31.Rxg3 las negras quedan con peones pasados unidos en el centro. Con 31…Aa4 el alfil paraliza los peones blancos del flanco de dama y los peones negros avanzan sin apuro."
+            },
+            {
+              "partida": "bacrot-charbonneau-2004",
+              "ply": 0,
+              "plies": 12,
+              "pregunta": "Juegan las blancas. Con 22.Txd5 quedan alfiles de distinto color, pero hay damas y torres. ¿Qué buscas después?",
+              "comentario": "22.Txd5 deja alfiles de distinto color con todas las piezas pesadas. Las blancas no buscan más cambios: llevan su alfil hacia c4 y d5, donde el alfil negro no lo puede discutir, y apuntan a f7. Con 28.T5d3 hasta entregan el peón de e4 para ganar tiempo."
+            }
+          ],
+          "diagramas": [
+            {
+              "id": "CC-12a",
+              "fen": "8/1p3p2/p1b1p1k1/2B3p1/1P1R3r/2P4P/1P3KP1/8 b - - 2 28",
+              "turno": "b",
+              "resultado": "*",
+              "pregunta": "Héctor Rossetto – Miguel Najdorf, Mar del Plata 1962. Juegan las negras, con alfiles de distinto color. ¿Te conviene cambiar las torres?",
+              "comentario": "28…Tf4+ acepta el cambio de torres, pero en f4: después de 29.Txf4 gxf4 30.g3 fxg3+ 31.Rxg3 las negras quedan con peones pasados unidos en el centro. Con 31…Aa4 el alfil paraliza los peones blancos del flanco de dama y los peones negros avanzan sin apuro. (Stockfish 17 a profundidad 22: Tf4+ está entre las mejores (−0,1; el motor prefiere apenas Th7, −0,3).)",
+              "linea": [
+                "Rf4+",
+                "Rxf4",
+                "gxf4",
+                "g3",
+                "fxg3+",
+                "Kxg3",
+                "Ba4",
+                "h4",
+                "e5",
+                "Bd6",
+                "f6",
+                "Kf2"
+              ]
+            },
+            {
+              "id": "CC-12b",
+              "fen": "3r1rk1/1p2bpp1/p2p2q1/3bp3/4P2p/2P2B2/PP2QPPP/3R1RK1 w - - 0 22",
+              "turno": "w",
+              "resultado": "*",
+              "pregunta": "Etienne Bacrot – Pascal Charbonneau, Trípoli (Mundial FIDE) 2004. Juegan las blancas. Con 22.Txd5 quedan alfiles de distinto color, pero hay damas y torres. ¿Qué buscas después?",
+              "comentario": "22.Txd5 deja alfiles de distinto color con todas las piezas pesadas. Las blancas no buscan más cambios: llevan su alfil hacia c4 y d5, donde el alfil negro no lo puede discutir, y apuntan a f7. Con 28.T5d3 hasta entregan el peón de e4 para ganar tiempo. (Stockfish 17 a profundidad 22: Txd5 es la que elige el motor (+0,3).)",
+              "linea": [
+                "Rxd5",
+                "Rc8",
+                "Rfd1",
+                "Qg5",
+                "a4",
+                "g6",
+                "Qc2",
+                "Rc6",
+                "Qb3",
+                "Rb8",
+                "Be2",
+                "Qf4"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "n": 3,
+      "titulo": "Damas y torres",
+      "lecciones": [
+        {
+          "titulo": "Cambiar damas, o no",
+          "resumen": "La dama es la pieza que más ataca. Antes de cambiarla, mira los reyes: quien tiene el rey más seguro quiere damas; quien lo tiene expuesto, no.",
+          "parrafos": [
+            "Cambiar damas cambia el carácter de la partida: casi siempre se pasa de una lucha con ataques al rey a un final donde mandan la estructura de peones y el rey activo. Por eso es un cambio que conviene a uno de los dos bandos casi siempre, y rara vez a los dos.",
+            "Dos preguntas ordenan la decisión. ¿Qué rey está más expuesto? El que tiene el rey débil quiere cambiar damas. ¿Quién tiene la mejor estructura? El que tiene los peones sanos y el rival los débiles quiere llegar al final, y el cambio de damas es el camino más corto.",
+            "Garry Kasparov, contra Bareev, dejó de atacar cuando el ataque ya no llevaba a nada y ofreció él mismo el cambio de damas: en el final, los peones negros de c6, c7 y a5 fueron blancos fijos. En los ejercicios 18 y 21 del curso hay otros dos ejemplos de lo mismo."
+          ],
+          "practica": "Cuando el rival te ofrezca cambiar damas, antes de contestar mira los dos reyes y las dos estructuras. Escribe en la planilla quién gana con el cambio.",
+          "ejemplos": [
+            {
+              "partida": "kasparov-bareev-2000",
+              "ply": 42,
+              "plies": 12,
+              "pregunta": "Juegan las blancas. El ataque se agotó y las negras tienen peones débiles en el flanco de dama. ¿Qué haces con las damas?",
+              "comentario": "22.De5 ofrece el cambio. Después de 22…Dxe5 23.dxe5 las negras quedan con los peones de c6, c7 y a5 débiles, y las blancas activan rey y torres: 25.Te2, 26.c3, 28.Rc2. El ataque ya no daba nada; el final, sí."
+            },
+            {
+              "partida": "goldin-milos-2003",
+              "ply": 0,
+              "plies": 12,
+              "pregunta": "Juegan las negras. Su rey casi no tiene peones alrededor y el blanco sí. ¿A quién le conviene cambiar damas?",
+              "comentario": "A las negras: con el rey desnudo, el cambio de damas las salvaría. Por eso las blancas lo evitan durante toda la partida: ponen a salvo su propio rey con h3 y Rh2, y siguen presionando con la dama y las torres hasta que cae el peón de f4."
+            }
+          ],
+          "diagramas": [
+            {
+              "id": "CC-13a",
+              "fen": "r2r1k2/2p2pp1/2p1pq1p/p7/3P3P/8/PPP2PP1/1K1RQ2R w - - 0 22",
+              "turno": "w",
+              "resultado": "*",
+              "pregunta": "Garry Kasparov – Evgeny Bareev, Sarajevo 2000. Juegan las blancas. El ataque se agotó y las negras tienen peones débiles en el flanco de dama. ¿Qué haces con las damas?",
+              "comentario": "22.De5 ofrece el cambio. Después de 22…Dxe5 23.dxe5 las negras quedan con los peones de c6, c7 y a5 débiles, y las blancas activan rey y torres: 25.Te2, 26.c3, 28.Rc2. El ataque ya no daba nada; el final, sí. (Stockfish 17 a profundidad 22: De5 es la que elige el motor (+0,1).)",
+              "linea": [
+                "Qe5",
+                "Qxe5",
+                "dxe5",
+                "Rd5",
+                "Rde1",
+                "Rb8",
+                "Re2",
+                "Ke7",
+                "c3",
+                "f6",
+                "exf6+",
+                "gxf6"
+              ]
+            },
+            {
+              "id": "CC-13b",
+              "fen": "5r1k/p4rn1/7p/3R4/5p1q/5P2/1Q2N1PP/3R2K1 b - - 0 46",
+              "turno": "b",
+              "resultado": "*",
+              "pregunta": "Alexander Goldin – Gilberto Milos, Torneo Continental, Buenos Aires 2003. Juegan las negras. Su rey casi no tiene peones alrededor y el blanco sí. ¿A quién le conviene cambiar damas?",
+              "comentario": "A las negras: con el rey desnudo, el cambio de damas las salvaría. Por eso las blancas lo evitan durante toda la partida: ponen a salvo su propio rey con h3 y Rh2, y siguen presionando con la dama y las torres hasta que cae el peón de f4. (Stockfish 17 a profundidad 22: Rg8 está entre las mejores (+1,6; el motor prefiere apenas Te8, +1,4).)",
+              "linea": [
+                "Kg8",
+                "Qa2",
+                "Qe7",
+                "h3",
+                "Qf6",
+                "Rd6",
+                "Qg5",
+                "Ra1",
+                "Qh4",
+                "Rg6",
+                "Kh7",
+                "Rg4"
+              ]
+            }
+          ]
+        },
+        {
+          "titulo": "Una torre sí, las dos no",
+          "resumen": "Cambiar las cuatro torres suele llevar a tablas; cambiar una pareja y conservar la otra deja juego para ganar.",
+          "parrafos": [
+            "En una posición pareja con torres en una columna abierta, lo natural es cambiarlas. Pero si cambias las dos parejas, muchas veces te quedas sin forma de crear amenazas. Cambiar una sola, y llevar la que queda a otra columna o a otro flanco, mantiene la partida viva.",
+            "También importa con qué se recaptura. Recapturar con el rey en vez de con la otra torre activa al rey y deja libre la torre para buscar otra vía de entrada.",
+            "Alexander Alekhine, contra Znosko Borovsky, cambió una pareja de torres en la columna d, tapó esa columna con su rey en e6 y usó la torre que le quedaba en el flanco de rey. Kasparov, contra Anand, recapturó con el rey en d1 y llevó su torre a la columna a para atacar el peón de b6."
+          ],
+          "practica": "En tus finales con torres, cuando cambies una pareja, anota qué hizo la torre que quedó en las diez jugadas siguientes. Si no hizo nada, la segunda pareja tal vez se tenía que cambiar también, o la primera no.",
+          "ejemplos": [
+            {
+              "partida": "znosko-alekhine-1933",
+              "ply": 0,
+              "plies": 14,
+              "pregunta": "Juegan las negras. La posición parece igualada y la columna d está abierta. ¿Cambias las dos parejas de torres?",
+              "comentario": "16…Tfd8 ofrece cambiar solo una pareja: tras 18.Txd8+ Txd8 las negras llevan el rey a e6, tapan la columna d y su torre se va a g8 para abrir el flanco de rey. Con una torre en el tablero, la posición pareja siguió teniendo juego."
+            },
+            {
+              "partida": "kasparov-anand-2003",
+              "ply": 0,
+              "plies": 12,
+              "pregunta": "Juegan las blancas, con más espacio. Las negras van a cambiar torres en d1. ¿Cómo recapturas?",
+              "comentario": "28.Rc2 Txd1 29.Rxd1: recapturar con el rey lo acerca al centro y al flanco de rey, donde habrá rupturas, y deja la otra torre libre. Con 31.f4, 32.f5 y 34.Ta1 las blancas ganan espacio y la torre va a buscar el peón débil de b6."
+            }
+          ],
+          "diagramas": [
+            {
+              "id": "CC-14a",
+              "fen": "r4rk1/1pp1bp1p/p6B/4p3/8/2P5/PP3PPP/R2R2K1 b - - 0 16",
+              "turno": "b",
+              "resultado": "*",
+              "pregunta": "Eugene Znosko Borovsky – Alexander Alekhine, París 1933. Juegan las negras. La posición parece igualada y la columna d está abierta. ¿Cambias las dos parejas de torres?",
+              "comentario": "16…Tfd8 ofrece cambiar solo una pareja: tras 18.Txd8+ Txd8 las negras llevan el rey a e6, tapan la columna d y su torre se va a g8 para abrir el flanco de rey. Con una torre en el tablero, la posición pareja siguió teniendo juego. (Stockfish 17 a profundidad 22: Tfd8 es la que elige el motor (+0,1).)",
+              "linea": [
+                "Rfd8",
+                "Kf1",
+                "f5",
+                "Rxd8+",
+                "Rxd8",
+                "g3",
+                "Kf7",
+                "Be3",
+                "h5",
+                "Ke2",
+                "Ke6",
+                "Rd1",
+                "Rg8",
+                "f3"
+              ]
+            },
+            {
+              "id": "CC-14b",
+              "fen": "2rr2k1/1pb2pp1/4p2p/p1p1P2P/P1P3P1/2B2P2/1P6/1K1RR3 w - - 0 28",
+              "turno": "w",
+              "resultado": "*",
+              "pregunta": "Garry Kasparov – Viswanathan Anand, Linares 2003. Juegan las blancas, con más espacio. Las negras van a cambiar torres en d1. ¿Cómo recapturas?",
+              "comentario": "28.Rc2 Txd1 29.Rxd1: recapturar con el rey lo acerca al centro y al flanco de rey, donde habrá rupturas, y deja la otra torre libre. Con 31.f4, 32.f5 y 34.Ta1 las blancas ganan espacio y la torre va a buscar el peón débil de b6. (Stockfish 17 a profundidad 22: Rc2 es la que elige el motor (+0,2).)",
+              "linea": [
+                "Kc2",
+                "Rxd1",
+                "Kxd1",
+                "Rd8+",
+                "Ke2",
+                "Rd7",
+                "f4",
+                "Bd8",
+                "f5",
+                "Bg5",
+                "f6",
+                "b6"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "n": 4,
+      "titulo": "Cambios paradójicos y técnica moderna",
+      "lecciones": [
+        {
+          "titulo": "El cambio paradójico",
+          "resumen": "A veces el mejor cambio es el que contradice las reglas: dar tu mejor pieza por la peor del rival, porque esa pieza «mala» era un defensor importante.",
+          "parrafos": [
+            "Las reglas dicen que no se cambia una pieza fuerte por una débil. Pero una pieza débil para atacar puede ser fuerte para defender, y si cuida casillas o peones clave, cambiarla puede abrir toda la posición.",
+            "El cambio paradójico se reconoce por sus consecuencias: después del cambio, aparecen debilidades nuevas en el campo rival o tus piezas encuentran caminos que antes estaban cerrados. No se calcula pieza por pieza, sino posición contra posición.",
+            "Fischer, contra Petrosian en 1971, dio su caballo dominante de c5 por el alfil «malo» de d7, que cuidaba las casillas de entrada. Después del cambio, las blancas tomaron la columna c y las torres negras quedaron atadas a la defensa de a6. El ejercicio 9 del curso muestra la misma idea en una partida de Oscar Panno."
+          ],
+          "practica": "Cuando una pieza del rival parezca mala pero no puedas progresar, pregúntate qué defiende. Si es algo importante, el cambio paradójico puede ser la clave.",
+          "ejemplos": [
+            {
+              "partida": "fischer-petrosian-1971",
+              "ply": 42,
+              "plies": 12,
+              "pregunta": "Juegan las blancas. Tu caballo de c5 es la mejor pieza del tablero y el alfil negro de d7 parece malo. ¿Cambias?",
+              "comentario": "22.Cxd7+ Txd7 23.Tc1: el alfil de d7 era el que cuidaba las casillas de entrada en la columna c. Sin él, la torre blanca llega a c7 y las torres negras quedan atadas a la defensa. Dar la mejor pieza por la peor fue lo que rompió la posición."
+            },
+            {
+              "partida": "petrosian-bannik-1958",
+              "ply": 0,
+              "plies": 12,
+              "pregunta": "Juegan las blancas. ¿Qué cambio de piezas menores les conviene?",
+              "comentario": "18.Ac5 cambia los alfiles de casillas negras: tras 18…Txd1+ 19.Txd1 Axc5 20.Cxc5 el peón de f6 necesita una torre para defenderse y las blancas evitan un cambio general que habría llevado a tablas. El caballo vuelve a e4 y las blancas siguen presionando."
+            }
+          ],
+          "diagramas": [
+            {
+              "id": "CC-15a",
+              "fen": "r4k2/r2b1ppp/p4n2/2NpR3/1P6/3B1P2/P5PP/R5K1 w - - 3 22",
+              "turno": "w",
+              "resultado": "*",
+              "pregunta": "Robert Fischer – Tigran Petrosian, Final de Candidatos, Buenos Aires 1971. Juegan las blancas. Tu caballo de c5 es la mejor pieza del tablero y el alfil negro de d7 parece malo. ¿Cambias?",
+              "comentario": "22.Cxd7+ Txd7 23.Tc1: el alfil de d7 era el que cuidaba las casillas de entrada en la columna c. Sin él, la torre blanca llega a c7 y las torres negras quedan atadas a la defensa. Dar la mejor pieza por la peor fue lo que rompió la posición. (Stockfish 17 a profundidad 22: el motor prefiere a4 (+1,6) a Cxd7+ (+1,1).)",
+              "linea": [
+                "Nxd7+",
+                "Rxd7",
+                "Rc1",
+                "Rd6",
+                "Rc7",
+                "Nd7",
+                "Re2",
+                "g6",
+                "Kf2",
+                "h5",
+                "f4",
+                "h4"
+              ]
+            },
+            {
+              "id": "CC-15b",
+              "fen": "3r3r/ppk1b2p/1np2p2/4p1pP/2P1N3/1P2B1P1/P3PP2/2KR3R w - - 0 18",
+              "turno": "w",
+              "resultado": "*",
+              "pregunta": "Tigran Petrosian – Anatoly Bannik, Campeonato de la URSS, Riga 1958. Juegan las blancas. ¿Qué cambio de piezas menores les conviene?",
+              "comentario": "18.Ac5 cambia los alfiles de casillas negras: tras 18…Txd1+ 19.Txd1 Axc5 20.Cxc5 el peón de f6 necesita una torre para defenderse y las blancas evitan un cambio general que habría llevado a tablas. El caballo vuelve a e4 y las blancas siguen presionando. (Stockfish 17 a profundidad 22: Ac5 es la que elige el motor (+1,3).)",
+              "linea": [
+                "Bc5",
+                "Rxd1+",
+                "Rxd1",
+                "Bxc5",
+                "Nxc5",
+                "Re8",
+                "Ne4",
+                "Re6",
+                "g4",
+                "a5",
+                "Rd3",
+                "Nd7"
+              ]
+            }
+          ]
+        },
+        {
+          "titulo": "Entregar la pareja a tiempo",
+          "resumen": "La pareja de alfiles es una ventaja, pero no es sagrada: si cambiar un alfil elimina la mejor pieza rival o deja su rey débil, conviene darla.",
+          "parrafos": [
+            "Muchos jugadores se aferran a los dos alfiles como si fueran un premio. Pero la pareja vale por lo que hace; si un alfil puede eliminar el caballo que sostiene toda la defensa rival, cambiarlo es dar algo bueno por algo mejor.",
+            "La clave está en lo que queda después: si el cambio deja al rey rival sin defensores o su estructura dañada, conviene mantener las damas en el tablero para aprovecharlo.",
+            "Karpov, contra Shirov, dio su alfil de b2 por el caballo de e5, la pieza negra más fuerte. El flanco de rey negro quedó flojo y, con las damas todavía en el tablero, la primera fila negra no resistió la táctica."
+          ],
+          "practica": "Cuando tengas la pareja de alfiles, revisa en cada momento tranquilo si hay una pieza rival tan fuerte que valga uno de tus alfiles.",
+          "ejemplos": [
+            {
+              "partida": "karpov-shirov-1992",
+              "ply": 40,
+              "plies": 12,
+              "pregunta": "Juegan las blancas, con los dos alfiles. El caballo negro de e5 domina el centro. ¿Lo cambias?",
+              "comentario": "21.Axe5 Dxe5 22.Ad3: Karpov entrega la pareja para eliminar el caballo de e5. Después de 23.Ag6 y 24.Cf5 las blancas atacan las casillas débiles del rey negro, y mantienen las damas en el tablero para que esas debilidades pesen."
+            }
+          ],
+          "diagramas": [
+            {
+              "id": "CC-16",
+              "fen": "3rr1k1/1b2q1pp/p1p2p2/1p2n3/Pb6/1P2P1NP/1BQ1BPP1/R2R2K1 w - - 0 21",
+              "turno": "w",
+              "resultado": "*",
+              "pregunta": "Anatoly Karpov – Alexei Shirov, Biel 1992. Juegan las blancas, con los dos alfiles. El caballo negro de e5 domina el centro. ¿Lo cambias?",
+              "comentario": "21.Axe5 Dxe5 22.Ad3: Karpov entrega la pareja para eliminar el caballo de e5. Después de 23.Ag6 y 24.Cf5 las blancas atacan las casillas débiles del rey negro, y mantienen las damas en el tablero para que esas debilidades pesen. (Stockfish 17 a profundidad 22: Axe5 es la que elige el motor (+1,8).)",
+              "linea": [
+                "Bxe5",
+                "Qxe5",
+                "Bd3",
+                "h6",
+                "Bg6",
+                "Rf8",
+                "Nf5",
+                "c5",
+                "axb5",
+                "axb5",
+                "Ra7",
+                "Qc7"
+              ]
+            }
+          ]
+        },
+        {
+          "titulo": "Tu peor pieza por su mejor pieza",
+          "resumen": "Una de las reglas más útiles de la técnica moderna: lleva tu pieza más inútil a una casilla donde se pueda cambiar por la mejor pieza del rival.",
+          "parrafos": [
+            "Todo jugador tiene a veces una pieza que no hace nada: un caballo en el borde, un alfil tapado, una torre sin columna. Una forma de resolverlo es mejorarla; otra, a veces más rápida, es ofrecerla a cambio de la mejor pieza del rival.",
+            "El plan es concreto: buscar la casilla desde donde tu pieza mala ataca o bloquea a la pieza buena del rival, y ver qué camino lleva hasta allí. Si el rival evita el cambio, su pieza buena tiene que retirarse, y eso también es una ganancia.",
+            "Oscar Panno, contra Miles, llevó su caballo de a6 —que no hacía nada— por b8 a d7 para cambiarlo por el fuerte caballo blanco de e5. Después del cambio, las piezas negras quedaron mejor que las blancas y Panno rompió en el centro."
+          ],
+          "practica": "Al empezar cada fase tranquila de una partida, nombra tu peor pieza y la mejor del rival. ¿Hay un camino para que se encuentren?",
+          "ejemplos": [
+            {
+              "partida": "miles-panno-1977",
+              "ply": 41,
+              "plies": 12,
+              "pregunta": "Juegan las negras. El caballo de a6 no hace nada y el caballo blanco de e5 domina. ¿Qué plan te propones?",
+              "comentario": "21…Cb8, 22…Cbd7 y 23.Cxd7 Txd7: el peor caballo negro se cambió por el mejor caballo blanco. Después, con 25…d4 las negras abren el centro y sus piezas quedan más activas que las blancas."
+            }
+          ],
+          "diagramas": [
+            {
+              "id": "CC-17",
+              "fen": "3rr1k1/pb2qpp1/n4n1p/2ppN3/5P1P/1PN1P3/P3QPB1/R2R2K1 b - - 4 21",
+              "turno": "b",
+              "resultado": "*",
+              "pregunta": "Anthony Miles – Oscar Panno, Biel 1977. Juegan las negras. El caballo de a6 no hace nada y el caballo blanco de e5 domina. ¿Qué plan te propones?",
+              "comentario": "21…Cb8, 22…Cbd7 y 23.Cxd7 Txd7: el peor caballo negro se cambió por el mejor caballo blanco. Después, con 25…d4 las negras abren el centro y sus piezas quedan más activas que las blancas. (Stockfish 17 a profundidad 22: el motor prefiere d4 (−1,0) a Cb8 (−0,3).)",
+              "linea": [
+                "Nb8",
+                "Rac1",
+                "Nbd7",
+                "Nxd7",
+                "Rxd7",
+                "Rd2",
+                "Rd6",
+                "Na4",
+                "d4",
+                "Bxb7",
+                "Qxb7",
+                "Nxc5"
+              ]
+            }
+          ]
+        },
+        {
+          "titulo": "Quitarle los defensores a una casilla",
+          "resumen": "Para ocupar una casilla fuerte, primero se cambian las piezas rivales que podían cubrirla.",
+          "parrafos": [
+            "Una casilla fuerte —un hueco en la estructura rival— solo vale si tu pieza puede llegar y quedarse. Si el rival tiene piezas que la vigilan, el camino pasa por cambiarlas, aunque eso cueste la pareja de alfiles o un tiempo.",
+            "El orden suele ser: primero se cambian las piezas menores que cubren la casilla, después se lleva el caballo propio, y al final el rival se queda con piezas que no pueden discutirla.",
+            "Rafael Leitão, contra Zhang Zhong, cambió todas las piezas menores negras que podían controlar d5 y dejó al rival solo con su alfil malo. Cuando las negras quisieron cambiar ese alfil, Leitão dio un peón para impedirlo y asentar su caballo en d5. Los ejercicios 14 y 22 del curso tienen la misma idea."
+          ],
+          "practica": "En la próxima partida donde veas un hueco en la estructura rival, cuenta las piezas del rival que lo pueden cubrir. Ese número es la cantidad de cambios que te faltan.",
+          "ejemplos": [
+            {
+              "partida": "leitao-zhang-2004",
+              "ply": 40,
+              "plies": 12,
+              "pregunta": "Juegan las blancas. La casilla d5 es el objetivo. ¿Qué piezas negras la cubren?",
+              "comentario": "21.Axf6 Cxf6 22.Cg4 Cxg4 23.Dxg4: las blancas entregan la pareja de alfiles para cambiar los dos caballos negros que podían vigilar d5. Al rival le queda el alfil de casillas blancas, que no alcanza para sostener esa casilla."
+            }
+          ],
+          "diagramas": [
+            {
+              "id": "CC-18",
+              "fen": "r2qrbk1/3n1pp1/p1bp1n1p/1p2p1B1/1P2P3/2P4P/P1B2PPN/R2QRNK1 w - - 0 21",
+              "turno": "w",
+              "resultado": "*",
+              "pregunta": "Rafael Leitao – Zhang Zhong, Campeonato del Mundo FIDE, Trípoli 2004. Juegan las blancas. La casilla d5 es el objetivo. ¿Qué piezas negras la cubren?",
+              "comentario": "21.Axf6 Cxf6 22.Cg4 Cxg4 23.Dxg4: las blancas entregan la pareja de alfiles para cambiar los dos caballos negros que podían vigilar d5. Al rival le queda el alfil de casillas blancas, que no alcanza para sostener esa casilla. (Stockfish 17 a profundidad 22: Axf6 es la que elige el motor (+0,2).)",
+              "linea": [
+                "Bxf6",
+                "Nxf6",
+                "Ng4",
+                "Nxg4",
+                "Qxg4",
+                "Bd7",
+                "Qf3",
+                "Be6",
+                "Bb3",
+                "Rc8",
+                "Qd3",
+                "Qc7"
+              ]
+            }
+          ]
+        },
+        {
+          "titulo": "La técnica moderna: no hay reglas fijas",
+          "resumen": "Los grandes maestros de hoy conocen las reglas clásicas, pero deciden cada cambio por la posición concreta. Las reglas son preguntas, no respuestas.",
+          "parrafos": [
+            "Todo lo que vimos en el curso son reglas útiles: cambia la mejor pieza del rival, deja su pieza mala, con espacio no cambies, con el rey débil cambia damas. Pero cada una tiene excepciones, y la técnica moderna consiste en saber cuándo aplicar cada una.",
+            "Una forma práctica de pensar: antes de cada cambio, imagina las dos posiciones —con y sin el cambio— y compáralas en lo que importa en esa partida: la seguridad de los reyes, la estructura, la actividad de las piezas que quedan. La regla te dice qué mirar; la posición te dice qué hacer.",
+            "Anand, contra Ivanchuk, cambió su alfil bueno por el alfil blanco de f1: no porque la regla lo dijera, sino porque sin ese alfil los peones blancos de e4 y g4 quedaban bloqueados en casillas claras. Y Akopian–Ivanchuk muestra lo contrario: con alfiles de distinto color, Ivanchuk se cuidó de no cambiar las torres."
+          ],
+          "practica": "Ve al bloque de ejercicios. Antes de mirar la solución de cada uno, escribe qué regla del curso se aplica y si en esa posición hay alguna razón para romperla.",
+          "ejemplos": [
+            {
+              "partida": "ivanchuk-anand-1992",
+              "ply": 39,
+              "plies": 12,
+              "pregunta": "Juegan las negras. Su alfil de e6 es el bueno. ¿Lo cambiarías por el alfil de f1?",
+              "comentario": "20…Ac4 ofrece el cambio del alfil bueno: después de 21.b3 Axf1 22.Txf1 Th3 los peones blancos de e4 y g4 quedan en casillas claras sin un alfil que los cuide, y la torre negra entra por h3. Con el rey negro cómodo en el centro, el final es de las negras."
+            }
+          ],
+          "diagramas": [
+            {
+              "id": "CC-19",
+              "fen": "1r2k2r/4bp2/p2pbp2/1p2p3/4P1P1/P3B3/1PPR3P/1K3BR1 b k - 0 20",
+              "turno": "b",
+              "resultado": "*",
+              "pregunta": "Vassily Ivanchuk – Viswanathan Anand, Linares 1992. Juegan las negras. Su alfil de e6 es el bueno. ¿Lo cambiarías por el alfil de f1?",
+              "comentario": "20…Ac4 ofrece el cambio del alfil bueno: después de 21.b3 Axf1 22.Txf1 Th3 los peones blancos de e4 y g4 quedan en casillas claras sin un alfil que los cuide, y la torre negra entra por h3. Con el rey negro cómodo en el centro, el final es de las negras. (Stockfish 17 a profundidad 22: Ac4 es la que elige el motor (−0,7).)",
+              "linea": [
+                "Bc4",
+                "b3",
+                "Bxf1",
+                "Rxf1",
+                "Rh3",
+                "Re2",
+                "Kd7",
+                "g5",
+                "Ke6",
+                "gxf6",
+                "Bxf6",
+                "Bd2"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "n": 5,
+      "titulo": "Ejercicios",
+      "lecciones": [
+        {
+          "titulo": "Ejercicios 1 a 6",
+          "resumen": "Seis posiciones de partidas de grandes maestros donde hay que decidir un cambio. No están ordenadas por tema: en la partida nadie avisa qué buscar.",
+          "parrafos": [
+            "Los ejercicios de este bloque son posiciones reales de partidas entre grandes maestros, tomadas del libro «El cambio de piezas» del Maestro Internacional Diego Valerga. No están ordenados por tema ni por dificultad, para que no sepas de antemano qué regla se aplica.",
+            "En cada uno, antes de mover nada, contesta tres preguntas: qué piezas quedarían después del cambio, a quién le conviene esa posición y por qué. Recién después mira la solución y la línea de la partida. Cada solución dice también qué opina el motor Stockfish, porque en varias de estas posiciones el motor de hoy no está del todo de acuerdo con lo que se jugó."
+          ],
+          "practica": "Escribe tu respuesta a cada ejercicio, con la jugada y una frase de por qué, antes de ver la solución. Al final cuenta cuántas acertaste y en cuáles fallaste la idea aunque acertaras la jugada.",
+          "ejercicios": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6
+          ],
+          "diagramas": [
+            {
+              "id": "CC-E1",
+              "fen": "r1b2bk1/1q5p/R2p1pp1/3PpP2/4P1P1/1Q2B2P/4B2K/8 w - - 0 36",
+              "turno": "w",
+              "resultado": "*",
+              "pregunta": "Ejercicio 1. Julio Bolbochán – Lothar Schmid, Olimpiada de Dubrovnik 1950. Juegan las blancas. Puedes cambiar damas y torres de un golpe. ¿Te conviene simplificar tanto?",
+              "comentario": "Sí: el cambio masivo deja en el tablero justo lo que le conviene a las blancas. Después de 38.Aa6 el alfil de a8 queda encerrado detrás de sus propios peones y no vuelve a jugar; el blanco, con los dos alfiles activos, lleva el rey al flanco de dama sin que nadie lo moleste. La regla de no cambiar con una posición cerrada no sirve aquí: lo que manda es que la pieza que le queda al rival es mala. (Stockfish 17 a profundidad 22: Dxb7 es la que elige el motor (+1,1); Tb6 da +0,5.)",
+              "linea": [
+                "Qxb7",
+                "Bxb7",
+                "Rxa8",
+                "Bxa8",
+                "Ba6",
+                "g5",
+                "Bb6",
+                "Kf7",
+                "Bc8",
+                "Be7",
+                "Bc7",
+                "h5",
+                "Kg3",
+                "hxg4",
+                "hxg4",
+                "Ke8"
+              ]
+            },
+            {
+              "id": "CC-E2",
+              "fen": "rnbqk2r/pppn1pbp/3p2p1/3Pp3/2P1P3/2N1BP2/PP4PP/R2QKBNR b KQkq - 1 7",
+              "turno": "b",
+              "resultado": "*",
+              "pregunta": "Ejercicio 2. Vladen Zurakhov – Bukhuti Gurgenidze, Semifinal del Campeonato de la URSS, Tiflis 1956. Juegan las negras, en una India de Rey con el centro cerrado. ¿Cuál es la mejor jugada?",
+              "comentario": "7…Ah6 ofrece cambiar el alfil de casillas negras, que con el centro cerrado mira contra sus propios peones, por el alfil de e3, que es la pieza que sostiene todas las casillas oscuras del blanco. Después del cambio, las casillas c5 y f4 quedan para los caballos negros y el blanco no encuentra un buen lugar para su rey. Un cambio táctico (el alfil ofrece el cambio con ganancia de tiempo) que resuelve un problema de estrategia. (Stockfish 17 a profundidad 22: Ah6 es la que elige el motor (+0,6).)",
+              "linea": [
+                "Bh6",
+                "Qd2",
+                "Bxe3",
+                "Qxe3",
+                "a5",
+                "Bd3",
+                "Na6",
+                "O-O-O",
+                "O-O",
+                "Nge2",
+                "Ndc5",
+                "Bb1",
+                "Bd7",
+                "Nb5",
+                "Bxb5",
+                "cxb5",
+                "Nb8",
+                "h4",
+                "Nbd7",
+                "h5"
+              ]
+            },
+            {
+              "id": "CC-E3",
+              "fen": "r3kb1r/pp1b1ppp/1q2pn2/n2p4/3P1B2/2PB1N2/PPQ2PPP/RN2K2R w KQkq - 0 11",
+              "turno": "w",
+              "resultado": "*",
+              "pregunta": "Ejercicio 3. Robert Fischer – Tigran Petrosian, Match URSS-Resto del Mundo, Belgrado 1970. Juegan las blancas. Las negras quieren …Ab5 para cambiar su alfil malo de d7. ¿Qué jugada lo impide?",
+              "comentario": "11.a4 le quita la casilla b5 al alfil de d7. Los peones negros están en d5 y e6, en casillas blancas, así que ese alfil es el que sobra; sin poder cambiarlo, las negras quedan con una pieza sin futuro y las blancas juegan cómodas en el flanco de rey. Enrocarse primero permitía …Ab5 y el cambio que liberaba a las negras. El motor pone 11.a4 entre las mejores jugadas. (Stockfish 17 a profundidad 22: a4 está entre las mejores (+0,4; el motor prefiere apenas De2, +0,7); O-O da +0,4.)",
+              "linea": [
+                "a4",
+                "Rc8",
+                "Nbd2",
+                "Nc6",
+                "Qb1",
+                "Nh5",
+                "Be3",
+                "h6",
+                "Ne5",
+                "Nf6",
+                "h3",
+                "Bd6",
+                "O-O",
+                "Kf8",
+                "f4"
+              ]
+            },
+            {
+              "id": "CC-E4",
+              "fen": "r2q1rk1/1b3pp1/pp1b1n1p/3N4/P1B5/5NP1/1P2QPP1/R2R2K1 w - - 0 19",
+              "turno": "w",
+              "resultado": "*",
+              "pregunta": "Ejercicio 4. Krishnan Sasikiran – Alexei Barsov, Campeonato de Asia, Doha 2003. Juegan las blancas. ¿Te conviene cambiar caballos en f6?",
+              "comentario": "La idea de la partida fue 19.Ce3: no cambiar, porque las blancas tienen más espacio y más libertad, y cada cambio le quitaba trabajo a la defensa negra. El caballo vuelve para saltar a f5 y, con 20.Ch4, los dos caballos apuntan a la misma casilla. Las blancas terminaron ganando un peón y la partida. El motor ve la posición pareja y no castiga el cambio en f6: la decisión es práctica, mantener piezas para que el rival siga apretado. (Stockfish 17 a profundidad 22: Ce3 está entre las mejores (−0,4; el motor prefiere apenas Ce5, 0,0); Cxf6+ da 0,0.)",
+              "linea": [
+                "Ne3",
+                "Qe7",
+                "Nh4",
+                "Rfd8",
+                "Nhf5",
+                "Qf8",
+                "Ng4",
+                "Ne4",
+                "Rd4",
+                "Re8",
+                "Qd3",
+                "Rad8",
+                "Rd1",
+                "Bc7",
+                "Bxf7+",
+                "Kxf7",
+                "Qc4+",
+                "Kg6",
+                "Qxc7",
+                "Rxd4",
+                "Nxd4"
+              ]
+            },
+            {
+              "id": "CC-E5",
+              "fen": "2rr1nk1/pb2bppp/1q2pn2/2pp2B1/2P5/2N1PN2/PPQRBPPP/3R2K1 w - - 0 16",
+              "turno": "w",
+              "resultado": "*",
+              "pregunta": "Ejercicio 5. Viktor Korchnoi – Luc Winants, Olimpiada de Bled 2002. Juegan las blancas. Con una serie de cambios en d5 pueden pasar a un final. ¿Es lo más indicado?",
+              "comentario": "Sí. Después de 16.cxd5 y los cambios en d5 a cada bando le queda torre, alfil y caballo, con material igual, pero la torre blanca manda en la columna d, el alfil de c4 apunta a f7 y las negras no tienen nada que atacar. Más tarde, con 27.Ce5, se cambia otro par de piezas menores y queda torre y alfil contra torre y caballo, con la torre blanca activa: un final que se gana despacio. Simplificar fue la forma de quedarse con lo que más pesaba, la actividad. (Stockfish 17 a profundidad 22: cxd5 es la que elige el motor (+1,0).)",
+              "linea": [
+                "cxd5",
+                "exd5",
+                "Bxf6",
+                "Bxf6",
+                "Nxd5",
+                "Bxd5",
+                "Rxd5",
+                "Rxd5",
+                "Rxd5",
+                "Qxb2",
+                "Qxb2",
+                "Bxb2",
+                "Bc4",
+                "Bf6",
+                "g4",
+                "h6",
+                "h4",
+                "g6",
+                "g5",
+                "hxg5",
+                "hxg5",
+                "Bg7",
+                "Ne5",
+                "Bxe5",
+                "Rxe5"
+              ]
+            },
+            {
+              "id": "CC-E6",
+              "fen": "r1bq1rk1/pp2ppbp/2n3p1/8/2PN4/6P1/PB1QPPBP/R2R2K1 b - - 0 13",
+              "turno": "b",
+              "resultado": "*",
+              "pregunta": "Ejercicio 6. Predrag Nikolic – Peter Svidler, Olimpiada de Ereván 1996. Juegan las negras. Pueden cambiarlo casi todo en d4. ¿Les conviene esa simplificación masiva?",
+              "comentario": "En la partida, 13…Cxd4 y los cambios en d4 llevaron a un final incómodo: las blancas se quedaron con ventaja de desarrollo, la columna d y presión sobre b7, y las negras terminaron defendiéndose de forma pasiva. Ojo: la simplificación no pierde por sí sola; perdió la forma de defender el final que vino después. El motor de hoy, de hecho, prefiere la simplificación: da 13…Cxd4 casi igualado y 13…Ce5 bastante peor. El final era defendible. (Stockfish 17 a profundidad 22: Cxd4 es la que elige el motor (+0,2); Ce5 da +0,9.)",
+              "linea": [
+                "Nxd4",
+                "Bxd4",
+                "Qxd4",
+                "Qxd4",
+                "Bxd4",
+                "Rxd4"
+              ]
+            }
+          ]
+        },
+        {
+          "titulo": "Ejercicios 7 a 12",
+          "resumen": "Seis posiciones más: aceptar o rechazar un cambio, ganar un peón a cambio de la pareja de alfiles, cambiar la mejor pieza propia.",
+          "parrafos": [
+            "Sigue con el mismo método: primero las piezas que quedan, después a quién le conviene, después la jugada. Fíjate en que varios de estos ejercicios no tienen una sola jugada que gana: piden elegir entre dos planes razonables, y lo que cuenta es la razón."
+          ],
+          "practica": "Para cada ejercicio, escribe qué regla del curso se aplica y si hay alguna razón para romperla.",
+          "ejercicios": [
+            7,
+            8,
+            9,
+            10,
+            11,
+            12
+          ],
+          "diagramas": [
+            {
+              "id": "CC-E7",
+              "fen": "r3nrk1/pppb1ppp/5q2/b3p3/4P1P1/2P2Q1P/PPB1NP2/R1B1K2R w KQ - 0 13",
+              "turno": "w",
+              "resultado": "*",
+              "pregunta": "Ejercicio 7. Alexei Shirov – Vassily Ivanchuk, Linares 1994. Juegan las blancas. Las negras acaban de llevar la dama a f6 para ofrecer el cambio. ¿Lo aceptas o lo rechazas?",
+              "comentario": "13.Dxf6 lo acepta, y con 14.Ag5 ofrece otro cambio en f6. Cuando el alfil toma el caballo, las negras quedan con peones doblados en la columna f; el caballo blanco va a h5 a atacarlos. Aceptar un cambio que el rival ofrece está bien cuando el que queda mejor eres tú. (Stockfish 17 a profundidad 22: Dxf6 es la que elige el motor (+0,5).)",
+              "linea": [
+                "Qxf6",
+                "Nxf6",
+                "Bg5",
+                "Be6",
+                "Bxf6",
+                "gxf6",
+                "Ng3",
+                "Rfd8",
+                "Nh5",
+                "Rd6",
+                "Nxf6+",
+                "Kh8",
+                "f4",
+                "Rad8"
+              ]
+            },
+            {
+              "id": "CC-E8",
+              "fen": "6k1/1p5p/np2ppp1/n2p4/P2P2P1/bP2PPB1/7P/2NK1B2 b - - 0 34",
+              "turno": "b",
+              "resultado": "*",
+              "pregunta": "Ejercicio 8. Mikhail Botvinnik – David Bronstein, Match por el Campeonato del Mundo, Moscú 1951. Juegan las negras. Pueden tomar el caballo de c1 y después el peón de b3. ¿Les conviene?",
+              "comentario": "34…Axc1 y 35…Cxb3+ ganan un peón, pero entregan el alfil negro y dejan a las blancas con los dos alfiles. Cuando el centro se abrió con 38.e4, los alfiles dominaron el tablero y los caballos negros se quedaron sin casillas. El motor de hoy da la posición igualada tanto después de 34…Axc1 como de 34…Rf7: la captura no pierde, pero obliga a defender con mucha precisión un final contra la pareja de alfiles, y en la partida las negras no lo lograron. (Stockfish 17 a profundidad 22: Axc1 es la que elige el motor (0,0); Rf7 da +0,1.)",
+              "linea": [
+                "Bxc1",
+                "Kxc1",
+                "Nxb3+",
+                "Kc2",
+                "Na5",
+                "Kc3",
+                "Kf7",
+                "e4",
+                "f5",
+                "gxf5",
+                "gxf5",
+                "Bd3",
+                "Kg6",
+                "Bd6",
+                "Nc6",
+                "Bb1",
+                "Kf6",
+                "Bg3",
+                "fxe4",
+                "fxe4",
+                "h6",
+                "Bf4",
+                "h5",
+                "exd5",
+                "exd5",
+                "h4"
+              ]
+            },
+            {
+              "id": "CC-E9",
+              "fen": "2r2rk1/p4pp1/1pn1b2p/2NpP3/3P4/1P2P1P1/6BP/2R2RK1 w - - 0 20",
+              "turno": "w",
+              "resultado": "*",
+              "pregunta": "Ejercicio 9. Oscar Panno – Carlos Guimard, Interzonal de Gotemburgo 1955. Juegan las blancas. ¿Conviene retirar el caballo de c5 o cambiarlo?",
+              "comentario": "20.Cxe6 cambia el caballo fuerte por el alfil «malo»: después de …fxe6 el peón de e6 queda débil y la diagonal del alfil de g2 se abre. Con 21.Ah3 y 23.e4 las blancas rompen y el centro negro se derrumba. A veces el cambio bueno es el que entrega tu mejor pieza, si la debilidad que deja vale más. (Stockfish 17 a profundidad 22: Cxe6 es la que elige el motor (+2,5).)",
+              "linea": [
+                "Nxe6",
+                "fxe6",
+                "Bh3",
+                "Rxf1+",
+                "Kxf1",
+                "Kf7",
+                "e4",
+                "Rc7",
+                "Kf2",
+                "dxe4",
+                "Ke3",
+                "a5",
+                "Bf1",
+                "Kf8",
+                "Kxe4",
+                "Rf7",
+                "Rxc6",
+                "Rxf1",
+                "Rxe6",
+                "b5",
+                "Rb6"
+              ]
+            },
+            {
+              "id": "CC-E10",
+              "fen": "r2q1rk1/1pp2pbp/2n1p1p1/3p4/p1PPb3/1PB1PNP1/P3QPBP/2RR2K1 w - - 0 14",
+              "turno": "w",
+              "resultado": "*",
+              "pregunta": "Ejercicio 10. Miguel Najdorf – Boris Spassky, Interzonal de Gotemburgo 1955. Juegan las blancas. ¿Cuál es el mejor plan?",
+              "comentario": "14.Af1 prepara Cd2 para atacar el alfil de e4, que no tiene buenas retiradas: si lo cambia por el caballo, las blancas se quedan con la pareja de alfiles. Con 16.Ce1 y 17.Cd3 el plan se cumple. Antes de cambiar una pieza fuerte del rival, mira si la puedes obligar a cambiarse en las condiciones que tú quieres. (Stockfish 17 a profundidad 22: Af1 es la que elige el motor (+0,4).)",
+              "linea": [
+                "Bf1",
+                "axb3",
+                "axb3",
+                "Qe7",
+                "Ne1",
+                "h5",
+                "Nd3",
+                "dxc4",
+                "bxc4",
+                "Bxd3",
+                "Qxd3",
+                "Ra7",
+                "Qb1",
+                "Rfa8",
+                "Bg2"
+              ]
+            },
+            {
+              "id": "CC-E11",
+              "fen": "r1bqk2r/1p3pbp/p1np2p1/3Qp1P1/4P3/1N5P/PPP1BP2/R1B1K2R w KQkq - 0 13",
+              "turno": "w",
+              "resultado": "*",
+              "pregunta": "Ejercicio 11. Robert Fischer – Samuel Reshevsky, Campeonato de los Estados Unidos 1962. Juegan las blancas. Las negras amenazan desarrollarse rápido. ¿Cuál es el mejor plan?",
+              "comentario": "13.Ag4 ofrece cambiar los alfiles de casillas blancas para que las negras no lleven el suyo a e6. Si lo cambian (13…Axg4 14.hxg4), la columna h se abre para la torre blanca y el rey negro no tiene un enroque seguro. Fischer siguió con 18.Ta5 y 19.Dd5, forzó el cambio de damas y ganó el final por la debilidad de h7. El motor da la posición muy pareja y pone 13.Ae3 a la par; la idea de cambiar la pieza que el rival necesita es la que importa. (Stockfish 17 a profundidad 22: Ag4 está entre las mejores (−0,3; el motor prefiere apenas Ae3, 0,0).)",
+              "linea": [
+                "Bg4",
+                "Bxg4",
+                "hxg4",
+                "Qc8",
+                "Qd1",
+                "Nd4",
+                "c3",
+                "Nxb3",
+                "axb3",
+                "Qe6",
+                "Ra5",
+                "f6",
+                "Qd5",
+                "Qxd5",
+                "Rxd5",
+                "Kd7",
+                "gxf6",
+                "Bxf6",
+                "g5",
+                "Be7",
+                "Ke2"
+              ]
+            },
+            {
+              "id": "CC-E12",
+              "fen": "2r2rk1/pp2bpp1/4pn1p/qb1nN3/3P3B/1BN5/PPQ2PPP/3RR1K1 w - - 0 17",
+              "turno": "w",
+              "resultado": "*",
+              "pregunta": "Ejercicio 12. Emanuel Lasker – José Raúl Capablanca, Match por el Campeonato del Mundo, La Habana 1921. Juegan las blancas. ¿Qué caballo conviene capturar, el de f6 o el de d5? ¿Por qué?",
+              "comentario": "El de f6. Con 17.Axf6 Axf6 18.Axd5 exd5 las blancas quedan con buena posición: el peón de d5 es un blanco y el caballo amenaza saltar a g4. En la partida se jugó 17.Axd5 y, tras los cambios, las negras quedaron con el caballo bueno contra el peón aislado de d4: un final para ellas. El motor confirma la diferencia: 17.Axf6 deja ventaja blanca y 17.Axd5 la da a las negras. (Stockfish 17 a profundidad 22: Axf6 es la que elige el motor (+0,4); Axd5 da −0,3.)",
+              "linea": [
+                "Bxf6",
+                "Bxf6",
+                "Bxd5",
+                "exd5",
+                "Qf5"
+              ]
+            }
+          ]
+        },
+        {
+          "titulo": "Ejercicios 13 a 17",
+          "resumen": "Cinco posiciones: evitar el cambio que libera al rival, cambiar al defensor de una casilla y elegir entre tres planes.",
+          "parrafos": [
+            "Aquí aparecen dos ideas que se repiten mucho en la práctica: impedir que el rival se quite de encima su pieza mala, y cambiar la pieza que defiende una casilla débil para ocuparla después. El último ejercicio pide comparar tres jugadas posibles; calcula cada una hasta que veas qué piezas quedan."
+          ],
+          "practica": "Pon cada posición en un tablero y juégala contra el motor desde el diagrama, primero con la idea de la solución y después con otra. Compara qué tan fácil fue jugar cada una.",
+          "ejercicios": [
+            13,
+            14,
+            15,
+            16,
+            17
+          ],
+          "diagramas": [
+            {
+              "id": "CC-E13",
+              "fen": "rnb1kbnr/p1pq1ppp/1p2p3/3pP3/3P4/2N2N2/PPPB1PPP/R2QKB1R w KQkq - 0 7",
+              "turno": "w",
+              "resultado": "*",
+              "pregunta": "Ejercicio 13. Murray Chandler – Ian Rogers, Wellington 1986. Juegan las blancas. ¿Pueden evitar que las negras cambien los alfiles de casillas blancas con …Aa6?",
+              "comentario": "7.Ab5 saca el alfil antes de que llegue …Aa6 y obliga a las negras a gastar jugadas (…c6 y …a5) para echarlo. Con 8.Aa4 y 13.Ab3 el alfil sigue vivo y las negras tienen que entregar su alfil «malo» por un caballo. El motor encuentra jugadas un poco más fuertes, como 7.h4; la idea de la partida es la que enseña el ejercicio: no dejar que el rival se quite de encima su pieza mala. (Stockfish 17 a profundidad 22: Ab5 está entre las mejores (+0,9; el motor prefiere apenas h4, +1,2).)",
+              "linea": [
+                "Bb5",
+                "c6",
+                "Ba4",
+                "a5",
+                "a3",
+                "Ba6",
+                "Ne2",
+                "Ne7",
+                "O-O",
+                "Bxe2",
+                "Qxe2",
+                "b5",
+                "Bb3",
+                "a4",
+                "Ba2",
+                "Nc8",
+                "Ne1",
+                "Na6",
+                "Nd3",
+                "Nb6",
+                "Rae1",
+                "Nc4"
+              ]
+            },
+            {
+              "id": "CC-E14",
+              "fen": "r2q1rk1/1b1n1pp1/p3pn1p/8/1b1N3B/2NBP3/1P3PPP/2RQ1RK1 w - - 0 19",
+              "turno": "w",
+              "resultado": "*",
+              "pregunta": "Ejercicio 14. Gata Kamsky – Valery Salov, Semifinal de Candidatos, Sanghi Nagar 1995. Juegan las blancas. ¿Cuál es el mejor plan?",
+              "comentario": "19.Ae4 ofrece cambiar el alfil de b7, la única pieza negra que cuida c6. Si se cambia, el caballo blanco salta a c6 sin que nadie lo desaloje. Cambiar al defensor de una casilla débil es una forma clásica de ganarla. Ojo con el cambio equivocado: 19.Cxe6 entrega material y no sirve para nada. (Stockfish 17 a profundidad 22: Ae4 es la que elige el motor (+0,1); Cxe6 da −2,7.)",
+              "linea": [
+                "Be4",
+                "Qb8",
+                "Nc6",
+                "Bxc6",
+                "Bxc6"
+              ]
+            },
+            {
+              "id": "CC-E15",
+              "fen": "r1bq1rk1/3nbppp/p2pp3/1p6/3QP1PP/2N1BP2/PPP5/2KR1B1R w - - 0 13",
+              "turno": "w",
+              "resultado": "*",
+              "pregunta": "Ejercicio 15. Pablo Ricardi – Jaime Sunye Neto, Panamericano de Cascavel 1996. Juegan las blancas. ¿Cuál es el mejor plan?",
+              "comentario": "13.Ag5 provoca el cambio del alfil de casillas negras de las negras, el que defiende d6. Después de 13…f6 14.Af4 Ce5 15.Cd5 las blancas cambian el caballo por el alfil de e7 y el peón de d6 queda sin su defensor; con 18.Db6 la ventaja es clara. El motor también propone 13.g5, más directo; el plan del cambio en e7 es igual de bueno para entender la posición. (Stockfish 17 a profundidad 22: el motor prefiere g5 (+0,9) a Ag5 (+0,5).)",
+              "linea": [
+                "Bg5",
+                "f6",
+                "Bf4",
+                "Ne5",
+                "Nd5",
+                "Bb7",
+                "Nxe7+",
+                "Qxe7",
+                "Be2",
+                "Rad8",
+                "Qb6"
+              ]
+            },
+            {
+              "id": "CC-E16",
+              "fen": "r5k1/1p2rppp/p2qbnn1/3p4/3P1NP1/3B1PN1/PP1Q3P/1K1R3R w - - 0 20",
+              "turno": "w",
+              "resultado": "*",
+              "pregunta": "Ejercicio 16. Garry Kasparov – Daniel Cámpora, Olimpiada de Salónica 1988. Juegan las blancas. ¿Te conviene cambiar caballos en g6?",
+              "comentario": "No: 20.Cg2 evita el cambio. Quien ataca necesita piezas, y cada cambio le alivia la defensa al rival. El caballo va a e3 y luego a h5, las torres se suben a la columna g, y Kasparov abrió la posición con f4 y f5. El motor confirma que 20.Cxg6 deja a las blancas peor que 20.Cg2. (Stockfish 17 a profundidad 22: Cg2 es la que elige el motor (+0,9); Cxg6 da −0,3.)",
+              "linea": [
+                "Ng2",
+                "Nd7",
+                "Rhg1",
+                "Ree8",
+                "Rdf1",
+                "Ngf8",
+                "Ne3",
+                "Kh8",
+                "Nh5",
+                "g6",
+                "f4",
+                "gxh5",
+                "f5",
+                "h4",
+                "fxe6",
+                "fxe6",
+                "g5"
+              ]
+            },
+            {
+              "id": "CC-E17",
+              "fen": "r2q1rk1/ppp2pbp/3p1np1/4p3/1PP5/2NP1BPb/P3PP1P/1RBQ1RK1 w - - 0 11",
+              "turno": "w",
+              "resultado": "*",
+              "pregunta": "Ejercicio 17. Oscar Panno – Diego Valerga, Torneo Interindustrial, Buenos Aires 1995. Juegan las blancas. Tienen tres opciones: 11.Ag2, 11.Te1 o 11.Axb7. ¿Cuál es la más fuerte?",
+              "comentario": "11.Axb7, aunque entregue la calidad: tras 11…Axf1 12.Axa8 Axe2 13.Dxe2 Dxa8 14.Ag5 las negras perdieron su alfil de casillas blancas y el caballo de f6 se va a cambiar; sin ellos, nadie cuida d5 y el caballo blanco entra por ahí. Con 11.Ag2 o 11.Te1 las negras se desarrollan y quedan igualadas. El motor elige 11.Axb7 por mucho. (Stockfish 17 a profundidad 22: Axb7 es la que elige el motor (+1,9); Ag2 da +0,4, Te1 da +0,6.)",
+              "linea": [
+                "Bxb7",
+                "Bxf1",
+                "Bxa8",
+                "Bxe2",
+                "Qxe2",
+                "Qxa8",
+                "Bg5",
+                "Rb8",
+                "b5",
+                "a6",
+                "Bxf6",
+                "Bxf6",
+                "Qe4",
+                "axb5",
+                "cxb5",
+                "Qxe4",
+                "dxe4",
+                "Ra8",
+                "a4",
+                "Bd8"
+              ]
+            }
+          ]
+        },
+        {
+          "titulo": "Ejercicios 18 a 22",
+          "resumen": "Las últimas cinco posiciones, de campeones del mundo: cambiar damas para asegurar el rey, transformar una ventaja y elegir el cambio justo.",
+          "parrafos": [
+            "Los últimos ejercicios son de partidas de Fischer, Karpov y Spassky, entre otros. En varios de ellos la decisión es cambiar damas o no, y en otro es renunciar a una ventaja (el peón aislado del rival) para ganar otra (su rey expuesto). Son los más difíciles del curso."
+          ],
+          "practica": "Vuelve a los ejercicios que fallaste del bloque y repítelos una semana después, sin mirar la solución.",
+          "ejercicios": [
+            18,
+            19,
+            20,
+            21,
+            22
+          ],
+          "diagramas": [
+            {
+              "id": "CC-E18",
+              "fen": "r4rk1/pp1b1pbp/3p1np1/2nPp1B1/1q2P1P1/2N2PN1/PP1Q3P/1R2KB1R w K - 0 14",
+              "turno": "w",
+              "resultado": "*",
+              "pregunta": "Ejercicio 18. Raúl Sanguinetti – Robert Fischer, Santiago de Chile 1959. Juegan las blancas, con más espacio pero sin terminar el desarrollo. ¿Cuál es el mejor plan?",
+              "comentario": "14.Cb5 fuerza el cambio de damas: después de 14…Dxd2+ 15.Rxd2 el rey blanco queda muy seguro en d2 y además el caballo en b5 obliga a las negras a cambiar su buen alfil de casillas blancas. Con las damas fuera, la ventaja de espacio pesa más que la falta de desarrollo. El motor pone 14.Cb5 entre las mejores, junto a 14.h4. (Stockfish 17 a profundidad 22: Cb5 es la que elige el motor (+1,3); Axf6 da −1,0.)",
+              "linea": [
+                "Nb5",
+                "Qxd2+",
+                "Kxd2",
+                "Bxb5",
+                "Bxb5",
+                "a6",
+                "Be2",
+                "Rfc8",
+                "Rbc1",
+                "Ne8",
+                "Rc2"
+              ]
+            },
+            {
+              "id": "CC-E19",
+              "fen": "r1q2rk1/3nbp1p/2p3p1/p3p3/Pn2P3/2N1BB1P/1PP2RP1/R4QK1 w - - 0 18",
+              "turno": "w",
+              "resultado": "*",
+              "pregunta": "Ejercicio 19. Anatoly Karpov – Boris Spassky, Match de Candidatos, Leningrado 1974. Juegan las blancas. No todos los cambios les convienen. ¿Cuál es la jugada correcta?",
+              "comentario": "18.Ag4 cambia el alfil de f3, que no tenía buena casilla, por el caballo de d7; así el alfil de e7 ya no puede ir a c5 a cambiar el mejor alfil blanco, el de e3. Karpov siguió con el retroceso 23.Cb1, el caballo pasó a d2 y f3, y las blancas evitaron los cambios que aliviaban a las negras. El motor lo da como la mejor. (Stockfish 17 a profundidad 22: Ag4 es la que elige el motor (+1,0).)",
+              "linea": [
+                "Bg4",
+                "h5",
+                "Bxd7",
+                "Qxd7",
+                "Qc4",
+                "Bh4",
+                "Rd2",
+                "Qe7",
+                "Rf1",
+                "Rfd8",
+                "Nb1",
+                "Qb7",
+                "Kh2",
+                "Kg7",
+                "c3",
+                "Na6",
+                "Re2",
+                "Rf8",
+                "Nd2",
+                "Bd8",
+                "Nf3",
+                "f6",
+                "Rd2"
+              ]
+            },
+            {
+              "id": "CC-E20",
+              "fen": "2r3k1/ppr2pp1/1q2bb1p/3p4/3N4/4P3/PP1RBPPP/1Q3RK1 w - - 0 21",
+              "turno": "w",
+              "resultado": "*",
+              "pregunta": "Ejercicio 20. Anatoly Karpov – Garry Kasparov, Match por el Campeonato del Mundo, Moscú 1985. Juegan las blancas. Las negras tienen un peón aislado, pero sus alfiles están activos y dominan la columna c. ¿Qué haces?",
+              "comentario": "21.Cxe6 renuncia a bloquear el peón aislado para cambiar el alfil activo de e6 y obligar a …fxe6: el rey negro queda abierto, sobre todo por el avance …h6 que ya se hizo. Karpov lo aprovechó con Ag4, h3 y el alfil y la dama hacia g6: una transformación de la ventaja, de una debilidad de peones a un rey expuesto. El motor la ve como la mejor; la natural 21.Ag4 pierde material. (Stockfish 17 a profundidad 22: Cxe6 es la que elige el motor (+0,2); Ag4 da −5,2.)",
+              "linea": [
+                "Nxe6",
+                "fxe6",
+                "Bg4",
+                "Rc4",
+                "h3",
+                "Qc6",
+                "Qd3",
+                "Kh8",
+                "Rfd1",
+                "a5",
+                "b3",
+                "Rc3",
+                "Qe2",
+                "Rf8",
+                "Bh5",
+                "b5",
+                "Bg6",
+                "Bd8",
+                "Bd3"
+              ]
+            },
+            {
+              "id": "CC-E21",
+              "fen": "1r3rk1/p1pn1ppp/4pq2/2p5/3P3P/7R/PPPQ1PP1/2KR1B2 w - - 0 15",
+              "turno": "w",
+              "resultado": "*",
+              "pregunta": "Ejercicio 21. Boris Spassky – Tigran Petrosian, Match por el Campeonato del Mundo, Moscú 1966. Juegan las blancas. Los dos bandos se preparan para atacar al rey contrario. ¿Cuál es el mejor plan?",
+              "comentario": "15.Dg5 fuerza el cambio de damas y lleva la partida a un final donde las debilidades negras del flanco de dama pesan más que cualquier ataque. Tras 15…cxd4 16.Dxf6 Cxf6 17.Txd4 las blancas cambian también un par de torres y el peón negro de a7 queda condenado. Spassky prefirió un final mejor a un ataque incierto; el motor lo da como la mejor. (Stockfish 17 a profundidad 22: Dg5 es la que elige el motor (+1,7); De2 da −1,3.)",
+              "linea": [
+                "Qg5",
+                "cxd4",
+                "Qxf6",
+                "Nxf6",
+                "Rxd4",
+                "Rb7",
+                "Rb3",
+                "Rxb3",
+                "axb3",
+                "Ra8",
+                "Rc4",
+                "Ne8",
+                "Ra4",
+                "Nd6",
+                "g3"
+              ]
+            },
+            {
+              "id": "CC-E22",
+              "fen": "r2r2k1/p2nqppp/1p2p3/3b4/1P6/2Q2NP1/P3PPBP/2RR2K1 w - - 0 18",
+              "turno": "w",
+              "resultado": "*",
+              "pregunta": "Ejercicio 22. Rustem Dautov – Judit Polgar, Olimpiada de Estambul 2000. Juegan las blancas. El juego parece igualado. ¿Cómo consiguen una posición más activa?",
+              "comentario": "18.Cd4 prepara el cambio del alfil de d5, que sostiene la posición negra, y apunta a la casilla c6. Después de 18…Cf6 19.b5 Axg2 20.Rxg2 el caballo blanco llega a c6 y las negras quedan atadas. Cambiar al defensor y ocupar la casilla que defendía: la misma idea del ejercicio 14. El motor la da como la mejor. (Stockfish 17 a profundidad 22: Cd4 es la que elige el motor (+0,6).)",
+              "linea": [
+                "Nd4",
+                "Nf6",
+                "b5",
+                "Bxg2",
+                "Kxg2",
+                "Rd5",
+                "Nc6",
+                "Qd7",
+                "Qc2",
+                "Qb7",
+                "a4",
+                "h6",
+                "e4",
+                "Rc5"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
