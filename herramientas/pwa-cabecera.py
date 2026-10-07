@@ -40,7 +40,8 @@ FIN = "<!-- app: fin -->"
 #     de sus versiones para imprimir), los accesibles de los diez volúmenes
 #     de «Mide tu fuerza» (mide-tu-fuerza-accesible.html,
 #     mide-tu-fuerza-2-accesible.html…), rompe-el-estancamiento-accesible.html,
-#     ganar-con-poco-accesible.html, ideas-que-ganan-partidas-accesible.html,
+#     ganar-con-poco-accesible.html, cambiar-o-no-cambiar-accesible.html,
+#     ideas-que-ganan-partidas-accesible.html,
 #     peonita-accesible.html y
 #     peonita-trucos-accesible.html son
 #     documentos que se descargan y se abren sueltos, hasta por correo y sin
@@ -67,7 +68,8 @@ FUERA = {"inscripcion.html", "offline.html", "formulario.html",
          "mide-tu-fuerza-9-accesible.html",
          "mide-tu-fuerza-10-accesible.html",
          "rompe-el-estancamiento-accesible.html",
-         "ganar-con-poco-accesible.html", "ideas-que-ganan-partidas-accesible.html",
+         "ganar-con-poco-accesible.html",
+         "cambiar-o-no-cambiar-accesible.html", "ideas-que-ganan-partidas-accesible.html",
          "peonita-accesible.html",
          "peonita-trucos-accesible.html"}
 CARPETAS_FUERA = ("cursos/recursos/", "cursos/protegido/", "material/", "herramientas/", "node_modules/")

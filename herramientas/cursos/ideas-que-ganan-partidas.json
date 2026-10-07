@@ -7,8 +7,8 @@
   "resumen": "Las ideas de medio juego y de final que deciden partidas —el ataque al enroque, el rey en el centro, las piezas, los peones, la táctica y los finales—, cada una con una posición real comprobada con motor.",
   "descripcion_larga": "Entre la apertura y el final hay un terreno donde no alcanza con saber las reglas generales: hay que reconocer, en la posición que tienes delante, cuál es la idea que funciona. El sacrificio en h7 que sí sirve, la torre que llega a la séptima, la ruptura de peón que abre el juego, el final de alfil contra caballo que se gana. Este curso reúne esas ideas en seis capítulos —el ataque al rey enrocado, el rey en el centro y los enroques opuestos, las piezas, los peones, la táctica que sostiene el plan y los finales— y explica cada una con una posición de partida real, tomada de la base abierta de Lichess y comprobada con Stockfish: en cada ejemplo hay una sola jugada buena, y lo que la lección dice de ella es cierto en el tablero.",
   "anterior": {
-    "href": "ganar-con-poco.html",
-    "titulo": "Ganar con poco"
+    "href": "cambiar-o-no-cambiar.html",
+    "titulo": "Cambiar o no cambiar"
   },
   "siguiente": {
     "href": "calculo-y-visualizacion.html",

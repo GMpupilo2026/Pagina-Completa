@@ -57,6 +57,7 @@ window.ExamenBanco = (function () {
     "preparacion-para-torneos": ["maestria", "calculo"],
     "rompe-el-estancamiento": ["estrategia", "calculo", "tactica"],
     "ganar-con-poco": ["estrategia", "finales"],
+    "cambiar-o-no-cambiar": ["estrategia", "material"],
     "ideas-que-ganan-partidas": ["estrategia", "tactica", "finales"],
   };
 

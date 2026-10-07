@@ -1,0 +1,4334 @@
+{
+ "curso": {
+  "slug": "cambiar-o-no-cambiar",
+  "titulo": "Cambiar o no cambiar",
+  "nivel": "Intermedio · Avanzado",
+  "descripcion": "El cambio de piezas en la estrategia: qué cambiar, qué conservar y por qué, con 33 partidas de grandes maestros y 22 ejercicios de partidas reales.",
+  "emoji": "🔁"
+ },
+ "finales": [
+  {
+   "n": 1,
+   "cap": 1,
+   "capitulo": "Las bases del cambio",
+   "titulo": "¿Qué cambia cuando cambias?",
+   "leccion": 1,
+   "diagramas": [
+    {
+     "id": "CC-1",
+     "idx": 0,
+     "fen": "r4rk1/p3bppp/2p1bn2/1q1p4/N7/4BPP1/PP2P1BP/2RQ1RK1 w - - 1 15",
+     "turno": "w",
+     "titulo": "Akiba Rubinstein – Georg Salwe, Lodz 1908. Juegan las blancas. Los peones negros de c6 y d5 están fijos en casillas blancas. ¿Qué cambio aprovecha eso?",
+     "resultado": "*",
+     "resultado_texto": "Posición para jugar",
+     "linea": "15.Bc5 Rfe8 16.Rf2 Nd7 17.Bxe7 Rxe7 18.Qd4 Ree8 19.Bf1 Rec8 20.e3 Qb7 21.Nc5 Nxc5",
+     "linea_es": "15.Ac5 Tfe8 16.Tf2 Cd7 17.Axe7 Txe7 18.Dd4 Tee8 19.Af1 Tec8 20.e3 Db7 21.Cc5 Cxc5",
+     "jugadas": [
+      {
+       "san": "Bc5",
+       "uci": "e3c5",
+       "fen": "r4rk1/p3bppp/2p1bn2/1qBp4/N7/5PP1/PP2P1BP/2RQ1RK1 b - - 2 15"
+      },
+      {
+       "san": "Rfe8",
+       "uci": "f8e8",
+       "fen": "r3r1k1/p3bppp/2p1bn2/1qBp4/N7/5PP1/PP2P1BP/2RQ1RK1 w - - 3 16"
+      },
+      {
+       "san": "Rf2",
+       "uci": "f1f2",
+       "fen": "r3r1k1/p3bppp/2p1bn2/1qBp4/N7/5PP1/PP2PRBP/2RQ2K1 b - - 4 16"
+      },
+      {
+       "san": "Nd7",
+       "uci": "f6d7",
+       "fen": "r3r1k1/p2nbppp/2p1b3/1qBp4/N7/5PP1/PP2PRBP/2RQ2K1 w - - 5 17"
+      },
+      {
+       "san": "Bxe7",
+       "uci": "c5e7",
+       "fen": "r3r1k1/p2nBppp/2p1b3/1q1p4/N7/5PP1/PP2PRBP/2RQ2K1 b - - 0 17"
+      },
+      {
+       "san": "Rxe7",
+       "uci": "e8e7",
+       "fen": "r5k1/p2nrppp/2p1b3/1q1p4/N7/5PP1/PP2PRBP/2RQ2K1 w - - 0 18"
+      },
+      {
+       "san": "Qd4",
+       "uci": "d1d4",
+       "fen": "r5k1/p2nrppp/2p1b3/1q1p4/N2Q4/5PP1/PP2PRBP/2R3K1 b - - 1 18"
+      },
+      {
+       "san": "Ree8",
+       "uci": "e7e8",
+       "fen": "r3r1k1/p2n1ppp/2p1b3/1q1p4/N2Q4/5PP1/PP2PRBP/2R3K1 w - - 2 19"
+      },
+      {
+       "san": "Bf1",
+       "uci": "g2f1",
+       "fen": "r3r1k1/p2n1ppp/2p1b3/1q1p4/N2Q4/5PP1/PP2PR1P/2R2BK1 b - - 3 19"
+      },
+      {
+       "san": "Rec8",
+       "uci": "e8c8",
+       "fen": "r1r3k1/p2n1ppp/2p1b3/1q1p4/N2Q4/5PP1/PP2PR1P/2R2BK1 w - - 4 20"
+      },
+      {
+       "san": "e3",
+       "uci": "e2e3",
+       "fen": "r1r3k1/p2n1ppp/2p1b3/1q1p4/N2Q4/4PPP1/PP3R1P/2R2BK1 b - - 0 20"
+      },
+      {
+       "san": "Qb7",
+       "uci": "b5b7",
+       "fen": "r1r3k1/pq1n1ppp/2p1b3/3p4/N2Q4/4PPP1/PP3R1P/2R2BK1 w - - 1 21"
+      },
+      {
+       "san": "Nc5",
+       "uci": "a4c5",
+       "fen": "r1r3k1/pq1n1ppp/2p1b3/2Np4/3Q4/4PPP1/PP3R1P/2R2BK1 b - - 2 21"
+      },
+      {
+       "san": "Nxc5",
+       "uci": "d7c5",
+       "fen": "r1r3k1/pq3ppp/2p1b3/2np4/3Q4/4PPP1/PP3R1P/2R2BK1 w - - 0 22"
+      }
+     ],
+     "comentario": "15.Ac5 ofrece cambiar el alfil de casillas negras de las negras, el único que podía cuidar c5 y d4. Después del cambio, las blancas se reagrupan sin prisa (16.Tf2, 18.Dd4, 21.Cc5) y ocupan esas casillas con sus piezas. El cambio no gana material: gana casillas. (Stockfish 17 a profundidad 22: Ac5 está entre las mejores (0,0; el motor prefiere apenas Cc5, +0,2).)",
+     "clave": true,
+     "marcas": []
+    }
+   ]
+  },
+  {
+   "n": 2,
+   "cap": 1,
+   "capitulo": "Las bases del cambio",
+   "titulo": "Cambia su mejor pieza",
+   "leccion": 2,
+   "diagramas": [
+    {
+     "id": "CC-2",
+     "idx": 0,
+     "fen": "r6r/pp2kppp/2nbpn2/8/1PB3b1/P3PN2/1B1NKPPP/R6R b - - 6 12",
+     "turno": "b",
+     "titulo": "Erich Cohn – Akiba Rubinstein, San Petersburgo 1909. Juegan las negras. ¿Cuál es la pieza blanca que más trabaja, y cómo la puedes cambiar?",
+     "resultado": "*",
+     "resultado_texto": "Posición para jugar",
+     "linea": "12...Be5 13.Bxe5 Nxe5 14.Rhc1 Rac8 15.Bb3 Rhd8 16.Nc4 Nxc4 17.Rxc4 Rxc4 18.Bxc4",
+     "linea_es": "12...Ae5 13.Axe5 Cxe5 14.Thc1 Tac8 15.Ab3 Thd8 16.Cc4 Cxc4 17.Txc4 Txc4 18.Axc4",
+     "jugadas": [
+      {
+       "san": "Be5",
+       "uci": "d6e5",
+       "fen": "r6r/pp2kppp/2n1pn2/4b3/1PB3b1/P3PN2/1B1NKPPP/R6R w - - 7 13"
+      },
+      {
+       "san": "Bxe5",
+       "uci": "b2e5",
+       "fen": "r6r/pp2kppp/2n1pn2/4B3/1PB3b1/P3PN2/3NKPPP/R6R b - - 0 13"
+      },
+      {
+       "san": "Nxe5",
+       "uci": "c6e5",
+       "fen": "r6r/pp2kppp/4pn2/4n3/1PB3b1/P3PN2/3NKPPP/R6R w - - 0 14"
+      },
+      {
+       "san": "Rhc1",
+       "uci": "h1c1",
+       "fen": "r6r/pp2kppp/4pn2/4n3/1PB3b1/P3PN2/3NKPPP/R1R5 b - - 1 14"
+      },
+      {
+       "san": "Rac8",
+       "uci": "a8c8",
+       "fen": "2r4r/pp2kppp/4pn2/4n3/1PB3b1/P3PN2/3NKPPP/R1R5 w - - 2 15"
+      },
+      {
+       "san": "Bb3",
+       "uci": "c4b3",
+       "fen": "2r4r/pp2kppp/4pn2/4n3/1P4b1/PB2PN2/3NKPPP/R1R5 b - - 3 15"
+      },
+      {
+       "san": "Rhd8",
+       "uci": "h8d8",
+       "fen": "2rr4/pp2kppp/4pn2/4n3/1P4b1/PB2PN2/3NKPPP/R1R5 w - - 4 16"
+      },
+      {
+       "san": "Nc4",
+       "uci": "d2c4",
+       "fen": "2rr4/pp2kppp/4pn2/4n3/1PN3b1/PB2PN2/4KPPP/R1R5 b - - 5 16"
+      },
+      {
+       "san": "Nxc4",
+       "uci": "e5c4",
+       "fen": "2rr4/pp2kppp/4pn2/8/1Pn3b1/PB2PN2/4KPPP/R1R5 w - - 0 17"
+      },
+      {
+       "san": "Rxc4",
+       "uci": "c1c4",
+       "fen": "2rr4/pp2kppp/4pn2/8/1PR3b1/PB2PN2/4KPPP/R7 b - - 0 17"
+      },
+      {
+       "san": "Rxc4",
+       "uci": "c8c4",
+       "fen": "3r4/pp2kppp/4pn2/8/1Pr3b1/PB2PN2/4KPPP/R7 w - - 0 18"
+      },
+      {
+       "san": "Bxc4",
+       "uci": "b3c4",
+       "fen": "3r4/pp2kppp/4pn2/8/1PB3b1/P3PN2/4KPPP/R7 b - - 0 18"
+      }
+     ],
+     "comentario": "12…Ae5 ofrece el cambio del alfil de b2, la mejor pieza blanca. Tras 13.Axe5 Cxe5 las negras dominan la columna c y la casilla c3 queda floja. Después de 16…Cxc4 y 18…Ce4 las negras siguen cambiando sin miedo: cada simplificación acerca el final donde los peones doblados de las blancas en la columna f pesan. (Stockfish 17 a profundidad 22: Ae5 es la que elige el motor (−0,2).)",
+     "clave": true,
+     "marcas": []
+    }
+   ]
+  },
+  {
+   "n": 3,
+   "cap": 1,
+   "capitulo": "Las bases del cambio",
+   "titulo": "Que le quede su pieza mala",
+   "leccion": 3,
+   "diagramas": [
+    {
+     "id": "CC-3",
+     "idx": 0,
+     "fen": "r1b2rk1/ppp2p2/3b1q1p/2p1p1p1/4P3/3P1NB1/PPP2PPP/R2Q1RK1 b - - 1 12",
+     "turno": "b",
+     "titulo": "William Winter – José Raúl Capablanca, Hastings 1919. Juegan las negras. El alfil blanco de g3 quedó encerrado detrás del peón de e5 y del de g5. ¿Qué cambios le convienen a las negras?",
+     "resultado": "*",
+     "resultado_texto": "Posición para jugar",
+     "linea": "12...Bg4 13.h3 Bxf3 14.Qxf3 Qxf3 15.gxf3 f6 16.Kg2 a5 17.a4 Kf7 18.Rh1",
+     "linea_es": "12...Ag4 13.h3 Axf3 14.Dxf3 Dxf3 15.gxf3 f6 16.Rg2 a5 17.a4 Rf7 18.Th1",
+     "jugadas": [
+      {
+       "san": "Bg4",
+       "uci": "c8g4",
+       "fen": "r4rk1/ppp2p2/3b1q1p/2p1p1p1/4P1b1/3P1NB1/PPP2PPP/R2Q1RK1 w - - 2 13"
+      },
+      {
+       "san": "h3",
+       "uci": "h2h3",
+       "fen": "r4rk1/ppp2p2/3b1q1p/2p1p1p1/4P1b1/3P1NBP/PPP2PP1/R2Q1RK1 b - - 0 13"
+      },
+      {
+       "san": "Bxf3",
+       "uci": "g4f3",
+       "fen": "r4rk1/ppp2p2/3b1q1p/2p1p1p1/4P3/3P1bBP/PPP2PP1/R2Q1RK1 w - - 0 14"
+      },
+      {
+       "san": "Qxf3",
+       "uci": "d1f3",
+       "fen": "r4rk1/ppp2p2/3b1q1p/2p1p1p1/4P3/3P1QBP/PPP2PP1/R4RK1 b - - 0 14"
+      },
+      {
+       "san": "Qxf3",
+       "uci": "f6f3",
+       "fen": "r4rk1/ppp2p2/3b3p/2p1p1p1/4P3/3P1qBP/PPP2PP1/R4RK1 w - - 0 15"
+      },
+      {
+       "san": "gxf3",
+       "uci": "g2f3",
+       "fen": "r4rk1/ppp2p2/3b3p/2p1p1p1/4P3/3P1PBP/PPP2P2/R4RK1 b - - 0 15"
+      },
+      {
+       "san": "f6",
+       "uci": "f7f6",
+       "fen": "r4rk1/ppp5/3b1p1p/2p1p1p1/4P3/3P1PBP/PPP2P2/R4RK1 w - - 0 16"
+      },
+      {
+       "san": "Kg2",
+       "uci": "g1g2",
+       "fen": "r4rk1/ppp5/3b1p1p/2p1p1p1/4P3/3P1PBP/PPP2PK1/R4R2 b - - 1 16"
+      },
+      {
+       "san": "a5",
+       "uci": "a7a5",
+       "fen": "r4rk1/1pp5/3b1p1p/p1p1p1p1/4P3/3P1PBP/PPP2PK1/R4R2 w - a6 0 17"
+      },
+      {
+       "san": "a4",
+       "uci": "a2a4",
+       "fen": "r4rk1/1pp5/3b1p1p/p1p1p1p1/P3P3/3P1PBP/1PP2PK1/R4R2 b - a3 0 17"
+      },
+      {
+       "san": "Kf7",
+       "uci": "g8f7",
+       "fen": "r4r2/1pp2k2/3b1p1p/p1p1p1p1/P3P3/3P1PBP/1PP2PK1/R4R2 w - - 1 18"
+      },
+      {
+       "san": "Rh1",
+       "uci": "f1h1",
+       "fen": "r4r2/1pp2k2/3b1p1p/p1p1p1p1/P3P3/3P1PBP/1PP2PK1/R6R b - - 2 18"
+      }
+     ],
+     "comentario": "12…Ag4 prepara el cambio del caballo de f3 y luego el de damas: 13.h3 Axf3 14.Dxf3 Dxf3 15.gxf3 f6. Con las damas fuera, al blanco solo le queda una pieza menor, y es la que no juega. Capablanca llevó el rey al centro y abrió el flanco de dama con …a5, …b5 y …c4. (Stockfish 17 a profundidad 22: Ag4 es la que elige el motor (−0,4).)",
+     "clave": true,
+     "marcas": []
+    }
+   ]
+  },
+  {
+   "n": 4,
+   "cap": 1,
+   "capitulo": "Las bases del cambio",
+   "titulo": "Todo menos el alfil malo",
+   "leccion": 4,
+   "diagramas": [
+    {
+     "id": "CC-4",
+     "idx": 0,
+     "fen": "3rr1k1/pbq2ppp/1pp1p3/4P3/2P1Q3/7P/PP2BPP1/R2R2K1 w - - 1 18",
+     "turno": "w",
+     "titulo": "Anatoly Karpov – Joël Lautier, Biel 1992. Juegan las blancas. El alfil negro de b7 está encerrado por sus propios peones y las negras quieren liberarlo con …c5. ¿Qué haces?",
+     "resultado": "*",
+     "resultado_texto": "Posición para jugar",
+     "linea": "18.Bf3 Ba8 19.Rxd8 Rxd8 20.Rd1 Rxd1+ 21.Bxd1 Qd8 22.Bf3 Qd2 23.b3 Qxa2 24.b4 Qa1+",
+     "linea_es": "18.Af3 Aa8 19.Txd8 Txd8 20.Td1 Txd1+ 21.Axd1 Dd8 22.Af3 Dd2 23.b3 Dxa2 24.b4 Da1+",
+     "jugadas": [
+      {
+       "san": "Bf3",
+       "uci": "e2f3",
+       "fen": "3rr1k1/pbq2ppp/1pp1p3/4P3/2P1Q3/5B1P/PP3PP1/R2R2K1 b - - 2 18"
+      },
+      {
+       "san": "Ba8",
+       "uci": "b7a8",
+       "fen": "b2rr1k1/p1q2ppp/1pp1p3/4P3/2P1Q3/5B1P/PP3PP1/R2R2K1 w - - 3 19"
+      },
+      {
+       "san": "Rxd8",
+       "uci": "d1d8",
+       "fen": "b2Rr1k1/p1q2ppp/1pp1p3/4P3/2P1Q3/5B1P/PP3PP1/R5K1 b - - 0 19"
+      },
+      {
+       "san": "Rxd8",
+       "uci": "e8d8",
+       "fen": "b2r2k1/p1q2ppp/1pp1p3/4P3/2P1Q3/5B1P/PP3PP1/R5K1 w - - 0 20"
+      },
+      {
+       "san": "Rd1",
+       "uci": "a1d1",
+       "fen": "b2r2k1/p1q2ppp/1pp1p3/4P3/2P1Q3/5B1P/PP3PP1/3R2K1 b - - 1 20"
+      },
+      {
+       "san": "Rxd1+",
+       "uci": "d8d1",
+       "fen": "b5k1/p1q2ppp/1pp1p3/4P3/2P1Q3/5B1P/PP3PP1/3r2K1 w - - 0 21"
+      },
+      {
+       "san": "Bxd1",
+       "uci": "f3d1",
+       "fen": "b5k1/p1q2ppp/1pp1p3/4P3/2P1Q3/7P/PP3PP1/3B2K1 b - - 0 21"
+      },
+      {
+       "san": "Qd8",
+       "uci": "c7d8",
+       "fen": "b2q2k1/p4ppp/1pp1p3/4P3/2P1Q3/7P/PP3PP1/3B2K1 w - - 1 22"
+      },
+      {
+       "san": "Bf3",
+       "uci": "d1f3",
+       "fen": "b2q2k1/p4ppp/1pp1p3/4P3/2P1Q3/5B1P/PP3PP1/6K1 b - - 2 22"
+      },
+      {
+       "san": "Qd2",
+       "uci": "d8d2",
+       "fen": "b5k1/p4ppp/1pp1p3/4P3/2P1Q3/5B1P/PP1q1PP1/6K1 w - - 3 23"
+      },
+      {
+       "san": "b3",
+       "uci": "b2b3",
+       "fen": "b5k1/p4ppp/1pp1p3/4P3/2P1Q3/1P3B1P/P2q1PP1/6K1 b - - 0 23"
+      },
+      {
+       "san": "Qxa2",
+       "uci": "d2a2",
+       "fen": "b5k1/p4ppp/1pp1p3/4P3/2P1Q3/1P3B1P/q4PP1/6K1 w - - 0 24"
+      },
+      {
+       "san": "b4",
+       "uci": "b3b4",
+       "fen": "b5k1/p4ppp/1pp1p3/4P3/1PP1Q3/5B1P/q4PP1/6K1 b - - 0 24"
+      },
+      {
+       "san": "Qa1+",
+       "uci": "a2a1",
+       "fen": "b5k1/p4ppp/1pp1p3/4P3/1PP1Q3/5B1P/5PP1/q5K1 w - - 1 25"
+      }
+     ],
+     "comentario": "18.Af3 ofrece cambiar los alfiles en la gran diagonal: si las negras lo aceptan, se quitan el problema pero las blancas quedan mejor; si no, su alfil se tiene que esconder en a8. Después llegan los cambios de torres (19.Txd8 y 20…Txd1+) y Karpov no se preocupa por simplificar: lo único que importa es que el alfil de a8 siga sin jugar. (Stockfish 17 a profundidad 22: Af3 es la que elige el motor (+0,5).)",
+     "clave": true,
+     "marcas": []
+    }
+   ]
+  },
+  {
+   "n": 5,
+   "cap": 1,
+   "capitulo": "Las bases del cambio",
+   "titulo": "Cambia las activas, encierra las pasivas",
+   "leccion": 5,
+   "diagramas": [
+    {
+     "id": "CC-5",
+     "idx": 0,
+     "fen": "1rq2rk1/n1p2ppp/p2p1nb1/P1b1p3/B1N1P1P1/2PP1N1P/5P2/R1BQ1RK1 w - - 3 17",
+     "turno": "w",
+     "titulo": "Viswanathan Anand – Michael Adams, Campeonato Mundial FIDE, Nueva Delhi 2000. Juegan las blancas. El caballo negro de a7 y el alfil de g6 están mal. ¿Cuál es la pieza negra que conviene cambiar?",
+     "resultado": "*",
+     "resultado_texto": "Posición para jugar",
+     "linea": "17.Be3 Bxe3 18.Nxe3 c6 19.Qd2 Qc7 20.c4 c5 21.Nh4 Kh8 22.g5 Nh5",
+     "linea_es": "17.Ae3 Axe3 18.Cxe3 c6 19.Dd2 Dc7 20.c4 c5 21.Ch4 Rh8 22.g5 Ch5",
+     "jugadas": [
+      {
+       "san": "Be3",
+       "uci": "c1e3",
+       "fen": "1rq2rk1/n1p2ppp/p2p1nb1/P1b1p3/B1N1P1P1/2PPBN1P/5P2/R2Q1RK1 b - - 4 17"
+      },
+      {
+       "san": "Bxe3",
+       "uci": "c5e3",
+       "fen": "1rq2rk1/n1p2ppp/p2p1nb1/P3p3/B1N1P1P1/2PPbN1P/5P2/R2Q1RK1 w - - 0 18"
+      },
+      {
+       "san": "Nxe3",
+       "uci": "c4e3",
+       "fen": "1rq2rk1/n1p2ppp/p2p1nb1/P3p3/B3P1P1/2PPNN1P/5P2/R2Q1RK1 b - - 0 18"
+      },
+      {
+       "san": "c6",
+       "uci": "c7c6",
+       "fen": "1rq2rk1/n4ppp/p1pp1nb1/P3p3/B3P1P1/2PPNN1P/5P2/R2Q1RK1 w - - 0 19"
+      },
+      {
+       "san": "Qd2",
+       "uci": "d1d2",
+       "fen": "1rq2rk1/n4ppp/p1pp1nb1/P3p3/B3P1P1/2PPNN1P/3Q1P2/R4RK1 b - - 1 19"
+      },
+      {
+       "san": "Qc7",
+       "uci": "c8c7",
+       "fen": "1r3rk1/n1q2ppp/p1pp1nb1/P3p3/B3P1P1/2PPNN1P/3Q1P2/R4RK1 w - - 2 20"
+      },
+      {
+       "san": "c4",
+       "uci": "c3c4",
+       "fen": "1r3rk1/n1q2ppp/p1pp1nb1/P3p3/B1P1P1P1/3PNN1P/3Q1P2/R4RK1 b - - 0 20"
+      },
+      {
+       "san": "c5",
+       "uci": "c6c5",
+       "fen": "1r3rk1/n1q2ppp/p2p1nb1/P1p1p3/B1P1P1P1/3PNN1P/3Q1P2/R4RK1 w - - 0 21"
+      },
+      {
+       "san": "Nh4",
+       "uci": "f3h4",
+       "fen": "1r3rk1/n1q2ppp/p2p1nb1/P1p1p3/B1P1P1PN/3PN2P/3Q1P2/R4RK1 b - - 1 21"
+      },
+      {
+       "san": "Kh8",
+       "uci": "g8h8",
+       "fen": "1r3r1k/n1q2ppp/p2p1nb1/P1p1p3/B1P1P1PN/3PN2P/3Q1P2/R4RK1 w - - 2 22"
+      },
+      {
+       "san": "g5",
+       "uci": "g4g5",
+       "fen": "1r3r1k/n1q2ppp/p2p1nb1/P1p1p1P1/B1P1P2N/3PN2P/3Q1P2/R4RK1 b - - 0 22"
+      },
+      {
+       "san": "Nh5",
+       "uci": "f6h5",
+       "fen": "1r3r1k/n1q2ppp/p2p2b1/P1p1p1Pn/B1P1P2N/3PN2P/3Q1P2/R4RK1 w - - 1 23"
+      }
+     ],
+     "comentario": "17.Ae3 ofrece el cambio del alfil de c5, la única pieza negra activa. Tras 17…Axe3 18.Cxe3 las blancas siguen con 20.c4: aceptan un hueco en d4 a cambio de que el caballo de a7 no tenga casillas. Cambiar la pieza activa y encerrar la pasiva fue el plan de toda la partida. (Stockfish 17 a profundidad 22: Ae3 es la que elige el motor (+0,3).)",
+     "clave": true,
+     "marcas": []
+    }
+   ]
+  },
+  {
+   "n": 6,
+   "cap": 1,
+   "capitulo": "Las bases del cambio",
+   "titulo": "La táctica al servicio del cambio",
+   "leccion": 6,
+   "diagramas": [
+    {
+     "id": "CC-6",
+     "idx": 0,
+     "fen": "r1bn1rk1/2q1bppp/3p1n2/p1pPp3/PpN1P3/2P2N1P/1PB2PP1/R1BQR1K1 w - - 0 16",
+     "turno": "w",
+     "titulo": "José Raúl Capablanca – Milan Vidmar, Nueva York 1927. Juegan las blancas. ¿Hay una forma de forzar cambios que te dejen un final mejor?",
+     "resultado": "*",
+     "resultado_texto": "Posición para jugar",
+     "linea": "16.Nfxe5 Ba6 17.Bb3 dxe5 18.d6 Bxd6 19.Qxd6 Qxd6 20.Nxd6 Nb7 21.Nxb7 Bxb7",
+     "linea_es": "16.Cfxe5 Aa6 17.Ab3 dxe5 18.d6 Axd6 19.Dxd6 Dxd6 20.Cxd6 Cb7 21.Cxb7 Axb7",
+     "jugadas": [
+      {
+       "san": "Nfxe5",
+       "uci": "f3e5",
+       "fen": "r1bn1rk1/2q1bppp/3p1n2/p1pPN3/PpN1P3/2P4P/1PB2PP1/R1BQR1K1 b - - 0 16"
+      },
+      {
+       "san": "Ba6",
+       "uci": "c8a6",
+       "fen": "r2n1rk1/2q1bppp/b2p1n2/p1pPN3/PpN1P3/2P4P/1PB2PP1/R1BQR1K1 w - - 1 17"
+      },
+      {
+       "san": "Bb3",
+       "uci": "c2b3",
+       "fen": "r2n1rk1/2q1bppp/b2p1n2/p1pPN3/PpN1P3/1BP4P/1P3PP1/R1BQR1K1 b - - 2 17"
+      },
+      {
+       "san": "dxe5",
+       "uci": "d6e5",
+       "fen": "r2n1rk1/2q1bppp/b4n2/p1pPp3/PpN1P3/1BP4P/1P3PP1/R1BQR1K1 w - - 0 18"
+      },
+      {
+       "san": "d6",
+       "uci": "d5d6",
+       "fen": "r2n1rk1/2q1bppp/b2P1n2/p1p1p3/PpN1P3/1BP4P/1P3PP1/R1BQR1K1 b - - 0 18"
+      },
+      {
+       "san": "Bxd6",
+       "uci": "e7d6",
+       "fen": "r2n1rk1/2q2ppp/b2b1n2/p1p1p3/PpN1P3/1BP4P/1P3PP1/R1BQR1K1 w - - 0 19"
+      },
+      {
+       "san": "Qxd6",
+       "uci": "d1d6",
+       "fen": "r2n1rk1/2q2ppp/b2Q1n2/p1p1p3/PpN1P3/1BP4P/1P3PP1/R1B1R1K1 b - - 0 19"
+      },
+      {
+       "san": "Qxd6",
+       "uci": "c7d6",
+       "fen": "r2n1rk1/5ppp/b2q1n2/p1p1p3/PpN1P3/1BP4P/1P3PP1/R1B1R1K1 w - - 0 20"
+      },
+      {
+       "san": "Nxd6",
+       "uci": "c4d6",
+       "fen": "r2n1rk1/5ppp/b2N1n2/p1p1p3/Pp2P3/1BP4P/1P3PP1/R1B1R1K1 b - - 0 20"
+      },
+      {
+       "san": "Nb7",
+       "uci": "d8b7",
+       "fen": "r4rk1/1n3ppp/b2N1n2/p1p1p3/Pp2P3/1BP4P/1P3PP1/R1B1R1K1 w - - 1 21"
+      },
+      {
+       "san": "Nxb7",
+       "uci": "d6b7",
+       "fen": "r4rk1/1N3ppp/b4n2/p1p1p3/Pp2P3/1BP4P/1P3PP1/R1B1R1K1 b - - 0 21"
+      },
+      {
+       "san": "Bxb7",
+       "uci": "a6b7",
+       "fen": "r4rk1/1b3ppp/5n2/p1p1p3/Pp2P3/1BP4P/1P3PP1/R1B1R1K1 w - - 0 22"
+      }
+     ],
+     "comentario": "16.Cfxe5 parece entregar una pieza, pero si 16…dxe5 el avance 17.d6 ataca a la vez la dama de c7 y el alfil de e7. Vidmar jugó 16…Aa6, y después de 17.Ab3 dxe5 18.d6 Axd6 19.Dxd6 Dxd6 20.Cxd6 la serie de cambios deja a las blancas con la pareja de alfiles en un final sin damas, con los peones negros del flanco de dama débiles. (Stockfish 17 a profundidad 22: el motor prefiere Ae3 (+1,5) a Cfxe5 (+1,1).)",
+     "clave": true,
+     "marcas": []
+    }
+   ]
+  },
+  {
+   "n": 7,
+   "cap": 1,
+   "capitulo": "Las bases del cambio",
+   "titulo": "El espacio no se cambia",
+   "leccion": 7,
+   "diagramas": [
+    {
+     "id": "CC-7a",
+     "idx": 0,
+     "fen": "r1b1k2r/pp1n1ppp/1qn1p3/3pP3/1b1P4/3B1N2/PP2NPPP/R1BQK2R w KQkq - 1 10",
+     "turno": "w",
+     "titulo": "Alexander Alekhine – José Raúl Capablanca, Torneo AVRO, Países Bajos 1938. Juegan las blancas, que tienen más espacio. Las negras acaban de dar jaque con …Ab4+. ¿Tapas con el alfil o mueves el rey?",
+     "resultado": "*",
+     "resultado_texto": "Posición para jugar",
+     "linea": "10.Kf1 Be7 11.a3 Nf8 12.b4 Bd7 13.Be3 Nd8 14.Nc3 a5 15.Na4 Qa7",
+     "linea_es": "10.Rf1 Ae7 11.a3 Cf8 12.b4 Ad7 13.Ae3 Cd8 14.Cc3 a5 15.Ca4 Da7",
+     "jugadas": [
+      {
+       "san": "Kf1",
+       "uci": "e1f1",
+       "fen": "r1b1k2r/pp1n1ppp/1qn1p3/3pP3/1b1P4/3B1N2/PP2NPPP/R1BQ1K1R b kq - 2 10"
+      },
+      {
+       "san": "Be7",
+       "uci": "b4e7",
+       "fen": "r1b1k2r/pp1nbppp/1qn1p3/3pP3/3P4/3B1N2/PP2NPPP/R1BQ1K1R w kq - 3 11"
+      },
+      {
+       "san": "a3",
+       "uci": "a2a3",
+       "fen": "r1b1k2r/pp1nbppp/1qn1p3/3pP3/3P4/P2B1N2/1P2NPPP/R1BQ1K1R b kq - 0 11"
+      },
+      {
+       "san": "Nf8",
+       "uci": "d7f8",
+       "fen": "r1b1kn1r/pp2bppp/1qn1p3/3pP3/3P4/P2B1N2/1P2NPPP/R1BQ1K1R w kq - 1 12"
+      },
+      {
+       "san": "b4",
+       "uci": "b2b4",
+       "fen": "r1b1kn1r/pp2bppp/1qn1p3/3pP3/1P1P4/P2B1N2/4NPPP/R1BQ1K1R b kq b3 0 12"
+      },
+      {
+       "san": "Bd7",
+       "uci": "c8d7",
+       "fen": "r3kn1r/pp1bbppp/1qn1p3/3pP3/1P1P4/P2B1N2/4NPPP/R1BQ1K1R w kq - 1 13"
+      },
+      {
+       "san": "Be3",
+       "uci": "c1e3",
+       "fen": "r3kn1r/pp1bbppp/1qn1p3/3pP3/1P1P4/P2BBN2/4NPPP/R2Q1K1R b kq - 2 13"
+      },
+      {
+       "san": "Nd8",
+       "uci": "c6d8",
+       "fen": "r2nkn1r/pp1bbppp/1q2p3/3pP3/1P1P4/P2BBN2/4NPPP/R2Q1K1R w kq - 3 14"
+      },
+      {
+       "san": "Nc3",
+       "uci": "e2c3",
+       "fen": "r2nkn1r/pp1bbppp/1q2p3/3pP3/1P1P4/P1NBBN2/5PPP/R2Q1K1R b kq - 4 14"
+      },
+      {
+       "san": "a5",
+       "uci": "a7a5",
+       "fen": "r2nkn1r/1p1bbppp/1q2p3/p2pP3/1P1P4/P1NBBN2/5PPP/R2Q1K1R w kq a6 0 15"
+      },
+      {
+       "san": "Na4",
+       "uci": "c3a4",
+       "fen": "r2nkn1r/1p1bbppp/1q2p3/p2pP3/NP1P4/P2BBN2/5PPP/R2Q1K1R b kq - 1 15"
+      },
+      {
+       "san": "Qa7",
+       "uci": "b6a7",
+       "fen": "r2nkn1r/qp1bbppp/4p3/p2pP3/NP1P4/P2BBN2/5PPP/R2Q1K1R w kq - 2 16"
+      }
+     ],
+     "comentario": "10.Rf1 renuncia al enroque para no cambiar los alfiles de casillas negras: 10.Ad2 aliviaba a las negras, que tienen poco espacio. Con 11.a3, 12.b4 y 15.Ca4 las blancas siguen ganando terreno en el flanco de dama, sin cambiar nada. (Stockfish 17 a profundidad 22: Rf1 es la que elige el motor (+0,6).)",
+     "clave": true,
+     "marcas": []
+    },
+    {
+     "id": "CC-7b",
+     "idx": 0,
+     "fen": "3rr1k1/pp1nbpp1/2p1p1p1/q7/2PPQ3/PP3N2/1B3PPP/3RR1K1 b - - 0 18",
+     "turno": "b",
+     "titulo": "Boris Spassky – Anatoly Karpov, Leningrado (semifinal de Candidatos) 1974. Juegan las negras, con menos espacio. ¿Qué cambio les conviene buscar?",
+     "resultado": "*",
+     "resultado_texto": "Posición para jugar",
+     "linea": "18...Qf5 19.Qe2 g5 20.h3 g4 21.hxg4 Qxg4 22.d5 cxd5 23.cxd5 e5 24.d6 Bf6 25.Nd2",
+     "linea_es": "18...Df5 19.De2 g5 20.h3 g4 21.hxg4 Dxg4 22.d5 cxd5 23.cxd5 e5 24.d6 Af6 25.Cd2",
+     "jugadas": [
+      {
+       "san": "Qf5",
+       "uci": "a5f5",
+       "fen": "3rr1k1/pp1nbpp1/2p1p1p1/5q2/2PPQ3/PP3N2/1B3PPP/3RR1K1 w - - 1 19"
+      },
+      {
+       "san": "Qe2",
+       "uci": "e4e2",
+       "fen": "3rr1k1/pp1nbpp1/2p1p1p1/5q2/2PP4/PP3N2/1B2QPPP/3RR1K1 b - - 2 19"
+      },
+      {
+       "san": "g5",
+       "uci": "g6g5",
+       "fen": "3rr1k1/pp1nbpp1/2p1p3/5qp1/2PP4/PP3N2/1B2QPPP/3RR1K1 w - - 0 20"
+      },
+      {
+       "san": "h3",
+       "uci": "h2h3",
+       "fen": "3rr1k1/pp1nbpp1/2p1p3/5qp1/2PP4/PP3N1P/1B2QPP1/3RR1K1 b - - 0 20"
+      },
+      {
+       "san": "g4",
+       "uci": "g5g4",
+       "fen": "3rr1k1/pp1nbpp1/2p1p3/5q2/2PP2p1/PP3N1P/1B2QPP1/3RR1K1 w - - 0 21"
+      },
+      {
+       "san": "hxg4",
+       "uci": "h3g4",
+       "fen": "3rr1k1/pp1nbpp1/2p1p3/5q2/2PP2P1/PP3N2/1B2QPP1/3RR1K1 b - - 0 21"
+      },
+      {
+       "san": "Qxg4",
+       "uci": "f5g4",
+       "fen": "3rr1k1/pp1nbpp1/2p1p3/8/2PP2q1/PP3N2/1B2QPP1/3RR1K1 w - - 0 22"
+      },
+      {
+       "san": "d5",
+       "uci": "d4d5",
+       "fen": "3rr1k1/pp1nbpp1/2p1p3/3P4/2P3q1/PP3N2/1B2QPP1/3RR1K1 b - - 0 22"
+      },
+      {
+       "san": "cxd5",
+       "uci": "c6d5",
+       "fen": "3rr1k1/pp1nbpp1/4p3/3p4/2P3q1/PP3N2/1B2QPP1/3RR1K1 w - - 0 23"
+      },
+      {
+       "san": "cxd5",
+       "uci": "c4d5",
+       "fen": "3rr1k1/pp1nbpp1/4p3/3P4/6q1/PP3N2/1B2QPP1/3RR1K1 b - - 0 23"
+      },
+      {
+       "san": "e5",
+       "uci": "e6e5",
+       "fen": "3rr1k1/pp1nbpp1/8/3Pp3/6q1/PP3N2/1B2QPP1/3RR1K1 w - - 0 24"
+      },
+      {
+       "san": "d6",
+       "uci": "d5d6",
+       "fen": "3rr1k1/pp1nbpp1/3P4/4p3/6q1/PP3N2/1B2QPP1/3RR1K1 b - - 0 24"
+      },
+      {
+       "san": "Bf6",
+       "uci": "e7f6",
+       "fen": "3rr1k1/pp1n1pp1/3P1b2/4p3/6q1/PP3N2/1B2QPP1/3RR1K1 w - - 1 25"
+      },
+      {
+       "san": "Nd2",
+       "uci": "f3d2",
+       "fen": "3rr1k1/pp1n1pp1/3P1b2/4p3/6q1/PP6/1B1NQPP1/3RR1K1 b - - 2 25"
+      }
+     ],
+     "comentario": "18…Df5 ofrece el cambio de damas. Spassky lo esquiva con 19.De2, pero el plan con 25.Cd2 le permite a Karpov cambiar damas más tarde (25…Dxe2), y sin damas el peón de d6 deja de ser una fuerza para volverse una debilidad. (Stockfish 17 a profundidad 22: Df5 es la que elige el motor (0,0).)",
+     "clave": true,
+     "marcas": []
+    }
+   ]
+  },
+  {
+   "n": 8,
+   "cap": 2,
+   "capitulo": "Alfiles y caballos",
+   "titulo": "La pareja de alfiles",
+   "leccion": 8,
+   "diagramas": [
+    {
+     "id": "CC-8",
+     "idx": 0,
+     "fen": "3rr1k1/ppp2pbp/6p1/8/6b1/1NP1B3/PP3PPP/R4RK1 b - - 0 17",
+     "turno": "b",
+     "titulo": "Berthold Englisch – Wilhelm Steinitz, Londres 1883. Juegan las negras, con los dos alfiles. ¿Cómo se aprovechan?",
+     "resultado": "*",
+     "resultado_texto": "Posición para jugar",
+     "linea": "17...b6 18.h3 Be6 19.Rfd1 c5 20.Bg5 f6 21.Bf4 Kf7 22.f3 g5 23.Rxd8 Rxd8 24.Be3",
+     "linea_es": "17...b6 18.h3 Ae6 19.Tfd1 c5 20.Ag5 f6 21.Af4 Rf7 22.f3 g5 23.Txd8 Txd8 24.Ae3",
+     "jugadas": [
+      {
+       "san": "b6",
+       "uci": "b7b6",
+       "fen": "3rr1k1/p1p2pbp/1p4p1/8/6b1/1NP1B3/PP3PPP/R4RK1 w - - 0 18"
+      },
+      {
+       "san": "h3",
+       "uci": "h2h3",
+       "fen": "3rr1k1/p1p2pbp/1p4p1/8/6b1/1NP1B2P/PP3PP1/R4RK1 b - - 0 18"
+      },
+      {
+       "san": "Be6",
+       "uci": "g4e6",
+       "fen": "3rr1k1/p1p2pbp/1p2b1p1/8/8/1NP1B2P/PP3PP1/R4RK1 w - - 1 19"
+      },
+      {
+       "san": "Rfd1",
+       "uci": "f1d1",
+       "fen": "3rr1k1/p1p2pbp/1p2b1p1/8/8/1NP1B2P/PP3PP1/R2R2K1 b - - 2 19"
+      },
+      {
+       "san": "c5",
+       "uci": "c7c5",
+       "fen": "3rr1k1/p4pbp/1p2b1p1/2p5/8/1NP1B2P/PP3PP1/R2R2K1 w - c6 0 20"
+      },
+      {
+       "san": "Bg5",
+       "uci": "e3g5",
+       "fen": "3rr1k1/p4pbp/1p2b1p1/2p3B1/8/1NP4P/PP3PP1/R2R2K1 b - - 1 20"
+      },
+      {
+       "san": "f6",
+       "uci": "f7f6",
+       "fen": "3rr1k1/p5bp/1p2bpp1/2p3B1/8/1NP4P/PP3PP1/R2R2K1 w - - 0 21"
+      },
+      {
+       "san": "Bf4",
+       "uci": "g5f4",
+       "fen": "3rr1k1/p5bp/1p2bpp1/2p5/5B2/1NP4P/PP3PP1/R2R2K1 b - - 1 21"
+      },
+      {
+       "san": "Kf7",
+       "uci": "g8f7",
+       "fen": "3rr3/p4kbp/1p2bpp1/2p5/5B2/1NP4P/PP3PP1/R2R2K1 w - - 2 22"
+      },
+      {
+       "san": "f3",
+       "uci": "f2f3",
+       "fen": "3rr3/p4kbp/1p2bpp1/2p5/5B2/1NP2P1P/PP4P1/R2R2K1 b - - 0 22"
+      },
+      {
+       "san": "g5",
+       "uci": "g6g5",
+       "fen": "3rr3/p4kbp/1p2bp2/2p3p1/5B2/1NP2P1P/PP4P1/R2R2K1 w - - 0 23"
+      },
+      {
+       "san": "Rxd8",
+       "uci": "d1d8",
+       "fen": "3Rr3/p4kbp/1p2bp2/2p3p1/5B2/1NP2P1P/PP4P1/R5K1 b - - 0 23"
+      },
+      {
+       "san": "Rxd8",
+       "uci": "e8d8",
+       "fen": "3r4/p4kbp/1p2bp2/2p3p1/5B2/1NP2P1P/PP4P1/R5K1 w - - 0 24"
+      },
+      {
+       "san": "Be3",
+       "uci": "f4e3",
+       "fen": "3r4/p4kbp/1p2bp2/2p3p1/8/1NP1BP1P/PP4P1/R5K1 b - - 1 24"
+      }
+     ],
+     "comentario": "17…b6 y …c5 le quitan al caballo de b3 todas sus casillas de salida. Las negras siguen ganando terreno con …f6, …Rf7 y …g5, y no cambian nada mientras no les sirva. Solo más tarde cambian los alfiles, uno por uno, cuando el final que queda está ganado. (Stockfish 17 a profundidad 22: b6 es la que elige el motor (−0,2).)",
+     "clave": true,
+     "marcas": []
+    }
+   ]
+  },
+  {
+   "n": 9,
+   "cap": 2,
+   "capitulo": "Alfiles y caballos",
+   "titulo": "Cuando el caballo vale más",
+   "leccion": 9,
+   "diagramas": [
+    {
+     "id": "CC-9a",
+     "idx": 0,
+     "fen": "r1bqk2r/pp1p1ppp/2n1pn2/2p5/1bPP4/2NBPN2/PP3PPP/R1BQK2R b KQkq - 2 6",
+     "turno": "b",
+     "titulo": "Boris Spassky – Robert Fischer, Reikiavik (Campeonato Mundial) 1972. Juegan las negras. ¿Te conviene dar el alfil de b4 por el caballo de c3?",
+     "resultado": "*",
+     "resultado_texto": "Posición para jugar",
+     "linea": "6...Bxc3+ 7.bxc3 d6 8.e4 e5 9.d5 Ne7 10.Nh4 h6 11.f4 Ng6 12.Nxg6",
+     "linea_es": "6...Axc3+ 7.bxc3 d6 8.e4 e5 9.d5 Ce7 10.Ch4 h6 11.f4 Cg6 12.Cxg6",
+     "jugadas": [
+      {
+       "san": "Bxc3+",
+       "uci": "b4c3",
+       "fen": "r1bqk2r/pp1p1ppp/2n1pn2/2p5/2PP4/2bBPN2/PP3PPP/R1BQK2R w KQkq - 0 7"
+      },
+      {
+       "san": "bxc3",
+       "uci": "b2c3",
+       "fen": "r1bqk2r/pp1p1ppp/2n1pn2/2p5/2PP4/2PBPN2/P4PPP/R1BQK2R b KQkq - 0 7"
+      },
+      {
+       "san": "d6",
+       "uci": "d7d6",
+       "fen": "r1bqk2r/pp3ppp/2nppn2/2p5/2PP4/2PBPN2/P4PPP/R1BQK2R w KQkq - 0 8"
+      },
+      {
+       "san": "e4",
+       "uci": "e3e4",
+       "fen": "r1bqk2r/pp3ppp/2nppn2/2p5/2PPP3/2PB1N2/P4PPP/R1BQK2R b KQkq - 0 8"
+      },
+      {
+       "san": "e5",
+       "uci": "e6e5",
+       "fen": "r1bqk2r/pp3ppp/2np1n2/2p1p3/2PPP3/2PB1N2/P4PPP/R1BQK2R w KQkq - 0 9"
+      },
+      {
+       "san": "d5",
+       "uci": "d4d5",
+       "fen": "r1bqk2r/pp3ppp/2np1n2/2pPp3/2P1P3/2PB1N2/P4PPP/R1BQK2R b KQkq - 0 9"
+      },
+      {
+       "san": "Ne7",
+       "uci": "c6e7",
+       "fen": "r1bqk2r/pp2nppp/3p1n2/2pPp3/2P1P3/2PB1N2/P4PPP/R1BQK2R w KQkq - 1 10"
+      },
+      {
+       "san": "Nh4",
+       "uci": "f3h4",
+       "fen": "r1bqk2r/pp2nppp/3p1n2/2pPp3/2P1P2N/2PB4/P4PPP/R1BQK2R b KQkq - 2 10"
+      },
+      {
+       "san": "h6",
+       "uci": "h7h6",
+       "fen": "r1bqk2r/pp2npp1/3p1n1p/2pPp3/2P1P2N/2PB4/P4PPP/R1BQK2R w KQkq - 0 11"
+      },
+      {
+       "san": "f4",
+       "uci": "f2f4",
+       "fen": "r1bqk2r/pp2npp1/3p1n1p/2pPp3/2P1PP1N/2PB4/P5PP/R1BQK2R b KQkq f3 0 11"
+      },
+      {
+       "san": "Ng6",
+       "uci": "e7g6",
+       "fen": "r1bqk2r/pp3pp1/3p1nnp/2pPp3/2P1PP1N/2PB4/P5PP/R1BQK2R w KQkq - 1 12"
+      },
+      {
+       "san": "Nxg6",
+       "uci": "h4g6",
+       "fen": "r1bqk2r/pp3pp1/3p1nNp/2pPp3/2P1PP2/2PB4/P5PP/R1BQK2R b KQkq - 0 12"
+      }
+     ],
+     "comentario": "6…Axc3+ 7.bxc3 entrega la pareja de alfiles, pero deja a las blancas con peones doblados en la columna c. Fischer sigue con …d6 y …e5 para cerrar el centro: con la posición trabada, los alfiles blancos no encuentran diagonales y los caballos negros sí encuentran casillas. (Stockfish 17 a profundidad 22: Axc3+ es la que elige el motor (+0,2).)",
+     "clave": true,
+     "marcas": []
+    },
+    {
+     "id": "CC-9b",
+     "idx": 0,
+     "fen": "r2qkb1r/1p1bppp1/p2p1n1p/6B1/3QP3/5N2/PPP2PPP/RN3RK1 w kq - 0 9",
+     "turno": "w",
+     "titulo": "Vassily Ivanchuk – Garry Kasparov, Linares 1991. Juegan las blancas. ¿Conviene entregar el alfil de g5 por el caballo de f6?",
+     "resultado": "*",
+     "resultado_texto": "Posición para jugar",
+     "linea": "9.Bxf6 gxf6 10.c4 e6 11.Nc3 Rc8 12.Kh1 h5 13.a4 h4 14.h3 Be7",
+     "linea_es": "9.Axf6 gxf6 10.c4 e6 11.Cc3 Tc8 12.Rh1 h5 13.a4 h4 14.h3 Ae7",
+     "jugadas": [
+      {
+       "san": "Bxf6",
+       "uci": "g5f6",
+       "fen": "r2qkb1r/1p1bppp1/p2p1B1p/8/3QP3/5N2/PPP2PPP/RN3RK1 b kq - 0 9"
+      },
+      {
+       "san": "gxf6",
+       "uci": "g7f6",
+       "fen": "r2qkb1r/1p1bpp2/p2p1p1p/8/3QP3/5N2/PPP2PPP/RN3RK1 w kq - 0 10"
+      },
+      {
+       "san": "c4",
+       "uci": "c2c4",
+       "fen": "r2qkb1r/1p1bpp2/p2p1p1p/8/2PQP3/5N2/PP3PPP/RN3RK1 b kq c3 0 10"
+      },
+      {
+       "san": "e6",
+       "uci": "e7e6",
+       "fen": "r2qkb1r/1p1b1p2/p2ppp1p/8/2PQP3/5N2/PP3PPP/RN3RK1 w kq - 0 11"
+      },
+      {
+       "san": "Nc3",
+       "uci": "b1c3",
+       "fen": "r2qkb1r/1p1b1p2/p2ppp1p/8/2PQP3/2N2N2/PP3PPP/R4RK1 b kq - 1 11"
+      },
+      {
+       "san": "Rc8",
+       "uci": "a8c8",
+       "fen": "2rqkb1r/1p1b1p2/p2ppp1p/8/2PQP3/2N2N2/PP3PPP/R4RK1 w k - 2 12"
+      },
+      {
+       "san": "Kh1",
+       "uci": "g1h1",
+       "fen": "2rqkb1r/1p1b1p2/p2ppp1p/8/2PQP3/2N2N2/PP3PPP/R4R1K b k - 3 12"
+      },
+      {
+       "san": "h5",
+       "uci": "h6h5",
+       "fen": "2rqkb1r/1p1b1p2/p2ppp2/7p/2PQP3/2N2N2/PP3PPP/R4R1K w k - 0 13"
+      },
+      {
+       "san": "a4",
+       "uci": "a2a4",
+       "fen": "2rqkb1r/1p1b1p2/p2ppp2/7p/P1PQP3/2N2N2/1P3PPP/R4R1K b k a3 0 13"
+      },
+      {
+       "san": "h4",
+       "uci": "h5h4",
+       "fen": "2rqkb1r/1p1b1p2/p2ppp2/8/P1PQP2p/2N2N2/1P3PPP/R4R1K w k - 0 14"
+      },
+      {
+       "san": "h3",
+       "uci": "h2h3",
+       "fen": "2rqkb1r/1p1b1p2/p2ppp2/8/P1PQP2p/2N2N1P/1P3PP1/R4R1K b k - 0 14"
+      },
+      {
+       "san": "Be7",
+       "uci": "f8e7",
+       "fen": "2rqk2r/1p1bbp2/p2ppp2/8/P1PQP2p/2N2N1P/1P3PP1/R4R1K w k - 1 15"
+      }
+     ],
+     "comentario": "9.Axf6 le da la pareja de alfiles a las negras, pero les deja peones doblados y una posición que se va a cerrar. Ivanchuk juega c4, Cc3 y prepara b4: busca casillas para sus caballos en el flanco de dama, donde los alfiles negros no tienen trabajo. (Stockfish 17 a profundidad 22: Axf6 es la que elige el motor (+0,6).)",
+     "clave": true,
+     "marcas": []
+    }
+   ]
+  },
+  {
+   "n": 10,
+   "cap": 2,
+   "capitulo": "Alfiles y caballos",
+   "titulo": "El alfil malo de toda la vida",
+   "leccion": 10,
+   "diagramas": [
+    {
+     "id": "CC-10",
+     "idx": 0,
+     "fen": "1rb2rk1/2qp1ppp/p2bpnn1/1p6/3BP3/1NN2P2/PPP2QPP/1K1R1B1R w - - 10 16",
+     "turno": "w",
+     "titulo": "Peter Leko – Francisco Vallejo Pons, Linares 2003. Juegan las blancas. ¿Qué cambio deja a las negras con un alfil malo?",
+     "resultado": "*",
+     "resultado_texto": "Posición para jugar",
+     "linea": "16.Bc5 Bxc5 17.Qxc5 Qxc5 18.Nxc5 Rb6 19.a4 Rc6 20.Nd3 bxa4 21.Nxa4 d5",
+     "linea_es": "16.Ac5 Axc5 17.Dxc5 Dxc5 18.Cxc5 Tb6 19.a4 Tc6 20.Cd3 bxa4 21.Cxa4 d5",
+     "jugadas": [
+      {
+       "san": "Bc5",
+       "uci": "d4c5",
+       "fen": "1rb2rk1/2qp1ppp/p2bpnn1/1pB5/4P3/1NN2P2/PPP2QPP/1K1R1B1R b - - 11 16"
+      },
+      {
+       "san": "Bxc5",
+       "uci": "d6c5",
+       "fen": "1rb2rk1/2qp1ppp/p3pnn1/1pb5/4P3/1NN2P2/PPP2QPP/1K1R1B1R w - - 0 17"
+      },
+      {
+       "san": "Qxc5",
+       "uci": "f2c5",
+       "fen": "1rb2rk1/2qp1ppp/p3pnn1/1pQ5/4P3/1NN2P2/PPP3PP/1K1R1B1R b - - 0 17"
+      },
+      {
+       "san": "Qxc5",
+       "uci": "c7c5",
+       "fen": "1rb2rk1/3p1ppp/p3pnn1/1pq5/4P3/1NN2P2/PPP3PP/1K1R1B1R w - - 0 18"
+      },
+      {
+       "san": "Nxc5",
+       "uci": "b3c5",
+       "fen": "1rb2rk1/3p1ppp/p3pnn1/1pN5/4P3/2N2P2/PPP3PP/1K1R1B1R b - - 0 18"
+      },
+      {
+       "san": "Rb6",
+       "uci": "b8b6",
+       "fen": "2b2rk1/3p1ppp/pr2pnn1/1pN5/4P3/2N2P2/PPP3PP/1K1R1B1R w - - 1 19"
+      },
+      {
+       "san": "a4",
+       "uci": "a2a4",
+       "fen": "2b2rk1/3p1ppp/pr2pnn1/1pN5/P3P3/2N2P2/1PP3PP/1K1R1B1R b - a3 0 19"
+      },
+      {
+       "san": "Rc6",
+       "uci": "b6c6",
+       "fen": "2b2rk1/3p1ppp/p1r1pnn1/1pN5/P3P3/2N2P2/1PP3PP/1K1R1B1R w - - 1 20"
+      },
+      {
+       "san": "Nd3",
+       "uci": "c5d3",
+       "fen": "2b2rk1/3p1ppp/p1r1pnn1/1p6/P3P3/2NN1P2/1PP3PP/1K1R1B1R b - - 2 20"
+      },
+      {
+       "san": "bxa4",
+       "uci": "b5a4",
+       "fen": "2b2rk1/3p1ppp/p1r1pnn1/8/p3P3/2NN1P2/1PP3PP/1K1R1B1R w - - 0 21"
+      },
+      {
+       "san": "Nxa4",
+       "uci": "c3a4",
+       "fen": "2b2rk1/3p1ppp/p1r1pnn1/8/N3P3/3N1P2/1PP3PP/1K1R1B1R b - - 0 21"
+      },
+      {
+       "san": "d5",
+       "uci": "d7d5",
+       "fen": "2b2rk1/5ppp/p1r1pnn1/3p4/N3P3/3N1P2/1PP3PP/1K1R1B1R w - d6 0 22"
+      }
+     ],
+     "comentario": "16.Ac5 ofrece el cambio del alfil de d6, el bueno de las negras. Tras 16…Axc5 17.Dxc5 Dxc5 18.Cxc5 también se fueron las damas, y a las negras les queda el alfil de c8, que tiene que cuidar peones. Con 19.a4 las blancas atacan el flanco de dama, donde ese alfil no alcanza. (Stockfish 17 a profundidad 22: el motor prefiere h4 (+0,9) a Ac5 (+0,3).)",
+     "clave": true,
+     "marcas": []
+    }
+   ]
+  },
+  {
+   "n": 11,
+   "cap": 2,
+   "capitulo": "Alfiles y caballos",
+   "titulo": "El alfil malo que sirve",
+   "leccion": 11,
+   "diagramas": [
+    {
+     "id": "CC-11",
+     "idx": 0,
+     "fen": "3r2k1/p4p1p/Bb2b1p1/3p4/3N4/4P3/P1R2PPP/6K1 b - - 1 26",
+     "turno": "b",
+     "titulo": "Walter Browne – Jan Timman, Buenos Aires 1980. Juegan las negras. El caballo blanco acaba de llegar a d4. ¿Cuál de tus alfiles entregas?",
+     "resultado": "*",
+     "resultado_texto": "Posición para jugar",
+     "linea": "26...Bxd4 27.exd4 Rb8 28.Kf1 Rb4 29.Bc8 a5 30.Bxe6 fxe6 31.Rd2 Ra4 32.Ke2",
+     "linea_es": "26...Axd4 27.exd4 Tb8 28.Rf1 Tb4 29.Ac8 a5 30.Axe6 fxe6 31.Td2 Ta4 32.Re2",
+     "jugadas": [
+      {
+       "san": "Bxd4",
+       "uci": "b6d4",
+       "fen": "3r2k1/p4p1p/B3b1p1/3p4/3b4/4P3/P1R2PPP/6K1 w - - 0 27"
+      },
+      {
+       "san": "exd4",
+       "uci": "e3d4",
+       "fen": "3r2k1/p4p1p/B3b1p1/3p4/3P4/8/P1R2PPP/6K1 b - - 0 27"
+      },
+      {
+       "san": "Rb8",
+       "uci": "d8b8",
+       "fen": "1r4k1/p4p1p/B3b1p1/3p4/3P4/8/P1R2PPP/6K1 w - - 1 28"
+      },
+      {
+       "san": "Kf1",
+       "uci": "g1f1",
+       "fen": "1r4k1/p4p1p/B3b1p1/3p4/3P4/8/P1R2PPP/5K2 b - - 2 28"
+      },
+      {
+       "san": "Rb4",
+       "uci": "b8b4",
+       "fen": "6k1/p4p1p/B3b1p1/3p4/1r1P4/8/P1R2PPP/5K2 w - - 3 29"
+      },
+      {
+       "san": "Bc8",
+       "uci": "a6c8",
+       "fen": "2B3k1/p4p1p/4b1p1/3p4/1r1P4/8/P1R2PPP/5K2 b - - 4 29"
+      },
+      {
+       "san": "a5",
+       "uci": "a7a5",
+       "fen": "2B3k1/5p1p/4b1p1/p2p4/1r1P4/8/P1R2PPP/5K2 w - a6 0 30"
+      },
+      {
+       "san": "Bxe6",
+       "uci": "c8e6",
+       "fen": "6k1/5p1p/4B1p1/p2p4/1r1P4/8/P1R2PPP/5K2 b - - 0 30"
+      },
+      {
+       "san": "fxe6",
+       "uci": "f7e6",
+       "fen": "6k1/7p/4p1p1/p2p4/1r1P4/8/P1R2PPP/5K2 w - - 0 31"
+      },
+      {
+       "san": "Rd2",
+       "uci": "c2d2",
+       "fen": "6k1/7p/4p1p1/p2p4/1r1P4/8/P2R1PPP/5K2 b - - 1 31"
+      },
+      {
+       "san": "Ra4",
+       "uci": "b4a4",
+       "fen": "6k1/7p/4p1p1/p2p4/r2P4/8/P2R1PPP/5K2 w - - 2 32"
+      },
+      {
+       "san": "Ke2",
+       "uci": "f1e2",
+       "fen": "6k1/7p/4p1p1/p2p4/r2P4/8/P2RKPPP/8 b - - 3 32"
+      }
+     ],
+     "comentario": "26…Axd4 da el alfil «bueno» de casillas negras y deja en el tablero el de e6, que cuida el peón de d5. Después de 27.exd4 los peones blancos de d4 y a2 quedan débiles, y la torre negra los ataca por la columna b. Cuando las blancas cambian los alfiles con 30.Axe6, el peón que llega a e6 sigue cuidando d5. (Stockfish 17 a profundidad 22: Axd4 es la que elige el motor (−0,2).)",
+     "clave": true,
+     "marcas": []
+    }
+   ]
+  },
+  {
+   "n": 12,
+   "cap": 2,
+   "capitulo": "Alfiles y caballos",
+   "titulo": "Alfiles de distinto color",
+   "leccion": 12,
+   "diagramas": [
+    {
+     "id": "CC-12a",
+     "idx": 0,
+     "fen": "8/1p3p2/p1b1p1k1/2B3p1/1P1R3r/2P4P/1P3KP1/8 b - - 2 28",
+     "turno": "b",
+     "titulo": "Héctor Rossetto – Miguel Najdorf, Mar del Plata 1962. Juegan las negras, con alfiles de distinto color. ¿Te conviene cambiar las torres?",
+     "resultado": "*",
+     "resultado_texto": "Posición para jugar",
+     "linea": "28...Rf4+ 29.Rxf4 gxf4 30.g3 fxg3+ 31.Kxg3 Ba4 32.h4 e5 33.Bd6 f6 34.Kf2",
+     "linea_es": "28...Tf4+ 29.Txf4 gxf4 30.g3 fxg3+ 31.Rxg3 Aa4 32.h4 e5 33.Ad6 f6 34.Rf2",
+     "jugadas": [
+      {
+       "san": "Rf4+",
+       "uci": "h4f4",
+       "fen": "8/1p3p2/p1b1p1k1/2B3p1/1P1R1r2/2P4P/1P3KP1/8 w - - 3 29"
+      },
+      {
+       "san": "Rxf4",
+       "uci": "d4f4",
+       "fen": "8/1p3p2/p1b1p1k1/2B3p1/1P3R2/2P4P/1P3KP1/8 b - - 0 29"
+      },
+      {
+       "san": "gxf4",
+       "uci": "g5f4",
+       "fen": "8/1p3p2/p1b1p1k1/2B5/1P3p2/2P4P/1P3KP1/8 w - - 0 30"
+      },
+      {
+       "san": "g3",
+       "uci": "g2g3",
+       "fen": "8/1p3p2/p1b1p1k1/2B5/1P3p2/2P3PP/1P3K2/8 b - - 0 30"
+      },
+      {
+       "san": "fxg3+",
+       "uci": "f4g3",
+       "fen": "8/1p3p2/p1b1p1k1/2B5/1P6/2P3pP/1P3K2/8 w - - 0 31"
+      },
+      {
+       "san": "Kxg3",
+       "uci": "f2g3",
+       "fen": "8/1p3p2/p1b1p1k1/2B5/1P6/2P3KP/1P6/8 b - - 0 31"
+      },
+      {
+       "san": "Ba4",
+       "uci": "c6a4",
+       "fen": "8/1p3p2/p3p1k1/2B5/bP6/2P3KP/1P6/8 w - - 1 32"
+      },
+      {
+       "san": "h4",
+       "uci": "h3h4",
+       "fen": "8/1p3p2/p3p1k1/2B5/bP5P/2P3K1/1P6/8 b - - 0 32"
+      },
+      {
+       "san": "e5",
+       "uci": "e6e5",
+       "fen": "8/1p3p2/p5k1/2B1p3/bP5P/2P3K1/1P6/8 w - - 0 33"
+      },
+      {
+       "san": "Bd6",
+       "uci": "c5d6",
+       "fen": "8/1p3p2/p2B2k1/4p3/bP5P/2P3K1/1P6/8 b - - 1 33"
+      },
+      {
+       "san": "f6",
+       "uci": "f7f6",
+       "fen": "8/1p6/p2B1pk1/4p3/bP5P/2P3K1/1P6/8 w - - 0 34"
+      },
+      {
+       "san": "Kf2",
+       "uci": "g3f2",
+       "fen": "8/1p6/p2B1pk1/4p3/bP5P/2P5/1P3K2/8 b - - 1 34"
+      }
+     ],
+     "comentario": "28…Tf4+ acepta el cambio de torres, pero en f4: después de 29.Txf4 gxf4 30.g3 fxg3+ 31.Rxg3 las negras quedan con peones pasados unidos en el centro. Con 31…Aa4 el alfil paraliza los peones blancos del flanco de dama y los peones negros avanzan sin apuro. (Stockfish 17 a profundidad 22: Tf4+ está entre las mejores (−0,1; el motor prefiere apenas Th7, −0,3).)",
+     "clave": true,
+     "marcas": []
+    },
+    {
+     "id": "CC-12b",
+     "idx": 0,
+     "fen": "3r1rk1/1p2bpp1/p2p2q1/3bp3/4P2p/2P2B2/PP2QPPP/3R1RK1 w - - 0 22",
+     "turno": "w",
+     "titulo": "Etienne Bacrot – Pascal Charbonneau, Trípoli (Mundial FIDE) 2004. Juegan las blancas. Con 22.Txd5 quedan alfiles de distinto color, pero hay damas y torres. ¿Qué buscas después?",
+     "resultado": "*",
+     "resultado_texto": "Posición para jugar",
+     "linea": "22.Rxd5 Rc8 23.Rfd1 Qg5 24.a4 g6 25.Qc2 Rc6 26.Qb3 Rb8 27.Be2 Qf4",
+     "linea_es": "22.Txd5 Tc8 23.Tfd1 Dg5 24.a4 g6 25.Dc2 Tc6 26.Db3 Tb8 27.Ae2 Df4",
+     "jugadas": [
+      {
+       "san": "Rxd5",
+       "uci": "d1d5",
+       "fen": "3r1rk1/1p2bpp1/p2p2q1/3Rp3/4P2p/2P2B2/PP2QPPP/5RK1 b - - 0 22"
+      },
+      {
+       "san": "Rc8",
+       "uci": "d8c8",
+       "fen": "2r2rk1/1p2bpp1/p2p2q1/3Rp3/4P2p/2P2B2/PP2QPPP/5RK1 w - - 1 23"
+      },
+      {
+       "san": "Rfd1",
+       "uci": "f1d1",
+       "fen": "2r2rk1/1p2bpp1/p2p2q1/3Rp3/4P2p/2P2B2/PP2QPPP/3R2K1 b - - 2 23"
+      },
+      {
+       "san": "Qg5",
+       "uci": "g6g5",
+       "fen": "2r2rk1/1p2bpp1/p2p4/3Rp1q1/4P2p/2P2B2/PP2QPPP/3R2K1 w - - 3 24"
+      },
+      {
+       "san": "a4",
+       "uci": "a2a4",
+       "fen": "2r2rk1/1p2bpp1/p2p4/3Rp1q1/P3P2p/2P2B2/1P2QPPP/3R2K1 b - a3 0 24"
+      },
+      {
+       "san": "g6",
+       "uci": "g7g6",
+       "fen": "2r2rk1/1p2bp2/p2p2p1/3Rp1q1/P3P2p/2P2B2/1P2QPPP/3R2K1 w - - 0 25"
+      },
+      {
+       "san": "Qc2",
+       "uci": "e2c2",
+       "fen": "2r2rk1/1p2bp2/p2p2p1/3Rp1q1/P3P2p/2P2B2/1PQ2PPP/3R2K1 b - - 1 25"
+      },
+      {
+       "san": "Rc6",
+       "uci": "c8c6",
+       "fen": "5rk1/1p2bp2/p1rp2p1/3Rp1q1/P3P2p/2P2B2/1PQ2PPP/3R2K1 w - - 2 26"
+      },
+      {
+       "san": "Qb3",
+       "uci": "c2b3",
+       "fen": "5rk1/1p2bp2/p1rp2p1/3Rp1q1/P3P2p/1QP2B2/1P3PPP/3R2K1 b - - 3 26"
+      },
+      {
+       "san": "Rb8",
+       "uci": "f8b8",
+       "fen": "1r4k1/1p2bp2/p1rp2p1/3Rp1q1/P3P2p/1QP2B2/1P3PPP/3R2K1 w - - 4 27"
+      },
+      {
+       "san": "Be2",
+       "uci": "f3e2",
+       "fen": "1r4k1/1p2bp2/p1rp2p1/3Rp1q1/P3P2p/1QP5/1P2BPPP/3R2K1 b - - 5 27"
+      },
+      {
+       "san": "Qf4",
+       "uci": "g5f4",
+       "fen": "1r4k1/1p2bp2/p1rp2p1/3Rp3/P3Pq1p/1QP5/1P2BPPP/3R2K1 w - - 6 28"
+      }
+     ],
+     "comentario": "22.Txd5 deja alfiles de distinto color con todas las piezas pesadas. Las blancas no buscan más cambios: llevan su alfil hacia c4 y d5, donde el alfil negro no lo puede discutir, y apuntan a f7. Con 28.T5d3 hasta entregan el peón de e4 para ganar tiempo. (Stockfish 17 a profundidad 22: Txd5 es la que elige el motor (+0,3).)",
+     "clave": true,
+     "marcas": []
+    }
+   ]
+  },
+  {
+   "n": 13,
+   "cap": 3,
+   "capitulo": "Damas y torres",
+   "titulo": "Cambiar damas, o no",
+   "leccion": 13,
+   "diagramas": [
+    {
+     "id": "CC-13a",
+     "idx": 0,
+     "fen": "r2r1k2/2p2pp1/2p1pq1p/p7/3P3P/8/PPP2PP1/1K1RQ2R w - - 0 22",
+     "turno": "w",
+     "titulo": "Garry Kasparov – Evgeny Bareev, Sarajevo 2000. Juegan las blancas. El ataque se agotó y las negras tienen peones débiles en el flanco de dama. ¿Qué haces con las damas?",
+     "resultado": "*",
+     "resultado_texto": "Posición para jugar",
+     "linea": "22.Qe5 Qxe5 23.dxe5 Rd5 24.Rde1 Rb8 25.Re2 Ke7 26.c3 f6 27.exf6+ gxf6",
+     "linea_es": "22.De5 Dxe5 23.dxe5 Td5 24.Tde1 Tb8 25.Te2 Re7 26.c3 f6 27.exf6+ gxf6",
+     "jugadas": [
+      {
+       "san": "Qe5",
+       "uci": "e1e5",
+       "fen": "r2r1k2/2p2pp1/2p1pq1p/p3Q3/3P3P/8/PPP2PP1/1K1R3R b - - 1 22"
+      },
+      {
+       "san": "Qxe5",
+       "uci": "f6e5",
+       "fen": "r2r1k2/2p2pp1/2p1p2p/p3q3/3P3P/8/PPP2PP1/1K1R3R w - - 0 23"
+      },
+      {
+       "san": "dxe5",
+       "uci": "d4e5",
+       "fen": "r2r1k2/2p2pp1/2p1p2p/p3P3/7P/8/PPP2PP1/1K1R3R b - - 0 23"
+      },
+      {
+       "san": "Rd5",
+       "uci": "d8d5",
+       "fen": "r4k2/2p2pp1/2p1p2p/p2rP3/7P/8/PPP2PP1/1K1R3R w - - 1 24"
+      },
+      {
+       "san": "Rde1",
+       "uci": "d1e1",
+       "fen": "r4k2/2p2pp1/2p1p2p/p2rP3/7P/8/PPP2PP1/1K2R2R b - - 2 24"
+      },
+      {
+       "san": "Rb8",
+       "uci": "a8b8",
+       "fen": "1r3k2/2p2pp1/2p1p2p/p2rP3/7P/8/PPP2PP1/1K2R2R w - - 3 25"
+      },
+      {
+       "san": "Re2",
+       "uci": "e1e2",
+       "fen": "1r3k2/2p2pp1/2p1p2p/p2rP3/7P/8/PPP1RPP1/1K5R b - - 4 25"
+      },
+      {
+       "san": "Ke7",
+       "uci": "f8e7",
+       "fen": "1r6/2p1kpp1/2p1p2p/p2rP3/7P/8/PPP1RPP1/1K5R w - - 5 26"
+      },
+      {
+       "san": "c3",
+       "uci": "c2c3",
+       "fen": "1r6/2p1kpp1/2p1p2p/p2rP3/7P/2P5/PP2RPP1/1K5R b - - 0 26"
+      },
+      {
+       "san": "f6",
+       "uci": "f7f6",
+       "fen": "1r6/2p1k1p1/2p1pp1p/p2rP3/7P/2P5/PP2RPP1/1K5R w - - 0 27"
+      },
+      {
+       "san": "exf6+",
+       "uci": "e5f6",
+       "fen": "1r6/2p1k1p1/2p1pP1p/p2r4/7P/2P5/PP2RPP1/1K5R b - - 0 27"
+      },
+      {
+       "san": "gxf6",
+       "uci": "g7f6",
+       "fen": "1r6/2p1k3/2p1pp1p/p2r4/7P/2P5/PP2RPP1/1K5R w - - 0 28"
+      }
+     ],
+     "comentario": "22.De5 ofrece el cambio. Después de 22…Dxe5 23.dxe5 las negras quedan con los peones de c6, c7 y a5 débiles, y las blancas activan rey y torres: 25.Te2, 26.c3, 28.Rc2. El ataque ya no daba nada; el final, sí. (Stockfish 17 a profundidad 22: De5 es la que elige el motor (+0,1).)",
+     "clave": true,
+     "marcas": []
+    },
+    {
+     "id": "CC-13b",
+     "idx": 0,
+     "fen": "5r1k/p4rn1/7p/3R4/5p1q/5P2/1Q2N1PP/3R2K1 b - - 0 46",
+     "turno": "b",
+     "titulo": "Alexander Goldin – Gilberto Milos, Torneo Continental, Buenos Aires 2003. Juegan las negras. Su rey casi no tiene peones alrededor y el blanco sí. ¿A quién le conviene cambiar damas?",
+     "resultado": "*",
+     "resultado_texto": "Posición para jugar",
+     "linea": "46...Kg8 47.Qa2 Qe7 48.h3 Qf6 49.Rd6 Qg5 50.Ra1 Qh4 51.Rg6 Kh7 52.Rg4",
+     "linea_es": "46...Rg8 47.Da2 De7 48.h3 Df6 49.Td6 Dg5 50.Ta1 Dh4 51.Tg6 Rh7 52.Tg4",
+     "jugadas": [
+      {
+       "san": "Kg8",
+       "uci": "h8g8",
+       "fen": "5rk1/p4rn1/7p/3R4/5p1q/5P2/1Q2N1PP/3R2K1 w - - 1 47"
+      },
+      {
+       "san": "Qa2",
+       "uci": "b2a2",
+       "fen": "5rk1/p4rn1/7p/3R4/5p1q/5P2/Q3N1PP/3R2K1 b - - 2 47"
+      },
+      {
+       "san": "Qe7",
+       "uci": "h4e7",
+       "fen": "5rk1/p3qrn1/7p/3R4/5p2/5P2/Q3N1PP/3R2K1 w - - 3 48"
+      },
+      {
+       "san": "h3",
+       "uci": "h2h3",
+       "fen": "5rk1/p3qrn1/7p/3R4/5p2/5P1P/Q3N1P1/3R2K1 b - - 0 48"
+      },
+      {
+       "san": "Qf6",
+       "uci": "e7f6",
+       "fen": "5rk1/p4rn1/5q1p/3R4/5p2/5P1P/Q3N1P1/3R2K1 w - - 1 49"
+      },
+      {
+       "san": "Rd6",
+       "uci": "d5d6",
+       "fen": "5rk1/p4rn1/3R1q1p/8/5p2/5P1P/Q3N1P1/3R2K1 b - - 2 49"
+      },
+      {
+       "san": "Qg5",
+       "uci": "f6g5",
+       "fen": "5rk1/p4rn1/3R3p/6q1/5p2/5P1P/Q3N1P1/3R2K1 w - - 3 50"
+      },
+      {
+       "san": "Ra1",
+       "uci": "d1a1",
+       "fen": "5rk1/p4rn1/3R3p/6q1/5p2/5P1P/Q3N1P1/R5K1 b - - 4 50"
+      },
+      {
+       "san": "Qh4",
+       "uci": "g5h4",
+       "fen": "5rk1/p4rn1/3R3p/8/5p1q/5P1P/Q3N1P1/R5K1 w - - 5 51"
+      },
+      {
+       "san": "Rg6",
+       "uci": "d6g6",
+       "fen": "5rk1/p4rn1/6Rp/8/5p1q/5P1P/Q3N1P1/R5K1 b - - 6 51"
+      },
+      {
+       "san": "Kh7",
+       "uci": "g8h7",
+       "fen": "5r2/p4rnk/6Rp/8/5p1q/5P1P/Q3N1P1/R5K1 w - - 7 52"
+      },
+      {
+       "san": "Rg4",
+       "uci": "g6g4",
+       "fen": "5r2/p4rnk/7p/8/5pRq/5P1P/Q3N1P1/R5K1 b - - 8 52"
+      }
+     ],
+     "comentario": "A las negras: con el rey desnudo, el cambio de damas las salvaría. Por eso las blancas lo evitan durante toda la partida: ponen a salvo su propio rey con h3 y Rh2, y siguen presionando con la dama y las torres hasta que cae el peón de f4. (Stockfish 17 a profundidad 22: Rg8 está entre las mejores (+1,6; el motor prefiere apenas Te8, +1,4).)",
+     "clave": true,
+     "marcas": []
+    }
+   ]
+  },
+  {
+   "n": 14,
+   "cap": 3,
+   "capitulo": "Damas y torres",
+   "titulo": "Una torre sí, las dos no",
+   "leccion": 14,
+   "diagramas": [
+    {
+     "id": "CC-14a",
+     "idx": 0,
+     "fen": "r4rk1/1pp1bp1p/p6B/4p3/8/2P5/PP3PPP/R2R2K1 b - - 0 16",
+     "turno": "b",
+     "titulo": "Eugene Znosko Borovsky – Alexander Alekhine, París 1933. Juegan las negras. La posición parece igualada y la columna d está abierta. ¿Cambias las dos parejas de torres?",
+     "resultado": "*",
+     "resultado_texto": "Posición para jugar",
+     "linea": "16...Rfd8 17.Kf1 f5 18.Rxd8+ Rxd8 19.g3 Kf7 20.Be3 h5 21.Ke2 Ke6 22.Rd1 Rg8 23.f3",
+     "linea_es": "16...Tfd8 17.Rf1 f5 18.Txd8+ Txd8 19.g3 Rf7 20.Ae3 h5 21.Re2 Re6 22.Td1 Tg8 23.f3",
+     "jugadas": [
+      {
+       "san": "Rfd8",
+       "uci": "f8d8",
+       "fen": "r2r2k1/1pp1bp1p/p6B/4p3/8/2P5/PP3PPP/R2R2K1 w - - 1 17"
+      },
+      {
+       "san": "Kf1",
+       "uci": "g1f1",
+       "fen": "r2r2k1/1pp1bp1p/p6B/4p3/8/2P5/PP3PPP/R2R1K2 b - - 2 17"
+      },
+      {
+       "san": "f5",
+       "uci": "f7f5",
+       "fen": "r2r2k1/1pp1b2p/p6B/4pp2/8/2P5/PP3PPP/R2R1K2 w - f6 0 18"
+      },
+      {
+       "san": "Rxd8+",
+       "uci": "d1d8",
+       "fen": "r2R2k1/1pp1b2p/p6B/4pp2/8/2P5/PP3PPP/R4K2 b - - 0 18"
+      },
+      {
+       "san": "Rxd8",
+       "uci": "a8d8",
+       "fen": "3r2k1/1pp1b2p/p6B/4pp2/8/2P5/PP3PPP/R4K2 w - - 0 19"
+      },
+      {
+       "san": "g3",
+       "uci": "g2g3",
+       "fen": "3r2k1/1pp1b2p/p6B/4pp2/8/2P3P1/PP3P1P/R4K2 b - - 0 19"
+      },
+      {
+       "san": "Kf7",
+       "uci": "g8f7",
+       "fen": "3r4/1pp1bk1p/p6B/4pp2/8/2P3P1/PP3P1P/R4K2 w - - 1 20"
+      },
+      {
+       "san": "Be3",
+       "uci": "h6e3",
+       "fen": "3r4/1pp1bk1p/p7/4pp2/8/2P1B1P1/PP3P1P/R4K2 b - - 2 20"
+      },
+      {
+       "san": "h5",
+       "uci": "h7h5",
+       "fen": "3r4/1pp1bk2/p7/4pp1p/8/2P1B1P1/PP3P1P/R4K2 w - h6 0 21"
+      },
+      {
+       "san": "Ke2",
+       "uci": "f1e2",
+       "fen": "3r4/1pp1bk2/p7/4pp1p/8/2P1B1P1/PP2KP1P/R7 b - - 1 21"
+      },
+      {
+       "san": "Ke6",
+       "uci": "f7e6",
+       "fen": "3r4/1pp1b3/p3k3/4pp1p/8/2P1B1P1/PP2KP1P/R7 w - - 2 22"
+      },
+      {
+       "san": "Rd1",
+       "uci": "a1d1",
+       "fen": "3r4/1pp1b3/p3k3/4pp1p/8/2P1B1P1/PP2KP1P/3R4 b - - 3 22"
+      },
+      {
+       "san": "Rg8",
+       "uci": "d8g8",
+       "fen": "6r1/1pp1b3/p3k3/4pp1p/8/2P1B1P1/PP2KP1P/3R4 w - - 4 23"
+      },
+      {
+       "san": "f3",
+       "uci": "f2f3",
+       "fen": "6r1/1pp1b3/p3k3/4pp1p/8/2P1BPP1/PP2K2P/3R4 b - - 0 23"
+      }
+     ],
+     "comentario": "16…Tfd8 ofrece cambiar solo una pareja: tras 18.Txd8+ Txd8 las negras llevan el rey a e6, tapan la columna d y su torre se va a g8 para abrir el flanco de rey. Con una torre en el tablero, la posición pareja siguió teniendo juego. (Stockfish 17 a profundidad 22: Tfd8 es la que elige el motor (+0,1).)",
+     "clave": true,
+     "marcas": []
+    },
+    {
+     "id": "CC-14b",
+     "idx": 0,
+     "fen": "2rr2k1/1pb2pp1/4p2p/p1p1P2P/P1P3P1/2B2P2/1P6/1K1RR3 w - - 0 28",
+     "turno": "w",
+     "titulo": "Garry Kasparov – Viswanathan Anand, Linares 2003. Juegan las blancas, con más espacio. Las negras van a cambiar torres en d1. ¿Cómo recapturas?",
+     "resultado": "*",
+     "resultado_texto": "Posición para jugar",
+     "linea": "28.Kc2 Rxd1 29.Kxd1 Rd8+ 30.Ke2 Rd7 31.f4 Bd8 32.f5 Bg5 33.f6 b6",
+     "linea_es": "28.Rc2 Txd1 29.Rxd1 Td8+ 30.Re2 Td7 31.f4 Ad8 32.f5 Ag5 33.f6 b6",
+     "jugadas": [
+      {
+       "san": "Kc2",
+       "uci": "b1c2",
+       "fen": "2rr2k1/1pb2pp1/4p2p/p1p1P2P/P1P3P1/2B2P2/1PK5/3RR3 b - - 1 28"
+      },
+      {
+       "san": "Rxd1",
+       "uci": "d8d1",
+       "fen": "2r3k1/1pb2pp1/4p2p/p1p1P2P/P1P3P1/2B2P2/1PK5/3rR3 w - - 0 29"
+      },
+      {
+       "san": "Kxd1",
+       "uci": "c2d1",
+       "fen": "2r3k1/1pb2pp1/4p2p/p1p1P2P/P1P3P1/2B2P2/1P6/3KR3 b - - 0 29"
+      },
+      {
+       "san": "Rd8+",
+       "uci": "c8d8",
+       "fen": "3r2k1/1pb2pp1/4p2p/p1p1P2P/P1P3P1/2B2P2/1P6/3KR3 w - - 1 30"
+      },
+      {
+       "san": "Ke2",
+       "uci": "d1e2",
+       "fen": "3r2k1/1pb2pp1/4p2p/p1p1P2P/P1P3P1/2B2P2/1P2K3/4R3 b - - 2 30"
+      },
+      {
+       "san": "Rd7",
+       "uci": "d8d7",
+       "fen": "6k1/1pbr1pp1/4p2p/p1p1P2P/P1P3P1/2B2P2/1P2K3/4R3 w - - 3 31"
+      },
+      {
+       "san": "f4",
+       "uci": "f3f4",
+       "fen": "6k1/1pbr1pp1/4p2p/p1p1P2P/P1P2PP1/2B5/1P2K3/4R3 b - - 0 31"
+      },
+      {
+       "san": "Bd8",
+       "uci": "c7d8",
+       "fen": "3b2k1/1p1r1pp1/4p2p/p1p1P2P/P1P2PP1/2B5/1P2K3/4R3 w - - 1 32"
+      },
+      {
+       "san": "f5",
+       "uci": "f4f5",
+       "fen": "3b2k1/1p1r1pp1/4p2p/p1p1PP1P/P1P3P1/2B5/1P2K3/4R3 b - - 0 32"
+      },
+      {
+       "san": "Bg5",
+       "uci": "d8g5",
+       "fen": "6k1/1p1r1pp1/4p2p/p1p1PPbP/P1P3P1/2B5/1P2K3/4R3 w - - 1 33"
+      },
+      {
+       "san": "f6",
+       "uci": "f5f6",
+       "fen": "6k1/1p1r1pp1/4pP1p/p1p1P1bP/P1P3P1/2B5/1P2K3/4R3 b - - 0 33"
+      },
+      {
+       "san": "b6",
+       "uci": "b7b6",
+       "fen": "6k1/3r1pp1/1p2pP1p/p1p1P1bP/P1P3P1/2B5/1P2K3/4R3 w - - 0 34"
+      }
+     ],
+     "comentario": "28.Rc2 Txd1 29.Rxd1: recapturar con el rey lo acerca al centro y al flanco de rey, donde habrá rupturas, y deja la otra torre libre. Con 31.f4, 32.f5 y 34.Ta1 las blancas ganan espacio y la torre va a buscar el peón débil de b6. (Stockfish 17 a profundidad 22: Rc2 es la que elige el motor (+0,2).)",
+     "clave": true,
+     "marcas": []
+    }
+   ]
+  },
+  {
+   "n": 15,
+   "cap": 4,
+   "capitulo": "Cambios paradójicos y técnica moderna",
+   "titulo": "El cambio paradójico",
+   "leccion": 15,
+   "diagramas": [
+    {
+     "id": "CC-15a",
+     "idx": 0,
+     "fen": "r4k2/r2b1ppp/p4n2/2NpR3/1P6/3B1P2/P5PP/R5K1 w - - 3 22",
+     "turno": "w",
+     "titulo": "Robert Fischer – Tigran Petrosian, Final de Candidatos, Buenos Aires 1971. Juegan las blancas. Tu caballo de c5 es la mejor pieza del tablero y el alfil negro de d7 parece malo. ¿Cambias?",
+     "resultado": "*",
+     "resultado_texto": "Posición para jugar",
+     "linea": "22.Nxd7+ Rxd7 23.Rc1 Rd6 24.Rc7 Nd7 25.Re2 g6 26.Kf2 h5 27.f4 h4",
+     "linea_es": "22.Cxd7+ Txd7 23.Tc1 Td6 24.Tc7 Cd7 25.Te2 g6 26.Rf2 h5 27.f4 h4",
+     "jugadas": [
+      {
+       "san": "Nxd7+",
+       "uci": "c5d7",
+       "fen": "r4k2/r2N1ppp/p4n2/3pR3/1P6/3B1P2/P5PP/R5K1 b - - 0 22"
+      },
+      {
+       "san": "Rxd7",
+       "uci": "a7d7",
+       "fen": "r4k2/3r1ppp/p4n2/3pR3/1P6/3B1P2/P5PP/R5K1 w - - 0 23"
+      },
+      {
+       "san": "Rc1",
+       "uci": "a1c1",
+       "fen": "r4k2/3r1ppp/p4n2/3pR3/1P6/3B1P2/P5PP/2R3K1 b - - 1 23"
+      },
+      {
+       "san": "Rd6",
+       "uci": "d7d6",
+       "fen": "r4k2/5ppp/p2r1n2/3pR3/1P6/3B1P2/P5PP/2R3K1 w - - 2 24"
+      },
+      {
+       "san": "Rc7",
+       "uci": "c1c7",
+       "fen": "r4k2/2R2ppp/p2r1n2/3pR3/1P6/3B1P2/P5PP/6K1 b - - 3 24"
+      },
+      {
+       "san": "Nd7",
+       "uci": "f6d7",
+       "fen": "r4k2/2Rn1ppp/p2r4/3pR3/1P6/3B1P2/P5PP/6K1 w - - 4 25"
+      },
+      {
+       "san": "Re2",
+       "uci": "e5e2",
+       "fen": "r4k2/2Rn1ppp/p2r4/3p4/1P6/3B1P2/P3R1PP/6K1 b - - 5 25"
+      },
+      {
+       "san": "g6",
+       "uci": "g7g6",
+       "fen": "r4k2/2Rn1p1p/p2r2p1/3p4/1P6/3B1P2/P3R1PP/6K1 w - - 0 26"
+      },
+      {
+       "san": "Kf2",
+       "uci": "g1f2",
+       "fen": "r4k2/2Rn1p1p/p2r2p1/3p4/1P6/3B1P2/P3RKPP/8 b - - 1 26"
+      },
+      {
+       "san": "h5",
+       "uci": "h7h5",
+       "fen": "r4k2/2Rn1p2/p2r2p1/3p3p/1P6/3B1P2/P3RKPP/8 w - h6 0 27"
+      },
+      {
+       "san": "f4",
+       "uci": "f3f4",
+       "fen": "r4k2/2Rn1p2/p2r2p1/3p3p/1P3P2/3B4/P3RKPP/8 b - - 0 27"
+      },
+      {
+       "san": "h4",
+       "uci": "h5h4",
+       "fen": "r4k2/2Rn1p2/p2r2p1/3p4/1P3P1p/3B4/P3RKPP/8 w - - 0 28"
+      }
+     ],
+     "comentario": "22.Cxd7+ Txd7 23.Tc1: el alfil de d7 era el que cuidaba las casillas de entrada en la columna c. Sin él, la torre blanca llega a c7 y las torres negras quedan atadas a la defensa. Dar la mejor pieza por la peor fue lo que rompió la posición. (Stockfish 17 a profundidad 22: el motor prefiere a4 (+1,6) a Cxd7+ (+1,1).)",
+     "clave": true,
+     "marcas": []
+    },
+    {
+     "id": "CC-15b",
+     "idx": 0,
+     "fen": "3r3r/ppk1b2p/1np2p2/4p1pP/2P1N3/1P2B1P1/P3PP2/2KR3R w - - 0 18",
+     "turno": "w",
+     "titulo": "Tigran Petrosian – Anatoly Bannik, Campeonato de la URSS, Riga 1958. Juegan las blancas. ¿Qué cambio de piezas menores les conviene?",
+     "resultado": "*",
+     "resultado_texto": "Posición para jugar",
+     "linea": "18.Bc5 Rxd1+ 19.Rxd1 Bxc5 20.Nxc5 Re8 21.Ne4 Re6 22.g4 a5 23.Rd3 Nd7",
+     "linea_es": "18.Ac5 Txd1+ 19.Txd1 Axc5 20.Cxc5 Te8 21.Ce4 Te6 22.g4 a5 23.Td3 Cd7",
+     "jugadas": [
+      {
+       "san": "Bc5",
+       "uci": "e3c5",
+       "fen": "3r3r/ppk1b2p/1np2p2/2B1p1pP/2P1N3/1P4P1/P3PP2/2KR3R b - - 1 18"
+      },
+      {
+       "san": "Rxd1+",
+       "uci": "d8d1",
+       "fen": "7r/ppk1b2p/1np2p2/2B1p1pP/2P1N3/1P4P1/P3PP2/2Kr3R w - - 0 19"
+      },
+      {
+       "san": "Rxd1",
+       "uci": "h1d1",
+       "fen": "7r/ppk1b2p/1np2p2/2B1p1pP/2P1N3/1P4P1/P3PP2/2KR4 b - - 0 19"
+      },
+      {
+       "san": "Bxc5",
+       "uci": "e7c5",
+       "fen": "7r/ppk4p/1np2p2/2b1p1pP/2P1N3/1P4P1/P3PP2/2KR4 w - - 0 20"
+      },
+      {
+       "san": "Nxc5",
+       "uci": "e4c5",
+       "fen": "7r/ppk4p/1np2p2/2N1p1pP/2P5/1P4P1/P3PP2/2KR4 b - - 0 20"
+      },
+      {
+       "san": "Re8",
+       "uci": "h8e8",
+       "fen": "4r3/ppk4p/1np2p2/2N1p1pP/2P5/1P4P1/P3PP2/2KR4 w - - 1 21"
+      },
+      {
+       "san": "Ne4",
+       "uci": "c5e4",
+       "fen": "4r3/ppk4p/1np2p2/4p1pP/2P1N3/1P4P1/P3PP2/2KR4 b - - 2 21"
+      },
+      {
+       "san": "Re6",
+       "uci": "e8e6",
+       "fen": "8/ppk4p/1np1rp2/4p1pP/2P1N3/1P4P1/P3PP2/2KR4 w - - 3 22"
+      },
+      {
+       "san": "g4",
+       "uci": "g3g4",
+       "fen": "8/ppk4p/1np1rp2/4p1pP/2P1N1P1/1P6/P3PP2/2KR4 b - - 0 22"
+      },
+      {
+       "san": "a5",
+       "uci": "a7a5",
+       "fen": "8/1pk4p/1np1rp2/p3p1pP/2P1N1P1/1P6/P3PP2/2KR4 w - a6 0 23"
+      },
+      {
+       "san": "Rd3",
+       "uci": "d1d3",
+       "fen": "8/1pk4p/1np1rp2/p3p1pP/2P1N1P1/1P1R4/P3PP2/2K5 b - - 1 23"
+      },
+      {
+       "san": "Nd7",
+       "uci": "b6d7",
+       "fen": "8/1pkn3p/2p1rp2/p3p1pP/2P1N1P1/1P1R4/P3PP2/2K5 w - - 2 24"
+      }
+     ],
+     "comentario": "18.Ac5 cambia los alfiles de casillas negras: tras 18…Txd1+ 19.Txd1 Axc5 20.Cxc5 el peón de f6 necesita una torre para defenderse y las blancas evitan un cambio general que habría llevado a tablas. El caballo vuelve a e4 y las blancas siguen presionando. (Stockfish 17 a profundidad 22: Ac5 es la que elige el motor (+1,3).)",
+     "clave": true,
+     "marcas": []
+    }
+   ]
+  },
+  {
+   "n": 16,
+   "cap": 4,
+   "capitulo": "Cambios paradójicos y técnica moderna",
+   "titulo": "Entregar la pareja a tiempo",
+   "leccion": 16,
+   "diagramas": [
+    {
+     "id": "CC-16",
+     "idx": 0,
+     "fen": "3rr1k1/1b2q1pp/p1p2p2/1p2n3/Pb6/1P2P1NP/1BQ1BPP1/R2R2K1 w - - 0 21",
+     "turno": "w",
+     "titulo": "Anatoly Karpov – Alexei Shirov, Biel 1992. Juegan las blancas, con los dos alfiles. El caballo negro de e5 domina el centro. ¿Lo cambias?",
+     "resultado": "*",
+     "resultado_texto": "Posición para jugar",
+     "linea": "21.Bxe5 Qxe5 22.Bd3 h6 23.Bg6 Rf8 24.Nf5 c5 25.axb5 axb5 26.Ra7 Qc7",
+     "linea_es": "21.Axe5 Dxe5 22.Ad3 h6 23.Ag6 Tf8 24.Cf5 c5 25.axb5 axb5 26.Ta7 Dc7",
+     "jugadas": [
+      {
+       "san": "Bxe5",
+       "uci": "b2e5",
+       "fen": "3rr1k1/1b2q1pp/p1p2p2/1p2B3/Pb6/1P2P1NP/2Q1BPP1/R2R2K1 b - - 0 21"
+      },
+      {
+       "san": "Qxe5",
+       "uci": "e7e5",
+       "fen": "3rr1k1/1b4pp/p1p2p2/1p2q3/Pb6/1P2P1NP/2Q1BPP1/R2R2K1 w - - 0 22"
+      },
+      {
+       "san": "Bd3",
+       "uci": "e2d3",
+       "fen": "3rr1k1/1b4pp/p1p2p2/1p2q3/Pb6/1P1BP1NP/2Q2PP1/R2R2K1 b - - 1 22"
+      },
+      {
+       "san": "h6",
+       "uci": "h7h6",
+       "fen": "3rr1k1/1b4p1/p1p2p1p/1p2q3/Pb6/1P1BP1NP/2Q2PP1/R2R2K1 w - - 0 23"
+      },
+      {
+       "san": "Bg6",
+       "uci": "d3g6",
+       "fen": "3rr1k1/1b4p1/p1p2pBp/1p2q3/Pb6/1P2P1NP/2Q2PP1/R2R2K1 b - - 1 23"
+      },
+      {
+       "san": "Rf8",
+       "uci": "e8f8",
+       "fen": "3r1rk1/1b4p1/p1p2pBp/1p2q3/Pb6/1P2P1NP/2Q2PP1/R2R2K1 w - - 2 24"
+      },
+      {
+       "san": "Nf5",
+       "uci": "g3f5",
+       "fen": "3r1rk1/1b4p1/p1p2pBp/1p2qN2/Pb6/1P2P2P/2Q2PP1/R2R2K1 b - - 3 24"
+      },
+      {
+       "san": "c5",
+       "uci": "c6c5",
+       "fen": "3r1rk1/1b4p1/p4pBp/1pp1qN2/Pb6/1P2P2P/2Q2PP1/R2R2K1 w - - 0 25"
+      },
+      {
+       "san": "axb5",
+       "uci": "a4b5",
+       "fen": "3r1rk1/1b4p1/p4pBp/1Pp1qN2/1b6/1P2P2P/2Q2PP1/R2R2K1 b - - 0 25"
+      },
+      {
+       "san": "axb5",
+       "uci": "a6b5",
+       "fen": "3r1rk1/1b4p1/5pBp/1pp1qN2/1b6/1P2P2P/2Q2PP1/R2R2K1 w - - 0 26"
+      },
+      {
+       "san": "Ra7",
+       "uci": "a1a7",
+       "fen": "3r1rk1/Rb4p1/5pBp/1pp1qN2/1b6/1P2P2P/2Q2PP1/3R2K1 b - - 1 26"
+      },
+      {
+       "san": "Qc7",
+       "uci": "e5c7",
+       "fen": "3r1rk1/Rbq3p1/5pBp/1pp2N2/1b6/1P2P2P/2Q2PP1/3R2K1 w - - 2 27"
+      }
+     ],
+     "comentario": "21.Axe5 Dxe5 22.Ad3: Karpov entrega la pareja para eliminar el caballo de e5. Después de 23.Ag6 y 24.Cf5 las blancas atacan las casillas débiles del rey negro, y mantienen las damas en el tablero para que esas debilidades pesen. (Stockfish 17 a profundidad 22: Axe5 es la que elige el motor (+1,8).)",
+     "clave": true,
+     "marcas": []
+    }
+   ]
+  },
+  {
+   "n": 17,
+   "cap": 4,
+   "capitulo": "Cambios paradójicos y técnica moderna",
+   "titulo": "Tu peor pieza por su mejor pieza",
+   "leccion": 17,
+   "diagramas": [
+    {
+     "id": "CC-17",
+     "idx": 0,
+     "fen": "3rr1k1/pb2qpp1/n4n1p/2ppN3/5P1P/1PN1P3/P3QPB1/R2R2K1 b - - 4 21",
+     "turno": "b",
+     "titulo": "Anthony Miles – Oscar Panno, Biel 1977. Juegan las negras. El caballo de a6 no hace nada y el caballo blanco de e5 domina. ¿Qué plan te propones?",
+     "resultado": "*",
+     "resultado_texto": "Posición para jugar",
+     "linea": "21...Nb8 22.Rac1 Nbd7 23.Nxd7 Rxd7 24.Rd2 Rd6 25.Na4 d4 26.Bxb7 Qxb7 27.Nxc5",
+     "linea_es": "21...Cb8 22.Tac1 Cbd7 23.Cxd7 Txd7 24.Td2 Td6 25.Ca4 d4 26.Axb7 Dxb7 27.Cxc5",
+     "jugadas": [
+      {
+       "san": "Nb8",
+       "uci": "a6b8",
+       "fen": "1n1rr1k1/pb2qpp1/5n1p/2ppN3/5P1P/1PN1P3/P3QPB1/R2R2K1 w - - 5 22"
+      },
+      {
+       "san": "Rac1",
+       "uci": "a1c1",
+       "fen": "1n1rr1k1/pb2qpp1/5n1p/2ppN3/5P1P/1PN1P3/P3QPB1/2RR2K1 b - - 6 22"
+      },
+      {
+       "san": "Nbd7",
+       "uci": "b8d7",
+       "fen": "3rr1k1/pb1nqpp1/5n1p/2ppN3/5P1P/1PN1P3/P3QPB1/2RR2K1 w - - 7 23"
+      },
+      {
+       "san": "Nxd7",
+       "uci": "e5d7",
+       "fen": "3rr1k1/pb1Nqpp1/5n1p/2pp4/5P1P/1PN1P3/P3QPB1/2RR2K1 b - - 0 23"
+      },
+      {
+       "san": "Rxd7",
+       "uci": "d8d7",
+       "fen": "4r1k1/pb1rqpp1/5n1p/2pp4/5P1P/1PN1P3/P3QPB1/2RR2K1 w - - 0 24"
+      },
+      {
+       "san": "Rd2",
+       "uci": "d1d2",
+       "fen": "4r1k1/pb1rqpp1/5n1p/2pp4/5P1P/1PN1P3/P2RQPB1/2R3K1 b - - 1 24"
+      },
+      {
+       "san": "Rd6",
+       "uci": "d7d6",
+       "fen": "4r1k1/pb2qpp1/3r1n1p/2pp4/5P1P/1PN1P3/P2RQPB1/2R3K1 w - - 2 25"
+      },
+      {
+       "san": "Na4",
+       "uci": "c3a4",
+       "fen": "4r1k1/pb2qpp1/3r1n1p/2pp4/N4P1P/1P2P3/P2RQPB1/2R3K1 b - - 3 25"
+      },
+      {
+       "san": "d4",
+       "uci": "d5d4",
+       "fen": "4r1k1/pb2qpp1/3r1n1p/2p5/N2p1P1P/1P2P3/P2RQPB1/2R3K1 w - - 0 26"
+      },
+      {
+       "san": "Bxb7",
+       "uci": "g2b7",
+       "fen": "4r1k1/pB2qpp1/3r1n1p/2p5/N2p1P1P/1P2P3/P2RQP2/2R3K1 b - - 0 26"
+      },
+      {
+       "san": "Qxb7",
+       "uci": "e7b7",
+       "fen": "4r1k1/pq3pp1/3r1n1p/2p5/N2p1P1P/1P2P3/P2RQP2/2R3K1 w - - 0 27"
+      },
+      {
+       "san": "Nxc5",
+       "uci": "a4c5",
+       "fen": "4r1k1/pq3pp1/3r1n1p/2N5/3p1P1P/1P2P3/P2RQP2/2R3K1 b - - 0 27"
+      }
+     ],
+     "comentario": "21…Cb8, 22…Cbd7 y 23.Cxd7 Txd7: el peor caballo negro se cambió por el mejor caballo blanco. Después, con 25…d4 las negras abren el centro y sus piezas quedan más activas que las blancas. (Stockfish 17 a profundidad 22: el motor prefiere d4 (−1,0) a Cb8 (−0,3).)",
+     "clave": true,
+     "marcas": []
+    }
+   ]
+  },
+  {
+   "n": 18,
+   "cap": 4,
+   "capitulo": "Cambios paradójicos y técnica moderna",
+   "titulo": "Quitarle los defensores a una casilla",
+   "leccion": 18,
+   "diagramas": [
+    {
+     "id": "CC-18",
+     "idx": 0,
+     "fen": "r2qrbk1/3n1pp1/p1bp1n1p/1p2p1B1/1P2P3/2P4P/P1B2PPN/R2QRNK1 w - - 0 21",
+     "turno": "w",
+     "titulo": "Rafael Leitao – Zhang Zhong, Campeonato del Mundo FIDE, Trípoli 2004. Juegan las blancas. La casilla d5 es el objetivo. ¿Qué piezas negras la cubren?",
+     "resultado": "*",
+     "resultado_texto": "Posición para jugar",
+     "linea": "21.Bxf6 Nxf6 22.Ng4 Nxg4 23.Qxg4 Bd7 24.Qf3 Be6 25.Bb3 Rc8 26.Qd3 Qc7",
+     "linea_es": "21.Axf6 Cxf6 22.Cg4 Cxg4 23.Dxg4 Ad7 24.Df3 Ae6 25.Ab3 Tc8 26.Dd3 Dc7",
+     "jugadas": [
+      {
+       "san": "Bxf6",
+       "uci": "g5f6",
+       "fen": "r2qrbk1/3n1pp1/p1bp1B1p/1p2p3/1P2P3/2P4P/P1B2PPN/R2QRNK1 b - - 0 21"
+      },
+      {
+       "san": "Nxf6",
+       "uci": "d7f6",
+       "fen": "r2qrbk1/5pp1/p1bp1n1p/1p2p3/1P2P3/2P4P/P1B2PPN/R2QRNK1 w - - 0 22"
+      },
+      {
+       "san": "Ng4",
+       "uci": "h2g4",
+       "fen": "r2qrbk1/5pp1/p1bp1n1p/1p2p3/1P2P1N1/2P4P/P1B2PP1/R2QRNK1 b - - 1 22"
+      },
+      {
+       "san": "Nxg4",
+       "uci": "f6g4",
+       "fen": "r2qrbk1/5pp1/p1bp3p/1p2p3/1P2P1n1/2P4P/P1B2PP1/R2QRNK1 w - - 0 23"
+      },
+      {
+       "san": "Qxg4",
+       "uci": "d1g4",
+       "fen": "r2qrbk1/5pp1/p1bp3p/1p2p3/1P2P1Q1/2P4P/P1B2PP1/R3RNK1 b - - 0 23"
+      },
+      {
+       "san": "Bd7",
+       "uci": "c6d7",
+       "fen": "r2qrbk1/3b1pp1/p2p3p/1p2p3/1P2P1Q1/2P4P/P1B2PP1/R3RNK1 w - - 1 24"
+      },
+      {
+       "san": "Qf3",
+       "uci": "g4f3",
+       "fen": "r2qrbk1/3b1pp1/p2p3p/1p2p3/1P2P3/2P2Q1P/P1B2PP1/R3RNK1 b - - 2 24"
+      },
+      {
+       "san": "Be6",
+       "uci": "d7e6",
+       "fen": "r2qrbk1/5pp1/p2pb2p/1p2p3/1P2P3/2P2Q1P/P1B2PP1/R3RNK1 w - - 3 25"
+      },
+      {
+       "san": "Bb3",
+       "uci": "c2b3",
+       "fen": "r2qrbk1/5pp1/p2pb2p/1p2p3/1P2P3/1BP2Q1P/P4PP1/R3RNK1 b - - 4 25"
+      },
+      {
+       "san": "Rc8",
+       "uci": "a8c8",
+       "fen": "2rqrbk1/5pp1/p2pb2p/1p2p3/1P2P3/1BP2Q1P/P4PP1/R3RNK1 w - - 5 26"
+      },
+      {
+       "san": "Qd3",
+       "uci": "f3d3",
+       "fen": "2rqrbk1/5pp1/p2pb2p/1p2p3/1P2P3/1BPQ3P/P4PP1/R3RNK1 b - - 6 26"
+      },
+      {
+       "san": "Qc7",
+       "uci": "d8c7",
+       "fen": "2r1rbk1/2q2pp1/p2pb2p/1p2p3/1P2P3/1BPQ3P/P4PP1/R3RNK1 w - - 7 27"
+      }
+     ],
+     "comentario": "21.Axf6 Cxf6 22.Cg4 Cxg4 23.Dxg4: las blancas entregan la pareja de alfiles para cambiar los dos caballos negros que podían vigilar d5. Al rival le queda el alfil de casillas blancas, que no alcanza para sostener esa casilla. (Stockfish 17 a profundidad 22: Axf6 es la que elige el motor (+0,2).)",
+     "clave": true,
+     "marcas": []
+    }
+   ]
+  },
+  {
+   "n": 19,
+   "cap": 4,
+   "capitulo": "Cambios paradójicos y técnica moderna",
+   "titulo": "La técnica moderna: no hay reglas fijas",
+   "leccion": 19,
+   "diagramas": [
+    {
+     "id": "CC-19",
+     "idx": 0,
+     "fen": "1r2k2r/4bp2/p2pbp2/1p2p3/4P1P1/P3B3/1PPR3P/1K3BR1 b k - 0 20",
+     "turno": "b",
+     "titulo": "Vassily Ivanchuk – Viswanathan Anand, Linares 1992. Juegan las negras. Su alfil de e6 es el bueno. ¿Lo cambiarías por el alfil de f1?",
+     "resultado": "*",
+     "resultado_texto": "Posición para jugar",
+     "linea": "20...Bc4 21.b3 Bxf1 22.Rxf1 Rh3 23.Re2 Kd7 24.g5 Ke6 25.gxf6 Bxf6 26.Bd2",
+     "linea_es": "20...Ac4 21.b3 Axf1 22.Txf1 Th3 23.Te2 Rd7 24.g5 Re6 25.gxf6 Axf6 26.Ad2",
+     "jugadas": [
+      {
+       "san": "Bc4",
+       "uci": "e6c4",
+       "fen": "1r2k2r/4bp2/p2p1p2/1p2p3/2b1P1P1/P3B3/1PPR3P/1K3BR1 w k - 1 21"
+      },
+      {
+       "san": "b3",
+       "uci": "b2b3",
+       "fen": "1r2k2r/4bp2/p2p1p2/1p2p3/2b1P1P1/PP2B3/2PR3P/1K3BR1 b k - 0 21"
+      },
+      {
+       "san": "Bxf1",
+       "uci": "c4f1",
+       "fen": "1r2k2r/4bp2/p2p1p2/1p2p3/4P1P1/PP2B3/2PR3P/1K3bR1 w k - 0 22"
+      },
+      {
+       "san": "Rxf1",
+       "uci": "g1f1",
+       "fen": "1r2k2r/4bp2/p2p1p2/1p2p3/4P1P1/PP2B3/2PR3P/1K3R2 b k - 0 22"
+      },
+      {
+       "san": "Rh3",
+       "uci": "h8h3",
+       "fen": "1r2k3/4bp2/p2p1p2/1p2p3/4P1P1/PP2B2r/2PR3P/1K3R2 w - - 1 23"
+      },
+      {
+       "san": "Re2",
+       "uci": "d2e2",
+       "fen": "1r2k3/4bp2/p2p1p2/1p2p3/4P1P1/PP2B2r/2P1R2P/1K3R2 b - - 2 23"
+      },
+      {
+       "san": "Kd7",
+       "uci": "e8d7",
+       "fen": "1r6/3kbp2/p2p1p2/1p2p3/4P1P1/PP2B2r/2P1R2P/1K3R2 w - - 3 24"
+      },
+      {
+       "san": "g5",
+       "uci": "g4g5",
+       "fen": "1r6/3kbp2/p2p1p2/1p2p1P1/4P3/PP2B2r/2P1R2P/1K3R2 b - - 0 24"
+      },
+      {
+       "san": "Ke6",
+       "uci": "d7e6",
+       "fen": "1r6/4bp2/p2pkp2/1p2p1P1/4P3/PP2B2r/2P1R2P/1K3R2 w - - 1 25"
+      },
+      {
+       "san": "gxf6",
+       "uci": "g5f6",
+       "fen": "1r6/4bp2/p2pkP2/1p2p3/4P3/PP2B2r/2P1R2P/1K3R2 b - - 0 25"
+      },
+      {
+       "san": "Bxf6",
+       "uci": "e7f6",
+       "fen": "1r6/5p2/p2pkb2/1p2p3/4P3/PP2B2r/2P1R2P/1K3R2 w - - 0 26"
+      },
+      {
+       "san": "Bd2",
+       "uci": "e3d2",
+       "fen": "1r6/5p2/p2pkb2/1p2p3/4P3/PP5r/2PBR2P/1K3R2 b - - 1 26"
+      }
+     ],
+     "comentario": "20…Ac4 ofrece el cambio del alfil bueno: después de 21.b3 Axf1 22.Txf1 Th3 los peones blancos de e4 y g4 quedan en casillas claras sin un alfil que los cuide, y la torre negra entra por h3. Con el rey negro cómodo en el centro, el final es de las negras. (Stockfish 17 a profundidad 22: Ac4 es la que elige el motor (−0,7).)",
+     "clave": true,
+     "marcas": []
+    }
+   ]
+  },
+  {
+   "n": 20,
+   "cap": 5,
+   "capitulo": "Ejercicios",
+   "titulo": "Ejercicios 1 a 6",
+   "leccion": 20,
+   "diagramas": [
+    {
+     "id": "CC-E1",
+     "idx": 0,
+     "fen": "r1b2bk1/1q5p/R2p1pp1/3PpP2/4P1P1/1Q2B2P/4B2K/8 w - - 0 36",
+     "turno": "w",
+     "titulo": "Ejercicio 1. Julio Bolbochán – Lothar Schmid, Olimpiada de Dubrovnik 1950. Juegan las blancas. Puedes cambiar damas y torres de un golpe. ¿Te conviene simplificar tanto?",
+     "resultado": "*",
+     "resultado_texto": "Posición para jugar",
+     "linea": "36.Qxb7 Bxb7 37.Rxa8 Bxa8 38.Ba6 g5 39.Bb6 Kf7 40.Bc8 Be7 41.Bc7 h5 42.Kg3 hxg4 43.hxg4 Ke8",
+     "linea_es": "36.Dxb7 Axb7 37.Txa8 Axa8 38.Aa6 g5 39.Ab6 Rf7 40.Ac8 Ae7 41.Ac7 h5 42.Rg3 hxg4 43.hxg4 Re8",
+     "jugadas": [
+      {
+       "san": "Qxb7",
+       "uci": "b3b7",
+       "fen": "r1b2bk1/1Q5p/R2p1pp1/3PpP2/4P1P1/4B2P/4B2K/8 b - - 0 36"
+      },
+      {
+       "san": "Bxb7",
+       "uci": "c8b7",
+       "fen": "r4bk1/1b5p/R2p1pp1/3PpP2/4P1P1/4B2P/4B2K/8 w - - 0 37"
+      },
+      {
+       "san": "Rxa8",
+       "uci": "a6a8",
+       "fen": "R4bk1/1b5p/3p1pp1/3PpP2/4P1P1/4B2P/4B2K/8 b - - 0 37"
+      },
+      {
+       "san": "Bxa8",
+       "uci": "b7a8",
+       "fen": "b4bk1/7p/3p1pp1/3PpP2/4P1P1/4B2P/4B2K/8 w - - 0 38"
+      },
+      {
+       "san": "Ba6",
+       "uci": "e2a6",
+       "fen": "b4bk1/7p/B2p1pp1/3PpP2/4P1P1/4B2P/7K/8 b - - 1 38"
+      },
+      {
+       "san": "g5",
+       "uci": "g6g5",
+       "fen": "b4bk1/7p/B2p1p2/3PpPp1/4P1P1/4B2P/7K/8 w - - 0 39"
+      },
+      {
+       "san": "Bb6",
+       "uci": "e3b6",
+       "fen": "b4bk1/7p/BB1p1p2/3PpPp1/4P1P1/7P/7K/8 b - - 1 39"
+      },
+      {
+       "san": "Kf7",
+       "uci": "g8f7",
+       "fen": "b4b2/5k1p/BB1p1p2/3PpPp1/4P1P1/7P/7K/8 w - - 2 40"
+      },
+      {
+       "san": "Bc8",
+       "uci": "a6c8",
+       "fen": "b1B2b2/5k1p/1B1p1p2/3PpPp1/4P1P1/7P/7K/8 b - - 3 40"
+      },
+      {
+       "san": "Be7",
+       "uci": "f8e7",
+       "fen": "b1B5/4bk1p/1B1p1p2/3PpPp1/4P1P1/7P/7K/8 w - - 4 41"
+      },
+      {
+       "san": "Bc7",
+       "uci": "b6c7",
+       "fen": "b1B5/2B1bk1p/3p1p2/3PpPp1/4P1P1/7P/7K/8 b - - 5 41"
+      },
+      {
+       "san": "h5",
+       "uci": "h7h5",
+       "fen": "b1B5/2B1bk2/3p1p2/3PpPpp/4P1P1/7P/7K/8 w - h6 0 42"
+      },
+      {
+       "san": "Kg3",
+       "uci": "h2g3",
+       "fen": "b1B5/2B1bk2/3p1p2/3PpPpp/4P1P1/6KP/8/8 b - - 1 42"
+      },
+      {
+       "san": "hxg4",
+       "uci": "h5g4",
+       "fen": "b1B5/2B1bk2/3p1p2/3PpPp1/4P1p1/6KP/8/8 w - - 0 43"
+      },
+      {
+       "san": "hxg4",
+       "uci": "h3g4",
+       "fen": "b1B5/2B1bk2/3p1p2/3PpPp1/4P1P1/6K1/8/8 b - - 0 43"
+      },
+      {
+       "san": "Ke8",
+       "uci": "f7e8",
+       "fen": "b1B1k3/2B1b3/3p1p2/3PpPp1/4P1P1/6K1/8/8 w - - 1 44"
+      }
+     ],
+     "comentario": "Sí: el cambio masivo deja en el tablero justo lo que le conviene a las blancas. Después de 38.Aa6 el alfil de a8 queda encerrado detrás de sus propios peones y no vuelve a jugar; el blanco, con los dos alfiles activos, lleva el rey al flanco de dama sin que nadie lo moleste. La regla de no cambiar con una posición cerrada no sirve aquí: lo que manda es que la pieza que le queda al rival es mala. (Stockfish 17 a profundidad 22: Dxb7 es la que elige el motor (+1,1); Tb6 da +0,5.)",
+     "clave": true,
+     "marcas": []
+    },
+    {
+     "id": "CC-E2",
+     "idx": 0,
+     "fen": "rnbqk2r/pppn1pbp/3p2p1/3Pp3/2P1P3/2N1BP2/PP4PP/R2QKBNR b KQkq - 1 7",
+     "turno": "b",
+     "titulo": "Ejercicio 2. Vladen Zurakhov – Bukhuti Gurgenidze, Semifinal del Campeonato de la URSS, Tiflis 1956. Juegan las negras, en una India de Rey con el centro cerrado. ¿Cuál es la mejor jugada?",
+     "resultado": "*",
+     "resultado_texto": "Posición para jugar",
+     "linea": "7...Bh6 8.Qd2 Bxe3 9.Qxe3 a5 10.Bd3 Na6 11.O-O-O O-O 12.Nge2 Ndc5 13.Bb1 Bd7 14.Nb5 Bxb5 15.cxb5 Nb8 16.h4 Nbd7 17.h5",
+     "linea_es": "7...Ah6 8.Dd2 Axe3 9.Dxe3 a5 10.Ad3 Ca6 11.O-O-O O-O 12.Cge2 Cdc5 13.Ab1 Ad7 14.Cb5 Axb5 15.cxb5 Cb8 16.h4 Cbd7 17.h5",
+     "jugadas": [
+      {
+       "san": "Bh6",
+       "uci": "g7h6",
+       "fen": "rnbqk2r/pppn1p1p/3p2pb/3Pp3/2P1P3/2N1BP2/PP4PP/R2QKBNR w KQkq - 2 8"
+      },
+      {
+       "san": "Qd2",
+       "uci": "d1d2",
+       "fen": "rnbqk2r/pppn1p1p/3p2pb/3Pp3/2P1P3/2N1BP2/PP1Q2PP/R3KBNR b KQkq - 3 8"
+      },
+      {
+       "san": "Bxe3",
+       "uci": "h6e3",
+       "fen": "rnbqk2r/pppn1p1p/3p2p1/3Pp3/2P1P3/2N1bP2/PP1Q2PP/R3KBNR w KQkq - 0 9"
+      },
+      {
+       "san": "Qxe3",
+       "uci": "d2e3",
+       "fen": "rnbqk2r/pppn1p1p/3p2p1/3Pp3/2P1P3/2N1QP2/PP4PP/R3KBNR b KQkq - 0 9"
+      },
+      {
+       "san": "a5",
+       "uci": "a7a5",
+       "fen": "rnbqk2r/1ppn1p1p/3p2p1/p2Pp3/2P1P3/2N1QP2/PP4PP/R3KBNR w KQkq a6 0 10"
+      },
+      {
+       "san": "Bd3",
+       "uci": "f1d3",
+       "fen": "rnbqk2r/1ppn1p1p/3p2p1/p2Pp3/2P1P3/2NBQP2/PP4PP/R3K1NR b KQkq - 1 10"
+      },
+      {
+       "san": "Na6",
+       "uci": "b8a6",
+       "fen": "r1bqk2r/1ppn1p1p/n2p2p1/p2Pp3/2P1P3/2NBQP2/PP4PP/R3K1NR w KQkq - 2 11"
+      },
+      {
+       "san": "O-O-O",
+       "uci": "e1c1",
+       "fen": "r1bqk2r/1ppn1p1p/n2p2p1/p2Pp3/2P1P3/2NBQP2/PP4PP/2KR2NR b kq - 3 11"
+      },
+      {
+       "san": "O-O",
+       "uci": "e8g8",
+       "fen": "r1bq1rk1/1ppn1p1p/n2p2p1/p2Pp3/2P1P3/2NBQP2/PP4PP/2KR2NR w - - 4 12"
+      },
+      {
+       "san": "Nge2",
+       "uci": "g1e2",
+       "fen": "r1bq1rk1/1ppn1p1p/n2p2p1/p2Pp3/2P1P3/2NBQP2/PP2N1PP/2KR3R b - - 5 12"
+      },
+      {
+       "san": "Ndc5",
+       "uci": "d7c5",
+       "fen": "r1bq1rk1/1pp2p1p/n2p2p1/p1nPp3/2P1P3/2NBQP2/PP2N1PP/2KR3R w - - 6 13"
+      },
+      {
+       "san": "Bb1",
+       "uci": "d3b1",
+       "fen": "r1bq1rk1/1pp2p1p/n2p2p1/p1nPp3/2P1P3/2N1QP2/PP2N1PP/1BKR3R b - - 7 13"
+      },
+      {
+       "san": "Bd7",
+       "uci": "c8d7",
+       "fen": "r2q1rk1/1ppb1p1p/n2p2p1/p1nPp3/2P1P3/2N1QP2/PP2N1PP/1BKR3R w - - 8 14"
+      },
+      {
+       "san": "Nb5",
+       "uci": "c3b5",
+       "fen": "r2q1rk1/1ppb1p1p/n2p2p1/pNnPp3/2P1P3/4QP2/PP2N1PP/1BKR3R b - - 9 14"
+      },
+      {
+       "san": "Bxb5",
+       "uci": "d7b5",
+       "fen": "r2q1rk1/1pp2p1p/n2p2p1/pbnPp3/2P1P3/4QP2/PP2N1PP/1BKR3R w - - 0 15"
+      },
+      {
+       "san": "cxb5",
+       "uci": "c4b5",
+       "fen": "r2q1rk1/1pp2p1p/n2p2p1/pPnPp3/4P3/4QP2/PP2N1PP/1BKR3R b - - 0 15"
+      },
+      {
+       "san": "Nb8",
+       "uci": "a6b8",
+       "fen": "rn1q1rk1/1pp2p1p/3p2p1/pPnPp3/4P3/4QP2/PP2N1PP/1BKR3R w - - 1 16"
+      },
+      {
+       "san": "h4",
+       "uci": "h2h4",
+       "fen": "rn1q1rk1/1pp2p1p/3p2p1/pPnPp3/4P2P/4QP2/PP2N1P1/1BKR3R b - h3 0 16"
+      },
+      {
+       "san": "Nbd7",
+       "uci": "b8d7",
+       "fen": "r2q1rk1/1ppn1p1p/3p2p1/pPnPp3/4P2P/4QP2/PP2N1P1/1BKR3R w - - 1 17"
+      },
+      {
+       "san": "h5",
+       "uci": "h4h5",
+       "fen": "r2q1rk1/1ppn1p1p/3p2p1/pPnPp2P/4P3/4QP2/PP2N1P1/1BKR3R b - - 0 17"
+      }
+     ],
+     "comentario": "7…Ah6 ofrece cambiar el alfil de casillas negras, que con el centro cerrado mira contra sus propios peones, por el alfil de e3, que es la pieza que sostiene todas las casillas oscuras del blanco. Después del cambio, las casillas c5 y f4 quedan para los caballos negros y el blanco no encuentra un buen lugar para su rey. Un cambio táctico (el alfil ofrece el cambio con ganancia de tiempo) que resuelve un problema de estrategia. (Stockfish 17 a profundidad 22: Ah6 es la que elige el motor (+0,6).)",
+     "clave": true,
+     "marcas": []
+    },
+    {
+     "id": "CC-E3",
+     "idx": 0,
+     "fen": "r3kb1r/pp1b1ppp/1q2pn2/n2p4/3P1B2/2PB1N2/PPQ2PPP/RN2K2R w KQkq - 0 11",
+     "turno": "w",
+     "titulo": "Ejercicio 3. Robert Fischer – Tigran Petrosian, Match URSS-Resto del Mundo, Belgrado 1970. Juegan las blancas. Las negras quieren …Ab5 para cambiar su alfil malo de d7. ¿Qué jugada lo impide?",
+     "resultado": "*",
+     "resultado_texto": "Posición para jugar",
+     "linea": "11.a4 Rc8 12.Nbd2 Nc6 13.Qb1 Nh5 14.Be3 h6 15.Ne5 Nf6 16.h3 Bd6 17.O-O Kf8 18.f4",
+     "linea_es": "11.a4 Tc8 12.Cbd2 Cc6 13.Db1 Ch5 14.Ae3 h6 15.Ce5 Cf6 16.h3 Ad6 17.O-O Rf8 18.f4",
+     "jugadas": [
+      {
+       "san": "a4",
+       "uci": "a2a4",
+       "fen": "r3kb1r/pp1b1ppp/1q2pn2/n2p4/P2P1B2/2PB1N2/1PQ2PPP/RN2K2R b KQkq a3 0 11"
+      },
+      {
+       "san": "Rc8",
+       "uci": "a8c8",
+       "fen": "2r1kb1r/pp1b1ppp/1q2pn2/n2p4/P2P1B2/2PB1N2/1PQ2PPP/RN2K2R w KQk - 1 12"
+      },
+      {
+       "san": "Nbd2",
+       "uci": "b1d2",
+       "fen": "2r1kb1r/pp1b1ppp/1q2pn2/n2p4/P2P1B2/2PB1N2/1PQN1PPP/R3K2R b KQk - 2 12"
+      },
+      {
+       "san": "Nc6",
+       "uci": "a5c6",
+       "fen": "2r1kb1r/pp1b1ppp/1qn1pn2/3p4/P2P1B2/2PB1N2/1PQN1PPP/R3K2R w KQk - 3 13"
+      },
+      {
+       "san": "Qb1",
+       "uci": "c2b1",
+       "fen": "2r1kb1r/pp1b1ppp/1qn1pn2/3p4/P2P1B2/2PB1N2/1P1N1PPP/RQ2K2R b KQk - 4 13"
+      },
+      {
+       "san": "Nh5",
+       "uci": "f6h5",
+       "fen": "2r1kb1r/pp1b1ppp/1qn1p3/3p3n/P2P1B2/2PB1N2/1P1N1PPP/RQ2K2R w KQk - 5 14"
+      },
+      {
+       "san": "Be3",
+       "uci": "f4e3",
+       "fen": "2r1kb1r/pp1b1ppp/1qn1p3/3p3n/P2P4/2PBBN2/1P1N1PPP/RQ2K2R b KQk - 6 14"
+      },
+      {
+       "san": "h6",
+       "uci": "h7h6",
+       "fen": "2r1kb1r/pp1b1pp1/1qn1p2p/3p3n/P2P4/2PBBN2/1P1N1PPP/RQ2K2R w KQk - 0 15"
+      },
+      {
+       "san": "Ne5",
+       "uci": "f3e5",
+       "fen": "2r1kb1r/pp1b1pp1/1qn1p2p/3pN2n/P2P4/2PBB3/1P1N1PPP/RQ2K2R b KQk - 1 15"
+      },
+      {
+       "san": "Nf6",
+       "uci": "h5f6",
+       "fen": "2r1kb1r/pp1b1pp1/1qn1pn1p/3pN3/P2P4/2PBB3/1P1N1PPP/RQ2K2R w KQk - 2 16"
+      },
+      {
+       "san": "h3",
+       "uci": "h2h3",
+       "fen": "2r1kb1r/pp1b1pp1/1qn1pn1p/3pN3/P2P4/2PBB2P/1P1N1PP1/RQ2K2R b KQk - 0 16"
+      },
+      {
+       "san": "Bd6",
+       "uci": "f8d6",
+       "fen": "2r1k2r/pp1b1pp1/1qnbpn1p/3pN3/P2P4/2PBB2P/1P1N1PP1/RQ2K2R w KQk - 1 17"
+      },
+      {
+       "san": "O-O",
+       "uci": "e1g1",
+       "fen": "2r1k2r/pp1b1pp1/1qnbpn1p/3pN3/P2P4/2PBB2P/1P1N1PP1/RQ3RK1 b k - 2 17"
+      },
+      {
+       "san": "Kf8",
+       "uci": "e8f8",
+       "fen": "2r2k1r/pp1b1pp1/1qnbpn1p/3pN3/P2P4/2PBB2P/1P1N1PP1/RQ3RK1 w - - 3 18"
+      },
+      {
+       "san": "f4",
+       "uci": "f2f4",
+       "fen": "2r2k1r/pp1b1pp1/1qnbpn1p/3pN3/P2P1P2/2PBB2P/1P1N2P1/RQ3RK1 b - f3 0 18"
+      }
+     ],
+     "comentario": "11.a4 le quita la casilla b5 al alfil de d7. Los peones negros están en d5 y e6, en casillas blancas, así que ese alfil es el que sobra; sin poder cambiarlo, las negras quedan con una pieza sin futuro y las blancas juegan cómodas en el flanco de rey. Enrocarse primero permitía …Ab5 y el cambio que liberaba a las negras. El motor pone 11.a4 entre las mejores jugadas. (Stockfish 17 a profundidad 22: a4 está entre las mejores (+0,4; el motor prefiere apenas De2, +0,7); O-O da +0,4.)",
+     "clave": true,
+     "marcas": []
+    },
+    {
+     "id": "CC-E4",
+     "idx": 0,
+     "fen": "r2q1rk1/1b3pp1/pp1b1n1p/3N4/P1B5/5NP1/1P2QPP1/R2R2K1 w - - 0 19",
+     "turno": "w",
+     "titulo": "Ejercicio 4. Krishnan Sasikiran – Alexei Barsov, Campeonato de Asia, Doha 2003. Juegan las blancas. ¿Te conviene cambiar caballos en f6?",
+     "resultado": "*",
+     "resultado_texto": "Posición para jugar",
+     "linea": "19.Ne3 Qe7 20.Nh4 Rfd8 21.Nhf5 Qf8 22.Ng4 Ne4 23.Rd4 Re8 24.Qd3 Rad8 25.Rd1 Bc7 26.Bxf7+ Kxf7 27.Qc4+ Kg6 28.Qxc7 Rxd4 29.Nxd4",
+     "linea_es": "19.Ce3 De7 20.Ch4 Tfd8 21.Chf5 Df8 22.Cg4 Ce4 23.Td4 Te8 24.Dd3 Tad8 25.Td1 Ac7 26.Axf7+ Rxf7 27.Dc4+ Rg6 28.Dxc7 Txd4 29.Cxd4",
+     "jugadas": [
+      {
+       "san": "Ne3",
+       "uci": "d5e3",
+       "fen": "r2q1rk1/1b3pp1/pp1b1n1p/8/P1B5/4NNP1/1P2QPP1/R2R2K1 b - - 1 19"
+      },
+      {
+       "san": "Qe7",
+       "uci": "d8e7",
+       "fen": "r4rk1/1b2qpp1/pp1b1n1p/8/P1B5/4NNP1/1P2QPP1/R2R2K1 w - - 2 20"
+      },
+      {
+       "san": "Nh4",
+       "uci": "f3h4",
+       "fen": "r4rk1/1b2qpp1/pp1b1n1p/8/P1B4N/4N1P1/1P2QPP1/R2R2K1 b - - 3 20"
+      },
+      {
+       "san": "Rfd8",
+       "uci": "f8d8",
+       "fen": "r2r2k1/1b2qpp1/pp1b1n1p/8/P1B4N/4N1P1/1P2QPP1/R2R2K1 w - - 4 21"
+      },
+      {
+       "san": "Nhf5",
+       "uci": "h4f5",
+       "fen": "r2r2k1/1b2qpp1/pp1b1n1p/5N2/P1B5/4N1P1/1P2QPP1/R2R2K1 b - - 5 21"
+      },
+      {
+       "san": "Qf8",
+       "uci": "e7f8",
+       "fen": "r2r1qk1/1b3pp1/pp1b1n1p/5N2/P1B5/4N1P1/1P2QPP1/R2R2K1 w - - 6 22"
+      },
+      {
+       "san": "Ng4",
+       "uci": "e3g4",
+       "fen": "r2r1qk1/1b3pp1/pp1b1n1p/5N2/P1B3N1/6P1/1P2QPP1/R2R2K1 b - - 7 22"
+      },
+      {
+       "san": "Ne4",
+       "uci": "f6e4",
+       "fen": "r2r1qk1/1b3pp1/pp1b3p/5N2/P1B1n1N1/6P1/1P2QPP1/R2R2K1 w - - 8 23"
+      },
+      {
+       "san": "Rd4",
+       "uci": "d1d4",
+       "fen": "r2r1qk1/1b3pp1/pp1b3p/5N2/P1BRn1N1/6P1/1P2QPP1/R5K1 b - - 9 23"
+      },
+      {
+       "san": "Re8",
+       "uci": "d8e8",
+       "fen": "r3rqk1/1b3pp1/pp1b3p/5N2/P1BRn1N1/6P1/1P2QPP1/R5K1 w - - 10 24"
+      },
+      {
+       "san": "Qd3",
+       "uci": "e2d3",
+       "fen": "r3rqk1/1b3pp1/pp1b3p/5N2/P1BRn1N1/3Q2P1/1P3PP1/R5K1 b - - 11 24"
+      },
+      {
+       "san": "Rad8",
+       "uci": "a8d8",
+       "fen": "3rrqk1/1b3pp1/pp1b3p/5N2/P1BRn1N1/3Q2P1/1P3PP1/R5K1 w - - 12 25"
+      },
+      {
+       "san": "Rd1",
+       "uci": "a1d1",
+       "fen": "3rrqk1/1b3pp1/pp1b3p/5N2/P1BRn1N1/3Q2P1/1P3PP1/3R2K1 b - - 13 25"
+      },
+      {
+       "san": "Bc7",
+       "uci": "d6c7",
+       "fen": "3rrqk1/1bb2pp1/pp5p/5N2/P1BRn1N1/3Q2P1/1P3PP1/3R2K1 w - - 14 26"
+      },
+      {
+       "san": "Bxf7+",
+       "uci": "c4f7",
+       "fen": "3rrqk1/1bb2Bp1/pp5p/5N2/P2Rn1N1/3Q2P1/1P3PP1/3R2K1 b - - 0 26"
+      },
+      {
+       "san": "Kxf7",
+       "uci": "g8f7",
+       "fen": "3rrq2/1bb2kp1/pp5p/5N2/P2Rn1N1/3Q2P1/1P3PP1/3R2K1 w - - 0 27"
+      },
+      {
+       "san": "Qc4+",
+       "uci": "d3c4",
+       "fen": "3rrq2/1bb2kp1/pp5p/5N2/P1QRn1N1/6P1/1P3PP1/3R2K1 b - - 1 27"
+      },
+      {
+       "san": "Kg6",
+       "uci": "f7g6",
+       "fen": "3rrq2/1bb3p1/pp4kp/5N2/P1QRn1N1/6P1/1P3PP1/3R2K1 w - - 2 28"
+      },
+      {
+       "san": "Qxc7",
+       "uci": "c4c7",
+       "fen": "3rrq2/1bQ3p1/pp4kp/5N2/P2Rn1N1/6P1/1P3PP1/3R2K1 b - - 0 28"
+      },
+      {
+       "san": "Rxd4",
+       "uci": "d8d4",
+       "fen": "4rq2/1bQ3p1/pp4kp/5N2/P2rn1N1/6P1/1P3PP1/3R2K1 w - - 0 29"
+      },
+      {
+       "san": "Nxd4",
+       "uci": "f5d4",
+       "fen": "4rq2/1bQ3p1/pp4kp/8/P2Nn1N1/6P1/1P3PP1/3R2K1 b - - 0 29"
+      }
+     ],
+     "comentario": "La idea de la partida fue 19.Ce3: no cambiar, porque las blancas tienen más espacio y más libertad, y cada cambio le quitaba trabajo a la defensa negra. El caballo vuelve para saltar a f5 y, con 20.Ch4, los dos caballos apuntan a la misma casilla. Las blancas terminaron ganando un peón y la partida. El motor ve la posición pareja y no castiga el cambio en f6: la decisión es práctica, mantener piezas para que el rival siga apretado. (Stockfish 17 a profundidad 22: Ce3 está entre las mejores (−0,4; el motor prefiere apenas Ce5, 0,0); Cxf6+ da 0,0.)",
+     "clave": true,
+     "marcas": []
+    },
+    {
+     "id": "CC-E5",
+     "idx": 0,
+     "fen": "2rr1nk1/pb2bppp/1q2pn2/2pp2B1/2P5/2N1PN2/PPQRBPPP/3R2K1 w - - 0 16",
+     "turno": "w",
+     "titulo": "Ejercicio 5. Viktor Korchnoi – Luc Winants, Olimpiada de Bled 2002. Juegan las blancas. Con una serie de cambios en d5 pueden pasar a un final. ¿Es lo más indicado?",
+     "resultado": "*",
+     "resultado_texto": "Posición para jugar",
+     "linea": "16.cxd5 exd5 17.Bxf6 Bxf6 18.Nxd5 Bxd5 19.Rxd5 Rxd5 20.Rxd5 Qxb2 21.Qxb2 Bxb2 22.Bc4 Bf6 23.g4 h6 24.h4 g6 25.g5 hxg5 26.hxg5 Bg7 27.Ne5 Bxe5 28.Rxe5",
+     "linea_es": "16.cxd5 exd5 17.Axf6 Axf6 18.Cxd5 Axd5 19.Txd5 Txd5 20.Txd5 Dxb2 21.Dxb2 Axb2 22.Ac4 Af6 23.g4 h6 24.h4 g6 25.g5 hxg5 26.hxg5 Ag7 27.Ce5 Axe5 28.Txe5",
+     "jugadas": [
+      {
+       "san": "cxd5",
+       "uci": "c4d5",
+       "fen": "2rr1nk1/pb2bppp/1q2pn2/2pP2B1/8/2N1PN2/PPQRBPPP/3R2K1 b - - 0 16"
+      },
+      {
+       "san": "exd5",
+       "uci": "e6d5",
+       "fen": "2rr1nk1/pb2bppp/1q3n2/2pp2B1/8/2N1PN2/PPQRBPPP/3R2K1 w - - 0 17"
+      },
+      {
+       "san": "Bxf6",
+       "uci": "g5f6",
+       "fen": "2rr1nk1/pb2bppp/1q3B2/2pp4/8/2N1PN2/PPQRBPPP/3R2K1 b - - 0 17"
+      },
+      {
+       "san": "Bxf6",
+       "uci": "e7f6",
+       "fen": "2rr1nk1/pb3ppp/1q3b2/2pp4/8/2N1PN2/PPQRBPPP/3R2K1 w - - 0 18"
+      },
+      {
+       "san": "Nxd5",
+       "uci": "c3d5",
+       "fen": "2rr1nk1/pb3ppp/1q3b2/2pN4/8/4PN2/PPQRBPPP/3R2K1 b - - 0 18"
+      },
+      {
+       "san": "Bxd5",
+       "uci": "b7d5",
+       "fen": "2rr1nk1/p4ppp/1q3b2/2pb4/8/4PN2/PPQRBPPP/3R2K1 w - - 0 19"
+      },
+      {
+       "san": "Rxd5",
+       "uci": "d2d5",
+       "fen": "2rr1nk1/p4ppp/1q3b2/2pR4/8/4PN2/PPQ1BPPP/3R2K1 b - - 0 19"
+      },
+      {
+       "san": "Rxd5",
+       "uci": "d8d5",
+       "fen": "2r2nk1/p4ppp/1q3b2/2pr4/8/4PN2/PPQ1BPPP/3R2K1 w - - 0 20"
+      },
+      {
+       "san": "Rxd5",
+       "uci": "d1d5",
+       "fen": "2r2nk1/p4ppp/1q3b2/2pR4/8/4PN2/PPQ1BPPP/6K1 b - - 0 20"
+      },
+      {
+       "san": "Qxb2",
+       "uci": "b6b2",
+       "fen": "2r2nk1/p4ppp/5b2/2pR4/8/4PN2/PqQ1BPPP/6K1 w - - 0 21"
+      },
+      {
+       "san": "Qxb2",
+       "uci": "c2b2",
+       "fen": "2r2nk1/p4ppp/5b2/2pR4/8/4PN2/PQ2BPPP/6K1 b - - 0 21"
+      },
+      {
+       "san": "Bxb2",
+       "uci": "f6b2",
+       "fen": "2r2nk1/p4ppp/8/2pR4/8/4PN2/Pb2BPPP/6K1 w - - 0 22"
+      },
+      {
+       "san": "Bc4",
+       "uci": "e2c4",
+       "fen": "2r2nk1/p4ppp/8/2pR4/2B5/4PN2/Pb3PPP/6K1 b - - 1 22"
+      },
+      {
+       "san": "Bf6",
+       "uci": "b2f6",
+       "fen": "2r2nk1/p4ppp/5b2/2pR4/2B5/4PN2/P4PPP/6K1 w - - 2 23"
+      },
+      {
+       "san": "g4",
+       "uci": "g2g4",
+       "fen": "2r2nk1/p4ppp/5b2/2pR4/2B3P1/4PN2/P4P1P/6K1 b - g3 0 23"
+      },
+      {
+       "san": "h6",
+       "uci": "h7h6",
+       "fen": "2r2nk1/p4pp1/5b1p/2pR4/2B3P1/4PN2/P4P1P/6K1 w - - 0 24"
+      },
+      {
+       "san": "h4",
+       "uci": "h2h4",
+       "fen": "2r2nk1/p4pp1/5b1p/2pR4/2B3PP/4PN2/P4P2/6K1 b - h3 0 24"
+      },
+      {
+       "san": "g6",
+       "uci": "g7g6",
+       "fen": "2r2nk1/p4p2/5bpp/2pR4/2B3PP/4PN2/P4P2/6K1 w - - 0 25"
+      },
+      {
+       "san": "g5",
+       "uci": "g4g5",
+       "fen": "2r2nk1/p4p2/5bpp/2pR2P1/2B4P/4PN2/P4P2/6K1 b - - 0 25"
+      },
+      {
+       "san": "hxg5",
+       "uci": "h6g5",
+       "fen": "2r2nk1/p4p2/5bp1/2pR2p1/2B4P/4PN2/P4P2/6K1 w - - 0 26"
+      },
+      {
+       "san": "hxg5",
+       "uci": "h4g5",
+       "fen": "2r2nk1/p4p2/5bp1/2pR2P1/2B5/4PN2/P4P2/6K1 b - - 0 26"
+      },
+      {
+       "san": "Bg7",
+       "uci": "f6g7",
+       "fen": "2r2nk1/p4pb1/6p1/2pR2P1/2B5/4PN2/P4P2/6K1 w - - 1 27"
+      },
+      {
+       "san": "Ne5",
+       "uci": "f3e5",
+       "fen": "2r2nk1/p4pb1/6p1/2pRN1P1/2B5/4P3/P4P2/6K1 b - - 2 27"
+      },
+      {
+       "san": "Bxe5",
+       "uci": "g7e5",
+       "fen": "2r2nk1/p4p2/6p1/2pRb1P1/2B5/4P3/P4P2/6K1 w - - 0 28"
+      },
+      {
+       "san": "Rxe5",
+       "uci": "d5e5",
+       "fen": "2r2nk1/p4p2/6p1/2p1R1P1/2B5/4P3/P4P2/6K1 b - - 0 28"
+      }
+     ],
+     "comentario": "Sí. Después de 16.cxd5 y los cambios en d5 a cada bando le queda torre, alfil y caballo, con material igual, pero la torre blanca manda en la columna d, el alfil de c4 apunta a f7 y las negras no tienen nada que atacar. Más tarde, con 27.Ce5, se cambia otro par de piezas menores y queda torre y alfil contra torre y caballo, con la torre blanca activa: un final que se gana despacio. Simplificar fue la forma de quedarse con lo que más pesaba, la actividad. (Stockfish 17 a profundidad 22: cxd5 es la que elige el motor (+1,0).)",
+     "clave": true,
+     "marcas": []
+    },
+    {
+     "id": "CC-E6",
+     "idx": 0,
+     "fen": "r1bq1rk1/pp2ppbp/2n3p1/8/2PN4/6P1/PB1QPPBP/R2R2K1 b - - 0 13",
+     "turno": "b",
+     "titulo": "Ejercicio 6. Predrag Nikolic – Peter Svidler, Olimpiada de Ereván 1996. Juegan las negras. Pueden cambiarlo casi todo en d4. ¿Les conviene esa simplificación masiva?",
+     "resultado": "*",
+     "resultado_texto": "Posición para jugar",
+     "linea": "13...Nxd4 14.Bxd4 Qxd4 15.Qxd4 Bxd4 16.Rxd4",
+     "linea_es": "13...Cxd4 14.Axd4 Dxd4 15.Dxd4 Axd4 16.Txd4",
+     "jugadas": [
+      {
+       "san": "Nxd4",
+       "uci": "c6d4",
+       "fen": "r1bq1rk1/pp2ppbp/6p1/8/2Pn4/6P1/PB1QPPBP/R2R2K1 w - - 0 14"
+      },
+      {
+       "san": "Bxd4",
+       "uci": "b2d4",
+       "fen": "r1bq1rk1/pp2ppbp/6p1/8/2PB4/6P1/P2QPPBP/R2R2K1 b - - 0 14"
+      },
+      {
+       "san": "Qxd4",
+       "uci": "d8d4",
+       "fen": "r1b2rk1/pp2ppbp/6p1/8/2Pq4/6P1/P2QPPBP/R2R2K1 w - - 0 15"
+      },
+      {
+       "san": "Qxd4",
+       "uci": "d2d4",
+       "fen": "r1b2rk1/pp2ppbp/6p1/8/2PQ4/6P1/P3PPBP/R2R2K1 b - - 0 15"
+      },
+      {
+       "san": "Bxd4",
+       "uci": "g7d4",
+       "fen": "r1b2rk1/pp2pp1p/6p1/8/2Pb4/6P1/P3PPBP/R2R2K1 w - - 0 16"
+      },
+      {
+       "san": "Rxd4",
+       "uci": "d1d4",
+       "fen": "r1b2rk1/pp2pp1p/6p1/8/2PR4/6P1/P3PPBP/R5K1 b - - 0 16"
+      }
+     ],
+     "comentario": "En la partida, 13…Cxd4 y los cambios en d4 llevaron a un final incómodo: las blancas se quedaron con ventaja de desarrollo, la columna d y presión sobre b7, y las negras terminaron defendiéndose de forma pasiva. Ojo: la simplificación no pierde por sí sola; perdió la forma de defender el final que vino después. El motor de hoy, de hecho, prefiere la simplificación: da 13…Cxd4 casi igualado y 13…Ce5 bastante peor. El final era defendible. (Stockfish 17 a profundidad 22: Cxd4 es la que elige el motor (+0,2); Ce5 da +0,9.)",
+     "clave": true,
+     "marcas": []
+    }
+   ]
+  },
+  {
+   "n": 21,
+   "cap": 5,
+   "capitulo": "Ejercicios",
+   "titulo": "Ejercicios 7 a 12",
+   "leccion": 21,
+   "diagramas": [
+    {
+     "id": "CC-E7",
+     "idx": 0,
+     "fen": "r3nrk1/pppb1ppp/5q2/b3p3/4P1P1/2P2Q1P/PPB1NP2/R1B1K2R w KQ - 0 13",
+     "turno": "w",
+     "titulo": "Ejercicio 7. Alexei Shirov – Vassily Ivanchuk, Linares 1994. Juegan las blancas. Las negras acaban de llevar la dama a f6 para ofrecer el cambio. ¿Lo aceptas o lo rechazas?",
+     "resultado": "*",
+     "resultado_texto": "Posición para jugar",
+     "linea": "13.Qxf6 Nxf6 14.Bg5 Be6 15.Bxf6 gxf6 16.Ng3 Rfd8 17.Nh5 Rd6 18.Nxf6+ Kh8 19.f4 Rad8",
+     "linea_es": "13.Dxf6 Cxf6 14.Ag5 Ae6 15.Axf6 gxf6 16.Cg3 Tfd8 17.Ch5 Td6 18.Cxf6+ Rh8 19.f4 Tad8",
+     "jugadas": [
+      {
+       "san": "Qxf6",
+       "uci": "f3f6",
+       "fen": "r3nrk1/pppb1ppp/5Q2/b3p3/4P1P1/2P4P/PPB1NP2/R1B1K2R b KQ - 0 13"
+      },
+      {
+       "san": "Nxf6",
+       "uci": "e8f6",
+       "fen": "r4rk1/pppb1ppp/5n2/b3p3/4P1P1/2P4P/PPB1NP2/R1B1K2R w KQ - 0 14"
+      },
+      {
+       "san": "Bg5",
+       "uci": "c1g5",
+       "fen": "r4rk1/pppb1ppp/5n2/b3p1B1/4P1P1/2P4P/PPB1NP2/R3K2R b KQ - 1 14"
+      },
+      {
+       "san": "Be6",
+       "uci": "d7e6",
+       "fen": "r4rk1/ppp2ppp/4bn2/b3p1B1/4P1P1/2P4P/PPB1NP2/R3K2R w KQ - 2 15"
+      },
+      {
+       "san": "Bxf6",
+       "uci": "g5f6",
+       "fen": "r4rk1/ppp2ppp/4bB2/b3p3/4P1P1/2P4P/PPB1NP2/R3K2R b KQ - 0 15"
+      },
+      {
+       "san": "gxf6",
+       "uci": "g7f6",
+       "fen": "r4rk1/ppp2p1p/4bp2/b3p3/4P1P1/2P4P/PPB1NP2/R3K2R w KQ - 0 16"
+      },
+      {
+       "san": "Ng3",
+       "uci": "e2g3",
+       "fen": "r4rk1/ppp2p1p/4bp2/b3p3/4P1P1/2P3NP/PPB2P2/R3K2R b KQ - 1 16"
+      },
+      {
+       "san": "Rfd8",
+       "uci": "f8d8",
+       "fen": "r2r2k1/ppp2p1p/4bp2/b3p3/4P1P1/2P3NP/PPB2P2/R3K2R w KQ - 2 17"
+      },
+      {
+       "san": "Nh5",
+       "uci": "g3h5",
+       "fen": "r2r2k1/ppp2p1p/4bp2/b3p2N/4P1P1/2P4P/PPB2P2/R3K2R b KQ - 3 17"
+      },
+      {
+       "san": "Rd6",
+       "uci": "d8d6",
+       "fen": "r5k1/ppp2p1p/3rbp2/b3p2N/4P1P1/2P4P/PPB2P2/R3K2R w KQ - 4 18"
+      },
+      {
+       "san": "Nxf6+",
+       "uci": "h5f6",
+       "fen": "r5k1/ppp2p1p/3rbN2/b3p3/4P1P1/2P4P/PPB2P2/R3K2R b KQ - 0 18"
+      },
+      {
+       "san": "Kh8",
+       "uci": "g8h8",
+       "fen": "r6k/ppp2p1p/3rbN2/b3p3/4P1P1/2P4P/PPB2P2/R3K2R w KQ - 1 19"
+      },
+      {
+       "san": "f4",
+       "uci": "f2f4",
+       "fen": "r6k/ppp2p1p/3rbN2/b3p3/4PPP1/2P4P/PPB5/R3K2R b KQ f3 0 19"
+      },
+      {
+       "san": "Rad8",
+       "uci": "a8d8",
+       "fen": "3r3k/ppp2p1p/3rbN2/b3p3/4PPP1/2P4P/PPB5/R3K2R w KQ - 1 20"
+      }
+     ],
+     "comentario": "13.Dxf6 lo acepta, y con 14.Ag5 ofrece otro cambio en f6. Cuando el alfil toma el caballo, las negras quedan con peones doblados en la columna f; el caballo blanco va a h5 a atacarlos. Aceptar un cambio que el rival ofrece está bien cuando el que queda mejor eres tú. (Stockfish 17 a profundidad 22: Dxf6 es la que elige el motor (+0,5).)",
+     "clave": true,
+     "marcas": []
+    },
+    {
+     "id": "CC-E8",
+     "idx": 0,
+     "fen": "6k1/1p5p/np2ppp1/n2p4/P2P2P1/bP2PPB1/7P/2NK1B2 b - - 0 34",
+     "turno": "b",
+     "titulo": "Ejercicio 8. Mikhail Botvinnik – David Bronstein, Match por el Campeonato del Mundo, Moscú 1951. Juegan las negras. Pueden tomar el caballo de c1 y después el peón de b3. ¿Les conviene?",
+     "resultado": "*",
+     "resultado_texto": "Posición para jugar",
+     "linea": "34...Bxc1 35.Kxc1 Nxb3+ 36.Kc2 Na5 37.Kc3 Kf7 38.e4 f5 39.gxf5 gxf5 40.Bd3 Kg6 41.Bd6 Nc6 42.Bb1 Kf6 43.Bg3 fxe4 44.fxe4 h6 45.Bf4 h5 46.exd5 exd5 47.h4",
+     "linea_es": "34...Axc1 35.Rxc1 Cxb3+ 36.Rc2 Ca5 37.Rc3 Rf7 38.e4 f5 39.gxf5 gxf5 40.Ad3 Rg6 41.Ad6 Cc6 42.Ab1 Rf6 43.Ag3 fxe4 44.fxe4 h6 45.Af4 h5 46.exd5 exd5 47.h4",
+     "jugadas": [
+      {
+       "san": "Bxc1",
+       "uci": "a3c1",
+       "fen": "6k1/1p5p/np2ppp1/n2p4/P2P2P1/1P2PPB1/7P/2bK1B2 w - - 0 35"
+      },
+      {
+       "san": "Kxc1",
+       "uci": "d1c1",
+       "fen": "6k1/1p5p/np2ppp1/n2p4/P2P2P1/1P2PPB1/7P/2K2B2 b - - 0 35"
+      },
+      {
+       "san": "Nxb3+",
+       "uci": "a5b3",
+       "fen": "6k1/1p5p/np2ppp1/3p4/P2P2P1/1n2PPB1/7P/2K2B2 w - - 0 36"
+      },
+      {
+       "san": "Kc2",
+       "uci": "c1c2",
+       "fen": "6k1/1p5p/np2ppp1/3p4/P2P2P1/1n2PPB1/2K4P/5B2 b - - 1 36"
+      },
+      {
+       "san": "Na5",
+       "uci": "b3a5",
+       "fen": "6k1/1p5p/np2ppp1/n2p4/P2P2P1/4PPB1/2K4P/5B2 w - - 2 37"
+      },
+      {
+       "san": "Kc3",
+       "uci": "c2c3",
+       "fen": "6k1/1p5p/np2ppp1/n2p4/P2P2P1/2K1PPB1/7P/5B2 b - - 3 37"
+      },
+      {
+       "san": "Kf7",
+       "uci": "g8f7",
+       "fen": "8/1p3k1p/np2ppp1/n2p4/P2P2P1/2K1PPB1/7P/5B2 w - - 4 38"
+      },
+      {
+       "san": "e4",
+       "uci": "e3e4",
+       "fen": "8/1p3k1p/np2ppp1/n2p4/P2PP1P1/2K2PB1/7P/5B2 b - - 0 38"
+      },
+      {
+       "san": "f5",
+       "uci": "f6f5",
+       "fen": "8/1p3k1p/np2p1p1/n2p1p2/P2PP1P1/2K2PB1/7P/5B2 w - - 0 39"
+      },
+      {
+       "san": "gxf5",
+       "uci": "g4f5",
+       "fen": "8/1p3k1p/np2p1p1/n2p1P2/P2PP3/2K2PB1/7P/5B2 b - - 0 39"
+      },
+      {
+       "san": "gxf5",
+       "uci": "g6f5",
+       "fen": "8/1p3k1p/np2p3/n2p1p2/P2PP3/2K2PB1/7P/5B2 w - - 0 40"
+      },
+      {
+       "san": "Bd3",
+       "uci": "f1d3",
+       "fen": "8/1p3k1p/np2p3/n2p1p2/P2PP3/2KB1PB1/7P/8 b - - 1 40"
+      },
+      {
+       "san": "Kg6",
+       "uci": "f7g6",
+       "fen": "8/1p5p/np2p1k1/n2p1p2/P2PP3/2KB1PB1/7P/8 w - - 2 41"
+      },
+      {
+       "san": "Bd6",
+       "uci": "g3d6",
+       "fen": "8/1p5p/np1Bp1k1/n2p1p2/P2PP3/2KB1P2/7P/8 b - - 3 41"
+      },
+      {
+       "san": "Nc6",
+       "uci": "a5c6",
+       "fen": "8/1p5p/npnBp1k1/3p1p2/P2PP3/2KB1P2/7P/8 w - - 4 42"
+      },
+      {
+       "san": "Bb1",
+       "uci": "d3b1",
+       "fen": "8/1p5p/npnBp1k1/3p1p2/P2PP3/2K2P2/7P/1B6 b - - 5 42"
+      },
+      {
+       "san": "Kf6",
+       "uci": "g6f6",
+       "fen": "8/1p5p/npnBpk2/3p1p2/P2PP3/2K2P2/7P/1B6 w - - 6 43"
+      },
+      {
+       "san": "Bg3",
+       "uci": "d6g3",
+       "fen": "8/1p5p/npn1pk2/3p1p2/P2PP3/2K2PB1/7P/1B6 b - - 7 43"
+      },
+      {
+       "san": "fxe4",
+       "uci": "f5e4",
+       "fen": "8/1p5p/npn1pk2/3p4/P2Pp3/2K2PB1/7P/1B6 w - - 0 44"
+      },
+      {
+       "san": "fxe4",
+       "uci": "f3e4",
+       "fen": "8/1p5p/npn1pk2/3p4/P2PP3/2K3B1/7P/1B6 b - - 0 44"
+      },
+      {
+       "san": "h6",
+       "uci": "h7h6",
+       "fen": "8/1p6/npn1pk1p/3p4/P2PP3/2K3B1/7P/1B6 w - - 0 45"
+      },
+      {
+       "san": "Bf4",
+       "uci": "g3f4",
+       "fen": "8/1p6/npn1pk1p/3p4/P2PPB2/2K5/7P/1B6 b - - 1 45"
+      },
+      {
+       "san": "h5",
+       "uci": "h6h5",
+       "fen": "8/1p6/npn1pk2/3p3p/P2PPB2/2K5/7P/1B6 w - - 0 46"
+      },
+      {
+       "san": "exd5",
+       "uci": "e4d5",
+       "fen": "8/1p6/npn1pk2/3P3p/P2P1B2/2K5/7P/1B6 b - - 0 46"
+      },
+      {
+       "san": "exd5",
+       "uci": "e6d5",
+       "fen": "8/1p6/npn2k2/3p3p/P2P1B2/2K5/7P/1B6 w - - 0 47"
+      },
+      {
+       "san": "h4",
+       "uci": "h2h4",
+       "fen": "8/1p6/npn2k2/3p3p/P2P1B1P/2K5/8/1B6 b - h3 0 47"
+      }
+     ],
+     "comentario": "34…Axc1 y 35…Cxb3+ ganan un peón, pero entregan el alfil negro y dejan a las blancas con los dos alfiles. Cuando el centro se abrió con 38.e4, los alfiles dominaron el tablero y los caballos negros se quedaron sin casillas. El motor de hoy da la posición igualada tanto después de 34…Axc1 como de 34…Rf7: la captura no pierde, pero obliga a defender con mucha precisión un final contra la pareja de alfiles, y en la partida las negras no lo lograron. (Stockfish 17 a profundidad 22: Axc1 es la que elige el motor (0,0); Rf7 da +0,1.)",
+     "clave": true,
+     "marcas": []
+    },
+    {
+     "id": "CC-E9",
+     "idx": 0,
+     "fen": "2r2rk1/p4pp1/1pn1b2p/2NpP3/3P4/1P2P1P1/6BP/2R2RK1 w - - 0 20",
+     "turno": "w",
+     "titulo": "Ejercicio 9. Oscar Panno – Carlos Guimard, Interzonal de Gotemburgo 1955. Juegan las blancas. ¿Conviene retirar el caballo de c5 o cambiarlo?",
+     "resultado": "*",
+     "resultado_texto": "Posición para jugar",
+     "linea": "20.Nxe6 fxe6 21.Bh3 Rxf1+ 22.Kxf1 Kf7 23.e4 Rc7 24.Kf2 dxe4 25.Ke3 a5 26.Bf1 Kf8 27.Kxe4 Rf7 28.Rxc6 Rxf1 29.Rxe6 b5 30.Rb6",
+     "linea_es": "20.Cxe6 fxe6 21.Ah3 Txf1+ 22.Rxf1 Rf7 23.e4 Tc7 24.Rf2 dxe4 25.Re3 a5 26.Af1 Rf8 27.Rxe4 Tf7 28.Txc6 Txf1 29.Txe6 b5 30.Tb6",
+     "jugadas": [
+      {
+       "san": "Nxe6",
+       "uci": "c5e6",
+       "fen": "2r2rk1/p4pp1/1pn1N2p/3pP3/3P4/1P2P1P1/6BP/2R2RK1 b - - 0 20"
+      },
+      {
+       "san": "fxe6",
+       "uci": "f7e6",
+       "fen": "2r2rk1/p5p1/1pn1p2p/3pP3/3P4/1P2P1P1/6BP/2R2RK1 w - - 0 21"
+      },
+      {
+       "san": "Bh3",
+       "uci": "g2h3",
+       "fen": "2r2rk1/p5p1/1pn1p2p/3pP3/3P4/1P2P1PB/7P/2R2RK1 b - - 1 21"
+      },
+      {
+       "san": "Rxf1+",
+       "uci": "f8f1",
+       "fen": "2r3k1/p5p1/1pn1p2p/3pP3/3P4/1P2P1PB/7P/2R2rK1 w - - 0 22"
+      },
+      {
+       "san": "Kxf1",
+       "uci": "g1f1",
+       "fen": "2r3k1/p5p1/1pn1p2p/3pP3/3P4/1P2P1PB/7P/2R2K2 b - - 0 22"
+      },
+      {
+       "san": "Kf7",
+       "uci": "g8f7",
+       "fen": "2r5/p4kp1/1pn1p2p/3pP3/3P4/1P2P1PB/7P/2R2K2 w - - 1 23"
+      },
+      {
+       "san": "e4",
+       "uci": "e3e4",
+       "fen": "2r5/p4kp1/1pn1p2p/3pP3/3PP3/1P4PB/7P/2R2K2 b - - 0 23"
+      },
+      {
+       "san": "Rc7",
+       "uci": "c8c7",
+       "fen": "8/p1r2kp1/1pn1p2p/3pP3/3PP3/1P4PB/7P/2R2K2 w - - 1 24"
+      },
+      {
+       "san": "Kf2",
+       "uci": "f1f2",
+       "fen": "8/p1r2kp1/1pn1p2p/3pP3/3PP3/1P4PB/5K1P/2R5 b - - 2 24"
+      },
+      {
+       "san": "dxe4",
+       "uci": "d5e4",
+       "fen": "8/p1r2kp1/1pn1p2p/4P3/3Pp3/1P4PB/5K1P/2R5 w - - 0 25"
+      },
+      {
+       "san": "Ke3",
+       "uci": "f2e3",
+       "fen": "8/p1r2kp1/1pn1p2p/4P3/3Pp3/1P2K1PB/7P/2R5 b - - 1 25"
+      },
+      {
+       "san": "a5",
+       "uci": "a7a5",
+       "fen": "8/2r2kp1/1pn1p2p/p3P3/3Pp3/1P2K1PB/7P/2R5 w - a6 0 26"
+      },
+      {
+       "san": "Bf1",
+       "uci": "h3f1",
+       "fen": "8/2r2kp1/1pn1p2p/p3P3/3Pp3/1P2K1P1/7P/2R2B2 b - - 1 26"
+      },
+      {
+       "san": "Kf8",
+       "uci": "f7f8",
+       "fen": "5k2/2r3p1/1pn1p2p/p3P3/3Pp3/1P2K1P1/7P/2R2B2 w - - 2 27"
+      },
+      {
+       "san": "Kxe4",
+       "uci": "e3e4",
+       "fen": "5k2/2r3p1/1pn1p2p/p3P3/3PK3/1P4P1/7P/2R2B2 b - - 0 27"
+      },
+      {
+       "san": "Rf7",
+       "uci": "c7f7",
+       "fen": "5k2/5rp1/1pn1p2p/p3P3/3PK3/1P4P1/7P/2R2B2 w - - 1 28"
+      },
+      {
+       "san": "Rxc6",
+       "uci": "c1c6",
+       "fen": "5k2/5rp1/1pR1p2p/p3P3/3PK3/1P4P1/7P/5B2 b - - 0 28"
+      },
+      {
+       "san": "Rxf1",
+       "uci": "f7f1",
+       "fen": "5k2/6p1/1pR1p2p/p3P3/3PK3/1P4P1/7P/5r2 w - - 0 29"
+      },
+      {
+       "san": "Rxe6",
+       "uci": "c6e6",
+       "fen": "5k2/6p1/1p2R2p/p3P3/3PK3/1P4P1/7P/5r2 b - - 0 29"
+      },
+      {
+       "san": "b5",
+       "uci": "b6b5",
+       "fen": "5k2/6p1/4R2p/pp2P3/3PK3/1P4P1/7P/5r2 w - - 0 30"
+      },
+      {
+       "san": "Rb6",
+       "uci": "e6b6",
+       "fen": "5k2/6p1/1R5p/pp2P3/3PK3/1P4P1/7P/5r2 b - - 1 30"
+      }
+     ],
+     "comentario": "20.Cxe6 cambia el caballo fuerte por el alfil «malo»: después de …fxe6 el peón de e6 queda débil y la diagonal del alfil de g2 se abre. Con 21.Ah3 y 23.e4 las blancas rompen y el centro negro se derrumba. A veces el cambio bueno es el que entrega tu mejor pieza, si la debilidad que deja vale más. (Stockfish 17 a profundidad 22: Cxe6 es la que elige el motor (+2,5).)",
+     "clave": true,
+     "marcas": []
+    },
+    {
+     "id": "CC-E10",
+     "idx": 0,
+     "fen": "r2q1rk1/1pp2pbp/2n1p1p1/3p4/p1PPb3/1PB1PNP1/P3QPBP/2RR2K1 w - - 0 14",
+     "turno": "w",
+     "titulo": "Ejercicio 10. Miguel Najdorf – Boris Spassky, Interzonal de Gotemburgo 1955. Juegan las blancas. ¿Cuál es el mejor plan?",
+     "resultado": "*",
+     "resultado_texto": "Posición para jugar",
+     "linea": "14.Bf1 axb3 15.axb3 Qe7 16.Ne1 h5 17.Nd3 dxc4 18.bxc4 Bxd3 19.Qxd3 Ra7 20.Qb1 Rfa8 21.Bg2",
+     "linea_es": "14.Af1 axb3 15.axb3 De7 16.Ce1 h5 17.Cd3 dxc4 18.bxc4 Axd3 19.Dxd3 Ta7 20.Db1 Tfa8 21.Ag2",
+     "jugadas": [
+      {
+       "san": "Bf1",
+       "uci": "g2f1",
+       "fen": "r2q1rk1/1pp2pbp/2n1p1p1/3p4/p1PPb3/1PB1PNP1/P3QP1P/2RR1BK1 b - - 1 14"
+      },
+      {
+       "san": "axb3",
+       "uci": "a4b3",
+       "fen": "r2q1rk1/1pp2pbp/2n1p1p1/3p4/2PPb3/1pB1PNP1/P3QP1P/2RR1BK1 w - - 0 15"
+      },
+      {
+       "san": "axb3",
+       "uci": "a2b3",
+       "fen": "r2q1rk1/1pp2pbp/2n1p1p1/3p4/2PPb3/1PB1PNP1/4QP1P/2RR1BK1 b - - 0 15"
+      },
+      {
+       "san": "Qe7",
+       "uci": "d8e7",
+       "fen": "r4rk1/1pp1qpbp/2n1p1p1/3p4/2PPb3/1PB1PNP1/4QP1P/2RR1BK1 w - - 1 16"
+      },
+      {
+       "san": "Ne1",
+       "uci": "f3e1",
+       "fen": "r4rk1/1pp1qpbp/2n1p1p1/3p4/2PPb3/1PB1P1P1/4QP1P/2RRNBK1 b - - 2 16"
+      },
+      {
+       "san": "h5",
+       "uci": "h7h5",
+       "fen": "r4rk1/1pp1qpb1/2n1p1p1/3p3p/2PPb3/1PB1P1P1/4QP1P/2RRNBK1 w - h6 0 17"
+      },
+      {
+       "san": "Nd3",
+       "uci": "e1d3",
+       "fen": "r4rk1/1pp1qpb1/2n1p1p1/3p3p/2PPb3/1PBNP1P1/4QP1P/2RR1BK1 b - - 1 17"
+      },
+      {
+       "san": "dxc4",
+       "uci": "d5c4",
+       "fen": "r4rk1/1pp1qpb1/2n1p1p1/7p/2pPb3/1PBNP1P1/4QP1P/2RR1BK1 w - - 0 18"
+      },
+      {
+       "san": "bxc4",
+       "uci": "b3c4",
+       "fen": "r4rk1/1pp1qpb1/2n1p1p1/7p/2PPb3/2BNP1P1/4QP1P/2RR1BK1 b - - 0 18"
+      },
+      {
+       "san": "Bxd3",
+       "uci": "e4d3",
+       "fen": "r4rk1/1pp1qpb1/2n1p1p1/7p/2PP4/2BbP1P1/4QP1P/2RR1BK1 w - - 0 19"
+      },
+      {
+       "san": "Qxd3",
+       "uci": "e2d3",
+       "fen": "r4rk1/1pp1qpb1/2n1p1p1/7p/2PP4/2BQP1P1/5P1P/2RR1BK1 b - - 0 19"
+      },
+      {
+       "san": "Ra7",
+       "uci": "a8a7",
+       "fen": "5rk1/rpp1qpb1/2n1p1p1/7p/2PP4/2BQP1P1/5P1P/2RR1BK1 w - - 1 20"
+      },
+      {
+       "san": "Qb1",
+       "uci": "d3b1",
+       "fen": "5rk1/rpp1qpb1/2n1p1p1/7p/2PP4/2B1P1P1/5P1P/1QRR1BK1 b - - 2 20"
+      },
+      {
+       "san": "Rfa8",
+       "uci": "f8a8",
+       "fen": "r5k1/rpp1qpb1/2n1p1p1/7p/2PP4/2B1P1P1/5P1P/1QRR1BK1 w - - 3 21"
+      },
+      {
+       "san": "Bg2",
+       "uci": "f1g2",
+       "fen": "r5k1/rpp1qpb1/2n1p1p1/7p/2PP4/2B1P1P1/5PBP/1QRR2K1 b - - 4 21"
+      }
+     ],
+     "comentario": "14.Af1 prepara Cd2 para atacar el alfil de e4, que no tiene buenas retiradas: si lo cambia por el caballo, las blancas se quedan con la pareja de alfiles. Con 16.Ce1 y 17.Cd3 el plan se cumple. Antes de cambiar una pieza fuerte del rival, mira si la puedes obligar a cambiarse en las condiciones que tú quieres. (Stockfish 17 a profundidad 22: Af1 es la que elige el motor (+0,4).)",
+     "clave": true,
+     "marcas": []
+    },
+    {
+     "id": "CC-E11",
+     "idx": 0,
+     "fen": "r1bqk2r/1p3pbp/p1np2p1/3Qp1P1/4P3/1N5P/PPP1BP2/R1B1K2R w KQkq - 0 13",
+     "turno": "w",
+     "titulo": "Ejercicio 11. Robert Fischer – Samuel Reshevsky, Campeonato de los Estados Unidos 1962. Juegan las blancas. Las negras amenazan desarrollarse rápido. ¿Cuál es el mejor plan?",
+     "resultado": "*",
+     "resultado_texto": "Posición para jugar",
+     "linea": "13.Bg4 Bxg4 14.hxg4 Qc8 15.Qd1 Nd4 16.c3 Nxb3 17.axb3 Qe6 18.Ra5 f6 19.Qd5 Qxd5 20.Rxd5 Kd7 21.gxf6 Bxf6 22.g5 Be7 23.Ke2",
+     "linea_es": "13.Ag4 Axg4 14.hxg4 Dc8 15.Dd1 Cd4 16.c3 Cxb3 17.axb3 De6 18.Ta5 f6 19.Dd5 Dxd5 20.Txd5 Rd7 21.gxf6 Axf6 22.g5 Ae7 23.Re2",
+     "jugadas": [
+      {
+       "san": "Bg4",
+       "uci": "e2g4",
+       "fen": "r1bqk2r/1p3pbp/p1np2p1/3Qp1P1/4P1B1/1N5P/PPP2P2/R1B1K2R b KQkq - 1 13"
+      },
+      {
+       "san": "Bxg4",
+       "uci": "c8g4",
+       "fen": "r2qk2r/1p3pbp/p1np2p1/3Qp1P1/4P1b1/1N5P/PPP2P2/R1B1K2R w KQkq - 0 14"
+      },
+      {
+       "san": "hxg4",
+       "uci": "h3g4",
+       "fen": "r2qk2r/1p3pbp/p1np2p1/3Qp1P1/4P1P1/1N6/PPP2P2/R1B1K2R b KQkq - 0 14"
+      },
+      {
+       "san": "Qc8",
+       "uci": "d8c8",
+       "fen": "r1q1k2r/1p3pbp/p1np2p1/3Qp1P1/4P1P1/1N6/PPP2P2/R1B1K2R w KQkq - 1 15"
+      },
+      {
+       "san": "Qd1",
+       "uci": "d5d1",
+       "fen": "r1q1k2r/1p3pbp/p1np2p1/4p1P1/4P1P1/1N6/PPP2P2/R1BQK2R b KQkq - 2 15"
+      },
+      {
+       "san": "Nd4",
+       "uci": "c6d4",
+       "fen": "r1q1k2r/1p3pbp/p2p2p1/4p1P1/3nP1P1/1N6/PPP2P2/R1BQK2R w KQkq - 3 16"
+      },
+      {
+       "san": "c3",
+       "uci": "c2c3",
+       "fen": "r1q1k2r/1p3pbp/p2p2p1/4p1P1/3nP1P1/1NP5/PP3P2/R1BQK2R b KQkq - 0 16"
+      },
+      {
+       "san": "Nxb3",
+       "uci": "d4b3",
+       "fen": "r1q1k2r/1p3pbp/p2p2p1/4p1P1/4P1P1/1nP5/PP3P2/R1BQK2R w KQkq - 0 17"
+      },
+      {
+       "san": "axb3",
+       "uci": "a2b3",
+       "fen": "r1q1k2r/1p3pbp/p2p2p1/4p1P1/4P1P1/1PP5/1P3P2/R1BQK2R b KQkq - 0 17"
+      },
+      {
+       "san": "Qe6",
+       "uci": "c8e6",
+       "fen": "r3k2r/1p3pbp/p2pq1p1/4p1P1/4P1P1/1PP5/1P3P2/R1BQK2R w KQkq - 1 18"
+      },
+      {
+       "san": "Ra5",
+       "uci": "a1a5",
+       "fen": "r3k2r/1p3pbp/p2pq1p1/R3p1P1/4P1P1/1PP5/1P3P2/2BQK2R b Kkq - 2 18"
+      },
+      {
+       "san": "f6",
+       "uci": "f7f6",
+       "fen": "r3k2r/1p4bp/p2pqpp1/R3p1P1/4P1P1/1PP5/1P3P2/2BQK2R w Kkq - 0 19"
+      },
+      {
+       "san": "Qd5",
+       "uci": "d1d5",
+       "fen": "r3k2r/1p4bp/p2pqpp1/R2Qp1P1/4P1P1/1PP5/1P3P2/2B1K2R b Kkq - 1 19"
+      },
+      {
+       "san": "Qxd5",
+       "uci": "e6d5",
+       "fen": "r3k2r/1p4bp/p2p1pp1/R2qp1P1/4P1P1/1PP5/1P3P2/2B1K2R w Kkq - 0 20"
+      },
+      {
+       "san": "Rxd5",
+       "uci": "a5d5",
+       "fen": "r3k2r/1p4bp/p2p1pp1/3Rp1P1/4P1P1/1PP5/1P3P2/2B1K2R b Kkq - 0 20"
+      },
+      {
+       "san": "Kd7",
+       "uci": "e8d7",
+       "fen": "r6r/1p1k2bp/p2p1pp1/3Rp1P1/4P1P1/1PP5/1P3P2/2B1K2R w K - 1 21"
+      },
+      {
+       "san": "gxf6",
+       "uci": "g5f6",
+       "fen": "r6r/1p1k2bp/p2p1Pp1/3Rp3/4P1P1/1PP5/1P3P2/2B1K2R b K - 0 21"
+      },
+      {
+       "san": "Bxf6",
+       "uci": "g7f6",
+       "fen": "r6r/1p1k3p/p2p1bp1/3Rp3/4P1P1/1PP5/1P3P2/2B1K2R w K - 0 22"
+      },
+      {
+       "san": "g5",
+       "uci": "g4g5",
+       "fen": "r6r/1p1k3p/p2p1bp1/3Rp1P1/4P3/1PP5/1P3P2/2B1K2R b K - 0 22"
+      },
+      {
+       "san": "Be7",
+       "uci": "f6e7",
+       "fen": "r6r/1p1kb2p/p2p2p1/3Rp1P1/4P3/1PP5/1P3P2/2B1K2R w K - 1 23"
+      },
+      {
+       "san": "Ke2",
+       "uci": "e1e2",
+       "fen": "r6r/1p1kb2p/p2p2p1/3Rp1P1/4P3/1PP5/1P2KP2/2B4R b - - 2 23"
+      }
+     ],
+     "comentario": "13.Ag4 ofrece cambiar los alfiles de casillas blancas para que las negras no lleven el suyo a e6. Si lo cambian (13…Axg4 14.hxg4), la columna h se abre para la torre blanca y el rey negro no tiene un enroque seguro. Fischer siguió con 18.Ta5 y 19.Dd5, forzó el cambio de damas y ganó el final por la debilidad de h7. El motor da la posición muy pareja y pone 13.Ae3 a la par; la idea de cambiar la pieza que el rival necesita es la que importa. (Stockfish 17 a profundidad 22: Ag4 está entre las mejores (−0,3; el motor prefiere apenas Ae3, 0,0).)",
+     "clave": true,
+     "marcas": []
+    },
+    {
+     "id": "CC-E12",
+     "idx": 0,
+     "fen": "2r2rk1/pp2bpp1/4pn1p/qb1nN3/3P3B/1BN5/PPQ2PPP/3RR1K1 w - - 0 17",
+     "turno": "w",
+     "titulo": "Ejercicio 12. Emanuel Lasker – José Raúl Capablanca, Match por el Campeonato del Mundo, La Habana 1921. Juegan las blancas. ¿Qué caballo conviene capturar, el de f6 o el de d5? ¿Por qué?",
+     "resultado": "*",
+     "resultado_texto": "Posición para jugar",
+     "linea": "17.Bxf6 Bxf6 18.Bxd5 exd5 19.Qf5",
+     "linea_es": "17.Axf6 Axf6 18.Axd5 exd5 19.Df5",
+     "jugadas": [
+      {
+       "san": "Bxf6",
+       "uci": "h4f6",
+       "fen": "2r2rk1/pp2bpp1/4pB1p/qb1nN3/3P4/1BN5/PPQ2PPP/3RR1K1 b - - 0 17"
+      },
+      {
+       "san": "Bxf6",
+       "uci": "e7f6",
+       "fen": "2r2rk1/pp3pp1/4pb1p/qb1nN3/3P4/1BN5/PPQ2PPP/3RR1K1 w - - 0 18"
+      },
+      {
+       "san": "Bxd5",
+       "uci": "b3d5",
+       "fen": "2r2rk1/pp3pp1/4pb1p/qb1BN3/3P4/2N5/PPQ2PPP/3RR1K1 b - - 0 18"
+      },
+      {
+       "san": "exd5",
+       "uci": "e6d5",
+       "fen": "2r2rk1/pp3pp1/5b1p/qb1pN3/3P4/2N5/PPQ2PPP/3RR1K1 w - - 0 19"
+      },
+      {
+       "san": "Qf5",
+       "uci": "c2f5",
+       "fen": "2r2rk1/pp3pp1/5b1p/qb1pNQ2/3P4/2N5/PP3PPP/3RR1K1 b - - 1 19"
+      }
+     ],
+     "comentario": "El de f6. Con 17.Axf6 Axf6 18.Axd5 exd5 las blancas quedan con buena posición: el peón de d5 es un blanco y el caballo amenaza saltar a g4. En la partida se jugó 17.Axd5 y, tras los cambios, las negras quedaron con el caballo bueno contra el peón aislado de d4: un final para ellas. El motor confirma la diferencia: 17.Axf6 deja ventaja blanca y 17.Axd5 la da a las negras. (Stockfish 17 a profundidad 22: Axf6 es la que elige el motor (+0,4); Axd5 da −0,3.)",
+     "clave": true,
+     "marcas": []
+    }
+   ]
+  },
+  {
+   "n": 22,
+   "cap": 5,
+   "capitulo": "Ejercicios",
+   "titulo": "Ejercicios 13 a 17",
+   "leccion": 22,
+   "diagramas": [
+    {
+     "id": "CC-E13",
+     "idx": 0,
+     "fen": "rnb1kbnr/p1pq1ppp/1p2p3/3pP3/3P4/2N2N2/PPPB1PPP/R2QKB1R w KQkq - 0 7",
+     "turno": "w",
+     "titulo": "Ejercicio 13. Murray Chandler – Ian Rogers, Wellington 1986. Juegan las blancas. ¿Pueden evitar que las negras cambien los alfiles de casillas blancas con …Aa6?",
+     "resultado": "*",
+     "resultado_texto": "Posición para jugar",
+     "linea": "7.Bb5 c6 8.Ba4 a5 9.a3 Ba6 10.Ne2 Ne7 11.O-O Bxe2 12.Qxe2 b5 13.Bb3 a4 14.Ba2 Nc8 15.Ne1 Na6 16.Nd3 Nb6 17.Rae1 Nc4",
+     "linea_es": "7.Ab5 c6 8.Aa4 a5 9.a3 Aa6 10.Ce2 Ce7 11.O-O Axe2 12.Dxe2 b5 13.Ab3 a4 14.Aa2 Cc8 15.Ce1 Ca6 16.Cd3 Cb6 17.Tae1 Cc4",
+     "jugadas": [
+      {
+       "san": "Bb5",
+       "uci": "f1b5",
+       "fen": "rnb1kbnr/p1pq1ppp/1p2p3/1B1pP3/3P4/2N2N2/PPPB1PPP/R2QK2R b KQkq - 1 7"
+      },
+      {
+       "san": "c6",
+       "uci": "c7c6",
+       "fen": "rnb1kbnr/p2q1ppp/1pp1p3/1B1pP3/3P4/2N2N2/PPPB1PPP/R2QK2R w KQkq - 0 8"
+      },
+      {
+       "san": "Ba4",
+       "uci": "b5a4",
+       "fen": "rnb1kbnr/p2q1ppp/1pp1p3/3pP3/B2P4/2N2N2/PPPB1PPP/R2QK2R b KQkq - 1 8"
+      },
+      {
+       "san": "a5",
+       "uci": "a7a5",
+       "fen": "rnb1kbnr/3q1ppp/1pp1p3/p2pP3/B2P4/2N2N2/PPPB1PPP/R2QK2R w KQkq a6 0 9"
+      },
+      {
+       "san": "a3",
+       "uci": "a2a3",
+       "fen": "rnb1kbnr/3q1ppp/1pp1p3/p2pP3/B2P4/P1N2N2/1PPB1PPP/R2QK2R b KQkq - 0 9"
+      },
+      {
+       "san": "Ba6",
+       "uci": "c8a6",
+       "fen": "rn2kbnr/3q1ppp/bpp1p3/p2pP3/B2P4/P1N2N2/1PPB1PPP/R2QK2R w KQkq - 1 10"
+      },
+      {
+       "san": "Ne2",
+       "uci": "c3e2",
+       "fen": "rn2kbnr/3q1ppp/bpp1p3/p2pP3/B2P4/P4N2/1PPBNPPP/R2QK2R b KQkq - 2 10"
+      },
+      {
+       "san": "Ne7",
+       "uci": "g8e7",
+       "fen": "rn2kb1r/3qnppp/bpp1p3/p2pP3/B2P4/P4N2/1PPBNPPP/R2QK2R w KQkq - 3 11"
+      },
+      {
+       "san": "O-O",
+       "uci": "e1g1",
+       "fen": "rn2kb1r/3qnppp/bpp1p3/p2pP3/B2P4/P4N2/1PPBNPPP/R2Q1RK1 b kq - 4 11"
+      },
+      {
+       "san": "Bxe2",
+       "uci": "a6e2",
+       "fen": "rn2kb1r/3qnppp/1pp1p3/p2pP3/B2P4/P4N2/1PPBbPPP/R2Q1RK1 w kq - 0 12"
+      },
+      {
+       "san": "Qxe2",
+       "uci": "d1e2",
+       "fen": "rn2kb1r/3qnppp/1pp1p3/p2pP3/B2P4/P4N2/1PPBQPPP/R4RK1 b kq - 0 12"
+      },
+      {
+       "san": "b5",
+       "uci": "b6b5",
+       "fen": "rn2kb1r/3qnppp/2p1p3/pp1pP3/B2P4/P4N2/1PPBQPPP/R4RK1 w kq - 0 13"
+      },
+      {
+       "san": "Bb3",
+       "uci": "a4b3",
+       "fen": "rn2kb1r/3qnppp/2p1p3/pp1pP3/3P4/PB3N2/1PPBQPPP/R4RK1 b kq - 1 13"
+      },
+      {
+       "san": "a4",
+       "uci": "a5a4",
+       "fen": "rn2kb1r/3qnppp/2p1p3/1p1pP3/p2P4/PB3N2/1PPBQPPP/R4RK1 w kq - 0 14"
+      },
+      {
+       "san": "Ba2",
+       "uci": "b3a2",
+       "fen": "rn2kb1r/3qnppp/2p1p3/1p1pP3/p2P4/P4N2/BPPBQPPP/R4RK1 b kq - 1 14"
+      },
+      {
+       "san": "Nc8",
+       "uci": "e7c8",
+       "fen": "rnn1kb1r/3q1ppp/2p1p3/1p1pP3/p2P4/P4N2/BPPBQPPP/R4RK1 w kq - 2 15"
+      },
+      {
+       "san": "Ne1",
+       "uci": "f3e1",
+       "fen": "rnn1kb1r/3q1ppp/2p1p3/1p1pP3/p2P4/P7/BPPBQPPP/R3NRK1 b kq - 3 15"
+      },
+      {
+       "san": "Na6",
+       "uci": "b8a6",
+       "fen": "r1n1kb1r/3q1ppp/n1p1p3/1p1pP3/p2P4/P7/BPPBQPPP/R3NRK1 w kq - 4 16"
+      },
+      {
+       "san": "Nd3",
+       "uci": "e1d3",
+       "fen": "r1n1kb1r/3q1ppp/n1p1p3/1p1pP3/p2P4/P2N4/BPPBQPPP/R4RK1 b kq - 5 16"
+      },
+      {
+       "san": "Nb6",
+       "uci": "c8b6",
+       "fen": "r3kb1r/3q1ppp/nnp1p3/1p1pP3/p2P4/P2N4/BPPBQPPP/R4RK1 w kq - 6 17"
+      },
+      {
+       "san": "Rae1",
+       "uci": "a1e1",
+       "fen": "r3kb1r/3q1ppp/nnp1p3/1p1pP3/p2P4/P2N4/BPPBQPPP/4RRK1 b kq - 7 17"
+      },
+      {
+       "san": "Nc4",
+       "uci": "b6c4",
+       "fen": "r3kb1r/3q1ppp/n1p1p3/1p1pP3/p1nP4/P2N4/BPPBQPPP/4RRK1 w kq - 8 18"
+      }
+     ],
+     "comentario": "7.Ab5 saca el alfil antes de que llegue …Aa6 y obliga a las negras a gastar jugadas (…c6 y …a5) para echarlo. Con 8.Aa4 y 13.Ab3 el alfil sigue vivo y las negras tienen que entregar su alfil «malo» por un caballo. El motor encuentra jugadas un poco más fuertes, como 7.h4; la idea de la partida es la que enseña el ejercicio: no dejar que el rival se quite de encima su pieza mala. (Stockfish 17 a profundidad 22: Ab5 está entre las mejores (+0,9; el motor prefiere apenas h4, +1,2).)",
+     "clave": true,
+     "marcas": []
+    },
+    {
+     "id": "CC-E14",
+     "idx": 0,
+     "fen": "r2q1rk1/1b1n1pp1/p3pn1p/8/1b1N3B/2NBP3/1P3PPP/2RQ1RK1 w - - 0 19",
+     "turno": "w",
+     "titulo": "Ejercicio 14. Gata Kamsky – Valery Salov, Semifinal de Candidatos, Sanghi Nagar 1995. Juegan las blancas. ¿Cuál es el mejor plan?",
+     "resultado": "*",
+     "resultado_texto": "Posición para jugar",
+     "linea": "19.Be4 Qb8 20.Nc6 Bxc6 21.Bxc6",
+     "linea_es": "19.Ae4 Db8 20.Cc6 Axc6 21.Axc6",
+     "jugadas": [
+      {
+       "san": "Be4",
+       "uci": "d3e4",
+       "fen": "r2q1rk1/1b1n1pp1/p3pn1p/8/1b1NB2B/2N1P3/1P3PPP/2RQ1RK1 b - - 1 19"
+      },
+      {
+       "san": "Qb8",
+       "uci": "d8b8",
+       "fen": "rq3rk1/1b1n1pp1/p3pn1p/8/1b1NB2B/2N1P3/1P3PPP/2RQ1RK1 w - - 2 20"
+      },
+      {
+       "san": "Nc6",
+       "uci": "d4c6",
+       "fen": "rq3rk1/1b1n1pp1/p1N1pn1p/8/1b2B2B/2N1P3/1P3PPP/2RQ1RK1 b - - 3 20"
+      },
+      {
+       "san": "Bxc6",
+       "uci": "b7c6",
+       "fen": "rq3rk1/3n1pp1/p1b1pn1p/8/1b2B2B/2N1P3/1P3PPP/2RQ1RK1 w - - 0 21"
+      },
+      {
+       "san": "Bxc6",
+       "uci": "e4c6",
+       "fen": "rq3rk1/3n1pp1/p1B1pn1p/8/1b5B/2N1P3/1P3PPP/2RQ1RK1 b - - 0 21"
+      }
+     ],
+     "comentario": "19.Ae4 ofrece cambiar el alfil de b7, la única pieza negra que cuida c6. Si se cambia, el caballo blanco salta a c6 sin que nadie lo desaloje. Cambiar al defensor de una casilla débil es una forma clásica de ganarla. Ojo con el cambio equivocado: 19.Cxe6 entrega material y no sirve para nada. (Stockfish 17 a profundidad 22: Ae4 es la que elige el motor (+0,1); Cxe6 da −2,7.)",
+     "clave": true,
+     "marcas": []
+    },
+    {
+     "id": "CC-E15",
+     "idx": 0,
+     "fen": "r1bq1rk1/3nbppp/p2pp3/1p6/3QP1PP/2N1BP2/PPP5/2KR1B1R w - - 0 13",
+     "turno": "w",
+     "titulo": "Ejercicio 15. Pablo Ricardi – Jaime Sunye Neto, Panamericano de Cascavel 1996. Juegan las blancas. ¿Cuál es el mejor plan?",
+     "resultado": "*",
+     "resultado_texto": "Posición para jugar",
+     "linea": "13.Bg5 f6 14.Bf4 Ne5 15.Nd5 Bb7 16.Nxe7+ Qxe7 17.Be2 Rad8 18.Qb6",
+     "linea_es": "13.Ag5 f6 14.Af4 Ce5 15.Cd5 Ab7 16.Cxe7+ Dxe7 17.Ae2 Tad8 18.Db6",
+     "jugadas": [
+      {
+       "san": "Bg5",
+       "uci": "e3g5",
+       "fen": "r1bq1rk1/3nbppp/p2pp3/1p4B1/3QP1PP/2N2P2/PPP5/2KR1B1R b - - 1 13"
+      },
+      {
+       "san": "f6",
+       "uci": "f7f6",
+       "fen": "r1bq1rk1/3nb1pp/p2ppp2/1p4B1/3QP1PP/2N2P2/PPP5/2KR1B1R w - - 0 14"
+      },
+      {
+       "san": "Bf4",
+       "uci": "g5f4",
+       "fen": "r1bq1rk1/3nb1pp/p2ppp2/1p6/3QPBPP/2N2P2/PPP5/2KR1B1R b - - 1 14"
+      },
+      {
+       "san": "Ne5",
+       "uci": "d7e5",
+       "fen": "r1bq1rk1/4b1pp/p2ppp2/1p2n3/3QPBPP/2N2P2/PPP5/2KR1B1R w - - 2 15"
+      },
+      {
+       "san": "Nd5",
+       "uci": "c3d5",
+       "fen": "r1bq1rk1/4b1pp/p2ppp2/1p1Nn3/3QPBPP/5P2/PPP5/2KR1B1R b - - 3 15"
+      },
+      {
+       "san": "Bb7",
+       "uci": "c8b7",
+       "fen": "r2q1rk1/1b2b1pp/p2ppp2/1p1Nn3/3QPBPP/5P2/PPP5/2KR1B1R w - - 4 16"
+      },
+      {
+       "san": "Nxe7+",
+       "uci": "d5e7",
+       "fen": "r2q1rk1/1b2N1pp/p2ppp2/1p2n3/3QPBPP/5P2/PPP5/2KR1B1R b - - 0 16"
+      },
+      {
+       "san": "Qxe7",
+       "uci": "d8e7",
+       "fen": "r4rk1/1b2q1pp/p2ppp2/1p2n3/3QPBPP/5P2/PPP5/2KR1B1R w - - 0 17"
+      },
+      {
+       "san": "Be2",
+       "uci": "f1e2",
+       "fen": "r4rk1/1b2q1pp/p2ppp2/1p2n3/3QPBPP/5P2/PPP1B3/2KR3R b - - 1 17"
+      },
+      {
+       "san": "Rad8",
+       "uci": "a8d8",
+       "fen": "3r1rk1/1b2q1pp/p2ppp2/1p2n3/3QPBPP/5P2/PPP1B3/2KR3R w - - 2 18"
+      },
+      {
+       "san": "Qb6",
+       "uci": "d4b6",
+       "fen": "3r1rk1/1b2q1pp/pQ1ppp2/1p2n3/4PBPP/5P2/PPP1B3/2KR3R b - - 3 18"
+      }
+     ],
+     "comentario": "13.Ag5 provoca el cambio del alfil de casillas negras de las negras, el que defiende d6. Después de 13…f6 14.Af4 Ce5 15.Cd5 las blancas cambian el caballo por el alfil de e7 y el peón de d6 queda sin su defensor; con 18.Db6 la ventaja es clara. El motor también propone 13.g5, más directo; el plan del cambio en e7 es igual de bueno para entender la posición. (Stockfish 17 a profundidad 22: el motor prefiere g5 (+0,9) a Ag5 (+0,5).)",
+     "clave": true,
+     "marcas": []
+    },
+    {
+     "id": "CC-E16",
+     "idx": 0,
+     "fen": "r5k1/1p2rppp/p2qbnn1/3p4/3P1NP1/3B1PN1/PP1Q3P/1K1R3R w - - 0 20",
+     "turno": "w",
+     "titulo": "Ejercicio 16. Garry Kasparov – Daniel Cámpora, Olimpiada de Salónica 1988. Juegan las blancas. ¿Te conviene cambiar caballos en g6?",
+     "resultado": "*",
+     "resultado_texto": "Posición para jugar",
+     "linea": "20.Ng2 Nd7 21.Rhg1 Ree8 22.Rdf1 Ngf8 23.Ne3 Kh8 24.Nh5 g6 25.f4 gxh5 26.f5 h4 27.fxe6 fxe6 28.g5",
+     "linea_es": "20.Cg2 Cd7 21.Thg1 Tee8 22.Tdf1 Cgf8 23.Ce3 Rh8 24.Ch5 g6 25.f4 gxh5 26.f5 h4 27.fxe6 fxe6 28.g5",
+     "jugadas": [
+      {
+       "san": "Ng2",
+       "uci": "f4g2",
+       "fen": "r5k1/1p2rppp/p2qbnn1/3p4/3P2P1/3B1PN1/PP1Q2NP/1K1R3R b - - 1 20"
+      },
+      {
+       "san": "Nd7",
+       "uci": "f6d7",
+       "fen": "r5k1/1p1nrppp/p2qb1n1/3p4/3P2P1/3B1PN1/PP1Q2NP/1K1R3R w - - 2 21"
+      },
+      {
+       "san": "Rhg1",
+       "uci": "h1g1",
+       "fen": "r5k1/1p1nrppp/p2qb1n1/3p4/3P2P1/3B1PN1/PP1Q2NP/1K1R2R1 b - - 3 21"
+      },
+      {
+       "san": "Ree8",
+       "uci": "e7e8",
+       "fen": "r3r1k1/1p1n1ppp/p2qb1n1/3p4/3P2P1/3B1PN1/PP1Q2NP/1K1R2R1 w - - 4 22"
+      },
+      {
+       "san": "Rdf1",
+       "uci": "d1f1",
+       "fen": "r3r1k1/1p1n1ppp/p2qb1n1/3p4/3P2P1/3B1PN1/PP1Q2NP/1K3RR1 b - - 5 22"
+      },
+      {
+       "san": "Ngf8",
+       "uci": "g6f8",
+       "fen": "r3rnk1/1p1n1ppp/p2qb3/3p4/3P2P1/3B1PN1/PP1Q2NP/1K3RR1 w - - 6 23"
+      },
+      {
+       "san": "Ne3",
+       "uci": "g2e3",
+       "fen": "r3rnk1/1p1n1ppp/p2qb3/3p4/3P2P1/3BNPN1/PP1Q3P/1K3RR1 b - - 7 23"
+      },
+      {
+       "san": "Kh8",
+       "uci": "g8h8",
+       "fen": "r3rn1k/1p1n1ppp/p2qb3/3p4/3P2P1/3BNPN1/PP1Q3P/1K3RR1 w - - 8 24"
+      },
+      {
+       "san": "Nh5",
+       "uci": "g3h5",
+       "fen": "r3rn1k/1p1n1ppp/p2qb3/3p3N/3P2P1/3BNP2/PP1Q3P/1K3RR1 b - - 9 24"
+      },
+      {
+       "san": "g6",
+       "uci": "g7g6",
+       "fen": "r3rn1k/1p1n1p1p/p2qb1p1/3p3N/3P2P1/3BNP2/PP1Q3P/1K3RR1 w - - 0 25"
+      },
+      {
+       "san": "f4",
+       "uci": "f3f4",
+       "fen": "r3rn1k/1p1n1p1p/p2qb1p1/3p3N/3P1PP1/3BN3/PP1Q3P/1K3RR1 b - - 0 25"
+      },
+      {
+       "san": "gxh5",
+       "uci": "g6h5",
+       "fen": "r3rn1k/1p1n1p1p/p2qb3/3p3p/3P1PP1/3BN3/PP1Q3P/1K3RR1 w - - 0 26"
+      },
+      {
+       "san": "f5",
+       "uci": "f4f5",
+       "fen": "r3rn1k/1p1n1p1p/p2qb3/3p1P1p/3P2P1/3BN3/PP1Q3P/1K3RR1 b - - 0 26"
+      },
+      {
+       "san": "h4",
+       "uci": "h5h4",
+       "fen": "r3rn1k/1p1n1p1p/p2qb3/3p1P2/3P2Pp/3BN3/PP1Q3P/1K3RR1 w - - 0 27"
+      },
+      {
+       "san": "fxe6",
+       "uci": "f5e6",
+       "fen": "r3rn1k/1p1n1p1p/p2qP3/3p4/3P2Pp/3BN3/PP1Q3P/1K3RR1 b - - 0 27"
+      },
+      {
+       "san": "fxe6",
+       "uci": "f7e6",
+       "fen": "r3rn1k/1p1n3p/p2qp3/3p4/3P2Pp/3BN3/PP1Q3P/1K3RR1 w - - 0 28"
+      },
+      {
+       "san": "g5",
+       "uci": "g4g5",
+       "fen": "r3rn1k/1p1n3p/p2qp3/3p2P1/3P3p/3BN3/PP1Q3P/1K3RR1 b - - 0 28"
+      }
+     ],
+     "comentario": "No: 20.Cg2 evita el cambio. Quien ataca necesita piezas, y cada cambio le alivia la defensa al rival. El caballo va a e3 y luego a h5, las torres se suben a la columna g, y Kasparov abrió la posición con f4 y f5. El motor confirma que 20.Cxg6 deja a las blancas peor que 20.Cg2. (Stockfish 17 a profundidad 22: Cg2 es la que elige el motor (+0,9); Cxg6 da −0,3.)",
+     "clave": true,
+     "marcas": []
+    },
+    {
+     "id": "CC-E17",
+     "idx": 0,
+     "fen": "r2q1rk1/ppp2pbp/3p1np1/4p3/1PP5/2NP1BPb/P3PP1P/1RBQ1RK1 w - - 0 11",
+     "turno": "w",
+     "titulo": "Ejercicio 17. Oscar Panno – Diego Valerga, Torneo Interindustrial, Buenos Aires 1995. Juegan las blancas. Tienen tres opciones: 11.Ag2, 11.Te1 o 11.Axb7. ¿Cuál es la más fuerte?",
+     "resultado": "*",
+     "resultado_texto": "Posición para jugar",
+     "linea": "11.Bxb7 Bxf1 12.Bxa8 Bxe2 13.Qxe2 Qxa8 14.Bg5 Rb8 15.b5 a6 16.Bxf6 Bxf6 17.Qe4 axb5 18.cxb5 Qxe4 19.dxe4 Ra8 20.a4 Bd8",
+     "linea_es": "11.Axb7 Axf1 12.Axa8 Axe2 13.Dxe2 Dxa8 14.Ag5 Tb8 15.b5 a6 16.Axf6 Axf6 17.De4 axb5 18.cxb5 Dxe4 19.dxe4 Ta8 20.a4 Ad8",
+     "jugadas": [
+      {
+       "san": "Bxb7",
+       "uci": "f3b7",
+       "fen": "r2q1rk1/pBp2pbp/3p1np1/4p3/1PP5/2NP2Pb/P3PP1P/1RBQ1RK1 b - - 0 11"
+      },
+      {
+       "san": "Bxf1",
+       "uci": "h3f1",
+       "fen": "r2q1rk1/pBp2pbp/3p1np1/4p3/1PP5/2NP2P1/P3PP1P/1RBQ1bK1 w - - 0 12"
+      },
+      {
+       "san": "Bxa8",
+       "uci": "b7a8",
+       "fen": "B2q1rk1/p1p2pbp/3p1np1/4p3/1PP5/2NP2P1/P3PP1P/1RBQ1bK1 b - - 0 12"
+      },
+      {
+       "san": "Bxe2",
+       "uci": "f1e2",
+       "fen": "B2q1rk1/p1p2pbp/3p1np1/4p3/1PP5/2NP2P1/P3bP1P/1RBQ2K1 w - - 0 13"
+      },
+      {
+       "san": "Qxe2",
+       "uci": "d1e2",
+       "fen": "B2q1rk1/p1p2pbp/3p1np1/4p3/1PP5/2NP2P1/P3QP1P/1RB3K1 b - - 0 13"
+      },
+      {
+       "san": "Qxa8",
+       "uci": "d8a8",
+       "fen": "q4rk1/p1p2pbp/3p1np1/4p3/1PP5/2NP2P1/P3QP1P/1RB3K1 w - - 0 14"
+      },
+      {
+       "san": "Bg5",
+       "uci": "c1g5",
+       "fen": "q4rk1/p1p2pbp/3p1np1/4p1B1/1PP5/2NP2P1/P3QP1P/1R4K1 b - - 1 14"
+      },
+      {
+       "san": "Rb8",
+       "uci": "f8b8",
+       "fen": "qr4k1/p1p2pbp/3p1np1/4p1B1/1PP5/2NP2P1/P3QP1P/1R4K1 w - - 2 15"
+      },
+      {
+       "san": "b5",
+       "uci": "b4b5",
+       "fen": "qr4k1/p1p2pbp/3p1np1/1P2p1B1/2P5/2NP2P1/P3QP1P/1R4K1 b - - 0 15"
+      },
+      {
+       "san": "a6",
+       "uci": "a7a6",
+       "fen": "qr4k1/2p2pbp/p2p1np1/1P2p1B1/2P5/2NP2P1/P3QP1P/1R4K1 w - - 0 16"
+      },
+      {
+       "san": "Bxf6",
+       "uci": "g5f6",
+       "fen": "qr4k1/2p2pbp/p2p1Bp1/1P2p3/2P5/2NP2P1/P3QP1P/1R4K1 b - - 0 16"
+      },
+      {
+       "san": "Bxf6",
+       "uci": "g7f6",
+       "fen": "qr4k1/2p2p1p/p2p1bp1/1P2p3/2P5/2NP2P1/P3QP1P/1R4K1 w - - 0 17"
+      },
+      {
+       "san": "Qe4",
+       "uci": "e2e4",
+       "fen": "qr4k1/2p2p1p/p2p1bp1/1P2p3/2P1Q3/2NP2P1/P4P1P/1R4K1 b - - 1 17"
+      },
+      {
+       "san": "axb5",
+       "uci": "a6b5",
+       "fen": "qr4k1/2p2p1p/3p1bp1/1p2p3/2P1Q3/2NP2P1/P4P1P/1R4K1 w - - 0 18"
+      },
+      {
+       "san": "cxb5",
+       "uci": "c4b5",
+       "fen": "qr4k1/2p2p1p/3p1bp1/1P2p3/4Q3/2NP2P1/P4P1P/1R4K1 b - - 0 18"
+      },
+      {
+       "san": "Qxe4",
+       "uci": "a8e4",
+       "fen": "1r4k1/2p2p1p/3p1bp1/1P2p3/4q3/2NP2P1/P4P1P/1R4K1 w - - 0 19"
+      },
+      {
+       "san": "dxe4",
+       "uci": "d3e4",
+       "fen": "1r4k1/2p2p1p/3p1bp1/1P2p3/4P3/2N3P1/P4P1P/1R4K1 b - - 0 19"
+      },
+      {
+       "san": "Ra8",
+       "uci": "b8a8",
+       "fen": "r5k1/2p2p1p/3p1bp1/1P2p3/4P3/2N3P1/P4P1P/1R4K1 w - - 1 20"
+      },
+      {
+       "san": "a4",
+       "uci": "a2a4",
+       "fen": "r5k1/2p2p1p/3p1bp1/1P2p3/P3P3/2N3P1/5P1P/1R4K1 b - a3 0 20"
+      },
+      {
+       "san": "Bd8",
+       "uci": "f6d8",
+       "fen": "r2b2k1/2p2p1p/3p2p1/1P2p3/P3P3/2N3P1/5P1P/1R4K1 w - - 1 21"
+      }
+     ],
+     "comentario": "11.Axb7, aunque entregue la calidad: tras 11…Axf1 12.Axa8 Axe2 13.Dxe2 Dxa8 14.Ag5 las negras perdieron su alfil de casillas blancas y el caballo de f6 se va a cambiar; sin ellos, nadie cuida d5 y el caballo blanco entra por ahí. Con 11.Ag2 o 11.Te1 las negras se desarrollan y quedan igualadas. El motor elige 11.Axb7 por mucho. (Stockfish 17 a profundidad 22: Axb7 es la que elige el motor (+1,9); Ag2 da +0,4, Te1 da +0,6.)",
+     "clave": true,
+     "marcas": []
+    }
+   ]
+  },
+  {
+   "n": 23,
+   "cap": 5,
+   "capitulo": "Ejercicios",
+   "titulo": "Ejercicios 18 a 22",
+   "leccion": 23,
+   "diagramas": [
+    {
+     "id": "CC-E18",
+     "idx": 0,
+     "fen": "r4rk1/pp1b1pbp/3p1np1/2nPp1B1/1q2P1P1/2N2PN1/PP1Q3P/1R2KB1R w K - 0 14",
+     "turno": "w",
+     "titulo": "Ejercicio 18. Raúl Sanguinetti – Robert Fischer, Santiago de Chile 1959. Juegan las blancas, con más espacio pero sin terminar el desarrollo. ¿Cuál es el mejor plan?",
+     "resultado": "*",
+     "resultado_texto": "Posición para jugar",
+     "linea": "14.Nb5 Qxd2+ 15.Kxd2 Bxb5 16.Bxb5 a6 17.Be2 Rfc8 18.Rbc1 Ne8 19.Rc2",
+     "linea_es": "14.Cb5 Dxd2+ 15.Rxd2 Axb5 16.Axb5 a6 17.Ae2 Tfc8 18.Tbc1 Ce8 19.Tc2",
+     "jugadas": [
+      {
+       "san": "Nb5",
+       "uci": "c3b5",
+       "fen": "r4rk1/pp1b1pbp/3p1np1/1NnPp1B1/1q2P1P1/5PN1/PP1Q3P/1R2KB1R b K - 1 14"
+      },
+      {
+       "san": "Qxd2+",
+       "uci": "b4d2",
+       "fen": "r4rk1/pp1b1pbp/3p1np1/1NnPp1B1/4P1P1/5PN1/PP1q3P/1R2KB1R w K - 0 15"
+      },
+      {
+       "san": "Kxd2",
+       "uci": "e1d2",
+       "fen": "r4rk1/pp1b1pbp/3p1np1/1NnPp1B1/4P1P1/5PN1/PP1K3P/1R3B1R b - - 0 15"
+      },
+      {
+       "san": "Bxb5",
+       "uci": "d7b5",
+       "fen": "r4rk1/pp3pbp/3p1np1/1bnPp1B1/4P1P1/5PN1/PP1K3P/1R3B1R w - - 0 16"
+      },
+      {
+       "san": "Bxb5",
+       "uci": "f1b5",
+       "fen": "r4rk1/pp3pbp/3p1np1/1BnPp1B1/4P1P1/5PN1/PP1K3P/1R5R b - - 0 16"
+      },
+      {
+       "san": "a6",
+       "uci": "a7a6",
+       "fen": "r4rk1/1p3pbp/p2p1np1/1BnPp1B1/4P1P1/5PN1/PP1K3P/1R5R w - - 0 17"
+      },
+      {
+       "san": "Be2",
+       "uci": "b5e2",
+       "fen": "r4rk1/1p3pbp/p2p1np1/2nPp1B1/4P1P1/5PN1/PP1KB2P/1R5R b - - 1 17"
+      },
+      {
+       "san": "Rfc8",
+       "uci": "f8c8",
+       "fen": "r1r3k1/1p3pbp/p2p1np1/2nPp1B1/4P1P1/5PN1/PP1KB2P/1R5R w - - 2 18"
+      },
+      {
+       "san": "Rbc1",
+       "uci": "b1c1",
+       "fen": "r1r3k1/1p3pbp/p2p1np1/2nPp1B1/4P1P1/5PN1/PP1KB2P/2R4R b - - 3 18"
+      },
+      {
+       "san": "Ne8",
+       "uci": "f6e8",
+       "fen": "r1r1n1k1/1p3pbp/p2p2p1/2nPp1B1/4P1P1/5PN1/PP1KB2P/2R4R w - - 4 19"
+      },
+      {
+       "san": "Rc2",
+       "uci": "c1c2",
+       "fen": "r1r1n1k1/1p3pbp/p2p2p1/2nPp1B1/4P1P1/5PN1/PPRKB2P/7R b - - 5 19"
+      }
+     ],
+     "comentario": "14.Cb5 fuerza el cambio de damas: después de 14…Dxd2+ 15.Rxd2 el rey blanco queda muy seguro en d2 y además el caballo en b5 obliga a las negras a cambiar su buen alfil de casillas blancas. Con las damas fuera, la ventaja de espacio pesa más que la falta de desarrollo. El motor pone 14.Cb5 entre las mejores, junto a 14.h4. (Stockfish 17 a profundidad 22: Cb5 es la que elige el motor (+1,3); Axf6 da −1,0.)",
+     "clave": true,
+     "marcas": []
+    },
+    {
+     "id": "CC-E19",
+     "idx": 0,
+     "fen": "r1q2rk1/3nbp1p/2p3p1/p3p3/Pn2P3/2N1BB1P/1PP2RP1/R4QK1 w - - 0 18",
+     "turno": "w",
+     "titulo": "Ejercicio 19. Anatoly Karpov – Boris Spassky, Match de Candidatos, Leningrado 1974. Juegan las blancas. No todos los cambios les convienen. ¿Cuál es la jugada correcta?",
+     "resultado": "*",
+     "resultado_texto": "Posición para jugar",
+     "linea": "18.Bg4 h5 19.Bxd7 Qxd7 20.Qc4 Bh4 21.Rd2 Qe7 22.Rf1 Rfd8 23.Nb1 Qb7 24.Kh2 Kg7 25.c3 Na6 26.Re2 Rf8 27.Nd2 Bd8 28.Nf3 f6 29.Rd2",
+     "linea_es": "18.Ag4 h5 19.Axd7 Dxd7 20.Dc4 Ah4 21.Td2 De7 22.Tf1 Tfd8 23.Cb1 Db7 24.Rh2 Rg7 25.c3 Ca6 26.Te2 Tf8 27.Cd2 Ad8 28.Cf3 f6 29.Td2",
+     "jugadas": [
+      {
+       "san": "Bg4",
+       "uci": "f3g4",
+       "fen": "r1q2rk1/3nbp1p/2p3p1/p3p3/Pn2P1B1/2N1B2P/1PP2RP1/R4QK1 b - - 1 18"
+      },
+      {
+       "san": "h5",
+       "uci": "h7h5",
+       "fen": "r1q2rk1/3nbp2/2p3p1/p3p2p/Pn2P1B1/2N1B2P/1PP2RP1/R4QK1 w - h6 0 19"
+      },
+      {
+       "san": "Bxd7",
+       "uci": "g4d7",
+       "fen": "r1q2rk1/3Bbp2/2p3p1/p3p2p/Pn2P3/2N1B2P/1PP2RP1/R4QK1 b - - 0 19"
+      },
+      {
+       "san": "Qxd7",
+       "uci": "c8d7",
+       "fen": "r4rk1/3qbp2/2p3p1/p3p2p/Pn2P3/2N1B2P/1PP2RP1/R4QK1 w - - 0 20"
+      },
+      {
+       "san": "Qc4",
+       "uci": "f1c4",
+       "fen": "r4rk1/3qbp2/2p3p1/p3p2p/PnQ1P3/2N1B2P/1PP2RP1/R5K1 b - - 1 20"
+      },
+      {
+       "san": "Bh4",
+       "uci": "e7h4",
+       "fen": "r4rk1/3q1p2/2p3p1/p3p2p/PnQ1P2b/2N1B2P/1PP2RP1/R5K1 w - - 2 21"
+      },
+      {
+       "san": "Rd2",
+       "uci": "f2d2",
+       "fen": "r4rk1/3q1p2/2p3p1/p3p2p/PnQ1P2b/2N1B2P/1PPR2P1/R5K1 b - - 3 21"
+      },
+      {
+       "san": "Qe7",
+       "uci": "d7e7",
+       "fen": "r4rk1/4qp2/2p3p1/p3p2p/PnQ1P2b/2N1B2P/1PPR2P1/R5K1 w - - 4 22"
+      },
+      {
+       "san": "Rf1",
+       "uci": "a1f1",
+       "fen": "r4rk1/4qp2/2p3p1/p3p2p/PnQ1P2b/2N1B2P/1PPR2P1/5RK1 b - - 5 22"
+      },
+      {
+       "san": "Rfd8",
+       "uci": "f8d8",
+       "fen": "r2r2k1/4qp2/2p3p1/p3p2p/PnQ1P2b/2N1B2P/1PPR2P1/5RK1 w - - 6 23"
+      },
+      {
+       "san": "Nb1",
+       "uci": "c3b1",
+       "fen": "r2r2k1/4qp2/2p3p1/p3p2p/PnQ1P2b/4B2P/1PPR2P1/1N3RK1 b - - 7 23"
+      },
+      {
+       "san": "Qb7",
+       "uci": "e7b7",
+       "fen": "r2r2k1/1q3p2/2p3p1/p3p2p/PnQ1P2b/4B2P/1PPR2P1/1N3RK1 w - - 8 24"
+      },
+      {
+       "san": "Kh2",
+       "uci": "g1h2",
+       "fen": "r2r2k1/1q3p2/2p3p1/p3p2p/PnQ1P2b/4B2P/1PPR2PK/1N3R2 b - - 9 24"
+      },
+      {
+       "san": "Kg7",
+       "uci": "g8g7",
+       "fen": "r2r4/1q3pk1/2p3p1/p3p2p/PnQ1P2b/4B2P/1PPR2PK/1N3R2 w - - 10 25"
+      },
+      {
+       "san": "c3",
+       "uci": "c2c3",
+       "fen": "r2r4/1q3pk1/2p3p1/p3p2p/PnQ1P2b/2P1B2P/1P1R2PK/1N3R2 b - - 0 25"
+      },
+      {
+       "san": "Na6",
+       "uci": "b4a6",
+       "fen": "r2r4/1q3pk1/n1p3p1/p3p2p/P1Q1P2b/2P1B2P/1P1R2PK/1N3R2 w - - 1 26"
+      },
+      {
+       "san": "Re2",
+       "uci": "d2e2",
+       "fen": "r2r4/1q3pk1/n1p3p1/p3p2p/P1Q1P2b/2P1B2P/1P2R1PK/1N3R2 b - - 2 26"
+      },
+      {
+       "san": "Rf8",
+       "uci": "d8f8",
+       "fen": "r4r2/1q3pk1/n1p3p1/p3p2p/P1Q1P2b/2P1B2P/1P2R1PK/1N3R2 w - - 3 27"
+      },
+      {
+       "san": "Nd2",
+       "uci": "b1d2",
+       "fen": "r4r2/1q3pk1/n1p3p1/p3p2p/P1Q1P2b/2P1B2P/1P1NR1PK/5R2 b - - 4 27"
+      },
+      {
+       "san": "Bd8",
+       "uci": "h4d8",
+       "fen": "r2b1r2/1q3pk1/n1p3p1/p3p2p/P1Q1P3/2P1B2P/1P1NR1PK/5R2 w - - 5 28"
+      },
+      {
+       "san": "Nf3",
+       "uci": "d2f3",
+       "fen": "r2b1r2/1q3pk1/n1p3p1/p3p2p/P1Q1P3/2P1BN1P/1P2R1PK/5R2 b - - 6 28"
+      },
+      {
+       "san": "f6",
+       "uci": "f7f6",
+       "fen": "r2b1r2/1q4k1/n1p2pp1/p3p2p/P1Q1P3/2P1BN1P/1P2R1PK/5R2 w - - 0 29"
+      },
+      {
+       "san": "Rd2",
+       "uci": "e2d2",
+       "fen": "r2b1r2/1q4k1/n1p2pp1/p3p2p/P1Q1P3/2P1BN1P/1P1R2PK/5R2 b - - 1 29"
+      }
+     ],
+     "comentario": "18.Ag4 cambia el alfil de f3, que no tenía buena casilla, por el caballo de d7; así el alfil de e7 ya no puede ir a c5 a cambiar el mejor alfil blanco, el de e3. Karpov siguió con el retroceso 23.Cb1, el caballo pasó a d2 y f3, y las blancas evitaron los cambios que aliviaban a las negras. El motor lo da como la mejor. (Stockfish 17 a profundidad 22: Ag4 es la que elige el motor (+1,0).)",
+     "clave": true,
+     "marcas": []
+    },
+    {
+     "id": "CC-E20",
+     "idx": 0,
+     "fen": "2r3k1/ppr2pp1/1q2bb1p/3p4/3N4/4P3/PP1RBPPP/1Q3RK1 w - - 0 21",
+     "turno": "w",
+     "titulo": "Ejercicio 20. Anatoly Karpov – Garry Kasparov, Match por el Campeonato del Mundo, Moscú 1985. Juegan las blancas. Las negras tienen un peón aislado, pero sus alfiles están activos y dominan la columna c. ¿Qué haces?",
+     "resultado": "*",
+     "resultado_texto": "Posición para jugar",
+     "linea": "21.Nxe6 fxe6 22.Bg4 Rc4 23.h3 Qc6 24.Qd3 Kh8 25.Rfd1 a5 26.b3 Rc3 27.Qe2 Rf8 28.Bh5 b5 29.Bg6 Bd8 30.Bd3",
+     "linea_es": "21.Cxe6 fxe6 22.Ag4 Tc4 23.h3 Dc6 24.Dd3 Rh8 25.Tfd1 a5 26.b3 Tc3 27.De2 Tf8 28.Ah5 b5 29.Ag6 Ad8 30.Ad3",
+     "jugadas": [
+      {
+       "san": "Nxe6",
+       "uci": "d4e6",
+       "fen": "2r3k1/ppr2pp1/1q2Nb1p/3p4/8/4P3/PP1RBPPP/1Q3RK1 b - - 0 21"
+      },
+      {
+       "san": "fxe6",
+       "uci": "f7e6",
+       "fen": "2r3k1/ppr3p1/1q2pb1p/3p4/8/4P3/PP1RBPPP/1Q3RK1 w - - 0 22"
+      },
+      {
+       "san": "Bg4",
+       "uci": "e2g4",
+       "fen": "2r3k1/ppr3p1/1q2pb1p/3p4/6B1/4P3/PP1R1PPP/1Q3RK1 b - - 1 22"
+      },
+      {
+       "san": "Rc4",
+       "uci": "c7c4",
+       "fen": "2r3k1/pp4p1/1q2pb1p/3p4/2r3B1/4P3/PP1R1PPP/1Q3RK1 w - - 2 23"
+      },
+      {
+       "san": "h3",
+       "uci": "h2h3",
+       "fen": "2r3k1/pp4p1/1q2pb1p/3p4/2r3B1/4P2P/PP1R1PP1/1Q3RK1 b - - 0 23"
+      },
+      {
+       "san": "Qc6",
+       "uci": "b6c6",
+       "fen": "2r3k1/pp4p1/2q1pb1p/3p4/2r3B1/4P2P/PP1R1PP1/1Q3RK1 w - - 1 24"
+      },
+      {
+       "san": "Qd3",
+       "uci": "b1d3",
+       "fen": "2r3k1/pp4p1/2q1pb1p/3p4/2r3B1/3QP2P/PP1R1PP1/5RK1 b - - 2 24"
+      },
+      {
+       "san": "Kh8",
+       "uci": "g8h8",
+       "fen": "2r4k/pp4p1/2q1pb1p/3p4/2r3B1/3QP2P/PP1R1PP1/5RK1 w - - 3 25"
+      },
+      {
+       "san": "Rfd1",
+       "uci": "f1d1",
+       "fen": "2r4k/pp4p1/2q1pb1p/3p4/2r3B1/3QP2P/PP1R1PP1/3R2K1 b - - 4 25"
+      },
+      {
+       "san": "a5",
+       "uci": "a7a5",
+       "fen": "2r4k/1p4p1/2q1pb1p/p2p4/2r3B1/3QP2P/PP1R1PP1/3R2K1 w - a6 0 26"
+      },
+      {
+       "san": "b3",
+       "uci": "b2b3",
+       "fen": "2r4k/1p4p1/2q1pb1p/p2p4/2r3B1/1P1QP2P/P2R1PP1/3R2K1 b - - 0 26"
+      },
+      {
+       "san": "Rc3",
+       "uci": "c4c3",
+       "fen": "2r4k/1p4p1/2q1pb1p/p2p4/6B1/1PrQP2P/P2R1PP1/3R2K1 w - - 1 27"
+      },
+      {
+       "san": "Qe2",
+       "uci": "d3e2",
+       "fen": "2r4k/1p4p1/2q1pb1p/p2p4/6B1/1Pr1P2P/P2RQPP1/3R2K1 b - - 2 27"
+      },
+      {
+       "san": "Rf8",
+       "uci": "c8f8",
+       "fen": "5r1k/1p4p1/2q1pb1p/p2p4/6B1/1Pr1P2P/P2RQPP1/3R2K1 w - - 3 28"
+      },
+      {
+       "san": "Bh5",
+       "uci": "g4h5",
+       "fen": "5r1k/1p4p1/2q1pb1p/p2p3B/8/1Pr1P2P/P2RQPP1/3R2K1 b - - 4 28"
+      },
+      {
+       "san": "b5",
+       "uci": "b7b5",
+       "fen": "5r1k/6p1/2q1pb1p/pp1p3B/8/1Pr1P2P/P2RQPP1/3R2K1 w - b6 0 29"
+      },
+      {
+       "san": "Bg6",
+       "uci": "h5g6",
+       "fen": "5r1k/6p1/2q1pbBp/pp1p4/8/1Pr1P2P/P2RQPP1/3R2K1 b - - 1 29"
+      },
+      {
+       "san": "Bd8",
+       "uci": "f6d8",
+       "fen": "3b1r1k/6p1/2q1p1Bp/pp1p4/8/1Pr1P2P/P2RQPP1/3R2K1 w - - 2 30"
+      },
+      {
+       "san": "Bd3",
+       "uci": "g6d3",
+       "fen": "3b1r1k/6p1/2q1p2p/pp1p4/8/1PrBP2P/P2RQPP1/3R2K1 b - - 3 30"
+      }
+     ],
+     "comentario": "21.Cxe6 renuncia a bloquear el peón aislado para cambiar el alfil activo de e6 y obligar a …fxe6: el rey negro queda abierto, sobre todo por el avance …h6 que ya se hizo. Karpov lo aprovechó con Ag4, h3 y el alfil y la dama hacia g6: una transformación de la ventaja, de una debilidad de peones a un rey expuesto. El motor la ve como la mejor; la natural 21.Ag4 pierde material. (Stockfish 17 a profundidad 22: Cxe6 es la que elige el motor (+0,2); Ag4 da −5,2.)",
+     "clave": true,
+     "marcas": []
+    },
+    {
+     "id": "CC-E21",
+     "idx": 0,
+     "fen": "1r3rk1/p1pn1ppp/4pq2/2p5/3P3P/7R/PPPQ1PP1/2KR1B2 w - - 0 15",
+     "turno": "w",
+     "titulo": "Ejercicio 21. Boris Spassky – Tigran Petrosian, Match por el Campeonato del Mundo, Moscú 1966. Juegan las blancas. Los dos bandos se preparan para atacar al rey contrario. ¿Cuál es el mejor plan?",
+     "resultado": "*",
+     "resultado_texto": "Posición para jugar",
+     "linea": "15.Qg5 cxd4 16.Qxf6 Nxf6 17.Rxd4 Rb7 18.Rb3 Rxb3 19.axb3 Ra8 20.Rc4 Ne8 21.Ra4 Nd6 22.g3",
+     "linea_es": "15.Dg5 cxd4 16.Dxf6 Cxf6 17.Txd4 Tb7 18.Tb3 Txb3 19.axb3 Ta8 20.Tc4 Ce8 21.Ta4 Cd6 22.g3",
+     "jugadas": [
+      {
+       "san": "Qg5",
+       "uci": "d2g5",
+       "fen": "1r3rk1/p1pn1ppp/4pq2/2p3Q1/3P3P/7R/PPP2PP1/2KR1B2 b - - 1 15"
+      },
+      {
+       "san": "cxd4",
+       "uci": "c5d4",
+       "fen": "1r3rk1/p1pn1ppp/4pq2/6Q1/3p3P/7R/PPP2PP1/2KR1B2 w - - 0 16"
+      },
+      {
+       "san": "Qxf6",
+       "uci": "g5f6",
+       "fen": "1r3rk1/p1pn1ppp/4pQ2/8/3p3P/7R/PPP2PP1/2KR1B2 b - - 0 16"
+      },
+      {
+       "san": "Nxf6",
+       "uci": "d7f6",
+       "fen": "1r3rk1/p1p2ppp/4pn2/8/3p3P/7R/PPP2PP1/2KR1B2 w - - 0 17"
+      },
+      {
+       "san": "Rxd4",
+       "uci": "d1d4",
+       "fen": "1r3rk1/p1p2ppp/4pn2/8/3R3P/7R/PPP2PP1/2K2B2 b - - 0 17"
+      },
+      {
+       "san": "Rb7",
+       "uci": "b8b7",
+       "fen": "5rk1/prp2ppp/4pn2/8/3R3P/7R/PPP2PP1/2K2B2 w - - 1 18"
+      },
+      {
+       "san": "Rb3",
+       "uci": "h3b3",
+       "fen": "5rk1/prp2ppp/4pn2/8/3R3P/1R6/PPP2PP1/2K2B2 b - - 2 18"
+      },
+      {
+       "san": "Rxb3",
+       "uci": "b7b3",
+       "fen": "5rk1/p1p2ppp/4pn2/8/3R3P/1r6/PPP2PP1/2K2B2 w - - 0 19"
+      },
+      {
+       "san": "axb3",
+       "uci": "a2b3",
+       "fen": "5rk1/p1p2ppp/4pn2/8/3R3P/1P6/1PP2PP1/2K2B2 b - - 0 19"
+      },
+      {
+       "san": "Ra8",
+       "uci": "f8a8",
+       "fen": "r5k1/p1p2ppp/4pn2/8/3R3P/1P6/1PP2PP1/2K2B2 w - - 1 20"
+      },
+      {
+       "san": "Rc4",
+       "uci": "d4c4",
+       "fen": "r5k1/p1p2ppp/4pn2/8/2R4P/1P6/1PP2PP1/2K2B2 b - - 2 20"
+      },
+      {
+       "san": "Ne8",
+       "uci": "f6e8",
+       "fen": "r3n1k1/p1p2ppp/4p3/8/2R4P/1P6/1PP2PP1/2K2B2 w - - 3 21"
+      },
+      {
+       "san": "Ra4",
+       "uci": "c4a4",
+       "fen": "r3n1k1/p1p2ppp/4p3/8/R6P/1P6/1PP2PP1/2K2B2 b - - 4 21"
+      },
+      {
+       "san": "Nd6",
+       "uci": "e8d6",
+       "fen": "r5k1/p1p2ppp/3np3/8/R6P/1P6/1PP2PP1/2K2B2 w - - 5 22"
+      },
+      {
+       "san": "g3",
+       "uci": "g2g3",
+       "fen": "r5k1/p1p2ppp/3np3/8/R6P/1P4P1/1PP2P2/2K2B2 b - - 0 22"
+      }
+     ],
+     "comentario": "15.Dg5 fuerza el cambio de damas y lleva la partida a un final donde las debilidades negras del flanco de dama pesan más que cualquier ataque. Tras 15…cxd4 16.Dxf6 Cxf6 17.Txd4 las blancas cambian también un par de torres y el peón negro de a7 queda condenado. Spassky prefirió un final mejor a un ataque incierto; el motor lo da como la mejor. (Stockfish 17 a profundidad 22: Dg5 es la que elige el motor (+1,7); De2 da −1,3.)",
+     "clave": true,
+     "marcas": []
+    },
+    {
+     "id": "CC-E22",
+     "idx": 0,
+     "fen": "r2r2k1/p2nqppp/1p2p3/3b4/1P6/2Q2NP1/P3PPBP/2RR2K1 w - - 0 18",
+     "turno": "w",
+     "titulo": "Ejercicio 22. Rustem Dautov – Judit Polgar, Olimpiada de Estambul 2000. Juegan las blancas. El juego parece igualado. ¿Cómo consiguen una posición más activa?",
+     "resultado": "*",
+     "resultado_texto": "Posición para jugar",
+     "linea": "18.Nd4 Nf6 19.b5 Bxg2 20.Kxg2 Rd5 21.Nc6 Qd7 22.Qc2 Qb7 23.a4 h6 24.e4 Rc5",
+     "linea_es": "18.Cd4 Cf6 19.b5 Axg2 20.Rxg2 Td5 21.Cc6 Dd7 22.Dc2 Db7 23.a4 h6 24.e4 Tc5",
+     "jugadas": [
+      {
+       "san": "Nd4",
+       "uci": "f3d4",
+       "fen": "r2r2k1/p2nqppp/1p2p3/3b4/1P1N4/2Q3P1/P3PPBP/2RR2K1 b - - 1 18"
+      },
+      {
+       "san": "Nf6",
+       "uci": "d7f6",
+       "fen": "r2r2k1/p3qppp/1p2pn2/3b4/1P1N4/2Q3P1/P3PPBP/2RR2K1 w - - 2 19"
+      },
+      {
+       "san": "b5",
+       "uci": "b4b5",
+       "fen": "r2r2k1/p3qppp/1p2pn2/1P1b4/3N4/2Q3P1/P3PPBP/2RR2K1 b - - 0 19"
+      },
+      {
+       "san": "Bxg2",
+       "uci": "d5g2",
+       "fen": "r2r2k1/p3qppp/1p2pn2/1P6/3N4/2Q3P1/P3PPbP/2RR2K1 w - - 0 20"
+      },
+      {
+       "san": "Kxg2",
+       "uci": "g1g2",
+       "fen": "r2r2k1/p3qppp/1p2pn2/1P6/3N4/2Q3P1/P3PPKP/2RR4 b - - 0 20"
+      },
+      {
+       "san": "Rd5",
+       "uci": "d8d5",
+       "fen": "r5k1/p3qppp/1p2pn2/1P1r4/3N4/2Q3P1/P3PPKP/2RR4 w - - 1 21"
+      },
+      {
+       "san": "Nc6",
+       "uci": "d4c6",
+       "fen": "r5k1/p3qppp/1pN1pn2/1P1r4/8/2Q3P1/P3PPKP/2RR4 b - - 2 21"
+      },
+      {
+       "san": "Qd7",
+       "uci": "e7d7",
+       "fen": "r5k1/p2q1ppp/1pN1pn2/1P1r4/8/2Q3P1/P3PPKP/2RR4 w - - 3 22"
+      },
+      {
+       "san": "Qc2",
+       "uci": "c3c2",
+       "fen": "r5k1/p2q1ppp/1pN1pn2/1P1r4/8/6P1/P1Q1PPKP/2RR4 b - - 4 22"
+      },
+      {
+       "san": "Qb7",
+       "uci": "d7b7",
+       "fen": "r5k1/pq3ppp/1pN1pn2/1P1r4/8/6P1/P1Q1PPKP/2RR4 w - - 5 23"
+      },
+      {
+       "san": "a4",
+       "uci": "a2a4",
+       "fen": "r5k1/pq3ppp/1pN1pn2/1P1r4/P7/6P1/2Q1PPKP/2RR4 b - a3 0 23"
+      },
+      {
+       "san": "h6",
+       "uci": "h7h6",
+       "fen": "r5k1/pq3pp1/1pN1pn1p/1P1r4/P7/6P1/2Q1PPKP/2RR4 w - - 0 24"
+      },
+      {
+       "san": "e4",
+       "uci": "e2e4",
+       "fen": "r5k1/pq3pp1/1pN1pn1p/1P1r4/P3P3/6P1/2Q2PKP/2RR4 b - e3 0 24"
+      },
+      {
+       "san": "Rc5",
+       "uci": "d5c5",
+       "fen": "r5k1/pq3pp1/1pN1pn1p/1Pr5/P3P3/6P1/2Q2PKP/2RR4 w - - 1 25"
+      }
+     ],
+     "comentario": "18.Cd4 prepara el cambio del alfil de d5, que sostiene la posición negra, y apunta a la casilla c6. Después de 18…Cf6 19.b5 Axg2 20.Rxg2 el caballo blanco llega a c6 y las negras quedan atadas. Cambiar al defensor y ocupar la casilla que defendía: la misma idea del ejercicio 14. El motor la da como la mejor. (Stockfish 17 a profundidad 22: Cd4 es la que elige el motor (+0,6).)",
+     "clave": true,
+     "marcas": []
+    }
+   ]
+  }
+ ],
+ "meta": {
+  "generado": "herramientas/curso-posiciones.js",
+  "posiciones": 47
+ }
+}
