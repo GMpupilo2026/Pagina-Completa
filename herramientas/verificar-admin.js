@@ -937,6 +937,18 @@ async function pruebaPdfs(browser) {
       Array.from(t.querySelectorAll("tr")).map((tr) => Array.from(tr.children).map((td) => td.textContent)), t.querySelectorAll("b").length] : "sin tabla";
   }), ["Hoja: Notas", [["Alumno", "Puntos"], ["<b>Ana</b>", "42"]], 0]);
   await clic(page, "#vista-previa-cerrar");
+  // Cerrar y abrir otro archivo en el mismo instante: el «close» del cierre
+  // llega después y no puede vaciar la vista nueva (dejaba «Abriendo el
+  // archivo…» para siempre; así falló el CI del PR #765).
+  igual("cerrar y abrir otro enseguida no deja la vista vacía", await page.evaluate(async () => {
+    const svg = URL.createObjectURL(new Blob(['<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10"/>'], { type: "image/svg+xml" }));
+    window.VistaPrevia.abrir([{ ruta: svg, ext: "svg", titulo: "uno" }], 0);
+    document.getElementById("vista-previa-cerrar").click();
+    window.VistaPrevia.abrir([{ ruta: svg, ext: "svg", titulo: "dos" }], 0);
+    await new Promise((r) => setTimeout(r, 300));
+    return [document.getElementById("vista-previa").open, !!document.querySelector("#vista-previa img")];
+  }), [true, true]);
+  await clic(page, "#vista-previa-cerrar");
   igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
   await ctx.close();
 }
