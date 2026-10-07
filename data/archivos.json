@@ -23,7 +23,7 @@
     "nombre": "Formación docente"
    }
   ],
-  "total": 433,
+  "total": 506,
   "material": [
    {
     "ruta": "material/diagnostico-de-nivel/diagnostico-de-nivel.pdf",
@@ -220,6 +220,13 @@
     "tipo": "otro",
     "kb": 356,
     "libro": "Ponte a prueba"
+   },
+   {
+    "ruta": "material/rompe-el-estancamiento/rompe-el-estancamiento.pdf",
+    "titulo": "Rompe el estancamiento — los errores que frenan tu progreso",
+    "tipo": "otro",
+    "kb": 1669,
+    "libro": "Rompe el estancamiento"
    }
   ],
   "cursos": [
@@ -3314,6 +3321,662 @@
     "otros": []
    },
    {
+    "slug": "rompe-el-estancamiento",
+    "titulo": "Rompe el estancamiento",
+    "nivel": "avanzado",
+    "lecciones": [
+     {
+      "numero": 1,
+      "titulo": "Plan o jugada a jugada",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/rompe-el-estancamiento/01-plan-o-jugada-a-jugada-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 185
+       },
+       {
+        "ruta": "cursos/recursos/rompe-el-estancamiento/01-plan-o-jugada-a-jugada-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 6
+       }
+      ]
+     },
+     {
+      "numero": 2,
+      "titulo": "Un plan concreto, no una intención",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/rompe-el-estancamiento/02-un-plan-concreto-no-una-intencion-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 191
+       },
+       {
+        "ruta": "cursos/recursos/rompe-el-estancamiento/02-un-plan-concreto-no-una-intencion-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 6
+       }
+      ]
+     },
+     {
+      "numero": 3,
+      "titulo": "Sin prisa: el plan va por etapas",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/rompe-el-estancamiento/03-sin-prisa-el-plan-va-por-etapas-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 185
+       },
+       {
+        "ruta": "cursos/recursos/rompe-el-estancamiento/03-sin-prisa-el-plan-va-por-etapas-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 5
+       }
+      ]
+     },
+     {
+      "numero": 4,
+      "titulo": "Un plan, no tres",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/rompe-el-estancamiento/04-un-plan-no-tres-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 189
+       },
+       {
+        "ruta": "cursos/recursos/rompe-el-estancamiento/04-un-plan-no-tres-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 6
+       }
+      ]
+     },
+     {
+      "numero": 5,
+      "titulo": "Lo básico que falta",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/rompe-el-estancamiento/05-lo-basico-que-falta-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 192
+       },
+       {
+        "ruta": "cursos/recursos/rompe-el-estancamiento/05-lo-basico-que-falta-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 6
+       }
+      ]
+     },
+     {
+      "numero": 6,
+      "titulo": "Las reglas tienen excepciones",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/rompe-el-estancamiento/06-las-reglas-tienen-excepciones-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 191
+       },
+       {
+        "ruta": "cursos/recursos/rompe-el-estancamiento/06-las-reglas-tienen-excepciones-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 6
+       }
+      ]
+     },
+     {
+      "numero": 7,
+      "titulo": "El factor que manda",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/rompe-el-estancamiento/07-el-factor-que-manda-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 192
+       },
+       {
+        "ruta": "cursos/recursos/rompe-el-estancamiento/07-el-factor-que-manda-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 6
+       }
+      ]
+     },
+     {
+      "numero": 8,
+      "titulo": "¿Dónde está la ventaja?",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/rompe-el-estancamiento/08-donde-esta-la-ventaja-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 189
+       },
+       {
+        "ruta": "cursos/recursos/rompe-el-estancamiento/08-donde-esta-la-ventaja-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 6
+       }
+      ]
+     },
+     {
+      "numero": 9,
+      "titulo": "Lo simple contra lo complicado",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/rompe-el-estancamiento/09-lo-simple-contra-lo-complicado-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 186
+       },
+       {
+        "ruta": "cursos/recursos/rompe-el-estancamiento/09-lo-simple-contra-lo-complicado-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 6
+       }
+      ]
+     },
+     {
+      "numero": 10,
+      "titulo": "Dinámica contra estática",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/rompe-el-estancamiento/10-dinamica-contra-estatica-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 190
+       },
+       {
+        "ruta": "cursos/recursos/rompe-el-estancamiento/10-dinamica-contra-estatica-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 6
+       }
+      ]
+     },
+     {
+      "numero": 11,
+      "titulo": "No des jugadas por hechas",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/rompe-el-estancamiento/11-no-des-jugadas-por-hechas-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 190
+       },
+       {
+        "ruta": "cursos/recursos/rompe-el-estancamiento/11-no-des-jugadas-por-hechas-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 6
+       }
+      ]
+     },
+     {
+      "numero": 12,
+      "titulo": "Hazle difícil la vida al rival",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/rompe-el-estancamiento/12-hazle-dificil-la-vida-al-rival-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 190
+       },
+       {
+        "ruta": "cursos/recursos/rompe-el-estancamiento/12-hazle-dificil-la-vida-al-rival-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 6
+       }
+      ]
+     },
+     {
+      "numero": 13,
+      "titulo": "Mira hacia dónde va la partida",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/rompe-el-estancamiento/13-mira-hacia-donde-va-la-partida-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 193
+       },
+       {
+        "ruta": "cursos/recursos/rompe-el-estancamiento/13-mira-hacia-donde-va-la-partida-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 6
+       }
+      ]
+     },
+     {
+      "numero": 14,
+      "titulo": "El cambio mal entendido",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/rompe-el-estancamiento/14-el-cambio-mal-entendido-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 187
+       },
+       {
+        "ruta": "cursos/recursos/rompe-el-estancamiento/14-el-cambio-mal-entendido-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 5
+       }
+      ]
+     },
+     {
+      "numero": 15,
+      "titulo": "Cada cambio se mira solo",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/rompe-el-estancamiento/15-cada-cambio-se-mira-solo-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 187
+       },
+       {
+        "ruta": "cursos/recursos/rompe-el-estancamiento/15-cada-cambio-se-mira-solo-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 6
+       }
+      ]
+     },
+     {
+      "numero": 16,
+      "titulo": "Cuando la estructura cambia",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/rompe-el-estancamiento/16-cuando-la-estructura-cambia-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 189
+       },
+       {
+        "ruta": "cursos/recursos/rompe-el-estancamiento/16-cuando-la-estructura-cambia-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 6
+       }
+      ]
+     },
+     {
+      "numero": 17,
+      "titulo": "Cuando cambia el carácter de la posición",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/rompe-el-estancamiento/17-cuando-cambia-el-caracter-de-la-posicion-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 192
+       },
+       {
+        "ruta": "cursos/recursos/rompe-el-estancamiento/17-cuando-cambia-el-caracter-de-la-posicion-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 6
+       }
+      ]
+     },
+     {
+      "numero": 18,
+      "titulo": "Cuando cambia la tendencia",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/rompe-el-estancamiento/18-cuando-cambia-la-tendencia-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 187
+       },
+       {
+        "ruta": "cursos/recursos/rompe-el-estancamiento/18-cuando-cambia-la-tendencia-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 6
+       }
+      ]
+     },
+     {
+      "numero": 19,
+      "titulo": "Los errores de cálculo más comunes",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/rompe-el-estancamiento/19-los-errores-de-calculo-mas-comunes-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 191
+       },
+       {
+        "ruta": "cursos/recursos/rompe-el-estancamiento/19-los-errores-de-calculo-mas-comunes-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 6
+       }
+      ]
+     },
+     {
+      "numero": 20,
+      "titulo": "La precipitación",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/rompe-el-estancamiento/20-la-precipitacion-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 192
+       },
+       {
+        "ruta": "cursos/recursos/rompe-el-estancamiento/20-la-precipitacion-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 5
+       }
+      ]
+     },
+     {
+      "numero": 21,
+      "titulo": "La jugada intermedia que no viste",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/rompe-el-estancamiento/21-la-jugada-intermedia-que-no-viste-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 194
+       },
+       {
+        "ruta": "cursos/recursos/rompe-el-estancamiento/21-la-jugada-intermedia-que-no-viste-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 6
+       }
+      ]
+     },
+     {
+      "numero": 22,
+      "titulo": "El orden de las jugadas",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/rompe-el-estancamiento/22-el-orden-de-las-jugadas-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 190
+       },
+       {
+        "ruta": "cursos/recursos/rompe-el-estancamiento/22-el-orden-de-las-jugadas-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 5
+       }
+      ]
+     },
+     {
+      "numero": 23,
+      "titulo": "Defender lo difícil",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/rompe-el-estancamiento/23-defender-lo-dificil-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 191
+       },
+       {
+        "ruta": "cursos/recursos/rompe-el-estancamiento/23-defender-lo-dificil-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 6
+       }
+      ]
+     },
+     {
+      "numero": 24,
+      "titulo": "Ver más lejos",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/rompe-el-estancamiento/24-ver-mas-lejos-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 184
+       },
+       {
+        "ruta": "cursos/recursos/rompe-el-estancamiento/24-ver-mas-lejos-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 5
+       }
+      ]
+     },
+     {
+      "numero": 25,
+      "titulo": "¿Qué quiere tu rival?",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/rompe-el-estancamiento/25-que-quiere-tu-rival-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 186
+       },
+       {
+        "ruta": "cursos/recursos/rompe-el-estancamiento/25-que-quiere-tu-rival-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 5
+       }
+      ]
+     },
+     {
+      "numero": 26,
+      "titulo": "Amenazas: cuáles son reales",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/rompe-el-estancamiento/26-amenazas-cuales-son-reales-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 189
+       },
+       {
+        "ruta": "cursos/recursos/rompe-el-estancamiento/26-amenazas-cuales-son-reales-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 5
+       }
+      ]
+     },
+     {
+      "numero": 27,
+      "titulo": "¿Qué cambió con su última jugada?",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/rompe-el-estancamiento/27-que-cambio-con-su-ultima-jugada-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 193
+       },
+       {
+        "ruta": "cursos/recursos/rompe-el-estancamiento/27-que-cambio-con-su-ultima-jugada-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 5
+       }
+      ]
+     },
+     {
+      "numero": 28,
+      "titulo": "Quitarle jugadas al rival",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/rompe-el-estancamiento/28-quitarle-jugadas-al-rival-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 189
+       },
+       {
+        "ruta": "cursos/recursos/rompe-el-estancamiento/28-quitarle-jugadas-al-rival-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 5
+       }
+      ]
+     },
+     {
+      "numero": 29,
+      "titulo": "El miedo",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/rompe-el-estancamiento/29-el-miedo-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 187
+       },
+       {
+        "ruta": "cursos/recursos/rompe-el-estancamiento/29-el-miedo-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 6
+       }
+      ]
+     },
+     {
+      "numero": 30,
+      "titulo": "El sentido del peligro",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/rompe-el-estancamiento/30-el-sentido-del-peligro-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 191
+       },
+       {
+        "ruta": "cursos/recursos/rompe-el-estancamiento/30-el-sentido-del-peligro-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 6
+       }
+      ]
+     },
+     {
+      "numero": 31,
+      "titulo": "El materialismo",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/rompe-el-estancamiento/31-el-materialismo-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 193
+       },
+       {
+        "ruta": "cursos/recursos/rompe-el-estancamiento/31-el-materialismo-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 5
+       }
+      ]
+     },
+     {
+      "numero": 32,
+      "titulo": "El conformismo",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/rompe-el-estancamiento/32-el-conformismo-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 187
+       },
+       {
+        "ruta": "cursos/recursos/rompe-el-estancamiento/32-el-conformismo-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 6
+       }
+      ]
+     },
+     {
+      "numero": 33,
+      "titulo": "La relajación con ventaja",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/rompe-el-estancamiento/33-la-relajacion-con-ventaja-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 187
+       },
+       {
+        "ruta": "cursos/recursos/rompe-el-estancamiento/33-la-relajacion-con-ventaja-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 6
+       }
+      ]
+     },
+     {
+      "numero": 34,
+      "titulo": "El primer error no es el último",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/rompe-el-estancamiento/34-el-primer-error-no-es-el-ultimo-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 188
+       },
+       {
+        "ruta": "cursos/recursos/rompe-el-estancamiento/34-el-primer-error-no-es-el-ultimo-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 6
+       }
+      ]
+     },
+     {
+      "numero": 35,
+      "titulo": "Decidir con poco tiempo",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/rompe-el-estancamiento/35-decidir-con-poco-tiempo-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 190
+       },
+       {
+        "ruta": "cursos/recursos/rompe-el-estancamiento/35-decidir-con-poco-tiempo-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 6
+       }
+      ]
+     },
+     {
+      "numero": 36,
+      "titulo": "Tu ficha de errores",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/rompe-el-estancamiento/36-tu-ficha-de-errores-material.pdf",
+        "titulo": "Material de estudio",
+        "tipo": "material",
+        "kb": 155
+       },
+       {
+        "ruta": "cursos/recursos/rompe-el-estancamiento/36-tu-ficha-de-errores-ejercicios.pdf",
+        "titulo": "Ejercicios",
+        "tipo": "ejercicios",
+        "kb": 6
+       }
+      ]
+     }
+    ],
+    "otros": []
+   },
+   {
     "slug": "preparacion-para-torneos",
     "titulo": "Preparación para Torneos",
     "nivel": "competicion",
@@ -4069,7 +4732,7 @@
     "nombre": "Formación docente"
    }
   ],
-  "total": 203,
+  "total": 239,
   "material": [],
   "cursos": [
    {
@@ -6070,6 +6733,446 @@
         "titulo": "Presentación",
         "tipo": "presentacion",
         "kb": 597
+       }
+      ]
+     }
+    ],
+    "otros": []
+   },
+   {
+    "slug": "rompe-el-estancamiento",
+    "titulo": "Rompe el estancamiento",
+    "nivel": "avanzado",
+    "lecciones": [
+     {
+      "numero": 1,
+      "titulo": "Plan o jugada a jugada",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/rompe-el-estancamiento/01-plan-o-jugada-a-jugada.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 2,
+      "titulo": "Un plan concreto, no una intención",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/rompe-el-estancamiento/02-un-plan-concreto-no-una-intencion.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 3,
+      "titulo": "Sin prisa: el plan va por etapas",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/rompe-el-estancamiento/03-sin-prisa-el-plan-va-por-etapas.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 4,
+      "titulo": "Un plan, no tres",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/rompe-el-estancamiento/04-un-plan-no-tres.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 5,
+      "titulo": "Lo básico que falta",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/rompe-el-estancamiento/05-lo-basico-que-falta.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 6,
+      "titulo": "Las reglas tienen excepciones",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/rompe-el-estancamiento/06-las-reglas-tienen-excepciones.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 7,
+      "titulo": "El factor que manda",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/rompe-el-estancamiento/07-el-factor-que-manda.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 8,
+      "titulo": "¿Dónde está la ventaja?",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/rompe-el-estancamiento/08-donde-esta-la-ventaja.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 9,
+      "titulo": "Lo simple contra lo complicado",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/rompe-el-estancamiento/09-lo-simple-contra-lo-complicado.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 10,
+      "titulo": "Dinámica contra estática",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/rompe-el-estancamiento/10-dinamica-contra-estatica.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 11,
+      "titulo": "No des jugadas por hechas",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/rompe-el-estancamiento/11-no-des-jugadas-por-hechas.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 12,
+      "titulo": "Hazle difícil la vida al rival",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/rompe-el-estancamiento/12-hazle-dificil-la-vida-al-rival.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 13,
+      "titulo": "Mira hacia dónde va la partida",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/rompe-el-estancamiento/13-mira-hacia-donde-va-la-partida.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 14,
+      "titulo": "El cambio mal entendido",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/rompe-el-estancamiento/14-el-cambio-mal-entendido.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 15,
+      "titulo": "Cada cambio se mira solo",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/rompe-el-estancamiento/15-cada-cambio-se-mira-solo.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 16,
+      "titulo": "Cuando la estructura cambia",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/rompe-el-estancamiento/16-cuando-la-estructura-cambia.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 17,
+      "titulo": "Cuando cambia el carácter de la posición",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/rompe-el-estancamiento/17-cuando-cambia-el-caracter-de-la-posicion.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 18,
+      "titulo": "Cuando cambia la tendencia",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/rompe-el-estancamiento/18-cuando-cambia-la-tendencia.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 19,
+      "titulo": "Los errores de cálculo más comunes",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/rompe-el-estancamiento/19-los-errores-de-calculo-mas-comunes.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 20,
+      "titulo": "La precipitación",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/rompe-el-estancamiento/20-la-precipitacion.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 21,
+      "titulo": "La jugada intermedia que no viste",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/rompe-el-estancamiento/21-la-jugada-intermedia-que-no-viste.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 22,
+      "titulo": "El orden de las jugadas",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/rompe-el-estancamiento/22-el-orden-de-las-jugadas.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 23,
+      "titulo": "Defender lo difícil",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/rompe-el-estancamiento/23-defender-lo-dificil.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 24,
+      "titulo": "Ver más lejos",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/rompe-el-estancamiento/24-ver-mas-lejos.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 25,
+      "titulo": "¿Qué quiere tu rival?",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/rompe-el-estancamiento/25-que-quiere-tu-rival.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 26,
+      "titulo": "Amenazas: cuáles son reales",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/rompe-el-estancamiento/26-amenazas-cuales-son-reales.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 27,
+      "titulo": "¿Qué cambió con su última jugada?",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/rompe-el-estancamiento/27-que-cambio-con-su-ultima-jugada.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 28,
+      "titulo": "Quitarle jugadas al rival",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/rompe-el-estancamiento/28-quitarle-jugadas-al-rival.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 29,
+      "titulo": "El miedo",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/rompe-el-estancamiento/29-el-miedo.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 30,
+      "titulo": "El sentido del peligro",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/rompe-el-estancamiento/30-el-sentido-del-peligro.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 31,
+      "titulo": "El materialismo",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/rompe-el-estancamiento/31-el-materialismo.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 32,
+      "titulo": "El conformismo",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/rompe-el-estancamiento/32-el-conformismo.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 33,
+      "titulo": "La relajación con ventaja",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/rompe-el-estancamiento/33-la-relajacion-con-ventaja.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 34,
+      "titulo": "El primer error no es el último",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/rompe-el-estancamiento/34-el-primer-error-no-es-el-ultimo.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 35,
+      "titulo": "Decidir con poco tiempo",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/rompe-el-estancamiento/35-decidir-con-poco-tiempo.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
+       }
+      ]
+     },
+     {
+      "numero": 36,
+      "titulo": "Tu ficha de errores",
+      "archivos": [
+       {
+        "ruta": "cursos/recursos/rompe-el-estancamiento/36-tu-ficha-de-errores.pptx",
+        "titulo": "Presentación",
+        "tipo": "presentacion",
+        "kb": 34
        }
       ]
      }
