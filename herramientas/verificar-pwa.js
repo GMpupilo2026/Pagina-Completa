@@ -215,7 +215,11 @@ function servidorPropio() {
            herramientas/pwa-cabecera.py. */
         if (["inscripcion.html", "formulario.html", "libro-de-diagnostico-accesible.html",
              "guia-del-profesor-accesible.html", "fichas-de-estudio-accesible.html",
-             "ponte-a-prueba-accesible.html", "ponte-a-prueba-versiones-accesible.html", "mide-tu-fuerza-accesible.html",
+             "ponte-a-prueba-accesible.html", "ponte-a-prueba-versiones-accesible.html", "mide-tu-fuerza-accesible.html", "mide-tu-fuerza-2-accesible.html",
+             "mide-tu-fuerza-3-accesible.html", "mide-tu-fuerza-4-accesible.html",
+             "mide-tu-fuerza-5-accesible.html", "mide-tu-fuerza-6-accesible.html",
+             "mide-tu-fuerza-7-accesible.html", "mide-tu-fuerza-8-accesible.html",
+             "mide-tu-fuerza-9-accesible.html", "mide-tu-fuerza-10-accesible.html",
              "rompe-el-estancamiento-accesible.html", "peonita-accesible.html", "peonita-trucos-accesible.html",
              "coachess-resumen-accesible.html"].includes(e.name)) continue;
         paginas.push(rel);

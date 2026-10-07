@@ -939,8 +939,8 @@ de la tienda.
 
 ## El banco de ejercicios «Mide tu fuerza»
 
-Un libro de tests tácticos de Oscar Angulo Cubero: 360 posiciones en 45 tests
-de 8, cada test de **un solo tema** (ataque doble, ataque a la descubierta,
+Un libro de tests tácticos de Oscar Angulo Cubero, en diez volúmenes de 360
+posiciones en 45 tests de 8 cada uno; cada test de **un solo tema** (ataque doble, ataque a la descubierta,
 jaque doble, clavada, enfilada, desviación, atracción, interferencia, despeje,
 eliminación del defensor, rayos X, jugada intermedia, pieza atrapada, jugada
 tranquila y el peón avanzado), en tres niveles. Lo arman dos scripts, como
@@ -950,6 +950,83 @@ tranquila y el peón avanzado), en tres niveles. Lo arman dos scripts, como
 comprueban `verificar-mide-tu-fuerza.js` (el banco y lo accesible) y
 `verificar-mide-tu-fuerza-pdf.py` (protección, autor, marca de agua en cada
 página y que estén los 45 tests).
+
+### Los volúmenes
+
+Cada volumen tiene **la misma forma** (los mismos 15 temas, los tres niveles,
+los tiempos y los puntos) y **posiciones distintas**: el volumen 2 sirve para
+seguir entrenando y para volver a medir sin que la memoria cuente (y los
+siguientes, una vez más cada uno). El 1 vive
+en `material/mide-tu-fuerza/` y cada siguiente en su propia carpeta
+(`material/mide-tu-fuerza-2/`), que es también **su propio material**: se
+comparte aparte en `admin.html#materiales`, y `puede_bajar()` lo decide por
+carpeta como cualquier otro. Los dos scripts y los dos verificadores reciben el
+volumen (`node herramientas/mide-tu-fuerza-generar.js 2`,
+`node herramientas/mide-tu-fuerza-pdf.js 2`) y los verificadores recorren todos
+los que tengan banco. Un volumen nuevo es: sus candidatas, correr los dos
+scripts con su número y agregarlo en `MATERIALES` de `js/admin-materiales.js`
+(y su accesible en las listas de `verificar-pwa.js` y `pwa-cabecera.py`). Su
+PDF nuevo entra también en la sección «Archivos»: después de generarlo se
+corre `node herramientas/archivos-catalogo.js`, o `verificar-archivos-catalogo`
+falla en el CI (pasó con el volumen 6).
+
+Las candidatas del 2 son las 20 siguientes de cada tema y nivel en la misma
+consulta (`k between 21 and 40`). El generador descarta además las que ya están
+en otro volumen. Los rayos X y los jaques dobles difíciles casi no existen en
+la base (16 y 22 en total): al 2 se le agregaron las candidatas de esos temas
+que el 1 no usó, y lo que aún falta lo completa el nivel vecino. Las del 3 son
+las 20 siguientes (`k between 41 and 60`); ahí los rayos X y jaques dobles
+difíciles ya se agotaron, y esos tests se completan con el nivel vecino.
+
+Para el 4 (`k between 61 and 80`) los temas raros ya no daban 20 con los
+filtros de siempre. Ahí, **y solo ahí**, se completa hasta 20 con un filtro
+algo más ancho (Popularity ≥ 80, NbPlays ≥ 400, RatingDeviation ≤ 90): son
+ejercicios igual de comprobados por Stockfish, con un rating medido con menos
+intentos.
+
+El 5 toma, de cada tema y nivel, las 20 siguientes que no tomó ningún volumen
+anterior, **en orden de calidad**: primero lo que queda con el filtro de
+siempre, después el del 4 y, solo donde todavía faltan (los temas raros), un
+tercero (Popularity ≥ 75, NbPlays ≥ 200, RatingDeviation ≤ 100). La consulta
+cuenta lo que tomó cada volumen anterior, y el archivo de candidatas lo
+confirma: ninguna repetida. Con eso los rayos X difíciles quedan en 16 y el
+resto lo completa el nivel vecino.
+
+El 6 se armó igual que el 5, pero eligiendo los identificadores aquí: se
+bajaron, por tema y nivel, los primeros 150 en orden de calidad y se
+descartaron los que ya eran candidatas de los volúmenes 1 a 5. Hizo falta un
+**cuarto filtro** (Popularity ≥ 70, NbPlays ≥ 100, RatingDeviation ≤ 110), y
+solo en los temas raros: de 891 candidatas, 720 son del filtro de siempre y
+49 del cuarto (jaque doble, rayos X e interferencia). Ahí la base ya está
+prácticamente agotada: un séptimo volumen igual no se podía hacer sin bajar
+todavía más la calidad de esos temas.
+
+Por eso el **7 cambia tres temas** (lo decidió el dueño del repo): jaque doble,
+rayos X e interferencia se cambian por **mate en dos, mate en tres y
+sacrificio** (`CAMBIOS_DESDE_7` y `temasDe()` en el generador; cada uno entra
+en el lugar del que sale). Los tres tienen cientos de posiciones con el filtro
+de siempre. El sacrificio se toma solo si no tiene mate ni ninguno de los
+otros temas del libro, para que no se cruce con los demás tests; los mates no
+se habían usado nunca, porque los otros temas excluyen las posiciones con
+mate. En los otros doce temas siguen las 20 siguientes; solo cuatro casilleros
+del tercer nivel (eliminación del defensor, enfilada, jugada intermedia y
+pieza atrapada) se completaron con los filtros más anchos: 66 de 900. Cada
+banco guarda sus propios temas y el verificador comprueba que sean los de su
+volumen.
+
+El 8 lleva los temas del 7 y las 20 siguientes de cada casillero en orden de
+calidad: 820 del filtro de siempre y 80 de los cuatro casilleros agotados del
+tercer nivel (jugada intermedia, enfilada y pieza atrapada con el filtro 2;
+eliminación del defensor con el 3). El 9 se armó igual, con la misma
+proporción (820 y 80). El 10 ya necesitó un quinto casillero con filtro ancho
+(despeje del tercer nivel): 800 del filtro de siempre, 78 del 2, 19 del 3 y 3
+del 4, todas del tercer nivel. Un undécimo volumen con estos temas tendría el
+tercer nivel cada vez más lleno de posiciones de los filtros 3 y 4: lo sano
+sería cambiar otros temas, como se hizo en el 7.
+
+Cada tapa lleva «Volumen N» y su propio color (verde, vino, azul, morado, café,
+gris pizarra, ciruela, oliva, petróleo y óxido; el contraste del texto se midió
+contra el más claro de cada degradado: 5,7 o más, AA).
 
 ### Tomado de un libro ajeno como referencia, no copiado
 
@@ -1299,8 +1376,8 @@ No está en la tienda: venderlo sería vender un resumen de un libro ajeno.
 ## Los materiales de clase
 
 `admin.html#materiales` («Materiales de clases») junta los materiales para dar
-clase —hoy, «Ponte a prueba», el banco de ejercicios «Mide tu fuerza», el libro
-«Rompe el estancamiento», los cuentos de Peonita y «Coachess en resumen»— y dice **con quién se comparte cada uno**: una
+clase —hoy, «Ponte a prueba», los diez volúmenes del banco de ejercicios «Mide
+tu fuerza», el libro «Rompe el estancamiento», los cuentos de Peonita y «Coachess en resumen»— y dice **con quién se comparte cada uno**: una
 persona, una academia entera o todos los profesores. Lo pinta
 `js/admin-materiales.js`; lo prueba `verificar-admin.js`.
 
