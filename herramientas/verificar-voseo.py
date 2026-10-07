@@ -122,6 +122,8 @@ quizá
 mamá papá bebé
 dará hará podrá dispondrá será tendrá tendrás vendrá verá verás sabrás habrá saldrá
 pondrá querrá irá
+mantendrá obtendrá supondrá intervendrá transpondrá traspondrá podrás
+hincapié azerí canadá calviá buxadé
 recibiré
 estrés poincaré
 """.split())

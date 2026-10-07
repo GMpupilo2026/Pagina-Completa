@@ -183,6 +183,7 @@ window.PlanEntrenamiento = (function () {
         { texto: 'Curso: Ganar con poco', href: 'cursos/ganar-con-poco.html' },
         { texto: 'Curso: Cambiar o no cambiar', href: 'cursos/cambiar-o-no-cambiar.html' },
         { texto: 'Curso: Ideas que ganan partidas', href: 'cursos/ideas-que-ganan-partidas.html' },
+        { texto: 'Curso: Las mil y una lecciones de ajedrez', href: 'cursos/las-mil-y-una-lecciones-de-ajedrez.html' },
       ],
     },
     {

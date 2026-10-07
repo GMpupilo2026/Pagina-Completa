@@ -1878,6 +1878,116 @@ está en `admin.html#materiales` y en «Archivos». No está en la tienda, por l
 mismo que «Rompe el estancamiento»; y el correo a la casa lo nombra desde el
 slug sin tocar la Edge Function.
 
+## El curso y el libro «Las mil y una lecciones de ajedrez»
+
+Las 360 clases que el MI Ángel Martín escribió para la escuela EDAMI entre 2000
+y 2007, reunidas en «Las Mil y una Lecciones de Ajedrez» (EDAMI, 2011; un PDF
+de 2170 páginas). **El dueño tiene permiso para publicarlas**, así que aquí sí
+va el texto del autor y sus partidas, a diferencia de «Rompe el estancamiento»
+o «Mide tu fuerza», que tomaron solo la idea. El crédito va en la portada, en
+cada tomo y al pie de la página del curso. Lo único cambiado del texto: el
+vocabulario de España que choca en Costa Rica («ordenador» → «computadora»), y
+el enroque escrito con letra O, como en el resto del sitio.
+
+Son un curso (nivel Avanzado, 360 lecciones en doce bloques por tema) y un
+libro en doce tomos, uno por bloque, con su versión accesible.
+
+### De dónde sale cada cosa
+
+Todo lo hace `herramientas/mil-lecciones/` (su `LEEME.md` dice el orden) desde
+el PDF original, que **no está en el repositorio**. Lo que sale son los datos
+del curso, y esos sí son la única copia: el libro se arma de ellos, no del PDF.
+
+- **El texto del PDF viene revuelto.** `pdftotext` mezcla las dos columnas y
+  los recuadros. PyMuPDF da cada bloque con su lugar en la página; ordenado por
+  columna y altura queda en orden de lectura, con una marca donde va cada
+  diagrama.
+- **Las partidas no se copian: se juegan.** El texto mezcla la línea principal,
+  las variantes entre corchetes —que a veces el original abre y no cierra— y
+  jugadas citadas en la prosa («se había jugado 9.0-0-0 d6 10.Dg3…», sin
+  corchetes). El lector busca la lectura que junta más jugadas de la línea
+  principal **y llega al resultado**: una variante que se cuela se atasca
+  antes del «1-0». Cada jugada pasa por python-chess; la que no es legal no
+  entra. Así salieron 1989 partidas (146 857 jugadas) y el 96 % llega a su
+  resultado; las demás se cortan donde el texto deja de dar jugadas legales.
+- **Los diagramas son imágenes, y se reconocen.** Los que caen dentro de una
+  partida ya leída dicen qué posición muestran: con 1700 de ellos se aprendió
+  cómo se ve cada pieza (99,7 % de casillas bien). Una partida que empieza en un
+  diagrama (un final desde la jugada 28) o un ejercicio **solo se acepta si sus
+  jugadas son legales desde la posición reconocida**: un error del
+  reconocedor casi siempre deja alguna jugada imposible.
+- **Los momentos para adivinar los eligió el autor y los confirmó Stockfish.**
+  Son las jugadas con «!» de la línea principal que Stockfish 16 deja a 0,3
+  peones de la mejor o menos (4999); las que empatan con ella valen como
+  alternativa. La pista no se inventa: dice qué pieza mueve y si captura o da
+  jaque.
+- **Los ejercicios**: las clases a partir de la 250 traen tres de táctica y un
+  «Repaso y práctica», con la solución en la clase siguiente. Quedaron 411 de
+  510: el de táctica tiene que ganar (+1,5 o más según Stockfish) y su solución
+  no puede quedar a más de medio peón de la mejor jugada. Los que no cumplían
+  —el diagrama mal reconocido, o una solución que el motor refuta— no se
+  muestran.
+- **Los bloques salen del título de cada clase** (`temas.py`): el libro las
+  ordena por fecha, y el curso por tema. Dentro de cada bloque van en el orden
+  del libro, y cada lección dice de qué clase viene.
+
+### Un curso que no cabe en un archivo
+
+`js/curso-partidas.js` bajaba un solo JSON con todas las partidas del curso.
+Este pesa 29 MB. Ahora `cursos/protegido/data/las-mil-y-una-lecciones-de-ajedrez.json` es un
+índice de 76 KB con `trozos` —de qué archivo sale cada partida o ejercicio— y
+el visor baja `data/las-mil-y-una-lecciones-de-ajedrez/lNNN.json` recién cuando se abre esa
+lección (`cargarTrozos`). Los cursos de un solo archivo siguen igual: sin
+`trozos`, no cambia nada. El worker protege esa carpeta como el resto de
+`protegido/data/`: su expresión ya toma el primer nombre después de `data/`
+como el curso.
+
+La página protegida (las 360 lecciones con su texto) pesa 2,4 MB, 440 KB
+comprimida: es la que monta `curso-academia.js` de una vez.
+
+### El libro, en doce tomos
+
+`herramientas/mil-lecciones-pdf.js` arma `cursos/recursos/las-mil-y-una-lecciones-de-ajedrez/tomo-NN.pdf`
+y `tomo-NN-accesible.html`: un tomo por bloque, porque un solo PDF pasaría de
+2000 páginas y el tomo es lo que se lleva a la clase. Van en `cursos/recursos/`
+y no en `material/` **a propósito**: son el material del curso, y los baja quien
+tiene el curso; en `material/` solo los bajaría la persona con quien
+administración compartió el libro. Cada lección enlaza su tomo y su lección en
+el accesible (`#leccion-N`).
+
+- Antes de imprimir, cada partida se vuelve a jugar entera con chess.js y cada
+  FEN guardada tiene que ser la que sale (sin la casilla al paso: python-chess
+  solo la escribe si la captura es posible).
+- Los diagramas se dibujan de nuevo con `lib/tablero-svg.js` **en las mismas
+  jugadas donde el libro original ponía los suyos**.
+- Se cierra como los demás libros (tapa, marca de agua en cada página, PDF
+  protegido que deja imprimir); el autor del archivo es el MI Ángel Martín.
+
+Lo comprueban `verificar-mil-lecciones.js` (sin navegador: las 1989 partidas se
+juegan enteras, cada momento clave y cada ejercicio, que la página monte
+exactamente lo que hay en los datos y que cada tomo tenga sus lecciones) y
+`verificar-mil-lecciones-pdf.py` (protección, autor, permiso, marca de agua en
+todas las páginas y todas las lecciones de cada tomo).
+
+### Dónde quedó dado de alta
+
+En el catálogo (Avanzado, después de «Rompe el estancamiento», con su
+diagrama: el 13.Axe5! de Browne – Quinteros), entre «Rompe el estancamiento» y
+«Cálculo y Visualización» en la navegación entre cursos, en «Mis cursos», en el
+material de la clase en vivo, en exámenes por curso, en el plan de
+entrenamiento del área de estrategia, en «Archivos» y en
+`interno.curso_lecciones` para su certificado
+(`20261007110911_curso_mil_y_una_lecciones.sql` y
+`20261007114143_curso_las_mil_y_una_lecciones_slug.sql`).
+
+- **El slug es largo a propósito**: `las-mil-y-una-lecciones-de-ajedrez`. El
+  correo a la casa (`informes-encargados`) nombra un curso que no está en su
+  `TITULOS_CURSOS` desde el slug, y este da justo el título del catálogo; con
+  `mil-y-una-lecciones` decía «Mil y una lecciones» y
+  `verificar-tiempo-secciones.js` lo atrapó. Cambiar el slug evitó redesplegar
+  la función solo para escribir el nombre. **No está en la tienda**:
+venderlo es una decisión de precio del dueño.
+
 ## Los materiales de clase
 
 `admin.html#materiales` («Materiales de clases») junta los materiales para dar
