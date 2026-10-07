@@ -1240,11 +1240,99 @@ es tablas.
 Las flechas de los diagramas (`flechas` en `lib/tablero-svg.js`) son azules
 #123e7c: 8,6:1 contra la casilla clara y 4,1:1 contra la oscura.
 
+## El curso y el libro «Rompe el estancamiento»
+
+Un curso (36 lecciones en ocho bloques) y su libro, de Oscar Angulo Cubero,
+para el jugador de 1400 a 2100 que lleva meses en el mismo Elo: las siete
+familias de errores que lo frenan (jugar sin plan, usar mal los conceptos,
+leer la posición a medias, cambiar sin preguntarse qué cambia, calcular con
+agujeros, olvidarse del rival y la cabeza que juega en contra) y un método
+para encontrar los propios con una ficha de errores.
+
+### Tomado de un libro ajeno como referencia, no copiado
+
+El dueño pidió un curso «similar» a *Blinda tu ajedrez* (Herraiz y Muñoz,
+2020), con un libro nuevo en PDF. Ese libro tiene derechos de autor y prohíbe
+reproducirlo, así que se tomó **la idea y nada más**: ordenar por familias los
+errores que repiten los jugadores estancados y corregirlos de a uno, con la
+partida propia como fuente. Ni el texto, ni los ejemplos, ni los ejercicios,
+ni los títulos salen de ahí; el título tampoco es el suyo. Las lecciones están
+escritas para esto, en tuteo.
+
+### Las posiciones: de Lichess, comprobadas con Stockfish
+
+`herramientas/rompe-el-estancamiento-generar.js` hace lo mismo que el de «Mide
+tu fuerza»: candidatas de la base abierta de Lichess
+(`herramientas/datos/rompe-el-estancamiento-candidatas.txt`, la consulta está
+en su cabecera), el MISMO `analizar()` del diagnóstico (una sola jugada
+buena), y ninguna repetida del diagnóstico, «Ponte a prueba» ni «Mide tu
+fuerza». Cada familia pide los temas de Lichess que la muestran
+(`TEMAS_CAPITULO`: la jugada intermedia para el cálculo, la jugada defensiva
+para pensar por el rival, el final de peones para los cambios…).
+
+- **Lo que la lección dice de su ejemplo se comprueba en la posición**, no
+  solo en la etiqueta de Lichess (`cumple()`): las etiquetas miran la solución
+  entera y la lección habla de la primera jugada. La jugada «tranquila» no da
+  jaque ni captura, la que «entrega material» deja la pieza al alcance del
+  rival, el «final de peones» no tiene piezas.
+- Casi todas las de «jugada defensiva» resultaron **conservar una ventaja**,
+  no salvar una partida perdida: el texto de esas lecciones dice «solo una
+  jugada conserva la ventaja», que es lo que el motor comprobó, y no «todo lo
+  demás pierde».
+- **El ejemplo de cada lección es la misma posición en el curso y en el
+  libro**: el generador escribe el banco del libro
+  (`material/rompe-el-estancamiento/banco.js`) y el campo `diagramas` de
+  `herramientas/cursos/rompe-el-estancamiento.json` en la misma corrida. El
+  resto de ese JSON (el texto, y `tema`, `pregunta` y `enlace` de cada lección)
+  es a mano.
+
+### Cómo se regenera
+
+    STOCKFISH=/usr/games/stockfish node herramientas/rompe-el-estancamiento-generar.js
+    node herramientas/curso-posiciones.js rompe-el-estancamiento
+    python3 herramientas/curso-generar.py rompe-el-estancamiento
+    CHROME_PATH=… node herramientas/curso-material-generar.js rompe-el-estancamiento
+    node herramientas/curso-material-enlazar.js
+    node herramientas/rompe-el-estancamiento-pdf.js
+
+**`curso-generar.py` reescribe el fragmento protegido sin los enlaces del
+material de estudio**: después de correrlo hay que volver a correr el
+enlazador, o las 36 lecciones se quedan sin su cuadernillo sin que nada falle
+en pantalla. `curso-generar.py` además se puso al día con los colores de
+contraste que ya tenían las portadas (`dark:text-brand-300`,
+`text-brand-450 dark:text-brand-350`, `text-accent-700 dark:text-accent-400`):
+generaba los viejos.
+
+Lo comprueban `verificar-rompe-el-estancamiento.js` (el banco, que el ejemplo
+del curso sea el del libro y que lo que dice la lección sea cierto en la
+posición, y la versión accesible) y `verificar-rompe-el-estancamiento-pdf.py`
+(protección, autor, marca de agua en cada página, los ocho capítulos, las 36
+lecciones, los 80 ejercicios y la ficha de errores).
+
+### Dónde quedó dado de alta
+
+En el catálogo (nivel Avanzado, entre «Desequilibrios de material» y
+«Cálculo y Visualización», con su diagrama), en «Mis cursos» de la Academia, en
+el material de la clase en vivo, en exámenes por curso, en el plan de
+entrenamiento del área de estrategia y en `interno.curso_lecciones` para su
+certificado (`20261006222049_curso_rompe_el_estancamiento.sql`). El libro está
+en `admin.html#materiales` (se comparte como los otros dos) y en «Archivos».
+
+- **No está en la tienda**: venderlo, y en qué módulo del sistema completo,
+  es una decisión de precio del dueño.
+- **El correo a la casa lo nombra sin tocar la Edge Function**:
+  `informes-encargados` nombra un curso que no está en su `TITULOS_CURSOS`
+  desde el slug, y «rompe-el-estancamiento» da justo «Rompe el estancamiento».
+  Sumarlo a la tabla obligaba a redesplegar la función solo para escribir lo
+  mismo. `verificar-tiempo-secciones.js` ya no exige que la tabla tenga todos
+  los cursos: comprueba el nombre que el correo **muestra** para cada curso del
+  catálogo, y que lo que la tabla sí nombra coincida con el catálogo.
+
 ## Los materiales de clase
 
 `admin.html#materiales` («Materiales de clases») junta los materiales para dar
 clase —hoy, «Ponte a prueba», los diez volúmenes del banco de ejercicios «Mide
-tu fuerza» y los cuentos de Peonita— y dice **con quién se comparte cada uno**: una
+tu fuerza», el libro «Rompe el estancamiento» y los cuentos de Peonita— y dice **con quién se comparte cada uno**: una
 persona, una academia entera o todos los profesores. Lo pinta
 `js/admin-materiales.js`; lo prueba `verificar-admin.js`.
 

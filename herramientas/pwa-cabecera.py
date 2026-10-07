@@ -39,7 +39,8 @@ FIN = "<!-- app: fin -->"
 #     fichas-de-estudio-accesible.html, ponte-a-prueba-accesible.html (y la
 #     de sus versiones para imprimir), los accesibles de los diez volúmenes
 #     de «Mide tu fuerza» (mide-tu-fuerza-accesible.html,
-#     mide-tu-fuerza-2-accesible.html…), peonita-accesible.html y
+#     mide-tu-fuerza-2-accesible.html…), rompe-el-estancamiento-accesible.html,
+#     peonita-accesible.html y
 #     peonita-trucos-accesible.html son
 #     documentos que se descargan y se abren sueltos, hasta por correo y sin
 #     red: declarar un manifest que no va a poder cargar es peor que no
@@ -64,6 +65,7 @@ FUERA = {"inscripcion.html", "offline.html", "formulario.html",
          "mide-tu-fuerza-8-accesible.html",
          "mide-tu-fuerza-9-accesible.html",
          "mide-tu-fuerza-10-accesible.html",
+         "rompe-el-estancamiento-accesible.html",
          "peonita-accesible.html",
          "peonita-trucos-accesible.html"}
 CARPETAS_FUERA = ("cursos/recursos/", "cursos/protegido/", "material/", "herramientas/", "node_modules/")
