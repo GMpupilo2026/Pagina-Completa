@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>El caballo que se entrega — Los cimientos del ajedrez — material de estudio</title>
+<meta name="robots" content="noindex">
+<meta name="author" content="Oscar Angulo Cubero">
+<meta name="description" content="Material de estudio en formato accesible de la lección 47 del curso Los cimientos del ajedrez.">
+<style>
+  /* Sin imágenes y sin columnas a propósito: esta versión está hecha para
+     lectores de pantalla y para quien necesita agrandar mucho el texto. */
+  body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+         font-size: 1.15rem; line-height: 1.8; color: #102a43; background: #ffffff;
+         max-width: 42rem; margin: 0 auto; padding: 1.5rem 1rem 4rem; }
+  h1 { font-size: 1.7rem; line-height: 1.3; }
+  h2 { font-size: 1.3rem; margin-top: 2.5rem; border-bottom: 2px solid #102a43; padding-bottom: .3rem; }
+  h3 { font-size: 1.1rem; margin-top: 1.8rem; }
+  a { color: #8a4a00; }
+  dt { font-weight: 700; margin-top: 1rem; }
+  dd { margin: .3rem 0 0; }
+  .posicion { border: 2px solid #243b53; border-radius: .5rem; padding: 1rem; margin: 1rem 0; }
+  .respuesta { background: #f0f4f8; border-left: 4px solid #102a43; padding: .6rem .9rem; }
+  footer { margin-top: 3rem; border-top: 2px solid #102a43; padding-top: 1rem; font-size: .95rem; }
+  /* La vuelta a la plataforma. Este archivo se abre solo, en su propia
+     pestaña: sin estos enlaces no hay forma de regresar al curso salvo el
+     botón "atrás" del navegador, que con lector de pantalla no siempre está
+     a mano. Van arriba y abajo: el documento es largo y quien termina de
+     leerlo no tendría que subir de nuevo para salir. */
+  .volver { margin: 0 0 1.5rem; font-size: 1rem; }
+  footer .volver { margin: 1rem 0 0; }
+  .volver a { display: inline-block; padding: .2rem 0; }
+  @media (prefers-color-scheme: dark) {
+    body { background: #0a1f33; color: #f0f4f8; }
+    h2, footer { border-color: #f0b429; }
+    a { color: #f0b429; }
+    .posicion { border-color: #829ab1; }
+    .respuesta { background: #102a43; border-color: #f0b429; }
+  }
+</style>
+</head>
+<body>
+<nav class="volver" aria-label="Volver a la plataforma">
+  <a href="../../academia/los-cimientos-del-ajedrez.html">← Volver al curso Los cimientos del ajedrez</a>
+  ·
+  <a href="../../../clases.html">Panel de Academia</a>
+</nav>
+<header>
+  <p>Los cimientos del ajedrez · Lección 47</p>
+  <h1>El caballo que se entrega</h1>
+  <p>Material de estudio en formato accesible. Autor: Oscar Angulo Cubero, Ajedrez Integral.</p>
+  <p>Esta versión dice en palabras todo lo que en el cuadernillo en PDF está dibujado: cada
+     posición viene descrita pieza por pieza, así que no hace falta ver ninguna imagen.</p>
+</header>
+
+<h2>1. De qué trata esta lección</h2>
+
+<p>El caballo es la pieza que más se sacrifica en ataques contra el rey. Se entrega en las casillas cercanas al rey rival, como f7, e6 o g5 y h5 según la estructura, para romper la protección de peones, para atraer al rey a una casilla donde recibe jaques o para desviar a una pieza que estaba defendiendo algo importante. Como vale tres puntos, el sacrificio es menos costoso que el de una torre, y por eso aparece en muchas más partidas.</p>
+<p>Las señales: el rey rival en el centro o con su enroque débil, muchas de tus piezas cerca y pocas defensoras del rival, una casilla clave como f7 defendida solo por el rey, o un peón rival que, si captura el caballo, abre una columna o una diagonal hacia su rey. La pregunta que decide es qué entra después: si después del sacrificio llegan la dama, una torre y un alfil con jaques o amenazas, vale la pena calcularlo.</p>
+<p>El error típico es entregar el caballo por intuición y no tener nada preparado para la segunda jugada. Un sacrificio sin continuación es solo una pieza menos. Cuenta las piezas que entran en el ataque, las que defienden y, sobre todo, mira qué pasa si el rival no captura el caballo y en vez de eso contesta con calma. Si ni así tienes ventaja, guarda el caballo para otro momento: los ataques que funcionan suelen madurar con una o dos jugadas más de preparación.</p>
+
+
+<h2>2. Conceptos clave</h2>
+<dl>
+  <dt>El sacrificio</dt>
+  <dd>Entregar material a cambio de algo que no es material: tiempo, líneas abiertas, el rey rival expuesto o una casilla. Un sacrificio correcto se calcula hasta el final o se apoya en una ventaja que se puede explicar.</dd>
+  <dd><strong>El error de siempre:</strong> Sacrificar por entusiasmo. Si no puedes decir con palabras qué recibes a cambio, y ver hasta dónde llega la secuencia, no es un sacrificio: es regalar una pieza.</dd>
+  <dd><strong>Para verlo:</strong> El clásico alfil captura hector 7 jaque existe porque después del jaque llega el caballo a g5 y la dama a h5. Sin esas dos piezas listas, es solo un alfil menos.</dd>
+  <dt>Jaque, mate y ahogado</dt>
+  <dd>Jaque es atacar al rey; mate es atacarlo sin que tenga salida; ahogado es que NO esté atacado y aun así no tenga ninguna jugada legal, y eso son tablas.</dd>
+  <dd><strong>El error de siempre:</strong> Buscar el jaque en vez del mate. Dar jaques sueltos deja al rey rival mejor colocado y gasta tiempo. Y en finales ganados, empujar sin mirar: entregar el ahogado es la forma más cara de no ganar.</dd>
+  <dd><strong>Para verlo:</strong> Rey y dama contra rey solo: si el rey negro está en a8 y pones la dama en b6, no hay jaque, pero tampoco hay jugada legal. Es ahogado y la partida queda en tablas con dama de más.</dd>
+  <dt>La estructura de peones</dt>
+  <dd>Los peones son los únicos que no vuelven atrás, así que su forma decide el carácter de la partida: dónde están las casillas fuertes, por dónde se ataca y qué final conviene.</dd>
+  <dd><strong>El error de siempre:</strong> Cambiar piezas sin mirar qué estructura queda. Los cambios llevan al final, y el final lo gana quien tenga la mejor estructura, no quien tuviera mejores piezas hace diez jugadas.</dd>
+  <dd><strong>Para verlo:</strong> Una cadena de peones apunta en una dirección: e4-d5 apunta al flanco de rey. La regla es atacar la base de la cadena, no la punta, porque la base es la que sostiene todo.</dd>
+</dl>
+
+<h2>3. Ejemplos del curso</h2>
+<div class="posicion">
+  <h3>Posición 1: El rey rival tiene pocos defensores: ¿qué casilla de su enroque se abre si entregas una pieza? Juegan las blancas; el rival acaba de jugar … alfil eva 6.</h3>
+  
+  <p>Piezas blancas: rey en h1; dama en f5; torre en a1; alfiles en d3, e1; caballo en e4; peones en b2, c2, g2, h3.</p>
+  <p>Piezas negras: rey en g8; dama en b6; torres en a8, f8; alfiles en e6, g7; peones en d4, f7, g5, h6.</p>
+  <p>Juegan las blancas.</p>
+  
+  <p>La línea, jugada por jugada: 25. caballo felix 6 jaque, alfil captura felix 6, 26. dama hector 7 jaque mate</p>
+  <p>Resultado: Ganan blancas</p>
+  <p>25. caballo felix 6 jaque, alfil captura felix 6, 26. dama hector 7 jaque mate. Hay un sacrificio: se entrega material para ganar más. Mira cómo el caballo entregado abre el camino para que las demás piezas lleguen al rey: el valor está en lo que entra después. (Ejercicio 0gAkg de la base abierta de Lichess (CC0), rating 1041. Stockfish 16 a profundidad 18: caballo felix 6 jaque es la mejor (mate en 2) y la segunda queda en -5,1.)</p>
+  <p>Posición en notación FEN, por si la quieres cargar en un programa: r4rk1/5pb1/1q2b2p/5Qp1/3pN3/3B3P/1PP3P1/R3B2K w - - 6 25</p>
+</div>
+
+<h2>4. Ejercicios</h2>
+<ol>
+  <li>Toma cinco partidas de ataque famosas y en cada una cuenta cuántas piezas atacaban antes del sacrificio.</li>
+  <li>En tu próxima partida, si sientes ganas de sacrificar, escribe antes en la planilla qué recibes a cambio. Si no te sale la frase, no lo hagas.</li>
+  <li>Da mate con rey y dama contra rey solo en menos de diez jugadas, empezando con el rey negro en el centro. Hazlo tres veces sin ahogarlo.</li>
+  <li>Arma tres posiciones de ahogado distintas y anótalas. Verlas te enseña a olerlas cuando vas ganando.</li>
+  <li>Dibuja la estructura de peones —solo los peones— de tus tres últimas partidas en la jugada 20 y di qué plan pedía cada una.</li>
+  <li>Arma en el tablero un peón aislado en d4 con las piezas de los dos bandos y juégalo desde los dos lados.</li>
+</ol>
+
+<h2>5. Preguntas con su respuesta</h2>
+<p>Contesta en voz alta antes de seguir leyendo: la respuesta viene justo después de cada pregunta.</p>
+<ol>
+  <li>
+    <p>¿Qué diferencia un sacrificio de una combinación?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> La combinación es forzada de principio a fin y termina en algo medible. El sacrificio puede ser posicional: se entrega material por una ventaja duradera que no se calcula hasta el mate.</p>
+  </li>
+  <li>
+    <p>¿Qué hay que tener antes de sacrificar contra el enroque?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Piezas cerca y jugando: normalmente dama, un caballo y un alfil apuntando. Con una sola pieza no hay ataque.</p>
+  </li>
+  <li>
+    <p>¿Qué es un gambito?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Un sacrificio de apertura, casi siempre de un peón, a cambio de desarrollo y centro. El Gambito de rey y el Gambito de dama son los dos más conocidos.</p>
+  </li>
+  <li>
+    <p>¿Cómo se defiende uno de un sacrificio?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Contando las piezas atacantes y las defensoras, y aceptando material solo cuando has visto la respuesta a la amenaza siguiente. Muchas veces devolver el material es la mejor defensa.</p>
+  </li>
+  <li>
+    <p>¿Cuáles son las tres maneras de salir de un jaque?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Mover el rey, capturar la pieza que da jaque o interponer una pieza en el camino. Contra un jaque de caballo la interposición no existe: solo mover o capturar.</p>
+  </li>
+  <li>
+    <p>¿Por qué el ahogado son tablas y no derrota?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Porque quien está ahogado no está en jaque: no se le puede dar mate. La regla premia al que se quedó sin jugadas, y por eso es un recurso defensivo real.</p>
+  </li>
+  <li>
+    <p>¿Cómo se evita el ahogado en un final de dama contra rey?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Acercando el rey propio antes de cerrar la jaula, y dejando siempre al rey rival una casilla mientras no sea mate. La regla práctica: si vas a encerrarlo, que sea con el rey cerca.</p>
+  </li>
+  <li>
+    <p>¿Un rey puede quedar al lado del otro?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> No. Un rey no puede moverse a una casilla atacada, y el otro rey ataca las suyas. Por eso los reyes nunca se tocan.</p>
+  </li>
+  <li>
+    <p>¿Qué es un peón retrasado y por qué es débil?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> El que quedó atrás de sus vecinos y no puede avanzar sin perderse. Es débil porque hay que defenderlo con piezas y la casilla de delante queda para el rival.</p>
+  </li>
+  <li>
+    <p>¿Los peones doblados son siempre malos?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> No. Pierden movilidad y no se defienden entre ellos, pero abren una columna y controlan casillas nuevas. En posiciones de ataque suelen valer la pena.</p>
+  </li>
+  <li>
+    <p>¿Qué es un peón aislado y qué da a cambio?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> El que no tiene peones vecinos. Es débil en el final, pero en el medio juego da una columna abierta, espacio y dos buenas casillas para las piezas.</p>
+  </li>
+  <li>
+    <p>¿Qué son los peones colgantes?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Dos peones juntos sin vecinos, normalmente c y d. Mientras avanzan juntos son fuerza; si se les obliga a avanzar uno solo, se vuelven dos debilidades.</p>
+  </li>
+</ol>
+
+<h2>6. Fuentes</h2>
+<ul>
+  <li>Texto de la lección: curso «Los cimientos del ajedrez» de Ajedrez Integral, de Oscar Angulo Cubero.</li>
+  <li>Conceptos, preguntas y ejercicios de este cuadernillo: material didáctico de Ajedrez Integral, de Oscar Angulo Cubero.</li>
+  <li>Posiciones: archivo de posiciones del propio curso, verificadas jugada por jugada con chess.js y evaluadas con el motor Stockfish que el sitio usa.</li>
+</ul>
+<h3>Para seguir leyendo</h3>
+<p>Obras de referencia sobre estos temas. Este material no reproduce texto de ellas: se listan como lectura recomendada, no como origen de lo que aquí se dice.</p>
+<ul>
+  <li>Martin Weteschnik, «Chess Tactics from Scratch» (Quality Chess, 2012).</li>
+  <li>Fred Reinfeld, «1001 Brilliant Ways to Checkmate» (1955).</li>
+  <li>Jacob Aagaard, «Calculation» — serie Grandmaster Preparation (Quality Chess, 2012).</li>
+  <li>Irving Chernev, «Logical Chess: Move by Move» (Batsford, 1957).</li>
+  <li>José Raúl Capablanca, «Fundamentos del ajedrez» (1921).</li>
+</ul>
+
+<footer>
+  <p>© 2026 Oscar Angulo Cubero · Ajedrez Integral. Material de uso docente para alumnos de la Academia.</p>
+  <p>No se autoriza su reproducción ni su distribución fuera de ella.</p>
+<p class="volver">
+  <a href="../../academia/los-cimientos-del-ajedrez.html">← Volver al curso Los cimientos del ajedrez</a>
+  ·
+  <a href="../../../clases.html">Panel de Academia</a>
+</p>
+</footer>
+</body>
+</html>

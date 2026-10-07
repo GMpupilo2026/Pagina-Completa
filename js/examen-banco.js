@@ -59,6 +59,7 @@ window.ExamenBanco = (function () {
     "ganar-con-poco": ["estrategia", "finales"],
     "cambiar-o-no-cambiar": ["estrategia", "material"],
     "ideas-que-ganan-partidas": ["estrategia", "tactica", "finales"],
+    "los-cimientos-del-ajedrez": ["tactica", "finales", "estrategia", "calculo", "apertura"],
   };
 
   /* Un sorteo que se puede repetir: con la misma semilla sale el mismo
