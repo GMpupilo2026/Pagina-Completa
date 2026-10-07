@@ -1000,6 +1000,38 @@ archivo, y protección (`herramientas/lib/pdf-armar.js`). **Se deja
 imprimir**: es un cuaderno de trabajo. Vive en `material/mide-tu-fuerza/`,
 detrás del candado del worker, y se comparte desde `admin.html#materiales`.
 
+## El cuaderno «Los tipos de mate», para imprimir
+
+Un libro para darles a los alumnos: las 19 figuras de mate que Lichess
+reconoce (del pasillo a Vuković), cada una con su explicación, su diagrama
+modelo y 8 ejercicios, las soluciones al final y una planilla de avance. Es de
+los entrenadores **Oscar Angulo Cubero y Sebastian Mora Chavarria**: los dos
+van en la tapa, en los datos del archivo y en el pie de cada página.
+
+- **Los ejercicios son los que ya estaban revisados**, los de «Ejercicios por
+  tema» (`entreno/data/temas.json`, de Lichess, CC0, con cada solución
+  reproducida al armarlo). No se buscaron posiciones nuevas. La explicación y
+  el modelo salen de la ficha de Estudio de cada figura; las tres que no tienen
+  ficha (triángulo, recuadro, Vuković) traen su texto en el banco y su modelo
+  es un mate en 1 de Lichess que después no se usa como ejercicio.
+- **Una sola solución, comprobada con chess.js.** Lichess solo garantiza su
+  línea, y en papel un ejercicio con dos soluciones se corrige mal. En mate en
+  1, una sola jugada da mate; en mate en 2, no hay mate en 1, una sola primera
+  jugada lo fuerza y hay mate contra CADA respuesta. Por fuerza bruta, sin
+  motor: alcanza con 1 y 2 jugadas. El pasillo casi no tiene mates en 1 así (hay
+  dos piezas que dan mate en la fila), y se completa con mates en 2.
+- **Elegir tarda un par de minutos**, por eso la selección se guarda:
+  `herramientas/tipos-de-mate-banco.js` escribe `material/tipos-de-mate/banco.json`
+  (no se edita a mano) y `herramientas/tipos-de-mate-pdf.js` arma el PDF y
+  `tipos-de-mate-accesible.html`. Se cierra como «Mide tu fuerza»: tapa, logo de
+  marca de agua en cada página del cuerpo, protegido y se deja imprimir.
+- Lo comprueban `verificar-tipos-de-mate.js` (cada ejercicio es de
+  `temas.json` y de su figura, con una sola solución; la versión accesible) y
+  `verificar-tipos-de-mate-pdf.py` (protección, los dos entrenadores en la tapa
+  y en el pie de cada página, marca de agua, capítulos y ejercicios).
+- Se comparte desde `admin.html#materiales` como los demás (producto
+  `tipos-de-mate`).
+
 ## El libro de Peonita, para los más pequeños
 
 *Peonita y el reino de las 64 casillas*, de Oscar Angulo Cubero: un cuento

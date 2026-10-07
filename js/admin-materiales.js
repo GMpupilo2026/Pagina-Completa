@@ -1,5 +1,6 @@
 /* Los materiales de clase en admin.html#materiales: cada material (el libro
- * «Ponte a prueba», el banco de ejercicios «Mide tu fuerza» y el cuento
+ * «Ponte a prueba», el banco de ejercicios «Mide tu fuerza», el cuaderno
+ * «Los tipos de mate» y el cuento
  * «Peonita y el reino de las 64 casillas»), con sus
  * sub-fichas —las pruebas y sus versiones como cuestionario, si las tiene— y
  * CON QUIÉN se comparte.
@@ -50,6 +51,17 @@
       archivos: [
         { href: "material/mide-tu-fuerza/mide-tu-fuerza.pdf", texto: "📥 El libro en PDF" },
         { href: "material/mide-tu-fuerza/mide-tu-fuerza-accesible.html", texto: "♿ Versión accesible" },
+      ],
+    },
+    {
+      producto: "tipos-de-mate",
+      emoji: "♚",
+      titulo: "Los tipos de mate",
+      autor: "Oscar Angulo Cubero y Sebastian Mora Chavarria",
+      resumen: "Cuaderno para imprimir y dar a los alumnos: las 19 figuras de mate (pasillo, coz, hombreras, Anastasia, árabe, Boden y trece más), cada una explicada con su diagrama modelo y 8 ejercicios de mate en 1 y en 2, con una sola solución cada uno. Soluciones al final y planilla de avance. Se puede imprimir.",
+      archivos: [
+        { href: "material/tipos-de-mate/tipos-de-mate.pdf", texto: "📥 El libro en PDF" },
+        { href: "material/tipos-de-mate/tipos-de-mate-accesible.html", texto: "♿ Versión accesible" },
       ],
     },
     {
