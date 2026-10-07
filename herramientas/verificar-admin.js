@@ -927,7 +927,9 @@ async function pruebaPdfs(browser) {
     const url = URL.createObjectURL(new Blob([...partes, ...central, fin]));
     window.VistaPrevia.abrir([{ ruta: url, ext: "xlsx", titulo: "Notas de prueba" }], 0);
   });
-  await page.waitForFunction(() => document.querySelector("#vista-previa .vista-contenido table, #vista-previa-cuerpo a[download]"), null, { timeout: 5000 });
+  // 15 s y no 5: en el CI, con cuatro tandas a la vez, armar la vista del Excel
+  // a veces pasó de 5 s sin que nada estuviera roto (PR #765).
+  await page.waitForFunction(() => document.querySelector("#vista-previa .vista-contenido table, #vista-previa-cuerpo a[download]"), null, { timeout: 15000 });
   igual("un Excel se ve con sus hojas y celdas, y el texto va como texto", await page.evaluate(() => {
     const t = document.querySelector("#vista-previa .vista-contenido table");
     return t ? [document.querySelector("#vista-previa .vista-contenido h3").textContent,
