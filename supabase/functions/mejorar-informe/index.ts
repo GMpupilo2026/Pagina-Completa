@@ -73,7 +73,7 @@ Lo que se trabajó: un párrafo corto con lo que se hizo en la clase.
 Reglas:
 - Usa SOLO lo que dicen las notas. No inventes temas, ejercicios, posiciones ni resultados. Si las notas son escuetas, escribe objetivos generales y breves en vez de rellenar.
 - No pongas nombres de personas aunque aparezcan en las notas.
-- Usa los nombres de ajedrez que se usan en la región (horquilla, clavada, enfilada, mate del pasillo, oposición, regla del cuadrado).
+- Usa los nombres de ajedrez que se usan en la región (tenedor, clavada, enfilada, mate del pasillo, oposición, regla del cuadrado). Di siempre «tenedor», nunca «horquilla».
 - Sin negritas, sin asteriscos, sin títulos extra. Máximo 1200 caracteres en total.
 - Devuelve solo el texto reescrito, sin comentarios antes ni después.`,
   },
@@ -91,7 +91,7 @@ Lo que se trabajó: uno o dos párrafos con lo que se hizo con los grupos.
 Reglas:
 - Usa SOLO lo que dice el resumen. No inventes clases, cifras, temas ni resultados.
 - No pongas nombres de alumnos aunque aparezcan.
-- Usa los nombres de ajedrez que se usan en la región.
+- Usa los nombres de ajedrez que se usan en la región. Di siempre «tenedor», nunca «horquilla».
 - Sin negritas, sin asteriscos, sin títulos extra. Máximo 3000 caracteres en total.
 - Devuelve solo el texto reescrito, sin comentarios antes ni después.`,
   },

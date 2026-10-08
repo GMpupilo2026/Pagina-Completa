@@ -7,7 +7,7 @@
  * Después se miran las jugadas del bando que ganó ese material, en las
  * últimas antes de cobrarlo, y se reconoce el patrón:
  *
- *   jaque doble, descubierta, horquilla (doble ataque), clavada, enfilada,
+ *   jaque doble, descubierta, tenedor (doble ataque), clavada, enfilada,
  *   eliminación del defensor, coronación; si ninguno: pieza sin defender
  *   (la dejó colgada) u otra.
  *
@@ -48,13 +48,13 @@
   "use strict";
 
   // Cada tema: su nombre y el tema de entreno/temas.html para practicarlo.
-  // `plural`: como se dice en una frase («cuidado con sus horquillas»).
+  // `plural`: como se dice en una frase («cuidado con sus tenedores»).
   const TEMAS = {
     "mate-pasillo": { nombre: "Mate del pasillo", plural: "mates del pasillo", practica: "backRankMate" },
     "mate": { nombre: "Ataque de mate", plural: "ataques de mate", practica: "mate" },
     "jaque-doble": { nombre: "Jaque doble", plural: "jaques dobles", practica: "doubleCheck" },
     "descubierta": { nombre: "Ataque a la descubierta", plural: "ataques a la descubierta", practica: "discoveredAttack" },
-    "horquilla": { nombre: "Horquilla (ataque doble)", plural: "horquillas", practica: "fork" },
+    "horquilla": { nombre: "Tenedor (ataque doble)", plural: "tenedores", practica: "fork" },
     "clavada": { nombre: "Clavada", plural: "clavadas", practica: "pin" },
     "enfilada": { nombre: "Enfilada", plural: "enfiladas", practica: "skewer" },
     "defensor": { nombre: "Eliminación del defensor", plural: "eliminaciones del defensor", practica: "capturingDefender" },
@@ -175,7 +175,7 @@
       }
     }
 
-    // Horquilla: la pieza que movió ataca dos cosas que valen más que ella o
+    // Tenedor: la pieza que movió ataca dos cosas que valen más que ella o
     // que no están defendidas (o el rey y otra).
     const blancos = ataques(despues, m.hasta).filter((x) => despues[x] && colorDe(despues[x]) === perdedor &&
       (x === rey || valor(despues[x]) > valor(pieza) || (valor(despues[x]) >= 3 && !defendida(despues, x))));

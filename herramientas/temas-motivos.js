@@ -1,5 +1,5 @@
 /* Genera entreno/data/temas-motivos.json: { clave → nombre } de los temas que
- * son MOTIVOS (clavada, horquilla, mate del pasillo…), sacados de
+ * son MOTIVOS (clavada, tenedor, mate del pasillo…), sacados de
  * entreno/data/temas.json.
  *
  * Lo usan Informes y el hub de Entrenamiento para el «tema más flojo»

@@ -1210,8 +1210,8 @@ medalla, y los diplomas de los anteriores lo suman solos al regenerarse.
 ### El segundo cuento: los trucos del bosque
 
 *Peonita, Tizón y los trucos del bosque*: los primeros trucos de la táctica
-para quien ya sabe mover las piezas (la pieza sin cuidar, la horquilla del
-caballo, el ataque doble de la dama, la horquilla de peón, la clavada, la
+para quien ya sabe mover las piezas (la pieza sin cuidar, el tenedor del
+caballo, el ataque doble de la dama, el tenedor de peón, la clavada, la
 enfilada, el mate del pasillo, el ataque a la descubierta, mirar qué quiere
 el otro y un repaso). La historia: en una excursión, Don Pillo, un mapache
 travieso, se lleva las piezas que nadie cuida; Peonita y Tizón aprenden un
@@ -1315,11 +1315,11 @@ posiciones de iniciación, que es lo que trae un cuento. Con él se comprueba:
 
 Rompió cuatro posiciones que parecían buenas a ojo. La torre que se come un
 caballo sin cuidar también amenazaba mate del pasillo, así que había dos
-respuestas. En dos horquillas de peón, la pieza atacada se salvaba **dando
+respuestas. En dos tenedores de peón, la pieza atacada se salvaba **dando
 jaque**, y después se salvaba la otra. Y en una descubierta, la dama negra
 tapaba el jaque dando jaque a su vez. Además, el buscador tenía un error
 propio: chess.js da tablas con rey y caballo contra rey, y entonces la torre
-que se comía la horquilla «valía 0». Para contar material, solo el ahogado
+que se comía el tenedor «valía 0». Para contar material, solo el ahogado
 es tablas.
 
 Las flechas de los diagramas (`flechas` en `lib/tablero-svg.js`) son azules

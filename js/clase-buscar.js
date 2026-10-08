@@ -33,7 +33,7 @@ window.ClaseBuscar = (function () {
        tiene que ser cierta: está porque esa herramienta lo hace. */
     const HERRAMIENTAS = [
         { nombre: "Tu plan de clase", donde: "Mi plan", claves: "plan planificacion temario que voy a dar", destino: "plan-panel" },
-        { nombre: "Táctica por tema", donde: "Táctica", claves: "ejercicios tactica temas clavada horquilla mate posiciones", destino: "tactics-panel" },
+        { nombre: "Táctica por tema", donde: "Táctica", claves: "ejercicios tactica temas clavada tenedor mate posiciones", destino: "tactics-panel" },
         { nombre: "Entrenamientos de la plataforma", donde: "Entrenamientos", claves: "entrenamiento entrenamientos habilidades detective memoria tipos ventana", destino: "tipos-panel" },
         { nombre: "Preguntar: ¿qué jugarías?", donde: "Preguntar", claves: "pregunta preguntar jugada respuesta tablero que jugarias", destino: "ask-question-btn" },
         { nombre: "Preguntar: ¿quién está mejor?", donde: "Preguntar", claves: "pregunta evaluar valorar quien esta mejor ventaja", destino: "ask-quien-mejor-btn" },

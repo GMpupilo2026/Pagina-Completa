@@ -35,7 +35,7 @@
       niveles: [
         { n: 1, titulo: "Algo colgando", desc: "El rival amenaza comerse una pieza que quedó sin defensa." },
         { n: 2, titulo: "Mate en 1", desc: "El rival amenaza dar mate de inmediato." },
-        { n: 3, titulo: "Golpe táctico", desc: "Horquillas, clavadas, enfiladas y ataques a la descubierta." },
+        { n: 3, titulo: "Golpe táctico", desc: "Tenedores, clavadas, enfiladas y ataques a la descubierta." },
         { n: 4, titulo: "Mate en 2", desc: "La amenaza es un mate en dos jugadas." },
         { n: 5, titulo: "Amenaza silenciosa", desc: "Sin jaque ni captura: una jugada tranquila que no tiene defensa." },
       ],
@@ -137,11 +137,11 @@
       id: "construye", emoji: "🏗️", nombre: "Constrúyela tú",
       pregunta: "¿Dónde pondrías esta pieza para que pase?",
       entrena: "Entender por qué funciona un motivo, no solo reconocerlo: para armarlo hay que saber qué condiciones necesita.",
-      como: "Te dan una posición y una pieza. Colócala en una casilla vacía para lograr lo que se pide: un mate, una horquilla, una clavada o tapar un mate. Vale cualquier casilla que cumpla.",
+      como: "Te dan una posición y una pieza. Colócala en una casilla vacía para lograr lo que se pide: un mate, un tenedor, una clavada o tapar un mate. Vale cualquier casilla que cumpla.",
       clase: "Pon la posición y que cada alumno proponga su casilla: puede haber varias respuestas buenas, y se comprueban juntos en el tablero.",
       niveles: [
         { n: 1, titulo: "Mate ya", desc: "La pieza que pones da jaque mate ahora mismo." },
-        { n: 2, titulo: "Horquilla", desc: "Un caballo que ataca dos piezas grandes a la vez y no se lo pueden comer." },
+        { n: 2, titulo: "Tenedor", desc: "Un caballo que ataca dos piezas grandes a la vez y no se lo pueden comer." },
         { n: 3, titulo: "Clavada", desc: "Una pieza que clava otra contra su rey." },
         { n: 4, titulo: "Mate en 1", desc: "Ponla para que haya mate en una jugada." },
         { n: 5, titulo: "Quita el mate", desc: "Del otro lado: pon una pieza para que el rival ya no tenga mate en 1." },
@@ -206,7 +206,7 @@
       niveles: [
         { n: 1, titulo: "Salva la pieza", desc: "El rival amenaza comerse algo, y solo una jugada lo evita sin perder otra cosa." },
         { n: 2, titulo: "Tapa el mate", desc: "El rival amenaza mate en una. Solo una jugada lo para." },
-        { n: 3, titulo: "Contra el golpe", desc: "El rival prepara un golpe sin captura: un jaque, una horquilla, una jugada tranquila. Desármalo antes." },
+        { n: 3, titulo: "Contra el golpe", desc: "El rival prepara un golpe sin captura: un jaque, un tenedor, una jugada tranquila. Desármalo antes." },
         { n: 4, titulo: "Lo que no se ve", desc: "El rival amenaza mate en dos o más jugadas: la defensa está más lejos." },
       ],
     },

@@ -37,7 +37,7 @@ window.MIDE_TU_FUERZA_ITEMS = [
     primera: 'Cb6+',
     linea: '23.Cb6+ Rc7 24.Cxc8',
     mate: null,
-    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez.',
+    explica: 'Es un tenedor: una pieza ataca dos objetivos a la vez.',
     comprobado: 'Ejercicio 03QUv de la base abierta de Lichess (CC0), rating 1341. Stockfish 16 a profundidad 18: Cb6+ es la mejor (+4,5) y la segunda queda en -0,8.',
   },
   {
@@ -57,7 +57,7 @@ window.MIDE_TU_FUERZA_ITEMS = [
     primera: 'dxe5',
     linea: '10.dxe5 Dd8 11.exf6',
     mate: null,
-    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez.',
+    explica: 'Es un tenedor: una pieza ataca dos objetivos a la vez.',
     comprobado: 'Ejercicio 232SG de la base abierta de Lichess (CC0), rating 1370. Stockfish 16 a profundidad 18: dxe5 es la mejor (+3,9) y la segunda queda en 0,0.',
   },
   {
@@ -77,7 +77,7 @@ window.MIDE_TU_FUERZA_ITEMS = [
     primera: 'Da5+',
     linea: '39…Da5+ 40.Rb3 Txb5+ 41.Dxb5 Dxb5+',
     mate: null,
-    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez.',
+    explica: 'Es un tenedor: una pieza ataca dos objetivos a la vez.',
     comprobado: 'Ejercicio 0nQUZ de la base abierta de Lichess (CC0), rating 1371. Stockfish 16 a profundidad 18: Da5+ es la mejor (+4,9) y la segunda queda en -7,1.',
   },
   {
@@ -97,7 +97,7 @@ window.MIDE_TU_FUERZA_ITEMS = [
     primera: 'Da4+',
     linea: '9.Da4+ Ad7 10.Dxe4',
     mate: null,
-    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez.',
+    explica: 'Es un tenedor: una pieza ataca dos objetivos a la vez.',
     comprobado: 'Ejercicio 1HdOj de la base abierta de Lichess (CC0), rating 1386. Stockfish 16 a profundidad 18: Da4+ es la mejor (+3,5) y la segunda queda en +0,0.',
   },
   {
@@ -117,7 +117,7 @@ window.MIDE_TU_FUERZA_ITEMS = [
     primera: 'Ad6+',
     linea: '18.Ad6+ Re8 19.Cc7+ Dxc7 20.Axc7',
     mate: null,
-    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez.',
+    explica: 'Es un tenedor: una pieza ataca dos objetivos a la vez.',
     comprobado: 'Ejercicio 1l5aQ de la base abierta de Lichess (CC0), rating 1400. Stockfish 16 a profundidad 18: Ad6+ es la mejor (+4,0) y la segunda queda en -2,8.',
   },
   {
@@ -137,7 +137,7 @@ window.MIDE_TU_FUERZA_ITEMS = [
     primera: 'Dxc5+',
     linea: '24…Dxc5+ 25.De3 Dxd6',
     mate: null,
-    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez.',
+    explica: 'Es un tenedor: una pieza ataca dos objetivos a la vez.',
     comprobado: 'Ejercicio 0SA8k de la base abierta de Lichess (CC0), rating 1548. Stockfish 16 a profundidad 18: Dxc5+ es la mejor (+4,7) y la segunda queda en -0,1.',
   },
   {
@@ -157,7 +157,7 @@ window.MIDE_TU_FUERZA_ITEMS = [
     primera: 'Ce4',
     linea: '16…Ce4 17.Tc7 Dxc7 18.Txc7 Cxd2',
     mate: null,
-    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez.',
+    explica: 'Es un tenedor: una pieza ataca dos objetivos a la vez.',
     comprobado: 'Ejercicio 1YTlP de la base abierta de Lichess (CC0), rating 1555. Stockfish 16 a profundidad 18: Ce4 es la mejor (+3,7) y la segunda queda en -0,1.',
   },
   {
@@ -177,7 +177,7 @@ window.MIDE_TU_FUERZA_ITEMS = [
     primera: 'Te7+',
     linea: '63.Te7+ Rd8 64.Txe1',
     mate: null,
-    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez.',
+    explica: 'Es un tenedor: una pieza ataca dos objetivos a la vez.',
     comprobado: 'Ejercicio 1jj5j de la base abierta de Lichess (CC0), rating 1589. Stockfish 16 a profundidad 18: Te7+ es la mejor (+5,4) y la segunda queda en 0,0.',
   },
   {
@@ -997,7 +997,7 @@ window.MIDE_TU_FUERZA_ITEMS = [
     primera: 'Te2+',
     linea: '29…Te2+ 30.Rxe2 Cf4+ 31.Rd2 Cxg6',
     mate: null,
-    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez.',
+    explica: 'Es un tenedor: una pieza ataca dos objetivos a la vez.',
     comprobado: 'Ejercicio 106GT de la base abierta de Lichess (CC0), rating 1282. Stockfish 16 a profundidad 18: Te2+ es la mejor (+4,7) y la segunda queda en -5,5.',
   },
   {
@@ -1037,7 +1037,7 @@ window.MIDE_TU_FUERZA_ITEMS = [
     primera: 'Dxg6+',
     linea: '37.Dxg6+ Rxg6 38.Tf6+ Rg7 39.Txc6',
     mate: null,
-    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez.',
+    explica: 'Es un tenedor: una pieza ataca dos objetivos a la vez.',
     comprobado: 'Ejercicio 0qZmu de la base abierta de Lichess (CC0), rating 1348. Stockfish 16 a profundidad 18: Dxg6+ es la mejor (+3,5) y la segunda queda en -0,8.',
   },
   {
@@ -1057,7 +1057,7 @@ window.MIDE_TU_FUERZA_ITEMS = [
     primera: 'Txf8+',
     linea: '35.Txf8+ Rxf8 36.Ce6+ Re7 37.Cxd4',
     mate: null,
-    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez.',
+    explica: 'Es un tenedor: una pieza ataca dos objetivos a la vez.',
     comprobado: 'Ejercicio 0emnn de la base abierta de Lichess (CC0), rating 1357. Stockfish 16 a profundidad 18: Txf8+ es la mejor (+6,6) y la segunda queda en -3,7.',
   },
   {
@@ -1077,7 +1077,7 @@ window.MIDE_TU_FUERZA_ITEMS = [
     primera: 'Txf2+',
     linea: '32…Txf2+ 33.Rxf2 Ac5+ 34.Rf3 Axa7',
     mate: null,
-    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez.',
+    explica: 'Es un tenedor: una pieza ataca dos objetivos a la vez.',
     comprobado: 'Ejercicio 0QRlB de la base abierta de Lichess (CC0), rating 1447. Stockfish 16 a profundidad 18: Txf2+ es la mejor (+4,8) y la segunda queda en 0,0.',
   },
   {
@@ -1117,7 +1117,7 @@ window.MIDE_TU_FUERZA_ITEMS = [
     primera: 'f7+',
     linea: '39.f7+ Txf7 40.Cd6+ Re7 41.Cxf7',
     mate: null,
-    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez.',
+    explica: 'Es un tenedor: una pieza ataca dos objetivos a la vez.',
     comprobado: 'Ejercicio 0vg7r de la base abierta de Lichess (CC0), rating 1505. Stockfish 16 a profundidad 18: f7+ es la mejor (+4,1) y la segunda queda en -0,6.',
   },
   {
@@ -1137,7 +1137,7 @@ window.MIDE_TU_FUERZA_ITEMS = [
     primera: 'Dxf7+',
     linea: '39.Dxf7+ Dxf7 40.Cxg5+ Rg8 41.Cxf7',
     mate: null,
-    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez.',
+    explica: 'Es un tenedor: una pieza ataca dos objetivos a la vez.',
     comprobado: 'Ejercicio 0zZVO de la base abierta de Lichess (CC0), rating 1531. Stockfish 16 a profundidad 18: Dxf7+ es la mejor (+4,8) y la segunda queda en -2,8.',
   },
   {
@@ -1397,7 +1397,7 @@ window.MIDE_TU_FUERZA_ITEMS = [
     primera: 'Txb2',
     linea: '39…Txb2 40.Txb2 Da1+ 41.Rh2 Dxb2',
     mate: null,
-    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez.',
+    explica: 'Es un tenedor: una pieza ataca dos objetivos a la vez.',
     comprobado: 'Ejercicio 1Cii2 de la base abierta de Lichess (CC0), rating 1574. Stockfish 16 a profundidad 18: Txb2 es la mejor (+3,9) y la segunda queda en +0,0.',
   },
   {
@@ -1437,7 +1437,7 @@ window.MIDE_TU_FUERZA_ITEMS = [
     primera: 'Cxe2+',
     linea: '13…Cxe2+ 14.Dxe2 Dd4+ 15.Ae3 Dxa4',
     mate: null,
-    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez.',
+    explica: 'Es un tenedor: una pieza ataca dos objetivos a la vez.',
     comprobado: 'Ejercicio 0ofgl de la base abierta de Lichess (CC0), rating 1634. Stockfish 16 a profundidad 18: Cxe2+ es la mejor (+3,7) y la segunda queda en +0,3.',
   },
   {
@@ -1497,7 +1497,7 @@ window.MIDE_TU_FUERZA_ITEMS = [
     primera: 'Txd5',
     linea: '23.Txd5 Txd5 24.Cxf6+ Rg7 25.Cxd5',
     mate: null,
-    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez.',
+    explica: 'Es un tenedor: una pieza ataca dos objetivos a la vez.',
     comprobado: 'Ejercicio 0rfq4 de la base abierta de Lichess (CC0), rating 1456. Stockfish 16 a profundidad 18: Txd5 es la mejor (+4,7) y la segunda queda en +0,1.',
   },
   {
@@ -1517,7 +1517,7 @@ window.MIDE_TU_FUERZA_ITEMS = [
     primera: 'Txc4',
     linea: '31…Txc4 32.Txc4 Cxe3+ 33.Re2 Cxc4',
     mate: null,
-    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez.',
+    explica: 'Es un tenedor: una pieza ataca dos objetivos a la vez.',
     comprobado: 'Ejercicio 1yBoq de la base abierta de Lichess (CC0), rating 1509. Stockfish 16 a profundidad 18: Txc4 es la mejor (+4,6) y la segunda queda en -0,5.',
   },
   {
@@ -2437,7 +2437,7 @@ window.MIDE_TU_FUERZA_ITEMS = [
     primera: 'Txd7',
     linea: '40…Txd7 41.e8=D Td2+ 42.Rf1 g2+ 43.Re1 gxh1=D+',
     mate: null,
-    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez.',
+    explica: 'Es un tenedor: una pieza ataca dos objetivos a la vez.',
     comprobado: 'Ejercicio 0f7Lc de la base abierta de Lichess (CC0), rating 1654. Stockfish 16 a profundidad 18: Txd7 es la mejor (+5,0) y la segunda queda en -41,3.',
   },
   {
@@ -2457,7 +2457,7 @@ window.MIDE_TU_FUERZA_ITEMS = [
     primera: 'Db6+',
     linea: '33…Db6+ 34.Rh2 Dxc7',
     mate: null,
-    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez.',
+    explica: 'Es un tenedor: una pieza ataca dos objetivos a la vez.',
     comprobado: 'Ejercicio 1DdiT de la base abierta de Lichess (CC0), rating 1772. Stockfish 16 a profundidad 18: Db6+ es la mejor (+3,3) y la segunda queda en -5,2.',
   },
   {
@@ -2477,7 +2477,7 @@ window.MIDE_TU_FUERZA_ITEMS = [
     primera: 'Ad3',
     linea: '17…Ad3 18.Df4 Dxf4 19.exf4 Axf1',
     mate: null,
-    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez.',
+    explica: 'Es un tenedor: una pieza ataca dos objetivos a la vez.',
     comprobado: 'Ejercicio 1ioBa de la base abierta de Lichess (CC0), rating 1795. Stockfish 16 a profundidad 18: Ad3 es la mejor (+3,9) y la segunda queda en -1,0.',
   },
   {
@@ -2497,7 +2497,7 @@ window.MIDE_TU_FUERZA_ITEMS = [
     primera: 'Dd4+',
     linea: '38…Dd4+ 39.Rb4 Dxe3',
     mate: null,
-    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez.',
+    explica: 'Es un tenedor: una pieza ataca dos objetivos a la vez.',
     comprobado: 'Ejercicio 0xpca de la base abierta de Lichess (CC0), rating 1844. Stockfish 16 a profundidad 18: Dd4+ es la mejor (+4,1) y la segunda queda en -2,0.',
   },
   {
@@ -2517,7 +2517,7 @@ window.MIDE_TU_FUERZA_ITEMS = [
     primera: 'f4',
     linea: '30.f4 Dd8 31.Te8+ Dxe8 32.Txe8+ Txe8 33.Dxd5',
     mate: null,
-    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez.',
+    explica: 'Es un tenedor: una pieza ataca dos objetivos a la vez.',
     comprobado: 'Ejercicio 1dNG2 de la base abierta de Lichess (CC0), rating 1904. Stockfish 16 a profundidad 18: f4 es la mejor (+4,9) y la segunda queda en +0,1.',
   },
   {
@@ -2537,7 +2537,7 @@ window.MIDE_TU_FUERZA_ITEMS = [
     primera: 'Ag5+',
     linea: '30…Ag5+ 31.f4 Axf4+ 32.Dxf4 Dxf4+',
     mate: null,
-    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez.',
+    explica: 'Es un tenedor: una pieza ataca dos objetivos a la vez.',
     comprobado: 'Ejercicio 1UQdN de la base abierta de Lichess (CC0), rating 1973. Stockfish 16 a profundidad 18: Ag5+ es la mejor (+5,1) y la segunda queda en -1,8.',
   },
   {
@@ -2557,7 +2557,7 @@ window.MIDE_TU_FUERZA_ITEMS = [
     primera: 'Dxg3+',
     linea: '30…Dxg3+ 31.fxg3 f2+ 32.Rh1 Txe1+ 33.Txe1 fxe1=D+',
     mate: null,
-    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez.',
+    explica: 'Es un tenedor: una pieza ataca dos objetivos a la vez.',
     comprobado: 'Ejercicio 16UY0 de la base abierta de Lichess (CC0), rating 1999. Stockfish 16 a profundidad 18: Dxg3+ es la mejor (+5,2) y la segunda queda en -4,0.',
   },
   {
@@ -2577,7 +2577,7 @@ window.MIDE_TU_FUERZA_ITEMS = [
     primera: 'Dh4+',
     linea: '9…Dh4+ 10.g3 De4+ 11.De2 Dxh1+',
     mate: null,
-    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez.',
+    explica: 'Es un tenedor: una pieza ataca dos objetivos a la vez.',
     comprobado: 'Ejercicio 1BP1M de la base abierta de Lichess (CC0), rating 2027. Stockfish 16 a profundidad 18: Dh4+ es la mejor (+4,9) y la segunda queda en -0,2.',
   },
   {
@@ -2877,7 +2877,7 @@ window.MIDE_TU_FUERZA_ITEMS = [
     primera: 'Dg7+',
     linea: '29.Dg7+ Re8 30.Dxg8#',
     mate: 2,
-    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez.',
+    explica: 'Es un tenedor: una pieza ataca dos objetivos a la vez.',
     comprobado: 'Ejercicio 0FqyT de la base abierta de Lichess (CC0), rating 1905. Stockfish 16 a profundidad 18: Dg7+ es la mejor (mate en 2) y la segunda queda en 0,0.',
   },
   {
@@ -3397,7 +3397,7 @@ window.MIDE_TU_FUERZA_ITEMS = [
     primera: 'Dxg6+',
     linea: '32.Dxg6+ Rxg6 33.Ce5+ Rh7 34.Cxd7',
     mate: null,
-    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez.',
+    explica: 'Es un tenedor: una pieza ataca dos objetivos a la vez.',
     comprobado: 'Ejercicio 115jd de la base abierta de Lichess (CC0), rating 1788. Stockfish 16 a profundidad 18: Dxg6+ es la mejor (+5,1) y la segunda queda en -1,2.',
   },
   {
@@ -3457,7 +3457,7 @@ window.MIDE_TU_FUERZA_ITEMS = [
     primera: 'Axg7+',
     linea: '33.Axg7+ Rxg7 34.Db2+ Rh6 35.Dxd2',
     mate: null,
-    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez.',
+    explica: 'Es un tenedor: una pieza ataca dos objetivos a la vez.',
     comprobado: 'Ejercicio 11lGI de la base abierta de Lichess (CC0), rating 1829. Stockfish 16 a profundidad 18: Axg7+ es la mejor (+4,5) y la segunda queda en -2,1.',
   },
   {
@@ -3497,7 +3497,7 @@ window.MIDE_TU_FUERZA_ITEMS = [
     primera: 'Txg7+',
     linea: '46.Txg7+ Rxg7 47.Dd7+ Rf8 48.Dxc8+',
     mate: null,
-    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez.',
+    explica: 'Es un tenedor: una pieza ataca dos objetivos a la vez.',
     comprobado: 'Ejercicio 0NVfF de la base abierta de Lichess (CC0), rating 1951. Stockfish 16 a profundidad 18: Txg7+ es la mejor (+3,9) y la segunda queda en -3,0.',
   },
   {
@@ -4177,7 +4177,7 @@ window.MIDE_TU_FUERZA_ITEMS = [
     primera: 'Cf7+',
     linea: '16.Cf7+ Rc7 17.Af4+ Rb7 18.Cd8#',
     mate: 3,
-    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez.',
+    explica: 'Es un tenedor: una pieza ataca dos objetivos a la vez.',
     comprobado: 'Ejercicio 0gQ70 de la base abierta de Lichess (CC0), rating 1999. Stockfish 16 a profundidad 18: Cf7+ es la mejor (mate en 3) y la segunda queda en -7,7.',
   },
   {
@@ -4237,7 +4237,7 @@ window.MIDE_TU_FUERZA_ITEMS = [
     primera: 'Txc8',
     linea: '22.Txc8 Txc8 23.Axe6+ Rh8 24.Axc8',
     mate: null,
-    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez.',
+    explica: 'Es un tenedor: una pieza ataca dos objetivos a la vez.',
     comprobado: 'Ejercicio 0ZWaG de la base abierta de Lichess (CC0), rating 1846. Stockfish 16 a profundidad 18: Txc8 es la mejor (+3,6) y la segunda queda en -2,6.',
   },
   {
@@ -4837,7 +4837,7 @@ window.MIDE_TU_FUERZA_ITEMS = [
     primera: 'Cxd4',
     linea: '20.Cxd4 Cxd4 21.Da4+ b5 22.Dxd4',
     mate: null,
-    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez.',
+    explica: 'Es un tenedor: una pieza ataca dos objetivos a la vez.',
     comprobado: 'Ejercicio 0vHlU de la base abierta de Lichess (CC0), rating 2067. Stockfish 16 a profundidad 18: Cxd4 es la mejor (+3,3) y la segunda queda en -0,9.',
   },
   {
@@ -4857,7 +4857,7 @@ window.MIDE_TU_FUERZA_ITEMS = [
     primera: 'Dh6+',
     linea: '25…Dh6+ 26.Rb1 Cc3+ 27.Ra1 Cxd5',
     mate: null,
-    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez.',
+    explica: 'Es un tenedor: una pieza ataca dos objetivos a la vez.',
     comprobado: 'Ejercicio 0WEMi de la base abierta de Lichess (CC0), rating 2108. Stockfish 16 a profundidad 18: Dh6+ es la mejor (+5,7) y la segunda queda en -3,7.',
   },
   {
@@ -4877,7 +4877,7 @@ window.MIDE_TU_FUERZA_ITEMS = [
     primera: 'f3',
     linea: '18.f3 Txc4 19.Db3',
     mate: null,
-    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez.',
+    explica: 'Es un tenedor: una pieza ataca dos objetivos a la vez.',
     comprobado: 'Ejercicio 1EiJ7 de la base abierta de Lichess (CC0), rating 2110. Stockfish 16 a profundidad 18: f3 es la mejor (+4,5) y la segunda queda en -0,4.',
   },
   {
@@ -4897,7 +4897,7 @@ window.MIDE_TU_FUERZA_ITEMS = [
     primera: 'Cd5',
     linea: '16.Cd5 Dc5 17.Cxc7+ Re7 18.Ad6+ Dxd6 19.Txd6',
     mate: null,
-    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez.',
+    explica: 'Es un tenedor: una pieza ataca dos objetivos a la vez.',
     comprobado: 'Ejercicio 1Rasd de la base abierta de Lichess (CC0), rating 2168. Stockfish 16 a profundidad 18: Cd5 es la mejor (+3,0) y la segunda queda en -1,9.',
   },
   {
@@ -4917,7 +4917,7 @@ window.MIDE_TU_FUERZA_ITEMS = [
     primera: 'Tg1+',
     linea: '47.Tg1+ Rf7 48.Txf5+ Re6 49.Te5+ Dxe5 50.fxe5',
     mate: null,
-    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez.',
+    explica: 'Es un tenedor: una pieza ataca dos objetivos a la vez.',
     comprobado: 'Ejercicio 1nCie de la base abierta de Lichess (CC0), rating 2260. Stockfish 16 a profundidad 18: Tg1+ es la mejor (+5,9) y la segunda queda en 0,0.',
   },
   {
@@ -4937,7 +4937,7 @@ window.MIDE_TU_FUERZA_ITEMS = [
     primera: 'd2',
     linea: '39…d2 40.Rc2 Cc3 41.Rxd2 Ce4+ 42.Rd3 Cxc5+',
     mate: null,
-    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez.',
+    explica: 'Es un tenedor: una pieza ataca dos objetivos a la vez.',
     comprobado: 'Ejercicio 2340i de la base abierta de Lichess (CC0), rating 2310. Stockfish 16 a profundidad 18: d2 es la mejor (+3,9) y la segunda queda en +1,4.',
   },
   {
@@ -4957,7 +4957,7 @@ window.MIDE_TU_FUERZA_ITEMS = [
     primera: 'Dxf2+',
     linea: '21…Dxf2+ 22.Rh1 Dxe1+ 23.Txe1 Cf2+ 24.Rg1 Cxd3',
     mate: null,
-    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez.',
+    explica: 'Es un tenedor: una pieza ataca dos objetivos a la vez.',
     comprobado: 'Ejercicio 1YE7O de la base abierta de Lichess (CC0), rating 2323. Stockfish 16 a profundidad 18: Dxf2+ es la mejor (+4,0) y la segunda queda en +0,3.',
   },
   {
@@ -4977,7 +4977,7 @@ window.MIDE_TU_FUERZA_ITEMS = [
     primera: 'cxb3',
     linea: '40…cxb3 41.Rd3 Cb4+ 42.Rc3 Cd5+ 43.Rxb3 Cxb6',
     mate: null,
-    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez.',
+    explica: 'Es un tenedor: una pieza ataca dos objetivos a la vez.',
     comprobado: 'Ejercicio 1DaXS de la base abierta de Lichess (CC0), rating 2418. Stockfish 16 a profundidad 18: cxb3 es la mejor (+4,1) y la segunda queda en +0,1.',
   },
   {
@@ -5497,7 +5497,7 @@ window.MIDE_TU_FUERZA_ITEMS = [
     primera: 'Dxh3+',
     linea: '32…Dxh3+ 33.Rg1 Tg6+ 34.Rf2 Tg2+ 35.Re1 Txd2',
     mate: null,
-    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez.',
+    explica: 'Es un tenedor: una pieza ataca dos objetivos a la vez.',
     comprobado: 'Ejercicio 0ocUz de la base abierta de Lichess (CC0), rating 2154. Stockfish 16 a profundidad 18: Dxh3+ es la mejor (+5,0) y la segunda queda en -5,4.',
   },
   {
@@ -5677,7 +5677,7 @@ window.MIDE_TU_FUERZA_ITEMS = [
     primera: 'Dh3',
     linea: '35.Dh3 Td6 36.Axh6 Dxh6 37.Tf7+ Rg8 38.Dxh6',
     mate: null,
-    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez.',
+    explica: 'Es un tenedor: una pieza ataca dos objetivos a la vez.',
     comprobado: 'Ejercicio 0RAMI de la base abierta de Lichess (CC0), rating 2074. Stockfish 16 a profundidad 18: Dh3 es la mejor (+3,6) y la segunda queda en +0,1.',
   },
   {
@@ -5697,7 +5697,7 @@ window.MIDE_TU_FUERZA_ITEMS = [
     primera: 'Dd6+',
     linea: '40…Dd6+ 41.Dg3 Th1+ 42.Rxh1 Dxg3 43.Ta2 Df3+',
     mate: null,
-    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez.',
+    explica: 'Es un tenedor: una pieza ataca dos objetivos a la vez.',
     comprobado: 'Ejercicio 08j1w de la base abierta de Lichess (CC0), rating 2089. Stockfish 16 a profundidad 18: Dd6+ es la mejor (+4,2) y la segunda queda en -0,8.',
   },
   {
@@ -5837,7 +5837,7 @@ window.MIDE_TU_FUERZA_ITEMS = [
     primera: 'Cd3+',
     linea: '34…Cd3+ 35.Rb3 Dxc2+ 36.Rxc2 Cxb4+ 37.Rc3 Cxc6',
     mate: null,
-    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez.',
+    explica: 'Es un tenedor: una pieza ataca dos objetivos a la vez.',
     comprobado: 'Ejercicio 0nY9s de la base abierta de Lichess (CC0), rating 2119. Stockfish 16 a profundidad 18: Cd3+ es la mejor (+4,0) y la segunda queda en +0,3.',
   },
   {
@@ -5897,7 +5897,7 @@ window.MIDE_TU_FUERZA_ITEMS = [
     primera: 'Ch6',
     linea: '43.Ch6 Txg7 44.e7 Txe7 45.Cg8+ Rf7 46.Cxe7',
     mate: null,
-    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez.',
+    explica: 'Es un tenedor: una pieza ataca dos objetivos a la vez.',
     comprobado: 'Ejercicio 0dI6f de la base abierta de Lichess (CC0), rating 2230. Stockfish 16 a profundidad 18: Ch6 es la mejor (+4,3) y la segunda queda en -1,4.',
   },
   {
@@ -5917,7 +5917,7 @@ window.MIDE_TU_FUERZA_ITEMS = [
     primera: 'Cxd4',
     linea: '14…Cxd4 15.Df4 Dxe5+ 16.Dxe5 Cf3+ 17.Rf2 Cxe5',
     mate: null,
-    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez.',
+    explica: 'Es un tenedor: una pieza ataca dos objetivos a la vez.',
     comprobado: 'Ejercicio 0t6A7 de la base abierta de Lichess (CC0), rating 2240. Stockfish 16 a profundidad 18: Cxd4 es la mejor (+3,9) y la segunda queda en -1,6.',
   },
   {

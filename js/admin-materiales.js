@@ -224,7 +224,7 @@
       emoji: "🦝",
       titulo: "Peonita, Tizón y los trucos del bosque",
       autor: "Oscar Angulo Cubero",
-      resumen: "El segundo cuento de Peonita, para quien ya sabe mover las piezas: con Don Pillo, un mapache travieso, aprende los primeros trucos (la pieza sin cuidar, la horquilla, el ataque doble, la clavada, la enfilada, el mate del pasillo y el ataque a la descubierta) y a mirar qué quiere hacer el otro. Diez capítulos con «¡A jugar!», el diploma y las soluciones. Se puede imprimir.",
+      resumen: "El segundo cuento de Peonita, para quien ya sabe mover las piezas: con Don Pillo, un mapache travieso, aprende los primeros trucos (la pieza sin cuidar, el tenedor, el ataque doble, la clavada, la enfilada, el mate del pasillo y el ataque a la descubierta) y a mirar qué quiere hacer el otro. Diez capítulos con «¡A jugar!», el diploma y las soluciones. Se puede imprimir.",
       archivos: [
         { href: "material/peonita-trucos/peonita-trucos.pdf", texto: "📥 El libro en PDF" },
         { href: "material/peonita-trucos/peonita-trucos-accesible.html", texto: "♿ Versión accesible" },

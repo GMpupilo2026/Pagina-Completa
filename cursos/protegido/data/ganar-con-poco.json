@@ -929,7 +929,7 @@
      "idx": 0,
      "fen": "8/4Pkp1/p2K4/1p1p4/4n3/2P3Np/PP6/8 w - - 2 42",
      "turno": "w",
-     "titulo": "Final de caballos: antes de mover, cuenta los saltos y mira qué horquillas tiene cada caballo. Juegan las blancas; el rival acaba de jugar …Ce4+.",
+     "titulo": "Final de caballos: antes de mover, cuenta los saltos y mira qué tenedores tiene cada caballo. Juegan las blancas; el rival acaba de jugar …Ce4+.",
      "resultado": "1-0",
      "resultado_texto": "Ganan blancas",
      "linea": "42.Nxe4 dxe4 43.Kd7",
@@ -1081,7 +1081,7 @@
        "fen": "6k1/6p1/8/8/5q2/6NP/4Q1PK/8 b - - 1 60"
       }
      ],
-     "comentario": "58.Dh5+ Rg8 59.Dxe2 Dxf4+ 60.Cg3. Es una horquilla: una pieza ataca dos objetivos a la vez. Es una jugada de profilaxis: no ataca nada, pero le quita al rival la única idea que tenía, y la posición sigue siendo tuya. (Ejercicio 1pIxY de la base abierta de Lichess (CC0), rating 1638. Stockfish 16 a profundidad 18: Dh5+ es la mejor (+5,0) y la segunda queda en +0,2.)",
+     "comentario": "58.Dh5+ Rg8 59.Dxe2 Dxf4+ 60.Cg3. Es un tenedor: una pieza ataca dos objetivos a la vez. Es una jugada de profilaxis: no ataca nada, pero le quita al rival la única idea que tenía, y la posición sigue siendo tuya. (Ejercicio 1pIxY de la base abierta de Lichess (CC0), rating 1638. Stockfish 16 a profundidad 18: Dh5+ es la mejor (+5,0) y la segunda queda en +0,2.)",
      "clave": true,
      "marcas": []
     }

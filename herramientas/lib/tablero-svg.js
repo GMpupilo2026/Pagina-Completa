@@ -18,7 +18,7 @@
  *     capturas     casillas donde come: un aro alrededor de la pieza
  *     estrellas    casillas con una estrella (la meta de un ejercicio)
  *     flechas      [[desde, hasta], …]: una flecha entre dos casillas (el
- *                  truco de un cuento: la horquilla, la clavada…). Azul
+ *                  truco de un cuento: el tenedor, la clavada…). Azul
  *                  #123e7c, medido: 8,6:1 contra la casilla clara de madera y
  *                  4,1:1 contra la oscura.
  */

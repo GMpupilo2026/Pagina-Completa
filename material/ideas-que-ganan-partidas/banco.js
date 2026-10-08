@@ -220,7 +220,7 @@ window.IDEAS_QUE_GANAN_ITEMS = [
     gana: true,
     valor: '+3,7',
     pista: 'Tienes más piezas en juego que el rival. Ese tiempo hay que usarlo ahora.',
-    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez.',
+    explica: 'Es un tenedor: una pieza ataca dos objetivos a la vez.',
     comprobado: 'Ejercicio 1ghMX de la base abierta de Lichess (CC0), rating 1373. Stockfish 16 a profundidad 18: Dxd8+ es la mejor (+3,7) y la segunda queda en -0,8.',
   },
   {
@@ -335,7 +335,7 @@ window.IDEAS_QUE_GANAN_ITEMS = [
     gana: true,
     valor: '+4,5',
     pista: 'El caballo ataca dos cosas a la vez: busca la casilla.',
-    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez.',
+    explica: 'Es un tenedor: una pieza ataca dos objetivos a la vez.',
     comprobado: 'Ejercicio 25UOh de la base abierta de Lichess (CC0), rating 1645. Stockfish 16 a profundidad 18: Ce7+ es la mejor (+4,5) y la segunda queda en -4,8.',
   },
   {
@@ -358,7 +358,7 @@ window.IDEAS_QUE_GANAN_ITEMS = [
     gana: true,
     valor: '+3,4',
     pista: 'El alfil trabaja de lejos: mira la diagonal entera, hasta el final.',
-    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez.',
+    explica: 'Es un tenedor: una pieza ataca dos objetivos a la vez.',
     comprobado: 'Ejercicio 2tT48 de la base abierta de Lichess (CC0), rating 1590. Stockfish 16 a profundidad 18: Axf6 es la mejor (+3,4) y la segunda queda en -3,7.',
   },
   {
@@ -381,7 +381,7 @@ window.IDEAS_QUE_GANAN_ITEMS = [
     gana: true,
     valor: '+4,2',
     pista: 'No hay jaque ni captura que sirva: la dama gana con una jugada tranquila.',
-    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez.',
+    explica: 'Es un tenedor: una pieza ataca dos objetivos a la vez.',
     comprobado: 'Ejercicio 2QnPY de la base abierta de Lichess (CC0), rating 1567. Stockfish 16 a profundidad 18: Dc6 es la mejor (+4,2) y la segunda queda en 0,0.',
   },
   {
@@ -427,7 +427,7 @@ window.IDEAS_QUE_GANAN_ITEMS = [
     gana: true,
     valor: '+3,9',
     pista: 'Entregar la torre por una pieza menor está bien si lo que queda vale más.',
-    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez.',
+    explica: 'Es un tenedor: una pieza ataca dos objetivos a la vez.',
     comprobado: 'Ejercicio 11MuH de la base abierta de Lichess (CC0), rating 1583. Stockfish 16 a profundidad 18: Txe5 es la mejor (+3,9) y la segunda queda en -0,3.',
   },
   {
@@ -1016,7 +1016,7 @@ window.IDEAS_QUE_GANAN_ITEMS = [
     gana: true,
     valor: '+3,9',
     pista: 'Tienes más piezas en juego que el rival. Ese tiempo hay que usarlo ahora.',
-    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez.',
+    explica: 'Es un tenedor: una pieza ataca dos objetivos a la vez.',
     comprobado: 'Ejercicio 35eKV de la base abierta de Lichess (CC0), rating 1299. Stockfish 16 a profundidad 18: Axc3+ es la mejor (+3,9) y la segunda queda en +0,1.',
   },
   {
@@ -1060,7 +1060,7 @@ window.IDEAS_QUE_GANAN_ITEMS = [
     gana: true,
     valor: '+4,1',
     pista: 'El rey rival sigue en el centro: abre líneas antes de que se esconda.',
-    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez.',
+    explica: 'Es un tenedor: una pieza ataca dos objetivos a la vez.',
     comprobado: 'Ejercicio 29Jkd de la base abierta de Lichess (CC0), rating 1606. Stockfish 16 a profundidad 18: Axe5 es la mejor (+4,1) y la segunda queda en -0,8.',
   },
   {
@@ -1104,7 +1104,7 @@ window.IDEAS_QUE_GANAN_ITEMS = [
     gana: true,
     valor: '+3,8',
     pista: 'La casilla f7 (f2) solo la defiende el rey. Es el punto más débil al empezar.',
-    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez.',
+    explica: 'Es un tenedor: una pieza ataca dos objetivos a la vez.',
     comprobado: 'Ejercicio 2F3P4 de la base abierta de Lichess (CC0), rating 1833. Stockfish 16 a profundidad 18: Cxf7 es la mejor (+3,8) y la segunda queda en -1,1.',
   },
   {
@@ -1236,7 +1236,7 @@ window.IDEAS_QUE_GANAN_ITEMS = [
     gana: true,
     valor: '+4,9',
     pista: 'Una torre en la séptima ataca peones y encierra al rey.',
-    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez.',
+    explica: 'Es un tenedor: una pieza ataca dos objetivos a la vez.',
     comprobado: 'Ejercicio 1LK8D de la base abierta de Lichess (CC0), rating 1639. Stockfish 16 a profundidad 18: Txh2+ es la mejor (+4,9) y la segunda queda en -1,4.',
   },
   {
@@ -1280,7 +1280,7 @@ window.IDEAS_QUE_GANAN_ITEMS = [
     gana: true,
     valor: '+3,2',
     pista: 'El caballo ataca dos cosas a la vez: busca la casilla.',
-    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez.',
+    explica: 'Es un tenedor: una pieza ataca dos objetivos a la vez.',
     comprobado: 'Ejercicio 1ag85 de la base abierta de Lichess (CC0), rating 1924. Stockfish 16 a profundidad 18: Cxd5 es la mejor (+3,2) y la segunda queda en -3,5.',
   },
   {
@@ -1346,7 +1346,7 @@ window.IDEAS_QUE_GANAN_ITEMS = [
     gana: true,
     valor: '+4,5',
     pista: 'El caballo ataca dos cosas a la vez: busca la casilla.',
-    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez.',
+    explica: 'Es un tenedor: una pieza ataca dos objetivos a la vez.',
     comprobado: 'Ejercicio 1WNxd de la base abierta de Lichess (CC0), rating 2532. Stockfish 16 a profundidad 18: Cg5 es la mejor (+4,5) y la segunda queda en -0,9.',
   },
   {
@@ -1566,7 +1566,7 @@ window.IDEAS_QUE_GANAN_ITEMS = [
     gana: true,
     valor: '+3,8',
     pista: 'Toma la pieza que defiende, y lo que defendía queda colgando.',
-    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez.',
+    explica: 'Es un tenedor: una pieza ataca dos objetivos a la vez.',
     comprobado: 'Ejercicio 2TEGK de la base abierta de Lichess (CC0), rating 1510. Stockfish 16 a profundidad 18: Txc3 es la mejor (+3,8) y la segunda queda en -2,6.',
   },
   {
@@ -1632,7 +1632,7 @@ window.IDEAS_QUE_GANAN_ITEMS = [
     gana: true,
     valor: '+3,2',
     pista: 'Toma la pieza que defiende, y lo que defendía queda colgando.',
-    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez.',
+    explica: 'Es un tenedor: una pieza ataca dos objetivos a la vez.',
     comprobado: 'Ejercicio 2LGyi de la base abierta de Lichess (CC0), rating 1928. Stockfish 16 a profundidad 18: exf5 es la mejor (+3,2) y la segunda queda en -3,9.',
   },
   {
@@ -1698,7 +1698,7 @@ window.IDEAS_QUE_GANAN_ITEMS = [
     gana: true,
     valor: '+4,6',
     pista: 'Toma la pieza que defiende, y lo que defendía queda colgando.',
-    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez.',
+    explica: 'Es un tenedor: una pieza ataca dos objetivos a la vez.',
     comprobado: 'Ejercicio 2ngFz de la base abierta de Lichess (CC0), rating 2526. Stockfish 16 a profundidad 18: Td6+ es la mejor (+4,6) y la segunda queda en -4,2.',
   },
   {
@@ -2028,7 +2028,7 @@ window.IDEAS_QUE_GANAN_ITEMS = [
     gana: true,
     valor: '+5,8',
     pista: 'Los peones del enroque son el techo del rey. Romper uno puede valer una pieza.',
-    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez.',
+    explica: 'Es un tenedor: una pieza ataca dos objetivos a la vez.',
     comprobado: 'Ejercicio 1JwhQ de la base abierta de Lichess (CC0), rating 1572. Stockfish 16 a profundidad 18: Txg2+ es la mejor (+5,8) y la segunda queda en -2,1.',
   },
   {
@@ -2380,7 +2380,7 @@ window.IDEAS_QUE_GANAN_ITEMS = [
     gana: true,
     valor: '+5,6',
     pista: 'El rey rival sigue en el centro: abre líneas antes de que se esconda.',
-    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez.',
+    explica: 'Es un tenedor: una pieza ataca dos objetivos a la vez.',
     comprobado: 'Ejercicio 0rtaZ de la base abierta de Lichess (CC0), rating 2134. Stockfish 16 a profundidad 18: b5 es la mejor (+5,6) y la segunda queda en -1,4.',
   },
   {

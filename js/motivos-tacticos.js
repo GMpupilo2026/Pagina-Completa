@@ -3,7 +3,7 @@
  * Practicar (js/entreno-practicas.js) y Aprender (js/entreno-aprender.js)
  * guardan UNA jugada por ejercicio y solo aceptaban esa. Pero en un ataque
  * descubierto cualquier salto del caballo descubre el jaque, y en varias
- * horquillas hay otra que también lo es (Cf7+ además de Cc6): la página le
+ * tenedores hay otra que también lo es (Cf7+ además de Cc6): la página le
  * decía «no es la jugada que buscamos» a una respuesta buena, y eso no da
  * ningún error. Lo encontró herramientas/verificar-practicar-aprender.js, que
  * usa este mismo módulo: una sola copia de qué es cada motivo.
@@ -19,7 +19,7 @@
  *                       puede volver a comer en esa casilla;
  *         "descubierto" después de la jugada da jaque OTRA pieza, no la que
  *                       se movió.
- *       «No lo puede comer» cuenta: una horquilla que regala la pieza no es
+ *       «No lo puede comer» cuenta: un tenedor que regala la pieza no es
  *       lo que el ejercicio enseña.
  *
  *   MotivosTacticos.ataques(juego, casilla) → casillas que ataca esa pieza

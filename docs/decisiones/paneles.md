@@ -2913,7 +2913,7 @@ análisis.
 - después se miran las jugadas del ganador desde 3 antes del cambio hasta
   que cobra;
 - la primera con patrón es el tema, en este orden: jaque doble, descubierta,
-  horquilla, clavada, enfilada, eliminación del defensor;
+  tenedor, clavada, enfilada, eliminación del defensor;
 - si ninguna tiene patrón: coronación; si no, pieza sin defender (la dejó
   colgada o atacada por una de menos valor); si no, «otra»;
 - las partidas que terminan en mate sin haber perdido material son «mate del
@@ -2932,7 +2932,7 @@ rival dejó colgada. En partidas de prueba, las «clavadas» bajaron de 16 a 3.
   `entreno/temas.html?tema=` (fork, pin, skewer, discoveredAttack…).
 - El resumen, en «En toda la partida», suma los temas que pesan (3 partidas o
   más y al menos el 15 % de las que se decidieron por material):
-  - con qué pierde va como «Busca horquillas: es con lo que más pierde»;
+  - con qué pierde va como «Busca tenedores: es con lo que más pierde»;
   - con qué gana, como «Cuidado con sus clavadas».
   - Si lo táctico ya dice que pierde por mate, «Ataca a su rey» no se repite.
 
@@ -2944,7 +2944,7 @@ material (por tiempo, en lo posicional o por abandono) no entran, y la tarjeta
 dice cuántas son.
 
 **Ninguna posición se inventa.** Las pruebas usan posiciones armadas para
-cada tema, y cada jugada se comprueba con chess.js: horquilla de caballo,
+cada tema, y cada jugada se comprueba con chess.js: tenedor de caballo,
 clavada de la dama contra el rey, enfilada, descubierta con jaque, torre
 colgada, mate del pasillo y eliminación del defensor. También usan dos
 partidas reales desde el inicio: el mate de Légal y la trampa de la Petrov

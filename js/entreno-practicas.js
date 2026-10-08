@@ -28,7 +28,7 @@ async function unlock(){
    programáticamente con chess.js (node), incluyendo, según el tipo de
    práctica: que la jugada da jaque mate (mates de escuela y finales con
    torre), que la pieza que se mueve ataca de verdad a las dos piezas
-   objetivo (horquillas y ataques dobles), que la pieza capturada está
+   objetivo (tenedores y ataques dobles), que la pieza capturada está
    realmente clavada — quitarla del tablero expone al rey — (clavadas), o
    que el jaque tras la jugada lo da una pieza DISTINTA a la que se movió
    (ataques descubiertos). Ninguna posición se escribió "a ojo".
@@ -59,7 +59,7 @@ const SETS = [
       { fen:'8/8/8/8/8/1K6/7Q/k7 w - - 0 1', from:'h2', to:'a2' },
       { fen:'6k1/8/6K1/8/8/8/8/R7 w - - 0 1', from:'a1', to:'a8' },
     ] },
-  { id:'horquilla', cat:'tacticas', emoji:'🍴', title:'Horquillas de caballo', desc:'Un solo salto de caballo ataca dos piezas rivales a la vez.',
+  { id:'horquilla', cat:'tacticas', emoji:'🍴', title:'Tenedores de caballo', desc:'Un solo salto de caballo ataca dos piezas rivales a la vez.',
     rounds:[
       { fen:'2q3k1/8/6N1/8/8/8/8/4K3 w - - 0 1', from:'g6', to:'e7' },
       { fen:'r3k3/8/4N3/8/8/8/8/7K w - - 0 1', from:'e6', to:'c7' },

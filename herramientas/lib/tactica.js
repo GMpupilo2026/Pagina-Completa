@@ -50,7 +50,7 @@ function buscar(g, prof, alfa, beta) {
   if (g.in_checkmate()) return -MATE - prof;   // el mate más cercano vale más
   // Solo el ahogado es tablas. in_draw() también da tablas con rey y caballo
   // contra rey, y entonces la pieza que se acaba de ganar valía 0: la
-  // horquilla que se come la torre y queda sola parecía no ganar nada.
+  // tenedor que se come la torre y queda solo parecía no ganar nada.
   if (g.in_stalemate()) return 0;
   if (prof <= 0) return calma(g, alfa, beta, 8);
   let mejor = -Infinity;

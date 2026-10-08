@@ -177,7 +177,7 @@
    * Constrúyela tú: poner UNA pieza para que pase algo.
    *
    *   mate-ya      la pieza puesta da jaque mate ahora mismo;
-   *   horquilla    un caballo que ataca a la vez dos piezas grandes (rey, dama,
+   *   tenedor    un caballo que ataca a la vez dos piezas grandes (rey, dama,
    *                torre, o una pieza menor sin defensa) y que no se puede comer;
    *   clavada      una pieza de largo alcance que clava una pieza rival contra
    *                su rey, sin dar jaque y sin que se la puedan comer;

@@ -26,7 +26,7 @@
  *
  * Todas las posiciones y soluciones están verificadas con chess.js: la FEN es
  * legal, la jugada solución es legal y, además, cumple de verdad lo que el
- * enunciado promete (el mate en 1 es el ÚNICO mate en 1; la horquilla ataca a
+ * enunciado promete (el mate en 1 es el ÚNICO mate en 1; el tenedor ataca a
  * la vez al rey y a la dama; la captura no tiene recaptura posible; el jaque
  * descubierto es jaque y ataca la dama; la columna es realmente abierta…).
  * El script que lo comprueba está descrito en `prueba` de cada ítem: si se
@@ -269,10 +269,10 @@ window.DIAGNOSTICO_ITEMS = [
   /* ---------------- Táctica ---------------- */
   {
     id: 'tac_horquilla', area: 'tactica', peso: 1, elo: 740, eloBase: 700, tipo: 'jugada',
-    enunciado: 'Encuentra la horquilla de caballo que ataca al rey y a la dama a la vez.',
+    enunciado: 'Encuentra el tenedor de caballo que ataca al rey y a la dama a la vez.',
     fen: '7k/8/3q4/6N1/8/8/8/K7 w - - 0 1',
     solucion: { from: 'g5', to: 'f7' },
-    explica: 'La horquilla de caballo es el recurso táctico que más partidas decide entre principiantes: revisa siempre los saltos con jaque.',
+    explica: 'El tenedor de caballo es el recurso táctico que más partidas decide entre principiantes: revisa siempre los saltos con jaque.',
     prueba: 'tras la jugada el caballo ataca a la vez al rey y a la dama negros',
   },
   {
@@ -313,7 +313,7 @@ window.DIAGNOSTICO_ITEMS = [
     enunciado: 'Da jaque con el caballo de manera que además ataques la torre negra.',
     fen: 'r3k3/8/8/1N6/8/8/8/4K3 w - - 0 1',
     solucion: { from: 'b5', to: 'c7' },
-    explica: 'Cc7+ es una horquilla familiar clásica: jaque al rey y ataque simultáneo a la torre de a8. Las negras tienen que atender el jaque moviendo el rey, y las blancas cobran la torre en la jugada siguiente.',
+    explica: 'Cc7+ es un tenedor familiar clásica: jaque al rey y ataque simultáneo a la torre de a8. Las negras tienen que atender el jaque moviendo el rey, y las blancas cobran la torre en la jugada siguiente.',
     prueba: 'de las 11 jugadas legales de la posición (6 del caballo — Ca7, Cc7, Cd6, Cd4, Cc3, Ca3 — y 5 del rey), solo Cc7 y Cd6 dan jaque; de esas dos, solo Cc7 ataca además la torre de a8.',
   },
   {
@@ -603,7 +603,7 @@ window.DIAGNOSTICO_ITEMS = [
     enunciado: 'Haz clic en la casilla desde la que tu caballo daría jaque al rey negro y atacaría la torre a la vez.',
     fen: '3k4/6r1/8/8/3N4/8/8/7K w - - 0 1',
     solucion: 'e6',
-    explica: 'Antes de mover un caballo, mira sus 8 saltos: la horquilla casi siempre está en uno que no miraste.',
+    explica: 'Antes de mover un caballo, mira sus 8 saltos: el tenedor casi siempre está en uno que no miraste.',
     prueba: 'el salto es legal y desde esa casilla el caballo ataca al rey y a la torre negros',
   },
   {
@@ -667,7 +667,7 @@ window.DIAGNOSTICO_ITEMS = [
    * clavada, enfilada, descubierta, jaque doble, desviación, atracción,
    * eliminación del defensor, sobrecarga, interferencia, despeje, jugada
    * intermedia, pieza desesperada, pieza atrapada, socavado, molino y jaque
-   * perpetuo. Los nombres van en el español que se usa acá (horquilla,
+   * perpetuo. Los nombres van en el español que se usa acá (tenedor,
    * enfilada, mate de la coz) y el término en inglés queda entre paréntesis
    * solo cuando es el que se va a encontrar buscando en internet.
    */
@@ -677,7 +677,7 @@ window.DIAGNOSTICO_ITEMS = [
     id: 'tac_doble_ataque', area: 'tactica', peso: 1, elo: 610, eloBase: 700, tipo: 'opcion',
     enunciado: '¿Cómo se llama la jugada que ataca dos piezas rivales al mismo tiempo?',
     opciones: [
-      'Ataque doble, u horquilla si es de caballo.',
+      'Ataque doble, u tenedor si es de caballo.',
       'Clavada, que deja inmóvil a una pieza.',
       'Enroque largo por el flanco de dama.',
       'Jugada de espera, para ganar un tiempo entero.',
@@ -2250,20 +2250,20 @@ window.DIAGNOSTICO_ITEMS = [
     id: 'tac_horquilla_nombre', area: 'tactica', peso: 1, elo: 660, eloBase: 700, tipo: 'opcion',
     enunciado: '¿Cómo se llama la táctica en la que una pieza ataca a dos piezas rivales a la vez?',
     opciones: [
-      'Horquilla (o tenedor)',
+      'Tenedor (o tenedor)',
       'Clavada de una pieza',
       'Rayos X sobre la fila',
       'Enroque por el centro',
     ],
     correcta: 0,
-    explica: 'Es un ataque doble hecho por una sola pieza. El caballo es el rey de la horquilla porque ataca casillas que ninguna otra pieza defiende de la misma forma.',
+    explica: 'Es un ataque doble hecho por una sola pieza. El caballo es el rey del tenedor porque ataca casillas que ninguna otra pieza defiende de la misma forma.',
   },
   {
     id: 'tac_clavada_nombre', area: 'tactica', peso: 1, elo: 720, eloBase: 700, tipo: 'opcion',
     enunciado: '¿Cómo se llama la táctica en la que una pieza no puede moverse porque detrás de ella, en la misma línea, está su rey u otra pieza más valiosa?',
     opciones: [
       'Clavada',
-      'Horquilla',
+      'Tenedor',
       'Descubierta',
       'Ahogado',
     ],
@@ -2284,7 +2284,7 @@ window.DIAGNOSTICO_ITEMS = [
   },
   {
     id: 'tac_horquilla_familiar', area: 'tactica', peso: 1, elo: 880, eloBase: 950, tipo: 'opcion_tablero',
-    enunciado: 'Juegan las blancas. ¿Cuál de estas jugadas del caballo gana material con una horquilla?',
+    enunciado: 'Juegan las blancas. ¿Cuál de estas jugadas del caballo gana material con un tenedor?',
     fen: 'r3k3/8/8/1N6/8/8/8/4K3 w - - 0 1',
     opciones: [
       'Cc7+',
@@ -2293,7 +2293,7 @@ window.DIAGNOSTICO_ITEMS = [
       'Cc3',
     ],
     correcta: 0,
-    explica: 'Cc7+ da jaque al rey de e8 y ataca la torre de a8 al mismo tiempo: la clásica «horquilla familiar». Las negras tienen que atender el jaque y las blancas se llevan la torre. Cd6+ también da jaque, pero no amenaza nada; Ca7 y Cc3 ni siquiera dan jaque.',
+    explica: 'Cc7+ da jaque al rey de e8 y ataca la torre de a8 al mismo tiempo: la clásica «tenedor familiar». Las negras tienen que atender el jaque y las blancas se llevan la torre. Cd6+ también da jaque, pero no amenaza nada; Ca7 y Cc3 ni siquiera dan jaque.',
     prueba: 'Cc7 es legal, da jaque y desde c7 el caballo ataca a8',
   },
   {
@@ -2320,7 +2320,7 @@ window.DIAGNOSTICO_ITEMS = [
       'Zugzwang mutuo',
     ],
     correcta: 0,
-    explica: 'La horquilla es el caso más conocido, pero el término general abarca cualquier jugada que cree dos amenazas a la vez, sea con una sola pieza o mediante una descubierta. El rival solo puede parar una.',
+    explica: 'El tenedor es el caso más conocido, pero el término general abarca cualquier jugada que cree dos amenazas a la vez, sea con una sola pieza o mediante una descubierta. El rival solo puede parar una.',
   },
   {
     id: 'tac_clavada_absoluta', area: 'tactica', peso: 2, elo: 1100, eloBase: 950, tipo: 'opcion',
@@ -2328,7 +2328,7 @@ window.DIAGNOSTICO_ITEMS = [
     opciones: [
       'Clavada absoluta',
       'Clavada relativa',
-      'Horquilla de rey',
+      'Tenedor de rey',
       'Rayos X directo',
     ],
     correcta: 0,
@@ -3900,7 +3900,7 @@ window.DIAGNOSTICO_ITEMS = [
     fen: 'r1bqr1k1/pppnppbp/6p1/4n1N1/2B5/2N5/PPP1QPPP/R1B2RK1 w - - 0 11',
     opciones: ['Axf7+', 'Cxf7', 'Dxe5', 'Ae6'],
     correcta: 0,
-    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez. La línea: 11.Axf7+ Cxf7 12.Ce6 Cf8 13.Cxd8. Las otras tientan, pero fallan: Cxf7? se contesta con 11…Cxf7 y las negras quedan mejor; Dxe5? se contesta con 11…Cxe5 y las negras quedan mejor; Ae6? se contesta con 11…Cc5 y la ventaja se esfuma.',
+    explica: 'Es un tenedor: una pieza ataca dos objetivos a la vez. La línea: 11.Axf7+ Cxf7 12.Ce6 Cf8 13.Cxd8. Las otras tientan, pero fallan: Cxf7? se contesta con 11…Cxf7 y las negras quedan mejor; Dxe5? se contesta con 11…Cxe5 y las negras quedan mejor; Ae6? se contesta con 11…Cc5 y la ventaja se esfuma.',
     prueba: 'Ejercicio 3DeOk de la base abierta de Lichess (CC0), rating 1925. Stockfish 16 a profundidad 18: Axf7+ es la mejor (+3,8) y la segunda queda en +0,3; las otras tres opciones quedan en -2,5, -5,8, +0,1 (profundidad 14).',
   },
   {
@@ -4024,7 +4024,7 @@ window.DIAGNOSTICO_ITEMS = [
     enunciado: 'Las negras acaban de jugar …Ce4. Juegan las blancas y están en apuros: encuentra la única jugada que no pierde.',
     fen: '8/2Q2p1k/6pp/2b5/4n3/2N1p2P/PPP2qPK/8 w - - 4 33',
     solucion: { from: 'c3', to: 'e4' },
-    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez. La línea: 33.Cxe4 Ab6 34.De5 Df5 35.Dxf5.',
+    explica: 'Es un tenedor: una pieza ataca dos objetivos a la vez. La línea: 33.Cxe4 Ab6 34.De5 Df5 35.Dxf5.',
     prueba: 'Ejercicio 0HFQs de la base abierta de Lichess (CC0), rating 2873. Stockfish 16 a profundidad 18: Cxe4 es la mejor (+2,8) y la segunda queda en -37,8.',
   },
   {
@@ -4128,7 +4128,7 @@ window.DIAGNOSTICO_ITEMS = [
     enunciado: 'Las negras acaban de jugar …Rf8. Juegan las blancas y están en apuros: encuentra la única jugada que no pierde.',
     fen: 'r1r2k2/4Npp1/4p2p/3q4/3Pn3/p6P/3R1PP1/R1Q3K1 w - - 8 30',
     solucion: { from: 'e7', to: 'c8' },
-    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez. La línea: 30.Cxc8 Cxd2 31.Cb6 Cb3 32.Dc3.',
+    explica: 'Es un tenedor: una pieza ataca dos objetivos a la vez. La línea: 30.Cxc8 Cxd2 31.Cb6 Cb3 32.Dc3.',
     prueba: 'Ejercicio 2YspS de la base abierta de Lichess (CC0), rating 2831. Stockfish 16 a profundidad 18: Cxc8 es la mejor (+2,5) y la segunda queda en -3,1.',
   },
   {
@@ -4209,7 +4209,7 @@ window.DIAGNOSTICO_ITEMS = [
     fen: 'rn1qk1nr/pp3ppp/3bp3/2pp4/6b1/P1P1PN2/1P1PBPPP/RNBQK2R w KQkq - 1 6',
     opciones: ['Da4+', 'Ab5+', 'a4', 'Dc2'],
     correcta: 0,
-    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez. La línea: 6.Da4+ Cc6 7.Dxg4. Las otras tientan, pero fallan: Ab5+? se contesta con 6…Cd7 y la ventaja se esfuma; a4? se contesta con 6…e5 y la ventaja se esfuma; Dc2? se contesta con 6…Cc6 y la ventaja se esfuma.',
+    explica: 'Es un tenedor: una pieza ataca dos objetivos a la vez. La línea: 6.Da4+ Cc6 7.Dxg4. Las otras tientan, pero fallan: Ab5+? se contesta con 6…Cd7 y la ventaja se esfuma; a4? se contesta con 6…e5 y la ventaja se esfuma; Dc2? se contesta con 6…Cc6 y la ventaja se esfuma.',
     prueba: 'Ejercicio 0NtVg de la base abierta de Lichess (CC0), rating 1433. Stockfish 16 a profundidad 18: Da4+ es la mejor (+4,0) y la segunda queda en -0,1; las otras tres opciones quedan en -0,9, -0,5, -0,5 (profundidad 14).',
   },
   {
@@ -4251,7 +4251,7 @@ window.DIAGNOSTICO_ITEMS = [
     enunciado: 'Las negras acaban de jugar …Ab4. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
     fen: 'r1bqk2r/ppp3pp/5nn1/4ppN1/1b6/2N5/PPP1QPPP/R1B1KB1R w KQkq - 2 10',
     solucion: { from: 'e2', to: 'b5' },
-    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez. La línea: 10.Db5+ Ad7 11.Dxb4.',
+    explica: 'Es un tenedor: una pieza ataca dos objetivos a la vez. La línea: 10.Db5+ Ad7 11.Dxb4.',
     prueba: 'Ejercicio 2TU5M de la base abierta de Lichess (CC0), rating 1075. Stockfish 16 a profundidad 18: Db5+ es la mejor (+3,3) y la segunda queda en -1,6.',
   },
   {
@@ -4267,7 +4267,7 @@ window.DIAGNOSTICO_ITEMS = [
     enunciado: 'Las negras acaban de jugar …d5. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
     fen: 'r1bqk2r/ppp1n3/6np/3p2NQ/4p3/2P5/PPP3PP/R1B2RK1 w kq d6 0 13',
     solucion: { from: 'g5', to: 'f7' },
-    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez. La línea: 13.Cf7 Ag4 14.Dxg4.',
+    explica: 'Es un tenedor: una pieza ataca dos objetivos a la vez. La línea: 13.Cf7 Ag4 14.Dxg4.',
     prueba: 'Ejercicio 1bfbG de la base abierta de Lichess (CC0), rating 1738. Stockfish 16 a profundidad 18: Cf7 es la mejor (+3,1) y la segunda queda en -3,8.',
   },
   {
@@ -4276,7 +4276,7 @@ window.DIAGNOSTICO_ITEMS = [
     fen: 'r2qr1k1/ppp3pn/3p3p/2b5/3n4/4NN1P/PPQ2PP1/R1B1K2R w KQ - 0 16',
     opciones: ['Cxd4', 'Dxh7+', 'Dxc5', 'Dc4+'],
     correcta: 0,
-    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez. La línea: 16.Cxd4 Axd4 17.Dc4+ d5 18.Dxd4. Las otras tientan, pero fallan: Dxh7+? se contesta con 16…Rxh7 y las negras quedan mejor; Dxc5? se contesta con 16…dxc5 y las negras quedan mejor; Dc4+? se contesta con 16…Ce6 y la ventaja se esfuma.',
+    explica: 'Es un tenedor: una pieza ataca dos objetivos a la vez. La línea: 16.Cxd4 Axd4 17.Dc4+ d5 18.Dxd4. Las otras tientan, pero fallan: Dxh7+? se contesta con 16…Rxh7 y las negras quedan mejor; Dxc5? se contesta con 16…dxc5 y las negras quedan mejor; Dc4+? se contesta con 16…Ce6 y la ventaja se esfuma.',
     prueba: 'Ejercicio 2LaX0 de la base abierta de Lichess (CC0), rating 1786. Stockfish 16 a profundidad 18: Cxd4 es la mejor (+2,6) y la segunda queda en -1,4; las otras tres opciones quedan en -6,3, -7,0, -1,4 (profundidad 14).',
   },
   {
@@ -4317,7 +4317,7 @@ window.DIAGNOSTICO_ITEMS = [
     enunciado: 'Las negras acaban de jugar …Cg6. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
     fen: 'r1bqk2r/pp3ppp/4p1n1/2bnP3/8/3B1N2/PP2QPPP/RNB2RK1 w kq - 2 11',
     solucion: { from: 'd3', to: 'g6' },
-    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez. La línea: 11.Axg6 fxg6 12.Db5+ Ad7 13.Dxc5.',
+    explica: 'Es un tenedor: una pieza ataca dos objetivos a la vez. La línea: 11.Axg6 fxg6 12.Db5+ Ad7 13.Dxc5.',
     prueba: 'Ejercicio 01xmi de la base abierta de Lichess (CC0), rating 1958. Stockfish 16 a profundidad 18: Axg6 es la mejor (+4,3) y la segunda queda en +0,6.',
   },
   {
@@ -4450,7 +4450,7 @@ window.DIAGNOSTICO_ITEMS = [
     enunciado: 'Las negras acaban de jugar …Db4+. Juegan las blancas y están en apuros: encuentra la única jugada que no pierde.',
     fen: '2kr1bnr/1pp1pppp/p7/8/1q1nNP1P/4B3/PPP1BP2/R2QK2R w KQ - 2 12',
     solucion: { from: 'c2', to: 'c3' },
-    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez. La línea: 12.c3 Cf3+ 13.Axf3 Txd1+ 14.Txd1.',
+    explica: 'Es un tenedor: una pieza ataca dos objetivos a la vez. La línea: 12.c3 Cf3+ 13.Axf3 Txd1+ 14.Txd1.',
     prueba: 'Ejercicio 0axmS de la base abierta de Lichess (CC0), rating 2677. Stockfish 16 a profundidad 18: c3 es la mejor (+1,1) y la segunda queda en -2,1.',
   },
   {
@@ -4554,7 +4554,7 @@ window.DIAGNOSTICO_ITEMS = [
     enunciado: 'Las negras acaban de jugar …Cf6. Juegan las blancas y están en apuros: encuentra la única jugada que no pierde.',
     fen: 'r2qk2r/pp1b1ppp/4pn2/1Bb5/3N4/2N5/PPP3PP/R2Q1R1K w kq - 3 12',
     solucion: { from: 'd4', to: 'e6' },
-    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez. La línea: 12.Cxe6 fxe6 13.Txf6 gxf6 14.Dh5+.',
+    explica: 'Es un tenedor: una pieza ataca dos objetivos a la vez. La línea: 12.Cxe6 fxe6 13.Txf6 gxf6 14.Dh5+.',
     prueba: 'Ejercicio 2BGV6 de la base abierta de Lichess (CC0), rating 2693. Stockfish 16 a profundidad 18: Cxe6 es la mejor (+2,5) y la segunda queda en -1,3.',
   },
   {
@@ -4644,7 +4644,7 @@ window.DIAGNOSTICO_ITEMS = [
     fen: 'r1b2r1k/pp4p1/3q2P1/2b3B1/2n1Q3/4PN2/PP3PP1/2K5 w - - 0 22',
     opciones: ['Dh4+', 'Dxc4', 'Dxb7', 'Ah4'],
     correcta: 0,
-    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez. La línea: 22.Dh4+ Rg8 23.Dh7#. Las otras tientan, pero fallan: Dxc4? se contesta con 22…Dxg6 y las negras quedan mejor; Dxb7? se contesta con 22…Axb7 y las negras quedan mejor; Ah4? se contesta con 22…Txf3 y las negras quedan mejor.',
+    explica: 'Es un tenedor: una pieza ataca dos objetivos a la vez. La línea: 22.Dh4+ Rg8 23.Dh7#. Las otras tientan, pero fallan: Dxc4? se contesta con 22…Dxg6 y las negras quedan mejor; Dxb7? se contesta con 22…Axb7 y las negras quedan mejor; Ah4? se contesta con 22…Txf3 y las negras quedan mejor.',
     prueba: 'Ejercicio 2ga5J de la base abierta de Lichess (CC0), rating 1127. Stockfish 16 a profundidad 18: Dh4+ es la mejor (mate en 2) y la segunda queda en -5,3; las otras tres opciones quedan en -6,6, -13,4, -9,1 (profundidad 14).',
   },
   {
@@ -4719,7 +4719,7 @@ window.DIAGNOSTICO_ITEMS = [
     enunciado: 'Las negras acaban de jugar …fxg5. Juegan las blancas y están en apuros: encuentra la única jugada que no pierde.',
     fen: 'r5k1/1pp2q2/pb2r3/nP2p1pp/P3R3/2Pn1NP1/Q2N1PKP/3R4 w - - 0 24',
     solucion: { from: 'f3', to: 'g5' },
-    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez. La línea: 24.Cxg5 Dxf2+ 25.Rh1.',
+    explica: 'Es un tenedor: una pieza ataca dos objetivos a la vez. La línea: 24.Cxg5 Dxf2+ 25.Rh1.',
     prueba: 'Ejercicio 05mps de la base abierta de Lichess (CC0), rating 1975. Stockfish 16 a profundidad 18: Cxg5 es la mejor (+2,5) y la segunda queda en -2,3.',
   },
   {
@@ -4744,7 +4744,7 @@ window.DIAGNOSTICO_ITEMS = [
     enunciado: 'Las negras acaban de jugar …Df4. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
     fen: 'r4rk1/pp2bpp1/4nn1p/3p1Q2/5q1B/2NB3P/PP3PP1/3R1RK1 w - - 8 18',
     solucion: { from: 'c3', to: 'd5' },
-    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez. La línea: 18.Cxd5 Dxf5 19.Cxe7+.',
+    explica: 'Es un tenedor: una pieza ataca dos objetivos a la vez. La línea: 18.Cxd5 Dxf5 19.Cxe7+.',
     prueba: 'Ejercicio 0qA4z de la base abierta de Lichess (CC0), rating 2076. Stockfish 16 a profundidad 18: Cxd5 es la mejor (+5,8) y la segunda queda en +0,0.',
   },
   {
@@ -4753,7 +4753,7 @@ window.DIAGNOSTICO_ITEMS = [
     fen: 'r1b2r1k/pp4pp/2p5/2qn1pB1/4p2Q/1BP5/P1P2PPP/1K1RR3 w - - 6 20',
     opciones: ['Txd5', 'Axd5', 'Dxh7+', 'Txe4'],
     correcta: 0,
-    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez. La línea: 20.Txd5 cxd5 21.Ae7 Dxc3 22.Te3. Las otras tientan, pero fallan: Axd5? se contesta con 20…cxd5 y la ventaja se esfuma; Dxh7+? se contesta con 20…Rxh7 y las negras quedan mejor; Txe4? se contesta con 20…fxe4 y las negras quedan mejor.',
+    explica: 'Es un tenedor: una pieza ataca dos objetivos a la vez. La línea: 20.Txd5 cxd5 21.Ae7 Dxc3 22.Te3. Las otras tientan, pero fallan: Axd5? se contesta con 20…cxd5 y la ventaja se esfuma; Dxh7+? se contesta con 20…Rxh7 y las negras quedan mejor; Txe4? se contesta con 20…fxe4 y las negras quedan mejor.',
     prueba: 'Ejercicio 10Ksv de la base abierta de Lichess (CC0), rating 2188. Stockfish 16 a profundidad 18: Txd5 es la mejor (+3,0) y la segunda queda en -0,5; las otras tres opciones quedan en -0,6, -7,5, -4,9 (profundidad 14).',
   },
   {
@@ -4761,7 +4761,7 @@ window.DIAGNOSTICO_ITEMS = [
     enunciado: 'Las negras acaban de jugar …Df6. Juegan las blancas y están en apuros: encuentra la única jugada que no pierde.',
     fen: '3r4/ppp2pkp/5qp1/3P1r1n/3Q4/2NR4/PPP3P1/2KR4 w - - 2 23',
     solucion: { from: 'g2', to: 'g4' },
-    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez. La línea: 23.g4 Dxd4 24.Txd4 Te5 25.gxh5.',
+    explica: 'Es un tenedor: una pieza ataca dos objetivos a la vez. La línea: 23.g4 Dxd4 24.Txd4 Te5 25.gxh5.',
     prueba: 'Ejercicio 2Bpop de la base abierta de Lichess (CC0), rating 1919. Stockfish 16 a profundidad 18: g4 es la mejor (+1,8) y la segunda queda en -0,8.',
   },
   {
@@ -4795,7 +4795,7 @@ window.DIAGNOSTICO_ITEMS = [
     fen: '7r/4kpp1/2B1p2p/qp2P3/1bpB1P2/r7/1Q3P1P/2R3K1 w - - 5 27',
     opciones: ['Ab6', 'Dxb4+', 'Ac5+', 'Dxa3'],
     correcta: 0,
-    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez. La línea: 27.Ab6 c3 28.Axa5 cxb2 29.Axb4+. Las otras tientan, pero fallan: Dxb4+? se contesta con 27…Dxb4 y las negras quedan mejor; Ac5+? se contesta con 27…Axc5 y las negras quedan mejor; Dxa3? se contesta con 27…Axa3 y las negras quedan mejor.',
+    explica: 'Es un tenedor: una pieza ataca dos objetivos a la vez. La línea: 27.Ab6 c3 28.Axa5 cxb2 29.Axb4+. Las otras tientan, pero fallan: Dxb4+? se contesta con 27…Dxb4 y las negras quedan mejor; Ac5+? se contesta con 27…Axc5 y las negras quedan mejor; Dxa3? se contesta con 27…Axa3 y las negras quedan mejor.',
     prueba: 'Ejercicio 1PXGg de la base abierta de Lichess (CC0), rating 2459. Stockfish 16 a profundidad 18: Ab6 es la mejor (+1,3) y la segunda queda en -2,4; las otras tres opciones quedan en -7,1, -5,7, -6,2 (profundidad 14).',
   },
   {
@@ -4803,7 +4803,7 @@ window.DIAGNOSTICO_ITEMS = [
     enunciado: 'Las negras acaban de jugar …Th8. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
     fen: 'r6r/1p4b1/2p1q1kp/4Pp1N/p2P1Q1R/P4PP1/1P4P1/6K1 w - - 7 32',
     solucion: { from: 'g3', to: 'g4' },
-    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez. La línea: 32.g4 Taf8 33.gxf5+ Dxf5 34.Tg4+.',
+    explica: 'Es un tenedor: una pieza ataca dos objetivos a la vez. La línea: 32.g4 Taf8 33.gxf5+ Dxf5 34.Tg4+.',
     prueba: 'Ejercicio 1PboK de la base abierta de Lichess (CC0), rating 2190. Stockfish 16 a profundidad 18: g4 es la mejor (+4,0) y la segunda queda en -0,3.',
   },
   {
@@ -4956,7 +4956,7 @@ window.DIAGNOSTICO_ITEMS = [
     enunciado: 'Las negras acaban de jugar …Axf3. Juegan las blancas y están en apuros: encuentra la única jugada que no pierde.',
     fen: 'r6k/5Pb1/1q1p1nBp/pP6/n2p3Q/5bNP/5PP1/4B1K1 w - - 0 29',
     solucion: { from: 'e1', to: 'd2' },
-    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez. La línea: 29.Ad2 d5 30.Axh6 Ch5 31.Cxh5.',
+    explica: 'Es un tenedor: una pieza ataca dos objetivos a la vez. La línea: 29.Ad2 d5 30.Axh6 Ch5 31.Cxh5.',
     prueba: 'Ejercicio 2UzQz de la base abierta de Lichess (CC0), rating 2822. Stockfish 16 a profundidad 18: Ad2 es la mejor (+2,7) y la segunda queda en -2,6.',
   },
   {
@@ -5004,7 +5004,7 @@ window.DIAGNOSTICO_ITEMS = [
     enunciado: 'Las negras acaban de jugar …Axf6. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
     fen: '1r4k1/p3Q3/b1p2bpp/4P3/q7/5N2/6P1/2K4R w - - 0 27',
     solucion: { from: 'e7', to: 'e6' },
-    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez. La línea: 27.De6+ Rf8 28.Dxf6+ Re8 29.Dh8+.',
+    explica: 'Es un tenedor: una pieza ataca dos objetivos a la vez. La línea: 27.De6+ Rf8 28.Dxf6+ Re8 29.Dh8+.',
     prueba: 'Ejercicio 3OYlI de la base abierta de Lichess (CC0), rating 2453. Stockfish 16 a profundidad 18: De6+ es la mejor (+4,1) y la segunda queda en recibe mate en 9.',
   },
   {
@@ -5012,7 +5012,7 @@ window.DIAGNOSTICO_ITEMS = [
     enunciado: 'Las negras acaban de jugar …Rh4. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
     fen: '5r2/2pq1p2/1r1p1np1/1p2p3/p3P2k/2PP3P/PP1QRP1K/R7 w - - 2 26',
     solucion: { from: 'd2', to: 'h6' },
-    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez. La línea: 26.Dh6+ Ch5 27.Te3 Th8 28.Dxh8.',
+    explica: 'Es un tenedor: una pieza ataca dos objetivos a la vez. La línea: 26.Dh6+ Ch5 27.Te3 Th8 28.Dxh8.',
     prueba: 'Ejercicio 3TlmP de la base abierta de Lichess (CC0), rating 2511. Stockfish 16 a profundidad 18: Dh6+ es la mejor (+4,4) y la segunda queda en -0,1.',
   },
   {
@@ -5270,7 +5270,7 @@ window.DIAGNOSTICO_ITEMS = [
     enunciado: 'Las negras acaban de jugar …bxc6. Juegan las blancas y fuerzan el mate. ¿Cuál es la primera jugada? (Se responde con una sola jugada.)',
     fen: 'r1k1r3/p2n2pp/2p5/B2b1pN1/4B2q/5P2/1P2Q3/2R2K2 w - - 0 27',
     solucion: { from: 'c1', to: 'c6' },
-    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez. La línea: 27.Txc6+ Axc6 28.Da6+ Rb8 29.Ac7+.',
+    explica: 'Es un tenedor: una pieza ataca dos objetivos a la vez. La línea: 27.Txc6+ Axc6 28.Da6+ Rb8 29.Ac7+.',
     prueba: 'Ejercicio 0g5p7 de la base abierta de Lichess (CC0), rating 2661. Stockfish 16 a profundidad 18: Txc6+ es la mejor (mate en 9) y la segunda queda en -1,1.',
   },
   {
@@ -5286,7 +5286,7 @@ window.DIAGNOSTICO_ITEMS = [
     enunciado: 'Las negras acaban de jugar …Rf8. Juegan las blancas y fuerzan el mate. ¿Cuál es la primera jugada? (Se responde con una sola jugada.)',
     fen: '1r3kr1/R2n2N1/2p1Q2p/3p4/8/2q1P2P/6PK/8 w - - 3 30',
     solucion: { from: 'e6', to: 'd6' },
-    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez. La línea: 30.Dd6+ Rxg7 31.Txd7+ Rh8 32.Dxh6#.',
+    explica: 'Es un tenedor: una pieza ataca dos objetivos a la vez. La línea: 30.Dd6+ Rxg7 31.Txd7+ Rh8 32.Dxh6#.',
     prueba: 'Ejercicio 16JJO de la base abierta de Lichess (CC0), rating 2404. Stockfish 16 a profundidad 18: Dd6+ es la mejor (mate en 3) y la segunda queda en +0,1.',
   },
   {
@@ -5407,7 +5407,7 @@ window.DIAGNOSTICO_ITEMS = [
     enunciado: 'Las negras acaban de jugar …Rf7. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
     fen: '8/1p3kpp/p1p1r1r1/3p4/3PpP2/1P2P1RP/P4P1K/6R1 w - - 8 29',
     solucion: { from: 'f4', to: 'f5' },
-    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez. La línea: 29.f5 Td6 30.fxg6+.',
+    explica: 'Es un tenedor: una pieza ataca dos objetivos a la vez. La línea: 29.f5 Td6 30.fxg6+.',
     prueba: 'Ejercicio 1Gm3s de la base abierta de Lichess (CC0), rating 1149. Stockfish 16 a profundidad 18: f5 es la mejor (+5,6) y la segunda queda en +0,5.',
   },
   {
@@ -5415,7 +5415,7 @@ window.DIAGNOSTICO_ITEMS = [
     enunciado: 'Las negras acaban de jugar …Ae7. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
     fen: '8/4bpk1/1p2p3/6p1/2P1Q3/5NPK/5r2/5n2 w - - 2 46',
     solucion: { from: 'e4', to: 'd4' },
-    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez. La línea: 46.Dd4+ f6 47.Dxf2.',
+    explica: 'Es un tenedor: una pieza ataca dos objetivos a la vez. La línea: 46.Dd4+ f6 47.Dxf2.',
     prueba: 'Ejercicio 2gqYH de la base abierta de Lichess (CC0), rating 1451. Stockfish 16 a profundidad 18: Dd4+ es la mejor (+4,8) y la segunda queda en -0,9.',
   },
   {
@@ -5442,7 +5442,7 @@ window.DIAGNOSTICO_ITEMS = [
     fen: 'r7/5kp1/Bb2p2q/3pPp2/5P1p/5R1P/P5PK/2Q5 w - - 1 32',
     opciones: ['Dc6', 'Dc7+', 'Db2', 'Da3'],
     correcta: 0,
-    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez. La línea: 32.Dc6 Txa6 33.Db7+. Las otras tientan, pero fallan: Dc7+? se contesta con 32…Axc7 y las negras quedan mejor; Db2? se contesta con 32…Txa6 y las negras quedan mejor; Da3? se contesta con 32…Ta7 y la ventaja se esfuma.',
+    explica: 'Es un tenedor: una pieza ataca dos objetivos a la vez. La línea: 32.Dc6 Txa6 33.Db7+. Las otras tientan, pero fallan: Dc7+? se contesta con 32…Axc7 y las negras quedan mejor; Db2? se contesta con 32…Txa6 y las negras quedan mejor; Da3? se contesta con 32…Ta7 y la ventaja se esfuma.',
     prueba: 'Ejercicio 1FSjx de la base abierta de Lichess (CC0), rating 1814. Stockfish 16 a profundidad 18: Dc6 es la mejor (+2,7) y la segunda queda en +0,1; las otras tres opciones quedan en -7,1, -2,7, -0,5 (profundidad 14).',
   },
   {
@@ -5450,7 +5450,7 @@ window.DIAGNOSTICO_ITEMS = [
     enunciado: 'Las negras acaban de jugar …b3. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
     fen: '1r6/R7/4k3/8/8/1p1N4/PKP1r3/8 w - - 0 53',
     solucion: { from: 'd3', to: 'f4' },
-    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez. La línea: 53.Cf4+ Re5 54.Cxe2.',
+    explica: 'Es un tenedor: una pieza ataca dos objetivos a la vez. La línea: 53.Cf4+ Re5 54.Cxe2.',
     prueba: 'Ejercicio 1m5dh de la base abierta de Lichess (CC0), rating 1615. Stockfish 16 a profundidad 18: Cf4+ es la mejor (+3,8) y la segunda queda en +0,1.',
   },
   {
@@ -5458,7 +5458,7 @@ window.DIAGNOSTICO_ITEMS = [
     enunciado: 'Las negras acaban de jugar …fxe5. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
     fen: '8/pb1r1k2/p6R/P1P1p2p/1P5P/2P1K3/8/8 w - - 0 36',
     solucion: { from: 'c5', to: 'c6' },
-    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez. La línea: 36.c6 Axc6 37.Txc6.',
+    explica: 'Es un tenedor: una pieza ataca dos objetivos a la vez. La línea: 36.c6 Axc6 37.Txc6.',
     prueba: 'Ejercicio 26M9C de la base abierta de Lichess (CC0), rating 1690. Stockfish 16 a profundidad 18: c6 es la mejor (+4,4) y la segunda queda en 0,0.',
   },
   {
@@ -5474,7 +5474,7 @@ window.DIAGNOSTICO_ITEMS = [
     enunciado: 'Las negras acaban de jugar …Dc6. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
     fen: '1b2k3/6pp/pBq1bp2/2p1p3/2P1P3/3Q3P/P3BPP1/6K1 w - - 10 35',
     solucion: { from: 'd3', to: 'd8' },
-    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez. La línea: 35.Dd8+ Rf7 36.Dxb8.',
+    explica: 'Es un tenedor: una pieza ataca dos objetivos a la vez. La línea: 35.Dd8+ Rf7 36.Dxb8.',
     prueba: 'Ejercicio 3ATUi de la base abierta de Lichess (CC0), rating 1595. Stockfish 16 a profundidad 18: Dd8+ es la mejor (+4,6) y la segunda queda en +0,3.',
   },
   {
@@ -5499,7 +5499,7 @@ window.DIAGNOSTICO_ITEMS = [
     enunciado: 'Las negras acaban de jugar …Dh3. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
     fen: '2r2k2/2p2p1p/1p1pr3/p7/2Q1NR2/P5Pq/1PP2P1P/6K1 w - - 10 26',
     solucion: { from: 'f4', to: 'f7' },
-    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez. La línea: 26.Txf7+ Rxf7 27.Cg5+ Re7 28.Cxh3.',
+    explica: 'Es un tenedor: una pieza ataca dos objetivos a la vez. La línea: 26.Txf7+ Rxf7 27.Cg5+ Re7 28.Cxh3.',
     prueba: 'Ejercicio 0uDCQ de la base abierta de Lichess (CC0), rating 1811. Stockfish 16 a profundidad 18: Txf7+ es la mejor (+5,6) y la segunda queda en 0,0.',
   },
   {
@@ -5508,7 +5508,7 @@ window.DIAGNOSTICO_ITEMS = [
     fen: '2b4k/4r1q1/p2R3p/1p2N3/5ppP/1P6/1PP2PP1/2K1R3 w - - 0 27',
     opciones: ['Cg6+', 'Txh6+', 'Cf7+', 'Cxg4'],
     correcta: 0,
-    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez. La línea: 27.Cg6+ Dxg6 28.Td8+ Rg7 29.Txe7+. Las otras tientan, pero fallan: Txh6+? se contesta con 27…Dxh6 y las negras quedan mejor; Cf7+? se contesta con 27…Dxf7 y las negras quedan mejor; Cxg4? se contesta con 27…Txe1+ y las negras quedan mejor.',
+    explica: 'Es un tenedor: una pieza ataca dos objetivos a la vez. La línea: 27.Cg6+ Dxg6 28.Td8+ Rg7 29.Txe7+. Las otras tientan, pero fallan: Txh6+? se contesta con 27…Dxh6 y las negras quedan mejor; Cf7+? se contesta con 27…Dxf7 y las negras quedan mejor; Cxg4? se contesta con 27…Txe1+ y las negras quedan mejor.',
     prueba: 'Ejercicio 16pA1 de la base abierta de Lichess (CC0), rating 2091. Stockfish 16 a profundidad 18: Cg6+ es la mejor (+5,0) y la segunda queda en -4,3; las otras tres opciones quedan en -5,4, -5,6, -5,9 (profundidad 14).',
   },
   {
@@ -5517,7 +5517,7 @@ window.DIAGNOSTICO_ITEMS = [
     fen: 'k6r/ppq5/4p2p/1QNr1p2/5P2/1PP3P1/2K5/6R1 w - - 3 34',
     opciones: ['Cxe6', 'Dxb7+', 'Cxb7', 'De8+'],
     correcta: 0,
-    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez. La línea: 34.Cxe6 Dxf4 35.gxf4 Txb5 36.Cc7+. Las otras tientan, pero fallan: Dxb7+? se contesta con 34…Dxb7 y las negras quedan mejor; Cxb7? se contesta con 34…Txb5 y las negras quedan mejor; De8+? se contesta con 34…Txe8 y las negras quedan mejor.',
+    explica: 'Es un tenedor: una pieza ataca dos objetivos a la vez. La línea: 34.Cxe6 Dxf4 35.gxf4 Txb5 36.Cc7+. Las otras tientan, pero fallan: Dxb7+? se contesta con 34…Dxb7 y las negras quedan mejor; Cxb7? se contesta con 34…Txb5 y las negras quedan mejor; De8+? se contesta con 34…Txe8 y las negras quedan mejor.',
     prueba: 'Ejercicio 1Hu70 de la base abierta de Lichess (CC0), rating 2145. Stockfish 16 a profundidad 18: Cxe6 es la mejor (+4,1) y la segunda queda en -4,2; las otras tres opciones quedan en -5,3, -7,3, -7,7 (profundidad 14).',
   },
   {
@@ -5533,7 +5533,7 @@ window.DIAGNOSTICO_ITEMS = [
     enunciado: 'Las negras acaban de jugar …fxg3. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
     fen: '8/pp4k1/2p1Qb1p/4p3/P3p3/2P1P1pP/1P1q1NP1/7K w - - 0 31',
     solucion: { from: 'e6', to: 'f6' },
-    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez. La línea: 31.Dxf6+ Rxf6 32.Cxe4+ Rg6 33.Cxd2.',
+    explica: 'Es un tenedor: una pieza ataca dos objetivos a la vez. La línea: 31.Dxf6+ Rxf6 32.Cxe4+ Rg6 33.Cxd2.',
     prueba: 'Ejercicio 3NkU1 de la base abierta de Lichess (CC0), rating 2029. Stockfish 16 a profundidad 18: Dxf6+ es la mejor (+5,0) y la segunda queda en +0,5.',
   },
   {
@@ -5551,7 +5551,7 @@ window.DIAGNOSTICO_ITEMS = [
     fen: 'r5k1/pp1q2p1/2pbp2p/4B3/P3P1Q1/3P3P/1PP5/5R1K w - - 1 22',
     opciones: ['Axg7', 'Dxg7+', 'Axd6', 'Dxe6+'],
     correcta: 0,
-    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez. La línea: 22.Axg7 Dxg7 23.Dxe6+ Rh8 24.Dxd6. Las otras tientan, pero fallan: Dxg7+? se contesta con 22…Dxg7 y las negras quedan mejor; Axd6? se contesta con 22…Dxd6 y la ventaja se esfuma; Dxe6+? se contesta con 22…Dxe6 y las negras quedan mejor.',
+    explica: 'Es un tenedor: una pieza ataca dos objetivos a la vez. La línea: 22.Axg7 Dxg7 23.Dxe6+ Rh8 24.Dxd6. Las otras tientan, pero fallan: Dxg7+? se contesta con 22…Dxg7 y las negras quedan mejor; Axd6? se contesta con 22…Dxd6 y la ventaja se esfuma; Dxe6+? se contesta con 22…Dxe6 y las negras quedan mejor.',
     prueba: 'Ejercicio 2ofuz de la base abierta de Lichess (CC0), rating 2394. Stockfish 16 a profundidad 18: Axg7 es la mejor (+4,2) y la segunda queda en +0,1; las otras tres opciones quedan en -3,9, +0,0, -6,0 (profundidad 14).',
   },
   {
@@ -5568,7 +5568,7 @@ window.DIAGNOSTICO_ITEMS = [
     fen: '7k/2q4p/p2N2p1/1p1Qp3/3b4/PP4P1/1P3r1P/3R3K w - - 3 31',
     opciones: ['Da8+', 'Dxe5+', 'Dxd4', 'Dg8+'],
     correcta: 0,
-    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez. La línea: 31.Da8+ Rg7 32.Ce8+ Rf7 33.Cxc7. Las otras tientan, pero fallan: Dxe5+? se contesta con 31…Axe5 y las negras quedan mejor; Dxd4? se contesta con 31…exd4 y las negras quedan mejor; Dg8+? se contesta con 31…Rxg8 y las blancas reciben mate.',
+    explica: 'Es un tenedor: una pieza ataca dos objetivos a la vez. La línea: 31.Da8+ Rg7 32.Ce8+ Rf7 33.Cxc7. Las otras tientan, pero fallan: Dxe5+? se contesta con 31…Axe5 y las negras quedan mejor; Dxd4? se contesta con 31…exd4 y las negras quedan mejor; Dg8+? se contesta con 31…Rxg8 y las blancas reciben mate.',
     prueba: 'Ejercicio 3DSzB de la base abierta de Lichess (CC0), rating 2416. Stockfish 16 a profundidad 18: Da8+ es la mejor (+6,7) y la segunda queda en 0,0; las otras tres opciones quedan en -7,6, -6,5, recibe mate en 8 (profundidad 14).',
   },
   {
@@ -5624,7 +5624,7 @@ window.DIAGNOSTICO_ITEMS = [
     enunciado: 'Las negras acaban de jugar …Axa4. Juegan las blancas y están en apuros: encuentra la única jugada que no pierde.',
     fen: '8/1p5p/6p1/pP6/b2pkP2/3N2PP/4K3/8 w - - 0 45',
     solucion: { from: 'd3', to: 'c5' },
-    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez. La línea: 45.Cc5+ Rd5 46.Cxa4 Rc4 47.g4.',
+    explica: 'Es un tenedor: una pieza ataca dos objetivos a la vez. La línea: 45.Cc5+ Rd5 46.Cxa4 Rc4 47.g4.',
     prueba: 'Ejercicio 0Ajqd de la base abierta de Lichess (CC0), rating 2446. Stockfish 16 a profundidad 18: Cc5+ es la mejor (+2,6) y la segunda queda en -5,0.',
   },
   {
@@ -5943,7 +5943,7 @@ window.DIAGNOSTICO_ITEMS = [
     fen: 'r4rk1/p3npb1/3N1n1p/2q1B1p1/4P3/1PP2Q2/P5PP/3R1RK1 w - - 1 24',
     opciones: ['Ad4', 'Td4', 'Rh1', 'Df2'],
     correcta: 0,
-    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez. La línea: 24.Ad4 Dxd6 25.e5 Dc7 26.exf6. Las otras tientan, pero fallan: Td4? se contesta con 24…Dxe5 y las negras quedan mejor; Rh1? se contesta con 24…Dxe5 y las negras quedan mejor; Df2? se contesta con 24…Dxe5 y las negras quedan mejor.',
+    explica: 'Es un tenedor: una pieza ataca dos objetivos a la vez. La línea: 24.Ad4 Dxd6 25.e5 Dc7 26.exf6. Las otras tientan, pero fallan: Td4? se contesta con 24…Dxe5 y las negras quedan mejor; Rh1? se contesta con 24…Dxe5 y las negras quedan mejor; Df2? se contesta con 24…Dxe5 y las negras quedan mejor.',
     prueba: 'Ejercicio 2wlcJ de la base abierta de Lichess (CC0), rating 2135. Stockfish 16 a profundidad 18: Ad4 es la mejor (+1,9) y la segunda queda en -5,6; las otras tres opciones quedan en -5,7, -5,9, -5,9 (profundidad 14).',
   },
   {
@@ -6049,7 +6049,7 @@ window.DIAGNOSTICO_ITEMS = [
     enunciado: 'Las negras acaban de jugar …Axd5. Juegan las blancas y están en apuros: encuentra la única jugada que no pierde.',
     fen: '3r2k1/pp3pbp/6p1/q2bp3/3n4/1B1Q1NBP/PP3PP1/2R3K1 w - - 0 23',
     solucion: { from: 'f3', to: 'd4' },
-    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez. La línea: 23.Cxd4 exd4 24.Ac7 Tc8 25.Axa5.',
+    explica: 'Es un tenedor: una pieza ataca dos objetivos a la vez. La línea: 23.Cxd4 exd4 24.Ac7 Tc8 25.Axa5.',
     prueba: 'Ejercicio 1Kchr de la base abierta de Lichess (CC0), rating 2431. Stockfish 16 a profundidad 18: Cxd4 es la mejor (+2,1) y la segunda queda en -1,7.',
   },
   {
@@ -6089,7 +6089,7 @@ window.DIAGNOSTICO_ITEMS = [
     enunciado: 'Las negras acaban de jugar …Ab6+. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
     fen: 'r4k2/7R/1b2b1R1/1p3p2/8/5P1P/6P1/6K1 w - - 1 41',
     solucion: { from: 'g1', to: 'h2' },
-    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez. La línea: 41.Rh2 Ag8 42.Tf6+ Re8 43.Tg7.',
+    explica: 'Es un tenedor: una pieza ataca dos objetivos a la vez. La línea: 41.Rh2 Ag8 42.Tf6+ Re8 43.Tg7.',
     prueba: 'Ejercicio 2bbYX de la base abierta de Lichess (CC0), rating 2594. Stockfish 16 a profundidad 18: Rh2 es la mejor (+3,6) y la segunda queda en -1,7.',
   },
   {
@@ -6106,7 +6106,7 @@ window.DIAGNOSTICO_ITEMS = [
     enunciado: 'Las negras acaban de jugar …h6. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
     fen: '6r1/4k1p1/7p/4KP2/2P5/8/8/6R1 w - - 0 44',
     solucion: { from: 'g1', to: 'g7' },
-    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez. La línea: 44.Txg7+ Txg7 45.f6+ Rf7 46.fxg7.',
+    explica: 'Es un tenedor: una pieza ataca dos objetivos a la vez. La línea: 44.Txg7+ Txg7 45.f6+ Rf7 46.fxg7.',
     prueba: 'Ejercicio 2kiPW de la base abierta de Lichess (CC0), rating 2473. Stockfish 16 a profundidad 18: Txg7+ es la mejor (+7,0) y la segunda queda en +0,1.',
   },
   {
@@ -6164,7 +6164,7 @@ window.DIAGNOSTICO_ITEMS = [
     fen: '2r2rk1/1p3p1p/p5pb/n1qBp3/3pP3/P2Q2PP/1P3PN1/R4RK1 w - - 4 23',
     opciones: ['b4', 'Axf7+', 'Axb7', 'Dxa6'],
     correcta: 0,
-    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez. La línea: 23.b4 Dc3 24.Dxc3 dxc3 25.bxa5. Las otras tientan, pero fallan: Axf7+? se contesta con 23…Txf7 y las negras quedan mejor; Axb7? se contesta con 23…Cxb7 y las negras quedan mejor; Dxa6? se contesta con 23…bxa6 y las negras quedan mejor.',
+    explica: 'Es un tenedor: una pieza ataca dos objetivos a la vez. La línea: 23.b4 Dc3 24.Dxc3 dxc3 25.bxa5. Las otras tientan, pero fallan: Axf7+? se contesta con 23…Txf7 y las negras quedan mejor; Axb7? se contesta con 23…Cxb7 y las negras quedan mejor; Dxa6? se contesta con 23…bxa6 y las negras quedan mejor.',
     prueba: 'Ejercicio 0JHet de la base abierta de Lichess (CC0), rating 1630. Stockfish 16 a profundidad 18: b4 es la mejor (+2,0) y la segunda queda en -0,9; las otras tres opciones quedan en -4,9, -5,6, -7,1 (profundidad 14).',
   },
   {
@@ -6172,7 +6172,7 @@ window.DIAGNOSTICO_ITEMS = [
     enunciado: 'Las negras acaban de jugar …Txd1. Juegan las blancas y fuerzan el mate. ¿Cuál es la primera jugada? (Se responde con una sola jugada.)',
     fen: '4r1k1/p4ppp/8/2q5/8/1Q6/PP4PP/3r1R1K w - - 0 22',
     solucion: { from: 'b3', to: 'f7' },
-    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez. La línea: 22.Dxf7+ Rh8 23.Dxe8+ Df8 24.Dxf8#.',
+    explica: 'Es un tenedor: una pieza ataca dos objetivos a la vez. La línea: 22.Dxf7+ Rh8 23.Dxe8+ Df8 24.Dxf8#.',
     prueba: 'Ejercicio 1FlQw de la base abierta de Lichess (CC0), rating 1285. Stockfish 16 a profundidad 18: Dxf7+ es la mejor (mate en 3) y la segunda queda en +0,1.',
   },
   {
@@ -6181,7 +6181,7 @@ window.DIAGNOSTICO_ITEMS = [
     fen: '4r3/1q3kbp/1p1Q1np1/pNr5/P1P1p3/1P6/5PPP/2R2RK1 w - - 0 26',
     opciones: ['Dxc5', 'Dxf6+', 'Dc7+', 'Dd7+'],
     correcta: 0,
-    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez. La línea: 26.Dxc5 bxc5 27.Cd6+ Rg8 28.Cxb7. Las otras tientan, pero fallan: Dxf6+? se contesta con 26…Rxf6 y las negras quedan mejor; Dc7+? se contesta con 26…Dxc7 y las negras quedan mejor; Dd7+? se contesta con 26…Dxd7 y las negras quedan mejor.',
+    explica: 'Es un tenedor: una pieza ataca dos objetivos a la vez. La línea: 26.Dxc5 bxc5 27.Cd6+ Rg8 28.Cxb7. Las otras tientan, pero fallan: Dxf6+? se contesta con 26…Rxf6 y las negras quedan mejor; Dc7+? se contesta con 26…Dxc7 y las negras quedan mejor; Dd7+? se contesta con 26…Dxd7 y las negras quedan mejor.',
     prueba: 'Ejercicio 1dUup de la base abierta de Lichess (CC0), rating 1366. Stockfish 16 a profundidad 18: Dxc5 es la mejor (+3,6) y la segunda queda en -3,4; las otras tres opciones quedan en -5,1, -6,5, -6,4 (profundidad 14).',
   },
   {
@@ -6296,7 +6296,7 @@ window.DIAGNOSTICO_ITEMS = [
     enunciado: 'Las negras acaban de jugar …Dg4. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
     fen: 'r1b2rk1/p5bp/2p3p1/1p1nP1B1/6qQ/1B6/PPP2PPP/3RR1K1 w - - 4 19',
     solucion: { from: 'd1', to: 'd5' },
-    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez. La línea: 19.Txd5 cxd5 20.Axd5+ Rh8 21.Axa8.',
+    explica: 'Es un tenedor: una pieza ataca dos objetivos a la vez. La línea: 19.Txd5 cxd5 20.Axd5+ Rh8 21.Axa8.',
     prueba: 'Ejercicio 2EKNR de la base abierta de Lichess (CC0), rating 2037. Stockfish 16 a profundidad 18: Txd5 es la mejor (+4,0) y la segunda queda en -1,5.',
   },
   {
@@ -6322,7 +6322,7 @@ window.DIAGNOSTICO_ITEMS = [
     enunciado: 'Las negras acaban de jugar …Ac3. Juegan las blancas y están en apuros: encuentra la única jugada que no pierde.',
     fen: '2rqr1k1/pp3pp1/7p/2n2N2/8/P1b4P/R1B2PP1/3QR1K1 w - - 8 26',
     solucion: { from: 'e1', to: 'e8' },
-    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez. La línea: 26.Txe8+ Dxe8 27.Cd6 De6 28.Cxc8.',
+    explica: 'Es un tenedor: una pieza ataca dos objetivos a la vez. La línea: 26.Txe8+ Dxe8 27.Cd6 De6 28.Cxc8.',
     prueba: 'Ejercicio 1LzUH de la base abierta de Lichess (CC0), rating 2267. Stockfish 16 a profundidad 18: Txe8+ es la mejor (+2,6) y la segunda queda en -1,3.',
   },
   {
@@ -6356,7 +6356,7 @@ window.DIAGNOSTICO_ITEMS = [
     fen: '2r2k2/2q3p1/p3b3/1p3pQ1/1n1Bp3/1Pr3PP/P2R4/1K1BR3 w - - 0 36',
     opciones: ['Axg7+', 'Axc3', 'Dxg7+', 'Dxf5+'],
     correcta: 0,
-    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez. La línea: 36.Axg7+ Dxg7 37.Td8+ Txd8 38.Dxd8+. Las otras tientan, pero fallan: Axc3? se contesta con 36…Dxc3 y la ventaja se esfuma; Dxg7+? se contesta con 36…Dxg7 y las negras quedan mejor; Dxf5+? se contesta con 36…Axf5 y las negras quedan mejor.',
+    explica: 'Es un tenedor: una pieza ataca dos objetivos a la vez. La línea: 36.Axg7+ Dxg7 37.Td8+ Txd8 38.Dxd8+. Las otras tientan, pero fallan: Axc3? se contesta con 36…Dxc3 y la ventaja se esfuma; Dxg7+? se contesta con 36…Dxg7 y las negras quedan mejor; Dxf5+? se contesta con 36…Axf5 y las negras quedan mejor.',
     prueba: 'Ejercicio 3FXGw de la base abierta de Lichess (CC0), rating 2448. Stockfish 16 a profundidad 18: Axg7+ es la mejor (+5,6) y la segunda queda en 0,0; las otras tres opciones quedan en +0,5, -5,4, -12,5 (profundidad 14).',
   },
   {
@@ -6412,7 +6412,7 @@ window.DIAGNOSTICO_ITEMS = [
     enunciado: 'Las negras acaban de jugar …Af3. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
     fen: '6k1/ppRP1pbp/8/4r1p1/8/3B1b1q/PP1Q1P2/6K1 w - - 1 30',
     solucion: { from: 'd7', to: 'd8', promotion: 'q' },
-    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez. La línea: 30.d8=D+ Af8 31.Axh7+ Dxh7 32.Dxf8+.',
+    explica: 'Es un tenedor: una pieza ataca dos objetivos a la vez. La línea: 30.d8=D+ Af8 31.Axh7+ Dxh7 32.Dxf8+.',
     prueba: 'Ejercicio 0hcxf de la base abierta de Lichess (CC0), rating 2807. Stockfish 16 a profundidad 18: d8=D+ es la mejor (+4,9) y la segunda queda en -4,9.',
   },
   {
@@ -6468,7 +6468,7 @@ window.DIAGNOSTICO_ITEMS = [
     enunciado: 'Las negras acaban de jugar …d4. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
     fen: 'r4rk1/pp3pp1/6np/5R2/P2p2QP/2q3P1/P5BK/5R2 w - - 0 27',
     solucion: { from: 'f5', to: 'f7' },
-    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez. La línea: 27.Txf7 Txf7 28.Txf7 Rxf7 29.Ad5+.',
+    explica: 'Es un tenedor: una pieza ataca dos objetivos a la vez. La línea: 27.Txf7 Txf7 28.Txf7 Rxf7 29.Ad5+.',
     prueba: 'Ejercicio 1x4AL de la base abierta de Lichess (CC0), rating 2865. Stockfish 16 a profundidad 18: Txf7 es la mejor (+3,1) y la segunda queda en -0,5.',
   },
   {
@@ -6500,7 +6500,7 @@ window.DIAGNOSTICO_ITEMS = [
     enunciado: 'Las negras acaban de jugar …Dxa1. Juegan las blancas y están en apuros: encuentra la única jugada que no pierde.',
     fen: 'r3kb1r/pp1n1pp1/4p1p1/3pP3/3P4/3BPQ1P/P5P1/qN3RK1 w kq - 0 16',
     solucion: { from: 'f3', to: 'f7' },
-    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez. La línea: 16.Dxf7+ Rd8 17.Ab5 Ae7 18.Dxe6.',
+    explica: 'Es un tenedor: una pieza ataca dos objetivos a la vez. La línea: 16.Dxf7+ Rd8 17.Ab5 Ae7 18.Dxe6.',
     prueba: 'Ejercicio 2jKZn de la base abierta de Lichess (CC0), rating 2830. Stockfish 16 a profundidad 18: Dxf7+ es la mejor (0,0) y la segunda queda en -2,6.',
   },
   {
@@ -6508,7 +6508,7 @@ window.DIAGNOSTICO_ITEMS = [
     enunciado: 'Las negras acaban de jugar …Rg8. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
     fen: '2r3k1/2q2prN/1n4pQ/p2Pp3/1pp1b3/8/B4PPP/3R2K1 w - - 1 33',
     solucion: { from: 'h7', to: 'f6' },
-    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez. La línea: 33.Cf6+ Rf8 34.d6 Dxd6 35.Txd6.',
+    explica: 'Es un tenedor: una pieza ataca dos objetivos a la vez. La línea: 33.Cf6+ Rf8 34.d6 Dxd6 35.Txd6.',
     prueba: 'Ejercicio 3620L de la base abierta de Lichess (CC0), rating 2447. Stockfish 16 a profundidad 18: Cf6+ es la mejor (+4,9) y la segunda queda en -7,0.',
   },
   {
@@ -6540,7 +6540,7 @@ window.DIAGNOSTICO_ITEMS = [
     enunciado: 'Las negras acaban de jugar …Ce4. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
     fen: 'r7/1p2q1pk/p5p1/8/P1Q1n2P/4PN2/6P1/5RK1 w - - 1 31',
     solucion: { from: 'c4', to: 'e4' },
-    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez. La línea: 31.Dxe4 Dxe4 32.Cg5+ Rh6 33.Cxe4.',
+    explica: 'Es un tenedor: una pieza ataca dos objetivos a la vez. La línea: 31.Dxe4 Dxe4 32.Cg5+ Rh6 33.Cxe4.',
     prueba: 'Ejercicio 0K5pu de la base abierta de Lichess (CC0), rating 1497. Stockfish 16 a profundidad 18: Dxe4 es la mejor (+4,6) y la segunda queda en +0,2.',
   },
   {
@@ -6650,7 +6650,7 @@ window.DIAGNOSTICO_ITEMS = [
     enunciado: 'Las negras acaban de jugar …Th6. Juegan las blancas. Encuentra la jugada que gana (se responde con una sola jugada).',
     fen: '2r5/1b4k1/2q1p1pr/2p5/1p1pR1QP/pP1P1PP1/P1P5/4R1K1 w - - 1 31',
     solucion: { from: 'e4', to: 'e6' },
-    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez. La línea: 31.Txe6 Dxf3 32.Te7+ Rf8 33.Tf1.',
+    explica: 'Es un tenedor: una pieza ataca dos objetivos a la vez. La línea: 31.Txe6 Dxf3 32.Te7+ Rf8 33.Tf1.',
     prueba: 'Ejercicio 00p5I de la base abierta de Lichess (CC0), rating 2008. Stockfish 16 a profundidad 18: Txe6 es la mejor (+3,6) y la segunda queda en -1,3.',
   },
   {
