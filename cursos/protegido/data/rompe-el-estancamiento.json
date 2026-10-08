@@ -471,7 +471,7 @@
        "fen": "r1b2r1k/pp3p1p/1n2p1p1/8/6N1/4B1P1/PPB2P2/R4RK1 b - - 0 22"
       }
      ],
-     "comentario": "20.Dxg4 Dxg4 21.Cf6+ Rh8 22.Cxg4. Es una horquilla: una pieza ataca dos objetivos a la vez. El material de menos es un factor estático; la actividad que se gana es dinámica, y en esta posición vale más. (Ejercicio 34QhP de la base abierta de Lichess (CC0), rating 1458. Stockfish 16 a profundidad 18: Dxg4 es la mejor (+4,7) y la segunda queda en -3,9.)",
+     "comentario": "20.Dxg4 Dxg4 21.Cf6+ Rh8 22.Cxg4. Es un tenedor: una pieza ataca dos objetivos a la vez. El material de menos es un factor estático; la actividad que se gana es dinámica, y en esta posición vale más. (Ejercicio 34QhP de la base abierta de Lichess (CC0), rating 1458. Stockfish 16 a profundidad 18: Dxg4 es la mejor (+4,7) y la segunda queda en -3,9.)",
      "clave": true,
      "marcas": []
     }
@@ -761,7 +761,7 @@
        "fen": "1R6/p4ppk/1p5p/8/1Pr5/P4NP1/5P1P/6K1 b - - 0 33"
       }
      ],
-     "comentario": "31.Dxc4 Txc4 32.Te8+ Rh7 33.Txb8. Es una horquilla: una pieza ataca dos objetivos a la vez. Al apartarse la pieza que tapaba, las líneas se abren y la posición se transforma: lo que estaba cerrado deja de estarlo. (Ejercicio 0bBpO de la base abierta de Lichess (CC0), rating 1453. Stockfish 16 a profundidad 18: Dxc4 es la mejor (+4,5) y la segunda queda en +0,1.)",
+     "comentario": "31.Dxc4 Txc4 32.Te8+ Rh7 33.Txb8. Es un tenedor: una pieza ataca dos objetivos a la vez. Al apartarse la pieza que tapaba, las líneas se abren y la posición se transforma: lo que estaba cerrado deja de estarlo. (Ejercicio 0bBpO de la base abierta de Lichess (CC0), rating 1453. Stockfish 16 a profundidad 18: Dxc4 es la mejor (+4,5) y la segunda queda en +0,1.)",
      "clave": true,
      "marcas": []
     }
@@ -811,7 +811,7 @@
        "fen": "r5k1/1b1p2p1/1p2p3/p3P1p1/3P4/P2B4/1Pn1N1PP/6K1 w - - 0 23"
       }
      ],
-     "comentario": "20…Dxf1+ 21.Rxf1 Ce3+ 22.Rg1 Cxc2. Es una horquilla: una pieza ataca dos objetivos a la vez. Con una sola jugada la posición pasa de tranquila a táctica: quien no nota ese cambio sigue jugando como antes y pierde. (Ejercicio 0yaFE de la base abierta de Lichess (CC0), rating 1401. Stockfish 16 a profundidad 18: Dxf1+ es la mejor (+4,2) y la segunda queda en -2,4.)",
+     "comentario": "20…Dxf1+ 21.Rxf1 Ce3+ 22.Rg1 Cxc2. Es un tenedor: una pieza ataca dos objetivos a la vez. Con una sola jugada la posición pasa de tranquila a táctica: quien no nota ese cambio sigue jugando como antes y pierde. (Ejercicio 0yaFE de la base abierta de Lichess (CC0), rating 1401. Stockfish 16 a profundidad 18: Dxf1+ es la mejor (+4,2) y la segunda queda en -2,4.)",
      "clave": true,
      "marcas": []
     }
@@ -1131,7 +1131,7 @@
        "fen": "7k/pp4pp/2np1p2/8/7N/2P4P/PP3PPK/3Br3 w - - 0 28"
       }
      ],
-     "comentario": "24…Txd1+ 25.Axd1 Te1+ 26.Rh2 Ad6 27.Dxd6 cxd6. Es una horquilla: una pieza ataca dos objetivos a la vez. Esta línea no se ve en el tablero: se ve en la cabeza, manteniendo la posición mientras las piezas se mueven. (Ejercicio 0Y04I de la base abierta de Lichess (CC0), rating 1486. Stockfish 16 a profundidad 18: Txd1+ es la mejor (+4,7) y la segunda queda en -5,3.)",
+     "comentario": "24…Txd1+ 25.Axd1 Te1+ 26.Rh2 Ad6 27.Dxd6 cxd6. Es un tenedor: una pieza ataca dos objetivos a la vez. Esta línea no se ve en el tablero: se ve en la cabeza, manteniendo la posición mientras las piezas se mueven. (Ejercicio 0Y04I de la base abierta de Lichess (CC0), rating 1486. Stockfish 16 a profundidad 18: Txd1+ es la mejor (+4,7) y la segunda queda en -5,3.)",
      "clave": true,
      "marcas": []
     }
@@ -1491,7 +1491,7 @@
        "fen": "6rk/7p/1pp2p2/1N2p3/p7/P3P3/1Br1b2P/Q2R1K2 w - - 0 38"
       }
      ],
-     "comentario": "35…Cxe3+ 36.fxe3 Ac4+ 37.Ae2 Axe2+. Es una horquilla: una pieza ataca dos objetivos a la vez. El conteo de material dice que se pierde algo; la posición dice que se gana mucho más. Aquí manda la posición. (Ejercicio 2Rsrp de la base abierta de Lichess (CC0), rating 1300. Stockfish 16 a profundidad 18: Cxe3+ es la mejor (+6,2) y la segunda queda en -1,9.)",
+     "comentario": "35…Cxe3+ 36.fxe3 Ac4+ 37.Ae2 Axe2+. Es un tenedor: una pieza ataca dos objetivos a la vez. El conteo de material dice que se pierde algo; la posición dice que se gana mucho más. Aquí manda la posición. (Ejercicio 2Rsrp de la base abierta de Lichess (CC0), rating 1300. Stockfish 16 a profundidad 18: Cxe3+ es la mejor (+6,2) y la segunda queda en -1,9.)",
      "clave": true,
      "marcas": []
     }
@@ -1541,7 +1541,7 @@
        "fen": "2N2k2/R7/8/7p/3P4/2P1p2P/1r4P1/5K2 b - - 0 39"
       }
      ],
-     "comentario": "37.Cg6+ Rg8 38.Ce7+ Rf8 39.Cxc8. Es una horquilla: una pieza ataca dos objetivos a la vez. Con el rey rival así de expuesto, conformarse con menos es regalar puntos: la jugada fuerte va directo a él. (Ejercicio 0NLXb de la base abierta de Lichess (CC0), rating 1468. Stockfish 16 a profundidad 18: Cg6+ es la mejor (+5,0) y la segunda queda en -1,6.)",
+     "comentario": "37.Cg6+ Rg8 38.Ce7+ Rf8 39.Cxc8. Es un tenedor: una pieza ataca dos objetivos a la vez. Con el rey rival así de expuesto, conformarse con menos es regalar puntos: la jugada fuerte va directo a él. (Ejercicio 0NLXb de la base abierta de Lichess (CC0), rating 1468. Stockfish 16 a profundidad 18: Cg6+ es la mejor (+5,0) y la segunda queda en -1,6.)",
      "clave": true,
      "marcas": []
     }
@@ -1631,7 +1631,7 @@
        "fen": "5rk1/ppp1br1p/n2pQ1p1/3P4/PPP1P3/4q3/1B4BP/5R1K w - - 2 30"
       }
      ],
-     "comentario": "27…Dxf2+ 28.Rh1 Dxe3 29.Tf1 Tf8. Es una horquilla: una pieza ataca dos objetivos a la vez. Evaluar con calma la posición nueva, sin pensar en lo que pasó antes, es lo que permite encontrar esta jugada. (Ejercicio 17stN de la base abierta de Lichess (CC0), rating 1405. Stockfish 16 a profundidad 18: Dxf2+ es la mejor (+3,5) y la segunda queda en -0,1.)",
+     "comentario": "27…Dxf2+ 28.Rh1 Dxe3 29.Tf1 Tf8. Es un tenedor: una pieza ataca dos objetivos a la vez. Evaluar con calma la posición nueva, sin pensar en lo que pasó antes, es lo que permite encontrar esta jugada. (Ejercicio 17stN de la base abierta de Lichess (CC0), rating 1405. Stockfish 16 a profundidad 18: Dxf2+ es la mejor (+3,5) y la segunda queda en -0,1.)",
      "clave": true,
      "marcas": []
     }

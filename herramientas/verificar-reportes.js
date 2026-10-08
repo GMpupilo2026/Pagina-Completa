@@ -41,7 +41,7 @@ const DATOS = {
              preguntas: 29, respuestas: 56, aciertos: 13 },
   clases: [
     { id: "1", title: "Táctica básica", started_at: "2026-09-14T15:31:50Z", ended_at: "2026-09-14T15:38:50Z",
-      notes: "Horquillas y clavadas. Cada niño resolvió cinco posiciones.", duracion_min: 7, asistentes: 1,
+      notes: "Tenedores y clavadas. Cada niño resolvió cinco posiciones.", duracion_min: 7, asistentes: 1,
       profesor: "Oscar Angulo Cubero", estudiantes: ["Jean Quesada Arauz"] },
     { id: "2", title: "Finales de peones", started_at: "2026-09-15T03:41:57Z", ended_at: "2026-09-15T03:54:57Z",
       notes: "La regla del cuadrado y la oposición.", duracion_min: 13, asistentes: 3,
@@ -170,8 +170,8 @@ const ASISTENCIA_CSV = [
 const BITACORA = [
   "Bitácora del grupo de la tarde",
   "",
-  "02/09/2026 — Táctica: la horquilla",
-  "Empezamos con el caballo. Cada niño resolvió cinco horquillas en el tablero grande.",
+  "02/09/2026 — Táctica: el tenedor",
+  "Empezamos con el caballo. Cada niño resolvió cinco tenedores en el tablero grande.",
   "",
   "09/09/2026 — Finales de peones",
   "La regla del cuadrado y la oposición. Costó más de lo esperado.",
@@ -299,7 +299,7 @@ async function probarTranscripcion(navegador) {
       window.__muestrasRecibidas = muestras.length;
       alAvanzar({ etapa: "modelo", porcentaje: 50 });
       alAvanzar({ etapa: "transcribiendo" });
-      return "Hoy repasamos la horquilla de caballo y cada niño resolvió cinco posiciones.";
+      return "Hoy repasamos el tenedor de caballo y cada niño resolvió cinco posiciones.";
     });
   });
 
@@ -327,7 +327,7 @@ async function probarTranscripcion(navegador) {
   const vista = await p.textContent("#vista");
   cumple("y la transcripción entra al informe",
     vista.includes("Lo que se trabajó, según las grabaciones") &&
-    vista.includes("Hoy repasamos la horquilla de caballo"));
+    vista.includes("Hoy repasamos el tenedor de caballo"));
   cumple("con el aviso de que es automática y se hizo en esta computadora",
     /se transcribieron en esta misma computadora/.test(vista) && /puede traer errores/.test(vista));
 
@@ -381,7 +381,7 @@ async function probarTranscripcion(navegador) {
   cumple("la vista previa cuenta las clases en palabras", /Se impartieron 4 clases/.test(vista));
   cumple("dice las asistencias y los estudiantes", /5 asistencias de 4 estudiantes/.test(vista));
   cumple("trae el detalle de cada clase", vista.includes("Táctica básica") && vista.includes("Finales de peones"));
-  cumple("trae lo que se trabajó", vista.includes("Horquillas y clavadas"));
+  cumple("trae lo que se trabajó", vista.includes("Tenedores y clavadas"));
   cumple("trae la asistencia por estudiante", vista.includes("Jean Quesada Arauz") && vista.includes("María Herrera"));
   // De mil en mil y en orden: pedir range(0, 4999) igual devolvía mil, sin avisar.
   igual("pide las faltas justificadas del MISMO periodo, de mil en mil y en orden",
@@ -469,7 +469,7 @@ async function probarTranscripcion(navegador) {
     !/\.solo-lectores\s*\{[^}]*(display:\s*none|visibility:\s*hidden)/.test(html));
   cumple("dice lo mismo que el informe: los números",
     html.includes("Se impartieron 4 clases") && html.includes("Jean Quesada Arauz"));
-  cumple("y lo que se trabajó", html.includes("Horquillas y clavadas"));
+  cumple("y lo que se trabajó", html.includes("Tenedores y clavadas"));
   cumple("la foto está CONTADA en palabras, ya que no se puede ver",
     html.includes("Los niños del grupo de 7") && html.includes("Fotografía:"));
 

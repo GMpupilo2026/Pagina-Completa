@@ -253,7 +253,8 @@ un documento llegue en inglés, la respuesta se da en español.
 
 **Todo va en español** —el sitio y también las respuestas de Claude, los
 commits y los PR—: latinoamericano, costarricense, **tuteo y nunca voseo**
-(«puedes», no «podés»), computadora y celular. Lo que se escribe en la
+(«puedes», no «podés»), computadora y celular, y **«tenedor», nunca
+«horquilla»** (`verificar-vocabulario.py`). Lo que se escribe en la
 conversación termina copiado en el sitio. `python3 herramientas/verificar-voseo.py`
 lo revisa. Detalle en `docs/decisiones/idioma.md`.
 
@@ -279,4 +280,4 @@ el archivo de cada tema dice cuál corresponde a cada pieza.
 | [`tableros-y-apariencia`](docs/decisiones/tableros-y-apariencia.md) | Coordenadas por fuera en todos los tableros, el tablero que cabe en pantallas bajas, el tablero siempre cuadrado (filas `minmax(0,1fr)` e interlineado 1 en la casilla; ver «Estudio: una ficha por idea»), colores de casilla, el tablero elegido en todo el sitio, «Clásico ilustrado» por omisión para profesores y alumnos nuevos, tema de la plataforma (con los magos de Magia) y la letra elegida aparte, contraste, arrastre táctil, elegir la pieza al coronar | tablero-preferido, pieza-omision, coordenadas-fuera, tablero-cabe, tablero-cuadrado, temas-plataforma, arrastre-tactil, css, coronacion |
 | [`accesibilidad`](docs/decisiones/accesibilidad.md) | Tableros con teclado y lector de pantalla (Entreno y Juegos), cuadro de comandos, Modo Adaptado, «Activar voz» en todo el sitio para quien ve poco (los avisos, las jugadas del tablero y la posición a pedido), la visión de cada persona marcada por administración (baja visión: la voz; ciega: el panel adaptado, lo no adaptado oculto y los accesos rápidos) | entreno-accesible, juegos-accesible, cuadro-comandos, voz-pagina, vision-cuenta |
 | [`legal`](docs/decisiones/legal.md) | Política de privacidad y términos (Ley 8968, Ley 7472), los enlaces en todos los pies, el consentimiento antes de mandar datos y guardado en la base | legal, formularios |
-| [`idioma`](docs/decisiones/idioma.md) | Tuteo, vocabulario, la tabla de `verificar-voseo.py` | voseo |
+| [`idioma`](docs/decisiones/idioma.md) | Tuteo, vocabulario («tenedor», nunca «horquilla»), la tabla de `verificar-voseo.py` | voseo, vocabulario |

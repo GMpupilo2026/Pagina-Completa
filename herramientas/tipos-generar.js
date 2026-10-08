@@ -127,7 +127,7 @@ const MOTIVOS = [
   ["backRankMate", "El golpe va a la última fila, donde el rey no tiene salida."],
   ["doubleCheck", "Es un jaque doble."],
   ["discoveredAttack", "Es un ataque a la descubierta."],
-  ["fork", "Es una horquilla: una pieza ataca dos cosas a la vez."],
+  ["fork", "Es un tenedor: una pieza ataca dos cosas a la vez."],
   ["skewer", "Es una enfilada: la pieza de adelante se va y cae la de atrás."],
   ["pin", "Hay una clavada: la pieza clavada no puede moverse sin perder algo."],
   ["deflection", "Es una desviación: se aleja al defensor."],
@@ -741,7 +741,7 @@ function generarConstruye(reales) {
     const sol = M.solucionesConstruye(Chess, base);
     if (!sol.length || sol.length > (n === 4 || n === 5 ? 5 : 3)) return false;
     out.push(Object.assign(base, { id: "con-" + n + "-" + hash(base.fen + base.pieza + base.objetivo).toString(36), nivel: n, soluciones: sol,
-      resumen: ({ "mate-ya": "Mate ya", horquilla: "Horquilla", clavada: "Clavada", "mate-en-1": "Mate en 1", "quitar-mate": "Quitar el mate" })[base.objetivo] + " con " + R.NOMBRE[base.pieza[1]] + " " + ({ w: "blanc", b: "negr" })[base.pieza[0]] + (["q", "r"].includes(base.pieza[1]) ? "a" : "o"),
+      resumen: ({ "mate-ya": "Mate ya", horquilla: "Tenedor", clavada: "Clavada", "mate-en-1": "Mate en 1", "quitar-mate": "Quitar el mate" })[base.objetivo] + " con " + R.NOMBRE[base.pieza[1]] + " " + ({ w: "blanc", b: "negr" })[base.pieza[0]] + (["q", "r"].includes(base.pieza[1]) ? "a" : "o"),
       respuesta: ["Casillas que cumplen: " + sol.join(", ") + "."] }));
     return true;
   };
@@ -771,7 +771,7 @@ function generarConstruye(reales) {
     }
     if (cuenta(1) >= POR_NIVEL && cuenta(4) >= POR_NIVEL && cuenta(5) >= POR_NIVEL) break;
   }
-  // 2. horquilla  ·  3. clavada  (en posiciones de partida)
+  // 2. tenedor  ·  3. clavada  (en posiciones de partida)
   for (const { fen } of barajar(reales, "construye")) {
     if (cuenta(2) >= POR_NIVEL && cuenta(3) >= POR_NIVEL) break;
     const c = fen.split(" ")[1];

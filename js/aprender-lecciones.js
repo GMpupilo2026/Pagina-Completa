@@ -80,8 +80,8 @@ const LESSONS = [
     ] },
 
   // ---------- Tácticas básicas ----------
-  { id:'tac_horquilla', cat:'tacticas', title:'Horquilla', type:'move',
-    text:'Una horquilla ataca dos piezas rivales a la vez con una sola pieza, obligando al rival a perder una de ellas. Encuentra el salto de caballo que ataca al rey Y a la dama negra al mismo tiempo.',
+  { id:'tac_horquilla', cat:'tacticas', title:'Tenedor', type:'move',
+    text:'Un tenedor ataca dos piezas rivales a la vez con una sola pieza, obligando al rival a perder una de ellas. Encuentra el salto de caballo que ataca al rey Y a la dama negra al mismo tiempo.',
     fen:'6k1/8/2q5/3N4/8/8/8/K7 w - - 0 1', solution:{from:'d5',to:'e7'}, motivo:'horquilla' },
   { id:'tac_clavada', cat:'tacticas', title:'Clavada', type:'move',
     text:'Una pieza está "clavada" cuando no puede moverse sin dejar expuesta a una pieza más valiosa detrás de ella — aquí, su propio rey. El caballo negro está clavado por tu torre y no se puede mover: captúralo gratis.',
@@ -90,7 +90,7 @@ const LESSONS = [
     text:'Un ataque descubierto pasa cuando mueves una pieza y, al apartarse, deja a otra pieza tuya atacando algo que antes tapaba. Mueve el caballo y descubre el jaque de tu alfil.',
     fen:'4k3/8/2N5/8/B7/8/8/6K1 w - - 0 1', solution:{from:'c6',to:'d4'}, motivo:'descubierto' },
   { id:'tac_doble', cat:'tacticas', title:'Ataque doble', type:'move',
-    text:'Un ataque doble amenaza dos piezas rivales a la vez con una sola pieza de largo alcance (a diferencia de la horquilla, que siempre es de un caballo). Mueve la dama a la casilla que ataca la torre Y el caballo negros al mismo tiempo.',
+    text:'Un ataque doble amenaza dos piezas rivales a la vez con una sola pieza de largo alcance (a diferencia del tenedor, que siempre es de un caballo). Mueve la dama a la casilla que ataca la torre Y el caballo negros al mismo tiempo.',
     fen:'7n/2r5/4k3/8/3Q4/8/8/7K w - - 0 1', solution:{from:'d4',to:'d8'}, motivo:'doble' },
 ];
 

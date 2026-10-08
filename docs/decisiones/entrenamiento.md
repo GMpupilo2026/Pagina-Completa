@@ -839,10 +839,9 @@ alfil, piezas menores como blanco), comprobado con chess.js.
 
 **Y la página acepta cualquier jugada que cumpla el motivo**, no solo la
 guardada (`js/motivos-tacticos.js`, el mismo módulo que usa el verificador): en
-un ataque descubierto todo salto del caballo descubre el jaque, y en varias
-horquillas y dobles hay otra jugada que también lo es; 47 respuestas buenas se
+un ataque descubierto todo salto del caballo descubre el jaque, y en varios tenedores y dobles hay otra jugada que también lo es; 47 respuestas buenas se
 rechazaban con «no es la jugada que buscamos». Cumplir el motivo exige también
-que el rival no pueda comer la pieza que atacó: una horquilla que regala el
+que el rival no pueda comer la pieza que atacó: un tenedor que regala el
 caballo no es lo que el ejercicio enseña. Las lecciones de táctica dicen su
 `motivo`. Lo prueba `verificar-entreno-arreglos.js` («cualquier jugada que
 cumpla el motivo»).
@@ -1029,9 +1028,9 @@ Las fichas de táctica y conceptos que nombran un tema de Ejercicios por tema
 traen `temaPractica` (la clave en `temas.json`) y la página les pone el botón
 «🎯 Practicar este tema» (`temas.html?tema=<clave>`, el mismo enlace de las
 tareas). `verificar-fichas.js` comprueba que el nombre del texto y la clave
-sean el mismo tema. **Ojo con los nombres de Lichess**: la horquilla es
+sean el mismo tema. **Ojo con los nombres de Lichess**: el tenedor es
 «Ataque doble» (`fork`) y la enfilada es «Pincho» (`skewer`). Las dos fichas
-estaban cruzadas —la horquilla mandaba al pincho y la enfilada a los rayos X—
+estaban cruzadas —el tenedor mandaba al pincho y la enfilada a los rayos X—
 y el alumno practicaba otro motivo sin que nada fallara.
 
 ## El hub de Entrenamiento y sus grupos
@@ -1487,13 +1486,11 @@ que en pantalla no se veían:
 
 La comprobación fuerte es `ganaSiempre`: no alcanza con que la pieza **ataque**
 dos cosas, se juegan **todas** las respuestas legales del rival y ninguna puede
-salvar lo prometido. Una horquilla que se para con una jugada no es una
-horquilla, y en el diagrama se ve igual de bien.
+salvar lo prometido. Un tenedor que se para con una jugada no es un tenedor, y en el diagrama se ve igual de bien.
 
 **Cuando una ficha dice «el tema X», ese X existe.** Los nombres salen de
 `entreno/data/temas.json` —el mismo archivo que arma Ejercicios por tema— y el
-verificador los compara contra él. Así se corrigieron cuatro: el tema de la
-horquilla se llama ahí **«Pincho»**, el del descubierto **«Ataque a la
+verificador los compara contra él. Así se corrigieron cuatro: el tema del tenedor se llama ahí **«Pincho»**, el del descubierto **«Ataque a la
 descubierta»** y el de la enfilada, **«Ataque por rayos X»**. Mandar a un alumno
 a un tema que no está no da ningún error: lo busca, no lo encuentra y se queda
 pensando que se equivocó él.
@@ -1680,7 +1677,7 @@ primero de los tres).
 - **Cómo se llega directo a una ficha**: los encabezados van en orden (h1 el
   documento, h2 cada categoría, h3 cada ficha, h4 cada bloque), así que con la
   tecla H, 2 o 3 del lector se salta de ficha en ficha; hay un índice por
-  categoría y otro alfabético por la palabra que importa («Horquilla, la»), con
+  categoría y otro alfabético por la palabra que importa («Tenedor, el»), con
   las letras como atajos; cada ficha lleva su número («Ficha 65») y termina con
   «Volver al índice». Arriba se explica cómo moverse, con las teclas de NVDA,
   JAWS y VoiceOver. **No lleva buscador con código** porque se abre suelto: la
@@ -3203,7 +3200,7 @@ hay lista: cada alumno tiene los suyos) y los verificadores.
   quitan una estrella; al tercero, la respuesta. Al final dice qué pasó en la
   partida («jugaste Cxf7 y la evaluación pasó de +0,1 a −4,6»). Resolver uno
   cuenta como cualquier Tipo (`activity = 'tipos'`, `category = 'errores'`).
-- **Cada error lleva su tema** («Lo que no viste: Horquilla», «Lo que te
+- **Cada error lleva su tema** («Lo que no viste: Tenedor», «Lo que te
   hicieron: Clavada»), con el mismo reconocedor de patrones de la preparación
   de rivales (`PreparacionTactica.temaDeJugada`, sin motor, con
   `preparacion-posiciones.js`): si se le escapó la ventaja, el de la mejor

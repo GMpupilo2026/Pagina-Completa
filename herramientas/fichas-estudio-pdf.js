@@ -495,7 +495,7 @@ with open(destino, "wb") as f:
      categoría, h3 cada ficha, h4 cada bloque), así que con la tecla H del
      lector se salta de ficha en ficha y con 2 o 3, por niveles;
    - hay dos índices con enlaces: por categoría (en el orden del libro) y
-     alfabético por la palabra que importa («Horquilla, la»), con las letras
+     alfabético por la palabra que importa («Tenedor, el»), con las letras
      como atajos;
    - cada ficha lleva su número («Ficha 37»), así que se encuentra buscando
      «Ficha 37» o su nombre, y termina con «Volver al índice».
@@ -529,7 +529,7 @@ function posicionContada(fen) {
   return `${d.turno} Piezas blancas: ${esc(d.blancas)}. Piezas negras: ${esc(d.negras)}.`;
 }
 
-// Para el índice alfabético: «La horquilla» se busca por «horquilla».
+// Para el índice alfabético: «El tenedor» se busca por «tenedor».
 const ARTICULO = /^(el|la|los|las)\s+/i;
 const sinTilde = (t) => t.normalize("NFD").replace(/[̀-ͯ]/g, "");
 function claveAlfabetica(titulo) {
@@ -626,7 +626,7 @@ ${indiceCategorias}
 
 <nav aria-labelledby="indice-alfabetico">
 <h2 id="indice-alfabetico">Índice alfabético</h2>
-<p>Las fichas ordenadas por la palabra que importa: «La horquilla» está en la H, como «Horquilla, la».</p>
+<p>Las fichas ordenadas por la palabra que importa: «El tenedor» está en la T, como «Tenedor, el».</p>
 ${indiceAlfabetico}
 <p><a href="#indice">Volver al índice por categoría</a></p>
 </nav>

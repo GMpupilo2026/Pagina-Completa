@@ -1,143 +1,441 @@
-%PDF-1.4
-%“Œ‹ž ReportLab Generated PDF document (opensource)
+%PDF-1.3
+%âãÏÓ
 1 0 obj
 <<
-/F1 2 0 R /F2 3 0 R /F3 4 0 R /F4 5 0 R
+/PageMode /UseNone
+/Pages 2 0 R
+/Type /Catalog
 >>
 endobj
 2 0 obj
 <<
-/BaseFont /Helvetica /Encoding /WinAnsiEncoding /Name /F1 /Subtype /Type1 /Type /Font
+/Count 4
+/Kids [ 3 0 R 10 0 R 12 0 R 14 0 R ]
+/Type /Pages
 >>
 endobj
 3 0 obj
 <<
-/BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding /Name /F2 /Subtype /Type1 /Type /Font
+/Contents 4 0 R
+/MediaBox [ 0 0 612 792 ]
+/Parent 2 0 R
+/Resources <<
+/Font 5 0 R
+/ProcSet [ /PDF /Text /ImageB /ImageC /ImageI ]
+>>
+/Rotate 0
+/Trans <<
+>>
+/Type /Page
 >>
 endobj
 4 0 obj
 <<
-/BaseFont /Helvetica-Oblique /Encoding /WinAnsiEncoding /Name /F3 /Subtype /Type1 /Type /Font
+/Length 4670
 >>
+stream
+1 0 0 1 0 0 cm  BT /F1 12 Tf 14.4 TL ET
+q
+BT /F1 8 Tf 9.6 TL ET
+.384314 .490196 .596078 rg
+BT 1 0 0 1 56.69291 39.68504 Tm (Ajedrez Integral \267 ajedrez-integral.com) Tj T* ET
+BT 1 0 0 1 465.0511 39.68504 Tm (Los cimientos del ajedrez) Tj T* ET
+Q
+q
+1 0 0 1 62.69291 717.3071 cm
+q
+BT 1 0 0 1 0 3 Tm 12 TL /F2 9 Tf .870588 .568627 .113725 rg (AJEDREZ INTEGRAL  ) Tj (\267) Tj (  LOS CIMIENTOS DEL AJEDREZ) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 703.3071 cm
+q
+.384314 .490196 .596078 rg
+BT 1 0 0 1 0 2.5 Tm /F3 9.5 Tf 12 TL (Ejercicios de pr\341ctica \227 Lecci\363n 12) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 670.3071 cm
+q
+.039216 .121569 .2 rg
+BT 1 0 0 1 0 4 Tm /F4 19 Tf 23 TL (El ataque doble) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 661.1071 cm
+q
+1.2 w
+1 J
+.870588 .568627 .113725 RG
+n 0 0 m 486.6142 0 l S
+Q
+Q
+q
+1 0 0 1 62.69291 636.1071 cm
+q
+.870588 .568627 .113725 rg
+BT 1 0 0 1 0 3 Tm /F2 10 Tf 13 TL (OBJETIVO DE LA LECCI\323N) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 601.1071 cm
+q
+.2 .305882 .407843 rg
+BT 1 0 0 1 0 19.5 Tm /F1 10.5 Tf 15 TL (Una sola jugada ataca dos cosas a la vez y el rival solo puede salvar una. Es el golpe t\341ctico m\341s) Tj T* (frecuente en las partidas de club.) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 576.1071 cm
+q
+.870588 .568627 .113725 rg
+BT 1 0 0 1 0 3 Tm /F2 10 Tf 13 TL (REPASO R\301PIDO) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 496.1071 cm
+q
+BT 1 0 0 1 2 64.5 Tm /F1 10 Tf 12 TL .2 .305882 .407843 rg (\226) Tj ET
+.2 .305882 .407843 rg
+BT 1 0 0 1 14 64.5 Tm /F1 10.5 Tf 15 TL (El ataque doble es la idea t\341ctica m\341s sencilla y la que m\341s partidas decide: una pieza ataca dos) Tj T* -0.07124 Tw (objetivos al mismo tiempo. Puede ser dos piezas sin defensa, una pieza y una amenaza de mate, o el) Tj T* 0 Tw (rey y otra pieza. El tenedor de caballo es la m\341s conocida, porque el caballo ataca sin ser atacado) Tj T* (por la pieza que amenaza. Pero tambi\351n hacen ataques dobles la dama, el pe\363n, que tiene tenedores) Tj T* (muy baratas, y hasta el rey en el final.) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 412.1071 cm
+q
+BT 1 0 0 1 2 64.5 Tm /F1 10 Tf 12 TL .2 .305882 .407843 rg (\226) Tj ET
+.2 .305882 .407843 rg
+BT 1 0 0 1 14 64.5 Tm /F1 10.5 Tf 15 TL (Las mejores v\355ctimas de un ataque doble son las piezas sin defensa y el rey. Antes de cada jugada,) Tj T* (haz una lista r\341pida de las piezas rivales que no est\341n protegidas: cada una es un posible objetivo.) Tj T* (Despu\351s busca una casilla desde la que alguna de tus piezas ataque dos de ellas, o una de ellas y el) Tj T* (rey. Las piezas rivales separadas a la distancia de un salto de caballo entre s\355 son una invitaci\363n a la) Tj T* (tenedor.) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 343.1071 cm
+q
+BT 1 0 0 1 2 49.5 Tm /F1 10 Tf 12 TL .2 .305882 .407843 rg (\226) Tj ET
+.2 .305882 .407843 rg
+BT 1 0 0 1 14 49.5 Tm /F1 10.5 Tf 15 TL (A veces la casilla del ataque doble est\341 defendida y hay que prepararla: con un jaque que lleve al rey) Tj T* (a la casilla justa, o con un sacrificio que desv\355e al defensor. El error t\355pico del que defiende es dejar) Tj T* (piezas sin protecci\363n \253porque no pasa nada\273: no pasa nada hasta que aparecen dos a la vez. La) Tj T* (costumbre de mantener las piezas defendidas evita la mitad de los ataques dobles que sufrir\355as.) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 318.1071 cm
+q
+.870588 .568627 .113725 rg
+BT 1 0 0 1 0 3 Tm /F2 10 Tf 13 TL (EJERCICIOS) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 294.1071 cm
+q
+.039216 .121569 .2 rg
+BT 1 0 0 1 0 3 Tm /F2 11 Tf 14 TL (1. Pr\341ctica dirigida) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 261.1071 cm
+q
+.2 .305882 .407843 rg
+BT 1 0 0 1 0 19.5 Tm /F1 10.5 Tf 15 TL (Antes de cada jugada de una partida r\341pida, nombra en voz baja las piezas rivales sin defensa. Al) Tj T* (terminar, revisa si en alg\372n momento dos de ellas estuvieron al alcance de una sola pieza tuya.) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 237.1071 cm
+q
+.039216 .121569 .2 rg
+BT 1 0 0 1 0 3 Tm /F2 11 Tf 14 TL (2. Expl\355calo con tus palabras) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 204.1071 cm
+q
+.2 .305882 .407843 rg
+BT 1 0 0 1 0 19.5 Tm /F1 10.5 Tf 15 TL (Escribe en tres o cuatro l\355neas de qu\351 se trata \223El ataque doble\224 y para qu\351 sirve, como si se lo) Tj T* (explicaras a alguien que reci\351n empieza.) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 145.1071 cm
+q
+.384314 .490196 .596078 rg
+BT 1 0 0 1 0 41.5 Tm /F1 10.5 Tf 26 TL (___________________________________________________________________________________) Tj T* (_____) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 89.10709 cm
+q
+.384314 .490196 .596078 rg
+BT 1 0 0 1 0 41.5 Tm /F1 10.5 Tf 26 TL (___________________________________________________________________________________) Tj T* (_____) Tj T* ET
+Q
+Q
+ 
+
+endstream
 endobj
 5 0 obj
 <<
-/BaseFont /Times-Bold /Encoding /WinAnsiEncoding /Name /F4 /Subtype /Type1 /Type /Font
+/F1 6 0 R
+/F2 7 0 R
+/F3 8 0 R
+/F4 9 0 R
 >>
 endobj
 6 0 obj
 <<
-/Contents 13 0 R /MediaBox [ 0 0 612 792 ] /Parent 12 0 R /Resources <<
-/Font 1 0 R /ProcSet [ /PDF /Text /ImageB /ImageC /ImageI ]
->> /Rotate 0 /Trans <<
-
->> 
-  /Type /Page
+/BaseFont /Helvetica
+/Encoding /WinAnsiEncoding
+/Name /F1
+/Subtype /Type1
+/Type /Font
 >>
 endobj
 7 0 obj
 <<
-/Contents 14 0 R /MediaBox [ 0 0 612 792 ] /Parent 12 0 R /Resources <<
-/Font 1 0 R /ProcSet [ /PDF /Text /ImageB /ImageC /ImageI ]
->> /Rotate 0 /Trans <<
-
->> 
-  /Type /Page
+/BaseFont /Helvetica-Bold
+/Encoding /WinAnsiEncoding
+/Name /F2
+/Subtype /Type1
+/Type /Font
 >>
 endobj
 8 0 obj
 <<
-/Contents 15 0 R /MediaBox [ 0 0 612 792 ] /Parent 12 0 R /Resources <<
-/Font 1 0 R /ProcSet [ /PDF /Text /ImageB /ImageC /ImageI ]
->> /Rotate 0 /Trans <<
-
->> 
-  /Type /Page
+/BaseFont /Helvetica-Oblique
+/Encoding /WinAnsiEncoding
+/Name /F3
+/Subtype /Type1
+/Type /Font
 >>
 endobj
 9 0 obj
 <<
-/Contents 16 0 R /MediaBox [ 0 0 612 792 ] /Parent 12 0 R /Resources <<
-/Font 1 0 R /ProcSet [ /PDF /Text /ImageB /ImageC /ImageI ]
->> /Rotate 0 /Trans <<
-
->> 
-  /Type /Page
+/BaseFont /Times-Bold
+/Encoding /WinAnsiEncoding
+/Name /F4
+/Subtype /Type1
+/Type /Font
 >>
 endobj
 10 0 obj
 <<
-/PageMode /UseNone /Pages 12 0 R /Type /Catalog
+/Contents 11 0 R
+/MediaBox [ 0 0 612 792 ]
+/Parent 2 0 R
+/Resources <<
+/Font 5 0 R
+/ProcSet [ /PDF /Text /ImageB /ImageC /ImageI ]
+>>
+/Rotate 0
+/Trans <<
+>>
+/Type /Page
 >>
 endobj
 11 0 obj
 <<
-/Author (Ajedrez Integral) /CreationDate (D:20261007095423+00'00') /Creator (\(unspecified\)) /Keywords () /ModDate (D:20261007095423+00'00') /Producer (ReportLab PDF Library - \(opensource\)) 
-  /Subject (\(unspecified\)) /Title (Los cimientos del ajedrez \204 Ejercicios 12) /Trapped /False
+/Filter [ /ASCII85Decode /FlateDecode ]
+/Length 277
 >>
+stream
+Gatmt6#4@l%#+0G(%7M!VHJp2a2\Wm)"^_qEA1#MQB\7X=\o"h[5/'!ST^A07Xd[roYaSjo(7)-n/Cf/A?\PUJINKM'c*M>X@fA7#u=H@C0K)j!?&)n$cmWkY/Ros"^L7l8A+YT-<7KT-0g$WjUen2]]/=#M>M:6`4He?c+!Q!(R;T'n:5ICGg$WcW(&<ebJ1!Vo,"ueki:ojU2<$<`&l%$q3`\+bA?/X29Kpm6V@C'R"AbP\aQm_Q/`nW[%7'Rs3L&*rpcHtXXd@0Dj#=9~>
+endstream
 endobj
 12 0 obj
 <<
-/Count 4 /Kids [ 6 0 R 7 0 R 8 0 R 9 0 R ] /Type /Pages
+/Contents 13 0 R
+/MediaBox [ 0 0 612 792 ]
+/Parent 2 0 R
+/Resources <<
+/Font 5 0 R
+/ProcSet [ /PDF /Text /ImageB /ImageC /ImageI ]
+>>
+/Rotate 0
+/Trans <<
+>>
+/Type /Page
 >>
 endobj
 13 0 obj
 <<
-/Filter [ /ASCII85Decode /FlateDecode ] /Length 1941
+/Length 3582
 >>
 stream
-Gb!;da_p-.&A@rklKA?\LWrPVD]W+=OJ.U\[ZX!#+D?mSRfYNmPFBR"T3"`ZU:``P3']6g\THHolIDrt#]fH>fRMqOkjs`sI1[_eRba/5S:G3M)UD0M::`AOIPGl;m^_?g"()2l"=%!,,'(Otj:6p?+*`G%XG;oONP(Ar+$57O$`c:Y?7]*NeMBpW>!6PedG0Wa,ho63Utnrs0(Y]K[\VU&m'(+[LdK,k`=&`qdSQIrW@DXf,q@YOll#U.q/!-#?5M?]$ln.F#iO(,/%4+*Cmd#G!X"KQN.Ec)\D_C_N2'hB%EK-u+*\qa7qUB5X5!0:2#0$KJ%`O_&m=CqS7$\41qgGpbK6rOn[BC=Y/XE*G4!9EG,2:uMtFLl\E#XnVt'#0O8=R=^,Db8nP\U2NDg3$<I4'<,-KBsU**!CWo?"/qiP5n_r9OJJ_L^\ogbT=:r3lS1a9te'j&aO'p,Z0H@?eIl;l*+7T!&913J9-82t)E=2<2o/@n#jY>2Q6:C:k^VdKdZMSR,(7X+;^n=uS-pWNR@FdP#&[?.lNh0cpXcR+.sT^FYMT]u7BE\dAPs4\-2])=aR-I>4)p_faiJc@2$1"m<_II23C%rE/u(QqI[8Qn"_16IMTWh+/7Psu[TKQerRkaKjg3aJFNZ+d$6;4rf/fh-!o$L,pin</P^Wta)'#*kGEV:fC%HEU?(TJI=^!k&P<;V,V,/b@u'=ZD0;#R;GQLYM@nMn9q>SboSb5.S6bloc3Y^%YcV'EroXG7F7XNE?V%aSKBa4]FoCpV-I:3kf8C;MGRG-;*]@+hLp>;+7!eGe`B0]W$8*X$qu\k?M,h;YAfi`Wi)C>R)BrkhR>&=tZ,@:04(tplVI$0<%]H?Bl"KDi(3qAX,--#grc<mT!]V=jP4D?HZRg&pMuob?CH6$"@c,]%3KSCFh)Rh<f;t.d=4f:Q<VWW?`98"&E,D]):Qn.$5?o<kMHf@5eSK"?A/re_VV6QF9oAG1nWqB,;ia;]<d#Hi\p076uti#.*&nR'mnkKLFtl$\t"Q;L2s"!2W$L,2`&bhQ1E72=-\dV"uK6/Stk>F4eO`I9L#:*l1q:rV-(J"UT4W/2b4G!Or[Dc!(cnML?tDZ4i*seEK@mXW>!'U9kQM.b9L1fbVe%q.uIaV2V,hD\Zs$l[+r"]"n`c/snZ-Esg./&dK$:Mt>L^S&.2h>*UGr(cVBMQK.U0RAs[b(g8aCDE#P_FSmuHFj$TIJ`#EPh/$TS,%-U49F^EBDP=bQfl-gl'W/'t0a^W,PDteSMu^FrG">!9lZ019MHU+'/r<#g4f61J76bla!4K4$G/N)[M!,*CHUJ93s!eV5pBTU[VH_i!kcQtM`7-Q9V-UsViJ(Ull;cO>X>>.Io"pbHm8j4UAST0fAr^aPPC6f]#5-osG'f4-FaDA(0l$bWZ/&iJ[&bo<7VtUeCIh@J0.S*M*-AgQ*g2]=$';*^e2mukooE\Vp.RF>6GLu:d(YZVX9+?KHNX:qmn'EDQF'1dZ-Y3m2hqM_i78po%s='hZta_'rE1Q)Dmq<e3&`P+XA7eg@b\1F0/]!MRc[qSRZj'"(rhEkLE.)KfAkW/alVUGm]^&:'_M>F4ot+WMY=C"\eLMa]sDsHlBGlD#li;mSIj[VelFook.Iose2-Rt24$G"<ol+afM]F0Yrr\SG4/D3<]\9'dq@m3<GHb"ZRJH+*2P,506@,mgXAT/cXrGO%.cg`M'6hQ';@YF[UZpef#Pjrk79bNGTPT2mjbZM9kJ6p>Ci-/"@D7,5ht;8W]2o`Q%_ACf0"*d:EsYF>\nqEC.I`VSQM6s=G6,&Y<W'+aV'X9a<,3SG'U)h32PRa^#XJWmbVeL'efW5[2hLplC^n\Pp%7*M$`?5H\OV@L^:j],"I+U#3%KkT)J,9e%\*Gf/E66]D$@bN]8>/oY8Y-:At9YJ,3"~>endstream
+1 0 0 1 0 0 cm  BT /F1 12 Tf 14.4 TL ET
+q
+BT /F1 8 Tf 9.6 TL ET
+.384314 .490196 .596078 rg
+BT 1 0 0 1 56.69291 39.68504 Tm (Ajedrez Integral \267 ajedrez-integral.com) Tj T* ET
+BT 1 0 0 1 465.0511 39.68504 Tm (Los cimientos del ajedrez) Tj T* ET
+Q
+q
+1 0 0 1 62.69291 717.3071 cm
+q
+BT 1 0 0 1 0 3 Tm 12 TL /F2 9 Tf .870588 .568627 .113725 rg (AJEDREZ INTEGRAL  ) Tj (\267) Tj (  LOS CIMIENTOS DEL AJEDREZ) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 703.3071 cm
+q
+.384314 .490196 .596078 rg
+BT 1 0 0 1 0 2.5 Tm /F3 9.5 Tf 12 TL (Ejercicios de pr\341ctica \227 Lecci\363n 12 \(continuaci\363n\)) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 692.1071 cm
+q
+1.2 w
+1 J
+.870588 .568627 .113725 RG
+n 0 0 m 486.6142 0 l S
+Q
+Q
+q
+1 0 0 1 62.69291 668.1071 cm
+q
+.039216 .121569 .2 rg
+BT 1 0 0 1 0 3 Tm /F2 11 Tf 14 TL (3. Pregunta de repaso) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 590.1071 cm
+q
+.2 .305882 .407843 rg
+BT 1 0 0 1 0 64.5 Tm /F1 10.5 Tf 15 TL (El ataque doble es la idea t\341ctica m\341s sencilla y la que m\341s partidas decide: una pieza ataca dos) Tj T* (objetivos al mismo tiempo. Puede ser dos piezas sin defensa, una pieza y una amenaza de mate, o el) Tj T* (rey y otra pieza. El tenedor de caballo es la m\341s conocida, porque el caballo ataca sin ser atacado por) Tj T* (la pieza que amenaza. Pero tambi\351n hacen ataques dobles la dama, el pe\363n, que tiene tenedores muy) Tj T* (baratas, y hasta el rey en el final.) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 568.1071 cm
+q
+.2 .305882 .407843 rg
+BT 1 0 0 1 0 4.5 Tm /F1 10.5 Tf 15 TL (\277Por qu\351 es as\355? Escr\355belo con tus palabras.) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 509.1071 cm
+q
+.384314 .490196 .596078 rg
+BT 1 0 0 1 0 41.5 Tm /F1 10.5 Tf 26 TL (___________________________________________________________________________________) Tj T* (_____) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 453.1071 cm
+q
+.384314 .490196 .596078 rg
+BT 1 0 0 1 0 41.5 Tm /F1 10.5 Tf 26 TL (___________________________________________________________________________________) Tj T* (_____) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 397.1071 cm
+q
+.384314 .490196 .596078 rg
+BT 1 0 0 1 0 41.5 Tm /F1 10.5 Tf 26 TL (___________________________________________________________________________________) Tj T* (_____) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 373.1071 cm
+q
+.039216 .121569 .2 rg
+BT 1 0 0 1 0 3 Tm /F2 11 Tf 14 TL (4. Ll\351valo a una partida) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 325.1071 cm
+q
+.2 .305882 .407843 rg
+BT 1 0 0 1 0 34.5 Tm /F1 10.5 Tf 15 TL (Juega una partida completa \227contra Oscar en el Tablero de ajedrez-integral.com, contra el motor o con) Tj T* (un compa\361ero\227 aplicando a prop\363sito lo de esta lecci\363n. Al terminar, anota un momento concreto en el) Tj T* (que lo usaste, o en el que debiste usarlo.) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 266.1071 cm
+q
+.384314 .490196 .596078 rg
+BT 1 0 0 1 0 41.5 Tm /F1 10.5 Tf 26 TL (___________________________________________________________________________________) Tj T* (_____) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 210.1071 cm
+q
+.384314 .490196 .596078 rg
+BT 1 0 0 1 0 41.5 Tm /F1 10.5 Tf 26 TL (___________________________________________________________________________________) Tj T* (_____) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 154.1071 cm
+q
+.384314 .490196 .596078 rg
+BT 1 0 0 1 0 41.5 Tm /F1 10.5 Tf 26 TL (___________________________________________________________________________________) Tj T* (_____) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 98.10709 cm
+q
+.384314 .490196 .596078 rg
+BT 1 0 0 1 0 41.5 Tm /F1 10.5 Tf 26 TL (___________________________________________________________________________________) Tj T* (_____) Tj T* ET
+Q
+Q
+ 
+
+endstream
 endobj
 14 0 obj
 <<
-/Filter [ /ASCII85Decode /FlateDecode ] /Length 277
+/Contents 15 0 R
+/MediaBox [ 0 0 612 792 ]
+/Parent 2 0 R
+/Resources <<
+/Font 5 0 R
+/ProcSet [ /PDF /Text /ImageB /ImageC /ImageI ]
 >>
-stream
-Gatmt6#4@l%#+0G(%7M!VHJp2a2\Wm)"^_qEA1#MQB\7X=\o"h[5/'!ST^A07Xd[roYaSjo(7)-n/Cf/A?\PUJINKM'c*M>X@fA7#u=H@C0K)j!?&)n$cmWkY/Ros"^L7l8A+YT-<7KT-0g$WjUen2]]/=#M>M:6`4He?c+!Q!(R;T'n:5ICGg$WcW(&<ebJ1!Vo,"ueki:ojU2<$<`&l%$q3`\+bA?/X29Kpm6V@C'R"AbP\aQm_Q/`nW[%7'Rs3L&*rpcHtXXd@0Dj#=9~>endstream
+/Rotate 0
+/Trans <<
+>>
+/Type /Page
+>>
 endobj
 15 0 obj
 <<
-/Filter [ /ASCII85Decode /FlateDecode ] /Length 1216
+/Filter [ /ASCII85Decode /FlateDecode ]
+/Length 277
 >>
 stream
-Gb!Sj?#SIU'Rf_Z\<$(9W?S=f]aWTZ((%X^9Dp[a(hf=/'M+rb8fa(%^I(UoS[M!MTJ*V\fG)GScTUGt?A_U90CuqI:%[2/?GC'i33@+T76s?-'eS%DLY92#\V3.:`q_l1O^Jb);'*#*TchXE0[7\o3Wh9dO-:^.H-Ssr15eMEX_E6(YBEAud:Le+>9bZPn0B;?bl1k-ZU(;N=1#]>ohQ(e^h]1Q5o?r3]WSW<U9%#<F;XCE[J+q(jA59uHV*uL>KYAZKIMN`"'mg!,FiDEaU/r*b+/`&QA0CFJT6i!4JdQ_On'@5_<bq4k'Hh>?+sZ!hd'TjLckIf&KF8.Wt1idpWGcRQg`NC]ihLO[!EMNpEL-d6):ET+=&#HNlLCo!r7b&IQaJ%nm7`Y/4qQ3[:UX-<chmrOUr(.WM1e"+q]ejfZX`ZFCiqEEH:[9jack?YUNrqE;Bg/Y%G^2]RDeT]T8MU%(3tsNe`KU*<f!>"+VL.3G20?E>Bo^!UjeY`#o42P`N"iYCm2FUJ\LKdn(p@;6@5%AU8>;*hm^BG!HH8&J>\4DpX\]T*lXHE(i_`,Qm_nabO3M:2_XOb#0ObgaPhNQc.BkBZ[9O-nDA`\kUI`>\Ktub+3V\/R\G`oo5cU<):qfLP)/+HX:d,]iSM8)<o0ZX@lc5l:P'c)J\mO3`os`_;G<lAHT\+Wj-Sai:t]\AZZmHjQ3FRV\Z("<>1ToO4^?l1E$G(P'!VH6gna)W/t4d<I3^hdQtuhn,Q_Zp-P$Zg,SSA0tB":dn[N''54e7crlD!JXS@P.I/S.3+`WUa[.k[p3%#)LTlt"DunT@?geBk"p-[I9B;E(rc&"p8cq;$!NL@lU6]3SR);-X2e@WEG!]1lYN_CSl?H0CGaa*2#*D!M:0VEeMLVJ!/W:Wc'r6N,eFftj._.FbSe>S$*sR"".uMugTlPXZbl@\4T.)G>SrRlL@W?R]7%TtlVc<SMVB;K<<UO+>QEHbe*Gt#4-cEg\s)prPnPabaX4q:V3088eWG]5%h7\`\q8!ipN3-VBdA>40co8`6g9dO##$Ym!T`OpE53^i]*^QO(0t?b_]kf3(0[7lld2LiPSnH5A;rqGPCM22i7M*p87@c1kHC@uuCinhW!3LG5?Oj1l$3MC="RJ/tr:Li]EO[2T*ImCSD2CinAh&3q#NA<qG*U<TG]oTZ*1\+Jgu$IerkIP_Z[W#CC<:&~>endstream
+Gatmt6#4@l%#+0G(%7M!VHJp2a2\Wm)"^_qEA1#MQB\7X=\o"h[5/'!ST^A07Xd[roYaSjo(7)-n/Cf/A?\PUJINKM'c*M>X@fA7#u=H@C0K)j!?&)n$cmWkY/Ros"^L7l8A+YT-<7KT-0g$WjUen2]]/=#M>M:6`4He?c+!Q!(R;T'n:5ICGg$WcW(&<ebJ1!Vo,"ueki:ojU2<$<`&l%$q3`\+bA?/X29Kpm6V@C'R"AbP\aQm_Q/`nW[%7'Rs3L&*rpcHtXXd@0Dj#=9~>
+endstream
 endobj
 16 0 obj
 <<
-/Filter [ /ASCII85Decode /FlateDecode ] /Length 277
+/Author (Ajedrez Integral)
+/CreationDate (D\07220261007095423\05300\04700\047)
+/Creator (\050unspecified\051)
+/Keywords ()
+/ModDate (D\07220261007095423\05300\04700\047)
+/Producer (ReportLab PDF Library \055 \050opensource\051)
+/Subject (\050unspecified\051)
+/Title (Los cimientos del ajedrez \204 Ejercicios 12)
+/Trapped /False
 >>
-stream
-Gatmt6#4@l%#+0G(%7M!VHJp2a2\Wm)"^_qEA1#MQB\7X=\o"h[5/'!ST^A07Xd[roYaSjo(7)-n/Cf/A?\PUJINKM'c*M>X@fA7#u=H@C0K)j!?&)n$cmWkY/Ros"^L7l8A+YT-<7KT-0g$WjUen2]]/=#M>M:6`4He?c+!Q!(R;T'n:5ICGg$WcW(&<ebJ1!Vo,"ueki:ojU2<$<`&l%$q3`\+bA?/X29Kpm6V@C'R"AbP\aQm_Q/`nW[%7'Rs3L&*rpcHtXXd@0Dj#=9~>endstream
 endobj
 xref
 0 17
 0000000000 65535 f 
-0000000061 00000 n 
-0000000122 00000 n 
-0000000229 00000 n 
-0000000341 00000 n 
-0000000456 00000 n 
-0000000564 00000 n 
-0000000759 00000 n 
-0000000954 00000 n 
-0000001149 00000 n 
-0000001344 00000 n 
-0000001414 00000 n 
-0000001729 00000 n 
-0000001807 00000 n 
-0000003840 00000 n 
-0000004208 00000 n 
-0000005516 00000 n 
+0000000015 00000 n 
+0000000083 00000 n 
+0000000163 00000 n 
+0000000352 00000 n 
+0000005074 00000 n 
+0000005135 00000 n 
+0000005242 00000 n 
+0000005354 00000 n 
+0000005469 00000 n 
+0000005577 00000 n 
+0000005768 00000 n 
+0000006137 00000 n 
+0000006328 00000 n 
+0000009963 00000 n 
+0000010154 00000 n 
+0000010523 00000 n 
 trailer
 <<
-/ID 
-[<f17edaca84effff8f5616fd52a3c02ec><f17edaca84effff8f5616fd52a3c02ec>]
-% ReportLab generated PDF document -- digest (opensource)
-
-/Info 11 0 R
-/Root 10 0 R
 /Size 17
+/Root 1 0 R
+/Info 16 0 R
+/ID [ <f17edaca84effff8f5616fd52a3c02ec> <f17edaca84effff8f5616fd52a3c02ec> ]
 >>
 startxref
-5884
+10874
 %%EOF

@@ -65,7 +65,7 @@ const CARLA = {
 };
 const CURSOS_ANA = [
   { student_id: "a-1", slug: "finales-practicos", titulo: "Finales prácticos", total: 8, hechos: 3, ultimo_titulo: "La oposición", ultima_fecha: "2026-09-09T10:00:00Z" },
-  { student_id: "a-1", slug: "tactica-basica", titulo: "Táctica básica", total: 0, hechos: 1, ultimo_titulo: "La horquilla", ultima_fecha: "2026-09-08T10:00:00Z" },
+  { student_id: "a-1", slug: "tactica-basica", titulo: "Táctica básica", total: 0, hechos: 1, ultimo_titulo: "El tenedor", ultima_fecha: "2026-09-08T10:00:00Z" },
 ];
 const RESPUESTAS = [
   { student_id: "a-1", created_at: "2026-09-12T10:00:00Z", is_correct: true },
@@ -534,7 +534,7 @@ async function pruebaProfesor(browser) {
     return li.querySelector("span").textContent + (a ? " → " + a.getAttribute("href") : "");
   }).join(" // "));
   igual("los temas de todo el grupo, con su nombre y a dónde practicarlos; lo desconocido y «otra» no salen", await temasGrupo(),
-    "Clavada · 5 errores en 2 alumnos → entreno/temas.html?tema=pin // Horquilla (ataque doble) · 1 error en 1 alumno → entreno/temas.html?tema=fork");
+    "Clavada · 5 errores en 2 alumnos → entreno/temas.html?tema=pin // Tenedor (ataque doble) · 1 error en 1 alumno → entreno/temas.html?tema=fork");
   igual("y se ve de verdad", await page.evaluate(() => document.getElementById("errores-grupo-body").checkVisibility()), true);
   igual("las celadas en que más cae el grupo: solo las del banco, con el enlace a la línea", await page.evaluate(() =>
     [...document.querySelectorAll("#errores-grupo-body [data-celadas] > li")].map((li) => li.querySelector("span").textContent + " → " + li.querySelector("a").getAttribute("href")).join(" // ")),
@@ -701,7 +701,7 @@ async function pruebaProfesor(browser) {
       t[0].includes("Finales prácticos3/8 · 38%"),
       t[0].includes("Último tema estudiado: La oposición (09 sept 2026)"),
       t[1].includes("Táctica básica1/1 · 100%"),
-      t[1].includes("Último tema estudiado: La horquilla (08 sept 2026)"),
+      t[1].includes("Último tema estudiado: El tenedor (08 sept 2026)"),
     ].join(",");
   }), "2,true,true,true,true");
   igual("ficha de diagnóstico visible", await page.evaluate(() => !document.getElementById("diagnostico-report").classList.contains("hidden")), "true");
@@ -855,7 +855,7 @@ async function pruebaProfesor(browser) {
     document.querySelector("#errores-body > p").textContent.trim()),
     "4 partidas revisadas · 6 errores (4 en que regaló, 2 en que se le escapó la ventaja) · 2 ya resueltos.");
   igual("y lo que más se repite, por tema", await page.evaluate(() =>
-    document.querySelectorAll("#errores-body > p")[1].textContent.trim()), "Lo que más se repite: clavadas (3), horquillas (1).");
+    document.querySelectorAll("#errores-body > p")[1].textContent.trim()), "Lo que más se repite: clavadas (3), tenedores (1).");
   igual("la curva de errores por partida, mes a mes, hablando de él (las viejas sin cuenta no entran)", await page.evaluate(() => {
     const c = document.querySelector("#errores-body [data-curva]");
     return c && c.checkVisibility() ? [c.firstElementChild.textContent].concat([...c.querySelectorAll("li")].map((li) => li.textContent)).join(" // ") : null;

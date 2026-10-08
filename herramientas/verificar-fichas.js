@@ -114,7 +114,7 @@ FICHAS.forEach((F) => {
 if (!fallos) bien("todas las posiciones cargan, son legales y sus jugadas existen");
 
 console.log("\n=== Lo que la ficha promete, comprobado con el motor ===");
-/* Una ficha que dice "horquilla" tiene que enseñar una horquilla de verdad, y
+/* Una ficha que dice "horquilla" tiene que enseñar un tenedor de verdad, y
    eso no se mira a ojo: se juega. Cada ficha declara en `comprueba` qué hay que
    cumplir y acá se cumple o falla. Es el mismo criterio del material de los
    cursos —el resultado se verifica con motor— y del banco del diagnóstico, que
@@ -122,8 +122,7 @@ console.log("\n=== Lo que la ficha promete, comprobado con el motor ===");
 
    El más fuerte de todos es ganaSiempre: no alcanza con que la pieza ATAQUE dos
    cosas, hay que ver que el rival no tenga NINGUNA respuesta que salve la que
-   se promete. Una horquilla que el rival para con una jugada no es una
-   horquilla, y en el diagrama se ve igual de bien. */
+   se promete. Un tenedor que el rival para con una jugada no es un tenedor, y en el diagrama se ve igual de bien. */
 const COMPRUEBAN = {
   // La jugada de la ficha da jaque de verdad.
   jaque(F, g0) {
@@ -794,8 +793,8 @@ FICHAS.forEach((F) => {
   if (F.temaPractica && !CLAVES.has(F.temaPractica)) mal(`[${F.id}] temaPractica «${F.temaPractica}» no es una clave de entreno/data/temas.json: el botón abriría la lista`);
 });
 /* Los nombres de Ejercicios por tema son los de Lichess y no siempre coinciden
-   con los de acá: la horquilla es «Ataque doble» (fork) y la enfilada es
-   «Pincho» (skewer). Las dos fichas mandaban cruzadas —la horquilla al pincho y
+   con los de acá: el tenedor es «Ataque doble» (fork) y la enfilada es
+   «Pincho» (skewer). Las dos fichas mandaban cruzadas —el tenedor al pincho y
    la enfilada a los rayos X— y el alumno practicaba otro motivo sin que nada
    fallara. Estas dos quedan fijas para que no se vuelvan a cruzar. */
 [["horquilla", "fork"], ["ataque-doble", "fork"], ["enfilada", "skewer"], ["clavada", "pin"]].forEach(([id, clave]) => {

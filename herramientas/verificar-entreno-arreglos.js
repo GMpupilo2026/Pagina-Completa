@@ -262,7 +262,7 @@ async function verLaLinea(browser) {
       }
       return null;
     });
-    if (!caso) igual("hay un ejercicio de horquilla con un error refutable", "ninguno", "alguno");
+    if (!caso) igual("hay un ejercicio de tenedor con un error refutable", "ninguno", "alguno");
     else {
       await page.evaluate((c) => { currentIndex = c.i; loadPuzzle(); playMove(c.from, c.to, "q"); }, caso);
       igual("el aviso del error dice la jugada en castellano y lo que contesta el rival",

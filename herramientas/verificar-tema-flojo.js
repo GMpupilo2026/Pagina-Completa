@@ -34,7 +34,7 @@ const motivos = JSON.parse(guardado);
 const temas = JSON.parse(fs.readFileSync(path.join(RAIZ, "entreno/data/temas.json"), "utf8"));
 const NO_SON = ["mix", "opening", "middlegame", "endgame", "short", "long", "oneMove", "master", "equality", "crushing", "mateIn1"];
 ok("no trae temas que no son motivos", NO_SON.every((k) => !(k in motivos)), NO_SON.filter((k) => k in motivos).join(", "));
-ok("trae los motivos de siempre (clavada, horquilla, mate del pasillo, la táctica de la casa)",
+ok("trae los motivos de siempre (clavada, tenedor, mate del pasillo, la táctica de la casa)",
   ["pin", "fork", "backRankMate", "ultima-linea"].every((k) => k in motivos));
 const vacios = Object.keys(motivos).filter((k) => !(temas.themes[k] || []).length);
 ok("cada motivo tiene ejercicios en temas.json", !vacios.length, vacios.join(", "));

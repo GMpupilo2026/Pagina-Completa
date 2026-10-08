@@ -119,7 +119,7 @@ const MOTIVOS = [
   ["backRankMate", "El golpe va a la última fila, donde el rey no tiene salida."],
   ["doubleCheck", "Es un jaque doble: el rey tiene que moverse y no alcanza a tapar nada."],
   ["discoveredAttack", "Es un ataque a la descubierta: al moverse una pieza, se destapa otra."],
-  ["fork", "Es una horquilla: una pieza ataca dos objetivos a la vez."],
+  ["fork", "Es un tenedor: una pieza ataca dos objetivos a la vez."],
   ["skewer", "Es una enfilada: la pieza de adelante se va y cae la de atrás."],
   ["pin", "Todo gira en torno a una clavada: la pieza clavada no puede defender."],
   ["deflection", "Es una desviación: se aleja al defensor de lo que defendía."],
