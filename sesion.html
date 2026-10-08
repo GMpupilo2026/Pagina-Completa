@@ -369,9 +369,15 @@
                                 <h2 id="presentacion-titulo" class="font-serif font-bold text-brand-800 dark:text-white text-sm break-words"></h2>
                                 <p id="presentacion-cuenta" class="text-xs text-brand-500 dark:text-brand-300" aria-live="off"></p>
                             </div>
+                            <div class="flex flex-wrap items-center gap-1.5 shrink-0">
+                            <button id="presentacion-mini-btn" type="button" aria-controls="presentacion-mini" class="solo-pantalla-completa text-xs font-semibold px-3 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">♟ </span>Ocultar el tablero</button>
                             <button id="presentacion-completa" type="button" class="presentacion-sin-proyector shrink-0 text-xs font-semibold px-3 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">⛶ </span>Pantalla completa</button>
+                            </div>
                         </div>
                         <p id="presentacion-msg" hidden role="status" class="text-sm text-brand-700 dark:text-brand-200 bg-brand-50 dark:bg-brand-950 rounded-lg px-3 py-2 mb-2"></p>
+                        <!-- En pantalla completa, el tablero de la clase en pequeño (una copia de lo que
+                             muestra #chessboard, ver copiarTableroMini). -->
+                        <div id="presentacion-mini" hidden aria-hidden="true" class="presentacion-mini"></div>
                         <img id="presentacion-img" alt="" class="presentacion-img block w-full h-auto aspect-video object-contain rounded-lg bg-white border border-brand-200 dark:border-brand-700">
                         <details class="presentacion-sin-proyector mt-2">
                             <summary class="cursor-pointer text-xs font-semibold text-brand-700 dark:text-brand-200 marker:text-accent-600">Leer el texto de la diapositiva</summary>

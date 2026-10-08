@@ -3370,6 +3370,24 @@ el alumno tiene que HACER le sale encima, debajo de una pregunta).
   quita: no se deja al alumno con un recuadro vacío y nada más.
 - En el celular es una columna: la diapositiva, el tablero y el chat.
 
+#### En pantalla completa, el tablero de la clase en pequeño
+
+A pantalla completa (⛶ de la tarjeta) la lámina tapa el tablero, y el profe
+muchas veces explica ahí. Abajo a la derecha sale el tablero en pequeño, y la
+lámina se corre a la izquierda para dejarle su lugar.
+
+- **Es una COPIA de `#chessboard`** (`copiarTableroMini`), que se vuelve a
+  copiar con cada cambio: un `MutationObserver` sobre el tablero, solo mientras
+  dura la pantalla completa. Copiarlo y no dibujarlo aparte es lo que hace que
+  muestre exactamente lo mismo: la posición, la jugada que está mirando el
+  profe, sus flechas, el lado y las piezas ocultas. A la copia se le quitan
+  los `id` (no puede haber dos `#chessboard`) y no se puede tocar ni enfocar;
+  la pieza se vuelve a medir sobre su casilla, que es más chica.
+- Cada quien lo oculta o lo muestra con «♟ Ocultar el tablero» / «♟ Ver el
+  tablero»; se recuerda en el aparato (`localStorage`).
+- Sobre el fondo oscuro, los textos de la tarjeta van en claro: antes eran
+  gris oscuro y no se leían.
+
 **Una presentación nueva del curso**: sus imágenes (`01.webp`…, 1600 × 900) y su
 `diapositivas.json` en su carpeta, y una línea en `LISTA` de
 `js/clase-presentacion.js`. Las imágenes se sacan del `.pptx` con LibreOffice
@@ -3385,7 +3403,8 @@ celular), al proyector (la lámina al lado del tablero, sin lo del profe) y las
 la vista limpia (el profe la enciende y la apaga, a él no se le aplica, la
 alumna queda con la diapositiva, el tablero y el chat en su lugar, el
 calentamiento encima y las preguntas más arriba, el Modo Adaptado la anula, en
-el celular cabe) y las subidas con un PDF de verdad armado en la prueba y un Storage de mentira
+el celular cabe), el tablero en pequeño a pantalla completa (copia la jugada
+y la flecha en vivo, no tapa la lámina, se oculta y se muestra) y las subidas con un PDF de verdad armado en la prueba y un Storage de mentira
 (`opciones.extra` del doble): una imagen por página en su carpeta, la fila
 después de las imágenes y con el texto de cada página, elegirla, guardar y
 quitar una posición, borrarla (antes la quita de la clase), y a la alumna solo
@@ -3393,7 +3412,8 @@ se le firma la que se ve.
 Está probado que falla de verdad sin la guardia de los ecos, adelantándole
 láminas a la alumna (las del curso y las subidas), sin la línea del trigger y
 guardando la fila antes de subir las imágenes, sin poner el calentamiento al
-frente en la vista limpia y aplicándosela también al profe.
+frente en la vista limpia, aplicándosela también al profe y sin volver a
+copiar el tablero en pequeño cuando cambia.
 
 ### Buscar un ejercicio es mirarlo: «Ver todas las posiciones»
 

@@ -432,6 +432,47 @@ async function pruebaVistaLimpia(browser) {
   await ctx.close();
 }
 
+
+async function pruebaTableroMini(browser) {
+  console.log("\n10. En pantalla completa, el tablero de la clase en pequeño");
+  const { page, ctx, errores } = await abrir(browser, "u-ana", CLASE, { game_state: [fila({ presentacion: { deck: DECK, n: 18 } })] });
+  await page.setViewportSize({ width: 1600, height: 900 });
+  await esperarImagen(page, "18.webp");
+  cierto("fuera de la pantalla completa no hay mini tablero ni su botón",
+    !(await seVe(page, "#presentacion-mini")) && !(await seVe(page, "#presentacion-mini-btn")));
+  await page.click("#presentacion-completa");
+  await page.waitForFunction(() => document.fullscreenElement && document.fullscreenElement.id === "presentacion-caja", null, { timeout: 5000 });
+  await page.waitForTimeout(200);
+  cierto("a pantalla completa sale abajo a la derecha", await page.evaluate(() => {
+    const m = document.getElementById("presentacion-mini"), r = m.getBoundingClientRect();
+    return m.checkVisibility() && r.right > innerWidth * 0.75 && r.bottom > innerHeight * 0.75 && r.width > 100;
+  }));
+  await page.evaluate((v) => window.__cambioEnBase("game_state", v),
+    fila({ moves: ["e4", "e5", "Nf3"], last_move: "Nf3", arrows: [{ from: "f8", to: "c5", color: "green" }], presentacion: { deck: DECK, n: 18 } }));
+  await page.waitForTimeout(300);
+  const mini = await page.evaluate(() => {
+    const m = document.getElementById("presentacion-mini");
+    const sq = m.querySelector('[data-square="f3"]');
+    return { f3: sq && sq.getAttribute("aria-label"), flecha: !!m.querySelector("svg.marks-overlay *"), ids: m.querySelectorAll("[id]").length };
+  });
+  cierto("copia en vivo la jugada y la flecha del profe, sin ids repetidos",
+    /caballo blanco/.test(mini.f3 || "") && mini.flecha && mini.ids === 0, JSON.stringify(mini));
+  cierto("la lámina le deja su lugar: no se tapan", await page.evaluate(() =>
+    document.getElementById("presentacion-img").getBoundingClientRect().right <= document.getElementById("presentacion-mini").getBoundingClientRect().left));
+  const contraste = await page.evaluate(() => getComputedStyle(document.getElementById("presentacion-titulo")).color);
+  cierto("el título se lee sobre el fondo oscuro", contraste === "rgb(241, 245, 249)", contraste);
+  await page.click("#presentacion-mini-btn");
+  cierto("«Ocultar el tablero» lo oculta y el botón ofrece volver a verlo",
+    !(await seVe(page, "#presentacion-mini")) && /Ver el tablero/.test(await page.textContent("#presentacion-mini-btn")));
+  await page.click("#presentacion-mini-btn");
+  cierto("y «Ver el tablero» lo trae de vuelta", await seVe(page, "#presentacion-mini"));
+  await page.evaluate(() => document.exitFullscreen());
+  await page.waitForTimeout(200);
+  cierto("al salir de la pantalla completa se va", !(await seVe(page, "#presentacion-mini")));
+  cierto("sin errores en consola", errores.length === 0, errores.join(" | "));
+  await ctx.close();
+}
+
 (async () => {
   try { datos(); } catch (e) { cierto("los datos se pudieron leer", false, e && e.stack); }
   const browser = await chromium.launch({ executablePath: CHROME });
@@ -442,6 +483,7 @@ async function pruebaVistaLimpia(browser) {
     await pruebaSubida(browser);
     await pruebaSubidaAlumna(browser);
     await pruebaVistaLimpia(browser);
+    await pruebaTableroMini(browser);
   } catch (e) {
     console.log("  ✗ la prueba se cayó: " + (e && e.stack || e));
     fallos += 1;

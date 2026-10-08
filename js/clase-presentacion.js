@@ -615,6 +615,76 @@ function setupPresentacionTools() {
     });
 }
 
+/* ---------- En pantalla completa, el tablero de la clase en pequeño ----------
+   La tarjeta a pantalla completa tapa el tablero, y el profe muchas veces
+   explica ahí. Abajo a la derecha va una COPIA de lo que muestra #chessboard
+   (la posición, la jugada que está mirando el profe, las flechas, el lado),
+   que se vuelve a copiar con cada cambio (un MutationObserver, solo mientras
+   dura la pantalla completa). Copiarlo y no dibujarlo aparte es lo que hace
+   que muestre exactamente lo mismo, también la vista del profe y las piezas
+   ocultas. Cada quien lo oculta o lo muestra en su aparato. */
+const MINI_CLAVE = "presentacion_mini_tablero_v1";
+let miniObservador = null;
+let miniPendiente = false;
+
+function miniQuiereVerse() {
+    try { return localStorage.getItem(MINI_CLAVE) !== "0"; } catch (e) { return true; }
+}
+
+function copiarTableroMini() {
+    miniPendiente = false;
+    const mini = document.getElementById("presentacion-mini");
+    const fuente = document.getElementById("chessboard");
+    if (!mini || !fuente || mini.hidden) return;
+    const copia = fuente.cloneNode(true);
+    copia.removeAttribute("id");
+    copia.querySelectorAll("[id]").forEach((el) => el.removeAttribute("id"));
+    copia.querySelectorAll("[tabindex]").forEach((el) => el.setAttribute("tabindex", "-1"));
+    mini.replaceChildren(copia);
+    // La pieza se mide sobre la casilla: la copia es más chica que el original.
+    requestAnimationFrame(() => {
+        const casilla = copia.querySelector("[data-square]");
+        if (!casilla) return;
+        const ancho = casilla.getBoundingClientRect().width;
+        if (!ancho) return;
+        const px = Math.max(6, ancho * (copia.querySelector(".chess-piece-illustrated") ? 0.82 : 0.62));
+        copia.querySelectorAll("[data-square]").forEach((sq) => { sq.style.fontSize = px + "px"; });
+    });
+}
+
+function programarCopiaMini() {
+    if (miniPendiente) return;
+    miniPendiente = true;
+    requestAnimationFrame(copiarTableroMini);
+}
+
+function pintarTableroMini() {
+    const caja = document.getElementById("presentacion-caja");
+    const mini = document.getElementById("presentacion-mini");
+    const btn = document.getElementById("presentacion-mini-btn");
+    const fuente = document.getElementById("chessboard");
+    const ver = document.fullscreenElement === caja && miniQuiereVerse();
+    mini.hidden = !ver;
+    btn.textContent = miniQuiereVerse() ? "♟ Ocultar el tablero" : "♟ Ver el tablero";
+    btn.setAttribute("aria-expanded", String(ver));
+    if (ver && fuente) {
+        copiarTableroMini();
+        if (!miniObservador) {
+            miniObservador = new MutationObserver(programarCopiaMini);
+            miniObservador.observe(fuente, { subtree: true, childList: true, attributes: true, characterData: true });
+        }
+    } else {
+        if (miniObservador) { miniObservador.disconnect(); miniObservador = null; }
+        mini.replaceChildren();
+    }
+}
+
+document.addEventListener("fullscreenchange", pintarTableroMini);
+document.getElementById("presentacion-mini-btn").addEventListener("click", () => {
+    try { localStorage.setItem(MINI_CLAVE, miniQuiereVerse() ? "0" : "1"); } catch (e) {}
+    pintarTableroMini();
+});
+
 // Lo de todos: pantalla completa. Lo del profe: ◀ ▶ y quitar (también con el teclado en pantalla completa).
 document.getElementById("presentacion-completa").addEventListener("click", () => {
     const caja = document.getElementById("presentacion-caja");
