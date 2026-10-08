@@ -12,6 +12,7 @@ avisar-diagnostico             false        el correo al supervisor por un diagn
 bootstrap-admin                true         deshabilitada (410): la cuenta master ya existe
 chess-results-proxy            true         trae de chess-results.com la ficha de un jugador
 cobros-recordatorios           false        la tanda diaria de avisos de morosidad (pg_cron)
+consulta-arbitraje             false        el Espacio de consultas de Herramientas de arbitraje (IA, sin cuenta; freno y presupuesto propios)
 correos-alumno                 true         corrige los tres correos de una familia
 create-student                 true         invita a un alumno desde la clase en vivo
 enviar-resultado-arbitraje     true         manda el detalle de un examen de arbitraje
