@@ -46,6 +46,9 @@ const TIPOS = [
     { id: "si_no",    etiqueta: "Sí o no" },
     { id: "imagen",   etiqueta: "Imagen (foto)" },
     { id: "archivo",  etiqueta: "Archivo (PDF, Word, Excel o foto)" },
+    // Pregunta qué sabe de ajedrez y, si dice que sabe mover, le hace una
+    // prueba corta de reglas (js/prueba-nivel-inicial.js).
+    { id: "nivel_ajedrez", etiqueta: "¿Sabe jugar ajedrez? (con prueba)" },
 ];
 const TIPO_VALIDO = new Set(TIPOS.map((t) => t.id));
 
@@ -107,6 +110,18 @@ const PLANTILLA = [
     { etiqueta: "Teléfono de contacto", tipo: "telefono", requerido: true },
     { etiqueta: "Modalidad", tipo: "opcion", requerido: true, opciones: ["Presencial", "En línea"] },
     { etiqueta: "Autorizo el uso de estos datos para organizar el torneo", tipo: "si_no", requerido: true },
+];
+
+/* Para un curso que todavía no sabe si arranca desde cero: los datos de
+   contacto y la pregunta «¿Sabes jugar ajedrez?» con su prueba. */
+const PLANTILLA_CURSO = [
+    { etiqueta: "Nombre completo", tipo: "texto", requerido: true, papel: "alumno_nombre" },
+    { etiqueta: "Correo del alumno", tipo: "correo", requerido: false, papel: "alumno_correo", ayuda: "Ahí le llega la invitación para entrar a la Academia." },
+    { etiqueta: "Fecha de nacimiento", tipo: "fecha", requerido: true },
+    { etiqueta: "Nombre de la persona encargada", tipo: "texto", requerido: false, papel: "encargado_nombre", ayuda: "Solo si el alumno es menor de edad." },
+    { etiqueta: "Correo de la persona encargada", tipo: "correo", requerido: false, papel: "encargado_correo" },
+    { etiqueta: "Teléfono de contacto", tipo: "telefono", requerido: true },
+    { etiqueta: "¿Sabes jugar ajedrez?", tipo: "nivel_ajedrez", requerido: true },
 ];
 
 const escapar = (t) => String(t == null ? "" : t)
@@ -210,6 +225,15 @@ function pintarCampos() {
         ayuda.className = "w-full bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
         ayuda.addEventListener("input", () => { c.ayuda = ayuda.value; });
         fila.appendChild(ayuda);
+
+        if (c.tipo === "nivel_ajedrez") {
+            const nota = document.createElement("p");
+            nota.className = "mt-2 text-xs text-brand-600 dark:text-brand-300";
+            nota.textContent = "Se le pregunta qué sabe de ajedrez. Si dice que sabe mover las piezas, contesta "
+                + PruebaNivelInicial.PREGUNTAS.length + " preguntas cortas de reglas con su tablero. "
+                + "En las respuestas sale qué se recomienda: empezar desde lo básico, repasar las reglas o empezar con base.";
+            fila.appendChild(nota);
+        }
 
         if (c.tipo === "opcion" || c.tipo === "varias") {
             const ops = document.createElement("input");
@@ -756,12 +780,14 @@ document.getElementById("guardar-btn").addEventListener("click", guardar);
 document.getElementById("csv-btn").addEventListener("click", bajarCsv);
 document.getElementById("buscar-respuestas").addEventListener("input", pintarRespuestas);
 document.getElementById("campo-btn").addEventListener("click", () => { agregarCampo(); pintarCampos(); });
-document.getElementById("plantilla-btn").addEventListener("click", async () => {
+async function usarPlantilla(plantilla) {
     if (campos.length && !(await Avisos.confirmar("Las preguntas que ya pusiste se cambian por las de la plantilla.", { titulo: "¿Usar la plantilla?", aceptar: "Usar la plantilla" }))) return;
     campos = [];
-    PLANTILLA.forEach(agregarCampo);
+    plantilla.forEach(agregarCampo);
     pintarCampos();
-});
+}
+document.getElementById("plantilla-btn").addEventListener("click", () => usarPlantilla(PLANTILLA));
+document.getElementById("plantilla-curso-btn").addEventListener("click", () => usarPlantilla(PLANTILLA_CURSO));
 
 async function init() {
     const { data } = await sb.auth.getSession();

@@ -27,6 +27,11 @@ let formularioId = "";   // la carpeta de Storage donde van sus imágenes
 const selectores = {};
 const esAdjunto = (c) => c.tipo === "imagen" || c.tipo === "archivo";
 
+/* Las preguntas «¿Sabe jugar ajedrez?», por pregunta (las arma
+   js/prueba-nivel-inicial.js, con su mini prueba de reglas). */
+const pruebas = {};
+const esPrueba = (c) => c.tipo === "nivel_ajedrez";
+
 const escapar = (t) => String(t == null ? "" : t)
     .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
@@ -35,6 +40,11 @@ const TIPO_INPUT = { texto: "text", numero: "number", fecha: "date", correo: "em
 function pintarCampo(c, i) {
     const caja = document.createElement("div");
     const idHtml = "campo-" + i;
+    if (esPrueba(c)) {
+        caja.id = idHtml;
+        pruebas[c.id] = PruebaNivelInicial.montar(caja, { idBase: idHtml, etiqueta: c.etiqueta, requerido: c.requerido, ayuda: c.ayuda });
+        return caja;
+    }
     const marca = c.requerido ? ' <span class="text-red-600 dark:text-red-400" aria-hidden="true">*</span>' : "";
     const clasesEntrada = "w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2.5 text-sm text-brand-800 dark:text-brand-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
 
@@ -91,6 +101,7 @@ function leerCampo(c, i) {
     }
     if (c.tipo === "si_no") return el.checked;
     if (esAdjunto(c)) return selectores[c.id] && selectores[c.id].cantidad() ? ["pendiente"] : [];
+    if (esPrueba(c)) return pruebas[c.id].leer();
     if (c.tipo === "numero") {
         const v = el.value.trim();
         return v === "" ? null : Number(v);
@@ -112,6 +123,15 @@ document.getElementById("formulario").addEventListener("submit", async (e) => {
     for (let i = 0; i < campos.length; i += 1) {
         const c = campos[i];
         const v = leerCampo(c, i);
+        // La prueba se contesta entera: una pregunta en blanco contaría como
+        // fallada, y mandaría a lo básico a quien solo se la saltó.
+        const faltaPrueba = esPrueba(c) ? pruebas[c.id].falta() : "";
+        if (faltaPrueba && (c.requerido || !vacio(v))) {
+            msg.textContent = faltaPrueba;
+            msg.className = "text-sm text-red-600 dark:text-red-400";
+            pruebas[c.id].enfocar();
+            return;
+        }
         if (c.requerido && vacio(v)) {
             msg.textContent = "Falta llenar: " + c.etiqueta;
             msg.className = "text-sm text-red-600 dark:text-red-400";
@@ -154,6 +174,13 @@ document.getElementById("formulario").addEventListener("submit", async (e) => {
         msg.className = "text-sm text-red-600 dark:text-red-400";
         btn.disabled = false;
         return;
+    }
+    // A quien hizo la prueba se le dice cómo le fue, sin las respuestas.
+    const conPrueba = campos.filter(esPrueba).map((c) => pruebas[c.id].resultado()).find(Boolean);
+    if (conPrueba) {
+        const nivel = document.getElementById("listo-nivel");
+        nivel.textContent = PruebaNivelInicial.mensajeParaQuienContesta(conPrueba);
+        nivel.classList.remove("hidden");
     }
     document.getElementById("formulario").classList.add("hidden");
     document.getElementById("listo").classList.remove("hidden");
