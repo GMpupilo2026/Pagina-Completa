@@ -2397,7 +2397,7 @@
         function ajustarTusClases() {
             const caja = document.getElementById("tus-clases");
             if (!caja) return;
-            const hay = ["calendario-alumno", "ultima-clase", "puntos-mes"].some((id) => !document.getElementById(id).hidden);
+            const hay = ["calendario-alumno", "ultima-clase", "puntos-mes", "puntos-ajedrez"].some((id) => !document.getElementById(id).hidden);
             if (!caja.dataset.armado) {
                 caja.dataset.armado = "1";
                 const guardado = gruposGuardados()["Tus clases"];
@@ -4146,6 +4146,7 @@
                 if (!profile._persona) partes.push(
                     Promise.resolve(ResumenClase.pintarUltimaClaseDelAlumno(sb, document.getElementById("ultima-clase"), profile.id)).finally(ajustarTusClases),
                     Promise.resolve(PuntosClase.pintarDelMesDelAlumno(sb, document.getElementById("puntos-mes"))).finally(ajustarTusClases),
+                    Promise.resolve(window.Puntos && Puntos.montarTarjetaPanel(document.getElementById("puntos-ajedrez"), { sb, alumnoId: profile.id })).finally(ajustarTusClases),
                 );
                 partes.push(
                     cargarPendientes(rachaP),

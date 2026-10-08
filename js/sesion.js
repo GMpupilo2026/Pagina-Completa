@@ -2438,6 +2438,20 @@
                 }
                 listEl.appendChild(li);
             }
+
+            // Los accesorios de avatar que cada alumno canjeó en la tienda de
+            // puntos (gorro, lentes, corona…): un solo pedido para toda la
+            // lista, con memoria de la página (js/puntos.js). Llega después
+            // del renglón para no atrasar el resto del renderizado — con la
+            // lista a punto de volver a pintarse en el próximo latido de
+            // presencia, decorar un poco tarde no se nota.
+            if (window.Puntos) {
+                Puntos.accesoriosDe(sb, entries.map(([id]) => id)).then((mapa) => {
+                    listEl.querySelectorAll("[data-foto-de]").forEach((caja) => {
+                        Puntos.decorarAvatar(caja, mapa.get(caja.dataset.fotoDe));
+                    });
+                });
+            }
         }
 
         /* ---------- El plan de clase ----------
