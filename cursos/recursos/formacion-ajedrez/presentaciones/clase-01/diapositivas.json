@@ -1,0 +1,282 @@
+{
+ "titulo": "Formación Ajedrez · Clase 1: rol arbitral, reglas básicas y notación",
+ "curso": "formacion-ajedrez",
+ "diapositivas": [
+  {
+   "titulo": "Clase 1: rol arbitral, reglas básicas y notación",
+   "texto": "Portada. Clase 1: rol arbitral, reglas básicas y notación. Programa de Formación para Personas Árbitras y Asesoras, Juegos Deportivos Estudiantiles (JDE).",
+   "imagen": "01.webp"
+  },
+  {
+   "titulo": "Objetivos de la sesión",
+   "texto": "Al terminar esta sesión, cada participante podrá: explicar la organización del curso, las evaluaciones y la sesión presencial; describir el rol, los deberes y los límites de la persona árbitra y asesora en los JDE; aplicar las reglas de movimiento, enroque, captura al paso, coronación y pieza tocada; distinguir sin dudar jaque, jaque mate, ahogado, posición muerta y tablas; leer y escribir partidas en notación algebraica y explicar el uso de la planilla.",
+   "imagen": "02.webp"
+  },
+  {
+   "titulo": "Mapa del curso",
+   "texto": "El camino hacia el arbitraje en los JDE, en tres pasos. Paso 1, sesiones virtuales: 7 sesiones virtuales de 5 horas (explicación, casos reales, trabajo en grupo y quiz). Paso 2, evaluación continua: quizzes de cada sesión y tareas asignadas. Paso 3, sesión presencial: cierre práctico con tableros y relojes reales. Recuerda: en los JDE, quien arbitra también forma; el trato con estudiantes, docentes y familias es parte integral del trabajo.",
+   "imagen": "03.webp"
+  },
+  {
+   "titulo": "Acuerdos de la sala virtual",
+   "texto": "Acuerdos para nuestro aprendizaje. Cámara: encendida durante las explicaciones y las salas de trabajo. Micrófono: apagado, salvo para intervenir o participar. Chat: deja tus dudas ahí; se responden al final de cada bloque. Salas de trabajo: una persona por grupo anota y otra diferente presenta en la plenaria.",
+   "imagen": "04.webp"
+  },
+  {
+   "titulo": "Cronograma de la sesión",
+   "texto": "Clase 1, 5 horas (300 minutos). De 0:00 a 0:15, bienvenida y encuadre del curso. De 0:15 a 0:45, el rol de la persona árbitra y asesora. De 0:45 a 1:30, reglas básicas I: tablero, piezas y jugadas especiales. De 1:30 a 1:45, receso. De 1:45 a 2:30, reglas básicas II: cómo termina una partida. De 2:30 a 3:00, notación algebraica y planilla. De 3:00 a 3:15, receso. De 3:15 a 4:05, práctica en salas de trabajo. De 4:05 a 4:40, quiz de la sesión y errores frecuentes en el aula. De 4:40 a 5:00, cierre.",
+   "notas": "Mostrar al inicio y volver a ella en cada cambio de bloque. Total: 300 minutos (5 horas) con dos recesos de 15 minutos.",
+   "imagen": "05.webp"
+  },
+  {
+   "titulo": "Deberes de la persona árbitra (art. 12)",
+   "texto": "El rol arbitral: más allá de observar. Hacer cumplir las Leyes del Ajedrez y el reglamento (12.1). Asegurar buenas condiciones de juego y evitar molestias a quienes juegan (12.2.3 y 12.2.4). Tomar medidas especiales para jugadores con discapacidad (12.2.6). Velar por el juego limpio (12.2.1 y 12.2.7). Observar las partidas, especialmente en apuro de tiempo (12.3). Hacer cumplir las decisiones y aplicar sanciones cuando corresponda (sanciones en el art. 12.9) (12.3).",
+   "imagen": "06.webp"
+  },
+  {
+   "titulo": "Imparcialidad, árbitro principal y adjuntos",
+   "texto": "Imparcialidad absoluta: no favorecer centros educativos, regiones ni estudiantes; no arbitrar partidas del propio centro (si es evitable) ni conversar con entrenadores durante la ronda. El equipo arbitral (12.4): el árbitro principal dirige el torneo, resuelve los casos difíciles y firma los resultados; los adjuntos vigilan sectores, resuelven casos sencillos y consultan al principal ante dudas. El entorno (12.7): el público y otros jugadores no pueden intervenir; si alguien observa una irregularidad, solo puede informar al árbitro, que puede expulsar a quien interfiera.",
+   "imagen": "07.webp"
+  },
+  {
+   "titulo": "Tabla «Puede / No debe»",
+   "texto": "Los límites de la intervención durante la partida. Puede (y debe): explicar el significado de una regla si se lo piden (11.9), sin decir sí o no sobre la posición actual; detener los relojes para resolver reclamaciones; intervenir de inmediato ante jugadas ilegales o pieza tocada, sin esperar reclamación (4.8 y 7.5); pedir silencio y ordenar el área. No debe: señalar jaque, mate o ahogado (12.6); indicar cuántas jugadas se han hecho, salvo si ya cayó una bandera (12.6 y 8.5); avisar que el rival jugó o que no presionó el reloj (12.6); sugerir jugadas, ofrecer tablas ni comentar la posición.",
+   "imagen": "08.webp"
+  },
+  {
+   "titulo": "Colocación del tablero (art. 2)",
+   "texto": "El tablero se coloca con la casilla de la esquina derecha de cada jugador de color claro. Las damas van en su color: la dama blanca en d1 y la dama negra en d8. ¿Qué pasa si hay un error? (art. 7): si durante la partida se descubre que la posición inicial o el tablero estaban mal colocados, el árbitro decide según el artículo 7, generalmente anulando o trasladando la posición.",
+   "posiciones": [
+    {
+     "nombre": "Posición inicial",
+     "fen": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+    }
+   ],
+   "imagen": "09.webp"
+  },
+  {
+   "titulo": "Movimiento de las piezas",
+   "texto": "Reglas de movimiento (art. 3): una jugada es legal solo si respeta el movimiento y no deja ni pone al propio rey en jaque (3.9 y 3.10). Rey: una casilla en cualquier dirección; captura igual. Dama: cualquier número de casillas en fila, columna o diagonal; captura igual. Torre: cualquier número de casillas en fila o columna; captura igual. Alfil: cualquier número de casillas en diagonal; captura igual. Caballo: en forma de L, saltando sobre otras piezas; captura igual. Peón: una casilla hacia adelante (dos desde su casilla inicial); captura una casilla en diagonal hacia adelante.",
+   "imagen": "10.webp"
+  },
+  {
+   "titulo": "Enroque: condiciones",
+   "texto": "El enroque (art. 3.8.2), con dos tableros. Enroque corto: rey blanco en e1, torre en h1, alfil negro en c4 y rey negro en e8. ¿Puede el blanco enrocar corto? No: el rey pasaría por f1, que está atacada por el alfil de c4. Enroque largo: rey blanco en e1, torre en a1, alfil negro en f5 y rey negro en e8. ¿Puede el blanco enrocar largo? Sí: el alfil ataca b1, pero por ahí solo pasa la torre, no el rey.",
+   "posiciones": [
+    {
+     "nombre": "Enroque corto: no se puede",
+     "fen": "4k3/8/8/8/2b5/8/8/4K2R w K - 0 1"
+    },
+    {
+     "nombre": "Enroque largo: sí se puede",
+     "fen": "4k3/8/8/5b2/8/8/8/R3K3 w Q - 0 1"
+    }
+   ],
+   "imagen": "11.webp"
+  },
+  {
+   "titulo": "Captura al paso",
+   "texto": "Captura al paso (art. 3.7.4.1). Ejemplo: rey blanco en e1 y peón blanco en e5; rey negro en e8 y peón negro en d5. Las negras acaban de jugar d7-d5. ¿Puede el blanco capturar el peón? Sí: se juega exd6 a.p. Condición clave: solo es legal hacer esta captura en la jugada inmediatamente siguiente al avance doble del peón rival.",
+   "posiciones": [
+    {
+     "nombre": "Las negras acaban de jugar d7-d5",
+     "fen": "4k3/8/8/3pP3/8/8/8/4K3 w - d6 0 1",
+     "jugadas": 1
+    }
+   ],
+   "imagen": "12.webp"
+  },
+  {
+   "titulo": "Coronación",
+   "texto": "Coronación de peón (art. 3.7.5), en cuatro pasos. Uno: el peón que llega a la última fila se cambia en la misma jugada por dama, torre, alfil o caballo del mismo color; la elección no depende de las piezas ya capturadas. Dos: si la pieza no está, el jugador pausa el reloj y la pide al árbitro (6.11.4). Tres: la elección se fija cuando la nueva pieza toca la casilla de coronación (4.4.4); no es necesario colocar el peón físicamente en la casilla final primero (4.6.1). Penalización: si presiona el reloj sin cambiar el peón, es jugada ilegal; el peón se cambia por una dama (7.5.2) y se aplica la sanción de jugada ilegal (7.5.5).",
+   "imagen": "13.webp"
+  },
+  {
+   "titulo": "Jugadas ilegales",
+   "texto": "Gestión de jugadas ilegales (art. 7.5). ¿Cuándo se completa? Cuando el jugador presiona el reloj; antes de eso puede corregirla, respetando pieza tocada. La regla de las dos manos (7.5.4): usar dos manos para una sola jugada (por ejemplo, enroque o captura) y presionar el reloj es jugada ilegal. El reloj (7.5.3): presionar el reloj sin haber jugado es jugada ilegal. Procedimiento y sanciones (7.5.1 y 7.5.5): primero se restablece la posición anterior. Primera ilegal: el árbitro suma 2 minutos al rival (1 en rápidas). Segunda ilegal del mismo jugador: pierde la partida, salvo que el rival no tenga material para dar mate; entonces son tablas.",
+   "imagen": "14.webp"
+  },
+  {
+   "titulo": "Pieza tocada y «compongo»",
+   "texto": "Contacto físico con las piezas (arts. 4.1 a 4.8). Pieza tocada: tocar una pieza propia obliga a moverla; tocar una pieza rival obliga a capturarla, si hay jugada legal (4.3). Si toca rey y torre, debe enrocar por ese lado si es legal (4.4.1). Si toca la torre primero, debe mover la torre y pierde el derecho a enrocar por ese lado (4.4.2). Si no hay jugada legal con lo tocado, puede hacer cualquier otra jugada legal (4.5). Ojo: quien toca una pieza para jugar pierde el derecho a reclamar (4.8). «Compongo» (art. 4.2.1): solo quien tiene el turno; debe avisar antes de tocar; sirve para centrar, no para cambiar hacia dónde mira un caballo.",
+   "imagen": "15.webp"
+  },
+  {
+   "titulo": "Laboratorio de casos (enunciados)",
+   "texto": "Casos de discusión: ¿qué haría usted? Caso 1: con el rey y la torre de h1 sin mover, un estudiante toma primero la torre para enrocar corto. Caso 2: un peón blanco llega a e8; el jugador lo deja como peón y presiona el reloj. Caso 4: un peón negro avanzó de d7 a d5 hace dos jugadas; ahora el peón blanco de e5 lo captura al paso. Piensa tu respuesta antes de pasar a la siguiente diapositiva.",
+   "imagen": "16.webp"
+  },
+  {
+   "titulo": "Laboratorio de casos (decisiones y artículos)",
+   "texto": "Decisiones arbitrales. Caso 1, el enroque que empezó por la torre: se aplica pieza tocada; al tocar la torre primero, debe mover esa torre y no puede enrocar por ese lado (4.4.2). Caso 2, el peón que llegó a la octava: es jugada ilegal completada; no se vuelve atrás: el peón se cambia por una dama del mismo color y el rival recibe 2 minutos extra en clásico o 1 minuto en rápidas (3.7.5, 7.5.2 y 7.5.5). Caso 4, la captura al paso tardía: es jugada ilegal; solo se puede capturar al paso en la jugada inmediatamente siguiente. Se restablece la posición, se respeta la pieza tocada para la nueva jugada y se aplica la sanción por primera jugada ilegal (3.7.4.1, 7.5.1 y 7.5.5).",
+   "imagen": "17.webp"
+  },
+  {
+   "titulo": "Receso",
+   "texto": "Receso de 15 minutos. Pausa los relojes. Nos vemos en breve para la segunda mitad de la sesión.",
+   "imagen": "18.webp"
+  },
+  {
+   "titulo": "Tabla de finales de partida",
+   "texto": "¿Cómo termina una partida? (arts. 5 y 9). Jaque (3.9.1): rey atacado, la partida sigue; no se reclama. Jaque mate (5.1.1): rey en jaque sin jugada legal, gana quien da mate; no se reclama, termina en el acto. Ahogado (5.2.1): rey que no está en jaque, sin jugada legal; tablas; termina en el acto. Posición muerta (5.2.2): imposible dar mate con ninguna serie de jugadas; tablas; termina en el acto. Tablas por acuerdo (5.2.3 y 9.1.2): se ofrecen y se aceptan; el reglamento puede limitarlas (9.1.1). Triple repetición (9.2): la misma posición aparece 3 veces; tablas; la reclama el jugador con turno. 50 jugadas (9.3): 50 jugadas sin mover peón ni capturar; tablas; la reclama el jugador con turno. Quíntuple repetición o 75 jugadas (9.6): tablas; el árbitro interviene directamente.",
+   "imagen": "19.webp"
+  },
+  {
+   "titulo": "Mate frente a ahogado",
+   "texto": "Tres tableros. Mate: torre blanca en e8, rey negro en g8 con peones en f7, g7 y h7, rey blanco en g1. Tras Te8, jaque mate (5.1.1): mate del pasillo, ganan las blancas. Ahogado: rey negro en a8, dama blanca en b6 y rey blanco en c5; juegan las negras: el rey no está en jaque y no tiene jugadas legales. Ahogado (5.2.1): tablas. No es ahogado: la misma posición con un peón negro en h7; juegan las negras: el rey no está en jaque, pero el peón de h7 puede avanzar. No es ahogado (5.2.1): la partida sigue.",
+   "posiciones": [
+    {
+     "nombre": "Mate del pasillo",
+     "fen": "4R1k1/5ppp/8/8/8/8/8/6K1 b - - 1 1"
+    },
+    {
+     "nombre": "Ahogado",
+     "fen": "k7/8/1Q6/2K5/8/8/8/8 b - - 0 1"
+    },
+    {
+     "nombre": "No es ahogado",
+     "fen": "k7/7p/1Q6/2K5/8/8/8/8 b - - 0 1"
+    }
+   ],
+   "imagen": "20.webp"
+  },
+  {
+   "titulo": "Posición muerta",
+   "texto": "Posición muerta (art. 5.2.2): la partida termina en tablas en el acto. Rey y alfil: rey blanco en f1 y alfil en c3 contra rey negro en f6. Imposible dar mate: tablas inmediatas. Rey y dos caballos: rey blanco en e1 y caballos en b1 y c1 contra rey negro en e6. El mate es posible si el defensor colabora: la partida sigue. Caso 3, rey contra rey: tras varios cambios quedan solo los reyes y los jugadores quieren seguir moviendo. Decisión: la partida terminó en tablas en el momento de esa posición; no hace falta reclamo (5.2.2).",
+   "posiciones": [
+    {
+     "nombre": "Rey y alfil contra rey (juegan las negras: el alfil da jaque)",
+     "fen": "8/8/5k2/8/8/2B5/8/5K2 b - - 0 1"
+    },
+    {
+     "nombre": "Rey y dos caballos contra rey",
+     "fen": "8/8/4k3/8/8/8/8/1NN1K3 w - - 0 1"
+    }
+   ],
+   "imagen": "21.webp"
+  },
+  {
+   "titulo": "Triple repetición y 50 jugadas",
+   "texto": "Reclamar tablas: repetición y 50 jugadas (arts. 9.2 y 9.3). ¿Qué es la misma posición? (9.2.3): turno del mismo jugador, piezas del mismo tipo y color en las mismas casillas y las mismas jugadas posibles, incluidos los derechos de enroque y captura al paso. Cómo reclamar: si se va a producir, escribe la jugada en la planilla sin hacerla en el tablero y lo declara al árbitro; si acaba de producirse, reclama antes de hacer su siguiente jugada. Cuidado: si toca una pieza con intención de moverla, pierde el derecho a reclamar en esa jugada (9.4). Rol del árbitro: se pausa el reloj (9.5.1). Si es correcto, tablas de inmediato (9.5.2). Si es incorrecto, el jugador está obligado a hacer la jugada anunciada y el árbitro suma 2 minutos al rival (9.5.3).",
+   "imagen": "22.webp"
+  },
+  {
+   "titulo": "Notación algebraica",
+   "texto": "Obligatoria en competencia (art. 8.1 y apéndice C). Casillas: columna (a a h) más fila (1 a 8): e4, f7, a8. Piezas: R rey, D dama, T torre, A alfil, C caballo; el peón no lleva letra. Jugada: pieza más casilla de llegada: Cf3, Ab5, e4. Si dos piezas iguales pueden ir a la misma casilla, se agrega la columna o la fila de salida: Cbd2, T1e1. Las iniciales pueden ser las del idioma del jugador; la estructura es la misma en todo el mundo. Signos: x captura (Axc6, dxc6); + jaque; # jaque mate (Dh4#); O-O enroque corto; O-O-O enroque largo; =D coronación (e8=D); a.p. captura al paso (exd6 a.p.); (=) oferta de tablas en la planilla.",
+   "notas": "30 minutos de bloque junto con la planilla. Pedir que cada participante escriba en el chat la jugada que el profesor muestra en el tablero.",
+   "imagen": "23.webp"
+  },
+  {
+   "titulo": "Así se anota una partida",
+   "texto": "Las dos columnas, jugada a jugada, de forma legible. 1. e4 e5, 2. Cf3 Cc6, 3. Ab5 a6, 4. Axc6 dxc6, 5. O-O. Apertura Española: 4.Axc6 es una captura (x) y 5.O-O, el enroque corto. Para leer y corregir: ¿qué pasó en esta partida? 1.f3 e5 2.g4 Dh4#: mate del loco, el mate más rápido posible; «#» indica que la partida terminó. ¿Qué está mal anotado? 1.e4 e5 2.Rf3: en español, «R» es el rey y el caballo es «C». Un árbitro tiene que poder leer cualquier planilla.",
+   "notas": "Jugadas comprobadas con chess.js. Pedir que lean la planilla en voz alta y reproduzcan la partida en el tablero.",
+   "posiciones": [
+    {
+     "nombre": "Española, tras 5.O-O",
+     "fen": "r1bqkbnr/1pp2ppp/p1p5/4p3/4P3/5N2/PPPP1PPP/RNBQ1RK1 b kq - 1 5"
+    },
+    {
+     "nombre": "Tras 1.f3 e5 2.g4: juegan las negras",
+     "fen": "rnbqkbnr/pppp1ppp/8/4p3/6P1/5P2/PPPPP2P/RNBQKBNR b KQkq g3 0 2",
+     "jugadas": 1
+    }
+   ],
+   "imagen": "24.webp"
+  },
+  {
+   "titulo": "La planilla",
+   "texto": "Obligaciones durante y después de la partida (art. 8). Anotar las jugadas propias y las del rival, jugada a jugada, en notación algebraica (8.1). No anotar la jugada antes de hacerla, salvo para reclamar tablas (8.1). La planilla queda a la vista del árbitro durante toda la partida (8.1). Las ofertas de tablas se anotan con el signo (=) (8.1 y 9.1). Se puede dejar de anotar solo con menos de 5 minutos y sin incremento de 30 segundos o más (8.4). Al terminar, los dos jugadores firman las dos planillas con el resultado (8.7); firmar no quita el derecho a apelar. Las planillas pertenecen al organizador (8.3).",
+   "notas": "Insistir: la planilla es documento del torneo y prueba en los reclamos (repetición, 50 jugadas, control de tiempo).",
+   "imagen": "25.webp"
+  },
+  {
+   "titulo": "Receso",
+   "texto": "Receso de 15 minutos. Pausa los relojes. Nos vemos en breve para la segunda mitad de la sesión.",
+   "imagen": "26.webp"
+  },
+  {
+   "titulo": "Práctica en salas de trabajo",
+   "texto": "Identificación de jugadas legales y finales de partida, 50 minutos. 1. Grupos de 3 o 4 personas, una sala de trabajo por grupo. 2. Para cada una de las 8 posiciones decidan: ¿jaque, jaque mate, ahogado, posición muerta o la partida sigue? 3. Justifiquen cada respuesta con el artículo de las Leyes. 4. Una persona anota y otra, diferente, presenta en la plenaria. Tiempo: 30 minutos en salas y 20 minutos de plenaria.",
+   "notas": "30 minutos en salas y 20 de plenaria. Son las mismas 8 posiciones del cuadernillo de ejercicios de la sesión 1 (respuestas en la diapositiva siguiente a las posiciones).",
+   "imagen": "27.webp"
+  },
+  {
+   "titulo": "Práctica: posiciones 1 a 4",
+   "texto": "¿Jaque, jaque mate, ahogado, posición muerta o la partida sigue? Posición 1, juegan las negras: torre blanca en a8, rey negro en g8 con peones en f7, g7 y h7, rey blanco en g1. Posición 2, juegan las negras: rey negro en h8, dama blanca en f7 y rey blanco en g6. Posición 3, juegan las negras: rey negro en e8, torre blanca en e1 y rey blanco en g1. Posición 4, juegan las blancas: rey blanco en e1 y alfil en c3 contra rey negro en e6.",
+   "notas": "Posiciones verificadas con chess.js. Dejar que cada grupo responda antes de pasar a las respuestas.",
+   "posiciones": [
+    {
+     "nombre": "Posición 1",
+     "fen": "R5k1/5ppp/8/8/8/8/8/6K1 b - - 1 1"
+    },
+    {
+     "nombre": "Posición 2",
+     "fen": "7k/5Q2/6K1/8/8/8/8/8 b - - 0 1"
+    },
+    {
+     "nombre": "Posición 3",
+     "fen": "4k3/8/8/8/8/8/8/4R1K1 b - - 0 1"
+    },
+    {
+     "nombre": "Posición 4",
+     "fen": "8/8/4k3/8/8/2B5/8/4K3 w - - 0 1"
+    }
+   ],
+   "imagen": "28.webp"
+  },
+  {
+   "titulo": "Práctica: posiciones 5 a 8",
+   "texto": "¿Jaque, jaque mate, ahogado, posición muerta o la partida sigue? Posición 5, juegan las blancas: tras 1.f3 e5 2.g4 Dh4. Posición 6, juegan las negras: rey blanco en e1 y caballo en c3 contra rey negro en e6. Posición 7, juegan las negras: rey blanco en e1 y torre en c3 contra rey negro en e6. Posición 8, juegan las negras: rey negro en a8, peón blanco en a7 y rey blanco en b6.",
+   "notas": "Posiciones verificadas con chess.js. Dejar que cada grupo responda antes de pasar a las respuestas.",
+   "posiciones": [
+    {
+     "nombre": "Posición 5",
+     "fen": "rnb1kbnr/pppp1ppp/8/4p3/6Pq/5P2/PPPPP2P/RNBQKBNR w KQkq - 1 3"
+    },
+    {
+     "nombre": "Posición 6",
+     "fen": "8/8/4k3/8/8/2N5/8/4K3 b - - 0 1"
+    },
+    {
+     "nombre": "Posición 7",
+     "fen": "8/8/4k3/8/8/2R5/8/4K3 b - - 0 1"
+    },
+    {
+     "nombre": "Posición 8",
+     "fen": "k7/P7/1K6/8/8/8/8/8 b - - 0 1"
+    }
+   ],
+   "imagen": "29.webp"
+  },
+  {
+   "titulo": "Práctica: respuestas",
+   "texto": "Cada respuesta, con su artículo. 1: jaque mate (5.1): la torre da jaque en la octava y los peones encierran al rey. 2: ahogado, tablas (5.2.1): el rey de h8 no está en jaque y no tiene casillas. 3: jaque, no mate; la partida sigue (3.9): el rey puede salir del jaque (d7, f7…). 4: posición muerta, tablas (5.2.2): rey y alfil contra rey, nunca hay mate. 5: jaque mate (5.1): mate del loco, nada tapa ni captura la dama. 6: posición muerta, tablas (5.2.2): rey y caballo contra rey, nunca hay mate. 7: la partida sigue: con rey y torre sí hay mate posible. 8: ahogado, tablas (5.2.1): el rey de a8 no está en jaque; b8 la controla el peón y b7, el rey blanco.",
+   "notas": "Repasar en plenaria; si un grupo dudó entre mate y ahogado, volver a la diapositiva «Mate frente a ahogado».",
+   "imagen": "30.webp"
+  },
+  {
+   "titulo": "Errores frecuentes en el aula",
+   "texto": "Lo que más se repite en los torneos estudiantiles. Llamar «mate» a un ahogado, o al revés (5.1 y 5.2.1). Dejar el peón en la octava fila sin cambiarlo y presionar el reloj: jugada ilegal, el peón pasa a ser dama (7.5.2). Enrocar después de haber movido el rey, aunque haya vuelto a su casilla (3.8.2). Capturar al paso una o dos jugadas tarde (3.7.4.1). Seguir jugando con rey contra rey: la partida ya terminó en tablas (5.2.2). Darse la mano sin oferta previa y creer que son tablas (9.1). Tocar la torre primero para enrocar (4.4.2).",
+   "notas": "Conviene repasarlos en la charla técnica antes de la primera ronda de cada torneo.",
+   "imagen": "31.webp"
+  },
+  {
+   "titulo": "Quiz de la sesión",
+   "texto": "Responde de forma individual. 1. Un rey está en jaque y no existe ninguna jugada legal que lo saque de esa condición. ¿Cómo se denomina esta situación? 2. Un jugador no está en jaque, pero no dispone de ninguna jugada legal en su turno. ¿Qué resultado corresponde? 3. ¿Cuándo se pierde para siempre el derecho a enrocar de un lado? 4. Quedan en el tablero rey contra rey. ¿Qué corresponde? 5. ¿Cuándo puede un jugador decir «compongo» para acomodar una pieza? 6. ¿Qué debe anotar cada jugador en su planilla en una partida de ritmo clásico?",
+   "notas": "Dar 1 minuto por pregunta y luego pasar a las respuestas.",
+   "imagen": "32.webp"
+  },
+  {
+   "titulo": "Quiz: respuestas",
+   "texto": "1. Jaque mate. 2. Partida ahogada (tablas). 3. Cuando ya se movió el rey o la torre de ese lado, aunque hayan vuelto a su casilla. 4. Tablas de inmediato: es posición muerta, sin necesidad de reclamo. 5. Solo en su turno y antes de tocar la pieza. 6. Sus jugadas y las del rival, jugada a jugada, en notación algebraica y de forma legible.",
+   "notas": "Comentar las preguntas con más respuestas distintas.",
+   "imagen": "33.webp"
+  },
+  {
+   "titulo": "Tarea y cierre",
+   "texto": "Para la sesión 2: reglas de competición (5 horas). Tarea: leer el capítulo de reglas básicas de las Leyes de Ajedrez de la FIDE y completar una ficha breve de reflexión sobre una situación de arbitraje básica vivida en tu contexto educativo. Antes de irte: dudas de la sesión; evaluación breve de la sesión (formulario); material de repaso: cuadernillo y ejercicios de la sesión 1 en la Academia.",
+   "notas": "20 minutos: dudas, explicación de la tarea y evaluación breve de la sesión.",
+   "imagen": "34.webp"
+  }
+ ]
+}

@@ -611,6 +611,7 @@
             pintarTanda(row.tanda_calentamiento || null);
             pintarEquipos(row.equipos || null);
             pintarPodio(row.podio || null);
+            pintarPresentacion(row.presentacion || null);
             updateTurnIndicator();
             updateAccessForRole();
             renderMoveList();
@@ -1629,8 +1630,8 @@
         }
 
         /* Lo que vive en game_state para ESTA clase no pasa a la siguiente: el
-           mapa, el calentamiento, el podio, los equipos, el tiempo para pensar
-           y el turno. Antes quedaban puestos, y la clase del día siguiente
+           mapa, el calentamiento, el podio, los equipos, el tiempo para pensar,
+           el turno y la presentación. Antes quedaban puestos, y la clase del día siguiente
            arrancaba con el podio de la anterior a la vista. La partida votada
            también termina. El tablero y su partida no se tocan: son lo que se
            repasa. */
@@ -1638,7 +1639,7 @@
             if (partidaClase) await terminarPartidaClase("La partida de la clase terminó al cerrar la clase.");
             if (ronda) await terminarRonda("La ronda rápida terminó al cerrar la clase.");
             if (cuestionarioEnJuego) await terminarCuestionario("El cuestionario terminó al cerrar la clase.");
-            const cambios = { encuesta: null, calentamiento: null, tanda_calentamiento: null, podio: null, equipos: null, pensar: null, elegido: null };
+            const cambios = { encuesta: null, calentamiento: null, tanda_calentamiento: null, podio: null, equipos: null, pensar: null, elegido: null, presentacion: null };
             // Las flechas del mapa se van con él; las que dibujó el profe, no.
             if (encuestaActual) { cambios.arrows = []; cambios.circles = []; }
             const { error } = await sb.from("game_state").update(cambios).eq("id", myGameStateId);
@@ -1651,6 +1652,7 @@
             pintarEquipos(null);
             pintarPensar(null);
             pintarElegido(null);
+            pintarPresentacion(null, true);
         }
 
         /* Lo que aparece para toda la clase, dicho en voz para quien usa lector
@@ -7256,6 +7258,7 @@
                 cargarPlanesEnClase();
                 setupTeacherLessonTools();
                 setupArchivosTools();
+                setupPresentacionTools();
                 // El enlace para invitados sin cuenta es de quien da la clase:
                 // quien administra no da clase, y el proyector y el control remoto
                 // son otra ventana de la misma clase.

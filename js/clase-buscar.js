@@ -47,6 +47,7 @@ window.ClaseBuscar = (function () {
         { nombre: "Partidas entre alumnos", donde: "Practicar", claves: "partidas emparejar parejas jugar entre ellos", destino: "emparejar-btn" },
         { nombre: "Abrir una lección de un curso", donde: "Tu material", claves: "curso cursos leccion material", destino: "toggle-lesson-btn" },
         { nombre: "Jalar un archivo PGN", donde: "Tu material", claves: "archivo archivos pgn partida subida", destino: "toggle-archivos-btn" },
+        { nombre: "Mostrar una presentación a la clase", donde: "Tu material", claves: "presentacion diapositivas laminas powerpoint pptx charla conferencia capacitacion", destino: "toggle-presentacion-btn" },
         { nombre: "Leer un PDF", donde: "Tu material", claves: "pdf libro documento diagrama", destino: "toggle-pdf-btn" },
         { nombre: "Armar una posición (o cargar FEN o PGN)", donde: "Tu material", claves: "armar posicion editar editor fen pgn colocar piezas", destino: "toggle-free-mode-btn" },
         { nombre: "Motor de análisis", donde: "Motor", claves: "motor stockfish analisis evaluacion", destino: "engine-toggle-btn" },

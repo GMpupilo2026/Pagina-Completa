@@ -1246,6 +1246,74 @@ html.modo-proyector #encuesta-quitar-btn,
 html.modo-proyector #podio-quitar-btn,
 html.modo-proyector #pensar-profe-acciones { display: none !important; }
 
+/* La presentación en el proyector: la diapositiva a la izquierda y el tablero a la
+   derecha, para que al mandar una posición al tablero no se pierda la lámina. Sin
+   presentación, la columna sigue siendo un bloque y el tablero lo ocupa todo. Ver
+   «La presentación de la clase» en docs/decisiones/clase-en-vivo.md. */
+html.modo-proyector .proyector-columna:has(> #presentacion-caja:not([hidden])) {
+  display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr); column-gap: 1.5rem; align-items: start;
+}
+html.modo-proyector .proyector-columna:has(> #presentacion-caja:not([hidden])) > * { grid-column: 2; }
+html.modo-proyector .proyector-columna:has(> #presentacion-caja:not([hidden])) > .proyector-barra,
+html.modo-proyector .proyector-columna:has(> #presentacion-caja:not([hidden])) > #entrar-qr-caja { grid-column: 1 / -1; }
+html.modo-proyector .proyector-columna:has(> #presentacion-caja:not([hidden])) > #presentacion-caja { grid-column: 1; grid-row: 2 / span 40; max-width: none; margin: 0; }
+html.modo-proyector .presentacion-sin-proyector { display: none !important; }
+/* A pantalla completa (el botón ⛶ de la tarjeta): la lámina tan grande como quepa. */
+#presentacion-caja:fullscreen { max-width: none; display: flex; flex-direction: column; justify-content: center; background: #0b1220; border-radius: 0; overflow-y: auto; }
+#presentacion-caja:fullscreen .presentacion-img { max-height: calc(100vh - 9rem); width: auto; max-width: 100%; margin: 0 auto; }
+/* Sobre el fondo oscuro, los textos de la tarjeta en claro (eran gris oscuro y no se leían). */
+#presentacion-caja:fullscreen #presentacion-titulo,
+#presentacion-caja:fullscreen #presentacion-cuenta,
+#presentacion-caja:fullscreen summary,
+#presentacion-caja:fullscreen #presentacion-texto,
+#presentacion-caja:fullscreen #presentacion-sigue,
+#presentacion-caja:fullscreen #presentacion-posiciones > p,
+#presentacion-caja:fullscreen #presentacion-posiciones span { color: #f1f5f9; }
+/* El tablero de la clase en pequeño, abajo a la derecha: solo en pantalla completa. */
+.solo-pantalla-completa,
+.presentacion-mini { display: none; }
+#presentacion-caja:fullscreen .solo-pantalla-completa { display: inline-flex; }
+#presentacion-caja:fullscreen .presentacion-mini:not([hidden]) {
+  display: block; position: absolute; right: 1rem; bottom: 1rem; z-index: 2;
+  width: min(32vh, 26vw); aspect-ratio: 1; border-radius: 0.5rem; overflow: hidden;
+  border: 3px solid #f4c430; box-shadow: 0 8px 24px rgb(0 0 0 / 0.5); background: #ffffff; pointer-events: none;
+}
+.presentacion-mini > * { width: 100%; height: 100%; max-width: none; border-width: 0; border-radius: 0; box-shadow: none; }
+/* Con el tablero a la vista, la lámina se corre a la izquierda y le deja su lugar: no tapa nada. */
+#presentacion-caja:fullscreen:has(.presentacion-mini:not([hidden])) .presentacion-img {
+  margin-left: 0; max-width: calc(100% - min(32vh, 26vw) - 2rem);
+}
+
+/* La vista limpia de los alumnos (presentacion.limpia, js/clase-presentacion.js):
+   la diapositiva, el tablero y el chat, como en el proyector. Por LISTA NEGRA a
+   propósito: se esconde solo lo que estorba, y una herramienta nueva para el
+   alumno sigue saliendo. Con el Modo Adaptado no se aplica. Ver «La vista
+   limpia de los alumnos» en docs/decisiones/clase-en-vivo.md. */
+html.vista-limpia:not(.adaptive-mode) #header,
+html.vista-limpia:not(.adaptive-mode) #migas,
+html.vista-limpia:not(.adaptive-mode) footer,
+html.vista-limpia:not(.adaptive-mode) #app > section > :not(.proyector-contenido),
+html.vista-limpia:not(.adaptive-mode) .proyector-contenido > aside,
+html.vista-limpia:not(.adaptive-mode) #moves-panel { display: none !important; }
+html.vista-limpia:not(.adaptive-mode) #app { padding-top: 0.75rem; }
+html.vista-limpia:not(.adaptive-mode) #app > section { max-width: 100rem; }
+html.vista-limpia:not(.adaptive-mode) .proyector-contenido { display: block; }
+@media (min-width: 900px) {
+  html.vista-limpia:not(.adaptive-mode) .proyector-columna {
+    display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr); column-gap: 1.5rem; align-items: start;
+  }
+  html.vista-limpia:not(.adaptive-mode) .proyector-columna > * { grid-column: 2; }
+  html.vista-limpia:not(.adaptive-mode) .proyector-columna > #presentacion-caja { grid-column: 1; grid-row: 1 / span 40; max-width: none; margin: 0; }
+  html.vista-limpia:not(.adaptive-mode) .proyector-columna > #chat-caja { grid-column: 1 / -1; }
+}
+/* Lo que el alumno tiene que HACER le sale encima, como las preguntas. */
+html.vista-limpia:not(.adaptive-mode) #calentamiento-caja:not([hidden]),
+html.vista-limpia:not(.adaptive-mode) #tanda-caja:not([hidden]) {
+  position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 45;
+  width: min(94vw, 600px); max-width: none; max-height: 92vh; overflow-y: auto; margin: 0;
+  box-shadow: 0 0 0 100vmax rgb(0 0 0 / 0.6);
+}
+
 /* ===== Control remoto (sesion.html?control=1) =====
    El celular del profe: el tablero chico y botones grandes para lo que ve la
    clase. Igual que el proyector, por lista blanca (.control-se-ve). Ver «El

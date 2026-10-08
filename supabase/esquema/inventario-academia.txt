@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261007134410
+# al-dia-con: 20261008040810
 tabla  Ejercicios Lichess  rls=true
 tabla  academia_ia  rls=true
 tabla  academia_miembros  rls=true
@@ -96,6 +96,7 @@ tabla  preferencias_avisos  rls=true
 tabla  preguntas_clave  rls=true
 tabla  preparacion_rivales_profesores  rls=true
 tabla  preparaciones_rival  rls=true
+tabla  presentaciones_profe  rls=true
 tabla  profesor_videollamada  rls=true
 tabla  profile_teachers  rls=true
 tabla  profiles  rls=true
@@ -647,6 +648,7 @@ columna  game_state.owner_id  uuid
 columna  game_state.pensar  jsonb
 columna  game_state.pieces_hidden  boolean
 columna  game_state.podio  jsonb
+columna  game_state.presentacion  jsonb
 columna  game_state.shown_curso  text
 columna  game_state.shown_leccion  integer
 columna  game_state.start_fen  text
@@ -902,6 +904,14 @@ columna  preparaciones_rival.id  uuid
 columna  preparaciones_rival.partidas  integer
 columna  preparaciones_rival.profesor_id  uuid
 columna  preparaciones_rival.rival  text
+columna  presentaciones_profe.created_at  timestamp with time zone
+columna  presentaciones_profe.formato  text
+columna  presentaciones_profe.id  uuid
+columna  presentaciones_profe.paginas  integer
+columna  presentaciones_profe.posiciones  jsonb
+columna  presentaciones_profe.profesor_id  uuid
+columna  presentaciones_profe.textos  text[]
+columna  presentaciones_profe.titulo  text
 columna  profesor_videollamada.actualizado_at  timestamp with time zone
 columna  profesor_videollamada.enlace  text
 columna  profesor_videollamada.grupo  text
@@ -1942,6 +1952,10 @@ politica  preparacion_rivales_profesores  preparacion_rivales_profesores_ver  SE
 politica  preparaciones_rival  preparaciones_rival_borrar  DELETE
 politica  preparaciones_rival  preparaciones_rival_guardar  INSERT
 politica  preparaciones_rival  preparaciones_rival_ver  SELECT
+politica  presentaciones_profe  presentaciones_profe_delete  DELETE
+politica  presentaciones_profe  presentaciones_profe_insert  INSERT
+politica  presentaciones_profe  presentaciones_profe_select  SELECT
+politica  presentaciones_profe  presentaciones_profe_update  UPDATE
 politica  profesor_videollamada  profesor_videollamada_delete  DELETE
 politica  profesor_videollamada  profesor_videollamada_insert  INSERT
 politica  profesor_videollamada  profesor_videollamada_select  SELECT
@@ -2446,6 +2460,8 @@ indice  preparacion_rivales_profesores  preparacion_rivales_profesores_activado_
 indice  preparacion_rivales_profesores  preparacion_rivales_profesores_pkey
 indice  preparaciones_rival  preparaciones_rival_pkey
 indice  preparaciones_rival  preparaciones_rival_profesor_idx
+indice  presentaciones_profe  presentaciones_profe_pkey
+indice  presentaciones_profe  presentaciones_profe_profesor_idx
 indice  profesor_videollamada  profesor_videollamada_pkey
 indice  profile_teachers  profile_teachers_pkey
 indice  profile_teachers  profile_teachers_teacher_idx
@@ -3240,6 +3256,20 @@ grant  preparacion_rivales_profesores  authenticated  SELECT
 grant  preparaciones_rival  authenticated  DELETE
 grant  preparaciones_rival  authenticated  INSERT
 grant  preparaciones_rival  authenticated  SELECT
+grant  presentaciones_profe  anon  DELETE
+grant  presentaciones_profe  anon  INSERT
+grant  presentaciones_profe  anon  REFERENCES
+grant  presentaciones_profe  anon  SELECT
+grant  presentaciones_profe  anon  TRIGGER
+grant  presentaciones_profe  anon  TRUNCATE
+grant  presentaciones_profe  anon  UPDATE
+grant  presentaciones_profe  authenticated  DELETE
+grant  presentaciones_profe  authenticated  INSERT
+grant  presentaciones_profe  authenticated  REFERENCES
+grant  presentaciones_profe  authenticated  SELECT
+grant  presentaciones_profe  authenticated  TRIGGER
+grant  presentaciones_profe  authenticated  TRUNCATE
+grant  presentaciones_profe  authenticated  UPDATE
 grant  profesor_videollamada  authenticated  DELETE
 grant  profesor_videollamada  authenticated  INSERT
 grant  profesor_videollamada  authenticated  REFERENCES
