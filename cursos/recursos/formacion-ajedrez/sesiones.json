@@ -1,0 +1,175 @@
+{
+ "_comentario": "Generado por herramientas/curso-generar-formacion.py: no se edita a mano.",
+ "curso": "formacion-ajedrez",
+ "titulo": "Formación Ajedrez",
+ "sesiones": [
+  {
+   "n": 1,
+   "titulo": "Encuadre del curso y reglas básicas del ajedrez",
+   "resumen": "Movimientos legales, jaque, jaque mate, ahogado y tablas, con los errores más frecuentes en el aula.",
+   "presencial": false,
+   "archivos": [
+    {
+     "archivo": "01-encuadre-y-reglas-basicas-material.pdf",
+     "texto": "📚 Material de estudio (PDF)"
+    },
+    {
+     "archivo": "01-encuadre-y-reglas-basicas.pptx",
+     "texto": "📊 Descargar presentación"
+    },
+    {
+     "archivo": "01-encuadre-y-reglas-basicas-ejercicios.pdf",
+     "texto": "📄 Descargar ejercicios (PDF)"
+    },
+    {
+     "archivo": "guia-rapida-arbitro-jde.pdf",
+     "texto": "📋 Guía rápida del árbitro JDE (PDF)"
+    }
+   ],
+   "presentacion": "formacion-ajedrez/clase-01"
+  },
+  {
+   "n": 2,
+   "titulo": "Reglas de competición",
+   "resumen": "Conducta durante la partida, uso de dispositivos electrónicos, reclamos e incidencias frecuentes.",
+   "presencial": false,
+   "archivos": [
+    {
+     "archivo": "02-reglas-de-competicion-material.pdf",
+     "texto": "📚 Material de estudio (PDF)"
+    },
+    {
+     "archivo": "02-reglas-de-competicion.pptx",
+     "texto": "📊 Descargar presentación"
+    },
+    {
+     "archivo": "02-reglas-de-competicion-ejercicios.pdf",
+     "texto": "📄 Descargar ejercicios (PDF)"
+    }
+   ],
+   "presentacion": "formacion-ajedrez/clase-02"
+  },
+  {
+   "n": 3,
+   "titulo": "Apéndices de las Leyes de Ajedrez y normativa de los Juegos Deportivos Estudiantiles",
+   "resumen": "Ajedrez rápido y relámpago, sistemas de desempate y normativa vigente de los Juegos Deportivos Estudiantiles.",
+   "presencial": false,
+   "archivos": [
+    {
+     "archivo": "03-apendices-y-normativa-jde-material.pdf",
+     "texto": "📚 Material de estudio (PDF)"
+    },
+    {
+     "archivo": "03-apendices-y-normativa-jde.pptx",
+     "texto": "📊 Descargar presentación"
+    },
+    {
+     "archivo": "03-apendices-y-normativa-jde-ejercicios.pdf",
+     "texto": "📄 Descargar ejercicios (PDF)"
+    }
+   ],
+   "presentacion": "formacion-ajedrez/clase-03"
+  },
+  {
+   "n": 4,
+   "titulo": "Sistemas de emparejamiento para torneos",
+   "resumen": "Sistema suizo y todos contra todos (round robin): cómo funcionan y cuándo usar cada uno.",
+   "presencial": false,
+   "archivos": [
+    {
+     "archivo": "04-sistemas-de-emparejamiento-material.pdf",
+     "texto": "📚 Material de estudio (PDF)"
+    },
+    {
+     "archivo": "04-sistemas-de-emparejamiento.pptx",
+     "texto": "📊 Descargar presentación"
+    },
+    {
+     "archivo": "04-sistemas-de-emparejamiento-ejercicios.pdf",
+     "texto": "📄 Descargar ejercicios (PDF)"
+    }
+   ],
+   "presentacion": "formacion-ajedrez/clase-04"
+  },
+  {
+   "n": 5,
+   "titulo": "Uso, configuración y control del reloj de ajedrez",
+   "resumen": "Controles de tiempo, incrementos y resolución de incidencias con el reloj en competencia.",
+   "presencial": false,
+   "archivos": [
+    {
+     "archivo": "05-uso-y-control-del-reloj-material.pdf",
+     "texto": "📚 Material de estudio (PDF)"
+    },
+    {
+     "archivo": "05-uso-y-control-del-reloj.pptx",
+     "texto": "📊 Descargar presentación"
+    },
+    {
+     "archivo": "05-uso-y-control-del-reloj-ejercicios.pdf",
+     "texto": "📄 Descargar ejercicios (PDF)"
+    }
+   ],
+   "presentacion": "formacion-ajedrez/clase-05"
+  },
+  {
+   "n": 6,
+   "titulo": "Resolución de casos en grupos y experiencias regionales",
+   "resumen": "Casos integradores de arbitraje y elementos logísticos de un torneo estudiantil.",
+   "presencial": false,
+   "archivos": [
+    {
+     "archivo": "06-resolucion-de-casos-en-grupos-material.pdf",
+     "texto": "📚 Material de estudio (PDF)"
+    },
+    {
+     "archivo": "06-resolucion-de-casos-en-grupos.pptx",
+     "texto": "📊 Descargar presentación"
+    },
+    {
+     "archivo": "06-resolucion-de-casos-en-grupos-ejercicios.pdf",
+     "texto": "📄 Descargar ejercicios (PDF)"
+    }
+   ],
+   "presentacion": "formacion-ajedrez/clase-06"
+  },
+  {
+   "n": 7,
+   "titulo": "Talleres prácticos y simulacros de arbitraje",
+   "resumen": "Simulacros de arbitraje entre pares y preparación de roles para la sesión presencial.",
+   "presencial": false,
+   "archivos": [
+    {
+     "archivo": "07-talleres-y-simulacros-de-arbitraje-material.pdf",
+     "texto": "📚 Material de estudio (PDF)"
+    },
+    {
+     "archivo": "07-talleres-y-simulacros-de-arbitraje.pptx",
+     "texto": "📊 Descargar presentación"
+    },
+    {
+     "archivo": "07-talleres-y-simulacros-de-arbitraje-ejercicios.pdf",
+     "texto": "📄 Descargar ejercicios (PDF)"
+    }
+   ],
+   "presentacion": "formacion-ajedrez/clase-07"
+  },
+  {
+   "n": 8,
+   "titulo": "Torneo real, evaluación final y certificación",
+   "resumen": "Sesión presencial, 5 horas.",
+   "presencial": true,
+   "archivos": [
+    {
+     "archivo": "08-torneo-real-evaluacion-formularios.pdf",
+     "texto": "📚 Formularios y lista de cotejo (PDF)"
+    },
+    {
+     "archivo": "08-prueba-final.pdf",
+     "texto": "📄 Prueba final teórica (PDF)"
+    }
+   ],
+   "presentacion": null
+  }
+ ]
+}

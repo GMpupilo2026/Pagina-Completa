@@ -267,6 +267,48 @@ def ejercicios_html(leccion):
     return "".join(partes)
 
 
+def archivos_de(leccion):
+    """Los archivos de una sesión, (nombre, texto del botón), en el orden en que
+    se muestran: los usan la página del curso y sesiones.json (la ficha
+    Asesores de administración), así que se escriben una sola vez."""
+    l = leccion
+    if l.get("presencial"):
+        return [(l["archivo_formularios"] + ".pdf", "📚 Formularios y lista de cotejo (PDF)"),
+                (l["archivo_prueba"] + ".pdf", "📄 Prueba final teórica (PDF)")]
+    return ([(l["archivo"] + "-material.pdf", "📚 Material de estudio (PDF)"),
+             (l["archivo"] + ".pptx", "📊 Descargar presentación"),
+             (l["archivo"] + "-ejercicios.pdf", "📄 Descargar ejercicios (PDF)")]
+            + [(x["archivo"], x.get("emoji", "") + " " + x["texto"]) for x in l.get("extras", [])])
+
+
+def sesiones_datos(curso, carpeta):
+    """Lo que va en cursos/recursos/<slug>/sesiones.json: las sesiones en orden,
+    con sus archivos y su presentación para la clase (si la tiene). Lo lee la
+    ficha Asesores (js/admin-asesores.js) para preparar el curso sesión por
+    sesión; verificar-formacion.js comprueba que esté al día."""
+    sesiones = []
+    for bloque in curso["bloques"]:
+        for l in bloque["lecciones"]:
+            deck = "%s/clase-%02d" % (curso["slug"], l["n"])
+            hay = os.path.isfile(os.path.join(carpeta, "presentaciones", "clase-%02d" % l["n"], "diapositivas.json"))
+            sesiones.append({
+                "n": l["n"],
+                "titulo": l["titulo"],
+                "resumen": l["resumen"],
+                "presencial": bool(l.get("presencial")),
+                "archivos": [{"archivo": a, "texto": t} for a, t in archivos_de(l)],
+                "presentacion": deck if hay else None,
+            })
+    return {"_comentario": "Generado por herramientas/curso-generar-formacion.py: no se edita a mano.",
+            "curso": curso["slug"], "titulo": curso["titulo"], "sesiones": sesiones}
+
+
+def sesiones_json(curso, carpeta):
+    with open(os.path.join(carpeta, "sesiones.json"), "w", encoding="utf-8") as fh:
+        json.dump(sesiones_datos(curso, carpeta), fh, ensure_ascii=False, indent=1)
+        fh.write("\n")
+
+
 def protegido(curso):
     slug = curso["slug"]
     # Sin data-curso-mat: js/curso-adaptado.js (marcarMaterial) lo marca solo
@@ -288,10 +330,6 @@ def protegido(curso):
                 cuerpo.append(agenda_html(l))
                 cuerpo.append('<h5 class="font-serif text-base font-bold text-brand-800 dark:text-white mt-4 mb-1">Evaluación final y certificación</h5>')
                 cuerpo.append('<p>%s</p>' % escapar(l["evaluacion"]))
-                botones = (boton.format(slug=slug, arch=l["archivo_formularios"] + ".pdf",
-                                        texto="📚 Formularios y lista de cotejo (PDF)") +
-                           boton.format(slug=slug, arch=l["archivo_prueba"] + ".pdf",
-                                        texto="📄 Prueba final teórica (PDF)"))
             else:
                 cuerpo.insert(0, '<h5 class="font-serif text-base font-bold text-brand-800 dark:text-white mt-1 mb-1">Objetivos de la sesión</h5>'
                                  '<ul class="list-disc list-inside space-y-1">%s</ul>'
@@ -310,11 +348,8 @@ def protegido(curso):
                 cuerpo.append(quiz_html(l))
                 cuerpo.append('<h5 class="font-serif text-base font-bold text-brand-800 dark:text-white mt-4 mb-1">Tarea</h5>')
                 cuerpo.append('<p>%s</p>' % escapar(l["tarea"]))
-                botones = (boton.format(slug=slug, arch=l["archivo"] + "-material.pdf", texto="📚 Material de estudio (PDF)") +
-                           boton.format(slug=slug, arch=l["archivo"] + ".pptx", texto="📊 Descargar presentación") +
-                           boton.format(slug=slug, arch=l["archivo"] + "-ejercicios.pdf", texto="📄 Descargar ejercicios (PDF)") +
-                           "".join(boton.format(slug=slug, arch=x["archivo"], texto=x.get("emoji", "") + " " + escapar(x["texto"])) for x in l.get("extras", [])))
 
+            botones = "".join(boton.format(slug=slug, arch=a, texto=escapar(t)) for a, t in archivos_de(l))
             titulo_lec = escapar(l["titulo"])
             if l.get("presencial"):
                 titulo_lec += (' <span class="text-xs font-normal text-accent-700 dark:text-accent-400 uppercase '
@@ -1022,6 +1057,8 @@ def main():
                 presentacion_de_clase(curso, leccion, pptx, presentacion(curso, leccion, pptx))
                 material_pdf(curso, leccion, os.path.join(carpeta, leccion["archivo"] + "-material.pdf"))
                 ejercicios_pdf(curso, leccion, os.path.join(carpeta, leccion["archivo"] + "-ejercicios.pdf"))
+
+    sesiones_json(curso, carpeta)
 
     # La guía rápida de la persona árbitra (JDE), que va con la Sesión 1.
     subprocess.run(["python3", os.path.join(RAIZ, "herramientas", "formacion-guia-rapida.py"),

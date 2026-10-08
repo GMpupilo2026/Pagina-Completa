@@ -266,6 +266,9 @@
   let versiones = [];        // cuestionarios del material: { id, titulo, material }
   let cargado = false;
   let pedido = null;
+  // Otras fichas que muestran el mismo «Con quién lo compartes» (la de
+  // Asesores, js/admin-asesores.js): { producto, caja }. Se repintan juntas.
+  const montajes = [];
 
   function el(tag, clase, texto) {
     const e = document.createElement(tag);
@@ -338,6 +341,7 @@
       if (error) throw error;
       await cargar();       // se pinta lo que quedó en la base
       pintar();
+      pintarMontajes();
       const varios = !!destino.todos;
       Avisos.avisar("Listo: " + textoDestino(destino) + (compartir
         ? (varios ? " ya lo pueden usar." : " ya lo puede usar.")
@@ -574,10 +578,33 @@
     });
   }
 
+  /* «Con quién lo compartes» de un producto en otra ficha (la de Asesores):
+     el mismo bloque, la misma lista y la misma función de la base. */
+  function pintarMontajes() {
+    montajes.forEach(({ producto, caja }) => {
+      caja.textContent = "";
+      if (!cargado) {
+        caja.appendChild(el("p", "text-sm font-semibold text-red-700 dark:text-red-300", $("mat-error").textContent || "No se pudo leer con quién se comparte."));
+        return;
+      }
+      pintarCompartidos({ producto }, caja);
+      pintarAgregar({ producto }, caja);
+    });
+  }
+  async function montarCompartir(producto, caja) {
+    const i = montajes.findIndex((m) => m.caja === caja);
+    if (i >= 0) montajes.splice(i, 1);
+    montajes.push({ producto, caja });
+    caja.textContent = "";
+    caja.appendChild(el("p", "text-sm text-brand-500 dark:text-brand-300", "Cargando con quién se comparte…"));
+    await abrir();
+    pintarMontajes();
+  }
+
   function iniciar(obtenerCuentas) {
     cuentas = obtenerCuentas;
     if (location.hash === "#materiales") abrir();
   }
 
-  window.AdminMateriales = { iniciar, pintar, abrir, MATERIALES };
+  window.AdminMateriales = { iniciar, pintar, abrir, montarCompartir, MATERIALES };
 })();

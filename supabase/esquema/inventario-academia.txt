@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261008055743
+# al-dia-con: 20261008080312
 tabla  Ejercicios Lichess  rls=true
 tabla  academia_ia  rls=true
 tabla  academia_miembros  rls=true
@@ -97,6 +97,7 @@ tabla  preguntas_clave  rls=true
 tabla  premios_canjeados  rls=true
 tabla  premios_catalogo  rls=true
 tabla  preparacion_rivales_profesores  rls=true
+tabla  preparacion_sesiones  rls=true
 tabla  preparaciones_rival  rls=true
 tabla  presentaciones_profe  rls=true
 tabla  profesor_videollamada  rls=true
@@ -922,6 +923,12 @@ columna  premios_catalogo.tipo_efecto  text
 columna  preparacion_rivales_profesores.activado_por  uuid
 columna  preparacion_rivales_profesores.created_at  timestamp with time zone
 columna  preparacion_rivales_profesores.profesor_id  uuid
+columna  preparacion_sesiones.actualizado_en  timestamp with time zone
+columna  preparacion_sesiones.actualizado_por  uuid
+columna  preparacion_sesiones.curso  text
+columna  preparacion_sesiones.estado  text
+columna  preparacion_sesiones.nota  text
+columna  preparacion_sesiones.sesion  integer
 columna  preparaciones_rival.analisis  jsonb
 columna  preparaciones_rival.created_at  timestamp with time zone
 columna  preparaciones_rival.id  uuid
@@ -1552,6 +1559,7 @@ funcion  interno.pagar(p_pagos jsonb, p_metodo text, p_referencia text, p_nota t
 funcion  interno.pizarras_de_sala_validas(p jsonb)  invoker  anon=true  auth=true
 funcion  interno.plantillas_casa_tope()  definer  anon=false  auth=false
 funcion  interno.prefijo_de_nombre(p_nombre text)  invoker  anon=false  auth=true
+funcion  interno.preparacion_sesiones_sello()  invoker  anon=false  auth=false
 funcion  interno.profesores_de(p_alumno uuid)  definer  anon=false  auth=true
 funcion  interno.profesores_que_coordino()  definer  anon=false  auth=true
 funcion  interno.profiles_foto_por_funcion()  definer  anon=false  auth=false
@@ -1998,6 +2006,9 @@ politica  premios_catalogo  premios_catalogo_insert  INSERT
 politica  premios_catalogo  premios_catalogo_select  SELECT
 politica  premios_catalogo  premios_catalogo_update  UPDATE
 politica  preparacion_rivales_profesores  preparacion_rivales_profesores_ver  SELECT
+politica  preparacion_sesiones  preparacion_sesiones_insert  INSERT
+politica  preparacion_sesiones  preparacion_sesiones_select  SELECT
+politica  preparacion_sesiones  preparacion_sesiones_update  UPDATE
 politica  preparaciones_rival  preparaciones_rival_borrar  DELETE
 politica  preparaciones_rival  preparaciones_rival_guardar  INSERT
 politica  preparaciones_rival  preparaciones_rival_ver  SELECT
@@ -2224,6 +2235,7 @@ trigger  practice_games  practica_ayuda_proteger
 trigger  practice_sessions  practice_sessions_ligar_a_la_clase
 trigger  premios_canjeados  auditar
 trigger  preparacion_rivales_profesores  auditar
+trigger  preparacion_sesiones  sello
 trigger  profesor_videollamada  profesor_videollamada_protege
 trigger  profile_teachers  auditar
 trigger  profile_teachers  profile_teachers_sincroniza_principal
@@ -2518,6 +2530,8 @@ indice  premios_catalogo  premios_catalogo_clave_key
 indice  premios_catalogo  premios_catalogo_pkey
 indice  preparacion_rivales_profesores  preparacion_rivales_profesores_activado_por_idx
 indice  preparacion_rivales_profesores  preparacion_rivales_profesores_pkey
+indice  preparacion_sesiones  preparacion_sesiones_actualizado_por_idx
+indice  preparacion_sesiones  preparacion_sesiones_pkey
 indice  preparaciones_rival  preparaciones_rival_pkey
 indice  preparaciones_rival  preparaciones_rival_profesor_idx
 indice  presentaciones_profe  presentaciones_profe_pkey
@@ -3324,6 +3338,9 @@ grant  premios_catalogo  authenticated  TRIGGER
 grant  premios_catalogo  authenticated  TRUNCATE
 grant  premios_catalogo  authenticated  UPDATE
 grant  preparacion_rivales_profesores  authenticated  SELECT
+grant  preparacion_sesiones  authenticated  INSERT
+grant  preparacion_sesiones  authenticated  SELECT
+grant  preparacion_sesiones  authenticated  UPDATE
 grant  preparaciones_rival  authenticated  DELETE
 grant  preparaciones_rival  authenticated  INSERT
 grant  preparaciones_rival  authenticated  SELECT
