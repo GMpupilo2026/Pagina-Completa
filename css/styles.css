@@ -1570,3 +1570,37 @@ html.dark .comparar-serie-3 { background: #199e70; }
    acento, que el buscador quita a los 2,5 s. Sin animación: con movimiento
    reducido se vería igual. */
 .buscar-resaltado { outline: 3px solid rgb(var(--c-accent-500)); outline-offset: 3px; border-radius: 0.75rem; }
+
+/* ===== Bromas entre compañeros (js/bromas.js) =====
+   El tablero arcoíris: cada par de colores tiene la MISMA luminancia que el
+   tablero de siempre (#f0f4f8 / #486581), así que el contraste entre
+   casillas (5,4–5,55) y el de las piezas encima (blanca sobre oscura ≥ 5,9;
+   negra sobre clara ≥ 18,9) no cambia: solo cambia el tono. Medidos, no a
+   ojo. La animación le gana al estilo EN LÍNEA que board-color-themes.js
+   pone sobre <html> (una animación pisa a cualquier declaración normal); sin
+   movimiento, el primer par se queda quieto, con !important por lo mismo. */
+@keyframes broma-arcoiris {
+  0%      { --sq-light: #fef1f1; --sq-dark: #b23434; }
+  16.66%  { --sq-light: #fdf2e3; --sq-dark: #825c26; }
+  33.33%  { --sq-light: #faf6c6; --sq-dark: #6b641f; }
+  50%     { --sq-light: #defcde; --sq-dark: #217321; }
+  66.66%  { --sq-light: #e7f6fd; --sq-dark: #286a8a; }
+  83.33%  { --sq-light: #faf1fe; --sq-dark: #9137be; }
+  100%    { --sq-light: #fef1f1; --sq-dark: #b23434; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  :root.broma-arcoiris { animation: broma-arcoiris 18s steps(1, end) infinite; }
+}
+@media (prefers-reduced-motion: reduce) {
+  :root.broma-arcoiris { --sq-light: #defcde !important; --sq-dark: #217321 !important; }
+}
+.broma-confeti, .broma-globo, .broma-patito { position: absolute; line-height: 1; }
+.broma-confeti { top: -2rem; font-size: 1.5rem; animation: broma-caer 3s linear forwards; }
+.broma-globo { bottom: -3rem; font-size: 3rem; animation: broma-subir 5.5s ease-in forwards; }
+.broma-patito { left: -3rem; font-size: 2.25rem; animation: broma-cruzar 6.5s linear forwards; }
+@keyframes broma-caer { to { transform: translateY(110vh) rotate(540deg); } }
+@keyframes broma-subir { to { transform: translateY(-115vh) translateX(2rem); } }
+@keyframes broma-cruzar { to { transform: translateX(calc(100vw + 6rem)); } }
+@media (prefers-reduced-motion: reduce) {
+  .broma-confeti, .broma-globo, .broma-patito { display: none; }
+}

@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261008142118
+# al-dia-con: 20261008173205
 tabla  Ejercicios Lichess  rls=true
 tabla  academia_ia  rls=true
 tabla  academia_miembros  rls=true
@@ -18,6 +18,10 @@ tabla  avisos_ficha_faltante  rls=true
 tabla  avisos_ia_tope  rls=true
 tabla  avisos_profesor  rls=true
 tabla  avisos_racha  rls=true
+tabla  bromas  rls=true
+tabla  bromas_apagadas  rls=true
+tabla  bromas_bloqueos  rls=true
+tabla  bromas_preferencias  rls=true
 tabla  certificados  rls=true
 tabla  clase_elegidos  rls=true
 tabla  clase_enlaces  rls=true
@@ -61,6 +65,7 @@ tabla  formulario_compartidos  rls=true
 tabla  formulario_respuestas  rls=true
 tabla  formularios  rls=true
 tabla  fourplayer_games  rls=true
+tabla  frases_regalo  rls=true
 tabla  game_rooms  rls=true
 tabla  game_state  rls=true
 tabla  horario_clases  rls=true
@@ -130,6 +135,7 @@ tabla  repertorio  rls=true
 tabla  respuestas_en_curso  rls=true
 tabla  retos_ejercicios  rls=true
 tabla  retos_ejercicios_respuestas  rls=true
+tabla  retos_semanales  rls=true
 tabla  salas_torneo  rls=true
 tabla  saved_games  rls=true
 tabla  solicitudes_academia  rls=true
@@ -261,6 +267,22 @@ columna  avisos_racha.faltan  integer
 columna  avisos_racha.fecha  date
 columna  avisos_racha.racha  integer
 columna  avisos_racha.student_id  uuid
+columna  bromas.created_at  timestamp with time zone
+columna  bromas.de_id  uuid
+columna  bromas.frase  text
+columna  bromas.id  uuid
+columna  bromas.para_id  uuid
+columna  bromas.tipo  text
+columna  bromas.vence_at  timestamp with time zone
+columna  bromas.visto_at  timestamp with time zone
+columna  bromas_apagadas.created_at  timestamp with time zone
+columna  bromas_apagadas.profesor_id  uuid
+columna  bromas_bloqueos.alumno_id  uuid
+columna  bromas_bloqueos.bloqueado_id  uuid
+columna  bromas_bloqueos.created_at  timestamp with time zone
+columna  bromas_preferencias.alumno_id  uuid
+columna  bromas_preferencias.no_recibir  boolean
+columna  bromas_preferencias.updated_at  timestamp with time zone
 columna  certificados.academia_id  uuid
 columna  certificados.academia_logo_path  text
 columna  certificados.academia_nombre  text
@@ -619,6 +641,10 @@ columna  fourplayer_games.seats  jsonb
 columna  fourplayer_games.status  text
 columna  fourplayer_games.turn  text
 columna  fourplayer_games.updated_at  timestamp with time zone
+columna  frases_regalo.clave  text
+columna  frases_regalo.orden  integer
+columna  frases_regalo.texto  text
+columna  frases_regalo.uso  text
 columna  game_rooms.black_id  uuid
 columna  game_rooms.black_ready  boolean
 columna  game_rooms.black_time_left  numeric
@@ -909,8 +935,10 @@ columna  premios_canjeados.activo  boolean
 columna  premios_canjeados.costo_pagado  integer
 columna  premios_canjeados.created_at  timestamp with time zone
 columna  premios_canjeados.id  uuid
+columna  premios_canjeados.mensaje  text
 columna  premios_canjeados.parametros  jsonb
 columna  premios_canjeados.premio_id  uuid
+columna  premios_canjeados.regalo_de  uuid
 columna  premios_canjeados.student_id  uuid
 columna  premios_canjeados.vigente_hasta  timestamp with time zone
 columna  premios_catalogo.activo  boolean
@@ -1170,6 +1198,17 @@ columna  retos_ejercicios_respuestas.created_at  timestamp with time zone
 columna  retos_ejercicios_respuestas.idx  smallint
 columna  retos_ejercicios_respuestas.ms  integer
 columna  retos_ejercicios_respuestas.reto_id  uuid
+columna  retos_semanales.activo  boolean
+columna  retos_semanales.bono  integer
+columna  retos_semanales.clave  text
+columna  retos_semanales.created_at  timestamp with time zone
+columna  retos_semanales.descripcion  text
+columna  retos_semanales.emoji  text
+columna  retos_semanales.id  uuid
+columna  retos_semanales.meta  integer
+columna  retos_semanales.metrica  text
+columna  retos_semanales.nombre  text
+columna  retos_semanales.orden  integer
 columna  salas_torneo.clave  text
 columna  salas_torneo.created_at  timestamp with time zone
 columna  salas_torneo.descripcion  text
@@ -1399,6 +1438,10 @@ funcion  avisar_tarea_asignada()  definer  anon=false  auth=false
 funcion  avisar_tope_ia()  definer  anon=false  auth=false
 funcion  bajo_mi_coordinacion(p_persona uuid)  definer  anon=true  auth=true
 funcion  bitacora_supervisada(p_alumno uuid)  definer  anon=false  auth=true
+funcion  broma_vista(p_id uuid)  definer  anon=false  auth=true
+funcion  bromas_bloquear(p_persona uuid, p_bloquear boolean)  definer  anon=false  auth=true
+funcion  bromas_configurar(p_no_recibir boolean)  definer  anon=false  auth=true
+funcion  bromas_en_mi_clase(p_permitir boolean)  definer  anon=false  auth=true
 funcion  cambiar_rol(p_persona uuid, p_rol text)  definer  anon=false  auth=true
 funcion  canjear_premio(p_premio_id uuid)  definer  anon=false  auth=true
 funcion  cerrar_examen(p_examen uuid, p_motivo text)  definer  anon=false  auth=true
@@ -1528,6 +1571,7 @@ funcion  interno.alumnos_de(p_profesor uuid)  definer  anon=false  auth=true
 funcion  interno.analisis_partidas_al_guardar()  definer  anon=false  auth=false
 funcion  interno.auditar()  definer  anon=false  auth=false
 funcion  interno.auditoria_intocable()  invoker  anon=false  auth=false
+funcion  interno.avance_reto(p_alumno uuid, p_metrica text, p_desde timestamp with time zone)  definer  anon=false  auth=false
 funcion  interno.avisos_que_mande()  definer  anon=false  auth=true
 funcion  interno.avisos_que_recibi()  definer  anon=false  auth=true
 funcion  interno.bajo_mi_coordinacion_conjunto()  definer  anon=false  auth=true
@@ -1561,7 +1605,6 @@ funcion  interno.otorgar_puntos(p_alumno uuid, p_cantidad integer, p_origen text
 funcion  interno.otorgar_puntos_de_clase()  definer  anon=false  auth=false
 funcion  interno.otorgar_puntos_de_entrenamiento()  definer  anon=false  auth=false
 funcion  interno.otorgar_puntos_de_examen()  definer  anon=false  auth=false
-funcion  interno.otorgar_puntos_de_tarea()  definer  anon=false  auth=false
 funcion  interno.pagar(p_pagos jsonb, p_metodo text, p_referencia text, p_nota text, p_fecha date)  definer  anon=false  auth=false
 funcion  interno.pizarras_de_sala_validas(p jsonb)  invoker  anon=true  auth=true
 funcion  interno.plantillas_casa_tope()  definer  anon=false  auth=false
@@ -1603,9 +1646,11 @@ funcion  lector_planilla_gastar()  definer  anon=false  auth=true
 funcion  lectores_de_aviso(p_aviso uuid)  definer  anon=false  auth=true
 funcion  ligar_a_la_clase_abierta()  invoker  anon=false  auth=false
 funcion  logros_hitos(alumno uuid)  invoker  anon=false  auth=true
+funcion  mandar_broma(p_premio_id uuid, p_para uuid, p_frase text)  definer  anon=false  auth=true
 funcion  mandar_plan_rival(p_alumnos uuid[], p_rival text, p_lado text, p_plan jsonb, p_nota text, p_vence timestamp with time zone)  invoker  anon=false  auth=true
 funcion  marca_de_alumno(p_alumno uuid)  definer  anon=false  auth=false
 funcion  marca_de_diagnostico(p_id uuid)  definer  anon=false  auth=true
+funcion  marcador_del_salon(p_periodo text)  definer  anon=false  auth=true
 funcion  marcar_aviso_leido(p_aviso uuid)  definer  anon=false  auth=true
 funcion  marcar_coordinador(p_profesor uuid, p_valor boolean)  definer  anon=false  auth=true
 funcion  marcar_supervisor(p_persona uuid, p_valor boolean)  definer  anon=false  auth=true
@@ -1626,6 +1671,7 @@ funcion  minutos_por_tramos(p_tramos tramo_crudo[])  invoker  anon=true  auth=tr
 funcion  mis_academias_supervisadas()  definer  anon=false  auth=true
 funcion  mis_avisos_enviados(p_limite integer)  invoker  anon=false  auth=true
 funcion  mis_avisos_sin_leer()  definer  anon=false  auth=true
+funcion  mis_bromas()  invoker  anon=false  auth=true
 funcion  mis_clases()  invoker  anon=false  auth=true
 funcion  mis_clases_proximas(p_dias integer)  definer  anon=false  auth=true
 funcion  mis_funciones_coordinacion()  definer  anon=false  auth=true
@@ -1698,8 +1744,10 @@ funcion  quitar_insignia(p_id uuid)  definer  anon=false  auth=true
 funcion  quitar_verificacion_en_dos_pasos(p_persona uuid)  definer  anon=false  auth=true
 funcion  rango_es(p_desde date, p_hasta date)  invoker  anon=false  auth=true
 funcion  recibo_entregado_en_mano(p_recibo uuid, p_entregado boolean)  definer  anon=false  auth=true
-funcion  reclamar_bono_racha()  definer  anon=false  auth=true
+funcion  reclamar_puntos_pendientes()  definer  anon=false  auth=true
 funcion  recordar_informes_mensuales(p_hoy date)  definer  anon=false  auth=false
+funcion  regalar_premio(p_premio_id uuid, p_para uuid, p_mensaje text)  definer  anon=false  auth=true
+funcion  regalos_y_bromas_recientes(p_desde timestamp with time zone)  invoker  anon=false  auth=true
 funcion  registrar_arbitraje_publico(p_nombre text, p_email text, p_porcentaje integer, p_nivel text, p_detalle jsonb)  definer  anon=true  auth=true
 funcion  registrar_cobro_pagado(p_alumno uuid, p_concepto text, p_monto numeric, p_moneda text, p_metodo text, p_referencia text, p_nota text, p_fecha date)  definer  anon=false  auth=true
 funcion  registrar_cobro_pagado_con_periodo(p_alumno uuid, p_concepto text, p_monto numeric, p_moneda text, p_metodo text, p_referencia text, p_nota text, p_fecha date, p_suscripcion uuid, p_desde date, p_hasta date)  definer  anon=false  auth=true
@@ -1728,6 +1776,7 @@ funcion  resumen_profesores_supervisados(p_periodo date)  definer  anon=false  a
 funcion  resumen_satisfaccion(p_desde date, p_hasta date)  invoker  anon=false  auth=true
 funcion  resumen_tareas_examenes(p_alumno uuid, p_desde timestamp with time zone, p_hasta timestamp with time zone)  definer  anon=false  auth=true
 funcion  retirar_justificacion(p_id uuid)  definer  anon=false  auth=true
+funcion  retos_de_la_semana()  definer  anon=false  auth=true
 funcion  revisar_informe_mensual(p_id uuid, p_comentario text)  definer  anon=false  auth=true
 funcion  sacar_de_la_clase(p_clase uuid, p_alumno uuid)  definer  anon=false  auth=true
 funcion  saldo_de_puntos(p_alumno uuid)  invoker  anon=false  auth=true
@@ -1794,6 +1843,10 @@ politica  auditoria  auditoria_select_admin  SELECT
 politica  aviso_destinatarios  aviso_destinatarios_select  SELECT
 politica  avisos_cobro  avisos_lee_coordinacion  SELECT
 politica  avisos_profesor  avisos_profesor_select  SELECT
+politica  bromas  bromas_ver  SELECT
+politica  bromas_apagadas  bromas_apagadas_ver  SELECT
+politica  bromas_bloqueos  bromas_bloqueos_ver  SELECT
+politica  bromas_preferencias  bromas_preferencias_ver  SELECT
 politica  certificados  certificados_lee  SELECT
 politica  clase_elegidos  clase_elegidos_insert  INSERT
 politica  clase_elegidos  clase_elegidos_select  SELECT
@@ -1917,6 +1970,7 @@ politica  fourplayer_games  fourplayer_games_insert  INSERT
 politica  fourplayer_games  fourplayer_games_select  SELECT
 politica  fourplayer_games  fourplayer_games_update  UPDATE
 politica  fourplayer_games  verificacion_en_dos_pasos  ALL  restrictiva
+politica  frases_regalo  frases_regalo_select  SELECT
 politica  game_rooms  game_rooms_delete  DELETE
 politica  game_rooms  game_rooms_exige_acceso_ins  INSERT  restrictiva
 politica  game_rooms  game_rooms_exige_acceso_upd  UPDATE  restrictiva
@@ -2101,6 +2155,10 @@ politica  retos_ejercicios  retos_ejercicios_select  SELECT
 politica  retos_ejercicios_respuestas  retos_ejercicios_respuestas_exige_acceso_ins  INSERT  restrictiva
 politica  retos_ejercicios_respuestas  retos_ejercicios_respuestas_insert  INSERT
 politica  retos_ejercicios_respuestas  retos_ejercicios_respuestas_select  SELECT
+politica  retos_semanales  retos_semanales_delete  DELETE
+politica  retos_semanales  retos_semanales_insert  INSERT
+politica  retos_semanales  retos_semanales_select  SELECT
+politica  retos_semanales  retos_semanales_update  UPDATE
 politica  salas_torneo  salas_torneo_borrar  DELETE
 politica  salas_torneo  salas_torneo_crear  INSERT
 politica  salas_torneo  salas_torneo_editar  UPDATE
@@ -2269,7 +2327,6 @@ trigger  supervisor_cuentas  auditar
 trigger  suscripciones  auditar
 trigger  tanda_resultados  tanda_resultado_de_la_base
 trigger  tarea_items  proteger_tarea_items_alumno
-trigger  tareas  otorgar_puntos_de_tarea
 trigger  tareas  tareas_avisa_push
 trigger  tareas  tareas_protege_alumno
 trigger  tournaments  tournaments_proteger
@@ -2315,6 +2372,12 @@ indice  avisos_ia_tope  avisos_ia_tope_pkey
 indice  avisos_profesor  avisos_profesor_pkey
 indice  avisos_profesor  avisos_profesor_profesor
 indice  avisos_racha  avisos_racha_pkey
+indice  bromas  bromas_de
+indice  bromas  bromas_para
+indice  bromas  bromas_pkey
+indice  bromas_apagadas  bromas_apagadas_pkey
+indice  bromas_bloqueos  bromas_bloqueos_pkey
+indice  bromas_preferencias  bromas_preferencias_pkey
 indice  certificados  certificados_academia_idx
 indice  certificados  certificados_anulado_por_idx
 indice  certificados  certificados_codigo_key
@@ -2442,6 +2505,7 @@ indice  formularios  formularios_pkey
 indice  formularios  formularios_slug_key
 indice  fourplayer_games  fourplayer_games_created_by_fk
 indice  fourplayer_games  fourplayer_games_pkey
+indice  frases_regalo  frases_regalo_pkey
 indice  game_rooms  game_rooms_black_id_fk
 indice  game_rooms  game_rooms_class_session_idx
 indice  game_rooms  game_rooms_created_by_fk
@@ -2537,6 +2601,7 @@ indice  preferencias_avisos  preferencias_avisos_pkey
 indice  preguntas_clave  preguntas_clave_pkey
 indice  premios_canjeados  premios_canjeados_alumno
 indice  premios_canjeados  premios_canjeados_pkey
+indice  premios_canjeados  premios_canjeados_regalo_de
 indice  premios_catalogo  premios_catalogo_clave_key
 indice  premios_catalogo  premios_catalogo_pkey
 indice  preparacion_rivales_profesores  preparacion_rivales_profesores_activado_por_idx
@@ -2620,6 +2685,8 @@ indice  retos_ejercicios  retos_ejercicios_retador
 indice  retos_ejercicios  retos_ejercicios_rival
 indice  retos_ejercicios_respuestas  retos_ejercicios_respuestas_alumno
 indice  retos_ejercicios_respuestas  retos_ejercicios_respuestas_pkey
+indice  retos_semanales  retos_semanales_clave_key
+indice  retos_semanales  retos_semanales_pkey
 indice  salas_torneo  salas_torneo_clave_key
 indice  salas_torneo  salas_torneo_pkey
 indice  salas_torneo  salas_torneo_updated_by_fk
@@ -2816,6 +2883,10 @@ grant  avisos_cobro  authenticated  UPDATE
 grant  avisos_profesor  authenticated  REFERENCES
 grant  avisos_profesor  authenticated  SELECT
 grant  avisos_profesor  authenticated  TRIGGER
+grant  bromas  authenticated  SELECT
+grant  bromas_apagadas  authenticated  SELECT
+grant  bromas_bloqueos  authenticated  SELECT
+grant  bromas_preferencias  authenticated  SELECT
 grant  certificados  authenticated  SELECT
 grant  clase_elegidos  authenticated  DELETE
 grant  clase_elegidos  authenticated  INSERT
@@ -3159,6 +3230,7 @@ grant  fourplayer_games  authenticated  SELECT
 grant  fourplayer_games  authenticated  TRIGGER
 grant  fourplayer_games  authenticated  TRUNCATE
 grant  fourplayer_games  authenticated  UPDATE
+grant  frases_regalo  authenticated  SELECT
 grant  game_rooms  anon  DELETE
 grant  game_rooms  anon  INSERT
 grant  game_rooms  anon  REFERENCES
@@ -3576,6 +3648,13 @@ grant  retos_ejercicios_respuestas  authenticated  SELECT
 grant  retos_ejercicios_respuestas  authenticated  TRIGGER
 grant  retos_ejercicios_respuestas  authenticated  TRUNCATE
 grant  retos_ejercicios_respuestas  authenticated  UPDATE
+grant  retos_semanales  authenticated  DELETE
+grant  retos_semanales  authenticated  INSERT
+grant  retos_semanales  authenticated  REFERENCES
+grant  retos_semanales  authenticated  SELECT
+grant  retos_semanales  authenticated  TRIGGER
+grant  retos_semanales  authenticated  TRUNCATE
+grant  retos_semanales  authenticated  UPDATE
 grant  salas_torneo  anon  SELECT
 grant  salas_torneo  authenticated  DELETE
 grant  salas_torneo  authenticated  INSERT

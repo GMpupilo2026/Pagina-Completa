@@ -395,6 +395,35 @@ def poner_tanda(ruta, s):
             + TANDA_FIN + s[cierre:])
 
 
+# Las bromas entre compañeros (js/bromas.js): solo en el panel, la tienda de
+# puntos y las páginas de Entrenamiento. Nunca en un examen, en la clase en
+# vivo ni en un torneo, que es donde una broma molesta de verdad. Ver «Retos,
+# marcador, regalos y bromas» en docs/decisiones/puntos-y-premios.md.
+BROMAS_INICIO = "<!-- bromas: inicio -->"
+BROMAS_FIN = "<!-- bromas: fin -->"
+
+
+def lleva_bromas(ruta):
+    return ruta in ("clases.html", "puntos-tienda.html") or ruta.startswith("entreno/")
+
+
+def poner_bromas(ruta, s):
+    i = s.find(BROMAS_INICIO)
+    if i >= 0:
+        j = s.find(BROMAS_FIN, i)
+        s = s[:i] + s[j + len(BROMAS_FIN):]
+    if not lleva_bromas(ruta):
+        return s
+    cierre = s.rfind("</body>")
+    if cierre < 0:
+        print(f"⚠️  {ruta}: no tiene </body>, se queda sin las bromas.")
+        return s
+    arriba = "../" * ruta.count("/")
+    return (s[:cierre] + BROMAS_INICIO
+            + f'<script src="{arriba}js/bromas.js" defer></script>'
+            + BROMAS_FIN + s[cierre:])
+
+
 def poner_juego_aviso(ruta, s):
     i = s.find(JUEGO_AVISO_INICIO)
     if i >= 0:
@@ -817,6 +846,7 @@ def procesar(ruta):
     s = poner_juego_aviso(ruta, s)
     s = poner_aviso_profe(ruta, s)
     s = poner_tanda(ruta, s)
+    s = poner_bromas(ruta, s)
     s = poner_acceso(ruta, s)
     s = poner_tiempo(ruta, s)
     s = poner_modo_vista(ruta, s)

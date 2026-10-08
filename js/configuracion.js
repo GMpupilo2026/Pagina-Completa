@@ -1106,6 +1106,9 @@
                 document.getElementById("videollamada").hidden = false;
                 cargarVll();
             }
+            /* Las bromas son entre alumnos de una misma clase: el interruptor
+               es de quien da clase (quien administra no tiene alumnos propios). */
+            if (profile.role === "profesor" && !profile._persona) pintarBromasClase();
             /* La verificación en dos pasos, para las cuentas que ven a otras
                personas: quien da clase, coordina, supervisa o administra. */
             if (profile.role !== "alumno" || profile.is_admin || profile.es_supervisor) {
@@ -1119,6 +1122,29 @@
             pintarAvisos();
             pintarAvisoRacha();
             Notificaciones.atenderRenovaciones();
+        }
+
+        /* ---------------- Bromas entre tus alumnos ----------------
+           Prendidas salvo que el profe las apague (una fila suya en
+           bromas_apagadas). Ver «Retos, marcador, regalos y bromas» en
+           docs/decisiones/puntos-y-premios.md. */
+        async function pintarBromasClase() {
+            const caja = document.getElementById("bromas-clase");
+            const casilla = document.getElementById("bromas-clase-permitir");
+            const estado = document.getElementById("bromas-clase-estado");
+            if (!caja || !casilla) return;
+            caja.hidden = false;
+            const { data, error } = await sb.from("bromas_apagadas").select("profesor_id").eq("profesor_id", profile.id).maybeSingle();
+            if (error) { estado.textContent = "No se pudo cargar esta opción."; return; }
+            casilla.checked = !data;
+            casilla.disabled = false;
+            casilla.addEventListener("change", async () => {
+                casilla.disabled = true;
+                const r = await sb.rpc("bromas_en_mi_clase", { p_permitir: casilla.checked });
+                casilla.disabled = false;
+                if (r.error) { casilla.checked = !casilla.checked; estado.textContent = "No se pudo guardar."; return; }
+                estado.textContent = casilla.checked ? "Listo: tus alumnos se pueden mandar bromas." : "Listo: en tu clase ya no hay bromas.";
+            });
         }
 
         /* ---------------- El panel para los más pequeños ----------------
