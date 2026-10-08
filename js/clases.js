@@ -2316,7 +2316,7 @@
             const hace30 = new Date(Date.now() - 30 * 86400000).toISOString();
             const ahora = new Date().toISOString();
             const pedir = (q) => q.then((r) => (r && !r.error && r.data) || []).catch(() => []);
-            const [tareas, examenes, retos, avisos, notas] = await Promise.all([
+            const [tareas, examenes, retos, avisos, notas, regalos] = await Promise.all([
                 pedir(sb.from("tareas").select("id, titulo, disponible_desde").eq("alumno_id", profile.id)
                     .gte("disponible_desde", hace30).lte("disponible_desde", ahora).order("disponible_desde", { ascending: false }).limit(5)),
                 pedir(sb.from("examenes").select("id, titulo, disponible_desde").eq("alumno_id", profile.id)
@@ -2327,6 +2327,9 @@
                     .gte("created_at", hace30).order("created_at", { ascending: false }).limit(5)),
                 pedir(sb.from("notas_alumno").select("id, texto, created_at").eq("alumno_id", profile.id).eq("compartida", true)
                     .gte("created_at", hace30).order("created_at", { ascending: false }).limit(5)),
+                // Lo que le mandó un compañero con sus Puntos Ajedrez (ver
+                // «Retos, marcador, regalos y bromas» en docs/decisiones/puntos-y-premios.md).
+                pedir(sb.rpc("regalos_y_bromas_recientes", { p_desde: hace30 })),
             ]);
             const corto = (t) => { t = String(t || "").replace(/\s+/g, " ").trim(); return t.length > 90 ? t.slice(0, 89) + "…" : t; };
             const cosas = [].concat(
@@ -2335,6 +2338,11 @@
                 retos.map((x) => ({ icono: "⚔️", texto: x.estado === "pendiente" ? "Te retaron a una partida" : "Te retaron a una partida (ya " + (x.estado === "aceptado" ? "la aceptaste" : "no está") + ")", fecha: x.created_at, href: "competir.html" })),
                 avisos.map((x) => ({ icono: "📣", texto: "Aviso de tu profe: «" + corto(x.texto) + "»", fecha: x.created_at, href: null })),
                 notas.map((x) => ({ icono: "✏️", texto: "Tu profe anotó: «" + corto(x.texto) + "»", fecha: x.created_at, href: "informes.html" })),
+                regalos.map((x) => ({
+                    icono: x.emoji || (x.tipo === "broma" ? "🃏" : "🎁"),
+                    texto: x.de_nombre + (x.tipo === "broma" ? " te mandó una broma: " : " te regaló ") + corto(x.que) + (x.frase ? " — «" + corto(x.frase) + "»" : ""),
+                    fecha: x.fecha, href: "puntos-tienda.html",
+                })),
             ).filter((c) => c.fecha).sort((a, b) => String(b.fecha).localeCompare(String(a.fecha))).slice(0, 10);
             if (!cosas.length) return;
             let vista = null;

@@ -1436,9 +1436,12 @@ Rica.
     clase»;
   - el alumno, en la tarjeta «Tus puntos de septiembre» de su panel
     (`clases.html`), que no aparece si este mes no tuvo clases.
-- **No hay tabla de posiciones para los alumnos.** Mostrarles la de sus
-  compañeros sería una lista que no pasa por una relación directa (ver «Las
-  academias son privadas»).
+- **No hay tabla de posiciones de la clase para los alumnos.** Mostrarles la
+  de sus compañeros sería una lista que no pasa por una relación directa (ver
+  «Las academias son privadas»). La que hay después es el marcador del salón
+  de Puntos Ajedrez, que sí pasa por una (compañeros: mismo profe Y misma
+  academia) y suma todo lo ganado, no solo la clase (ver «Retos, marcador,
+  regalos y bromas» en `puntos-y-premios.md`).
 - **El doble de `verificar-clase-registrada.js` aprendió `resumen_del_mes`**,
   y lo calcula de verdad: suma su propio `resumen_de_la_clase` por cada clase
   del mes, con el mismo filtro de quién ve qué.

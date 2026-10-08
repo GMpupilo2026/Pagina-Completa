@@ -9,8 +9,12 @@
    comprueba la PÁGINA: que el saldo se pinte, que un premio que no alcanza
    se vea deshabilitado y diga cuánto falta, que canjear descuente y quede en
    "Mis premios", que equipar/quitar un cosmético se pueda deshacer, que el
-   aviso de puntos dobles aparezca solo si está vigente, y que un bono de
-   racha nuevo se anuncie (y uno ya reclamado no se repita ni se note).
+   aviso de puntos dobles aparezca solo si está vigente, que lo pendiente
+   (tareas, racha, retos) se anuncie una vez y no se repita, los retos de la
+   semana con su avance, el marcador del salón (semana y mes), regalar y
+   mandar bromas a un compañero con un mensaje de la lista, y los ajustes de
+   bromas (no recibir, bloquear). Lo que se VE de una broma lo comprueba
+   verificar-bromas.js.
 
    Uso:  python3 -m http.server 8777    (desde la raíz del sitio)
          node herramientas/verificar-puntos.js                              */
@@ -37,26 +41,81 @@ const CATALOGO = [
   { id: "p-gorro", clave: "accesorio_gorro", nombre: "Gorro de copa", descripcion: "Un adorno que ven tu profe y tus compañeros.",
     emoji: "🎩", categoria: "cosmetico", tipo_efecto: "accesorio_avatar", costo_puntos: 50,
     parametros: {}, limite_por_alumno: 1, activo: true, orden: 15 },
+  { id: "p-estrella", clave: "tarjeta_estrella", nombre: "Tarjeta de estrella", descripcion: "Para felicitar a un compañero.",
+    emoji: "🌟", categoria: "regalo", tipo_efecto: "tarjeta", costo_puntos: 10,
+    parametros: {}, limite_por_alumno: null, activo: true, orden: 200 },
+  { id: "p-globo", clave: "broma_globo", nombre: "Globo de reto", descripcion: "Un globo con una frase.",
+    emoji: "🎈", categoria: "broma", tipo_efecto: "broma", costo_puntos: 20,
+    parametros: { tipo: "globo", horas: 168 }, limite_por_alumno: null, activo: true, orden: 300 },
+  { id: "p-confeti", clave: "broma_confeti", nombre: "Lluvia de confeti", descripcion: "Confeti con tu nombre.",
+    emoji: "🎉", categoria: "broma", tipo_efecto: "broma", costo_puntos: 25,
+    parametros: { tipo: "confeti", horas: 168 }, limite_por_alumno: null, activo: true, orden: 310 },
 ];
 
-function clienteFalso(saldoInicial, misPremiosIniciales, rachaYaReclamada) {
+// Lo que la RLS de profiles le deja ver a un alumno: él mismo, su profe y sus
+// compañeros (mismo profe y misma academia).
+const PERFILES = [
+  { id: YO, full_name: "Ana Pérez", role: "alumno" },
+  { id: "u-beto", full_name: "Beto Rojas", role: "alumno" },
+  { id: "u-carla", full_name: "Carla Mora", role: "alumno" },
+  { id: "u-profe", full_name: "Profe Luis", role: "profesor" },
+];
+const FRASES = [
+  { clave: "felicidades", texto: "¡Felicidades!", uso: "regalo", orden: 10 },
+  { clave: "gracias", texto: "Gracias por ayudarme.", uso: "regalo", orden: 30 },
+  { clave: "cuac", texto: "Cuac. Eso es todo.", uso: "broma", orden: 30 },
+  { clave: "te_vigilo", texto: "Te estoy vigilando… desde la casilla e4.", uso: "broma", orden: 50 },
+];
+const RETOS = [
+  { id: "r-1", clave: "ejercicios_30", nombre: "Treinta ejercicios", descripcion: "Resuelve 30 ejercicios.", emoji: "🎯",
+    metrica: "ejercicios", meta: 30, bono: 40, avance: 12, cobrado: false, desde: "2026-10-05", hasta: "2026-10-11" },
+  { id: "r-2", clave: "dias_4", nombre: "Cuatro días de entrenamiento", descripcion: "Entrena 4 días.", emoji: "📅",
+    metrica: "dias_activos", meta: 4, bono: 60, avance: 1, cobrado: false, desde: "2026-10-05", hasta: "2026-10-11" },
+  { id: "r-3", clave: "tareas_2", nombre: "Tareas al día", descripcion: "Completa 2 tareas.", emoji: "📋",
+    metrica: "tareas", meta: 2, bono: 30, avance: 2, cobrado: false, desde: "2026-10-05", hasta: "2026-10-11" },
+];
+
+function clienteFalso(saldoInicial, misPremiosIniciales, pendientesYaCobrados, extra) {
+  extra = extra || {};
   return `
 window.__llamadas = [];
 (function () {
   const YO = ${JSON.stringify(YO)};
   const CATALOGO = ${JSON.stringify(CATALOGO)};
+  const PERFILES = ${JSON.stringify(PERFILES)};
+  const FRASES = ${JSON.stringify(FRASES)};
+  const RETOS = ${JSON.stringify(RETOS)};
   let SALDO = ${JSON.stringify(saldoInicial)};
   let MIS_PREMIOS = ${JSON.stringify(misPremiosIniciales)};
-  let RACHA_RECLAMADA = ${JSON.stringify(!!rachaYaReclamada)};
+  let COBRADO = ${JSON.stringify(!!pendientesYaCobrados)};
+  const TABLAS = {
+    premios_catalogo: CATALOGO, profiles: PERFILES, frases_regalo: FRASES,
+    bromas_preferencias: ${JSON.stringify(extra.preferencias || [])},
+    bromas_bloqueos: ${JSON.stringify(extra.bloqueos || [])},
+    bromas: ${JSON.stringify(extra.bromas || [])},
+  };
   let siguienteCanje = 1;
+  // Para probar la tarjeta del panel en una página donde la tienda ya cobró.
+  window.__reiniciarPendientes = () => { COBRADO = false; RETOS[2].cobrado = false; };
 
+  // Los filtros se aplican al RESOLVER, como en el resto de los dobles.
   function tabla(nombre) {
-    let filas = (nombre === "premios_catalogo" ? CATALOGO : []).slice();
+    const filtros = [];
+    let orden = null, tope = null, una = false;
     const b = {
       select() { return b; },
-      eq(col, val) { filas = filas.filter((r) => r[col] === val); return b; },
-      order(col) { filas = filas.slice().sort((a, b2) => a[col] - b2[col]); return b; },
-      then(resolve) { resolve({ data: filas, error: null }); },
+      eq(col, val) { filtros.push((r) => r[col] === val); return b; },
+      neq(col, val) { filtros.push((r) => r[col] !== val); return b; },
+      in(col, vals) { filtros.push((r) => vals.includes(r[col])); return b; },
+      order(col, op) { orden = { col: col, desc: op && op.ascending === false }; return b; },
+      limit(n) { tope = n; return b; },
+      maybeSingle() { una = true; return b; },
+      then(resolve) {
+        let filas = (TABLAS[nombre] || []).filter((r) => filtros.every((f) => f(r)));
+        if (orden) filas = filas.slice().sort((x, y) => (x[orden.col] > y[orden.col] ? 1 : x[orden.col] < y[orden.col] ? -1 : 0) * (orden.desc ? -1 : 1));
+        if (tope != null) filas = filas.slice(0, tope);
+        resolve({ data: una ? (filas[0] || null) : filas, error: null });
+      },
     };
     return b;
   }
@@ -83,11 +142,38 @@ window.__llamadas = [];
         });
         return Promise.resolve({ data: salida, error: null });
       }
-      if (nombre === "reclamar_bono_racha") {
-        if (RACHA_RECLAMADA) return Promise.resolve({ data: [{ nuevo_hito: 7, puntos_otorgados: 25, racha_actual: 7 }], error: null });
-        RACHA_RECLAMADA = true;
-        SALDO += 25;
-        return Promise.resolve({ data: [{ nuevo_hito: 7, puntos_otorgados: 25, racha_actual: 7 }], error: null });
+      // Como la base: devuelve solo lo NUEVO; la segunda vez, nada.
+      if (nombre === "reclamar_puntos_pendientes") {
+        if (COBRADO) return Promise.resolve({ data: [], error: null });
+        COBRADO = true;
+        SALDO += 25 + 30;
+        RETOS[2].cobrado = true;
+        return Promise.resolve({ data: [
+          { que: "racha", detalle: "Racha de 7 días", ganados: 25 },
+          { que: "reto_semanal", detalle: "Reto de la semana: Tareas al día", ganados: 30 },
+        ], error: null });
+      }
+      if (nombre === "retos_de_la_semana") return Promise.resolve({ data: RETOS, error: null });
+      if (nombre === "marcador_del_salon") {
+        const mes = args && args.p_periodo === "mes";
+        return Promise.resolve({ data: [
+          { alumno_id: "u-carla", nombre: "Carla Mora", puntos: mes ? 400 : 120, puesto: 1, soy_yo: false },
+          { alumno_id: YO, nombre: "Ana Pérez", puntos: mes ? 310 : 80, puesto: 2, soy_yo: true },
+          { alumno_id: "u-beto", nombre: "Beto Rojas", puntos: mes ? 90 : 15, puesto: 3, soy_yo: false },
+        ], error: null });
+      }
+      if (nombre === "regalar_premio" || nombre === "mandar_broma") {
+        const premio = CATALOGO.find((p) => p.id === args.p_premio_id);
+        if (!premio) return Promise.resolve({ data: null, error: { message: "Ese premio ya no está disponible." } });
+        if (!PERFILES.some((p) => p.id === args.p_para && p.role === "alumno" && p.id !== YO)) {
+          return Promise.resolve({ data: null, error: { message: "Solo se le puede regalar a un compañero de clase." } });
+        }
+        if (nombre === "mandar_broma" && premio.parametros.tipo === "globo" && !FRASES.some((f) => f.clave === args.p_frase && f.uso === "broma")) {
+          return Promise.resolve({ data: null, error: { message: "Elige una frase de la lista." } });
+        }
+        if (SALDO < premio.costo_puntos) return Promise.resolve({ data: null, error: { message: "Te faltan " + (premio.costo_puntos - SALDO) + " puntos para este regalo." } });
+        SALDO -= premio.costo_puntos;
+        return Promise.resolve({ data: [{ canje_id: "g-1", broma_id: "b-1", saldo_restante: SALDO }], error: null });
       }
       if (nombre === "canjear_premio") {
         const premio = CATALOGO.find((p) => p.id === args.p_premio_id);
@@ -129,8 +215,10 @@ async function contexto(navegador, initScript) {
   return ctx;
 }
 
-async function abrir(navegador, saldoInicial, misPremiosIniciales, rachaYaReclamada) {
-  const ctx = await contexto(navegador, clienteFalso(saldoInicial, misPremiosIniciales, rachaYaReclamada));
+async function abrir(navegador, saldoInicial, misPremiosIniciales, pendientesYaCobrados, extra) {
+  // Casi todas las pruebas abren con lo pendiente ya cobrado: así el saldo
+  // que se pinta es el que se pasó. La 5 y la 6 prueban el cobro.
+  const ctx = await contexto(navegador, clienteFalso(saldoInicial, misPremiosIniciales, pendientesYaCobrados !== false, extra));
   const page = await ctx.newPage();
   const errores = [];
   page.on("pageerror", (e) => errores.push(String(e)));
@@ -142,6 +230,7 @@ async function abrir(navegador, saldoInicial, misPremiosIniciales, rachaYaReclam
 }
 
 const tarjeta = (page, nombre) => page.locator(`#tienda-puntos article:has(h4:has-text("${nombre}"))`);
+const canjear = (page, nombre) => tarjeta(page, nombre).locator('button[aria-label^="Canjear"]');
 
 async function main() {
   const fallos = [];
@@ -153,7 +242,7 @@ async function main() {
   // <script> escrito dentro". Un olvido acá no da ningún error: se ve y
   // funciona, hasta que a alguien se le abre un confirm() nativo feo.
   {
-    const archivos = ["js/puntos.js", "js/puntos-tienda-pagina.js"];
+    const archivos = ["js/puntos.js", "js/puntos-tienda-pagina.js", "js/puntos-regalos.js", "js/bromas.js"];
     archivos.forEach((f) => {
       const src = fs.readFileSync(path.join(RAIZ, f), "utf8");
       ok(!/\b(alert|confirm|prompt)\s*\(/.test(src), `${f}: usa alert/confirm/prompt del navegador`);
@@ -178,10 +267,10 @@ async function main() {
     ok(await page.isVisible('h3:has-text("⚡ Ventajas de entrenamiento")'), "no aparece la de entrenamiento");
     ok(await page.isVisible('h3:has-text("📚 Contenido")'), "no aparece la de contenido");
 
-    const btnTitulo = tarjeta(page, "Título: Táctico").locator("button");
+    const btnTitulo = canjear(page, "Título: Táctico");
     ok(!(await btnTitulo.isDisabled()), "con 180 puntos debería poder canjear el título de 150");
 
-    const btnDoble = tarjeta(page, "Día de puntos dobles").locator("button");
+    const btnDoble = canjear(page, "Día de puntos dobles");
     ok(await btnDoble.isDisabled(), "con 180 puntos NO debería poder canjear el de 200");
     ok((await tarjeta(page, "Día de puntos dobles").locator("p[aria-live]").textContent()).includes("Te faltan 20 puntos"),
       "no dice cuánto falta para el premio de 200");
@@ -196,7 +285,7 @@ async function main() {
   // ---------- 2) canjear descuenta, queda en «Mis premios», y no se puede dos veces ----------
   {
     const { page, ctx, errores } = await abrir(navegador, 180, []);
-    await tarjeta(page, "Título: Táctico").locator("button").click();
+    await canjear(page, "Título: Táctico").click();
     await page.waitForFunction(() => document.querySelector("#tienda-puntos [data-puntos-total]").textContent === "💎 30 puntos", null, { timeout: 5000 });
     ok(await page.evaluate(() => window.__llamadas.some((l) => l.rpc === "canjear_premio" && l.args.p_premio_id === "p-titulo")),
       "canjear no mandó canjear_premio con el id del premio");
@@ -207,7 +296,7 @@ async function main() {
       "el premio canjeado no aparece en «Mis premios» con su botón de Quitar");
 
     // El límite es 1: ya no se puede canjear otra vez.
-    const btnTitulo = tarjeta(page, "Título: Táctico").locator("button");
+    const btnTitulo = canjear(page, "Título: Táctico");
     ok(await btnTitulo.isDisabled(), "ya con el título, el botón debería quedar deshabilitado");
     ok((await tarjeta(page, "Título: Táctico").locator("p[aria-live]").textContent()) === "Ya lo tienes.",
       "no dice «Ya lo tienes.» cuando el límite ya se alcanzó");
@@ -227,7 +316,7 @@ async function main() {
   // ---------- 2 bis) un accesorio de avatar: se ve en «Mis premios» y en Puntos.accesoriosDe/decorarAvatar ----------
   {
     const { page, ctx } = await abrir(navegador, 50, []);
-    await tarjeta(page, "Gorro de copa").locator("button").click();
+    await canjear(page, "Gorro de copa").click();
     await page.waitForFunction(() => document.querySelector("#tienda-puntos [data-puntos-total]").textContent === "💎 0 puntos", null, { timeout: 5000 });
     ok((await page.textContent("#tienda-puntos")).includes("Así te ven en la clase en vivo: 🎩 Gorro de copa"),
       "después de canjear el gorro debería decir que así te ven en la clase en vivo");
@@ -284,44 +373,171 @@ async function main() {
     await ctx.close();
   }
 
-  // ---------- 5) la tarjeta del panel (Puntos.montarTarjetaPanel): el bono de racha ----------
+  // ---------- 5) lo pendiente se cobra al abrir la tienda, una sola vez ----------
   {
-    const { page, ctx } = await abrir(navegador, 100, []);
-    const texto = await page.evaluate(async () => {
-      const div = document.createElement("div");
-      document.body.appendChild(div);
-      await window.Puntos.montarTarjetaPanel(div, { sb: window.sb, alumnoId: "u-ana" });
-      return { total: div.querySelector("[data-puntos-total]").textContent, aviso: div.querySelectorAll("p")[1].textContent };
-    });
-    ok(texto.total === "💎 125 puntos", `la tarjeta debería mostrar 100 + 25 del bono de racha, salió: ${texto.total}`);
-    ok(texto.aviso.includes("Racha de 7 días: +25 puntos"), `no avisa el bono de racha nuevo: ${JSON.stringify(texto.aviso)}`);
-
-    // Si se vuelve a montar (otra visita al panel), la racha ya está
-    // reclamada: no debe repetir el aviso ni volver a sumar.
-    const segunda = await page.evaluate(async () => {
-      const div = document.createElement("div");
-      document.body.appendChild(div);
-      await window.Puntos.montarTarjetaPanel(div, { sb: window.sb, alumnoId: "u-ana" });
-      return { total: div.querySelector("[data-puntos-total]").textContent, aviso: div.querySelectorAll("p")[1].textContent };
-    });
-    ok(segunda.total === "💎 125 puntos", `la segunda vez no debería sumar de nuevo, salió: ${segunda.total}`);
-    ok(segunda.aviso === "", `la segunda vez no debería repetir el aviso de racha: ${JSON.stringify(segunda.aviso)}`);
+    const { page, ctx, errores } = await abrir(navegador, 100, [], false);
+    await page.waitForFunction(() => document.querySelector("#tienda-puntos [data-puntos-total]").textContent === "💎 155 puntos", null, { timeout: 5000 })
+      .catch(() => {});
+    ok((await page.textContent("#tienda-puntos [data-puntos-total]")) === "💎 155 puntos",
+      "al abrir la tienda debería cobrar lo pendiente (100 + 25 de racha + 30 del reto)");
+    const nuevos = await page.textContent("[data-puntos-nuevos]");
+    ok(nuevos.includes("Racha de 7 días: +25") && nuevos.includes("Reto de la semana: Tareas al día: +30"),
+      `no anuncia lo recién cobrado: ${JSON.stringify(nuevos)}`);
+    ok((await page.textContent('[data-reto="tareas_2"] [data-reto-estado]')).includes("✓ Cumplido"),
+      "el reto recién cobrado debería salir como cumplido");
+    ok(errores.join(" | ") === "", "hubo errores en consola: " + errores.join(" | "));
     await ctx.close();
   }
 
-  // ---------- 5 bis) sin ningún punto todavía (y sin racha nueva), la tarjeta no se pinta ----------
+  // ---------- 5 bis) la tarjeta del panel (Puntos.montarTarjetaPanel) ----------
+  {
+    const { page, ctx } = await abrir(navegador, 100, []);
+    await page.evaluate(() => window.__reiniciarPendientes());
+    const montar = () => page.evaluate(async () => {
+      const div = document.createElement("div");
+      document.body.appendChild(div);
+      await window.Puntos.montarTarjetaPanel(div, { sb: window.sb, alumnoId: "u-ana" });
+      return { total: div.querySelector("[data-puntos-total]").textContent, aviso: div.querySelectorAll("p")[1].textContent };
+    });
+    const texto = await montar();
+    ok(texto.total === "💎 155 puntos", `la tarjeta debería mostrar 100 + 55 de lo pendiente, salió: ${texto.total}`);
+    ok(texto.aviso.includes("🔥 Racha de 7 días: +25") && texto.aviso.includes("🎯 Reto de la semana: Tareas al día: +30"),
+      `no avisa lo pendiente recién cobrado: ${JSON.stringify(texto.aviso)}`);
+
+    // Otra visita al panel: ya está cobrado, no repite el aviso ni suma.
+    const segunda = await montar();
+    ok(segunda.total === "💎 155 puntos", `la segunda vez no debería sumar de nuevo, salió: ${segunda.total}`);
+    ok(segunda.aviso === "", `la segunda vez no debería repetir el aviso: ${JSON.stringify(segunda.aviso)}`);
+    await ctx.close();
+  }
+
+  // ---------- 5 ter) sin ningún punto todavía (y nada pendiente), la tarjeta no se pinta ----------
   // Ver «sin profe no hay botón, y sin nada más "Tus clases" no se pinta» en
   // herramientas/verificar-panel.js: un alumno recién creado no debe ver una
   // tarjeta invitando a una tienda vacía.
   {
-    const { page, ctx } = await abrir(navegador, 0, [], true);
+    const { page, ctx } = await abrir(navegador, 0, []);
     const hidden = await page.evaluate(async () => {
       const div = document.createElement("div");
       document.body.appendChild(div);
       await window.Puntos.montarTarjetaPanel(div, { sb: window.sb, alumnoId: "u-ana" });
       return div.hidden;
     });
-    ok(hidden === true, "con saldo 0 y sin racha nueva, la tarjeta debería quedar oculta (hidden)");
+    ok(hidden === true, "con saldo 0 y nada pendiente, la tarjeta debería quedar oculta (hidden)");
+    await ctx.close();
+  }
+
+  // ---------- 6) los retos de la semana, con su avance escrito ----------
+  {
+    const { page, ctx } = await abrir(navegador, 100, []);
+    await page.waitForSelector('[data-reto="ejercicios_30"]', { timeout: 5000 });
+    ok((await page.textContent('[data-reto="ejercicios_30"] [data-reto-estado]')) === "12 de 30",
+      "el avance del reto debería ir escrito («12 de 30»), no solo en la barra");
+    const barra = await page.evaluate(() => { const b = document.querySelector('[data-reto="ejercicios_30"] progress'); return b && [b.value, b.max, b.getAttribute("aria-label")]; });
+    ok(barra && barra[0] === 12 && barra[1] === 30 && barra[2] === "Treinta ejercicios", "la barra del reto no tiene su valor o su nombre: " + JSON.stringify(barra));
+    ok((await page.textContent('[data-reto="ejercicios_30"] h4')).includes("+40 puntos"), "el reto no dice su bono");
+    await ctx.close();
+  }
+
+  // ---------- 7) el marcador del salón: semana y mes, y uno mismo marcado ----------
+  {
+    const { page, ctx } = await abrir(navegador, 100, []);
+    await page.waitForSelector("#puntos-marcador [data-marcador-fila]", { timeout: 5000 });
+    const filas = await page.$$eval("#puntos-marcador [data-marcador-fila]", (l) => l.map((x) => x.textContent));
+    ok(filas.length === 3 && filas[0].includes("Carla Mora") && filas[0].includes("120 puntos"), "el marcador de la semana no sale bien: " + JSON.stringify(filas));
+    ok(await page.isVisible('#puntos-marcador [aria-current="true"]:has-text("Ana Pérez (tú)")'), "uno mismo no sale marcado en el marcador");
+    ok((await page.getAttribute('[data-periodo="semana"]', "aria-pressed")) === "true", "«Esta semana» debería arrancar apretado");
+    await page.click('[data-periodo="mes"]');
+    await page.waitForFunction(() => document.querySelector("#puntos-marcador").textContent.includes("400 puntos"), null, { timeout: 5000 });
+    ok(await page.evaluate(() => window.__llamadas.some((l) => l.rpc === "marcador_del_salon" && l.args.p_periodo === "mes")),
+      "«Este mes» no pidió el marcador del mes");
+    ok((await page.getAttribute('[data-periodo="mes"]', "aria-pressed")) === "true"
+      && (await page.getAttribute('[data-periodo="semana"]', "aria-pressed")) === "false", "los botones del periodo no dicen cuál está apretado");
+    await ctx.close();
+  }
+
+  // ---------- 8) regalar una tarjeta: compañero y mensaje de la lista ----------
+  {
+    const { page, ctx, errores } = await abrir(navegador, 100, []);
+    const btn = tarjeta(page, "Tarjeta de estrella").locator("[data-regalar]");
+    ok(await canjear(page, "Tarjeta de estrella").count() === 0, "una tarjeta de regalo no debería tener botón de Canjear para uno mismo");
+    await btn.click();
+    const dialogo = page.locator("dialog[open]");
+    await dialogo.waitFor({ timeout: 5000 });
+    const opciones = await dialogo.locator("select").first().locator("option").allTextContents();
+    ok(opciones.join("|") === "Beto Rojas|Carla Mora", "la lista de compañeros debería traer solo a los otros alumnos: " + JSON.stringify(opciones));
+    const mensajes = await dialogo.locator("select").nth(1).locator("option").allTextContents();
+    ok(mensajes.join("|") === "Sin mensaje|¡Felicidades!|Gracias por ayudarme.", "los mensajes de regalo no son los de la lista: " + JSON.stringify(mensajes));
+    await dialogo.locator("select").first().selectOption("u-carla");
+    await dialogo.locator("select").nth(1).selectOption("felicidades");
+    await dialogo.locator('button:has-text("Regalar (10 puntos)")').click();
+    await page.waitForFunction(() => document.querySelector("#tienda-puntos [data-puntos-total]").textContent === "💎 90 puntos", null, { timeout: 5000 }).catch(() => {});
+    const llamada = await page.evaluate(() => window.__llamadas.find((l) => l.rpc === "regalar_premio"));
+    ok(llamada && llamada.args.p_para === "u-carla" && llamada.args.p_mensaje === "felicidades" && llamada.args.p_premio_id === "p-estrella",
+      "regalar no mandó regalar_premio con el compañero y el mensaje: " + JSON.stringify(llamada));
+    ok((await tarjeta(page, "Tarjeta de estrella").textContent()).includes("Le regalaste Tarjeta de estrella a Carla Mora"), "no confirma a quién se regaló");
+    ok(errores.join(" | ") === "", "hubo errores en consola: " + errores.join(" | "));
+    await ctx.close();
+  }
+
+  // ---------- 8 bis) un cosmético también se puede regalar ----------
+  {
+    const { page, ctx } = await abrir(navegador, 100, []);
+    ok(await tarjeta(page, "Gorro de copa").locator("[data-regalar]").isVisible(), "un cosmético debería tener «Regalar…» además de Canjear");
+    ok(await tarjeta(page, "Adelanta una lección").locator("[data-regalar]").count() === 0, "el contenido (cursos, materiales) no se regala");
+    await ctx.close();
+  }
+
+  // ---------- 9) una broma: el globo exige una frase de la lista ----------
+  {
+    const { page, ctx } = await abrir(navegador, 100, []);
+    await tarjeta(page, "Globo de reto").locator("[data-regalar]").click();
+    const dialogo = page.locator("dialog[open]");
+    await dialogo.waitFor({ timeout: 5000 });
+    const frases = await dialogo.locator("select").nth(1).locator("option").allTextContents();
+    ok(frases.join("|") === "Cuac. Eso es todo.|Te estoy vigilando… desde la casilla e4.", "las frases del globo no son las de broma: " + JSON.stringify(frases));
+    await dialogo.locator("select").first().selectOption("u-beto");
+    await dialogo.locator("select").nth(1).selectOption("cuac");
+    await dialogo.locator('button:has-text("Mandar la broma (20 puntos)")').click();
+    await page.waitForFunction(() => window.__llamadas.some((l) => l.rpc === "mandar_broma"), null, { timeout: 5000 }).catch(() => {});
+    const llamada = await page.evaluate(() => window.__llamadas.find((l) => l.rpc === "mandar_broma"));
+    ok(llamada && llamada.args.p_para === "u-beto" && llamada.args.p_frase === "cuac", "mandar la broma no llevó compañero y frase: " + JSON.stringify(llamada));
+    await page.waitForFunction(() => document.querySelector("#tienda-puntos").textContent.includes("Le mandaste la broma a Beto Rojas"), null, { timeout: 5000 }).catch(() => {});
+    ok((await page.textContent("#tienda-puntos")).includes("Le mandaste la broma a Beto Rojas"), "no confirma a quién se le mandó la broma");
+
+    // El confeti no lleva frase: el formulario solo pregunta a quién.
+    await tarjeta(page, "Lluvia de confeti").locator("[data-regalar]").click();
+    await page.locator("dialog[open]").waitFor({ timeout: 5000 });
+    ok(await page.locator("dialog[open] select").count() === 1, "el confeti no debería pedir frase");
+    await ctx.close();
+  }
+
+  // ---------- 10) un regalo recibido dice de quién y su mensaje ----------
+  {
+    const regalo = { id: "c-r", premio_id: "p-estrella", clave: "tarjeta_estrella", nombre: "Tarjeta de estrella", emoji: "🌟",
+      categoria: "regalo", tipo_efecto: "tarjeta", parametros: {}, activo: true, vigente_hasta: null, created_at: new Date().toISOString(),
+      regalo_de: "u-carla", regalo_de_nombre: "Carla Mora", mensaje: "¡Felicidades!" };
+    const { page, ctx } = await abrir(navegador, 10, [regalo]);
+    await page.waitForSelector("[data-regalo-de]", { timeout: 5000 });
+    ok((await page.textContent("[data-regalo-de]")) === "🎁 Regalo de Carla Mora: «¡Felicidades!»", "un regalo recibido no dice de quién ni su mensaje");
+    await ctx.close();
+  }
+
+  // ---------- 11) las bromas: no recibirlas y bloquear a alguien ----------
+  {
+    const bromas = [{ id: "b-9", de_id: "u-beto", para_id: YO, tipo: "patito", created_at: new Date().toISOString() }];
+    const { page, ctx } = await abrir(navegador, 10, [], true, { bromas });
+    await page.waitForSelector('[data-broma-recibida="b-9"]', { timeout: 5000 });
+    ok((await page.textContent('[data-broma-recibida="b-9"]')).includes("Beto Rojas te mandó un patito"), "la broma recibida no dice quién la mandó");
+    ok(await page.isChecked("#bromas-recibir"), "por omisión se reciben bromas");
+    await page.uncheck("#bromas-recibir");
+    await page.waitForFunction(() => window.__llamadas.some((l) => l.rpc === "bromas_configurar"), null, { timeout: 5000 }).catch(() => {});
+    ok(await page.evaluate(() => window.__llamadas.some((l) => l.rpc === "bromas_configurar" && l.args.p_no_recibir === true)),
+      "desmarcar no guardó «no recibir bromas»");
+    await page.click('[data-broma-recibida="b-9"] button');
+    await page.waitForFunction(() => window.__llamadas.some((l) => l.rpc === "bromas_bloquear"), null, { timeout: 5000 }).catch(() => {});
+    ok(await page.evaluate(() => window.__llamadas.some((l) => l.rpc === "bromas_bloquear" && l.args.p_persona === "u-beto" && l.args.p_bloquear === true)),
+      "«No más bromas de…» no bloqueó a quien la mandó");
     await ctx.close();
   }
 
