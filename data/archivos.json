@@ -7787,7 +7787,7 @@
         "ruta": "cursos/recursos/formacion-ajedrez/01-encuadre-y-reglas-basicas-material.pdf",
         "titulo": "Material de estudio",
         "tipo": "material",
-        "kb": 14
+        "kb": 15
        },
        {
         "ruta": "cursos/recursos/formacion-ajedrez/01-encuadre-y-reglas-basicas-ejercicios.pdf",
@@ -13022,7 +13022,7 @@
         "ruta": "cursos/recursos/formacion-ajedrez/01-encuadre-y-reglas-basicas.pptx",
         "titulo": "Presentación",
         "tipo": "presentacion",
-        "kb": 79
+        "kb": 80
        }
       ]
      },
