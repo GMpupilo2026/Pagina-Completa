@@ -32,7 +32,7 @@ const VIGILADAS = [
   "academias", "academia_miembros", "academia_ia", "preparacion_rivales_profesores",
   // A qué profesor se le asigna un grupo de un proyecto (y con eso, sus planes).
   "proyecto_grupos",
-  "acceso_config", "paquetes_acceso", "paquete_alumnos", "pruebas_gratis",
+  "acceso_config", "paquetes_acceso", "paquete_alumnos", "pruebas_gratis", "cuentas_temporales",
   "planes_cobro", "suscripciones", "cobros", "pagos", "recibos",
   // No reparte permisos: es un dato de salud, y quién lo marcó queda anotado.
   "vision_personas",

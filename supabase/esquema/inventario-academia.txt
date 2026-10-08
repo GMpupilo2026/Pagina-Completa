@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261008080312
+# al-dia-con: 20261008142118
 tabla  Ejercicios Lichess  rls=true
 tabla  academia_ia  rls=true
 tabla  academia_miembros  rls=true
@@ -36,6 +36,7 @@ tabla  coordinador_funciones_quitadas  rls=true
 tabla  coordinador_profesores  rls=true
 tabla  course_unlocks  rls=true
 tabla  cuaderno  rls=true
+tabla  cuentas_temporales  rls=true
 tabla  cuestionario_intentos  rls=true
 tabla  cuestionarios  rls=true
 tabla  curso_adjuntos  rls=true
@@ -392,6 +393,11 @@ columna  cuaderno.nota  text
 columna  cuaderno.origen  text
 columna  cuaderno.titulo  text
 columna  cuaderno.updated_at  timestamp with time zone
+columna  cuentas_temporales.detalle  text
+columna  cuentas_temporales.fijada_en  timestamp with time zone
+columna  cuentas_temporales.fijada_por  uuid
+columna  cuentas_temporales.persona_id  uuid
+columna  cuentas_temporales.vence  timestamp with time zone
 columna  cuestionario_intentos.aciertos  integer
 columna  cuestionario_intentos.alumno_id  uuid
 columna  cuestionario_intentos.created_at  timestamp with time zone
@@ -1431,6 +1437,7 @@ funcion  correos_de_supervision(p_alumno uuid)  definer  anon=false  auth=false
 funcion  crear_examen(p_alumnos uuid[], p_titulo text, p_instrucciones text, p_minutos integer, p_vence timestamp with time zone, p_items jsonb, p_salidas_permitidas integer, p_disponible_desde timestamp with time zone)  invoker  anon=true  auth=true
 funcion  crear_relevo(p_blancas uuid[], p_negras uuid[])  definer  anon=false  auth=true
 funcion  crear_tarea(p_alumnos uuid[], p_titulo text, p_instrucciones text, p_vence timestamp with time zone, p_items jsonb, p_disponible_desde timestamp with time zone)  invoker  anon=true  auth=true
+funcion  cuentas_temporales_fijar(p_personas uuid[], p_vence timestamp with time zone, p_detalle text)  definer  anon=false  auth=true
 funcion  cuestionario_de_tarea(p_item uuid)  definer  anon=false  auth=true
 funcion  dejar_volver_a_la_clase(p_clase uuid, p_alumno uuid)  definer  anon=false  auth=true
 funcion  detalle_informe_mensual(p_informe uuid)  definer  anon=false  auth=true
@@ -1849,6 +1856,7 @@ politica  cuaderno  cuaderno_select_profesor  SELECT
 politica  cuaderno  cuaderno_select_propio  SELECT
 politica  cuaderno  cuaderno_select_supervisor  SELECT
 politica  cuaderno  cuaderno_update_propio  UPDATE
+politica  cuentas_temporales  cuentas_temporales_ver  SELECT
 politica  cuestionario_intentos  cuestionario_intentos_select  SELECT
 politica  cuestionarios  cuestionarios_delete  DELETE
 politica  cuestionarios  cuestionarios_insert  INSERT
@@ -2199,6 +2207,7 @@ trigger  coordinador_funciones_quitadas  auditar
 trigger  coordinador_profesores  auditar
 trigger  cuaderno  cuaderno_al_cambiar
 trigger  cuaderno  cuaderno_tope
+trigger  cuentas_temporales  auditar
 trigger  desafios  desafios_avisa_push
 trigger  diagnosticos_publicos  diagnosticos_publicos_avisa
 trigger  diagnosticos_publicos  diagnosticos_publicos_supervisor
@@ -2363,6 +2372,8 @@ indice  course_unlocks  course_unlocks_student_id_curso_key
 indice  cuaderno  cuaderno_alumno_fecha
 indice  cuaderno  cuaderno_alumno_fen
 indice  cuaderno  cuaderno_pkey
+indice  cuentas_temporales  cuentas_temporales_fijada_por_idx
+indice  cuentas_temporales  cuentas_temporales_pkey
 indice  cuestionario_intentos  cuestionario_intentos_alumno_id_fk
 indice  cuestionario_intentos  cuestionario_intentos_cuestionario_id_fk
 indice  cuestionario_intentos  cuestionario_intentos_item_idx
@@ -2952,6 +2963,7 @@ grant  cuaderno  authenticated  SELECT
 grant  cuaderno  authenticated  TRIGGER
 grant  cuaderno  authenticated  TRUNCATE
 grant  cuaderno  authenticated  UPDATE
+grant  cuentas_temporales  authenticated  SELECT
 grant  cuestionario_intentos  authenticated  SELECT
 grant  cuestionarios  authenticated  DELETE
 grant  cuestionarios  authenticated  INSERT
