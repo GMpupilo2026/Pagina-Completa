@@ -1,6 +1,6 @@
 /* El segundo cuento de Peonita: «Peonita, Tizón y los trucos del bosque», de
  * Oscar Angulo Cubero. Los primeros trucos de la táctica (la pieza sin cuidar,
- * la horquilla, el ataque doble, la clavada, la enfilada, el mate del pasillo,
+ * el tenedor, el ataque doble, la clavada, la enfilada, el mate del pasillo,
  * el ataque a la descubierta y mirar qué quiere el otro), contados con la
  * historia de Don Pillo, un mapache que se lleva las piezas que nadie cuida.
  *
@@ -65,7 +65,7 @@ const PRESENTACION = {
 
 const NOTA_ADULTOS = [
   "Este segundo libro es para quienes ya saben mover las piezas y conocen el jaque y el jaque mate (lo que enseña «Peonita y el reino de las 64 casillas»). Sigue pensado para leer acompañado, un capítulo por vez, con un tablero de verdad sobre la mesa.",
-  "Cada capítulo presenta un truco: la pieza sin cuidar, la horquilla del caballo, el ataque doble de la dama, la horquilla del peón, la clavada, la enfilada, el mate del pasillo y el ataque a la descubierta. El capítulo 9 enseña lo más importante de todo: antes de mover, mirar qué quiere hacer el otro. El 10 repasa todo.",
+  "Cada capítulo presenta un truco: la pieza sin cuidar, el tenedor del caballo, el ataque doble de la dama, el tenedor del peón, la clavada, la enfilada, el mate del pasillo y el ataque a la descubierta. El capítulo 9 enseña lo más importante de todo: antes de mover, mirar qué quiere hacer el otro. El 10 repasa todo.",
   "En «¡A jugar!», cada respuesta es la única jugada que hace el truco. Conviene armar la posición en el tablero y dejar que la niña o el niño pruebe con las piezas: el truco se entiende mucho mejor cuando se ve qué pasa después.",
   "Si se equivoca, no le digan la respuesta enseguida: pregúntenle qué piezas ataca su jugada. Encontrar el truco solo, aunque tarde, enseña más que leerlo.",
 ];
@@ -115,7 +115,7 @@ const CAPITULOS = [
 
   {
     n: 2,
-    titulo: "La horquilla de Galope",
+    titulo: "Los tenedores de Galope",
     escena: {
       id: "horquilla", fondo: "dia",
       alt: "Galope, el caballo blanco, salta hacia el centro. De él salen dos flechas: una hacia el rey negro y otra hacia la torre negra.",
@@ -125,25 +125,25 @@ const CAPITULOS = [
     },
     cuento: [
       "Al día siguiente, Galope reunió a todos junto al río.",
-      "—Si queremos ganarle a Don Pillo, tenemos que aprender sus trucos —relinchó—. Y el primero es mío: la horquilla.",
-      "—¿Una horquilla? ¿Como la de comer? —preguntó Peonita.",
+      "—Si queremos ganarle a Don Pillo, tenemos que aprender sus trucos —relinchó—. Y el primero es mío: el tenedor.",
+      "—¿Un tenedor? ¿Como el de comer? —preguntó Peonita.",
       "—¡Exacto! Un tenedor tiene varias puntas y pincha dos pedazos de comida a la vez. Yo hago lo mismo: con un solo salto ataco dos piezas al mismo tiempo.",
       "Galope saltó al centro del tablero, justo a una casilla desde donde atacaba al rey negro y a la torre negra.",
       "—¡Jaque! —dijo—. El rey tiene que escaparse… y la torre se queda sola. ¡Tacatán, me la como!",
       "—Por eso hay que tener cuidado con los caballos —dijo Don Lento—. Como saltan en L, sus ataques se ven poco. Antes de cada jugada… busquen adónde puede saltar el caballo del otro.",
-      "Esa noche, Don Pillo intentó llevarse otra pieza, pero Galope lo estaba esperando con una horquilla preparada. El mapache salió corriendo con las manos vacías.",
+      "Esa noche, Don Pillo intentó llevarse otra pieza, pero Galope lo estaba esperando con un tenedor preparado. El mapache salió corriendo con las manos vacías.",
     ],
     aprendi: [
-      "Una horquilla es un ataque a dos piezas al mismo tiempo.",
-      "El caballo es el rey de las horquillas: con un salto ataca a dos.",
+      "Un tenedor es un ataque a dos piezas al mismo tiempo.",
+      "El caballo es el rey de los tenedores: con un salto ataca a dos.",
       "Si una de las piezas atacadas es el rey, el otro tiene que salvarlo y pierde la otra.",
     ],
     muestras: [
-      { fen: "r3k3/2N5/8/8/8/8/8/4K3 b - - 1 1", desde: { fen: "r3k3/8/8/3N4/8/8/8/4K3 w - - 0 1", jugada: "Nc7+" }, flechas: [["c7", "e8"], ["c7", "a8"]], pie: "Galope saltó a c7: da jaque al rey y ataca a la torre. ¡Una horquilla!" },
+      { fen: "r3k3/2N5/8/8/8/8/8/4K3 b - - 1 1", desde: { fen: "r3k3/8/8/3N4/8/8/8/4K3 w - - 0 1", jugada: "Nc7+" }, flechas: [["c7", "e8"], ["c7", "a8"]], pie: "Galope saltó a c7: da jaque al rey y ataca a la torre. ¡Un tenedor!" },
     ],
     ejercicios: [
       { tipo: "gana", fen: "2q3k1/5ppp/8/5N2/8/8/5PPP/6K1 w - - 0 1", minimo: 9, respuesta: "Ce7+", pregunta: "Juegan las blancas. ¿Adónde salta Galope para atacar a dos piezas?", explica: " Desde e7, Galope da jaque al rey y ataca a la dama. El rey se escapa y Galope se come a la dama." },
-      { tipo: "gana", fen: "8/5k2/8/1r6/4N3/8/8/4K3 w - - 0 1", minimo: 5, respuesta: "Cd6+", pregunta: "Juegan las blancas. Busca la horquilla.", explica: " Desde d6, Galope ataca al rey de f7 y a la torre de b5." },
+      { tipo: "gana", fen: "8/5k2/8/1r6/4N3/8/8/4K3 w - - 0 1", minimo: 5, respuesta: "Cd6+", pregunta: "Juegan las blancas. Busca el tenedor.", explica: " Desde d6, Galope ataca al rey de f7 y a la torre de b5." },
     ],
   },
 
@@ -162,7 +162,7 @@ const CAPITULOS = [
       "—¡Claro! —dijo Tizón—. Tú caminas para todos lados.",
       "—Por eso soy la mejor para los ataques dobles. Miren: si me pongo donde le doy jaque al rey y, por otro camino, ataco a una pieza sin cuidar… el rey tiene que salvarse primero, y la pieza se queda sola.",
       "La dama se movió y, con un solo paso, dio jaque al rey negro por una diagonal y atacó a un alfil por la fila.",
-      "—¡Es como una horquilla, pero de dama! —gritó Peonita.",
+      "—¡Es como un tenedor, pero de dama! —gritó Peonita.",
       "—Así es —sonrió la Dama Estrella—. Y el jaque es lo mejor: obliga al otro a contestar. Cuando busquen un ataque doble, empiecen por los jaques.",
       "Don Lento asintió desde su rama: —Los jaques… son jugadas que obligan. Revísenlos siempre primero.",
     ],
@@ -192,25 +192,25 @@ const CAPITULOS = [
     },
     cuento: [
       "Peonita estaba un poco triste.",
-      "—Galope hace horquillas, la Dama Estrella hace ataques dobles… y yo soy solo un peón —suspiró.",
+      "—Galope hace tenedores, la Dama Estrella hace ataques dobles… y yo soy solo un peón —suspiró.",
       "Don Lento bajó un poquito de su rama.",
       "—Peonita… ¿cómo come un peón?",
       "—En diagonal, hacia adelante: una casilla a la izquierda o una a la derecha.",
       "—Entonces… un peón ataca dos casillas a la vez. Si tú avanzas y quedas justo en medio de dos piezas del otro…",
       "Peonita abrió los ojos muy grandes. Avanzó una casilla y quedó entre los dos caballos de Tizón: ¡los atacaba a los dos! Tizón solo pudo salvar a uno.",
-      "—¡Una horquilla de peón! —celebró Tizón, aunque había perdido el caballo—. Y lo mejor es que un peón vale poco: aunque te coman después, ya ganaste.",
+      "—¡Un tenedor de peón! —celebró Tizón, aunque había perdido el caballo—. Y lo mejor es que un peón vale poco: aunque te coman después, ya ganaste.",
       "Desde ese día, Peonita no volvió a sentirse pequeña. En el ajedrez, hasta el peón más chiquito puede hacer el truco más grande.",
     ],
     aprendi: [
       "El peón ataca las dos casillas de adelante en diagonal.",
       "Si avanza y queda entre dos piezas, ¡las ataca a las dos!",
-      "Vale poco, así que aunque se lo coman, la horquilla de peón casi siempre gana.",
+      "Vale poco, así que aunque se lo coman, el tenedor de peón casi siempre gana.",
     ],
     muestras: [
       { fen: "6k1/5ppp/2n1n3/3P4/8/8/6PP/6K1 b - - 0 1", desde: { fen: "6k1/5ppp/2n1n3/8/3P4/8/6PP/6K1 w - - 0 1", jugada: "d5" }, flechas: [["d5", "c6"], ["d5", "e6"]], pie: "El peón avanzó a d5 y ataca a los dos caballos. Uno se va a escapar… y el otro, se lo come." },
     ],
     ejercicios: [
-      { tipo: "gana", fen: "6k1/5ppp/8/2b1n3/8/2PP4/5PPP/6K1 w - - 0 1", minimo: 2, respuesta: "d4", pregunta: "Juegan las blancas. ¿Qué peón hace la horquilla?", explica: " El peón avanza a d4 y ataca al alfil y al caballo. Si el alfil se lo come, el peón de c3 se come al alfil, y el caballo sigue atacado." },
+      { tipo: "gana", fen: "6k1/5ppp/8/2b1n3/8/2PP4/5PPP/6K1 w - - 0 1", minimo: 2, respuesta: "d4", pregunta: "Juegan las blancas. ¿Qué peón hace el tenedor?", explica: " El peón avanza a d4 y ataca al alfil y al caballo. Si el alfil se lo come, el peón de c3 se come al alfil, y el caballo sigue atacado." },
       { tipo: "gana", fen: "6k1/5ppp/8/3n1n2/8/8/4PPPP/6K1 w - - 0 1", minimo: 2, respuesta: "e4", pregunta: "Juegan las blancas. ¿Qué peón ataca a los dos caballos? Pista: acuérdate de su primera salida.", explica: " En su primera salida, el peón avanza dos casillas, hasta e4, y ataca a los dos caballos." },
     ],
   },
@@ -225,7 +225,7 @@ const CAPITULOS = [
         D.flecha(170, 230, 470, 90, "#9c36b5"),
     },
     cuento: [
-      "La cuarta noche apareció un viejo amigo: Don Saleras, el alfil, con su gorro de punta.",
+      "Al cuarto día, muy temprano, apareció un viejo amigo: Don Saleras, el alfil, con su gorro de punta.",
       "—Les voy a enseñar mi truco favorito —dijo—. Se llama la clavada.",
       "Don Saleras se puso en una diagonal donde había un caballo negro, y detrás del caballo, en la misma línea, el rey negro.",
       "—Ahora el caballo no se puede mover —explicó—. Si se quita, el rey queda en jaque, y eso no está permitido. Es como si el caballo estuviera pegado al tablero con goma.",
@@ -284,7 +284,7 @@ const CAPITULOS = [
     n: 7,
     titulo: "Nunca dejes al rey sin aire: el mate del pasillo",
     escena: {
-      id: "pasillo", fondo: "noche",
+      id: "pasillo", fondo: "dia",
       alt: "El Rey Sereno, detrás de tres peones que no lo dejan salir, mira asustado a una torre negra que le apunta desde el otro lado. Arriba del rey brilla una ventanita.",
       contenido: D.pieza("r", "b", 300, 270, 0.85, { cara: "sorpresa" }) +
         [0, 1, 2].map((i) => D.pieza("p", "b", 210 + i * 90, 300, 0.5, { cara: "pensando" })).join("") +
@@ -353,7 +353,7 @@ const CAPITULOS = [
     n: 9,
     titulo: "Revisa qué quiere tu amigo",
     escena: {
-      id: "revisa", fondo: "dia",
+      id: "revisa", fondo: "noche",
       alt: "Peonita mira con su lupa a Don Pillo, el mapache, que sonríe con picardía detrás de un tablero. Alrededor de Peonita hay signos de pregunta.",
       contenido: D.mapache(440, 292, 0.85) + D.pieza("p", "b", 170, 292, 0.95, { mono: true, cara: "pensando" }) + D.lupa(270, 190, 1, -50) +
         [[90, 90], [235, 70]].map(([x, y]) => `<text x="${x}" y="${y}" font-family="Quicksand, sans-serif" font-weight="700" font-size="34" fill="#1971c2">?</text>`).join(""),
@@ -364,7 +364,7 @@ const CAPITULOS = [
       "Peonita tragó saliva. Esa noche no podía dormir, y fue a buscar a Don Lento.",
       "—Don Pillo sabe muchos trucos —le dijo—. ¿Cómo hago para que no me los haga a mí?",
       "Don Lento la miró con calma, muuuy despacio, y le dijo lo más importante de todo:",
-      "—Antes de cada jugada… mira la última jugada del otro y pregúntate: ¿qué quiere hacer? ¿Qué pieza mía ataca? ¿Me prepara una horquilla, una clavada, un mate del pasillo? Si descubres su truco a tiempo… lo puedes evitar.",
+      "—Antes de cada jugada… mira la última jugada del otro y pregúntate: ¿qué quiere hacer? ¿Qué pieza mía ataca? ¿Me prepara un tenedor, una clavada, un mate del pasillo? Si descubres su truco a tiempo… lo puedes evitar.",
       "Peonita practicó toda la noche con Tizón. Cada vez que él movía, ella se detenía, miraba con su lupa y preguntaba: «¿Qué quieres hacer?». ¡Y casi siempre lo descubría!",
     ],
     aprendi: [
@@ -376,7 +376,7 @@ const CAPITULOS = [
       { fen: "3r2k1/5ppp/8/8/8/1R6/5PPP/6K1 w - - 0 1", flechas: [["d8", "d1"]], pie: "Antes de jugar, Peonita revisa: la torre de Tizón quiere ir a d1 y dar mate del pasillo." },
     ],
     ejercicios: [
-      { tipo: "amenaza", fen: "6k1/5ppp/8/8/1n6/8/5PPP/R3K3 w - - 0 1", minimo: 4, respuesta: "Cc2+", explica: " El caballo negro quiere saltar a c2: jaque al rey y ataque a la torre, ¡una horquilla! Peonita tiene que mover la torre o el rey antes." },
+      { tipo: "amenaza", fen: "6k1/5ppp/8/8/1n6/8/5PPP/R3K3 w - - 0 1", minimo: 4, respuesta: "Cc2+", explica: " El caballo negro quiere saltar a c2: jaque al rey y ataque a la torre, ¡un tenedor! Peonita tiene que mover la torre o el rey antes." },
       { tipo: "defensa", fen: "6k1/5ppp/8/8/1n6/8/5PPP/R3K3 w - - 0 1", minimo: 3, jugadas: ["Tb1", "Tc1", "Td1", "Rd2"], pregunta: "En la misma posición, ¿qué jugada harías para que Tizón no pueda hacer su truco?", respuesta: "Por ejemplo, mover la torre a b1, c1 o d1, o el rey a d2: así el caballo ya no puede atacar a los dos a la vez." },
     ],
   },
@@ -392,9 +392,9 @@ const CAPITULOS = [
     },
     cuento: [
       "El día del torneo, todo el bosque vino a mirar. Los tucanes se sentaron en las ramas, las ardillas en las piedras y hasta un perezoso muy lento llegó, justo a tiempo, a su rama favorita.",
-      "Peonita y Tizón jugaron contra Don Pillo, uno por uno. El mapache era muy astuto: preparaba horquillas, clavadas y mates del pasillo. Pero antes de cada jugada, Peonita se preguntaba: «¿Qué quiere hacer?», y descubría el truco a tiempo.",
+      "Peonita y Tizón jugaron contra Don Pillo, uno por uno. El mapache era muy astuto: preparaba tenedores, clavadas y mates del pasillo. Pero antes de cada jugada, Peonita se preguntaba: «¿Qué quiere hacer?», y descubría el truco a tiempo.",
       "En la última partida, Don Pillo se descuidó. Peonita vio con ojo de águila que el rey y la dama del mapache estaban donde Galope los podía atacar a los dos a la vez.",
-      "—¡Jaque! —dijo, con una horquilla perfecta.",
+      "—¡Jaque! —dijo, con un tenedor perfecto.",
       "Don Pillo se rascó la cabeza, miró el tablero un buen rato… y se rió.",
       "—¡Me ganaste con mi propio truco! —dijo, y le dio la mano—. Buena partida.",
       "Esa misma tarde, el mapache devolvió todas las piezas que se había llevado: Doña Muralla, el caballo y hasta un peón que nadie había echado de menos.",
@@ -402,13 +402,13 @@ const CAPITULOS = [
       "Y así, el mapache más travieso del bosque se volvió el amigo más nuevo de Peonita y Tizón.",
     ],
     aprendi: [
-      "Los trucos de este libro: pieza sin cuidar, horquilla, ataque doble, clavada, enfilada, mate del pasillo y ataque a la descubierta.",
+      "Los trucos de este libro: pieza sin cuidar, tenedor, ataque doble, clavada, enfilada, mate del pasillo y ataque a la descubierta.",
       "Antes de cada jugada, mira qué quiere hacer el otro.",
       "Los trucos se ganan jugando limpio, ¡y se aprenden jugando mucho!",
     ],
     muestras: [],
     ejercicios: [
-      { tipo: "gana", fen: "3r3k/6pp/8/6N1/8/8/5PPP/6K1 w - - 0 1", minimo: 5, respuesta: "Cf7+", pregunta: "Juegan las blancas. ¿Qué truco hay? ¿Qué jugada lo hace?", explica: " Horquilla: Galope salta a f7, da jaque al rey de h8 y ataca a la torre de d8." },
+      { tipo: "gana", fen: "3r3k/6pp/8/6N1/8/8/5PPP/6K1 w - - 0 1", minimo: 5, respuesta: "Cf7+", pregunta: "Juegan las blancas. ¿Qué truco hay? ¿Qué jugada lo hace?", explica: " Tenedor: Galope salta a f7, da jaque al rey de h8 y ataca a la torre de d8." },
       { tipo: "gana", fen: "4k3/8/4q3/8/8/8/5PPP/R4K2 w - - 0 1", minimo: 4, respuesta: "Te1", pregunta: "Juegan las blancas. ¿Qué truco hay? ¿Qué jugada lo hace?", explica: " Clavada: la torre va a e1 y la dama negra queda clavada delante de su rey. Si se come a la torre, el rey blanco se come a la dama." },
       { tipo: "gana", fen: "1r5k/7p/6p1/8/8/8/6PP/4Q1K1 w - - 0 1", minimo: 5, respuesta: "De5+", pregunta: "Juegan las blancas. ¿Qué truco hay? ¿Qué jugada lo hace?", explica: " Ataque doble: la dama da jaque desde e5 y ataca a la torre de b8." },
       { tipo: "mate", fen: "6k1/5ppp/8/8/8/8/5PPP/4Q1K1 w - - 0 1", respuesta: "De8" },
@@ -438,11 +438,11 @@ const DIPLOMA = {
   sub: "Peonita, Tizón y Don Pillo reconocen a",
   firma: "Peonita, Tizón y Don Pillo",
   firmaMano: "Peonita ♥ Tizón ♥ Don Pillo",
-  texto: ["porque aprendió a encontrar horquillas, clavadas y enfiladas,", "y a mirar siempre qué quiere hacer su amigo."],
+  texto: ["porque aprendió a encontrar tenedores, clavadas y enfiladas,", "y a mirar siempre qué quiere hacer su amigo."],
 };
 
 const FINAL = [
-  "¡Lo lograste! Ahora conoces los primeros trucos del ajedrez: la pieza sin cuidar, la horquilla, el ataque doble, la horquilla de peón, la clavada, la enfilada, el mate del pasillo y el ataque a la descubierta.",
+  "¡Lo lograste! Ahora conoces los primeros trucos del ajedrez: la pieza sin cuidar, el tenedor, el ataque doble, el tenedor de peón, la clavada, la enfilada, el mate del pasillo y el ataque a la descubierta.",
   "Pero el truco más importante es el de Don Lento: antes de cada jugada, mira qué quiere hacer el otro. Juega mucho, busca los trucos con tu lupa de detective y, sobre todo, ¡diviértete como Peonita, Tizón y su nuevo amigo, Don Pillo!",
 ];
 
