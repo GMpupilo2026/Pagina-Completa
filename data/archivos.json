@@ -183,7 +183,7 @@
     "ruta": "material/peonita-rey/peonita-rey.pdf",
     "titulo": "Peonita y el rey escondido — el cuento ilustrado",
     "tipo": "otro",
-    "kb": 1197,
+    "kb": 1212,
     "libro": "Peonita y el rey escondido"
    },
    {
@@ -197,7 +197,7 @@
     "ruta": "material/peonita/peonita.pdf",
     "titulo": "Peonita y el reino de las 64 casillas — el cuento ilustrado",
     "tipo": "otro",
-    "kb": 1589,
+    "kb": 1559,
     "libro": "Peonita y el reino de las 64 casillas"
    },
    {
@@ -7787,7 +7787,7 @@
         "ruta": "cursos/recursos/formacion-ajedrez/01-encuadre-y-reglas-basicas-material.pdf",
         "titulo": "Material de estudio",
         "tipo": "material",
-        "kb": 14
+        "kb": 15
        },
        {
         "ruta": "cursos/recursos/formacion-ajedrez/01-encuadre-y-reglas-basicas-ejercicios.pdf",
@@ -13022,7 +13022,7 @@
         "ruta": "cursos/recursos/formacion-ajedrez/01-encuadre-y-reglas-basicas.pptx",
         "titulo": "Presentación",
         "tipo": "presentacion",
-        "kb": 79
+        "kb": 80
        }
       ]
      },

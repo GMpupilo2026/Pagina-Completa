@@ -643,7 +643,11 @@ async function pruebaCupoInvitaciones(browser) {
   // Las usó todas.
   {
     const sinCupo = Object.assign({}, PROFE, { invitaciones_max: 5, invitaciones_usadas: 5 });
-    const { page, ctx, errores } = await panel(browser, [sinCupo], "u-profe");
+    // Con el recorrido del profesor nuevo ya visto: se abre solo a los 700 ms
+    // de pintar el panel y, con el CI cargado, caía en medio de esta prueba
+    // (el PR #782 falló dos veces así). El recorrido tiene su prueba aparte.
+    const { page, ctx, errores } = await panel(browser, [sinCupo], "u-profe",
+      null, { local: { "recorrido_profe_v1:u-profe": "1" } });
     await page.evaluate(contestarAvisos);
     const f = await page.evaluate(ficha);
     igual("sin invitaciones, la ficha se apaga: sin enlace", [f.apagada, f.enlace], [true, null]);
@@ -662,8 +666,7 @@ async function pruebaCupoInvitaciones(browser) {
     igual("y con «Ahora no» se queda en el panel", new URL(page.url()).pathname, "/clases.html");
     // Con Enter, lo mismo, y «Ver los planes» lleva a los paquetes.
     await page.evaluate(() => { window.__cancelarAvisos = false; window.__avisos = []; });
-    await page.evaluate(() => [...document.querySelectorAll("#tile-grid [aria-disabled=true]")]
-      .find((el) => /Crear cuenta de alumno/.test(el.textContent)).focus());
+
     // Se espera a que la dirección CAMBIE ("commit"), no a que precios.html
     // termine de cargar: en el CI, con las cuatro tandas a la vez, la carga
     // entera pasó de los 10 s y la prueba falló sin que nada estuviera roto.
@@ -672,7 +675,10 @@ async function pruebaCupoInvitaciones(browser) {
       // precios.html termine de cargar dependía de lo cargado que estuviera el
       // CI, y en el PR #765 se pasó dos veces de los 10 s.
       page.waitForURL(/precios\.html#t-paquetes/, { timeout: 20000, waitUntil: "commit" }).catch(() => {}),
-      page.keyboard.press("Enter"),
+      // El localizador enfoca la ficha JUSTO antes del Enter (y la vuelve a
+      // buscar si la grilla se repintó): enfocarla aparte dejaba un hueco en
+      // el que el foco se podía ir a otra parte.
+      page.locator("#tile-grid [aria-disabled=true]", { hasText: "Crear cuenta de alumno" }).press("Enter"),
     ]);
     // Si no llegó, lo que hace falta para saber por qué: dónde quedó el foco,
     // qué avisos salieron y qué diálogos siguen abiertos.
@@ -2932,7 +2938,10 @@ async function pruebaProximaDelProfe(browser) {
   await ctx.close();
 
   // A la hora de la clase (empezó hace 10 minutos), con el nombre de su subgrupo.
-  const ahora = enCR(-10 * 60000);
+  // Pasada la medianoche de Costa Rica, «hace 10 minutos» caía en el día de
+  // ayer y la clase ya no era de hoy: la prueba fallaba de 00:00 a 00:10.
+  const desdeMedianoche = (Date.now() - 6 * 3600000) % 86400000;
+  const ahora = enCR(-Math.min(10 * 60000, desdeMedianoche));
   ({ page, ctx, errores } = await panel(browser, [PROFE], "u-profe", {}, {
     horario_clases: [filaHorario({ dia_semana: ahora.dow, hora: ahora.hora, subgrupo_id: "sg-1", modalidad: "en_linea" })],
     rpc: { mis_subgrupos: [{ id: "sg-1", nombre: "Avanzados", cuantos: 4 }] },

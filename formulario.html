@@ -14,6 +14,11 @@
     <link rel="stylesheet" href="css/styles.css">
     <!-- oscuro: inicio --><script>(function(){try{var t=localStorage.getItem('theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.classList.add('dark');}catch(e){}})();</script><!-- oscuro: fin -->
     <script src="js/adaptive-mode.js"></script>
+    <!-- tablero: inicio -->
+    <script src="js/board-color-themes.js"></script>
+    <script src="js/piece-color-themes.js"></script>
+    <script src="js/piece-style-themes.js"></script>
+    <!-- tablero: fin -->
 <!-- fuentes: inicio --><link rel="stylesheet" href="css/fuentes.css"><!-- fuentes: fin --></head>
 <body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
     <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-accent-500 focus:text-brand-900 focus:font-semibold focus:px-4 focus:py-2 focus:rounded-lg">Saltar al contenido principal</a>
@@ -77,6 +82,7 @@
             <p class="text-5xl mb-3">✅</p>
             <h1 class="font-serif text-2xl font-bold text-brand-800 dark:text-white mb-2">¡Inscripción enviada!</h1>
             <p class="text-brand-500 dark:text-brand-300">Ya quedó registrada. Si hace falta algo más, quien organiza te escribe.</p>
+            <p id="listo-nivel" class="hidden mt-3 text-brand-700 dark:text-brand-200 font-semibold"></p>
             <a href="index.html" class="inline-block mt-5 bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg text-sm transition-colors">Conocer Ajedrez Integral</a>
         </div>
 
@@ -127,11 +133,24 @@
             <div class="border-t border-brand-700 pt-6 text-center text-sm text-brand-300"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p><!-- legal: inicio --><p class="mt-2"><a href="privacidad.html" class="underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Política de privacidad</a> <span aria-hidden="true">·</span> <a href="terminos.html" class="underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Términos y condiciones</a></p><!-- legal: fin --></div>
         </div>
     </footer>
+    <!-- tablero-js: inicio -->
+    <script src="js/board-themes.js"></script>
+    <script src="js/chess-piece-svg.js"></script>
+    <script src="js/pieza-preferida.js"></script>
+    <script src="js/coordenadas-tablero.js"></script>
+    <script src="js/coronacion.js"></script>
+    <!-- tablero-js: fin -->
     <script src="js/vendor/supabase.js"></script>
     <script src="js/supabase-client.js"></script>
     <script src="js/legal-version.js"></script>
     <script src="js/adjuntos.js"></script>
     <script src="js/marca-academia.js"></script>
+    <!-- La pregunta «¿Sabe jugar ajedrez?» y los tableros de su prueba. -->
+    <script src="js/vendor/chess.js"></script>
+    <script src="js/blind-notation.js"></script>
+    <script src="js/tablero-accesible.js"></script>
+    <script src="js/tablero-pregunta.js"></script>
+    <script src="js/prueba-nivel-inicial.js"></script>
     <script src="js/main.js"></script>
     <script src="js/formulario.js"></script>
 </body>
