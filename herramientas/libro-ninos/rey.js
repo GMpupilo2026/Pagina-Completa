@@ -24,6 +24,13 @@
  *   - El sol del capítulo 5, a la mitad del libro, es Alessandro: la misma
  *     carita del sol del segundo cuento, ahora con dos dientitos y saludando
  *     con las manos. Es el único sol así de este libro.
+ *
+ * Y tres para Karina, la esposa del autor (los marca `para` en SECRETOS):
+ *   - La dedicatoria es un acróstico: sus seis versos dicen KARINA.
+ *   - En el cielo del capítulo 6, el del beso de la dama, cinco estrellitas
+ *     unidas con líneas tenues forman una K.
+ *   - En el capítulo 7, donde la torre y el rey caminan de la mano, una piedra
+ *     tiene un corazoncito tallado con «K+O», del color de la piedra.
  */
 "use strict";
 const D = require("./dibujos.js");
@@ -40,6 +47,9 @@ const SECRETOS = [
   { tipo: "personaje", nombre: "Sandro" },
   { tipo: "acrostico-soluciones", capitulo: 6, texto: "ALE" },
   { tipo: "sol-gatea" },
+  { tipo: "acrostico-dedicatoria", para: "KARINA" },
+  { tipo: "constelacion", para: "KARINA", capitulo: 6, letra: "K" },
+  { tipo: "grabado", para: "KARINA", texto: "K+O" },
 ];
 
 const TAPA = {
@@ -77,11 +87,17 @@ const NOTA_ADULTOS = [
 ];
 
 const DEDICATORIA = [
-  "Para quien ya sabe mover las piezas",
-  "y ahora quiere ganar la partida.",
-  "Busca despacio, encierra con calma",
-  "y que nunca se te ahogue un rey.",
+  "Kilómetros de casillas te esperan:",
+  "a buscar al rey, paso a pasito,",
+  "rodeándolo despacio, con calma,",
+  "igual que un abrazo que no aprieta,",
+  "nunca dejándolo sin salida,",
+  "atento siempre a no ahogarlo.",
 ];
+
+/* La K del cielo del capítulo 6 (un secreto para Karina). */
+const CONSTELACION_K = `<g data-constelacion="K"><g stroke="#fff3bf" stroke-width="1.2" opacity=".45" fill="none"><path d="M150,32 L150,132 M150,84 L214,34 M150,84 L210,130"/></g>` +
+  [[150, 32], [150, 132], [150, 84], [214, 34], [210, 130]].map(([x, y]) => D.estrella(x, y, 4.5, "#fff3bf")).join("") + "</g>";
 
 /* ---------------------------------------------------------- capítulos */
 const CAPITULOS = [
@@ -90,7 +106,7 @@ const CAPITULOS = [
     titulo: "El rey que no quería jugar",
     escena: {
       id: "carbon", fondo: "dia",
-      alt: "Al pie de un volcán con humito, el Rey Carbón, el rey negro, se aleja con su corona, saludando con la mano. Peonita y Tizón lo miran sorprendidos, y detrás de una piedra se asoma un osito panda chiquito con una mochila.",
+      alt: "Al pie de un volcán con humito, el Rey Carbón, el rey negro, se aleja con su corona, saludando con la mano. Peonita y Tizón lo miran sorprendidos, y a un lado se asoma un osito panda chiquito con una mochila.",
       contenido: D.volcan(470, 250, 1.1) + D.pieza("r", "n", 430, 292, 0.7, { cara: "feliz", espejo: true }) +
         D.pieza("p", "b", 150, 292, 0.85, { mono: true, cara: "sorpresa" }) + D.pieza("p", "n", 255, 292, 0.85, { bufanda: true, cara: "sorpresa" }) +
         D.panda(560, 300, 0.42, { espejo: true }) + D.globo(330, 20, 200, ["¡Atrápenme si pueden!"], [410, 150]),
@@ -198,7 +214,7 @@ const CAPITULOS = [
     titulo: "La caja de la Dama Estrella",
     escena: {
       id: "caja-dama", fondo: "dia",
-      alt: "La Dama Estrella, la dama blanca con su corona, dibuja con su varita un cuadrado brillante en el suelo. Adentro del cuadrado, el Rey Carbón mira para todos lados. Sandro, el osito panda, sostiene su mapa.",
+      alt: "La Dama Estrella, la dama blanca con su corona, dibuja con sus líneas un cuadrado brillante en el suelo. Adentro del cuadrado, el Rey Carbón mira para todos lados. Sandro, el osito panda, sostiene su mapa.",
       contenido: `<rect x="300" y="190" width="150" height="100" rx="6" fill="#fff3bf" stroke="#f59f00" stroke-width="5" stroke-dasharray="14 8"/>` +
         D.pieza("d", "b", 210, 292, 0.85) + D.pieza("r", "n", 375, 285, 0.55, { cara: "sorpresa" }) +
         D.panda(530, 292, 0.5, { espejo: true }) + D.estrella(150, 120, 9) + D.estrella(260, 90, 7),
@@ -269,9 +285,9 @@ const CAPITULOS = [
     titulo: "El beso de la dama",
     escena: {
       id: "beso", fondo: "noche",
-      alt: "De noche, la Dama Estrella se acerca pegadita al Rey Carbón y le da un besito en la mejilla. Detrás de ella, el Rey Sereno, el rey blanco, la cuida. Un corazón flota en el aire.",
+      alt: "De noche, la Dama Estrella se acerca pegadita al Rey Carbón y le da un besito en la mejilla. Detrás de ella, el Rey Sereno, el rey blanco, la cuida. Un corazón flota en el aire. A un lado, Sandro, el osito panda, duerme abrazado a su mapa.",
       contenido: D.pieza("r", "n", 380, 292, 0.75, { cara: "sorpresa", espejo: true }) + D.pieza("d", "b", 290, 292, 0.75) +
-        D.pieza("r", "b", 175, 292, 0.75) + D.corazon(335, 150, 1) + D.estrella(80, 70, 8) + D.estrella(520, 60, 7),
+        D.pieza("r", "b", 175, 292, 0.75) + D.panda(520, 300, 0.38, { cara: "dormida", espejo: true }) + `<text x="548" y="226" font-family="Quicksand, sans-serif" font-weight="700" font-size="16" fill="#fff3bf">z<tspan font-size="12" dy="-8">z</tspan></text>` + D.corazon(335, 150, 1) + D.estrella(80, 70, 8) + D.estrella(430, 50, 7) + CONSTELACION_K,
     },
     cuento: [
       "Esa noche acamparon cerca del cráter. Sandro se quedó dormido abrazado a su mapa, y la Dama Estrella se sentó a pensar.",
@@ -304,7 +320,7 @@ const CAPITULOS = [
       id: "muralla-rey", fondo: "dia",
       alt: "Doña Muralla, la torre blanca, y el Rey Sereno caminan juntos de la mano por el borde del cráter. Sandro, el osito panda, va adelante mirando su mapa.",
       contenido: D.volcan(470, 300, 1.2) + D.pieza("t", "b", 200, 292, 0.75) + D.pieza("r", "b", 300, 292, 0.75, { espejo: true }) +
-        D.panda(90, 292, 0.5) + D.corazon(250, 170, 0.6),
+        D.panda(90, 292, 0.5) + D.corazon(250, 170, 0.6) + D.piedra(385, 300, 0.9, { grabado: "K+O" }),
     },
     cuento: [
       "A la mañana siguiente, Doña Muralla estaba un poco triste.",
@@ -404,8 +420,8 @@ const CAPITULOS = [
 const FINAL_TITULO = "¡Ya sabes atrapar al rey!";
 const ESCENA_FINAL = {
   id: "final3", fondo: "noche",
-  alt: "Bajo la luna, junto al volcán, todos celebran: Peonita, Tizón, el Rey Carbón, la Dama Estrella, Doña Muralla y Sandro, el osito panda, con su mapa. Don Lento sonríe desde su rama.",
-  contenido: D.confeti(13, 50, 600, 320) + D.volcan(520, 300, 0.9) + D.perezoso(80, 40, 0.5) +
+  alt: "Bajo la luna, con el volcán a lo lejos, todos celebran: Peonita, Tizón, el Rey Carbón, la Dama Estrella, Doña Muralla y Sandro, el osito panda, con su mapa. Don Lento sonríe desde su rama.",
+  contenido: D.confeti(13, 50, 600, 320) + D.volcan(540, 255, 0.55) + D.perezoso(80, 40, 0.5) +
     [["r", "n"], ["d", "b"], ["t", "b"]].map(([t, col], i) => D.pieza(t, col, 120 + i * 75, 228, 0.5)).join("") +
     D.pieza("p", "b", 260, 300, 0.8, { mono: true }) + D.pieza("p", "n", 360, 300, 0.8, { bufanda: true, espejo: true }) +
     D.panda(150, 300, 0.45) + D.corazon(310, 205, 1),

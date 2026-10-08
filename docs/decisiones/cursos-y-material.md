@@ -1263,6 +1263,23 @@ con una corona.
   con `sol: "gatea"`). El verificador comprueba que sea el único sol distinto
   del libro y que sea de día.
 
+**Y tres secretos para Karina**, la esposa del autor (pedido suyo; en
+`SECRETOS` llevan `para: "KARINA"` y el verificador los compara con ese
+nombre en lugar de `SECRETO`). Se le mostraron cuatro opciones dibujadas y
+eligió estas; el grabado lo pidió «más disimulado» que un corazón grande con
+letras blancas:
+
+- **La dedicatoria es un acróstico**: sus seis versos («Kilómetros de casillas
+  te esperan…») dicen KARINA y hablan del libro, encerrar al rey sin ahogarlo.
+  Reemplazó la dedicatoria de cuatro versos (`acrostico-dedicatoria`).
+- **Una K en el cielo** del capítulo 6, el del beso de la dama: cinco
+  estrellitas unidas con líneas tenues (`data-constelacion="K"`). El
+  verificador exige que siga ahí y que la escena siga siendo de noche
+  (`constelacion`).
+- **«K+O» tallado en una piedra** del capítulo 7, donde la torre y el rey
+  caminan de la mano: un corazoncito del color de la piedra, tan chiquito como
+  el «ALE» del guarumo del libro 2 (`piedra()` de `dibujos.js`, `grabado`).
+
 **Dos tipos de ejercicio nuevos**, comprobados con chess.js (sin el buscador
 de material, que acá no hace falta: es mate o no es):
 
