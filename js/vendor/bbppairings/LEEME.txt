@@ -1,0 +1,7 @@
+bbpPairings, compilado a WebAssembly para Pareo Integral (ajedrez-integral.com).
+
+Fuente:   https://github.com/BieremaBoyzProgramming/bbpPairings.git
+Commit:   8f9e3c5ffdc4d7a08a33d31c6fb49b4e7acef4d5
+Licencia: Apache 2.0 (Apache-2.0.txt), Copyright 2016-2026 Jeremy Bierema.
+Cambios:  ninguno al código. Pareo Integral usa solo el Sistema Holandés (--dutch).
+Se arma con herramientas/pareo-motor-compilar.sh.

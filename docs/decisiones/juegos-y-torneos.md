@@ -1662,6 +1662,127 @@ ajedrez-4x8`.** Está probado que falla de verdad: quitando la captura al paso
 saltan dos comprobaciones, y montando el tablero sin `columnas: 4`, las dos de
 las flechas.
 
+## Pareo Integral
+
+`pareo.html`: el emparejador público de torneos. Cualquiera arma su torneo sin
+cuenta —jugadores, rondas, resultados, clasificación con desempates, tabla
+cruzada y el TRF para FIDE— con el **Sistema Holandés de FIDE** (C.04.3,
+versión vigente desde el 1 de febrero de 2026) o un todos contra todos con
+las tablas de Berger. Se pidió «que cumpla con todas las reglas de la FIDE
+para ser avalado»: el aval lo tramita el dueño del sitio por su cuenta; esto
+deja el programa listo para pedirlo. No es el torneo de la Academia
+(`torneo.html`, con `js/torneo-engine.js`), que sigue siendo un suizo
+simplificado para grupos de clase y no se tocó.
+
+### El Holandés no se reescribe: es bbpPairings, compilado
+
+- **El motor es bbpPairings** (Jeremy Bierema, Apache 2.0), el que usan
+  programas avalados por FIDE, compilado a WebAssembly con
+  `herramientas/pareo-motor-compilar.sh` (Emscripten; el commit está fijado en
+  el script). Lo que queda en `js/vendor/bbppairings/` no se edita: se vuelve a
+  compilar. Escribir el Holandés a mano era meses de trabajo y un emparejamiento
+  mal hecho no da ningún error: se ve igual de prolijo que uno bueno.
+- **Pareo Integral no empareja: arma el TRF, se lo pasa y lee la respuesta**
+  (`js/pareo/torneo.js`, `aTrf()` / `leerPareo()`). La ronda que viene va en el
+  mismo TRF con quien no juega marcado (`0000 - H`, `Z` o `F`); bbpPairings
+  devuelve las mesas ya en el orden de FIDE (incluido el bye del pareo, al final).
+- **Corre en un Worker** (`js/pareo/motor-worker.js`) y **una instancia nueva
+  por pedido**: `main()` lee y escribe archivos y deja estado. El `.wasm` se
+  compila una sola vez y cada pedido solo lo instancia. La CSP ya tenía
+  `'wasm-unsafe-eval'` y `worker-src 'self'`.
+- **Burstein queda compilado pero nunca se pide**: `-DOMIT_BURSTEIN` no compila
+  en ese commit, y FIDE no avaló esa parte de bbpPairings. La página solo usa
+  `--dutch`.
+- **Los tres servicios que FIDE pide a un programa avalado están en la
+  página** (ficha «Archivos y comprobador»): el TRF de entrada y salida, el
+  comprobador público (FPC: vuelve a emparejar cada ronda y dice si coincide)
+  y el generador de torneos al azar (RTG). Y la interfaz en inglés (botón
+  «English»; los textos en `js/pareo/textos.js`, los dos idiomas por clave).
+- **Ojo con el generador**: con la misma semilla NO da el mismo torneo que el
+  bbpPairings nativo, porque el azar de la librería de C++ de Emscripten
+  (libc++) no es el de GCC. Los emparejamientos sí son los mismos: en 300
+  torneos el comprobador nativo dio por buenos todos los del WebAssembly y al
+  revés. Si FIDE compara semillas en la prueba de aval, hay que usar el
+  generador de la página para las dos cosas, o el nativo para las dos.
+
+### El torneo y el TRF
+
+- **Los números de emparejamiento quedan fijos al emparejar la ronda 1**
+  (`numeracion`), por Elo, título y nombre (C.04.2). Quien se inscribe tarde se
+  intercala donde le toca sin mover el orden de los demás; en las rondas que
+  no jugó cuenta como ausente con 0 (el árbitro lo cambia a bye si
+  corresponde). Al importar un TRF se respeta su numeración, aunque no sea la
+  de Elo (`numeracionDeArchivo`: deshacer la ronda 1 no la borra).
+- **Lo que se lee de un TRF tiene que volver a escribirse igual**, y el
+  verificador lo comprueba con el comprobador. Dos cosas que se encontraron así:
+  sin línea `142` (bbpPairings no la escribe si ya se jugaron todas) el torneo
+  tiene las rondas que trae, no 7; y sin línea `152`, el color inicial se
+  deduce como lo hace bbpPairings (el de la ronda 1 del primero por número que
+  la jugó, al revés si no es el primero). Antes se asumía blancas y el TRF
+  reescrito tenía la ronda 1 al revés.
+- Los códigos de cabecera son los del TRF-2026 que lee bbpPairings (`142`
+  rondas, `152` color inicial, `162` puntos si no son 1-½-0, `192`
+  `FIDE_DUTCH_2026` o `_BAKU`). No se pudo leer la especificación de FIDE
+  (handbook.fide.com está bloqueado desde las sesiones): **antes de mandar un
+  TRF de Pareo Integral al servidor de Elo de FIDE, probarlo**.
+- Cambiar un resultado de una ronda vieja no vuelve a emparejar las
+  siguientes (la página lo avisa). Deshacer el emparejamiento solo se puede en
+  la última ronda, y al volver a emparejarla sale la misma.
+
+### Los desempates: C.07:2026, traducido de chesspairing y comparado con él
+
+- `js/pareo/desempates.js` es la traducción de `chesspairing` (Gert Nutterts,
+  Apache 2.0, paquete `tiebreaker`), que sigue el C.07:2026 artículo por
+  artículo. Lo difícil son las **rondas no jugadas** (artículos 15 y 16): cada
+  ronda de cada jugador lleva su categoría (bye del pareo o de punto entero,
+  incomparecencia ganada o perdida, bye pedido con partidas después o al
+  final), cuentan contra un rival ficticio con el puntaje del jugador **con el
+  tope del 16.4**, y el corte del peor (16.5) se lleva primero una ronda no
+  jugada voluntaria. Son 26 desempates (BH y sus cortes, SB, DE, WIN, WON,
+  BPG, BWG, GE, PS, KS, STD, ARO, TPR, PTP, FB, AOB, APRO, APPO, AFB).
+- **Se comparó contra chesspairing (en Go) en 300 torneos al azar: 131 144
+  valores, cero diferencias.** Ese cruce se corre fuera del repositorio (Go no
+  está en el CI); lo que queda en `herramientas/datos/pareo-desempates.json`
+  son los casos del C.07:2026 que trae chesspairing (62 valores de FIDE) y 60
+  torneos al azar con los valores de chesspairing, que el CI compara siempre.
+  Está probado que discrimina: quitando la regla del corte del 16.5 y la del
+  bye pedido seguido de partidas saltaron 24 862 diferencias.
+- Los ejercicios de desempate de FIDE de 2023 (los de Mario Held) **no** se
+  usan: son de la versión 2023, sin el tope del rival ficticio.
+- El Elo de un rival sin Elo cuenta como 0 en ARO, TPR y compañía: la ayuda de
+  la página pide el Elo de todos para usarlos.
+
+### Nada sale del navegador
+
+El torneo vive en `localStorage` (`pareo_lista_v1`, `pareo_torneo_v1_<id>`) y
+en los archivos que baja quien organiza (`.json` y TRF). No hay cuenta, ni
+base, ni consentimiento que pedir: los datos de los jugadores no salen de la
+computadora (el verificador lo comprueba: ni una petición a otro origen). **El
+día que se publique un torneo en línea** (emparejamientos y resultados con un
+enlace), eso cambia entero: tabla con su RLS (lectura pública, escritura solo
+de quien organiza), la casilla de consentimiento y su mención en
+`privacidad.html`.
+
+### Lo que falta para pedir el aval
+
+Lo que pide el C.04.A (programa, interfaz en inglés, TRF, FPC y RTG públicos)
+está. Falta lo que no es código: el formulario FE-1 y las pruebas de FIDE en su
+entorno, y que el árbitro del sitio lo pruebe con torneos reales (sus TRF de
+Swiss-Manager se abren en la ficha «Archivos»). Mientras no haya aval, la
+página dice que no lo tiene.
+
+**Al tocar `js/pareo/`, el motor o `pareo.html`, correr
+`node herramientas/verificar-todo.js pareo pareo-pagina`.** `pareo` (sin
+navegador): el motor contra las pruebas del propio bbpPairings, el generador y
+el comprobador (que marca una mesa con los colores al revés), 60 torneos de
+Pareo Integral con byes, retiros, inscripciones tardías e incomparecencias
+que el comprobador da por buenos y cuyo TRF se lee y se vuelve a escribir
+igual, las tablas de Berger y los desempates. `pareo-pagina`: un suizo y un
+todos contra todos de punta a punta en la página, el inglés, recargar, y que
+nada salga del sitio. Está probado que fallan de verdad: con los colores de una
+ronda al revés en el TRF salta `pareo`, y sin guardar después de emparejar,
+`pareo-pagina`.
+
 ## Ajedrez estudiantil en Costa Rica: los torneos de chess-results
 
 `ajedrez-estudiantil.html` es una página pública con la participación en los
