@@ -124,6 +124,9 @@
         return fuera;
     }
 
+    // Un código de verdad: chess-results pone «0» (o nada) cuando no hay.
+    function codigo(x) { const t = String(x == null ? "" : x).trim(); return /^[1-9]\d*$/.test(t) ? t : ""; }
+
     // Une a la misma persona entre torneos: por código FIDE, por código nacional
     // o por el nombre. Un código en un torneo y otro no, igual se une por nombre.
     function agrupar(entradas) {
@@ -133,8 +136,8 @@
         const visto = {};
         entradas.forEach((e, i) => {
             const claves = [];
-            if (e.jugador.fideId) claves.push("f:" + e.jugador.fideId);
-            if (e.jugador.codigoNacional) claves.push("n:" + e.jugador.codigoNacional);
+            if (codigo(e.jugador.fideId)) claves.push("f:" + codigo(e.jugador.fideId));
+            if (codigo(e.jugador.codigoNacional)) claves.push("n:" + codigo(e.jugador.codigoNacional));
             claves.push("o:" + normalizar(e.jugador.nombre));
             claves.forEach((c) => { if (visto[c] == null) visto[c] = i; else unir(visto[c], i); });
         });
@@ -148,10 +151,10 @@
     }
 
     function claveDe(grupo) {
-        const conFide = grupo.find((e) => e.jugador.fideId);
-        if (conFide) return "f:" + conFide.jugador.fideId;
-        const conNac = grupo.find((e) => e.jugador.codigoNacional);
-        if (conNac) return "n:" + conNac.jugador.codigoNacional;
+        const conFide = grupo.find((e) => codigo(e.jugador.fideId));
+        if (conFide) return "f:" + codigo(conFide.jugador.fideId);
+        const conNac = grupo.find((e) => codigo(e.jugador.codigoNacional));
+        if (conNac) return "n:" + codigo(conNac.jugador.codigoNacional);
         return "o:" + normalizar(grupo[0].jugador.nombre);
     }
 
@@ -244,7 +247,7 @@
             const eloNacional = grupo.map((e) => Number(e.jugador.eloNacional) || 0).find((x) => x > 0) || 0;
             const p = { clave, nombre, sexo, sexoManual: !!ajuste.sexo, nacimiento, nacimientoManual: !!ajuste.nacimiento,
                 nacimientoChessResults: nacCR, porRitmo, modalidades, categorias, eloNacional,
-                fideId: (grupo.find((e) => e.jugador.fideId) || { jugador: {} }).jugador.fideId || "",
+                fideId: grupo.map((e) => codigo(e.jugador.fideId)).find(Boolean) || "",
                 club: (grupo.find((e) => e.jugador.club) || { jugador: {} }).jugador.club || "",
                 equipo: (grupo.find((e) => e.jugador.equipo) || { jugador: {} }).jugador.equipo || "",
                 soloAbsoluto: !enFemenino };
