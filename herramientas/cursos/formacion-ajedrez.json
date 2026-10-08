@@ -67,6 +67,30 @@
             {
               "pregunta": "¿Qué debe anotar cada jugador en su planilla en una partida de ritmo clásico?",
               "respuesta": "Sus jugadas y las del rival, jugada a jugada, en notación algebraica y de forma legible."
+            },
+            {
+              "pregunta": "¿Puede el árbitro principal jugar como participante en el torneo que dirige?",
+              "respuesta": "No."
+            },
+            {
+              "pregunta": "Un jugador le pide al árbitro que le explique qué significa una regla durante la partida. ¿Puede hacerlo?",
+              "respuesta": "Sí: puede explicar el significado de la regla, pero no debe opinar sobre la posición actual ni aconsejar una jugada."
+            },
+            {
+              "pregunta": "Se descubre a mitad de partida que la posición inicial estaba mal armada desde el principio. ¿Qué corresponde?",
+              "respuesta": "Se anula la partida y se juega de nuevo (distinto de si solo el tablero estaba mal orientado, donde la posición se traslada a un tablero bien colocado y la partida sigue)."
+            },
+            {
+              "pregunta": "¿Hasta qué momento es legal capturar un peón al paso?",
+              "respuesta": "Solo en la jugada inmediatamente siguiente al avance doble del peón rival; después se pierde el derecho."
+            },
+            {
+              "pregunta": "¿Qué letras se usan en español para las piezas al anotar una partida en notación algebraica?",
+              "respuesta": "R (rey), D (dama), T (torre), A (alfil) y C (caballo); el peón no lleva letra."
+            },
+            {
+              "pregunta": "¿Puede un jugador escribir en la planilla una jugada antes de hacerla en el tablero?",
+              "respuesta": "Solo como excepción, para reclamar tablas por triple repetición o por la regla de las 50 jugadas."
             }
           ],
           "tarea": "Leer el capítulo de reglas básicas de las Leyes de Ajedrez de la FIDE y completar una ficha breve de reflexión sobre una situación de arbitraje básica vivida en su contexto educativo.",
