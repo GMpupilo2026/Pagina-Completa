@@ -469,11 +469,28 @@ function medalla(icono, opciones) {
     dibujo + `</svg>`;
 }
 
+/* Una piedra del camino. `grabado`: unas letras talladas adentro de un
+   corazoncito, del mismo color que la piedra y tan chiquito como el del
+   guarumo: hay que buscarlo (un secreto; ver «Cada cuento lleva un secreto
+   para Alessandro»). Lleva data-grabado para el verificador. */
+function piedra(x, y, s, opciones) {
+  const o = opciones || {};
+  const grabado = o.grabado
+    ? `<g data-grabado="${esc(o.grabado)}" transform="translate(2,-12)">` +
+      `<path d="M0,5 C-3,1 -9,1 -8.5,-3.5 C-8,-7.5 -2.5,-8 0,-4 C2.5,-8 8,-7.5 8.5,-3.5 C9,1 3,1 0,5 Z" fill="none" stroke="#6b5d52" stroke-width="0.8"/>` +
+      `<text x="0" y="-0.8" text-anchor="middle" font-family="Quicksand, sans-serif" font-weight="700" font-size="4.2" fill="#5b4d43">${esc(o.grabado)}</text></g>`
+    : "";
+  return `<g transform="translate(${x},${y}) scale(${s || 1})">` +
+    `<ellipse cx="0" cy="0" rx="30" ry="4" fill="#000" opacity=".12"/>` +
+    `<path d="M-28,0 C-30,-14 -18,-26 -2,-26 C14,-27 28,-16 28,-4 L28,0 Z" fill="#a8998c" stroke="#6b5d52" stroke-width="2"/>` +
+    `<path d="M-16,-18 Q-10,-22 -4,-21" fill="none" stroke="#c9bdb2" stroke-width="2" stroke-linecap="round"/>` + grabado + `</g>`;
+}
+
 /* Una pieza suelta, para «une cada pieza con su nombre» y la tapa. */
 function piezaSola(tipo, color, opciones) {
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 145" aria-hidden="true">${pieza(tipo, color, 50, 142, 1, opciones)}</svg>`;
 }
 
 module.exports = {
-  pieza, perezoso, mapache, panda, volcan, lupa, medalla, escena, piezaSola, estrella, corazon, flecha, globo, guarumo, nube, caja, corona, mango, trofeo, confeti, piso, FONDOS,
+  pieza, perezoso, mapache, panda, volcan, lupa, medalla, escena, piezaSola, estrella, corazon, flecha, globo, guarumo, piedra, nube, caja, corona, mango, trofeo, confeti, piso, FONDOS,
 };
