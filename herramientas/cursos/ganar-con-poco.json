@@ -611,11 +611,11 @@
           "parrafos": [
             "Los finales de caballos tienen fama de difíciles, pero siguen reglas bastante claras. Un peón de más suele ser suficiente para ganar, porque el caballo, a diferencia de la torre o del alfil, no puede frenar a un peón pasado desde lejos: tiene que ir hasta él.",
             "Por eso un peón pasado lejano es todavía más fuerte en estos finales que en otros: el caballo que va a frenarlo deja todo lo demás sin cuidar. Y por eso los reyes son tan importantes: un rey activo ayuda a su caballo a frenar peones y a ganar los del rival.",
-            "Hay que cuidar un detalle: el caballo puede dar jaques dobles y horquillas en cualquier momento. Antes de cada jugada en un final de caballos, revisa qué casillas quedan al alcance del caballo rival, sobre todo las que atacan a tu rey y a una pieza o peón a la vez."
+            "Hay que cuidar un detalle: el caballo puede dar jaques dobles y tenedores en cualquier momento. Antes de cada jugada en un final de caballos, revisa qué casillas quedan al alcance del caballo rival, sobre todo las que atacan a tu rey y a una pieza o peón a la vez."
           ],
           "practica": "Juega contra la computadora diez finales de caballo y tres peones contra caballo y dos peones, en el mismo flanco y en flancos distintos. Anota en cuáles ganaste y qué los diferenciaba.",
           "tema": "knightEndgame",
-          "pregunta": "Final de caballos: antes de mover, cuenta los saltos y mira qué horquillas tiene cada caballo.",
+          "pregunta": "Final de caballos: antes de mover, cuenta los saltos y mira qué tenedores tiene cada caballo.",
           "enlace": "Con solo caballos en el tablero, el que cuenta mejor gana: la jugada buena es la única que conserva la ventaja.",
           "diagramas": [
             {
@@ -623,7 +623,7 @@
               "fen": "8/4Pkp1/p2K4/1p1p4/4n3/2P3Np/PP6/8 w - - 2 42",
               "turno": "w",
               "resultado": "1-0",
-              "pregunta": "Final de caballos: antes de mover, cuenta los saltos y mira qué horquillas tiene cada caballo. Juegan las blancas; el rival acaba de jugar …Ce4+.",
+              "pregunta": "Final de caballos: antes de mover, cuenta los saltos y mira qué tenedores tiene cada caballo. Juegan las blancas; el rival acaba de jugar …Ce4+.",
               "comentario": "42.Cxe4 dxe4 43.Rd7. Es una jugada defensiva precisa: la única que sostiene la posición. Con solo caballos en el tablero, el que cuenta mejor gana: la jugada buena es la única que conserva la ventaja. (Ejercicio 1oIpG de la base abierta de Lichess (CC0), rating 1447. Stockfish 16 a profundidad 18: Cxe4 es la mejor (+4,7) y la segunda queda en -2,9.)",
               "linea": [
                 "Nxe4",
@@ -714,7 +714,7 @@
               "turno": "w",
               "resultado": "1-0",
               "pregunta": "El rival tiene una amenaza escondida. Encuentra la única jugada que la quita y conserva lo que tienes. Juegan las blancas; el rival acaba de jugar …Dc7.",
-              "comentario": "58.Dh5+ Rg8 59.Dxe2 Dxf4+ 60.Cg3. Es una horquilla: una pieza ataca dos objetivos a la vez. Es una jugada de profilaxis: no ataca nada, pero le quita al rival la única idea que tenía, y la posición sigue siendo tuya. (Ejercicio 1pIxY de la base abierta de Lichess (CC0), rating 1638. Stockfish 16 a profundidad 18: Dh5+ es la mejor (+5,0) y la segunda queda en +0,2.)",
+              "comentario": "58.Dh5+ Rg8 59.Dxe2 Dxf4+ 60.Cg3. Es un tenedor: una pieza ataca dos objetivos a la vez. Es una jugada de profilaxis: no ataca nada, pero le quita al rival la única idea que tenía, y la posición sigue siendo tuya. (Ejercicio 1pIxY de la base abierta de Lichess (CC0), rating 1638. Stockfish 16 a profundidad 18: Dh5+ es la mejor (+5,0) y la segunda queda en +0,2.)",
               "linea": [
                 "Qh5+",
                 "Kg8",

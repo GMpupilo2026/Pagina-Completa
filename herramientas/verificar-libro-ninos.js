@@ -248,9 +248,12 @@ L.CAPITULOS.forEach((cap) => {
 ok(L.SECRETOS && L.SECRETOS.length, `${L.SLUG}: no tiene ningún secreto para Alessandro (ver «Cada cuento lleva un secreto para Alessandro»)`);
 const inicial = (t) => t.normalize("NFD").replace(/[^A-Za-z]/g, "")[0].toUpperCase();
 const letras = (t) => t.normalize("NFD").toUpperCase().replace(/[^A-Z]/g, "").split("").sort().join("");
+// Un secreto con `para` es para otra persona (el libro 3 lleva tres para
+// Karina): se compara con ese nombre en lugar de SECRETO.
 (L.SECRETOS || []).forEach((sec) => {
+  const nombre = sec.para || L.SECRETO;
   if (sec.tipo === "acrostico-dedicatoria") {
-    ok(L.DEDICATORIA.map(inicial).join("") === L.SECRETO, `${L.SLUG}: la dedicatoria ya no forma el acróstico ${L.SECRETO}`);
+    ok(L.DEDICATORIA.map(inicial).join("") === nombre, `${L.SLUG}: la dedicatoria ya no forma el acróstico ${nombre}`);
   } else if (sec.tipo === "acrostico-titulos") {
     ok(L.CAPITULOS.map((c) => inicial(c.titulo)).join("") === L.SECRETO, `${L.SLUG}: los títulos de los capítulos ya no forman el acróstico ${L.SECRETO}`);
   } else if (sec.tipo === "anagrama") {
@@ -273,8 +276,12 @@ const letras = (t) => t.normalize("NFD").toUpperCase().replace(/[^A-Z]/g, "").sp
     ok(cap && cap.ejercicios.map((e) => inicial(e.solucion || "?")).join("") === sec.texto, `${L.SLUG}: las soluciones del capítulo ${sec.capitulo} ya no empiezan con ${sec.texto}`);
     ok(L.SECRETO.startsWith(sec.texto), `${L.SLUG}: «${sec.texto}» no es parte de ${L.SECRETO}`);
   } else if (sec.tipo === "grabado") {
-    ok(L.SECRETO.startsWith(sec.texto), `${L.SLUG}: el grabado «${sec.texto}» no es parte de ${L.SECRETO}`);
-    ok(L.CAPITULOS.some((c) => c.escena.contenido.includes(`data-grabado="${sec.texto}"`)), `${L.SLUG}: ya no hay ningún árbol con el grabado «${sec.texto}»`);
+    ok(sec.para ? sec.texto.startsWith(nombre[0]) : nombre.startsWith(sec.texto), `${L.SLUG}: el grabado «${sec.texto}» no es parte de ${nombre}`);
+    ok(L.CAPITULOS.some((c) => c.escena.contenido.includes(`data-grabado="${sec.texto}"`)), `${L.SLUG}: ya no hay ningún dibujo con el grabado «${sec.texto}»`);
+  } else if (sec.tipo === "constelacion") {
+    const cap = L.CAPITULOS.find((c) => c.n === sec.capitulo);
+    ok(nombre.startsWith(sec.letra), `${L.SLUG}: la constelación «${sec.letra}» no es la inicial de ${nombre}`);
+    ok(cap && cap.escena.fondo === "noche" && cap.escena.contenido.includes(`data-constelacion="${sec.letra}"`), `${L.SLUG}: el cielo de noche del capítulo ${sec.capitulo} ya no tiene la constelación «${sec.letra}»`);
   } else {
     fallos.push(`${L.SLUG}: secreto de tipo desconocido (${sec.tipo})`);
   }

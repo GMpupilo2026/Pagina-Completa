@@ -132,7 +132,7 @@ window.TiendaCatalogo = (function () {
       titulo: "Estrategia y Táctica",
       nivel: "Avanzado",
       gancho: "Del golpe suelto al plan que lo prepara.",
-      resumen: "Clavada, horquilla, enfilada y desviación por un lado; columnas, casillas débiles y estructura de peones por el otro — y cómo se sostienen entre sí.",
+      resumen: "Clavada, tenedor, enfilada y desviación por un lado; columnas, casillas débiles y estructura de peones por el otro — y cómo se sostienen entre sí.",
       carpeta: "cursos/recursos/estrategia-y-tactica",
       piezas: { cuadernillos: 20, ejercicios: 20, presentaciones: 20, accesibles: 20 },
     },

@@ -33,7 +33,7 @@ window.ClaseBuscar = (function () {
        tiene que ser cierta: está porque esa herramienta lo hace. */
     const HERRAMIENTAS = [
         { nombre: "Tu plan de clase", donde: "Mi plan", claves: "plan planificacion temario que voy a dar", destino: "plan-panel" },
-        { nombre: "Táctica por tema", donde: "Táctica", claves: "ejercicios tactica temas clavada horquilla mate posiciones", destino: "tactics-panel" },
+        { nombre: "Táctica por tema", donde: "Táctica", claves: "ejercicios tactica temas clavada tenedor mate posiciones", destino: "tactics-panel" },
         { nombre: "Entrenamientos de la plataforma", donde: "Entrenamientos", claves: "entrenamiento entrenamientos habilidades detective memoria tipos ventana", destino: "tipos-panel" },
         { nombre: "Preguntar: ¿qué jugarías?", donde: "Preguntar", claves: "pregunta preguntar jugada respuesta tablero que jugarias", destino: "ask-question-btn" },
         { nombre: "Preguntar: ¿quién está mejor?", donde: "Preguntar", claves: "pregunta evaluar valorar quien esta mejor ventaja", destino: "ask-quien-mejor-btn" },
@@ -47,6 +47,7 @@ window.ClaseBuscar = (function () {
         { nombre: "Partidas entre alumnos", donde: "Practicar", claves: "partidas emparejar parejas jugar entre ellos", destino: "emparejar-btn" },
         { nombre: "Abrir una lección de un curso", donde: "Tu material", claves: "curso cursos leccion material", destino: "toggle-lesson-btn" },
         { nombre: "Jalar un archivo PGN", donde: "Tu material", claves: "archivo archivos pgn partida subida", destino: "toggle-archivos-btn" },
+        { nombre: "Mostrar una presentación a la clase", donde: "Tu material", claves: "presentacion diapositivas laminas powerpoint pptx charla conferencia capacitacion", destino: "toggle-presentacion-btn" },
         { nombre: "Leer un PDF", donde: "Tu material", claves: "pdf libro documento diagrama", destino: "toggle-pdf-btn" },
         { nombre: "Armar una posición (o cargar FEN o PGN)", donde: "Tu material", claves: "armar posicion editar editor fen pgn colocar piezas", destino: "toggle-free-mode-btn" },
         { nombre: "Motor de análisis", donde: "Motor", claves: "motor stockfish analisis evaluacion", destino: "engine-toggle-btn" },

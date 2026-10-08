@@ -43,7 +43,7 @@
     "ruta": "material/diagnostico-de-nivel/diagnostico-de-nivel.pdf",
     "titulo": "Diagnóstico de nivel — la prueba",
     "tipo": "otro",
-    "kb": 450,
+    "kb": 451,
     "libro": "Diagnóstico de nivel"
    },
    {
@@ -64,7 +64,7 @@
     "ruta": "material/fichas-de-estudio/fichas-de-estudio-libro.pdf",
     "titulo": "Fichas de estudio — libro",
     "tipo": "otro",
-    "kb": 22302,
+    "kb": 23938,
     "libro": "Fichas de estudio"
    },
    {
@@ -99,7 +99,7 @@
     "ruta": "material/libro-de-diagnostico/libro-de-diagnostico.pdf",
     "titulo": "Libro del diagnóstico de nivel — banco de preguntas",
     "tipo": "otro",
-    "kb": 2497,
+    "kb": 2499,
     "libro": "Libro del diagnóstico de nivel"
    },
    {
@@ -113,77 +113,77 @@
     "ruta": "material/mide-tu-fuerza-10/mide-tu-fuerza-10.pdf",
     "titulo": "Mide tu fuerza 10",
     "tipo": "otro",
-    "kb": 2968,
+    "kb": 2960,
     "libro": "Mide tu fuerza 10"
    },
    {
     "ruta": "material/mide-tu-fuerza-2/mide-tu-fuerza-2.pdf",
     "titulo": "Mide tu fuerza 2",
     "tipo": "otro",
-    "kb": 2985,
+    "kb": 2973,
     "libro": "Mide tu fuerza 2"
    },
    {
     "ruta": "material/mide-tu-fuerza-3/mide-tu-fuerza-3.pdf",
     "titulo": "Mide tu fuerza 3",
     "tipo": "otro",
-    "kb": 2964,
+    "kb": 2954,
     "libro": "Mide tu fuerza 3"
    },
    {
     "ruta": "material/mide-tu-fuerza-4/mide-tu-fuerza-4.pdf",
     "titulo": "Mide tu fuerza 4",
     "tipo": "otro",
-    "kb": 2995,
+    "kb": 2989,
     "libro": "Mide tu fuerza 4"
    },
    {
     "ruta": "material/mide-tu-fuerza-5/mide-tu-fuerza-5.pdf",
     "titulo": "Mide tu fuerza 5",
     "tipo": "otro",
-    "kb": 2996,
+    "kb": 2987,
     "libro": "Mide tu fuerza 5"
    },
    {
     "ruta": "material/mide-tu-fuerza-6/mide-tu-fuerza-6.pdf",
     "titulo": "Mide tu fuerza 6",
     "tipo": "otro",
-    "kb": 2931,
+    "kb": 2922,
     "libro": "Mide tu fuerza 6"
    },
    {
     "ruta": "material/mide-tu-fuerza-7/mide-tu-fuerza-7.pdf",
     "titulo": "Mide tu fuerza 7",
     "tipo": "otro",
-    "kb": 2956,
+    "kb": 2943,
     "libro": "Mide tu fuerza 7"
    },
    {
     "ruta": "material/mide-tu-fuerza-8/mide-tu-fuerza-8.pdf",
     "titulo": "Mide tu fuerza 8",
     "tipo": "otro",
-    "kb": 2904,
+    "kb": 2899,
     "libro": "Mide tu fuerza 8"
    },
    {
     "ruta": "material/mide-tu-fuerza-9/mide-tu-fuerza-9.pdf",
     "titulo": "Mide tu fuerza 9",
     "tipo": "otro",
-    "kb": 2970,
+    "kb": 2963,
     "libro": "Mide tu fuerza 9"
    },
    {
     "ruta": "material/mide-tu-fuerza/mide-tu-fuerza.pdf",
     "titulo": "Mide tu fuerza — banco de ejercicios tácticos",
     "tipo": "otro",
-    "kb": 2938,
+    "kb": 2933,
     "libro": "Mide tu fuerza"
    },
    {
     "ruta": "material/peonita-rey/peonita-rey.pdf",
     "titulo": "Peonita y el rey escondido — el cuento ilustrado",
     "tipo": "otro",
-    "kb": 1197,
+    "kb": 1212,
     "libro": "Peonita y el rey escondido"
    },
    {
@@ -197,7 +197,7 @@
     "ruta": "material/peonita/peonita.pdf",
     "titulo": "Peonita y el reino de las 64 casillas — el cuento ilustrado",
     "tipo": "otro",
-    "kb": 1589,
+    "kb": 1559,
     "libro": "Peonita y el reino de las 64 casillas"
    },
    {
@@ -790,7 +790,7 @@
         "ruta": "cursos/recursos/los-cimientos-del-ajedrez/12-el-ataque-doble-ejercicios.pdf",
         "titulo": "Ejercicios",
         "tipo": "ejercicios",
-        "kb": 6
+        "kb": 11
        }
       ]
      },
@@ -952,7 +952,7 @@
         "ruta": "cursos/recursos/los-cimientos-del-ajedrez/21-combinaciones-con-peones-ejercicios.pdf",
         "titulo": "Ejercicios",
         "tipo": "ejercicios",
-        "kb": 6
+        "kb": 11
        }
       ]
      },
@@ -1306,13 +1306,13 @@
         "ruta": "cursos/recursos/los-cimientos-del-ajedrez/41-combinaciones-con-caballos-material.pdf",
         "titulo": "Material de estudio",
         "tipo": "material",
-        "kb": 189
+        "kb": 188
        },
        {
         "ruta": "cursos/recursos/los-cimientos-del-ajedrez/41-combinaciones-con-caballos-ejercicios.pdf",
         "titulo": "Ejercicios",
         "tipo": "ejercicios",
-        "kb": 6
+        "kb": 11
        }
       ]
      },
@@ -3248,10 +3248,10 @@
      },
      {
       "numero": 2,
-      "titulo": "Horquillas de caballo y de peón",
+      "titulo": "Tenedores de caballo y de peón",
       "archivos": [
        {
-        "ruta": "cursos/recursos/estrategia-y-tactica/02-horquillas-de-caballo-y-de-peon-material.pdf",
+        "ruta": "cursos/recursos/estrategia-y-tactica/02-tenedores-de-caballo-y-de-peon-material.pdf",
         "titulo": "Material de estudio",
         "tipo": "material",
         "kb": 178
@@ -3260,7 +3260,7 @@
         "ruta": "cursos/recursos/estrategia-y-tactica/02-horquillas-de-caballo-y-de-peon-ejercicios.pdf",
         "titulo": "Ejercicios",
         "tipo": "ejercicios",
-        "kb": 4
+        "kb": 7
        }
       ]
      },
@@ -4394,7 +4394,7 @@
         "ruta": "cursos/recursos/desequilibrios-de-material/01-valor-relativo-de-las-piezas-ejercicios.pdf",
         "titulo": "Ejercicios",
         "tipo": "ejercicios",
-        "kb": 133
+        "kb": 162
        }
       ]
      },
@@ -5760,7 +5760,7 @@
         "ruta": "cursos/recursos/ganar-con-poco/20-finales-de-caballos-ejercicios.pdf",
         "titulo": "Ejercicios",
         "tipo": "ejercicios",
-        "kb": 5
+        "kb": 7
        }
       ]
      },
@@ -6887,7 +6887,7 @@
         "ruta": "cursos/recursos/ideas-que-ganan-partidas/14-el-caballo-y-la-doble-amenaza-ejercicios.pdf",
         "titulo": "Ejercicios",
         "tipo": "ejercicios",
-        "kb": 5
+        "kb": 10
        }
       ]
      },
@@ -7787,7 +7787,7 @@
         "ruta": "cursos/recursos/formacion-ajedrez/01-encuadre-y-reglas-basicas-material.pdf",
         "titulo": "Material de estudio",
         "tipo": "material",
-        "kb": 14
+        "kb": 15
        },
        {
         "ruta": "cursos/recursos/formacion-ajedrez/01-encuadre-y-reglas-basicas-ejercicios.pdf",
@@ -10117,7 +10117,7 @@
      },
      {
       "numero": 2,
-      "titulo": "Horquillas de caballo y de peón",
+      "titulo": "Tenedores de caballo y de peón",
       "archivos": [
        {
         "ruta": "cursos/recursos/estrategia-y-tactica/02-horquillas-de-caballo-y-de-peon.pptx",
@@ -13022,7 +13022,7 @@
         "ruta": "cursos/recursos/formacion-ajedrez/01-encuadre-y-reglas-basicas.pptx",
         "titulo": "Presentación",
         "tipo": "presentacion",
-        "kb": 79
+        "kb": 80
        }
       ]
      },
@@ -15455,10 +15455,10 @@
      },
      {
       "numero": 2,
-      "titulo": "Horquillas de caballo y de peón",
+      "titulo": "Tenedores de caballo y de peón",
       "archivos": [
        {
-        "ruta": "cursos/recursos/estrategia-y-tactica/02-horquillas-de-caballo-y-de-peon-material-accesible.html",
+        "ruta": "cursos/recursos/estrategia-y-tactica/02-tenedores-de-caballo-y-de-peon-material-accesible.html",
         "titulo": "Material accesible",
         "tipo": "accesible",
         "kb": 12
@@ -18486,7 +18486,7 @@
   ]
  },
  "imagenes": {
-  "total": 620,
+  "total": 654,
   "grupos": [
    {
     "carpeta": "entreno/img/facil",
@@ -22268,6 +22268,217 @@
       "titulo": "Ejemplo: la fotografía",
       "tipo": "otro",
       "kb": 18
+     }
+    ]
+   },
+   {
+    "carpeta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-01",
+    "titulo": "Clase 01",
+    "grupo": "Carpetas",
+    "archivos": [
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-01/01.webp",
+      "titulo": "01",
+      "tipo": "otro",
+      "kb": 47
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-01/02.webp",
+      "titulo": "02",
+      "tipo": "otro",
+      "kb": 54
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-01/03.webp",
+      "titulo": "03",
+      "tipo": "otro",
+      "kb": 47
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-01/04.webp",
+      "titulo": "04",
+      "tipo": "otro",
+      "kb": 45
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-01/05.webp",
+      "titulo": "05",
+      "tipo": "otro",
+      "kb": 61
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-01/06.webp",
+      "titulo": "06",
+      "tipo": "otro",
+      "kb": 81
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-01/07.webp",
+      "titulo": "07",
+      "tipo": "otro",
+      "kb": 90
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-01/08.webp",
+      "titulo": "08",
+      "tipo": "otro",
+      "kb": 90
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-01/09.webp",
+      "titulo": "09",
+      "tipo": "otro",
+      "kb": 63
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-01/10.webp",
+      "titulo": "10",
+      "tipo": "otro",
+      "kb": 89
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-01/11.webp",
+      "titulo": "11",
+      "tipo": "otro",
+      "kb": 49
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-01/12.webp",
+      "titulo": "12",
+      "tipo": "otro",
+      "kb": 51
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-01/13.webp",
+      "titulo": "13",
+      "tipo": "otro",
+      "kb": 73
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-01/14.webp",
+      "titulo": "14",
+      "tipo": "otro",
+      "kb": 95
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-01/15.webp",
+      "titulo": "15",
+      "tipo": "otro",
+      "kb": 88
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-01/16.webp",
+      "titulo": "16",
+      "tipo": "otro",
+      "kb": 69
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-01/17.webp",
+      "titulo": "17",
+      "tipo": "otro",
+      "kb": 107
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-01/18.webp",
+      "titulo": "18",
+      "tipo": "otro",
+      "kb": 32
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-01/19.webp",
+      "titulo": "19",
+      "tipo": "otro",
+      "kb": 98
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-01/20.webp",
+      "titulo": "20",
+      "tipo": "otro",
+      "kb": 65
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-01/21.webp",
+      "titulo": "21",
+      "tipo": "otro",
+      "kb": 67
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-01/22.webp",
+      "titulo": "22",
+      "tipo": "otro",
+      "kb": 102
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-01/23.webp",
+      "titulo": "23",
+      "tipo": "otro",
+      "kb": 68
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-01/24.webp",
+      "titulo": "24",
+      "tipo": "otro",
+      "kb": 55
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-01/25.webp",
+      "titulo": "25",
+      "tipo": "otro",
+      "kb": 73
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-01/26.webp",
+      "titulo": "26",
+      "tipo": "otro",
+      "kb": 32
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-01/27.webp",
+      "titulo": "27",
+      "tipo": "otro",
+      "kb": 60
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-01/28.webp",
+      "titulo": "28",
+      "tipo": "otro",
+      "kb": 50
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-01/29.webp",
+      "titulo": "29",
+      "tipo": "otro",
+      "kb": 57
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-01/30.webp",
+      "titulo": "30",
+      "tipo": "otro",
+      "kb": 63
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-01/31.webp",
+      "titulo": "31",
+      "tipo": "otro",
+      "kb": 69
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-01/32.webp",
+      "titulo": "32",
+      "tipo": "otro",
+      "kb": 66
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-01/33.webp",
+      "titulo": "33",
+      "tipo": "otro",
+      "kb": 46
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-01/34.webp",
+      "titulo": "34",
+      "tipo": "otro",
+      "kb": 52
      }
     ]
    }

@@ -1295,7 +1295,7 @@
             "entreno/estudio.html": "fichas aperturas defensas repasar conceptos",
             "entreno/estudio.html?cat=apertura": "fichas blancas italiana espanola",
             "entreno/estudio.html?cat=defensa": "fichas negras siciliana francesa caro kann",
-            "entreno/estudio.html?cat=tactica": "fichas clavada horquilla ataque doble motivos",
+            "entreno/estudio.html?cat=tactica": "fichas clavada tenedor ataque doble motivos",
             "entreno/estudio.html?cat=mate": "fichas mates mate pasillo coz anastasia boden morphy opera",
             "entreno/estudio.html?cat=concepto": "fichas estrategia plan peon pasado",
             "entreno/estudio.html?cat=final": "fichas finales lucena philidor oposicion torre dama",

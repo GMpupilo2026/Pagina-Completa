@@ -469,8 +469,8 @@
           "titulo": "El ataque doble",
           "resumen": "Una sola jugada ataca dos cosas a la vez y el rival solo puede salvar una. Es el golpe táctico más frecuente en las partidas de club.",
           "parrafos": [
-            "El ataque doble es la idea táctica más sencilla y la que más partidas decide: una pieza ataca dos objetivos al mismo tiempo. Puede ser dos piezas sin defensa, una pieza y una amenaza de mate, o el rey y otra pieza. La horquilla de caballo es la más conocida, porque el caballo ataca sin ser atacado por la pieza que amenaza. Pero también hacen ataques dobles la dama, el peón, que tiene horquillas muy baratas, y hasta el rey en el final.",
-            "Las mejores víctimas de un ataque doble son las piezas sin defensa y el rey. Antes de cada jugada, haz una lista rápida de las piezas rivales que no están protegidas: cada una es un posible objetivo. Después busca una casilla desde la que alguna de tus piezas ataque dos de ellas, o una de ellas y el rey. Las piezas rivales separadas a la distancia de un salto de caballo entre sí son una invitación a la horquilla.",
+            "El ataque doble es la idea táctica más sencilla y la que más partidas decide: una pieza ataca dos objetivos al mismo tiempo. Puede ser dos piezas sin defensa, una pieza y una amenaza de mate, o el rey y otra pieza. El tenedor de caballo es la más conocida, porque el caballo ataca sin ser atacado por la pieza que amenaza. Pero también hacen ataques dobles la dama, el peón, que tiene tenedores muy baratos, y hasta el rey en el final.",
+            "Las mejores víctimas de un ataque doble son las piezas sin defensa y el rey. Antes de cada jugada, haz una lista rápida de las piezas rivales que no están protegidas: cada una es un posible objetivo. Después busca una casilla desde la que alguna de tus piezas ataque dos de ellas, o una de ellas y el rey. Las piezas rivales separadas a la distancia de un salto de caballo entre sí son una invitación al tenedor.",
             "A veces la casilla del ataque doble está defendida y hay que prepararla: con un jaque que lleve al rey a la casilla justa, o con un sacrificio que desvíe al defensor. El error típico del que defiende es dejar piezas sin protección «porque no pasa nada»: no pasa nada hasta que aparecen dos a la vez. La costumbre de mantener las piezas defendidas evita la mitad de los ataques dobles que sufrirías."
           ],
           "practica": "Antes de cada jugada de una partida rápida, nombra en voz baja las piezas rivales sin defensa. Al terminar, revisa si en algún momento dos de ellas estuvieron al alcance de una sola pieza tuya.",
@@ -485,7 +485,7 @@
               "turno": "b",
               "resultado": "0-1",
               "pregunta": "Hay piezas del rival que no se defienden bien: busca cómo atacar dos cosas a la vez. Juegan las negras; el rival acaba de jugar Tf6.",
-              "comentario": "28…Dg5+ 29.Rd1 Dxf6. Es una horquilla: una pieza ataca dos objetivos a la vez. Fíjate en que el rival solo puede atender una amenaza por jugada, y la otra queda servida. (Ejercicio 25y61 de la base abierta de Lichess (CC0), rating 972. Stockfish 16 a profundidad 18: Dg5+ es la mejor (+5,1) y la segunda queda en -0,9.)",
+              "comentario": "28…Dg5+ 29.Rd1 Dxf6. Es un tenedor: una pieza ataca dos objetivos a la vez. Fíjate en que el rival solo puede atender una amenaza por jugada, y la otra queda servida. (Ejercicio 25y61 de la base abierta de Lichess (CC0), rating 972. Stockfish 16 a profundidad 18: Dg5+ es la mejor (+5,1) y la segunda queda en -0,9.)",
               "linea": [
                 "Qg5+",
                 "Kd1",
@@ -514,7 +514,7 @@
               "turno": "b",
               "resultado": "0-1",
               "pregunta": "Vas con material de más: busca la forma más segura de acercarte a la victoria. Juegan las negras; el rival acaba de jugar Dc1.",
-              "comentario": "25…Dc6+ 26.Rg1 Dxb7. Es una horquilla: una pieza ataca dos objetivos a la vez. Fíjate en que la jugada buena reduce el juego del rival antes de buscar más ganancia. (Ejercicio 1jjJV de la base abierta de Lichess (CC0), rating 972. Stockfish 16 a profundidad 18: Dc6+ es la mejor (+4,7) y la segunda queda en -2,2.)",
+              "comentario": "25…Dc6+ 26.Rg1 Dxb7. Es un tenedor: una pieza ataca dos objetivos a la vez. Fíjate en que la jugada buena reduce el juego del rival antes de buscar más ganancia. (Ejercicio 1jjJV de la base abierta de Lichess (CC0), rating 972. Stockfish 16 a profundidad 18: Dc6+ es la mejor (+4,7) y la segunda queda en -2,2.)",
               "linea": [
                 "Qc6+",
                 "Kg1",
@@ -737,9 +737,9 @@
         },
         {
           "titulo": "Combinaciones con peones",
-          "resumen": "El peón también da golpes: horquillas, rupturas y avances con amenaza. Aprende a usar la pieza más barata como arma táctica.",
+          "resumen": "El peón también da golpes: tenedores, rupturas y avances con amenaza. Aprende a usar la pieza más barata como arma táctica.",
           "parrafos": [
-            "El peón es la pieza que menos vale, y justamente por eso es un arma táctica temible: cualquier pieza que ataque está en peligro, porque cambiarla por un peón es perder. La horquilla de peón, que ataca dos piezas en diagonal a la vez, gana material casi siempre. El avance de un peón que ataca una pieza también sirve para ganar tiempos o echar a una pieza de una buena casilla. Y en el final, las rupturas de peones crean un peón pasado de la nada.",
+            "El peón es la pieza que menos vale, y justamente por eso es un arma táctica temible: cualquier pieza que ataque está en peligro, porque cambiarla por un peón es perder. El tenedor de peón, que ataca dos piezas en diagonal a la vez, gana material casi siempre. El avance de un peón que ataca una pieza también sirve para ganar tiempos o echar a una pieza de una buena casilla. Y en el final, las rupturas de peones crean un peón pasado de la nada.",
             "Busca casillas donde un peón tuyo, con un solo avance, ataque dos piezas rivales: dos piezas en la misma fila separadas por una casilla son el blanco perfecto. En los finales, mira los grupos de peones enfrentados: a veces sacrificar uno o dos peones abre el paso a un tercero, que corona antes de que el rey rival llegue. La ruptura funciona mejor cuando tus peones están avanzados y el rey rival está lejos.",
             "El error típico es olvidar que los peones atacan. Muchos jugadores colocan dos piezas al lado una de otra frente a un peón rival que puede avanzar, y pierden una. Al atacar, no descartes un sacrificio de peón porque «se pierde un peón»: si abre una línea, desvía a un defensor o crea un peón pasado imparable, vale mucho más de lo que cuesta. Cuenta siempre qué ganas a cambio antes de decidir."
           ],
@@ -1252,7 +1252,7 @@
               "turno": "w",
               "resultado": "1-0",
               "pregunta": "Hay una columna con un solo peón, del rival: ¿cuántas piezas tuyas pueden atacarlo? Juegan las blancas; el rival acaba de jugar …h5.",
-              "comentario": "34.Txc8+ Axc8 35.Te8+ Rh7 36.Txc8. Es una horquilla: una pieza ataca dos objetivos a la vez. Mira cómo las piezas mayores apuntan al peón de la columna semiabierta y el rival se queda sin defensores suficientes. (Ejercicio 1thjO de la base abierta de Lichess (CC0), rating 1147. Stockfish 16 a profundidad 18: Txc8+ es la mejor (+3,1) y la segunda queda en -0,9.)",
+              "comentario": "34.Txc8+ Axc8 35.Te8+ Rh7 36.Txc8. Es un tenedor: una pieza ataca dos objetivos a la vez. Mira cómo las piezas mayores apuntan al peón de la columna semiabierta y el rival se queda sin defensores suficientes. (Ejercicio 1thjO de la base abierta de Lichess (CC0), rating 1147. Stockfish 16 a profundidad 18: Txc8+ es la mejor (+3,1) y la segunda queda en -0,9.)",
               "linea": [
                 "Rxc8+",
                 "Bxc8",
@@ -1418,13 +1418,13 @@
         },
         {
           "titulo": "Combinaciones con caballos",
-          "resumen": "El caballo salta y ataca en todas direcciones a la vez. Aprende la horquilla, el jaque doble y el mate de la coz, y las señales que los anuncian.",
+          "resumen": "El caballo salta y ataca en todas direcciones a la vez. Aprende el tenedor, el jaque doble y el mate de la coz, y las señales que los anuncian.",
           "parrafos": [
-            "El caballo es la pieza de las horquillas: desde una casilla ataca hasta ocho, y sus ataques no se pueden tapar. Cuando ataca a la vez al rey y a otra pieza, o a la dama y a una torre, el rival solo puede salvar una. Hay además un mate propio del caballo: el mate de la coz, en que el rey rival queda rodeado por sus propias piezas y el caballo da jaque sin que nadie pueda capturarlo. Para preparar horquillas suele hacer falta un sacrificio que lleve las piezas rivales a las casillas correctas.",
-            "Una señal muy útil: el caballo siempre ataca casillas de un mismo color, el contrario al de la casilla donde está. Por eso solo puede hacer horquilla a dos piezas que estén en casillas del mismo color. Si el rey y la dama rivales están en casillas del mismo color y a distancia de salto, busca la casilla donde un caballo los atacaría a los dos. Fíjate también en las piezas rivales sin defensa: el caballo las cobra con un ataque doble.",
-            "El error típico es encontrar la horquilla y no mirar si la casilla de llegada está defendida, o si el rival, en vez de salvar una pieza, contesta con un jaque o captura el caballo. Antes de saltar, comprueba que el caballo llega seguro o que lo que ganas vale más que él. Y en defensa, mira siempre las casillas a las que puede saltar el caballo rival en una o dos jugadas: muchas horquillas se ven venir de lejos."
+            "El caballo es la pieza de los tenedores: desde una casilla ataca hasta ocho, y sus ataques no se pueden tapar. Cuando ataca a la vez al rey y a otra pieza, o a la dama y a una torre, el rival solo puede salvar una. Hay además un mate propio del caballo: el mate de la coz, en que el rey rival queda rodeado por sus propias piezas y el caballo da jaque sin que nadie pueda capturarlo. Para preparar tenedores suele hacer falta un sacrificio que lleve las piezas rivales a las casillas correctas.",
+            "Una señal muy útil: el caballo siempre ataca casillas de un mismo color, el contrario al de la casilla donde está. Por eso solo puede hacer tenedor a dos piezas que estén en casillas del mismo color. Si el rey y la dama rivales están en casillas del mismo color y a distancia de salto, busca la casilla donde un caballo los atacaría a los dos. Fíjate también en las piezas rivales sin defensa: el caballo las cobra con un ataque doble.",
+            "El error típico es encontrar el tenedor y no mirar si la casilla de llegada está defendida, o si el rival, en vez de salvar una pieza, contesta con un jaque o captura el caballo. Antes de saltar, comprueba que el caballo llega seguro o que lo que ganas vale más que él. Y en defensa, mira siempre las casillas a las que puede saltar el caballo rival en una o dos jugadas: muchos tenedores se ven venir de lejos."
           ],
-          "practica": "Pon en el tablero el rey y la dama rivales en casillas del mismo color y busca desde dónde podría atacarlos un caballo. Después revisa tus partidas y anota cuántas horquillas te hicieron sin que las vieras venir.",
+          "practica": "Pon en el tablero el rey y la dama rivales en casillas del mismo color y busca desde dónde podría atacarlos un caballo. Después revisa tus partidas y anota cuántos tenedores te hicieron sin que los vieras venir.",
           "area": "Táctica",
           "clave": "caballo",
           "js": "pieza:N",
@@ -1437,7 +1437,7 @@
               "turno": "w",
               "resultado": "1-0",
               "pregunta": "Hay un caballo cerca de piezas rivales valiosas: ¿a qué casillas puede saltar? Juegan las blancas; el rival acaba de jugar …Rb5.",
-              "comentario": "54.Cc3+ Rc6 55.Cxb1. Es una horquilla: una pieza ataca dos objetivos a la vez. Mira cómo el caballo ataca dos piezas a la vez desde una casilla donde nadie puede taparlo. (Ejercicio 1aiIq de la base abierta de Lichess (CC0), rating 905. Stockfish 16 a profundidad 18: Cc3+ es la mejor (+6,1) y la segunda queda en +0,1.)",
+              "comentario": "54.Cc3+ Rc6 55.Cxb1. Es un tenedor: una pieza ataca dos objetivos a la vez. Mira cómo el caballo ataca dos piezas a la vez desde una casilla donde nadie puede taparlo. (Ejercicio 1aiIq de la base abierta de Lichess (CC0), rating 905. Stockfish 16 a profundidad 18: Cc3+ es la mejor (+6,1) y la segunda queda en +0,1.)",
               "linea": [
                 "Nc3+",
                 "Kc6",
@@ -1466,7 +1466,7 @@
               "turno": "b",
               "resultado": "0-1",
               "pregunta": "Mira cuántas piezas tiene fuera cada bando: ¿quién va adelante en el desarrollo? Juegan las negras; el rival acaba de jugar Ab5.",
-              "comentario": "11…Da5+ 12.Rf1 Dxb5+. Es una horquilla: una pieza ataca dos objetivos a la vez. Fíjate en que el bando con más piezas activas castiga al que se quedó atrás antes de que este pueda terminar de desarrollarse. (Ejercicio 1Luyr de la base abierta de Lichess (CC0), rating 1019. Stockfish 16 a profundidad 18: Da5+ es la mejor (+4,2) y la segunda queda en -0,5.)",
+              "comentario": "11…Da5+ 12.Rf1 Dxb5+. Es un tenedor: una pieza ataca dos objetivos a la vez. Fíjate en que el bando con más piezas activas castiga al que se quedó atrás antes de que este pueda terminar de desarrollarse. (Ejercicio 1Luyr de la base abierta de Lichess (CC0), rating 1019. Stockfish 16 a profundidad 18: Da5+ es la mejor (+4,2) y la segunda queda en -0,5.)",
               "linea": [
                 "Qa5+",
                 "Kf1",
@@ -1590,7 +1590,7 @@
               "turno": "b",
               "resultado": "0-1",
               "pregunta": "Mira dónde está cada pieza: ¿cuáles trabajan juntas y cuál está sola? Juegan las negras; el rival acaba de jugar De5+.",
-              "comentario": "35…Dxe5 36.Txe5 Cf3+ 37.Rf1 Cxe5. Es una horquilla: una pieza ataca dos objetivos a la vez. Fíjate en cómo las piezas que apuntan al mismo objetivo se apoyan entre ellas, y en que la pieza suelta es la que sufre el golpe. (Ejercicio 0APD2 de la base abierta de Lichess (CC0), rating 1105. Stockfish 16 a profundidad 18: Dxe5 es la mejor (+5,4) y la segunda queda en -5,7.)",
+              "comentario": "35…Dxe5 36.Txe5 Cf3+ 37.Rf1 Cxe5. Es un tenedor: una pieza ataca dos objetivos a la vez. Fíjate en cómo las piezas que apuntan al mismo objetivo se apoyan entre ellas, y en que la pieza suelta es la que sufre el golpe. (Ejercicio 0APD2 de la base abierta de Lichess (CC0), rating 1105. Stockfish 16 a profundidad 18: Dxe5 es la mejor (+5,4) y la segunda queda en -5,7.)",
               "linea": [
                 "Qxe5",
                 "Rxe5",
@@ -1817,7 +1817,7 @@
               "turno": "b",
               "resultado": "0-1",
               "pregunta": "Tienes ventaja: ¿cuál es la forma más segura de acercarla a la victoria? Juegan las negras; el rival acaba de jugar Dc5.",
-              "comentario": "47…Ce4+ 48.Rf4 Cxc5. Es una horquilla: una pieza ataca dos objetivos a la vez. La jugada no busca brillar: quita contrajuego o simplifica, y deja la ventaja más fácil de cobrar. (Ejercicio 2g2QK de la base abierta de Lichess (CC0), rating 974. Stockfish 16 a profundidad 18: Ce4+ es la mejor (+5,3) y la segunda queda en -4,9.)",
+              "comentario": "47…Ce4+ 48.Rf4 Cxc5. Es un tenedor: una pieza ataca dos objetivos a la vez. La jugada no busca brillar: quita contrajuego o simplifica, y deja la ventaja más fácil de cobrar. (Ejercicio 2g2QK de la base abierta de Lichess (CC0), rating 974. Stockfish 16 a profundidad 18: Ce4+ es la mejor (+5,3) y la segunda queda en -4,9.)",
               "linea": [
                 "Ne4+",
                 "Kf4",
@@ -2141,7 +2141,7 @@
               "turno": "w",
               "resultado": "1-0",
               "pregunta": "¿A qué casillas puede escapar el rey, y cuáles de ellas cubre ya el alfil? Juegan las blancas; el rival acaba de jugar …Cxg3.",
-              "comentario": "33.Txe8+ Rb7 34.Te7+ Dxe7 35.Axe7. Es una horquilla: una pieza ataca dos objetivos a la vez. Torre y alfil se reparten el trabajo: uno corta las casillas de escape y el otro da el golpe. (Ejercicio 2ZvDk de la base abierta de Lichess (CC0), rating 969. Stockfish 16 a profundidad 18: Txe8+ es la mejor (+5,8) y la segunda queda en -6,3.)",
+              "comentario": "33.Txe8+ Rb7 34.Te7+ Dxe7 35.Axe7. Es un tenedor: una pieza ataca dos objetivos a la vez. Torre y alfil se reparten el trabajo: uno corta las casillas de escape y el otro da el golpe. (Ejercicio 2ZvDk de la base abierta de Lichess (CC0), rating 969. Stockfish 16 a profundidad 18: Txe8+ es la mejor (+5,8) y la segunda queda en -6,3.)",
               "linea": [
                 "Rxe8+",
                 "Kb7",

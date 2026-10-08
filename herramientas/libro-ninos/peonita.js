@@ -150,7 +150,7 @@ const CAPITULOS = [
     n: 2,
     titulo: "Los vecinos del tablero",
     escena: {
-      id: "vecinos", fondo: "dia",
+      id: "vecinos", fondo: "aula",
       alt: "Las piezas blancas en fila: la torre, el caballo, el alfil, la dama y el rey. Adelante, Peonita y Tizón, un peón negro con bufanda verde, se sonríen con un corazón entre los dos.",
       contenido: ["t", "c", "a", "d", "r"].map((t, i) => D.pieza(t, "b", 70 + i * 70, 222, 0.62)).join("") +
         D.pieza("p", "b", 410, 292, 0.85, { mono: true }) + D.pieza("p", "n", 520, 292, 0.85, { bufanda: true, espejo: true }) +
@@ -185,10 +185,10 @@ const CAPITULOS = [
     n: 3,
     titulo: "Doña Muralla, la torre",
     escena: {
-      id: "torre", fondo: "dia",
+      id: "torre", fondo: "noche",
       alt: "Doña Muralla, la torre blanca, en el centro, con cuatro flechas que salen de ella: hacia arriba, hacia abajo y hacia los dos lados.",
       contenido: D.pieza("t", "b", 300, 270, 1.15) + D.flecha(370, 190, 520, 190, "#1971c2") + D.flecha(230, 190, 80, 190, "#1971c2") +
-        D.flecha(300, 98, 300, 30, "#1971c2") + D.globo(380, 40, 190, ["¡Derechito,", "como un tren!"], [345, 140]),
+        D.flecha(300, 98, 300, 30, "#1971c2") + D.globo(320, 40, 160, ["¡Derechito,", "como un tren!"], [345, 140]),
     },
     cuento: [
       "La primera en dar clase fue Doña Muralla, la torre.",
@@ -216,7 +216,7 @@ const CAPITULOS = [
     n: 4,
     titulo: "Don Saleras y sus caminos de colores",
     escena: {
-      id: "alfil", fondo: "dia",
+      id: "alfil", fondo: "noche",
       alt: "Don Saleras, el alfil blanco con su gorro puntiagudo, con cuatro flechas inclinadas que salen de él en diagonal.",
       contenido: D.pieza("a", "b", 300, 270, 1.15) + D.flecha(360, 150, 470, 60, "#9c36b5") + D.flecha(240, 150, 130, 60, "#9c36b5") +
         D.flecha(370, 225, 470, 245, "#9c36b5") + D.flecha(230, 225, 130, 245, "#9c36b5"),
@@ -282,11 +282,11 @@ const CAPITULOS = [
     n: 6,
     titulo: "El Rey Sereno, paso a pasito",
     escena: {
-      id: "rey", fondo: "dia",
+      id: "rey", fondo: "noche",
       alt: "El Rey Sereno, el rey blanco con su corona y su cruz dorada, camina con pasos cortitos. Delante de él hay huellas pequeñas, una casilla a la vez.",
       contenido: D.pieza("r", "b", 220, 272, 1.15) +
         [0, 1, 2].map((i) => `<ellipse cx="${330 + i * 60}" cy="${280 - i * 4}" rx="14" ry="8" fill="#8d5524" opacity=".45"/>`).join("") +
-        D.globo(300, 50, 220, ["Paso a pasito,", "¡pero con cuidado!"], [270, 130]),
+        D.globo(250, 50, 220, ["Paso a pasito,", "¡pero con cuidado!"], [270, 130]),
     },
     cuento: [
       "La cuarta noche, todos hicieron silencio: venía el Rey Sereno.",
@@ -315,7 +315,7 @@ const CAPITULOS = [
     n: 7,
     titulo: "Galope, el caballo saltarín",
     escena: {
-      id: "caballo", fondo: "dia",
+      id: "caballo", fondo: "noche",
       alt: "Galope, el caballo blanco, salta por encima de un peón dibujando una L con una línea de puntos.",
       contenido: D.pieza("p", "n", 300, 272, 0.7, { bufanda: true, cara: "sorpresa" }) +
         D.pieza("c", "b", 140, 272, 1.05) +
@@ -349,7 +349,7 @@ const CAPITULOS = [
     n: 8,
     titulo: "Peonita aprende a caminar",
     escena: {
-      id: "peon", fondo: "dia",
+      id: "peon", fondo: "noche",
       alt: "Peonita sube una escalera de casillas. Arriba, al final del camino, brilla una corona dorada: el sueño de Peonita de llegar al final del tablero.",
       contenido: [0, 1, 2, 3, 4].map((i) => `<rect x="${150 + i * 70}" y="${250 - i * 34}" width="70" height="${70 + i * 34}" fill="${i % 2 ? "#c79a6b" : "#f6e7c8"}" stroke="#6b4a2e" stroke-width="2"/>`).join("") +
         D.pieza("p", "b", 185, 252, 0.72, { mono: true }) + D.corona(465, 70, 1.4) +
@@ -422,7 +422,7 @@ const CAPITULOS = [
     n: 10,
     titulo: "¡Jaque!",
     escena: {
-      id: "jaque", fondo: "dia",
+      id: "jaque", fondo: "noche",
       alt: "Una torre negra apunta al Rey Sereno, que pone cara de susto. Un globo dice: ¡Jaque!",
       contenido: D.pieza("t", "n", 440, 272, 0.95, { espejo: true }) + D.pieza("r", "b", 150, 272, 0.95, { cara: "sorpresa" }) +
         D.flecha(390, 200, 225, 200, "#e03131") + D.globo(330, 40, 140, "¡Jaque!", [420, 120], { color: "#c92a2a" }),
@@ -493,8 +493,8 @@ const CAPITULOS = [
     n: 12,
     titulo: "Ahogado: cuando nadie gana",
     escena: {
-      id: "ahogado", fondo: "dia",
-      alt: "El rey negro, solito en una esquina, piensa con signos de pregunta alrededor. Un globo dice: No me puedo mover… ¡pero no estoy en jaque!",
+      id: "ahogado", fondo: "noche",
+      alt: "El rey negro, solito en una esquina, piensa con signos de pregunta alrededor. Enfrente está la dama blanca, la nueva corona de Peonita. Un globo dice: No me puedo mover… ¡pero no estoy en jaque!",
       contenido: D.pieza("r", "n", 160, 272, 1, { cara: "pensando" }) + D.pieza("d", "b", 430, 272, 0.85, { cara: "sorpresa", espejo: true }) +
         [[95, 95], [235, 85], [175, 55]].map(([x, y]) => `<text x="${x}" y="${y}" font-family="Quicksand, sans-serif" font-weight="700" font-size="34" fill="#1971c2">?</text>`).join("") +
         D.globo(280, 34, 290, ["No me puedo mover…", "¡pero no estoy en jaque!"], [215, 140]),

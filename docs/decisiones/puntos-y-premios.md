@@ -16,7 +16,7 @@ el patrón correcto para lo que faltaba: una tabla de solo apéndice (un
 renglón por evento, nunca un contador que se pisa), sin política de
 escritura, que solo toca una función `SECURITY DEFINER` con
 `pg_advisory_xact_lock` para que dos ajustes a la vez no la dejen en
-negativo. `public.puntos_ajustes` (`20261008150000_puntos_acumulados.sql`)
+negativo. `public.puntos_ajustes` (`20261008054002_puntos_acumulados.sql`)
 es ese mismo patrón, generalizado: cada renglón dice de dónde salió
 (`origen`: clase, entrenamiento, tarea, examen, racha, canje, ajuste_manual)
 y lleva una `referencia` opcional para no pagar el mismo evento dos veces.
@@ -102,7 +102,7 @@ exactamente el mismo: da igual por cuál de las dos vías se compró.
 
 Los títulos y los marcos de perfil solo se ven en el panel y la tienda de
 quien los tiene — motivadores, pero privados. Se agregó una categoría más
-(`20261008160000_puntos_accesorios_avatar.sql`) pensada para que SÍ se note
+(`20261008055743_puntos_accesorios_avatar.sql`) pensada para que SÍ se note
 delante de otros: un emoji pequeño (gorro, lentes, una corona…) encima de la
 foto de perfil, en los lugares donde la foto de uno ya la ven otras
 personas. El primer lugar donde se conectó fue el más visible de todos: la

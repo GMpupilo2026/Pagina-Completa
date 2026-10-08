@@ -542,7 +542,7 @@ window.GANAR_CON_POCO_ITEMS = [
     gana: true,
     valor: '+5,0',
     pista: 'Antes de apretar, mira qué amenaza el rival: solo una jugada conserva lo que tienes.',
-    explica: 'Es una horquilla: una pieza ataca dos objetivos a la vez.',
+    explica: 'Es un tenedor: una pieza ataca dos objetivos a la vez.',
     comprobado: 'Ejercicio 1pIxY de la base abierta de Lichess (CC0), rating 1638. Stockfish 16 a profundidad 18: Dh5+ es la mejor (+5,0) y la segunda queda en +0,2.',
   },
   {

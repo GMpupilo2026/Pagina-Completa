@@ -451,7 +451,7 @@
        "fen": "rnb1kb1N/ppp3pp/4pn2/8/8/8/PPP2PPP/RNB1KB1R b KQ - 0 8"
       }
      ],
-     "comentario": "6.Dxd8+ Rxd8 7.Cxf7+ Re8 8.Cxh8. Es una horquilla: una pieza ataca dos objetivos a la vez. La posición sale de la apertura: la ventaja de tiempo se convierte en algo concreto con esta jugada. (Ejercicio 1ghMX de la base abierta de Lichess (CC0), rating 1373. Stockfish 16 a profundidad 18: Dxd8+ es la mejor (+3,7) y la segunda queda en -0,8.)",
+     "comentario": "6.Dxd8+ Rxd8 7.Cxf7+ Re8 8.Cxh8. Es un tenedor: una pieza ataca dos objetivos a la vez. La posición sale de la apertura: la ventaja de tiempo se convierte en algo concreto con esta jugada. (Ejercicio 1ghMX de la base abierta de Lichess (CC0), rating 1373. Stockfish 16 a profundidad 18: Dxd8+ es la mejor (+3,7) y la segunda queda en -0,8.)",
      "clave": true,
      "marcas": []
     }
@@ -691,7 +691,7 @@
        "fen": "2Nr1k2/p4p1p/1b3Pp1/8/2P5/7P/P5K1/3RR3 b - - 0 28"
       }
      ],
-     "comentario": "26.Ce7+ Rf8 27.Cxc8 Txg2+ 28.Rxg2. Es una horquilla: una pieza ataca dos objetivos a la vez. La jugada es del caballo, y la línea gana material con una doble amenaza que no se puede parar. (Ejercicio 25UOh de la base abierta de Lichess (CC0), rating 1645. Stockfish 16 a profundidad 18: Ce7+ es la mejor (+4,5) y la segunda queda en -4,8.)",
+     "comentario": "26.Ce7+ Rf8 27.Cxc8 Txg2+ 28.Rxg2. Es un tenedor: una pieza ataca dos objetivos a la vez. La jugada es del caballo, y la línea gana material con una doble amenaza que no se puede parar. (Ejercicio 25UOh de la base abierta de Lichess (CC0), rating 1645. Stockfish 16 a profundidad 18: Ce7+ es la mejor (+4,5) y la segunda queda en -4,8.)",
      "clave": true,
      "marcas": []
     }
@@ -741,7 +741,7 @@
        "fen": "r6r/2pb2pk/p4BNp/1p2p3/7P/1P3PP1/1PP5/3RK2R b K - 0 26"
       }
      ],
-     "comentario": "24.Axf6 Dxg6 25.Ce7+ Rh7 26.Cxg6. Es una horquilla: una pieza ataca dos objetivos a la vez. La jugada es del alfil, que trabaja desde lejos: lo que gana se ve recién al mirar la línea entera. (Ejercicio 2tT48 de la base abierta de Lichess (CC0), rating 1590. Stockfish 16 a profundidad 18: Axf6 es la mejor (+3,4) y la segunda queda en -3,7.)",
+     "comentario": "24.Axf6 Dxg6 25.Ce7+ Rh7 26.Cxg6. Es un tenedor: una pieza ataca dos objetivos a la vez. La jugada es del alfil, que trabaja desde lejos: lo que gana se ve recién al mirar la línea entera. (Ejercicio 2tT48 de la base abierta de Lichess (CC0), rating 1590. Stockfish 16 a profundidad 18: Axf6 es la mejor (+3,4) y la segunda queda en -3,7.)",
      "clave": true,
      "marcas": []
     }
@@ -801,7 +801,7 @@
        "fen": "5rk1/pp4pp/8/3R4/3p4/1P4PK/PB1r3P/8 w - - 0 30"
       }
      ],
-     "comentario": "26…Dc6 27.Tf5 Dxd5+ 28.Txd5 Tf2+ 29.Rh3 Txd2. Es una horquilla: una pieza ataca dos objetivos a la vez. La dama se mueve sin dar jaque ni capturar, y aun así el rival no puede parar todo lo que amenaza. (Ejercicio 2QnPY de la base abierta de Lichess (CC0), rating 1567. Stockfish 16 a profundidad 18: Dc6 es la mejor (+4,2) y la segunda queda en 0,0.)",
+     "comentario": "26…Dc6 27.Tf5 Dxd5+ 28.Txd5 Tf2+ 29.Rh3 Txd2. Es un tenedor: una pieza ataca dos objetivos a la vez. La dama se mueve sin dar jaque ni capturar, y aun así el rival no puede parar todo lo que amenaza. (Ejercicio 2QnPY de la base abierta de Lichess (CC0), rating 1567. Stockfish 16 a profundidad 18: Dc6 es la mejor (+4,2) y la segunda queda en 0,0.)",
      "clave": true,
      "marcas": []
     }
@@ -891,7 +891,7 @@
        "fen": "r4rk1/2p1N1p1/p3b2p/1p2p2q/8/P1N4P/1PQB1PP1/3R2K1 b - - 0 23"
       }
      ],
-     "comentario": "21.Txe5 fxe5 22.Cg6+ Rg8 23.Cxe7+. Es una horquilla: una pieza ataca dos objetivos a la vez. La torre se entrega: se cambia por una pieza menor o queda donde una pieza de menos valor la puede tomar. Lo que queda después vale más que la diferencia de material. (Ejercicio 11MuH de la base abierta de Lichess (CC0), rating 1583. Stockfish 16 a profundidad 18: Txe5 es la mejor (+3,9) y la segunda queda en -0,3.)",
+     "comentario": "21.Txe5 fxe5 22.Cg6+ Rg8 23.Cxe7+. Es un tenedor: una pieza ataca dos objetivos a la vez. La torre se entrega: se cambia por una pieza menor o queda donde una pieza de menos valor la puede tomar. Lo que queda después vale más que la diferencia de material. (Ejercicio 11MuH de la base abierta de Lichess (CC0), rating 1583. Stockfish 16 a profundidad 18: Txe5 es la mejor (+3,9) y la segunda queda en -0,3.)",
      "clave": true,
      "marcas": []
     }

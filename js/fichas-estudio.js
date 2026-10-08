@@ -58,7 +58,7 @@
  * La misma ficha trae `temaPractica`: la clave de ese tema en temas.json, que
  * es a donde lleva el botón «Practicar este tema» (temas.html?tema=<clave>).
  * El verificador comprueba que el nombre del texto y la clave sean el mismo
- * tema. Ojo con los nombres de Lichess: la horquilla es «Ataque doble» y la
+ * tema. Ojo con los nombres de Lichess: el tenedor es «Ataque doble» y la
  * enfilada es «Pincho».
  *
  * AL TOCAR ESTE ARCHIVO, CORRER herramientas/verificar-fichas.js (el banco) y
@@ -153,7 +153,7 @@
         ],
         [
           "Golpe Axc6 cuando el peón de e5 queda sin defensa suficiente",
-          "La horquilla d5 contra un alfil y un caballo mal puestos",
+          "El tenedor d5 contra un alfil y un caballo mal puestos",
           "Presión en la columna e, que se abre tarde pero se abre",
         ],
         [
@@ -309,7 +309,7 @@
         ],
         [
           "El golpe Cd5 contra un alfil clavado",
-          "La horquilla Cb5 contra c7",
+          "El tenedor Cb5 contra c7",
           "Jaques de la dama por la diagonal que abre e5",
         ],
         [
@@ -624,7 +624,7 @@
         ],
         [
           "El golpe cxd4 en el momento justo, no antes",
-          "La horquilla Cb4 contra c2 cuando la casilla queda floja",
+          "El tenedor Cb4 contra c2 cuando la casilla queda floja",
           "Presión de la dama y el caballo contra d4 y b2 al mismo tiempo",
         ],
         [
@@ -1035,7 +1035,7 @@
     {
       id: "horquilla",
       categoria: "tactica",
-      titulo: "La horquilla",
+      titulo: "El tenedor",
       subtitulo: "Una pieza, dos amenazas",
       nivel: 1,
       temaPractica: "fork",
@@ -1048,13 +1048,13 @@
       centro: [
         "Una pieza ataca dos cosas: solo se puede salvar una",
         "Si una de las dos es el rey, la otra se cae segura",
-        "El caballo es el rey de la horquilla: ataca desde donde nadie lo ve venir",
+        "El caballo es el rey del tenedor: ataca desde donde nadie lo ve venir",
       ],
       bloques: [
         [
           "Dos piezas del rival a distancia de salto de caballo una de otra",
           "El rey y la dama en casillas del mismo color, con el caballo cerca",
-          "Piezas sin defender: son la mitad de las horquillas que existen",
+          "Piezas sin defender: son la mitad de los tenedores que existen",
         ],
         [
           "El caballo, la más peligrosa: ningún otro puede atacarlo de vuelta a distancia",
@@ -1062,14 +1062,14 @@
           "La dama, que ataca en ocho direcciones y siempre encuentra dos",
         ],
         [
-          "Mirar solo la jugada propia y no ver la horquilla del rival",
+          "Mirar solo la jugada propia y no ver el tenedor del rival",
           "Dejar el rey y la dama en la misma diagonal o en el mismo color",
-          "Buscar la horquilla y olvidarse de que la casilla está defendida",
+          "Buscar el tenedor y olvidarse de que la casilla está defendida",
         ],
         [
           "Antes de mover, pregúntate: ¿qué ataca ahora esta pieza?",
-          "En Entrenamiento, el tema «Ataque doble» de Ejercicios por tema: así se llama ahí la horquilla",
-          "Repasar las partidas propias buscando las horquillas que no se vieron",
+          "En Entrenamiento, el tema «Ataque doble» de Ejercicios por tema: así se llama ahí el tenedor",
+          "Repasar las partidas propias buscando los tenedores que no se vieron",
         ],
       ],
     },
@@ -1584,17 +1584,17 @@
       fen: "3q2kr/5p1p/8/6N1/3Q4/8/5PPP/6K1 w - - 0 1",
       linea: ["Qxh8+", "Kxh8", "Nxf7+", "Kg8", "Nxd8"],
       comprueba: { jaque: true, materialGanado: { color: "w", al_menos: 5 } },
-      resumen: "Se entrega material para obligar al rey a pararse justo en la casilla donde lo espera una horquilla.",
-      diagrama: "La dama blanca se entrega en h8: el rey negro está obligado a comerla, y desde f7 el caballo lo horquilla junto con la dama de d8.",
+      resumen: "Se entrega material para obligar al rey a pararse justo en la casilla donde lo espera un tenedor.",
+      diagrama: "La dama blanca se entrega en h8: el rey negro está obligado a comerla, y desde f7 el caballo le hace un tenedor al rey y a la dama de d8.",
       centro: [
         "No se ataca al rey donde está: se lo trae a donde conviene",
         "Se paga con material porque lo que se gana vale más",
-        "Casi siempre termina en una horquilla de caballo o en mate",
+        "Casi siempre termina en un tenedor de caballo o en mate",
       ],
       bloques: [
         [
           "Un rey con una sola casilla libre y una captura obligada",
-          "Un caballo a un salto de una casilla que horquillaría rey y dama",
+          "Un caballo a un salto de una casilla desde la que haría un tenedor al rey y a la dama",
           "Piezas del rival alineadas con la casilla a la que iría el rey",
         ],
         [
@@ -1609,7 +1609,7 @@
         ],
         [
           "Calcular jugada por jugada, hasta ver el material de vuelta",
-          "Buscar primero la horquilla y después la casilla que la habilita",
+          "Buscar primero el tenedor y después la casilla que lo habilita",
           "En Entrenamiento, el tema «Atracción» de Ejercicios por tema",
         ],
       ],
@@ -1833,13 +1833,13 @@
       diagrama: "El peón blanco corona en c8, y solo como caballo da jaque al rey de a7 y ataca la dama negra de e7 al mismo tiempo.",
       centro: [
         "Coronar dama es lo normal, pero no es una regla: se elige la pieza",
-        "El caballo hace lo único que la dama no sabe: saltar y horquillar",
+        "El caballo hace lo único que la dama no sabe: saltar y hacer tenedores",
         "También se corona caballo o torre para NO ahogar al rival",
       ],
       bloques: [
         [
           "Un peón que corona a salto de caballo del rey rival",
-          "El rey y una pieza grande a distancia de horquilla desde la casilla de coronación",
+          "El rey y una pieza grande a distancia de tenedor desde la casilla de coronación",
           "Una posición donde coronar dama sería ahogado y tablas",
         ],
         [
@@ -5574,7 +5574,7 @@
       centro: [
         "Un rey sin peones delante no tiene donde esconderse",
         "Cada jaque obliga al rival a responder y nos da un tiempo",
-        "Entre jaque y jaque aparecen las horquillas y las piezas sueltas",
+        "Entre jaque y jaque aparecen los tenedores y las piezas sueltas",
       ],
       bloques: [
         [
@@ -5585,7 +5585,7 @@
         [
           "Las damas, las torres y los caballos, que dan jaque de cerca",
           "Los jaques que comen algo al pasar",
-          "Una horquilla después de mover al rey a una casilla mala",
+          "Un tenedor después de mover al rey a una casilla mala",
         ],
         [
           "Dar jaques que solo empujan al rey a un lugar seguro",

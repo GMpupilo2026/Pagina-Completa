@@ -122,8 +122,8 @@ console.log("\n=== acierta() ===");
 console.log("\n=== temaDelError() y temasDe() ===");
 {
   const T = require("../js/preparacion-tactica.js");
-  ok("regaló (Tc1) y el rival lo castiga con una horquilla (Ce2+)", E.temaDelError(T, Chess, 1, "4k3/8/8/8/5n2/8/8/R5K1 w - - 0 1", null, "Rc1", "Ne2+") === "horquilla");
-  ok("se le escapó una horquilla (Cc7+): el tema es la mejor que no vio", E.temaDelError(T, Chess, 2, "r3k3/8/8/1N6/8/8/8/4K3 w - - 0 1", "Nc7+") === "horquilla");
+  ok("regaló (Tc1) y el rival lo castiga con un tenedor (Ce2+)", E.temaDelError(T, Chess, 1, "4k3/8/8/8/5n2/8/8/R5K1 w - - 0 1", null, "Rc1", "Ne2+") === "horquilla");
+  ok("se le escapó un tenedor (Cc7+): el tema es la mejor que no vio", E.temaDelError(T, Chess, 2, "r3k3/8/8/1N6/8/8/8/4K3 w - - 0 1", "Nc7+") === "horquilla");
   ok("el mate se reconoce aunque el motor mande la jugada sin «#»", E.temaDelError(T, Chess, 2, "6k1/5ppp/8/8/8/8/8/R5K1 w - - 0 1", "Ra8") === "mate");
   ok("una jugada que no es legal no inventa tema", E.temaDelError(T, Chess, 1, "4k3/8/8/8/5n2/8/8/R5K1 w - - 0 1", null, "Rc9", "Ne2+") === null);
   ok("sin el reconocedor, sin tema", E.temaDelError(null, Chess, 2, "r3k3/8/8/1N6/8/8/8/4K3 w - - 0 1", "Nc7+") === null);

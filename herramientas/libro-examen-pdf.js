@@ -118,7 +118,7 @@ const GUIA = {
     ],
   },
   tactica: {
-    mide: "Ver los golpes: horquillas, clavadas, ataques dobles, desviaciones, piezas sin defender.",
+    mide: "Ver los golpes: tenedores, clavadas, ataques dobles, desviaciones, piezas sin defender.",
     flojo: "Pierdes o dejas de ganar material por golpes de una o dos jugadas. Es lo primero que hay que arreglar, a cualquier nivel.",
     entrena: [
       "Veinte minutos diarios de ejercicios tácticos valen más que tres horas un domingo.",

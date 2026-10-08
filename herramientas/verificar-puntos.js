@@ -4,7 +4,7 @@
    La cuenta de verdad —que cerrar una clase paga una sola vez, que un
    ejercicio de entrenamiento no se puede repetir para hacer trampa, que
    canjear sin saldo no pasa— la hace la base (ver supabase/migraciones/
-   20261008150000_puntos_acumulados.sql: interno.otorgar_puntos() con su
+   20261008054002_puntos_acumulados.sql: interno.otorgar_puntos() con su
    "referencia" única, canjear_premio() con pg_advisory_xact_lock). Acá se
    comprueba la PÁGINA: que el saldo se pinte, que un premio que no alcanza
    se vea deshabilitado y diga cuánto falta, que canjear descuente y quede en

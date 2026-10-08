@@ -47,11 +47,12 @@ const CLASE_ABIERTA = { id: "s-1", title: null, created_by: "u-profe",
 
 /* Los dos grupos, con el orden en que tienen que salir y DÓNDE. El orden no es
    estético: dentro de "tu material" van primero los que traen algo ya preparado
-   (un curso, un archivo, un PDF) y de último el de armar una posición a mano,
-   que es el trabajo. */
+   (un curso, un archivo, un PDF, una presentación) y de último el de armar una
+   posición a mano, que es el trabajo. La presentación sí la ve la clase, pero
+   elegirla y pasarla es del profe: es su material. */
 const GRUPOS = [
   { donde: "teacher-toolbar", rotulo: "Tu material — solo lo ves tú",
-    botones: ["toggle-lesson-btn", "toggle-archivos-btn", "toggle-pdf-btn", "toggle-free-mode-btn"] },
+    botones: ["toggle-lesson-btn", "toggle-archivos-btn", "toggle-pdf-btn", "toggle-presentacion-btn", "toggle-free-mode-btn"] },
 ];
 /* «El tablero — lo ve toda la clase» ya no es una tarjeta: sus cuatro botones van en
    la barra del tablero, en su grupo #botones-tablero (que lleva ese rótulo como

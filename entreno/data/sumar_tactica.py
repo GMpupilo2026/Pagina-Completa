@@ -39,7 +39,7 @@ CATEGORIAS = [
     ('columnas-diagonales', 'Ataque por columnas y diagonales',
      'Torres que dominan una columna abierta y alfiles que cruzan el tablero: la pieza que llega lejos decide la partida.'),
     ('ataque-doble', 'Ataque doble',
-     'Una jugada, dos amenazas. Horquillas de caballo, jaques dobles y la pieza que ataca dos cosas a la vez.'),
+     'Una jugada, dos amenazas. Tenedores de caballo, jaques dobles y la pieza que ataca dos cosas a la vez.'),
 ]
 
 
