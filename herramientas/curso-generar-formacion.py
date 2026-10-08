@@ -33,6 +33,18 @@ y decisión) y `ejercicios` con respuesta; la respuesta de los ejercicios con
 posición la calculó chess.js. `node herramientas/verificar-formacion.js`
 comprueba todo eso y que lo generado esté al día.
 
+Las presentaciones (.pptx) siguen el estilo de la presentación de la Clase 1
+que armó el profe —franja azul, letra grande, una idea por diapositiva— y,
+además del .pptx, cada sesión 2 a 7 sale como presentación de la clase en vivo
+(cursos/recursos/formacion-ajedrez/presentaciones/clase-NN/: una imagen por
+diapositiva y diapositivas.json, ver js/clase-presentacion.js). Para eso hace
+falta LibreOffice (pptx a PDF) y PyMuPDF; los tableros salen de
+herramientas/lib/tablero-png.js (playwright). La Clase 1 se da con la
+presentación propia del profe ("presentacion_clase": "propia"). La guía rápida
+de la persona árbitra la arma herramientas/formacion-guia-rapida.py.
+
+    pip install pymupdf pillow      (y LibreOffice instalado)
+
 Las portadas se clonan de un molde, así que salen con las migas y los datos
 estructurados del molde: después de generar hay que correr
 `python3 herramientas/academia-cabecera.py` y
@@ -300,7 +312,8 @@ def protegido(curso):
                 cuerpo.append('<p>%s</p>' % escapar(l["tarea"]))
                 botones = (boton.format(slug=slug, arch=l["archivo"] + "-material.pdf", texto="📚 Material de estudio (PDF)") +
                            boton.format(slug=slug, arch=l["archivo"] + ".pptx", texto="📊 Descargar presentación") +
-                           boton.format(slug=slug, arch=l["archivo"] + "-ejercicios.pdf", texto="📄 Descargar ejercicios (PDF)"))
+                           boton.format(slug=slug, arch=l["archivo"] + "-ejercicios.pdf", texto="📄 Descargar ejercicios (PDF)") +
+                           "".join(boton.format(slug=slug, arch=x["archivo"], texto=x.get("emoji", "") + " " + escapar(x["texto"])) for x in l.get("extras", [])))
 
             titulo_lec = escapar(l["titulo"])
             if l.get("presencial"):
@@ -390,222 +403,317 @@ def academia(curso):
 
 
 # ------------------------------------------------------------- presentaciones
+# ------------------------------------------------------- presentación (.pptx)
+# Con el estilo de la presentación de la Clase 1 que armó el profe: fondo
+# blanco, franja azul con el título, letra grande (las listas, de 22 pt para arriba) y
+# una idea por diapositiva. Lo que no cabe a buen tamaño se parte en otra
+# diapositiva «(continuación)», nunca se achica hasta no leerse. La misma lista
+# de diapositivas (título, texto completo, notas y posiciones) se guarda para
+# la presentación de la clase en vivo (ver presentaciones_de_clase).
+AZUL_T, PIZARRA_T, VERDE_T, OSCURO_T = "3172AC", "4E6178", "15803D", "102A43"
+FUENTE_TTF = "/usr/share/fonts/truetype/crosextra/Carlito-Regular.ttf"   # métrica de Calibri
+
+
+def _medidor():
+    try:
+        from PIL import ImageFont
+        cache = {}
+
+        def ancho(texto, pt):
+            if pt not in cache:
+                cache[pt] = ImageFont.truetype(FUENTE_TTF, pt * 10)
+            return cache[pt].getlength(texto) / 10.0
+        return ancho
+    except Exception:  # sin la fuente, una estimación prudente
+        return lambda texto, pt: len(texto) * pt * 0.52
+
+
+def lineas_que_ocupa(texto, pt, ancho_in, ancho):
+    max_pt = ancho_in * 72
+    total = 0
+    for parrafo in texto.split("\n"):
+        palabras, linea, n = parrafo.split(" "), "", 1
+        for p in palabras:
+            prueba = (linea + " " + p).strip()
+            if ancho(prueba, pt) > max_pt and linea:
+                n, linea = n + 1, p
+            else:
+                linea = prueba
+        total += n
+    return total
+
+
+def cabe(parrafos, pt, ancho_in, alto_in, ancho, interlineado=1.2, entre=0.45):
+    alto = 0.0
+    for t in parrafos:
+        alto += lineas_que_ocupa(t, pt, ancho_in, ancho) * pt * interlineado / 72.0 + entre * pt / 72.0
+    return alto <= alto_in
+
+
+def tamano_que_cabe(parrafos, ancho_in, alto_in, ancho, maximo=28, minimo=18):
+    for pt in range(maximo, minimo - 1, -1):
+        if cabe(parrafos, pt, ancho_in, alto_in, ancho):
+            return pt
+    return None
+
+
 def presentacion(curso, leccion, destino):
     from pptx import Presentation
     from pptx.util import Inches, Pt
     from pptx.dml.color import RGBColor
     from pptx.enum.shapes import MSO_SHAPE
-    from pptx.enum.text import PP_ALIGN
+    from pptx.enum.text import PP_ALIGN, MSO_ANCHOR
+    import tempfile
+
+    ancho = _medidor()
+    W, H = 13.333, 7.5
+    diapos = []        # lo mismo, para la clase en vivo
 
     def rgb(h):
         return RGBColor.from_string(h)
 
-    def caja(diapo, x, y, an, al, texto, tam, color, negrita=False, fuente="Calibri", alineado=None):
-        tb = diapo.shapes.add_textbox(Inches(x), Inches(y), Inches(an), Inches(al))
-        tf = tb.text_frame
-        tf.word_wrap = True
-        for i, linea in enumerate(texto.split("\n")):
-            p = tf.paragraphs[0] if i == 0 else tf.add_paragraph()
-            r = p.add_run()
-            r.text = linea
-            r.font.size = Pt(tam)
-            r.font.bold = negrita
-            r.font.name = fuente
-            r.font.color.rgb = rgb(color)
-            if alineado is not None:
-                p.alignment = alineado
-        return tb
+    prs = Presentation()
+    prs.slide_width, prs.slide_height = Inches(W), Inches(H)
+    vacio = prs.slide_layouts[6]
 
-    def figura(diapo, forma, x, y, an, al, color):
-        f = diapo.shapes.add_shape(forma, Inches(x), Inches(y), Inches(an), Inches(al))
+    def figura(d, x, y, an, al, color, forma=MSO_SHAPE.RECTANGLE, borde=None):
+        f = d.shapes.add_shape(forma, Inches(x), Inches(y), Inches(an), Inches(al))
         f.fill.solid()
         f.fill.fore_color.rgb = rgb(color)
-        f.line.fill.background()
+        if borde:
+            f.line.color.rgb = rgb(borde)
+            f.line.width = Pt(1.5)
+        else:
+            f.line.fill.background()
         f.shadow.inherit = False
         return f
 
-    GLIFOS = {"k": "♚", "q": "♛", "r": "♜", "b": "♝", "n": "♞", "p": "♟"}
-
-    def tablero(d, fen, x, y, lado):
-        """Diagrama de la posición. Las piezas son glifos rellenos para los dos
-        bandos, en blanco con borde o en negro, para que se distingan igual sobre
-        casillas claras y oscuras. La misma posición va además escrita en
-        palabras en la diapositiva."""
-        c = lado / 8.0
-        filas = fen.split(" ")[0].split("/")
-        for r in range(8):
-            col = 0
-            for ch in filas[r]:
-                if ch.isdigit():
-                    for k in range(int(ch)):
-                        figura(d, MSO_SHAPE.RECTANGLE, x + (col + k) * c, y + r * c, c, c,
-                               "F0D9B5" if (r + col + k) % 2 == 0 else "B58863")
-                    col += int(ch)
-                    continue
-                figura(d, MSO_SHAPE.RECTANGLE, x + col * c, y + r * c, c, c,
-                       "F0D9B5" if (r + col) % 2 == 0 else "B58863")
-                blanca = ch.isupper()
-                tb = caja(d, x + col * c, y + r * c - 0.04, c, c, GLIFOS[ch.lower()], 28,
-                          "FFFFFF" if blanca else "111111", fuente="Segoe UI Symbol", alineado=PP_ALIGN.CENTER)
-                if blanca:
-                    from pptx.oxml.ns import qn
-                    rpr = tb.text_frame.paragraphs[0].runs[0]._r.get_or_add_rPr()
-                    ln = rpr.makeelement(qn("a:ln"), {"w": "9525"})
-                    relleno = ln.makeelement(qn("a:solidFill"), {})
-                    color = relleno.makeelement(qn("a:srgbClr"), {"val": "111111"})
-                    relleno.append(color)
-                    ln.append(relleno)
-                    rpr.insert(0, ln)
-                col += 1
-
-    prs = Presentation()
-    prs.slide_width, prs.slide_height = Inches(13.333), Inches(7.5)
-    vacio = prs.slide_layouts[6]
-
-    # 1 · portada de la sesión
-    d = prs.slides.add_slide(vacio)
-    figura(d, MSO_SHAPE.RECTANGLE, 0, 0, 13.333, 7.5, AZUL_950)
-    figura(d, MSO_SHAPE.OVAL, 10.6, -1.6, 5, 5, AZUL_900)
-    figura(d, MSO_SHAPE.OVAL, -1.8, 5.4, 4.2, 4.2, AZUL_900)
-    figura(d, MSO_SHAPE.OVAL, 0.7, 0.65, 1.1, 1.1, AMBAR_500)
-    caja(d, 0.7, 0.65, 1.1, 1.1, str(leccion["n"]), 32, AZUL_950, True, alineado=PP_ALIGN.CENTER)
-    caja(d, 2.1, 0.75, 10.4, 0.5, "AJEDREZ INTEGRAL  ·  %s" % curso["titulo"].upper(), 13, AMBAR_400, True)
-    caja(d, 2.1, 1.2, 10.4, 0.4, "Bloque %d · %s" % (leccion["bloque"]["n"], leccion["bloque"]["titulo"]), 13, AZUL_300)
-    caja(d, 0.7, 2.9, 11.9, 2.2, leccion["titulo"], 34, "FFFFFF", True, "Cambria")
-    caja(d, 0.7, 5.05, 10.5, 1.0, leccion["resumen"], 18, CLARO)
-    caja(d, 0.7, 6.9, 6.0, 0.4, "ajedrez-integral.com", 11, AZUL_400)
-
-    def encabezado(d, etiqueta, icono="⚖"):
-        figura(d, MSO_SHAPE.OVAL, 0.6, 0.55, 0.55, 0.55, AMBAR_500)
-        caja(d, 0.6, 0.55, 0.55, 0.55, icono, 20, AZUL_950, alineado=PP_ALIGN.CENTER)
-        caja(d, 1.35, 0.58, 10.0, 0.5, etiqueta, 14, AMBAR_500, True)
-
-    def lista(d, x, y, an, al, items, tam):
+    def caja(d, x, y, an, al, parrafos, pt, color, negrita=False, centrado=False, vertical=None, vinetas=False):
         tb = d.shapes.add_textbox(Inches(x), Inches(y), Inches(an), Inches(al))
         tf = tb.text_frame
         tf.word_wrap = True
-        for i, item in enumerate(items):
-            par = tf.paragraphs[0] if i == 0 else tf.add_paragraph()
-            par.space_after = Pt(8)
-            r = par.add_run()
-            r.text = "•  " + item
-            r.font.size = Pt(tam)
-            r.font.name = "Calibri"
-            r.font.color.rgb = rgb(AZUL_600)
+        tf.margin_left = tf.margin_right = Inches(0.05)
+        if vertical:
+            tf.vertical_anchor = vertical
+        if isinstance(parrafos, str):
+            parrafos = [parrafos]
+        for i, texto in enumerate(parrafos):
+            p = tf.paragraphs[0] if i == 0 else tf.add_paragraph()
+            p.space_after = Pt(pt * 0.45)
+            if centrado:
+                p.alignment = PP_ALIGN.CENTER
+            r = p.add_run()
+            r.text = ("•  " if vinetas else "") + texto
+            r.font.size, r.font.bold, r.font.name = Pt(pt), negrita, "Calibri"
+            r.font.color.rgb = rgb(color)
         return tb
 
-    def pie_fuente(d, texto):
-        caja(d, 0.6, 6.95, 12.1, 0.4, "Fuente: " + texto, 11, AZUL_400)
+    def nueva(titulo, subtitulo=None, notas=None, texto_clase=None, posiciones=None, fuente=None, oscura=False):
+        d = prs.slides.add_slide(vacio)
+        if oscura:
+            figura(d, 0, 0, W, H, OSCURO_T)
+        else:
+            figura(d, 0, 0, W, 1.05, AZUL_T)
+            caja(d, 0.5, 0.12, W - 1.0, 0.85, titulo, tamano_que_cabe([titulo], W - 1.0, 0.8, ancho, 34, 24) or 24,
+                 "FFFFFF", True, True, MSO_ANCHOR.MIDDLE)
+            if subtitulo:
+                figura(d, 0, 1.05, W, 0.6, PIZARRA_T)
+                caja(d, 0.5, 1.08, W - 1.0, 0.55, subtitulo, tamano_que_cabe([subtitulo], W - 1.0, 0.5, ancho, 22, 16) or 16,
+                     "FFFFFF", False, True, MSO_ANCHOR.MIDDLE)
+        if fuente:
+            caja(d, 0.5, H - 0.48, W - 2.2, 0.4, "Fuente: " + fuente, 12, "9FB3C8" if oscura else "627D98")
+        caja(d, W - 1.6, H - 0.48, 1.2, 0.4, "%d" % (len(diapos) + 1), 12, "9FB3C8" if oscura else "627D98", centrado=True)
+        if notas:
+            d.notes_slide.notes_text_frame.text = notas
+        diapos.append({"titulo": titulo, "texto": texto_clase or titulo, "notas": notas, "posiciones": posiciones})
+        return d
 
-    def tamano(items, base=18):
-        # Más texto, letra algo menor, para que nada se salga de la caja.
-        largo = sum(len(x) for x in items)
-        return base if largo < 380 else base - 2 if largo < 560 else base - 4
+    def cuerpo_y_lista(titulo, subtitulo, intro, puntos, fuente, notas=None):
+        """Texto e ítems en la caja gris; si no caben a 20 pt o más, se parte."""
+        y0 = 1.95 if subtitulo else 1.4
+        alto = H - y0 - 0.75
+        resto, primera = list(puntos), True
+        while primera or resto:
+            parrafos = ([intro] if (primera and intro) else [])
+            tomados = []
+            while resto:
+                prueba = parrafos + ["•  " + p for p in tomados + [resto[0]]]
+                if tamano_que_cabe(prueba, W - 1.8, alto - 0.3, ancho, 30, 22) is None and (tomados or parrafos):
+                    break
+                tomados.append(resto.pop(0))
+            todo = parrafos + ["•  " + p for p in tomados]
+            pt = tamano_que_cabe(todo, W - 1.8, alto - 0.3, ancho, 30, 20) or 20
+            tit = titulo if primera else titulo + " (continuación)"
+            d = nueva(tit, subtitulo, notas, " ".join(([intro] if primera and intro else []) + tomados), None, fuente)
+            figura(d, 0.5, y0, W - 1.0, alto, "F0F4F8")
+            tb = caja(d, 0.85, y0 + 0.15, W - 1.7, alto - 0.3, todo, pt, OSCURO_T)
+            if primera and intro and tomados:     # el texto de entrada, en negrita suave
+                tb.text_frame.paragraphs[0].runs[0].font.color.rgb = rgb(AZUL_T)
+            primera = False
+
+    # 1 · portada
+    d = nueva(leccion["titulo"], oscura=True,
+              texto_clase="Portada. Sesión %d: %s. %s %s" % (leccion["n"], leccion["titulo"], leccion["resumen"], curso["titulo"]))
+    figura(d, 0.8, 2.2, 0.12, 2.6, "F4C430")
+    caja(d, 1.15, 1.2, 11, 0.6, "SESIÓN %d  ·  %s" % (leccion["n"], curso["titulo"].upper()), 20, "F4C430", True)
+    caja(d, 1.15, 2.1, 11.3, 2.0, leccion["titulo"], tamano_que_cabe([leccion["titulo"]], 11.3, 2.0, ancho, 44, 30) or 30, "FFFFFF", True)
+    caja(d, 1.15, 4.25, 11.3, 1.4, leccion["resumen"], 22, "CADCFC")
+    caja(d, 1.15, 6.3, 11.3, 0.5, "Programa de Formación para Personas Árbitras y Asesoras  ·  Juegos Deportivos Estudiantiles", 16, "9FB3C8")
 
     # 2 · objetivos
-    d = prs.slides.add_slide(vacio)
-    encabezado(d, "OBJETIVOS DE LA SESIÓN", "◎")
-    caja(d, 0.6, 1.15, 12.1, 0.9, leccion["titulo"], 24, AZUL_950, True, "Cambria")
-    figura(d, MSO_SHAPE.RECTANGLE, 0.6, 2.15, 12.1, 4.7, GRIS_50)
-    lista(d, 1.0, 2.4, 11.3, 4.3, leccion["objetivos"], tamano(leccion["objetivos"]))
+    cuerpo_y_lista("Objetivos de la sesión", "Al terminar esta sesión, cada participante podrá:", None, leccion["objetivos"], None)
 
-    # 3 · cronograma de las 5 horas
-    d = prs.slides.add_slide(vacio)
-    encabezado(d, "CRONOGRAMA DE LA SESIÓN · 5 HORAS", "◷")
+    # 3 · cronograma
     filas = cronograma_filas(leccion)
-    tabla = d.shapes.add_table(len(filas) + 1, 3, Inches(0.6), Inches(1.25), Inches(12.1), Inches(5.5)).table
-    tabla.columns[0].width, tabla.columns[1].width, tabla.columns[2].width = Inches(1.9), Inches(1.3), Inches(8.9)
-    for j, titulo in enumerate(["Tiempo", "Duración", "Actividad"]):
-        celda = tabla.cell(0, j)
-        celda.text = titulo
-        celda.fill.solid()
-        celda.fill.fore_color.rgb = rgb(AZUL_900)
-        run = celda.text_frame.paragraphs[0].runs[0]
-        run.font.size, run.font.bold, run.font.color.rgb = Pt(13), True, rgb("FFFFFF")
+    d = nueva("Cronograma de la sesión", "Sesión %d · 5 horas (300 minutos)" % leccion["n"], None,
+              " ".join("De %s a %s, %s." % (a, b, bloque.lower() if bloque == "Receso" else bloque) for a, b, m, bloque, _ in filas))
+    alto_fila = min(0.48, 5.0 / (len(filas) + 1))
+    tabla = d.shapes.add_table(len(filas) + 1, 3, Inches(0.8), Inches(1.95), Inches(W - 1.6), Inches(alto_fila * (len(filas) + 1))).table
+    tabla.columns[0].width, tabla.columns[1].width, tabla.columns[2].width = Inches(2.3), Inches(1.6), Inches(W - 1.6 - 3.9)
+    for j, t in enumerate(["Horario", "Duración", "Bloque"]):
+        cel = tabla.cell(0, j)
+        cel.text = t
+        cel.fill.solid(); cel.fill.fore_color.rgb = rgb(AZUL_T)
+        r = cel.text_frame.paragraphs[0].runs[0]
+        r.font.size, r.font.bold, r.font.color.rgb, r.font.name = Pt(18), True, rgb("FFFFFF"), "Calibri"
     for i, (a, b, m, bloque, _) in enumerate(filas, 1):
-        for j, texto in enumerate(["%s – %s" % (a, b), "%d min" % m, bloque]):
-            celda = tabla.cell(i, j)
-            celda.text = texto
-            celda.fill.solid()
-            celda.fill.fore_color.rgb = rgb(GRIS_50 if i % 2 else "FFFFFF")
-            run = celda.text_frame.paragraphs[0].runs[0]
-            run.font.size = Pt(12)
-            run.font.color.rgb = rgb(AMBAR_500 if bloque == "Receso" else AZUL_600)
-            run.font.bold = bloque == "Receso"
+        for j, t in enumerate(["%s – %s" % (a, b), "%d min" % m, bloque]):
+            cel = tabla.cell(i, j)
+            cel.text = t
+            cel.fill.solid(); cel.fill.fore_color.rgb = rgb("FDF3D7" if bloque == "Receso" else ("F0F4F8" if i % 2 else "FFFFFF"))
+            r = cel.text_frame.paragraphs[0].runs[0]
+            r.font.size, r.font.name = Pt(16), "Calibri"
+            r.font.color.rgb, r.font.bold = rgb(OSCURO_T), bloque == "Receso"
 
-    # 4 · un tema por diapositiva, con su fuente
-    for t in leccion["temas"]:
-        d = prs.slides.add_slide(vacio)
-        encabezado(d, "CONTENIDO PARA VER EN CLASE")
-        caja(d, 0.6, 1.15, 12.1, 0.9, t["titulo"], 26, AZUL_950, True, "Cambria")
-        figura(d, MSO_SHAPE.RECTANGLE, 0.6, 2.05, 12.1, 4.8, GRIS_50)
-        items = t.get("puntos") or []
-        caja(d, 1.0, 2.2, 11.3, 1.5, t["texto"], 15 if len(t["texto"]) < 330 else 13, AZUL_950)
-        lista(d, 1.0, 3.75, 11.3, 3.0, items, tamano(items, 15))
-        pie_fuente(d, t["fuente"])
+    recesos = sum(1 for f in filas if f[3] == "Receso")
 
-    # 5 · casos: primero la situación (para discutir) y después la decisión
+    def receso():
+        d = nueva("Receso", oscura=True, texto_clase="Receso de 15 minutos. Pausa los relojes: seguimos en breve.")
+        caja(d, 0.5, 2.3, W - 1.0, 1.4, "Receso", 72, "FFFFFF", True, True)
+        caja(d, 0.5, 3.9, W - 1.0, 1.2, ["15 minutos", "Pausa los relojes: seguimos en breve."], 28, "CADCFC", centrado=True)
+
+    # 4 · temas (y el primer receso a la mitad)
+    mitad = (len(leccion["temas"]) + 1) // 2
+    for k, t in enumerate(leccion["temas"]):
+        cuerpo_y_lista(t["titulo"], None, t["texto"], t.get("puntos") or [], t["fuente"])
+        if k + 1 == mitad and recesos >= 1:
+            receso()
+
+    # 5 · laboratorio de casos: primero la situación, después la decisión
     for i, c in enumerate(leccion["casos"], 1):
-        d = prs.slides.add_slide(vacio)
-        encabezado(d, "CASO %d · ¿QUÉ DECIDE LA PERSONA ÁRBITRA?" % i, "?")
-        caja(d, 0.6, 1.15, 12.1, 0.9, c["titulo"], 26, AZUL_950, True, "Cambria")
-        figura(d, MSO_SHAPE.RECTANGLE, 0.6, 2.15, 12.1, 4.6, GRIS_50)
-        caja(d, 1.0, 2.45, 11.3, 4.1, c["situacion"], 20 if len(c["situacion"]) < 300 else 16, AZUL_600)
-        d = prs.slides.add_slide(vacio)
-        figura(d, MSO_SHAPE.RECTANGLE, 0, 0, 13.333, 7.5, AZUL_900)
-        caja(d, 0.6, 0.6, 12.1, 0.5, "CASO %d · DECISIÓN" % i, 14, AMBAR_400, True)
-        caja(d, 0.6, 1.15, 12.1, 0.9, c["titulo"], 26, "FFFFFF", True, "Cambria")
-        caja(d, 0.6, 2.3, 12.1, 4.3, c["decision"], 20 if len(c["decision"]) < 330 else 16, CLARO)
-        caja(d, 0.6, 6.85, 12.1, 0.4, "Fuente: " + c["fuente"], 11, AZUL_300)
+        d = nueva("Caso %d · ¿Qué decide la persona árbitra?" % i, c["titulo"], "Dejar que el grupo decida antes de pasar a la siguiente diapositiva.",
+                  "Caso %d: %s. %s" % (i, c["titulo"], c["situacion"]))
+        figura(d, 0.5, 1.95, W - 1.0, H - 2.7, "F0F4F8")
+        caja(d, 0.9, 2.2, W - 1.8, H - 3.2, c["situacion"], tamano_que_cabe([c["situacion"]], W - 1.8, H - 3.3, ancho, 34, 22) or 22,
+             OSCURO_T, vertical=MSO_ANCHOR.MIDDLE)
+        d = nueva("Caso %d · Decisión" % i, c["titulo"], None, "Caso %d, decisión: %s" % (i, c["decision"]), None, c["fuente"])
+        figura(d, 0.5, 1.95, W - 1.0, H - 2.7, "EEF7EE", borde=VERDE_T)
+        caja(d, 0.9, 2.2, W - 1.8, H - 3.2, c["decision"], tamano_que_cabe([c["decision"]], W - 1.8, H - 3.3, ancho, 30, 20) or 20,
+             OSCURO_T, vertical=MSO_ANCHOR.MIDDLE)
 
-    # 6 · la práctica
-    d = prs.slides.add_slide(vacio)
-    figura(d, MSO_SHAPE.RECTANGLE, 0, 0, 13.333, 7.5, AZUL_900)
-    figura(d, MSO_SHAPE.OVAL, -1.4, -1.6, 4.5, 4.5, AZUL_950)
-    figura(d, MSO_SHAPE.OVAL, 5.66, 0.9, 2.0, 2.0, AMBAR_500)
-    caja(d, 5.66, 0.9, 2.0, 2.0, "✔", 44, AZUL_950, True, alineado=PP_ALIGN.CENTER)
-    caja(d, 0.6, 3.15, 12.1, 0.5, "PRÁCTICA — " + leccion["practica_titulo"].upper(), 14, AMBAR_400, True, alineado=PP_ALIGN.CENTER)
-    caja(d, 1.4, 3.7, 10.5, 2.6, leccion["practica"], 20, "FFFFFF", False, "Cambria", PP_ALIGN.CENTER)
-    caja(d, 0.6, 6.85, 12.1, 0.4, "%s · Sesión %d" % (curso["titulo"], leccion["n"]), 12, AZUL_300,
-         alineado=PP_ALIGN.CENTER)
+    if recesos >= 2:
+        receso()
 
-    # 7 · los ejercicios, sin la respuesta (va en el cuadernillo de repaso)
-    for i, e in enumerate(leccion["ejercicios"], 1):
-        d = prs.slides.add_slide(vacio)
-        encabezado(d, "EJERCICIO %d DE %d" % (i, len(leccion["ejercicios"])), "✎")
-        figura(d, MSO_SHAPE.RECTANGLE, 0.6, 1.3, 12.1, 5.5, GRIS_50)
+    # 6 · práctica
+    d = nueva("Práctica · " + leccion["practica_titulo"], None, None, "Práctica: %s. %s" % (leccion["practica_titulo"], leccion["practica"]))
+    figura(d, 0.5, 1.4, W - 1.0, H - 2.15, "F0F4F8")
+    caja(d, 0.9, 1.6, W - 1.8, H - 2.6, leccion["practica"], tamano_que_cabe([leccion["practica"]], W - 1.8, H - 2.7, ancho, 32, 20) or 20,
+         OSCURO_T, vertical=MSO_ANCHOR.MIDDLE)
+
+    # 7 · ejercicios (con tablero si traen posición) y después sus respuestas
+    ejercicios = leccion["ejercicios"]
+    pngs = []
+    tmp = tempfile.mkdtemp()
+    for i, e in enumerate(ejercicios, 1):
         if e.get("fen"):
-            tablero(d, e["fen"], 8.2, 1.55, 4.2)
-            caja(d, 1.0, 1.6, 7.0, 1.8, e["enunciado"], 20, AZUL_950, True)
-            caja(d, 1.0, 3.6, 7.0, 3.0, e["posicion"], 14, AZUL_600)
+            pngs.append({"fen": e["fen"], "archivo": os.path.join(tmp, "e%d.png" % i), "titulo": "Ejercicio %d" % i})
+    if pngs:
+        lista = os.path.join(tmp, "lista.json")
+        json.dump(pngs, open(lista, "w"))
+        subprocess.run(["node", os.path.join(RAIZ, "herramientas", "lib", "tablero-png.js"), lista], check=True)
+    for i, e in enumerate(ejercicios, 1):
+        titulo = "Ejercicio %d de %d" % (i, len(ejercicios))
+        if e.get("fen"):
+            turno = "Juegan las blancas." if e["fen"].split(" ")[1] == "w" else "Juegan las negras."
+            d = nueva(titulo, None, None, "Ejercicio %d: %s %s %s" % (i, e["enunciado"], turno, e.get("posicion", "")),
+                      [{"nombre": "Ejercicio %d" % i, "fen": e["fen"]}])
+            d.shapes.add_picture(os.path.join(tmp, "e%d.png" % i), Inches(0.7), Inches(1.35), Inches(5.6), Inches(5.6))
+            texto = [e["enunciado"], turno]
+            caja(d, 6.7, 1.5, W - 7.2, 5.3, texto, tamano_que_cabe(texto, W - 7.2, 5.2, ancho, 30, 20) or 20, OSCURO_T,
+                 vertical=MSO_ANCHOR.MIDDLE)
         else:
-            caja(d, 1.0, 1.7, 11.3, 4.9, e["enunciado"], 22 if len(e["enunciado"]) < 260 else 18, AZUL_950)
+            d = nueva(titulo, None, None, "Ejercicio %d: %s" % (i, e["enunciado"]))
+            figura(d, 0.5, 1.4, W - 1.0, H - 2.15, "F0F4F8")
+            caja(d, 0.9, 1.6, W - 1.8, H - 2.6, e["enunciado"], tamano_que_cabe([e["enunciado"]], W - 1.8, H - 2.7, ancho, 32, 20) or 20,
+                 OSCURO_T, vertical=MSO_ANCHOR.MIDDLE)
+    cuerpo_y_lista("Ejercicios: respuestas", None, None,
+                   ["%d. %s" % (i, e["respuesta"]) for i, e in enumerate(ejercicios, 1)], None,
+                   "Repasar en plenaria; cada respuesta con su artículo.")
 
-    # 8 · el quiz
-    d = prs.slides.add_slide(vacio)
-    encabezado(d, "QUIZ DE LA SESIÓN", "?")
-    figura(d, MSO_SHAPE.RECTANGLE, 0.6, 1.3, 12.1, 5.5, GRIS_50)
-    preguntas = ["%d. %s" % (i, q["pregunta"]) for i, q in enumerate(leccion["quiz"], 1)]
-    tb = d.shapes.add_textbox(Inches(1.0), Inches(1.5), Inches(11.3), Inches(5.2))
-    tf = tb.text_frame
-    tf.word_wrap = True
-    for i, texto in enumerate(preguntas):
-        par = tf.paragraphs[0] if i == 0 else tf.add_paragraph()
-        par.space_after = Pt(6)
-        r = par.add_run()
-        r.text = texto
-        r.font.size = Pt(tamano(preguntas, 16))
-        r.font.name = "Calibri"
-        r.font.color.rgb = rgb(AZUL_600)
+    # 8 · quiz y sus respuestas
+    cuerpo_y_lista("Quiz de la sesión", "Responde de forma individual", None,
+                   ["%d. %s" % (i, q["pregunta"]) for i, q in enumerate(leccion["quiz"], 1)], None,
+                   "Un minuto por pregunta, y después las respuestas.")
+    cuerpo_y_lista("Quiz: respuestas", None, None,
+                   ["%d. %s" % (i, q["respuesta"]) for i, q in enumerate(leccion["quiz"], 1)], None)
 
     # 9 · tarea y cierre
-    d = prs.slides.add_slide(vacio)
-    figura(d, MSO_SHAPE.RECTANGLE, 0, 0, 13.333, 7.5, AZUL_950)
-    caja(d, 0.6, 0.8, 12.1, 0.5, "TAREA PARA LA PRÓXIMA SESIÓN", 14, AMBAR_400, True)
-    caja(d, 0.6, 1.5, 12.1, 3.2, leccion["tarea"], 24, "FFFFFF", False, "Cambria")
-    caja(d, 0.6, 5.2, 12.1, 1.0, "¿Dudas? Este es el momento. Gracias por tu participación.", 18, CLARO)
-    caja(d, 0.6, 6.85, 12.1, 0.4, "%s · Sesión %d · ajedrez-integral.com" % (curso["titulo"], leccion["n"]), 12, AZUL_300)
+    d = nueva("Tarea y cierre", oscura=True,
+              texto_clase="Tarea para la próxima sesión: %s ¿Dudas? Este es el momento. Gracias por tu participación." % leccion["tarea"])
+    caja(d, 0.8, 0.7, W - 1.6, 0.6, "TAREA PARA LA PRÓXIMA SESIÓN", 20, "F4C430", True)
+    caja(d, 0.8, 1.5, W - 1.6, 3.4, leccion["tarea"], tamano_que_cabe([leccion["tarea"]], W - 1.6, 3.3, ancho, 32, 22) or 22, "FFFFFF")
+    caja(d, 0.8, 5.3, W - 1.6, 0.8, "¿Dudas? Este es el momento. Gracias por tu participación.", 24, "CADCFC")
     prs.save(destino)
+    return diapos
+
+
+def presentacion_de_clase(curso, leccion, pptx, diapos):
+    """La presentación de la sesión, para mostrarla dentro de la clase en vivo
+    (js/clase-presentacion.js): una imagen por diapositiva, sacada del mismo
+    .pptx (LibreOffice a PDF y PyMuPDF a WebP de 1600 px), y diapositivas.json
+    con el título, el texto completo de cada una (para el lector de pantalla),
+    sus notas y las posiciones de los ejercicios, para mandarlas al tablero.
+    La Clase 1 no: esa es la presentación propia del profe ("presentacion_clase":
+    "propia" en el JSON del curso). Sin LibreOffice o PyMuPDF no se arma y se
+    avisa: el resto del curso se genera igual."""
+    import shutil
+    import tempfile
+    if leccion.get("presentacion_clase") == "propia":
+        return
+    soffice = shutil.which("soffice") or shutil.which("libreoffice")
+    try:
+        import pymupdf
+        from PIL import Image
+    except ImportError:
+        pymupdf = None
+    if not soffice or not pymupdf:
+        print("  (sin LibreOffice o PyMuPDF: no se armó la presentación de clase de la sesión %d)" % leccion["n"])
+        return
+    tmp = tempfile.mkdtemp()
+    subprocess.run([soffice, "--headless", "--convert-to", "pdf", "--outdir", tmp, pptx],
+                   check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    pdf = pymupdf.open(os.path.join(tmp, os.path.splitext(os.path.basename(pptx))[0] + ".pdf"))
+    if pdf.page_count != len(diapos):
+        raise SystemExit("La presentación de la sesión %d salió con %d páginas y %d diapositivas" % (leccion["n"], pdf.page_count, len(diapos)))
+    carpeta = os.path.join(RAIZ, "cursos", "recursos", curso["slug"], "presentaciones", "clase-%02d" % leccion["n"])
+    if os.path.isdir(carpeta):
+        shutil.rmtree(carpeta)
+    os.makedirs(carpeta)
+    salida = []
+    for i, (pagina, d) in enumerate(zip(pdf, diapos), 1):
+        import io
+        pix = pagina.get_pixmap(matrix=pymupdf.Matrix(1600 / pagina.rect.width, 1600 / pagina.rect.width))
+        Image.open(io.BytesIO(pix.tobytes("png"))).convert("RGB").save(os.path.join(carpeta, "%02d.webp" % i), "WEBP", quality=80, method=6)
+        fila = {"titulo": d["titulo"], "texto": d["texto"], "imagen": "%02d.webp" % i}
+        if d.get("notas"):
+            fila["notas"] = d["notas"]
+        if d.get("posiciones"):
+            fila["posiciones"] = d["posiciones"]
+        salida.append(fila)
+    datos = {"titulo": "%s · Sesión %d: %s" % (curso["titulo"], leccion["n"], leccion["titulo"]),
+             "curso": curso["slug"], "diapositivas": salida}
+    with open(os.path.join(carpeta, "diapositivas.json"), "w", encoding="utf-8") as fh:
+        json.dump(datos, fh, ensure_ascii=False, indent=1)
 
 
 # --------------------------------------------- material de estudio (PDF)
@@ -910,9 +1018,14 @@ def main():
                 formularios_pdf(curso, leccion, os.path.join(carpeta, leccion["archivo_formularios"] + ".pdf"))
                 prueba_final_pdf(curso, leccion, os.path.join(carpeta, leccion["archivo_prueba"] + ".pdf"))
             else:
-                presentacion(curso, leccion, os.path.join(carpeta, leccion["archivo"] + ".pptx"))
+                pptx = os.path.join(carpeta, leccion["archivo"] + ".pptx")
+                presentacion_de_clase(curso, leccion, pptx, presentacion(curso, leccion, pptx))
                 material_pdf(curso, leccion, os.path.join(carpeta, leccion["archivo"] + "-material.pdf"))
                 ejercicios_pdf(curso, leccion, os.path.join(carpeta, leccion["archivo"] + "-ejercicios.pdf"))
+
+    # La guía rápida de la persona árbitra (JDE), que va con la Sesión 1.
+    subprocess.run(["python3", os.path.join(RAIZ, "herramientas", "formacion-guia-rapida.py"),
+                    os.path.join(carpeta, "guia-rapida-arbitro-jde.pdf")], check=True)
 
     print("Curso '%s': %d sesiones" % (curso["titulo"], total))
     print("  cursos/%s.html" % slug)

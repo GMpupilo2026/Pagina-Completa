@@ -1,0 +1,217 @@
+{
+ "titulo": "Formación Ajedrez · Sesión 3: Apéndices de las Leyes de Ajedrez y normativa de los Juegos Deportivos Estudiantiles",
+ "curso": "formacion-ajedrez",
+ "diapositivas": [
+  {
+   "titulo": "Apéndices de las Leyes de Ajedrez y normativa de los Juegos Deportivos Estudiantiles",
+   "texto": "Portada. Sesión 3: Apéndices de las Leyes de Ajedrez y normativa de los Juegos Deportivos Estudiantiles. Ajedrez rápido y relámpago, sistemas de desempate y normativa vigente de los Juegos Deportivos Estudiantiles. Formación Ajedrez",
+   "imagen": "01.webp"
+  },
+  {
+   "titulo": "Objetivos de la sesión",
+   "texto": "Clasificar un control de tiempo como clásico, rápido o relámpago con la fórmula de 60 jugadas. Aplicar las diferencias de las rápidas y el relámpago, con y sin supervisión adecuada. Calcular Buchholz, Buchholz con corte, Sonneborn-Berger y encuentro directo. Aplicar el artículo 66 de la Normativa JDE 2026: modalidades, sistemas y ritmos por etapa, anotación, puntos y desempates.",
+   "imagen": "02.webp"
+  },
+  {
+   "titulo": "Cronograma de la sesión",
+   "texto": "De 0:00 a 0:15, Repaso y revisión de la tarea. De 0:15 a 0:55, Ritmos de juego: los apéndices A y B. De 0:55 a 1:35, Rápidas y relámpago en la sala. De 1:35 a 1:50, receso. De 1:50 a 2:35, Sistemas de desempate. De 2:35 a 3:05, La Normativa JDE 2026 (art. 30 y 66). De 3:05 a 3:20, receso. De 3:20 a 4:10, Práctica: cálculo de desempates. De 4:10 a 4:40, Quiz de la sesión. De 4:40 a 5:00, Cierre.",
+   "imagen": "03.webp"
+  },
+  {
+   "titulo": "Cómo se clasifica un ritmo",
+   "texto": "Para clasificar un control de tiempo se supone una partida de 60 jugadas: se suma el tiempo base más 60 veces el incremento. Con 10 minutos o menos por jugador es relámpago; con más de 10 y menos de 60 es rápidas; con 60 o más es ritmo clásico. 3 min + 2 s: 3 + 2 = 5 minutos, relámpago. 15 min + 10 s: 15 + 10 = 25 minutos, rápidas. 90 min + 30 s: 90 + 30 = 120 minutos, clásico. En rápidas y relámpago rigen las Leyes con los cambios que fijan sus apéndices.",
+   "imagen": "04.webp"
+  },
+  {
+   "titulo": "Rápidas y relámpago en la práctica",
+   "texto": "En estos ritmos no es obligatorio anotar, salvo que el reglamento del evento lo exija; aun así, el jugador conserva sus reclamos. Las sanciones de tiempo de los art. 7 y 9 son de un minuto en lugar de dos. Supervisión adecuada (A.4): una persona árbitra por cada tres partidas como máximo, que registra cada partida. Con ella rigen las reglas de competición, como en ritmo clásico. Sin esa supervisión (A.5), pasadas 10 jugadas de cada bando ya no se cambia el reloj ni se reclama por el tablero mal armado u orientado (A.5.1). Jugada ilegal sin esa supervisión: la persona árbitra actúa si el rival todavía no hizo su jugada; si nadie reclama y el rival ya jugó, la jugada ilegal queda (A.5.2). Caída de bandera: quien reclama pausa el reloj y avisa; si no puede dar mate con ninguna serie de jugadas legales, son tablas (A.5.3).",
+   "imagen": "05.webp"
+  },
+  {
+   "titulo": "Rápidas y relámpago en la práctica (continuación)",
+   "texto": "El mate termina la partida al instante: si un jugador da mate y un instante después cae su bandera, gana quien dio mate.",
+   "imagen": "06.webp"
+  },
+  {
+   "titulo": "Buchholz y sus cortes",
+   "texto": "El Buchholz suma los puntos finales de todos los rivales que enfrentó el jugador: mide la dureza de su recorrido. Es el desempate más usado en el sistema suizo. El Buchholz con corte 1 quita el resultado más bajo de esa suma, para que un rival que se hundió pese menos. Ejemplo: los rivales de Ana terminaron con 3, 2½, 4, 1 y 2 puntos. Buchholz = 12½; con corte 1 (se quita el 1) = 11½. Los rivales de Bruno terminaron con 3½, 3, 2, 2 y 2 puntos. Buchholz = 12½; con corte 1 (se quita un 2) = 10½. Empatan en Buchholz, pero el corte 1 ordena primero a Ana. El reglamento del torneo anuncia de antemano la lista de desempates y su orden.",
+   "imagen": "07.webp"
+  },
+  {
+   "titulo": "Receso",
+   "texto": "Receso de 15 minutos. Pausa los relojes: seguimos en breve.",
+   "imagen": "08.webp"
+  },
+  {
+   "titulo": "Sonneborn-Berger y encuentro directo",
+   "texto": "El Sonneborn-Berger suma los puntos finales de los rivales a los que el jugador venció, más la mitad de los puntos de aquellos con quienes empató. Premia haberles ganado a los que terminaron arriba y es el desempate habitual en el sistema de todos contra todos. El encuentro directo ordena a los empatados según el resultado de sus partidas entre sí. Si los empatados no se enfrentaron o el encuentro no define nada, se pasa al siguiente desempate de la lista. Si se agota la lista y sigue el empate, se resuelve por sorteo, salvo que el reglamento diga otra cosa. Si el reglamento no dice nada sobre cómo ordenar a los empatados, se usan desempates fuera del tablero, no una partida extra.",
+   "imagen": "09.webp"
+  },
+  {
+   "titulo": "La Normativa JDE 2026: el artículo 66 (ajedrez)",
+   "texto": "La Normativa del Programa Juegos Deportivos Estudiantiles 2026 dedica su artículo 66 al ajedrez, en las categorías A a E. Lo que no establece se rige primero por las reglas de la Federación Costarricense de Ajedrez y después por las de la FIDE. Dos modalidades: torneo individual (mujeres y abierto) y torneo por equipos (mujeres y abierto). Cada estudiante juega solo una (66.1.e y 66.1.h). Equipos de 3 a 5 estudiantes: cuatro titulares y un suplente. Al iniciar cada ronda, al menos dos frente al tablero (66.1.g y 66.2.f). Anotación algebraica en todas las categorías; quien no anote es amonestado si el rival lo pide, excepto en la categoría A (66.2.g). Puntos: 1, ½ y 0. Al menos tres desempates, que fija la persona árbitra principal en el congresillo (66.3 y 66.4).",
+   "imagen": "10.webp"
+  },
+  {
+   "titulo": "La Normativa JDE 2026: el artículo 66 (ajedrez) (continuación)",
+   "texto": "Presentación: en ajedrez, la persona estudiante puede llegar hasta que su reloj caiga a cero (art. 30).",
+   "imagen": "11.webp"
+  },
+  {
+   "titulo": "Sistemas y ritmos de la JDE, etapa por etapa",
+   "texto": "La Normativa fija el sistema y el ritmo mínimo de cada etapa. Con 10 minutos más 2 segundos por jugada, la fórmula de las 60 jugadas da 12 minutos: para la FIDE es ajedrez rápido, así que en las etapas Regional e Interregional rige el apéndice A. Regional: suizo de al menos cinco rondas si hay más de ocho por modalidad; todos contra todos si hay ocho o menos. Ritmo mínimo de 10 min + 2 s (66.2.a y 66.2.b). Interregional: todos contra todos, con un ritmo mínimo de 10 min + 2 s (66.2.c). Nacional: suizo de cinco rondas con más de siete; todos contra todos con seis o menos. Ritmo clásico y blitz de 3 min + 2 s (66.2.d y 66.2.e). Con exactamente siete en la Etapa Nacional, la Normativa no dice qué sistema usar: conviene dejarlo escrito en el acta del congresillo.",
+   "imagen": "12.webp"
+  },
+  {
+   "titulo": "Sistemas y ritmos de la JDE, etapa por etapa (continuación)",
+   "texto": "Consecuencia práctica: en Regional e Interregional, la primera jugada ilegal le suma 1 minuto al rival, no 2 (A.3).",
+   "imagen": "13.webp"
+  },
+  {
+   "titulo": "Caso 1 · ¿Qué decide la persona árbitra?",
+   "texto": "Caso 1: ¿Rápidas o relámpago?. Un torneo escolar se anuncia a 5 minutos más 3 segundos por jugada.",
+   "imagen": "14.webp",
+   "notas": "Dejar que el grupo decida antes de pasar a la siguiente diapositiva."
+  },
+  {
+   "titulo": "Caso 1 · Decisión",
+   "texto": "Caso 1, decisión: 5 + 60 × 3 s = 5 + 3 = 8 minutos: es relámpago, porque no pasa de 10 minutos.",
+   "imagen": "15.webp"
+  },
+  {
+   "titulo": "Caso 2 · ¿Qué decide la persona árbitra?",
+   "texto": "Caso 2: Justo en el límite. Un torneo se anuncia a 45 minutos más 15 segundos.",
+   "imagen": "16.webp",
+   "notas": "Dejar que el grupo decida antes de pasar a la siguiente diapositiva."
+  },
+  {
+   "titulo": "Caso 2 · Decisión",
+   "texto": "Caso 2, decisión: 45 + 15 = 60 minutos. Las rápidas son de más de 10 y menos de 60, así que este ritmo ya es clásico.",
+   "imagen": "17.webp"
+  },
+  {
+   "titulo": "Caso 3 · ¿Qué decide la persona árbitra?",
+   "texto": "Caso 3: Mate y bandera. En relámpago, un estudiante da mate y, un instante después, cae su bandera.",
+   "imagen": "18.webp",
+   "notas": "Dejar que el grupo decida antes de pasar a la siguiente diapositiva."
+  },
+  {
+   "titulo": "Caso 3 · Decisión",
+   "texto": "Caso 3, decisión: Gana quien dio mate: el mate termina la partida en el momento en que se produce.",
+   "imagen": "19.webp"
+  },
+  {
+   "titulo": "Caso 4 · ¿Qué decide la persona árbitra?",
+   "texto": "Caso 4: Llega con el reloj corriendo. Ronda de la Etapa Regional a 10 min + 2 s. Una estudiante llega 8 minutos tarde y su rival ya puso en marcha el reloj.",
+   "imagen": "20.webp",
+   "notas": "Dejar que el grupo decida antes de pasar a la siguiente diapositiva."
+  },
+  {
+   "titulo": "Caso 4 · Decisión",
+   "texto": "Caso 4, decisión: Puede jugar: en ajedrez, la JDE admite a la persona estudiante hasta que su reloj caiga a cero (art. 30). Juega con el tiempo que le queda. Si su reloj ya hubiera llegado a cero, se aplica lo que la Normativa establece para la no presentación (art. 32).",
+   "imagen": "21.webp"
+  },
+  {
+   "titulo": "Caso 5 · ¿Qué decide la persona árbitra?",
+   "texto": "Caso 5: Categoría A sin planilla. En la categoría A, un niño no anota sus jugadas y su rival le pide a la persona árbitra que lo amoneste.",
+   "imagen": "22.webp",
+   "notas": "Dejar que el grupo decida antes de pasar a la siguiente diapositiva."
+  },
+  {
+   "titulo": "Caso 5 · Decisión",
+   "texto": "Caso 5, decisión: En la categoría A no se amonesta por no anotar. En las demás categorías, la persona árbitra principal amonesta a quien no anote si el rival lo solicita (66.2.g).",
+   "imagen": "23.webp"
+  },
+  {
+   "titulo": "Caso 6 · ¿Qué decide la persona árbitra?",
+   "texto": "Caso 6: La primera ilegal en la Regional. Etapa Regional a 10 min + 2 s. Un estudiante deja su rey en jaque y presiona el reloj; su rival todavía no ha jugado. Es su primera jugada ilegal.",
+   "imagen": "24.webp",
+   "notas": "Dejar que el grupo decida antes de pasar a la siguiente diapositiva."
+  },
+  {
+   "titulo": "Caso 6 · Decisión",
+   "texto": "Caso 6, decisión: Se restablece la posición anterior, juega otra respetando la pieza tocada y el rival recibe 1 minuto: con 10 + 60 × 2 s = 12 minutos la partida es rápida (A.1) y en rápidas la sanción es de un minuto (A.3).",
+   "imagen": "25.webp"
+  },
+  {
+   "titulo": "Receso",
+   "texto": "Receso de 15 minutos. Pausa los relojes: seguimos en breve.",
+   "imagen": "26.webp"
+  },
+  {
+   "titulo": "Práctica · Cálculo de desempates de un torneo simulado",
+   "texto": "Práctica: Cálculo de desempates de un torneo simulado. Con los resultados de un torneo simulado de 8 jugadores, cada participante calcula la tabla final aplicando Buchholz y Sonneborn-Berger.",
+   "imagen": "27.webp"
+  },
+  {
+   "titulo": "Ejercicio 1 de 5",
+   "texto": "Ejercicio 1: Clasifica estos ritmos: a) 10 min sin incremento; b) 10 min + 5 s; c) 25 min + 10 s; d) 60 min sin incremento.",
+   "imagen": "28.webp"
+  },
+  {
+   "titulo": "Ejercicio 2 de 5",
+   "texto": "Ejercicio 2: Torneo de todos contra todos con 6 jugadores (A a F). A: ½ con B, ganó a C, D y F, perdió con E. B: ½ con A, perdió con C, ganó a D, E y F. C: 3 puntos. D: 2½. E: 1½. F: 1. A y B terminan con 3½. ¿Quién queda primero por Sonneborn-Berger?",
+   "imagen": "29.webp"
+  },
+  {
+   "titulo": "Ejercicio 3 de 5",
+   "texto": "Ejercicio 3: En un suizo a 5 rondas, los rivales de Carla terminaron con 4, 3, 3, 2 y ½ puntos, y los de Diego con 3½, 3, 3, 2½ y 1. Ambos tienen 4 puntos. Calcula Buchholz y Buchholz con corte 1.",
+   "imagen": "30.webp"
+  },
+  {
+   "titulo": "Ejercicio 4 de 5",
+   "texto": "Ejercicio 4: Con la Normativa JDE 2026, completa para ajedrez: sistema y ritmo en una Etapa Regional con 12 inscritos por modalidad, mínimo de estudiantes al iniciar una ronda por equipos, quién fija los desempates y hasta cuándo puede presentarse un estudiante.",
+   "imagen": "31.webp"
+  },
+  {
+   "titulo": "Ejercicio 5 de 5",
+   "texto": "Ejercicio 5: Etapa Nacional de ajedrez con siete inscritos en el torneo individual abierto. ¿Qué sistema dice la Normativa? ¿Qué debe hacer la persona árbitra principal?",
+   "imagen": "32.webp"
+  },
+  {
+   "titulo": "Ejercicios: respuestas",
+   "texto": "1. a) 10 minutos: relámpago (10 o menos). b) 10 + 5 = 15: rápidas. c) 25 + 10 = 35: rápidas. d) 60: clásico. 2. A: venció a C (3), D (2½) y F (1) = 6½, más la mitad de B (3½) = 1¾. Total 8¼. B: venció a D (2½), E (1½) y F (1) = 5, más la mitad de A = 1¾. Total 6¾. Queda primero A. (El encuentro directo no los separaba: empataron entre sí.) 3. Carla: Buchholz 12½; corte 1 (se quita ½) = 12. Diego: Buchholz 13; corte 1 (se quita 1) = 12. Si el primer desempate es Buchholz, gana Diego; si fuera Buchholz con corte 1, siguen empatados y se pasa al siguiente criterio. 4. Suizo de al menos cinco rondas, con un ritmo mínimo de 10 min + 2 s (66.2.a); al menos dos frente al tablero (66.2.f); la persona árbitra principal, en el congresillo, con al menos tres criterios (66.4); hasta que su reloj caiga a cero (art. 30).",
+   "imagen": "33.webp",
+   "notas": "Repasar en plenaria; cada respuesta con su artículo."
+  },
+  {
+   "titulo": "Ejercicios: respuestas (continuación)",
+   "texto": "5. La Normativa prevé suizo con más de siete y todos contra todos con seis o menos (66.2.d y 66.2.e): no dice nada para exactamente siete. La persona árbitra principal lo plantea en el congresillo y deja el acuerdo escrito en el acta, que obliga a todas las delegaciones (art. 34).",
+   "imagen": "34.webp",
+   "notas": "Repasar en plenaria; cada respuesta con su artículo."
+  },
+  {
+   "titulo": "Quiz de la sesión",
+   "texto": "1. ¿Cuál es el criterio de desempate que suma los puntajes finales de los rivales enfrentados? 2. ¿Qué distingue principalmente al ajedrez relámpago del ajedrez rápido? 3. ¿Cómo se clasifica un ritmo que tiene incremento? 4. ¿En qué tipo de torneo es habitual el Sonneborn-Berger? 5. Se agotó la lista de desempates y dos jugadores siguen empatados. ¿Qué corresponde? 6. En rápidas, ¿es obligatorio anotar las jugadas? 7. En ajedrez relámpago sin supervisión adecuada, ¿quién reclama la caída de una bandera?",
+   "imagen": "35.webp",
+   "notas": "Un minuto por pregunta, y después las respuestas."
+  },
+  {
+   "titulo": "Quiz de la sesión (continuación)",
+   "texto": "8. Sin supervisión adecuada, pasadas 10 jugadas de cada bando, ¿se puede reclamar por un tablero mal orientado? 9. Si la Normativa JDE 2026 no regula algo del ajedrez, ¿qué se aplica? 10. El encuentro directo no separa a dos jugadores empatados porque no se enfrentaron entre sí. ¿Qué corresponde? 11. En relámpago, un jugador da mate y un instante después cae su propia bandera. ¿Quién gana? 12. En la Etapa Regional de la JDE se juega a 10 minutos más 2 segundos. ¿Qué tipo de partida es para la FIDE?",
+   "imagen": "36.webp",
+   "notas": "Un minuto por pregunta, y después las respuestas."
+  },
+  {
+   "titulo": "Quiz de la sesión (continuación)",
+   "texto": "13. Según la Normativa JDE 2026, ¿cuántos estudiantes de un equipo deben estar frente al tablero al iniciar cada ronda?",
+   "imagen": "37.webp",
+   "notas": "Un minuto por pregunta, y después las respuestas."
+  },
+  {
+   "titulo": "Quiz: respuestas",
+   "texto": "1. Buchholz. 2. El control de tiempo asignado a cada jugador. 3. Con el tiempo base más 60 veces el incremento por jugada. 4. En los de todos contra todos (round robin). 5. Un sorteo, salvo que el reglamento del torneo diga otra cosa. 6. No, salvo que el reglamento del evento lo exija; el jugador conserva sus reclamos. 7. El propio jugador: pausa el reloj y avisa a la persona árbitra. Si no puede dar mate con ninguna serie de jugadas legales, son tablas (A.5.3). 8. No, ya no se admite ese reclamo.",
+   "imagen": "38.webp"
+  },
+  {
+   "titulo": "Quiz: respuestas (continuación)",
+   "texto": "9. Primero las reglas de la Federación Costarricense de Ajedrez y, después, las de la FIDE (art. 66). 10. Pasar al siguiente desempate de la lista anunciada en el reglamento del torneo. 11. Gana quien dio mate: el mate termina la partida en el momento en que se produce. 12. Rápida: 10 + 60 × 2 s = 12 minutos (apéndice A.1). 13. Al menos dos (art. 66.2.f).",
+   "imagen": "39.webp"
+  },
+  {
+   "titulo": "Tarea y cierre",
+   "texto": "Tarea para la próxima sesión: Analizar un caso de inscripción o de categorización de una persona estudiante y determinar el procedimiento correcto según la normativa JDE vigente. ¿Dudas? Este es el momento. Gracias por tu participación.",
+   "imagen": "40.webp"
+  }
+ ]
+}

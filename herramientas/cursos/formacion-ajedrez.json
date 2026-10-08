@@ -306,6 +306,14 @@
               "estado": "ahogado",
               "respuesta": "Ahogado: el rey no está en jaque y el bando que mueve no tiene ninguna jugada legal. Tablas (art. 5.2.1)."
             }
+          ],
+          "presentacion_clase": "propia",
+          "extras": [
+            {
+              "archivo": "guia-rapida-arbitro-jde.pdf",
+              "emoji": "📋",
+              "texto": "Guía rápida del árbitro JDE (PDF)"
+            }
           ]
         },
         {
@@ -592,15 +600,15 @@
             },
             {
               "pregunta": "En ajedrez relámpago sin supervisión adecuada, ¿quién reclama la caída de una bandera?",
-              "respuesta": "El propio jugador, deteniendo el reloj, siempre que su propio tiempo no se haya agotado."
+              "respuesta": "El propio jugador: pausa el reloj y avisa a la persona árbitra. Si no puede dar mate con ninguna serie de jugadas legales, son tablas (A.5.3)."
             },
             {
               "pregunta": "Sin supervisión adecuada, pasadas 10 jugadas de cada bando, ¿se puede reclamar por un tablero mal orientado?",
               "respuesta": "No, ya no se admite ese reclamo."
             },
             {
-              "pregunta": "Si la normativa vigente de los JDE no regula algo, por ejemplo el tiempo de incomparecencia, ¿qué se aplica?",
-              "respuesta": "Las Leyes de la FIDE."
+              "pregunta": "Si la Normativa JDE 2026 no regula algo del ajedrez, ¿qué se aplica?",
+              "respuesta": "Primero las reglas de la Federación Costarricense de Ajedrez y, después, las de la FIDE (art. 66)."
             },
             {
               "pregunta": "El encuentro directo no separa a dos jugadores empatados porque no se enfrentaron entre sí. ¿Qué corresponde?",
@@ -609,6 +617,14 @@
             {
               "pregunta": "En relámpago, un jugador da mate y un instante después cae su propia bandera. ¿Quién gana?",
               "respuesta": "Gana quien dio mate: el mate termina la partida en el momento en que se produce."
+            },
+            {
+              "pregunta": "En la Etapa Regional de la JDE se juega a 10 minutos más 2 segundos. ¿Qué tipo de partida es para la FIDE?",
+              "respuesta": "Rápida: 10 + 60 × 2 s = 12 minutos (apéndice A.1)."
+            },
+            {
+              "pregunta": "Según la Normativa JDE 2026, ¿cuántos estudiantes de un equipo deben estar frente al tablero al iniciar cada ronda?",
+              "respuesta": "Al menos dos (art. 66.2.f)."
             }
           ],
           "tarea": "Analizar un caso de inscripción o de categorización de una persona estudiante y determinar el procedimiento correcto según la normativa JDE vigente.",
@@ -616,7 +632,7 @@
             "Clasificar un control de tiempo como clásico, rápido o relámpago con la fórmula de 60 jugadas.",
             "Aplicar las diferencias de las rápidas y el relámpago, con y sin supervisión adecuada.",
             "Calcular Buchholz, Buchholz con corte, Sonneborn-Berger y encuentro directo.",
-            "Ubicar en la normativa vigente de los JDE lo que el árbitro necesita antes de cada torneo."
+            "Aplicar el artículo 66 de la Normativa JDE 2026: modalidades, sistemas y ritmos por etapa, anotación, puntos y desempates."
           ],
           "cronograma": [
             [
@@ -646,8 +662,8 @@
             ],
             [
               30,
-              "Normativa de los Juegos Deportivos Estudiantiles",
-              "Cómo leer la normativa vigente: categorías, inscripción, ritmo, sistema, desempates, tolerancia, dispositivos, reclamos y plazos."
+              "La Normativa JDE 2026 (art. 30 y 66)",
+              "Modalidades, equipos, sistemas y ritmos por etapa, anotación, puntos, desempates y presentación tardía; lo que la Normativa no dice y cómo dejarlo en el acta del congresillo."
             ],
             [
               15,
@@ -657,7 +673,7 @@
             [
               50,
               "Práctica: cálculo de desempates",
-              "En salas de trabajo se resuelven los ejercicios de desempate y la ficha de lectura de la normativa JDE. Plenaria."
+              "En salas de trabajo se resuelven los ejercicios de desempate y la ficha de la Normativa JDE 2026. Plenaria."
             ],
             [
               30,
@@ -686,12 +702,13 @@
               "titulo": "Rápidas y relámpago en la práctica",
               "texto": "En estos ritmos no es obligatorio anotar, salvo que el reglamento del evento lo exija; aun así, el jugador conserva sus reclamos. Las sanciones de tiempo de los art. 7 y 9 son de un minuto en lugar de dos.",
               "puntos": [
-                "Supervisión adecuada: un árbitro para pocas partidas, que puede ver cada mesa y registrar las partidas. Con ella rigen casi las mismas reglas que en ritmo clásico.",
-                "Sin supervisión adecuada, pasadas 10 jugadas de cada bando ya no se admiten reclamos por el tablero mal armado u orientado.",
-                "En relámpago sin supervisión, la caída de bandera la reclama el jugador deteniendo el reloj, siempre que su propio tiempo no se haya agotado.",
+                "Supervisión adecuada (A.4): una persona árbitra por cada tres partidas como máximo, que registra cada partida. Con ella rigen las reglas de competición, como en ritmo clásico.",
+                "Sin esa supervisión (A.5), pasadas 10 jugadas de cada bando ya no se cambia el reloj ni se reclama por el tablero mal armado u orientado (A.5.1).",
+                "Jugada ilegal sin esa supervisión: la persona árbitra actúa si el rival todavía no hizo su jugada; si nadie reclama y el rival ya jugó, la jugada ilegal queda (A.5.2).",
+                "Caída de bandera: quien reclama pausa el reloj y avisa; si no puede dar mate con ninguna serie de jugadas legales, son tablas (A.5.3).",
                 "El mate termina la partida al instante: si un jugador da mate y un instante después cae su bandera, gana quien dio mate."
               ],
-              "fuente": "Leyes del Ajedrez 2023 (Handbook E.I.01), apéndices A.2 a A.5 y B.3"
+              "fuente": "Leyes del Ajedrez 2023 (Handbook E.I.01), apéndices A.2 a A.5 y B.3 (Manual del Árbitro FIDE 2026)"
             },
             {
               "titulo": "Buchholz y sus cortes",
@@ -715,17 +732,28 @@
               "fuente": "Reglamento de desempates de la FIDE (Handbook C.07)"
             },
             {
-              "titulo": "La normativa de los Juegos Deportivos Estudiantiles",
-              "texto": "Cada edición de los JDE publica su normativa, con reglas generales para todos los deportes y un apartado propio del ajedrez. Antes de cada torneo, quien arbitra debe leer la versión vigente y dejar anotado lo que va a aplicar en la sala. Cuando la normativa no dice algo, se aplican las Leyes de la FIDE.",
+              "titulo": "La Normativa JDE 2026: el artículo 66 (ajedrez)",
+              "texto": "La Normativa del Programa Juegos Deportivos Estudiantiles 2026 dedica su artículo 66 al ajedrez, en las categorías A a E. Lo que no establece se rige primero por las reglas de la Federación Costarricense de Ajedrez y después por las de la FIDE.",
               "puntos": [
-                "Categorías, edades y ramas; requisitos y documentos de inscripción.",
-                "Modalidad (individual o por equipos), sistema de competencia y número de rondas.",
-                "Ritmo de juego y tiempo de incomparecencia.",
-                "Desempates y su orden.",
-                "Dispositivos electrónicos, conducta y sanciones propias del evento.",
-                "Reclamos y apelaciones: ante quién, en qué plazo y con qué requisitos."
+                "Dos modalidades: torneo individual (mujeres y abierto) y torneo por equipos (mujeres y abierto). Cada estudiante juega solo una (66.1.e y 66.1.h).",
+                "Equipos de 3 a 5 estudiantes: cuatro titulares y un suplente. Al iniciar cada ronda, al menos dos frente al tablero (66.1.g y 66.2.f).",
+                "Anotación algebraica en todas las categorías; quien no anote es amonestado si el rival lo pide, excepto en la categoría A (66.2.g).",
+                "Puntos: 1, ½ y 0. Al menos tres desempates, que fija la persona árbitra principal en el congresillo (66.3 y 66.4).",
+                "Presentación: en ajedrez, la persona estudiante puede llegar hasta que su reloj caiga a cero (art. 30)."
               ],
-              "fuente": "Normativa vigente de los Juegos Deportivos Estudiantiles (edición del año en curso)"
+              "fuente": "Normativa del Programa Juegos Deportivos Estudiantiles 2026, art. 30 y 66"
+            },
+            {
+              "titulo": "Sistemas y ritmos de la JDE, etapa por etapa",
+              "texto": "La Normativa fija el sistema y el ritmo mínimo de cada etapa. Con 10 minutos más 2 segundos por jugada, la fórmula de las 60 jugadas da 12 minutos: para la FIDE es ajedrez rápido, así que en las etapas Regional e Interregional rige el apéndice A.",
+              "puntos": [
+                "Regional: suizo de al menos cinco rondas si hay más de ocho por modalidad; todos contra todos si hay ocho o menos. Ritmo mínimo de 10 min + 2 s (66.2.a y 66.2.b).",
+                "Interregional: todos contra todos, con un ritmo mínimo de 10 min + 2 s (66.2.c).",
+                "Nacional: suizo de cinco rondas con más de siete; todos contra todos con seis o menos. Ritmo clásico y blitz de 3 min + 2 s (66.2.d y 66.2.e).",
+                "Con exactamente siete en la Etapa Nacional, la Normativa no dice qué sistema usar: conviene dejarlo escrito en el acta del congresillo.",
+                "Consecuencia práctica: en Regional e Interregional, la primera jugada ilegal le suma 1 minuto al rival, no 2 (A.3)."
+              ],
+              "fuente": "Normativa del Programa Juegos Deportivos Estudiantiles 2026, art. 66.2; Leyes del Ajedrez 2023 (Handbook E.I.01), apéndices A.1, A.3 y B.1"
             }
           ],
           "casos": [
@@ -746,6 +774,24 @@
               "situacion": "En relámpago, un estudiante da mate y, un instante después, cae su bandera.",
               "decision": "Gana quien dio mate: el mate termina la partida en el momento en que se produce.",
               "fuente": "Leyes del Ajedrez 2023 (Handbook E.I.01), art. 5.1.1 y apéndice B.3"
+            },
+            {
+              "titulo": "Llega con el reloj corriendo",
+              "situacion": "Ronda de la Etapa Regional a 10 min + 2 s. Una estudiante llega 8 minutos tarde y su rival ya puso en marcha el reloj.",
+              "decision": "Puede jugar: en ajedrez, la JDE admite a la persona estudiante hasta que su reloj caiga a cero (art. 30). Juega con el tiempo que le queda. Si su reloj ya hubiera llegado a cero, se aplica lo que la Normativa establece para la no presentación (art. 32).",
+              "fuente": "Normativa del Programa Juegos Deportivos Estudiantiles 2026, art. 30 y 32"
+            },
+            {
+              "titulo": "Categoría A sin planilla",
+              "situacion": "En la categoría A, un niño no anota sus jugadas y su rival le pide a la persona árbitra que lo amoneste.",
+              "decision": "En la categoría A no se amonesta por no anotar. En las demás categorías, la persona árbitra principal amonesta a quien no anote si el rival lo solicita (66.2.g).",
+              "fuente": "Normativa del Programa Juegos Deportivos Estudiantiles 2026, art. 66.2.g"
+            },
+            {
+              "titulo": "La primera ilegal en la Regional",
+              "situacion": "Etapa Regional a 10 min + 2 s. Un estudiante deja su rey en jaque y presiona el reloj; su rival todavía no ha jugado. Es su primera jugada ilegal.",
+              "decision": "Se restablece la posición anterior, juega otra respetando la pieza tocada y el rival recibe 1 minuto: con 10 + 60 × 2 s = 12 minutos la partida es rápida (A.1) y en rápidas la sanción es de un minuto (A.3).",
+              "fuente": "Leyes del Ajedrez 2023 (Handbook E.I.01), art. 7.5.1 y 7.5.5; apéndices A.1 y A.3"
             }
           ],
           "ejercicios": [
@@ -762,8 +808,12 @@
               "respuesta": "Carla: Buchholz 12½; corte 1 (se quita ½) = 12. Diego: Buchholz 13; corte 1 (se quita 1) = 12. Si el primer desempate es Buchholz, gana Diego; si fuera Buchholz con corte 1, siguen empatados y se pasa al siguiente criterio."
             },
             {
-              "enunciado": "Ficha de lectura: con la normativa JDE vigente en la mano, anota para ajedrez la categoría, el ritmo, el sistema de competencia, los desempates en orden, el tiempo de incomparecencia y el plazo para presentar un reclamo.",
-              "respuesta": "Se completa con el texto vigente de la normativa y se revisa en plenaria. Lo que la normativa no regule se resuelve con las Leyes de la FIDE: por ejemplo, si no fija tiempo de incomparecencia, es cero (art. 6.7)."
+              "enunciado": "Con la Normativa JDE 2026, completa para ajedrez: sistema y ritmo en una Etapa Regional con 12 inscritos por modalidad, mínimo de estudiantes al iniciar una ronda por equipos, quién fija los desempates y hasta cuándo puede presentarse un estudiante.",
+              "respuesta": "Suizo de al menos cinco rondas, con un ritmo mínimo de 10 min + 2 s (66.2.a); al menos dos frente al tablero (66.2.f); la persona árbitra principal, en el congresillo, con al menos tres criterios (66.4); hasta que su reloj caiga a cero (art. 30)."
+            },
+            {
+              "enunciado": "Etapa Nacional de ajedrez con siete inscritos en el torneo individual abierto. ¿Qué sistema dice la Normativa? ¿Qué debe hacer la persona árbitra principal?",
+              "respuesta": "La Normativa prevé suizo con más de siete y todos contra todos con seis o menos (66.2.d y 66.2.e): no dice nada para exactamente siete. La persona árbitra principal lo plantea en el congresillo y deja el acuerdo escrito en el acta, que obliga a todas las delegaciones (art. 34)."
             }
           ]
         },
@@ -936,9 +986,10 @@
                 "Pocos participantes (hasta 8 o 10) y tiempo suficiente: todos contra todos, que da la clasificación más justa.",
                 "Muchos participantes y pocas rondas posibles: suizo.",
                 "Regla práctica: con n jugadores, un suizo necesita al menos tantas rondas como veces hay que dividir n entre 2 para llegar a 1, y conviene sumar una o dos más para separar bien los primeros puestos.",
-                "Si el objetivo es clasificar a una etapa siguiente, las bases deben decir cuántos clasifican y con qué desempates."
+                "Si el objetivo es clasificar a una etapa siguiente, las bases deben decir cuántos clasifican y con qué desempates.",
+                "En la JDE lo decide la Normativa según la etapa: en la Regional, suizo de al menos cinco rondas con más de ocho por modalidad y todos contra todos con ocho o menos (66.2.a y 66.2.b)."
               ],
-              "fuente": "Reglas básicas del sistema suizo (Handbook C.04.1)"
+              "fuente": "Reglas básicas del sistema suizo (Handbook C.04.1, vigentes desde el 1 de febrero de 2026); Normativa del Programa Juegos Deportivos Estudiantiles 2026, art. 66.2"
             }
           ],
           "casos": [
@@ -1321,14 +1372,14 @@
               "titulo": "Logística antes del torneo",
               "texto": "La mayoría de los problemas de un torneo escolar se evitan antes de la primera ronda.",
               "puntos": [
-                "Inscripción con los datos que pide la normativa y verificación de la categoría de cada estudiante.",
-                "Lista inicial ordenada y publicada; número de rondas y desempates anunciados en las bases.",
+                "Acreditación con la Boleta Oficial de la Plataforma JDE, revisada por el comité de la etapa; sin los datos completos no se recibe (art. 27 y 28).",
+                "Congresillo técnico antes de la etapa: sistema, ritmo, orden de tableros y desempates, todo en el acta oficial. Quien no asista acepta lo acordado (art. 33, 34 y 66.4).",
+                "Quien arbitra en las etapas Circuital, Regional e Interregional debe ser mayor de edad, de preferencia titulado (art. 14).",
+                "Lista inicial ordenada y publicada; número de rondas y desempates anunciados.",
                 "Sala con buena luz y ventilación, mesas numeradas, espacio entre mesas y zona separada para público.",
-                "Materiales: tableros, juegos de piezas y relojes revisados y configurados, repuestos, planillas, actas, formularios y cinta para numerar.",
-                "Personal: árbitro principal, adjuntos, mesa de control y apoyo para la inscripción.",
-                "Charla técnica antes de la ronda 1: ritmo, dispositivos, tolerancia, reclamos y conducta del público."
+                "Materiales: tableros, piezas y relojes revisados y configurados, repuestos, planillas, actas y formularios."
               ],
-              "fuente": "Buenas prácticas de organización; normativa vigente de los JDE"
+              "fuente": "Normativa del Programa Juegos Deportivos Estudiantiles 2026, art. 14, 27, 28, 33, 34 y 66; buenas prácticas de organización"
             },
             {
               "titulo": "Durante y después de las rondas",

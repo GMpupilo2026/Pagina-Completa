@@ -1,0 +1,157 @@
+{
+ "titulo": "Formación Ajedrez · Sesión 4: Sistemas de emparejamiento para torneos",
+ "curso": "formacion-ajedrez",
+ "diapositivas": [
+  {
+   "titulo": "Sistemas de emparejamiento para torneos",
+   "texto": "Portada. Sesión 4: Sistemas de emparejamiento para torneos. Sistema suizo y todos contra todos (round robin): cómo funcionan y cuándo usar cada uno. Formación Ajedrez",
+   "imagen": "01.webp"
+  },
+  {
+   "titulo": "Objetivos de la sesión",
+   "texto": "Aplicar las reglas básicas del sistema suizo: rivales, colores y descansos. Ordenar la lista inicial y emparejar la primera ronda. Emparejar una ronda siguiente por grupos de puntuación. Calendarizar un torneo de todos contra todos con las tablas de Berger. Elegir el sistema adecuado según participantes, tiempo y objetivo del torneo.",
+   "imagen": "02.webp"
+  },
+  {
+   "titulo": "Cronograma de la sesión",
+   "texto": "De 0:00 a 0:15, Repaso y revisión de la tarea. De 0:15 a 1:00, El sistema suizo: reglas básicas. De 1:00 a 1:40, La primera ronda. De 1:40 a 1:55, receso. De 1:55 a 2:35, Las rondas siguientes. De 2:35 a 3:05, Todos contra todos (round robin). De 3:05 a 3:20, receso. De 3:20 a 4:10, Práctica: construcción de cuadros. De 4:10 a 4:40, Quiz de la sesión. De 4:40 a 5:00, Cierre.",
+   "imagen": "03.webp"
+  },
+  {
+   "titulo": "Reglas básicas de todo sistema suizo",
+   "texto": "En el suizo se empareja ronda a ronda a jugadores con puntuaciones iguales o parecidas. Su regla absoluta es que dos jugadores no se enfrentan más de una vez, por encima de puntuaciones y colores. La diferencia entre partidas con blancas y con negras de un jugador no puede superar 2 ni bajar de -2. Ningún jugador recibe el mismo color tres veces seguidas (con excepciones en la última ronda). Con número impar, un jugador queda libre (bye): recibe un punto sin color, y no puede recibirlo dos veces. El número de rondas se fija y se anuncia antes de empezar.",
+   "imagen": "04.webp"
+  },
+  {
+   "titulo": "La lista inicial y la primera ronda",
+   "texto": "Antes de la primera ronda se ordena a los jugadores por rating, de mayor a menor, con criterios para los empates (en torneos escolares sin rating, suele usarse el orden alfabético o un sorteo que el reglamento anuncia). Ese número de orden acompaña al jugador todo el torneo. En la primera ronda se divide la lista en dos mitades y la superior juega contra la inferior. Con 12 jugadores: 1–7, 2–8, 3–9, 4–10, 5–11 y 6–12. El color del número 1 se sortea y se alterna tablero a tablero: si el 1 lleva blancas, el 2 lleva negras, el 3 blancas, y así. Resultado con el 1 de blancas: 1–7, 8–2, 3–9, 10–4, 5–11, 12–6 (el primero de cada pareja lleva blancas).",
+   "imagen": "05.webp"
+  },
+  {
+   "titulo": "Las rondas siguientes",
+   "texto": "Desde la segunda ronda se forman grupos de puntuación. Dentro de cada grupo, ordenado por el número inicial, se cruza la mitad superior con la inferior, respetando los colores y la prohibición de repetir rival. Quien no se puede emparejar en su grupo baja al siguiente como flotante. Una vez publicado, el emparejamiento solo se cambia si hace jugar dos veces al mismo par. A quien se sabe que no jugará una ronda no se le empareja y anota cero, salvo que el reglamento prevea otra cosa (por ejemplo, medio punto por descanso solicitado). Quien falta sin avisar se considera retirado, salvo que explique su ausencia antes del siguiente emparejamiento. Está prohibido alterar el emparejamiento correcto para favorecer a alguien.",
+   "imagen": "06.webp"
+  },
+  {
+   "titulo": "Las rondas siguientes (continuación)",
+   "texto": "En la práctica se usa un programa de emparejamiento reconocido por la FIDE; quien arbitra debe entender lo que hace para poder revisarlo.",
+   "imagen": "07.webp"
+  },
+  {
+   "titulo": "Receso",
+   "texto": "Receso de 15 minutos. Pausa los relojes: seguimos en breve.",
+   "imagen": "08.webp"
+  },
+  {
+   "titulo": "Todos contra todos (round robin)",
+   "texto": "Cada jugador se enfrenta una vez con todos los demás. Con n jugadores (n par) hay n - 1 rondas y n × (n - 1) / 2 partidas. Si n es impar, se agrega un «descanso» como jugador más y en cada ronda descansa quien le toque enfrentarlo. El orden de las partidas sale de las tablas de Berger. Tabla de Berger para 4 jugadores. Ronda 1: 1–4, 2–3. Ronda 2: 4–3, 1–2. Ronda 3: 2–4, 3–1. Con 6 jugadores: 5 rondas y 15 partidas. Con 8: 7 rondas y 28 partidas. Los números se sortean antes de empezar. El desempate habitual es el Sonneborn-Berger, porque el Buchholz no distingue: todos enfrentaron a los mismos.",
+   "imagen": "09.webp"
+  },
+  {
+   "titulo": "¿Suizo o todos contra todos?",
+   "texto": "La decisión depende de cuántas personas juegan, del tiempo disponible y del objetivo del torneo. Pocos participantes (hasta 8 o 10) y tiempo suficiente: todos contra todos, que da la clasificación más justa. Muchos participantes y pocas rondas posibles: suizo. Regla práctica: con n jugadores, un suizo necesita al menos tantas rondas como veces hay que dividir n entre 2 para llegar a 1, y conviene sumar una o dos más para separar bien los primeros puestos. Si el objetivo es clasificar a una etapa siguiente, las bases deben decir cuántos clasifican y con qué desempates.",
+   "imagen": "10.webp"
+  },
+  {
+   "titulo": "¿Suizo o todos contra todos? (continuación)",
+   "texto": "En la JDE lo decide la Normativa según la etapa: en la Regional, suizo de al menos cinco rondas con más de ocho por modalidad y todos contra todos con ocho o menos (66.2.a y 66.2.b).",
+   "imagen": "11.webp"
+  },
+  {
+   "titulo": "Caso 1 · ¿Qué decide la persona árbitra?",
+   "texto": "Caso 1: La ronda 2 de un suizo de 8 jugadores. Ronda 1 (primero, las blancas): 1–5, 6–2, 3–7, 8–4. Resultados: ganan 1, 2, 7 y 8. ¿Cómo queda la ronda 2?",
+   "imagen": "12.webp",
+   "notas": "Dejar que el grupo decida antes de pasar a la siguiente diapositiva."
+  },
+  {
+   "titulo": "Caso 1 · Decisión",
+   "texto": "Caso 1, decisión: Grupo de 1 punto: 1, 2, 7 y 8 (mitades {1, 2} y {7, 8}): 1 contra 7 y 2 contra 8. Grupo de 0: 3, 4, 5 y 6: 3 contra 5 y 4 contra 6. Colores alternados: 7 (tuvo negras) lleva blancas contra 1; 2 (tuvo negras) lleva blancas contra 8; 5 (tuvo negras) blancas contra 3; 4 (tuvo negras) blancas contra 6. Emparejamiento: 7–1, 2–8, 5–3, 4–6.",
+   "imagen": "13.webp"
+  },
+  {
+   "titulo": "Caso 2 · ¿Qué decide la persona árbitra?",
+   "texto": "Caso 2: El error del emparejamiento publicado. Tras publicar la ronda 4, un padre de familia pide cambiar un emparejamiento porque su hijo «ya jugó con alguien de su colegio».",
+   "imagen": "14.webp",
+   "notas": "Dejar que el grupo decida antes de pasar a la siguiente diapositiva."
+  },
+  {
+   "titulo": "Caso 2 · Decisión",
+   "texto": "Caso 2, decisión: No se cambia: jugar con alguien del mismo centro educativo no es una causa. Solo se corrige si el emparejamiento hace jugar dos veces a los mismos dos jugadores (salvo que la normativa del evento prevea evitar cruces del mismo centro, y en ese caso debe estar anunciado).",
+   "imagen": "15.webp"
+  },
+  {
+   "titulo": "Caso 3 · ¿Qué decide la persona árbitra?",
+   "texto": "Caso 3: Siete jugadores en round robin. Se inscriben 7 estudiantes y se quiere un todos contra todos.",
+   "imagen": "16.webp",
+   "notas": "Dejar que el grupo decida antes de pasar a la siguiente diapositiva."
+  },
+  {
+   "titulo": "Caso 3 · Decisión",
+   "texto": "Caso 3, decisión: Se agrega un descanso como octavo número: 7 rondas, 21 partidas, y en cada ronda descansa un jugador.",
+   "imagen": "17.webp"
+  },
+  {
+   "titulo": "Receso",
+   "texto": "Receso de 15 minutos. Pausa los relojes: seguimos en breve.",
+   "imagen": "18.webp"
+  },
+  {
+   "titulo": "Práctica · Construcción de un cuadro de emparejamiento",
+   "texto": "Práctica: Construcción de un cuadro de emparejamiento. Con una lista de 12 jugadores ficticios, cada participante construye la primera ronda bajo sistema suizo y, luego, la calendarización equivalente en round robin.",
+   "imagen": "19.webp"
+  },
+  {
+   "titulo": "Ejercicio 1 de 4",
+   "texto": "Ejercicio 1: Con 12 jugadores ordenados por rating (1 a 12) y el 1 con blancas por sorteo, escribe la primera ronda del suizo.",
+   "imagen": "20.webp"
+  },
+  {
+   "titulo": "Ejercicio 2 de 4",
+   "texto": "Ejercicio 2: ¿Cuántas rondas y cuántas partidas tiene un todos contra todos con 10 jugadores? ¿Y con 9?",
+   "imagen": "21.webp"
+  },
+  {
+   "titulo": "Ejercicio 3 de 4",
+   "texto": "Ejercicio 3: Escribe el calendario completo de un todos contra todos de 4 jugadores con la tabla de Berger.",
+   "imagen": "22.webp"
+  },
+  {
+   "titulo": "Ejercicio 4 de 4",
+   "texto": "Ejercicio 4: Un suizo tiene 11 jugadores. ¿Qué pasa en cada ronda con el número impar?",
+   "imagen": "23.webp"
+  },
+  {
+   "titulo": "Ejercicios: respuestas",
+   "texto": "1. 1–7, 8–2, 3–9, 10–4, 5–11, 12–6 (el primero de cada pareja lleva blancas). 2. 10 jugadores: 9 rondas y 45 partidas. 9 jugadores: se agrega un descanso, 9 rondas y 36 partidas, con un jugador libre por ronda. 3. Ronda 1: 1–4, 2–3. Ronda 2: 4–3, 1–2. Ronda 3: 2–4, 3–1 (el primero de cada pareja lleva blancas). 4. Un jugador queda libre (bye) y recibe un punto sin color. No puede recibirlo quien ya lo tuvo ni quien ya ganó por incomparecencia.",
+   "imagen": "24.webp",
+   "notas": "Repasar en plenaria; cada respuesta con su artículo."
+  },
+  {
+   "titulo": "Quiz de la sesión",
+   "texto": "1. ¿Qué sistema resulta más adecuado cuando hay muchos participantes y tiempo limitado? 2. En el sistema todos contra todos (round robin), ¿qué característica lo define? 3. ¿Cómo se ordena la lista inicial de un suizo? 4. Publicado el emparejamiento, ¿en qué único caso se puede cambiar? 5. ¿Qué recibe en un suizo quien queda libre por número impar? 6. ¿Cuántas partidas tiene un todos contra todos de 8 jugadores? 7. ¿Puede la diferencia entre las partidas que un jugador tuvo con blancas y con negras llegar a ser de 3?",
+   "imagen": "25.webp",
+   "notas": "Un minuto por pregunta, y después las respuestas."
+  },
+  {
+   "titulo": "Quiz de la sesión (continuación)",
+   "texto": "8. ¿Puede un jugador recibir el mismo color tres veces seguidas en un suizo? 9. Un jugador falta a una ronda sin avisar. ¿Qué se asume? 10. ¿Por qué el desempate habitual en un todos contra todos es el Sonneborn-Berger y no el Buchholz? 11. ¿Puede el árbitro cambiar un emparejamiento ya publicado para favorecer a un estudiante?",
+   "imagen": "26.webp",
+   "notas": "Un minuto por pregunta, y después las respuestas."
+  },
+  {
+   "titulo": "Quiz: respuestas",
+   "texto": "1. El sistema suizo. 2. Cada jugador se enfrenta una vez a todos los demás participantes. 3. Por rating, de mayor a menor, con criterios para los empates. 4. Si hace jugar dos veces al mismo par de jugadores. 5. Un punto, sin color asignado. 6. 28 partidas, en 7 rondas. 7. No: no puede superar 2 ni bajar de -2. 8. No, salvo las excepciones que se permiten en la última ronda. 9. Se considera retirado, salvo que explique su ausencia antes de que se publique el siguiente emparejamiento.",
+   "imagen": "27.webp"
+  },
+  {
+   "titulo": "Quiz: respuestas (continuación)",
+   "texto": "10. Porque en un todos contra todos cada jugador enfrenta a los mismos rivales que los demás, así que el Buchholz no distingue a nadie. 11. No, está prohibido alterar el emparejamiento correcto para favorecer a alguien.",
+   "imagen": "28.webp"
+  },
+  {
+   "titulo": "Tarea y cierre",
+   "texto": "Tarea para la próxima sesión: A partir de los resultados de la ronda 1, elaborar el emparejamiento de la ronda 2 bajo sistema suizo. ¿Dudas? Este es el momento. Gracias por tu participación.",
+   "imagen": "29.webp"
+  }
+ ]
+}
