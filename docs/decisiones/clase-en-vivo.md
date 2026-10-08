@@ -3343,6 +3343,33 @@ al tablero que sigue en vivo. Código en `js/clase-presentacion.js`.
 - En el celular de control remoto también se ve con ◀ ▶: sirve para pasar las
   láminas desde el celular.
 
+#### La vista limpia de los alumnos
+
+Con una presentación en pantalla, «🧹 Vista limpia para los alumnos» (en la
+tarjeta, junto a ◀ ▶) deja a cada alumno como el proyector: la diapositiva a la
+izquierda, el tablero a la derecha y el chat abajo, a lo ancho. Las preguntas,
+las prácticas y el aviso del elegido ya eran ventanas al frente; en la vista
+limpia también lo son el calentamiento y la competencia de ejercicios (lo que
+el alumno tiene que HACER le sale encima, debajo de una pregunta).
+
+- **Va en la misma columna**: `presentacion.limpia = true` (el CHECK solo mira
+  `deck` y `n`, y el trigger protege la columna entera). Pasar la diapositiva o
+  elegir otra presentación la deja como estaba; quitar la presentación la
+  apaga.
+- **Lo hace la clase `.vista-limpia` en `<html>`** (`pintarVistaLimpia`), solo
+  para alumnos: al profe, al proyector, al control remoto y a quien supervisa
+  no se les aplica. Con el Modo Adaptado tampoco (lo dice el selector del CSS):
+  quien usa lector de pantalla no gana nada con esconder cosas.
+- **Por LISTA NEGRA, al revés que el proyector**: esconde el encabezado, las
+  migas, el pie, lo de arriba de la sección (título, franja de estado), la
+  columna lateral y la lista de jugadas. En el proyector se esconde por lista
+  blanca para que no se cuele una herramienta del profe; aquí el riesgo es el
+  contrario —que el alumno no vea algo que le piden—, así que una herramienta
+  nueva para él aparece sola.
+- Si la diapositiva no se puede abrir (sin acceso, borrada), la vista limpia se
+  quita: no se deja al alumno con un recuadro vacío y nada más.
+- En el celular es una columna: la diapositiva, el tablero y el chat.
+
 **Una presentación nueva del curso**: sus imágenes (`01.webp`…, 1600 × 900) y su
 `diapositivas.json` en su carpeta, y una línea en `LISTA` de
 `js/clase-presentacion.js`. Las imágenes se sacan del `.pptx` con LibreOffice
@@ -3355,14 +3382,18 @@ ecos viejos, «Al tablero de la clase», Practicar solo donde corresponde, el
 tope de la última), a la alumna (la ve al entrar, la sigue, se le dice en voz,
 no se le piden las siguientes, una forma mala no se muestra, cabe en el
 celular), al proyector (la lámina al lado del tablero, sin lo del profe) y las
-subidas con un PDF de verdad armado en la prueba y un Storage de mentira
+la vista limpia (el profe la enciende y la apaga, a él no se le aplica, la
+alumna queda con la diapositiva, el tablero y el chat en su lugar, el
+calentamiento encima y las preguntas más arriba, el Modo Adaptado la anula, en
+el celular cabe) y las subidas con un PDF de verdad armado en la prueba y un Storage de mentira
 (`opciones.extra` del doble): una imagen por página en su carpeta, la fila
 después de las imágenes y con el texto de cada página, elegirla, guardar y
 quitar una posición, borrarla (antes la quita de la clase), y a la alumna solo
 se le firma la que se ve.
 Está probado que falla de verdad sin la guardia de los ecos, adelantándole
 láminas a la alumna (las del curso y las subidas), sin la línea del trigger y
-guardando la fila antes de subir las imágenes.
+guardando la fila antes de subir las imágenes, sin poner el calentamiento al
+frente en la vista limpia y aplicándosela también al profe.
 
 ### Buscar un ejercicio es mirarlo: «Ver todas las posiciones»
 

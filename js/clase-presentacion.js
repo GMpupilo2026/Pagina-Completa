@@ -155,6 +155,7 @@ async function pintarPresentacion(p, propia) {
     const caja = document.getElementById("presentacion-caja");
     if (!caja) return;
     const nueva = PresentacionClase.valida(p) ? { deck: p.deck, n: p.n } : null;
+    if (nueva && p.limpia === true) nueva.limpia = true;
     // Si el profe pasa tres diapositivas seguidas, los ecos de las dos primeras
     // llegan después y lo devolverían atrás: unos segundos, solo vale lo suyo.
     if (!propia && presentacionEsDelProfe() && Date.now() - presentacionEnviadaEn < 3000
@@ -163,6 +164,7 @@ async function pintarPresentacion(p, propia) {
     if (presentacionDatos && JSON.stringify(nueva) === JSON.stringify(presentacionActual) && !caja.hidden) return;
     presentacionActual = nueva;
     pintarPresentacionPanel();
+    pintarVistaLimpia(nueva);
     const turno = ++presentacionPintando;
     if (!nueva) {
         caja.hidden = true;
@@ -179,6 +181,8 @@ async function pintarPresentacion(p, propia) {
             || "No se pudo abrir la presentación. Revisa tu conexión: se vuelve a intentar con la siguiente diapositiva.";
         msg.hidden = false;
         img.removeAttribute("src");
+        // Sin la diapositiva, la vista limpia dejaría al alumno sin nada que mirar.
+        document.documentElement.classList.remove("vista-limpia");
     };
     let datos, d, src, n;
     try {
@@ -208,6 +212,9 @@ async function pintarPresentacion(p, propia) {
     const delProfe = presentacionEsDelProfe() && !modoProyector;
     document.getElementById("presentacion-profe").hidden = !delProfe;
     if (!delProfe) return;
+    const limpia = document.getElementById("presentacion-limpia");
+    limpia.setAttribute("aria-pressed", String(!!nueva.limpia));
+    limpia.textContent = nueva.limpia ? "🧹 Vista limpia: encendida" : "🧹 Vista limpia para los alumnos";
     document.getElementById("presentacion-anterior").disabled = n <= 1;
     document.getElementById("presentacion-siguiente").disabled = n >= total;
     const notas = document.getElementById("presentacion-notas");
@@ -332,8 +339,9 @@ async function presentacionPracticar(pos) {
 async function mostrarPresentacion(p) {
     if (!presentacionEsDelProfe() || !myGameStateId) return;
     if (p && presentacionDatos && p.deck === (presentacionActual && presentacionActual.deck)) {
-        p = { deck: p.deck, n: Math.max(1, Math.min(p.n, presentacionDatos.diapositivas.length)) };
+        p = Object.assign({}, p, { n: Math.max(1, Math.min(p.n, presentacionDatos.diapositivas.length)) });
     }
+    if (p && !p.limpia) delete p.limpia;
     presentacionEnviada = JSON.stringify(p);
     presentacionEnviadaEn = Date.now();
     const local = pintarPresentacion(p, true);
@@ -344,7 +352,32 @@ async function mostrarPresentacion(p) {
 
 function pasarDiapositiva(paso) {
     if (!presentacionActual) return;
-    mostrarPresentacion({ deck: presentacionActual.deck, n: presentacionActual.n + paso });
+    mostrarPresentacion(Object.assign({}, presentacionActual, { n: presentacionActual.n + paso }));
+}
+
+/* ---------- La vista limpia de los alumnos ----------
+   El profe la enciende («🧹 Vista limpia para los alumnos», presentacion.limpia)
+   y a cada alumno le queda la diapositiva al lado del tablero, el chat abajo
+   y nada más: las preguntas, las prácticas, el calentamiento y la competencia
+   le salen encima. Lo hace la clase .vista-limpia en <html> (css/styles.css),
+   que esconde por LISTA NEGRA —al revés que el proyector—: lo que se le
+   escapa a un alumno es lo que no ve, así que una herramienta nueva para él
+   aparece sin que nadie tenga que acordarse. Al profe, al proyector y a quien
+   supervisa no se les aplica, y con el Modo Adaptado tampoco (lo dice el CSS). */
+function pintarVistaLimpia(p) {
+    const limpia = !!(p && p.limpia) && !isTeacher && !esObservador;
+    const habia = document.documentElement.classList.contains("vista-limpia");
+    document.documentElement.classList.toggle("vista-limpia", limpia);
+    anunciarALaClase("vista-limpia", limpia ? "si" : null,
+        "Tu profe dejó la clase en vista limpia: la diapositiva, el tablero y el chat. Las preguntas te salen encima.");
+    if (habia !== limpia && limpia) window.scrollTo(0, 0);
+}
+
+function cambiarVistaLimpia() {
+    if (!presentacionActual) return;
+    const p = Object.assign({}, presentacionActual);
+    if (p.limpia) delete p.limpia; else p.limpia = true;
+    mostrarPresentacion(p);
 }
 
 /* ---------- Elegir qué presentación compartir (panel «📊 Presentación») ---------- */
@@ -376,7 +409,9 @@ function filaDePresentacion(deck, titulo, detalle, alBorrar) {
     } else {
         const mostrar = presentacionBoton("▶ Mostrar a la clase", "Mostrar la primera diapositiva a toda la clase, arriba del tablero", true);
         mostrar.addEventListener("click", () => {
-            mostrarPresentacion({ deck: deck, n: 1 });
+            // Si ya estaba en vista limpia, la siguiente presentación sigue igual.
+            const limpia = !!(presentacionActual && presentacionActual.limpia);
+            mostrarPresentacion(limpia ? { deck: deck, n: 1, limpia: true } : { deck: deck, n: 1 });
             cerrarPanelPresentacion();
         });
         acciones.appendChild(mostrar);
@@ -589,6 +624,7 @@ document.getElementById("presentacion-completa").addEventListener("click", () =>
 document.getElementById("presentacion-anterior").addEventListener("click", () => pasarDiapositiva(-1));
 document.getElementById("presentacion-siguiente").addEventListener("click", () => pasarDiapositiva(1));
 document.getElementById("presentacion-quitar").addEventListener("click", () => mostrarPresentacion(null));
+document.getElementById("presentacion-limpia").addEventListener("click", cambiarVistaLimpia);
 document.getElementById("presentacion-caja").addEventListener("keydown", (e) => {
     if (!presentacionEsDelProfe() || document.fullscreenElement !== e.currentTarget) return;
     if (e.key === "ArrowRight" || e.key === "PageDown") { e.preventDefault(); pasarDiapositiva(1); }

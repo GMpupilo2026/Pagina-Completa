@@ -366,6 +366,72 @@ async function pruebaSubidaAlumna(browser) {
   await ctx.close();
 }
 
+
+async function pruebaVistaLimpia(browser) {
+  console.log("\n9. La vista limpia: el profe la enciende y al alumno le queda la diapositiva, el tablero y el chat");
+  {
+    const { page, ctx, errores } = await abrir(browser, "u-profe", CLASE, { game_state: [fila({ presentacion: { deck: DECK, n: 3 } })] });
+    await esperarImagen(page, "03.webp");
+    await page.click("#presentacion-limpia");
+    cierto("«🧹 Vista limpia» la manda en la presentación", JSON.stringify(await ultimaPresentacion(page)) === JSON.stringify({ deck: DECK, n: 3, limpia: true }));
+    cierto("y el botón dice que está encendida", (await page.getAttribute("#presentacion-limpia", "aria-pressed")) === "true");
+    cierto("al profe no se le aplica: él sigue con todo", !(await page.evaluate(() => document.documentElement.classList.contains("vista-limpia")))
+      && await seVe(page, "#teacher-toolbar"));
+    await page.click("#presentacion-siguiente");
+    await esperarImagen(page, "04.webp");
+    cierto("pasar la diapositiva no la apaga", JSON.stringify(await ultimaPresentacion(page)) === JSON.stringify({ deck: DECK, n: 4, limpia: true }));
+    await page.click("#presentacion-limpia");
+    cierto("apagarla la saca de la presentación", JSON.stringify(await ultimaPresentacion(page)) === JSON.stringify({ deck: DECK, n: 4 }));
+    cierto("sin errores en consola", errores.length === 0, errores.join(" | "));
+    await ctx.close();
+  }
+  const { page, ctx, errores } = await abrir(browser, "u-ana", CLASE, { game_state: [fila({ presentacion: { deck: DECK, n: 29, limpia: true } })] });
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await esperarImagen(page, "29.webp");
+  cierto("la alumna queda en vista limpia", await page.evaluate(() => document.documentElement.classList.contains("vista-limpia")));
+  cierto("sin encabezado, título, columna lateral ni lista de jugadas",
+    !(await seVe(page, "#header")) && !(await seVe(page, "#status-banner")) && !(await seVe(page, "#herramientas-profe")) && !(await seVe(page, "#moves-panel")));
+  cierto("con el tablero, «Levantar la mano» y el chat", await seVe(page, "#chessboard") && await seVe(page, "#raise-hand-btn") && await seVe(page, "#chat-caja"));
+  const cajas = await page.evaluate(() => {
+    const r = (id) => document.getElementById(id).getBoundingClientRect();
+    const a = r("presentacion-caja"), b = r("chessboard"), c = r("chat-caja");
+    return { lamina: [a.left, a.right, a.top, a.bottom], tablero: [b.left, b.top], chat: [c.left, c.right, c.top] };
+  });
+  cierto("la diapositiva a la izquierda, el tablero a la derecha y el chat abajo, a lo ancho",
+    cajas.lamina[1] <= cajas.tablero[0] && cajas.tablero[1] < 200 && cajas.chat[2] >= cajas.lamina[3]
+      && cajas.chat[0] <= cajas.lamina[0] + 1 && cajas.chat[1] > cajas.tablero[0], JSON.stringify(cajas));
+  await page.waitForFunction(() => /vista limpia/.test(document.getElementById("clase-voz").textContent), null, { timeout: 3000 }).catch(() => {});
+  cierto("y se le dice en voz", /vista limpia/.test(await page.textContent("#clase-voz")));
+  const encima = await page.evaluate(() => {
+    const c = document.getElementById("calentamiento-caja");
+    c.hidden = false;
+    const s = getComputedStyle(c), q = getComputedStyle(document.getElementById("question-card"));
+    const r = { cal: [s.position, +s.zIndex], pregunta: [q.position, +q.zIndex] };
+    c.hidden = true;
+    return r;
+  });
+  cierto("el calentamiento le sale encima, y las preguntas por encima de todo",
+    encima.cal[0] === "fixed" && encima.cal[1] >= 45 && encima.pregunta[0] === "fixed" && encima.pregunta[1] > encima.cal[1], JSON.stringify(encima));
+  await page.evaluate(() => document.documentElement.classList.add("adaptive-mode"));
+  cierto("con el Modo Adaptado no se aplica (vuelve el encabezado)", await seVe(page, "#header"));
+  await page.evaluate(() => document.documentElement.classList.remove("adaptive-mode"));
+  await page.evaluate((v) => window.__cambioEnBase("game_state", v), fila({ presentacion: { deck: DECK, n: 29 } }));
+  await page.waitForTimeout(200);
+  cierto("el profe la apaga: vuelve todo", !(await page.evaluate(() => document.documentElement.classList.contains("vista-limpia"))) && await seVe(page, "#header"));
+  await page.evaluate((v) => window.__cambioEnBase("game_state", v), fila({ presentacion: { deck: DECK, n: 29, limpia: true } }));
+  await page.waitForTimeout(200);
+  await page.evaluate((v) => window.__cambioEnBase("game_state", v), fila({ presentacion: null }));
+  await page.waitForTimeout(200);
+  cierto("y si quita la presentación, también", !(await page.evaluate(() => document.documentElement.classList.contains("vista-limpia"))));
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.evaluate((v) => window.__cambioEnBase("game_state", v), fila({ presentacion: { deck: DECK, n: 29, limpia: true } }));
+  await esperarImagen(page, "29.webp");
+  cierto("en el celular, una columna que cabe", await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth
+    && document.getElementById("presentacion-caja").getBoundingClientRect().bottom <= document.getElementById("chessboard").getBoundingClientRect().top));
+  cierto("sin errores en consola", errores.length === 0, errores.join(" | "));
+  await ctx.close();
+}
+
 (async () => {
   try { datos(); } catch (e) { cierto("los datos se pudieron leer", false, e && e.stack); }
   const browser = await chromium.launch({ executablePath: CHROME });
@@ -375,6 +441,7 @@ async function pruebaSubidaAlumna(browser) {
     await pruebaProyector(browser);
     await pruebaSubida(browser);
     await pruebaSubidaAlumna(browser);
+    await pruebaVistaLimpia(browser);
   } catch (e) {
     console.log("  ✗ la prueba se cayó: " + (e && e.stack || e));
     fallos += 1;
