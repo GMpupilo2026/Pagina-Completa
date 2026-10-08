@@ -3267,6 +3267,67 @@ por uno—. Antes solo tenía "Cargar" (la línea entera, jugada a jugada, con
   la pestaña Practicar —el mismo insert que `start-practice-btn`, solo que con
   el fen del archivo en vez de `board.fen()`.
 
+### La presentación de la clase
+
+Para una charla o una capacitación, el profe muestra sus diapositivas **dentro
+de la clase**: «📽️ Presentación» (en la barra del profe) la pone arriba del
+tablero para todos, y la pasa con ◀ ▶ (también con las flechas o Re Pág / Av
+Pág en pantalla completa). Los alumnos la ven sin salir de `sesion.html`, junto
+al tablero que sigue en vivo. La primera es la clase 1 de Formación Ajedrez
+(34 láminas). Código en `js/clase-presentacion.js`.
+
+- **Es la excepción consciente a «el material del profesor no es el de la
+  clase»**: la lámina sí la ve todo el mundo, porque el profe la pone para eso.
+  Lo que sigue siendo solo suyo va en `#presentacion-profe`: los botones, las
+  notas de cada diapositiva, qué sigue y las posiciones.
+- **Qué lámina se ve va en `game_state.presentacion`** (`{deck, n}` o null),
+  no en un broadcast, por lo mismo que la vista: quien entra tarde o recarga
+  ve la misma. La protege `protect_game_state_teacher_columns` y el CHECK
+  `game_state_presentacion_forma` (envuelto en `coalesce`). Comprobado
+  impersonando: la alumna cambia la fila y la presentación queda como estaba;
+  el profe la cambia; `n` 0, 1.5 o "2", un `deck` con otra forma, un arreglo
+  o sin `deck` se rechazan. Al cerrar la clase se limpia con lo demás.
+- **Las láminas son imágenes con su texto**: cada una trae en
+  `diapositivas.json` su título y su transcripción completa, que va en el
+  desplegable «Leer el texto de la diapositiva» y se anuncia en `#clase-voz`
+  al cambiar. Una imagen sola no la lee nadie que no la vea.
+- **Viven con el material del curso** (`cursos/recursos/<curso>/presentaciones/<clase>/`),
+  detrás del candado del worker: la ve quien tiene el acceso a la Academia.
+  Si no lo tiene, la tarjeta lo dice en vez de quedar vacía.
+- **Al alumno se le pide SOLO la lámina que se ve**; al profe, también la
+  siguiente (para pasar sin esperar). Las siguientes son, entre otras, las
+  respuestas de la práctica y del quiz.
+- **Las posiciones de una lámina pasan por `aplicarPosicionEnClase()`**:
+  «📥 Al tablero de la clase», «❓ Preguntar» (solo si la lámina dice cuántas
+  jugadas, `jugadas`) y «🎯 Practicar» (solo si la partida no terminó en esa
+  posición: practicar un mate ya dado no tiene sentido). Cada FEN se copió de
+  la lámina y se comprobó con chess.js y `PosicionValida`; en «Rey y alfil
+  contra rey» el alfil de c3 da jaque al rey de f6, así que la posición solo
+  es legal con turno de las negras, y así quedó.
+- **Los ecos de Realtime no devuelven atrás al profe**: si pasa tres láminas
+  seguidas, los ecos de las dos primeras llegan después. Durante 3 segundos
+  después de mandar, su pantalla solo acepta lo que mandó.
+- **En el proyector** la lámina va a la izquierda y el tablero a la derecha
+  (dos tercios y un tercio), sin los botones del profe ni el desplegable: al
+  mandar una posición al tablero no se pierde la lámina.
+- En el celular de control remoto también se ve con ◀ ▶: sirve para pasar las
+  láminas desde el celular.
+
+**Una presentación nueva**: sus imágenes (`01.webp`…, 1600 × 900) y su
+`diapositivas.json` en su carpeta, y una línea en `LISTA` de
+`js/clase-presentacion.js`. Las imágenes se sacan del `.pptx` con LibreOffice
+(a PDF) y PyMuPDF (cada página a 1,25×, WebP calidad 80).
+
+**Al tocar esto, correr `node herramientas/verificar-todo.js clase-presentacion`.**
+Comprueba cada posición con chess.js, que cada lámina tenga su imagen y su
+texto, que el trigger proteja la columna, y en el navegador al profe (◀ ▶, los
+ecos viejos, «Al tablero de la clase», Practicar solo donde corresponde, el
+tope de la última), a la alumna (la ve al entrar, la sigue, se le dice en voz,
+no se le piden las siguientes, una forma mala no se muestra, cabe en el
+celular) y al proyector (la lámina al lado del tablero, sin lo del profe).
+Está probado que falla de verdad sin la guardia de los ecos, adelantándole
+láminas a la alumna y sin la línea del trigger.
+
 ### Buscar un ejercicio es mirarlo: «Ver todas las posiciones»
 
 Las dos listas de material del profesor —los PGN de Archivos y los ejercicios de

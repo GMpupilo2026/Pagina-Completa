@@ -1246,6 +1246,22 @@ html.modo-proyector #encuesta-quitar-btn,
 html.modo-proyector #podio-quitar-btn,
 html.modo-proyector #pensar-profe-acciones { display: none !important; }
 
+/* La presentación en el proyector: la diapositiva a la izquierda y el tablero a la
+   derecha, para que al mandar una posición al tablero no se pierda la lámina. Sin
+   presentación, la columna sigue siendo un bloque y el tablero lo ocupa todo. Ver
+   «La presentación de la clase» en docs/decisiones/clase-en-vivo.md. */
+html.modo-proyector .proyector-columna:has(> #presentacion-caja:not([hidden])) {
+  display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr); column-gap: 1.5rem; align-items: start;
+}
+html.modo-proyector .proyector-columna:has(> #presentacion-caja:not([hidden])) > * { grid-column: 2; }
+html.modo-proyector .proyector-columna:has(> #presentacion-caja:not([hidden])) > .proyector-barra,
+html.modo-proyector .proyector-columna:has(> #presentacion-caja:not([hidden])) > #entrar-qr-caja { grid-column: 1 / -1; }
+html.modo-proyector .proyector-columna:has(> #presentacion-caja:not([hidden])) > #presentacion-caja { grid-column: 1; grid-row: 2 / span 40; max-width: none; margin: 0; }
+html.modo-proyector .presentacion-sin-proyector { display: none !important; }
+/* A pantalla completa (el botón ⛶ de la tarjeta): la lámina tan grande como quepa. */
+#presentacion-caja:fullscreen { max-width: none; display: flex; flex-direction: column; justify-content: center; background: #0b1220; border-radius: 0; overflow-y: auto; }
+#presentacion-caja:fullscreen .presentacion-img { max-height: calc(100vh - 9rem); width: auto; max-width: 100%; margin: 0 auto; }
+
 /* ===== Control remoto (sesion.html?control=1) =====
    El celular del profe: el tablero chico y botones grandes para lo que ve la
    clase. Igual que el proyector, por lista blanca (.control-se-ve). Ver «El
