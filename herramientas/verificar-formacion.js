@@ -115,5 +115,26 @@ virtuales.forEach((l) => {
   cierto(`${l.archivo}.pptx existe`, fs.existsSync(path.join(RECURSOS, l.archivo + ".pptx")));
 });
 
+console.log("\n6. Las presentaciones de la clase en vivo y la guía rápida");
+const modClase = fs.readFileSync(path.join(RAIZ, "js", "clase-presentacion.js"), "utf8");
+virtuales.forEach((l) => {
+  const deck = "formacion-ajedrez/clase-" + String(lecciones.indexOf(l) + 1).padStart(2, "0");
+  const dir = path.join(RECURSOS, "presentaciones", deck.split("/")[1]);
+  const json = path.join(dir, "diapositivas.json");
+  cierto(`${l.archivo}: tiene su presentación para la clase en vivo (${deck})`, fs.existsSync(json));
+  cierto(`${l.archivo}: y se ofrece en la clase`, modClase.includes('deck: "' + deck + '"'));
+  if (l.presentacion_clase === "propia" || !fs.existsSync(json)) return;
+  const d = JSON.parse(fs.readFileSync(json, "utf8")).diapositivas;
+  cierto(`${l.archivo}: la presentación de clase trae los casos de la sesión`,
+    l.casos.every((c) => d.some((x) => x.texto.includes(c.situacion.slice(0, 40)))));
+  const fens = l.ejercicios.filter((e) => e.fen).map((e) => e.fen);
+  cierto(`${l.archivo}: y sus posiciones, para mandarlas al tablero`,
+    fens.every((f) => d.some((x) => (x.posiciones || []).some((p) => p.fen === f))));
+});
+const guia = sinEspacios(leerPdf(path.join(RECURSOS, "guia-rapida-arbitro-jde.pdf")));
+cierto("la guía rápida existe y dice que la Regional se juega a ritmo rápido (A.1)",
+  guia.includes(sinEspacios("Rápida (A.1)")) && guia.includes(sinEspacios("Normativa PJDE 2026")));
+cierto("la Sesión 1 la ofrece para bajar", fragmento.includes("guia-rapida-arbitro-jde.pdf"));
+
 console.log(fallos ? `\n${fallos} fallo(s)` : "\nTodo bien.");
 process.exit(fallos ? 1 : 0);

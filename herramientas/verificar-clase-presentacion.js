@@ -57,6 +57,8 @@ function datos() {
     cierto(`${deck}: cada una con título y su texto para el lector de pantalla`,
       ds.every((d) => d.titulo && d.texto && d.texto.length > 30));
     cierto(`${deck}: no pasa del tope del CHECK de la base (500)`, ds.length <= 500);
+    const enLista = (modulo.match(new RegExp('deck: "' + deck + '", titulo: ("[^"]*")')) || [])[1];
+    cierto(`${deck}: el título de la lista es el de su diapositivas.json`, enLista && JSON.parse(enLista) === j.titulo, enLista + " / " + j.titulo);
     const posiciones = ds.flatMap((d, i) => (d.posiciones || []).map((p) => Object.assign({ n: i + 1 }, p)));
     console.log(`\n2. ${deck}: ${posiciones.length} posiciones, contra chess.js`);
     posiciones.forEach((p) => {

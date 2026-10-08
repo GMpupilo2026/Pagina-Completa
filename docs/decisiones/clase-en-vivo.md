@@ -3279,8 +3279,11 @@ al tablero que sigue en vivo. Código en `js/clase-presentacion.js`.
 
 - **«Las del curso»** (`LISTA`): imágenes y `diapositivas.json` en
   `cursos/recursos/<curso>/presentaciones/<clase>/`, detrás del candado del
-  worker; `deck` = `"<curso>/<clase>"`. La primera es la clase 1 de Formación
-  Ajedrez (34 láminas).
+  worker; `deck` = `"<curso>/<clase>"`. De Formación Ajedrez están las siete
+  sesiones virtuales: la Clase 1 es la presentación propia del profe (34
+  láminas, transcritas a mano) y las sesiones 2 a 7 las arma
+  `herramientas/curso-generar-formacion.py` con el mismo `.pptx` que se baja
+  del curso (ver «Las presentaciones de Formación Ajedrez» abajo).
 - **«Las tuyas»**: sube un PDF desde el mismo panel (PowerPoint y Google Slides
   lo exportan; un `.pptx` no, porque el navegador no sabe dibujarlo). pdf.js —el
   mismo de «📄 PDF»— dibuja cada página a 1600 px y se guarda en WebP (JPG si el
@@ -3390,8 +3393,36 @@ lámina se corre a la izquierda para dejarle su lugar.
 
 **Una presentación nueva del curso**: sus imágenes (`01.webp`…, 1600 × 900) y su
 `diapositivas.json` en su carpeta, y una línea en `LISTA` de
-`js/clase-presentacion.js`. Las imágenes se sacan del `.pptx` con LibreOffice
-(a PDF) y PyMuPDF (cada página a 1,25×, WebP calidad 80).
+`js/clase-presentacion.js` con el MISMO título del JSON (lo revisa el
+verificador). Las imágenes se sacan del `.pptx` con LibreOffice (a PDF) y
+PyMuPDF (cada página a 1600 px de ancho, WebP calidad 80).
+
+#### Las presentaciones de Formación Ajedrez
+
+Las sesiones 2 a 7 no se transcriben a mano: `presentacion()` de
+`herramientas/curso-generar-formacion.py` arma el `.pptx` de cada sesión desde
+el JSON del curso con el estilo de la Clase 1 del profe (franja azul, letra
+grande, una idea por diapositiva), y `presentacion_de_clase()` lo pasa a
+imágenes con el texto de cada diapositiva, sus notas y las posiciones de sus
+ejercicios. Así el `.pptx` que se baja y la presentación de la clase en vivo
+son la misma, y cambian juntas al volver a generar.
+
+- **Nada por debajo de 22 pt en las listas** (20 en lo que no se puede
+  partir): lo que no cabe se parte en una diapositiva «(continuación)», nunca
+  se achica hasta no leerse en un proyector. El tamaño se mide con la métrica
+  de Carlito (la de Calibri), no a ojo.
+- **Cada sesión trae**: portada, objetivos, cronograma, un tema por
+  diapositiva con su fuente al pie, recesos (los del cronograma), cada caso en
+  dos (la situación para discutir y la decisión), la práctica, los ejercicios
+  —con tablero si traen posición, dibujado con `herramientas/lib/tablero-png.js`,
+  que usa las piezas del sitio— y sus respuestas, el quiz y sus respuestas, y
+  la tarea.
+- La Clase 1 lleva `"presentacion_clase": "propia"` en el JSON: el generador no
+  la toca.
+- Hace falta LibreOffice y PyMuPDF; sin ellos se avisa y el resto del curso se
+  genera igual. `verificar-formacion.js` revisa que cada sesión virtual tenga
+  su presentación de clase, que se ofrezca en la clase, que traiga los casos
+  de la sesión y sus posiciones.
 
 **Al tocar esto, correr `node herramientas/verificar-todo.js clase-presentacion`.**
 Comprueba cada posición con chess.js, que cada lámina tenga su imagen y su
