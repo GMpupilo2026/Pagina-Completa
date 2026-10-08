@@ -1209,6 +1209,103 @@ transmisiones»).
   sala (pestañas, medallas, lo viejo, la función caída) y
   `verificar-salas-torneo.js` el editor.
 
+## Herramientas de arbitraje
+
+`herramientas-arbitraje.html` es el hub de herramientas para quien arbitra.
+Hoy tiene una sola, abierta a cualquiera sin cuenta: el **Espacio de
+consultas**. La idea es que crezca con herramientas con licencia (ver
+«La migración huérfana», abajo), pero lo único construido y documentado acá es
+la consulta.
+
+- **Un árbitro, o una madre o un padre de familia, escribe su duda** (nombre,
+  a quién corresponde y la pregunta; el correo es opcional, solo para que el
+  equipo escriba si hace falta corregir algo) y recibe, en la misma pantalla,
+  una respuesta escrita por IA a partir del Reglamento de la FIDE. Sin cuenta,
+  igual que `nivel-de-arbitraje.html`.
+- **La responde la Edge Function `consulta-arbitraje`** (`verify_jwt` en
+  **false**: no hay sesión que comprobar). El candado está todo adentro:
+  - **El freno de los envíos públicos**, con su propio tipo
+    `'arbitraje_consulta'` en `interno.frenar_envio_publico()` — 10 por IP en
+    una hora, 5 por correo al día (cuando lo dan), 80 en total por hora. Más
+    chico que el de un formulario común porque **cada intento que pasa cuesta
+    dinero de verdad**: llama a la IA. Se llama ANTES de gastar nada, por
+    `public.arbitraje_consulta_frenar(p_ip, p_correo)` (mismo patrón que
+    `jdn_frenar`: la función trae la IP de SU PROPIO pedido, porque la que
+    vería PostgREST sería la de Supabase, no la de quien preguntó).
+  - **Un presupuesto propio**, en `arbitraje_consulta_config` (una sola fila):
+    qué modelo contesta (`claude-haiku-4-5` o `claude-sonnet-5`; `null` = la
+    consulta está apagada) y cuánto puede gastar por mes. Aparte del de
+    «Mejorar informe» (`academia_ia`), porque esa la gasta un profesor con
+    sesión y esta la gasta cualquiera sin sesión: mezclarlos dejaría que el
+    público le vaciara el presupuesto a la Academia. Solo quien administra la
+    ve y la cambia (`arbitraje_consulta_config_guardar()`), desde
+    `arbitraje.html` → «⚙️ IA del espacio de consultas». Lleva su trigger de
+    auditoría (controla gasto, igual que `academia_ia`).
+  - **Cada intento queda anotado en `consultas_arbitraje`**, llegue o no a
+    contestar (sin presupuesto, error de la IA): así quien revisa ve también
+    lo que no se pudo responder, no solo lo que salió bien. La RLS es la misma
+    que `arbitrajes_publicos`: solo profesores y administración leen y
+    marcan `revisado`; nadie inserta desde el navegador, solo la Edge
+    Function con la clave de servicio.
+- **La respuesta no es una decisión arbitral ni sustituye el reglamento
+  particular de un torneo.** El propio texto del sistema a la IA se lo pide:
+  citar el artículo cuando pueda, decir con honestidad cuando no esté segura
+  del número exacto en vez de inventarlo, remitir a las bases del torneo
+  cuando la duda dependa de ellas (el ritmo, el desempate) y nunca decidir un
+  caso concreto que esté pasando ahora mismo — eso es siempre del árbitro
+  presente. La pantalla lo repite antes del formulario, con el enlace a
+  `handbook.fide.com`.
+- **La revisión vive en `arbitraje.html`**, en «💬 Espacio de consultas»: la
+  lista con la pregunta, la respuesta, el modelo y el costo, una nota de
+  revisión y el botón para marcarla revisada. Mismo patrón que «📥 Exámenes
+  del público».
+- `arbitraje.html` y `nivel-de-arbitraje.html` enlazan hacia acá (y al revés)
+  para que quien busca un examen completo o una duda puntual encuentre el que
+  le toca.
+- **Pendiente al cerrar esta sesión**: la migración
+  `20261008195500_consultas_arbitraje.sql` está escrita y comprobada
+  (`node herramientas/verificar-arbitraje-consulta.js`), y la Edge Function ya
+  está desplegada (`verify_jwt` en false), pero la migración **no se pudo
+  aplicar** a la base en vivo desde esta sesión (`apply_migration` devolvió
+  "cancelled" tres veces, incluso tras confirmarlo). Hasta que alguien la
+  aplique a mano (panel de Supabase → SQL Editor, o `supabase db push`), el
+  formulario de `herramientas-arbitraje.html` va a contestar "no se pudo
+  procesar la consulta": la Edge Function llama a funciones y tablas que
+  todavía no existen en la base. Después de aplicarla, falta también volver a
+  armar `supabase/esquema/inventario-academia.txt`
+  (`herramientas/inventario-esquema.sql`) y sumar `arbitraje_consulta_config`
+  a `VIGILADAS` de `herramientas/verificar-auditoria.js` (se dejó afuera a
+  propósito: agregarla antes de que el trigger exista de verdad en la base
+  habría hecho fallar ese verificador).
+
+### La migración huérfana
+
+El 8 de octubre de 2026 ya existía en la base de AjedrezIntegral una migración
+llamada `herramientas_arbitraje` con tablas de **licencias**
+(`licencias_herramientas`, códigos `AI-XXXX-XXXX-XXXX`), una caché de
+chess-results (`seleccion_cache`) y selecciones guardadas
+(`selecciones_arbitraje`) para una herramienta `seleccion-codicader` — pensada,
+por el nombre, para armar una selección de torneo desde chess-results.com. Esa
+migración **no tiene ningún código correspondiente en el repositorio**: ni
+`herramientas-arbitraje.html` (que entonces era otra página, distinta de la de
+hoy), ni `licencias.html`, ni `js/herramientas-arbitraje.js`, ni la Edge
+Function `seleccion-chess-results` aparecen en ningún commit ni en ninguna
+rama. Se aplicó directo a Supabase en una sesión cuyo código nunca se
+commiteó ni se subió: el patrón que esta misma página advierte en «Los
+servidores MCP van en `.mcp.json`, no en la máquina» y que
+`RESTAURAR.md`/`verificar-punto-restauracion.js` existen para evitar, pero
+esta vez con una migración de base en vez de un servidor MCP.
+
+No se tocó para escribir el Espacio de consultas: las tablas siguen ahí, sin
+usarse y sin romper nada (RLS propia, sin relación con `consultas_arbitraje`).
+Quien quiera construir la selección de torneos tiene el esquema ya aplicado
+(`tengo_herramienta()`, `canjear_licencia()`, `licencias_generar()`,
+`licencias_cambiar()`, `licencias_admin()`, `seleccion_compartida()`) y puede
+partir de ahí, escribiendo esta vez `herramientas-arbitraje.html`,
+`licencias.html` y la Edge Function que falta, y documentando el porqué de
+cada decisión acá — en vez de descubrir otra vez, a ciegas, lo que ya se
+decidió una vez y se perdió.
+
 ## La sala se actualiza sola, jugada por jugada
 
 «No se actualiza en vivo», y era cierto por tres lados, ninguno con error a la

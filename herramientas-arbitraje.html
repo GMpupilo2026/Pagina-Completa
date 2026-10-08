@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="img/favicon.svg">
+    <title>Herramientas de arbitraje — Ajedrez Integral</title>
+    <meta name="description" content="Herramientas para quien arbitra: un espacio de consultas sobre el Reglamento de la FIDE, abierto a árbitros y a madres y padres de familia, sin necesidad de cuenta.">
+    <meta name="robots" content="noindex">
+    <!-- Tailwind compilado: lo genera herramientas/css-construir.js. -->
+    <link rel="stylesheet" href="css/tailwind.css">
+    <link rel="stylesheet" href="css/styles.css">
+    <!-- oscuro: inicio --><script>(function(){try{var t=localStorage.getItem('theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.classList.add('dark');}catch(e){}})();</script><!-- oscuro: fin -->
+    <script src="js/adaptive-mode.js"></script>
+<!-- app: inicio --><meta name="theme-color" content="#102a43"><link rel="manifest" href="/manifest.json"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Ajedrez"><script src="js/errores.js"></script><script src="js/pwa.js" defer></script><script src="js/navegacion.js" defer></script><!-- app: fin --><!-- fuentes: inicio --><link rel="stylesheet" href="css/fuentes.css"><!-- fuentes: fin --><!-- tema: inicio --><script>(function(){try{var l=localStorage.getItem('plataforma_letra_v1');if(l&&/^[a-z]{2,24}$/.test(l)&&l!=='tema')document.documentElement.setAttribute('data-letra',l);var t=localStorage.getItem('plataforma_tema_v1');if(!t||!/^[a-z]{2,24}$/.test(t)||t==='clasico')return;document.documentElement.setAttribute('data-tema',t);var b=getComputedStyle(document.documentElement).getPropertyValue('--c-brand-800').trim();var m=document.querySelector('meta[name="theme-color"]');if(b&&m)m.setAttribute('content','rgb('+b.replace(/\s+/g,',')+')');}catch(e){}})();</script><!-- tema: fin --></head>
+<body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-accent-500 focus:text-brand-900 focus:font-semibold focus:px-4 focus:py-2 focus:rounded-lg">Saltar al contenido principal</a>
+    <header id="header" class="sticky top-0 z-50 bg-brand-800 shadow-lg">
+        <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Navegación principal">
+            <div class="flex items-center justify-between min-h-[4rem] md:min-h-[5rem] py-2">
+                <a href="index.html" class="flex items-center gap-2 text-white"><img src="/img/logo-marca.png" alt="" width="78" height="48" class="h-10 md:h-12 w-auto shrink-0"><span class="font-serif text-xl md:text-2xl font-bold">Ajedrez <span class="text-accent-400">Integral</span></span></a>
+                <div class="flex items-center gap-2 sm:gap-3">
+                    <button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro">
+                        <span id="theme-icon" aria-hidden="true">☀️</span>
+                    </button>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main id="main-content">
+    <section class="py-12 sm:py-14">
+        <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+            <p class="text-xs font-semibold uppercase tracking-wide text-accent-700 dark:text-accent-400">Herramientas de arbitraje</p>
+            <h1 class="font-serif text-3xl md:text-4xl font-bold text-brand-800 dark:text-white mt-1 mb-3"><span aria-hidden="true">⚖️</span> Herramientas de arbitraje</h1>
+            <p class="text-brand-600 dark:text-brand-300 mb-10">Un espacio para quien arbitra y para las familias: empieza con las consultas sobre el reglamento. Más herramientas (con licencia, para quien las necesite) se irán sumando acá.</p>
+
+            <!-- ======== Espacio de consultas ======== -->
+            <section id="consulta-view" aria-labelledby="consulta-titulo">
+                <h2 id="consulta-titulo" class="font-serif text-2xl font-bold text-brand-800 dark:text-white mb-2"><span aria-hidden="true">💬</span> Espacio de consultas</h2>
+                <p class="text-brand-600 dark:text-brand-300 mb-4">¿Eres árbitro, o madre o padre de familia, y tienes una duda puntual sobre el reglamento? Escríbela acá. No hace falta cuenta.</p>
+
+                <div class="bg-accent-50 dark:bg-brand-800 border-l-4 border-accent-500 rounded-r-xl px-4 py-3 mb-6">
+                    <p class="text-sm text-brand-700 dark:text-brand-200"><strong>La respuesta la escribe una inteligencia artificial</strong>, a partir del Reglamento de la FIDE, y no sustituye la decisión del árbitro de un torneo ni el reglamento particular de ese torneo. Ante cualquier diferencia, o si tu duda es sobre las bases de un torneo específico, manda <a href="https://handbook.fide.com/" target="_blank" rel="noopener" class="underline">handbook.fide.com</a> o escríbele a la organización del torneo.</p>
+                </div>
+
+                <form id="consulta-form" class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-6 mb-6" novalidate>
+                    <div class="space-y-4">
+                        <div>
+                            <span class="block text-sm font-medium text-brand-700 dark:text-brand-200 mb-1">¿Quién pregunta?</span>
+                            <div role="radiogroup" aria-label="Quién pregunta" class="grid sm:grid-cols-3 gap-2">
+                                <label class="flex items-center gap-2 border-2 border-brand-100 dark:border-brand-700 rounded-xl px-3 py-2 cursor-pointer text-sm">
+                                    <input type="radio" name="quien" value="arbitro" checked class="focus-visible:ring-2 focus-visible:ring-accent-400"> Soy árbitro
+                                </label>
+                                <label class="flex items-center gap-2 border-2 border-brand-100 dark:border-brand-700 rounded-xl px-3 py-2 cursor-pointer text-sm">
+                                    <input type="radio" name="quien" value="padre_familia" class="focus-visible:ring-2 focus-visible:ring-accent-400"> Soy madre o padre de familia
+                                </label>
+                                <label class="flex items-center gap-2 border-2 border-brand-100 dark:border-brand-700 rounded-xl px-3 py-2 cursor-pointer text-sm">
+                                    <input type="radio" name="quien" value="otro" class="focus-visible:ring-2 focus-visible:ring-accent-400"> Otro
+                                </label>
+                            </div>
+                        </div>
+                        <div>
+                            <label for="c-nombre" class="block text-sm font-medium text-brand-700 dark:text-brand-200 mb-1">Nombre</label>
+                            <input type="text" id="c-nombre" required minlength="2" maxlength="120" autocomplete="name"
+                                   class="w-full px-4 py-2.5 rounded-xl border-2 border-brand-100 dark:border-brand-700 bg-white dark:bg-brand-800 text-brand-800 dark:text-white focus:border-accent-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 transition-colors">
+                        </div>
+                        <div>
+                            <label for="c-email" class="block text-sm font-medium text-brand-700 dark:text-brand-200 mb-1">Correo (opcional)</label>
+                            <input type="email" id="c-email" maxlength="160" autocomplete="email"
+                                   class="w-full px-4 py-2.5 rounded-xl border-2 border-brand-100 dark:border-brand-700 bg-white dark:bg-brand-800 text-brand-800 dark:text-white focus:border-accent-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 transition-colors">
+                            <p class="text-xs text-brand-450 dark:text-brand-350 mt-1">Solo por si el equipo necesita escribirte para corregir o ampliar la respuesta.</p>
+                        </div>
+                        <div>
+                            <label for="c-pregunta" class="block text-sm font-medium text-brand-700 dark:text-brand-200 mb-1">Tu pregunta</label>
+                            <textarea id="c-pregunta" rows="5" required minlength="10" maxlength="1500"
+                                      class="w-full px-4 py-2.5 rounded-xl border-2 border-brand-100 dark:border-brand-700 bg-white dark:bg-brand-800 text-brand-800 dark:text-white focus:border-accent-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 transition-colors"></textarea>
+                        </div>
+                        <p id="c-error" class="hidden text-sm text-red-600 dark:text-red-400" role="alert"></p>
+                        <button type="submit" id="c-enviar" class="w-full sm:w-auto bg-accent-500 hover:bg-accent-600 text-brand-900 font-bold px-6 py-3 rounded-xl text-base transition-all hover:scale-105 shadow-lg">Preguntar →</button>
+                    </div>
+                </form>
+
+                <div id="c-resultado" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md p-6 mb-10" role="status"></div>
+            </section>
+
+            <!-- ======== Otras herramientas ======== -->
+            <section aria-labelledby="otras-titulo" class="border-t border-brand-100 dark:border-brand-800 pt-8">
+                <h2 id="otras-titulo" class="font-serif text-xl font-bold text-brand-800 dark:text-white mb-2">Otras herramientas</h2>
+                <ul class="space-y-2 text-sm text-brand-600 dark:text-brand-300 mb-4">
+                    <li>⚖️ <a href="arbitraje.html" class="underline underline-offset-2 hover:text-accent-600">Examen de arbitraje FIDE</a> — para profesores y administración de la Academia.</li>
+                    <li>📝 <a href="nivel-de-arbitraje.html" class="underline underline-offset-2 hover:text-accent-600">¿Cuánto sabes del reglamento?</a> — el mismo examen, abierto a cualquiera, sin cuenta.</li>
+                </ul>
+                <p class="text-sm text-brand-500 dark:text-brand-300">Las herramientas con licencia (como la selección para torneos) están pensadas para quien tenga una cuenta y un código de acceso. Si tienes uno, <a href="login.html" class="underline underline-offset-2 hover:text-accent-600">inicia sesión</a> para activarlo.</p>
+            </section>
+        </div>
+    </section>
+    </main>
+
+    <footer class="bg-brand-900 text-brand-300 py-8"><div class="max-w-7xl mx-auto px-4 text-center text-sm"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p><!-- legal: inicio --><p class="mt-2"><a href="privacidad.html" class="underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Política de privacidad</a> <span aria-hidden="true">·</span> <a href="terminos.html" class="underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Términos y condiciones</a></p><!-- legal: fin --></div></footer>
+    <script src="js/vendor/supabase.js"></script>
+    <script src="js/supabase-client.js"></script>
+    <script src="js/avisos.js"></script>
+    <script src="js/main.js"></script>
+    <script src="js/consulta-arbitraje.js"></script>
+</body>
+</html>
