@@ -81,6 +81,13 @@ function datos() {
     /new\.presentacion := old\.presentacion;/.test(ramaAlumno));
   cierto("la columna tiene su CHECK de forma", fs.readdirSync(dirMig).some((f) =>
     /game_state_presentacion_forma/.test(fs.readFileSync(path.join(dirMig, f), "utf8"))));
+  // Las subidas: al que no es su profe, el bucket solo le deja leer la página
+  // que se está mostrando (la n de game_state.presentacion), no las siguientes.
+  const mig = fs.readdirSync(dirMig).sort().filter((f) => /policy presentaciones_select on storage\.objects/.test(fs.readFileSync(path.join(dirMig, f), "utf8"))).pop();
+  const pol = mig ? fs.readFileSync(path.join(dirMig, mig), "utf8").split("create policy presentaciones_select")[1].split(";")[0] : "";
+  cierto("el bucket de las subidas solo firma la diapositiva que se está mostrando",
+    /g\.presentacion->>'deck' = 'subida\/' \|\| \(storage\.foldername\(name\)\)\[2\]/.test(pol)
+      && /g\.presentacion->>'n' = split_part\(storage\.filename\(name\), '\.', 1\)/.test(pol), mig || "sin migración");
 }
 
 const DECK = decks[0];
@@ -231,6 +238,134 @@ async function pruebaProyector(browser) {
   await ctx.close();
 }
 
+
+/* Un PDF de verdad, chico, armado acá: una página por texto (Helvetica). */
+function pdfDePrueba(textos) {
+  const objs = [];
+  const n = textos.length;
+  objs.push("<< /Type /Catalog /Pages 2 0 R >>");
+  objs.push("<< /Type /Pages /Kids [" + textos.map((_, i) => (4 + i * 2) + " 0 R").join(" ") + "] /Count " + n + " >>");
+  objs.push("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>");
+  textos.forEach((tx, i) => {
+    const flujo = "BT /F1 48 Tf 60 300 Td (" + tx + ") Tj ET";
+    objs.push("<< /Type /Page /Parent 2 0 R /MediaBox [0 0 960 540] /Contents " + (5 + i * 2) + " 0 R /Resources << /Font << /F1 3 0 R >> >> >>");
+    objs.push("<< /Length " + flujo.length + " >>\nstream\n" + flujo + "\nendstream");
+  });
+  let s = "%PDF-1.4\n";
+  const pos = [];
+  objs.forEach((o, i) => { pos.push(s.length); s += (i + 1) + " 0 obj\n" + o + "\nendobj\n"; });
+  const xref = s.length;
+  s += "xref\n0 " + (objs.length + 1) + "\n0000000000 65535 f \n" + pos.map((p) => String(p).padStart(10, "0") + " 00000 n \n").join("");
+  s += "trailer\n<< /Size " + (objs.length + 1) + " /Root 1 0 R >>\nstartxref\n" + xref + "\n%%EOF";
+  return Buffer.from(s, "latin1");
+}
+
+/* El Storage de mentira: apunta lo que se sube, lo que se firma y lo que se
+   borra, y firma con la imagen subida (o con una del curso, si la semilla trae
+   una presentación que no se subió en esta prueba). */
+const STORAGE = `
+window.__subidas = []; window.__firmadas = []; window.__borradas = []; window.__blobs = {};
+window.sb.storage = { from: (bucket) => ({
+  upload: (ruta, blob, o) => {
+    window.__subidas.push({ bucket, ruta, tipo: blob.type, tam: blob.size,
+      filasAntes: window.__inserts.filter((i) => i.tabla === "presentaciones_profe").length });
+    window.__blobs[ruta] = URL.createObjectURL(blob);
+    return Promise.resolve({ data: { path: ruta }, error: null });
+  },
+  createSignedUrl: (ruta) => {
+    window.__firmadas.push(ruta);
+    return Promise.resolve({ data: { signedUrl: window.__blobs[ruta] || "/cursos/recursos/formacion-ajedrez/presentaciones/clase-01/0" + ruta.split("/").pop().replace(/\\D/g, "") + ".webp" }, error: null });
+  },
+  remove: (rutas) => { window.__borradas.push(...rutas); return Promise.resolve({ data: [], error: null }); },
+}) };`;
+
+async function pruebaSubida(browser) {
+  console.log("\n7. El profe sube su PDF, lo elige, le guarda una posición y lo borra");
+  const { page, ctx, errores } = await abrir(browser, "u-profe", CLASE,
+    { game_state: [fila()], presentaciones_profe: [] }, { extra: STORAGE });
+  await page.waitForSelector("#toggle-presentacion-btn", { state: "visible", timeout: 10000 });
+  await page.click("#toggle-presentacion-btn");
+  await page.waitForSelector("#presentacion-panel-vacia", { state: "visible", timeout: 5000 });
+  cierto("sin presentaciones propias, lo dice", true);
+  cierto("y ofrece también las del curso", await page.isVisible("#presentacion-panel-lista li:has-text('Formación Ajedrez')"));
+  await page.setInputFiles("#presentacion-subir-archivo", { name: "charla.pdf", mimeType: "application/pdf",
+    buffer: pdfDePrueba(["Hola mundo del arbitraje. Primera", "Segunda pagina con texto"]) });
+  await page.fill("#presentacion-subir-titulo", "Mi charla");
+  await page.click("#presentacion-subir-btn");
+  await page.waitForFunction(() => /^Lista:/.test(document.getElementById("presentacion-subir-msg").textContent), null, { timeout: 30000 })
+    .catch(() => {});
+  cierto("el PDF se prepara y lo dice", /Lista: «Mi charla», 2 diapositivas/.test(await page.textContent("#presentacion-subir-msg")),
+    await page.textContent("#presentacion-subir-msg"));
+  const subidas = await page.evaluate(() => window.__subidas);
+  const fila1 = await page.evaluate(() => (window.__inserts.find((i) => i.tabla === "presentaciones_profe") || {}).fila);
+  cierto("una imagen por página, en su carpeta del bucket privado",
+    subidas.length === 2 && subidas.every((s, i) => s.bucket === "presentaciones" && s.ruta === "u-profe/" + fila1.id + "/" + (i + 1) + "." + fila1.formato && s.tam > 1000),
+    JSON.stringify(subidas));
+  cierto("la fila se guarda DESPUÉS de subir las imágenes", subidas.every((s) => s.filasAntes === 0));
+  cierto("con su título, sus páginas y el texto de cada una",
+    fila1 && fila1.titulo === "Mi charla" && fila1.paginas === 2 && /Hola mundo del arbitraje/.test(fila1.textos[0]) && /Segunda pagina/.test(fila1.textos[1]),
+    JSON.stringify(fila1 && Object.assign({}, fila1, { textos: fila1.textos })));
+  const deck = "subida/" + fila1.id;
+  await page.click("#presentacion-panel-mias li:has-text('Mi charla') button:has-text('Mostrar a la clase')");
+  await page.waitForFunction(() => { const i = document.getElementById("presentacion-img"); return i.complete && i.naturalWidth > 0; }, null, { timeout: 8000 });
+  cierto("«Mostrar a la clase» manda la suya", JSON.stringify(await ultimaPresentacion(page)) === JSON.stringify({ deck, n: 1 }));
+  cierto("con su título, y la diapositiva con su texto", (await page.textContent("#presentacion-titulo")) === "Mi charla"
+    && /Hola mundo del arbitraje/.test(await page.textContent("#presentacion-texto"))
+    && (await imagen(page)).alt === "Diapositiva 1: Hola mundo del arbitraje.", (await imagen(page)).alt);
+
+  // Guardar en la diapositiva la posición del tablero, y quitarla.
+  await page.click("#presentacion-posiciones button:has-text('Guardar aquí la posición del tablero')");
+  await page.waitForTimeout(200);
+  const pos = await page.evaluate(() => {
+    const u = window.__updates.filter((x) => x.tabla === "presentaciones_profe");
+    return u.length ? u[u.length - 1] : null;
+  });
+  cierto("«Guardar aquí la posición del tablero» la guarda en esa diapositiva",
+    pos && JSON.stringify(pos.campos.posiciones) === JSON.stringify({ 1: [{ nombre: "Posición 1", fen: new Chess().fen() }] })
+      && JSON.stringify(pos.donde) === JSON.stringify([["id", fila1.id]]), JSON.stringify(pos));
+  cierto("y ya sale con su «Al tablero de la clase»", await page.isVisible("#presentacion-posiciones button:has-text('Al tablero de la clase')"));
+  await page.click("#presentacion-posiciones button:has-text('Quitar')");
+  await page.waitForTimeout(200);
+  cierto("«✕ Quitar» la saca de la diapositiva", await page.evaluate(() => {
+    const u = window.__updates.filter((x) => x.tabla === "presentaciones_profe");
+    return JSON.stringify(u[u.length - 1].campos.posiciones) === "{}";
+  }) && !(await page.isVisible("#presentacion-posiciones button:has-text('Al tablero de la clase')")));
+
+  await page.click("#presentacion-siguiente");
+  await page.waitForTimeout(300);
+  cierto("▶ pasa a la 2 y se firma esa", (await page.textContent("#presentacion-cuenta")) === "Diapositiva 2 de 2"
+    && (await page.evaluate(() => window.__firmadas)).includes("u-profe/" + fila1.id + "/2." + fila1.formato));
+
+  await page.click("#toggle-presentacion-btn");
+  await page.click("#presentacion-panel-mias li:has-text('Mi charla') button:has-text('Borrar')");
+  await page.click("button:has-text('Borrar la presentación')");
+  await page.waitForFunction(() => window.__deletes.some((d) => d.tabla === "presentaciones_profe"), null, { timeout: 5000 }).catch(() => {});
+  cierto("borrarla la quita antes de la clase, borra sus imágenes y su fila",
+    (await ultimaPresentacion(page)) === null
+      && JSON.stringify(await page.evaluate(() => window.__borradas)) === JSON.stringify(subidas.map((s) => s.ruta))
+      && await page.evaluate((id) => window.__deletes.some((d) => d.tabla === "presentaciones_profe" && JSON.stringify(d.donde) === JSON.stringify([["id", id]])), fila1.id));
+  cierto("y deja de estar en la lista", !(await page.isVisible("#presentacion-panel-mias li:has-text('Mi charla')")));
+  cierto("sin errores en consola", errores.length === 0, errores.join(" | "));
+  await ctx.close();
+}
+
+async function pruebaSubidaAlumna(browser) {
+  console.log("\n8. La alumna ve la del profe: solo se le firma la que se muestra");
+  const fila1 = { id: "0b8f6a2e-1111-4222-8333-944455556666", profesor_id: "u-profe", titulo: "Charla del profe", paginas: 3,
+    formato: "webp", textos: ["Uno", "Dos: el texto de la segunda", "Tres"], posiciones: { 2: [{ nombre: "Posición 1", fen: new Chess().fen() }] } };
+  const deck = "subida/" + fila1.id;
+  const { page, ctx, errores } = await abrir(browser, "u-ana", CLASE,
+    { game_state: [fila({ presentacion: { deck, n: 2 } })], presentaciones_profe: [fila1] }, { extra: STORAGE });
+  await page.waitForFunction(() => { const i = document.getElementById("presentacion-img"); return i.complete && i.naturalWidth > 0; }, null, { timeout: 8000 });
+  cierto("ve la diapositiva 2 de la charla, con su texto", (await page.textContent("#presentacion-cuenta")) === "Diapositiva 2 de 3"
+    && (await page.textContent("#presentacion-titulo")) === "Charla del profe" && /el texto de la segunda/.test(await page.textContent("#presentacion-texto")));
+  cierto("sin los botones ni las posiciones del profe", !(await seVe(page, "#presentacion-profe")));
+  cierto("solo se le firmó la que se ve", JSON.stringify(await page.evaluate(() => window.__firmadas)) === JSON.stringify(["u-profe/" + fila1.id + "/2.webp"]),
+    JSON.stringify(await page.evaluate(() => window.__firmadas)));
+  cierto("sin errores en consola", errores.length === 0, errores.join(" | "));
+  await ctx.close();
+}
+
 (async () => {
   try { datos(); } catch (e) { cierto("los datos se pudieron leer", false, e && e.stack); }
   const browser = await chromium.launch({ executablePath: CHROME });
@@ -238,6 +373,8 @@ async function pruebaProyector(browser) {
     await pruebaProfesor(browser);
     await pruebaAlumna(browser);
     await pruebaProyector(browser);
+    await pruebaSubida(browser);
+    await pruebaSubidaAlumna(browser);
   } catch (e) {
     console.log("  ✗ la prueba se cayó: " + (e && e.stack || e));
     fallos += 1;

@@ -548,7 +548,9 @@ async function abrir(browser, quien, claseAbierta, semilla, opciones) {
   await ctx.route("**/fonts.gstatic.com/**", (r) => r.abort());
   await ctx.route("**/cdn.jsdelivr.net/**", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: "" }));
   await ctx.route("**/js/supabase-client.js", (r) =>
-    r.fulfill({ status: 200, contentType: "application/javascript", body: clienteFalso(quien, claseAbierta, semilla) }));
+    r.fulfill({ status: 200, contentType: "application/javascript",
+      // opciones.extra: código que se suma al doble (un Storage de mentira, por ejemplo).
+      body: clienteFalso(quien, claseAbierta, semilla) + ((opciones && opciones.extra) || "") }));
   const page = await ctx.newPage();
   const errores = [];
   page.on("pageerror", (e) => errores.push(String(e)));

@@ -3270,11 +3270,41 @@ por uno—. Antes solo tenía "Cargar" (la línea entera, jugada a jugada, con
 ### La presentación de la clase
 
 Para una charla o una capacitación, el profe muestra sus diapositivas **dentro
-de la clase**: «📽️ Presentación» (en la barra del profe) la pone arriba del
+de la clase**: «📊 Presentación» (en «Tu material», la barra del profe; 📽️ es el Proyector) la pone arriba del
 tablero para todos, y la pasa con ◀ ▶ (también con las flechas o Re Pág / Av
 Pág en pantalla completa). Los alumnos la ven sin salir de `sesion.html`, junto
-al tablero que sigue en vivo. La primera es la clase 1 de Formación Ajedrez
-(34 láminas). Código en `js/clase-presentacion.js`.
+al tablero que sigue en vivo. Código en `js/clase-presentacion.js`.
+
+**El profe elige cuál compartir**, de dos listas:
+
+- **«Las del curso»** (`LISTA`): imágenes y `diapositivas.json` en
+  `cursos/recursos/<curso>/presentaciones/<clase>/`, detrás del candado del
+  worker; `deck` = `"<curso>/<clase>"`. La primera es la clase 1 de Formación
+  Ajedrez (34 láminas).
+- **«Las tuyas»**: sube un PDF desde el mismo panel (PowerPoint y Google Slides
+  lo exportan; un `.pptx` no, porque el navegador no sabe dibujarlo). pdf.js —el
+  mismo de «📄 PDF»— dibuja cada página a 1600 px y se guarda en WebP (JPG si el
+  navegador no hace WebP) en el bucket privado `presentaciones`
+  (`<profe>/<id>/<n>.webp`), con el texto de cada página en
+  `presentaciones_profe.textos`. **Las imágenes se suben primero y la fila
+  después**: una subida a medias no aparece en la lista, y lo que alcanzó a
+  subir se borra. `deck` = `"subida/<id>"`, que cabe en el mismo CHECK.
+  Tope: 200 páginas, 60 MB el PDF, 3 MB cada imagen.
+- **En una diapositiva subida, el profe guarda la posición del tablero**
+  («➕ Guardar aquí la posición del tablero», hasta 8 por diapositiva, en
+  `presentaciones_profe.posiciones`, `{"<n>": [{nombre, fen}]}`): la arma antes
+  con ✏️ Armar posición, 📄 PDF o jugando, y en la clase sale su «📥 Al tablero
+  de la clase» como en las del curso. Se valida con `PosicionValida` al
+  guardarla y otra vez al mandarla (`aplicarPosicionEnClase`).
+- **Quién ve una subida lo decide la base**: la fila la ve su profe, quien
+  administra y quien ve la clase MIENTRAS se está mostrando (la subconsulta
+  pasa por la RLS de `game_state`); la imagen, su profe y, los demás, **solo la
+  `n` que se está mostrando** (la política del bucket compara el nombre del
+  archivo con `game_state.presentacion`). Comprobado impersonando: con la
+  clase abierta y la 2 a la vista, la alumna ve la fila y solo `2.webp`, y no
+  crea ni cambia presentaciones; el profe ve sus tres imágenes.
+- La migración se aplicó sin `drop policy if exists` sobre `storage.objects`:
+  con ellos, el aplicador de Supabase la cancelaba como destructiva.
 
 - **Es la excepción consciente a «el material del profesor no es el de la
   clase»**: la lámina sí la ve todo el mundo, porque el profe la pone para eso.
@@ -3313,7 +3343,7 @@ al tablero que sigue en vivo. La primera es la clase 1 de Formación Ajedrez
 - En el celular de control remoto también se ve con ◀ ▶: sirve para pasar las
   láminas desde el celular.
 
-**Una presentación nueva**: sus imágenes (`01.webp`…, 1600 × 900) y su
+**Una presentación nueva del curso**: sus imágenes (`01.webp`…, 1600 × 900) y su
 `diapositivas.json` en su carpeta, y una línea en `LISTA` de
 `js/clase-presentacion.js`. Las imágenes se sacan del `.pptx` con LibreOffice
 (a PDF) y PyMuPDF (cada página a 1,25×, WebP calidad 80).
@@ -3324,9 +3354,15 @@ texto, que el trigger proteja la columna, y en el navegador al profe (◀ ▶, l
 ecos viejos, «Al tablero de la clase», Practicar solo donde corresponde, el
 tope de la última), a la alumna (la ve al entrar, la sigue, se le dice en voz,
 no se le piden las siguientes, una forma mala no se muestra, cabe en el
-celular) y al proyector (la lámina al lado del tablero, sin lo del profe).
+celular), al proyector (la lámina al lado del tablero, sin lo del profe) y las
+subidas con un PDF de verdad armado en la prueba y un Storage de mentira
+(`opciones.extra` del doble): una imagen por página en su carpeta, la fila
+después de las imágenes y con el texto de cada página, elegirla, guardar y
+quitar una posición, borrarla (antes la quita de la clase), y a la alumna solo
+se le firma la que se ve.
 Está probado que falla de verdad sin la guardia de los ecos, adelantándole
-láminas a la alumna y sin la línea del trigger.
+láminas a la alumna (las del curso y las subidas), sin la línea del trigger y
+guardando la fila antes de subir las imágenes.
 
 ### Buscar un ejercicio es mirarlo: «Ver todas las posiciones»
 
