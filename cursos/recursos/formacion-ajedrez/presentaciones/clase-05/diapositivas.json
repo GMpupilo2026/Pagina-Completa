@@ -1,0 +1,158 @@
+{
+ "titulo": "Formación Ajedrez · Sesión 5: Uso, configuración y control del reloj de ajedrez",
+ "curso": "formacion-ajedrez",
+ "diapositivas": [
+  {
+   "titulo": "Uso, configuración y control del reloj de ajedrez",
+   "texto": "Portada. Sesión 5: Uso, configuración y control del reloj de ajedrez. Controles de tiempo, incrementos y resolución de incidencias con el reloj en competencia. Formación Ajedrez",
+   "imagen": "01.webp"
+  },
+  {
+   "titulo": "Objetivos de la sesión",
+   "texto": "Aplicar las reglas del art. 6 sobre el uso del reloj durante la partida. Distinguir controles sin incremento, con incremento (Fischer), con demora y por períodos. Configurar el reloj para partidas clásicas, rápidas y relámpago. Resolver incidencias de tiempo: caída de bandera, incomparecencia y reloj defectuoso.",
+   "imagen": "02.webp"
+  },
+  {
+   "titulo": "Cronograma de la sesión",
+   "texto": "De 0:00 a 0:15, Repaso y revisión de la tarea. De 0:15 a 0:55, El reloj en las Leyes. De 0:55 a 1:35, Sistemas de control de tiempo. De 1:35 a 1:50, receso. De 1:50 a 2:35, Configuración según la modalidad. De 2:35 a 3:05, Incidencias de tiempo. De 3:05 a 3:20, receso. De 3:20 a 4:05, Práctica: configurar el reloj por escenario. De 4:05 a 4:40, Quiz de la sesión. De 4:40 a 5:00, Cierre.",
+   "imagen": "03.webp"
+  },
+  {
+   "titulo": "El uso del reloj durante la partida",
+   "texto": "A la hora de inicio se pone en marcha el reloj de las blancas, esté o no el jugador en la mesa. El árbitro decide de qué lado del tablero va el reloj. Cada jugador mueve y después presiona el reloj, con la misma mano con la que movió. No se puede dejar el dedo sobre el botón ni presionar con fuerza, levantar o volcar el reloj. Solo quien tiene su reloj en marcha puede acomodar sus piezas. Un jugador puede pausar el reloj para llamar al árbitro; la partida se reanuda cuando el árbitro lo decide. La jugada queda hecha al soltar la pieza y completada al presionar el reloj.",
+   "imagen": "04.webp"
+  },
+  {
+   "titulo": "Sistemas de control de tiempo",
+   "texto": "El reloj puede funcionar de varias maneras, y quien arbitra debe saber configurarlas y explicarlas. Sin incremento («a finish»): un tiempo fijo para toda la partida. Incremento o tiempo Fischer: se suma un tiempo fijo después de cada jugada, desde la primera. Demora (delay): cada jugada trae un tiempo fijo; el tiempo principal empieza a descontarse cuando ese tiempo se agota. Por períodos: por ejemplo, 40 jugadas en 90 minutos y luego 30 minutos más; el tiempo nuevo se suma al completar la jugada 40. Con menos de 5 minutos y sin incremento de al menos 30 segundos, el jugador puede dejar de anotar.",
+   "imagen": "05.webp"
+  },
+  {
+   "titulo": "Receso",
+   "texto": "Receso de 15 minutos. Pausa los relojes: seguimos en breve.",
+   "imagen": "06.webp"
+  },
+  {
+   "titulo": "Configurar el reloj según la modalidad",
+   "texto": "Antes de la ronda se configuran y revisan todos los relojes con el ritmo que anuncia el reglamento del torneo. Un reloj mal configurado es la causa de muchas incidencias que después no tienen buena solución. Revisa el tiempo base, el incremento y, si lo hay, el período siguiente. Comprueba que los dos lados muestren el mismo tiempo antes de empezar. Deja relojes de repuesto configurados. Si a mitad de partida se descubre un reloj mal configurado o con un defecto evidente, el árbitro lo corrige o lo reemplaza y fija los tiempos con su criterio.",
+   "imagen": "07.webp"
+  },
+  {
+   "titulo": "Caída de bandera e incidencias de tiempo",
+   "texto": "Cuando a un jugador se le agota el tiempo, pierde la partida, salvo que el rival no pueda dar mate por ninguna serie de jugadas legales: en ese caso son tablas. La prueba es «cualquier serie de jugadas legales», aunque sea con la peor defensa. Al caer una bandera, se comprueba si el jugador cumplió el número de jugadas del control. En ritmo clásico con árbitro presente, el árbitro declara la caída de bandera de oficio; en relámpago sin supervisión, la reclama el jugador. Si el reglamento no fija tiempo de incomparecencia, es cero: quien llega tarde pierde, salvo decisión del árbitro. En apuro de tiempo, el árbitro observa especialmente esas partidas y puede nombrar asistentes.",
+   "imagen": "08.webp"
+  },
+  {
+   "titulo": "Caso 1 · ¿Qué decide la persona árbitra?",
+   "texto": "Caso 1: Las blancas no llegaron. Es la hora de inicio y el jugador de blancas no está en la mesa. El reglamento fija 15 minutos de incomparecencia.",
+   "imagen": "09.webp",
+   "notas": "Dejar que el grupo decida antes de pasar a la siguiente diapositiva."
+  },
+  {
+   "titulo": "Caso 1 · Decisión",
+   "texto": "Caso 1, decisión: Se pone en marcha el reloj de las blancas igual. Si llega antes de los 15 minutos, juega con el tiempo que le quede; si no, pierde por incomparecencia.",
+   "imagen": "10.webp"
+  },
+  {
+   "titulo": "Caso 2 · ¿Qué decide la persona árbitra?",
+   "texto": "Caso 2: Presionar antes de mover. En apuro de tiempo, un jugador presiona el reloj antes de soltar la pieza.",
+   "imagen": "11.webp",
+   "notas": "Dejar que el grupo decida antes de pasar a la siguiente diapositiva."
+  },
+  {
+   "titulo": "Caso 2 · Decisión",
+   "texto": "Caso 2, decisión: Es un manejo indebido del reloj: el árbitro interviene y aplica una sanción del art. 12.9, de menor a mayor.",
+   "imagen": "12.webp"
+  },
+  {
+   "titulo": "Caso 3 · ¿Qué decide la persona árbitra?",
+   "texto": "Caso 3: Bandera con rey y caballo. Cae la bandera de las blancas. Las negras solo tienen rey y caballo, y las blancas tienen rey y peón.",
+   "imagen": "13.webp",
+   "notas": "Dejar que el grupo decida antes de pasar a la siguiente diapositiva."
+  },
+  {
+   "titulo": "Caso 3 · Decisión",
+   "texto": "Caso 3, decisión: Pierden las blancas: con ese material existe al menos una serie de jugadas legales que termina en mate. Por ejemplo, rey blanco en h1 con su peón en h2, rey negro en f1 y caballo negro en f2: el peón le quita al rey su última casilla. Solo serían tablas si el rival no pudiera dar mate de ninguna manera, como con rey y caballo contra rey solo.",
+   "imagen": "14.webp"
+  },
+  {
+   "titulo": "Caso 4 · ¿Qué decide la persona árbitra?",
+   "texto": "Caso 4: Reloj con defecto evidente. A mitad de partida, la pantalla de un reloj deja de funcionar.",
+   "imagen": "15.webp",
+   "notas": "Dejar que el grupo decida antes de pasar a la siguiente diapositiva."
+  },
+  {
+   "titulo": "Caso 4 · Decisión",
+   "texto": "Caso 4, decisión: El árbitro lo reemplaza y fija los tiempos del reloj nuevo con su mejor criterio, apoyándose en las planillas y en lo que recuerden los jugadores.",
+   "imagen": "16.webp"
+  },
+  {
+   "titulo": "Receso",
+   "texto": "Receso de 15 minutos. Pausa los relojes: seguimos en breve.",
+   "imagen": "17.webp"
+  },
+  {
+   "titulo": "Práctica · Configuración de un reloj según escenario",
+   "texto": "Práctica: Configuración de un reloj según escenario. Con un simulador de reloj digital en línea, cada participante configura el control de tiempo correspondiente a tres escenarios: partida clásica, rápida y relámpago.",
+   "imagen": "18.webp"
+  },
+  {
+   "titulo": "Ejercicio 1 de 5",
+   "texto": "Ejercicio 1: Configura el reloj para una partida clásica de 90 minutos con 30 segundos de incremento desde la jugada 1. ¿Deben anotar los jugadores toda la partida?",
+   "imagen": "19.webp"
+  },
+  {
+   "titulo": "Ejercicio 2 de 5",
+   "texto": "Ejercicio 2: Configura el reloj para rápidas a 15 minutos más 10 segundos. ¿Qué ritmo es según la fórmula?",
+   "imagen": "20.webp"
+  },
+  {
+   "titulo": "Ejercicio 3 de 5",
+   "texto": "Ejercicio 3: Configura el reloj para relámpago a 3 minutos más 2 segundos. ¿Qué ritmo es?",
+   "imagen": "21.webp"
+  },
+  {
+   "titulo": "Ejercicio 4 de 5",
+   "texto": "Ejercicio 4: Cae la bandera de un jugador. Su rival solo tiene el rey. ¿Resultado?",
+   "imagen": "22.webp"
+  },
+  {
+   "titulo": "Ejercicio 5 de 5",
+   "texto": "Ejercicio 5: El reglamento no dice nada sobre la tolerancia. Un jugador llega 3 minutos tarde. ¿Qué pasa?",
+   "imagen": "23.webp"
+  },
+  {
+   "titulo": "Ejercicios: respuestas",
+   "texto": "1. Tiempo base 90:00 e incremento de 30 s por jugada, en ambos lados. Sí: con incremento de 30 segundos o más no se puede dejar de anotar (art. 8.4). 2. Tiempo base 15:00 e incremento de 10 s. 15 + 10 = 25 minutos: rápidas. 3. Tiempo base 3:00 e incremento de 2 s. 3 + 2 = 5 minutos: relámpago. 4. Tablas: el rival no puede dar mate por ninguna serie de jugadas legales (art. 6.9). 5. El tiempo de incomparecencia es cero: pierde, salvo que el árbitro decida otra cosa en ese caso puntual (art. 6.7).",
+   "imagen": "24.webp",
+   "notas": "Repasar en plenaria; cada respuesta con su artículo."
+  },
+  {
+   "titulo": "Quiz de la sesión",
+   "texto": "1. ¿Qué es el incremento o «tiempo Fischer» en el reloj de ajedrez? 2. Si a un jugador se le agota el tiempo, ¿qué debe verificar primero la persona árbitra? 3. ¿Qué reloj se pone en marcha al empezar la ronda? 4. ¿Con qué mano se presiona el reloj? 5. En el modo de demora, ¿cuándo empieza a descontarse el tiempo principal? 6. Si el reglamento no fija tiempo de incomparecencia, ¿cuál es? 7. ¿Puede un jugador acomodar sus propias piezas mientras el reloj del rival está en marcha?",
+   "imagen": "25.webp",
+   "notas": "Un minuto por pregunta, y después las respuestas."
+  },
+  {
+   "titulo": "Quiz de la sesión (continuación)",
+   "texto": "8. Con menos de 5 minutos y sin incremento de al menos 30 segundos, ¿está obligado el jugador a seguir anotando? 9. En ritmo clásico con árbitro presente, ¿quién declara la caída de una bandera? 10. Si a mitad de partida se descubre que un reloj estaba mal configurado o tiene un defecto evidente, ¿qué hace el árbitro? 11. ¿Cuándo queda hecha una jugada y cuándo queda completada?",
+   "imagen": "26.webp",
+   "notas": "Un minuto por pregunta, y después las respuestas."
+  },
+  {
+   "titulo": "Quiz: respuestas",
+   "texto": "1. Un tiempo adicional que se suma después de cada jugada. 2. Si el rival tiene material suficiente para dar mate. 3. El de las blancas, esté o no el jugador en la mesa. 4. Con la misma mano con la que se hizo la jugada. 5. Cuando se agota el tiempo fijo de esa jugada. 6. Cero. 7. No, solo puede hacerlo cuando su propio reloj está en marcha. 8. No, puede dejar de anotar. 9. El árbitro, de oficio. 10. Lo corrige o lo reemplaza, y fija los tiempos del reloj con su propio criterio.",
+   "imagen": "27.webp"
+  },
+  {
+   "titulo": "Quiz: respuestas (continuación)",
+   "texto": "11. Hecha al soltar la pieza; completada al presionar el reloj.",
+   "imagen": "28.webp"
+  },
+  {
+   "titulo": "Tarea y cierre",
+   "texto": "Tarea para la próxima sesión: Completar una ficha con la configuración correcta del reloj (tiempo base e incremento) para tres modalidades, según la normativa JDE. ¿Dudas? Este es el momento. Gracias por tu participación.",
+   "imagen": "29.webp"
+  }
+ ]
+}
