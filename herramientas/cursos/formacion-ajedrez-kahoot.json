@@ -1,0 +1,262 @@
+{
+  "_comentario": [
+    "Los cuestionarios al estilo Kahoot de cada sesión de «Formación Ajedrez».",
+    "Cada pregunta con la correcta aparte y sus distractores: el lugar de la correcta",
+    "lo reparte herramientas/formacion-cuestionarios.js (parejo entre A, B, C y D).",
+    "Son cuestionarios listos del material «formacion-ajedrez»: los usa quien tenga",
+    "el curso compartido (admin.html#asesores). Se van sumando sesión por sesión."
+  ],
+  "material": "formacion-ajedrez",
+  "sesiones": [
+    {
+      "sesion": 1,
+      "titulo": "Formación Ajedrez · Sesión 1: reglas FIDE y Normativa JDE 2026",
+      "preguntas": [
+        {
+          "texto": "En la JDE Regional se juega a 10 min + 2 s por jugada. Para la FIDE, ¿qué tipo de partida es?",
+          "correcta": "Rápida (Apéndice A.1)",
+          "distractores": [
+            "Clásica",
+            "Blitz",
+            "Depende de la categoría"
+          ],
+          "tiempo": 30,
+          "fuente": "Normativa 66.2.a; FIDE A.1"
+        },
+        {
+          "texto": "Primera jugada ilegal completada en una partida RÁPIDA. ¿Qué hace la persona árbitra?",
+          "correcta": "Restablece la posición y suma 1 minuto al rival",
+          "distractores": [
+            "Restablece la posición y suma 2 minutos al rival",
+            "Declara perdida la partida",
+            "Solo le llama la atención"
+          ],
+          "tiempo": 30,
+          "fuente": "FIDE 7.5.5 y A.3"
+        },
+        {
+          "texto": "En una rápida, tras una jugada ilegal el rival ya hizo su jugada y nadie reclamó. ¿Se corrige?",
+          "correcta": "No: la jugada ilegal queda y se sigue",
+          "distractores": [
+            "Sí, siempre que se descubra",
+            "Sí, si el árbitro la ve después",
+            "Solo si es la segunda ilegal"
+          ],
+          "tiempo": 30,
+          "fuente": "FIDE A.5.2"
+        },
+        {
+          "texto": "En la JDE, ¿hasta cuándo puede presentarse al tablero un estudiante de ajedrez?",
+          "correcta": "Hasta que su reloj caiga a cero",
+          "distractores": [
+            "Hasta 10 minutos después de la hora oficial",
+            "Hasta 30 minutos después de la hora oficial",
+            "Hasta el tercer llamado oficial"
+          ],
+          "tiempo": 30,
+          "fuente": "Normativa art. 30"
+        },
+        {
+          "texto": "¿Cuál es la anotación oficial en todas las categorías de la JDE?",
+          "correcta": "La algebraica",
+          "distractores": [
+            "La descriptiva",
+            "Cualquiera que sea legible",
+            "Ninguna: no se anota en rápidas"
+          ],
+          "tiempo": 20,
+          "fuente": "Normativa 66.2.g"
+        },
+        {
+          "texto": "En la JDE, ¿en qué categoría NO se amonesta a quien no anota?",
+          "correcta": "Categoría A",
+          "distractores": [
+            "Categoría B",
+            "Categoría E",
+            "En ninguna"
+          ],
+          "tiempo": 20,
+          "fuente": "Normativa 66.2.g"
+        },
+        {
+          "texto": "Etapa Regional con 8 o menos estudiantes en una modalidad. ¿Qué sistema de juego se usa?",
+          "correcta": "Todos contra todos",
+          "distractores": [
+            "Suizo de cinco rondas",
+            "Eliminación directa",
+            "El que elija el congresillo"
+          ],
+          "tiempo": 20,
+          "fuente": "Normativa 66.2.b"
+        },
+        {
+          "texto": "Etapa Regional con más de 8 estudiantes en una modalidad. ¿Cuántas rondas de suizo, como mínimo?",
+          "correcta": "Cinco",
+          "distractores": [
+            "Tres",
+            "Siete",
+            "Nueve"
+          ],
+          "tiempo": 20,
+          "fuente": "Normativa 66.2.a"
+        },
+        {
+          "texto": "Torneo por equipos JDE: ¿cuántos estudiantes deben estar frente al tablero al iniciar cada ronda?",
+          "correcta": "Al menos dos",
+          "distractores": [
+            "Los cuatro titulares",
+            "Al menos tres",
+            "Basta con uno"
+          ],
+          "tiempo": 20,
+          "fuente": "Normativa 66.2.f"
+        },
+        {
+          "texto": "¿Cómo se forma un equipo de ajedrez en la JDE?",
+          "correcta": "De 3 a 5 estudiantes: 4 titulares y 1 suplente",
+          "distractores": [
+            "Exactamente 4 estudiantes",
+            "De 2 a 6 estudiantes",
+            "5 titulares, sin suplente"
+          ],
+          "tiempo": 20,
+          "fuente": "Normativa 66.1.g"
+        },
+        {
+          "texto": "Un estudiante quiere jugar el torneo individual y el de equipos en la misma etapa. ¿Puede?",
+          "correcta": "No: solo una modalidad de torneo",
+          "distractores": [
+            "Sí, si los horarios no chocan",
+            "Sí, solo en la Etapa Institucional",
+            "Sí, con permiso del congresillo"
+          ],
+          "tiempo": 20,
+          "fuente": "Normativa 66.1.h"
+        },
+        {
+          "texto": "¿Quién define los criterios de desempate de un torneo de ajedrez JDE?",
+          "correcta": "La persona árbitra principal, en el congresillo",
+          "distractores": [
+            "El Comité Regional",
+            "Las delegaciones, por votación",
+            "Ninguno: siempre se usa Buchholz"
+          ],
+          "tiempo": 20,
+          "fuente": "Normativa 66.4"
+        },
+        {
+          "texto": "Lo que la Normativa JDE no establezca para ajedrez se rige, en primera instancia, por:",
+          "correcta": "La Federación Costarricense de Ajedrez",
+          "distractores": [
+            "La FIDE",
+            "El Comité Organizador de la etapa",
+            "El Tribunal Regional"
+          ],
+          "tiempo": 20,
+          "fuente": "Normativa 66, último párrafo"
+        },
+        {
+          "texto": "Para arbitrar en las etapas Circuital, Regional e Interregional de la JDE, la persona debe:",
+          "correcta": "Ser mayor de edad",
+          "distractores": [
+            "Ser docente del MEP",
+            "Tener título de árbitro FIDE",
+            "Tener rating Elo"
+          ],
+          "tiempo": 20,
+          "fuente": "Normativa art. 14"
+        },
+        {
+          "texto": "En la Etapa Nacional de ajedrez JDE, además del ritmo clásico, ¿qué se juega?",
+          "correcta": "Blitz de 3 minutos + 2 segundos",
+          "distractores": [
+            "Rápido de 10 minutos + 2 segundos",
+            "Blitz de 5 minutos, sin incremento",
+            "Rápido de 15 minutos + 10 segundos"
+          ],
+          "tiempo": 20,
+          "fuente": "Normativa 66.2.d"
+        },
+        {
+          "texto": "Un estudiante tiene el celular en el bolsillo durante la partida. Según la FIDE:",
+          "correcta": "Pierde la partida, salvo que el reglamento fije algo menos severo",
+          "distractores": [
+            "Se le advierte la primera vez",
+            "Se le restan 2 minutos",
+            "Nada, si no lo usó"
+          ],
+          "tiempo": 30,
+          "fuente": "FIDE 11.3.2.2"
+        },
+        {
+          "texto": "Durante la partida, ¿qué NO debe hacer la persona árbitra?",
+          "correcta": "Avisar a un jugador que su rival ya jugó",
+          "distractores": [
+            "Detener los relojes para resolver un reclamo",
+            "Intervenir ante una jugada ilegal",
+            "Pedir silencio en la sala"
+          ],
+          "tiempo": 20,
+          "fuente": "FIDE 12.6"
+        },
+        {
+          "texto": "Un jugador toca primero la torre de h1 y después el rey para enrocar corto. ¿Qué corresponde?",
+          "correcta": "Mover la torre; pierde el enroque por ese lado",
+          "distractores": [
+            "Enrocar corto",
+            "Mover el rey",
+            "Cualquier jugada legal"
+          ],
+          "tiempo": 30,
+          "fuente": "FIDE 4.4.2"
+        },
+        {
+          "texto": "¿Cuándo puede un jugador decir «compongo» para acomodar una pieza?",
+          "correcta": "Solo en su turno y avisando antes de tocarla",
+          "distractores": [
+            "En cualquier momento",
+            "Solo con los relojes detenidos",
+            "Solo con permiso del rival"
+          ],
+          "tiempo": 20,
+          "fuente": "FIDE 4.2.1"
+        },
+        {
+          "texto": "Juegan las negras. ¿Cómo termina esta partida?",
+          "correcta": "Ahogado: tablas",
+          "distractores": [
+            "Jaque mate: ganan las blancas",
+            "La partida sigue",
+            "Posición muerta: tablas"
+          ],
+          "tiempo": 20,
+          "fuente": "FIDE 5.2.1",
+          "fen": "k7/8/1Q6/2K5/8/8/8/8 b - - 0 1"
+        },
+        {
+          "texto": "Quedan rey y caballo contra rey. ¿Qué corresponde?",
+          "correcta": "Tablas en el acto: posición muerta",
+          "distractores": [
+            "La partida sigue",
+            "Gana quien tenga más tiempo",
+            "Tablas solo si alguien las reclama"
+          ],
+          "tiempo": 20,
+          "fuente": "FIDE 5.2.2",
+          "fen": "8/8/4k3/8/8/2N5/8/4K3 b - - 0 1"
+        },
+        {
+          "texto": "Partida clásica: un jugador reclama triple repetición y el reclamo resulta incorrecto. ¿Qué pasa?",
+          "correcta": "Se suman 2 minutos al rival y la partida sigue",
+          "distractores": [
+            "Pierde la partida",
+            "Solo se le advierte",
+            "Son tablas de todos modos"
+          ],
+          "tiempo": 30,
+          "fuente": "FIDE 9.5.3"
+        }
+      ]
+    }
+  ]
+}

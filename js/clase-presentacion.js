@@ -134,6 +134,7 @@ let presentacionPintando = 0;      // para descartar una carga vieja que llega t
 let presentacionEnviada = null;    // el profe: lo último que mandó, y cuándo
 let presentacionEnviadaEn = 0;
 let presentacionesMias = null;     // el profe: las que subió (null = sin pedir todavía)
+let presentacionCursos = null;     // el profe: los cursos cuyas presentaciones puede mostrar (null = sin preguntar)
 
 function presentacionEsDelProfe() {
     return isTeacher && !esObservador;
@@ -439,7 +440,15 @@ function pintarPresentacionPanel() {
     const ul = document.getElementById("presentacion-panel-lista");
     if (!ul) return;
     ul.innerHTML = "";
-    PresentacionClase.LISTA.forEach((pr) => ul.appendChild(filaDePresentacion(pr.deck, pr.titulo, "Del curso")));
+    // Las del curso, solo las que le compartieron (admin.html#asesores).
+    const delCurso = PresentacionClase.LISTA.filter((pr) => presentacionCursos && presentacionCursos.has(pr.deck.split("/")[0]));
+    delCurso.forEach((pr) => ul.appendChild(filaDePresentacion(pr.deck, pr.titulo, "Del curso")));
+    if (!delCurso.length) {
+        const li = document.createElement("li");
+        li.className = "text-xs text-brand-500 dark:text-brand-300";
+        li.textContent = presentacionCursos ? "Ninguna compartida contigo todavía." : "Buscando…";
+        ul.appendChild(li);
+    }
     const mias = document.getElementById("presentacion-panel-mias");
     const vacia = document.getElementById("presentacion-panel-vacia");
     mias.innerHTML = "";
@@ -448,6 +457,22 @@ function pintarPresentacionPanel() {
         mias.appendChild(filaDePresentacion("subida/" + pr.id, pr.titulo,
             pr.paginas + (pr.paginas === 1 ? " diapositiva" : " diapositivas"), () => borrarPresentacion(pr)));
     });
+}
+
+/* Las presentaciones de un curso a medida («Formación Ajedrez») son de quien
+   administra y de quien se las comparte (admin.html#asesores). Se pregunta lo
+   mismo que el worker a los cursos escondidos: puede_bajar() sin que el acceso
+   a la Academia baste. */
+async function cargarCursosDePresentacion() {
+    const cursos = [...new Set(PresentacionClase.LISTA.map((pr) => pr.deck.split("/")[0]))];
+    const si = new Set();
+    await Promise.all(cursos.map(async (curso) => {
+        const { data, error } = await sb.rpc("puede_bajar", { p_producto: curso, p_basta_acceso: false });
+        if (error) console.error(error);
+        else if (data === true) si.add(curso);
+    }));
+    presentacionCursos = si;
+    pintarPresentacionPanel();
 }
 
 async function cargarMisPresentaciones() {
@@ -606,6 +631,7 @@ function setupPresentacionTools() {
         if (abrir) {
             pintarPresentacionPanel();
             if (presentacionesMias === null) cargarMisPresentaciones();
+            if (presentacionCursos === null) cargarCursosDePresentacion();
         }
     });
     document.getElementById("presentacion-panel-close-btn").addEventListener("click", cerrarPanelPresentacion);

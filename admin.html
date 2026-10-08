@@ -90,6 +90,7 @@
                     </ul>
                     <ul data-subnav="contenido" hidden class="flex flex-wrap gap-2">
                         <li><a href="#materiales" data-ir="materiales" class="admin-nav subnav-pestana inline-block rounded-full px-4 py-1.5 text-sm font-semibold border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-900 text-brand-700 dark:text-brand-200 hover:border-accent-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Materiales de clases</a></li>
+                        <li><a href="#asesores" data-ir="asesores" class="admin-nav subnav-pestana inline-block rounded-full px-4 py-1.5 text-sm font-semibold border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-900 text-brand-700 dark:text-brand-200 hover:border-accent-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Asesores</a></li>
                         <li><a href="#archivos" data-ir="archivos" class="admin-nav subnav-pestana inline-block rounded-full px-4 py-1.5 text-sm font-semibold border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-900 text-brand-700 dark:text-brand-200 hover:border-accent-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Archivos</a></li>
                         <li><a href="#proyectos" data-ir="proyectos" class="admin-nav subnav-pestana inline-block rounded-full px-4 py-1.5 text-sm font-semibold border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-900 text-brand-700 dark:text-brand-200 hover:border-accent-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Proyectos</a></li>
                         <li><a href="#torneos" data-ir="torneos" class="admin-nav subnav-pestana inline-block rounded-full px-4 py-1.5 text-sm font-semibold border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-900 text-brand-700 dark:text-brand-200 hover:border-accent-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Salas de torneos</a></li>
@@ -515,6 +516,25 @@
                     <div id="mat-lista" class="space-y-8"></div>
                 </section>
 
+                <!-- ===== Asesores =====
+                     Todo lo del curso «Formación Ajedrez» (el taller para asesores del MEP),
+                     sesión por sesión: con quién se comparte, el estado de preparación de
+                     cada sesión (preparacion_sesiones, solo administración), sus archivos,
+                     su presentación y su cuestionario. Lo pinta js/admin-asesores.js. Ver
+                     «La ficha Asesores» en docs/decisiones/cursos-y-material.md. -->
+                <section data-seccion="asesores" aria-labelledby="titulo-asesores" hidden>
+                    <h2 id="titulo-asesores" class="font-serif text-2xl font-bold text-brand-800 dark:text-white mb-1">Asesores</h2>
+                    <p class="text-sm text-brand-500 dark:text-brand-300 mb-5">Todo el curso «Formación Ajedrez» en orden, para prepararlo sesión por sesión. Marca cada una como lista cuando la tengas revisada. Si lo compartes con otro profesor, le aparecen las presentaciones del curso para mostrarlas en su clase en vivo, y los cuestionarios de cada sesión.</p>
+                    <p id="ase-cargando" class="text-sm text-brand-500 dark:text-brand-300">Cargando las sesiones…</p>
+                    <p id="ase-error" hidden role="alert" class="text-sm font-semibold text-red-700 dark:text-red-300"></p>
+                    <article class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6" aria-labelledby="ase-compartir-titulo">
+                        <h3 id="ase-compartir-titulo" class="text-sm font-bold uppercase tracking-wide text-brand-500 dark:text-brand-300 mb-2">Con quién lo compartes</h3>
+                        <div id="ase-compartir"></div>
+                    </article>
+                    <p id="ase-resumen" role="status" class="text-sm font-semibold text-brand-700 dark:text-brand-200 mb-4"></p>
+                    <div id="ase-lista" class="space-y-6"></div>
+                </section>
+
                 <!-- ===== Archivos =====
                      Todos los PDF, Word, Excel, presentaciones, versiones accesibles e imágenes del sitio, una ficha por
                      tipo. Cada ficha es un explorador: las carpetas a la izquierda (los
@@ -658,6 +678,7 @@
     <script src="js/admin-proyectos.js"></script>
     <script src="js/admin-preparacion.js"></script>
     <script src="js/admin-materiales.js"></script>
+    <script src="js/admin-asesores.js"></script>
     <script src="js/vista-previa.js"></script>
     <script src="js/admin-archivos.js"></script>
     <script src="js/admin-auditoria.js"></script>

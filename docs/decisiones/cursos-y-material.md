@@ -2119,6 +2119,45 @@ migración en `supabase_migrations.schema_migrations` con el mismo texto del
 archivo: así el punto de restauración coincide igual que si la hubiera
 aplicado el CLI.
 
+## La ficha Asesores
+
+`admin.html#asesores` (grupo Contenido) junta todo el curso «Formación Ajedrez»
+—el taller para asesores regionales del MEP— para prepararlo **sesión por
+sesión**. Lo pinta `js/admin-asesores.js`.
+
+- **Las sesiones** salen de `cursos/recursos/formacion-ajedrez/sesiones.json`,
+  que arma `herramientas/curso-generar-formacion.py` con el curso: título,
+  resumen, archivos (la misma lista que los botones de la página del curso,
+  `archivos_de()`: se escribe una vez) y su presentación para la clase en vivo
+  si la tiene. `verificar-formacion.js` falla si no está al día.
+- **El estado** («En preparación» / «Lista») y una nota por sesión viven en
+  `preparacion_sesiones` (clave curso + sesión). Es cosa de administración: la
+  RLS solo deja leer y escribir a `soy_admin()`, y quién y cuándo lo pone un
+  trigger, no la pantalla. La página pinta lo que devuelve la base.
+- **La presentación** se mira ahí mismo con `VistaPrevia` (las imágenes de
+  `presentaciones/clase-NN/`).
+- **El cuestionario al estilo Kahoot** de cada sesión: la fuente es
+  `herramientas/cursos/formacion-ajedrez-kahoot.json` (correcta aparte y tres
+  distractores, sin publicar: `.assetsignore`), y
+  `herramientas/formacion-cuestionarios.js` reparte el lugar de la correcta
+  parejo entre A, B, C y D y escribe el SQL. Son cuestionarios **listos** con
+  `material = 'formacion-ajedrez'`, que se llaman «Formación Ajedrez · Sesión
+  N: …» (así los encuentra la ficha). `verificar-formacion.js` los pasa por el
+  armador y comprueba sus posiciones con chess.js.
+- **Con quién se comparte** es el mismo bloque de «Materiales de clases»
+  (`AdminMateriales.montarCompartir`) con el producto `formacion-ajedrez`. A
+  quien se lo compartes le aparecen los cuestionarios del curso y, en el panel
+  «📊 Presentación» de la clase en vivo, las presentaciones del curso: el panel
+  pregunta `puede_bajar(curso, false)`, que dice que sí a administración, a quien
+  lo compró y a quien se lo compartieron.
+
+El curso en sí **no** se esconde: se vende en la tienda y el proyecto Campeones
+Colegiales usa dos de sus lecciones. Lo que se reparte es el kit del taller
+(las presentaciones para la clase y los cuestionarios). Los archivos de
+`cursos/recursos/formacion-ajedrez/` los sigue sirviendo el worker a quien
+tiene acceso a la Academia, así que a los alumnos de la clase les llegan las
+diapositivas que el profe muestra.
+
 ## La sección Archivos
 
 `admin.html#archivos` junta **todos** los PDF, Word, Excel, presentaciones,
