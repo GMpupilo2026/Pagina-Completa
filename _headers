@@ -66,3 +66,19 @@
 
 /data/oscar-book-provenance.json
   Cache-Control: public, max-age=86400
+
+# Los bancos de Entrenamiento (temas, tipos, mates, puzzles, memoria,
+# ejercicios…): hasta 1,8 MB cada uno, los piden por fetch() media docena de
+# páginas (Entrenamiento, la clase en vivo, los ejercicios sin internet) y los
+# regeneran los scripts de herramientas/, o sea casi nunca. Mismo caso que el
+# libro de aperturas: sin esta cabecera se vuelven a bajar enteros en cada
+# visita, y que queden un día viejos no rompe nada.
+/entreno/data/*.json
+  Cache-Control: public, max-age=86400
+
+# Las fuentes autoalojadas (fonts/*.woff2): el contenido no cambia salvo que
+# se corra herramientas/fuentes-bajar.js, así que no hace falta volver a
+# preguntar en cada visita. A diferencia de tailwind.css, una fuente vieja en
+# caché no rompe nada (como mucho falta un glifo de un subconjunto nuevo).
+/fonts/*
+  Cache-Control: public, max-age=604800
