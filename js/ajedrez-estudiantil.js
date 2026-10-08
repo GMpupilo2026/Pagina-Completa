@@ -439,7 +439,7 @@
     }
     torneos = datos.torneos.map((f) => Object.fromEntries(datos.columnas.map((c, i) => [c, f[i]])));
     armarSerie();
-    texto("ae-consulta", "Datos consultados en chess-results el " + window.HoraCR.fecha(datos.consulta, { day: "numeric", month: "long", year: "numeric" }) + ".");
+    texto("ae-consulta", "Los datos se revisan en chess-results cada seis horas; la última novedad es del " + window.HoraCR.fecha(datos.actualizado, { day: "numeric", month: "long", year: "numeric" }) + ".");
 
     const regiones = [...new Set(torneos.map((t) => t.region).filter(Boolean))].sort((a, b) => a.localeCompare(b, "es"));
     $("ae-region").append(...regiones.map((x) => new Option(x, x)));

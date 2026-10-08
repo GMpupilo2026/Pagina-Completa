@@ -1686,7 +1686,8 @@ los internacionales (CODICADER y escolares de la federación). Se enlaza desde
   tope de 2000 filas por búsqueda (la de «regional» dio exactamente 1000, y
   partida por tipo de torneo da los mismos 1000).
 - **La fuente es `herramientas/datos/ajedrez-estudiantil-torneos.csv`**, un
-  torneo por fila ya clasificado. `herramientas/ajedrez-estudiantil.py` lo
+  torneo por fila ya clasificado (la búsqueda inicial; lo nuevo lo suma el
+  flujo de abajo). `herramientas/ajedrez-estudiantil.py` lo
   pasa a `data/ajedrez-estudiantil.json` sin el organizador (a veces es el
   nombre de una persona, y la página no lo usa) y falla si una etapa o una
   categoría no es válida. El JSON no se edita a mano.
@@ -1732,9 +1733,41 @@ los internacionales (CODICADER y escolares de la federación). Se enlaza desde
   grande tiene su tabla. Los filtros van en la dirección
   (`?region=Cartago&categoria=D`) para compartir una vista. Los colores de las
   etapas están medidos en `css/styles.css` y cada etapa va también escrita.
-- **Para ponerla al día** hay que repetir la búsqueda (no la hace el CI):
-  volver a armar el CSV con el mismo criterio, cambiar `CONSULTA` en el script
-  y correrlo.
+- **Se pone al día sola, cada seis horas**
+  (`.github/workflows/ajedrez-estudiantil.yml`). Chess-results no avisa cuando
+  se publica algo, así que se revisa: `herramientas/ajedrez-estudiantil-actualizar.py`
+  hace UNA búsqueda, los 250 torneos de Costa Rica tocados más recientemente
+  (orden «Última actualización»), que trae fechas, lugar, rondas e inscritos
+  de cada uno. Un torneo que ya estaba se pone al día (inscritos, rondas,
+  fecha; el lugar no, porque los primeros se guardaron cortados a 40 letras y
+  saldrían como «cambio» cada vez). Uno nuevo se clasifica con
+  `herramientas/ajedrez_estudiantil_reglas.py` y se suma si es estudiantil;
+  si su nombre llega cortado (≥ 45 letras) y tiene pistas de ser estudiantil,
+  antes se lee su título completo en su página, porque la categoría suele
+  estar al final. Los cortados sin pistas no se piden: cien páginas por
+  revisión sería abusar del sitio.
+- **El flujo no escribe en `main` directo**: abre un PR desde
+  `datos/ajedrez-estudiantil-…`, le pide «Verificar» a mano (un PR que abre el
+  `GITHUB_TOKEN` no dispara otros flujos solo; `workflow_dispatch` sí) y solo
+  si pasa lo mergea. Si falla, el PR queda abierto y el flujo no abre otro
+  hasta que alguien lo cierre. Necesita que el repositorio deje a Actions
+  crear PR (Settings → Actions → General → «Allow GitHub Actions to create
+  and approve pull requests»); sin eso, el paso de abrir el PR falla y GitHub
+  avisa por correo. La fecha que dice la página
+  (`herramientas/datos/ajedrez-estudiantil-actualizado.txt`) cambia solo
+  cuando hubo algo nuevo, para no abrir un PR cada seis horas por nada.
+- **Las reglas son una sola copia** (`ajedrez_estudiantil_reglas.py`), y
+  `verificar-ajedrez-estudiantil-reglas.py` comprueba que clasifiquen los
+  torneos guardados exactamente como están: una regla que cambie desordenaría
+  lo viejo sin avisar. Para que eso valga, los 167 torneos de nombre cortado
+  guardan su título completo (con él, además, salieron 28 torneos por
+  equipos que se contaban como individuales y un interregional que figuraba
+  como regional). El mismo verificador prueba el actualizador con muestras de
+  las páginas reales de chess-results (`herramientas/datos/ajedrez-estudiantil-muestras/`,
+  en `.txt` para que los generadores del sitio no las tomen por páginas).
+  Probado también con una respuesta real del 8/10/2026: leyó las 250 filas y
+  encontró 25 eliminatorias de 2026 que la búsqueda por palabras no había
+  traído («Regional Heredia …», «Eliminatoria Inter regional …_Puriscal»).
 - `verificar-ajedrez-estudiantil.js` cuenta las participaciones directo del
   CSV, por otro camino que la página, y las compara con lo que se pinta: sin
   filtros, con una región, con una categoría y con las dos; además, los

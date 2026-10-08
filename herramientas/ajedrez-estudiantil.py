@@ -9,10 +9,11 @@ clasificaron, en docs/decisiones/juegos-y-torneos.md («Ajedrez estudiantil en
 Costa Rica: los torneos de chess-results»).
 
 La fuente es herramientas/datos/ajedrez-estudiantil-torneos.csv: un torneo por
-fila, ya clasificado. Este script no la vuelve a armar (chess-results no tiene
-API y desde una sesión de Claude Code no hay salida al sitio): solo la pasa a
-lo que pide la página, sin el organizador (a veces es el nombre de una persona
-y la página no lo usa) y con las columnas que la página filtra.
+fila, ya clasificado. Este script no la vuelve a armar: la pone al día
+herramientas/ajedrez-estudiantil-actualizar.py, que corre en GitHub Actions
+cada seis horas. Este solo la pasa a lo que pide la página, sin el
+organizador (a veces es el nombre de una persona y la página no lo usa) y con
+las columnas que la página filtra.
 
     python3 herramientas/ajedrez-estudiantil.py              escribe el JSON
     python3 herramientas/ajedrez-estudiantil.py --comprobar  falla si no está al día
@@ -26,8 +27,10 @@ RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 FUENTE = os.path.join(RAIZ, "herramientas", "datos", "ajedrez-estudiantil-torneos.csv")
 DESTINO = os.path.join(RAIZ, "data", "ajedrez-estudiantil.json")
 
-# El día de la búsqueda en chess-results: la página lo dice.
-CONSULTA = "2026-10-08"
+# El último día en que cambió algo de chess-results: la página lo dice. Lo
+# escribe herramientas/ajedrez-estudiantil-actualizar.py cuando suma o pone al
+# día un torneo.
+FECHA = os.path.join(RAIZ, "herramientas", "datos", "ajedrez-estudiantil-actualizado.txt")
 
 COLUMNAS = ["clave", "anio", "etapa", "categoria", "nombre", "inicio", "lugar",
             "region", "jugadores", "modalidad", "ritmo"]
@@ -56,7 +59,9 @@ def armar():
         vistas.add(r["clave"])
         torneos.append([int(r[c]) if c in NUMEROS else r[c] for c in COLUMNAS])
     torneos.sort(key=lambda t: (t[1], t[5], t[0]))
-    datos = {"consulta": CONSULTA, "columnas": COLUMNAS, "torneos": torneos}
+    with open(FECHA, encoding="utf-8") as f:
+        actualizado = f.read().strip()
+    datos = {"actualizado": actualizado, "columnas": COLUMNAS, "torneos": torneos}
     return json.dumps(datos, ensure_ascii=False, separators=(",", ":")) + "\n"
 
 
