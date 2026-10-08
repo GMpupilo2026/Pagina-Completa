@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="img/favicon.svg">
+    <title>Pareo Integral — emparejamientos de torneos de ajedrez (Sistema Holandés de FIDE)</title>
+    <meta name="description" content="Empareja tu torneo de ajedrez con el Sistema Holandés de FIDE: rondas, resultados, clasificación con desempates del C.07, tabla cruzada y el TRF para FIDE. Gratis, sin cuenta y en tu computadora.">
+    <link rel="canonical" href="https://ajedrez-integral.com/pareo.html">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Ajedrez Integral">
+    <meta property="og:locale" content="es_CR">
+    <meta property="og:title" content="Pareo Integral — emparejamientos de torneos de ajedrez">
+    <meta property="og:description" content="Sistema Holandés de FIDE, resultados, desempates y TRF. Gratis y sin cuenta.">
+    <meta property="og:url" content="https://ajedrez-integral.com/pareo.html">
+    <meta property="og:image" content="https://ajedrez-integral.com/img/og-ajedrez-integral.jpg">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="Ajedrez Integral — clases de ajedrez en vivo, no solo videos. ajedrez-integral.com">
+    <meta name="twitter:card" content="summary_large_image">
+    <link rel="stylesheet" href="css/tailwind.css">
+    <link rel="stylesheet" href="css/styles.css">
+    <!-- oscuro: inicio --><script>(function(){try{var t=localStorage.getItem('theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.classList.add('dark');}catch(e){}})();</script><!-- oscuro: fin -->
+    <script src="js/adaptive-mode.js"></script>
+<!-- app: inicio --><meta name="theme-color" content="#102a43"><link rel="manifest" href="/manifest.json"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Ajedrez"><script src="js/errores.js"></script><script src="js/pwa.js" defer></script><script src="js/navegacion.js" defer></script><!-- app: fin --><!-- fuentes: inicio --><link rel="stylesheet" href="css/fuentes.css"><!-- fuentes: fin --><!-- tema: inicio --><script>(function(){try{var l=localStorage.getItem('plataforma_letra_v1');if(l&&/^[a-z]{2,24}$/.test(l)&&l!=='tema')document.documentElement.setAttribute('data-letra',l);var t=localStorage.getItem('plataforma_tema_v1');if(!t||!/^[a-z]{2,24}$/.test(t)||t==='clasico')return;document.documentElement.setAttribute('data-tema',t);var b=getComputedStyle(document.documentElement).getPropertyValue('--c-brand-800').trim();var m=document.querySelector('meta[name="theme-color"]');if(b&&m)m.setAttribute('content','rgb('+b.replace(/\s+/g,',')+')');}catch(e){}})();</script><!-- tema: fin --></head>
+<body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-accent-500 focus:text-brand-900 focus:font-semibold focus:px-4 focus:py-2 focus:rounded-lg">Saltar al contenido principal</a>
+    <header id="header" class="sticky top-0 z-50 bg-brand-800 shadow-lg transition-all duration-300">
+        <div class="hidden lg:block bg-brand-900 border-b border-brand-700/60">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-8 flex items-center justify-end gap-5 text-xs text-brand-300">
+                <a href="te-reto.html" class="hover:text-accent-400 transition-colors">🏆 ¡Te reto!</a>
+                <span class="text-brand-700" aria-hidden="true">&middot;</span>
+                <a href="tv.html" class="hover:text-accent-400 transition-colors">TV en vivo</a>
+                <span class="text-brand-700" aria-hidden="true">&middot;</span>
+                <a href="torneos-en-vivo.html" class="hover:text-accent-400 transition-colors">Torneos</a>
+            </div>
+        </div>
+        <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Navegación principal">
+            <div class="flex items-center justify-between min-h-[4rem] md:min-h-[5rem] py-2">
+                <a href="index.html" class="flex items-center gap-2 text-white"><img src="/img/logo-marca.png" alt="" width="78" height="48" class="h-10 md:h-12 w-auto shrink-0"><span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span></a>
+                <ul class="hidden lg:flex items-center gap-8 text-brand-100 font-medium">
+                    <li><a href="index.html" class="hover:text-accent-400 transition-colors">Inicio</a></li>
+                    <li><a href="cursos.html" class="hover:text-accent-400 transition-colors">Cursos</a></li>
+                    <li><a href="articulos.html" class="hover:text-accent-400 transition-colors">Artículos</a></li>
+                    <li><a href="tablero.html" class="hover:text-accent-400 transition-colors">Jugar contra el profe</a></li>
+                    <li><a href="clases.html" class="hover:text-accent-400 text-accent-400 transition-colors">Academia</a></li>
+                    <li><a href="precios.html" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg transition-colors">Inscríbete</a></li>
+                </ul>
+                <div class="flex items-center gap-2 sm:gap-3">
+                    <button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro">
+                        <span id="theme-icon" aria-hidden="true">☀️</span>
+                    </button>
+                    <button id="menu-toggle" class="lg:hidden text-white text-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Abrir menú" aria-expanded="false" aria-controls="mobile-menu">
+                        <svg id="icon-open" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                        <svg id="icon-close" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+            </div>
+        </nav>
+        <div id="mobile-menu" class="lg:hidden hidden bg-brand-800 border-t border-brand-700">
+            <ul class="px-4 py-4 space-y-3 text-brand-100 font-medium">
+                <li><a href="index.html" class="block py-2 hover:text-accent-400">Inicio</a></li>
+                <li><a href="cursos.html" class="block py-2 hover:text-accent-400">Cursos</a></li>
+                <li><a href="articulos.html" class="block py-2 hover:text-accent-400">Artículos</a></li>
+                <li><a href="tablero.html" class="block py-2 hover:text-accent-400">Jugar contra el profe</a></li>
+                <li><a href="clases.html" class="block py-2 hover:text-accent-400">Academia</a></li>
+                <li><a href="te-reto.html" class="block py-2 hover:text-accent-400">🏆 ¡Te reto!</a></li>
+                <li><a href="tv.html" class="block py-2 hover:text-accent-400">TV en vivo</a></li>
+                <li><a href="torneos-en-vivo.html" class="block py-2 hover:text-accent-400">Torneos</a></li>
+                <li><a href="precios.html" class="block py-2 bg-accent-500 text-brand-900 font-semibold px-4 rounded-lg text-center">Inscríbete</a></li>
+            </ul>
+        </div>
+    </header>
+        <main id="main-content">
+    <!-- Pareo Integral (js/pareo/pagina.js): emparejamientos con el Sistema
+         Holandés de FIDE (bbpPairings en WebAssembly), resultados, desempates
+         del C.07 y el TRF. Página pública y sin cuenta: el torneo vive en el
+         navegador de quien lo organiza y en los archivos que baja; nada se
+         manda a ningún servidor. Ver «Pareo Integral» en
+         docs/decisiones/juegos-y-torneos.md. -->
+    <div class="pt-10 pb-16">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-wrap items-start justify-between gap-4 mb-6 no-imprimir">
+                <div>
+                    <h1 class="font-serif text-3xl md:text-4xl font-bold text-brand-800 dark:text-white"><span aria-hidden="true">♟️</span> Pareo Integral</h1>
+                    <p class="text-brand-600 dark:text-brand-300 mt-1 max-w-2xl" data-t="lema">Emparejamientos de torneos de ajedrez con el Sistema Holandés de FIDE, resultados y desempates. Gratis, sin cuenta y en tu computadora.</p>
+                </div>
+                <button type="button" id="pi-idioma" class="border border-brand-300 dark:border-brand-600 text-brand-800 dark:text-white font-semibold px-4 py-2 rounded-lg text-sm hover:bg-white dark:hover:bg-brand-800 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400" lang="en">English</button>
+            </div>
+
+            <noscript><p class="rounded-xl border-2 border-red-700 p-4 mb-6">Pareo Integral necesita JavaScript para emparejar.</p></noscript>
+
+            <!-- El torneo abierto y los guardados en este navegador. -->
+            <section aria-labelledby="pi-mis-titulo" class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-4 sm:p-5 mb-6 no-imprimir">
+                <h2 id="pi-mis-titulo" class="sr-only" data-t="misTorneos">Mis torneos</h2>
+                <div class="flex flex-wrap items-end gap-3">
+                    <label class="flex-1 min-w-[12rem]">
+                        <span class="block text-sm font-semibold mb-1" data-t="torneoAbierto">Torneo abierto</span>
+                        <select id="pi-lista" class="w-full rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 text-brand-800 dark:text-white px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></select>
+                    </label>
+                    <button type="button" id="pi-nuevo" class="bg-brand-800 hover:bg-brand-900 dark:bg-brand-700 dark:hover:bg-brand-600 text-white font-semibold px-4 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400" data-t="nuevoTorneo">Nuevo torneo</button>
+                </div>
+                <p class="text-xs text-brand-600 dark:text-brand-300 mt-3" data-t="privado">Lo que escribes queda guardado solo en este navegador. Para pasarlo a otra computadora o tener una copia, baja el archivo del torneo en «Archivos».</p>
+            </section>
+
+            <div id="pi-fichas" role="tablist" aria-label="Partes del torneo" data-t-aria="partes" class="flex flex-wrap gap-2 mb-6 no-imprimir">
+                <button type="button" role="tab" id="pi-f-torneo" aria-controls="pi-p-torneo" data-ficha="torneo" class="pi-ficha" data-t="fTorneo">Torneo</button>
+                <button type="button" role="tab" id="pi-f-jugadores" aria-controls="pi-p-jugadores" data-ficha="jugadores" class="pi-ficha" data-t="fJugadores">Jugadores</button>
+                <button type="button" role="tab" id="pi-f-rondas" aria-controls="pi-p-rondas" data-ficha="rondas" class="pi-ficha" data-t="fRondas">Rondas</button>
+                <button type="button" role="tab" id="pi-f-clasificacion" aria-controls="pi-p-clasificacion" data-ficha="clasificacion" class="pi-ficha" data-t="fClasificacion">Clasificación</button>
+                <button type="button" role="tab" id="pi-f-cruzada" aria-controls="pi-p-cruzada" data-ficha="cruzada" class="pi-ficha" data-t="fCruzada">Tabla cruzada</button>
+                <button type="button" role="tab" id="pi-f-archivos" aria-controls="pi-p-archivos" data-ficha="archivos" class="pi-ficha" data-t="fArchivos">Archivos y comprobador</button>
+            </div>
+
+            <!-- ===== Torneo ===== -->
+            <section id="pi-p-torneo" role="tabpanel" aria-labelledby="pi-f-torneo" class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5" hidden>
+                <h2 class="font-serif text-xl font-bold mb-4" data-t="datosTorneo">Datos del torneo</h2>
+                <form id="pi-form-torneo" class="grid sm:grid-cols-2 gap-4" novalidate>
+                    <label class="sm:col-span-2"><span class="block text-sm font-semibold mb-1" data-t="nombreTorneo">Nombre del torneo</span><input name="nombre" class="w-full rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 text-brand-800 dark:text-white px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400" maxlength="120" autocomplete="off"></label>
+                    <label><span class="block text-sm font-semibold mb-1" data-t="ciudad">Ciudad</span><input name="ciudad" class="w-full rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 text-brand-800 dark:text-white px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400" maxlength="60" autocomplete="off"></label>
+                    <label><span class="block text-sm font-semibold mb-1" data-t="federacion">Federación (código FIDE, p. ej. CRC)</span><input name="federacion" class="w-full rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 text-brand-800 dark:text-white px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400" maxlength="3" autocomplete="off"></label>
+                    <label><span class="block text-sm font-semibold mb-1" data-t="fechaInicio">Fecha de inicio</span><input name="fechaInicio" type="date" class="w-full rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 text-brand-800 dark:text-white px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></label>
+                    <label><span class="block text-sm font-semibold mb-1" data-t="fechaFin">Fecha de cierre</span><input name="fechaFin" type="date" class="w-full rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 text-brand-800 dark:text-white px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></label>
+                    <label><span class="block text-sm font-semibold mb-1" data-t="arbitro">Árbitro principal</span><input name="arbitro" class="w-full rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 text-brand-800 dark:text-white px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400" maxlength="80" autocomplete="off"></label>
+                    <label><span class="block text-sm font-semibold mb-1" data-t="arbitroAdjunto">Árbitro adjunto</span><input name="arbitroAdjunto" class="w-full rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 text-brand-800 dark:text-white px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400" maxlength="80" autocomplete="off"></label>
+                    <label class="sm:col-span-2"><span class="block text-sm font-semibold mb-1" data-t="ritmo">Ritmo de juego (p. ej. 90 min + 30 s por jugada)</span><input name="ritmo" class="w-full rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 text-brand-800 dark:text-white px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400" maxlength="80" autocomplete="off"></label>
+
+                    <fieldset class="sm:col-span-2 rounded-xl border border-brand-200 dark:border-brand-700 p-4">
+                        <legend class="px-1 font-semibold" data-t="sistema">Sistema</legend>
+                        <div class="flex flex-wrap gap-4">
+                            <label class="flex items-center gap-2"><input type="radio" name="sistema" value="suizo" class="w-4 h-4 accent-brand-800"> <span data-t="suizo">Suizo (Sistema Holandés de FIDE)</span></label>
+                            <label class="flex items-center gap-2"><input type="radio" name="sistema" value="todos" class="w-4 h-4 accent-brand-800"> <span data-t="todos">Todos contra todos (tablas de Berger)</span></label>
+                        </div>
+                        <p id="pi-sistema-fijo" class="text-xs text-brand-600 dark:text-brand-300 mt-2" hidden data-t="sistemaFijo">El sistema ya no se puede cambiar: hay rondas emparejadas.</p>
+                        <div class="grid sm:grid-cols-3 gap-4 mt-4">
+                            <label id="pi-campo-rondas"><span class="block text-sm font-semibold mb-1" data-t="rondasTotales">Número de rondas</span><input name="rondasTotales" type="number" min="1" max="30" inputmode="numeric" class="w-full rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 text-brand-800 dark:text-white px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></label>
+                            <label><span class="block text-sm font-semibold mb-1" data-t="colorInicial">Color del n.º 1 en la ronda 1</span>
+                                <select name="colorInicial" class="w-full rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 text-brand-800 dark:text-white px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><option value="w" data-t="blancas">Blancas</option><option value="b" data-t="negras">Negras</option></select></label>
+                            <label id="pi-campo-baku" class="flex items-center gap-2 sm:mt-6"><input type="checkbox" name="baku" class="w-4 h-4 accent-brand-800"> <span data-t="baku">Aceleración Baku</span></label>
+                            <label id="pi-campo-doble" class="flex items-center gap-2 sm:mt-6" hidden><input type="checkbox" name="dobleVuelta" class="w-4 h-4 accent-brand-800"> <span data-t="dobleVuelta">A doble vuelta</span></label>
+                        </div>
+                    </fieldset>
+
+                    <fieldset class="sm:col-span-2 rounded-xl border border-brand-200 dark:border-brand-700 p-4">
+                        <legend class="px-1 font-semibold" data-t="puntos">Puntos</legend>
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                            <label><span class="block text-sm font-semibold mb-1" data-t="pVictoria">Victoria</span><input name="p_victoria" type="number" step="0.5" min="0" max="9" class="w-full rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 text-brand-800 dark:text-white px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></label>
+                            <label><span class="block text-sm font-semibold mb-1" data-t="pTablas">Tablas</span><input name="p_tablas" type="number" step="0.5" min="0" max="9" class="w-full rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 text-brand-800 dark:text-white px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></label>
+                            <label><span class="block text-sm font-semibold mb-1" data-t="pDerrota">Derrota</span><input name="p_derrota" type="number" step="0.5" min="0" max="9" class="w-full rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 text-brand-800 dark:text-white px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></label>
+                            <label><span class="block text-sm font-semibold mb-1" data-t="pBye">Bye del pareo</span><input name="p_bye" type="number" step="0.5" min="0" max="9" class="w-full rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 text-brand-800 dark:text-white px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></label>
+                        </div>
+                    </fieldset>
+                </form>
+
+                <div class="mt-6">
+                    <h3 class="font-semibold mb-1" data-t="desempates">Desempates, en orden</h3>
+                    <p class="text-sm text-brand-600 dark:text-brand-300 mb-3" data-t="desempatesAyuda">Se aplican uno detrás del otro, según el reglamento C.07 de FIDE (versión 2026). Los que usan el Elo necesitan el Elo de todos los jugadores.</p>
+                    <ol id="pi-desempates" class="space-y-2 mb-3"></ol>
+                    <div class="flex flex-wrap items-end gap-2">
+                        <label class="flex-1 min-w-[14rem]"><span class="block text-sm font-semibold mb-1" data-t="agregarDesempate">Agregar un desempate</span><select id="pi-desempate-nuevo" class="w-full rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 text-brand-800 dark:text-white px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></select></label>
+                        <button type="button" id="pi-desempate-agregar" class="bg-brand-800 hover:bg-brand-900 dark:bg-brand-700 dark:hover:bg-brand-600 text-white font-semibold px-4 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 disabled:opacity-50 disabled:cursor-not-allowed" data-t="agregar">Agregar</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ===== Jugadores ===== -->
+            <section id="pi-p-jugadores" role="tabpanel" aria-labelledby="pi-f-jugadores" class="space-y-6" hidden>
+                <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5">
+                    <h2 class="font-serif text-xl font-bold mb-4" data-t="agregarJugador">Agregar un jugador</h2>
+                    <form id="pi-form-jugador" class="grid sm:grid-cols-6 gap-3" novalidate>
+                        <label class="sm:col-span-3"><span class="block text-sm font-semibold mb-1" data-t="nombreJugador">Apellidos, nombre</span><input name="nombre" required maxlength="33" class="w-full rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 text-brand-800 dark:text-white px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400" autocomplete="off"></label>
+                        <label><span class="block text-sm font-semibold mb-1">Elo FIDE</span><input name="elo" type="number" min="0" max="3500" inputmode="numeric" class="w-full rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 text-brand-800 dark:text-white px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></label>
+                        <label><span class="block text-sm font-semibold mb-1" data-t="titulo">Título</span><select name="titulo" class="w-full rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 text-brand-800 dark:text-white px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><option value="">—</option><option>GM</option><option>IM</option><option>WGM</option><option>FM</option><option>WIM</option><option>CM</option><option>WFM</option><option>WCM</option></select></label>
+                        <label><span class="block text-sm font-semibold mb-1" data-t="fed">Fed.</span><input name="fed" maxlength="3" class="w-full rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 text-brand-800 dark:text-white px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400" autocomplete="off"></label>
+                        <label class="sm:col-span-2"><span class="block text-sm font-semibold mb-1" data-t="fideId">ID FIDE</span><input name="fideId" inputmode="numeric" maxlength="11" class="w-full rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 text-brand-800 dark:text-white px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400" autocomplete="off"></label>
+                        <label><span class="block text-sm font-semibold mb-1" data-t="sexo">Sexo</span><select name="sexo" class="w-full rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 text-brand-800 dark:text-white px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><option value="">—</option><option value="m" data-t="masculino">Masculino</option><option value="w" data-t="femenino">Femenino</option></select></label>
+                        <label class="sm:col-span-2"><span class="block text-sm font-semibold mb-1" data-t="nacimiento">Fecha de nacimiento</span><input name="nacimiento" type="date" class="w-full rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 text-brand-800 dark:text-white px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></label>
+                        <div class="sm:col-span-1 flex items-end"><button type="submit" class="bg-brand-800 hover:bg-brand-900 dark:bg-brand-700 dark:hover:bg-brand-600 text-white font-semibold px-4 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 disabled:opacity-50 disabled:cursor-not-allowed w-full" data-t="agregar">Agregar</button></div>
+                    </form>
+                    <details class="mt-4">
+                        <summary class="cursor-pointer font-semibold text-sm rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400" data-t="pegarVarios">Pegar una lista de jugadores</summary>
+                        <p class="text-sm text-brand-600 dark:text-brand-300 mt-2" data-t="pegarAyuda">Uno por línea: Nombre; Elo; Título; Federación; ID FIDE. Sirve copiar las columnas de una hoja de cálculo (con tabuladores también).</p>
+                        <textarea id="pi-pegar" rows="5" class="w-full rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 text-brand-800 dark:text-white px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 mt-2 font-mono text-xs" aria-label="Lista de jugadores" data-t-aria="listaJugadores"></textarea>
+                        <button type="button" id="pi-pegar-agregar" class="bg-brand-800 hover:bg-brand-900 dark:bg-brand-700 dark:hover:bg-brand-600 text-white font-semibold px-4 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 disabled:opacity-50 disabled:cursor-not-allowed mt-2" data-t="agregarLista">Agregar la lista</button>
+                    </details>
+                </div>
+                <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5">
+                    <div class="flex flex-wrap items-baseline justify-between gap-2 mb-3">
+                        <h2 class="font-serif text-xl font-bold"><span data-t="inscritos">Inscritos</span> (<span id="pi-cuenta">0</span>)</h2>
+                        <p class="text-sm text-brand-600 dark:text-brand-300" id="pi-orden-ayuda" data-t="ordenAyuda">El número de cada uno sale del orden inicial de FIDE: Elo, título y nombre.</p>
+                    </div>
+                    <div class="overflow-x-auto"><table class="pi-tabla" id="pi-tabla-jugadores"></table></div>
+                    <p id="pi-sin-jugadores" class="text-sm italic text-brand-600 dark:text-brand-300" data-t="sinJugadores">Todavía no hay nadie inscrito.</p>
+                </div>
+            </section>
+
+            <!-- ===== Rondas ===== -->
+            <section id="pi-p-rondas" role="tabpanel" aria-labelledby="pi-f-rondas" class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5" hidden>
+                <div class="flex flex-wrap items-center gap-2 mb-4 no-imprimir" id="pi-rondas-nav" role="group" aria-label="Ronda" data-t-aria="ronda"></div>
+                <div id="pi-ronda"></div>
+            </section>
+
+            <!-- ===== Clasificación ===== -->
+            <section id="pi-p-clasificacion" role="tabpanel" aria-labelledby="pi-f-clasificacion" class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5" hidden>
+                <div class="flex flex-wrap items-baseline justify-between gap-3 mb-3">
+                    <h2 class="font-serif text-xl font-bold" id="pi-clas-titulo" data-t="fClasificacion">Clasificación</h2>
+                    <button type="button" class="inline-block border border-brand-300 dark:border-brand-600 text-brand-800 dark:text-white font-semibold px-4 py-2 rounded-lg text-sm hover:bg-brand-50 dark:hover:bg-brand-800 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 no-imprimir pi-imprimir" data-t="imprimir">Imprimir</button>
+                </div>
+                <p id="pi-clas-nota" class="text-sm text-brand-600 dark:text-brand-300 mb-3"></p>
+                <div class="overflow-x-auto"><table class="pi-tabla" id="pi-tabla-clas"></table></div>
+                <dl id="pi-clas-leyenda" class="text-xs text-brand-600 dark:text-brand-300 mt-3 grid sm:grid-cols-2 gap-x-6 gap-y-1"></dl>
+            </section>
+
+            <!-- ===== Tabla cruzada ===== -->
+            <section id="pi-p-cruzada" role="tabpanel" aria-labelledby="pi-f-cruzada" class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5" hidden>
+                <div class="flex flex-wrap items-baseline justify-between gap-3 mb-3">
+                    <h2 class="font-serif text-xl font-bold" data-t="fCruzada">Tabla cruzada</h2>
+                    <button type="button" class="inline-block border border-brand-300 dark:border-brand-600 text-brand-800 dark:text-white font-semibold px-4 py-2 rounded-lg text-sm hover:bg-brand-50 dark:hover:bg-brand-800 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 no-imprimir pi-imprimir" data-t="imprimir">Imprimir</button>
+                </div>
+                <p class="text-sm text-brand-600 dark:text-brand-300 mb-3" data-t="cruzadaAyuda">En cada ronda: el número del rival, el color (b blancas, n negras) y el resultado. «+» y «−» son partidas no jugadas.</p>
+                <div class="overflow-x-auto"><table class="pi-tabla" id="pi-tabla-cruzada"></table></div>
+            </section>
+
+            <!-- ===== Archivos y comprobador ===== -->
+            <section id="pi-p-archivos" role="tabpanel" aria-labelledby="pi-f-archivos" class="space-y-6" hidden>
+                <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5">
+                    <h2 class="font-serif text-xl font-bold mb-3" data-t="esteTorneo">Este torneo</h2>
+                    <div class="flex flex-wrap gap-2">
+                        <button type="button" id="pi-bajar-trf" class="bg-brand-800 hover:bg-brand-900 dark:bg-brand-700 dark:hover:bg-brand-600 text-white font-semibold px-4 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 disabled:opacity-50 disabled:cursor-not-allowed" data-t="bajarTrf">Bajar el TRF para FIDE</button>
+                        <button type="button" id="pi-bajar-json" class="inline-block border border-brand-300 dark:border-brand-600 text-brand-800 dark:text-white font-semibold px-4 py-2 rounded-lg text-sm hover:bg-brand-50 dark:hover:bg-brand-800 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400" data-t="bajarCopia">Bajar una copia (.json)</button>
+                        <button type="button" id="pi-borrar" class="border border-red-700 text-red-700 dark:border-red-400 dark:text-red-300 font-semibold px-4 py-2 rounded-lg text-sm hover:bg-red-50 dark:hover:bg-red-950 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400" data-t="borrarTorneo">Borrar este torneo</button>
+                    </div>
+                    <p class="text-sm text-brand-600 dark:text-brand-300 mt-3" data-t="trfAyuda">El TRF es el archivo que FIDE pide para el informe de Elo, y el que leen los demás programas de emparejamiento.</p>
+                </div>
+                <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5">
+                    <h2 class="font-serif text-xl font-bold mb-3" data-t="abrir">Abrir un torneo</h2>
+                    <div class="flex flex-wrap items-center gap-3">
+                        <label class="inline-block border border-brand-300 dark:border-brand-600 text-brand-800 dark:text-white font-semibold px-4 py-2 rounded-lg text-sm hover:bg-brand-50 dark:hover:bg-brand-800 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 cursor-pointer focus-within:ring-2 focus-within:ring-accent-400"><span data-t="abrirArchivo">Abrir un TRF o una copia .json</span><input type="file" id="pi-abrir" accept=".trf,.txt,.json,text/plain,application/json" class="sr-only"></label>
+                    </div>
+                    <p class="text-sm text-brand-600 dark:text-brand-300 mt-3" data-t="abrirAyuda">Sirve el TRF de Swiss-Manager, Vega u otro programa: se siguen emparejando las rondas que faltan.</p>
+                </div>
+                <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5">
+                    <h2 class="font-serif text-xl font-bold mb-1" data-t="comprobador">Comprobador de emparejamientos</h2>
+                    <p class="text-sm text-brand-600 dark:text-brand-300 mb-3" data-t="comprobadorAyuda">Pega un TRF (de cualquier programa) y se vuelve a emparejar cada ronda con el Sistema Holandés para ver si coincide con la que se jugó.</p>
+                    <textarea id="pi-fpc-texto" rows="6" class="w-full rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 text-brand-800 dark:text-white px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 font-mono text-xs" aria-label="TRF a comprobar" data-t-aria="trfComprobar"></textarea>
+                    <div class="flex flex-wrap items-center gap-3 mt-2">
+                        <button type="button" id="pi-fpc" class="bg-brand-800 hover:bg-brand-900 dark:bg-brand-700 dark:hover:bg-brand-600 text-white font-semibold px-4 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 disabled:opacity-50 disabled:cursor-not-allowed" data-t="comprobar">Comprobar</button>
+                        <button type="button" id="pi-fpc-este" class="inline-block border border-brand-300 dark:border-brand-600 text-brand-800 dark:text-white font-semibold px-4 py-2 rounded-lg text-sm hover:bg-brand-50 dark:hover:bg-brand-800 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400" data-t="comprobarEste">Comprobar este torneo</button>
+                        <label class="inline-block border border-brand-300 dark:border-brand-600 text-brand-800 dark:text-white font-semibold px-4 py-2 rounded-lg text-sm hover:bg-brand-50 dark:hover:bg-brand-800 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 cursor-pointer focus-within:ring-2 focus-within:ring-accent-400"><span data-t="desdeArchivo">Desde un archivo</span><input type="file" id="pi-fpc-archivo" accept=".trf,.txt,text/plain" class="sr-only"></label>
+                    </div>
+                    <div id="pi-fpc-resultado" class="mt-3" role="status" aria-live="polite"></div>
+                </div>
+                <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5">
+                    <h2 class="font-serif text-xl font-bold mb-1" data-t="generador">Generador de torneos al azar</h2>
+                    <p class="text-sm text-brand-600 dark:text-brand-300 mb-3" data-t="generadorAyuda">Arma un torneo entero con resultados al azar, emparejado con el Sistema Holandés. Con la misma semilla sale siempre el mismo torneo: sirve para comparar programas.</p>
+                    <div class="flex flex-wrap items-end gap-3">
+                        <label><span class="block text-sm font-semibold mb-1" data-t="semilla">Semilla</span><input id="pi-rtg-semilla" type="number" min="1" inputmode="numeric" class="w-full rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 text-brand-800 dark:text-white px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 w-40"></label>
+                        <button type="button" id="pi-rtg" class="bg-brand-800 hover:bg-brand-900 dark:bg-brand-700 dark:hover:bg-brand-600 text-white font-semibold px-4 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 disabled:opacity-50 disabled:cursor-not-allowed" data-t="generar">Generar y bajar el TRF</button>
+                        <button type="button" id="pi-rtg-abrir" class="inline-block border border-brand-300 dark:border-brand-600 text-brand-800 dark:text-white font-semibold px-4 py-2 rounded-lg text-sm hover:bg-brand-50 dark:hover:bg-brand-800 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400" data-t="generarAbrir">Generar y abrirlo acá</button>
+                    </div>
+                </div>
+                <div class="rounded-2xl border border-brand-200 dark:border-brand-700 p-5 text-sm text-brand-700 dark:text-brand-200">
+                    <h2 class="font-semibold mb-2" data-t="creditos">Con qué está hecho</h2>
+                    <p data-t="creditosMotor">Los emparejamientos los calcula bbpPairings (Jeremy Bierema, licencia Apache 2.0), el motor del Sistema Holandés que usan programas avalados por FIDE, compilado para correr en tu navegador.</p>
+                    <p class="mt-2" data-t="creditosDesempates">Los desempates siguen el C.07 de FIDE (versión 2026) y están comparados con chesspairing (Gert Nutterts, licencia Apache 2.0).</p>
+                    <p class="mt-2" data-t="creditosAval">Pareo Integral todavía no tiene el aval de FIDE.</p>
+                    <p class="mt-2"><a href="js/vendor/bbppairings/LEEME.txt" class="underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400" data-t="licencias">Licencias y versión del motor</a></p>
+                </div>
+            </section>
+        </div>
+    </div>
+    </main>
+
+    <footer class="bg-brand-900 text-brand-300 pt-16 pb-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid md:grid-cols-4 gap-8 mb-12">
+                <div><a href="index.html" class="flex items-center gap-2 text-white mb-4"><img src="/img/logo-marca.png" alt="" width="78" height="48" class="h-9 w-auto shrink-0"><span class="font-serif text-lg font-bold">Ajedrez Integral</span></a><p class="text-sm text-brand-300">Plataforma educativa de ajedrez para escuelas, colegios y familias. Aprende, practica y compite.</p></div>
+                <div><h3 class="text-white font-semibold mb-4">Navegación</h3><ul class="space-y-2 text-sm"><li><a href="index.html" class="hover:text-accent-400 transition-colors">Inicio</a></li><li><a href="cursos.html" class="hover:text-accent-400 transition-colors">Cursos</a></li><li><a href="articulos.html" class="hover:text-accent-400 transition-colors">Artículos</a></li><li><a href="tablero.html" class="hover:text-accent-400 transition-colors">Jugar contra el profe</a></li><li><a href="clases.html" class="hover:text-accent-400 transition-colors">Academia</a></li><li><a href="te-reto.html" class="hover:text-accent-400 transition-colors">🏆 ¡Te reto!</a></li><li><a href="tv.html" class="hover:text-accent-400 transition-colors">TV en vivo</a></li><li><a href="torneos-en-vivo.html" class="hover:text-accent-400 transition-colors">Torneos</a></li></ul></div>
+                <div><h3 class="text-white font-semibold mb-4">Recursos</h3><ul class="space-y-2 text-sm"><li><a href="entreno/diagnostico.html" class="hover:text-accent-400 transition-colors">Diagnóstico de nivel gratis</a></li><li><a href="bot.html" class="hover:text-accent-400 transition-colors">Jugar contra el bot</a></li><li><a href="sobre-oscar.html" class="hover:text-accent-400 transition-colors">Sobre Oscar</a></li><li><a href="inscripcion.html" class="hover:text-accent-400 transition-colors">Torneos en línea</a></li></ul></div>
+                <div><h3 class="text-white font-semibold mb-4">Contacto</h3><ul class="space-y-2 text-sm"><li><a href="mailto:info@ajedrez-integral.com" class="hover:text-accent-400 transition-colors">info@ajedrez-integral.com</a></li><li><a href="https://wa.me/50683092291" target="_blank" rel="noopener" class="hover:text-accent-400 transition-colors">+506 8309-2291 (WhatsApp)</a></li><li>Clases en línea desde Costa Rica</li></ul></div>
+            </div>
+            <div class="border-t border-brand-700 pt-6 text-center text-sm text-brand-300"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p><!-- legal: inicio --><p class="mt-2"><a href="privacidad.html" class="underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Política de privacidad</a> <span aria-hidden="true">·</span> <a href="terminos.html" class="underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Términos y condiciones</a></p><!-- legal: fin --></div>
+        </div>
+    </footer>
+    <script src="js/main.js"></script>
+    <script src="js/avisos.js"></script>
+    <script src="js/hora-cr.js"></script>
+    <script src="js/pareo/torneo.js"></script>
+    <script src="js/pareo/desempates.js"></script>
+    <script src="js/pareo/motor.js"></script>
+    <script src="js/pareo/textos.js"></script>
+    <script src="js/pareo/pagina.js"></script>
+</body>
+</html>
