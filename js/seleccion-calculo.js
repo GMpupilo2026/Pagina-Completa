@@ -172,7 +172,7 @@
             jugadas.push({ pts, elo: elo > 0 ? elo : op.sinElo });
         });
         if (rivalesSinEncontrar) {
-            avisos.push({ tipo: "revisar", clave: null, nombre: jugador.nombre,
+            avisos.push({ tipo: "revisar", motivo: "rival", clave: null, nombre: jugador.nombre,
                 texto: `${rivalesSinEncontrar} rival(es) de ${jugador.nombre} en «${torneo.titulo}» no están en la lista de jugadores del torneo: se tomaron como sin Elo (${op.sinElo}).` });
         }
         const pj = jugadas.length;
@@ -236,7 +236,7 @@
             grupo.forEach((e) => {
                 const r = e.torneo.ritmo;
                 if (porRitmo[r]) {
-                    avisos.push({ tipo: "revisar", clave, nombre,
+                    avisos.push({ tipo: "revisar", motivo: "dos-torneos", clave, nombre,
                         texto: `${nombre} aparece en dos torneos de ritmo ${RITMOS[r] || r} («${porRitmo[r].torneo}» y «${e.torneo.titulo}»): se tomó el primero. Una persona juega una sola modalidad.` });
                     return;
                 }
@@ -253,21 +253,21 @@
                 soloAbsoluto: !enFemenino };
 
             // Los avisos de cada persona.
-            if (!nacimiento) avisos.push({ tipo: "error", clave, nombre,
+            if (!nacimiento) avisos.push({ tipo: "error", motivo: "nacimiento", clave, nombre,
                 texto: `${nombre} no tiene año de nacimiento en chess-results: no se puede saber si cumple la edad y quedó fuera del cálculo. Ponlo en el torneo (Swiss-Manager) y vuelve a cargar, o escríbelo abajo.` });
-            if (p.soloAbsoluto && !ajuste.sexo && pareceMujer(nombre)) avisos.push({ tipo: "revisar", clave, nombre,
+            if (p.soloAbsoluto && !ajuste.sexo && pareceMujer(nombre)) avisos.push({ tipo: "revisar", motivo: "sexo", clave, nombre,
                 texto: `¿${nombre} es mujer? Juega en un torneo absoluto y chess-results no dice el sexo. Si es mujer, márcala: se calcula solo en la rama femenina.` });
-            if (modalidades.length > 1) avisos.push({ tipo: "revisar", clave, nombre,
+            if (modalidades.length > 1) avisos.push({ tipo: "revisar", motivo: "modalidades", clave, nombre,
                 texto: `${nombre} juega individual y por equipos. La normativa permite una sola modalidad: revisa la inscripción.` });
             ritmos.forEach((r) => {
-                if (!porRitmo[r]) avisos.push({ tipo: "revisar", clave, nombre,
+                if (!porRitmo[r]) avisos.push({ tipo: "revisar", motivo: "sin-ritmo", clave, nombre,
                     texto: `${nombre} no aparece en ningún torneo de ${RITMOS[r] || r}. Si sí lo jugó, el nombre o el código FIDE no coinciden entre torneos: corrígelo en chess-results y vuelve a cargar.` });
-                else if (porRitmo[r].pj < op.minPartidasB) avisos.push({ tipo: "info", clave, nombre,
+                else if (porRitmo[r].pj < op.minPartidasB) avisos.push({ tipo: "info", motivo: "pocas-partidas", clave, nombre,
                     texto: `${nombre} jugó ${porRitmo[r].pj} partida(s) sobre el tablero en ${RITMOS[r] || r}: sin puntos de rendimiento (B) en ese ritmo (pide ${op.minPartidasB}).` });
-                if (porRitmo[r] && porRitmo[r].sinMinimo && porRitmo[r].puesto) avisos.push({ tipo: "info", clave, nombre,
+                if (porRitmo[r] && porRitmo[r].sinMinimo && porRitmo[r].puesto) avisos.push({ tipo: "info", motivo: "sin-minimo", clave, nombre,
                     texto: `${nombre} jugó ${porRitmo[r].pj} partida(s) con su equipo en ${RITMOS[r] || r}: no llega al ${op.porcentajeEquipo} % de las rondas y no recibe el lugar del equipo (A).` });
             });
-            if (!eloNacional) avisos.push({ tipo: "info", clave, nombre,
+            if (!eloNacional) avisos.push({ tipo: "info", motivo: "sin-elo", clave, nombre,
                 texto: `${nombre} no tiene Elo nacional: cuenta ${op.sinElo} en el ranking nacional (C).` });
             return p;
         });

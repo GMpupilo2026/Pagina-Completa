@@ -56,6 +56,9 @@ const FUNCIONES = {
   "prueba-gratis": ["usuario-alumno.ts"],
   // La pizarra de la sala de cine: lee chess-results. Ver su cabecera.
   "pizarra-torneo": [],
+  // La calculadora de la selección CODICADER: lee un torneo entero de
+  // chess-results, solo con licencia. Ver su cabecera.
+  "seleccion-chess-results": [],
   "explorador-maestros": [],
   // La quiniela de la sala de cine. Ver su cabecera.
   "quiniela": [],

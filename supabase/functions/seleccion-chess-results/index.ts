@@ -32,14 +32,17 @@
 //   uno por equipos es la clasificación de los equipos («Rk.», «Equipo»). Por
 //   el encabezado se sabe cuál es.
 // - individual: art=1, la clasificación («Rk.», «Nombre»).
-// - equipos: art=4, los jugadores con su «Equipo».
+// - equipos: art=16, el ranking inicial de jugadores con su «Equipo». NO art=4:
+//   esa trae solo a quien jugó alguna partida (en el femenino blitz, 29 de 30).
 // - art=9&snr=N: la ficha. Tabla de pares («Elo nacional», «Elo
 //   internacional», «Fecha de nacimiento», «Código FIDE», «Código
 //   nacional», «Club/Ciudad») y la de rondas («Rd.», «Nombre», «Res.»). La
 //   celda «Res.» trae una tabla ANIDADA: por eso las celdas se leen contando
 //   aperturas y cierres, no con un regex «hasta el próximo </td>».
 // - El título y la ronda salen de los <h2>: «Clasificación Final después de 5
-//   rondas» o «Clasificación después de la ronda 3».
+//   rondas» o «Clasificación después de la ronda 3». Un todos contra todos por
+//   equipos dice «Cuadro cruzado por clasificación»: ahí las rondas jugadas
+//   salen de las partidas (la ronda más alta que ya tiene resultado).
 // Siempre con turdet=YES (si no, un torneo de más de dos semanas pide tocar
 // «Mostrar detalles») y zeilen=99999 (todas las filas).
 //
@@ -191,7 +194,7 @@ export function leerClasificacion(html: string) {
   return t.filas.filter((f) => f[iNombre]).map((f) => ({ puesto: Number(f[iRk]) || 0, nombre: f[iNombre] }));
 }
 
-// art=4 de un torneo por equipos: los jugadores con su equipo, en el orden de
+// art=16 de un torneo por equipos: los jugadores con su equipo, en el orden de
 // su número inicial.
 export function leerJugadoresDeEquipos(html: string) {
   const t = tablas(html).find((x) => x.encabezado && columna(x.encabezado, /^Equipo$/i, /^Team$/i) >= 0);
@@ -271,7 +274,7 @@ async function leerTorneo(servidor: string, tnr: string) {
   let deEquipos: { nombre: string; equipo: string }[] = [];
   let cantidad = portada.cantidad;
   if (portada.equipos) {
-    deEquipos = leerJugadoresDeEquipos(await pedir(base + "&art=4"));
+    deEquipos = leerJugadoresDeEquipos(await pedir(base + "&art=16"));
     cantidad = deEquipos.length;
   } else {
     const html = await pedir(base + "&art=1");
@@ -298,13 +301,17 @@ async function leerTorneo(servidor: string, tnr: string) {
       }
     }
   }));
+  const leidos = jugadores.filter(Boolean) as { partidas: { ronda: number; res: string }[] }[];
+  if (!titulos.rondasJugadas) {
+    titulos.rondasJugadas = Math.max(0, ...leidos.flatMap((j) => j.partidas.filter((p) => p.res.trim()).map((p) => p.ronda)));
+  }
   return {
     id: tnr,
     url: `https://${servidor}/tnr${tnr}.aspx?lan=2`,
     ...titulos,
     equipos: portada.equipos,
     clasificacion,
-    jugadores: jugadores.filter(Boolean),
+    jugadores: leidos,
     faltantes: faltantes.sort((a, b) => a - b),
   };
 }
