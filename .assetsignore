@@ -54,6 +54,7 @@ herramientas/video
 herramientas/datos
 herramientas/libro-ninos
 herramientas/mil-lecciones
+herramientas/pareo-cli
 # Los cuestionarios de «Formación Ajedrez» traen las respuestas: los lee
 # herramientas/formacion-cuestionarios.js, no una página, y en la base solo
 # los ven quienes tienen el curso compartido.
