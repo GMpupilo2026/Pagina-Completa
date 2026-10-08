@@ -2932,7 +2932,10 @@ async function pruebaProximaDelProfe(browser) {
   await ctx.close();
 
   // A la hora de la clase (empezó hace 10 minutos), con el nombre de su subgrupo.
-  const ahora = enCR(-10 * 60000);
+  // Pasada la medianoche de Costa Rica, «hace 10 minutos» caía en el día de
+  // ayer y la clase ya no era de hoy: la prueba fallaba de 00:00 a 00:10.
+  const desdeMedianoche = (Date.now() - 6 * 3600000) % 86400000;
+  const ahora = enCR(-Math.min(10 * 60000, desdeMedianoche));
   ({ page, ctx, errores } = await panel(browser, [PROFE], "u-profe", {}, {
     horario_clases: [filaHorario({ dia_semana: ahora.dow, hora: ahora.hora, subgrupo_id: "sg-1", modalidad: "en_linea" })],
     rpc: { mis_subgrupos: [{ id: "sg-1", nombre: "Avanzados", cuantos: 4 }] },
