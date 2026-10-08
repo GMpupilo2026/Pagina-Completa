@@ -1661,3 +1661,83 @@ sitio con sus piezas compartidas.
 ajedrez-4x8`.** Está probado que falla de verdad: quitando la captura al paso
 saltan dos comprobaciones, y montando el tablero sin `columnas: 4`, las dos de
 las flechas.
+
+## Ajedrez estudiantil en Costa Rica: los torneos de chess-results
+
+`ajedrez-estudiantil.html` es una página pública con la participación en los
+torneos estudiantiles de Costa Rica publicados en chess-results.com: los Juegos
+Deportivos Estudiantiles (JDE) del MEP por año, etapa, región y categoría, y
+los internacionales (CODICADER y escolares de la federación). Se enlaza desde
+`articulos.html` (categoría «Datos»).
+
+- **De dónde salen los datos.** chess-results no tiene API y desde una sesión
+  de Claude Code no hay salida al sitio, así que la búsqueda se hizo desde la
+  base con `pg_net` (como las pizarras; ver «Las posiciones oficiales vienen
+  de chess-results»). El buscador de torneos (`TurnierSuche.aspx`) es un
+  formulario ASP.NET que se manda por POST con su `__VIEWSTATE`, y
+  `net.http_post` solo acepta `application/json`: el pedido se puso directo en
+  `net.http_request_queue` con su cuerpo `application/x-www-form-urlencoded`.
+  Además, `chess-results.com` redirige a un servidor (`s2`, `s3`…) y la
+  redirección convierte el POST en GET: hay que pedirle el formulario y
+  mandarlo **al mismo servidor** (`s3.chess-results.com`). El filtro de fechas
+  del buscador se ignoró en las pruebas, así que se buscó por palabras del
+  nombre, con federación CRC: JDE, estudiant, Juegos, CODICADER, colegial,
+  escolar, nacional, regional, eliminatoria, etapa y circuit. Ninguna llegó al
+  tope de 2000 filas por búsqueda (la de «regional» dio exactamente 1000, y
+  partida por tipo de torneo da los mismos 1000).
+- **La fuente es `herramientas/datos/ajedrez-estudiantil-torneos.csv`**, un
+  torneo por fila ya clasificado. `herramientas/ajedrez-estudiantil.py` lo
+  pasa a `data/ajedrez-estudiantil.json` sin el organizador (a veces es el
+  nombre de una persona, y la página no lo usa) y falla si una etapa o una
+  categoría no es válida. El JSON no se edita a mano.
+- **Qué entra y qué no.** Entran los torneos de los JDE (cualquier etapa), los
+  CODICADER, los escolares internacionales de la federación y unos pocos
+  estudiantiles fuera de los JDE. Quedan fuera los Juegos Deportivos
+  Nacionales del ICODER (JDN), los juegos comunales, distritales y laborales y
+  los torneos privados de colegios. Cinco torneos de la DRE de Coto en 2026 se
+  llaman «JDN» pero son de los JDE (categorías A y B, los organiza la DRE). El
+  «Campeonato Nacional Estudiantil 2008» figura con federación Costa Rica pero
+  se jugó en Ecuador, y quedó fuera: **la federación de chess-results no
+  garantiza el país**.
+- **Las etapas** salen del nombre: institucional o circuital, regional,
+  interregional y nacional. Los años de algunos torneos de 2013 vienen como
+  1913; el año se toma del nombre cuando la fecha no tiene sentido.
+- **La categoría (A a E)** sale del nombre, con varias formas («Categoría B»,
+  «Individual Absoluto C», «JDEB», «Sula C», `"D`…). El buscador da los
+  nombres cortados a 50 letras: en 167 torneos la letra quedaba fuera y se
+  leyó el título completo de cada uno (`<h2>` de su página). Algunos la traen
+  en clave: «2025 AIO» es categoría A, individual, abierto. Cuatro no la dicen
+  y quedan como «Sin dato». Antes de 2013 las letras pueden no ser las mismas
+  edades que hoy.
+- **La región** sale del nombre, el organizador o el lugar, con una lista de
+  direcciones regionales; un interregional cuenta para la primera que se
+  reconoce (el «Interregional Los Santos-Turrialba-Cartago» queda en Cartago).
+  La final nacional no tiene región.
+- **«Participaciones» no son personas**: es la suma de inscritos de los
+  torneos de ritmo clásico, individuales y por equipos (en chess-results, la
+  columna `n` de un torneo por equipos cuenta jugadores, no equipos:
+  comprobado con uno real, 12 colegios y 50 jugadores). Un estudiante cuenta
+  una vez por etapa y por modalidad. Los blitz y rápidos no se suman porque
+  repiten a los del clásico.
+- **Lo que hay que decir junto a los números.** El salto desde 2023 es en
+  buena parte de registro: las regiones que publican su eliminatoria en
+  chess-results pasaron de 5 a 17. Y la final nacional alterna categorías (B y
+  C en años impares, B y D en pares), así que comparar años de una categoría
+  mezcla años con final y sin ella: la página lo avisa en la frase de arriba
+  cuando pasa.
+- **La página cuenta todo en el navegador** (`js/ajedrez-estudiantil.js`):
+  son 1082 filas fijas de un archivo del sitio, no una tabla de la base. Los
+  gráficos son SVG escritos a mano (el sitio no carga librerías de gráficos);
+  cada año es un botón que se alcanza con Tab y dice su valor, y el gráfico
+  grande tiene su tabla. Los filtros van en la dirección
+  (`?region=Cartago&categoria=D`) para compartir una vista. Los colores de las
+  etapas están medidos en `css/styles.css` y cada etapa va también escrita.
+- **Para ponerla al día** hay que repetir la búsqueda (no la hace el CI):
+  volver a armar el CSV con el mismo criterio, cambiar `CONSULTA` en el script
+  y correrlo.
+- `verificar-ajedrez-estudiantil.js` cuenta las participaciones directo del
+  CSV, por otro camino que la página, y las compara con lo que se pinta: sin
+  filtros, con una región, con una categoría y con las dos; además, los
+  filtros en la dirección, el aviso de la final, el teclado, el celular a
+  400 px, el modo oscuro y la página sin datos. Sumando también los blitz, o
+  sin filtrar la tabla por región, salta.
