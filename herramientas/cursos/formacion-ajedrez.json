@@ -343,6 +343,26 @@
             {
               "pregunta": "¿Cuál es la primera sanción de la lista del art. 12.9?",
               "respuesta": "La advertencia."
+            },
+            {
+              "pregunta": "Para salir de la sala de juego durante la ronda, ¿qué necesita un jugador?",
+              "respuesta": "Permiso del árbitro."
+            },
+            {
+              "pregunta": "¿Puede un jugador que ya terminó su partida quedarse analizándola en un tablero de la sala, junto a mesas que siguen jugando?",
+              "respuesta": "No: ya es espectador y no puede interferir ni analizar en la sala de juego."
+            },
+            {
+              "pregunta": "Si no se puede reconstruir la posición anterior a una jugada ilegal, ¿desde dónde continúa la partida?",
+              "respuesta": "Desde la última posición identificable."
+            },
+            {
+              "pregunta": "¿Cuál es la sanción más severa de la lista del art. 12.9?",
+              "respuesta": "Multa anunciada de antemano, exclusión de una o más rondas o expulsión de la competición."
+            },
+            {
+              "pregunta": "Un jugador toca una pieza con intención de capturarla. Si luego quiere reclamar que el rival incumplió la regla de pieza tocada, ¿puede hacerlo?",
+              "respuesta": "No: al tocar una pieza con esa intención, pierde el derecho a reclamar esa infracción del rival."
             }
           ],
           "tarea": "Redactar el análisis de un caso de reclamo (real o hipotético) indicando la normativa aplicada y la decisión arbitral justificada.",
@@ -569,6 +589,26 @@
             {
               "pregunta": "En rápidas, ¿es obligatorio anotar las jugadas?",
               "respuesta": "No, salvo que el reglamento del evento lo exija; el jugador conserva sus reclamos."
+            },
+            {
+              "pregunta": "En ajedrez relámpago sin supervisión adecuada, ¿quién reclama la caída de una bandera?",
+              "respuesta": "El propio jugador, deteniendo el reloj, siempre que su propio tiempo no se haya agotado."
+            },
+            {
+              "pregunta": "Sin supervisión adecuada, pasadas 10 jugadas de cada bando, ¿se puede reclamar por un tablero mal orientado?",
+              "respuesta": "No, ya no se admite ese reclamo."
+            },
+            {
+              "pregunta": "Si la normativa vigente de los JDE no regula algo, por ejemplo el tiempo de incomparecencia, ¿qué se aplica?",
+              "respuesta": "Las Leyes de la FIDE."
+            },
+            {
+              "pregunta": "El encuentro directo no separa a dos jugadores empatados porque no se enfrentaron entre sí. ¿Qué corresponde?",
+              "respuesta": "Pasar al siguiente desempate de la lista anunciada en el reglamento del torneo."
+            },
+            {
+              "pregunta": "En relámpago, un jugador da mate y un instante después cae su propia bandera. ¿Quién gana?",
+              "respuesta": "Gana quien dio mate: el mate termina la partida en el momento en que se produce."
             }
           ],
           "tarea": "Analizar un caso de inscripción o de categorización de una persona estudiante y determinar el procedimiento correcto según la normativa JDE vigente.",
@@ -762,6 +802,26 @@
             {
               "pregunta": "¿Cuántas partidas tiene un todos contra todos de 8 jugadores?",
               "respuesta": "28 partidas, en 7 rondas."
+            },
+            {
+              "pregunta": "¿Puede la diferencia entre las partidas que un jugador tuvo con blancas y con negras llegar a ser de 3?",
+              "respuesta": "No: no puede superar 2 ni bajar de -2."
+            },
+            {
+              "pregunta": "¿Puede un jugador recibir el mismo color tres veces seguidas en un suizo?",
+              "respuesta": "No, salvo las excepciones que se permiten en la última ronda."
+            },
+            {
+              "pregunta": "Un jugador falta a una ronda sin avisar. ¿Qué se asume?",
+              "respuesta": "Se considera retirado, salvo que explique su ausencia antes de que se publique el siguiente emparejamiento."
+            },
+            {
+              "pregunta": "¿Por qué el desempate habitual en un todos contra todos es el Sonneborn-Berger y no el Buchholz?",
+              "respuesta": "Porque en un todos contra todos cada jugador enfrenta a los mismos rivales que los demás, así que el Buchholz no distingue a nadie."
+            },
+            {
+              "pregunta": "¿Puede el árbitro cambiar un emparejamiento ya publicado para favorecer a un estudiante?",
+              "respuesta": "No, está prohibido alterar el emparejamiento correcto para favorecer a alguien."
             }
           ],
           "tarea": "A partir de los resultados de la ronda 1, elaborar el emparejamiento de la ronda 2 bajo sistema suizo.",
@@ -955,6 +1015,26 @@
             {
               "pregunta": "Si el reglamento no fija tiempo de incomparecencia, ¿cuál es?",
               "respuesta": "Cero."
+            },
+            {
+              "pregunta": "¿Puede un jugador acomodar sus propias piezas mientras el reloj del rival está en marcha?",
+              "respuesta": "No, solo puede hacerlo cuando su propio reloj está en marcha."
+            },
+            {
+              "pregunta": "Con menos de 5 minutos y sin incremento de al menos 30 segundos, ¿está obligado el jugador a seguir anotando?",
+              "respuesta": "No, puede dejar de anotar."
+            },
+            {
+              "pregunta": "En ritmo clásico con árbitro presente, ¿quién declara la caída de una bandera?",
+              "respuesta": "El árbitro, de oficio."
+            },
+            {
+              "pregunta": "Si a mitad de partida se descubre que un reloj estaba mal configurado o tiene un defecto evidente, ¿qué hace el árbitro?",
+              "respuesta": "Lo corrige o lo reemplaza, y fija los tiempos del reloj con su propio criterio."
+            },
+            {
+              "pregunta": "¿Cuándo queda hecha una jugada y cuándo queda completada?",
+              "respuesta": "Hecha al soltar la pieza; completada al presionar el reloj."
             }
           ],
           "tarea": "Completar una ficha con la configuración correcta del reloj (tiempo base e incremento) para tres modalidades, según la normativa JDE.",
@@ -1148,6 +1228,22 @@
             {
               "pregunta": "¿Dónde se atienden las inquietudes del público durante una ronda?",
               "respuesta": "Fuera de la sala de juego: el público no interviene en las partidas."
+            },
+            {
+              "pregunta": "Además del número de rondas, ¿qué más debe anunciarse en las bases de un torneo antes de empezar?",
+              "respuesta": "El sistema de desempates y su orden."
+            },
+            {
+              "pregunta": "¿Dónde y cómo debe el árbitro comunicar una decisión a los jugadores involucrados?",
+              "respuesta": "Hablando con los dos jugadores, en voz baja y lejos de otras mesas."
+            },
+            {
+              "pregunta": "Si un jugador quiere apelar una decisión arbitral, ¿qué debe informarle el árbitro?",
+              "respuesta": "Ante quién se presenta la apelación y en qué plazo, según el reglamento del torneo."
+            },
+            {
+              "pregunta": "¿Qué se arma al cerrar un torneo, después de la última ronda?",
+              "respuesta": "La tabla con los desempates, el acta del torneo, el informe de incidencias y la premiación."
             }
           ],
           "tarea": "Elaborar una propuesta logística breve (inscripción, espacios, materiales, personal de apoyo) para un torneo estudiantil de su región.",
@@ -1319,6 +1415,22 @@
             {
               "pregunta": "¿En qué orden se ofrecen tablas correctamente?",
               "respuesta": "Primero la jugada, después la oferta y por último presionar el reloj."
+            },
+            {
+              "pregunta": "En el simulacro, ¿conoce la persona árbitra de antemano la incidencia que va a arbitrar?",
+              "respuesta": "No."
+            },
+            {
+              "pregunta": "Según la lista de cotejo, ¿qué debe verificar la persona árbitra antes de iniciar la ronda?",
+              "respuesta": "La acreditación y el emparejamiento."
+            },
+            {
+              "pregunta": "¿Qué función cumple la mesa de control en el torneo presencial?",
+              "respuesta": "Inscripción, emparejamientos, resultados y desempates."
+            },
+            {
+              "pregunta": "¿Qué hace un árbitro auxiliar cuando no puede resolver una incidencia?",
+              "respuesta": "Informa al árbitro principal y aplica lo que se acuerde."
             }
           ],
           "tarea": "Confirmar el rol asignado, revisar la lista de cotejo y reunir los materiales solicitados para el día presencial.",
