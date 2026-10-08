@@ -111,6 +111,41 @@ veces, una aceptaría un `.docx` que la otra no sabe enseñar.
   pregunta y el nombre original). Uno que no se pudo bajar **lo dice**.
 - En el CSV se **cuentan** («2 archivos adjuntos»), no se pega la ruta.
 
+### La prueba de nivel inicial de un formulario
+
+Para un curso que no sabe si arranca desde cero: el tipo de pregunta «¿Sabe
+jugar ajedrez? (con prueba)» (`nivel_ajedrez`) y la plantilla «Inscripción a
+un curso (¿sabe jugar?)» de `formularios.html`. Todo vive en
+`js/prueba-nivel-inicial.js`, que usan el armador y `formulario.html`.
+
+- **Primero se pregunta qué sabe**, en cuatro respuestas (nunca jugó / conoce
+  las piezas / sabe mover / juega partidas). Solo a quien dice que sabe mover
+  se le abre la prueba: **siete preguntas de reglas, cada una con su tablero**
+  (la posición inicial, el caballo, el peón, quién captura, el jaque, el
+  enroque y el mate). Opción múltiple: se contesta con el teclado, y los
+  tableros son los de `js/tablero-pregunta.js` en modo «mirar», que se
+  recorren con las flechas.
+- **Se guarda UNA línea de texto**, que empieza por la recomendación:
+  «Empezar desde lo básico», «Sabe mover, pero conviene repasar las reglas»
+  (4 o 5 de 7) o «Puede empezar con base» (6 o 7), con lo que dijo y los temas
+  que falló. Así se lee en la tabla de respuestas y en el CSV sin tocar nada
+  de allá, y `responder_formulario()` la acepta como cualquier texto (no hizo
+  falta migración: la base no restringe los tipos de pregunta).
+- **Se califica en el navegador, a propósito.** Es para acomodar a la persona
+  en el curso, no un examen: quien la falsea solo se manda a un grupo que no
+  es el suyo. Si algún día decide algo que importe, la calificación se muda a
+  la base.
+- **La prueba se contesta entera**: una pregunta en blanco contaría como
+  fallada y mandaría a lo básico a quien solo se la saltó, así que no deja
+  mandar y lleva el foco a la que falta.
+- A quien contesta se le dice cómo le fue **sin las respuestas buenas**: el
+  enlace es el mismo para todos.
+- **Ninguna posición se puso a ojo**: `verificar-prueba-nivel-inicial.js`
+  comprueba con chess.js que la opción buena es la única buena de cada
+  pregunta (el enroque: que no es legal, que no es por jaque ni por piezas en
+  medio, y que sin el alfil que ataca f1 sí lo sería). Rompiéndolo a propósito
+  —marcar otra opción como buena, abrirle una salida al rey del mate— salta.
+
 #### Los formularios de la coordinación (proyecto de la Academia)
 
 Tipos de pregunta «Imagen (foto)» y «Archivo (PDF, Word, Excel o foto)».
