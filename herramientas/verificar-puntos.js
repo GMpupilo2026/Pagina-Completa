@@ -39,7 +39,7 @@ const CATALOGO = [
     parametros: {}, limite_por_alumno: 1, activo: true, orden: 15 },
 ];
 
-function clienteFalso(saldoInicial, misPremiosIniciales) {
+function clienteFalso(saldoInicial, misPremiosIniciales, rachaYaReclamada) {
   return `
 window.__llamadas = [];
 (function () {
@@ -47,7 +47,7 @@ window.__llamadas = [];
   const CATALOGO = ${JSON.stringify(CATALOGO)};
   let SALDO = ${JSON.stringify(saldoInicial)};
   let MIS_PREMIOS = ${JSON.stringify(misPremiosIniciales)};
-  let RACHA_RECLAMADA = false;
+  let RACHA_RECLAMADA = ${JSON.stringify(!!rachaYaReclamada)};
   let siguienteCanje = 1;
 
   function tabla(nombre) {
@@ -129,8 +129,8 @@ async function contexto(navegador, initScript) {
   return ctx;
 }
 
-async function abrir(navegador, saldoInicial, misPremiosIniciales) {
-  const ctx = await contexto(navegador, clienteFalso(saldoInicial, misPremiosIniciales));
+async function abrir(navegador, saldoInicial, misPremiosIniciales, rachaYaReclamada) {
+  const ctx = await contexto(navegador, clienteFalso(saldoInicial, misPremiosIniciales, rachaYaReclamada));
   const page = await ctx.newPage();
   const errores = [];
   page.on("pageerror", (e) => errores.push(String(e)));
@@ -290,8 +290,7 @@ async function main() {
     const texto = await page.evaluate(async () => {
       const div = document.createElement("div");
       document.body.appendChild(div);
-      window.Puntos.montarTarjetaPanel(div, { sb: window.sb, alumnoId: "u-ana" });
-      await new Promise((r) => setTimeout(r, 300));
+      await window.Puntos.montarTarjetaPanel(div, { sb: window.sb, alumnoId: "u-ana" });
       return { total: div.querySelector("[data-puntos-total]").textContent, aviso: div.querySelectorAll("p")[1].textContent };
     });
     ok(texto.total === "💎 125 puntos", `la tarjeta debería mostrar 100 + 25 del bono de racha, salió: ${texto.total}`);
@@ -302,12 +301,27 @@ async function main() {
     const segunda = await page.evaluate(async () => {
       const div = document.createElement("div");
       document.body.appendChild(div);
-      window.Puntos.montarTarjetaPanel(div, { sb: window.sb, alumnoId: "u-ana" });
-      await new Promise((r) => setTimeout(r, 300));
+      await window.Puntos.montarTarjetaPanel(div, { sb: window.sb, alumnoId: "u-ana" });
       return { total: div.querySelector("[data-puntos-total]").textContent, aviso: div.querySelectorAll("p")[1].textContent };
     });
     ok(segunda.total === "💎 125 puntos", `la segunda vez no debería sumar de nuevo, salió: ${segunda.total}`);
     ok(segunda.aviso === "", `la segunda vez no debería repetir el aviso de racha: ${JSON.stringify(segunda.aviso)}`);
+    await ctx.close();
+  }
+
+  // ---------- 5 bis) sin ningún punto todavía (y sin racha nueva), la tarjeta no se pinta ----------
+  // Ver «sin profe no hay botón, y sin nada más "Tus clases" no se pinta» en
+  // herramientas/verificar-panel.js: un alumno recién creado no debe ver una
+  // tarjeta invitando a una tienda vacía.
+  {
+    const { page, ctx } = await abrir(navegador, 0, [], true);
+    const hidden = await page.evaluate(async () => {
+      const div = document.createElement("div");
+      document.body.appendChild(div);
+      await window.Puntos.montarTarjetaPanel(div, { sb: window.sb, alumnoId: "u-ana" });
+      return div.hidden;
+    });
+    ok(hidden === true, "con saldo 0 y sin racha nueva, la tarjeta debería quedar oculta (hidden)");
     await ctx.close();
   }
 

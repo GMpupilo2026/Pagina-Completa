@@ -216,24 +216,22 @@ window.Puntos = (function () {
     });
   }
 
-  /* La tarjeta chiquita del panel: el saldo y un enlace a la tienda. De
-     paso, revisa si hay un hito de racha nuevo que reclamar (silencioso: si
+  /* La tarjeta chiquita del panel: el saldo y un enlace a la tienda. Si
+     todavía no tiene ningún punto, no se pinta (como «Tus puntos del mes»
+     cuando no hubo clases): no tiene sentido invitar a una tienda vacía. De
+     paso revisa si hay un hito de racha nuevo que reclamar (silencioso: si
      no hay nada nuevo, el saldo no cambia y no se avisa nada). */
-  function montarTarjetaPanel(contenedor, opciones) {
+  async function montarTarjetaPanel(contenedor, opciones) {
     const { sb, alumnoId, enlaceTienda } = opciones;
-    contenedor.hidden = false;
     contenedor.replaceChildren();
 
     const h2 = document.createElement("h2");
     h2.id = "puntos-ajedrez-titulo";
     h2.className = "font-serif text-lg font-bold text-brand-800 dark:text-white mb-1";
     conAdorno(h2, "💎", "Puntos Ajedrez");
-    contenedor.appendChild(h2);
-
     const total = document.createElement("p");
     total.className = "text-2xl font-bold text-brand-800 dark:text-white";
     total.setAttribute("data-puntos-total", "");
-    total.textContent = "…";
     const aviso = document.createElement("p");
     aviso.className = "text-xs text-brand-500 dark:text-brand-300 mt-0.5 min-h-[1rem]";
     aviso.setAttribute("aria-live", "polite");
@@ -241,25 +239,28 @@ window.Puntos = (function () {
     enlace.href = enlaceTienda || "puntos-tienda.html";
     enlace.className = "inline-block mt-2 text-xs font-semibold text-accent-700 dark:text-accent-300 hover:underline";
     enlace.textContent = "Ver la tienda de puntos →";
-    contenedor.append(total, aviso, enlace);
+    contenedor.append(h2, total, aviso, enlace);
 
-    (async () => {
-      const antes = await saldo(sb, alumnoId);
-      const bono = await reclamarBonoRacha(sb);
-      const despues = await saldo(sb, alumnoId);
-      const n = despues == null ? antes : despues;
-      if (n == null) {
-        total.textContent = "—";
-        aviso.textContent = "No se pudo cargar tu saldo de puntos.";
-        return;
-      }
-      conAdorno(total, "💎", texto(n));
-      if (bono && bono.puntos_otorgados && antes != null && despues != null && despues > antes) {
-        aviso.textContent = "🔥 Racha de " + bono.nuevo_hito + " días: +" + fmt(bono.puntos_otorgados) + " puntos.";
-      } else {
-        aviso.textContent = "";
-      }
-    })();
+    const antes = await saldo(sb, alumnoId);
+    const bono = await reclamarBonoRacha(sb);
+    const despues = await saldo(sb, alumnoId);
+    const n = despues == null ? antes : despues;
+
+    if (n == null) {
+      contenedor.hidden = false;
+      total.textContent = "—";
+      aviso.textContent = "No se pudo cargar tu saldo de puntos.";
+      return;
+    }
+    if (!n) {
+      contenedor.hidden = true;
+      return;
+    }
+    contenedor.hidden = false;
+    conAdorno(total, "💎", texto(n));
+    aviso.textContent = (bono && bono.puntos_otorgados && antes != null && despues != null && despues > antes)
+      ? "🔥 Racha de " + bono.nuevo_hito + " días: +" + fmt(bono.puntos_otorgados) + " puntos."
+      : "";
   }
 
   function boton(textoBoton, etiqueta, clases) {
