@@ -40,6 +40,9 @@ const VIGILADAS = [
   "certificados",
   // Con quién se comparte cada material de clase (admin.html#materiales).
   "material_compartido",
+  // Puntos Ajedrez: se canjean por acceso (curso_adelanto, material_tienda),
+  // así que ganarlos y gastarlos queda anotado igual que un permiso.
+  "puntos_ajustes", "premios_canjeados",
 ];
 
 let fallos = 0;
