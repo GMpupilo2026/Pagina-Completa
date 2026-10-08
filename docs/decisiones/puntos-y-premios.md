@@ -140,11 +140,22 @@ un accesorio se vea también en el modo proyector.
 
 ## Retos, marcador, regalos y bromas
 
-La segunda parte (`supabase/pendientes/20261008170000_puntos_retos_marcador.sql`
-y `…170100_puntos_regalos_bromas.sql`: al aplicarlas pasan a
-`supabase/migraciones/` con la versión que les ponga la base, no con la de su
-nombre; si no, la huella del punto de restauración no coincide, que es lo que
-pasó con las dos primeras).
+La segunda parte está en `20261008173204_puntos_retos_marcador.sql` y
+`20261008173205_puntos_regalos_bromas.sql`. **El nombre de un archivo de
+migración tiene que ser la versión que quedó en la base**, no otra: si no,
+la huella del punto de restauración no coincide, que es lo que pasó con las
+dos primeras (se llamaban `150000`/`160000` y en la base eran
+`054002`/`055743`).
+
+**Si `apply_migration` vuelve «cancelled».** Estas dos se cancelaron varias
+veces aunque el dueño las había aprobado. Tienen `drop` (de funciones que
+cambian lo que devuelven, de una restricción, del trigger muerto), y la
+herramienta pide una confirmación aparte que en la sesión web nunca le llegó;
+hasta un `insert` con ese texto adentro se colgaba. Se corrieron a mano en el
+editor SQL de Supabase. Como el editor no anota en
+`supabase_migrations.schema_migrations`, después se agregó cada renglón con
+su texto exacto (`statements` = el archivo entero), así su md5 da lo mismo
+que el del archivo. Se comprobó todo en la base antes de seguir.
 
 **Lo pendiente se cobra al abrir, no con un trigger.** Una tarea completada,
 un hito de racha y un reto cumplido no tienen un momento propio en la base:
@@ -244,3 +255,21 @@ impersonando roles contra el proyecto cuando se escribieron—, no una
 impersonación nueva hecha para esta función. **Queda pendiente** hacer esa
 prueba de verdad (dos canjes a la vez desde dos sesiones, un alumno pidiendo
 el saldo de otro) antes de confiar en esto tanto como en lo de trofeos.
+
+**Lo que sí se comprobó impersonando roles (8/10/2026, con la segunda parte
+ya aplicada, solo lecturas o llamadas que fallan antes de escribir):**
+
+- Como alumno: no ve ni un renglón ajeno de `puntos_ajustes`, ni bromas ni
+  preferencias de otros. El marcador solo trae a compañeros (cada fila pasa
+  `es_companero()`), y uno de otra academia no aparece. La lista de
+  `profiles` que ofrece «Regalar…» son todos compañeros de verdad.
+  `es_companero()` da `true` con uno de su mismo profe y academia, y `false`
+  con uno del mismo profe pero de otra academia.
+- `regalar_premio()` a alguien de otra academia: «Solo se le puede regalar a
+  un compañero de clase.». `mandar_broma()` con un globo de texto inventado:
+  «Elige una frase de la lista.».
+- Como profe: el marcador solo trae a sus alumnos. Sin sesión (`anon`):
+  «permission denied» para `marcador_del_salon`.
+
+Sigue pendiente lo que exige escribir: dos canjes a la vez desde dos
+sesiones, y los topes del día de regalos y bromas.
