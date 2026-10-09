@@ -169,7 +169,7 @@ const visible = (p, sel) => p.$eval(sel, (e) => e.checkVisibility());
     await p.waitForSelector("#lista li[data-herramienta='seleccion-codicader'] a[href='seleccion-codicader.html']");
     igual("con licencia: «Abrir la herramienta» en la que tiene, candado en las demás",
         await p.$$eval("#lista > li", (l) => l.map((x) => [x.dataset.herramienta, /🔓/.test(x.textContent)])),
-        [["pareo", false], ["seleccion-codicader", true], ["ajedrez-estudiantil", false], ["desempates", false], ["variacion-elo", false], ["reclamos-tablas", false], ["acta-jde", false]]);
+        [["pareo", false], ["seleccion-codicader", true], ["jdn-comites", false], ["ajedrez-estudiantil", false], ["desempates", false], ["variacion-elo", false], ["reclamos-tablas", false], ["acta-jde", false]]);
     igual("las gratis no se le preguntan a la base (y las demás sí)",
         await p.evaluate(() => [window.__pedidos.includes("tengo_herramienta ajedrez-estudiantil"), window.__pedidos.includes("tengo_herramienta pareo"), window.__pedidos.includes("tengo_herramienta seleccion-codicader")]),
         [false, false, true]);
