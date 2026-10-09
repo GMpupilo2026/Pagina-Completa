@@ -170,6 +170,8 @@ window.ProgresoUsuario = (function () {
     { clave: "batalla_estrellas_v1",             fusion: "maxPorClave" },   // Batalla naval: nivel → estrellas
     { clave: "batalla_mejor_v1",                 fusion: "minPorClave" },   // nivel → menos disparos
     { clave: "batalla_victorias_v1",             fusion: "maxNumero" },     // duelos ganados
+    { clave: "buscaminas_estrellas_v1",          fusion: "maxPorClave" },   // Buscaminas de ajedrez: nivel → estrellas
+    { clave: "buscaminas_mejor_v1",              fusion: "minPorClave" },   // nivel → menos segundos
     { clave: "aperturas_srs_v1",                 fusion: "srsPorLinea" },  // Aperturas y celadas
     { clave: "entreno_temas_repaso_v1",          fusion: "srsPorLinea" },  // Ejercicios por tema: la cola de «Repasar fallados»
     { clave: "entreno_mates_repaso_v1",          fusion: "srsPorLinea" },  // Mates: la misma cola

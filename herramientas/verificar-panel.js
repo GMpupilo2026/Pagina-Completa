@@ -488,7 +488,7 @@ async function pruebaProfesora(browser) {
      (PANEL_DOCENTE en js/clases.js), no el del alumno con cosas encima. Una
      tarjeta que no tenga lugar caería en «Otras»: ese grupo no debe existir. */
   igual("sus grupos, en su orden (sin coordinar, no hay «Coordinación»)", grupos.map((g) => g.titulo),
-    ["Clase en vivo", "Tus alumnos", "Tus clases", "Aprender", "Jugar y competir", "Tu cuenta"]);
+    ["Clase en vivo", "Tus alumnos", "Tus clases", "Aprender", "Jugar y competir", "Herramientas de arbitraje", "Tu cuenta"]);
   const enlacesProfe = grupos.flatMap((g) => g.tiles).map((t) => t.enlace).filter(Boolean);
   igual("cada destino una sola vez", enlacesProfe.filter((h, i) => enlacesProfe.indexOf(h) !== i), []);
   /* Informes es de sus alumnos, no de su cuenta; y el diagnóstico ya no es
@@ -497,9 +497,12 @@ async function pruebaProfesora(browser) {
     grupo(grupos, "Tus alumnos").tiles.map((t) => t.enlace),
     ["alumno-nuevo.html", "tareas.html", "examenes.html", "informes.html", "justificaciones.html", "libreta-torneos.html", "subgrupos.html"]);
   igual("una sola puerta a Informes", enlacesProfe.filter((h) => h.startsWith("informes.html")), ["informes.html"]);
+  /* Las dos pruebas son el diagnóstico de nivel y el examen de arbitraje
+     (nivel-de-arbitraje.html, y su revisión, arbitraje.html). La vitrina de
+     herramientas-arbitraje.html no es una prueba: esa sí le sale. */
   igual("y no se le ofrece ninguna de las dos pruebas",
     await page.evaluate(() => document.querySelectorAll(
-      "#tile-grid [href*='entreno/diagnostico'], #tile-grid [href*='arbitraje']").length), "0");
+      "#tile-grid [href*='entreno/diagnostico'], #tile-grid [href*='nivel-de-arbitraje'], #tile-grid [href='arbitraje.html']").length), "0");
   const apagados = await page.evaluate(() =>
     Array.from(document.querySelectorAll("#tile-grid [aria-disabled=true]"))
       .filter((el) => !el.closest("#videollamada-wrap") && !el.closest("#sesion-wrap") && !el.dataset.claseCompacta)
@@ -530,6 +533,13 @@ async function pruebaProfesora(browser) {
     const t = document.getElementById("closed-status-hint").textContent;
     return [/sola/.test(t), /Iniciar clase/.test(t), /no pueden entrar/.test(t)];
   }), [false, true, true]);
+  /* Quien da clase suele arbitrar los torneos de sus alumnos: Pareo Integral
+     (gratis, sin cuenta) y la vitrina de las herramientas de arbitraje le quedan a mano. Al alumnado no le sale (soloDocente,
+     y el grupo vacío no se pinta: ver «los grupos, en su orden» de la alumna).
+     Ver «Pareo Integral» en docs/decisiones/juegos-y-torneos.md. */
+  igual("«Herramientas de arbitraje»: Pareo Integral y la vitrina",
+    (grupo(grupos, "Herramientas de arbitraje") || { tiles: [] }).tiles.map((t) => t.enlace),
+    ["pareo.html", "herramientas-arbitraje.html"]);
   igual("«Tu cuenta»: configuración, la guía del profesor y logros",
     grupo(grupos, "Tu cuenta").tiles.map((t) => t.enlace),
     ["configuracion.html", "guia-del-profesor-accesible.html", "logros.html"]);
@@ -851,7 +861,7 @@ async function pruebaAdmin(browser) {
   /* Quien administra se encarga de que toda la empresa vaya bien: su panel es
      el suyo, escrito entero en ADMIN_GROUPS, y no el de un profesor recortado. */
   igual("sus grupos, en su orden", grupos.map((g) => g.titulo),
-    ["Administración", "Supervisión y coordinación", "Formularios", "Cobros y accesos", "Resultados de las pruebas", "Torneos", "Revisar el contenido", "Tu cuenta"]);
+    ["Administración", "Supervisión y coordinación", "Formularios", "Cobros y accesos", "Resultados de las pruebas", "Torneos", "Herramientas de arbitraje", "Revisar el contenido", "Tu cuenta"]);
   /* UNA sola puerta para cada cosa: acá están TODAS las páginas de quien
      administra, y admin.html solo tiene lo que se maneja adentro (lo urgente,
      las cuentas, supervisores y profesores). Antes admin.html traía una
@@ -2880,7 +2890,7 @@ async function pruebaPlegables(browser) {
   igual("a la profesora se le pliegan sus grupos en el celular, menos la clase en vivo y «Tu cuenta»",
     await page.evaluate(() => Array.from(document.querySelectorAll("#tile-grid > section")).map((s) =>
       [s.querySelector("h2").textContent, !!s.querySelector("h2 button[aria-expanded=false]")])),
-    [["Clase en vivo", false], ["Tus alumnos", true], ["Tus clases", true], ["Aprender", true], ["Jugar y competir", true], ["Tu cuenta", false]]);
+    [["Clase en vivo", false], ["Tus alumnos", true], ["Tus clases", true], ["Aprender", true], ["Jugar y competir", true], ["Herramientas de arbitraje", true], ["Tu cuenta", false]]);
   await ctx.close();
 
   /* En la computadora, lo de dar clase abierto y lo que no es para dar clase
@@ -2890,7 +2900,7 @@ async function pruebaPlegables(browser) {
   const cerrados = () => page.evaluate(() => Array.from(document.querySelectorAll("#tile-grid > section")).map((s) =>
       [s.querySelector("h2").textContent, !!s.querySelector("h2 button[aria-expanded=false]"), s.querySelector(".grid").checkVisibility()]));
   igual("en la computadora, a la profesora solo se le cierran «Aprender» y «Jugar y competir»", await cerrados(),
-    [["Clase en vivo", false, true], ["Tus alumnos", false, true], ["Tus clases", false, true], ["Aprender", true, false], ["Jugar y competir", true, false], ["Tu cuenta", false, true]]);
+    [["Clase en vivo", false, true], ["Tus alumnos", false, true], ["Tus clases", false, true], ["Aprender", true, false], ["Jugar y competir", true, false], ["Herramientas de arbitraje", false, true], ["Tu cuenta", false, true]]);
   await page.click('#tile-grid h2 button:has-text("Aprender")');
   await page.reload({ waitUntil: "networkidle" });
   await page.waitForSelector("#app:not(.hidden)");

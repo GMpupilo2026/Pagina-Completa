@@ -1,7 +1,8 @@
 /* El código de herramientas-arbitraje.html: la vitrina pública de las
    herramientas de arbitraje.
 
-   Sin sesión, todas salen con el candado cerrado y su descripción. Con
+   Sin sesión, todas salen con el candado cerrado y su descripción, menos las
+   gratis (`gratis: true`, Pareo Integral), que salen abiertas para todos. Con
    sesión, se pregunta a la base cuáles abre la cuenta (tengo_herramienta(),
    que a quien administra le dice que sí a todas) y se puede activar un código
    (canjear_licencia()). El candado de verdad está en la base y en la Edge
@@ -25,7 +26,7 @@
         const ul = $("lista");
         ul.textContent = "";
         H.LISTA.forEach((h) => {
-            const abierta = h.gratis || abiertas.has(h.id);
+            const abierta = abiertas.has(h.id) || !!h.gratis;
             const li = el("li", "rounded-2xl bg-white dark:bg-brand-900 shadow-md p-6");
             li.dataset.herramienta = h.id;
             const fila = el("div", "flex flex-wrap items-start justify-between gap-3");
@@ -37,7 +38,7 @@
                 ? "bg-green-100 text-green-900 dark:bg-green-900 dark:text-green-100"
                 : h.disponible ? "bg-brand-100 text-brand-800 dark:bg-brand-800 dark:text-brand-100"
                     : "bg-accent-100 text-brand-900"));
-            estado.textContent = h.gratis ? "Gratis, abierta a todos" : abierta ? "🔓 Abierta para tu cuenta" : h.disponible ? "🔒 Con licencia" : "🔒 Próximamente";
+            estado.textContent = h.gratis ? "🆓 Gratis, sin cuenta" : abierta ? "🔓 Abierta para tu cuenta" : h.disponible ? "🔒 Con licencia" : "🔒 Próximamente";
             fila.append(titulo, estado);
             li.appendChild(fila);
             li.appendChild(el("p", "mt-2 text-brand-600 dark:text-brand-300", h.resumen));
@@ -51,6 +52,11 @@
                 const a = el("a", "bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg text-sm transition-colors", "Abrir la herramienta");
                 a.href = h.href;
                 acciones.appendChild(a);
+                if (h.manual) {
+                    const m = el("a", "font-semibold px-5 py-2.5 rounded-lg text-sm bg-brand-100 dark:bg-brand-800 hover:bg-brand-200 dark:hover:bg-brand-700", "Manual de uso");
+                    m.href = h.manual;
+                    acciones.appendChild(m);
+                }
             } else if (h.disponible) {
                 const a = el("a", "bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg text-sm transition-colors", "Pedir una licencia");
                 a.href = "https://wa.me/50683092291?text=" + encodeURIComponent("Hola, quiero una licencia de «" + h.nombre + "» (herramientas de arbitraje).");
@@ -86,7 +92,7 @@
 
     async function revisarAbiertas() {
         abiertas.clear();
-        // Las gratis no se le preguntan a la base: están abiertas para todos.
+        // Las gratis no se le preguntan a la base: no tienen licencia.
         const conLicencia = H.LISTA.filter((h) => !h.gratis);
         const respuestas = await Promise.all(conLicencia.map((h) => sb.rpc("tengo_herramienta", { p_herramienta: h.id })));
         respuestas.forEach((r, i) => { if (r.data === true) abiertas.add(conLicencia[i].id); });
