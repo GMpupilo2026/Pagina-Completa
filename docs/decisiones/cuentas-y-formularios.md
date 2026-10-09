@@ -884,6 +884,48 @@ y con `verify_jwt` en true como antes. Si alguna vuelve a quedar atrás, el
 servidor viejo ignora la contraseña: con correo de la casa manda el enlace
 como siempre, y sin él contesta que falta, sin crear nada.
 
+### Crear una cuenta con usuario y contraseña, y con fecha de cierre
+
+El dueño pidió poder crear desde «Crear cuenta nueva» de `admin.html` una
+cuenta **sin mandar ningún correo**: la crea con usuario y contraseña, se la da
+él a la persona, y ahí mismo le pone **cuánto tiempo vale**. El formulario
+trae «Cómo entra» (con su correo / usuario y contraseña que le doy yo) y
+«Válida por» (sin fecha, 1 semana, 1, 3 o 6 meses, 1 año o hasta una fecha).
+
+- **Va por la acción `create` de `admin-manage-users`**, con `usuario`,
+  `contrasena`, `valida_hasta` y `detalle`. No es una puerta nueva: con la
+  contraseña hace lo mismo que `create-student` con «No tiene correo propio» y
+  la contraseña puesta (`usuarioLibre()` desempata, `crearConContrasena()` la
+  deja confirmada, **no es provisional**: se la dio en la mano) y no sale
+  correo. Sin cupo de invitaciones: quien administra no tiene tope.
+- **Solo para estudiantes**, y lo decide el servidor: el usuario es del
+  dominio sin buzón (todo lo que se le escribe va a la casa) y el corte de una
+  cuenta temporal no alcanza a quien da clase. A un profesor la pantalla ni lo
+  ofrece. Con usuario y contraseña **no se manda correo**: si viniera uno, la
+  contraseña sería de esa persona y le llega provisional por la invitación.
+- **El usuario se puede escribir o dejar vacío** (sale del nombre con
+  `UsuarioAlumno.base()`, la misma regla del servidor, que ahora es la única
+  copia del navegador: antes vivía también dentro de `alta-alumno.js`). **Lo
+  que se enseña al final es el usuario que devolvió el servidor**, sin el
+  dominio, con la contraseña y un botón para copiar los dos.
+- **La fecha es el último día que entra** («AAAA-MM-DD» de Costa Rica), y el
+  servidor la convierte en el cierre: la medianoche de Costa Rica del día
+  siguiente, como ya se guardaban las cuentas temporales. La pantalla lo dice
+  antes de crear: «Podrá entrar hasta el sábado 9 de enero de 2027 inclusive».
+  Un mes es el mismo día del mes que viene, o el último si ese mes es más
+  corto. Pide «Para qué es», que es el `detalle` que la persona lee al cerrarse.
+- **La fecha se pone en la misma llamada**, con `cuentas_temporales_fijar` y la
+  sesión de quien llama (que la anota como suya y la bitácora la registra).
+  Partido en dos pedidos del navegador, una cuenta que debía cerrarse podía
+  quedar abierta para siempre. Si fijarla falla y no salió correo, la cuenta se
+  borra y se dice; si ya salió la invitación, queda y la pantalla lo dice en
+  rojo (`temporal_error`).
+
+Lo revisa `verificar-admin.js` («Crear cuenta con usuario y contraseña»). La
+función hay que desplegarla armada con `node herramientas/funciones-armar.js`:
+si queda la vieja, ignora la contraseña y pide el correo («email es
+requerido»), sin crear nada.
+
 ### Las dos puertas de alta
 
 `formularios.html` (el diálogo "Crear cuenta") trae la casilla **"No tiene

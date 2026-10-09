@@ -178,7 +178,7 @@ function cqAviso(texto) {
 /* Trae los propios y los listos: la RLS de `cuestionarios` deja ver los del
    profe y los listos de la Academia (a quien da clase o administra), nada más. */
 async function cargarCuestionarios() {
-    const { data, error } = await sb.from("cuestionarios").select("id, titulo, nivel, listo, preguntas, updated_at")
+    const { data, error } = await sb.from("cuestionarios").select("id, titulo, nivel, listo, material, preguntas, updated_at")
         .order("updated_at", { ascending: false }).range(0, 299);
     if (error) { console.error(error); cqAviso("No se pudieron traer los cuestionarios: " + error.message); return; }
     cuestionarios = data || [];
@@ -187,6 +187,14 @@ async function cargarCuestionarios() {
 }
 
 const cqMios = () => cuestionarios.filter((c) => !c.listo);
+/* Los listos de un material de clase no tienen nivel (los del taller de
+   asesores, por ejemplo): van en su propio grupo, con el nombre de acá. Sin
+   esto no salían en ningún grupo, ni en la clase ni en Cuestionarios. La RLS
+   ya decide quién los ve (puede_bajar: administración, quien lo compró y a
+   quien se lo compartieron). */
+const CQ_MATERIALES = [{ material: "formacion-ajedrez", nombre: "Asesores", emoji: "⚖️" }];
+const cqDelMaterial = (material) => cuestionarios.filter((c) => c.listo && c.material === material)
+    .sort((a, b) => String(a.titulo).localeCompare(String(b.titulo), "es", { numeric: true }));
 // Los listos, ordenados por nivel y por título.
 const cqListos = (nivel) => cuestionarios.filter((c) => c.listo && (!nivel || c.nivel === nivel))
     .sort((a, b) => Cuestionario.NIVELES.findIndex((n) => n.id === a.nivel) - Cuestionario.NIVELES.findIndex((n) => n.id === b.nivel)

@@ -1518,6 +1518,7 @@ funcion  anular_certificado(p_codigo text)  definer  anon=false  auth=true
 funcion  anular_recibo(p_recibo uuid, p_anular boolean, p_motivo text)  definer  anon=false  auth=true
 funcion  arbitraje_consulta_config_guardar(p_modelo text, p_tope numeric)  definer  anon=false  auth=true
 funcion  arbitraje_consulta_frenar(p_ip text, p_correo text)  definer  anon=false  auth=false
+funcion  asesores_tablero(p_detalle text)  invoker  anon=false  auth=true
 funcion  asignar_grupo_proyecto(p_grupo uuid, p_profesor uuid)  definer  anon=false  auth=true
 funcion  avance_del_plan(p_alumno uuid, p_desde timestamp with time zone)  invoker  anon=false  auth=true
 funcion  avisar_clase_abierta()  definer  anon=false  auth=false

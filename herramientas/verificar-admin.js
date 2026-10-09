@@ -244,6 +244,17 @@ window.__consultas = [];
         }
         return Promise.resolve({ data: null, error: null });
       }
+      /* El grupo de un taller (admin.html#asesores): lo arma la base por
+         taller. Uno ya entró y contestó la sesión 1 tres veces; el otro nunca
+         entró, y su nombre trae HTML que tiene que ir literal. */
+      if (n === "asesores_tablero") {
+        window.__tablero = (window.__tablero || []).concat([args]);
+        return Promise.resolve({ data: args.p_detalle !== "Taller Formación Ajedrez del MEP" ? [] : [
+          { persona_id: "u-ase1", nombre: "Ana Asesora · Heredia", clases: 2, ultima_vez: "2026-10-09T17:24:00Z",
+            cuestionarios: { "cq-fa1": { aciertos: 13, total: 22, veces: 3 } } },
+          { persona_id: "u-ase2", nombre: '<img src=x onerror="window.__xss=1">Beto', clases: 0, ultima_vez: null, cuestionarios: {} },
+        ], error: null });
+      }
       if (n === "activar_preparacion_rivales") {
         window.__activaciones = (window.__activaciones || []).concat([args]);
         return Promise.resolve({ data: !!(args && args.p_activa), error: null });
@@ -278,7 +289,13 @@ async function abrir(browser, ruta, usuario, extra, datos) {
      "reemplazar" donde debía decir "agregar"). */
   await ctx.route("**/functions/v1/admin-manage-users", async (ruta2) => {
     const cuerpo = JSON.parse(ruta2.request().postData() || "{}");
-    await ruta2.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, asignados: (cuerpo.target_ids || []).length }) });
+    /* «Crear» con usuario y contraseña contesta lo que contesta el servidor:
+       el usuario ya desempatado (con un 2, para ver que se enseña ESE y no el
+       propuesto). */
+    const respuesta = cuerpo.action === "create" && cuerpo.contrasena
+      ? { ok: true, con_contrasena: true, correo_enviado: null, usuario: (cuerpo.usuario || "x") + "2@alumno.ajedrez-integral.com", email: (cuerpo.usuario || "x") + "2@alumno.ajedrez-integral.com", vence: cuerpo.valida_hasta ? "2099-01-01T06:00:00Z" : null }
+      : { ok: true, asignados: (cuerpo.target_ids || []).length };
+    await ruta2.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(respuesta) });
     llamadasDeAdmin.push(cuerpo);
   });
   await ctx.route("**/cdn.jsdelivr.net/**", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: "" }));
@@ -786,6 +803,17 @@ async function pruebaAsesores(browser) {
     return a && [a.getAttribute("href"), a.textContent];
   }), ["tareas.html?material=cuestionario&recorte=cq-fa1&temporales=" + encodeURIComponent("Taller Formación Ajedrez del MEP"),
        "📨 Mandarlo como tarea a las 2 personas del taller"]);
+  // El grupo: lo arma la base (asesores_tablero) para el taller abierto.
+  igual("el grupo se pide a la base, para el taller abierto", await page.evaluate(() => window.__tablero),
+    [{ p_detalle: "Taller Formación Ajedrez del MEP" }]);
+  igual("el resumen del grupo dice cuántos entraron y cuántos nunca", await page.textContent("#ase-grupo p"),
+    "1 de 2 personas ya entraron a la plataforma; 1 nunca ha entrado. La nota es la de la primera vez que contestó el cuestionario de cada sesión.");
+  igual("una fila por asesor, con su nombre literal, su última vez, sus clases y su nota", await page.evaluate(() =>
+    Array.from(document.querySelectorAll("#ase-grupo tbody tr")).map((tr) => Array.from(tr.children).slice(0, 5).map((c) => c.textContent.replace(/\s+/g, " ").trim()))),
+    [["Ana Asesora · Heredia", "9 oct, 11:24 a. m.", "2", "13/223 veces", "—No lo contestó"],
+     ['<img src=x onerror="window.__xss=1">Beto', "Nunca entró", "0", "—No lo contestó", "—No lo contestó"]]);
+  igual("una columna por sesión", await page.evaluate(() => document.querySelectorAll("#ase-grupo thead th").length), 3 + 8);
+  igual("el nombre ajeno no se ejecuta", await page.evaluate(() => !window.__xss), true);
   igual("sin cuestionario no hay nada que mandar", await page.evaluate(() =>
     !document.querySelector("#ase-lista article:nth-child(2) a[href^='tareas.html']")), true);
   igual("el de la sesión 2 dice que falta", await page.evaluate(() =>
@@ -1216,6 +1244,81 @@ async function pruebaFichasDeGrupo(browser) {
   igual("y con el profesor elegido", lote.teacher_id, PROFE.id);
   igual("solo alumnos: a un profesor no se le asigna profesor",
     lote.target_ids.every((id) => id.startsWith("u-") && id !== "u-profe" && id !== "u-admin"), "true");
+
+  igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
+  await ctx.close();
+}
+
+/* ====================== admin.html · crear con usuario y contraseña ======================
+   Quien administra crea la cuenta y se la da a la persona: sin correo. Lo que
+   se rompe callado: que se mande el correo vacío (el servidor invitaría), que
+   la fecha de cierre salga corrida un día, o que el aviso enseñe el usuario
+   propuesto y no el que devolvió el servidor. */
+async function pruebaCrearConUsuario(browser) {
+  console.log("\n=== Crear cuenta con usuario y contraseña ===");
+  const { page, ctx, errores } = await abrir(browser, "/admin.html", ADMIN);
+  await page.goto(BASE + "/admin.html", { waitUntil: "networkidle" });
+  await page.waitForSelector("#app:not(.hidden)", { timeout: 20000 });
+  await irA(page, "crear");
+  const ve = (id) => page.evaluate((i) => document.getElementById(i).checkVisibility(), id);
+
+  igual("de entrada se invita por correo: el correo se ve y el usuario no",
+    [await ve("create-email"), await ve("create-usuario"), await ve("create-clave")], [true, false, false]);
+  await page.selectOption("#create-role", "profesor");
+  igual("a un profesor no se le ofrece usuario ni fecha de cierre",
+    [await ve("create-modo"), await ve("create-validez")], [false, false]);
+  await page.selectOption("#create-role", "alumno");
+
+  await page.selectOption("#create-modo", "usuario");
+  igual("con «Usuario y contraseña» el correo se va y salen usuario y contraseña",
+    [await ve("create-email"), await ve("create-usuario"), await ve("create-clave")], [false, true, true]);
+  await page.fill("#create-name", "Sofía Muñoz Pérez");
+  igual("propone el usuario con la regla del servidor",
+    await page.getAttribute("#create-usuario", "placeholder"), "sofia.munoz");
+  igual("el botón dice lo que hace", (await page.textContent("#create-btn")).trim(), "Crear la cuenta");
+  await page.click("#create-clave-proponer");
+  const clave = await page.inputValue("#create-clave");
+  igual("«Proponer una fácil» deja una de 8 o más", clave.length >= 8, true);
+  await page.fill("#create-usuario", "sofi.m");
+
+  await page.selectOption("#create-validez", "fecha");
+  igual("«Hasta una fecha» pide el día y para qué es",
+    [await ve("create-hasta"), await ve("create-detalle")], [true, true]);
+  await page.fill("#create-hasta", "2099-12-20");
+  await page.dispatchEvent("#create-hasta", "change");
+  igual("el resumen dice hasta qué día entra y desde cuándo no",
+    /20 de diciembre de 2099 inclusive\. Desde el 21 de diciembre/.test(await page.textContent("#create-validez-resumen")), true);
+  await page.fill("#create-detalle", "Taller de verano");
+
+  llamadasDeAdmin.length = 0;
+  await page.click("#create-btn");
+  const llamada = await esperarLlamada("create");
+  igual("manda usuario, contraseña, último día y para qué es, sin correo",
+    [llamada.usuario, llamada.contrasena === clave, llamada.valida_hasta, llamada.detalle, "email" in llamada],
+    ["sofi.m", true, "2099-12-20", "Taller de verano", false]);
+  await page.waitForFunction(() => /Usuario:/.test(document.getElementById("create-msg").textContent), { timeout: 5000 });
+  const aviso = await page.textContent("#create-msg");
+  igual("el aviso enseña el usuario que devolvió el servidor, sin dominio, y la contraseña",
+    [/Usuario: sofi\.m2(?!@)/.test(aviso), aviso.includes("Contraseña: " + clave), /No salió ningún correo/.test(aviso)], [true, true, true]);
+  igual("y dice hasta cuándo entra", /último día que entra es el 20 de diciembre de 2099/.test(aviso), true);
+  igual("el formulario queda limpio para la siguiente",
+    [await page.inputValue("#create-clave"), await page.inputValue("#create-name"), await ve("create-detalle")], ["", "", false]);
+
+  // Con 1 mes, el último día es el mismo día del mes que viene (o el último de ese mes).
+  await page.selectOption("#create-validez", "m1");
+  const esperado = await page.evaluate(() => {
+    const [y, m, d] = HoraCR.hoy().split("-").map(Number);
+    const fin = new Date(Date.UTC(y, m + 1, 0)).getUTCDate();
+    return new Date(Date.UTC(y, m, Math.min(d, fin))).toISOString().slice(0, 10);
+  });
+  await page.selectOption("#create-modo", "correo");
+  await page.fill("#create-email", "nueva@x.cr");
+  await page.fill("#create-detalle", "Curso de un mes");
+  llamadasDeAdmin.length = 0;
+  await page.click("#create-btn");
+  const conCorreo = await esperarLlamada("create");
+  igual("por correo también lleva la fecha, y no lleva contraseña",
+    [conCorreo.email, conCorreo.valida_hasta, "contrasena" in conCorreo], ["nueva@x.cr", esperado, false]);
 
   igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
   await ctx.close();
@@ -1920,6 +2023,7 @@ async function pruebaVolcarEnUnEquipo(browser) {
     await pruebaFichaDePersona(browser);
     await pruebaBuscador(browser);
     await pruebaUsuarioYContrasena(browser);
+    await pruebaCrearConUsuario(browser);
     await pruebaInscripciones(browser);
     await pruebaInscripcionesDenegado(browser);
     await pruebaPdfSoloAdmin(browser);
