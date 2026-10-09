@@ -71,6 +71,9 @@ const FUNCIONES = {
   // El Elo FIDE y Nacional de cada mes (verify_jwt en false: la tanda la
   // dispara pg_cron). Su leer-elo.ts es suyo. Ver su cabecera.
   "elo-fide": [],
+  // El robo de puntos al perder una partida ganada (verify_jwt en false: la
+  // dispara el trigger de game_rooms). Su calculo.ts es suyo. Ver su cabecera.
+  "partida-fin": [],
 };
 
 function armar(nombre) {
