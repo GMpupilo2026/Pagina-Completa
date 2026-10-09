@@ -59,6 +59,11 @@ const FUNCIONES = {
   // La calculadora de la selección CODICADER: lee un torneo entero de
   // chess-results, solo con licencia. Ver su cabecera.
   "seleccion-chess-results": [],
+  // Desempates explicados: lee un torneo individual entero de chess-results
+  // (clasificación y partidas ronda a ronda), solo con licencia. El cálculo
+  // de los desempates lo hace el navegador (js/pareo/desempates.js). Ver su
+  // cabecera.
+  "desempates-chess-results": [],
   "explorador-maestros": [],
   // La quiniela de la sala de cine. Ver su cabecera.
   "quiniela": [],
@@ -71,6 +76,9 @@ const FUNCIONES = {
   // El Elo FIDE y Nacional de cada mes (verify_jwt en false: la tanda la
   // dispara pg_cron). Su leer-elo.ts es suyo. Ver su cabecera.
   "elo-fide": [],
+  // El robo de puntos al perder una partida ganada (verify_jwt en false: la
+  // dispara el trigger de game_rooms). Su calculo.ts es suyo. Ver su cabecera.
+  "partida-fin": [],
 };
 
 function armar(nombre) {

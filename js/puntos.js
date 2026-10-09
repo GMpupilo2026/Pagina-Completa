@@ -56,7 +56,8 @@ window.Puntos = (function () {
   const ORIGEN_TEXTO = {
     clase: "Clase en vivo", entrenamiento: "Entrenamiento", tarea: "Tarea completada",
     examen: "Examen entregado", racha: "Racha de días", reto_semanal: "Reto de la semana", canje: "Canjeado",
-    regalo: "Regalo para un compañero", broma: "Broma para un compañero", ajuste_manual: "Ajuste",
+    regalo: "Regalo para un compañero", broma: "Broma para un compañero", partida: "Partida entre alumnos",
+    ajuste_manual: "Ajuste",
   };
 
   async function saldo(sb, alumnoId) {

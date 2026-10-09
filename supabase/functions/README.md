@@ -87,6 +87,17 @@ pide `/masters`, solo con posiciones que tienen forma de FEN, y solo para quien
 puede preparar rivales. Lo que contesta se guarda en
 `explorador_maestros_cache`, que solo ve el service role.
 
+## `partida-fin` va con `verify_jwt` en **false**
+
+La dispara `public.disparar_fin_de_partida()` (el trigger de `game_rooms`,
+con pg_net) cuando una partida de ajedrez estándar entre dos alumnos termina
+con un ganador, sin sesión de persona. A cambio exige el secreto
+`partida_robo_secreto` de la bóveda y solo recibe el `room_id`: vuelve a leer
+la sala, reproduce las jugadas con chess.js y decide sola si hubo robo. Con
+`verify_jwt` en true el disparador recibe un 401 y nadie pierde ni gana
+puntos por esto, sin que nada falle a la vista. Ver «El robo de puntos» en
+`docs/decisiones/puntos-y-premios.md`.
+
 ## Los secretos
 
 No están aquí ni pueden estarlo: viven en los secretos del proyecto de

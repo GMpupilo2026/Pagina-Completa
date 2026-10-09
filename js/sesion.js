@@ -6056,7 +6056,7 @@
             if (!lista) return;
             if (!currentOpenSessionId) { lista.innerHTML = ""; return; }
             const { data, error } = await sb.from("game_rooms")
-                .select("id, white_id, black_id, status, result, moves")
+                .select("id, white_id, black_id, status, result, moves, fen")
                 .eq("class_session_id", currentOpenSessionId).order("created_at");
             if (error) { console.error(error); return; }
             const { data: nombres } = await sb.rpc("nombres_de_jugadores", {

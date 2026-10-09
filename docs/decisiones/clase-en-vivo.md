@@ -509,7 +509,11 @@ impersonando roles.
     si no llega a la FEN guardada, a propósito no declara nada.
   - La lista de la pestaña dice cómo va cada una y trae «Mirar» (se abre en
     otra pestaña, y el enlace lo dice). Se refresca por Realtime con el filtro
-    `created_by`.
+    `created_by`. Mientras está en juego, no se queda en «N jugadas»: dice
+    quién va arriba y por cuánto (`PartidasClase.ventajaDeMaterial`, contado
+    de la FEN que ya trae la fila — sin motor, solo piezas, así nunca se
+    queda sin decir nada mientras no haya Stockfish corriendo ahí). El color
+    nunca va solo: el nombre y el número se escriben siempre.
 - **El resumen del cierre las cuenta**: `resumen_de_la_clase` suma partidas
   (cada una para los dos, desde su lado) y la columna «Partidas con
   compañeros» sale solo si hubo. El profe que jugó con un alumno no aparece
