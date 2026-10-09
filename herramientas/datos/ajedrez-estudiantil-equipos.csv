@@ -1,0 +1,1315 @@
+clave,puesto,equipo,puntos
+49302,1,Liceo de Alfaro Ruiz,
+49302,2,CTP Parrita,
+49302,3,Liceo Rural COOPESILENCIO,
+49303,1,CTP Parrita,
+49303,2,CTP Piedades Sur,
+49303,3,Liceo Rural COOPESILENCIO,
+54200,1,Saint Beneditt,8
+54200,2,GOLDEN VALLEY,0
+54203,1,Liceo Finca Naranjo,7
+54203,2,GOLDEN VALLEY,1
+54204,1,Liceo Alfaro Ruiz,16
+54204,2,Liceo Fernando Volio,12.5
+54204,3,Liceo Turrialba,10
+54204,4,Liceo Pacto del Jocote,9.5
+54204,5,Humboldt,9
+54204,6,GOLDEN VALLEY,3
+54207,1,Liceo Fernando Volio,7
+54207,2,Liceo Experimental Turrialba,1
+54208,1,Colegio Humboldt,19.5
+54208,2,CTP Fernando Volio,16
+54208,3,CTP de Parrita,10.5
+54208,4,CTP Corredores,8.5
+54208,5,CTP Nandayure,5.5
+54208,6,GOLDEN VALLEY,0
+59301,1,Escuela Pacto del Jocote,6.5
+59301,2,Escuela Las Lagunas,5.5
+59301,3,Escuela José Cubero,0
+59302,1,Escuela Las Lagunas,8
+59302,2,Escuela José Cubero,3
+59302,3,Escuela Mariano Cortez,1
+59303,1,Escuela Pacto del Jocote,8
+59303,2,Nuestra Señora de Sión,8
+59303,3,Escuela Las Lagunas,7
+59303,4,Escuela Líder Bribrí,1
+59304,1,Escuela Pacto del Jocote,15
+59304,2,Escuela José Cubero,13.5
+59304,3,Escuela Las Lagunas,10
+59304,4,Escuela Luis Shapiro,8.5
+59304,5,Escuela Líder Bribrí,7
+59304,6,Escuela Manuel de Jesús Jiménez,6
+85725,1,Escuela Las Lagunas,19
+85725,2,Escuela Pacto del Jocote,17
+85725,3,Escuela Ermida Blanco,8.5
+85725,4,Escuela Dr. Luis Shapiro,8
+85725,5,Escuela Manuel Jesús Jiménez,4
+85725,6,Escuela José Cubero,3.5
+85728,1,Escuela Pacto del Jocote,19
+85728,2,Escuela Las Lagunas,16
+85728,3,Escuela José Cubero,8.5
+85728,4,Escuela Dr. Luis Shapiro,8
+85728,5,Escuela Ermida Blanco,7.5
+85728,6,Rafael Fuentes Piedra,1
+85741,1,Escuela Pacto del Jocote,14
+85741,2,Escuela Ermida Blanco,9.5
+85741,3,Escuela Las Lagunas,9
+85741,4,Ricardo Jiménez Oreamuno,7.5
+85741,5,Escuela Chase,0
+85742,1,Escuela Eugenio Corrales,12.5
+85742,2,Escuela Ermida Blanco,12
+85742,3,Escuela Las Lagunas,11.5
+85742,4,Escuela Pacto del Jocote,11
+85742,5,Saint Jude,8.5
+85742,6,Escuela Dr. Luis Shapiro,4.5
+103971,1,Colegio Claretiano,
+103971,2,CTP Orosi,
+103971,3,Liceo Pacto del Jocote,
+103971,4,CTP La Suiza,
+103971,5,Colegio Academico Finca Naranjo,
+103971,6,LEB Los Angeles San Carlos,
+103972,1,Colegio Humboldt,22
+103972,2,CTP San Isidro,21
+103972,3,Liceo Alfaro Ruiz,19
+103972,4,CTP La Suiza,16
+103972,5,CTP Orosi,14.5
+103972,6,LEB Rio Jimenez,10.5
+103972,7,Liceo Rural Islas del Chirripo,6.5
+103972,8,Colegio Jose M Gutierrez,2.5
+103973,1,Liceo Fernando Volio Jimenez PZ,
+103973,2,Liceo San Jose de Alajuela,
+103974,1,Liceo Fernando Volio Jimenez PZ,
+103974,2,Liceo Teodoro Picado,
+103974,3,Liceo Julio Acosta Garcia,
+138197,1,Las Lagunas,18
+138197,2,Mariano Cortés Turrialba,12
+138197,3,Ermida Blanco,10
+138197,4,Lepanto,8.5
+138197,5,Dr. Luis Shapiro Guápiles,7
+138197,6,Carolina Dent,3.5
+138202,1,Las Lagunas,17
+138202,2,Saint Jude,14
+138202,3,Lepanto,9
+138202,4,Dr. Luis Shapiro,8
+138202,5,Mariano Cortes C,8
+138202,6,Jorge Washington,4
+138205,1,Pacto del Jocote,18
+138205,2,Las Lagunas,16
+138205,3,Pbro Jose Daniel Carmona Briceno,11.5
+138205,4,Cecilio Lindo Morales,7.5
+138205,5,Dr. Luis Shapiro,4
+138205,6,Santa Marta,2
+138208,1,Eugenio Corrales Bianchini,15
+138208,2,Las Lagunas,9.5
+138208,3,Pacto del Jocote,7.5
+138208,4,Lepanto,7
+138208,5,Dr. Luis Shapiro,1
+175119,1,Liceo Paraiso,
+175120,1,CTP La Suiza,
+175120,2,Liceo Paraiso,
+175120,3,Liceo Aserri,
+175121,1,LEB Jose Figueres,
+176158,1,Las Lagunas A,17.5
+176158,2,Santa Martha,12.5
+176158,3,Pacto del Jocote,11
+176158,4,Lepanto,8
+176158,5,Cecilio,6.5
+176158,6,Luis Shapiro,4.5
+176159,1,Pacto del Jocote,23
+176159,2,Las Lagunas 1,19
+176159,3,Carmona,15
+176159,4,Las Lagunas 2,13
+176159,5,Mariano Cortes,9.5
+176159,6,Luis Shapiro,3
+176159,7,Santa Matha,1.5
+176161,1,Pacto del Jocote,17
+176161,2,New Hope,15
+176161,3,Las Lagunas A,10
+176161,4,Mariano Cortes,9
+176161,5,Lepanto,6
+176161,6,Jesus Jimenez,3
+176162,1,Pacto del Jocote,20
+176162,2,Eugenio Corrales,17
+176162,3,Las Lagunas 2,17
+176162,4,Las Lagunas 1,10.5
+176162,5,Luis Shapiro,9.5
+176162,6,Saint Jude,5
+176162,7,Lepanto,4
+178064,1,Liceo Fernando Volio Jiménez,23
+178064,2,Liceo Teodoro Picado,20
+178064,3,Liceo Paraíso,16.5
+178064,4,Colegio Academico Lepanto,16
+178064,5,Redentorista,13.5
+178064,6,Colegio Bilingüe de Palmares,13
+178064,7,CTP Puerto Viejo Sarapiquí,6
+178064,8,Liceo de Duacarí,4
+178065,1,Pacto del Jocote,14
+178065,2,Liceo Fernando Volio Jiménez,12
+178065,3,Clodomiro Picado,6.5
+178065,4,Colegio Bilingüe de Palmares,4.5
+178065,5,Colegio San José de la Montaña,3
+178066,1,Pacto del Jocote,22.5
+178066,2,Colegio Claretiano,22
+178066,3,Liceo Rural El Concho,18
+178066,4,Liceo UNESCO,16
+178066,5,Colegio José María Gutiérrez,13
+178066,6,LEB Río Jiménez,9
+178066,7,CTP La Suiza,9
+178066,8,Colegio Bilingüe de Palmares,2.5
+178072,1,Liceo Fernando Volio Jiménez,19
+178072,2,Liceo Teodoro Picado,14
+178072,3,José Figueres Ferrer,10.5
+178072,4,Liceo Nicoya,9.5
+178072,5,LEB Rio Jimenez,5
+178072,6,Colegio Bilingüe de Palmares,2
+216610,0,E. Alberto Manuel Brenes,0
+216610,0,E.Jorge Washington,0
+216618,1,E. Mercedes Quesada Quesada,0
+219155,1,LEB Naranjo,4
+219159,1,Pacto del Jocote,7
+219159,2,Santa Rita,1
+219160,1,Pacto del Jocote,0
+219164,1,Escuela Jorge Washington,14.5
+219164,2,Santa Sofia,13
+219164,3,Santa Rita A,11.5
+219164,4,La Inmaculada,10
+219164,5,Escuela Alberto Manuel Brenes,9
+219164,6,Santa Rita B,2
+219954,1,CEB Palmares,5
+219954,2,LEB San Ramon,4
+219954,3,LEB Naranjo,3
+221283,1,Pacto del Jocote,14
+221283,2,Gregorio,12.5
+221283,3,LEB Naranjo,5.5
+221283,4,Rural Cerros,4
+221283,5,CEB Palmares,0
+221284,1,LEB Naranjo,8
+221284,2,Redentorista,0
+221287,1,Pacto del Jocote,15.5
+221287,2,Instituto de Alajuela,8.5
+221287,3,LEB San Ramón,6.5
+221287,4,CEB Palmares,3
+221287,5,Rural Cerros,2.5
+221288,1,CTP Sabanilla,8
+221288,2,CEB Palmares,0
+223761,1,New Hope,23
+223761,2,Escuela Mariano Cortez,15
+223761,3,Escuela Lepanto,14.5
+223761,4,Escuela Jesus Jimenez,12
+223761,5,Pacto Del Jocote A,11.5
+223761,6,Pacto Del Jocote B,5
+223761,7,Escuela las Lagunas,3
+223762,1,Escuela las Lagunas,23
+223762,2,Escuela Cecilio Lindo,15
+223762,3,Pacto del Jocote A,14.5
+223762,4,San Francisco de Asis,11
+223762,5,Humbolt,8
+223762,6,Pacto del Jocote B,6.5
+223762,7,Escuela Lepanto,6
+223765,1,Escuela las Lagunas,19
+223765,2,Pacto del Jocote,17.5
+223765,3,Escuela Juan Santamaria,13
+223765,4,Escuela Padre Peralta,13
+223765,5,Escuela Luis Shapiro,8
+223765,6,Escuela Lepanto,8
+223765,7,Jorge Washington,5.5
+223766,1,Pacto del Jocote,21.5
+223766,2,Escuela las Lagunas,18.5
+223766,3,Escuela Mariano Cortez,15
+223766,4,Escuela Santa Marta,14
+223766,5,Escuela Lepanto,7
+223766,6,Escuela Jesus Jimenez,7
+223766,7,Escuela Mercedes Quesada,1
+228973,1,Liceo Fernando Volio - Perez Zeledon,18.5
+228973,2,Liceo Nicoya - Nicoya,9.5
+228973,3,LEB Cartago - Cartago,9
+228973,4,CTP Sabanilla - Alajuela,8.5
+228973,5,LEB de Río Jiménez - Guapiles,7.5
+228973,6,Teodoro Picado - San Jose Central,7
+228974,1,Liceo Pacto del Jocote - Alajuela,21.5
+228974,2,Liceo de Paraíso - Cartago,15
+228974,3,Colegio Claretiano - Heredia,12
+228974,4,Liceo Fernando Volio - Perez Zeledon,12
+228974,5,CTP Nandayure - Nicoya,11
+228974,6,CTP Talamanca - Sula,6.5
+228974,7,Liceo Colonia Puntarenas - Zona Norte No,6
+228980,1,Liceo Pacto del Jocote - Alajuela,19
+228980,2,Teodoro Picado - San Jose,16
+228980,3,Liceo Fernando Volio - Perez Zeledon,14.5
+228980,4,CTP La Suiza - Turrialba,14.5
+228980,5,Liceo Rural El Concho - San Carlos,11.5
+228980,6,LEB Pococí - Guapiles,4.5
+228980,7,José María Gutiérrez - Liberia,4
+271931,1,Escuela Pacto del Jocote,20
+271931,2,Escuela Santa Rita A,12.5
+271931,3,Escuela Santa Rita B,11
+271931,4,Escuela Juan Arrieta,10.5
+271931,5,Escuela Miguel Obregon,6
+271931,6,Adolfo Jimenez de la Guardia,0
+272119,1,COLEGIO GREGORIO JOSÉ RAMIREZ,18
+272119,2,LICEO PACTO DEL JOCOTE,17
+272119,3,COLEGIO REDENTORISTA B,10
+272119,5,COLEGIO REDENTORISTA A,4
+272119,6,CTP ATENAS,0
+272120,1,Colegio Gregorio José Ramirez,8
+272120,2,CTP SABANILLA,0
+272122,1,LICEO LEÓN CORTÉS,5
+272122,2,COLEGIO REDENTORISTA,3
+272123,1,LICEO PACTO DEL JOCOTE,
+276626,1,Colegio Bilingüe Palmares,
+277749,0,Pacto del Jocote,
+277750,0,Pacto Del Jocote,
+277751,1,La Inmaculada,
+277752,0,Santa Rita,
+278847,1,Colegio Bilingue de Palmares,
+278848,1,Pacto del Jocote,
+278851,1,Gregorio Jose Ramirez,
+278852,1,Pacto del Jocote,
+278852,2,Sistema Educativo Los Delfines,
+278852,3,LEB San Ramon,
+278852,4,Alfaro Ruiz,
+278852,5,Gregorio Jose Ramirez,
+278852,6,CTP Esparza,
+279068,1,Liceo de Paraíso,6
+279068,2,CATIE,2
+279069,1,Liceo de Paraíso,10.5
+279069,2,IET,9.5
+279069,3,Liceo Llano Bonito,4
+279069,4,Liceo San Miguel,0
+279071,1,Figueres,6
+279071,2,Hernán Vargas,2
+279186,1,E Mariano Cortes,8
+279186,2,CE SEMILLAS,0
+279189,1,E Cecilio Lindo Morales,8
+279189,2,CE Semillas,0
+279194,1,E Mariano Cortez,8
+279194,2,CE Semillas,2
+279194,3,E Bajo Canet,2
+279204,1,E Cecilio lindo,6
+279204,2,CE SEMILLAS,2
+283113,1,Escuela Pacto del Jocote,25.5
+283113,2,Saint Jude School,16.5
+283113,3,Escuela Jesus Jimenez Zamora,15.5
+283113,4,Escuela las Lagunas,12.5
+283113,5,Escuela Lepanto,12.5
+283113,6,San Francisco de Asis,12.5
+283113,7,Cecilio Liendo Morales,12
+283113,8,Escuela Juan Santamaria,5
+283119,1,Escuela Pacto del Jocote,16
+283119,2,Escuela las Laguna,14.5
+283119,3,Escuela Mariano Cortez,13
+283119,4,Escuela Dr. Luis Shapiro,12
+283119,5,Escuela Santa Marta,3
+283119,6,Escuela Lepanto,1.5
+283124,1,New Hope,26
+283124,2,Juan Santamaria,21.5
+283124,3,Escuela Pacto del Jocote,21.5
+283124,4,Escuela Lepanto,15.5
+283124,5,Escuela Mariano Cortez,11.5
+283124,6,Escuela Jesus Jimenez Zamora,8
+283124,7,Escuela San Francisco de Asis,7
+283124,8,Las Lagunas,1
+283126,1,Las Lagunas,17
+283126,2,Escuela Santa Marta,12
+283126,3,Escuea Dr. Luis Shapiro,11
+283126,4,Lepanto,11
+283126,5,Cecilio Lindo,9
+283126,6,Escuela Santa Rita,0
+284934,1,Liceo Teodoro Picado,24
+284934,2,Liceo de Paraiso,20
+284934,3,Liceo Fernando Volio J.,15
+284934,4,Liceo Leon Cortes,13.5
+284934,5,Liceo Rural El Concho,12.5
+284934,6,CTP Liberia,11
+284934,7,LEB de Rio Jimenez,9.5
+284934,8,CTP La Suiza,6.5
+284935,1,Liceo Pacto del Jocote,20
+284935,2,Liceo Fernando Volio,14
+284935,3,CTP La Suiza,9.5
+284935,4,Liceo Teodoro Picado,8
+284935,5,LEB de Pococi,7
+284935,6,CTP Orosi,1.5
+284936,1,Liceo Teodoro Picado,21
+284936,2,Liceo Pacto del Jocote,17.5
+284936,3,Liceo Fernando Volio J.,15.5
+284936,4,CTP Nandayure,13.5
+284936,5,Liceo de Paraiso,9
+284936,6,LEB de Pococi,5.5
+284936,7,CTP La Suiza,2
+284937,1,Colegio Gregorio Jose Ramirez,18
+284937,2,Liceo Unesco,16
+284937,3,Liceo Figueres,14
+284937,4,LEB de Rio Jimenez,5
+284937,5,CTP La Suiza,4.5
+284937,6,Colegio San Jose de la Montana,2.5
+351100,1,Liceo Paraiso,6
+351100,2,Monseñor Ruben Odio,4
+351100,3,CAOTOSO,2
+351101,1,IET,11
+351101,2,Liceo Paraiso,6.5
+351101,3,Santa Maria School,4
+351101,4,Liceo Llano Bonito,2.5
+351102,1,Liceo Experimental Bilingue de Cartago,8
+351102,2,CAOTOSO,0
+351103,0,Hernan Vargas,0
+352703,1,Liceo Rural El Concho,9.5
+352703,2,Colegio Rio Frio,8.5
+352703,3,Claretiano,4
+352703,4,Liceo Colonia Puntarenas,2
+352704,0,CTP Belen,0
+352706,1,San Francisco de Asis,8
+352706,2,Liceo de Heredia,3
+352706,3,Liceo Rural Las Colinas,1
+352709,1,Liceo Exp Bilingue,4.5
+352709,2,Claretiano,3.5
+373495,0,Gerardo Badilla Mora,0
+373495,0,Santiago,0
+373498,0,Gerardo Badilla Mora,0
+373498,0,Santiago,0
+375801,1,Escuela Pacto del Jocote,6
+375801,2,Escuela Santa Rita,2
+375802,1,Escuela Pacto del Jocote,8
+375802,2,Escuela Santa Rita,0
+375804,1,Escuela Pacto Jocote,8
+375804,2,Escuela Juan Arieta,0
+375807,1,Escuela Pacto Jocote,15
+375807,2,Escuela Santa Rita,9
+375807,3,Escuela Silvestre Rojas,7
+375807,4,Juan Arrieta,6
+375807,5,Escuela Francisco Alfaro,3
+429205,0,Esc. Gerardo Badilla,
+429205,0,LEB Palmares,
+429205,0,LEB San Ramón,
+430591,1,Esc. San Felipe Nery,9
+430591,2,Esc. Sagrado Corazon de Jesus,6.5
+430591,3,CE Miravalle,4.5
+430591,4,Esc. Ricardo Jimenez,4
+430592,1,CE Miravalle,7.5
+430592,2,CE Semillas,0.5
+430593,1,Esc. Sagrado Corazon de Jesus,13.5
+430593,2,Esc. San Felipe Nery,12.5
+430593,3,Esc. Ricardo Jimenez,11.5
+430593,4,Esc. Monsenor Sanabria,10
+430593,6,Esc. Carlos Luis Valverde,9
+430593,7,Esc. La Laguna,7
+430593,9,CE Miravalle,6.5
+430593,10,CE Semillas,5
+430594,1,Esc. San Felipe Nery,10
+430594,2,CE Semillas,7.5
+430594,3,Esc. Ricardo Jimenez,6.5
+430594,4,Esc. Mario Fernandez,0
+430605,1,Liceo Leon Cortes,6.5
+430605,2,CTP Atenas,3.5
+430605,3,Bilingue de Grecia,2
+431516,1,Liceo Paraiso,12
+431516,2,CTP Fernando Volio,6
+431516,3,San Luis Gonzaga,3
+431516,4,CE Semillas,3
+434739,1,Pacto del Jocote,12
+434739,2,Gerardo Badilla Mora,6
+434739,3,Escuela de Santiago,6
+434739,4,Escuela Joaquin Lorenzo,0
+435194,1,Esc Mariano Cortes,6.5
+435194,2,EB Sagrado Corazon de Jesus,1.5
+435195,1,Esc Cecilio Lindo,6
+435195,2,Esc San Felipe Nery,2
+435196,1,Clodomiro Picado,8
+435196,2,Francisca Carrasco Jimenez,0
+435198,1,Hernan Vargas,5
+435198,2,CE Semillas,1
+437398,1,Santa María,
+437398,2,Joaquin Garcia Monge,
+440189,1,Liceo Unesco,34
+440189,2,Liceo Experimental Bilingue de Rio Jimen,32.5
+440189,3,Colegio Lepanto,27.5
+440189,4,Colegio Claretiano,25
+440189,5,Colegio Clodomiro Picado,21
+440189,6,Liceo Teodoro Picado,20
+440189,7,CTP Esparza,17.5
+440189,8,Liceo de Paraiso,13
+440189,9,Colegio Jose M. Gutierrez,11
+440189,10,CTP Rosario,10.5
+440189,11,Santa Maria School,7
+443324,1,Liceo Unesco,31.5
+443324,2,Liceo Experimental Bilingue de Rio Jimen,27.5
+443324,3,Colegio Lepanto,27
+443324,4,Liceo Teodoro Picado,23
+443324,5,Colegio Jose M. Gutierrez,19.5
+443324,6,Colegio Claretiano,19
+443324,7,Colegio Clodomiro Picado,16
+443324,8,Liceo de Paraiso,15.5
+443324,9,CTP Esparza,14.5
+443324,10,Santa Maria School,13.5
+443324,11,CTP Rosario,13
+445090,1,Pacto Jocote,21
+445090,2,Las Lagunas 2,14
+445090,3,Cecilio Lindo,13
+445090,4,Lepanto,11
+445090,5,Santa Marta Y Griega,9
+445090,6,Las Lagunas 1,9
+445090,7,Luis Shapiro,7
+445091,1,Pacto Jocote,23
+445091,2,Anita Grande,20
+445091,3,Las Lagunas,19
+445091,4,Arco Iris,15
+445091,5,Futuro Verde,14.5
+445091,6,La Inmaculada,10
+445091,7,Santa María,6.5
+445091,8,Ascensión Esquivel,4
+641692,1,Mariano Cortes,6
+641692,2,Jorge Debravo,2
+641693,1,Mariano Cortes,5
+641693,2,Jorge Debravo,3
+642086,1,LEBT,9
+642086,2,Jorge Debravo,7
+642087,1,Jorge Debravo,7
+642087,2,Hernan Vargas,1
+812799,1,Liceo Finca Naranjo,6
+812799,2,Liceo de Agua Buena,2
+812803,1,Liceo de Ciudad Neily,5
+812803,2,Liceo Finca Naranjo,3
+814965,1,Colegio BIlingue San Ramon,
+814966,1,Liceo de Palmares,
+814968,0,Colegio Bilingüe San Ramón 1,
+814968,0,Colegio Bilingüe San Ramón 2,
+814969,0,Colegio Bilingue San Ramón 1,
+814969,0,Colegio Bilingue San Ramón 2,
+814970,1,CTP Zarcero 1,9.5
+814970,2,CTP Rosario Naranjo,9
+814970,3,CTP Zarcero 2,3.5
+814970,4,Liceo de Palmares,2
+814972,1,CTP Rosario de Naranjo,11
+814972,2,Liceo de Palmares,5
+814972,3,CTP Zarcero 2,4.5
+814972,4,CTP Zarcero 1,3.5
+815486,1,Colegio Bilingue San Ramon,
+822226,1,GSD,14
+822226,2,Redentorista San Alfonso,9.5
+822226,3,LEB Grecia,8
+822226,4,Liceo San José,6
+822226,5,Liceo Puente Piedra,2.5
+822227,1,Redentorista San Alfonsol,22
+822227,2,CTP Jesus Ocana,18
+822227,3,LEB Grecia,15
+822227,4,CTP Atenas,11.5
+822227,5,Liceo Santa Gertrudis,9
+822227,6,Liceo Puente Piedra,6
+822227,7,Instituto de Alajuela,2.5
+824831,1,Jorge Debravo,5.5
+824831,2,CATIE,3.5
+824831,3,Cecilio Lindo,3
+824832,0,CATIE,
+824971,1,Mariano Cortes 2,13
+824971,2,Jorge Debravo 1,12
+824971,3,Jorge Debravo 2,8
+824971,4,Mariano Cortes 1,4.5
+824971,5,Manuel Jimenez de la Guardia,2.5
+824972,0,CAITE,
+828557,1,GSD,5
+828557,2,Bilingue San Ramon,3
+829413,1,CTP Puriscal_A,6
+829413,2,Liceo Ruben Odio,2
+829437,1,Esc Republica de Honduras,18
+829437,2,Esc Roberto Lopez Varela,14
+829437,3,Esc Dario Flores Hernandez,11
+829437,4,Esc Juan XXIII,9
+829437,5,Esc Domingo Faustino Sarmineto_2,7
+829437,6,Esc Domingo Faustino Sarmiento_1,1
+831127,1,Liceo Sinai,5
+831127,2,Liceo de Ciudad Neily,5
+831127,3,Liceo Finca Naranjo,2
+831128,1,Pueblo Nuevo de Cajon,8
+831128,2,Kilometro 29 (Guaycara),0
+831129,1,I.D.A Joron,6
+831129,2,Juan Lara Alfaro (Corredor),4.5
+831129,3,Santiago,1.5
+831328,1,Liceo Sinai,6
+831328,2,Liceo Finca Naranjo,2
+832345,0,Liceo Copey,0
+832346,1,Santa Teresita,4
+832347,0,Colegio Cientifico Interamericano CATIE,0
+832348,1,Mariano Cortes,12
+832348,2,Jorge Debravo,10.5
+832348,3,Miravalle,7.5
+832348,4,San Lorenzo,6
+832348,5,Leon Cortes Castro,3
+842418,1,C.T.P Suiza,20
+842418,2,C.T.P Granadilla,19.5
+842418,3,C.T.P Puriscal,18.5
+842418,4,Liceo de SINAI,15.5
+842418,5,C.T.P Zarcero,15
+842418,6,Liceo Experimental Bilingue Claudio Bonilla A,10
+842418,7,Liceo Jose María Gutierrez,7.5
+842418,8,Colegio Lepanto,6
+842420,1,Liceo de SINAI,13
+842420,2,LiceoSan José la Montaña,10
+842420,3,Liceo Jose Maria Gutierrez,7
+842420,4,Liceo COPEY,6
+842420,5,Colegio de Lepanto,4
+845206,1,Republica de Honduras,18
+845206,2,Las Lagunas de Daniel Flores,15
+845206,3,Colegio San Francisco de asís,13
+845206,4,John. F Kennedy,11
+845206,5,Lepanto,10
+845206,6,Mariano Cortes,9.5
+845206,7,GSD,8.5
+845206,8,Jose Maria Zeledon Brenes,6
+845206,9,I.D.A. Joron,6
+845206,10,Los Corales,3
+845208,1,Lepanto,15
+845208,2,Pacto de Jocote,14
+845208,3,Las Lagunas,14
+845208,4,Colegio Cientifico I Catie,11
+845208,5,Lider Los Corales,9
+845208,6,Anita Grande Jiménez,9
+845208,7,Pueblo Nuevo de Cajón,9
+845208,8,Guardia,6.5
+845208,9,José María Zeledón B,2.5
+846071,1,LiceoSan José la Montaña,12
+846071,2,Liceo de SINAI,11
+846071,3,Liceo Jose Maria Gutierrez,9
+846071,4,Liceo COPEY,6
+846071,5,Colegio de Lepanto,2
+846081,1,C.T.P Granadilla,12.5
+846081,2,Liceo de SINAI,12.5
+846081,3,C.T.P Zarcero,12
+846081,4,C.T.P Puriscal,11
+846081,5,C.T.P Suiza,10.5
+846081,6,Liceo Jose María Gutierrez,8
+846081,7,Liceo Experimental Bilingue Claudio Bonilla A,8
+846081,8,Colegio Lepanto,5.5
+846613,1,Republica de Honduras,17.5
+846613,2,Las Lagunas de Daniel Flores,14.5
+846613,3,Colegio San Francisco de asís,13
+846613,4,John. F Kennedy,10.5
+846613,5,GSD,9.5
+846613,6,Jose Maria Zeledon Brenes,9
+846613,7,I.D.A. Joron,8
+846613,8,Mariano Cortes,8
+846613,9,Lepanto,7.5
+846613,10,Los Corales,2.5
+846614,1,Pacto de Jocote,18
+846614,2,Colegio Cientifico I Catie,13
+846614,3,Las Lagunas,12
+846614,4,Anita Grande Jiménez,11
+846614,5,Lider Los Corales,9.5
+846614,6,Lepanto,8.5
+846614,7,Pueblo Nuevo de Cajón,8
+846614,8,Guardia,7
+846614,9,José María Zeledón B,3
+917772,1,Tolentino,6
+917772,2,Serafico,3
+917772,3,CTP Dulce Nombre,2
+917775,1,Francisca Carrazco,4
+917775,2,CTP Dulce Nombre,4
+917776,1,Francisca Carrazco,0
+917777,1,Francisca Carrazco,0
+917959,0,Liceo Llano Bonito,0
+917959,0,Liceo San Carlos,0
+919342,1,CATIE 1,13
+919342,2,Cecilio Lindo,10.5
+919342,3,Jorge Debrado 2,7
+919342,4,Mariano Cortes,7
+919342,5,Jorge Debrado 1,6.5
+919342,7,CATIE 2,5.5
+919345,1,Jorge Debrado,7.5
+919345,2,Cecilio Lindo,7
+919345,3,Jorge Debrado 2,5
+919345,4,CATIE,4.5
+919761,1,Liceo Jose Maria Gutierrez,8
+919761,2,CTP de la Fortuna,4
+919761,3,Liceo Exp. Bil. La Cruz,0
+919982,1,John F. Kennedy,7.5
+919982,2,Isabel Brown Brown,4.5
+919982,3,El Guayabo (Mogote),0
+920000,1,Isabel Brown Brown,4
+920000,2,Alba Ocampo Alvarado,2
+921515,1,Liceo Santo Domingo,20.5
+921515,2,Liceo de Heredia,17.5
+921515,3,Liceo San Jose de la Montaña,16
+921515,4,Colegio Santa Maria de Guadalupe,16
+921515,5,Colegio Claretiano,15
+921515,6,Liceo Exp Bilingue de Belen,9
+921515,7,Liceo Ing Manuel Benavidez,4
+921516,1,Liceo San Jose de la Montaña,12
+921516,2,Colegio Claretirano,10.5
+921516,3,Liceo Exp Bilingue Belen,10
+921516,4,Liceo Ing Manuel Benavides,9.5
+921516,5,Colegio Santa Maria de Guadalupe,9
+921516,6,Liceo de Heredia,9
+921862,1,ESCUELA LAS LAGUNAS DE DANIEL FLORES,7
+921862,2,ESCUELA LABORATORIO DANIEL FLORES,1
+921863,1,ESCUELA LAS LAGUNAS DE DANIEL FLORES,7
+921863,2,ESCUELA LABORATORIO DANIEL FLORES,1
+922245,1,LICEO FERNANDO VOLIO JIMENEZ,5
+922245,2,LICEO DE SINAI,3
+922568,1,LEBP Guapiles,7
+922568,2,Liceo San Rafael,1
+922569,1,San Francisco,6
+922569,2,Liceo San Rafael,2
+922610,1,Sulayon,
+922610,2,CTP,
+923835,1,LICEO DE CIUDAD NEILLY,6.5
+923835,2,LICEO DE AGUA BUENA,4.5
+923835,3,LICEO FINCA NARANJO,1
+925034,1,CTP Quepos,
+925036,1,CTP Quepos,
+932564,1,Escuela John F. Kennedy,6
+932564,2,Escuela Delia Oviedo de Acuna,3.5
+932564,3,Escuela Isabel Brown Brown,2.5
+932568,1,Escuela Isabel Brown Brown,5.5
+932568,2,Escuela Alba Ocampo Alvarado,2.5
+932595,1,Liceo José María Gutierrez,7
+932595,2,Colegio Técnico Profesional Fortuna de Bagace,4
+932595,3,Liceo Experimental Bilingue de La Cruz,1
+932857,1,Barrio Canada,9
+932857,2,Juan Lara Alfaro,5.5
+932857,3,Las Lagunas,5
+932857,4,Laboratorio,4.5
+932858,1,Las Lagunas,5.5
+932858,2,Laboratorio,2.5
+932859,1,Liceo Unesco,13.5
+932859,2,Liceo Ciudad Neily,11.5
+932859,3,CTP San Isidro,11
+932859,4,Liceo Académico Buenos Aires,4
+932859,5,Liceo Agua Buena,0
+932860,1,Liceo Sinai,7
+932860,2,Colegio Finca Naranjo,1
+932935,1,Colegio Bilingue San Ramon A,15
+932935,2,GSD,14.5
+932935,3,Escuela San Gerardo,14
+932935,4,Escuela Timoleon Morera Soto,10
+932935,5,Eida Vargas Carranza A,3.5
+932935,6,Colegio Bilingue San Ramon B,3
+932936,1,Escuela Pacto del Jocote,7
+932936,2,Humminbird School,3
+932936,3,Colegio Bilingue San Ramon,2
+932940,1,Liceo San Jose de Alajuela,13
+932940,2,LEB de Grecia,12.5
+932940,3,CTP Rosario Naranjo,12
+932940,4,Liceo de Palmares,9
+932940,5,CTP Zarcero,8.5
+932940,6,CTP Atenas,5
+932943,1,Liceo Redentorista San Alfonso,7
+932943,2,GSD International School,4
+932943,3,Liceo de Palmares,1
+933046,1,LEPANTO ABIERTO,
+936592,1,DELIA URBINA GUEVARA,7
+936592,2,EL MOJON (ESPIRITU SANTO),1
+936593,1,C.T.P DE SANTA ELENA,10
+936593,2,C.T.P ESPARZA,8
+936593,3,LICEO RURAL CERROS,3
+940317,1,CATIE,13
+940317,2,Cecilio Lindo,12
+940317,3,Ricardo Jimenez Oreamuno,10
+940317,4,Escuela de Orosi,4
+940317,5,Escuela Manuel Castro Blanco,1
+940319,1,CATIE,6
+940319,2,Goicoechea,4
+940319,3,Guayabal,2
+940323,1,Santa Teresita,14
+940323,2,CTP de la Suiza,13
+940323,3,Cole. Francisca Carrasco J.,12
+940323,4,Liceo de Copey,11.5
+940323,5,CTP de Orosi,5.5
+940323,6,Liceo Llano Bonito,4
+940324,1,LEB Turrialba,7
+940324,2,Liceo Copey,4
+940324,3,Cole. Francisca Carrasco J.,1
+945217,1,Colegio Humanistico Costarricense Campus Nico,14
+945217,2,CTP Granadilla,12
+945217,3,Liceo Exp. Bilingue de Pococi,12
+945217,4,CTP Talamanca,12
+945217,5,Liceo Unesco,11.5
+945217,6,CTP de Santa Elena,11
+945217,7,Liceo Experimental Bilingue Claudio Bonilla A,10.5
+945217,8,Liceo San Jose de Alajuela,8.5
+945217,9,Liceo Santa Teresita,7
+945217,10,CTP Puriscal,6.5
+945217,11,Liceo Jose Maria Gutierrez,5
+945220,1,Liceo Redentorista San Alfonso,16.5
+945220,2,Liceo San Jose de la Montaña,13
+945220,3,Liceo Exp. Bilingue de Turrialba,12
+945220,4,Colegio Lepanto,11.5
+945220,5,Liceo SINAI,10.5
+945220,6,Liceo Jose Maria Gutierrez,9.5
+945220,7,CTP la Carpio,4.5
+945220,8,IEGB Paraiso,2.5
+948410,1,Liceo Redentorista San Alfonso,18
+948410,2,Liceo Exp. Bilingue de Turrialba,13
+948410,3,Liceo San Jose de la MontaÃ±a,12
+948410,4,Colegio Lepanto,10.5
+948410,5,Liceo Jose Maria Gutierrez,8.5
+948410,6,Liceo SINAI,8
+948410,7,CTP la Carpio,8
+948410,8,IEGB Paraiso,2
+948411,1,Liceo Exp. Bilingue de Pococi,13.5
+948411,2,Liceo Experimental Bilingue Claudio Bonilla A,12.5
+948411,3,CTP de Santa Elena,12
+948411,4,CTP Granadilla,12
+948411,5,Colegio Humanistico Costarricense Campus Nico,9.5
+948411,6,Liceo Unesco,9.5
+948411,7,CTP Talamanca,9
+948411,8,CTP Puriscal,9
+948411,9,Liceo San Jose de Alajuela,9
+948411,10,Liceo Jose Maria Gutierrez,7
+948411,11,Liceo Santa Teresita,7
+949279,1,Pacto del Jocote,14.5
+949279,2,Lepanto,14.5
+949279,3,Escuela Las Lagunas de Daniel Flores,14
+949279,4,Los Corales,10
+949279,5,Anita Grande,9
+949279,6,Colegio Cientifico Interamericano CATIE,7
+949279,7,Montaña Grande,6
+949279,8,Isabel Brown Brown,5
+949284,1,Republica de Honduras,17
+949284,2,Colegio Bilengue San Francisco de Asis,13.5
+949284,3,Caspari Montessori IS,13.5
+949284,4,Colegio Bilingue San Ramon,11.5
+949284,5,Colegio Cientifico Interamericano CATIE,11
+949284,6,John.F Kennedy (Liberia),10
+949284,7,Los Corales,10
+949284,8,Delia Urbina Guevara,9.5
+949284,9,Barrio Canada,8.5
+949284,10,Lepanto,8.5
+949284,11,Montaña Grande,4
+949284,12,San Rafael,3
+949860,1,Escuela Las Lagunas de Daniel Flores,15.5
+949860,2,Pacto del Jocote,14
+949860,3,Lepanto,11
+949860,4,Los Corales,10
+949860,5,MontaÃ±a Grande,9
+949860,6,Anita Grande,8.5
+949860,7,Colegio Cientifico Interamericano CATIE,8
+949860,8,Isabel Brown Brown,4
+949864,1,Republica de Honduras,18
+949864,2,Colegio Bilengue San Francisco de Asis,14.5
+949864,3,Caspari Montessori IS,12
+949864,4,John.F Kennedy (Liberia),11
+949864,5,Los Corales,10
+949864,6,Barrio Canada,10
+949864,7,Colegio Bilingue San Ramon,9.5
+949864,8,Delia Urbina Guevara,9
+949864,9,Colegio Cientifico Interamericano CATIE,9
+949864,10,Lepanto,9
+949864,11,San Rafael,4
+949864,12,MontaÃ±a Grande,4
+1131927,1,BARRIO CANADA 3,6
+1131927,2,LA UNION 2,2
+1136301,1,C.T.P. UMBERTO MELLONI CAMPANINI,10
+1136301,2,LICEO CIUDAD NEILY,5
+1136301,3,EXPERIMENTAL BILINGÜE DE AGUA BUENA,5
+1136301,4,C.T.P. DE SABALITO,4
+1136313,1,LICEO CIUDAD NEILY,6
+1136313,2,EXPERIMENTAL BILINGÜE DE AGUA BUENA,5
+1136313,3,COLEGIO FINCA NARANJO,1
+1140010,1,Dr Rafael Calderon Munoz 1,16
+1140010,2,Domingo Faustino Sarmiento 1,9.5
+1140010,3,Dr Rafael Calderon Munoz 2,7.5
+1140010,4,Domingo Faustino Sarmiento 2,6
+1140010,5,La Fila,1
+1148519,1,CATIE,11
+1148519,2,Cecilio Lindo2,8.5
+1148519,3,Cecilio Lindo1,4
+1148519,4,Jorge Debravo,0.5
+1148522,1,LEBT,4
+1148522,2,Santa Teresita,0
+1148526,1,CTP La Suiza,11.5
+1148526,2,CATIE,10
+1148526,3,LEBT#1,8
+1148526,4,Santa Teresita #1,7
+1148526,5,LEBT #2,3.5
+1149257,1,Científico de Costa Rica de San Carlos-TEC,13
+1149257,2,LEBCBA,12.5
+1149257,3,CTP Los Chiles,6
+1149257,4,LR San Joaquín de Cutris,6
+1149257,5,CINDEA La Perla,2.5
+1149269,1,Humanistico Costarricense Campus Nicoya,6
+1149269,2,Liceo el Carmen,2
+1149529,1,LICEO SAN NICOLÁS DE TOLENTINO,7
+1149529,2,LICEO DE PARAÍSO,6
+1149529,3,C.T.P. OROSI,6
+1149529,4,C.T.P. DE DULCE NOMBRE,4
+1149538,1,C.T.P. OROSI,6
+1149538,3,LICEO DE PARAÍSO,0
+1149890,1,SAINT SPIRIT SCHOOL,9
+1149890,2,LLANO GRANDE,8.5
+1149890,3,JUNQUILLO ABAJO,6.5
+1150050,1,COLEGIO MIRAVALLE BILINGUE,
+1150050,2,Centro Educativo San Felipe Neri,
+1150050,3,GUAYABAL,
+1150050,4,MONSEÑOR SANABRIA MARTÍNEZ,
+1150064,1,RICARDO JIMÉNEZ OREAMUNO,
+1150064,2,GUAYABAL,
+1150540,0,DELIA URBINA DE GUEVARA,
+1150540,0,EL MOJÓN,
+1150540,0,LA RIVIERA,
+1150543,0,BENEMERITO LICEO JOSÉ MARTÍ,
+1150543,0,C.T.P. ESPARZA,
+1150544,0,BENEMERITO LICEO JOSÉ MARTÍ,
+1153390,1,SAN JUAN CHIQUITO,4
+1153390,2,DELIA OVIEDO DE ACUÑA,2
+1154642,1,Unidad Pedagogica Jose Fidel Tristan,4.5
+1154642,2,Bello Horizonte,4
+1154642,3,Rafael Francisco Osejo,3.5
+1154643,1,Bello Horizonte,5
+1154643,2,Rafael Francisco Osejo,3
+1163383,0,Colegio Saint Francis,
+1163386,0,Amadita,
+1163386,0,Colegio Saint Francis,
+1163389,0,Napoleon Quesada,
+1163392,0,Colegio Saint Francis,
+1163392,0,Napoleon Quesada,
+1168863,1,CATIE,13.5
+1168863,2,Cecilio Lindo,12.5
+1168863,3,C E San Felipe Nery,9
+1168863,4,Colegio Miravalle,8
+1168863,5,Escuela Japon,3
+1168863,6,Esc. Leon Cortes C,2
+1168864,1,Esc. Ricardo Jimenez,7.5
+1168864,2,CATIE,7.5
+1168864,3,Cecilio Lindo,6
+1168864,4,Esc. Guayabal,3
+1169654,1,Experimental Bilingue,17
+1169654,2,Liceo San Nicolas De Tolentino,13
+1169654,3,Liceo Tarrazu,11
+1169654,4,Liceo Santa Teresita,11
+1169654,5,Liceo Paraiso,4
+1169654,6,Liceo Llano Bonito,4
+1169655,1,Experimental Bilingue,7
+1169655,2,Liceo Tarrazu,3
+1169655,3,CTP Dulce Nombre,2
+1170258,1,Escuela DR Rafael Calderón Muñoz,15
+1170258,2,Saint Spirit School,14
+1170258,3,Escuela Domingo Faustino Sarmiento,9.5
+1170258,4,Unidad Pedagógica José Fidel Tristán,7.5
+1170258,5,Escuela Bello Horizonte,7
+1170258,6,Escuela Llano Grande,7
+1170270,1,CTP José Albertazzi,11
+1170270,2,Liceo Rural La Palma,5
+1170270,3,CTP Roberto Gamboa Valverde,4
+1170270,4,CTP de Puriscal,4
+1172810,1,Isabel Brown Brown,9.5
+1172810,2,John F Kennedy,8.5
+1172810,3,Delia Oviedo de Acuna,3
+1172810,4,Pijije,3
+1172813,1,Alba Ocampo Alvarado,5
+1172813,2,Bilingue Ciudad Blanca,3
+1172822,1,Colegio Bilingue Ciudad Blanca,7
+1172822,2,Jose Maria Gutierrez,1
+1182151,1,Caspari Montessori School,19
+1182151,2,Colegio Cientifico Interamericano IHS,13
+1182151,4,Escuela del Valle,11
+1182151,5,Lakeside International School,10
+1182151,6,Dr. Rafael Calderon Munoz,9
+1182151,7,San Rafael,8
+1182151,8,Los Corales,8
+1182151,9,Isabel Brown Brown,7.5
+1182151,10,La Rivera,6
+1182151,11,Santa Fe,5.5
+1182152,1,Las Lagunas,20
+1182152,2,Hummingbird,13
+1182152,3,Bello Horizonte,10.5
+1182152,4,Lepanto,8
+1182152,5,Los Corales,7.5
+1182152,6,Felix Arcadio Montero,7.5
+1182152,7,Anita Grande,7
+1182152,8,Cientifico Interamericano,6.5
+1183660,1,Las Lagunas,17.5
+1183660,2,Hummingbird,16.5
+1183660,3,Cientifico Interamericano,9
+1183660,4,Anita Grande,8
+1183660,5,Lepanto,8
+1183660,6,Bello Horizonte,7.5
+1183660,7,Los Corales,7.5
+1183660,8,Felix Arcadio Montero,6
+1183663,1,Gredos San Diego ISCR,16
+1183663,2,Caspari Montessori School,15.5
+1183663,3,Colegio Cientifico Interamericano IHS,14.5
+1183663,4,Dr. Rafael Calderon Munoz,10
+1183663,5,San Rafael,9
+1183663,6,Lakeside International School,9
+1183663,7,Escuela del Valle,9
+1183663,8,Isabel Brown Brown,8
+1183663,9,Los Corales,7
+1183663,10,La Rivera,6.5
+1183663,11,Santa Fe,5.5
+1186810,1,Liceo Experimental Bilingue de Pococi,16
+1186810,2,Colegio de Lepanto,15
+1186810,3,Liceo Experimental Bilingue de Turrialba,11
+1186810,4,Colegio Nuestra Señora de Desamparados,10
+1186810,5,Liceo Fernando Volio Jimenez,9.5
+1186810,6,Colegio Jose Maria Gutierrez,7.5
+1186810,7,Liceo San Jose de la Montaña,7
+1186810,8,Liceo San Jose de Alajuela,4
+1186819,1,Liceo Experimental Bilingue de Grecia,15
+1186819,2,CTP Jose Albertazzi Avendano,12.5
+1186819,3,Colegio Bilingue San Francisco de Asis,12
+1186819,4,CTP Alajuelita,12
+1186819,5,Liceo Experimental Bilingue de Turrialba,10.5
+1186819,6,CTP Esparza,10
+1186819,7,Liceo Sinai PZ,10
+1186819,8,Colegio Indigena Sulayom,9
+1186819,9,Liceo Experimental Bilingue Claudio Bonilla A,8
+1186819,10,Colegio Bilingue Ciudad Blanca,5.5
+1188238,1,Colegio de Lepanto,15
+1188238,2,Liceo Experimental Bilingue de Pococi,14
+1188238,3,Liceo Experimental Bilingue de Turrialba,12
+1188238,4,Liceo Fernando Volio Jimenez,10.5
+1188238,5,Colegio Nuestra Señora de Desamparados,10
+1188238,6,Colegio Jose Maria Gutierrez,9
+1188238,7,Liceo San Jose de Alajuela,5
+1188238,8,Liceo San Jose de la Montaña,4.5
+1188240,1,Liceo Experimental Bilingue de Grecia,14.5
+1188240,2,CTP Jose Albertazzi Avendano,13
+1188240,3,Colegio Indigena Sulayom,12
+1188240,4,Colegio Bilingue San Francisco de Asis,11.5
+1188240,5,Liceo Experimental Bilingue de Turrialba,10
+1188240,6,Colegio Sinai PZ,9
+1188240,7,CTP Alajuelita,9
+1188240,8,Colegio Lepanto,8.5
+1188240,9,Liceo Experimental Bilingue Claudio Bonilla A,8
+1188240,10,CTP Esparza,7.5
+1188240,11,Colegio Bilingue Ciudad Blanca,7
+1371584,1,Sistema Educativo Cenit,10
+1371584,2,Liceo Laboratorio de Liberia,6
+1371584,3,CBCB Liberia,5
+1371584,4,CTP Fortuna de Bagaces,2
+1371879,1,Liceo Laboratorio de Liberia 1,19
+1371879,2,Liceo Laboratorio de Liberia 2,15
+1371879,3,CBCB Liberia,11
+1371879,4,Colegio Cientifico de Liberia,6.5
+1371879,5,Sistema Educativo Cenit,6.5
+1371879,6,Instituto de Guanacaste,2
+1373721,1,LEÓN CORTÉS CASTRO,
+1373721,2,ESCUELA JAPÓN,
+1373721,3,ESCUELA SAN ISIDRO,
+1373723,1,LICEO TARRAZÚ,
+1373723,2,CTP SAN PABLO,
+1373723,3,LICEO COPEY,
+1373723,4,LICEO LLANO BONITO,
+1373725,1,LICEO COPEY,
+1373725,2,LICEO TARRAZÚ,
+1373725,3,CTP SAN PABLO,
+1373725,4,LICEO LLANO BONITO,
+1373988,1,COLEGIO HUMBOLDT,7
+1373988,2,BELLO HORIZONTE,1
+1373993,1,BELLO HORIZONTE,6.5
+1373993,2,RAFAEL FRANCISCO OSEJO,1.5
+1374514,1,Centro Educativo Lakeside International Schoo,14
+1374514,2,Centro Educativo La Paz Community School,7.5
+1374514,3,Escuela de Belen,2.5
+1375112,1,Centro Educativo La Paz Community School,4.5
+1375112,2,CTP 27 de Abril,3.5
+1375422,1,Laboratorio John F Kennedy,24
+1375422,2,El Guayabo,15.5
+1375422,3,Alba Ocampo Alvarado,15
+1375422,4,Corazon de Jesus,11.5
+1375422,5,Guardia,11.5
+1375422,6,Pijije,11.5
+1375422,7,Ascension Esquivel Ibarra,11.5
+1375422,8,CBCB,11.5
+1379771,1,CTP Orosí,14.5
+1379771,2,Colegio Elias Leiva Quiros,12
+1379771,3,CTP Dulce Nombre A,10
+1379771,4,Liceo de Paraiso,9.5
+1379771,5,Liceo San Nicolas de Tolentino,9.5
+1379771,6,Liceo Manuel Emilio Rodriguez,8.5
+1379771,7,CTP Pacayas,6
+1379822,1,Liceo de Paraiso,11
+1379822,2,CTP Orosi,5.5
+1379822,3,CTP Dulce Nombre A,4.5
+1379822,4,CTP Dulce Nombre B,3
+1380183,1,Monseñor Sanabria Martinez,3
+1380183,2,Jose Liendo y Goicoechea,0
+1380185,1,Monseñor Sanabria Martinez,6.5
+1380185,2,Filadelfo Salas Cespedes,5.5
+1380185,3,Jose Liendo y Goicoechea,5
+1380196,1,Padre Peralta,16.5
+1380196,2,Monseñor Sanabria Martínez,12
+1380196,3,Centro Educativo San Felipe Neri,11.5
+1380196,4,Guayabal,5.5
+1380196,5,Ricardo Jiménez Oreamuno,4.5
+1384684,1,COLEGIO BILINGÜE SAN RAMÓN A,
+1384684,2,LABORATORIO,
+1384684,3,SANTIAGO CRESPO CALVO,
+1384684,4,UNIDAD PEDAGÓGICA SAN FRANCISCO,
+1384684,5,MONSEÑOR JUAN VICENTE SOLÍS FERNÁNDEZ,
+1384684,6,COLEGIO BILINGÜE SAN RAMÓN B,
+1384684,7,MIXTA SAN RAFAEL,
+1384684,8,REPÚBLICA DE COLOMBIA,
+1384684,9,JOAQUÍN LORENZO SANCHO QUESADA,
+1384699,1,SANTIAGO CRESPO CALVO,
+1384699,2,COLEGIO BILINGÜE SAN RAMÓN,
+1384699,3,REPÚBLICA DE COLOMBIA,
+1384699,4,JOAQUÍN LORENZO SANCHO QUESADA,
+1384710,1,EXPERIMENTAL BILINGÜE DE PALMARES,8
+1384710,2,CTP ZARCERO,4
+1384710,3,C.T.P. FRANCISCO JOSÉ ORLICH BOLMARCICH,0
+1384748,1,C.T.P. ZARCERO,14
+1384748,2,INSTITUTO JULIO ACOSTA GARCÍA B,14
+1384748,3,COLEGIO BILINGÜE SAN RAMÓN,13
+1384748,4,SEP INTERNATIONAL SCHOOL A,11.5
+1384748,5,EXPERIMENTAL BILINGÜE DE PALMARES,10
+1384748,6,INSTITUTO JULIO ACOSTA GARCÍA A,9
+1384748,7,C.T.P. DE PIEDADES SUR,9
+1384748,8,C.T.P. FRANCISCO JOSÉ ORLICH BOLMARCICH,5
+1384748,9,SEP INTERNATIONAL SCHOOL B,4
+1385344,1,LABORATORIO A,14.5
+1385344,2,LAS LAGUNAS,12
+1385344,4,CENTRO EDUCATIVO ESCUELA Y COLEGIO DEL VALLE,9.5
+1385344,5,PUEBLO NUEVO,8
+1385344,6,LABORATORIO B,4
+1385347,1,LAS LAGUNAS,3
+1385347,2,ESCUELA DEL VALLE,1
+1387512,1,ESCUELA DEL VALLE A,18
+1387512,2,LAS LAGUNAS A,13
+1387512,3,LABORATORIO A,12
+1387512,4,ESCUELA DEL VALLE B,10
+1387512,5,LABORATORIO B,9.5
+1387512,6,PEDRO PÉREZ ZELEDÓN,9
+1387512,7,PUEBLO NUEVO,8.5
+1387512,8,12 DE MARZO DE 1948,6
+1387512,9,LAS LAGUNAS B,4
+1387518,1,LABORATORIO,5
+1387518,3,LAS LAGUNAS,2
+1387917,1,LICEO SINAÍ,21
+1387917,2,LICEO UNESCO,19.5
+1387917,3,LICEO SAN PEDRO,11
+1387917,4,COLEGIO DEL VALLE,10
+1387917,5,C.T.P. SAN ISIDRO,9.5
+1387917,6,UP DR. CALDERÓN GUARDIA,9
+1387917,7,C.T.P. DE PLATANARES,4
+1387919,1,LICEO FERNANDO VOLIO JIMÉNEZ,8
+1387919,2,LICEO SINAÍ,2.5
+1387919,3,COLEGIO DEL VALLE,1.5
+1388481,1,J.E.C SAINT SPIRIT SCHOOL,14
+1388481,2,SAN BOSCO DE MORA,11
+1388481,3,LLANO GRANDE,7
+1388481,4,DARIO FLORES HERNÁNDEZ,6
+1388481,5,KREATIVE LEARNING SCHOOL MONTESSORI,2
+1389072,1,C.T.P. DE PURISCAL,8
+1389072,2,LICEO RURAL LA PALMA,4
+1389072,3,LICEO DE PURISCAL,0
+1389073,1,C.T.P. DE PURISCAL,7
+1389073,2,LICEO DE PURISCAL,4
+1389073,3,LICEO RURAL LA PALMA,1
+1389154,1,Corales,7.5
+1389154,2,El Parque,7.5
+1389154,3,Sector Norte,5
+1389154,4,Caribbean School,4
+1389768,1,Deportivo,6
+1389768,2,CTP Limon,3
+1389768,3,CTP Batan,3
+1389973,1,LICEO SINAÍ,23.5
+1389973,2,LICEO UNESCO,16.5
+1389973,3,CIENTÍFICO PZ -UNA,15
+1389973,4,C.T.P. SAN ISIDRO,14
+1389973,5,COLEGIO DEL VALLE,7
+1389973,6,LICEO SAN PEDRO,6.5
+1389973,7,UP DR. CALDERÓN,1.5
+1389979,1,LICEO SINAÍ,8
+1389979,2,C.T.P. SAN ISIDRO,4
+1389979,3,COLEGIO DEL VALLE,0
+1397241,1,Laboratorio,15.5
+1397241,2,Timoleon Morera,14
+1397241,3,Santa Fe Pacific,12
+1397241,4,CBSR,10.5
+1397241,5,GSD,4.5
+1397241,6,Santiago Crespo Calvo,3.5
+1397247,1,Santiago Crespo Calvo,17
+1397247,2,CBSR,12
+1397247,3,GSD1,11.5
+1397247,4,GSD2,9
+1397247,5,Santa Fe Pacific,8.5
+1397247,6,Republica de Colombia,2
+1397262,1,LEB Grecia,17
+1397262,2,Santa Gertrudis,12.5
+1397262,3,Redentorista,11.5
+1397262,4,CBSR,7
+1397262,5,Instituto Superior Julio Acosta Garcia,6
+1397262,6,CTP Zarcero,6
+1398660,1,Cecilio Lindo,7.5
+1398660,2,CATIE,2.5
+1398660,3,Escuela Guayabal,2
+1398661,1,CATIE,19
+1398661,2,Escuela del Padre Peralta,16.5
+1398661,3,Cecilio Lindo,9.5
+1398661,4,Escuela Monseñor Sanabria,7
+1398661,5,Esc. León Cortés Castro,6
+1398661,6,Esc. Japón,2
+1398663,1,Santa Teresita,14
+1398663,2,CTP Orosí,13
+1398663,3,Colegio Elías Leiva Quirós,12
+1398663,4,Liceo Copey,11
+1398663,5,Liceo Tarrazú,6
+1398663,6,CTP La Suiza,4
+1398664,1,CTP La Suiza,7
+1398664,2,Liceo Manuel Emilio Rodríguez,5
+1398664,3,Liceo San Carlos,0
+1399559,1,Colegio Humboldt,20
+1399559,2,Bello Horizonte,12
+1399559,3,Saint Spirit School,10.5
+1399559,4,Domingo Faustino Sarmiento,8.5
+1399559,5,Esc. Rafael Calderón Muñoz,5
+1399559,6,San Bosco de Mora,4
+1399560,1,Bello Horizonte,8
+1399560,2,Esc. Rafael Angel Calderón Muñoz,3
+1399560,3,Rafael Francisco Osejo,1
+1399564,1,Nuestra Señora de Desamparados,11.5
+1399564,2,Colegio de Santa Ana,10.5
+1399564,3,CTP José Albertazzi,7
+1399564,4,Liceo de Puriscal,6
+1399564,5,CTP de Puriscal,5
+1400301,1,Liceo Sinaí,17.5
+1400301,2,Liceo Unesco,15
+1400301,3,Liceo Experimental Bilingue Agua Buena,13.5
+1400301,4,Liceo Bilingue Italo Costarricense,8
+1400301,5,Buenos Aires A,5
+1400301,6,Buenos Aires B,1
+1400304,1,Liceo Sinaí,7
+1400304,2,CTP San Isidro,5
+1400304,3,Liceo Cuidad Neily,0
+1400376,1,ESCUELA DEL VALLE A,10
+1400376,2,COLEGIO MADRE DEL DIVINO PASTOR DE CORREDORES,7
+1400376,3,ESCUELA JUAN LARA ALFARO,4
+1400376,4,LAS LAGUNAS A,3
+1400378,1,ESCUELA DEL VALLE,11.5
+1400378,2,ESCUELA JOSE GONZALO ACUÑA HERNANDEZ,7.5
+1400378,3,LABORATORIO,4
+1400378,4,LA MONA,1
+1400658,1,COLEGIO SANTA MARÍA DE GUADALUPE,10
+1400658,2,EXPERIMENTAL BILINGÜE DE BELÉN,6.5
+1400658,3,C.T.P. MERCEDES NORTE,4
+1400658,4,COLEGIO CLARETIANO,3.5
+1400659,1,LICEO SAN JOSÉ DE LA MONTAÑA,0
+1400660,1,COLEGIO SANTA MARÍA DE GUADALUPE,17
+1400660,2,COLEGIO CLARETIANO,13
+1400660,3,LICEO SAN JOSÉ DE LA MONTAÑA,11.5
+1400660,4,C.T.P. SANTO DOMINGO 1,11.5
+1400660,5,LICEO ING. MANUEL BENAVIDES RODRÍGUEZ B,11
+1400660,6,LICEO DE HEREDIA,10.5
+1400660,7,LICEO ING. MANUEL BENAVIDES RODRÍGUEZ A,9
+1400660,8,C.T.P. DEL ESTE,7.5
+1400660,9,LICEO SANTO DOMINGO,6
+1400660,10,C.T.P. SANTO DOMINGO 2,3
+1400661,1,LICEO SAN JOSÉ DE LA MONTAÑA,0
+1400662,1,C.T.P. SANTO DOMINGO,0
+1403313,0,CASPARI MONTESSORI SCHOOL,0
+1403313,0,CLETO GONZÁLEZ VÍQUEZ,0
+1403327,1,GOLDEN VALLEY SCHOOL,18.5
+1403327,2,CASPARI MONTESSORI SCHOOL,14.5
+1403327,3,SISTEMA EDUCATIVO MONTEALTO,11
+1403327,4,CLETO GONZÁLEZ VÍQUEZ,8
+1403327,5,FÉLIX ARCADIO MONTERO MONGE,4.5
+1403327,6,FÉLIX ARCADIO MONTERO MONGE 2,2.5
+1403329,1,CASPARI MONTESSORI SCHOOL,23.5
+1403329,2,ESCUELA BILINGÜE NUEVA ESPERANZA-COMPLEJO EDU,23
+1403329,3,CENTRO EDUCATIVO SANTA ROSA DE LIMA,20.5
+1403329,4,BARRIO FÁTIMA,12.5
+1403329,5,CLETO GONZÁLEZ VÍQUEZ,11
+1403329,6,SAN VICENTE,8
+1403329,7,CUBUJUQUÍ,6.5
+1403329,8,CLETO GONZÁLEZ VÍQUEZ 2,7
+1404085,1,LICEO LABORATORIO DE LIBERIA 1,12
+1404085,2,LICEO LABORATORIO DE LIBERIA 2,6.5
+1404085,3,LICEO MAURILIO ALVARADO VARGAS,4.5
+1404085,4,COLEGIO BILINGUE CIUDAD BLANCA,1
+1404088,1,COLEGIO CIENTIFICO DE LIBERIA,
+1404088,2,LICEO MAURILIO ALVARADO VARGAS,
+1404615,1,LABORATORIO J. F. KENNEDY,11
+1404615,2,EL GUAYABO,7
+1404615,3,ALBA OCAMPO ALVARADO,3
+1404618,1,ALBA OCAMPO ALVARADO,8
+1404618,2,EL GUAYABO,3
+1404618,3,SAN JUAN CHIQUITO,1
+1408611,1,Caspari Montessori School,11
+1408611,2,Escuela Bilingue Nueva Esperanza,7
+1408611,3,Cipreses,6
+1408611,4,Colegio Metodista,0
+1408621,1,CTP Granadilla,9.5
+1408621,2,Colegio Claretiano,8
+1408621,3,Colegio Santa Maria de Guadalupe,6.5
+1408621,4,Liceo Anastasio Alfaro,0
+1408623,0,Liceo Anastasio Alfaro,0
+1423870,1,Liceo Experimental Bilingue de Grecia,17
+1423870,2,Colegio Bilingue San Francisco de Asis,13
+1423870,3,Liceo Experimental Bilingue Claudio Bonilla A,9
+1423870,4,Liceo Laboratorio de Liberia,11
+1423870,5,Colegio Indigena Sulayom,7.5
+1423870,6,CTP Granadilla,10
+1423870,7,Liceo Sinai,9
+1423870,8,CTP Talamanca,8.5
+1423870,9,CTP de Santa Elena,6
+1423870,10,Liceo Santa Teresita,5
+1423870,11,Centro Educativo Lakeside International Schoo,4
+1423871,1,Liceo Experimental Bilingue de Pococi,17.5
+1423871,2,CTP Talamanca,18.5
+1423871,3,Instituto Educativo San Gerardo,13
+1423871,4,Liceo Sinai,14
+1423871,5,Liceo Anastasio Alfaro,8.5
+1423871,6,CTP La Suiza,7.5
+1423871,7,Liceo Maurilio Alvarado Vargas,5
+1425570,1,Escuela Bello Horizonte,17
+1425570,2,Escuela Santiago Crespo Calvo,12
+1425570,3,Escuela y colegio Del Valle,13
+1425570,4,Escuela Los Corales,12
+1425570,5,Escuela Alba Ocampo Alvarado,11
+1425570,6,Escuela IDA los Lagos,7
+1425570,7,Centro Educativo Cecilio Lindo,11
+1425570,8,Escuela Anita Grande,5
+1425570,9,Caspari Montessori International School,8
+1425570,10,Escuela Isabel Brown Brown,3.5
+1425570,11,Escuela Pavones,0.5
+1425573,1,Caspari Montessori International School,15
+1425573,2,Colegio Humboldt,14.5
+1425573,3,Escuela y Colegio del Valle,14
+1425573,4,Escuela Laboratorio,12
+1425573,5,Escuela Interamericana Catie-Colegio Cientifi,11
+1425573,6,Escuela Puerto Viejo,8
+1425573,7,Escuela San Rafael,8
+1425573,8,Lakeside International School,8.5
+1425573,9,Bernardo Drug Ingermann,8
+1425573,11,Escuela Isabel Brown Brown,7
+1425573,12,Delia Urbina de Guevara,6
+1426183,1,Colegio Bilingue San Francisco de Asis,16
+1426183,2,Liceo Sinai,12
+1426183,3,CTP de Santa Elena,10.5
+1426183,4,Liceo Experimental Bilingue Claudio Bonilla A,10.5
+1426183,5,Colegio Indigena Sulayom,7.5
+1426183,6,CTP Granadilla,7
+1426183,7,Centro Educativo Lakeside International Schoo,6
+1426183,8,Liceo Laboratorio de Liberia,10.5
+1426183,9,Liceo Experimental Bilingue de Grecia,10
+1426183,10,CTP Talamanca,5.5
+1426183,11,Liceo Santa Teresita,4.5
+1426189,1,CTP Talamanca,19
+1426189,2,Liceo Experimental Bilingue de Pococi,16
+1426189,3,Liceo Sinai,12.5
+1426189,4,Liceo Maurilio Alvarado Vargas,11
+1426189,5,Instituto Educativo San Gerardo,10
+1426189,6,CTP La Suiza,8
+1426189,7,Liceo Anastasio Alfaro,7.5
+1431104,1,Escuela y Colegio del Valle,14
+1431104,2,Colegio Humboldt,14
+1431104,3,Caspari Montessori International School,13.5
+1431104,4,Escuela Laboratorio,12.5
+1431104,5,Escuela Interamericana Catie,12
+1431104,6,Laboratorio John Fitzgerald Kennedy,11
+1431104,7,Lakeside International School,8.5
+1431104,8,Bernardo Drug Ingermann,8.5
+1431104,9,Escuela San Rafael,9.5
+1431104,10,Escuela Puerto Viejo,7.5
+1431104,11,Delia Urbina de Guevara,5
+1431104,12,Escuela Isabel Brown Brown,4
+1431125,1,Escuela Bello Horizonte,17
+1431125,2,Escuela y colegio Del Valle,15
+1431125,3,Centro Educativo Cecilio Lindo,12
+1431125,4,Escuela IDA los Lagos,12
+1431125,5,Escuela Los Corales,11
+1431125,6,Escuela Santiago Crespo Calvo,7
+1431125,7,Escuela Alba Ocampo Alvarado,6
+1431125,8,Escuela Anita Grande,10
+1431125,9,Escuela Isabel Brown Brown,6
+1431125,10,Caspari Montessori International School,3
+1431125,11,Escuela Pavones,1
