@@ -1260,7 +1260,8 @@ html.modo-proyector .proyector-columna:has(> #presentacion-caja:not([hidden])) >
 html.modo-proyector .presentacion-sin-proyector { display: none !important; }
 /* A pantalla completa (el botón ⛶ de la tarjeta): la lámina tan grande como quepa. */
 #presentacion-caja:fullscreen { max-width: none; display: flex; flex-direction: column; justify-content: center; background: #0b1220; border-radius: 0; overflow-y: auto; }
-#presentacion-caja:fullscreen .presentacion-img { max-height: calc(100vh - 9rem); width: auto; max-width: 100%; margin: 0 auto; }
+#presentacion-caja:fullscreen .presentacion-lienzo { width: fit-content; max-width: 100%; margin: 0 auto; }
+#presentacion-caja:fullscreen .presentacion-img { max-height: calc(100vh - 9rem); width: auto; max-width: 100%; }
 /* Sobre el fondo oscuro, los textos de la tarjeta en claro (eran gris oscuro y no se leían). */
 #presentacion-caja:fullscreen #presentacion-titulo,
 #presentacion-caja:fullscreen #presentacion-cuenta,
@@ -1280,9 +1281,20 @@ html.modo-proyector .presentacion-sin-proyector { display: none !important; }
 }
 .presentacion-mini > * { width: 100%; height: 100%; max-width: none; border-width: 0; border-radius: 0; box-shadow: none; }
 /* Con el tablero a la vista, la lámina se corre a la izquierda y le deja su lugar: no tapa nada. */
-#presentacion-caja:fullscreen:has(.presentacion-mini:not([hidden])) .presentacion-img {
+#presentacion-caja:fullscreen:has(.presentacion-mini:not([hidden])) .presentacion-lienzo {
   margin-left: 0; max-width: calc(100% - min(32vh, 26vw) - 2rem);
 }
+/* La pizarra del profe (js/clase-pizarra.js): un SVG justo encima de la imagen.
+   Su viewBox es el de la imagen y preserveAspectRatio el mismo «contain» de la
+   imagen, así que una marca cae en el mismo punto de la diapositiva en todas
+   las pantallas. Solo recibe el puntero cuando el profe está dibujando. */
+.presentacion-lienzo { position: relative; }
+.presentacion-pizarra { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: hidden; }
+.presentacion-pizarra.dibujando { pointer-events: auto; touch-action: none; cursor: crosshair; }
+.presentacion-pizarra.borrando { cursor: cell; }
+#presentacion-caja:fullscreen #presentacion-mis-notas label,
+#presentacion-caja:fullscreen #presentacion-nota-msg,
+#presentacion-caja:fullscreen #pizarra-msg { color: #f1f5f9; }
 
 /* La vista limpia de los alumnos (presentacion.limpia, js/clase-presentacion.js):
    la diapositiva, el tablero y el chat, como en el proyector. Por LISTA NEGRA a

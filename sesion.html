@@ -378,7 +378,12 @@
                         <!-- En pantalla completa, el tablero de la clase en pequeño (una copia de lo que
                              muestra #chessboard, ver copiarTableroMini). -->
                         <div id="presentacion-mini" hidden aria-hidden="true" class="presentacion-mini"></div>
-                        <img id="presentacion-img" alt="" class="presentacion-img block w-full h-auto aspect-video object-contain rounded-lg bg-white border border-brand-200 dark:border-brand-700">
+                        <!-- La diapositiva y, encima, la pizarra del profe (js/clase-pizarra.js): sus
+                             rayas, flechas y círculos, que ve toda la clase. Solo dibuja el profe. -->
+                        <div id="presentacion-lienzo" class="presentacion-lienzo">
+                            <img id="presentacion-img" alt="" class="presentacion-img block w-full h-auto aspect-video object-contain rounded-lg bg-white border border-brand-200 dark:border-brand-700">
+                            <svg id="presentacion-pizarra" class="presentacion-pizarra" aria-hidden="true" focusable="false" preserveAspectRatio="xMidYMid meet" viewBox="0 0 1000 563"></svg>
+                        </div>
                         <details class="presentacion-sin-proyector mt-2">
                             <summary class="cursor-pointer text-xs font-semibold text-brand-700 dark:text-brand-200 marker:text-accent-600">Leer el texto de la diapositiva</summary>
                             <p id="presentacion-texto" class="text-sm text-brand-700 dark:text-brand-200 mt-1"></p>
@@ -388,10 +393,39 @@
                                 <button id="presentacion-anterior" type="button" class="min-h-[44px] sm:min-h-[2.25rem] text-sm font-semibold px-4 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">◀ </span>Anterior</button>
                                 <button id="presentacion-siguiente" type="button" class="min-h-[44px] sm:min-h-[2.25rem] text-sm font-semibold px-4 py-1.5 rounded-lg bg-accent-500 hover:bg-accent-600 text-brand-900 transition-colors disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Siguiente<span aria-hidden="true"> ▶</span></button>
                                 <button id="presentacion-limpia" type="button" aria-pressed="false" title="A cada alumno le queda solo la diapositiva, el tablero y el chat; las preguntas y las prácticas le salen encima" class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 aria-pressed:bg-accent-500 aria-pressed:text-brand-900 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">🧹 Vista limpia para los alumnos</button>
+                                <button id="pizarra-btn" type="button" aria-pressed="false" aria-controls="pizarra-herramientas" title="Dibujar sobre la diapositiva: rayas, flechas, círculos y resaltador. Toda la clase ve lo que marcas" class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 aria-pressed:bg-accent-500 aria-pressed:text-brand-900 dark:aria-pressed:bg-accent-500 dark:aria-pressed:text-brand-900 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">✏️ </span>Pizarra</button>
                                 <button id="presentacion-quitar" type="button" class="ml-auto text-xs font-semibold px-3 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">⏹ </span>Quitar de la clase</button>
+                            </div>
+                            <!-- Las herramientas de la pizarra (js/clase-pizarra.js): se dibuja con el
+                                 dedo, el mouse o el lápiz sobre la diapositiva. -->
+                            <div id="pizarra-herramientas" hidden class="mt-2 rounded-lg border border-brand-200 dark:border-brand-700 p-2 space-y-1.5">
+                                <div class="flex flex-wrap items-center gap-1.5" role="group" aria-label="Qué dibujar">
+                                    <button type="button" data-pizarra-herramienta="lapiz" aria-pressed="true" class="text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 aria-pressed:bg-accent-500 aria-pressed:text-brand-900 dark:aria-pressed:bg-accent-500 dark:aria-pressed:text-brand-900 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">✏️ </span>Lápiz</button>
+                                    <button type="button" data-pizarra-herramienta="linea" aria-pressed="false" class="text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 aria-pressed:bg-accent-500 aria-pressed:text-brand-900 dark:aria-pressed:bg-accent-500 dark:aria-pressed:text-brand-900 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">➖ </span>Línea</button>
+                                    <button type="button" data-pizarra-herramienta="flecha" aria-pressed="false" class="text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 aria-pressed:bg-accent-500 aria-pressed:text-brand-900 dark:aria-pressed:bg-accent-500 dark:aria-pressed:text-brand-900 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">➡️ </span>Flecha</button>
+                                    <button type="button" data-pizarra-herramienta="circulo" aria-pressed="false" class="text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 aria-pressed:bg-accent-500 aria-pressed:text-brand-900 dark:aria-pressed:bg-accent-500 dark:aria-pressed:text-brand-900 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">⭕ </span>Círculo</button>
+                                    <button type="button" data-pizarra-herramienta="resaltador" aria-pressed="false" class="text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 aria-pressed:bg-accent-500 aria-pressed:text-brand-900 dark:aria-pressed:bg-accent-500 dark:aria-pressed:text-brand-900 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">🖍️ </span>Resaltador</button>
+                                    <button type="button" data-pizarra-herramienta="borrador" aria-pressed="false" title="Toca o arrastra sobre una marca para borrarla" class="text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 aria-pressed:bg-accent-500 aria-pressed:text-brand-900 dark:aria-pressed:bg-accent-500 dark:aria-pressed:text-brand-900 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">🧽 </span>Borrador</button>
+                                </div>
+                                <div id="pizarra-colores" class="flex flex-wrap items-center gap-1.5" role="group" aria-label="Color"></div>
+                                <div class="flex flex-wrap items-center gap-1.5">
+                                    <button id="pizarra-deshacer" type="button" class="text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 aria-pressed:bg-accent-500 aria-pressed:text-brand-900 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 disabled:opacity-50"><span aria-hidden="true">↶ </span>Deshacer</button>
+                                    <button id="pizarra-limpiar" type="button" class="text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 aria-pressed:bg-accent-500 aria-pressed:text-brand-900 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 disabled:opacity-50"><span aria-hidden="true">🗑 </span>Borrar todo</button>
+                                    <p id="pizarra-msg" role="status" aria-live="polite" class="text-xs text-brand-700 dark:text-brand-200"></p>
+                                </div>
                             </div>
                             <p id="presentacion-sigue" class="text-xs text-brand-500 dark:text-brand-300 mt-1.5"></p>
                             <p id="presentacion-notas" hidden class="text-xs text-brand-700 dark:text-brand-200 bg-accent-50 dark:bg-brand-950 rounded-lg px-3 py-2 mt-1.5"></p>
+                            <!-- Las notas del profe para esta diapositiva: recordatorios que solo ve él
+                                 (presentacion_notas, la RLS no se las da a nadie más). -->
+                            <div id="presentacion-mis-notas" class="mt-2">
+                                <label for="presentacion-nota" class="block text-xs font-semibold text-brand-700 dark:text-brand-200"><span aria-hidden="true">📝 </span>Tus notas de esta diapositiva <span class="font-normal">(solo las ves tú)</span></label>
+                                <textarea id="presentacion-nota" rows="2" maxlength="2000" placeholder="Un recordatorio: qué preguntar, qué ejemplo dar, cuánto tiempo…" class="mt-1 w-full text-sm bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-1.5 text-brand-800 dark:text-brand-100 focus:outline-none focus:ring-2 focus:ring-accent-500"></textarea>
+                                <div class="flex flex-wrap items-center gap-2 mt-1">
+                                    <button id="presentacion-nota-guardar" type="button" class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Guardar la nota</button>
+                                    <p id="presentacion-nota-msg" role="status" aria-live="polite" class="text-xs text-brand-500 dark:text-brand-300"></p>
+                                </div>
+                            </div>
                             <div id="presentacion-posiciones" hidden class="mt-2 border-t border-brand-200 dark:border-brand-700 pt-2"></div>
                         </div>
                     </section>
@@ -1579,6 +1613,7 @@
     <script src="js/clase-herramientas-grandes.js"></script>
     <script src="js/clase-buscar.js"></script>
     <script src="js/clase-presentacion.js"></script>
+    <script src="js/clase-pizarra.js"></script>
     <script src="js/foto-perfil.js"></script>
     <script src="js/cursos-ocultos.js"></script>
     <!-- Después de cursos-ocultos.js: la lista del material la consulta. -->
