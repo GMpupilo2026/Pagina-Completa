@@ -1994,7 +1994,7 @@ la vitrina de Herramientas con `gratis: true`.
   el que lo lleva («Pacto del Jocote» con «Escuela Pacto del Jocote») solo si
   hay UNA forma con tipo: con «Escuela Lepanto» y «Colegio Lepanto» a la vez,
   «Lepanto» queda solo, porque pueden ser dos instituciones (con los datos
-  reales, de 1927 nombres quedaron 1655). Lo demás se junta a mano en
+  reales, unos 250 nombres menos). Lo demás se junta a mano en
   `herramientas/datos/ajedrez-estudiantil-instituciones.csv` («variante,nombre»).
   «CRC», «Costa Rica», un número o la celda vacía no son un colegio. El nombre
   que se muestra es la variante más usada que no viene toda en mayúsculas.
