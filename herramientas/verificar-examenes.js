@@ -105,6 +105,20 @@ window.__llamadas = [];
     functions: { invoke: (n, o) => { window.__llamadas.push({ fn: n, body: o && o.body }); return Promise.resolve({ data: { enviados: 1 }, error: null }); } },
     rpc: function (nombre, args) {
       window.__llamadas.push({ rpc: nombre, args: args });
+      if (nombre === "diagnostico_items_para_examen") {
+        // El doble de diagnostico_items_para_examen(): a quien da clase le
+        // entrega esas pocas preguntas ya armadas como visible/clave —el
+        // mismo trabajo que antes hacía deOpcion() en el navegador—, nunca
+        // el banco entero. Acá no hace falta que la clave sea la posta (de
+        // eso se encarga la parte 1, sin navegador): alcanza con que tenga
+        // la forma correcta y que lo visible no delate la respuesta.
+        const items = (args.p_ids || []).map((id, i) => ({
+          tipo: "opcion", banco: "diagnostico", item_id: id, area: "finales", peso: (i % 5) + 1,
+          visible: { enunciado: "Pregunta " + id, opciones: ["a", "b", "c", "d"], fen: null, explica: "" },
+          clave: { correcta: "0" },
+        }));
+        return Promise.resolve({ data: items, error: null });
+      }
       if (nombre === "examen_para_alumno") {
         return Promise.resolve({ data: JSON.parse(JSON.stringify(EX)), error: null });
       }
@@ -181,17 +195,67 @@ async function main() {
     const win = {};
     const cargar = (f) => new Function("window", fs.readFileSync(path.join(RAIZ, f), "utf8"))(win);
     cargar("js/plan-entrenamiento.js");
+    // js/diagnostico-items.js (con las respuestas) ya no se publica — ver
+    // «Diagnóstico» en docs/decisiones/entrenamiento.md. examen-banco.js
+    // sortea sobre el catálogo público (sin respuestas) y completa esas
+    // pocas preguntas pidiéndoselas al servidor (diagnostico_items_para_examen,
+    // SECURITY DEFINER). Acá se carga igual el banco entero —con sus
+    // respuestas— porque esta comprobación SÍ necesita saber cuál era la
+    // correcta para verificar que el servidor no la pierda al barajar; pero
+    // se usa solo como la "base de verdad" del test, nunca como lo que
+    // recibiría un navegador real.
     cargar("js/diagnostico-items.js");
     cargar("js/arbitraje-items.js");
     cargar("js/aperturas-lineas.js");
     cargar("js/examen-banco.js");
     const B = win.ExamenBanco;
+    win.DIAGNOSTICO_CATALOGO = (win.DIAGNOSTICO_ITEMS || []).map((i) => ({ id: i.id, area: i.area, peso: i.peso, tipo: i.tipo }));
     const porId = {};
     (win.DIAGNOSTICO_ITEMS || []).forEach((i) => { porId[i.id] = i; });
 
+    /* examen-banco.js llama a la función SQL diagnostico_items_para_examen()
+       por `sb.rpc(...)` para completar las preguntas del diagnóstico (ver
+       completar() en js/examen-banco.js). Sin una base de verdad delante,
+       se simula acá con el MISMO algoritmo que la función SQL: barajar las
+       opciones y decir dónde quedó la correcta. Si alguno de los dos
+       cambia y el otro no, esta comprobación es la que tiene que notarlo. */
+    function azarSimple() {
+      let s = 1;
+      return () => { s ^= s << 13; s >>>= 0; s ^= s >> 17; s ^= s << 5; s >>>= 0; return s / 4294967296; };
+    }
+    global.sb = {
+      rpc: (nombre, args) => {
+        if (nombre !== "diagnostico_items_para_examen") return Promise.resolve({ data: null, error: { message: "rpc no simulada: " + nombre } });
+        const rnd = azarSimple();
+        const salida = (args.p_ids || []).map((id) => {
+          const it = porId[id];
+          if (it.tipo === "opcion" || it.tipo === "opcion_tablero") {
+            const conIndice = it.opciones.map((texto, i) => ({ texto, i }));
+            const mezcladas = B._barajar(conIndice, rnd);
+            const correcta = mezcladas.findIndex((o) => o.i === it.correcta);
+            return { tipo: it.tipo, banco: "diagnostico", item_id: it.id, area: it.area, peso: it.peso,
+              visible: { enunciado: it.enunciado, opciones: mezcladas.map((o) => o.texto), fen: it.fen || null, explica: it.explica || "" },
+              clave: { correcta: String(correcta) } };
+          }
+          if (it.tipo === "jugada") {
+            const todas = [it.solucion].concat(it.alternas || []);
+            return { tipo: "jugada", banco: "diagnostico", item_id: it.id, area: it.area, peso: it.peso,
+              visible: { enunciado: it.enunciado, fen: it.fen, explica: it.explica || "" },
+              clave: { jugadas: todas.map((j) => ({ from: j.from, to: j.to })) } };
+          }
+          const todas = [it.solucion].concat(it.alternas || []);
+          return { tipo: "casilla", banco: "diagnostico", item_id: it.id, area: it.area, peso: it.peso,
+            visible: { enunciado: it.enunciado, fen: it.fen, explica: it.explica || "" },
+            clave: { casillas: todas } };
+        });
+        return Promise.resolve({ data: salida, error: null });
+      },
+    };
+
     let revisadas = 0, malClave = 0, filtradas = 0;
     for (let s = 1; s <= 40; s++) {
-      const ex = B.armar({ fuente: "areas", areas: [], cantidad: 40, dificultad: { min: 1, max: 5 }, semilla: s });
+      const armadas = B.armar({ fuente: "areas", areas: [], cantidad: 40, dificultad: { min: 1, max: 5 }, semilla: s });
+      const ex = await B.completar(armadas);
       ex.forEach((e) => {
         const orig = porId[e.item_id];
         revisadas++;

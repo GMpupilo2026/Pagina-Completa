@@ -18,12 +18,16 @@
  * "diagnostico" (EntrenoProgress), que es lo que lee Informes para armar el
  * informe del alumno y su plan de entrenamiento.
  */
-/* El banco tiene más ítems de los que se preguntan: cada prueba sortea los
-   suyos (DiagnosticoPrueba, en js/diagnostico-items.js). ITEMS son los de ESTA
-   prueba —siempre 63, siempre 180 puntos, siempre 7 por área—, y sus ids
-   quedan guardados en el estado para poder retomarla igual y para volver a
-   mostrar el resultado con las preguntas que de verdad se hicieron. */
-const PRUEBA = window.DiagnosticoPrueba;
+/* El banco (centenares de preguntas, con su respuesta y su explicación) ya no viaja al
+   navegador: vive en Supabase (public.diagnostico_items), sin política de
+   select para nadie. `diagnostico_armar()` sortea los 60 de ESTA prueba y
+   entrega solo lo visible —nunca la respuesta—; `diagnostico_responder()`
+   califica cada una en el servidor; `diagnostico_terminar()` entrega la clave
+   de esos 60, ya con la prueba cerrada, para la revisión final. Ver
+   «Diagnóstico» en docs/decisiones/entrenamiento.md. ITEMS son los de ESTA
+   prueba, y su `sesion` (el id que devuelve diagnostico_armar) queda guardada
+   en el estado para poder retomarla igual y para volver a mostrar el
+   resultado con las preguntas que de verdad se hicieron. */
 const PE = window.PlanEntrenamiento;
 let ITEMS = [];
 const ESTADO_KEY = 'diagnostico_estado_v1';
@@ -68,7 +72,7 @@ const GLYPH = {
 };
 const FILES = ['a','b','c','d','e','f','g','h'];
 
-let estado = { perfil: {}, idx: 0, respuestas: {}, items: [] };
+let estado = { perfil: {}, sesion: null, idx: 0, respuestas: {}, items: [] };
 let perfilCuenta = null;   // profiles: { elo, elo_tipo } del alumno (Configuración › Perfil)
 let sesionActual = null;   // sesión de Supabase (la fija init); null = visitante sin cuenta
 /* El enlace propio de un supervisor (entreno/diagnostico.html?s=<código>): el
@@ -86,7 +90,12 @@ let origenElegido = null;  // casilla de origen en los ítems de jugada
 /* ---------------- Estado guardado ---------------- */
 let pruebaVieja = false;   // había una a medias, de una versión anterior
 
-function cargarEstado() {
+/* Ya no reconstruye ITEMS de un banco local: le pregunta al servidor por la
+   sesión guardada (diagnostico_sesion_estado), que es quien de verdad sabe
+   qué 60 ítems tocaron y cuáles ya se contestaron. Si la sesión ya no existe
+   (se borró, es de otra cuenta, pasó mucho tiempo), se descarta como si fuera
+   de otra versión: no hay con qué retomarla. */
+async function cargarEstado() {
   let crudo = null;
   try { crudo = JSON.parse(localStorage.getItem(ESTADO_KEY) || 'null'); } catch (e) {}
   if (!crudo || !crudo.estado) return;
@@ -97,11 +106,21 @@ function cargarEstado() {
     return;
   }
   estado = crudo.estado;
-  ITEMS = PRUEBA.porIds(estado.items);
-  // Si el banco cambió y algún ítem ya no existe, se completa la prueba con
-  // otros del área que falte, en vez de dejarla corta.
-  if (ITEMS.length !== PRUEBA.TOTAL) ITEMS = PRUEBA.armar(ITEMS.map((i) => i.id));
-  estado.items = ITEMS.map((i) => i.id);
+  if (!estado.sesion) { borrarPrueba(); return; }
+  try {
+    const { data, error } = await sb.rpc('diagnostico_sesion_estado', { p_sesion: estado.sesion });
+    if (error || !data) throw error || new Error('sin datos');
+    ITEMS = data.items || [];
+    estado.items = ITEMS.map((i) => i.id);
+    estado.respuestas = data.respondidas || {};
+    estado.idx = ITEMS.findIndex((it) => !(it.id in estado.respuestas));
+    if (estado.idx === -1) estado.idx = ITEMS.length;
+    guardarEstado();
+  } catch (e) {
+    // Sesión vencida o de otra cuenta: no hay nada que retomar.
+    pruebaVieja = (estado.idx || 0) > 0;
+    borrarPrueba();
+  }
 }
 function guardarEstado() {
   // «guardado» es lo que permite saber, en otro aparato, que esta prueba a
@@ -111,8 +130,18 @@ function guardarEstado() {
 }
 function borrarEstado() {
   try { localStorage.removeItem(ESTADO_KEY); } catch (e) {}
-  estado = { perfil: {}, idx: 0, respuestas: {}, items: [] };
+  estado = { perfil: {}, sesion: null, idx: 0, respuestas: {}, items: [] };
   ITEMS = [];
+}
+/* Como borrarEstado(), pero sin perder el perfil ni los datos del visitante
+   (nombre, correo, a quién le llega su resultado): una sesión del servidor
+   que ya no sirve no tiene por qué hacerle repetir esos datos desde cero. */
+function borrarPrueba() {
+  const perfil = estado.perfil, visitante = estado.visitante;
+  borrarEstado();
+  estado.perfil = perfil || {};
+  if (visitante) estado.visitante = visitante;
+  guardarEstado();
 }
 function resultadoGuardado() {
   try { return JSON.parse(localStorage.getItem(RESULTADO_KEY) || 'null'); } catch (e) { return null; }
@@ -230,7 +259,7 @@ function irA(vista) {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-function empezar() {
+async function empezar() {
   if (!sesionActual) {
     const nombre = document.getElementById('visitante-nombre').value.trim();
     const email = document.getElementById('visitante-email').value.trim();
@@ -244,8 +273,28 @@ function empezar() {
       destino: enlaceSupervisor ? enlaceSupervisor.destino : null };
     guardarEstado();
   }
+  const error = document.getElementById('empezar-error');
   if (!ITEMS.length || estado.idx >= ITEMS.length) {
-    ITEMS = PRUEBA.armar();
+    const btn = document.getElementById('start-btn');
+    const textoOriginal = btn.textContent;
+    error.classList.add('hidden');
+    btn.disabled = true;
+    btn.textContent = 'Preparando tu prueba…';
+    let armada = null;
+    try {
+      const { data, error: err } = await sb.rpc('diagnostico_armar');
+      if (err) throw err;
+      armada = data;
+    } catch (e) {}
+    btn.disabled = false;
+    btn.textContent = textoOriginal;
+    if (!armada || !Array.isArray(armada.items) || !armada.items.length) {
+      error.textContent = 'No se pudo preparar la prueba: revisa tu conexión e intenta otra vez.';
+      error.classList.remove('hidden');
+      return;
+    }
+    estado.sesion = armada.sesion;
+    ITEMS = armada.items;
     estado.items = ITEMS.map((i) => i.id);
     estado.idx = 0;
     estado.respuestas = {};
@@ -421,9 +470,9 @@ function preguntaDicha() {
  * contestando a ciegas una pregunta que nunca oyó. El aviso es región viva, así
  * que se lee solo. Los botones de opción NO avanzan: ahí se ve la pantalla y
  * poder cambiar de idea antes de seguir es lo normal. */
-function avanzarEscribiendo(resumen) {
+async function avanzarEscribiendo(resumen) {
   const ultima = esUltima();
-  siguiente();
+  await siguiente();
   if (ultima) return;   // la prueba terminó: ya no hay cuadro que llenar
   comandos.decir(`${resumen} ${preguntaDicha()}`);
   comandos.enfocar();
@@ -666,28 +715,40 @@ function responderJugada(juego, intento) {
   document.getElementById('next-btn').disabled = false;
 }
 
-function coincideJugada(respuesta, jugada) {
-  return !!respuesta.from && respuesta.from === jugada.from && respuesta.to === jugada.to &&
-    (!jugada.promotion || respuesta.promotion === jugada.promotion);
+/* Lo que entiende diagnostico_responder() según el tipo de ítem. Quien
+   califica ahora es el servidor —ahí vive la respuesta correcta—, así que acá
+   solo se empaqueta lo que el alumno eligió, igual para cualquier tipo. */
+function respuestaParaServidor(item, respuesta) {
+  if (respuesta === null || respuesta === undefined || respuesta === NO_SE) return { nose: true };
+  if (item.tipo === 'opcion' || item.tipo === 'opcion_tablero') return { opcion: respuesta };
+  if (item.tipo === 'casilla') return { casilla: respuesta };
+  return { from: respuesta.from, to: respuesta.to, promotion: respuesta.promotion || null };
 }
 
-function esCorrecta(item, respuesta) {
-  if (respuesta === null || respuesta === undefined || respuesta === NO_SE) return false;
-  if (item.tipo === 'opcion' || item.tipo === 'opcion_tablero') return respuesta === item.correcta;
-  if (item.tipo === 'casilla') return respuesta === item.solucion;
-  if (item.tipo === 'jugada') {
-    // Algunos ítems tienen más de una jugada válida para el mismo enunciado
-    // (ver el comentario sobre `alternas` al inicio de js/diagnostico-items.js).
-    if (coincideJugada(respuesta, item.solucion)) return true;
-    return !!(item.alternas && item.alternas.some((alt) => coincideJugada(respuesta, alt)));
+async function siguiente() {
+  const item = itemActual;
+  const dada = seleccion;
+  const btn = document.getElementById('next-btn');
+  const textoOriginal = btn.textContent;
+  btn.disabled = true;
+  let ok = false;
+  try {
+    const { data, error } = await sb.rpc('diagnostico_responder', {
+      p_sesion: estado.sesion, p_item: item.id, p_respuesta: respuestaParaServidor(item, dada),
+    });
+    if (error) throw error;
+    ok = !!data;
+  } catch (e) {
+    btn.disabled = false;
+    btn.textContent = textoOriginal;
+    document.getElementById('q-hint').textContent = 'No se pudo enviar tu respuesta: revisa tu conexión e intenta otra vez.';
+    return;
   }
-  return false;
-}
-
-function siguiente() {
-  estado.respuestas[itemActual.id] = { dada: seleccion, ok: esCorrecta(itemActual, seleccion) };
+  estado.respuestas[item.id] = { dada, ok };
   estado.idx++;
   guardarEstado();
+  btn.disabled = false;
+  btn.textContent = textoOriginal;
   if (estado.idx >= ITEMS.length) { terminar(); return; }
   pintarItem();
 }
@@ -740,6 +801,21 @@ async function terminar() {
   detalle.nivel = resumen.nivel.clave;
   detalle.nivel_etiqueta = resumen.nivel.etiqueta;
 
+  // La clave de estos 60 ítems, para la revisión de abajo (igual que la hoja
+  // de un examen ya corregido): solo existe una vez que diagnostico_responder
+  // ya marcó la sesión como terminada, que es justo lo que acaba de pasar.
+  // Se guarda SOLO en este aparato (localStorage): training_progress y
+  // diagnosticos_publicos tienen un tope de tamaño por fila
+  // (diagnosticos_publicos_insert exige pg_column_size(detalle) < 60000) y
+  // Informes nunca mostró la revisión pregunta por pregunta, solo el
+  // resumen por área — así que no hace falta mandarlo.
+  try {
+    const { data: completos, error: errC } = await sb.rpc('diagnostico_terminar', { p_sesion: estado.sesion });
+    if (!errC && Array.isArray(completos)) detalle.itemsCompletos = completos;
+  } catch (e) {}
+  const detalleParaGuardar = Object.assign({}, detalle);
+  delete detalleParaGuardar.itemsCompletos;
+
   try {
     localStorage.setItem(RESULTADO_KEY, JSON.stringify({
       fecha: detalle.fecha, porcentaje: resumen.porcentaje, nivel: resumen.nivel.etiqueta, detalle,
@@ -764,7 +840,7 @@ async function terminar() {
       const { error } = await sb.from('diagnosticos_publicos').insert([{
         nombre: v.nombre, email: v.email || null, telefono: v.telefono || null,
         elo: detalle.perfil.elo || null, elo_tipo: detalle.perfil.elo ? detalle.perfil.elo_tipo : null,
-        porcentaje: resumen.porcentaje, nivel: resumen.nivel.etiqueta, detalle,
+        porcentaje: resumen.porcentaje, nivel: resumen.nivel.etiqueta, detalle: detalleParaGuardar,
         enlace: v.enlace || null,
       }]);
       ok = !error;
@@ -781,7 +857,7 @@ async function terminar() {
       perfilCuenta = { elo: detalle.perfil.elo, elo_tipo: detalle.perfil.elo_tipo };
     } catch (e) {}
   }
-  const subida = subirResultado(detalle);
+  const subida = subirResultado(detalleParaGuardar);
   borrarEstado();
   document.getElementById('result-saved').textContent = 'Guardando tu resultado…';
   try {
@@ -797,9 +873,11 @@ async function terminar() {
    guardados traen la lista de ítems (`items`), y los de antes del sorteo se
    reconstruyen con las respuestas que quedaron anotadas. */
 function itemsDelResultado(detalle) {
-  if (Array.isArray(detalle.items) && detalle.items.length) return PRUEBA.porIds(detalle.items);
-  const ids = Object.keys(detalle.respuestas || {});
-  return ids.length ? PRUEBA.porIds(ids) : ITEMS;
+  if (Array.isArray(detalle.itemsCompletos) && detalle.itemsCompletos.length) return detalle.itemsCompletos;
+  // Resultado de antes de este cambio (sin itemsCompletos guardado): ya no
+  // hay banco local del que reconstruirlo. El resto del resultado se ve
+  // igual; mostrarResultado() se salta la revisión pregunta por pregunta.
+  return [];
 }
 
 /* La escalera de dificultad: de dónde sale el nivel. Se muestra entera para
@@ -1044,7 +1122,11 @@ function mostrarResultado(detalle, reciente) {
 
   const review = document.getElementById('result-review');
   review.innerHTML = '';
-  itemsDelResultado(detalle).forEach((item, i) => {
+  const itemsRevision = itemsDelResultado(detalle);
+  if (!itemsRevision.length) {
+    review.innerHTML = '<p class="text-sm text-brand-450 dark:text-brand-350">La revisión pregunta por pregunta de este diagnóstico ya no está disponible. Haz uno nuevo para ver cada pregunta con su respuesta.</p>';
+  }
+  itemsRevision.forEach((item, i) => {
     const ok = detalle.respuestas[item.id];
     const dijoNoSaber = !!(detalle.nosabe && detalle.nosabe[item.id]);
     const det = document.createElement('details');
@@ -1227,7 +1309,7 @@ async function init() {
   // Baja el progreso de la cuenta antes de leer el estado guardado: si la prueba
   // se empezó en otro aparato, se retoma donde iba.
   await ProgresoUsuario.init();
-  cargarEstado();
+  await cargarEstado();
   // Si quedó un resultado terminado sin subir (se cerró la prueba sin internet
   // o la base lo rechazó), se reintenta ahora, en silencio y sin trabar la
   // página. Mientras no suba, el aviso del recuadro de arriba lo dice.

@@ -67,6 +67,18 @@ window.sb = {
     const cod = args && args.p_codigo;
     if (n === "enlace_diagnostico_publico") return Promise.resolve({ data: ${JSON.stringify(DESTINOS)}[cod] || null, error: null });
     if (n === "enlace_diagnostico_marca") { const m = ${JSON.stringify(MARCAS)}[cod]; return Promise.resolve({ data: m ? [m] : [], error: null }); }
+    // El doble de las funciones del diagnóstico (ver «Diagnóstico» en
+    // docs/decisiones/entrenamiento.md): acá no importa EL contenido, solo
+    // que la prueba se pueda hacer de punta a punta contestando "no lo sé".
+    if (n === "diagnostico_armar") {
+      const items = Array.from({ length: 3 }, (_, i) => ({
+        id: "falso-" + i, area: "reglas", peso: 1, elo: 800, eloBase: 800, tipo: "opcion",
+        enunciado: "Pregunta de mentira " + i, opciones: ["a", "b", "c", "d"], fen: null,
+      }));
+      return Promise.resolve({ data: { sesion: "sesion-falsa", items }, error: null });
+    }
+    if (n === "diagnostico_responder") return Promise.resolve({ data: false, error: null });
+    if (n === "diagnostico_terminar") return Promise.resolve({ data: [], error: null });
     return Promise.resolve({ data: null, error: null });
   },
   channel: () => ({ on() { return this; }, subscribe() { return this; } }),

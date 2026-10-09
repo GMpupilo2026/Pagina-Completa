@@ -507,8 +507,25 @@ async function ponerExamen(ev) {
   // acá mandaría un examen distinto del que se midió.
   const prev = refrescarPrevision();
   if (prev.error) { status.textContent = prev.error; return; }
-  const items = prev.items;
-  if (!items.length) { status.textContent = "Con ese filtro no sale ninguna pregunta."; return; }
+  if (!prev.items.length) { status.textContent = "Con ese filtro no sale ninguna pregunta."; return; }
+
+  // Las del diagnóstico llegan de la previsión sin su contenido real (solo
+  // id/área/peso/tipo, del catálogo público): acá se completan con su
+  // enunciado y su clave, pedidas al servidor por esas pocas preguntas y
+  // nunca con el banco entero. Las de otros bancos ya llegan completas.
+  const btnPoner = $("poner-btn");
+  btnPoner.disabled = true;
+  status.textContent = "Preparando las preguntas…";
+  let items;
+  try {
+    items = await ExamenBanco.completar(prev.items);
+  } catch (e) {
+    btnPoner.disabled = false;
+    status.textContent = e.message;
+    return;
+  }
+  btnPoner.disabled = false;
+  status.textContent = "";
 
   const minutos = modoRecomendado() ? prev.minutos : (parseInt($("e-minutos").value, 10) || 0);
   if (minutos < items.length) {
