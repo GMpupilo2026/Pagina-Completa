@@ -2,7 +2,7 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://ajedrez-integral.com/ajedrez-estudiantil.html</loc>
-    <lastmod>2026-10-08</lastmod>
+    <lastmod>2026-10-09</lastmod>
     <priority>0.6</priority>
   </url>
   <url>
@@ -151,14 +151,14 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://ajedrez-integral.com/</loc>
-    <lastmod>2026-10-04</lastmod>
-    <priority>1.0</priority>
+    <loc>https://ajedrez-integral.com/herramientas-arbitraje.html</loc>
+    <lastmod>2026-10-09</lastmod>
+    <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://ajedrez-integral.com/herramientas-arbitraje.html</loc>
-    <lastmod>2026-10-08</lastmod>
-    <priority>0.6</priority>
+    <loc>https://ajedrez-integral.com/</loc>
+    <lastmod>2026-10-09</lastmod>
+    <priority>1.0</priority>
   </url>
   <url>
     <loc>https://ajedrez-integral.com/inscripcion.html</loc>
@@ -167,7 +167,12 @@
   </url>
   <url>
     <loc>https://ajedrez-integral.com/nivel-de-arbitraje.html</loc>
-    <lastmod>2026-10-04</lastmod>
+    <lastmod>2026-10-09</lastmod>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://ajedrez-integral.com/pareo-manual.html</loc>
+    <lastmod>2026-10-08</lastmod>
     <priority>0.6</priority>
   </url>
   <url>
@@ -212,7 +217,7 @@
   </url>
   <url>
     <loc>https://ajedrez-integral.com/torneos-en-vivo.html</loc>
-    <lastmod>2026-10-04</lastmod>
+    <lastmod>2026-10-08</lastmod>
     <priority>0.6</priority>
   </url>
   <url>

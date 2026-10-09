@@ -35,6 +35,11 @@ promo/
 CLAUDE.md
 docs
 .mcp.json
+# Las habilidades de Claude Code (.claude/skills/): instrucciones de trabajo,
+# como el informe del CCDR. No las pide ninguna página.
+.claude
+# Los datos del informe del CCDR, si alguien los dejó acá (ver .gitignore).
+informes-ccdr
 node_modules
 package.json
 package-lock.json
@@ -54,6 +59,7 @@ herramientas/video
 herramientas/datos
 herramientas/libro-ninos
 herramientas/mil-lecciones
+herramientas/pareo-cli
 # Los cuestionarios de «Formación Ajedrez» traen las respuestas: los lee
 # herramientas/formacion-cuestionarios.js, no una página, y en la base solo
 # los ven quienes tienen el curso compartido.
