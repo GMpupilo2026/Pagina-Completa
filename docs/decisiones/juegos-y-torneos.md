@@ -2153,16 +2153,23 @@ prueba el lector de la función con HTML de la forma real y nombres inventados,
 y que pregunte la licencia antes de leer. Rompiendo a propósito las ausencias
 o el 40 %, saltan.
 
-### El Espacio de consultas: sin licencia
+### El Espacio de consultas: FAQ a la vista, la IA oculta debajo
 
 Arriba de la vitrina, `herramientas-arbitraje.html` tiene una sección aparte,
-marcada «Gratis · sin licencia ni cuenta»: un árbitro, o una madre o un padre
-de familia, escribe una duda sobre el reglamento y recibe, en la misma
-pantalla, una respuesta escrita por IA a partir del Reglamento de la FIDE. A
-propósito no pasa por `tengo_herramienta()` ni por `licencias_herramientas`:
-es la puerta de entrada abierta de la vitrina, no una herramienta más de la
-lista con candado. (La otra que no lleva licencia es Pareo Integral, pero ese sí va en la
-lista, con `gratis: true`: ver «Pareo Integral».)
+marcada «Gratis · sin licencia ni cuenta»: hoy son **11 preguntas frecuentes
+de madres, padres y entrenadores** («pieza tocada, pieza jugada», ofrecer
+tablas, la bandera caída, el celular en la mesa, quién reclama…), con
+respuesta fija en el propio HTML (`<details>`/`<summary>`, igual que el FAQ de
+`precios.html`), sin backend ni formulario. No pasa por `tengo_herramienta()`
+ni por `licencias_herramientas`: es la puerta de entrada abierta de la
+vitrina, no una herramienta más de la lista con candado. (La otra que no
+lleva licencia es Pareo Integral, pero ese sí va en la lista, con
+`gratis: true`: ver «Pareo Integral».)
+
+**Debajo del FAQ, en un `<div class="hidden">`, sigue armado (pero sin
+mostrarse) el formulario de consulta por IA** que este espacio tenía antes:
+el dueño del repo pidió reemplazarlo por el FAQ mientras tanto, pero el
+código queda intacto por si se retoma. Nada de lo de abajo se tocó.
 
 - **La responde la Edge Function `consulta-arbitraje`** (`verify_jwt` en
   **false**: no hay sesión que comprobar, igual que `seleccion-chess-results`
@@ -2215,20 +2222,18 @@ lea el presupuesto y lo compare contra el gasto del mes, que el freno conozca
 el tipo `'arbitraje_consulta'` y que el formulario pida los campos que la
 función espera.
 
-**Mientras no haya `ANTHROPIC_API_KEY` en los secretos de las Edge Functions,
-en `herramientas-arbitraje.html` queda oculta tras un `<div class="hidden">`**:
-el formulario y sus campos (`#consulta-form`, `#c-nombre`…) siguen en el HTML
-tal cual —el verificador los sigue encontrando— pero no se ven, y en su lugar
-sale una tarjeta «🔒 Con licencia» igual a las de la vitrina de abajo, con los
-mismos botones de pedir una licencia o activar un código. No hay ninguna
-licencia de verdad detrás: es solo la vitrina, mientras la clave no esté. Ese
-hueco no es nuevo: `ia_uso` (el registro de «Mejorar informe», que usa la
-misma clave) está vacío, así que la clave nunca estuvo puesta en este
-proyecto. Para abrirla: agregar el secreto `ANTHROPIC_API_KEY` en el panel de
-Supabase (Project Settings → Edge Functions → Secrets) con una clave de
-`console.anthropic.com`, y quitar el `<div class="hidden">` que envuelve el
-aviso, el formulario y `#c-resultado` (dejando la tarjeta de arriba o
-sacándola, a gusto).
+**El formulario de IA nunca llegó a funcionar en producción** (al proyecto le
+faltaba, y le sigue faltando, el secreto `ANTHROPIC_API_KEY` en las Edge
+Functions — mismo hueco que «Mejorar informe», con `ia_uso` vacío: esa clave
+nunca estuvo puesta en este proyecto) y por eso, en vez de arreglarlo, se optó
+por el FAQ de arriba. El formulario y sus campos (`#consulta-form`,
+`#c-nombre`…) siguen en el HTML tal cual —el verificador los sigue
+encontrando— dentro de un `<div class="hidden">` que también envuelve el
+aviso de «la respuesta la escribe una inteligencia artificial» y
+`#c-resultado`. Para retomarlo algún día: agregar `ANTHROPIC_API_KEY` en el
+panel de Supabase (Project Settings → Edge Functions → Secrets) con una clave
+de `console.anthropic.com`, decidir qué pasa con el FAQ (¿se queda arriba, se
+baja, se borra?) y quitar el `<div class="hidden">`.
 
 ## Desempates explicados
 
