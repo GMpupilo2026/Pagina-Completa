@@ -46,6 +46,25 @@ const CHROME = process.env.CHROME_PATH || "/opt/pw-browsers/chromium-1194/chrome
 const BASE = process.env.BASE_URL || "http://localhost:8777";
 const RAIZ = path.join(__dirname, "..");
 
+/* js/diagnostico-items.js (con sus respuestas) ya no se publica — ver
+   «Diagnóstico» en docs/decisiones/entrenamiento.md: entreno/diagnostico.html
+   ahora pide las preguntas por diagnostico_armar()/diagnostico_sesion_estado(),
+   SECURITY DEFINER en Supabase. Acá se carga igual el banco, como lo carga
+   herramientas/diagnostico-calibrar.js (eval, no es nada externo), pero solo
+   para armar el doble de esas funciones con posiciones REALES del banco:
+   este archivo prueba cómo se contesta un ejercicio, no qué banco hay detrás.
+*/
+global.window = {};
+eval(fs.readFileSync(path.join(RAIZ, "js/diagnostico-items.js"), "utf8"));
+const BANCO_ITEMS = global.window.DIAGNOSTICO_ITEMS || [];
+const BANCO_POR_ID = {};
+BANCO_ITEMS.forEach((i) => { BANCO_POR_ID[i.id] = i; });
+const ITEM_OPCION_REAL = BANCO_ITEMS.find((i) => i.tipo === "opcion" && i.opciones && i.opciones.length === 4);
+const ITEM_JUGADA_REAL = BANCO_ITEMS.find((i) => i.tipo === "jugada" && i.fen);
+const ITEMS_CASILLA_REALES = ["fin_oposicion", "cal_jaque_doble"].map((id) => BANCO_POR_ID[id]).filter(Boolean);
+const visible = (it) => ({ id: it.id, area: it.area, peso: it.peso, elo: it.elo, eloBase: it.eloBase,
+  tipo: it.tipo, enunciado: it.enunciado, opciones: it.opciones || null, fen: it.fen || null });
+
 let fallos = 0;
 function igual(nombre, hallado, esperado) {
   const a = typeof hallado === "object" ? JSON.stringify(hallado) : String(hallado);
@@ -57,34 +76,77 @@ function mal(t) { console.log("  ✗ " + t); fallos += 1; }
 function bien(t) { console.log("  ✓ " + t); }
 
 
+/* Las preguntas que entrega el doble de diagnostico_armar(): algunas reales
+   del banco (para poder escribir una jugada o una casilla de verdad) y de
+   relleno las que hagan falta para que "no lo sé" tenga qué saltar. */
+const ITEMS_ARMADOS = [ITEM_OPCION_REAL]
+  .concat(Array.from({ length: 3 }, (_, i) => ({ id: "relleno-" + i, area: "reglas", peso: 1, elo: 800, eloBase: 800, tipo: "opcion", enunciado: "De relleno " + i, opciones: ["a", "b", "c", "d"], fen: null })))
+  .concat([ITEM_JUGADA_REAL])
+  .concat(Array.from({ length: 3 }, (_, i) => ({ id: "relleno2-" + i, area: "reglas", peso: 1, elo: 800, eloBase: 800, tipo: "opcion", enunciado: "También de relleno " + i, opciones: ["a", "b", "c", "d"], fen: null })))
+  .filter(Boolean)
+  .map(visible);
+
 /* Supabase de mentira: estas páginas piden la sesión y el perfil al cargar, y
    sin respuesta se quedan en "Cargando…" para siempre. Devuelve un profesor
-   con is_admin, que es el caso que más cosas destapa. */
+   con is_admin, que es el caso que más cosas destapa.
+
+   El diagnóstico (ver «Diagnóstico» en docs/decisiones/entrenamiento.md) ya
+   no arma la prueba en el navegador: diagnostico_armar()/responder()/
+   sesion_estado() viven en la base. El doble de esas tres guarda su estado
+   en localStorage (bajo otra llave, que ninguna página lee) para sobrevivir
+   a un reload igual que lo haría la base de verdad — si no, "retomar la
+   prueba" no se podría probar después de recargar. */
 const STUB = `
 window.SUPABASE_URL = "https://ejemplo.supabase.co";
 window.SUPABASE_ANON_KEY = "clave-de-mentira";
-window.sb = {
-  auth: {
-    getSession: () => Promise.resolve({ data: { session: { user: { id: "u-1", email: "p@ejemplo.com" }, access_token: "t" } } }),
-    getUser: () => Promise.resolve({ data: { user: { id: "u-1", email: "p@ejemplo.com" } } }),
-    onAuthStateChange: () => ({ data: { subscription: { unsubscribe() {} } } }),
-    signOut: () => Promise.resolve({ error: null }),
-  },
-  from: () => {
-    const fila = { id: "u-1", role: "profesor", is_admin: true, full_name: "Profe", elo: null, elo_tipo: "fide" };
-    const b = {
-      select: () => b, eq: () => b, in: () => b, or: () => b, order: () => b, limit: () => b,
-      range: () => b, gte: () => b, lte: () => b, ilike: () => b, upsert: () => b, insert: () => b,
-      update: () => b, delete: () => b,
-      single: () => Promise.resolve({ data: fila, error: null }),
-      maybeSingle: () => Promise.resolve({ data: fila, error: null }),
-      then: (r) => Promise.resolve({ data: [], error: null }).then(r),
-    };
-    return b;
-  },
-  rpc: () => Promise.resolve({ data: null, error: null }),
-  channel: () => ({ on() { return this; }, subscribe() { return this; } }),
-};`;
+(function () {
+  const CLAVE_SESIONES = "__sesiones_diagnostico_falsas";
+  function leerSesiones() { try { return JSON.parse(localStorage.getItem(CLAVE_SESIONES) || "{}"); } catch (e) { return {}; } }
+  function guardarSesiones(s) { try { localStorage.setItem(CLAVE_SESIONES, JSON.stringify(s)); } catch (e) {} }
+  let seq = 0;
+  window.sb = {
+    auth: {
+      getSession: () => Promise.resolve({ data: { session: { user: { id: "u-1", email: "p@ejemplo.com" }, access_token: "t" } } }),
+      getUser: () => Promise.resolve({ data: { user: { id: "u-1", email: "p@ejemplo.com" } } }),
+      onAuthStateChange: () => ({ data: { subscription: { unsubscribe() {} } } }),
+      signOut: () => Promise.resolve({ error: null }),
+    },
+    from: () => {
+      const fila = { id: "u-1", role: "profesor", is_admin: true, full_name: "Profe", elo: null, elo_tipo: "fide" };
+      const b = {
+        select: () => b, eq: () => b, in: () => b, or: () => b, order: () => b, limit: () => b,
+        range: () => b, gte: () => b, lte: () => b, ilike: () => b, upsert: () => b, insert: () => b,
+        update: () => b, delete: () => b,
+        single: () => Promise.resolve({ data: fila, error: null }),
+        maybeSingle: () => Promise.resolve({ data: fila, error: null }),
+        then: (r) => Promise.resolve({ data: [], error: null }).then(r),
+      };
+      return b;
+    },
+    rpc: (n, args) => {
+      if (n === "diagnostico_armar") {
+        const items = ${JSON.stringify(ITEMS_ARMADOS)};
+        const sesion = "sesion-" + (++seq);
+        const s = leerSesiones(); s[sesion] = { items, respondidas: {} }; guardarSesiones(s);
+        return Promise.resolve({ data: { sesion, items }, error: null });
+      }
+      if (n === "diagnostico_sesion_estado") {
+        const s = leerSesiones()[args.p_sesion];
+        if (!s) return Promise.resolve({ data: null, error: { message: "esa prueba no existe" } });
+        return Promise.resolve({ data: { sesion: args.p_sesion, items: s.items, respondidas: s.respondidas,
+          terminada: Object.keys(s.respondidas).length >= s.items.length }, error: null });
+      }
+      if (n === "diagnostico_responder") {
+        const todas = leerSesiones(); const s = todas[args.p_sesion];
+        if (s) { s.respondidas[args.p_item] = { dada: args.p_respuesta, ok: false }; guardarSesiones(todas); }
+        return Promise.resolve({ data: false, error: null });
+      }
+      if (n === "diagnostico_terminar") return Promise.resolve({ data: [], error: null });
+      return Promise.resolve({ data: null, error: null });
+    },
+    channel: () => ({ on() { return this; }, subscribe() { return this; } }),
+  };
+})();`;
 
 /* Sin service worker, a propósito. Estas páginas lo registran, y al RECARGAR
    es él quien sirve los archivos: lo que pide el service worker no pasa por las
@@ -451,13 +513,16 @@ async function pruebaCasilla(browser) {
   await ctx.route("**/fonts.googleapis.com/**", (r) => r.fulfill({ status: 200, contentType: "text/css", body: "" }));
   await ctx.route("**/fonts.gstatic.com/**", (r) => r.abort());
   await ctx.route("**/js/supabase-client.js", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: STUB }));
-  await ctx.addInitScript(() => {
+  await ctx.addInitScript((items) => {
     localStorage.setItem("oscarBlindMode_v1", "1");
+    localStorage.setItem("__sesiones_diagnostico_falsas", JSON.stringify({
+      "sesion-casillas": { items, respondidas: {} },
+    }));
     localStorage.setItem("diagnostico_estado_v1", JSON.stringify({
       version: 6,
-      estado: { perfil: {}, idx: 0, respuestas: {}, items: ["fin_oposicion", "cal_jaque_doble"] },
+      estado: { perfil: {}, sesion: "sesion-casillas", idx: 0, respuestas: {}, items: items.map((i) => i.id) },
     }));
-  });
+  }, ITEMS_CASILLA_REALES.map(visible));
   const page = await ctx.newPage();
   await page.goto(BASE + "/entreno/diagnostico.html", { waitUntil: "networkidle" });
   await page.click("#start-btn");
@@ -496,13 +561,18 @@ async function pruebaUltimaPregunta(browser) {
   await page.goto(BASE + "/entreno/diagnostico.html", { waitUntil: "networkidle" });
   await saltarPortada(page);
 
-  // Saltar a la última: se le cambia el `idx` al estado que la propia página
-  // guarda para poder retomar la prueba, y se recarga. Es su camino de siempre.
+  // Saltar a la última: a quién le toca retomar la prueba lo decide el
+  // servidor según lo que ya se contestó (diagnostico_sesion_estado), así que
+  // acá se marcan como contestadas todas las anteriores en el doble de esa
+  // sesión —no solo el `idx` del estado local— y se recarga. Es su camino de
+  // siempre, adaptado a que el servidor manda.
   const total = await page.evaluate(() => {
     const c = JSON.parse(localStorage.getItem("diagnostico_estado_v1"));
-    c.estado.idx = c.estado.items.length - 1;
-    localStorage.setItem("diagnostico_estado_v1", JSON.stringify(c));
-    return c.estado.items.length;
+    const sesiones = JSON.parse(localStorage.getItem("__sesiones_diagnostico_falsas") || "{}");
+    const s = sesiones[c.estado.sesion];
+    s.items.slice(0, -1).forEach((it) => { s.respondidas[it.id] = { dada: "nose", ok: false }; });
+    localStorage.setItem("__sesiones_diagnostico_falsas", JSON.stringify(sesiones));
+    return s.items.length;
   });
   await page.reload({ waitUntil: "networkidle" });
   await saltarPortada(page);

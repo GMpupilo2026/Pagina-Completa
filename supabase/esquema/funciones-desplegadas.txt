@@ -26,8 +26,10 @@ ocr-scoresheet                 true         el lector de planilla, contra Google
 elo-fide                       false        el Elo FIDE Estandar y Nacional de Costa Rica con el codigo FIDE (pg_cron elo-fide-nacional, secreto de la boveda; "actualizar" con el JWT de quien llama)
 explorador-maestros            true         las partidas de maestros de Lichess por posicion, para ver donde un rival deja la teoria (token en LICHESS_TOKEN)
 seleccion-chess-results        true         un torneo entero de chess-results para la seleccion CODICADER (herramientas de arbitraje): solo con licencia, tengo_herramienta() con el token de quien llama
+desempates-chess-results       true         la clasificacion y las partidas de un torneo individual de chess-results para Desempates explicados (herramientas de arbitraje): solo con licencia, tengo_herramienta() con el token de quien llama
 pizarra-torneo                 true         las posiciones oficiales de chess-results para la sala de cine
 quiniela                       true         la quiniela de resultados de la sala de cine: anotarse, pronosticar, la tabla
 prueba-gratis                  true         la prueba gratis de 3 dias: la crea administracion, sin correo
 recuperar-acceso               false        el olvido de contrasena de cualquier cuenta
 reenviar-acceso                true         reenvia el acceso a una cuenta
+partida-fin                    false        el robo de puntos al perder una partida ganada (trigger de game_rooms, secreto de la boveda)

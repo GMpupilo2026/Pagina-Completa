@@ -90,15 +90,25 @@ def recortes_por_categoria(archivo, nombres, actividad):
     ]
 
 
-def recortes_de_pagina(pagina, nombres, actividad):
-    """Las categorías de Aprender y Practicar, que viven dentro del HTML.
+def recortes_de_pagina(archivo, nombres, actividad):
+    """Las categorías de Aprender y Practicar, que viven en el JS de la página.
 
-    No tienen un JSON propio: son listas escritas dentro de la página. Se
-    leen de ahí igual, que es la fuente, en vez de copiarlas."""
-    s = (RAIZ / "entreno" / pagina).read_text(encoding="utf-8")
+    No tienen un JSON propio: son listas escritas dentro del código de la
+    página (js/aprender-lecciones.js, js/entreno-practicas.js). Se leen de
+    ahí igual, que es la fuente, en vez de copiarlas.
+
+    Antes estaban dentro del HTML y se leían de entreno/<página>.html. Cuando
+    pasaron al JS, esto siguió leyendo el HTML, encontró cero y Tareas se
+    quedó sin tope: se podían pedir 50 series de Practicar, que tiene 9. Por
+    eso, si no encuentra ninguna, revienta en vez de escribir una lista
+    vacía."""
+    s = (RAIZ / archivo).read_text(encoding="utf-8")
     cuenta = {}
     for cat in re.findall(r"cat:'([a-z_]+)'", s):
         cuenta[cat] = cuenta.get(cat, 0) + 1
+    if not cuenta:
+        raise SystemExit(f"{archivo}: no encontré ninguna categoría (cat:'…'). "
+                         "¿Se movió la lista a otro archivo?")
     return [
         {"clave": c, "label": nombres.get(c, c), "total": n,
          "actividades": [actividad]}
@@ -184,8 +194,8 @@ def main():
         "temas": recortes_de_temas(),
         "mates": recortes_por_categoria("mates.json", NOMBRE_MATE, "mates"),
         "4x4": recortes_por_categoria("exercises.json", {}, "4x4"),
-        "aprender": recortes_de_pagina("aprender.html", NOMBRE_APRENDER, "aprender"),
-        "practicas": recortes_de_pagina("practicas.html", NOMBRE_PRACTICAR, "practicar"),
+        "aprender": recortes_de_pagina("js/aprender-lecciones.js", NOMBRE_APRENDER, "aprender"),
+        "practicas": recortes_de_pagina("js/entreno-practicas.js", NOMBRE_PRACTICAR, "practicar"),
         "aperturas": recortes_de_aperturas(),
         "estudio": recortes_de_estudio(),
         "tipos": recortes_de_tipos(),

@@ -44,7 +44,24 @@ window.PartidasClase = (function () {
         return { parejas, sobra: lista.length % 2 ? lista[lista.length - 1] : null };
     }
 
-    // Cómo va una partida, dicho con los nombres.
+    // Ventaja en material de una posición (positivo = blancas arriba), leída
+    // directo de la FEN: para decir quién va ganando mientras la partida está
+    // en juego no hace falta un motor, solo contar piezas.
+    const VALOR_MATERIAL = { p: 1, n: 3, b: 3, r: 5, q: 9 };
+    function ventajaDeMaterial(fen) {
+        const tablero = (fen || "").split(" ")[0] || "";
+        let dif = 0;
+        for (const c of tablero) {
+            const v = VALOR_MATERIAL[c.toLowerCase()];
+            if (!v) continue;
+            dif += c === c.toUpperCase() ? v : -v;
+        }
+        return dif;
+    }
+
+    // Cómo va una partida, dicho con los nombres. Mientras está en juego, el
+    // color nunca va solo (ver «Ningún color se elige a ojo» en CLAUDE.md): se
+    // escribe quién tiene la ventaja y cuánta.
     function estado(room, nombre) {
         const b = nombre(room.white_id), n = nombre(room.black_id);
         if (room.status === "finished" || room.result) {
@@ -53,7 +70,11 @@ window.PartidasClase = (function () {
             if (room.result === "black") return "Ganó " + n + " (negras)";
             return "Terminada";
         }
-        return (room.moves || []).length ? "En juego · " + (room.moves || []).length + " jugadas" : "Por empezar";
+        const jugadas = (room.moves || []).length;
+        if (!jugadas) return "Por empezar";
+        const dif = ventajaDeMaterial(room.fen);
+        const ventaja = dif > 0 ? " · " + b + " +" + dif : dif < 0 ? " · " + n + " +" + (-dif) : "";
+        return "En juego · " + jugadas + " jugadas" + ventaja;
     }
 
     function reloj(ms) {
@@ -76,5 +97,5 @@ window.PartidasClase = (function () {
         return pendientes[Math.floor(r() * pendientes.length)];
     }
 
-    return { RITMOS, RELOJES_PRACTICA, emparejar, estado, reloj, elegirConMenos };
+    return { RITMOS, RELOJES_PRACTICA, emparejar, estado, reloj, elegirConMenos, ventajaDeMaterial };
 })();

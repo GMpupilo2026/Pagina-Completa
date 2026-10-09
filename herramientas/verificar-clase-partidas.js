@@ -56,6 +56,11 @@ function pruebaEmparejador() {
   igual("con el mismo azar, lo mismo", P.emparejar(["a", "b", "c", "d", "e"], azar), r);
   igual("con un número par no sobra nadie", P.emparejar(["a", "b"]).sobra, null);
   igual("el estado de una partida, dicho", P.estado({ result: "black", white_id: "a", black_id: "b" }, (x) => x.toUpperCase()), "Ganó B (negras)");
+  igual("en juego, sin ventaja, no dice de más", P.estado({ status: "playing", white_id: "a", black_id: "b", moves: ["e4"], fen: "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1" }, (x) => x.toUpperCase()), "En juego · 1 jugadas");
+  igual("en juego, con blancas arriba, lo dice", P.estado({ status: "playing", white_id: "a", black_id: "b", moves: ["e4", "d5", "exd5"], fen: "rnbqkbnr/ppp1pppp/8/3P4/8/8/PPPP1PPP/RNBQKBNR b KQkq - 0 2" }, (x) => x.toUpperCase()), "En juego · 3 jugadas · A +1");
+  igual("en juego, con negras arriba, lo dice", P.estado({ status: "playing", white_id: "a", black_id: "b", moves: ["e4", "e5", "Nf3", "d6", "Bc4", "Bg4", "Nc3", "g6", "Nxe5", "Bxd1"], fen: "rn1qkbnr/ppp2p1p/3p2p1/4N3/2B1P3/2N5/PPPP1PPP/R1BbK2R w KQkq - 0 6" }, (x) => x.toUpperCase()), "En juego · 10 jugadas · B +8");
+  igual("por empezar, sin jugadas todavía", P.estado({ status: "playing", white_id: "a", black_id: "b", moves: [], fen: null }, (x) => x.toUpperCase()), "Por empezar");
+  igual("la ventaja de material, solo cuenta piezas", P.ventajaDeMaterial("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"), 0);
   igual("el reloj", [P.reloj(61000), P.reloj(9100), P.reloj(-5)], ["1:01", "0:10", "0:00"]);
 }
 

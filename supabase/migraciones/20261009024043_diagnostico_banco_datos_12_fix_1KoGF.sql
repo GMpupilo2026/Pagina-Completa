@@ -1,0 +1,1 @@
+update public.diagnostico_items set fen = '2r1k1r1/pQ3p1p/4p2p/P1p3bq/3p4/1N6/1PP2PP1/R2KR3 w - - 2 24', updated_at = now() where id = 'est_lx_1KoGF';

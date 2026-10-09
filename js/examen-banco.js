@@ -5,13 +5,19 @@
  * "Lucena" que no era Lucena: las posiciones salen de bancos que se
  * comprobaron con chess.js y con motor.
  *
- * Tres bancos, y cada uno trae de fábrica lo que un examen necesita:
+ * Cuatro bancos, y cada uno trae de fábrica lo que un examen necesita:
  *
- *  - `js/diagnostico-items.js` — 301 preguntas en 9 áreas, con `peso` de
- *    1 a 5 (que ES la dificultad, y por eso es lo que vale cada pregunta)
- *    y cuatro tipos: opción, opción con tablero, jugada y casilla. De
- *    acá salen las preguntas "sobre un tema de un curso": cada curso
- *    apunta a sus áreas en AREAS_DEL_CURSO.
+ *  - El banco del diagnóstico (centenares de preguntas en 9 áreas) — de acá salen
+ *    las preguntas "sobre un tema de un curso": cada curso apunta a sus
+ *    áreas en AREAS_DEL_CURSO. Ya no viaja al navegador (ver «Diagnóstico»
+ *    en docs/decisiones/entrenamiento.md): `items()` lee el catálogo
+ *    público y SIN respuestas de `js/diagnostico-catalogo.js` —alcanza
+ *    para sortear y para la previsión de tiempo, que solo necesitan
+ *    `área`, `peso` y `tipo`— y el contenido de verdad (enunciado,
+ *    opciones, clave) lo entrega `diagnostico_items_para_examen()` por
+ *    las pocas preguntas que de verdad se van a usar, recién al poner el
+ *    examen (`completar()`, abajo). `js/diagnostico-items.js` —el banco
+ *    entero, con las respuestas— no se publica.
  *  - `js/arbitraje-items.js` — 200 preguntas de reglamento, con su
  *    escalón y su cita del Handbook.
  *  - `js/aperturas-lineas.js` — 40 líneas, para "ejecuta esta apertura
@@ -22,6 +28,10 @@
  *    parcial para el papel; acá se toma la de la jugada, que es la que
  *    tiene una sola respuesta buena.
  *
+ * Estos tres últimos SÍ viajan enteros al navegador de quien da clase,
+ * con su respuesta: es la misma fuga que tenía el diagnóstico, pendiente
+ * para otra vez.
+ *
  * LO QUE ESTE ARCHIVO SEPARA, y es su razón de ser: cada pregunta se
  * parte en `visible` (lo que el alumno ve) y `clave` (la respuesta). La
  * clave viaja a `examen_items.clave`, una columna que el alumno no
@@ -30,10 +40,11 @@
  * descuido, no fallaría nada: el examen se vería igual y se podría
  * aprobar mirando el código.
  *
- * Las opciones se barajan ACÁ, al armar el examen, y la clave guarda el
- * índice ya barajado. Así dos alumnos reciben el mismo examen con las
- * opciones en otro orden, y el número que queda guardado no dice nada
- * por sí solo.
+ * Las opciones se barajan al armar el examen (acá para arbitraje/libro,
+ * en diagnostico_items_para_examen() para el diagnóstico), y la clave
+ * guarda el índice ya barajado. Así dos alumnos reciben el mismo examen
+ * con las opciones en otro orden, y el número que queda guardado no dice
+ * nada por sí solo.
  */
 window.ExamenBanco = (function () {
   "use strict";
@@ -85,8 +96,13 @@ window.ExamenBanco = (function () {
     return a;
   }
 
+  /* El catálogo público —solo id, área, peso y tipo, sin enunciado ni
+     respuesta— alcanza para sortear cuáles preguntas tocan y para calcular
+     cuántas hay y cuánto tiempo piden (minutosRecomendados solo mira `tipo` y
+     `peso`). El contenido de verdad lo entrega el servidor, y solo para las
+     pocas que de verdad se van a usar: ver completar(), más abajo. */
   function items() {
-    return (window.DIAGNOSTICO_ITEMS || []).slice();
+    return (window.DIAGNOSTICO_CATALOGO || []).slice();
   }
 
   function itemsArbitraje() {
@@ -104,66 +120,12 @@ window.ExamenBanco = (function () {
 
   /* ---------- Pasar una pregunta del banco al examen ---------- */
 
-  /* Una de opción: se barajan las cuatro y la clave guarda dónde quedó
-     la correcta DESPUÉS de barajar. `explica` va en `visible` porque el
-     informe del profesor lo lee de ahí — pero examen_para_alumno() no
-     devuelve `explica`, así que el alumno no lo ve mientras rinde. */
-  function deOpcion(it, rnd) {
-    const conIndice = it.opciones.map((texto, i) => ({ texto, i }));
-    const mezcladas = barajar(conIndice, rnd);
-    const correcta = mezcladas.findIndex((o) => o.i === it.correcta);
-    return {
-      tipo: it.fen ? "opcion_tablero" : "opcion",
-      banco: "diagnostico",
-      item_id: it.id,
-      area: it.area,
-      peso: it.peso,
-      visible: {
-        enunciado: it.enunciado,
-        opciones: mezcladas.map((o) => o.texto),
-        fen: it.fen || null,
-        explica: it.explica || "",
-      },
-      // Texto y no número: en la base se compara con ->>'opcion', que
-      // también es texto. Comparar un número con un texto en jsonb da
-      // false siempre, y eso calificaría todo mal sin dar ningún error.
-      clave: { correcta: String(correcta) },
-    };
-  }
-
-  function deJugada(it) {
-    const todas = [it.solucion].concat(it.alternas || []);
-    return {
-      tipo: "jugada",
-      banco: "diagnostico",
-      item_id: it.id,
-      area: it.area,
-      peso: it.peso,
-      visible: { enunciado: it.enunciado, fen: it.fen, explica: it.explica || "" },
-      // Todas las jugadas que valen, no solo la primera: dar una sola
-      // marcaría mal una respuesta correcta.
-      clave: { jugadas: todas.map((j) => ({ from: j.from, to: j.to })) },
-    };
-  }
-
-  function deCasilla(it) {
-    const todas = [it.solucion].concat(it.alternas || []);
-    return {
-      tipo: "casilla",
-      banco: "diagnostico",
-      item_id: it.id,
-      area: it.area,
-      peso: it.peso,
-      visible: { enunciado: it.enunciado, fen: it.fen, explica: it.explica || "" },
-      clave: { casillas: todas },
-    };
-  }
-
-  function convertir(it, rnd) {
-    if (it.tipo === "jugada") return deJugada(it);
-    if (it.tipo === "casilla") return deCasilla(it);
-    return deOpcion(it, rnd);
-  }
+  /* Las preguntas del diagnóstico que ya se sortearon (por item_id) con su
+     contenido real y su clave, listas para crear_examen() — exactamente el
+     mismo formato que armaban antes deOpcion/deJugada/deCasilla, ahora
+     construido en el servidor (diagnostico_items_para_examen) para que su
+     respuesta no pase por este navegador. Se llama una sola vez, al poner el
+     examen: ver completar(), más abajo. */
 
   function deArbitraje(it, rnd) {
     const conIndice = it.opciones.map((texto, i) => ({ texto, i }));
@@ -315,7 +277,34 @@ window.ExamenBanco = (function () {
 
     const cand = items().filter((it) =>
       it.peso >= min && it.peso <= max && (!areas.length || areas.includes(it.area)));
-    return sortear(cand, cantidad, rnd).map((it) => convertir(it, rnd));
+    // Todavía sin `visible`/`clave`: eso lo entrega el servidor, y solo para
+    // estas pocas (completar(), más abajo) — nunca el banco entero.
+    return sortear(cand, cantidad, rnd).map((it) => ({
+      tipo: it.tipo, banco: "diagnostico", item_id: it.id, area: it.area, peso: it.peso,
+    }));
+  }
+
+  /* De las preguntas que armar() devolvió, completa con su contenido real y
+     su clave las que todavía no lo tienen —las del diagnóstico, sorteadas
+     sobre el catálogo sin respuestas—. Arbitraje, apertura y libro ya las
+     traen completas desde armar(), así que no se tocan. Se llama una sola
+     vez, al poner el examen: resortear acá mandaría un examen distinto del
+     que se le mostró al profesor (ver el comentario de refrescarPrevision()
+     en js/examenes.js). */
+  async function completar(items) {
+    const faltan = items.filter((it) => it.banco === "diagnostico" && !it.visible);
+    if (!faltan.length) return items;
+    const ids = faltan.map((it) => it.item_id);
+    const { data, error } = await sb.rpc("diagnostico_items_para_examen", { p_ids: ids });
+    if (error) throw new Error(error.message);
+    const porId = {};
+    (data || []).forEach((it) => { porId[it.item_id] = it; });
+    return items.map((it) => {
+      if (it.banco !== "diagnostico" || it.visible) return it;
+      const it2 = porId[it.item_id];
+      if (!it2) throw new Error("Una pregunta del banco ya no está disponible: vuelve a armar el examen.");
+      return it2;
+    });
   }
 
   /* Cuántas preguntas hay de verdad para lo que se está pidiendo. La
@@ -421,6 +410,6 @@ window.ExamenBanco = (function () {
     };
   }
 
-  return { AREAS_DEL_CURSO, armar, disponibles, cursosConPreguntas, minutosRecomendados,
+  return { AREAS_DEL_CURSO, armar, completar, disponibles, cursosConPreguntas, minutosRecomendados,
            _barajar: barajar, _azar: azar };
 })();
