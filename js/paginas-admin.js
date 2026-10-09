@@ -56,6 +56,10 @@
             { emoji: "🏅", label: "Inscripciones a torneos en línea", desc: "Las respuestas del formulario de inscripcion.html", href: "inscripciones.html", zona: "contenido" },
             { emoji: "🔎", label: "Jugadores de chess-results", desc: "Busca a una persona y su historial de torneos", href: "admin-jugador.html", zona: "contenido" },
         ] },
+        { title: "Herramientas de arbitraje", tiles: [
+            { emoji: "♟️", label: "Pareo Integral", desc: "Empareja un torneo con el Sistema Holandés de FIDE: rondas, resultados, desempates y el TRF", href: "pareo.html", zona: "contenido" },
+            { emoji: "📘", label: "Manual de Pareo Integral", desc: "Cómo se usa, los 26 desempates y la línea de comandos, en español y en inglés", href: "pareo-manual.html", zona: "contenido" },
+        ] },
         { title: "Revisar el contenido", tiles: [
             { emoji: "🏛️", label: "Cursos", desc: "Los cursos de la Academia y el temario de cada uno", href: "cursos/academia/index.html", zona: "contenido" },
             { emoji: "🏋️", label: "Entrenamiento", desc: "Los ejercicios y lecciones que usa el alumnado", href: "entreno/index.html", zona: "contenido" },

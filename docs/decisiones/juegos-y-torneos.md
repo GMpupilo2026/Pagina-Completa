@@ -1786,6 +1786,17 @@ de quien organiza), la casilla de consentimiento y su mención en
   descomprime y lo corre: empareja las pruebas de bbpPairings, genera, comprueba
   y saca la clasificación con los mismos números que `desempates.js`.
 
+### Dónde se entra: las herramientas de arbitraje
+
+- En el panel de la Academia, el grupo **«Herramientas de arbitraje»**
+  (`js/clases.js`, `soloDocente`: al alumnado el grupo le queda vacío y no se
+  pinta) y el mismo grupo en el de quien administra (`js/paginas-admin.js`,
+  sección Contenido de `admin.html`): Pareo Integral y su manual. Ctrl + K los
+  encuentra por «emparejar», «suizo», «buchholz», «trf», «árbitro»…
+- Para el público: la sección «Herramientas de arbitraje» del examen de
+  arbitraje (`nivel-de-arbitraje.html`), la tarjeta «Para quienes arbitran» de
+  la portada y la página de Torneos.
+
 ### Lo que falta para pedir el aval
 
 Lo que pide el C.04.A (programa, interfaz en inglés, TRF, FPC y RTG públicos)

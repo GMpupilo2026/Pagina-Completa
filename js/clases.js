@@ -176,6 +176,14 @@
             { title: "Herramientas", tiles: [
                 { emoji: "📂", label: "Archivos", desc: "Sube tus PGN completos y revisa las partidas guardadas en clase — llévalos al tablero en vivo", href: "partidas.html", mantenimientoAlumno: true },
             ] },
+            /* Para quien arbitra los torneos de sus alumnos. Pareo Integral es
+               público y sin cuenta (pareo.html); acá está a mano. Al alumnado
+               no se le pinta: el grupo queda vacío y no sale. Ver «Pareo
+               Integral» en docs/decisiones/juegos-y-torneos.md. */
+            { title: "Herramientas de arbitraje", tiles: [
+                { emoji: "♟️", label: "Pareo Integral", desc: "Empareja un torneo con el Sistema Holandés de FIDE: rondas, resultados, desempates y el TRF", href: "pareo.html", soloDocente: true },
+                { emoji: "📘", label: "Manual de Pareo Integral", desc: "Cómo se usa, los 26 desempates y la línea de comandos, en español y en inglés", href: "pareo-manual.html", soloDocente: true },
+            ] },
             /* El orden lo pidió el dueño de la Academia: Configuración,
                Informes, Logros y, al alumnado, «¿Cómo van tus clases?» de
                última (se agrega más abajo, solo a su panel). «TV en vivo» ya
@@ -400,6 +408,7 @@
             { title: "Coordinación", hrefs: ["coordinacion.html", "solicitudes.html", "formularios.html", "cobros.html"] },
             { title: "Aprender", hrefs: ["entreno/index.html", "entreno/estudio.html", "cursos/academia/index.html", "articulos.html"] },
             { title: "Jugar y competir", hrefs: ["juegos.html", "competir.html", "tablero.html"] },
+            { title: "Herramientas de arbitraje", hrefs: ["pareo.html", "pareo-manual.html"] },
             { title: "Tu cuenta", hrefs: ["configuracion.html", "guia-del-profesor-accesible.html", "logros.html"] },
         ];
         function ordenarPanelDocente() {
@@ -1319,6 +1328,8 @@
             "entreno/diagnostico.html": "nivel examen de nivel prueba de nivel",
             "nivel-de-arbitraje.html": "arbitro reglamento fide",
             "arbitraje.html": "arbitro reglamento fide revisar",
+            "pareo.html": "pareo emparejar emparejamientos suizo holandes fide desempates buchholz sonneborn arbitro arbitraje torneo rondas trf swiss manager",
+            "pareo-manual.html": "manual pareo ayuda emparejamientos desempates arbitro linea de comandos",
             "partidas.html": "pgn partidas guardadas carpetas subir",
             "informes.html": "progreso estadisticas notas reportes asistencia alumnos informe a la casa encargados padres sin entrenar inactivos diagnostico nivel cursos mates tactica coordenadas concentracion",
             "informes.html?tema=diagnostico-publico": "visitantes enlace publico sin cuenta contactos",
