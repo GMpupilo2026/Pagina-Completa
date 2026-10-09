@@ -3775,3 +3775,52 @@ pocas puertas grandes.
   nombres, que lo de leer no se VE (`checkVisibility`), la franja que se
   queda, lo que dice «Escúchame», el ancho del celular, que «Volver» borra la
   marca, y que a quien da clase no le cambia nada.
+
+## La franja de la región
+
+Para el taller «Formación Ajedrez» del MEP (academia MEP, cuentas temporales
+hasta el 20 de diciembre de 2026): cada asesor regional ve arriba de su panel
+el dibujo de su Dirección Regional, con el nombre en grande y, en pequeño, lo
+que muestra («Dirección Regional de Cartago — La Basílica de los Ángeles
+frente al Irazú»). Lo eligió el dueño del sitio entre tres bocetos (franja en
+el panel, fondo tenue en todo el sitio, solo colores) y revisó región por
+región qué poner (las eólicas de Salitral en SJ Oeste, los chicharrones de
+Puriscal, el Valle del General en Pérez Zeledón…).
+
+- **Qué fondo le toca a cada cuenta lo guarda la base**: `fondos_region`
+  (`persona_id`, `fondo`), sin política de escritura; la persona lee la suya y
+  administración todas. La escribe `fondos_region_fijar(personas, fondo)`, solo
+  quien administra; con `fondo` en null lo quita. Es cosmético, pero lo decide
+  quien organiza el taller, no cada cuenta. Sin fila, el panel queda como
+  siempre, y una clave que el archivo no conoce tampoco se pinta.
+- **Los dibujos viven en `js/fondo-region.js`**: 29 SVG propios armados con
+  piezas comunes (cielo, cerros, volcán, iglesia, palmera…), nada copiado ni
+  fotos. 27 regionales, «Nacional» (el mapa de Costa Rica con las 27 sedes) para
+  los dos asesores nacionales de Vida Estudiantil y «Escuela Laboratorio» (la
+  escuela, la bandera y un engranaje) para la cuenta de Enseñanza Técnico
+  Profesional. El contorno del mapa y las sedes son aproximados: es un dibujo.
+- **El nombre y la leyenda van DEBAJO del dibujo**, no encima: en el boceto un
+  rótulo sobre el dibujo tapaba, en el ancho de un celular, la torre de
+  Coronado, el humo del Irazú o las eólicas. En la computadora el dibujo va a
+  la izquierda (24 rem) y el texto al lado.
+- **La nacional trae «¿Qué regional es cada punto?»** (un `<details>`): el mapa
+  grande con cada regional numerada —los mismos números del PDF de revisión, 1
+  Alajuela … 27 Turrialba— y la lista al lado. Las seis del Valle Central
+  (Alajuela, Heredia, los tres de San José y Desamparados) quedaban una encima
+  de otra: van en un recuadro ampliado.
+- La sección va en `clases.html` **justo después del buscador**: el buscador
+  va pegado al saludo (`verificar-panel.js` lo exige; un primer intento de
+  poner la franja entre los dos lo rompió) y, mientras se busca, la franja se
+  hace a un lado como todo lo que no es la grilla.
+
+Comprobado impersonando roles en SQL, en un bloque revertido: el alumno no se
+fija el fondo (42501) ni escribe la tabla (42501); la clave se guarda en
+minúsculas y una rara o una cuenta inexistente se rechazan; el alumno ve solo
+la suya, una profesora ninguna y `anon` nada.
+
+**Al tocar la franja o un dibujo, correr
+`node herramientas/verificar-fondo-region.js`.** Lee `supabase/` (la RLS, la
+única política de lectura, los permisos de la función) y `clases.html`, y en el
+navegador arma los 29 dibujos (sin NaN ni «undefined»), pinta la franja con su
+fondo y no sin él, mira el ancho del celular y abre el mapa de la nacional con
+sus 27 números.

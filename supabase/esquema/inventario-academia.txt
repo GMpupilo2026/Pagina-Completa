@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261009180830
+# al-dia-con: 20261009190500
 tabla  Ejercicios Lichess  rls=true
 tabla  academia_ia  rls=true
 tabla  academia_miembros  rls=true
@@ -66,6 +66,7 @@ tabla  examen_items  rls=true
 tabla  examen_respuestas  rls=true
 tabla  examenes  rls=true
 tabla  explorador_maestros_cache  rls=true
+tabla  fondos_region  rls=true
 tabla  formulario_compartidos  rls=true
 tabla  formulario_respuestas  rls=true
 tabla  formularios  rls=true
@@ -658,6 +659,10 @@ columna  examenes.vence_at  timestamp with time zone
 columna  explorador_maestros_cache.datos  jsonb
 columna  explorador_maestros_cache.fen  text
 columna  explorador_maestros_cache.leido_en  timestamp with time zone
+columna  fondos_region.fijado_en  timestamp with time zone
+columna  fondos_region.fijado_por  uuid
+columna  fondos_region.fondo  text
+columna  fondos_region.persona_id  uuid
 columna  formulario_compartidos.coordinador_id  uuid
 columna  formulario_compartidos.created_at  timestamp with time zone
 columna  formulario_compartidos.formulario_id  uuid
@@ -1633,6 +1638,7 @@ funcion  examenes_con_nota(p_alumno uuid, p_profesor uuid, p_limite integer)  in
 funcion  exigir_acceso_vigente()  definer  anon=false  auth=false
 funcion  faltas_justificadas(p_desde date, p_hasta date)  invoker  anon=false  auth=true
 funcion  fecha_segura(p_texto text)  invoker  anon=false  auth=true
+funcion  fondos_region_fijar(p_personas uuid[], p_fondo text)  definer  anon=false  auth=true
 funcion  formulario_acepta_adjuntos(p_carpeta text)  definer  anon=true  auth=true
 funcion  formulario_compartido_conmigo(p_formulario uuid)  definer  anon=false  auth=true
 funcion  formulario_publico(p_slug text)  definer  anon=true  auth=true
@@ -2069,6 +2075,7 @@ politica  examenes  examenes_insert  INSERT
 politica  examenes  examenes_select  SELECT
 politica  examenes  examenes_select_supervisor  SELECT
 politica  examenes  examenes_update  UPDATE
+politica  fondos_region  fondos_region_ver  SELECT
 politica  formulario_compartidos  formulario_compartidos_delete  DELETE
 politica  formulario_compartidos  formulario_compartidos_insert  INSERT
 politica  formulario_compartidos  formulario_compartidos_select  SELECT
@@ -2626,6 +2633,8 @@ indice  examenes  examenes_alumno_idx
 indice  examenes  examenes_pkey
 indice  examenes  examenes_profesor_idx
 indice  explorador_maestros_cache  explorador_maestros_cache_pkey
+indice  fondos_region  fondos_region_fijado_por_idx
+indice  fondos_region  fondos_region_pkey
 indice  formulario_compartidos  formulario_compartidos_coordinador_idx
 indice  formulario_compartidos  formulario_compartidos_pkey
 indice  formulario_respuestas  formulario_respuestas_alumno_id_fk
@@ -3370,6 +3379,7 @@ grant  examenes  authenticated  SELECT
 grant  examenes  authenticated  TRIGGER
 grant  examenes  authenticated  TRUNCATE
 grant  examenes  authenticated  UPDATE
+grant  fondos_region  authenticated  SELECT
 grant  formulario_compartidos  authenticated  DELETE
 grant  formulario_compartidos  authenticated  INSERT
 grant  formulario_compartidos  authenticated  REFERENCES
