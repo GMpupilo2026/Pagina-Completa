@@ -3,7 +3,7 @@
 
 Lo que comprueba:
 - que las reglas (herramientas/ajedrez_estudiantil_reglas.py) clasifiquen los
-  1082 torneos guardados exactamente como están: etapa, categoría, región,
+  torneos guardados exactamente como están: etapa, categoría, región,
   modalidad, ritmo y año. Si una regla cambia y desordena lo que ya estaba,
   salta acá antes de que el actualizador lo escriba;
 - que el actualizador lea el formulario y la tabla del buscador de
@@ -96,6 +96,23 @@ cierto("«2025 AIO» es la categoría A", reglas.categoria("Eliminatoria Regiona
 cierto("los JDN del ICODER quedan fuera", reglas.etapa("Eliminatoria JDN 2024- Zona 2- Individual U16", "ICODER-FCACR") is None)
 cierto("la eliminatoria «JDN» de la DRE de Coto es de los JDE", reglas.etapa("JDN ELIMINATORIA REGION COTO - A ABIERTO", "DRE COTO") == "Regional")
 cierto("un torneo de otro país queda fuera", reglas.etapa("Campeonato Nacional Estudiantil 2008", "Federación Deportiva Nacional del Ecuador") is None)
+# Las que faltaban cuando el buscador cortó en 1000 filas (ver «El buscador
+# corta en 1000 filas» en docs/decisiones/juegos-y-torneos.md).
+c = reglas.clasificar("&#10145;&#65039; Regional Turrialba - Individual Abierto Categoria A", "", "", "2026-04-20") or {}
+cierto("«➡️ Regional Turrialba - … A» sin organizador es la regional de Turrialba, categoría A",
+       (c.get("etapa"), c.get("region"), c.get("categoria")) == ("Regional", "Turrialba", "A"), str(c))
+cierto("«Regional San José CentralA Abierto»: la letra pegada a la región es la categoría",
+       reglas.categoria("Regional San José CentralA Abierto Equipos") == "A")
+cierto("«Regional Desamparados» que subió la regional de San José Central es de Desamparados",
+       reglas.region("Regional DesamparadosC Abierto Individual", "Regional San José Central", "") == "Desamparados")
+cierto("«Peninsular» no es Grande de Térraba (por el «sula» de adentro)",
+       reglas.region("Categoría A - Regional Penínsular", "Regional de Paquera", "") == "Peninsular")
+cierto("«Inter-regional» con guion es interregional",
+       reglas.etapa("ELIMINATORIA INTER-REGIONAL HEREDIA-SAN JOSE CATEGORIA D ABIERTO INDIVIDUAL") == "Interregional")
+cierto("«Eliminatoria Regional San Carlos» es regional",
+       reglas.etapa("Eliminatoria Regional San Carlos Cat A individual abierto", "Asesoría de Educación Física") == "Regional")
+cierto("los amistosos, fogueos y recreativos quedan fuera",
+       [reglas.etapa(n, "Regional San José Central") for n in ("Regional San José Norte Amistoso", "Regional San José Central Fogueo", "Regional Limon Recreativo")] == [None, None, None])
 
 print("Leer chess-results")
 ocultos = actualizar.campos_ocultos(muestra("formulario.txt"))

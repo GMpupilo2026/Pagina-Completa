@@ -1843,9 +1843,27 @@ los internacionales (CODICADER y escolares de la federación). Se enlaza desde
   mandarlo **al mismo servidor** (`s3.chess-results.com`). El filtro de fechas
   del buscador se ignoró en las pruebas, así que se buscó por palabras del
   nombre, con federación CRC: JDE, estudiant, Juegos, CODICADER, colegial,
-  escolar, nacional, regional, eliminatoria, etapa y circuit. Ninguna llegó al
-  tope de 2000 filas por búsqueda (la de «regional» dio exactamente 1000, y
-  partida por tipo de torneo da los mismos 1000).
+  escolar, nacional, regional, eliminatoria, etapa y circuit.
+- **El buscador corta en 1000 filas aunque se le pidan 2000, sin avisar.** La
+  búsqueda de «regional» dio exactamente 1000 y se tomó por completa: faltaron
+  260 torneos de los JDE de 2017 a 2026 (toda la etapa regional 2025 de Pérez
+  Zeledón, Los Santos y Santa Cruz; la de 2026 de San Carlos, Turrialba,
+  Aguirre, Desamparados y Grande de Térraba…). Lo vio el dueño: Pérez Zeledón
+  2025 decía 36 participaciones y eran 260. Se completó partiendo la búsqueda
+  hasta que ninguna parte llegara a 1000: «regional» por tipo de torneo (suizo
+  285, round robin 398, liga por equipos 299, suizo por equipos 18) y por
+  ritmo, y el organizador «Regional», «DRE», «Circuito», «MEP» y «Supervis»
+  (ordenar distinto NO sirve: devuelve los mismos 1000). **Una búsqueda que
+  da justo 1000 no está completa.** Con eso las reglas también crecieron:
+  «Inter-regional» con guion, «Eliminatoria Regional San Carlos», un nombre
+  que empieza con «Regional» aunque no diga «JDE» ni tenga organizador
+  («➡️ Regional Turrialba - …»), la letra pegada a la región («Regional San
+  José CentralA Abierto»), Desamparados antes que San José (la subió la
+  regional de San José Central), «sula» solo como palabra (dentro de
+  «Peninsular» la tomaba por Grande de Térraba), y fuera los amistosos,
+  fogueos, recreativos, el cuadrangular final (repite a los de sus grupos) y
+  el torneo de profesores. Cinco torneos de Térraba 2026 estaban subidos dos
+  veces (mismo nombre, día e inscritos): quedó el último.
 - **La fuente es `herramientas/datos/ajedrez-estudiantil-torneos.csv`**, un
   torneo por fila ya clasificado (la búsqueda inicial; lo nuevo lo suma el
   flujo de abajo). `herramientas/ajedrez-estudiantil.py` lo
@@ -1868,7 +1886,7 @@ los internacionales (CODICADER y escolares de la federación). Se enlaza desde
   «Individual Absoluto C», «JDEB», «Sula C», `"D`…). El buscador da los
   nombres cortados a 50 letras: en 167 torneos la letra quedaba fuera y se
   leyó el título completo de cada uno (`<h2>` de su página). Algunos la traen
-  en clave: «2025 AIO» es categoría A, individual, abierto. Cuatro no la dicen
+  en clave: «2025 AIO» es categoría A, individual, abierto. Seis no la dicen
   y quedan como «Sin dato». Antes de 2013 las letras pueden no ser las mismas
   edades que hoy.
 - **La región** sale del nombre, el organizador o el lugar, con una lista de
@@ -1883,12 +1901,12 @@ los internacionales (CODICADER y escolares de la federación). Se enlaza desde
   repiten a los del clásico.
 - **Lo que hay que decir junto a los números.** El salto desde 2023 es en
   buena parte de registro: las regiones que publican su eliminatoria en
-  chess-results pasaron de 5 a 17. Y la final nacional alterna categorías (B y
+  chess-results pasaron de 7 en 2023 a 24 en 2026. Y la final nacional alterna categorías (B y
   C en años impares, B y D en pares), así que comparar años de una categoría
   mezcla años con final y sin ella: la página lo avisa en la frase de arriba
   cuando pasa.
 - **La página cuenta todo en el navegador** (`js/ajedrez-estudiantil.js`):
-  son 1082 filas fijas de un archivo del sitio, no una tabla de la base. Los
+  son las filas fijas de un archivo del sitio, no una tabla de la base. Los
   gráficos son SVG escritos a mano (el sitio no carga librerías de gráficos);
   cada año es un botón que se alcanza con Tab y dice su valor, y el gráfico
   grande tiene su tabla. Los filtros van en la dirección
