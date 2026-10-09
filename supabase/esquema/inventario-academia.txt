@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261008173205
+# al-dia-con: 20261008195500
 tabla  Ejercicios Lichess  rls=true
 tabla  academia_ia  rls=true
 tabla  academia_miembros  rls=true
@@ -9,6 +9,7 @@ tabla  acceso_config  rls=true
 tabla  actualizaciones_plataforma  rls=true
 tabla  ajustes_academia  rls=true
 tabla  analisis_partidas_alumno  rls=true
+tabla  arbitraje_consulta_config  rls=true
 tabla  arbitrajes_publicos  rls=true
 tabla  archivos_pgn  rls=true
 tabla  auditoria  rls=true
@@ -36,6 +37,7 @@ tabla  cobros  rls=true
 tabla  cobros_contacto  rls=true
 tabla  cobros_recordatorios_programados  rls=true
 tabla  compras_tienda  rls=true
+tabla  consultas_arbitraje  rls=true
 tabla  coordinador_funciones_quitadas  rls=true
 tabla  coordinador_profesores  rls=true
 tabla  course_unlocks  rls=true
@@ -80,6 +82,7 @@ tabla  interno.envios_publicos  rls=true
 tabla  interno.lector_planilla_uso  rls=true
 tabla  interno.salud_base  rls=true
 tabla  justificaciones_ausencia  rls=true
+tabla  licencias_herramientas  rls=true
 tabla  material_compartido  rls=true
 tabla  mensajes_casa  rls=true
 tabla  misiones_secretas  rls=true
@@ -138,6 +141,8 @@ tabla  retos_ejercicios_respuestas  rls=true
 tabla  retos_semanales  rls=true
 tabla  salas_torneo  rls=true
 tabla  saved_games  rls=true
+tabla  seleccion_cache  rls=true
+tabla  selecciones_arbitraje  rls=true
 tabla  solicitudes_academia  rls=true
 tabla  subgrupo_alumnos  rls=true
 tabla  subgrupos  rls=true
@@ -210,6 +215,11 @@ columna  analisis_partidas_alumno.chesscom  text
 columna  analisis_partidas_alumno.lichess  text
 columna  analisis_partidas_alumno.partidas  integer
 columna  analisis_partidas_alumno.updated_at  timestamp with time zone
+columna  arbitraje_consulta_config.id  smallint
+columna  arbitraje_consulta_config.modelo  text
+columna  arbitraje_consulta_config.tope_mensual_usd  numeric(10,2)
+columna  arbitraje_consulta_config.updated_at  timestamp with time zone
+columna  arbitraje_consulta_config.updated_by  uuid
 columna  arbitrajes_publicos.created_at  timestamp with time zone
 columna  arbitrajes_publicos.detalle  jsonb
 columna  arbitrajes_publicos.email  text
@@ -390,6 +400,23 @@ columna  compras_tienda.creado_en  timestamp with time zone
 columna  compras_tienda.otorgado_por  uuid
 columna  compras_tienda.producto  text
 columna  compras_tienda.profile_id  uuid
+columna  consultas_arbitraje.costo_usd  numeric(12,6)
+columna  consultas_arbitraje.created_at  timestamp with time zone
+columna  consultas_arbitraje.detalle  text
+columna  consultas_arbitraje.email  text
+columna  consultas_arbitraje.id  uuid
+columna  consultas_arbitraje.modelo  text
+columna  consultas_arbitraje.nombre  text
+columna  consultas_arbitraje.nota_revision  text
+columna  consultas_arbitraje.ok  boolean
+columna  consultas_arbitraje.pregunta  text
+columna  consultas_arbitraje.quien  text
+columna  consultas_arbitraje.respuesta  text
+columna  consultas_arbitraje.revisado  boolean
+columna  consultas_arbitraje.revisado_at  timestamp with time zone
+columna  consultas_arbitraje.revisado_por  uuid
+columna  consultas_arbitraje.tokens_entrada  integer
+columna  consultas_arbitraje.tokens_salida  integer
 columna  coordinador_funciones_quitadas.academia_id  uuid
 columna  coordinador_funciones_quitadas.coordinador_id  uuid
 columna  coordinador_funciones_quitadas.created_at  timestamp with time zone
@@ -782,6 +809,17 @@ columna  justificaciones_ausencia.revisada_en  timestamp with time zone
 columna  justificaciones_ausencia.revisada_por  uuid
 columna  justificaciones_ausencia.revisada_por_nombre  text
 columna  justificaciones_ausencia.student_id  uuid
+columna  licencias_herramientas.activada_en  timestamp with time zone
+columna  licencias_herramientas.codigo  text
+columna  licencias_herramientas.creada_en  timestamp with time zone
+columna  licencias_herramientas.creada_por  uuid
+columna  licencias_herramientas.dias  integer
+columna  licencias_herramientas.herramienta  text
+columna  licencias_herramientas.id  uuid
+columna  licencias_herramientas.nota  text
+columna  licencias_herramientas.persona_id  uuid
+columna  licencias_herramientas.revocada  boolean
+columna  licencias_herramientas.vence  timestamp with time zone
 columna  material_compartido.academia_id  uuid
 columna  material_compartido.creado_en  timestamp with time zone
 columna  material_compartido.id  uuid
@@ -1091,6 +1129,7 @@ columna  question_answers.updated_at  timestamp with time zone
 columna  question_engine_answers.answer  jsonb
 columna  question_engine_answers.computed_at  timestamp with time zone
 columna  question_engine_answers.question_id  uuid
+columna  questions.bloquea_cambio  boolean
 columna  questions.class_session_id  uuid
 columna  questions.closed_at  timestamp with time zone
 columna  questions.created_at  timestamp with time zone
@@ -1236,6 +1275,15 @@ columna  saved_games.id  uuid
 columna  saved_games.move_count  integer
 columna  saved_games.pgn  text
 columna  saved_games.title  text
+columna  seleccion_cache.clave  text
+columna  seleccion_cache.datos  jsonb
+columna  seleccion_cache.leido_en  timestamp with time zone
+columna  selecciones_arbitraje.actualizada_en  timestamp with time zone
+columna  selecciones_arbitraje.config  jsonb
+columna  selecciones_arbitraje.creada_en  timestamp with time zone
+columna  selecciones_arbitraje.creada_por  uuid
+columna  selecciones_arbitraje.id  uuid
+columna  selecciones_arbitraje.nombre  text
 columna  solicitudes_academia.created_at  timestamp with time zone
 columna  solicitudes_academia.edad_nivel  text
 columna  solicitudes_academia.email  text
@@ -1423,6 +1471,8 @@ funcion  alumnos_del_profesor_con_nombre(p_profesor uuid)  invoker  anon=true  a
 funcion  antes_de_cada_pedido()  definer  anon=true  auth=true
 funcion  anular_certificado(p_codigo text)  definer  anon=false  auth=true
 funcion  anular_recibo(p_recibo uuid, p_anular boolean, p_motivo text)  definer  anon=false  auth=true
+funcion  arbitraje_consulta_config_guardar(p_modelo text, p_tope numeric)  definer  anon=false  auth=true
+funcion  arbitraje_consulta_frenar(p_ip text, p_correo text)  definer  anon=false  auth=false
 funcion  asignar_grupo_proyecto(p_grupo uuid, p_profesor uuid)  definer  anon=false  auth=true
 funcion  avance_del_plan(p_alumno uuid, p_desde timestamp with time zone)  invoker  anon=false  auth=true
 funcion  avisar_clase_abierta()  definer  anon=false  auth=false
@@ -1443,6 +1493,7 @@ funcion  bromas_bloquear(p_persona uuid, p_bloquear boolean)  definer  anon=fals
 funcion  bromas_configurar(p_no_recibir boolean)  definer  anon=false  auth=true
 funcion  bromas_en_mi_clase(p_permitir boolean)  definer  anon=false  auth=true
 funcion  cambiar_rol(p_persona uuid, p_rol text)  definer  anon=false  auth=true
+funcion  canjear_licencia(p_codigo text)  definer  anon=false  auth=true
 funcion  canjear_premio(p_premio_id uuid)  definer  anon=false  auth=true
 funcion  cerrar_examen(p_examen uuid, p_motivo text)  definer  anon=false  auth=true
 funcion  certificado_publico(p_codigo text)  definer  anon=true  auth=true
@@ -1489,6 +1540,7 @@ funcion  detalle_mensual_profesor(p_profesor uuid, p_periodo date)  definer  ano
 funcion  detalle_para_mi(p_profesor uuid, p_detalle jsonb)  definer  anon=false  auth=false
 funcion  devolver_invitacion(p_profesor uuid)  definer  anon=false  auth=false
 funcion  diagnosticos_publicos_supervisor()  definer  anon=false  auth=false
+funcion  disparar_fin_de_partida()  definer  anon=false  auth=false
 funcion  disparar_informes_encargados()  definer  anon=false  auth=false
 funcion  disparar_recordatorios_cobro()  definer  anon=false  auth=false
 funcion  disparar_recordatorios_programados()  definer  anon=false  auth=false
@@ -1546,6 +1598,7 @@ funcion  guardar_informe_mensual(p_periodo date, p_resumen text, p_logros text, 
 funcion  guardar_mi_foto(p_ruta text, p_version_privacidad text)  definer  anon=false  auth=true
 funcion  hacer_pregunta_de_opciones(p_fen text, p_prompt text, p_opciones jsonb, p_correcta integer, p_tiempo_limite integer)  invoker  anon=false  auth=true
 funcion  hacer_pregunta_de_opciones(p_fen text, p_prompt text, p_opciones jsonb, p_correcta integer, p_tiempo_limite integer, p_sin_tablero boolean)  invoker  anon=false  auth=true
+funcion  hacer_pregunta_de_opciones(p_fen text, p_prompt text, p_opciones jsonb, p_correcta integer, p_tiempo_limite integer, p_sin_tablero boolean, p_bloquea_cambio boolean)  invoker  anon=false  auth=true
 funcion  handle_new_user()  definer  anon=false  auth=false
 funcion  historial_de_puntos(p_alumno uuid, p_limite integer)  invoker  anon=false  auth=true
 funcion  hora_servidor_ms()  invoker  anon=false  auth=true
@@ -1644,6 +1697,9 @@ funcion  justificaciones_recibidas(p_estado text, p_busqueda text, p_limite inte
 funcion  justificar_ausencia(p_desde date, p_hasta date, p_motivo text, p_detalle text, p_adjuntos jsonb, p_privacidad text)  definer  anon=false  auth=true
 funcion  lector_planilla_gastar()  definer  anon=false  auth=true
 funcion  lectores_de_aviso(p_aviso uuid)  definer  anon=false  auth=true
+funcion  licencias_admin()  definer  anon=false  auth=true
+funcion  licencias_cambiar(p_id uuid, p_accion text, p_vence timestamp with time zone)  definer  anon=false  auth=true
+funcion  licencias_generar(p_herramienta text, p_cantidad integer, p_dias integer, p_nota text, p_persona uuid)  definer  anon=false  auth=true
 funcion  ligar_a_la_clase_abierta()  invoker  anon=false  auth=false
 funcion  logros_hitos(alumno uuid)  invoker  anon=false  auth=true
 funcion  mandar_broma(p_premio_id uuid, p_para uuid, p_frase text)  definer  anon=false  auth=true
@@ -1754,6 +1810,7 @@ funcion  registrar_cobro_pagado_con_periodo(p_alumno uuid, p_concepto text, p_mo
 funcion  registrar_cobro_y_abono(p_alumno uuid, p_concepto text, p_monto numeric, p_moneda text, p_metodo text, p_referencia text, p_nota text, p_fecha date, p_suscripcion uuid, p_desde date, p_hasta date, p_pagado numeric)  definer  anon=false  auth=true
 funcion  registrar_compra(p_profile uuid, p_producto text, p_registrar boolean)  definer  anon=false  auth=true
 funcion  registrar_pago(p_pagos jsonb, p_metodo text, p_referencia text, p_nota text, p_fecha date)  definer  anon=false  auth=true
+funcion  registrar_robo_de_puntos(p_room_id uuid, p_ganador uuid, p_perdedor uuid, p_puntos integer)  definer  anon=false  auth=false
 funcion  registrar_salida_examen(p_examen uuid, p_segundos integer)  definer  anon=false  auth=true
 funcion  relevo_jugar(p_relevo uuid, p_fen_antes text, p_fen text, p_san text, p_resultado text)  definer  anon=false  auth=true
 funcion  relevo_senal(p_relevo uuid, p_senal text)  definer  anon=false  auth=true
@@ -1784,10 +1841,12 @@ funcion  salida_de_la_clase(p_clase uuid)  invoker  anon=false  auth=true
 funcion  se_caen_del_plan(p_dias integer)  invoker  anon=false  auth=true
 funcion  secreto_alerta_base()  definer  anon=false  auth=false
 funcion  secreto_aviso_diagnostico()  definer  anon=false  auth=false
+funcion  secreto_partida_robo()  definer  anon=false  auth=false
 funcion  secreto_tanda_cobros()  definer  anon=false  auth=false
 funcion  secreto_tanda_elo()  definer  anon=false  auth=false
 funcion  secreto_tanda_informes()  definer  anon=false  auth=false
 funcion  secreto_tanda_push()  definer  anon=false  auth=false
+funcion  seleccion_compartida(p_id uuid)  definer  anon=false  auth=true
 funcion  sesion_de_supervisado(p_sesion uuid)  definer  anon=false  auth=true
 funcion  set_cuentas_del_supervisor(p_supervisor uuid, p_cuentas uuid[])  definer  anon=false  auth=true
 funcion  set_profesores_del_coordinador(p_coordinador uuid, p_profesores uuid[])  definer  anon=false  auth=true
@@ -1811,6 +1870,7 @@ funcion  supervisado_por_mi(p_persona uuid)  definer  anon=false  auth=true
 funcion  supervisores_de(p_persona uuid)  definer  anon=false  auth=true
 funcion  tablero_academias(p_periodo date)  definer  anon=false  auth=true
 funcion  tareas_con_avance(p_alumno uuid, p_profesor uuid, p_pendientes boolean, p_limite integer)  invoker  anon=true  auth=true
+funcion  tengo_herramienta(p_herramienta text)  definer  anon=false  auth=true
 funcion  tiempo_por_seccion(p_alumno uuid, p_desde timestamp with time zone, p_hasta timestamp with time zone)  invoker  anon=false  auth=true
 funcion  trofeos_de(p_alumno uuid)  definer  anon=false  auth=true
 funcion  uuid_seguro(p_texto text)  invoker  anon=false  auth=true
@@ -1831,6 +1891,7 @@ politica  analisis_partidas_alumno  analisis_partidas_delete  DELETE
 politica  analisis_partidas_alumno  analisis_partidas_insert  INSERT
 politica  analisis_partidas_alumno  analisis_partidas_select  SELECT
 politica  analisis_partidas_alumno  analisis_partidas_update  UPDATE
+politica  arbitraje_consulta_config  arbitraje_consulta_config_select  SELECT
 politica  arbitrajes_publicos  arbitrajes_publicos_insert  INSERT
 politica  arbitrajes_publicos  arbitrajes_publicos_select  SELECT
 politica  arbitrajes_publicos  arbitrajes_publicos_update  UPDATE
@@ -1894,6 +1955,8 @@ politica  cobros_contacto  cobros_contacto_coordinacion  ALL
 politica  cobros_contacto  cobros_contacto_lee_alumno  SELECT
 politica  cobros_recordatorios_programados  cobros_recordatorios_programados_coordinacion  ALL
 politica  compras_tienda  compras_tienda_select  SELECT
+politica  consultas_arbitraje  consultas_arbitraje_select  SELECT
+politica  consultas_arbitraje  consultas_arbitraje_update  UPDATE
 politica  coordinador_funciones_quitadas  coordinador_funciones_quitadas_select  SELECT
 politica  coordinador_profesores  coordinador_profesores_select  SELECT
 politica  course_unlocks  course_unlocks_delete  DELETE
@@ -1995,6 +2058,7 @@ politica  insignias  insignias_ver  SELECT
 politica  insignias  verificacion_en_dos_pasos  ALL  restrictiva
 politica  insignias_tipos  insignias_tipos_ver  SELECT
 politica  justificaciones_ausencia  justificaciones_select  SELECT
+politica  licencias_herramientas  licencias_herramientas_ver  SELECT
 politica  material_compartido  material_compartido_select  SELECT
 politica  mensajes_casa  mensajes_casa_delete  DELETE
 politica  mensajes_casa  mensajes_casa_insert  INSERT
@@ -2170,6 +2234,10 @@ politica  saved_games  saved_games_select  SELECT
 politica  saved_games  saved_games_select_asistentes  SELECT
 politica  saved_games  saved_games_select_ausentes  SELECT
 politica  saved_games  verificacion_en_dos_pasos  ALL  restrictiva
+politica  selecciones_arbitraje  selecciones_arbitraje_borrar  DELETE
+politica  selecciones_arbitraje  selecciones_arbitraje_cambiar  UPDATE
+politica  selecciones_arbitraje  selecciones_arbitraje_crear  INSERT
+politica  selecciones_arbitraje  selecciones_arbitraje_ver  SELECT
 politica  solicitudes_academia  solicitudes_academia_select  SELECT
 politica  solicitudes_academia  solicitudes_academia_update  UPDATE
 politica  subgrupo_alumnos  subgrupo_alumnos_delete  DELETE
@@ -2252,6 +2320,7 @@ trigger  academias  auditar
 trigger  acceso_config  auditar
 trigger  ajustes_academia  ajustes_academia_protegido
 trigger  analisis_partidas_alumno  analisis_partidas_al_guardar
+trigger  arbitraje_consulta_config  auditar
 trigger  auditoria  auditoria_intocable
 trigger  auditoria  auditoria_sin_truncate
 trigger  certificados  auditar
@@ -2282,11 +2351,13 @@ trigger  examenes  examenes_exige_acceso_al_empezar
 trigger  examenes  otorgar_puntos_de_examen
 trigger  formularios  formularios_academia_propia
 trigger  fourplayer_games  reloj_de_partida
+trigger  game_rooms  disparar_fin_de_partida
 trigger  game_rooms  game_rooms_exige_acceso
 trigger  game_rooms  game_rooms_ligar_a_la_clase
 trigger  game_rooms  reloj_de_partida
 trigger  game_state  protect_game_state_teacher_columns_trigger
 trigger  ia_uso  ia_uso_avisa_tope
+trigger  licencias_herramientas  auditar
 trigger  material_compartido  auditar
 trigger  mensajes_casa  mensajes_casa_al_crear
 trigger  notas_alumno  notas_alumno_clase_propia
@@ -2354,6 +2425,7 @@ indice  actualizaciones_plataforma  actualizaciones_plataforma_pkey
 indice  ajustes_academia  ajustes_academia_actualizado_por_fk
 indice  ajustes_academia  ajustes_academia_pkey
 indice  analisis_partidas_alumno  analisis_partidas_alumno_pkey
+indice  arbitraje_consulta_config  arbitraje_consulta_config_pkey
 indice  arbitrajes_publicos  arbitrajes_publicos_pendientes
 indice  arbitrajes_publicos  arbitrajes_publicos_pkey
 indice  arbitrajes_publicos  arbitrajes_publicos_revisado_por_fk
@@ -2425,6 +2497,8 @@ indice  cobros_recordatorios_programados  cobros_recordatorios_programados_pkey
 indice  cobros_recordatorios_programados  cobros_recordatorios_programados_student_id_fk
 indice  compras_tienda  compras_tienda_otorgado_por_fk
 indice  compras_tienda  compras_tienda_pkey
+indice  consultas_arbitraje  consultas_arbitraje_pendientes
+indice  consultas_arbitraje  consultas_arbitraje_pkey
 indice  coordinador_funciones_quitadas  coordinador_funciones_quitadas_coordinador_id_fk
 indice  coordinador_funciones_quitadas  coordinador_funciones_quitadas_pkey
 indice  coordinador_profesores  coordinador_profesores_pkey
@@ -2546,6 +2620,10 @@ indice  justificaciones_ausencia  justificaciones_ausencia_pkey
 indice  justificaciones_ausencia  justificaciones_por_fecha
 indice  justificaciones_ausencia  justificaciones_revisada_por_fk
 indice  justificaciones_ausencia  justificaciones_una_por_dias
+indice  licencias_herramientas  licencias_herramientas_codigo_key
+indice  licencias_herramientas  licencias_herramientas_creada_por_idx
+indice  licencias_herramientas  licencias_herramientas_persona_idx
+indice  licencias_herramientas  licencias_herramientas_pkey
 indice  material_compartido  material_compartido_academia_idx
 indice  material_compartido  material_compartido_academia_unica
 indice  material_compartido  material_compartido_otorgado_idx
@@ -2693,6 +2771,9 @@ indice  salas_torneo  salas_torneo_updated_by_fk
 indice  saved_games  saved_games_class_session_idx
 indice  saved_games  saved_games_created_by_fk
 indice  saved_games  saved_games_pkey
+indice  seleccion_cache  seleccion_cache_pkey
+indice  selecciones_arbitraje  selecciones_arbitraje_creada_por_idx
+indice  selecciones_arbitraje  selecciones_arbitraje_pkey
 indice  solicitudes_academia  solicitudes_academia_pkey
 indice  solicitudes_academia  solicitudes_academia_revisado_por_fk
 indice  subgrupo_alumnos  subgrupo_alumnos_pkey
@@ -2841,6 +2922,7 @@ grant  analisis_partidas_alumno  authenticated  DELETE
 grant  analisis_partidas_alumno  authenticated  INSERT
 grant  analisis_partidas_alumno  authenticated  SELECT
 grant  analisis_partidas_alumno  authenticated  UPDATE
+grant  arbitraje_consulta_config  authenticated  SELECT
 grant  arbitrajes_publicos  anon  DELETE
 grant  arbitrajes_publicos  anon  INSERT
 grant  arbitrajes_publicos  anon  REFERENCES
@@ -3002,6 +3084,8 @@ grant  cobros_vista  authenticated  TRIGGER
 grant  cobros_vista  authenticated  TRUNCATE
 grant  cobros_vista  authenticated  UPDATE
 grant  compras_tienda  authenticated  SELECT
+grant  consultas_arbitraje  authenticated  SELECT
+grant  consultas_arbitraje  authenticated  UPDATE
 grant  coordinador_funciones_quitadas  authenticated  REFERENCES
 grant  coordinador_funciones_quitadas  authenticated  SELECT
 grant  coordinador_funciones_quitadas  authenticated  TRIGGER
@@ -3276,6 +3360,7 @@ grant  insignias_tipos  authenticated  SELECT
 grant  justificaciones_ausencia  authenticated  REFERENCES
 grant  justificaciones_ausencia  authenticated  SELECT
 grant  justificaciones_ausencia  authenticated  TRIGGER
+grant  licencias_herramientas  authenticated  SELECT
 grant  material_compartido  authenticated  SELECT
 grant  mensajes_casa  authenticated  DELETE
 grant  mensajes_casa  authenticated  INSERT
@@ -3674,6 +3759,10 @@ grant  saved_games  authenticated  SELECT
 grant  saved_games  authenticated  TRIGGER
 grant  saved_games  authenticated  TRUNCATE
 grant  saved_games  authenticated  UPDATE
+grant  selecciones_arbitraje  authenticated  DELETE
+grant  selecciones_arbitraje  authenticated  INSERT
+grant  selecciones_arbitraje  authenticated  SELECT
+grant  selecciones_arbitraje  authenticated  UPDATE
 grant  solicitudes_academia  anon  DELETE
 grant  solicitudes_academia  anon  INSERT
 grant  solicitudes_academia  anon  REFERENCES
