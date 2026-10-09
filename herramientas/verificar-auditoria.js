@@ -43,6 +43,9 @@ const VIGILADAS = [
   // Puntos Ajedrez: se canjean por acceso (curso_adelanto, material_tienda),
   // así que ganarlos y gastarlos queda anotado igual que un permiso.
   "puntos_ajustes", "premios_canjeados",
+  // Las licencias de las herramientas de arbitraje: quién recibió cuál, y
+  // quién la anuló o le cambió el vencimiento.
+  "licencias_herramientas",
 ];
 
 let fallos = 0;

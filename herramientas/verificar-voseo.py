@@ -119,6 +119,7 @@ dejé llegué terminé
 moví saqué enroqué pensé equivoqué encerré
 ojalá
 quizá
+pococí sarapiquí sinaí
 mamá papá bebé
 dará hará podrá dispondrá será tendrá tendrás vendrá verá verás sabrás habrá saldrá
 pondrá querrá irá
