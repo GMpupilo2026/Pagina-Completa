@@ -9,7 +9,11 @@
  *     «Lista») y una nota, que guarda preparacion_sesiones (solo la lee y la
  *     escribe administración: lo dice la RLS, no esta pantalla);
  *   - sus archivos, su presentación (se mira acá mismo con VistaPrevia) y su
- *     cuestionario al estilo Kahoot, si ya está cargado.
+ *     cuestionario al estilo Kahoot, si ya está cargado;
+ *   - «Mandarlo como tarea a los asesores»: abre Tareas con ese cuestionario
+ *     en el renglón y marcadas las cuentas temporales abiertas del taller
+ *     (tareas.html?temporales=<detalle>), para que lo practiquen en su casa
+ *     entre una sesión y otra.
  *
  * Las sesiones salen de cursos/recursos/formacion-ajedrez/sesiones.json, que
  * arma herramientas/curso-generar-formacion.py junto con el curso; los
@@ -32,6 +36,7 @@
   let datos = null;          // sesiones.json
   let estados = [];          // filas de preparacion_sesiones
   let cuestionarios = [];    // { id, titulo, preguntas }
+  let talleres = [];         // [detalle, cuántas cuentas temporales abiertas]
   let pedido = null;
 
   function el(tag, clase, texto) {
@@ -46,9 +51,11 @@
     const r = await fetch(CARPETA + "sesiones.json", { cache: "no-cache" });
     if (!r.ok) throw new Error("No se pudo leer la lista de sesiones del curso.");
     datos = await r.json();
-    const [e, c] = await Promise.all([
+    const [e, c, t] = await Promise.all([
       sb.from("preparacion_sesiones").select("sesion, estado, nota, actualizado_en").eq("curso", CURSO),
       sb.from("cuestionarios").select("id, titulo, preguntas").eq("material", CURSO).eq("listo", true),
+      // Los asesores son las cuentas temporales del taller que siguen abiertas.
+      sb.from("cuentas_temporales").select("detalle").gt("vence", new Date().toISOString()).range(0, 999),
     ]);
     if (e.error) {
       throw new Error(/preparacion_sesiones|does not exist|schema cache/i.test(e.error.message || "")
@@ -57,6 +64,9 @@
     }
     estados = e.data || [];
     cuestionarios = (c && !c.error && c.data) || [];
+    const cuenta = new Map();
+    ((t && !t.error && t.data) || []).forEach((f) => cuenta.set(f.detalle, (cuenta.get(f.detalle) || 0) + 1));
+    talleres = [...cuenta.entries()];
   }
 
   function abrir() {
@@ -160,6 +170,16 @@
       const a = el("a", ENLACE, "🎯 Cuestionario Kahoot (" + (q.preguntas || []).length + " preguntas)");
       a.href = "cuestionarios.html?id=" + encodeURIComponent(q.id);
       cosas.appendChild(a);
+      // Con más de un taller abierto, uno por taller: se dice a cuál va.
+      talleres.forEach(([detalle, n]) => {
+        const m = el("a", ENLACE, "📨 Mandarlo como tarea a "
+          + (n === 1 ? "la persona" : "las " + n + " personas")
+          + (talleres.length > 1 ? " de «" + detalle + "»" : " del taller"));
+        m.href = "tareas.html?material=cuestionario&recorte=" + encodeURIComponent(q.id)
+          + "&temporales=" + encodeURIComponent(detalle);
+        m.setAttribute("aria-label", m.textContent + ": el cuestionario de la sesión " + s.n);
+        cosas.appendChild(m);
+      });
     } else {
       cosas.appendChild(el("span", "inline-flex items-center rounded-lg border border-dashed border-brand-300 dark:border-brand-600 px-3 py-1.5 text-sm text-brand-500 dark:text-brand-300",
         "🎯 Kahoot: por preparar"));
