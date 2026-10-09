@@ -1,4 +1,16 @@
 clave,puesto,equipo,puntos
+25524,1,Costa Rica,14
+25524,2,Nicaragua,12
+25524,3,Guatemala,11.5
+25524,4,El Salvador,11.5
+25524,5,Panamá,9
+25524,6,Honduras,2
+25525,1,Guatemala,13.5
+25525,2,El Salvador,13
+25525,3,Costa Rica,12
+25525,4,Honduras,10.5
+25525,5,Nicaragua,9
+25525,6,Panamá,2
 49302,1,Liceo de Alfaro Ruiz,
 49302,2,CTP Parrita,
 49302,3,Liceo Rural COOPESILENCIO,
@@ -342,6 +354,24 @@ clave,puesto,equipo,puntos
 284937,4,LEB de Rio Jimenez,5
 284937,5,CTP La Suiza,4.5
 284937,6,Colegio San Jose de la Montana,2.5
+350486,1,Pacto del Jocote,6.5
+350486,2,Futuro Verde,1.5
+350487,1,Lepanto,19
+350487,2,CTP Rosario,11
+350487,3,CEP Palmares,11
+350487,4,Futuro Verde,7.5
+350487,5,CTP Esparza,6.5
+350487,6,León Cortés Castro,5
+350488,1,Gregorio José Ramírez,8
+350488,2,Lepanto,0
+350489,1,Redentorista San Alfonso,18
+350489,2,Gregorio José Ramírez,18
+350489,3,Lepanto,10
+350489,4,CTP Esparza,9.5
+350489,5,LEB San Ramón,7
+350489,6,CEB Palmares,6
+350489,7,CTP Jicaral,5.5
+350489,8,Liceo Rural Aranjuez,2
 351100,1,Liceo Paraiso,6
 351100,2,Monseñor Ruben Odio,4
 351100,3,CAOTOSO,2
@@ -362,6 +392,61 @@ clave,puesto,equipo,puntos
 352706,3,Liceo Rural Las Colinas,1
 352709,1,Liceo Exp Bilingue,4.5
 352709,2,Claretiano,3.5
+355929,1,Liceo Teodoro Picado,27
+355929,2,Colegio Academico de Lepanto,21.5
+355929,3,Liceo Fernando Volio Jimenez,20.5
+355929,4,Centro Educativo San Francisco Cuidad Qu,16
+355929,5,Liceo de Paraiso,10.5
+355929,6,Colegio Jose Maria Gutierrez,7
+355929,7,Liceo Duacari,5
+355929,8,Liceo San Rafael,4.5
+355930,1,Liceo Teodoro Picado,27
+355930,2,Colegio Academico de Lepanto,19
+355930,3,Liceo Fernando Volio Jimenez,18.5
+355930,4,Centro Educativo San Francisco Cuidad Qu,16.5
+355930,5,Liceo de Paraiso,14
+355930,6,Colegio Jose Maria Gutierrez,11
+355930,7,Liceo Duacari,3
+355930,8,Liceo San Rafael,3
+355932,1,Liceo Pacto del Jocote,14
+355932,2,Liceo Experimental Bilingue Jose Figuere,14
+355932,3,Liceo Duacari,11.5
+355932,4,Liceo Teodoro Picado,10
+355932,5,Colegio Academico Finca Naranjo,6
+355932,6,Liceo Experimental Bilingue Los Angeles,4.5
+355937,1,Clodomiro Picado,23.5
+355937,2,Colegio Redentorista San Alfonso,23.5
+355937,3,Liceo Unesco,18
+355937,4,Liceo Teodoro Picado,17
+355937,5,Liceo Experimental Bilingue Pococi,11.5
+355937,6,Colegio Tecnico Profesional Nandayure,11
+355937,7,Liceo Rural El Concho,7.5
+355937,8,Liceo de San Rafael,0
+355938,1,Colegio Redentorista San Alfonso,21
+355938,2,Liceo Teodoro Picado,21
+355938,3,Clodomiro Picado,20.5
+355938,4,Liceo Unesco,15
+355938,5,Liceo Rural El Concho,13
+355938,6,Colegio Tecnico Profesional Nandayure,12
+355938,7,Liceo Experimental Bilingue Pococi,8.5
+355938,8,Liceo de San Rafael,1
+355939,1,Colegio Gregorio Jose Ramirez,18
+355939,2,Liceo Fernando Volio Jimenez,14.5
+355939,3,Liceo Hernan Vargas Ramirez,10
+355939,4,Liceo Experimental Bilingue Rio Jimenez,9.5
+355939,5,Colegio Iribo,8
+355939,6,CTP Belen,0
+355940,1,Colegio Gregorio Jose Ramirez,12
+355940,2,Liceo Fernando Volio Jimenez,11
+355940,3,Liceo Experimental Bilingue Rio Jimenez,7
+355940,4,Liceo Hernan Vargas Ramirez,5
+355940,5,Colegio Iribo,5
+357366,1,Liceo Pacto del Jocote,14
+357366,2,Liceo Experimental Bilingue Jose Figuere,14
+357366,3,Liceo Duacari,13
+357366,4,Colegio Academico Finca Naranjo,10
+357366,5,Liceo Teodoro Picado,7
+357366,6,Liceo Experimental Bilingue Los Angeles,2
 373495,0,Gerardo Badilla Mora,0
 373495,0,Santiago,0
 373498,0,Gerardo Badilla Mora,0
@@ -441,6 +526,21 @@ clave,puesto,equipo,puntos
 443324,9,CTP Esparza,14.5
 443324,10,Santa Maria School,13.5
 443324,11,CTP Rosario,13
+444584,1,Pacto Jocote,22.5
+444584,2,Lepanto,14
+444584,3,Las Lagunas 1,13
+444584,4,Cecilio Lindo,11
+444584,5,Las Lagunas 2,10.5
+444584,6,Santa Marta Y Griega,7
+444584,7,Luis Shapiro,6
+444585,1,Las Lagunas,22.5
+444585,2,Pacto Jocote,22
+444585,3,Anita Grande,18
+444585,4,Arco Iris,14.5
+444585,5,Futuro Verde,13
+444585,6,Ascensión Esquivel,9
+444585,7,Santa María,8.5
+444585,8,La Inmaculada,4.5
 445090,1,Pacto Jocote,21
 445090,2,Las Lagunas 2,14
 445090,3,Cecilio Lindo,13
@@ -456,6 +556,30 @@ clave,puesto,equipo,puntos
 445091,6,La Inmaculada,10
 445091,7,Santa María,6.5
 445091,8,Ascensión Esquivel,4
+479716,1,Guatemala,21.5
+479716,2,Panama,18
+479716,3,El Salvador,17.5
+479716,4,Costa Rica,15.5
+479716,5,Nicaragua,10
+479716,6,Honduras,6.5
+479771,1,El Salvador,24
+479771,2,Guatemala,21
+479771,3,Costa Rica,19
+479771,4,Panama,11
+479771,5,Nicaragua,10
+479771,6,Honduras,5
+481523,1,El Salvador,23
+481523,2,Costa Rica,22.5
+481523,3,Guatemala,21
+481523,4,Panama,13.5
+481523,5,Honduras,7
+481523,6,Nicaragua,3
+481536,1,Guatemala,24.5
+481536,2,Panama,19.5
+481536,3,El Salvador,19.5
+481536,4,Costa Rica,13.5
+481536,5,Nicaragua,9.5
+481536,6,Honduras,2.5
 641692,1,Mariano Cortes,6
 641692,2,Jorge Debravo,2
 641693,1,Mariano Cortes,5
@@ -507,6 +631,7 @@ clave,puesto,equipo,puntos
 824972,0,CAITE,
 828557,1,GSD,5
 828557,2,Bilingue San Ramon,3
+828559,0,Pacto del Jocote,
 829413,1,CTP Puriscal_A,6
 829413,2,Liceo Ruben Odio,2
 829437,1,Esc Republica de Honduras,18
@@ -597,6 +722,9 @@ clave,puesto,equipo,puntos
 846614,7,Pueblo Nuevo de Cajón,8
 846614,8,Guardia,7
 846614,9,José María Zeledón B,3
+912345,1,C.T.P. de Esparza,0
+912351,0,C.T.P. de Esparza,0
+912351,0,C.T.P. de Santa Elena,0
 917772,1,Tolentino,6
 917772,2,Serafico,3
 917772,3,CTP Dulce Nombre,2
@@ -796,6 +924,8 @@ clave,puesto,equipo,puntos
 949864,12,MontaÃ±a Grande,4
 1131927,1,BARRIO CANADA 3,6
 1131927,2,LA UNION 2,2
+1135778,1,CIENTÍFICO DE COSTA RICA DE PARRITA -UNED-,5
+1135778,2,Liceo Rural Cerros,3
 1136301,1,C.T.P. UMBERTO MELLONI CAMPANINI,10
 1136301,2,LICEO CIUDAD NEILY,5
 1136301,3,EXPERIMENTAL BILINGÜE DE AGUA BUENA,5
@@ -808,6 +938,37 @@ clave,puesto,equipo,puntos
 1140010,3,Dr Rafael Calderon Munoz 2,7.5
 1140010,4,Domingo Faustino Sarmiento 2,6
 1140010,5,La Fila,1
+1140295,1,Colegio Bilingue Ciudad Blanca,4.5
+1140295,2,Alba Ocampo Alvarado,3.5
+1140342,1,Mixta San Rafael,8.5
+1140342,2,CBSR,8
+1140342,3,Monseñor JVSF,5.5
+1140342,4,Centro Educativo Nbs,2
+1140354,1,CBSR,18.5
+1140354,2,Santiago Crespo Calvo,13
+1140354,3,La Palma,10
+1140354,4,Laboratorio,8
+1140354,5,Centro Educativo NBS,8
+1140354,6,EJW,2.5
+1140356,1,Santiago Crespo Calvo,7
+1140356,2,CBSR,3.5
+1140356,3,EJW,1.5
+1140498,1,CBSR,15.5
+1140498,2,CTP Rosario,12.5
+1140498,3,LEB,11
+1140498,4,ISJAG,10.5
+1140498,5,CTP Zarcero,10.5
+1140498,6,CTP Piedades Sur,0
+1140549,1,CTP Piedades Sur,12
+1140549,2,LEB Palmares,12
+1140549,3,CTP Zarcero,12
+1140549,4,SEP,4
+1140549,5,CTP Rosario,0
+1140695,1,Colegio Liceo Laboratorio de Liberia,15
+1140695,2,Colegio Bilingue Ciudad Blanca,9
+1140695,3,Colegio José María Gutiérrez,0
+1140783,1,Colegio José María Gutiérrez,5
+1140783,2,Liceo Laboratorio de Liberia,3
 1148519,1,CATIE,11
 1148519,2,Cecilio Lindo2,8.5
 1148519,3,Cecilio Lindo1,4
@@ -860,6 +1021,42 @@ clave,puesto,equipo,puntos
 1163389,0,Napoleon Quesada,
 1163392,0,Colegio Saint Francis,
 1163392,0,Napoleon Quesada,
+1164003,1,CASPARI MONTESSORI SCHOOL,20
+1164003,2,CLETO GONZÁLEZ VÍQUEZ,15.5
+1164003,3,FÉLIX ARCADIO MONTERO MONGE,11
+1164003,4,FELIXARCADIO MONTERO MONGE 2,8.5
+1164003,5,ESPAÑA,5
+1164003,6,SANTO TOMÁS,0
+1164004,1,CASPARI MONTESSORI SCHOOL,11
+1164004,2,FÉLIX ARCADIO MONTERO MONGE 2,5.5
+1164004,3,ESPAÑA,4
+1164004,4,FÉLIX ARCADIO MONTERO MONGE 1,3.5
+1164240,1,LICEO FERNANDO VOLIO,4
+1164240,2,LICEO CIUDAD NEILY,0
+1164250,1,ESC. LAS LAGUNAS,12
+1164250,2,JOSÉ GONZÁLO ACUÑA HERNÁNDEZ,5
+1164250,3,ESC. LABORATORIO,4
+1164250,4,SANTIAGO,3
+1164254,1,ESC.DEL VALLE,10.5
+1164254,2,SANTIAGO,5.5
+1164254,3,ESC. LAS LAGUNAS,5
+1164254,4,BARRIO CANADÁ,3
+1164260,1,LICEO SINAÍ,13
+1164260,2,C.T.P. UMBERTO MELLONI CAMPANINI,13
+1164260,3,LICEO CIUDAD NEILY,8
+1164260,4,LABA,3
+1164531,1,SAMAGU,10
+1164531,2,C.T.P. MERCEDES NORTE,8
+1164531,3,LEB BELEN,5.5
+1164531,4,LICEO SAN JOSÉ DE LA MONTAÑA,0.5
+1164540,0,C.T.P. MERCEDES NORTE,0
+1164540,0,COLEGIO CLARETIANO,0
+1164540,0,COLEGIO SANTA MARÍA DE GUADALUPE,0
+1164540,0,EXPERIMENTAL BILINGÜE DE BELÉN,0
+1164540,0,LICEO DE HEREDIA,0
+1164540,0,LICEO ING. MANUEL BENAVIDES RODRÍGUEZ,0
+1164540,0,LICEO SAN JOSÉ DE LA MONTAÑA,0
+1164540,0,UNIDAD PEDAGÓGICA LICEO EL ROBLE,0
 1168863,1,CATIE,13.5
 1168863,2,Cecilio Lindo,12.5
 1168863,3,C E San Felipe Nery,9
@@ -971,6 +1168,42 @@ clave,puesto,equipo,puntos
 1188240,9,Liceo Experimental Bilingue Claudio Bonilla A,8
 1188240,10,CTP Esparza,7.5
 1188240,11,Colegio Bilingue Ciudad Blanca,7
+1265328,1,Panama,25.5
+1265328,2,Costa Rica,15.5
+1265328,3,Guatemala,15.5
+1265328,4,Nicaragua,13.5
+1265328,5,Honduras,13
+1265328,6,El Salvador,7
+1265329,1,Panama,23
+1265329,2,Nicaragua,17
+1265329,3,Honduras,15
+1265329,4,Costa Rica,13.5
+1265329,5,Guatemala,11.5
+1265329,6,El Salvador,10
+1265972,1,Panama,24.5
+1265972,2,Guatemala,18
+1265972,3,Costa Rica,17.5
+1265972,4,Nicaragua,12
+1265972,5,El Salvador,10.5
+1265972,6,Honduras,7.5
+1265973,1,Panama,21
+1265973,2,Nicaragua,20.5
+1265973,3,Guatemala,15.5
+1265973,4,Costa Rica,14
+1265973,5,Honduras,12.5
+1265973,6,El Salvador,6.5
+1266976,1,Panama,25
+1266976,2,Costa Rica,17.5
+1266976,3,Guatemala,14
+1266976,4,Honduras,12.5
+1266976,5,Nicaragua,12
+1266976,6,El Salvador,9
+1266977,1,Panama,24
+1266977,2,Nicaragua,18
+1266977,3,El Salvador,12.5
+1266977,4,Guatemala,12
+1266977,5,Costa Rica,12
+1266977,6,Honduras,11.5
 1371584,1,Sistema Educativo Cenit,10
 1371584,2,Liceo Laboratorio de Liberia,6
 1371584,3,CBCB Liberia,5
@@ -1030,6 +1263,10 @@ clave,puesto,equipo,puntos
 1380196,3,Centro Educativo San Felipe Neri,11.5
 1380196,4,Guayabal,5.5
 1380196,5,Ricardo Jiménez Oreamuno,4.5
+1382091,1,COLEGIO BILINGÜE ENRIQUE MALAVASSI VARGAS,5
+1382091,3,LICEO ANASTASIO ALFARO,2
+1382101,0,LICEO ANASTASIO ALFARO,0
+1382121,0,LICEO ANASTASIO ALFARO,0
 1384684,1,COLEGIO BILINGÜE SAN RAMÓN A,
 1384684,2,LABORATORIO,
 1384684,3,SANTIAGO CRESPO CALVO,
@@ -1083,11 +1320,25 @@ clave,puesto,equipo,puntos
 1387919,1,LICEO FERNANDO VOLIO JIMÉNEZ,8
 1387919,2,LICEO SINAÍ,2.5
 1387919,3,COLEGIO DEL VALLE,1.5
+1388118,1,COLEGIO MADRE DEL DIVINO PASTOR DE CORREDORES,19
+1388118,2,JUAN LARA ALFARO,14.5
+1388118,3,LA UNION,12.5
+1388118,4,SANTIAGO,11
+1388118,5,LA ESTRELLA,8.5
+1388118,6,LAS JUNTAS,6.5
+1388118,7,FILA GUINEA,6
+1388118,8,LA MONA,2
+1388382,0,LICEO ANASTASIO ALFARO,
 1388481,1,J.E.C SAINT SPIRIT SCHOOL,14
 1388481,2,SAN BOSCO DE MORA,11
 1388481,3,LLANO GRANDE,7
 1388481,4,DARIO FLORES HERNÁNDEZ,6
 1388481,5,KREATIVE LEARNING SCHOOL MONTESSORI,2
+1388597,1,COLEGIO METODISTA 1,11
+1388597,2,CENTRO BILINGÜE EDUCATIVO AMADITA ROJAS DE MA,9.5
+1388597,3,COLEGIO METODISTA 2,9
+1388597,4,JESÚS JIMÉNEZ ZAMORA,8
+1388597,5,COLEGIO SAINT FRANCIS,2.5
 1389072,1,C.T.P. DE PURISCAL,8
 1389072,2,LICEO RURAL LA PALMA,4
 1389072,3,LICEO DE PURISCAL,0
@@ -1129,6 +1380,12 @@ clave,puesto,equipo,puntos
 1397262,4,CBSR,7
 1397262,5,Instituto Superior Julio Acosta Garcia,6
 1397262,6,CTP Zarcero,6
+1398504,1,C.T.P. DE SANTA ELENA,19.5
+1398504,2,CIENTIFICO DE PARRITA - UNED,12.5
+1398504,3,C.T.P. ESPARZA,9
+1398504,4,C.T.P. DE QUEPOS,7
+1398520,1,DELIA URBINA DE GUEVARA,5.5
+1398520,2,LA RIVIERA,2.5
 1398660,1,Cecilio Lindo,7.5
 1398660,2,CATIE,2.5
 1398660,3,Escuela Guayabal,2
