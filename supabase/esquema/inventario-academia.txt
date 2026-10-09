@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261009042516
+# al-dia-con: 20261009190740
 tabla  Ejercicios Lichess  rls=true
 tabla  academia_ia  rls=true
 tabla  academia_miembros  rls=true
@@ -66,6 +66,7 @@ tabla  examen_items  rls=true
 tabla  examen_respuestas  rls=true
 tabla  examenes  rls=true
 tabla  explorador_maestros_cache  rls=true
+tabla  fondos_region  rls=true
 tabla  formulario_compartidos  rls=true
 tabla  formulario_respuestas  rls=true
 tabla  formularios  rls=true
@@ -84,6 +85,7 @@ tabla  interno.curso_lecciones  rls=false
 tabla  interno.envios_publicos  rls=true
 tabla  interno.lector_planilla_uso  rls=true
 tabla  interno.salud_base  rls=true
+tabla  jde_eventos  rls=true
 tabla  jdn_resultados  rls=true
 tabla  justificaciones_ausencia  rls=true
 tabla  licencias_herramientas  rls=true
@@ -112,6 +114,7 @@ tabla  premios_catalogo  rls=true
 tabla  preparacion_rivales_profesores  rls=true
 tabla  preparacion_sesiones  rls=true
 tabla  preparaciones_rival  rls=true
+tabla  presentacion_notas  rls=true
 tabla  presentaciones_profe  rls=true
 tabla  profesor_videollamada  rls=true
 tabla  profile_teachers  rls=true
@@ -657,6 +660,10 @@ columna  examenes.vence_at  timestamp with time zone
 columna  explorador_maestros_cache.datos  jsonb
 columna  explorador_maestros_cache.fen  text
 columna  explorador_maestros_cache.leido_en  timestamp with time zone
+columna  fondos_region.fijado_en  timestamp with time zone
+columna  fondos_region.fijado_por  uuid
+columna  fondos_region.fondo  text
+columna  fondos_region.persona_id  uuid
 columna  formulario_compartidos.coordinador_id  uuid
 columna  formulario_compartidos.created_at  timestamp with time zone
 columna  formulario_compartidos.formulario_id  uuid
@@ -823,6 +830,18 @@ columna  interno.salud_base.lenta  boolean
 columna  interno.salud_base.lentas  integer
 columna  interno.salud_base.medido_at  timestamp with time zone
 columna  interno.salud_base.pulso_ms  integer
+columna  jde_eventos.anio  smallint
+columna  jde_eventos.arbitro  text
+columna  jde_eventos.categoria  text
+columna  jde_eventos.clasificacion  jsonb
+columna  jde_eventos.creado  timestamp with time zone
+columna  jde_eventos.fase  text
+columna  jde_eventos.fecha  date
+columna  jde_eventos.id  bigint
+columna  jde_eventos.nombre  text
+columna  jde_eventos.rama  text
+columna  jde_eventos.region  text
+columna  jde_eventos.sede  text
 columna  jdn_resultados.codigo  text
 columna  jdn_resultados.comite  text
 columna  jdn_resultados.edicion  text
@@ -1046,6 +1065,11 @@ columna  preparaciones_rival.id  uuid
 columna  preparaciones_rival.partidas  integer
 columna  preparaciones_rival.profesor_id  uuid
 columna  preparaciones_rival.rival  text
+columna  presentacion_notas.deck  text
+columna  presentacion_notas.n  integer
+columna  presentacion_notas.profesor_id  uuid
+columna  presentacion_notas.texto  text
+columna  presentacion_notas.updated_at  timestamp with time zone
 columna  presentaciones_profe.created_at  timestamp with time zone
 columna  presentaciones_profe.formato  text
 columna  presentaciones_profe.id  uuid
@@ -1512,6 +1536,7 @@ funcion  anular_certificado(p_codigo text)  definer  anon=false  auth=true
 funcion  anular_recibo(p_recibo uuid, p_anular boolean, p_motivo text)  definer  anon=false  auth=true
 funcion  arbitraje_consulta_config_guardar(p_modelo text, p_tope numeric)  definer  anon=false  auth=true
 funcion  arbitraje_consulta_frenar(p_ip text, p_correo text)  definer  anon=false  auth=false
+funcion  asesores_tablero(p_detalle text)  invoker  anon=false  auth=true
 funcion  asignar_grupo_proyecto(p_grupo uuid, p_profesor uuid)  definer  anon=false  auth=true
 funcion  avance_del_plan(p_alumno uuid, p_desde timestamp with time zone)  invoker  anon=false  auth=true
 funcion  avisar_clase_abierta()  definer  anon=false  auth=false
@@ -1626,6 +1651,7 @@ funcion  examenes_con_nota(p_alumno uuid, p_profesor uuid, p_limite integer)  in
 funcion  exigir_acceso_vigente()  definer  anon=false  auth=false
 funcion  faltas_justificadas(p_desde date, p_hasta date)  invoker  anon=false  auth=true
 funcion  fecha_segura(p_texto text)  invoker  anon=false  auth=true
+funcion  fondos_region_fijar(p_personas uuid[], p_fondo text)  definer  anon=false  auth=true
 funcion  formulario_acepta_adjuntos(p_carpeta text)  definer  anon=true  auth=true
 funcion  formulario_compartido_conmigo(p_formulario uuid)  definer  anon=false  auth=true
 funcion  formulario_publico(p_slug text)  definer  anon=true  auth=true
@@ -1731,6 +1757,7 @@ funcion  interno.ultima_actividad_de_clase(p_clase uuid)  definer  anon=false  a
 funcion  interno.validar_periodo(p_desde date, p_hasta date)  invoker  anon=false  auth=false
 funcion  interno.verificacion_al_dia()  definer  anon=false  auth=true
 funcion  interno.version_legal_valida(p text)  invoker  anon=false  auth=false
+funcion  jde_frenar(p_ip text, p_correo text)  definer  anon=false  auth=false
 funcion  jdn_drive_guardar(p_url text, p_secreto text)  definer  anon=false  auth=false
 funcion  jdn_drive_leer()  definer  anon=false  auth=false
 funcion  jdn_frenar(p_ip text, p_correo text)  definer  anon=false  auth=false
@@ -2062,6 +2089,7 @@ politica  examenes  examenes_insert  INSERT
 politica  examenes  examenes_select  SELECT
 politica  examenes  examenes_select_supervisor  SELECT
 politica  examenes  examenes_update  UPDATE
+politica  fondos_region  fondos_region_ver  SELECT
 politica  formulario_compartidos  formulario_compartidos_delete  DELETE
 politica  formulario_compartidos  formulario_compartidos_insert  INSERT
 politica  formulario_compartidos  formulario_compartidos_select  SELECT
@@ -2101,6 +2129,7 @@ politica  informes_profesor  informes_profesor_select  SELECT
 politica  insignias  insignias_ver  SELECT
 politica  insignias  verificacion_en_dos_pasos  ALL  restrictiva
 politica  insignias_tipos  insignias_tipos_ver  SELECT
+politica  jde_eventos  jde_eventos_lectura_publica  SELECT
 politica  jdn_resultados  jdn_resultados_con_herramienta  SELECT
 politica  justificaciones_ausencia  justificaciones_select  SELECT
 politica  licencias_herramientas  licencias_herramientas_ver  SELECT
@@ -2183,6 +2212,10 @@ politica  preparacion_sesiones  preparacion_sesiones_update  UPDATE
 politica  preparaciones_rival  preparaciones_rival_borrar  DELETE
 politica  preparaciones_rival  preparaciones_rival_guardar  INSERT
 politica  preparaciones_rival  preparaciones_rival_ver  SELECT
+politica  presentacion_notas  presentacion_notas_delete  DELETE
+politica  presentacion_notas  presentacion_notas_insert  INSERT
+politica  presentacion_notas  presentacion_notas_select  SELECT
+politica  presentacion_notas  presentacion_notas_update  UPDATE
 politica  presentaciones_profe  presentaciones_profe_delete  DELETE
 politica  presentaciones_profe  presentaciones_profe_insert  INSERT
 politica  presentaciones_profe  presentaciones_profe_select  SELECT
@@ -2615,6 +2648,8 @@ indice  examenes  examenes_alumno_idx
 indice  examenes  examenes_pkey
 indice  examenes  examenes_profesor_idx
 indice  explorador_maestros_cache  explorador_maestros_cache_pkey
+indice  fondos_region  fondos_region_fijado_por_idx
+indice  fondos_region  fondos_region_pkey
 indice  formulario_compartidos  formulario_compartidos_coordinador_idx
 indice  formulario_compartidos  formulario_compartidos_pkey
 indice  formulario_respuestas  formulario_respuestas_alumno_id_fk
@@ -2665,6 +2700,8 @@ indice  interno.envios_publicos  envios_publicos_tipo_ambito
 indice  interno.lector_planilla_uso  lector_planilla_uso_dia
 indice  interno.lector_planilla_uso  lector_planilla_uso_pkey
 indice  interno.salud_base  salud_base_pkey
+indice  jde_eventos  jde_eventos_anio_fase_idx
+indice  jde_eventos  jde_eventos_pkey
 indice  jdn_resultados  jdn_resultados_edicion_codigo_orden_key
 indice  jdn_resultados  jdn_resultados_pkey
 indice  justificaciones_ausencia  justificaciones_ausencia_pkey
@@ -2739,6 +2776,7 @@ indice  preparacion_sesiones  preparacion_sesiones_actualizado_por_idx
 indice  preparacion_sesiones  preparacion_sesiones_pkey
 indice  preparaciones_rival  preparaciones_rival_pkey
 indice  preparaciones_rival  preparaciones_rival_profesor_idx
+indice  presentacion_notas  presentacion_notas_pkey
 indice  presentaciones_profe  presentaciones_profe_pkey
 indice  presentaciones_profe  presentaciones_profe_profesor_idx
 indice  profesor_videollamada  profesor_videollamada_pkey
@@ -3358,6 +3396,7 @@ grant  examenes  authenticated  SELECT
 grant  examenes  authenticated  TRIGGER
 grant  examenes  authenticated  TRUNCATE
 grant  examenes  authenticated  UPDATE
+grant  fondos_region  authenticated  SELECT
 grant  formulario_compartidos  authenticated  DELETE
 grant  formulario_compartidos  authenticated  INSERT
 grant  formulario_compartidos  authenticated  REFERENCES
@@ -3436,6 +3475,12 @@ grant  informes_profesor  authenticated  TRIGGER
 grant  informes_profesor  authenticated  TRUNCATE
 grant  insignias  authenticated  SELECT
 grant  insignias_tipos  authenticated  SELECT
+grant  jde_eventos  anon  REFERENCES
+grant  jde_eventos  anon  SELECT
+grant  jde_eventos  anon  TRIGGER
+grant  jde_eventos  authenticated  REFERENCES
+grant  jde_eventos  authenticated  SELECT
+grant  jde_eventos  authenticated  TRIGGER
 grant  jdn_resultados  authenticated  REFERENCES
 grant  jdn_resultados  authenticated  SELECT
 grant  jdn_resultados  authenticated  TRIGGER
@@ -3595,6 +3640,13 @@ grant  preparacion_sesiones  authenticated  UPDATE
 grant  preparaciones_rival  authenticated  DELETE
 grant  preparaciones_rival  authenticated  INSERT
 grant  preparaciones_rival  authenticated  SELECT
+grant  presentacion_notas  authenticated  DELETE
+grant  presentacion_notas  authenticated  INSERT
+grant  presentacion_notas  authenticated  REFERENCES
+grant  presentacion_notas  authenticated  SELECT
+grant  presentacion_notas  authenticated  TRIGGER
+grant  presentacion_notas  authenticated  TRUNCATE
+grant  presentacion_notas  authenticated  UPDATE
 grant  presentaciones_profe  anon  DELETE
 grant  presentaciones_profe  anon  INSERT
 grant  presentaciones_profe  anon  REFERENCES

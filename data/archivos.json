@@ -23,7 +23,7 @@
     "nombre": "Formación docente"
    }
   ],
-  "total": 888,
+  "total": 889,
   "material": [
    {
     "ruta": "material/cambiar-o-no-cambiar/cambiar-o-no-cambiar.pdf",
@@ -8146,6 +8146,12 @@
    }
   ],
   "sueltos": [
+   {
+    "ruta": "documentos/jde/normativa-pjde-2026.pdf",
+    "titulo": "Normativa pjde 2026",
+    "tipo": "otro",
+    "kb": 1695
+   },
    {
     "ruta": "instrucciones-adaptadas.pdf",
     "titulo": "Instrucciones adaptadas (para quien ve poco o no ve)",

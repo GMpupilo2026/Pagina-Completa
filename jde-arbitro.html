@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="img/favicon.svg">
+    <title>Juegos Estudiantiles MEP — modo árbitro | Ajedrez Integral</title>
+    <meta name="description" content="Arma cada fase de los Juegos Deportivos Estudiantiles (institucional, regional, interregional y nacional) con el Sistema Holandés de FIDE y publica los resultados en la página pública. Gratis, sin cuenta.">
+    <link rel="canonical" href="https://ajedrez-integral.com/jde-arbitro.html">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Ajedrez Integral">
+    <meta property="og:locale" content="es_CR">
+    <meta property="og:title" content="Juegos Estudiantiles MEP — modo árbitro">
+    <meta property="og:description" content="Arma cada fase de los Juegos Deportivos Estudiantiles y publica los resultados en la página pública. Gratis, sin cuenta.">
+    <meta property="og:url" content="https://ajedrez-integral.com/jde-arbitro.html">
+    <meta property="og:image" content="https://ajedrez-integral.com/img/og-ajedrez-integral.jpg">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="Ajedrez Integral — clases de ajedrez en vivo, no solo videos. ajedrez-integral.com">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="robots" content="noindex">
+    <link rel="stylesheet" href="css/tailwind.css">
+    <link rel="stylesheet" href="css/styles.css">
+    <!-- oscuro: inicio --><script>(function(){try{var t=localStorage.getItem('theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.classList.add('dark');}catch(e){}})();</script><!-- oscuro: fin -->
+    <script src="js/adaptive-mode.js"></script>
+<!-- app: inicio --><meta name="theme-color" content="#102a43"><link rel="manifest" href="/manifest.json"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Ajedrez"><script src="js/errores.js"></script><script src="js/pwa.js" defer></script><script src="js/navegacion.js" defer></script><!-- app: fin --><!-- fuentes: inicio --><link rel="stylesheet" href="css/fuentes.css"><!-- fuentes: fin --><!-- tema: inicio --><script>(function(){try{var l=localStorage.getItem('plataforma_letra_v1');if(l&&/^[a-z]{2,24}$/.test(l)&&l!=='tema')document.documentElement.setAttribute('data-letra',l);var t=localStorage.getItem('plataforma_tema_v1');if(!t||!/^[a-z]{2,24}$/.test(t)||t==='clasico')return;document.documentElement.setAttribute('data-tema',t);var b=getComputedStyle(document.documentElement).getPropertyValue('--c-brand-800').trim();var m=document.querySelector('meta[name="theme-color"]');if(b&&m)m.setAttribute('content','rgb('+b.replace(/\s+/g,',')+')');}catch(e){}})();</script><!-- tema: fin --></head>
+<body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-accent-500 focus:text-brand-900 focus:font-semibold focus:px-4 focus:py-2 focus:rounded-lg">Saltar al contenido principal</a>
+    <header id="header" class="sticky top-0 z-50 bg-brand-800 shadow-lg transition-all duration-300">
+        <div class="hidden lg:block bg-brand-900 border-b border-brand-700/60">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-8 flex items-center justify-end gap-5 text-xs text-brand-300">
+                <a href="juegos-estudiantiles.html" class="hover:text-accent-400 transition-colors">Juegos Estudiantiles MEP</a>
+                <span class="text-brand-700" aria-hidden="true">&middot;</span>
+                <a href="herramientas-arbitraje.html" class="hover:text-accent-400 transition-colors">Herramientas</a>
+            </div>
+        </div>
+        <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Navegación principal">
+            <div class="flex items-center justify-between min-h-[4rem] md:min-h-[5rem] py-2">
+                <a href="index.html" class="flex items-center gap-2 text-white"><img src="/img/logo-marca.png" alt="" width="78" height="48" class="h-10 md:h-12 w-auto shrink-0"><span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span></a>
+                <ul class="hidden lg:flex items-center gap-8 text-brand-100 font-medium">
+                    <li><a href="index.html" class="hover:text-accent-400 transition-colors">Inicio</a></li>
+                    <li><a href="juegos-estudiantiles.html" class="hover:text-accent-400 transition-colors">Juegos Estudiantiles MEP</a></li>
+                    <li><a href="pareo.html" class="hover:text-accent-400 transition-colors">Pareo Integral</a></li>
+                </ul>
+                <div class="flex items-center gap-2 sm:gap-3">
+                    <button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro">
+                        <span id="theme-icon" aria-hidden="true">☀️</span>
+                    </button>
+                    <button id="menu-toggle" class="lg:hidden text-white text-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Abrir menú" aria-expanded="false" aria-controls="mobile-menu">
+                        <svg id="icon-open" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                        <svg id="icon-close" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+            </div>
+        </nav>
+        <div id="mobile-menu" class="lg:hidden hidden bg-brand-800 border-t border-brand-700">
+            <ul class="px-4 py-4 space-y-3 text-brand-100 font-medium">
+                <li><a href="index.html" class="block py-2 hover:text-accent-400">Inicio</a></li>
+                <li><a href="juegos-estudiantiles.html" class="block py-2 hover:text-accent-400">Juegos Estudiantiles MEP</a></li>
+                <li><a href="pareo.html" class="block py-2 hover:text-accent-400">Pareo Integral</a></li>
+            </ul>
+        </div>
+    </header>
+    <main id="main-content">
+    <!-- Juegos Estudiantiles MEP, modo árbitro (js/jde-arbitro-pagina.js): arma
+         cada fase de los JDE con el motor ya comprobado de Pareo Integral
+         (js/pareo/torneo.js y js/pareo/desempates.js) y publica el resumen,
+         SIN CUENTA, en juegos-estudiantiles.html. Ver «Juegos Estudiantiles
+         MEP, modo árbitro» en docs/decisiones/juegos-y-torneos.md. -->
+    <div class="pt-10 pb-16">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="mb-8">
+                <h1 class="font-serif text-3xl md:text-4xl font-bold text-brand-800 dark:text-white"><span aria-hidden="true">🏟️ </span>Juegos Estudiantiles MEP — modo árbitro</h1>
+                <p class="text-brand-600 dark:text-brand-300 mt-2 max-w-2xl">Para quien organiza una fase de los Juegos Deportivos Estudiantiles —institucional, regional, interregional o nacional—, en cualquier regional del país. Gratis, sin cuenta ni licencia.</p>
+                <p class="mt-2 text-sm"><a href="juegos-estudiantiles.html" class="font-semibold text-brand-800 dark:text-white underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Ver los eventos ya publicados →</a></p>
+            </div>
+
+            <section class="rounded-2xl bg-white dark:bg-brand-900 shadow-md p-6 mb-8">
+                <h2 class="font-serif text-xl font-bold text-brand-800 dark:text-white mb-2">1. Arma el torneo de tu fase</h2>
+                <p class="text-brand-600 dark:text-brand-300 text-sm mb-4">Cada fase se empareja y se juega con <strong>Pareo Integral</strong>, el mismo emparejador del Sistema Holandés de FIDE que ya usa el sitio para cualquier torneo: rondas, resultados, desempates del C.07 y la clasificación final. No hay que aprender una herramienta nueva ni repetir el trabajo.</p>
+                <ol class="list-decimal list-inside text-sm text-brand-700 dark:text-brand-200 space-y-1 mb-4">
+                    <li>Abre Pareo Integral y crea el torneo de tu fase (institucional, regional, interregional o la final nacional).</li>
+                    <li>Juega las rondas y anota los resultados hasta cerrar el torneo.</li>
+                    <li>En «Archivos», descarga el torneo como <strong>.json</strong> (el botón «Bajar el torneo»).</li>
+                </ol>
+                <a href="pareo.html" target="_blank" rel="noopener" class="inline-block bg-accent-500 hover:bg-accent-600 text-brand-900 font-bold px-6 py-3 rounded-lg transition-colors shadow-md"><span aria-hidden="true">♟️ </span>Abrir Pareo Integral →</a>
+            </section>
+
+            <section class="rounded-2xl bg-white dark:bg-brand-900 shadow-md p-6 mb-8">
+                <h2 class="font-serif text-xl font-bold text-brand-800 dark:text-white mb-2">2. Publica los resultados</h2>
+                <p class="text-brand-600 dark:text-brand-300 text-sm mb-4">Sube el <strong>.json</strong> que bajaste de Pareo Integral, cuenta de qué fase y regional se trata, y publica. Aparece de inmediato en la página pública, con la misma plantilla que las demás regionales.</p>
+
+                <form id="ja-form" novalidate class="space-y-4">
+                    <div class="grid sm:grid-cols-2 gap-4">
+                        <label class="block"><span class="block text-sm font-semibold mb-1">Año</span>
+                            <select id="ja-anio" class="w-full rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 text-brand-800 dark:text-white px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></select>
+                        </label>
+                        <label class="block"><span class="block text-sm font-semibold mb-1">Fase</span>
+                            <select id="ja-fase" class="w-full rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 text-brand-800 dark:text-white px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></select>
+                        </label>
+                    </div>
+                    <div class="grid sm:grid-cols-2 gap-4">
+                        <label class="block" id="ja-region-campo"><span class="block text-sm font-semibold mb-1">Región o comité que organiza</span>
+                            <input id="ja-region" type="text" maxlength="80" placeholder="Ej.: San José Norte" class="w-full rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 text-brand-800 dark:text-white px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                        </label>
+                        <label class="block"><span class="block text-sm font-semibold mb-1">Categoría <span class="text-brand-450 dark:text-brand-350 font-normal">(opcional)</span></span>
+                            <input id="ja-categoria" type="text" maxlength="40" placeholder="Ej.: Categoría C" class="w-full rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 text-brand-800 dark:text-white px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                        </label>
+                    </div>
+                    <div class="grid sm:grid-cols-2 gap-4">
+                        <label class="block"><span class="block text-sm font-semibold mb-1">Rama</span>
+                            <select id="ja-rama" class="w-full rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 text-brand-800 dark:text-white px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></select>
+                        </label>
+                        <label class="block"><span class="block text-sm font-semibold mb-1">Fecha <span class="text-brand-450 dark:text-brand-350 font-normal">(opcional)</span></span>
+                            <input id="ja-fecha" type="date" class="w-full rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 text-brand-800 dark:text-white px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                        </label>
+                    </div>
+                    <label class="block"><span class="block text-sm font-semibold mb-1">Nombre del evento</span>
+                        <input id="ja-nombre" type="text" maxlength="160" placeholder="Ej.: JDE 2026 — Regional San José Norte, Categoría C" class="w-full rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 text-brand-800 dark:text-white px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                    </label>
+                    <label class="block"><span class="block text-sm font-semibold mb-1">Sede <span class="text-brand-450 dark:text-brand-350 font-normal">(opcional)</span></span>
+                        <input id="ja-sede" type="text" maxlength="120" class="w-full rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 text-brand-800 dark:text-white px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                    </label>
+                    <div class="grid sm:grid-cols-2 gap-4">
+                        <label class="block"><span class="block text-sm font-semibold mb-1">Tu nombre (quien arbitra o publica)</span>
+                            <input id="ja-arbitro" type="text" maxlength="80" class="w-full rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 text-brand-800 dark:text-white px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                        </label>
+                        <label class="block"><span class="block text-sm font-semibold mb-1">Tu correo <span class="text-brand-450 dark:text-brand-350 font-normal">(opcional, no se publica)</span></span>
+                            <input id="ja-correo" type="email" maxlength="160" class="w-full rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 text-brand-800 dark:text-white px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                        </label>
+                    </div>
+
+                    <div class="rounded-xl border border-dashed border-brand-300 dark:border-brand-700 p-4">
+                        <label class="block"><span class="block text-sm font-semibold mb-1">El .json de tu torneo, ya cerrado</span>
+                            <input id="ja-archivo" type="file" accept="application/json,.json" class="w-full text-sm">
+                        </label>
+                        <p id="ja-archivo-estado" class="text-sm text-brand-500 dark:text-brand-300 mt-2"></p>
+                    </div>
+
+                    <div id="ja-clasificacion-caja" class="hidden">
+                        <h3 class="font-semibold text-brand-800 dark:text-white mb-2">Clasificación final</h3>
+                        <p class="text-sm text-brand-500 dark:text-brand-300 mb-3">Pareo Integral no guarda la institución de cada jugador: escríbela en cada fila antes de publicar (puede quedar en blanco).</p>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-sm">
+                                <thead><tr class="text-left text-brand-500 dark:text-brand-300"><th class="py-1 pr-2">Puesto</th><th class="py-1 pr-2">Jugador</th><th class="py-1 pr-2">Puntos</th><th class="py-1">Institución</th></tr></thead>
+                                <tbody id="ja-clasificacion-cuerpo"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <button type="submit" id="ja-publicar" class="bg-brand-800 hover:bg-brand-900 dark:bg-brand-700 dark:hover:bg-brand-600 text-white font-semibold px-6 py-3 rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 disabled:opacity-50 disabled:cursor-not-allowed">Publicar en la página pública</button>
+                </form>
+            </section>
+
+            <section class="rounded-2xl bg-white dark:bg-brand-900 shadow-md p-6">
+                <h2 class="font-serif text-xl font-bold text-brand-800 dark:text-white mb-2">3. La normativa oficial</h2>
+                <p class="text-brand-600 dark:text-brand-300 text-sm mb-4">El reglamento de cada año, tal como lo publica el MEP.</p>
+                <ul id="ja-normativa" class="space-y-2 text-sm"></ul>
+            </section>
+        </div>
+    </div>
+    </main>
+
+    <footer class="bg-brand-900 text-brand-300 pt-16 pb-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid md:grid-cols-4 gap-8 mb-12">
+                <div><a href="index.html" class="flex items-center gap-2 text-white mb-4"><img src="/img/logo-marca.png" alt="" width="78" height="48" class="h-9 w-auto shrink-0"><span class="font-serif text-lg font-bold">Ajedrez Integral</span></a><p class="text-sm text-brand-300">Plataforma educativa de ajedrez para escuelas, colegios y familias. Aprende, practica y compite.</p></div>
+                <div><h3 class="text-white font-semibold mb-4">Juegos Estudiantiles</h3><ul class="space-y-2 text-sm"><li><a href="juegos-estudiantiles.html" class="hover:text-accent-400 transition-colors">Eventos publicados</a></li><li><a href="jde-arbitro.html" class="hover:text-accent-400 transition-colors">Modo árbitro</a></li><li><a href="pareo.html" class="hover:text-accent-400 transition-colors">Pareo Integral</a></li></ul></div>
+                <div><h3 class="text-white font-semibold mb-4">Recursos</h3><ul class="space-y-2 text-sm"><li><a href="herramientas-arbitraje.html" class="hover:text-accent-400 transition-colors">Herramientas</a></li><li><a href="ajedrez-estudiantil.html" class="hover:text-accent-400 transition-colors">Ajedrez estudiantil en Costa Rica</a></li></ul></div>
+                <div><h3 class="text-white font-semibold mb-4">Contacto</h3><ul class="space-y-2 text-sm"><li><a href="mailto:info@ajedrez-integral.com" class="hover:text-accent-400 transition-colors">info@ajedrez-integral.com</a></li><li><a href="https://wa.me/50683092291" target="_blank" rel="noopener" class="hover:text-accent-400 transition-colors">+506 8309-2291 (WhatsApp)</a></li></ul></div>
+            </div>
+            <div class="border-t border-brand-700 pt-6 text-center text-sm text-brand-300"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p><!-- legal: inicio --><p class="mt-2"><a href="privacidad.html" class="underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Política de privacidad</a> <span aria-hidden="true">·</span> <a href="terminos.html" class="underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Términos y condiciones</a></p><!-- legal: fin --></div>
+        </div>
+    </footer>
+    <script src="js/vendor/supabase.js"></script>
+    <script src="js/supabase-client.js"></script>
+    <script src="js/main.js"></script>
+    <script src="js/avisos.js"></script>
+    <script src="js/jde-fases.js"></script>
+    <script src="js/pareo/torneo.js"></script>
+    <script src="js/pareo/desempates.js"></script>
+    <script src="js/jde-arbitro-pagina.js"></script>
+</body>
+</html>

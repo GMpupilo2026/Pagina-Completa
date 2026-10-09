@@ -2396,3 +2396,86 @@ un solo torneo), las variantes juntas y el orden del medallero, el empate que
 comparte la plata, el comité deducido, la medalla escrita, «Jugó la final», el
 filtro de edición y el enlace. Rompiendo a propósito la paginación, el empate o
 la deducción, salta.
+
+## Juegos Estudiantiles MEP, modo árbitro
+
+`jde-arbitro.html` arma cada fase de los Juegos Deportivos Estudiantiles
+—institucional, regional, interregional y la final nacional— y publica el
+resumen en `juegos-estudiantiles.html`, la página que ve el público: los
+resultados de todas las regionales del país, cada una con la MISMA
+plantilla. Lo pidió el dueño del sitio, con una condición clara: que
+cualquier comité regional pueda publicar, sin que haya que repartirle una
+cuenta o una licencia a cada uno.
+
+- **No se inventó un segundo emparejador.** La fase se juega entera con
+  **Pareo Integral** (ver arriba): ya tiene el Sistema Holandés, los
+  desempates del C.07 y la clasificación final comprobados contra los
+  ejercicios de FIDE. `jde-arbitro.html` no toca nada de eso; solo lee el
+  `.json` que Pareo Integral ya deja bajar («Bajar el torneo») con los
+  MISMOS módulos que usa `pareo.html` —`js/pareo/torneo.js` y
+  `js/pareo/desempates.js`, cargados tal cual— y calcula la clasificación
+  con `PareoDesempates.clasificacion(t, t.desempates)`: el mismo número que
+  ya daría Pareo Integral si uno mirara la pantalla.
+- **Pareo Integral no guarda la institución de cada jugador** (es un
+  emparejador de FIDE, no un sistema de inscripciones escolares): por eso
+  `jde-arbitro.html` pinta la clasificación leída con un campo de texto por
+  fila para escribirla a mano antes de publicar. Puede quedar en blanco.
+- **Sin cuenta, a propósito.** Lo normal en este sitio es un candado de
+  licencia (`tengo_herramienta()`, ver «Herramientas de arbitraje» y
+  «Resultados JDN por comité» arriba), pero acá el dueño pidió lo contrario:
+  los JDE los organizan decenas de comités regionales, y pedirles una cuenta
+  a todos —o repartir licencias una por una— es justo la fricción que no
+  tiene sentido para algo que ya es público por naturaleza (los resultados
+  de un torneo escolar). La tabla `jde_eventos` no tiene ninguna política de
+  escritura: solo la escribe la Edge Function **`jde-publicar`**, con la
+  clave de servicio, y el freno de los envíos públicos hace el trabajo que
+  en otras herramientas hace la licencia. La LECTURA sí es de verdad
+  pública —`grant select to anon, authenticated`—, porque es lo que debe
+  ver cualquier familia sin sesión que busca el resultado de su regional.
+- **El freno es `jde_frenar()`, el mismo patrón que `jdn_frenar()`** (ver
+  «La ficha de los JDN 2027» en `docs/decisiones/cuentas-y-formularios.md`):
+  sus propios topes —10 eventos por hora por conexión, 5 por correo al
+  día, 40 en total por hora— y después el freno genérico de los envíos
+  públicos, con el tipo `'formulario'` y el ámbito `'jde-publicar'` (no se
+  le suma un caso nuevo a `interno.frenar_envio_publico`: ese freno ya
+  reparte por tipo y por ámbito). La Edge Function lo llama ANTES de
+  escribir nada en `jde_eventos`.
+- **Todas las regionales, la misma plantilla.** `juegos-estudiantiles.html`
+  pinta las cuatro fases SIEMPRE, en el mismo orden, aunque una todavía no
+  tenga ningún evento publicado («Todavía no hay eventos publicados de esta
+  fase.» en vez de un hueco en blanco): así ninguna regional ve una página
+  distinta de las demás, y nadie tiene que preguntarse si la fase existe o
+  si la página se rompió. Dentro de cada fase, los eventos se agrupan por
+  región (el texto que escribió quien publicó, sin una lista cerrada de
+  regiones: los JDE los organiza el MEP por Dirección Regional de
+  Educación, y esta primera versión no intenta adivinar ni validar esos
+  nombres, a diferencia de `comite()` en `js/jdn-comites.js`).
+- **La normativa, por año, en una sola lista** (`js/jde-fases.js`): 2026 ya
+  tiene su PDF oficial, servido por el propio sitio en
+  `documentos/jde/normativa-pjde-2026.pdf` (igual que las fichas de los JDN
+  en `documentos/jdn/`, así no depende de que el dominio del MEP esté
+  disponible). Un año nuevo —2027…— se agrega ahí, con su normativa cuando
+  el MEP la publique; mientras no la tenga, la página lo dice
+  («normativa pendiente de publicar») en vez de callar o enlazar a nada.
+- **`anio`, `fase`, `region`, `rama` y `clasificacion` se validan los dos
+  lados**: en el navegador, para avisar rápido sin gastar un envío; en la
+  Edge Function, porque el navegador que llama no es necesariamente
+  `jde-arbitro.html` —nada impide que alguien llame a la función directo—.
+  La clasificación se acota a 300 puestos y cada fila exige puesto, nombre
+  y puntos.
+
+**Lo que falta, a propósito, para una primera versión**: no hay forma de
+corregir o borrar un evento ya publicado desde la página (hay que pedirlo
+a quien administra, por la base), ni una lista cerrada de las Direcciones
+Regionales de Educación para evitar que la misma región quede escrita de
+dos formas distintas —el riesgo ya documentado en «Resultados JDN por
+comité»—. Las dos son mejoras para cuando el volumen de eventos lo pida.
+
+`herramientas/verificar-jde-eventos.js` lo prueba: la migración y la Edge
+Function leídas (el candado de lectura pública, que nadie escriba directo,
+que el freno se llame antes de guardar), `jde-arbitro.html` en un
+navegador —lee un torneo armado con el MISMO motor de Pareo Integral, pide
+la institución de cada fila, no publica sin árbitro ni región— y
+`juegos-estudiantiles.html` —las cuatro fases siempre se ven, cada regional
+con su sección, la medalla del podio, la normativa del año—. Rompiendo a
+propósito la política de lectura pública, salta.
