@@ -3793,6 +3793,11 @@
             const listaOp = document.createElement("ul");
             listaOp.className = "grid gap-2";
             caja.appendChild(listaOp);
+            // El cuestionario al estilo Kahoot no deja cambiar la opción ya elegida
+            // (questions.bloquea_cambio): ver «El cuestionario al estilo Kahoot» en
+            // docs/decisiones/clase-en-vivo.md. La pregunta de opciones de siempre
+            // sigue dejando tocar otra mientras la pregunta siga abierta.
+            const yaNoCambia = !!myAnswer && !!currentQuestion.bloquea_cambio;
             currentQuestion.opciones.forEach((texto, i) => {
                 const b = document.createElement("button");
                 b.type = "button";
@@ -3805,7 +3810,7 @@
                    lector de pantalla solo dice lo que es texto. Ver «En los
                    ejercicios de opción, cada opción dice su letra». */
                 b.textContent = "Opción " + CuadroComandos.letra(i) + ". " + String(texto);   // la escribió una persona
-                b.disabled = vencida;
+                b.disabled = vencida || yaNoCambia;
                 b.addEventListener("click", () => enviarOpcion(i));
                 const li = document.createElement("li");
                 li.appendChild(b);
@@ -3815,6 +3820,12 @@
 
         async function enviarOpcion(i) {
             if (!currentQuestion || currentQuestion.closed_at) return false;
+            // El cuestionario al estilo Kahoot no deja cambiar: la base también lo
+            // rechaza (respuesta_calificar_y_plazo), esto evita el viaje de más.
+            if (myAnswer && currentQuestion.bloquea_cambio) {
+                document.getElementById("question-status-text").textContent = "Ya elegiste tu respuesta: esta pregunta no deja cambiarla.";
+                return false;
+            }
             const { data, error } = await sb.from("question_answers").upsert({
                 question_id: currentQuestion.id, student_id: profile.id, moves: [], resulting_fen: currentQuestion.fen, opcion: i,
             }, { onConflict: "question_id,student_id" }).select().single();
@@ -3906,6 +3917,9 @@
             };
             const cerrada = () => currentQuestion.closed_at || PreguntaClase.segundosRestantes(currentQuestion) === 0;
             if (/^(cambiar respuesta|cambiar la respuesta|cambiar mi respuesta|cambiar|otra respuesta|volver a contestar|contestar de nuevo)$/.test(pedido)) {
+                if (esOpc && myAnswer && currentQuestion.bloquea_cambio) {
+                    return { fallo: true, texto: "Ya elegiste tu respuesta: esta pregunta no deja cambiarla." };
+                }
                 if (esOpc) return { texto: "Para cambiar tu opción, escribe la letra de otra: " + letrasDichas() + "." };
                 if (!myAnswer) return { texto: "Todavía no contestaste: escribe tu jugada." };
                 if (cerrada()) return { fallo: true, texto: "Ya no se puede cambiar: la pregunta se cerró o se acabó el tiempo." };
@@ -3915,7 +3929,8 @@
             // «siguiente» con la respuesta ya enviada: lo siguiente lo trae el profe.
             if (myAnswer && /^(siguiente|continuar|seguir|otra|la siguiente|siguiente pregunta)$/.test(pedido)) {
                 return { texto: "Ya enviaste tu respuesta: espera a que tu profe pase a lo siguiente. "
-                    + (cerrada() ? "" : esOpc ? "Si quieres cambiarla, escribe la letra de otra opción." : "Si quieres cambiarla, escribe «cambiar respuesta».") };
+                    + (cerrada() || (esOpc && currentQuestion.bloquea_cambio) ? ""
+                        : esOpc ? "Si quieres cambiarla, escribe la letra de otra opción." : "Si quieres cambiarla, escribe «cambiar respuesta».") };
             }
             if (!esOpc) return null;
             const n = currentQuestion.opciones.length;
@@ -3946,7 +3961,7 @@
             enviarOpcion(i).then((ok) => {
                 responder(ok
                     ? "Enviaste la opción " + CuadroComandos.letra(i) + ": " + PreguntaClase.textoDeOpcion(currentQuestion, i)
-                        + ". Puedes cambiarla mientras la pregunta siga abierta."
+                        + (currentQuestion.bloquea_cambio ? ". Ya no la puedes cambiar." : ". Puedes cambiarla mientras la pregunta siga abierta.")
                     : document.getElementById("question-status-text").textContent || "No se pudo enviar tu respuesta.");
             });
             return "";
@@ -5821,7 +5836,9 @@
                 document.getElementById("question-color-hint").textContent = "";
                 document.getElementById("question-plies-hint").textContent = esTermometro
                     ? "Contesta con sinceridad: tu profe no le enseña a la clase quién eligió qué."
-                    : "Elige una opción. Puedes cambiarla mientras la pregunta siga abierta.";
+                    : currentQuestion.bloquea_cambio
+                        ? "Elige una opción: no la vas a poder cambiar."
+                        : "Elige una opción. Puedes cambiarla mientras la pregunta siga abierta.";
                 questionBoard.setInteractive(false);
                 retryBtn.classList.add("hidden");
                 document.getElementById("question-undo-btn").classList.add("hidden");

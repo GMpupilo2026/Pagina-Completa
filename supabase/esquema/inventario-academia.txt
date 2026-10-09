@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261008193213
+# al-dia-con: 20261009005951
 tabla  Ejercicios Lichess  rls=true
 tabla  academia_ia  rls=true
 tabla  academia_miembros  rls=true
@@ -1105,6 +1105,7 @@ columna  question_answers.updated_at  timestamp with time zone
 columna  question_engine_answers.answer  jsonb
 columna  question_engine_answers.computed_at  timestamp with time zone
 columna  question_engine_answers.question_id  uuid
+columna  questions.bloquea_cambio  boolean
 columna  questions.class_session_id  uuid
 columna  questions.closed_at  timestamp with time zone
 columna  questions.created_at  timestamp with time zone
@@ -1570,6 +1571,7 @@ funcion  guardar_informe_mensual(p_periodo date, p_resumen text, p_logros text, 
 funcion  guardar_mi_foto(p_ruta text, p_version_privacidad text)  definer  anon=false  auth=true
 funcion  hacer_pregunta_de_opciones(p_fen text, p_prompt text, p_opciones jsonb, p_correcta integer, p_tiempo_limite integer)  invoker  anon=false  auth=true
 funcion  hacer_pregunta_de_opciones(p_fen text, p_prompt text, p_opciones jsonb, p_correcta integer, p_tiempo_limite integer, p_sin_tablero boolean)  invoker  anon=false  auth=true
+funcion  hacer_pregunta_de_opciones(p_fen text, p_prompt text, p_opciones jsonb, p_correcta integer, p_tiempo_limite integer, p_sin_tablero boolean, p_bloquea_cambio boolean)  invoker  anon=false  auth=true
 funcion  handle_new_user()  definer  anon=false  auth=false
 funcion  historial_de_puntos(p_alumno uuid, p_limite integer)  invoker  anon=false  auth=true
 funcion  hora_servidor_ms()  invoker  anon=false  auth=true
