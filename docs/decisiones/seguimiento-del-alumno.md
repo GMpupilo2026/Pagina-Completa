@@ -102,6 +102,16 @@ alumno, que es justo lo que la tarea viene a evitar.
   tope de siempre (1000), y `tareas_con_avance()` lo cuenta igual, porque
   nunca usó el total (cuenta ejercicios distintos de esa `category`). Ver
   «El tipo 18: Tus propios errores» en entrenamiento.md.
+- **No se puede pedir más de lo que hay en la plataforma, tampoco con «—
+  todo —».** El tope de «todo» es la suma de sus recortes (Practicar: 9
+  series; sin tope si algún recorte no tiene total). El campo baja al tope al
+  salir de él y el envío lo vuelve a comprobar. Pasó de verdad: las series de
+  Practicar y las lecciones de Aprender se mudaron del HTML a
+  `js/entreno-practicas.js` y `js/aprender-lecciones.js`, el generador siguió
+  leyendo el HTML, escribió listas vacías sin quejarse y se mandaron tareas de
+  50 series de Practicar. Ahora el generador revienta si no encuentra
+  ninguna, y `verificar-tareas.js` cuenta esas categorías en el JS y prueba
+  el tope de «todo».
 
 ### La franja de la tarea vive dentro del ejercicio
 
