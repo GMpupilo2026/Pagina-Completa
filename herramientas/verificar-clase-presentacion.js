@@ -13,7 +13,13 @@
      tiene que devolverle `presentacion` a quien no es profesor;
    - el eco de Realtime de la diapositiva que el profe ya pasó lo devolvería
      atrás; al alumno no se le piden las láminas siguientes (son las
-     respuestas); el proyector no muestra los botones del profe.
+     respuestas); el proyector no muestra los botones del profe;
+   - la pizarra (js/clase-pizarra.js): una marca que cae en otro lugar de la
+     lámina en otra pantalla, un color que no se ve sobre la diapositiva, unas
+     marcas que el alumno pueda dibujar o que se pierdan al volver a una
+     lámina;
+   - las notas del profe en cada diapositiva: que se guarden con su lámina y
+     que nadie más las vea (la RLS de presentacion_notas, solo las propias).
 
    Con el sitio en localhost:8777 y playwright, contra el doble de
    verificar-clase-registrada.js:
@@ -90,6 +96,40 @@ function datos() {
   cierto("el bucket de las subidas solo firma la diapositiva que se está mostrando",
     /g\.presentacion->>'deck' = 'subida\/' \|\| \(storage\.foldername\(name\)\)\[2\]/.test(pol)
       && /g\.presentacion->>'n' = split_part\(storage\.filename\(name\), '\.', 1\)/.test(pol), mig || "sin migración");
+
+  console.log("\n3b. La pizarra y las notas del profe");
+  const todas = fs.readdirSync(dirMig).sort().map((f) => fs.readFileSync(path.join(dirMig, f), "utf8")).join("\n");
+  cierto("las marcas de la pizarra tienen tope en la base (la fila viaja entera con cada jugada)",
+    /constraint game_state_presentacion_tamano\s+check \(presentacion is null or length\(presentacion::text\) <= 60000\)/.test(todas));
+  const notas = todas.slice(todas.indexOf("create table if not exists public.presentacion_notas"));
+  const politicas = [...notas.matchAll(/create policy (presentacion_notas_\w+) on public\.presentacion_notas for (\w+) to authenticated\s+(using|with check) \(([^;]*);/g)];
+  cierto("las notas: RLS encendida y una política por operación", /alter table public\.presentacion_notas enable row level security/.test(notas)
+    && ["select", "insert", "update", "delete"].every((op) => politicas.some((m) => m[2] === op)), politicas.map((m) => m[2]).join(" "));
+  cierto("y cada una deja SOLO las propias (ni alumnos, ni quien administra)",
+    politicas.length === 4 && politicas.every((m) => !/soy_admin|game_state|alumnos_de|\bor\b/.test(m[4])
+      && /profesor_id = \(select auth\.uid\(\)\)/.test(m[4])),
+    politicas.map((m) => m[4]).join(" | "));
+  // Los colores, contra el fondo real de la lámina: 3:1, el de un gráfico (WCAG 1.4.11).
+  const ctxPz = { window: {}, document: {} };
+  vm.runInNewContext(fs.readFileSync(path.join(RAIZ, "js", "clase-pizarra.js"), "utf8").split("let pizarraActiva")[0], ctxPz);
+  const Pz = ctxPz.window.Pizarra;
+  const lum = (hex) => { const c = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255).map((v) => v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4); return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]; };
+  const contraste = (a, b) => { const [x, y] = [lum(a), lum(b)].sort((m, n) => n - m); return (x + 0.05) / (y + 0.05); };
+  Pz.COLORES.forEach((c) => {
+    if (c.clave === "amarillo") return; // el del resaltador: va debajo de lo que resalta
+    const fondo = c.clave === "blanco" ? "#000000" : "#ffffff";
+    const r = contraste(c.hex, fondo);
+    cierto(`${c.nombre} se ve sobre una lámina ${c.clave === "blanco" ? "oscura" : "blanca"} (${r.toFixed(1)}:1)`, r >= 3);
+  });
+  const sucias = [
+    { h: "lapiz", c: "rojo", p: [10, 10, 20, 20] }, { h: "lapiz", c: "morado", p: [1, 1] }, { h: "script", c: "rojo", p: [1, 1] },
+    { h: "linea", c: "azul", p: [1, 2, 3] }, { h: "flecha", c: "verde", p: [0, 0, 1001, 5] }, { h: "circulo", c: "negro", p: [1.5, 2, 3, 4] }, "x", null,
+    { h: "circulo", c: "negro", p: [100, 100, 300, 300], extra: "<script>" },
+  ];
+  cierto("de la base solo se dibuja lo que tiene la forma (y sin claves de más)",
+    JSON.stringify(Pz.limpiar(sucias)) === JSON.stringify([{ h: "lapiz", c: "rojo", p: [10, 10, 20, 20] }, { h: "circulo", c: "negro", p: [100, 100, 300, 300] }]),
+    JSON.stringify(Pz.limpiar(sucias)));
+  cierto("y nunca más de " + Pz.MAX_TRAZOS + " marcas", Pz.limpiar(Array.from({ length: 99 }, () => ({ h: "lapiz", c: "rojo", p: [1, 1] }))).length === Pz.MAX_TRAZOS);
 }
 
 const DECK = decks[0];
@@ -185,6 +225,185 @@ async function pruebaProfesor(browser) {
     (await ultimaPresentacion(page)) === null && !(await seVe(page, "#presentacion-caja")));
   cierto("sin errores en consola", errores.length === 0, errores.join(" | "));
   await ctx.close();
+}
+
+/* Hacer algo y esperar a que la presentación se mande (no un tiempo fijo: con
+   la máquina cargada, como en el CI, 350 ms no alcanzan). Si no se manda nada
+   —un toque que no deja marca—, sigue a los 3 segundos. */
+const enviosDePresentacion = (page) => page.evaluate(() => window.__updates.filter((x) => x.tabla === "game_state" && "presentacion" in x.campos).length);
+async function yMandar(page, accion) {
+  const antes = await enviosDePresentacion(page);
+  await accion();
+  await page.waitForFunction((n) => window.__updates.filter((x) => x.tabla === "game_state" && "presentacion" in x.campos).length > n, antes, { timeout: 3000 }).catch(() => {});
+  await page.waitForTimeout(50);
+}
+
+/* Arrastrar el mouse sobre la diapositiva, en fracciones de la imagen (0 a 1). */
+async function trazar(page, puntos) {
+  await yMandar(page, () => arrastrar(page, puntos));
+}
+async function arrastrar(page, puntos) {
+  const r = await page.evaluate(() => { const b = document.getElementById("presentacion-img").getBoundingClientRect(); return { x: b.left, y: b.top, w: b.width, h: b.height }; });
+  const a = (f) => [r.x + f[0] * r.w, r.y + f[1] * r.h];
+  await page.mouse.move(...a(puntos[0]));
+  await page.mouse.down();
+  for (const f of puntos.slice(1)) await page.mouse.move(...a(f), { steps: 6 });
+  await page.mouse.up();
+}
+const marcasEnPantalla = (page) => page.evaluate(() => document.getElementById("presentacion-pizarra").children.length);
+const punteroDePizarra = (page) => page.evaluate(() => getComputedStyle(document.getElementById("presentacion-pizarra")).pointerEvents);
+
+async function pruebaPizarra(browser) {
+  console.log("\n4b. La pizarra: el profe raya la diapositiva; sus notas, solo para él");
+  const { page, ctx, errores } = await abrir(browser, "u-profe", CLASE, {
+    game_state: [fila({ presentacion: { deck: DECK, n: 3 } })],
+    presentacion_notas: [{ profesor_id: "u-profe", deck: DECK, n: 4, texto: "Preguntar quién ya arbitró un torneo." }],
+  });
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await esperarImagen(page, "03.webp");
+  cierto("sin encender la pizarra, la diapositiva no se raya (el puntero pasa de largo)",
+    await punteroDePizarra(page) === "none" && !(await seVe(page, "#pizarra-herramientas")));
+  await page.click("#pizarra-btn");
+  cierto("«✏️ Pizarra» la enciende, lo dice y saca las herramientas",
+    (await page.getAttribute("#pizarra-btn", "aria-pressed")) === "true" && await seVe(page, "#pizarra-herramientas") && await punteroDePizarra(page) === "auto");
+  cierto("cada color dice su nombre (el color nunca va solo)", await page.$$eval("#pizarra-colores button", (bs) =>
+    bs.length >= 5 && bs.every((b) => b.textContent.trim().length > 2)));
+  await trazar(page, [[0.2, 0.3], [0.3, 0.35], [0.4, 0.3]]);
+  let enviada = await ultimaPresentacion(page);
+  cierto("un trazo con el lápiz se manda al soltarlo, rojo de entrada", enviada && enviada.n === 3 && Array.isArray(enviada.trazos)
+    && enviada.trazos.length === 1 && enviada.trazos[0].h === "lapiz" && enviada.trazos[0].c === "rojo" && enviada.trazos[0].p.length >= 4,
+    JSON.stringify(enviada));
+  await page.click("[data-pizarra-herramienta='linea']");
+  await page.click("#pizarra-colores button:has-text('Azul')");
+  await trazar(page, [[0.25, 0.5], [0.75, 0.5]]);
+  enviada = await ultimaPresentacion(page);
+  const linea = enviada && enviada.trazos && enviada.trazos[1];
+  cierto("la línea azul cae donde se trazó, en milésimas de la imagen", !!linea && linea.h === "linea" && linea.c === "azul"
+    && Math.abs(linea.p[0] - 250) <= 3 && Math.abs(linea.p[1] - 500) <= 3 && Math.abs(linea.p[2] - 750) <= 3 && Math.abs(linea.p[3] - 500) <= 3,
+    JSON.stringify(linea));
+  await page.click("[data-pizarra-herramienta='flecha']");
+  await trazar(page, [[0.5, 0.7], [0.8, 0.8]]);
+  await page.click("[data-pizarra-herramienta='circulo']");
+  await trazar(page, [[0.6, 0.6], [0.6, 0.6]]);
+  await trazar(page, [[0.1, 0.1], [0.2, 0.25]]);
+  enviada = await ultimaPresentacion(page);
+  cierto("flecha y círculo; un toque con la línea o el círculo no deja nada",
+    enviada.trazos.map((t) => t.h).join(",") === "lapiz,linea,flecha,circulo" && await marcasEnPantalla(page) === 4, JSON.stringify(enviada.trazos.map((t) => t.h)));
+  // Un eco viejo (de cuando había una sola marca) no le borra las demás.
+  await page.evaluate((v) => window.__cambioEnBase("game_state", v), fila({ presentacion: { deck: DECK, n: 3, trazos: [enviada.trazos[0]] } }));
+  await page.waitForTimeout(200);
+  cierto("un eco viejo de Realtime no le quita marcas", await marcasEnPantalla(page) === 4);
+  await yMandar(page, () => page.click("#pizarra-deshacer"));
+  cierto("«Deshacer» quita la última", (await ultimaPresentacion(page)).trazos.length === 3 && await marcasEnPantalla(page) === 3);
+  await page.click("[data-pizarra-herramienta='borrador']");
+  await trazar(page, [[0.5, 0.49], [0.5, 0.51]]);
+  enviada = await ultimaPresentacion(page);
+  cierto("el borrador quita la marca que toca (la línea) y deja las demás", enviada.trazos.map((t) => t.h).join(",") === "lapiz,flecha",
+    JSON.stringify(enviada.trazos.map((t) => t.h)));
+
+  // Pasar de lámina: la siguiente, limpia; al volver, sus marcas otra vez.
+  await yMandar(page, () => page.click("#presentacion-siguiente"));
+  await esperarImagen(page, "04.webp");
+  await page.waitForFunction(() => !document.getElementById("presentacion-nota").disabled, null, { timeout: 5000 }).catch(() => {});
+  cierto("la siguiente diapositiva va sin las marcas de la anterior",
+    JSON.stringify(await ultimaPresentacion(page)) === JSON.stringify({ deck: DECK, n: 4 }) && await marcasEnPantalla(page) === 0);
+  cierto("sus notas del profe, en su cuadro", await page.inputValue("#presentacion-nota") === "Preguntar quién ya arbitró un torneo.");
+  await yMandar(page, () => page.click("#presentacion-anterior"));
+  await esperarImagen(page, "03.webp");
+  enviada = await ultimaPresentacion(page);
+  cierto("al volver a la anterior, vuelven sus marcas (y se mandan a la clase)",
+    enviada.n === 3 && !!enviada.trazos && enviada.trazos.length === 2 && await marcasEnPantalla(page) === 2, JSON.stringify(enviada));
+  await yMandar(page, () => page.click("#pizarra-limpiar"));
+  cierto("«Borrar todo» las quita para todos", JSON.stringify(await ultimaPresentacion(page)) === JSON.stringify({ deck: DECK, n: 3 }) && await marcasEnPantalla(page) === 0);
+  await yMandar(page, () => page.click("#pizarra-deshacer"));
+  cierto("y «Deshacer» las trae de vuelta", ((await ultimaPresentacion(page)).trazos || []).length === 2);
+
+  // Las notas: escribir, guardar, que se guarde sola al pasar, y borrar.
+  cierto("el cuadro de notas dice que son solo suyas", /solo las ves tú/.test(await page.textContent("label[for='presentacion-nota']")));
+  await page.fill("#presentacion-nota", "Mostrar el reloj antes de esta.");
+  await page.click("#presentacion-nota-guardar");
+  await page.waitForFunction(() => /Nota guardada/.test(document.getElementById("presentacion-nota-msg").textContent), null, { timeout: 5000 }).catch(() => {});
+  const ultimaNota = () => page.evaluate(() => { const u = window.__inserts.filter((i) => i.tabla === "presentacion_notas"); return u.length ? u[u.length - 1] : null; });
+  const nota = await ultimaNota();
+  cierto("«Guardar la nota» la guarda con su diapositiva, a su nombre", !!nota && nota.upsert && nota.fila.profesor_id === "u-profe"
+    && nota.fila.deck === DECK && nota.fila.n === 3 && nota.fila.texto === "Mostrar el reloj antes de esta.", JSON.stringify(nota));
+  cierto("y dice que quedó guardada", /Nota guardada/.test(await page.textContent("#presentacion-nota-msg")));
+  await page.fill("#presentacion-nota", "Se guarda sola al pasar.");
+  await page.click("#presentacion-siguiente");
+  await esperarImagen(page, "04.webp");
+  await page.waitForFunction(() => window.__inserts.filter((i) => i.tabla === "presentacion_notas").length >= 2, null, { timeout: 5000 }).catch(() => {});
+  const sola = (await ultimaNota()).fila;
+  cierto("lo escrito se guarda solo al pasar de diapositiva (en la que era)", sola.n === 3 && sola.texto === "Se guarda sola al pasar.", JSON.stringify(sola));
+  await page.waitForFunction(() => !document.getElementById("presentacion-nota").disabled, null, { timeout: 5000 }).catch(() => {});
+  await page.fill("#presentacion-nota", "");
+  await page.click("#presentacion-nota-guardar");
+  await page.waitForFunction(() => window.__deletes.some((x) => x.tabla === "presentacion_notas"), null, { timeout: 5000 }).catch(() => {});
+  cierto("vaciarla la borra", await page.evaluate((d) => window.__deletes.some((x) => x.tabla === "presentacion_notas"
+    && JSON.stringify(x.donde) === JSON.stringify([["profesor_id", "u-profe"], ["deck", d], ["n", 4]])), DECK));
+  await page.click("#pizarra-btn");
+  cierto("apagar la pizarra deja la diapositiva como antes", await punteroDePizarra(page) === "none" && !(await seVe(page, "#pizarra-herramientas")));
+  cierto("sin errores en consola", errores.length === 0, errores.join(" | "));
+  await ctx.close();
+}
+
+/* Dónde cae en pantalla el centro de la primera marca, en fracciones de la lámina. */
+const centroDeMarca = (page) => page.evaluate(() => {
+  const m = document.getElementById("presentacion-pizarra").firstElementChild.getBoundingClientRect();
+  const i = document.getElementById("presentacion-img");
+  const r = i.getBoundingClientRect();
+  // La imagen va «contain»: la lámina es el rectángulo dibujado, no el de la etiqueta.
+  const k = Math.min(r.width / i.naturalWidth, r.height / i.naturalHeight);
+  const w = i.naturalWidth * k, h = i.naturalHeight * k;
+  const x0 = r.left + (r.width - w) / 2, y0 = r.top + (r.height - h) / 2;
+  return [((m.left + m.right) / 2 - x0) / w, ((m.top + m.bottom) / 2 - y0) / h];
+});
+const cerca = (c) => Math.abs(c[0] - 0.7) < 0.01 && Math.abs(c[1] - 0.4) < 0.01;
+
+async function pruebaPizarraClase(browser) {
+  console.log("\n4c. Las marcas, en la pantalla de la alumna y en el proyector");
+  const MARCA = { h: "circulo", c: "verde", p: [600, 300, 800, 500] }; // su centro: (0,7; 0,4) de la lámina
+  const { page, ctx, errores } = await abrir(browser, "u-ana", CLASE, { game_state: [fila({ presentacion: { deck: DECK, n: 7, trazos: [MARCA] } })] });
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await esperarImagen(page, "07.webp");
+  await page.waitForTimeout(200);
+  let c = await centroDeMarca(page);
+  cierto("la alumna ve la marca del profe en su lugar de la lámina", cerca(c), JSON.stringify(c));
+  cierto("sin pizarra ni notas, y la marca no se puede tocar",
+    !(await seVe(page, "#pizarra-btn")) && !(await seVe(page, "#presentacion-mis-notas")) && await punteroDePizarra(page) === "none");
+  await page.waitForFunction(() => /marcando la diapositiva/.test(document.getElementById("clase-voz").textContent), null, { timeout: 3000 }).catch(() => {});
+  cierto("y se le dice en voz que su profe está marcando", /marcando la diapositiva/.test(await page.textContent("#clase-voz")));
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.waitForTimeout(200);
+  c = await centroDeMarca(page);
+  cierto("en el celular, la misma marca en el mismo lugar", cerca(c), JSON.stringify(c));
+  await page.setViewportSize({ width: 1600, height: 900 });
+  await page.click("#presentacion-completa");
+  await page.waitForFunction(() => document.fullscreenElement && document.fullscreenElement.id === "presentacion-caja", null, { timeout: 5000 });
+  await page.waitForTimeout(250);
+  c = await centroDeMarca(page);
+  cierto("a pantalla completa, con el tablero en pequeño al lado, también", cerca(c), JSON.stringify(c));
+  await page.evaluate(() => document.exitFullscreen());
+  await page.waitForTimeout(200);
+  await page.evaluate((v) => window.__cambioEnBase("game_state", v), fila({ presentacion: { deck: DECK, n: 7, trazos: [MARCA, { h: "flecha", c: "rojo", p: [100, 100, 300, 200] }] } }));
+  await page.waitForTimeout(200);
+  cierto("el profe raya otra: le llega sin volver a cargar la lámina", await marcasEnPantalla(page) === 2 && (await imagen(page)).src === "07.webp");
+  await page.evaluate((v) => window.__cambioEnBase("game_state", v), fila({ presentacion: { deck: DECK, n: 8 } }));
+  await esperarImagen(page, "08.webp");
+  cierto("pasa de lámina: las marcas se van", await marcasEnPantalla(page) === 0);
+  cierto("la alumna nunca escribió la presentación ni notas", await page.evaluate(() =>
+    !window.__updates.some((x) => x.tabla === "game_state" && "presentacion" in x.campos) && !window.__inserts.some((i) => i.tabla === "presentacion_notas")));
+  cierto("sin errores en consola", errores.length === 0, errores.join(" | "));
+  await ctx.close();
+
+  const pr = await abrir(browser, "u-profe", CLASE, { game_state: [fila({ presentacion: { deck: DECK, n: 7, trazos: [MARCA] } })] }, { ruta: "/sesion.html?proyector=1" });
+  await pr.page.setViewportSize({ width: 1600, height: 900 });
+  await esperarImagen(pr.page, "07.webp");
+  await pr.page.waitForTimeout(200);
+  c = await centroDeMarca(pr.page);
+  cierto("en el proyector la marca se ve en su lugar", cerca(c), JSON.stringify(c));
+  cierto("sin la pizarra ni las notas del profe", !(await seVe(pr.page, "#pizarra-btn")) && !(await seVe(pr.page, "#presentacion-nota")));
+  cierto("sin errores en consola", pr.errores.length === 0, pr.errores.join(" | "));
+  await pr.ctx.close();
 }
 
 async function pruebaAlumna(browser) {
@@ -406,7 +625,12 @@ async function pruebaVistaLimpia(browser) {
   cierto("la diapositiva a la izquierda, el tablero a la derecha y el chat abajo, a lo ancho",
     cajas.lamina[1] <= cajas.tablero[0] && cajas.tablero[1] < 200 && cajas.chat[2] >= cajas.lamina[3]
       && cajas.chat[0] <= cajas.lamina[0] + 1 && cajas.chat[1] > cajas.tablero[0], JSON.stringify(cajas));
-  await page.waitForFunction(() => /vista limpia/.test(document.getElementById("clase-voz").textContent), null, { timeout: 3000 }).catch(() => {});
+  // Con la máquina cargada, el aviso de la diapositiva (que llega cuando carga
+  // la imagen) puede pisar al de la vista limpia antes de leerlo: con la lámina
+  // ya a la vista, el profe la apaga y la vuelve a encender, y se lee ese.
+  await page.evaluate((v) => window.__cambioEnBase("game_state", v), fila({ presentacion: { deck: DECK, n: 29 } }));
+  await page.evaluate((v) => window.__cambioEnBase("game_state", v), fila({ presentacion: { deck: DECK, n: 29, limpia: true } }));
+  await page.waitForFunction(() => /vista limpia/.test(document.getElementById("clase-voz").textContent), null, { timeout: 5000 }).catch(() => {});
   cierto("y se le dice en voz", /vista limpia/.test(await page.textContent("#clase-voz")));
   const encima = await page.evaluate(() => {
     const c = document.getElementById("calentamiento-caja");
@@ -484,6 +708,8 @@ async function pruebaTableroMini(browser) {
   const browser = await chromium.launch({ executablePath: CHROME });
   try {
     await pruebaProfesor(browser);
+    await pruebaPizarra(browser);
+    await pruebaPizarraClase(browser);
     await pruebaAlumna(browser);
     await pruebaProyector(browser);
     await pruebaSubida(browser);

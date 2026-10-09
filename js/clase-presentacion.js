@@ -26,6 +26,11 @@
    subidas, la política del bucket no le firma otra): adelantarle las
    siguientes sería adelantarle las respuestas.
 
+   Encima de la diapositiva, la pizarra del profe (js/clase-pizarra.js): sus
+   marcas van en la misma columna, presentacion.trazos. Y debajo, sus notas de
+   cada diapositiva (presentacion_notas): recordatorios que solo ve él, en las
+   del curso y en las suyas.
+
    Como las demás partes de la clase (ver «sesion.js en partes»), un script
    clásico cargado ANTES que sesion.js: usa lo de sesion.js solo dentro de
    funciones. */
@@ -161,17 +166,38 @@ const PRESENTACION_ERRORES = {
 };
 
 /* Lo que llega de la base (applyGameStateRow) y lo que pone el profe. */
+/* La forma única de una presentación, con las claves siempre en el mismo orden:
+   el eco de Realtime se compara como texto con lo que mandó el profe. */
+function formaPresentacion(p) {
+    if (!PresentacionClase.valida(p)) return null;
+    const q = { deck: p.deck, n: p.n };
+    if (p.limpia === true) q.limpia = true;
+    const trazos = Pizarra.limpiar(p.trazos);
+    if (trazos.length) q.trazos = trazos;
+    return q;
+}
+
+function mismaDiapositiva(a, b) {
+    return !!(a && b && a.deck === b.deck && a.n === b.n);
+}
+
 async function pintarPresentacion(p, propia) {
     const caja = document.getElementById("presentacion-caja");
     if (!caja) return;
-    const nueva = PresentacionClase.valida(p) ? { deck: p.deck, n: p.n } : null;
-    if (nueva && p.limpia === true) nueva.limpia = true;
+    const nueva = formaPresentacion(p);
     // Si el profe pasa tres diapositivas seguidas, los ecos de las dos primeras
     // llegan después y lo devolverían atrás: unos segundos, solo vale lo suyo.
     if (!propia && presentacionEsDelProfe() && Date.now() - presentacionEnviadaEn < 3000
         && JSON.stringify(nueva) !== presentacionEnviada) return;
     // El mismo eco de siempre (una jugada, una flecha): no se vuelve a pintar.
     if (presentacionDatos && JSON.stringify(nueva) === JSON.stringify(presentacionActual) && !caja.hidden) return;
+    // La misma diapositiva con otras marcas de la pizarra: solo las marcas.
+    if (presentacionDatos && !caja.hidden && mismaDiapositiva(nueva, presentacionActual)
+        && !!nueva.limpia === !!presentacionActual.limpia) {
+        presentacionActual = nueva;
+        pintarPizarra(nueva.trazos);
+        return;
+    }
     presentacionActual = nueva;
     pintarPresentacionPanel();
     pintarVistaLimpia(nueva);
@@ -179,6 +205,8 @@ async function pintarPresentacion(p, propia) {
     if (!nueva) {
         caja.hidden = true;
         presentacionDatos = null;
+        ponerPizarraActiva(false);
+        pintarPizarra([]);
         anunciarALaClase("presentacion", null);
         return;
     }
@@ -191,6 +219,7 @@ async function pintarPresentacion(p, propia) {
             || "No se pudo abrir la presentación. Revisa tu conexión: se vuelve a intentar con la siguiente diapositiva.";
         msg.hidden = false;
         img.removeAttribute("src");
+        document.getElementById("presentacion-pizarra").replaceChildren();
         // Sin la diapositiva, la vista limpia dejaría al alumno sin nada que mirar.
         document.documentElement.classList.remove("vista-limpia");
     };
@@ -211,6 +240,7 @@ async function pintarPresentacion(p, propia) {
     msg.hidden = true;
     const total = datos.diapositivas.length;
     img.src = src;
+    pintarPizarra(nueva.trazos);
     img.alt = /^Diapositiva \d+$/.test(d.titulo) ? d.titulo : "Diapositiva " + n + ": " + d.titulo;
     document.getElementById("presentacion-titulo").textContent = datos.titulo;
     document.getElementById("presentacion-cuenta").textContent = "Diapositiva " + n + " de " + total;
@@ -221,7 +251,7 @@ async function pintarPresentacion(p, propia) {
     // En el proyector no van los botones ni las notas: es lo que ve la clase.
     const delProfe = presentacionEsDelProfe() && !modoProyector;
     document.getElementById("presentacion-profe").hidden = !delProfe;
-    if (!delProfe) return;
+    if (!delProfe) { ponerPizarraActiva(false); return; }
     const limpia = document.getElementById("presentacion-limpia");
     limpia.setAttribute("aria-pressed", String(!!nueva.limpia));
     limpia.textContent = nueva.limpia ? "🧹 Vista limpia: encendida" : "🧹 Vista limpia para los alumnos";
@@ -237,8 +267,94 @@ async function pintarPresentacion(p, propia) {
         PresentacionClase.url(nueva.deck, datos.diapositivas[n])
             .then((u) => { const pre = new Image(); pre.src = u; }).catch(() => {});
     }
+    pintarMiNota(nueva.deck, n);
     pintarPresentacionPosiciones(d, n);
 }
+
+/* ---------- Las notas del profe en cada diapositiva ----------
+   Recordatorios que escribe él (qué preguntar, qué ejemplo dar, cuánto
+   tiempo), en las presentaciones del curso y en las suyas, por diapositiva.
+   Van en presentacion_notas, cuya RLS solo le da a cada quien las suyas: ni
+   los alumnos, ni el proyector, ni quien administra las leen. Se guardan solas
+   al dejar de escribir, al salir del cuadro y al pasar de diapositiva. */
+const notasPedidas = {};              // deck → promesa de {n: texto}
+let notaDe = null;                    // {deck, n} de la nota que está en el cuadro
+let notaGuardada = "";                // su texto tal como está en la base
+let notaEspera = null;
+
+function cargarMisNotas(deck) {
+    if (!notasPedidas[deck]) {
+        notasPedidas[deck] = sb.from("presentacion_notas").select("n, texto")
+            .eq("profesor_id", session.user.id).eq("deck", deck)
+            .then(({ data, error }) => {
+                if (error) throw error;
+                const m = {};
+                (data || []).forEach((r) => { m[r.n] = r.texto; });
+                return m;
+            })
+            .catch((e) => { delete notasPedidas[deck]; throw e; });
+    }
+    return notasPedidas[deck];
+}
+
+function avisoNota(texto) {
+    document.getElementById("presentacion-nota-msg").textContent = texto || "";
+}
+
+async function guardarMiNota() {
+    clearTimeout(notaEspera);
+    const area = document.getElementById("presentacion-nota");
+    if (!notaDe || area.disabled) return;
+    const de = notaDe;
+    const texto = area.value.trim().slice(0, 2000);
+    if (texto === notaGuardada) return;
+    const pedido = texto
+        ? sb.from("presentacion_notas").upsert({ profesor_id: session.user.id, deck: de.deck, n: de.n, texto: texto, updated_at: new Date().toISOString() },
+            { onConflict: "profesor_id,deck,n" })
+        : sb.from("presentacion_notas").delete().eq("profesor_id", session.user.id).eq("deck", de.deck).eq("n", de.n);
+    const { error } = await pedido;
+    const sigueAhi = mismaDiapositiva(notaDe, de);
+    if (error) {
+        console.error(error);
+        if (sigueAhi) avisoNota("No se pudo guardar la nota: " + error.message);
+        else setStatus("No se pudo guardar tu nota de la diapositiva " + de.n + ": " + error.message);
+        return;
+    }
+    if (sigueAhi) notaGuardada = texto;
+    cargarMisNotas(de.deck).then((m) => { if (texto) m[de.n] = texto; else delete m[de.n]; }).catch(() => {});
+    if (sigueAhi) avisoNota(texto ? "Nota guardada. Solo la ves tú." : "Nota borrada.");
+}
+
+async function pintarMiNota(deck, n) {
+    if (mismaDiapositiva(notaDe, { deck, n })) return;
+    // Lo que quedó escrito en la anterior se guarda antes de cambiar.
+    if (notaDe) await guardarMiNota();
+    const area = document.getElementById("presentacion-nota");
+    notaDe = { deck, n };
+    notaGuardada = "";
+    area.value = "";
+    area.disabled = true;
+    avisoNota("Buscando tus notas…");
+    let m;
+    try { m = await cargarMisNotas(deck); } catch (e) {
+        console.error(e);
+        if (mismaDiapositiva(notaDe, { deck, n })) avisoNota("No se pudieron cargar tus notas.");
+        return;
+    }
+    if (!mismaDiapositiva(notaDe, { deck, n })) return;
+    notaGuardada = m[n] || "";
+    area.value = notaGuardada;
+    area.disabled = false;
+    avisoNota("");
+}
+
+document.getElementById("presentacion-nota").addEventListener("input", () => {
+    avisoNota("Sin guardar…");
+    clearTimeout(notaEspera);
+    notaEspera = setTimeout(guardarMiNota, 1500);
+});
+document.getElementById("presentacion-nota").addEventListener("blur", guardarMiNota);
+document.getElementById("presentacion-nota-guardar").addEventListener("click", guardarMiNota);
 
 function pintarPresentacionPosiciones(d, n) {
     const caja = document.getElementById("presentacion-posiciones");
@@ -346,23 +462,43 @@ async function presentacionPracticar(pos) {
 
 /* El profe la pone, la pasa o la quita. Se pinta en su pantalla en el acto y
    el eco de Realtime no la devuelve atrás (presentacionEnviada). */
+/* Sin `trazos`, la diapositiva lleva las marcas que el profe le hizo antes
+   (o ninguna); con `trazos`, esas. Los envíos van de a uno y en orden: si el
+   profe pasa tres láminas o hace tres rayas seguidas, a la base llega la
+   última, nunca una vieja después de una nueva. */
+let presentacionPorMandar;
+let presentacionMandando = null;
+
 async function mostrarPresentacion(p) {
     if (!presentacionEsDelProfe() || !myGameStateId) return;
     if (p && presentacionDatos && p.deck === (presentacionActual && presentacionActual.deck)) {
         p = Object.assign({}, p, { n: Math.max(1, Math.min(p.n, presentacionDatos.diapositivas.length)) });
     }
-    if (p && !p.limpia) delete p.limpia;
+    if (p && !("trazos" in p)) p = Object.assign({}, p, { trazos: pizarraDeMemoria(p.deck, p.n) });
+    p = formaPresentacion(p);
     presentacionEnviada = JSON.stringify(p);
     presentacionEnviadaEn = Date.now();
     const local = pintarPresentacion(p, true);
-    const { error } = await sb.from("game_state").update({ presentacion: p }).eq("id", myGameStateId);
+    presentacionPorMandar = p;
+    if (!presentacionMandando) {
+        presentacionMandando = (async () => {
+            while (presentacionPorMandar !== undefined) {
+                const va = presentacionPorMandar;
+                presentacionPorMandar = undefined;
+                const { error } = await sb.from("game_state").update({ presentacion: va }).eq("id", myGameStateId);
+                if (error) { console.error(error); setStatus("No se pudo cambiar la diapositiva: " + error.message); }
+            }
+        })().finally(() => { presentacionMandando = null; });
+    }
+    await presentacionMandando;
     await local;
-    if (error) { console.error(error); setStatus("No se pudo cambiar la diapositiva: " + error.message); }
 }
 
 function pasarDiapositiva(paso) {
     if (!presentacionActual) return;
-    mostrarPresentacion(Object.assign({}, presentacionActual, { n: presentacionActual.n + paso }));
+    const p = { deck: presentacionActual.deck, n: presentacionActual.n + paso };
+    if (presentacionActual.limpia) p.limpia = true;
+    mostrarPresentacion(p);
 }
 
 /* ---------- La vista limpia de los alumnos ----------
@@ -498,6 +634,10 @@ async function borrarPresentacion(pr) {
     if (e1) { console.error(e1); avisoSubida("No se pudieron borrar sus imágenes: " + e1.message); return; }
     const { error } = await sb.from("presentaciones_profe").delete().eq("id", pr.id);
     if (error) { console.error(error); avisoSubida("No se pudo borrar: " + error.message); return; }
+    // Sus notas no le sirven a nada más: se van con ella.
+    const { error: e2 } = await sb.from("presentacion_notas").delete().eq("profesor_id", session.user.id).eq("deck", deck);
+    if (e2) console.error(e2);
+    delete notasPedidas[deck];
     PresentacionClase.olvidar(deck);
     presentacionesMias = (presentacionesMias || []).filter((x) => x.id !== pr.id);
     pintarPresentacionPanel();

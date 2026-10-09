@@ -113,6 +113,7 @@ tabla  premios_catalogo  rls=true
 tabla  preparacion_rivales_profesores  rls=true
 tabla  preparacion_sesiones  rls=true
 tabla  preparaciones_rival  rls=true
+tabla  presentacion_notas  rls=true
 tabla  presentaciones_profe  rls=true
 tabla  profesor_videollamada  rls=true
 tabla  profile_teachers  rls=true
@@ -1051,6 +1052,11 @@ columna  preparaciones_rival.id  uuid
 columna  preparaciones_rival.partidas  integer
 columna  preparaciones_rival.profesor_id  uuid
 columna  preparaciones_rival.rival  text
+columna  presentacion_notas.deck  text
+columna  presentacion_notas.n  integer
+columna  presentacion_notas.profesor_id  uuid
+columna  presentacion_notas.texto  text
+columna  presentacion_notas.updated_at  timestamp with time zone
 columna  presentaciones_profe.created_at  timestamp with time zone
 columna  presentaciones_profe.formato  text
 columna  presentaciones_profe.id  uuid
@@ -2191,6 +2197,10 @@ politica  preparacion_sesiones  preparacion_sesiones_update  UPDATE
 politica  preparaciones_rival  preparaciones_rival_borrar  DELETE
 politica  preparaciones_rival  preparaciones_rival_guardar  INSERT
 politica  preparaciones_rival  preparaciones_rival_ver  SELECT
+politica  presentacion_notas  presentacion_notas_delete  DELETE
+politica  presentacion_notas  presentacion_notas_insert  INSERT
+politica  presentacion_notas  presentacion_notas_select  SELECT
+politica  presentacion_notas  presentacion_notas_update  UPDATE
 politica  presentaciones_profe  presentaciones_profe_delete  DELETE
 politica  presentaciones_profe  presentaciones_profe_insert  INSERT
 politica  presentaciones_profe  presentaciones_profe_select  SELECT
@@ -2749,6 +2759,7 @@ indice  preparacion_sesiones  preparacion_sesiones_actualizado_por_idx
 indice  preparacion_sesiones  preparacion_sesiones_pkey
 indice  preparaciones_rival  preparaciones_rival_pkey
 indice  preparaciones_rival  preparaciones_rival_profesor_idx
+indice  presentacion_notas  presentacion_notas_pkey
 indice  presentaciones_profe  presentaciones_profe_pkey
 indice  presentaciones_profe  presentaciones_profe_profesor_idx
 indice  profesor_videollamada  profesor_videollamada_pkey
@@ -3606,6 +3617,13 @@ grant  preparacion_sesiones  authenticated  UPDATE
 grant  preparaciones_rival  authenticated  DELETE
 grant  preparaciones_rival  authenticated  INSERT
 grant  preparaciones_rival  authenticated  SELECT
+grant  presentacion_notas  authenticated  DELETE
+grant  presentacion_notas  authenticated  INSERT
+grant  presentacion_notas  authenticated  REFERENCES
+grant  presentacion_notas  authenticated  SELECT
+grant  presentacion_notas  authenticated  TRIGGER
+grant  presentacion_notas  authenticated  TRUNCATE
+grant  presentacion_notas  authenticated  UPDATE
 grant  presentaciones_profe  anon  DELETE
 grant  presentaciones_profe  anon  INSERT
 grant  presentaciones_profe  anon  REFERENCES
