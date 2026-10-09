@@ -227,15 +227,28 @@ async function pruebaProfesor(browser) {
   await ctx.close();
 }
 
+/* Hacer algo y esperar a que la presentación se mande (no un tiempo fijo: con
+   la máquina cargada, como en el CI, 350 ms no alcanzan). Si no se manda nada
+   —un toque que no deja marca—, sigue a los 3 segundos. */
+const enviosDePresentacion = (page) => page.evaluate(() => window.__updates.filter((x) => x.tabla === "game_state" && "presentacion" in x.campos).length);
+async function yMandar(page, accion) {
+  const antes = await enviosDePresentacion(page);
+  await accion();
+  await page.waitForFunction((n) => window.__updates.filter((x) => x.tabla === "game_state" && "presentacion" in x.campos).length > n, antes, { timeout: 3000 }).catch(() => {});
+  await page.waitForTimeout(50);
+}
+
 /* Arrastrar el mouse sobre la diapositiva, en fracciones de la imagen (0 a 1). */
 async function trazar(page, puntos) {
+  await yMandar(page, () => arrastrar(page, puntos));
+}
+async function arrastrar(page, puntos) {
   const r = await page.evaluate(() => { const b = document.getElementById("presentacion-img").getBoundingClientRect(); return { x: b.left, y: b.top, w: b.width, h: b.height }; });
   const a = (f) => [r.x + f[0] * r.w, r.y + f[1] * r.h];
   await page.mouse.move(...a(puntos[0]));
   await page.mouse.down();
   for (const f of puntos.slice(1)) await page.mouse.move(...a(f), { steps: 6 });
   await page.mouse.up();
-  await page.waitForTimeout(350);
 }
 const marcasEnPantalla = (page) => page.evaluate(() => document.getElementById("presentacion-pizarra").children.length);
 const punteroDePizarra = (page) => page.evaluate(() => getComputedStyle(document.getElementById("presentacion-pizarra")).pointerEvents);
@@ -271,8 +284,8 @@ async function pruebaPizarra(browser) {
   await page.click("[data-pizarra-herramienta='flecha']");
   await trazar(page, [[0.5, 0.7], [0.8, 0.8]]);
   await page.click("[data-pizarra-herramienta='circulo']");
-  await trazar(page, [[0.1, 0.1], [0.2, 0.25]]);
   await trazar(page, [[0.6, 0.6], [0.6, 0.6]]);
+  await trazar(page, [[0.1, 0.1], [0.2, 0.25]]);
   enviada = await ultimaPresentacion(page);
   cierto("flecha y círculo; un toque con la línea o el círculo no deja nada",
     enviada.trazos.map((t) => t.h).join(",") === "lapiz,linea,flecha,circulo" && await marcasEnPantalla(page) === 4, JSON.stringify(enviada.trazos.map((t) => t.h)));
@@ -280,8 +293,7 @@ async function pruebaPizarra(browser) {
   await page.evaluate((v) => window.__cambioEnBase("game_state", v), fila({ presentacion: { deck: DECK, n: 3, trazos: [enviada.trazos[0]] } }));
   await page.waitForTimeout(200);
   cierto("un eco viejo de Realtime no le quita marcas", await marcasEnPantalla(page) === 4);
-  await page.click("#pizarra-deshacer");
-  await page.waitForTimeout(350);
+  await yMandar(page, () => page.click("#pizarra-deshacer"));
   cierto("«Deshacer» quita la última", (await ultimaPresentacion(page)).trazos.length === 3 && await marcasEnPantalla(page) === 3);
   await page.click("[data-pizarra-herramienta='borrador']");
   await trazar(page, [[0.5, 0.49], [0.5, 0.51]]);
@@ -290,30 +302,27 @@ async function pruebaPizarra(browser) {
     JSON.stringify(enviada.trazos.map((t) => t.h)));
 
   // Pasar de lámina: la siguiente, limpia; al volver, sus marcas otra vez.
-  await page.click("#presentacion-siguiente");
+  await yMandar(page, () => page.click("#presentacion-siguiente"));
   await esperarImagen(page, "04.webp");
-  await page.waitForTimeout(200);
+  await page.waitForFunction(() => !document.getElementById("presentacion-nota").disabled, null, { timeout: 5000 }).catch(() => {});
   cierto("la siguiente diapositiva va sin las marcas de la anterior",
     JSON.stringify(await ultimaPresentacion(page)) === JSON.stringify({ deck: DECK, n: 4 }) && await marcasEnPantalla(page) === 0);
   cierto("sus notas del profe, en su cuadro", await page.inputValue("#presentacion-nota") === "Preguntar quién ya arbitró un torneo.");
-  await page.click("#presentacion-anterior");
+  await yMandar(page, () => page.click("#presentacion-anterior"));
   await esperarImagen(page, "03.webp");
-  await page.waitForTimeout(200);
   enviada = await ultimaPresentacion(page);
   cierto("al volver a la anterior, vuelven sus marcas (y se mandan a la clase)",
     enviada.n === 3 && !!enviada.trazos && enviada.trazos.length === 2 && await marcasEnPantalla(page) === 2, JSON.stringify(enviada));
-  await page.click("#pizarra-limpiar");
-  await page.waitForTimeout(350);
+  await yMandar(page, () => page.click("#pizarra-limpiar"));
   cierto("«Borrar todo» las quita para todos", JSON.stringify(await ultimaPresentacion(page)) === JSON.stringify({ deck: DECK, n: 3 }) && await marcasEnPantalla(page) === 0);
-  await page.click("#pizarra-deshacer");
-  await page.waitForTimeout(350);
+  await yMandar(page, () => page.click("#pizarra-deshacer"));
   cierto("y «Deshacer» las trae de vuelta", ((await ultimaPresentacion(page)).trazos || []).length === 2);
 
   // Las notas: escribir, guardar, que se guarde sola al pasar, y borrar.
   cierto("el cuadro de notas dice que son solo suyas", /solo las ves tú/.test(await page.textContent("label[for='presentacion-nota']")));
   await page.fill("#presentacion-nota", "Mostrar el reloj antes de esta.");
   await page.click("#presentacion-nota-guardar");
-  await page.waitForTimeout(200);
+  await page.waitForFunction(() => /Nota guardada/.test(document.getElementById("presentacion-nota-msg").textContent), null, { timeout: 5000 }).catch(() => {});
   const ultimaNota = () => page.evaluate(() => { const u = window.__inserts.filter((i) => i.tabla === "presentacion_notas"); return u.length ? u[u.length - 1] : null; });
   const nota = await ultimaNota();
   cierto("«Guardar la nota» la guarda con su diapositiva, a su nombre", !!nota && nota.upsert && nota.fila.profesor_id === "u-profe"
@@ -322,12 +331,13 @@ async function pruebaPizarra(browser) {
   await page.fill("#presentacion-nota", "Se guarda sola al pasar.");
   await page.click("#presentacion-siguiente");
   await esperarImagen(page, "04.webp");
-  await page.waitForTimeout(200);
+  await page.waitForFunction(() => window.__inserts.filter((i) => i.tabla === "presentacion_notas").length >= 2, null, { timeout: 5000 }).catch(() => {});
   const sola = (await ultimaNota()).fila;
   cierto("lo escrito se guarda solo al pasar de diapositiva (en la que era)", sola.n === 3 && sola.texto === "Se guarda sola al pasar.", JSON.stringify(sola));
+  await page.waitForFunction(() => !document.getElementById("presentacion-nota").disabled, null, { timeout: 5000 }).catch(() => {});
   await page.fill("#presentacion-nota", "");
   await page.click("#presentacion-nota-guardar");
-  await page.waitForTimeout(200);
+  await page.waitForFunction(() => window.__deletes.some((x) => x.tabla === "presentacion_notas"), null, { timeout: 5000 }).catch(() => {});
   cierto("vaciarla la borra", await page.evaluate((d) => window.__deletes.some((x) => x.tabla === "presentacion_notas"
     && JSON.stringify(x.donde) === JSON.stringify([["profesor_id", "u-profe"], ["deck", d], ["n", 4]])), DECK));
   await page.click("#pizarra-btn");
@@ -615,7 +625,12 @@ async function pruebaVistaLimpia(browser) {
   cierto("la diapositiva a la izquierda, el tablero a la derecha y el chat abajo, a lo ancho",
     cajas.lamina[1] <= cajas.tablero[0] && cajas.tablero[1] < 200 && cajas.chat[2] >= cajas.lamina[3]
       && cajas.chat[0] <= cajas.lamina[0] + 1 && cajas.chat[1] > cajas.tablero[0], JSON.stringify(cajas));
-  await page.waitForFunction(() => /vista limpia/.test(document.getElementById("clase-voz").textContent), null, { timeout: 3000 }).catch(() => {});
+  // Con la máquina cargada, el aviso de la diapositiva (que llega cuando carga
+  // la imagen) puede pisar al de la vista limpia antes de leerlo: con la lámina
+  // ya a la vista, el profe la apaga y la vuelve a encender, y se lee ese.
+  await page.evaluate((v) => window.__cambioEnBase("game_state", v), fila({ presentacion: { deck: DECK, n: 29 } }));
+  await page.evaluate((v) => window.__cambioEnBase("game_state", v), fila({ presentacion: { deck: DECK, n: 29, limpia: true } }));
+  await page.waitForFunction(() => /vista limpia/.test(document.getElementById("clase-voz").textContent), null, { timeout: 5000 }).catch(() => {});
   cierto("y se le dice en voz", /vista limpia/.test(await page.textContent("#clase-voz")));
   const encima = await page.evaluate(() => {
     const c = document.getElementById("calentamiento-caja");
