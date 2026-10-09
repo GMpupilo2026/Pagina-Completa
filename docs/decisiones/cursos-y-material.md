@@ -2144,6 +2144,16 @@ sesión**. Lo pinta `js/admin-asesores.js`.
   `material = 'formacion-ajedrez'`, que se llaman «Formación Ajedrez · Sesión
   N: …» (así los encuentra la ficha). `verificar-formacion.js` los pasa por el
   armador y comprueba sus posiciones con chess.js.
+  Hay **uno por sesión, de la 1 a la 8** (153 preguntas). Salen de lo que
+  enseña cada sesión —su quiz, sus casos y sus temas, con el artículo en
+  `fuente`— y las reglas, del banco ya revisado de `js/arbitraje-items.js`:
+  ninguna se inventa. El de la Sesión 8 es un repaso para el torneo real
+  (ritmo 10 + 5, supervisión, desempates del día) y **no repite** ninguna
+  pregunta de la prueba final teórica, que se toma esa misma mañana. Los
+  distractores tientan (el ritmo justo en el límite, el castigo del otro
+  ritmo, el orden cambiado) y se cuidó que la correcta **no sea siempre la
+  opción más larga**: en un Kahoot eso se aprende rápido y se contesta sin
+  leer.
 - **Con quién se comparte** es el mismo bloque de «Materiales de clases»
   (`AdminMateriales.montarCompartir`) con el producto `formacion-ajedrez`. A
   quien se lo compartes le aparecen los cuestionarios del curso y, en el panel
