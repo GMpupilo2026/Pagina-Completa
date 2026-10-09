@@ -159,6 +159,8 @@ window.__deletes = [];
     clase_enlaces: [], clase_espectadores: [],
     // Los sacados de una clase (verificar-clase-sacar.js).
     clase_sacados: [],
+    // Las notas del profe en cada diapositiva (verificar-clase-presentacion.js).
+    presentacion_notas: [],
     // El catálogo es de la base (insignias_tipos): dos de muestra alcanzan.
     insignias_tipos: [
       { tipo: "buen_estudiante", nombre: "Estrella de buen estudiante", emoji: "⭐", descripcion: "Por su actitud.", orden: 1 },
