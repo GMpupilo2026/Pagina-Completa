@@ -11,7 +11,9 @@
      LA BASE; al terminar cada una la clase ve lo que contestó el grupo y el
      podio con su título; al final, el resultado y todas las preguntas cerradas.
    - El alumno: la pregunta sin tablero no le muestra un tablero; la que lleva
-     posición, sí.
+     posición, sí. Elegida una opción, no la puede cambiar (questions.bloquea_cambio,
+     que solo pone el cuestionario): las opciones quedan deshabilitadas y un
+     segundo intento se frena del lado del cliente antes de mandar nada.
 
    Con el sitio en localhost:8777 y playwright:
        node herramientas/verificar-clase-cuestionario.js
@@ -107,9 +109,9 @@ async function pruebaProfe(browser) {
   await page.click("#cuestionario-jugar-btn");
   await page.waitForFunction(() => (window.__rpcs || []).some((r) => r.n === "hacer_pregunta_de_opciones"), null, { timeout: 5000 });
   const r1 = await page.evaluate(() => window.__rpcs.filter((r) => r.n === "hacer_pregunta_de_opciones")[0].args);
-  igual("la primera sale como pregunta de opciones, con su clave, su tiempo y sin tablero",
-    [r1.p_prompt, r1.p_opciones, r1.p_correcta, r1.p_tiempo_limite, r1.p_sin_tablero],
-    ["🎯 Pregunta 1 de 2: ¿Qué pieza salta?", ["La torre", "El caballo", "El alfil"], 1, 20, true]);
+  igual("la primera sale como pregunta de opciones, con su clave, su tiempo, sin tablero y sin dejar cambiar",
+    [r1.p_prompt, r1.p_opciones, r1.p_correcta, r1.p_tiempo_limite, r1.p_sin_tablero, r1.p_bloquea_cambio],
+    ["🎯 Pregunta 1 de 2: ¿Qué pieza salta?", ["La torre", "El caballo", "El alfil"], 1, 20, true, true]);
   igual("mientras se juega, el editor no está", [await seVe(page, "#cuestionario-editor"), await seVe(page, "#cuestionario-juego")], [false, true]);
   // Ana acierta a los 2 s; Beto falla.
   await page.evaluate(() => {
@@ -137,7 +139,8 @@ async function pruebaProfe(browser) {
   await page.click("#cuestionario-siguiente-btn");
   await page.waitForFunction(() => (window.__rpcs || []).filter((r) => r.n === "hacer_pregunta_de_opciones").length === 2, null, { timeout: 5000 });
   const r2 = await page.evaluate(() => window.__rpcs.filter((r) => r.n === "hacer_pregunta_de_opciones")[1].args);
-  igual("la segunda lleva su posición, que el tablero de la clase muestra", [r2.p_fen, r2.p_sin_tablero, await page.evaluate(() => board.fen())], [INICIO, false, INICIO]);
+  igual("la segunda lleva su posición, que el tablero de la clase muestra, y tampoco deja cambiar",
+    [r2.p_fen, r2.p_sin_tablero, r2.p_bloquea_cambio, await page.evaluate(() => board.fen())], [INICIO, false, true, INICIO]);
   igual("el podio de antes se quitó para contestar", await page.evaluate(() => window.__updates.some((u) => u.tabla === "game_state" && "podio" in u.campos && u.campos.podio === null)), true);
   await page.evaluate(() => {
     const q = window.__tablas.questions[window.__tablas.questions.length - 1];
@@ -179,6 +182,27 @@ async function pruebaAlumno(browser) {
 }
 
 
+async function pruebaNoDejaCambiar(browser) {
+  console.log("\n=== El alumno: elegida la opción, el cuestionario no deja cambiarla ===");
+  const q = { id: "q1", fen: INICIO, prompt: "🎯 Pregunta 1 de 1: ¿Qué pieza salta?", created_by: "u-profe",
+    created_at: new Date().toISOString(), closed_at: null, expected_plies: 1, tipo: "opciones", opciones: ["La torre", "El caballo"],
+    tiempo_limite: 60, resultados_visibles: false, sin_tablero: true, bloquea_cambio: true, class_session_id: "c-viva" };
+  const { page, ctx, errores } = await abrir(browser, "u-ana", CLASE, { game_state: [fila()], questions: [q] });
+  await page.waitForFunction(() => document.getElementById("question-card").checkVisibility(), null, { timeout: 10000 });
+  igual("antes de contestar, la pista ya avisa que no se puede cambiar", await page.textContent("#question-plies-hint"), "Elige una opción: no la vas a poder cambiar.");
+  await page.click("#question-opciones button >> nth=0");
+  await page.waitForFunction(() => window.__inserts.some((i) => i.tabla === "question_answers"), null, { timeout: 5000 });
+  igual("una sola respuesta mandada", await page.evaluate(() => window.__inserts.filter((i) => i.tabla === "question_answers").length), 1);
+  igual("las dos opciones quedan deshabilitadas", await page.evaluate(() => [...document.querySelectorAll("#question-opciones button")].map((b) => b.disabled)), [true, true]);
+  // Un segundo intento (lo que haría tocar otra opción, o escribir otra letra en Modo
+  // Adaptado) se frena del lado del cliente: ni se manda, y lo dice.
+  const segundoIntento = await page.evaluate(() => enviarOpcion(1));
+  igual("un segundo intento no manda nada", [segundoIntento, await page.evaluate(() => window.__inserts.filter((i) => i.tabla === "question_answers").length)], [false, 1]);
+  igual("y lo dice", await page.textContent("#question-status-text"), "Ya elegiste tu respuesta: esta pregunta no deja cambiarla.");
+  igual("sin errores en consola", errores, []);
+  await ctx.close();
+}
+
 async function pruebaListoEnClase(browser) {
   console.log("\n=== Uno listo, desde cuestionarios.html (sesion.html?cuestionario=) ===");
   const listo = { id: "l-1", titulo: "El tablero", nivel: "inicial", listo: true, profesor_id: null, updated_at: "2026-09-30T10:00:00Z",
@@ -195,8 +219,8 @@ async function pruebaListoEnClase(browser) {
   await page.getByRole("button", { name: "▶️ Jugarlo con la clase" }).click();
   await page.waitForFunction(() => (window.__rpcs || []).some((r) => r.n === "hacer_pregunta_de_opciones"), null, { timeout: 5000 });
   const r = await page.evaluate(() => window.__rpcs.find((x) => x.n === "hacer_pregunta_de_opciones").args);
-  igual("se juega tal cual: su pregunta, su clave y su tiempo", [r.p_prompt, r.p_correcta, r.p_tiempo_limite, r.p_sin_tablero],
-    ["🎯 Pregunta 1 de 1: ¿Cuántas casillas tiene el tablero?", 1, 30, true]);
+  igual("se juega tal cual: su pregunta, su clave, su tiempo y sin dejar cambiar", [r.p_prompt, r.p_correcta, r.p_tiempo_limite, r.p_sin_tablero, r.p_bloquea_cambio],
+    ["🎯 Pregunta 1 de 1: ¿Cuántas casillas tiene el tablero?", 1, 30, true, true]);
   igual("y no se guardó ninguna copia", await page.evaluate(() => window.__inserts.filter((i) => i.tabla === "cuestionarios").length), 0);
   igual("sin errores en consola", errores, []);
   await ctx.close();
@@ -208,6 +232,7 @@ async function pruebaListoEnClase(browser) {
   try {
     await pruebaProfe(browser);
     await pruebaAlumno(browser);
+    await pruebaNoDejaCambiar(browser);
     await pruebaListoEnClase(browser);
   } catch (e) {
     console.log("  ✗ la prueba se cayó: " + (e && e.stack || e));
