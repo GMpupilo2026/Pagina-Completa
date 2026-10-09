@@ -1951,6 +1951,11 @@ abierto para todos, sin sesión ni candado, con «Abrir» y «Manual de uso»; l
 vitrina no le pregunta `tengo_herramienta()` y `licencias.html` no lo ofrece
 (no hay licencia que vender de algo gratis).
 
+También es gratis **«Ajedrez estudiantil en Costa Rica»**
+(`ajedrez-estudiantil.html`; lo pidió el dueño del sitio: gratis y pública,
+como era). La página sigue siendo pública por sí misma: no tiene candado que
+abrir.
+
 Se llega desde el menú de arriba de las páginas públicas (la barra chica, después
 de «Torneos», y el menú del celular) y desde «Recursos» en el pie: lo pidió el
 dueño para que se vea lo que se vende. Las páginas de la Academia no lo llevan
