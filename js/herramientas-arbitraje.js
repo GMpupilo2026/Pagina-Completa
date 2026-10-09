@@ -52,6 +52,22 @@
             ],
         },
         {
+            id: "ajedrez-estudiantil",
+            emoji: "📊",
+            nombre: "Ajedrez estudiantil en Costa Rica",
+            corto: "Ajedrez estudiantil",
+            href: "ajedrez-estudiantil.html",
+            disponible: true,
+            gratis: true,
+            resumen: "La participación en los Juegos Deportivos Estudiantiles año por año, por etapa, región y categoría, con todos los torneos estudiantiles de Costa Rica publicados en chess-results.",
+            puntos: [
+                "Las etapas institucional o circuital, regional, interregional y nacional, y la internacional (CODICADER).",
+                "Filtros por región y por categoría (A a E) que cambian toda la página; el enlace guarda la vista para compartirla.",
+                "La lista de los torneos con su enlace a chess-results, con buscador.",
+                "Se pone al día sola: revisa chess-results cada seis horas y suma los torneos nuevos.",
+            ],
+        },
+        {
             id: "desempates",
             emoji: "⚖️",
             nombre: "Desempates explicados",

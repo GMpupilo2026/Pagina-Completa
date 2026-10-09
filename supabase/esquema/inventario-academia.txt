@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261009120000
+# al-dia-con: 20261009035429
 tabla  Ejercicios Lichess  rls=true
 tabla  academia_ia  rls=true
 tabla  academia_miembros  rls=true
@@ -50,6 +50,8 @@ tabla  curso_contenido  rls=true
 tabla  datos_facturacion  rls=true
 tabla  desafios  rls=true
 tabla  desempates_cache  rls=true
+tabla  diagnostico_items  rls=true
+tabla  diagnostico_sesiones  rls=true
 tabla  diagnosticos_publicos  rls=true
 tabla  elo_historial  rls=true
 tabla  encargados  rls=true
@@ -82,6 +84,7 @@ tabla  interno.curso_lecciones  rls=false
 tabla  interno.envios_publicos  rls=true
 tabla  interno.lector_planilla_uso  rls=true
 tabla  interno.salud_base  rls=true
+tabla  jdn_resultados  rls=true
 tabla  justificaciones_ausencia  rls=true
 tabla  licencias_herramientas  rls=true
 tabla  material_compartido  rls=true
@@ -500,6 +503,28 @@ columna  desafios.room_id  uuid
 columna  desempates_cache.clave  text
 columna  desempates_cache.datos  jsonb
 columna  desempates_cache.leido_en  timestamp with time zone
+columna  diagnostico_items.alternas  jsonb
+columna  diagnostico_items.area  text
+columna  diagnostico_items.correcta  integer
+columna  diagnostico_items.elo  integer
+columna  diagnostico_items.elo_base  integer
+columna  diagnostico_items.enunciado  text
+columna  diagnostico_items.explica  text
+columna  diagnostico_items.fen  text
+columna  diagnostico_items.id  text
+columna  diagnostico_items.lichess  text
+columna  diagnostico_items.opciones  jsonb
+columna  diagnostico_items.peso  integer
+columna  diagnostico_items.rating  integer
+columna  diagnostico_items.solucion  jsonb
+columna  diagnostico_items.tipo  text
+columna  diagnostico_items.updated_at  timestamp with time zone
+columna  diagnostico_sesiones.created_at  timestamp with time zone
+columna  diagnostico_sesiones.id  uuid
+columna  diagnostico_sesiones.items  text[]
+columna  diagnostico_sesiones.respondidas  jsonb
+columna  diagnostico_sesiones.terminada  boolean
+columna  diagnostico_sesiones.user_id  uuid
 columna  diagnosticos_publicos.atendido  boolean
 columna  diagnosticos_publicos.aviso_enviado_at  timestamp with time zone
 columna  diagnosticos_publicos.created_at  timestamp with time zone
@@ -798,6 +823,16 @@ columna  interno.salud_base.lenta  boolean
 columna  interno.salud_base.lentas  integer
 columna  interno.salud_base.medido_at  timestamp with time zone
 columna  interno.salud_base.pulso_ms  integer
+columna  jdn_resultados.codigo  text
+columna  jdn_resultados.comite  text
+columna  jdn_resultados.edicion  text
+columna  jdn_resultados.id  bigint
+columna  jdn_resultados.nombre  text
+columna  jdn_resultados.orden  smallint
+columna  jdn_resultados.puesto  smallint
+columna  jdn_resultados.puntos  numeric(4,1)
+columna  jdn_resultados.record  text
+columna  jdn_resultados.tnr  integer
 columna  justificaciones_ausencia.adjuntos  jsonb
 columna  justificaciones_ausencia.created_at  timestamp with time zone
 columna  justificaciones_ausencia.detalle  text
@@ -1543,6 +1578,11 @@ funcion  detalle_mensual_crudo(p_profesor uuid, p_periodo date)  definer  anon=f
 funcion  detalle_mensual_profesor(p_profesor uuid, p_periodo date)  definer  anon=false  auth=true
 funcion  detalle_para_mi(p_profesor uuid, p_detalle jsonb)  definer  anon=false  auth=false
 funcion  devolver_invitacion(p_profesor uuid)  definer  anon=false  auth=false
+funcion  diagnostico_armar()  definer  anon=true  auth=true
+funcion  diagnostico_items_para_examen(p_ids text[])  definer  anon=true  auth=true
+funcion  diagnostico_responder(p_sesion uuid, p_item text, p_respuesta jsonb)  definer  anon=true  auth=true
+funcion  diagnostico_sesion_estado(p_sesion uuid)  definer  anon=true  auth=true
+funcion  diagnostico_terminar(p_sesion uuid)  definer  anon=true  auth=true
 funcion  diagnosticos_publicos_supervisor()  definer  anon=false  auth=false
 funcion  disparar_fin_de_partida()  definer  anon=false  auth=false
 funcion  disparar_informes_encargados()  definer  anon=false  auth=false
@@ -2061,6 +2101,7 @@ politica  informes_profesor  informes_profesor_select  SELECT
 politica  insignias  insignias_ver  SELECT
 politica  insignias  verificacion_en_dos_pasos  ALL  restrictiva
 politica  insignias_tipos  insignias_tipos_ver  SELECT
+politica  jdn_resultados  jdn_resultados_con_herramienta  SELECT
 politica  justificaciones_ausencia  justificaciones_select  SELECT
 politica  licencias_herramientas  licencias_herramientas_ver  SELECT
 politica  material_compartido  material_compartido_select  SELECT
@@ -2534,6 +2575,9 @@ indice  desafios  desafios_para_pendiente
 indice  desafios  desafios_pkey
 indice  desafios  desafios_room_id_fk
 indice  desempates_cache  desempates_cache_pkey
+indice  diagnostico_items  diagnostico_items_pkey
+indice  diagnostico_sesiones  diagnostico_sesiones_pkey
+indice  diagnostico_sesiones  diagnostico_sesiones_user_idx
 indice  diagnosticos_publicos  diagnosticos_publicos_pkey
 indice  diagnosticos_publicos  diagnosticos_publicos_supervisor_idx
 indice  elo_historial  elo_historial_pkey
@@ -2621,6 +2665,8 @@ indice  interno.envios_publicos  envios_publicos_tipo_ambito
 indice  interno.lector_planilla_uso  lector_planilla_uso_dia
 indice  interno.lector_planilla_uso  lector_planilla_uso_pkey
 indice  interno.salud_base  salud_base_pkey
+indice  jdn_resultados  jdn_resultados_edicion_codigo_orden_key
+indice  jdn_resultados  jdn_resultados_pkey
 indice  justificaciones_ausencia  justificaciones_ausencia_pkey
 indice  justificaciones_ausencia  justificaciones_por_fecha
 indice  justificaciones_ausencia  justificaciones_revisada_por_fk
@@ -3181,6 +3227,34 @@ grant  desafios  authenticated  SELECT
 grant  desafios  authenticated  TRIGGER
 grant  desafios  authenticated  TRUNCATE
 grant  desafios  authenticated  UPDATE
+grant  diagnostico_items  anon  DELETE
+grant  diagnostico_items  anon  INSERT
+grant  diagnostico_items  anon  REFERENCES
+grant  diagnostico_items  anon  SELECT
+grant  diagnostico_items  anon  TRIGGER
+grant  diagnostico_items  anon  TRUNCATE
+grant  diagnostico_items  anon  UPDATE
+grant  diagnostico_items  authenticated  DELETE
+grant  diagnostico_items  authenticated  INSERT
+grant  diagnostico_items  authenticated  REFERENCES
+grant  diagnostico_items  authenticated  SELECT
+grant  diagnostico_items  authenticated  TRIGGER
+grant  diagnostico_items  authenticated  TRUNCATE
+grant  diagnostico_items  authenticated  UPDATE
+grant  diagnostico_sesiones  anon  DELETE
+grant  diagnostico_sesiones  anon  INSERT
+grant  diagnostico_sesiones  anon  REFERENCES
+grant  diagnostico_sesiones  anon  SELECT
+grant  diagnostico_sesiones  anon  TRIGGER
+grant  diagnostico_sesiones  anon  TRUNCATE
+grant  diagnostico_sesiones  anon  UPDATE
+grant  diagnostico_sesiones  authenticated  DELETE
+grant  diagnostico_sesiones  authenticated  INSERT
+grant  diagnostico_sesiones  authenticated  REFERENCES
+grant  diagnostico_sesiones  authenticated  SELECT
+grant  diagnostico_sesiones  authenticated  TRIGGER
+grant  diagnostico_sesiones  authenticated  TRUNCATE
+grant  diagnostico_sesiones  authenticated  UPDATE
 grant  diagnosticos_publicos  anon  INSERT
 grant  diagnosticos_publicos  authenticated  INSERT
 grant  diagnosticos_publicos  authenticated  SELECT
@@ -3362,6 +3436,9 @@ grant  informes_profesor  authenticated  TRIGGER
 grant  informes_profesor  authenticated  TRUNCATE
 grant  insignias  authenticated  SELECT
 grant  insignias_tipos  authenticated  SELECT
+grant  jdn_resultados  authenticated  REFERENCES
+grant  jdn_resultados  authenticated  SELECT
+grant  jdn_resultados  authenticated  TRIGGER
 grant  justificaciones_ausencia  authenticated  REFERENCES
 grant  justificaciones_ausencia  authenticated  SELECT
 grant  justificaciones_ausencia  authenticated  TRIGGER
