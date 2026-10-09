@@ -202,6 +202,8 @@
     creditosDesempates: ["Los desempates siguen el C.07 de FIDE (versión 2026) y están comparados con chesspairing (Gert Nutterts, licencia Apache 2.0).", "Tie-breaks follow FIDE C.07 (2026 version) and are cross-checked against chesspairing (Gert Nutterts, Apache 2.0 licence)."],
     creditosAval: ["Pareo Integral todavía no tiene el aval de FIDE.", "Pareo Integral is not yet endorsed by FIDE."],
     licencias: ["Licencias y versión del motor", "Engine licence and version"],
+    manual: ["Manual de uso", "User manual"],
+    bajarCli: ["Versión de línea de comandos (.zip)", "Command-line version (.zip)"],
   };
 
   function t(idioma, clave, vars) {

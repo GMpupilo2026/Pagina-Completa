@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="img/favicon.svg">
+    <title>Buscaminas de ajedrez — Ajedrez Integral</title>
+    <meta name="robots" content="noindex">
+    <meta name="description" content="El buscaminas de siempre, con piezas de ajedrez escondidas. Cada casilla vacía dice cuántas piezas la atacan con su propio movimiento: deduce dónde están y destapa el tablero entero sin pisar ninguna.">
+    <!-- Para cuando alguien pega el enlace en WhatsApp, que es por donde se comparte esto. -->
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Ajedrez Integral">
+    <meta property="og:locale" content="es_CR">
+    <meta property="og:title" content="Buscaminas de ajedrez — Ajedrez Integral">
+    <meta property="og:description" content="El buscaminas de siempre, con piezas de ajedrez escondidas. Cada casilla vacía dice cuántas piezas la atacan con su propio movimiento.">
+    <meta property="og:url" content="https://ajedrez-integral.com/buscaminas.html">
+    <meta property="og:image" content="https://ajedrez-integral.com/img/og-ajedrez-integral.jpg">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="Ajedrez Integral — clases de ajedrez en vivo, no solo videos. ajedrez-integral.com">
+    <meta name="twitter:card" content="summary_large_image">
+    <!-- Tailwind compilado: lo genera herramientas/css-construir.js. -->
+    <link rel="stylesheet" href="css/tailwind.css">
+    <link rel="stylesheet" href="css/styles.css">
+    <!-- oscuro: inicio --><script>(function(){try{var t=localStorage.getItem('theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.classList.add('dark');}catch(e){}})();</script><!-- oscuro: fin -->
+    <style>
+        /* Ocho filas IGUALES, como en El Sonar y Batalla naval: con las filas en
+           `auto`, la fila de un número se estira y aplasta a las demás. */
+        .bm-tablero { grid-template-rows: repeat(8, minmax(0, 1fr)); }
+        .bm-casilla { min-width: 0; min-height: 0; overflow: hidden; position: relative; display: flex; align-items: center; justify-content: center; font-weight: 700; line-height: 1; border: 0; padding: 0; color: #102a43; }
+        #board .bm-casilla { font-size: clamp(14px, 4.2vw, 26px); cursor: pointer; }
+        .bm-casilla.clara { background: var(--sq-light, #f0d9b5); }
+        .bm-casilla.oscura { background: var(--sq-dark, #b58863); }
+        /* Colores medidos contra su propio fondo (WCAG AA), los mismos de Batalla
+           naval: #102a43 sobre #cfe3f5, 11,1:1. Blanco sobre #a61b1b, 7,5:1.
+           #102a43 sobre #de911d, 5,7:1. El dato va también escrito: nunca solo el color. */
+        .bm-casilla.revelada { background: #cfe3f5; color: #102a43; }
+        .bm-casilla.explotada { background: #a61b1b; color: #fff; }
+        .bm-casilla.mostrada { background: #de911d; color: #102a43; }
+        .bm-casilla.revelada, .bm-casilla.explotada, .bm-casilla.mostrada { cursor: default; }
+        /* La casilla segura de la pista es un aro, no un color: relleno claro y
+           borde oscuro, se distingue sobre cualquier tema de tablero. */
+        .bm-casilla.segura::after { content: ""; position: absolute; width: 24%; height: 24%; border-radius: 9999px; background: #cfe3f5; border: 2px solid #102a43; pointer-events: none; }
+        .bm-casilla:focus-visible { outline: 3px solid #de911d; outline-offset: -3px; z-index: 1; }
+        .bm-casilla .marca { font-size: .85em; }
+        .coord-etiqueta { position: absolute; font-size: 9px; font-weight: 700; color: rgba(16,42,67,.55); pointer-events: none; }
+    </style>
+    <script src="js/tarea-en-curso.js" defer></script>
+    <script src="js/adaptive-mode.js"></script>
+
+
+<!-- app: inicio --><meta name="theme-color" content="#102a43"><link rel="manifest" href="/manifest.json"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Ajedrez"><script src="js/errores.js"></script><script src="js/pwa.js" defer></script><script src="js/navegacion.js" defer></script><!-- app: fin --><!-- fuentes: inicio --><link rel="stylesheet" href="css/fuentes.css"><!-- fuentes: fin --><!-- tema: inicio --><script>(function(){try{var l=localStorage.getItem('plataforma_letra_v1');if(l&&/^[a-z]{2,24}$/.test(l)&&l!=='tema')document.documentElement.setAttribute('data-letra',l);var t=localStorage.getItem('plataforma_tema_v1');if(!t||!/^[a-z]{2,24}$/.test(t)||t==='clasico')return;document.documentElement.setAttribute('data-tema',t);var b=getComputedStyle(document.documentElement).getPropertyValue('--c-brand-800').trim();var m=document.querySelector('meta[name="theme-color"]');if(b&&m)m.setAttribute('content','rgb('+b.replace(/\s+/g,',')+')');}catch(e){}})();</script><!-- tema: fin --></head>
+<body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-accent-500 focus:text-brand-900 focus:font-semibold focus:px-4 focus:py-2 focus:rounded-lg">Saltar al contenido principal</a>
+    <header id="header" class="sticky top-0 z-50 bg-brand-800 shadow-lg transition-all duration-300">
+        <div class="hidden lg:block bg-brand-900 border-b border-brand-700/60">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-8 flex items-center justify-end gap-5 text-xs text-brand-300">
+                <a href="te-reto.html" class="hover:text-accent-400 transition-colors">🏆 ¡Te reto!</a>
+                <span class="text-brand-700" aria-hidden="true">&middot;</span>
+                <a href="tv.html" class="hover:text-accent-400 transition-colors">TV en vivo</a>
+                <span class="text-brand-700" aria-hidden="true">&middot;</span>
+                <a href="torneos-en-vivo.html" class="hover:text-accent-400 transition-colors">Torneos</a>
+            </div>
+        </div>
+        <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Navegación principal">
+            <div class="flex items-center justify-between min-h-[4rem] md:min-h-[5rem] py-2">
+                <a href="index.html" class="flex items-center gap-2 text-white"><img src="/img/logo-marca.png" alt="" width="78" height="48" class="h-10 md:h-12 w-auto shrink-0"><span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span></a>
+                <ul class="hidden lg:flex items-center gap-8 text-brand-100 font-medium">
+                    <li><a href="index.html" class="hover:text-accent-400 transition-colors">Inicio</a></li>
+                    <li><a href="cursos.html" class="hover:text-accent-400 transition-colors">Cursos</a></li>
+                    <li><a href="articulos.html" class="hover:text-accent-400 transition-colors">Artículos</a></li>
+                    <li><a href="tablero.html" class="hover:text-accent-400 transition-colors">Jugar contra el profe</a></li>
+                    <li><a href="clases.html" class="hover:text-accent-400 text-accent-400 transition-colors">Academia</a></li>
+                    <li><a href="precios.html" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg transition-colors">Inscríbete</a></li>
+                </ul>
+                <div class="flex items-center gap-2 sm:gap-3">
+                    <button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro">
+                        <span id="theme-icon" aria-hidden="true">☀️</span>
+                    </button>
+                    <button id="menu-toggle" class="lg:hidden text-white text-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Abrir menú" aria-expanded="false" aria-controls="mobile-menu">
+                        <svg id="icon-open" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                        <svg id="icon-close" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+            </div>
+        </nav>
+        <div id="mobile-menu" class="lg:hidden hidden bg-brand-800 border-t border-brand-700">
+            <ul class="px-4 py-4 space-y-3 text-brand-100 font-medium">
+                <li><a href="index.html" class="block py-2 hover:text-accent-400">Inicio</a></li>
+                <li><a href="cursos.html" class="block py-2 hover:text-accent-400">Cursos</a></li>
+                <li><a href="articulos.html" class="block py-2 hover:text-accent-400">Artículos</a></li>
+                <li><a href="tablero.html" class="block py-2 hover:text-accent-400">Jugar contra el profe</a></li>
+                <li><a href="clases.html" class="block py-2 text-accent-400">Academia</a></li>
+                <li><a href="te-reto.html" class="block py-2 hover:text-accent-400">🏆 ¡Te reto!</a></li>
+                <li><a href="tv.html" class="block py-2 hover:text-accent-400">TV en vivo</a></li>
+                <li><a href="torneos-en-vivo.html" class="block py-2 hover:text-accent-400">Torneos</a></li>
+                <li><a href="precios.html" class="block py-2 bg-accent-500 text-brand-900 font-semibold px-4 rounded-lg text-center">Inscríbete</a></li>
+            </ul>
+        </div>
+    </header>
+
+    <main id="main-content" class="pt-8 pb-16">
+        <div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
+            <a href="juegos.html" class="inline-flex items-center gap-1 text-sm text-brand-500 dark:text-brand-300 hover:text-accent-500 transition-colors mb-3">← 🎲 Juegos</a>
+            <h1 class="font-serif text-3xl font-bold text-brand-800 dark:text-white mb-1">Buscaminas de ajedrez <span aria-hidden="true">💣</span></h1>
+            <p class="text-brand-500 dark:text-brand-300 mb-4">El buscaminas de siempre, pero las minas son piezas de ajedrez escondidas. Revela una casilla: si está vacía, dice <strong>cuántas piezas la atacan con su propio movimiento</strong>. Si pisas una pieza, se acaba. Destapa el tablero entero sin pisar ninguna.</p>
+
+            <!-- Los niveles: un grupo de botones con aria-pressed, no pestañas —
+                 elegir uno empieza una partida, no destapa un panel. -->
+            <div class="mb-4" role="group" aria-labelledby="niveles-titulo">
+                <h2 id="niveles-titulo" class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-2">Niveles</h2>
+                <div id="niveles" class="grid grid-cols-1 sm:grid-cols-3 gap-2"></div>
+            </div>
+
+            <!-- LA región viva de la página: una sola, role="status" sin aria-live encima. -->
+            <div id="aviso" role="status" aria-atomic="true" class="mb-4 rounded-xl px-4 py-3 text-sm bg-brand-100 dark:bg-brand-900 text-brand-700 dark:text-brand-200"></div>
+
+            <!-- Se juega escribiendo; va SIEMPRE a la vista, no solo en Modo Adaptado. -->
+            <form id="cmd-form" class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-4 mb-4" autocomplete="off" novalidate>
+                <label for="cmd-input" class="block font-semibold text-brand-800 dark:text-white mb-1">Escribe la casilla que revelas, o un comando</label>
+                <p id="cmd-ayuda" class="text-xs text-brand-500 dark:text-brand-300 mb-2">Una casilla, como «e4» o «eva 4», la revela. «Marcar e4» le pone o le quita bandera. Comandos: trampas, pista, banderas, nuevo, nivel 2, ayuda.</p>
+                <div class="flex gap-2">
+                    <input id="cmd-input" type="text" autocapitalize="none" autocorrect="off" spellcheck="false" aria-describedby="cmd-ayuda" class="flex-1 min-w-0 rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-950 text-brand-800 dark:text-white px-3 py-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                    <button type="submit" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2 rounded-lg text-sm transition-colors">Revelar</button>
+                </div>
+            </form>
+
+            <!-- Marcador -->
+            <div class="grid grid-cols-3 gap-3 mb-4">
+                <div class="bg-white dark:bg-brand-900 rounded-xl shadow-md p-3 text-center">
+                    <p class="text-2xl font-bold text-accent-700 dark:text-accent-400" id="m-reveladas">0</p>
+                    <p class="text-xs text-brand-500 dark:text-brand-300" id="m-reveladas-rotulo">casillas de 61</p>
+                </div>
+                <div class="bg-white dark:bg-brand-900 rounded-xl shadow-md p-3 text-center">
+                    <p class="text-2xl font-bold text-brand-800 dark:text-white" id="m-tiempo">0:00</p>
+                    <p class="text-xs text-brand-500 dark:text-brand-300">tiempo</p>
+                </div>
+                <div class="bg-white dark:bg-brand-900 rounded-xl shadow-md p-3 text-center">
+                    <p class="text-2xl font-bold text-brand-800 dark:text-white" id="m-record">—</p>
+                    <p class="text-xs text-brand-500 dark:text-brand-300">tu mejor tiempo</p>
+                </div>
+            </div>
+
+            <!-- El tablero donde se revela. Una sola parada de tabulador
+                 (js/tablero-accesible.js): se entra con Tab y se anda con las flechas. -->
+            <section aria-labelledby="tablero-titulo" class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-3 sm:p-4 mb-4">
+                <h2 id="tablero-titulo" class="font-serif text-base font-bold text-brand-800 dark:text-white mb-2">El campo: aquí revelas</h2>
+                <div id="board" class="bm-tablero grid grid-cols-8 w-full aspect-square rounded-lg overflow-hidden select-none"></div>
+                <p id="trampas-texto" class="mt-3 text-sm text-brand-600 dark:text-brand-300"></p>
+            </section>
+
+            <div class="flex flex-wrap gap-3 mb-8">
+                <button type="button" id="btn-bandera" aria-pressed="false" class="border border-brand-200 dark:border-brand-700 text-brand-600 dark:text-brand-300 font-semibold px-4 py-2.5 rounded-lg text-sm hover:border-accent-500 transition-colors"><span aria-hidden="true">🚩 </span>Modo bandera</button>
+                <button type="button" id="btn-pista" class="border border-brand-200 dark:border-brand-700 text-brand-600 dark:text-brand-300 font-semibold px-4 py-2.5 rounded-lg text-sm hover:border-accent-500 transition-colors"><span aria-hidden="true">💡 </span>Pista</button>
+                <button type="button" id="btn-trampas" class="border border-brand-200 dark:border-brand-700 text-brand-600 dark:text-brand-300 font-semibold px-4 py-2.5 rounded-lg text-sm hover:border-accent-500 transition-colors"><span aria-hidden="true">♟️ </span>Trampas</button>
+                <button type="button" id="btn-nuevo" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2.5 rounded-lg text-sm transition-colors"><span aria-hidden="true">↺ </span>Nueva partida</button>
+                <button type="button" id="btn-voz" class="border border-brand-200 dark:border-brand-700 text-brand-600 dark:text-brand-300 font-semibold px-4 py-2.5 rounded-lg text-sm hover:border-accent-500 transition-colors">Activar voz</button>
+            </div>
+
+            <section aria-labelledby="h-como" class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 mb-6">
+                <h2 id="h-como" class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-3">Cómo se juega</h2>
+                <ul class="space-y-2 text-sm text-brand-600 dark:text-brand-300 list-disc pl-5">
+                    <li><strong>Revela</strong> escribiendo una casilla («e4», «eva 4») o tocándola en el tablero.</li>
+                    <li><strong>Vacía:</strong> dice cuántas piezas escondidas la atacan con su propio movimiento. La torre apunta por su fila y su columna, el alfil por sus diagonales, la dama por las dos, y el caballo a sus saltos — igual que en Batalla naval.</li>
+                    <li><strong>Un 0 destapa en cadena</strong> a las casillas de alrededor, como en el buscaminas de siempre, y además deja segura (con un aro) cualquier casilla desde la que una pieza escondida habría atacado ese 0.</li>
+                    <li><strong>Pisaste una pieza:</strong> ahí se acaba la partida, y se muestra dónde estaban todas.</li>
+                    <li><strong>Bandera:</strong> con «Modo bandera» activo, tocar una casilla sin revelar le pone o le quita una bandera, para recordar dónde sospechas que hay una pieza. No hace falta para ganar.</li>
+                    <li><strong>Ganas</strong> cuando revelas todas las casillas que no tienen pieza — no hace falta marcarlas todas con bandera.</li>
+                </ul>
+            </section>
+
+            <section aria-labelledby="h-teclas" class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 mb-6">
+                <h2 id="h-teclas" class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-3">Con el teclado</h2>
+                <ul class="space-y-2 text-sm text-brand-600 dark:text-brand-300 list-disc pl-5">
+                    <li>El recuadro de arriba recibe el foco al empezar: se puede jugar la partida entera sin salir de él.</li>
+                    <li>El tablero es una sola parada de tabulador. Dentro, las flechas mueven entre casillas e Intro revela (o marca, con «Modo bandera» activo). Cada casilla dice qué hay revelado ahí.</li>
+                    <li>Las columnas se dicen <em>anna, bella, césar, david, eva, félix, gustav y héctor</em>, como en todo el sitio.</li>
+                </ul>
+            </section>
+        </div>
+    </main>
+    <footer class="bg-brand-900 text-brand-300 pt-16 pb-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid md:grid-cols-4 gap-8 mb-12">
+                <div><a href="index.html" class="flex items-center gap-2 text-white mb-4"><img src="/img/logo-marca.png" alt="" width="78" height="48" class="h-9 w-auto shrink-0"><span class="font-serif text-lg font-bold">Ajedrez Integral</span></a><p class="text-sm text-brand-300">Plataforma educativa de ajedrez para escuelas, colegios y familias. Aprende, practica y compite.</p></div>
+                <div><h3 class="text-white font-semibold mb-4">Navegación</h3><ul class="space-y-2 text-sm"><li><a href="index.html" class="hover:text-accent-400 transition-colors">Inicio</a></li><li><a href="cursos.html" class="hover:text-accent-400 transition-colors">Cursos</a></li><li><a href="articulos.html" class="hover:text-accent-400 transition-colors">Artículos</a></li><li><a href="tablero.html" class="hover:text-accent-400 transition-colors">Jugar contra el profe</a></li><li><a href="clases.html" class="hover:text-accent-400 transition-colors">Academia</a></li><li><a href="te-reto.html" class="hover:text-accent-400 transition-colors">🏆 ¡Te reto!</a></li><li><a href="tv.html" class="hover:text-accent-400 transition-colors">TV en vivo</a></li><li><a href="torneos-en-vivo.html" class="hover:text-accent-400 transition-colors">Torneos</a></li></ul></div>
+                <div><h3 class="text-white font-semibold mb-4">Recursos</h3><ul class="space-y-2 text-sm"><li><a href="entreno/diagnostico.html" class="hover:text-accent-400 transition-colors">Diagnóstico de nivel gratis</a></li><li><a href="bot.html" class="hover:text-accent-400 transition-colors">Jugar contra el bot</a></li><li><a href="sobre-oscar.html" class="hover:text-accent-400 transition-colors">Sobre Oscar</a></li><li><a href="inscripcion.html" class="hover:text-accent-400 transition-colors">Torneos en línea</a></li></ul></div>
+                <div><h3 class="text-white font-semibold mb-4">Contacto</h3><ul class="space-y-2 text-sm"><li><a href="mailto:info@ajedrez-integral.com" class="hover:text-accent-400 transition-colors">info@ajedrez-integral.com</a></li><li><a href="https://wa.me/50683092291" target="_blank" rel="noopener" class="hover:text-accent-400 transition-colors">+506 8309-2291 (WhatsApp)</a></li><li>Clases en línea desde Costa Rica</li></ul></div>
+            </div>
+            <div class="border-t border-brand-700 pt-6 text-center text-sm text-brand-300"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p><!-- legal: inicio --><p class="mt-2"><a href="privacidad.html" class="underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Política de privacidad</a> <span aria-hidden="true">·</span> <a href="terminos.html" class="underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Términos y condiciones</a></p><!-- legal: fin --></div>
+        </div>
+    </footer>
+    <script src="js/vendor/supabase.js"></script>
+    <script src="js/supabase-client.js"></script>
+    <script src="js/tiempo-plataforma.js" data-activity="buscaminas"></script>
+    <script src="js/blind-notation.js"></script>
+    <script src="js/tablero-accesible.js"></script>
+    <script src="js/coordenadas-tablero.js"></script>
+    <script src="js/progreso-usuario.js"></script>
+    <script src="js/sonar-motor.js"></script>
+    <script src="js/batalla-naval-motor.js"></script>
+    <script src="js/buscaminas-motor.js"></script>
+    <script src="js/main.js"></script>
+    <script src="js/buscaminas.js"></script>
+</body>
+</html>

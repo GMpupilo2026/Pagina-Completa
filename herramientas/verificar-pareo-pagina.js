@@ -18,6 +18,8 @@
  *   7. Un todos contra todos de 5 (con ronda libre): cada uno juega con todos una vez.
  *   8. En inglés, todo [data-t] dice lo del inglés y <html lang> es "en".
  *   9. Nada sale del sitio: ni una petición a otro origen.
+ *  10. El manual (pareo-manual.html) se ve en el idioma elegido, explica todos
+ *      los desempates en los dos idiomas, y la descarga de la línea de comandos está.
  *
  * Uso:  python3 -m http.server 8777      (desde la raíz del sitio)
  *       node herramientas/verificar-pareo-pagina.js                         */
@@ -241,6 +243,31 @@ const ok = (c, m, detalle) => (c ? bien(m) : mal(m + (detalle ? " — " + detall
     await p.reload();
     ok((await p.getAttribute("html", "lang")) === "en", "y el idioma elegido se recuerda al recargar");
     await p.click("#pi-idioma");
+  }
+
+  console.log("=== 10. El manual y la línea de comandos ===");
+  {
+    const D = require(path.join(raiz, "js/pareo/desempates.js"));
+    await p.evaluate(() => { try { localStorage.setItem("pareo_idioma_v1", "es"); } catch (e) { /* nada */ } });
+    await p.goto(BASE + "/pareo-manual.html");
+    ok(await visible("#pm-es") && !(await visible("#pm-en")) && (await p.getAttribute("html", "lang")) === "es", "el manual abre en español y el inglés no se ve");
+    await p.click("#pm-idioma");
+    ok(await visible("#pm-en") && !(await visible("#pm-es")) && (await p.getAttribute("html", "lang")) === "en", "con «English» se ve el inglés y <html lang=\"en\">");
+    await p.goto(BASE + "/pareo-manual.html?lang=en");
+    ok(await visible("#pm-en"), "?lang=en lo abre en inglés (el enlace para FIDE)");
+    for (const id of ["pm-es", "pm-en"]) {
+      // Los códigos de la lista de desempates, uno por uno (textContent pegaría
+      // cada <dt> con su <dd>: «DEEncuentro»).
+      const codigos = (await p.$$eval(`#${id} .pm-desempates dt`, (ds) => ds.map((d) => d.textContent))).join(",").split(",").map((c) => c.trim());
+      const faltan = D.CATALOGO.map((x) => x.codigo).filter((c) => !codigos.includes(c));
+      ok(!faltan.length, `el manual (${id === "pm-es" ? "español" : "inglés"}) explica los ${D.CATALOGO.length} desempates`, faltan.join(", "));
+      const rotos = await p.$$eval(`#${id} a[href^="#"]`, (as) => as.map((a) => a.getAttribute("href")).filter((h) => !document.querySelector(h)));
+      ok(!rotos.length, `y su índice lleva a secciones que existen (${id})`, rotos.join(" "));
+    }
+    const zip = await p.request.get(BASE + "/descargas/pareo-integral-cli.zip");
+    ok(zip.ok() && (await zip.body()).slice(0, 2).toString() === "PK", "la descarga de la línea de comandos es un zip que está");
+    await p.goto(BASE + "/pareo.html");
+    ok((await p.$$('a[href="pareo-manual.html"]')).length >= 2 && (await p.$('a[href="descargas/pareo-integral-cli.zip"]')) !== null, "pareo.html enlaza al manual y a la descarga");
   }
 
   console.log("=== 9. Nada sale del sitio ===");
