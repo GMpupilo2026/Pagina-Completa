@@ -1,0 +1,2 @@
+<!-- Muestra de la página de un torneo (tnr….aspx), recortada al título. -->
+<div class="defaultDialog"><h3 Class="CRmsg">Acreditación de 7am a 8:30am</h3><h2>JDE Regional Cartago 2027 - Categoría B Individual Abierto &#9814;</h2><p class="CRsmall">Última actualización 10.03.2027</p></div>

@@ -363,7 +363,8 @@ window.__deletes = [];
         TABLAS.questions.forEach((q) => { if (q.created_by === ${JSON.stringify(quien)} && !q.closed_at) q.closed_at = new Date().toISOString(); });
         const q = { id: "qo-" + (TABLAS.questions.length + 1), fen: args.p_fen, prompt: args.p_prompt, created_by: ${JSON.stringify(quien)},
           expected_plies: 1, tipo: "opciones", opciones: args.p_opciones, tiempo_limite: args.p_tiempo_limite,
-          resultados_visibles: false, sin_tablero: !!args.p_sin_tablero, created_at: new Date().toISOString(), closed_at: null,
+          resultados_visibles: false, sin_tablero: !!args.p_sin_tablero, bloquea_cambio: !!args.p_bloquea_cambio,
+          created_at: new Date().toISOString(), closed_at: null,
           class_session_id: (SESIONES.find((c) => !c.ended_at) || {}).id || null };
         TABLAS.questions.push(q);
         if (args.p_correcta !== null && args.p_correcta !== undefined) TABLAS.preguntas_clave.push({ question_id: q.id, correcta: args.p_correcta });
@@ -425,6 +426,10 @@ window.__deletes = [];
         if (i && !i.bloqueado_at) i.bloqueado_at = new Date().toISOString();
         return objeto(null);
       }
+      /* El candado del material (puede_bajar): solo dice que sí a lo que la
+         semilla pone en puede_bajar —lo que administración le compartió—, como
+         la base sin «basta el acceso». Sin semilla, a nada. */
+      if (n === "puede_bajar") return objeto((TABLAS.puede_bajar || []).includes(args.p_producto));
       if (n === "resumen_de_la_clase") return constructor(n, resumenDeLaClase(args.p_clase));
       if (n === "puntos_de_la_clase") return constructor(n, puntosDeLaClase(args.p_clase));
       if (n === "puntos_de_tandas") return constructor(n, puntosDeTandas(args.p_clase));

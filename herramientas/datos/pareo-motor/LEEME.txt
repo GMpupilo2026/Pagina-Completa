@@ -1,0 +1,4 @@
+Casos de prueba de bbpPairings (Copyright 2016-2026 Jeremy Bierema, licencia
+Apache 2.0; ver js/vendor/bbppairings/Apache-2.0.txt), copiados sin cambios de
+test/tests/ del commit 8f9e3c5f: el .trf es la entrada y el .esperado lo que el
+motor tiene que contestar con --dutch -p. Los usa herramientas/verificar-pareo.js.

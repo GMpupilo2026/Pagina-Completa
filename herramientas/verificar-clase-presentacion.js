@@ -57,6 +57,8 @@ function datos() {
     cierto(`${deck}: cada una con título y su texto para el lector de pantalla`,
       ds.every((d) => d.titulo && d.texto && d.texto.length > 30));
     cierto(`${deck}: no pasa del tope del CHECK de la base (500)`, ds.length <= 500);
+    const enLista = (modulo.match(new RegExp('deck: "' + deck + '", titulo: ("[^"]*")')) || [])[1];
+    cierto(`${deck}: el título de la lista es el de su diapositivas.json`, enLista && JSON.parse(enLista) === j.titulo, enLista + " / " + j.titulo);
     const posiciones = ds.flatMap((d, i) => (d.posiciones || []).map((p) => Object.assign({ n: i + 1 }, p)));
     console.log(`\n2. ${deck}: ${posiciones.length} posiciones, contra chess.js`);
     posiciones.forEach((p) => {
@@ -118,7 +120,8 @@ async function esperarImagen(page, archivo) {
 
 async function pruebaProfesor(browser) {
   console.log("\n4. El profe la pone, la pasa, manda una posición y la quita");
-  const { page, ctx, errores } = await abrir(browser, "u-profe", CLASE, { game_state: [fila()] });
+  // Administración le compartió el curso (admin.html#asesores).
+  const { page, ctx, errores } = await abrir(browser, "u-profe", CLASE, { game_state: [fila()], puede_bajar: ["formacion-ajedrez"] });
   await page.waitForSelector("#toggle-presentacion-btn", { state: "visible", timeout: 10000 });
   cierto("sin presentación, no hay tarjeta", !(await seVe(page, "#presentacion-caja")));
   await page.click("#toggle-presentacion-btn");
@@ -287,7 +290,10 @@ async function pruebaSubida(browser) {
   await page.click("#toggle-presentacion-btn");
   await page.waitForSelector("#presentacion-panel-vacia", { state: "visible", timeout: 5000 });
   cierto("sin presentaciones propias, lo dice", true);
-  cierto("y ofrece también las del curso", await page.isVisible("#presentacion-panel-lista li:has-text('Formación Ajedrez')"));
+  // A este profe no le compartieron «Formación Ajedrez»: no se la ofrece.
+  await page.waitForSelector("#presentacion-panel-lista li:has-text('Ninguna compartida contigo')", { timeout: 5000 });
+  cierto("las del curso, solo si se las compartieron (acá, ninguna)",
+    !(await page.isVisible("#presentacion-panel-lista li:has-text('Formación Ajedrez')")));
   await page.setInputFiles("#presentacion-subir-archivo", { name: "charla.pdf", mimeType: "application/pdf",
     buffer: pdfDePrueba(["Hola mundo del arbitraje. Primera", "Segunda pagina con texto"]) });
   await page.fill("#presentacion-subir-titulo", "Mi charla");

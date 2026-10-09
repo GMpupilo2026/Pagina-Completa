@@ -106,7 +106,13 @@ window.__consultas = [];
     cuestionarios: [
       { id: "cq-1A", titulo: "Ponte a prueba · Prueba 1 · versión A", material: "ponte-a-prueba" },
       { id: "cq-1B", titulo: "Ponte a prueba · Prueba 1 · versión B", material: "ponte-a-prueba" },
+      // El de la sesión 1 de «Formación Ajedrez» (admin.html#asesores).
+      { id: "cq-fa1", titulo: "Formación Ajedrez · Sesión 1: reglas FIDE y Normativa JDE 2026", material: "formacion-ajedrez", listo: true,
+        preguntas: Array.from({ length: 22 }, (_, i) => ({ texto: "P" + i })) },
     ],
+    /* Cómo va la preparación de cada sesión (admin.html#asesores): la 1 ya
+       está lista, con una nota. upsert escribe acá por (curso, sesion). */
+    preparacion_sesiones: [{ curso: "formacion-ajedrez", sesion: 1, estado: "lista", nota: "Revisada con la Normativa 2026", actualizado_en: "2026-10-08T08:00:00Z" }],
     /* Un proyecto con dos grupos (admin.html#proyectos). «Finales» ya tiene
        profesora; el otro no, y su nombre trae HTML que tiene que ir literal.
        Las fechas: una clase que ya pasó y dos que vienen. */
@@ -162,6 +168,17 @@ window.__consultas = [];
       range(a, z) { anotado.range = [a, z]; filas2 = filas2.slice(a, z + 1); return b; },
       single() { unica = true; return b; },
       maybeSingle() { unica = true; return b; },
+      // Por la clave de preparacion_sesiones (curso, sesion), que es la única
+      // tabla que la página escribe así. Se anota lo que se pidió.
+      upsert(fila) {
+        anotado.upsert = fila;
+        (window.__upserts = window.__upserts || []).push({ tabla: tabla, fila: fila });
+        const i = filas.findIndex((r) => r.curso === fila.curso && r.sesion === fila.sesion);
+        const nueva = Object.assign({}, i >= 0 ? filas[i] : {}, fila, { actualizado_en: "2026-10-08T09:00:00Z" });
+        if (i >= 0) filas[i] = nueva; else filas.push(nueva);
+        filas2 = [nueva];
+        return b;
+      },
       then(res, rej) {
         let d = filas2;
         if (unica) d = filas2.length ? filas2[0] : null;
@@ -335,7 +352,7 @@ async function pruebaUnaSolaPuerta(browser) {
   igual("las secciones de cada pestaña",
     await page.evaluate(() => Array.from(document.querySelectorAll("[data-subnav]")).map((ul) =>
       ul.dataset.subnav + ": " + Array.from(ul.querySelectorAll("a")).map((a) => a.dataset.ir).join(", "))),
-    ["organizacion: profesores, supervisores, equipos, preparacion", "contenido: materiales, archivos, proyectos, torneos, novedades", "informes: informes, auditoria"]);
+    ["organizacion: profesores, supervisores, equipos, preparacion", "contenido: materiales, asesores, archivos, proyectos, torneos, novedades", "informes: informes, auditoria"]);
   igual("cada sección se alcanza con un enlace del menú, y ninguna sobra ni falta",
     await page.evaluate(() => {
       const menu = new Set(Array.from(document.querySelectorAll(".admin-nav[data-ir], .admin-grupo[data-ir]")).map((a) => a.dataset.ir));
@@ -726,6 +743,74 @@ async function pruebaMateriales(browser) {
 async function clic(page, selector) {
   await page.locator(selector).first().evaluate((e) => e.scrollIntoView({ block: "center" }));
   await page.click(selector);
+}
+
+/* ============ admin.html · Asesores: «Formación Ajedrez» sesión por sesión ============
+   Las sesiones salen de cursos/recursos/formacion-ajedrez/sesiones.json (el de
+   verdad, que arma el generador); el estado de cada una, de
+   preparacion_sesiones. Se mira que estén las 8 en orden, que el estado y la
+   nota se guarden en la base (y se pinte lo que quedó), que el Kahoot cargado
+   lleve a su cuestionario y el que falta lo diga, que la presentación se vea
+   acá mismo y que «Con quién lo compartes» sea el de Materiales, con este curso. */
+async function pruebaAsesores(browser) {
+  console.log("\n=== Asesores: Formación Ajedrez, sesión por sesión ===");
+  const { page, ctx, errores } = await abrir(browser, "/admin.html", ADMIN);
+  await page.goto(BASE + "/admin.html", { waitUntil: "networkidle" });
+  await page.waitForSelector("#app:not(.hidden)", { timeout: 20000 });
+  await page.evaluate(contestarAvisos);
+  await irA(page, "asesores");
+  await page.waitForSelector("#ase-lista article", { timeout: 10000 });
+  igual("las 8 sesiones, en orden", await page.evaluate(() =>
+    Array.from(document.querySelectorAll("#ase-lista article h3")).length), 8);
+  igual("la primera y la última", await page.evaluate(() => {
+    const h = Array.from(document.querySelectorAll("#ase-lista article h3")).map((x) => x.textContent);
+    return [h[0], h[7]];
+  }), ["Encuadre del curso y reglas básicas del ajedrez", "Torneo real, evaluación final y certificación"]);
+  igual("cuántas van listas y cuál sigue", await page.textContent("#ase-resumen"), "1 de 8 sesiones listas. La que sigue: Sesión 2.");
+  igual("la sesión 1 trae su estado y su nota de la base", [await page.inputValue("#ase-1-estado"), await page.inputValue("#ase-1-nota")],
+    ["lista", "Revisada con la Normativa 2026"]);
+  igual("el Kahoot de la sesión 1 lleva a su cuestionario, con cuántas preguntas", await page.evaluate(() => {
+    const a = document.querySelector("#ase-lista article:nth-child(1) a[href^='cuestionarios.html']");
+    return a && [a.getAttribute("href"), a.textContent];
+  }), ["cuestionarios.html?id=cq-fa1", "🎯 Cuestionario Kahoot (22 preguntas)"]);
+  igual("el de la sesión 2 dice que falta", await page.evaluate(() =>
+    /Kahoot: por preparar/.test(document.querySelector("#ase-lista article:nth-child(2)").textContent)), true);
+  igual("los archivos de la sesión 2, del curso", await page.evaluate(() =>
+    Array.from(document.querySelectorAll("#ase-lista article:nth-child(2) a[href^='cursos/']")).map((a) => a.getAttribute("href"))),
+    ["cursos/recursos/formacion-ajedrez/02-reglas-de-competicion-material.pdf", "cursos/recursos/formacion-ajedrez/02-reglas-de-competicion.pptx",
+     "cursos/recursos/formacion-ajedrez/02-reglas-de-competicion-ejercicios.pdf"]);
+  igual("la sesión 8 (presencial) no tiene presentación", await page.evaluate(() =>
+    !document.querySelector("#ase-lista article:nth-child(8) button[aria-label^='Ver la presentación']")), true);
+
+  // El estado se guarda en la base y se pinta lo que quedó.
+  await page.selectOption("#ase-2-estado", "lista");
+  await page.waitForFunction(() => /2 de 8/.test(document.getElementById("ase-resumen").textContent), null, { timeout: 5000 });
+  igual("marcar lista la sesión 2 la guarda con su curso y su número", await page.evaluate(() => window.__upserts.slice(-1)[0]),
+    { tabla: "preparacion_sesiones", fila: { curso: "formacion-ajedrez", sesion: 2, estado: "lista", nota: "" } });
+  igual("y el resumen pasa a la siguiente", await page.textContent("#ase-resumen"), "2 de 8 sesiones listas. La que sigue: Sesión 3.");
+  await page.fill("#ase-3-nota", "  Falta el Kahoot  ");
+  await page.click("button[aria-label='Guardar la nota de la sesión 3']");
+  await page.waitForFunction(() => (window.__upserts || []).length === 2, null, { timeout: 5000 });
+  igual("la nota se guarda sin espacios de más, con el estado que tenía", await page.evaluate(() => window.__upserts[1].fila),
+    { curso: "formacion-ajedrez", sesion: 3, estado: "preparacion", nota: "Falta el Kahoot" });
+
+  // La presentación, acá mismo: la vista previa con la primera diapositiva.
+  await page.click("#ase-lista button[aria-label='Ver la presentación de la sesión 3']");
+  await page.waitForFunction(() => Array.from(document.querySelectorAll("img")).some((i) => i.checkVisibility() && /^blob:|01\.webp$/.test(i.getAttribute("src") || "") && i.naturalWidth > 0), null, { timeout: 8000 });
+  igual("la presentación se abre en la vista previa, desde la primera", true, true);
+  await page.keyboard.press("Escape");
+
+  // Con quién lo compartes: el bloque de Materiales, con este curso.
+  await page.waitForSelector("#mat-formacion-ajedrez-buscar", { timeout: 5000 });
+  igual("dice que por ahora solo lo tienes tú", await page.textContent("#ase-compartir [role=status]"), "Por ahora solo lo tienes tú.");
+  await page.fill("#mat-formacion-ajedrez-buscar", "karina");
+  await page.click("#mat-formacion-ajedrez-resultados button");
+  await page.waitForFunction(() => /1 persona/.test(document.querySelector("#ase-compartir [role=status]").textContent), null, { timeout: 5000 });
+  igual("compartir pide a la base ESTE curso", await page.evaluate(() => window.__compartidos.slice(-1)[0]),
+    { p_producto: "formacion-ajedrez", p_persona: "u-profe", p_academia: null, p_todos: false, p_compartir: true });
+  if (process.env.CAPTURAS) await page.screenshot({ path: path.join(process.env.CAPTURAS, "admin-asesores.png"), fullPage: true });
+  igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
+  await ctx.close();
 }
 
 async function pruebaPdfs(browser) {
@@ -1809,6 +1894,7 @@ async function pruebaVolcarEnUnEquipo(browser) {
     await pruebaPreparacionRivales(browser);
     await pruebaProyectos(browser);
     await pruebaMateriales(browser);
+    await pruebaAsesores(browser);
     await pruebaPdfs(browser);
     await pruebaAuditoria(browser);
     await pruebaFichasDeGrupo(browser);

@@ -1436,9 +1436,12 @@ Rica.
     clase»;
   - el alumno, en la tarjeta «Tus puntos de septiembre» de su panel
     (`clases.html`), que no aparece si este mes no tuvo clases.
-- **No hay tabla de posiciones para los alumnos.** Mostrarles la de sus
-  compañeros sería una lista que no pasa por una relación directa (ver «Las
-  academias son privadas»).
+- **No hay tabla de posiciones de la clase para los alumnos.** Mostrarles la
+  de sus compañeros sería una lista que no pasa por una relación directa (ver
+  «Las academias son privadas»). La que hay después es el marcador del salón
+  de Puntos Ajedrez, que sí pasa por una (compañeros: mismo profe Y misma
+  academia) y suma todo lo ganado, no solo la clase (ver «Retos, marcador,
+  regalos y bromas» en `puntos-y-premios.md`).
 - **El doble de `verificar-clase-registrada.js` aprendió `resumen_del_mes`**,
   y lo calcula de verdad: suma su propio `resumen_de_la_clase` por cada clase
   del mes, con el mismo filtro de quién ve qué.
@@ -1730,6 +1733,19 @@ lo mismo con preguntas propias, de ajedrez o no, y con puntos por rapidez.
   sería ambigua entre las dos. La que sí lleva posición la toma del tablero de
   la clase al armarla («📌 Usar la posición del tablero de ahora»), y al
   jugarla se manda con `aplicarPosicionEnClase`: ninguna posición se inventa.
+- **Elegida una opción, no se puede cambiar.** La pregunta de opciones de
+  siempre (Preguntar) cuenta la ÚLTIMA respuesta a propósito (ver el punto de
+  los puntos, abajo): mientras la pregunta siga abierta, tocar otra opción la
+  cambia. En el cuestionario eso deja ver cómo contestó el resto y cambiar la
+  propia si el profe tarda en cerrar, así que acá no: `questions.bloquea_cambio`,
+  que pone la versión de **siete** argumentos de `hacer_pregunta_de_opciones`
+  (la de seis, con `sin_tablero`, pasa por ella con `bloquea_cambio` en
+  `false`, igual que la de cinco ya pasaba por la de seis). Lo exige la BASE
+  (`respuesta_calificar_y_plazo` rechaza el `UPDATE` que cambiaría `opcion`
+  cuando ya había una), y la pantalla no espera a que falle: en cuanto hay
+  respuesta, los botones quedan deshabilitados y `enviarOpcion` se niega a
+  mandar un segundo intento (también el de escribir otra letra en Modo
+  Adaptado), con el mismo aviso que daría la base.
 - **Los puntos: de 500 a 1000 por acertar, más cuanto antes; 0 al fallar**
   (`Cuestionario.puntos`, la regla escrita en `REGLA` y a la vista del profe).
   Se calculan con las horas que pone **la base**: la de la pregunta y la de la
@@ -3279,8 +3295,11 @@ al tablero que sigue en vivo. Código en `js/clase-presentacion.js`.
 
 - **«Las del curso»** (`LISTA`): imágenes y `diapositivas.json` en
   `cursos/recursos/<curso>/presentaciones/<clase>/`, detrás del candado del
-  worker; `deck` = `"<curso>/<clase>"`. La primera es la clase 1 de Formación
-  Ajedrez (34 láminas).
+  worker; `deck` = `"<curso>/<clase>"`. De Formación Ajedrez están las siete
+  sesiones virtuales: la Clase 1 es la presentación propia del profe (34
+  láminas, transcritas a mano) y las sesiones 2 a 7 las arma
+  `herramientas/curso-generar-formacion.py` con el mismo `.pptx` que se baja
+  del curso (ver «Las presentaciones de Formación Ajedrez» abajo).
 - **«Las tuyas»**: sube un PDF desde el mismo panel (PowerPoint y Google Slides
   lo exportan; un `.pptx` no, porque el navegador no sabe dibujarlo). pdf.js —el
   mismo de «📄 PDF»— dibuja cada página a 1600 px y se guarda en WebP (JPG si el
@@ -3390,8 +3409,36 @@ lámina se corre a la izquierda para dejarle su lugar.
 
 **Una presentación nueva del curso**: sus imágenes (`01.webp`…, 1600 × 900) y su
 `diapositivas.json` en su carpeta, y una línea en `LISTA` de
-`js/clase-presentacion.js`. Las imágenes se sacan del `.pptx` con LibreOffice
-(a PDF) y PyMuPDF (cada página a 1,25×, WebP calidad 80).
+`js/clase-presentacion.js` con el MISMO título del JSON (lo revisa el
+verificador). Las imágenes se sacan del `.pptx` con LibreOffice (a PDF) y
+PyMuPDF (cada página a 1600 px de ancho, WebP calidad 80).
+
+#### Las presentaciones de Formación Ajedrez
+
+Las sesiones 2 a 7 no se transcriben a mano: `presentacion()` de
+`herramientas/curso-generar-formacion.py` arma el `.pptx` de cada sesión desde
+el JSON del curso con el estilo de la Clase 1 del profe (franja azul, letra
+grande, una idea por diapositiva), y `presentacion_de_clase()` lo pasa a
+imágenes con el texto de cada diapositiva, sus notas y las posiciones de sus
+ejercicios. Así el `.pptx` que se baja y la presentación de la clase en vivo
+son la misma, y cambian juntas al volver a generar.
+
+- **Nada por debajo de 22 pt en las listas** (20 en lo que no se puede
+  partir): lo que no cabe se parte en una diapositiva «(continuación)», nunca
+  se achica hasta no leerse en un proyector. El tamaño se mide con la métrica
+  de Carlito (la de Calibri), no a ojo.
+- **Cada sesión trae**: portada, objetivos, cronograma, un tema por
+  diapositiva con su fuente al pie, recesos (los del cronograma), cada caso en
+  dos (la situación para discutir y la decisión), la práctica, los ejercicios
+  —con tablero si traen posición, dibujado con `herramientas/lib/tablero-png.js`,
+  que usa las piezas del sitio— y sus respuestas, el quiz y sus respuestas, y
+  la tarea.
+- La Clase 1 lleva `"presentacion_clase": "propia"` en el JSON: el generador no
+  la toca.
+- Hace falta LibreOffice y PyMuPDF; sin ellos se avisa y el resto del curso se
+  genera igual. `verificar-formacion.js` revisa que cada sesión virtual tenga
+  su presentación de clase, que se ofrezca en la clase, que traiga los casos
+  de la sesión y sus posiciones.
 
 **Al tocar esto, correr `node herramientas/verificar-todo.js clase-presentacion`.**
 Comprueba cada posición con chess.js, que cada lámina tenga su imagen y su

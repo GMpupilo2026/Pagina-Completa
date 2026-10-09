@@ -41,11 +41,11 @@
             { id: "inicio", nombre: "Inicio", secciones: ["inicio"] },
             { id: "personas", nombre: "Personas", secciones: ["cuentas", "crear"] },
             { id: "organizacion", nombre: "Organización", secciones: ["profesores", "supervisores", "equipos", "preparacion"] },
-            { id: "contenido", nombre: "Contenido", secciones: ["materiales", "archivos", "proyectos", "torneos", "novedades"] },
+            { id: "contenido", nombre: "Contenido", secciones: ["materiales", "asesores", "archivos", "proyectos", "torneos", "novedades"] },
             { id: "cobros", nombre: "Cobros y accesos", secciones: ["cobros"] },
             { id: "informes", nombre: "Informes", secciones: ["informes", "auditoria"] },
         ];
-        const SECCIONES = ["inicio", "cuentas", "crear", "profesores", "supervisores", "equipos", "novedades", "torneos", "proyectos", "materiales", "archivos", "preparacion", "auditoria", "cobros", "informes"];
+        const SECCIONES = ["inicio", "cuentas", "crear", "profesores", "supervisores", "equipos", "novedades", "torneos", "proyectos", "materiales", "asesores", "archivos", "preparacion", "auditoria", "cobros", "informes"];
 
         function grupoDeSeccion(nombre) {
             return GRUPOS_ADMIN.find((g) => g.secciones.includes(nombre)) || GRUPOS_ADMIN[0];
@@ -118,6 +118,8 @@
             if (nombre === "auditoria" && window.AdminAuditoria) AdminAuditoria.abrir();
             // Con quién se comparte cada material: también se pide al abrirlo.
             if (nombre === "materiales" && window.AdminMateriales) AdminMateriales.abrir();
+            // El curso de los asesores, sesión por sesión (js/admin-asesores.js): al abrirla.
+            if (nombre === "asesores" && window.AdminAsesores) AdminAsesores.abrir();
             // La lista de todos los archivos para bajar (data/archivos.json), igual: al abrirla.
             if (nombre === "archivos" && window.AdminArchivos) AdminArchivos.abrir();
             if (!(opciones && opciones.sinHistoria) && location.hash !== "#" + nombre) {

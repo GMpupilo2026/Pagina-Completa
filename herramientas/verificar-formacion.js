@@ -100,6 +100,14 @@ const fragmento = fs.readFileSync(path.join(RAIZ, "cursos", "protegido", "formac
 cierto("cursos/protegido/formacion-ajedrez.html es lo que arma hoy el generador (si no: python3 herramientas/curso-generar-formacion.py)",
   fragmento === esperado);
 cierto("el fragmento ya no habla de 8 horas presenciales", !/8 horas/.test(fragmento));
+const sesionesHoy = execFileSync("python3", ["-c", py.replace("sys.stdout.write(gen.protegido(curso))",
+  "json.dump(gen.sesiones_datos(curso, sys.argv[2]), sys.stdout, ensure_ascii=False)"),
+  path.join(__dirname, "curso-generar-formacion.py"), RECURSOS], { encoding: "utf8" });
+cierto("sesiones.json (la ficha Asesores) es lo que arma hoy el generador",
+  JSON.stringify(JSON.parse(fs.readFileSync(path.join(RECURSOS, "sesiones.json"), "utf8"))) === JSON.stringify(JSON.parse(sesionesHoy)));
+const sesionesJson = JSON.parse(sesionesHoy).sesiones;
+cierto("sesiones.json: las 8 sesiones, y cada archivo que nombra existe",
+  sesionesJson.length === lecciones.length && sesionesJson.every((x) => x.archivos.every((f) => fs.existsSync(path.join(RECURSOS, f.archivo)))));
 
 const leerPdf = (f) => execFileSync("python3", ["-c",
   "import sys, pypdf; print('\\n'.join(p.extract_text() for p in pypdf.PdfReader(sys.argv[1]).pages))", f], { encoding: "utf8" });
@@ -114,6 +122,60 @@ virtuales.forEach((l) => {
   cierto(`${l.archivo}-ejercicios.pdf no trae las respuestas`, !ejercicios.includes("Respuesta:"));
   cierto(`${l.archivo}.pptx existe`, fs.existsSync(path.join(RECURSOS, l.archivo + ".pptx")));
 });
+
+console.log("\n6. Las presentaciones de la clase en vivo y la guía rápida");
+const modClase = fs.readFileSync(path.join(RAIZ, "js", "clase-presentacion.js"), "utf8");
+virtuales.forEach((l) => {
+  const deck = "formacion-ajedrez/clase-" + String(lecciones.indexOf(l) + 1).padStart(2, "0");
+  const dir = path.join(RECURSOS, "presentaciones", deck.split("/")[1]);
+  const json = path.join(dir, "diapositivas.json");
+  cierto(`${l.archivo}: tiene su presentación para la clase en vivo (${deck})`, fs.existsSync(json));
+  cierto(`${l.archivo}: y se ofrece en la clase`, modClase.includes('deck: "' + deck + '"'));
+  if (l.presentacion_clase === "propia" || !fs.existsSync(json)) return;
+  const d = JSON.parse(fs.readFileSync(json, "utf8")).diapositivas;
+  cierto(`${l.archivo}: la presentación de clase trae los casos de la sesión`,
+    l.casos.every((c) => d.some((x) => x.texto.includes(c.situacion.slice(0, 40)))));
+  const fens = l.ejercicios.filter((e) => e.fen).map((e) => e.fen);
+  cierto(`${l.archivo}: y sus posiciones, para mandarlas al tablero`,
+    fens.every((f) => d.some((x) => (x.posiciones || []).some((p) => p.fen === f))));
+});
+const guia = sinEspacios(leerPdf(path.join(RECURSOS, "guia-rapida-arbitro-jde.pdf")));
+cierto("la guía rápida existe y dice que la Regional se juega a ritmo rápido (A.1)",
+  guia.includes(sinEspacios("Rápida (A.1)")) && guia.includes(sinEspacios("Normativa PJDE 2026")));
+cierto("la Sesión 1 la ofrece para bajar", fragmento.includes("guia-rapida-arbitro-jde.pdf"));
+
+console.log("\n7. Los cuestionarios al estilo Kahoot (herramientas/formacion-cuestionarios.js)");
+// La parte pura del armador (js/cuestionario-editor.js), la misma que valida
+// lo que guarda un profe: lo que no pase acá fallaría delante de la clase.
+global.window = global.window || {};
+global.Chess = Chess;
+const srcEditor = fs.readFileSync(path.join(RAIZ, "js", "cuestionario-editor.js"), "utf8");
+const i0 = srcEditor.indexOf("window.Cuestionario"), j0 = srcEditor.indexOf("})();", i0) + 5;
+eval(srcEditor.slice(i0, j0));
+const C = global.window.Cuestionario;
+const kahoot = require("./formacion-cuestionarios.js");
+const qs = kahoot.cuestionarios();
+cierto("son del material del curso", kahoot.fuente().material === curso.slug);
+qs.forEach((q) => {
+  const pre = `Sesión ${q.sesion}`;
+  cierto(`${pre}: el título nombra su sesión (la ficha Asesores lo encuentra así) y cabe`,
+    q.titulo.startsWith("Formación Ajedrez · Sesión " + q.sesion + ":") && q.titulo.length <= C.LARGO_TITULO && q.sesion >= 1 && q.sesion <= lecciones.length);
+  cierto(`${pre}: pasa el armador tal cual`, C.problemas(q).length === 0, C.problemas(q).join(" | "));
+  cierto(`${pre}: nada se recorta al guardarlo`, q.preguntas.every((p) => JSON.stringify(C.limpiar(p)) === JSON.stringify(p)));
+  cierto(`${pre}: ninguna pregunta repite una opción`, q.preguntas.every((p) => new Set(p.opciones.map((o) => o.toLowerCase())).size === p.opciones.length));
+  const cuenta = [0, 0, 0, 0];
+  q.preguntas.forEach((p) => { cuenta[p.correcta] += 1; });
+  cierto(`${pre}: la correcta, pareja entre A, B, C y D (${cuenta.join(", ")})`, Math.max(...cuenta) - Math.min(...cuenta) <= 1);
+  q.preguntas.filter((p) => p.fen).forEach((p) => {
+    const g = new Chess();
+    const legal = g.load(p.fen);
+    const dice = p.opciones[p.correcta];
+    const estado = !legal ? "ilegal" : g.in_stalemate() ? "Ahogado" : g.in_checkmate() ? "Jaque mate" : g.insufficient_material() ? "Tablas en el acto" : "sigue";
+    cierto(`${pre}: «${p.texto.slice(0, 40)}…» es legal y la correcta dice lo que pasa (${estado})`, legal && dice.startsWith(estado));
+  });
+});
+const nuevaSql = kahoot.sql();
+cierto("el SQL actualiza por título y no borra", /on conflict \(titulo\) where listo do update/.test(nuevaSql) && !/delete/i.test(nuevaSql));
 
 console.log(fallos ? `\n${fallos} fallo(s)` : "\nTodo bien.");
 process.exit(fallos ? 1 : 0);

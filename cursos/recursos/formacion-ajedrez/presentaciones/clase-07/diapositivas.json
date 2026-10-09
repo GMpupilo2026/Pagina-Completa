@@ -1,0 +1,127 @@
+{
+ "titulo": "Formación Ajedrez · Sesión 7: Talleres prácticos y simulacros de arbitraje",
+ "curso": "formacion-ajedrez",
+ "diapositivas": [
+  {
+   "titulo": "Talleres prácticos y simulacros de arbitraje",
+   "texto": "Portada. Sesión 7: Talleres prácticos y simulacros de arbitraje. Simulacros de arbitraje entre pares y preparación de roles para la sesión presencial. Formación Ajedrez",
+   "imagen": "01.webp"
+  },
+  {
+   "titulo": "Objetivos de la sesión",
+   "texto": "Arbitrar una ronda simulada aplicando todo lo visto en el curso. Observar a otra persona con la lista de cotejo y dar retroalimentación útil. Conocer los formularios que se usarán en la sesión presencial. Confirmar los roles y los materiales para el torneo real.",
+   "imagen": "02.webp"
+  },
+  {
+   "titulo": "Cronograma de la sesión",
+   "texto": "De 0:00 a 0:15, Repaso y revisión de la tarea. De 0:15 a 0:45, Guía del simulacro y roles. De 0:45 a 1:15, La lista de cotejo y los formularios. De 1:15 a 1:30, receso. De 1:30 a 2:30, Simulacro 1 en salas de trabajo. De 2:30 a 3:00, Retroalimentación del simulacro 1. De 3:00 a 3:15, receso. De 3:15 a 4:15, Simulacro 2 con rotación de roles. De 4:15 a 4:40, Asignación de roles para la sesión presencial. De 4:40 a 5:00, Cierre.",
+   "imagen": "03.webp"
+  },
+  {
+   "titulo": "Cómo funciona el simulacro",
+   "texto": "En cada sala de trabajo hay tres roles: la persona árbitra, dos personas que representan a los jugadores y actúan una incidencia de la guía, y una persona observadora con la lista de cotejo. La persona árbitra no conoce la incidencia de antemano. La incidencia se actúa con un tablero y un reloj reales o con un simulador en pantalla. La persona árbitra aplica el método de cuatro pasos y comunica su decisión en voz alta. La persona observadora marca Sí o No en cada ítem y anota observaciones concretas. Al final de cada incidencia se rotan los roles.",
+   "imagen": "04.webp"
+  },
+  {
+   "titulo": "La lista de cotejo de desempeño arbitral",
+   "texto": "La lista de cotejo es el instrumento con el que se evalúa el desempeño en el torneo real de la sesión presencial. Conocerla de antemano permite prepararse para cada ítem. Verifica la acreditación y el emparejamiento antes de iniciar la ronda. Aplica correctamente las reglas básicas y resuelve reclamos con el procedimiento del reglamento. Gestiona con criterio las incidencias con el reloj. Aplica las sanciones correspondientes ante faltas o dispositivos no autorizados. Calcula correctamente los desempates. Mantiene un trato respetuoso e imparcial y documenta cada incidencia.",
+   "imagen": "05.webp"
+  },
+  {
+   "titulo": "Receso",
+   "texto": "Receso de 15 minutos. Pausa los relojes: seguimos en breve.",
+   "imagen": "06.webp"
+  },
+  {
+   "titulo": "Roles en el torneo presencial",
+   "texto": "En la sesión presencial se organiza y arbitra un torneo real. Cada participante tiene un rol asignado y rota durante las rondas. Árbitro principal: decide las incidencias y coordina al equipo. Árbitros auxiliares: supervisan un grupo de mesas, informan y aplican lo acordado. Mesa de control: inscripción, emparejamientos, resultados y desempates. Todas las personas completan la lista de cotejo de otra en al menos una ronda.",
+   "imagen": "07.webp"
+  },
+  {
+   "titulo": "Caso 1 · ¿Qué decide la persona árbitra?",
+   "texto": "Caso 1: Guion A: el enroque dudoso. El jugador de negras enroca largo; el de blancas reclama que el rey ya se había movido en la jugada 9 y había vuelto.",
+   "imagen": "08.webp",
+   "notas": "Dejar que el grupo decida antes de pasar a la siguiente diapositiva."
+  },
+  {
+   "titulo": "Caso 1 · Decisión",
+   "texto": "Caso 1, decisión: Se revisan las planillas. Si el rey se movió, el enroque fue una jugada ilegal: se repone la posición, el jugador debe mover el rey (pieza tocada) y el rival recibe la compensación de tiempo que corresponde al ritmo.",
+   "imagen": "09.webp"
+  },
+  {
+   "titulo": "Caso 2 · ¿Qué decide la persona árbitra?",
+   "texto": "Caso 2: Guion B: reclamo de triple repetición. Un jugador detiene el reloj y dice que la posición se repitió tres veces. Todavía no hizo la jugada que produciría la tercera repetición.",
+   "imagen": "10.webp",
+   "notas": "Dejar que el grupo decida antes de pasar a la siguiente diapositiva."
+  },
+  {
+   "titulo": "Caso 2 · Decisión",
+   "texto": "Caso 2, decisión: Correcto si anotó la jugada sin hacerla y llamó al árbitro sin tocar ninguna pieza. Se verifica con las planillas; si el reclamo es correcto, son tablas de inmediato. Si no lo es, el reclamo cuenta como oferta de tablas y, en ritmo clásico, el rival recibe dos minutos.",
+   "imagen": "11.webp"
+  },
+  {
+   "titulo": "Caso 3 · ¿Qué decide la persona árbitra?",
+   "texto": "Caso 3: Guion C: la oferta de tablas en el turno del rival. Un jugador ofrece tablas mientras corre el reloj de su rival.",
+   "imagen": "12.webp",
+   "notas": "Dejar que el grupo decida antes de pasar a la siguiente diapositiva."
+  },
+  {
+   "titulo": "Caso 3 · Decisión",
+   "texto": "Caso 3, decisión: La oferta es válida, pero hacerla en el turno del rival es una molestia: se le recuerda el procedimiento correcto (jugada, oferta y reloj) y, si se repite, se sanciona según el art. 12.9.",
+   "imagen": "13.webp"
+  },
+  {
+   "titulo": "Caso 4 · ¿Qué decide la persona árbitra?",
+   "texto": "Caso 4: Guion D: el público que ayuda. Un docente acompañante comenta en voz baja con su estudiante una partida en curso.",
+   "imagen": "14.webp",
+   "notas": "Dejar que el grupo decida antes de pasar a la siguiente diapositiva."
+  },
+  {
+   "titulo": "Caso 4 · Decisión",
+   "texto": "Caso 4, decisión: Se retira al docente de la zona de juego; si hubo ayuda, se sanciona al estudiante según el art. 12.9. Se registra la incidencia.",
+   "imagen": "15.webp"
+  },
+  {
+   "titulo": "Receso",
+   "texto": "Receso de 15 minutos. Pausa los relojes: seguimos en breve.",
+   "imagen": "16.webp"
+  },
+  {
+   "titulo": "Práctica · Simulacro de arbitraje con observación entre pares",
+   "texto": "Práctica: Simulacro de arbitraje con observación entre pares. Cada participante arbitra una partida simulada mientras otra persona observa y completa la lista de cotejo; luego se intercambian los roles.",
+   "imagen": "17.webp"
+  },
+  {
+   "titulo": "Ejercicio 1 de 2",
+   "texto": "Ejercicio 1: Durante el simulacro, la persona árbitra resolvió bien un reclamo, pero no lo anotó en el acta. ¿Cómo lo marcas en la lista de cotejo?",
+   "imagen": "18.webp"
+  },
+  {
+   "titulo": "Ejercicio 2 de 2",
+   "texto": "Ejercicio 2: Escribe una retroalimentación útil para una persona que aplicó la sanción máxima a una primera falta leve.",
+   "imagen": "19.webp"
+  },
+  {
+   "titulo": "Ejercicios: respuestas",
+   "texto": "1. «Resuelve los reclamos siguiendo el procedimiento»: Sí. «Documenta cada incidencia en la planilla o en el acta»: No, con una observación concreta (qué incidencia faltó registrar). 2. Por ejemplo: «La decisión tuvo base en el art. 12.9, pero la sanción no fue proporcionada: para una primera falta leve correspondía una advertencia. Te sugiero empezar por la sanción más baja de la lista y subir si la falta se repite».",
+   "imagen": "20.webp",
+   "notas": "Repasar en plenaria; cada respuesta con su artículo."
+  },
+  {
+   "titulo": "Quiz de la sesión",
+   "texto": "1. Durante un simulacro, no se aplicó la sanción por uso de dispositivo electrónico. ¿Qué instrumento documenta esa observación? 2. ¿Cuál es el propósito principal de asignar roles antes de la sesión presencial? 3. Un reclamo de triple repetición resulta incorrecto. ¿Qué efecto tiene además? 4. ¿En qué orden se ofrecen tablas correctamente? 5. En el simulacro, ¿conoce la persona árbitra de antemano la incidencia que va a arbitrar? 6. Según la lista de cotejo, ¿qué debe verificar la persona árbitra antes de iniciar la ronda? 7. ¿Qué función cumple la mesa de control en el torneo presencial? 8. ¿Qué hace un árbitro auxiliar cuando no puede resolver una incidencia?",
+   "imagen": "21.webp",
+   "notas": "Un minuto por pregunta, y después las respuestas."
+  },
+  {
+   "titulo": "Quiz: respuestas",
+   "texto": "1. La lista de cotejo. 2. Garantizar una organización clara y una evaluación práctica ordenada. 3. Cuenta como una oferta de tablas. 4. Primero la jugada, después la oferta y por último presionar el reloj. 5. No. 6. La acreditación y el emparejamiento. 7. Inscripción, emparejamientos, resultados y desempates. 8. Informa al árbitro principal y aplica lo que se acuerde.",
+   "imagen": "22.webp"
+  },
+  {
+   "titulo": "Tarea y cierre",
+   "texto": "Tarea para la próxima sesión: Confirmar el rol asignado, revisar la lista de cotejo y reunir los materiales solicitados para el día presencial. ¿Dudas? Este es el momento. Gracias por tu participación.",
+   "imagen": "23.webp"
+  }
+ ]
+}

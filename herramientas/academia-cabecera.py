@@ -59,13 +59,14 @@ PAGINAS = [
     "configuracion.html", "crazyhouse.html", "cuatro-jugadores.html",
     "duelo.html", "estandar.html", "formularios.html", "ilumina-tablero.html",
     "informes.html", "inscripciones.html", "juegos.html", "competir.html",
-    "lector-planilla.html", "logros.html", "cuaderno.html", "reto-ejercicios.html", "niebla.html", "partidas.html",
+    "lector-planilla.html", "logros.html", "puntos-tienda.html", "cuaderno.html", "reto-ejercicios.html", "niebla.html", "partidas.html",
     "examen.html", "examenes.html",
     "planes.html", "proyecto.html", "cuestionarios.html", "cuestionario-tarea.html", "racha-tactica.html", "reportes.html", "sesion.html",
     "coordinacion.html", "subgrupos.html", "alumno-nuevo.html", "tareas.html",
     "informe-mensual.html", "supervision.html", "supervisor.html", "academias.html", "tablero-academias.html",
     "novedades.html", "repasar-clases.html",
     "tienda.html", "accesos.html",
+    "licencias.html", "seleccion-codicader.html",
     "encuesta-profesor.html", "satisfaccion.html", "encuestas-curso.html",
     "justificaciones.html",
     "preparacion-rivales.html", "plan-rival.html", "libreta-torneos.html",
@@ -395,6 +396,35 @@ def poner_tanda(ruta, s):
             + TANDA_FIN + s[cierre:])
 
 
+# Las bromas entre compañeros (js/bromas.js): solo en el panel, la tienda de
+# puntos y las páginas de Entrenamiento. Nunca en un examen, en la clase en
+# vivo ni en un torneo, que es donde una broma molesta de verdad. Ver «Retos,
+# marcador, regalos y bromas» en docs/decisiones/puntos-y-premios.md.
+BROMAS_INICIO = "<!-- bromas: inicio -->"
+BROMAS_FIN = "<!-- bromas: fin -->"
+
+
+def lleva_bromas(ruta):
+    return ruta in ("clases.html", "puntos-tienda.html") or ruta.startswith("entreno/")
+
+
+def poner_bromas(ruta, s):
+    i = s.find(BROMAS_INICIO)
+    if i >= 0:
+        j = s.find(BROMAS_FIN, i)
+        s = s[:i] + s[j + len(BROMAS_FIN):]
+    if not lleva_bromas(ruta):
+        return s
+    cierre = s.rfind("</body>")
+    if cierre < 0:
+        print(f"⚠️  {ruta}: no tiene </body>, se queda sin las bromas.")
+        return s
+    arriba = "../" * ruta.count("/")
+    return (s[:cierre] + BROMAS_INICIO
+            + f'<script src="{arriba}js/bromas.js" defer></script>'
+            + BROMAS_FIN + s[cierre:])
+
+
 def poner_juego_aviso(ruta, s):
     i = s.find(JUEGO_AVISO_INICIO)
     if i >= 0:
@@ -625,6 +655,7 @@ NOMBRE_Y_PADRE = {
     "competir.html": ("Competir", "clases.html"),
     "lector-planilla.html": ("Lector de planilla", "clases.html"),
     "logros.html": ("Logros", "clases.html"),
+    "puntos-tienda.html": ("Tienda de puntos", "clases.html"),
     "cuaderno.html": ("Mi cuaderno", "clases.html"),
     "reto-ejercicios.html": ("Retos de ejercicios", "competir.html"),
     "partidas.html": ("Archivos", "clases.html"),
@@ -648,6 +679,8 @@ NOMBRE_Y_PADRE = {
     "tablero-academias.html": ("Tablero por academia", "clases.html"),
     "tienda.html": ("Tienda", "clases.html"),
     "accesos.html": ("Accesos y cupos", "clases.html"),
+    "licencias.html": ("Licencias de herramientas", "clases.html"),
+    "seleccion-codicader.html": ("Selección por parámetros", "clases.html"),
     "encuesta-profesor.html": ("¿Cómo van tus clases?", "clases.html"),
     "justificaciones.html": ("Justificaciones de ausencia", "clases.html"),
     "satisfaccion.html": ("Satisfacción con los profesores", "clases.html"),
@@ -816,6 +849,7 @@ def procesar(ruta):
     s = poner_juego_aviso(ruta, s)
     s = poner_aviso_profe(ruta, s)
     s = poner_tanda(ruta, s)
+    s = poner_bromas(ruta, s)
     s = poner_acceso(ruta, s)
     s = poner_tiempo(ruta, s)
     s = poner_modo_vista(ruta, s)

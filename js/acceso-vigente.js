@@ -16,6 +16,11 @@
  * vencido, con la salida a los precios. Esa se cierra aunque el interruptor
  * esté apagado.
  *
+ * La cuenta temporal (un taller con fecha de cierre, como el del MEP) también:
+ * «temporal» mientras vale —el panel avisa solo la última semana— y
+ * «temporal_vencida» al cerrarse, con su propio aviso y sin la salida a los
+ * precios: nadie la compró, se la dieron por un tiempo.
+ *
  * Quién tiene acceso lo decide la base (paquetes_acceso + paquete_alumnos +
  * acceso_config), no esta página: acá solo se pinta. Y mientras quien
  * administra no encienda «exigir el acceso», `mi_acceso()` contesta vigente
@@ -83,6 +88,12 @@
     return d.toLocaleString("es-CR", { timeZone: "America/Costa_Rica", day: "numeric", month: "long", hour: "numeric", minute: "2-digit" });
   }
 
+  function dia(iso) {
+    const d = new Date(iso);
+    if (isNaN(d)) return "";
+    return d.toLocaleDateString("es-CR", { timeZone: "America/Costa_Rica", day: "numeric", month: "long", year: "numeric" });
+  }
+
   function cuantoQueda(horas) {
     if (horas <= 1) return "menos de una hora";
     if (horas < 24) return horas + " horas";
@@ -106,6 +117,9 @@
     if (a.motivo === "prueba_vencida") {
       return "Tu prueba gratis de 3 días terminó el " + fechaHora(a.vence) + ".";
     }
+    if (a.motivo === "temporal_vencida") {
+      return "Tu cuenta temporal" + (a.detalle ? " (" + a.detalle + ")" : "") + " se cerró el " + dia(a.vence) + ".";
+    }
     if (a.motivo === "vencido") {
       return "Tu acceso a la Academia venció el " + fecha(a.hasta) + ".";
     }
@@ -121,10 +135,21 @@
     return a;
   }
 
-  function contacto(wa, prueba) {
+  /** modo: "prueba" (la salida es comprar), "temporal" (pedir que la alarguen)
+   *  o cualquier otra cosa (renovar el acceso). */
+  function contacto(wa, modo) {
     const p = document.createElement("p");
     p.className = "text-sm mt-3";
-    if (prueba) {
+    if (modo === "temporal") {
+      if (wa) {
+        p.append("Si necesitas seguir usándola, ", enlace(wa + "?text=" + encodeURIComponent("Hola, mi cuenta temporal de la Academia se cerró y necesito seguir usándola."), "escríbenos por WhatsApp", true), ".");
+      } else {
+        p.append("Si necesitas seguir usándola, habla con la Academia.");
+      }
+      p.append(" Tu progreso no se pierde: queda guardado en tu cuenta.");
+      return p;
+    }
+    if (modo === "prueba") {
       p.append("Para seguir con esta misma cuenta, ", enlace(precios(), "elige tu plan"));
       if (wa) {
         p.append(" o ", enlace(wa + "?text=" + encodeURIComponent("Hola Oscar, hice la prueba gratis de la Academia y quiero mi cuenta."), "escríbenos por WhatsApp", true));
@@ -147,7 +172,7 @@
     return p;
   }
 
-  function franja(texto, wa, urgente, prueba) {
+  function franja(texto, wa, urgente, modo) {
     const main = document.getElementById("main-content") || document.querySelector("main");
     if (!main) return;
     const div = document.createElement("div");
@@ -161,9 +186,13 @@
     const p = document.createElement("p");
     p.className = "font-semibold";
     p.textContent = texto;
-    caja.append(p, contacto(wa, prueba));
+    caja.append(p, contacto(wa, modo));
     div.append(caja);
     main.prepend(div);
+  }
+
+  function modoDe(a) {
+    return a.motivo === "prueba_vencida" ? "prueba" : a.motivo === "temporal_vencida" ? "temporal" : "";
   }
 
   function tapar(a, wa) {
@@ -185,14 +214,16 @@
     const h1 = document.createElement("h1");
     h1.className = "font-serif text-2xl font-bold text-brand-800 dark:text-white mb-2";
     h1.tabIndex = -1;
-    h1.textContent = a.motivo === "prueba_vencida" ? "Tu prueba gratis terminó" : "Tu acceso no está activo";
+    h1.textContent = a.motivo === "prueba_vencida" ? "Tu prueba gratis terminó"
+      : a.motivo === "temporal_vencida" ? "Tu cuenta temporal se cerró"
+      : "Tu acceso no está activo";
     const p = document.createElement("p");
     p.textContent = porQue(a);
     const volver = document.createElement("a");
     volver.href = panelHref();
     volver.className = "inline-block mt-5 bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg text-sm transition-colors";
     volver.textContent = "← Volver al panel";
-    caja.append(icono, h1, p, contacto(wa, a.motivo === "prueba_vencida"), volver);
+    caja.append(icono, h1, p, contacto(wa, modoDe(a)), volver);
     aviso.append(caja);
     main.after(aviso);
 
@@ -232,7 +263,12 @@
 
     if (a.vigente) {
       if (enPanel() && a.motivo === "prueba" && typeof a.horas === "number") {
-        franja("Estás en tu prueba gratis: te quedan " + cuantoQueda(a.horas) + " (hasta el " + fechaHora(a.vence) + ").", await whatsapp(sb), false, true);
+        franja("Estás en tu prueba gratis: te quedan " + cuantoQueda(a.horas) + " (hasta el " + fechaHora(a.vence) + ").", await whatsapp(sb), false, "prueba");
+        return;
+      }
+      if (enPanel() && a.motivo === "temporal" && typeof a.dias === "number" && a.dias <= DIAS_AVISO) {
+        const cuando = a.dias === 0 ? "hoy" : a.dias === 1 ? "mañana" : "en " + a.dias + " días";
+        franja("Tu cuenta temporal se cierra " + cuando + " (el " + dia(a.vence) + ").", await whatsapp(sb), false, "temporal");
         return;
       }
       if (enPanel() && a.exigido && a.motivo === "paquete" && typeof a.dias === "number" && a.dias <= DIAS_AVISO) {
@@ -243,7 +279,7 @@
     }
 
     const wa = await whatsapp(sb);
-    if (enPanel()) franja(porQue(a) + " Puedes ver tu panel, pero no entrar a los ejercicios ni a las clases.", wa, true, a.motivo === "prueba_vencida");
+    if (enPanel()) franja(porQue(a) + " Puedes ver tu panel, pero no entrar a los ejercicios ni a las clases.", wa, true, modoDe(a));
     else tapar(a, wa);
   }
 

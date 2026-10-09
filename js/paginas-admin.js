@@ -42,6 +42,7 @@
         { title: "Cobros y accesos", tiles: [
             { emoji: "💳", label: "Cobros de la Academia", desc: "Mensualidades, pagos y morosidad. Los recordatorios salen solos", href: "cobros.html", zona: "cobros" },
             { emoji: "🎟️", label: "Accesos y cupos", desc: "Los paquetes de acceso y los cupos de cada academia", href: "accesos.html", zona: "cobros" },
+            { emoji: "🔑", label: "Licencias de herramientas", desc: "Genera y controla las licencias de las herramientas de arbitraje", href: "licencias.html", zona: "cobros" },
             { emoji: "🏷️", label: "Precios", desc: "La tabla para enseñar a una academia o un colegio", href: "precios.html", zona: "cobros" },
             { emoji: "🎁", label: "Prueba gratis", desc: "Crear los 3 días de prueba de quien la pidió por WhatsApp", href: "prueba-gratis.html", zona: "cobros" },
             { emoji: "🛒", label: "Tienda de materiales", desc: "El catálogo de venta: todavía no está abierta al público", href: "tienda.html", zona: "cobros" },
@@ -55,6 +56,7 @@
         { title: "Torneos", tiles: [
             { emoji: "🏅", label: "Inscripciones a torneos en línea", desc: "Las respuestas del formulario de inscripcion.html", href: "inscripciones.html", zona: "contenido" },
             { emoji: "🔎", label: "Jugadores de chess-results", desc: "Busca a una persona y su historial de torneos", href: "admin-jugador.html", zona: "contenido" },
+            { emoji: "🏅", label: "Selección por parámetros", desc: "La selección CODICADER desde chess-results, en vivo ronda a ronda", href: "seleccion-codicader.html", zona: "contenido" },
         ] },
         { title: "Revisar el contenido", tiles: [
             { emoji: "🏛️", label: "Cursos", desc: "Los cursos de la Academia y el temario de cada uno", href: "cursos/academia/index.html", zona: "contenido" },

@@ -293,8 +293,9 @@ lista, y el resto se acomoda solo.
   texto no pueden decir cosas distintas). La barra es adorno; el dato es el
   número, y el lector de pantalla dice el día completo. Sale también en el hub.
 - **La campana del alumno.** «🔔 Novedades · 3 nuevas» junto al saludo abre
-  «Lo último que te pasó»: tareas y exámenes nuevos, retos, avisos del profe y
-  las notas que el profe le compartió —lo que le llega como push y, si lo
+  «Lo último que te pasó»: tareas y exámenes nuevos, retos, avisos del profe,
+  las notas que el profe le compartió y los regalos y bromas que le mandó un
+  compañero con sus Puntos Ajedrez —lo que le llega como push y, si lo
   perdía, no quedaba en ninguna parte—. Cinco de cada cosa y del último mes,
   lo que la RLS ya le deja leer, sin nada que guardar aparte. «Nuevo» es lo
   llegado desde la última vez que la abrió en este aparato

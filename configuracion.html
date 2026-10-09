@@ -133,6 +133,21 @@
                 <p class="text-xs text-brand-450 dark:text-brand-350">Usa salas que no caduquen: la de siempre en Meet, tu sala personal de Zoom o el enlace de tu canal de Teams. Si cada clase generas un enlace nuevo, hay que volver a pegarlo aquí antes de empezar.</p>
             </div>
 
+            <!-- Solo de quien da clase: sus alumnos se pueden mandar bromas con
+                 sus Puntos Ajedrez (confeti, un patito, el tablero arcoíris…).
+                 Lo apaga para toda su clase; la base (mandar_broma) lo cumple.
+                 Ver «Retos, marcador, regalos y bromas» en
+                 docs/decisiones/puntos-y-premios.md. -->
+            <div id="bromas-clase" hidden class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6">
+                <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1">Bromas entre tus alumnos <span aria-hidden="true">🃏</span></h2>
+                <p class="text-sm text-brand-500 dark:text-brand-300 mb-4">Con sus Puntos Ajedrez, tus alumnos se pueden mandar bromas inofensivas entre compañeros: confeti en el panel, un patito que cruza la pantalla de Entrenamiento, el tablero arcoíris por una hora. Nunca en un examen, en la clase en vivo ni en un torneo, y siempre con el nombre de quien la manda. Si prefieres que en tu clase no haya, apágalas aquí.</p>
+                <label class="flex items-center gap-2 text-sm text-brand-800 dark:text-white">
+                    <input id="bromas-clase-permitir" type="checkbox" class="h-4 w-4 rounded border-brand-300 text-accent-600 focus:ring-accent-400" disabled>
+                    Mis alumnos se pueden mandar bromas
+                </label>
+                <p id="bromas-clase-estado" class="text-xs mt-1 min-h-[1rem] text-brand-500 dark:text-brand-300" aria-live="polite"></p>
+            </div>
+
             <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6">
                 <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-4">Seguridad</h2>
                 <label for="new-password" class="block text-xs font-medium text-brand-500 dark:text-brand-300 mb-1">Nueva contraseña</label>
