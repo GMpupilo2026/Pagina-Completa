@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="img/favicon.svg">
+    <title>Manual de Pareo Integral — Ajedrez Integral</title>
+    <meta name="description" content="Cómo usar Pareo Integral, el emparejador de torneos de ajedrez con el Sistema Holandés de FIDE: jugadores, rondas, byes, desempates del C.07, TRF, comprobador y línea de comandos. En español y en inglés.">
+    <link rel="canonical" href="https://ajedrez-integral.com/pareo-manual.html">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Ajedrez Integral">
+    <meta property="og:locale" content="es_CR">
+    <meta property="og:title" content="Manual de Pareo Integral">
+    <meta property="og:description" content="Cómo usar Pareo Integral, el emparejador de torneos de ajedrez con el Sistema Holandés de FIDE: jugadores, rondas, byes, desempates del C.07, TRF, comprobador y línea de comandos. En español y en inglés.">
+    <meta property="og:url" content="https://ajedrez-integral.com/pareo-manual.html">
+    <meta property="og:image" content="https://ajedrez-integral.com/img/og-ajedrez-integral.jpg">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="Ajedrez Integral — clases de ajedrez en vivo, no solo videos. ajedrez-integral.com">
+    <meta name="twitter:card" content="summary_large_image">
+    <link rel="stylesheet" href="css/tailwind.css">
+    <link rel="stylesheet" href="css/styles.css">
+    <!-- oscuro: inicio --><script>(function(){try{var t=localStorage.getItem('theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.classList.add('dark');}catch(e){}})();</script><!-- oscuro: fin -->
+    <script src="js/adaptive-mode.js"></script>
+<!-- app: inicio --><meta name="theme-color" content="#102a43"><link rel="manifest" href="/manifest.json"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Ajedrez"><script src="js/errores.js"></script><script src="js/pwa.js" defer></script><script src="js/navegacion.js" defer></script><!-- app: fin --><!-- fuentes: inicio --><link rel="stylesheet" href="css/fuentes.css"><!-- fuentes: fin --><!-- tema: inicio --><script>(function(){try{var l=localStorage.getItem('plataforma_letra_v1');if(l&&/^[a-z]{2,24}$/.test(l)&&l!=='tema')document.documentElement.setAttribute('data-letra',l);var t=localStorage.getItem('plataforma_tema_v1');if(!t||!/^[a-z]{2,24}$/.test(t)||t==='clasico')return;document.documentElement.setAttribute('data-tema',t);var b=getComputedStyle(document.documentElement).getPropertyValue('--c-brand-800').trim();var m=document.querySelector('meta[name="theme-color"]');if(b&&m)m.setAttribute('content','rgb('+b.replace(/\s+/g,',')+')');}catch(e){}})();</script><!-- tema: fin --></head>
+<body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-accent-500 focus:text-brand-900 focus:font-semibold focus:px-4 focus:py-2 focus:rounded-lg">Saltar al contenido principal</a>
+    <header id="header" class="sticky top-0 z-50 bg-brand-800 shadow-lg transition-all duration-300">
+        <div class="hidden lg:block bg-brand-900 border-b border-brand-700/60">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-8 flex items-center justify-end gap-5 text-xs text-brand-300">
+                <a href="te-reto.html" class="hover:text-accent-400 transition-colors">🏆 ¡Te reto!</a>
+                <span class="text-brand-700" aria-hidden="true">&middot;</span>
+                <a href="tv.html" class="hover:text-accent-400 transition-colors">TV en vivo</a>
+                <span class="text-brand-700" aria-hidden="true">&middot;</span>
+                <a href="torneos-en-vivo.html" class="hover:text-accent-400 transition-colors">Torneos</a>
+            </div>
+        </div>
+        <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Navegación principal">
+            <div class="flex items-center justify-between min-h-[4rem] md:min-h-[5rem] py-2">
+                <a href="index.html" class="flex items-center gap-2 text-white"><img src="/img/logo-marca.png" alt="" width="78" height="48" class="h-10 md:h-12 w-auto shrink-0"><span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span></a>
+                <ul class="hidden lg:flex items-center gap-8 text-brand-100 font-medium">
+                    <li><a href="index.html" class="hover:text-accent-400 transition-colors">Inicio</a></li>
+                    <li><a href="cursos.html" class="hover:text-accent-400 transition-colors">Cursos</a></li>
+                    <li><a href="articulos.html" class="hover:text-accent-400 transition-colors">Artículos</a></li>
+                    <li><a href="tablero.html" class="hover:text-accent-400 transition-colors">Jugar contra el profe</a></li>
+                    <li><a href="clases.html" class="hover:text-accent-400 text-accent-400 transition-colors">Academia</a></li>
+                    <li><a href="precios.html" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg transition-colors">Inscríbete</a></li>
+                </ul>
+                <div class="flex items-center gap-2 sm:gap-3">
+                    <button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro">
+                        <span id="theme-icon" aria-hidden="true">☀️</span>
+                    </button>
+                    <button id="menu-toggle" class="lg:hidden text-white text-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Abrir menú" aria-expanded="false" aria-controls="mobile-menu">
+                        <svg id="icon-open" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                        <svg id="icon-close" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+            </div>
+        </nav>
+        <div id="mobile-menu" class="lg:hidden hidden bg-brand-800 border-t border-brand-700">
+            <ul class="px-4 py-4 space-y-3 text-brand-100 font-medium">
+                <li><a href="index.html" class="block py-2 hover:text-accent-400">Inicio</a></li>
+                <li><a href="cursos.html" class="block py-2 hover:text-accent-400">Cursos</a></li>
+                <li><a href="articulos.html" class="block py-2 hover:text-accent-400">Artículos</a></li>
+                <li><a href="tablero.html" class="block py-2 hover:text-accent-400">Jugar contra el profe</a></li>
+                <li><a href="clases.html" class="block py-2 hover:text-accent-400">Academia</a></li>
+                <li><a href="te-reto.html" class="block py-2 hover:text-accent-400">🏆 ¡Te reto!</a></li>
+                <li><a href="tv.html" class="block py-2 hover:text-accent-400">TV en vivo</a></li>
+                <li><a href="torneos-en-vivo.html" class="block py-2 hover:text-accent-400">Torneos</a></li>
+                <li><a href="precios.html" class="block py-2 bg-accent-500 text-brand-900 font-semibold px-4 rounded-lg text-center">Inscríbete</a></li>
+            </ul>
+        </div>
+    </header>
+        <main id="main-content">
+    <!-- El manual de Pareo Integral, en español y en inglés (FIDE pide el
+         inglés para avalar un programa). Los dos textos están completos en la
+         página; js/pareo/manual.js muestra el del idioma elegido, el mismo que
+         recuerda pareo.html. Ver «Pareo Integral» en
+         docs/decisiones/juegos-y-torneos.md. -->
+    <div class="pt-10 pb-16">
+        <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-end mb-4">
+                <button type="button" id="pm-idioma" class="border border-brand-300 dark:border-brand-600 text-brand-800 dark:text-white font-semibold px-4 py-2 rounded-lg text-sm hover:bg-white dark:hover:bg-brand-800 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400" lang="en">English</button>
+            </div>
+
+            <article id="pm-es" lang="es" class="pm-manual">
+                <h1><span aria-hidden="true">📘</span> Manual de Pareo Integral</h1>
+                <p class="pm-lema">Versión 1.1 · Sistema Holandés de FIDE (C.04.3, vigente desde el 1 de febrero de 2026) · desempates del C.07 (versión 2026).</p>
+                <nav aria-label="Contenido del manual" class="pm-indice">
+                    <ol>
+                        <li><a href="#es-que">Qué es</a></li>
+                        <li><a href="#es-rapido">Un torneo en cinco pasos</a></li>
+                        <li><a href="#es-torneo">Los datos del torneo</a></li>
+                        <li><a href="#es-jugadores">Los jugadores</a></li>
+                        <li><a href="#es-rondas">Las rondas</a></li>
+                        <li><a href="#es-todos">Todos contra todos</a></li>
+                        <li><a href="#es-desempates">La clasificación y los desempates</a></li>
+                        <li><a href="#es-archivos">Archivos, comprobador y generador</a></li>
+                        <li><a href="#es-cli">La versión de línea de comandos</a></li>
+                        <li><a href="#es-limites">Con qué está hecho y qué falta</a></li>
+                    </ol>
+                </nav>
+
+                <h2 id="es-que">1. Qué es</h2>
+                <p>Pareo Integral empareja torneos de ajedrez con el <strong>Sistema Holandés de FIDE</strong>, anota los resultados, arma la clasificación con los desempates que elijas y la tabla cruzada, y baja el <strong>TRF</strong>, el archivo que FIDE pide para el informe de Elo. También hace todos contra todos con las tablas de Berger.</p>
+                <p>Es gratis y no pide cuenta. Todo queda guardado <strong>solo en el navegador</strong> de la computadora donde lo usas: nada se manda a ningún servidor. Para pasar un torneo a otra computadora, o tener una copia, baja su archivo en «Archivos y comprobador».</p>
+
+                <h2 id="es-rapido">2. Un torneo en cinco pasos</h2>
+                <ol>
+                    <li>En <strong>Torneo</strong>, escribe el nombre, elige el sistema y el número de rondas.</li>
+                    <li>En <strong>Jugadores</strong>, inscribe a cada uno (o pega la lista entera).</li>
+                    <li>En <strong>Rondas</strong>, marca quién pidió bye y aprieta «Emparejar la ronda 1».</li>
+                    <li>Anota el resultado de cada mesa. Con todos anotados, ya se puede emparejar la siguiente.</li>
+                    <li>En <strong>Clasificación</strong> y <strong>Tabla cruzada</strong> está el torneo; en <strong>Archivos</strong>, el TRF para FIDE.</li>
+                </ol>
+
+                <h2 id="es-torneo">3. Los datos del torneo</h2>
+                <ul>
+                    <li><strong>Nombre, ciudad, federación, fechas, árbitros y ritmo</strong>: van al TRF.</li>
+                    <li><strong>Sistema</strong>: suizo (Sistema Holandés) o todos contra todos. No se puede cambiar una vez emparejada la primera ronda.</li>
+                    <li><strong>Número de rondas</strong>: se puede subir durante el torneo, nunca por debajo de las ya emparejadas.</li>
+                    <li><strong>Color del n.º 1 en la ronda 1</strong>: blancas o negras; lo decide el sorteo del árbitro.</li>
+                    <li><strong>Aceleración Baku</strong>: la aceleración de FIDE para torneos grandes.</li>
+                    <li><strong>Puntos</strong>: por victoria, tablas, derrota y bye del pareo (por omisión 1, ½, 0 y 1). Se fijan antes de la primera ronda.</li>
+                </ul>
+
+                <h2 id="es-jugadores">4. Los jugadores</h2>
+                <ul>
+                    <li>Cada jugador lleva nombre (apellidos, nombre), Elo FIDE, título, federación, ID FIDE, sexo y fecha de nacimiento. Solo el nombre es obligatorio.</li>
+                    <li><strong>Pegar una lista</strong>: uno por línea, <code>Nombre; Elo; Título; Federación; ID FIDE</code>. Sirve copiar columnas de una hoja de cálculo.</li>
+                    <li><strong>Los números</strong> salen del orden inicial de FIDE: Elo, después título y después nombre. Quedan fijos al emparejar la ronda 1.</li>
+                    <li><strong>Inscripción tardía</strong>: se intercala en el lugar que le toca por Elo, sin cambiar el orden de los demás. En las rondas que no jugó cuenta como ausente con 0; si le corresponde un bye, cámbialo en cada una de esas rondas.</li>
+                    <li><strong>Retirar</strong>: deja de emparejarse desde la ronda que todavía no está hecha. Lo que jugó sigue contando. «Vuelve a jugar» lo reincorpora.</li>
+                    <li><strong>Eliminar</strong> solo se puede con quien todavía no jugó ninguna ronda.</li>
+                </ul>
+
+                <h2 id="es-rondas">5. Las rondas</h2>
+                <ul>
+                    <li>Antes de emparejar, marca a quien no juega esa ronda: <strong>bye pedido</strong> (medio punto), <strong>ausente</strong> (0) o <strong>bye de punto entero</strong>. Los retirados ya quedan fuera.</li>
+                    <li>«Emparejar la ronda N» calcula los emparejamientos con el Sistema Holandés. Las mesas salen en el orden de FIDE. Si sobra uno, recibe el <strong>bye del pareo</strong>, con los puntos que elegiste.</li>
+                    <li>Si no hay forma de emparejar según las reglas (por ejemplo, alguien ya no tiene rivales nuevos), la página lo dice y no empareja.</li>
+                    <li>Los resultados: <strong>1-0, ½-½, 0-1</strong>; <strong>+/−</strong> y <strong>−/+</strong> son incomparecencias (gana el que vino); <strong>−/−</strong>, no vino ninguno.</li>
+                    <li>Para emparejar una ronda hacen falta todos los resultados de la anterior.</li>
+                    <li><strong>Corregir un resultado</strong> de una ronda vieja se puede, pero las rondas siguientes no se vuelven a emparejar.</li>
+                    <li><strong>Deshacer el emparejamiento</strong> solo se puede en la última ronda. Al volver a emparejarla con los mismos datos sale la misma ronda.</li>
+                    <li>«Imprimir» saca solo la ronda, con los resultados escritos.</li>
+                </ul>
+
+                <h2 id="es-todos">6. Todos contra todos</h2>
+                <ul>
+                    <li>Los emparejamientos salen de las <strong>tablas de Berger</strong> de FIDE. El número de rondas se calcula solo, y a doble vuelta se repiten con los colores al revés.</li>
+                    <li>Antes de la ronda 1 se pueden <strong>sortear los números</strong>. Si no, quedan por Elo.</li>
+                    <li>Con un número impar de jugadores, en cada ronda uno queda <strong>libre</strong> (0 puntos).</li>
+                    <li>Quien no se presenta pierde por incomparecencia: se anota en el resultado de su mesa.</li>
+                </ul>
+
+                <h2 id="es-desempates">7. La clasificación y los desempates</h2>
+                <p>La clasificación cuenta solo las rondas con todos sus resultados. Ordena por puntos y después por los desempates <strong>en el orden que elegiste</strong> en «Torneo». Si dos jugadores quedan iguales en todo, comparten el puesto (lo resuelve el árbitro).</p>
+                <p>Las <strong>rondas no jugadas</strong> se cuentan como dice el C.07 (artículos 15 y 16): cuentan contra un rival ficticio con el mismo puntaje del jugador, con el tope del artículo 16.4. En los cortes, primero se quita una ronda no jugada voluntaria. En un todos contra todos, una incomparecencia cuenta con el rival programado.</p>
+                <p>Los desempates que usan el Elo necesitan el Elo de todos: un rival sin Elo cuenta como 0.</p>
+                <dl class="pm-desempates">
+                    <dt>BH</dt><dd>Buchholz: la suma de los puntos de los rivales.</dd>
+                    <dt>BH-C1, BH-C2</dt><dd>Buchholz sin el peor rival, o sin los dos peores.</dd>
+                    <dt>BH-M1, BH-M2</dt><dd>Buchholz mediano: sin el mejor ni el peor (o sin los dos mejores ni los dos peores).</dd>
+                    <dt>SB, SB-C1</dt><dd>Sonneborn-Berger: los puntos de cada rival multiplicados por lo que se le sacó; con o sin el peor.</dd>
+                    <dt>DE</dt><dd>Encuentro directo: los puntos contra los empatados.</dd>
+                    <dt>WIN</dt><dd>Rondas ganadas, jugadas o no (incluye el bye del pareo).</dd>
+                    <dt>WON</dt><dd>Partidas ganadas en el tablero.</dd>
+                    <dt>BPG, BWG</dt><dd>Partidas jugadas con negras, y ganadas con negras.</dd>
+                    <dt>GE</dt><dd>Partidas que eligió jugar: las rondas menos las no jugadas voluntarias.</dd>
+                    <dt>PS, PS-C1</dt><dd>Progresivo: la suma del puntaje acumulado ronda a ronda; con o sin la primera.</dd>
+                    <dt>KS</dt><dd>Koya: los puntos contra quienes hicieron al menos la mitad.</dd>
+                    <dt>STD</dt><dd>Puntos estándar: 1 por ganar, ½ por empatar, cualquiera sea el sistema de puntos.</dd>
+                    <dt>ARO, ARO-C1</dt><dd>Elo medio de los rivales; con o sin el menor.</dd>
+                    <dt>TPR</dt><dd>Rendimiento (performance) con la tabla de FIDE.</dd>
+                    <dt>PTP</dt><dd>Rendimiento perfecto: el Elo con el que se esperaría exactamente su puntaje.</dd>
+                    <dt>FB</dt><dd>Fore Buchholz: el Buchholz como si la última ronda hubiera terminado toda en tablas.</dd>
+                    <dt>AOB, AFB</dt><dd>El Buchholz medio (o el Fore Buchholz medio) de los rivales.</dd>
+                    <dt>APRO, APPO</dt><dd>El rendimiento medio (o el rendimiento perfecto medio) de los rivales.</dd>
+                </dl>
+
+                <h2 id="es-archivos">8. Archivos, comprobador y generador</h2>
+                <ul>
+                    <li><strong>Bajar el TRF para FIDE</strong>: lleva las rondas con todos sus resultados.</li>
+                    <li><strong>Bajar una copia (.json)</strong>: el torneo entero, para abrirlo en otra computadora.</li>
+                    <li><strong>Abrir un torneo</strong>: un TRF de Swiss-Manager, Vega u otro programa, o una copia .json. Del TRF se respeta su numeración, y se pueden seguir emparejando las rondas que faltan.</li>
+                    <li><strong>Comprobador de emparejamientos</strong>: pega un TRF de cualquier programa. Cada ronda se vuelve a emparejar con el Sistema Holandés y se muestra dónde difiere.</li>
+                    <li><strong>Generador de torneos al azar</strong>: arma un torneo entero con resultados al azar. Con la misma semilla sale siempre el mismo torneo.</li>
+                </ul>
+
+                <h2 id="es-cli">9. La versión de línea de comandos</h2>
+                <p>Para probar en lote (por ejemplo, los probadores de FIDE) está <a href="descargas/pareo-integral-cli.zip" download>la versión de línea de comandos</a>. Necesita Node.js 18 o más nuevo y corre el mismo motor que la página. Para emparejar, comprobar y generar usa la sintaxis de JaVaFo y bbpPairings:</p>
+                <pre><code>node pareo.js --dutch torneo.trf -p salida.txt
+node pareo.js --dutch torneo.trf -c
+node pareo.js --dutch -g -o azar.trf -s 2026
+node pareo.js standings torneo.trf --tiebreaks BH-C1,BH,SB --lang es</code></pre>
+                <p>El detalle está en el <code>LEEME.md</code> que trae el paquete.</p>
+
+                <h2 id="es-limites">10. Con qué está hecho y qué falta</h2>
+                <ul>
+                    <li>Los emparejamientos los calcula <strong>bbpPairings</strong> (Jeremy Bierema, licencia Apache 2.0), el motor del Sistema Holandés que usan programas avalados por FIDE. Está compilado para correr en el navegador, sin cambios a su código.</li>
+                    <li>Los desempates están traducidos de <strong>chesspairing</strong> (Gert Nutterts, licencia Apache 2.0) y comparados con él.</li>
+                    <li>Con la misma semilla, el generador arma un torneo distinto del que arma el bbpPairings de escritorio, porque el azar de la librería de C++ es otro. Los emparejamientos sí son los mismos.</li>
+                    <li>Por ahora no hace torneos por equipos ni otros sistemas suizos (Burstein, Dubov, Lim).</li>
+                    <li><strong>Pareo Integral todavía no tiene el aval de FIDE.</strong></li>
+                </ul>
+                <p><a href="pareo.html" class="pm-volver">← Volver a Pareo Integral</a></p>
+            </article>
+
+            <article id="pm-en" lang="en" class="pm-manual" hidden>
+                <h1><span aria-hidden="true">📘</span> Pareo Integral user manual</h1>
+                <p class="pm-lema">Version 1.1 · FIDE Dutch System (C.04.3, in force since 1 February 2026) · C.07 tie-breaks (2026 version).</p>
+                <nav aria-label="Manual contents" class="pm-indice">
+                    <ol>
+                        <li><a href="#en-what">What it is</a></li>
+                        <li><a href="#en-quick">A tournament in five steps</a></li>
+                        <li><a href="#en-tournament">Tournament details</a></li>
+                        <li><a href="#en-players">Players</a></li>
+                        <li><a href="#en-rounds">Rounds</a></li>
+                        <li><a href="#en-rr">Round robin</a></li>
+                        <li><a href="#en-tiebreaks">Standings and tie-breaks</a></li>
+                        <li><a href="#en-files">Files, checker and generator</a></li>
+                        <li><a href="#en-cli">The command-line version</a></li>
+                        <li><a href="#en-limits">What it is built on, and what is missing</a></li>
+                    </ol>
+                </nav>
+
+                <h2 id="en-what">1. What it is</h2>
+                <p>Pareo Integral pairs chess tournaments with the <strong>FIDE Dutch System</strong>, records results, builds the standings with the tie-breaks you choose and the crosstable, and exports the <strong>TRF</strong>, the file FIDE requires for rating reports. It also runs round robins with the Berger tables.</p>
+                <p>It is free and needs no account. Everything is stored <strong>only in the browser</strong> of the computer you use: nothing is sent to any server. To move a tournament to another computer, or to keep a copy, download its file under “Files and checker”.</p>
+
+                <h2 id="en-quick">2. A tournament in five steps</h2>
+                <ol>
+                    <li>Under <strong>Tournament</strong>, enter the name, choose the system and the number of rounds.</li>
+                    <li>Under <strong>Players</strong>, register each player (or paste the whole list).</li>
+                    <li>Under <strong>Rounds</strong>, mark who requested a bye and press “Pair round 1”.</li>
+                    <li>Enter the result of every board. Once all are in, the next round can be paired.</li>
+                    <li><strong>Standings</strong> and <strong>Crosstable</strong> show the tournament; <strong>Files</strong> has the TRF for FIDE.</li>
+                </ol>
+
+                <h2 id="en-tournament">3. Tournament details</h2>
+                <ul>
+                    <li><strong>Name, city, federation, dates, arbiters and time control</strong> go into the TRF.</li>
+                    <li><strong>System</strong>: Swiss (Dutch System) or round robin. It cannot be changed once round 1 is paired.</li>
+                    <li><strong>Number of rounds</strong>: it can be raised during the tournament, never below the rounds already paired.</li>
+                    <li><strong>Colour of no. 1 in round 1</strong>: white or black, as drawn by the arbiter.</li>
+                    <li><strong>Baku acceleration</strong>: FIDE's acceleration for large tournaments.</li>
+                    <li><strong>Points</strong> for a win, a draw, a loss and the pairing-allocated bye (by default 1, ½, 0 and 1). They are fixed before round 1.</li>
+                </ul>
+
+                <h2 id="en-players">4. Players</h2>
+                <ul>
+                    <li>Each player has a name (surname, first name), FIDE rating, title, federation, FIDE ID, sex and date of birth. Only the name is required.</li>
+                    <li><strong>Paste a list</strong>: one per line, <code>Name; Rating; Title; Federation; FIDE ID</code>. Columns copied from a spreadsheet work too.</li>
+                    <li><strong>Pairing numbers</strong> follow the FIDE initial ranking: rating, then title, then name. They are fixed when round 1 is paired.</li>
+                    <li><strong>Late entries</strong> are inserted where their rating places them, without changing the order of the others. They count as absent with 0 in the rounds they missed; if they are entitled to a bye, change it in each of those rounds.</li>
+                    <li><strong>Withdraw</strong>: the player is no longer paired from the next unpaired round. Games already played still count. “Rejoin” brings them back.</li>
+                    <li><strong>Delete</strong> is only possible for players who have not played any round.</li>
+                </ul>
+
+                <h2 id="en-rounds">5. Rounds</h2>
+                <ul>
+                    <li>Before pairing, mark who does not play the round: <strong>requested bye</strong> (half a point), <strong>absent</strong> (0) or <strong>full-point bye</strong>. Withdrawn players are already left out.</li>
+                    <li>“Pair round N” computes the pairings with the Dutch System. Boards come out in FIDE board order. If one player is left over, they get the <strong>pairing-allocated bye</strong>, with the points you chose.</li>
+                    <li>If the round cannot be paired under the rules (for example, someone has no new opponents left), the page says so and does not pair it.</li>
+                    <li>Results: <strong>1-0, ½-½, 0-1</strong>; <strong>+/−</strong> and <strong>−/+</strong> are forfeits (the player who showed up wins); <strong>−/−</strong> means neither came.</li>
+                    <li>A round can be paired only when every result of the previous one is in.</li>
+                    <li><strong>Correcting a result</strong> in an earlier round is possible, but later rounds are not re-paired.</li>
+                    <li><strong>Undo the pairing</strong> is only possible for the last round. Pairing it again with the same data gives the same round.</li>
+                    <li>“Print” prints only the round, with the results written out.</li>
+                </ul>
+
+                <h2 id="en-rr">6. Round robin</h2>
+                <ul>
+                    <li>Pairings come from the FIDE <strong>Berger tables</strong>. The number of rounds is computed automatically; a double round robin repeats them with colours reversed.</li>
+                    <li>Before round 1 the numbers can be <strong>drawn by lot</strong>. Otherwise they follow the ratings.</li>
+                    <li>With an odd number of players, one player has a <strong>free round</strong> (0 points) in each round.</li>
+                    <li>A player who does not show up loses by forfeit: record it as the result of their board.</li>
+                </ul>
+
+                <h2 id="en-tiebreaks">7. Standings and tie-breaks</h2>
+                <p>The standings only count rounds with every result in. Players are ranked by points, then by the tie-breaks <strong>in the order you chose</strong> under “Tournament”. Players equal in everything share their place (the arbiter breaks the tie).</p>
+                <p><strong>Unplayed rounds</strong> are handled as C.07 prescribes (articles 15 and 16): they count against a virtual opponent with the player's own score, capped as article 16.4 says, and a voluntary unplayed round is cut first. In a round robin, a forfeit counts with the scheduled opponent.</p>
+                <p>Rating-based tie-breaks need every player's rating: an unrated opponent counts as 0.</p>
+                <dl class="pm-desempates">
+                    <dt>BH</dt><dd>Buchholz: the sum of the opponents' scores.</dd>
+                    <dt>BH-C1, BH-C2</dt><dd>Buchholz without the lowest opponent, or the two lowest.</dd>
+                    <dt>BH-M1, BH-M2</dt><dd>Median Buchholz: without the highest and the lowest (or the two highest and two lowest).</dd>
+                    <dt>SB, SB-C1</dt><dd>Sonneborn-Berger: each opponent's score multiplied by the points scored against them; with or without the lowest.</dd>
+                    <dt>DE</dt><dd>Direct encounter: points scored against the tied players.</dd>
+                    <dt>WIN</dt><dd>Rounds won, played or not (the pairing-allocated bye included).</dd>
+                    <dt>WON</dt><dd>Games won over the board.</dd>
+                    <dt>BPG, BWG</dt><dd>Games played with black, and won with black.</dd>
+                    <dt>GE</dt><dd>Games elected to play: the rounds minus the voluntary unplayed ones.</dd>
+                    <dt>PS, PS-C1</dt><dd>Progressive scores: the sum of the running score round by round; with or without the first.</dd>
+                    <dt>KS</dt><dd>Koya: points scored against players who scored at least half.</dd>
+                    <dt>STD</dt><dd>Standard points: 1 for a win, ½ for a draw, whatever the point system.</dd>
+                    <dt>ARO, ARO-C1</dt><dd>Average rating of opponents; with or without the lowest.</dd>
+                    <dt>TPR</dt><dd>Tournament performance rating with the FIDE table.</dd>
+                    <dt>PTP</dt><dd>Perfect tournament performance: the rating at which the score would be exactly expected.</dd>
+                    <dt>FB</dt><dd>Fore Buchholz: Buchholz as if every game of the last round had been drawn.</dd>
+                    <dt>AOB, AFB</dt><dd>The opponents' average Buchholz (or average Fore Buchholz).</dd>
+                    <dt>APRO, APPO</dt><dd>The opponents' average performance rating (or average perfect performance).</dd>
+                </dl>
+
+                <h2 id="en-files">8. Files, checker and generator</h2>
+                <ul>
+                    <li><strong>Download the FIDE TRF</strong>: it includes the rounds with every result in.</li>
+                    <li><strong>Download a copy (.json)</strong>: the whole tournament, to open it on another computer.</li>
+                    <li><strong>Open a tournament</strong>: a TRF from Swiss-Manager, Vega or another program, or a .json copy. A TRF keeps its own pairing numbers, and the remaining rounds can be paired here.</li>
+                    <li><strong>Pairings checker</strong>: paste a TRF from any program. Every round is re-paired with the Dutch System, and any difference is shown.</li>
+                    <li><strong>Random tournament generator</strong>: builds a whole tournament with random results. The same seed always gives the same tournament.</li>
+                </ul>
+
+                <h2 id="en-cli">9. The command-line version</h2>
+                <p>For batch testing (for example, by FIDE testers) there is <a href="descargas/pareo-integral-cli.zip" download>a command-line version</a>. It needs Node.js 18 or later and runs the same engine as the page. Pairing, checking and generating use the JaVaFo / bbpPairings syntax:</p>
+                <pre><code>node pareo.js --dutch tournament.trf -p output.txt
+node pareo.js --dutch tournament.trf -c
+node pareo.js --dutch -g -o random.trf -s 2026
+node pareo.js standings tournament.trf --tiebreaks BH-C1,BH,SB</code></pre>
+                <p>The details are in the <code>README.md</code> inside the package.</p>
+
+                <h2 id="en-limits">10. What it is built on, and what is missing</h2>
+                <ul>
+                    <li>Pairings are computed by <strong>bbpPairings</strong> (Jeremy Bierema, Apache 2.0 licence), the Dutch System engine used by FIDE-endorsed programs. It is compiled to run in the browser, with no changes to its code.</li>
+                    <li>Tie-breaks are translated from <strong>chesspairing</strong> (Gert Nutterts, Apache 2.0 licence) and cross-checked against it.</li>
+                    <li>With the same seed, the generator builds a different tournament than the desktop bbpPairings, because the random number generator of the C++ library differs. The pairings themselves are identical.</li>
+                    <li>Team tournaments and other Swiss systems (Burstein, Dubov, Lim) are not supported yet.</li>
+                    <li><strong>Pareo Integral is not yet endorsed by FIDE.</strong></li>
+                </ul>
+                <p><a href="pareo.html" class="pm-volver">← Back to Pareo Integral</a></p>
+            </article>
+        </div>
+    </div>
+    </main>
+
+    <footer class="bg-brand-900 text-brand-300 pt-16 pb-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid md:grid-cols-4 gap-8 mb-12">
+                <div><a href="index.html" class="flex items-center gap-2 text-white mb-4"><img src="/img/logo-marca.png" alt="" width="78" height="48" class="h-9 w-auto shrink-0"><span class="font-serif text-lg font-bold">Ajedrez Integral</span></a><p class="text-sm text-brand-300">Plataforma educativa de ajedrez para escuelas, colegios y familias. Aprende, practica y compite.</p></div>
+                <div><h3 class="text-white font-semibold mb-4">Navegación</h3><ul class="space-y-2 text-sm"><li><a href="index.html" class="hover:text-accent-400 transition-colors">Inicio</a></li><li><a href="cursos.html" class="hover:text-accent-400 transition-colors">Cursos</a></li><li><a href="articulos.html" class="hover:text-accent-400 transition-colors">Artículos</a></li><li><a href="tablero.html" class="hover:text-accent-400 transition-colors">Jugar contra el profe</a></li><li><a href="clases.html" class="hover:text-accent-400 transition-colors">Academia</a></li><li><a href="te-reto.html" class="hover:text-accent-400 transition-colors">🏆 ¡Te reto!</a></li><li><a href="tv.html" class="hover:text-accent-400 transition-colors">TV en vivo</a></li><li><a href="torneos-en-vivo.html" class="hover:text-accent-400 transition-colors">Torneos</a></li></ul></div>
+                <div><h3 class="text-white font-semibold mb-4">Recursos</h3><ul class="space-y-2 text-sm"><li><a href="entreno/diagnostico.html" class="hover:text-accent-400 transition-colors">Diagnóstico de nivel gratis</a></li><li><a href="bot.html" class="hover:text-accent-400 transition-colors">Jugar contra el bot</a></li><li><a href="sobre-oscar.html" class="hover:text-accent-400 transition-colors">Sobre Oscar</a></li><li><a href="inscripcion.html" class="hover:text-accent-400 transition-colors">Torneos en línea</a></li></ul></div>
+                <div><h3 class="text-white font-semibold mb-4">Contacto</h3><ul class="space-y-2 text-sm"><li><a href="mailto:info@ajedrez-integral.com" class="hover:text-accent-400 transition-colors">info@ajedrez-integral.com</a></li><li><a href="https://wa.me/50683092291" target="_blank" rel="noopener" class="hover:text-accent-400 transition-colors">+506 8309-2291 (WhatsApp)</a></li><li>Clases en línea desde Costa Rica</li></ul></div>
+            </div>
+            <div class="border-t border-brand-700 pt-6 text-center text-sm text-brand-300"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p><!-- legal: inicio --><p class="mt-2"><a href="privacidad.html" class="underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Política de privacidad</a> <span aria-hidden="true">·</span> <a href="terminos.html" class="underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Términos y condiciones</a></p><!-- legal: fin --></div>
+        </div>
+    </footer>
+    <script src="js/main.js"></script>
+    <script src="js/pareo/manual.js"></script>
+</body>
+</html>

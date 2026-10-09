@@ -1763,16 +1763,56 @@ enlace), eso cambia entero: tabla con su RLS (lectura pública, escritura solo
 de quien organiza), la casilla de consentimiento y su mención en
 `privacidad.html`.
 
+### El manual y la línea de comandos
+
+- **`pareo-manual.html`**: el manual entero en español y en inglés en la misma
+  página (`js/pareo/manual.js` muestra uno; recuerda el idioma de
+  `pareo.html`, y `?lang=en` lo abre en inglés: ese es el enlace para FIDE).
+  Explica los 26 desempates; el verificador falla si el catálogo de
+  `desempates.js` gana uno que el manual no explica, en cualquiera de los dos
+  idiomas.
+- **La línea de comandos** (`js/pareo/cli.js`, para bajar en
+  `descargas/pareo-integral-cli.zip`): los probadores de FIDE corren miles de
+  torneos del generador y del comprobador en lote, y eso en la página se hace
+  de a uno. Usa la sintaxis de JaVaFo / bbpPairings (`--dutch … -p`, `-c`,
+  `-g -o -s`) más `standings` con los desempates. Corre el mismo `.wasm` y los
+  mismos `torneo.js` y `desempates.js` que la página: no hay una segunda copia
+  que se pueda desfasar. Los mensajes van en inglés y en español.
+- **El zip lo arma `herramientas/pareo-cli-empaquetar.py`** (fechas y orden
+  fijos) y no se edita a mano. `verificar-pareo-cli.py` compara el CONTENIDO de
+  cada archivo del zip con el del repositorio —no los bytes del zip: la
+  compresión puede cambiar con la versión de zlib del CI—, así que tocar
+  `js/pareo/` sin volver a empaquetar hace fallar el CI. Después lo
+  descomprime y lo corre: empareja las pruebas de bbpPairings, genera, comprueba
+  y saca la clasificación con los mismos números que `desempates.js`.
+
+### Dónde se entra: las herramientas de arbitraje
+
+- **En la vitrina de las herramientas de arbitraje** (`herramientas-arbitraje.html`,
+  ver «Herramientas de arbitraje»), gratis y sin candado: `js/herramientas-arbitraje.js`
+  la lista con `gratis: true`. El Espacio de consultas, arriba, tampoco lleva
+  licencia, pero no es parte de la lista.
+- En el panel de la Academia, el grupo **«Herramientas de arbitraje»**
+  (`js/clases.js`, `soloDocente`: al alumnado el grupo le queda vacío y no se
+  pinta) y el mismo grupo en el de quien administra (`js/paginas-admin.js`,
+  sección Contenido de `admin.html`): Pareo Integral y la vitrina. Ctrl + K los
+  encuentra por «emparejar», «suizo», «buchholz», «trf», «árbitro», «licencia»…
+- Para el público: además de la vitrina, la sección «Herramientas de arbitraje»
+  del examen de arbitraje (`nivel-de-arbitraje.html`), la tarjeta «Para quienes
+  arbitran» de la portada y la página de Torneos.
+
 ### Lo que falta para pedir el aval
 
 Lo que pide el C.04.A (programa, interfaz en inglés, TRF, FPC y RTG públicos)
-está. Falta lo que no es código: el formulario FE-1 y las pruebas de FIDE en su
+está, con el manual en inglés y la línea de comandos para probarlo en lote.
+Falta lo que no es código: el formulario FE-1 y las pruebas de FIDE en su
 entorno, y que el árbitro del sitio lo pruebe con torneos reales (sus TRF de
 Swiss-Manager se abren en la ficha «Archivos»). Mientras no haya aval, la
 página dice que no lo tiene.
 
-**Al tocar `js/pareo/`, el motor o `pareo.html`, correr
-`node herramientas/verificar-todo.js pareo pareo-pagina`.** `pareo` (sin
+**Al tocar `js/pareo/`, el motor, `pareo.html` o `pareo-manual.html`, correr
+`python3 herramientas/pareo-cli-empaquetar.py` y
+`node herramientas/verificar-todo.js pareo pareo-pagina pareo-cli`.** `pareo` (sin
 navegador): el motor contra las pruebas del propio bbpPairings, el generador y
 el comprobador (que marca una mesa con los colores al revés), 60 torneos de
 Pareo Integral con byes, retiros, inscripciones tardías e incomparecencias
@@ -1904,9 +1944,14 @@ una **licencia** que genera quien administra en `licencias.html` (lo pidió el
 dueño del sitio: las herramientas se venden). La lista de herramientas vive en
 `js/herramientas-arbitraje.js` (la usan la vitrina y la administración); una
 con `disponible: false` sale como «Próximamente», sin enlace. Hoy están
-abiertas la **selección por parámetros** (`seleccion-codicader.html`) y los
-**resultados JDN por comité** (`jdn-comites.html`, ver «Resultados JDN por
+abiertas con licencia la **selección por parámetros** (`seleccion-codicader.html`)
+y los **resultados JDN por comité** (`jdn-comites.html`, ver «Resultados JDN por
 comité»).
+**Pareo Integral** (`pareo.html`, ver «Pareo Integral») está en la vitrina con
+`gratis: true`: el dueño lo pidió público y para quien lo necesite, así que sale
+abierto para todos, sin sesión ni candado, con «Abrir» y «Manual de uso»; la
+vitrina no le pregunta `tengo_herramienta()` y `licencias.html` no lo ofrece
+(no hay licencia que vender de algo gratis).
 
 Se llega desde el menú de arriba de las páginas públicas (la barra chica, después
 de «Torneos», y el menú del celular) y desde «Recursos» en el pie: lo pidió el
@@ -2001,7 +2046,7 @@ prueba el lector de la función con HTML de la forma real y nombres inventados,
 y que pregunte la licencia antes de leer. Rompiendo a propósito las ausencias
 o el 40 %, saltan.
 
-### El Espacio de consultas: la única herramienta sin licencia
+### El Espacio de consultas: sin licencia
 
 Arriba de la vitrina, `herramientas-arbitraje.html` tiene una sección aparte,
 marcada «Gratis · sin licencia ni cuenta»: un árbitro, o una madre o un padre
@@ -2009,7 +2054,8 @@ de familia, escribe una duda sobre el reglamento y recibe, en la misma
 pantalla, una respuesta escrita por IA a partir del Reglamento de la FIDE. A
 propósito no pasa por `tengo_herramienta()` ni por `licencias_herramientas`:
 es la puerta de entrada abierta de la vitrina, no una herramienta más de la
-lista con candado.
+lista con candado. (La otra que no lleva licencia es Pareo Integral, pero ese sí va en la
+lista, con `gratis: true`: ver «Pareo Integral».)
 
 - **La responde la Edge Function `consulta-arbitraje`** (`verify_jwt` en
   **false**: no hay sesión que comprobar, igual que `seleccion-chess-results`
