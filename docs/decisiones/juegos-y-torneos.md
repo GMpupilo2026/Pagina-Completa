@@ -1620,3 +1620,376 @@ plataforma lo ofrece como juego con niveles.
   `check` con la lista de actividades, y el nombre de cada sección de tiempo
   vive también en la Edge Function `informes-encargados`. Sumarla pide una
   migración y desplegar esa función: queda para cuando se quiera.
+
+## Ajedrez 4×8
+
+`ajedrez-4x8.html` (tarjeta en Juegos) es ajedrez en medio tablero: cuatro
+columnas (a–d) y las ocho filas. Cada bando tiene torre, rey, dama y caballo
+en a1–d1 (y a8–d8) y cuatro peones delante; todo lo demás es ajedrez —el peón
+avanza dos, captura al paso y corona; mate, ahogado, triple repetición,
+cincuenta jugadas y material insuficiente—, menos el enroque. Se juega contra
+la computadora (Fácil, Medio, Difícil) o contra alguien al lado, con reloj o
+sin él. Nació como una página suelta que el dueño armó aparte y se trajo al
+sitio con sus piezas compartidas.
+
+- **Las reglas viven en `js/ajedrez-4x8-motor.js`**, sin DOM, y se comprueban
+  contra chess.js, no contra sí mismas: en un 8×8 con las columnas e–h vacías,
+  las jugadas legales que no salen de a–d son exactamente las de este juego
+  (una pieza que va de a–d a a–d no pasa por e–h, y sin nada allá nadie da
+  jaque desde allá). El verificador juega 400 partidas al azar y compara cada
+  posición: jugadas, SAN y jaque. El «#» no se compara: en 8×8 el rey tiene
+  escapatorias por la columna e.
+- **La partida se presenta como una de chess.js** (`get`, `moves`, `move`,
+  `turn`, `in_check`, `history`, `undo`). Con eso el teclado del tablero, el
+  recuadro de comandos, la coronación y la posición en palabras son los del
+  resto del sitio, sin copias. Las casillas e–h contestan «vacía».
+- **`js/tablero-accesible.js` aprendió tableros que no son cuadrados**
+  (`columnas: 4`). Deducía el lado con la raíz del número de casillas, y la de
+  32 no es entera: las flechas no movían nada, sin ningún error.
+- **No guarda nada en la cuenta.** Es un juego del aparato: no hay sala ni
+  base, y el reloj se mide con `performance.now()` (el reloj que «no se fía del
+  navegador» es el de las salas en línea, donde hay alguien del otro lado). El
+  tiempo cuenta como «partidas» (`TIEMPO_ACTIVIDAD`). Sumarlo a
+  `training_progress` o a los logros pide una migración por el `check` de
+  actividades.
+- Contra la computadora, «Deshacer» devuelve también su respuesta; si no, le
+  vuelve a tocar y contesta lo mismo al instante. En el celular el reloj y el
+  aviso van arriba del tablero, que es el doble de alto que de ancho y los
+  tapaba.
+
+**Al tocar el motor o la página, correr `node herramientas/verificar-todo.js
+ajedrez-4x8`.** Está probado que falla de verdad: quitando la captura al paso
+saltan dos comprobaciones, y montando el tablero sin `columnas: 4`, las dos de
+las flechas.
+
+## Pareo Integral
+
+`pareo.html`: el emparejador público de torneos. Cualquiera arma su torneo sin
+cuenta —jugadores, rondas, resultados, clasificación con desempates, tabla
+cruzada y el TRF para FIDE— con el **Sistema Holandés de FIDE** (C.04.3,
+versión vigente desde el 1 de febrero de 2026) o un todos contra todos con
+las tablas de Berger. Se pidió «que cumpla con todas las reglas de la FIDE
+para ser avalado»: el aval lo tramita el dueño del sitio por su cuenta; esto
+deja el programa listo para pedirlo. No es el torneo de la Academia
+(`torneo.html`, con `js/torneo-engine.js`), que sigue siendo un suizo
+simplificado para grupos de clase y no se tocó.
+
+### El Holandés no se reescribe: es bbpPairings, compilado
+
+- **El motor es bbpPairings** (Jeremy Bierema, Apache 2.0), el que usan
+  programas avalados por FIDE, compilado a WebAssembly con
+  `herramientas/pareo-motor-compilar.sh` (Emscripten; el commit está fijado en
+  el script). Lo que queda en `js/vendor/bbppairings/` no se edita: se vuelve a
+  compilar. Escribir el Holandés a mano era meses de trabajo y un emparejamiento
+  mal hecho no da ningún error: se ve igual de prolijo que uno bueno.
+- **Pareo Integral no empareja: arma el TRF, se lo pasa y lee la respuesta**
+  (`js/pareo/torneo.js`, `aTrf()` / `leerPareo()`). La ronda que viene va en el
+  mismo TRF con quien no juega marcado (`0000 - H`, `Z` o `F`); bbpPairings
+  devuelve las mesas ya en el orden de FIDE (incluido el bye del pareo, al final).
+- **Corre en un Worker** (`js/pareo/motor-worker.js`) y **una instancia nueva
+  por pedido**: `main()` lee y escribe archivos y deja estado. El `.wasm` se
+  compila una sola vez y cada pedido solo lo instancia. La CSP ya tenía
+  `'wasm-unsafe-eval'` y `worker-src 'self'`.
+- **Burstein queda compilado pero nunca se pide**: `-DOMIT_BURSTEIN` no compila
+  en ese commit, y FIDE no avaló esa parte de bbpPairings. La página solo usa
+  `--dutch`.
+- **Los tres servicios que FIDE pide a un programa avalado están en la
+  página** (ficha «Archivos y comprobador»): el TRF de entrada y salida, el
+  comprobador público (FPC: vuelve a emparejar cada ronda y dice si coincide)
+  y el generador de torneos al azar (RTG). Y la interfaz en inglés (botón
+  «English»; los textos en `js/pareo/textos.js`, los dos idiomas por clave).
+- **Ojo con el generador**: con la misma semilla NO da el mismo torneo que el
+  bbpPairings nativo, porque el azar de la librería de C++ de Emscripten
+  (libc++) no es el de GCC. Los emparejamientos sí son los mismos: en 300
+  torneos el comprobador nativo dio por buenos todos los del WebAssembly y al
+  revés. Si FIDE compara semillas en la prueba de aval, hay que usar el
+  generador de la página para las dos cosas, o el nativo para las dos.
+
+### El torneo y el TRF
+
+- **Los números de emparejamiento quedan fijos al emparejar la ronda 1**
+  (`numeracion`), por Elo, título y nombre (C.04.2). Quien se inscribe tarde se
+  intercala donde le toca sin mover el orden de los demás; en las rondas que
+  no jugó cuenta como ausente con 0 (el árbitro lo cambia a bye si
+  corresponde). Al importar un TRF se respeta su numeración, aunque no sea la
+  de Elo (`numeracionDeArchivo`: deshacer la ronda 1 no la borra).
+- **Lo que se lee de un TRF tiene que volver a escribirse igual**, y el
+  verificador lo comprueba con el comprobador. Dos cosas que se encontraron así:
+  sin línea `142` (bbpPairings no la escribe si ya se jugaron todas) el torneo
+  tiene las rondas que trae, no 7; y sin línea `152`, el color inicial se
+  deduce como lo hace bbpPairings (el de la ronda 1 del primero por número que
+  la jugó, al revés si no es el primero). Antes se asumía blancas y el TRF
+  reescrito tenía la ronda 1 al revés.
+- Los códigos de cabecera son los del TRF-2026 que lee bbpPairings (`142`
+  rondas, `152` color inicial, `162` puntos si no son 1-½-0, `192`
+  `FIDE_DUTCH_2026` o `_BAKU`). No se pudo leer la especificación de FIDE
+  (handbook.fide.com está bloqueado desde las sesiones): **antes de mandar un
+  TRF de Pareo Integral al servidor de Elo de FIDE, probarlo**.
+- Cambiar un resultado de una ronda vieja no vuelve a emparejar las
+  siguientes (la página lo avisa). Deshacer el emparejamiento solo se puede en
+  la última ronda, y al volver a emparejarla sale la misma.
+
+### Los desempates: C.07:2026, traducido de chesspairing y comparado con él
+
+- `js/pareo/desempates.js` es la traducción de `chesspairing` (Gert Nutterts,
+  Apache 2.0, paquete `tiebreaker`), que sigue el C.07:2026 artículo por
+  artículo. Lo difícil son las **rondas no jugadas** (artículos 15 y 16): cada
+  ronda de cada jugador lleva su categoría (bye del pareo o de punto entero,
+  incomparecencia ganada o perdida, bye pedido con partidas después o al
+  final), cuentan contra un rival ficticio con el puntaje del jugador **con el
+  tope del 16.4**, y el corte del peor (16.5) se lleva primero una ronda no
+  jugada voluntaria. Son 26 desempates (BH y sus cortes, SB, DE, WIN, WON,
+  BPG, BWG, GE, PS, KS, STD, ARO, TPR, PTP, FB, AOB, APRO, APPO, AFB).
+- **Se comparó contra chesspairing (en Go) en 300 torneos al azar: 131 144
+  valores, cero diferencias.** Ese cruce se corre fuera del repositorio (Go no
+  está en el CI); lo que queda en `herramientas/datos/pareo-desempates.json`
+  son los casos del C.07:2026 que trae chesspairing (62 valores de FIDE) y 60
+  torneos al azar con los valores de chesspairing, que el CI compara siempre.
+  Está probado que discrimina: quitando la regla del corte del 16.5 y la del
+  bye pedido seguido de partidas saltaron 24 862 diferencias.
+- Los ejercicios de desempate de FIDE de 2023 (los de Mario Held) **no** se
+  usan: son de la versión 2023, sin el tope del rival ficticio.
+- El Elo de un rival sin Elo cuenta como 0 en ARO, TPR y compañía: la ayuda de
+  la página pide el Elo de todos para usarlos.
+
+### Nada sale del navegador
+
+El torneo vive en `localStorage` (`pareo_lista_v1`, `pareo_torneo_v1_<id>`) y
+en los archivos que baja quien organiza (`.json` y TRF). No hay cuenta, ni
+base, ni consentimiento que pedir: los datos de los jugadores no salen de la
+computadora (el verificador lo comprueba: ni una petición a otro origen). **El
+día que se publique un torneo en línea** (emparejamientos y resultados con un
+enlace), eso cambia entero: tabla con su RLS (lectura pública, escritura solo
+de quien organiza), la casilla de consentimiento y su mención en
+`privacidad.html`.
+
+### Lo que falta para pedir el aval
+
+Lo que pide el C.04.A (programa, interfaz en inglés, TRF, FPC y RTG públicos)
+está. Falta lo que no es código: el formulario FE-1 y las pruebas de FIDE en su
+entorno, y que el árbitro del sitio lo pruebe con torneos reales (sus TRF de
+Swiss-Manager se abren en la ficha «Archivos»). Mientras no haya aval, la
+página dice que no lo tiene.
+
+**Al tocar `js/pareo/`, el motor o `pareo.html`, correr
+`node herramientas/verificar-todo.js pareo pareo-pagina`.** `pareo` (sin
+navegador): el motor contra las pruebas del propio bbpPairings, el generador y
+el comprobador (que marca una mesa con los colores al revés), 60 torneos de
+Pareo Integral con byes, retiros, inscripciones tardías e incomparecencias
+que el comprobador da por buenos y cuyo TRF se lee y se vuelve a escribir
+igual, las tablas de Berger y los desempates. `pareo-pagina`: un suizo y un
+todos contra todos de punta a punta en la página, el inglés, recargar, y que
+nada salga del sitio. Está probado que fallan de verdad: con los colores de una
+ronda al revés en el TRF salta `pareo`, y sin guardar después de emparejar,
+`pareo-pagina`.
+
+## Ajedrez estudiantil en Costa Rica: los torneos de chess-results
+
+`ajedrez-estudiantil.html` es una página pública con la participación en los
+torneos estudiantiles de Costa Rica publicados en chess-results.com: los Juegos
+Deportivos Estudiantiles (JDE) del MEP por año, etapa, región y categoría, y
+los internacionales (CODICADER y escolares de la federación). Se enlaza desde
+`articulos.html` (categoría «Datos»).
+
+- **De dónde salen los datos.** chess-results no tiene API y desde una sesión
+  de Claude Code no hay salida al sitio, así que la búsqueda se hizo desde la
+  base con `pg_net` (como las pizarras; ver «Las posiciones oficiales vienen
+  de chess-results»). El buscador de torneos (`TurnierSuche.aspx`) es un
+  formulario ASP.NET que se manda por POST con su `__VIEWSTATE`, y
+  `net.http_post` solo acepta `application/json`: el pedido se puso directo en
+  `net.http_request_queue` con su cuerpo `application/x-www-form-urlencoded`.
+  Además, `chess-results.com` redirige a un servidor (`s2`, `s3`…) y la
+  redirección convierte el POST en GET: hay que pedirle el formulario y
+  mandarlo **al mismo servidor** (`s3.chess-results.com`). El filtro de fechas
+  del buscador se ignoró en las pruebas, así que se buscó por palabras del
+  nombre, con federación CRC: JDE, estudiant, Juegos, CODICADER, colegial,
+  escolar, nacional, regional, eliminatoria, etapa y circuit. Ninguna llegó al
+  tope de 2000 filas por búsqueda (la de «regional» dio exactamente 1000, y
+  partida por tipo de torneo da los mismos 1000).
+- **La fuente es `herramientas/datos/ajedrez-estudiantil-torneos.csv`**, un
+  torneo por fila ya clasificado (la búsqueda inicial; lo nuevo lo suma el
+  flujo de abajo). `herramientas/ajedrez-estudiantil.py` lo
+  pasa a `data/ajedrez-estudiantil.json` sin el organizador (a veces es el
+  nombre de una persona, y la página no lo usa) y falla si una etapa o una
+  categoría no es válida. El JSON no se edita a mano.
+- **Qué entra y qué no.** Entran los torneos de los JDE (cualquier etapa), los
+  CODICADER, los escolares internacionales de la federación y unos pocos
+  estudiantiles fuera de los JDE. Quedan fuera los Juegos Deportivos
+  Nacionales del ICODER (JDN), los juegos comunales, distritales y laborales y
+  los torneos privados de colegios. Cinco torneos de la DRE de Coto en 2026 se
+  llaman «JDN» pero son de los JDE (categorías A y B, los organiza la DRE). El
+  «Campeonato Nacional Estudiantil 2008» figura con federación Costa Rica pero
+  se jugó en Ecuador, y quedó fuera: **la federación de chess-results no
+  garantiza el país**.
+- **Las etapas** salen del nombre: institucional o circuital, regional,
+  interregional y nacional. Los años de algunos torneos de 2013 vienen como
+  1913; el año se toma del nombre cuando la fecha no tiene sentido.
+- **La categoría (A a E)** sale del nombre, con varias formas («Categoría B»,
+  «Individual Absoluto C», «JDEB», «Sula C», `"D`…). El buscador da los
+  nombres cortados a 50 letras: en 167 torneos la letra quedaba fuera y se
+  leyó el título completo de cada uno (`<h2>` de su página). Algunos la traen
+  en clave: «2025 AIO» es categoría A, individual, abierto. Cuatro no la dicen
+  y quedan como «Sin dato». Antes de 2013 las letras pueden no ser las mismas
+  edades que hoy.
+- **La región** sale del nombre, el organizador o el lugar, con una lista de
+  direcciones regionales; un interregional cuenta para la primera que se
+  reconoce (el «Interregional Los Santos-Turrialba-Cartago» queda en Cartago).
+  La final nacional no tiene región.
+- **«Participaciones» no son personas**: es la suma de inscritos de los
+  torneos de ritmo clásico, individuales y por equipos (en chess-results, la
+  columna `n` de un torneo por equipos cuenta jugadores, no equipos:
+  comprobado con uno real, 12 colegios y 50 jugadores). Un estudiante cuenta
+  una vez por etapa y por modalidad. Los blitz y rápidos no se suman porque
+  repiten a los del clásico.
+- **Lo que hay que decir junto a los números.** El salto desde 2023 es en
+  buena parte de registro: las regiones que publican su eliminatoria en
+  chess-results pasaron de 5 a 17. Y la final nacional alterna categorías (B y
+  C en años impares, B y D en pares), así que comparar años de una categoría
+  mezcla años con final y sin ella: la página lo avisa en la frase de arriba
+  cuando pasa.
+- **La página cuenta todo en el navegador** (`js/ajedrez-estudiantil.js`):
+  son 1082 filas fijas de un archivo del sitio, no una tabla de la base. Los
+  gráficos son SVG escritos a mano (el sitio no carga librerías de gráficos);
+  cada año es un botón que se alcanza con Tab y dice su valor, y el gráfico
+  grande tiene su tabla. Los filtros van en la dirección
+  (`?region=Cartago&categoria=D`) para compartir una vista. Los colores de las
+  etapas están medidos en `css/styles.css` y cada etapa va también escrita.
+- **Se pone al día sola, cada seis horas**
+  (`.github/workflows/ajedrez-estudiantil.yml`). Chess-results no avisa cuando
+  se publica algo, así que se revisa: `herramientas/ajedrez-estudiantil-actualizar.py`
+  hace UNA búsqueda, los 250 torneos de Costa Rica tocados más recientemente
+  (orden «Última actualización»), que trae fechas, lugar, rondas e inscritos
+  de cada uno. Un torneo que ya estaba se pone al día (inscritos, rondas,
+  fecha; el lugar no, porque los primeros se guardaron cortados a 40 letras y
+  saldrían como «cambio» cada vez). Uno nuevo se clasifica con
+  `herramientas/ajedrez_estudiantil_reglas.py` y se suma si es estudiantil;
+  si su nombre llega cortado (≥ 45 letras) y tiene pistas de ser estudiantil,
+  antes se lee su título completo en su página, porque la categoría suele
+  estar al final. Los cortados sin pistas no se piden: cien páginas por
+  revisión sería abusar del sitio.
+- **El flujo no escribe en `main` directo**: abre un PR desde
+  `datos/ajedrez-estudiantil-…`, le pide «Verificar» a mano (un PR que abre el
+  `GITHUB_TOKEN` no dispara otros flujos solo; `workflow_dispatch` sí) y solo
+  si pasa lo mergea. Si falla, el PR queda abierto y el flujo no abre otro
+  hasta que alguien lo cierre. Necesita que el repositorio deje a Actions
+  crear PR (Settings → Actions → General → «Allow GitHub Actions to create
+  and approve pull requests»); sin eso, el paso de abrir el PR falla y GitHub
+  avisa por correo. La fecha que dice la página
+  (`herramientas/datos/ajedrez-estudiantil-actualizado.txt`) cambia solo
+  cuando hubo algo nuevo, para no abrir un PR cada seis horas por nada.
+- **Las reglas son una sola copia** (`ajedrez_estudiantil_reglas.py`), y
+  `verificar-ajedrez-estudiantil-reglas.py` comprueba que clasifiquen los
+  torneos guardados exactamente como están: una regla que cambie desordenaría
+  lo viejo sin avisar. Para que eso valga, los 167 torneos de nombre cortado
+  guardan su título completo (con él, además, salieron 28 torneos por
+  equipos que se contaban como individuales y un interregional que figuraba
+  como regional). El mismo verificador prueba el actualizador con muestras de
+  las páginas reales de chess-results (`herramientas/datos/ajedrez-estudiantil-muestras/`,
+  en `.txt` para que los generadores del sitio no las tomen por páginas).
+  Probado también con una respuesta real del 8/10/2026: leyó las 250 filas y
+  encontró 25 eliminatorias de 2026 que la búsqueda por palabras no había
+  traído («Regional Heredia …», «Eliminatoria Inter regional …_Puriscal»).
+- `verificar-ajedrez-estudiantil.js` cuenta las participaciones directo del
+  CSV, por otro camino que la página, y las compara con lo que se pinta: sin
+  filtros, con una región, con una categoría y con las dos; además, los
+  filtros en la dirección, el aviso de la final, el teclado, el celular a
+  400 px, el modo oscuro y la página sin datos. Sumando también los blitz, o
+  sin filtrar la tabla por región, salta.
+
+## Herramientas de arbitraje
+
+`herramientas-arbitraje.html` es la vitrina pública de las herramientas para
+árbitros, asesores y profesores: qué hace cada una, con su candado. Se usan con
+una **licencia** que genera quien administra en `licencias.html` (lo pidió el
+dueño del sitio: las herramientas se venden). La lista de herramientas vive en
+`js/herramientas-arbitraje.js` (la usan la vitrina y la administración); una
+con `disponible: false` sale como «Próximamente», sin enlace. Hoy la única
+abierta es la **selección por parámetros** (`seleccion-codicader.html`).
+
+**Las licencias** (`licencias_herramientas`, migración `20261008193213`):
+
+- Un código `AI-XXXX-XXXX-XXXX` para una herramienta o para «todas», con sus
+  días de vigencia (o sin vencimiento) y una nota de a quién se le vendió.
+  Quien administra lo entrega y la persona lo activa con su cuenta en la
+  vitrina (`canjear_licencia()`): desde ese momento corren los días. También
+  se puede generar ya puesta en una cuenta.
+- Un código sirve para una sola cuenta: el mismo dueño lo puede volver a
+  canjear sin que cambie nada; otra cuenta recibe «ya la activó otra cuenta».
+- **Quien administra tiene todas las herramientas sin licencia** y controla
+  todas las licencias: anular y reactivar, cambiar el vencimiento, soltarla de
+  la cuenta (queda libre, con sus días completos) y borrarla.
+- La tabla reparte acceso: no tiene política de escritura (la escriben
+  `licencias_generar()`, `licencias_cambiar()` y `canjear_licencia()`) y lleva
+  el trigger de la bitácora (`VIGILADAS` de `verificar-auditoria.js`). Cada
+  quien lee solo las suyas; `licencias_admin()` le da a administración la
+  lista con el nombre y el correo de quien tiene cada una.
+- Comprobado impersonando roles en SQL (y deshecho al final): administración
+  tiene la herramienta; un profesor sin licencia no, ni puede generar, ver la
+  lista ni insertar directo; al canjear, sí; otra cuenta no puede canjear el
+  mismo código; al anularla, la pierde; cada cambio queda en la bitácora.
+
+**El candado está en el servidor.** La página pregunta `tengo_herramienta()`
+solo para decidir qué pinta; lo que no se puede saltar es la Edge Function
+**`seleccion-chess-results`**, que antes de pedir nada a chess-results llama a
+`tengo_herramienta()` **con el token de quien llama** (clave anónima + su
+`Authorization`), no con la de servicio: así pasa por
+`antes_de_cada_pedido()` y la verificación en dos pasos la exige la base,
+como en cualquier página.
+
+**La selección por parámetros** aplica el procedimiento del ICODER para la
+delegación CODICADER 2026 (ajedrez, nivel secundaria): cinco hombres y cinco
+mujeres por la suma de cuatro parámetros de 20 a 1 — A, el lugar en la Etapa
+Nacional (en equipos, el del equipo con al menos el 40 % de las rondas sobre
+el tablero); B, el rendimiento `(puntos ÷ partidas) × Elo nacional promedio
+de los rivales`, con al menos 3 partidas; C, el Elo nacional; D, el Elo FIDE
+de cada ritmo —, con clásico y blitz promediados, empates prorrateados y el
+desempate por C y luego por edad. El cálculo es `js/seleccion-calculo.js`.
+
+- **Por qué la Edge Function lee el torneo entero.** chess-results no tiene
+  API ni CORS, y el año de nacimiento solo sale en la ficha de cada jugador
+  (`art=9&snr=N`): un torneo de 53 jugadores son 55 páginas. La función las
+  pide de a ocho y devuelve el torneo listo; lo guarda un minuto en
+  `seleccion_cache` (solo el service role: trae años de nacimiento de menores).
+- **Las páginas que se leen**, comprobadas con los ocho torneos de la Etapa
+  Nacional JDE 2026, categoría D: `art=0` (individual: la lista inicial;
+  equipos: la clasificación de equipos), `art=1` (la clasificación
+  individual), `art=16` (los jugadores de equipos con su equipo) y la ficha.
+  **No `art=4`**: trae solo a quien jugó alguna partida (en el femenino blitz,
+  29 de 30). La celda «Res.» de la ficha trae otra tabla adentro: las celdas se
+  leen contando aperturas y cierres. Un todos contra todos por equipos dice
+  «Cuadro cruzado» y no la ronda: las rondas jugadas salen de las partidas.
+- **Comprobado con los datos reales**: leyendo esas páginas, el cálculo dio la
+  misma selección colegial 2026 que el cálculo hecho a mano, número por
+  número. Ahí apareció un error que no se veía: chess-results pone «0» como
+  código nacional de quien no tiene, y la unión por código juntaba a 18
+  personas en una. Un código en cero no cuenta.
+- **Lo que el procedimiento no dice y se decidió**: las escalas de B, C y D se
+  reparten dentro de cada rama y solo entre quienes cumplen la edad (con todos,
+  la selección 2026 no cambia); el rival sin Elo nacional cuenta 1400; **las
+  mujeres que juegan en un absoluto se calculan solo en la rama femenina** (lo
+  pidió el dueño del sitio). chess-results no dice el sexo: es mujer quien
+  jugó un torneo femenino de la selección o a quien el árbitro marcó; los
+  nombres que parecen de mujer en un absoluto salen en los avisos.
+- **Otra final**: en la categoría C pueden entrar estudiantes que jugaron la
+  final B y cumplen la edad. Se cargan los torneos de las dos finales en la
+  misma selección; la edad decide quién entra y la A de cada uno es su lugar
+  en su final.
+- **Lo que falta se avisa**, para que el árbitro lo corrija en Swiss-Manager y
+  vuelva a subir el torneo: sin año de nacimiento (queda fuera hasta que se
+  arregle), un nombre o código que no coincide entre clásico y blitz, alguien
+  en dos modalidades, un rival que no está en la lista. Si ya no da tiempo, el
+  sexo y el año se ajustan a mano en la página; el ajuste se guarda con la
+  selección (`selecciones_arbitraje`) y lo ven los profesores.
+- **En vivo**: la página vuelve a leer cada 1, 2 o 5 minutos (solo con la
+  pestaña a la vista) y dice quién entró y quién salió de la selección, cuánto
+  subió o bajó cada uno y a cuántos puntos del corte está. Un profesor con
+  licencia abre la misma selección con el enlace (`?s=<id>`,
+  `seleccion_compartida()`), con los mismos torneos y ajustes.
+
+`verificar-seleccion-calculo.js` prueba cada regla con torneos inventados (el
+prorrateo y el Ps con los ejemplos del propio procedimiento, el 40 % y las
+ausencias, las mujeres del absoluto, la final B, el año que falta, el
+desempate, los códigos en cero, en vivo); `verificar-seleccion-chess-results.js`
+prueba el lector de la función con HTML de la forma real y nombres inventados,
+y que pregunte la licencia antes de leer. Rompiendo a propósito las ausencias
+o el 40 %, saltan.

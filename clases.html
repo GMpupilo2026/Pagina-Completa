@@ -176,6 +176,9 @@
                             <button id="start-session-btn" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2 rounded-lg transition-colors text-sm whitespace-nowrap">Iniciar clase</button>
                         </div>
                     </div>
+                    <!-- Su próxima clase, de su horario (asistencia.html → «Tu horario»).
+                         Ver «Tu próxima clase, también para el profe». -->
+                    <p id="profe-proxima" hidden class="mt-3 text-sm text-brand-700 dark:text-brand-200"></p>
                 </div>
             </div>
 
@@ -292,6 +295,11 @@
                 <!-- «Tus puntos del mes» (solo alumno): las clases del mes, con la regla de
                      js/puntos-clase.js. Solo lo suyo: resumen_del_mes no le da a nadie más. -->
                 <section id="puntos-mes" hidden aria-labelledby="puntos-mes-titulo" class="mb-8 bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6"></section>
+
+                <!-- Puntos Ajedrez (solo alumno): el total acumulado de clase,
+                     entrenamiento, tareas, exámenes y racha, con el enlace a la
+                     tienda de puntos. Ver js/puntos.js y puntos-tienda.html. -->
+                <section id="puntos-ajedrez" hidden aria-labelledby="puntos-ajedrez-titulo" class="mb-8 bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6"></section>
             </details>
 
 
@@ -374,9 +382,15 @@
                  alumno tiene que marcar como leída, y quiénes lo leyeron.
                  Ver pintarAvisoAlumnos() y js/aviso-profe.js. ===== -->
             <section id="aviso-alumnos" hidden aria-labelledby="aviso-alumnos-titulo" class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-10">
-                <h2 id="aviso-alumnos-titulo" class="font-serif text-lg font-bold text-brand-800 dark:text-white"><span aria-hidden="true">📣 </span>Aviso a tus alumnos</h2>
-                <p class="text-sm text-brand-600 dark:text-brand-300 mt-1">Les sale en una ventana que no pueden cerrar hasta marcarlo como leído, en la página de la Academia que abran. Aquí ves quién lo leyó.</p>
-                <form id="aviso-form" class="mt-4 space-y-3" novalidate>
+                <!-- Plegado: es para un día puntual, no para todos los días, y
+                     abierto ocupaba media pantalla antes de las herramientas.
+                     Ver «El panel del profe, más corto». -->
+                <div class="flex flex-wrap items-center justify-between gap-3">
+                    <h2 id="aviso-alumnos-titulo" class="font-serif text-lg font-bold text-brand-800 dark:text-white"><span aria-hidden="true">📣 </span>Aviso a tus alumnos</h2>
+                    <button id="aviso-abrir" type="button" aria-expanded="false" aria-controls="aviso-form" class="rounded-lg px-4 py-2 text-sm font-semibold border border-accent-500 text-brand-800 dark:text-white hover:bg-accent-50 dark:hover:bg-brand-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Escribir un aviso</button>
+                </div>
+                <form id="aviso-form" hidden class="mt-4 space-y-3" novalidate>
+                    <p class="text-sm text-brand-600 dark:text-brand-300">Les sale en una ventana que no pueden cerrar hasta marcarlo como leído, en la página de la Academia que abran. Abajo ves quién lo leyó.</p>
                     <div>
                         <label for="aviso-para" class="block text-sm font-semibold text-brand-800 dark:text-white mb-1">Para</label>
                         <select id="aviso-para" class="w-full sm:w-auto rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 text-brand-800 dark:text-white px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
@@ -514,6 +528,7 @@
     <script src="js/resumen-clase.js"></script>
     <script src="js/pendientes.js"></script>
     <script src="js/puntos-clase.js"></script>
+    <script src="js/puntos.js"></script>
     <script src="js/notas-alumno.js"></script>
     <script src="js/plan-clase.js"></script>
     <script src="js/lo-que-costo.js"></script>
@@ -525,6 +540,8 @@
     <script src="js/busqueda-base.js"></script>
     <script src="js/cupo-invitaciones.js"></script>
     <script src="js/recorrido-profe.js"></script>
+    <script src="js/paginas-admin.js"></script>
+    <script src="js/paginas-supervisor.js"></script>
     <script src="js/clases.js"></script>
-<!-- burbuja: inicio --><script src="js/burbuja-en-linea.js" defer></script><!-- burbuja: fin --><!-- juego-aviso: inicio --><script src="js/juego-aviso.js" defer></script><!-- juego-aviso: fin --><!-- aviso-profe: inicio --><script src="js/aviso-profe.js" defer></script><!-- aviso-profe: fin --><!-- tanda: inicio --><script src="js/tanda-diez.js" defer></script><!-- tanda: fin --><!-- acceso: inicio --><script src="js/acceso-vigente.js" defer></script><!-- acceso: fin --><!-- marca: inicio --><script src="js/marca-academia.js" defer></script><!-- marca: fin --><!-- ayuda: inicio --><script src="js/ayuda-guia.js" defer></script><!-- ayuda: fin --></body>
+<!-- burbuja: inicio --><script src="js/burbuja-en-linea.js" defer></script><!-- burbuja: fin --><!-- juego-aviso: inicio --><script src="js/juego-aviso.js" defer></script><!-- juego-aviso: fin --><!-- aviso-profe: inicio --><script src="js/aviso-profe.js" defer></script><!-- aviso-profe: fin --><!-- tanda: inicio --><script src="js/tanda-diez.js" defer></script><!-- tanda: fin --><!-- bromas: inicio --><script src="js/bromas.js" defer></script><!-- bromas: fin --><!-- acceso: inicio --><script src="js/acceso-vigente.js" defer></script><!-- acceso: fin --><!-- marca: inicio --><script src="js/marca-academia.js" defer></script><!-- marca: fin --><!-- ayuda: inicio --><script src="js/ayuda-guia.js" defer></script><!-- ayuda: fin --></body>
 </html>

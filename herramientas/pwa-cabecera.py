@@ -36,8 +36,15 @@ FIN = "<!-- app: fin -->"
 #   - inscripcion.html tiene su propio diseño y su propio CSS;
 #   - offline.html ya las trae escritas a mano (es la que se enseña sin red);
 #   - libro-de-diagnostico-accesible.html, guia-del-profesor-accesible.html,
-#     fichas-de-estudio-accesible.html, ponte-a-prueba-accesible.html y
-#     mide-tu-fuerza-accesible.html son
+#     fichas-de-estudio-accesible.html, ponte-a-prueba-accesible.html (y la
+#     de sus versiones para imprimir), los accesibles de los diez volúmenes
+#     de «Mide tu fuerza» (mide-tu-fuerza-accesible.html,
+#     mide-tu-fuerza-2-accesible.html…), rompe-el-estancamiento-accesible.html,
+#     ganar-con-poco-accesible.html, cambiar-o-no-cambiar-accesible.html,
+#     ideas-que-ganan-partidas-accesible.html,
+#     los-cimientos-del-ajedrez-accesible.html, peonita-accesible.html,
+#     peonita-trucos-accesible.html, coachess-resumen-accesible.html y
+#     peonita-rey-accesible.html son
 #     documentos que se descargan y se abren sueltos, hasta por correo y sin
 #     red: declarar un manifest que no va a poder cargar es peor que no
 #     declararlo. Esta lista tiene que decir lo mismo que la de
@@ -50,7 +57,25 @@ FUERA = {"inscripcion.html", "offline.html", "formulario.html",
          "guia-del-profesor-accesible.html",
          "fichas-de-estudio-accesible.html",
          "ponte-a-prueba-accesible.html",
-         "mide-tu-fuerza-accesible.html"}
+         "ponte-a-prueba-versiones-accesible.html",
+         "mide-tu-fuerza-accesible.html",
+         "mide-tu-fuerza-2-accesible.html",
+         "mide-tu-fuerza-3-accesible.html",
+         "mide-tu-fuerza-4-accesible.html",
+         "mide-tu-fuerza-5-accesible.html",
+         "mide-tu-fuerza-6-accesible.html",
+         "mide-tu-fuerza-7-accesible.html",
+         "mide-tu-fuerza-8-accesible.html",
+         "mide-tu-fuerza-9-accesible.html",
+         "mide-tu-fuerza-10-accesible.html",
+         "rompe-el-estancamiento-accesible.html",
+         "ganar-con-poco-accesible.html",
+         "cambiar-o-no-cambiar-accesible.html", "ideas-que-ganan-partidas-accesible.html",
+         "los-cimientos-del-ajedrez-accesible.html",
+         "peonita-accesible.html",
+         "peonita-trucos-accesible.html",
+         "peonita-rey-accesible.html",
+         "coachess-resumen-accesible.html"}
 CARPETAS_FUERA = ("cursos/recursos/", "cursos/protegido/", "material/", "herramientas/", "node_modules/")
 
 

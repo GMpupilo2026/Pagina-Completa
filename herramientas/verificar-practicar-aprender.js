@@ -8,7 +8,7 @@
  *   - toda FEN es válida y toda jugada pedida es legal;
  *   - Practicar: en los mates y finales, la jugada da mate (la página acepta
  *     también cualquier otro mate). En las tácticas, la jugada cumple el
- *     motivo —la horquilla y el ataque doble atacan dos piezas que valen (rey,
+ *     motivo —el tenedor y el ataque doble atacan dos piezas que valen (rey,
  *     dama, torre, alfil o caballo); la clavada come una pieza clavada a su rey;
  *     el descubierto da jaque con OTRA pieza, con js/motivos-tacticos.js, el
  *     mismo módulo con el que la página acepta cualquier jugada que lo cumpla;

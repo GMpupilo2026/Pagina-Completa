@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="img/favicon.svg">
+    <title>Herramientas de arbitraje: selección CODICADER y más — Ajedrez Integral</title>
+    <meta name="description" content="Herramientas para árbitros y profesores de ajedrez: la selección CODICADER y JDE calculada desde chess-results con el método del ICODER, en vivo ronda a ronda. Se usan con licencia.">
+    <link rel="canonical" href="https://ajedrez-integral.com/herramientas-arbitraje.html">
+    <!-- Para cuando alguien pega el enlace en WhatsApp, que es por donde se comparte esto. -->
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Ajedrez Integral">
+    <meta property="og:locale" content="es_CR">
+    <meta property="og:title" content="Herramientas de arbitraje: selección CODICADER y más — Ajedrez Integral">
+    <meta property="og:description" content="Herramientas para árbitros y profesores de ajedrez: la selección CODICADER y JDE calculada desde chess-results con el método del ICODER, en vivo ronda a ronda. Se usan con licencia.">
+    <meta property="og:url" content="https://ajedrez-integral.com/herramientas-arbitraje.html">
+    <meta property="og:image" content="https://ajedrez-integral.com/img/og-ajedrez-integral.jpg">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="Ajedrez Integral — clases de ajedrez en vivo, no solo videos. ajedrez-integral.com">
+    <meta name="twitter:card" content="summary_large_image">
+    <!-- Tailwind compilado: lo genera herramientas/css-construir.js.
+         Antes venía del CDN, que baja ~400 KB de JavaScript y compila el CSS
+         dentro del navegador en cada visita. -->
+    <link rel="stylesheet" href="css/tailwind.css">
+    <link rel="stylesheet" href="css/styles.css">
+    <!-- oscuro: inicio --><script>(function(){try{var t=localStorage.getItem('theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.classList.add('dark');}catch(e){}})();</script><!-- oscuro: fin -->
+    <script src="js/adaptive-mode.js"></script>
+
+
+
+<!-- app: inicio --><meta name="theme-color" content="#102a43"><link rel="manifest" href="/manifest.json"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Ajedrez"><script src="js/errores.js"></script><script src="js/pwa.js" defer></script><script src="js/navegacion.js" defer></script><!-- app: fin --><!-- fuentes: inicio --><link rel="stylesheet" href="css/fuentes.css"><!-- fuentes: fin --><!-- tema: inicio --><script>(function(){try{var l=localStorage.getItem('plataforma_letra_v1');if(l&&/^[a-z]{2,24}$/.test(l)&&l!=='tema')document.documentElement.setAttribute('data-letra',l);var t=localStorage.getItem('plataforma_tema_v1');if(!t||!/^[a-z]{2,24}$/.test(t)||t==='clasico')return;document.documentElement.setAttribute('data-tema',t);var b=getComputedStyle(document.documentElement).getPropertyValue('--c-brand-800').trim();var m=document.querySelector('meta[name="theme-color"]');if(b&&m)m.setAttribute('content','rgb('+b.replace(/\s+/g,',')+')');}catch(e){}})();</script><!-- tema: fin --></head>
+<body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-accent-500 focus:text-brand-900 focus:font-semibold focus:px-4 focus:py-2 focus:rounded-lg">Saltar al contenido principal</a>
+    <header id="header" class="sticky top-0 z-50 bg-brand-800 shadow-lg">
+        <div class="hidden lg:block bg-brand-900 border-b border-brand-700/60">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-8 flex items-center justify-end gap-5 text-xs text-brand-300">
+                <a href="te-reto.html" class="hover:text-accent-400">🏆 ¡Te reto!</a>
+                <span class="text-brand-700" aria-hidden="true">&middot;</span>
+                <a href="tv.html" class="hover:text-accent-400">TV en vivo</a>
+                <span class="text-brand-700" aria-hidden="true">&middot;</span>
+                <a href="torneos-en-vivo.html" class="hover:text-accent-400">Torneos</a>
+            </div>
+        </div>
+        <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Navegación principal">
+            <div class="flex items-center justify-between min-h-[4rem] md:min-h-[5rem] py-2">
+                <a href="index.html" class="flex items-center gap-2 text-white"><img src="/img/logo-marca.png" alt="" width="78" height="48" class="h-10 md:h-12 w-auto shrink-0"><span class="font-serif text-xl md:text-2xl font-bold">Ajedrez <span class="text-accent-400">Integral</span></span></a>
+                <ul class="hidden lg:flex items-center gap-8 text-brand-100 font-medium">
+                    <li><a href="index.html" class="hover:text-accent-400">Inicio</a></li>
+                    <li><a href="cursos.html" class="hover:text-accent-400">Cursos</a></li>
+                    <li><a href="articulos.html" class="hover:text-accent-400">Artículos</a></li>
+                    <li><a href="tablero.html" class="hover:text-accent-400">Jugar contra el profe</a></li>
+                    <li><a href="clases.html" class="hover:text-accent-400">Academia</a></li>
+                    <li><a href="precios.html" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg">Inscríbete</a></li>
+                </ul>
+                <div class="flex items-center gap-2 sm:gap-3">
+                    <button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro">
+                        <span id="theme-icon" aria-hidden="true">☀️</span>
+                    </button>
+                    <button id="menu-toggle" class="lg:hidden text-white text-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Abrir menú" aria-expanded="false" aria-controls="mobile-menu">
+                    <svg id="icon-open" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                    <svg id="icon-close" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+                </div>
+            </div>
+        </nav>
+        <div id="mobile-menu" class="lg:hidden hidden bg-brand-800 border-t border-brand-700">
+            <ul class="px-4 py-4 space-y-3 text-brand-100 font-medium">
+                <li><a href="index.html" class="block py-2 hover:text-accent-400">Inicio</a></li>
+                <li><a href="cursos.html" class="block py-2 hover:text-accent-400">Cursos</a></li>
+                <li><a href="articulos.html" class="block py-2 hover:text-accent-400">Artículos</a></li>
+                <li><a href="tablero.html" class="block py-2 hover:text-accent-400">Jugar contra el profe</a></li>
+                <li><a href="clases.html" class="block py-2 hover:text-accent-400">Academia</a></li>
+                <li><a href="te-reto.html" class="block py-2 hover:text-accent-400">🏆 ¡Te reto!</a></li>
+                <li><a href="tv.html" class="block py-2 hover:text-accent-400">TV en vivo</a></li>
+                <li><a href="torneos-en-vivo.html" class="block py-2 hover:text-accent-400">Torneos</a></li>
+                <li><a href="precios.html" class="block py-2 bg-accent-500 text-brand-900 font-semibold px-4 rounded-lg text-center">Inscríbete</a></li>
+            </ul>
+        </div>
+    </header>
+
+    <main id="main-content">
+
+    <section class="bg-gradient-to-br from-brand-800 via-brand-700 to-brand-900 pt-14 pb-16">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+            <span class="text-accent-400 font-semibold uppercase tracking-wide text-sm">Para árbitros, asesores y profesores</span>
+            <h1 class="font-serif text-3xl md:text-5xl font-bold text-white mt-2 mb-4 leading-tight">Herramientas de arbitraje</h1>
+            <p class="text-brand-200 text-lg max-w-3xl">Lo que en un torneo se hace a mano, con una hoja de cálculo y a las carreras, hecho con los datos oficiales de chess-results. Cada herramienta se usa con una <strong class="text-white">licencia</strong>: la activas con tu cuenta y queda abierta mientras esté vigente.</p>
+            <div class="flex flex-wrap gap-3 mt-6">
+                <a href="#activar" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-bold px-6 py-3 rounded-xl text-base transition-colors">Ya tengo una licencia</a>
+                <a href="https://wa.me/50683092291?text=Hola%2C%20quiero%20una%20licencia%20de%20las%20herramientas%20de%20arbitraje" target="_blank" rel="noopener" class="bg-white/10 hover:bg-white/20 text-white font-semibold px-6 py-3 rounded-xl text-base border border-white/30 transition-colors">Pedir una licencia por WhatsApp</a>
+            </div>
+        </div>
+    </section>
+
+    <section class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12" aria-labelledby="t-lista">
+        <h2 id="t-lista" class="font-serif text-2xl md:text-3xl font-bold text-brand-800 dark:text-white">Las herramientas</h2>
+        <p class="text-brand-500 dark:text-brand-300 mt-1">Con candado cerrado, la herramienta todavía no está abierta para tu cuenta.</p>
+        <ul id="lista" class="mt-6 grid gap-6"></ul>
+    </section>
+
+    <section class="bg-white dark:bg-brand-900 py-12" aria-labelledby="t-como">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+            <h2 id="t-como" class="font-serif text-2xl md:text-3xl font-bold text-brand-800 dark:text-white">Cómo funciona la licencia</h2>
+            <ol class="mt-6 grid md:grid-cols-3 gap-6 text-sm">
+                <li class="rounded-2xl bg-brand-50 dark:bg-brand-950 p-5"><p class="font-bold text-brand-800 dark:text-white text-base"><span aria-hidden="true">1. </span>La pides</p><p class="mt-1 text-brand-600 dark:text-brand-300">Escríbenos por WhatsApp o a info@ajedrez-integral.com. Te damos un código como <span class="font-mono">AI-1A2B-3C4D-5E6F</span>.</p></li>
+                <li class="rounded-2xl bg-brand-50 dark:bg-brand-950 p-5"><p class="font-bold text-brand-800 dark:text-white text-base"><span aria-hidden="true">2. </span>La activas</p><p class="mt-1 text-brand-600 dark:text-brand-300">Entras con tu cuenta de Ajedrez Integral y escribes el código abajo. Desde ese momento corren sus días.</p></li>
+                <li class="rounded-2xl bg-brand-50 dark:bg-brand-950 p-5"><p class="font-bold text-brand-800 dark:text-white text-base"><span aria-hidden="true">3. </span>La usas</p><p class="mt-1 text-brand-600 dark:text-brand-300">La herramienta se abre para tu cuenta, en la computadora o en el celular. Un código sirve para una sola cuenta.</p></li>
+            </ol>
+        </div>
+    </section>
+
+    <section id="activar" class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12 scroll-mt-24" aria-labelledby="t-activar">
+        <h2 id="t-activar" class="font-serif text-2xl md:text-3xl font-bold text-brand-800 dark:text-white">Activar tu licencia</h2>
+        <div id="activar-sin-sesion" class="mt-4 rounded-2xl bg-white dark:bg-brand-900 shadow-md p-6">
+            <p class="text-brand-600 dark:text-brand-300">Para activar un código hace falta entrar con tu cuenta.</p>
+            <a href="login.html?next=herramientas-arbitraje.html" class="inline-block mt-4 bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg text-sm transition-colors">Iniciar sesión</a>
+        </div>
+        <div id="activar-con-sesion" class="hidden mt-4 rounded-2xl bg-white dark:bg-brand-900 shadow-md p-6">
+            <form id="form-activar" class="flex flex-wrap items-end gap-3" novalidate>
+                <div class="grow min-w-[14rem]">
+                    <label for="codigo" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Código de la licencia</label>
+                    <input id="codigo" type="text" required maxlength="24" autocomplete="off" spellcheck="false" placeholder="AI-XXXX-XXXX-XXXX" class="w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 font-mono uppercase focus:ring-2 focus:ring-accent-500 outline-none">
+                </div>
+                <button type="submit" id="btn-activar" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2 rounded-lg text-sm transition-colors">Activar licencia</button>
+            </form>
+            <p id="msg-activar" class="text-sm mt-3" role="status"></p>
+            <h3 class="font-semibold text-brand-800 dark:text-white mt-6">Tus licencias</h3>
+            <ul id="mis-licencias" class="mt-2 space-y-2 text-sm"></ul>
+        </div>
+    </section>
+
+        </main>
+    <footer class="bg-brand-900 text-brand-300 pt-16 pb-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid md:grid-cols-4 gap-8 mb-12">
+                <div><a href="index.html" class="flex items-center gap-2 text-white mb-4"><img src="/img/logo-marca.png" alt="" width="78" height="48" class="h-9 w-auto shrink-0"><span class="font-serif text-lg font-bold">Ajedrez Integral</span></a><p class="text-sm text-brand-300">Plataforma educativa de ajedrez para escuelas, colegios y familias. Aprende, practica y compite.</p></div>
+                <div><h3 class="text-white font-semibold mb-4">Navegación</h3><ul class="space-y-2 text-sm"><li><a href="index.html" class="hover:text-accent-400 transition-colors">Inicio</a></li><li><a href="cursos.html" class="hover:text-accent-400 transition-colors">Cursos</a></li><li><a href="articulos.html" class="hover:text-accent-400 transition-colors">Artículos</a></li><li><a href="tablero.html" class="hover:text-accent-400 transition-colors">Jugar contra el profe</a></li><li><a href="clases.html" class="hover:text-accent-400 transition-colors">Academia</a></li><li><a href="te-reto.html" class="hover:text-accent-400 transition-colors">🏆 ¡Te reto!</a></li><li><a href="tv.html" class="hover:text-accent-400 transition-colors">TV en vivo</a></li><li><a href="torneos-en-vivo.html" class="hover:text-accent-400 transition-colors">Torneos</a></li></ul></div>
+                <div><h3 class="text-white font-semibold mb-4">Recursos</h3><ul class="space-y-2 text-sm"><li><a href="entreno/diagnostico.html" class="hover:text-accent-400 transition-colors">Diagnóstico de nivel gratis</a></li><li><a href="herramientas-arbitraje.html" class="hover:text-accent-400 transition-colors">Herramientas de arbitraje</a></li><li><a href="bot.html" class="hover:text-accent-400 transition-colors">Jugar contra el bot</a></li><li><a href="sobre-oscar.html" class="hover:text-accent-400 transition-colors">Sobre Oscar</a></li><li><a href="inscripcion.html" class="hover:text-accent-400 transition-colors">Torneos en línea</a></li></ul></div>
+                <div><h3 class="text-white font-semibold mb-4">Contacto</h3><ul class="space-y-2 text-sm"><li><a href="mailto:info@ajedrez-integral.com" class="hover:text-accent-400 transition-colors">info@ajedrez-integral.com</a></li><li><a href="https://wa.me/50683092291" target="_blank" rel="noopener" class="hover:text-accent-400 transition-colors">+506 8309-2291 (WhatsApp)</a></li><li>Clases en línea desde Costa Rica</li></ul></div>
+            </div>
+            <div class="border-t border-brand-700 pt-6 text-center text-sm text-brand-300"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p><!-- legal: inicio --><p class="mt-2"><a href="privacidad.html" class="underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Política de privacidad</a> <span aria-hidden="true">·</span> <a href="terminos.html" class="underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Términos y condiciones</a></p><!-- legal: fin --></div>
+        </div>
+    </footer>
+    <script src="js/vendor/supabase.js"></script>
+    <script src="js/supabase-client.js"></script>
+    <script src="js/avisos.js"></script>
+    <script src="js/hora-cr.js"></script>
+    <script src="js/herramientas-arbitraje.js"></script>
+    <script src="js/main.js"></script>
+    <script src="js/herramientas-arbitraje-pagina.js"></script>
+</body>
+</html>

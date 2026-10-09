@@ -1,0 +1,434 @@
+%PDF-1.3
+%‚„œ”
+1 0 obj
+<<
+/PageMode /UseNone
+/Pages 2 0 R
+/Type /Catalog
+>>
+endobj
+2 0 obj
+<<
+/Count 4
+/Kids [ 3 0 R 10 0 R 12 0 R 14 0 R ]
+/Type /Pages
+>>
+endobj
+3 0 obj
+<<
+/Contents 4 0 R
+/MediaBox [ 0 0 612 792 ]
+/Parent 2 0 R
+/Resources <<
+/Font 5 0 R
+/ProcSet [ /PDF /Text /ImageB /ImageC /ImageI ]
+>>
+/Rotate 0
+/Trans <<
+>>
+/Type /Page
+>>
+endobj
+4 0 obj
+<<
+/Length 4639
+>>
+stream
+1 0 0 1 0 0 cm  BT /F1 12 Tf 14.4 TL ET
+q
+BT /F1 8 Tf 9.6 TL ET
+.384314 .490196 .596078 rg
+BT 1 0 0 1 56.69291 39.68504 Tm (Ajedrez Integral \267 ajedrez-integral.com) Tj T* ET
+BT 1 0 0 1 465.0511 39.68504 Tm (Los cimientos del ajedrez) Tj T* ET
+Q
+q
+1 0 0 1 62.69291 717.3071 cm
+q
+BT 1 0 0 1 0 3 Tm 12 TL /F2 9 Tf .870588 .568627 .113725 rg (AJEDREZ INTEGRAL  ) Tj (\267) Tj (  LOS CIMIENTOS DEL AJEDREZ) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 703.3071 cm
+q
+.384314 .490196 .596078 rg
+BT 1 0 0 1 0 2.5 Tm /F3 9.5 Tf 12 TL (Ejercicios de pr\341ctica \227 Lecci\363n 41) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 670.3071 cm
+q
+.039216 .121569 .2 rg
+BT 1 0 0 1 0 4 Tm /F4 19 Tf 23 TL (Combinaciones con caballos) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 661.1071 cm
+q
+1.2 w
+1 J
+.870588 .568627 .113725 RG
+n 0 0 m 486.6142 0 l S
+Q
+Q
+q
+1 0 0 1 62.69291 636.1071 cm
+q
+.870588 .568627 .113725 rg
+BT 1 0 0 1 0 3 Tm /F2 10 Tf 13 TL (OBJETIVO DE LA LECCI\323N) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 601.1071 cm
+q
+.2 .305882 .407843 rg
+BT 1 0 0 1 0 19.5 Tm /F1 10.5 Tf 15 TL -0.033897 Tw (El caballo salta y ataca en todas direcciones a la vez. Aprende el tenedor, el jaque doble y el mate de la) Tj T* 0 Tw (coz, y las se\361ales que los anuncian.) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 576.1071 cm
+q
+.870588 .568627 .113725 rg
+BT 1 0 0 1 0 3 Tm /F2 10 Tf 13 TL (REPASO R\301PIDO) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 496.1071 cm
+q
+BT 1 0 0 1 2 64.5 Tm /F1 10 Tf 12 TL .2 .305882 .407843 rg (\226) Tj ET
+.2 .305882 .407843 rg
+BT 1 0 0 1 14 64.5 Tm /F1 10.5 Tf 15 TL (El caballo es la pieza de los tenedores: desde una casilla ataca hasta ocho, y sus ataques no se) Tj T* (pueden tapar. Cuando ataca a la vez al rey y a otra pieza, o a la dama y a una torre, el rival solo) Tj T* (puede salvar una. Hay adem\341s un mate propio del caballo: el mate de la coz, en que el rey rival) Tj T* (queda rodeado por sus propias piezas y el caballo da jaque sin que nadie pueda capturarlo. Para) Tj T* (preparar tenedores suele hacer falta un sacrificio que lleve las piezas rivales a las casillas correctas.) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 412.1071 cm
+q
+BT 1 0 0 1 2 64.5 Tm /F1 10 Tf 12 TL .2 .305882 .407843 rg (\226) Tj ET
+.2 .305882 .407843 rg
+BT 1 0 0 1 14 64.5 Tm /F1 10.5 Tf 15 TL (Una se\361al muy \372til: el caballo siempre ataca casillas de un mismo color, el contrario al de la casilla) Tj T* -0.103324 Tw (donde est\341. Por eso solo puede hacer tenedor a dos piezas que est\351n en casillas del mismo color. Si) Tj T* 0 Tw -0.090891 Tw (el rey y la dama rivales est\341n en casillas del mismo color y a distancia de salto, busca la casilla donde) Tj T* 0 Tw (un caballo los atacar\355a a los dos. F\355jate tambi\351n en las piezas rivales sin defensa: el caballo las cobra) Tj T* (con un ataque doble.) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 328.1071 cm
+q
+BT 1 0 0 1 2 64.5 Tm /F1 10 Tf 12 TL .2 .305882 .407843 rg (\226) Tj ET
+.2 .305882 .407843 rg
+BT 1 0 0 1 14 64.5 Tm /F1 10.5 Tf 15 TL (El error t\355pico es encontrar el tenedor y no mirar si la casilla de llegada est\341 defendida, o si el rival,) Tj T* (en vez de salvar una pieza, contesta con un jaque o captura el caballo. Antes de saltar, comprueba) Tj T* (que el caballo llega seguro o que lo que ganas vale m\341s que \351l. Y en defensa, mira siempre las) Tj T* (casillas a las que puede saltar el caballo rival en una o dos jugadas: muchos tenedores se ven venir) Tj T* (de lejos.) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 303.1071 cm
+q
+.870588 .568627 .113725 rg
+BT 1 0 0 1 0 3 Tm /F2 10 Tf 13 TL (EJERCICIOS) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 279.1071 cm
+q
+.039216 .121569 .2 rg
+BT 1 0 0 1 0 3 Tm /F2 11 Tf 14 TL (1. Pr\341ctica dirigida) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 231.1071 cm
+q
+.2 .305882 .407843 rg
+BT 1 0 0 1 0 34.5 Tm /F1 10.5 Tf 15 TL (Pon en el tablero el rey y la dama rivales en casillas del mismo color y busca desde d\363nde podr\355a) Tj T* (atacarlos un caballo. Despu\351s revisa tus partidas y anota cu\341ntos tenedores te hicieron sin que las) Tj T* (vieras venir.) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 207.1071 cm
+q
+.039216 .121569 .2 rg
+BT 1 0 0 1 0 3 Tm /F2 11 Tf 14 TL (2. Expl\355calo con tus palabras) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 174.1071 cm
+q
+.2 .305882 .407843 rg
+BT 1 0 0 1 0 19.5 Tm /F1 10.5 Tf 15 TL (Escribe en tres o cuatro l\355neas de qu\351 se trata \223Combinaciones con caballos\224 y para qu\351 sirve, como si) Tj T* (se lo explicaras a alguien que reci\351n empieza.) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 115.1071 cm
+q
+.384314 .490196 .596078 rg
+BT 1 0 0 1 0 41.5 Tm /F1 10.5 Tf 26 TL (___________________________________________________________________________________) Tj T* (_____) Tj T* ET
+Q
+Q
+ 
+
+endstream
+endobj
+5 0 obj
+<<
+/F1 6 0 R
+/F2 7 0 R
+/F3 8 0 R
+/F4 9 0 R
+>>
+endobj
+6 0 obj
+<<
+/BaseFont /Helvetica
+/Encoding /WinAnsiEncoding
+/Name /F1
+/Subtype /Type1
+/Type /Font
+>>
+endobj
+7 0 obj
+<<
+/BaseFont /Helvetica-Bold
+/Encoding /WinAnsiEncoding
+/Name /F2
+/Subtype /Type1
+/Type /Font
+>>
+endobj
+8 0 obj
+<<
+/BaseFont /Helvetica-Oblique
+/Encoding /WinAnsiEncoding
+/Name /F3
+/Subtype /Type1
+/Type /Font
+>>
+endobj
+9 0 obj
+<<
+/BaseFont /Times-Bold
+/Encoding /WinAnsiEncoding
+/Name /F4
+/Subtype /Type1
+/Type /Font
+>>
+endobj
+10 0 obj
+<<
+/Contents 11 0 R
+/MediaBox [ 0 0 612 792 ]
+/Parent 2 0 R
+/Resources <<
+/Font 5 0 R
+/ProcSet [ /PDF /Text /ImageB /ImageC /ImageI ]
+>>
+/Rotate 0
+/Trans <<
+>>
+/Type /Page
+>>
+endobj
+11 0 obj
+<<
+/Filter [ /ASCII85Decode /FlateDecode ]
+/Length 286
+>>
+stream
+Gb!<G5t_;7&;BTM/)G7\S7](KA95,N+S6l=-qN$gAP9M/CJXqUP;N_J4F$@)!b(YSq.AJ;<4Y3*h#Ju.(68mT#[=MVK<W3[W6SDbZoR):MG?l])E&_u'mfsa0?U[>GI`53h$T"jT$a@VeuD+Y:uCa%ArQ2'3aUf`>T`I0`F8_EhXs=6mPN]Alk+,V_^h`!9?QfalK\"rXrmLb]VK3S%l<__nsoX%'[^JMEK1t!3:.lcIqMHk0\P6*g7$1S(4+\0rVH8$p/$879oa\rV"oLe6M1A)&$]I~>
+endstream
+endobj
+12 0 obj
+<<
+/Contents 13 0 R
+/MediaBox [ 0 0 612 792 ]
+/Parent 2 0 R
+/Resources <<
+/Font 5 0 R
+/ProcSet [ /PDF /Text /ImageB /ImageC /ImageI ]
+>>
+/Rotate 0
+/Trans <<
+>>
+/Type /Page
+>>
+endobj
+13 0 obj
+<<
+/Length 3626
+>>
+stream
+1 0 0 1 0 0 cm  BT /F1 12 Tf 14.4 TL ET
+q
+BT /F1 8 Tf 9.6 TL ET
+.384314 .490196 .596078 rg
+BT 1 0 0 1 56.69291 39.68504 Tm (Ajedrez Integral \267 ajedrez-integral.com) Tj T* ET
+BT 1 0 0 1 465.0511 39.68504 Tm (Los cimientos del ajedrez) Tj T* ET
+Q
+q
+1 0 0 1 62.69291 717.3071 cm
+q
+BT 1 0 0 1 0 3 Tm 12 TL /F2 9 Tf .870588 .568627 .113725 rg (AJEDREZ INTEGRAL  ) Tj (\267) Tj (  LOS CIMIENTOS DEL AJEDREZ) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 703.3071 cm
+q
+.384314 .490196 .596078 rg
+BT 1 0 0 1 0 2.5 Tm /F3 9.5 Tf 12 TL (Ejercicios de pr\341ctica \227 Lecci\363n 41 \(continuaci\363n\)) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 692.1071 cm
+q
+1.2 w
+1 J
+.870588 .568627 .113725 RG
+n 0 0 m 486.6142 0 l S
+Q
+Q
+q
+1 0 0 1 62.69291 668.1071 cm
+q
+.039216 .121569 .2 rg
+BT 1 0 0 1 0 3 Tm /F2 11 Tf 14 TL (3. Pregunta de repaso) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 590.1071 cm
+q
+.2 .305882 .407843 rg
+BT 1 0 0 1 0 64.5 Tm /F1 10.5 Tf 15 TL (El caballo es la pieza de los tenedores: desde una casilla ataca hasta ocho, y sus ataques no se pueden) Tj T* (tapar. Cuando ataca a la vez al rey y a otra pieza, o a la dama y a una torre, el rival solo puede salvar) Tj T* (una. Hay adem\341s un mate propio del caballo: el mate de la coz, en que el rey rival queda rodeado por) Tj T* (sus propias piezas y el caballo da jaque sin que nadie pueda capturarlo. Para preparar tenedores suele) Tj T* (hacer falta un sacrificio que lleve las piezas rivales a las casillas correctas.) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 568.1071 cm
+q
+.2 .305882 .407843 rg
+BT 1 0 0 1 0 4.5 Tm /F1 10.5 Tf 15 TL (\277Por qu\351 es as\355? Escr\355belo con tus palabras.) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 509.1071 cm
+q
+.384314 .490196 .596078 rg
+BT 1 0 0 1 0 41.5 Tm /F1 10.5 Tf 26 TL (___________________________________________________________________________________) Tj T* (_____) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 453.1071 cm
+q
+.384314 .490196 .596078 rg
+BT 1 0 0 1 0 41.5 Tm /F1 10.5 Tf 26 TL (___________________________________________________________________________________) Tj T* (_____) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 397.1071 cm
+q
+.384314 .490196 .596078 rg
+BT 1 0 0 1 0 41.5 Tm /F1 10.5 Tf 26 TL (___________________________________________________________________________________) Tj T* (_____) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 373.1071 cm
+q
+.039216 .121569 .2 rg
+BT 1 0 0 1 0 3 Tm /F2 11 Tf 14 TL (4. Ll\351valo a una partida) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 325.1071 cm
+q
+.2 .305882 .407843 rg
+BT 1 0 0 1 0 34.5 Tm /F1 10.5 Tf 15 TL (Juega una partida completa \227contra Oscar en el Tablero de ajedrez-integral.com, contra el motor o con) Tj T* (un compa\361ero\227 aplicando a prop\363sito lo de esta lecci\363n. Al terminar, anota un momento concreto en el) Tj T* (que lo usaste, o en el que debiste usarlo.) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 266.1071 cm
+q
+.384314 .490196 .596078 rg
+BT 1 0 0 1 0 41.5 Tm /F1 10.5 Tf 26 TL (___________________________________________________________________________________) Tj T* (_____) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 210.1071 cm
+q
+.384314 .490196 .596078 rg
+BT 1 0 0 1 0 41.5 Tm /F1 10.5 Tf 26 TL (___________________________________________________________________________________) Tj T* (_____) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 154.1071 cm
+q
+.384314 .490196 .596078 rg
+BT 1 0 0 1 0 41.5 Tm /F1 10.5 Tf 26 TL (___________________________________________________________________________________) Tj T* (_____) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 98.10709 cm
+q
+.384314 .490196 .596078 rg
+BT 1 0 0 1 0 41.5 Tm /F1 10.5 Tf 26 TL (___________________________________________________________________________________) Tj T* (_____) Tj T* ET
+Q
+Q
+ 
+
+endstream
+endobj
+14 0 obj
+<<
+/Contents 15 0 R
+/MediaBox [ 0 0 612 792 ]
+/Parent 2 0 R
+/Resources <<
+/Font 5 0 R
+/ProcSet [ /PDF /Text /ImageB /ImageC /ImageI ]
+>>
+/Rotate 0
+/Trans <<
+>>
+/Type /Page
+>>
+endobj
+15 0 obj
+<<
+/Filter [ /ASCII85Decode /FlateDecode ]
+/Length 277
+>>
+stream
+Gatmt6#4@l%#+0G(%7M!VHJp2a2\Wm)"^_qEA1#MQB\7X=\o"h[5/'!ST^A07Xd[roYaSjo(7)-n/Cf/A?\PUJINKM'c*M>X@fA7#u=H@C0K)j!?&)n$cmWkY/Ros"^L7l8A+YT-<7KT-0g$WjUen2]]/=#M>M:6`4He?c+!Q!(R;T'n:5ICGg$WcW(&<ebJ1!Vo,"ueki:ojU2<$<`&l%$q3`\+bA?/X29Kpm6V@C'R"AbP\aQm_Q/`nW[%7'Rs3L&*rpcHtXXd@0Dj#=9~>
+endstream
+endobj
+16 0 obj
+<<
+/Author (Ajedrez Integral)
+/CreationDate (D\07220261007095425\05300\04700\047)
+/Creator (\050unspecified\051)
+/Keywords ()
+/ModDate (D\07220261007095425\05300\04700\047)
+/Producer (ReportLab PDF Library \055 \050opensource\051)
+/Subject (\050unspecified\051)
+/Title (Los cimientos del ajedrez \204 Ejercicios 41)
+/Trapped /False
+>>
+endobj
+xref
+0 17
+0000000000 65535 f 
+0000000015 00000 n 
+0000000083 00000 n 
+0000000163 00000 n 
+0000000352 00000 n 
+0000005043 00000 n 
+0000005104 00000 n 
+0000005211 00000 n 
+0000005323 00000 n 
+0000005438 00000 n 
+0000005546 00000 n 
+0000005737 00000 n 
+0000006115 00000 n 
+0000006306 00000 n 
+0000009985 00000 n 
+0000010176 00000 n 
+0000010545 00000 n 
+trailer
+<<
+/Size 17
+/Root 1 0 R
+/Info 16 0 R
+/ID [ <a26bae3a7cfaa34d724daffe9d26281f> <a26bae3a7cfaa34d724daffe9d26281f> ]
+>>
+startxref
+10896
+%%EOF

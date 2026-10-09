@@ -34,77 +34,73 @@
     </div>
 
     <div id="app" class="hidden">
-        <!-- El panel, con un menú a la izquierda y UNA sección a la vista.
-             Antes era una sola página larguísima: los atajos, cinco tarjetas
-             plegadas y la lista de cuentas, una debajo de la otra; para llegar a
-             Equipos había que saber que estaba ahí y bajar. Ahora cada cosa
-             tiene su lugar en el menú, e «Inicio» dice de un vistazo cómo está
-             la plataforma. Ver «El panel de Administración, por secciones» en
+        <!-- El panel en seis secciones, con pestañas arriba. Antes era un menú a
+             la izquierda con trece entradas y, aparte, unas veinte páginas que
+             solo se encontraban en el panel de la Academia: el dueño pidió algo
+             «más eficiente y fácil de usar», con orden lógico. Ahora:
+               - arriba, seis pestañas (Inicio, Personas, Organización,
+                 Contenido, Cobros y accesos, Informes);
+               - debajo, las secciones de la pestaña elegida, si tiene varias;
+               - lo de una persona se hace en SU ficha, al costado;
+               - Ctrl + K encuentra personas, secciones y páginas.
+             Cada sección sigue siendo un <section data-seccion> con sus mismos
+             ids, y la dirección sigue llevando su nombre (admin.html#equipos).
+             Ver «El panel de Administración en seis secciones» en
              docs/decisiones/paneles.md. -->
-        <div class="lg:flex max-w-[96rem] mx-auto">
-            <aside class="bg-brand-900 lg:w-64 lg:shrink-0 lg:min-h-screen">
-                <div class="lg:sticky lg:top-28 px-3 py-3 lg:py-6">
-                    <div class="hidden lg:block px-3 mb-5">
-                        <p class="font-serif text-lg font-bold text-white"><span aria-hidden="true">👑 </span>Administración</p>
-                        <p id="admin-fecha" class="text-xs text-brand-200 mt-1"></p>
-                        <p id="admin-cuantas" class="text-xs font-semibold text-accent-400 mt-0.5"></p>
+        <div class="bg-brand-900">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
+                <div class="flex flex-wrap items-end justify-between gap-4">
+                    <div class="min-w-0">
+                        <h1 id="admin-saludo" class="font-serif text-2xl sm:text-3xl font-bold text-white">Panel de Administración</h1>
+                        <p class="text-sm text-brand-200 mt-1"><span id="admin-fecha"></span><span id="admin-cuantas" class="font-semibold text-accent-400 ml-2"></span></p>
                     </div>
-                    <nav aria-label="Secciones de administración">
-                        <!-- El menú, por lo que se viene a hacer: primero lo que no puede esperar, después
-                             ayudar a supervisores y coordinadores (para eso existe este panel), la gente y
-                             la plataforma. En el celular es una tira que se desliza y los títulos se esconden. -->
-                        <div class="flex lg:flex-col gap-1 lg:gap-5 overflow-x-auto">
-                            <div class="flex lg:flex-col gap-1 shrink-0">
-                                <p id="nav-grupo-hoy" class="hidden lg:block px-3 text-xs font-bold uppercase tracking-wide text-brand-200">Hoy</p>
-                                <ul class="flex lg:flex-col gap-1" aria-labelledby="nav-grupo-hoy">
-                                    <li><a href="#inicio" data-ir="inicio" class="admin-nav flex items-center gap-3 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-semibold text-brand-100 hover:bg-brand-800 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true" class="w-5 text-center">🚨</span><span>Lo urgente</span><span id="nav-urgentes" class="hidden ml-auto rounded-full bg-accent-500 text-brand-900 text-xs font-bold px-2 py-0.5"></span></a></li>
-                                </ul>
-                            </div>
-                            <div class="flex lg:flex-col gap-1 shrink-0">
-                                <p id="nav-grupo-mando" class="hidden lg:block px-3 text-xs font-bold uppercase tracking-wide text-brand-200">Supervisión y coordinación</p>
-                                <ul class="flex lg:flex-col gap-1" aria-labelledby="nav-grupo-mando">
-                                    <li><a href="#supervisores" data-ir="supervisores" class="admin-nav flex items-center gap-3 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-semibold text-brand-100 hover:bg-brand-800 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true" class="w-5 text-center">🧭</span><span>Supervisores</span></a></li>
-                                    <li><a href="#profesores" data-ir="profesores" class="admin-nav flex items-center gap-3 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-semibold text-brand-100 hover:bg-brand-800 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true" class="w-5 text-center">🎓</span><span>Profesores y coordinadores</span></a></li>
-                                    <li><a href="#equipos" data-ir="equipos" class="admin-nav flex items-center gap-3 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-semibold text-brand-100 hover:bg-brand-800 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true" class="w-5 text-center">🛡️</span><span>Equipos</span></a></li>
-                                </ul>
-                            </div>
-                            <div class="flex lg:flex-col gap-1 shrink-0">
-                                <p id="nav-grupo-personas" class="hidden lg:block px-3 text-xs font-bold uppercase tracking-wide text-brand-200">Personas</p>
-                                <ul class="flex lg:flex-col gap-1" aria-labelledby="nav-grupo-personas">
-                                    <li><a href="#cuentas" data-ir="cuentas" class="admin-nav flex items-center gap-3 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-semibold text-brand-100 hover:bg-brand-800 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true" class="w-5 text-center">👥</span><span>Cuentas</span></a></li>
-                                    <li><a href="#crear" data-ir="crear" class="admin-nav flex items-center gap-3 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-semibold text-brand-100 hover:bg-brand-800 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true" class="w-5 text-center">➕</span><span>Crear cuenta</span></a></li>
-                                </ul>
-                            </div>
-                            <div class="flex lg:flex-col gap-1 shrink-0">
-                                <p id="nav-grupo-plataforma" class="hidden lg:block px-3 text-xs font-bold uppercase tracking-wide text-brand-200">La plataforma</p>
-                                <ul class="flex lg:flex-col gap-1" aria-labelledby="nav-grupo-plataforma">
-                                    <li><a href="#novedades" data-ir="novedades" class="admin-nav flex items-center gap-3 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-semibold text-brand-100 hover:bg-brand-800 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true" class="w-5 text-center">📣</span><span>Avisos internos</span></a></li>
-                                    <li><a href="#torneos" data-ir="torneos" class="admin-nav flex items-center gap-3 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-semibold text-brand-100 hover:bg-brand-800 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true" class="w-5 text-center">🏆</span><span>Salas de torneos</span></a></li>
-                                    <li><a href="#proyectos" data-ir="proyectos" class="admin-nav flex items-center gap-3 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-semibold text-brand-100 hover:bg-brand-800 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true" class="w-5 text-center">📁</span><span>Proyectos</span></a></li>
-                                    <li><a href="#materiales" data-ir="materiales" class="admin-nav flex items-center gap-3 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-semibold text-brand-100 hover:bg-brand-800 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true" class="w-5 text-center">📚</span><span>Materiales de clases</span></a></li>
-                                    <li><a href="#preparacion" data-ir="preparacion" class="admin-nav flex items-center gap-3 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-semibold text-brand-100 hover:bg-brand-800 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true" class="w-5 text-center">🔭</span><span>Preparación de rivales</span></a></li>
-                                    <li><a href="#auditoria" data-ir="auditoria" class="admin-nav flex items-center gap-3 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-semibold text-brand-100 hover:bg-brand-800 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true" class="w-5 text-center">🧾</span><span>Registro de cambios</span></a></li>
-                                </ul>
-                            </div>
+                    <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+                        <!-- Buscar a una persona: escribir lleva a «Personas» con lo
+                             escrito. Ctrl + K abre el buscador de todo el panel. -->
+                        <div class="relative flex-1 sm:w-80">
+                            <label for="user-search" class="sr-only">Buscar una cuenta en todos los grupos</label>
+                            <input id="user-search" type="search" placeholder="🔍 Buscar a una persona" class="w-full pl-4 pr-20 py-2.5 rounded-xl bg-brand-800 text-white placeholder:text-brand-300 border border-brand-700 text-sm focus:ring-2 focus:ring-accent-400 outline-none">
+                            <button type="button" id="abrir-buscador" class="absolute right-2 top-1/2 -translate-y-1/2 rounded-md border border-brand-600 px-2 py-0.5 text-xs text-brand-200 hover:text-white hover:border-accent-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400" aria-label="Buscar en todo el panel (Ctrl + K)" title="Buscar en todo el panel: personas, secciones y páginas">Ctrl K</button>
                         </div>
-                    </nav>
+                        <a href="#crear" data-ir="crear" class="admin-nav shrink-0 bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2.5 rounded-xl text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-900">＋ Crear cuenta</a>
+                    </div>
                 </div>
-            </aside>
+                <nav aria-label="Secciones de administración" class="mt-5 -mb-px">
+                    <ul class="flex gap-1 overflow-x-auto">
+                        <li><a href="#inicio" data-ir="inicio" data-grupo="inicio" class="admin-grupo inline-flex items-center gap-2 whitespace-nowrap px-4 py-3 text-sm font-semibold border-b-4 border-transparent text-brand-200 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent-400 rounded-t-lg">Inicio<span id="nav-urgentes" class="hidden rounded-full bg-accent-500 text-brand-900 text-xs font-bold px-2 py-0.5"></span></a></li>
+                        <li><a href="#cuentas" data-ir="cuentas" data-grupo="personas" class="admin-grupo inline-flex items-center gap-2 whitespace-nowrap px-4 py-3 text-sm font-semibold border-b-4 border-transparent text-brand-200 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent-400 rounded-t-lg">Personas</a></li>
+                        <li><a href="#profesores" data-ir="profesores" data-grupo="organizacion" class="admin-grupo inline-flex items-center gap-2 whitespace-nowrap px-4 py-3 text-sm font-semibold border-b-4 border-transparent text-brand-200 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent-400 rounded-t-lg">Organización</a></li>
+                        <li><a href="#materiales" data-ir="materiales" data-grupo="contenido" class="admin-grupo inline-flex items-center gap-2 whitespace-nowrap px-4 py-3 text-sm font-semibold border-b-4 border-transparent text-brand-200 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent-400 rounded-t-lg">Contenido</a></li>
+                        <li><a href="#cobros" data-ir="cobros" data-grupo="cobros" class="admin-grupo inline-flex items-center gap-2 whitespace-nowrap px-4 py-3 text-sm font-semibold border-b-4 border-transparent text-brand-200 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent-400 rounded-t-lg">Cobros y accesos</a></li>
+                        <li><a href="#informes" data-ir="informes" data-grupo="informes" class="admin-grupo inline-flex items-center gap-2 whitespace-nowrap px-4 py-3 text-sm font-semibold border-b-4 border-transparent text-brand-200 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent-400 rounded-t-lg">Informes</a></li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
 
-            <div class="flex-1 min-w-0 px-4 sm:px-6 lg:px-10 pt-8 pb-16">
-                <!-- Arriba, siempre a mano: el saludo y buscar a una persona.
-                     Buscar lleva a «Cuentas» con lo escrito: es lo que más se hace
-                     en esta página, y no puede depender de en qué sección se esté. -->
-                <div class="flex flex-wrap items-start justify-between gap-4 mb-8">
-                    <div>
-                        <h1 id="admin-saludo" class="font-serif text-3xl font-bold text-brand-800 dark:text-white">Panel de Administración</h1>
-                        <p class="text-brand-500 dark:text-brand-300 mt-1">Lo que no puede esperar, las cuentas y quién tiene a cargo a quién. Las demás páginas (informes, cobros, formularios…) están en el <a href="clases.html" class="underline underline-offset-2 hover:text-accent-700 dark:hover:text-accent-400 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">panel de la Academia</a>.</p>
-                    </div>
-                    <div class="w-full sm:w-80">
-                        <label for="user-search" class="sr-only">Buscar una cuenta en todos los grupos</label>
-                        <input id="user-search" type="search" placeholder="🔍 Buscar: nombre, correo o grupo" class="w-full px-4 py-2.5 rounded-xl bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-sm shadow-sm focus:ring-2 focus:ring-accent-500 outline-none">
-                    </div>
-                </div>
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-16">
+                <!-- Las secciones de la pestaña elegida, cuando tiene más de una.
+                     Se ve solo la lista de la pestaña abierta. -->
+                <nav id="subnav" aria-label="Dentro de esta pestaña" class="mb-6">
+                    <ul data-subnav="organizacion" hidden class="flex flex-wrap gap-2">
+                        <li><a href="#profesores" data-ir="profesores" class="admin-nav subnav-pestana inline-block rounded-full px-4 py-1.5 text-sm font-semibold border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-900 text-brand-700 dark:text-brand-200 hover:border-accent-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Profesores y coordinadores</a></li>
+                        <li><a href="#supervisores" data-ir="supervisores" class="admin-nav subnav-pestana inline-block rounded-full px-4 py-1.5 text-sm font-semibold border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-900 text-brand-700 dark:text-brand-200 hover:border-accent-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Supervisores</a></li>
+                        <li><a href="#equipos" data-ir="equipos" class="admin-nav subnav-pestana inline-block rounded-full px-4 py-1.5 text-sm font-semibold border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-900 text-brand-700 dark:text-brand-200 hover:border-accent-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Equipos</a></li>
+                        <li><a href="#preparacion" data-ir="preparacion" class="admin-nav subnav-pestana inline-block rounded-full px-4 py-1.5 text-sm font-semibold border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-900 text-brand-700 dark:text-brand-200 hover:border-accent-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Preparación de rivales</a></li>
+                    </ul>
+                    <ul data-subnav="contenido" hidden class="flex flex-wrap gap-2">
+                        <li><a href="#materiales" data-ir="materiales" class="admin-nav subnav-pestana inline-block rounded-full px-4 py-1.5 text-sm font-semibold border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-900 text-brand-700 dark:text-brand-200 hover:border-accent-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Materiales de clases</a></li>
+                        <li><a href="#asesores" data-ir="asesores" class="admin-nav subnav-pestana inline-block rounded-full px-4 py-1.5 text-sm font-semibold border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-900 text-brand-700 dark:text-brand-200 hover:border-accent-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Asesores</a></li>
+                        <li><a href="#archivos" data-ir="archivos" class="admin-nav subnav-pestana inline-block rounded-full px-4 py-1.5 text-sm font-semibold border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-900 text-brand-700 dark:text-brand-200 hover:border-accent-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Archivos</a></li>
+                        <li><a href="#proyectos" data-ir="proyectos" class="admin-nav subnav-pestana inline-block rounded-full px-4 py-1.5 text-sm font-semibold border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-900 text-brand-700 dark:text-brand-200 hover:border-accent-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Proyectos</a></li>
+                        <li><a href="#torneos" data-ir="torneos" class="admin-nav subnav-pestana inline-block rounded-full px-4 py-1.5 text-sm font-semibold border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-900 text-brand-700 dark:text-brand-200 hover:border-accent-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Salas de torneos</a></li>
+                        <li><a href="#novedades" data-ir="novedades" class="admin-nav subnav-pestana inline-block rounded-full px-4 py-1.5 text-sm font-semibold border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-900 text-brand-700 dark:text-brand-200 hover:border-accent-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Avisos internos</a></li>
+                    </ul>
+                    <ul data-subnav="informes" hidden class="flex flex-wrap gap-2">
+                        <li><a href="#informes" data-ir="informes" class="admin-nav subnav-pestana inline-block rounded-full px-4 py-1.5 text-sm font-semibold border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-900 text-brand-700 dark:text-brand-200 hover:border-accent-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Informes y resultados</a></li>
+                        <li><a href="#auditoria" data-ir="auditoria" class="admin-nav subnav-pestana inline-block rounded-full px-4 py-1.5 text-sm font-semibold border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-900 text-brand-700 dark:text-brand-200 hover:border-accent-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Registro de cambios</a></li>
+                    </ul>
+                </nav>
 
                 <!-- ===== Lo urgente =====
                      Lo primero que se ve al entrar: lo que alguien está esperando
@@ -140,7 +136,7 @@
                 <section data-seccion="cuentas" aria-labelledby="titulo-cuentas" hidden>
                     <div class="flex flex-wrap items-end justify-between gap-3 mb-5">
                         <div>
-                            <h2 id="titulo-cuentas" class="font-serif text-2xl font-bold text-brand-800 dark:text-white">Las cuentas, por grupo</h2>
+                            <h2 id="titulo-cuentas" class="font-serif text-2xl font-bold text-brand-800 dark:text-white">Personas</h2>
                             <p id="users-summary" class="text-sm text-brand-500 dark:text-brand-300 mt-1">Cargando…</p>
                         </div>
                         <div class="flex flex-wrap items-center gap-2 text-xs">
@@ -194,13 +190,12 @@
                         <thead>
                             <tr class="text-left text-brand-450 dark:text-brand-350 border-b border-brand-100 dark:border-brand-800">
                                 <th scope="col" class="py-2 pr-2 font-semibold w-8"><span class="sr-only">Marcar</span></th>
-                                <th scope="col" class="py-2 pr-3 font-semibold min-w-[20rem]">Cuenta</th>
+                                <th scope="col" class="py-2 pr-3 font-semibold min-w-[16rem]">Cuenta</th>
                                 <th scope="col" class="py-2 pr-3 font-semibold">Rol</th>
                                 <th scope="col" class="py-2 pr-3 font-semibold">Grupo</th>
-                                <th scope="col" class="py-2 pr-3 font-semibold min-w-[12rem]">Profesores</th>
-                                <th scope="col" class="py-2 pr-3 font-semibold">Visión</th>
-                                <th scope="col" class="py-2 pr-3 font-semibold">Creado</th>
-                                <th scope="col" class="py-2 font-semibold text-right">Acciones</th>
+                                <th scope="col" class="py-2 pr-3 font-semibold min-w-[10rem]">Profesores</th>
+                                <th scope="col" class="hidden md:table-cell py-2 pr-3 font-semibold">Creado</th>
+                                <th scope="col" class="py-2 font-semibold text-right"><span class="sr-only">Ficha</span></th>
                             </tr>
                         </thead>
                         <tbody id="users-body"></tbody>
@@ -508,7 +503,7 @@
                 </section>
 
                 <!-- ===== Materiales de clases =====
-                     Los materiales para dar clase (hoy, el libro «Ponte a prueba») y con
+                     Los materiales para dar clase («Ponte a prueba», «Mide tu fuerza» y los cuentos de Peonita) y con
                      quién se comparte cada uno: una persona, una academia o todos los
                      profesores. Lo decide la base (material_compartir(), y puede_bajar()
                      para descargarlo); lo pinta js/admin-materiales.js. Ver «Los
@@ -519,6 +514,68 @@
                     <p id="mat-cargando" class="text-sm text-brand-500 dark:text-brand-300">Cargando los materiales…</p>
                     <p id="mat-error" hidden role="alert" class="text-sm font-semibold text-red-700 dark:text-red-300"></p>
                     <div id="mat-lista" class="space-y-8"></div>
+                </section>
+
+                <!-- ===== Asesores =====
+                     Todo lo del curso «Formación Ajedrez» (el taller para asesores del MEP),
+                     sesión por sesión: con quién se comparte, el estado de preparación de
+                     cada sesión (preparacion_sesiones, solo administración), sus archivos,
+                     su presentación y su cuestionario. Lo pinta js/admin-asesores.js. Ver
+                     «La ficha Asesores» en docs/decisiones/cursos-y-material.md. -->
+                <section data-seccion="asesores" aria-labelledby="titulo-asesores" hidden>
+                    <h2 id="titulo-asesores" class="font-serif text-2xl font-bold text-brand-800 dark:text-white mb-1">Asesores</h2>
+                    <p class="text-sm text-brand-500 dark:text-brand-300 mb-5">Todo el curso «Formación Ajedrez» en orden, para prepararlo sesión por sesión. Marca cada una como lista cuando la tengas revisada. Si lo compartes con otro profesor, le aparecen las presentaciones del curso para mostrarlas en su clase en vivo, y los cuestionarios de cada sesión.</p>
+                    <p id="ase-cargando" class="text-sm text-brand-500 dark:text-brand-300">Cargando las sesiones…</p>
+                    <p id="ase-error" hidden role="alert" class="text-sm font-semibold text-red-700 dark:text-red-300"></p>
+                    <article class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6" aria-labelledby="ase-compartir-titulo">
+                        <h3 id="ase-compartir-titulo" class="text-sm font-bold uppercase tracking-wide text-brand-500 dark:text-brand-300 mb-2">Con quién lo compartes</h3>
+                        <div id="ase-compartir"></div>
+                    </article>
+                    <p id="ase-resumen" role="status" class="text-sm font-semibold text-brand-700 dark:text-brand-200 mb-4"></p>
+                    <div id="ase-lista" class="space-y-6"></div>
+                </section>
+
+                <!-- ===== Archivos =====
+                     Todos los PDF, Word, Excel, presentaciones, versiones accesibles e imágenes del sitio, una ficha por
+                     tipo. Cada ficha es un explorador: las carpetas a la izquierda (los
+                     libros, los cursos por nivel, lo suelto) y lo de la elegida a la
+                     derecha, lección por lección; cada archivo con su vista previa
+                     (js/vista-previa.js). La lista es data/archivos.json, que arma
+                     herramientas/archivos-catalogo.js leyendo el disco: los nuevos entran
+                     solos al volver a correrlo, y el CI falla si alguien se olvida
+                     (verificar-archivos-catalogo.js). Lo pinta js/admin-archivos.js. Ver
+                     «La sección Archivos» en docs/decisiones/cursos-y-material.md. -->
+                <section data-seccion="archivos" aria-labelledby="titulo-archivos" hidden>
+                    <h2 id="titulo-archivos" class="font-serif text-2xl font-bold text-brand-800 dark:text-white mb-1">Archivos</h2>
+                    <p class="text-sm text-brand-500 dark:text-brand-300 mb-5">Todos los PDF, Word, Excel, presentaciones, versiones accesibles e imágenes que hay en la plataforma, en una ficha por tipo y ordenados por carpeta: los libros, cada curso con sus lecciones y lo suelto. Míralos sin bajarlos con «👁 Vista previa», o bájalos de a uno o la carpeta entera. Cuando se crea uno nuevo, aparece aquí solo.</p>
+                    <p id="arch-cargando" class="text-sm text-brand-500 dark:text-brand-300">Cargando la lista de archivos…</p>
+                    <p id="arch-error" hidden role="alert" class="text-sm font-semibold text-red-700 dark:text-red-300"></p>
+                    <div id="arch-fichas" hidden role="tablist" aria-label="Tipo de archivo" class="flex flex-wrap gap-2 mb-6">
+                        <button type="button" role="tab" id="arch-ficha-pdf" data-ficha="pdf" aria-controls="arch-panel-pdf" aria-selected="true" tabindex="0" class="px-4 py-2 rounded-lg text-sm font-semibold border border-brand-200 dark:border-brand-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 bg-accent-500 text-brand-900"><span aria-hidden="true">📕 </span>PDF (<span id="arch-cuenta-pdf">…</span>)</button>
+                        <button type="button" role="tab" id="arch-ficha-word" data-ficha="word" aria-controls="arch-panel-word" aria-selected="false" tabindex="-1" class="px-4 py-2 rounded-lg text-sm font-semibold border border-brand-200 dark:border-brand-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 bg-white dark:bg-brand-900 text-brand-700 dark:text-brand-100"><span aria-hidden="true">📝 </span>Word (<span id="arch-cuenta-word">…</span>)</button>
+                        <button type="button" role="tab" id="arch-ficha-excel" data-ficha="excel" aria-controls="arch-panel-excel" aria-selected="false" tabindex="-1" class="px-4 py-2 rounded-lg text-sm font-semibold border border-brand-200 dark:border-brand-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 bg-white dark:bg-brand-900 text-brand-700 dark:text-brand-100"><span aria-hidden="true">📊 </span>Excel (<span id="arch-cuenta-excel">…</span>)</button>
+                        <button type="button" role="tab" id="arch-ficha-presentaciones" data-ficha="presentaciones" aria-controls="arch-panel-presentaciones" aria-selected="false" tabindex="-1" class="px-4 py-2 rounded-lg text-sm font-semibold border border-brand-200 dark:border-brand-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 bg-white dark:bg-brand-900 text-brand-700 dark:text-brand-100"><span aria-hidden="true">📽️ </span>Presentaciones (<span id="arch-cuenta-presentaciones">…</span>)</button>
+                        <button type="button" role="tab" id="arch-ficha-accesibles" data-ficha="accesibles" aria-controls="arch-panel-accesibles" aria-selected="false" tabindex="-1" class="px-4 py-2 rounded-lg text-sm font-semibold border border-brand-200 dark:border-brand-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 bg-white dark:bg-brand-900 text-brand-700 dark:text-brand-100"><span aria-hidden="true">♿ </span>Versiones accesibles (<span id="arch-cuenta-accesibles">…</span>)</button>
+                        <button type="button" role="tab" id="arch-ficha-imagenes" data-ficha="imagenes" aria-controls="arch-panel-imagenes" aria-selected="false" tabindex="-1" class="px-4 py-2 rounded-lg text-sm font-semibold border border-brand-200 dark:border-brand-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 bg-white dark:bg-brand-900 text-brand-700 dark:text-brand-100"><span aria-hidden="true">🖼️ </span>Imágenes (<span id="arch-cuenta-imagenes">…</span>)</button>
+                    </div>
+                    <div id="arch-panel-pdf" data-ficha-panel="pdf" role="tabpanel" aria-labelledby="arch-ficha-pdf">
+                        <div id="arch-lista-pdf"></div>
+                    </div>
+                    <div id="arch-panel-word" data-ficha-panel="word" role="tabpanel" aria-labelledby="arch-ficha-word" hidden>
+                        <div id="arch-lista-word"></div>
+                    </div>
+                    <div id="arch-panel-excel" data-ficha-panel="excel" role="tabpanel" aria-labelledby="arch-ficha-excel" hidden>
+                        <div id="arch-lista-excel"></div>
+                    </div>
+                    <div id="arch-panel-presentaciones" data-ficha-panel="presentaciones" role="tabpanel" aria-labelledby="arch-ficha-presentaciones" hidden>
+                        <div id="arch-lista-presentaciones"></div>
+                    </div>
+                    <div id="arch-panel-accesibles" data-ficha-panel="accesibles" role="tabpanel" aria-labelledby="arch-ficha-accesibles" hidden>
+                        <div id="arch-lista-accesibles"></div>
+                    </div>
+                    <div id="arch-panel-imagenes" data-ficha-panel="imagenes" role="tabpanel" aria-labelledby="arch-ficha-imagenes" hidden>
+                        <div id="arch-lista-imagenes"></div>
+                    </div>
                 </section>
 
                 <!-- ===== Preparación de rivales =====
@@ -546,8 +603,58 @@
                     </div>
                 </section>
 
-            </div>
+                <!-- ===== Cobros y accesos =====
+                     Lo que antes solo estaba en el panel de la Academia. Las
+                     tarjetas salen de js/paginas-admin.js (zona «cobros»). -->
+                <section data-seccion="cobros" aria-labelledby="titulo-cobros" hidden>
+                    <h2 id="titulo-cobros" class="font-serif text-2xl font-bold text-brand-800 dark:text-white mb-1">Cobros y accesos</h2>
+                    <p class="text-sm text-brand-500 dark:text-brand-300 mb-5">Mensualidades, accesos a los cursos, precios y la prueba gratis. Los saldos vencidos salen también en Inicio.</p>
+                    <ul data-paginas="cobros" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-3"></ul>
+                </section>
+
+                <!-- ===== Informes y resultados =====
+                     Para mirar cómo va todo: nada de acá cambia datos. Las
+                     tarjetas salen de js/paginas-admin.js (zona «informes»). -->
+                <section data-seccion="informes" aria-labelledby="titulo-informes" hidden>
+                    <h2 id="titulo-informes" class="font-serif text-2xl font-bold text-brand-800 dark:text-white mb-1">Informes y resultados</h2>
+                    <p class="text-sm text-brand-500 dark:text-brand-300 mb-5">El progreso del alumnado, las encuestas y los resultados de las pruebas. Quién cambió qué está en «Registro de cambios».</p>
+                    <ul data-paginas="informes" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-3"></ul>
+                </section>
+
+                <!-- Las otras páginas del tema de la pestaña abierta (Personas,
+                     Organización, Contenido), debajo de su sección: así cada
+                     página tiene un lugar en este panel, al lado de lo suyo. -->
+                <section id="paginas-zona" aria-labelledby="paginas-zona-titulo" hidden class="mt-10 pt-6 border-t border-brand-200 dark:border-brand-800">
+                    <h2 id="paginas-zona-titulo" class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-3">Otras páginas</h2>
+                    <ul id="paginas-zona-lista" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-3"></ul>
+                </section>
         </div>
+    </div>
+
+    <!-- La ficha de una persona: TODO lo que se le cambia a una cuenta, en un
+         mismo lugar al costado (nombre, correo, grupo, visión, rol, profesores,
+         cómo entra, y lo que se hace de vez en cuando). Antes eran siete
+         columnas de campos editables en cada fila de la lista. Ver «La ficha
+         de cada persona» en docs/decisiones/paneles.md. -->
+    <div id="ficha-velo" hidden class="fixed inset-0 z-[60] bg-brand-950/50"></div>
+    <aside id="ficha-persona" role="dialog" aria-modal="true" aria-labelledby="ficha-titulo" hidden class="fixed inset-y-0 right-0 z-[61] w-full sm:w-[32rem] bg-white dark:bg-brand-900 shadow-2xl flex flex-col">
+        <div class="flex items-start gap-3 px-5 py-4 border-b border-brand-100 dark:border-brand-800">
+            <div class="min-w-0 flex-1">
+                <h2 id="ficha-titulo" tabindex="-1" class="font-serif text-xl font-bold text-brand-800 dark:text-white break-words focus:outline-none"></h2>
+                <p id="ficha-sub" class="text-sm text-brand-500 dark:text-brand-300 mt-0.5"></p>
+            </div>
+            <button type="button" id="ficha-cerrar" class="shrink-0 w-9 h-9 rounded-lg text-xl text-brand-500 dark:text-brand-300 hover:bg-brand-50 dark:hover:bg-brand-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400" aria-label="Cerrar la ficha">✕</button>
+        </div>
+        <div id="ficha-cuerpo" class="flex-1 overflow-y-auto px-5 py-5 space-y-6"></div>
+    </aside>
+
+    <!-- Ctrl + K: buscar en todo el panel (js/buscador-panel.js). -->
+    <div id="buscador-velo" hidden class="fixed inset-0 z-[70] bg-brand-950/50"></div>
+    <div id="buscador" role="dialog" aria-modal="true" aria-label="Buscar en el panel" hidden class="fixed left-1/2 top-[12vh] -translate-x-1/2 z-[71] w-[calc(100%-2rem)] max-w-xl rounded-2xl bg-white dark:bg-brand-900 shadow-2xl border border-brand-100 dark:border-brand-800 overflow-hidden">
+        <label for="buscador-campo" class="sr-only">Busca una persona, una sección o una página</label>
+        <input id="buscador-campo" type="search" autocomplete="off" role="combobox" aria-expanded="true" aria-controls="buscador-lista" aria-autocomplete="list" placeholder="Busca una persona, una sección o una página…" class="w-full px-5 py-4 text-base bg-transparent border-b border-brand-100 dark:border-brand-800 outline-none text-brand-800 dark:text-white">
+        <ul id="buscador-lista" role="listbox" aria-label="Lo que se encontró" class="max-h-[55vh] overflow-y-auto p-2"></ul>
+        <p id="buscador-estado" role="status" class="sr-only"></p>
     </div>
 
     
@@ -571,9 +678,16 @@
     <script src="js/admin-proyectos.js"></script>
     <script src="js/admin-preparacion.js"></script>
     <script src="js/admin-materiales.js"></script>
+    <script src="js/admin-asesores.js"></script>
+    <script src="js/vista-previa.js"></script>
+    <script src="js/admin-archivos.js"></script>
     <script src="js/admin-auditoria.js"></script>
     <script src="js/pendientes.js"></script>
     <script src="js/foto-perfil.js"></script>
+    <script src="js/paginas-admin.js"></script>
+    <script src="js/tarjeta-pagina.js"></script>
+    <script src="js/ficha-lateral.js"></script>
     <script src="js/admin.js"></script>
-<!-- burbuja: inicio --><script src="js/burbuja-en-linea.js" defer></script><!-- burbuja: fin --><!-- juego-aviso: inicio --><script src="js/juego-aviso.js" defer></script><!-- juego-aviso: fin --><!-- aviso-profe: inicio --><script src="js/aviso-profe.js" defer></script><!-- aviso-profe: fin --><!-- tanda: inicio --><script src="js/tanda-diez.js" defer></script><!-- tanda: fin --><!-- acceso: inicio --><script src="js/acceso-vigente.js" defer></script><!-- acceso: fin --><!-- marca: inicio --><script src="js/marca-academia.js" defer></script><!-- marca: fin --><!-- ayuda: inicio --><script src="js/ayuda-guia.js" defer></script><!-- ayuda: fin --><!-- atajo: inicio --><script src="js/atajo-buscar.js" data-arriba="" defer></script><!-- atajo: fin --></body>
+    <script src="js/buscador-panel.js"></script>
+<!-- burbuja: inicio --><script src="js/burbuja-en-linea.js" defer></script><!-- burbuja: fin --><!-- juego-aviso: inicio --><script src="js/juego-aviso.js" defer></script><!-- juego-aviso: fin --><!-- aviso-profe: inicio --><script src="js/aviso-profe.js" defer></script><!-- aviso-profe: fin --><!-- tanda: inicio --><script src="js/tanda-diez.js" defer></script><!-- tanda: fin --><!-- acceso: inicio --><script src="js/acceso-vigente.js" defer></script><!-- acceso: fin --><!-- marca: inicio --><script src="js/marca-academia.js" defer></script><!-- marca: fin --><!-- ayuda: inicio --><script src="js/ayuda-guia.js" defer></script><!-- ayuda: fin --></body>
 </html>

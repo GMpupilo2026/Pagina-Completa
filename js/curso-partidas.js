@@ -41,6 +41,30 @@
       .then((d) => { data = d; return d; });
     return dataPromise;
   }
+  // Un curso grande ("Una clase al día", casi 2000 partidas) no cabe en
+  // un solo archivo: su <slug>.json trae en "trozos" de qué archivo sale cada
+  // partida o ejercicio (data/<slug>/<trozo>.json) y se baja solo el de la
+  // lección abierta.
+  const trozosPedidos = {};
+  function cargarTrozos(ids) {
+    const faltan = {};
+    ids.forEach((id) => {
+      const t = data && !(data.partidas || {})[id] && !(data.ejercicios || {})[id] && (data.trozos || {})[id];
+      if (t) faltan[t] = true;
+    });
+    return Promise.all(Object.keys(faltan).map((t) => {
+      if (!trozosPedidos[t]) {
+        trozosPedidos[t] = fetch(DATA_BASE + slug + "/" + t + ".json", { credentials: "same-origin" })
+          .then((r) => { if (!r.ok) throw new Error("datos " + r.status); return r.json(); })
+          .then((d) => {
+            data.partidas = Object.assign(data.partidas || {}, d.partidas || {});
+            data.ejercicios = Object.assign(data.ejercicios || {}, d.ejercicios || {});
+          })
+          .catch((e) => { delete trozosPedidos[t]; throw e; });
+      }
+      return trozosPedidos[t];
+    }));
+  }
 
   function injectDefs() {
     if (window.ChessPieceSVG) window.ChessPieceSVG.injectDefs();
@@ -780,7 +804,7 @@
     const nodes = pendientes(root);
     if (!nodes.length) return Promise.resolve();
     injectDefs();
-    return loadData(root).then(() => {
+    return loadData(root).then(() => cargarTrozos(nodes.filter((el) => !el.classList.contains("cp-quiz")).map((el) => el.dataset.id))).then(() => {
       nodes.forEach((el) => {
         const id = el.dataset.id;
         if (el.classList.contains("cp-partida")) { const g = data.partidas[id]; if (g) makeGame(el, g); else fallo(el, id); }

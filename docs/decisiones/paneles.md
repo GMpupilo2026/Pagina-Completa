@@ -293,8 +293,9 @@ lista, y el resto se acomoda solo.
   texto no pueden decir cosas distintas). La barra es adorno; el dato es el
   número, y el lector de pantalla dice el día completo. Sale también en el hub.
 - **La campana del alumno.** «🔔 Novedades · 3 nuevas» junto al saludo abre
-  «Lo último que te pasó»: tareas y exámenes nuevos, retos, avisos del profe y
-  las notas que el profe le compartió —lo que le llega como push y, si lo
+  «Lo último que te pasó»: tareas y exámenes nuevos, retos, avisos del profe,
+  las notas que el profe le compartió y los regalos y bromas que le mandó un
+  compañero con sus Puntos Ajedrez —lo que le llega como push y, si lo
   perdía, no quedaba en ninguna parte—. Cinco de cada cosa y del último mes,
   lo que la RLS ya le deja leer, sin nada que guardar aparte. «Nuevo» es lo
   llegado desde la última vez que la abrió en este aparato
@@ -1291,10 +1292,115 @@ segura de poner en tantas páginas.
 
 `admin.html` es de quien administra. Lo que hace está en las secciones de
 abajo (lo urgente, cuentas, profesores…); cómo se reparte en la pantalla, en
-«El panel de Administración, por secciones», y qué va acá y qué en el panel de
-la Academia, en «Una sola puerta para cada cosa».
+«El panel de Administración en seis secciones» (lo vigente) y, antes, «El
+panel de Administración, por secciones»; qué va acá y qué en el panel de la
+Academia, en «Una sola puerta para cada cosa».
+
+### El panel de Administración en seis secciones
+
+El dueño dijo que no le gustaba el panel: **demasiadas secciones, lo de todos
+los días costaba, se veía recargado y todo estaba esparcido, sin orden
+lógico**. Lo que más hace es manejar cuentas y contenido. Primero se le armó
+una maqueta navegable, la aprobó, y se construyó así:
+
+- **Seis pestañas arriba, por tema**: Inicio (lo urgente), Personas,
+  Organización, Contenido, Cobros y accesos, Informes. Eran trece entradas en
+  un menú a la izquierda. Las secciones de siempre cuelgan de su pestaña
+  (`GRUPOS_ADMIN` de `js/admin.js`), y la que tiene varias las enseña debajo
+  como pastillas: Organización (Profesores y coordinadores, Supervisores,
+  Equipos, Preparación de rivales), Contenido (Materiales, Archivos,
+  Proyectos, Salas de torneos, Avisos internos) e Informes (Informes y
+  resultados, Registro de cambios).
+  - **Cada sección sigue siendo un `<section data-seccion>` con sus mismos
+    ids**, y la dirección sigue llevando su nombre (`admin.html#equipos`):
+    los enlaces guardados y las otras páginas que llevan a una sección
+    (coordinación a `#equipos`, la auditoría a `#materiales`) siguen sirviendo.
+  - **Una pestaña recuerda su última sección**: volver a Contenido vuelve a
+    Archivos si ahí se estaba.
+  - **«＋ Crear cuenta» es un botón de arriba, a la vista en todas las
+    pestañas**, y es su única puerta: no está además en el menú.
+  - Los colores siguen siendo los del sitio (el azul de la marca y el ámbar):
+    la cabecera es `bg-brand-900`, que cambia con el tema de la plataforma.
+- **Las páginas de quien administra están en el panel, cada una en la pestaña
+  de su tema.** Antes `admin.html` no llevaba a ninguna («Una sola puerta»):
+  cobros, informes, solicitudes, academias… estaban solo en el panel de la
+  Academia, y quien administraba iba y volvía para todo. Ahora:
+  - **La lista es UNA, `js/paginas-admin.js`**: el panel de la Academia arma
+    `ADMIN_GROUPS` con ella (`window.PaginasAdmin.GRUPOS`) y `admin.html` la
+    reparte por la `zona` de cada página. Escribirla dos veces era que se
+    fueran separando. Una página nueva de quien administra va ahí, con su
+    `zona`, y sale en las dos pantallas.
+  - Cobros y accesos e Informes son pestañas hechas de esas tarjetas; en
+    Personas, Organización y Contenido salen debajo de la sección, en «Otras
+    páginas de …».
+  - Las que no llevan `zona` no salen en `admin.html`: «Administración» (la
+    página misma) y «Configuración» (la cuenta propia).
+  - **Esto cambia la regla de «Una sola puerta para cada cosa» para quien
+    administra**: cada página está una vez en cada uno de sus dos paneles, que
+    leen la misma lista. Dentro de `admin.html` sigue habiendo una sola puerta
+    a cada cosa, y eso es lo que comprueba el verificador.
+- **Ctrl + K busca en todo el panel sin salir** (`js/buscador-panel.js`):
+  personas (abre su ficha), secciones (lleva a ella) y páginas (las abre),
+  sin tildes y también por lo que hace cada página («mensualidades» encuentra
+  Cobros). Sin nada escrito, enseña las secciones y las páginas: es el mapa
+  del panel. Por eso `admin.html` ya no lleva `js/atajo-buscar.js` (que manda
+  a `clases.html?buscar=`): está en `SIN_ATAJO` de `academia-cabecera.py`,
+  junto a `clases.html`. El botón «Ctrl K» del buscador de arriba lo abre con
+  el mouse o en el celular.
+- **Lo de una persona se hace en su ficha**: ver «La ficha de cada persona».
+- Lo prueban `pruebaUnaSolaPuerta` («Seis pestañas, y cada cosa en una»: las
+  pestañas, que cada sección se alcance y ninguna sobre, que «Crear cuenta»
+  tenga una puerta, que cada página con `zona` salga una vez en su pestaña y
+  lleve a un archivo que existe, que `clases.js` use la misma lista y que no
+  haya otros enlaces sueltos), `pruebaSecciones` (la pestaña marcada, sus
+  secciones debajo, las otras páginas y que vuelva a la última) y
+  `pruebaBuscador` en `verificar-admin.js`. Probado rompiéndolo: una página
+  repetida con otra `zona`, o un `href` mal escrito, saltan.
+
+### La ficha de cada persona
+
+La lista de cuentas era una tabla de **siete columnas de campos editables**
+(nombre, rol, grupo, profesores, visión) más una fila de botones por persona
+(reenviar acceso, usuario y contraseña, quitar foto, quitar verificación,
+hacer administrador, eliminar). Con cincuenta filas era una pared, y lo de una
+misma persona estaba repartido en siete lugares.
+
+- **La fila solo dice quién es**: nombre, correo debajo, rol, grupo, sus
+  profesores (o «Sin profesor», escrito) y cuándo se creó. Ningún campo para
+  editar. El nombre es el botón que abre la ficha («Abrir la ficha de …»); el
+  botón «Abrir ficha» de la punta hace lo mismo con el mouse y no es otra
+  parada del Tab.
+- **La ficha va al costado** (`#ficha-persona`, `role="dialog"`,
+  `aria-modal`), en cuatro bloques: «Sus datos» (nombre, correo, grupo,
+  visión), «Rol y a cargo» (rol, sus profesores, y el atajo a su informe o a
+  su panel), «Cómo entra» (reenviar acceso, usuario y contraseña, quitar la
+  verificación) y «De vez en cuando» (quitar la foto, hacer administrador,
+  eliminar la cuenta). En el celular ocupa toda la pantalla.
+- **Nada de lo que se guarda cambió**: son los mismos `callAdmin`, `rpc` y
+  Edge Functions que tenían los campos de la fila, con sus mismos textos de
+  confirmación. Solo cambió dónde están.
+- **La ficha nunca enseña datos viejos**: se arma de nuevo cada vez que se
+  abre y cada vez que la lista se vuelve a cargar (`refrescarFicha()` al final
+  de `loadUsers()`: un cambio de rol, una cuenta borrada). Un cambio en la
+  ficha repinta la fila de atrás.
+- **El teclado**: al abrir, el foco va al nombre de la persona; Tab no se
+  escapa detrás de la ficha; Escape o un clic afuera la cierran y el foco
+  vuelve al nombre de la fila (al de la lista nueva, si se repintó). Con un
+  aviso de `js/avisos.js` encima, Escape es del aviso.
+- **«Usuario y contraseña» sigue abierto** al cerrar y volver a abrir la ficha
+  de esa persona (`accesoAbierto`), como antes al repintar la tabla.
+- La marca para asignar en lote sigue en la fila: es para muchos a la vez.
+- Lo prueban `pruebaFichaDePersona`, `pruebaElNombreNoSeCorta` (la fila sin
+  campos y con siete columnas, y el nombre entero en la fila y en la ficha) y
+  `pruebaUsuarioYContrasena` en `verificar-admin.js`;
+  `verificar-varios-profesores.js` y `verificar-vision-cuenta.js` cambian
+  profesores y visión desde la ficha. Probado rompiéndolo: si la ficha manda
+  el `target_id` de otra persona o el foco no vuelve, saltan.
 
 ### El panel de Administración, por secciones
+
+(Lo que sigue es el paso anterior, el menú a la izquierda. Hoy son seis
+pestañas: ver «El panel de Administración en seis secciones».)
 
 Era **una sola página larguísima**: el botón de Informes, «Ver como», los
 atajos, cinco tarjetas plegadas (crear cuenta, novedades, profesores,
@@ -1404,7 +1510,9 @@ muchos:
   de alumnos sin profesor, en Inicio, en el menú y en Profesores.
 
 La regla que quedó: **cada pantalla hace lo suyo, y cada destino tiene una sola
-puerta.**
+puerta.** (Para quien administra cambió después: `admin.html` también lleva a
+sus páginas, desde la misma lista que el panel de la Academia. Ver «El panel
+de Administración en seis secciones».)
 
 - **El panel de la Academia (`clases.html`, `ADMIN_GROUPS`) tiene TODAS las
   páginas**, que es donde entra quien administra: Administración (esta
@@ -1440,7 +1548,78 @@ puerta.**
   Academia y se consultan seguido: en el tema `diagnostico` había que bajar a
   buscarlos.
 
+### La página de supervisión
+
+Después del panel de administración, el dueño pidió «la misma revisión» para
+quien supervisa. Su panel era el de la Academia con «Lo urgente», tres números
+y dieciséis tarjetas en cinco grupos; corregir una cuenta mandaba a
+Coordinación y ver cómo iba un profesor, a Supervisión. Se le armó una
+maqueta, la aprobó y eligió que fuera **una página propia**: `supervisor.html`
+(`js/supervisor.js`).
+
+- **Al entrar, el panel de la Academia lo lleva ahí** (`esSupervisorSolo()` en
+  `js/clases.js`, con `location.replace`). Con `?buscar=` (el Ctrl + K de otra
+  página) llega buscando: el buscador se abre con eso. El panel de tarjetas
+  (`SUPERVISOR_GROUPS`) queda para quien administra cuando mira el de un
+  supervisor (`_persona` o «Ver como: supervisor»): ahí no se redirige.
+- **«Ver como» de quien supervisa pasó a las fichas.** En su panel tenía un
+  selector con sus profesores y coordinadores; ahora la ficha de cada uno
+  (Personas y Profesores) trae «👁 Ver su panel →», que es
+  `clases.html?ver_como=<id>`, el mismo enlace de `supervision.html`: solo
+  fija a alguien de la lista que da la base, y «Volver a mi vista» lo trae de
+  nuevo a `supervisor.html`. Lo prueba `verificar-ver-como.js`.
+- **Cinco pestañas**, con la dirección en la pestaña (`supervisor.html#profesores`):
+  - **Inicio**: «Esperan por ti» (`Pendientes.pintar`, la misma tarjeta del
+    panel de la Academia, ahora en `js/pendientes.js`), «A tu cargo»
+    (`Pendientes.aCargo`: estudiantes, profesores y los suyos sin entrenar;
+    cada número lleva a esa gente) y «Ahora mismo»: quién de su gente está
+    dando clase, con «Mirar la clase». La pestaña lleva cuántas cosas urgentes
+    hay.
+  - **Personas**: su gente, de la base y de a 50 (`mi_gente`), con la ficha al
+    costado. **La ficha es la de Coordinación**: se sacó de `js/coordinacion.js`
+    a `js/cuenta-coordinacion.js` (`CuentaCoord.botones` y `montarFicha`), y
+    las dos páginas la usan. Lo que se guarda va por las mismas `coord_*` y
+    Edge Functions, que deciden el alcance.
+  - **Profesores**: el mes de cada uno en una tabla (clases, alumnos que
+    entrenaron, el estado del informe, si está en clase), de
+    `resumen_profesores_supervisados()`, lo mismo que lee `supervision.html`.
+    Su ficha trae sus números (`ActividadProfesor.tarjetas`) y lleva a leer y
+    comentar el informe en `supervision.html?profesor=<id>`, que abre en su
+    tarjeta. El estado del informe (`ActividadProfesor.estadoInforme`) se
+    sacó de `supervision.js` para no escribirlo dos veces.
+  - **Estudiantes**: una tarjeta por tema de Informes (asistencia, sin
+    entrenar, diagnóstico, cursos, táctica, habilidades). El panel de la
+    Academia dejó UNA tarjeta a Informes porque la página ya trae su selector;
+    acá cada tema es una puerta a la vista, que es lo que se pidió. Cada
+    `?tema=` se comprueba contra el selector de `informes.html`.
+  - **Cobros y accesos**: saldos vencidos y recibos por entregar, contados en
+    la base (un conteo que falla dice «no se pudo contar», nunca cero).
+- **Las páginas de quien supervisa son UNA lista**, `js/paginas-supervisor.js`:
+  el panel de la Academia arma `SUPERVISOR_GROUPS` con ella y
+  `supervisor.html` las pone debajo de su pestaña según `zona`. `panel`
+  cambia cómo se llama una ahí: «Cuentas» es la pestaña Personas misma, así
+  que de Coordinación queda lo que solo está allá, los equipos.
+- **Lo que comparte con `admin.html`**: la ficha lateral (`js/ficha-lateral.js`:
+  abrir, cerrar, el foco que no se escapa y que vuelve a la fila), la tarjeta
+  de página (`js/tarjeta-pagina.js`) y Ctrl + K (`js/buscador-panel.js`, antes
+  `admin-buscador.js`): cada panel le dice qué buscar en
+  `window.PanelBuscador`. Acá las personas las busca la base (`mi_gente` con
+  lo escrito), no la lista que está pintada. `supervisor.html` va en
+  `SIN_ATAJO`.
+- Lo prueban `pruebaSupervisor`, `pruebaFichasDeSupervision` y
+  `pruebaBuscadorSupervision` en `verificar-supervisor.js`: que el panel lo
+  lleve ahí, las pestañas, lo urgente contado en la base y sin sus propios
+  informes, «sin entrenar» solo de los suyos, quién está en clase, cada página
+  una vez en su pestaña y a un archivo que existe, nada de entrenar ni jugar,
+  los temas de Informes, la ficha (guarda a esa persona y el foco vuelve) y
+  Ctrl + K, también llegando con `?buscar=`. Probado rompiéndolo: sin la
+  redirección o con un tema que no existe, salta.
+
 ### El panel de quien supervisa, sin caminos repetidos
+
+(El panel de tarjetas que sigue es el que ve hoy quien administra al mirar el
+de un supervisor. Quien supervisa entra a su página: ver «La página de
+supervisión».)
 
 Lo mismo que en administración, pedido por el dueño para el panel de quien
 supervisa (`SUPERVISOR_GROUPS` y `cargarUrgenteSupervisor()` de
@@ -1538,6 +1717,51 @@ su lugar y sin caminos repetidos.
   y que sin supervisión no se reclame), `pruebaPreparacionRivales` y
   `pruebaCoordinadorRecortado` en `verificar-panel.js`. Rompiendo a propósito
   el filtro `soloAlumno` o dando el informe por enviado, saltan.
+
+### El panel del profe, más corto
+
+El pedido: que el trabajo del profe sea más fácil y menos enredado, que sienta
+la plataforma simple y no quiera irse a probar otras. Medido en la
+computadora, sus herramientas («Tus alumnos», «Tus clases») empezaban recién a
+~1800 px: arriba iba, siempre abierto, el formulario de «Aviso a tus
+alumnos», y abajo dos grupos que no son para dar clase.
+
+- **El aviso va plegado.** Queda el título, el botón «Escribir un aviso»
+  (`aria-expanded`, lleva el foco al texto) y, sin abrir nada, sus últimos
+  avisos con quién los leyó, que es lo que se vuelve a mirar. Mandar un aviso
+  es de un día puntual; tenerlo abierto le cobraba media pantalla todos los
+  días.
+- **«Aprender» y «Jugar y competir» arrancan cerrados también en la
+  computadora** (`cerrado` en `ordenarPanelDocente()`), y se recuerda si los
+  abre (`panel_grupos_abiertos_v1`, la misma clave de siempre). Así lo de sus
+  alumnos y sus clases queda junto. La página bajó de 4128 a 3505 px.
+- Lo prueban `pruebaPlegables` (`verificar-panel.js`) y
+  `verificar-aviso-profe.js`.
+
+### Tu próxima clase, también para el profe
+
+El alumno veía cuándo era su próxima clase; el profe, que es quien puso el
+horario, no lo veía en ningún lado de su panel. Ahora la tarjeta de «Iniciar
+clase» lo dice (`#profe-proxima`, `pintarProximaDelProfe()` en
+`js/clases.js`):
+
+- «Tu próxima clase: Grupo 7B, mañana a las 4:00 p. m., presencial. Ver tu
+  horario». El nombre es el título de la clase, o su subgrupo
+  (`mis_subgrupos()`), o «Grupo X».
+- **Desde 15 minutos antes y mientras dura**: «Te toca clase ahora…» y el
+  título de la clase **ya escrito** en el campo (si no escribió otro): abrirla
+  es un solo toque.
+- **Sin horario, lo invita a ponerlo** (`asistencia.html#horario`): sin él
+  tampoco funcionan la ficha de asistencia llena ni «Tu próxima clase» del
+  alumno.
+- Su horario lo lee él mismo por la RLS de `horario_clases`, así que no hizo
+  falta ninguna función nueva; la cuenta de cuándo toca se hace en el
+  navegador con los días de `HoraCR` (Costa Rica es siempre UTC−6) y mira
+  una semana, igual que `mi_proxima_clase()`.
+- **Solo a quien da clase (`role === "profesor"`), en su propio panel** y sin
+  clase abierta: quien administra no da clase, y mirando a otra persona no es
+  su horario.
+- Lo prueba `pruebaProximaDelProfe` en `verificar-panel.js`.
 
 ### El recorrido del profesor nuevo
 
@@ -2690,7 +2914,7 @@ análisis.
 - después se miran las jugadas del ganador desde 3 antes del cambio hasta
   que cobra;
 - la primera con patrón es el tema, en este orden: jaque doble, descubierta,
-  horquilla, clavada, enfilada, eliminación del defensor;
+  tenedor, clavada, enfilada, eliminación del defensor;
 - si ninguna tiene patrón: coronación; si no, pieza sin defender (la dejó
   colgada o atacada por una de menos valor); si no, «otra»;
 - las partidas que terminan en mate sin haber perdido material son «mate del
@@ -2709,7 +2933,7 @@ rival dejó colgada. En partidas de prueba, las «clavadas» bajaron de 16 a 3.
   `entreno/temas.html?tema=` (fork, pin, skewer, discoveredAttack…).
 - El resumen, en «En toda la partida», suma los temas que pesan (3 partidas o
   más y al menos el 15 % de las que se decidieron por material):
-  - con qué pierde va como «Busca horquillas: es con lo que más pierde»;
+  - con qué pierde va como «Busca tenedores: es con lo que más pierde»;
   - con qué gana, como «Cuidado con sus clavadas».
   - Si lo táctico ya dice que pierde por mate, «Ataca a su rey» no se repite.
 
@@ -2721,7 +2945,7 @@ material (por tiempo, en lo posicional o por abandono) no entran, y la tarjeta
 dice cuántas son.
 
 **Ninguna posición se inventa.** Las pruebas usan posiciones armadas para
-cada tema, y cada jugada se comprueba con chess.js: horquilla de caballo,
+cada tema, y cada jugada se comprueba con chess.js: tenedor de caballo,
 clavada de la dama contra el rey, enfilada, descubierta con jaque, torre
 colgada, mate del pasillo y eliminación del defensor. También usan dos
 partidas reales desde el inicio: el mate de Légal y la trampa de la Petrov

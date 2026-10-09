@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dama y peón juntos — Los cimientos del ajedrez — material de estudio</title>
+<meta name="robots" content="noindex">
+<meta name="author" content="Oscar Angulo Cubero">
+<meta name="description" content="Material de estudio en formato accesible de la lección 61 del curso Los cimientos del ajedrez.">
+<style>
+  /* Sin imágenes y sin columnas a propósito: esta versión está hecha para
+     lectores de pantalla y para quien necesita agrandar mucho el texto. */
+  body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+         font-size: 1.15rem; line-height: 1.8; color: #102a43; background: #ffffff;
+         max-width: 42rem; margin: 0 auto; padding: 1.5rem 1rem 4rem; }
+  h1 { font-size: 1.7rem; line-height: 1.3; }
+  h2 { font-size: 1.3rem; margin-top: 2.5rem; border-bottom: 2px solid #102a43; padding-bottom: .3rem; }
+  h3 { font-size: 1.1rem; margin-top: 1.8rem; }
+  a { color: #8a4a00; }
+  dt { font-weight: 700; margin-top: 1rem; }
+  dd { margin: .3rem 0 0; }
+  .posicion { border: 2px solid #243b53; border-radius: .5rem; padding: 1rem; margin: 1rem 0; }
+  .respuesta { background: #f0f4f8; border-left: 4px solid #102a43; padding: .6rem .9rem; }
+  footer { margin-top: 3rem; border-top: 2px solid #102a43; padding-top: 1rem; font-size: .95rem; }
+  /* La vuelta a la plataforma. Este archivo se abre solo, en su propia
+     pestaña: sin estos enlaces no hay forma de regresar al curso salvo el
+     botón "atrás" del navegador, que con lector de pantalla no siempre está
+     a mano. Van arriba y abajo: el documento es largo y quien termina de
+     leerlo no tendría que subir de nuevo para salir. */
+  .volver { margin: 0 0 1.5rem; font-size: 1rem; }
+  footer .volver { margin: 1rem 0 0; }
+  .volver a { display: inline-block; padding: .2rem 0; }
+  @media (prefers-color-scheme: dark) {
+    body { background: #0a1f33; color: #f0f4f8; }
+    h2, footer { border-color: #f0b429; }
+    a { color: #f0b429; }
+    .posicion { border-color: #829ab1; }
+    .respuesta { background: #102a43; border-color: #f0b429; }
+  }
+</style>
+</head>
+<body>
+<nav class="volver" aria-label="Volver a la plataforma">
+  <a href="../../academia/los-cimientos-del-ajedrez.html">← Volver al curso Los cimientos del ajedrez</a>
+  ·
+  <a href="../../../clases.html">Panel de Academia</a>
+</nav>
+<header>
+  <p>Los cimientos del ajedrez · Lección 61</p>
+  <h1>Dama y peón juntos</h1>
+  <p>Material de estudio en formato accesible. Autor: Oscar Angulo Cubero, Ajedrez Integral.</p>
+  <p>Esta versión dice en palabras todo lo que en el cuadernillo en PDF está dibujado: cada
+     posición viene descrita pieza por pieza, así que no hace falta ver ninguna imagen.</p>
+</header>
+
+<h2>1. De qué trata esta lección</h2>
+
+<p>Un peón que llega a f6, g6 o h6 frente al enroque rival, o a f3, g3 o h3 frente al blanco, se convierte en una cuña muy molesta: quita casillas al rey y sirve de apoyo para que la dama entre. Con un peón en f6, por ejemplo, la dama que llega a g7 o a h8 suele dar mate. Lo mismo pasa con un peón en séptima que amenaza coronar: la dama lo apoya y el rival tiene que ocuparse de los dos a la vez.</p>
+<p>Las señales son un peón tuyo clavado en el campo rival, sobre todo uno que el enemigo ya no puede capturar con facilidad, y una ruta para que tu dama llegue a las casillas que ese peón protege. Si el rey rival tiene pocas casillas y una de ellas está cubierta por tu peón, busca dónde puede aterrizar la dama. También vale la pena mirar si la dama puede apoyar la coronación del peón con jaques.</p>
+<p>La técnica más común es llevar la dama a la casilla que defiende el peón, a veces sacrificando antes una pieza para abrir paso. Un peón avanzado a veces vale más que una pieza, y por eso entregar material para mantenerlo puede ser correcto. El error típico del defensor es dejar que el peón se instale; el del atacante, olvidar que si el peón cae, el ataque entero se desmorona. Protégelo antes de lanzar la dama.</p>
+
+
+<h2>2. Conceptos clave</h2>
+<dl>
+  <dt>Jaque, mate y ahogado</dt>
+  <dd>Jaque es atacar al rey; mate es atacarlo sin que tenga salida; ahogado es que NO esté atacado y aun así no tenga ninguna jugada legal, y eso son tablas.</dd>
+  <dd><strong>El error de siempre:</strong> Buscar el jaque en vez del mate. Dar jaques sueltos deja al rey rival mejor colocado y gasta tiempo. Y en finales ganados, empujar sin mirar: entregar el ahogado es la forma más cara de no ganar.</dd>
+  <dd><strong>Para verlo:</strong> Rey y dama contra rey solo: si el rey negro está en a8 y pones la dama en b6, no hay jaque, pero tampoco hay jugada legal. Es ahogado y la partida queda en tablas con dama de más.</dd>
+  <dt>La coronación y el peón pasado</dt>
+  <dd>Un peón que llega a la octava fila se cambia por dama, torre, alfil o caballo, a elección y sin importar las piezas que ya haya en el tablero. Un peón pasado es el que no tiene peones rivales delante ni en las columnas vecinas.</dd>
+  <dd><strong>El error de siempre:</strong> Coronar siempre dama. Hay posiciones en que la dama ahoga al rival y la torre gana, y otras en que el caballo da un jaque que la dama no da. Coronar en algo que no es dama tiene nombre —subpromoción— y decide partidas.</dd>
+  <dd><strong>Para verlo:</strong> Con peón en g7 y el rey negro encerrado, coronar dama puede ser ahogado; coronar torre da mate en dos. Vale la pena mirar antes de apretar.</dd>
+  <dt>La iniciativa</dt>
+  <dd>Tenerla es obligar: el rival contesta a lo que tú haces en vez de hacer lo suyo. No es material y no dura para siempre: o se convierte en algo o se pierde.</dd>
+  <dd><strong>El error de siempre:</strong> Soltarla por comer un peón. Perder dos tiempos por un peón devuelve el turno al rival justo cuando estaba obligado, y la ventaja se desarma.</dd>
+  <dd><strong>Para verlo:</strong> En un gambito aceptado, el que entregó el peón tiene iniciativa: cada jugada suya es una amenaza, y el rival no alcanza a desarrollar. Si la iniciativa se apaga, queda un peón menos y nada más.</dd>
+</dl>
+
+<h2>3. Ejemplos del curso</h2>
+<div class="posicion">
+  <h3>Posición 1: ¿Qué casillas cerca del rey cubre el peón avanzado, y puede llegar la dama a alguna? Juegan las negras; el rival acaba de jugar torre bella 7.</h3>
+  
+  <p>Piezas blancas: rey en g1; dama en c2; torre en b7; alfil en d3; caballo en e2; peones en a2, d4, e3, f2, f3, g4.</p>
+  <p>Piezas negras: rey en g7; dama en a5; torre en e8; caballos en d7, f6; peones en a7, d5, f7, g5, h4.</p>
+  <p>Juegan las negras.</p>
+  
+  <p>La línea, jugada por jugada: 25… dama eva 1 jaque, 26. rey gustav 2, hector 3 jaque</p>
+  <p>Resultado: Ganan negras</p>
+  <p>25… dama eva 1 jaque, 26. rey gustav 2, hector 3 jaque. El peón avanzado cierra casillas al rey y la dama aprovecha justo esas casillas para rematar. (Ejercicio 0Dwkb de la base abierta de Lichess (CC0), rating 1085. Stockfish 16 a profundidad 18: dama eva 1 jaque es la mejor (+6,1) y la segunda queda en -1,5.)</p>
+  <p>Posición en notación FEN, por si la quieres cargar en un programa: 4r3/pR1n1pk1/5n2/q2p2p1/3P2Pp/3BPP2/P1Q1NP2/6K1 b - - 2 25</p>
+</div>
+
+<h2>4. Ejercicios</h2>
+<ol>
+  <li>Da mate con rey y dama contra rey solo en menos de diez jugadas, empezando con el rey negro en el centro. Hazlo tres veces sin ahogarlo.</li>
+  <li>Arma tres posiciones de ahogado distintas y anótalas. Verlas te enseña a olerlas cuando vas ganando.</li>
+  <li>Pon un peón blanco en cada columna, por turnos, con el rey negro a distintas distancias, y decide con la regla del cuadrado si corona. Después compruébalo jugando.</li>
+  <li>Busca en tus partidas una posición donde tuviste peón pasado y no lo usaste. Casi siempre hay una.</li>
+  <li>Revisa una partida tuya y marca en cada jugada quién estaba obligando. Vas a ver el momento exacto en que se te escapó.</li>
+  <li>Juega tres partidas con el compromiso de no comer ningún peón lateral mientras tengas amenazas que hacer.</li>
+</ol>
+
+<h2>5. Preguntas con su respuesta</h2>
+<p>Contesta en voz alta antes de seguir leyendo: la respuesta viene justo después de cada pregunta.</p>
+<ol>
+  <li>
+    <p>¿Cuáles son las tres maneras de salir de un jaque?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Mover el rey, capturar la pieza que da jaque o interponer una pieza en el camino. Contra un jaque de caballo la interposición no existe: solo mover o capturar.</p>
+  </li>
+  <li>
+    <p>¿Por qué el ahogado son tablas y no derrota?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Porque quien está ahogado no está en jaque: no se le puede dar mate. La regla premia al que se quedó sin jugadas, y por eso es un recurso defensivo real.</p>
+  </li>
+  <li>
+    <p>¿Cómo se evita el ahogado en un final de dama contra rey?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Acercando el rey propio antes de cerrar la jaula, y dejando siempre al rey rival una casilla mientras no sea mate. La regla práctica: si vas a encerrarlo, que sea con el rey cerca.</p>
+  </li>
+  <li>
+    <p>¿Un rey puede quedar al lado del otro?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> No. Un rey no puede moverse a una casilla atacada, y el otro rey ataca las suyas. Por eso los reyes nunca se tocan.</p>
+  </li>
+  <li>
+    <p>¿Un peón puede coronar en una pieza que ya está en el tablero?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Sí. Se pueden tener dos, tres o nueve damas: la regla no limita cuántas piezas iguales hay.</p>
+  </li>
+  <li>
+    <p>¿Qué hace peligroso a un peón pasado?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Que nadie lo puede frenar con peones: hay que gastarle una pieza. Una pieza atada a vigilar un peón vale la mitad, y por eso el peón pasado gana finales.</p>
+  </li>
+  <li>
+    <p>¿Qué es un peón pasado lejano y por qué gana?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> El que está en el ala contraria a donde están los reyes. Obliga al rey rival a correr a pararlo, y mientras tanto el propio rey se come los peones del otro lado.</p>
+  </li>
+  <li>
+    <p>¿Cuál es la regla del cuadrado?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Traza un cuadrado entre el peón y su casilla de coronación: si el rey defensor puede entrar en ese cuadrado en su jugada, atrapa al peón; si no, corona solo. Si el peón todavía no se movió, cuenta desde la tercera fila.</p>
+  </li>
+  <li>
+    <p>¿Cómo se sabe si tienes la iniciativa?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Mira las últimas cinco jugadas del rival: si todas fueron respuestas a algo tuyo, la tienes.</p>
+  </li>
+  <li>
+    <p>¿Iniciativa es lo mismo que ataque?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> No. El ataque va contra el rey; la iniciativa es obligar al rival en cualquier parte del tablero. Un ataque casi siempre nace de una iniciativa que se mantuvo.</p>
+  </li>
+  <li>
+    <p>¿Cómo se defiende quien no la tiene?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Cambiando piezas, devolviendo material para desactivar amenazas y buscando un golpe en el centro. Defender pasivo y esperar rara vez funciona.</p>
+  </li>
+  <li>
+    <p>¿Por qué se dice que la iniciativa es del que mueve?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Porque mover primero es un derecho: las blancas empiezan con medio tiempo de ventaja y toda la teoría de aperturas es una discusión sobre si eso alcanza para algo.</p>
+  </li>
+</ol>
+
+<h2>6. Fuentes</h2>
+<ul>
+  <li>Texto de la lección: curso «Los cimientos del ajedrez» de Ajedrez Integral, de Oscar Angulo Cubero.</li>
+  <li>Conceptos, preguntas y ejercicios de este cuadernillo: material didáctico de Ajedrez Integral, de Oscar Angulo Cubero.</li>
+  <li>Posiciones: archivo de posiciones del propio curso, verificadas jugada por jugada con chess.js y evaluadas con el motor Stockfish que el sitio usa.</li>
+</ul>
+<h3>Para seguir leyendo</h3>
+<p>Obras de referencia sobre estos temas. Este material no reproduce texto de ellas: se listan como lectura recomendada, no como origen de lo que aquí se dice.</p>
+<ul>
+  <li>Irving Chernev, «Logical Chess: Move by Move» (Batsford, 1957).</li>
+  <li>José Raúl Capablanca, «Fundamentos del ajedrez» (1921).</li>
+  <li>Leyes del Ajedrez de la FIDE, FIDE Handbook, capítulo E.I.01.</li>
+  <li>Aron Nimzowitsch, «Mi sistema» (1925).</li>
+  <li>Andrew Soltis, «Pawn Structure Chess» (1976).</li>
+</ul>
+
+<footer>
+  <p>© 2026 Oscar Angulo Cubero · Ajedrez Integral. Material de uso docente para alumnos de la Academia.</p>
+  <p>No se autoriza su reproducción ni su distribución fuera de ella.</p>
+<p class="volver">
+  <a href="../../academia/los-cimientos-del-ajedrez.html">← Volver al curso Los cimientos del ajedrez</a>
+  ·
+  <a href="../../../clases.html">Panel de Academia</a>
+</p>
+</footer>
+</body>
+</html>

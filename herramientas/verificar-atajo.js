@@ -19,7 +19,7 @@ const { chromium } = require("playwright");
 const CHROME = process.env.CHROME_PATH || "/opt/pw-browsers/chromium-1194/chrome-linux/chrome";
 const BASE = process.env.BASE_URL || "http://localhost:8777";
 const RAIZ = path.join(__dirname, "..");
-const SIN_ATAJO = new Set(["clases.html", "sesion.html", "examen.html"]);
+const SIN_ATAJO = new Set(["clases.html", "admin.html", "supervisor.html", "sesion.html", "examen.html"]);
 
 let fallos = 0;
 function cierto(nombre, valor, detalle) {
@@ -52,7 +52,7 @@ function pruebaEstatica() {
     if (SIN_ATAJO.has(rel)) { if (lleva) problemas.push(`${rel}: no debería llevarlo`); continue; }
     if (!s.includes(etiqueta)) problemas.push(`${rel}: falta ${etiqueta}`);
   }
-  cierto(`las ${paginas.length - SIN_ATAJO.size} páginas lo cargan, con su ruta, y las tres de la excepción no`,
+  cierto(`las ${paginas.length - SIN_ATAJO.size} páginas lo cargan, con su ruta, y las de la excepción no`,
     problemas.length === 0, "corre python3 herramientas/academia-cabecera.py:\n      " + problemas.join("\n      "));
   cierto("y son de verdad muchas (si esto da pocas, el barrido está roto)", paginas.length >= 60, "encontró " + paginas.length);
 }

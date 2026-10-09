@@ -1,6 +1,6 @@
 /* Ajedrez Integral — el tema más flojo de cada alumno.
  *
- * En qué MOTIVO (clavada, horquilla, mate del pasillo…) le cuesta más resolver
+ * En qué MOTIVO (clavada, tenedor, mate del pasillo…) le cuesta más resolver
  * limpio, sin error ni pista. La cuenta la hace la base,
  * informes_tema_mas_flojo(p_temas), sobre lo que la RLS deja ver: el alumno lo
  * suyo, el profesor sus alumnos, administración todos. Acá solo se le manda la

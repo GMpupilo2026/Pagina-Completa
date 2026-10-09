@@ -1000,12 +1000,71 @@ administración, `precios.html` y el aviso. Está probado que falla de verdad:
 con la pregunta por la prueba después del interruptor, con el desbloqueo antes
 de activar y sin la comprobación de `is_admin`, salta.
 
+## Las cuentas temporales
+
+Una cuenta de alumno que **se cierra sola en una fecha**. La primera vez fue
+para el taller «Formación Ajedrez» de los asesores regionales del MEP: 27
+cuentas en la academia MEP que valen hasta el 20 de diciembre de 2026.
+
+**Por qué no la prueba gratis.** Ya cerraba una cuenta en una fecha, pero dice
+lo que es: el panel avisaba «Estás en tu prueba gratis: te quedan 73 días» y al
+final «Tu prueba gratis de 3 días terminó», con la salida a los precios, a gente
+a la que se le dio la cuenta. Además, `prueba_gratis_activar()` solo acepta una
+cuenta creada hace menos de 10 minutos y con la aceptación legal, y la lista de
+pruebas de administración (para ofrecerles la cuenta) se habría llenado de
+asesores. La cuenta temporal es lo mismo con su nombre: quién, hasta cuándo y
+por qué.
+
+- **`public.cuentas_temporales`** (`persona_id`, `vence`, `detalle`, quién y
+  cuándo la fijó). Reparte acceso, así que **no tiene política de escritura**:
+  la persona ve la suya, administración todas, y la bitácora la anota
+  (`auditar`, en `VIGILADAS`).
+- **La escribe `cuentas_temporales_fijar(personas, vence, detalle)`**, solo
+  quien administra (`coalesce(soy_admin(), false)`). Con `vence` en null la
+  quita y la cuenta vuelve a ser normal: así se alarga o se reabre. Solo acepta
+  **cuentas de alumno**: el corte de `acceso_vigente()` no alcanza a quien da
+  clase o administra, y una fila que no corta nada sería una promesa falsa.
+  Pide el `detalle` (el taller), porque es lo que lee la persona al cerrarse.
+  Por ahora no tiene pantalla: se llama desde el SQL de Supabase.
+- **El corte lo hace la base, igual que con la prueba**: `acceso_vigente()`
+  pregunta por la cuenta temporal **antes** que por la prueba y por el
+  interruptor. Con el interruptor apagado una cuenta normal entra sin límite, y
+  la temporal no; con el interruptor encendido, la temporal entra hasta su
+  fecha aunque no tenga paquete (vale como un paquete que termina ese día). Con
+  un paquete vigente vuelve a entrar.
+- **`mi_acceso()` dice `temporal`** (con `vence`, `detalle` y los `dias` de
+  calendario que quedan, contados en hora de Costa Rica) **o
+  `temporal_vencida`**. `js/acceso-vigente.js` avisa en el panel solo la última
+  semana («Tu cuenta temporal se cierra en 3 días (el 20 de diciembre de
+  2026)») —73 días de franja serían ruido—, y al cerrarse tapa con «Tu cuenta
+  temporal se cerró», el taller y el día, y el WhatsApp para pedir que la
+  alarguen. **Sin la salida a los precios**: nadie la compró.
+- `vence` es un instante: «se cierra el 20 de diciembre» se guarda como
+  `2026-12-20 00:00` de Costa Rica (`06:00` UTC). Ese día ya no entra.
+
+Comprobado impersonando roles en SQL, en un bloque que se revierte solo y antes
+de aplicarla: un alumno sin fila no cambia (`sin_exigir`); el alumno no se fija
+ni se quita la fecha (42501) ni escribe la tabla directo (42501); no se le puede
+fijar a una profesora ni sin detalle; con la fecha por delante entra, también
+con el interruptor encendido y sin paquete, y escribe actividad; con la fecha
+atrás `acceso_vigente()` da false y el insert de `platform_activity_log` se
+rechaza con 42501; al quitarla vuelve a `sin_exigir`; la prueba gratis sigue
+igual (`prueba` / `prueba_vencida`), y la bitácora anota el alta y la baja con
+quien las hizo.
+
+**Al tocar las cuentas temporales, `acceso_vigente()` o `mi_acceso()`, correr
+`node herramientas/verificar-cuentas-temporales.js`** (y el de la prueba
+gratis). Lee `supabase/` (que la última `acceso_vigente()` pregunte por la
+cuenta temporal antes que por el interruptor, la única política de lectura, el
+trigger, los permisos de la función) y prueba el aviso en el navegador.
+
 ## La tienda de materiales: montada, con precio, y todavía cerrada
 
 `tienda.html` es el catálogo de venta de lo que este repositorio ya produjo:
 los doce cursos con su material de clase y los cinco libros y guías. **Cada
-material vale ₡5.000**, y los seis módulos del anuncio —«¿Eres entrenador de
-ajedrez?»— son la forma en que se presenta el paquete completo.
+material vale ₡5.000** —salvo uno, abajo—, y los seis módulos del anuncio
+—«¿Eres entrenador de ajedrez?»— son la forma en que se presenta el paquete
+completo.
 
 **Hoy solo la ve quien administra**, a propósito: está montada entera para
 poder revisarla antes de abrirla, no para vender todavía. El candado es
@@ -1039,6 +1098,34 @@ quede distinta.
   portada pública, un libro es su primer archivo) en vez de escribirse
   diecisiete veces, donde el que se olvidara quedaría con un botón que no lleva
   a ninguna parte.
+
+### Un material con su propio precio: «Una clase al día»
+
+El dueño pidió poner en la tienda «Una clase al día» (entonces «Las mil y una
+lecciones de ajedrez») y
+calcularle el precio. A ₡5.000 habría valido lo mismo que un curso de diez
+lecciones, y son 360. El precio **no se puso a ojo: sale de las dos reglas que
+la tienda ya tenía**. Son doce bloques, cada uno del tamaño de un curso grande
+del catálogo (de 6 a 58 lecciones, 30 en promedio; los demás cursos traen de 10
+a 36) y con su tomo del libro: doce materiales a `PRECIO` son ₡60.000, y con
+`DESCUENTO_PACK` (el 40 % de llevarse muchos juntos), **₡36.000**: ₡100 por
+lección, contra unos ₡290 de los demás cursos.
+
+- **El precio se calcula en el catálogo**, con `PRECIO` y `DESCUENTO_PACK`: si
+  el dueño cambia cualquiera de los dos, este se mueve solo. Un producto puede
+  traer `precio`; sin él, vale `PRECIO` (`precioDe()`).
+- **Todo lo que sumaba «cuántos × PRECIO» pasó a sumar el precio de cada uno**:
+  el suelto del paquete, la barra de la selección y el mensaje de WhatsApp. El
+  verificador elige este curso en la prueba de la selección, porque con dos a
+  ₡5.000 la cuenta vieja pasaba igual (se comprobó rompiéndola).
+- La frase «cada material, por su cuenta, a ₡5.000» pasó a decir «desde», con
+  el más barato (`precioMinimo()`).
+- Va en el módulo 4, «Comprensión, criterio y partidas modelo». **El paquete
+  completo subió de ₡54.000 a ₡76.000** (₡126.000 por separado): entra al
+  sistema completo como todo producto, porque fuera de los módulos se vendería
+  algo que el paquete no entrega.
+- Sus piezas son sus doce tomos y sus doce versiones accesibles
+  (`tomos`, `tomosAccesibles`), contadas contra el disco como las demás.
 
 ### Lo que se rompe callado acá, y lo caro que sale
 

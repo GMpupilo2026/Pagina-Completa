@@ -1246,6 +1246,74 @@ html.modo-proyector #encuesta-quitar-btn,
 html.modo-proyector #podio-quitar-btn,
 html.modo-proyector #pensar-profe-acciones { display: none !important; }
 
+/* La presentación en el proyector: la diapositiva a la izquierda y el tablero a la
+   derecha, para que al mandar una posición al tablero no se pierda la lámina. Sin
+   presentación, la columna sigue siendo un bloque y el tablero lo ocupa todo. Ver
+   «La presentación de la clase» en docs/decisiones/clase-en-vivo.md. */
+html.modo-proyector .proyector-columna:has(> #presentacion-caja:not([hidden])) {
+  display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr); column-gap: 1.5rem; align-items: start;
+}
+html.modo-proyector .proyector-columna:has(> #presentacion-caja:not([hidden])) > * { grid-column: 2; }
+html.modo-proyector .proyector-columna:has(> #presentacion-caja:not([hidden])) > .proyector-barra,
+html.modo-proyector .proyector-columna:has(> #presentacion-caja:not([hidden])) > #entrar-qr-caja { grid-column: 1 / -1; }
+html.modo-proyector .proyector-columna:has(> #presentacion-caja:not([hidden])) > #presentacion-caja { grid-column: 1; grid-row: 2 / span 40; max-width: none; margin: 0; }
+html.modo-proyector .presentacion-sin-proyector { display: none !important; }
+/* A pantalla completa (el botón ⛶ de la tarjeta): la lámina tan grande como quepa. */
+#presentacion-caja:fullscreen { max-width: none; display: flex; flex-direction: column; justify-content: center; background: #0b1220; border-radius: 0; overflow-y: auto; }
+#presentacion-caja:fullscreen .presentacion-img { max-height: calc(100vh - 9rem); width: auto; max-width: 100%; margin: 0 auto; }
+/* Sobre el fondo oscuro, los textos de la tarjeta en claro (eran gris oscuro y no se leían). */
+#presentacion-caja:fullscreen #presentacion-titulo,
+#presentacion-caja:fullscreen #presentacion-cuenta,
+#presentacion-caja:fullscreen summary,
+#presentacion-caja:fullscreen #presentacion-texto,
+#presentacion-caja:fullscreen #presentacion-sigue,
+#presentacion-caja:fullscreen #presentacion-posiciones > p,
+#presentacion-caja:fullscreen #presentacion-posiciones span { color: #f1f5f9; }
+/* El tablero de la clase en pequeño, abajo a la derecha: solo en pantalla completa. */
+.solo-pantalla-completa,
+.presentacion-mini { display: none; }
+#presentacion-caja:fullscreen .solo-pantalla-completa { display: inline-flex; }
+#presentacion-caja:fullscreen .presentacion-mini:not([hidden]) {
+  display: block; position: absolute; right: 1rem; bottom: 1rem; z-index: 2;
+  width: min(32vh, 26vw); aspect-ratio: 1; border-radius: 0.5rem; overflow: hidden;
+  border: 3px solid #f4c430; box-shadow: 0 8px 24px rgb(0 0 0 / 0.5); background: #ffffff; pointer-events: none;
+}
+.presentacion-mini > * { width: 100%; height: 100%; max-width: none; border-width: 0; border-radius: 0; box-shadow: none; }
+/* Con el tablero a la vista, la lámina se corre a la izquierda y le deja su lugar: no tapa nada. */
+#presentacion-caja:fullscreen:has(.presentacion-mini:not([hidden])) .presentacion-img {
+  margin-left: 0; max-width: calc(100% - min(32vh, 26vw) - 2rem);
+}
+
+/* La vista limpia de los alumnos (presentacion.limpia, js/clase-presentacion.js):
+   la diapositiva, el tablero y el chat, como en el proyector. Por LISTA NEGRA a
+   propósito: se esconde solo lo que estorba, y una herramienta nueva para el
+   alumno sigue saliendo. Con el Modo Adaptado no se aplica. Ver «La vista
+   limpia de los alumnos» en docs/decisiones/clase-en-vivo.md. */
+html.vista-limpia:not(.adaptive-mode) #header,
+html.vista-limpia:not(.adaptive-mode) #migas,
+html.vista-limpia:not(.adaptive-mode) footer,
+html.vista-limpia:not(.adaptive-mode) #app > section > :not(.proyector-contenido),
+html.vista-limpia:not(.adaptive-mode) .proyector-contenido > aside,
+html.vista-limpia:not(.adaptive-mode) #moves-panel { display: none !important; }
+html.vista-limpia:not(.adaptive-mode) #app { padding-top: 0.75rem; }
+html.vista-limpia:not(.adaptive-mode) #app > section { max-width: 100rem; }
+html.vista-limpia:not(.adaptive-mode) .proyector-contenido { display: block; }
+@media (min-width: 900px) {
+  html.vista-limpia:not(.adaptive-mode) .proyector-columna {
+    display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr); column-gap: 1.5rem; align-items: start;
+  }
+  html.vista-limpia:not(.adaptive-mode) .proyector-columna > * { grid-column: 2; }
+  html.vista-limpia:not(.adaptive-mode) .proyector-columna > #presentacion-caja { grid-column: 1; grid-row: 1 / span 40; max-width: none; margin: 0; }
+  html.vista-limpia:not(.adaptive-mode) .proyector-columna > #chat-caja { grid-column: 1 / -1; }
+}
+/* Lo que el alumno tiene que HACER le sale encima, como las preguntas. */
+html.vista-limpia:not(.adaptive-mode) #calentamiento-caja:not([hidden]),
+html.vista-limpia:not(.adaptive-mode) #tanda-caja:not([hidden]) {
+  position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 45;
+  width: min(94vw, 600px); max-width: none; max-height: 92vh; overflow-y: auto; margin: 0;
+  box-shadow: 0 0 0 100vmax rgb(0 0 0 / 0.6);
+}
+
 /* ===== Control remoto (sesion.html?control=1) =====
    El celular del profe: el tablero chico y botones grandes para lo que ve la
    clase. Igual que el proyector, por lista blanca (.control-se-ve). Ver «El
@@ -1502,3 +1570,137 @@ html.dark .comparar-serie-3 { background: #199e70; }
    acento, que el buscador quita a los 2,5 s. Sin animación: con movimiento
    reducido se vería igual. */
 .buscar-resaltado { outline: 3px solid rgb(var(--c-accent-500)); outline-offset: 3px; border-radius: 0.75rem; }
+
+/* ===== Bromas entre compañeros (js/bromas.js) =====
+   El tablero arcoíris: cada par de colores tiene la MISMA luminancia que el
+   tablero de siempre (#f0f4f8 / #486581), así que el contraste entre
+   casillas (5,4–5,55) y el de las piezas encima (blanca sobre oscura ≥ 5,9;
+   negra sobre clara ≥ 18,9) no cambia: solo cambia el tono. Medidos, no a
+   ojo. La animación le gana al estilo EN LÍNEA que board-color-themes.js
+   pone sobre <html> (una animación pisa a cualquier declaración normal); sin
+   movimiento, el primer par se queda quieto, con !important por lo mismo. */
+@keyframes broma-arcoiris {
+  0%      { --sq-light: #fef1f1; --sq-dark: #b23434; }
+  16.66%  { --sq-light: #fdf2e3; --sq-dark: #825c26; }
+  33.33%  { --sq-light: #faf6c6; --sq-dark: #6b641f; }
+  50%     { --sq-light: #defcde; --sq-dark: #217321; }
+  66.66%  { --sq-light: #e7f6fd; --sq-dark: #286a8a; }
+  83.33%  { --sq-light: #faf1fe; --sq-dark: #9137be; }
+  100%    { --sq-light: #fef1f1; --sq-dark: #b23434; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  :root.broma-arcoiris { animation: broma-arcoiris 18s steps(1, end) infinite; }
+}
+@media (prefers-reduced-motion: reduce) {
+  :root.broma-arcoiris { --sq-light: #defcde !important; --sq-dark: #217321 !important; }
+}
+.broma-confeti, .broma-globo, .broma-patito { position: absolute; line-height: 1; }
+.broma-confeti { top: -2rem; font-size: 1.5rem; animation: broma-caer 3s linear forwards; }
+.broma-globo { bottom: -3rem; font-size: 3rem; animation: broma-subir 5.5s ease-in forwards; }
+.broma-patito { left: -3rem; font-size: 2.25rem; animation: broma-cruzar 6.5s linear forwards; }
+@keyframes broma-caer { to { transform: translateY(110vh) rotate(540deg); } }
+@keyframes broma-subir { to { transform: translateY(-115vh) translateX(2rem); } }
+@keyframes broma-cruzar { to { transform: translateX(calc(100vw + 6rem)); } }
+@media (prefers-reduced-motion: reduce) {
+  .broma-confeti, .broma-globo, .broma-patito { display: none; }
+}
+
+/* ===== Pareo Integral (pareo.html) =====
+   Las tablas de emparejamientos, clasificación y cruzada, y lo que sale en
+   papel: solo la ficha abierta, sin encabezado, pie ni botones, y el
+   resultado escrito en vez del menú para elegirlo. */
+.pi-tabla { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+.pi-tabla th, .pi-tabla td { padding: 0.4rem 0.5rem; border-bottom: 1px solid rgb(var(--c-brand-100, 217 226 236)); text-align: left; vertical-align: middle; }
+.dark .pi-tabla th, .dark .pi-tabla td { border-bottom-color: rgb(var(--c-brand-700, 36 59 83)); }
+.pi-tabla th { font-weight: 600; white-space: nowrap; }
+.pi-tabla .num { text-align: right; font-variant-numeric: tabular-nums; }
+.pi-tabla abbr { text-decoration: none; cursor: help; }
+.pi-solo-imprimir { display: none; }
+@media print {
+  body:has(#pi-fichas) { background: #fff !important; color: #000 !important; }
+  body:has(#pi-fichas) #header,
+  body:has(#pi-fichas) footer,
+  body:has(#pi-fichas) .no-imprimir,
+  body:has(#pi-fichas) [role="tabpanel"] select,
+  body:has(#pi-fichas) [role="tabpanel"] button { display: none !important; }
+  body:has(#pi-fichas) .pi-solo-imprimir { display: inline; }
+  body:has(#pi-fichas) [role="tabpanel"] { box-shadow: none !important; padding: 0 !important; background: #fff !important; color: #000 !important; }
+  .pi-tabla th, .pi-tabla td { border-bottom-color: #999 !important; color: #000 !important; }
+}
+
+/* ===== Ajedrez estudiantil en Costa Rica (ajedrez-estudiantil.html, js/ajedrez-estudiantil.js) =====
+   Los cuatro colores de las etapas, medidos (no a ojo): contra el blanco de la
+   tarjeta, 5,47 (verde azulado), 6,70 (azul), 5,02 (ámbar) y 6,98 (morado);
+   en modo oscuro, contra brand-900, 8,98 / 6,57 / 10,01 / 6,32. Las barras
+   apagadas (brand-400) dan 4,28 sobre blanco y 3,90 sobre brand-900: pasan el
+   3:1 de un gráfico. El color nunca va solo: cada etapa tiene su nombre en la
+   leyenda, en la ventanita de cada año y en la tabla. */
+.ae-e1 { fill: #0f766e; background-color: #0f766e; }
+.ae-e2 { fill: #1d4ed8; background-color: #1d4ed8; }
+.ae-e3 { fill: #b45309; background-color: #b45309; }
+.ae-e4 { fill: #7e22ce; background-color: #7e22ce; }
+.dark .ae-e1 { fill: #2dd4bf; background-color: #2dd4bf; }
+.dark .ae-e2 { fill: #60a5fa; background-color: #60a5fa; }
+.dark .ae-e3 { fill: #fbbf24; background-color: #fbbf24; }
+.dark .ae-e4 { fill: #c084fc; background-color: #c084fc; }
+.ae-apagada { fill: rgb(var(--c-brand-400, 98 125 152)); }
+.ae-tarjeta { background: #fff; border-radius: 1rem; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1); padding: 1.25rem; display: grid; gap: 0.75rem; min-width: 0; }
+.dark .ae-tarjeta { background: rgb(var(--c-brand-900, 10 31 51)); }
+.ae-tarjeta-t { font-weight: 700; font-size: 1.15rem; color: rgb(var(--c-brand-800, 16 42 67)); margin: 0; text-wrap: balance; }
+.dark .ae-tarjeta-t { color: #fff; }
+.ae-tarjeta-sub { font-size: 0.875rem; line-height: 1.5; color: rgb(var(--c-brand-600, 51 78 104)); margin: 0; max-width: 72ch; }
+.dark .ae-tarjeta-sub { color: rgb(var(--c-brand-200, 188 204 220)); }
+.ae-cifra { background: #fff; border-radius: 1rem; box-shadow: 0 1px 3px rgb(0 0 0 / 0.1); padding: 1rem 1.25rem; display: grid; gap: 0.25rem; align-content: start; }
+.dark .ae-cifra { background: rgb(var(--c-brand-900, 10 31 51)); }
+.ae-cifra-et, .ae-cifra-nota { font-size: 0.8rem; color: rgb(var(--c-brand-600, 51 78 104)); }
+.dark .ae-cifra-et, .dark .ae-cifra-nota { color: rgb(var(--c-brand-200, 188 204 220)); }
+.ae-cifra-num { font-size: 2rem; line-height: 1.15; font-variant-numeric: tabular-nums; color: rgb(var(--c-brand-800, 16 42 67)); }
+.dark .ae-cifra-num { color: #fff; }
+.ae-control { font: inherit; font-size: 0.95rem; padding: 0.5rem 0.75rem; border: 1px solid rgb(var(--c-brand-300, 159 179 200)); border-radius: 0.5rem; background: #fff; color: rgb(var(--c-brand-800, 16 42 67)); min-width: 0; max-width: 100%; }
+.dark .ae-control { background: rgb(var(--c-brand-950, 7 21 39)); border-color: rgb(var(--c-brand-600, 51 78 104)); color: #fff; }
+.ae-boton { font: inherit; font-size: 0.9rem; padding: 0.5rem 0.9rem; border-radius: 0.5rem; border: 1px solid rgb(var(--c-brand-300, 159 179 200)); background: transparent; color: rgb(var(--c-brand-800, 16 42 67)); cursor: pointer; }
+.dark .ae-boton { color: #fff; border-color: rgb(var(--c-brand-600, 51 78 104)); }
+.ae-control:focus-visible, .ae-boton:focus-visible, .ae-blanco:focus-visible, .ae-tabla th button:focus-visible, .ae-detalles summary:focus-visible, .ae-tabla a:focus-visible { outline: 3px solid rgb(var(--c-accent-500, 222 145 29)); outline-offset: 2px; }
+.ae-leyenda { display: flex; flex-wrap: wrap; gap: 0.4rem 1rem; font-size: 0.8rem; color: rgb(var(--c-brand-700, 36 59 83)); }
+.dark .ae-leyenda { color: rgb(var(--c-brand-100, 217 226 236)); }
+.ae-leyenda span { display: inline-flex; align-items: center; gap: 0.35rem; }
+.ae-muestra { display: inline-block; width: 0.7rem; height: 0.7rem; border-radius: 2px; }
+.ae-graf { position: relative; min-height: 320px; }
+.ae-graf-bajo { min-height: 220px; }
+.ae-graf svg { display: block; overflow: visible; }
+.ae-rejilla { stroke: rgb(var(--c-brand-100, 217 226 236)); stroke-width: 1; }
+.dark .ae-rejilla { stroke: rgb(var(--c-brand-700, 36 59 83)); }
+.ae-eje { fill: rgb(var(--c-brand-600, 51 78 104)); font-size: 12px; }
+.dark .ae-eje { fill: rgb(var(--c-brand-200, 188 204 220)); }
+.ae-eje-chico { font-size: 10px; }
+.ae-valor { fill: rgb(var(--c-brand-800, 16 42 67)); font-size: 12px; font-variant-numeric: tabular-nums; font-weight: 600; }
+.dark .ae-valor { fill: #fff; }
+.ae-pandemia { fill: rgb(var(--c-brand-100, 217 226 236) / 0.6); }
+.dark .ae-pandemia { fill: rgb(var(--c-brand-800, 16 42 67) / 0.7); }
+.ae-blanco { position: absolute; top: 0; padding: 0; margin: 0; border: 0; background: transparent; cursor: default; border-radius: 4px; }
+.ae-tip { position: absolute; z-index: 2; pointer-events: none; min-width: 11rem; background: #fff; color: rgb(var(--c-brand-800, 16 42 67)); border: 1px solid rgb(var(--c-brand-200, 188 204 220)); border-radius: 0.5rem; box-shadow: 0 6px 16px rgb(0 0 0 / 0.15); padding: 0.4rem 0.6rem; font-size: 0.8rem; font-variant-numeric: tabular-nums; }
+.dark .ae-tip { background: rgb(var(--c-brand-950, 7 21 39)); color: #fff; border-color: rgb(var(--c-brand-600, 51 78 104)); }
+.ae-tip-t { color: rgb(var(--c-brand-600, 51 78 104)); margin-bottom: 2px; }
+.dark .ae-tip-t { color: rgb(var(--c-brand-200, 188 204 220)); }
+.ae-tip-l { display: flex; justify-content: space-between; gap: 0.75rem; }
+.ae-tip-l span:first-child { display: inline-flex; align-items: center; gap: 0.35rem; }
+.ae-multi { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fill, minmax(min(100%, 9.5rem), 1fr)); }
+.ae-multi figure { margin: 0; display: grid; gap: 0.25rem; }
+.ae-multi figcaption { font-size: 0.8rem; font-weight: 600; color: rgb(var(--c-brand-800, 16 42 67)); }
+.dark .ae-multi figcaption { color: #fff; }
+.ae-detalles summary { cursor: pointer; font-size: 0.875rem; color: rgb(var(--c-brand-700, 36 59 83)); width: fit-content; border-radius: 0.25rem; }
+.dark .ae-detalles summary { color: rgb(var(--c-brand-100, 217 226 236)); }
+.ae-tabla-caja { overflow: auto; max-width: 100%; }
+.ae-tabla-alta { max-height: 32rem; }
+.ae-tabla { border-collapse: collapse; width: 100%; font-size: 0.85rem; font-variant-numeric: tabular-nums; color: rgb(var(--c-brand-800, 16 42 67)); }
+.dark .ae-tabla { color: rgb(var(--c-brand-50, 240 244 248)); }
+.ae-tabla th, .ae-tabla td { text-align: left; padding: 0.4rem 0.6rem; border-bottom: 1px solid rgb(var(--c-brand-100, 217 226 236)); vertical-align: top; }
+.dark .ae-tabla th, .dark .ae-tabla td { border-bottom-color: rgb(var(--c-brand-700, 36 59 83)); }
+.ae-tabla thead th { position: sticky; top: 0; background: #fff; font-weight: 600; z-index: 1; }
+.dark .ae-tabla thead th { background: rgb(var(--c-brand-900, 10 31 51)); }
+.ae-tabla tbody th { font-weight: 600; }
+.ae-tabla .ae-n { text-align: right; }
+.ae-tabla th button { all: unset; cursor: pointer; border-radius: 0.25rem; }
+.ae-tabla th[aria-sort="ascending"] button::after { content: " ▲"; font-size: 0.7em; }
+.ae-tabla th[aria-sort="descending"] button::after { content: " ▼"; font-size: 0.7em; }
+.ae-tabla a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }

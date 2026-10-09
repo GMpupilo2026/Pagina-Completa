@@ -57,6 +57,12 @@ herramientas/planes
 herramientas/plantillas
 herramientas/video
 herramientas/datos
+herramientas/libro-ninos
+herramientas/mil-lecciones
+# Los cuestionarios de «Formación Ajedrez» traen las respuestas: los lee
+# herramientas/formacion-cuestionarios.js, no una página, y en la base solo
+# los ven quienes tienen el curso compartido.
+herramientas/cursos/*-kahoot.json
 
 # El estado local de `wrangler dev`: no es del sitio.
 .wrangler

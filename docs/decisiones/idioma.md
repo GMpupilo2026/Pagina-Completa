@@ -9,11 +9,44 @@ están en `CLAUDE.md`.
 El español del sitio es el de acá: latinoamericano, costarricense. Se tutea
 —**tuteo, no voseo**: "puedes", no "podés"; "juega", no "jugá"— y tampoco
 "vosotros". Se dice computadora y celular (no ordenador ni móvil), y los
-términos de ajedrez van en el nombre que se usa en la región —horquilla,
+términos de ajedrez van en el nombre que se usa en la región —tenedor,
 enfilada, clavada, mate de la coz, mate del pasillo—, con el término en inglés
 entre paréntesis solo cuando es el que el alumno va a encontrar buscando en
 internet (zwischenzug, smothered mate). Nada de traducciones calcadas del
 inglés ni de giros peninsulares.
+
+### «Tenedor», nunca «horquilla»
+
+Pedido del dueño (octubre de 2026): el ataque de una pieza a dos a la vez se
+llama **tenedor** en todo el sitio y en todo lo que se escriba después —libros,
+cursos, ejercicios, artículos, informes, la IA de «Mejorar informe»—. Primero
+se cambió en el cuento de los trucos de Peonita y después en todo lo demás:
+unas 1.850 apariciones de una vez, con un script que ajusta el género («la
+horquilla» → «el tenedor», «una horquilla preparada» → «un tenedor
+preparado», «de la horquilla» → «del tenedor») y una revisión a mano de lo que
+un script no ve (pronombres: «se llega a ella» → «se llega a él»; el verbo
+«horquillar»; el índice alfabético de las fichas, que ahora pone «Tenedor, el»
+en la T).
+
+- **Los identificadores no cambiaron**, porque no se ven y algunos los guarda
+  la base: el tema `horquilla` de los errores y de la preparación, `tac_horquilla`
+  del diagnóstico, el motivo `horquilla`, la ficha `?ficha=horquilla`, la
+  dirección `articulos/horquillas-de-caballo.html` y los archivos de la lección
+  2 de Estrategia y táctica (`02-horquillas-…pptx` y `-ejercicios.pdf`). Solo
+  el cuadernillo de esa lección cambió de nombre, porque el generador lo nombra
+  por el título.
+- **`python3 herramientas/verificar-vocabulario.py` falla si «horquilla»
+  vuelve** al texto que se ve (el mismo que lee `verificar-voseo.py`, más las
+  presentaciones), y deja pasar esos identificadores. Una palabra cambiada así
+  no da ningún error si un generador o un texto importado la vuelve a meter.
+- Lo generado se regeneró con su generador (los PDF de los libros y los
+  cuadernillos). Lo que no tiene generador se corrigió en el propio archivo:
+  las presentaciones (`.pptx`), los PDF de ejercicios de las lecciones (el
+  texto va en claro) y uno de Desequilibrios de material hecho con Chrome, al
+  que se le cambiaron los glifos de la única palabra. Los `banco.js` de los
+  libros dicen «GENERADO… no se edita a mano», pero su generador necesita la
+  base de Lichess y Stockfish: se les cambió la palabra igual que a la fuente,
+  para que vuelvan a salir iguales la próxima vez que se generen.
 
 **`python3 herramientas/verificar-voseo.py` revisa que no se cuele voseo** y
 falla si encuentra; con `--arreglar` lo convierte. Al escribir texto nuevo o

@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ejercicios 1 a 6 — Cambiar o no cambiar — material de estudio</title>
+<meta name="robots" content="noindex">
+<meta name="author" content="Oscar Angulo Cubero">
+<meta name="description" content="Material de estudio en formato accesible de la lección 20 del curso Cambiar o no cambiar.">
+<style>
+  /* Sin imágenes y sin columnas a propósito: esta versión está hecha para
+     lectores de pantalla y para quien necesita agrandar mucho el texto. */
+  body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+         font-size: 1.15rem; line-height: 1.8; color: #102a43; background: #ffffff;
+         max-width: 42rem; margin: 0 auto; padding: 1.5rem 1rem 4rem; }
+  h1 { font-size: 1.7rem; line-height: 1.3; }
+  h2 { font-size: 1.3rem; margin-top: 2.5rem; border-bottom: 2px solid #102a43; padding-bottom: .3rem; }
+  h3 { font-size: 1.1rem; margin-top: 1.8rem; }
+  a { color: #8a4a00; }
+  dt { font-weight: 700; margin-top: 1rem; }
+  dd { margin: .3rem 0 0; }
+  .posicion { border: 2px solid #243b53; border-radius: .5rem; padding: 1rem; margin: 1rem 0; }
+  .respuesta { background: #f0f4f8; border-left: 4px solid #102a43; padding: .6rem .9rem; }
+  footer { margin-top: 3rem; border-top: 2px solid #102a43; padding-top: 1rem; font-size: .95rem; }
+  /* La vuelta a la plataforma. Este archivo se abre solo, en su propia
+     pestaña: sin estos enlaces no hay forma de regresar al curso salvo el
+     botón "atrás" del navegador, que con lector de pantalla no siempre está
+     a mano. Van arriba y abajo: el documento es largo y quien termina de
+     leerlo no tendría que subir de nuevo para salir. */
+  .volver { margin: 0 0 1.5rem; font-size: 1rem; }
+  footer .volver { margin: 1rem 0 0; }
+  .volver a { display: inline-block; padding: .2rem 0; }
+  @media (prefers-color-scheme: dark) {
+    body { background: #0a1f33; color: #f0f4f8; }
+    h2, footer { border-color: #f0b429; }
+    a { color: #f0b429; }
+    .posicion { border-color: #829ab1; }
+    .respuesta { background: #102a43; border-color: #f0b429; }
+  }
+</style>
+</head>
+<body>
+<nav class="volver" aria-label="Volver a la plataforma">
+  <a href="../../academia/cambiar-o-no-cambiar.html">← Volver al curso Cambiar o no cambiar</a>
+  ·
+  <a href="../../../clases.html">Panel de Academia</a>
+</nav>
+<header>
+  <p>Cambiar o no cambiar · Lección 20</p>
+  <h1>Ejercicios 1 a 6</h1>
+  <p>Material de estudio en formato accesible. Autor: Oscar Angulo Cubero, Ajedrez Integral.</p>
+  <p>Esta versión dice en palabras todo lo que en el cuadernillo en PDF está dibujado: cada
+     posición viene descrita pieza por pieza, así que no hace falta ver ninguna imagen.</p>
+</header>
+
+<h2>1. De qué trata esta lección</h2>
+
+<p>Los ejercicios de este bloque son posiciones reales de partidas entre grandes maestros, tomadas del libro «El cambio de piezas» del Maestro Internacional Diego Valerga. No están ordenados por tema ni por dificultad, para que no sepas de antemano qué regla se aplica.</p>
+<p>En cada uno, antes de mover nada, contesta tres preguntas: qué piezas quedarían después del cambio, a quién le conviene esa posición y por qué. Recién después mira la solución y la línea de la partida. Cada solución dice también qué opina el motor Stockfish, porque en varias de estas posiciones el motor de hoy no está del todo de acuerdo con lo que se jugó.</p>
+
+
+<h2>2. Conceptos clave</h2>
+<dl>
+  <dt>El valor de las piezas</dt>
+  <dd>Peón 1, caballo y alfil 3, torre 5, dama 9. El rey no tiene valor de cambio porque no se puede entregar. Son números de referencia, no una verdad: sirven para decidir cambios rápido, no para juzgar una posición.</dd>
+  <dd><strong>El error de siempre:</strong> Tratar los números como si fueran exactos. Un caballo clavado en el borde vale menos que un peón pasado a punto de coronar, y la calidad (torre por pieza menor) se entrega todos los días cuando la pieza menor domina una casilla fuerte.</dd>
+  <dd><strong>Para verlo:</strong> Dos piezas menores (6) contra una torre y un peón (6) están igualadas en el papel; en la práctica las dos piezas suelen ser mejores en el medio juego, porque hacen dos trabajos a la vez, y peores en el final, donde la torre corre.</dd>
+</dl>
+
+<h2>3. Ejemplos del curso</h2>
+<div class="posicion">
+  <h3>Posición 1: Ejercicio 1. Julio Bolbochán – Lothar Schmid, Olimpiada de Dubrovnik 1950. Juegan las blancas. Puedes cambiar damas y torres de un golpe. ¿Te conviene simplificar tanto?</h3>
+  
+  <p>Piezas blancas: rey en h2; dama en b3; torre en a6; alfiles en e2, e3; peones en d5, e4, f5, g4, h3.</p>
+  <p>Piezas negras: rey en g8; dama en b7; torre en a8; alfiles en c8, f8; peones en d6, e5, f6, g6, h7.</p>
+  <p>Juegan las blancas.</p>
+  
+  <p>La línea, jugada por jugada: 36. dama captura bella 7, alfil captura bella 7, 37. torre captura anna 8, alfil captura anna 8, 38. alfil anna 6, gustav 5, 39. alfil bella 6, rey felix 7, 40. alfil cesar 8, alfil eva 7, 41. alfil cesar 7, hector 5, 42. rey gustav 3, hector captura gustav 4, 43. hector captura gustav 4, rey eva 8</p>
+  <p>Resultado: Posición para jugar</p>
+  <p>Sí: el cambio masivo deja en el tablero justo lo que le conviene a las blancas. Después de 38. alfil anna 6 el alfil de a8 queda encerrado detrás de sus propios peones y no vuelve a jugar; el blanco, con los dos alfiles activos, lleva el rey al flanco de dama sin que nadie lo moleste. La regla de no cambiar con una posición cerrada no sirve aquí: lo que manda es que la pieza que le queda al rival es mala. (Stockfish 17 a profundidad 22: dama captura bella 7 es la que elige el motor (+1,1); torre bella 6 da +0,5.)</p>
+  <p>Posición en notación FEN, por si la quieres cargar en un programa: r1b2bk1/1q5p/R2p1pp1/3PpP2/4P1P1/1Q2B2P/4B2K/8 w - - 0 36</p>
+</div>
+<div class="posicion">
+  <h3>Posición 2: Ejercicio 2. Vladen Zurakhov – Bukhuti Gurgenidze, Semifinal del Campeonato de la URSS, Tiflis 1956. Juegan las negras, en una India de Rey con el centro cerrado. ¿Cuál es la mejor jugada?</h3>
+  
+  <p>Piezas blancas: rey en e1; dama en d1; torres en a1, h1; alfiles en e3, f1; caballos en c3, g1; peones en a2, b2, c4, d5, e4, f3, g2, h2.</p>
+  <p>Piezas negras: rey en e8; dama en d8; torres en a8, h8; alfiles en c8, g7; caballos en b8, d7; peones en a7, b7, c7, d6, e5, f7, g6, h7.</p>
+  <p>Juegan las negras.</p>
+  
+  <p>La línea, jugada por jugada: 7… alfil hector 6, 8. dama david 2, alfil captura eva 3, 9. dama captura eva 3, anna 5, 10. alfil david 3, caballo anna 6, 11. Enroque largo, Enroque corto, 12. caballo gustav eva 2, caballo david cesar 5, 13. alfil bella 1, alfil david 7, 14. caballo bella 5, alfil captura bella 5, 15. cesar captura bella 5, caballo bella 8, 16. hector 4, caballo bella david 7, 17. hector 5</p>
+  <p>Resultado: Posición para jugar</p>
+  <p>7… alfil hector 6 ofrece cambiar el alfil de casillas negras, que con el centro cerrado mira contra sus propios peones, por el alfil de e3, que es la pieza que sostiene todas las casillas oscuras del blanco. Después del cambio, las casillas c5 y f4 quedan para los caballos negros y el blanco no encuentra un buen lugar para su rey. Un cambio táctico (el alfil ofrece el cambio con ganancia de tiempo) que resuelve un problema de estrategia. (Stockfish 17 a profundidad 22: alfil hector 6 es la que elige el motor (+0,6).)</p>
+  <p>Posición en notación FEN, por si la quieres cargar en un programa: rnbqk2r/pppn1pbp/3p2p1/3Pp3/2P1P3/2N1BP2/PP4PP/R2QKBNR b KQkq - 1 7</p>
+</div>
+<div class="posicion">
+  <h3>Posición 3: Ejercicio 3. Robert Fischer – Tigran Petrosian, Match URSS-Resto del Mundo, Belgrado 1970. Juegan las blancas. Las negras quieren … alfil bella 5 para cambiar su alfil malo de d7. ¿Qué jugada lo impide?</h3>
+  
+  <p>Piezas blancas: rey en e1; dama en c2; torres en a1, h1; alfiles en d3, f4; caballos en b1, f3; peones en a2, b2, c3, d4, f2, g2, h2.</p>
+  <p>Piezas negras: rey en e8; dama en b6; torres en a8, h8; alfiles en d7, f8; caballos en a5, f6; peones en a7, b7, d5, e6, f7, g7, h7.</p>
+  <p>Juegan las blancas.</p>
+  
+  <p>La línea, jugada por jugada: 11. anna 4, torre cesar 8, 12. caballo bella david 2, caballo cesar 6, 13. dama bella 1, caballo hector 5, 14. alfil eva 3, hector 6, 15. caballo eva 5, caballo felix 6, 16. hector 3, alfil david 6, 17. Enroque corto, rey felix 8, 18. felix 4</p>
+  <p>Resultado: Posición para jugar</p>
+  <p>11. anna 4 le quita la casilla b5 al alfil de d7. Los peones negros están en d5 y e6, en casillas blancas, así que ese alfil es el que sobra; sin poder cambiarlo, las negras quedan con una pieza sin futuro y las blancas juegan cómodas en el flanco de rey. Enrocarse primero permitía … alfil bella 5 y el cambio que liberaba a las negras. El motor pone 11. anna 4 entre las mejores jugadas. (Stockfish 17 a profundidad 22: a4 está entre las mejores (+0,4; el motor prefiere apenas dama eva 2, +0,7); Enroque corto da +0,4.)</p>
+  <p>Posición en notación FEN, por si la quieres cargar en un programa: r3kb1r/pp1b1ppp/1q2pn2/n2p4/3P1B2/2PB1N2/PPQ2PPP/RN2K2R w KQkq - 0 11</p>
+</div>
+
+<h2>4. Ejercicios</h2>
+<ol>
+  <li>Anota diez cambios de tu última partida y di, en cada uno, si ganaste o perdiste material y si la posición mejoró o empeoró. Vas a encontrar cambios parejos que fueron buenos y cambios parejos que fueron malos.</li>
+  <li>Arma en el tablero torre y dos peones contra dos caballos y juégala contra alguien. Cuenta quién gana en cinco intentos.</li>
+</ol>
+
+<h2>5. Preguntas con su respuesta</h2>
+<p>Contesta en voz alta antes de seguir leyendo: la respuesta viene justo después de cada pregunta.</p>
+<ol>
+  <li>
+    <p>¿Cuánto vale la calidad y qué significa 'ganar la calidad'?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Unos dos puntos: cambiar una pieza menor (3) por una torre (5). Ganar la calidad es quedarse con la torre a cambio de un caballo o un alfil.</p>
+  </li>
+  <li>
+    <p>¿Por qué el rey no tiene valor en la tabla?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Porque no se puede cambiar ni perder: si cae, se acaba la partida. En el final sí se le calcula una fuerza de ataque parecida a la de una pieza menor, pero eso es otra cosa.</p>
+  </li>
+  <li>
+    <p>Tienes dama por torre y alfil. ¿Estás mejor?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> En el papel sí (9 contra 8), pero depende: con las dos piezas coordinadas y el rey rival abierto, la dama sola puede quedar peor. La tabla decide cambios, no partidas.</p>
+  </li>
+  <li>
+    <p>¿Cuándo tres peones compensan una pieza menor?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Cuando están conectados, avanzados y el rival no tiene cómo frenarlos; sobre todo en finales. En el medio juego, con las piezas puestas, la pieza suele valer más.</p>
+  </li>
+</ol>
+
+<h2>6. Fuentes</h2>
+<ul>
+  <li>Texto de la lección: curso «Cambiar o no cambiar» de Ajedrez Integral, de Oscar Angulo Cubero.</li>
+  <li>Conceptos, preguntas y ejercicios de este cuadernillo: material didáctico de Ajedrez Integral, de Oscar Angulo Cubero.</li>
+  <li>Posiciones: archivo de posiciones del propio curso, verificadas jugada por jugada con chess.js y evaluadas con el motor Stockfish que el sitio usa.</li>
+</ul>
+<h3>Para seguir leyendo</h3>
+<p>Obras de referencia sobre estos temas. Este material no reproduce texto de ellas: se listan como lectura recomendada, no como origen de lo que aquí se dice.</p>
+<ul>
+  <li>Irving Chernev, «Logical Chess: Move by Move» (Batsford, 1957).</li>
+  <li>José Raúl Capablanca, «Fundamentos del ajedrez» (1921).</li>
+  <li>Leyes del Ajedrez de la FIDE, FIDE Handbook, capítulo E.I.01.</li>
+</ul>
+
+<footer>
+  <p>© 2026 Oscar Angulo Cubero · Ajedrez Integral. Material de uso docente para alumnos de la Academia.</p>
+  <p>No se autoriza su reproducción ni su distribución fuera de ella.</p>
+<p class="volver">
+  <a href="../../academia/cambiar-o-no-cambiar.html">← Volver al curso Cambiar o no cambiar</a>
+  ·
+  <a href="../../../clases.html">Panel de Academia</a>
+</p>
+</footer>
+</body>
+</html>

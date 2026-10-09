@@ -1436,9 +1436,12 @@ Rica.
     clase»;
   - el alumno, en la tarjeta «Tus puntos de septiembre» de su panel
     (`clases.html`), que no aparece si este mes no tuvo clases.
-- **No hay tabla de posiciones para los alumnos.** Mostrarles la de sus
-  compañeros sería una lista que no pasa por una relación directa (ver «Las
-  academias son privadas»).
+- **No hay tabla de posiciones de la clase para los alumnos.** Mostrarles la
+  de sus compañeros sería una lista que no pasa por una relación directa (ver
+  «Las academias son privadas»). La que hay después es el marcador del salón
+  de Puntos Ajedrez, que sí pasa por una (compañeros: mismo profe Y misma
+  academia) y suma todo lo ganado, no solo la clase (ver «Retos, marcador,
+  regalos y bromas» en `puntos-y-premios.md`).
 - **El doble de `verificar-clase-registrada.js` aprendió `resumen_del_mes`**,
   y lo calcula de verdad: suma su propio `resumen_de_la_clase` por cada clase
   del mes, con el mismo filtro de quién ve qué.
@@ -3266,6 +3269,185 @@ por uno—. Antes solo tenía "Cargar" (la línea entera, jugada a jugada, con
   `Practicar` inserta en `practice_sessions` con el nivel que esté elegido en
   la pestaña Practicar —el mismo insert que `start-practice-btn`, solo que con
   el fen del archivo en vez de `board.fen()`.
+
+### La presentación de la clase
+
+Para una charla o una capacitación, el profe muestra sus diapositivas **dentro
+de la clase**: «📊 Presentación» (en «Tu material», la barra del profe; 📽️ es el Proyector) la pone arriba del
+tablero para todos, y la pasa con ◀ ▶ (también con las flechas o Re Pág / Av
+Pág en pantalla completa). Los alumnos la ven sin salir de `sesion.html`, junto
+al tablero que sigue en vivo. Código en `js/clase-presentacion.js`.
+
+**El profe elige cuál compartir**, de dos listas:
+
+- **«Las del curso»** (`LISTA`): imágenes y `diapositivas.json` en
+  `cursos/recursos/<curso>/presentaciones/<clase>/`, detrás del candado del
+  worker; `deck` = `"<curso>/<clase>"`. De Formación Ajedrez están las siete
+  sesiones virtuales: la Clase 1 es la presentación propia del profe (34
+  láminas, transcritas a mano) y las sesiones 2 a 7 las arma
+  `herramientas/curso-generar-formacion.py` con el mismo `.pptx` que se baja
+  del curso (ver «Las presentaciones de Formación Ajedrez» abajo).
+- **«Las tuyas»**: sube un PDF desde el mismo panel (PowerPoint y Google Slides
+  lo exportan; un `.pptx` no, porque el navegador no sabe dibujarlo). pdf.js —el
+  mismo de «📄 PDF»— dibuja cada página a 1600 px y se guarda en WebP (JPG si el
+  navegador no hace WebP) en el bucket privado `presentaciones`
+  (`<profe>/<id>/<n>.webp`), con el texto de cada página en
+  `presentaciones_profe.textos`. **Las imágenes se suben primero y la fila
+  después**: una subida a medias no aparece en la lista, y lo que alcanzó a
+  subir se borra. `deck` = `"subida/<id>"`, que cabe en el mismo CHECK.
+  Tope: 200 páginas, 60 MB el PDF, 3 MB cada imagen.
+- **En una diapositiva subida, el profe guarda la posición del tablero**
+  («➕ Guardar aquí la posición del tablero», hasta 8 por diapositiva, en
+  `presentaciones_profe.posiciones`, `{"<n>": [{nombre, fen}]}`): la arma antes
+  con ✏️ Armar posición, 📄 PDF o jugando, y en la clase sale su «📥 Al tablero
+  de la clase» como en las del curso. Se valida con `PosicionValida` al
+  guardarla y otra vez al mandarla (`aplicarPosicionEnClase`).
+- **Quién ve una subida lo decide la base**: la fila la ve su profe, quien
+  administra y quien ve la clase MIENTRAS se está mostrando (la subconsulta
+  pasa por la RLS de `game_state`); la imagen, su profe y, los demás, **solo la
+  `n` que se está mostrando** (la política del bucket compara el nombre del
+  archivo con `game_state.presentacion`). Comprobado impersonando: con la
+  clase abierta y la 2 a la vista, la alumna ve la fila y solo `2.webp`, y no
+  crea ni cambia presentaciones; el profe ve sus tres imágenes.
+- La migración se aplicó sin `drop policy if exists` sobre `storage.objects`:
+  con ellos, el aplicador de Supabase la cancelaba como destructiva.
+
+- **Es la excepción consciente a «el material del profesor no es el de la
+  clase»**: la lámina sí la ve todo el mundo, porque el profe la pone para eso.
+  Lo que sigue siendo solo suyo va en `#presentacion-profe`: los botones, las
+  notas de cada diapositiva, qué sigue y las posiciones.
+- **Qué lámina se ve va en `game_state.presentacion`** (`{deck, n}` o null),
+  no en un broadcast, por lo mismo que la vista: quien entra tarde o recarga
+  ve la misma. La protege `protect_game_state_teacher_columns` y el CHECK
+  `game_state_presentacion_forma` (envuelto en `coalesce`). Comprobado
+  impersonando: la alumna cambia la fila y la presentación queda como estaba;
+  el profe la cambia; `n` 0, 1.5 o "2", un `deck` con otra forma, un arreglo
+  o sin `deck` se rechazan. Al cerrar la clase se limpia con lo demás.
+- **Las láminas son imágenes con su texto**: cada una trae en
+  `diapositivas.json` su título y su transcripción completa, que va en el
+  desplegable «Leer el texto de la diapositiva» y se anuncia en `#clase-voz`
+  al cambiar. Una imagen sola no la lee nadie que no la vea.
+- **Viven con el material del curso** (`cursos/recursos/<curso>/presentaciones/<clase>/`),
+  detrás del candado del worker: la ve quien tiene el acceso a la Academia.
+  Si no lo tiene, la tarjeta lo dice en vez de quedar vacía.
+- **Al alumno se le pide SOLO la lámina que se ve**; al profe, también la
+  siguiente (para pasar sin esperar). Las siguientes son, entre otras, las
+  respuestas de la práctica y del quiz.
+- **Las posiciones de una lámina pasan por `aplicarPosicionEnClase()`**:
+  «📥 Al tablero de la clase», «❓ Preguntar» (solo si la lámina dice cuántas
+  jugadas, `jugadas`) y «🎯 Practicar» (solo si la partida no terminó en esa
+  posición: practicar un mate ya dado no tiene sentido). Cada FEN se copió de
+  la lámina y se comprobó con chess.js y `PosicionValida`; en «Rey y alfil
+  contra rey» el alfil de c3 da jaque al rey de f6, así que la posición solo
+  es legal con turno de las negras, y así quedó.
+- **Los ecos de Realtime no devuelven atrás al profe**: si pasa tres láminas
+  seguidas, los ecos de las dos primeras llegan después. Durante 3 segundos
+  después de mandar, su pantalla solo acepta lo que mandó.
+- **En el proyector** la lámina va a la izquierda y el tablero a la derecha
+  (dos tercios y un tercio), sin los botones del profe ni el desplegable: al
+  mandar una posición al tablero no se pierde la lámina.
+- En el celular de control remoto también se ve con ◀ ▶: sirve para pasar las
+  láminas desde el celular.
+
+#### La vista limpia de los alumnos
+
+Con una presentación en pantalla, «🧹 Vista limpia para los alumnos» (en la
+tarjeta, junto a ◀ ▶) deja a cada alumno como el proyector: la diapositiva a la
+izquierda, el tablero a la derecha y el chat abajo, a lo ancho. Las preguntas,
+las prácticas y el aviso del elegido ya eran ventanas al frente; en la vista
+limpia también lo son el calentamiento y la competencia de ejercicios (lo que
+el alumno tiene que HACER le sale encima, debajo de una pregunta).
+
+- **Va en la misma columna**: `presentacion.limpia = true` (el CHECK solo mira
+  `deck` y `n`, y el trigger protege la columna entera). Pasar la diapositiva o
+  elegir otra presentación la deja como estaba; quitar la presentación la
+  apaga.
+- **Lo hace la clase `.vista-limpia` en `<html>`** (`pintarVistaLimpia`), solo
+  para alumnos: al profe, al proyector, al control remoto y a quien supervisa
+  no se les aplica. Con el Modo Adaptado tampoco (lo dice el selector del CSS):
+  quien usa lector de pantalla no gana nada con esconder cosas.
+- **Por LISTA NEGRA, al revés que el proyector**: esconde el encabezado, las
+  migas, el pie, lo de arriba de la sección (título, franja de estado), la
+  columna lateral y la lista de jugadas. En el proyector se esconde por lista
+  blanca para que no se cuele una herramienta del profe; aquí el riesgo es el
+  contrario —que el alumno no vea algo que le piden—, así que una herramienta
+  nueva para él aparece sola.
+- Si la diapositiva no se puede abrir (sin acceso, borrada), la vista limpia se
+  quita: no se deja al alumno con un recuadro vacío y nada más.
+- En el celular es una columna: la diapositiva, el tablero y el chat.
+
+#### En pantalla completa, el tablero de la clase en pequeño
+
+A pantalla completa (⛶ de la tarjeta) la lámina tapa el tablero, y el profe
+muchas veces explica ahí. Abajo a la derecha sale el tablero en pequeño, y la
+lámina se corre a la izquierda para dejarle su lugar.
+
+- **Es una COPIA de `#chessboard`** (`copiarTableroMini`), que se vuelve a
+  copiar con cada cambio: un `MutationObserver` sobre el tablero, solo mientras
+  dura la pantalla completa. Copiarlo y no dibujarlo aparte es lo que hace que
+  muestre exactamente lo mismo: la posición, la jugada que está mirando el
+  profe, sus flechas, el lado y las piezas ocultas. A la copia se le quitan
+  los `id` (no puede haber dos `#chessboard`) y no se puede tocar ni enfocar;
+  la pieza se vuelve a medir sobre su casilla, que es más chica.
+- Cada quien lo oculta o lo muestra con «♟ Ocultar el tablero» / «♟ Ver el
+  tablero»; se recuerda en el aparato (`localStorage`).
+- Sobre el fondo oscuro, los textos de la tarjeta van en claro: antes eran
+  gris oscuro y no se leían.
+
+**Una presentación nueva del curso**: sus imágenes (`01.webp`…, 1600 × 900) y su
+`diapositivas.json` en su carpeta, y una línea en `LISTA` de
+`js/clase-presentacion.js` con el MISMO título del JSON (lo revisa el
+verificador). Las imágenes se sacan del `.pptx` con LibreOffice (a PDF) y
+PyMuPDF (cada página a 1600 px de ancho, WebP calidad 80).
+
+#### Las presentaciones de Formación Ajedrez
+
+Las sesiones 2 a 7 no se transcriben a mano: `presentacion()` de
+`herramientas/curso-generar-formacion.py` arma el `.pptx` de cada sesión desde
+el JSON del curso con el estilo de la Clase 1 del profe (franja azul, letra
+grande, una idea por diapositiva), y `presentacion_de_clase()` lo pasa a
+imágenes con el texto de cada diapositiva, sus notas y las posiciones de sus
+ejercicios. Así el `.pptx` que se baja y la presentación de la clase en vivo
+son la misma, y cambian juntas al volver a generar.
+
+- **Nada por debajo de 22 pt en las listas** (20 en lo que no se puede
+  partir): lo que no cabe se parte en una diapositiva «(continuación)», nunca
+  se achica hasta no leerse en un proyector. El tamaño se mide con la métrica
+  de Carlito (la de Calibri), no a ojo.
+- **Cada sesión trae**: portada, objetivos, cronograma, un tema por
+  diapositiva con su fuente al pie, recesos (los del cronograma), cada caso en
+  dos (la situación para discutir y la decisión), la práctica, los ejercicios
+  —con tablero si traen posición, dibujado con `herramientas/lib/tablero-png.js`,
+  que usa las piezas del sitio— y sus respuestas, el quiz y sus respuestas, y
+  la tarea.
+- La Clase 1 lleva `"presentacion_clase": "propia"` en el JSON: el generador no
+  la toca.
+- Hace falta LibreOffice y PyMuPDF; sin ellos se avisa y el resto del curso se
+  genera igual. `verificar-formacion.js` revisa que cada sesión virtual tenga
+  su presentación de clase, que se ofrezca en la clase, que traiga los casos
+  de la sesión y sus posiciones.
+
+**Al tocar esto, correr `node herramientas/verificar-todo.js clase-presentacion`.**
+Comprueba cada posición con chess.js, que cada lámina tenga su imagen y su
+texto, que el trigger proteja la columna, y en el navegador al profe (◀ ▶, los
+ecos viejos, «Al tablero de la clase», Practicar solo donde corresponde, el
+tope de la última), a la alumna (la ve al entrar, la sigue, se le dice en voz,
+no se le piden las siguientes, una forma mala no se muestra, cabe en el
+celular), al proyector (la lámina al lado del tablero, sin lo del profe) y las
+la vista limpia (el profe la enciende y la apaga, a él no se le aplica, la
+alumna queda con la diapositiva, el tablero y el chat en su lugar, el
+calentamiento encima y las preguntas más arriba, el Modo Adaptado la anula, en
+el celular cabe), el tablero en pequeño a pantalla completa (copia la jugada
+y la flecha en vivo, no tapa la lámina, se oculta y se muestra) y las subidas con un PDF de verdad armado en la prueba y un Storage de mentira
+(`opciones.extra` del doble): una imagen por página en su carpeta, la fila
+después de las imágenes y con el texto de cada página, elegirla, guardar y
+quitar una posición, borrarla (antes la quita de la clase), y a la alumna solo
+se le firma la que se ve.
+Está probado que falla de verdad sin la guardia de los ecos, adelantándole
+láminas a la alumna (las del curso y las subidas), sin la línea del trigger y
+guardando la fila antes de subir las imágenes, sin poner el calentamiento al
+frente en la vista limpia, aplicándosela también al profe y sin volver a
+copiar el tablero en pequeño cuando cambia.
 
 ### Buscar un ejercicio es mirarlo: «Ver todas las posiciones»
 

@@ -254,7 +254,7 @@
  },
  {
   "id": "horquilla",
-  "nombre": "La horquilla (ataque doble)",
+  "nombre": "El tenedor (ataque doble)",
   "area": "tactica",
   "claves": [
    "horquilla",
@@ -263,29 +263,29 @@
    "tenedor"
   ],
   "definicion": "Una sola pieza ataca dos cosas a la vez. El rival solo puede salvar una. La hace cualquier pieza, pero el caballo es el especialista porque ataca casillas de los dos colores.",
-  "error": "Buscar la horquilla y no preparar la casilla. Casi ninguna horquilla aparece sola: se llega a ella con un jaque, un cambio o una desviación que deja las dos piezas rivales en casillas del mismo color.",
-  "ejemplo": "Caballo en e5 con el rey negro en g8 y la torre en c6: no hay horquilla. Pero si un jaque obliga al rey a ir a f8, el caballo salta a d7 y se lleva la torre.",
+  "error": "Buscar el tenedor y no preparar la casilla. Casi ningún tenedor aparece solo: se llega a él con un jaque, un cambio o una desviación que deja las dos piezas rivales en casillas del mismo color.",
+  "ejemplo": "Caballo en e5 con el rey negro en g8 y la torre en c6: no hay tenedor. Pero si un jaque obliga al rey a ir a f8, el caballo salta a d7 y se lleva la torre.",
   "preguntas": [
    {
-    "p": "¿Por qué el caballo es el rey de la horquilla?",
+    "p": "¿Por qué el caballo es el rey del tenedor?",
     "r": "Porque salta y porque desde una casilla clara ataca ocho casillas oscuras: nadie lo ve venir y ninguna pieza rival lo bloquea."
    },
    {
-    "p": "¿Qué es una horquilla de peón?",
+    "p": "¿Qué es un tenedor de peón?",
     "r": "Un peón que avanza y ataca dos piezas a la vez. Es la más barata de todas: aunque lo capturen, el peón vale uno."
    },
    {
-    "p": "¿Cómo se evita caer en horquillas de caballo?",
+    "p": "¿Cómo se evita caer en tenedores de caballo?",
     "r": "Mirando, antes de mover, las casillas desde las que un caballo rival atacaría dos piezas tuyas, y no dejando el rey y la dama en casillas del mismo color con un caballo cerca."
    },
    {
-    "p": "La horquilla ataca dos piezas defendidas. ¿Sirve igual?",
-    "r": "Solo si una de las dos es el rey, o si la que se pierde vale más que la que da la horquilla. Atacar dos torres defendidas con la dama no gana nada."
+    "p": "El tenedor ataca dos piezas defendidas. ¿Sirve igual?",
+    "r": "Solo si una de las dos es el rey, o si la que se pierde vale más que la que da el tenedor. Atacar dos torres defendidas con la dama no gana nada."
    }
   ],
   "ejercicios": [
    "Pon un caballo en el centro del tablero vacío y anota las ocho casillas que ataca. Repítelo desde una esquina y compara.",
-   "Resuelve veinte ejercicios de horquilla seguidos y anota, en cada uno, cuál fue la jugada que preparó la casilla."
+   "Resuelve veinte ejercicios de tenedor seguidos y anota, en cada uno, cuál fue la jugada que preparó la casilla."
   ]
  },
  {
@@ -379,7 +379,7 @@
    },
    {
     "p": "¿Qué es un sacrificio de atracción?",
-    "r": "Entregar material para llevar al rey o a una pieza a una casilla donde después hay horquilla, clavada o mate. Se calcula hasta el final antes de jugarlo."
+    "r": "Entregar material para llevar al rey o a una pieza a una casilla donde después hay tenedor, clavada o mate. Se calcula hasta el final antes de jugarlo."
    },
    {
     "p": "¿Por qué el jaque es la mejor herramienta de desviación?",

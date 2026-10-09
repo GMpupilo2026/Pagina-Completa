@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>La pieza que no tiene casillas — Ganar con poco — material de estudio</title>
+<meta name="robots" content="noindex">
+<meta name="author" content="Oscar Angulo Cubero">
+<meta name="description" content="Material de estudio en formato accesible de la lección 2 del curso Ganar con poco.">
+<style>
+  /* Sin imágenes y sin columnas a propósito: esta versión está hecha para
+     lectores de pantalla y para quien necesita agrandar mucho el texto. */
+  body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+         font-size: 1.15rem; line-height: 1.8; color: #102a43; background: #ffffff;
+         max-width: 42rem; margin: 0 auto; padding: 1.5rem 1rem 4rem; }
+  h1 { font-size: 1.7rem; line-height: 1.3; }
+  h2 { font-size: 1.3rem; margin-top: 2.5rem; border-bottom: 2px solid #102a43; padding-bottom: .3rem; }
+  h3 { font-size: 1.1rem; margin-top: 1.8rem; }
+  a { color: #8a4a00; }
+  dt { font-weight: 700; margin-top: 1rem; }
+  dd { margin: .3rem 0 0; }
+  .posicion { border: 2px solid #243b53; border-radius: .5rem; padding: 1rem; margin: 1rem 0; }
+  .respuesta { background: #f0f4f8; border-left: 4px solid #102a43; padding: .6rem .9rem; }
+  footer { margin-top: 3rem; border-top: 2px solid #102a43; padding-top: 1rem; font-size: .95rem; }
+  /* La vuelta a la plataforma. Este archivo se abre solo, en su propia
+     pestaña: sin estos enlaces no hay forma de regresar al curso salvo el
+     botón "atrás" del navegador, que con lector de pantalla no siempre está
+     a mano. Van arriba y abajo: el documento es largo y quien termina de
+     leerlo no tendría que subir de nuevo para salir. */
+  .volver { margin: 0 0 1.5rem; font-size: 1rem; }
+  footer .volver { margin: 1rem 0 0; }
+  .volver a { display: inline-block; padding: .2rem 0; }
+  @media (prefers-color-scheme: dark) {
+    body { background: #0a1f33; color: #f0f4f8; }
+    h2, footer { border-color: #f0b429; }
+    a { color: #f0b429; }
+    .posicion { border-color: #829ab1; }
+    .respuesta { background: #102a43; border-color: #f0b429; }
+  }
+</style>
+</head>
+<body>
+<nav class="volver" aria-label="Volver a la plataforma">
+  <a href="../../academia/ganar-con-poco.html">← Volver al curso Ganar con poco</a>
+  ·
+  <a href="../../../clases.html">Panel de Academia</a>
+</nav>
+<header>
+  <p>Ganar con poco · Lección 2</p>
+  <h1>La pieza que no tiene casillas</h1>
+  <p>Material de estudio en formato accesible. Autor: Oscar Angulo Cubero, Ajedrez Integral.</p>
+  <p>Esta versión dice en palabras todo lo que en el cuadernillo en PDF está dibujado: cada
+     posición viene descrita pieza por pieza, así que no hace falta ver ninguna imagen.</p>
+</header>
+
+<h2>1. De qué trata esta lección</h2>
+
+<p>Toda pieza vale lo que hace. Un alfil encerrado detrás de sus peones vale menos que un caballo bien puesto; una torre que no tiene columna vale menos que un alfil activo. Las tablas de valores (3, 3, 5, 9) son un promedio: en cada posición concreta, una pieza puede valer bastante más o bastante menos.</p>
+<p>Cuando una pieza rival se queda con pocas casillas, hay dos formas de aprovecharlo. La primera es quitarle las que le quedan y ganarla, que es lo que pasa en los ejemplos más llamativos. La segunda, más frecuente, es dejarla donde está: mientras esa pieza no juegue, tú juegas con una pieza de más en el resto del tablero, y esa ventaja se nota en cada plan.</p>
+<p>La pregunta «¿cuál es la peor pieza de cada bando?» es de las más útiles del ajedrez. Para la tuya, la tarea es mejorarla, aunque tarde tres jugadas. Para la del rival, la tarea es asegurarte de que siga mala: cada jugada que le impide salir vale tanto como una jugada que mejora una pieza propia.</p>
+
+
+<h2>2. Conceptos clave</h2>
+<dl>
+  <dt>La estructura de peones</dt>
+  <dd>Los peones son los únicos que no vuelven atrás, así que su forma decide el carácter de la partida: dónde están las casillas fuertes, por dónde se ataca y qué final conviene.</dd>
+  <dd><strong>El error de siempre:</strong> Cambiar piezas sin mirar qué estructura queda. Los cambios llevan al final, y el final lo gana quien tenga la mejor estructura, no quien tuviera mejores piezas hace diez jugadas.</dd>
+  <dd><strong>Para verlo:</strong> Una cadena de peones apunta en una dirección: e4-d5 apunta al flanco de rey. La regla es atacar la base de la cadena, no la punta, porque la base es la que sostiene todo.</dd>
+  <dt>Cómo hacer un plan</dt>
+  <dd>Un plan es una secuencia corta de jugadas con un objetivo concreto: 'llevar el caballo a d5', 'abrir la columna b', 'cambiar su alfil bueno'. Sale de la posición, no de las ganas.</dd>
+  <dd><strong>El error de siempre:</strong> Jugar sin plan, mirando solo la jugada que sigue. El otro error es enamorarse del plan y no cambiarlo cuando la posición cambia.</dd>
+  <dd><strong>Para verlo:</strong> El método corto: qué material hay, cómo están los reyes, cómo es la estructura, qué pieza mía es la peor. La respuesta a la última pregunta suele ser el plan.</dd>
+  <dt>El valor de las piezas</dt>
+  <dd>Peón 1, caballo y alfil 3, torre 5, dama 9. El rey no tiene valor de cambio porque no se puede entregar. Son números de referencia, no una verdad: sirven para decidir cambios rápido, no para juzgar una posición.</dd>
+  <dd><strong>El error de siempre:</strong> Tratar los números como si fueran exactos. Un caballo clavado en el borde vale menos que un peón pasado a punto de coronar, y la calidad (torre por pieza menor) se entrega todos los días cuando la pieza menor domina una casilla fuerte.</dd>
+  <dd><strong>Para verlo:</strong> Dos piezas menores (6) contra una torre y un peón (6) están igualadas en el papel; en la práctica las dos piezas suelen ser mejores en el medio juego, porque hacen dos trabajos a la vez, y peores en el final, donde la torre corre.</dd>
+</dl>
+
+<h2>3. Ejemplos del curso</h2>
+<div class="posicion">
+  <h3>Posición 1: Una pieza rival se quedó con muy pocas casillas. Busca la jugada que le quita las que le quedan. Juegan las blancas; el rival acaba de jugar … alfil cesar 7.</h3>
+  
+  <p>Piezas blancas: rey en g1; dama en e2; torres en a1, f1; alfiles en c1, f3; caballo en e4; peones en a2, b2, c2, d3, f2, g2, h3.</p>
+  <p>Piezas negras: rey en e8; dama en h4; torres en a8, h8; alfiles en c7, f5; caballo en d7; peones en a7, b7, c6, e6, f7, g7, h7.</p>
+  <p>Juegan las blancas.</p>
+  
+  <p>La línea, jugada por jugada: 15. alfil gustav 5, alfil captura eva 4, 16. alfil captura hector 4</p>
+  <p>Resultado: Ganan blancas</p>
+  <p>15. alfil gustav 5, alfil captura eva 4, 16. alfil captura hector 4. Una pieza rival queda atrapada, sin casilla adonde ir. La pieza no se pierde por una combinación: se pierde porque ya estaba mal puesta, y la jugada buena solo lo aprovecha. (Ejercicio 2mRC9 de la base abierta de Lichess (CC0), rating 1448. Stockfish 16 a profundidad 18: alfil gustav 5 es la mejor (+5,5) y la segunda queda en +0,4.)</p>
+  <p>Posición en notación FEN, por si la quieres cargar en un programa: r3k2r/ppbn1ppp/2p1p3/5b2/4N2q/3P1B1P/PPP1QPP1/R1B2RK1 w kq - 2 15</p>
+</div>
+
+<h2>4. Ejercicios</h2>
+<ol>
+  <li>Dibuja la estructura de peones —solo los peones— de tus tres últimas partidas en la jugada 20 y di qué plan pedía cada una.</li>
+  <li>Arma en el tablero un peón aislado en d4 con las piezas de los dos bandos y juégalo desde los dos lados.</li>
+  <li>Para en la jugada 15 de tu próxima partida y escribe tu plan en una frase. Al final, mira si lo cumpliste.</li>
+  <li>Toma cinco posiciones de partidas de maestros en la jugada 20, escribe tu plan, y compáralo con lo que pasó.</li>
+  <li>Anota diez cambios de tu última partida y di, en cada uno, si ganaste o perdiste material y si la posición mejoró o empeoró. Vas a encontrar cambios parejos que fueron buenos y cambios parejos que fueron malos.</li>
+  <li>Arma en el tablero torre y dos peones contra dos caballos y juégala contra alguien. Cuenta quién gana en cinco intentos.</li>
+</ol>
+
+<h2>5. Preguntas con su respuesta</h2>
+<p>Contesta en voz alta antes de seguir leyendo: la respuesta viene justo después de cada pregunta.</p>
+<ol>
+  <li>
+    <p>¿Qué es un peón retrasado y por qué es débil?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> El que quedó atrás de sus vecinos y no puede avanzar sin perderse. Es débil porque hay que defenderlo con piezas y la casilla de delante queda para el rival.</p>
+  </li>
+  <li>
+    <p>¿Los peones doblados son siempre malos?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> No. Pierden movilidad y no se defienden entre ellos, pero abren una columna y controlan casillas nuevas. En posiciones de ataque suelen valer la pena.</p>
+  </li>
+  <li>
+    <p>¿Qué es un peón aislado y qué da a cambio?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> El que no tiene peones vecinos. Es débil en el final, pero en el medio juego da una columna abierta, espacio y dos buenas casillas para las piezas.</p>
+  </li>
+  <li>
+    <p>¿Qué son los peones colgantes?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Dos peones juntos sin vecinos, normalmente c y d. Mientras avanzan juntos son fuerza; si se les obliga a avanzar uno solo, se vuelven dos debilidades.</p>
+  </li>
+  <li>
+    <p>¿Cuál es la pregunta que más rinde en una posición tranquila?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> '¿Cuál es mi peor pieza?' Mejorarla es un plan que casi nunca está mal.</p>
+  </li>
+  <li>
+    <p>¿De qué depende dónde atacar?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> De la estructura de peones: se ataca donde tus peones apuntan. Con la cadena e4-d5 el juego es en el flanco de rey; con d4-e3, en el de dama.</p>
+  </li>
+  <li>
+    <p>¿Cada cuánto se revisa un plan?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Cada vez que el rival hace algo que no esperabas, y siempre después de un cambio de piezas o de un avance de peones.</p>
+  </li>
+  <li>
+    <p>¿Un plan puede ser esperar?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Sí, en posiciones donde cualquier avance debilita. Se mejoran las piezas y se obliga al rival a definir. Se llama maniobrar, y es un plan legítimo.</p>
+  </li>
+  <li>
+    <p>¿Cuánto vale la calidad y qué significa 'ganar la calidad'?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Unos dos puntos: cambiar una pieza menor (3) por una torre (5). Ganar la calidad es quedarse con la torre a cambio de un caballo o un alfil.</p>
+  </li>
+  <li>
+    <p>¿Por qué el rey no tiene valor en la tabla?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Porque no se puede cambiar ni perder: si cae, se acaba la partida. En el final sí se le calcula una fuerza de ataque parecida a la de una pieza menor, pero eso es otra cosa.</p>
+  </li>
+  <li>
+    <p>Tienes dama por torre y alfil. ¿Estás mejor?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> En el papel sí (9 contra 8), pero depende: con las dos piezas coordinadas y el rey rival abierto, la dama sola puede quedar peor. La tabla decide cambios, no partidas.</p>
+  </li>
+  <li>
+    <p>¿Cuándo tres peones compensan una pieza menor?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Cuando están conectados, avanzados y el rival no tiene cómo frenarlos; sobre todo en finales. En el medio juego, con las piezas puestas, la pieza suele valer más.</p>
+  </li>
+</ol>
+
+<h2>6. Fuentes</h2>
+<ul>
+  <li>Texto de la lección: curso «Ganar con poco» de Ajedrez Integral, de Oscar Angulo Cubero.</li>
+  <li>Conceptos, preguntas y ejercicios de este cuadernillo: material didáctico de Ajedrez Integral, de Oscar Angulo Cubero.</li>
+  <li>Posiciones: archivo de posiciones del propio curso, verificadas jugada por jugada con chess.js y evaluadas con el motor Stockfish que el sitio usa.</li>
+</ul>
+<h3>Para seguir leyendo</h3>
+<p>Obras de referencia sobre estos temas. Este material no reproduce texto de ellas: se listan como lectura recomendada, no como origen de lo que aquí se dice.</p>
+<ul>
+  <li>Aron Nimzowitsch, «Mi sistema» (1925).</li>
+  <li>Andrew Soltis, «Pawn Structure Chess» (1976).</li>
+  <li>Herman Grooten, «Chess Strategy for Club Players» (New in Chess, 2009).</li>
+  <li>Irving Chernev, «Logical Chess: Move by Move» (Batsford, 1957).</li>
+  <li>José Raúl Capablanca, «Fundamentos del ajedrez» (1921).</li>
+</ul>
+
+<footer>
+  <p>© 2026 Oscar Angulo Cubero · Ajedrez Integral. Material de uso docente para alumnos de la Academia.</p>
+  <p>No se autoriza su reproducción ni su distribución fuera de ella.</p>
+<p class="volver">
+  <a href="../../academia/ganar-con-poco.html">← Volver al curso Ganar con poco</a>
+  ·
+  <a href="../../../clases.html">Panel de Academia</a>
+</p>
+</footer>
+</body>
+</html>

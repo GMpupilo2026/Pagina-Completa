@@ -137,5 +137,106 @@
       accion: "Ver por supervisor", href: "admin.html#supervisores", alDia: "Todos entrenaron esta semana" },
   ];
 
-  window.Pendientes = { contarEnLaBase, EN_LA_BASE, hoyCR };
+  /* La tarjeta «Lo urgente», pintada: la usan el panel de la Academia (quien
+     da clase) y la página de supervisión (supervisor.html). Los elementos
+     llevan el id `prefijo` (la caja), `prefijo-lista`, `prefijo-al-dia` y
+     `prefijo-estado`. Devuelve los conteos, por si la página los quiere.
+
+     `soloSiHayAlgo`: a quien da clase la tarjeta solo le aparece cuando hay
+     algo. Su panel ya tiene la franja del primer paso y «Tu semana»; un «todo
+     al día» de todos los días deja de leerse. */
+  async function pintar(sb, claves, op) {
+    const caja = document.getElementById(op.prefijo);
+    if (!caja || !claves.length) return null;
+    if (!op.soloSiHayAlgo) caja.hidden = false;
+    const conteos = await contarEnLaBase(sb, claves, { yo: op.yo });
+    const defs = claves.map((c) => EN_LA_BASE.find((d) => d.clave === c));
+    const lista = document.getElementById(op.prefijo + "-lista");
+    lista.replaceChildren();
+    // Lo urgente primero, después lo de vigilar; cada grupo en su orden.
+    const conAlgo = defs.filter((d) => conteos[d.clave] !== 0)
+      .sort((a, b) => (a.nivel === "urgente" ? 0 : 1) - (b.nivel === "urgente" ? 0 : 1));
+    conAlgo.forEach((d) => {
+      const n = conteos[d.clave];
+      const urgente = d.nivel === "urgente" && n !== null;
+      const li = document.createElement("li");
+      li.dataset.pendiente = d.clave;
+      const a = document.createElement("a");
+      a.href = d.href;
+      a.className = "flex items-center gap-3 py-2.5 rounded hover:bg-brand-50 dark:hover:bg-brand-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
+      const icono = document.createElement("span");
+      icono.className = "text-xl shrink-0";
+      icono.setAttribute("aria-hidden", "true");
+      icono.textContent = d.emoji;
+      const texto = document.createElement("span");
+      texto.className = "min-w-0 flex-1 text-sm text-brand-800 dark:text-white";
+      // El nivel va escrito, no solo en el color.
+      const nivel = document.createElement("span");
+      nivel.className = "block text-xs font-bold uppercase tracking-wide " + (urgente ? "text-accent-700 dark:text-accent-400" : "text-brand-500 dark:text-brand-300");
+      nivel.textContent = n === null ? "No se pudo revisar" : urgente ? "Urgente" : "A vigilar";
+      const frase = document.createElement("span");
+      frase.className = "block";
+      if (n === null) {
+        frase.textContent = d.alDia + ": no se pudo contar. Ábrelo para revisarlo.";
+      } else if (d.sinNumero) {
+        frase.textContent = d.titulo(n);
+      } else {
+        const num = document.createElement("strong");
+        num.textContent = n.toLocaleString("es-CR");
+        frase.append(num, document.createTextNode(" " + d.titulo(n)));
+      }
+      texto.append(nivel, frase);
+      const ir = document.createElement("span");
+      ir.className = "shrink-0 text-xs font-semibold text-accent-700 dark:text-accent-400";
+      ir.textContent = d.accion + " →";
+      a.append(icono, texto, ir);
+      li.appendChild(a);
+      lista.appendChild(li);
+    });
+    const alDia = defs.filter((d) => conteos[d.clave] === 0).map((d) => d.alDia);
+    const pieAlDia = document.getElementById(op.prefijo + "-al-dia");
+    pieAlDia.hidden = !alDia.length;
+    pieAlDia.textContent = alDia.length ? "✓ Al día: " + alDia.join(" · ") + "." : "";
+    const urgentes = conAlgo.filter((d) => d.nivel === "urgente" && conteos[d.clave] > 0).length;
+    if (op.soloSiHayAlgo) {
+      caja.hidden = !conAlgo.length;
+      pieAlDia.hidden = true;
+    }
+    document.getElementById(op.prefijo + "-estado").textContent = !conAlgo.length
+      ? "Nada esperando: todo al día."
+      : urgentes
+        ? (urgentes === 1 ? "1 cosa urgente: alguien está esperando." : urgentes + " cosas urgentes: alguien está esperando.")
+        : "Nada urgente. Lo de abajo es para tenerlo a la vista.";
+    return { conteos: conteos, urgentes: urgentes };
+  }
+
+  // Lo de quien supervisa, en su orden: el panel de la Academia (mirando a
+  // un supervisor) y supervisor.html piden lo mismo.
+  const DE_SUPERVISOR = ["solicitudes", "justificaciones", "informesSinLeer", "recibosSinEntregar", "seVan", "morosos"];
+
+  /* «A tu cargo» de quien supervisa: cuántos estudiantes y profesores, y
+     cuántos de SUS estudiantes llevan 4 días o más sin entrenar. Se cuenta en
+     la base: mi_gente trae el total en cada fila, y los que no entrenan se
+     cruzan con mis_supervisados() (informes_inactivos le devuelve también a
+     compañeros que la RLS le deja ver). Lo que no se pudo contar vale null. */
+  async function aCargo(sb) {
+    const total = async (rol) => {
+      const { data, error } = await sb.rpc("mi_gente", { p_busqueda: null, p_rol: rol, p_limite: 1, p_desde: 0 });
+      if (error) return null;
+      return data && data.length ? Number(data[0].total) : 0;
+    };
+    const [alumnos, profesores, ids, inac] = await Promise.all([
+      total("alumno"), total("profesor"),
+      sb.rpc("mis_supervisados"),
+      sb.rpc("informes_inactivos", { p_dias: 4 }),
+    ]);
+    let inactivos = null;
+    if (!ids.error && !inac.error) {
+      const suyos = new Set((ids.data || []).map((x) => (typeof x === "string" ? x : x.mis_supervisados)));
+      inactivos = (inac.data || []).filter((a) => suyos.has(a.id)).length;
+    }
+    return { alumnos: alumnos, profesores: profesores, inactivos: inactivos };
+  }
+
+  window.Pendientes = { contarEnLaBase, EN_LA_BASE, hoyCR, pintar, DE_SUPERVISOR, aCargo };
 })();

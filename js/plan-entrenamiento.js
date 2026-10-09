@@ -95,11 +95,11 @@ window.PlanEntrenamiento = (function () {
     },
     {
       id: 'tactica', nombre: 'Táctica', emoji: '⚔️',
-      mide: 'Horquillas, clavadas, ataques dobles y descubiertos, y la rutina de revisar las amenazas del rival.',
+      mide: 'Tenedores, clavadas, ataques dobles y descubiertos, y la rutina de revisar las amenazas del rival.',
       flojo: 'No ve los golpes tácticos —ni los suyos ni los del rival—. En estas edades y niveles, la táctica decide la mayoría de las partidas.',
       solido: 'Ve los motivos tácticos habituales: ya puede pelear cualquier partida.',
       tareas: [
-        'Quince ejercicios de táctica diarios, siempre por tema (primero horquilla, después clavada, después doble).',
+        'Quince ejercicios de táctica diarios, siempre por tema (primero tenedor, después clavada, después doble).',
         'Racha táctica dos veces por semana para entrenar la vista rápida.',
         'Después de cada jugada del rival, decir en voz alta: jaques, capturas, amenazas.',
       ],
@@ -109,9 +109,10 @@ window.PlanEntrenamiento = (function () {
         { texto: 'Ejercicios de pincho', href: 'entreno/temas.html?tema=skewer' },
         { texto: 'Ejercicios de desviación', href: 'entreno/temas.html?tema=deflection' },
         { texto: 'Racha táctica', href: 'racha-tactica.html' },
-        { texto: 'Ficha: la horquilla', href: 'entreno/estudio.html?ficha=horquilla' },
+        { texto: 'Ficha: el tenedor', href: 'entreno/estudio.html?ficha=horquilla' },
         { texto: 'Habilidades: ¿Qué quiere el rival?', href: 'entreno/tipos.html#amenaza' },
         { texto: 'Habilidades: Aguanta (la única jugada que defiende)', href: 'entreno/tipos.html#aguanta' },
+        { texto: 'Curso: Los cimientos del ajedrez', href: 'cursos/los-cimientos-del-ajedrez.html' },
       ],
     },
     {
@@ -178,6 +179,11 @@ window.PlanEntrenamiento = (function () {
         { texto: 'Precisión posicional: elegir el plan', href: 'entreno/precision-posicional.html' },
         { texto: 'Habilidades: Remata la ventaja', href: 'entreno/tipos.html#remata' },
         { texto: 'Habilidades: Elige a tiempo', href: 'entreno/tipos.html#tiempo' },
+        { texto: 'Curso: Rompe el estancamiento', href: 'cursos/rompe-el-estancamiento.html' },
+        { texto: 'Curso: Ganar con poco', href: 'cursos/ganar-con-poco.html' },
+        { texto: 'Curso: Cambiar o no cambiar', href: 'cursos/cambiar-o-no-cambiar.html' },
+        { texto: 'Curso: Ideas que ganan partidas', href: 'cursos/ideas-que-ganan-partidas.html' },
+        { texto: 'Curso: Una clase al día', href: 'cursos/una-clase-al-dia.html' },
       ],
     },
     {

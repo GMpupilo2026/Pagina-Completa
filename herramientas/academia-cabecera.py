@@ -59,13 +59,14 @@ PAGINAS = [
     "configuracion.html", "crazyhouse.html", "cuatro-jugadores.html",
     "duelo.html", "estandar.html", "formularios.html", "ilumina-tablero.html",
     "informes.html", "inscripciones.html", "juegos.html", "competir.html",
-    "lector-planilla.html", "logros.html", "cuaderno.html", "reto-ejercicios.html", "niebla.html", "partidas.html",
+    "lector-planilla.html", "logros.html", "puntos-tienda.html", "cuaderno.html", "reto-ejercicios.html", "niebla.html", "partidas.html",
     "examen.html", "examenes.html",
     "planes.html", "proyecto.html", "cuestionarios.html", "cuestionario-tarea.html", "racha-tactica.html", "reportes.html", "sesion.html",
     "coordinacion.html", "subgrupos.html", "alumno-nuevo.html", "tareas.html",
-    "informe-mensual.html", "supervision.html", "academias.html", "tablero-academias.html",
+    "informe-mensual.html", "supervision.html", "supervisor.html", "academias.html", "tablero-academias.html",
     "novedades.html", "repasar-clases.html",
     "tienda.html", "accesos.html",
+    "licencias.html", "seleccion-codicader.html",
     "encuesta-profesor.html", "satisfaccion.html", "encuestas-curso.html",
     "justificaciones.html",
     "preparacion-rivales.html", "plan-rival.html", "libreta-torneos.html",
@@ -76,7 +77,7 @@ PAGINAS = [
     "entreno/visualizacion.html", "entreno/aperturas.html", "entreno/sin-internet.html",
     "entreno/precision-posicional.html", "entreno/tipos.html", "entreno/finales.html",
     "entreno/memoria.html",
-    "sonar.html", "batalla-naval.html",
+    "sonar.html", "batalla-naval.html", "ajedrez-4x8.html",
     "cursos/academia/aperturas-y-defensas.html",
     "cursos/academia/arbitro-nacional.html",
     "cursos/academia/calculo-y-visualizacion.html",
@@ -88,8 +89,14 @@ PAGINAS = [
     "cursos/academia/formacion-ajedrez.html",
     "cursos/academia/fundamentos-del-ajedrez.html",
     "cursos/academia/index.html",
+    "cursos/academia/una-clase-al-dia.html",
     "cursos/academia/partidas-modelo.html",
     "cursos/academia/preparacion-para-torneos.html",
+    "cursos/academia/rompe-el-estancamiento.html",
+    "cursos/academia/ganar-con-poco.html",
+    "cursos/academia/cambiar-o-no-cambiar.html",
+    "cursos/academia/ideas-que-ganan-partidas.html",
+    "cursos/academia/los-cimientos-del-ajedrez.html",
 ]
 
 HEADER_RE = re.compile(r'<header id="header"[\s\S]*?</header>')
@@ -204,7 +211,7 @@ AYUDA_GUIA = {
     "admin.html": "administracion", "inscripciones.html": "administracion",
     "accesos.html": "administracion",
     "asistencia.html": "clase-en-vivo", "subgrupos.html": "tareas",
-    "informe-mensual.html": "supervision", "supervision.html": "supervision",
+    "informe-mensual.html": "supervision", "supervision.html": "supervision", "supervisor.html": "supervision",
     "academias.html": "supervision", "tablero-academias.html": "supervision",
     # Las del día a día del profe que la guía ya cuenta (ver «El «?» de la
     # guía, para el equipo docente»).
@@ -389,6 +396,35 @@ def poner_tanda(ruta, s):
             + TANDA_FIN + s[cierre:])
 
 
+# Las bromas entre compañeros (js/bromas.js): solo en el panel, la tienda de
+# puntos y las páginas de Entrenamiento. Nunca en un examen, en la clase en
+# vivo ni en un torneo, que es donde una broma molesta de verdad. Ver «Retos,
+# marcador, regalos y bromas» en docs/decisiones/puntos-y-premios.md.
+BROMAS_INICIO = "<!-- bromas: inicio -->"
+BROMAS_FIN = "<!-- bromas: fin -->"
+
+
+def lleva_bromas(ruta):
+    return ruta in ("clases.html", "puntos-tienda.html") or ruta.startswith("entreno/")
+
+
+def poner_bromas(ruta, s):
+    i = s.find(BROMAS_INICIO)
+    if i >= 0:
+        j = s.find(BROMAS_FIN, i)
+        s = s[:i] + s[j + len(BROMAS_FIN):]
+    if not lleva_bromas(ruta):
+        return s
+    cierre = s.rfind("</body>")
+    if cierre < 0:
+        print(f"⚠️  {ruta}: no tiene </body>, se queda sin las bromas.")
+        return s
+    arriba = "../" * ruta.count("/")
+    return (s[:cierre] + BROMAS_INICIO
+            + f'<script src="{arriba}js/bromas.js" defer></script>'
+            + BROMAS_FIN + s[cierre:])
+
+
 def poner_juego_aviso(ruta, s):
     i = s.find(JUEGO_AVISO_INICIO)
     if i >= 0:
@@ -494,6 +530,7 @@ TIEMPO_ACTIVIDAD = {
     "crazyhouse.html": "partidas", "cartas.html": "partidas",
     "duelo.html": "partidas", "variante.html": "partidas", "relevo.html": "partidas",
     "cuatro-jugadores.html": "partidas",
+    "ajedrez-4x8.html": "partidas",
     "torneo.html": "torneos",
     "examen.html": "examen",
     "plan-rival.html": "preparacion",
@@ -618,6 +655,7 @@ NOMBRE_Y_PADRE = {
     "competir.html": ("Competir", "clases.html"),
     "lector-planilla.html": ("Lector de planilla", "clases.html"),
     "logros.html": ("Logros", "clases.html"),
+    "puntos-tienda.html": ("Tienda de puntos", "clases.html"),
     "cuaderno.html": ("Mi cuaderno", "clases.html"),
     "reto-ejercicios.html": ("Retos de ejercicios", "competir.html"),
     "partidas.html": ("Archivos", "clases.html"),
@@ -636,10 +674,13 @@ NOMBRE_Y_PADRE = {
     "tareas.html": ("Tareas", "clases.html"),
     "informe-mensual.html": ("Informe mensual", "clases.html"),
     "supervision.html": ("Supervisión", "clases.html"),
+    "supervisor.html": ("Panel de supervisión", "clases.html"),
     "academias.html": ("Academias", "clases.html"),
     "tablero-academias.html": ("Tablero por academia", "clases.html"),
     "tienda.html": ("Tienda", "clases.html"),
     "accesos.html": ("Accesos y cupos", "clases.html"),
+    "licencias.html": ("Licencias de herramientas", "clases.html"),
+    "seleccion-codicader.html": ("Selección por parámetros", "clases.html"),
     "encuesta-profesor.html": ("¿Cómo van tus clases?", "clases.html"),
     "justificaciones.html": ("Justificaciones de ausencia", "clases.html"),
     "satisfaccion.html": ("Satisfacción con los profesores", "clases.html"),
@@ -663,6 +704,7 @@ NOMBRE_Y_PADRE = {
     "partida-perdida.html": ("La partida perdida", "juegos.html"),
     "sonar.html": ("El Sonar", "juegos.html"),
     "batalla-naval.html": ("Batalla naval", "juegos.html"),
+    "ajedrez-4x8.html": ("Ajedrez 4×8", "juegos.html"),
     # Las páginas de entrenamiento cuelgan del panel, no del hub: el alumno
     # entra a cada una por su tarjeta del panel y nunca pasa por
     # entreno/index.html; unas migas que lo mandaban ahí lo dejaban en un
@@ -761,12 +803,12 @@ def poner_migas(ruta, s):
 
 
 # El Ctrl + K de toda la Academia (js/atajo-buscar.js): lleva al buscador del
-# panel. No va en clases.html (tiene el suyo), ni en sesion.html (salir de la
+# panel. No va en clases.html, admin.html ni supervisor.html (cada una tiene el suyo), ni en sesion.html (salir de la
 # clase tiene que cerrar antes la asistencia) ni en examen.html (salir del
 # examen lo congela): ver la cabecera de ese archivo.
 ATAJO_INICIO = "<!-- atajo: inicio -->"
 ATAJO_FIN = "<!-- atajo: fin -->"
-SIN_ATAJO = {"clases.html", "sesion.html", "examen.html"}
+SIN_ATAJO = {"clases.html", "admin.html", "supervisor.html", "sesion.html", "examen.html"}
 
 
 def poner_atajo(ruta, s):
@@ -807,6 +849,7 @@ def procesar(ruta):
     s = poner_juego_aviso(ruta, s)
     s = poner_aviso_profe(ruta, s)
     s = poner_tanda(ruta, s)
+    s = poner_bromas(ruta, s)
     s = poner_acceso(ruta, s)
     s = poner_tiempo(ruta, s)
     s = poner_modo_vista(ruta, s)

@@ -611,6 +611,7 @@
             pintarTanda(row.tanda_calentamiento || null);
             pintarEquipos(row.equipos || null);
             pintarPodio(row.podio || null);
+            pintarPresentacion(row.presentacion || null);
             updateTurnIndicator();
             updateAccessForRole();
             renderMoveList();
@@ -678,6 +679,12 @@
             { slug: "calculo-y-visualizacion", titulo: "Cálculo y Visualización" },
             { slug: "estrategia-y-tactica", titulo: "Estrategia y Táctica" },
             { slug: "desequilibrios-de-material", titulo: "Desequilibrios de material" },
+            { slug: "rompe-el-estancamiento", titulo: "Rompe el estancamiento" },
+            { slug: "ganar-con-poco", titulo: "Ganar con poco" },
+            { slug: "cambiar-o-no-cambiar", titulo: "Cambiar o no cambiar" },
+            { slug: "ideas-que-ganan-partidas", titulo: "Ideas que ganan partidas" },
+            { slug: "los-cimientos-del-ajedrez", titulo: "Los cimientos del ajedrez" },
+            { slug: "una-clase-al-dia", titulo: "Una clase al día" },
             { slug: "finales-practicos", titulo: "Finales Prácticos" },
             { slug: "el-mapa-de-los-finales", titulo: "El mapa de los finales" },
             { slug: "estrategia-en-el-final", titulo: "Estrategia en el final" },
@@ -1623,8 +1630,8 @@
         }
 
         /* Lo que vive en game_state para ESTA clase no pasa a la siguiente: el
-           mapa, el calentamiento, el podio, los equipos, el tiempo para pensar
-           y el turno. Antes quedaban puestos, y la clase del día siguiente
+           mapa, el calentamiento, el podio, los equipos, el tiempo para pensar,
+           el turno y la presentación. Antes quedaban puestos, y la clase del día siguiente
            arrancaba con el podio de la anterior a la vista. La partida votada
            también termina. El tablero y su partida no se tocan: son lo que se
            repasa. */
@@ -1632,7 +1639,7 @@
             if (partidaClase) await terminarPartidaClase("La partida de la clase terminó al cerrar la clase.");
             if (ronda) await terminarRonda("La ronda rápida terminó al cerrar la clase.");
             if (cuestionarioEnJuego) await terminarCuestionario("El cuestionario terminó al cerrar la clase.");
-            const cambios = { encuesta: null, calentamiento: null, tanda_calentamiento: null, podio: null, equipos: null, pensar: null, elegido: null };
+            const cambios = { encuesta: null, calentamiento: null, tanda_calentamiento: null, podio: null, equipos: null, pensar: null, elegido: null, presentacion: null };
             // Las flechas del mapa se van con él; las que dibujó el profe, no.
             if (encuestaActual) { cambios.arrows = []; cambios.circles = []; }
             const { error } = await sb.from("game_state").update(cambios).eq("id", myGameStateId);
@@ -1645,6 +1652,7 @@
             pintarEquipos(null);
             pintarPensar(null);
             pintarElegido(null);
+            pintarPresentacion(null, true);
         }
 
         /* Lo que aparece para toda la clase, dicho en voz para quien usa lector
@@ -2429,6 +2437,20 @@
                     li.appendChild(extra);
                 }
                 listEl.appendChild(li);
+            }
+
+            // Los accesorios de avatar que cada alumno canjeó en la tienda de
+            // puntos (gorro, lentes, corona…): un solo pedido para toda la
+            // lista, con memoria de la página (js/puntos.js). Llega después
+            // del renglón para no atrasar el resto del renderizado — con la
+            // lista a punto de volver a pintarse en el próximo latido de
+            // presencia, decorar un poco tarde no se nota.
+            if (window.Puntos) {
+                Puntos.accesoriosDe(sb, entries.map(([id]) => id)).then((mapa) => {
+                    listEl.querySelectorAll("[data-foto-de]").forEach((caja) => {
+                        Puntos.decorarAvatar(caja, mapa.get(caja.dataset.fotoDe));
+                    });
+                });
             }
         }
 
@@ -7250,6 +7272,7 @@
                 cargarPlanesEnClase();
                 setupTeacherLessonTools();
                 setupArchivosTools();
+                setupPresentacionTools();
                 // El enlace para invitados sin cuenta es de quien da la clase:
                 // quien administra no da clase, y el proyector y el control remoto
                 // son otra ventana de la misma clase.

@@ -53,7 +53,7 @@ TIENE_TABLERO = re.compile(
     r"|ficha-render\.js|visor-linea\.js|finales-100\.js|curso-partidas\.js"
     # Los que arman su tablero entero desde su js/ y no dejan rastro en el HTML.
     r"|js/(?:racha-tactica|te-reto|entreno-diagnostico|entreno-practicas|entreno-aprender|transmision"
-    r"|entreno-temas|entreno-mates|entreno-desafios"
+    r"|entreno-temas|entreno-mates|entreno-desafios|ajedrez-4x8"
     # El módulo común de ejercicios corona con js/coronacion.js: quien lo carga
     # necesita ese módulo aunque no pinte piezas en el HTML.
     r"|ejercicio-tablero)\.js"

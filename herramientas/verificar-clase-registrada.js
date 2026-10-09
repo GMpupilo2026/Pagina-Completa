@@ -425,6 +425,10 @@ window.__deletes = [];
         if (i && !i.bloqueado_at) i.bloqueado_at = new Date().toISOString();
         return objeto(null);
       }
+      /* El candado del material (puede_bajar): solo dice que sí a lo que la
+         semilla pone en puede_bajar —lo que administración le compartió—, como
+         la base sin «basta el acceso». Sin semilla, a nada. */
+      if (n === "puede_bajar") return objeto((TABLAS.puede_bajar || []).includes(args.p_producto));
       if (n === "resumen_de_la_clase") return constructor(n, resumenDeLaClase(args.p_clase));
       if (n === "puntos_de_la_clase") return constructor(n, puntosDeLaClase(args.p_clase));
       if (n === "puntos_de_tandas") return constructor(n, puntosDeTandas(args.p_clase));
@@ -548,7 +552,9 @@ async function abrir(browser, quien, claseAbierta, semilla, opciones) {
   await ctx.route("**/fonts.gstatic.com/**", (r) => r.abort());
   await ctx.route("**/cdn.jsdelivr.net/**", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: "" }));
   await ctx.route("**/js/supabase-client.js", (r) =>
-    r.fulfill({ status: 200, contentType: "application/javascript", body: clienteFalso(quien, claseAbierta, semilla) }));
+    r.fulfill({ status: 200, contentType: "application/javascript",
+      // opciones.extra: código que se suma al doble (un Storage de mentira, por ejemplo).
+      body: clienteFalso(quien, claseAbierta, semilla) + ((opciones && opciones.extra) || "") }));
   const page = await ctx.newPage();
   const errores = [];
   page.on("pageerror", (e) => errores.push(String(e)));

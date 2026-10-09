@@ -37,32 +37,20 @@ const path = require("path");
 const os = require("os");
 const { Chess } = require("chess.js");
 const RAIZ = path.join(__dirname, "..");
-const { tablero } = require("./lib/tablero-svg.js");
 const { describir } = require("./lib/describir-fen.js");
 const N = require("./lib/notacion.js");
 const { unir, proteger } = require("./lib/pdf-armar.js");
+const {
+  LETRAS, banco, LOGO_CREMA, esc, puntosTexto, esperado, FUERZAS, filasTablaPuntos, diagrama, htmlMarca,
+} = require("./lib/libro-examen-comun.js");
 
-global.window = {};
-eval(fs.readFileSync(path.join(RAIZ, "material/ponte-a-prueba/banco.js"), "utf8"));
-const LIBRO = global.window.LIBRO_EXAMEN;
-const ITEMS = global.window.LIBRO_EXAMEN_ITEMS;
+const { LIBRO, ITEMS } = banco();
 const CATS = LIBRO.CATEGORIAS;
 
 const AUTOR = LIBRO.AUTOR;
 const CLAVE_PROPIETARIO = "ponte-a-prueba-oac-2026";
 const CARPETA = path.join(RAIZ, "material", "ponte-a-prueba");
-const LETRAS = ["a", "b", "c", "d"];
 const ANIO = 2026;
-
-function incrustar(relativo) {
-  return "data:image/png;base64," + fs.readFileSync(path.join(RAIZ, relativo)).toString("base64");
-}
-const LOGO_CREMA = incrustar("img/logo-oscar-angulo.png");
-const LOGO_MARCA = incrustar("img/logo-oscar-angulo-marca.png");
-
-function esc(t) {
-  return String(t).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
-}
 
 /* Las opciones de la jugada se barajan para que la buena no quede siempre
    primera, con un orden fijo que sale del identificador: el libro, sus
@@ -78,46 +66,6 @@ function ordenOpciones(item) {
     [orden[i], orden[j]] = [orden[j], orden[i]];
   }
   return orden;
-}
-
-function puntosTexto(p) {
-  return p > 0 ? `+${p}` : p < 0 ? `−${-p}` : "0";
-}
-
-/* ---------------------------------------------------------- las tablas */
-const AZAR = 0.25;
-function acierto(elo, R) {
-  return AZAR + (1 - AZAR) / (1 + Math.pow(10, (elo - R) / 400));
-}
-function promedioDeLasOtras(puntos, correcta) {
-  const otras = puntos.filter((_, i) => i !== correcta);
-  return otras.reduce((a, b) => a + b, 0) / otras.length;
-}
-function esperado(items, R) {
-  return items.reduce((s, it) => {
-    const p = acierto(it.elo, R);
-    return s
-      + p * 5 + (1 - p) * promedioDeLasOtras(it.jugada.puntos, it.jugada.correcta)
-      + p * 5 + (1 - p) * promedioDeLasOtras(it.evaluacion.puntos, it.evaluacion.correcta);
-  }, 0);
-}
-const ELO_MIN = 600, ELO_MAX = 2200, PASO = 100;
-const FUERZAS = [];
-for (let r = ELO_MIN; r <= ELO_MAX; r += PASO) FUERZAS.push(r);
-
-/* Desde cuántos puntos corresponde cada fuerza: el punto medio entre la
-   fuerza y la de abajo. Así cada renglón cubre un tramo y no hay huecos. */
-function tablaPuntos(items) {
-  return FUERZAS.map((r) => ({ r, desde: Math.round(esperado(items, r - PASO / 2)) }));
-}
-function filasTablaPuntos(items, maximo) {
-  const t = tablaPuntos(items);
-  return t.map((f, i) => {
-    const hasta = i + 1 < t.length ? t[i + 1].desde - 1 : maximo;
-    const rango = i === 0 ? `hasta ${hasta}` : i + 1 === t.length ? `${f.desde} o más` : `${f.desde} a ${hasta}`;
-    const fuerza = i === 0 ? `${f.r} o menos` : i + 1 === t.length ? `${f.r} o más` : String(f.r);
-    return `<tr><td class="num">${rango}</td><td class="num"><strong>${fuerza}</strong></td></tr>`;
-  }).join("");
 }
 
 /* ---------------------------------------------------------- los textos */
@@ -170,7 +118,7 @@ const GUIA = {
     ],
   },
   tactica: {
-    mide: "Ver los golpes: horquillas, clavadas, ataques dobles, desviaciones, piezas sin defender.",
+    mide: "Ver los golpes: tenedores, clavadas, ataques dobles, desviaciones, piezas sin defender.",
     flojo: "Pierdes o dejas de ganar material por golpes de una o dos jugadas. Es lo primero que hay que arreglar, a cualquier nivel.",
     entrena: [
       "Veinte minutos diarios de ejercicios tácticos valen más que tres horas un domingo.",
@@ -228,14 +176,6 @@ const HABITOS = [
   "Cuida el cuerpo: dormir bien antes de un torneo vale tanto como una tarde de estudio.",
   "Vuelve a hacer este examen dentro de seis meses y compara: lo que subió es lo que funcionó.",
 ];
-
-/* ---------------------------------------------------------- la posición */
-function diagrama(item, n) {
-  return `<div class="diagrama">${tablero(item.fen, {
-    coordenadas: true, destacar: item.marca,
-    titulo: `Posición ${n}. Juegan las blancas.`,
-  })}<p class="turno">Juegan las blancas</p></div>`;
-}
 
 function pregunta(item) {
   const orden = ordenOpciones(item);
@@ -585,16 +525,6 @@ const htmlPortada = `<!doctype html><html lang="es"><head><meta charset="utf-8">
     </div>
   </div>
 </body></html>`;
-
-/* La marca de agua: el logo, inclinado y tenue, en su propia hoja. */
-const htmlMarca = `<!doctype html><html lang="es"><head><meta charset="utf-8">
-<style>
-  @page { size: A4; margin: 0; }
-  html, body { margin: 0; padding: 0; width: 210mm; height: 297mm; }
-  .sello { position: absolute; left: 52.5mm; top: 109mm; width: 105mm; transform: rotate(-15deg); opacity: .11; }
-  .sello img { display: block; width: 105mm; height: auto; }
-</style>
-</head><body><div class="sello"><img src="${LOGO_MARCA}" alt=""></div></body></html>`;
 
 /* ---------------------------------------------------------- accesible */
 /* Sin una sola imagen: la posición se cuenta pieza por pieza y las jugadas van

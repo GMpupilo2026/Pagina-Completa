@@ -800,6 +800,10 @@ Detalles que importan:
   `informes-encargados/informe-html.ts` (Deno). Si se separan, el correo nombra
   una sección que la pantalla no conoce. Al sumar una página que cuenta tiempo
   con una actividad nueva, agregarla en las dos.
+  Un curso nuevo no hace falta sumarlo a `TITULOS_CURSOS` si su slug ya da su
+  título («rompe-el-estancamiento» → «Rompe el estancamiento»): el correo lo
+  nombra así, y el verificador mira el nombre que el correo muestra para cada
+  curso del catálogo (ver «Dónde quedó dado de alta» en cursos-y-material.md).
 - Sin `secciones` (una base de antes), el correo cae a los conteos de siempre.
 - **«Preparación de rivales»** (`preparacion`) cuenta el tiempo en
   `plan-rival.html` y las líneas del plan que el alumno jugó de memoria (ver

@@ -211,6 +211,8 @@ window.__consultas = [];
     examenes: DATOS.examenes || [],
     avisos_profesor: DATOS.avisos_profesor || [],
     notas_alumno: DATOS.notas_alumno || [],
+    // El horario de quien da clase (asistencia.html → «Tu horario»).
+    horario_clases: DATOS.horario_clases || [],
   };
 
   window.sb = {
@@ -641,7 +643,11 @@ async function pruebaCupoInvitaciones(browser) {
   // Las usó todas.
   {
     const sinCupo = Object.assign({}, PROFE, { invitaciones_max: 5, invitaciones_usadas: 5 });
-    const { page, ctx, errores } = await panel(browser, [sinCupo], "u-profe");
+    // Con el recorrido del profesor nuevo ya visto: se abre solo a los 700 ms
+    // de pintar el panel y, con el CI cargado, caía en medio de esta prueba
+    // (el PR #782 falló dos veces así). El recorrido tiene su prueba aparte.
+    const { page, ctx, errores } = await panel(browser, [sinCupo], "u-profe",
+      null, { local: { "recorrido_profe_v1:u-profe": "1" } });
     await page.evaluate(contestarAvisos);
     const f = await page.evaluate(ficha);
     igual("sin invitaciones, la ficha se apaga: sin enlace", [f.apagada, f.enlace], [true, null]);
@@ -660,13 +666,30 @@ async function pruebaCupoInvitaciones(browser) {
     igual("y con «Ahora no» se queda en el panel", new URL(page.url()).pathname, "/clases.html");
     // Con Enter, lo mismo, y «Ver los planes» lleva a los paquetes.
     await page.evaluate(() => { window.__cancelarAvisos = false; window.__avisos = []; });
-    await page.evaluate(() => [...document.querySelectorAll("#tile-grid [aria-disabled=true]")]
-      .find((el) => /Crear cuenta de alumno/.test(el.textContent)).focus());
+
+    // Se espera a que la dirección CAMBIE ("commit"), no a que precios.html
+    // termine de cargar: en el CI, con las cuatro tandas a la vez, la carga
+    // entera pasó de los 10 s y la prueba falló sin que nada estuviera roto.
     await Promise.all([
-      page.waitForURL(/precios\.html#t-paquetes/, { timeout: 10000 }).catch(() => {}),
-      page.keyboard.press("Enter"),
+      // Basta con que la navegación ARRANQUE («commit»): esperar a que
+      // precios.html termine de cargar dependía de lo cargado que estuviera el
+      // CI, y en el PR #765 se pasó dos veces de los 10 s.
+      page.waitForURL(/precios\.html#t-paquetes/, { timeout: 20000, waitUntil: "commit" }).catch(() => {}),
+      // El localizador enfoca la ficha JUSTO antes del Enter (y la vuelve a
+      // buscar si la grilla se repintó): enfocarla aparte dejaba un hueco en
+      // el que el foco se podía ir a otra parte.
+      page.locator("#tile-grid [aria-disabled=true]", { hasText: "Crear cuenta de alumno" }).press("Enter"),
     ]);
-    cierto("con Enter y «Ver los planes», va a los paquetes de precios.html: " + page.url(),
+    // Si no llegó, lo que hace falta para saber por qué: dónde quedó el foco,
+    // qué avisos salieron y qué diálogos siguen abiertos.
+    const porQue = /precios\.html#t-paquetes$/.test(page.url()) ? "" : " | " + await page.evaluate(() => {
+      const f = document.activeElement;
+      return "foco: " + (f ? f.tagName + (f.id ? "#" + f.id : "") + " «" + (f.textContent || "").trim().slice(0, 40) + "»" : "ninguno") +
+        " | avisos: " + JSON.stringify(window.__avisos || []) +
+        " | diálogos abiertos: " + document.querySelectorAll("dialog[open]").length +
+        " | recorrido: " + !!document.getElementById("recorrido-profe");
+    }).catch((e) => "sin diagnóstico: " + e.message);
+    cierto("con Enter y «Ver los planes», va a los paquetes de precios.html: " + page.url() + porQue,
       /precios\.html#t-paquetes$/.test(page.url()));
     igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
     await ctx.close();
@@ -2859,6 +2882,91 @@ async function pruebaPlegables(browser) {
       [s.querySelector("h2").textContent, !!s.querySelector("h2 button[aria-expanded=false]")])),
     [["Clase en vivo", false], ["Tus alumnos", true], ["Tus clases", true], ["Aprender", true], ["Jugar y competir", true], ["Tu cuenta", false]]);
   await ctx.close();
+
+  /* En la computadora, lo de dar clase abierto y lo que no es para dar clase
+     («Aprender», «Jugar y competir») cerrado: así sus herramientas quedan
+     juntas. Ver «El panel del profe, más corto». */
+  ({ page, ctx } = await panel(browser, [PROFE], "u-profe", { viewport: { width: 1280, height: 900 } }));
+  const cerrados = () => page.evaluate(() => Array.from(document.querySelectorAll("#tile-grid > section")).map((s) =>
+      [s.querySelector("h2").textContent, !!s.querySelector("h2 button[aria-expanded=false]"), s.querySelector(".grid").checkVisibility()]));
+  igual("en la computadora, a la profesora solo se le cierran «Aprender» y «Jugar y competir»", await cerrados(),
+    [["Clase en vivo", false, true], ["Tus alumnos", false, true], ["Tus clases", false, true], ["Aprender", true, false], ["Jugar y competir", true, false], ["Tu cuenta", false, true]]);
+  await page.click('#tile-grid h2 button:has-text("Aprender")');
+  await page.reload({ waitUntil: "networkidle" });
+  await page.waitForSelector("#app:not(.hidden)");
+  igual("y si abre uno, se recuerda", (await cerrados()).find((x) => x[0] === "Aprender"), ["Aprender", false, true]);
+  await ctx.close();
+}
+
+/* ---------- Tu próxima clase, también para el profe ----------
+   La tarjeta de «Iniciar clase» le dice cuándo le toca, de su horario; a la
+   hora de la clase deja el título escrito; sin horario lo invita a ponerlo. Ni
+   a quien administra ni con una clase abierta. Ver «Tu próxima clase, también
+   para el profe» en docs/decisiones/paneles.md. */
+function enCR(msDesdeAhora) {
+  // El día de la semana, la fecha y la hora en Costa Rica (UTC−6, sin horario de verano).
+  const d = new Date(Date.now() + msDesdeAhora - 6 * 3600000);
+  return { dow: d.getUTCDay(), dia: d.toISOString().slice(0, 10), hora: d.toISOString().slice(11, 16) + ":00" };
+}
+let filasHorario = 0;
+function filaHorario(extra) {
+  return Object.assign({ id: "h-" + (++filasHorario), profesor_id: "u-profe", duracion_min: 60,
+    grupo: null, subgrupo_id: null, titulo: null, modalidad: "presencial", desde: "2026-01-01", hasta: null }, extra);
+}
+async function pruebaProximaDelProfe(browser) {
+  console.log("\n=== Tu próxima clase, en el panel del profe ===");
+  const linea = (page) => page.evaluate(() => { const p = document.getElementById("profe-proxima"); return p.checkVisibility() ? p.textContent.replace(/\s/g, " ") : null; });
+  const esperar = (page) => page.waitForFunction(() => !document.getElementById("profe-proxima").hidden, null, { timeout: 5000 }).catch(() => {});
+
+  let { page, ctx, errores } = await panel(browser, [PROFE], "u-profe");
+  await esperar(page);
+  igual("sin horario, la invita a ponerlo", await linea(page),
+    "🗓️ ¿Das clase en días fijos? Ponlos en tu horario y aquí te decimos cuándo te toca. Poner mi horario");
+  igual("y el enlace lleva a su horario", await page.getAttribute("#profe-proxima a", "href"), "asistencia.html#horario");
+  await ctx.close();
+
+  // Mañana a las 4:00 p. m. con el grupo 7B (más una clase que ya terminó su vigencia).
+  const manana = enCR(24 * 3600000);
+  ({ page, ctx } = await panel(browser, [PROFE], "u-profe", {}, { horario_clases: [
+    filaHorario({ dia_semana: manana.dow, hora: "16:00:00", grupo: "7B" }),
+    filaHorario({ dia_semana: enCR(0).dow, hora: "23:59:00", grupo: "Viejo", hasta: "2026-01-02" }),
+  ] }));
+  await esperar(page);
+  igual("dice cuál es, cuándo y cómo, y no cuenta la que ya no está en el horario", await linea(page),
+    "🗓️ Tu próxima clase: Grupo 7B, mañana a las 4:00 p. m., presencial. Ver tu horario");
+  igual("y no le escribe el título: todavía no es hora", await page.inputValue("#new-session-title"), "");
+  await ctx.close();
+
+  // A la hora de la clase (empezó hace 10 minutos), con el nombre de su subgrupo.
+  // Pasada la medianoche de Costa Rica, «hace 10 minutos» caía en el día de
+  // ayer y la clase ya no era de hoy: la prueba fallaba de 00:00 a 00:10.
+  const desdeMedianoche = (Date.now() - 6 * 3600000) % 86400000;
+  const ahora = enCR(-Math.min(10 * 60000, desdeMedianoche));
+  ({ page, ctx, errores } = await panel(browser, [PROFE], "u-profe", {}, {
+    horario_clases: [filaHorario({ dia_semana: ahora.dow, hora: ahora.hora, subgrupo_id: "sg-1", modalidad: "en_linea" })],
+    rpc: { mis_subgrupos: [{ id: "sg-1", nombre: "Avanzados", cuantos: 4 }] },
+  }));
+  await esperar(page);
+  const texto = await linea(page);
+  cierto("a la hora de la clase se lo dice con su subgrupo («" + texto + "»)",
+    /^🔔 Te toca clase ahora: Avanzados, hasta las .+, en línea\. Toca «Iniciar clase» y tus alumnos ya pueden entrar\.$/.test(texto || ""));
+  igual("y deja el título escrito: abrirla es un toque", await page.inputValue("#new-session-title"), "Avanzados");
+  igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
+  await ctx.close();
+
+  // Con la clase abierta no hace falta decirle cuándo es la próxima.
+  ({ page, ctx } = await panel(browser, [PROFE], "u-profe", {}, { clase_abierta: true,
+    horario_clases: [filaHorario({ dia_semana: manana.dow, hora: "16:00:00", grupo: "7B" })] }));
+  await page.waitForTimeout(500);
+  igual("con la clase abierta no sale", await linea(page), null);
+  await ctx.close();
+
+  // Quien administra no da clase.
+  ({ page, ctx } = await panel(browser, [ADMIN], "u-admin", {}, {
+    horario_clases: [filaHorario({ profesor_id: "u-admin", dia_semana: manana.dow, hora: "16:00:00", grupo: "7B" })] }));
+  await page.waitForTimeout(500);
+  igual("a quien administra no le sale", await page.evaluate(() => { const p = document.getElementById("profe-proxima"); return !!p && p.checkVisibility(); }), false);
+  await ctx.close();
 }
 
 /* ---------- «Hoy te toca», también en el panel ----------
@@ -3445,6 +3553,7 @@ async function pruebaPanelPequenos(browser) {
     await pruebaSemanaProfesora(browser);
     await pruebaProfesora(browser);
     await pruebaRecorrido(browser);
+    await pruebaProximaDelProfe(browser);
     await pruebaCupoInvitaciones(browser);
     await pruebaPreparacionRivales(browser);
     await pruebaUrgenteProfesora(browser);
