@@ -32,6 +32,21 @@
             ],
         },
         {
+            id: "jdn-comites",
+            emoji: "🏆",
+            nombre: "Resultados JDN por comité",
+            corto: "Resultados JDN",
+            href: "jdn-comites.html",
+            disponible: true,
+            resumen: "Todos los torneos de ajedrez de los Juegos Deportivos Nacionales que están en chess-results, eliminatorias y finales desde 2018, ordenados por comité de deportes.",
+            puntos: [
+                "El medallero de las finales, de todas juntas o de una edición, con individual y equipos.",
+                "La ficha de cada comité: sus jugadores y equipos edición por edición, con el puesto, los puntos y la medalla.",
+                "En una eliminatoria, quién jugó después la final de ese ciclo.",
+                "Junta las variantes de un mismo comité («Goico», «CCDR Goicochea») y deduce el comité de quien no lo trae.",
+            ],
+        },
+        {
             id: "desempates",
             emoji: "⚖️",
             nombre: "Desempates explicados",

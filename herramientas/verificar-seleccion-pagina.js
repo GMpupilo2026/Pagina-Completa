@@ -160,7 +160,7 @@ const visible = (p, sel) => p.$eval(sel, (e) => e.checkVisibility());
     await p.waitForSelector("#lista li[data-herramienta='seleccion-codicader'] a[href='seleccion-codicader.html']");
     igual("con licencia: «Abrir la herramienta» en la que tiene, candado en las demás",
         await p.$$eval("#lista > li", (l) => l.map((x) => [x.dataset.herramienta, /🔓/.test(x.textContent)])),
-        [["seleccion-codicader", true], ["desempates", false], ["variacion-elo", false], ["reclamos-tablas", false], ["acta-jde", false]]);
+        [["seleccion-codicader", true], ["jdn-comites", false], ["desempates", false], ["variacion-elo", false], ["reclamos-tablas", false], ["acta-jde", false]]);
     await ctx.close();
 
     await browser.close();

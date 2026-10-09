@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261009005951
+# al-dia-con: 20261009021548
 tabla  Ejercicios Lichess  rls=true
 tabla  academia_ia  rls=true
 tabla  academia_miembros  rls=true
@@ -79,6 +79,7 @@ tabla  interno.curso_lecciones  rls=false
 tabla  interno.envios_publicos  rls=true
 tabla  interno.lector_planilla_uso  rls=true
 tabla  interno.salud_base  rls=true
+tabla  jdn_resultados  rls=true
 tabla  justificaciones_ausencia  rls=true
 tabla  licencias_herramientas  rls=true
 tabla  material_compartido  rls=true
@@ -770,6 +771,16 @@ columna  interno.salud_base.lenta  boolean
 columna  interno.salud_base.lentas  integer
 columna  interno.salud_base.medido_at  timestamp with time zone
 columna  interno.salud_base.pulso_ms  integer
+columna  jdn_resultados.codigo  text
+columna  jdn_resultados.comite  text
+columna  jdn_resultados.edicion  text
+columna  jdn_resultados.id  bigint
+columna  jdn_resultados.nombre  text
+columna  jdn_resultados.orden  smallint
+columna  jdn_resultados.puesto  smallint
+columna  jdn_resultados.puntos  numeric(4,1)
+columna  jdn_resultados.record  text
+columna  jdn_resultados.tnr  integer
 columna  justificaciones_ausencia.adjuntos  jsonb
 columna  justificaciones_ausencia.created_at  timestamp with time zone
 columna  justificaciones_ausencia.detalle  text
@@ -2025,6 +2036,7 @@ politica  informes_profesor  informes_profesor_select  SELECT
 politica  insignias  insignias_ver  SELECT
 politica  insignias  verificacion_en_dos_pasos  ALL  restrictiva
 politica  insignias_tipos  insignias_tipos_ver  SELECT
+politica  jdn_resultados  jdn_resultados_con_herramienta  SELECT
 politica  justificaciones_ausencia  justificaciones_select  SELECT
 politica  licencias_herramientas  licencias_herramientas_ver  SELECT
 politica  material_compartido  material_compartido_select  SELECT
@@ -2579,6 +2591,8 @@ indice  interno.envios_publicos  envios_publicos_tipo_ambito
 indice  interno.lector_planilla_uso  lector_planilla_uso_dia
 indice  interno.lector_planilla_uso  lector_planilla_uso_pkey
 indice  interno.salud_base  salud_base_pkey
+indice  jdn_resultados  jdn_resultados_edicion_codigo_orden_key
+indice  jdn_resultados  jdn_resultados_pkey
 indice  justificaciones_ausencia  justificaciones_ausencia_pkey
 indice  justificaciones_ausencia  justificaciones_por_fecha
 indice  justificaciones_ausencia  justificaciones_revisada_por_fk
@@ -3317,6 +3331,9 @@ grant  informes_profesor  authenticated  TRIGGER
 grant  informes_profesor  authenticated  TRUNCATE
 grant  insignias  authenticated  SELECT
 grant  insignias_tipos  authenticated  SELECT
+grant  jdn_resultados  authenticated  REFERENCES
+grant  jdn_resultados  authenticated  SELECT
+grant  jdn_resultados  authenticated  TRIGGER
 grant  justificaciones_ausencia  authenticated  REFERENCES
 grant  justificaciones_ausencia  authenticated  SELECT
 grant  justificaciones_ausencia  authenticated  TRIGGER

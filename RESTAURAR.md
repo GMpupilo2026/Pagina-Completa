@@ -175,6 +175,12 @@ herramientas/cuestionarios-listos.js` escribe `herramientas/cuestionarios/semill
 que se corre en la base. Borra los listos y los vuelve a poner: no toca los que
 armaron los profes.
 
+**Los resultados JDN** (`jdn_resultados`, de la herramienta «Resultados JDN por
+comité») también vienen en el volcado. Si faltan, se vuelven a leer de
+chess-results desde la base con `herramientas/jdn-comites/cargar.sql` (los dos
+pasos están en su cabecera; la lista de torneos, en `torneos.txt` de la misma
+carpeta). Reemplaza la tabla entera.
+
 ### 4. Las Edge Functions
 
 ```
