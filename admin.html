@@ -212,16 +212,12 @@
                     <div class="flex flex-wrap items-center gap-3 mb-1">
                         <h2 id="titulo-crear" class="font-serif text-2xl font-bold text-brand-800 dark:text-white">Crear cuenta nueva</h2>
                     </div>
-                    <p class="text-sm text-brand-500 dark:text-brand-300 mb-5">Se envía un correo de invitación; la persona entra directo y pone su propia contraseña.</p>
+                    <p class="text-sm text-brand-500 dark:text-brand-300 mb-5">Por correo de invitación, o con un usuario y una contraseña que le das tú. A un estudiante le puedes poner hasta cuándo vale la cuenta.</p>
                     <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6">
                 <form id="create-form" class="grid sm:grid-cols-4 gap-3 items-end">
                     <div class="sm:col-span-2">
                         <label for="create-name" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Nombre</label>
                         <input type="text" id="create-name" class="w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none">
-                    </div>
-                    <div class="sm:col-span-2">
-                        <label for="create-email" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Correo *</label>
-                        <input type="email" id="create-email" required class="w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none">
                     </div>
                     <div class="sm:col-span-1">
                         <label for="create-role" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Rol</label>
@@ -229,6 +225,30 @@
                             <option value="alumno">Estudiante</option>
                             <option value="profesor">Profesor</option>
                         </select>
+                    </div>
+                    <div class="sm:col-span-1" id="create-modo-wrap">
+                        <label for="create-modo" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Cómo entra</label>
+                        <select id="create-modo" class="w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none">
+                            <option value="correo">Con su correo (le llega invitación)</option>
+                            <option value="usuario">Usuario y contraseña que le doy yo</option>
+                        </select>
+                    </div>
+                    <div class="sm:col-span-2" id="create-email-wrap">
+                        <label for="create-email" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Correo *</label>
+                        <input type="email" id="create-email" required class="w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none">
+                    </div>
+                    <div class="sm:col-span-2" id="create-usuario-wrap" hidden>
+                        <label for="create-usuario" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Usuario</label>
+                        <input type="text" id="create-usuario" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" aria-describedby="create-usuario-ayuda" class="w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none">
+                        <p id="create-usuario-ayuda" class="text-xs text-brand-450 dark:text-brand-350 mt-1">Vacío, se arma con el nombre. Si ya es de otra persona, se le suma un número.</p>
+                    </div>
+                    <div class="sm:col-span-2" id="create-clave-wrap" hidden>
+                        <label for="create-clave" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Contraseña *</label>
+                        <div class="flex gap-2">
+                            <input type="text" id="create-clave" minlength="8" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" aria-describedby="create-clave-ayuda" class="w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none">
+                            <button type="button" id="create-clave-proponer" class="shrink-0 px-3 py-2 rounded-lg text-sm font-semibold border border-brand-200 dark:border-brand-700 hover:border-accent-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Proponer una fácil</button>
+                        </div>
+                        <p id="create-clave-ayuda" class="text-xs text-brand-450 dark:text-brand-350 mt-1">Ocho caracteres como mínimo. Se ve a propósito: es para dársela a la persona.</p>
                     </div>
                     <div class="sm:col-span-1">
                         <label for="create-grupo" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Grupo / equipo</label>
@@ -240,13 +260,34 @@
                             <option value="">— Sin asignar —</option>
                         </select>
                     </div>
-                    <div class="sm:col-span-3"></div>
-                    <div class="sm:col-span-1">
+                    <div class="sm:col-span-1" id="create-validez-wrap">
+                        <label for="create-validez" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Válida por</label>
+                        <select id="create-validez" aria-describedby="create-validez-resumen" class="w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none">
+                            <option value="">Sin fecha de cierre</option>
+                            <option value="d7">1 semana</option>
+                            <option value="m1">1 mes</option>
+                            <option value="m3">3 meses</option>
+                            <option value="m6">6 meses</option>
+                            <option value="m12">1 año</option>
+                            <option value="fecha">Hasta una fecha…</option>
+                        </select>
+                    </div>
+                    <div class="sm:col-span-1" id="create-hasta-wrap" hidden>
+                        <label for="create-hasta" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Último día que entra</label>
+                        <input type="date" id="create-hasta" class="w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none">
+                    </div>
+                    <div class="sm:col-span-2" id="create-detalle-wrap" hidden>
+                        <label for="create-detalle" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Para qué es *</label>
+                        <input type="text" id="create-detalle" maxlength="120" placeholder="Ej: Taller de verano" aria-describedby="create-detalle-ayuda" class="w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none">
+                        <p id="create-detalle-ayuda" class="text-xs text-brand-450 dark:text-brand-350 mt-1">Es lo que la persona lee cuando la cuenta se cierra.</p>
+                    </div>
+                    <p id="create-validez-resumen" class="sm:col-span-4 text-xs text-brand-600 dark:text-brand-200" hidden></p>
+                    <div class="sm:col-span-1 sm:col-start-4">
                         <button type="submit" id="create-btn" class="w-full bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2 rounded-lg text-sm transition-colors">Invitar</button>
                     </div>
                 </form>
-                <p id="create-msg" class="text-xs mt-3"></p>
-                <p class="text-xs text-brand-450 dark:text-brand-350 mt-2">Se envía un correo de invitación; la persona entra directo y pone su propia contraseña. El grupo es solo para ordenar la lista; el profesor asignado determina qué alumnos puede ver y gestionar cada profesor.</p>
+                <div id="create-msg" role="status" class="text-xs mt-3"></div>
+                <p class="text-xs text-brand-450 dark:text-brand-350 mt-2">Con correo, le llega una invitación con su usuario y una contraseña provisional. Con usuario y contraseña no sale ningún correo: se los das tú. Al cerrarse una cuenta con fecha, la persona ya no entra y ve un aviso con lo que escribiste en «Para qué es». El grupo es solo para ordenar la lista; el profesor asignado determina qué alumnos puede ver y gestionar cada profesor.</p>
                     </div>
                 </section>
 
@@ -530,6 +571,10 @@
                     <article class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6" aria-labelledby="ase-compartir-titulo">
                         <h3 id="ase-compartir-titulo" class="text-sm font-bold uppercase tracking-wide text-brand-500 dark:text-brand-300 mb-2">Con quién lo compartes</h3>
                         <div id="ase-compartir"></div>
+                    </article>
+                    <article class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6" aria-labelledby="ase-grupo-titulo">
+                        <h3 id="ase-grupo-titulo" class="text-sm font-bold uppercase tracking-wide text-brand-500 dark:text-brand-300 mb-2">El grupo</h3>
+                        <div id="ase-grupo"></div>
                     </article>
                     <p id="ase-resumen" role="status" class="text-sm font-semibold text-brand-700 dark:text-brand-200 mb-4"></p>
                     <div id="ase-lista" class="space-y-6"></div>

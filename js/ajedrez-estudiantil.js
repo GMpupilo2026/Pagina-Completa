@@ -2,7 +2,7 @@
  * Costa Rica publicados en chess-results.com, por año, etapa, región y
  * categoría. Los datos son data/ajedrez-estudiantil.json (lo arma
  * herramientas/ajedrez-estudiantil.py) y todo se cuenta acá, en el navegador:
- * son 1082 filas fijas, no una tabla de la base.
+ * son las filas fijas de un archivo, no una tabla de la base.
  *
  * «Participaciones» es la suma de inscritos de los torneos de ritmo clásico
  * (individuales y por equipos): un mismo estudiante cuenta una vez por etapa y

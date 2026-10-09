@@ -222,7 +222,7 @@ async function terminarCuestionario(mensaje) {
 
 /* ---------- La lista de la clase y lo que la clase le pone al armador ---------- */
 
-// Los propios arriba; los listos, agrupados por nivel.
+// Los propios arriba; los listos, agrupados por nivel, y los de un material (Asesores).
 function pintarListaDeCuestionarios() {
     const sel = document.getElementById("cuestionario-select");
     const antes = (cuestionarioEditado && cuestionarioEditado.id) || (cuestionarioListo && cuestionarioListo.id);
@@ -245,6 +245,7 @@ function pintarListaDeCuestionarios() {
     };
     grupo("Tus cuestionarios", cqMios());
     Cuestionario.NIVELES.forEach((n) => grupo("Listos · " + n.nombre, cqListos(n.id)));
+    CQ_MATERIALES.forEach((m) => grupo("Listos · " + m.nombre, cqDelMaterial(m.material)));
     sel.value = antes && cuestionarios.some((c) => c.id === antes) ? antes : "";
 }
 

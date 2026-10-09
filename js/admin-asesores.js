@@ -10,6 +10,10 @@
  *     escribe administración: lo dice la RLS, no esta pantalla);
  *   - sus archivos, su presentación (se mira acá mismo con VistaPrevia) y su
  *     cuestionario al estilo Kahoot, si ya está cargado;
+ *   - el grupo: una tabla con cada asesor (las cuentas temporales abiertas
+ *     del taller), la última vez que entró, sus clases en la plataforma y la
+ *     nota de la primera vez en el cuestionario de cada sesión. La arma la
+ *     base, asesores_tablero(): acá solo se pinta;
  *   - «Mandarlo como tarea a los asesores»: abre Tareas con ese cuestionario
  *     en el renglón y marcadas las cuentas temporales abiertas del taller
  *     (tareas.html?temporales=<detalle>), para que lo practiquen en su casa
@@ -37,6 +41,7 @@
   let estados = [];          // filas de preparacion_sesiones
   let cuestionarios = [];    // { id, titulo, preguntas }
   let talleres = [];         // [detalle, cuántas cuentas temporales abiertas]
+  let grupos = [];           // [detalle, filas de asesores_tablero()]
   let pedido = null;
 
   function el(tag, clase, texto) {
@@ -67,6 +72,11 @@
     const cuenta = new Map();
     ((t && !t.error && t.data) || []).forEach((f) => cuenta.set(f.detalle, (cuenta.get(f.detalle) || 0) + 1));
     talleres = [...cuenta.entries()];
+    grupos = await Promise.all(talleres.map(async ([detalle]) => {
+      const { data, error } = await sb.rpc("asesores_tablero", { p_detalle: detalle });
+      if (error) console.error(error);
+      return [detalle, error ? null : (data || [])];
+    }));
   }
 
   function abrir() {
@@ -220,7 +230,81 @@
     return art;
   }
 
+  /* ---------------------------------------------------------- el grupo */
+  // «13/22»: la nota de la primera vez. Si lo repitió, se dice cuántas veces.
+  function celdaNota(td, nota) {
+    if (!nota) {
+      td.appendChild(el("span", null, "—")).setAttribute("aria-hidden", "true");
+      td.appendChild(el("span", "sr-only", "No lo contestó"));
+      return;
+    }
+    td.textContent = nota.aciertos + "/" + nota.total;
+    if (nota.veces > 1) td.appendChild(el("span", "block text-xs text-brand-500 dark:text-brand-300", nota.veces + " veces"));
+  }
+
+  function tablaDelGrupo(filas, sesiones) {
+    const envoltura = el("div", "overflow-x-auto");
+    const t = el("table", "min-w-full text-sm");
+    const cap = el("caption", "sr-only", "Cada asesor: la última vez que entró, sus clases y la nota de la primera vez en el cuestionario de cada sesión");
+    t.appendChild(cap);
+    const th = (texto, clase) => { const c = el("th", "px-2 py-2 font-semibold text-left " + (clase || ""), texto); c.scope = "col"; return c; };
+    const cab = el("tr", "border-b border-brand-200 dark:border-brand-700 text-brand-600 dark:text-brand-200");
+    cab.append(th("Asesor"), th("Última vez que entró"), th("Clases", "text-right"));
+    sesiones.forEach((s) => {
+      const c = th("S" + s.n, "text-center");
+      c.setAttribute("aria-label", "Cuestionario de la sesión " + s.n);
+      cab.appendChild(c);
+    });
+    t.appendChild(el("thead")).appendChild(cab);
+    const cuerpo = t.appendChild(el("tbody"));
+    filas.forEach((f) => {
+      const tr = el("tr", "border-b border-brand-100 dark:border-brand-800");
+      const nombre = el("th", "px-2 py-2 text-left font-medium text-brand-800 dark:text-white", f.nombre || "");
+      nombre.scope = "row";
+      tr.appendChild(nombre);
+      tr.appendChild(el("td", "px-2 py-2 whitespace-nowrap " + (f.ultima_vez ? "" : "font-semibold text-red-700 dark:text-red-300"),
+        f.ultima_vez ? HoraCR.fecha(f.ultima_vez, { day: "numeric", month: "short" }) + ", " + HoraCR.hora(f.ultima_vez) : "Nunca entró"));
+      tr.appendChild(el("td", "px-2 py-2 text-right tabular-nums", String(f.clases || 0)));
+      sesiones.forEach((s) => {
+        const td = el("td", "px-2 py-2 text-center tabular-nums");
+        celdaNota(td, s.q && (f.cuestionarios || {})[s.q.id]);
+        tr.appendChild(td);
+      });
+      cuerpo.appendChild(tr);
+    });
+    envoltura.appendChild(t);
+    return envoltura;
+  }
+
+  function pintarGrupo() {
+    const cont = $("ase-grupo");
+    if (!cont || !datos) return;
+    cont.textContent = "";
+    if (!grupos.length) {
+      cont.appendChild(el("p", "text-sm text-brand-500 dark:text-brand-300",
+        "No hay ninguna cuenta temporal abierta: cuando le pongas una a los asesores del taller, aparecen acá."));
+      return;
+    }
+    const sesiones = datos.sesiones.map((s) => ({ n: s.n, q: cuestionarioDe(s.n) }));
+    grupos.forEach(([detalle, filas]) => {
+      if (grupos.length > 1) cont.appendChild(el("h4", "font-semibold text-brand-800 dark:text-white mt-4 mb-1", detalle));
+      if (!filas) {
+        cont.appendChild(el("p", "text-sm font-semibold text-red-700 dark:text-red-300",
+          "No se pudo leer cómo va el grupo. ¿Falta aplicar en la base la migración asesores_tablero?"));
+        return;
+      }
+      const entraron = filas.filter((f) => f.ultima_vez).length;
+      const nunca = filas.length - entraron;
+      cont.appendChild(el("p", "text-sm text-brand-700 dark:text-brand-200 mb-3",
+        entraron + " de " + filas.length + (filas.length === 1 ? " persona ya entró" : " personas ya entraron") + " a la plataforma"
+        + (nunca ? "; " + nunca + (nunca === 1 ? " nunca ha entrado." : " nunca han entrado.") : ".")
+        + " La nota es la de la primera vez que contestó el cuestionario de cada sesión."));
+      cont.appendChild(tablaDelGrupo(filas, sesiones));
+    });
+  }
+
   function pintar() {
+    pintarGrupo();
     const lista = $("ase-lista");
     if (!lista || !datos) return;
     lista.textContent = "";

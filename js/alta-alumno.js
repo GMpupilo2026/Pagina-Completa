@@ -225,18 +225,10 @@
         }
     }
 
-    /* La misma regla que `baseDeUsuario()` de la Edge Function: primer nombre y
-       primer apellido, sin tildes. Acá es solo para PROPONER lo que se ve en
-       pantalla — quien decide de verdad es el servidor, que además desempata si el
-       usuario ya está tomado. Que las dos coincidan lo comprueba
-       verificar-alumno-sin-correo.js. */
+    /* La regla del usuario propuesto vive en js/usuario-alumno.js
+       (`UsuarioAlumno.base`), una sola copia para las dos pantallas de alta. */
     function baseDeUsuarioEnPantalla(nombre) {
-        const pedazos = String(nombre || "")
-            .normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/ñ/gi, "n")
-            .toLowerCase().replace(/[^a-z0-9\s]/g, " ").trim().split(/\s+/).filter(Boolean);
-        if (!pedazos.length) return "";
-        const apellido = pedazos.length >= 4 ? pedazos[2] : pedazos[1];
-        return [pedazos[0], apellido].filter(Boolean).join(".").slice(0, 40);
+        return window.UsuarioAlumno.base(nombre);
     }
 
     /* Abre la caja. Sin `respuestaId` es el alta a mano (create-student): el

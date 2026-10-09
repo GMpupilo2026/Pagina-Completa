@@ -135,8 +135,12 @@ function pintarListas() {
     });
     const caja = $("lista-listos");
     caja.innerHTML = "";
-    Cuestionario.NIVELES.filter((n) => !filtroNivel || n.id === filtroNivel).forEach((n) => {
-        const lista = cqListos(n.id);
+    // Los de cada nivel y, sin filtro, los de un material (Asesores), que no tienen nivel.
+    const grupos = Cuestionario.NIVELES.filter((n) => !filtroNivel || n.id === filtroNivel)
+        .map((n) => ({ emoji: n.emoji, nombre: n.nombre, lista: cqListos(n.id) }))
+        .concat(filtroNivel ? [] : CQ_MATERIALES.map((m) => ({ emoji: m.emoji, nombre: m.nombre, lista: cqDelMaterial(m.material) })));
+    grupos.forEach((n) => {
+        const lista = n.lista;
         if (!lista.length) return;
         const grupo = document.createElement("div");
         const h = document.createElement("h3");
