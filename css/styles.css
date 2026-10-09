@@ -1727,3 +1727,23 @@ html.dark .comparar-serie-3 { background: #199e70; }
 .ae-tabla th[aria-sort="ascending"] button::after { content: " ▲"; font-size: 0.7em; }
 .ae-tabla th[aria-sort="descending"] button::after { content: " ▼"; font-size: 0.7em; }
 .ae-tabla a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
+/* historial-jugador.html y estadisticas-colegios.html: las mismas tarjetas,
+ * tablas y colores de etapa que ajedrez-estudiantil.html (arriba). */
+.hj-resultados { display: grid; gap: 0.5rem; grid-template-columns: repeat(auto-fill, minmax(min(100%, 18rem), 1fr)); list-style: none; margin: 0; padding: 0; }
+.hj-resultado { font: inherit; width: 100%; text-align: left; display: grid; gap: 0.15rem; padding: 0.6rem 0.8rem; border-radius: 0.6rem; border: 1px solid rgb(var(--c-brand-200, 188 204 220)); background: rgb(var(--c-brand-50, 240 244 248)); color: rgb(var(--c-brand-800, 16 42 67)); cursor: pointer; }
+.dark .hj-resultado { background: rgb(var(--c-brand-950, 7 21 39)); border-color: rgb(var(--c-brand-600, 51 78 104)); color: #fff; }
+.hj-resultado:hover { border-color: rgb(var(--c-brand-500, 72 101 129)); }
+.hj-resultado-n { font-weight: 600; }
+.hj-resultado-d { font-size: 0.8rem; color: rgb(var(--c-brand-600, 51 78 104)); }
+.dark .hj-resultado-d { color: rgb(var(--c-brand-200, 188 204 220)); }
+.hj-cifra-num { font-size: 1.35rem; overflow-wrap: anywhere; }
+.hj-sub { display: block; font-size: 0.75rem; color: rgb(var(--c-brand-600, 51 78 104)); }
+.dark .hj-sub { color: rgb(var(--c-brand-200, 188 204 220)); }
+.hj-ruta { fill: none; stroke: rgb(var(--c-brand-400, 98 125 152)); stroke-width: 2; }
+.hj-punto { stroke: #fff; stroke-width: 1.5; }
+.dark .hj-punto { stroke: rgb(var(--c-brand-900, 10 31 51)); }
+.ec-abrir { all: unset; cursor: pointer; text-decoration: underline; text-underline-offset: 2px; border-radius: 0.25rem; }
+.ec-lista { display: grid; gap: 0.35rem; margin: 0; padding: 0; list-style: none; font-size: 0.875rem; color: rgb(var(--c-brand-800, 16 42 67)); }
+.dark .ec-lista { color: rgb(var(--c-brand-50, 240 244 248)); }
+.ec-lista a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
+.hj-resultado:focus-visible, .ec-abrir:focus-visible, .ec-lista a:focus-visible, #hj-nombre:focus-visible, #ec-detalle-t:focus-visible { outline: 3px solid rgb(var(--c-accent-500, 222 145 29)); outline-offset: 2px; }

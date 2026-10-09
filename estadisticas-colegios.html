@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="img/favicon.svg">
+    <title>Estadísticas por colegio y región — Ajedrez Integral</title>
+    <meta name="description" content="Los colegios y escuelas en los Juegos Deportivos Estudiantiles de Costa Rica: estudiantes, podios regionales y nacionales y finalistas, por región, categoría y año, con los torneos de chess-results.">
+    <link rel="canonical" href="https://ajedrez-integral.com/estadisticas-colegios.html">
+    <!-- Para cuando alguien pega el enlace en WhatsApp, que es por donde se comparte esto. -->
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Ajedrez Integral">
+    <meta property="og:locale" content="es_CR">
+    <meta property="og:title" content="Estadísticas por colegio y región — Ajedrez Integral">
+    <meta property="og:description" content="Los colegios y escuelas en los Juegos Deportivos Estudiantiles de Costa Rica: estudiantes, podios regionales y nacionales y finalistas, por región, categoría y año, con los torneos de chess-results.">
+    <meta property="og:url" content="https://ajedrez-integral.com/estadisticas-colegios.html">
+    <meta property="og:image" content="https://ajedrez-integral.com/img/og-ajedrez-integral.jpg">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="Ajedrez Integral — clases de ajedrez en vivo, no solo videos. ajedrez-integral.com">
+    <meta name="twitter:card" content="summary_large_image">
+    <!-- Tailwind compilado: lo genera herramientas/css-construir.js.
+         Antes venía del CDN, que baja ~400 KB de JavaScript y compila el CSS
+         dentro del navegador en cada visita. -->
+    <link rel="stylesheet" href="css/tailwind.css">
+    <link rel="stylesheet" href="css/styles.css">
+    <!-- oscuro: inicio --><script>(function(){try{var t=localStorage.getItem('theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.classList.add('dark');}catch(e){}})();</script><!-- oscuro: fin -->
+    <script src="js/adaptive-mode.js"></script>
+
+
+<!-- app: inicio --><meta name="theme-color" content="#102a43"><link rel="manifest" href="/manifest.json"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Ajedrez"><script src="js/errores.js"></script><script src="js/pwa.js" defer></script><script src="js/navegacion.js" defer></script><!-- app: fin --><!-- tema: inicio --><script>(function(){try{var l=localStorage.getItem('plataforma_letra_v1');if(l&&/^[a-z]{2,24}$/.test(l)&&l!=='tema')document.documentElement.setAttribute('data-letra',l);var t=localStorage.getItem('plataforma_tema_v1');if(!t||!/^[a-z]{2,24}$/.test(t)||t==='clasico')return;document.documentElement.setAttribute('data-tema',t);var b=getComputedStyle(document.documentElement).getPropertyValue('--c-brand-800').trim();var m=document.querySelector('meta[name="theme-color"]');if(b&&m)m.setAttribute('content','rgb('+b.replace(/\s+/g,',')+')');}catch(e){}})();</script><!-- tema: fin --><!-- fuentes: inicio --><link rel="stylesheet" href="css/fuentes.css"><!-- fuentes: fin --></head>
+<body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-accent-500 focus:text-brand-900 focus:font-semibold focus:px-4 focus:py-2 focus:rounded-lg">Saltar al contenido principal</a>
+    <header id="header" class="sticky top-0 z-50 bg-brand-800 shadow-lg transition-all duration-300">
+        <div class="hidden lg:block bg-brand-900 border-b border-brand-700/60">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-8 flex items-center justify-end gap-5 text-xs text-brand-300">
+                <a href="te-reto.html" class="hover:text-accent-400 transition-colors">🏆 ¡Te reto!</a>
+                <span class="text-brand-700" aria-hidden="true">&middot;</span>
+                <a href="tv.html" class="hover:text-accent-400 transition-colors">TV en vivo</a>
+                <span class="text-brand-700" aria-hidden="true">&middot;</span>
+                <a href="torneos-en-vivo.html" class="hover:text-accent-400 transition-colors">Torneos</a>
+                <span class="text-brand-700" aria-hidden="true">&middot;</span>
+                <a href="herramientas-arbitraje.html" class="hover:text-accent-400 transition-colors">Herramientas</a>
+            </div>
+        </div>
+        <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Navegación principal">
+            <div class="flex items-center justify-between min-h-[4rem] md:min-h-[5rem] py-2">
+                <a href="index.html" class="flex items-center gap-2 text-white"><img src="/img/logo-marca.png" alt="" width="78" height="48" class="h-10 md:h-12 w-auto shrink-0"><span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span></a>
+                <ul class="hidden lg:flex items-center gap-8 text-brand-100 font-medium">
+                    <li><a href="index.html" class="hover:text-accent-400 transition-colors">Inicio</a></li>
+                    <li><a href="cursos.html" class="hover:text-accent-400 transition-colors">Cursos</a></li>
+                    <li><a href="articulos.html" class="hover:text-accent-400 transition-colors">Artículos</a></li>
+                    <li><a href="tablero.html" class="hover:text-accent-400 transition-colors">Jugar contra el profe</a></li>
+                    <li><a href="clases.html" class="hover:text-accent-400 text-accent-400 transition-colors">Academia</a></li>
+                    <li><a href="precios.html" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg transition-colors">Inscríbete</a></li>
+                </ul>
+                <div class="flex items-center gap-2 sm:gap-3">
+                    <button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro">
+                        <span id="theme-icon" aria-hidden="true">☀️</span>
+                    </button>
+                    <button id="menu-toggle" class="lg:hidden text-white text-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Abrir menú" aria-expanded="false" aria-controls="mobile-menu">
+                        <svg id="icon-open" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                        <svg id="icon-close" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+            </div>
+        </nav>
+        <div id="mobile-menu" class="lg:hidden hidden bg-brand-800 border-t border-brand-700">
+            <ul class="px-4 py-4 space-y-3 text-brand-100 font-medium">
+                <li><a href="index.html" class="block py-2 hover:text-accent-400">Inicio</a></li>
+                <li><a href="cursos.html" class="block py-2 hover:text-accent-400">Cursos</a></li>
+                <li><a href="articulos.html" class="block py-2 hover:text-accent-400">Artículos</a></li>
+                <li><a href="tablero.html" class="block py-2 hover:text-accent-400">Jugar contra el profe</a></li>
+                <li><a href="clases.html" class="block py-2 hover:text-accent-400">Academia</a></li>
+                <li><a href="te-reto.html" class="block py-2 hover:text-accent-400">🏆 ¡Te reto!</a></li>
+                <li><a href="tv.html" class="block py-2 hover:text-accent-400">TV en vivo</a></li>
+                <li><a href="torneos-en-vivo.html" class="block py-2 hover:text-accent-400">Torneos</a></li>
+                <li><a href="herramientas-arbitraje.html" class="block py-2 hover:text-accent-400">Herramientas</a></li>
+                <li><a href="precios.html" class="block py-2 bg-accent-500 text-brand-900 font-semibold px-4 rounded-lg text-center">Inscríbete</a></li>
+            </ul>
+        </div>
+    </header>
+    <main id="main-content">
+
+    <div class="pt-12 pb-16">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+            <header class="space-y-3">
+                <p class="text-sm font-semibold uppercase tracking-wide text-accent-700 dark:text-accent-300">Herramientas · gratis · datos de chess-results.com</p>
+                <h1 class="font-serif text-3xl md:text-4xl font-bold text-brand-800 dark:text-white">Estadísticas por colegio y región</h1>
+                <p class="text-brand-600 dark:text-brand-200 max-w-3xl">Los colegios y escuelas en los Juegos Deportivos Estudiantiles (JDE): cuántos estudiantes llevó cada uno, sus podios regionales y nacionales y cuántos llegaron a la final, con los torneos publicados en chess-results.com.</p>
+                <p id="ec-tesis" class="text-lg text-brand-800 dark:text-brand-50 max-w-3xl" aria-live="polite">Cargando los datos…</p>
+            </header>
+
+            <section aria-labelledby="ec-filtros-t" class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-4 flex flex-wrap items-end gap-4">
+                <h2 id="ec-filtros-t" class="sr-only">Filtros</h2>
+                <div class="flex flex-col gap-1">
+                    <label for="ec-region" class="text-sm font-medium text-brand-700 dark:text-brand-200">Región</label>
+                    <select id="ec-region" class="ae-control"><option value="">Todo el país</option></select>
+                </div>
+                <div class="flex flex-col gap-1">
+                    <label for="ec-categoria" class="text-sm font-medium text-brand-700 dark:text-brand-200">Categoría</label>
+                    <select id="ec-categoria" class="ae-control"><option value="">Todas</option></select>
+                </div>
+                <div class="flex flex-col gap-1">
+                    <label for="ec-anio" class="text-sm font-medium text-brand-700 dark:text-brand-200">Año</label>
+                    <select id="ec-anio" class="ae-control"><option value="">Todos</option></select>
+                </div>
+                <button type="button" id="ec-quitar" class="ae-boton" hidden>Quitar los filtros</button>
+            </section>
+
+            <section aria-label="Cifras principales" class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <div class="ae-cifra"><span class="ae-cifra-et">Instituciones</span><span class="ae-cifra-num font-serif" id="ec-c1">—</span><span class="ae-cifra-nota">con al menos un estudiante en los JDE</span></div>
+                <div class="ae-cifra"><span class="ae-cifra-et">Estudiantes distintos</span><span class="ae-cifra-num font-serif" id="ec-c2">—</span><span class="ae-cifra-nota">por su nombre en chess-results</span></div>
+                <div class="ae-cifra"><span class="ae-cifra-et">La que llevó más estudiantes</span><span class="ae-cifra-num font-serif hj-cifra-num" id="ec-c3">—</span><span class="ae-cifra-nota" id="ec-c3-nota"></span></div>
+                <div class="ae-cifra"><span class="ae-cifra-et">La de más podios en la final nacional</span><span class="ae-cifra-num font-serif hj-cifra-num" id="ec-c4">—</span><span class="ae-cifra-nota" id="ec-c4-nota"></span></div>
+            </section>
+
+            <section aria-labelledby="ec-graf-t" class="ae-tarjeta">
+                <h2 id="ec-graf-t" class="ae-tarjeta-t font-serif">Las instituciones con más estudiantes</h2>
+                <p class="ae-tarjeta-sub">Estudiantes distintos de cada institución en los torneos de ritmo clásico de los JDE, con los filtros de arriba. Todas están en la tabla de abajo.</p>
+                <div id="ec-graf" class="ae-graf ae-graf-bajo" role="img"></div>
+            </section>
+
+            <section aria-labelledby="ec-tabla-t" class="ae-tarjeta">
+                <h2 id="ec-tabla-t" class="ae-tarjeta-t font-serif">Todas las instituciones</h2>
+                <p class="ae-tarjeta-sub">Un podio es un 1.º, 2.º o 3.º, individual o por equipos. «Regionales» suma las etapas institucional, regional e interregional; «en la final» son los estudiantes distintos que jugaron la etapa nacional. Elige una institución para ver su detalle.</p>
+                <div class="flex flex-wrap items-end gap-3">
+                    <div class="flex flex-col gap-1 grow">
+                        <label for="ec-buscar" class="text-sm font-medium text-brand-700 dark:text-brand-200">Buscar una institución</label>
+                        <input id="ec-buscar" type="search" class="ae-control w-full" placeholder="Nombre del colegio o la escuela" autocomplete="off">
+                    </div>
+                    <p id="ec-cuenta" class="text-sm text-brand-600 dark:text-brand-200" aria-live="polite"></p>
+                </div>
+                <div class="ae-tabla-caja ae-tabla-alta">
+                    <table id="ec-tabla" class="ae-tabla">
+                        <caption class="sr-only">Instituciones en los JDE. Los encabezados ordenan la tabla.</caption>
+                        <thead><tr>
+                            <th scope="col" aria-sort="none"><button type="button" data-col="nombre">Institución</button></th>
+                            <th scope="col" aria-sort="none"><button type="button" data-col="region">Región</button></th>
+                            <th scope="col" aria-sort="descending" class="ae-n"><button type="button" data-col="estudiantes">Estudiantes</button></th>
+                            <th scope="col" aria-sort="none" class="ae-n"><button type="button" data-col="participaciones">Participaciones</button></th>
+                            <th scope="col" aria-sort="none" class="ae-n"><button type="button" data-col="podios">Podios regionales</button></th>
+                            <th scope="col" aria-sort="none" class="ae-n"><button type="button" data-col="nacionales">Podios nacionales</button></th>
+                            <th scope="col" aria-sort="none" class="ae-n"><button type="button" data-col="final">En la final</button></th>
+                            <th scope="col" aria-sort="none" class="ae-n"><button type="button" data-col="anios">Años</button></th>
+                        </tr></thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section id="ec-detalle" aria-labelledby="ec-detalle-t" class="ae-tarjeta" hidden>
+                <h2 id="ec-detalle-t" tabindex="-1" class="ae-tarjeta-t font-serif"></h2>
+                <p id="ec-detalle-region" class="ae-tarjeta-sub"></p>
+                <div class="grid gap-6 lg:grid-cols-2">
+                    <div class="space-y-2 min-w-0">
+                        <h3 class="font-semibold text-brand-800 dark:text-white">Año por año</h3>
+                        <div class="ae-tabla-caja"><table id="ec-anios" class="ae-tabla"><caption class="sr-only">Estudiantes, etapa más alta y podios por año</caption><thead><tr><th scope="col">Año</th><th scope="col" class="ae-n">Estudiantes</th><th scope="col">Etapa más alta</th><th scope="col" class="ae-n">Podios</th></tr></thead><tbody></tbody></table></div>
+                    </div>
+                    <div class="space-y-2 min-w-0">
+                        <h3 class="font-semibold text-brand-800 dark:text-white">Sus estudiantes</h3>
+                        <p id="ec-jugadores-nota" class="ae-tarjeta-sub"></p>
+                        <ul id="ec-jugadores" class="ec-lista"></ul>
+                    </div>
+                </div>
+                <h3 id="ec-podios-t" class="font-semibold text-brand-800 dark:text-white">Sus podios</h3>
+                <ul id="ec-podios" class="ec-lista"></ul>
+            </section>
+
+            <section aria-labelledby="ec-regiones-t" class="ae-tarjeta">
+                <h2 id="ec-regiones-t" class="ae-tarjeta-t font-serif">Región por región</h2>
+                <p class="ae-tarjeta-sub">La región de una institución es la de la mayoría de sus torneos de los JDE (la final nacional no tiene región).</p>
+                <div class="ae-tabla-caja">
+                    <table id="ec-regiones" class="ae-tabla">
+                        <caption class="sr-only">Instituciones, estudiantes y podios nacionales por región</caption>
+                        <thead><tr><th scope="col">Región</th><th scope="col" class="ae-n">Instituciones</th><th scope="col" class="ae-n">Estudiantes</th><th scope="col" class="ae-n">En la final</th><th scope="col" class="ae-n">Podios nacionales</th></tr></thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section aria-labelledby="ec-metodo-t" class="text-sm text-brand-600 dark:text-brand-200 space-y-2 max-w-3xl">
+                <h2 id="ec-metodo-t" class="font-serif font-bold text-lg text-brand-800 dark:text-white">De dónde sale</h2>
+                <p>De la clasificación de cada torneo de <a href="ajedrez-estudiantil.html" class="underline underline-offset-2 hover:no-underline">Ajedrez estudiantil en Costa Rica</a> publicada en chess-results.com: el colegio es el «Club/Ciudad» que anotó el árbitro, y en un torneo por equipos, el nombre del equipo. Solo cuentan los torneos de ritmo clásico de los JDE; los blitz y rápidos repiten a los mismos estudiantes. <span id="ec-actualizado"></span></p>
+                <p>Un mismo colegio se escribe a veces de varias formas («C.T.P.», «CTP», «Colegio Técnico Profesional»): las más comunes se juntan solas, pero alguna puede quedar repetida. Lo que no se subió a chess-results no aparece, y muchas regiones empezaron a subir sus eliminatorias en 2023: un colegio sin años antes no es un colegio sin ajedrez.</p>
+                <p>Cada estudiante se cuenta por su nombre: para ver todos sus torneos, ve su <a href="historial-jugador.html" class="underline underline-offset-2 hover:no-underline">historial</a>. ¿Ves un colegio repetido o un nombre que prefieres que no salga? Escríbenos a <a href="mailto:info@ajedrez-integral.com" class="underline underline-offset-2 hover:no-underline">info@ajedrez-integral.com</a>.</p>
+            </section>
+        </div>
+    </div>
+
+    </main>
+
+    <footer class="bg-brand-900 text-brand-300 pt-16 pb-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid md:grid-cols-4 gap-8 mb-12">
+                <div><a href="index.html" class="flex items-center gap-2 text-white mb-4"><img src="/img/logo-marca.png" alt="" width="78" height="48" class="h-9 w-auto shrink-0"><span class="font-serif text-lg font-bold">Ajedrez Integral</span></a><p class="text-sm text-brand-300">Plataforma educativa de ajedrez para escuelas, colegios y familias. Aprende, practica y compite.</p></div>
+                <div><h3 class="text-white font-semibold mb-4">Navegación</h3><ul class="space-y-2 text-sm"><li><a href="index.html" class="hover:text-accent-400 transition-colors">Inicio</a></li><li><a href="cursos.html" class="hover:text-accent-400 transition-colors">Cursos</a></li><li><a href="articulos.html" class="hover:text-accent-400 transition-colors">Artículos</a></li><li><a href="tablero.html" class="hover:text-accent-400 transition-colors">Jugar contra el profe</a></li><li><a href="clases.html" class="hover:text-accent-400 transition-colors">Academia</a></li><li><a href="te-reto.html" class="hover:text-accent-400 transition-colors">🏆 ¡Te reto!</a></li><li><a href="tv.html" class="hover:text-accent-400 transition-colors">TV en vivo</a></li><li><a href="torneos-en-vivo.html" class="hover:text-accent-400 transition-colors">Torneos</a></li></ul></div>
+                <div><h3 class="text-white font-semibold mb-4">Recursos</h3><ul class="space-y-2 text-sm"><li><a href="entreno/diagnostico.html" class="hover:text-accent-400 transition-colors">Diagnóstico de nivel gratis</a></li><li><a href="bot.html" class="hover:text-accent-400 transition-colors">Jugar contra el bot</a></li><li><a href="sobre-oscar.html" class="hover:text-accent-400 transition-colors">Sobre Oscar</a></li><li><a href="inscripcion.html" class="hover:text-accent-400 transition-colors">Torneos en línea</a></li></ul></div>
+                <div><h3 class="text-white font-semibold mb-4">Contacto</h3><ul class="space-y-2 text-sm"><li><a href="mailto:info@ajedrez-integral.com" class="hover:text-accent-400 transition-colors">info@ajedrez-integral.com</a></li><li><a href="https://wa.me/50683092291" target="_blank" rel="noopener" class="hover:text-accent-400 transition-colors">+506 8309-2291 (WhatsApp)</a></li><li>Clases en línea desde Costa Rica</li></ul></div>
+            </div>
+            <div class="border-t border-brand-700 pt-6 text-center text-sm text-brand-300"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p><!-- legal: inicio --><p class="mt-2"><a href="privacidad.html" class="underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Política de privacidad</a> <span aria-hidden="true">·</span> <a href="terminos.html" class="underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Términos y condiciones</a></p><!-- legal: fin --></div>
+        </div>
+    </footer>
+    <script src="js/main.js"></script>
+    <script src="js/jde-datos.js"></script>
+    <script src="js/estadisticas-colegios.js"></script>
+</body>
+</html>

@@ -1,0 +1,10 @@
+<!-- Muestra de la clasificación de un torneo individual de chess-results
+     (art=1), con la misma forma que la página real del 9/10/2026 y nombres
+     inventados. La lee herramientas/verificar-ajedrez-estudiantil-reglas.py. -->
+<html lang="es"><body>
+<h2>JDE Regional Muestra Individual Absoluto D </h2> <h2>Clasificación Final después de 5 rondas</h2><div><table class="CRs1" border="0" cellpadding="1" cellspacing="1"> <tr class="CRng1b"><th class="CRc">Rk.</th><th class="CRc">No.Ini.</th><th class="CR"></th><th class="CR">Nombre</th><th class="CR">FED</th><th class="CRr">Elo</th><th class="CR">Club/Ciudad</th><th class="CRc">&nbsp;Des 1&nbsp;</th><th class="CRc">&nbsp;Des 2&nbsp;</th><th class="CRc">&nbsp;Des 3&nbsp;</th></tr>
+<tr class="CRng2 CRC"><td class="CRc">1</td><td class="CRc">1</td><td class="CR"></td><td class="CR"><a href="tnr1.aspx?lan=2&amp;art=9&amp;snr=1">Solano Mora, Ana Lucía</a></td><td class="CR"><div class="fed"><img src="img/flags/CRC.svg" />CRC</div></td><td class="CRr">1650</td><td class="CR">Liceo de Muestra</td><td class="CRc">4,5</td><td class="CRc">0</td><td class="CRc">4</td></tr>
+<tr class="CRng1 CRC"><td class="CRc">2</td><td class="CRc">9</td><td class="CR"></td><td class="CR">Quesada Rojas, Pablo</td><td class="CR">CRC</td><td class="CRr">0</td><td class="CR">C.T.P. Ejemplo</td><td class="CRc">4</td><td class="CRc">0</td><td class="CRc">4</td></tr>
+<tr class="CRng2 CRC"><td class="CRc">3</td><td class="CRc">4</td><td class="CR"></td><td class="CR">Vargas Núñez, Sofía</td><td class="CR">CRC</td><td class="CRr">0</td><td class="CR">Liceo de Muestra</td><td class="CRc">½</td><td class="CRc">0</td><td class="CRc">0</td></tr>
+</table><p><b>Anotación:</b><br/>Desempate 1: points (game-points)<br/>Desempate 2: Direct Encounter (DE) (Forfeited games count)<br/>Desempate 3: Number of wins including byes (WIN) (Matchpoints, Forfeited games count)</p></div>
+</body></html>

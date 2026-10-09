@@ -1,0 +1,8 @@
+<!-- Muestra de una clasificación a medio torneo, con columna «Pts.» y sin
+     anotación (forma de chess-results, nombres inventados). -->
+<html lang="es"><body>
+<h2>Etapa Nacional JDE Muestra Categoría C Femenino</h2> <h2>Clasificación después de la ronda 3</h2><table class="CRs1" border="0" cellpadding="1" cellspacing="1"> <tr class="CRng1b"><th class="CRc">Rk.</th><th class="CRc">No.Ini.</th><th class="CR">Nombre</th><th class="CRr">Elo</th><th class="CR">Equipo</th><th class="CRc">Pts.</th><th class="CRc">&nbsp;Des 1&nbsp;</th></tr>
+<tr class="CRng2"><td class="CRc">1</td><td class="CRc">2</td><td class="CR">Calderón Arias, María</td><td class="CRr">1480</td><td class="CR">Escuela Modelo</td><td class="CRc">3</td><td class="CRc">5,5</td></tr>
+<tr class="CRng1"><td class="CRc">2</td><td class="CRc">1</td><td class="CR">Brenes Soto, Laura</td><td class="CRr">0</td><td class="CR">Liceo de Muestra</td><td class="CRc">2,5</td><td class="CRc">6</td></tr>
+</table>
+</body></html>

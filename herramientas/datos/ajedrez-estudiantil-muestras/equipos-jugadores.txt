@@ -1,0 +1,9 @@
+<!-- Muestra de los jugadores de un torneo por equipos (art=16), con la forma
+     de la página real y nombres inventados. -->
+<html lang="es"><body>
+<h2>JDE Regionales Secundaria Equipos &quot;C&quot; Abierto Muestra 2026 </h2> <h2>Ranking inicial</h2><table class="CRs1" border="0" cellpadding="1" cellspacing="1"> <tr class="CRng1b"><th class="CRc">No.</th><th class="CR"></th><th class="CR">Nombre</th><th class="CR">FIDE-ID</th><th class="CRr">Elo</th><th class="CR">FED</th><th class="CR">Equipo</th><th class="CRc">M.</th></tr>
+<tr class="CRng2"><td class="CRc">1</td><td class="CR"></td><td class="CR">SOLANO MORA, ANA LUCIA</td><td class="CR"></td><td class="CRr">0</td><td class="CR">CRC</td><td class="CR">Liceo de Muestra</td><td class="CRc">1</td></tr>
+<tr class="CRng1"> <td class="CRc">2</td><td class="CR"></td><td class="CR">QUESADA ROJAS, PABLO</td><td class="CR"></td><td class="CRr">1500</td><td class="CR">CRC</td><td class="CR">C.T.P. Ejemplo</td><td class="CRc">1</td></tr>
+<tr class="CRng2"><td class="CRc">3</td><td class="CR"></td><td class="CR">ARAYA LEON, JOSE</td><td class="CR"></td><td class="CRr">0</td><td class="CR">CRC</td><td class="CR">Liceo de Muestra</td><td class="CRc">2</td></tr>
+</table>
+</body></html>

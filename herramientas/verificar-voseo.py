@@ -201,7 +201,13 @@ def archivos():
             # La lista de provincias, cantones y distritos del TSE (generada
             # por herramientas/division-territorial-generar.js): son nombres
             # de lugares —Poás, Tibás, Sarapiquí—, no prosa que alguien escribe.
-            and f != os.path.join("js", "division-territorial.js")]
+            and f != os.path.join("js", "division-territorial.js")
+            # Los nombres de los jugadores y de los colegios de los juegos
+            # estudiantiles, como los publicó chess-results (los arma
+            # herramientas/ajedrez-estudiantil.py): Solís, Tomás, Sarchí… Crece
+            # solo cada seis horas, así que un nombre nuevo con tilde
+            # rompería el PR automático sin que nadie haya escrito nada.
+            and f != os.path.join("data", "ajedrez-estudiantil-jugadores.json")]
 
 def hallazgos(ruta):
     """Devuelve [(palabra, contexto)] del voseo que quede en el archivo."""

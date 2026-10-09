@@ -1,0 +1,4 @@
+# Las personas que pidieron que su nombre no salga en historial-jugador.html ni
+# en estadisticas-colegios.html. Un nombre por línea, como sale en
+# chess-results (no importan las mayúsculas, las tildes ni la coma). Lo lee
+# herramientas/ajedrez-estudiantil.py; después de agregar uno, correrlo.

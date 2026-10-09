@@ -1,0 +1,8 @@
+<!-- Muestra de la clasificación de un torneo por equipos (art=0), con la forma
+     del cuadro cruzado real y nombres inventados. -->
+<html lang="es"><body>
+<h2>JDE Regionales Secundaria Equipos &quot;C&quot; Abierto Muestra 2026 </h2> <h2>Cuadro cruzado por clasificación (Pts.)</h2><table class="CRs1" border="0" cellpadding="1" cellspacing="1"> <tr class="CRng1b"><th class="CRc">Rk.</th><th class="CR">Equipo</th><td class="CRc">1a</td><th class="CRc">1b</th><td class="CRc">2a</td><th class="CRc">2b</th><th class="CRc">&nbsp;Des 1&nbsp;</th><th class="CRc">&nbsp;Des 2&nbsp;</th></tr>
+<tr class="CRng2"><td class="CRc">1</td><td class="CR">Liceo de Muestra</td><td Class="CR">&nbsp;*&nbsp;</td><td Class="CR">&nbsp;*&nbsp;</td><td class="CRc">2</td><td class="CRc">2,5</td><td class="CRc">4,5</td><td class="CRc">3</td></tr>
+<tr class="CRng1"> <td class="CRc">2</td><td class="CR">C.T.P. Ejemplo</td><td class="CRc">2</td><td class="CRc">1,5</td><td Class="CR">&nbsp;*&nbsp;</td><td Class="CR">&nbsp;*&nbsp;</td><td class="CRc">3,5</td><td class="CRc">1</td></tr>
+</table><p><b>Anotación:</b><br/>Desempate 1: points (game-points)<br/>Desempate 2: Matchpoints (2 for wins, 1 for Draws, 0 for Losses)</p>
+</body></html>
