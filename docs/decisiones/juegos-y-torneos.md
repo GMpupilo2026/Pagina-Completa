@@ -1789,8 +1789,9 @@ de quien organiza), la casilla de consentimiento y su mención en
 ### Dónde se entra: las herramientas de arbitraje
 
 - **En la vitrina de las herramientas de arbitraje** (`herramientas-arbitraje.html`,
-  ver «Herramientas de arbitraje»), como la única gratis: `js/herramientas-arbitraje.js`
-  la lista con `gratis: true`.
+  ver «Herramientas de arbitraje»), gratis y sin candado: `js/herramientas-arbitraje.js`
+  la lista con `gratis: true`. El Espacio de consultas, arriba, tampoco lleva
+  licencia, pero no es parte de la lista.
 - En el panel de la Academia, el grupo **«Herramientas de arbitraje»**
   (`js/clases.js`, `soloDocente`: al alumnado el grupo le queda vacío y no se
   pinta) y el mismo grupo en el de quien administra (`js/paginas-admin.js`,
@@ -2042,3 +2043,65 @@ desempate, los códigos en cero, en vivo); `verificar-seleccion-chess-results.js
 prueba el lector de la función con HTML de la forma real y nombres inventados,
 y que pregunte la licencia antes de leer. Rompiendo a propósito las ausencias
 o el 40 %, saltan.
+
+### El Espacio de consultas: sin licencia
+
+Arriba de la vitrina, `herramientas-arbitraje.html` tiene una sección aparte,
+marcada «Gratis · sin licencia ni cuenta»: un árbitro, o una madre o un padre
+de familia, escribe una duda sobre el reglamento y recibe, en la misma
+pantalla, una respuesta escrita por IA a partir del Reglamento de la FIDE. A
+propósito no pasa por `tengo_herramienta()` ni por `licencias_herramientas`:
+es la puerta de entrada abierta de la vitrina, no una herramienta más de la
+lista con candado. (La otra que no lleva licencia es Pareo Integral, pero ese sí va en la
+lista, con `gratis: true`: ver «Pareo Integral».)
+
+- **La responde la Edge Function `consulta-arbitraje`** (`verify_jwt` en
+  **false**: no hay sesión que comprobar, igual que `seleccion-chess-results`
+  no la necesita para mirar `tengo_herramienta()` con el token de quien llama
+  — acá, al revés, no hay token porque no hay cuenta). El candado está todo
+  adentro:
+  - **El freno de los envíos públicos**, con su propio tipo
+    `'arbitraje_consulta'` en `interno.frenar_envio_publico()` — 10 por IP en
+    una hora, 5 por correo al día (cuando lo dan), 80 en total por hora. Más
+    chico que el de un formulario común porque **cada intento que pasa cuesta
+    dinero de verdad**: llama a la IA. Se llama ANTES de gastar nada, por
+    `public.arbitraje_consulta_frenar(p_ip, p_correo)` (mismo patrón que
+    `jdn_frenar`: la función trae la IP de SU PROPIO pedido, porque la que
+    vería PostgREST sería la de Supabase, no la de quien preguntó).
+  - **Un presupuesto propio**, en `arbitraje_consulta_config` (una sola fila):
+    qué modelo contesta (`claude-haiku-4-5` o `claude-sonnet-5`; `null` = la
+    consulta está apagada) y cuánto puede gastar por mes. Aparte del de
+    «Mejorar informe» (`academia_ia`), porque esa la gasta un profesor con
+    sesión y esta la gasta cualquiera sin sesión: mezclarlos dejaría que el
+    público le vaciara el presupuesto a la Academia. Solo quien administra la
+    ve y la cambia (`arbitraje_consulta_config_guardar()`), desde
+    `arbitraje.html` → «⚙️ IA del espacio de consultas». Lleva su trigger de
+    auditoría (controla gasto, igual que `academia_ia` y
+    `licencias_herramientas`).
+  - **Cada intento queda anotado en `consultas_arbitraje`**, llegue o no a
+    contestar (sin presupuesto, error de la IA): así quien revisa ve también
+    lo que no se pudo responder, no solo lo que salió bien. La RLS es la misma
+    que `arbitrajes_publicos`: solo profesores y administración leen y
+    marcan `revisado`; nadie inserta desde el navegador, solo la Edge
+    Function con la clave de servicio.
+- **La respuesta no es una decisión arbitral ni sustituye el reglamento
+  particular de un torneo.** El propio texto del sistema a la IA se lo pide:
+  citar el artículo cuando pueda, decir con honestidad cuando no esté segura
+  del número exacto en vez de inventarlo, remitir a las bases del torneo
+  cuando la duda dependa de ellas (el ritmo, el desempate) y nunca decidir un
+  caso concreto que esté pasando ahora mismo — eso es siempre del árbitro
+  presente. La pantalla lo repite antes del formulario, con el enlace a
+  `handbook.fide.com`.
+- **La revisión vive en `arbitraje.html`**, en «💬 Espacio de consultas»: la
+  lista con la pregunta, la respuesta, el modelo y el costo, una nota de
+  revisión y el botón para marcarla revisada. Mismo patrón que «📥 Exámenes
+  del público» (ver «Examen de arbitraje (reglamento FIDE)» en
+  `docs/decisiones/entrenamiento.md`).
+- `arbitraje.html` y `nivel-de-arbitraje.html` enlazan hacia acá para que
+  quien busca un examen completo o una duda puntual encuentre el que le toca.
+
+`node herramientas/verificar-arbitraje-consulta.js` (sin navegador ni red)
+comprueba que la Edge Function pase por el freno antes de llamar a la IA, que
+lea el presupuesto y lo compare contra el gasto del mes, que el freno conozca
+el tipo `'arbitraje_consulta'` y que el formulario pida los campos que la
+función espera.
