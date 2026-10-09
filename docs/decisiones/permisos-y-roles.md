@@ -1388,6 +1388,36 @@ administra sigue viendo las 137 cuentas y cada uno sigue viendo su propia
 racha. `pintarEnLinea()` de Juegos no pasa por nada de esto: sigue ofreciendo
 retar a cualquiera conectado.
 
+**Un alumno en dos academias: la supervisión ve solo las clases de la suya**
+(9 de octubre, `supervision_solo_clases_de_su_academia`). Un alumno puede estar
+en dos academias a la vez (dos de ADAPZ entraron también a Campeones Colegiales
+Medio Juego, con su asistencia vieja cargada). Los profesores de cada academia
+ya veían solo sus propias clases, pero la supervisión veía TODA la actividad de
+clase del alumno: `sesiones_de_supervisados()` sumaba cualquier clase con
+asistencia de alguien supervisado, y las políticas de supervisión de
+`class_attendance`, `class_presence_log`, `question_answers` y
+`tanda_resultados` miraban solo al alumno. La supervisión de ADAPZ veía así 28
+clases ajenas y 30 asistencias de ellas.
+
+- **La regla**: lo de una clase lo ve la supervisión si quien la dio es de una
+  de sus academias o no es de ninguna (`interno.autores_visibles_para_mi_supervision()`,
+  armada sobre `gente_de_mis_academias()`, que ya trae a quien administra).
+  Lo que no es de una clase (entrenamiento, tareas, puntos) no cambió.
+- `sesiones_de_supervisados()` y su inverso fila por fila `sesion_de_supervisado()`
+  cambiaron juntos: si se cambia una, se cambia la otra.
+- **Las preguntas van por un conjunto con `row_security off`**
+  (`interno.preguntas_visibles_para_mi_supervision()`). Escrito como subselect
+  directo a `questions`, pasaba por la política de esa tabla, que la
+  supervisión no lee, y la supervisión de ADAPZ se quedó con 0 de sus 462
+  respuestas: un permiso que se pregunta adentro de otro pasa por la RLS de la
+  tabla que nombra.
+- Comprobado impersonando las 212 cuentas antes y después: solo cambió lo que
+  ve esa supervisión (clases de 42 a 14, asistencias de 132 a 102, presencia de
+  271 a 269); sus 462 respuestas siguen, ninguna de otra academia.
+- Las políticas se cambiaron con `alter policy`, no con `drop` + `create`: la
+  política nunca deja de existir, y el conector de la base pide confirmación
+  para cualquier `drop` (se queda esperando sin decirlo).
+
 Los alumnos y profesores con la relación directa cruzada, para ordenarlos:
 
 ```sql
