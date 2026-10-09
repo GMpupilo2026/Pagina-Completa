@@ -4,7 +4,7 @@
     "Cada pregunta con la correcta aparte y sus distractores: el lugar de la correcta",
     "lo reparte herramientas/formacion-cuestionarios.js (parejo entre A, B, C y D).",
     "Son cuestionarios listos del material «formacion-ajedrez»: los usa quien tenga",
-    "el curso compartido (admin.html#asesores). Se van sumando sesión por sesión."
+    "el curso compartido (admin.html#asesores). Hay uno por sesión, de la 1 a la 8."
   ],
   "material": "formacion-ajedrez",
   "sesiones": [
@@ -255,6 +255,1489 @@
           ],
           "tiempo": 30,
           "fuente": "FIDE 9.5.3"
+        }
+      ]
+    },
+    {
+      "sesion": 2,
+      "titulo": "Formación Ajedrez · Sesión 2: reglas de competición",
+      "preguntas": [
+        {
+          "texto": "Un jugador toca a propósito su caballo, que tiene jugada legal, y después quiere mover el alfil. ¿Qué corresponde?",
+          "correcta": "Debe mover el caballo: pieza tocada",
+          "distractores": [
+            "Puede mover el alfil si no soltó el caballo",
+            "Puede mover el alfil, con una advertencia",
+            "Debe mover el caballo solo si el rival lo exige"
+          ],
+          "tiempo": 30,
+          "fuente": "FIDE 4.3.1"
+        },
+        {
+          "texto": "Un jugador toca a propósito una pieza del rival que puede capturar. ¿Qué está obligado a hacer?",
+          "correcta": "Capturarla, si tiene una jugada legal para eso",
+          "distractores": [
+            "Nada: pieza tocada vale solo para las propias",
+            "Mover cualquier pieza propia",
+            "Capturarla solo si el rival lo reclama"
+          ],
+          "tiempo": 30,
+          "fuente": "FIDE 4.3.2"
+        },
+        {
+          "texto": "Un jugador suelta su torre en d4 y se arrepiente antes de presionar el reloj. ¿Puede llevarla a d6?",
+          "correcta": "No: al soltarla en una casilla, la jugada quedó hecha",
+          "distractores": [
+            "Sí, mientras no haya presionado el reloj",
+            "Sí, pero el rival recibe dos minutos",
+            "Sí, si dice «compongo» antes de tocarla"
+          ],
+          "tiempo": 30,
+          "fuente": "FIDE 4.6"
+        },
+        {
+          "texto": "¿En qué momento queda completada una jugada ilegal, a efectos de sanción?",
+          "correcta": "Cuando el jugador presiona el reloj",
+          "distractores": [
+            "Cuando suelta la pieza en la casilla",
+            "Cuando el rival hace su jugada siguiente",
+            "Cuando la persona árbitra la ve"
+          ],
+          "tiempo": 20,
+          "fuente": "FIDE 7.5.1"
+        },
+        {
+          "texto": "Ritmo clásico: primera jugada ilegal completada de un jugador. ¿Qué recibe el rival?",
+          "correcta": "Dos minutos más en su reloj",
+          "distractores": [
+            "Un minuto más en su reloj",
+            "La partida ganada",
+            "Nada: solo se repone la posición"
+          ],
+          "tiempo": 20,
+          "fuente": "FIDE 7.5.5"
+        },
+        {
+          "texto": "Un jugador completa su segunda jugada ilegal en la partida. Su rival tiene material para dar mate. ¿Resultado?",
+          "correcta": "Pierde quien hizo la segunda ilegal",
+          "distractores": [
+            "El rival recibe otros dos minutos",
+            "Una advertencia y la partida sigue",
+            "Tablas"
+          ],
+          "tiempo": 20,
+          "fuente": "FIDE 7.5.5"
+        },
+        {
+          "texto": "Segunda jugada ilegal completada de un jugador, pero a su rival solo le queda el rey. ¿Resultado?",
+          "correcta": "Tablas: el rival no puede dar mate",
+          "distractores": [
+            "Pierde quien hizo la segunda ilegal",
+            "El rival recibe dos minutos y sigue",
+            "La partida se juega de nuevo"
+          ],
+          "tiempo": 30,
+          "fuente": "FIDE 7.5.5"
+        },
+        {
+          "texto": "Un jugador presiona el reloj sin haber hecho ninguna jugada. ¿Cómo se trata?",
+          "correcta": "Como una jugada ilegal",
+          "distractores": [
+            "Como una oferta de tablas",
+            "Solo como molestia al rival",
+            "Sin consecuencia, si lo corrige rápido"
+          ],
+          "tiempo": 20,
+          "fuente": "FIDE 7.5.3"
+        },
+        {
+          "texto": "Enroca moviendo el rey con una mano y la torre con la otra, y presiona el reloj. ¿Qué es?",
+          "correcta": "Una jugada ilegal, y se sanciona como tal",
+          "distractores": [
+            "Un enroque válido: cuenta la posición final",
+            "Una falta de conducta con advertencia",
+            "Pierde el enroque, sin otra sanción"
+          ],
+          "tiempo": 30,
+          "fuente": "FIDE 7.5.4"
+        },
+        {
+          "texto": "No se puede reconstruir la posición anterior a la jugada ilegal. ¿Desde dónde sigue la partida?",
+          "correcta": "Desde la última posición identificable",
+          "distractores": [
+            "Desde la posición inicial",
+            "Desde la posición actual, con la ilegal",
+            "No sigue: se anula la partida"
+          ],
+          "tiempo": 20,
+          "fuente": "FIDE 7.5.1"
+        },
+        {
+          "texto": "En apuro de tiempo, un jugador vuelca varias piezas al mover. ¿Con qué tiempo las repone?",
+          "correcta": "Con su propio tiempo",
+          "distractores": [
+            "Con el tiempo del rival",
+            "Con los relojes detenidos por el árbitro",
+            "Las repone el árbitro, sin parar el reloj"
+          ],
+          "tiempo": 20,
+          "fuente": "FIDE 7.4"
+        },
+        {
+          "texto": "El reglamento permite el celular completamente apagado en el bolso. Durante la partida vibra dentro del bolso. ¿Qué corresponde?",
+          "correcta": "La sanción del reglamento o, si no prevé otra, perder",
+          "distractores": [
+            "Nada: estaba en el bolso, como se permite",
+            "Una advertencia: no sonó, solo vibró",
+            "Dos minutos más para el rival"
+          ],
+          "tiempo": 30,
+          "fuente": "FIDE 11.3.2"
+        },
+        {
+          "texto": "Hay una sospecha de que un jugador lleva un dispositivo. ¿Cómo se hace la revisión?",
+          "correcta": "En privado, por alguien de su mismo sexo",
+          "distractores": [
+            "Delante de todos, para que sirva de ejemplo",
+            "Solo con permiso escrito de su familia",
+            "No se puede: solo se le pide que salga"
+          ],
+          "tiempo": 30,
+          "fuente": "FIDE 11.3.3"
+        },
+        {
+          "texto": "Durante su partida, ¿puede un jugador salir del recinto de juego (sala, baños y zona de descanso)?",
+          "correcta": "Solo con permiso del árbitro",
+          "distractores": [
+            "Sí, si su reloj no está en marcha",
+            "Sí, si le avisa a su rival",
+            "Nunca, ni con permiso"
+          ],
+          "tiempo": 20,
+          "fuente": "FIDE 11.2"
+        },
+        {
+          "texto": "Dos estudiantes que ya terminaron analizan su partida en la sala, junto a mesas que siguen jugando. ¿Qué haces?",
+          "correcta": "Les pides que analicen fuera de la sala de juego",
+          "distractores": [
+            "Nada: su partida ya terminó",
+            "Les quitas medio punto a cada uno",
+            "Los dejas si hablan en voz baja"
+          ],
+          "tiempo": 30,
+          "fuente": "FIDE 11.4 y 12.7"
+        },
+        {
+          "texto": "Un jugador ofrece tablas una y otra vez, pese a las negativas del rival. ¿Qué es?",
+          "correcta": "Una molestia al rival, que se puede sancionar",
+          "distractores": [
+            "Su derecho: puede ofrecerlas cuantas veces quiera",
+            "Una jugada ilegal",
+            "Motivo para declarar tablas"
+          ],
+          "tiempo": 20,
+          "fuente": "FIDE 11.5 y 12.9"
+        },
+        {
+          "texto": "¿Cuál es la sanción más leve de la lista del art. 12.9?",
+          "correcta": "La advertencia",
+          "distractores": [
+            "Sumarle tiempo al rival",
+            "Quitarle medio punto",
+            "Declarar perdida la partida"
+          ],
+          "tiempo": 20,
+          "fuente": "FIDE 12.9"
+        },
+        {
+          "texto": "¿Cuál de estas NO está en la lista de sanciones del art. 12.9?",
+          "correcta": "Ordenar que la partida se juegue de nuevo",
+          "distractores": [
+            "Reducir el tiempo del infractor",
+            "Excluirlo de una o más rondas",
+            "Una multa anunciada de antemano"
+          ],
+          "tiempo": 30,
+          "fuente": "FIDE 12.9"
+        },
+        {
+          "texto": "Un jugador ya tocó una pieza para capturar y entonces reclama que el rival no cumplió pieza tocada. ¿Procede?",
+          "correcta": "No: perdió el derecho a reclamar al tocar la pieza",
+          "distractores": [
+            "Sí: el rival debe deshacer su jugada",
+            "Sí, si reclama antes de presionar el reloj",
+            "Solo si el árbitro lo vio"
+          ],
+          "tiempo": 30,
+          "fuente": "FIDE 4.8"
+        },
+        {
+          "texto": "Un jugador firmó la planilla con el resultado y después quiere apelar una decisión. ¿Puede?",
+          "correcta": "Sí: firmar no quita el derecho a apelar",
+          "distractores": [
+            "No: al firmar aceptó el resultado",
+            "Solo si el rival firma la apelación",
+            "Solo si no había árbitro presente"
+          ],
+          "tiempo": 20,
+          "fuente": "FIDE 8.7 y 11.10"
+        },
+        {
+          "texto": "A las 12 jugadas de cada bando se descubre que los colores estaban invertidos. ¿Qué se hace?",
+          "correcta": "La partida sigue con esos colores",
+          "distractores": [
+            "Se juega de nuevo con los colores correctos",
+            "Se cambian los colores y se sigue",
+            "Se declaran tablas"
+          ],
+          "tiempo": 30,
+          "fuente": "FIDE 7.3"
+        },
+        {
+          "texto": "Un jugador pausó el reloj para llamar al árbitro. ¿Quién decide cuándo se reanuda la partida?",
+          "correcta": "La persona árbitra",
+          "distractores": [
+            "El jugador que pausó el reloj",
+            "El rival de quien pausó",
+            "Los dos jugadores, de común acuerdo"
+          ],
+          "tiempo": 20,
+          "fuente": "FIDE 6.11"
+        }
+      ]
+    },
+    {
+      "sesion": 3,
+      "titulo": "Formación Ajedrez · Sesión 3: rápidas, relámpago, desempates y JDE",
+      "preguntas": [
+        {
+          "texto": "Un torneo escolar se juega a 5 min + 3 s por jugada. ¿Qué ritmo es para la FIDE?",
+          "correcta": "Relámpago: 5 + 3 = 8 minutos",
+          "distractores": [
+            "Rápidas: tiene incremento",
+            "Clásico: hay incremento desde la jugada 1",
+            "Depende de cuántas jugadas dure"
+          ],
+          "tiempo": 30,
+          "fuente": "FIDE B.1"
+        },
+        {
+          "texto": "Un torneo se juega a 45 min + 15 s por jugada. ¿Qué ritmo es?",
+          "correcta": "Clásico: 45 + 15 = 60 minutos",
+          "distractores": [
+            "Rápidas: 45 + 15 = 60, y rápidas llega a 60",
+            "Rápidas: la base es menor de 60",
+            "Relámpago: es menos de una hora"
+          ],
+          "tiempo": 30,
+          "fuente": "FIDE A.1"
+        },
+        {
+          "texto": "Un torneo se juega a 10 minutos, sin incremento. ¿Qué ritmo es?",
+          "correcta": "Relámpago: 10 minutos o menos",
+          "distractores": [
+            "Rápidas: desde 10 minutos ya es rápidas",
+            "Clásico",
+            "Depende de lo que diga la Normativa JDE"
+          ],
+          "tiempo": 20,
+          "fuente": "FIDE B.1"
+        },
+        {
+          "texto": "¿Cómo se calcula el tiempo para clasificar un ritmo con incremento?",
+          "correcta": "Tiempo base + 60 × el incremento",
+          "distractores": [
+            "Tiempo base + 40 × el incremento",
+            "Solo el tiempo base",
+            "Tiempo base × 2 + el incremento"
+          ],
+          "tiempo": 20,
+          "fuente": "FIDE A.1"
+        },
+        {
+          "texto": "En rápidas, ¿es obligatorio anotar las jugadas?",
+          "correcta": "No, salvo que el reglamento del evento lo exija",
+          "distractores": [
+            "Sí, siempre, como en el ritmo clásico",
+            "Sí, hasta que queden 5 minutos",
+            "No, y por eso no se puede reclamar nada"
+          ],
+          "tiempo": 20,
+          "fuente": "FIDE A.2"
+        },
+        {
+          "texto": "En rápidas, ¿qué es la «supervisión adecuada» del apéndice A.4?",
+          "correcta": "Una persona árbitra por cada 3 partidas, como máximo",
+          "distractores": [
+            "Una persona árbitra por cada 10 partidas",
+            "Una persona árbitra en la sala, haya las que haya",
+            "Que haya cámaras en la sala"
+          ],
+          "tiempo": 20,
+          "fuente": "FIDE A.4"
+        },
+        {
+          "texto": "Con supervisión adecuada (A.4), ¿qué reglas rigen en rápidas?",
+          "correcta": "Las de competición, con los cambios de A.2 y A.3",
+          "distractores": [
+            "Solo las del apéndice de relámpago",
+            "Solo las reglas básicas del juego",
+            "Las mismas que sin supervisión"
+          ],
+          "tiempo": 30,
+          "fuente": "FIDE A.4"
+        },
+        {
+          "texto": "Rápidas sin supervisión adecuada: pasadas 10 jugadas de cada bando, reclaman que el tablero está mal orientado. ¿Se admite?",
+          "correcta": "No: ese reclamo ya no se admite",
+          "distractores": [
+            "Sí: la posición se pasa a un tablero bien puesto",
+            "Sí, y la partida se juega de nuevo",
+            "Solo si lo reclaman los dos"
+          ],
+          "tiempo": 30,
+          "fuente": "FIDE A.5.1"
+        },
+        {
+          "texto": "Relámpago: un jugador da mate y un instante después cae su propia bandera. ¿Resultado?",
+          "correcta": "Gana quien dio mate",
+          "distractores": [
+            "Pierde quien dio mate: cayó su bandera",
+            "Tablas: pasaron las dos cosas",
+            "Se juega de nuevo la partida"
+          ],
+          "tiempo": 20,
+          "fuente": "FIDE 5.1.1 y B.3"
+        },
+        {
+          "texto": "En relámpago sin supervisión, ¿quién reclama la caída de una bandera?",
+          "correcta": "El jugador: detiene el reloj y avisa",
+          "distractores": [
+            "La persona árbitra, de oficio, apenas la ve",
+            "Cualquier espectador que la note",
+            "Nadie: en relámpago la bandera no cuenta"
+          ],
+          "tiempo": 20,
+          "fuente": "FIDE B.3 y A.5"
+        },
+        {
+          "texto": "En rápidas, ¿cuánto tiempo le suma al rival un reclamo de tablas incorrecto?",
+          "correcta": "Un minuto",
+          "distractores": [
+            "Dos minutos",
+            "Nada",
+            "Medio minuto"
+          ],
+          "tiempo": 20,
+          "fuente": "FIDE A.3 y 9.5.3"
+        },
+        {
+          "texto": "Los rivales de Ana terminaron con 3, 2½, 4, 1 y 2 puntos. ¿Cuál es su Buchholz?",
+          "correcta": "12½",
+          "distractores": [
+            "11½",
+            "12",
+            "13"
+          ],
+          "tiempo": 60,
+          "fuente": "FIDE C.07"
+        },
+        {
+          "texto": "Mismo caso: rivales con 3, 2½, 4, 1 y 2 puntos. ¿Cuál es su Buchholz con corte 1?",
+          "correcta": "11½ (se quita el 1)",
+          "distractores": [
+            "8½ (se quita el 4)",
+            "12½ (no cambia)",
+            "9½ (se quitan el 1 y el 2)"
+          ],
+          "tiempo": 60,
+          "fuente": "FIDE C.07"
+        },
+        {
+          "texto": "¿Qué suma el Sonneborn-Berger?",
+          "correcta": "Puntos de rivales vencidos + mitad de empatados",
+          "distractores": [
+            "Los puntos de todos los rivales enfrentados",
+            "Solo los puntos de quienes lo vencieron",
+            "Las partidas que ganó con negras"
+          ],
+          "tiempo": 30,
+          "fuente": "FIDE C.07"
+        },
+        {
+          "texto": "El primer desempate es el encuentro directo, pero los dos empatados no jugaron entre sí. ¿Qué se hace?",
+          "correcta": "Se pasa al siguiente desempate de la lista",
+          "distractores": [
+            "Se les hace jugar una partida entre ellos",
+            "Se sortea de inmediato",
+            "Gana quien tenga mejor rating"
+          ],
+          "tiempo": 30,
+          "fuente": "FIDE C.07"
+        },
+        {
+          "texto": "Se agotó la lista de desempates y siguen empatados. Si el reglamento no dice otra cosa:",
+          "correcta": "Se resuelve por sorteo",
+          "distractores": [
+            "Se juega una partida relámpago",
+            "Comparten el puesto y el premio",
+            "Gana quien jugó más con negras"
+          ],
+          "tiempo": 20,
+          "fuente": "FIDE C.07"
+        },
+        {
+          "texto": "¿Cuándo se dan a conocer los desempates de un torneo y su orden?",
+          "correcta": "Antes de empezar, en el reglamento o las bases",
+          "distractores": [
+            "Al terminar la última ronda",
+            "Cuando se produce el empate",
+            "Solo si lo piden los jugadores"
+          ],
+          "tiempo": 20,
+          "fuente": "FIDE C.07; Normativa 66.4"
+        },
+        {
+          "texto": "Normativa JDE 2026: ¿cuántos criterios de desempate se fijan como mínimo?",
+          "correcta": "Tres",
+          "distractores": [
+            "Uno",
+            "Dos",
+            "Cinco"
+          ],
+          "tiempo": 20,
+          "fuente": "Normativa 66.4"
+        },
+        {
+          "texto": "Etapa Interregional de la JDE: ¿qué sistema de juego fija la Normativa?",
+          "correcta": "Todos contra todos",
+          "distractores": [
+            "Suizo de cinco rondas",
+            "Eliminación directa",
+            "Suizo o todos contra todos, según inscritos"
+          ],
+          "tiempo": 20,
+          "fuente": "Normativa 66.2.c"
+        },
+        {
+          "texto": "Etapa Nacional de la JDE con exactamente siete inscritos en una modalidad. ¿Qué dice la Normativa?",
+          "correcta": "Nada: se acuerda en el congresillo y queda en el acta",
+          "distractores": [
+            "Suizo de cinco rondas",
+            "Todos contra todos",
+            "Se agrega un descanso y se juega suizo"
+          ],
+          "tiempo": 30,
+          "fuente": "Normativa 66.2.d, 66.2.e y art. 34"
+        },
+        {
+          "texto": "Ronda JDE a 10 min + 2 s. Una estudiante llega 8 minutos tarde, con su reloj corriendo. ¿Juega?",
+          "correcta": "Sí, con el tiempo que le queda",
+          "distractores": [
+            "No: en la JDE la tolerancia es cero",
+            "Sí, y se le repone el tiempo perdido",
+            "Solo si su rival acepta"
+          ],
+          "tiempo": 30,
+          "fuente": "Normativa art. 30"
+        }
+      ]
+    },
+    {
+      "sesion": 4,
+      "titulo": "Formación Ajedrez · Sesión 4: suizo y todos contra todos",
+      "preguntas": [
+        {
+          "texto": "¿Qué sistema conviene con muchos participantes y pocas rondas posibles?",
+          "correcta": "Suizo",
+          "distractores": [
+            "Todos contra todos",
+            "Eliminación directa",
+            "Todos contra todos a doble vuelta"
+          ],
+          "tiempo": 20,
+          "fuente": "FIDE C.04.1"
+        },
+        {
+          "texto": "¿Cuál es la regla absoluta de todo sistema suizo?",
+          "correcta": "Dos jugadores no se enfrentan más de una vez",
+          "distractores": [
+            "Nadie juega dos veces seguidas con negras, en ninguna ronda",
+            "Siempre se empareja por rating",
+            "El primero de la lista nunca queda libre"
+          ],
+          "tiempo": 20,
+          "fuente": "FIDE C.04.1"
+        },
+        {
+          "texto": "Torneo escolar sin rating. ¿Cómo se ordena la lista inicial?",
+          "correcta": "Con el criterio que anuncia el reglamento",
+          "distractores": [
+            "Por edad, de mayor a menor",
+            "Por orden de llegada a la sala",
+            "Lo decide la persona árbitra de nuevo en cada ronda"
+          ],
+          "tiempo": 20,
+          "fuente": "FIDE C.04.2"
+        },
+        {
+          "texto": "Suizo de 12 jugadores, el 1 con blancas por sorteo. ¿Quién juega en el tablero 1 de la ronda 1?",
+          "correcta": "El 1 contra el 7",
+          "distractores": [
+            "El 1 contra el 12",
+            "El 1 contra el 2",
+            "El 1 contra el 6"
+          ],
+          "tiempo": 30,
+          "fuente": "FIDE C.04.3"
+        },
+        {
+          "texto": "Mismo suizo de 12 (el 1 con blancas). ¿Quién lleva blancas en el tablero 2 de la ronda 1?",
+          "correcta": "El 8, contra el 2",
+          "distractores": [
+            "El 2, contra el 8",
+            "El 2, contra el 11",
+            "El 8, contra el 3"
+          ],
+          "tiempo": 30,
+          "fuente": "FIDE C.04.3"
+        },
+        {
+          "texto": "Suizo de 8. Ronda 1: 1–5, 6–2, 3–7, 8–4. Ganan 1, 2, 7 y 8. ¿Contra quién juega el 1 en la ronda 2?",
+          "correcta": "Contra el 7",
+          "distractores": [
+            "Contra el 2",
+            "Contra el 8",
+            "Contra el 5"
+          ],
+          "tiempo": 60,
+          "fuente": "FIDE C.04.3"
+        },
+        {
+          "texto": "En un suizo, ¿qué recibe quien queda libre por número impar?",
+          "correcta": "Un punto, sin color asignado",
+          "distractores": [
+            "Medio punto",
+            "Cero, pero cuenta como jugada",
+            "Un punto, y cuenta como partida con blancas"
+          ],
+          "tiempo": 20,
+          "fuente": "FIDE C.04.1"
+        },
+        {
+          "texto": "¿Quién NO puede recibir el punto por quedar libre en un suizo?",
+          "correcta": "Quien ya lo tuvo o ganó por incomparecencia",
+          "distractores": [
+            "El último de la lista inicial",
+            "Quien perdió la ronda anterior",
+            "Quien tiene más partidas con negras que con blancas en el torneo"
+          ],
+          "tiempo": 30,
+          "fuente": "FIDE C.04.1"
+        },
+        {
+          "texto": "¿Hasta cuánto puede llegar la diferencia entre las partidas de un jugador con blancas y con negras?",
+          "correcta": "Hasta 2, en más o en menos",
+          "distractores": [
+            "Hasta 3",
+            "Hasta 1",
+            "No hay límite"
+          ],
+          "tiempo": 20,
+          "fuente": "FIDE C.04.1"
+        },
+        {
+          "texto": "¿Puede un jugador llevar el mismo color tres veces seguidas en un suizo?",
+          "correcta": "No, salvo excepciones en la última ronda",
+          "distractores": [
+            "Sí, si así lo da el programa",
+            "Sí, siempre que no sean blancas",
+            "No, nunca, ni siquiera en la última ronda del torneo"
+          ],
+          "tiempo": 20,
+          "fuente": "FIDE C.04.1"
+        },
+        {
+          "texto": "Ya se publicó el emparejamiento. ¿En qué caso se puede cambiar?",
+          "correcta": "Si hace jugar dos veces a los mismos dos",
+          "distractores": [
+            "Si una familia lo pide con una buena razón",
+            "Si los dos son del mismo colegio",
+            "Si al árbitro no le parece justo"
+          ],
+          "tiempo": 30,
+          "fuente": "FIDE C.04.2"
+        },
+        {
+          "texto": "Un estudiante falta a una ronda sin avisar. ¿Qué se asume?",
+          "correcta": "Que se retiró, salvo que explique antes del siguiente emparejamiento",
+          "distractores": [
+            "Que juega la ronda siguiente como si nada",
+            "Que recibe medio punto por descanso",
+            "Que pierde solo esa partida y sigue en el torneo con normalidad"
+          ],
+          "tiempo": 30,
+          "fuente": "FIDE C.04.2"
+        },
+        {
+          "texto": "¿Cuántas rondas tiene un todos contra todos de 8 jugadores?",
+          "correcta": "7",
+          "distractores": [
+            "8",
+            "4",
+            "28"
+          ],
+          "tiempo": 20,
+          "fuente": "Tablas de Berger"
+        },
+        {
+          "texto": "¿Cuántas partidas hay en un todos contra todos de 6 jugadores?",
+          "correcta": "15",
+          "distractores": [
+            "30",
+            "36",
+            "12"
+          ],
+          "tiempo": 30,
+          "fuente": "Tablas de Berger"
+        },
+        {
+          "texto": "Se inscriben 7 estudiantes para un todos contra todos. ¿Qué se hace?",
+          "correcta": "Se agrega un descanso: 7 rondas y uno libre por ronda",
+          "distractores": [
+            "Se juegan 6 rondas y uno queda sin un rival",
+            "Se pasa a suizo de 5 rondas, porque la cantidad es impar",
+            "Se juega a doble vuelta"
+          ],
+          "tiempo": 30,
+          "fuente": "Tablas de Berger"
+        },
+        {
+          "texto": "Tabla de Berger de 4 jugadores, ronda 1 (el primero de cada pareja lleva blancas). ¿Cuáles son las parejas?",
+          "correcta": "1–4 y 2–3",
+          "distractores": [
+            "4–1 y 3–2",
+            "1–2 y 3–4",
+            "1–3 y 2–4"
+          ],
+          "tiempo": 30,
+          "fuente": "Tablas de Berger"
+        },
+        {
+          "texto": "¿Por qué en un todos contra todos se usa el Sonneborn-Berger y no el Buchholz?",
+          "correcta": "Todos enfrentan a los mismos: el Buchholz no separa",
+          "distractores": [
+            "El Buchholz solo existe con rating",
+            "El Sonneborn-Berger es más fácil de calcular",
+            "La FIDE prohíbe usar el Buchholz en los torneos de todos contra todos"
+          ],
+          "tiempo": 30,
+          "fuente": "FIDE C.07"
+        },
+        {
+          "texto": "Suizo de 32 jugadores. ¿Cuántas rondas como mínimo para que solo uno pueda ganarlas todas?",
+          "correcta": "5",
+          "distractores": [
+            "4",
+            "8",
+            "31"
+          ],
+          "tiempo": 30,
+          "fuente": "FIDE C.04.1"
+        },
+        {
+          "texto": "Desde la ronda 2 de un suizo, ¿qué pasa con quien no se puede emparejar dentro de su grupo de puntos?",
+          "correcta": "Baja al grupo siguiente como flotante",
+          "distractores": [
+            "Queda libre y recibe un punto",
+            "Juega con alguien con quien ya jugó",
+            "Se queda sin jugar esa ronda, con cero"
+          ],
+          "tiempo": 30,
+          "fuente": "FIDE C.04.3"
+        },
+        {
+          "texto": "Con un programa de emparejamiento reconocido por la FIDE, ¿qué le toca a la persona árbitra?",
+          "correcta": "Entender lo que hace el programa y revisarlo",
+          "distractores": [
+            "Nada: el programa decide y su emparejamiento no se puede revisar",
+            "Emparejar a mano y no usar el programa",
+            "Cambiar lo que no le parezca justo"
+          ],
+          "tiempo": 30,
+          "fuente": "FIDE C.04.2"
+        }
+      ]
+    },
+    {
+      "sesion": 5,
+      "titulo": "Formación Ajedrez · Sesión 5: el reloj de ajedrez",
+      "preguntas": [
+        {
+          "texto": "Es la hora de inicio y el jugador de blancas no está en la mesa. ¿Qué hace la persona árbitra?",
+          "correcta": "Pone en marcha el reloj de las blancas",
+          "distractores": [
+            "Espera a que llegue para empezar",
+            "Pone en marcha el reloj de las negras",
+            "Declara perdida la partida de inmediato"
+          ],
+          "tiempo": 20,
+          "fuente": "FIDE 6.6"
+        },
+        {
+          "texto": "Torneo fuera de la JDE cuyo reglamento no fija tolerancia. Un jugador llega 3 minutos tarde. ¿Qué pasa?",
+          "correcta": "Pierde: la tolerancia es cero, salvo decisión del árbitro",
+          "distractores": [
+            "Juega, con 3 minutos menos en su reloj por haber llegado tarde",
+            "Tiene 15 minutos de tolerancia",
+            "Juega con su tiempo completo"
+          ],
+          "tiempo": 30,
+          "fuente": "FIDE 6.7.1"
+        },
+        {
+          "texto": "¿Con qué mano se presiona el reloj?",
+          "correcta": "Con la misma con la que movió",
+          "distractores": [
+            "Con cualquiera, si es rápido",
+            "Con la contraria a la que movió",
+            "Siempre con la derecha"
+          ],
+          "tiempo": 20,
+          "fuente": "FIDE 6.2"
+        },
+        {
+          "texto": "¿Quién decide de qué lado del tablero va el reloj?",
+          "correcta": "La persona árbitra",
+          "distractores": [
+            "El jugador de negras",
+            "El jugador de blancas",
+            "Se sortea entre los dos"
+          ],
+          "tiempo": 20,
+          "fuente": "FIDE 6.5"
+        },
+        {
+          "texto": "¿Qué es el incremento o «tiempo Fischer»?",
+          "correcta": "Tiempo que se suma después de cada jugada",
+          "distractores": [
+            "Un tiempo fijo que se espera antes de descontar",
+            "Tiempo extra al llegar a la jugada 40",
+            "Tiempo que el árbitro da como compensación"
+          ],
+          "tiempo": 20,
+          "fuente": "FIDE 6.3"
+        },
+        {
+          "texto": "En el modo de demora (delay), ¿cuándo empieza a descontarse el tiempo principal?",
+          "correcta": "Cuando se agota el tiempo fijo de esa jugada",
+          "distractores": [
+            "Desde el primer segundo de la jugada, igual que sin demora",
+            "Al llegar a la jugada 40",
+            "Nunca: en demora no baja"
+          ],
+          "tiempo": 20,
+          "fuente": "FIDE 6.3"
+        },
+        {
+          "texto": "¿En qué se diferencian el incremento y la demora?",
+          "correcta": "El incremento se acumula; la demora no",
+          "distractores": [
+            "La demora se acumula; el incremento no",
+            "En nada: son el mismo modo",
+            "El incremento solo existe en rápidas"
+          ],
+          "tiempo": 30,
+          "fuente": "FIDE 6.3"
+        },
+        {
+          "texto": "Control de 40 jugadas en 90 minutos y luego 30 minutos más. ¿Cuándo se suman los 30?",
+          "correcta": "Al completar la jugada 40",
+          "distractores": [
+            "Cuando cae la bandera del primer período",
+            "A los 90 minutos de juego",
+            "Cuando lo pide el jugador"
+          ],
+          "tiempo": 30,
+          "fuente": "FIDE 6.3"
+        },
+        {
+          "texto": "Partida a 90 min + 30 s por jugada. Con menos de 5 minutos, ¿puede un jugador dejar de anotar?",
+          "correcta": "No: con 30 s o más de incremento anota siempre",
+          "distractores": [
+            "Sí, como en cualquier ritmo",
+            "Sí, siempre que su rival también deje de anotar las jugadas",
+            "Solo si el árbitro lo autoriza"
+          ],
+          "tiempo": 30,
+          "fuente": "FIDE 8.4"
+        },
+        {
+          "texto": "Partida sin incremento: a un jugador le quedan menos de 5 minutos. ¿Debe seguir anotando?",
+          "correcta": "No, puede dejar de anotar",
+          "distractores": [
+            "Sí, siempre en ritmo clásico",
+            "Solo debe anotar las jugadas del rival",
+            "Sí, o pierde la partida"
+          ],
+          "tiempo": 20,
+          "fuente": "FIDE 8.4"
+        },
+        {
+          "texto": "Ritmo clásico con árbitro presente: cae una bandera y nadie dice nada. ¿Qué pasa?",
+          "correcta": "La persona árbitra la declara de oficio",
+          "distractores": [
+            "La partida sigue: sin reclamo no hay bandera",
+            "Se espera a que el rival la reclame",
+            "Se suman 2 minutos y sigue"
+          ],
+          "tiempo": 20,
+          "fuente": "FIDE 6.8"
+        },
+        {
+          "texto": "Cae la bandera de un jugador. A su rival solo le queda el rey. ¿Resultado?",
+          "correcta": "Tablas",
+          "distractores": [
+            "Gana el rival por tiempo",
+            "Sigue con un minuto más",
+            "Se juega de nuevo la partida"
+          ],
+          "tiempo": 20,
+          "fuente": "FIDE 6.9"
+        },
+        {
+          "texto": "Cae la bandera de las blancas (rey y peón). Las negras tienen rey y caballo. ¿Resultado?",
+          "correcta": "Ganan las negras: hay una serie de jugadas que da mate",
+          "distractores": [
+            "Tablas: rey y caballo no dan mate",
+            "Tablas: las blancas tienen más material en el tablero",
+            "Sigue: falta que alguien lo reclame"
+          ],
+          "tiempo": 30,
+          "fuente": "FIDE 6.9"
+        },
+        {
+          "texto": "¿Quién puede acomodar sus piezas mientras corre un reloj?",
+          "correcta": "Solo el jugador cuyo reloj está en marcha",
+          "distractores": [
+            "Cualquiera de los dos, diciendo «compongo»",
+            "Solo la persona árbitra",
+            "Solo quien no tiene el turno"
+          ],
+          "tiempo": 20,
+          "fuente": "FIDE 4.2 y 6.2"
+        },
+        {
+          "texto": "A mitad de partida se descubre que un reloj estaba mal configurado. ¿Qué hace la persona árbitra?",
+          "correcta": "Lo corrige y fija los tiempos con su criterio",
+          "distractores": [
+            "Anula la partida y se juega de nuevo con el reloj bien configurado",
+            "Deja el reloj así hasta el final",
+            "Vuelve los dos lados al tiempo inicial"
+          ],
+          "tiempo": 30,
+          "fuente": "FIDE 6.10"
+        },
+        {
+          "texto": "¿Puede un jugador pausar el reloj durante su partida?",
+          "correcta": "Sí, solo para llamar a la persona árbitra",
+          "distractores": [
+            "Sí, para ir al baño",
+            "No, nunca",
+            "Sí, para pensar un momento sin gastar su propio tiempo"
+          ],
+          "tiempo": 20,
+          "fuente": "FIDE 6.11"
+        },
+        {
+          "texto": "Una jugadora deja el dedo sobre el botón del reloj mientras piensa el rival. ¿Qué hace la persona árbitra?",
+          "correcta": "Interviene: no se permite y puede sancionarse",
+          "distractores": [
+            "Nada: el reloj es suyo mientras juega",
+            "Nada, salvo que el rival se queje tres veces seguidas",
+            "Le suma 2 minutos al rival de inmediato"
+          ],
+          "tiempo": 30,
+          "fuente": "FIDE 6.2 y 12.9"
+        },
+        {
+          "texto": "El torneo se juega a 10 min + 5 s. ¿Qué ritmo es y cómo se configura el reloj?",
+          "correcta": "Rápidas: base 10:00 e incremento de 5 s",
+          "distractores": [
+            "Relámpago: base 10:00 y demora de 5 s",
+            "Rápidas: base 10:05 sin incremento",
+            "Relámpago: base 10:00 e incremento de 5 s"
+          ],
+          "tiempo": 30,
+          "fuente": "FIDE A.1 y 6.3"
+        },
+        {
+          "texto": "Antes de la ronda, ¿qué conviene revisar en cada reloj?",
+          "correcta": "Base, incremento y el mismo tiempo en los dos lados",
+          "distractores": [
+            "Solo que tenga batería",
+            "Que marque la hora oficial del torneo",
+            "Nada: el reloj se configura cuando la partida ya empezó"
+          ],
+          "tiempo": 20,
+          "fuente": "FIDE 6.10"
+        },
+        {
+          "texto": "Varias partidas están en apuro de tiempo. ¿Qué hace la persona árbitra?",
+          "correcta": "Las observa con especial atención",
+          "distractores": [
+            "Avisa cuántos segundos le quedan a cada uno",
+            "Avisa cuántas jugadas faltan para el control",
+            "Se aleja para no presionarlos"
+          ],
+          "tiempo": 20,
+          "fuente": "FIDE 12.3 y 12.6"
+        }
+      ]
+    },
+    {
+      "sesion": 6,
+      "titulo": "Formación Ajedrez · Sesión 6: casos y logística de un torneo",
+      "preguntas": [
+        {
+          "texto": "¿Cuáles son los cuatro pasos para resolver un caso arbitral?",
+          "correcta": "Hechos, artículo, decisión y registro",
+          "distractores": [
+            "Escuchar, decidir, sancionar y seguir",
+            "Artículo, registro, hechos y decisión",
+            "Hechos, opinión del público, decisión y acta"
+          ],
+          "tiempo": 20,
+          "fuente": "Método del curso; FIDE 12.1 y 12.2"
+        },
+        {
+          "texto": "Para un caso no hay una regla exacta. ¿Qué debe primar?",
+          "correcta": "La regla más cercana, con imparcialidad y justificada",
+          "distractores": [
+            "Lo que acuerden los dos jugadores",
+            "Lo que diga el entrenador con más experiencia",
+            "Repetir la partida desde el inicio, para no tener que decidir"
+          ],
+          "tiempo": 30,
+          "fuente": "FIDE, preámbulo de las Leyes"
+        },
+        {
+          "texto": "¿Cómo comunica la persona árbitra una decisión?",
+          "correcta": "A los dos jugadores, en voz baja y lejos de otras mesas",
+          "distractores": [
+            "En voz alta, para que toda la sala aprenda de una vez la regla",
+            "Solo al jugador sancionado",
+            "Por escrito, al final de la ronda"
+          ],
+          "tiempo": 20,
+          "fuente": "FIDE 11.9 y 12.7"
+        },
+        {
+          "texto": "Un familiar le señala una jugada a su hija desde el público. ¿Qué haces?",
+          "correcta": "Retiras al familiar y evalúas si hubo ayuda",
+          "distractores": [
+            "Das perdida la partida de la hija de inmediato",
+            "Nada: el público puede animar",
+            "Detienes la ronda en toda la sala"
+          ],
+          "tiempo": 30,
+          "fuente": "FIDE 11.3.1 y 12.7"
+        },
+        {
+          "texto": "¿Qué se revisa antes de emparejar la ronda siguiente?",
+          "correcta": "Que todos los resultados estén firmados e ingresados",
+          "distractores": [
+            "Que el público haya salido de la sala",
+            "Que los jugadores acepten el emparejamiento",
+            "Que todas las partidas de la ronda hayan durado lo mismo"
+          ],
+          "tiempo": 20,
+          "fuente": "FIDE 8.7; C.04.2"
+        },
+        {
+          "texto": "¿Cuál de estos NO forma parte de la logística previa a un torneo escolar?",
+          "correcta": "El resultado de las partidas",
+          "distractores": [
+            "Revisar tableros, piezas y relojes",
+            "Publicar la lista inicial",
+            "Anunciar las rondas y los desempates"
+          ],
+          "tiempo": 20,
+          "fuente": "Buenas prácticas de organización"
+        },
+        {
+          "texto": "Al empezar la ronda 1, con 30 inscritos, faltan 4 relojes. ¿Qué haces?",
+          "correcta": "Usas repuestos y reorganizas sin perder la puntualidad",
+          "distractores": [
+            "Atrasas la ronda hasta conseguir los relojes que hacen falta",
+            "Juegan sin reloj y sin control de tiempo",
+            "Suspendes el torneo"
+          ],
+          "tiempo": 30,
+          "fuente": "Buenas prácticas de organización"
+        },
+        {
+          "texto": "JDE: ¿con qué documento se acredita a cada estudiante?",
+          "correcta": "La Boleta Oficial de la Plataforma JDE",
+          "distractores": [
+            "La cédula del docente acompañante",
+            "Una carta firmada por la dirección del centro educativo",
+            "El carné del club de ajedrez"
+          ],
+          "tiempo": 20,
+          "fuente": "Normativa art. 27 y 28"
+        },
+        {
+          "texto": "JDE: el congresillo acordó el sistema de juego y una delegación no asistió. ¿Qué pasa?",
+          "correcta": "Acepta lo acordado: obliga a todas las delegaciones",
+          "distractores": [
+            "Puede pedir que se vuelva a votar el sistema en la primera ronda",
+            "Juega con el sistema que prefiera",
+            "Queda fuera del torneo"
+          ],
+          "tiempo": 30,
+          "fuente": "Normativa art. 33 y 34"
+        },
+        {
+          "texto": "¿Dónde se atienden las inquietudes de las familias durante una ronda?",
+          "correcta": "Fuera de la sala de juego",
+          "distractores": [
+            "En la mesa del jugador, en voz baja",
+            "En la mesa de control, dentro de la sala",
+            "Solo al final del torneo"
+          ],
+          "tiempo": 20,
+          "fuente": "FIDE 12.7"
+        },
+        {
+          "texto": "Un jugador quiere apelar una decisión. ¿Qué le informa la persona árbitra?",
+          "correcta": "Ante quién y en qué plazo, según el reglamento",
+          "distractores": [
+            "Que sus decisiones no se apelan",
+            "Que primero debe negarse a firmar la planilla",
+            "Que la apelación la resuelve la misma persona árbitra que decidió"
+          ],
+          "tiempo": 20,
+          "fuente": "FIDE 11.10"
+        },
+        {
+          "texto": "Rápidas con 10 minutos de tolerancia. El jugador de blancas llega 5 minutos tarde. ¿Juega?",
+          "correcta": "Sí, con 5 minutos menos en su reloj",
+          "distractores": [
+            "Sí, con su tiempo completo",
+            "No: pierde por llegar después de la hora de inicio",
+            "Sí, pero con una advertencia"
+          ],
+          "tiempo": 30,
+          "fuente": "FIDE 6.6 y 6.7"
+        },
+        {
+          "texto": "Empate en el primer lugar de un todos contra todos. Bases: 1) encuentro directo, 2) Sonneborn-Berger. Su partida fue tablas. ¿Qué sigue?",
+          "correcta": "Calcular el Sonneborn-Berger",
+          "distractores": [
+            "Una partida relámpago de desempate",
+            "Un sorteo",
+            "Declarar campeones a los dos"
+          ],
+          "tiempo": 30,
+          "fuente": "FIDE C.07"
+        },
+        {
+          "texto": "¿Qué se arma al cerrar un torneo, después de la última ronda?",
+          "correcta": "La tabla con desempates, el acta y el informe",
+          "distractores": [
+            "Solo la lista de ganadores",
+            "El emparejamiento de una ronda extra para los que empataron",
+            "Una lista inicial nueva por resultados"
+          ],
+          "tiempo": 20,
+          "fuente": "Buenas prácticas de organización"
+        },
+        {
+          "texto": "Además del número de rondas, ¿qué debe anunciarse en las bases antes de empezar?",
+          "correcta": "Los desempates y su orden",
+          "distractores": [
+            "El emparejamiento de todas las rondas",
+            "La persona árbitra de cada mesa",
+            "El color de cada jugador en cada ronda"
+          ],
+          "tiempo": 20,
+          "fuente": "FIDE C.07"
+        },
+        {
+          "texto": "Al registrar una incidencia en el acta, ¿qué no puede faltar?",
+          "correcta": "Ronda, mesa, hechos, artículo y decisión",
+          "distractores": [
+            "Solo el resultado de la partida",
+            "La opinión de las familias y de los docentes acompañantes",
+            "El rating de los dos jugadores"
+          ],
+          "tiempo": 20,
+          "fuente": "Método del curso"
+        },
+        {
+          "texto": "Una decisión correcta, pero mal comunicada…",
+          "correcta": "Genera tanto conflicto como una incorrecta",
+          "distractores": [
+            "No importa: lo que vale es que el artículo esté bien aplicado",
+            "Se arregla sola al final de la ronda",
+            "Obliga a repetir la partida"
+          ],
+          "tiempo": 20,
+          "fuente": "Método del curso"
+        },
+        {
+          "texto": "Torneo de 20 mesas. ¿Cuántos relojes conviene llevar?",
+          "correcta": "20 configurados y 2 o 3 de repuesto",
+          "distractores": [
+            "20 exactos",
+            "10: se comparten entre dos mesas vecinas, por turnos",
+            "40: uno por jugador"
+          ],
+          "tiempo": 20,
+          "fuente": "Buenas prácticas de organización"
+        }
+      ]
+    },
+    {
+      "sesion": 7,
+      "titulo": "Formación Ajedrez · Sesión 7: simulacros y lista de cotejo",
+      "preguntas": [
+        {
+          "texto": "¿Qué roles hay en cada sala de trabajo del simulacro?",
+          "correcta": "Árbitro, dos jugadores y una persona observadora",
+          "distractores": [
+            "Árbitro y público",
+            "Dos árbitros y un jugador",
+            "Árbitro principal, árbitro auxiliar y mesa de control"
+          ],
+          "tiempo": 20,
+          "fuente": "Metodología del curso"
+        },
+        {
+          "texto": "¿Conoce de antemano la persona árbitra la incidencia que le toca en el simulacro?",
+          "correcta": "No",
+          "distractores": [
+            "Sí, para preparar el artículo",
+            "Sí, la elige ella misma",
+            "Solo la de la primera ronda"
+          ],
+          "tiempo": 20,
+          "fuente": "Metodología del curso"
+        },
+        {
+          "texto": "¿Qué instrumento documenta lo que hizo bien o mal la persona árbitra?",
+          "correcta": "La lista de cotejo",
+          "distractores": [
+            "La planilla de la partida",
+            "El acta del torneo",
+            "La hoja de emparejamientos"
+          ],
+          "tiempo": 20,
+          "fuente": "Lista de cotejo del curso"
+        },
+        {
+          "texto": "¿Qué anota la persona observadora en la lista de cotejo?",
+          "correcta": "Sí o No en cada ítem, con observaciones concretas",
+          "distractores": [
+            "Una nota del 1 al 100",
+            "Solo si la decisión final fue correcta o incorrecta, sin detalles",
+            "Lo que opinan los jugadores"
+          ],
+          "tiempo": 20,
+          "fuente": "Lista de cotejo del curso"
+        },
+        {
+          "texto": "Resolvió bien un reclamo, pero no lo anotó en el acta. ¿Cómo lo marcas?",
+          "correcta": "Resuelve: Sí. Documenta: No, con la observación",
+          "distractores": [
+            "Todo Sí: lo importante era la decisión, no el papeleo del acta",
+            "Todo No: sin registro no vale",
+            "Lo dejas en blanco"
+          ],
+          "tiempo": 30,
+          "fuente": "Lista de cotejo del curso"
+        },
+        {
+          "texto": "Guion A: enrocó largo, pero su rey ya se había movido y había vuelto. Presionó el reloj. ¿Qué corresponde?",
+          "correcta": "Jugada ilegal: se repone y debe mover el rey",
+          "distractores": [
+            "Es legal: el rey volvió a su casilla",
+            "Se repone la posición y puede mover cualquier pieza que quiera",
+            "Pierde la partida de inmediato"
+          ],
+          "tiempo": 30,
+          "fuente": "FIDE 3.8.2, 4.3 y 7.5"
+        },
+        {
+          "texto": "Guion B: ¿cómo reclama tablas por triple repetición con una jugada que todavía no hizo?",
+          "correcta": "Anota la jugada sin hacerla y llama al árbitro",
+          "distractores": [
+            "Hace la jugada y después reclama",
+            "Le dice al rival que son tablas",
+            "Detiene el reloj, hace la jugada en el tablero y luego reclama"
+          ],
+          "tiempo": 30,
+          "fuente": "FIDE 9.2"
+        },
+        {
+          "texto": "Un reclamo de triple repetición resulta incorrecto. ¿Qué efecto tiene, además?",
+          "correcta": "Cuenta como una oferta de tablas",
+          "distractores": [
+            "Se anula la partida",
+            "Pierde la partida quien hizo el reclamo equivocado",
+            "Ningún otro efecto"
+          ],
+          "tiempo": 20,
+          "fuente": "FIDE 9.1.2"
+        },
+        {
+          "texto": "Antes de reclamar la triple repetición, el jugador tocó a propósito una pieza. ¿Qué pasa?",
+          "correcta": "Pierde el derecho a reclamar en esa jugada",
+          "distractores": [
+            "Reclama igual: tocar no cuenta",
+            "Reclama, y el rival recibe 2 minutos",
+            "Puede reclamar si suelta la pieza enseguida"
+          ],
+          "tiempo": 30,
+          "fuente": "FIDE 9.4"
+        },
+        {
+          "texto": "Un jugador reclama tablas por triple repetición y el reclamo es correcto. ¿Qué pasa?",
+          "correcta": "Son tablas de inmediato",
+          "distractores": [
+            "El árbitro decide si son tablas o sigue",
+            "Se juegan 10 jugadas más",
+            "Son tablas solo si el rival acepta"
+          ],
+          "tiempo": 20,
+          "fuente": "FIDE 9.5"
+        },
+        {
+          "texto": "¿En qué orden se ofrecen tablas correctamente?",
+          "correcta": "Jugada, oferta y después el reloj",
+          "distractores": [
+            "Oferta, jugada y reloj",
+            "Jugada, reloj y oferta",
+            "Reloj, oferta y jugada"
+          ],
+          "tiempo": 20,
+          "fuente": "FIDE 9.1.2"
+        },
+        {
+          "texto": "Guion C: ofrece tablas mientras corre el reloj del rival. ¿La oferta vale?",
+          "correcta": "Sí, pero molesta: se le recuerda cómo se hace",
+          "distractores": [
+            "No: la oferta es nula",
+            "Sí, y el rival está obligado a contestarla antes de seguir pensando",
+            "No, y pierde la partida"
+          ],
+          "tiempo": 30,
+          "fuente": "FIDE 9.1.2 y 11.5"
+        },
+        {
+          "texto": "Guion D: un docente acompañante comenta en voz baja con su estudiante la partida en curso. ¿Qué haces?",
+          "correcta": "Lo retiras de la zona de juego y evalúas si hubo ayuda",
+          "distractores": [
+            "Le pides que hable más bajo",
+            "Das perdida la partida del rival",
+            "Nada: el docente acompañante responde por su estudiante en la sala"
+          ],
+          "tiempo": 30,
+          "fuente": "FIDE 11.3.1 y 12.7"
+        },
+        {
+          "texto": "Torneo presencial: ¿qué hace la mesa de control?",
+          "correcta": "Inscripción, emparejamientos, resultados y desempates",
+          "distractores": [
+            "Arbitra los reclamos de las mesas",
+            "Atiende a las familias y al público dentro de la sala de juego",
+            "Solo entrega los premios"
+          ],
+          "tiempo": 20,
+          "fuente": "Roles del torneo presencial"
+        },
+        {
+          "texto": "¿Qué hace un árbitro auxiliar ante una incidencia que no puede resolver?",
+          "correcta": "Informa al principal y aplica lo que se acuerde",
+          "distractores": [
+            "Decide por su cuenta",
+            "Pide a los dos jugadores que se pongan de acuerdo entre ellos",
+            "Detiene todas las partidas de su grupo"
+          ],
+          "tiempo": 20,
+          "fuente": "FIDE 12.4"
+        },
+        {
+          "texto": "Según la lista de cotejo, ¿qué se verifica antes de iniciar la ronda?",
+          "correcta": "La acreditación y el emparejamiento",
+          "distractores": [
+            "Los desempates finales",
+            "La lista de premiación",
+            "Que el público esté sentado y en silencio alrededor de las mesas"
+          ],
+          "tiempo": 20,
+          "fuente": "Lista de cotejo del curso"
+        },
+        {
+          "texto": "Alguien aplicó la sanción máxima a una primera falta leve. ¿Qué retroalimentación le das?",
+          "correcta": "Tuvo base, pero no fue proporcionada: empezar por lo leve",
+          "distractores": [
+            "Bien hecho: así aprenden",
+            "Mal: no debía sancionar nada",
+            "Bien: si el reglamento lo permite, la sanción más alta siempre vale"
+          ],
+          "tiempo": 30,
+          "fuente": "FIDE 12.9"
+        },
+        {
+          "texto": "Al terminar cada incidencia del simulacro, ¿qué se hace?",
+          "correcta": "Se rotan los roles",
+          "distractores": [
+            "Se repite con la misma persona árbitra",
+            "Se pasa al torneo real",
+            "Se vota quién arbitró mejor"
+          ],
+          "tiempo": 20,
+          "fuente": "Metodología del curso"
+        }
+      ]
+    },
+    {
+      "sesion": 8,
+      "titulo": "Formación Ajedrez · Sesión 8: repaso para el torneo real",
+      "preguntas": [
+        {
+          "texto": "El torneo del día se juega a 10 min + 5 s. ¿Qué ritmo es?",
+          "correcta": "Rápidas: 10 + 5 = 15 minutos",
+          "distractores": [
+            "Relámpago: la base es de 10 minutos",
+            "Clásico",
+            "Relámpago: el incremento no cuenta"
+          ],
+          "tiempo": 20,
+          "fuente": "FIDE A.1 y B.1"
+        },
+        {
+          "texto": "En ese ritmo, primera jugada ilegal completada. ¿Cuánto tiempo recibe el rival?",
+          "correcta": "Un minuto",
+          "distractores": [
+            "Dos minutos",
+            "Cinco segundos",
+            "Nada"
+          ],
+          "tiempo": 20,
+          "fuente": "FIDE 7.5.5 y A.3"
+        },
+        {
+          "texto": "Para una supervisión adecuada de 12 partidas en rápidas, ¿cuántas personas árbitras hacen falta?",
+          "correcta": "4",
+          "distractores": [
+            "1",
+            "2",
+            "12"
+          ],
+          "tiempo": 30,
+          "fuente": "FIDE A.4"
+        },
+        {
+          "texto": "¿Qué se hace antes de emparejar la ronda 1?",
+          "correcta": "Inscripción, lista inicial y charla técnica",
+          "distractores": [
+            "Calcular los desempates",
+            "Repartir los certificados",
+            "Firmar las planillas"
+          ],
+          "tiempo": 20,
+          "fuente": "Agenda de la sesión presencial"
+        },
+        {
+          "texto": "En la charla técnica conviene anunciar…",
+          "correcta": "Ritmo, rondas, desempates y dónde van los celulares",
+          "distractores": [
+            "Quién es favorito para ganar",
+            "Las aperturas recomendadas",
+            "Los resultados de torneos anteriores"
+          ],
+          "tiempo": 20,
+          "fuente": "Buenas prácticas de organización"
+        },
+        {
+          "texto": "¿Cómo se forma la ronda 2 del torneo?",
+          "correcta": "Por grupos de puntos, sin repetir rivales",
+          "distractores": [
+            "Por rating, igual que la ronda 1",
+            "Al azar",
+            "Todos los ganadores contra todos los perdedores"
+          ],
+          "tiempo": 20,
+          "fuente": "FIDE C.04.1"
+        },
+        {
+          "texto": "Empatan A y B en 2½. El desempate es Buchholz. Rivales de A: 2, 2 y 1. Rivales de B: 2, 1½ y 1. ¿Quién queda arriba?",
+          "correcta": "A, con 5 contra 4½",
+          "distractores": [
+            "B, con 5 contra 4½",
+            "Siguen empatados: sorteo",
+            "A, porque ganó más partidas"
+          ],
+          "tiempo": 60,
+          "fuente": "FIDE C.07"
+        },
+        {
+          "texto": "A las 3 jugadas se nota que un reloj tiene 10:00 de un lado y 5:00 del otro. ¿Qué haces?",
+          "correcta": "Lo detienes, lo corriges y ajustas los tiempos",
+          "distractores": [
+            "Sigue así: ya empezaron",
+            "Anulas la partida",
+            "Gana quien tenía menos tiempo"
+          ],
+          "tiempo": 30,
+          "fuente": "FIDE 6.10"
+        },
+        {
+          "texto": "Una mamá entra a la sala a darle agua a su hijo y le dice algo al oído. ¿Qué haces?",
+          "correcta": "La acompañas afuera y evalúas si hubo ayuda",
+          "distractores": [
+            "Nada: es su mamá",
+            "Das perdida la partida sin preguntar",
+            "Le pides que la próxima vez hable más bajo"
+          ],
+          "tiempo": 30,
+          "fuente": "FIDE 11.3.1 y 12.7"
+        },
+        {
+          "texto": "Durante el torneo, ¿qué hace la persona observadora?",
+          "correcta": "Completa la lista de cotejo de otra persona",
+          "distractores": [
+            "Arbitra las mesas sin reloj",
+            "Ayuda a los jugadores en apuro de tiempo",
+            "Calcula el emparejamiento"
+          ],
+          "tiempo": 20,
+          "fuente": "Roles del torneo presencial"
+        },
+        {
+          "texto": "¿Cuál es el último paso después de cada decisión del día?",
+          "correcta": "Registrarla en el acta o en la planilla",
+          "distractores": [
+            "Anunciarla en voz alta a la sala",
+            "Pedir la firma de las familias",
+            "Esperar al final del torneo para escribirla"
+          ],
+          "tiempo": 20,
+          "fuente": "Método del curso"
+        },
+        {
+          "texto": "¿Quién recibe el certificado al cierre del curso?",
+          "correcta": "Quien aprueba la evaluación final",
+          "distractores": [
+            "Todo el que vino a la sesión presencial",
+            "Solo quien arbitró como principal",
+            "Quien ganó el torneo"
+          ],
+          "tiempo": 20,
+          "fuente": "Evaluación del curso"
         }
       ]
     }
