@@ -2391,3 +2391,63 @@ un solo torneo), las variantes juntas y el orden del medallero, el empate que
 comparte la plata, el comité deducido, la medalla escrita, «Jugó la final», el
 filtro de edición y el enlace. Rompiendo a propósito la paginación, el empate o
 la deducción, salta.
+
+### Revisa los desempates: gratis
+
+`revisar-desempates.html` (lo pidió el dueño del sitio: gratis, sin cuenta y
+aparte de «Desempates explicados», `desempates.html`, que va con licencia):
+se pega la dirección de un torneo individual de chess-results y la página lee
+el orden de desempates que el torneo publicó, los vuelve a calcular, marca los
+que no coinciden y dice de dónde sale cada número, jugador por jugador y ronda
+por ronda, y por qué uno quedó delante de otro. En la vitrina es
+`revisar-desempates`, con `gratis: true`. La diferencia con la de licencia:
+esta no pide el orden de las bases (lo toma de chess-results) y lee una o dos
+páginas por torneo, no la ficha de cada jugador; aquella recalcula la
+clasificación con el orden que uno elige.
+
+- **Una sola copia del cálculo.** Los desempates son los de Pareo Integral
+  (`js/pareo/desempates.js`, el C.07:2026 comparado con chesspairing y con los
+  ejercicios de FIDE). `js/revisar-desempates-cr.js` solo pasa el torneo de
+  chess-results al torneo de Pareo (`js/pareo/torneo.js`), y el desglose del
+  Buchholz y el Sonneborn-Berger es el mismo `PareoDesempates.explicar()`
+  que usa `desempates.html` (el aporte de cada ronda y cuáles se cortan, con
+  el rival ficticio de una ronda no jugada).
+- **Lo que se lee.** En un suizo, el cuadro cruzado por clasificación
+  (`art=4`): una celda por ronda con el rival por su puesto, el color y el
+  resultado («3w1», «10b½», «5w+», «7b-»), «-1» el bye de un punto, «-½» el de
+  medio, «-0» o vacío no jugó. En un todos contra todos ese cuadro es una
+  matriz sin rondas ni colores, así que se leen también los emparejamientos
+  (`art=2`). En los dos, las columnas «Des 1…» y la «Anotación» que dice qué
+  es cada una (Swiss-Manager la escribe en inglés aunque la página esté en
+  español). Las columnas se buscan por su encabezado.
+- **Cuando chess-results no dice el corte** («Buchholz Tie-Breaks (variabel
+  with parameter)», «Sonneborn-Berger-Tie-Break variable»), se calculan las
+  variantes (BH, BH-C1, BH-C2, BH-M1, BH-M2; SB y SB-C1; ARO y ARO-C1) y se usa
+  la que más números publicados da. La página lo dice.
+- **El encuentro directo se calcula entre los empatados en todo lo
+  anterior**, con los valores publicados de los desempates que van antes (es
+  el orden que hay que explicar). Con un torneo real (JDE Regional SJ Norte D
+  2025) apareció que chess-results escribe 0 a todo un grupo que se ganó en
+  círculo (1, 1 y 1): el encuentro no separa a nadie. Eso cuenta como que
+  coincide, y la explicación lo dice.
+- **Si un número no coincide**, va marcado y con el de chess-results escrito
+  debajo (el color nunca va solo). Casi siempre es por las rondas no
+  jugadas: el C.07 de 2026 las cuenta con un rival ficticio (art. 16) y el
+  programa del torneo puede tener la regla vieja. La página no decide un
+  reclamo, y lo dice.
+- **La Edge Function `revisar-desempates`** (`verify_jwt` en false)
+  solo trae el HTML: no es un proxy abierto (solo chess-results.com o sus
+  servidores, un número de torneo y `art` 2 o 4). Antes de salir a
+  chess-results pasa por `revisar_desempates_frenar()` (el freno de los envíos
+  públicos con su tipo `'revisar_desempates'`: 60 por IP y 600 en total por hora) y
+  guarda lo leído dos minutos en `revisar_desempates_cache` (solo el service role).
+  Lo guardado no gasta el freno. Migración
+  `20261009121500_revisar_desempates.sql`.
+- Todavía no se explican los torneos por equipos (sus desempates son de
+  puntos de match): la página lo avisa.
+
+`verificar-revisar-desempates.js` abre la página con páginas de chess-results de la
+forma real y nombres inventados (un suizo con bye, incomparecencia y medio
+punto; un todos contra todos; tres empatados en círculo; uno por equipos; el
+freno) y compara cada número y cada explicación con la cuenta a mano. Tomando
+el «-1» como una ronda no jugada, salta.

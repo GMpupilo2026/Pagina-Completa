@@ -1746,4 +1746,25 @@ html.dark .comparar-serie-3 { background: #199e70; }
 .ec-lista { display: grid; gap: 0.35rem; margin: 0; padding: 0; list-style: none; font-size: 0.875rem; color: rgb(var(--c-brand-800, 16 42 67)); }
 .dark .ec-lista { color: rgb(var(--c-brand-50, 240 244 248)); }
 .ec-lista a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
+/* revisar-desempates.html: «distinto» usa el mismo par de colores del rótulo de
+ * arriba de las páginas (text-accent-700 / dark:text-accent-300, ya medido
+ * contra el fondo de la tarjeta), y la diferencia va siempre escrita. */
+.rd-sub { display: block; font-size: 0.75rem; color: rgb(var(--c-brand-600, 51 78 104)); }
+.dark .rd-sub { color: rgb(var(--c-brand-200, 188 204 220)); }
+.rd-nota { display: block; font-size: 0.8rem; color: rgb(var(--c-brand-700, 36 59 83)); }
+.dark .rd-nota { color: rgb(var(--c-brand-100, 217 226 236)); }
+.rd-distinto, .ae-tabla td.rd-distinto { color: rgb(var(--c-accent-700, 168 90 13)); font-weight: 600; }
+.dark .rd-distinto, .dark .ae-tabla td.rd-distinto { color: rgb(var(--c-accent-300, 247 201 72)); }
+.rd-cortado { text-decoration: line-through; color: rgb(var(--c-brand-600, 51 78 104)); }
+.dark .rd-cortado { color: rgb(var(--c-brand-200, 188 204 220)); }
+.rd-pasos { display: grid; gap: 0.5rem; margin: 0; padding-left: 1.25rem; list-style: decimal; font-size: 0.9rem; color: rgb(var(--c-brand-800, 16 42 67)); }
+.dark .rd-pasos { color: rgb(var(--c-brand-50, 240 244 248)); }
+.rd-decide { font-weight: 600; }
+.rd-criterio { display: grid; gap: 0.4rem; align-content: start; padding: 0.75rem; border: 1px solid rgb(var(--c-brand-100, 217 226 236)); border-radius: 0.75rem; min-width: 0; }
+.dark .rd-criterio { border-color: rgb(var(--c-brand-700, 36 59 83)); }
+.rd-principal { background: rgb(var(--c-brand-800, 16 42 67)); color: #fff; border-color: transparent; font-weight: 600; }
+.dark .rd-principal { background: rgb(var(--c-accent-500, 222 145 29)); color: rgb(var(--c-brand-900, 10 31 51)); }
+.rd-explicar[aria-pressed="true"] { background: rgb(var(--c-brand-100, 217 226 236)); }
+.dark .rd-explicar[aria-pressed="true"] { background: rgb(var(--c-brand-700, 36 59 83)); }
+.rd-principal:disabled { opacity: 0.6; cursor: wait; }
 .hj-resultado:focus-visible, .ec-abrir:focus-visible, .ec-lista a:focus-visible, #hj-nombre:focus-visible, #ec-detalle-t:focus-visible { outline: 3px solid rgb(var(--c-accent-500, 222 145 29)); outline-offset: 2px; }

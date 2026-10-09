@@ -131,6 +131,22 @@
             ],
         },
         {
+            id: "revisar-desempates",
+            emoji: "🔎",
+            nombre: "Revisa los desempates",
+            corto: "Revisa los desempates",
+            href: "revisar-desempates.html",
+            disponible: true,
+            gratis: true,
+            resumen: "Pega un torneo individual de chess-results: lee los desempates que publicó, los vuelve a calcular con el reglamento de FIDE de 2026 y marca los que no coinciden, con la explicación ronda por ronda de cada jugador.",
+            puntos: [
+                "Lee solo el orden de desempates del torneo y sus números, sin que tengas que escribir nada: el Buchholz con su corte, el Sonneborn-Berger, el encuentro directo, las victorias y los demás del C.07:2026.",
+                "Marca cada número que no coincide con chess-results y dice el porqué más común: las rondas que no se jugaron.",
+                "«¿Por qué quedó delante?»: elige dos jugadores y mira cuál criterio los separa.",
+                "Suizos y todos contra todos. Gratis y sin cuenta; para recalcular con otro orden de desempates está «Desempates explicados».",
+            ],
+        },
+        {
             id: "variacion-elo",
             emoji: "📈",
             nombre: "Variación de Elo del torneo",
