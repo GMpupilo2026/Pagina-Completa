@@ -60,6 +60,7 @@
         ] },
         { title: "Herramientas de arbitraje", tiles: [
             { emoji: "♟️", label: "Pareo Integral", desc: "Empareja un torneo con el Sistema Holandés de FIDE: rondas, resultados, desempates y el TRF. Gratis", href: "pareo.html", zona: "contenido" },
+            { emoji: "⚖️", label: "Desempates explicados", desc: "Recalcula la clasificación de un torneo de chess-results y explica, paso a paso, por qué cada persona queda arriba de la otra", href: "desempates.html", zona: "contenido" },
             { emoji: "🧰", label: "Todas las herramientas de arbitraje", desc: "La vitrina pública: lo que se vende con licencia y lo que viene", href: "herramientas-arbitraje.html", zona: "contenido" },
         ] },
         { title: "Revisar el contenido", tiles: [
