@@ -35,6 +35,11 @@ promo/
 CLAUDE.md
 docs
 .mcp.json
+# Las habilidades de Claude Code (.claude/skills/): instrucciones de trabajo,
+# como el informe del CCDR. No las pide ninguna página.
+.claude
+# Los datos del informe del CCDR, si alguien los dejó acá (ver .gitignore).
+informes-ccdr
 node_modules
 package.json
 package-lock.json

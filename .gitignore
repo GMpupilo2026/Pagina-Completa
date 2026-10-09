@@ -39,3 +39,8 @@ herramientas/.cache-ganar-con-poco-partidas.json
 herramientas/.cache-cambiar-o-no-cambiar.json
 herramientas/.cache-ideas-que-ganan-partidas.json
 herramientas/.cache-los-cimientos.json
+
+# Los datos del informe mensual del CCDR San José (herramientas/informe-ccdr.js):
+# nombres de menores de edad, asistencia y fotos. Se trabajan fuera del
+# repositorio; esta línea es por si alguien los guarda acá por descuido.
+informes-ccdr/

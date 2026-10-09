@@ -217,6 +217,49 @@ luminancia que el tablero de siempre, así que el contraste entre casillas y
 con las piezas no cambia, solo el tono. La animación le gana al estilo en
 línea que `board-color-themes.js` pone sobre `<html>`.
 
+## Entrenamiento, con puntos retroactivos (a diferencia de las tareas)
+
+`20261009005657_puntos_entrenamiento_retroactivo.sql` paga, una sola vez, los
+ejercicios de `training_progress` que ya existían ANTES de que
+`otorgar_puntos_de_entrenamiento()` empezara a correr: ese trigger es
+`after insert`, así que nunca vio los renglones viejos. Es lo opuesto de lo
+que se decidió para las tareas (ver «Qué fuentes de puntos se decidió
+cubrir» arriba: ahí pagar de golpe lo viejo se dejó fuera a propósito, «sería
+una sorpresa, no un premio»): para entrenamiento el dueño del sitio pidió
+justo eso, así que aquí sí se paga.
+
+- Mismo tope de 40 puntos por día de Costa Rica que la regla en vivo, pero
+  calculado día por día con la fecha de CADA ejercicio, no con la fecha en
+  que corrió la migración: hay alumnos con cientos de ejercicios en un solo
+  día histórico (hasta 395), y sin el tope esa única ráfaga pagaría de un
+  golpe muchas veces lo que cualquier día de verdad puede dar. Antes de
+  aplicarla se simuló el resultado y se le preguntó al dueño del sitio si
+  quería el tope o pagar todo tal cual; eligió el tope.
+- Inserta directo en `puntos_ajustes` (no llama a `interno.otorgar_puntos()`)
+  y con el `created_at` del ejercicio, no el de hoy: así no pasa por el
+  multiplicador de «puntos dobles» vigente el día que corrió la migración
+  (ese premio no existía cuando se jugaron estos ejercicios) y no se suma al
+  tope de ejercicios de HOY de nadie.
+- Usa la misma referencia que el trigger en vivo (`'entrenamiento:' || id`),
+  así que es idempotente con él y con ella misma: volver a correrla no paga
+  dos veces.
+- Resultado al aplicarla (9/10/2026): 6.745 de 19.760 ejercicios sin crédito
+  pagaron sus 2 puntos (el resto chocó con el tope), 13.490 puntos repartidos
+  entre 107 alumnos.
+
+**Sobre el punto de restauración sin coincidir** (sección «El robo de
+puntos», abajo, encontró el mismo problema con otra migración más): al
+aplicar esta, la huella de `supabase_migrations.schema_migrations` no
+coincidía con la del repositorio porque `20261008173204_puntos_retos_marcador.sql`
+y `20261008173205_puntos_regalos_bromas.sql` —las dos que, según «Retos,
+marcador, regalos y bromas» más abajo, se corrieron a mano en el editor SQL
+por los `drop` que colgaban `apply_migration`— nunca llegaron a anotarse en
+`schema_migrations` (su efecto SÍ está aplicado: las tablas y funciones que
+crean existen). Quedó pendiente agregar esos dos renglones con su texto
+exacto; intentarlo de nuevo desde `apply_migration`/`execute_sql` también se
+cuelga (`cancelled`), así que falta correrlo a mano en el editor SQL de
+Supabase, como la primera vez.
+
 ## El robo de puntos
 
 Migración `20261009140000_robo_de_puntos_al_perder_la_ventaja.sql`. Cuando dos
