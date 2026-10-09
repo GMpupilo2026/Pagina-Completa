@@ -2037,8 +2037,11 @@ el blitz, o pintando un nombre con `innerHTML`, salta.
 una **licencia** que genera quien administra en `licencias.html` (lo pidió el
 dueño del sitio: las herramientas se venden). La lista de herramientas vive en
 `js/herramientas-arbitraje.js` (la usan la vitrina y la administración); una
-con `disponible: false` sale como «Próximamente», sin enlace. Hoy la única
-abierta con licencia es la **selección por parámetros** (`seleccion-codicader.html`).
+con `disponible: false` sale como «Próximamente», sin enlace. Hoy están
+abiertas con licencia la **selección por parámetros** (`seleccion-codicader.html`),
+los **desempates explicados** (`desempates.html`, ver «Desempates explicados») y
+los **resultados JDN por comité** (`jdn-comites.html`, ver «Resultados JDN por
+comité»).
 **Pareo Integral** (`pareo.html`, ver «Pareo Integral») está en la vitrina con
 `gratis: true`: el dueño lo pidió público y para quien lo necesite, así que sale
 abierto para todos, sin sesión ni candado, con «Abrir» y «Manual de uso»; la
@@ -2325,3 +2328,66 @@ equipos, y adivinar el orden de desempates desde chess-results en vez de
 pedirlo (sus `Des N` no siempre dicen cuál código del C.07 son). Las dos
 herramientas que siguen en la vitrina —variación de Elo del torneo y
 reclamos de tablas desde el PGN— no comparten nada de código con esta.
+
+## Resultados JDN por comité
+
+`jdn-comites.html` es una de las herramientas con licencia (`id: "jdn-comites"`
+en `js/herramientas-arbitraje.js`). Junta los 216
+torneos de ajedrez de los Juegos Deportivos Nacionales que están en
+chess-results —eliminatorias 2018, 2021, 2022, 2024 y 2025; finales 2019,
+2022-2023, 2024 y 2026— y los ordena **por comité de deportes**: lo pidió el
+dueño («lo que importa es filtrar por resultados de todos los comités»). Arriba,
+el medallero de las finales (todas o una edición); al elegir un comité, su
+ficha con cada jugador y cada equipo, edición por edición. El enlace guarda lo
+elegido (`#comite~edicion`).
+
+- **Los datos están en la base, no en la página** (`jdn_resultados`, migración
+  `20261009021548`): una fila por puesto, con el nombre y el comité tal como
+  los escribió chess-results. **El candado es la RLS**: la única política es de
+  lectura y pregunta `(select tengo_herramienta('jdn-comites'))`; sin licencia
+  la tabla no devuelve nada, aunque se pida desde la consola. No hay política
+  de escritura.
+- **Se llena desde la base** con `herramientas/jdn-comites/cargar.sql`: desde
+  una sesión de Claude Code no hay salida a chess-results, así que las páginas
+  se piden con `pg_net` (`art=1` de cada torneo y `art=46`, la tabla final, de
+  los de equipos) y el archivo las lee. Los torneos están en `torneos.txt`. La
+  edición sale del número de torneo (cada edición se subió en un bloque propio;
+  las finales 2024 se volvieron a subir en otro, 967761–967928) y el código
+  (zona o ritmo, categoría, modalidad y rama) del título, que dice «JDN» o
+  «Juegos Deportivos Nacionales» según el año. Las columnas se leen por el
+  nombre del encabezado, nunca por la posición.
+- **Comprobado al cargar**: las 2570 filas (1823 individuales y 747 de
+  equipos) coinciden torneo por torneo con la revisión a mano —cantidad, suma
+  de puntos y la huella de los nombres en orden—.
+- **Son más de mil filas**: la página las pide de mil en mil (`range()`), si no
+  PostgREST corta sin avisar.
+- **Los comités se juntan en la página**: chess-results escribe el mismo comité
+  de muchas formas («CCDR Goicochea», «Goico», «Asociación Goicoechea»; los
+  equipos «CODEA A» y los jugadores «Alajuela»; «CC Distrital de Lepanto»). La
+  tabla guarda lo que dice chess-results y `comite()` de `js/jdn-comites.js`
+  lo normaliza: así, si aparece una variante nueva, se arregla en un solo lugar
+  sin volver a cargar.
+- **El comité que falta se deduce**: la final 2022-2023 no trae el comité de
+  nadie. Se toma del mismo jugador en la misma edición, si no en la
+  eliminatoria de su ciclo, si no en cualquier otra (con nombres cortados por
+  chess-results: «Diaz Charpentier Kristel Meli» es el mismo que el nombre
+  completo), y la ficha dice «comité deducido». Queda una sola persona sin
+  comité.
+- **Un puesto vacío es un empate** sin desempatar: hereda el de arriba y
+  comparte la medalla. Por eso las medallas no suman exactamente lo mismo en
+  cada final.
+- **Las medallas van con su emoji y escritas** (🥇 Oro, 🥈 Plata, 🥉 Bronce),
+  sin colores nuevos: el color nunca va solo.
+- En equipos, chess-results ordena primero por puntos de partida. En 17
+  eliminatorias por equipos no hay tabla final: el orden sale de la página de
+  resultados y no hay récord de matches.
+- Lo que no está en chess-results no está acá: la eliminatoria 2019, las
+  finales 2018 y 2021, la eliminatoria 2018 de U12, y cuatro eliminatorias por
+  equipos de 2024. La página lo dice en «De dónde salen los datos».
+
+`verificar-jdn-comites.js` lo prueba con un doble de Supabase: el candado sin
+licencia (y que no pida la tabla), la lectura de mil en mil (con 1100 filas de
+un solo torneo), las variantes juntas y el orden del medallero, el empate que
+comparte la plata, el comité deducido, la medalla escrita, «Jugó la final», el
+filtro de edición y el enlace. Rompiendo a propósito la paginación, el empate o
+la deducción, salta.
