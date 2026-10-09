@@ -1906,6 +1906,14 @@ dueño del sitio: las herramientas se venden). La lista de herramientas vive en
 con `disponible: false` sale como «Próximamente», sin enlace. Hoy la única
 abierta es la **selección por parámetros** (`seleccion-codicader.html`).
 
+Una herramienta con `gratis: true` está abierta a todos, sin cuenta ni
+licencia: la vitrina la pinta «Gratis, abierta a todos» con su enlace, no le
+pregunta a la base por ella (`tengo_herramienta()` diría que no a quien no
+tiene licencia) y `licencias.html` no la ofrece. Hoy es **«Ajedrez estudiantil
+en Costa Rica»** (`ajedrez-estudiantil.html`; lo pidió el dueño del sitio:
+gratis y pública, como era). La página sigue siendo pública por sí misma: no
+tiene candado que abrir.
+
 Se llega desde el menú de arriba de las páginas públicas (la barra chica, después
 de «Torneos», y el menú del celular) y desde «Recursos» en el pie: lo pidió el
 dueño para que se vea lo que se vende. Las páginas de la Academia no lo llevan

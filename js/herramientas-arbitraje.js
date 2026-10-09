@@ -7,7 +7,9 @@
    «todas» es la licencia que abre cualquiera.
 
    `disponible: false` es una herramienta anunciada que todavía no se puede
-   usar: sale en la vitrina como «Próximamente», sin enlace. Ver «Herramientas
+   usar: sale en la vitrina como «Próximamente», sin enlace. `gratis: true` es
+   una abierta a todos, sin cuenta ni licencia: no se le pregunta a la base y
+   no se ofrece en las licencias. Ver «Herramientas
    de arbitraje» en docs/decisiones/juegos-y-torneos.md. */
 (function () {
     "use strict";
@@ -29,6 +31,22 @@
                 "Admite estudiantes de otra final que cumplen la edad (la final B en la selección de la C).",
                 "Avisa lo que falta —un año de nacimiento, un nombre que no coincide entre torneos— para corregirlo en chess-results y volver a cargar.",
                 "En vivo: se actualiza ronda a ronda, marca quién entra y quién sale y cuántos puntos le faltan a cada estudiante.",
+            ],
+        },
+        {
+            id: "ajedrez-estudiantil",
+            emoji: "📊",
+            nombre: "Ajedrez estudiantil en Costa Rica",
+            corto: "Ajedrez estudiantil",
+            href: "ajedrez-estudiantil.html",
+            disponible: true,
+            gratis: true,
+            resumen: "La participación en los Juegos Deportivos Estudiantiles año por año, por etapa, región y categoría, con todos los torneos estudiantiles de Costa Rica publicados en chess-results.",
+            puntos: [
+                "Las etapas institucional o circuital, regional, interregional y nacional, y la internacional (CODICADER).",
+                "Filtros por región y por categoría (A a E) que cambian toda la página; el enlace guarda la vista para compartirla.",
+                "La lista de los torneos con su enlace a chess-results, con buscador.",
+                "Se pone al día sola: revisa chess-results cada seis horas y suma los torneos nuevos.",
             ],
         },
         {

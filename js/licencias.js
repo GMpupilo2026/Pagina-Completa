@@ -181,7 +181,7 @@
             return;
         }
         const sel = $("f-herramienta");
-        [{ id: "todas", nombre: H.nombre("todas") }].concat(H.LISTA).forEach((h) => {
+        [{ id: "todas", nombre: H.nombre("todas") }].concat(H.LISTA.filter((h) => !h.gratis)).forEach((h) => {
             const o = el("option", "", h.nombre + (h.disponible === false ? " (próximamente)" : ""));
             o.value = h.id;
             sel.appendChild(o);

@@ -74,7 +74,7 @@ window.SUPABASE_ANON_KEY = "anon-falsa";
       mfa: { getAuthenticatorAssuranceLevel: () => respuesta({ currentLevel: "aal1", nextLevel: "aal1" }), listFactors: () => respuesta({ all: [], totp: [] }) },
     },
     rpc: (nombre, args) => {
-      window.__pedidos.push(nombre);
+      window.__pedidos.push(nombre === "tengo_herramienta" ? nombre + " " + args.p_herramienta : nombre);
       if (nombre === "tengo_herramienta") return respuesta(LICENCIA && args.p_herramienta === "seleccion-codicader");
       return respuesta(null);
     },
@@ -151,16 +151,22 @@ const visible = (p, sel) => p.$eval(sel, (e) => e.checkVisibility());
     await v.addInitScript(() => { try { localStorage.clear(); } catch (e) { } });
     await v.goto(BASE + "/herramientas-arbitraje.html", { waitUntil: "load" });
     await v.waitForFunction(() => document.querySelectorAll("#lista > li").length > 0);
-    igual("sin sesión: todas con candado y el aviso de iniciar sesión",
-        [await v.$$eval("#lista > li", (l) => l.every((x) => /🔒/.test(x.textContent))), await visible(v, "#activar-sin-sesion"), await visible(v, "#activar-con-sesion")],
+    igual("sin sesión: todas con candado menos la gratis, y el aviso de iniciar sesión",
+        [await v.$$eval("#lista > li", (l) => l.every((x) => /🔒/.test(x.textContent) === (x.dataset.herramienta !== "ajedrez-estudiantil"))), await visible(v, "#activar-sin-sesion"), await visible(v, "#activar-con-sesion")],
         [true, true, false]);
+    igual("sin sesión: la gratis se abre sin cuenta",
+        await v.$eval("#lista li[data-herramienta='ajedrez-estudiantil']", (x) => [/Gratis/.test(x.textContent), !!x.querySelector("a[href='ajedrez-estudiantil.html']")]),
+        [true, true]);
     await ctx2.close();
     ({ ctx, p } = await abrir(browser, "herramientas-arbitraje.html", true));
     await p.waitForFunction(() => document.getElementById("activar-con-sesion").checkVisibility());
     await p.waitForSelector("#lista li[data-herramienta='seleccion-codicader'] a[href='seleccion-codicader.html']");
     igual("con licencia: «Abrir la herramienta» en la que tiene, candado en las demás",
         await p.$$eval("#lista > li", (l) => l.map((x) => [x.dataset.herramienta, /🔓/.test(x.textContent)])),
-        [["seleccion-codicader", true], ["desempates", false], ["variacion-elo", false], ["reclamos-tablas", false], ["acta-jde", false]]);
+        [["seleccion-codicader", true], ["ajedrez-estudiantil", false], ["desempates", false], ["variacion-elo", false], ["reclamos-tablas", false], ["acta-jde", false]]);
+    igual("la gratis no se le pregunta a la base (y las demás sí)",
+        await p.evaluate(() => [window.__pedidos.includes("tengo_herramienta ajedrez-estudiantil"), window.__pedidos.includes("tengo_herramienta seleccion-codicader")]),
+        [false, true]);
     await ctx.close();
 
     await browser.close();

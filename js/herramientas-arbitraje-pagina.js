@@ -25,7 +25,7 @@
         const ul = $("lista");
         ul.textContent = "";
         H.LISTA.forEach((h) => {
-            const abierta = abiertas.has(h.id);
+            const abierta = h.gratis || abiertas.has(h.id);
             const li = el("li", "rounded-2xl bg-white dark:bg-brand-900 shadow-md p-6");
             li.dataset.herramienta = h.id;
             const fila = el("div", "flex flex-wrap items-start justify-between gap-3");
@@ -37,7 +37,7 @@
                 ? "bg-green-100 text-green-900 dark:bg-green-900 dark:text-green-100"
                 : h.disponible ? "bg-brand-100 text-brand-800 dark:bg-brand-800 dark:text-brand-100"
                     : "bg-accent-100 text-brand-900"));
-            estado.textContent = abierta ? "🔓 Abierta para tu cuenta" : h.disponible ? "🔒 Con licencia" : "🔒 Próximamente";
+            estado.textContent = h.gratis ? "Gratis, abierta a todos" : abierta ? "🔓 Abierta para tu cuenta" : h.disponible ? "🔒 Con licencia" : "🔒 Próximamente";
             fila.append(titulo, estado);
             li.appendChild(fila);
             li.appendChild(el("p", "mt-2 text-brand-600 dark:text-brand-300", h.resumen));
@@ -86,8 +86,10 @@
 
     async function revisarAbiertas() {
         abiertas.clear();
-        const respuestas = await Promise.all(H.LISTA.map((h) => sb.rpc("tengo_herramienta", { p_herramienta: h.id })));
-        respuestas.forEach((r, i) => { if (r.data === true) abiertas.add(H.LISTA[i].id); });
+        // Las gratis no se le preguntan a la base: están abiertas para todos.
+        const conLicencia = H.LISTA.filter((h) => !h.gratis);
+        const respuestas = await Promise.all(conLicencia.map((h) => sb.rpc("tengo_herramienta", { p_herramienta: h.id })));
+        respuestas.forEach((r, i) => { if (r.data === true) abiertas.add(conLicencia[i].id); });
     }
 
     async function activar(e) {
