@@ -1936,6 +1936,85 @@ los internacionales (CODICADER y escolares de la federación). Se enlaza desde
   400 px, el modo oscuro y la página sin datos. Sumando también los blitz, o
   sin filtrar la tabla por región, salta.
 
+## Historial del jugador y estadísticas por colegio
+
+Dos herramientas gratis y públicas, hechas con los mismos torneos de
+«Ajedrez estudiantil en Costa Rica» (lo pidió el dueño del sitio: gratis, como
+esa): `historial-jugador.html` (todos los torneos estudiantiles de una persona,
+año tras año) y `estadisticas-colegios.html` (cada colegio o escuela en los
+JDE: estudiantes, podios y finalistas, y la comparación por región). Están en
+la vitrina de Herramientas con `gratis: true`.
+
+- **De dónde salen.** `herramientas/ajedrez-estudiantil-jugadores.py` lee de
+  chess-results la clasificación de cada torneo del CSV: en uno individual,
+  `art=1` (puesto, nombre, Elo, «Club/Ciudad» y puntos); en uno por equipos,
+  `art=0` (la clasificación de los equipos) y `art=16` (los jugadores con su
+  equipo; no `art=4`, que trae solo a quien jugó: ver «Herramientas de
+  arbitraje»). Lo corre el mismo flujo de cada seis horas, después del
+  actualizador, con un tope de 100 torneos por vuelta y un segundo entre
+  pedido y pedido. Relee lo que cambió de inscritos o de rondas y lo que no
+  había terminado si empezó hace menos de 60 días. La primera lectura completa
+  se hizo con un flujo temporal en la rama del PR (borrado antes de mergear).
+- **Los puntos no se adivinan.** Muchas clasificaciones de los JDE no traen
+  «Pts.»: los puntos son el desempate que la anotación llama «points
+  (game-points)», casi siempre el primero. Si no está ninguno de los dos,
+  quedan en blanco. Los «Des» se leen por su número en la anotación, no por la
+  posición.
+- **Un torneo «por equipos» que no lo es.** Algunos torneos del CSV dicen
+  «Equipos» y su `art=0` no trae clasificación de equipos (los CODICADER de
+  2009, donde el «Equipo» es el país): se leen como individuales.
+- **Los archivos.** `herramientas/datos/ajedrez-estudiantil-jugadores.csv`,
+  `-equipos.csv` y `-leidos.csv` (qué se leyó, cuándo y si estaba terminado)
+  son la fuente; `herramientas/ajedrez-estudiantil.py` arma con ellos
+  `data/ajedrez-estudiantil-jugadores.json` (el JSON no se edita a mano). El
+  JSON de los torneos ganó la columna `rondas`, para decir «3,5 de 5».
+- **Una persona es su nombre.** Sin tildes, mayúsculas, comas ni espacios de
+  más: «SOLANO MORA, ANA LUCIA» y «Solano Mora, Ana Lucía» son la misma.
+  chess-results no da otra cosa que sirva en todos los torneos (el código
+  nacional falta casi siempre, y en la selección se vio que un código «0»
+  juntaba a 18 personas). Un nombre escrito distinto queda partido en dos, y
+  dos estudiantes que se llaman igual quedan juntos: las dos páginas lo dicen.
+- **Un colegio es su nombre, con las abreviaturas juntas.** «C.T.P.», «CTP» y
+  «Colegio Técnico Profesional» son lo mismo; también «L.R.» y «Liceo Rural»,
+  «U.P.» y «Unidad Pedagógica», «Esc.» y «Escuela», «St.» y «Saint».
+  chess-results corta la columna a unas 35 letras («Colegio Teresiano San
+  Enrique de Os»): un nombre de 30 letras o más que es el comienzo de UNO SOLO
+  de los otros se junta con ese. Lo demás se junta a mano en
+  `herramientas/datos/ajedrez-estudiantil-instituciones.csv` («variante,nombre»).
+  «CRC», «Costa Rica», un número o la celda vacía no son un colegio. El nombre
+  que se muestra es la variante más usada que no viene toda en mayúsculas.
+- **Qué cuenta en las estadísticas**: solo los torneos de ritmo clásico de las
+  cuatro etapas de los JDE, como las participaciones de la otra página (los
+  blitz y rápidos repiten a los mismos estudiantes). Un podio es un 1.º, 2.º o
+  3.º, individual o del equipo; los «regionales» suman las etapas
+  institucional, regional e interregional. La región de un colegio es la de la
+  mayoría de sus torneos de los JDE (la final no tiene región). El historial,
+  en cambio, trae todos los torneos de la persona, también los blitz y los
+  internacionales.
+- **Datos de menores.** Los nombres, los colegios y los resultados ya son
+  públicos en chess-results; aquí no se agrega nada que no esté allá (ni
+  fechas de nacimiento ni códigos, que la selección guarda solo para el
+  service role). Lo que sí agrega es juntarlos, así que las dos páginas
+  ofrecen quitar un nombre: se anota en
+  `herramientas/datos/ajedrez-estudiantil-excluidos.txt` y se vuelve a correr
+  `ajedrez-estudiantil.py`; sale del historial y de las cuentas de su colegio
+  como estudiante (su equipo sigue contando).
+- **Las páginas cuentan en el navegador** (`js/jde-datos.js`, compartido por
+  `js/historial-jugador.js` y `js/estadisticas-colegios.js`), como la de los
+  torneos: es un archivo fijo, no una tabla de la base. Todo nombre va por
+  `textContent`. La persona (`?j=`), la institución (`?i=`) y los filtros van
+  en la dirección. Los gráficos son SVG a mano con los colores de etapa de la
+  otra página y la etapa siempre escrita; cada gráfico tiene su texto para el
+  lector de pantalla y sus datos en una tabla.
+
+`verificar-ajedrez-estudiantil-reglas.py` prueba el lector con muestras de la
+forma real y nombres inventados (`clasificacion.txt`,
+`clasificacion-en-juego.txt`, `equipos.txt`, `equipos-jugadores.txt`), qué se
+lee en cada vuelta y el armado (personas, colegios, cortados, variantes,
+excluidos). `verificar-jde-jugadores.js` abre las dos páginas con datos
+inventados y compara cada cifra con la cuenta hecha a mano; contando también
+el blitz, o pintando un nombre con `innerHTML`, salta.
+
 ## Herramientas de arbitraje
 
 `herramientas-arbitraje.html` es la vitrina pública de las herramientas para
@@ -1951,7 +2030,9 @@ abierto para todos, sin sesión ni candado, con «Abrir» y «Manual de uso»; l
 vitrina no le pregunta `tengo_herramienta()` y `licencias.html` no lo ofrece
 (no hay licencia que vender de algo gratis).
 
-También es gratis **«Ajedrez estudiantil en Costa Rica»**
+También son gratis el **historial de un jugador** y las **estadísticas por
+colegio y región** (ver «Historial del jugador y estadísticas por colegio»), y
+**«Ajedrez estudiantil en Costa Rica»**
 (`ajedrez-estudiantil.html`; lo pidió el dueño del sitio: gratis y pública,
 como era). La página sigue siendo pública por sí misma: no tiene candado que
 abrir.

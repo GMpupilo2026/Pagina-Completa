@@ -14,7 +14,16 @@ Lo que comprueba:
   JDE leyendo su título completo, sume uno corto sin pedir nada, deje fuera el
   que no es estudiantil y el que se jugó en otro país, y no pida el título de
   un nombre cortado sin pistas de ser estudiantil;
-- que el JSON esté al día con el CSV.
+- que el lector de jugadores (herramientas/ajedrez-estudiantil-jugadores.py)
+  lea la clasificación individual, la de equipos y la lista de jugadores de
+  equipos con la forma real (muestras con nombres inventados), saque los
+  puntos de «Pts.» o del desempate «points», sepa si el torneo terminó, y
+  elija bien qué leer en cada vuelta;
+- que al armar los jugadores junte a una persona escrita con o sin tildes y
+  mayúsculas, junte las formas de un mismo colegio («C.T.P.» y «Colegio
+  Técnico Profesional») y el nombre cortado por chess-results, no tome «CRC»
+  por un colegio, use la lista de variantes y quite a quien pidió no salir;
+- que los dos JSON estén al día con los CSV.
 
 Ver «Ajedrez estudiantil en Costa Rica: los torneos de chess-results» en
 docs/decisiones/juegos-y-torneos.md.
@@ -31,6 +40,21 @@ import sys
 RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(RAIZ, "herramientas"))
 import ajedrez_estudiantil_reglas as reglas  # noqa: E402
+
+import datetime  # noqa: E402
+import json  # noqa: E402
+import tempfile  # noqa: E402
+
+
+def modulo(nombre, archivo):
+    e = importlib.util.spec_from_file_location(nombre, os.path.join(RAIZ, "herramientas", archivo))
+    m = importlib.util.module_from_spec(e)
+    e.loader.exec_module(m)
+    return m
+
+
+lector = modulo("jugadores", "ajedrez-estudiantil-jugadores.py")
+armador = modulo("armar", "ajedrez-estudiantil.py")
 
 espec = importlib.util.spec_from_file_location("actualizar", os.path.join(RAIZ, "herramientas", "ajedrez-estudiantil-actualizar.py"))
 actualizar = importlib.util.module_from_spec(espec)
@@ -117,9 +141,105 @@ cierto("la lista queda con los nuevos y ordenada", len(total) == len(guardados) 
 cierto("no toca la lista guardada en disco", len(list(csv.DictReader(open(actualizar.FUENTE, encoding="utf-8")))) == len(guardados))
 cierto("el resumen nombra el torneo nuevo", "JDE Regional Cartago 2027" in actualizar.resumen(nuevos, cambiados))
 
-print("El JSON")
+print("Leer los jugadores de cada torneo")
+ind = lector.leer_individual(muestra("clasificacion.txt"))
+cierto("lee la clasificación individual: puesto, nombre, colegio, Elo",
+       [(j["puesto"], j["nombre"], j["institucion"], j["elo"]) for j in ind]
+       == [("1", "Solano Mora, Ana Lucía", "Liceo de Muestra", "1650"), ("2", "Quesada Rojas, Pablo", "C.T.P. Ejemplo", ""),
+           ("3", "Vargas Núñez, Sofía", "Liceo de Muestra", "")], str(ind))
+cierto("los puntos salen del desempate que la anotación llama «points» (con ½)", [j["puntos"] for j in ind] == ["4.5", "4", "0.5"], str([j["puntos"] for j in ind]))
+cierto("una clasificación final se reconoce como final", lector.es_final(muestra("clasificacion.txt")))
+en_juego = lector.leer_individual(muestra("clasificacion-en-juego.txt"))
+cierto("con columna «Pts.», los puntos salen de ahí y no del desempate", [j["puntos"] for j in en_juego] == ["3", "2.5"], str(en_juego))
+cierto("el «Equipo» de un torneo internacional se lee como la institución", en_juego and en_juego[0]["institucion"] == "Escuela Modelo")
+cierto("«Clasificación después de la ronda 3» no es final", not lector.es_final(muestra("clasificacion-en-juego.txt")))
+sin_puntos = lector.leer_individual(muestra("clasificacion.txt").replace("Desempate 1: points (game-points)", "Desempate 1: Buchholz"))
+cierto("sin «Pts.» ni desempate de puntos, los puntos quedan en blanco (no se adivinan)", all(j["puntos"] == "" for j in sin_puntos))
+eq = lector.leer_equipos(muestra("equipos.txt"))
+cierto("lee la clasificación de equipos del cuadro cruzado", eq == [{"puesto": "1", "equipo": "Liceo de Muestra", "puntos": "4.5"},
+                                                                     {"puesto": "2", "equipo": "C.T.P. Ejemplo", "puntos": "3.5"}], str(eq))
+cierto("un cuadro cruzado sin «después de la ronda» es final", lector.es_final(muestra("equipos.txt")))
+
+paginas = {0: muestra("equipos.txt"), 16: muestra("equipos-jugadores.txt"), 1: muestra("clasificacion.txt")}
+pedidas = []
+def pedir(clave, art):
+    pedidas.append(art)
+    return paginas[art]
+js, es, final = lector.leer_torneo({"clave": "1", "modalidad": "Equipos"}, pedir)
+cierto("en un torneo por equipos pide art=0 y art=16, no art=4", pedidas == [0, 16], str(pedidas))
+cierto("cada jugador de equipos lleva su equipo y el puesto del equipo",
+       [(j["nombre"], j["institucion"], j["puesto"]) for j in js]
+       == [("SOLANO MORA, ANA LUCIA", "Liceo de Muestra", "1"), ("QUESADA ROJAS, PABLO", "C.T.P. Ejemplo", "2"), ("ARAYA LEON, JOSE", "Liceo de Muestra", "1")], str(js))
+pedidas.clear()
+paginas[0] = muestra("clasificacion.txt")
+js, es, final = lector.leer_torneo({"clave": "1", "modalidad": "Equipos"}, pedir)
+cierto("un «por equipos» sin clasificación de equipos se lee como individual", pedidas == [0, 1] and len(js) == 3 and es == [], str(pedidas))
+
+hoy = datetime.date(2026, 10, 9)
+torneos_prueba = [
+    {"clave": "1", "inicio": "2020-05-01", "jugadores": "10", "rondas": "5"},
+    {"clave": "2", "inicio": "2026-09-30", "jugadores": "12", "rondas": "5"},
+    {"clave": "3", "inicio": "2026-10-01", "jugadores": "8", "rondas": "5"},
+    {"clave": "4", "inicio": "2026-09-01", "jugadores": "9", "rondas": "5"},
+    {"clave": "5", "inicio": "2025-01-01", "jugadores": "6", "rondas": "5"},
+]
+leidos_prueba = {
+    "1": {"clave": "1", "leido": "2026-01-01", "jugadores": "10", "rondas": "5", "final": "si"},
+    "2": {"clave": "2", "leido": "2026-10-08", "jugadores": "12", "rondas": "5", "final": "no"},
+    "4": {"clave": "4", "leido": "2026-10-08", "jugadores": "7", "rondas": "5", "final": "si"},
+    "5": {"clave": "5", "leido": "2025-02-01", "jugadores": "6", "rondas": "5", "final": "no"},
+}
+orden_leer = [t["clave"] for t in lector.por_leer(torneos_prueba, leidos_prueba, hoy, 10)]
+cierto("lee primero lo nunca leído, después lo que cambió o sigue en juego, y no lo viejo sin terminar",
+       orden_leer == ["3", "2", "4"], str(orden_leer))
+cierto("respeta el máximo por vuelta", [t["clave"] for t in lector.por_leer(torneos_prueba, leidos_prueba, hoy, 1)] == ["3"])
+
+print("Armar los jugadores y los colegios")
+cp = armador.clave_de_persona
+cierto("una persona con y sin tildes, mayúsculas ni coma es la misma",
+       cp("SOLANO MORA, ANA LUCIA") == cp("Solano Mora, Ana Lucía") == cp("Solano  Mora Ana lucia"))
+ci = armador.clave_de_institucion
+cierto("«C.T.P.», «CTP» y «Colegio Técnico Profesional» son lo mismo",
+       ci("C.T.P. de Ejemplo") == ci("CTP de Ejemplo") == ci("Colegio Técnico Profesional de Ejemplo"))
+cierto("un nombre cortado a 35 letras se junta con el completo, si es uno solo",
+       armador.juntar_cortados({"colegio teresiano san enrique de os", "colegio teresiano san enrique de ossó"})
+       == {"colegio teresiano san enrique de os": "colegio teresiano san enrique de ossó"})
+cierto("un nombre corto no se junta con otro que empieza igual", armador.juntar_cortados({"liceo de", "liceo de muestra"}) == {})
+cierto("un nombre en mayúsculas se muestra con mayúscula inicial y las siglas como van",
+       armador.bonito(["CTP 27 DE ABRIL"]) == "CTP 27 de Abril" and armador.bonito(["QUESADA ROJAS, PABLO", "Quesada Rojas, Pablo"]) == "Quesada Rojas, Pablo",
+       armador.bonito(["CTP 27 DE ABRIL"]))
+
+claves = [r["clave"] for r in guardados[:2]]
+with tempfile.TemporaryDirectory() as tmp:
+    def escribir(nombre, texto):
+        ruta = os.path.join(tmp, nombre)
+        with open(ruta, "w", encoding="utf-8") as f:
+            f.write(texto)
+        return ruta
+    armador.JUGADORES = escribir("j.csv", "clave,puesto,nombre,institucion,elo,puntos\n"
+                                f"{claves[0]},1,\"Solano Mora, Ana Lucía\",C.T.P. de Ejemplo,1650,4.5\n"
+                                f"{claves[0]},2,\"Pérez Ruiz, Juan\",CRC,,3\n"
+                                f"{claves[0]},3,\"Borrar Este, Nombre\",Liceo Uno,,2\n"
+                                f"{claves[1]},1,\"SOLANO MORA, ANA LUCIA\",Colegio Técnico Profesional de Ejemplo,,\n"
+                                "99999999,1,\"Fuera De Lista, Torneo\",Liceo Uno,,1\n")
+    armador.EQUIPOS = escribir("e.csv", f"clave,puesto,equipo,puntos\n{claves[1]},1,Liceo Viejo,4\n")
+    armador.EXCLUIDOS = escribir("x.txt", "# comentario\nBORRAR ESTE, NOMBRE\n")
+    armador.INSTITUCIONES = escribir("i.csv", "variante,nombre\nLiceo Viejo,Liceo Uno\n")
+    d = json.loads(armador.armar_jugadores())
+    nombres = [j[0] for j in d["jugadores"]]
+    cierto("la misma persona en dos torneos queda una sola vez, con su nombre bien escrito",
+           nombres.count("Solano Mora, Ana Lucía") == 1 and len([p for p in d["participaciones"] if p[1] == nombres.index("Solano Mora, Ana Lucía")]) == 2, str(nombres))
+    cierto("quien pidió no salir no sale", "Borrar Este, Nombre" not in nombres)
+    cierto("un torneo que no está en la lista no cuenta", "Fuera De Lista, Torneo" not in nombres)
+    insts = [i[0] for i in d["instituciones"]]
+    cierto("«CRC» no es un colegio", "CRC" not in insts and any(p[2] is None for p in d["participaciones"]), str(insts))
+    cierto("las dos formas del C.T.P. son una institución", len([i for i in insts if "Ejemplo" in i]) == 1, str(insts))
+    cierto("la lista de variantes junta «Liceo Viejo» con «Liceo Uno»", "Liceo Viejo" not in insts and d["equipos"][0][1] == insts.index("Liceo Uno"), str(insts))
+    cierto("los puntos y el Elo vacíos quedan en null", any(p[4] is None and p[5] is None for p in d["participaciones"]))
+
+print("Los JSON")
 r = subprocess.run([sys.executable, os.path.join(RAIZ, "herramientas", "ajedrez-estudiantil.py"), "--comprobar"], capture_output=True, text=True)
-cierto("data/ajedrez-estudiantil.json está al día", r.returncode == 0, (r.stdout + r.stderr).strip())
+cierto("data/ajedrez-estudiantil.json y data/ajedrez-estudiantil-jugadores.json están al día", r.returncode == 0, (r.stdout + r.stderr).strip())
 
 print(f"\n{fallos} comprobación(es) fallaron" if fallos else "\nTodo bien")
 sys.exit(1 if fallos else 0)
