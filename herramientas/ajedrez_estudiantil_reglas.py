@@ -3,7 +3,7 @@ ajedrez-estudiantil.html: si entra, en qué etapa, de qué categoría y región.
 
 Una sola copia: las usa herramientas/ajedrez-estudiantil-actualizar.py (que
 suma los torneos nuevos) y las prueba verificar-ajedrez-estudiantil-reglas.py
-contra los 1082 torneos ya clasificados. El porqué de cada regla, en
+contra todos los torneos ya clasificados. El porqué de cada regla, en
 docs/decisiones/juegos-y-torneos.md («Ajedrez estudiantil en Costa Rica: los
 torneos de chess-results»).
 """
@@ -21,7 +21,10 @@ def sin_tildes(s):
 EXCLUIR = (r"\bjdn\b|juegos (deportivos )?nacionales|comunal|distrital|paranacional|laboral|seguridad social|"
            r"chess ?talent|saint jude|st\. jude|provincial|no videntes|discapacid|grados|impares|"
            r"centroamericano de ajedrez|centroamericano y del caribe sub|crchesstour|festival deportivo colegio|"
-           r"monterrey|humboldt|lincoln|castillo|talamanca|paraiso|belen|iribo|juegos regionales (limon|guarco)|tercera division")
+           r"monterrey|humboldt|lincoln|castillo|talamanca|paraiso|belen|iribo|juegos regionales (limon|guarco)|tercera division|"
+           # Los amistosos, fogueos y recreativos no son eliminatoria; el cuadrangular final repite a
+           # los jugadores de sus grupos; el de profesores no es de estudiantes.
+           r"amistoso|fogueo|recreativo|cuadrangular|profesores|curso de entrenadores")
 INTERNACIONAL = r"codicader|estudiantiles? (femeninos |masculinos )?cen|centroamericanos? estudiantil|estudiantiles centroamericanos"
 FEDERATIVO_INTERNACIONAL = r"panamericano escolar|festival centroamericano y del caribe escolar"
 OTRO_ESTUDIANTIL = r"campeonato estudiantil|rapid estudiantil|campeonato nacional estudiantil"
@@ -29,10 +32,13 @@ JDE = (r"\bjde|j\.d\.e|juegos deportivos estudianti|juegos estudianti|estudianti
        r"final nacional de ajedrez escolar|etapa regional (escolar|colegial)|regional coto|fase regional|"
        r"eliminatoria interregional|elimintaria interregional|eliminatoria de ajedrez ,regional|interregional|"
        r"eliminatoria estudiantil institucional|eliminatoria +institucional|liceo .*eliminatoria cat|"
-       r"circuito \d+ cartago|intercircuital")
+       r"circuito \d+ cartago|intercircuital|inter-regional|eliminatoria regional|"
+       # «Regional Alajuela A Abierto», «➡️ Regional Turrialba - …»: la etapa
+       # regional sin «JDE» en el nombre, a veces sin organizador.
+       r"^\W*regional\b")
 # Un organizador del MEP (una dirección regional, un circuito) con un nombre de
 # categoría o de etapa también es de los JDE, aunque el nombre no lo diga.
-ORGANIZADOR_MEP = r"\bmep\b|ministerio de educ|direccion regional|regional|dre\b|supervision|circuito|edufi"
+ORGANIZADOR_MEP = r"\bmep\b|ministerio de educ|direccion regional|regional|dre\b|supervision|circuito|edufi|educacion fisica"
 NOMBRE_DE_CATEGORIA = r"categor|regional|cat\.? ?[a-e]\b|torneo [a-e]\b|^[a-e] |primaria|secundaria|escolar|colegial"
 # chess-results acepta la federación que le ponga quien sube el torneo: el
 # «Campeonato Nacional Estudiantil 2008» dice Costa Rica y se jugó en Ecuador.
@@ -44,9 +50,11 @@ ETAPAS_JDE = ("Institucional o circuital", "Regional", "Interregional", "Naciona
 REGIONES = [  # (nombre, patrón sobre nombre + organizador + lugar sin tildes); la primera que calza
     ("Alajuela", r"alajuela"), ("Occidente", r"occidente|san ramon|araja|cbsr"), ("Cartago", r"cartago"),
     ("Turrialba", r"turrialba"), ("Los Santos", r"los santos"), ("Heredia", r"heredia"), ("Sarapiquí", r"sarapiqui"),
-    ("San José Norte", r"(sj|san jose) norte"), ("San José Central", r"(sj|san jose) central"),
-    ("San José Oeste", r"(sj|san jose) oeste"), ("Desamparados", r"desamparados"), ("Puriscal", r"puriscal"),
-    ("Pérez Zeledón", r"perez zeledon|\bpz\b"), ("Grande de Térraba", r"terraba|sula"),
+    # Desamparados va antes que San José: «Regional Desamparados C» lo subió la
+    # regional de San José Central y es de Desamparados.
+    ("Desamparados", r"desamparados"), ("San José Norte", r"(sj|san jose) norte"), ("San José Central", r"(sj|san jose) central"),
+    ("San José Oeste", r"(sj|san jose) oeste"), ("Puriscal", r"puriscal"),
+    ("Pérez Zeledón", r"perez zeledon|\bpz\b"), ("Grande de Térraba", r"terraba|\bsula\b"),
     ("Coto", r"coto|golfito|san vito"), ("Aguirre", r"aguirre|quepos"), ("Peninsular", r"peninsular|lepanto"),
     ("Esparza", r"esparza"), ("Cañas", r"canas"), ("Liberia", r"liberia"), ("Nicoya", r"nicoya"),
     ("Santa Cruz", r"santa cruz"), ("San Carlos", r"san carlos"), ("Guápiles", r"guapiles|pococi"),
@@ -67,6 +75,7 @@ CATEGORIA = [
     r"[-,|]\s*([A-E])(?![A-Za-z])",
     r"(?i:absolut[oa]|abiert[oa]|femenin[oa]|masculin[oa])\s+([a-e])$",   # «… Absoluto e» al final
     r"\s-\s[IE][FM]([A-E])\b",                     # 2011: «IFD» = individual, femenino, D
+    r"[a-z]([A-E])\s+(?i:abiert|femenin|individual|equipo)",   # «Regional San José CentralA Abierto»
 ]
 
 
