@@ -269,6 +269,20 @@ async function main() {
         ok((propio ? t.total === null : t.total === (tipos[t.clave] || []).length) && t.actividades.join() === "tipos",
           `el tipo ${t.clave} dice ${t.total} y ${propio ? "un tipo propio no tiene total" : "en tipos.json hay " + (tipos[t.clave] || []).length}`);
       });
+
+      /* Aprender y Practicar: sus categorías viven en el JS de la página. Un
+         índice vacío no da ningún error, pero deja Tareas sin tope (se
+         pedían 50 series de Practicar, que tiene 9). Se cuentan acá con la
+         misma regla que el generador y se comparan. */
+      [["aprender", "js/aprender-lecciones.js"], ["practicas", "js/entreno-practicas.js"]].forEach(([k, archivo]) => {
+        const cuenta = {};
+        (fs.readFileSync(path.join(RAIZ, archivo), "utf8").match(/cat:'([a-z_]+)'/g) || [])
+          .forEach((m) => { const c = m.slice(5, -1); cuenta[c] = (cuenta[c] || 0) + 1; });
+        const lista = metas[k] || [];
+        ok(lista.length > 0, `metas.json no trae ninguna categoría de ${k}: Tareas se queda sin tope`);
+        ok(lista.length === Object.keys(cuenta).length && lista.every((c) => cuenta[c.clave] === c.total),
+          `metas.json (${k}) no coincide con ${archivo}: ${JSON.stringify(lista.map((c) => [c.clave, c.total]))} contra ${JSON.stringify(cuenta)}`);
+      });
     }
   }
 
@@ -385,6 +399,19 @@ async function main() {
       "«Tus propios errores» no tiene banco: el tope es el de siempre, no uno inventado");
     const fraseErr = await pagina.textContent("#renglones .renglon:nth-of-type(2) .r-frase");
     ok(/5/.test(fraseErr) && /Tus propios errores/.test(fraseErr), `la frase no dice lo que se pidió: ${JSON.stringify(fraseErr)}`);
+
+    /* Practicar con «— todo —»: el tope es lo que suman sus series, no el
+       1000 de siempre. Se pedían 50 series y hay 9. */
+    const seriesPracticar = (fs.readFileSync(path.join(RAIZ, "js/entreno-practicas.js"), "utf8").match(/cat:'[a-z_]+'/g) || []).length;
+    await pagina.selectOption("#renglones .renglon:nth-of-type(2) .r-material", "herramienta:practicas");
+    await pagina.waitForSelector("#renglones .renglon:nth-of-type(2) .r-recorte-wrap:not(.hidden)", { timeout: 5000 });
+    await pagina.selectOption("#renglones .renglon:nth-of-type(2) .r-recorte", "");
+    ok(await pagina.getAttribute("#renglones .renglon:nth-of-type(2) .r-cantidad", "max") === String(seriesPracticar),
+      `Practicar con «— todo —» debería tener tope ${seriesPracticar}`);
+    await pagina.fill("#renglones .renglon:nth-of-type(2) .r-cantidad", "50");
+    await pagina.dispatchEvent("#renglones .renglon:nth-of-type(2) .r-cantidad", "change");
+    ok(await pagina.inputValue("#renglones .renglon:nth-of-type(2) .r-cantidad") === String(seriesPracticar),
+      `pedir 50 series de Practicar debería bajar a ${seriesPracticar}, las que hay`);
 
     await pagina.selectOption("#renglones .renglon:nth-of-type(2) .r-material", "herramienta:diagnostico");
     const metasDiag = await pagina.$$eval("#renglones .renglon:nth-of-type(2) .r-meta option", (e) => e.map((o) => o.value));
