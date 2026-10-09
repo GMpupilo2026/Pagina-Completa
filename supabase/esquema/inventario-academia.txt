@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261009005951
+# al-dia-con: 20261009120000
 tabla  Ejercicios Lichess  rls=true
 tabla  academia_ia  rls=true
 tabla  academia_miembros  rls=true
@@ -49,6 +49,7 @@ tabla  curso_adjuntos  rls=true
 tabla  curso_contenido  rls=true
 tabla  datos_facturacion  rls=true
 tabla  desafios  rls=true
+tabla  desempates_cache  rls=true
 tabla  diagnosticos_publicos  rls=true
 tabla  elo_historial  rls=true
 tabla  encargados  rls=true
@@ -496,6 +497,9 @@ columna  desafios.motivo_rechazo  text
 columna  desafios.para_id  uuid
 columna  desafios.respondido_at  timestamp with time zone
 columna  desafios.room_id  uuid
+columna  desempates_cache.clave  text
+columna  desempates_cache.datos  jsonb
+columna  desempates_cache.leido_en  timestamp with time zone
 columna  diagnosticos_publicos.atendido  boolean
 columna  diagnosticos_publicos.aviso_enviado_at  timestamp with time zone
 columna  diagnosticos_publicos.created_at  timestamp with time zone
@@ -2529,6 +2533,7 @@ indice  desafios  desafios_de_pendiente
 indice  desafios  desafios_para_pendiente
 indice  desafios  desafios_pkey
 indice  desafios  desafios_room_id_fk
+indice  desempates_cache  desempates_cache_pkey
 indice  diagnosticos_publicos  diagnosticos_publicos_pkey
 indice  diagnosticos_publicos  diagnosticos_publicos_supervisor_idx
 indice  elo_historial  elo_historial_pkey
