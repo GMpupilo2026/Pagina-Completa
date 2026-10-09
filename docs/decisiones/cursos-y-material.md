@@ -2154,6 +2154,18 @@ sesión**. Lo pinta `js/admin-asesores.js`.
   ritmo, el orden cambiado) y se cuidó que la correcta **no sea siempre la
   opción más larga**: en un Kahoot eso se aprende rápido y se contesta sin
   leer.
+- **El grupo**: una tabla con cada asesor (las cuentas temporales abiertas del
+  taller), la última vez que entró, sus clases en la plataforma y la nota de
+  la primera vez en el cuestionario de cada sesión, con cuántas veces lo hizo.
+  Arriba dice cuántos ya entraron y cuántos nunca; «Nunca entró» va escrito,
+  no solo en rojo. La arma la base, `asesores_tablero(p_detalle)`
+  (`SECURITY INVOKER`): las cuentas se hacen allá y no en el navegador, porque
+  el registro de actividad crece y PostgREST corta a ~1000 filas. «La última
+  vez» es la página o la clase más reciente que abrió: el último inicio de
+  sesión vive en `auth.users`, que no se le abre a nadie. No dice cuántos días
+  le quedan a cada cuenta: lo pidió así el dueño. Comprobado impersonando
+  roles: administración ve los 30; un asesor, solo su fila; `anon` no puede
+  llamarla.
 - **Practicar entre sesión y sesión**: cada sesión con cuestionario trae
   «📨 Mandarlo como tarea a las N personas del taller», que abre Tareas con
   ese cuestionario en el renglón y los asesores ya marcados
