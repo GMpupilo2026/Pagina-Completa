@@ -217,6 +217,71 @@ luminancia que el tablero de siempre, así que el contraste entre casillas y
 con las piezas no cambia, solo el tono. La animación le gana al estilo en
 línea que `board-color-themes.js` pone sobre `<html>`.
 
+## El robo de puntos
+
+Migración `20261009140000_robo_de_puntos_al_perder_la_ventaja.sql`. Cuando dos
+alumnos juegan entre sí una partida de ajedrez estándar y quien termina
+GANANDO estuvo en algún momento en una posición materialmente perdida, se le
+roban esos puntos a quien tenía la ventaja y la dejó ir: la cantidad es la
+mayor ventaja en material (en peones) que tuvo el perdedor en algún punto de
+la partida, por 100 (+6 en algún momento = 600 puntos). Se le restan a quien
+perdió habiendo ido ganando y se le suman a quien ganó: es un robo de
+verdad, no un descuento que desaparece.
+
+**Por qué material y no una evaluación de motor.** No hay ningún motor
+corriendo durante una partida entre alumnos (a diferencia del bot de Oscar o
+la práctica), y evaluar con Stockfish en el navegador de un jugador sería
+manipulable: un alumno podría no evaluar, o falsear el resultado, justo para
+evitar que se note su ventaja perdida. El material, en cambio, se puede
+recalcular después de que la partida terminó, a partir de las jugadas que de
+verdad se jugaron (`game_rooms.moves`, que ya guarda el servidor): nadie lo
+puede inflar ni esconder. Es una medida más cruda que una evaluación
+posicional (no ve ataques ni amenazas, solo piezas), pero es la que no se
+puede hacer trampa, y es la que pidió el dueño del sitio con su propio
+ejemplo («ventaja de +6» → 600 puntos).
+
+**Por qué en una Edge Function y no en SQL.** Contar material jugada por
+jugada exige reproducir la partida con reglas de ajedrez de verdad
+(capturas, promociones, enroque...), y eso no se hace en SQL sin reinventar
+un motor de reglas adentro de una función `plpgsql`. `supabase/functions/
+partida-fin/calculo.ts` hace la cuenta con chess.js —la misma librería que
+usa todo el sitio para no inventar nunca una posición (`verificar-tipos.js`,
+los generadores de libros...)—, y es una función PURA (recibe un tablero de
+chess.js ya armado, no importa nada de Supabase ni de Deno): la prueba
+(`herramientas/verificar-puntos-robo.js`) la importa tal cual, sin copiarla,
+así que nunca se prueba una reimplementación en vez del código que se
+despliega.
+
+**Solo variante "estandar".** En crazyhouse, niebla, cartas, duelo,
+camaleón... el conteo de material a partir de las jugadas SAN con chess.js
+no es confiable (hay descartes, piezas que cambian de valor, reglas
+distintas): `disparar_fin_de_partida()` ni siquiera avisa a la Edge Function
+si la variante no es la estándar, y la función lo vuelve a comprobar por si
+acaso.
+
+**Solo entre dos alumnos.** Si juega un profesor (el profe también se sienta
+a jugar, ver `clase-en-vivo.md`) no hay robo: la Edge Function lee el `role`
+de los dos perfiles y exige que ambos sean `'alumno'`. No hay bot en
+`game_rooms` (el bot de Oscar no usa esta tabla), así que no hace falta
+excluirlo aparte.
+
+**Cómo se dispara, sin que el navegador tenga que avisar nada.** El trigger
+`disparar_fin_de_partida()` (sobre `game_rooms`, cuando `status` pasa a
+`finished`) avisa con `pg_net` a la Edge Function `partida-fin`, firmado con
+el secreto de la bóveda `partida_robo_secreto` (mismo patrón que
+`disparar_informes_encargados`/`alerta-base`: `verify_jwt` en false, nadie
+más la puede llamar). La función vuelve a leer la sala por su cuenta antes de
+reproducir nada — el aviso solo trae el `id` — así un aviso repetido o tardío
+nunca cobra ni paga de más, y `registrar_robo_de_puntos()` además es
+idempotente por sala (`partida_robo:<room_id>` / `partida_premio:<room_id>`
+como referencia de `puntos_ajustes`, origen `'partida'`).
+
+**Qué NO hace.** No distingue empates (nadie roba en unas tablas) ni castiga
+por sí sola ganar "de pura suerte": si la posición nunca estuvo objetivamente
+perdida para quien ganó, no se roba nada, aunque la partida haya sido reñida.
+Tampoco se aplicó con retroactividad a partidas ya jugadas antes de esta
+migración: solo las que terminan después de que el trigger existe.
+
 ## Los verificadores
 
 `herramientas/verificar-puntos.js` (con Playwright y un doble de Supabase,
@@ -242,6 +307,19 @@ el aviso sin mover nada, que el Modo Adaptado no pinta ninguna, que el
 arcoíris le gana al color en línea del tablero y que el aviso de una broma de
 una hora no se repite en cada página. Se rompió a propósito (el Modo
 Adaptado, la animación, `bromas.js` en `examen.html`) y saltó en las tres.
+
+`herramientas/verificar-puntos-robo.js` (sin navegador): el cálculo del robo
+de puntos (`supabase/functions/partida-fin/calculo.ts`), importado tal cual
+—no copiado— y corrido con el chess.js del sitio sobre una partida real (la
+trampa de Légal: blancas pierden la dama y aun así dan mate, 8 de ventaja
+perdida = 800 puntos), mirado desde el ganador y desde el perdedor, una
+partida sin capturas (no roba nada) y una jugada que no calza (corta en seco,
+no revienta). Lo que NO comprueba: que el trigger `disparar_fin_de_partida`
+solo avisa para la variante estándar y con un ganador de verdad, y que
+`registrar_robo_de_puntos()` no paga ni cobra dos veces la misma sala — eso
+se apoya en el mismo patrón ya probado de `otorgar_puntos()` y en la
+comprobación hecha a mano en la base al aplicar la migración (ver abajo),
+no en una prueba de Playwright.
 
 Lo que NO comprueba el verificador de Playwright: que
 `interno.otorgar_puntos()` no pague dos veces el mismo evento, que
