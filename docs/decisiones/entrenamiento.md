@@ -2046,9 +2046,39 @@ está en `js/plan-entrenamiento.js` y lo comparten el alumno (al terminar) e
 `informes.html` (informe del profesor). Si se tocan las posiciones, hay que
 volver a verificarlas con chess.js: cada ítem dice en `prueba` qué debe cumplir.
 
+- **El banco (con sus respuestas) ya no se publica.** `js/diagnostico-items.js`
+  se servía como cualquier archivo del sitio: quien conociera su dirección se
+  bajaba las preguntas y la clave entera, sin sesión ni página de por medio.
+  Ahora vive en Supabase (`public.diagnostico_items`), sin política de select
+  para nadie — solo se llega por `diagnostico_armar()` (sortea 60 y entrega
+  lo visible, nunca la respuesta), `diagnostico_sesion_estado()` (retomar una
+  prueba a medias), `diagnostico_responder()` (califica en el servidor,
+  pregunta por pregunta, sin decir si acertó) y `diagnostico_terminar()` (ya
+  cerrada la prueba, la clave de esos 60 para la revisión final — igual que un
+  examen ya corregido). El armador de exámenes por tema de `examenes.html`
+  (`js/examen-banco.js`) tampoco carga el banco: sortea sobre
+  `js/diagnostico-catalogo.js` —un archivo público generado sin ninguna
+  respuesta, solo id/área/peso/tipo— y pide el contenido real de las pocas
+  preguntas elegidas con `diagnostico_items_para_examen()`, solo para
+  profesor o administración. `js/diagnostico-items.js` sigue en el
+  repositorio —lo leen `herramientas/diagnostico-calibrar.js`,
+  `diagnostico-lichess.js`, `diagnostico-pdf.js`, `diagnostico-libro.js` y
+  `verificar-diagnostico.js`, todos del lado del servidor/generador— pero
+  está en `.assetsignore`: no se despliega. **Al tocar el banco** (una
+  pregunta nueva, recalibrar), correr `node
+  herramientas/diagnostico-sincronizar.js --migracion` y aplicar la migración
+  que escribe: sin eso, `js/diagnostico-catalogo.js` y la tabla de Supabase
+  quedan desactualizados en silencio (`verificar-diagnostico-catalogo.js`
+  avisa si el catálogo quedó viejo; la tabla no tiene cómo comprobarse sin
+  credenciales de la base, así que ese paso es manual).
+  `js/arbitraje-items.js` y `js/aperturas-lineas.js` siguen publicados
+  enteros, con su respuesta: es la misma fuga, en otro banco, pendiente.
 - **El banco es más grande que la prueba**: cada diagnóstico sortea sus
-  preguntas con `DiagnosticoPrueba.armar()` (al final de
-  `js/diagnostico-items.js`). Lo que nunca cambia es la forma: desde la versión
+  preguntas — en la base, con `diagnostico_armar()`, para la prueba que
+  rinde un alumno o un visitante; en el navegador, con
+  `DiagnosticoPrueba.armar()` (al final de `js/diagnostico-items.js`), solo
+  para el cuadernillo impreso y el libro de respuestas, que se generan fuera
+  del sitio. Lo que nunca cambia es la forma: desde la versión
   5, 60 ítems con la cuota fija de `FORMA` por área y por escalón (199 puntos),
   para que dos diagnósticos del mismo alumno se puedan comparar aunque las
   preguntas hayan sido otras (ver «Versión 5: 60 preguntas y la fuerza en
@@ -2832,6 +2862,59 @@ tiene flota y la computadora le dispara.
 **Al tocar el motor o la página, correr `node herramientas/verificar-batalla-naval.js`**
 (`--sin-navegador` corre solo las reglas). Está probado que falla de verdad:
 haciendo que un disparo al agua sume uno, saltan nueve comprobaciones.
+
+## El Buscaminas de ajedrez
+
+`buscaminas.html` es el buscaminas de toda la vida, pero las minas son piezas
+de ajedrez escondidas. Es, a propósito, la ÚNICA de estas cuatro páginas
+(Confites, El Sonar, Batalla naval y esta) **pública, sin sesión** —como
+Confites del caballo—: pedía ser un juego para compartir, no un ejercicio de
+la Academia, y la mecánica no necesita nada de Supabase para funcionar. Revelar
+una casilla vacía dice **cuántas piezas escondidas la atacan con su propio
+movimiento**; pisar una pieza termina la partida. Reutiliza la geometría de
+Batalla naval en vez de copiarla: `js/buscaminas-motor.js` hace
+`require("./batalla-naval-motor.js")` para `ataca()`/`PIEZAS`, y
+`require("./sonar-motor.js")` para leer una casilla escrita.
+
+Tres niveles (tres caballos; torres y alfiles; flota completa de siete), sin
+duelo: a diferencia de Batalla naval, acá SÍ se puede perder a mitad de
+partida, así que no hace falta un modo contra alguien más.
+
+- **La cadena de un 0 se para siempre en una pieza** (`revelar()` hace BFS por
+  las 8 vecinas, nunca por las de una casilla con pieza o con bandera): una
+  pieza escondida nunca se revela sola, hay que pisarla a propósito o dejarla
+  marcada.
+- **La pista (`seguras()`) fue el primer intento, y mentía.** La primera
+  versión marcaba segura cualquier casilla desde la que ALGUNO de los tipos
+  escondidos atacara un 0 ya revelado (un `some` sobre los tipos). Con un solo
+  tipo (nivel 1) nunca se nota, pero con dos o más (torres y alfiles, flota
+  completa) marcaba seguras casillas que de verdad tenían una pieza de OTRO
+  tipo: el 0 solo descarta, para cada tipo por separado, que ESE tipo esté
+  ahí; con varios tipos sueltos, una casilla queda segura solo cuando TODOS
+  quedan descartados ahí (un `every`, no un `some`). El verificador lo agarró
+  jugando 1000 tableros al azar por nivel y comprobando que ninguna «segura»
+  tuviera pieza de verdad: con el `some`, miles de mentiras en los niveles 2 y
+  3; con el `every`, cero. Queda de ejemplo de por qué «un jugador que solo
+  deduce gana» no alcanza como prueba: hace falta comprobar la pista contra el
+  tablero real, no contra sí misma.
+- **El nivel 1 (tres caballos) se gana casi siempre de un solo clic**: con tan
+  pocas piezas de alcance tan corto, casi toda la cadena de ceros se destapa
+  sola. Es a propósito —el nivel que presenta la mecánica sin castigar— y no
+  un error: el verificador no le exige ganar siempre, solo que la pista nunca
+  mienta y que la cuenta de cada casilla sea la de verdad.
+- **Sin `training_progress`** (no hay fila `'buscaminas'` en su CHECK, y
+  sumarla es una migración aparte, como La partida perdida): el progreso vive
+  en `buscaminas_estrellas_v1` (`maxPorClave`) y `buscaminas_mejor_v1`
+  (`minPorClave`, el mejor tiempo en segundos), en CLAVES de
+  `js/progreso-usuario.js`. El tiempo activo sí se cuenta, con
+  `data-activity="buscaminas"`.
+- Mismos colores que Batalla naval para revelada/explotada/pieza mostrada
+  (ya medidos contra su fondo): no se inventó una paleta nueva para un estado
+  que ya tenía una aprobada.
+
+**Al tocar el motor o la página, correr `node herramientas/verificar-buscaminas.js`**
+(`--sin-navegador` corre solo las reglas: 1000 tableros al azar por nivel,
+comprobando que la pista nunca marque segura una casilla con pieza).
 
 ## Los Tipos de entrenamiento
 

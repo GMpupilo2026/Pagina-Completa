@@ -58,6 +58,10 @@
             { emoji: "🔎", label: "Jugadores de chess-results", desc: "Busca a una persona y su historial de torneos", href: "admin-jugador.html", zona: "contenido" },
             { emoji: "🏅", label: "Selección por parámetros", desc: "La selección CODICADER desde chess-results, en vivo ronda a ronda", href: "seleccion-codicader.html", zona: "contenido" },
         ] },
+        { title: "Herramientas de arbitraje", tiles: [
+            { emoji: "♟️", label: "Pareo Integral", desc: "Empareja un torneo con el Sistema Holandés de FIDE: rondas, resultados, desempates y el TRF. Gratis", href: "pareo.html", zona: "contenido" },
+            { emoji: "🧰", label: "Todas las herramientas de arbitraje", desc: "La vitrina pública: lo que se vende con licencia y lo que viene", href: "herramientas-arbitraje.html", zona: "contenido" },
+        ] },
         { title: "Revisar el contenido", tiles: [
             { emoji: "🏛️", label: "Cursos", desc: "Los cursos de la Academia y el temario de cada uno", href: "cursos/academia/index.html", zona: "contenido" },
             { emoji: "🏋️", label: "Entrenamiento", desc: "Los ejercicios y lecciones que usa el alumnado", href: "entreno/index.html", zona: "contenido" },

@@ -535,6 +535,118 @@ async function guardarRetro(r, abrirCorreo) {
   }
 }
 
+/* ---------------- Herramientas de arbitraje: Espacio de consultas ----------------
+ *
+ * Lo que llega desde herramientas-arbitraje.html, sin cuenta: una pregunta y la
+ * respuesta que escribió la IA a partir del Reglamento de la FIDE. Profesores
+ * y administración la revisan acá, igual que «Exámenes del público» arriba:
+ * marcan si está bien o si hace falta corregirla con una nota. La tabla
+ * consultas_arbitraje ya tiene su RLS (solo profesor/admin la leen), así que
+ * no hace falta ningún filtro aparte. */
+async function pintarConsultasIA() {
+  const { data, error } = await sb.from('consultas_arbitraje')
+    .select('id, created_at, nombre, email, quien, pregunta, respuesta, modelo, costo_usd, ok, detalle, revisado, revisado_at, nota_revision')
+    .order('created_at', { ascending: false })
+    .limit(100);
+  if (error) return;
+  const caja = $('consultas-ia');
+  caja.classList.remove('hidden');
+  const pendientes = (data || []).filter((r) => !r.revisado).length;
+  const ETIQUETA_QUIEN = { arbitro: 'Árbitro', padre_familia: 'Madre o padre de familia', otro: 'Otro' };
+  caja.innerHTML = `
+    <h2 class="font-serif text-xl font-bold text-brand-800 dark:text-white mb-1">💬 Espacio de consultas${pendientes ? ` <span class="text-sm font-sans font-semibold text-accent-700 dark:text-accent-400">· ${pendientes} sin revisar</span>` : ''}</h2>
+    <p class="text-xs text-brand-450 dark:text-brand-350 mb-3">Preguntas llegadas desde <a href="herramientas-arbitraje.html" class="underline">Herramientas</a>, con la respuesta que escribió la IA a partir del Reglamento de la FIDE. Revísala y marca si quedó bien.</p>
+    <div id="consultas-ia-lista" class="space-y-3"></div>`;
+  const lista = $('consultas-ia-lista');
+  if (!data || !data.length) {
+    lista.innerHTML = '<p class="text-sm text-brand-450 dark:text-brand-350 bg-white dark:bg-brand-900 rounded-2xl shadow-md p-4">Todavía no ha llegado ninguna.</p>';
+    return;
+  }
+  data.forEach((r) => {
+    const det = document.createElement('details');
+    det.className = 'bg-white dark:bg-brand-900 rounded-2xl shadow-md px-4 py-3';
+    if (!r.revisado) det.open = true;
+    det.innerHTML = `
+      <summary class="cursor-pointer text-sm font-medium text-brand-700 dark:text-brand-200 flex flex-wrap items-center gap-x-3 gap-y-1">
+        <span>${r.revisado ? '✅' : (r.ok ? '🟡' : '⚠️')}</span>
+        <strong>${esc(r.nombre)}</strong>
+        <span class="text-brand-450 dark:text-brand-350">${ETIQUETA_QUIEN[r.quien] || esc(r.quien)}</span>
+        <span class="text-xs text-brand-450 dark:text-brand-350">${fechaCorta(r.created_at)}</span>
+      </summary>
+      <div class="mt-3 space-y-2 text-sm">
+        <p class="text-brand-700 dark:text-brand-200"><strong>Pregunta:</strong> ${esc(r.pregunta)}</p>
+        ${r.ok
+          ? `<p class="text-brand-600 dark:text-brand-300 whitespace-pre-line"><strong>Respuesta:</strong> ${esc(r.respuesta || '')}</p>
+             <p class="text-xs text-brand-450 dark:text-brand-350">${esc(r.modelo || '')} · US$${Number(r.costo_usd || 0).toFixed(4)}</p>`
+          : `<p class="text-red-600 dark:text-red-400">No se pudo responder: ${esc(r.detalle || 'error desconocido')}</p>`}
+        <div>
+          <label class="block text-xs font-semibold text-brand-600 dark:text-brand-300 mb-1" for="nr-${r.id}">Nota de revisión (opcional)</label>
+          <textarea id="nr-${r.id}" rows="2" class="w-full px-3 py-2 text-sm rounded-xl border-2 border-brand-100 dark:border-brand-700 bg-white dark:bg-brand-800 text-brand-800 dark:text-white focus:border-accent-500 focus:outline-none">${esc(r.nota_revision || '')}</textarea>
+        </div>
+        <div class="flex items-center gap-2">
+          <button type="button" data-revisar="${r.id}" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2 rounded-lg text-sm transition-colors">${r.revisado ? 'Guardar nota' : 'Marcar revisada'}</button>
+          <span class="text-xs text-brand-450 dark:text-brand-350" data-estado="${r.id}">${r.revisado ? 'Revisada el ' + fechaCorta(r.revisado_at) : 'Sin revisar'}</span>
+        </div>
+      </div>`;
+    det.querySelector(`[data-revisar="${r.id}"]`).addEventListener('click', async () => {
+      const estado = det.querySelector(`[data-estado="${r.id}"]`);
+      const nota = det.querySelector(`#nr-${r.id}`).value.trim();
+      estado.textContent = 'Guardando…';
+      const { error: err2 } = await sb.from('consultas_arbitraje').update({
+        revisado: true, revisado_at: new Date().toISOString(), revisado_por: perfil.id,
+        nota_revision: nota || null,
+      }).eq('id', r.id);
+      estado.textContent = err2 ? ('No se pudo guardar: ' + err2.message) : ('Revisada el ' + fechaCorta(new Date().toISOString()));
+    });
+    lista.appendChild(det);
+  });
+}
+
+/* El modelo y el tope mensual del Espacio de consultas: solo quien administra
+ * los ve y los cambia (arbitraje_consulta_config_guardar), igual que el
+ * modelo de «Mejorar informe» en academias.html. Sin modelo, la consulta del
+ * público contesta «no disponible» sin gastar nada. */
+async function pintarConfigIA() {
+  if (!perfil.is_admin) return;
+  const { data: config } = await sb.from('arbitraje_consulta_config').select('modelo, tope_mensual_usd').eq('id', 1).maybeSingle();
+  const { data: inicioMes } = await sb.rpc('ia_inicio_de_mes');
+  const { data: filas } = await sb.from('consultas_arbitraje').select('costo_usd').gte('created_at', inicioMes || '1970-01-01');
+  const gastado = (filas || []).reduce((s, f) => s + Number(f.costo_usd || 0), 0);
+  const caja = $('config-ia');
+  caja.classList.remove('hidden');
+  caja.innerHTML = `
+    <h2 class="font-serif text-xl font-bold text-brand-800 dark:text-white mb-1">⚙️ IA del espacio de consultas</h2>
+    <p class="text-xs text-brand-450 dark:text-brand-350 mb-3">Qué modelo contesta en herramientas-arbitraje.html y cuánto puede gastar por mes. Sin modelo, el espacio de consultas dice «no disponible» y no gasta nada.</p>
+    <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-4 flex flex-wrap items-end gap-3">
+      <div>
+        <label class="block text-xs font-semibold text-brand-600 dark:text-brand-300 mb-1" for="cfg-modelo">Modelo</label>
+        <select id="cfg-modelo" class="px-3 py-2 text-sm rounded-xl border-2 border-brand-100 dark:border-brand-700 bg-white dark:bg-brand-800 text-brand-800 dark:text-white focus:border-accent-500 focus:outline-none">
+          <option value="">Sin IA (apagado)</option>
+          <option value="claude-haiku-4-5">Claude Haiku</option>
+          <option value="claude-sonnet-5">Claude Sonnet</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-brand-600 dark:text-brand-300 mb-1" for="cfg-tope">Tope mensual (US$)</label>
+        <input type="number" id="cfg-tope" min="0" max="200" step="0.5" class="w-28 px-3 py-2 text-sm rounded-xl border-2 border-brand-100 dark:border-brand-700 bg-white dark:bg-brand-800 text-brand-800 dark:text-white focus:border-accent-500 focus:outline-none">
+      </div>
+      <button type="button" id="cfg-guardar" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2 rounded-lg text-sm transition-colors">Guardar</button>
+      <span id="cfg-estado" class="text-xs text-brand-450 dark:text-brand-350"></span>
+    </div>
+    <p class="text-xs text-brand-450 dark:text-brand-350 mt-2">Gastado este mes: US$${gastado.toFixed(2)}${config ? ` de US$${Number(config.tope_mensual_usd).toFixed(2)}` : ''}.</p>`;
+  $('cfg-modelo').value = (config && config.modelo) || '';
+  $('cfg-tope').value = config ? Number(config.tope_mensual_usd) : 10;
+  $('cfg-guardar').addEventListener('click', async () => {
+    const estado = $('cfg-estado');
+    estado.textContent = 'Guardando…';
+    const { error } = await sb.rpc('arbitraje_consulta_config_guardar', {
+      p_modelo: $('cfg-modelo').value || null,
+      p_tope: Number($('cfg-tope').value),
+    });
+    estado.textContent = error ? ('No se pudo guardar: ' + error.message) : 'Guardado.';
+  });
+}
+
 async function pintarEquipo() {
   if (!perfil.is_admin) return;
   const { data: gente } = await sb.from('profiles').select('id, full_name, email, role, is_admin');
@@ -601,6 +713,8 @@ async function init() {
   if (perfil.is_admin === true) $('banco-pdf').classList.remove('hidden');
   await pintarPrevio();
   await pintarPublicos();
+  await pintarConsultasIA();
+  await pintarConfigIA();
   await pintarEquipo();
 }
 init();

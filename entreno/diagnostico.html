@@ -139,6 +139,7 @@
 
                 <div class="flex flex-wrap items-center gap-3">
                     <button type="button" id="start-btn" class="marca-boton w-full sm:w-auto bg-accent-500 hover:bg-accent-600 text-brand-900 font-bold px-6 py-3 rounded-xl text-base transition-all hover:scale-105 shadow-lg">Empezar el diagnóstico →</button>
+                    <p id="empezar-error" class="hidden w-full text-sm text-red-600 dark:text-red-400" aria-live="polite"></p>
                     <!-- Mismo diagnóstico en papel, con sus diagramas y su hoja de corrección:
                          se genera desde este mismo banco de ítems (herramientas/diagnostico-pdf.js).
                          Trae las respuestas, así que solo se le ofrece a QUIEN ADMINISTRA —ni
@@ -275,7 +276,6 @@
     <script src="../js/tablero-accesible.js"></script>
     <script src="../js/comandos-tablero.js"></script>
     <script src="../js/cuadro-comandos.js"></script>
-    <script src="../js/diagnostico-items.js"></script>
     <script src="../js/main.js"></script>
 <script src="../js/coordenadas-tablero.js"></script>
     <script src="../js/entreno-diagnostico.js"></script>
