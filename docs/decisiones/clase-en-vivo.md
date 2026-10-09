@@ -1733,6 +1733,19 @@ lo mismo con preguntas propias, de ajedrez o no, y con puntos por rapidez.
   sería ambigua entre las dos. La que sí lleva posición la toma del tablero de
   la clase al armarla («📌 Usar la posición del tablero de ahora»), y al
   jugarla se manda con `aplicarPosicionEnClase`: ninguna posición se inventa.
+- **Elegida una opción, no se puede cambiar.** La pregunta de opciones de
+  siempre (Preguntar) cuenta la ÚLTIMA respuesta a propósito (ver el punto de
+  los puntos, abajo): mientras la pregunta siga abierta, tocar otra opción la
+  cambia. En el cuestionario eso deja ver cómo contestó el resto y cambiar la
+  propia si el profe tarda en cerrar, así que acá no: `questions.bloquea_cambio`,
+  que pone la versión de **siete** argumentos de `hacer_pregunta_de_opciones`
+  (la de seis, con `sin_tablero`, pasa por ella con `bloquea_cambio` en
+  `false`, igual que la de cinco ya pasaba por la de seis). Lo exige la BASE
+  (`respuesta_calificar_y_plazo` rechaza el `UPDATE` que cambiaría `opcion`
+  cuando ya había una), y la pantalla no espera a que falle: en cuanto hay
+  respuesta, los botones quedan deshabilitados y `enviarOpcion` se niega a
+  mandar un segundo intento (también el de escribir otra letra en Modo
+  Adaptado), con el mismo aviso que daría la base.
 - **Los puntos: de 500 a 1000 por acertar, más cuanto antes; 0 al fallar**
   (`Cuestionario.puntos`, la regla escrita en `REGLA` y a la vista del profe).
   Se calculan con las horas que pone **la base**: la de la pregunta y la de la

@@ -497,9 +497,12 @@ async function pruebaProfesora(browser) {
     grupo(grupos, "Tus alumnos").tiles.map((t) => t.enlace),
     ["alumno-nuevo.html", "tareas.html", "examenes.html", "informes.html", "justificaciones.html", "libreta-torneos.html", "subgrupos.html"]);
   igual("una sola puerta a Informes", enlacesProfe.filter((h) => h.startsWith("informes.html")), ["informes.html"]);
+  /* Las dos pruebas son el diagnóstico de nivel y el examen de arbitraje
+     (nivel-de-arbitraje.html, y su revisión, arbitraje.html). La vitrina de
+     herramientas-arbitraje.html no es una prueba: esa sí le sale. */
   igual("y no se le ofrece ninguna de las dos pruebas",
     await page.evaluate(() => document.querySelectorAll(
-      "#tile-grid [href*='entreno/diagnostico'], #tile-grid [href*='arbitraje']").length), "0");
+      "#tile-grid [href*='entreno/diagnostico'], #tile-grid [href*='nivel-de-arbitraje'], #tile-grid [href='arbitraje.html']").length), "0");
   const apagados = await page.evaluate(() =>
     Array.from(document.querySelectorAll("#tile-grid [aria-disabled=true]"))
       .filter((el) => !el.closest("#videollamada-wrap") && !el.closest("#sesion-wrap") && !el.dataset.claseCompacta)
@@ -531,12 +534,12 @@ async function pruebaProfesora(browser) {
     return [/sola/.test(t), /Iniciar clase/.test(t), /no pueden entrar/.test(t)];
   }), [false, true, true]);
   /* Quien da clase suele arbitrar los torneos de sus alumnos: Pareo Integral
-     (público, sin cuenta) le queda a mano. Al alumnado no le sale (soloDocente,
+     (gratis, sin cuenta) y la vitrina de las herramientas de arbitraje le quedan a mano. Al alumnado no le sale (soloDocente,
      y el grupo vacío no se pinta: ver «los grupos, en su orden» de la alumna).
      Ver «Pareo Integral» en docs/decisiones/juegos-y-torneos.md. */
-  igual("«Herramientas de arbitraje»: Pareo Integral y su manual",
+  igual("«Herramientas de arbitraje»: Pareo Integral y la vitrina",
     (grupo(grupos, "Herramientas de arbitraje") || { tiles: [] }).tiles.map((t) => t.enlace),
-    ["pareo.html", "pareo-manual.html"]);
+    ["pareo.html", "herramientas-arbitraje.html"]);
   igual("«Tu cuenta»: configuración, la guía del profesor y logros",
     grupo(grupos, "Tu cuenta").tiles.map((t) => t.enlace),
     ["configuracion.html", "guia-del-profesor-accesible.html", "logros.html"]);

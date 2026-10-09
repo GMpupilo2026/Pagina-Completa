@@ -1,0 +1,8 @@
+<!-- Muestra del buscador de torneos de chess-results (TurnierSuche.aspx), recortada: solo el formulario. -->
+<form method="post" action="./TurnierSuche.aspx?lan=2&amp;SNode=S0" id="form1">
+<input type="hidden" name="__VIEWSTATE" id="__VIEWSTATE" value="dDwtMTIzNDU2Nzg5O3Q8O2w8aTwxPjs+Oz4=" />
+<input type="hidden" name="__VIEWSTATEGENERATOR" id="__VIEWSTATEGENERATOR" value="E1A6AC8B" />
+<input type="hidden" name="__EVENTVALIDATION" id="__EVENTVALIDATION" value="/wEdAAJmuestra+de+validacion==" />
+<input name="ctl00$P1$txt_bez" type="text" maxlength="30" id="P1_txt_bez" class="CRText" />
+<input type="submit" name="ctl00$P1$cb_suchen" value="Buscar" id="P1_cb_suchen" class="CRButton" />
+</form>

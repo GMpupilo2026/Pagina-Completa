@@ -62,6 +62,9 @@ async function siguienteDelCuestionario() {
     const { data, error } = await sb.rpc("hacer_pregunta_de_opciones", {
         p_fen: p.fen || Cuestionario.FEN_INICIAL, p_prompt: Cuestionario.enunciado(j.i, n, p.texto), p_opciones: p.opciones,
         p_correcta: p.correcta, p_tiempo_limite: p.tiempo, p_sin_tablero: !p.fen,
+        // Elegida una opción, no se puede cambiar: ver «El cuestionario al estilo
+        // Kahoot» en docs/decisiones/clase-en-vivo.md.
+        p_bloquea_cambio: true,
     });
     const q = Array.isArray(data) ? data[0] : data;
     if (error || !q) { console.error(error); await terminarCuestionario("No se pudo abrir la pregunta: el cuestionario terminó."); return; }
