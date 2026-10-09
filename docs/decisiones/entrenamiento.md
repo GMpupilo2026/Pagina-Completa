@@ -2046,9 +2046,39 @@ está en `js/plan-entrenamiento.js` y lo comparten el alumno (al terminar) e
 `informes.html` (informe del profesor). Si se tocan las posiciones, hay que
 volver a verificarlas con chess.js: cada ítem dice en `prueba` qué debe cumplir.
 
+- **El banco (con sus respuestas) ya no se publica.** `js/diagnostico-items.js`
+  se servía como cualquier archivo del sitio: quien conociera su dirección se
+  bajaba las preguntas y la clave entera, sin sesión ni página de por medio.
+  Ahora vive en Supabase (`public.diagnostico_items`), sin política de select
+  para nadie — solo se llega por `diagnostico_armar()` (sortea 60 y entrega
+  lo visible, nunca la respuesta), `diagnostico_sesion_estado()` (retomar una
+  prueba a medias), `diagnostico_responder()` (califica en el servidor,
+  pregunta por pregunta, sin decir si acertó) y `diagnostico_terminar()` (ya
+  cerrada la prueba, la clave de esos 60 para la revisión final — igual que un
+  examen ya corregido). El armador de exámenes por tema de `examenes.html`
+  (`js/examen-banco.js`) tampoco carga el banco: sortea sobre
+  `js/diagnostico-catalogo.js` —un archivo público generado sin ninguna
+  respuesta, solo id/área/peso/tipo— y pide el contenido real de las pocas
+  preguntas elegidas con `diagnostico_items_para_examen()`, solo para
+  profesor o administración. `js/diagnostico-items.js` sigue en el
+  repositorio —lo leen `herramientas/diagnostico-calibrar.js`,
+  `diagnostico-lichess.js`, `diagnostico-pdf.js`, `diagnostico-libro.js` y
+  `verificar-diagnostico.js`, todos del lado del servidor/generador— pero
+  está en `.assetsignore`: no se despliega. **Al tocar el banco** (una
+  pregunta nueva, recalibrar), correr `node
+  herramientas/diagnostico-sincronizar.js --migracion` y aplicar la migración
+  que escribe: sin eso, `js/diagnostico-catalogo.js` y la tabla de Supabase
+  quedan desactualizados en silencio (`verificar-diagnostico-catalogo.js`
+  avisa si el catálogo quedó viejo; la tabla no tiene cómo comprobarse sin
+  credenciales de la base, así que ese paso es manual).
+  `js/arbitraje-items.js` y `js/aperturas-lineas.js` siguen publicados
+  enteros, con su respuesta: es la misma fuga, en otro banco, pendiente.
 - **El banco es más grande que la prueba**: cada diagnóstico sortea sus
-  preguntas con `DiagnosticoPrueba.armar()` (al final de
-  `js/diagnostico-items.js`). Lo que nunca cambia es la forma: desde la versión
+  preguntas — en la base, con `diagnostico_armar()`, para la prueba que
+  rinde un alumno o un visitante; en el navegador, con
+  `DiagnosticoPrueba.armar()` (al final de `js/diagnostico-items.js`), solo
+  para el cuadernillo impreso y el libro de respuestas, que se generan fuera
+  del sitio. Lo que nunca cambia es la forma: desde la versión
   5, 60 ítems con la cuota fija de `FORMA` por área y por escalón (199 puntos),
   para que dos diagnósticos del mismo alumno se puedan comparar aunque las
   preguntas hayan sido otras (ver «Versión 5: 60 preguntas y la fuerza en
