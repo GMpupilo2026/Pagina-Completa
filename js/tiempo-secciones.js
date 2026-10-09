@@ -48,6 +48,7 @@ window.TiempoSecciones = (function () {
         "precision-posicional": { nombre: "Precisión posicional",  emoji: "🧭" },
         "sonar":                { nombre: "El Sonar",              emoji: "🔊" },
         "batalla-naval":        { nombre: "Batalla naval",         emoji: "🚢" },
+        "buscaminas":           { nombre: "Buscaminas de ajedrez", emoji: "💣" },
         "tipos":                { nombre: "Habilidades",           emoji: "🧠" },
         "memoria":              { nombre: "Memoria",               emoji: "📷" },
         "racha":                { nombre: "Racha táctica",         emoji: "⚔️" },

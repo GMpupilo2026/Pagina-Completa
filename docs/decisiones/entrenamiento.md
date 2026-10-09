@@ -2833,6 +2833,59 @@ tiene flota y la computadora le dispara.
 (`--sin-navegador` corre solo las reglas). Está probado que falla de verdad:
 haciendo que un disparo al agua sume uno, saltan nueve comprobaciones.
 
+## El Buscaminas de ajedrez
+
+`buscaminas.html` es el buscaminas de toda la vida, pero las minas son piezas
+de ajedrez escondidas. Es, a propósito, la ÚNICA de estas cuatro páginas
+(Confites, El Sonar, Batalla naval y esta) **pública, sin sesión** —como
+Confites del caballo—: pedía ser un juego para compartir, no un ejercicio de
+la Academia, y la mecánica no necesita nada de Supabase para funcionar. Revelar
+una casilla vacía dice **cuántas piezas escondidas la atacan con su propio
+movimiento**; pisar una pieza termina la partida. Reutiliza la geometría de
+Batalla naval en vez de copiarla: `js/buscaminas-motor.js` hace
+`require("./batalla-naval-motor.js")` para `ataca()`/`PIEZAS`, y
+`require("./sonar-motor.js")` para leer una casilla escrita.
+
+Tres niveles (tres caballos; torres y alfiles; flota completa de siete), sin
+duelo: a diferencia de Batalla naval, acá SÍ se puede perder a mitad de
+partida, así que no hace falta un modo contra alguien más.
+
+- **La cadena de un 0 se para siempre en una pieza** (`revelar()` hace BFS por
+  las 8 vecinas, nunca por las de una casilla con pieza o con bandera): una
+  pieza escondida nunca se revela sola, hay que pisarla a propósito o dejarla
+  marcada.
+- **La pista (`seguras()`) fue el primer intento, y mentía.** La primera
+  versión marcaba segura cualquier casilla desde la que ALGUNO de los tipos
+  escondidos atacara un 0 ya revelado (un `some` sobre los tipos). Con un solo
+  tipo (nivel 1) nunca se nota, pero con dos o más (torres y alfiles, flota
+  completa) marcaba seguras casillas que de verdad tenían una pieza de OTRO
+  tipo: el 0 solo descarta, para cada tipo por separado, que ESE tipo esté
+  ahí; con varios tipos sueltos, una casilla queda segura solo cuando TODOS
+  quedan descartados ahí (un `every`, no un `some`). El verificador lo agarró
+  jugando 1000 tableros al azar por nivel y comprobando que ninguna «segura»
+  tuviera pieza de verdad: con el `some`, miles de mentiras en los niveles 2 y
+  3; con el `every`, cero. Queda de ejemplo de por qué «un jugador que solo
+  deduce gana» no alcanza como prueba: hace falta comprobar la pista contra el
+  tablero real, no contra sí misma.
+- **El nivel 1 (tres caballos) se gana casi siempre de un solo clic**: con tan
+  pocas piezas de alcance tan corto, casi toda la cadena de ceros se destapa
+  sola. Es a propósito —el nivel que presenta la mecánica sin castigar— y no
+  un error: el verificador no le exige ganar siempre, solo que la pista nunca
+  mienta y que la cuenta de cada casilla sea la de verdad.
+- **Sin `training_progress`** (no hay fila `'buscaminas'` en su CHECK, y
+  sumarla es una migración aparte, como La partida perdida): el progreso vive
+  en `buscaminas_estrellas_v1` (`maxPorClave`) y `buscaminas_mejor_v1`
+  (`minPorClave`, el mejor tiempo en segundos), en CLAVES de
+  `js/progreso-usuario.js`. El tiempo activo sí se cuenta, con
+  `data-activity="buscaminas"`.
+- Mismos colores que Batalla naval para revelada/explotada/pieza mostrada
+  (ya medidos contra su fondo): no se inventó una paleta nueva para un estado
+  que ya tenía una aprobada.
+
+**Al tocar el motor o la página, correr `node herramientas/verificar-buscaminas.js`**
+(`--sin-navegador` corre solo las reglas: 1000 tableros al azar por nivel,
+comprobando que la pista nunca marque segura una casilla con pieza).
+
 ## Los Tipos de entrenamiento
 
 > **En pantalla se llaman «Habilidades»** (pedido del dueño de la Academia): la
