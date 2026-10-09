@@ -7,13 +7,33 @@
    «todas» es la licencia que abre cualquiera.
 
    `disponible: false` es una herramienta anunciada que todavía no se puede
-   usar: sale en la vitrina como «Próximamente», sin enlace. Ver «Herramientas
+   usar: sale en la vitrina como «Próximamente», sin enlace. `gratis: true` es
+   una que no lleva licencia (Pareo Integral, pública y sin cuenta): sale
+   abierta para todos y no se ofrece en licencias.html. Ver «Herramientas
    de arbitraje» en docs/decisiones/juegos-y-torneos.md. */
 (function () {
     "use strict";
     if (window.HerramientasArbitraje) return;
 
     const LISTA = [
+        {
+            id: "pareo",
+            emoji: "♟️",
+            nombre: "Pareo Integral: emparejamientos con el Sistema Holandés de FIDE",
+            corto: "Pareo Integral",
+            href: "pareo.html",
+            manual: "pareo-manual.html",
+            disponible: true,
+            gratis: true,
+            resumen: "Empareja tu torneo suizo o todos contra todos, anota los resultados y saca la clasificación con los desempates de FIDE, la tabla cruzada y el TRF para el Elo. Gratis, sin cuenta y en tu computadora.",
+            puntos: [
+                "El Sistema Holandés vigente (C.04.3, 2026), calculado con bbpPairings, el motor que usan programas avalados por FIDE.",
+                "Byes pedidos, retiros, inscripciones tardías e incomparecencias; aceleración Baku; puntos a elegir.",
+                "Los 26 desempates del C.07 (versión 2026) en el orden que elijas, con las rondas no jugadas como dice el reglamento.",
+                "Abre el TRF de Swiss-Manager o de Vega para seguir emparejando, y trae el comprobador de emparejamientos y el generador de torneos al azar.",
+                "En español y en inglés, con su manual y una versión de línea de comandos. Todavía sin el aval de FIDE.",
+            ],
+        },
         {
             id: "seleccion-codicader",
             emoji: "🏅",
