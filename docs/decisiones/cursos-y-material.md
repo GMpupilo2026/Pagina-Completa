@@ -2144,6 +2144,13 @@ sesión**. Lo pinta `js/admin-asesores.js`.
   `material = 'formacion-ajedrez'`, que se llaman «Formación Ajedrez · Sesión
   N: …» (así los encuentra la ficha). `verificar-formacion.js` los pasa por el
   armador y comprueba sus posiciones con chess.js.
+  **No tienen nivel**, y la clase en vivo y `cuestionarios.html` agrupaban los
+  listos solo por nivel: no salían en ningún grupo, aunque la base sí se los
+  daba. Ahora van en su propio grupo, «Listos · Asesores» en la clase y
+  «⚖️ Asesores» en Cuestionarios (`CQ_MATERIALES` en
+  `js/cuestionario-editor.js`: un material nuevo con cuestionarios sin nivel
+  es una línea más ahí). Lo prueban `verificar-clase-cuestionario.js` y
+  `verificar-cuestionarios-pagina.js`.
   Hay **uno por sesión, de la 1 a la 8** (153 preguntas). Salen de lo que
   enseña cada sesión —su quiz, sus casos y sus temas, con el artículo en
   `fuente`— y las reglas, del banco ya revisado de `js/arbitraje-items.js`:

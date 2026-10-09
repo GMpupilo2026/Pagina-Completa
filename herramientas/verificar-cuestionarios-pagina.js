@@ -34,6 +34,9 @@ const LISTOS = [
     preguntas: [P("¿Qué pieza no puede clavar?", ["La torre", "El caballo", "El alfil"], 1)] },
   { id: "l-3", titulo: "Finales de torre", nivel: "avanzado", listo: true, profesor_id: null, updated_at: "2026-09-30T10:00:00Z",
     preguntas: [P("¿Qué es la posición de Lucena?", ["Una defensa", "Un final ganado de torre"], 1)] },
+  // Uno del taller de asesores: listo, de un material y SIN nivel.
+  { id: "l-fa2", titulo: "Formación Ajedrez · Sesión 2: reglas de competición", nivel: null, listo: true, material: "formacion-ajedrez",
+    profesor_id: null, updated_at: "2026-10-09T10:00:00Z", preguntas: [P("¿Cuál es la sanción más leve?", ["La advertencia", "Perder"], 0)] },
 ];
 const MIO = { id: "m-1", titulo: "Repaso del lunes", nivel: null, listo: false, profesor_id: "prof-1", updated_at: "2026-09-30T12:00:00Z",
   preguntas: [P("¿Qué vale más?", ["La torre", "El alfil"], 0)] };
@@ -128,8 +131,8 @@ async function pruebaListas(browser) {
   const { page, ctx, errores } = await abrir(browser, "/cuestionarios.html", tablasProfe(), "prof-1");
   await page.waitForSelector("#lista-listos h3", { timeout: 10000 });
   igual("tus cuestionarios", await page.evaluate(() => [...document.querySelectorAll("#lista-mios button span:first-child")].map((s) => s.textContent)), ["Repaso del lunes"]);
-  igual("los listos, agrupados por nivel y con cuántos hay", await page.evaluate(() => [...document.querySelectorAll("#lista-listos h3")].map((h) => h.textContent)),
-    ["🟢 Inicial (1)", "🟡 Intermedio (1)", "🔴 Avanzado (1)"]);
+  igual("los listos, agrupados por nivel (y los de asesores, que no tienen) y con cuántos hay", await page.evaluate(() => [...document.querySelectorAll("#lista-listos h3")].map((h) => h.textContent)),
+    ["🟢 Inicial (1)", "🟡 Intermedio (1)", "🔴 Avanzado (1)", "⚖️ Asesores (1)"]);
   igual("cada uno dice su nivel y cuántas preguntas trae, escrito", await page.evaluate(() => document.querySelector('#lista-listos button[data-cuestionario="l-1"] span:last-child').textContent),
     "Inicial · 2 preguntas");
   await page.getByRole("button", { name: "🟡 Intermedio" }).click();
