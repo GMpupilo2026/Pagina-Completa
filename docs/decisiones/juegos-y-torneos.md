@@ -1895,3 +1895,101 @@ los internacionales (CODICADER y escolares de la federación). Se enlaza desde
   filtros en la dirección, el aviso de la final, el teclado, el celular a
   400 px, el modo oscuro y la página sin datos. Sumando también los blitz, o
   sin filtrar la tabla por región, salta.
+
+## Herramientas de arbitraje
+
+`herramientas-arbitraje.html` es la vitrina pública de las herramientas para
+árbitros, asesores y profesores: qué hace cada una, con su candado. Se usan con
+una **licencia** que genera quien administra en `licencias.html` (lo pidió el
+dueño del sitio: las herramientas se venden). La lista de herramientas vive en
+`js/herramientas-arbitraje.js` (la usan la vitrina y la administración); una
+con `disponible: false` sale como «Próximamente», sin enlace. Hoy la única
+abierta es la **selección por parámetros** (`seleccion-codicader.html`).
+
+**Las licencias** (`licencias_herramientas`, migración `20261008193213`):
+
+- Un código `AI-XXXX-XXXX-XXXX` para una herramienta o para «todas», con sus
+  días de vigencia (o sin vencimiento) y una nota de a quién se le vendió.
+  Quien administra lo entrega y la persona lo activa con su cuenta en la
+  vitrina (`canjear_licencia()`): desde ese momento corren los días. También
+  se puede generar ya puesta en una cuenta.
+- Un código sirve para una sola cuenta: el mismo dueño lo puede volver a
+  canjear sin que cambie nada; otra cuenta recibe «ya la activó otra cuenta».
+- **Quien administra tiene todas las herramientas sin licencia** y controla
+  todas las licencias: anular y reactivar, cambiar el vencimiento, soltarla de
+  la cuenta (queda libre, con sus días completos) y borrarla.
+- La tabla reparte acceso: no tiene política de escritura (la escriben
+  `licencias_generar()`, `licencias_cambiar()` y `canjear_licencia()`) y lleva
+  el trigger de la bitácora (`VIGILADAS` de `verificar-auditoria.js`). Cada
+  quien lee solo las suyas; `licencias_admin()` le da a administración la
+  lista con el nombre y el correo de quien tiene cada una.
+- Comprobado impersonando roles en SQL (y deshecho al final): administración
+  tiene la herramienta; un profesor sin licencia no, ni puede generar, ver la
+  lista ni insertar directo; al canjear, sí; otra cuenta no puede canjear el
+  mismo código; al anularla, la pierde; cada cambio queda en la bitácora.
+
+**El candado está en el servidor.** La página pregunta `tengo_herramienta()`
+solo para decidir qué pinta; lo que no se puede saltar es la Edge Function
+**`seleccion-chess-results`**, que antes de pedir nada a chess-results llama a
+`tengo_herramienta()` **con el token de quien llama** (clave anónima + su
+`Authorization`), no con la de servicio: así pasa por
+`antes_de_cada_pedido()` y la verificación en dos pasos la exige la base,
+como en cualquier página.
+
+**La selección por parámetros** aplica el procedimiento del ICODER para la
+delegación CODICADER 2026 (ajedrez, nivel secundaria): cinco hombres y cinco
+mujeres por la suma de cuatro parámetros de 20 a 1 — A, el lugar en la Etapa
+Nacional (en equipos, el del equipo con al menos el 40 % de las rondas sobre
+el tablero); B, el rendimiento `(puntos ÷ partidas) × Elo nacional promedio
+de los rivales`, con al menos 3 partidas; C, el Elo nacional; D, el Elo FIDE
+de cada ritmo —, con clásico y blitz promediados, empates prorrateados y el
+desempate por C y luego por edad. El cálculo es `js/seleccion-calculo.js`.
+
+- **Por qué la Edge Function lee el torneo entero.** chess-results no tiene
+  API ni CORS, y el año de nacimiento solo sale en la ficha de cada jugador
+  (`art=9&snr=N`): un torneo de 53 jugadores son 55 páginas. La función las
+  pide de a ocho y devuelve el torneo listo; lo guarda un minuto en
+  `seleccion_cache` (solo el service role: trae años de nacimiento de menores).
+- **Las páginas que se leen**, comprobadas con los ocho torneos de la Etapa
+  Nacional JDE 2026, categoría D: `art=0` (individual: la lista inicial;
+  equipos: la clasificación de equipos), `art=1` (la clasificación
+  individual), `art=16` (los jugadores de equipos con su equipo) y la ficha.
+  **No `art=4`**: trae solo a quien jugó alguna partida (en el femenino blitz,
+  29 de 30). La celda «Res.» de la ficha trae otra tabla adentro: las celdas se
+  leen contando aperturas y cierres. Un todos contra todos por equipos dice
+  «Cuadro cruzado» y no la ronda: las rondas jugadas salen de las partidas.
+- **Comprobado con los datos reales**: leyendo esas páginas, el cálculo dio la
+  misma selección colegial 2026 que el cálculo hecho a mano, número por
+  número. Ahí apareció un error que no se veía: chess-results pone «0» como
+  código nacional de quien no tiene, y la unión por código juntaba a 18
+  personas en una. Un código en cero no cuenta.
+- **Lo que el procedimiento no dice y se decidió**: las escalas de B, C y D se
+  reparten dentro de cada rama y solo entre quienes cumplen la edad (con todos,
+  la selección 2026 no cambia); el rival sin Elo nacional cuenta 1400; **las
+  mujeres que juegan en un absoluto se calculan solo en la rama femenina** (lo
+  pidió el dueño del sitio). chess-results no dice el sexo: es mujer quien
+  jugó un torneo femenino de la selección o a quien el árbitro marcó; los
+  nombres que parecen de mujer en un absoluto salen en los avisos.
+- **Otra final**: en la categoría C pueden entrar estudiantes que jugaron la
+  final B y cumplen la edad. Se cargan los torneos de las dos finales en la
+  misma selección; la edad decide quién entra y la A de cada uno es su lugar
+  en su final.
+- **Lo que falta se avisa**, para que el árbitro lo corrija en Swiss-Manager y
+  vuelva a subir el torneo: sin año de nacimiento (queda fuera hasta que se
+  arregle), un nombre o código que no coincide entre clásico y blitz, alguien
+  en dos modalidades, un rival que no está en la lista. Si ya no da tiempo, el
+  sexo y el año se ajustan a mano en la página; el ajuste se guarda con la
+  selección (`selecciones_arbitraje`) y lo ven los profesores.
+- **En vivo**: la página vuelve a leer cada 1, 2 o 5 minutos (solo con la
+  pestaña a la vista) y dice quién entró y quién salió de la selección, cuánto
+  subió o bajó cada uno y a cuántos puntos del corte está. Un profesor con
+  licencia abre la misma selección con el enlace (`?s=<id>`,
+  `seleccion_compartida()`), con los mismos torneos y ajustes.
+
+`verificar-seleccion-calculo.js` prueba cada regla con torneos inventados (el
+prorrateo y el Ps con los ejemplos del propio procedimiento, el 40 % y las
+ausencias, las mujeres del absoluto, la final B, el año que falta, el
+desempate, los códigos en cero, en vivo); `verificar-seleccion-chess-results.js`
+prueba el lector de la función con HTML de la forma real y nombres inventados,
+y que pregunte la licencia antes de leer. Rompiendo a propósito las ausencias
+o el 40 %, saltan.
