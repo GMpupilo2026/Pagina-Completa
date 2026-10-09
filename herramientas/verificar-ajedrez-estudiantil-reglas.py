@@ -174,6 +174,11 @@ pedidas.clear()
 paginas[0] = muestra("clasificacion.txt")
 js, es, final = lector.leer_torneo({"clave": "1", "modalidad": "Equipos"}, pedir)
 cierto("un «por equipos» sin clasificación de equipos se lee como individual", pedidas == [0, 1] and len(js) == 3 and es == [], str(pedidas))
+pedidas.clear()
+paginas[0] = muestra("equipos.txt")
+paginas[1] = "<html><body><h2>JDE Muestra por Equipos</h2><h2>Orden de fuerza de los equipos con resultados ronda a ronda</h2></body></html>"
+js, es, final = lector.leer_torneo({"clave": "1", "modalidad": "Individual"}, pedir)
+cierto("un «individual» cortado que es por equipos se lee por equipos", pedidas == [1, 0, 16] and len(es) == 2 and len(js) == 3, str(pedidas))
 
 hoy = datetime.date(2026, 10, 9)
 torneos_prueba = [

@@ -78,6 +78,10 @@
       if (p.torneo.modalidad !== "Equipos") clasificados.set(p.torneo.clave, (clasificados.get(p.torneo.clave) || 0) + 1);
     }
     for (const o of torneos.values()) {
+      // Un torneo con clasificación de equipos ES por equipos, aunque la lista
+      // de torneos diga «Individual» (su nombre llegó cortado, sin «Equipos»):
+      // el puesto de sus jugadores es el de su equipo.
+      if (equiposPorTorneo.has(o.clave)) o.modalidad = "Equipos";
       o.de = o.modalidad === "Equipos" ? (equiposPorTorneo.get(o.clave) || 0) : (clasificados.get(o.clave) || o.jugadores);
       o.porEquipos = equiposPorTorneo.has(o.clave);
     }

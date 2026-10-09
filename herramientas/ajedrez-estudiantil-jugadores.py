@@ -239,20 +239,38 @@ def leer_jugadores_de_equipos(pagina):
 
 def leer_torneo(torneo, pedir):
     """Lee un torneo. `pedir(clave, art)` devuelve el HTML. Devuelve
-    (jugadores, equipos, final)."""
+    (jugadores, equipos, final).
+
+    La modalidad del CSV sale del nombre, y muchos llegan cortados: un torneo
+    «individual» puede ser por equipos («JDE Interregional | Esparza |
+    Categoría D Abierto por Equipos» se guardó sin «Equipos»), y entonces su
+    art=1 no es una clasificación sino el «Orden de fuerza de los equipos». Se
+    prueba lo que dice el CSV y, si no trae nada, lo otro."""
     clave = torneo["clave"]
-    if torneo["modalidad"] == "Equipos":
+
+    def por_equipos():
         portada = pedir(clave, 0)
         equipos = leer_equipos(portada)
-        if equipos:
-            puesto = {e["equipo"]: e["puesto"] for e in equipos}
-            lista = leer_jugadores_de_equipos(pedir(clave, 16))
-            jugadores = [{"puesto": puesto.get(j["equipo"], ""), "nombre": j["nombre"], "institucion": j["equipo"],
-                          "elo": j["elo"], "puntos": ""} for j in lista]
-            return jugadores, equipos, es_final(portada)
+        if not equipos:
+            return None
+        puesto = {e["equipo"]: e["puesto"] for e in equipos}
+        lista = leer_jugadores_de_equipos(pedir(clave, 16))
+        jugadores = [{"puesto": puesto.get(j["equipo"], ""), "nombre": j["nombre"], "institucion": j["equipo"],
+                      "elo": j["elo"], "puntos": ""} for j in lista]
+        return jugadores, equipos, es_final(portada)
+
+    if torneo["modalidad"] == "Equipos":
+        leido = por_equipos()
+        if leido:
+            return leido
         # Mal clasificado como de equipos: se lee como individual.
     pagina = pedir(clave, 1)
-    return leer_individual(pagina), [], es_final(pagina)
+    individual = leer_individual(pagina)
+    if not individual and torneo["modalidad"] != "Equipos":
+        leido = por_equipos()
+        if leido:
+            return leido
+    return individual, [], es_final(pagina)
 
 
 # ---------- Qué leer en esta vuelta ----------
