@@ -2130,3 +2130,102 @@ Supabase (Project Settings → Edge Functions → Secrets) con una clave de
 `console.anthropic.com`, y quitar el `<div class="hidden">` que envuelve el
 aviso, el formulario y `#c-resultado` (dejando la tarjeta de arriba o
 sacándola, a gusto).
+
+## Desempates explicados
+
+`desempates.html` recalcula la clasificación de un torneo de chess-results
+desde las partidas (no desde los números que ya trae chess-results) y
+explica, desempate por desempate, por qué una persona queda arriba de la
+otra: el que se pensó para «responder un reclamo con números», no solo para
+mostrar una tabla. Con licencia, igual que la selección CODICADER (ver
+arriba): la vitrina la anunciaba como «Próximamente» desde que se armó la
+lista de herramientas de arbitraje, y es la primera de las tres que faltaban
+en construirse.
+
+- **El cálculo de los 26 desempates es el MISMO de Pareo Integral**
+  (`js/pareo/desempates.js`), no una segunda copia: ya está comprobado
+  artículo por artículo contra los ejercicios del C.07:2026 y contra
+  `chesspairing` en miles de torneos al azar (ver «Pareo Integral» más
+  arriba). Lo único que se le agregó fue `explicar(t, id, codigo)`, que
+  desglosa **ronda por ronda** de dónde sale cada número —el rival, el
+  resultado, cuánto aportó y si ese desempate lo descarta (un Buchholz
+  Cut-1, un rival con el que no quedaste empatado en el encuentro
+  directo…)—, reusando las mismas listas internas que ya construía el
+  cálculo (`aportesBuchholz`, `aportesSonneborn`) con el campo de más que le
+  hacía falta a la pantalla, no con una cuenta aparte. Dos desempates no son
+  una suma de rondas sino una fórmula (TPR, PTP): ahí se listan igual los
+  rivales y, aparte, los pasos de la fórmula (el Elo medio, el porcentaje de
+  puntos, la diferencia de la tabla B.02…).
+  `node herramientas/verificar-desempates-explicar.js` (sin navegador)
+  prueba, en 80 torneos al azar, que el total de cada desglose sea
+  exactamente el mismo número que ya daba `calcular()` —27 000 comparaciones,
+  los 26 desempates por cada jugador—, y que ninguna ronda ya jugada
+  desaparezca del desglose sin decir por qué.
+- **Las bases del torneo son el orden de desempates, elegido a mano.** No se
+  adivina de chess-results (sus etiquetas vienen en el idioma y la forma que
+  haya elegido quien armó el torneo, no en los códigos del C.07): quien usa
+  la herramienta arma la lista con el mismo control de «subir / bajar /
+  quitar» de Pareo Integral (`js/pareo/pagina.js`), con «Buchholz sin el
+  peor, Buchholz, Sonneborn-Berger, encuentro directo, partidas ganadas» de
+  entrada —el orden más común en Costa Rica, el mismo que trae por omisión
+  un torneo nuevo de Pareo Integral (`js/pareo/torneo.js`)—.
+- **chess-results no tiene API ni manda CORS**, así que lo lee la Edge
+  Function **`desempates-chess-results`** (mismo patrón que
+  `seleccion-chess-results`: solo con licencia —`tengo_herramienta('desempates')`
+  con el token de quien llama, así que pasa por la verificación en dos
+  pasos—, con caché de un minuto en `desempates_cache`, solo el service
+  role). Lee la clasificación (`art=1`: puesto, «No.Ini.», nombre, Elo y el
+  puntaje final) y, de cada jugador, su ficha (`art=9&snr=N`) con las
+  partidas ronda a ronda: ahí viene el rival (su «No.Ini.», no el nombre: dos
+  personas pueden compartir apellido), el color (el div `FarbewT`/`FarbesT`
+  que trae adentro la celda «Res.» —esas letras quedan en alemán aunque la
+  página esté en español— ) y el resultado. **Solo torneos individuales**:
+  uno por equipos reparte el Buchholz por equipo, no por tablero, y eso pide
+  otro diseño que no se intentó acá.
+- **La categoría de cada ronda (bye, incomparecencia, jugada) se adivina con
+  dos señales, no más, porque son las únicas que se comprobaron contra una
+  página real** (la misma que ya usa `seleccion-chess-results`, ver su
+  cabecera): un bye trae el rival «bye» literal (en cualquier idioma de la
+  página) y una incomparecencia trae una «K» en la celda de resultado
+  («- 1K»). Cualquier otra forma que chess-results use y esta función no
+  reconozca se guarda como «sin resultado», nunca inventando una categoría:
+  un desempate mal armado por adivinar una ronda vale menos que uno
+  incompleto que avisa cuál le falta.
+- **El puntaje reconstruido se compara contra el oficial, SIEMPRE.**
+  `js/desempates-convertir.js` arma, de las fichas de cada jugador, el
+  torneo que entiende `js/pareo/desempates.js` (una mesa por pareja, un
+  `ausencias: "F"/"H"` por bye, nunca por posición sino por el «No.Ini.» de
+  cada quien) y después vuelve a sumar el puntaje de cada persona con la
+  MISMA función que usa Pareo Integral (`PareoTorneo.puntos`): si no
+  coincide con el «Pts.» que chess-results ya tenía, esa persona entra igual
+  a la tabla pero con su fila marcada y un aviso aparte que no se puede
+  cerrar —es la red de seguridad contra una ronda que se leyó mal, y la
+  única razón por la que esta herramienta se puede usar para un reclamo sin
+  tener que creerle a ciegas al HTML—. `node
+  herramientas/verificar-desempates-convertir.js` lo prueba con un torneo de
+  5 armado a mano (impar, para que el bye tenga sentido de verdad: con 4 no
+  sobra nadie) con un bye, una incomparecencia y partidas normales, y
+  comprueba que un puntaje oficial puesto mal a propósito SÍ se avisa, y que
+  un rival que no se pudo leer en ningún lado no se inventa.
+- **El «por qué» compara a dos personas, no expone un informe de todos
+  contra todos.** Se elige quién y quién (o se toca «¿Por qué aquí?» en una
+  fila de la clasificación, que arma la comparación con la de encima) y la
+  pantalla recorre los desempates elegidos EN ORDEN hasta el primero que las
+  distingue: ese es el que se despliega con el desglose completo de las
+  DOS personas, lado a lado; los de antes se muestran con su valor nada más
+  (ya se sabía que no decidían nada) y los de después no se calculan ni se
+  muestran (ya no hacen falta). Si quedan empatadas en todo lo elegido, lo
+  dice con esas palabras en vez de inventar un ganador: lo que sigue
+  (sorteo, una partida rápida…) lo deciden las bases del torneo, no un
+  número más.
+- `node herramientas/verificar-desempates-chess-results.js` (sin navegador
+  ni red) prueba el lector de la Edge Function con HTML de la forma real —el
+  bye, la incomparecencia a favor y en contra, el color de las dos celdas, la
+  columna de puntaje cuando falta «Pts.» y sale de un «Des N»— y que el
+  candado (`tengo_herramienta`, antes de tocar chess-results) siga ahí.
+
+**Lo que falta, a propósito, para una primera versión**: torneos por
+equipos, y adivinar el orden de desempates desde chess-results en vez de
+pedirlo (sus `Des N` no siempre dicen cuál código del C.07 son). Las dos
+herramientas que siguen en la vitrina —variación de Elo del torneo y
+reclamos de tablas desde el PGN— no comparten nada de código con esta.
