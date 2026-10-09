@@ -1960,6 +1960,15 @@ la vitrina de Herramientas con `gratis: true`.
   (game-points)», casi siempre el primero. Si no está ninguno de los dos,
   quedan en blanco. Los «Des» se leen por su número en la anotación, no por la
   posición.
+- **Un torneo «individual» que es por equipos.** La modalidad del CSV sale del
+  nombre, y muchos llegan cortados sin «Equipos» («JDE Interregional | Esparza
+  | Categoría D Abierto por Equipos»): su `art=1` no es una clasificación sino
+  el «Orden de fuerza de los equipos», y en la primera lectura 127 torneos
+  salieron sin jugadores. Si un «individual» no trae clasificación, se lee
+  como por equipos; y la página trata como por equipos a todo torneo que
+  tenga clasificación de equipos, así el puesto del equipo no cuenta como
+  podio individual de cada uno. La lista de torneos no se cambia (sus reglas
+  se comprueban contra lo guardado).
 - **Un torneo «por equipos» que no lo es.** Algunos torneos del CSV dicen
   «Equipos» y su `art=0` no trae clasificación de equipos (los CODICADER de
   2009, donde el «Equipo» es el país): se leen como individuales.
@@ -1979,7 +1988,13 @@ la vitrina de Herramientas con `gratis: true`.
   «U.P.» y «Unidad Pedagógica», «Esc.» y «Escuela», «St.» y «Saint».
   chess-results corta la columna a unas 35 letras («Colegio Teresiano San
   Enrique de Os»): un nombre de 30 letras o más que es el comienzo de UNO SOLO
-  de los otros se junta con ese. Lo demás se junta a mano en
+  de los otros se junta con ese. El «de» suelto no cuenta («CTP de Santa
+  Elena» y «CTP Santa Elena»), ni los espacios («Anglo Americano» y
+  «Angloamericano», queda la forma más usada). Un nombre sin tipo se junta con
+  el que lo lleva («Pacto del Jocote» con «Escuela Pacto del Jocote») solo si
+  hay UNA forma con tipo: con «Escuela Lepanto» y «Colegio Lepanto» a la vez,
+  «Lepanto» queda solo, porque pueden ser dos instituciones (con los datos
+  reales, de 1927 nombres quedaron 1655). Lo demás se junta a mano en
   `herramientas/datos/ajedrez-estudiantil-instituciones.csv` («variante,nombre»).
   «CRC», «Costa Rica», un número o la celda vacía no son un colegio. El nombre
   que se muestra es la variante más usada que no viene toda en mayúsculas.

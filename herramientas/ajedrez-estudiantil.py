@@ -116,7 +116,25 @@ def clave_de_institucion(nombre):
     k = re.sub(r"\s+", " ", re.sub(r"[^a-z0-9 ]", " ", sin_tildes(nombre).replace("ñ", "n"))).strip()
     for patron, cambio in ABREVIATURAS:
         k = re.sub(patron, cambio, k)
-    return k
+    # «CTP de Santa Elena» y «CTP Santa Elena»: el «de» suelto no distingue.
+    return re.sub(r"\s+", " ", re.sub(r"\bde\b", " ", k)).strip()
+
+
+# El tipo que a veces se escribe y a veces no: «Pacto del Jocote» y «Escuela
+# Pacto del Jocote». El nombre sin tipo se junta con el que lo lleva solo si
+# hay UNO: con «Liceo X» y «Colegio X» a la vez pueden ser dos instituciones.
+TIPOS = ("esc", "colegio", "liceo", "ctp", "centro educativo", "lr", "up", "instituto", "cindea", "ipec")
+
+
+def juntar_sin_tipo(claves):
+    fuera = {}
+    for k in claves:
+        if any(k.startswith(t + " ") for t in TIPOS):
+            continue
+        con_tipo = [t + " " + k for t in TIPOS if t + " " + k in claves]
+        if len(con_tipo) == 1:
+            fuera[k] = con_tipo[0]
+    return fuera
 
 
 def leer(ruta):
@@ -197,6 +215,26 @@ def armar_jugadores():
 
     todas = {clave_inst(r["institucion"])[0] for r in filas_j} | {clave_inst(r["equipo"])[0] for r in filas_e}
     cortados = juntar_cortados(todas - {None})
+    sin_tipo = juntar_sin_tipo({cortados.get(k, k) for k in todas - {None}})
+    cortados = {k: sin_tipo.get(v, v) for k, v in cortados.items()}
+    for k, v in sin_tipo.items():
+        cortados.setdefault(k, v)
+    # «Anglo Americano» y «Angloamericano»: lo que solo cambia en los
+    # espacios es lo mismo; queda la forma más usada.
+    uso = collections.Counter(cortados.get(k, k) for k in
+                              [clave_inst(r["institucion"])[0] for r in filas_j] + [clave_inst(r["equipo"])[0] for r in filas_e] if k)
+    pegadas = collections.defaultdict(list)
+    for k in uso:
+        pegadas[k.replace(" ", "")].append(k)
+    for grupo in pegadas.values():
+        if len(grupo) > 1:
+            destino = max(grupo, key=lambda k: (uso[k], k))
+            for k in grupo:
+                if k != destino:
+                    for origen, v in list(cortados.items()):
+                        if v == k:
+                            cortados[origen] = destino
+                    cortados[k] = destino
 
     personas, instituciones = {}, {}          # clave → (índice, [variantes])
     def indice(tabla, clave, variante, cuenta=True):

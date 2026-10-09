@@ -229,6 +229,11 @@ with tempfile.TemporaryDirectory() as tmp:
                                 "99999999,1,\"Fuera De Lista, Torneo\",Liceo Uno,,1\n")
     armador.EQUIPOS = escribir("e.csv", f"clave,puesto,equipo,puntos\n{claves[1]},1,Liceo Viejo,4\n")
     armador.EXCLUIDOS = escribir("x.txt", "# comentario\nBORRAR ESTE, NOMBRE\n")
+    with open(armador.JUGADORES, "a", encoding="utf-8") as f:
+        f.write(f"{claves[0]},4,\"Mena Paz, Rosa\",Anglo Americano,,1\n{claves[1]},2,\"Mena Paz, Rosa\",Angloamericano,,1\n"
+                f"{claves[1]},3,\"Rey Sol, Luis\",Angloamericano,,1\n"
+                f"{claves[0]},5,\"Ruiz Lara, Ana\",Pacto del Jocote,,1\n{claves[1]},4,\"Ruiz Lara, Ana\",Escuela Pacto del Jocote,,1\n"
+                f"{claves[0]},6,\"Mora Gil, Eva\",Lepanto,,1\n{claves[1]},5,\"Mora Gil, Eva\",Escuela Lepanto,,1\n{claves[1]},6,\"Mora Gil, Teo\",Colegio Lepanto,,1\n")
     armador.INSTITUCIONES = escribir("i.csv", "variante,nombre\nLiceo Viejo,Liceo Uno\n")
     d = json.loads(armador.armar_jugadores())
     nombres = [j[0] for j in d["jugadores"]]
@@ -240,6 +245,12 @@ with tempfile.TemporaryDirectory() as tmp:
     cierto("«CRC» no es un colegio", "CRC" not in insts and any(p[2] is None for p in d["participaciones"]), str(insts))
     cierto("las dos formas del C.T.P. son una institución", len([i for i in insts if "Ejemplo" in i]) == 1, str(insts))
     cierto("la lista de variantes junta «Liceo Viejo» con «Liceo Uno»", "Liceo Viejo" not in insts and d["equipos"][0][1] == insts.index("Liceo Uno"), str(insts))
+    cierto("«Anglo Americano» y «Angloamericano» son una institución, con la forma más usada",
+           "Angloamericano" in insts and "Anglo Americano" not in insts, str(insts))
+    cierto("«Pacto del Jocote» se junta con «Escuela Pacto del Jocote» (es la única con tipo)",
+           "Pacto del Jocote" not in insts and "Escuela Pacto del Jocote" in insts, str(insts))
+    cierto("«Lepanto» no se junta: hay una Escuela y un Colegio Lepanto",
+           all(x in insts for x in ("Lepanto", "Escuela Lepanto", "Colegio Lepanto")), str(insts))
     cierto("los puntos y el Elo vacíos quedan en null", any(p[4] is None and p[5] is None for p in d["participaciones"]))
 
 print("Los JSON")
