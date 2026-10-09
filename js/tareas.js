@@ -249,6 +249,15 @@ function agregarRenglon() {
     div.querySelector(".r-recorte").addEventListener("change", () => refrescarRenglon(div));
     div.querySelector(".r-meta").addEventListener("change", () => refrescarRenglon(div));
     div.querySelector(".r-cantidad").addEventListener("input", () => pintarFrase(div));
+    // Al salir del campo, lo que pasa del tope se baja al tope: no se puede
+    // pedir más de lo que hay en la plataforma.
+    div.querySelector(".r-cantidad").addEventListener("change", (ev) => {
+        const tope = parseInt(ev.target.max, 10);
+        if (tope > 0 && parseInt(ev.target.value, 10) > tope) {
+            ev.target.value = String(tope);
+            pintarFrase(div);
+        }
+    });
     div.querySelector(".r-leccion").addEventListener("input", () => pintarFrase(div));
     div.querySelector(".r-quitar").addEventListener("click", () => {
         div.remove();
@@ -295,6 +304,12 @@ async function refrescarRenglon(div, cambioMaterial) {
             if (!(h && h.recorteObligatorio)) {
                 const todo = document.createElement("option");
                 todo.value = ""; todo.textContent = "— todo —";
+                /* «Todo» también tiene tope: lo que suman los recortes.
+                   Sin él se podían pedir 50 series de Practicar, que tiene
+                   9. Si algún recorte no tiene banco (los errores propios de
+                   cada alumno), no hay suma que valga y queda sin tope. */
+                const sinBanco = recortes.some((r) => !(r.total > 0));
+                todo.dataset.total = sinBanco ? "0" : String(recortes.reduce((n, r) => n + r.total, 0));
                 recSel.appendChild(todo);
             }
             // Agrupados como vienen en su página, que es como el profesor los
@@ -451,6 +466,15 @@ async function enviarTarea(ev) {
         }
         if (r.meta_tipo !== "completar" && !(r.meta_cantidad > 0)) {
             status.textContent = `Ponle una cantidad a «${r.filtro_label || r.material_label}».`;
+            return;
+        }
+        /* El tope del campo (refrescarRenglon) no basta: un número escrito a
+           mano pasa por encima del `max` si el navegador no valida. Pedir más
+           de lo que hay deja la tarea imposible de terminar. */
+        const tope = parseInt(d.querySelector(".r-cantidad").max, 10);
+        if (r.meta_tipo === "cantidad" && tope > 0 && r.meta_cantidad > tope) {
+            status.textContent = `«${r.filtro_label || r.material_label}» solo tiene ${tope} en la plataforma: no se pueden pedir ${r.meta_cantidad}.`;
+            d.querySelector(".r-cantidad").focus();
             return;
         }
         items.push(r);

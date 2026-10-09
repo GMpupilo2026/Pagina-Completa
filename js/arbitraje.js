@@ -555,7 +555,7 @@ async function pintarConsultasIA() {
   const ETIQUETA_QUIEN = { arbitro: 'Árbitro', padre_familia: 'Madre o padre de familia', otro: 'Otro' };
   caja.innerHTML = `
     <h2 class="font-serif text-xl font-bold text-brand-800 dark:text-white mb-1">💬 Espacio de consultas${pendientes ? ` <span class="text-sm font-sans font-semibold text-accent-700 dark:text-accent-400">· ${pendientes} sin revisar</span>` : ''}</h2>
-    <p class="text-xs text-brand-450 dark:text-brand-350 mb-3">Preguntas llegadas desde <a href="herramientas-arbitraje.html" class="underline">Herramientas de arbitraje</a>, con la respuesta que escribió la IA a partir del Reglamento de la FIDE. Revísala y marca si quedó bien.</p>
+    <p class="text-xs text-brand-450 dark:text-brand-350 mb-3">Preguntas llegadas desde <a href="herramientas-arbitraje.html" class="underline">Herramientas</a>, con la respuesta que escribió la IA a partir del Reglamento de la FIDE. Revísala y marca si quedó bien.</p>
     <div id="consultas-ia-lista" class="space-y-3"></div>`;
   const lista = $('consultas-ia-lista');
   if (!data || !data.length) {

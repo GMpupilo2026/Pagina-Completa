@@ -183,7 +183,7 @@
                arbitraje» y «Pareo Integral» en docs/decisiones/juegos-y-torneos.md. */
             { title: "Herramientas de arbitraje", tiles: [
                 { emoji: "♟️", label: "Pareo Integral", desc: "Empareja un torneo con el Sistema Holandés de FIDE: rondas, resultados, desempates y el TRF. Gratis", href: "pareo.html", soloDocente: true },
-                { emoji: "🧰", label: "Todas las herramientas de arbitraje", desc: "La vitrina: la selección CODICADER por parámetros y las que vienen, con su licencia", href: "herramientas-arbitraje.html", soloDocente: true },
+                { emoji: "🧰", label: "Todas las herramientas", desc: "La vitrina: la selección CODICADER por parámetros y las que vienen, con su licencia", href: "herramientas-arbitraje.html", soloDocente: true },
             ] },
             /* El orden lo pidió el dueño de la Academia: Configuración,
                Informes, Logros y, al alumnado, «¿Cómo van tus clases?» de
@@ -409,7 +409,7 @@
             { title: "Coordinación", hrefs: ["coordinacion.html", "solicitudes.html", "formularios.html", "cobros.html"] },
             { title: "Aprender", hrefs: ["entreno/index.html", "entreno/estudio.html", "cursos/academia/index.html", "articulos.html"] },
             { title: "Jugar y competir", hrefs: ["juegos.html", "competir.html", "tablero.html"] },
-            { title: "Herramientas de arbitraje", hrefs: ["pareo.html", "herramientas-arbitraje.html"] },
+            { title: "Herramientas", hrefs: ["pareo.html", "herramientas-arbitraje.html"] },
             { title: "Tu cuenta", hrefs: ["configuracion.html", "guia-del-profesor-accesible.html", "logros.html"] },
         ];
         function ordenarPanelDocente() {

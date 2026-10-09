@@ -798,8 +798,58 @@
    ]
   }
  ],
- "aprender": [],
- "practicas": [],
+ "aprender": [
+  {
+   "clave": "movimientos",
+   "label": "Cómo mueve cada pieza",
+   "total": 12,
+   "actividades": [
+    "aprender"
+   ]
+  },
+  {
+   "clave": "reglas",
+   "label": "Las reglas",
+   "total": 5,
+   "actividades": [
+    "aprender"
+   ]
+  },
+  {
+   "clave": "tacticas",
+   "label": "Primeras tácticas",
+   "total": 4,
+   "actividades": [
+    "aprender"
+   ]
+  }
+ ],
+ "practicas": [
+  {
+   "clave": "tacticas",
+   "label": "Tácticas",
+   "total": 4,
+   "actividades": [
+    "practicar"
+   ]
+  },
+  {
+   "clave": "mates",
+   "label": "Mates",
+   "total": 3,
+   "actividades": [
+    "practicar"
+   ]
+  },
+  {
+   "clave": "finales",
+   "label": "Finales",
+   "total": 2,
+   "actividades": [
+    "practicar"
+   ]
+  }
+ ],
  "aperturas": [
   {
    "clave": "pastor-mate",

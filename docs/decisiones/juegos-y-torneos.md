@@ -1961,6 +1961,11 @@ de «Torneos», y el menú del celular) y desde «Recursos» en el pie: lo pidi�
 dueño para que se vea lo que se vende. Las páginas de la Academia no lo llevan
 (no tienen menú; ver «Dentro de la Academia no hay encabezado de marketing»).
 
+**Para la gente se llaman solo «Herramientas»** (el menú, el pie, el título y
+los textos): así lo pidió el dueño, porque no todas son de arbitraje. La
+dirección (`herramientas-arbitraje.html`), los archivos y esta sección
+conservan el nombre de antes, para no romper enlaces ya compartidos.
+
 **Las licencias** (`licencias_herramientas`, migración `20261008193213`):
 
 - Un código `AI-XXXX-XXXX-XXXX` para una herramienta o para «todas», con sus
@@ -2110,6 +2115,21 @@ comprueba que la Edge Function pase por el freno antes de llamar a la IA, que
 lea el presupuesto y lo compare contra el gasto del mes, que el freno conozca
 el tipo `'arbitraje_consulta'` y que el formulario pida los campos que la
 función espera.
+
+**Mientras no haya `ANTHROPIC_API_KEY` en los secretos de las Edge Functions,
+en `herramientas-arbitraje.html` queda oculta tras un `<div class="hidden">`**:
+el formulario y sus campos (`#consulta-form`, `#c-nombre`…) siguen en el HTML
+tal cual —el verificador los sigue encontrando— pero no se ven, y en su lugar
+sale una tarjeta «🔒 Con licencia» igual a las de la vitrina de abajo, con los
+mismos botones de pedir una licencia o activar un código. No hay ninguna
+licencia de verdad detrás: es solo la vitrina, mientras la clave no esté. Ese
+hueco no es nuevo: `ia_uso` (el registro de «Mejorar informe», que usa la
+misma clave) está vacío, así que la clave nunca estuvo puesta en este
+proyecto. Para abrirla: agregar el secreto `ANTHROPIC_API_KEY` en el panel de
+Supabase (Project Settings → Edge Functions → Secrets) con una clave de
+`console.anthropic.com`, y quitar el `<div class="hidden">` que envuelve el
+aviso, el formulario y `#c-resultado` (dejando la tarjeta de arriba o
+sacándola, a gusto).
 
 ## Desempates explicados
 
