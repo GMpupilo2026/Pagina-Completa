@@ -2519,44 +2519,150 @@
             renderUsers();
         });
 
-        // El profesor asignado solo tiene sentido al crear un estudiante.
-        function toggleCreateTeacherField() {
-            const isAlumno = document.getElementById("create-role").value === "alumno";
-            document.getElementById("create-teacher-wrap").classList.toggle("hidden", !isAlumno);
-        }
-        document.getElementById("create-role").addEventListener("change", toggleCreateTeacherField);
-        toggleCreateTeacherField();
+        /* «Crear cuenta nueva». Con correo, le llega la invitación con una
+           contraseña provisional. Con «Usuario y contraseña», quien administra
+           los elige y se los da a la persona: no sale ningún correo (es la
+           salida para quien no tiene correo, o no lo abre). Las dos cosas, y la
+           fecha de cierre, son solo de estudiante: el usuario de la Academia es
+           del dominio sin buzón, y el corte de una cuenta temporal no alcanza a
+           quien da clase. Lo decide el servidor; la pantalla solo no las ofrece. */
+        const crear = (id) => document.getElementById("create-" + id);
 
-        document.getElementById("create-form").addEventListener("submit", async (e) => {
+        // El último día que entra, «AAAA-MM-DD» en hora de Costa Rica, o "" sin fecha.
+        function ultimoDiaDeValidez() {
+            const v = crear("validez").value;
+            if (!v) return "";
+            if (v === "fecha") return crear("hasta").value || "";
+            const hoy = HoraCR.hoy();
+            if (v[0] === "d") return HoraCR.sumarDias(hoy, Number(v.slice(1)));
+            // n meses: el mismo día del mes, o el último si ese mes es más corto
+            // (31 de enero + 1 mes = 28 de febrero, no 3 de marzo).
+            const n = Number(v.slice(1));
+            const [y, m, d] = hoy.split("-").map(Number);
+            const finDeMes = new Date(Date.UTC(y, m - 1 + n + 1, 0)).getUTCDate();
+            return new Date(Date.UTC(y, m - 1 + n, Math.min(d, finDeMes))).toISOString().slice(0, 10);   // calendario en UTC
+        }
+
+        function pintarCrear() {
+            const alumno = crear("role").value === "alumno";
+            if (!alumno) crear("modo").value = "correo";
+            const conUsuario = crear("modo").value === "usuario";
+            crear("modo-wrap").hidden = !alumno;
+            crear("teacher-wrap").classList.toggle("hidden", !alumno);
+            crear("email-wrap").hidden = conUsuario;
+            crear("email").required = !conUsuario;
+            crear("usuario-wrap").hidden = !conUsuario;
+            crear("clave-wrap").hidden = !conUsuario;
+            crear("clave").required = conUsuario;
+            if (!alumno) crear("validez").value = "";
+            crear("validez-wrap").hidden = !alumno;
+            const validez = crear("validez").value;
+            crear("hasta-wrap").hidden = validez !== "fecha";
+            crear("hasta").required = validez === "fecha";
+            crear("hasta").min = HoraCR.hoy();
+            crear("detalle-wrap").hidden = !validez;
+            crear("detalle").required = !!validez;
+            const ultimo = ultimoDiaDeValidez();
+            const resumen = crear("validez-resumen");
+            resumen.hidden = !ultimo;
+            if (ultimo) {
+                resumen.textContent = "Podrá entrar hasta el " + HoraCR.fecha(ultimo, { weekday: "long", day: "numeric", month: "long", year: "numeric" })
+                    + " inclusive. Desde el " + HoraCR.fecha(HoraCR.sumarDias(ultimo, 1), { day: "numeric", month: "long" }) + " la cuenta queda cerrada.";
+            }
+            if (!crear("btn").disabled) crear("btn").textContent = conUsuario ? "Crear la cuenta" : "Invitar";
+            // El usuario que se propone sale del nombre, con la misma regla del servidor
+            // (UsuarioAlumno.base); vacío, el servidor arma ese mismo.
+            crear("usuario").placeholder = conUsuario ? (window.UsuarioAlumno.base(crear("name").value) || "nombre.apellido") : "";
+        }
+
+        ["role", "modo", "validez", "hasta"].forEach((id) => crear(id).addEventListener("change", pintarCrear));
+        crear("name").addEventListener("input", pintarCrear);
+        crear("clave-proponer").addEventListener("click", () => {
+            crear("clave").value = window.ContrasenaAlumno.claveFacil();
+            crear("clave").focus();
+        });
+        pintarCrear();
+
+        // El aviso del final, con texto (nunca HTML: el usuario lo escribió alguien).
+        function avisoCrear(lineas, color, copiar) {
+            const msg = crear("msg");
+            msg.replaceChildren();
+            msg.className = "text-xs mt-3 " + color;
+            lineas.forEach((t) => { const p = document.createElement("p"); p.textContent = t; msg.append(p); });
+            if (copiar) {
+                const b = document.createElement("button");
+                b.type = "button";
+                b.className = "mt-2 px-3 py-1.5 rounded-lg text-xs font-semibold border border-brand-200 dark:border-brand-700 text-brand-700 dark:text-brand-100 hover:border-accent-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
+                b.textContent = "Copiar usuario y contraseña";
+                b.addEventListener("click", async () => {
+                    try { await navigator.clipboard.writeText(copiar); b.textContent = "Copiado"; }
+                    catch (e) { b.textContent = "No se pudo copiar: cópialo a mano"; }
+                });
+                msg.append(b);
+            }
+        }
+
+        crear("form").addEventListener("submit", async (e) => {
             e.preventDefault();
-            const msg = document.getElementById("create-msg");
-            const btn = document.getElementById("create-btn");
-            const email = document.getElementById("create-email").value.trim();
-            const full_name = document.getElementById("create-name").value.trim();
-            const role = document.getElementById("create-role").value;
-            const grupo = document.getElementById("create-grupo").value.trim();
-            const teacher_id = document.getElementById("create-teacher").value || null;
-            msg.textContent = "";
-            btn.disabled = true; btn.textContent = "Enviando…";
+            const btn = crear("btn");
+            const role = crear("role").value;
+            const conUsuario = role === "alumno" && crear("modo").value === "usuario";
+            const full_name = crear("name").value.trim();
+            const valida_hasta = role === "alumno" ? ultimoDiaDeValidez() : "";
+            const datos = {
+                full_name, role,
+                grupo: crear("grupo").value.trim(),
+                teacher_id: role === "alumno" ? (crear("teacher").value || null) : null,
+            };
+            if (conUsuario) {
+                datos.usuario = crear("usuario").value.trim();
+                datos.contrasena = crear("clave").value;
+                if (datos.contrasena.length < 8) { avisoCrear(["La contraseña tiene que tener al menos 8 caracteres."], "text-red-600 dark:text-red-400"); crear("clave").focus(); return; }
+                if (!datos.usuario && !full_name) { avisoCrear(["Escribe su nombre o su usuario."], "text-red-600 dark:text-red-400"); crear("name").focus(); return; }
+            } else {
+                datos.email = crear("email").value.trim();
+            }
+            if (crear("validez").value && role === "alumno") {
+                if (!valida_hasta) { avisoCrear(["Elige el último día que entra."], "text-red-600 dark:text-red-400"); crear("hasta").focus(); return; }
+                datos.valida_hasta = valida_hasta;
+                datos.detalle = crear("detalle").value.trim();
+            }
+            crear("msg").replaceChildren();
+            btn.disabled = true; btn.textContent = conUsuario ? "Creando…" : "Enviando…";
             try {
-                const result = await callAdmin("create", { email, full_name, role, grupo, teacher_id });
-                /* La cuenta se crea con una contraseña provisional que solo
-                   viaja en el correo: si el correo no salió, nadie la conoce y
-                   hay que decirlo ahora, no cuando la persona no pueda entrar. */
-                if (result.correo_enviado === false) {
-                    msg.textContent = `La cuenta de ${result.email} quedó creada, pero el correo con su contraseña provisional no salió. Usa «Reenviar acceso» en su ficha.`;
-                    msg.className = "text-xs mt-3 text-red-600 dark:text-red-400";
+                const result = await callAdmin("create", datos);
+                const cierre = result.vence
+                    ? "Se cierra sola: el último día que entra es el " + HoraCR.fecha(valida_hasta) + "."
+                    : "";
+                if (result.con_contrasena) {
+                    const usuario = window.UsuarioAlumno.soloUsuario(result.usuario || result.email);
+                    avisoCrear([
+                        "Cuenta creada. No salió ningún correo: dale estos datos a la persona.",
+                        "Usuario: " + usuario,
+                        "Contraseña: " + datos.contrasena,
+                        "Entra en ajedrez-integral.com/login.html.",
+                        cierre,
+                    ].filter(Boolean), "text-green-700 dark:text-green-400",
+                    "Usuario: " + usuario + "\nContraseña: " + datos.contrasena + "\nEntra en https://ajedrez-integral.com/login.html");
+                } else if (result.correo_enviado === false) {
+                    /* La cuenta se crea con una contraseña provisional que solo
+                       viaja en el correo: si el correo no salió, nadie la conoce y
+                       hay que decirlo ahora, no cuando la persona no pueda entrar. */
+                    avisoCrear([`La cuenta de ${result.email} quedó creada, pero el correo con su contraseña provisional no salió. Usa «Reenviar acceso» en su ficha.`, cierre].filter(Boolean), "text-red-600 dark:text-red-400");
                 } else {
-                    msg.textContent = `Cuenta creada: le llegó a ${result.email} un correo con su usuario y una contraseña provisional.`;
-                    msg.className = "text-xs mt-3 text-green-600 dark:text-green-400";
+                    avisoCrear([`Cuenta creada: le llegó a ${result.email} un correo con su usuario y una contraseña provisional.`, cierre].filter(Boolean), "text-green-600 dark:text-green-400");
                 }
-                document.getElementById("create-form").reset();
+                if (result.temporal_error) {
+                    avisoCrear([`La cuenta de ${result.email} quedó creada y se le mandó la invitación, pero SIN fecha de cierre: ${result.temporal_error}`], "text-red-600 dark:text-red-400");
+                }
+                crear("form").reset();
+                pintarCrear();
                 loadUsers();
             } catch (err) {
-                msg.textContent = err.message;
-                msg.className = "text-xs mt-3 text-red-600 dark:text-red-400";
+                avisoCrear([err.message], "text-red-600 dark:text-red-400");
             } finally {
-                btn.disabled = false; btn.textContent = "Invitar";
+                btn.disabled = false;
+                pintarCrear();
             }
         });
 

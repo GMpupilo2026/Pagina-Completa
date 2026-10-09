@@ -7,7 +7,8 @@
 // administradora antes de usar la service role key.
 //
 // Acciones (body.action):
-//   "create"          { email, full_name, role, grupo?, teacher_ids?[], invitaciones_max? }
+//   "create"          { email, full_name, role, grupo?, teacher_ids?[], invitaciones_max?,
+//                       usuario?, contrasena?, valida_hasta?, detalle? }
 //   "update"          { target_id, full_name?, role?, is_admin?, grupo?,
 //                       invitaciones_max?, reset_invitaciones? }
 //   "set_teachers"    { target_id, teacher_ids: [] }  -> deja EXACTAMENTE esos
@@ -59,6 +60,22 @@
 // les llegaba a las otras dos puertas. Si el correo no sale, la cuenta no se
 // deshace: `correo_enviado: false` sube a la pantalla.
 //
+// "create" CON `contrasena` NO MANDA NINGÚN CORREO: quien administra crea la
+// cuenta con un usuario de la Academia (`usuario`, o armado con el nombre) y
+// la contraseña que eligió, y se los da él a la persona. Solo para alumnos: el
+// usuario es del dominio sin buzón y esa contraseña no es provisional (se la
+// dio en la mano). Es la misma salida que ya tienen las dos puertas de alta de
+// create-student (ver «La contraseña se puede poner al crear la cuenta»).
+//
+// "create" CON `valida_hasta` (el último día que entra, «AAAA-MM-DD» de Costa
+// Rica) deja la cuenta TEMPORAL en la misma llamada: `cuentas_temporales_fijar`
+// con la sesión de quien llama, para que la anote como suya y la bitácora la
+// registre. `detalle` es lo que la persona lee cuando se cierra. Partido en dos
+// llamadas del navegador, una cuenta que debía cerrarse podía quedar abierta
+// para siempre sin que nadie lo notara. Si fijar la fecha falla y no salió
+// ningún correo, la cuenta se borra (se puede volver a crear igual); si ya
+// salió la invitación, se dice en `temporal_error` y la cuenta queda.
+//
 // "approve_request"/"reject_request" atienden la bandeja de
 // solicitudes_academia (alguien se anotó solo desde unirse.html). A
 // diferencia de TODAS las demás acciones de aquí (solo is_admin), estas dos
@@ -80,7 +97,7 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { sendInvitacionPlan } from "./instrucciones-email.ts";
 import { invitarConBienvenida } from "./invitacion-email.ts";
-import { esCorreoInterno } from "./usuario-alumno.ts";
+import { crearConContrasena, esCorreoInterno, problemaDeContrasena, usuarioLibre } from "./usuario-alumno.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -92,6 +109,30 @@ const MAX_PROFESORES = 10;       // por alumno; más que eso es un error de dedo
 const MAX_ENTRENADORES_POR_EQUIPO = 30; // techo de cordura, no un límite real
 const MAX_ALUMNOS_POR_EQUIPO = 300;
 const MAX_NOMBRE_EQUIPO = 120;
+const MAX_ANIOS_TEMPORAL = 5;    // una cuenta "temporal" de más es un error de dedo
+
+// «AAAA-MM-DD» + n días, pura cuenta de calendario.
+function sumarDias(dia: string, n: number) {
+  const [y, m, d] = dia.split("-").map(Number);
+  return new Date(Date.UTC(y, m - 1, d + n)).toISOString().slice(0, 10);   // calendario en UTC
+}
+const hoyCR = () => new Date().toLocaleDateString("en-CA", { timeZone: "America/Costa_Rica" });
+
+// El último día que entra → el instante en que se cierra: la medianoche de
+// Costa Rica (UTC-6, sin horario de verano) del día siguiente. Es la forma en
+// que ya se guardan las cuentas temporales: «se cierra el 20 de diciembre» es
+// 2026-12-20 00:00 de Costa Rica.
+function validarValidez(valor: unknown) {
+  if (typeof valor !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(valor) || sumarDias(valor, 0) !== valor) {
+    return { ok: false as const, error: "La fecha hasta la que vale la cuenta no es una fecha" };
+  }
+  const hoy = hoyCR();
+  if (valor < hoy) return { ok: false as const, error: "La fecha hasta la que vale la cuenta ya pasó" };
+  if (valor > sumarDias(hoy, 366 * MAX_ANIOS_TEMPORAL)) {
+    return { ok: false as const, error: `Una cuenta temporal vale como mucho ${MAX_ANIOS_TEMPORAL} años` };
+  }
+  return { ok: true as const, vence: `${sumarDias(valor, 1)}T00:00:00-06:00` };
+}
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": SITE_URL,
@@ -279,8 +320,41 @@ Deno.serve(async (req) => {
     const full_name = typeof body.full_name === "string" ? body.full_name.trim() : "";
     const role = typeof body.role === "string" ? body.role : "alumno";
     const grupo = typeof body.grupo === "string" ? body.grupo.trim() : "";
-    if (!email) return json({ error: "email es requerido" }, 400);
+    // Vacía es lo mismo que no mandarla: se invita por correo como siempre.
+    const clave = typeof body.contrasena === "string" && body.contrasena !== "" ? body.contrasena : null;
+    const usuarioPedido = typeof body.usuario === "string" ? body.usuario.trim() : "";
+    const conFecha = typeof body.valida_hasta === "string" && body.valida_hasta !== "";
+    const detalle = typeof body.detalle === "string" ? body.detalle.trim() : "";
     if (!ROLES_VALIDOS.includes(role)) return json({ error: "Rol inválido" }, 400);
+
+    if (clave !== null) {
+      // El usuario de la Academia es de alumno (el dominio sin buzón, y todo
+      // lo que se le escribe va a la casa), y una contraseña con correo propio
+      // es de esa persona: la recibe provisional por correo.
+      if (role !== "alumno") return json({ error: "Usuario y contraseña es solo para una cuenta de estudiante" }, 400);
+      if (email) return json({ error: "Con usuario y contraseña no se pone correo: la persona entra con su usuario" }, 400);
+      const problema = problemaDeContrasena(clave);
+      if (problema) return json({ error: problema }, 400);
+      if (!usuarioPedido && !full_name) return json({ error: "Para armarle un usuario hace falta su nombre, o escribe el usuario" }, 400);
+    } else {
+      if (!email) return json({ error: "email es requerido" }, 400);
+      if (esCorreoInterno(email)) {
+        return json({ error: "Ese es un usuario de la Academia, no un correo. Para darle un usuario, elige «Usuario y contraseña»." }, 400);
+      }
+    }
+
+    let vence: string | null = null;
+    if (conFecha) {
+      // El corte de acceso_vigente() solo alcanza a los alumnos: una fecha a
+      // un profesor sería una promesa falsa.
+      if (role !== "alumno") return json({ error: "Solo una cuenta de estudiante puede tener fecha de cierre" }, 400);
+      const v = validarValidez(body.valida_hasta);
+      if (!v.ok) return json({ error: v.error }, 400);
+      if (detalle.length < 2 || detalle.length > 120) {
+        return json({ error: "Di para qué es la cuenta (por ejemplo, el taller): es lo que la persona lee cuando se cierra" }, 400);
+      }
+      vence = v.vence;
+    }
 
     // Se sigue aceptando teacher_id suelto por comodidad; internamente es una
     // lista de uno.
@@ -295,10 +369,64 @@ Deno.serve(async (req) => {
       cupo = c.value as number;
     }
 
-    const r = await invitarYCompletarPerfil(adminClient, { email, full_name, role, grupo, cupo, teacherIds: profes.value });
-    if (r.error) return json({ error: r.error }, 400);
+    let r: { userId?: string; email?: string; correoEnviado?: boolean | null; error?: string };
+    if (clave !== null) {
+      // El desempate lo hace siempre el servidor, aunque el usuario venga
+      // escrito: dos «José Rodríguez» no son ninguna rareza. Lo que la pantalla
+      // enseña al final es el que devuelve esto.
+      const tomado = async (correo: string) => {
+        const { data } = await adminClient.from("profiles").select("id").ilike("email", correo).maybeSingle();
+        return !!data;
+      };
+      const usuario = await usuarioLibre(usuarioPedido || full_name, tomado);
+      if (!usuario) return json({ error: "No se pudo armar un usuario con eso. Escribe otro." }, 400);
+      // deno-lint-ignore no-explicit-any
+      const creada = await crearConContrasena(adminClient as any, usuario, clave, full_name || null);
+      if (creada.error || !creada.user) return json({ error: creada.error ?? "No se pudo crear la cuenta" }, 400);
+      const updates: Record<string, unknown> = {};
+      if (full_name) updates.full_name = full_name;
+      if (grupo) updates.grupo = grupo;
+      if (Object.keys(updates).length) await adminClient.from("profiles").update(updates).eq("id", creada.user.id);
+      if (profes.value.length) {
+        const p = await ponerProfesores(adminClient, creada.user.id, profes.value);
+        if (p.error) {
+          await adminClient.auth.admin.deleteUser(creada.user.id);
+          return json({ error: p.error }, 400);
+        }
+      }
+      r = { userId: creada.user.id, email: usuario, correoEnviado: null };
+    } else {
+      r = await invitarYCompletarPerfil(adminClient, { email, full_name, role, grupo, cupo, teacherIds: profes.value });
+      if (r.error) return json({ error: r.error }, 400);
+    }
 
-    return json({ ok: true, user_id: r.userId, email: r.email, correo_enviado: r.correoEnviado });
+    let temporalError: string | null = null;
+    if (vence) {
+      // Con la sesión de quien llama: la función exige que administre y anota
+      // quién la fijó.
+      const { error: tErr } = await callerClient.rpc("cuentas_temporales_fijar", {
+        p_personas: [r.userId], p_vence: vence, p_detalle: detalle,
+      });
+      if (tErr) {
+        if (clave !== null) {
+          // No salió ningún correo: nadie conoce todavía esta cuenta, así que
+          // se deshace en vez de dejarla abierta para siempre.
+          await adminClient.auth.admin.deleteUser(r.userId!);
+          return json({ error: "No se pudo poner la fecha de cierre, así que la cuenta no se creó: " + tErr.message }, 400);
+        }
+        temporalError = tErr.message;
+      }
+    }
+
+    return json({
+      ok: true, user_id: r.userId, email: r.email, correo_enviado: r.correoEnviado,
+      // Con la contraseña puesta: no salió correo y la pantalla enseña el
+      // usuario y la contraseña para dárselos a la persona.
+      con_contrasena: clave !== null,
+      usuario: clave !== null ? r.email : null,
+      vence: vence && !temporalError ? vence : null,
+      temporal_error: temporalError,
+    });
   }
 
   if (action === "update") {

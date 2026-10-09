@@ -57,8 +57,26 @@
         return esInterno(limpio) ? limpio.slice(0, limpio.lastIndexOf("@")) : limpio;
     }
 
+    /**
+     * El usuario que se PROPONE para ese nombre: la misma regla que
+     * `baseDeUsuario()` de _compartido/usuario-alumno.ts —primer nombre y
+     * primer apellido, sin tildes—. Solo se propone: quien decide es el
+     * servidor, que además desempata si ya está tomado. Que las dos coincidan
+     * lo comprueba verificar-alumno-sin-correo.js. La usan las dos pantallas de
+     * alta (alta-alumno.js y «Crear cuenta nueva» de admin.html).
+     */
+    function base(nombre) {
+        var pedazos = String(nombre || "")
+            .normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/ñ/gi, "n")
+            .toLowerCase().replace(/[^a-z0-9\s]/g, " ").trim().split(/\s+/).filter(Boolean);
+        if (!pedazos.length) return "";
+        var apellido = pedazos.length >= 4 ? pedazos[2] : pedazos[1];
+        return [pedazos[0], apellido].filter(Boolean).join(".").slice(0, 40);
+    }
+
     global.UsuarioAlumno = {
         DOMINIO: DOMINIO,
+        base: base,
         esInterno: esInterno,
         completar: completar,
         soloUsuario: soloUsuario,

@@ -1025,7 +1025,10 @@ por qué.
   **cuentas de alumno**: el corte de `acceso_vigente()` no alcanza a quien da
   clase o administra, y una fila que no corta nada sería una promesa falsa.
   Pide el `detalle` (el taller), porque es lo que lee la persona al cerrarse.
-  Por ahora no tiene pantalla: se llama desde el SQL de Supabase.
+  **Al crear la cuenta** se pone desde «Crear cuenta nueva» de `admin.html`
+  («Válida por», ver «Crear una cuenta con usuario y contraseña, y con fecha
+  de cierre» en cuentas-y-formularios.md); para alargar, quitar o fijar a una
+  cuenta que ya existe, se llama desde el SQL de Supabase.
 - **El corte lo hace la base, igual que con la prueba**: `acceso_vigente()`
   pregunta por la cuenta temporal **antes** que por la prueba y por el
   interruptor. Con el interruptor apagado una cuenta normal entra sin límite, y

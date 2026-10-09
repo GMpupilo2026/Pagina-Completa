@@ -1509,6 +1509,8 @@
           "intro": "Se dan de alta cuentas de alumno, de profesor y de administración, y se fija cuántos alumnos puede invitar cada profesor por su cuenta.",
           "pasos": [
             "«Crear cuenta nueva»: nombre, correo y rol.",
+            "Para un estudiante, en «Cómo entra» puedes elegir «Usuario y contraseña que le doy yo»: no sale ningún correo y tú le das los datos.",
+            "En «Válida por» le pones hasta cuándo vale (una semana, unos meses o hasta una fecha): ese día la cuenta se cierra sola.",
             "A cada profesor le pones su cupo de invitaciones.",
             "El profesor gasta ese cupo con la ficha «Crear cuenta de alumno» de su panel (o desde Formularios, si coordina). Sin invitaciones, la ficha se apaga y le dice que adquiera un plan mayor."
           ],
