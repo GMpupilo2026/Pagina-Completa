@@ -111,7 +111,13 @@ alumno, que es justo lo que la tarea viene a evitar.
   leyendo el HTML, escribió listas vacías sin quejarse y se mandaron tareas de
   50 series de Practicar. Ahora el generador revienta si no encuentra
   ninguna, y `verificar-tareas.js` cuenta esas categorías en el JS y prueba
-  el tope de «todo».
+  el tope de «todo». Las que ya se habían mandado (una tarea a 14 alumnos con
+  50 series de Practicar) las bajó al tope la migración
+  `20261009042516_tareas_sin_pedir_mas_de_lo_que_hay`: como el avance se
+  calcula, con cambiar `meta_cantidad` basta. Antes de hacerla se revisaron
+  todas las herramientas con tope (temas, mates, 4×4, aprender, practicar,
+  aperturas, tipos) y las tareas semanales de los proyectos: solo Practicar
+  estaba pasada.
 
 ### La franja de la tarea vive dentro del ejercicio
 
