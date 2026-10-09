@@ -67,6 +67,7 @@ async function init() {
         document.getElementById("form-tarea").addEventListener("submit", enviarTarea);
         await desdeLaBitacora();
         await desdeLaClase();
+        await desdeLasCuentasTemporales();
         await desdeElInforme();
         await cargarEnviadas();
     } else {
@@ -194,6 +195,27 @@ async function desdeLaClase() {
             ? new Date(clase.started_at).toLocaleDateString("es-CR", { day: "numeric", month: "long", timeZone: "America/Costa_Rica" }) : "";
         titulo.value = "Repaso de la clase" + (clase && clase.title ? ": " + clase.title : fecha ? " del " + fecha : "");
     }
+}
+
+/* Desde la ficha Asesores de administración («Mandarlo como tarea a los
+   asesores»): `?temporales=<detalle>` marca a quienes tienen una cuenta
+   temporal todavía abierta con ese detalle (el taller). Viaja solo el nombre
+   del taller, como con la clase: quiénes son lo lee la base
+   (cuentas_temporales, que quien administra lee entera). Una cuenta ya
+   cerrada no se marca: esa persona no podría entrar a hacerla. */
+async function desdeLasCuentasTemporales() {
+    const detalle = new URLSearchParams(location.search).get("temporales");
+    if (!detalle) return;
+    const { data } = await sb.from("cuentas_temporales").select("persona_id")
+        .eq("detalle", detalle).gt("vence", new Date().toISOString());
+    let primera = null;
+    (data || []).forEach((c) => {
+        const check = document.querySelector('.alumno-check[value="' + CSS.escape(c.persona_id) + '"]');
+        if (!check) return;
+        check.checked = true;
+        if (!primera) primera = check;
+    });
+    if (primera) primera.closest("label").scrollIntoView({ block: "nearest" });
 }
 
 /* Desde Informes («Mandarle 10 de La balanza», en la tarjeta del tipo más

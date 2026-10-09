@@ -113,6 +113,13 @@ window.__consultas = [];
     /* Cómo va la preparación de cada sesión (admin.html#asesores): la 1 ya
        está lista, con una nota. upsert escribe acá por (curso, sesion). */
     preparacion_sesiones: [{ curso: "formacion-ajedrez", sesion: 1, estado: "lista", nota: "Revisada con la Normativa 2026", actualizado_en: "2026-10-08T08:00:00Z" }],
+    /* Los asesores del taller son cuentas temporales: dos abiertas y una que
+       ya se cerró (no cuenta: no podría entrar a hacer la tarea). */
+    cuentas_temporales: [
+      { persona_id: "u-ase1", detalle: "Taller Formación Ajedrez del MEP", vence: new Date(Date.now() + 864e5).toISOString() },
+      { persona_id: "u-ase2", detalle: "Taller Formación Ajedrez del MEP", vence: new Date(Date.now() + 864e5).toISOString() },
+      { persona_id: "u-ase3", detalle: "Taller Formación Ajedrez del MEP", vence: new Date(Date.now() - 864e5).toISOString() },
+    ],
     /* Un proyecto con dos grupos (admin.html#proyectos). «Finales» ya tiene
        profesora; el otro no, y su nombre trae HTML que tiene que ir literal.
        Las fechas: una clase que ya pasó y dos que vienen. */
@@ -161,6 +168,7 @@ window.__consultas = [];
       select(_c, op) { if (op && op.head) { cabeza = true; anotado.head = true; } return b; },
       conCabeza(op) { if (op && op.head) { cabeza = true; anotado.head = true; } return b; },
       eq(col, val) { anotado.eq[col] = val; filas2 = filas2.filter((r) => String(r[col]) === String(val)); return b; },
+      gt(col, val) { anotado.eq[col + ">"] = val; filas2 = filas2.filter((r) => String(r[col]) > String(val)); return b; },
       in(col, vals) { anotado.in = { [col]: vals }; filas2 = filas2.filter((r) => vals.includes(r[col])); return b; },
       // .is(col, null): los recibos por entregar se cuentan así.
       is(col, val) { anotado.is = { [col]: val }; filas2 = filas2.filter((r) => (val === null ? r[col] == null : r[col] === val)); return b; },
@@ -773,6 +781,13 @@ async function pruebaAsesores(browser) {
     const a = document.querySelector("#ase-lista article:nth-child(1) a[href^='cuestionarios.html']");
     return a && [a.getAttribute("href"), a.textContent];
   }), ["cuestionarios.html?id=cq-fa1", "🎯 Cuestionario Kahoot (22 preguntas)"]);
+  igual("la sesión 1 se manda como tarea a las cuentas abiertas del taller", await page.evaluate(() => {
+    const a = document.querySelector("#ase-lista article:nth-child(1) a[href^='tareas.html']");
+    return a && [a.getAttribute("href"), a.textContent];
+  }), ["tareas.html?material=cuestionario&recorte=cq-fa1&temporales=" + encodeURIComponent("Taller Formación Ajedrez del MEP"),
+       "📨 Mandarlo como tarea a las 2 personas del taller"]);
+  igual("sin cuestionario no hay nada que mandar", await page.evaluate(() =>
+    !document.querySelector("#ase-lista article:nth-child(2) a[href^='tareas.html']")), true);
   igual("el de la sesión 2 dice que falta", await page.evaluate(() =>
     /Kahoot: por preparar/.test(document.querySelector("#ase-lista article:nth-child(2)").textContent)), true);
   igual("los archivos de la sesión 2, del curso", await page.evaluate(() =>

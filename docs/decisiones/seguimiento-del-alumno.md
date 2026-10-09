@@ -216,7 +216,9 @@ Un renglón «Cuestionario» en Tareas: el profe elige uno de los suyos o de los
 `cuestionario-tarea.html` (lo que Blooket llama «Homework»). Desde
 `cuestionarios.html`, «📨 Mandarlo como tarea» abre Tareas con el renglón
 armado (`?material=cuestionario&recorte=<id>`, lo mismo que «Mandarle 10
-de…» desde Informes). Migración `cuestionario_como_tarea`.
+de…» desde Informes). Migración `cuestionario_como_tarea`. Desde la ficha
+Asesores llega además `&temporales=<detalle>`, que marca las cuentas
+temporales abiertas de ese taller (ver «La ficha Asesores»).
 
 - **La correcta no sale de la base hasta que el alumno entrega.** Vive en
   `cuestionarios`, que el alumno no puede leer, así que todo pasa por dos

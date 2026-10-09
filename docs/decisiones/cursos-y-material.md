@@ -2154,6 +2154,18 @@ sesión**. Lo pinta `js/admin-asesores.js`.
   ritmo, el orden cambiado) y se cuidó que la correcta **no sea siempre la
   opción más larga**: en un Kahoot eso se aprende rápido y se contesta sin
   leer.
+- **Practicar entre sesión y sesión**: cada sesión con cuestionario trae
+  «📨 Mandarlo como tarea a las N personas del taller», que abre Tareas con
+  ese cuestionario en el renglón y los asesores ya marcados
+  (`tareas.html?material=cuestionario&recorte=<id>&temporales=<detalle>`).
+  Lo contestan en su casa, sin reloj, con la nota de la primera vez (ver «El
+  cuestionario como tarea»). Los asesores no tienen profe asignado: son
+  cuentas temporales, y la tarea la manda quien administra, que la RLS de
+  `tareas` ya deja mandar a cualquier alumno. Quiénes son lo lee la base de
+  `cuentas_temporales` (solo las de ese taller que siguen abiertas: una
+  cuenta cerrada no podría entrar a hacerla); en la dirección viaja solo el
+  nombre del taller. Con dos talleres abiertos a la vez sale un botón por
+  taller, con su nombre.
 - **Con quién se comparte** es el mismo bloque de «Materiales de clases»
   (`AdminMateriales.montarCompartir`) con el producto `formacion-ajedrez`. A
   quien se lo compartes le aparecen los cuestionarios del curso y, en el panel

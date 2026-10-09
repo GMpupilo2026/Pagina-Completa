@@ -118,6 +118,14 @@ window.__llamadas = [];
       class_sessions: [{ id: "c-1", title: "Finales de torre", started_at: "2026-09-28T21:00:00Z" }],
       // La marca de la cuenta (js/vision-cuenta.js): ciega si la prueba lo pide.
       vision_personas: window.__VISION_PERSONAS || [],
+      // Las cuentas temporales de un taller (tareas.html?temporales=): Ana la
+      // tiene abierta; la de Beto en ese taller ya se cerró, y la abierta que
+      // tiene es de otro.
+      cuentas_temporales: [
+        { persona_id: "u-ana", detalle: "Taller de asesores", vence: new Date(Date.now() + 864e5).toISOString() },
+        { persona_id: "u-beto", detalle: "Taller de asesores", vence: new Date(Date.now() - 864e5).toISOString() },
+        { persona_id: "u-beto", detalle: "Otro taller", vence: new Date(Date.now() + 864e5).toISOString() },
+      ],
     };
     let filas = (nombre === "profiles" ? PERFILES : CLASES[nombre] || []).slice();
     let unica = false;
@@ -128,6 +136,11 @@ window.__llamadas = [];
       eq(col, val) {
         anotado.eq[col] = val;
         filas = filas.filter((r) => String(r[col]) === String(val));
+        return b;
+      },
+      gt(col, val) {
+        anotado.eq[col + ">"] = val;
+        filas = filas.filter((r) => String(r[col]) > String(val));
         return b;
       },
       order(col) { if (anotado.order == null) anotado.order = col; return b; },
@@ -698,6 +711,21 @@ async function main() {
     ok(JSON.stringify(marcados) === JSON.stringify(["u-beto"]), `?clase= debería marcar solo a quien asistió (u-beto), marcó ${JSON.stringify(marcados)}`);
     const titulo = await pagina.inputValue("#t-titulo");
     ok(titulo === "Repaso de la clase: Finales de torre", `?clase= debería proponer el título de la clase, puso ${JSON.stringify(titulo)}`);
+    await pagina.close();
+  }
+
+  // ---------- 4 bis b) desde la ficha Asesores de administración ----------
+  // Viaja solo el nombre del taller: a quiénes marcar lo lee la página de la
+  // base, y solo las cuentas temporales de ese taller que siguen abiertas.
+  {
+    const pagina = await navegador.newPage();
+    await pagina.addInitScript(clienteFalso([PROFE, ALUMNA1, ALUMNA2], [], PROFE.id));
+    await pagina.goto(`${BASE}/tareas.html?temporales=${encodeURIComponent("Taller de asesores")}`, { waitUntil: "networkidle" });
+    await pagina.waitForSelector("#app:not(.hidden)", { timeout: 10000 });
+    await pagina.waitForFunction(() => document.querySelectorAll(".alumno-check:checked").length > 0, null, { timeout: 5000 }).catch(() => {});
+    const marcados = await pagina.$$eval(".alumno-check", (els) => els.filter((e) => e.checked).map((e) => e.value));
+    ok(JSON.stringify(marcados) === JSON.stringify(["u-ana"]),
+      `?temporales= debería marcar solo la cuenta abierta de ese taller (u-ana), marcó ${JSON.stringify(marcados)}`);
     await pagina.close();
   }
 
