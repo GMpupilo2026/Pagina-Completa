@@ -1961,6 +1961,11 @@ de «Torneos», y el menú del celular) y desde «Recursos» en el pie: lo pidi�
 dueño para que se vea lo que se vende. Las páginas de la Academia no lo llevan
 (no tienen menú; ver «Dentro de la Academia no hay encabezado de marketing»).
 
+**Para la gente se llaman solo «Herramientas»** (el menú, el pie, el título y
+los textos): así lo pidió el dueño, porque no todas son de arbitraje. La
+dirección (`herramientas-arbitraje.html`), los archivos y esta sección
+conservan el nombre de antes, para no romper enlaces ya compartidos.
+
 **Las licencias** (`licencias_herramientas`, migración `20261008193213`):
 
 - Un código `AI-XXXX-XXXX-XXXX` para una herramienta o para «todas», con sus
