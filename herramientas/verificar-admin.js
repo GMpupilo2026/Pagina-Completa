@@ -244,6 +244,17 @@ window.__consultas = [];
         }
         return Promise.resolve({ data: null, error: null });
       }
+      /* El grupo de un taller (admin.html#asesores): lo arma la base por
+         taller. Uno ya entró y contestó la sesión 1 tres veces; el otro nunca
+         entró, y su nombre trae HTML que tiene que ir literal. */
+      if (n === "asesores_tablero") {
+        window.__tablero = (window.__tablero || []).concat([args]);
+        return Promise.resolve({ data: args.p_detalle !== "Taller Formación Ajedrez del MEP" ? [] : [
+          { persona_id: "u-ase1", nombre: "Ana Asesora · Heredia", clases: 2, ultima_vez: "2026-10-09T17:24:00Z",
+            cuestionarios: { "cq-fa1": { aciertos: 13, total: 22, veces: 3 } } },
+          { persona_id: "u-ase2", nombre: '<img src=x onerror="window.__xss=1">Beto', clases: 0, ultima_vez: null, cuestionarios: {} },
+        ], error: null });
+      }
       if (n === "activar_preparacion_rivales") {
         window.__activaciones = (window.__activaciones || []).concat([args]);
         return Promise.resolve({ data: !!(args && args.p_activa), error: null });
@@ -786,6 +797,17 @@ async function pruebaAsesores(browser) {
     return a && [a.getAttribute("href"), a.textContent];
   }), ["tareas.html?material=cuestionario&recorte=cq-fa1&temporales=" + encodeURIComponent("Taller Formación Ajedrez del MEP"),
        "📨 Mandarlo como tarea a las 2 personas del taller"]);
+  // El grupo: lo arma la base (asesores_tablero) para el taller abierto.
+  igual("el grupo se pide a la base, para el taller abierto", await page.evaluate(() => window.__tablero),
+    [{ p_detalle: "Taller Formación Ajedrez del MEP" }]);
+  igual("el resumen del grupo dice cuántos entraron y cuántos nunca", await page.textContent("#ase-grupo p"),
+    "1 de 2 personas ya entraron a la plataforma; 1 nunca ha entrado. La nota es la de la primera vez que contestó el cuestionario de cada sesión.");
+  igual("una fila por asesor, con su nombre literal, su última vez, sus clases y su nota", await page.evaluate(() =>
+    Array.from(document.querySelectorAll("#ase-grupo tbody tr")).map((tr) => Array.from(tr.children).slice(0, 5).map((c) => c.textContent.replace(/\s+/g, " ").trim()))),
+    [["Ana Asesora · Heredia", "9 oct, 11:24 a. m.", "2", "13/223 veces", "—No lo contestó"],
+     ['<img src=x onerror="window.__xss=1">Beto', "Nunca entró", "0", "—No lo contestó", "—No lo contestó"]]);
+  igual("una columna por sesión", await page.evaluate(() => document.querySelectorAll("#ase-grupo thead th").length), 3 + 8);
+  igual("el nombre ajeno no se ejecuta", await page.evaluate(() => !window.__xss), true);
   igual("sin cuestionario no hay nada que mandar", await page.evaluate(() =>
     !document.querySelector("#ase-lista article:nth-child(2) a[href^='tareas.html']")), true);
   igual("el de la sesión 2 dice que falta", await page.evaluate(() =>

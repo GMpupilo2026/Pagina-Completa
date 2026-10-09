@@ -2144,6 +2144,13 @@ sesión**. Lo pinta `js/admin-asesores.js`.
   `material = 'formacion-ajedrez'`, que se llaman «Formación Ajedrez · Sesión
   N: …» (así los encuentra la ficha). `verificar-formacion.js` los pasa por el
   armador y comprueba sus posiciones con chess.js.
+  **No tienen nivel**, y la clase en vivo y `cuestionarios.html` agrupaban los
+  listos solo por nivel: no salían en ningún grupo, aunque la base sí se los
+  daba. Ahora van en su propio grupo, «Listos · Asesores» en la clase y
+  «⚖️ Asesores» en Cuestionarios (`CQ_MATERIALES` en
+  `js/cuestionario-editor.js`: un material nuevo con cuestionarios sin nivel
+  es una línea más ahí). Lo prueban `verificar-clase-cuestionario.js` y
+  `verificar-cuestionarios-pagina.js`.
   Hay **uno por sesión, de la 1 a la 8** (153 preguntas). Salen de lo que
   enseña cada sesión —su quiz, sus casos y sus temas, con el artículo en
   `fuente`— y las reglas, del banco ya revisado de `js/arbitraje-items.js`:
@@ -2154,6 +2161,18 @@ sesión**. Lo pinta `js/admin-asesores.js`.
   ritmo, el orden cambiado) y se cuidó que la correcta **no sea siempre la
   opción más larga**: en un Kahoot eso se aprende rápido y se contesta sin
   leer.
+- **El grupo**: una tabla con cada asesor (las cuentas temporales abiertas del
+  taller), la última vez que entró, sus clases en la plataforma y la nota de
+  la primera vez en el cuestionario de cada sesión, con cuántas veces lo hizo.
+  Arriba dice cuántos ya entraron y cuántos nunca; «Nunca entró» va escrito,
+  no solo en rojo. La arma la base, `asesores_tablero(p_detalle)`
+  (`SECURITY INVOKER`): las cuentas se hacen allá y no en el navegador, porque
+  el registro de actividad crece y PostgREST corta a ~1000 filas. «La última
+  vez» es la página o la clase más reciente que abrió: el último inicio de
+  sesión vive en `auth.users`, que no se le abre a nadie. No dice cuántos días
+  le quedan a cada cuenta: lo pidió así el dueño. Comprobado impersonando
+  roles: administración ve los 30; un asesor, solo su fila; `anon` no puede
+  llamarla.
 - **Practicar entre sesión y sesión**: cada sesión con cuestionario trae
   «📨 Mandarlo como tarea a las N personas del taller», que abre Tareas con
   ese cuestionario en el renglón y los asesores ya marcados

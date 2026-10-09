@@ -209,13 +209,20 @@ async function pruebaListoEnClase(browser) {
     preguntas: [{ texto: "¿Cuántas casillas tiene el tablero?", opciones: ["48", "64", "81"], correcta: 1, tiempo: 30, fen: null }] };
   const mio = { id: "m-1", titulo: "Repaso", nivel: null, listo: false, profesor_id: "u-profe", updated_at: "2026-09-30T12:00:00Z",
     preguntas: [{ texto: "¿Qué vale más?", opciones: ["La torre", "El alfil"], correcta: 0, tiempo: 20, fen: null }] };
-  const { page, ctx, errores } = await abrir(browser, "u-profe", CLASE, { game_state: [fila()], cuestionarios: [mio, listo] },
+  // Uno del taller de asesores: listo, de un material y SIN nivel.
+  const asesores = { id: "l-fa2", titulo: "Formación Ajedrez · Sesión 2: reglas de competición", nivel: null, listo: true, material: "formacion-ajedrez",
+    profesor_id: null, updated_at: "2026-10-09T10:00:00Z",
+    preguntas: [{ texto: "¿Cuál es la sanción más leve?", opciones: ["La advertencia", "Perder"], correcta: 0, tiempo: 20, fen: null }] };
+  const { page, ctx, errores } = await abrir(browser, "u-profe", CLASE, { game_state: [fila()], cuestionarios: [mio, listo, asesores] },
     { ruta: "/sesion.html?cuestionario=l-1" });
   await page.waitForFunction(() => document.getElementById("cuestionario-listo").checkVisibility(), null, { timeout: 10000 });
   igual("abre la caja con ese elegido, para mirarlo (no para editarlo)", [await page.evaluate(() => document.getElementById("cuestionario-caja").open),
     await page.inputValue("#cuestionario-select"), await seVe(page, "#cuestionario-editor")], [true, "l-1", false]);
-  igual("la lista: los tuyos y los listos por nivel", await page.evaluate(() => [...document.querySelectorAll("#cuestionario-select optgroup")].map((g) => g.label)),
-    ["Tus cuestionarios", "Listos · Inicial"]);
+  igual("la lista: los tuyos, los listos por nivel y los de asesores (sin nivel)", await page.evaluate(() => [...document.querySelectorAll("#cuestionario-select optgroup")].map((g) => g.label)),
+    ["Tus cuestionarios", "Listos · Inicial", "Listos · Asesores"]);
+  igual("el de asesores está en su grupo", await page.evaluate(() =>
+    [...document.querySelectorAll("#cuestionario-select optgroup[label='Listos · Asesores'] option")].map((o) => [o.value, o.textContent])),
+    [["l-fa2", "Formación Ajedrez · Sesión 2: reglas de competición (1 pregunta)"]]);
   await page.getByRole("button", { name: "▶️ Jugarlo con la clase" }).click();
   await page.waitForFunction(() => (window.__rpcs || []).some((r) => r.n === "hacer_pregunta_de_opciones"), null, { timeout: 5000 });
   const r = await page.evaluate(() => window.__rpcs.find((x) => x.n === "hacer_pregunta_de_opciones").args);
