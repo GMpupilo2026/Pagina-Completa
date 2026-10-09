@@ -53,7 +53,7 @@
                 acciones.appendChild(a);
             } else if (h.disponible) {
                 const a = el("a", "bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg text-sm transition-colors", "Pedir una licencia");
-                a.href = "https://wa.me/50683092291?text=" + encodeURIComponent("Hola, quiero una licencia de «" + h.nombre + "» (herramientas de arbitraje).");
+                a.href = "https://wa.me/50683092291?text=" + encodeURIComponent("Hola, quiero una licencia de «" + h.nombre + "».");
                 a.target = "_blank";
                 a.rel = "noopener";
                 const b = el("a", "font-semibold px-5 py-2.5 rounded-lg text-sm bg-brand-100 dark:bg-brand-800 hover:bg-brand-200 dark:hover:bg-brand-700", "Ya tengo un código");
