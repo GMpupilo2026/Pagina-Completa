@@ -1906,6 +1906,11 @@ dueño del sitio: las herramientas se venden). La lista de herramientas vive en
 con `disponible: false` sale como «Próximamente», sin enlace. Hoy la única
 abierta es la **selección por parámetros** (`seleccion-codicader.html`).
 
+Se llega desde el menú de arriba de las páginas públicas (la barra chica, después
+de «Torneos», y el menú del celular) y desde «Recursos» en el pie: lo pidió el
+dueño para que se vea lo que se vende. Las páginas de la Academia no lo llevan
+(no tienen menú; ver «Dentro de la Academia no hay encabezado de marketing»).
+
 **Las licencias** (`licencias_herramientas`, migración `20261008193213`):
 
 - Un código `AI-XXXX-XXXX-XXXX` para una herramienta o para «todas», con sus
