@@ -268,6 +268,7 @@
     if (!v.jugadores.length) return;
     tabla.append(el("thead", {}, el("tr", {},
       el("th", { class: "num", scope: "col", texto: tx("nro") }), el("th", { scope: "col", texto: tx("nombre") }),
+      el("th", { scope: "col", texto: tx("institucion") }),
       el("th", { scope: "col", texto: tx("titulo") }), el("th", { class: "num", scope: "col", texto: "Elo" }),
       el("th", { scope: "col", texto: tx("fed") }), el("th", { scope: "col", texto: tx("fideId") }),
       el("th", { class: "num", scope: "col", texto: tx("pts") }), el("th", { scope: "col", texto: tx("estado") }),
@@ -281,6 +282,7 @@
       cuerpo.append(el("tr", {},
         el("td", { class: "num", texto: num.get(id) }),
         el("td", { class: "font-semibold", texto: j.nombre }),
+        el("td", { texto: j.institucion || "" }),
         el("td", { texto: j.titulo || "" }),
         el("td", { class: "num", texto: Number(j.elo) > 0 ? j.elo : "" }),
         el("td", { texto: j.fed || "" }),
@@ -301,7 +303,8 @@
     const g = (k) => String(f[k] == null ? "" : f[k]).trim();
     const elo = Math.round(Number(g("elo")) || 0);
     return {
-      nombre: g("nombre").slice(0, 33), elo: elo > 0 && elo <= 3500 ? elo : 0,
+      nombre: g("nombre").slice(0, 33), institucion: g("institucion").slice(0, 80),
+      elo: elo > 0 && elo <= 3500 ? elo : 0,
       titulo: ["GM", "IM", "WGM", "FM", "WIM", "CM", "WFM", "WCM"].includes(g("titulo").toUpperCase()) ? g("titulo").toUpperCase() : "",
       fed: g("fed").toUpperCase().replace(/[^A-Z]/g, "").slice(0, 3),
       fideId: g("fideId").replace(/\D/g, "").slice(0, 11),
@@ -326,6 +329,115 @@
     return n;
   }
 
+  // ---------- Subir una lista (Word o Excel) ----------
+  // Las mismas claves que ya entiende "Pegar una lista", en el mismo orden,
+  // para cuando el archivo no trae una cabecera reconocible.
+  const ORDEN_LISTA = ["nombre", "institucion", "elo", "titulo", "fed", "fideId"];
+  // De cada etiqueta posible (sin tildes, en minúscula) a su campo. Una sola
+  // tabla, no una de arrays: dos claves "palabra" seguidas entre corchetes
+  // son justo el patrón con el que verificar-pareo-pagina.js reconoce una
+  // lista de opciones traducible, y esta no lo es.
+  const SINONIMOS_COLUMNA = {
+    nombre: "nombre", name: "nombre", jugador: "nombre", player: "nombre",
+    institucion: "institucion", colegio: "institucion", escuela: "institucion",
+    club: "institucion", institution: "institucion", school: "institucion",
+    elo: "elo", rating: "elo",
+    titulo: "titulo", title: "titulo",
+    fed: "fed", federacion: "fed", pais: "fed", country: "fed", federation: "fed",
+    fideid: "fideId", "fide id": "fideId", "id fide": "fideId",
+    "codigo fide": "fideId", "fide code": "fideId",
+  };
+  const sinTildes = (s) => String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
+
+  // La primera fila es cabecera si reconoce al menos la columna "nombre"
+  // (con cualquiera de sus etiquetas); si no, se lee en ORDEN_LISTA y la
+  // primera fila es ya un jugador. Nunca se adivina a medias: o se reconoce
+  // el nombre, o se cae al orden fijo entero.
+  function columnasDeLista(primeraFila) {
+    const mapa = {};
+    (primeraFila || []).forEach((celda, i) => {
+      const campo = SINONIMOS_COLUMNA[sinTildes(celda)];
+      if (campo && mapa[campo] == null) mapa[campo] = i;
+    });
+    return mapa.nombre != null ? mapa : null;
+  }
+
+  function filasAJugadores(filas) {
+    if (!filas || !filas.length) return [];
+    const conCabecera = columnasDeLista(filas[0]);
+    const mapa = conCabecera || Object.fromEntries(ORDEN_LISTA.map((campo, i) => [campo, i]));
+    const datos = conCabecera ? filas.slice(1) : filas;
+    return datos.map((fila) => datosJugador({
+      nombre: mapa.nombre != null ? fila[mapa.nombre] : "",
+      institucion: mapa.institucion != null ? fila[mapa.institucion] : "",
+      elo: mapa.elo != null ? fila[mapa.elo] : "",
+      titulo: mapa.titulo != null ? fila[mapa.titulo] : "",
+      fed: mapa.fed != null ? fila[mapa.fed] : "",
+      fideId: mapa.fideId != null ? fila[mapa.fideId] : "",
+    })).filter((d) => d.nombre);
+  }
+
+  async function subirLista(archivo) {
+    const estadoEl = $("pi-subir-lista-estado");
+    if (archivo.size > 5 * 1024 * 1024) { Avisos.avisar(tx("archivoGrande"), { tipo: "error" }); return; }
+    const nombreArch = (archivo.name || "").toLowerCase();
+    estadoEl.textContent = tx("leyendoArchivo");
+    try {
+      let filas;
+      if (nombreArch.endsWith(".docx")) filas = await window.ReporteTextos.filasDeDocx(archivo);
+      else if (nombreArch.endsWith(".doc")) { estadoEl.textContent = ""; Avisos.avisar(tx("archivoDocAntiguo"), { tipo: "error" }); return; }
+      else filas = (await window.ReporteExcel.leer(archivo)).filas;
+      estadoEl.textContent = "";
+      const lista = filasAJugadores(filas);
+      if (!lista.length) { Avisos.avisar(tx("archivoSinJugadores"), { tipo: "error" }); return; }
+      const n = agregarJugadores(lista);
+      if (n) Avisos.avisar(tx("agregados", { n }));
+      else Avisos.avisar(tx("nadaQueAgregar"), { tipo: "error" });
+    } catch (err) {
+      estadoEl.textContent = "";
+      Avisos.avisar(tx("noAbre", { e: err.message }), { tipo: "error" });
+    }
+  }
+
+  // El mismo bolsillo de palabras que usa la Edge Function, para emparejar
+  // su respuesta (que viene por nombre, no por id) con el jugador de acá.
+  function bolsilloNombre(nombre) {
+    const limpio = String(nombre || "").normalize("NFD").replace(/[̀-ͯ]/g, "")
+      .toUpperCase().replace(/[^A-Z ,]/g, " ").replace(/,/g, " ");
+    return limpio.split(/\s+/).filter(Boolean).sort().join(" ");
+  }
+
+  const TOPE_BUSQUEDA_ELO = 40;   // el mismo tope que exige la Edge Function
+
+  async function buscarEloNacional() {
+    const v = t();
+    const todosFaltantes = v.jugadores.filter((j) => !(Number(j.elo) > 0));
+    if (!todosFaltantes.length) { Avisos.avisar(tx("sinQuienBuscar")); return; }
+    const faltantes = todosFaltantes.slice(0, TOPE_BUSQUEDA_ELO);
+    const boton = $("pi-elo-nacional");
+    const estadoEl = $("pi-elo-nacional-estado");
+    boton.disabled = true;
+    estadoEl.textContent = tx("buscandoElo");
+    const r = await window.PareoEloNacional.buscar(faltantes.map((j) => j.nombre));
+    boton.disabled = false;
+    estadoEl.textContent = "";
+    if (!r || r.ok === false) { Avisos.avisar((r && r.error) || tx("eloNacionalError"), { tipo: "error" }); return; }
+    const porBolsillo = new Map();
+    for (const res of r.resultados || []) {
+      if (res.estado === "encontrado" && Number(res.nacional) > 0) porBolsillo.set(bolsilloNombre(res.nombre), res.nacional);
+    }
+    let n = 0;
+    for (const j of faltantes) {
+      const nacional = porBolsillo.get(bolsilloNombre(j.nombre));
+      if (nacional) { j.elo = nacional; n++; }
+    }
+    if (n) { guardar(); pintarJugadores(); }
+    Avisos.avisar(tx("eloNacionalResultado", { n: n, total: faltantes.length }));
+    if (todosFaltantes.length > TOPE_BUSQUEDA_ELO) {
+      Avisos.avisar(tx("eloNacionalTope", { tope: TOPE_BUSQUEDA_ELO }), { tipo: "info" });
+    }
+  }
+
   async function editarJugador(id) {
     const j = jugador(id);
     const r = await Avisos.formulario({
@@ -333,6 +445,7 @@
       aceptar: tx("guardarCambios"),
       campos: [
         { nombre: "nombre", etiqueta: tx("nombreJugador"), valor: j.nombre, max: 33 },
+        { nombre: "institucion", etiqueta: tx("institucion"), valor: j.institucion || "", max: 80 },
         { nombre: "elo", etiqueta: "Elo FIDE", valor: String(j.elo || ""), inputmode: "numeric" },
         { nombre: "titulo", etiqueta: tx("titulo"), tipo: "select", valor: j.titulo || "", opciones: [["", "—"]].concat(T.TITULOS.map((x) => [x, x])) },
         { nombre: "fed", etiqueta: tx("fed"), valor: j.fed || "", max: 3 },
@@ -753,13 +866,19 @@
     $("pi-pegar-agregar").addEventListener("click", () => {
       const lineas = $("pi-pegar").value.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
       const lista = lineas.map((l) => {
-        const [nombre, elo, titulo, fed, fideId] = l.split(/\t|;/).map((x) => x.trim());
-        return datosJugador({ nombre, elo, titulo, fed, fideId });
+        const [nombre, institucion, elo, titulo, fed, fideId] = l.split(/\t|;/).map((x) => x.trim());
+        return datosJugador({ nombre, institucion, elo, titulo, fed, fideId });
       });
       const n = agregarJugadores(lista);
       if (n) { $("pi-pegar").value = ""; Avisos.avisar(tx("agregados", { n })); }
       else Avisos.avisar(tx("nadaQueAgregar"), { tipo: "error" });
     });
+    $("pi-subir-lista").addEventListener("change", (e) => {
+      const f = e.target.files && e.target.files[0];
+      e.target.value = "";
+      if (f) subirLista(f);
+    });
+    $("pi-elo-nacional").addEventListener("click", buscarEloNacional);
 
     document.querySelectorAll(".pi-imprimir").forEach((b) => b.addEventListener("click", () => window.print()));
     $("pi-bajar-trf").addEventListener("click", () => {
@@ -767,6 +886,16 @@
       catch (e) { Avisos.avisar(e.message, { tipo: "error" }); }
     });
     $("pi-bajar-json").addEventListener("click", () => bajar(nombreArchivo(".json"), JSON.stringify(t(), null, 1), "application/json"));
+    $("pi-bajar-jugadores").addEventListener("click", () => {
+      const v = t();
+      if (!v.jugadores.length) { Avisos.avisar(tx("sinJugadoresQueExportar"), { tipo: "error" }); return; }
+      const orden = T.ordenInicial(v);
+      const filas = orden.map((id) => {
+        const j = jugador(id);
+        return [j.nombre, j.institucion || "", Number(j.elo) > 0 ? j.elo : "", j.titulo || "", j.fed || "", j.fideId || ""];
+      });
+      CsvExcel.bajar(nombreArchivo("-jugadores.csv"), [tx("nombre"), tx("institucion"), "Elo", tx("titulo"), tx("fed"), tx("fideId")], filas);
+    });
     $("pi-borrar").addEventListener("click", async () => {
       const ok = await Avisos.confirmar(tx("confirmarBorrar", { n: t().nombre || tx("sinNombre") }), { aceptar: tx("borrarTorneo"), peligro: true });
       if (!ok) return;

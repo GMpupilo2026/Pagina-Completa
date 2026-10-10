@@ -1,0 +1,206 @@
+/* Pareo Integral: institución, subir una lista (Word o Excel) y el Elo
+ * Nacional (pareo.html, js/pareo/pagina.js, js/pareo/elo-nacional.js,
+ * js/reporte-textos.js, la migración y la Edge Function pareo-elo-nacional).
+ *
+ * Lo que se rompe acá no da ningún error: una columna mal mapeada agrega
+ * jugadores con los datos cambiados de lugar, y una llamada de más al Elo
+ * Nacional rompería justo lo que la página promete («nada sale de tu
+ * computadora»). Tres partes:
+ *
+ *   1. La migración y la Edge Function, leídas (sin navegador): el freno
+ *      ANTES de buscar, el candado de quién puede llamar jde_frenar... digo
+ *      pareo_elo_frenar, y que nunca devuelva un homónimo cualquiera.
+ *   2. Subir una lista, en un navegador real: un .docx con tabla (armado con
+ *      el mismo ReporteDOCX que ya usan los informes) y un .csv con la
+ *      cabecera en otro orden, los dos agregando la institución de cada
+ *      jugador.
+ *   3. El botón de Elo Nacional: es la ÚNICA llamada que sale del sitio, y
+ *      no inventa un homónimo.
+ *
+ * Uso:  python3 -m http.server 8777      (desde la raíz del sitio)
+ *       node herramientas/verificar-pareo-institucion.js
+ */
+const fs = require("fs");
+const path = require("path");
+const { chromium } = require("playwright");
+
+const RAIZ = path.join(__dirname, "..");
+const CHROME = process.env.CHROME_PATH || "/opt/pw-browsers/chromium-1194/chrome-linux/chrome";
+const BASE = process.env.BASE_URL || process.env.BASE || "http://localhost:8777";
+const leer = (r) => fs.readFileSync(path.join(RAIZ, r), "utf8");
+
+let fallos = 0;
+const mal = (m, detalle) => { console.log("  ✗ " + m + (detalle ? "\n      " + String(detalle).slice(0, 400) : "")); fallos += 1; };
+const bien = (m) => console.log("  ✓ " + m);
+const ok = (c, m, detalle) => (c ? bien(m) : mal(m, detalle));
+const igual = (m, a, b) => {
+  const ja = JSON.stringify(a), jb = JSON.stringify(b);
+  ok(ja === jb, m, ja === jb ? "" : "esperaba " + jb + ", salió " + ja);
+};
+
+/* ==================================================================
+   1. La migración y la Edge Function
+   ================================================================== */
+function pruebaBase() {
+  console.log("\n=== La migración (pareo_elo_frenar) ===");
+  const archivo = fs.readdirSync(path.join(RAIZ, "supabase/migraciones")).find((f) => /_pareo_elo_nacional\.sql$/.test(f));
+  ok(!!archivo, "existe una migración *_pareo_elo_nacional.sql");
+  const sql = leer("supabase/migraciones/" + archivo);
+  ok(/create or replace function public\.pareo_elo_frenar\(p_ip text\)/.test(sql), "existe pareo_elo_frenar(p_ip)");
+  ok(/security definer/.test(sql), "es security definer");
+  ok(/revoke all on function public\.pareo_elo_frenar\(text\) from public, anon, authenticated/.test(sql),
+    "nadie más que la service role puede llamarla");
+  ok(/return interno\.frenar_envio_publico\('formulario', 'pareo-elo-nacional', null, v_ip\)/.test(sql),
+    "al final usa el freno genérico de envíos públicos, sin correo");
+  ok(/ambito = 'pareo-elo-nacional' and ip = v_ip[\s\S]*?>= \d+ then/.test(sql), "tiene su propio tope por conexión");
+
+  console.log("\n=== La Edge Function (pareo-elo-nacional) ===");
+  const ts = leer("supabase/functions/pareo-elo-nacional/index.ts");
+  const frenoPos = ts.search(/admin\.rpc\("pareo_elo_frenar"/);
+  const buscarPos = ts.search(/await enTandas\(nombres/);
+  ok(frenoPos >= 0 && buscarPos > frenoPos, "llama al freno ANTES de salir a buscar en ajedrezcostarica.com");
+  ok(/if \(freno\) return json\(\{ ok: false, error: freno \}, 429\)/.test(ts), "si el freno contesta, no sigue (429)");
+  ok(/Access-Control-Allow-Origin": SITE_URL/.test(ts), "CORS fijo al sitio");
+  ok(/if \(vistos\.size > 1\) return .*estado: "ambiguo"/.test(ts), "más de un homónimo: «ambiguo», no elige cualquiera");
+  ok(/nombres\.length > MAX_JUGADORES/.test(ts), "la lista de nombres se acota");
+  ok(/from "\.\/ajedrezcostarica\.ts"/.test(ts), "reusa el lector compartido, no una copia propia");
+
+  console.log("\n=== funciones-armar.js sabe traerle su compartido ===");
+  const armar = leer("herramientas/funciones-armar.js");
+  ok(/"pareo-elo-nacional":\s*\["ajedrezcostarica\.ts"\]/.test(armar), "pareo-elo-nacional pide ajedrezcostarica.ts al armar");
+  ok(/"elo-fide":\s*\["ajedrezcostarica\.ts"\]/.test(armar), "elo-fide también, desde que se mudó");
+}
+
+/* ==================================================================
+   2 y 3. La página, en un navegador real
+   ================================================================== */
+async function abrir(browser) {
+  const ctx = await browser.newContext({ serviceWorkers: "block", viewport: { width: 1280, height: 1000 } });
+  const page = await ctx.newPage();
+  const errores = [];
+  const afuera = [];
+  page.on("pageerror", (e) => errores.push(String(e)));
+  page.on("request", (r) => { if (!r.url().startsWith(BASE) && !r.url().startsWith("data:") && !r.url().startsWith("blob:")) afuera.push(r.url()); });
+  await page.route("**/fonts.googleapis.com/**", (r) => r.fulfill({ status: 200, contentType: "text/css", body: "" }));
+  await page.route("**/fonts.gstatic.com/**", (r) => r.abort());
+  await page.goto(BASE + "/pareo.html", { waitUntil: "networkidle" });
+  // Las dos fichas (Jugadores) están ocultas hasta elegirlas desde «Partes del torneo».
+  await page.click('[data-ficha="jugadores"]');
+  return { ctx, page, errores, afuera };
+}
+const vis = (page, sel) => page.$eval(sel, (e) => e.checkVisibility()).catch(() => false);
+const texto = (page, sel) => page.textContent(sel).catch(() => null);
+
+async function docxDePrueba(page, filas) {
+  await page.addScriptTag({ path: path.join(RAIZ, "js/reporte-docx.js") });
+  const bytes = await page.evaluate(async (filas) => {
+    const blob = window.ReporteDOCX.generar({
+      titulo: "Lista de prueba",
+      bloques: [{ tipo: "tabla", encabezados: ["Nombre", "Institución"], filas: filas, anchos: [2, 2] }],
+    });
+    return Array.from(new Uint8Array(await blob.arrayBuffer()));
+  }, filas);
+  return Buffer.from(bytes);
+}
+
+async function pruebaSubirLista(browser) {
+  console.log("\n=== Subir una lista: .docx con tabla ===");
+  const { ctx, page, errores } = await abrir(browser);
+  const docx = await docxDePrueba(page, [["Pérez Solano, Ana", "Liceo de Prueba"], ["Mora Ruiz, Luis", "Colegio de Prueba"]]);
+  await page.setInputFiles("#pi-subir-lista", {
+    name: "lista.docx", mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document", buffer: docx,
+  });
+  await page.waitForFunction(() => document.getElementById("pi-cuenta").textContent === "2");
+  // La tabla ordena por el criterio de numeración (Elo, título, nombre), no
+  // por el orden de llegada: con los dos en 0, gana el orden alfabético.
+  igual("los dos nombres, con su institución", await page.$$eval("#pi-tabla-jugadores tbody tr", (trs) =>
+    trs.map((tr) => [tr.children[1].textContent, tr.children[2].textContent])),
+    [["Mora Ruiz, Luis", "Colegio de Prueba"], ["Pérez Solano, Ana", "Liceo de Prueba"]]);
+  await ctx.close();
+
+  console.log("\n=== Subir una lista: .csv con la cabecera en otro orden ===");
+  const { ctx: ctx2, page: page2 } = await abrir(browser);
+  const csv = "Institución;Nombre;Elo\nLiceo X;García Vega, Pedro;1800\n";
+  await page2.setInputFiles("#pi-subir-lista", { name: "lista.csv", mimeType: "text/csv", buffer: Buffer.from(csv, "utf8") });
+  await page2.waitForFunction(() => document.getElementById("pi-cuenta").textContent === "1");
+  igual("lee la cabecera por su etiqueta, no por su posición",
+    await page2.$$eval("#pi-tabla-jugadores tbody tr", (trs) => trs.map((tr) => [tr.children[1].textContent, tr.children[2].textContent, tr.children[4].textContent])),
+    [["García Vega, Pedro", "Liceo X", "1800"]]);
+  await ctx2.close();
+
+  console.log("\n=== Subir una lista: sin cabecera reconocible, orden fijo ===");
+  const { ctx: ctx3, page: page3 } = await abrir(browser);
+  const csv2 = "Jiménez Alfaro, Sofía;Escuela Z;1200\n";
+  await page3.setInputFiles("#pi-subir-lista", { name: "lista2.csv", mimeType: "text/csv", buffer: Buffer.from(csv2, "utf8") });
+  await page3.waitForFunction(() => document.getElementById("pi-cuenta").textContent === "1");
+  igual("cae al orden Nombre; Institución; Elo",
+    await page3.$$eval("#pi-tabla-jugadores tbody tr", (trs) => trs.map((tr) => [tr.children[1].textContent, tr.children[2].textContent, tr.children[4].textContent])),
+    [["Jiménez Alfaro, Sofía", "Escuela Z", "1200"]]);
+  await ctx3.close();
+}
+
+async function pruebaExportar(browser) {
+  console.log("\n=== Exportar jugadores (.csv) ===");
+  const { ctx, page, errores } = await abrir(browser);
+  await page.fill('#pi-form-jugador [name="nombre"]', "Angulo Cubero, Oscar");
+  await page.fill('#pi-form-jugador [name="institucion"]', "Academia de Prueba");
+  await page.click('#pi-form-jugador button[type="submit"]');
+  await page.waitForFunction(() => document.getElementById("pi-cuenta").textContent === "1");
+  // El botón vive en la ficha «Archivos», no en «Jugadores».
+  await page.click('[data-ficha="archivos"]');
+  const descarga = page.waitForEvent("download");
+  await page.click("#pi-bajar-jugadores");
+  const bajada = await descarga;
+  const ruta = await bajada.path();
+  const contenido = fs.readFileSync(ruta, "utf8");
+  ok(contenido.includes("Angulo Cubero, Oscar") && contenido.includes("Academia de Prueba"), "el .csv trae el nombre y la institución", contenido);
+  ok(errores.length === 0, "sin errores en la página", errores.join(" | "));
+  await ctx.close();
+}
+
+async function pruebaEloNacional(browser) {
+  console.log("\n=== Buscar Elo Nacional: la única llamada que sale del sitio ===");
+  const { ctx, page, errores, afuera } = await abrir(browser);
+  await page.fill('#pi-form-jugador [name="nombre"]', "Pérez Vargas, Juan");
+  await page.click('#pi-form-jugador button[type="submit"]');
+  await page.fill('#pi-form-jugador [name="nombre"]', "Rojas Mora, Ana");
+  await page.click('#pi-form-jugador button[type="submit"]');
+  await page.waitForFunction(() => document.getElementById("pi-cuenta").textContent === "2");
+
+  let pedido = null;
+  await page.route("https://bgtijpimpcokxatxxbki.supabase.co/functions/v1/pareo-elo-nacional", (r) => {
+    pedido = JSON.parse(r.request().postData() || "{}");
+    r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({
+      ok: true,
+      resultados: [
+        { nombre: "Pérez Vargas, Juan", estado: "encontrado", nacional: 1550, fideEstandar: null, fideId: "123" },
+        { nombre: "Rojas Mora, Ana", estado: "ambiguo", nacional: null, fideEstandar: null, fideId: null },
+      ],
+    }) });
+  });
+  await page.click("#pi-elo-nacional");
+  await page.waitForFunction(() => /\d/.test(document.querySelector(".avisos-mensaje")?.textContent || ""));
+
+  ok(!!pedido && Array.isArray(pedido.nombres) && pedido.nombres.length === 2, "manda los dos nombres, nada más", JSON.stringify(pedido));
+  igual("el primero queda con el Elo encontrado",
+    await page.$$eval("#pi-tabla-jugadores tbody tr", (trs) => trs.map((tr) => tr.children[4].textContent)),
+    ["1550", ""]);
+  ok(afuera.filter((u) => u.includes("pareo-elo-nacional")).length === 1, "una sola llamada afuera, y es esta", afuera.join(" | "));
+  ok(afuera.filter((u) => !u.includes("pareo-elo-nacional")).length === 0, "y ninguna otra petición salió del sitio", afuera.join(" | "));
+  ok(errores.length === 0, "sin errores en la página", errores.join(" | "));
+  await ctx.close();
+}
+
+(async () => {
+  pruebaBase();
+  const browser = await chromium.launch({ executablePath: fs.existsSync(CHROME) ? CHROME : undefined });
+  try {
+    await pruebaSubirLista(browser);
+    await pruebaExportar(browser);
+    await pruebaEloNacional(browser);
+  } finally {
+    await browser.close();
+  }
+  console.log(fallos ? "\n" + fallos + " comprobación(es) fallaron." : "\nTodo bien.");
+  process.exit(fallos ? 1 : 0);
+})();

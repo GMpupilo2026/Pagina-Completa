@@ -173,6 +173,7 @@
                     <h2 class="font-serif text-xl font-bold mb-4" data-t="agregarJugador">Agregar un jugador</h2>
                     <form id="pi-form-jugador" class="grid sm:grid-cols-6 gap-3" novalidate>
                         <label class="sm:col-span-3"><span class="block text-sm font-semibold mb-1" data-t="nombreJugador">Apellidos, nombre</span><input name="nombre" required maxlength="33" class="w-full rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 text-brand-800 dark:text-white px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400" autocomplete="off"></label>
+                        <label class="sm:col-span-3"><span class="block text-sm font-semibold mb-1" data-t="institucion">Institución</span><input name="institucion" maxlength="80" class="w-full rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 text-brand-800 dark:text-white px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400" autocomplete="off"></label>
                         <label><span class="block text-sm font-semibold mb-1">Elo FIDE</span><input name="elo" type="number" min="0" max="3500" inputmode="numeric" class="w-full rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 text-brand-800 dark:text-white px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></label>
                         <label><span class="block text-sm font-semibold mb-1" data-t="titulo">Título</span><select name="titulo" class="w-full rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 text-brand-800 dark:text-white px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><option value="">—</option><option>GM</option><option>IM</option><option>WGM</option><option>FM</option><option>WIM</option><option>CM</option><option>WFM</option><option>WCM</option></select></label>
                         <label><span class="block text-sm font-semibold mb-1" data-t="fed">Fed.</span><input name="fed" maxlength="3" class="w-full rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 text-brand-800 dark:text-white px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400" autocomplete="off"></label>
@@ -183,9 +184,15 @@
                     </form>
                     <details class="mt-4">
                         <summary class="cursor-pointer font-semibold text-sm rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400" data-t="pegarVarios">Pegar una lista de jugadores</summary>
-                        <p class="text-sm text-brand-600 dark:text-brand-300 mt-2" data-t="pegarAyuda">Uno por línea: Nombre; Elo; Título; Federación; ID FIDE. Sirve copiar las columnas de una hoja de cálculo (con tabuladores también).</p>
+                        <p class="text-sm text-brand-600 dark:text-brand-300 mt-2" data-t="pegarAyuda">Uno por línea: Nombre; Institución; Elo; Título; Federación; ID FIDE. Sirve copiar las columnas de una hoja de cálculo (con tabuladores también); lo que no tengas, se deja en blanco.</p>
                         <textarea id="pi-pegar" rows="5" class="w-full rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 text-brand-800 dark:text-white px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 mt-2 font-mono text-xs" aria-label="Lista de jugadores" data-t-aria="listaJugadores"></textarea>
                         <button type="button" id="pi-pegar-agregar" class="bg-brand-800 hover:bg-brand-900 dark:bg-brand-700 dark:hover:bg-brand-600 text-white font-semibold px-4 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 disabled:opacity-50 disabled:cursor-not-allowed mt-2" data-t="agregarLista">Agregar la lista</button>
+                    </details>
+                    <details class="mt-4">
+                        <summary class="cursor-pointer font-semibold text-sm rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400" data-t="subirLista">Subir una lista (Word o Excel)</summary>
+                        <p class="text-sm text-brand-600 dark:text-brand-300 mt-2" data-t="subirListaAyuda">Un .xlsx, .csv o .docx con una fila o un párrafo por jugador. Si la primera fila dice «Nombre», «Institución», «Elo»… se usa esa columna; si no, se lee en el mismo orden de arriba.</p>
+                        <label class="mt-2 inline-block border border-brand-300 dark:border-brand-600 text-brand-800 dark:text-white font-semibold px-4 py-2 rounded-lg text-sm hover:bg-brand-50 dark:hover:bg-brand-800 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 cursor-pointer focus-within:ring-2 focus-within:ring-accent-400"><span data-t="subirListaBoton">Elegir el archivo</span><input type="file" id="pi-subir-lista" accept=".xlsx,.csv,.docx" class="sr-only"></label>
+                        <p id="pi-subir-lista-estado" class="text-sm text-brand-600 dark:text-brand-300 mt-2" role="status" aria-live="polite"></p>
                     </details>
                 </div>
                 <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5">
@@ -195,6 +202,11 @@
                     </div>
                     <div class="overflow-x-auto"><table class="pi-tabla" id="pi-tabla-jugadores"></table></div>
                     <p id="pi-sin-jugadores" class="text-sm italic text-brand-600 dark:text-brand-300" data-t="sinJugadores">Todavía no hay nadie inscrito.</p>
+                    <div class="mt-4 pt-4 border-t border-brand-100 dark:border-brand-800">
+                        <button type="button" id="pi-elo-nacional" class="inline-block border border-brand-300 dark:border-brand-600 text-brand-800 dark:text-white font-semibold px-4 py-2 rounded-lg text-sm hover:bg-brand-50 dark:hover:bg-brand-800 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 disabled:opacity-50 disabled:cursor-not-allowed" data-t="buscarEloNacional">Buscar Elo Nacional de quien no tiene</button>
+                        <p class="text-sm text-brand-600 dark:text-brand-300 mt-2" data-t="eloNacionalAyuda">Es lo único de Pareo Integral que sale de tu computadora: se manda el nombre de cada jugador a nuestro servidor para buscarlo en ajedrezcostarica.com. No se guarda nada.</p>
+                        <p id="pi-elo-nacional-estado" class="text-sm mt-2" role="status" aria-live="polite"></p>
+                    </div>
                 </div>
             </section>
 
@@ -232,6 +244,7 @@
                     <div class="flex flex-wrap gap-2">
                         <button type="button" id="pi-bajar-trf" class="bg-brand-800 hover:bg-brand-900 dark:bg-brand-700 dark:hover:bg-brand-600 text-white font-semibold px-4 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 disabled:opacity-50 disabled:cursor-not-allowed" data-t="bajarTrf">Bajar el TRF para FIDE</button>
                         <button type="button" id="pi-bajar-json" class="inline-block border border-brand-300 dark:border-brand-600 text-brand-800 dark:text-white font-semibold px-4 py-2 rounded-lg text-sm hover:bg-brand-50 dark:hover:bg-brand-800 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400" data-t="bajarCopia">Bajar una copia (.json)</button>
+                        <button type="button" id="pi-bajar-jugadores" class="inline-block border border-brand-300 dark:border-brand-600 text-brand-800 dark:text-white font-semibold px-4 py-2 rounded-lg text-sm hover:bg-brand-50 dark:hover:bg-brand-800 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400" data-t="bajarJugadores">Exportar jugadores (.csv)</button>
                         <button type="button" id="pi-borrar" class="border border-red-700 text-red-700 dark:border-red-400 dark:text-red-300 font-semibold px-4 py-2 rounded-lg text-sm hover:bg-red-50 dark:hover:bg-red-950 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400" data-t="borrarTorneo">Borrar este torneo</button>
                     </div>
                     <p class="text-sm text-brand-600 dark:text-brand-300 mt-3" data-t="trfAyuda">El TRF es el archivo que FIDE pide para el informe de Elo, y el que leen los demás programas de emparejamiento.</p>
@@ -293,6 +306,10 @@
     <script src="js/pareo/desempates.js"></script>
     <script src="js/pareo/motor.js"></script>
     <script src="js/pareo/textos.js"></script>
+    <script src="js/csv-excel.js"></script>
+    <script src="js/reporte-excel.js"></script>
+    <script src="js/reporte-textos.js"></script>
+    <script src="js/pareo/elo-nacional.js"></script>
     <script src="js/pareo/pagina.js"></script>
 </body>
 </html>

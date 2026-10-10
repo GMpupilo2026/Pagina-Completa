@@ -16,6 +16,10 @@
  * lenguaje, con su credencial y su costo, y acá no hay ninguno. Lo que queda en
  * el informe son las palabras de quien dio la clase, ordenadas y puestas donde
  * corresponde — no una versión inventada de ellas.
+ *
+ * `tablaDeDocx`/`filasDeDocx` leen además la PRIMERA TABLA de un .docx como
+ * filas de celdas (o, si no hay tabla, una fila por párrafo): lo usa Pareo
+ * Integral para subir una lista de jugadores desde Word.
  */
 window.ReporteTextos = (function () {
   "use strict";
@@ -48,6 +52,45 @@ window.ReporteTextos = (function () {
       throw new Error("Los .doc viejos no se pueden leer acá. Guárdalo como .docx o como texto.");
     }
     return (await archivo.text()).replace(/\r\n/g, "\n");
+  }
+
+  /* ------------------------------------------------- tablas de un .docx */
+
+  /* La PRIMERA tabla del documento, como filas de celdas de texto (igual que
+     ReporteExcel.leer): <w:tbl> → <w:tr> → <w:tc>, con sus <w:t> pegados. Una
+     celda con varios párrafos (negrita, un salto de línea) los junta con un
+     espacio. No entiende tablas anidadas: una celda que tenga otra tabla
+     adentro trae el texto de las dos mezclado, que para una lista de
+     jugadores no pasa. Usado por Pareo Integral para subir una lista desde
+     Word (js/pareo/pagina.js). */
+  async function tablaDeDocx(archivo) {
+    const zip = await window.ReporteExcel.abrirZip(await archivo.arrayBuffer());
+    const xml = await zip.texto("word/document.xml");
+    if (!xml) throw new Error("El documento de Word no trae contenido legible.");
+    const tbl = xml.match(/<w:tbl[ >][\s\S]*?<\/w:tbl>/);
+    if (!tbl) return null;
+    const filas = [];
+    for (const tr of tbl[0].matchAll(/<w:tr[ >][\s\S]*?<\/w:tr>/g)) {
+      const celdas = [];
+      for (const tc of tr[0].matchAll(/<w:tc[ >][\s\S]*?<\/w:tc>/g)) {
+        const texto = (tc[0].match(/<w:t[^>]*>([\s\S]*?)<\/w:t>/g) || [])
+          .map((t) => desescapar(t.replace(/<[^>]+>/g, ""))).join("");
+        celdas.push(texto.trim());
+      }
+      if (celdas.some((c) => c)) filas.push(celdas);
+    }
+    return filas;
+  }
+
+  /* Filas de un .docx para una lista (Pareo Integral): la primera tabla si
+     trae una, o si no una fila por párrafo no vacío, cada una cortada por
+     tabulador o punto y coma —igual que «Pegar una lista»—. Nunca null: sin
+     nada que leer, devuelve una lista vacía. */
+  async function filasDeDocx(archivo) {
+    const tabla = await tablaDeDocx(archivo);
+    if (tabla && tabla.length) return tabla;
+    const texto = await textoDeDocx(archivo);
+    return texto.split("\n").map((l) => l.trim()).filter(Boolean).map((l) => l.split(/\t|;/).map((x) => x.trim()));
   }
 
   /* -------------------------------------------------------- cortar por clase */
@@ -132,6 +175,8 @@ window.ReporteTextos = (function () {
 
   return {
     leer: leer,
+    tablaDeDocx: tablaDeDocx,
+    filasDeDocx: filasDeDocx,
     _enSecciones: enSecciones,
     _fechaAlInicio: fechaAlInicio,
     _textoDeDocx: textoDeDocx,

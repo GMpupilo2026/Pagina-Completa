@@ -1,9 +1,14 @@
 // Leer el Elo de las dos páginas públicas, sin red: solo el HTML que llegó.
 //
-// Vive aparte de index.ts para que `herramientas/verificar-elo-fide.js` lo
-// pruebe con Node contra páginas guardadas, sin Deno ni red. Si mañana la FIDE
-// o ajedrezcostarica.com cambian su HTML, esto devuelve null (nunca un número
-// inventado) y el verificador es el que avisa con qué formato se contaba.
+// Compartido por dos Edge Functions —`elo-fide` (el Elo de una persona, con
+// su código FIDE) y `pareo-elo-nacional` (el de una lista de nombres, para
+// Pareo Integral)— así que vive en `_compartido/` y cada una se lo trae con
+// `node herramientas/funciones-armar.js` al desplegar (ver su cabecera). Vive
+// aparte de cada index.ts, además, para que `herramientas/verificar-elo-fide.js`
+// lo pruebe con Node contra páginas guardadas, sin Deno ni red. Si mañana la
+// FIDE o ajedrezcostarica.com cambian su HTML, esto devuelve null (nunca un
+// número inventado) y el verificador es el que avisa con qué formato se
+// contaba.
 
 export type FichaFide = { nombre: string | null; estandar: number | null };
 export type FilaNacional = { fideId: string; nombre: string; nacional: number | null; fideEstandar: number | null };

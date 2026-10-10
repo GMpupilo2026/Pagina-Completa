@@ -1823,6 +1823,86 @@ nada salga del sitio. Está probado que fallan de verdad: con los colores de una
 ronda al revés en el TRF salta `pareo`, y sin guardar después de emparejar,
 `pareo-pagina`.
 
+### Institución, subir una lista y el Elo Nacional
+
+Lo pidió el dueño del sitio: cada jugador puede llevar su **institución**
+(colegio, club), se puede **subir una lista desde Word o Excel** en vez de
+pegarla a mano, y Pareo Integral puede **buscar el Elo Nacional** de quien no
+lo tenga.
+
+- **`institucion` es un campo más del jugador**, igual que `nombre` o `fed`:
+  en el formulario de alta, en «Pegar una lista» (ahora Nombre; Institución;
+  Elo; Título; Federación; ID FIDE —se corrió un lugar—), al editar, en la
+  tabla de inscritos y en el `.json` del torneo. **No va al TRF**: revisado
+  artículo por artículo, el TRF-16 de FIDE no tiene una columna de club o
+  institución por jugador (`js/pareo/torneo.js:aTrf()`/`deTrf()` no la
+  nombran), así que meterla ahí sería una extensión que FIDE no pide y que
+  ningún otro programa sabría leer. Vive solo en Pareo Integral.
+- **Subir una lista** (`pi-subir-lista` en «Agregar un jugador») lee `.xlsx`
+  y `.csv` con `js/reporte-excel.js` (`ReporteExcel.leer`, el mismo lector de
+  hojas sin librería que ya usan los informes) y `.docx` con
+  `js/reporte-textos.js` (`filasDeDocx`, nuevo: lee la PRIMERA TABLA del
+  documento como filas de celdas —`<w:tbl>` → `<w:tr>` → `<w:tc>`— y, si el
+  documento no trae tabla, una fila por párrafo). **La cabecera se reconoce
+  por su etiqueta, no por su posición**: si la primera fila dice «Nombre»,
+  «Institución», «Elo»… (en español o en inglés, sin mirar tildes ni
+  mayúsculas) esa es la columna, en cualquier orden; si no reconoce ninguna
+  columna de nombre, se lee en el orden fijo de siempre
+  (`js/pareo/pagina.js:ORDEN_LISTA`). El diccionario de etiquetas
+  (`SINONIMOS_COLUMNA`) es una tabla de `"etiqueta": "campo"`, no una lista
+  de arrays de dos elementos: esa forma exacta —dos cadenas entre
+  corchetes— es justo el patrón con el que `verificar-pareo-pagina.js`
+  reconoce una lista de opciones que necesita traducción, y esta tabla no lo
+  es; se armó así para no hacerle creer al verificador que faltaba traducir
+  «rating» o «title».
+- **Exportar jugadores** (ficha Archivos, «Exportar jugadores (.csv)») reusa
+  `js/csv-excel.js` (`CsvExcel.bajar`, el mismo CSV con punto y coma, BOM y
+  el escape de fórmulas que ya usan Formularios y Cobros) en vez de escribir
+  un generador de `.xlsx` de verdad: no hay uno en el sitio y no hacía falta
+  —un CSV abre igual en Excel con un doble clic—.
+- **Buscar el Elo Nacional es la ÚNICA cosa de Pareo Integral que sale de la
+  computadora de quien organiza**, y la página lo dice con esas palabras
+  junto al botón. Todo lo demás —el torneo, los jugadores, los archivos que
+  baja— se queda en el navegador a propósito (ver el comentario de cabecera
+  de `js/pareo/pagina.js`); esta excepción es necesaria porque
+  ajedrezcostarica.com/es/national-rating no manda CORS, así que el
+  navegador no puede leerla directo. Se manda **solo el nombre** de cada
+  jugador sin Elo —nada de institución, fecha de nacimiento ni ningún otro
+  dato— a la Edge Function **`pareo-elo-nacional`** (`verify_jwt` en false:
+  no hay cuenta que comprobar), que la busca por nombre (no hay código FIDE
+  confiable para un jugador escolar) y **nunca adivina un homónimo**: si la
+  búsqueda trae más de una persona con el mismo nombre normalizado
+  (sin tildes, sin importar el orden de apellidos y nombre), contesta
+  «ambiguo» en vez de elegir cualquiera. No hay tabla ni bitácora propia: no
+  se guarda qué se buscó ni quién lo buscó, solo el freno de los envíos
+  públicos antes de salir a buscar (`pareo_elo_frenar`, mismo patrón que
+  `jde_frenar` y `jdn_frenar`, pero solo por IP —Pareo Integral no pide
+  ningún otro dato—). Tope por pedido: 40 jugadores (`js/pareo/pagina.js:
+  TOPE_BUSQUEDA_ELO`, el mismo que exige la función); con más, hay que volver
+  a tocar el botón para el resto.
+- **El lector de ajedrezcostarica.com ya existía y se compartió, no se
+  copió**: `leerListaNacional`/`busquedasPorNombre` vivían en
+  `supabase/functions/elo-fide/leer-elo.ts` (el Elo de un alumno, por su
+  código FIDE, para el informe a la casa). Se mudaron a
+  `supabase/functions/_compartido/ajedrezcostarica.ts` y las dos funciones
+  —`elo-fide` y `pareo-elo-nacional`— se lo traen con
+  `node herramientas/funciones-armar.js` al desplegar; `elo-fide` sigue
+  haciendo exactamente lo mismo que antes, solo cambió de dónde importa.
+  `herramientas/verificar-elo-fide.js` sigue probando ese archivo (ahora en
+  su nueva dirección) sin red ni Deno.
+
+**Al tocar la institución, la subida de listas o el Elo Nacional, correr
+`node herramientas/verificar-pareo-institucion.js`** (con el sitio en
+localhost:8777 y playwright para la parte de la página; sin navegador para
+la migración y la Edge Function). Comprueba el freno y el candado de
+`pareo-elo-nacional` leídos de la migración y de `index.ts`, el lector de
+tablas de un `.docx` armado a mano (con y sin cabecera reconocible, con una
+tabla y con un párrafo por línea), el mapeo de columnas por etiqueta, la
+exportación a CSV y, en la página, que subir un archivo agregue a los
+jugadores con su institución, que el botón de Elo Nacional sea la única
+llamada que sale del sitio y que no adivine un homónimo. Rompiendo a
+propósito el freno o la comparación de nombres, salta.
+
 ## Ajedrez estudiantil en Costa Rica: los torneos de chess-results
 
 `ajedrez-estudiantil.html` es una página pública con la participación en los
