@@ -2,8 +2,9 @@
    con un doble de Supabase (js/supabase-client.js interceptado) y torneos
    inventados:
 
-   - sin licencia muestra el candado y no pide los resultados;
-   - con licencia lee jdn_resultados de mil en mil (hay 1100 filas de un solo
+   - por ahora es gratis y pública: sin sesión ni licencia se ve entera, no
+     manda al login y no le pregunta la licencia a la base;
+   - lee jdn_resultados de mil en mil (hay 1100 filas de un solo
      torneo: si la página se quedara con el primer pedido, faltarían 100);
    - junta las variantes del comité («CCDR Goicochea», «Goico», «Goicoechea A»)
      y el medallero ordena por oros, platas y bronces;
@@ -19,7 +20,7 @@
 
    Uso:  node herramientas/verificar-jdn-comites.js   (con el sitio en el 8777) */
 "use strict";
-const { chromium } = require("./lib/playwright-con-sesion");
+const { chromium } = require("playwright");
 
 const BASE = process.env.BASE_URL || "http://localhost:8777";
 let fallos = 0;
@@ -46,13 +47,12 @@ fila("2026-F", "C-U12-IA", 4, 4, "Perez Mora, Leo", "CCDR Belen", 0);
 fila("2026-F", "C-U12-EA", 1, 1, "CCDR Goicoechea A", "", 10, "3-0-0");
 fila("2026-F", "C-U12-EA", 2, 2, "CODEA B", "", 8, "2-0-1");
 
-function doble(tieneLicencia) {
+function doble() {
     return `
 window.SUPABASE_URL = "https://falso.supabase.co";
 window.SUPABASE_ANON_KEY = "anon-falsa";
 (function () {
   const FILAS = ${JSON.stringify(FILAS)};
-  const LICENCIA = ${tieneLicencia ? "true" : "false"};
   window.__pedidos = [];
   function respuesta(data, error) { return Promise.resolve({ data, error: error || null }); }
   function consulta(tabla) {
@@ -63,8 +63,8 @@ window.SUPABASE_ANON_KEY = "anon-falsa";
       let data = [];
       if (tabla === "jdn_resultados") {
         window.__pedidos.push("jdn_resultados " + q._desde);
-        // Como PostgREST: nunca más de mil por pedido, y sin licencia, nada.
-        data = LICENCIA ? FILAS.slice(q._desde, Math.min(q._hasta + 1, q._desde + 1000)) : [];
+        // Como PostgREST: nunca más de mil por pedido.
+        data = FILAS.slice(q._desde, Math.min(q._hasta + 1, q._desde + 1000));
       }
       if (tabla === "profiles") data = { id: "yo", is_admin: false, role: "profesor" };
       return Promise.resolve({ data, error: null }).then(ok, mal);
@@ -73,14 +73,13 @@ window.SUPABASE_ANON_KEY = "anon-falsa";
   }
   window.sb = {
     auth: {
-      getSession: () => respuesta({ session: { user: { id: "yo" }, access_token: "x" } }),
+      getSession: () => respuesta({ session: null }),
       getUser: () => respuesta({ user: { id: "yo" } }),
       onAuthStateChange: () => ({ data: { subscription: { unsubscribe() {} } } }),
       mfa: { getAuthenticatorAssuranceLevel: () => respuesta({ currentLevel: "aal1", nextLevel: "aal1" }), listFactors: () => respuesta({ all: [], totp: [] }) },
     },
     rpc: (nombre, args) => {
       window.__pedidos.push(nombre);
-      if (nombre === "tengo_herramienta") return respuesta(LICENCIA && args.p_herramienta === "jdn-comites");
       return respuesta(null);
     },
     from: (t) => consulta(t),
@@ -92,9 +91,9 @@ window.SUPABASE_ANON_KEY = "anon-falsa";
 })();`;
 }
 
-async function abrir(browser, ruta, licencia) {
+async function abrir(browser, ruta) {
     const ctx = await browser.newContext({ serviceWorkers: "block" });
-    await ctx.route("**/js/supabase-client.js", (r) => r.fulfill({ contentType: "application/javascript", body: doble(licencia) }));
+    await ctx.route("**/js/supabase-client.js", (r) => r.fulfill({ contentType: "application/javascript", body: doble() }));
     await ctx.route("**/js/vendor/supabase.js", (r) => r.fulfill({ contentType: "application/javascript", body: "" }));
     await ctx.route(/supabase\.co|sentry|googletagmanager/, (r) => r.abort());
     const p = await ctx.newPage();
@@ -108,15 +107,16 @@ const medallero = (p) => p.$$eval("#medallero tbody tr", (trs) => trs.map((t) =>
 (async () => {
     const browser = await chromium.launch();
 
-    console.log("\n=== Sin licencia ===");
-    let { ctx, p } = await abrir(browser, "jdn-comites.html", false);
+    console.log("\n=== Gratis, sin sesión ni licencia ===");
+    let { ctx, p } = await abrir(browser, "jdn-comites.html");
     await p.waitForFunction(() => !document.getElementById("loading").checkVisibility());
-    igual("se ve el candado y no la herramienta", [await visible(p, "#denegado"), await visible(p, "#app")], [true, false]);
-    igual("no pide los resultados", await p.evaluate(() => window.__pedidos.filter((x) => x.startsWith("jdn_resultados")).length), 0);
+    igual("se ve la herramienta, sin candado y sin mandar al login",
+        [await visible(p, "#app"), await p.$("#denegado") === null, new URL(p.url()).pathname], [true, true, "/jdn-comites.html"]);
+    igual("no le pregunta la licencia a la base", await p.evaluate(() => window.__pedidos.includes("tengo_herramienta")), false);
     await ctx.close();
 
-    console.log("\n=== Con licencia: el medallero ===");
-    ({ ctx, p } = await abrir(browser, "jdn-comites.html", true));
+    console.log("\n=== El medallero ===");
+    ({ ctx, p } = await abrir(browser, "jdn-comites.html"));
     await p.waitForFunction(() => document.getElementById("app").checkVisibility());
     igual("lee de mil en mil hasta el final", await p.evaluate(() => window.__pedidos.filter((x) => x.startsWith("jdn_resultados"))),
         ["jdn_resultados 0", "jdn_resultados 1000"]);
@@ -160,7 +160,7 @@ const medallero = (p) => p.$$eval("#medallero tbody tr", (trs) => trs.map((t) =>
     await ctx.close();
 
     console.log("\n=== El enlace abre lo mismo ===");
-    ({ ctx, p } = await abrir(browser, "jdn-comites.html#belen~2026-F", true));
+    ({ ctx, p } = await abrir(browser, "jdn-comites.html#belen~2026-F"));
     await p.waitForFunction(() => document.getElementById("ficha").checkVisibility());
     igual("abre la ficha de Belén en la final 2026", [await p.$eval("#comite", (s) => s.value), await p.$eval("#edicion", (s) => s.value)], ["belen", "2026-F"]);
     igual("el empate de Rojas comparte la plata",

@@ -11,7 +11,7 @@ Costa Rica: los torneos de chess-results»).
 La fuente es herramientas/datos/ajedrez-estudiantil-torneos.csv: un torneo por
 fila, ya clasificado. Este script no la vuelve a armar: la pone al día
 herramientas/ajedrez-estudiantil-actualizar.py, que corre en GitHub Actions
-cada seis horas. Este solo la pasa a lo que pide la página, sin el
+cuando se pide. Este solo la pasa a lo que pide la página, sin el
 organizador (a veces es el nombre de una persona y la página no lo usa) y con
 las columnas que la página filtra.
 

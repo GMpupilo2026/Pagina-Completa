@@ -1,7 +1,8 @@
 # Pone al día ajedrez-estudiantil.html con lo que se publica en chess-results.
 #
-# Cada seis horas revisa los 250 torneos de Costa Rica tocados más
-# recientemente en chess-results (herramientas/ajedrez-estudiantil-actualizar.py):
+# Cuando se pide (Actions → «Ajedrez estudiantil» → Run workflow, o
+# `gh workflow run ajedrez-estudiantil.yml`) revisa los 250 torneos de Costa
+# Rica tocados más recientemente en chess-results (herramientas/ajedrez-estudiantil-actualizar.py):
 # suma los de los juegos estudiantiles que sean nuevos y pone al día los
 # inscritos de los que ya estaban. Después lee la clasificación de los torneos
 # nuevos o que cambiaron (herramientas/ajedrez-estudiantil-jugadores.py), para
@@ -22,9 +23,9 @@
 # chess-results» en docs/decisiones/juegos-y-torneos.md.
 name: Ajedrez estudiantil
 
+# Ya no corre solo cada seis horas: el dueño pidió ponerlo al día cuando él
+# lo indique (ver «Se pone al día cuando se pide» en juegos-y-torneos.md).
 on:
-  schedule:
-    - cron: "41 */6 * * *"   # cada seis horas, a los 41 minutos (UTC)
   workflow_dispatch:
 
 permissions:

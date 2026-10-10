@@ -58,6 +58,7 @@
             corto: "Resultados JDN",
             href: "jdn-comites.html",
             disponible: true,
+            gratis: true,
             resumen: "Todos los torneos de ajedrez de los Juegos Deportivos Nacionales que están en chess-results, eliminatorias y finales desde 2018, ordenados por comité de deportes.",
             puntos: [
                 "El medallero de las finales, de todas juntas o de una edición, con individual y equipos.",
@@ -79,7 +80,7 @@
                 "Las etapas institucional o circuital, regional, interregional y nacional, y la internacional (CODICADER).",
                 "Filtros por región y por categoría (A a E) que cambian toda la página; el enlace guarda la vista para compartirla.",
                 "La lista de los torneos con su enlace a chess-results, con buscador.",
-                "Se pone al día sola: revisa chess-results cada seis horas y suma los torneos nuevos.",
+                "Se pone al día con chess-results de vez en cuando y suma los torneos nuevos.",
             ],
         },
         {
@@ -95,7 +96,7 @@
                 "Su camino por las etapas, año por año: institucional, regional, interregional y nacional.",
                 "Cada torneo con su categoría, su institución, el puesto entre cuántos, los puntos y el Elo publicado, con el enlace a chess-results.",
                 "El enlace guarda al jugador, para mandárselo a la familia o al profesor.",
-                "Se pone al día sola con cada torneo nuevo que se publica.",
+                "Se pone al día de vez en cuando con los torneos nuevos que se publican.",
             ],
         },
         {
@@ -111,7 +112,7 @@
                 "Filtros por región, categoría y año; la tabla se ordena por cualquier columna.",
                 "El detalle de cada institución: año por año, sus estudiantes que llegaron más lejos y sus podios.",
                 "La comparación de las regiones: instituciones, estudiantes, finalistas y podios nacionales.",
-                "Sale de las clasificaciones publicadas en chess-results y se pone al día sola.",
+                "Sale de las clasificaciones publicadas en chess-results y se pone al día de vez en cuando.",
             ],
         },
         {

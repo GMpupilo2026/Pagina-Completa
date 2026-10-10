@@ -2128,9 +2128,13 @@ los internacionales (CODICADER y escolares de la federación). Se enlaza desde
     empezaron a publicar (la historia de la frase de arriba). El rango va del
     primer torneo (CODICADER 2009) al último, y sale de los datos: un año nuevo
     entra solo.
-- **Se pone al día sola, cada seis horas**
-  (`.github/workflows/ajedrez-estudiantil.yml`). Chess-results no avisa cuando
-  se publica algo, así que se revisa: `herramientas/ajedrez-estudiantil-actualizar.py`
+- **Se pone al día cuando se pide** (`.github/workflows/ajedrez-estudiantil.yml`,
+  solo con `workflow_dispatch`: Actions → «Ajedrez estudiantil» → Run
+  workflow, o `gh workflow run ajedrez-estudiantil.yml`). Corría solo cada
+  seis horas; el 10/10/2026 el dueño pidió que no, que se haga cuando él lo
+  indique, y se le quitó el `schedule`. Lo mismo vale para el historial de un
+  jugador y las estadísticas por colegio, que salen del mismo flujo.
+  Chess-results no avisa cuando se publica algo, así que se revisa: `herramientas/ajedrez-estudiantil-actualizar.py`
   hace UNA búsqueda, los 250 torneos de Costa Rica tocados más recientemente
   (orden «Última actualización»), que trae fechas, lugar, rondas e inscritos
   de cada uno. Un torneo que ya estaba se pone al día (inscritos, rondas,
@@ -2150,7 +2154,7 @@ los internacionales (CODICADER y escolares de la federación). Se enlaza desde
   and approve pull requests»); sin eso, el paso de abrir el PR falla y GitHub
   avisa por correo. La fecha que dice la página
   (`herramientas/datos/ajedrez-estudiantil-actualizado.txt`) cambia solo
-  cuando hubo algo nuevo, para no abrir un PR cada seis horas por nada.
+  cuando hubo algo nuevo, para no abrir un PR por nada.
 - **Las reglas son una sola copia** (`ajedrez_estudiantil_reglas.py`), y
   `verificar-ajedrez-estudiantil-reglas.py` comprueba que clasifiquen los
   torneos guardados exactamente como están: una regla que cambie desordenaría
@@ -2229,7 +2233,7 @@ la vitrina de Herramientas con `gratis: true`.
   `art=1` (puesto, nombre, Elo, «Club/Ciudad» y puntos); en uno por equipos,
   `art=0` (la clasificación de los equipos) y `art=16` (los jugadores con su
   equipo; no `art=4`, que trae solo a quien jugó: ver «Herramientas de
-  arbitraje»). Lo corre el mismo flujo de cada seis horas, después del
+  arbitraje»). Lo corre el mismo flujo (cuando se pide), después del
   actualizador, con un tope de 100 torneos por vuelta y un segundo entre
   pedido y pedido. Relee lo que cambió de inscritos o de rondas y lo que no
   había terminado si empezó hace menos de 60 días. La primera lectura completa
@@ -2317,10 +2321,10 @@ una **licencia** que genera quien administra en `licencias.html` (lo pidió el
 dueño del sitio: las herramientas se venden). La lista de herramientas vive en
 `js/herramientas-arbitraje.js` (la usan la vitrina y la administración); una
 con `disponible: false` sale como «Próximamente», sin enlace. Hoy están
-abiertas con licencia la **selección por parámetros** (`seleccion-codicader.html`),
-los **desempates explicados** (`desempates.html`, ver «Desempates explicados») y
-los **resultados JDN por comité** (`jdn-comites.html`, ver «Resultados JDN por
-comité»).
+abiertas con licencia la **selección por parámetros** (`seleccion-codicader.html`)
+y los **desempates explicados** (`desempates.html`, ver «Desempates explicados»).
+Los **resultados JDN por comité** (`jdn-comites.html`, ver «Resultados JDN por
+comité») son, por ahora, gratis.
 **Pareo Integral** (`pareo.html`, ver «Pareo Integral») está en la vitrina con
 `gratis: true`: el dueño lo pidió público y para quien lo necesite, así que sale
 abierto para todos, sin sesión ni candado, con «Abrir» y «Manual de uso»; la
@@ -2615,8 +2619,7 @@ reclamos de tablas desde el PGN— no comparten nada de código con esta.
 
 ## Resultados JDN por comité
 
-`jdn-comites.html` es una de las herramientas con licencia (`id: "jdn-comites"`
-en `js/herramientas-arbitraje.js`). Junta los 216
+`jdn-comites.html` (`id: "jdn-comites"` en `js/herramientas-arbitraje.js`) junta los 216
 torneos de ajedrez de los Juegos Deportivos Nacionales que están en
 chess-results —eliminatorias 2018, 2021, 2022, 2024 y 2025; finales 2019,
 2022-2023, 2024 y 2026— y los ordena **por comité de deportes**: lo pidió el
@@ -2627,10 +2630,21 @@ elegido (`#comite~edicion`).
 
 - **Los datos están en la base, no en la página** (`jdn_resultados`, migración
   `20261009021548`): una fila por puesto, con el nombre y el comité tal como
-  los escribió chess-results. **El candado es la RLS**: la única política es de
-  lectura y pregunta `(select tengo_herramienta('jdn-comites'))`; sin licencia
-  la tabla no devuelve nada, aunque se pida desde la consola. No hay política
-  de escritura.
+  los escribió chess-results. No hay política de escritura.
+- **Por ahora es gratis y sin cuenta** (lo pidió el dueño el 10/10/2026: «que
+  no tenga licencia por ahora»). Se armó con licencia: la política
+  `jdn_resultados_con_herramienta` pregunta `(select tengo_herramienta('jdn-comites'))`.
+  La migración `20261010191238` le sumó `jdn_resultados_lectura_publica`
+  (`using (true)`, para `anon` y `authenticated`) y el `select` a `anon`; como
+  las políticas permisivas se suman, con esa basta, y la de licencia quedó ahí
+  sin borrar. La página pasó a ser pública, como «Ajedrez estudiantil» (el
+  encabezado de las páginas públicas, en el sitemap, fuera de `PAGINAS` de
+  `academia-cabecera.py`), y en la vitrina lleva `gratis: true`.
+  **Para volver a cobrarla**: borrar `jdn_resultados_lectura_publica`,
+  quitarle el `select` a `anon`, quitar `gratis: true`, devolver la página a
+  la Academia (de vuelta en `PAGINAS` y `NOMBRE_Y_PADRE`, con su `#denegado` y
+  `tengo_herramienta()` en `js/jdn-comites.js`; está en el historial, PR #805)
+  y sacarla del sitemap.
 - **Se llena desde la base** con `herramientas/jdn-comites/cargar.sql`: desde
   una sesión de Claude Code no hay salida a chess-results, así que las páginas
   se piden con `pg_net` (`art=1` de cada torneo y `art=46`, la tabla final, de
@@ -2669,8 +2683,8 @@ elegido (`#comite~edicion`).
   finales 2018 y 2021, la eliminatoria 2018 de U12, y cuatro eliminatorias por
   equipos de 2024. La página lo dice en «De dónde salen los datos».
 
-`verificar-jdn-comites.js` lo prueba con un doble de Supabase: el candado sin
-licencia (y que no pida la tabla), la lectura de mil en mil (con 1100 filas de
+`verificar-jdn-comites.js` lo prueba con un doble de Supabase: que sin sesión
+ni licencia se vea entera (sin mandar al login ni preguntar la licencia), la lectura de mil en mil (con 1100 filas de
 un solo torneo), las variantes juntas y el orden del medallero, el empate que
 comparte la plata, el comité deducido, la medalla escrita, «Jugó la final», el
 filtro de edición y el enlace. Rompiendo a propósito la paginación, el empate o

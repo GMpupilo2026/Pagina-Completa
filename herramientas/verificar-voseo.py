@@ -205,7 +205,7 @@ def archivos():
             # Los nombres de los jugadores y de los colegios de los juegos
             # estudiantiles, como los publicó chess-results (los arma
             # herramientas/ajedrez-estudiantil.py): Solís, Tomás, Sarchí… Crece
-            # solo cada seis horas, así que un nombre nuevo con tilde
+            # con cada puesta al día, así que un nombre nuevo con tilde
             # rompería el PR automático sin que nadie haya escrito nada.
             and f != os.path.join("data", "ajedrez-estudiantil-jugadores.json")]
 

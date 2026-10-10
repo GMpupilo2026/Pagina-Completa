@@ -558,7 +558,7 @@
     // El rango va de los primeros torneos (CODICADER 2009) a los últimos.
     const todos = torneos.map((t) => t.anio);
     PRIMER = Math.min(...todos); ULTIMO = Math.max(...todos);
-    texto("ae-consulta", "Los datos se revisan en chess-results cada seis horas; la última novedad es del " + window.HoraCR.fecha(datos.actualizado, { day: "numeric", month: "long", year: "numeric" }) + ".");
+    texto("ae-consulta", "La última vez que se sumó algo de chess-results fue el " + window.HoraCR.fecha(datos.actualizado, { day: "numeric", month: "long", year: "numeric" }) + ".");
 
     REGIONES = [...new Set(torneos.map((t) => t.region).filter(Boolean))].sort((a, b) => a.localeCompare(b, "es"));
     panelRegiones();
