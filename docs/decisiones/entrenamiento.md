@@ -3767,3 +3767,35 @@ enroques de B saltan las 3 que corresponden.
 - Lo prueba `verificar-tu-mes.js`, con el reloj del navegador fijo (en hora de
   Costa Rica: el 4 a las 8 p. m., en UTC ya es el 5). Dejando que el aviso
   salga todo el mes, o abriendo un mes del futuro, salta.
+
+## En el 4×4, volver a los que ya hiciste
+
+El 4×4 abría siempre el primer ejercicio sin resolver y, con el nivel
+completo, no dejaba volver a ninguno: quien quería repasar uno, o repetir el
+que le gustó, no tenía cómo. Ahora, debajo del ejercicio, **«Tus ejercicios»**:
+
+- **Cuántos llevas** en el nivel y cuál te toca.
+- **Volver a uno ya resuelto**: «Ir al ejercicio número», la lista plegada de
+  resueltos del nivel (se pinta solo abierta: con el nivel entero son
+  doscientos botones) y «Ir al que te toca». Lo que todavía no se abrió sigue
+  cerrado (se abre al resolver el anterior, `isUnlocked`) y se dice cuál toca.
+  `showCategory(cat, pedido)` abre ese índice aunque ya esté resuelto o el
+  nivel entero lo esté; con el nivel completo la sección también está.
+- **Favoritos**: «Favorito» (`aria-pressed`) marca el ejercicio en pantalla, y
+  la lista de favoritos lleva a cualquiera, de cualquier nivel. Se guardan en
+  `entreno_4x4_favoritos_v1` y viajan con la cuenta (`progreso-usuario.js`,
+  `ultimaEscritura`, como las favoritas del panel: una unión no dejaría
+  quitar ninguno).
+- **Escribiendo**, en el recuadro del Modo Adaptado: «resueltos» (cuáles, en
+  tramos: «del 1 al 37 y 40»), «ir al 12», «intermedio 3», «el que toca»,
+  «favorito» (marca o quita el de ahora), «favoritos» (la lista numerada) y
+  «favorito 1» (abre el primero). Con la cuenta ciega el foco no sale del
+  recuadro; en Modo Adaptado va a «Piezas», como con «siguiente».
+
+Los niveles de arriba (Fácil, Intermedio…) dicen cuál está elegido con
+`aria-pressed`: llevaban `aria-selected`, que fuera de un `tablist` el lector
+ignora.
+
+Lo mide `verificar-4x4-repaso.js` (con 3 resueltos, los favoritos, la cuenta
+ciega y el nivel completo). Probado que falla: si `showCategory` no abre el
+pedido y no se mira si está abierto, saltan dos.

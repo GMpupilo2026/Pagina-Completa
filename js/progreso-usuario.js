@@ -201,6 +201,10 @@ window.ProgresoUsuario = (function () {
        o el modo adaptado. Gana la última que eligió. Ver «Tus favoritas» en
        docs/decisiones/paneles.md. */
     { clave: "panel_favoritas_v1",               fusion: "ultimaEscritura" },
+    /* Los favoritos del 4×4: se marcan y se quitan, así que gana la última
+       que eligió (una unión no dejaría quitar ninguno). Ver «En el 4×4, volver
+       a los que ya hiciste» en docs/decisiones/entrenamiento.md. */
+    { clave: "entreno_4x4_favoritos_v1",         fusion: "ultimaEscritura" },
     /* La meta de la semana que se pone el alumno («Hoy te toca»): la elige en
        un aparato y la quiere ver en el otro. Gana la última que eligió. */
     { clave: "meta_semana_v1",                   fusion: "ultimaEscritura" },

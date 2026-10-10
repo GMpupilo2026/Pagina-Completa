@@ -47,7 +47,7 @@
 <body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
     <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-accent-500 focus:text-brand-900 focus:font-semibold focus:px-4 focus:py-2 focus:rounded-lg">Saltar al contenido principal</a>
     <header id="header" class="sticky top-0 z-50 bg-brand-800 shadow-lg">
-        <div class="hidden lg:block bg-brand-900 border-b border-brand-700/60">
+        <div data-oculto-ciego class="hidden lg:block bg-brand-900 border-b border-brand-700/60">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-8 flex items-center justify-end gap-5 text-xs text-brand-300">
                 <a href="te-reto.html" class="hover:text-accent-400">🏆 ¡Te reto!</a>
                 <span class="text-brand-700" aria-hidden="true">&middot;</span>
@@ -61,7 +61,7 @@
         <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Navegación principal">
             <div class="flex items-center justify-between min-h-[4rem] md:min-h-[5rem] py-2">
                 <a href="index.html" class="flex items-center gap-2 text-white"><img src="/img/logo-marca.png" alt="" width="78" height="48" class="h-10 md:h-12 w-auto shrink-0"><span class="font-serif text-xl md:text-2xl font-bold">Ajedrez <span class="text-accent-400">Integral</span></span></a>
-                <ul class="hidden lg:flex items-center gap-8 text-brand-100 font-medium">
+                <ul data-oculto-ciego class="hidden lg:flex items-center gap-8 text-brand-100 font-medium">
                     <li><a href="index.html" class="hover:text-accent-400">Inicio</a></li>
                     <li><a href="cursos.html" class="hover:text-accent-400">Cursos</a></li>
                     <li><a href="articulos.html" class="hover:text-accent-400">Artículos</a></li>
@@ -73,14 +73,14 @@
                     <button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro">
                         <span id="theme-icon" aria-hidden="true">☀️</span>
                     </button>
-                    <button id="menu-toggle" class="lg:hidden text-white text-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Abrir menú" aria-expanded="false" aria-controls="mobile-menu">
+                    <button id="menu-toggle" data-oculto-ciego class="lg:hidden text-white text-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Abrir menú" aria-expanded="false" aria-controls="mobile-menu">
                     <svg id="icon-open" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
                     <svg id="icon-close" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                 </button>
                 </div>
             </div>
         </nav>
-        <div id="mobile-menu" class="lg:hidden hidden bg-brand-800 border-t border-brand-700">
+        <div id="mobile-menu" data-oculto-ciego class="lg:hidden hidden bg-brand-800 border-t border-brand-700">
             <ul class="px-4 py-4 space-y-3 text-brand-100 font-medium">
                 <li><a href="index.html" class="block py-2 hover:text-accent-400">Inicio</a></li>
                 <li><a href="cursos.html" class="block py-2 hover:text-accent-400">Cursos</a></li>
