@@ -31,6 +31,7 @@
             if (resultLocked) return;
             resultLocked = true;
             clearTimeout(failTimeoutId);
+            cortarLectura();
             if (relojHablado) relojHablado.parar();
             streak++;
             updateStreakDisplay();
@@ -44,6 +45,7 @@
             if (resultLocked) return;
             resultLocked = true;
             clearTimeout(failTimeoutId);
+            cortarLectura();
             if (relojHablado) relojHablado.parar();
             stopTimerBar();
             flashBoard("wrong");
@@ -89,7 +91,16 @@
         function modoAdaptado() {
             return window.CuadroComandos ? CuadroComandos.activo() : document.documentElement.classList.contains("adaptive-mode");
         }
+        /* Las cuentas marcadas «ciego» (js/vision-cuenta.js) van aparte, como lo
+           pidió ese grupo: las piezas se dicen una por una, con una pausa entre
+           una y otra, y los 30 segundos empiezan cuando termina la lectura. Con
+           los 60 de antes, oír la posición se comía casi todo el reloj. */
+        const TIEMPO_CIEGO_MS = 30000;
+        function modoCiego() {
+            return document.documentElement.classList.contains("modo-ciego");
+        }
         function limiteMs() {
+            if (modoCiego()) return TIEMPO_CIEGO_MS;
             return modoAdaptado() ? TIME_LIMIT_MS * FACTOR_ADAPTADO : TIME_LIMIT_MS;
         }
         function startTimerBar() {
@@ -99,6 +110,12 @@
             void bar.offsetWidth; // fuerza el reflow para que el siguiente cambio sí anime
             bar.style.transition = "width " + limiteMs() + "ms linear";
             bar.style.width = "0%";
+        }
+        // La barra llena y quieta mientras se dicen las piezas: el reloj no corre.
+        function prepararTimerBar() {
+            const bar = document.getElementById("timer-bar");
+            bar.style.transition = "none";
+            bar.style.width = "100%";
         }
         function stopTimerBar() {
             const bar = document.getElementById("timer-bar");
@@ -156,6 +173,80 @@
             el.appendChild(sr);
         }
 
+        /* ---------- La posición pieza por pieza (cuentas «ciego») ----------
+           Cada pieza va sola a una región viva, y la siguiente llega dos segundos
+           DESPUÉS de que se terminó de decir la anterior. Con «Activar voz» se
+           sabe cuándo terminó (la voz del navegador avisa); con un lector de
+           pantalla no hay forma de saberlo, así que se calcula por el largo de la
+           frase. Contestar antes de que termine vale: corta la lectura. */
+        const LECTURA = { pausaMs: 2000, msPorLetra: 65 };
+        const GENERO = { k: "rey blanco", q: "dama blanca", r: "torre blanca", b: "alfil blanco", n: "caballo blanco", p: "peón blanco" };
+        let lecturaId = 0, lecturaEspera = null, leyendoPiezas = false;
+        function cortarLectura() {
+            lecturaId++;
+            clearTimeout(lecturaEspera);
+            leyendoPiezas = false;
+        }
+        function piezasUnaPorUna(juego) {
+            const orden = ["k", "q", "r", "b", "n", "p"], frases = [];
+            ["w", "b"].forEach((color) => {
+                orden.forEach((tipo) => {
+                    juego.SQUARES.filter((sq) => { const c = juego.get(sq); return c && c.color === color && c.type === tipo; })
+                        .sort()
+                        .forEach((sq) => {
+                            const nombre = color === "w" ? GENERO[tipo] : GENERO[tipo].replace("blanc", "negr");
+                            frases.push(nombre.charAt(0).toUpperCase() + nombre.slice(1) + " en " + BlindNotation.squareSpoken(sq) + ".");
+                        });
+                });
+            });
+            return frases;
+        }
+        function estimarMs(texto) { return String(texto).length * LECTURA.msPorLetra; }
+        function decirPieza(texto, despues) {
+            const region = document.getElementById("pieza-dicha");
+            const conVoz = window.BlindNotation && BlindNotation.isSpeechEnabled && BlindNotation.isSpeechEnabled();
+            if (conVoz) {
+                /* Muda para «Activar voz» (js/voz-pagina.js), que si no la diría
+                   otra vez: acá se dice directo, para saber cuándo terminó. */
+                region.setAttribute("aria-live", "off");
+                region.textContent = texto;
+                let listo = false;
+                const seguir = () => { if (!listo) { listo = true; despues(); } };
+                BlindNotation.speak(texto, { alTerminar: seguir });
+                lecturaEspera = setTimeout(seguir, estimarMs(texto) * 3 + 1000);
+            } else {
+                region.setAttribute("aria-live", "polite");
+                region.textContent = texto;
+                lecturaEspera = setTimeout(despues, estimarMs(texto));
+            }
+        }
+        function leerPiezasYEmpezar(aviso) {
+            cortarLectura();
+            const id = lecturaId;
+            leyendoPiezas = true;
+            const frases = piezasUnaPorUna(game);
+            const turno = "Juegan las " + (game.turn() === "w" ? "blancas" : "negras") + ". Empieza el reloj: "
+                + (limiteMs() / 1000) + " segundos.";
+            let i = 0;
+            const siguiente = () => {
+                if (id !== lecturaId) return;
+                if (i < frases.length) {
+                    const frase = frases[i++];
+                    decirPieza(frase, () => {
+                        if (id !== lecturaId) return;
+                        lecturaEspera = setTimeout(siguiente, LECTURA.pausaMs);
+                    });
+                    return;
+                }
+                leyendoPiezas = false;
+                document.getElementById("pieza-dicha").textContent = "";
+                setResultText(turno);
+                startTimer();
+            };
+            // Primero se deja oír el aviso del ejercicio nuevo, y la pausa.
+            lecturaEspera = setTimeout(siguiente, estimarMs(aviso) + LECTURA.pausaMs);
+        }
+
         function loadPuzzle() {
             const [fen, uci, san] = pickRandomPuzzle();
             currentSolution = uci;
@@ -168,6 +259,17 @@
                esto, el "¡Correcto!" se borraba a los 350 ms, antes de que el lector
                de pantalla lo dijera, y el ejercicio siguiente llegaba sin aviso: el
                reloj ya corría y quien no ve la pantalla no sabía que había cambiado. */
+            if (modoCiego() && window.BlindNotation) {
+                const aviso = (streak > 0 ? "✅ ¡Correcto! Racha: " + streak + ". " : "")
+                    + "Ejercicio nuevo: juegan las " + (game.turn() === "w" ? "blancas" : "negras")
+                    + ". Te digo las piezas una por una; los " + (limiteMs() / 1000)
+                    + " segundos empiezan cuando termine.";
+                setResultText(aviso);
+                renderBoard();
+                prepararTimerBar();
+                leerPiezasYEmpezar(aviso);
+                return;
+            }
             setResultText(modoAdaptado()
                 ? (streak > 0 ? "✅ ¡Correcto! Racha: " + streak + ". " : "")
                   + "Ejercicio nuevo: juegan las " + (game.turn() === "w" ? "blancas" : "negras")
