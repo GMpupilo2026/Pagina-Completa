@@ -1712,6 +1712,20 @@ html.dark .comparar-serie-3 { background: #199e70; }
 .dark .ae-control { background: rgb(var(--c-brand-950, 7 21 39)); border-color: rgb(var(--c-brand-600, 51 78 104)); color: #fff; }
 .ae-boton { font: inherit; font-size: 0.9rem; padding: 0.5rem 0.9rem; border-radius: 0.5rem; border: 1px solid rgb(var(--c-brand-300, 159 179 200)); background: transparent; color: rgb(var(--c-brand-800, 16 42 67)); cursor: pointer; }
 .dark .ae-boton { color: #fff; border-color: rgb(var(--c-brand-600, 51 78 104)); }
+.ae-filtro-regiones { position: relative; }
+.ae-desplegable { text-align: left; cursor: pointer; min-width: 11rem; }
+.ae-desplegable::after { content: " ▾"; }
+.ae-desplegable[aria-expanded="true"]::after { content: " ▴"; }
+.ae-panel { position: absolute; top: 100%; left: 0; z-index: 5; margin-top: 0.25rem; width: min(34rem, calc(100vw - 4rem)); max-height: 22rem; overflow: auto; background: #fff; color: rgb(var(--c-brand-800, 16 42 67)); border: 1px solid rgb(var(--c-brand-300, 159 179 200)); border-radius: 0.75rem; box-shadow: 0 10px 24px rgb(0 0 0 / 0.18); padding: 0.75rem; }
+.dark .ae-panel { background: rgb(var(--c-brand-950, 7 21 39)); color: #fff; border-color: rgb(var(--c-brand-600, 51 78 104)); }
+.ae-panel fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
+.ae-panel-t { font-size: 0.85rem; font-weight: 600; margin-bottom: 0.5rem; }
+.ae-panel-lista { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 9.5rem), 1fr)); gap: 0.25rem 0.75rem; }
+.ae-panel-lista label { display: flex; align-items: center; gap: 0.4rem; font-size: 0.9rem; padding: 0.15rem 0; cursor: pointer; }
+.ae-panel-lista input { width: 1rem; height: 1rem; accent-color: rgb(var(--c-brand-700, 36 59 83)); }
+.dark .ae-panel-lista input { accent-color: rgb(var(--c-brand-300, 159 179 200)); }
+.ae-panel-pie { display: flex; justify-content: space-between; gap: 0.5rem; margin-top: 0.75rem; }
+.ae-panel-lista input:focus-visible { outline: 3px solid rgb(var(--c-accent-500, 222 145 29)); outline-offset: 2px; }
 .ae-control:focus-visible, .ae-boton:focus-visible, .ae-blanco:focus-visible, .ae-tabla th button:focus-visible, .ae-detalles summary:focus-visible, .ae-tabla a:focus-visible { outline: 3px solid rgb(var(--c-accent-500, 222 145 29)); outline-offset: 2px; }
 .ae-leyenda { display: flex; flex-wrap: wrap; gap: 0.4rem 1rem; font-size: 0.8rem; color: rgb(var(--c-brand-700, 36 59 83)); }
 .dark .ae-leyenda { color: rgb(var(--c-brand-100, 217 226 236)); }
