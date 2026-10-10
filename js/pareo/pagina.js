@@ -610,6 +610,7 @@
       el("h2", { class: "font-serif text-xl font-bold", texto: tx("emparejamientosRonda", { r: r + 1 }) + (v.nombre ? " — " + v.nombre : "") }),
       el("div", { class: "flex flex-wrap gap-2 no-imprimir" },
         el("button", { type: "button", class: C.botonSec, onclick: () => window.print() }, tx("imprimir")),
+        el("button", { type: "button", class: C.botonSec, onclick: () => imprimirPlantillaMesas(r) }, tx("plantillaMesas")),
         ultima ? el("button", { type: "button", class: C.miniPeligro + " px-3 py-2", onclick: () => deshacerRonda(r) }, tx("deshacerRonda")) : null)));
     caja.append(el("p", { class: C.nota + " mb-3 no-imprimir", role: "status", texto: pendientes ? tx("faltanResultados", { n: pendientes }) : tx("rondaCompleta") }));
     if (!ultima) caja.append(el("p", { class: C.nota + " mb-3 no-imprimir", texto: tx("avisoCorregir") }));
@@ -675,6 +676,47 @@
       caja.append(el("h3", { class: "font-semibold mt-5", texto: tx("noJuegan") }), ul);
     }
   }
+
+  // Una hoja aparte para pegar en la pared antes de la ronda: mesa, blancas,
+  // negras y un espacio en blanco para anotar el resultado a mano (nunca el
+  // que ya está en la base: eso es justo lo que no se quiere acá). Separada
+  // de la tabla de arriba, que es la que se imprime para el archivo de la
+  // ronda ya jugada.
+  function imprimirPlantillaMesas(r) {
+    const v = t();
+    const R = v.rondas[r];
+    const num = T.numeros(v);
+    const cont = $("pi-plantilla");
+    cont.replaceChildren(el("h1", { class: "pi-plantilla-titulo" },
+      tx("plantillaTitulo", { r: r + 1 }) + (v.nombre ? " — " + v.nombre : "")));
+    const lista = el("div", { class: "pi-plantilla-lista" });
+    R.mesas.forEach((m, i) => {
+      if (m.n === null) {
+        lista.append(el("div", { class: "pi-plantilla-mesa" },
+          el("span", { class: "pi-plantilla-num", texto: i + 1 }),
+          el("span", { class: "pi-plantilla-jugador", texto: num.get(m.b) + ". " + nombreDe(m.b) }),
+          el("span", { class: "pi-plantilla-bye", texto: tx("byePareo", { p: puntosTexto(v.puntos.bye) }) })));
+        return;
+      }
+      lista.append(el("div", { class: "pi-plantilla-mesa" },
+        el("span", { class: "pi-plantilla-num", texto: i + 1 }),
+        el("span", { class: "pi-plantilla-jugador", texto: num.get(m.b) + ". " + nombreDe(m.b) }),
+        el("span", { class: "pi-plantilla-vs" }, "–"),
+        el("span", { class: "pi-plantilla-jugador", texto: num.get(m.n) + ". " + nombreDe(m.n) }),
+        el("span", { class: "pi-plantilla-resultado" })));
+    });
+    cont.append(lista);
+    document.body.classList.add("pi-imprimiendo-plantilla");
+    window.print();
+  }
+
+  // El afterprint llega sea que se imprima o se cancele: ahí se limpia, una
+  // sola vez para toda la página (no hace falta re-engancharlo).
+  window.addEventListener("afterprint", () => {
+    document.body.classList.remove("pi-imprimiendo-plantilla");
+    const cont = $("pi-plantilla");
+    if (cont) cont.replaceChildren();
+  });
 
   function pintarRondasNav() {
     // Repinta solo la barra de rondas (el foco queda en la mesa que se estaba llenando).
@@ -779,14 +821,21 @@
     pintarRondas();
   }
 
+  // Las mismas filas de D.clasificacion(), acotadas a la institución elegida
+  // (si hay una elegida): la usan la pantalla y el PDF por igual, para que
+  // lo que se baja sea siempre lo que se está viendo.
+  function filasFiltradas(todasFilas) {
+    return estado.filtroInstitucion
+      ? todasFilas.filter((f) => jugador(f.id).institucion === estado.filtroInstitucion) : todasFilas;
+  }
+
   // ---------- Clasificación ----------
   function pintarClasificacion() {
     const v = t();
     const k = rondasCompletas();
     const tc = hasta(k);
     const todasFilas = D.clasificacion(tc, v.desempates);
-    const filas = estado.filtroInstitucion
-      ? todasFilas.filter((f) => jugador(f.id).institucion === estado.filtroInstitucion) : todasFilas;
+    const filas = filasFiltradas(todasFilas);
     const num = T.numeros(v);
     $("pi-clas-titulo").textContent = k ? tx("clasificacionTras", { r: k }) : tx("fClasificacion");
     $("pi-clas-nota").textContent = (k < v.rondas.length ? tx("clasSoloCompletas", { r: k }) : (v.nombre || ""))
@@ -830,8 +879,7 @@
     if (!v.jugadores.length) return;
     const k = rondasCompletas();
     const todasFilas = D.clasificacion(hasta(k), v.desempates);
-    const filas = estado.filtroInstitucion
-      ? todasFilas.filter((f) => jugador(f.id).institucion === estado.filtroInstitucion) : todasFilas;
+    const filas = filasFiltradas(todasFilas);
     const num = T.numeros(v);
     const R = v.rondas.length;
     tabla.append(el("thead", {}, el("tr", {},
@@ -862,6 +910,86 @@
         celdas, el("td", { class: "num font-bold", texto: puntosTexto(T.puntos(v, f.id)) })));
     }
     tabla.append(cuerpo);
+  }
+
+  // El subtítulo del PDF: nombre del torneo, la institución si hay una
+  // elegida, y quién lo hizo.
+  function subtituloPDF() {
+    return [t().nombre, estado.filtroInstitucion, "Pareo Integral"].filter(Boolean).join(" · ");
+  }
+
+  function datosClasificacionPDF() {
+    const v = t();
+    const k = rondasCompletas();
+    const todasFilas = D.clasificacion(hasta(k), v.desempates);
+    const filas = filasFiltradas(todasFilas);
+    const num = T.numeros(v);
+    const encabezados = [tx("puesto"), tx("nro"), tx("nombre"), tx("institucion"), tx("fed"), "Elo", tx("pts")]
+      .concat(v.desempates);
+    const anchos = [1, 1, 3, 2.2, 1, 1, 1].concat(v.desempates.map(() => 1));
+    const filasTabla = filas.map((f) => {
+      const j = jugador(f.id);
+      return [String(f.puesto), String(num.get(f.id)), j.nombre + (j.titulo ? " (" + j.titulo + ")" : ""),
+        j.institucion || "", j.fed || "", Number(j.elo) > 0 ? String(j.elo) : "", puntosTexto(f.puntos)]
+        .concat(v.desempates.map((c) => formatoNum(f.valores[c])));
+    });
+    const notas = v.desempates.map((c) => {
+      const info = D.CATALOGO.find((x) => x.codigo === c);
+      return info ? c + ": " + info[idioma] : c;
+    });
+    return {
+      titulo: k ? tx("clasificacionTras", { r: k }) : tx("fClasificacion"),
+      subtitulo: subtituloPDF(), encabezados, anchos, filas: filasTabla, notas,
+    };
+  }
+
+  // Igual que pintarCruzada, pero en caracteres sencillos: el PDF escribe
+  // Latin-1/WinAnsi a mano (js/reporte-pdf.js) y un signo menos de verdad
+  // («−», U+2212) no está en esa tabla y se perdería sin avisar. Un guion
+  // común sí.
+  function datosCruzadaPDF() {
+    const v = t();
+    const k = rondasCompletas();
+    const todasFilas = D.clasificacion(hasta(k), v.desempates);
+    const filas = filasFiltradas(todasFilas);
+    const num = T.numeros(v);
+    const R = v.rondas.length;
+    const letra = idioma === "en" ? { w: "w", b: "b" } : { w: "b", b: "n" };
+    const encabezados = [tx("puesto"), tx("nro"), tx("nombre"), "Elo"]
+      .concat(Array.from({ length: R }, (_, r) => tx("rCorta", { r: r + 1 }))).concat([tx("pts")]);
+    const anchos = [1, 1, 3, 1].concat(Array.from({ length: R }, () => 1)).concat([1]);
+    const filasTabla = filas.map((f) => {
+      const j = jugador(f.id);
+      const celdas = [];
+      for (let r = 0; r < R; r++) {
+        const s = T.situacion(v, r, f.id);
+        let texto;
+        if (s.tipo === "bye") texto = tx("cBye") + " " + puntosTexto(s.puntos);
+        else if (s.tipo === "ausente") texto = (s.codigo === "Z" ? "-" : tx("cBye")) + (s.puntos ? " " + puntosTexto(s.puntos) : "");
+        else if (s.tipo === "pendiente") texto = num.get(s.rival) + letra[s.color] + " *";
+        else texto = num.get(s.rival) + letra[s.color] + " " + (s.codigo === "=" ? "1/2" : s.codigo);
+        celdas.push(texto);
+      }
+      return [String(f.puesto), String(num.get(f.id)), j.nombre, Number(j.elo) > 0 ? String(j.elo) : ""]
+        .concat(celdas).concat([puntosTexto(T.puntos(v, f.id))]);
+    });
+    return { titulo: tx("fCruzada"), subtitulo: subtituloPDF(), encabezados, anchos, filas: filasTabla, notas: [tx("cruzadaAyuda")] };
+  }
+
+  async function bajarPDF(boton, datosFn, sufijo) {
+    const v = t();
+    if (!v.jugadores.length) { Avisos.avisar(tx("sinNadaQueExportar"), { tipo: "error" }); return; }
+    boton.disabled = true;
+    const original = boton.textContent;
+    boton.textContent = tx("generandoPdf");
+    try {
+      await window.PareoPDF.bajar(datosFn(), window.PareoPDF.nombreArchivo(v.nombre, sufijo));
+    } catch (e) {
+      Avisos.avisar(tx("errorPdf", { e: e.message }), { tipo: "error" });
+    } finally {
+      boton.disabled = false;
+      boton.textContent = original;
+    }
   }
 
   // ---------- Archivos, comprobador y generador ----------
@@ -970,6 +1098,8 @@
     $("pi-elo-nacional").addEventListener("click", buscarEloNacional);
     $("pi-clas-institucion").addEventListener("change", (e) => { estado.filtroInstitucion = e.target.value; pintarClasificacion(); });
     $("pi-cruzada-institucion").addEventListener("change", (e) => { estado.filtroInstitucion = e.target.value; pintarCruzada(); });
+    $("pi-clas-pdf").addEventListener("click", () => bajarPDF($("pi-clas-pdf"), datosClasificacionPDF, "clasificacion"));
+    $("pi-cruzada-pdf").addEventListener("click", () => bajarPDF($("pi-cruzada-pdf"), datosCruzadaPDF, "cruzada"));
 
     document.querySelectorAll(".pi-imprimir").forEach((b) => b.addEventListener("click", () => window.print()));
     $("pi-bajar-trf").addEventListener("click", () => {

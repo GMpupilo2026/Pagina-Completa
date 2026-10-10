@@ -270,6 +270,60 @@ const ok = (c, m, detalle) => (c ? bien(m) : mal(m + (detalle ? " — " + detall
     ok((await p.$$('a[href="pareo-manual.html"]')).length >= 2 && (await p.$('a[href="descargas/pareo-integral-cli.zip"]')) !== null, "pareo.html enlaza al manual y a la descarga");
   }
 
+  console.log("=== 11. Reportes: la plantilla para la pared y el PDF ===");
+  {
+    // La sección 10 deja el idioma en inglés (el ?lang=en del manual, que
+    // comparte la misma llave de localStorage): se vuelve a español acá.
+    await p.evaluate(() => { try { localStorage.setItem("pareo_idioma_v1", "es"); } catch (e) { /* nada */ } });
+    await p.goto(BASE + "/pareo.html");
+    await p.evaluate(() => { window.print = () => {}; });
+    await p.click("#pi-nuevo");
+    await p.fill('#pi-form-torneo input[name="nombre"]', "Reportes de prueba");
+    await p.dispatchEvent('#pi-form-torneo input[name="nombre"]', "change");
+    await ficha("jugadores");
+    for (const [n, inst] of [["Alfa, Uno", "Liceo Reportes"], ["Beta, Dos", "Liceo Reportes"], ["Gama, Tres", ""], ["Delta, Cuatro", ""]]) {
+      await p.fill('#pi-form-jugador input[name="nombre"]', n);
+      await p.fill('#pi-form-jugador input[name="institucion"]', inst);
+      await p.click('#pi-form-jugador button[type="submit"]');
+    }
+    await ficha("rondas");
+    await emparejar(1);
+    await resultados(["1-0", "0-1"]);
+
+    console.log("--- La plantilla para la pared ---");
+    ok(!(await visible("#pi-plantilla")), "normalmente no se ve en pantalla");
+    await p.click('#pi-ronda button:has-text("Plantilla para la pared")');
+    const plantilla = await p.textContent("#pi-plantilla");
+    ok(plantilla.includes("Ronda 1") && plantilla.includes("Reportes de prueba"), "trae el título de la ronda y el torneo", plantilla);
+    ok(!/1-0|0-1/.test(plantilla), "no trae ningún resultado: es para escribirlo a mano", plantilla);
+    ok(await p.evaluate(() => document.body.classList.contains("pi-imprimiendo-plantilla")), "marca el body mientras imprime");
+    await p.evaluate(() => window.dispatchEvent(new Event("afterprint")));
+    ok(!(await p.evaluate(() => document.body.classList.contains("pi-imprimiendo-plantilla"))), "y la saca al terminar");
+    ok((await p.textContent("#pi-plantilla")) === "", "limpia el contenido también");
+
+    console.log("--- El PDF de la Clasificación ---");
+    await ficha("clasificacion");
+    const [descargaClas] = await Promise.all([p.waitForEvent("download"), p.click("#pi-clas-pdf")]);
+    const pdfClas = fs.readFileSync(await descargaClas.path()).toString("latin1");
+    ok(pdfClas.slice(0, 5) === "%PDF-", "es un PDF de verdad");
+    ok(pdfClas.includes("Alfa, Uno") && pdfClas.includes("Liceo Reportes"), "trae los nombres y la institución");
+    ok(pdfClas.includes("Pareo Integral"), "con su pie de página");
+
+    console.log("--- El PDF de la Tabla cruzada ---");
+    await ficha("cruzada");
+    const [descargaCruz] = await Promise.all([p.waitForEvent("download"), p.click("#pi-cruzada-pdf")]);
+    const pdfCruz = fs.readFileSync(await descargaCruz.path()).toString("latin1");
+    ok(pdfCruz.slice(0, 5) === "%PDF-", "también es un PDF de verdad");
+    ok(pdfCruz.includes("Alfa, Uno"), "trae los nombres");
+
+    console.log("--- El filtro de institución, también en el PDF ---");
+    await ficha("clasificacion");
+    await p.selectOption("#pi-clas-institucion", "Liceo Reportes");
+    const [descargaFiltro] = await Promise.all([p.waitForEvent("download"), p.click("#pi-clas-pdf")]);
+    const pdfFiltro = fs.readFileSync(await descargaFiltro.path()).toString("latin1");
+    ok(pdfFiltro.includes("Alfa, Uno") && !pdfFiltro.includes("Gama, Tres"), "baja solo la institución elegida");
+  }
+
   console.log("=== 9. Nada sale del sitio ===");
   ok(!afuera.length, "ninguna petición a otro origen", afuera.slice(0, 3).join(" "));
   ok(!errores.length, "sin errores en la consola", errores.slice(0, 3).join(" | "));
