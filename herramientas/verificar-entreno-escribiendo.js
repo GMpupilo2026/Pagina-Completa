@@ -58,6 +58,15 @@ async function abrir(browser, ruta, esperarA) {
   await r.page.waitForFunction(() => document.documentElement.classList.contains("modo-ciego"), null, { timeout: 8000 }).catch(() => {});
   return r;
 }
+/* Coordenadas y Memoria ya no se le ofrecen a la cuenta ciega (ver «Lo que no
+   se puede hacer sin ver, no se ofrece»), pero siguen en Modo Adaptado para
+   quien lo enciende sin la marca (baja visión, quien navega con teclado):
+   ahí se miden. */
+async function abrirAdaptado(browser, ruta, esperarA) {
+  const r = await doble.abrir(browser, ruta, {}, { oscarBlindMode_v1: "1" });
+  await r.page.waitForSelector(esperarA || "#app:not(.hidden)", { timeout: 20000 });
+  return r;
+}
 /* Escribe en el recuadro visible (como la alumna: Intro) y devuelve lo que
    quedó en su aviso. */
 async function escribir(page, texto, ms) {
@@ -421,7 +430,7 @@ async function precisionSinListo(browser) {
 
 async function volverYMemoria(browser) {
   console.log("\n=== Coordenadas, Memoria y Mates: «volver»; Memoria dice qué faltó ===");
-  let { page, ctx, errores } = await abrir(browser, "/entreno/coordenadas.html");
+  let { page, ctx, errores } = await abrirAdaptado(browser, "/entreno/coordenadas.html");
   await page.click("#start-btn");
   await page.waitForSelector("#blind-input", { state: "visible" });
   await escribirEn(page, "#blind-input", "volver", 200);
@@ -435,7 +444,7 @@ async function volverYMemoria(browser) {
   cierto("Mates: «volver» dice adónde va", /^Volviendo a /.test(m), m);
   await ctx.close();
 
-  ({ page, ctx, errores } = await abrir(browser, "/entreno/memoria.html?piezas=4&segundos=3", "#vista-juego:not(.hidden)"));
+  ({ page, ctx, errores } = await abrirAdaptado(browser, "/entreno/memoria.html?piezas=4&segundos=3", "#vista-juego:not(.hidden)"));
   await page.waitForSelector(".cc-input", { state: "visible" });
   await escribir(page, "ya la tengo", 300);
   // Se pone una sola pieza, bien, más una que sobra: faltan las otras.
