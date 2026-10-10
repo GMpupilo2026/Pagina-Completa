@@ -1050,12 +1050,51 @@
             ajustarTusClases();
         }
 
-        async function bajarCalendario(boton, estado) {
+        /* ---------- El panel de taller ----------
+           Un taller (el de los asesores del MEP) son unas pocas sesiones con
+           fecha, no una clase de todas las semanas, y quien lo sigue no viene a
+           entrenar todos los días: «Hoy te toca» y la racha le hablaban de
+           otra cosa. En una academia con panel de taller (academias.panel_taller,
+           lo enciende administración) esa tarjeta no se ve: en su lugar va el
+           calendario de clases, y el subtítulo dice la próxima sesión. Las
+           sesiones son las del horario de su profe (mis_clases_proximas, la
+           misma regla de «Tu próxima clase» y del .ics). Ver «El panel de
+           taller» en docs/decisiones/paneles.md. */
+        async function esPanelTaller() {
+            try {
+                const { data, error } = await sb.rpc("mi_panel_taller");
+                return !error && data === true;
+            } catch (e) {
+                return false;   // sin respuesta, el panel de siempre
+            }
+        }
+
+        async function pintarPanelTaller(tallerP) {
+            if (!(await tallerP)) return;
+            document.getElementById("progreso-alumno").hidden = true;
+            let sesiones = [];
+            try {
+                const { data, error } = await sb.rpc("mis_clases_proximas", { p_dias: 90 });
+                if (!error && Array.isArray(data)) sesiones = data;
+            } catch (e) { /* sin sesiones, la tarjeta lo dice */ }
+            const quedan = CalendarioTaller.pintar(document.getElementById("calendario-taller"), sesiones, {
+                alBajar: (boton, estado) => bajarCalendario(boton, estado, 90),
+            });
+            if (!panelAdaptado && quedan) {
+                const s = sesiones.find((x) => new Date(x.fin) > new Date());
+                const T = CalendarioTaller;
+                document.getElementById("panel-subtitulo").textContent = T.conPunto(new Date(s.inicio) <= new Date()
+                    ? "Tu sesión es ahora, hasta las " + T.hora(s.fin)
+                    : "Tu próxima sesión es el " + T.dia(s.inicio).toLowerCase() + " a las " + T.hora(s.inicio));
+            }
+        }
+
+        async function bajarCalendario(boton, estado, dias = 28) {
             boton.disabled = true;
             estado.textContent = "Armando tu calendario…";
             try {
                 const [c, t, x] = await Promise.all([
-                    sb.rpc("mis_clases_proximas", { p_dias: 28 }),
+                    sb.rpc("mis_clases_proximas", { p_dias: dias }),
                     sb.rpc("tareas_con_avance", { p_alumno: profile.id, p_pendientes: true, p_limite: 50 }),
                     sb.rpc("examenes_con_nota", { p_alumno: profile.id, p_limite: 50 }),
                 ]);
@@ -2467,9 +2506,11 @@
            propio subtítulo —que es el panel adaptado y cómo oír los atajos—, y
            ese le gana: la racha llega después y lo pisaba. */
         let panelAdaptado = false;
-        async function pintarSaludoAlumno(rachaP) {
+        async function pintarSaludoAlumno(rachaP, tallerP) {
             let r = null;
             try { r = await rachaP; } catch (e) { return; }
+            // En el panel de taller el subtítulo dice la próxima sesión (pintarPanelTaller), no la racha.
+            if (await tallerP) return;
             // Mirando el de otra persona se queda el subtítulo que dice de quién es.
             if (!r || r.error || !r.stats || panelAdaptado || profile._persona) return;
             const racha = r.stats.racha_actual || 0;
@@ -4163,6 +4204,12 @@
                    «Hoy te toca»: la primera sale de las clases que puede leer
                    quien mira, y la segunda del progreso guardado en ESTE
                    aparato. Las dos dirían lo de quien mira, no lo suyo. */
+                /* ¿Es de una academia con panel de taller? Se pregunta UNA vez y
+                   la respuesta la usan la tarjeta del calendario y el saludo.
+                   Mirando a otra persona no se pregunta: contestaría por quien
+                   mira. Ver «El panel de taller» en docs/decisiones/paneles.md. */
+                const tallerP = profile._persona ? Promise.resolve(false) : esPanelTaller();
+                partes.push(pintarPanelTaller(tallerP));
                 if (!profile._persona) partes.push(
                     Promise.resolve(ResumenClase.pintarUltimaClaseDelAlumno(sb, document.getElementById("ultima-clase"), profile.id)).finally(ajustarTusClases),
                     Promise.resolve(PuntosClase.pintarDelMesDelAlumno(sb, document.getElementById("puntos-mes"))).finally(ajustarTusClases),
@@ -4173,7 +4220,7 @@
                     cargarSeguirCurso(),
                     loadEntrenoProgress(),
                     loadTacticsRecord(),
-                    pintarSaludoAlumno(rachaP),
+                    pintarSaludoAlumno(rachaP, tallerP),
                 );
                 /* «Hoy te toca» (diez scripts, ~200 KB) y «lo último que
                    hiciste» arrancan a la vez pero el panel NO los espera: se
