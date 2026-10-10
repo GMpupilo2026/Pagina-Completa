@@ -1891,17 +1891,75 @@ lo tenga.
   `herramientas/verificar-elo-fide.js` sigue probando ese archivo (ahora en
   su nueva dirección) sin red ni Deno.
 
-**Al tocar la institución, la subida de listas o el Elo Nacional, correr
+### Categoría, nombres repetidos y resolver un Elo Nacional ambiguo
+
+Cuatro mejoras más sobre lo de arriba, pedidas después de mirar el código con
+calma: la categoría del jugador, avisar de un nombre repetido, filtrar por
+institución y resolver a mano un Elo Nacional que quedó ambiguo.
+
+- **`categoria` es un campo libre** (ej. «Sub-10», «Veteranos», «Femenino
+  A»), no una lista cerrada: Pareo Integral sirve para cualquier torneo, no
+  solo escolares, y una lista cerrada en un programa genérico tarde o
+  temprano le queda chica a alguien. Mismo patrón que `institucion`: va en
+  el formulario, al editar, en la tabla, en el `.json` y se exporta a CSV;
+  no va al TRF (mismo motivo: FIDE no la pide). En **«Pegar una lista» y
+  «Subir una lista» va al FINAL** del orden fijo (Nombre; Institución; Elo;
+  Título; Federación; ID FIDE; Categoría), no intercalada, para no romper
+  las listas que alguien ya tenía armadas con el orden de antes de esta
+  mejora. En la TABLA de inscritos, en cambio, se ve junto a la institución
+  (antes del título): ahí no hay nada que se rompa por el orden, y así se
+  ven juntos los datos de «quién es y dónde juega» antes que los de rating.
+  `SINONIMOS_COLUMNA` reconoce «categoria», «category», «nivel» y
+  «division».
+- **Dos jugadores con el mismo nombre se avisan, nunca se bloquean**: puede
+  ser la misma persona anotada dos veces por error, o un homónimo de
+  verdad (dos alumnos distintos se llaman igual más de lo que parece).
+  `agregarJugadores()` compara por el mismo bolsillo de palabras que usa el
+  Elo Nacional (sin tildes, sin importar el orden de apellidos y nombre)
+  entre los recién agregados y el resto del torneo, y si hay coincidencia
+  muestra un aviso con el nombre — sin impedir que se agreguen. Cubre los
+  tres caminos de alta (el formulario, pegar una lista y subir un archivo)
+  porque los tres pasan por esa misma función.
+- **Clasificación y Tabla cruzada se pueden filtrar por institución**: un
+  `<select>` en cada ficha (el mismo filtro para las dos, recordado en
+  `estado.filtroInstitucion` mientras el torneo esté abierto) con las
+  instituciones que de verdad tiene el torneo. Útil en un torneo con varios
+  colegios para ver solo el de uno. La Clasificación además le suma una
+  columna de institución (la Tabla cruzada no: ya tiene una columna por
+  ronda y `verificar-pareo-pagina.js` cuenta las columnas de su cabecera,
+  así que ahí solo se filtra, no se agrega una columna). El filtro compara
+  el texto tal cual está escrito, sin normalizar mayúsculas ni tildes: dos
+  formas distintas de escribir el mismo colegio son, a propósito, dos
+  instituciones distintas para Pareo Integral — unirlas a ciegas podría
+  juntar dos colegios que en realidad son distintos.
+- **Un Elo Nacional «ambiguo» o no encontrado se puede resolver sin repetir
+  toda la búsqueda**: `buscarEloNacional()` ahora empareja la respuesta de
+  la Edge Function con cada jugador **por posición** (el jugador *i* de la
+  lista que se mandó con el resultado *i* de la respuesta), no por el
+  bolsillo de palabras del nombre como antes. Con el bolsillo, dos jugadores
+  CON EL MISMO NOMBRE (el caso de arriba) habrían recibido el mismo Elo
+  encontrado para uno solo de ellos — un bug chiquito que este cambio de
+  paso también corrige. A quien queda «ambiguo» o «no encontrado» se le
+  pone en una lista bajo el botón (`#pi-elo-pendientes`, en memoria, no se
+  guarda) con un botón «Editar» que abre el mismo formulario de editar un
+  jugador para poner el Elo a mano; la lista se actualiza sola al guardar
+  esos cambios o al volver a buscar.
+
+**Al tocar la institución, la categoría, los nombres repetidos, la subida de
+listas, el filtro por institución o el Elo Nacional, correr
 `node herramientas/verificar-pareo-institucion.js`** (con el sitio en
 localhost:8777 y playwright para la parte de la página; sin navegador para
 la migración y la Edge Function). Comprueba el freno y el candado de
 `pareo-elo-nacional` leídos de la migración y de `index.ts`, el lector de
 tablas de un `.docx` armado a mano (con y sin cabecera reconocible, con una
 tabla y con un párrafo por línea), el mapeo de columnas por etiqueta, la
-exportación a CSV y, en la página, que subir un archivo agregue a los
-jugadores con su institución, que el botón de Elo Nacional sea la única
-llamada que sale del sitio y que no adivine un homónimo. Rompiendo a
-propósito el freno o la comparación de nombres, salta.
+exportación a CSV, que subir un archivo agregue a los jugadores con su
+institución, que el botón de Elo Nacional sea la única llamada que sale del
+sitio, que no adivine un homónimo y que asigne por índice, que resolver un
+ambiguo a mano lo saque de la lista de pendientes, que un nombre repetido se
+avise sin bloquear el alta, y que el filtro de institución filtre de verdad
+tanto la Clasificación como la Tabla cruzada. Rompiendo a propósito el freno,
+la comparación de nombres o el filtro, salta.
 
 ## Ajedrez estudiantil en Costa Rica: los torneos de chess-results
 
