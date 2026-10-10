@@ -373,8 +373,15 @@ window.ComandosTablero = (function () {
   function sanHablada(san) {
     return window.BlindNotation && BlindNotation.sanSpoken ? BlindNotation.sanSpoken(san) : sanEspanol(san);
   }
+  /* Un ejercicio que arranca en la posición no trae historia, pero puede saber
+     qué jugó el rival para llegar a ella: la página se lo pone a la partida en
+     `jugadaPrevia` (el SAN; la Racha táctica, de su banco de Lichess). */
   function ultimaJugada(juego) {
     var h = historiaDe(juego);
+    if ((!h || !h.length) && juego && juego.jugadaPrevia) {
+      var rival = juego.turn() === "w" ? "negras" : "blancas";
+      return "La última jugada fue de las " + rival + ": " + sanHablada(juego.jugadaPrevia) + ".";
+    }
     if (!h || !h.length) return "Todavía no hay jugadas: la partida (o el ejercicio) empieza en esta posición.";
     var quien = h.length % 2 === 1 ? "blancas" : "negras";
     try {

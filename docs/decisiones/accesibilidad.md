@@ -996,6 +996,32 @@ ejercicios:
   «tiempo», «reloj», «cuánto tiempo» y «segundos» dicen lo que queda, y en
   Modo Adaptado se avisa solo a la mitad y a los 10 segundos. En el examen,
   «tiempo» dice lo que le queda al examen.
+- **La Racha táctica para las cuentas «ciego»** (lo pidió ese grupo): al
+  llegar cada ejercicio, las piezas se dicen **una por una** en su propia
+  región viva (`#pieza-dicha`), con **1 segundo de pausa** entre una y otra, y
+  el reloj **no corre** mientras tanto: los **30 segundos** empiezan cuando
+  termina la lectura (antes eran 60 contando la lectura entera de corrido, que
+  se comía casi todo). Con «Activar voz» la pausa se cuenta desde que la voz
+  avisa que terminó; con un lector de pantalla no hay forma de saberlo y se
+  calcula por el largo de la frase (`LECTURA.msPorLetra`). Contestar antes
+  vale y corta la lectura; «tiempo» dice que el reloj todavía no empezó. El
+  resto del Modo Adaptado sigue con 60 segundos. En el recuadro, la posición
+  va bajo un encabezado «Piezas» (h2) y partida en dos listas, cada una con
+  el suyo: «Blancas» y «Negras» (h3), para llegar con la tecla H
+  (`encabezadoPosicion` de `CuadroComandos.montar`; también en ¡Te reto!,
+  que comparte `js/racha-tablero.js`).
+- **La Racha dice qué jugó el rival.** Cada ejercicio de Lichess empieza con
+  una jugada del rival, pero el banco guardaba solo la posición de después:
+  quien no ve el tablero no sabía qué acababa de pasar. Ahora el banco trae un
+  quinto campo con esa jugada (SAN) y al llegar el ejercicio se dice «Las negras
+  jugaron caballo captura eva 6» (en Modo Adaptado y en la cuenta «ciego», antes
+  de las piezas; fuera del modo se escribe en algebraica española, «Cxe6»).
+  «última jugada» en el recuadro la repite: `ComandosTablero` lee
+  `juego.jugadaPrevia` cuando la partida no trae historia. Las jugadas salen de
+  la tabla «Ejercicios Lichess» cruzando huellas de la posición
+  (`herramientas/racha-jugada-rival.js`, que rearma la posición de antes y la
+  comprueba con chess.js: 4446 de 4446), y `verificar-racha-rival.js` revisa
+  que cada una cuadre con su posición.
 - **«enroque corto» / «enroque largo»** en Estándar, Niebla, contra Oscar, a
   ciegas contra el bot y en las variantes: antes solo se entendía «O-O».
 - **«siguiente»** en Batalla naval, como en el Sonar.
