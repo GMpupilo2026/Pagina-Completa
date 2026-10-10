@@ -79,6 +79,9 @@ const FUNCIONES = {
   // El robo de puntos al perder una partida ganada (verify_jwt en false: la
   // dispara el trigger de game_rooms). Su calculo.ts es suyo. Ver su cabecera.
   "partida-fin": [],
+  // Juegos Estudiantiles MEP, modo árbitro: publica un evento sin cuenta
+  // (verify_jwt en false), con su propio freno (jde_frenar). Ver su cabecera.
+  "jde-publicar": [],
 };
 
 function armar(nombre) {

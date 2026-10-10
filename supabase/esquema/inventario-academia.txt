@@ -2,6 +2,7 @@
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
 # al-dia-con: 20261009200000
 tabla  Ejercicios Lichess  rls=true
+tabla  _foto_rls_tmp  rls=false
 tabla  academia_ia  rls=true
 tabla  academia_miembros  rls=true
 tabla  academias  rls=true
@@ -85,6 +86,7 @@ tabla  interno.curso_lecciones  rls=false
 tabla  interno.envios_publicos  rls=true
 tabla  interno.lector_planilla_uso  rls=true
 tabla  interno.salud_base  rls=true
+tabla  jde_eventos  rls=true
 tabla  jdn_resultados  rls=true
 tabla  justificaciones_ausencia  rls=true
 tabla  licencias_herramientas  rls=true
@@ -180,6 +182,13 @@ columna  Ejercicios Lichess.PuzzleId  text
 columna  Ejercicios Lichess.Rating  bigint
 columna  Ejercicios Lichess.RatingDeviation  bigint
 columna  Ejercicios Lichess.Themes  text
+columna  _foto_rls_tmp.ca  bigint
+columna  _foto_rls_tmp.cp  bigint
+columna  _foto_rls_tmp.cs  bigint
+columna  _foto_rls_tmp.cuando  text
+columna  _foto_rls_tmp.persona  uuid
+columna  _foto_rls_tmp.qa  bigint
+columna  _foto_rls_tmp.tr  bigint
 columna  academia_ia.academia_id  uuid
 columna  academia_ia.id  uuid
 columna  academia_ia.modelo  text
@@ -829,6 +838,18 @@ columna  interno.salud_base.lenta  boolean
 columna  interno.salud_base.lentas  integer
 columna  interno.salud_base.medido_at  timestamp with time zone
 columna  interno.salud_base.pulso_ms  integer
+columna  jde_eventos.anio  smallint
+columna  jde_eventos.arbitro  text
+columna  jde_eventos.categoria  text
+columna  jde_eventos.clasificacion  jsonb
+columna  jde_eventos.creado  timestamp with time zone
+columna  jde_eventos.fase  text
+columna  jde_eventos.fecha  date
+columna  jde_eventos.id  bigint
+columna  jde_eventos.nombre  text
+columna  jde_eventos.rama  text
+columna  jde_eventos.region  text
+columna  jde_eventos.sede  text
 columna  jdn_resultados.codigo  text
 columna  jdn_resultados.comite  text
 columna  jdn_resultados.edicion  text
@@ -1746,6 +1767,7 @@ funcion  interno.ultima_actividad_de_clase(p_clase uuid)  definer  anon=false  a
 funcion  interno.validar_periodo(p_desde date, p_hasta date)  invoker  anon=false  auth=false
 funcion  interno.verificacion_al_dia()  definer  anon=false  auth=true
 funcion  interno.version_legal_valida(p text)  invoker  anon=false  auth=false
+funcion  jde_frenar(p_ip text, p_correo text)  definer  anon=false  auth=false
 funcion  jdn_drive_guardar(p_url text, p_secreto text)  definer  anon=false  auth=false
 funcion  jdn_drive_leer()  definer  anon=false  auth=false
 funcion  jdn_frenar(p_ip text, p_correo text)  definer  anon=false  auth=false
@@ -2117,6 +2139,7 @@ politica  informes_profesor  informes_profesor_select  SELECT
 politica  insignias  insignias_ver  SELECT
 politica  insignias  verificacion_en_dos_pasos  ALL  restrictiva
 politica  insignias_tipos  insignias_tipos_ver  SELECT
+politica  jde_eventos  jde_eventos_lectura_publica  SELECT
 politica  jdn_resultados  jdn_resultados_con_herramienta  SELECT
 politica  justificaciones_ausencia  justificaciones_select  SELECT
 politica  licencias_herramientas  licencias_herramientas_ver  SELECT
@@ -2687,6 +2710,8 @@ indice  interno.envios_publicos  envios_publicos_tipo_ambito
 indice  interno.lector_planilla_uso  lector_planilla_uso_dia
 indice  interno.lector_planilla_uso  lector_planilla_uso_pkey
 indice  interno.salud_base  salud_base_pkey
+indice  jde_eventos  jde_eventos_anio_fase_idx
+indice  jde_eventos  jde_eventos_pkey
 indice  jdn_resultados  jdn_resultados_edicion_codigo_orden_key
 indice  jdn_resultados  jdn_resultados_pkey
 indice  justificaciones_ausencia  justificaciones_ausencia_pkey
@@ -3460,6 +3485,12 @@ grant  informes_profesor  authenticated  TRIGGER
 grant  informes_profesor  authenticated  TRUNCATE
 grant  insignias  authenticated  SELECT
 grant  insignias_tipos  authenticated  SELECT
+grant  jde_eventos  anon  REFERENCES
+grant  jde_eventos  anon  SELECT
+grant  jde_eventos  anon  TRIGGER
+grant  jde_eventos  authenticated  REFERENCES
+grant  jde_eventos  authenticated  SELECT
+grant  jde_eventos  authenticated  TRIGGER
 grant  jdn_resultados  authenticated  REFERENCES
 grant  jdn_resultados  authenticated  SELECT
 grant  jdn_resultados  authenticated  TRIGGER

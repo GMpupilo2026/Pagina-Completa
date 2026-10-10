@@ -33,3 +33,4 @@ prueba-gratis                  true         la prueba gratis de 3 dias: la crea 
 recuperar-acceso               false        el olvido de contrasena de cualquier cuenta
 reenviar-acceso                true         reenvia el acceso a una cuenta
 partida-fin                    false        el robo de puntos al perder una partida ganada (trigger de game_rooms, secreto de la boveda)
+jde-publicar                   false        Juegos Estudiantiles MEP, modo arbitro: publica un evento sin cuenta, con su propio freno (jde_frenar)

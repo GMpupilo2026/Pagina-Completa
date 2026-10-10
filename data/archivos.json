@@ -23,7 +23,7 @@
     "nombre": "Formación docente"
    }
   ],
-  "total": 888,
+  "total": 889,
   "material": [
    {
     "ruta": "material/cambiar-o-no-cambiar/cambiar-o-no-cambiar.pdf",
@@ -78,14 +78,14 @@
     "ruta": "material/guia-del-profesor/guia-del-profesor-presentacion.pdf",
     "titulo": "Guía del profesor — presentación",
     "tipo": "otro",
-    "kb": 6401,
+    "kb": 6402,
     "libro": "Guía del profesor"
    },
    {
     "ruta": "material/guia-del-profesor/guia-del-profesor.pdf",
     "titulo": "Guía del profesor — manual",
     "tipo": "otro",
-    "kb": 4637,
+    "kb": 4639,
     "libro": "Guía del profesor"
    },
    {
@@ -8146,6 +8146,12 @@
    }
   ],
   "sueltos": [
+   {
+    "ruta": "documentos/jde/normativa-pjde-2026.pdf",
+    "titulo": "Normativa pjde 2026",
+    "tipo": "otro",
+    "kb": 1695
+   },
    {
     "ruta": "instrucciones-adaptadas.pdf",
     "titulo": "Instrucciones adaptadas (para quien ve poco o no ve)",
