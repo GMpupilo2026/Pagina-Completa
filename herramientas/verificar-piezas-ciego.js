@@ -28,6 +28,11 @@ const BASE = process.env.BASE_URL || "http://localhost:8777";
 const CIEGA = { vision_personas: [{ persona_id: "u-ana", vision: "ciego" }] };
 
 let fallos = 0;
+function igual(nombre, hallado, esperado) {
+  const a = JSON.stringify(hallado), b = JSON.stringify(esperado);
+  if (a === b) console.log("  ✓ " + nombre);
+  else { console.log("  ✗ " + nombre + "\n      esperaba: " + b + "\n      salió:    " + a); fallos += 1; }
+}
 function cierto(n, v, detalle) {
   if (v) console.log("  ✓ " + n);
   else { console.log("  ✗ " + n + (detalle ? "\n      " + detalle : "")); fallos += 1; }
@@ -128,6 +133,34 @@ function leer() {
     const { page, ctx } = await abrir(browser, "/ciegos.html", true);
     const vis = await page.evaluate(() => ["h-coordenadas", "h-sonar", "h-batalla"].map((id) => { const h = document.getElementById(id); return h ? h.checkVisibility() : "no está"; }));
     cierto("la guía no muestra Coordenadas, el Sonar ni la Batalla naval", vis.every((v) => v === false), JSON.stringify(vis));
+    await ctx.close();
+  }
+
+  console.log("\n=== Juega contra Oscar: el tablero, fuera del lector ===");
+  {
+    const { page, ctx } = await abrir(browser, "/tablero.html", true);
+    const r = await page.evaluate(() => {
+      const t = document.getElementById("chessboard");
+      return {
+        oculto: t.getAttribute("aria-hidden"),
+        seVe: t.checkVisibility(),
+        enElTab: t.querySelectorAll("[tabindex='0']").length,
+        marketing: ["#header nav ul", "#menu-toggle"].map((s) => { const e = document.querySelector(s); return e ? e.checkVisibility() : "no está"; }),
+      };
+    });
+    igual("el tablero se ve, pero sin lector ni Tab, y sin el menú del sitio público", r,
+      { oculto: "true", seVe: true, enElTab: 0, marketing: [false, false] });
+    await ctx.close();
+  }
+  {
+    const { page, ctx } = await abrir(browser, "/tablero.html", false);
+    const r = await page.evaluate(() => {
+      const t = document.getElementById("chessboard");
+      const a8 = t.querySelector('[data-square="a8"]');
+      return { oculto: t.getAttribute("aria-hidden"), enElTab: t.querySelectorAll("[tabindex='0']").length, a8: a8 && a8.getAttribute("aria-label") };
+    });
+    igual("sin la marca, en Modo Adaptado el tablero sigue en el lector y dice «anna 8»", r,
+      { oculto: null, enElTab: 1, a8: "anna 8, torre negra" });
     await ctx.close();
   }
 

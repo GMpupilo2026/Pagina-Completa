@@ -139,8 +139,13 @@ function buildTabs(){
   CATEGORY_ORDER.forEach(cat => {
     const count = EXERCISES.filter(e => e.category === cat).length;
     const btn = document.createElement('button');
+    btn.type = 'button';
     btn.className = 'tab' + (cat === currentCategory ? ' active' : '');
-    btn.setAttribute('aria-selected', cat === currentCategory ? 'true' : 'false');
+    /* `aria-pressed` y no `aria-selected`: estos botones no son pestañas de un
+       `tablist` (no hay `tabpanel`), y un `aria-selected` fuera de ese rol el
+       lector lo ignora: no decía cuál nivel estaba elegido. */
+    btn.setAttribute('aria-pressed', cat === currentCategory ? 'true' : 'false');
+    btn.setAttribute('aria-label', `Nivel ${CATEGORY_LABEL[cat]}, ${count} ejercicios`);
     btn.style.setProperty('--tab-color', `var(${CATEGORY_VAR[cat]})`);
     btn.innerHTML = `${CATEGORY_LABEL[cat]} <span class="n">${count}</span>`;
     btn.addEventListener('click', () => showCategory(cat));
@@ -152,11 +157,14 @@ function setActiveTab(cat){
   document.querySelectorAll('.tab').forEach((btn,i) => {
     const active = CATEGORY_ORDER[i] === cat;
     btn.classList.toggle('active', active);
-    btn.setAttribute('aria-selected', active ? 'true' : 'false');
+    btn.setAttribute('aria-pressed', active ? 'true' : 'false');
   });
 }
 
-function showCategory(cat){
+/* `pedido` (opcional): el índice del ejercicio que se quiere abrir, aunque ya
+   esté resuelto o el nivel entero lo esté — es como se vuelve a uno hecho
+   (ver «Tus ejercicios» más abajo). Sin él, el primero sin resolver. */
+function showCategory(cat, pedido){
   currentCategory = cat;
   setActiveTab(cat);
   currentList = EXERCISES.filter(e => e.category === cat).sort((a,b) => a.number - b.number);
@@ -169,12 +177,13 @@ function showCategory(cat){
 
   if(hasPuzzles){
     grid.hidden = true;
-    const idx = firstUnsolvedIndex(currentList);
+    const idx = typeof pedido === 'number' ? pedido : firstUnsolvedIndex(currentList);
     if(idx >= currentList.length){
       soloPanel.hidden = true;
       soloComplete.hidden = false;
       document.getElementById('solo-complete-text').textContent =
-        `Resolviste los ${currentList.length} ejercicios de ${CATEGORY_LABEL[cat]}. ¡Muy bien!`;
+        `Resolviste los ${currentList.length} ejercicios de ${CATEGORY_LABEL[cat]}. ¡Muy bien! Abajo, en «Tus ejercicios», puedes volver a cualquiera.`;
+      pintarMisEjercicios();
     } else {
       soloComplete.hidden = true;
       soloPanel.hidden = false;
@@ -187,8 +196,211 @@ function showCategory(cat){
     soloComplete.hidden = true;
     grid.hidden = false;
     renderGrid();
+    pintarMisEjercicios();
   }
 }
+
+/* ---------------- TUS EJERCICIOS: volver a uno hecho y los favoritos ----------------
+   El 4×4 abría siempre el primero sin resolver, y con el nivel completo no
+   dejaba volver a ninguno. Ahora se puede ir a cualquiera ya resuelto (para
+   repasarlo, o porque gustó) y marcar favoritos para llegar rápido. Lo que
+   todavía no se abrió sigue cerrado: se abre al resolver el anterior.
+   Los favoritos van con la cuenta (progreso-usuario.js; gana la última que
+   eligió, como las favoritas del panel). Ver «En el 4×4, volver a los que ya
+   hiciste» en docs/decisiones/entrenamiento.md. */
+const FAV_KEY = 'entreno_4x4_favoritos_v1';
+function leerFavoritos(){
+  try{
+    const o = JSON.parse(localStorage.getItem(FAV_KEY) || '{}');
+    return o && typeof o === 'object' && !Array.isArray(o) ? o : {};
+  }catch(e){ return {}; }
+}
+function esFavorito(id){ return !!leerFavoritos()[id]; }
+function cambiarFavorito(id){
+  const f = leerFavoritos();
+  if(f[id]) delete f[id]; else f[id] = true;
+  try{ localStorage.setItem(FAV_KEY, JSON.stringify(f)); }catch(e){}
+  return !!f[id];
+}
+function listaDeNivel(cat){
+  return EXERCISES.filter(e => e.category === cat).sort((a,b) => a.number - b.number);
+}
+/* Los favoritos que existen, en el orden de los niveles y de los números. */
+function favoritosOrdenados(){
+  const f = leerFavoritos();
+  const out = [];
+  CATEGORY_ORDER.forEach(cat => {
+    listaDeNivel(cat).forEach(ex => {
+      const puz = puzzleForExercise(ex);
+      if(puz && f[puz.id]) out.push({ cat, number: ex.number });
+    });
+  });
+  return out;
+}
+/* «1 al 37, 40 y 52»: los números de los resueltos, juntados en tramos. */
+function tramos(nums){
+  const partes = [];
+  for(let i = 0; i < nums.length; i++){
+    let j = i;
+    while(j + 1 < nums.length && nums[j + 1] === nums[j] + 1) j++;
+    partes.push(j > i ? `${nums[i]} al ${nums[j]}` : String(nums[i]));
+    i = j;
+  }
+  return joinSpanishList(partes);
+}
+function resueltosDeNivel(cat){
+  return listaDeNivel(cat).filter(ex => { const p = puzzleForExercise(ex); return p && isSolved(p.id); }).map(ex => ex.number);
+}
+/* El ejercicio que se está jugando, si hay uno en pantalla. */
+function ejercicioActual(){
+  if(document.getElementById('solo-panel').hidden || boardCategory !== currentCategory) return null;
+  const ex = boardExList[boardExIndex];
+  const puz = ex && puzzleForExercise(ex);
+  return puz ? { ex, puz } : null;
+}
+
+/* Abre el ejercicio `number` del nivel `cat`, si ya se abrió. Devuelve el
+   aviso de por qué no, o '' si lo abrió. */
+function abrirEjercicio(cat, number){
+  const lista = listaDeNivel(cat);
+  const idx = lista.findIndex(e => e.number === number);
+  if(idx < 0 || !puzzleForExercise(lista[idx])){
+    return `${CATEGORY_LABEL[cat]} no tiene un ejercicio ${number}: van del 1 al ${lista.length}.`;
+  }
+  if(!isUnlocked(lista[idx], lista)){
+    const toca = lista[firstUnsolvedIndex(lista)];
+    return `El ejercicio ${number} de ${CATEGORY_LABEL[cat]} todavía no se abre: se abre al resolver el anterior. El que te toca es el ${toca ? toca.number : 1}.`;
+  }
+  showCategory(cat, idx);
+  // Al ejercicio, también con el ratón: el botón que se tocó quedó abajo.
+  const h = document.getElementById('piezas-heading');
+  if(h && !modoCiego()){ h.focus({ preventScroll: true }); h.scrollIntoView({ block: 'center' }); }
+  return '';
+}
+
+function botonEjercicio(texto, alClic){
+  const li = document.createElement('li');
+  const b = document.createElement('button');
+  b.type = 'button';
+  b.className = 'bctrl';
+  b.textContent = texto;
+  b.addEventListener('click', alClic);
+  li.appendChild(b);
+  return li;
+}
+function pintarListas(){
+  const favs = favoritosOrdenados();
+  document.getElementById('n-favoritos').textContent = favs.length;
+  const ulF = document.getElementById('ul-favoritos');
+  ulF.textContent = '';
+  if(!favs.length){
+    const li = document.createElement('li');
+    li.textContent = 'Todavía no marcaste ninguno. En un ejercicio, aprieta «Favorito» (o escribe «favorito»).';
+    ulF.appendChild(li);
+  }
+  favs.forEach(f => ulF.appendChild(botonEjercicio(`${CATEGORY_LABEL[f.cat]} — ejercicio ${f.number}`, () => avisoMis(abrirEjercicio(f.cat, f.number)))));
+
+  const hechos = resueltosDeNivel(currentCategory);
+  document.getElementById('n-resueltos').textContent = hechos.length;
+  const ulR = document.getElementById('ul-resueltos');
+  ulR.textContent = '';
+  // Se pinta solo abierta: con el nivel entero son doscientos botones.
+  if(!document.getElementById('mis-resueltos').open) return;
+  if(!hechos.length){
+    const li = document.createElement('li');
+    li.textContent = 'Todavía no resolviste ninguno de este nivel.';
+    ulR.appendChild(li);
+  }
+  const f = leerFavoritos();
+  const lista = listaDeNivel(currentCategory);
+  hechos.forEach(n => {
+    const puz = puzzleForExercise(lista.find(e => e.number === n));
+    const li = botonEjercicio(`Ejercicio ${n}`, () => avisoMis(abrirEjercicio(currentCategory, n)));
+    if(puz && f[puz.id]){
+      const b = li.firstChild;
+      const est = document.createElement('span');
+      est.setAttribute('aria-hidden', 'true');
+      est.textContent = ' ★';
+      b.appendChild(est);
+      b.setAttribute('aria-label', `Ejercicio ${n}, favorito`);
+    }
+    ulR.appendChild(li);
+  });
+}
+function avisoMis(texto){
+  const el = document.getElementById('mis-4x4-aviso');
+  if(!el) return;
+  el.textContent = '';
+  if(texto) window.setTimeout(() => { el.textContent = texto; }, 50);
+}
+function pintarMisEjercicios(){
+  const sec = document.getElementById('mis-4x4');
+  if(!sec) return;
+  const lista = listaDeNivel(currentCategory);
+  const jugable = lista.length > 0 && !!puzzleForExercise(lista[0]);
+  sec.hidden = !jugable && !favoritosOrdenados().length;
+  if(sec.hidden) return;
+  const hechos = resueltosDeNivel(currentCategory);
+  const toca = jugable ? lista[firstUnsolvedIndex(lista)] : null;
+  document.getElementById('mis-4x4-resumen').textContent = !jugable
+    ? `${CATEGORY_LABEL[currentCategory]} todavía no tiene ejercicios para jugar. Tus favoritos están abajo.`
+    : !hechos.length
+      ? `Todavía no resolviste ninguno de ${CATEGORY_LABEL[currentCategory]}. Los que resuelvas quedan acá para volver a hacerlos.`
+      : `Llevas ${hechos.length} de ${lista.length} resueltos en ${CATEGORY_LABEL[currentCategory]}: puedes volver a cualquiera para repasarlo` +
+        (toca ? `, o seguir con el que te toca, el ${toca.number}.` : '. Los terminaste todos.');
+  const actual = ejercicioActual();
+  const fav = document.getElementById('fav-actual');
+  fav.hidden = !actual;
+  if(actual){
+    const si = esFavorito(actual.puz.id);
+    fav.setAttribute('aria-pressed', si ? 'true' : 'false');
+    fav.setAttribute('aria-label', `Marcar el ejercicio ${actual.ex.number} como favorito`);
+    document.getElementById('fav-estrella').textContent = si ? '★' : '☆';
+  }
+  const irToca = document.getElementById('ir-al-que-toca');
+  irToca.hidden = !toca || (actual && actual.ex === toca);
+  if(toca) irToca.textContent = `Ir al que te toca (el ${toca.number})`;
+  const num = document.getElementById('ir-numero');
+  num.max = String(lista.length || 1);
+  document.getElementById('ir-form').hidden = !jugable;
+  pintarListas();
+}
+/* Marca o desmarca el ejercicio en pantalla. Devuelve lo que se dice. */
+function alternarFavoritoActual(){
+  const actual = ejercicioActual();
+  if(!actual) return 'Abre un ejercicio para marcarlo como favorito.';
+  const si = cambiarFavorito(actual.puz.id);
+  pintarMisEjercicios();
+  return si
+    ? `Ejercicio ${actual.ex.number} de ${CATEGORY_LABEL[currentCategory]} guardado en tus favoritos.`
+    : `Ejercicio ${actual.ex.number} de ${CATEGORY_LABEL[currentCategory]} quitado de tus favoritos.`;
+}
+function textoFavoritos(){
+  const favs = favoritosOrdenados();
+  if(!favs.length) return 'Todavía no tienes favoritos. En un ejercicio, escribe «favorito» para guardarlo.';
+  return `Tus favoritos: ${favs.map((f, i) => `${i + 1}, ${CATEGORY_LABEL[f.cat]} ${f.number}`).join('; ')}. Escribe «favorito» y el número de la lista para abrirlo, por ejemplo «favorito 1».`;
+}
+function textoResueltos(){
+  const hechos = resueltosDeNivel(currentCategory);
+  if(!hechos.length) return `Todavía no resolviste ninguno de ${CATEGORY_LABEL[currentCategory]}.`;
+  return `En ${CATEGORY_LABEL[currentCategory]} resolviste ${hechos.length}: ${hechos.length === 1 ? 'el' : 'del'} ${tramos(hechos)}. Escribe «ir al» y el número para volver a uno.`;
+}
+function irAlQueToca(){
+  const lista = listaDeNivel(currentCategory);
+  const i = firstUnsolvedIndex(lista);
+  if(i >= lista.length) return `Ya resolviste todos los de ${CATEGORY_LABEL[currentCategory]}. Escribe «resueltos» para volver a uno.`;
+  return abrirEjercicio(currentCategory, lista[i].number);
+}
+
+document.getElementById('fav-actual').addEventListener('click', () => avisoMis(alternarFavoritoActual()));
+document.getElementById('ir-al-que-toca').addEventListener('click', () => avisoMis(irAlQueToca()));
+document.getElementById('ir-form').addEventListener('submit', (e) => {
+  e.preventDefault();
+  const n = parseInt(document.getElementById('ir-numero').value, 10);
+  if(!n){ avisoMis('Escribe el número del ejercicio.'); return; }
+  avisoMis(abrirEjercicio(currentCategory, n));
+});
+document.getElementById('mis-resueltos').addEventListener('toggle', pintarListas);
 
 function renderGrid(){
   const grid = document.getElementById('grid');
@@ -469,6 +681,7 @@ function loadPuzzleAt(exIndex, prefijo){
   setStatus('Mueve una pieza para capturar otra. Gana al dejar 1 sola pieza.');
   renderBoard();
   updatePuzzleNavButtons();
+  pintarMisEjercicios();
   // Al empezar el ejercicio hay que saber dónde está cada pieza, no solo cuántas
   // quedan. Lo dice la lectura de arriba (#position-readout, región viva), que es
   // la que el foco tiene al lado; este anuncio se queda SOLO con el número de
@@ -689,6 +902,7 @@ function checkWin(){
     const ex = boardExList[boardExIndex];
     const puz = puzzleForExercise(ex);
     markSolved(puz.id);
+    pintarMisEjercicios();
     EntrenoProgress.log('4x4', { puzzle_id: puz.id, category: ex.category, number: ex.number,
       ...EntrenoProgress.comoSalio(!intentoLimpio, false) });
     setStatus('¡Resuelto!');
@@ -1075,6 +1289,14 @@ const HELP_SECTIONS = [
       's seguido de una columna a-d o fila 1-4 (piezas en esa línea), reiniciar (empezar de nuevo este ejercicio), ayuda (esta lista).',
   },
   {
+    title: 'Volver a un ejercicio y los favoritos',
+    text:
+      'resueltos (cuáles hiciste en este nivel), ir al y un número (volver a ese, por ejemplo "ir al 12"), ' +
+      'el nivel y un número (por ejemplo "intermedio 3"), el que toca (el primero sin resolver), ' +
+      'favorito (guardar o quitar el ejercicio de ahora), favoritos (oír tu lista) y favorito con un número ' +
+      '(abrir ese de la lista, por ejemplo "favorito 1"). Lo que todavía no se abrió se abre al resolver el anterior.',
+  },
+  {
     title: 'Atajos con el tablero enfocado',
     text:
       'i (ir al recuadro de jugada), o (casilla actual), z (posición completa, en voz — igual que el comando T), ' +
@@ -1169,6 +1391,32 @@ function handleCmdFormSubmit(e){
     const prev = document.getElementById('board-prev-puzzle');
     if(prev.disabled) cmdAnnounce('Este es el primer ejercicio: no hay uno anterior.');
     else prev.click();
+    return;
+  }
+  /* Tus ejercicios, escribiendo: marcar el de ahora, oír y abrir los
+     favoritos, oír los resueltos y volver a uno («ir al 12», «intermedio 3»).
+     Al abrirlo, `abrirEjercicio` devuelve '' y el aviso anterior se borra (el
+     ejercicio nuevo lo dice loadPuzzleAt); si no se pudo, dice por qué. */
+  if(/^(favorito|marcar favorito|marcar como favorito|me gusta|quitar favorito|quitar de favoritos)$/.test(plano)){ input.value = ''; cmdAnnounce(alternarFavoritoActual()); return; }
+  if(/^(favoritos|mis favoritos|lista de favoritos)$/.test(plano)){ input.value = ''; cmdAnnounce(textoFavoritos()); return; }
+  const favN = plano.match(/^(?:abrir |ir al |ir a )?favorito (\d+)$/);
+  if(favN){
+    input.value = '';
+    const f = favoritosOrdenados()[parseInt(favN[1], 10) - 1];
+    if(!f){ cmdAnnounce(`No tienes un favorito ${favN[1]}. ${textoFavoritos()}`); return; }
+    const no = abrirEjercicio(f.cat, f.number);
+    cmdAnnounce(no, !!no);
+    return;
+  }
+  if(/^(resueltos|hechos|los que hice|los resueltos|ejercicios resueltos)$/.test(plano)){ input.value = ''; cmdAnnounce(textoResueltos()); return; }
+  if(/^(el que toca|el que me toca|ir al que toca|ir al que me toca|ir al que te toca|pendiente)$/.test(plano)){ input.value = ''; const no = irAlQueToca(); cmdAnnounce(no, !!no); return; }
+  const irN = plano.match(/^(?:ir al?|ir al ejercicio|ejercicio|abrir|abrir el|numero)\s*(\d+)$/);
+  if(irN){ input.value = ''; const no = abrirEjercicio(currentCategory, parseInt(irN[1], 10)); cmdAnnounce(no, !!no); return; }
+  const nivelYNumero = plano.match(/^(?:ir a )?(?:nivel )?(facil|medio|intermedio|dificil|avanzado|especialista|gran ?maestro|maestro)\s+(\d+)$/);
+  if(nivelYNumero){
+    input.value = '';
+    const no = abrirEjercicio(nivelEscrito(nivelYNumero[1]), parseInt(nivelYNumero[2], 10));
+    cmdAnnounce(no, !!no);
     return;
   }
   if(/^(otra vez|de nuevo|reintentar|repetir)$/.test(plano)){ input.value = ''; reiniciarEjercicio(); cmdAnnounce('Ejercicio reiniciado.', false); return; }

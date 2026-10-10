@@ -1207,3 +1207,23 @@ Lo mide `verificar-piezas-ciego.js` (las páginas escondidas avisan, Habilidades
 sin la Fotografía ni el nivel 3, la guía sin esas secciones). Probado que
 falla: sin `escondido()` saltan tres comprobaciones, y sin Memoria en la lista
 o sin la regla de `data-oculto-ciego`, una cada una.
+
+## Juega contra Oscar, como Entrenamiento
+
+La revisión de lo que les sigue costando a las cuentas ciegas encontró que
+`tablero.html` (contra Oscar) no seguía la regla de «Quien no ve hace todo
+desde el recuadro»: su tablero es el propio de `js/tablero-board.js`, no
+`TableroAccesible`, y con la cuenta ciega seguía en el lector, con sus 64
+casillas entre los botones de arriba y los de abajo.
+
+- Con la cuenta ciega el tablero se queda a la vista (para quien acompaña) con
+  `aria-hidden` y ninguna casilla en el Tab; «b e4» dice qué hay sin mover el
+  foco (`focusBoardSquare` solo anota la casilla).
+- En Modo Adaptado las casillas se dicen como en todo el sitio, «anna 8,
+  torre negra», y no «a8».
+- El encabezado de esa página es el del sitio público: la barra de arriba, el
+  menú (Cursos, Artículos, Inscríbete…) y su botón llevan `data-oculto-ciego`.
+  Los accesos rápidos ya llevan al panel.
+
+Lo mide `verificar-piezas-ciego.js` (con la marca y sin ella). Probado que
+falla con el `tablero-board.js` de antes: saltan las dos comprobaciones.

@@ -139,6 +139,17 @@
     color:var(--text);
   }
   .tab .n{color:var(--text-muted); font-size:0.8em;}
+  /* Tus ejercicios: volver a uno hecho y los favoritos */
+  .mis-4x4{max-width:640px; margin:2rem auto 0; padding:1rem 1.25rem; border:1px solid var(--border, rgba(127,127,127,.35)); border-radius:12px;}
+  .mis-titulo{font-family:'Merriweather',serif; font-size:1.2rem; font-weight:700; color:var(--text); margin:0 0 .4rem;}
+  .mis-resumen{color:var(--text-muted); margin:0 0 .8rem; line-height:1.5;}
+  .mis-fila{display:flex; flex-wrap:wrap; align-items:center; gap:.5rem; margin:0 0 .7rem;}
+  .mis-label{color:var(--text);}
+  #ir-numero.mis-numero{width:6rem; flex:0 0 auto;}
+  .mis-aviso{min-height:1.3em; margin:0 0 .6rem; font-weight:600; color:var(--text);}
+  .mis-lista{margin:.4rem 0;}
+  .mis-lista summary{cursor:pointer; color:var(--text); font-weight:600; padding:.35rem 0;}
+  .mis-lista ul{display:flex; flex-wrap:wrap; gap:.4rem; list-style:none; margin:.5rem 0 0; padding:0;}
 
   main{
     max-width:1180px;
@@ -597,6 +608,35 @@
     <section id="solo-complete" hidden>
       <h2>¡Completaste todos los ejercicios!</h2>
       <p id="solo-complete-text"></p>
+    </section>
+
+    <!-- TUS EJERCICIOS: volver a uno que ya hiciste (para repasarlo o porque
+         gustó) y los favoritos, para llegar rápido. Va también con el nivel
+         completo, que antes no dejaba volver a ninguno. Se maneja igual
+         escribiendo en el recuadro («favorito», «favoritos», «resueltos», «ir
+         al 12»). Ver «En el 4×4, volver a los que ya hiciste» en
+         docs/decisiones/entrenamiento.md. -->
+    <section id="mis-4x4" class="mis-4x4" hidden aria-labelledby="mis-4x4-titulo">
+      <h2 id="mis-4x4-titulo" class="mis-titulo">Tus ejercicios</h2>
+      <p id="mis-4x4-resumen" class="mis-resumen"></p>
+      <div class="mis-fila">
+        <button type="button" class="bctrl" id="fav-actual" aria-pressed="false" aria-label="Marcar este ejercicio como favorito"><span aria-hidden="true" id="fav-estrella">☆</span> Favorito</button>
+        <button type="button" class="bctrl" id="ir-al-que-toca">Ir al que te toca</button>
+      </div>
+      <form id="ir-form" class="mis-fila">
+        <label for="ir-numero" class="mis-label">Ir al ejercicio número</label>
+        <input id="ir-numero" type="number" min="1" inputmode="numeric" class="cmd-input mis-numero">
+        <button type="submit" class="bctrl">Ir</button>
+      </form>
+      <p id="mis-4x4-aviso" class="mis-aviso" role="status"></p>
+      <details id="mis-favoritos" class="mis-lista">
+        <summary>Tus favoritos (<span id="n-favoritos">0</span>)</summary>
+        <ul id="ul-favoritos"></ul>
+      </details>
+      <details id="mis-resueltos" class="mis-lista">
+        <summary>Resueltos de este nivel (<span id="n-resueltos">0</span>)</summary>
+        <ul id="ul-resueltos"></ul>
+      </details>
     </section>
 
     <!-- Grilla de imágenes (categorías sin tablero jugable todavía) -->

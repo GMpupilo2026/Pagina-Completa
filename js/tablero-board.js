@@ -363,9 +363,18 @@
 
   // Descripción hablada de una casilla (pieza, si está seleccionada, si es un movimiento
   // posible o la última jugada), para el aria-label del botón de cada casilla.
+  /* La cuenta marcada como ciega (js/vision-cuenta.js): el tablero es para
+     quien acompaña y todo se hace desde el recuadro, como en Entrenamiento. */
+  function cuentaCiega() {
+    return document.documentElement.classList.contains("modo-ciego");
+  }
+
   function squareAriaLabel(square) {
     const piece = game.get(square);
-    let label = square + ", " + (piece ? pieceLabel(piece) : "casilla vacía");
+    // En Modo Adaptado la casilla se dice como en todo el sitio («anna 8»,
+    // js/blind-notation.js): «a8» suelto el lector lo lee como una palabra.
+    const nombre = blindMode && window.BlindNotation ? BlindNotation.squareSpoken(square) : square;
+    let label = nombre + ", " + (piece ? pieceLabel(piece) : "casilla vacía");
     const extras = [];
     if (selected === square) {
       extras.push("seleccionada");
@@ -410,6 +419,14 @@
 
     boardEl.innerHTML = "";
     if (window.Coordenadas) Coordenadas.aplicar(boardEl);   // letras y números por fuera (js/coordenadas-tablero.js)
+    /* Con la cuenta ciega el tablero se queda a la vista (para quien acompaña)
+       pero fuera del lector: eran 64 casillas entre los botones de arriba y los
+       de abajo, y quien no ve juega escribiendo en el recuadro. La misma regla
+       que js/tablero-accesible.js en Entrenamiento (ver «Quien no ve hace todo
+       desde el recuadro» en docs/decisiones/accesibilidad.md). */
+    const ciega = cuentaCiega();
+    if (ciega) boardEl.setAttribute("aria-hidden", "true");
+    else boardEl.removeAttribute("aria-hidden");
     const squares = boardSquaresInOrder();
     if (!focusSquare || squares.indexOf(focusSquare) === -1) {
       focusSquare = squares[0];
@@ -423,7 +440,8 @@
       btn.setAttribute("aria-label", squareAriaLabel(square));
       // Tabulación circular ("roving tabindex"): sólo una casilla es alcanzable con Tab;
       // dentro del tablero se navega con las flechas (ver el listener de keydown más abajo).
-      btn.tabIndex = square === focusSquare ? 0 : -1;
+      // Con la cuenta ciega, ninguna: el tablero no está en su camino.
+      btn.tabIndex = square === focusSquare && !ciega ? 0 : -1;
 
       const piece = game.get(square);
       if (piece) {
@@ -463,7 +481,7 @@
       boardEl.appendChild(btn);
     }
 
-    if (hadFocusInBoard) {
+    if (hadFocusInBoard && !ciega) {
       const target = boardEl.querySelector('[data-square="' + focusSquare + '"]');
       if (target) target.focus();
     }
@@ -1234,6 +1252,9 @@
   function focusBoardSquare(square) {
     const squares = boardSquaresInOrder();
     if (squares.indexOf(square) === -1) return false;
+    // Con la cuenta ciega el tablero está fuera del lector: se anota la casilla
+    // (la dice quien llama) pero el foco se queda en el recuadro.
+    if (cuentaCiega()) { focusSquare = square; return true; }
     const oldBtn = focusSquare ? boardEl.querySelector('[data-square="' + focusSquare + '"]') : null;
     if (oldBtn) oldBtn.tabIndex = -1;
     focusSquare = square;
@@ -1638,6 +1659,7 @@
         return true; // el salto falló, así que el foco nunca se movió: se queda en el recuadro
       }
       announceCurrentSquare(target);
+      if (cuentaCiega()) return true; // el foco se quedó en el recuadro (ver focusBoardSquare)
       return false; // "board"/"b" existe justamente para saltar al tablero — no hay que revertirlo
     }
     if (cmd0 === "P" && tokens.length >= 2 && /^[a-zA-Z]$/.test(tokens[1])) {
