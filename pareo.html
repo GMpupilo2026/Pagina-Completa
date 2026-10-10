@@ -224,6 +224,7 @@
                     <h2 class="font-serif text-xl font-bold" id="pi-clas-titulo" data-t="fClasificacion">Clasificación</h2>
                     <div class="flex flex-wrap items-center gap-2 no-imprimir">
                         <label class="flex items-center gap-2 text-sm"><span class="font-semibold" data-t="filtrarInstitucion">Institución</span><select id="pi-clas-institucion" class="rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 text-brand-800 dark:text-white px-2 py-1 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></select></label>
+                        <button type="button" id="pi-clas-pdf" class="inline-block border border-brand-300 dark:border-brand-600 text-brand-800 dark:text-white font-semibold px-4 py-2 rounded-lg text-sm hover:bg-brand-50 dark:hover:bg-brand-800 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 disabled:opacity-50 disabled:cursor-not-allowed" data-t="bajarPdf">Bajar PDF</button>
                         <button type="button" class="inline-block border border-brand-300 dark:border-brand-600 text-brand-800 dark:text-white font-semibold px-4 py-2 rounded-lg text-sm hover:bg-brand-50 dark:hover:bg-brand-800 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 pi-imprimir" data-t="imprimir">Imprimir</button>
                     </div>
                 </div>
@@ -238,6 +239,7 @@
                     <h2 class="font-serif text-xl font-bold" data-t="fCruzada">Tabla cruzada</h2>
                     <div class="flex flex-wrap items-center gap-2 no-imprimir">
                         <label class="flex items-center gap-2 text-sm"><span class="font-semibold" data-t="filtrarInstitucion">Institución</span><select id="pi-cruzada-institucion" class="rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 text-brand-800 dark:text-white px-2 py-1 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></select></label>
+                        <button type="button" id="pi-cruzada-pdf" class="inline-block border border-brand-300 dark:border-brand-600 text-brand-800 dark:text-white font-semibold px-4 py-2 rounded-lg text-sm hover:bg-brand-50 dark:hover:bg-brand-800 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 disabled:opacity-50 disabled:cursor-not-allowed" data-t="bajarPdf">Bajar PDF</button>
                         <button type="button" class="inline-block border border-brand-300 dark:border-brand-600 text-brand-800 dark:text-white font-semibold px-4 py-2 rounded-lg text-sm hover:bg-brand-50 dark:hover:bg-brand-800 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 pi-imprimir" data-t="imprimir">Imprimir</button>
                     </div>
                 </div>
@@ -294,6 +296,7 @@
             </section>
         </div>
     </div>
+    <div id="pi-plantilla" class="pi-plantilla"></div>
     </main>
 
     <footer class="bg-brand-900 text-brand-300 pt-16 pb-8">
@@ -318,6 +321,8 @@
     <script src="js/reporte-excel.js"></script>
     <script src="js/reporte-textos.js"></script>
     <script src="js/pareo/elo-nacional.js"></script>
+    <script src="js/reporte-pdf.js"></script>
+    <script src="js/pareo/pdf.js"></script>
     <script src="js/pareo/pagina.js"></script>
 </body>
 </html>

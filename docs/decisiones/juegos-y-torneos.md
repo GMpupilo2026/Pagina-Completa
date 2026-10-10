@@ -1961,6 +1961,55 @@ avise sin bloquear el alta, y que el filtro de institución filtre de verdad
 tanto la Clasificación como la Tabla cruzada. Rompiendo a propósito el freno,
 la comparación de nombres o el filtro, salta.
 
+### La plantilla para la pared y el PDF de verdad
+
+Antes lo único que había para llevar algo al papel era «Imprimir»
+(`window.print()` con CSS de impresión): bueno para el archivo de una ronda
+ya jugada, pero no para pegar en la pared antes de jugarla ni para mandar la
+Clasificación por correo.
+
+- **La plantilla para la pared** (`imprimirPlantillaMesas()` en
+  `js/pareo/pagina.js`, botón junto a «Imprimir» en cada ronda ya emparejada)
+  es una hoja APARTE de la tabla de la ronda: mesa, blancas, negras y un
+  espacio en blanco — **nunca el resultado que ya esté guardado**, aunque la
+  ronda ya tenga todos sus resultados anotados; es justo lo contrario de la
+  tabla de arriba, que si imprime algo imprime el resultado. Vive en un
+  `<div id="pi-plantilla">` escondido (`display: none` siempre en pantalla,
+  `css/styles.css`) que se llena al tocar el botón, se marca el `<body>` con
+  `pi-imprimiendo-plantilla` para que el CSS de impresión oculte la ficha
+  abierta y muestre solo esto, y se llama a `window.print()`. El `afterprint`
+  —que llega imprima o cancele— limpia la marca y el contenido; un solo
+  listener para toda la página, no hace falta reengancharlo cada vez que se
+  pinta la ronda.
+- **El PDF de Clasificación y Tabla cruzada** (botón «Bajar PDF» en cada
+  ficha) reusa `js/reporte-pdf.js` —el mismo generador a mano, sin ninguna
+  librería, de los informes de actividades— en vez de escribir uno nuevo:
+  `js/pareo/pdf.js` solo arma el «documento neutral» (título, subtítulo,
+  una tabla, una nota) que ese generador ya sabe dibujar. Sin marca de agua:
+  Pareo Integral no es de una academia en particular. El documento lo arma
+  `datosClasificacionPDF()`/`datosCruzadaPDF()` con los MISMOS datos que ya
+  pintó la pantalla —toman la fila ya filtrada por institución
+  (`filasFiltradas()`, compartida con `pintarClasificacion()`/
+  `pintarCruzada()`) — así que bajar el PDF con un colegio elegido en el
+  filtro baja solo ese colegio.
+- **Los símbolos del PDF son ASCII, no los elegantes de la pantalla**:
+  `js/reporte-pdf.js` escribe Latin-1/WinAnsi a mano, y el signo menos de
+  verdad que usa la Tabla cruzada en pantalla («−», U+2212) no está en esa
+  tabla de caracteres —a diferencia del guion largo, que sí— y se perdería
+  sin avisar. `datosCruzadaPDF()` no es un copy-paste de `pintarCruzada()`
+  por eso: usa un guion común («-») donde la pantalla usa el signo elegante.
+- **`js/pareo/pdf.js` no toca el DOM**: recibe encabezados, anchos y filas ya
+  armados y en el idioma elegido, así que `documento()` se puede probar con
+  Node, igual que `js/informe-grupo-pdf.js`.
+
+**Al tocar la plantilla o el PDF, correr `node herramientas/verificar-pareo-pagina.js`**
+(su sección 11): que la plantilla no traiga ningún resultado aunque la ronda
+ya los tenga, que limpie el `<body>` y el contenido al terminar de imprimir,
+que los dos PDF sean un PDF de verdad (`%PDF-` al principio) con los nombres
+y la institución adentro, y que el filtro de institución elegido en pantalla
+baje solo esa institución. Rompiendo a propósito cualquiera de los dos,
+salta.
+
 ## Ajedrez estudiantil en Costa Rica: los torneos de chess-results
 
 `ajedrez-estudiantil.html` es una página pública con la participación en los

@@ -1639,6 +1639,23 @@ html.dark .comparar-serie-3 { background: #199e70; }
   body:has(#pi-fichas) [role="tabpanel"] { box-shadow: none !important; padding: 0 !important; background: #fff !important; color: #000 !important; }
   .pi-tabla th, .pi-tabla td { border-bottom-color: #999 !important; color: #000 !important; }
 }
+/* La plantilla de resultados por mesa (imprimirPlantillaMesas() en
+   js/pareo/pagina.js): siempre oculta en pantalla, y la única cosa visible
+   al imprimirla —se superpone a la ficha abierta, no a la tabla de la ronda
+   ya jugada, que es la que trae los resultados puestos y esto es justo lo
+   contrario: en blanco, para anotar a mano. */
+.pi-plantilla { display: none; }
+@media print {
+  body.pi-imprimiendo-plantilla [role="tabpanel"] { display: none !important; }
+  body.pi-imprimiendo-plantilla .pi-plantilla { display: block !important; }
+}
+.pi-plantilla-titulo { font-family: Merriweather, Georgia, serif; font-weight: 700; font-size: 1.4rem; margin-bottom: 1rem; color: #000; }
+.pi-plantilla-mesa { display: flex; align-items: center; gap: 0.75rem; padding: 0.6rem 0; border-bottom: 1px solid #ccc; font-size: 1.15rem; color: #000; }
+.pi-plantilla-num { font-weight: 700; width: 2rem; text-align: right; flex-shrink: 0; }
+.pi-plantilla-jugador { flex: 1 1 auto; }
+.pi-plantilla-vs { color: #666; flex-shrink: 0; }
+.pi-plantilla-resultado { width: 6rem; height: 1.7rem; border: 1px solid #999; border-radius: 0.25rem; flex-shrink: 0; }
+.pi-plantilla-bye { font-style: italic; color: #666; margin-left: auto; }
 
 /* El manual de Pareo Integral (pareo-manual.html): texto largo para leer. */
 .pm-manual { line-height: 1.65; }
