@@ -468,13 +468,15 @@
             { title: "Clase en vivo", destacado: true, hrefs: ["sesion.html"] },
             { title: "Lo que te pone tu profesor", id: "tareas", hrefs: ["tareas.html", "examenes.html", "entreno/diagnostico.html"] },
             { title: "Aprender y estudiar", id: "aprender", hrefs: ["entreno/aprender.html", "entreno/estudio.html", "cursos/academia/index.html", "repasar-clases.html", "articulos.html"] },
-            { title: "Entrenar", id: "entrenar", hrefs: ["entreno/mates.html", "entreno/practicas.html", "entreno/desafios.html", "entreno/4x4.html", "entreno/coordenadas.html", "entreno/temas.html", "entreno/aperturas.html", "entreno/sin-internet.html", "entreno/memoria.html", "entreno/visualizacion.html", "entreno/precision-posicional.html", "entreno/finales.html", "entreno/tipos.html"] },
-            { title: "Jugar", id: "jugar", hrefs: ["sonar.html", "batalla-naval.html", "te-reto.html", "tablero.html", "juegos.html", "competir.html", "reto-ejercicios.html"] },
+            { title: "Entrenar", id: "entrenar", hrefs: ["entreno/mates.html", "entreno/practicas.html", "entreno/desafios.html", "entreno/4x4.html", "entreno/temas.html", "entreno/aperturas.html", "entreno/sin-internet.html", "entreno/visualizacion.html", "entreno/precision-posicional.html", "entreno/finales.html", "entreno/tipos.html"] },
+            { title: "Jugar", id: "jugar", hrefs: ["te-reto.html", "tablero.html", "juegos.html", "competir.html", "reto-ejercicios.html"] },
             { title: "Tu cuenta", id: "cuenta", hrefs: ["ciegos.html", "configuracion.html", "informes.html", "logros.html", "cuaderno.html", "justificaciones.html", "encuesta-profesor.html"] },
         ];
+        /* El Sonar, la Batalla naval, Memoria y Coordenadas ya no van: la Academia
+           pidió esconderlas a las cuentas ciegas (están en NO_ADAPTADAS de
+           js/vision-cuenta.js; ver «Lo que no se puede hacer sin ver, no se
+           ofrece» en docs/decisiones/accesibilidad.md). */
         const TILES_SOLO_ADAPTADO = [
-            { emoji: "🔊", label: "El Sonar", desc: "Busca el tesoro escondido escribiendo casillas: el sonar dice a cuántas jugadas está", href: "sonar.html" },
-            { emoji: "🚢", label: "Batalla naval", desc: "Dispara escribiendo casillas a la flota de piezas escondida", href: "batalla-naval.html" },
             /* ¡Te reto! está adaptado (la jugada se escribe, el reloj se pide con
                «tiempo») y en el panel de siempre se llega desde Juegos; acá va
                a la mano, como el Sonar: la alumna ciega no lo encontraba. */

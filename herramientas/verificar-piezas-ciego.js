@@ -10,7 +10,12 @@
      2. debajo vienen «Blancas» y «Negras» (h3), cada uno con su lista y con una
         casilla en ella (la posición de verdad, no un cartel);
      3. uno solo por posición (la página con su propia lectura no lleva dos);
-   y que sin la marca el recuadro sigue sin ese encabezado.
+   que sin la marca el recuadro sigue sin ese encabezado; y que lo que no
+   tiene piezas que poner ahí no se le ofrece (ver «Lo que no se puede hacer
+   sin ver, no se ofrece»): Memoria, Coordenadas, el Sonar, la Batalla naval y
+   el curso de Fundamentos avisan que no están adaptados, en Habilidades no
+   salen la Fotografía ni la apertura sin tablero (nivel 3), y la guía
+   ciegos.html no los explica.
 
    Uso: con el sitio en localhost:8777,  node herramientas/verificar-piezas-ciego.js */
 "use strict";
@@ -38,7 +43,6 @@ const EJERCICIOS = [
   { nombre: "Ejercicios por tema", ruta: "/entreno/temas.html", clic: ".theme-card, [data-theme]" },
   { nombre: "Estudio", ruta: "/entreno/estudio.html", clic: ".ficha-item" },
   { nombre: "Precisión posicional", ruta: "/entreno/precision-posicional.html", clic: "#start-btn" },
-  { nombre: "Memoria (mientras se mira)", ruta: "/entreno/memoria.html?piezas=6&segundos=60" },
   { nombre: "Visualización", ruta: "/entreno/visualizacion.html", clic: "[data-nivel]" },
   { nombre: "Habilidades: Detective", ruta: "/entreno/tipos.html#detective", clic: "main :text-is('Empezar')" },
   { nombre: "Habilidades: Con lo justo", ruta: "/entreno/tipos.html#con-lo-justo", clic: "main :text-is('Empezar')" },
@@ -97,6 +101,33 @@ function leer() {
       hs.length === esperados.length && esperados.every((t, i) => hs[i] && hs[i].titulo === t
         && hs[i].colores.join() === "Blancas:con piezas,Negras:con piezas"),
       JSON.stringify(hs));
+    await ctx.close();
+  }
+
+  console.log("\n=== Lo que no tiene piezas que poner bajo «Piezas» no se ofrece ===");
+  for (const ruta of ["/entreno/memoria.html", "/entreno/coordenadas.html", "/sonar.html", "/batalla-naval.html", "/cursos/academia/fundamentos-del-ajedrez.html"]) {
+    const { page, ctx } = await abrir(browser, ruta, true);
+    const aviso = await page.evaluate(() => { const c = document.getElementById("vc-no-adaptada"); return !!c && c.checkVisibility(); });
+    cierto(ruta + " dice que no está adaptada y ofrece volver al panel", aviso);
+    await ctx.close();
+  }
+  {
+    const { page, ctx } = await abrir(browser, "/entreno/tipos.html", true);
+    const fichas = await page.evaluate(() => Array.from(document.querySelectorAll("#fichas a")).map((a) => a.getAttribute("href")));
+    cierto("Habilidades no ofrece la Fotografía", fichas.length > 5 && !fichas.includes("#fotografia"), JSON.stringify(fichas));
+    await page.evaluate(() => { location.hash = "#apertura"; });
+    await page.waitForTimeout(600);
+    const niveles = await page.evaluate(() => Array.from(document.querySelectorAll("#niveles a")).map((a) => a.getAttribute("href")));
+    cierto("¿Qué apertura es? sin el nivel 3 (sin tablero)", niveles.join() === "#apertura/1,#apertura/2", JSON.stringify(niveles));
+    await page.evaluate(() => { location.hash = "#fotografia/1"; });
+    await page.waitForTimeout(600);
+    cierto("un enlace guardado a la Fotografía vuelve a la lista", await page.evaluate(() => location.hash === "" || location.hash === "#"));
+    await ctx.close();
+  }
+  {
+    const { page, ctx } = await abrir(browser, "/ciegos.html", true);
+    const vis = await page.evaluate(() => ["h-coordenadas", "h-sonar", "h-batalla"].map((id) => { const h = document.getElementById(id); return h ? h.checkVisibility() : "no está"; }));
+    cierto("la guía no muestra Coordenadas, el Sonar ni la Batalla naval", vis.every((v) => v === false), JSON.stringify(vis));
     await ctx.close();
   }
 

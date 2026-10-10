@@ -83,7 +83,10 @@
     return item ? { tipo, item } : null;
   }
   function pendientesDeRepaso() {
-    return CLAVE_REPASO ? RepasoFallados.pendientes(CLAVE_REPASO, (k) => !!itemDeClave(k)) : [];
+    return CLAVE_REPASO ? RepasoFallados.pendientes(CLAVE_REPASO, (k) => {
+      const x = itemDeClave(k);
+      return !!x && !escondido(x.tipo, x.item.nivel);
+    }) : [];
   }
   function anotarMejor(id, jugadas) {
     const o = leer(CLAVE_MEJOR);
@@ -185,6 +188,15 @@
       : "Respuesta incorrecta: " + jugada + " no es la jugada que buscamos." + (porque ? " " + porque : "");
   }
   function modoCiego() { return document.documentElement.classList.contains("modo-ciego"); }
+  /* Lo que a la cuenta ciega no se le ofrece: la Fotografía (mirar la posición
+     y reconstruirla tapada) y la apertura sin tablero (nivel 3), donde la
+     posición es justamente la respuesta y no se puede escribir bajo «Piezas».
+     Lo pidió la Academia: esconderlas en vez de dejarlas a medias. Ver «Lo que
+     no se puede hacer sin ver, no se ofrece» en docs/decisiones/accesibilidad.md. */
+  function escondido(tipo, nivel) {
+    if (!modoCiego()) return false;
+    return tipo === "fotografia" || (tipo === "apertura" && nivel !== undefined && +nivel === 3);
+  }
   /* Con la cuenta ciega, todo se hace desde el recuadro: al cargar un
      ejercicio (también con «Siguiente →», que se quedaba con el foco) vuelve
      ahí. Espera un momento: algunos juegos piden la jugada después de pintar. */
@@ -580,7 +592,7 @@
     const completos = anotarCompletos();
     const ul = $("fichas");
     ul.innerHTML = "";
-    C.TIPOS.forEach((t) => {
+    C.TIPOS.filter((t) => !escondido(t.id)).forEach((t) => {
       const a = avance(t.id);
       const li = el("li", "relative flex flex-col gap-3 rounded-2xl p-6 shadow-md bg-white dark:bg-brand-900");
       const cab = el("div", "flex items-start gap-3");
@@ -605,7 +617,8 @@
       });
       li.appendChild(dl);
       const niv = el("p", "text-xs text-brand-500 dark:text-brand-300");
-      niv.textContent = t.niveles.length + " niveles: " + t.niveles.map((n) => n.n + ". " + n.titulo).join(" · ");
+      const nivelesVis = t.niveles.filter((n) => !escondido(t.id, n.n));
+      niv.textContent = nivelesVis.length + " niveles: " + nivelesVis.map((n) => n.n + ". " + n.titulo).join(" · ");
       li.appendChild(niv);
       const pie = el("div", "flex flex-wrap items-center justify-between gap-2 mt-auto");
       pie.appendChild(el("span", "text-xs text-brand-500 dark:text-brand-300", a.hechos + " de " + a.total + " resueltos · " + a.estrellas + " de " + a.maximo + " estrellas" + (completos[t.id] ? " · completo 🏅" : "")));
@@ -633,7 +646,7 @@
     if (EXTRA[tipoId]) EXTRA[tipoId](extra);
     const ul = $("niveles");
     ul.innerHTML = "";
-    t.niveles.forEach((n) => {
+    t.niveles.filter((n) => !escondido(tipoId, n.n)).forEach((n) => {
       const a = avance(tipoId, n.n);
       const li = el("li", "flex flex-col gap-2 rounded-xl p-5 bg-white dark:bg-brand-900 shadow-sm border-l-4 " + (a.total && a.hechos >= a.total ? "border-green-700" : "border-accent-500"));
       const h = el("h2", "font-semibold text-brand-800 dark:text-white", "Nivel " + n.n + " — " + n.titulo);
@@ -1406,6 +1419,11 @@
   function rutear() {
     const h = decodeURIComponent((location.hash || "").replace(/^#/, ""));
     const [tipo, nivel, item] = h.split("/");
+    // Un enlace guardado a lo escondido lleva a lo más cercano que sí está.
+    if (escondido(tipo) || escondido(tipo, nivel)) {
+      location.replace(escondido(tipo) ? "#" : "#" + tipo);
+      return;
+    }
     if (tipo === "repaso") {
       mostrar("vista-juego");
       $("controles").innerHTML = "";

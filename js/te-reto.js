@@ -257,7 +257,12 @@
             const el = document.getElementById("result-text");
             const sr = document.createElement("span");
             sr.className = "sr-only";
-            sr.textContent = " Posición: " + BlindNotation.positionSentence(game);
+            /* Con la cuenta ciega la posición ya está escrita en el recuadro, bajo
+               el encabezado «Piezas»: repetirla acá en una frase hacía que se oyera
+               dos veces al recorrer la página. Se dice solo dónde está. */
+            sr.textContent = document.documentElement.classList.contains("modo-ciego")
+                ? " Las piezas están en la lista «Piezas», junto al recuadro."
+                : " Posición: " + BlindNotation.positionSentence(game);
             el.appendChild(sr);
         }
 

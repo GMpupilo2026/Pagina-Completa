@@ -1167,13 +1167,43 @@ Finales, Aperturas, los cursos…). Con la H del lector se llega directo a
   posición».
 - **Dos posiciones, dos nombres:** en Siete diferencias son «Piezas de la
   posición A» y «Piezas de la posición B».
-- **Lo que a propósito NO lleva piezas:** la Fotografía y la reconstrucción de
-  Memoria mientras se reconstruye, y la apertura sin tablero de nivel 3 (la
-  posición es la respuesta); Coordenadas (no hay piezas), Sonar y Batalla
-  naval (lo escondido es el juego).
+- **Lo que no lleva piezas no se ofrece** (ver la sección siguiente).
 - Sin la marca de cuenta ciega no cambia nada: en Modo Adaptado la posición
   sigue en un renglón donde iba en un renglón.
 
 Lo mide `verificar-piezas-ciego.js`, entrando como alumna ciega a quince
 ejercicios. Probado que falla: sin la lectura sola del recuadro saltan tres, y
 sin `escribirPosicion()` con encabezado, cinco.
+
+## Lo que no se puede hacer sin ver, no se ofrece
+
+Después de poner «Piezas» en todos los ejercicios quedaron algunos donde no
+hay piezas que escribir ahí, y la Academia pidió **esconderlos** a las cuentas
+ciegas en vez de dejarlos a medias:
+
+- **Memoria**, la **Fotografía** de Habilidades y la apertura **sin tablero**
+  (nivel 3 de «¿Qué apertura es?»): la posición es justamente la respuesta.
+- **Coordenadas**: no hay piezas.
+- **El Sonar** y **la Batalla naval**: lo escondido es el juego. Estaban hechos
+  para jugar sin ver, pero igual se esconden: lo pidió la Academia.
+- **El curso de Fundamentos**, que sigue en notación inglesa (ya estaba
+  escondido a alumnos y profesores por `js/cursos-ocultos.js`).
+
+Las páginas van en `NO_ADAPTADAS` de `js/vision-cuenta.js` (sus enlaces no se
+ven y, si se llega igual, la página lo dice y ofrece volver al panel), y salen
+de `PANEL_ADAPTADO` de `js/clases.js`. La Fotografía y el nivel 3 de aperturas
+son parte de una página que sí está adaptada, así que los esconde
+`escondido()` de `js/entreno-tipos.js`: no salen en la lista ni en el repaso,
+y un enlace guardado a ellos lleva a la lista. En `ciegos.html` sus secciones
+llevan `data-oculto-ciego`. Para devolver una, se saca de esas listas.
+
+**La posición ya no se oye dos veces.** ¡Te reto! (y la Racha táctica en Modo
+Adaptado sin la cuenta ciega) agregaba al aviso de cada ejercicio una frase
+oculta con la posición entera; con la lista «Piezas» en el recuadro, quien
+recorría la página la oía dos veces. Con la cuenta ciega esa frase ahora solo
+dice dónde está la lista.
+
+Lo mide `verificar-piezas-ciego.js` (las páginas escondidas avisan, Habilidades
+sin la Fotografía ni el nivel 3, la guía sin esas secciones). Probado que
+falla: sin `escondido()` saltan tres comprobaciones, y sin Memoria en la lista
+o sin la regla de `data-oculto-ciego`, una cada una.

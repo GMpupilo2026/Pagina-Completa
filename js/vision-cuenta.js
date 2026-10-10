@@ -39,11 +39,19 @@ window.VisionCuenta = (function () {
      comandos ni casillas que se recorran (las modalidades de Juegos que no son
      Estándar ni Niebla, Confites, Ilumina el tablero, Concentración) y las
      salas de transmisión, que son pura imagen. Una página que se adapte sale
-     de esta lista. */
+     de esta lista.
+     Y las que la Academia pidió esconder aunque se puedan contestar
+     escribiendo, porque ahí no hay piezas que poner bajo «Piezas» (ver «Lo que
+     no se puede hacer sin ver, no se ofrece»): Memoria (la posición es la
+     respuesta), Coordenadas (no hay piezas), el Sonar y la Batalla naval (lo
+     escondido es el juego) y el curso de Fundamentos, que sigue en notación
+     inglesa. */
   var NO_ADAPTADAS = [
     "bot.html", "cartas.html", "concentracion.html", "confites.html", "crazyhouse.html",
     "cuatro-jugadores.html", "duelo.html", "ilumina-tablero.html", "variante.html",
     "transmision.html", "torneos-en-vivo.html", "lector-planilla.html", "tv.html",
+    "memoria.html", "coordenadas.html", "sonar.html", "batalla-naval.html",
+    "fundamentos-del-ajedrez.html",
   ];
 
   /* De dónde se cargó este archivo: la raíz del sitio es su carpeta de arriba. */
@@ -591,6 +599,9 @@ window.VisionCuenta = (function () {
       "#accesos-rapidos a:focus-visible,#accesos-rapidos summary:focus-visible{outline:3px solid #f0b429;outline-offset:2px}" +
       "#accesos-rapidos details ul{display:block;padding:.25rem 0 .5rem 1rem}" +
       "#accesos-rapidos details li{padding:.15rem 0}" +
+      /* Lo que una página explica para todos pero la cuenta ciega no tiene
+         (en ciegos.html, Coordenadas, el Sonar y la Batalla naval). */
+      "html.modo-ciego [data-oculto-ciego]{display:none!important}" +
       "#vc-no-adaptada{max-width:40rem;margin:3rem auto;padding:1.5rem;border-radius:1rem;background:#fff;color:#102a43;border:3px solid #102a43;font-size:1.125rem;line-height:1.5}" +
       "html.dark #vc-no-adaptada{background:#102a43;color:#fff;border-color:#f0b429}" +
       "#vc-no-adaptada a{color:inherit;font-weight:700;text-decoration:underline}";
@@ -672,7 +683,7 @@ window.VisionCuenta = (function () {
     h.tabIndex = -1;
     h.textContent = "Esta página todavía no está adaptada";
     var p = document.createElement("p");
-    p.textContent = "Aquí se juega mirando el tablero, sin recuadro para escribir la jugada ni casillas que se puedan recorrer. Mientras se adapta, lo que sí puedes usar está en tu panel.";
+    p.textContent = "Aquí hace falta mirar el tablero o la página: todavía no se puede usar bien con lector de pantalla. Mientras se adapta, lo que sí puedes usar está en tu panel.";
     var volver = document.createElement("a");
     volver.href = ruta("clases.html");
     volver.textContent = "Volver a tu panel";
