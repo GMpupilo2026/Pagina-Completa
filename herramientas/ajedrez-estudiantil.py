@@ -32,7 +32,7 @@ import re
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from ajedrez_estudiantil_reglas import sin_tildes  # noqa: E402
+from ajedrez_estudiantil_reglas import rama, sin_tildes  # noqa: E402
 
 RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 FUENTE = os.path.join(RAIZ, "herramientas", "datos", "ajedrez-estudiantil-torneos.csv")
@@ -56,6 +56,9 @@ FECHA = os.path.join(RAIZ, "herramientas", "datos", "ajedrez-estudiantil-actuali
 
 COLUMNAS = ["clave", "anio", "etapa", "categoria", "nombre", "inicio", "lugar",
             "region", "jugadores", "rondas", "modalidad", "ritmo"]
+# La rama (abierta o femenina) no se guarda en el CSV: sale del nombre con
+# reglas.rama() y va solo en el JSON, para el filtro de la página.
+COLUMNAS_JSON = COLUMNAS + ["rama"]
 ETAPAS = {"Institucional o circuital", "Regional", "Interregional", "Nacional",
           "Internacional (CODICADER)", "Internacional federativo", "Otro estudiantil"}
 JDE = {"Institucional o circuital", "Regional", "Interregional", "Nacional"}
@@ -79,11 +82,11 @@ def armar():
         if r["clave"] in vistas:
             sys.exit(f"{donde}: el torneo {r['clave']} está dos veces")
         vistas.add(r["clave"])
-        torneos.append([int(r[c]) if c in NUMEROS else r[c] for c in COLUMNAS])
+        torneos.append([int(r[c]) if c in NUMEROS else r[c] for c in COLUMNAS] + [rama(r["nombre"])])
     torneos.sort(key=lambda t: (t[1], t[5], t[0]))
     with open(FECHA, encoding="utf-8") as f:
         actualizado = f.read().strip()
-    datos = {"actualizado": actualizado, "columnas": COLUMNAS, "torneos": torneos}
+    datos = {"actualizado": actualizado, "columnas": COLUMNAS_JSON, "torneos": torneos}
     return json.dumps(datos, ensure_ascii=False, separators=(",", ":")) + "\n"
 
 

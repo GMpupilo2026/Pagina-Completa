@@ -114,6 +114,26 @@ cierto("«Eliminatoria Regional San Carlos» es regional",
 cierto("los amistosos, fogueos y recreativos quedan fuera",
        [reglas.etapa(n, "Regional San José Central") for n in ("Regional San José Norte Amistoso", "Regional San José Central Fogueo", "Regional Limon Recreativo")] == [None, None, None])
 
+print("La rama, del nombre")
+casos = {
+    "Regional Desamparados Individual A Femenino": "Femenina",
+    "JDE Regionales Secundaria Individual \"C\" Mujeres L": "Femenina",
+    "Categoría C ind FemSan José Norte": "Femenina",
+    "Eliminatoria Regional Juegos Deportivos Estudiantiles 2025 AIF": "Femenina",
+    "Eliminatoria Interregional VII JDE Individual C Fe": "Femenina",
+    "Final Juegos Deportivos EstudiantilesCategoría C F": "Femenina",
+    "Regional Coto E Abierto Individual": "Abierta",
+    "Eliminatoria Interregional VII JDE Equipo Masculino D 2015": "Abierta",
+    "Eliminatoria Regional Juegos Deportivos Estudiantiles 2025 DEO": "Abierta",
+    "JDE Regional Sula B Individual abs": "Abierta",
+    "Final Juegos Deportivos EstudiantilesCategoría C A": "Abierta",
+    "JDE Regional Golfito Categoria C": "",
+    "Eliminatoria Regional Circuito 03 JDE \"Categoria A": "",
+}
+mal = {n: reglas.rama(n) for n, r in casos.items() if reglas.rama(n) != r}
+cierto("femenina, abierta o sin dato según el nombre (con las claves y los nombres cortados)", not mal, str(mal))
+cierto("«Categoria A» al final es la categoría, no la rama abierta", reglas.rama("JDE Regional Golfito Categoria A") == "")
+
 print("Leer chess-results")
 ocultos = actualizar.campos_ocultos(muestra("formulario.txt"))
 cierto("lee los campos ocultos del formulario", set(ocultos) == {"__VIEWSTATE", "__VIEWSTATEGENERATOR", "__EVENTVALIDATION"}, str(sorted(ocultos)))

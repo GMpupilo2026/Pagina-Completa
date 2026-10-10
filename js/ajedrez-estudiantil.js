@@ -9,8 +9,11 @@
  * por modalidad. Los blitz y rápidos no se suman porque repiten a los mismos
  * jugadores del clásico.
  *
- * Los filtros (región y categoría) van en la dirección (?region=…&categoria=…)
- * para que un enlace compartido abra la misma vista.
+ * Los filtros (una o varias regiones, categoría, etapa, modalidad, rama y los
+ * años) cambian todo lo de la página y van en la dirección
+ * (?region=Cartago&region=Heredia&categoria=D&desde=2022…) para que un enlace
+ * compartido abra la misma vista. Con cinco filtros que se combinan, las
+ * cuentas se hacen cada vez sobre los torneos que pasan (son unos 1400).
  */
 (function () {
   "use strict";
@@ -24,7 +27,11 @@
   const CLAVE_ETAPA = { "Institucional o circuital": "institucional", "Regional": "regional", "Interregional": "interregional", "Nacional": "nacional" };
   const INTERNACIONAL = ["Internacional (CODICADER)", "Internacional federativo", "Otro estudiantil"];
   const CATEGORIAS = ["A", "B", "C", "D", "E"];
-  const PRIMER_ANIO = 2008, ULTIMO_ANIO = 2026;
+  const MODALIDADES = { Individual: "individual", Equipos: "por equipos" };
+  const RAMAS = { Abierta: "abierta", Femenina: "femenina" };
+  // El año de la historia de la portada: desde 2023 las regiones empezaron a
+  // publicar su eliminatoria. Sin elegir años, las cifras comparan contra él.
+  const ANIO_COMPARACION = 2023;
   const SVG = "http://www.w3.org/2000/svg";
 
   const numero = new Intl.NumberFormat("es-CR");
@@ -35,82 +42,100 @@
   const texto = (id, t) => { $(id).textContent = t; };
 
   let torneos = [];
-  let serie = new Map();          // "region|categoria|anio" → fila
-  const estado = { region: "", categoria: "", orden: { col: "anio", dir: -1 } };
+  let PRIMER = 2009, ULTIMO = 2026;   // el primer y el último año con torneos; salen de los datos
+  let REGIONES = [];
+  const estado = { regiones: [], categoria: "", etapa: "", modalidad: "", rama: "", desde: 0, hasta: 0, orden: { col: "anio", dir: -1 } };
 
   // ---------- Las cuentas ----------
 
-  function fila(region, categoria, anio) {
-    const k = region + "|" + categoria + "|" + anio;
-    if (!serie.has(k)) serie.set(k, { region, categoria, anio, institucional: 0, regional: 0, interregional: 0, nacional: 0, total: 0, torneos: 0, torneos_regionales: 0 });
-    return serie.get(k);
-  }
+  // Categoría, modalidad y rama: valen para todo lo de la página.
+  const pasaComunes = (t) => (!estado.categoria || t.categoria === estado.categoria)
+    && (!estado.modalidad || t.modalidad === estado.modalidad)
+    && (!estado.rama || t.rama === estado.rama);
+  // Con regiones elegidas, la final nacional queda fuera: no es de ninguna región.
+  const pasaRegion = (t) => !estado.regiones.length || (estado.regiones.includes(t.region) && t.etapa !== "Nacional");
+  const enRango = (t) => t.anio >= estado.desde && t.anio <= estado.hasta;
+  const etapasVisibles = () => estado.etapa ? ETAPAS.filter((e) => e.k === estado.etapa)
+    : estado.regiones.length ? ETAPAS.filter((e) => e.k !== "nacional") : ETAPAS;
 
-  function armarSerie() {
-    serie = new Map();
+  /* Una fila por año del rango, con las participaciones de cada etapa y los
+     torneos. `conRegion: false` ignora las regiones elegidas (la final);
+     `etapas` dice cuáles contar (por omisión, las visibles). */
+  function porAnio(opciones) {
+    const o = opciones || {};
+    const ver = new Set((o.etapas || etapasVisibles()).map((e) => e.k));
+    const filas = new Map();
+    for (let y = estado.desde; y <= estado.hasta; y++) filas.set(y, { anio: y, institucional: 0, regional: 0, interregional: 0, nacional: 0, total: 0, torneos: 0 });
     for (const t of torneos) {
       const k = CLAVE_ETAPA[t.etapa];
-      if (!k) continue;
-      const regiones = ["Todas"].concat(t.region && k !== "nacional" ? [t.region] : []);
-      for (const r of regiones) {
-        for (const c of ["Todas", t.categoria]) {
-          const o = fila(r, c, t.anio);
-          o.torneos += 1;
-          if (k === "regional" || k === "institucional") o.torneos_regionales += 1;
-          if (t.ritmo === "Clásico") { o[k] += t.jugadores; o.total += t.jugadores; }
-        }
-      }
+      if (!k || !ver.has(k) || !enRango(t) || !pasaComunes(t)) continue;
+      if (o.conRegion !== false && !pasaRegion(t)) continue;
+      const f = filas.get(t.anio);
+      f.torneos += 1;
+      if (t.ritmo === "Clásico") { f[k] += t.jugadores; f.total += t.jugadores; }
     }
-    const combos = new Set([...serie.values()].map((o) => o.region + "|" + o.categoria));
-    for (const c of combos) {
-      const [r, cat] = c.split("|");
-      for (let y = PRIMER_ANIO; y <= ULTIMO_ANIO; y++) fila(r, cat, y);
-    }
+    return [...filas.values()];
   }
 
-  const anios = (region, categoria) => {
-    const out = [];
-    for (let y = PRIMER_ANIO; y <= ULTIMO_ANIO; y++) out.push(serie.get(region + "|" + categoria + "|" + y) || fila(region, categoria, y));
-    return out;
-  };
-
-  // Regiones distintas con torneos de etapa regional o de circuito, por año.
-  function regionesPorAnio(categoria) {
-    const cuenta = {};
-    for (const o of serie.values()) {
-      if (o.region === "Todas" || o.categoria !== categoria) continue;
-      if (o.torneos_regionales > 0) cuenta[o.anio] = (cuenta[o.anio] || 0) + 1;
+  // Regiones distintas con torneos de etapa regional o de circuito, por año
+  // (con la categoría, la modalidad y la rama elegidas; no con las regiones).
+  function regionesPorAnio() {
+    const por = {};
+    for (const t of torneos) {
+      const k = CLAVE_ETAPA[t.etapa];
+      if ((k !== "regional" && k !== "institucional") || !t.region || !enRango(t) || !pasaComunes(t)) continue;
+      (por[t.anio] = por[t.anio] || new Set()).add(t.region);
     }
+    const cuenta = {};
+    for (const y in por) cuenta[y] = por[y].size;
     return cuenta;
   }
 
-  function resumen(region, categoria) {
-    const filas = anios(region, categoria);
+  // El año contra el que se compara el último: el «desde» elegido o, sin
+  // elegirlo, 2023.
+  function anioBase() {
+    if (estado.desde >= estado.hasta) return null;
+    if (estado.desde === PRIMER && ANIO_COMPARACION > estado.desde && ANIO_COMPARACION < estado.hasta) return ANIO_COMPARACION;
+    return estado.desde;
+  }
+
+  function resumen() {
+    const filas = porAnio();
+    const ref = estado.hasta, base = anioBase();
+    const de = (y) => (filas.find((r) => r.anio === y) || { total: 0 }).total;
     const con = filas.filter((r) => r.torneos > 0);
-    const p = (y) => filas.find((r) => r.anio === y).total;
-    const reg = regionesPorAnio(categoria);
+    const reg = regionesPorAnio();
+    const finales = porAnio({ conRegion: false, etapas: ETAPAS.filter((e) => e.k === "nacional") });
     return {
-      part2023: p(2023), part2026: p(2026),
-      veces: p(2023) > 0 && p(2026) > 0 ? p(2026) / p(2023) : null,
+      ref, base, pRef: de(ref), pBase: base ? de(base) : 0,
+      veces: base && de(base) > 0 && de(ref) > 0 ? de(ref) / de(base) : null,
       primer: con.length ? Math.min(...con.map((r) => r.anio)) : null,
       ultimo: con.length ? Math.max(...con.map((r) => r.anio)) : null,
       anios: con.length,
       torneos: con.reduce((s, r) => s + r.torneos, 0),
-      regiones2023: reg[2023] || 0, regiones2026: reg[2026] || 0,
-      finalEn: (y) => filas.find((r) => r.anio === y).nacional > 0
+      regRef: reg[ref] || 0, regBase: base ? reg[base] || 0 : 0,
+      conTorneos: (y) => new Set(torneos.filter((t) => t.anio === y && CLAVE_ETAPA[t.etapa] && pasaComunes(t) && pasaRegion(t)).map((t) => t.region)).size,
+      finalEn: (y) => (finales.find((r) => r.anio === y) || { nacional: 0 }).nacional > 0
     };
   }
 
-  const R = () => estado.region || "Todas";
-  const C = () => estado.categoria || "Todas";
+  const lista = (xs) => xs.length < 2 ? xs.join("") : xs.slice(0, -1).join(", ") + " y " + xs[xs.length - 1];
+  const nombreEtapa = (k) => ETAPAS.find((e) => e.k === k).n;
+  const sinFiltros = () => !estado.regiones.length && !estado.categoria && !estado.etapa && !estado.modalidad && !estado.rama;
+  const rangoCompleto = () => estado.desde === PRIMER && estado.hasta === ULTIMO;
+
+  // «Cartago y Heredia, categoría D, etapa regional, por equipos, rama femenina»;
+  // sin región, la primera parte lleva su artículo («la categoría D, …»).
   function ambito() {
-    const r = estado.region, c = estado.categoria;
-    if (r && c) return r + ", categoría " + c;
-    if (r) return r;
-    if (c) return "la categoría " + c;
-    return "";
+    const partes = [];
+    const conArticulo = !estado.regiones.length;
+    if (estado.regiones.length) partes.push(lista(estado.regiones));
+    if (estado.categoria) partes.push((conArticulo && !partes.length ? "la " : "") + "categoría " + estado.categoria);
+    if (estado.etapa) partes.push((conArticulo && !partes.length ? "la " : "") + "etapa " + nombreEtapa(estado.etapa).toLowerCase());
+    if (estado.modalidad) partes.push(conArticulo && !partes.length ? "los torneos " + (estado.modalidad === "Equipos" ? "por equipos" : "individuales") : MODALIDADES[estado.modalidad]);
+    if (estado.rama) partes.push((conArticulo && !partes.length ? "la " : "") + "rama " + RAMAS[estado.rama]);
+    return partes.join(", ");
   }
-  const mayuscula = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 
   // ---------- SVG a mano ----------
 
@@ -229,42 +254,49 @@
   // ---------- Lo que se pinta ----------
 
   function cifras() {
-    const r = estado.region, c = estado.categoria, a = ambito();
-    const x = resumen(R(), C());
-    texto("ae-c1-et", a ? "Participaciones de " + a + ", 2026" : "Participaciones en los JDE, 2026");
-    texto("ae-c1-nota", r ? "etapas institucional, regional e interregional" : "todas las etapas, ritmo clásico");
-    texto("ae-c1", miles(x.part2026));
-    if (x.veces != null) { texto("ae-c2", veces(x.veces)); texto("ae-c2-nota", "2023 tuvo " + miles(x.part2023) + " participaciones"); }
-    else { texto("ae-c2", "—"); texto("ae-c2-nota", x.part2026 > 0 ? "sin torneos en chess-results en 2023" : "sin torneos en chess-results en 2026; en 2023 tuvo " + miles(x.part2023)); }
-    if (r) { texto("ae-c3-et", "Años con torneos en chess-results"); texto("ae-c3", x.anios); texto("ae-c3-nota", x.primer ? "el primero, " + x.primer : ""); }
-    else { texto("ae-c3-et", "Regiones con su eliminatoria en chess-results, 2026"); texto("ae-c3", x.regiones2026); texto("ae-c3-nota", "en 2023 eran " + x.regiones2023); }
+    const n = estado.regiones.length, a = ambito();
+    const x = resumen();
+    const periodo = estado.desde === estado.hasta ? "en " + estado.desde : "de " + estado.desde + " a " + estado.hasta;
+    texto("ae-c1-et", a ? "Participaciones de " + a + ", " + x.ref : "Participaciones en los JDE, " + x.ref);
+    texto("ae-c1-nota", (estado.etapa ? "etapa " + nombreEtapa(estado.etapa).toLowerCase() : n ? "etapas institucional, regional e interregional" : "todas las etapas") + ", ritmo clásico");
+    texto("ae-c1", miles(x.pRef));
+    texto("ae-c2-et", x.base ? "Crecimiento desde " + x.base : "Crecimiento");
+    if (x.veces != null) { texto("ae-c2", veces(x.veces)); texto("ae-c2-nota", x.base + " tuvo " + miles(x.pBase) + " participaciones"); }
+    else if (!x.base) { texto("ae-c2", "—"); texto("ae-c2-nota", "elige más de un año para comparar"); }
+    else { texto("ae-c2", "—"); texto("ae-c2-nota", x.pRef > 0 ? "sin torneos en chess-results en " + x.base : "sin torneos en chess-results en " + x.ref + "; en " + x.base + " tuvo " + miles(x.pBase)); }
+    if (n === 1) { texto("ae-c3-et", "Años con torneos en chess-results"); texto("ae-c3", x.anios); texto("ae-c3-nota", x.primer ? "el primero, " + x.primer : ""); }
+    else if (n > 1) { texto("ae-c3-et", "Regiones elegidas con torneos en " + x.ref); texto("ae-c3", x.conTorneos(x.ref)); texto("ae-c3-nota", "de las " + n + " elegidas"); }
+    else { texto("ae-c3-et", "Regiones con su eliminatoria en chess-results, " + x.ref); texto("ae-c3", x.regRef); texto("ae-c3-nota", x.base ? "en " + x.base + " eran " + x.regBase : ""); }
     texto("ae-c4-et", a ? "Torneos de " + a : "Torneos de los JDE encontrados");
     texto("ae-c4", miles(x.torneos));
-    texto("ae-c4-nota", a ? "de todos los años, en todas sus etapas" : "de 2011 a 2026");
+    texto("ae-c4-nota", periodo + (a ? ", en sus etapas" : ""));
 
     let frase;
-    if (!r && !c) {
-      frase = "Los Juegos Deportivos Estudiantiles pasaron de " + miles(x.part2023) + " participaciones en chess-results en 2023 a " + miles(x.part2026) + " en 2026. Buena parte de ese salto es registro: las regiones que publican su eliminatoria pasaron de " + x.regiones2023 + " a " + x.regiones2026 + ".";
-    } else if (x.part2026 > 0) {
-      frase = mayuscula(a) + " suma " + miles(x.part2026) + " participaciones en chess-results en 2026";
-      frase += x.part2023 > 0 ? ", contra " + miles(x.part2023) + " en 2023." : "; en 2023 no hay torneos suyos en el sitio.";
-      frase += r ? " Tiene torneos en " + x.anios + (x.anios === 1 ? " año" : " años") + ", desde " + x.primer + "." : " Las regiones con eliminatoria de esta categoría pasaron de " + x.regiones2023 + " a " + x.regiones2026 + ".";
-      if (!r && x.finalEn(2023) !== x.finalEn(2026)) frase += " Ojo al comparar: la final nacional de esta categoría está en chess-results en " + (x.finalEn(2026) ? "2026 y no en 2023." : "2023 y no en 2026.");
+    if (sinFiltros() && x.base) {
+      frase = "Los Juegos Deportivos Estudiantiles pasaron de " + miles(x.pBase) + " participaciones en chess-results en " + x.base + " a " + miles(x.pRef) + " en " + x.ref + ".";
+      if (x.base <= ANIO_COMPARACION) frase += " Buena parte de ese salto es registro: las regiones que publican su eliminatoria pasaron de " + x.regBase + " a " + x.regRef + ".";
+    } else if (x.pRef > 0) {
+      frase = "En " + (a || "los JDE") + (a.includes(",") ? "," : "") + " hay " + miles(x.pRef) + " participaciones en chess-results en " + x.ref;
+      if (x.base) frase += x.pBase > 0 ? ", contra " + miles(x.pBase) + " en " + x.base + "." : "; en " + x.base + " no hay ningún torneo en el sitio.";
+      else frase += ".";
+      if (n) frase += " Hay torneos en " + x.anios + (x.anios === 1 ? " año" : " años") + " de este periodo, desde " + x.primer + ".";
+      else if (x.base) frase += " Las regiones con eliminatoria" + (estado.categoria ? " de esta categoría" : "") + " pasaron de " + x.regBase + " a " + x.regRef + ".";
+      if (!n && estado.categoria && x.base && x.finalEn(x.base) !== x.finalEn(x.ref)) frase += " Ojo al comparar: la final nacional de esta categoría está en chess-results en " + (x.finalEn(x.ref) ? x.ref + " y no en " + x.base + "." : x.base + " y no en " + x.ref + ".");
     } else if (x.ultimo) {
-      frase = mayuscula(a) + " no tiene torneos de ritmo clásico en chess-results en 2026; su último año con torneos es " + x.ultimo + ".";
+      frase = "En " + (a || "los JDE") + (a.includes(",") ? "," : "") + " no hay torneos de ritmo clásico en chess-results en " + x.ref + "; el último año con torneos es " + x.ultimo + ".";
     } else {
-      frase = "No hay torneos de " + a + " en chess-results.";
+      frase = "No hay torneos de " + (a || "los JDE") + " en chess-results " + periodo + ".";
     }
     texto("ae-tesis", frase);
   }
 
   function grafEtapas() {
     const a = ambito();
-    texto("ae-etapas-t", a ? "Participaciones de " + a + " por año y etapa" : "Participaciones en los JDE por año y etapa");
-    const capas = estado.region ? ETAPAS.filter((e) => e.k !== "nacional") : ETAPAS;
+    texto("ae-etapas-t", a ? "Participaciones de " + a + " por año" + (estado.etapa ? "" : " y etapa") : "Participaciones en los JDE por año y etapa");
+    const capas = etapasVisibles();
     const ley = $("ae-leyenda");
     ley.replaceChildren(...capas.map((e) => { const s = document.createElement("span"); const i = document.createElement("i"); i.className = "ae-muestra " + e.clase; s.append(i, document.createTextNode(e.n)); return s; }));
-    const datos = anios(R(), C());
+    const datos = porAnio();
     barras($("ae-graf-etapas"), datos, capas, { alto: 320, formato: miles, vacio: "Sin torneos en chess-results", pandemia: true, torneos: true });
     // La misma información, como tabla.
     const thead = $("ae-tabla-etapas").tHead, tbody = $("ae-tabla-etapas").tBodies[0];
@@ -279,65 +311,74 @@
   }
 
   function grafRegiones() {
-    const r = estado.region, c = estado.categoria;
+    const n = estado.regiones.length;
     const caja = $("ae-graf-regiones");
-    if (r) {
+    if (n) {
       texto("ae-regiones-t", "Torneos de " + ambito() + " por año");
-      texto("ae-regiones-sub", "Torneos de la región en las etapas institucional, regional e interregional, de todos los ritmos.");
-      const datos = anios(R(), C()).filter((d) => d.anio >= 2011).map((d) => ({ anio: d.anio, v: d.torneos }));
-      barras(caja, datos, [{ k: "v", n: "Torneos", clase: "ae-e2" }], { alto: 220, formato: miles, vacio: "Sin torneos", resaltar: 2026 });
+      texto("ae-regiones-sub", (n === 1 ? "Torneos de la región" : "Torneos de las " + n + " regiones juntas") + (estado.etapa ? " en la etapa " + nombreEtapa(estado.etapa).toLowerCase() : " en las etapas institucional, regional e interregional") + ", de todos los ritmos." + (n > 1 ? " Para verlas una al lado de la otra, abajo está cada región por separado." : ""));
+      const datos = porAnio().map((d) => ({ anio: d.anio, v: d.torneos }));
+      barras(caja, datos, [{ k: "v", n: "Torneos", clase: "ae-e2" }], { alto: 220, formato: miles, vacio: "Sin torneos", resaltar: estado.hasta });
     } else {
-      texto("ae-regiones-t", c ? "Regiones que suben su eliminatoria de la categoría " + c : "Regiones que suben su eliminatoria");
+      texto("ae-regiones-t", estado.categoria ? "Regiones que suben su eliminatoria de la categoría " + estado.categoria : "Regiones que suben su eliminatoria");
       texto("ae-regiones-sub", "Direcciones regionales del MEP con torneos de etapa regional o de circuito en chess-results. Buena parte del salto de 2024 viene de acá: más regiones empezaron a publicar.");
-      const cuenta = regionesPorAnio(C());
-      const datos = []; for (let y = 2011; y <= ULTIMO_ANIO; y++) datos.push({ anio: y, v: cuenta[y] || 0 });
-      barras(caja, datos, [{ k: "v", n: "Regiones", clase: "ae-e2" }], { alto: 220, formato: String, vacio: "Ninguna región", resaltar: 2026 });
+      const cuenta = regionesPorAnio();
+      const datos = []; for (let y = estado.desde; y <= estado.hasta; y++) datos.push({ anio: y, v: cuenta[y] || 0 });
+      barras(caja, datos, [{ k: "v", n: "Regiones", clase: "ae-e2" }], { alto: 220, formato: String, vacio: "Ninguna región", resaltar: estado.hasta });
     }
   }
 
   function grafNacional() {
-    $("ae-nacional-nota").hidden = !estado.region;
-    const datos = anios("Todas", C()).filter((d) => d.anio >= 2011).map((d) => ({ anio: d.anio, v: d.nacional }));
-    barras($("ae-graf-nacional"), datos, [{ k: "v", n: estado.categoria ? "Final, categoría " + estado.categoria : "Participaciones en la final", clase: "ae-e4" }], { alto: 220, formato: miles, vacio: "Sin final en chess-results", resaltar: 2026 });
+    $("ae-nacional-nota").hidden = !estado.regiones.length;
+    const datos = porAnio({ conRegion: false, etapas: ETAPAS.filter((e) => e.k === "nacional") }).map((d) => ({ anio: d.anio, v: d.nacional }));
+    barras($("ae-graf-nacional"), datos, [{ k: "v", n: estado.categoria ? "Final, categoría " + estado.categoria : "Participaciones en la final", clase: "ae-e4" }], { alto: 220, formato: miles, vacio: "Sin final en chess-results", resaltar: estado.hasta });
   }
 
+  /* Una cajita por región con los últimos cuatro años del rango, todas en la
+     misma escala. Sin regiones elegidas, las que publicaron al menos dos de
+     esos años; con regiones elegidas, solo esas, para compararlas. */
   function multiples() {
     const caja = $("ae-multi");
-    texto("ae-multi-t", estado.categoria ? "La etapa regional de la categoría " + estado.categoria + ", región por región" : "La etapa regional, región por región");
-    const anios4 = [2023, 2024, 2025, 2026];
-    const por = new Map();
-    for (const o of serie.values()) {
-      if (o.region === "Todas" || o.categoria !== C() || o.anio < 2023) continue;
-      const p = o.regional + o.institucional;
-      if (p <= 0) continue;
-      if (!por.has(o.region)) por.set(o.region, {});
-      por.get(o.region)[o.anio] = p;
-    }
-    const elegida = estado.region;
-    const suma = (k) => Object.values(por.get(k)).reduce((s, v) => s + v, 0);
-    let regiones = [...por.keys()].filter((k) => Object.keys(por.get(k)).length >= 2 || k === elegida).sort((a, b) => suma(b) - suma(a));
-    if (elegida && regiones.includes(elegida)) regiones = [elegida].concat(regiones.filter((k) => k !== elegida));
+    const elegidas = estado.regiones;
+    const etapa = estado.etapa && estado.etapa !== "nacional" ? [estado.etapa] : ["regional", "institucional"];
+    texto("ae-multi-t", (estado.etapa && estado.etapa !== "nacional" ? "La etapa " + nombreEtapa(estado.etapa).toLowerCase() : "La etapa regional") + (estado.categoria ? " de la categoría " + estado.categoria : "") + ", región por región");
+    const y1 = estado.hasta, y0 = Math.max(estado.desde, y1 - 3);
+    const anios4 = []; for (let y = y0; y <= y1; y++) anios4.push(y);
+    texto("ae-multi-sub", "Participaciones " + (y0 === y1 ? "de " + y0 : "de " + y0 + " a " + y1) + (elegidas.length ? " en las regiones elegidas" : " en las regiones que publicaron al menos " + (anios4.length > 1 ? "dos de esos años" : "ese año")) + ", todas en la misma escala. Un año en blanco es un año sin torneos de esa región en chess-results, no un año sin juegos.");
     caja.replaceChildren();
-    if (!regiones.length) { const p = document.createElement("p"); p.className = "ae-tarjeta-sub"; p.textContent = "Ninguna región tiene torneos de esta categoría en dos o más de estos años."; caja.appendChild(p); return; }
+    const aviso = (t) => { const p = document.createElement("p"); p.className = "ae-tarjeta-sub"; p.textContent = t; caja.appendChild(p); };
+    if (estado.etapa === "nacional") { aviso("La final nacional reúne a todo el país y no se separa por región."); return; }
+    const por = new Map();
+    for (const t of torneos) {
+      if (!etapa.includes(CLAVE_ETAPA[t.etapa]) || !t.region || t.ritmo !== "Clásico" || t.anio < y0 || t.anio > y1 || !pasaComunes(t)) continue;
+      if (elegidas.length && !elegidas.includes(t.region)) continue;
+      if (!por.has(t.region)) por.set(t.region, {});
+      const r = por.get(t.region);
+      r[t.anio] = (r[t.anio] || 0) + t.jugadores;
+    }
+    for (const r of elegidas) if (!por.has(r)) por.set(r, {});
+    const suma = (k) => Object.values(por.get(k)).reduce((s, v) => s + v, 0);
+    const minimo = Math.min(2, anios4.length);
+    const regiones = [...por.keys()].filter((k) => elegidas.length || Object.keys(por.get(k)).length >= minimo).sort((a, b) => suma(b) - suma(a));
+    if (!regiones.length) { aviso("Ninguna región tiene torneos con estos filtros en " + (anios4.length > 1 ? "dos o más de estos años." : "ese año.")); return; }
     const max = Math.max(1, ...regiones.flatMap((k) => Object.values(por.get(k))));
     for (const reg of regiones) {
       const fig = document.createElement("figure");
       const cap = document.createElement("figcaption");
-      cap.textContent = reg + (reg === elegida ? " · elegida" : "");
+      cap.textContent = reg;
       fig.appendChild(cap);
       const W = 160, H = 96;
       const svg = el("svg", { viewBox: `0 0 ${W} ${H}`, width: "100%", height: H, role: "img" }, fig);
       const desc = anios4.map((a) => a + ": " + (por.get(reg)[a] ? miles(por.get(reg)[a]) : "sin torneos")).join("; ");
       el("title", {}, svg).textContent = reg + ". " + desc;
       el("line", { x1: 0, x2: W, y1: H - 16, y2: H - 16, class: "ae-rejilla" }, svg);
-      const banda = W / 4, ancho = banda * 0.7;
+      const banda = W / Math.max(4, anios4.length), ancho = banda * 0.7;
       anios4.forEach((a, i) => {
         const x = i * banda + (banda - ancho) / 2;
         el("text", { x: x + ancho / 2, y: H - 3, "text-anchor": "middle", class: "ae-eje ae-eje-chico" }, svg).textContent = "'" + String(a).slice(2);
         const v = por.get(reg)[a];
         if (!v) return;
         const alto = (v / max) * (H - 32);
-        el("rect", { x, y: H - 16 - alto, width: ancho, height: alto, rx: 3, class: "ae-barra " + (!elegida || reg === elegida ? "ae-e2" : "ae-apagada") }, svg);
+        el("rect", { x, y: H - 16 - alto, width: ancho, height: alto, rx: 3, class: "ae-barra ae-e2" }, svg);
         el("text", { x: x + ancho / 2, y: H - 19 - alto, "text-anchor": "middle", class: "ae-valor ae-eje-chico" }, svg).textContent = miles(v);
       });
       caja.appendChild(fig);
@@ -345,10 +386,11 @@
   }
 
   function tablaInternacional() {
-    $("ae-int-nota").hidden = !estado.region && !estado.categoria;
+    $("ae-int-nota").hidden = !estado.regiones.length && !estado.categoria && !estado.etapa;
     const grupos = new Map();
     for (const t of torneos) {
-      if (!INTERNACIONAL.includes(t.etapa)) continue;
+      if (!INTERNACIONAL.includes(t.etapa) || !enRango(t)) continue;
+      if ((estado.modalidad && t.modalidad !== estado.modalidad) || (estado.rama && t.rama !== estado.rama)) continue;
       const k = t.anio + "|" + t.etapa;
       if (!grupos.has(k)) grupos.set(k, { anio: t.anio, etapa: t.etapa, torneos: 0, jugadores: 0 });
       const g = grupos.get(k);
@@ -356,7 +398,13 @@
       if (t.ritmo === "Clásico") g.jugadores += t.jugadores;
     }
     const tbody = $("ae-tabla-int").tBodies[0];
-    tbody.replaceChildren(...[...grupos.values()].sort((a, b) => a.anio - b.anio || a.etapa.localeCompare(b.etapa)).map((g) => {
+    const filas = [...grupos.values()].sort((a, b) => a.anio - b.anio || a.etapa.localeCompare(b.etapa));
+    if (!filas.length) {
+      const tr = document.createElement("tr"), td = document.createElement("td");
+      td.colSpan = 4; td.textContent = "Ninguno con estos filtros.";
+      tr.appendChild(td); tbody.replaceChildren(tr); return;
+    }
+    tbody.replaceChildren(...filas.map((g) => {
       const tr = document.createElement("tr");
       [g.anio, g.etapa, miles(g.torneos), g.jugadores ? miles(g.jugadores) : "sin inscritos aún"].forEach((v, i) => { const td = document.createElement(i === 0 ? "th" : "td"); if (i === 0) td.scope = "row"; td.textContent = v; if (i >= 2) td.className = "ae-n"; tr.appendChild(td); });
       return tr;
@@ -367,12 +415,13 @@
     const a = ambito();
     texto("ae-torneos-t", a ? "Torneos de " + a : "Todos los torneos");
     const q = $("ae-buscar").value.trim().toLowerCase();
-    const et = $("ae-etapa").value;
-    const base = torneos.filter((t) => (!estado.region || t.region === estado.region) && (!estado.categoria || t.categoria === estado.categoria));
+    const base = torneos.filter((t) => enRango(t) && pasaComunes(t)
+      && (!estado.regiones.length || estado.regiones.includes(t.region))
+      && (!estado.etapa || CLAVE_ETAPA[t.etapa] === estado.etapa));
     const { col, dir } = estado.orden;
     const num = col === "anio" || col === "jugadores";
     const filas = base
-      .filter((t) => (!et || t.etapa === et) && (!q || (t.nombre + " " + t.lugar + " " + t.region).toLowerCase().includes(q)))
+      .filter((t) => !q || (t.nombre + " " + t.lugar + " " + t.region).toLowerCase().includes(q))
       .sort((x, y) => {
         const A = x[col], B = y[col];
         const k = num ? A - B : String(A).localeCompare(String(B), "es");
@@ -403,13 +452,39 @@
     });
   }
 
+  // ---------- Los filtros ----------
+
+  function etiquetaRegiones() {
+    const n = estado.regiones.length;
+    return !n ? "Todo el país" : n === 1 ? estado.regiones[0] : n === 2 ? lista(estado.regiones) : n + " regiones";
+  }
+
   function filtros() {
-    $("ae-region").value = estado.region;
+    $("ae-regiones-boton").textContent = etiquetaRegiones();
+    $("ae-regiones-lista").querySelectorAll("input").forEach((c) => { c.checked = estado.regiones.includes(c.value); });
     $("ae-categoria").value = estado.categoria;
-    $("ae-quitar").hidden = !estado.region && !estado.categoria;
+    $("ae-etapa").value = estado.etapa;
+    $("ae-modalidad").value = estado.modalidad;
+    $("ae-rama").value = estado.rama;
+    $("ae-desde").value = String(estado.desde);
+    $("ae-hasta").value = String(estado.hasta);
+    $("ae-quitar").hidden = sinFiltros() && rangoCompleto();
+    const notas = [];
+    if (estado.rama) {
+      const sin = torneos.filter((t) => CLAVE_ETAPA[t.etapa] && !t.rama && enRango(t)).length;
+      if (sin) notas.push(miles(sin) + " torneos de los JDE de estos años no dicen su rama en el nombre (chess-results lo cortó) y no entran con este filtro.");
+    }
+    if (estado.etapa === "nacional" && estado.regiones.length) notas.push("La final nacional reúne a todo el país y no se separa por región: con regiones elegidas no hay participaciones de esa etapa.");
+    $("ae-filtros-nota").hidden = !notas.length;
+    texto("ae-filtros-nota", notas.join(" "));
     const p = new URLSearchParams();
-    if (estado.region) p.set("region", estado.region);
+    for (const r of estado.regiones) p.append("region", r);
     if (estado.categoria) p.set("categoria", estado.categoria);
+    if (estado.etapa) p.set("etapa", estado.etapa);
+    if (estado.modalidad) p.set("modalidad", estado.modalidad);
+    if (estado.rama) p.set("rama", estado.rama);
+    if (estado.desde !== PRIMER) p.set("desde", estado.desde);
+    if (estado.hasta !== ULTIMO) p.set("hasta", estado.hasta);
     const q = p.toString();
     history.replaceState(null, "", location.pathname + (q ? "?" + q : "") + location.hash);
   }
@@ -425,6 +500,48 @@
     tablaTorneos();
   }
 
+  function leerDireccion() {
+    const p = new URLSearchParams(location.search);
+    estado.regiones = REGIONES.filter((r) => p.getAll("region").includes(r));
+    estado.categoria = CATEGORIAS.includes(p.get("categoria")) ? p.get("categoria") : "";
+    estado.etapa = ETAPAS.some((e) => e.k === p.get("etapa")) ? p.get("etapa") : "";
+    estado.modalidad = p.get("modalidad") in MODALIDADES ? p.get("modalidad") : "";
+    estado.rama = p.get("rama") in RAMAS ? p.get("rama") : "";
+    const anio = (k, porOmision) => { const v = Number(p.get(k)); return Number.isInteger(v) && v >= PRIMER && v <= ULTIMO ? v : porOmision; };
+    estado.desde = anio("desde", PRIMER);
+    estado.hasta = anio("hasta", ULTIMO);
+    if (estado.desde > estado.hasta) [estado.desde, estado.hasta] = [estado.hasta, estado.desde];
+  }
+
+  // El panel de regiones: un botón que lo abre y lo dice (aria-expanded), las
+  // casillas, y se cierra con Escape, con «Listo» o al tocar afuera.
+  function panelRegiones() {
+    const boton = $("ae-regiones-boton"), panel = $("ae-regiones-panel");
+    $("ae-regiones-lista").append(...REGIONES.map((r) => {
+      const l = document.createElement("label");
+      const c = document.createElement("input");
+      c.type = "checkbox"; c.value = r;
+      c.addEventListener("change", () => {
+        estado.regiones = REGIONES.filter((x) => x === r ? c.checked : estado.regiones.includes(x));
+        dibujar();
+      });
+      l.append(c, document.createTextNode(r));
+      return l;
+    }));
+    const abrir = (si, volver) => {
+      panel.hidden = !si;
+      boton.setAttribute("aria-expanded", si ? "true" : "false");
+      if (si) panel.querySelector("input").focus();
+      else if (volver) boton.focus();
+    };
+    boton.addEventListener("click", () => abrir(panel.hidden));
+    $("ae-regiones-listo").addEventListener("click", () => abrir(false, true));
+    $("ae-regiones-todas").addEventListener("click", () => { estado.regiones = []; dibujar(); abrir(false, true); });
+    panel.addEventListener("keydown", (e) => { if (e.key === "Escape") { e.preventDefault(); abrir(false, true); } });
+    document.addEventListener("pointerdown", (e) => { if (!panel.hidden && !panel.contains(e.target) && e.target !== boton) abrir(false); });
+    document.addEventListener("focusin", (e) => { if (!panel.hidden && !panel.contains(e.target) && e.target !== boton) abrir(false); });
+  }
+
   // ---------- Arranque ----------
 
   async function iniciar() {
@@ -438,23 +555,28 @@
       return;
     }
     torneos = datos.torneos.map((f) => Object.fromEntries(datos.columnas.map((c, i) => [c, f[i]])));
-    armarSerie();
+    // El rango va de los primeros torneos (CODICADER 2009) a los últimos.
+    const todos = torneos.map((t) => t.anio);
+    PRIMER = Math.min(...todos); ULTIMO = Math.max(...todos);
     texto("ae-consulta", "La última vez que se sumó algo de chess-results fue el " + window.HoraCR.fecha(datos.actualizado, { day: "numeric", month: "long", year: "numeric" }) + ".");
 
-    const regiones = [...new Set(torneos.map((t) => t.region).filter(Boolean))].sort((a, b) => a.localeCompare(b, "es"));
-    $("ae-region").append(...regiones.map((x) => new Option(x, x)));
+    REGIONES = [...new Set(torneos.map((t) => t.region).filter(Boolean))].sort((a, b) => a.localeCompare(b, "es"));
+    panelRegiones();
     $("ae-categoria").append(...CATEGORIAS.map((x) => new Option(x, x)));
-    $("ae-etapa").append(...[...new Set(torneos.map((t) => t.etapa))].sort((a, b) => a.localeCompare(b, "es")).map((x) => new Option(x, x)));
+    $("ae-etapa").append(...ETAPAS.map((e) => new Option(e.n, e.k)));
+    for (let y = PRIMER; y <= ULTIMO; y++) { $("ae-desde").append(new Option(y, y)); $("ae-hasta").append(new Option(y, y)); }
+    leerDireccion();
 
-    const p = new URLSearchParams(location.search);
-    if (regiones.includes(p.get("region"))) estado.region = p.get("region");
-    if (CATEGORIAS.includes(p.get("categoria"))) estado.categoria = p.get("categoria");
-
-    $("ae-region").addEventListener("change", (e) => { estado.region = e.target.value; dibujar(); });
-    $("ae-categoria").addEventListener("change", (e) => { estado.categoria = e.target.value; dibujar(); });
-    $("ae-quitar").addEventListener("click", () => { estado.region = ""; estado.categoria = ""; dibujar(); $("ae-region").focus(); });
+    const al = (id, k) => $(id).addEventListener("change", (e) => { estado[k] = e.target.value; dibujar(); });
+    al("ae-categoria", "categoria"); al("ae-etapa", "etapa"); al("ae-modalidad", "modalidad"); al("ae-rama", "rama");
+    // Si «desde» pasa a «hasta» (o al revés), el otro lo sigue: el rango nunca queda al revés.
+    $("ae-desde").addEventListener("change", (e) => { estado.desde = Number(e.target.value); if (estado.hasta < estado.desde) estado.hasta = estado.desde; dibujar(); });
+    $("ae-hasta").addEventListener("change", (e) => { estado.hasta = Number(e.target.value); if (estado.desde > estado.hasta) estado.desde = estado.hasta; dibujar(); });
+    $("ae-quitar").addEventListener("click", () => {
+      Object.assign(estado, { regiones: [], categoria: "", etapa: "", modalidad: "", rama: "", desde: PRIMER, hasta: ULTIMO });
+      dibujar(); $("ae-regiones-boton").focus();
+    });
     $("ae-buscar").addEventListener("input", tablaTorneos);
-    $("ae-etapa").addEventListener("change", tablaTorneos);
     document.querySelectorAll("#ae-tabla-torneos th button").forEach((b) => b.addEventListener("click", () => {
       const c = b.dataset.col;
       estado.orden.dir = estado.orden.col === c ? -estado.orden.dir : (c === "anio" || c === "jugadores" ? -1 : 1);

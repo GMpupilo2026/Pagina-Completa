@@ -2097,8 +2097,37 @@ los internacionales (CODICADER y escolares de la federación). Se enlaza desde
   gráficos son SVG escritos a mano (el sitio no carga librerías de gráficos);
   cada año es un botón que se alcanza con Tab y dice su valor, y el gráfico
   grande tiene su tabla. Los filtros van en la dirección
-  (`?region=Cartago&categoria=D`) para compartir una vista. Los colores de las
+  (`?region=Cartago&region=Heredia&categoria=D&etapa=regional&modalidad=Equipos&rama=Femenina&desde=2022&hasta=2025`)
+  para compartir una vista; uno que no existe se ignora. Los colores de las
   etapas están medidos en `css/styles.css` y cada etapa va también escrita.
+- **Los filtros valen para toda la página** (pedido del dueño, octubre de
+  2026): una o varias regiones, categoría, etapa, modalidad, rama y los años.
+  Con cinco filtros que se combinan, ya no hay una serie armada de antemano por
+  región y categoría: cada vez se cuenta sobre los torneos que pasan (son unos
+  1400, nada). Lo que hay que saber de cada uno:
+  - **Varias regiones** se eligen en un panel de casillas (el botón dice si
+    está abierto; Escape, «Listo» o tocar afuera lo cierran y el foco vuelve
+    al botón). La cifra es la suma de las elegidas, y la tarjeta «región por
+    región» muestra solo esas, en la misma escala, para compararlas: se
+    descartó apilar las regiones en un gráfico porque harían falta colores
+    nuevos (y medirlos) y con más de tres ya no se leen.
+  - **La etapa** pasó de la tabla de torneos a arriba: cambia las cifras, el
+    gráfico grande (queda una sola capa) y la tabla. La final nacional no es de
+    ninguna región: con regiones elegidas y la etapa nacional, la página lo
+    dice en vez de mostrar ceros sin explicación.
+  - **La rama** no está en el CSV: sale del nombre con `reglas.rama()` y va en
+    el JSON. «Femenino», «Fem», «Mujeres», las claves de Occidente («2025 AIF»)
+    y el nombre cortado en «… C Fe» o «… C F»; abierta es lo que dice abierto,
+    absoluto o masculino (2011 y 2015). Unos 130 torneos de los JDE no dicen
+    ninguna de las dos (chess-results cortó el nombre antes) y quedan sin rama:
+    adivinar «abierta» inflaría esa rama. Con el filtro puesto, la página dice
+    cuántos quedan fuera.
+  - **Los años** («desde» y «hasta») recortan todo; si uno pasa al otro, el
+    otro lo sigue y el rango nunca queda al revés. Las cifras comparan «hasta»
+    contra «desde»; sin elegir años, contra 2023, el año en que las regiones
+    empezaron a publicar (la historia de la frase de arriba). El rango va del
+    primer torneo (CODICADER 2009) al último, y sale de los datos: un año nuevo
+    entra solo.
 - **Se pone al día cuando se pide** (`.github/workflows/ajedrez-estudiantil.yml`,
   solo con `workflow_dispatch`: Actions → «Ajedrez estudiantil» → Run
   workflow, o `gh workflow run ajedrez-estudiantil.yml`). Corría solo cada
@@ -2184,7 +2213,8 @@ los internacionales (CODICADER y escolares de la federación). Se enlaza desde
   también se lee completo antes de decidir.
 - `verificar-ajedrez-estudiantil.js` cuenta las participaciones directo del
   CSV, por otro camino que la página, y las compara con lo que se pinta: sin
-  filtros, con una región, con una categoría y con las dos; además, los
+  filtros, con una región, con dos, con una categoría y con las dos, con cada
+  etapa, modalidad, rama y rango de años, y con un enlace que trae todos; además, los
   filtros en la dirección, el aviso de la final, el teclado, el celular a
   400 px, el modo oscuro y la página sin datos. Sumando también los blitz, o
   sin filtrar la tabla por región, salta.

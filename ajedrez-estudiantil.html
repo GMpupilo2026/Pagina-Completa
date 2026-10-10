@@ -93,15 +93,46 @@
 
             <section aria-labelledby="ae-filtros-t" class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-4 flex flex-wrap items-end gap-4">
                 <h2 id="ae-filtros-t" class="sr-only">Filtros</h2>
-                <div class="flex flex-col gap-1">
-                    <label for="ae-region" class="text-sm font-medium text-brand-700 dark:text-brand-200">Región</label>
-                    <select id="ae-region" class="ae-control"><option value="">Todo el país</option></select>
+                <div class="ae-filtro-regiones flex flex-col gap-1">
+                    <span id="ae-regiones-et" class="text-sm font-medium text-brand-700 dark:text-brand-200">Regiones</span>
+                    <button type="button" id="ae-regiones-boton" class="ae-control ae-desplegable" aria-expanded="false" aria-controls="ae-regiones-panel" aria-labelledby="ae-regiones-et ae-regiones-boton">Todo el país</button>
+                    <div id="ae-regiones-panel" class="ae-panel" hidden>
+                        <fieldset>
+                            <legend class="ae-panel-t">Elige una o varias regiones para compararlas</legend>
+                            <div id="ae-regiones-lista" class="ae-panel-lista"></div>
+                        </fieldset>
+                        <div class="ae-panel-pie">
+                            <button type="button" id="ae-regiones-todas" class="ae-boton">Todo el país</button>
+                            <button type="button" id="ae-regiones-listo" class="ae-boton">Listo</button>
+                        </div>
+                    </div>
                 </div>
                 <div class="flex flex-col gap-1">
                     <label for="ae-categoria" class="text-sm font-medium text-brand-700 dark:text-brand-200">Categoría</label>
                     <select id="ae-categoria" class="ae-control"><option value="">Todas</option></select>
                 </div>
+                <div class="flex flex-col gap-1">
+                    <label for="ae-etapa" class="text-sm font-medium text-brand-700 dark:text-brand-200">Etapa</label>
+                    <select id="ae-etapa" class="ae-control"><option value="">Todas</option></select>
+                </div>
+                <div class="flex flex-col gap-1">
+                    <label for="ae-modalidad" class="text-sm font-medium text-brand-700 dark:text-brand-200">Modalidad</label>
+                    <select id="ae-modalidad" class="ae-control"><option value="">Individual y equipos</option><option value="Individual">Individual</option><option value="Equipos">Por equipos</option></select>
+                </div>
+                <div class="flex flex-col gap-1">
+                    <label for="ae-rama" class="text-sm font-medium text-brand-700 dark:text-brand-200">Rama</label>
+                    <select id="ae-rama" class="ae-control"><option value="">Abierta y femenina</option><option value="Abierta">Abierta</option><option value="Femenina">Femenina</option></select>
+                </div>
+                <div class="flex flex-col gap-1">
+                    <label for="ae-desde" class="text-sm font-medium text-brand-700 dark:text-brand-200">Desde</label>
+                    <select id="ae-desde" class="ae-control"></select>
+                </div>
+                <div class="flex flex-col gap-1">
+                    <label for="ae-hasta" class="text-sm font-medium text-brand-700 dark:text-brand-200">Hasta</label>
+                    <select id="ae-hasta" class="ae-control"></select>
+                </div>
                 <button type="button" id="ae-quitar" class="ae-boton" hidden>Quitar los filtros</button>
+                <p id="ae-filtros-nota" class="ae-tarjeta-sub w-full" hidden></p>
             </section>
 
             <section aria-label="Cifras principales" class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -138,14 +169,14 @@
 
             <section aria-labelledby="ae-multi-t" class="ae-tarjeta">
                 <h2 id="ae-multi-t" class="ae-tarjeta-t font-serif">La etapa regional, región por región</h2>
-                <p class="ae-tarjeta-sub">Participaciones de 2023 a 2026 en las regiones que publicaron al menos dos de esos años, todas en la misma escala. Un año en blanco es un año sin torneos de esa región en chess-results, no un año sin juegos.</p>
+                <p id="ae-multi-sub" class="ae-tarjeta-sub">Participaciones de 2023 a 2026 en las regiones que publicaron al menos dos de esos años, todas en la misma escala. Un año en blanco es un año sin torneos de esa región en chess-results, no un año sin juegos.</p>
                 <div id="ae-multi" class="ae-multi"></div>
             </section>
 
             <section aria-labelledby="ae-int-t" class="ae-tarjeta">
                 <h2 id="ae-int-t" class="ae-tarjeta-t font-serif">Etapa internacional y otros estudiantiles</h2>
                 <p class="ae-tarjeta-sub">Los Juegos Estudiantiles Centroamericanos (CODICADER) que están en chess-results se jugaron en San José. Los federativos son escolares de la federación, no del MEP.</p>
-                <p id="ae-int-nota" class="ae-tarjeta-sub" hidden>Estos eventos son de todo el país y no usan las categorías de los JDE: esta tabla no cambia con los filtros.</p>
+                <p id="ae-int-nota" class="ae-tarjeta-sub" hidden>Estos eventos son de todo el país y no usan las categorías ni las etapas de los JDE: esta tabla cambia solo con los años, la modalidad y la rama.</p>
                 <div class="ae-tabla-caja"><table id="ae-tabla-int" class="ae-tabla"><caption class="sr-only">Eventos internacionales y otros estudiantiles</caption><thead><tr><th scope="col">Año</th><th scope="col">Evento</th><th scope="col" class="ae-n">Torneos</th><th scope="col" class="ae-n">Jugadores</th></tr></thead><tbody></tbody></table></div>
             </section>
 
@@ -156,10 +187,6 @@
                     <div class="flex flex-col gap-1 grow">
                         <label for="ae-buscar" class="text-sm font-medium text-brand-700 dark:text-brand-200">Buscar</label>
                         <input id="ae-buscar" type="search" class="ae-control w-full" placeholder="Nombre o lugar del torneo" autocomplete="off">
-                    </div>
-                    <div class="flex flex-col gap-1">
-                        <label for="ae-etapa" class="text-sm font-medium text-brand-700 dark:text-brand-200">Etapa</label>
-                        <select id="ae-etapa" class="ae-control"><option value="">Todas</option></select>
                     </div>
                     <p id="ae-cuenta" class="text-sm text-brand-600 dark:text-brand-200" aria-live="polite"></p>
                 </div>

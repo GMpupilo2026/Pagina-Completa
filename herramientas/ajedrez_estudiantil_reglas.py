@@ -155,6 +155,27 @@ def region(nombre, organizador, lugar):
     return ""
 
 
+# La rama sale del nombre: «Femenino», «Fem», «Mujeres», «Damas», las claves
+# de Occidente («2025 AIF»: A, individual, femenino) y de 2011 («- IFD»), y el
+# nombre cortado justo en la palabra («… C Fe», «… C F»). Abierta es lo que
+# dice abierto, absoluto o masculino (las de 2011 y 2015). Lo que no dice
+# ninguna de las dos queda sin rama: suelen ser nombres que chess-results cortó
+# antes, y adivinar «abierta» inflaría esa rama.
+FEMENINA = r"fem|mujer|dama|ninas|\bfe?$|\b20\d\d [a-e][ie]f\b|\s-\s[ie]f[a-e]\b|\b[a-e]f\b"
+ABIERTA = (r"abiert|absolut|\babs\b|masc|open|varon|hombre|mixt|\bab$|\babi$|\babie$|"
+           r"\b20\d\d [a-e][ie]o\b|\s-\s[ie]m[a-e]\b|\b[a-e] a$")
+
+
+def rama(nombre):
+    """«Femenina», «Abierta» o «» si el nombre no lo dice."""
+    t = sin_tildes(html.unescape(nombre)).strip()
+    if re.search(FEMENINA, t):
+        return "Femenina"
+    if re.search(ABIERTA, t):
+        return "Abierta"
+    return ""
+
+
 def anio(nombre, inicio):
     """El año del torneo: el de la fecha, salvo que no tenga sentido (hay torneos de 2013 fechados en 1913)."""
     y = int(inicio[:4]) if inicio[:4].isdigit() else None
