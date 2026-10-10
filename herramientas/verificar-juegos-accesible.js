@@ -668,7 +668,7 @@ async function pruebaLasRachas(browser) {
 
   /* Las cuentas «ciego»: lo pidió ese grupo. Las piezas se dicen UNA por una
      (con un segundo entre una y otra; acá se acortan para no esperar un
-     minutos), el reloj NO corre mientras tanto, y después son 30 segundos.
+     minuto), el reloj NO corre mientras tanto, y después son 30 segundos.
      Arriba de la lista de piezas, un encabezado «Piezas» para llegar con la H. */
   const c = await abrir(browser, RACHAS[1].url, RACHAS[1].datos, "u-ana", true);
   await c.page.evaluate((ej) => {
