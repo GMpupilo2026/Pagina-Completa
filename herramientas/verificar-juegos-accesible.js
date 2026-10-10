@@ -667,7 +667,7 @@ async function pruebaLasRachas(browser) {
   await ctx.close();
 
   /* Las cuentas «ciego»: lo pidió ese grupo. Las piezas se dicen UNA por una
-     (con dos segundos entre una y otra; acá se acortan para no esperar dos
+     (con un segundo entre una y otra; acá se acortan para no esperar un
      minutos), el reloj NO corre mientras tanto, y después son 30 segundos.
      Arriba de la lista de piezas, un encabezado «Piezas» para llegar con la H. */
   const c = await abrir(browser, RACHAS[1].url, RACHAS[1].datos, "u-ana", true);
@@ -687,7 +687,7 @@ async function pruebaLasRachas(browser) {
   });
   ok("  el encabezado «Piezas» está justo arriba de la lista y se ve", enc.texto === "Piezas" && enc.antes && enc.seVe, enc);
   // La pausa real es de 2 s: se mide el valor y después se acorta para la prueba.
-  igual("  la pausa entre pieza y pieza es de 2 segundos", await c.page.evaluate(() => LECTURA.pausaMs), 2000);
+  igual("  la pausa entre pieza y pieza es de 1 segundo", await c.page.evaluate(() => LECTURA.pausaMs), 1000);
   await c.page.evaluate(() => { LECTURA.pausaMs = 400; LECTURA.msPorLetra = 1; });
   await c.page.click("#start-btn");
   await c.page.waitForTimeout(1000);

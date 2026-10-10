@@ -998,7 +998,7 @@ ejercicios:
   «tiempo» dice lo que le queda al examen.
 - **La Racha táctica para las cuentas «ciego»** (lo pidió ese grupo): al
   llegar cada ejercicio, las piezas se dicen **una por una** en su propia
-  región viva (`#pieza-dicha`), con **2 segundos de pausa** entre una y otra, y
+  región viva (`#pieza-dicha`), con **1 segundo de pausa** entre una y otra, y
   el reloj **no corre** mientras tanto: los **30 segundos** empiezan cuando
   termina la lectura (antes eran 60 contando la lectura entera de corrido, que
   se comía casi todo). Con «Activar voz» la pausa se cuenta desde que la voz

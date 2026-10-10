@@ -174,12 +174,12 @@
         }
 
         /* ---------- La posición pieza por pieza (cuentas «ciego») ----------
-           Cada pieza va sola a una región viva, y la siguiente llega dos segundos
+           Cada pieza va sola a una región viva, y la siguiente llega un segundo
            DESPUÉS de que se terminó de decir la anterior. Con «Activar voz» se
            sabe cuándo terminó (la voz del navegador avisa); con un lector de
            pantalla no hay forma de saberlo, así que se calcula por el largo de la
            frase. Contestar antes de que termine vale: corta la lectura. */
-        const LECTURA = { pausaMs: 2000, msPorLetra: 65 };
+        const LECTURA = { pausaMs: 1000, msPorLetra: 65 };
         const GENERO = { k: "rey blanco", q: "dama blanca", r: "torre blanca", b: "alfil blanco", n: "caballo blanco", p: "peón blanco" };
         let lecturaId = 0, lecturaEspera = null, leyendoPiezas = false;
         function cortarLectura() {
