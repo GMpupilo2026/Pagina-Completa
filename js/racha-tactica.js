@@ -248,10 +248,18 @@
         }
 
         function loadPuzzle() {
-            const [fen, uci, san] = pickRandomPuzzle();
+            const [fen, uci, san, , jugadaRival] = pickRandomPuzzle();
             currentSolution = uci;
             currentSan = san;
             game = new Chess(fen);
+            /* Lo que acaba de jugar el rival (el quinto campo del banco, que arma
+               herramientas/racha-jugada-rival.js): se dice al llegar el ejercicio,
+               y «última jugada» en el recuadro lo repite (js/comandos-tablero.js). */
+            if (jugadaRival) game.jugadaPrevia = jugadaRival;
+            const rivalJugo = jugadaRival && window.ComandosTablero
+                ? "Las " + (game.turn() === "w" ? "negras" : "blancas") + " jugaron "
+                  + ComandosTablero.jugadaParaMostrar(jugadaRival) + ". "
+                : "";
             selected = null;
             resultLocked = false;
             /* En Modo Adaptado el renglón del resultado (región viva) dice que llegó
@@ -261,7 +269,7 @@
                reloj ya corría y quien no ve la pantalla no sabía que había cambiado. */
             if (modoCiego() && window.BlindNotation) {
                 const aviso = (streak > 0 ? "✅ ¡Correcto! Racha: " + streak + ". " : "")
-                    + "Ejercicio nuevo: juegan las " + (game.turn() === "w" ? "blancas" : "negras")
+                    + "Ejercicio nuevo. " + rivalJugo + "Juegan las " + (game.turn() === "w" ? "blancas" : "negras")
                     + ". Te digo las piezas una por una; los " + (limiteMs() / 1000)
                     + " segundos empiezan cuando termine.";
                 setResultText(aviso);
@@ -272,9 +280,9 @@
             }
             setResultText(modoAdaptado()
                 ? (streak > 0 ? "✅ ¡Correcto! Racha: " + streak + ". " : "")
-                  + "Ejercicio nuevo: juegan las " + (game.turn() === "w" ? "blancas" : "negras")
+                  + "Ejercicio nuevo. " + rivalJugo + "Juegan las " + (game.turn() === "w" ? "blancas" : "negras")
                   + ". Tienes " + (limiteMs() / 1000) + " segundos."
-                : "");
+                : rivalJugo.trim());
             decirPosicionNueva();
             renderBoard();
             startTimer();

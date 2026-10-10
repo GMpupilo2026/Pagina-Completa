@@ -1010,6 +1010,18 @@ ejercicios:
   el suyo: «Blancas» y «Negras» (h3), para llegar con la tecla H
   (`encabezadoPosicion` de `CuadroComandos.montar`; también en ¡Te reto!,
   que comparte `js/racha-tablero.js`).
+- **La Racha dice qué jugó el rival.** Cada ejercicio de Lichess empieza con
+  una jugada del rival, pero el banco guardaba solo la posición de después:
+  quien no ve el tablero no sabía qué acababa de pasar. Ahora el banco trae un
+  quinto campo con esa jugada (SAN) y al llegar el ejercicio se dice «Las negras
+  jugaron caballo captura eva 6» (en Modo Adaptado y en la cuenta «ciego», antes
+  de las piezas; fuera del modo se escribe en algebraica española, «Cxe6»).
+  «última jugada» en el recuadro la repite: `ComandosTablero` lee
+  `juego.jugadaPrevia` cuando la partida no trae historia. Las jugadas salen de
+  la tabla «Ejercicios Lichess» cruzando huellas de la posición
+  (`herramientas/racha-jugada-rival.js`, que rearma la posición de antes y la
+  comprueba con chess.js: 4446 de 4446), y `verificar-racha-rival.js` revisa
+  que cada una cuadre con su posición.
 - **«enroque corto» / «enroque largo»** en Estándar, Niebla, contra Oscar, a
   ciegas contra el bot y en las variantes: antes solo se entendía «O-O».
 - **«siguiente»** en Batalla naval, como en el Sonar.
