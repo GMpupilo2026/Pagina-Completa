@@ -2173,9 +2173,10 @@ los internacionales (CODICADER y escolares de la federación). Se enlaza desde
   `A_MANO` y a la lista de torneos (y sale de la de revisar); si no, `no` en
   `decision`, y no se vuelve a anotar. Medido contra la revisión del
   10/10/2026, la alarma habría marcado todos los de `A_MANO` (el verificador lo
-  exige) y 31 de más en toda la historia; esos 31 se guardaron revisados, 25
-  con `no` y 6 pendientes de confirmar («Institucional Anastasio Alfaro»
-  2022 y «Torneo CECELO» 2026, Cañas). Un nombre cortado que es dudoso
+  exige) y 31 de más en toda la historia; esos 31 se guardaron revisados: 25
+  con `no`, los 2 del «Institucional Anastasio Alfaro» (2022), que el dueño
+  confirmó y pasaron a `A_MANO`, y 4 del «Torneo CECELO» 2026 (Cañas)
+  pendientes de confirmar. Un nombre cortado que es dudoso
   también se lee completo antes de decidir.
 - `verificar-ajedrez-estudiantil.js` cuenta las participaciones directo del
   CSV, por otro camino que la página, y las compara con lo que se pinta: sin

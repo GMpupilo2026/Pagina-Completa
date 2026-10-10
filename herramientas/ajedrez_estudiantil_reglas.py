@@ -71,6 +71,8 @@ A_MANO = {
     "1369387": ("Institucional o circuital", "", "A"),       # «Institucional Laboratorio A/B» (Escuela
     "1369389": ("Institucional o circuital", "", "B"),       # Laboratorio de PZ): lo confirmó el dueño
     "434740": ("Interregional", "", ""),                     # «Interrregional Alajuela JDNEquipo C»: hermano de 434735-9
+    "650282": ("Institucional o circuital", "", ""),         # «I Torneo Institucional Anastasio Alfaro» (2022):
+    "650284": ("Institucional o circuital", "", "C"),        # lo confirmó el dueño; el segundo dice «(C)»
 }
 
 # Lo que las reglas no aceptan pero tiene pinta de JDE: el actualizador no lo
