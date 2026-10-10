@@ -2175,8 +2175,8 @@ los internacionales (CODICADER y escolares de la federación). Se enlaza desde
   10/10/2026, la alarma habría marcado todos los de `A_MANO` (el verificador lo
   exige) y 31 de más en toda la historia; esos 31 se guardaron revisados: 25
   con `no`, los 2 del «Institucional Anastasio Alfaro» (2022), que el dueño
-  confirmó y pasaron a `A_MANO`, y 4 del «Torneo CECELO» 2026 (Cañas)
-  pendientes de confirmar. Un nombre cortado que es dudoso
+  confirmó y pasaron a `A_MANO`, y 4 del «Torneo CECELO» 2026 (Cañas),
+  que el dueño dijo que no son de los JDE (`no`). Un nombre cortado que es dudoso
   también se lee completo antes de decidir.
 - `verificar-ajedrez-estudiantil.js` cuenta las participaciones directo del
   CSV, por otro camino que la página, y las compara con lo que se pinta: sin
