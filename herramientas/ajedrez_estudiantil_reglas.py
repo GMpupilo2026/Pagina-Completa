@@ -68,6 +68,8 @@ A_MANO = {
     "746395": ("Institucional o circuital", "", ""),
     "1140377": ("Regional", "Guápiles", ""),                 # 18/3/2025, jugadores de Pococí: la D que faltaba
     "1365365": ("Institucional o circuital", "Pérez Zeledón", ""),  # «Institucional Sinai»: lo confirmó el dueño
+    "1369387": ("Institucional o circuital", "", "A"),       # «Institucional Laboratorio A/B» (Escuela
+    "1369389": ("Institucional o circuital", "", "B"),       # Laboratorio de PZ): lo confirmó el dueño
 }
 
 REGIONES = [  # (nombre, patrón sobre nombre + organizador + lugar sin tildes); la primera que calza

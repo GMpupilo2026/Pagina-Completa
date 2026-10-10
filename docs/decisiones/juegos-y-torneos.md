@@ -2149,15 +2149,14 @@ los internacionales (CODICADER y escolares de la federación). Se enlaza desde
   «JDETurrialba», sus hermanos sí estaban); la categoría D absoluta de Guápiles
   2025 («individual absoluto categoria D», jugadores de Pococí, el mismo día
   que las demás de Guápiles); y la institucional del LEBCBA de 2023 (la de
-  2026 ya estaba). Después, el dueño confirmó que «Institucional Sinai»
-  (Pérez Zeledón, 2026) sí es de los JDE y que los «Festival Circuital … Mis
+  2026 ya estaba). Después, el dueño confirmó que «Institucional Sinai» e
+  «Institucional Laboratorio A/B» (Pérez Zeledón, 2026) sí son de los JDE y que los «Festival Circuital … Mis
   Primeras 64 Casillas» del circuito 05 (2025) no: son aparte. **Se reconocen por clave** en `A_MANO` de
   `ajedrez_estudiantil_reglas.py`, con su etapa y, si el nombre no la dice,
   su región o categoría: así el verificador sigue exigiendo que las reglas den
   exactamente lo guardado. Quedaron fuera los festivales circuitales, los
   «Juegos Regionales de Cartago» (2026, del CCDR, no del MEP), el «COLYPRO
-  Regional» (profesores) y, a falta de confirmarlo, «Institucional
-  Laboratorio A/B» (Escuela Laboratorio de Pérez Zeledón, 2026). Desde la base, `pg_net` solo despierta con una
+  Regional» (profesores). Desde la base, `pg_net` solo despierta con una
   llamada suya (`net.http_get`): los POST metidos directo en
   `net.http_request_queue` se quedan en la cola hasta la siguiente; y el
   formulario del buscador vence en unos minutos, así que se pide uno nuevo
