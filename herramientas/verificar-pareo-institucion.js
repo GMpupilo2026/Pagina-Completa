@@ -1,11 +1,13 @@
-/* Pareo Integral: institución, subir una lista (Word o Excel) y el Elo
- * Nacional (pareo.html, js/pareo/pagina.js, js/pareo/elo-nacional.js,
+/* Pareo Integral: institución, categoría, subir una lista (Word o Excel), el
+ * Elo Nacional (y resolver un ambiguo a mano) y los nombres repetidos
+ * (pareo.html, js/pareo/pagina.js, js/pareo/elo-nacional.js,
  * js/reporte-textos.js, la migración y la Edge Function pareo-elo-nacional).
  *
  * Lo que se rompe acá no da ningún error: una columna mal mapeada agrega
- * jugadores con los datos cambiados de lugar, y una llamada de más al Elo
+ * jugadores con los datos cambiados de lugar, una llamada de más al Elo
  * Nacional rompería justo lo que la página promete («nada sale de tu
- * computadora»). Tres partes:
+ * computadora»), y un bolsillo de nombre mal comparado le pone a alguien el
+ * Elo de otra persona. Cinco partes:
  *
  *   1. La migración y la Edge Function, leídas (sin navegador): el freno
  *      ANTES de buscar, el candado de quién puede llamar jde_frenar... digo
@@ -14,8 +16,15 @@
  *      el mismo ReporteDOCX que ya usan los informes) y un .csv con la
  *      cabecera en otro orden, los dos agregando la institución de cada
  *      jugador.
- *   3. El botón de Elo Nacional: es la ÚNICA llamada que sale del sitio, y
- *      no inventa un homónimo.
+ *   3. El botón de Elo Nacional: es la ÚNICA llamada que sale del sitio, no
+ *      inventa un homónimo, asigna por índice (no por bolsillo de nombre, que
+ *      mezclaría a dos homónimos) y a quien queda ambiguo o sin encontrar se
+ *      le puede resolver a mano desde la misma lista, sin repetir la
+ *      búsqueda completa.
+ *   4. Dos jugadores con el mismo nombre: se avisa, pero se agregan los dos
+ *      (puede ser un homónimo de verdad, nunca se bloquea por las dudas).
+ *   5. La categoría (campo libre, ej. «Sub-10») y el filtro por institución
+ *      en Clasificación y Tabla cruzada.
  *
  * Uso:  python3 -m http.server 8777      (desde la raíz del sitio)
  *       node herramientas/verificar-pareo-institucion.js
@@ -124,7 +133,7 @@ async function pruebaSubirLista(browser) {
   await page2.setInputFiles("#pi-subir-lista", { name: "lista.csv", mimeType: "text/csv", buffer: Buffer.from(csv, "utf8") });
   await page2.waitForFunction(() => document.getElementById("pi-cuenta").textContent === "1");
   igual("lee la cabecera por su etiqueta, no por su posición",
-    await page2.$$eval("#pi-tabla-jugadores tbody tr", (trs) => trs.map((tr) => [tr.children[1].textContent, tr.children[2].textContent, tr.children[4].textContent])),
+    await page2.$$eval("#pi-tabla-jugadores tbody tr", (trs) => trs.map((tr) => [tr.children[1].textContent, tr.children[2].textContent, tr.children[5].textContent])),
     [["García Vega, Pedro", "Liceo X", "1800"]]);
   await ctx2.close();
 
@@ -134,7 +143,7 @@ async function pruebaSubirLista(browser) {
   await page3.setInputFiles("#pi-subir-lista", { name: "lista2.csv", mimeType: "text/csv", buffer: Buffer.from(csv2, "utf8") });
   await page3.waitForFunction(() => document.getElementById("pi-cuenta").textContent === "1");
   igual("cae al orden Nombre; Institución; Elo",
-    await page3.$$eval("#pi-tabla-jugadores tbody tr", (trs) => trs.map((tr) => [tr.children[1].textContent, tr.children[2].textContent, tr.children[4].textContent])),
+    await page3.$$eval("#pi-tabla-jugadores tbody tr", (trs) => trs.map((tr) => [tr.children[1].textContent, tr.children[2].textContent, tr.children[5].textContent])),
     [["Jiménez Alfaro, Sofía", "Escuela Z", "1200"]]);
   await ctx3.close();
 }
@@ -182,12 +191,65 @@ async function pruebaEloNacional(browser) {
   await page.waitForFunction(() => /\d/.test(document.querySelector(".avisos-mensaje")?.textContent || ""));
 
   ok(!!pedido && Array.isArray(pedido.nombres) && pedido.nombres.length === 2, "manda los dos nombres, nada más", JSON.stringify(pedido));
-  igual("el primero queda con el Elo encontrado",
-    await page.$$eval("#pi-tabla-jugadores tbody tr", (trs) => trs.map((tr) => tr.children[4].textContent)),
+  igual("el primero queda con el Elo encontrado, por índice (no por bolsillo de nombre)",
+    await page.$$eval("#pi-tabla-jugadores tbody tr", (trs) => trs.map((tr) => tr.children[5].textContent)),
     ["1550", ""]);
   ok(afuera.filter((u) => u.includes("pareo-elo-nacional")).length === 1, "una sola llamada afuera, y es esta", afuera.join(" | "));
   ok(afuera.filter((u) => !u.includes("pareo-elo-nacional")).length === 0, "y ninguna otra petición salió del sitio", afuera.join(" | "));
+  // El ambiguo queda pendiente, con su botón para resolverlo a mano.
+  ok(await vis(page, "#pi-elo-pendientes"), "la lista de pendientes se ve");
+  const pendiente = await page.textContent("#pi-elo-pendientes");
+  ok(pendiente.includes("Rojas Mora, Ana") && /más de una persona/.test(pendiente), "nombra a quien quedó ambiguo y por qué", pendiente);
+  ok(!pendiente.includes("Pérez Vargas, Juan"), "a quien sí se encontró no lo deja en la lista", pendiente);
+  await page.click('#pi-elo-pendientes button:has-text("Editar")');
+  ok(await vis(page, 'dialog.avisos-dialogo[open] input[name="nombre"]'), "el botón abre el formulario de editar a esa persona");
+  await page.fill('dialog.avisos-dialogo[open] input[name="elo"]', "1600");
+  await page.click('dialog.avisos-dialogo[open] button:has-text("Guardar")');
+  // Guardar cierra el <dialog> (evento "close") y editarJugador() sigue
+  // async desde ahí: esperar el resultado, no mirar el DOM al toque del clic.
+  await page.waitForFunction(() => !document.getElementById("pi-elo-pendientes").textContent.includes("Rojas Mora, Ana"));
+  ok(true, "al resolverlo a mano, sale solo de la lista de pendientes");
   ok(errores.length === 0, "sin errores en la página", errores.join(" | "));
+  await ctx.close();
+}
+
+async function pruebaDuplicados(browser) {
+  console.log("\n=== Nombres repetidos: avisa, no bloquea ===");
+  const { ctx, page } = await abrir(browser);
+  await page.click("#pi-p-jugadores summary");
+  await page.fill("#pi-pegar", ["Soto Vega, Karla;Liceo A", "Soto Vega, Karla;Liceo B"].join("\n"));
+  await page.click("#pi-pegar-agregar");
+  await page.waitForFunction(() => document.getElementById("pi-cuenta").textContent === "2");
+  const avisos = await page.$$eval(".avisos-mensaje", (ns) => ns.map((n) => n.textContent));
+  ok(avisos.some((m) => m.includes("Soto Vega, Karla")), "avisa del nombre repetido", avisos.join(" | "));
+  ok((await page.$$("#pi-tabla-jugadores tbody tr")).length === 2, "pero agrega a los dos: puede ser un homónimo de verdad");
+  await ctx.close();
+}
+
+async function pruebaCategoria(browser) {
+  console.log("\n=== Categoría: campo y filtro de institución ===");
+  const { ctx, page } = await abrir(browser);
+  for (const [nombre, institucion, categoria] of [["Jara Ulloa, Mateo", "Liceo A", "Sub-10"], ["Campos Díaz, Rosa", "Liceo B", "Sub-12"]]) {
+    await page.fill('#pi-form-jugador [name="nombre"]', nombre);
+    await page.fill('#pi-form-jugador [name="institucion"]', institucion);
+    await page.fill('#pi-form-jugador [name="categoria"]', categoria);
+    await page.click('#pi-form-jugador button[type="submit"]');
+  }
+  await page.waitForFunction(() => document.getElementById("pi-cuenta").textContent === "2");
+  igual("la categoría queda en la tabla de jugadores",
+    await page.$$eval("#pi-tabla-jugadores tbody tr", (trs) => trs.map((tr) => tr.children[3].textContent).sort()),
+    ["Sub-10", "Sub-12"]);
+
+  await page.click('[data-ficha="clasificacion"]');
+  ok((await page.$$eval("#pi-clas-institucion option", (os) => os.map((o) => o.value))).includes("Liceo A"),
+    "el filtro de institución lista las que hay en el torneo");
+  await page.selectOption("#pi-clas-institucion", "Liceo A");
+  await page.waitForFunction(() => document.querySelectorAll("#pi-tabla-clas tbody tr").length === 1);
+  ok((await page.textContent("#pi-tabla-clas tbody tr")).includes("Jara Ulloa, Mateo"), "y filtra la clasificación a esa sola institución");
+
+  await page.click('[data-ficha="cruzada"]');
+  ok((await page.$eval("#pi-cruzada-institucion", (s) => s.value)) === "Liceo A", "el filtro se recuerda al cambiar de ficha");
+  ok((await page.$$("#pi-tabla-cruzada tbody tr")).length === 1, "y también filtra la tabla cruzada");
   await ctx.close();
 }
 
@@ -198,6 +260,8 @@ async function pruebaEloNacional(browser) {
     await pruebaSubirLista(browser);
     await pruebaExportar(browser);
     await pruebaEloNacional(browser);
+    await pruebaDuplicados(browser);
+    await pruebaCategoria(browser);
   } finally {
     await browser.close();
   }

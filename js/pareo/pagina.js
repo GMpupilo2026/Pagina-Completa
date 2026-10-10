@@ -59,7 +59,7 @@
   let idioma = leer(CLAVE_IDIOMA) === "en" ? "en" : "es";
   const tx = (clave, vars) => X.t(idioma, clave, vars);
 
-  const estado = { lista: leerJSON(CLAVE_LISTA, []), id: null, t: null, ficha: leer(CLAVE_FICHA) || "jugadores", ronda: null };
+  const estado = { lista: leerJSON(CLAVE_LISTA, []), id: null, t: null, ficha: leer(CLAVE_FICHA) || "jugadores", ronda: null, filtroInstitucion: "", eloPendientes: [] };
 
   function nuevoId() { return "t" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
   function idJugador() { return "j" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
@@ -83,6 +83,8 @@
     estado.id = id;
     estado.t = T.nuevo(t);
     estado.ronda = null;
+    estado.filtroInstitucion = "";
+    estado.eloPendientes = [];
     escribir("pareo_abierto_v1", id);
     return true;
   }
@@ -91,6 +93,8 @@
     estado.id = nuevoId();
     estado.t = t || T.nuevo({ fechaInicio: window.HoraCR ? HoraCR.hoy() : "" });
     estado.ronda = null;
+    estado.filtroInstitucion = "";
+    estado.eloPendientes = [];
     guardar();
   }
 
@@ -256,6 +260,41 @@
   }
 
   // ---------- Jugadores ----------
+  function instituciones() {
+    const v = t();
+    const vistas = new Set();
+    for (const j of v.jugadores) if (j.institucion) vistas.add(j.institucion);
+    return [...vistas].sort((a, b) => a.localeCompare(b, "es", { sensitivity: "base" }));
+  }
+
+  function pintarSelectInstitucion(sel) {
+    const lista = instituciones();
+    sel.replaceChildren(el("option", { value: "", texto: tx("todasInstituciones") }));
+    for (const inst of lista) sel.append(el("option", { value: inst, texto: inst }));
+    // Si la institución filtrada ya no tiene a nadie (se borró o se editó),
+    // el filtro vuelve a «todas»: nunca se queda filtrando en silencio algo
+    // que el select ya no ofrece.
+    if (!lista.includes(estado.filtroInstitucion)) estado.filtroInstitucion = "";
+    sel.value = estado.filtroInstitucion;
+  }
+
+  function pintarEloPendientes() {
+    const ul = $("pi-elo-pendientes");
+    estado.eloPendientes = estado.eloPendientes.filter((x) => {
+      const j = jugador(x.id);
+      return j && !(Number(j.elo) > 0);
+    });
+    ul.replaceChildren();
+    ul.hidden = !estado.eloPendientes.length;
+    for (const x of estado.eloPendientes) {
+      ul.append(el("li", { class: "flex items-center justify-between gap-2" },
+        el("span", {},
+          el("span", { class: "font-semibold", texto: x.nombre }), " — ",
+          el("span", { class: "text-brand-600 dark:text-brand-300", texto: tx(x.estado === "ambiguo" ? "eloAmbiguo" : "eloNoEncontrado") })),
+        el("button", { type: "button", class: C.mini, "aria-label": tx("editarA", { n: x.nombre }), onclick: () => editarJugador(x.id) }, tx("editar"))));
+    }
+  }
+
   function pintarJugadores() {
     const v = t();
     const num = T.numeros(v);
@@ -265,10 +304,11 @@
     $("pi-cuenta").textContent = v.jugadores.length;
     $("pi-sin-jugadores").hidden = v.jugadores.length > 0;
     $("pi-orden-ayuda").textContent = tx(Array.isArray(v.numeracion) ? "ordenFijo" : "ordenAyuda");
+    pintarEloPendientes();
     if (!v.jugadores.length) return;
     tabla.append(el("thead", {}, el("tr", {},
       el("th", { class: "num", scope: "col", texto: tx("nro") }), el("th", { scope: "col", texto: tx("nombre") }),
-      el("th", { scope: "col", texto: tx("institucion") }),
+      el("th", { scope: "col", texto: tx("institucion") }), el("th", { scope: "col", texto: tx("categoria") }),
       el("th", { scope: "col", texto: tx("titulo") }), el("th", { class: "num", scope: "col", texto: "Elo" }),
       el("th", { scope: "col", texto: tx("fed") }), el("th", { scope: "col", texto: tx("fideId") }),
       el("th", { class: "num", scope: "col", texto: tx("pts") }), el("th", { scope: "col", texto: tx("estado") }),
@@ -283,6 +323,7 @@
         el("td", { class: "num", texto: num.get(id) }),
         el("td", { class: "font-semibold", texto: j.nombre }),
         el("td", { texto: j.institucion || "" }),
+        el("td", { texto: j.categoria || "" }),
         el("td", { texto: j.titulo || "" }),
         el("td", { class: "num", texto: Number(j.elo) > 0 ? j.elo : "" }),
         el("td", { texto: j.fed || "" }),
@@ -303,7 +344,7 @@
     const g = (k) => String(f[k] == null ? "" : f[k]).trim();
     const elo = Math.round(Number(g("elo")) || 0);
     return {
-      nombre: g("nombre").slice(0, 33), institucion: g("institucion").slice(0, 80),
+      nombre: g("nombre").slice(0, 33), institucion: g("institucion").slice(0, 80), categoria: g("categoria").slice(0, 40),
       elo: elo > 0 && elo <= 3500 ? elo : 0,
       titulo: ["GM", "IM", "WGM", "FM", "WIM", "CM", "WFM", "WCM"].includes(g("titulo").toUpperCase()) ? g("titulo").toUpperCase() : "",
       fed: g("fed").toUpperCase().replace(/[^A-Z]/g, "").slice(0, 3),
@@ -313,18 +354,50 @@
     };
   }
 
+  // Quienes comparten nombre (sin tildes ni importar el orden de apellidos y
+  // nombre, el mismo bolsillo que usa el Elo Nacional) entre los recién
+  // agregados y el resto del torneo: no se bloquea, puede ser un homónimo de
+  // verdad, pero se avisa para que quien organiza revise si es la misma
+  // persona anotada dos veces.
+  function duplicadosEntre(idsNuevos) {
+    const v = t();
+    const porBolsillo = new Map();
+    for (const j of v.jugadores) {
+      const b = bolsilloNombre(j.nombre);
+      if (!b) continue;
+      if (!porBolsillo.has(b)) porBolsillo.set(b, 0);
+      porBolsillo.set(b, porBolsillo.get(b) + 1);
+    }
+    const vistos = new Set();
+    const nombres = [];
+    for (const id of idsNuevos) {
+      const j = jugador(id);
+      const b = bolsilloNombre(j.nombre);
+      if (porBolsillo.get(b) > 1 && !vistos.has(b)) {
+        vistos.add(b);
+        nombres.push(j.nombre);
+      }
+    }
+    return nombres;
+  }
+
   function agregarJugadores(lista) {
     const v = t();
     let n = 0;
+    const idsNuevos = [];
     for (const datos of lista) {
       if (!datos.nombre) continue;
-      v.jugadores.push(Object.assign({ id: idJugador(), retiradoDespuesDe: null }, datos));
+      const id = idJugador();
+      v.jugadores.push(Object.assign({ id, retiradoDespuesDe: null }, datos));
+      idsNuevos.push(id);
       n++;
     }
     if (n) {
       guardar();
       pintarJugadores();
       if (v.rondas.length) Avisos.avisar(tx("inscripcionTardia", { r: v.rondas.length }), { tipo: "info" });
+      const repetidos = duplicadosEntre(idsNuevos);
+      if (repetidos.length) Avisos.avisar(tx("nombresRepetidos", { n: repetidos.join(", ") }), { tipo: "info" });
     }
     return n;
   }
@@ -332,7 +405,7 @@
   // ---------- Subir una lista (Word o Excel) ----------
   // Las mismas claves que ya entiende "Pegar una lista", en el mismo orden,
   // para cuando el archivo no trae una cabecera reconocible.
-  const ORDEN_LISTA = ["nombre", "institucion", "elo", "titulo", "fed", "fideId"];
+  const ORDEN_LISTA = ["nombre", "institucion", "elo", "titulo", "fed", "fideId", "categoria"];
   // De cada etiqueta posible (sin tildes, en minúscula) a su campo. Una sola
   // tabla, no una de arrays: dos claves "palabra" seguidas entre corchetes
   // son justo el patrón con el que verificar-pareo-pagina.js reconoce una
@@ -346,6 +419,7 @@
     fed: "fed", federacion: "fed", pais: "fed", country: "fed", federation: "fed",
     fideid: "fideId", "fide id": "fideId", "id fide": "fideId",
     "codigo fide": "fideId", "fide code": "fideId",
+    categoria: "categoria", category: "categoria", nivel: "categoria", division: "categoria",
   };
   const sinTildes = (s) => String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
 
@@ -374,6 +448,7 @@
       titulo: mapa.titulo != null ? fila[mapa.titulo] : "",
       fed: mapa.fed != null ? fila[mapa.fed] : "",
       fideId: mapa.fideId != null ? fila[mapa.fideId] : "",
+      categoria: mapa.categoria != null ? fila[mapa.categoria] : "",
     })).filter((d) => d.nombre);
   }
 
@@ -422,16 +497,20 @@
     boton.disabled = false;
     estadoEl.textContent = "";
     if (!r || r.ok === false) { Avisos.avisar((r && r.error) || tx("eloNacionalError"), { tipo: "error" }); return; }
-    const porBolsillo = new Map();
-    for (const res of r.resultados || []) {
-      if (res.estado === "encontrado" && Number(res.nacional) > 0) porBolsillo.set(bolsilloNombre(res.nombre), res.nacional);
-    }
+    // Por índice, no por nombre: dos jugadores con el mismo nombre piden la
+    // misma búsqueda pero son personas distintas, y el bolsillo de palabras
+    // los mezclaría. La función contesta en el mismo orden en que se le manda.
+    const resultados = r.resultados || [];
     let n = 0;
-    for (const j of faltantes) {
-      const nacional = porBolsillo.get(bolsilloNombre(j.nombre));
-      if (nacional) { j.elo = nacional; n++; }
-    }
-    if (n) { guardar(); pintarJugadores(); }
+    const pendientes = [];
+    faltantes.forEach((j, i) => {
+      const res = resultados[i];
+      if (res && res.estado === "encontrado" && Number(res.nacional) > 0) { j.elo = res.nacional; n++; }
+      else pendientes.push({ id: j.id, nombre: j.nombre, estado: (res && res.estado) || "no_encontrado" });
+    });
+    if (n) guardar();
+    estado.eloPendientes = pendientes;
+    pintarJugadores();
     Avisos.avisar(tx("eloNacionalResultado", { n: n, total: faltantes.length }));
     if (todosFaltantes.length > TOPE_BUSQUEDA_ELO) {
       Avisos.avisar(tx("eloNacionalTope", { tope: TOPE_BUSQUEDA_ELO }), { tipo: "info" });
@@ -446,6 +525,7 @@
       campos: [
         { nombre: "nombre", etiqueta: tx("nombreJugador"), valor: j.nombre, max: 33 },
         { nombre: "institucion", etiqueta: tx("institucion"), valor: j.institucion || "", max: 80 },
+        { nombre: "categoria", etiqueta: tx("categoria"), valor: j.categoria || "", max: 40 },
         { nombre: "elo", etiqueta: "Elo FIDE", valor: String(j.elo || ""), inputmode: "numeric" },
         { nombre: "titulo", etiqueta: tx("titulo"), tipo: "select", valor: j.titulo || "", opciones: [["", "—"]].concat(T.TITULOS.map((x) => [x, x])) },
         { nombre: "fed", etiqueta: tx("fed"), valor: j.fed || "", max: 3 },
@@ -704,16 +784,21 @@
     const v = t();
     const k = rondasCompletas();
     const tc = hasta(k);
-    const filas = D.clasificacion(tc, v.desempates);
+    const todasFilas = D.clasificacion(tc, v.desempates);
+    const filas = estado.filtroInstitucion
+      ? todasFilas.filter((f) => jugador(f.id).institucion === estado.filtroInstitucion) : todasFilas;
     const num = T.numeros(v);
     $("pi-clas-titulo").textContent = k ? tx("clasificacionTras", { r: k }) : tx("fClasificacion");
-    $("pi-clas-nota").textContent = k < v.rondas.length ? tx("clasSoloCompletas", { r: k }) : (v.nombre || "");
+    $("pi-clas-nota").textContent = (k < v.rondas.length ? tx("clasSoloCompletas", { r: k }) : (v.nombre || ""))
+      + (estado.filtroInstitucion ? tx("clasFiltroNota", { n: filas.length, total: todasFilas.length, inst: estado.filtroInstitucion }) : "");
+    pintarSelectInstitucion($("pi-clas-institucion"));
     const tabla = $("pi-tabla-clas");
     tabla.replaceChildren();
     if (!v.jugadores.length) return;
     tabla.append(el("thead", {}, el("tr", {},
       el("th", { class: "num", scope: "col", texto: tx("puesto") }), el("th", { class: "num", scope: "col", texto: tx("nro") }),
-      el("th", { scope: "col", texto: tx("nombre") }), el("th", { scope: "col", texto: tx("fed") }), el("th", { class: "num", scope: "col", texto: "Elo" }),
+      el("th", { scope: "col", texto: tx("nombre") }), el("th", { scope: "col", texto: tx("institucion") }),
+      el("th", { scope: "col", texto: tx("fed") }), el("th", { class: "num", scope: "col", texto: "Elo" }),
       el("th", { class: "num", scope: "col", texto: tx("pts") }),
       v.desempates.map((c) => el("th", { class: "num", scope: "col" }, el("abbr", { title: (D.CATALOGO.find((x) => x.codigo === c) || {})[idioma], texto: c }))))));
     const cuerpo = el("tbody");
@@ -722,6 +807,7 @@
       cuerpo.append(el("tr", {},
         el("td", { class: "num", texto: f.puesto }), el("td", { class: "num", texto: num.get(f.id) }),
         el("td", { class: "font-semibold", texto: j.nombre + (j.titulo ? " (" + j.titulo + ")" : "") }),
+        el("td", { texto: j.institucion || "" }),
         el("td", { texto: j.fed || "" }), el("td", { class: "num", texto: Number(j.elo) > 0 ? j.elo : "" }),
         el("td", { class: "num font-bold", texto: puntosTexto(f.puntos) }),
         v.desempates.map((c) => el("td", { class: "num", texto: formatoNum(f.valores[c]) }))));
@@ -738,11 +824,14 @@
   // ---------- Tabla cruzada ----------
   function pintarCruzada() {
     const v = t();
+    pintarSelectInstitucion($("pi-cruzada-institucion"));
     const tabla = $("pi-tabla-cruzada");
     tabla.replaceChildren();
     if (!v.jugadores.length) return;
     const k = rondasCompletas();
-    const filas = D.clasificacion(hasta(k), v.desempates);
+    const todasFilas = D.clasificacion(hasta(k), v.desempates);
+    const filas = estado.filtroInstitucion
+      ? todasFilas.filter((f) => jugador(f.id).institucion === estado.filtroInstitucion) : todasFilas;
     const num = T.numeros(v);
     const R = v.rondas.length;
     tabla.append(el("thead", {}, el("tr", {},
@@ -866,8 +955,8 @@
     $("pi-pegar-agregar").addEventListener("click", () => {
       const lineas = $("pi-pegar").value.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
       const lista = lineas.map((l) => {
-        const [nombre, institucion, elo, titulo, fed, fideId] = l.split(/\t|;/).map((x) => x.trim());
-        return datosJugador({ nombre, institucion, elo, titulo, fed, fideId });
+        const [nombre, institucion, elo, titulo, fed, fideId, categoria] = l.split(/\t|;/).map((x) => x.trim());
+        return datosJugador({ nombre, institucion, elo, titulo, fed, fideId, categoria });
       });
       const n = agregarJugadores(lista);
       if (n) { $("pi-pegar").value = ""; Avisos.avisar(tx("agregados", { n })); }
@@ -879,6 +968,8 @@
       if (f) subirLista(f);
     });
     $("pi-elo-nacional").addEventListener("click", buscarEloNacional);
+    $("pi-clas-institucion").addEventListener("change", (e) => { estado.filtroInstitucion = e.target.value; pintarClasificacion(); });
+    $("pi-cruzada-institucion").addEventListener("change", (e) => { estado.filtroInstitucion = e.target.value; pintarCruzada(); });
 
     document.querySelectorAll(".pi-imprimir").forEach((b) => b.addEventListener("click", () => window.print()));
     $("pi-bajar-trf").addEventListener("click", () => {
@@ -892,9 +983,9 @@
       const orden = T.ordenInicial(v);
       const filas = orden.map((id) => {
         const j = jugador(id);
-        return [j.nombre, j.institucion || "", Number(j.elo) > 0 ? j.elo : "", j.titulo || "", j.fed || "", j.fideId || ""];
+        return [j.nombre, j.institucion || "", Number(j.elo) > 0 ? j.elo : "", j.titulo || "", j.fed || "", j.fideId || "", j.categoria || ""];
       });
-      CsvExcel.bajar(nombreArchivo("-jugadores.csv"), [tx("nombre"), tx("institucion"), "Elo", tx("titulo"), tx("fed"), tx("fideId")], filas);
+      CsvExcel.bajar(nombreArchivo("-jugadores.csv"), [tx("nombre"), tx("institucion"), "Elo", tx("titulo"), tx("fed"), tx("fideId"), tx("categoria")], filas);
     });
     $("pi-borrar").addEventListener("click", async () => {
       const ok = await Avisos.confirmar(tx("confirmarBorrar", { n: t().nombre || tx("sinNombre") }), { aceptar: tx("borrarTorneo"), peligro: true });
