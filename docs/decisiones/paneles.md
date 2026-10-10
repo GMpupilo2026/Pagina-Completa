@@ -3824,3 +3824,83 @@ la suya, una profesora ninguna y `anon` nada.
 navegador arma los 29 dibujos (sin NaN ni «undefined»), pinta la franja con su
 fondo y no sin él, mira el ancho del celular y abre el mapa de la nacional con
 sus 27 números.
+
+## El panel de taller
+
+Los asesores del MEP no vienen a entrenar todos los días: siguen un taller de
+siete sesiones con fecha, hora y duración distintas (cuatro de 8:00 a. m. a
+12 m. d., dos de 8:00 a 11:00 y una presencial de cierre de 7:00 a. m. a
+3:00 p. m.). «Hoy te toca», la racha del saludo y «Empieza por acá» (el
+diagnóstico) les hablaban de otra cosa, y lo que sí necesitan —cuándo es la
+próxima sesión— no estaba en ningún lado. Lo pidió el dueño del sitio para esas
+cuentas, después de validar la captura.
+
+- **Es de la academia, no de cada alumno**: `academias.panel_taller`
+  (migración `20261010042302`, arranca apagado). Lo cambia
+  `academia_panel_taller(id, valor)`, solo quien administra o el supervisor de
+  esa academia (la misma regla que sus datos de contacto, con `coalesce`), y
+  queda en la bitácora por el trigger `auditar` de la tabla. En `academias.html`
+  es la casilla «Panel de taller» de la ficha, que se guarda al marcarla y
+  vuelve atrás si la base no deja.
+- **El panel pregunta UNA vez** `mi_panel_taller()` (contesta solo sobre quien
+  pregunta: ¿soy miembro de una academia con panel de taller?) y reparte la
+  respuesta (`tallerP` en `js/clases.js`) entre tres cosas:
+  - `#progreso-alumno` («Hoy te toca» con los totales) no se ve, y en su lugar
+    va `#calendario-taller`;
+  - el subtítulo dice la próxima sesión («Tu próxima sesión es el lunes 12 de
+    octubre a las 8:00 a. m.»), no la racha;
+  - `mostrarPrimerPaso()` se calla: ni «Empieza por acá», ni «Por dónde
+    empezar», ni la semana del plan. **Lo que pide el profe sí sale**: las
+    tareas y los exámenes se pintan antes de llegar ahí, también el diagnóstico
+    si él lo pide.
+  
+  Sin respuesta de la base, el panel de siempre. Mirando a otra persona («Ver
+  como») no se pregunta: contestaría por quien mira.
+- **Las sesiones son el horario del profe**, no una tabla nueva: una fila de
+  `horario_clases` por sesión, con `desde` = `hasta` (el horario ya admitía
+  fechas de inicio y fin). Así «Tu próxima clase», el `.ics` y el calendario
+  dicen lo mismo, y el profe las ve en su panel. Las del MEP están en el horario
+  de «Campeones», grupo MEP; reemplazaron una fila de «todos los lunes a las
+  8:00 sin fin», que habría puesto clase en lunes sin sesión.
+- **La tarjeta la pinta `js/calendario-taller.js`** con lo que devuelve
+  `mis_clases_proximas(90)` (las de 90 días; las que terminaron no vienen, y la
+  tarjeta igual las descarta). Una sesión por renglón, con la etiqueta escrita
+  —«Ahora», «Hoy», «Próxima»—, no solo el color. Detalles que se notaron en la
+  captura:
+  - el navegador escribe «lunes, 12 de octubre»: se le quita la coma;
+  - las 12 del mediodía van como «12:00 m. d.», como en el calendario oficial,
+    y no «12:00 p. m.»;
+  - «a las 8:00 a. m.» no lleva otro punto al final;
+  - en el celular la hora («8:00 a. m. a 12:00 m. d.») baja entera al renglón
+    de abajo, no partida.
+  
+  «Agregar a mi calendario» baja las de 90 días (el de «Tus clases» sigue con
+  cuatro semanas). Contraste medido contra el fondo real: 5,5:1 o más en claro
+  y 6,5:1 en oscuro.
+
+Comprobado impersonando roles en SQL, en un bloque revertido:
+
+- sin sesión, la alumna, otro alumno y `anon` no lo pueden cambiar (42501), y
+  la alumna tampoco puede cambiar la tabla a mano;
+- quien administra lo enciende;
+- el supervisor de ADAPZ cambia la suya y no la del MEP;
+- `mi_panel_taller()` da sí a una asesora y no a un alumno de otra academia;
+- cada cambio queda en la bitácora.
+
+Ya aplicado, Jenny ve las 7 sesiones y su próxima clase es la Sesión I.
+
+**Al tocar esto, correr `node herramientas/verificar-panel-taller.js`** (el
+panel) **y `verificar-academias.js`** (la casilla).
+
+- **Revisa en `supabase/`:** la columna apagada y los permisos de las dos
+  funciones.
+- **Abre el panel con el doble:**
+  - con taller: sin «Hoy te toca» ni diagnóstico, la tarea del profe sí, la
+    sesión que pasó fuera, «Ahora», el mediodía, el subtítulo, el `.ics` y el
+    celular;
+  - sin taller: «Hoy te toca» sigue;
+  - si la base no contesta: el panel de siempre.
+- **Prueba la tarjeta sola:** «Hoy», «Próxima», el título como texto y la
+  lista vacía.
+
+Se rompieron a propósito seis cosas y saltaron todas.

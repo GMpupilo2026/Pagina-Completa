@@ -236,6 +236,14 @@
                 <span class="text-sm font-semibold text-accent-700 dark:text-accent-400 whitespace-nowrap">Seguir el curso →</span>
             </a>
 
+            <!-- ===== Calendario de clases (panel de taller) =====
+                 En una academia con «panel de taller» (academias.panel_taller,
+                 como la del taller del MEP), el alumno no ve «Hoy te toca»: ve
+                 acá las sesiones que vienen, con la próxima marcada. Lo pinta
+                 js/calendario-taller.js. Ver «El panel de taller» en
+                 docs/decisiones/paneles.md. -->
+            <section id="calendario-taller" hidden aria-labelledby="calendario-taller-titulo" class="mb-8 bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6"></section>
+
             <!-- ===== Hoy te toca (solo alumno) =====
                  UNA tarjeta con lo que da ganas de volver: la meta del día y la
                  racha, lo que toca hoy (repasos vencidos, lo que quedó a medias)
@@ -543,6 +551,7 @@
     <script src="js/cursos-ocultos.js"></script>
     <script src="js/hora-cr.js"></script>
     <script src="js/calendario-ics.js"></script>
+    <script src="js/calendario-taller.js"></script>
     <script src="js/reto-ejercicios.js"></script>
     <script src="js/busqueda-base.js"></script>
     <script src="js/cupo-invitaciones.js"></script>
