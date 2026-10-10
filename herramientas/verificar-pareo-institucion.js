@@ -205,7 +205,10 @@ async function pruebaEloNacional(browser) {
   ok(await vis(page, 'dialog.avisos-dialogo[open] input[name="nombre"]'), "el botón abre el formulario de editar a esa persona");
   await page.fill('dialog.avisos-dialogo[open] input[name="elo"]', "1600");
   await page.click('dialog.avisos-dialogo[open] button:has-text("Guardar")');
-  ok(!(await page.textContent("#pi-elo-pendientes")).includes("Rojas Mora, Ana"), "al resolverlo a mano, sale solo de la lista de pendientes");
+  // Guardar cierra el <dialog> (evento "close") y editarJugador() sigue
+  // async desde ahí: esperar el resultado, no mirar el DOM al toque del clic.
+  await page.waitForFunction(() => !document.getElementById("pi-elo-pendientes").textContent.includes("Rojas Mora, Ana"));
+  ok(true, "al resolverlo a mano, sale solo de la lista de pendientes");
   ok(errores.length === 0, "sin errores en la página", errores.join(" | "));
   await ctx.close();
 }
