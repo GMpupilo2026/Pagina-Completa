@@ -152,8 +152,8 @@ const visible = (p, sel) => p.$eval(sel, (e) => e.checkVisibility());
     await v.addInitScript(() => { try { localStorage.clear(); } catch (e) { } });
     await v.goto(BASE + "/herramientas-arbitraje.html", { waitUntil: "load" });
     await v.waitForFunction(() => document.querySelectorAll("#lista > li").length > 0);
-    igual("sin sesión: todas con candado y el aviso de iniciar sesión, menos las gratis (Pareo Integral y las de datos estudiantiles)",
-        [await v.$$eval("#lista > li:not([data-herramienta='pareo']):not([data-herramienta='ajedrez-estudiantil']):not([data-herramienta='historial-jugador']):not([data-herramienta='estadisticas-colegios'])", (l) => l.every((x) => /🔒/.test(x.textContent))), await visible(v, "#activar-sin-sesion"), await visible(v, "#activar-con-sesion")],
+    igual("sin sesión: todas con candado y el aviso de iniciar sesión, menos las gratis (Pareo Integral, las de datos estudiantiles y los resultados JDN)",
+        [await v.$$eval("#lista > li:not([data-herramienta='pareo']):not([data-herramienta='ajedrez-estudiantil']):not([data-herramienta='historial-jugador']):not([data-herramienta='estadisticas-colegios']):not([data-herramienta='jdn-comites'])", (l) => l.every((x) => /🔒/.test(x.textContent))), await visible(v, "#activar-sin-sesion"), await visible(v, "#activar-con-sesion")],
         [true, true, false]);
     // Pareo Integral no lleva licencia: abierto para todos, sin sesión, con su manual.
     igual("sin sesión, Pareo Integral sale gratis y se abre",
@@ -176,7 +176,7 @@ const visible = (p, sel) => p.$eval(sel, (e) => e.checkVisibility());
         await p.$$eval("#lista > li", (l) => l.map((x) => [x.dataset.herramienta, /🔓/.test(x.textContent)])),
         [["pareo", false], ["seleccion-codicader", true], ["jdn-comites", false], ["ajedrez-estudiantil", false], ["historial-jugador", false], ["estadisticas-colegios", false], ["desempates", false], ["variacion-elo", false], ["reclamos-tablas", false], ["acta-jde", false]]);
     igual("las gratis no se le preguntan a la base (y las demás sí)",
-        await p.evaluate(() => [window.__pedidos.includes("tengo_herramienta ajedrez-estudiantil") || window.__pedidos.includes("tengo_herramienta historial-jugador") || window.__pedidos.includes("tengo_herramienta estadisticas-colegios"), window.__pedidos.includes("tengo_herramienta pareo"), window.__pedidos.includes("tengo_herramienta seleccion-codicader")]),
+        await p.evaluate(() => [window.__pedidos.includes("tengo_herramienta ajedrez-estudiantil") || window.__pedidos.includes("tengo_herramienta historial-jugador") || window.__pedidos.includes("tengo_herramienta estadisticas-colegios") || window.__pedidos.includes("tengo_herramienta jdn-comites"), window.__pedidos.includes("tengo_herramienta pareo"), window.__pedidos.includes("tengo_herramienta seleccion-codicader")]),
         [false, false, true]);
     await ctx.close();
 

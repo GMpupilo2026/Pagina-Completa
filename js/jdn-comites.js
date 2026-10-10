@@ -1,9 +1,9 @@
 /* El código de jdn-comites.html: los resultados JDN por comité.
 
    - Los datos están en jdn_resultados: cada puesto de cada torneo JDN de
-     chess-results, con el comité como lo escribió chess-results. Solo los lee
-     quien tiene la herramienta (la RLS pregunta tengo_herramienta()); la tabla
-     se llena desde la base con herramientas/jdn-comites/cargar.sql.
+     chess-results, con el comité como lo escribió chess-results. Por ahora es
+     gratis y sin cuenta: la RLS deja leer a cualquiera (también sin sesión).
+     La tabla se llena desde la base con herramientas/jdn-comites/cargar.sql.
    - Son más de mil filas: se piden de mil en mil, porque PostgREST corta sin
      avisar.
    - Acá se juntan las variantes de un mismo comité («Goico», «CCDR
@@ -271,10 +271,6 @@
     }
 
     async function init() {
-        const { data: { session } } = await sb.auth.getSession();
-        if (!session) { location.href = "login.html?next=jdn-comites.html"; return; }
-        const { data: puede, error } = await sb.rpc("tengo_herramienta", { p_herramienta: "jdn-comites" });
-        if (error || puede !== true) { $("loading").classList.add("hidden"); $("denegado").classList.remove("hidden"); return; }
         let filas;
         try { filas = await leerTodo(); } catch (e) {
             $("loading").classList.add("hidden"); $("app").classList.remove("hidden");

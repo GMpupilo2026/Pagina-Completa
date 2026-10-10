@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261010054225
+# al-dia-con: 20261010191238
 tabla  Ejercicios Lichess  rls=true
 tabla  _foto_rls_tmp  rls=false
 tabla  academia_ia  rls=true
@@ -2145,6 +2145,7 @@ politica  insignias  verificacion_en_dos_pasos  ALL  restrictiva
 politica  insignias_tipos  insignias_tipos_ver  SELECT
 politica  jde_eventos  jde_eventos_lectura_publica  SELECT
 politica  jdn_resultados  jdn_resultados_con_herramienta  SELECT
+politica  jdn_resultados  jdn_resultados_lectura_publica  SELECT
 politica  justificaciones_ausencia  justificaciones_select  SELECT
 politica  licencias_herramientas  licencias_herramientas_ver  SELECT
 politica  material_compartido  material_compartido_select  SELECT
@@ -3495,6 +3496,7 @@ grant  jde_eventos  anon  TRIGGER
 grant  jde_eventos  authenticated  REFERENCES
 grant  jde_eventos  authenticated  SELECT
 grant  jde_eventos  authenticated  TRIGGER
+grant  jdn_resultados  anon  SELECT
 grant  jdn_resultados  authenticated  REFERENCES
 grant  jdn_resultados  authenticated  SELECT
 grant  jdn_resultados  authenticated  TRIGGER
