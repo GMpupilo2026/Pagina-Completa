@@ -127,42 +127,34 @@ window.CuadroComandos = (function () {
   }
 
   /* La posición en dos listas, «Blancas» y «Negras», cada una bajo su <h3>
-     (va debajo del <h2> de `encabezadoPosicion`), y al final quién juega. */
+     (va debajo del <h2> «Piezas» del recuadro), y al final quién juega. La
+     pinta js/blind-notation.js, que es la única copia del sitio. */
   function pintarPorColor(destino, game) {
-    var BN = window.BlindNotation;
     destino.textContent = "";
-    if (!BN) return;
-    var ORDEN = ["k", "q", "r", "b", "n", "p"];
-    [["w", "Blancas"], ["b", "Negras"]].forEach(function (par) {
-      var h = document.createElement("h3");
-      h.className = "cc-pos-color";
-      h.textContent = par[1];
-      destino.appendChild(h);
-      var ul = document.createElement("ul");
-      ul.className = "cc-pos-lista";
-      ORDEN.forEach(function (tipo) {
-        var casillas = game.SQUARES.filter(function (sq) {
-          var c = game.get(sq);
-          return c && c.color === par[0] && c.type === tipo;
-        }).sort();
-        if (!casillas.length) return;
-        var li = document.createElement("li");
-        var nombre = BN.pieceLabel(tipo, casillas.length);
-        li.textContent = nombre.charAt(0).toUpperCase() + nombre.slice(1) + " en "
-          + casillas.map(BN.squareSpoken).join(", ") + ".";
-        ul.appendChild(li);
-      });
-      if (!ul.children.length) {
-        var nada = document.createElement("li");
-        nada.textContent = "Sin piezas.";
-        ul.appendChild(nada);
-      }
-      destino.appendChild(ul);
+    if (window.BlindNotation && BlindNotation.pintarPiezas) BlindNotation.pintarPiezas(destino, game, { titulo: false });
+  }
+
+  /* La cuenta marcada como ciega por administración (`modo-ciego` en el
+     <html>). Se pregunta cada vez y no una al montar: la primera visita monta
+     el recuadro antes de que la base conteste. */
+  function cuentaCiega() {
+    return document.documentElement.classList.contains("modo-ciego");
+  }
+
+  /* Una huella de la posición para saber si cambió. Con fen() si la partida lo
+     tiene; si no, casilla por casilla. */
+  function huella(game) {
+    if (typeof game.fen === "function") return game.fen();
+    var t = "";
+    "abcdefgh".split("").forEach(function (f) {
+      for (var r = 1; r <= 8; r++) { var c = game.get(f + r); t += c ? c.color + c.type : "."; }
     });
-    var turno = document.createElement("p");
-    var jaque = typeof game.in_check === "function" && game.in_check() ? ", en jaque" : "";
-    turno.textContent = (game.turn() === "w" ? "Juegan blancas" : "Juegan negras") + jaque + ".";
-    destino.appendChild(turno);
+    return t;
+  }
+
+  function seVe(el) {
+    if (typeof el.checkVisibility === "function") return el.checkVisibility();
+    return !!(el.offsetWidth || el.offsetHeight || el.getClientRects().length);
   }
 
   // ---------------------------------------------------------------- el estilo
@@ -175,8 +167,8 @@ window.CuadroComandos = (function () {
     "html.adaptive-mode .cc-caja { display: block; margin: 1rem 0; padding: .9rem 1rem;",
     "  border: 2px solid currentColor; border-radius: .6rem; }",
     ".cc-pos-titulo { margin: 0 0 .3rem; font-size: 1.05rem; font-weight: 700; }",
-    ".cc-pos-color { margin: .4rem 0 .1rem; font-size: 1rem; font-weight: 700; }",
-    ".cc-pos-lista { margin: 0 0 .3rem; padding-left: 1.2rem; list-style: disc; }",
+    ".cc-pos .bn-piezas-color { margin: .4rem 0 .1rem; font-size: 1rem; font-weight: 700; }",
+    ".cc-pos .bn-piezas-lista { margin: 0 0 .3rem; padding-left: 1.2rem; list-style: disc; }",
     ".cc-pos { margin: 0 0 .6rem; font-size: 1rem; line-height: 1.6; }",
     ".cc-form { display: flex; flex-wrap: wrap; gap: .5rem; align-items: flex-end; }",
     ".cc-campo { flex: 1 1 12rem; }",
@@ -220,30 +212,38 @@ window.CuadroComandos = (function () {
     // La posición va ARRIBA del cuadro y no al final del ejercicio: leerla y
     // contestarla son el mismo gesto (misma razón que en js/curso-adaptado.js).
     // Región viva, para que cada cambio se vuelva a leer solo.
-    /* Con `encabezadoPosicion`, la posición no es un renglón sino una lista
-       por color, cada una con su encabezado («Blancas», «Negras»): con la H se
-       salta directo a las piezas del rival. */
-    var porColor = !!cfg.encabezadoPosicion;
-    var pos = document.createElement(porColor ? "div" : "p");
+    /* Con `encabezadoPosicion`, o con la cuenta ciega, la posición no es un
+       renglón sino un encabezado «Piezas» y debajo una lista por color, cada
+       una con el suyo («Blancas», «Negras»): con la H se llega directo a la
+       posición y, desde ahí, a las piezas del rival. Lo pidió el grupo de
+       personas ciegas para la Racha táctica, y después para TODOS los
+       ejercicios: con la cuenta ciega va siempre (ver «Las piezas, siempre
+       bajo su encabezado» en docs/decisiones/accesibilidad.md). */
+    function porColor() { return !!cfg.encabezadoPosicion || cuentaCiega(); }
+    var pos = document.createElement("div");
     pos.className = "cc-pos";
     /* `posicionViva: false` la deja escrita pero muda. Es para un tablero que se
        mueve SOLO —la clase en vivo, donde mueve el profesor—: ahí dictar las
        treinta y dos piezas en cada jugada ajena tapa lo único que cambió, que es
        la jugada. Esa página anuncia la jugada y la posición se pide. */
-    if (cfg.posicionViva !== false) {
-      pos.setAttribute("aria-live", "polite");
-      pos.setAttribute("aria-atomic", "true");
+    function viva(si) {
+      if (si && cfg.posicionViva !== false) {
+        pos.setAttribute("aria-live", "polite");
+        pos.setAttribute("aria-atomic", "true");
+      } else {
+        pos.removeAttribute("aria-live");
+        pos.removeAttribute("aria-atomic");
+      }
     }
-    /* `encabezadoPosicion: "Piezas"` le pone un encabezado de verdad arriba de
-       la lista de piezas: con lector de pantalla se llega con la tecla H, sin
-       recorrer la página renglón por renglón (lo pidió el grupo de personas
-       ciegas para la Racha táctica). */
-    if (cfg.encabezadoPosicion) {
-      var tit = document.createElement("h2");
-      tit.className = "cc-pos-titulo";
-      tit.textContent = cfg.encabezadoPosicion;
-      caja.appendChild(tit);
-    }
+    viva(true);
+    /* El encabezado va SIEMPRE en el recuadro y se destapa cuando hay piezas
+       que poner debajo. Fuera de la cuenta ciega y sin `encabezadoPosicion`,
+       la posición sigue en un renglón, sin encabezado. */
+    var tit = document.createElement("h2");
+    tit.className = "cc-pos-titulo bn-piezas-titulo";
+    tit.textContent = cfg.encabezadoPosicion || "Piezas";
+    tit.hidden = true;
+    caja.appendChild(tit);
     caja.appendChild(pos);
 
     var form = document.createElement("form");
@@ -327,16 +327,61 @@ window.CuadroComandos = (function () {
         return api;
       },
       posicion: function (juegoOTexto) {
-        if (porColor && juegoOTexto && typeof juegoOTexto !== "string") {
-          pintarPorColor(pos, juegoOTexto);
-          return api;
-        }
-        pos.textContent = typeof juegoOTexto === "string"
-          ? juegoOTexto
-          : (juegoOTexto ? posicionEnPalabras(juegoOTexto) : "");
+        // La página la escribe: desde acá manda ella, no la lectura sola de abajo.
+        if (!manual) { manual = true; viva(true); }
+        escribir(juegoOTexto);
         return api;
       },
     };
+
+    function escribir(juegoOTexto) {
+      if (porColor() && juegoOTexto && typeof juegoOTexto !== "string") {
+        pintarPorColor(pos, juegoOTexto);
+        tit.hidden = false;
+        return;
+      }
+      pos.textContent = typeof juegoOTexto === "string"
+        ? juegoOTexto
+        : (juegoOTexto ? posicionEnPalabras(juegoOTexto) : "");
+      // Un aviso suelto («las piezas están ocultas») también va bajo «Piezas».
+      tit.hidden = !(porColor() && pos.textContent);
+    }
+
+    /* Con la cuenta ciega, la posición está SIEMPRE escrita en el recuadro,
+       también en los ejercicios que nunca la escribían (Mates, Practicar,
+       Finales, Aperturas, los cursos…): ahí solo se oía pidiéndola con
+       «posición». Si la página no llama a `posicion()`, el recuadro la toma de
+       `juego` y la vuelve a escribir cuando cambia. Va MUDA: cada jugada ya se
+       dice sola, y dictar las treinta y dos piezas después de cada una taparía
+       el «¡Correcto!» (la misma razón que en Juegos). Y si la página ya tiene
+       su propia lectura con «Piezas» a la vista (Mates, Desafíos, los visores),
+       esta se calla: dos encabezados iguales seguidos son una parada de más. */
+    var manual = false, ultima = null;
+    function lecturaSola() {
+      if (manual || !cuentaCiega()) return;
+      var g = null;
+      try { g = cfg.juego(); } catch (e) { g = null; }
+      // Solo una partida de verdad (con fen): Memoria pasa una de mentira con lo
+      // colocado, y escribirla bajo «Piezas» sería confundir.
+      if (!g || typeof g.get !== "function" || typeof g.fen !== "function") {
+        if (ultima !== null) { ultima = null; pos.textContent = ""; tit.hidden = true; }
+        return;
+      }
+      var otra = Array.prototype.some.call(document.querySelectorAll(".bn-piezas-titulo"), function (h) {
+        return h !== tit && !caja.contains(h) && seVe(h);
+      });
+      if (otra) {
+        if (ultima !== null) { ultima = null; pos.textContent = ""; tit.hidden = true; }
+        return;
+      }
+      var h;
+      try { h = huella(g); } catch (e) { return; }
+      if (h === ultima) return;
+      ultima = h;
+      viva(false);
+      escribir(g);
+    }
+    if (typeof cfg.juego === "function") window.setInterval(lecturaSola, 400);
 
     /* Antes de tratar el texto como una jugada se mira si era una PREGUNTA
        ("caballos", "qué hay en e4", "posición"). Va acá y no dentro de cada

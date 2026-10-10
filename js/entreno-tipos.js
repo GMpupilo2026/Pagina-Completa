@@ -316,12 +316,15 @@
      cada jugada ya se dice sola, y releer las treinta y dos piezas en cada una
      taparía todo lo demás. */
   let lecturaActiva = false;
+  /* Con dos posiciones (Siete diferencias), cada lectura dice de cuál es: con
+     la cuenta ciega, «Piezas de la posición A» y «… B» en vez de dos «Piezas». */
+  let tituloLectura;
   function leerPosicion(fen) {
     lecturaActiva = !!fen;
     const p = $("lectura");
-    if (!fen) { p.classList.add("hidden"); p.textContent = ""; return; }
+    if (!fen) { p.classList.add("hidden"); p.textContent = ""; tituloLectura = undefined; return; }
     const g = new Chess(fen);
-    p.textContent = window.BlindNotation ? BlindNotation.positionSentence(g) : fen;
+    if (window.BlindNotation) BlindNotation.escribirPosicion(p, g, { titulo: tituloLectura }); else p.textContent = fen;
     p.classList.remove("hidden");
   }
   function refrescarLectura() {
@@ -330,7 +333,7 @@
     const p = $("lectura");
     if (!fen || tab.oculto || tab.piezasLibres) { p.classList.add("hidden"); p.textContent = ""; return; }
     try {
-      p.textContent = window.BlindNotation ? BlindNotation.positionSentence(new Chess(fen)) : fen;
+      if (window.BlindNotation) BlindNotation.escribirPosicion(p, new Chess(fen), { titulo: tituloLectura }); else p.textContent = fen;
       p.classList.remove("hidden");
     } catch (e) {}
   }
@@ -1037,7 +1040,13 @@
     $("tablero-a-caja").classList.remove("hidden");
     $("tablero-a-titulo").textContent = "A: aquí " + R.sanEs(item.golpe) + " gana";
     tableroFijo("tablero-a", item.fenA, turno);
-    if (adaptado()) { $("lectura-a").textContent = "Posición A: " + $("tablero-a").getAttribute("aria-label"); $("lectura-a").classList.remove("hidden"); }
+    if (adaptado()) {
+      if (window.BlindNotation && BlindNotation.cuentaCiega()) {
+        BlindNotation.escribirPosicion($("lectura-a"), new Chess(item.fenA), { titulo: "Piezas de la posición A" });
+        tituloLectura = "Piezas de la posición B";
+      } else $("lectura-a").textContent = "Posición A: " + $("tablero-a").getAttribute("aria-label");
+      $("lectura-a").classList.remove("hidden");
+    }
     $("juego-turno").textContent = "B: casi igual, y aquí " + golpe + " ya no gana. Juegan las " + COLOR[turno] + " en las dos.";
     $("juego-enunciado").textContent = "¿Qué casilla es distinta en B? Tócala en el tablero B o escríbela.";
     const elegir = (s) => {

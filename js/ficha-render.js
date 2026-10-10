@@ -199,7 +199,7 @@ window.FichaRender = (function () {
          se dicta sola en cada paso. La saca BlindNotation, que es la única tabla
          de nombres y plurales del sitio. */
       const todo = document.getElementById("posicion-completa");
-      if (todo) todo.textContent = window.BlindNotation ? window.BlindNotation.positionSentence(partida) : "";
+      if (todo && window.BlindNotation) window.BlindNotation.escribirPosicion(todo, partida);
       const anuncio = document.getElementById("anuncio");
       if (anuncio) anuncio.textContent = donde;
       if (window.BlindNotation && window.BlindNotation.speak) window.BlindNotation.speak(donde);

@@ -321,7 +321,7 @@ function drawStaticBoard(fen, orientation){
     if (teclado && teclado.refrescar) teclado.refrescar();
   }
   const readout = document.getElementById('position-readout');
-  readout.textContent = window.BlindNotation ? BlindNotation.positionSentence(snapshot) : '';
+  if (window.BlindNotation) BlindNotation.escribirPosicion(readout, snapshot); else readout.textContent = '';
 }
 
 function setStatus(text, cls){

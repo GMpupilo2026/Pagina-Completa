@@ -203,7 +203,7 @@
   .en-palabras p{color:var(--text-cuerpo); font-size:0.9rem; line-height:1.55; margin:0;}
   .pos-completa{margin-top:8px;}
   .pos-completa summary{cursor:pointer; font-size:0.85rem; color:var(--text-muted);}
-  .pos-completa p{margin-top:6px; color:var(--text-muted);}
+  .pos-completa p, .pos-completa #posicion-completa{margin-top:6px; color:var(--text-muted);}
 
   .ficha-pie{display:flex; gap:10px; justify-content:center; margin-top:22px; flex-wrap:wrap;}
   .bctrl{
@@ -454,7 +454,7 @@
           <p id="posicion-escrita" role="status"></p>
           <details class="pos-completa">
             <summary>Toda la posición, pieza por pieza</summary>
-            <p id="posicion-completa"></p>
+            <div id="posicion-completa"></div>
           </details>
         </div>
         <!-- Donde se le pregunta a la posición y se recorre la línea escribiendo
