@@ -1,0 +1,18 @@
+# TEMPORAL: busca en chess-results los torneos JDN que faltan (pedido del
+# dueño). Corre en el PR y se borra antes de mergear.
+name: Buscar JDN (temporal)
+on:
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  buscar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+      - run: python3 herramientas/buscar-jdn-temporal.py
