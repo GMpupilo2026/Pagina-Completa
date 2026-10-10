@@ -2027,6 +2027,33 @@ los internacionales (CODICADER y escolares de la federación). Se enlaza desde
   Probado también con una respuesta real del 8/10/2026: leyó las 250 filas y
   encontró 25 eliminatorias de 2026 que la búsqueda por palabras no había
   traído («Regional Heredia …», «Eliminatoria Inter regional …_Puriscal»).
+- **Lo que la búsqueda por palabras no reconoce.** El 10/10/2026 se revisó si
+  faltaba algún torneo de los JDE con otro camino: todos los torneos de Costa
+  Rica partidos por tipo (suizo, round robin, liga y suizo por equipos) y
+  ritmo, más el nombre («JDE», «estudiant», «regional» partido por tipo y
+  ritmo, «eliminatoria», «circuit», «categor», «institucional»…) y el
+  organizador («Regional», «DRE», «MEP», «Supervis», «Direcci», «Educ»…).
+  Las búsquedas vieron los 1367 torneos que ya estaban; de los 850 con pistas
+  que no estaban, las reglas no sumaban ninguno nuevo (los 7 que aceptaban eran
+  duplicados, vacíos o amistosos ya descartados). A ojo salieron 32 de los JDE
+  que ninguna regla puede reconocer sin meter torneos privados: la regional de
+  Alajuela de 2016 y la de 2018 y la de San José Norte de 2018, subidas como
+  «Categoria A Individual Abierto» sin organizador; «JDR Turrialba» (errata de
+  «JDETurrialba», sus hermanos sí estaban); la categoría D absoluta de Guápiles
+  2025 («individual absoluto categoria D», jugadores de Pococí, el mismo día
+  que las demás de Guápiles); y la institucional del LEBCBA de 2023 (la de
+  2026 ya estaba). **Se reconocen por clave** en `A_MANO` de
+  `ajedrez_estudiantil_reglas.py`, con su etapa y, si el nombre no la dice,
+  su región o categoría: así el verificador sigue exigiendo que las reglas den
+  exactamente lo guardado. Quedaron fuera, a falta de confirmarlo: «Institucional
+  Sinai» e «Institucional Laboratorio A/B» (Pérez Zeledón, 2026), los
+  «Festival Circuital … Mis Primeras 64 Casillas» del circuito 05 (2025), los
+  «Juegos Regionales de Cartago» (2026, del CCDR, no del MEP) y el «COLYPRO
+  Regional» (profesores). Desde la base, `pg_net` solo despierta con una
+  llamada suya (`net.http_get`): los POST metidos directo en
+  `net.http_request_queue` se quedan en la cola hasta la siguiente; y el
+  formulario del buscador vence en unos minutos, así que se pide uno nuevo
+  antes de cada tanda.
 - `verificar-ajedrez-estudiantil.js` cuenta las participaciones directo del
   CSV, por otro camino que la página, y las compara con lo que se pinta: sin
   filtros, con una región, con una categoría y con las dos; además, los

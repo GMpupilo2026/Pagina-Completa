@@ -83,7 +83,7 @@ with open(actualizar.FUENTE, encoding="utf-8", newline="") as f:
     guardados = list(csv.DictReader(f))
 distintos = []
 for r in guardados:
-    c = reglas.clasificar(r["nombre"], r["organizador"], r["lugar"], r["inicio"])
+    c = reglas.clasificar(r["nombre"], r["organizador"], r["lugar"], r["inicio"], r["clave"])
     if c is None:
         distintos.append(f"{r['clave']} quedaría fuera")
         continue

@@ -47,6 +47,28 @@ OTRO_PAIS = (r"federacion (deportiva |central )?(nacional )?(de ajedrez )?(del |
 
 ETAPAS_JDE = ("Institucional o circuital", "Regional", "Interregional", "Nacional")
 
+# Torneos de los JDE que ninguna regla puede reconocer sin meter también
+# torneos privados: el nombre no dice de qué son («Categoria A Individual
+# Abierto», sin organizador) o trae una errata («JDR Turrialba»). Se
+# reconocieron a mano, por la fecha, el lugar y los hermanos que sí estaban,
+# en la revisión del 10/10/2026 (ver «Lo que la búsqueda por palabras no
+# reconoce» en docs/decisiones/juegos-y-torneos.md). Clave: (etapa, región,
+# categoría); lo vacío lo pone la regla.
+_REGIONAL_ALAJUELA_2016 = ("Regional", "Alajuela", "")      # 13 a 15/4/2016, en Alajuela
+_REGIONAL_ALAJUELA_2018 = ("Regional", "Alajuela", "")      # 23/4/2018, Polideportivo Monserrat
+_REGIONAL_SJ_NORTE_2018 = ("Regional", "San José Norte", "")  # 17/4/2018, liceos de San José Norte
+A_MANO = {
+    **{k: _REGIONAL_ALAJUELA_2016 for k in ("216954", "216955", "216956", "216957", "216959", "216960", "216963",
+                                             "216964", "216965", "216966", "216967", "216969", "216970", "216971",
+                                             "217215", "217216", "217219")},
+    **{k: _REGIONAL_SJ_NORTE_2018 for k in ("347331", "347336", "347339")},
+    **{k: _REGIONAL_ALAJUELA_2018 for k in ("347889", "347890", "347892", "347893", "347894", "347895", "347896", "347898")},
+    "641689": ("Regional", "", ""),                         # «JDR»: sus hermanos 641690-3 dicen «JDETurrialba»
+    "746394": ("Institucional o circuital", "", "C"),        # «Ctegoría C»; el LEBCBA de 2026 es 1366341
+    "746395": ("Institucional o circuital", "", ""),
+    "1140377": ("Regional", "Guápiles", ""),                 # 18/3/2025, jugadores de Pococí: la D que faltaba
+}
+
 REGIONES = [  # (nombre, patrón sobre nombre + organizador + lugar sin tildes); la primera que calza
     ("Alajuela", r"alajuela"), ("Occidente", r"occidente|san ramon|araja|cbsr"), ("Cartago", r"cartago"),
     ("Turrialba", r"turrialba"), ("Los Santos", r"los santos"), ("Heredia", r"heredia"), ("Sarapiquí", r"sarapiqui"),
@@ -139,9 +161,10 @@ def etapa(nombre, organizador="", lugar=""):
     return None
 
 
-def clasificar(nombre, organizador, lugar, inicio):
+def clasificar(nombre, organizador, lugar, inicio, clave=""):
     """Lo que la página necesita de un torneo, o None si no entra."""
-    e = etapa(nombre, organizador, lugar)
+    e_mano, region_mano, categoria_mano = A_MANO.get(str(clave), (None, "", ""))
+    e = e_mano or etapa(nombre, organizador, lugar)
     if e is None:
         return None
     t = sin_tildes(html.unescape(nombre))
@@ -149,8 +172,8 @@ def clasificar(nombre, organizador, lugar, inicio):
     return {
         "anio": anio(nombre, inicio),
         "etapa": e,
-        "categoria": (categoria(nombre) or "Sin dato") if jde else "",
-        "region": region(nombre, organizador, lugar) if jde and e != "Nacional" else "",
+        "categoria": (categoria_mano or categoria(nombre) or "Sin dato") if jde else "",
+        "region": (region_mano or region(nombre, organizador, lugar)) if jde and e != "Nacional" else "",
         "modalidad": "Equipos" if re.search(r"equipo|por eq|team|\beq\b", t) else "Individual",
         "ritmo": "Blitz o rápido" if re.search(r"blitz|rapid|rapido", t) else "Clásico",
     }
