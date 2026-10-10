@@ -121,6 +121,12 @@ window.SUPABASE_URL = "https://bgtijpimpcokxatxxbki.supabase.co";
         Object.assign(a, { whatsapp: args.p_whatsapp, correo_respuestas: args.p_correo });
         return ok(a);
       }
+      if (n === "academia_panel_taller") {
+        if (D.panelTallerFalla) return { then(res, rej) { return Promise.resolve({ data: null, error: { message: D.panelTallerFalla } }).then(res, rej); } };
+        const a = D.tablas.academias.find((x) => x.id === args.p_id);
+        a.panel_taller = !!args.p_valor;
+        return ok(Object.assign({}, a));
+      }
       if (n === "academia_guardar_marca") {
         const a = D.tablas.academias.find((x) => x.id === args.p_id);
         Object.assign(a, { color: args.p_color, logo_path: args.p_logo_path });
@@ -298,6 +304,43 @@ async function pruebaSupervisor(browser) {
   const sinAc = await abrir(browser, "/academias.html", datosBase({ tablas: { profiles: TODOS, academias: [], academia_miembros: [] } }), SUP);
   igual("se le dice que todavía no tiene una", await sinAc.page.$eval("#intro", (p) => p.textContent.includes("Todavía no tienes una academia")), true);
   await sinAc.page.close();
+}
+
+/* El panel de taller se guarda al marcar la casilla, por su función, y lo que
+   queda marcado es lo que devolvió la base: si falla, la casilla vuelve a como
+   estaba. Ver «El panel de taller» en docs/decisiones/paneles.md. */
+async function pruebaPanelTaller(browser) {
+  console.log("\nEl panel de taller: se enciende y se apaga desde la ficha de la academia");
+  const datos = datosBase();
+  const { page, errores } = await abrir(browser, "/academias.html", datos, SUP, "#vista-academia:not([hidden])");
+  igual("quien supervisa ve la casilla, apagada", [await seVe(page, "#panel-taller"), await page.isChecked("#panel-taller")], ["sí", false]);
+  await page.click("#panel-taller");
+  await page.waitForFunction(() => window.__rpc.some((r) => r.n === "academia_panel_taller"));
+  await page.waitForFunction(() => !document.getElementById("panel-taller").disabled);
+  igual("marcarla manda su academia y el sí", (await llamadas(page, "academia_panel_taller"))[0], { p_id: "ac1", p_valor: true });
+  igual("y queda marcada con lo que devolvió la base", await page.isChecked("#panel-taller"), true);
+  await page.click("#panel-taller");
+  await page.waitForFunction(() => window.__rpc.filter((r) => r.n === "academia_panel_taller").length === 2);
+  await page.waitForFunction(() => !document.getElementById("panel-taller").disabled);
+  igual("desmarcarla manda el no", (await llamadas(page, "academia_panel_taller"))[1], { p_id: "ac1", p_valor: false });
+  igual("sin errores en la página", errores, []);
+  await page.close();
+
+  const mal = await abrir(browser, "/academias.html", datosBase({ panelTallerFalla: "Solo su supervisor o quien administra cambia el panel de sus alumnos." }), SUP, "#vista-academia:not([hidden])");
+  await mal.page.click("#panel-taller");
+  await mal.page.waitForFunction(() => window.__rpc.some((r) => r.n === "academia_panel_taller"));
+  await mal.page.waitForFunction(() => !document.getElementById("panel-taller").disabled);
+  igual("si la base no deja, la casilla vuelve a como estaba", await mal.page.isChecked("#panel-taller"), false);
+  igual("y se dice por qué", await mal.page.evaluate(() => /cambia el panel de sus alumnos/.test(document.body.innerText)), true);
+  await mal.page.close();
+
+  const conTaller = datosBase();
+  conTaller.tablas.academias[0].panel_taller = true;
+  const adm = await abrir(browser, "/academias.html", conTaller, ADMIN, "#vista-lista:not([hidden])");
+  await adm.page.click('button[aria-label="Abrir Los Reyes"]');
+  await adm.page.waitForSelector("#vista-academia:not([hidden])");
+  igual("quien administra la ve marcada en una academia con panel de taller", await adm.page.isChecked("#panel-taller"), true);
+  await adm.page.close();
 }
 
 async function pruebaSinAcceso(browser) {
@@ -540,6 +583,7 @@ async function pruebaIA(browser) {
     await pruebaAdmin(browser);
     await pruebaDesdeGrupo(browser);
     await pruebaSupervisor(browser);
+    await pruebaPanelTaller(browser);
     await pruebaSinAcceso(browser);
     await pruebaFuncionesApagadas(browser);
     await pruebaMarca(browser);

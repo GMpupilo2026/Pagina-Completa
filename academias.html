@@ -118,6 +118,21 @@
                     </div>
                 </form>
 
+                <!-- El panel de taller: para un taller con sesiones de fecha fija
+                     (el de los asesores del MEP). Se guarda al marcarlo, con
+                     academia_panel_taller(). Ver «El panel de taller» en
+                     docs/decisiones/paneles.md. -->
+                <section id="caja-panel-taller" class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 mb-6" aria-labelledby="h-panel-taller">
+                    <h2 id="h-panel-taller" class="font-semibold text-lg text-brand-900 dark:text-white mb-2">El panel de sus alumnos</h2>
+                    <label for="panel-taller" class="flex items-start gap-3 cursor-pointer">
+                        <input id="panel-taller" type="checkbox" aria-describedby="panel-taller-ayuda" class="mt-1 h-4 w-4">
+                        <span>
+                            <span class="block text-sm font-semibold text-brand-900 dark:text-white">Panel de taller</span>
+                            <span id="panel-taller-ayuda" class="block text-sm text-brand-500 dark:text-brand-300">Para un taller con sesiones de fecha fija. Sus alumnos no ven «Hoy te toca» ni la invitación a hacer el diagnóstico: en su lugar ven el calendario de clases, que sale del horario de su profe (una fila por sesión). Lo que les pida su profe les sigue saliendo.</span>
+                        </span>
+                    </label>
+                </section>
+
                 <form id="form-marca" novalidate class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 mb-6" aria-labelledby="h-marca">
                     <h2 id="h-marca" class="font-semibold text-lg text-brand-900 dark:text-white mb-1">La marca de la academia</h2>
                     <p class="text-sm text-brand-500 dark:text-brand-300 mb-4">El logo y el color salen en el encabezado de la plataforma de toda su gente y en sus formularios de inscripción. Quien es de dos academias sigue viendo Ajedrez Integral.</p>

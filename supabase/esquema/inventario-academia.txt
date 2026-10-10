@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261009200000
+# al-dia-con: 20261010042302
 tabla  Ejercicios Lichess  rls=true
 tabla  _foto_rls_tmp  rls=false
 tabla  academia_ia  rls=true
@@ -205,6 +205,7 @@ columna  academias.created_by  uuid
 columna  academias.id  uuid
 columna  academias.logo_path  text
 columna  academias.nombre  text
+columna  academias.panel_taller  boolean
 columna  academias.prefijo_recibo  text
 columna  academias.supervisor_id  uuid
 columna  academias.updated_at  timestamp with time zone
@@ -1525,6 +1526,7 @@ funcion  academia_guardar(p_id uuid, p_nombre text, p_supervisor uuid, p_whatsap
 funcion  academia_guardar_contacto(p_id uuid, p_whatsapp text, p_correo text)  definer  anon=false  auth=true
 funcion  academia_guardar_marca(p_id uuid, p_color text, p_logo_path text)  definer  anon=false  auth=true
 funcion  academia_guardar_prefijo_recibo(p_academia uuid, p_prefijo text)  definer  anon=false  auth=true
+funcion  academia_panel_taller(p_id uuid, p_valor boolean)  definer  anon=false  auth=true
 funcion  academia_personas(p_academia uuid)  definer  anon=false  auth=true
 funcion  academia_set_funciones_coordinador(p_academia uuid, p_coordinador uuid, p_permitidas text[])  definer  anon=false  auth=true
 funcion  academia_set_miembros(p_academia uuid, p_personas uuid[])  definer  anon=false  auth=true
@@ -1802,6 +1804,7 @@ funcion  mi_entreno_resumen(p_alumno uuid)  invoker  anon=false  auth=true
 funcion  mi_gente(p_busqueda text, p_rol text, p_limite integer, p_desde integer)  invoker  anon=true  auth=true
 funcion  mi_grupo()  definer  anon=false  auth=true
 funcion  mi_marca_academia()  definer  anon=false  auth=true
+funcion  mi_panel_taller()  definer  anon=false  auth=true
 funcion  mi_proxima_clase()  definer  anon=false  auth=true
 funcion  minutos_minimos_por_ejercicio(p_grupo text)  invoker  anon=false  auth=true
 funcion  minutos_por_tramos(p_tramos tramo_crudo[])  invoker  anon=true  auth=true

@@ -446,8 +446,26 @@ function pintarDatos() {
     if (esAdmin) llenarSupervisores(document.getElementById("d-supervisor"), abierta.supervisor_id);
     document.getElementById("d-whatsapp").value = abierta.whatsapp || "";
     document.getElementById("d-correo").value = abierta.correo_respuestas || "";
+    document.getElementById("panel-taller").checked = !!abierta.panel_taller;
     pintarMarca();
 }
+
+/* El panel de taller se guarda al marcarlo: es un sí o un no, y un botón de
+   guardar aparte sería un paso para olvidarse. Lo que manda es lo que devuelve
+   la base; si falla, la casilla vuelve a como estaba. */
+document.getElementById("panel-taller").addEventListener("change", async (e) => {
+    const casilla = e.currentTarget;
+    casilla.disabled = true;
+    const { data, error } = await sb.rpc("academia_panel_taller", { p_id: abierta.id, p_valor: casilla.checked });
+    casilla.disabled = false;
+    if (error) { casilla.checked = !!abierta.panel_taller; avisar(error.message, true); return; }
+    abierta = data;
+    academias = academias.map((a) => a.id === abierta.id ? abierta : a);
+    casilla.checked = !!abierta.panel_taller;
+    avisar(abierta.panel_taller
+        ? "Listo: los alumnos de " + abierta.nombre + " ven el panel de taller."
+        : "Listo: los alumnos de " + abierta.nombre + " vuelven al panel de siempre.");
+});
 
 /* ── La marca ──────────────────────────────────────────────────────────────
    El logo se achica en el navegador y se sube al ENVIAR, no al elegirlo: uno

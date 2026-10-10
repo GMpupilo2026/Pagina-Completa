@@ -2633,7 +2633,7 @@
             return { ...hallado, href };
         }
 
-        async function cargarPendientes(rachaP) {
+        async function cargarPendientes(rachaP, tallerP) {
             const [t, x] = await Promise.all([
                 sb.rpc("tareas_con_avance", { p_alumno: alumnoDelPanel(), p_pendientes: true, p_limite: 50 }),
                 sb.rpc("examenes_con_nota", { p_alumno: alumnoDelPanel(), p_limite: 50 }),
@@ -2663,7 +2663,7 @@
                siguiente paso de quien todavía no arrancó (ver abajo). Lo que
                vence manda siempre —una fecha le gana a una sugerencia—, así que
                el primer paso solo llega hasta acá. */
-            if (!hacibles && !perdidos.length && !congelados.length) return mostrarPrimerPaso(rachaP);
+            if (!hacibles && !perdidos.length && !congelados.length) return mostrarPrimerPaso(rachaP, tallerP);
 
             /* EL ORDEN DE LAS REGLAS IMPORTA Y ESTÁ ESCRITO, como el del informe
                a la casa: el texto se queda con UNA cosa, la que pide actuar
@@ -2846,7 +2846,12 @@
            Y NO se pinta "no tienes nada que hacer" cuando ya arrancó: un cartel
            que se repite deja de leerse, la misma lección del aviso de instalar
            la app. */
-        async function mostrarPrimerPaso(rachaP) {
+        async function mostrarPrimerPaso(rachaP, tallerP) {
+            /* En el panel de taller no se sugiere el diagnóstico ni el plan de
+               entrenamiento: quien sigue un taller no viene a eso. Lo que le
+               pida su profe (una tarea, también el diagnóstico) sí sale: eso
+               se pinta antes de llegar acá. Ver «El panel de taller». */
+            if (await tallerP) return;
             let stats;
             try {
                 const r = await rachaP;
@@ -4216,7 +4221,7 @@
                     Promise.resolve(window.Puntos && Puntos.montarTarjetaPanel(document.getElementById("puntos-ajedrez"), { sb, alumnoId: profile.id })).finally(ajustarTusClases),
                 );
                 partes.push(
-                    cargarPendientes(rachaP),
+                    cargarPendientes(rachaP, tallerP),
                     cargarSeguirCurso(),
                     loadEntrenoProgress(),
                     loadTacticsRecord(),
