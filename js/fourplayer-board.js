@@ -17,7 +17,13 @@
 (function () {
   "use strict";
 
-  const GLYPH = { p: "♟", n: "♞", b: "♝", r: "♜", q: "♛", k: "♚" };
+  // «♙» y no «♟»: el peón relleno tiene presentación de emoji en muchos
+  // sistemas (a diferencia del resto de las piezas) y sale como un emoji
+  // negro grande que ignora el color de piece-red/piece-blue/… — mismo caso
+  // ya resuelto en js/voz-pagina.js (ver «La posición entera, a pedido» en
+  // docs/decisiones/accesibilidad.md). «♙» se dibuja como letra y sí toma
+  // el color de CSS.
+  const GLYPH = { p: "♙", n: "♞", b: "♝", r: "♜", q: "♛", k: "♚" };
   const PIECE_NAME = { p: "peón", n: "caballo", b: "alfil", r: "torre", q: "dama", k: "rey" };
   const SEAT_LABEL = { red: "Rojo", blue: "Azul", yellow: "Amarillo", green: "Verde" };
   // Rotación (en pasos de 90° horario) para que el brazo de este asiento
