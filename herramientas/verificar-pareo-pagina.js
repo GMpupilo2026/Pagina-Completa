@@ -116,7 +116,23 @@ const ok = (c, m, detalle) => (c ? bien(m) : mal(m + (detalle ? " — " + detall
   await p.click('#pi-tabla-jugadores button[aria-label="Retirar a Brenes, Héctor"]');
   await p.click('dialog.avisos-dialogo[open] button:has-text("Retirar")');
   await ficha("rondas");
-  for (let r = 3; r <= 5; r++) {
+  await p.click('#pi-rondas-nav button:has-text("Ronda 3")');
+  // Diego avisa que no viene a la ronda 3, con el atajo de un clic (en vez de abrir el select).
+  const selDiego = '#pi-ronda select[aria-label^="Paz, Diego"]';
+  const botonDiego = '#pi-ronda button[aria-label="Marcar que Paz, Diego no viene a esta ronda"]';
+  await p.click(botonDiego);
+  ok((await p.$eval(selDiego, (s) => s.value)) === "Z", "el botón «No viene» marca Z en el select, sin abrirlo");
+  await p.click('#pi-ronda button[aria-label="Deshacer que Paz, Diego no viene a esta ronda"]');
+  ok((await p.$eval(selDiego, (s) => s.value)) === "", "y se puede deshacer antes de emparejar");
+  await p.click(botonDiego);
+  await emparejar(3);
+  {
+    const t = await leerTorneo();
+    const diego = t.jugadores.find((j) => j.nombre === "Paz, Diego").id;
+    ok(t.rondas[2].ausencias[diego] === "Z" && !t.rondas[2].mesas.some((m) => m.b === diego || m.n === diego), "el botón deja a Diego fuera del emparejamiento, igual que elegirlo a mano");
+  }
+  await resultados(["=", "1-0", "0-1", "1-0"]);
+  for (let r = 4; r <= 5; r++) {
     await p.click(`#pi-rondas-nav button:has-text("Ronda ${r}")`);
     await emparejar(r);
     await resultados(["=", "1-0", "0-1", "1-0"]);

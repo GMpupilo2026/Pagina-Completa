@@ -761,8 +761,16 @@
           el("option", { value: "H", texto: tx("byeMedio", { p: puntosTexto(v.puntos.tablas) }) }),
           el("option", { value: "Z", texto: tx("byeCero") }),
           el("option", { value: "F", texto: tx("byeEntero", { p: puntosTexto(v.puntos.victoria) }) }));
-        s.addEventListener("change", () => { if (s.value) pedidas[id] = s.value; else delete pedidas[id]; });
-        ul.append(el("li", { class: "flex items-center justify-between gap-2" }, el("span", { class: "text-sm", texto: num.get(id) + ". " + j.nombre }), s));
+        const noViene = el("button", { type: "button", class: C.mini });
+        const actualizarNoViene = () => {
+          const marcado = s.value === "Z";
+          noViene.textContent = tx(marcado ? "deshacerNoViene" : "noViene");
+          noViene.setAttribute("aria-label", tx(marcado ? "deshacerNoVieneA" : "noVieneA", { n: j.nombre }));
+        };
+        s.addEventListener("change", () => { if (s.value) pedidas[id] = s.value; else delete pedidas[id]; actualizarNoViene(); });
+        noViene.addEventListener("click", () => { s.value = s.value === "Z" ? "" : "Z"; s.dispatchEvent(new Event("change")); });
+        actualizarNoViene();
+        ul.append(el("li", { class: "flex items-center justify-between gap-2" }, el("span", { class: "text-sm", texto: num.get(id) + ". " + j.nombre }), el("div", { class: "flex items-center gap-1" }, s, noViene)));
       }
       caja.append(ul);
     }

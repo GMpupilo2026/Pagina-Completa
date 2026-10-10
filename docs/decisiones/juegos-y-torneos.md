@@ -2002,6 +2002,32 @@ Clasificación por correo.
   armados y en el idioma elegido, así que `documento()` se puede probar con
   Node, igual que `js/informe-grupo-pdf.js`.
 
+### El atajo «No viene» antes de emparejar una ronda
+
+Marcar a alguien ausente antes de emparejar la ronda **ya existía**: el
+`<select>` de `pintarRondaNueva()` (`js/pareo/pagina.js`) tiene desde siempre
+las opciones «Juega», «Bye pedido», «Ausente (0)» y «Bye de punto entero», y
+quien elige «Ausente» queda afuera del TRF que se le pasa al motor
+(`rondas[r].ausencias`, visto por `aTrf()` y `participantes()`), nunca se le
+intenta emparejar y después se descubre como incomparecencia. Lo que faltaba
+era la velocidad: con 50 jugadores, abrir el `<select>` de cada uno que avisó
+que no viene y elegir la opción correcta es lento al lado de la mesa de
+inscripción un domingo por la mañana.
+
+- **El botón «No viene»**, al lado del `<select>` de cada jugador, pone
+  directamente `"Z"` (la opción más común: alguien que no llegó, sin pedir
+  nada) de un clic, y dispara el mismo evento `change` del `<select>` — no
+  hay un camino de datos aparte, es un atajo de UI sobre el mismo mecanismo.
+  Si la persona vuelve a avisar que sí viene, el mismo botón (que ahora dice
+  «Deshacer») lo saca.
+- **El botón no reemplaza el `<select>`**: quien pidió bye de medio punto o
+  tiene un punto entero por reglamento sigue eligiéndolo ahí; el botón es
+  solo para el caso más frecuente, «no viene y no pide nada».
+- Queda solo en el sistema Suizo. En «todos contra todos» no hay bye a
+  elección (la ronda libre la decide la tabla de Berger) y quien no se
+  presenta se anota como incomparecencia en el resultado, no antes de
+  emparejar.
+
 **Al tocar la plantilla o el PDF, correr `node herramientas/verificar-pareo-pagina.js`**
 (su sección 11): que la plantilla no traiga ningún resultado aunque la ronda
 ya los tenga, que limpie el `<body>` y el contenido al terminar de imprimir,
