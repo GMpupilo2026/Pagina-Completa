@@ -165,7 +165,7 @@ def actualizar(guardados, recientes, titulo):
             if not PISTAS.search(reglas.sin_tildes(nombre + " " + t["organizador"])):
                 continue
             nombre = titulo(t["clave"]) or nombre
-        c = reglas.clasificar(nombre, t["organizador"], t["lugar"], t["inicio"])
+        c = reglas.clasificar(nombre, t["organizador"], t["lugar"], t["inicio"], t["clave"])
         if c is None:
             continue
         fila = {
