@@ -68,7 +68,30 @@ A_MANO = {
     "746395": ("Institucional o circuital", "", ""),
     "1140377": ("Regional", "Guápiles", ""),                 # 18/3/2025, jugadores de Pococí: la D que faltaba
     "1365365": ("Institucional o circuital", "Pérez Zeledón", ""),  # «Institucional Sinai»: lo confirmó el dueño
+    "1369387": ("Institucional o circuital", "", "A"),       # «Institucional Laboratorio A/B» (Escuela
+    "1369389": ("Institucional o circuital", "", "B"),       # Laboratorio de PZ): lo confirmó el dueño
+    "434740": ("Interregional", "", ""),                     # «Interrregional Alajuela JDNEquipo C»: hermano de 434735-9
 }
+
+# Lo que las reglas no aceptan pero tiene pinta de JDE: el actualizador no lo
+# suma, lo anota en ajedrez-estudiantil-revisar.csv para que alguien decida
+# (todos los de A_MANO habrían salido acá). Se descarta lo que se sabe ajeno:
+# los JDN, los de la federación, los de clubes por edades, los festivales…
+NO_DUDOSO = (r"\bjdn\b|icoder|juegos (deportivos )?nacionales|comunal|distrital|laboral|amistoso|fogueo|recreativo|"
+             r"categorias (menores|pares|impares)|categoria (senior|open|s\d)|chess ?talent|festival|universi|\bina\b|"
+             r"apse|no videntes|profesores|grados|division|cuarta|tercera|segunda|primera|federaci|fcacr|\bfca\b|"
+             r"absolut[oa] 20|juegos regionales|colypro")
+PISTA_DUDOSO = r"institucional|circuital|eliminatoria|\bjd[er]\b|estudiant|regional|ctegor"
+
+
+def dudoso(nombre, organizador="", lugar=""):
+    """¿Puede ser de los JDE aunque las reglas no lo acepten? Una letra de
+    categoría, un organizador del MEP o una palabra de las etapas."""
+    t = sin_tildes(html.unescape(nombre))
+    o = sin_tildes(html.unescape(organizador))
+    if re.search(NO_DUDOSO, t) or re.search(NO_DUDOSO, o):
+        return False
+    return bool(categoria(nombre) or re.search(ORGANIZADOR_MEP, o) or re.search(PISTA_DUDOSO, t))
 
 REGIONES = [  # (nombre, patrón sobre nombre + organizador + lugar sin tildes); la primera que calza
     ("Alajuela", r"alajuela"), ("Occidente", r"occidente|san ramon|araja|cbsr"), ("Cartago", r"cartago"),

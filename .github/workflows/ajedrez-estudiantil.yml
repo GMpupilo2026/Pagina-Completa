@@ -5,7 +5,10 @@
 # suma los de los juegos estudiantiles que sean nuevos y pone al día los
 # inscritos de los que ya estaban. Después lee la clasificación de los torneos
 # nuevos o que cambiaron (herramientas/ajedrez-estudiantil-jugadores.py), para
-# historial-jugador.html y estadisticas-colegios.html. Si cambió algo:
+# historial-jugador.html y estadisticas-colegios.html. Lo que tiene pinta de
+# JDE pero las reglas no aceptan no se suma: se anota en
+# herramientas/datos/ajedrez-estudiantil-revisar.csv y el PR lo lista para
+# que alguien decida. Si cambió algo:
 #
 #   1. abre un PR desde una rama datos/ajedrez-estudiantil-…;
 #   2. corre «Verificar» sobre esa rama (un PR abierto con el GITHUB_TOKEN no
@@ -75,7 +78,8 @@ jobs:
           git switch -c "$rama"
           git add herramientas/datos/ajedrez-estudiantil-torneos.csv herramientas/datos/ajedrez-estudiantil-actualizado.txt data/ajedrez-estudiantil.json \
             herramientas/datos/ajedrez-estudiantil-jugadores.csv herramientas/datos/ajedrez-estudiantil-equipos.csv \
-            herramientas/datos/ajedrez-estudiantil-leidos.csv data/ajedrez-estudiantil-jugadores.json
+            herramientas/datos/ajedrez-estudiantil-leidos.csv data/ajedrez-estudiantil-jugadores.json \
+            herramientas/datos/ajedrez-estudiantil-revisar.csv
           git commit -q -m "Ajedrez estudiantil: lo nuevo de chess-results" -m "$(cat "$RUNNER_TEMP/resumen.md")"
           git push -q -u origin "$rama"
           titulo="Ajedrez estudiantil: lo nuevo de chess-results ($(date -u +%Y-%m-%d))"
