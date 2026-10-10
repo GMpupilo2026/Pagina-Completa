@@ -74,14 +74,19 @@ const FUNCIONES = {
   // false: la llama public.vigilar_base()). Ver su cabecera.
   "alerta-base": ["marca-correo.ts"],
   // El Elo FIDE y Nacional de cada mes (verify_jwt en false: la tanda la
-  // dispara pg_cron). Su leer-elo.ts es suyo. Ver su cabecera.
-  "elo-fide": [],
+  // dispara pg_cron). Su lector de las dos páginas es compartido con
+  // pareo-elo-nacional. Ver su cabecera.
+  "elo-fide": ["ajedrezcostarica.ts"],
   // El robo de puntos al perder una partida ganada (verify_jwt en false: la
   // dispara el trigger de game_rooms). Su calculo.ts es suyo. Ver su cabecera.
   "partida-fin": [],
   // Juegos Estudiantiles MEP, modo árbitro: publica un evento sin cuenta
   // (verify_jwt en false), con su propio freno (jde_frenar). Ver su cabecera.
   "jde-publicar": [],
+  // Pareo Integral: busca el Elo Nacional de una lista de nombres, sin
+  // cuenta (verify_jwt en false), con su propio freno (pareo_elo_frenar).
+  // Su lector de ajedrezcostarica.com es compartido con elo-fide.
+  "pareo-elo-nacional": ["ajedrezcostarica.ts"],
 };
 
 function armar(nombre) {

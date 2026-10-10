@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261010042302
+# al-dia-con: 20261010054225
 tabla  Ejercicios Lichess  rls=true
 tabla  _foto_rls_tmp  rls=false
 tabla  academia_ia  rls=true
@@ -1833,6 +1833,7 @@ funcion  paquete_borrar(p_id uuid)  definer  anon=false  auth=true
 funcion  paquete_guardar(p_id uuid, p_nombre text, p_titular uuid, p_academia uuid, p_cupos integer, p_desde date, p_hasta date, p_precio numeric, p_moneda text, p_notas text)  definer  anon=false  auth=true
 funcion  paquete_set_alumnos(p_id uuid, p_alumnos uuid[])  definer  anon=false  auth=true
 funcion  paquetes_con_uso()  invoker  anon=false  auth=true
+funcion  pareo_elo_frenar(p_ip text)  definer  anon=false  auth=false
 funcion  personas_con_dos_pasos()  definer  anon=false  auth=true
 funcion  personas_para_ver_como()  definer  anon=false  auth=true
 funcion  plan_compartido_conmigo(p_plan uuid)  definer  anon=true  auth=true

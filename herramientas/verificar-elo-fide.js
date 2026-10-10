@@ -3,13 +3,15 @@
  * invente uno.
  *
  * No necesita red, ni navegador, ni el sitio servido: prueba
- * `supabase/functions/elo-fide/leer-elo.ts` contra extractos del HTML tal como
- * lo sirven ratings.fide.com y ajedrezcostarica.com (setiembre de 2026). Si
- * alguno de los dos cambia su formato, la función deja de encontrar el número
- * —y lo deja en null, no en 0—; este verificador es el que dice con qué forma
- * se contaba. Ver «El Elo oficial, mes a mes» en docs/decisiones/informes.md.
+ * `supabase/functions/_compartido/ajedrezcostarica.ts` contra extractos del
+ * HTML tal como lo sirven ratings.fide.com y ajedrezcostarica.com (setiembre
+ * de 2026). Si alguno de los dos cambia su formato, la función deja de
+ * encontrar el número —y lo deja en null, no en 0—; este verificador es el
+ * que dice con qué forma se contaba. Ver «El Elo oficial, mes a mes» en
+ * docs/decisiones/informes.md. Este mismo archivo lo usa también
+ * `pareo-elo-nacional` (ver «Pareo Integral» en docs/decisiones/juegos-y-torneos.md).
  *
- * `leer-elo.ts` es TypeScript (se despliega a Deno): se carga en un
+ * `ajedrezcostarica.ts` es TypeScript (se despliega a Deno): se carga en un
  * subproceso con --experimental-strip-types, como el informe de la casa.
  *
  *   node herramientas/verificar-elo-fide.js
@@ -62,7 +64,7 @@ const listaNacional = `<!DOCTYPE html><html lang="es"><head><title>Clasificació
   `\\n"])</script></body></html>`;
 
 const r = spawnSync(process.execPath, ["--experimental-strip-types", "--no-warnings", "--input-type=module", "-e", `
-  const m = await import(${JSON.stringify(path.join(RAIZ, "supabase/functions/elo-fide/leer-elo.ts"))});
+  const m = await import(${JSON.stringify(path.join(RAIZ, "supabase/functions/_compartido/ajedrezcostarica.ts"))});
   const casos = JSON.parse(process.argv[1]);
   process.stdout.write(JSON.stringify({
     conRating: m.leerFichaFide(casos.fichaConRating),
@@ -78,7 +80,7 @@ const r = spawnSync(process.execPath, ["--experimental-strip-types", "--no-warni
   }));
 `, JSON.stringify({ fichaConRating, fichaSinRating, fichaInexistente, listaNacional })], { cwd: RAIZ, encoding: "utf8" });
 if (r.status !== 0) {
-  console.error("No se pudo cargar leer-elo.ts:\n" + (r.stderr || r.stdout));
+  console.error("No se pudo cargar ajedrezcostarica.ts:\n" + (r.stderr || r.stdout));
   process.exit(1);
 }
 const x = JSON.parse(r.stdout);
