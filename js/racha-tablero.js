@@ -158,6 +158,12 @@
             },
         }) : null;
 
+        /* La lectura pieza por pieza de las cuentas «ciego» es de Racha táctica
+           (js/racha-tactica.js); ¡Te reto! comparte este archivo y no la tiene. */
+        function lecturaPorPiezas() {
+            return typeof modoCiego === "function" && modoCiego();
+        }
+
         function refrescarComandos() {
             if (!window.CuadroComandos || !game) return;
             if (!comandos) {
@@ -175,10 +181,12 @@
                        jugada propia —treinta piezas con el reloj corriendo— y tapaba
                        el «¡Correcto!» y el aviso del ejercicio nuevo. */
                     posicionViva: false,
+                    encabezadoPosicion: "Piezas",
                 });
             }
             comandos.ayuda('Jugada: "Cf3", "e4", "Dxh7+", "e8=D". Pregunta: "caballos", "qué hay en e4". Escribe "ayuda" para todo. '
-                + "Tienes " + (limiteMs() / 1000) + " segundos por ejercicio.");
+                + "Tienes " + (limiteMs() / 1000) + " segundos por ejercicio"
+                + (lecturaPorPiezas() ? ", que empiezan cuando termino de decir las piezas." : "."));
             comandos.posicion(game);
         }
 
@@ -193,7 +201,9 @@
             // «tiempo», «reloj», «cuánto tiempo»: los segundos que quedan. Va antes que
             // lo demás porque la barra que se achica no la oye nadie (js/reloj-hablado.js).
             if (relojHablado && relojHablado.esPregunta(texto)) {
-                api.limpiar().decir(relojHablado.texto());
+                api.limpiar().decir(lecturaPorPiezas() && leyendoPiezas
+                    ? "El reloj empieza cuando termine de decir las piezas: después tienes " + (limiteMs() / 1000) + " segundos."
+                    : relojHablado.texto());
                 return;
             }
             /* Terminada la racha (o antes de empezar), «otra vez», «siguiente» o

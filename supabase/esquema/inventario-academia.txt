@@ -1,7 +1,8 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261009190740
+# al-dia-con: 20261009200000
 tabla  Ejercicios Lichess  rls=true
+tabla  _foto_rls_tmp  rls=false
 tabla  academia_ia  rls=true
 tabla  academia_miembros  rls=true
 tabla  academias  rls=true
@@ -181,6 +182,13 @@ columna  Ejercicios Lichess.PuzzleId  text
 columna  Ejercicios Lichess.Rating  bigint
 columna  Ejercicios Lichess.RatingDeviation  bigint
 columna  Ejercicios Lichess.Themes  text
+columna  _foto_rls_tmp.ca  bigint
+columna  _foto_rls_tmp.cp  bigint
+columna  _foto_rls_tmp.cs  bigint
+columna  _foto_rls_tmp.cuando  text
+columna  _foto_rls_tmp.persona  uuid
+columna  _foto_rls_tmp.qa  bigint
+columna  _foto_rls_tmp.tr  bigint
 columna  academia_ia.academia_id  uuid
 columna  academia_ia.id  uuid
 columna  academia_ia.modelo  text
@@ -1694,6 +1702,7 @@ funcion  interno.alumnos_de(p_profesor uuid)  definer  anon=false  auth=true
 funcion  interno.analisis_partidas_al_guardar()  definer  anon=false  auth=false
 funcion  interno.auditar()  definer  anon=false  auth=false
 funcion  interno.auditoria_intocable()  invoker  anon=false  auth=false
+funcion  interno.autores_visibles_para_mi_supervision()  definer  anon=false  auth=true
 funcion  interno.avance_reto(p_alumno uuid, p_metrica text, p_desde timestamp with time zone)  definer  anon=false  auth=false
 funcion  interno.avisos_que_mande()  definer  anon=false  auth=true
 funcion  interno.avisos_que_recibi()  definer  anon=false  auth=true
@@ -1732,6 +1741,7 @@ funcion  interno.pagar(p_pagos jsonb, p_metodo text, p_referencia text, p_nota t
 funcion  interno.pizarras_de_sala_validas(p jsonb)  invoker  anon=true  auth=true
 funcion  interno.plantillas_casa_tope()  definer  anon=false  auth=false
 funcion  interno.prefijo_de_nombre(p_nombre text)  invoker  anon=false  auth=true
+funcion  interno.preguntas_visibles_para_mi_supervision()  definer  anon=false  auth=true
 funcion  interno.preparacion_sesiones_sello()  invoker  anon=false  auth=false
 funcion  interno.profesores_de(p_alumno uuid)  definer  anon=false  auth=true
 funcion  interno.profesores_que_coordino()  definer  anon=false  auth=true

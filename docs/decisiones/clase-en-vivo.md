@@ -3411,6 +3411,63 @@ lámina se corre a la izquierda para dejarle su lugar.
 - Sobre el fondo oscuro, los textos de la tarjeta van en claro: antes eran
   gris oscuro y no se leían.
 
+#### La pizarra de la presentación
+
+«✏️ Pizarra» (junto a ◀ ▶) deja al profe dibujar ENCIMA de la diapositiva:
+lápiz, línea, flecha, círculo y resaltador, en seis colores, con borrador,
+«Deshacer» y «Borrar todo». Toda la clase (alumnos, proyector, quien supervisa)
+ve las mismas marcas. Código en `js/clase-pizarra.js`.
+
+- **Las marcas van en la misma columna**: `game_state.presentacion.trazos`, no
+  en un broadcast, por lo mismo que la lámina: quien entra tarde o recarga la
+  ve CON sus marcas. Quién la cambia ya lo decidía
+  `protect_game_state_teacher_columns`; el CHECK `game_state_presentacion_tamano`
+  le pone tope (60 000 caracteres; el navegador corta en 30 000 y 60 marcas),
+  porque la fila de `game_state` viaja entera por Realtime con cada jugada.
+  Comprobado impersonando al profe dueño de la fila: 70 000 se rechaza y unas
+  marcas normales entran. (Sin sesión el trigger devuelve la columna vieja
+  antes del CHECK, así que esa prueba no sirve para el tope.)
+- **Cada trazo es `{h, c, p}`**: herramienta, color (por nombre, no un color
+  libre) y puntos de 0 a 1000 sobre el ancho y el alto de la IMAGEN. El SVG va
+  encima con el viewBox de la imagen y `preserveAspectRatio="xMidYMid meet"`,
+  el mismo «contain» de la `<img>`: la marca cae en el mismo punto de la lámina
+  en la computadora, el celular, el proyector y a pantalla completa (lo mide el
+  verificador). Lo que llega de la base se dibuja solo si tiene esa forma
+  (`Pizarra.limpiar`), con `createElementNS`, nunca con `innerHTML`.
+- **Se manda al soltar cada trazo**, no a cada movimiento del dedo. Los envíos
+  de `mostrarPresentacion` van de a uno y en orden (el último gana): tres rayas
+  o tres láminas seguidas no dejan una vieja en la base. Un trazo de lápiz muy
+  largo sigue en otro, pegado, para no pasar de 200 puntos.
+- **Las marcas son de la diapositiva**: al pasar a otra se van; al volver, el
+  profe las trae de nuevo (las recuerda su pantalla mientras dure la página, y
+  `mostrarPresentacion` sin `trazos` se lleva las de la lámina). Al cerrar la
+  clase se limpian con la presentación.
+- **Solo recibe el puntero mientras el profe dibuja** (`pointer-events`); al
+  alumno nunca. Para quien usa lector de pantalla, «Tu profe está marcando la
+  diapositiva» en `#clase-voz` la primera vez en cada lámina.
+- **Colores medidos**: rojo, azul, verde y negro contra el blanco de la lámina y
+  el blanco contra el negro (para láminas oscuras), 3:1 como mínimo (lo mide el
+  verificador). El amarillo es para el resaltador, que va debajo de lo que
+  resalta. Cada botón de color dice su nombre.
+
+#### Las notas del profe en cada diapositiva
+
+Debajo de la diapositiva, «📝 Tus notas de esta diapositiva (solo las ves tú)»:
+recordatorios que el profe escribe y edita (qué preguntar, qué ejemplo dar,
+cuánto tiempo), en las presentaciones del curso y en las suyas. Las notas que
+ya traía el curso (`notas` de `diapositivas.json`) siguen arriba, aparte.
+
+- **Van en `presentacion_notas`** (`profesor_id, deck, n`), con la misma forma
+  de `deck` que el CHECK de `game_state`. Cada política es
+  `profesor_id = (select auth.uid())` y nada más: **ni quien administra las
+  ve** — son apuntes personales, no un dato del alumno. Comprobado
+  impersonando: el profe que la escribió la ve; otro profe, quien administra y
+  un alumno ven 0, y el otro profe no la cambia.
+- Se guarda sola 1,5 s después de dejar de escribir, al salir del cuadro y al
+  pasar de diapositiva (en la que era), y con «Guardar la nota». Vaciarla la
+  borra. Borrar una presentación subida borra sus notas.
+- Van dentro de `#presentacion-profe`: no salen en el proyector.
+
 **Una presentación nueva del curso**: sus imágenes (`01.webp`…, 1600 × 900) y su
 `diapositivas.json` en su carpeta, y una línea en `LISTA` de
 `js/clase-presentacion.js` con el MISMO título del JSON (lo revisa el

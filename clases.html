@@ -109,6 +109,13 @@
                 <p id="buscar-panel-estado" role="status" class="text-sm text-brand-600 dark:text-brand-300 mt-2 empty:hidden"></p>
             </form>
 
+            <!-- ===== La franja de la región (taller del MEP): el dibujo de su
+                 Dirección Regional, con el nombre y lo que muestra, si la cuenta
+                 tiene uno en fondos_region. La pinta js/fondo-region.js. Va justo
+                 después del buscador (que va pegado al saludo): mientras se busca
+                 se esconde, como todo lo que no es la grilla. ===== -->
+            <section id="fondo-region" hidden aria-labelledby="fondo-region-titulo" class="mb-6 bg-white dark:bg-brand-900 rounded-2xl shadow-md overflow-hidden"></section>
+
             <!-- ===== Novedades (alumno): lo último que le pasó —tareas, exámenes,
                  retos, avisos y notas de su profe—, lo nuevo marcado. ===== -->
             <section id="campana-panel" hidden aria-labelledby="campana-titulo" class="mb-6 bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6">
@@ -543,5 +550,6 @@
     <script src="js/paginas-admin.js"></script>
     <script src="js/paginas-supervisor.js"></script>
     <script src="js/clases.js"></script>
+    <script src="js/fondo-region.js"></script>
 <!-- burbuja: inicio --><script src="js/burbuja-en-linea.js" defer></script><!-- burbuja: fin --><!-- juego-aviso: inicio --><script src="js/juego-aviso.js" defer></script><!-- juego-aviso: fin --><!-- aviso-profe: inicio --><script src="js/aviso-profe.js" defer></script><!-- aviso-profe: fin --><!-- tanda: inicio --><script src="js/tanda-diez.js" defer></script><!-- tanda: fin --><!-- bromas: inicio --><script src="js/bromas.js" defer></script><!-- bromas: fin --><!-- acceso: inicio --><script src="js/acceso-vigente.js" defer></script><!-- acceso: fin --><!-- marca: inicio --><script src="js/marca-academia.js" defer></script><!-- marca: fin --><!-- ayuda: inicio --><script src="js/ayuda-guia.js" defer></script><!-- ayuda: fin --></body>
 </html>

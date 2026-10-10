@@ -765,8 +765,15 @@ async function pruebaContrarreloj(browser, ruta, nombre) {
   }, null, { timeout: 25000 });
   igual("el cuadro de comandos se ve",
     await page.evaluate(() => { const c = document.querySelector(".cc-caja"); return c ? getComputedStyle(c).display : "no se montó"; }), "block");
-  igual("con la posición contada en palabras",
-    await page.evaluate(() => /Blancas:.*Negras:/.test(document.querySelector(".cc-pos").textContent)), "true");
+  /* Acá la posición va en dos listas, cada una bajo su encabezado: «Piezas»
+     (h2) y debajo «Blancas» y «Negras» (h3), para llegar con la tecla H. */
+  igual("con la posición en dos listas, «Blancas» y «Negras», bajo «Piezas»",
+    await page.evaluate(() => {
+      const caja = document.querySelector("#q-comandos .cc-caja");
+      const hs = Array.from(caja.querySelectorAll(":scope > h2, .cc-pos h3")).map((h) => h.tagName + ":" + h.textContent);
+      const listas = Array.from(caja.querySelectorAll(".cc-pos h3 + ul")).map((u) => u.children.length > 0);
+      return hs.join("|") + " " + listas.join(",");
+    }), "H2:Piezas|H3:Blancas|H3:Negras true,true");
 
   const fen = await fenDeLaPantalla(page, "#board", ".cc-pos");
   const { Chess } = require("chess.js");

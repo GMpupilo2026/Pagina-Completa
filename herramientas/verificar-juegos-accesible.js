@@ -523,7 +523,8 @@ async function pruebaRevisarLaPartida(browser) {
    de pantalla perdía por tiempo antes de terminar de oír la posición. Nada de eso
    daba error: la página se veía perfecta. */
 const RACHA_FEN = "r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 2 3";
-const RACHA_EJERCICIO = [RACHA_FEN, "f1c4", "Bc4", 500];
+// El quinto campo: lo que jugó el rival para llegar a la posición (1.e4 e5 2.Cf3 Cc6).
+const RACHA_EJERCICIO = [RACHA_FEN, "f1c4", "Bc4", 500, "Nc6"];
 
 async function pruebaLasRachas(browser) {
   console.log("\n▶ ¡Te reto! y Racha táctica: una parada de Tab, preguntas y tiempo");
@@ -569,6 +570,15 @@ async function pruebaLasRachas(browser) {
     /* Diez segundos alcanzan para MIRAR un tablero, no para oírlo. */
     ok("    en Modo Adaptado el ejercicio da 60 segundos", /60000ms/.test(t.barra), t.barra);
     ok("    y lo dice", /60 segundos/.test(t.resultado), t.resultado);
+    if (r.nombre === "racha-tactica.html") {
+      // Lo que acaba de jugar el rival, dicho en palabras al llegar el ejercicio.
+      ok("    dice qué jugó el rival, en palabras", /Las negras jugaron caballo cesar 6\./.test(t.resultado), t.resultado);
+      await page.fill(".cc-input", "última jugada");
+      await page.press(".cc-input", "Enter");
+      await page.waitForTimeout(200);
+      const ult = await page.evaluate(() => (document.querySelector(".cc-msg") || {}).textContent || "");
+      ok("    «última jugada» la repite", /^La última jugada fue de las negras: caballo cesar 6\.$/.test(ult), ult);
+    }
 
     await page.fill(".cc-input", "caballos");
     await page.press(".cc-input", "Enter");
@@ -664,7 +674,62 @@ async function pruebaLasRachas(browser) {
   await page.waitForTimeout(300);
   const barra = await page.evaluate(() => document.getElementById("timer-bar").style.transition);
   ok("  fuera del modo, siguen siendo 10 segundos", /10000ms/.test(barra), barra);
+  const rival = await page.evaluate(() => document.getElementById("result-text").textContent);
+  igual("  y la jugada del rival va escrita en algebraica española", rival, "Las negras jugaron Cc6.");
   await ctx.close();
+
+  /* Las cuentas «ciego»: lo pidió ese grupo. Las piezas se dicen UNA por una
+     (con un segundo entre una y otra; acá se acortan para no esperar un
+     minuto), el reloj NO corre mientras tanto, y después son 30 segundos.
+     Arriba de la lista de piezas, un encabezado «Piezas» para llegar con la H. */
+  const c = await abrir(browser, RACHAS[1].url, RACHAS[1].datos, "u-ana", true);
+  await c.page.evaluate((ej) => {
+    window.PUZZLE_RUSH_DATA = [ej];
+    document.documentElement.classList.add("modo-ciego");
+    window.__dichas = [];
+    new MutationObserver(() => {
+      const t = document.getElementById("pieza-dicha").textContent;
+      if (t) window.__dichas.push(t);
+    }).observe(document.getElementById("pieza-dicha"), { childList: true, characterData: true, subtree: true });
+  }, RACHA_EJERCICIO);
+  const enc = await c.page.evaluate(() => {
+    const h = document.querySelector("#q-comandos h2");
+    const pos = document.querySelector("#q-comandos .cc-pos");
+    return { texto: h ? h.textContent : null, antes: !!(h && pos && h.nextElementSibling === pos), seVe: !!(h && h.checkVisibility()) };
+  });
+  ok("  el encabezado «Piezas» está justo arriba de la lista y se ve", enc.texto === "Piezas" && enc.antes && enc.seVe, enc);
+  // La pausa real es de 2 s: se mide el valor y después se acorta para la prueba.
+  igual("  la pausa entre pieza y pieza es de 1 segundo", await c.page.evaluate(() => LECTURA.pausaMs), 1000);
+  await c.page.evaluate(() => { LECTURA.pausaMs = 400; LECTURA.msPorLetra = 1; });
+  await c.page.click("#start-btn");
+  await c.page.waitForTimeout(1000);
+  const durante = await c.page.evaluate(() => ({
+    barra: document.getElementById("timer-bar").style.transition,
+    res: document.getElementById("result-text").textContent,
+    dichas: window.__dichas.slice(),
+  }));
+  ok("  mientras dice las piezas, el reloj no corre", !/ms linear/.test(durante.barra), durante.barra);
+  ok("  y avisa que los 30 segundos empiezan al terminar", /los 30 segundos empiezan cuando termine/.test(durante.res), durante.res);
+  ok("  y antes de las piezas, qué jugó el rival", /^Ejercicio nuevo\. Las negras jugaron caballo cesar 6\. Juegan las blancas\./.test(durante.res), durante.res);
+  ok("  dice una pieza a la vez, con su pausa", durante.dichas.length >= 1 && durante.dichas.length <= 3 && durante.dichas[0] === "Rey blanco en eva 1.", durante.dichas);
+  await c.page.fill(".cc-input", "tiempo");
+  await c.page.press(".cc-input", "Enter");
+  await c.page.waitForTimeout(150);
+  const tiempo = await c.page.evaluate(() => document.querySelector(".cc-msg").textContent);
+  ok("  «tiempo» durante la lectura dice cuándo empieza el reloj", /^El reloj empieza cuando termine/.test(tiempo), tiempo);
+  await c.page.evaluate(() => { LECTURA.pausaMs = 5; });
+  await c.page.waitForFunction(() => /ms linear/.test(document.getElementById("timer-bar").style.transition), null, { timeout: 15000 }).catch(() => {});
+  const despues = await c.page.evaluate(() => ({
+    barra: document.getElementById("timer-bar").style.transition,
+    res: document.getElementById("result-text").textContent,
+    dichas: window.__dichas.slice(),
+  }));
+  igual("  dijo las 32 piezas, cada una por separado", despues.dichas.length, 32);
+  ok("  con su color bien dicho", despues.dichas.includes("Dama negra en david 8.") && despues.dichas.includes("Caballo blanco en felix 3."), despues.dichas);
+  ok("  y al terminar arranca el reloj de 30 segundos", /30000ms/.test(despues.barra), despues.barra);
+  ok("  y lo dice", /Empieza el reloj: 30 segundos/.test(despues.res), despues.res);
+  igual("  sin errores de JavaScript", c.errores.length, 0);
+  await c.ctx.close();
 }
 
 /* Los avisos de mitad de tiempo y de los 10 segundos (js/reloj-hablado.js),

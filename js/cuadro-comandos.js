@@ -126,6 +126,45 @@ window.CuadroComandos = (function () {
     return "";
   }
 
+  /* La posición en dos listas, «Blancas» y «Negras», cada una bajo su <h3>
+     (va debajo del <h2> de `encabezadoPosicion`), y al final quién juega. */
+  function pintarPorColor(destino, game) {
+    var BN = window.BlindNotation;
+    destino.textContent = "";
+    if (!BN) return;
+    var ORDEN = ["k", "q", "r", "b", "n", "p"];
+    [["w", "Blancas"], ["b", "Negras"]].forEach(function (par) {
+      var h = document.createElement("h3");
+      h.className = "cc-pos-color";
+      h.textContent = par[1];
+      destino.appendChild(h);
+      var ul = document.createElement("ul");
+      ul.className = "cc-pos-lista";
+      ORDEN.forEach(function (tipo) {
+        var casillas = game.SQUARES.filter(function (sq) {
+          var c = game.get(sq);
+          return c && c.color === par[0] && c.type === tipo;
+        }).sort();
+        if (!casillas.length) return;
+        var li = document.createElement("li");
+        var nombre = BN.pieceLabel(tipo, casillas.length);
+        li.textContent = nombre.charAt(0).toUpperCase() + nombre.slice(1) + " en "
+          + casillas.map(BN.squareSpoken).join(", ") + ".";
+        ul.appendChild(li);
+      });
+      if (!ul.children.length) {
+        var nada = document.createElement("li");
+        nada.textContent = "Sin piezas.";
+        ul.appendChild(nada);
+      }
+      destino.appendChild(ul);
+    });
+    var turno = document.createElement("p");
+    var jaque = typeof game.in_check === "function" && game.in_check() ? ", en jaque" : "";
+    turno.textContent = (game.turn() === "w" ? "Juegan blancas" : "Juegan negras") + jaque + ".";
+    destino.appendChild(turno);
+  }
+
   // ---------------------------------------------------------------- el estilo
   // Va en su propia hoja inyectada y no en css/styles.css porque estas páginas
   // no comparten hoja: el diagnóstico usa Tailwind y Ejercicios por tema tiene
@@ -135,6 +174,9 @@ window.CuadroComandos = (function () {
     ".cc-caja { display: none; }",
     "html.adaptive-mode .cc-caja { display: block; margin: 1rem 0; padding: .9rem 1rem;",
     "  border: 2px solid currentColor; border-radius: .6rem; }",
+    ".cc-pos-titulo { margin: 0 0 .3rem; font-size: 1.05rem; font-weight: 700; }",
+    ".cc-pos-color { margin: .4rem 0 .1rem; font-size: 1rem; font-weight: 700; }",
+    ".cc-pos-lista { margin: 0 0 .3rem; padding-left: 1.2rem; list-style: disc; }",
     ".cc-pos { margin: 0 0 .6rem; font-size: 1rem; line-height: 1.6; }",
     ".cc-form { display: flex; flex-wrap: wrap; gap: .5rem; align-items: flex-end; }",
     ".cc-campo { flex: 1 1 12rem; }",
@@ -178,7 +220,11 @@ window.CuadroComandos = (function () {
     // La posición va ARRIBA del cuadro y no al final del ejercicio: leerla y
     // contestarla son el mismo gesto (misma razón que en js/curso-adaptado.js).
     // Región viva, para que cada cambio se vuelva a leer solo.
-    var pos = document.createElement("p");
+    /* Con `encabezadoPosicion`, la posición no es un renglón sino una lista
+       por color, cada una con su encabezado («Blancas», «Negras»): con la H se
+       salta directo a las piezas del rival. */
+    var porColor = !!cfg.encabezadoPosicion;
+    var pos = document.createElement(porColor ? "div" : "p");
     pos.className = "cc-pos";
     /* `posicionViva: false` la deja escrita pero muda. Es para un tablero que se
        mueve SOLO —la clase en vivo, donde mueve el profesor—: ahí dictar las
@@ -187,6 +233,16 @@ window.CuadroComandos = (function () {
     if (cfg.posicionViva !== false) {
       pos.setAttribute("aria-live", "polite");
       pos.setAttribute("aria-atomic", "true");
+    }
+    /* `encabezadoPosicion: "Piezas"` le pone un encabezado de verdad arriba de
+       la lista de piezas: con lector de pantalla se llega con la tecla H, sin
+       recorrer la página renglón por renglón (lo pidió el grupo de personas
+       ciegas para la Racha táctica). */
+    if (cfg.encabezadoPosicion) {
+      var tit = document.createElement("h2");
+      tit.className = "cc-pos-titulo";
+      tit.textContent = cfg.encabezadoPosicion;
+      caja.appendChild(tit);
     }
     caja.appendChild(pos);
 
@@ -271,6 +327,10 @@ window.CuadroComandos = (function () {
         return api;
       },
       posicion: function (juegoOTexto) {
+        if (porColor && juegoOTexto && typeof juegoOTexto !== "string") {
+          pintarPorColor(pos, juegoOTexto);
+          return api;
+        }
         pos.textContent = typeof juegoOTexto === "string"
           ? juegoOTexto
           : (juegoOTexto ? posicionEnPalabras(juegoOTexto) : "");
