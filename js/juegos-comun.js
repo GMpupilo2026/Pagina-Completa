@@ -25,7 +25,7 @@
             { id: "misiones", emoji: "🎯", label: "Misiones secretas", desc: "Cada uno recibe una misión que el otro no ve (una torre en séptima, dejar al rival sin caballos…). Ganas por mate o si al llegar tu turno tu misión sigue cumplida. Adivina el plan del rival antes de que sea tarde." },
             { id: "ciegas", emoji: "🙈", label: "A ciegas", desc: "Ajedrez normal sin ver las piezas: escribes tu jugada en un panel, la del rival aparece 10 segundos y desaparece. Cinco oportunidades de ver la planilla 20 segundos." },
             { id: "relevo", emoji: "🤫", label: "Relevo en silencio", equipos: true, desc: "Ajedrez por equipos: cada integrante hace una jugada cuando le toca, sin hablar. Solo hay tres señales para el equipo —ataca, defiende y cuidado— y el otro equipo no las ve. Hay que adivinar el plan del compañero." },
-            { id: "4ffa", emoji: "♟️", label: "4 jugadores · Todos contra todos", desc: "4 personas, un solo tablero en cruz. Suma puntos por capturas y jaque mate — no hace falta ser el último en pie para ganar." },
+            { id: "4ffa", emoji: "♟️", label: "4 jugadores · Todos contra todos", desc: "4 personas, un solo tablero en cruz. Gana el último rey en pie — suma puntos extra por cada rival que seguía vivo cuando termina la partida." },
             { id: "4teams", emoji: "🤝", label: "4 jugadores · Equipos", desc: "2 parejas (los que quedan frente a frente en el tablero): gana el primer equipo que da jaque mate a un rival. No se puede capturar al compañero." },
             { id: "kingofthehill", emoji: "⛰️", label: "Rey de la colina", desc: "Próximamente", disabled: true },
             { id: "threecheck", emoji: "🎯", label: "Tres jaques", desc: "Próximamente", disabled: true },
