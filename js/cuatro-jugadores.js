@@ -49,7 +49,17 @@
                 const r = room.result || {};
                 let text;
                 if (r.reason === "draw") text = "Tablas — se repartieron los puntos.";
-                else if (r.winners && r.winners.length) text = "Ganó " + r.winners.map((s) => SEAT_LABEL[s] + " (" + nameFor(s) + ")").join(" + ") + ".";
+                else if (r.winners && r.winners.length) {
+                    text = "Ganó " + r.winners.map((s) => SEAT_LABEL[s] + " (" + nameFor(s) + ")").join(" + ") + ".";
+                    // "Todos contra todos" termina en cuanto queda un solo jugador activo
+                    // (ver «Fin de partida en FFA» en js/fourplayer-engine.js): los demás
+                    // pudieron quedarse sin tiempo o rendirse sin que les dieran mate, y sus
+                    // reyes siguen en el tablero. Sin esto, verlos ahí después de "Ganó
+                    // Verde" parece que la partida se cortó a medias en vez de terminar.
+                    if (r.reason === "last-standing" && r.bonusPoints && Object.values(r.bonusPoints).some((p) => p > 0)) {
+                        text += " Los demás se quedaron sin tiempo o se rindieron — sus reyes no llegaron a mate, pero ya se sumó el bono por cada uno.";
+                    }
+                }
                 else text = "Partida terminada.";
                 setStatus("Partida terminada — " + text);
             } else if (waitingToStart) {
