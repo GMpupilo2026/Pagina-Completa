@@ -13,7 +13,11 @@ jugadores. Con eso:
     si es de los juegos estudiantiles, se suma. El buscador da los nombres
     cortados a 50 letras, así que de un nombre cortado se lee el título
     completo en la página del torneo antes de clasificarlo (la categoría suele
-    estar al final).
+    estar al final);
+  · uno nuevo que las reglas no aceptan pero tiene pinta de JDE (una letra de
+    categoría, un organizador del MEP…) no se suma: se anota en
+    herramientas/datos/ajedrez-estudiantil-revisar.csv y sale en el resumen
+    del PR, para que alguien decida. Así se perdieron 36 torneos hasta 2026.
 
 Si cambió algo, reescribe herramientas/datos/ajedrez-estudiantil-torneos.csv,
 la fecha de actualización y data/ajedrez-estudiantil.json. Si no, no toca nada.
@@ -41,6 +45,8 @@ import ajedrez_estudiantil_reglas as reglas  # noqa: E402
 
 FUENTE = os.path.join(RAIZ, "herramientas", "datos", "ajedrez-estudiantil-torneos.csv")
 FECHA = os.path.join(RAIZ, "herramientas", "datos", "ajedrez-estudiantil-actualizado.txt")
+REVISAR = os.path.join(RAIZ, "herramientas", "datos", "ajedrez-estudiantil-revisar.csv")
+COLUMNAS_REVISAR = ["clave", "nombre", "inicio", "organizador", "lugar", "jugadores", "visto", "decision"]
 BUSCADOR = "https://chess-results.com/TurnierSuche.aspx?lan=2"
 # Un navegador común: el agente por omisión de Python lo tratan distinto.
 AGENTE = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
@@ -148,10 +154,11 @@ class ChessResults:
 
 # ---------- Juntar lo nuevo con lo que ya está ----------
 
-def actualizar(guardados, recientes, titulo):
-    """Devuelve (filas, nuevos, cambiados). `titulo(clave)` lee el título completo."""
+def actualizar(guardados, recientes, titulo, ya_anotados=()):
+    """Devuelve (filas, nuevos, cambiados, por_revisar). `titulo(clave)` lee el
+    título completo; `ya_anotados` son las claves que ya están para revisar."""
     por_clave = {r["clave"]: r for r in guardados}
-    nuevos, cambiados = [], []
+    nuevos, cambiados, por_revisar = [], [], []
     for t in recientes:
         viejo = por_clave.get(t["clave"])
         if viejo:
@@ -160,13 +167,18 @@ def actualizar(guardados, recientes, titulo):
                 viejo.update(cambio)
                 cambiados.append((viejo, cambio))
             continue
+        if t["clave"] in ya_anotados:
+            continue
         nombre = t["nombre"]
-        if len(nombre) >= 45:   # cortado: el título completo, si puede ser estudiantil
-            if not PISTAS.search(reglas.sin_tildes(nombre + " " + t["organizador"])):
-                continue
+        # Cortado y con pistas de ser estudiantil (o dudoso): antes, el título
+        # completo. Sin pistas, ninguna regla lo acepta: se mira cortado.
+        if len(nombre) >= 45 and (PISTAS.search(reglas.sin_tildes(nombre + " " + t["organizador"]))
+                                  or reglas.dudoso(nombre, t["organizador"], t["lugar"])):
             nombre = titulo(t["clave"]) or nombre
         c = reglas.clasificar(nombre, t["organizador"], t["lugar"], t["inicio"], t["clave"])
         if c is None:
+            if reglas.dudoso(nombre, t["organizador"], t["lugar"]):
+                por_revisar.append({**{k: t[k] for k in ("clave", "inicio", "organizador", "lugar", "jugadores")}, "nombre": nombre})
             continue
         fila = {
             "clave": t["clave"], "anio": str(c["anio"]), "etapa": c["etapa"], "categoria": c["categoria"],
@@ -178,15 +190,23 @@ def actualizar(guardados, recientes, titulo):
         por_clave[t["clave"]] = fila
         nuevos.append(fila)
     filas = sorted(por_clave.values(), key=lambda r: (int(r["anio"]), r["inicio"], int(r["clave"])))
-    return filas, nuevos, cambiados
+    return filas, nuevos, cambiados, por_revisar
 
 
 def hoy_en_costa_rica():
     return (datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(hours=6)).date().isoformat()
 
 
-def resumen(nuevos, cambiados):
+def resumen(nuevos, cambiados, pendientes=()):
     lineas = [f"Revisión automática de chess-results del {hoy_en_costa_rica()}.", ""]
+    if pendientes:
+        lineas += [f"**{len(pendientes)} torneo(s) por revisar:** las reglas no los aceptan, pero tienen pinta de los JDE. "
+                   "Si alguno es de los JDE, va en `A_MANO` de `herramientas/ajedrez_estudiantil_reglas.py`; si no, "
+                   "«no» en la columna `decision` de `herramientas/datos/ajedrez-estudiantil-revisar.csv`.", ""]
+        lineas += [f"- {r['inicio'][:4]} · [{r['nombre']}](https://chess-results.com/tnr{r['clave']}.aspx?lan=2)"
+                   + (f" · {r['organizador']}" if r["organizador"] else "") + (f" · {r['lugar']}" if r["lugar"] else "")
+                   + f" · {r['jugadores']} jugadores" for r in pendientes]
+        lineas.append("")
     if nuevos:
         lineas += [f"**{len(nuevos)} torneo(s) nuevo(s):**", ""]
         lineas += [f"- {r['anio']} · {r['etapa']}" + (f" · {r['categoria']}" if r["categoria"] else "")
@@ -199,6 +219,13 @@ def resumen(nuevos, cambiados):
     return "\n".join(lineas) + "\n"
 
 
+def leer_revisar():
+    if not os.path.exists(REVISAR):
+        return []
+    with open(REVISAR, encoding="utf-8", newline="") as f:
+        return list(csv.DictReader(f))
+
+
 def main():
     with open(FUENTE, encoding="utf-8", newline="") as f:
         guardados = list(csv.DictReader(f))
@@ -206,11 +233,18 @@ def main():
     cr = ChessResults()
     recientes = cr.recientes()
     print(f"chess-results: {len(recientes)} torneos recientes de Costa Rica")
-    filas, nuevos, cambiados = actualizar(guardados, recientes, cr.titulo)
-    print(f"nuevos: {len(nuevos)} · puestos al día: {len(cambiados)}")
+    anotados = leer_revisar()
+    filas, nuevos, cambiados, por_revisar = actualizar(guardados, recientes, cr.titulo, {r["clave"] for r in anotados})
+    print(f"nuevos: {len(nuevos)} · puestos al día: {len(cambiados)} · por revisar: {len(por_revisar)}")
+    if por_revisar:
+        anotados += [{**r, "visto": hoy_en_costa_rica(), "decision": ""} for r in por_revisar]
+        with open(REVISAR, "w", encoding="utf-8", newline="") as f:
+            w = csv.DictWriter(f, fieldnames=COLUMNAS_REVISAR)
+            w.writeheader()
+            w.writerows(sorted(anotados, key=lambda r: int(r["clave"])))
     if "--resumen" in sys.argv:
         with open(sys.argv[sys.argv.index("--resumen") + 1], "w", encoding="utf-8") as f:
-            f.write(resumen(nuevos, cambiados))
+            f.write(resumen(nuevos, cambiados, [r for r in anotados if not r["decision"]]))
     if not nuevos and not cambiados:
         return
     with open(FUENTE, "w", encoding="utf-8", newline="") as f:

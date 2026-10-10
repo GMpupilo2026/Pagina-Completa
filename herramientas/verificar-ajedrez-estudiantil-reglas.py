@@ -142,7 +142,7 @@ def titulo(clave):
 
 
 copia = copy.deepcopy(guardados)
-total, nuevos, cambiados = actualizar.actualizar(copia, filas, titulo)
+total, nuevos, cambiados, por_revisar = actualizar.actualizar(copia, filas, titulo)
 claves_nuevas = [r["clave"] for r in nuevos]
 cierto("pone al día los inscritos del torneo que ya estaba", [(r["clave"], c) for r, c in cambiados] == [("1408605", {"jugadores": "9"})], str(cambiados))
 cierto("suma los dos torneos nuevos de los JDE y nada más", claves_nuevas == ["1599001", "1599004"], str(claves_nuevas))
@@ -157,6 +157,31 @@ cierto("deja fuera el torneo jugado en otro país", "1599005" not in claves_nuev
 cierto("la lista queda con los nuevos y ordenada", len(total) == len(guardados) + 2 and total == sorted(total, key=lambda r: (int(r["anio"]), r["inicio"], int(r["clave"]))))
 cierto("no toca la lista guardada en disco", len(list(csv.DictReader(open(actualizar.FUENTE, encoding="utf-8")))) == len(guardados))
 cierto("el resumen nombra el torneo nuevo", "JDE Regional Cartago 2027" in actualizar.resumen(nuevos, cambiados))
+cierto("con las muestras reales no hay nada por revisar", por_revisar == [], str(por_revisar))
+
+print("Lo que tiene pinta de JDE y las reglas no aceptan")
+dudosa = {"clave": "1599101", "nombre": "Categoria A Individual Abierto", "inicio": "2027-04-15", "organizador": "",
+          "lugar": "Alajuela", "rondas": "5", "jugadores": "11"}
+ajena = {"clave": "1599102", "nombre": "Campeonato Nacional de Categorías Menores 2027 Sub 12", "inicio": "2027-04-15",
+         "organizador": "Asociación de Ajedrez", "lugar": "", "rondas": "7", "jugadores": "30"}
+_, nuevos2, _, revisar2 = actualizar.actualizar(copy.deepcopy(guardados), [dudosa, ajena], lambda c: "")
+cierto("«Categoria A Individual Abierto» sin organizador no se suma: queda para revisar",
+       nuevos2 == [] and [r["clave"] for r in revisar2] == ["1599101"], str(revisar2))
+_, _, _, revisar3 = actualizar.actualizar(copy.deepcopy(guardados), [dudosa], lambda c: "", {"1599101"})
+cierto("lo que ya está anotado para revisar no se vuelve a anotar", revisar3 == [], str(revisar3))
+cierto("el resumen lista lo que falta revisar, con su enlace",
+       "tnr1599101.aspx" in actualizar.resumen([], [], [{**dudosa, "visto": "2027-04-16", "decision": ""}]))
+por_clave = {r["clave"]: r for r in guardados}
+sin_alarma = [k for k in reglas.A_MANO if k in por_clave
+              and not reglas.dudoso(por_clave[k]["nombre"], por_clave[k]["organizador"], por_clave[k]["lugar"])]
+cierto("cada torneo reconocido a mano habría salido para revisar", not sin_alarma, ", ".join(sin_alarma))
+cierto("los de A_MANO están todos en la lista", all(k in por_clave for k in reglas.A_MANO),
+       ", ".join(k for k in reglas.A_MANO if k not in por_clave))
+anotados = actualizar.leer_revisar()
+cierto("la lista para revisar tiene sus columnas y decisiones válidas («» o «no»)",
+       all(list(r) == actualizar.COLUMNAS_REVISAR and r["decision"] in ("", "no") for r in anotados))
+cierto("nada de la lista para revisar está ya entre los torneos (al sumarlo, sale de ahí)",
+       not [r["clave"] for r in anotados if r["clave"] in por_clave], str([r["clave"] for r in anotados if r["clave"] in por_clave]))
 
 print("Leer los jugadores de cada torneo")
 ind = lector.leer_individual(muestra("clasificacion.txt"))

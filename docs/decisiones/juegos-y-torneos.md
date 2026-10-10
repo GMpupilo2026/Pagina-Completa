@@ -2161,6 +2161,22 @@ los internacionales (CODICADER y escolares de la federación). Se enlaza desde
   `net.http_request_queue` se quedan en la cola hasta la siguiente; y el
   formulario del buscador vence en unos minutos, así que se pide uno nuevo
   antes de cada tanda.
+- **Lo dudoso se anota para revisar, no se pierde.** Los 36 de arriba (35 de
+  esa revisión y «Interrregional Alajuela JDNEquipo C», 2019, hermano de los
+  «Interregional Alajuela JDE…») tenían algo en común: una letra de categoría,
+  un organizador del MEP o una palabra de las etapas, sin que ninguna regla los
+  aceptara. `reglas.dudoso()` mira eso (y descarta lo que se sabe ajeno: JDN,
+  federación, torneos de clubes por edades, festivales…), y el actualizador ya
+  no deja ese torneo fuera sin avisar: lo anota en
+  `herramientas/datos/ajedrez-estudiantil-revisar.csv` (`decision` vacía) y el
+  resumen del PR lista todo lo pendiente con su enlace. Si es de los JDE, va a
+  `A_MANO` y a la lista de torneos (y sale de la de revisar); si no, `no` en
+  `decision`, y no se vuelve a anotar. Medido contra la revisión del
+  10/10/2026, la alarma habría marcado todos los de `A_MANO` (el verificador lo
+  exige) y 31 de más en toda la historia; esos 31 se guardaron revisados, 25
+  con `no` y 6 pendientes de confirmar («Institucional Anastasio Alfaro»
+  2022 y «Torneo CECELO» 2026, Cañas). Un nombre cortado que es dudoso
+  también se lee completo antes de decidir.
 - `verificar-ajedrez-estudiantil.js` cuenta las participaciones directo del
   CSV, por otro camino que la página, y las compara con lo que se pinta: sin
   filtros, con una región, con una categoría y con las dos; además, los
