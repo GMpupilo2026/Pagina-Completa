@@ -175,7 +175,7 @@ window.VisorLinea = (function () {
     const motor = el("p", "visor-motor");
     const detalles = el("details", "visor-posicion");
     const resumen = el("summary", "", "La posición, pieza por pieza");
-    const completa = el("p");
+    const completa = el("div");
     detalles.appendChild(resumen);
     detalles.appendChild(completa);
     const comandosCaja = el("div", "visor-comandos");
@@ -295,7 +295,7 @@ window.VisorLinea = (function () {
       anuncio.textContent = donde;
       nota.textContent = indice > 0 && notas[indice - 1] ? notas[indice - 1] : "";
       nota.hidden = !nota.textContent;
-      completa.textContent = window.BlindNotation ? BlindNotation.positionSentence(partida) : "";
+      if (window.BlindNotation) BlindNotation.escribirPosicion(completa, partida); else completa.textContent = "";
       evaluarAhora();
       if (o.alCambiar) o.alCambiar(indice);
     }

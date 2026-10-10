@@ -1137,3 +1137,43 @@ Lo miden `verificar-preguntas-tablero.js` («R» y la coronación),
 `verificar-clase-adaptada.js`, `verificar-examenes.js`,
 `verificar-curso-adaptado.js`, `verificar-temas-plataforma.js`,
 `verificar-informes.js`, `verificar-logros.js` y `verificar-panel.js`.
+
+## Las piezas, siempre bajo su encabezado
+
+Lo pidió la Academia para **todas las cuentas ciegas y todos los ejercicios**:
+que en cada uno esté el encabezado «Piezas» y, justo debajo, las piezas de la
+posición. Antes eso solo lo tenían la Racha táctica y ¡Te reto!
+(`encabezadoPosicion`); en el resto la posición salía en una frase corrida, iba
+dentro de un `<details>` plegado (Estudio, los visores de los cursos) o no
+estaba escrita en ninguna parte y había que pedirla con «posición» (Practicar,
+Finales, Aperturas, los cursos…). Con la H del lector se llega directo a
+«Piezas», y desde ahí a «Blancas» y «Negras».
+
+- **Una sola forma de escribirla:** `BlindNotation.pintarPiezas()`
+  (`js/blind-notation.js`): `<h2>Piezas</h2>`, `<h3>Blancas</h3>` con su lista,
+  `<h3>Negras</h3>` con la suya y al final quién juega. De ahí salen
+  `groupedReadoutHTML()` (Mates, Juegos, Repasar, los artículos), el recuadro
+  de comandos y `BlindNotation.escribirPosicion()`, que usan las lecturas
+  propias de Habilidades, Memoria, Visualización, Estudio y los visores. Esas
+  lecturas tienen que ser un `<div>`: un `<h2>` no puede ir dentro de un `<p>`.
+- **El recuadro de comandos** (`js/cuadro-comandos.js`), con la cuenta ciega,
+  escribe la posición con encabezado aunque la página no lo pida. Si la página
+  no llama nunca a `posicion()`, la toma de `juego` cada 400 ms y la reescribe
+  cuando cambia, **muda** (cada jugada ya se dice sola: dictar las treinta y
+  dos piezas después de cada una tapaba el «¡Correcto!»). Si la página ya tiene
+  su propia lectura con «Piezas» a la vista, la del recuadro se calla: dos
+  encabezados iguales seguidos son una parada de más. Memoria pasa una partida
+  de mentira (sin `fen`) con lo colocado y no entra: lo colocado no es «la
+  posición».
+- **Dos posiciones, dos nombres:** en Siete diferencias son «Piezas de la
+  posición A» y «Piezas de la posición B».
+- **Lo que a propósito NO lleva piezas:** la Fotografía y la reconstrucción de
+  Memoria mientras se reconstruye, y la apertura sin tablero de nivel 3 (la
+  posición es la respuesta); Coordenadas (no hay piezas), Sonar y Batalla
+  naval (lo escondido es el juego).
+- Sin la marca de cuenta ciega no cambia nada: en Modo Adaptado la posición
+  sigue en un renglón donde iba en un renglón.
+
+Lo mide `verificar-piezas-ciego.js`, entrando como alumna ciega a quince
+ejercicios. Probado que falla: sin la lectura sola del recuadro saltan tres, y
+sin `escribirPosicion()` con encabezado, cinco.

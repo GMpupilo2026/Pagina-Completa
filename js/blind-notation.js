@@ -81,20 +81,6 @@ window.BlindNotation = (function () {
     return parts.join(' ');
   }
 
-  // A partir de un objeto chess.js (con .get(casilla) para a1..h8), arma el
-  // HTML de la descripción completa de la posición, agrupada por color y tipo
-  // de pieza, con encabezados reales (h2/h3) para poder navegarla con las
-  // teclas de encabezado del lector de pantalla — igual que el comando "T" de
-  // tablero.html:
-  //
-  //   <p>Turno de blancas.</p>
-  //   <h2>Piezas</h2>
-  //   <h3>Blancas</h3>
-  //   <p>rey: felix 1</p>
-  //   <p>dama: hector 1</p>
-  //   ...
-  //   <h3>Negras</h3>
-  //   ...
   // Las piezas del tablero agrupadas por color y por tipo, con sus casillas
   // ordenadas. Lo usan las dos lecturas de abajo: una copia por lectura se
   // habría ido separando de la otra a la primera corrección.
@@ -112,35 +98,94 @@ window.BlindNotation = (function () {
     return byColor;
   }
 
-  function groupedReadoutHTML(game, opts) {
-    opts = opts || {};
-    const byColor = groupPieces(game);
+  /* Las piezas como las pidió el grupo de personas ciegas, y IGUAL en todos
+     los ejercicios: primero el encabezado «Piezas» (h2) y justo debajo las
+     piezas, en dos listas con su propio encabezado, «Blancas» y «Negras» (h3).
+     Con la tecla H del lector se llega directo a la posición y, desde ahí, a
+     las piezas del rival, sin recorrer la página renglón por renglón. Quién
+     juega va al final, después de las piezas.
 
-    let html = '';
-    if (opts.includeTurn !== false) {
-      const turn = game.turn() === 'w' ? 'blancas' : 'negras';
-      const check = typeof game.in_check === 'function' && game.in_check() ? ', en jaque' : '';
-      html += '<p>Turno de ' + turn + check + '.</p>';
+     Es la ÚNICA forma de escribir la posición con encabezados del sitio:
+     groupedReadoutHTML() (Mates, Juegos, Repasar…), el recuadro de comandos
+     (js/cuadro-comandos.js) y escribirPosicion() salen de acá. Una copia por
+     página se habría ido separando a la primera corrección.
+       opts.titulo: false  → sin el <h2> (quien lo llama ya puso el suyo);
+                    un texto → ese encabezado («Piezas de la posición A»).
+       opts.includeTurn: false → sin «Juegan blancas». */
+  function pintarPiezas(destino, game, opts) {
+    opts = opts || {};
+    destino.textContent = '';
+    if (!game || typeof game.get !== 'function') return;
+    if (opts.titulo !== false) {
+      const h2 = document.createElement('h2');
+      h2.className = 'bn-piezas-titulo';
+      h2.textContent = typeof opts.titulo === 'string' ? opts.titulo : 'Piezas';
+      destino.appendChild(h2);
     }
-    html += '<h2>Piezas</h2>';
-    const colorLabel = { w: 'Blancas', b: 'Negras' };
-    ['w', 'b'].forEach(function (color) {
-      html += '<h3>' + colorLabel[color] + '</h3>';
-      const lines = [];
+    const byColor = groupPieces(game);
+    [['w', 'Blancas'], ['b', 'Negras']].forEach(function (par) {
+      const h3 = document.createElement('h3');
+      h3.className = 'bn-piezas-color';
+      h3.textContent = par[1];
+      destino.appendChild(h3);
+      const ul = document.createElement('ul');
+      ul.className = 'bn-piezas-lista';
       PIECE_ORDER.forEach(function (type) {
-        const squares = byColor[color][type];
+        const squares = byColor[par[0]][type];
         if (!squares || !squares.length) return;
-        // Mismo orden que tablero-board.js: alfabético simple sobre la
-        // casilla real (a1 antes que h1), y recién después se convierte a
-        // la palabra de columna.
-        const spoken = squares.slice().sort().map(squareSpoken).join(', ');
-        lines.push(PIECE_LABEL[type] + ': ' + spoken);
+        const li = document.createElement('li');
+        const nombre = pieceLabel(type, squares.length);
+        // Mismo orden que tablero-board.js: alfabético simple sobre la casilla
+        // real (a1 antes que h1), y recién después se convierte a la palabra.
+        li.textContent = nombre.charAt(0).toUpperCase() + nombre.slice(1) + ' en '
+          + squares.slice().sort().map(squareSpoken).join(', ') + '.';
+        ul.appendChild(li);
       });
-      html += lines.length
-        ? lines.map(function (l) { return '<p>' + l + '</p>'; }).join('')
-        : '<p>Sin piezas ' + (color === 'w' ? 'blancas' : 'negras') + ' en el tablero.</p>';
+      if (!ul.children.length) {
+        const nada = document.createElement('li');
+        nada.textContent = 'Sin piezas.';
+        ul.appendChild(nada);
+      }
+      destino.appendChild(ul);
     });
-    return html;
+    if (opts.includeTurn !== false && typeof game.turn === 'function') {
+      const turno = document.createElement('p');
+      const jaque = typeof game.in_check === 'function' && game.in_check() ? ', en jaque' : '';
+      turno.className = 'bn-piezas-turno';
+      turno.textContent = (game.turn() === 'w' ? 'Juegan blancas' : 'Juegan negras') + jaque + '.';
+      destino.appendChild(turno);
+    }
+  }
+
+  // La misma lectura, como HTML (para quien la pone con innerHTML).
+  function groupedReadoutHTML(game, opts) {
+    const div = document.createElement('div');
+    pintarPiezas(div, game, opts);
+    return div.innerHTML;
+  }
+
+  /* Si la cuenta está marcada como ciega por administración (la clase la pone
+     js/adaptive-mode.js con lo que dice js/vision-cuenta.js). */
+  function cuentaCiega() {
+    try { return document.documentElement.classList.contains('modo-ciego'); } catch (e) { return false; }
+  }
+
+  /* La posición escrita en una lectura propia de una página (Tipos, Memoria,
+     Visualización, Estudio, los visores de los cursos). Con la cuenta ciega,
+     SIEMPRE con el encabezado «Piezas» y las piezas debajo (pintarPiezas), y
+     si la lectura está dentro de un <details> plegado se despliega: plegada, la
+     tecla H no llega al encabezado. Sin la marca, la frase de siempre. El
+     destino tiene que ser un <div>: un <h2> no puede ir dentro de un <p>. */
+  function escribirPosicion(el, game, opts) {
+    if (!el) return;
+    if (!game) { el.textContent = ''; return; }
+    if (cuentaCiega()) {
+      pintarPiezas(el, game, opts);
+      const det = el.closest ? el.closest('details') : null;
+      if (det) det.open = true;
+      return;
+    }
+    el.textContent = positionSentence(game, opts);
   }
 
   // La MISMA lectura, pero en una frase y sin ningún encabezado:
@@ -149,7 +194,8 @@ window.BlindNotation = (function () {
   // cuando la lectura es lo único que hay en esa zona de la página (Mates,
   // Aprender, Desafíos, Practicar) pero rompen el árbol de encabezados de una
   // página que ya tiene el suyo — el diagnóstico, con su <h2> por pregunta, o
-  // los ejercicios por tema. Ahí va esta.
+  // los ejercicios por tema. Ahí va esta — salvo con la cuenta ciega, que
+  // lleva siempre el encabezado (escribirPosicion y el recuadro de comandos).
   function positionSentence(game, opts) {
     opts = opts || {};
     const byColor = groupPieces(game);
@@ -330,6 +376,7 @@ window.BlindNotation = (function () {
 
   return {
     fileName, squareSpoken, textSpoken, sanSpoken, groupedReadoutHTML, positionSentence, pieceLabel,
+    pintarPiezas, escribirPosicion, cuentaCiega,
     FILE_NAMES, PIECE_LABEL, PIECE_PLURAL, PIECE_ORDER,
     isSpeechEnabled, setSpeechEnabled, speak, setupSpeechToggle,
     getAvailableVoices, getSpeechVoiceURI, setSpeechVoiceURI,

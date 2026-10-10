@@ -90,7 +90,7 @@
   function leerPosicion(fen) {
     const p = $("lectura");
     if (!fen) { p.classList.add("hidden"); p.textContent = ""; return; }
-    p.textContent = window.BlindNotation ? BlindNotation.positionSentence(new Chess(fen)) : fen;
+    if (window.BlindNotation) BlindNotation.escribirPosicion(p, new Chess(fen)); else p.textContent = fen;
     p.classList.remove("hidden");
   }
 
