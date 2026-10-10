@@ -57,8 +57,12 @@ async function pruebaCiega(browser) {
   const noAdaptadas = await page.evaluate(() => VisionCuenta.NO_ADAPTADAS);
   igual("ninguna tarjeta lleva a una página no adaptada",
     enlaces.filter((h) => noAdaptadas.includes(h.split("?")[0].split("/").pop())), []);
-  cierto("trae los juegos hechos para jugar sin ver y el entrenamiento con tablero",
-    ["sonar.html", "batalla-naval.html", "entreno/mates.html", "entreno/estudio.html", "tareas.html", "ciegos.html"].every((h) => enlaces.includes(h)));
+  cierto("trae el entrenamiento con tablero, ¡Te reto! y la guía",
+    ["te-reto.html", "entreno/mates.html", "entreno/estudio.html", "tareas.html", "ciegos.html"].every((h) => enlaces.includes(h)));
+  /* La Academia pidió esconderlas: ahí no hay piezas que poner bajo «Piezas»
+     (ver «Lo que no se puede hacer sin ver, no se ofrece»). */
+  igual("y no trae Sonar, Batalla naval, Memoria ni Coordenadas",
+    ["sonar.html", "batalla-naval.html", "entreno/memoria.html", "entreno/coordenadas.html"].filter((h) => enlaces.includes(h)), []);
   cierto("y ninguna de las puertas que no están adaptadas (Archivos, las fichas por categoría repetidas)",
     !enlaces.includes("partidas.html") && !enlaces.some((h) => h.includes("?cat=")));
   igual("el grupo de entrenar se alcanza con #entrenar", await page.evaluate(() => !!document.querySelector("section#entrenar h2")), true);
@@ -221,8 +225,8 @@ async function pruebaJuegos(browser) {
     const ve = (h) => { const a = document.querySelector('main a[href="' + h + '"]'); return a ? a.checkVisibility() : "no está"; };
     return { bot: ve("bot.html"), confites: ve("confites.html"), concentracion: ve("concentracion.html"), sonar: ve("sonar.html"), batalla: ve("batalla-naval.html") };
   });
-  igual("lo no adaptado no se ofrece y lo adaptado sí", vistas,
-    { bot: false, confites: false, concentracion: false, sonar: true, batalla: true });
+  igual("lo no adaptado (y lo escondido a pedido: Sonar, Batalla naval) no se ofrece", vistas,
+    { bot: false, confites: false, concentracion: false, sonar: false, batalla: false });
   await ctx.close();
 }
 
