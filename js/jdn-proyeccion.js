@@ -12,6 +12,12 @@
      como activo. Es el mismo criterio de esa herramienta (una persona es su
      nombre), con la misma limitación: dos personas con el mismo nombre
      quedan juntas.
+   - «Elo Nacional» cruza el mismo nombre con elo_nacional_activos: los
+     menores de 20 años que ajedrezcostarica.com/es/national-rating marca
+     como activos, con su club. Ahí el nombre ya viene «Apellidos, Nombre»,
+     igual que en jdn_inscripciones (los dos lo arman igual desde su propia
+     fuente), así que la comparación es por el nombre completo normalizado,
+     no por palabra suelta como en «Activos 2026».
 
    Ver «Proyección JDN por comité» en docs/decisiones/juegos-y-torneos.md. */
 (function () {
@@ -57,6 +63,31 @@
         }
     }
 
+    async function leerEloNacional() {
+        const filas = [];
+        for (let desde = 0; ; desde += 1000) {
+            const { data, error } = await sb.from("elo_nacional_activos")
+                .select("nombre,club,edad")
+                .range(desde, desde + 999);
+            if (error) throw error;
+            filas.push(...data);
+            if (data.length < 1000) return filas;
+        }
+    }
+
+    // Las dos tablas arman el nombre igual, «Apellidos, Nombre» desde su
+    // propia fuente (el export del ICODER y el Elo Nacional), así que se
+    // compara el nombre completo normalizado, sin la coincidencia parcial
+    // por palabra que usa «Activos 2026» contra Ajedrez estudiantil.
+    function eloPorNombreDe(filas) {
+        const m = new Map();
+        for (const f of filas) {
+            const k = JdeDatos.normalizar(f.nombre);
+            if (k && !m.has(k)) m.set(k, f);
+        }
+        return m;
+    }
+
     // Busca a la misma persona en los datos de Ajedrez estudiantil (JDE) por
     // nombre, igual que historial-jugador.html: cada palabra del nombre debe
     // aparecer en la clave normalizada del jugador.
@@ -86,13 +117,13 @@
         return el("div", { class: "overflow-x-auto mt-2 bg-white dark:bg-brand-900 rounded-2xl shadow-md" }, t);
     }
 
-    let comites = []; // [{nombre, mio, atletas:[{nombre,categoria,estado,activo2026,clave}], tecnico, u12, u16, u20, registrado, tramite, fuera, activos}]
+    let comites = []; // [{nombre, mio, atletas:[{nombre,categoria,estado,activo2026,clave,elo}], tecnico, u12, u16, u20, registrado, tramite, fuera, activos, enEloNacional}]
 
-    function preparar(filas, datosJde) {
+    function preparar(filas, datosJde, eloPorNombre) {
         const C = {};
         const c = (n) => C[n] || (C[n] = {
             nombre: n, mio: MIS_COMITES.includes(n), atletas: [], tecnico: 0,
-            u12: 0, u16: 0, u20: 0, registrado: 0, tramite: 0, fuera: 0, activos: 0, conDato: 0,
+            u12: 0, u16: 0, u20: 0, registrado: 0, tramite: 0, fuera: 0, activos: 0, conDato: 0, enEloNacional: 0,
         });
         for (const f of filas) {
             const x = c(f.comite);
@@ -103,10 +134,12 @@
             x[ei.grupo]++;
             const act = activoEn2026(f.nombre, datosJde);
             if (act && act.clave) { x.conDato++; if (act.activo) x.activos++; }
+            const elo = (eloPorNombre && eloPorNombre.get(JdeDatos.normalizar(f.nombre))) || null;
+            if (elo) x.enEloNacional++;
             x.atletas.push({
                 nombre: f.nombre, categoria: f.categoria, estado: f.estado,
                 identificacion: f.identificacion || "", nacimiento: f.nacimiento,
-                activo: act && act.activo, clave: act && act.clave,
+                activo: act && act.activo, clave: act && act.clave, elo,
             });
         }
         return Object.values(C).sort((a, b) => (b.mio - a.mio) || a.nombre.localeCompare(b.nombre, "es"));
@@ -127,9 +160,9 @@
             b.addEventListener("click", () => elegir(b.dataset.c));
             tb.append(el("tr", {}, el("td", { class: TD }, b),
                 td(x.u12, 1), td(x.u16, 1), td(x.u20, 1), td(totalAtletas, 1),
-                td(x.registrado, 1), td(x.tramite, 1), td(x.fuera, 1), td(cifraActivos(x), 1)));
+                td(x.registrado, 1), td(x.tramite, 1), td(x.fuera, 1), td(cifraActivos(x), 1), td(x.enEloNacional, 1)));
         }
-        if (!comites.length) tb.append(el("tr", {}, el("td", { class: TD, colspan: "9" }, "Todavía no hay ningún export cargado.")));
+        if (!comites.length) tb.append(el("tr", {}, el("td", { class: TD, colspan: "10" }, "Todavía no hay ningún export cargado.")));
     }
 
     function cifra(n, texto) {
@@ -150,21 +183,23 @@
         ficha.append(el("div", { class: "flex flex-wrap items-baseline justify-between gap-2" },
             el("h2", { id: "ficha-titulo", class: "font-serif text-2xl font-bold text-brand-800 dark:text-white" }, (x.mio ? "⭐ " : "") + x.nombre),
             el("p", { class: "text-sm text-brand-500 dark:text-brand-300" }, x.tecnico + " en el cuerpo técnico (entrenadores, asistentes y chaperonas)")));
-        ficha.append(el("div", { class: "grid grid-cols-2 md:grid-cols-4 gap-3 mt-4" },
+        ficha.append(el("div", { class: "grid grid-cols-2 md:grid-cols-5 gap-3 mt-4" },
             cifra(x.u12 + x.u16 + x.u20, "atletas inscritos (" + x.u12 + " U-12, " + x.u16 + " U-16, " + x.u20 + " U-20)"),
             cifra(x.registrado, "con el trámite registrado"),
             cifra(x.tramite, "todavía en trámite (aprobado por ICODER, pase cantonal o debe corregir)"),
-            cifra(cifraActivos(x), "activos en 2026 (de quienes se pudo buscar)")));
+            cifra(cifraActivos(x), "activos en 2026 (de quienes se pudo buscar)"),
+            cifra(x.enEloNacional, "en el Elo Nacional de la FCA (menores de 20, activos)")));
         const filas = [...x.atletas].sort((a, b) => a.categoria.localeCompare(b.categoria) || a.nombre.localeCompare(b.nombre, "es"));
         ficha.append(el("h3", { class: "font-serif text-lg font-bold text-brand-800 dark:text-white mt-6" }, "Atletas"));
-        ficha.append(tabla("Atletas de " + x.nombre, ["Nombre", "Cédula", "Nacimiento", "Categoría", "Estado del trámite", "Activo 2026"], filas.map((a) => {
+        ficha.append(tabla("Atletas de " + x.nombre, ["Nombre", "Cédula", "Nacimiento", "Categoría", "Estado del trámite", "Activo 2026", "Elo Nacional"], filas.map((a) => {
             const ei = estadoInfo(a.estado);
             const activoCel = a.clave
                 ? el("a", { href: "historial-jugador.html?j=" + encodeURIComponent(a.clave), class: "underline underline-offset-2 hover:no-underline" }, a.activo ? "Sí, ver historial" : "No en 2026, ver historial")
                 : "Sin dato";
+            const eloCel = a.elo ? a.elo.club + " · " + a.elo.edad + " años" : "No encontrado";
             return el("tr", {}, td(a.nombre), td(a.identificacion || "—"), td(fechaCorta(a.nacimiento)), td(a.categoria),
                 el("td", { class: TD }, el("span", { "aria-hidden": "true" }, ei.emoji + " "), ei.texto),
-                el("td", { class: TD }, activoCel));
+                el("td", { class: TD }, activoCel), td(eloCel));
         })));
     }
 
@@ -195,12 +230,17 @@
             $("error").classList.remove("hidden");
             return;
         }
+        const avisos = [];
         let datosJde = null;
         try { datosJde = await JdeDatos.cargar(); } catch (e) {
-            $("error").textContent = "No se pudo cruzar con la actividad de chess-results en 2026: " + (e.message || e) + ". La tabla se ve igual, sin la columna de activos.";
-            $("error").classList.remove("hidden");
+            avisos.push("No se pudo cruzar con la actividad de chess-results en 2026: " + (e.message || e) + ".");
         }
-        comites = preparar(filas, datosJde);
+        let filasElo = [];
+        try { filasElo = await leerEloNacional(); } catch (e) {
+            avisos.push("No se pudo leer el Elo Nacional: " + (e.message || e) + ".");
+        }
+        if (avisos.length) { $("error").textContent = avisos.join(" ") + " La tabla se ve igual, sin esas columnas."; $("error").classList.remove("hidden"); }
+        comites = preparar(filas, datosJde, eloPorNombreDe(filasElo));
         const totalAtletas = comites.reduce((s, x) => s + x.u12 + x.u16 + x.u20, 0);
         $("intro").textContent = `${filas.length ? comites.length : 0} comités, ${totalAtletas} atletas inscritos en la próxima eliminatoria de los JDN(P). Elige un comité para ver a todos sus atletas, su categoría y en qué paso del trámite van.`;
         armarControles();

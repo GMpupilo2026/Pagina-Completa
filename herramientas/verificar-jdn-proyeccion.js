@@ -11,7 +11,10 @@
      pudo buscar, no sobre el total;
    - la ficha de un comité lista a sus atletas con su cédula, su fecha de
      nacimiento, su categoría, el estado del trámite escrito (no solo el
-     color) y el enlace a su historial si se encontró a alguien.
+     color) y el enlace a su historial si se encontró a alguien;
+   - «Elo Nacional» cuenta, por comité y en la ficha de cada atleta, a quien
+     se encuentra por el nombre completo (no por palabra suelta) entre los
+     menores de 20 años activos de elo_nacional_activos, con su club.
 
    Ver «Proyección JDN por comité» en docs/decisiones/juegos-y-torneos.md.
 
@@ -38,6 +41,15 @@ fila("San José", "Entrenador", "Perez Soto, Carlos", "CUERPO TÉCNICO", "REGIST
 fila("Alajuela", "Atleta", "Rojas Arias, Luis", "U-12 POR EQUIPOS", "APROBADO ICODER", "121700034", "2013-04-19");
 fila("Alajuela", "Atleta", "Brenes Soto, Laura", "U-16 INDIVIDUAL", "DEBEN CORREGIR LO SOLICITADO", "306220866", "2014-11-22");
 
+// Ana y Laura están en el Elo Nacional (con su club de hoy); Juan y Eva no
+// se encuentran (ninguno de los dos está en ELO, a propósito: Juan SÍ se
+// encuentra en Ajedrez estudiantil pero NO en el Elo Nacional, para probar
+// que son dos cruces independientes).
+const ELO = [
+    { nombre: "Mora Vargas, Ana", club: "San José", edad: 12 },
+    { nombre: "Brenes Soto, Laura", club: "Alajuela", edad: 15 },
+];
+
 const T = (clave, anio) => [clave, anio, "Regional", "C", "JDE de prueba " + anio, anio + "-05-01", "", "", 10, 5, "Individual", "Clásico"];
 const TORNEOS = {
     actualizado: "2026-10-08",
@@ -61,6 +73,7 @@ window.SUPABASE_URL = "https://falso.supabase.co";
 window.SUPABASE_ANON_KEY = "anon-falsa";
 (function () {
   const FILAS = ${JSON.stringify(FILAS)};
+  const ELO = ${JSON.stringify(ELO)};
   const LICENCIA = ${tieneLicencia ? "true" : "false"};
   window.__pedidos = [];
   function respuesta(data, error) { return Promise.resolve({ data, error: error || null }); }
@@ -73,6 +86,10 @@ window.SUPABASE_ANON_KEY = "anon-falsa";
       if (tabla === "jdn_inscripciones") {
         window.__pedidos.push("jdn_inscripciones " + q._desde);
         data = LICENCIA ? FILAS.slice(q._desde, Math.min(q._hasta + 1, q._desde + 1000)) : [];
+      }
+      if (tabla === "elo_nacional_activos") {
+        window.__pedidos.push("elo_nacional_activos " + q._desde);
+        data = LICENCIA ? ELO.slice(q._desde, Math.min(q._hasta + 1, q._desde + 1000)) : [];
       }
       return Promise.resolve({ data, error: null }).then(ok, mal);
     };
@@ -138,6 +155,8 @@ const filasTabla = (p) => p.$$eval("#tabla-comites tbody tr", (trs) => trs.map((
     igual("San José: activos 2026 es «1 de 2» (Ana activa, Juan encontrado pero no activo, Eva sin dato no cuenta)",
         m[0][8], "1 de 2");
     igual("Alajuela: activos 2026 es «1 de 1» (Laura activa, Luis sin dato no cuenta)", m[1][8], "1 de 1");
+    igual("San José: Elo Nacional es 1 (solo Ana; Juan y Eva no están en ELO aunque Juan sí esté en Ajedrez estudiantil)", m[0][9], "1");
+    igual("Alajuela: Elo Nacional es 1 (Laura)", m[1][9], "1");
 
     console.log("\n=== La ficha de un comité ===");
     await p.click("#tabla-comites button:text-is('⭐ San José')");
@@ -147,9 +166,13 @@ const filasTabla = (p) => p.$$eval("#tabla-comites tbody tr", (trs) => trs.map((
     const filaAna = await p.$eval("#ficha tbody tr:has-text('Mora Vargas')", (t) => [...t.cells].map((c) => c.textContent.trim()));
     igual("a Ana se le ve la cédula, la fecha de nacimiento (DD/MM/AAAA), el estado escrito y el enlace de activa en 2026",
         [filaAna[1], filaAna[2], filaAna[4], /Sí, ver historial/.test(filaAna[5])], ["121090928", "02/12/2013", "✅ Registrado", true]);
+    igual("a Ana se le ve su club y edad del Elo Nacional", filaAna[6], "San José · 12 años");
     const filaEva = await p.$eval("#ficha tbody tr:has-text('Quesada Mena')", (t) => [...t.cells].map((c) => c.textContent.trim()));
     igual("a Eva (sin dato en Ajedrez estudiantil) le dice «Sin dato», no que no esté activa",
         [filaEva[4], filaEva[5]], ["⬛ No convocado", "Sin dato"]);
+    const filaJuan = await p.$eval("#ficha tbody tr:has-text('Solis Rojas')", (t) => [...t.cells].map((c) => c.textContent.trim()));
+    igual("a Juan (encontrado en Ajedrez estudiantil pero no en el Elo Nacional) el Elo Nacional le dice «No encontrado»",
+        filaJuan[6], "No encontrado");
     await ctx.close();
 
     await browser.close();
