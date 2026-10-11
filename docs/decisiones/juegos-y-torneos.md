@@ -2036,6 +2036,109 @@ y la institución adentro, y que el filtro de institución elegido en pantalla
 baje solo esa institución. Rompiendo a propósito cualquiera de los dos,
 salta.
 
+### El buscador de jugador en la lista
+
+Con muchos jugadores, encontrar uno para corregir un dato a mano en la tabla
+de Inscritos se vuelve lento. Un cuadro de texto (`estado.filtroJugador`, el
+mismo patrón que `estado.filtroInstitucion`) filtra `pintarJugadores()` por
+nombre o institución, sin tildes ni mayúsculas
+(`normalizarBusqueda()`, el mismo truco de `NFD` + quitar diacríticos que ya
+usa `bolsilloNombre()` para detectar duplicados). No hay nada de servidor que
+buscar: Pareo Integral no tiene backend propio de jugadores, así que el
+filtro es, como el resto de la página, sobre la lista que ya está cargada en
+el navegador. Se vacía al abrir o crear otro torneo, igual que el filtro de
+institución.
+
+### Las planillas de mesa para firmar, lo contrario de la plantilla de la pared
+
+La plantilla de la pared (arriba) es para ANTES de la ronda y nunca muestra
+un resultado. Las planillas para firmar (`imprimirPlanillasFirma()`) son para
+DESPUÉS: una hoja POR MESA —con salto de página real entre una y la
+siguiente (`break-after: page` en `.pi-firma-mesa`)— para que el árbitro la
+recoja firmada por los dos jugadores. A propósito, muestran el resultado ya
+anotado (o un espacio en blanco para escribirlo si todavía no hay uno): es
+para que ambos lo confirmen con su firma, no para ocultarlo. Un bye no tiene
+con quién firmar: sale sin líneas de firma. Comparten con la plantilla de la
+pared el mismo patrón —un `<div>` siempre oculto en pantalla, una clase en el
+`<body>` que el CSS de impresión usa para esconder la ficha abierta y mostrar
+solo esto, y un único `afterprint` que ahora limpia los dos contenedores— así
+que no hace falta reengancharlo cada vez.
+
+### El resumen de validación antes de emparejar la ronda 1
+
+Antes de emparejar la ronda 1 (y solo ahí: después el orden ya quedó fijo),
+`pintarRondaNueva()` cuenta cuántos jugadores no tienen categoría, institución
+o Elo y lo dice en una lista corta. Es solo un aviso: **nunca deshabilita el
+botón «Emparejar»**, porque ninguno de esos tres datos es necesario para el
+Sistema Holandés en sí —el Elo decide el orden inicial (y los desempates que
+lo usan), pero su ausencia no rompe el pareo, solo ordena a ese jugador al
+final (`porCriterio()` en `torneo.js` ordena por Elo descendente, y `0` es lo
+más bajo)—. Deshabilitar el botón por datos opcionales habría sido excesivo
+para un torneo casual que no usa esos campos.
+
+### El enlace y el QR de solo lectura
+
+El pedido era «ver el torneo desde el celular sin tocar nada», y Pareo
+Integral no tiene servidor propio de datos (solo la búsqueda de Elo Nacional,
+ver arriba): no hay dónde publicar un estado que otro aparato pueda leer.
+La solución, consistente con «nada sale de tu computadora», es que los datos
+viajen DENTRO del enlace: `js/pareo/ver.js` comprime el JSON con
+`CompressionStream("deflate")` (el mismo patrón ya usado en
+`js/reporte-pdf.js`/`js/vista-previa.js` para no traer ninguna librería) y lo
+codifica en base64 apto para URL (igual que `js/notificaciones.js`), puesto
+en el FRAGMENTO de la dirección (después del `#`): el navegador nunca manda
+el fragmento a ningún servidor, así que ni siquiera Cloudflare lo ve. Quien
+escanea el código o abre el enlace lee esos datos directo del navegador que
+los armó, sin que pasen por ningún lado.
+
+- **Es una foto del momento, no una vista en vivo.** Cambia un resultado o
+  empareja otra ronda y el código anterior queda desactualizado: hay que
+  volver a generarlo. Se dice así, sin rodeos, en la propia caja («Ver desde
+  el celular»).
+- **Lo que viaja es lo que la pantalla ya pintó, no el torneo entero**:
+  `compartirLectura(r)` en `js/pareo/pagina.js` arma un objeto chico —el
+  nombre, la ronda (mesa, blancas, negras, resultado) y la clasificación
+  (puesto, nombre, puntos)—, reusando `filasFiltradas()` y `D.clasificacion()`,
+  las MISMAS funciones que ya usan la pantalla y el PDF. `js/pareo/ver.js` no
+  necesita el motor de emparejamiento, el TRF ni los desempates para
+  mostrarlo: es un dibujo de datos ya resueltos, no un segundo torneo.
+- **Modo lectura, adentro de la misma página**: en vez de una página nueva (con
+  toda la plomería de cabeceras, migas de pan y verificadores que eso exige),
+  `arrancar()` en `pagina.js` mira `location.hash` ANTES de tocar
+  `localStorage`: si empieza con `#ver=`, oculta `#pi-editor` (el `id` nuevo
+  en el `<div class="max-w-6xl">` que envuelve todo lo editable) y llama a
+  `PareoVer.iniciar()`, que pinta dentro de `#pi-ver`. **No lee ni escribe el
+  torneo guardado en este navegador**: ni `abrir()` ni `crear()` ni `guardar()`
+  se llaman en esa rama.
+- **El dibujo del QR es una copia chica y a propósito**, no un módulo
+  compartido con `js/clase-qr.js` (`sesion.html`): ese archivo es crítico para
+  entrar a la clase en vivo y tiene su propio comprobador
+  (`verificar-clase-qr.js`) que extrae su IIFE con un `eval` literal asumiendo
+  que es autocontenido; refactorizarlo para compartir quince líneas estables
+  de dibujo de QR no valía el riesgo de tocar una pantalla de producción para
+  una mejora nueva y de menor criticidad. `js/pareo/qr.js` tiene su propio
+  `svg()`/`cargar()`, iguales a los de `clase-qr.js` pero independientes.
+- **El atril de origen manda**: el botón «Ver desde el celular» vive junto a
+  «Planillas para firmar» en `pintarRondaJugada()` (solo con la ronda ya
+  emparejada: antes no hay nada que mostrar), y pinta la caja
+  `#pi-ver-compartir` (QR + dirección + «Copiar el enlace») que ya estaba en
+  el HTML, oculta, para no perderla si `pintarRondaJugada()` se vuelve a
+  pintar con un resultado nuevo.
+- Un enlace roto (recortado al copiarlo, o escrito a mano) no rompe la
+  página: `desempaquetar()` falla, y `PareoVer.iniciar()` muestra un aviso en
+  vez de una pantalla en blanco o un error de consola.
+
+**Al tocar el modo lectura, correr `node herramientas/verificar-pareo-pagina.js`**
+(su sección 11, «Ver desde el celular»): que el código y la dirección
+aparezcan al pedirlo, que abrir la dirección muestre el nombre del torneo, la
+ronda y la clasificación compartidos, que NO toque el torneo guardado en el
+navegador (se compara con `JSON.stringify` antes y después), que no mande
+nada a ningún servidor, y que un enlace roto avise en vez de romper la
+página. Rompiendo a propósito la descompresión o dejando que el modo lectura
+escriba en `pareo_abierto_v1`, los dos saltan (el segundo con un `✗`, no con
+el script colgado: el chequeo espera por `textContent`, no por un `<h1>` que
+en el camino roto nunca aparece).
+
 ## Ajedrez estudiantil en Costa Rica: los torneos de chess-results
 
 `ajedrez-estudiantil.html` es una página pública con la participación en los
