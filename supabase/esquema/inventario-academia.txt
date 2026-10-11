@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261010054225
+# al-dia-con: 20261011031200
 tabla  Ejercicios Lichess  rls=true
 tabla  _foto_rls_tmp  rls=false
 tabla  academia_ia  rls=true
@@ -1970,7 +1970,9 @@ politica  actualizaciones_plataforma  actualizaciones_plataforma_delete  DELETE
 politica  actualizaciones_plataforma  actualizaciones_plataforma_insert  INSERT
 politica  actualizaciones_plataforma  actualizaciones_plataforma_select  SELECT
 politica  actualizaciones_plataforma  actualizaciones_plataforma_update  UPDATE
-politica  ajustes_academia  ajustes_academia_coordinacion  ALL
+politica  ajustes_academia  ajustes_academia_coordinacion_actualiza  UPDATE
+politica  ajustes_academia  ajustes_academia_coordinacion_borra  DELETE
+politica  ajustes_academia  ajustes_academia_coordinacion_escribe  INSERT
 politica  ajustes_academia  ajustes_academia_select  SELECT
 politica  analisis_partidas_alumno  analisis_partidas_delete  DELETE
 politica  analisis_partidas_alumno  analisis_partidas_insert  INSERT
@@ -1996,7 +1998,6 @@ politica  bromas_preferencias  bromas_preferencias_ver  SELECT
 politica  certificados  certificados_lee  SELECT
 politica  clase_elegidos  clase_elegidos_insert  INSERT
 politica  clase_elegidos  clase_elegidos_select  SELECT
-politica  clase_elegidos  clase_elegidos_select_propio  SELECT
 politica  clase_elegidos  clase_elegidos_update  UPDATE
 politica  clase_enlaces  clase_enlaces_select  SELECT
 politica  clase_espectadores  clase_espectadores_select  SELECT
@@ -2007,11 +2008,9 @@ politica  clase_sacados  verificacion_en_dos_pasos  ALL  restrictiva
 politica  class_attendance  class_attendance_delete_profesor  DELETE
 politica  class_attendance  class_attendance_exige_acceso_ins  INSERT  restrictiva
 politica  class_attendance  class_attendance_exige_acceso_upd  UPDATE  restrictiva
-politica  class_attendance  class_attendance_insert_own  INSERT
-politica  class_attendance  class_attendance_insert_profesor  INSERT
+politica  class_attendance  class_attendance_insert  INSERT
 politica  class_attendance  class_attendance_no_sacado  INSERT  restrictiva
 politica  class_attendance  class_attendance_select  SELECT
-politica  class_attendance  class_attendance_select_supervisor  SELECT
 politica  class_attendance  class_attendance_update_profesor  UPDATE
 politica  class_attendance  verificacion_en_dos_pasos  ALL  restrictiva
 politica  class_chat_messages  class_chat_messages_delete  DELETE
@@ -2021,23 +2020,23 @@ politica  class_chat_messages  verificacion_en_dos_pasos  ALL  restrictiva
 politica  class_presence_log  class_presence_log_delete_profesor  DELETE
 politica  class_presence_log  class_presence_log_exige_acceso_ins  INSERT  restrictiva
 politica  class_presence_log  class_presence_log_exige_acceso_upd  UPDATE  restrictiva
-politica  class_presence_log  class_presence_log_insert_own  INSERT
-politica  class_presence_log  class_presence_log_insert_profesor  INSERT
+politica  class_presence_log  class_presence_log_insert  INSERT
 politica  class_presence_log  class_presence_log_no_sacado  INSERT  restrictiva
 politica  class_presence_log  class_presence_log_select  SELECT
-politica  class_presence_log  class_presence_log_select_supervisor  SELECT
 politica  class_presence_log  class_presence_log_update_own  UPDATE
 politica  class_sessions  class_sessions_delete  DELETE
 politica  class_sessions  class_sessions_insert  INSERT
 politica  class_sessions  class_sessions_select  SELECT
-politica  class_sessions  class_sessions_select_coordinacion  SELECT
-politica  class_sessions  class_sessions_select_supervisor  SELECT
 politica  class_sessions  class_sessions_update  UPDATE
 politica  class_sessions  verificacion_en_dos_pasos  ALL  restrictiva
-politica  cobros  cobros_coordinacion  ALL
-politica  cobros  cobros_lee_alumno  SELECT
-politica  cobros_contacto  cobros_contacto_coordinacion  ALL
-politica  cobros_contacto  cobros_contacto_lee_alumno  SELECT
+politica  cobros  cobros_coordinacion_actualiza  UPDATE
+politica  cobros  cobros_coordinacion_borra  DELETE
+politica  cobros  cobros_coordinacion_escribe  INSERT
+politica  cobros  cobros_select  SELECT
+politica  cobros_contacto  cobros_contacto_coordinacion_actualiza  UPDATE
+politica  cobros_contacto  cobros_contacto_coordinacion_borra  DELETE
+politica  cobros_contacto  cobros_contacto_coordinacion_escribe  INSERT
+politica  cobros_contacto  cobros_contacto_select  SELECT
 politica  cobros_recordatorios_programados  cobros_recordatorios_programados_coordinacion  ALL
 politica  compras_tienda  compras_tienda_select  SELECT
 politica  consultas_arbitraje  consultas_arbitraje_select  SELECT
@@ -2047,15 +2046,12 @@ politica  coordinador_profesores  coordinador_profesores_select  SELECT
 politica  course_unlocks  course_unlocks_delete  DELETE
 politica  course_unlocks  course_unlocks_insert  INSERT
 politica  course_unlocks  course_unlocks_select  SELECT
-politica  course_unlocks  course_unlocks_select_supervisor  SELECT
 politica  course_unlocks  course_unlocks_update  UPDATE
 politica  cuaderno  cuaderno_delete_propio  DELETE
 politica  cuaderno  cuaderno_exige_acceso_ins  INSERT  restrictiva
 politica  cuaderno  cuaderno_exige_acceso_upd  UPDATE  restrictiva
 politica  cuaderno  cuaderno_insert_propio  INSERT
-politica  cuaderno  cuaderno_select_profesor  SELECT
-politica  cuaderno  cuaderno_select_propio  SELECT
-politica  cuaderno  cuaderno_select_supervisor  SELECT
+politica  cuaderno  cuaderno_select  SELECT
 politica  cuaderno  cuaderno_update_propio  UPDATE
 politica  cuentas_temporales  cuentas_temporales_ver  SELECT
 politica  cuestionario_intentos  cuestionario_intentos_select  SELECT
@@ -2071,8 +2067,10 @@ politica  curso_contenido  curso_contenido_delete  DELETE
 politica  curso_contenido  curso_contenido_insert  INSERT
 politica  curso_contenido  curso_contenido_select  SELECT
 politica  curso_contenido  curso_contenido_update  UPDATE
-politica  datos_facturacion  facturacion_coordinacion  ALL
-politica  datos_facturacion  facturacion_lee_alumno  SELECT
+politica  datos_facturacion  facturacion_coordinacion_actualiza  UPDATE
+politica  datos_facturacion  facturacion_coordinacion_borra  DELETE
+politica  datos_facturacion  facturacion_coordinacion_escribe  INSERT
+politica  datos_facturacion  facturacion_select  SELECT
 politica  desafios  desafios_exige_acceso_ins  INSERT  restrictiva
 politica  desafios  desafios_exige_acceso_upd  UPDATE  restrictiva
 politica  desafios  desafios_insert  INSERT
@@ -2086,7 +2084,6 @@ politica  elo_historial  elo_historial_select  SELECT
 politica  encargados  encargados_delete  DELETE
 politica  encargados  encargados_insert  INSERT
 politica  encargados  encargados_select  SELECT
-politica  encargados  encargados_select_supervisor  SELECT
 politica  encargados  encargados_update  UPDATE
 politica  encuesta_curso_respuestas  encuesta_curso_respuestas_ver  SELECT
 politica  encuestas_curso  encuestas_curso_admin  ALL
@@ -2101,7 +2098,6 @@ politica  examen_respuestas  examen_respuestas_select  SELECT
 politica  examenes  examenes_delete  DELETE
 politica  examenes  examenes_insert  INSERT
 politica  examenes  examenes_select  SELECT
-politica  examenes  examenes_select_supervisor  SELECT
 politica  examenes  examenes_update  UPDATE
 politica  fondos_region  fondos_region_ver  SELECT
 politica  formulario_compartidos  formulario_compartidos_delete  DELETE
@@ -2130,8 +2126,6 @@ politica  game_rooms  verificacion_en_dos_pasos  ALL  restrictiva
 politica  game_state  game_state_exige_acceso_sel  SELECT  restrictiva
 politica  game_state  game_state_insert  INSERT
 politica  game_state  game_state_select  SELECT
-politica  game_state  game_state_select_coordinacion  SELECT
-politica  game_state  game_state_select_supervisor  SELECT
 politica  game_state  game_state_update  UPDATE
 politica  game_state  verificacion_en_dos_pasos  ALL  restrictiva
 politica  horario_clases  horario_clases_delete  DELETE
@@ -2144,7 +2138,8 @@ politica  insignias  insignias_ver  SELECT
 politica  insignias  verificacion_en_dos_pasos  ALL  restrictiva
 politica  insignias_tipos  insignias_tipos_ver  SELECT
 politica  jde_eventos  jde_eventos_lectura_publica  SELECT
-politica  jdn_resultados  jdn_resultados_con_herramienta  SELECT
+politica  jdn_resultados  jdn_resultados_lectura_publica  SELECT
+politica  jdn_resultados  zzz_prueba_temporal  SELECT
 politica  justificaciones_ausencia  justificaciones_select  SELECT
 politica  licencias_herramientas  licencias_herramientas_ver  SELECT
 politica  material_compartido  material_compartido_select  SELECT
@@ -2155,20 +2150,20 @@ politica  misiones_secretas  misiones_secretas_lee  SELECT
 politica  misiones_secretas  verificacion_en_dos_pasos  ALL  restrictiva
 politica  notas_alumno  notas_alumno_delete  DELETE
 politica  notas_alumno  notas_alumno_insert  INSERT
-politica  notas_alumno  notas_alumno_select_alumno  SELECT
-politica  notas_alumno  notas_alumno_select_profesor  SELECT
+politica  notas_alumno  notas_alumno_select  SELECT
 politica  notas_alumno  notas_alumno_update  UPDATE
 politica  pagos  pagos_borra_solo_supervision  DELETE  restrictiva
 politica  pagos  pagos_cambia_solo_supervision  UPDATE  restrictiva
-politica  pagos  pagos_coordinacion  ALL
-politica  pagos  pagos_lee_alumno  SELECT
+politica  pagos  pagos_coordinacion_actualiza  UPDATE
+politica  pagos  pagos_coordinacion_borra  DELETE
+politica  pagos  pagos_coordinacion_escribe  INSERT
+politica  pagos  pagos_select  SELECT
 politica  paquete_alumnos  paquete_alumnos_select  SELECT
 politica  paquetes_acceso  paquetes_acceso_select  SELECT
 politica  partidas_torneo  partidas_torneo_anota  INSERT
 politica  partidas_torneo  partidas_torneo_borra  DELETE
 politica  partidas_torneo  partidas_torneo_corrige  UPDATE
 politica  partidas_torneo  partidas_torneo_lee  SELECT
-politica  partidas_torneo  partidas_torneo_lee_supervisor  SELECT
 politica  plan_compartidos  plan_compartidos_delete  DELETE
 politica  plan_compartidos  plan_compartidos_insert  INSERT
 politica  plan_compartidos  plan_compartidos_select  SELECT
@@ -2180,8 +2175,10 @@ politica  planes_clase  planes_clase_delete  DELETE
 politica  planes_clase  planes_clase_insert  INSERT
 politica  planes_clase  planes_clase_select  SELECT
 politica  planes_clase  planes_clase_update  UPDATE
-politica  planes_cobro  planes_escribe_coordinacion  ALL
-politica  planes_cobro  planes_lee_coordinacion  SELECT
+politica  planes_cobro  planes_cobro_select  SELECT
+politica  planes_cobro  planes_coordinacion_actualiza  UPDATE
+politica  planes_cobro  planes_coordinacion_borra  DELETE
+politica  planes_cobro  planes_coordinacion_escribe  INSERT
 politica  planes_rival_alumno  planes_rival_alumno_borrar  DELETE
 politica  planes_rival_alumno  planes_rival_alumno_mandar  INSERT
 politica  planes_rival_alumno  planes_rival_alumno_ver  SELECT
@@ -2190,24 +2187,17 @@ politica  platform_activity_log  platform_activity_log_exige_acceso_ins  INSERT 
 politica  platform_activity_log  platform_activity_log_exige_acceso_upd  UPDATE  restrictiva
 politica  platform_activity_log  platform_activity_log_insert_own  INSERT
 politica  platform_activity_log  platform_activity_log_select  SELECT
-politica  platform_activity_log  platform_activity_log_select_supervisor  SELECT
 politica  platform_activity_log  platform_activity_log_update_own  UPDATE
 politica  practice_games  practice_games_delete  DELETE
 politica  practice_games  practice_games_exige_acceso_ins  INSERT  restrictiva
 politica  practice_games  practice_games_exige_acceso_upd  UPDATE  restrictiva
 politica  practice_games  practice_games_insert_own  INSERT
 politica  practice_games  practice_games_select  SELECT
-politica  practice_games  practice_games_select_coordinacion  SELECT
-politica  practice_games  practice_games_select_supervisor  SELECT
 politica  practice_games  practice_games_update  UPDATE
-politica  practice_games  practice_games_update_coordinacion  UPDATE
-politica  practice_games  practice_games_update_supervisor  UPDATE
 politica  practice_games  verificacion_en_dos_pasos  ALL  restrictiva
 politica  practice_sessions  practice_sessions_exige_acceso_sel  SELECT  restrictiva
 politica  practice_sessions  practice_sessions_insert  INSERT
 politica  practice_sessions  practice_sessions_select  SELECT
-politica  practice_sessions  practice_sessions_select_coordinacion  SELECT
-politica  practice_sessions  practice_sessions_select_supervisor  SELECT
 politica  practice_sessions  practice_sessions_update  UPDATE
 politica  practice_sessions  verificacion_en_dos_pasos  ALL  restrictiva
 politica  preferencias_avisos  preferencias_avisos_agrega  INSERT
@@ -2237,8 +2227,6 @@ politica  presentaciones_profe  presentaciones_profe_update  UPDATE
 politica  profesor_videollamada  profesor_videollamada_delete  DELETE
 politica  profesor_videollamada  profesor_videollamada_insert  INSERT
 politica  profesor_videollamada  profesor_videollamada_select  SELECT
-politica  profesor_videollamada  profesor_videollamada_select_coordinacion  SELECT
-politica  profesor_videollamada  profesor_videollamada_select_supervisor  SELECT
 politica  profesor_videollamada  profesor_videollamada_update  UPDATE
 politica  profile_teachers  profile_teachers_select  SELECT
 politica  profiles  profiles_select  SELECT
@@ -2268,13 +2256,11 @@ politica  question_answers  question_answers_insert_own  INSERT
 politica  question_answers  question_answers_no_sacado_ins  INSERT  restrictiva
 politica  question_answers  question_answers_no_sacado_upd  UPDATE  restrictiva
 politica  question_answers  question_answers_select  SELECT
-politica  question_answers  question_answers_select_supervisor  SELECT
 politica  question_answers  question_answers_update  UPDATE
 politica  question_answers  verificacion_en_dos_pasos  ALL  restrictiva
 politica  question_engine_answers  question_engine_answers_exige_acceso_ins  INSERT  restrictiva
 politica  question_engine_answers  question_engine_answers_insert  INSERT
 politica  question_engine_answers  question_engine_answers_select  SELECT
-politica  question_engine_answers  question_engine_answers_select_alumno  SELECT
 politica  questions  questions_exige_acceso_sel  SELECT  restrictiva
 politica  questions  questions_insert  INSERT
 politica  questions  questions_select  SELECT
@@ -2283,8 +2269,7 @@ politica  questions  verificacion_en_dos_pasos  ALL  restrictiva
 politica  quiniela_participantes  quiniela_participantes_admin  SELECT
 politica  quiniela_partidas  quiniela_partidas_admin  SELECT
 politica  quiniela_pronosticos  quiniela_pronosticos_admin  SELECT
-politica  recibos  recibos_coordinacion  SELECT
-politica  recibos  recibos_lee_alumno  SELECT
+politica  recibos  recibos_select  SELECT
 politica  relevo_jugadores  relevo_jugadores_lee  SELECT
 politica  relevo_jugadores  verificacion_en_dos_pasos  ALL  restrictiva
 politica  relevo_senales  relevo_senales_lee  SELECT
@@ -2295,9 +2280,7 @@ politica  repertorio  repertorio_delete_propio  DELETE
 politica  repertorio  repertorio_exige_acceso_ins  INSERT  restrictiva
 politica  repertorio  repertorio_exige_acceso_upd  UPDATE  restrictiva
 politica  repertorio  repertorio_insert_propio  INSERT
-politica  repertorio  repertorio_select_profesor  SELECT
-politica  repertorio  repertorio_select_propio  SELECT
-politica  repertorio  repertorio_select_supervisor  SELECT
+politica  repertorio  repertorio_select  SELECT
 politica  repertorio  repertorio_update_propio  UPDATE
 politica  respuestas_en_curso  respuestas_en_curso_exige_acceso_ins  INSERT  restrictiva
 politica  respuestas_en_curso  respuestas_en_curso_exige_acceso_upd  UPDATE  restrictiva
@@ -2323,8 +2306,6 @@ politica  saved_games  saved_games_delete  DELETE
 politica  saved_games  saved_games_exige_acceso_sel  SELECT  restrictiva
 politica  saved_games  saved_games_insert  INSERT
 politica  saved_games  saved_games_select  SELECT
-politica  saved_games  saved_games_select_asistentes  SELECT
-politica  saved_games  saved_games_select_ausentes  SELECT
 politica  saved_games  verificacion_en_dos_pasos  ALL  restrictiva
 politica  selecciones_arbitraje  selecciones_arbitraje_borrar  DELETE
 politica  selecciones_arbitraje  selecciones_arbitraje_cambiar  UPDATE
@@ -2340,8 +2321,10 @@ politica  subgrupos  subgrupos_insert  INSERT
 politica  subgrupos  subgrupos_select  SELECT
 politica  subgrupos  subgrupos_update  UPDATE
 politica  supervisor_cuentas  supervisor_cuentas_select  SELECT
-politica  suscripciones  suscripciones_coordinacion  ALL
-politica  suscripciones  suscripciones_lee_alumno  SELECT
+politica  suscripciones  suscripciones_coordinacion_actualiza  UPDATE
+politica  suscripciones  suscripciones_coordinacion_borra  DELETE
+politica  suscripciones  suscripciones_coordinacion_escribe  INSERT
+politica  suscripciones  suscripciones_select  SELECT
 politica  tanda_resultados  tanda_resultados_exige_acceso_ins  INSERT  restrictiva
 politica  tanda_resultados  tanda_resultados_inserta_alumno  INSERT
 politica  tanda_resultados  tanda_resultados_lee  SELECT
@@ -2355,7 +2338,6 @@ politica  tarea_items  tarea_items_update  UPDATE
 politica  tareas  tareas_delete  DELETE
 politica  tareas  tareas_insert  INSERT
 politica  tareas  tareas_select  SELECT
-politica  tareas  tareas_select_supervisor  SELECT
 politica  tareas  tareas_update  UPDATE
 politica  tournament_pairings  tournament_pairings_insert  INSERT
 politica  tournament_pairings  tournament_pairings_select  SELECT
@@ -2376,22 +2358,16 @@ politica  tournaments  tournaments_select  SELECT
 politica  tournaments  tournaments_update  UPDATE
 politica  tournaments  verificacion_en_dos_pasos  ALL  restrictiva
 politica  training_plans  training_plans_insert_teacher  INSERT
-politica  training_plans  training_plans_select_student  SELECT
-politica  training_plans  training_plans_select_supervisor  SELECT
-politica  training_plans  training_plans_select_teacher  SELECT
+politica  training_plans  training_plans_select  SELECT
 politica  training_plans  training_plans_update_teacher  UPDATE
 politica  training_progress  training_progress_exige_acceso_ins  INSERT  restrictiva
 politica  training_progress  training_progress_insert_own  INSERT
-politica  training_progress  training_progress_select_own  SELECT
-politica  training_progress  training_progress_select_supervisor  SELECT
-politica  training_progress  training_progress_select_teacher  SELECT
+politica  training_progress  training_progress_select  SELECT
 politica  training_state  training_state_delete_own  DELETE
 politica  training_state  training_state_exige_acceso_ins  INSERT  restrictiva
 politica  training_state  training_state_exige_acceso_upd  UPDATE  restrictiva
 politica  training_state  training_state_insert_own  INSERT
-politica  training_state  training_state_select_own  SELECT
-politica  training_state  training_state_select_supervisor  SELECT
-politica  training_state  training_state_select_teacher  SELECT
+politica  training_state  training_state_select  SELECT
 politica  training_state  training_state_update_own  UPDATE
 politica  trofeos_ajustes  trofeos_ajustes_ver  SELECT
 politica  trofeos_ajustes  verificacion_en_dos_pasos  ALL  restrictiva
@@ -2402,8 +2378,6 @@ politica  variant_nodes  variant_nodes_delete  DELETE
 politica  variant_nodes  variant_nodes_exige_acceso_sel  SELECT  restrictiva
 politica  variant_nodes  variant_nodes_insert  INSERT
 politica  variant_nodes  variant_nodes_select  SELECT
-politica  variant_nodes  variant_nodes_select_coordinacion  SELECT
-politica  variant_nodes  variant_nodes_select_supervisor  SELECT
 politica  variant_nodes  verificacion_en_dos_pasos  ALL  restrictiva
 politica  vision_personas  vision_personas_select  SELECT
 trigger  academia_ia  auditar
@@ -3495,6 +3469,7 @@ grant  jde_eventos  anon  TRIGGER
 grant  jde_eventos  authenticated  REFERENCES
 grant  jde_eventos  authenticated  SELECT
 grant  jde_eventos  authenticated  TRIGGER
+grant  jdn_resultados  anon  SELECT
 grant  jdn_resultados  authenticated  REFERENCES
 grant  jdn_resultados  authenticated  SELECT
 grant  jdn_resultados  authenticated  TRIGGER
