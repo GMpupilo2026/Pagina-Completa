@@ -1,8 +1,9 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261011050000
+# al-dia-con: 20261011055900
 tabla  Ejercicios Lichess  rls=true
 tabla  _foto_rls_tmp  rls=false
+tabla  _pedidos_elo  rls=false
 tabla  academia_ia  rls=true
 tabla  academia_miembros  rls=true
 tabla  academias  rls=true
@@ -55,6 +56,7 @@ tabla  diagnostico_items  rls=true
 tabla  diagnostico_sesiones  rls=true
 tabla  diagnosticos_publicos  rls=true
 tabla  elo_historial  rls=true
+tabla  elo_nacional_activos  rls=true
 tabla  encargados  rls=true
 tabla  encuesta_curso_respuestas  rls=true
 tabla  encuestas_curso  rls=true
@@ -190,6 +192,8 @@ columna  _foto_rls_tmp.cuando  text
 columna  _foto_rls_tmp.persona  uuid
 columna  _foto_rls_tmp.qa  bigint
 columna  _foto_rls_tmp.tr  bigint
+columna  _pedidos_elo.id  bigint
+columna  _pedidos_elo.p  integer
 columna  academia_ia.academia_id  uuid
 columna  academia_ia.id  uuid
 columna  academia_ia.modelo  text
@@ -559,6 +563,13 @@ columna  elo_historial.nacional  integer
 columna  elo_historial.nombre  text
 columna  elo_historial.periodo  date
 columna  elo_historial.student_id  uuid
+columna  elo_nacional_activos.club  text
+columna  elo_nacional_activos.consultado_en  timestamp with time zone
+columna  elo_nacional_activos.edad  smallint
+columna  elo_nacional_activos.fide_id  text
+columna  elo_nacional_activos.id  bigint
+columna  elo_nacional_activos.nombre  text
+columna  elo_nacional_activos.rating_nacional  integer
 columna  encargados.activo  boolean
 columna  encargados.creado_por  uuid
 columna  encargados.created_at  timestamp with time zone
@@ -2091,6 +2102,7 @@ politica  diagnosticos_publicos  diagnosticos_publicos_insert  INSERT
 politica  diagnosticos_publicos  diagnosticos_publicos_select  SELECT
 politica  diagnosticos_publicos  diagnosticos_publicos_update  UPDATE
 politica  elo_historial  elo_historial_select  SELECT
+politica  elo_nacional_activos  elo_nacional_activos_con_herramienta  SELECT
 politica  encargados  encargados_delete  DELETE
 politica  encargados  encargados_insert  INSERT
 politica  encargados  encargados_select  SELECT
@@ -2484,6 +2496,7 @@ trigger  training_progress  training_progress_valida_marca
 trigger  vision_personas  auditar
 indice  Ejercicios Lichess  ejercicios_lichess_nbplays_idx
 indice  Ejercicios Lichess  ejercicios_lichess_pkey
+indice  _pedidos_elo  _pedidos_elo_pkey
 indice  academia_ia  academia_ia_academia_id_fk
 indice  academia_ia  academia_ia_pkey
 indice  academia_ia  academia_ia_una_por_academia
@@ -2613,6 +2626,8 @@ indice  diagnostico_sesiones  diagnostico_sesiones_user_idx
 indice  diagnosticos_publicos  diagnosticos_publicos_pkey
 indice  diagnosticos_publicos  diagnosticos_publicos_supervisor_idx
 indice  elo_historial  elo_historial_pkey
+indice  elo_nacional_activos  elo_nacional_activos_fide_id_key
+indice  elo_nacional_activos  elo_nacional_activos_pkey
 indice  encargados  encargados_creado_por_fk
 indice  encargados  encargados_pendientes_idx
 indice  encargados  encargados_pkey
@@ -3300,6 +3315,9 @@ grant  diagnosticos_publicos  authenticated  SELECT
 grant  elo_historial  authenticated  REFERENCES
 grant  elo_historial  authenticated  SELECT
 grant  elo_historial  authenticated  TRIGGER
+grant  elo_nacional_activos  authenticated  REFERENCES
+grant  elo_nacional_activos  authenticated  SELECT
+grant  elo_nacional_activos  authenticated  TRIGGER
 grant  encargados  authenticated  DELETE
 grant  encargados  authenticated  INSERT
 grant  encargados  authenticated  REFERENCES
