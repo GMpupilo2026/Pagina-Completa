@@ -159,7 +159,11 @@ canjeó la Corona dorada y sus compañeros de clase no la veían.
   siendo solo de `renderStudentsList()` (el profesor). Mismo patrón que la
   lista del profesor: `Puntos.accesoriosDe()`/`Puntos.decorarAvatar()`
   llegan después de pintar la lista, con la misma memoria de 60 segundos.
-  La caja queda oculta si todavía no hay compañeros conectados.
+  La caja queda oculta si todavía no hay compañeros conectados. A uno mismo
+  no se lo lista ahí (`renderCompanerosList()` se filtra a sí mismo): su
+  propia foto, decorada con su propio accesorio, va aparte en
+  `#mi-foto-caja` (`pintarMiFoto()`), arriba del todo en `#student-panel` —
+  así ve lo mismo que ya ven sus compañeros y su profesor de él mismo.
 - **Comprobado impersonando roles en SQL** (11/10/2026, sobre una Corona
   dorada canjeada de verdad): un compañero de mismo profesor y academia que
   pide `premios_canjeados`/`accesorios_de()` de quien la tiene recibe SOLO

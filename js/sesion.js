@@ -2501,6 +2501,26 @@
             }
         }
 
+        /* La propia foto del alumno, con su accesorio de avatar puesto si
+           tiene uno — lo mismo que ya ve de los demás en
+           renderCompanerosList() de arriba. La caja se arma una sola vez
+           (no hace falta rehacer el <img> en cada latido de presencia);
+           el accesorio sí se vuelve a pedir, por si se lo quitó a mitad de
+           clase desde la tienda, en otra pestaña. */
+        function pintarMiFoto() {
+            if (isTeacher || esObservador) return;
+            const caja = document.getElementById("mi-foto-caja");
+            if (!caja) return;
+            if (!caja.firstChild && window.FotoPerfil) {
+                caja.appendChild(FotoPerfil.avatar(profile.id, profile.full_name || profile.email, "w-12 h-12 text-base"));
+            }
+            if (window.Puntos) {
+                Puntos.accesoriosDe(sb, [profile.id]).then((mapa) => {
+                    Puntos.decorarAvatar(caja.querySelector("[data-foto-de]"), mapa.get(profile.id));
+                });
+            }
+        }
+
         /* ---------- El plan de clase ----------
 
            Lo que el profesor preparó en planes.html, aquí al lado del tablero.
@@ -3008,7 +3028,7 @@
                 }
                 dictarFotografiaDeLaPresencia(state);
                 if (!isTeacher && !esObservador) pintarEntrenoDelProfe(state);
-                if (!isTeacher && !esObservador) renderCompanerosList();
+                if (!isTeacher && !esObservador) { pintarMiFoto(); renderCompanerosList(); }
                 renderStudentsList();
                 pintarCuentaCalentamiento();
                 if (isTeacher && tandaActual) { anotarTandaDeLaPresencia(); pintarTandaProfe(); }
