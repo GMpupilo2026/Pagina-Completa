@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Arma el SQL para cargar un export nuevo del ICODER a jdn_inscripciones
-(jdn-proyeccion.html, la proyección JDN por comité).
+(jdn-proyeccion.html, la proyección JDN por comité: herramienta de arbitraje
+con licencia, id «jdn-proyeccion»).
 
 NO lee chess-results: lee el CSV que exporta el propio sistema de
 inscripciones del ICODER («Archivo › Descargar › Valores separados por
@@ -9,10 +10,10 @@ Inscripción, Identificación, Tipo Identificación, Nombre, Primer Apellido,
 Segundo Apellido, Nacimiento, Sexo biológico, Edad, Etapa, Nacionalidad,
 Categoría, Estado Inscripción.
 
-Solo saca lo que la página usa (comité, tipo, nombre, categoría, estado):
-la cédula, la nacionalidad, el sexo y la fecha de nacimiento del export NO
-se copian a ningún lado. El CSV de origen tampoco se commitea: queda afuera
-del repositorio, igual que los datos de calibración del diagnóstico.
+Saca lo que la página usa: comité, tipo, nombre, categoría, estado, cédula
+(«Identificación») y fecha de nacimiento. NO copia el tipo de identificación
+ni la nacionalidad. El CSV de origen tampoco se commitea: queda afuera del
+repositorio, igual que los datos de calibración del diagnóstico.
 
 El SQL que arma este script TAMPOCO se commitea (son datos de personas,
 muchas menores de edad): se corre una vez contra la base y se descarta.
@@ -40,6 +41,15 @@ ESTADOS_VALIDOS = {"REGISTRADO", "APROBADO ICODER", "PASE CANTONAL",
 
 def escapar(s):
     return s.replace("'", "''")
+
+
+def iso(fecha):
+    """«DD/MM/AAAA» (como la escribe el ICODER) a «AAAA-MM-DD», o None si no se reconoce."""
+    partes = fecha.strip().split("/")
+    if len(partes) != 3:
+        return None
+    dd, mm, yyyy = partes
+    return f"{yyyy}-{mm}-{dd}"
 
 
 def leer(ruta):
@@ -70,12 +80,18 @@ def armar_sql(filas, edicion):
         if estado not in ESTADOS_VALIDOS:
             avisos.append(f"fila {i}: estado «{estado}» desconocido, se saltó")
             continue
-        valores.append("('{}','{}','{}','{}','{}','{}')".format(
-            escapar(edicion), escapar(comite), escapar(tipo), escapar(nombre), escapar(categoria), escapar(estado)))
+        identificacion = f["Identificación"].strip()
+        fecha = iso(f["Nacimiento"])
+        if not fecha:
+            avisos.append(f"fila {i} ({nombre}): fecha de nacimiento «{f['Nacimiento']}» no reconocida, queda en blanco")
+        valores.append("('{}','{}','{}','{}','{}','{}',{},{})".format(
+            escapar(edicion), escapar(comite), escapar(tipo), escapar(nombre), escapar(categoria), escapar(estado),
+            f"'{escapar(identificacion)}'" if identificacion else "null",
+            f"'{fecha}'" if fecha else "null"))
     if not valores:
         sys.exit("Ninguna fila se pudo cargar.")
     sql = (f"delete from public.jdn_inscripciones where edicion = '{escapar(edicion)}';\n"
-           "insert into public.jdn_inscripciones (edicion, comite, tipo, nombre, categoria, estado) values\n"
+           "insert into public.jdn_inscripciones (edicion, comite, tipo, nombre, categoria, estado, identificacion, nacimiento) values\n"
            + ",\n".join(valores) + ";\n")
     return sql, avisos
 

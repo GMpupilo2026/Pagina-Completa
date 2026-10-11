@@ -67,6 +67,21 @@
             ],
         },
         {
+            id: "jdn-proyeccion",
+            emoji: "📋",
+            nombre: "Proyección JDN por comité",
+            corto: "Proyección JDN",
+            href: "jdn-proyeccion.html",
+            disponible: true,
+            resumen: "Quién está inscrito en la próxima eliminatoria de los JDN(P) por comité de deportes, con su cédula, su fecha de nacimiento, su categoría y en qué paso del trámite del ICODER va, cruzado con su actividad reciente en los torneos estudiantiles de chess-results.",
+            puntos: [
+                "Por comité: cuántos atletas en U-12, U-16 y U-20, cuántos con el trámite registrado, en trámite o no convocados.",
+                "La ficha de cada comité: cada atleta con su cédula, su fecha de nacimiento, su categoría y el estado de su inscripción.",
+                "«Activos 2026»: a quién se le encontró un torneo estudiantil de chess-results este año, con el enlace a su historial.",
+                "Se carga a mano con cada export nuevo del sistema de inscripciones del ICODER (no es un dato público de chess-results).",
+            ],
+        },
+        {
             id: "ajedrez-estudiantil",
             emoji: "📊",
             nombre: "Ajedrez estudiantil en Costa Rica",

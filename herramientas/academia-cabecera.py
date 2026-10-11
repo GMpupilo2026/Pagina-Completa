@@ -683,7 +683,7 @@ NOMBRE_Y_PADRE = {
     "seleccion-codicader.html": ("Selección por parámetros", "clases.html"),
     "desempates.html": ("Desempates explicados", "clases.html"),
     "jdn-comites.html": ("Resultados JDN por comité", "clases.html"),
-    "jdn-proyeccion.html": ("Proyección JDN por comité", "admin.html"),
+    "jdn-proyeccion.html": ("Proyección JDN por comité", "clases.html"),
     "encuesta-profesor.html": ("¿Cómo van tus clases?", "clases.html"),
     "justificaciones.html": ("Justificaciones de ausencia", "clases.html"),
     "satisfaccion.html": ("Satisfacción con los profesores", "clases.html"),

@@ -2,16 +2,16 @@
    comité), con un doble de Supabase y datos inventados de jdn_inscripciones
    y de «Ajedrez estudiantil» (data/ajedrez-estudiantil*.json):
 
-   - quien no administra ve el candado y no pide los inscritos;
-   - quien administra ve la tabla general: un comité mío (San José, con ⭐)
+   - sin licencia se ve el candado y no se piden los inscritos;
+   - con licencia se ve la tabla general: un comité mío (San José, con ⭐)
      primero, después Alajuela; U-12/U-16/U-20, registrados, en trámite y no
      convocados contados bien, y el cuerpo técnico no cuenta como atleta;
    - «activos 2026» solo cuenta a quien se le encontró un torneo con ese año
      en los datos de Ajedrez estudiantil, y dice «n de m» sobre quienes se
      pudo buscar, no sobre el total;
-   - la ficha de un comité lista a sus atletas con su categoría, el estado del
-     trámite escrito (no solo el color) y el enlace a su historial si se
-     encontró a alguien.
+   - la ficha de un comité lista a sus atletas con su cédula, su fecha de
+     nacimiento, su categoría, el estado del trámite escrito (no solo el
+     color) y el enlace a su historial si se encontró a alguien.
 
    Ver «Proyección JDN por comité» en docs/decisiones/juegos-y-torneos.md.
 
@@ -28,13 +28,15 @@ function igual(nombre, hallado, esperado) {
 }
 
 const FILAS = [];
-function fila(comite, tipo, nombre, categoria, estado) { FILAS.push({ comite, tipo, nombre, categoria, estado }); }
-fila("San José", "Atleta", "Mora Vargas, Ana", "U-12 INDIVIDUAL", "REGISTRADO");
-fila("San José", "Atleta", "Solis Rojas, Juan", "U-16 POR EQUIPOS", "PASE CANTONAL");
-fila("San José", "Atleta", "Quesada Mena, Eva", "U-20 INDIVIDUAL", "NO CONVOCATORIA");
-fila("San José", "Entrenador", "Perez Soto, Carlos", "CUERPO TÉCNICO", "REGISTRADO");
-fila("Alajuela", "Atleta", "Rojas Arias, Luis", "U-12 POR EQUIPOS", "APROBADO ICODER");
-fila("Alajuela", "Atleta", "Brenes Soto, Laura", "U-16 INDIVIDUAL", "DEBEN CORREGIR LO SOLICITADO");
+function fila(comite, tipo, nombre, categoria, estado, identificacion, nacimiento) {
+    FILAS.push({ comite, tipo, nombre, categoria, estado, identificacion: identificacion || null, nacimiento: nacimiento || null });
+}
+fila("San José", "Atleta", "Mora Vargas, Ana", "U-12 INDIVIDUAL", "REGISTRADO", "121090928", "2013-12-02");
+fila("San José", "Atleta", "Solis Rojas, Juan", "U-16 POR EQUIPOS", "PASE CANTONAL", "209400455", "2011-01-06");
+fila("San José", "Atleta", "Quesada Mena, Eva", "U-20 INDIVIDUAL", "NO CONVOCATORIA", "120330900", "2008-08-25");
+fila("San José", "Entrenador", "Perez Soto, Carlos", "CUERPO TÉCNICO", "REGISTRADO", "117930237", "2000-10-21");
+fila("Alajuela", "Atleta", "Rojas Arias, Luis", "U-12 POR EQUIPOS", "APROBADO ICODER", "121700034", "2013-04-19");
+fila("Alajuela", "Atleta", "Brenes Soto, Laura", "U-16 INDIVIDUAL", "DEBEN CORREGIR LO SOLICITADO", "306220866", "2014-11-22");
 
 const T = (clave, anio) => [clave, anio, "Regional", "C", "JDE de prueba " + anio, anio + "-05-01", "", "", 10, 5, "Individual", "Clásico"];
 const TORNEOS = {
@@ -53,13 +55,13 @@ const JUGADORES = {
     equipos: [],
 };
 
-function doble(esAdmin) {
+function doble(tieneLicencia) {
     return `
 window.SUPABASE_URL = "https://falso.supabase.co";
 window.SUPABASE_ANON_KEY = "anon-falsa";
 (function () {
   const FILAS = ${JSON.stringify(FILAS)};
-  const ADMIN = ${esAdmin ? "true" : "false"};
+  const LICENCIA = ${tieneLicencia ? "true" : "false"};
   window.__pedidos = [];
   function respuesta(data, error) { return Promise.resolve({ data, error: error || null }); }
   function consulta(tabla) {
@@ -70,7 +72,7 @@ window.SUPABASE_ANON_KEY = "anon-falsa";
       let data = [];
       if (tabla === "jdn_inscripciones") {
         window.__pedidos.push("jdn_inscripciones " + q._desde);
-        data = ADMIN ? FILAS.slice(q._desde, Math.min(q._hasta + 1, q._desde + 1000)) : [];
+        data = LICENCIA ? FILAS.slice(q._desde, Math.min(q._hasta + 1, q._desde + 1000)) : [];
       }
       return Promise.resolve({ data, error: null }).then(ok, mal);
     };
@@ -83,9 +85,9 @@ window.SUPABASE_ANON_KEY = "anon-falsa";
       onAuthStateChange: () => ({ data: { subscription: { unsubscribe() {} } } }),
       mfa: { getAuthenticatorAssuranceLevel: () => respuesta({ currentLevel: "aal1", nextLevel: "aal1" }), listFactors: () => respuesta({ all: [], totp: [] }) },
     },
-    rpc: (nombre) => {
+    rpc: (nombre, args) => {
       window.__pedidos.push(nombre);
-      if (nombre === "soy_admin") return respuesta(ADMIN);
+      if (nombre === "tengo_herramienta") return respuesta(LICENCIA && args.p_herramienta === "jdn-proyeccion");
       return respuesta(null);
     },
     from: (t) => consulta(t),
@@ -97,9 +99,9 @@ window.SUPABASE_ANON_KEY = "anon-falsa";
 })();`;
 }
 
-async function abrir(browser, ruta, esAdmin) {
+async function abrir(browser, ruta, tieneLicencia) {
     const ctx = await browser.newContext({ serviceWorkers: "block" });
-    await ctx.route("**/js/supabase-client.js", (r) => r.fulfill({ contentType: "application/javascript", body: doble(esAdmin) }));
+    await ctx.route("**/js/supabase-client.js", (r) => r.fulfill({ contentType: "application/javascript", body: doble(tieneLicencia) }));
     await ctx.route("**/js/vendor/supabase.js", (r) => r.fulfill({ contentType: "application/javascript", body: "" }));
     await ctx.route("**/data/ajedrez-estudiantil.json*", (r) => r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(TORNEOS) }));
     await ctx.route("**/data/ajedrez-estudiantil-jugadores.json*", (r) => r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(JUGADORES) }));
@@ -115,14 +117,14 @@ const filasTabla = (p) => p.$$eval("#tabla-comites tbody tr", (trs) => trs.map((
 (async () => {
     const browser = await chromium.launch();
 
-    console.log("\n=== Quien no administra ===");
+    console.log("\n=== Sin licencia ===");
     let { ctx, p } = await abrir(browser, "jdn-proyeccion.html", false);
     await p.waitForFunction(() => !document.getElementById("loading").checkVisibility());
     igual("se ve el candado y no la página", [await visible(p, "#denegado"), await visible(p, "#app")], [true, false]);
     igual("no pide los inscritos", await p.evaluate(() => window.__pedidos.filter((x) => x.startsWith("jdn_inscripciones")).length), 0);
     await ctx.close();
 
-    console.log("\n=== Quien administra: la tabla general ===");
+    console.log("\n=== Con licencia: la tabla general ===");
     ({ ctx, p } = await abrir(browser, "jdn-proyeccion.html", true));
     await p.waitForFunction(() => document.getElementById("app").checkVisibility());
     const m = await filasTabla(p);
@@ -143,11 +145,11 @@ const filasTabla = (p) => p.$$eval("#tabla-comites tbody tr", (trs) => trs.map((
     igual("abre la ficha de San José y esconde la tabla general", [await visible(p, "#ficha"), await visible(p, "#general")], [true, false]);
     igual("el enlace lleva el comité", await p.evaluate(() => location.hash), "#san-jose");
     const filaAna = await p.$eval("#ficha tbody tr:has-text('Mora Vargas')", (t) => [...t.cells].map((c) => c.textContent.trim()));
-    igual("a Ana se le ve el estado escrito (no solo el color) y el enlace de activa en 2026",
-        [filaAna[2], /Sí, ver historial/.test(filaAna[3])], ["✅ Registrado", true]);
+    igual("a Ana se le ve la cédula, la fecha de nacimiento (DD/MM/AAAA), el estado escrito y el enlace de activa en 2026",
+        [filaAna[1], filaAna[2], filaAna[4], /Sí, ver historial/.test(filaAna[5])], ["121090928", "02/12/2013", "✅ Registrado", true]);
     const filaEva = await p.$eval("#ficha tbody tr:has-text('Quesada Mena')", (t) => [...t.cells].map((c) => c.textContent.trim()));
     igual("a Eva (sin dato en Ajedrez estudiantil) le dice «Sin dato», no que no esté activa",
-        [filaEva[2], filaEva[3]], ["⬛ No convocado", "Sin dato"]);
+        [filaEva[4], filaEva[5]], ["⬛ No convocado", "Sin dato"]);
     await ctx.close();
 
     await browser.close();

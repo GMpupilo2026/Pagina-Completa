@@ -2807,30 +2807,42 @@ la deducción, salta.
 
 ## Proyección JDN por comité
 
-`jdn-proyeccion.html` (`js/jdn-proyeccion.js`) es para la planificación interna
-del dueño del sitio: por cada comité de deportes, quién está inscrito en la
-próxima eliminatoria de los JDN(P), en qué categoría y en qué paso del trámite
-va, cruzado con si se le encontró actividad reciente en chess-results. No es
-una herramienta con licencia como las de arbitraje (ver «Herramientas de
-arbitraje» arriba): no se vende, así que el candado es `soy_admin()`, el mismo
-que `auditoria` o `arbitraje_consulta_config`, no `tengo_herramienta()`.
+`jdn-proyeccion.html` (`js/jdn-proyeccion.js`) es una herramienta de arbitraje
+con licencia más (id `jdn-proyeccion`, ver «Herramientas de arbitraje»
+arriba), con el mismo candado que `jdn-comites`: por cada comité de deportes,
+quién está inscrito en la próxima eliminatoria de los JDN(P), su cédula y
+fecha de nacimiento, en qué categoría y en qué paso del trámite va, cruzado
+con si se le encontró actividad reciente en chess-results. El dueño del sitio
+pidió guardar la cédula y la fecha de nacimiento de todos: le sirven para
+identificar con certeza a quien se repite de una edición a otra (el nombre
+solo no alcanza, ver «Una persona es su nombre» en «Historial del jugador») y
+para calcular la edad exacta de cara al siguiente ciclo.
 
 - **La fuente no es chess-results, es el ICODER.** `jdn_resultados` (ver
   «Resultados JDN por comité» arriba) sale de los torneos ya jugados y
-  publicados en chess-results; esta tabla, `jdn_inscripciones` (migración
-  `20261011120000`), sale del export del propio sistema de inscripciones del
-  ICODER para la disciplina de ajedrez, con el estado de cada trámite
-  (`REGISTRADO`, `APROBADO ICODER`, `PASE CANTONAL`,
+  publicados en chess-results; esta tabla, `jdn_inscripciones` (migraciones
+  `20261011120000` y `20261011130000`), sale del export del propio sistema de
+  inscripciones del ICODER para la disciplina de ajedrez, con el estado de
+  cada trámite (`REGISTRADO`, `APROBADO ICODER`, `PASE CANTONAL`,
   `DEBEN CORREGIR LO SOLICITADO`, `NO CONVOCATORIA`). Se llena a mano cada vez
   que el dueño tiene un export nuevo: no hay forma de leerlo en vivo (no es
   una página pública como chess-results, pg_net no sirve de nada ahí).
-- **Sin cédula ni fecha de nacimiento.** El export del ICODER trae
-  identificación, nacionalidad y fecha de nacimiento de cada persona —muchas
-  menores de edad—: la tabla solo guarda lo que la página usa (comité, tipo de
-  inscripción, nombre, categoría y estado), para no tener en la base más datos
-  personales de los necesarios. Por lo mismo, el export en sí (Excel o CSV)
-  **nunca se commitea al repositorio**: se procesa y se carga a la base desde
-  afuera, igual que los datos de calibración del diagnóstico.
+- **Sí guarda cédula y fecha de nacimiento, no el resto.** El export del
+  ICODER trae además el tipo de identificación y la nacionalidad de cada
+  persona —muchas menores de edad—: esos dos no se copian a ningún lado,
+  porque la página no los usa. El export en sí (Excel o CSV) **nunca se
+  commitea al repositorio**, y tampoco el SQL que arma
+  `herramientas/jdn-proyeccion/preparar.py` para cargarlo: se procesan y se
+  cargan a la base desde afuera, igual que los datos de calibración del
+  diagnóstico, y se descartan después.
+- **La tabla empezó sin cédula ni nacimiento (`soy_admin()`, solo para quien
+  administra) y cambió a herramienta con licencia con las dos columnas**: la
+  migración `20261011130000` las agrega y cambia la política de
+  `soy_admin()` a `tengo_herramienta('jdn-proyeccion')` (con `alter policy
+  … rename to … ` y `alter policy … using (…)`, no `drop policy` +
+  `create policy`: en esta sesión, un `drop policy`, un `truncate` o un
+  `delete` sin filtro contra la tabla quedaban cancelados en silencio por el
+  MCP de Supabase; un `update` con los valores nuevos sí pasó).
 - **«Activos 2026» reusa «Ajedrez estudiantil», no inventa una fuente nueva.**
   Cruza el nombre de cada atleta con `data/ajedrez-estudiantil.json` y
   `data/ajedrez-estudiantil-jugadores.json` (los mismos que
@@ -2854,11 +2866,12 @@ que `auditoria` o `arbitraje_consulta_config`, no `tengo_herramienta()`.
   falta más.
 
 `verificar-jdn-proyeccion.js` lo prueba con un doble de Supabase y datos
-inventados de Ajedrez estudiantil: el candado sin `soy_admin()`, el comité
-propio primero, las cuentas de categoría y de estado del trámite (y que el
-cuerpo técnico no sume como atleta), «activos 2026» contado solo sobre a
-quienes se les encontró dato, y que a quien no se le encuentra nada le diga
-«Sin dato» en vez de darlo por inactivo.
+inventados de Ajedrez estudiantil: el candado sin licencia (y que no pida la
+tabla), el comité propio primero, las cuentas de categoría y de estado del
+trámite (y que el cuerpo técnico no sume como atleta), la cédula y la fecha
+de nacimiento (DD/MM/AAAA) en la ficha de cada atleta, «activos 2026»
+contado solo sobre a quienes se les encontró dato, y que a quien no se le
+encuentra nada le diga «Sin dato» en vez de darlo por inactivo.
 
 ## Juegos Estudiantiles MEP, modo árbitro
 

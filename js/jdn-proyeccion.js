@@ -2,9 +2,10 @@
 
    - Los datos están en jdn_inscripciones: cada persona inscrita en la próxima
      eliminatoria de los JDN(P), tal como la exporta el sistema del ICODER (no
-     chess-results). Solo la lee quien administra (RLS: soy_admin()); la tabla
-     se llena a mano con cada export nuevo. No es una herramienta con
-     licencia: es la planificación interna del dueño del sitio.
+     chess-results), con su cédula y su fecha de nacimiento. Es una
+     herramienta de arbitraje con licencia (RLS: tengo_herramienta
+     ('jdn-proyeccion')), igual que jdn-comites; la tabla se llena a mano con
+     cada export nuevo.
    - «Activos 2026» cruza el nombre de cada atleta con los mismos datos de
      «Ajedrez estudiantil» que usa historial-jugador.html (js/jde-datos.js):
      si alguien con ese nombre jugó un torneo estudiantil en 2026, se marca
@@ -36,12 +37,18 @@
     }
 
     const slug = (n) => n.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+    // «AAAA-MM-DD» a «DD/MM/AAAA» sin pasar por Date (nunca se lee un día de
+    // calendario con new Date("AAAA-MM-DD"): corre el riesgo de leerlo en UTC).
+    function fechaCorta(iso) {
+        const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || "");
+        return m ? `${m[3]}/${m[2]}/${m[1]}` : "—";
+    }
 
     async function leerInscripciones() {
         const filas = [];
         for (let desde = 0; ; desde += 1000) {
             const { data, error } = await sb.from("jdn_inscripciones")
-                .select("comite,tipo,nombre,categoria,estado")
+                .select("comite,tipo,nombre,categoria,estado,identificacion,nacimiento")
                 .order("comite").order("nombre")
                 .range(desde, desde + 999);
             if (error) throw error;
@@ -96,7 +103,11 @@
             x[ei.grupo]++;
             const act = activoEn2026(f.nombre, datosJde);
             if (act && act.clave) { x.conDato++; if (act.activo) x.activos++; }
-            x.atletas.push({ nombre: f.nombre, categoria: f.categoria, estado: f.estado, activo: act && act.activo, clave: act && act.clave });
+            x.atletas.push({
+                nombre: f.nombre, categoria: f.categoria, estado: f.estado,
+                identificacion: f.identificacion || "", nacimiento: f.nacimiento,
+                activo: act && act.activo, clave: act && act.clave,
+            });
         }
         return Object.values(C).sort((a, b) => (b.mio - a.mio) || a.nombre.localeCompare(b.nombre, "es"));
     }
@@ -146,12 +157,12 @@
             cifra(cifraActivos(x), "activos en 2026 (de quienes se pudo buscar)")));
         const filas = [...x.atletas].sort((a, b) => a.categoria.localeCompare(b.categoria) || a.nombre.localeCompare(b.nombre, "es"));
         ficha.append(el("h3", { class: "font-serif text-lg font-bold text-brand-800 dark:text-white mt-6" }, "Atletas"));
-        ficha.append(tabla("Atletas de " + x.nombre, ["Nombre", "Categoría", "Estado del trámite", "Activo 2026"], filas.map((a) => {
+        ficha.append(tabla("Atletas de " + x.nombre, ["Nombre", "Cédula", "Nacimiento", "Categoría", "Estado del trámite", "Activo 2026"], filas.map((a) => {
             const ei = estadoInfo(a.estado);
             const activoCel = a.clave
                 ? el("a", { href: "historial-jugador.html?j=" + encodeURIComponent(a.clave), class: "underline underline-offset-2 hover:no-underline" }, a.activo ? "Sí, ver historial" : "No en 2026, ver historial")
                 : "Sin dato";
-            return el("tr", {}, td(a.nombre), td(a.categoria),
+            return el("tr", {}, td(a.nombre), td(a.identificacion || "—"), td(fechaCorta(a.nacimiento)), td(a.categoria),
                 el("td", { class: TD }, el("span", { "aria-hidden": "true" }, ei.emoji + " "), ei.texto),
                 el("td", { class: TD }, activoCel));
         })));
@@ -174,8 +185,8 @@
     async function init() {
         const { data: { session } } = await sb.auth.getSession();
         if (!session) { location.href = "login.html?next=jdn-proyeccion.html"; return; }
-        const { data: admin, error } = await sb.rpc("soy_admin");
-        if (error || admin !== true) { $("loading").classList.add("hidden"); $("denegado").classList.remove("hidden"); return; }
+        const { data: puede, error } = await sb.rpc("tengo_herramienta", { p_herramienta: "jdn-proyeccion" });
+        if (error || puede !== true) { $("loading").classList.add("hidden"); $("denegado").classList.remove("hidden"); return; }
 
         let filas;
         try { filas = await leerInscripciones(); } catch (e) {
