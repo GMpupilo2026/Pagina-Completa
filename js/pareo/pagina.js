@@ -524,9 +524,16 @@
     const faltantes = todosFaltantes.slice(0, TOPE_BUSQUEDA_ELO);
     const boton = $("pi-elo-nacional");
     const estadoEl = $("pi-elo-nacional-estado");
+    const barraEl = $("pi-elo-barra-caja");
     boton.disabled = true;
-    estadoEl.textContent = tx("buscandoElo");
+    estadoEl.textContent = tx("buscandoElo", { n: faltantes.length });
+    // Es UNA sola llamada que solo contesta al terminar (ver elo-nacional.js):
+    // no hay un «n de total» real que mostrar sin partirla en varios pedidos,
+    // y eso gastaría varias veces el tope por hora del freno por la misma
+    // búsqueda. La barra es indeterminada a propósito: nunca un número inventado.
+    barraEl.hidden = false;
     const r = await window.PareoEloNacional.buscar(faltantes.map((j) => j.nombre));
+    barraEl.hidden = true;
     boton.disabled = false;
     estadoEl.textContent = "";
     if (!r || r.ok === false) { Avisos.avisar((r && r.error) || tx("eloNacionalError"), { tipo: "error" }); return; }

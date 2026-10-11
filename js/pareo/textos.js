@@ -91,7 +91,7 @@
     buscarEloNacional: ["Buscar Elo Nacional de quien no tiene", "Look up National rating for those without one"],
     eloNacionalAyuda: ["Es lo único de Pareo Integral que sale de tu computadora: se manda el nombre de cada jugador a nuestro servidor para buscarlo en ajedrezcostarica.com. No se guarda nada.", "This is the one thing in Pareo Integral that leaves your computer: each player's name is sent to our server to look it up on ajedrezcostarica.com. Nothing is stored."],
     sinQuienBuscar: ["Ya todos los jugadores tienen Elo.", "Every player already has a rating."],
-    buscandoElo: ["Buscando…", "Looking up…"],
+    buscandoElo: ["Buscando el Elo Nacional de {n} jugadores…", "Looking up the National rating of {n} players…"],
     eloNacionalResultado: ["Se encontró el Elo Nacional de {n} de {total}.", "Found the National rating for {n} of {total}."],
     eloNacionalError: ["No se pudo buscar el Elo Nacional. Intenta de nuevo.", "Could not look up the National rating. Try again."],
     eloNacionalTope: ["Se buscaron los primeros {tope}; vuelve a tocar el botón para seguir con el resto.", "Only the first {tope} were searched; click the button again for the rest."],
