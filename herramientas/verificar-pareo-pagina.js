@@ -92,12 +92,23 @@ const ok = (c, m, detalle) => (c ? bien(m) : mal(m + (detalle ? " — " + detall
     "Mora, Fabián;1800", "Solís, Gabriela;1750", "Brenes, Héctor;1700", "<img src=x onerror=window.__xss=1>;1600"].join("\n"));
   await p.click("#pi-pegar-agregar");
   ok((await p.$$("#pi-tabla-jugadores tbody tr")).length === 9, "la lista pegada inscribe a los 9");
+  await p.fill("#pi-buscar-jugador", "bruno");
+  ok((await p.$$("#pi-tabla-jugadores tbody tr")).length === 1 && (await p.textContent("#pi-tabla-jugadores")).includes("Mena, Bruno"), "el buscador filtra por nombre, sin importar mayúsculas");
+  await p.fill("#pi-buscar-jugador", "zzz");
+  ok((await p.$$("#pi-tabla-jugadores tbody tr")).length === 0 && await visible("#pi-sin-coincidencias"), "y avisa cuando nadie coincide");
+  await p.fill("#pi-buscar-jugador", "");
+  ok((await p.$$("#pi-tabla-jugadores tbody tr")).length === 9, "vaciar el buscador trae a todos de vuelta");
   await ficha("torneo");
   await p.fill('#pi-form-torneo input[name="nombre"]', "Abierto de prueba");
   await p.dispatchEvent('#pi-form-torneo input[name="nombre"]', "change");
   await p.fill('#pi-form-torneo input[name="rondasTotales"]', "5");
   await p.dispatchEvent('#pi-form-torneo input[name="rondasTotales"]', "change");
   await ficha("rondas");
+  {
+    const resumen = await p.textContent("#pi-ronda");
+    ok(resumen.includes("9 sin categoría") && resumen.includes("9 sin Elo"), "antes de emparejar la ronda 1, avisa quién no tiene categoría o Elo", resumen.slice(0, 200));
+    ok(await p.isEnabled('#pi-ronda button:has-text("Emparejar la ronda 1")'), "y no bloquea el botón: es solo un aviso");
+  }
   await emparejar(1);
   ok((await p.$$("#pi-ronda table tbody tr")).length === 5, "ronda 1: 4 mesas y el bye del pareo");
   await resultados(["1-0", "=", "0-1", "+-"]);
@@ -316,6 +327,55 @@ const ok = (c, m, detalle) => (c ? bien(m) : mal(m + (detalle ? " — " + detall
     await p.evaluate(() => window.dispatchEvent(new Event("afterprint")));
     ok(!(await p.evaluate(() => document.body.classList.contains("pi-imprimiendo-plantilla"))), "y la saca al terminar");
     ok((await p.textContent("#pi-plantilla")) === "", "limpia el contenido también");
+
+    console.log("--- Las planillas para firmar ---");
+    ok(!(await visible("#pi-firmas")), "normalmente no se ven en pantalla");
+    await p.click('#pi-ronda button:has-text("Planillas para firmar")');
+    const firmas = await p.textContent("#pi-firmas");
+    ok(firmas.includes("Mesa 1") && firmas.includes("Mesa 2"), "una hoja por mesa", firmas);
+    ok(/1-0/.test(firmas) && /0-1/.test(firmas), "a diferencia de la plantilla de la pared, SÍ trae el resultado ya anotado", firmas);
+    ok(["Alfa, Uno", "Beta, Dos", "Gama, Tres", "Delta, Cuatro"].every((n) => firmas.includes(n)), "con los cuatro nombres para firmar");
+    ok(await p.evaluate(() => document.body.classList.contains("pi-imprimiendo-firmas")), "marca el body mientras imprime");
+    await p.evaluate(() => window.dispatchEvent(new Event("afterprint")));
+    ok(!(await p.evaluate(() => document.body.classList.contains("pi-imprimiendo-firmas"))), "y la saca al terminar");
+    ok((await p.textContent("#pi-firmas")) === "", "limpia el contenido también");
+
+    console.log("--- Ver desde el celular (QR y enlace de solo lectura) ---");
+    ok(!(await visible("#pi-ver-compartir")), "normalmente no se ve");
+    await p.click('#pi-ronda button:has-text("Ver desde el celular")');
+    await p.waitForFunction(() => (document.getElementById("pi-ver-direccion") || {}).textContent?.includes("#ver="), null, { timeout: 10000 });
+    ok(await visible("#pi-ver-compartir"), "al pedirlo se ve");
+    ok(await p.getAttribute("#pi-ver-qr svg", "aria-label") === "Código QR para ver el torneo desde el celular", "el código tiene nombre para el lector de pantalla");
+    const direccion = await p.textContent("#pi-ver-direccion");
+    ok(direccion.startsWith(BASE + "/pareo.html#ver="), "la dirección abre pareo.html con los datos en el fragmento (nunca se manda a ningún servidor)", direccion);
+    {
+      // La misma página, pero en modo lectura: no toca el torneo guardado.
+      // Un cambio solo del fragmento (#...) no siempre recarga el documento
+      // (es un cambio «en el lugar», como escribirlo en la barra de
+      // direcciones): se fuerza una recarga de verdad pasando por about:blank.
+      const antes = await leerTorneo();
+      await p.goto("about:blank");
+      await p.goto(direccion);
+      await p.waitForFunction(() => (document.getElementById("pi-ver") || {}).textContent?.trim().length > 0, null, { timeout: 10000 });
+      ok(!(await visible("#pi-editor")), "el editor se oculta");
+      const texto = await p.textContent("#pi-ver");
+      ok(texto.includes("Reportes de prueba") && texto.includes("Ronda 1"), "trae el nombre del torneo y la ronda", texto.slice(0, 120));
+      ok(/1-0/.test(texto) && /0-1/.test(texto), "con los resultados ya anotados", texto);
+      ok(["Alfa, Uno", "Beta, Dos", "Gama, Tres", "Delta, Cuatro"].every((n) => texto.includes(n)), "y la clasificación de los cuatro");
+      ok(afuera.length === 0, "y sigue sin mandar nada a ningún servidor");
+      const despues = await leerTorneo();
+      ok(JSON.stringify(despues) === JSON.stringify(antes), "el modo lectura no toca el torneo guardado en este navegador");
+    }
+    {
+      // Un enlace roto (a mano, o recortado al copiarlo): avisa, no se cae.
+      await p.goto("about:blank");
+      await p.goto(BASE + "/pareo.html#ver=esto-no-es-un-torneo-comprimido");
+      await p.waitForFunction(() => (document.getElementById("pi-ver") || {}).textContent?.trim().length > 0, null, { timeout: 10000 });
+      ok((await p.textContent("#pi-ver")).includes("no se pudo leer"), "un enlace roto avisa en vez de romper la página");
+    }
+    await p.goto("about:blank");
+    await p.goto(BASE + "/pareo.html");
+    await ficha("rondas");
 
     console.log("--- El PDF de la Clasificación ---");
     await ficha("clasificacion");

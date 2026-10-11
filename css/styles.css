@@ -1657,6 +1657,25 @@ html.dark .comparar-serie-3 { background: #199e70; }
 .pi-plantilla-resultado { width: 6rem; height: 1.7rem; border: 1px solid #999; border-radius: 0.25rem; flex-shrink: 0; }
 .pi-plantilla-bye { font-style: italic; color: #666; margin-left: auto; }
 
+/* Las planillas de mesa para firmar (imprimirPlanillasFirma() en
+   js/pareo/pagina.js): una hoja POR MESA, con salto de página entre una y la
+   siguiente. A diferencia de la plantilla de la pared, esta SÍ muestra el
+   resultado ya anotado: es para que ambos jugadores lo confirmen con su
+   firma, no para ocultarlo. */
+.pi-firmas { display: none; }
+@media print {
+  body.pi-imprimiendo-firmas [role="tabpanel"] { display: none !important; }
+  body.pi-imprimiendo-firmas .pi-firmas { display: block !important; }
+}
+.pi-firma-mesa { break-after: page; padding: 2rem 0; color: #000; }
+.pi-firma-mesa:last-child { break-after: auto; }
+.pi-firma-titulo { font-family: Merriweather, Georgia, serif; font-weight: 700; font-size: 1.4rem; margin-bottom: 1.5rem; }
+.pi-firma-jugador { font-size: 1.2rem; margin-bottom: 0.5rem; }
+.pi-firma-resultado { font-size: 1.1rem; margin: 1rem 0 2rem; }
+.pi-firma-blanco { display: inline-block; width: 6rem; border-bottom: 1px solid #333; }
+.pi-firma-bye { font-style: italic; color: #666; }
+.pi-firma-linea { margin-top: 2.5rem; border-top: 1px solid #333; padding-top: 0.25rem; font-size: 0.95rem; color: #333; }
+
 /* El manual de Pareo Integral (pareo-manual.html): texto largo para leer. */
 .pm-manual { line-height: 1.65; }
 .pm-manual h1 { font-family: Merriweather, Georgia, serif; font-weight: 700; font-size: 2rem; line-height: 1.2; margin-bottom: 0.5rem; }

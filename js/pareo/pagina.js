@@ -59,7 +59,10 @@
   let idioma = leer(CLAVE_IDIOMA) === "en" ? "en" : "es";
   const tx = (clave, vars) => X.t(idioma, clave, vars);
 
-  const estado = { lista: leerJSON(CLAVE_LISTA, []), id: null, t: null, ficha: leer(CLAVE_FICHA) || "jugadores", ronda: null, filtroInstitucion: "", eloPendientes: [] };
+  const estado = { lista: leerJSON(CLAVE_LISTA, []), id: null, t: null, ficha: leer(CLAVE_FICHA) || "jugadores", ronda: null, filtroInstitucion: "", filtroJugador: "", eloPendientes: [] };
+
+  // Sin tildes y en minúsculas, para que buscar "Jose" encuentre "José".
+  function normalizarBusqueda(s) { return String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase(); }
 
   function nuevoId() { return "t" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
   function idJugador() { return "j" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
@@ -84,6 +87,7 @@
     estado.t = T.nuevo(t);
     estado.ronda = null;
     estado.filtroInstitucion = "";
+    estado.filtroJugador = "";
     estado.eloPendientes = [];
     escribir("pareo_abierto_v1", id);
     return true;
@@ -94,6 +98,7 @@
     estado.t = t || T.nuevo({ fechaInicio: window.HoraCR ? HoraCR.hoy() : "" });
     estado.ronda = null;
     estado.filtroInstitucion = "";
+    estado.filtroJugador = "";
     estado.eloPendientes = [];
     guardar();
   }
@@ -304,8 +309,16 @@
     $("pi-cuenta").textContent = v.jugadores.length;
     $("pi-sin-jugadores").hidden = v.jugadores.length > 0;
     $("pi-orden-ayuda").textContent = tx(Array.isArray(v.numeracion) ? "ordenFijo" : "ordenAyuda");
+    $("pi-buscar-jugador").value = estado.filtroJugador;
     pintarEloPendientes();
-    if (!v.jugadores.length) return;
+    if (!v.jugadores.length) { $("pi-sin-coincidencias").hidden = true; return; }
+    const q = normalizarBusqueda(estado.filtroJugador);
+    const filtrado = q ? orden.filter((id) => {
+      const j = jugador(id);
+      return normalizarBusqueda(j.nombre).includes(q) || normalizarBusqueda(j.institucion).includes(q);
+    }) : orden;
+    $("pi-sin-coincidencias").hidden = filtrado.length > 0;
+    if (!filtrado.length) return;
     tabla.append(el("thead", {}, el("tr", {},
       el("th", { class: "num", scope: "col", texto: tx("nro") }), el("th", { scope: "col", texto: tx("nombre") }),
       el("th", { scope: "col", texto: tx("institucion") }), el("th", { scope: "col", texto: tx("categoria") }),
@@ -316,7 +329,7 @@
     const cuerpo = el("tbody");
     const enUnaMesa = new Set();
     for (const R of v.rondas) for (const m of R.mesas) { enUnaMesa.add(m.b); if (m.n) enUnaMesa.add(m.n); }
-    for (const id of orden) {
+    for (const id of filtrado) {
       const j = jugador(id);
       const retirado = j.retiradoDespuesDe != null;
       cuerpo.append(el("tr", {},
@@ -611,6 +624,8 @@
       el("div", { class: "flex flex-wrap gap-2 no-imprimir" },
         el("button", { type: "button", class: C.botonSec, onclick: () => window.print() }, tx("imprimir")),
         el("button", { type: "button", class: C.botonSec, onclick: () => imprimirPlantillaMesas(r) }, tx("plantillaMesas")),
+        el("button", { type: "button", class: C.botonSec, onclick: () => imprimirPlanillasFirma(r) }, tx("planillasFirma")),
+        el("button", { type: "button", class: C.botonSec, onclick: () => compartirLectura(r) }, tx("verDesdeElCelular")),
         ultima ? el("button", { type: "button", class: C.miniPeligro + " px-3 py-2", onclick: () => deshacerRonda(r) }, tx("deshacerRonda")) : null)));
     caja.append(el("p", { class: C.nota + " mb-3 no-imprimir", role: "status", texto: pendientes ? tx("faltanResultados", { n: pendientes }) : tx("rondaCompleta") }));
     if (!ultima) caja.append(el("p", { class: C.nota + " mb-3 no-imprimir", texto: tx("avisoCorregir") }));
@@ -710,13 +725,83 @@
     window.print();
   }
 
+  // Una hoja POR MESA (salto de página entre una y la siguiente) para que el
+  // árbitro la recoja firmada: a diferencia de la plantilla de la pared, esta
+  // SÍ muestra el resultado ya anotado (si lo hay) — es para confirmarlo, no
+  // para ocultarlo. Un bye no tiene con quién firmar: va sin líneas de firma.
+  function imprimirPlanillasFirma(r) {
+    const v = t();
+    const R = v.rondas[r];
+    const num = T.numeros(v);
+    const cont = $("pi-firmas");
+    cont.replaceChildren();
+    R.mesas.forEach((m, i) => {
+      const hoja = el("div", { class: "pi-firma-mesa" },
+        el("h1", { class: "pi-firma-titulo" }, tx("planillaFirmaTitulo", { r: r + 1, m: i + 1 }) + (v.nombre ? " — " + v.nombre : "")));
+      if (m.n === null) {
+        hoja.append(el("p", { class: "pi-firma-jugador" }, num.get(m.b) + ". " + nombreDe(m.b)),
+          el("p", { class: "pi-firma-bye", texto: tx("byePareo", { p: puntosTexto(v.puntos.bye) }) }));
+        cont.append(hoja);
+        return;
+      }
+      hoja.append(
+        el("p", { class: "pi-firma-jugador" }, num.get(m.b) + ". " + nombreDe(m.b)),
+        el("p", { class: "pi-firma-jugador" }, num.get(m.n) + ". " + nombreDe(m.n)),
+        el("p", { class: "pi-firma-resultado" },
+          tx("resultado") + ": ",
+          m.r ? el("span", { class: "font-semibold" }, tx("corto_" + m.r)) : el("span", { class: "pi-firma-blanco" })),
+        el("p", { class: "pi-firma-linea" }, tx("firmaDe", { n: nombreDe(m.b) })),
+        el("p", { class: "pi-firma-linea" }, tx("firmaDe", { n: nombreDe(m.n) })));
+      cont.append(hoja);
+    });
+    document.body.classList.add("pi-imprimiendo-firmas");
+    window.print();
+  }
+
   // El afterprint llega sea que se imprima o se cancele: ahí se limpia, una
   // sola vez para toda la página (no hace falta re-engancharlo).
   window.addEventListener("afterprint", () => {
-    document.body.classList.remove("pi-imprimiendo-plantilla");
-    const cont = $("pi-plantilla");
-    if (cont) cont.replaceChildren();
+    document.body.classList.remove("pi-imprimiendo-plantilla", "pi-imprimiendo-firmas");
+    const plantilla = $("pi-plantilla");
+    if (plantilla) plantilla.replaceChildren();
+    const firmas = $("pi-firmas");
+    if (firmas) firmas.replaceChildren();
   });
+
+  // Una «foto» de esta ronda y la clasificación de ahora, para ver desde el
+  // celular sin tocar nada (ver «El enlace y el QR de solo lectura» en
+  // docs/decisiones/juegos-y-torneos.md): nada se manda a ningún servidor,
+  // los datos viajan comprimidos en la URL (de la mano a la cámara que la
+  // lee, nunca por internet). No se actualiza sola: es del momento en que se
+  // generó.
+  async function compartirLectura(r) {
+    const v = t();
+    const R = v.rondas[r];
+    const k = rondasCompletas();
+    const filas = filasFiltradas(D.clasificacion(hasta(k), v.desempates));
+    const datos = {
+      v: 1,
+      nombre: v.nombre || "",
+      ronda: { n: r + 1, mesas: R.mesas.map((m, i) => ({ m: i + 1, b: nombreDe(m.b), n: m.n == null ? null : nombreDe(m.n), r: m.r || null })) },
+      clasificacion: filas.map((f) => ({ p: f.puesto, n: jugador(f.id).nombre, pts: f.puntos })),
+    };
+    const caja = $("pi-ver-compartir");
+    const qrCont = $("pi-ver-qr");
+    const dirTexto = $("pi-ver-direccion");
+    caja.hidden = false;
+    qrCont.replaceChildren();
+    dirTexto.textContent = tx("generandoQr");
+    try {
+      const cadena = await PareoVer.empaquetar(datos);
+      const url = location.origin + location.pathname + "#ver=" + cadena;
+      await PareoQr.cargar();
+      qrCont.replaceChildren(PareoQr.svg(url, tx("qrEtiqueta")));
+      dirTexto.textContent = url;
+    } catch (e) {
+      dirTexto.textContent = "";
+      Avisos.avisar(tx("errorQr", { e: e.message }), { tipo: "error" });
+    }
+  }
 
   function pintarRondasNav() {
     // Repinta solo la barra de rondas (el foco queda en la mesa que se estaba llenando).
@@ -737,6 +822,22 @@
       return;
     }
     caja.append(el("h2", { class: "font-serif text-xl font-bold mb-2", texto: tx("emparejarRonda", { r: r + 1 }) }));
+    if (r === 0) {
+      const sinCategoria = v.jugadores.filter((j) => !j.categoria).length;
+      const sinInstitucion = v.jugadores.filter((j) => !j.institucion).length;
+      const sinElo = v.jugadores.filter((j) => !(Number(j.elo) > 0)).length;
+      const problemas = [
+        sinCategoria && [sinCategoria, "sinCategoriaResumen"],
+        sinInstitucion && [sinInstitucion, "sinInstitucionResumen"],
+        sinElo && [sinElo, "sinEloResumen"],
+      ].filter(Boolean);
+      if (problemas.length) {
+        caja.append(el("div", { class: "mb-4" },
+          el("p", { class: C.nota, texto: tx("antesDeEmparejar") }),
+          el("ul", { class: "list-disc pl-6 text-sm text-brand-600 dark:text-brand-300" },
+            problemas.map(([n, clave]) => el("li", { texto: tx(clave, { n }) })))));
+      }
+    }
     const pedidas = {};
     if (v.sistema === "todos") {
       caja.append(el("p", { class: C.nota + " mb-3", texto: tx("todosAyuda") }));
@@ -1104,6 +1205,11 @@
       if (f) subirLista(f);
     });
     $("pi-elo-nacional").addEventListener("click", buscarEloNacional);
+    $("pi-buscar-jugador").addEventListener("input", (e) => { estado.filtroJugador = e.target.value; pintarJugadores(); });
+    $("pi-ver-copiar").addEventListener("click", async () => {
+      try { await navigator.clipboard.writeText($("pi-ver-direccion").textContent); Avisos.avisar(tx("enlaceCopiado")); }
+      catch (e) { Avisos.avisar(tx("noCopia"), { tipo: "error" }); }
+    });
     $("pi-clas-institucion").addEventListener("change", (e) => { estado.filtroInstitucion = e.target.value; pintarClasificacion(); });
     $("pi-cruzada-institucion").addEventListener("change", (e) => { estado.filtroInstitucion = e.target.value; pintarCruzada(); });
     $("pi-clas-pdf").addEventListener("click", () => bajarPDF($("pi-clas-pdf"), datosClasificacionPDF, "clasificacion"));
@@ -1176,6 +1282,14 @@
   }
 
   function arrancar() {
+    // El enlace de solo lectura (#ver=…) no toca nada del torneo guardado en
+    // este navegador: ni lo lee ni lo pisa. Es una página distinta adentro
+    // de la misma página.
+    if (location.hash.startsWith("#ver=")) {
+      $("pi-editor").hidden = true;
+      PareoVer.iniciar(location.hash.slice(5), idioma);
+      return;
+    }
     if (!FICHAS.includes(estado.ficha)) estado.ficha = "jugadores";
     const ultimo = leer("pareo_abierto_v1");
     if (!(ultimo && abrir(ultimo))) {
