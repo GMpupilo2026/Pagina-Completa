@@ -1,0 +1,20 @@
+<!-- Muestra de las partidas de UN jugador (chess-results, art=9&snr=N&turdet=YES),
+     con la misma forma que una página real del 11/10/2026 y nombres inventados.
+     La primera tabla CRs1 (resumen Nombre/Ranking inicial/Elo…) no tiene
+     encabezado y se descarta sola. La segunda es la de rondas: una ganada de
+     blancas, una perdida de negras, una ronda sin emparejar (bye, no cuenta
+     como partida) y una ganada por incomparecencia de un rival real (sin el
+     <div class="FarbewT/FarbesT">: el color queda «desconocido» y el
+     resultado es el texto tal cual, sin interpretarlo). La lee
+     herramientas/verificar-ajedrez-estudiantil-partidas.py. -->
+<html lang="es"><body>
+<div class="defaultDialog"><h2>Regional Muestra D Abierto Individual</h2>
+<table Class="CRs1" border="0" cellpadding="1" cellspacing="1" bgcolor=""><tr><td class="CR">Nombre</td><td class="CR">Ana Pérez Mora, </td></tr><tr><td class="CR">Ranking inicial</td><td class="CR">3</td></tr><tr><td class="CR">Puntos</td><td class="CR">2</td></tr><tr><td class="CR">Puesto</td><td class="CR">2</td></tr></table><p Class="CRlz">&nbsp;</p>
+<table class="CRs1" border="0" cellpadding="1" cellspacing="1">
+<tr class="CRng1b"><th class="CRc">Rd.</th><th class="CRc">M.</th><th class="CRc">No.Ini.</th><th class="CR"></th><th class="CR">Nombre</th><th class="CRr">Elo</th><th class="CR">FED</th><th class="CR">Club/Ciudad</th><th class="CRc">Pts.</th><th class="CRc">Res.</th></tr>
+<tr class="CRng2"><td class="CRc">1</td><td class="CRc">2</td><td class="CRc">5</td><td class="CR"></td><td class="CR">Beto Soto Vargas,</td><td class="CRr">1200</td><td class="CR">CRC</td><td class="CR">Liceo de Muestra</td><td class="CRc">1</td><td class="CR"><table><tr><td><div class="FarbewT"></div></td><td class="CR">1</td></tr></table></td></tr>
+<tr class="CRng1"> <td class="CRc">2</td><td class="CRc">1</td><td class="CRc">2</td><td class="CR"></td><td class="CR">Lucía Araya Núñez,</td><td class="CRr">1100</td><td class="CR">CRC</td><td class="CR">C.T.P. Ejemplo</td><td class="CRc">1</td><td class="CR"><table><tr><td><div class="FarbesT"></div></td><td class="CR">0</td></tr></table></td></tr>
+<tr class="CRng2"><td class="CRc">3</td><td class="CRc">4</td><td class="CRc">-1</td><td class="CR"></td><td class="CR">sin emparejar</td><td class="CRr">0</td><td class="CR"></td><td class="CR"></td><td class="CRc">1</td><td class="CRc">- 0</td></tr>
+<tr class="CRng1"> <td class="CRc">4</td><td class="CRc">3</td><td class="CRc">4</td><td class="CR"></td><td class="CR">Tono Jara Solís,</td><td class="CRr">0</td><td class="CR">CRC</td><td class="CR">Liceo de Muestra</td><td class="CRc">2</td><td class="CR">+ 1K</td></tr>
+</table></div>
+</body></html>

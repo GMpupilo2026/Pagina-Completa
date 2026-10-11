@@ -1961,6 +1961,42 @@ avise sin bloquear el alta, y que el filtro de institución filtre de verdad
 tanto la Clasificación como la Tabla cruzada. Rompiendo a propósito el freno,
 la comparación de nombres o el filtro, salta.
 
+### La barra de progreso al buscar el Elo Nacional
+
+Antes de esto, tocar «Buscar Elo Nacional de quien no tiene» con una lista
+larga solo mostraba «Buscando…», sin ninguna señal de que seguía viva: con
+veinte o treinta jugadores el pedido puede tardar varios segundos y no había
+manera de distinguir eso de que se hubiera colgado.
+
+- **No hay un «5 de 23» real que mostrar.** `buscarEloNacional()` manda los
+  nombres en UNA sola llamada a la Edge Function (ver arriba), que contesta
+  entera solo al terminar — no hay ningún aviso a medio camino que el
+  navegador pueda leer. Partirla en varios pedidos más chicos para armar un
+  progreso de verdad se consideró y se descartó: el freno
+  (`pareo_elo_frenar`) cuenta **pedidos** por hora, 6 por conexión, no
+  jugadores; una sola búsqueda de treinta jugadores partida en, digamos,
+  cuatro pedidos de ocho gastaría cuatro de esos seis en una sola vez que
+  alguien toca el botón, cuando hoy gasta uno. Partirla haría la búsqueda
+  más transparente a cambio de hacerla mucho más fácil de agotar.
+- **La barra es indeterminada a propósito: nunca un número inventado**
+  (`#pi-elo-barra-caja`/`.pi-elo-barra` en `css/styles.css`, con su
+  animación — y su versión quieta pero igual visible bajo
+  `prefers-reduced-motion: reduce`). Lo único que dice es «esto sigue
+  corriendo», no cuánto falta, porque cuánto falta es justo lo que no se
+  puede saber sin romper el punto de arriba.
+- **El texto de estado (`#pi-elo-nacional-estado`, con su `aria-live`) sí
+  lleva un dato real**: cuántos jugadores está buscando (`buscandoElo`, con
+  `{n}`). Se pone UNA vez al empezar, no se actualiza con un reloj
+  corriendo: un `aria-live="polite"` que cambia cada segundo le leería a
+  quien usa lector de pantalla un número en voz alta cada segundo entero de
+  la búsqueda, y la barra —decorativa, `aria-hidden`— no le dice nada que el
+  texto no le haya dicho ya.
+
+Al tocar esto, `node herramientas/verificar-pareo-institucion.js` cubre que
+la barra se vea mientras el pedido está pendiente (con un `page.route()` que
+demora la respuesta a propósito), que el aviso de estado diga cuántos
+jugadores busca, y que la barra se oculte de nuevo al terminar.
+
 ### La plantilla para la pared y el PDF de verdad
 
 Antes lo único que había para llevar algo al papel era «Imprimir»
@@ -2138,6 +2174,85 @@ página. Rompiendo a propósito la descompresión o dejando que el modo lectura
 escriba en `pareo_abierto_v1`, los dos saltan (el segundo con un `✗`, no con
 el script colgado: el chequeo espera por `textContent`, no por un `<h1>` que
 en el camino roto nunca aparece).
+
+### El canal en vivo
+
+«Ver desde el celular» (arriba) es una foto: queda vieja apenas cambia un
+resultado. El pedido fue «que se actualice sola», y eso Pareo Integral no lo
+puede hacer sin que algo reciba y reparta los datos en el medio — es decir,
+sin un servidor. Se lo planteé así al dueño del repo (la primera vez que
+Pareo Integral tocaría uno, de verdad, no solo la búsqueda de Elo Nacional) y
+eligió hacerlo de verdad en vivo, con las dos cosas claras: que contradice a
+propósito «nada sale de tu computadora», y que es una decisión de quien es
+dueño del repo, no solo de código.
+
+- **Un canal de Supabase Realtime en modo Broadcast**, no una tabla: no hay
+  fila que guardar ni que proteger con una política, así que ninguna de las
+  reglas de «La verificación en dos pasos» aplica (esa exigencia está atada a
+  tablas con Realtime vía `postgres_changes`; un canal de Broadcast no tiene
+  tabla). Tampoco lo tocan `verificar-realtime-filtros.js` ni
+  `verificar-realtime-publicadas.js`: los dos buscan `postgres_changes` en el
+  código, y Broadcast nunca aparece ahí. Y el freno de envíos públicos
+  (`interno.frenar_envio_publico`) tampoco aplica: ese freno protege un
+  INSERT que alguien sin cuenta puede disparar, y un Broadcast no inserta
+  nada en ninguna tabla.
+- **Público por default, sin RLS**: el proyecto nunca activó el modo privado
+  de canales de Supabase (que exigiría una política sobre `realtime.messages`).
+  Cualquiera con la anon key —la misma que ya es pública en
+  `js/supabase-client.js`— puede unirse a un canal con solo saber su nombre.
+  El nombre del canal (`pareo-vivo-<código>`) hace de contraseña: por eso el
+  código es de 8 caracteres al azar (sin `0/1/i/l/o`, para poder leerlo a
+  mano si hace falta) y vive en `v.liveCodigo`, guardado con el torneo. Quien
+  tenga el enlace puede mandar mensajes falsos al mismo canal —no hay forma
+  de firmarlos—; para un emparejamiento que de todas formas se comparte en
+  público, se aceptó el riesgo en vez de construir algo más. El botón «Usar
+  un código nuevo» (`$("pi-ver-en-vivo-nuevo-codigo")`) es la única salida si
+  el código se comparte de más: no revoca al viejo canal (nadie puede, sin
+  RLS), pero el organizador deja de mandarle nada.
+- **`js/pareo/qr.js` no se compartió con `js/clase-qr.js`** (ver ese archivo)
+  y por la misma razón `js/pareo/ver.js` NO reutiliza `js/supabase-client.js`
+  como `<script>` fijo de `pareo.html`: lo carga perezoso
+  (`PareoVer.cargarSupabase()`, igual que la librería del QR), para que la
+  inmensa mayoría de quien usa Pareo Integral —que nunca toca «en vivo»— no
+  pague el peso de Supabase. `_headers` ya traía `wss://…supabase.co` en
+  `connect-src` para el resto del sitio: no hizo falta tocar la CSP.
+- **Quién manda y quién escucha, nunca al revés**: `estado.canalVivo` en
+  `js/pareo/pagina.js` solo llama `.send()`; nunca `.on()`. El organizador no
+  necesita recibir nada (es el dueño de los datos), y esto evita que un
+  mensaje ajeno al canal pueda, por accidente, pisarle su propia pantalla.
+- **Qué manda y cuándo**: `datosLecturaActual(r)` —la misma función que ya
+  armaba el enlace estático— con `r` siempre la ÚLTIMA ronda (`v.rondas.length
+  - 1`), sin importar qué ronda esté mirando el organizador en su pantalla:
+  «en vivo» significa el estado real del torneo, no lo que el organizador
+  tiene abierto. Se manda desde `guardar()` (una línea: `if (estado.enVivo)
+  difundirEnVivo();`), así que cualquier cambio que ya dispara un guardado
+  —un resultado, un jugador nuevo, deshacer una ronda— lo manda solo, sin un
+  gancho aparte para cada acción.
+- **Apagarlo de verdad apaga**: cambiar de torneo (`abrir()`/`crear()`) corta
+  el canal (`apagarEnVivo()`), para no seguir mandando el estado de un
+  torneo al canal de otro. Desmarcar la casilla también corta: nunca se deja
+  un canal mandando datos que nadie pidió seguir viendo.
+- **Quien mira y nadie transmite, no se queda mirando una pantalla en
+  blanco para siempre**: `PareoVer.iniciarVivo()` pone un aviso de «Conectando»
+  y, si no llega nada en 8 segundos, lo cambia por uno de «Esperando» (el
+  organizador puede no tener la pestaña abierta). Sigue escuchando: si algo
+  llega después, igual se pinta.
+- No se actualiza sola si quien organiza cierra la pestaña: el canal es tan
+  efímero como la conexión. Quien ya estaba mirando se queda con la última
+  foto que le llegó; quien recién abre el enlace no ve nada. Se dice así, sin
+  vueltas, en la propia caja («Actualizar sola (en vivo)»).
+
+**Al tocar el canal en vivo, correr `node herramientas/verificar-pareo-pagina.js`**
+(su sección 12): nunca habla con el Supabase de verdad —dos páginas de
+Playwright aparte (el organizador y «el celular»), cada una con su propio
+`window.sb` falso, y Node relevando los mensajes de una a la otra, igual que
+haría un canal de Broadcast—. Comprueba que activarlo manda la foto de
+ahora, que un resultado nuevo le llega solo a quien ya esté mirando, que
+desmarcarlo corta los envíos siguientes, que «Usar un código nuevo» cambia
+el código sin tocar el torneo, que un código al que nadie transmite avisa
+que está esperando (no una pantalla en blanco), y que cambiar de torneo
+apaga el canal del anterior. Rompiendo a propósito cualquiera de esos
+caminos, salta.
 
 ## Ajedrez estudiantil en Costa Rica: los torneos de chess-results
 
@@ -2437,6 +2552,73 @@ lee en cada vuelta y el armado (personas, colegios, cortados, variantes,
 excluidos). `verificar-jde-jugadores.js` abre las dos páginas con datos
 inventados y compara cada cifra con la cuenta hecha a mano; contando también
 el blitz, o pintando un nombre con `innerHTML`, salta.
+
+## Contra quién jugó cada estudiante, y el resultado
+
+Lo pidió el dueño en octubre de 2026: en `historial-jugador.html`, cada
+torneo de la ficha de un jugador se puede desplegar («Ver N partidas») para
+ver, ronda por ronda, contra quién jugó, con qué color y el resultado, con un
+enlace al historial del rival.
+
+- **Solo los torneos individuales de 2024 en adelante.** Esto no sale de la
+  misma página que ya se lee (`art=1`, la clasificación): hace falta pedirle
+  a chess-results una página MÁS por cada jugador de cada torneo
+  (`tnr<clave>.aspx?art=9&snr=<N>&turdet=YES`, la misma que ya usa, para un
+  jugador puntual, el panel de administración —
+  `supabase/functions/chess-results-proxy/index.ts`). Traer eso de los ~1400
+  torneos de toda la historia (desde 2011) le pediría al sitio miles de
+  páginas de más; acotado a los individuales de 2024 en adelante son unas
+  5300. Los torneos por equipos quedan fuera: reparten sus partidas por
+  tablero dentro de un duelo entre equipos, una estructura distinta que no se
+  lee todavía.
+- **`herramientas/ajedrez-estudiantil-partidas.py`**, después de
+  `ajedrez-estudiantil-jugadores.py` en el mismo flujo de cada seis horas, en
+  dos pasos que cuentan juntos para `--maximo` (100 por vuelta, igual
+  cadencia que el resto del sitio):
+  1. completa el «snr» (el `No.Ini.` con que arrancó cada jugador, lo que
+     identifica su fila en `art=9`) de los torneos que se habían leído ANTES
+     de que `ajedrez-estudiantil-jugadores.py` empezara a guardar esa
+     columna — una página por torneo, no por jugador, para toda su lista de
+     una vez;
+  2. con el snr ya puesto, pide las partidas de cada (torneo, jugador) que
+     todavía no se leyó. A este ritmo, completar los individuales de 2024 en
+     adelante tarda unas dos semanas; lo que se agregue después se pone al
+     día solo.
+- **El color sale de un `<div class="FarbewT">` (blancas) o
+  `<div class="FarbesT">` (negras) DENTRO de la celda del resultado** — se
+  comprobó contra una página real (torneo 911786, Regional Turrialba, marzo
+  2024). Cuando ese `<div>` no está (una ronda sin emparejar, o ganada o
+  perdida por incomparecencia de un rival real, también visto en una página
+  real) el color queda «desconocido» y el resultado es el texto tal cual lo
+  escribe chess-results (p. ej. `- 1K`), sin interpretarlo: no se inventa qué
+  significa un código que no se pudo confirmar.
+- **Una ronda sin emparejar (bye) no es una partida**: su rival es «sin
+  emparejar» con un `No.Ini.` negativo, y no cuenta como «contra quién
+  jugó». Una ganada o perdida por incomparecencia de un rival CON nombre sí
+  cuenta (el emparejamiento existió), con su resultado tal cual.
+- **Se guarda en `herramientas/datos/ajedrez-estudiantil-partidas.csv`**
+  (`clave,snr,ronda,mesa,color,resultado,rival_snr,rival_nombre,rival_institucion,rival_elo`)
+  y qué (torneo, jugador) ya se leyó en
+  `ajedrez-estudiantil-partidas-leidas.csv` (no se vuelve a pedir aunque el
+  torneo cambie: es un hecho pasado). `ajedrez-estudiantil.py` arma con eso
+  `data/ajedrez-estudiantil-partidas.json`, y la participación de
+  `ajedrez-estudiantil-jugadores.csv`/`.json` ganó la columna «snr» para
+  enlazar las dos.
+- **`js/jde-datos.js`** carga el tercer JSON (con `.catch` si todavía no
+  existe, para no romper nada mientras se despliega esto) y le agrega
+  `partidas` a cada participación que tenga snr y partidas leídas; el rival
+  se enlaza a su propio historial con el mismo `D.normalizar()` de siempre
+  (`historial-jugador.html?j=`), sin tener que resolverlo contra un índice de
+  personas.
+- `herramientas/datos/ajedrez-estudiantil-muestras/partidas.txt` tiene una
+  página de ejemplo (nombres inventados) con una ganada de blancas, una
+  perdida de negras, un bye y una incomparecencia, y
+  `verificar-ajedrez-estudiantil-partidas.py` prueba el lector contra ella,
+  el filtro de «elegible» (individual, 2024+) y una vuelta completa (los dos
+  pasos, el `--maximo` compartido entre ambos, lo ya leído que no se repite).
+  `verificar-jde-jugadores.js` prueba el despliegue en la página: que no se
+  vea hasta abrirlo, el texto de la ronda y el enlace al rival, y que un
+  torneo sin partidas leídas no muestre el despliegue.
 
 ## Herramientas de arbitraje
 

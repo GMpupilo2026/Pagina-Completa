@@ -177,8 +177,14 @@ async function pruebaEloNacional(browser) {
   await page.waitForFunction(() => document.getElementById("pi-cuenta").textContent === "2");
 
   let pedido = null;
-  await page.route("https://bgtijpimpcokxatxxbki.supabase.co/functions/v1/pareo-elo-nacional", (r) => {
+  let avisarLlego;
+  const pedidoLlego = new Promise((r) => { avisarLlego = r; });
+  await page.route("https://bgtijpimpcokxatxxbki.supabase.co/functions/v1/pareo-elo-nacional", async (r) => {
     pedido = JSON.parse(r.request().postData() || "{}");
+    avisarLlego();
+    // Una espera a propósito: sin ella, la llamada mockeada contesta tan
+    // rápido que nunca se llega a ver la barra de progreso mientras pende.
+    await new Promise((res) => setTimeout(res, 400));
     r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({
       ok: true,
       resultados: [
@@ -188,7 +194,12 @@ async function pruebaEloNacional(browser) {
     }) });
   });
   await page.click("#pi-elo-nacional");
+  await pedidoLlego;
+  ok(await vis(page, "#pi-elo-barra-caja"), "mientras busca, se ve la barra de progreso");
+  ok((await texto(page, "#pi-elo-nacional-estado") || "").includes("2"), "el aviso de estado dice cuántos jugadores busca",
+    await texto(page, "#pi-elo-nacional-estado"));
   await page.waitForFunction(() => /\d/.test(document.querySelector(".avisos-mensaje")?.textContent || ""));
+  ok(!(await vis(page, "#pi-elo-barra-caja")), "al terminar, la barra se vuelve a ocultar");
 
   ok(!!pedido && Array.isArray(pedido.nombres) && pedido.nombres.length === 2, "manda los dos nombres, nada más", JSON.stringify(pedido));
   igual("el primero queda con el Elo encontrado, por índice (no por bolsillo de nombre)",

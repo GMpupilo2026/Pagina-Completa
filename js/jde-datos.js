@@ -34,17 +34,24 @@
     return r.json();
   }
 
-  /* Carga los dos archivos y arma los índices. Devuelve:
+  /* Carga los tres archivos y arma los índices. Devuelve:
    *   torneos: Map clave → {clave, anio, etapa, categoria, nombre, inicio,
    *            lugar, region, jugadores, modalidad, ritmo, enlace}
    *   jugadores: [{i, nombre, clave, part: [participación]}]
    *   instituciones: [{i, nombre, clave}]
-   *   participaciones: [{torneo, jugador, institucion, puesto, puntos, elo}]
+   *   participaciones: [{torneo, jugador, institucion, puesto, puntos, elo,
+   *            partidas: [{ronda, mesa, color, resultado, rivalNombre,
+   *            rivalClave, rivalInstitucion, rivalElo}] o null si no se
+   *            leyeron (solo hay de individuales de 2024 en adelante, y se
+   *            completan de a poco)}]
    *   equipos: [{torneo, institucion, puesto, puntos}]
    *   equiposPorTorneo: Map clave → cantidad de equipos
    */
   async function cargar() {
-    const [t, j] = await Promise.all([pedir("data/ajedrez-estudiantil.json"), pedir("data/ajedrez-estudiantil-jugadores.json")]);
+    const [t, j, pa] = await Promise.all([
+      pedir("data/ajedrez-estudiantil.json"), pedir("data/ajedrez-estudiantil-jugadores.json"),
+      pedir("data/ajedrez-estudiantil-partidas.json").catch(() => ({ partidas: [] })),
+    ]);
     const torneos = new Map();
     for (const fila of t.torneos) {
       const o = {};
@@ -55,11 +62,23 @@
     }
     const jugadores = j.jugadores.map(([nombre, clave], i) => ({ i, nombre, clave, part: [] }));
     const instituciones = j.instituciones.map(([nombre, clave], i) => ({ i, nombre, clave }));
+    const partidasPorClaveYSnr = new Map();
+    for (const fila of pa.partidas || []) {
+      const o = {};
+      pa.columnas.forEach((c, i) => { o[c] = fila[i]; });
+      o.rivalClave = normalizar(o.rivalNombre);
+      const k = o.clave + "|" + o.snr;
+      if (!partidasPorClaveYSnr.has(k)) partidasPorClaveYSnr.set(k, []);
+      partidasPorClaveYSnr.get(k).push(o);
+    }
     const participaciones = [];
-    for (const [clave, jugador, institucion, puesto, pts, elo] of j.participaciones) {
+    for (const [clave, jugador, institucion, puesto, pts, elo, snr] of j.participaciones) {
       const torneo = torneos.get(clave);
       if (!torneo) continue;
-      const p = { torneo, jugador: jugadores[jugador], institucion: institucion == null ? null : instituciones[institucion], puesto, puntos: pts, elo };
+      const p = {
+        torneo, jugador: jugadores[jugador], institucion: institucion == null ? null : instituciones[institucion],
+        puesto, puntos: pts, elo, partidas: snr == null ? null : (partidasPorClaveYSnr.get(clave + "|" + snr) || null),
+      };
       participaciones.push(p);
       p.jugador.part.push(p);
     }

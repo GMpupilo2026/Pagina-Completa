@@ -210,6 +210,7 @@ cierto("lee la clasificación individual: puesto, nombre, colegio, Elo",
        == [("1", "Solano Mora, Ana Lucía", "Liceo de Muestra", "1650"), ("2", "Quesada Rojas, Pablo", "C.T.P. Ejemplo", ""),
            ("3", "Vargas Núñez, Sofía", "Liceo de Muestra", "")], str(ind))
 cierto("los puntos salen del desempate que la anotación llama «points» (con ½)", [j["puntos"] for j in ind] == ["4.5", "4", "0.5"], str([j["puntos"] for j in ind]))
+cierto("el «snr» es el No.Ini. (lo que pide ajedrez-estudiantil-partidas.py)", [j["snr"] for j in ind] == ["1", "9", "4"], str([j["snr"] for j in ind]))
 cierto("una clasificación final se reconoce como final", lector.es_final(muestra("clasificacion.txt")))
 en_juego = lector.leer_individual(muestra("clasificacion-en-juego.txt"))
 cierto("con columna «Pts.», los puntos salen de ahí y no del desempate", [j["puntos"] for j in en_juego] == ["3", "2.5"], str(en_juego))
@@ -283,19 +284,19 @@ with tempfile.TemporaryDirectory() as tmp:
         with open(ruta, "w", encoding="utf-8") as f:
             f.write(texto)
         return ruta
-    armador.JUGADORES = escribir("j.csv", "clave,puesto,nombre,institucion,elo,puntos\n"
-                                f"{claves[0]},1,\"Solano Mora, Ana Lucía\",C.T.P. de Ejemplo,1650,4.5\n"
-                                f"{claves[0]},2,\"Pérez Ruiz, Juan\",CRC,,3\n"
-                                f"{claves[0]},3,\"Borrar Este, Nombre\",Liceo Uno,,2\n"
-                                f"{claves[1]},1,\"SOLANO MORA, ANA LUCIA\",Colegio Técnico Profesional de Ejemplo,,\n"
-                                "99999999,1,\"Fuera De Lista, Torneo\",Liceo Uno,,1\n")
+    armador.JUGADORES = escribir("j.csv", "clave,puesto,nombre,institucion,elo,puntos,snr\n"
+                                f"{claves[0]},1,\"Solano Mora, Ana Lucía\",C.T.P. de Ejemplo,1650,4.5,3\n"
+                                f"{claves[0]},2,\"Pérez Ruiz, Juan\",CRC,,3,1\n"
+                                f"{claves[0]},3,\"Borrar Este, Nombre\",Liceo Uno,,2,2\n"
+                                f"{claves[1]},1,\"SOLANO MORA, ANA LUCIA\",Colegio Técnico Profesional de Ejemplo,,,\n"
+                                "99999999,1,\"Fuera De Lista, Torneo\",Liceo Uno,,1,\n")
     armador.EQUIPOS = escribir("e.csv", f"clave,puesto,equipo,puntos\n{claves[1]},1,Liceo Viejo,4\n")
     armador.EXCLUIDOS = escribir("x.txt", "# comentario\nBORRAR ESTE, NOMBRE\n")
     with open(armador.JUGADORES, "a", encoding="utf-8") as f:
-        f.write(f"{claves[0]},4,\"Mena Paz, Rosa\",Anglo Americano,,1\n{claves[1]},2,\"Mena Paz, Rosa\",Angloamericano,,1\n"
-                f"{claves[1]},3,\"Rey Sol, Luis\",Angloamericano,,1\n"
-                f"{claves[0]},5,\"Ruiz Lara, Ana\",Pacto del Jocote,,1\n{claves[1]},4,\"Ruiz Lara, Ana\",Escuela Pacto del Jocote,,1\n"
-                f"{claves[0]},6,\"Mora Gil, Eva\",Lepanto,,1\n{claves[1]},5,\"Mora Gil, Eva\",Escuela Lepanto,,1\n{claves[1]},6,\"Mora Gil, Teo\",Colegio Lepanto,,1\n")
+        f.write(f"{claves[0]},4,\"Mena Paz, Rosa\",Anglo Americano,,1,\n{claves[1]},2,\"Mena Paz, Rosa\",Angloamericano,,1,\n"
+                f"{claves[1]},3,\"Rey Sol, Luis\",Angloamericano,,1,\n"
+                f"{claves[0]},5,\"Ruiz Lara, Ana\",Pacto del Jocote,,1,\n{claves[1]},4,\"Ruiz Lara, Ana\",Escuela Pacto del Jocote,,1,\n"
+                f"{claves[0]},6,\"Mora Gil, Eva\",Lepanto,,1,\n{claves[1]},5,\"Mora Gil, Eva\",Escuela Lepanto,,1,\n{claves[1]},6,\"Mora Gil, Teo\",Colegio Lepanto,,1,\n")
     armador.INSTITUCIONES = escribir("i.csv", "variante,nombre\nLiceo Viejo,Liceo Uno\n")
     d = json.loads(armador.armar_jugadores())
     nombres = [j[0] for j in d["jugadores"]]
@@ -314,10 +315,13 @@ with tempfile.TemporaryDirectory() as tmp:
     cierto("«Lepanto» no se junta: hay una Escuela y un Colegio Lepanto",
            all(x in insts for x in ("Lepanto", "Escuela Lepanto", "Colegio Lepanto")), str(insts))
     cierto("los puntos y el Elo vacíos quedan en null", any(p[4] is None and p[5] is None for p in d["participaciones"]))
+    cierto("el «snr» pasa a la participación (para enlazarla con sus partidas)",
+           any(p[1] == nombres.index("Solano Mora, Ana Lucía") and p[6] == 3 for p in d["participaciones"])
+           and any(p[6] is None for p in d["participaciones"]), str(d["participaciones"]))
 
 print("Los JSON")
 r = subprocess.run([sys.executable, os.path.join(RAIZ, "herramientas", "ajedrez-estudiantil.py"), "--comprobar"], capture_output=True, text=True)
-cierto("data/ajedrez-estudiantil.json y data/ajedrez-estudiantil-jugadores.json están al día", r.returncode == 0, (r.stdout + r.stderr).strip())
+cierto("los tres JSON de ajedrez estudiantil están al día", r.returncode == 0, (r.stdout + r.stderr).strip())
 
 print(f"\n{fallos} comprobación(es) fallaron" if fallos else "\nTodo bien")
 sys.exit(1 if fallos else 0)

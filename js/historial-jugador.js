@@ -152,6 +152,25 @@
     caja.setAttribute("aria-label", "La etapa más alta de cada año. " + frase + ".");
   }
 
+  // El resultado de una ronda tal como lo cuenta chess-results: "1"/"0"/"½"
+  // se traducen; cualquier otro código (una incomparecencia, por ejemplo) se
+  // muestra tal cual lo escribe el sitio, sin inventarle un significado.
+  function resultadoDeRonda(r) {
+    return r === "1" ? "ganó" : r === "0" ? "perdió" : (r === "½" || r === "0.5" || r === "0,5") ? "empató" : r;
+  }
+
+  function filaPartida(ronda) {
+    const li = el("li");
+    const color = ronda.color === "blancas" ? " con blancas" : ronda.color === "negras" ? " con negras" : "";
+    li.append(document.createTextNode("Ronda " + ronda.ronda + ": " + resultadoDeRonda(ronda.resultado) + color + ", contra "));
+    const a = el("a", null, ronda.rivalNombre);
+    a.href = "historial-jugador.html?j=" + encodeURIComponent(ronda.rivalClave);
+    li.append(a);
+    if (ronda.rivalInstitucion) li.append(document.createTextNode(" (" + ronda.rivalInstitucion + ")"));
+    li.append(document.createTextNode("."));
+    return li;
+  }
+
   function tabla(j) {
     const cuerpo = $("hj-tabla").tBodies[0];
     cuerpo.replaceChildren();
@@ -174,6 +193,14 @@
       nombre.append(a);
       const det = [t.modalidad === "Equipos" ? "por equipos" : "individual"].concat(t.ritmo === "Clásico" ? [] : [t.ritmo.toLowerCase()]).concat(t.region ? [t.region] : []);
       nombre.append(el("span", "hj-sub", det.join(" · ")));
+      if (p.partidas && p.partidas.length) {
+        const partidas = el("details", "ae-detalles");
+        partidas.append(el("summary", null, "Ver " + plural(p.partidas.length, "partida", "partidas")));
+        const ul = el("ul", "ec-lista");
+        for (const ronda of p.partidas) ul.append(filaPartida(ronda));
+        partidas.append(ul);
+        nombre.append(partidas);
+      }
       tr.append(nombre, el("td", null, p.institucion ? p.institucion.nombre : "—"));
       tr.append(el("td", "ae-n", p.puesto ? ordinal(p.puesto) + (t.de ? " de " + t.de : "") + (t.modalidad === "Equipos" ? " (equipo)" : "") : "—"));
       tr.append(el("td", "ae-n", p.puntos != null ? D.puntos.format(p.puntos) + (t.rondas ? " de " + t.rondas : "") : "—"));

@@ -19,9 +19,15 @@ Los puntos: si la tabla no trae «Pts.», son el desempate que la anotación de
 abajo llama «points (game-points)» (en los JDE casi siempre es el primero).
 Si no hay ninguno de los dos, quedan en blanco: no se adivina.
 
+El «No.Ini.» (número con el que arrancó el torneo) se guarda como «snr»: es lo
+que necesita herramientas/ajedrez-estudiantil-partidas.py para pedirle a
+chess-results las partidas ronda a ronda de ESE jugador en ESE torneo
+(art=9&snr=). En un torneo por equipos queda en blanco: las partidas de
+equipos se leen aparte.
+
 Guarda tres archivos en herramientas/datos/ (no se publican: .assetsignore):
 
-  ajedrez-estudiantil-jugadores.csv  clave,puesto,nombre,institucion,elo,puntos
+  ajedrez-estudiantil-jugadores.csv  clave,puesto,nombre,institucion,elo,puntos,snr
   ajedrez-estudiantil-equipos.csv    clave,puesto,equipo,puntos
   ajedrez-estudiantil-leidos.csv     clave,leido,jugadores,rondas,final
 
@@ -57,7 +63,7 @@ JUGADORES = os.path.join(DATOS, "ajedrez-estudiantil-jugadores.csv")
 EQUIPOS = os.path.join(DATOS, "ajedrez-estudiantil-equipos.csv")
 LEIDOS = os.path.join(DATOS, "ajedrez-estudiantil-leidos.csv")
 
-COLUMNAS_JUGADORES = ["clave", "puesto", "nombre", "institucion", "elo", "puntos"]
+COLUMNAS_JUGADORES = ["clave", "puesto", "nombre", "institucion", "elo", "puntos", "snr"]
 COLUMNAS_EQUIPOS = ["clave", "puesto", "equipo", "puntos"]
 COLUMNAS_LEIDOS = ["clave", "leido", "jugadores", "rondas", "final"]
 
@@ -183,8 +189,9 @@ def elo(t):
 
 
 def leer_individual(pagina):
-    """art=1: [{puesto, nombre, institucion, elo, puntos}]. Vacío si la página
-    no trae la clasificación."""
+    """art=1: [{puesto, nombre, institucion, elo, puntos, snr}]. «snr» es el
+    «No.Ini.» (número con el que arrancó el torneo). Vacío si la página no
+    trae la clasificación."""
     for enc, filas in tablas(pagina):
         if not enc:
             continue
@@ -194,6 +201,7 @@ def leer_individual(pagina):
         i_club = columna(enc, r"Club/Ciudad", r"Club/City", r"Club", r"Equipo", r"Team")
         i_elo = columna(enc, r"Elo", r"Rtg", r"ELO")
         i_pts = columna_de_puntos(pagina, enc)
+        i_snr = columna(enc, r"No\.Ini\.?", r"Snr")
         fuera = []
         for f in filas:
             if len(f) <= max(i_rk, i_nombre) or not f[i_nombre] or not f[i_rk].isdigit():
@@ -204,6 +212,7 @@ def leer_individual(pagina):
                 "institucion": f[i_club] if 0 <= i_club < len(f) else "",
                 "elo": elo(f[i_elo]) if 0 <= i_elo < len(f) else "",
                 "puntos": numero(f[i_pts]) if 0 <= i_pts < len(f) else "",
+                "snr": f[i_snr] if 0 <= i_snr < len(f) and f[i_snr].isdigit() else "",
             })
         return fuera
     return []
@@ -256,7 +265,7 @@ def leer_torneo(torneo, pedir):
         puesto = {e["equipo"]: e["puesto"] for e in equipos}
         lista = leer_jugadores_de_equipos(pedir(clave, 16))
         jugadores = [{"puesto": puesto.get(j["equipo"], ""), "nombre": j["nombre"], "institucion": j["equipo"],
-                      "elo": j["elo"], "puntos": ""} for j in lista]
+                      "elo": j["elo"], "puntos": "", "snr": ""} for j in lista]
         return jugadores, equipos, es_final(portada)
 
     if torneo["modalidad"] == "Equipos":

@@ -54,9 +54,9 @@ const JUGADORES = {
   jugadores: [["Solano Mora, Ana Lucía", "solano mora ana lucia"], ["Quesada Rojas, Pablo", "quesada rojas pablo"],
     ["Vargas Núñez, Sofía", "vargas nunez sofia"], ["Brenes Soto, Laura", "brenes soto laura"], [MALO, "img src x id inyectado"]],
   instituciones: [["Liceo de Muestra", "liceo de muestra"], ["C.T.P. Ejemplo", "ctp ejemplo"], ["Escuela Heredia", "esc heredia"]],
-  columnas_participaciones: ["clave", "jugador", "institucion", "puesto", "puntos", "elo"],
+  columnas_participaciones: ["clave", "jugador", "institucion", "puesto", "puntos", "elo", "snr"],
   participaciones: [
-    [101, 0, 0, 1, 4, null], [101, 1, 1, 2, 3, null], [101, 2, 0, 3, 2, null],
+    [101, 0, 0, 1, 4, null, 1], [101, 1, 1, 2, 3, null], [101, 2, 0, 3, 2, null],
     [106, 3, 2, 1, 3, null], [106, 4, 2, 2, 1, null],
     [102, 0, 0, 2, 3.5, 1500], [102, 1, 1, 1, 4, null], [102, 2, 0, 3, 1, null],
     [104, 0, 0, 1, null, null], [104, 2, 0, 1, null, null], [104, 1, 1, 2, null, null],
@@ -65,6 +65,13 @@ const JUGADORES = {
   ],
   columnas_equipos: ["clave", "institucion", "puesto", "puntos"],
   equipos: [[104, 0, 1, 4], [104, 1, 2, 2]],
+};
+const PARTIDAS = {
+  actualizado: "2026-10-08",
+  columnas: ["clave", "snr", "ronda", "mesa", "color", "resultado", "rivalNombre", "rivalInstitucion", "rivalElo"],
+  // La partida de Solano Mora (snr 1) en el torneo 101, contra Quesada Rojas:
+  // se linkea por nombre, sin depender de su propio «snr» en la fila rival.
+  partidas: [[101, 1, 1, 1, "blancas", "1", "Quesada Rojas, Pablo", "C.T.P. Ejemplo", null]],
 };
 
 (async () => {
@@ -76,6 +83,7 @@ const JUGADORES = {
       const url = ruta.request().url();
       if (url.includes("/data/ajedrez-estudiantil.json")) return ruta.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(TORNEOS) });
       if (url.includes("/data/ajedrez-estudiantil-jugadores.json")) return ruta.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(JUGADORES) });
+      if (url.includes("/data/ajedrez-estudiantil-partidas.json")) return ruta.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(PARTIDAS) });
       return url.startsWith(BASE) ? ruta.continue() : ruta.fulfill({ status: 200, body: "", contentType: "text/plain" });
     });
     const page = await ctx.newPage();
@@ -130,6 +138,19 @@ const JUGADORES = {
     const camino = await page.$eval("#hj-camino", (c) => ({ ve: !!c.querySelector("svg") && c.querySelector("svg").checkVisibility(), puntos: c.querySelectorAll("circle").length, texto: c.getAttribute("aria-label") }));
     cierto("el camino por etapas se ve, con un punto por torneo de los JDE", camino.ve && camino.puntos === 5, JSON.stringify(camino));
     cierto("y dice en texto la etapa más alta de cada año", (camino.texto || "").includes("2024: regional; 2025: nacional"), camino.texto);
+
+    const filaConPartidas = (await page.$$("#hj-tabla tbody tr"))[4]; // torneo 101, con partidas leídas
+    const resumen = await filaConPartidas.$("details.ae-detalles summary");
+    cierto("el torneo con partidas leídas trae «Ver 1 partida»", resumen && limpio(await resumen.textContent()) === "Ver 1 partida", resumen && await resumen.textContent());
+    cierto("no se ve hasta desplegarlo", !(await filaConPartidas.$eval("details.ae-detalles ul li", (li) => li.checkVisibility())));
+    await resumen.click();
+    const liTexto = await filaConPartidas.$eval("details.ae-detalles ul li", (li) => li.checkVisibility() && li.textContent.replace(/\s+/g, " ").trim());
+    cierto("desplegada, la partida dice la ronda, el color, el resultado y contra quién",
+           liTexto === "Ronda 1: ganó con blancas, contra Quesada Rojas, Pablo (C.T.P. Ejemplo).", liTexto);
+    const enlaceRival = await filaConPartidas.$eval("details.ae-detalles ul li a", (a) => a.getAttribute("href"));
+    cierto("el rival enlaza a su propio historial, por su nombre normalizado", enlaceRival === "historial-jugador.html?j=quesada%20rojas%20pablo", enlaceRival);
+    const filaSinPartidas = (await page.$$("#hj-tabla tbody tr"))[0]; // torneo 103 (Nacional): no se le leyeron partidas
+    cierto("un torneo sin partidas leídas no muestra el despliegue", !(await filaSinPartidas.$("details.ae-detalles")));
     cierto("sin errores de la página", errores.length === 0, errores.join("; "));
     await ctx.close();
   }
