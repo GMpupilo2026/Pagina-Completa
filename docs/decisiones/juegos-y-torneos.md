@@ -2139,6 +2139,85 @@ escriba en `pareo_abierto_v1`, los dos saltan (el segundo con un `✗`, no con
 el script colgado: el chequeo espera por `textContent`, no por un `<h1>` que
 en el camino roto nunca aparece).
 
+### El canal en vivo
+
+«Ver desde el celular» (arriba) es una foto: queda vieja apenas cambia un
+resultado. El pedido fue «que se actualice sola», y eso Pareo Integral no lo
+puede hacer sin que algo reciba y reparta los datos en el medio — es decir,
+sin un servidor. Se lo planteé así al dueño del repo (la primera vez que
+Pareo Integral tocaría uno, de verdad, no solo la búsqueda de Elo Nacional) y
+eligió hacerlo de verdad en vivo, con las dos cosas claras: que contradice a
+propósito «nada sale de tu computadora», y que es una decisión de quien es
+dueño del repo, no solo de código.
+
+- **Un canal de Supabase Realtime en modo Broadcast**, no una tabla: no hay
+  fila que guardar ni que proteger con una política, así que ninguna de las
+  reglas de «La verificación en dos pasos» aplica (esa exigencia está atada a
+  tablas con Realtime vía `postgres_changes`; un canal de Broadcast no tiene
+  tabla). Tampoco lo tocan `verificar-realtime-filtros.js` ni
+  `verificar-realtime-publicadas.js`: los dos buscan `postgres_changes` en el
+  código, y Broadcast nunca aparece ahí. Y el freno de envíos públicos
+  (`interno.frenar_envio_publico`) tampoco aplica: ese freno protege un
+  INSERT que alguien sin cuenta puede disparar, y un Broadcast no inserta
+  nada en ninguna tabla.
+- **Público por default, sin RLS**: el proyecto nunca activó el modo privado
+  de canales de Supabase (que exigiría una política sobre `realtime.messages`).
+  Cualquiera con la anon key —la misma que ya es pública en
+  `js/supabase-client.js`— puede unirse a un canal con solo saber su nombre.
+  El nombre del canal (`pareo-vivo-<código>`) hace de contraseña: por eso el
+  código es de 8 caracteres al azar (sin `0/1/i/l/o`, para poder leerlo a
+  mano si hace falta) y vive en `v.liveCodigo`, guardado con el torneo. Quien
+  tenga el enlace puede mandar mensajes falsos al mismo canal —no hay forma
+  de firmarlos—; para un emparejamiento que de todas formas se comparte en
+  público, se aceptó el riesgo en vez de construir algo más. El botón «Usar
+  un código nuevo» (`$("pi-ver-en-vivo-nuevo-codigo")`) es la única salida si
+  el código se comparte de más: no revoca al viejo canal (nadie puede, sin
+  RLS), pero el organizador deja de mandarle nada.
+- **`js/pareo/qr.js` no se compartió con `js/clase-qr.js`** (ver ese archivo)
+  y por la misma razón `js/pareo/ver.js` NO reutiliza `js/supabase-client.js`
+  como `<script>` fijo de `pareo.html`: lo carga perezoso
+  (`PareoVer.cargarSupabase()`, igual que la librería del QR), para que la
+  inmensa mayoría de quien usa Pareo Integral —que nunca toca «en vivo»— no
+  pague el peso de Supabase. `_headers` ya traía `wss://…supabase.co` en
+  `connect-src` para el resto del sitio: no hizo falta tocar la CSP.
+- **Quién manda y quién escucha, nunca al revés**: `estado.canalVivo` en
+  `js/pareo/pagina.js` solo llama `.send()`; nunca `.on()`. El organizador no
+  necesita recibir nada (es el dueño de los datos), y esto evita que un
+  mensaje ajeno al canal pueda, por accidente, pisarle su propia pantalla.
+- **Qué manda y cuándo**: `datosLecturaActual(r)` —la misma función que ya
+  armaba el enlace estático— con `r` siempre la ÚLTIMA ronda (`v.rondas.length
+  - 1`), sin importar qué ronda esté mirando el organizador en su pantalla:
+  «en vivo» significa el estado real del torneo, no lo que el organizador
+  tiene abierto. Se manda desde `guardar()` (una línea: `if (estado.enVivo)
+  difundirEnVivo();`), así que cualquier cambio que ya dispara un guardado
+  —un resultado, un jugador nuevo, deshacer una ronda— lo manda solo, sin un
+  gancho aparte para cada acción.
+- **Apagarlo de verdad apaga**: cambiar de torneo (`abrir()`/`crear()`) corta
+  el canal (`apagarEnVivo()`), para no seguir mandando el estado de un
+  torneo al canal de otro. Desmarcar la casilla también corta: nunca se deja
+  un canal mandando datos que nadie pidió seguir viendo.
+- **Quien mira y nadie transmite, no se queda mirando una pantalla en
+  blanco para siempre**: `PareoVer.iniciarVivo()` pone un aviso de «Conectando»
+  y, si no llega nada en 8 segundos, lo cambia por uno de «Esperando» (el
+  organizador puede no tener la pestaña abierta). Sigue escuchando: si algo
+  llega después, igual se pinta.
+- No se actualiza sola si quien organiza cierra la pestaña: el canal es tan
+  efímero como la conexión. Quien ya estaba mirando se queda con la última
+  foto que le llegó; quien recién abre el enlace no ve nada. Se dice así, sin
+  vueltas, en la propia caja («Actualizar sola (en vivo)»).
+
+**Al tocar el canal en vivo, correr `node herramientas/verificar-pareo-pagina.js`**
+(su sección 12): nunca habla con el Supabase de verdad —dos páginas de
+Playwright aparte (el organizador y «el celular»), cada una con su propio
+`window.sb` falso, y Node relevando los mensajes de una a la otra, igual que
+haría un canal de Broadcast—. Comprueba que activarlo manda la foto de
+ahora, que un resultado nuevo le llega solo a quien ya esté mirando, que
+desmarcarlo corta los envíos siguientes, que «Usar un código nuevo» cambia
+el código sin tocar el torneo, que un código al que nadie transmite avisa
+que está esperando (no una pantalla en blanco), y que cambiar de torneo
+apaga el canal del anterior. Rompiendo a propósito cualquiera de esos
+caminos, salta.
+
 ## Ajedrez estudiantil en Costa Rica: los torneos de chess-results
 
 `ajedrez-estudiantil.html` es una página pública con la participación en los
