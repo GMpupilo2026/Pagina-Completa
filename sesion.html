@@ -1513,6 +1513,15 @@
                             <div id="mis-insignias" class="flex justify-center"></div>
                             <a href="logros.html" class="inline-block mt-2 text-xs font-semibold underline underline-offset-2 text-brand-700 dark:text-brand-200 hover:no-underline">Ver todos tus logros</a>
                         </div>
+                        <!-- Los compañeros conectados ahora, con su adorno de avatar si tienen uno
+                             puesto (gorro, lentes, corona…): lo mismo que ya ve el profesor en
+                             «Alumnos conectados», sin ningún control, solo para mirar. Oculto si
+                             nadie más está conectado todavía. Ver «Los accesorios de avatar» en
+                             docs/decisiones/puntos-y-premios.md. -->
+                        <div id="companeros-caja" hidden class="mt-4 pt-4 border-t border-brand-100 dark:border-brand-800 text-left">
+                            <h3 class="text-xs font-semibold text-brand-500 dark:text-brand-300 mb-2 text-center"><span aria-hidden="true">👥 </span>Compañeros en esta clase</h3>
+                            <ul id="companeros-list" class="space-y-1.5 text-sm"></ul>
+                        </div>
                     </div>
                 </aside>
             </div>
