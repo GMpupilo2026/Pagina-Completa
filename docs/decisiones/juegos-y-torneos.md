@@ -2805,6 +2805,61 @@ comparte la plata, el comité deducido, la medalla escrita, «Jugó la final», 
 filtro de edición y el enlace. Rompiendo a propósito la paginación, el empate o
 la deducción, salta.
 
+## Proyección JDN por comité
+
+`jdn-proyeccion.html` (`js/jdn-proyeccion.js`) es para la planificación interna
+del dueño del sitio: por cada comité de deportes, quién está inscrito en la
+próxima eliminatoria de los JDN(P), en qué categoría y en qué paso del trámite
+va, cruzado con si se le encontró actividad reciente en chess-results. No es
+una herramienta con licencia como las de arbitraje (ver «Herramientas de
+arbitraje» arriba): no se vende, así que el candado es `soy_admin()`, el mismo
+que `auditoria` o `arbitraje_consulta_config`, no `tengo_herramienta()`.
+
+- **La fuente no es chess-results, es el ICODER.** `jdn_resultados` (ver
+  «Resultados JDN por comité» arriba) sale de los torneos ya jugados y
+  publicados en chess-results; esta tabla, `jdn_inscripciones` (migración
+  `20261011120000`), sale del export del propio sistema de inscripciones del
+  ICODER para la disciplina de ajedrez, con el estado de cada trámite
+  (`REGISTRADO`, `APROBADO ICODER`, `PASE CANTONAL`,
+  `DEBEN CORREGIR LO SOLICITADO`, `NO CONVOCATORIA`). Se llena a mano cada vez
+  que el dueño tiene un export nuevo: no hay forma de leerlo en vivo (no es
+  una página pública como chess-results, pg_net no sirve de nada ahí).
+- **Sin cédula ni fecha de nacimiento.** El export del ICODER trae
+  identificación, nacionalidad y fecha de nacimiento de cada persona —muchas
+  menores de edad—: la tabla solo guarda lo que la página usa (comité, tipo de
+  inscripción, nombre, categoría y estado), para no tener en la base más datos
+  personales de los necesarios. Por lo mismo, el export en sí (Excel o CSV)
+  **nunca se commitea al repositorio**: se procesa y se carga a la base desde
+  afuera, igual que los datos de calibración del diagnóstico.
+- **«Activos 2026» reusa «Ajedrez estudiantil», no inventa una fuente nueva.**
+  Cruza el nombre de cada atleta con `data/ajedrez-estudiantil.json` y
+  `data/ajedrez-estudiantil-jugadores.json` (los mismos que
+  `historial-jugador.html`, ver «Historial del jugador y estadísticas por
+  colegio»), con la misma regla de esa herramienta: cada palabra del nombre
+  tiene que aparecer en la clave normalizada de alguien que jugó un torneo
+  estudiantil (`js/jde-datos.js`, `JdeDatos.normalizar`), y si a esa persona se
+  le encuentra un torneo de 2026 queda «activa». La cifra de cada comité dice
+  «n de m» sobre a quiénes se les pudo buscar, no sobre el total: a quien no
+  se le encuentra nada le queda «Sin dato» (no «no está activo»), porque la
+  ausencia solo dice que no se le encontró ahí, no que no juegue.
+- **No se cruza con el colegio.** El comité de los JDN es el cantón o
+  distrito; el colegio de los JDE es otra cosa, y no hay una tabla que junte
+  los dos. Por eso la página no intenta adivinar qué jugadores nuevos de
+  chess-results le tocarían a cada comité: solo confirma actividad de quienes
+  ya están en el export del ICODER. Es una limitación conocida, dicha en la
+  propia página («De dónde salen los datos»).
+- **Los comités del dueño van primero, con ⭐** (`MIS_COMITES` en
+  `js/jdn-proyeccion.js`: hoy San José y Pérez Zeledón). Es una constante a
+  mano, no una preferencia guardada: es la vista de una sola persona, no hace
+  falta más.
+
+`verificar-jdn-proyeccion.js` lo prueba con un doble de Supabase y datos
+inventados de Ajedrez estudiantil: el candado sin `soy_admin()`, el comité
+propio primero, las cuentas de categoría y de estado del trámite (y que el
+cuerpo técnico no sume como atleta), «activos 2026» contado solo sobre a
+quienes se les encontró dato, y que a quien no se le encuentra nada le diga
+«Sin dato» en vez de darlo por inactivo.
+
 ## Juegos Estudiantiles MEP, modo árbitro
 
 `jde-arbitro.html` arma cada fase de los Juegos Deportivos Estudiantiles
