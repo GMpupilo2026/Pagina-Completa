@@ -2438,6 +2438,73 @@ excluidos). `verificar-jde-jugadores.js` abre las dos páginas con datos
 inventados y compara cada cifra con la cuenta hecha a mano; contando también
 el blitz, o pintando un nombre con `innerHTML`, salta.
 
+## Contra quién jugó cada estudiante, y el resultado
+
+Lo pidió el dueño en octubre de 2026: en `historial-jugador.html`, cada
+torneo de la ficha de un jugador se puede desplegar («Ver N partidas») para
+ver, ronda por ronda, contra quién jugó, con qué color y el resultado, con un
+enlace al historial del rival.
+
+- **Solo los torneos individuales de 2024 en adelante.** Esto no sale de la
+  misma página que ya se lee (`art=1`, la clasificación): hace falta pedirle
+  a chess-results una página MÁS por cada jugador de cada torneo
+  (`tnr<clave>.aspx?art=9&snr=<N>&turdet=YES`, la misma que ya usa, para un
+  jugador puntual, el panel de administración —
+  `supabase/functions/chess-results-proxy/index.ts`). Traer eso de los ~1400
+  torneos de toda la historia (desde 2011) le pediría al sitio miles de
+  páginas de más; acotado a los individuales de 2024 en adelante son unas
+  5300. Los torneos por equipos quedan fuera: reparten sus partidas por
+  tablero dentro de un duelo entre equipos, una estructura distinta que no se
+  lee todavía.
+- **`herramientas/ajedrez-estudiantil-partidas.py`**, después de
+  `ajedrez-estudiantil-jugadores.py` en el mismo flujo de cada seis horas, en
+  dos pasos que cuentan juntos para `--maximo` (100 por vuelta, igual
+  cadencia que el resto del sitio):
+  1. completa el «snr» (el `No.Ini.` con que arrancó cada jugador, lo que
+     identifica su fila en `art=9`) de los torneos que se habían leído ANTES
+     de que `ajedrez-estudiantil-jugadores.py` empezara a guardar esa
+     columna — una página por torneo, no por jugador, para toda su lista de
+     una vez;
+  2. con el snr ya puesto, pide las partidas de cada (torneo, jugador) que
+     todavía no se leyó. A este ritmo, completar los individuales de 2024 en
+     adelante tarda unas dos semanas; lo que se agregue después se pone al
+     día solo.
+- **El color sale de un `<div class="FarbewT">` (blancas) o
+  `<div class="FarbesT">` (negras) DENTRO de la celda del resultado** — se
+  comprobó contra una página real (torneo 911786, Regional Turrialba, marzo
+  2024). Cuando ese `<div>` no está (una ronda sin emparejar, o ganada o
+  perdida por incomparecencia de un rival real, también visto en una página
+  real) el color queda «desconocido» y el resultado es el texto tal cual lo
+  escribe chess-results (p. ej. `- 1K`), sin interpretarlo: no se inventa qué
+  significa un código que no se pudo confirmar.
+- **Una ronda sin emparejar (bye) no es una partida**: su rival es «sin
+  emparejar» con un `No.Ini.` negativo, y no cuenta como «contra quién
+  jugó». Una ganada o perdida por incomparecencia de un rival CON nombre sí
+  cuenta (el emparejamiento existió), con su resultado tal cual.
+- **Se guarda en `herramientas/datos/ajedrez-estudiantil-partidas.csv`**
+  (`clave,snr,ronda,mesa,color,resultado,rival_snr,rival_nombre,rival_institucion,rival_elo`)
+  y qué (torneo, jugador) ya se leyó en
+  `ajedrez-estudiantil-partidas-leidas.csv` (no se vuelve a pedir aunque el
+  torneo cambie: es un hecho pasado). `ajedrez-estudiantil.py` arma con eso
+  `data/ajedrez-estudiantil-partidas.json`, y la participación de
+  `ajedrez-estudiantil-jugadores.csv`/`.json` ganó la columna «snr» para
+  enlazar las dos.
+- **`js/jde-datos.js`** carga el tercer JSON (con `.catch` si todavía no
+  existe, para no romper nada mientras se despliega esto) y le agrega
+  `partidas` a cada participación que tenga snr y partidas leídas; el rival
+  se enlaza a su propio historial con el mismo `D.normalizar()` de siempre
+  (`historial-jugador.html?j=`), sin tener que resolverlo contra un índice de
+  personas.
+- `herramientas/datos/ajedrez-estudiantil-muestras/partidas.txt` tiene una
+  página de ejemplo (nombres inventados) con una ganada de blancas, una
+  perdida de negras, un bye y una incomparecencia, y
+  `verificar-ajedrez-estudiantil-partidas.py` prueba el lector contra ella,
+  el filtro de «elegible» (individual, 2024+) y una vuelta completa (los dos
+  pasos, el `--maximo` compartido entre ambos, lo ya leído que no se repite).
+  `verificar-jde-jugadores.js` prueba el despliegue en la página: que no se
+  vea hasta abrirlo, el texto de la ronda y el enlace al rival, y que un
+  torneo sin partidas leídas no muestre el despliegue.
+
 ## Herramientas de arbitraje
 
 `herramientas-arbitraje.html` es la vitrina pública de las herramientas para

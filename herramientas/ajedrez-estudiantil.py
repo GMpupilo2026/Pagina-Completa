@@ -48,6 +48,11 @@ EXCLUIDOS = os.path.join(DATOS, "ajedrez-estudiantil-excluidos.txt")
 # «variante,nombre» (la variante, como la da chess-results).
 INSTITUCIONES = os.path.join(DATOS, "ajedrez-estudiantil-instituciones.csv")
 DESTINO_JUGADORES = os.path.join(RAIZ, "data", "ajedrez-estudiantil-jugadores.json")
+# Las partidas ronda a ronda de los torneos individuales de 2024 en adelante
+# (herramientas/ajedrez-estudiantil-partidas.py). Ver «Historial del jugador y
+# estadísticas por colegio» en docs/decisiones/juegos-y-torneos.md.
+PARTIDAS = os.path.join(DATOS, "ajedrez-estudiantil-partidas.csv")
+DESTINO_PARTIDAS = os.path.join(RAIZ, "data", "ajedrez-estudiantil-partidas.json")
 
 # El último día en que cambió algo de chess-results: la página lo dice. Lo
 # escribe herramientas/ajedrez-estudiantil-actualizar.py cuando suma o pone al
@@ -259,7 +264,8 @@ def armar_jugadores():
         if not k or k in excluidos:
             continue
         participaciones.append([int(r["clave"]), indice(personas, k, r["nombre"].strip()),
-                                institucion(r["institucion"]), numero(r["puesto"]), numero(r["puntos"]), numero(r["elo"])])
+                                institucion(r["institucion"]), numero(r["puesto"]), numero(r["puntos"]), numero(r["elo"]),
+                                numero(r["snr"])])
     for r in filas_e:
         equipos.append([int(r["clave"]), institucion(r["equipo"]), numero(r["puesto"]), numero(r["puntos"])])
 
@@ -275,7 +281,7 @@ def armar_jugadores():
         "actualizado": actualizado,
         "jugadores": nombres(personas),
         "instituciones": nombres(instituciones),
-        "columnas_participaciones": ["clave", "jugador", "institucion", "puesto", "puntos", "elo"],
+        "columnas_participaciones": ["clave", "jugador", "institucion", "puesto", "puntos", "elo", "snr"],
         "participaciones": participaciones,
         "columnas_equipos": ["clave", "institucion", "puesto", "puntos"],
         "equipos": equipos,
@@ -283,14 +289,36 @@ def armar_jugadores():
     return json.dumps(datos, ensure_ascii=False, separators=(",", ":")) + "\n"
 
 
+def armar_partidas():
+    """data/ajedrez-estudiantil-partidas.json: las partidas ronda a ronda de
+    herramientas/ajedrez-estudiantil-partidas.py, una por fila. Se enlaza a su
+    participación por (clave, snr) — ver armar_jugadores()."""
+    with open(FUENTE, encoding="utf-8", newline="") as f:
+        claves_torneos = {r["clave"] for r in csv.DictReader(f)}
+    filas = [r for r in leer(PARTIDAS) if r["clave"] in claves_torneos]
+    partidas = [[int(r["clave"]), numero(r["snr"]), numero(r["ronda"]), numero(r["mesa"]), r["color"], r["resultado"],
+                 r["rival_nombre"].strip(), r["rival_institucion"].strip() or None, numero(r["rival_elo"])]
+                for r in filas]
+    partidas.sort(key=lambda p: (p[0], p[1], p[2]))
+    with open(FECHA, encoding="utf-8") as f:
+        actualizado = f.read().strip()
+    datos = {
+        "actualizado": actualizado,
+        "columnas": ["clave", "snr", "ronda", "mesa", "color", "resultado", "rivalNombre", "rivalInstitucion", "rivalElo"],
+        "partidas": partidas,
+    }
+    return json.dumps(datos, ensure_ascii=False, separators=(",", ":")) + "\n"
+
+
 def main():
-    salidas = [(DESTINO, armar()), (DESTINO_JUGADORES, armar_jugadores())]
+    salidas = [(DESTINO, armar()), (DESTINO_JUGADORES, armar_jugadores()), (DESTINO_PARTIDAS, armar_partidas())]
     if "--comprobar" in sys.argv:
         for destino, texto in salidas:
             actual = open(destino, encoding="utf-8").read() if os.path.exists(destino) else ""
             if actual != texto:
                 sys.exit(f"{os.path.relpath(destino, RAIZ)} no está al día: corre python3 herramientas/ajedrez-estudiantil.py")
-        print("data/ajedrez-estudiantil.json y data/ajedrez-estudiantil-jugadores.json al día")
+        print("data/ajedrez-estudiantil.json, data/ajedrez-estudiantil-jugadores.json y "
+              "data/ajedrez-estudiantil-partidas.json al día")
         return
     for destino, texto in salidas:
         with open(destino, "w", encoding="utf-8") as f:
@@ -299,6 +327,8 @@ def main():
     j = json.loads(salidas[1][1])
     print(f"data/ajedrez-estudiantil-jugadores.json: {len(j['jugadores'])} jugadores, "
           f"{len(j['instituciones'])} instituciones, {len(j['participaciones'])} participaciones")
+    p = json.loads(salidas[2][1])
+    print(f"data/ajedrez-estudiantil-partidas.json: {len(p['partidas'])} partida(s)")
 
 
 if __name__ == "__main__":
