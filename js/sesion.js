@@ -2454,6 +2454,53 @@
             }
         }
 
+        /* Lo que ve un ALUMNO de sus compañeros conectados ahora mismo: su
+           nombre, su foto y el adorno de avatar que tenga puesto (gorro,
+           lentes, corona…) — sin ningún control, eso es solo de
+           renderStudentsList() (el profesor). onlineStudents ya trae a
+           todos los de role "alumno" del canal de presencia de ESTA clase
+           (subscribePresence), así que no hace falta pedir nada aparte: la
+           RLS de premios_canjeados (20261011161244_premios_accesorios_
+           companeros.sql) es la que decide que solo se vea el accesorio,
+           nunca el título ni el marco. Ver «Los accesorios de avatar» en
+           docs/decisiones/puntos-y-premios.md. */
+        function renderCompanerosList() {
+            if (isTeacher || esObservador) return;
+            const caja = document.getElementById("companeros-caja");
+            const listEl = document.getElementById("companeros-list");
+            if (!caja || !listEl) return;
+            const companeros = Array.from(onlineStudents.entries()).filter(([id]) => id !== profile.id);
+            caja.hidden = companeros.length === 0;
+            if (!companeros.length) { listEl.innerHTML = ""; return; }
+            companeros.sort((a, b) => (a[1].full_name || a[1].email || "").localeCompare(b[1].full_name || b[1].email || ""));
+            listEl.innerHTML = "";
+            for (const [studentId, info] of companeros) {
+                const nombreVisible = info.full_name || info.email;
+                const li = document.createElement("li");
+                li.className = "flex items-center gap-2 text-brand-700 dark:text-brand-200 min-w-0";
+                const dot = document.createElement("span");
+                dot.className = "w-1.5 h-1.5 rounded-full bg-green-500 shrink-0";
+                dot.title = "En vivo";
+                li.appendChild(dot);
+                // Nunca innerHTML: full_name/email vienen de datos que controla el propio
+                // usuario (presence.track), textContent los trata siempre como texto plano.
+                if (window.FotoPerfil) li.appendChild(FotoPerfil.avatar(studentId, nombreVisible));
+                const name = document.createElement("span");
+                name.className = "truncate";
+                name.title = nombreVisible;
+                name.textContent = nombreVisible;
+                li.appendChild(name);
+                listEl.appendChild(li);
+            }
+            if (window.Puntos) {
+                Puntos.accesoriosDe(sb, companeros.map(([id]) => id)).then((mapa) => {
+                    listEl.querySelectorAll("[data-foto-de]").forEach((caja2) => {
+                        Puntos.decorarAvatar(caja2, mapa.get(caja2.dataset.fotoDe));
+                    });
+                });
+            }
+        }
+
         /* ---------- El plan de clase ----------
 
            Lo que el profesor preparó en planes.html, aquí al lado del tablero.
@@ -2961,6 +3008,7 @@
                 }
                 dictarFotografiaDeLaPresencia(state);
                 if (!isTeacher && !esObservador) pintarEntrenoDelProfe(state);
+                if (!isTeacher && !esObservador) renderCompanerosList();
                 renderStudentsList();
                 pintarCuentaCalentamiento();
                 if (isTeacher && tandaActual) { anotarTandaDeLaPresencia(); pintarTandaProfe(); }

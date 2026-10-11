@@ -134,9 +134,44 @@ lista «Alumnos conectados» que ve el profesor en la clase en vivo
   vuelve a pintar con cada latido de presencia, lo peor que pasa es que se
   vea un instante más tarde.
 
-Queda para otra vez: que los propios compañeros (no solo el profesor) se
-vean los accesorios entre ellos en algún listado de alumno a alumno, y que
-un accesorio se vea también en el modo proyector.
+**Los compañeros también lo ven, no solo el profesor** (desde
+`20261011161244_premios_accesorios_companeros.sql`): el texto del catálogo
+siempre dijo «que ven tu profesor y tus compañeros», pero hasta esa
+migración la RLS de `premios_canjeados` solo dejaba ver la propia fila, la
+del profesor, la de quien administra o la de quien supervisa —a un
+compañero ni `accesorios_de()` le devolvía nada, aunque la función ya
+estuviera pensada para pedir de varios a la vez—. Se notó porque alguien
+canjeó la Corona dorada y sus compañeros de clase no la veían.
+
+- La política `premios_canjeados_ver` suma una rama más: si la fila es de
+  `tipo_efecto = 'accesorio_avatar'` Y el que pregunta es compañero (mismo
+  conjunto que la rama de compañeros de `profiles_select`: mismo profesor Y
+  misma academia, por `interno.profesores_de()` + `interno.alumnos_de()` +
+  `interno.gente_de_mis_academias()`), se deja ver. Los títulos, los marcos
+  de perfil y todo lo demás de `premios_canjeados` siguen sin verse entre
+  compañeros: la excepción es solo para `accesorio_avatar`, que es la única
+  categoría pensada para notarse delante de otros.
+- `js/sesion.js` reutiliza `onlineStudents` (ya lo llena `subscribePresence`
+  para TODOS los que están en el canal, alumno o profesor) con una función
+  nueva, `renderCompanerosList()`, que pinta en `#companeros-caja` (dentro
+  de `#student-panel`, el panel que ya veía un alumno) a sus compañeros
+  conectados con su foto y su accesorio — sin ningún control, eso sigue
+  siendo solo de `renderStudentsList()` (el profesor). Mismo patrón que la
+  lista del profesor: `Puntos.accesoriosDe()`/`Puntos.decorarAvatar()`
+  llegan después de pintar la lista, con la misma memoria de 60 segundos.
+  La caja queda oculta si todavía no hay compañeros conectados.
+- **Comprobado impersonando roles en SQL** (11/10/2026, sobre una Corona
+  dorada canjeada de verdad): un compañero de mismo profesor y academia que
+  pide `premios_canjeados`/`accesorios_de()` de quien la tiene recibe SOLO
+  sus 5 filas `accesorio_avatar` (ni los títulos ni los marcos, que son 5
+  filas más de la misma persona); alguien sin profesor en común recibe cero
+  filas. **Queda pendiente** un verificador de Playwright para esto (los
+  de `verificar-puntos.js` solo abren `puntos-tienda.html`, no
+  `sesion.html` con dos alumnos a la vez): por ahora se apoya en la
+  impersonación de arriba y en que la política sigue, fila por fila, el
+  mismo candado y forma que las demás ramas ya probadas.
+
+Queda para otra vez: que un accesorio se vea también en el modo proyector.
 
 ## Retos, marcador, regalos y bromas
 
