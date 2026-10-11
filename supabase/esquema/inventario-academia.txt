@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261011031200
+# al-dia-con: 20261011050000
 tabla  Ejercicios Lichess  rls=true
 tabla  _foto_rls_tmp  rls=false
 tabla  academia_ia  rls=true
@@ -87,6 +87,7 @@ tabla  interno.envios_publicos  rls=true
 tabla  interno.lector_planilla_uso  rls=true
 tabla  interno.salud_base  rls=true
 tabla  jde_eventos  rls=true
+tabla  jdn_inscripciones  rls=true
 tabla  jdn_resultados  rls=true
 tabla  justificaciones_ausencia  rls=true
 tabla  licencias_herramientas  rls=true
@@ -851,6 +852,15 @@ columna  jde_eventos.nombre  text
 columna  jde_eventos.rama  text
 columna  jde_eventos.region  text
 columna  jde_eventos.sede  text
+columna  jdn_inscripciones.categoria  text
+columna  jdn_inscripciones.comite  text
+columna  jdn_inscripciones.edicion  text
+columna  jdn_inscripciones.estado  text
+columna  jdn_inscripciones.id  bigint
+columna  jdn_inscripciones.identificacion  text
+columna  jdn_inscripciones.nacimiento  date
+columna  jdn_inscripciones.nombre  text
+columna  jdn_inscripciones.tipo  text
 columna  jdn_resultados.codigo  text
 columna  jdn_resultados.comite  text
 columna  jdn_resultados.edicion  text
@@ -2138,6 +2148,7 @@ politica  insignias  insignias_ver  SELECT
 politica  insignias  verificacion_en_dos_pasos  ALL  restrictiva
 politica  insignias_tipos  insignias_tipos_ver  SELECT
 politica  jde_eventos  jde_eventos_lectura_publica  SELECT
+politica  jdn_inscripciones  jdn_inscripciones_con_herramienta  SELECT
 politica  jdn_resultados  jdn_resultados_lectura_publica  SELECT
 politica  jdn_resultados  zzz_prueba_temporal  SELECT
 politica  justificaciones_ausencia  justificaciones_select  SELECT
@@ -2690,6 +2701,8 @@ indice  interno.lector_planilla_uso  lector_planilla_uso_pkey
 indice  interno.salud_base  salud_base_pkey
 indice  jde_eventos  jde_eventos_anio_fase_idx
 indice  jde_eventos  jde_eventos_pkey
+indice  jdn_inscripciones  jdn_inscripciones_edicion_comite
+indice  jdn_inscripciones  jdn_inscripciones_pkey
 indice  jdn_resultados  jdn_resultados_edicion_codigo_orden_key
 indice  jdn_resultados  jdn_resultados_pkey
 indice  justificaciones_ausencia  justificaciones_ausencia_pkey
@@ -3469,6 +3482,9 @@ grant  jde_eventos  anon  TRIGGER
 grant  jde_eventos  authenticated  REFERENCES
 grant  jde_eventos  authenticated  SELECT
 grant  jde_eventos  authenticated  TRIGGER
+grant  jdn_inscripciones  authenticated  REFERENCES
+grant  jdn_inscripciones  authenticated  SELECT
+grant  jdn_inscripciones  authenticated  TRIGGER
 grant  jdn_resultados  anon  SELECT
 grant  jdn_resultados  authenticated  REFERENCES
 grant  jdn_resultados  authenticated  SELECT

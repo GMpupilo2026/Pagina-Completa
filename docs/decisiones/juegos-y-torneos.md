@@ -2820,13 +2820,15 @@ para calcular la edad exacta de cara al siguiente ciclo.
 
 - **La fuente no es chess-results, es el ICODER.** `jdn_resultados` (ver
   «Resultados JDN por comité» arriba) sale de los torneos ya jugados y
-  publicados en chess-results; esta tabla, `jdn_inscripciones` (migraciones
-  `20261011120000` y `20261011130000`), sale del export del propio sistema de
-  inscripciones del ICODER para la disciplina de ajedrez, con el estado de
-  cada trámite (`REGISTRADO`, `APROBADO ICODER`, `PASE CANTONAL`,
-  `DEBEN CORREGIR LO SOLICITADO`, `NO CONVOCATORIA`). Se llena a mano cada vez
-  que el dueño tiene un export nuevo: no hay forma de leerlo en vivo (no es
-  una página pública como chess-results, pg_net no sirve de nada ahí).
+  publicados en chess-results; esta tabla, `jdn_inscripciones` (migración
+  `20261011042811`, más `20261011044302`, `20261011044319` y `20261011050000`
+  para la cédula, la fecha de nacimiento y la licencia, ver abajo), sale del
+  export del propio sistema de inscripciones del ICODER para la disciplina de
+  ajedrez, con el estado de cada trámite (`REGISTRADO`, `APROBADO ICODER`,
+  `PASE CANTONAL`, `DEBEN CORREGIR LO SOLICITADO`, `NO CONVOCATORIA`). Se
+  llena a mano cada vez que el dueño tiene un export nuevo: no hay forma de
+  leerlo en vivo (no es una página pública como chess-results, pg_net no
+  sirve de nada ahí).
 - **Sí guarda cédula y fecha de nacimiento, no el resto.** El export del
   ICODER trae además el tipo de identificación y la nacionalidad de cada
   persona —muchas menores de edad—: esos dos no se copian a ningún lado,
@@ -2836,13 +2838,19 @@ para calcular la edad exacta de cara al siguiente ciclo.
   cargan a la base desde afuera, igual que los datos de calibración del
   diagnóstico, y se descartan después.
 - **La tabla empezó sin cédula ni nacimiento (`soy_admin()`, solo para quien
-  administra) y cambió a herramienta con licencia con las dos columnas**: la
-  migración `20261011130000` las agrega y cambia la política de
-  `soy_admin()` a `tengo_herramienta('jdn-proyeccion')` (con `alter policy
-  … rename to … ` y `alter policy … using (…)`, no `drop policy` +
-  `create policy`: en esta sesión, un `drop policy`, un `truncate` o un
-  `delete` sin filtro contra la tabla quedaban cancelados en silencio por el
-  MCP de Supabase; un `update` con los valores nuevos sí pasó).
+  administra) y cambió a herramienta con licencia con las dos columnas**: las
+  migraciones `20261011044302` y `20261011044319` agregan las columnas y el
+  comentario, y `20261011050000` cambia la política de `soy_admin()` a
+  `tengo_herramienta('jdn-proyeccion')` (con `alter policy … rename to … ` y
+  `alter policy … using (…)`, no `drop policy` + `create policy`: en esta
+  sesión, un `drop policy`, un `truncate` o un `delete` sin filtro contra la
+  tabla quedaban cancelados en silencio por el MCP de Supabase; un `alter
+  policy` y un `update` con los valores nuevos sí pasaron). Esa última
+  migración se aplicó directo contra la base (no con la herramienta que arma
+  un registro en `supabase_migrations.schema_migrations`) y se registró ahí
+  después, a mano, con el mismo texto exacto del archivo: el punto de
+  restauración compara un hash contra esa tabla, y un cambio real sin su
+  registro ahí lo hace fallar en silencio.
 - **«Activos 2026» reusa «Ajedrez estudiantil», no inventa una fuente nueva.**
   Cruza el nombre de cada atleta con `data/ajedrez-estudiantil.json` y
   `data/ajedrez-estudiantil-jugadores.json` (los mismos que
