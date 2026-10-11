@@ -1961,6 +1961,42 @@ avise sin bloquear el alta, y que el filtro de institución filtre de verdad
 tanto la Clasificación como la Tabla cruzada. Rompiendo a propósito el freno,
 la comparación de nombres o el filtro, salta.
 
+### La barra de progreso al buscar el Elo Nacional
+
+Antes de esto, tocar «Buscar Elo Nacional de quien no tiene» con una lista
+larga solo mostraba «Buscando…», sin ninguna señal de que seguía viva: con
+veinte o treinta jugadores el pedido puede tardar varios segundos y no había
+manera de distinguir eso de que se hubiera colgado.
+
+- **No hay un «5 de 23» real que mostrar.** `buscarEloNacional()` manda los
+  nombres en UNA sola llamada a la Edge Function (ver arriba), que contesta
+  entera solo al terminar — no hay ningún aviso a medio camino que el
+  navegador pueda leer. Partirla en varios pedidos más chicos para armar un
+  progreso de verdad se consideró y se descartó: el freno
+  (`pareo_elo_frenar`) cuenta **pedidos** por hora, 6 por conexión, no
+  jugadores; una sola búsqueda de treinta jugadores partida en, digamos,
+  cuatro pedidos de ocho gastaría cuatro de esos seis en una sola vez que
+  alguien toca el botón, cuando hoy gasta uno. Partirla haría la búsqueda
+  más transparente a cambio de hacerla mucho más fácil de agotar.
+- **La barra es indeterminada a propósito: nunca un número inventado**
+  (`#pi-elo-barra-caja`/`.pi-elo-barra` en `css/styles.css`, con su
+  animación — y su versión quieta pero igual visible bajo
+  `prefers-reduced-motion: reduce`). Lo único que dice es «esto sigue
+  corriendo», no cuánto falta, porque cuánto falta es justo lo que no se
+  puede saber sin romper el punto de arriba.
+- **El texto de estado (`#pi-elo-nacional-estado`, con su `aria-live`) sí
+  lleva un dato real**: cuántos jugadores está buscando (`buscandoElo`, con
+  `{n}`). Se pone UNA vez al empezar, no se actualiza con un reloj
+  corriendo: un `aria-live="polite"` que cambia cada segundo le leería a
+  quien usa lector de pantalla un número en voz alta cada segundo entero de
+  la búsqueda, y la barra —decorativa, `aria-hidden`— no le dice nada que el
+  texto no le haya dicho ya.
+
+Al tocar esto, `node herramientas/verificar-pareo-institucion.js` cubre que
+la barra se vea mientras el pedido está pendiente (con un `page.route()` que
+demora la respuesta a propósito), que el aviso de estado diga cuántos
+jugadores busca, y que la barra se oculte de nuevo al terminar.
+
 ### La plantilla para la pared y el PDF de verdad
 
 Antes lo único que había para llevar algo al papel era «Imprimir»
