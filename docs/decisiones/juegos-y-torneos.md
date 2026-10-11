@@ -3056,12 +3056,15 @@ para calcular la edad exacta de cara al siguiente ciclo.
   falta más.
 
 `verificar-jdn-proyeccion.js` lo prueba con un doble de Supabase y datos
-inventados de Ajedrez estudiantil: el candado sin licencia (y que no pida la
-tabla), el comité propio primero, las cuentas de categoría y de estado del
-trámite (y que el cuerpo técnico no sume como atleta), la cédula y la fecha
-de nacimiento (DD/MM/AAAA) en la ficha de cada atleta, «activos 2026»
-contado solo sobre a quienes se les encontró dato, y que a quien no se le
-encuentra nada le diga «Sin dato» en vez de darlo por inactivo.
+inventados de Ajedrez estudiantil y de `elo_nacional_activos`: el candado sin
+licencia (y que no pida la tabla), el comité propio primero, las cuentas de
+categoría y de estado del trámite (y que el cuerpo técnico no sume como
+atleta), la cédula y la fecha de nacimiento (DD/MM/AAAA) en la ficha de cada
+atleta, «activos 2026» contado solo sobre a quienes se les encontró dato, que
+a quien no se le encuentra nada le diga «Sin dato» en vez de darlo por
+inactivo, y «Elo Nacional» contado aparte de «activos 2026» (con alguien
+encontrado en Ajedrez estudiantil pero no en el Elo Nacional, para probar que
+son dos cruces independientes).
 
 ### `elo_nacional_activos`: quién juega hoy, a nivel nacional
 
@@ -3072,6 +3075,15 @@ en el Elo Nacional de la FCA, con su club — para ver qué tan completo está
 (migración `20261011055900`) guarda `fide_id`, `nombre`, `club`, `edad` y
 `rating_nacional` (hoy sin usar) de esa gente; la lee quien tenga la
 herramienta `jdn-proyeccion`, igual candado que `jdn_inscripciones`.
+
+**Sí se muestra en `jdn-proyeccion.html`**, como la columna «Elo Nacional»
+(general y en la ficha de cada comité): a diferencia de «Activos 2026»
+(coincidencia por palabra suelta contra Ajedrez estudiantil), acá el cruce es
+por el **nombre completo normalizado**, porque las dos tablas lo arman igual
+—`"Apellidos, Nombre"`— desde su propia fuente (el export del ICODER y el
+Elo Nacional). Encontrado, muestra el club y la edad de hoy; si no, «No
+encontrado» (misma limitación de siempre: una persona es su nombre, y un
+nombre escrito distinto en los dos lados no se encuentra).
 
 - **El dato sale de `ajedrezcostarica.com/es/national-rating`**, no de
   chess-results: esa lista ya trae `age`, `active` y `club` calculados por
