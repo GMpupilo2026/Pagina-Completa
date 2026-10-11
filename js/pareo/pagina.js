@@ -59,7 +59,24 @@
   let idioma = leer(CLAVE_IDIOMA) === "en" ? "en" : "es";
   const tx = (clave, vars) => X.t(idioma, clave, vars);
 
-  const estado = { lista: leerJSON(CLAVE_LISTA, []), id: null, t: null, ficha: leer(CLAVE_FICHA) || "jugadores", ronda: null, filtroInstitucion: "", filtroJugador: "", eloPendientes: [] };
+  const estado = { lista: leerJSON(CLAVE_LISTA, []), id: null, t: null, ficha: leer(CLAVE_FICHA) || "jugadores", ronda: null, filtroInstitucion: "", filtroJugador: "", eloPendientes: [], enVivo: false, canalVivo: null };
+
+  // Al cambiar de torneo: cortar el canal del que se sale, para no seguir
+  // mandando SU estado por la conexión que había quedado abierta.
+  function apagarEnVivo() {
+    desactivarEnVivo();
+    const caja = $("pi-ver-compartir");
+    if (caja) caja.hidden = true;
+    const chk = $("pi-ver-en-vivo");
+    if (chk) chk.checked = false;
+  }
+
+  function nuevoCodigoVivo() {
+    const letras = "abcdefghjkmnpqrstuvwxyz23456789"; // sin 0/1/i/l/o: se puede leer a mano si hace falta
+    let s = "";
+    for (let i = 0; i < 8; i++) s += letras[Math.floor(Math.random() * letras.length)];
+    return s;
+  }
 
   // Sin tildes y en minúsculas, para que buscar "Jose" encuentre "José".
   function normalizarBusqueda(s) { return String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase(); }
@@ -78,11 +95,13 @@
     else estado.lista.push({ id: estado.id, nombre, actualizado: Date.now() });
     escribir(CLAVE_LISTA, JSON.stringify(estado.lista));
     escribir("pareo_abierto_v1", estado.id);
+    if (estado.enVivo) difundirEnVivo();
   }
 
   function abrir(id) {
     const t = leerJSON(PREFIJO + id, null);
     if (!t) return false;
+    apagarEnVivo();
     estado.id = id;
     estado.t = T.nuevo(t);
     estado.ronda = null;
@@ -94,6 +113,7 @@
   }
 
   function crear(t) {
+    apagarEnVivo();
     estado.id = nuevoId();
     estado.t = t || T.nuevo({ fechaInicio: window.HoraCR ? HoraCR.hoy() : "" });
     estado.ronda = null;
@@ -768,23 +788,73 @@
     if (firmas) firmas.replaceChildren();
   });
 
-  // Una «foto» de esta ronda y la clasificación de ahora, para ver desde el
-  // celular sin tocar nada (ver «El enlace y el QR de solo lectura» en
-  // docs/decisiones/juegos-y-torneos.md): nada se manda a ningún servidor,
-  // los datos viajan comprimidos en la URL (de la mano a la cámara que la
-  // lee, nunca por internet). No se actualiza sola: es del momento en que se
-  // generó.
-  async function compartirLectura(r) {
+  // La misma «foto» para los dos caminos (el enlace del momento y la
+  // difusión en vivo): la ronda r y la clasificación de ahora, con los
+  // mismos datos que ya pintó la pantalla (filasFiltradas(), D.clasificacion()).
+  function datosLecturaActual(r) {
     const v = t();
     const R = v.rondas[r];
     const k = rondasCompletas();
     const filas = filasFiltradas(D.clasificacion(hasta(k), v.desempates));
-    const datos = {
+    return {
       v: 1,
       nombre: v.nombre || "",
       ronda: { n: r + 1, mesas: R.mesas.map((m, i) => ({ m: i + 1, b: nombreDe(m.b), n: m.n == null ? null : nombreDe(m.n), r: m.r || null })) },
       clasificacion: filas.map((f) => ({ p: f.puesto, n: jugador(f.id).nombre, pts: f.puntos })),
     };
+  }
+
+  // Un canal de Supabase Realtime en modo Broadcast: efímero, sin tabla y sin
+  // RLS (no hay fila que proteger), público por default en este proyecto —
+  // la única manera de que otro aparato reciba algo sin que Pareo Integral
+  // tenga cuenta ni servidor propio de datos. Ver «El canal en vivo» en
+  // docs/decisiones/juegos-y-torneos.md.
+  function difundirEnVivo() {
+    const v = t();
+    if (!estado.enVivo || !estado.canalVivo || !v.rondas.length) return;
+    estado.canalVivo.send({ type: "broadcast", event: "estado", payload: datosLecturaActual(v.rondas.length - 1) });
+  }
+
+  async function activarEnVivo() {
+    const v = t();
+    const estadoTxt = $("pi-ver-en-vivo-estado");
+    estadoTxt.hidden = false;
+    estadoTxt.textContent = tx("conectandoEnVivo");
+    try {
+      await PareoVer.cargarSupabase();
+    } catch (e) {
+      estadoTxt.textContent = tx("errorEnVivo", { e: e.message });
+      $("pi-ver-en-vivo").checked = false;
+      return false;
+    }
+    if (!v.liveCodigo) { v.liveCodigo = nuevoCodigoVivo(); guardar(); }
+    estado.canalVivo = window.sb.channel("pareo-vivo-" + v.liveCodigo);
+    estado.canalVivo.subscribe();
+    estado.enVivo = true;
+    estadoTxt.textContent = tx("enVivoActivo");
+    $("pi-ver-en-vivo-nuevo-codigo").hidden = false;
+    difundirEnVivo();
+    return true;
+  }
+
+  function desactivarEnVivo() {
+    if (estado.canalVivo) { estado.canalVivo.unsubscribe(); estado.canalVivo = null; }
+    estado.enVivo = false;
+    const estadoTxt = $("pi-ver-en-vivo-estado");
+    if (estadoTxt) estadoTxt.hidden = true;
+    const nuevoCodigo = $("pi-ver-en-vivo-nuevo-codigo");
+    if (nuevoCodigo) nuevoCodigo.hidden = true;
+  }
+
+  // Una «foto» de esta ronda y la clasificación de ahora, para ver desde el
+  // celular sin tocar nada (ver «El enlace y el QR de solo lectura» en
+  // docs/decisiones/juegos-y-torneos.md): nada se manda a ningún servidor,
+  // los datos viajan comprimidos en la URL (de la mano a la cámara que la
+  // lee, nunca por internet). Con «Actualizar sola» marcado, en vez de los
+  // datos el enlace lleva el código del canal en vivo (`#vivo=`), y cada
+  // `guardar()` manda la foto de nuevo mientras esta pestaña quede abierta.
+  async function compartirLectura(r) {
+    const v = t();
     const caja = $("pi-ver-compartir");
     const qrCont = $("pi-ver-qr");
     const dirTexto = $("pi-ver-direccion");
@@ -792,8 +862,9 @@
     qrCont.replaceChildren();
     dirTexto.textContent = tx("generandoQr");
     try {
-      const cadena = await PareoVer.empaquetar(datos);
-      const url = location.origin + location.pathname + "#ver=" + cadena;
+      const url = estado.enVivo
+        ? location.origin + location.pathname + "#vivo=" + v.liveCodigo
+        : location.origin + location.pathname + "#ver=" + await PareoVer.empaquetar(datosLecturaActual(r));
       await PareoQr.cargar();
       qrCont.replaceChildren(PareoQr.svg(url, tx("qrEtiqueta")));
       dirTexto.textContent = url;
@@ -1210,6 +1281,17 @@
       try { await navigator.clipboard.writeText($("pi-ver-direccion").textContent); Avisos.avisar(tx("enlaceCopiado")); }
       catch (e) { Avisos.avisar(tx("noCopia"), { tipo: "error" }); }
     });
+    $("pi-ver-en-vivo").addEventListener("change", async (e) => {
+      if (e.target.checked) { if (!(await activarEnVivo())) return; } else desactivarEnVivo();
+      if (estado.ronda != null) compartirLectura(estado.ronda);
+    });
+    $("pi-ver-en-vivo-nuevo-codigo").addEventListener("click", async () => {
+      desactivarEnVivo();
+      t().liveCodigo = nuevoCodigoVivo();
+      guardar();
+      $("pi-ver-en-vivo").checked = true;
+      if (await activarEnVivo() && estado.ronda != null) compartirLectura(estado.ronda);
+    });
     $("pi-clas-institucion").addEventListener("change", (e) => { estado.filtroInstitucion = e.target.value; pintarClasificacion(); });
     $("pi-cruzada-institucion").addEventListener("change", (e) => { estado.filtroInstitucion = e.target.value; pintarCruzada(); });
     $("pi-clas-pdf").addEventListener("click", () => bajarPDF($("pi-clas-pdf"), datosClasificacionPDF, "clasificacion"));
@@ -1282,12 +1364,17 @@
   }
 
   function arrancar() {
-    // El enlace de solo lectura (#ver=…) no toca nada del torneo guardado en
-    // este navegador: ni lo lee ni lo pisa. Es una página distinta adentro
-    // de la misma página.
+    // El enlace de solo lectura (#ver= o #vivo=) no toca nada del torneo
+    // guardado en este navegador: ni lo lee ni lo pisa. Es una página
+    // distinta adentro de la misma página.
     if (location.hash.startsWith("#ver=")) {
       $("pi-editor").hidden = true;
       PareoVer.iniciar(location.hash.slice(5), idioma);
+      return;
+    }
+    if (location.hash.startsWith("#vivo=")) {
+      $("pi-editor").hidden = true;
+      PareoVer.iniciarVivo(location.hash.slice(6), idioma);
       return;
     }
     if (!FICHAS.includes(estado.ficha)) estado.ficha = "jugadores";

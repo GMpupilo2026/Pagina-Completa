@@ -1,18 +1,46 @@
-/* El enlace y el QR de solo lectura de pareo.html (ver «El enlace y el QR de
- * solo lectura» en docs/decisiones/juegos-y-torneos.md).
+/* El enlace y el QR de solo lectura de pareo.html, en dos versiones (ver «El
+ * enlace y el QR de solo lectura» y «El canal en vivo» en
+ * docs/decisiones/juegos-y-torneos.md).
  *
- * Una «foto» de una ronda y la clasificación de ese momento, para que quien
- * no organiza el torneo la vea desde el celular sin tocar nada: nunca pasa
- * por un servidor, viaja comprimida en el fragmento de la URL (después del
- * «#», que el navegador no manda a nadie) y la lee directamente la cámara o
- * un clic en el enlace. No se actualiza sola — es del momento en que se
- * generó — y no necesita el motor de emparejamiento ni el resto del torneo:
- * recibe ya armadas las filas que la pantalla (o el PDF) ya pintó.
+ * `#ver=<datos>`: una «foto» de una ronda y la clasificación de ese momento,
+ * para ver desde el celular sin tocar nada. Nunca pasa por un servidor:
+ * viaja comprimida en el fragmento de la URL (después del «#», que el
+ * navegador no manda a nadie).
+ *
+ * `#vivo=<código>`: lo mismo, pero actualizándose sola mientras quien
+ * organiza tenga la pestaña abierta. Acá SÍ hay servidor —la primera vez que
+ * Pareo Integral toca uno, a propósito, con el visto bueno del dueño del
+ * repo—: un canal de Supabase Realtime en modo Broadcast, efímero y sin
+ * tabla (nada se guarda ni ahí), público por default en este proyecto.
+ *
+ * En los dos casos no se necesita el motor de emparejamiento ni el resto del
+ * torneo: recibe ya armadas las filas que la pantalla (o el PDF) ya pintó.
  */
 window.PareoVer = (function () {
   "use strict";
 
   const X = window.PareoTextos;
+
+  let cargaSupabase = null;
+  function cargarSupabase() {
+    if (window.sb) return Promise.resolve();
+    if (!cargaSupabase) {
+      cargaSupabase = new Promise((listo, fallo) => {
+        const s1 = document.createElement("script");
+        s1.src = "js/vendor/supabase.js";
+        s1.addEventListener("load", () => {
+          const s2 = document.createElement("script");
+          s2.src = "js/supabase-client.js";
+          s2.addEventListener("load", listo);
+          s2.addEventListener("error", () => { cargaSupabase = null; fallo(new Error("No cargó supabase-client.js")); });
+          document.head.appendChild(s2);
+        });
+        s1.addEventListener("error", () => { cargaSupabase = null; fallo(new Error("No cargó la librería de Supabase")); });
+        document.head.appendChild(s1);
+      });
+    }
+    return cargaSupabase;
+  }
 
   function b64urlDeBytes(bytes) {
     let s = "";
@@ -53,11 +81,11 @@ window.PareoVer = (function () {
       .replace(/[.,]5$/, "½").replace(/^0½$/, "½");
   }
 
-  function pintar(cont, idioma, datos) {
+  function pintar(cont, idioma, datos, enVivo) {
     const tx = (clave, vars) => X.t(idioma, clave, vars);
     const nodos = [
       el("h1", { class: "font-serif text-2xl font-bold mb-1" }, datos.nombre || "Pareo Integral"),
-      el("p", { class: "text-sm text-brand-600 dark:text-brand-300 mb-6" }, tx("verFotoDelMomento")),
+      el("p", { class: "text-sm text-brand-600 dark:text-brand-300 mb-6" }, tx(enVivo ? "verEnVivoLeyenda" : "verFotoDelMomento")),
     ];
     if (datos.ronda) {
       nodos.push(el("h2", { class: "font-serif text-xl font-bold mb-3" }, tx("rondaN", { r: datos.ronda.n })));
@@ -103,8 +131,26 @@ window.PareoVer = (function () {
       cont.replaceChildren(el("p", { class: "text-sm text-red-700 dark:text-red-300" }, tx("errorVerEnlace")));
       return;
     }
-    pintar(cont, idioma, datos);
+    pintar(cont, idioma, datos, false);
   }
 
-  return { empaquetar, desempaquetar, iniciar };
+  async function iniciarVivo(codigo, idioma) {
+    const cont = document.getElementById("pi-ver");
+    const tx = (clave) => X.t(idioma, clave);
+    cont.hidden = false;
+    cont.replaceChildren(el("p", { class: "text-sm text-brand-600 dark:text-brand-300" }, tx("conectandoEnVivo")));
+    try {
+      await cargarSupabase();
+    } catch (e) {
+      cont.replaceChildren(el("p", { class: "text-sm text-red-700 dark:text-red-300" }, tx("errorEnVivoVer")));
+      return;
+    }
+    let llego = false;
+    const canal = window.sb.channel("pareo-vivo-" + codigo);
+    canal.on("broadcast", { event: "estado" }, (msg) => { llego = true; pintar(cont, idioma, msg.payload, true); });
+    canal.subscribe();
+    setTimeout(() => { if (!llego) cont.replaceChildren(el("p", { class: "text-sm text-brand-600 dark:text-brand-300" }, tx("esperandoVivo"))); }, 8000);
+  }
+
+  return { empaquetar, desempaquetar, cargarSupabase, iniciar, iniciarVivo };
 })();

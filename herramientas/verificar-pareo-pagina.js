@@ -400,6 +400,119 @@ const ok = (c, m, detalle) => (c ? bien(m) : mal(m + (detalle ? " — " + detall
     ok(pdfFiltro.includes("Alfa, Uno") && !pdfFiltro.includes("Gama, Tres"), "baja solo la institución elegida");
   }
 
+  console.log("=== 12. El canal en vivo ===");
+  {
+    // Nunca se habla con el Supabase de verdad: dos páginas aparte, cada una
+    // con su propio `window.sb` falso, y Node en el medio relevando los
+    // mensajes de una a la otra — lo mismo que hace un canal de Broadcast,
+    // sin que nada salga a internet. El organizador solo manda (nunca
+    // escucha); quien mira solo escucha.
+    const ctxOrg = await browser.newContext({ serviceWorkers: "block", viewport: { width: 1280, height: 900 } });
+    const pOrg = await ctxOrg.newPage();
+    const erroresVivo = [];
+    pOrg.on("pageerror", (e) => erroresVivo.push("organizador: " + e));
+    let mandados = 0;
+    let ultimoCanal = null;
+    await pOrg.exposeFunction("__enviarAlCanal", (nombre, msg) => {
+      mandados++;
+      ultimoCanal = nombre;
+      if (pVerActual) pVerActual.evaluate(({ nombre, msg }) => {
+        const cb = (window.__oyentes || {})[nombre + ":" + msg.event];
+        if (cb) cb({ payload: msg.payload });
+      }, { nombre, msg }).catch(() => { /* la página del celular ya no está */ });
+    });
+    await pOrg.addInitScript(() => {
+      window.sb = { channel: (nombre) => ({ subscribe() { return this; }, unsubscribe() {}, send(msg) { window.__enviarAlCanal(nombre, msg); return Promise.resolve("ok"); } }) };
+    });
+    let pVerActual = null;
+    function nuevoCelular() {
+      return (async () => {
+        const ctxVer = await browser.newContext({ serviceWorkers: "block", viewport: { width: 390, height: 844 } });
+        const pVer = await ctxVer.newPage();
+        pVer.on("pageerror", (e) => erroresVivo.push("celular: " + e));
+        await pVer.addInitScript(() => {
+          window.__oyentes = {};
+          window.sb = { channel: (nombre) => ({ on(tipo, filtro, cb) { if (tipo === "broadcast") window.__oyentes[nombre + ":" + filtro.event] = cb; return this; }, subscribe() { return this; }, unsubscribe() {} }) };
+        });
+        return { ctxVer, pVer };
+      })();
+    }
+
+    await pOrg.goto(BASE + "/pareo.html");
+    await pOrg.click('[data-ficha="torneo"]');
+    await pOrg.fill('#pi-form-torneo input[name="nombre"]', "En vivo de prueba");
+    await pOrg.dispatchEvent('#pi-form-torneo input[name="nombre"]', "change");
+    await pOrg.click('[data-ficha="jugadores"]');
+    for (const n of ["Uno, A", "Dos, B"]) {
+      await pOrg.fill('#pi-form-jugador input[name="nombre"]', n);
+      await pOrg.click('#pi-form-jugador button[type="submit"]');
+    }
+    await pOrg.click('[data-ficha="rondas"]');
+    await pOrg.click('#pi-ronda button:has-text("Emparejar la ronda 1")');
+    await pOrg.waitForFunction(() => { const h = document.querySelector("#pi-ronda h2"); return h && h.textContent.startsWith("Emparejamientos de la ronda 1"); });
+
+    ok(!(await pOrg.isVisible("#pi-ver-compartir")), "la caja de compartir no se ve hasta pedirla");
+    await pOrg.click('#pi-ronda button:has-text("Ver desde el celular")');
+    ok(await pOrg.isVisible("#pi-ver-compartir") && !(await pOrg.isChecked("#pi-ver-en-vivo")), "se abre con «Actualizar sola» sin marcar: estática por omisión");
+
+    await pOrg.check("#pi-ver-en-vivo");
+    await pOrg.waitForFunction(() => document.getElementById("pi-ver-en-vivo-estado").textContent === "En vivo.");
+    const direccion1 = await pOrg.textContent("#pi-ver-direccion");
+    ok(/#vivo=[a-z0-9]{8}$/.test(direccion1), "la dirección lleva el código del canal, no los datos", direccion1);
+    ok(mandados === 1, "al activarlo, manda la foto de ahora una vez", String(mandados));
+
+    const { ctxVer, pVer } = await nuevoCelular();
+    pVerActual = pVer;
+    await pVer.goto(direccion1);
+    await pVer.waitForFunction(() => (document.getElementById("pi-ver") || {}).textContent?.trim().length > 0, null, { timeout: 10000 });
+
+    // Lo primero que manda el organizador se pierde (el celular todavía no
+    // estaba escuchando) — a propósito, igual que en la vida real: hace
+    // falta otro cambio para que le llegue algo.
+    await pOrg.selectOption('#pi-ronda table select', "1-0");
+    await pVer.waitForFunction(() => (document.getElementById("pi-ver") || {}).textContent?.includes("1-0"), null, { timeout: 10000 });
+    const textoVer = await pVer.textContent("#pi-ver");
+    ok(textoVer.includes("En vivo de prueba") && textoVer.includes("1-0"), "al celular le llega el resultado apenas se guarda", textoVer);
+    ok(textoVer.includes("Esto se actualiza solo mientras"), "y dice que se actualiza sola (no la leyenda de la foto fija)", textoVer);
+
+    const mandadosAntes = mandados;
+    await pOrg.uncheck("#pi-ver-en-vivo");
+    await pOrg.selectOption('#pi-ronda table select', "0-1");
+    await pOrg.waitForTimeout(300);
+    ok(mandados === mandadosAntes, "al desmarcarlo, los cambios siguientes ya no se mandan", String(mandados));
+
+    await pOrg.check("#pi-ver-en-vivo");
+    await pOrg.waitForFunction(() => document.getElementById("pi-ver-en-vivo-estado").textContent === "En vivo.");
+    const direccion2 = await pOrg.textContent("#pi-ver-direccion");
+    ok(direccion1 === direccion2, "el código del torneo no cambia solo con prender y apagar «en vivo»");
+
+    await pOrg.click("#pi-ver-en-vivo-nuevo-codigo");
+    await pOrg.waitForFunction((anterior) => document.getElementById("pi-ver-direccion").textContent !== anterior, direccion2);
+    const direccion3 = await pOrg.textContent("#pi-ver-direccion");
+    ok(direccion3 !== direccion2 && /#vivo=[a-z0-9]{8}$/.test(direccion3), "«Usar un código nuevo» cambia el código", direccion3);
+
+    // Un celular sin nadie del otro lado: avisa que está esperando, no se queda en blanco para siempre.
+    pVerActual = null;
+    const { ctxVer: ctxVer2, pVer: pVer2 } = await nuevoCelular();
+    await pVer2.goto(BASE + "/pareo.html#vivo=zzzzzzzz");
+    await pVer2.waitForTimeout(8500);
+    ok((await pVer2.textContent("#pi-ver")).includes("Esperando"), "un código al que nadie transmite avisa que está esperando, en vez de quedarse en blanco", await pVer2.textContent("#pi-ver"));
+    await ctxVer2.close();
+
+    // Cambiar de torneo apaga el canal: no se sigue mandando el de otro torneo.
+    const mandadosAntesDeNuevo = mandados;
+    await pOrg.click("#pi-nuevo");
+    ok(!(await pOrg.isVisible("#pi-ver-compartir")), "al crear otro torneo, la caja de compartir se cierra");
+    await pOrg.click('[data-ficha="jugadores"]');
+    await pOrg.fill('#pi-form-jugador input[name="nombre"]', "Tres, C");
+    await pOrg.click('#pi-form-jugador button[type="submit"]');
+    ok(mandados === mandadosAntesDeNuevo, "y agregar un jugador al torneo nuevo no manda nada por el canal del anterior", String(mandados));
+
+    await ctxVer.close();
+    await ctxOrg.close();
+    ok(!erroresVivo.length, "sin errores de consola en el organizador ni en el celular", erroresVivo.slice(0, 3).join(" | "));
+  }
+
   console.log("=== 9. Nada sale del sitio ===");
   ok(!afuera.length, "ninguna petición a otro origen", afuera.slice(0, 3).join(" "));
   ok(!errores.length, "sin errores en la consola", errores.slice(0, 3).join(" | "));

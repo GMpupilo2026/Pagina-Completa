@@ -223,6 +223,10 @@
                 <div id="pi-ver-compartir" class="mt-4 pt-4 border-t border-brand-100 dark:border-brand-800 no-imprimir" hidden>
                     <h3 class="font-semibold mb-2" data-t="verDesdeElCelular">Ver desde el celular</h3>
                     <p class="text-sm text-brand-600 dark:text-brand-300 mb-3" data-t="verAyuda">Es una foto del momento: muestra esta ronda y la clasificación de ahora, pero no se actualiza sola. Si cambia un resultado o se empareja otra ronda, vuelve a mostrar el código.</p>
+                    <label class="flex items-center gap-2 text-sm mb-1"><input type="checkbox" id="pi-ver-en-vivo" class="w-4 h-4 accent-brand-800"> <span data-t="actualizarSola">Actualizar sola (en vivo)</span></label>
+                    <p class="text-xs text-brand-600 dark:text-brand-300 mb-3" data-t="actualizarSolaAyuda">Mientras esta pestaña quede abierta, cada cambio que guardes llega solo a quien ya tenga el enlace o el código abiertos. Si la cierras, quien ya estaba mirando se queda con lo último que vio, y quien recién llega no ve nada hasta que la vuelvas a abrir.</p>
+                    <p id="pi-ver-en-vivo-estado" class="text-sm mb-3" role="status" aria-live="polite" hidden></p>
+                    <button type="button" id="pi-ver-en-vivo-nuevo-codigo" class="text-sm underline underline-offset-2 mb-3 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400" data-t="nuevoCodigoBoton" hidden>Usar un código nuevo</button>
                     <div class="flex flex-wrap gap-4 items-start">
                         <div id="pi-ver-qr" class="w-40 h-40 shrink-0"></div>
                         <div class="flex-1 min-w-[12rem]">
