@@ -3063,6 +3063,41 @@ de nacimiento (DD/MM/AAAA) en la ficha de cada atleta, «activos 2026»
 contado solo sobre a quienes se les encontró dato, y que a quien no se le
 encuentra nada le diga «Sin dato» en vez de darlo por inactivo.
 
+### `elo_nacional_activos`: quién juega hoy, a nivel nacional
+
+Aparte del cruce con Ajedrez estudiantil (que solo ve torneos JDE), el dueño
+pidió saber, de TODO el país, quiénes son menores de 20 años y siguen activos
+en el Elo Nacional de la FCA, con su club — para ver qué tan completo está
+`jdn_inscripciones` frente a la actividad real. `public.elo_nacional_activos`
+(migración `20261011055900`) guarda `fide_id`, `nombre`, `club`, `edad` y
+`rating_nacional` (hoy sin usar) de esa gente; la lee quien tenga la
+herramienta `jdn-proyeccion`, igual candado que `jdn_inscripciones`.
+
+- **El dato sale de `ajedrezcostarica.com/es/national-rating`**, no de
+  chess-results: esa lista ya trae `age`, `active` y `club` calculados por
+  jugador (RSC/flight data de Next.js, hay que quitarle el `\` de escape),
+  paginada de 50 en 50 (163 páginas en octubre de 2026, ~8100 jugadores en
+  total). No hace falta pedirle a chess-results torneo por torneo.
+- **Por qué no se leyó en vivo desde la sesión**: ese dominio no es alcanzable
+  directo desde una sesión de Claude Code (a diferencia de chess-results, que
+  tampoco lo es), y pedirlo en ráfaga por `pg_net` desde Supabase lo empieza a
+  frenar después de unos 80-100 pedidos acumulados (empieza a devolver la
+  página sin los datos del jugador, solo el armazón). Se resolvió con el mismo
+  patrón que `buscar-jdn-temporal.yml` (#837): un workflow y un script
+  **temporales** en `main` —`.github/workflows/_tmp-buscar-elo-nacional.yml` y
+  `herramientas/_tmp_buscar_elo_nacional.py`— que recorren las 163 páginas con
+  reintentos y una espera real entre pedido y pedido (no tiene el problema de
+  `pg_net` porque corre desde un runner de GitHub, no desde Supabase), filtran
+  a los menores de 20 con `active: true` y suben el CSV. Igual que su
+  antecesor, **se corrieron una vez y se borraron antes de cerrar el
+  trabajo**: no quedan en el repositorio.
+- **GitHub solo deja disparar un workflow por `workflow_dispatch` si el
+  archivo ya existe en la rama por defecto.** Por eso el workflow temporal se
+  mergeó primero a `main` (un PR aparte, solo para eso), se corrió desde ahí,
+  y se sacó en un PR de limpieza después — no se puede simplemente abrir un
+  PR con el workflow y dispararlo desde esa rama, como si fuera cualquier
+  otro cambio.
+
 ## Juegos Estudiantiles MEP, modo árbitro
 
 `jde-arbitro.html` arma cada fase de los Juegos Deportivos Estudiantiles
