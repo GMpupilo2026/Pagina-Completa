@@ -1,0 +1,2 @@
+comment on table public.jdn_inscripciones is
+  'Inscritos a una fase de los JDN(P) tal como los exporta el sistema del ICODER: comité, categoría, estado del trámite, cédula y fecha de nacimiento. Herramienta de arbitraje con licencia (tengo_herramienta(''jdn-proyeccion'')), no una herramienta gratis ni solo para quien administra. Se llena a mano con cada export nuevo (herramientas/jdn-proyeccion/preparar.py).';
