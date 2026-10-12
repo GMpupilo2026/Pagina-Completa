@@ -3680,6 +3680,16 @@ mostrarlo para explicarlo, preguntarlo a la clase y que lo practiquen.
   nivel, y `entreno/4x4.html?nivel=AVANZADO` abre ese nivel en el ejercicio que
   le toca a cada uno (los siguientes se destapan al resolver el anterior). El
   mismo `hrefRecorte` arregla las tareas de un nivel, que abrían siempre Fácil.
+- **Practicar tiene su lista en la clase.** Sus 9 series (45 posiciones,
+  todas válidas y con la jugada legal) se abrían solo como página. Ahora van
+  en Entrenamientos con el tablero de la clase —«Al tablero», «Preguntar»,
+  «Calentamiento», «Guion»— y «🪟 Que la practiquen» abre esa posición sola
+  (`entreno/practicas.html?abrir=pasillo:2`, el «serie:índice» que ya usaba
+  su repaso). `?abrir=tacticas` abre un tema: lo usan las tareas, que antes
+  abrían siempre la lista. Las series viven en `js/practicas-series.js`, que
+  usan la página y la clase (una sola copia; `metas-indice.py` y los
+  verificadores las leen de ahí). Va dentro de una función: dos scripts
+  clásicos con `const SETS` arriba chocan y la página no carga.
 - **Una lección de Aprender con varias posiciones va una por posición.**
   «¿Jaque mate o ahogado?» tiene dos y la clase solo tomaba la primera (el
   mate): el ahogado no se veía nunca. Cada una va como pregunta de opciones

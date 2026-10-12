@@ -59,7 +59,9 @@ window.MaterialPlataforma = (function () {
 
     { slug: "practicas", label: "Practicar", href: "entreno/practicas.html",
       actividades: ["practicar"], metas: ["cantidad", "minutos"],
-      unidad: "series", recortes: "practicas", recorteLabel: "Bloque" },
+      unidad: "series", recortes: "practicas", recorteLabel: "Bloque",
+      // Un tema («tacticas»: las tareas), una serie o una posición («pasillo:2»: la clase).
+      hrefRecorte: (c) => `entreno/practicas.html?abrir=${encodeURIComponent(c)}` },
 
     { slug: "aperturas", label: "Aperturas y celadas", href: "entreno/aperturas.html",
       actividades: ["aperturas"], metas: ["cantidad", "minutos"],

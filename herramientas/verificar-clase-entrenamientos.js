@@ -217,6 +217,17 @@ async function pruebaDelProfe(browser) {
   igual("Finales: están todos los del archivo", finales,
     JSON.parse(fs.readFileSync(path.join(RAIZ, "entreno", "data", "finales.json"), "utf8")).finales.length);
 
+  /* Practicar: sus 9 series y sus 45 posiciones, con la jugada en SAN, y «Que la
+     practiquen» abre esa posición sola («serie:índice», como la nombra la página). */
+  const practicas = await page.evaluate(async () => {
+    const g = await ADAPTADORES_ENTRENO.practicas.cargar();
+    return [g.length, g.reduce((n, x) => n + x.items.length, 0), window.PracticasSeries.SETS.reduce((n, s) => n + s.rounds.length, 0),
+      g.every((x) => x.items.every((it) => it.solucion && it.solucion.length === 1)), g[0].items[2].practica.enlace,
+      EntrenosClase.enlaceDe(herramientasDelSitio(), "practicas", g[0].id + ":2").href];
+  });
+  igual("Practicar: todas las series y posiciones, cada una con su jugada, y el enlace abre esa sola", practicas,
+    [9, practicas[2], 45, true, "pasillo:2", "entreno/practicas.html?abrir=pasillo%3A2"]);
+
   /* Memoria: todas las posiciones del banco (antes 8 de cada cantidad de piezas,
      240 de 1200). Aperturas: todas las líneas, cada una en su grupo. */
   const memoriaBanco = JSON.parse(fs.readFileSync(path.join(RAIZ, "entreno", "data", "memoria.json"), "utf8"));

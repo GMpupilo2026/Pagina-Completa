@@ -167,6 +167,24 @@ const ADAPTADORES_ENTRENO = {
             });
         },
     },
+    practicas: {
+        corto: "Mates de escuela, motivos y finales",
+        desc: "Las series de Practicar: cinco posiciones cada una, con una jugada que la resuelve. «Que la practiquen» le abre a cada alumno esa posición sola.",
+        async cargar() {
+            const P = await cargarScriptEntreno("js/practicas-series.js", "PracticasSeries");
+            return P.SETS.map((serie) => {
+                const items = serie.rounds.map((r, k) => {
+                    const san = EntrenosClase.sanDe(r.fen, r.from, r.to, r.promotion);
+                    return { id: "practica-" + serie.id + "-" + k, titulo: (k + 1) + ". Juegan " + (r.fen.split(" ")[1] === "w" ? "blancas" : "negras"),
+                        fen: r.fen, solucion: san ? [san] : null, prompt: serie.title, elo: 900,
+                        guion: [serie.desc].concat(san ? ["La jugada: " + san + "."] : []),
+                        // «serie:índice», como lo nombra la página (y su repaso).
+                        practica: { enlace: serie.id + ":" + k } };
+                });
+                return { id: serie.id, emoji: serie.emoji, titulo: serie.title, desc: serie.desc + " · " + items.length + " posiciones", items, practica: { enlace: null } };
+            });
+        },
+    },
     visualizacion: {
         corto: "La línea de memoria",
         desc: "Ejercicios de Táctica según cuántas jugadas hay que ver de memoria. En la clase: la posición, y que digan la línea entera.",

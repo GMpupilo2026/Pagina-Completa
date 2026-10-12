@@ -287,7 +287,7 @@ async function main() {
          índice vacío no da ningún error, pero deja Tareas sin tope (se
          pedían 50 series de Practicar, que tiene 9). Se cuentan acá con la
          misma regla que el generador y se comparan. */
-      [["aprender", "js/aprender-lecciones.js"], ["practicas", "js/entreno-practicas.js"]].forEach(([k, archivo]) => {
+      [["aprender", "js/aprender-lecciones.js"], ["practicas", "js/practicas-series.js"]].forEach(([k, archivo]) => {
         const cuenta = {};
         (fs.readFileSync(path.join(RAIZ, archivo), "utf8").match(/cat:'([a-z_]+)'/g) || [])
           .forEach((m) => { const c = m.slice(5, -1); cuenta[c] = (cuenta[c] || 0) + 1; });
@@ -415,7 +415,7 @@ async function main() {
 
     /* Practicar con «— todo —»: el tope es lo que suman sus series, no el
        1000 de siempre. Se pedían 50 series y hay 9. */
-    const seriesPracticar = (fs.readFileSync(path.join(RAIZ, "js/entreno-practicas.js"), "utf8").match(/cat:'[a-z_]+'/g) || []).length;
+    const seriesPracticar = (fs.readFileSync(path.join(RAIZ, "js/practicas-series.js"), "utf8").match(/cat:'[a-z_]+'/g) || []).length;
     await pagina.selectOption("#renglones .renglon:nth-of-type(2) .r-material", "herramienta:practicas");
     await pagina.waitForSelector("#renglones .renglon:nth-of-type(2) .r-recorte-wrap:not(.hidden)", { timeout: 5000 });
     await pagina.selectOption("#renglones .renglon:nth-of-type(2) .r-recorte", "");
