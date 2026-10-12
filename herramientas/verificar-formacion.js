@@ -51,10 +51,10 @@ const aMin = (h) => {
   return hora * 60 + +m[2];
 };
 const agenda = presencial.agenda.map(([h]) => aMin(h));
-cierto("la sesión presencial va de la primera a la última hora en 5 horas",
-  agenda[agenda.length - 1] - agenda[0] === 300, `dura ${agenda[agenda.length - 1] - agenda[0]} minutos`);
+cierto("la sesión presencial va de la primera a la última hora en 6 horas",
+  agenda[agenda.length - 1] - agenda[0] === 360, `dura ${agenda[agenda.length - 1] - agenda[0]} minutos`);
 cierto("la agenda presencial está en orden", agenda.every((m, i) => i === 0 || m > agenda[i - 1]));
-cierto("la portada del curso dice 29 horas", /^29 horas/.test(curso.duracion_texto));
+cierto("la portada del curso dice 30 horas", /^30 horas/.test(curso.duracion_texto));
 
 console.log("\n2. Cada sesión virtual trae todas sus partes");
 virtuales.forEach((l) => {

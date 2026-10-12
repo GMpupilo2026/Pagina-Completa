@@ -28,7 +28,7 @@ Arma:
 
 Cada sesión virtual está calculada para 4 horas: su `cronograma` (minutos,
 bloque, detalle) tiene que sumar 240, y la agenda presencial va de 8:00 a. m. a
-1:00 p. m. (5 horas, el 14 de diciembre). Trae además `objetivos`, `temas` (con
+2:00 p. m. (6 horas, el 14 de diciembre). Trae además `objetivos`, `temas` (con
 su fuente), `casos` (situación y decisión) y `ejercicios` con respuesta; la
 respuesta de los ejercicios con posición la calculó chess.js. `node
 herramientas/verificar-formacion.js` comprueba todo eso y que lo generado esté
@@ -355,7 +355,7 @@ def protegido(curso):
             titulo_lec = escapar(l["titulo"])
             if l.get("presencial"):
                 titulo_lec += (' <span class="text-xs font-normal text-accent-700 dark:text-accent-400 uppercase '
-                               'tracking-wide">· Sesión presencial, 5 horas, 14 de diciembre</span>')
+                               'tracking-wide">· Sesión presencial, 6 horas, 14 de diciembre</span>')
 
             # Sin data-curso-enc, sin ac-marca y sin envolver el título en un
             # h4: eso lo hace js/curso-adaptado.js (ponerEncabezados) y

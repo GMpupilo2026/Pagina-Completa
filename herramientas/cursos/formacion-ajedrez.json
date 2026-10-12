@@ -16,7 +16,7 @@
   "gradiente": "from-accent-700 to-brand-900",
   "resumen": "Reglamento FIDE, normativa JDE, sistemas de competencia y arbitraje práctico, con torneo real de cierre.",
   "descripcion_larga": "Curso para personas docentes, asesoras regionales y árbitras de ajedrez: el reglamento de la FIDE, la normativa vigente de los Juegos Deportivos Estudiantiles (JDE) y el arbitraje práctico, con una sesión presencial de cierre en la que se organiza y arbitra un torneo real.",
-  "duracion_texto": "29 horas en total: 7 sesiones (6 virtuales sincrónicas por Microsoft Teams, de 4 horas cada una, y 1 presencial de cierre de 5 horas, el 14 de diciembre), cada una con su cronograma, contenido con ejemplos y casos, presentación, práctica, quiz y tarea.",
+  "duracion_texto": "30 horas en total: 7 sesiones (6 virtuales sincrónicas por Microsoft Teams, de 4 horas cada una, y 1 presencial de cierre de 6 horas, el 14 de diciembre), cada una con su cronograma, contenido con ejemplos y casos, presentación, práctica, quiz y tarea.",
   "unidad": "sesiones",
   "anterior": {
     "href": "preparacion-para-torneos.html",
@@ -1555,7 +1555,7 @@
           "presencial": true,
           "archivo_formularios": "07-torneo-real-evaluacion-formularios",
           "archivo_prueba": "07-prueba-final",
-          "resumen": "Sesión presencial, 5 horas, el 14 de diciembre.",
+          "resumen": "Sesión presencial, 6 horas, el 14 de diciembre.",
           "contenido": [
             "Acreditación y bienvenida presencial.",
             "Organización integral de un torneo real: inscripción, emparejamiento y logística de mesas.",
@@ -1567,34 +1567,34 @@
           "agenda": [
             [
               "8:00 a. m.",
-              "Acreditación y bienvenida (20 minutos)."
+              "Acreditación y bienvenida (25 minutos)."
             ],
             [
-              "8:20 a. m.",
-              "Organización del torneo: inscripción, lista inicial, charla técnica y emparejamiento de la ronda 1 (40 minutos)."
+              "8:25 a. m.",
+              "Organización del torneo: inscripción, lista inicial, charla técnica y emparejamiento de la ronda 1 (45 minutos)."
             ],
             [
-              "9:00 a. m.",
-              "Rondas 1 y 2 a 10 minutos más 5 segundos, con arbitraje en vivo y rotación de roles (1 hora 40 minutos)."
+              "9:10 a. m.",
+              "Rondas 1 y 2 a 10 minutos más 5 segundos, con arbitraje en vivo y rotación de roles (1 hora 50 minutos)."
             ],
             [
-              "10:40 a. m.",
-              "Receso (15 minutos)."
+              "11:00 a. m.",
+              "Receso (30 minutos)."
             ],
             [
-              "10:55 a. m.",
-              "Ronda 3, cierre del torneo y cálculo de desempates en la mesa de control (50 minutos)."
-            ],
-            [
-              "11:45 a. m.",
-              "Evaluación final teórica integradora: prueba escrita de 20 preguntas (45 minutos)."
+              "11:30 a. m.",
+              "Ronda 3, cierre del torneo y cálculo de desempates en la mesa de control (1 hora)."
             ],
             [
               "12:30 p. m.",
-              "Cierre de listas de cotejo, autoevaluación, plenaria y entrega de certificados (30 minutos)."
+              "Evaluación final teórica integradora: prueba escrita de 20 preguntas (55 minutos)."
             ],
             [
-              "1:00 p. m.",
+              "1:25 p. m.",
+              "Cierre de listas de cotejo, autoevaluación, plenaria y entrega de certificados (35 minutos)."
+            ],
+            [
+              "2:00 p. m.",
               "Fin de la sesión."
             ]
           ],
