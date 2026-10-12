@@ -110,7 +110,7 @@ async function pruebaProfesor(browser) {
     const g = document.getElementById("botones-tablero");
     return [g.getAttribute("aria-label"), [...g.querySelectorAll("button")].map((b) => b.id).join(", "), g.checkVisibility(),
             !!g.closest("#barra-tablero")];
-  }), ["El tablero — lo ve toda la clase", "reset-board-btn, clear-marks-btn, toggle-hide-btn, save-game-btn", true, true]);
+  }), ["El tablero — lo ve toda la clase", "reset-board-btn, clear-marks-btn, toggle-hide-btn, save-game-btn, planilla-btn", true, true]);
   const ayuda = () => page.evaluate(() => {
     const r = document.querySelector("#clear-marks-btn .boton-icono-ayuda").getBoundingClientRect();
     return r.width > 40 && r.height > 12;

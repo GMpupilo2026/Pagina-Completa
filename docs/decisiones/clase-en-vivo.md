@@ -1170,6 +1170,46 @@ clase-repaso-personal`.** Está probado que fallan de verdad:
 - con la marcada mal fuera del repaso, o con cualquier jugada dada por buena;
 - marcando la tarea que no era.
 
+### La planilla en vivo
+
+Para enseñar cómo se anota una partida en un torneo (Formación Ajedrez, art.
+8), el profe abre «📝 Planilla de torneo» en la barra del tablero y, al lado
+del tablero de la clase, sale una planilla de papel que **se llena sola con
+cada jugada**, en algebraica española: «Cf3», «Axf7+», «Cd5#», «O-O», «e8=D»,
+«exd6 a.p.». Debajo, un cartel dice cómo se lee la última («6. Axf7+ — Alfil
+(A) captura en f7 (x), jaque (+).»). Código en `js/clase-planilla.js`.
+
+- **Las jugadas no se guardan aparte**: salen de las de la clase
+  (`board.moves()` y `board.startFen`), igual que el tablero, así que la
+  planilla nunca dice otra cosa que el tablero. Una clase que arranca con
+  negras en la jugada 30 empieza en «30. … h6»; una jugada que chess.js no
+  acepta corta la planilla en vez de inventar.
+- **Lo que el profe le agrega va en `game_state.planilla`** (null = cerrada):
+  los nombres de los jugadores, las ofertas de tablas —el número de la media
+  jugada, que se marca «(=)» junto a ella, como pide el 9.1— y el resultado
+  (1-0, 0-1, ½-½; con mate o ahogado se pone solo). Va en la base por lo mismo
+  que la presentación: quien entra tarde o recarga la ve igual. La protege
+  `protect_game_state_teacher_columns` y el CHECK `game_state_planilla_forma`
+  (envuelto en `coalesce`, con un CASE para no llamar a `jsonb_array_length`
+  sobre lo que no es un arreglo). Comprobado impersonando: la alumna la cambia
+  y queda como estaba; el profe la cambia; un resultado «2-0», unas tablas que
+  no son arreglo, algo que no es objeto o un nombre de 61 letras se rechazan.
+  Al cerrar la clase se limpia con lo demás.
+- **Al lado cuando cabe, debajo si no**: lo decide el ancho de la columna del
+  tablero con una consulta de contenedor (no el de la ventana), porque con las
+  tres columnas de la computadora el centro mide unos 616 px. Al lado, la
+  planilla mide 15 rem y el tablero no baja de unos 340 px.
+- **La hoja es de papel también en modo oscuro**: es una planilla, y así se la
+  reconoce. Los nombres que escribe el profe van por `textContent`.
+- La lleva también el buscador de herramientas («planilla», «anotar»).
+
+**Al tocar esto, correr `node herramientas/verificar-todo.js clase-planilla`.**
+Prueba sin navegador cómo se escribe cada jugada (la partida del dictado de la
+Clase 1, los enroques, la coronación, al paso, el arranque con negras) y en el
+navegador al profe (abrirla, que vaya al lado, las jugadas, tablas, nombres con
+HTML, resultado, el eco viejo, cerrarla) y a la alumna (la ve, sin lo del profe,
+debajo en el celular).
+
 ### sesion.js en partes
 
 `js/sesion.js` pasaba de 7000 líneas. Lo que tiene vida propia se mudó, tal
@@ -3300,7 +3340,7 @@ al tablero que sigue en vivo. Código en `js/clase-presentacion.js`.
 - **«Las del curso»** (`LISTA`): imágenes y `diapositivas.json` en
   `cursos/recursos/<curso>/presentaciones/<clase>/`, detrás del candado del
   worker; `deck` = `"<curso>/<clase>"`. De Formación Ajedrez están las seis
-  sesiones virtuales: la Clase 1 es la presentación propia del profe (48
+  sesiones virtuales: la Clase 1 es la presentación propia del profe (51
   láminas, transcritas a mano) y las sesiones 2 a 6 las arma
   `herramientas/curso-generar-formacion.py` con el mismo `.pptx` que se baja
   del curso (ver «Las presentaciones de Formación Ajedrez» abajo). Las láminas
@@ -3631,7 +3671,10 @@ idea por lámina, dibujos en vez de frases y el detalle en las `notas`:
   árbitro para decidir?» (la versión de los jugadores, la planilla, el
   tablero y el reloj), después de las sanciones, y la 23, «¿Cuándo cuenta una
   jugada?» (hecha al soltar la pieza, 4.6 y 4.7; completada al presionar el
-  reloj, 6.2.1), antes de las jugadas ilegales: la Clase 1 tiene 48. La tabla
+  reloj, 6.2.1), antes de las jugadas ilegales, y la práctica en salas pasó a
+  cuatro estaciones (una por sala: las 8 posiciones, dictado de planilla, juego
+  de roles de un reclamo y los casos del laboratorio, láminas 41 a 47, con lo
+  que el profe manda a cada sala en las notas): la Clase 1 tiene 51. La tabla
   de finales suma el abandono (5.1.2) y la planilla, cómo se anota el
   resultado (1-0, 0-1, ½-½). Una tabla de más de 8 filas se dibuja con las
   filas más juntas, no con letra más chica.

@@ -341,6 +341,7 @@
             }
             updateHistoryControls();
             pintarComentarioDeLaJugada();
+            pintarPlanillaJugadas();
         }
 
         /* ---------- Comentar las jugadas ----------
@@ -612,6 +613,7 @@
             pintarEquipos(row.equipos || null);
             pintarPodio(row.podio || null);
             pintarPresentacion(row.presentacion || null);
+            pintarPlanilla(row.planilla || null);
             updateTurnIndicator();
             updateAccessForRole();
             renderMoveList();
@@ -1639,7 +1641,7 @@
             if (partidaClase) await terminarPartidaClase("La partida de la clase terminó al cerrar la clase.");
             if (ronda) await terminarRonda("La ronda rápida terminó al cerrar la clase.");
             if (cuestionarioEnJuego) await terminarCuestionario("El cuestionario terminó al cerrar la clase.");
-            const cambios = { encuesta: null, calentamiento: null, tanda_calentamiento: null, podio: null, equipos: null, pensar: null, elegido: null, presentacion: null };
+            const cambios = { encuesta: null, calentamiento: null, tanda_calentamiento: null, podio: null, equipos: null, pensar: null, elegido: null, presentacion: null, planilla: null };
             // Las flechas del mapa se van con él; las que dibujó el profe, no.
             if (encuestaActual) { cambios.arrows = []; cambios.circles = []; }
             const { error } = await sb.from("game_state").update(cambios).eq("id", myGameStateId);
@@ -1653,6 +1655,7 @@
             pintarPensar(null);
             pintarElegido(null);
             pintarPresentacion(null, true);
+            pintarPlanilla(null, true);
         }
 
         /* Lo que aparece para toda la clase, dicho en voz para quien usa lector

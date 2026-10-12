@@ -18468,7 +18468,7 @@
   ]
  },
  "imagenes": {
-  "total": 842,
+  "total": 845,
   "grupos": [
    {
     "carpeta": "entreno/img/facil",
@@ -22502,19 +22502,19 @@
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-01/41.webp",
       "titulo": "41",
       "tipo": "otro",
-      "kb": 65
+      "kb": 73
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-01/42.webp",
       "titulo": "42",
       "tipo": "otro",
-      "kb": 66
+      "kb": 68
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-01/43.webp",
       "titulo": "43",
       "tipo": "otro",
-      "kb": 73
+      "kb": 75
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-01/44.webp",
@@ -22526,23 +22526,41 @@
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-01/45.webp",
       "titulo": "45",
       "tipo": "otro",
-      "kb": 68
+      "kb": 76
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-01/46.webp",
       "titulo": "46",
       "tipo": "otro",
-      "kb": 66
+      "kb": 59
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-01/47.webp",
       "titulo": "47",
       "tipo": "otro",
-      "kb": 53
+      "kb": 66
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-01/48.webp",
       "titulo": "48",
+      "tipo": "otro",
+      "kb": 68
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-01/49.webp",
+      "titulo": "49",
+      "tipo": "otro",
+      "kb": 66
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-01/50.webp",
+      "titulo": "50",
+      "tipo": "otro",
+      "kb": 53
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-01/51.webp",
+      "titulo": "51",
       "tipo": "otro",
       "kb": 42
      }

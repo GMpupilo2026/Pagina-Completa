@@ -275,20 +275,20 @@ module.exports = [
   // 40
   { tipo: "receso" },
   // 41
-  { tipo: "filas", k: "Jugadas legales y finales de partida · 40 minutos", numerar: true, items: [
-    { ic: "👥", t: "Grupos de 3 o 4", s: "una sala por grupo" },
-    { ic: "♟️", t: "8 posiciones", s: "¿jaque, mate, ahogado, posición muerta o sigue?" },
-    { ic: "📖", t: "Justifiquen con el artículo" },
-    { ic: "🎤", t: "Una persona anota y otra presenta" } ],
-    clave: "25 minutos en salas y 15 de plenaria." },
+  { tipo: "tarjetas", k: "Una estación por sala · 25 minutos en salas y 15 de plenaria", cols: 4, numerar: true, items: [
+    { ic: "♟️", t: "8 posiciones", s: "¿mate, ahogado, muerta o sigue?" },
+    { ic: "✍️", t: "Dictado de planilla" },
+    { ic: "🧑‍⚖️", t: "Juego de roles: un reclamo" },
+    { ic: "📖", t: "Los casos del laboratorio" } ],
+    clave: "Una persona anota y otra cuenta en la plenaria lo que hizo su sala." },
   // 42
-  { tipo: "tableros", k: "¿Jaque, mate, ahogado, posición muerta o sigue?", items: [
+  { tipo: "tableros", k: "Estación 1 · ¿jaque, mate, ahogado, posición muerta o sigue?", items: [
     { pos: 0, t: "Posición 1", s: "juegan las negras" },
     { pos: 1, t: "Posición 2", s: "juegan las negras" },
     { pos: 2, t: "Posición 3", s: "juegan las negras" },
     { pos: 3, t: "Posición 4", s: "juegan las blancas" } ] },
   // 43
-  { tipo: "tableros", k: "¿Jaque, mate, ahogado, posición muerta o sigue?", items: [
+  { tipo: "tableros", k: "Estación 1 · ¿jaque, mate, ahogado, posición muerta o sigue?", items: [
     { pos: 0, t: "Posición 5", s: "juegan las blancas" },
     { pos: 1, t: "Posición 6", s: "juegan las negras" },
     { pos: 2, t: "Posición 7", s: "juegan las negras" },
@@ -304,6 +304,25 @@ module.exports = [
     { t: "Sigue", s: "con torre sí hay mate", a: "", tono: "info" },
     { t: "Ahogado", s: "b8 y b7 están tomadas", a: "5.2.1", tono: "ojo" } ] },
   // 45
+  { tipo: "filas", k: "En salas", numerar: true, items: [
+    { ic: "🗣️", t: "Una persona dicta la partida", s: "en voz alta, sin mostrar el tablero" },
+    { ic: "✍️", t: "Las demás la anotan", s: "jugada a jugada, en su planilla" },
+    { ic: "♟️", t: "Juntas la reproducen en un tablero", s: "si una jugada no se puede, hay un error" },
+    { ic: "🔎", t: "Comparan las planillas", s: "y corrigen cada diferencia" } ],
+    clave: "La partida llega por el chat: 7 jugadas, con capturas, jaque y mate." },
+  // 46
+  { tipo: "ciclo", k: "En salas · se rotan los roles", pasos: ["Pausa el reloj", "Escucha a los dos", "Verifica", "Decide con el artículo", "Registra"],
+    items: [
+      { ic: "👥", t: "Árbitro, dos jugadores y quien observa", s: "quien observa marca cada paso" },
+      { ic: "🃏", t: "Una situación por ronda", s: "el árbitro no sabe cuál es" } ] },
+  // 47
+  { tipo: "tarjetas", k: "En salas · decidan y citen el artículo", cols: 4, numerar: true, items: [
+    { ic: "pieza:wR", t: "La torre primero", s: "para enrocar corto" },
+    { ic: "pieza:wP", t: "El peón en la octava", s: "sin cambiarlo" },
+    { ic: "pieza:wK", t: "Rey contra rey", s: "y quieren seguir" },
+    { ic: "⏳", t: "Al paso, tarde", s: "dos jugadas después" } ],
+    clave: "En la plenaria, cada grupo da su decisión." },
+  // 48
   { tipo: "filas", k: "Lo que más se repite en los torneos estudiantiles", cols: 2, items: [
     { ic: "❌", t: "Confundir mate y ahogado", a: "5.1 y 5.2.1" },
     { ic: "pieza:wP", t: "Peón en la octava sin cambiar", a: "7.5.2" },
@@ -312,7 +331,7 @@ module.exports = [
     { ic: "🔁", t: "Seguir con rey contra rey", a: "5.2.2" },
     { ic: "🤝", t: "Darse la mano sin ofrecer tablas", a: "9.1" },
     { ic: "pieza:wR", t: "Tocar la torre primero para enrocar", a: "4.4.2" } ] },
-  // 46
+  // 49
   { tipo: "tarjetas", k: "Responde de forma individual", cols: 3, compacto: true, numerar: true, items: [
     { t: "Jaque sin salida: ¿cómo se llama?" },
     { t: "Sin jaque y sin jugadas: ¿qué resultado?" },
@@ -320,7 +339,7 @@ module.exports = [
     { t: "Rey contra rey: ¿qué corresponde?" },
     { t: "¿Cuándo se puede decir «compongo»?" },
     { t: "¿Qué se anota en la planilla?" } ] },
-  // 47
+  // 50
   { tipo: "tarjetas", k: "Quiz: respuestas", cols: 3, compacto: true, numerar: true, items: [
     { t: "Jaque mate" },
     { t: "Ahogado: tablas" },
@@ -328,7 +347,7 @@ module.exports = [
     { t: "Tablas al instante", s: "posición muerta, sin reclamo" },
     { t: "En su turno", s: "y avisando antes de tocar" },
     { t: "Las dos jugadas", s: "en algebraica y legible" } ] },
-  // 48
+  // 51
   { tipo: "tarjetas", k: "Próxima: sesión 2, reglas de competición", items: [
     { ic: "📚", t: "Tarea", s: "lee las reglas básicas de las Leyes FIDE y llena la ficha de reflexión" },
     { ic: "👋", t: "Antes de irte", s: "dudas, evaluación breve y el cuadernillo en la Academia" } ] },
