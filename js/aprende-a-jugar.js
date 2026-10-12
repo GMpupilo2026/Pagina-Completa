@@ -23,6 +23,11 @@
   let flechas = [];
   let bloqueado = false;
   let temporizadores = [];
+  /* Abierta desde la clase en vivo (js/main.js pone `en-clase`): el profe
+     manda el nivel. Si mandó uno en particular (#torre/3), al terminarlo no
+     se pasa solo al siguiente: se espera el que mande el profe. */
+  const enClase = () => document.documentElement.classList.contains("en-clase");
+  let nivelDelProfe = false;
   /* Los sonidos de Lichess en los mismos momentos (js/sonidos.js). */
   const sonar = (n) => { if (window.Sonidos) Sonidos.tocar(n); };
 
@@ -223,7 +228,7 @@
     const e = ETAPAS[i];
     const idx = n == null ? primerPendiente(e) : n;
     cargarNivel(idx, true);
-    if (conPresentacion && idx === 0 && !puntosDe(e, e.niveles[0])) {
+    if (conPresentacion && !enClase() && idx === 0 && !puntosDe(e, e.niveles[0])) {
       tarjeta({ etapa: e, titulo: e.titulo, texto: e.intro, botones: [{ texto: "¡Vamos!", primario: true, hacer: () => { sonar("inicio-etapa"); empezarNivel(true); } }] });
     } else empezarNivel();
   }
@@ -234,7 +239,7 @@
     const est = estrellasEtapa(e);
     const sig = ETAPAS[etapaIdx + 1];
     const botones = [{ texto: "↺ Jugar la etapa otra vez", hacer: () => abrirEtapa(etapaIdx, 0, false) }];
-    if (sig) botones.push({ texto: "Siguiente: " + sig.titulo + " →", primario: true, hacer: () => abrirEtapa(etapaIdx + 1, null, true) });
+    if (sig && !enClase()) botones.push({ texto: "Siguiente: " + sig.titulo + " →", primario: true, hacer: () => abrirEtapa(etapaIdx + 1, null, true) });
     tarjeta({ etapa: e, titulo: "¡Etapa terminada!", texto: e.final, estrellas: estrellasTexto(est), estrellasDichas: "Ganaste " + estrellasDichas(est) + " en la etapa.", botones });
   }
 
@@ -265,7 +270,9 @@
     // Recién sonó el acorde de la etapa: el ping del nivel se lo pisaría.
     if (!conEtapa) sonar("inicio-nivel");
     const e = ETAPAS[etapaIdx];
-    decir(e.titulo + ", nivel " + nivel.plano.id + " de " + e.niveles.length + ". " + nivel.plano.meta + estrellasQueQuedan());
+    // En la clase lo que pide el nivel ya se lee arriba: el aviso no lo repite.
+    if (enClase()) decir(estrellasQueQuedan().trim());
+    else decir(e.titulo + ", nivel " + nivel.plano.id + " de " + e.niveles.length + ". " + nivel.plano.meta + estrellasQueQuedan());
     if (nivel.empiezaElRival()) {
       bloqueado = true;
       luego(1000, () => { rivalSegunGuion(); bloqueado = false; });
@@ -353,7 +360,9 @@
       pintarPanel();
       const ultimo = nivelIdx === e.niveles.length - 1;
       decir("✓ " + dicha + ". ¡Muy bien! Nivel terminado con " + estrellasDichas(est) + " " + estrellasTexto(est) + (est < 3 ? ". Con " + nivel.plano.jugadas + (nivel.plano.jugadas === 1 ? " jugada" : " jugadas") + " ganas tres." : "."), "ok");
-      if (nivel.plano.botonSiguiente) {
+      if (enClase() && nivelDelProfe) {
+        decir("✓ " + dicha + ". ¡Muy bien! Nivel terminado con " + estrellasDichas(est) + " " + estrellasTexto(est) + ". Espera el siguiente ejercicio de tu profe.", "ok");
+      } else if (nivel.plano.botonSiguiente) {
         const b = $("btn-siguiente");
         b.hidden = false;
         b.textContent = ultimo ? "Terminar la etapa →" : "Siguiente nivel →";
@@ -489,6 +498,7 @@
     montarComandos();
     pintarModo();
     const d = desdeElEnlace();
+    nivelDelProfe = !!d && d.n != null;
     if (d) abrirEtapa(d.i, d.n, d.n == null);
     else {
       const i = ETAPAS.findIndex((e) => e.niveles.some((n) => !puntosDe(e, n)));
@@ -500,7 +510,7 @@
      fragmento (#torre/3): el marco no se recarga, así que se escucha. */
   window.addEventListener("hashchange", () => {
     const d = desdeElEnlace();
-    if (d && !$("app").classList.contains("hidden")) abrirEtapa(d.i, d.n, d.n == null);
+    if (d && !$("app").classList.contains("hidden")) { nivelDelProfe = d.n != null; abrirEtapa(d.i, d.n, d.n == null); }
   });
 
   async function requireLoginThenGate() {

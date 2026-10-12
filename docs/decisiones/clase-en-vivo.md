@@ -3870,6 +3870,15 @@ igual, uno a uno.
   el nivel no se encontraba.
 - El pedido siguiente cambia solo el fragmento y el marco no se recarga: la
   página escucha `hashchange` y abre el nivel nuevo.
+- **En la ventana de la clase, solo el ejercicio.** Con `en-clase` (ver
+  js/main.js) la página esconde el menú de etapas, el encabezado, la
+  descripción, los modos, los botones de niveles y los puntos: queda el
+  tablero, el nombre de la etapa, lo que pide el nivel, el aviso y
+  «Reintentar». Tampoco sale la presentación de la etapa, el aviso no repite
+  lo que ya se lee arriba, y al ganar un nivel que mandó el profe NO pasa
+  solo al siguiente: dice «Espera el siguiente ejercicio de tu profe». Si el
+  profe mandó la etapa entera (`torre`), sí avanza dentro de ella, pero no
+  ofrece la etapa siguiente.
 - Va «Al tablero» lo que el tablero de la clase acepta
   (`PosicionValida.motivo`); las estrellas no existen ahí, y la fila lo dice.
 - Lo prueba `verificar-clase-entrenamientos.js` (la lista, el pedido y el
