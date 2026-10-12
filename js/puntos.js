@@ -148,22 +148,38 @@ window.Puntos = (function () {
   }
 
   /* Pone el accesorio como una insignia chica en la esquina de una caja de
-     avatar (la que arma FotoPerfil.avatar/poner): la caja necesita quedar
-     "relative" para que la insignia se pueda ubicar encima. Sin accesorio,
-     no agrega nada (y quita el que hubiera quedado de otra persona). */
+     avatar (la que arma FotoPerfil.avatar/poner). La caja misma NO sirve de
+     ancla: recorta a círculo (overflow-hidden + rounded-full, para la foto),
+     y la esquina de un cuadrado siempre cae FUERA del círculo inscrito en él
+     — metida ahí adentro, la insignia queda en el DOM con el emoji correcto
+     pero invisible de verdad, recortada junto con la foto (así estuvo desde
+     que se agregaron los accesorios: ni el profesor la llegó a ver). Por eso
+     la insignia va en un envoltorio APARTE, sin recortar, con la caja
+     adentro: se arma una sola vez (si ya existe, de una decoración anterior
+     de esta misma caja, se reusa) y la caja sigue siendo la que tiene
+     data-foto-de, así quien la busca con querySelectorAll la sigue
+     encontrando igual. Sin accesorio, no agrega nada (y quita el que hubiera
+     quedado de otra persona). */
   function decorarAvatar(caja, accesorio) {
     if (!caja) return;
-    const vieja = caja.querySelector(":scope > [data-accesorio-avatar]");
+    let envoltorio = caja.parentElement;
+    if (!envoltorio || !envoltorio.hasAttribute("data-envoltorio-accesorio")) {
+      envoltorio = document.createElement("span");
+      envoltorio.setAttribute("data-envoltorio-accesorio", "");
+      envoltorio.className = "relative inline-flex shrink-0";
+      caja.replaceWith(envoltorio);
+      envoltorio.appendChild(caja);
+    }
+    const vieja = envoltorio.querySelector(":scope > [data-accesorio-avatar]");
     if (vieja) vieja.remove();
     if (!accesorio) return;
-    caja.classList.add("relative");
     const ins = document.createElement("span");
     ins.setAttribute("data-accesorio-avatar", "");
     ins.setAttribute("aria-hidden", "true");
     ins.title = accesorio.nombre || "";
     ins.className = "absolute -top-1 -right-1 text-[10px] leading-none drop-shadow";
     ins.textContent = accesorio.emoji;
-    caja.appendChild(ins);
+    envoltorio.appendChild(ins);
   }
 
   /* Cobra lo que ya se ganó y no tiene un momento propio: las tareas
