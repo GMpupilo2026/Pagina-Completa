@@ -1307,6 +1307,42 @@ html.presentacion-forzada:not(.adaptive-mode) #presentacion-caja:not([hidden]) {
   position: fixed; inset: 0; z-index: 48; margin: 0; padding: 1rem;
 }
 html.presentacion-forzada:not(.adaptive-mode) body { overflow: hidden; }
+/* En el celular parado, la diapositiva (que es ancha) se gira de lado: si no,
+   queda una franja chica en medio de la pantalla y el tablero diminuto. Donde
+   el navegador deja girar la pantalla de verdad (screen.orientation.lock), el
+   celular queda horizontal y esto deja de aplicarse solo. Se gira desde la
+   esquina de arriba a la izquierda: el ancho de la tarjeta es el alto de la
+   pantalla y al revés. Ver «La pantalla completa en el celular, de lado». */
+@media (orientation: portrait) and (max-width: 767px) {
+  :is(#presentacion-caja:fullscreen, html.presentacion-forzada:not(.adaptive-mode) #presentacion-caja:not([hidden])) {
+    position: fixed; inset: auto; top: 0; left: 100vw; width: 100vh; height: 100vw; max-height: none;
+    transform-origin: top left; transform: rotate(90deg);
+  }
+  :is(#presentacion-caja:fullscreen, html.presentacion-forzada:not(.adaptive-mode) #presentacion-caja:not([hidden])) .presentacion-img { max-height: calc(100vw - 6.5rem); }
+  :is(#presentacion-caja:fullscreen, html.presentacion-forzada:not(.adaptive-mode) #presentacion-caja:not([hidden])) .presentacion-mini:not([hidden]) { width: min(42vw, 30vh); }
+  :is(#presentacion-caja:fullscreen, html.presentacion-forzada:not(.adaptive-mode) #presentacion-caja:not([hidden])):has(.presentacion-mini:not([hidden])) .presentacion-lienzo {
+    max-width: calc(100% - min(42vw, 30vh) - 2rem);
+  }
+}
+/* El celular acostado (o ya girado de verdad): poca altura, así que la lámina
+   y el tablero pequeño aprovechan casi toda. */
+@media (orientation: landscape) and (max-height: 500px) {
+  :is(#presentacion-caja:fullscreen, html.presentacion-forzada:not(.adaptive-mode) #presentacion-caja:not([hidden])) { padding: 0.5rem 1rem; }
+  :is(#presentacion-caja:fullscreen, html.presentacion-forzada:not(.adaptive-mode) #presentacion-caja:not([hidden])) .presentacion-img { max-height: calc(100vh - 5.5rem); }
+  :is(#presentacion-caja:fullscreen, html.presentacion-forzada:not(.adaptive-mode) #presentacion-caja:not([hidden])) .presentacion-mini:not([hidden]) { width: min(42vh, 30vw); }
+  :is(#presentacion-caja:fullscreen, html.presentacion-forzada:not(.adaptive-mode) #presentacion-caja:not([hidden])):has(.presentacion-mini:not([hidden])) .presentacion-lienzo {
+    max-width: calc(100% - min(42vh, 30vw) - 2rem);
+  }
+}
+@supports (height: 100dvh) {
+  @media (orientation: portrait) and (max-width: 767px) {
+    :is(#presentacion-caja:fullscreen, html.presentacion-forzada:not(.adaptive-mode) #presentacion-caja:not([hidden])) { width: 100dvh; }
+    :is(#presentacion-caja:fullscreen, html.presentacion-forzada:not(.adaptive-mode) #presentacion-caja:not([hidden])) .presentacion-mini:not([hidden]) { width: min(42vw, 30dvh); }
+    :is(#presentacion-caja:fullscreen, html.presentacion-forzada:not(.adaptive-mode) #presentacion-caja:not([hidden])):has(.presentacion-mini:not([hidden])) .presentacion-lienzo {
+      max-width: calc(100% - min(42vw, 30dvh) - 2rem);
+    }
+  }
+}
 html.presentacion-forzada:not(.adaptive-mode) #header { display: none !important; }
 html.presentacion-forzada:not(.adaptive-mode) #calentamiento-caja:not([hidden]),
 html.presentacion-forzada:not(.adaptive-mode) #tanda-caja:not([hidden]) {

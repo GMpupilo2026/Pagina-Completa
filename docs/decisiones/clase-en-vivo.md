@@ -3449,6 +3449,30 @@ lámina y nada más mientras el profe explica algo puntual.
   pone y la quita desde el celular. En el control remoto los botones de la
   presentación miden 44 px de alto para el dedo (antes 28).
 
+#### La pantalla completa en el celular, de lado
+
+En el celular parado, la diapositiva (que es ancha) quedaba como una franja
+chica en medio de la pantalla negra, con el tablero pequeño de 107 px. Ahora se
+pone de lado:
+
+- **Donde el navegador deja, se gira la pantalla de verdad**:
+  `screen.orientation.lock("landscape")` apenas entra a la pantalla completa
+  de verdad (`pantallaCompletaDe`), solo en pantallas táctiles, y se suelta al
+  salir. Solo funciona YA en pantalla completa, y en el iPhone no funciona.
+- **Donde no, la gira el CSS**: con el celular parado (`orientation: portrait`
+  y hasta 767 px de ancho), la tarjeta se rota 90° desde su esquina de arriba
+  a la izquierda, con el ancho de la tarjeta igual al alto de la pantalla
+  (`100dvh`) y al revés. El alumno pone el celular de lado y la ve derecha. Si
+  el celular gira solo (o lo giró el `lock`), la regla deja de aplicarse sola.
+- Con el celular acostado (poca altura), la lámina y el tablero pequeño
+  aprovechan casi todo el alto.
+- **Las piezas del tablero pequeño se salían de su casilla**: la copia
+  heredaba el interlineado de la casilla grande (`text-3xl`, 36 px) en una de
+  12 px, y la pieza quedaba corrida y cortada contra el borde. Ahora la casilla
+  de la copia lleva interlineado 1, y la medida se vuelve a tomar si la
+  ventana cambia (al girar el celular): medida una sola vez, quedaba con el
+  tamaño de antes.
+
 #### La pizarra de la presentación
 
 «✏️ Pizarra» (junto a ◀ ▶) deja al profe dibujar ENCIMA de la diapositiva:

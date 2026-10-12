@@ -792,6 +792,29 @@ async function pruebaPantallaCompletaTodos(browser) {
   await esperarImagen(page, "18.webp");
   cierto("en el celular también la tapa y cabe", await tapa() && await page.evaluate(() =>
     document.getElementById("presentacion-img").getBoundingClientRect().right <= innerWidth + 1));
+  const piezasCaben = () => page.evaluate(() => {
+    const m = document.getElementById("presentacion-mini");
+    const pz = [...m.querySelectorAll("[data-square] > span")];
+    return pz.length > 0 && pz.every((p) => {
+      const a = p.getBoundingClientRect(), c = p.parentElement.getBoundingClientRect();
+      return a.left >= c.left - 1 && a.right <= c.right + 1 && a.top >= c.top - 1 && a.bottom <= c.bottom + 1;
+    });
+  });
+  const girada = () => page.evaluate(() => {
+    const t = getComputedStyle(document.getElementById("presentacion-caja")).transform;
+    const r = document.getElementById("presentacion-img").getBoundingClientRect();
+    return t !== "none" && r.height > r.width;
+  });
+  cierto("en el celular parado, la diapositiva se gira de lado (es ancha)", await girada());
+  cierto("y en el tablero pequeño cada pieza cabe en su casilla", await piezasCaben());
+  cierto("el tablero pequeño no queda diminuto (más de 150 px)", await page.evaluate(() =>
+    document.getElementById("presentacion-mini").getBoundingClientRect().width > 150));
+  await page.setViewportSize({ width: 844, height: 390 });
+  await page.waitForTimeout(300);
+  cierto("con el celular acostado no se gira, y tapa la ventana", !(await girada()) && await tapa());
+  cierto("y al girar el celular las piezas se vuelven a medir y caben", await piezasCaben());
+  cierto("la lámina y el tablero pequeño no se tapan", await page.evaluate(() =>
+    document.getElementById("presentacion-img").getBoundingClientRect().right <= document.getElementById("presentacion-mini").getBoundingClientRect().left));
   cierto("sin errores en consola", errores.length === 0, errores.join(" | "));
   await ctx.close();
 }

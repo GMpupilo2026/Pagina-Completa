@@ -551,8 +551,19 @@ function pantallaCompletaForzada() {
 
 function pedirPantallaCompletaDeVerdad() {
     if (!pantallaCompletaForzada() || document.fullscreenElement) return;
-    const html = document.documentElement;
-    if (html.requestFullscreen) html.requestFullscreen().catch(() => {});
+    pantallaCompletaDe(document.documentElement);
+}
+
+/* La pantalla completa de verdad, y en el celular, de lado: la diapositiva es
+   ancha. El navegador solo deja girarla ya en pantalla completa, y no todos
+   (en el iPhone no): donde no se puede, el CSS la gira igual con el celular
+   parado (ver «La pantalla completa en el celular, de lado»). */
+function pantallaCompletaDe(el) {
+    if (!el.requestFullscreen) return;
+    el.requestFullscreen().then(() => {
+        const o = screen.orientation;
+        if (o && o.lock && matchMedia("(pointer: coarse)").matches) o.lock("landscape").catch(() => {});
+    }).catch(() => {});
 }
 
 function pintarPantallaCompletaForzada(p) {
@@ -875,14 +886,15 @@ function copiarTableroMini() {
     copia.querySelectorAll("[tabindex]").forEach((el) => el.setAttribute("tabindex", "-1"));
     mini.replaceChildren(copia);
     // La pieza se mide sobre la casilla: la copia es más chica que el original.
-    requestAnimationFrame(() => {
-        const casilla = copia.querySelector("[data-square]");
-        if (!casilla) return;
-        const ancho = casilla.getBoundingClientRect().width;
-        if (!ancho) return;
-        const px = Math.max(6, ancho * (copia.querySelector(".chess-piece-illustrated") ? 0.82 : 0.62));
-        copia.querySelectorAll("[data-square]").forEach((sq) => { sq.style.fontSize = px + "px"; });
-    });
+    // Se mide en el acto (getBoundingClientRect ya arma el layout) y otra vez si
+    // la ventana cambia (el celular se gira): medida una sola vez, quedaba con el
+    // tamaño de antes. Y con interlineado 1: el de la casilla grande (36 px) en
+    // una de 12 sacaba la pieza de su casilla, cortada contra el borde.
+    const casilla = copia.querySelector("[data-square]");
+    const ancho = casilla ? casilla.getBoundingClientRect().width : 0;
+    if (!ancho) return;
+    const px = Math.max(6, ancho * (copia.querySelector(".chess-piece-illustrated") ? 0.82 : 0.62));
+    copia.querySelectorAll("[data-square]").forEach((sq) => { sq.style.fontSize = px + "px"; sq.style.lineHeight = "1"; });
 }
 
 function programarCopiaMini() {
@@ -912,7 +924,16 @@ function pintarTableroMini() {
     }
 }
 
-document.addEventListener("fullscreenchange", pintarTableroMini);
+document.addEventListener("fullscreenchange", () => {
+    // Al salir, el celular vuelve a girar solo.
+    if (!document.fullscreenElement && screen.orientation && screen.orientation.unlock) {
+        try { screen.orientation.unlock(); } catch (e) {}
+    }
+    pintarTableroMini();
+});
+window.addEventListener("resize", () => {
+    if (!document.getElementById("presentacion-mini").hidden) programarCopiaMini();
+});
 document.getElementById("presentacion-mini-btn").addEventListener("click", () => {
     try { localStorage.setItem(MINI_CLAVE, miniQuiereVerse() ? "0" : "1"); } catch (e) {}
     pintarTableroMini();
@@ -922,9 +943,8 @@ document.getElementById("presentacion-mini-btn").addEventListener("click", () =>
 // Con la pantalla completa del profe puesta, la de verdad es la de toda la página (ver arriba).
 document.getElementById("presentacion-completa").addEventListener("click", () => {
     const caja = document.getElementById("presentacion-caja");
-    const el = pantallaCompletaForzada() ? document.documentElement : caja;
     if (document.fullscreenElement) document.exitFullscreen();
-    else if (el.requestFullscreen) el.requestFullscreen().catch(() => {});
+    else pantallaCompletaDe(pantallaCompletaForzada() ? document.documentElement : caja);
 });
 document.getElementById("presentacion-anterior").addEventListener("click", () => pasarDiapositiva(-1));
 document.getElementById("presentacion-siguiente").addEventListener("click", () => pasarDiapositiva(1));
