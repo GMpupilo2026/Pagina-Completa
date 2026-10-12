@@ -387,13 +387,13 @@ async function pruebaAlumna(browser) {
   /* Al alumnado, Entrenamiento y Estudio no son dos puertas: lo que hay
      detrás está abierto en el panel, repartido por lo que es. Lo pidió así el
      dueño de la Academia. Las dos puertas siguen siendo del equipo docente. */
-  igual("Aprender: las seis categorías de fichas, las lecciones, los desafíos y la lectura",
+  igual("Aprender: las seis categorías de fichas, Aprende a jugar, las lecciones, los desafíos y la lectura",
     grupo(grupos, "Aprender").tiles.map((t) => t.enlace),
     ["entreno/estudio.html?cat=apertura", "entreno/estudio.html?cat=defensa",
      "entreno/estudio.html?cat=tactica", "entreno/estudio.html?cat=mate",
      "entreno/estudio.html?cat=concepto",
      "entreno/estudio.html?cat=final",
-     "entreno/aprender.html", "entreno/desafios.html", "articulos.html"]);
+     "entreno/aprende-a-jugar.html", "entreno/aprender.html", "entreno/desafios.html", "articulos.html"]);
   igual("Estudiar: lo que se estudia con el profe",
     grupo(grupos, "Estudiar").tiles.map((t) => t.enlace),
     ["cursos/academia/index.html", "repasar-clases.html"]);
@@ -414,9 +414,10 @@ async function pruebaAlumna(browser) {
   igual("y ninguna habilidad suelta en el panel",
     await page.evaluate(() => document.querySelectorAll("#tile-grid [href^='entreno/tipos.html#']").length), "0");
   /* Los nombres que no se confunden con sus vecinas. */
-  igual("«Fichas de aperturas» y «Lecciones», no «Aperturas» ni «Aprende»",
+  // «Aprende a jugar» (las lecciones de Lichess) se distingue de «Lecciones» por su nombre entero.
+  igual("«Fichas de aperturas», «Aprende a jugar» y «Lecciones», no «Aperturas» ni «Aprende» a secas",
     grupo(grupos, "Aprender").tiles.map((t) => t.etiqueta).filter((e) => /apertura|lecci|aprende/i.test(e)),
-    ["Fichas de aperturas", "Lecciones"]);
+    ["Fichas de aperturas", "Aprende a jugar", "Lecciones"]);
   igual("y las dos puertas del equipo docente no están, ni escondidas",
     await page.evaluate(() => document.querySelectorAll(
       "#tile-grid [href='entreno/index.html'], #tile-grid [href='entreno/estudio.html']").length), "0");
@@ -2853,7 +2854,7 @@ async function pruebaPlegables(browser) {
     e.filter((x) => !PLEGABLES.includes(x.titulo) && x.titulo !== "Clase en vivo").every((x) => x.boton === null && x.grilla), true);
   igual("el título sigue siendo un encabezado, y dice cuántos accesos tiene",
     await page.evaluate(() => document.querySelector("#tile-grid [aria-controls]").closest("section").querySelector("h2 + span").textContent),
-    "9 accesos");
+    "10 accesos");
   const jugar = await page.evaluate(() => {
     const s = Array.from(document.querySelectorAll("#tile-grid > section")).find((x) => x.querySelector("h2").textContent === "Jugar y competir");
     return Math.round(s.getBoundingClientRect().top + scrollY);
