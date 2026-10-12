@@ -165,6 +165,12 @@ async function pruebaDelProfe(browser) {
   igual("los que no tienen reyes: vista previa, ventana y guion, sin tablero ni pregunta",
     [sinReyes.length > 0, sinReyes.every((f) => f.botones.some((b) => /Vista previa/.test(b)) && f.botones.some((b) => /Que la practiquen/.test(b))
       && f.botones.some((b) => /Guion/.test(b)) && !f.botones.some((b) => /Preguntar|Calentamiento/.test(b)))], [true, true]);
+  igual("«Que la practiquen» de un desafío abre ESE desafío, no la sección",
+    await page.evaluate(() => EntrenosClase.enlaceDe(herramientasDelSitio(), "desafios", "73").href), "entreno/desafios.html?n=73");
+  await page.locator("#entrenos-body li").first().getByRole("button", { name: "Que la practiquen" }).click();
+  const pedido = await page.evaluate(() => window.__tracks.slice(-1)[0].entreno);
+  igual("y el botón pide el desafío de la fila (el 1 de coronación es el n.º 1 del cuaderno)", [pedido.slug, pedido.recorte], ["desafios", "1"]);
+  await page.click("#entreno-pedido-quitar");
   const k = filasDesafio.findIndex((f) => !f.botones.some((b) => /Al tablero/.test(b)));
   await page.locator("#entrenos-body li").nth(k).getByRole("button", { name: "Vista previa" }).click();
   await page.waitForFunction((k) => document.querySelectorAll("#entrenos-body li")[k].querySelector(".example-board"), k, { timeout: 5000 });

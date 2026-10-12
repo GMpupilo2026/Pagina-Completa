@@ -153,10 +153,11 @@ const ADAPTADORES_ENTRENO = {
                     const conReyes = TandaCalentamiento.tieneLosDosReyes(x.fen);
                     const guion = [x.text, "La solución: " + x.solution.san.join(" ") + ".", x.solution.explain].filter(Boolean);
                     const titulo = (i + 1) + ". " + x.text;
-                    if (!conReyes) return { id: "desafio-" + x.n, titulo, fen: x.fen, soloVer: true, guion,
-                        nota: "Sin los dos reyes: no va al tablero de la clase. Se hace en la página de Desafíos.",
-                        practica: { enlace: c.id } };
-                    return { id: "desafio-" + x.n, titulo, fen: x.fen, solucion: x.solution.san, prompt: x.text, elo: 1100, guion };
+                    // «🪟 Que la practiquen» abre ESTE desafío a cada alumno, no la sección.
+                    const practica = { enlace: String(x.n) };
+                    if (!conReyes) return { id: "desafio-" + x.n, titulo, fen: x.fen, soloVer: true, guion, practica,
+                        nota: "Sin los dos reyes: no va al tablero de la clase. «Que la practiquen» se lo abre a cada alumno en una ventana." };
+                    return { id: "desafio-" + x.n, titulo, fen: x.fen, solucion: x.solution.san, prompt: x.text, elo: 1100, guion, practica };
                 });
                 const enClase = items.filter((x) => !x.soloVer).length;
                 const fuera = items.length - enClase;

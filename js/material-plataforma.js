@@ -79,6 +79,8 @@ window.MaterialPlataforma = (function () {
        ofrece minutos (que sí lleva su propio nombre en el registro de
        tiempo). Pedir "5 desafíos" contaría también lo hecho en Practicar. */
     { slug: "desafios", label: "Desafíos", href: "entreno/desafios.html",
+      // Un desafío solo, por su número del cuaderno (lo pide la clase en vivo).
+      hrefRecorte: (c) => `entreno/desafios.html?n=${encodeURIComponent(c)}`,
       actividades: ["desafios"], metas: ["minutos", "completar"], unidad: "series" },
 
     { slug: "visualizacion", label: "Visualización", href: "entreno/visualizacion.html",

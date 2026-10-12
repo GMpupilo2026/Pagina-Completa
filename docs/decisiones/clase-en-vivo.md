@@ -3642,6 +3642,14 @@ mostrarlo para explicarlo, preguntarlo a la clase y que lo practiquen.
   No se les agregan reyes: eso sería inventar otra posición. El verificador
   comprueba que todo `soloVer` sea de verdad una posición que el tablero no
   acepta.
+- **«🪟 Que la practiquen» de un desafío abre ESE desafío**, no la sección:
+  el recorte es su número del cuaderno y `entreno/desafios.html?n=73` lo abre
+  solo, como una serie de uno (sin anotarle estrellas a ninguna serie de la
+  lista). Antes abría la página entera y el alumno tenía que buscarlo entre
+  noventa. Va en todos los desafíos, con reyes o sin ellos: para los que no
+  tienen reyes es la única forma de llevarlos a la clase, porque chess.js los
+  da por terminados (ve jaques y mates que no existen: «Bd4#») y el tablero de
+  la clase no los puede jugar.
 - **Una lección de Aprender con varias posiciones va una por posición.**
   «¿Jaque mate o ahogado?» tiene dos y la clase solo tomaba la primera (el
   mate): el ahogado no se veía nunca. Cada una va como pregunta de opciones

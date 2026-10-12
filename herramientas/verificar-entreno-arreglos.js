@@ -123,6 +123,19 @@ async function desafios(browser) {
   igual("y el aviso dice «Solución» (y que no cuenta), no «¡Correcto!»", /^Solución( \(no cuenta como resuelto\))?:/.test(await estado(page)), "true");
   sinErrores(errores, "desafíos");
   await ctx.close();
+
+  /* «?n=73» (lo que manda la clase con «Que la practiquen»): abre ese desafío
+     solo, sin la lista, y sin anotar estrellas a ninguna serie. */
+  const u = await abrir(browser, "/entreno/desafios.html?n=73");
+  await u.page.waitForFunction(() => currentSet, { timeout: 20000 });
+  igual("?n=73 abre ese desafío solo",
+    await u.page.evaluate(() => [currentSet.rounds.length, currentSet.rounds[0].n, getComputedStyle(document.getElementById("list-view")).display,
+      document.getElementById("set-view").checkVisibility()]), [1, 73, "none", true]);
+  await u.page.evaluate(() => { giveHint(); giveHint(); giveHint(); });
+  await u.page.waitForFunction(() => getComputedStyle(document.getElementById("celebration")).display !== "none", { timeout: 8000 });
+  igual("al terminarlo no se anota como una serie de la lista", await u.page.evaluate(() => getProgress()["desafio-73"]), undefined);
+  sinErrores(u.errores, "desafío pedido");
+  await u.ctx.close();
 }
 
 async function aprender(browser) {
