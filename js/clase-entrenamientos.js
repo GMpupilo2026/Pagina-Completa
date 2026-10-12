@@ -143,15 +143,26 @@ const ADAPTADORES_ENTRENO = {
             const d = await bajarJsonEntreno("entreno/data/desafios.json");
             return (d.categories || []).map((c) => {
                 const todos = (d.challenges || []).filter((x) => x.cat === c.id);
-                // Los que no tienen los dos reyes no van al tablero de la clase (ni los juega chess.js).
-                const items = todos.filter((x) => TandaCalentamiento.tieneLosDosReyes(x.fen)).map((x) => ({
-                    id: "desafio-" + x.n, titulo: x.n + ". " + x.text, fen: x.fen, solucion: x.solution.san, prompt: x.text, elo: 1100,
-                    guion: [x.text, "La solución: " + x.solution.san.join(" ") + ".", x.solution.explain].filter(Boolean),
-                }));
-                const fuera = todos.length - items.length;
-                return { id: c.id, emoji: c.emoji, titulo: c.title, desc: c.desc + " · " + items.length + " para la clase"
-                    + (fuera ? " (" + fuera + " sin los dos reyes se hacen en la página)" : ""),
-                    items, practica: items.length >= 5 ? { tanda: { banco: "desafios", filtro: "cat:" + c.id, titulo: "Desafíos: " + c.title } } : { enlace: null } };
+                /* Van TODOS, numerados dentro de su tema (el «n» del archivo es el del
+                   cuaderno entero: con él, «Carrera a la coronación» empezaba en el 73).
+                   Los que no tienen los dos reyes —casi todas las carreras de peones— no
+                   van al tablero de la clase: chess.js los carga, pero rompen a Stockfish
+                   para el resto de la sesión. Se ven, se explican con su guion y se
+                   abren en la página de Desafíos, que tiene su propio motor. */
+                const items = todos.map((x, i) => {
+                    const conReyes = TandaCalentamiento.tieneLosDosReyes(x.fen);
+                    const guion = [x.text, "La solución: " + x.solution.san.join(" ") + ".", x.solution.explain].filter(Boolean);
+                    const titulo = (i + 1) + ". " + x.text;
+                    if (!conReyes) return { id: "desafio-" + x.n, titulo, fen: x.fen, soloVer: true, guion,
+                        nota: "Sin los dos reyes: no va al tablero de la clase. Se hace en la página de Desafíos.",
+                        practica: { enlace: c.id } };
+                    return { id: "desafio-" + x.n, titulo, fen: x.fen, solucion: x.solution.san, prompt: x.text, elo: 1100, guion };
+                });
+                const enClase = items.filter((x) => !x.soloVer).length;
+                const fuera = items.length - enClase;
+                return { id: c.id, emoji: c.emoji, titulo: c.title, desc: c.desc + " · " + items.length + " ejercicios"
+                    + (fuera ? ", " + enClase + " van al tablero de la clase" : ""),
+                    items, practica: enClase >= 5 ? { tanda: { banco: "desafios", filtro: "cat:" + c.id, titulo: "Desafíos: " + c.title } } : { enlace: null } };
             });
         },
     },
@@ -482,12 +493,12 @@ function filaDeEntreno(t, item) {
         const fb = entrenoBoton("📸 Mostrar " + item.foto + " s y ocultar", () => tiposFotografia({ fen: item.fen }, item.foto, fb), true,
             "La clase ve la posición y después las piezas desaparecen de todos los tableros");
         acciones.appendChild(fb);
-    } else if (item.fen) {
+    } else if (item.fen && !item.soloVer) {
         acciones.appendChild(entrenoBoton("📥 Al tablero", () => aplicarPosicionEnClase(item.fen,
             item.linea ? "Posición inicial en el tablero: juega la línea con la clase (la tienes en «Guion»)." : "Posición en el tablero de la clase: explícala."),
         true, "La posición le llega a todos, para explicarla"));
     }
-    const fenPregunta = item.fenClave || item.fen;
+    const fenPregunta = item.soloVer ? null : item.fenClave || item.fen;
     if (item.opciones && fenPregunta) {
         acciones.appendChild(entrenoBoton("❓ Preguntar", () => preguntarDeOpcionesEntreno(item), false, "Una pregunta de opciones: la base la califica sola"));
     } else if (item.solucion && fenPregunta) {
@@ -515,6 +526,12 @@ function filaDeEntreno(t, item) {
         acciones.appendChild(g);
     }
     li.appendChild(acciones);
+    if (item.nota) {
+        const n = document.createElement("p");
+        n.className = "text-xs text-brand-450 dark:text-brand-350 mt-1.5";
+        n.textContent = item.nota;
+        li.appendChild(n);
+    }
     const caja = document.createElement("div");
     caja.hidden = true;
     caja.className = "text-xs text-brand-700 dark:text-brand-200 bg-white dark:bg-brand-900 rounded-lg p-2 mt-2 space-y-1";

@@ -100,6 +100,13 @@ async function pruebaDelProfe(browser) {
       for (const g of grupos) for (const it of g.items) {
         out.ejercicios += 1;
         if (!it.fen) { out.malos.push(slug + "/" + it.id + ": sin posición"); continue; }
+        if (it.soloVer) {
+          // Solo se ve: tiene que ser de verdad una que el tablero de la clase no acepta,
+          // y no traer nada que la mande ahí.
+          if (!motivoPosicionInvalida(it.fen)) out.malos.push(slug + "/" + it.id + ": la posición es válida y no va al tablero");
+          if (it.solucion || it.opciones) out.malos.push(slug + "/" + it.id + ": solo se ve, pero trae para preguntarla");
+          continue;
+        }
         if (!it.foto) {
           const m = motivoPosicionInvalida(it.fen);
           if (m) { out.malos.push(slug + "/" + it.id + ": " + m); continue; }
@@ -132,6 +139,28 @@ async function pruebaDelProfe(browser) {
   await page.waitForFunction(() => window.__inserts.some((i) => i.tabla === "questions"), null, { timeout: 5000 });
   const q = await page.evaluate(() => window.__inserts.filter((i) => i.tabla === "questions").slice(-1)[0].fila);
   igual("«Preguntar» crea la pregunta con su posición y las jugadas del alumno (mate en 2: 2)", [q.fen, q.expected_plies], [primero.fen, 2]);
+
+  /* Desafíos: van TODOS, numerados desde el 1 dentro de su tema. Antes solo los que
+     tenían los dos reyes, con el número del cuaderno entero: «Carrera a la
+     coronación» mostraba 4 de 42 y empezaba en el 73. */
+  const desafios = JSON.parse(fs.readFileSync(path.join(RAIZ, "entreno", "data", "desafios.json"), "utf8"));
+  const deCoronacion = desafios.challenges.filter((x) => x.cat === "promocion").length;
+  await page.evaluate(() => { activateTeacherTab("tipos"); entrenosView = { slug: "desafios", grupo: "promocion", mostrar: 100 }; pintarEntrenos(); });
+  await page.waitForSelector("#entrenos-body li");
+  const filasDesafio = await page.$$eval("#entrenos-body li", (l) => l.map((x) => ({
+    titulo: x.querySelector("p").textContent,
+    botones: [...x.querySelectorAll("button")].map((b) => b.textContent),
+  })));
+  igual("Desafíos → Carrera a la coronación: están todos", [filasDesafio.length, deCoronacion > 4], [deCoronacion, true]);
+  igual("numerados desde el 1", filasDesafio.slice(0, 2).map((f) => f.titulo.split(".")[0]), ["1", "2"]);
+  const sinReyes = filasDesafio.filter((f) => !f.botones.some((b) => /Al tablero/.test(b)));
+  igual("los que no tienen reyes: vista previa, ventana y guion, sin tablero ni pregunta",
+    [sinReyes.length > 0, sinReyes.every((f) => f.botones.some((b) => /Vista previa/.test(b)) && f.botones.some((b) => /Que la practiquen/.test(b))
+      && f.botones.some((b) => /Guion/.test(b)) && !f.botones.some((b) => /Preguntar|Calentamiento/.test(b)))], [true, true]);
+  const k = filasDesafio.findIndex((f) => !f.botones.some((b) => /Al tablero/.test(b)));
+  await page.locator("#entrenos-body li").nth(k).getByRole("button", { name: "Vista previa" }).click();
+  await page.waitForFunction((k) => document.querySelectorAll("#entrenos-body li")[k].querySelector(".example-board"), k, { timeout: 5000 });
+  igual("la vista previa de uno sin reyes dibuja el tablero", true, true);
 
   // La vista previa y el guion (solo el profe).
   await page.evaluate(() => { activateTeacherTab("tipos"); entrenosView = { slug: "mates", grupo: "mate1", mostrar: 30 }; pintarEntrenos(); });
