@@ -849,6 +849,29 @@ async function pruebaPantallaCompletaTodos(browser) {
   cierto("y al girar el celular las piezas se vuelven a medir y caben", await piezasCaben());
   cierto("la lámina y el tablero pequeño no se tapan", await page.evaluate(() =>
     document.getElementById("presentacion-img").getBoundingClientRect().right <= document.getElementById("presentacion-mini").getBoundingClientRect().left));
+  // El chat en el celular parado: derecho, arriba, y la lámina sin girar debajo.
+  await page.setViewportSize({ width: 412, height: 915 });
+  await page.waitForTimeout(300);
+  await page.click("#presentacion-chat-btn");
+  const chatArriba = () => page.evaluate(() => {
+    const c = document.getElementById("chat-caja").getBoundingClientRect();
+    const i = document.getElementById("chat-input").getBoundingClientRect();
+    const img = document.getElementById("presentacion-img").getBoundingClientRect();
+    const el = document.elementFromPoint(i.left + i.width / 2, i.top + i.height / 2);
+    return getComputedStyle(document.getElementById("chat-caja")).transform === "none" && c.top < 20 && c.width > innerWidth * 0.9
+      && !!el && !!el.closest("#chat-caja") && img.top >= c.bottom && img.bottom <= innerHeight + 1 && img.width > img.height;
+  });
+  cierto("con el celular parado, el chat sale derecho arriba y la lámina sin girar debajo", await chatArriba() && !(await girada()));
+  await page.setViewportSize({ width: 412, height: 480 });   // se abre el teclado
+  await page.waitForTimeout(300);
+  cierto("con el teclado abierto, el chat sigue arriba y a la vista", await chatArriba());
+  await page.setViewportSize({ width: 412, height: 915 });   // se cierra
+  await page.waitForTimeout(300);
+  await page.click("#chat-cerrar-flotante");
+  await page.waitForTimeout(300);
+  cierto("«✕ Cerrar el chat» (en el chat) lo cierra, y la lámina vuelve a girarse y a tapar toda la pantalla",
+    !(await page.evaluate(() => document.documentElement.classList.contains("chat-flotante"))) && await girada() && await tapa()
+      && await page.evaluate(() => scrollY === 0));
   cierto("sin errores en consola", errores.length === 0, errores.join(" | "));
   await ctx.close();
 }
