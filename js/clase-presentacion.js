@@ -247,8 +247,11 @@ async function pintarPresentacion(p, propia) {
     document.getElementById("presentacion-titulo").textContent = datos.titulo;
     document.getElementById("presentacion-cuenta").textContent = "Diapositiva " + n + " de " + total;
     document.getElementById("presentacion-texto").textContent = d.texto;
+    // El texto de la lámina, al alumno solo con el Modo Adaptado (lo dice el CSS).
+    const conTexto = presentacionEsDelProfe() || document.documentElement.classList.contains("adaptive-mode");
+    caja.classList.toggle("texto-del-profe", presentacionEsDelProfe());
     anunciarALaClase("presentacion", nueva.deck + ":" + n,
-        "Tu profe muestra la diapositiva " + n + " de " + total + ": " + d.titulo + ". Su texto está debajo de la imagen.");
+        "Tu profe muestra la diapositiva " + n + " de " + total + ": " + d.titulo + "." + (conTexto ? " Su texto está debajo de la imagen." : ""));
 
     // En el proyector no van los botones ni las notas: es lo que ve la clase.
     const delProfe = presentacionEsDelProfe() && !modoProyector;
@@ -551,8 +554,19 @@ function pantallaCompletaForzada() {
 
 function pedirPantallaCompletaDeVerdad() {
     if (!pantallaCompletaForzada() || document.fullscreenElement) return;
-    const html = document.documentElement;
-    if (html.requestFullscreen) html.requestFullscreen().catch(() => {});
+    pantallaCompletaDe(document.documentElement);
+}
+
+/* La pantalla completa de verdad, y en el celular, de lado: la diapositiva es
+   ancha. El navegador solo deja girarla ya en pantalla completa, y no todos
+   (en el iPhone no): donde no se puede, el CSS la gira igual con el celular
+   parado (ver «La pantalla completa en el celular, de lado»). */
+function pantallaCompletaDe(el) {
+    if (!el.requestFullscreen) return;
+    el.requestFullscreen().then(() => {
+        const o = screen.orientation;
+        if (o && o.lock && matchMedia("(pointer: coarse)").matches) o.lock("landscape").catch(() => {});
+    }).catch(() => {});
 }
 
 function pintarPantallaCompletaForzada(p) {
@@ -568,12 +582,55 @@ function pintarPantallaCompletaForzada(p) {
         document.addEventListener("pointerdown", pedirPantallaCompletaDeVerdad, { capture: true, once: true });
         document.addEventListener("keydown", pedirPantallaCompletaDeVerdad, { capture: true, once: true });
     } else {
+        ponerChatFlotante(false);
         document.removeEventListener("pointerdown", pedirPantallaCompletaDeVerdad, { capture: true });
         document.removeEventListener("keydown", pedirPantallaCompletaDeVerdad, { capture: true });
         if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(() => {});
     }
     pintarTableroMini();
 }
+
+/* El chat con el profe, en la pantalla completa: la tapa esconde todo lo de
+   abajo, también el chat, y el alumno se quedaba sin cómo preguntar.
+   «💬 Preguntar al profe» (en la tarjeta, solo con la pantalla completa del
+   profe puesta) le abre su chat privado encima de la diapositiva: el MISMO
+   #chat-caja, puesto encima por el CSS (.chat-flotante en <html>), no una
+   copia. Si el profe le contesta con el chat cerrado, el botón lo dice. */
+let chatUltimoVisto = null;
+let chatUltimoAjeno = null;
+
+function ponerChatFlotante(abierto) {
+    const html = document.documentElement;
+    const btn = document.getElementById("presentacion-chat-btn");
+    const va = !!abierto && pantallaCompletaForzada();
+    html.classList.toggle("chat-flotante", va);
+    btn.setAttribute("aria-expanded", String(va));
+    if (va) chatUltimoVisto = chatUltimoAjeno;
+    pintarBotonChat();
+    if (va) {
+        const lista = document.getElementById("chat-messages");
+        lista.scrollTop = lista.scrollHeight;
+        document.getElementById("chat-input").focus({ preventScroll: true });
+    }
+}
+
+function pintarBotonChat() {
+    const btn = document.getElementById("presentacion-chat-btn");
+    const abierto = document.documentElement.classList.contains("chat-flotante");
+    const nuevo = !abierto && chatUltimoAjeno !== null && chatUltimoAjeno !== chatUltimoVisto;
+    btn.lastChild.textContent = abierto ? "Cerrar el chat" : (nuevo ? "Tu profe te respondió" : "Preguntar al profe");
+    btn.classList.toggle("chat-con-nuevo", nuevo);
+}
+
+document.addEventListener("chat-clase-pintado", (e) => {
+    const d = e.detail || {};
+    if (!d.ajeno) { if (chatUltimoAjeno === null) chatUltimoVisto = null; return; }
+    // Lo que ya estaba al entrar no es nuevo: solo lo que llega después.
+    if (chatUltimoAjeno === null) chatUltimoVisto = d.id;
+    chatUltimoAjeno = d.id;
+    if (document.documentElement.classList.contains("chat-flotante")) chatUltimoVisto = d.id;
+    pintarBotonChat();
+});
 
 function cambiarPantallaCompletaTodos() {
     if (!presentacionActual) return;
@@ -875,14 +932,15 @@ function copiarTableroMini() {
     copia.querySelectorAll("[tabindex]").forEach((el) => el.setAttribute("tabindex", "-1"));
     mini.replaceChildren(copia);
     // La pieza se mide sobre la casilla: la copia es más chica que el original.
-    requestAnimationFrame(() => {
-        const casilla = copia.querySelector("[data-square]");
-        if (!casilla) return;
-        const ancho = casilla.getBoundingClientRect().width;
-        if (!ancho) return;
-        const px = Math.max(6, ancho * (copia.querySelector(".chess-piece-illustrated") ? 0.82 : 0.62));
-        copia.querySelectorAll("[data-square]").forEach((sq) => { sq.style.fontSize = px + "px"; });
-    });
+    // Se mide en el acto (getBoundingClientRect ya arma el layout) y otra vez si
+    // la ventana cambia (el celular se gira): medida una sola vez, quedaba con el
+    // tamaño de antes. Y con interlineado 1: el de la casilla grande (36 px) en
+    // una de 12 sacaba la pieza de su casilla, cortada contra el borde.
+    const casilla = copia.querySelector("[data-square]");
+    const ancho = casilla ? casilla.getBoundingClientRect().width : 0;
+    if (!ancho) return;
+    const px = Math.max(6, ancho * (copia.querySelector(".chess-piece-illustrated") ? 0.82 : 0.62));
+    copia.querySelectorAll("[data-square]").forEach((sq) => { sq.style.fontSize = px + "px"; sq.style.lineHeight = "1"; });
 }
 
 function programarCopiaMini() {
@@ -912,7 +970,16 @@ function pintarTableroMini() {
     }
 }
 
-document.addEventListener("fullscreenchange", pintarTableroMini);
+document.addEventListener("fullscreenchange", () => {
+    // Al salir, el celular vuelve a girar solo.
+    if (!document.fullscreenElement && screen.orientation && screen.orientation.unlock) {
+        try { screen.orientation.unlock(); } catch (e) {}
+    }
+    pintarTableroMini();
+});
+window.addEventListener("resize", () => {
+    if (!document.getElementById("presentacion-mini").hidden) programarCopiaMini();
+});
 document.getElementById("presentacion-mini-btn").addEventListener("click", () => {
     try { localStorage.setItem(MINI_CLAVE, miniQuiereVerse() ? "0" : "1"); } catch (e) {}
     pintarTableroMini();
@@ -922,15 +989,22 @@ document.getElementById("presentacion-mini-btn").addEventListener("click", () =>
 // Con la pantalla completa del profe puesta, la de verdad es la de toda la página (ver arriba).
 document.getElementById("presentacion-completa").addEventListener("click", () => {
     const caja = document.getElementById("presentacion-caja");
-    const el = pantallaCompletaForzada() ? document.documentElement : caja;
     if (document.fullscreenElement) document.exitFullscreen();
-    else if (el.requestFullscreen) el.requestFullscreen().catch(() => {});
+    else pantallaCompletaDe(pantallaCompletaForzada() ? document.documentElement : caja);
 });
 document.getElementById("presentacion-anterior").addEventListener("click", () => pasarDiapositiva(-1));
 document.getElementById("presentacion-siguiente").addEventListener("click", () => pasarDiapositiva(1));
 document.getElementById("presentacion-quitar").addEventListener("click", () => mostrarPresentacion(null));
 document.getElementById("presentacion-limpia").addEventListener("click", cambiarVistaLimpia);
 document.getElementById("presentacion-completa-todos").addEventListener("click", cambiarPantallaCompletaTodos);
+document.getElementById("presentacion-chat-btn").addEventListener("click", () =>
+    ponerChatFlotante(!document.documentElement.classList.contains("chat-flotante")));
+document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && document.documentElement.classList.contains("chat-flotante")) {
+        ponerChatFlotante(false);
+        document.getElementById("presentacion-chat-btn").focus();
+    }
+});
 document.getElementById("presentacion-caja").addEventListener("keydown", (e) => {
     if (!presentacionEsDelProfe() || document.fullscreenElement !== e.currentTarget) return;
     if (e.key === "ArrowRight" || e.key === "PageDown") { e.preventDefault(); pasarDiapositiva(1); }

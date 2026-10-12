@@ -712,6 +712,7 @@ async function pruebaPantallaCompletaTodos(browser) {
     cierto("«⛶ Pantalla completa para todos» la manda en la presentación", JSON.stringify(await ultimaPresentacion(page)) === JSON.stringify({ deck: DECK, n: 3, completa: true }));
     cierto("y el botón dice cómo quitarla", (await page.getAttribute("#presentacion-completa-todos", "aria-pressed")) === "true"
       && /Quitar la pantalla completa/.test(await page.textContent("#presentacion-completa-todos")));
+    cierto("el profe sí tiene el texto de la diapositiva debajo", await seVe(page, "#presentacion-texto-caja"));
     cierto("al profe no se le aplica: sigue con sus herramientas", !(await page.evaluate(() => document.documentElement.classList.contains("presentacion-forzada")))
       && await seVe(page, "#teacher-toolbar"));
     await page.click("#presentacion-siguiente");
@@ -739,7 +740,9 @@ async function pruebaPantallaCompletaTodos(browser) {
     cierto("sin errores en consola", errores.length === 0, errores.join(" | "));
     await ctx.close();
   }
-  const { page, ctx, errores } = await abrir(browser, "u-ana", CLASE, { game_state: [fila({ presentacion: { deck: DECK, n: 18, completa: true } })] });
+  const PROFE_MIN = { full_name: "Karina Rojas", email: "karina@x.cr", role: "profesor" };
+  const { page, ctx, errores } = await abrir(browser, "u-ana", CLASE, { game_state: [fila({ presentacion: { deck: DECK, n: 18, completa: true } })],
+    class_chat_messages: [{ id: "m-1", student_id: "u-ana", sender_id: "u-profe", body: "Bienvenida a la clase.", created_at: "2026-10-12T15:00:00Z", profiles: PROFE_MIN }] });
   await page.setViewportSize({ width: 1440, height: 900 });
   await esperarImagen(page, "18.webp");
   const tapa = () => page.evaluate(() => {
@@ -759,6 +762,36 @@ async function pruebaPantallaCompletaTodos(browser) {
   await page.evaluate((v) => window.__cambioEnBase("game_state", v), fila({ presentacion: { deck: DECK, n: 18, completa: true } }));
   await page.waitForFunction(() => /pantalla completa/.test(document.getElementById("clase-voz").textContent), null, { timeout: 5000 }).catch(() => {});
   cierto("y se le dice en voz", /pantalla completa/.test(await page.textContent("#clase-voz")));
+  cierto("el alumno no ve el texto de la diapositiva debajo", !(await seVe(page, "#presentacion-texto-caja")));
+  // El chat con el profe, encima de la diapositiva.
+  const chatEncima = () => page.evaluate(() => {
+    const r = document.getElementById("chat-input").getBoundingClientRect();
+    const el = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+    return r.width > 0 && !!el && !!el.closest("#chat-caja");
+  });
+  cierto("sin abrirlo, el chat queda debajo de la tapa", !(await chatEncima()));
+  cierto("y el botón «💬 Preguntar al profe» se ve, sin aviso de nada nuevo (lo de antes no cuenta)",
+    await seVe(page, "#presentacion-chat-btn") && /Preguntar al profe/.test(await page.textContent("#presentacion-chat-btn")));
+  await page.click("#presentacion-chat-btn");
+  cierto("al tocarlo, el chat sale encima de la diapositiva, con el cursor en el cuadro",
+    await chatEncima() && await page.evaluate(() => document.activeElement && document.activeElement.id === "chat-input")
+      && (await page.getAttribute("#presentacion-chat-btn", "aria-expanded")) === "true");
+  await page.fill("#chat-input", "Profe, ¿por qué el rey no puede enrocar?");
+  await page.press("#chat-input", "Enter");
+  await page.waitForFunction(() => window.__inserts.some((i) => i.tabla === "class_chat_messages"), null, { timeout: 5000 }).catch(() => {});
+  cierto("y desde ahí le pregunta al profe", await page.evaluate(() =>
+    window.__inserts.some((i) => i.tabla === "class_chat_messages" && /enrocar/.test(i.fila.body) && i.fila.student_id === "u-ana")));
+  await page.click("#presentacion-chat-btn");
+  cierto("«Cerrar el chat» lo vuelve a esconder", !(await chatEncima()) && (await page.getAttribute("#presentacion-chat-btn", "aria-expanded")) === "false");
+  // Adelante: la base lo devuelve del más nuevo al más viejo (order desc) y el doble no ordena.
+  await page.evaluate((m) => { window.__tablas.class_chat_messages.unshift(m); window.__cambioEnBase("class_chat_messages", m, "INSERT"); },
+    { id: "m-2", student_id: "u-ana", sender_id: "u-profe", body: "Porque ya movió el rey.", created_at: "2026-10-12T15:05:00Z", profiles: PROFE_MIN });
+  await page.waitForFunction(() => /respondió/.test(document.getElementById("presentacion-chat-btn").textContent), null, { timeout: 5000 }).catch(() => {});
+  cierto("si el profe contesta con el chat cerrado, el botón lo dice", /Tu profe te respondió/.test(await page.textContent("#presentacion-chat-btn")));
+  await page.click("#presentacion-chat-btn");
+  cierto("y al abrirlo se ve la respuesta", await chatEncima() && /ya movió el rey/.test(await page.textContent("#chat-messages")));
+  await page.keyboard.press("Escape");
+  cierto("Esc cierra el chat", !(await chatEncima()));
   await page.mouse.click(30, 30);
   await page.waitForFunction(() => document.fullscreenElement === document.documentElement, null, { timeout: 3000 }).catch(() => {});
   cierto("con su primer toque pasa a la pantalla completa de verdad (de toda la página)",
@@ -775,6 +808,7 @@ async function pruebaPantallaCompletaTodos(browser) {
     encima.cal[0] === "fixed" && encima.cal[1] > encima.caja && encima.pregunta[0] === "fixed" && encima.pregunta[1] > encima.caja, JSON.stringify(encima));
   await page.evaluate(() => document.documentElement.classList.add("adaptive-mode"));
   cierto("con el Modo Adaptado no se aplica", !(await tapa()) && await seVe(page, "#header"));
+  cierto("y con el Modo Adaptado sí tiene el texto de la diapositiva (quien no la ve)", await seVe(page, "#presentacion-texto-caja"));
   await page.evaluate(() => document.documentElement.classList.remove("adaptive-mode"));
   await page.evaluate((v) => window.__cambioEnBase("game_state", v), fila({ presentacion: { deck: DECK, n: 18 } }));
   await page.waitForFunction(() => !document.fullscreenElement, null, { timeout: 3000 }).catch(() => {});
@@ -792,6 +826,29 @@ async function pruebaPantallaCompletaTodos(browser) {
   await esperarImagen(page, "18.webp");
   cierto("en el celular también la tapa y cabe", await tapa() && await page.evaluate(() =>
     document.getElementById("presentacion-img").getBoundingClientRect().right <= innerWidth + 1));
+  const piezasCaben = () => page.evaluate(() => {
+    const m = document.getElementById("presentacion-mini");
+    const pz = [...m.querySelectorAll("[data-square] > span")];
+    return pz.length > 0 && pz.every((p) => {
+      const a = p.getBoundingClientRect(), c = p.parentElement.getBoundingClientRect();
+      return a.left >= c.left - 1 && a.right <= c.right + 1 && a.top >= c.top - 1 && a.bottom <= c.bottom + 1;
+    });
+  });
+  const girada = () => page.evaluate(() => {
+    const t = getComputedStyle(document.getElementById("presentacion-caja")).transform;
+    const r = document.getElementById("presentacion-img").getBoundingClientRect();
+    return t !== "none" && r.height > r.width;
+  });
+  cierto("en el celular parado, la diapositiva se gira de lado (es ancha)", await girada());
+  cierto("y en el tablero pequeño cada pieza cabe en su casilla", await piezasCaben());
+  cierto("el tablero pequeño no queda diminuto (más de 150 px)", await page.evaluate(() =>
+    document.getElementById("presentacion-mini").getBoundingClientRect().width > 150));
+  await page.setViewportSize({ width: 844, height: 390 });
+  await page.waitForTimeout(300);
+  cierto("con el celular acostado no se gira, y tapa la ventana", !(await girada()) && await tapa());
+  cierto("y al girar el celular las piezas se vuelven a medir y caben", await piezasCaben());
+  cierto("la lámina y el tablero pequeño no se tapan", await page.evaluate(() =>
+    document.getElementById("presentacion-img").getBoundingClientRect().right <= document.getElementById("presentacion-mini").getBoundingClientRect().left));
   cierto("sin errores en consola", errores.length === 0, errores.join(" | "));
   await ctx.close();
 }

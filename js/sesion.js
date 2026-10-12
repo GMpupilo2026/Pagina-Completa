@@ -3326,6 +3326,12 @@
                 listEl.appendChild(row);
             }
             if (wasNearBottom) listEl.scrollTop = listEl.scrollHeight;
+            // Para el chat de la pantalla completa (js/clase-presentacion.js): si el
+            // último lo mandó el otro lado, con el chat cerrado se avisa en el botón.
+            const ultimo = messages[messages.length - 1];
+            document.dispatchEvent(new CustomEvent("chat-clase-pintado", {
+                detail: { id: ultimo.id, ajeno: ultimo.sender_id !== profile.id },
+            }));
         }
 
         async function loadChatMessages() {
