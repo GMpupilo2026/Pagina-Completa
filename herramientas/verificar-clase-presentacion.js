@@ -205,13 +205,16 @@ async function pruebaProfesor(browser) {
     puesta && puesta.start_fen === new Chess().fen() && puesta.moves.length === 0 && puesta.vista === null,
     JSON.stringify(puesta));
 
-  // La 28 (mate frente a ahogado): Practicar solo donde la partida sigue.
+  // La 30 (mate frente a ahogado): Practicar solo donde la partida sigue.
   await page.evaluate((d) => mostrarPresentacion({ deck: d, n: 30 }), DECK);
   await esperarImagen(page, "30.webp");
   const filas = await page.$$eval("#presentacion-posiciones > div", (ds) => ds.map((d) => d.textContent));
   cierto("en el mate y el ahogado no se ofrece practicar; en «No es ahogado», sí",
     filas.length === 3 && !/Practicar/.test(filas[0]) && !/Practicar/.test(filas[1]) && /Practicar/.test(filas[2]), filas.join(" | "));
-  cierto("en la 30, que no tiene notas, no queda la caja de notas", !(await seVe(page, "#presentacion-notas")));
+  cierto("la 30 trae sus notas (el ejemplo para el profe)", await seVe(page, "#presentacion-notas"));
+  await page.evaluate((d) => mostrarPresentacion({ deck: d, n: 28 }), DECK);
+  await esperarImagen(page, "28.webp");
+  cierto("en la 28 (un receso), que no tiene notas, no queda la caja de notas", !(await seVe(page, "#presentacion-notas")));
 
   await page.evaluate((d) => mostrarPresentacion({ deck: d, n: 48 }), DECK);
   await esperarImagen(page, "48.webp");
