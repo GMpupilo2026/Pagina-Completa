@@ -115,6 +115,8 @@ td{background:#fff;padding:11px 22px}
 td:first-child{border-radius:12px 0 0 12px;font-weight:700}td:last-child{border-radius:0 12px 12px 0;color:var(--gris)}
 td .art{margin-left:10px;font-size:22px}
 td .marca{font-size:28px;padding:2px 16px;border-width:2px}
+/* Más de 8 filas: más juntas, para que entren sin achicar la letra. */
+table.larga{border-spacing:0 6px}table.larga td{padding:8px 22px}table.larga td .marca{padding:0 14px}
 /* frase: una sola idea grande (un caso, una decisión) */
 .frase{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:26px;padding:40px 90px}
 .frase .ic{font-size:120px}.frase p{font-size:52px;font-weight:700;line-height:1.2;max-width:1200px}
@@ -225,7 +227,7 @@ function cuerpo(d, diapo, usadas) {
           "<div><b>" + esc(x.t) + "</b>" + (x.s ? '<span class="s">' + esc(x.s) + "</span>" : "") + "</div></div>").join("") +
         (d.clave ? '<div class="clave">' + esc(d.clave) + "</div>" : "") + "</div></div>";
     case "tabla":
-      return "<table><thead><tr>" + d.cab.map((c) => "<th>" + esc(c) + "</th>").join("") + "</tr></thead><tbody>" +
+      return "<table" + (d.filas.length > 8 ? ' class="larga"' : "") + "><thead><tr>" + d.cab.map((c) => "<th>" + esc(c) + "</th>").join("") + "</tr></thead><tbody>" +
         d.filas.map(([sit, a, res, tn, que]) => "<tr><td>" + esc(sit) + art(a) + "</td><td>" +
           (tn ? '<span class="marca ' + tn + '">' + MARCA[tn] + " " + esc(res) + "</span>" : esc(res)) + "</td><td>" + esc(que) + "</td></tr>").join("") +
         "</tbody></table>";

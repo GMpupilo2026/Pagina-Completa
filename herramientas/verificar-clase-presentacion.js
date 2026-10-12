@@ -184,7 +184,7 @@ async function pruebaProfesor(browser) {
   await page.evaluate((v) => window.__cambioEnBase("game_state", v), fila({ presentacion: { deck: DECK, n: 3 } }));
   await page.waitForTimeout(300);
   cierto("los ecos viejos no la devuelven atrás", (await imagen(page)).src === "04.webp", (await imagen(page)).src);
-  cierto("y dice cuál es", (await page.textContent("#presentacion-cuenta")) === "Diapositiva 4 de 47");
+  cierto("y dice cuál es", (await page.textContent("#presentacion-cuenta")) === "Diapositiva 4 de 48");
 
   // A la 18 (colocación del tablero): su posición, al tablero de la clase.
   await page.click("#presentacion-siguiente");
@@ -206,18 +206,18 @@ async function pruebaProfesor(browser) {
     JSON.stringify(puesta));
 
   // La 28 (mate frente a ahogado): Practicar solo donde la partida sigue.
-  await page.evaluate((d) => mostrarPresentacion({ deck: d, n: 29 }), DECK);
-  await esperarImagen(page, "29.webp");
+  await page.evaluate((d) => mostrarPresentacion({ deck: d, n: 30 }), DECK);
+  await esperarImagen(page, "30.webp");
   const filas = await page.$$eval("#presentacion-posiciones > div", (ds) => ds.map((d) => d.textContent));
   cierto("en el mate y el ahogado no se ofrece practicar; en «No es ahogado», sí",
     filas.length === 3 && !/Practicar/.test(filas[0]) && !/Practicar/.test(filas[1]) && /Practicar/.test(filas[2]), filas.join(" | "));
-  cierto("en la 29, que no tiene notas, no queda la caja de notas", !(await seVe(page, "#presentacion-notas")));
+  cierto("en la 30, que no tiene notas, no queda la caja de notas", !(await seVe(page, "#presentacion-notas")));
 
-  await page.evaluate((d) => mostrarPresentacion({ deck: d, n: 47 }), DECK);
-  await esperarImagen(page, "47.webp");
+  await page.evaluate((d) => mostrarPresentacion({ deck: d, n: 48 }), DECK);
+  await esperarImagen(page, "48.webp");
   cierto("▶ apagado en la última", await page.isDisabled("#presentacion-siguiente"));
   await page.evaluate((d) => mostrarPresentacion({ deck: d, n: 99 }), DECK);
-  cierto("pasarse del final se queda en la última", JSON.stringify(await ultimaPresentacion(page)) === JSON.stringify({ deck: DECK, n: 47 }));
+  cierto("pasarse del final se queda en la última", JSON.stringify(await ultimaPresentacion(page)) === JSON.stringify({ deck: DECK, n: 48 }));
 
   await page.click("#presentacion-quitar");
   await page.waitForTimeout(200);
@@ -412,15 +412,15 @@ async function pruebaAlumna(browser) {
   const pedidas = [];
   page.on("request", (r) => { if (/\.webp$/.test(r.url())) pedidas.push(r.url().split("/").pop()); });
   await esperarImagen(page, "05.webp");
-  cierto("al entrar ya ve la diapositiva que está en la base", (await page.textContent("#presentacion-cuenta")) === "Diapositiva 5 de 47");
+  cierto("al entrar ya ve la diapositiva que está en la base", (await page.textContent("#presentacion-cuenta")) === "Diapositiva 5 de 48");
   cierto("la imagen dice cuál es", /^Diapositiva 5: Cronograma/.test((await imagen(page)).alt), (await imagen(page)).alt);
   cierto("y su texto se puede leer", /240 minutos/.test(await page.textContent("#presentacion-texto")));
   cierto("sin los botones del profe", !(await seVe(page, "#presentacion-profe")) && !(await seVe(page, "#presentacion-siguiente")));
   await page.evaluate((v) => window.__cambioEnBase("game_state", v), fila({ presentacion: { deck: DECK, n: 21 } }));
   await esperarImagen(page, "21.webp");
-  cierto("el profe la pasa: la alumna ve la 21", (await page.textContent("#presentacion-cuenta")) === "Diapositiva 21 de 47");
-  await page.waitForFunction(() => /diapositiva 21 de 47/.test(document.getElementById("clase-voz").textContent), null, { timeout: 3000 }).catch(() => {});
-  cierto("y se le dice en voz", /diapositiva 21 de 47: Captura al paso/.test(await page.textContent("#clase-voz")));
+  cierto("el profe la pasa: la alumna ve la 21", (await page.textContent("#presentacion-cuenta")) === "Diapositiva 21 de 48");
+  await page.waitForFunction(() => /diapositiva 21 de 48/.test(document.getElementById("clase-voz").textContent), null, { timeout: 3000 }).catch(() => {});
+  cierto("y se le dice en voz", /diapositiva 21 de 48: Captura al paso/.test(await page.textContent("#clase-voz")));
   cierto("sin las posiciones para mandar al tablero", !(await seVe(page, "#presentacion-posiciones")));
   await page.setViewportSize({ width: 390, height: 844 });
   await page.waitForTimeout(200);
@@ -610,9 +610,9 @@ async function pruebaVistaLimpia(browser) {
     cierto("sin errores en consola", errores.length === 0, errores.join(" | "));
     await ctx.close();
   }
-  const { page, ctx, errores } = await abrir(browser, "u-ana", CLASE, { game_state: [fila({ presentacion: { deck: DECK, n: 30, limpia: true } })] });
+  const { page, ctx, errores } = await abrir(browser, "u-ana", CLASE, { game_state: [fila({ presentacion: { deck: DECK, n: 31, limpia: true } })] });
   await page.setViewportSize({ width: 1440, height: 900 });
-  await esperarImagen(page, "30.webp");
+  await esperarImagen(page, "31.webp");
   cierto("la alumna queda en vista limpia", await page.evaluate(() => document.documentElement.classList.contains("vista-limpia")));
   cierto("sin encabezado, título, columna lateral ni lista de jugadas",
     !(await seVe(page, "#header")) && !(await seVe(page, "#status-banner")) && !(await seVe(page, "#herramientas-profe")) && !(await seVe(page, "#moves-panel")));
@@ -628,8 +628,8 @@ async function pruebaVistaLimpia(browser) {
   // Con la máquina cargada, el aviso de la diapositiva (que llega cuando carga
   // la imagen) puede pisar al de la vista limpia antes de leerlo: con la lámina
   // ya a la vista, el profe la apaga y la vuelve a encender, y se lee ese.
-  await page.evaluate((v) => window.__cambioEnBase("game_state", v), fila({ presentacion: { deck: DECK, n: 30 } }));
-  await page.evaluate((v) => window.__cambioEnBase("game_state", v), fila({ presentacion: { deck: DECK, n: 30, limpia: true } }));
+  await page.evaluate((v) => window.__cambioEnBase("game_state", v), fila({ presentacion: { deck: DECK, n: 31 } }));
+  await page.evaluate((v) => window.__cambioEnBase("game_state", v), fila({ presentacion: { deck: DECK, n: 31, limpia: true } }));
   await page.waitForFunction(() => /vista limpia/.test(document.getElementById("clase-voz").textContent), null, { timeout: 5000 }).catch(() => {});
   cierto("y se le dice en voz", /vista limpia/.test(await page.textContent("#clase-voz")));
   const encima = await page.evaluate(() => {
@@ -645,17 +645,17 @@ async function pruebaVistaLimpia(browser) {
   await page.evaluate(() => document.documentElement.classList.add("adaptive-mode"));
   cierto("con el Modo Adaptado no se aplica (vuelve el encabezado)", await seVe(page, "#header"));
   await page.evaluate(() => document.documentElement.classList.remove("adaptive-mode"));
-  await page.evaluate((v) => window.__cambioEnBase("game_state", v), fila({ presentacion: { deck: DECK, n: 30 } }));
+  await page.evaluate((v) => window.__cambioEnBase("game_state", v), fila({ presentacion: { deck: DECK, n: 31 } }));
   await page.waitForTimeout(200);
   cierto("el profe la apaga: vuelve todo", !(await page.evaluate(() => document.documentElement.classList.contains("vista-limpia"))) && await seVe(page, "#header"));
-  await page.evaluate((v) => window.__cambioEnBase("game_state", v), fila({ presentacion: { deck: DECK, n: 30, limpia: true } }));
+  await page.evaluate((v) => window.__cambioEnBase("game_state", v), fila({ presentacion: { deck: DECK, n: 31, limpia: true } }));
   await page.waitForTimeout(200);
   await page.evaluate((v) => window.__cambioEnBase("game_state", v), fila({ presentacion: null }));
   await page.waitForTimeout(200);
   cierto("y si quita la presentación, también", !(await page.evaluate(() => document.documentElement.classList.contains("vista-limpia"))));
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.evaluate((v) => window.__cambioEnBase("game_state", v), fila({ presentacion: { deck: DECK, n: 30, limpia: true } }));
-  await esperarImagen(page, "30.webp");
+  await page.evaluate((v) => window.__cambioEnBase("game_state", v), fila({ presentacion: { deck: DECK, n: 31, limpia: true } }));
+  await esperarImagen(page, "31.webp");
   cierto("en el celular, una columna que cabe", await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth
     && document.getElementById("presentacion-caja").getBoundingClientRect().bottom <= document.getElementById("chessboard").getBoundingClientRect().top));
   cierto("sin errores en consola", errores.length === 0, errores.join(" | "));
