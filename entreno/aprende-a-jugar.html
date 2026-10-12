@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"><!-- guardia: inicio --><script>(function(){try{if(window.sb||localStorage.getItem("sb-bgtijpimpcokxatxxbki-auth-token"))return;}catch(e){return;}try{window.stop()}catch(e){}var p=location.pathname.replace(/^\/+/,'');if(!p||/\/$/.test(p))p+='index.html';else if(!/\.html$/.test(p))p+='.html';location.replace('/login.html?next='+encodeURIComponent(p));})();</script><!-- guardia: fin -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="../img/favicon.svg">
+<title>Aprende a jugar — Entreno — Ajedrez Integral</title>
+<meta name="description" content="Aprende a jugar ajedrez paso a paso: cómo se mueve cada pieza, capturar, proteger, jaque, mate, enroque, captura al paso y ahogado, juntando estrellas.">
+<meta name="robots" content="noindex">
+    <!-- Tailwind compilado: lo genera herramientas/css-construir.js.
+         Antes venía del CDN, que baja ~400 KB de JavaScript y compila el CSS
+         dentro del navegador en cada visita. -->
+    <link rel="stylesheet" href="../css/tailwind.css">
+<link rel="stylesheet" href="../css/styles.css">
+<!-- oscuro: inicio --><script>(function(){try{var t=localStorage.getItem('theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.classList.add('dark');}catch(e){}})();</script><!-- oscuro: fin -->
+<script src="../js/tarea-en-curso.js" defer></script>
+<style>
+  :root{
+    --bg-panel:#ffffff; --bg-panel-2:#f0f4f8; --line:#d9e2ec; --text:#102a43; --text-muted:#486581;
+    --brass:#de911d; --brass-bright:#f0b429; --ok:#2f7a3e; --bad:#b03a2e; --star:#f0b429; --azul:#1f6fc5; --cab:#1f5fa8;
+  }
+  html.dark{ --bg-panel:#102a43; --bg-panel-2:#0a1f33; --line:#243b53; --text:#f0f4f8; --text-muted:#bcccdc; --ok:#7ccf8a; --bad:#ff9b8f; --azul:#7cb8ff; }
+  *:focus-visible{outline:3px solid var(--brass-bright); outline-offset:2px;}
+  .aj{max-width:1180px; margin:0 auto; padding:18px 16px 60px; display:grid; gap:20px; grid-template-columns:1fr;}
+  /* En el celular, primero el tablero y lo que pide el nivel; el menú, abajo. */
+  .aj-centro{order:1;} .aj-panel{order:2;} .aj-menu{order:3;}
+  @media (min-width:1024px){ .aj{grid-template-columns:250px minmax(0,1fr) 300px; align-items:start;} .aj-menu,.aj-centro,.aj-panel{order:0;} }
+
+  /* El menú de etapas, como el de Lichess: categorías y, adentro, las etapas. */
+  .aj-menu{background:var(--bg-panel); border:1px solid var(--line); border-radius:10px; overflow:hidden;}
+  .aj-menu h2{font-size:.95rem; margin:0; padding:10px 14px; background:var(--bg-panel-2); color:var(--text); font-family:'Inter',sans-serif; font-weight:700; border-top:1px solid var(--line);}
+  .aj-menu h2:first-child{border-top:none;}
+  .aj-menu ol{list-style:none; margin:0; padding:0;}
+  .aj-etapa{display:flex; align-items:center; gap:10px; width:100%; text-align:left; background:none; border:none; border-top:1px solid var(--line); padding:8px 12px; color:var(--text); font:inherit; font-size:.9rem; cursor:pointer; min-height:44px;}
+  .aj-etapa:hover{background:var(--bg-panel-2);}
+  .aj-etapa[aria-current="true"]{background:var(--cab); color:#fff;}
+  .aj-etapa .ic{width:28px; height:28px; flex:none; display:flex; align-items:center; justify-content:center; font-size:1.2rem; border-radius:6px; background:var(--bg-panel-2);}
+  .aj-etapa[aria-current="true"] .ic{background:rgba(255,255,255,.2);}
+  .aj-etapa .ic span{display:inline-flex; width:24px; height:24px;}
+  .aj-etapa .ic svg{width:100%; height:100%;}
+  .aj-etapa .est{margin-left:auto; font-size:.8rem; letter-spacing:1px; white-space:nowrap;}
+
+  .aj-centro{min-width:0;}
+  .board-wrap{max-width:560px; margin:0 auto; position:relative;}
+  .board8{display:grid; grid-template-columns:repeat(8,minmax(0,1fr)); grid-template-rows:repeat(8,minmax(0,1fr)); width:100%; aspect-ratio:1/1; border:2px solid var(--brass); box-shadow:0 8px 30px rgba(16,42,67,0.18);}
+  .sq{position:relative; display:flex; align-items:center; justify-content:center; font-size:min(9vw,50px); line-height:1; cursor:pointer; user-select:none; border:none; padding:0;}
+  .sq.light{background:var(--sq-light);}
+  .sq.dark{background:var(--sq-dark);}
+  .sq.selected{box-shadow:inset 0 0 0 4px var(--brass-bright);}
+  .sq.last{box-shadow:inset 0 0 0 100px rgba(155,199,0,.35);}
+  .sq.selected.last{box-shadow:inset 0 0 0 4px var(--brass-bright), inset 0 0 0 100px rgba(155,199,0,.35);}
+  .sq.target::after{content:""; position:absolute; inset:36%; border-radius:50%; background:rgba(20,85,30,.5); pointer-events:none;}
+  .sq.target-capture::after{content:""; position:absolute; inset:4%; border:5px solid rgba(20,85,30,.5); border-radius:50%; pointer-events:none;}
+  .sq.fila-resaltada{box-shadow:inset 0 0 0 100px rgba(31,111,197,.22);}
+  .sq.castigo::before{content:"!"; position:absolute; top:2px; right:4px; z-index:2; font:700 1.1rem/1 'Inter',sans-serif; color:#fff; background:#af0000; border-radius:50%; width:1.3rem; height:1.3rem; display:flex; align-items:center; justify-content:center;}
+  .sq .estrella{position:absolute; inset:12%; display:block; pointer-events:none; animation:estrella-entra .35s ease-out;}
+  .sq .estrella svg{width:100%; height:100%; filter:drop-shadow(0 2px 2px rgba(0,0,0,.35));}
+  @keyframes estrella-entra{from{transform:scale(.3); opacity:0;} to{transform:scale(1); opacity:1;}}
+  .flechas{position:absolute; inset:2px; pointer-events:none; z-index:3;}
+
+  .aj-panel{background:var(--bg-panel); border:1px solid var(--line); border-radius:10px; overflow:hidden; color:var(--text);}
+  .aj-cab{background:var(--cab); color:#fff; padding:14px 16px; display:flex; gap:12px; align-items:center;}
+  .aj-cab .ic{font-size:2.2rem; width:48px; height:48px; flex:none; display:flex; align-items:center; justify-content:center;}
+  .aj-cab .ic svg{width:100%; height:100%;}
+  .aj-cab h2{font-family:'Inter',sans-serif; font-weight:600; font-size:1.5rem; margin:0; color:#fff;}
+  .aj-cab p{margin:2px 0 0; font-size:.85rem;}
+  .aj-meta{padding:14px 16px; font-size:.95rem; line-height:1.5; text-align:center; min-height:3.5em;}
+  .aj-niveles{display:flex; flex-wrap:wrap; border-top:1px solid var(--line);}
+  .aj-nivel{flex:1 1 0; min-width:44px; min-height:48px; border:none; border-left:1px solid var(--line); background:var(--bg-panel-2); color:var(--text); font:600 .8rem 'Inter',sans-serif; cursor:pointer; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; padding:4px 2px;}
+  .aj-nivel:first-child{border-left:none;}
+  .aj-nivel.hecho{background:#3f7d1f; color:#fff;}
+  .aj-nivel[aria-current="step"]{background:var(--cab); color:#fff;}
+  .aj-nivel:disabled{cursor:not-allowed; opacity:.55;}
+  .aj-nivel .e{font-size:.7rem; letter-spacing:1px;}
+  .aj-estado{margin:0; padding:12px 16px; min-height:1.5em; font-size:.95rem; text-align:center; border-top:1px solid var(--line);}
+  .aj-estado.ok{color:var(--ok); font-weight:600;}
+  .aj-estado.bad{color:var(--bad); font-weight:600;}
+  .aj-botones{display:flex; flex-wrap:wrap; gap:8px; justify-content:center; padding:0 16px 16px;}
+  .bctrl{background:transparent; border:1px solid var(--line); color:var(--text); font-family:'Inter',sans-serif; font-size:.9rem; padding:10px 16px; cursor:pointer; border-radius:6px; min-height:44px;}
+  .bctrl:hover{border-color:var(--brass);}
+  .bctrl.primary{background:var(--brass); color:#102a43; border-color:var(--brass); font-weight:600;}
+  .aj-puntos{font-size:.85rem; color:var(--text-muted); text-align:center; padding:0 16px 14px; margin:0;}
+
+  /* La presentación de cada etapa y su cierre, encima del tablero. */
+  .aj-tarjeta{position:absolute; inset:0; z-index:5; display:flex; align-items:center; justify-content:center; background:rgba(16,42,67,.55); padding:16px;}
+  .aj-tarjeta[hidden]{display:none;}
+  .aj-tarjeta > div{background:var(--bg-panel); color:var(--text); border-radius:12px; max-width:420px; padding:22px; text-align:center; box-shadow:0 10px 40px rgba(0,0,0,.35);}
+  .aj-tarjeta h2{font-size:1.4rem; margin:0 0 8px;}
+  .aj-tarjeta .grande{font-size:2.6rem; margin-bottom:6px;}
+  .aj-tarjeta .grande svg{width:64px; height:64px;}
+  .aj-tarjeta p{line-height:1.5; margin:0 0 14px;}
+
+  .mode-bar{max-width:1180px; margin:10px auto 0; padding:0 16px; display:flex; justify-content:flex-end; align-items:center; gap:8px; font-size:.8rem; color:var(--text-muted); flex-wrap:wrap;}
+  .mode-switch{display:inline-flex; border:1px solid var(--line); overflow:hidden; border-radius:6px;}
+  .mode-btn{background:var(--bg-panel); border:none; color:var(--text-muted); font-family:'Inter',sans-serif; font-size:.8rem; padding:6px 10px; cursor:pointer; min-height:36px;}
+  .mode-btn + .mode-btn{border-left:1px solid var(--line);}
+  .mode-btn.active{background:var(--brass); color:#102a43;}
+  .speech-btn{background:var(--bg-panel); border:1px solid var(--line); border-radius:6px; color:var(--text-muted); font-family:'Inter',sans-serif; font-size:.8rem; padding:6px 10px; cursor:pointer;}
+  .position-readout{background:var(--bg-panel); border:1px solid var(--line); padding:12px 16px; margin:14px auto 0; font-size:.85rem; color:var(--text-muted); line-height:1.6; max-width:560px;}
+  @media (prefers-reduced-motion: reduce){ .sq .estrella{animation:none;} }
+</style>
+    <script src="../js/piece-color-themes.js"></script>
+    <script src="../js/piece-style-themes.js"></script>
+    <script src="../js/board-color-themes.js"></script>
+    <script src="../js/adaptive-mode.js"></script>
+
+<!-- app: inicio --><meta name="theme-color" content="#102a43"><link rel="manifest" href="/manifest.json"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Ajedrez"><script src="../js/errores.js"></script><script src="../js/pwa.js" defer></script><script src="../js/navegacion.js" defer></script><!-- app: fin --><!-- fuentes: inicio --><link rel="stylesheet" href="../css/fuentes.css"><!-- fuentes: fin --><!-- tema: inicio --><script>(function(){try{var l=localStorage.getItem('plataforma_letra_v1');if(l&&/^[a-z]{2,24}$/.test(l)&&l!=='tema')document.documentElement.setAttribute('data-letra',l);var t=localStorage.getItem('plataforma_tema_v1');if(!t||!/^[a-z]{2,24}$/.test(t)||t==='clasico')return;document.documentElement.setAttribute('data-tema',t);var b=getComputedStyle(document.documentElement).getPropertyValue('--c-brand-800').trim();var m=document.querySelector('meta[name="theme-color"]');if(b&&m)m.setAttribute('content','rgb('+b.replace(/\s+/g,',')+')');}catch(e){}})();</script><!-- tema: fin --></head>
+<body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-accent-500 focus:text-brand-900 focus:font-semibold focus:px-4 focus:py-2 focus:rounded-lg">Saltar al contenido principal</a>
+    <header id="header" class="sticky top-0 z-50 bg-brand-800 shadow-lg transition-all duration-300"><nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Academia"><div class="flex items-center justify-between min-h-[4rem] md:min-h-[5rem] py-2"><a id="marca-enlace" href="../clases.html" class="flex items-center gap-2 text-white min-w-0"><img src="/img/logo-marca.png" alt="" width="78" height="48" class="h-10 md:h-12 w-auto shrink-0"><span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span><span class="sr-only"> — panel de la Academia</span></a><div class="flex items-center gap-2"><a id="ayuda-guia" href="../guia-del-profesor-accesible.html#cap-8" target="_blank" rel="noopener" class="hidden text-white font-bold text-lg w-9 h-9 items-center justify-center rounded-lg border border-white/40 hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Ayuda: capítulo «Entrenamiento» de la guía del profesor (se abre en otra pestaña)" title="Guía del profesor: Entrenamiento"><span aria-hidden="true">?</span></a><button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro"><span id="theme-icon" aria-hidden="true">☀️</span></button></div></div></nav></header><!-- migas: inicio --><div class="bg-brand-900"><nav id="migas" aria-label="Estás en" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 text-sm"><ol class="flex flex-wrap items-center gap-x-2 gap-y-1"><li class="flex items-center gap-2"><a href="../clases.html" class="text-brand-200 underline underline-offset-2 hover:text-accent-400 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">🏛️ </span>Academia</a></li><li class="flex items-center gap-2"><span aria-hidden="true" class="text-brand-400">›</span><span aria-current="page" class="font-semibold text-white">Aprende a jugar</span></li></ol></nav></div><!-- migas: fin -->
+
+
+<!-- ===== GATE: exige sesión de Academia ===== -->
+<div id="gate" class="min-h-[calc(100vh-5rem)] flex items-center justify-center px-4">
+    <div class="w-full max-w-sm text-center">
+        <p class="text-5xl mb-4" aria-hidden="true">⭐</p>
+        <h1 class="font-serif text-2xl font-bold text-brand-800 dark:text-white mb-2">Aprende a jugar</h1>
+        <p id="gate-checking" class="text-brand-500 dark:text-brand-300 mb-4">Comprobando tu sesión…</p>
+    </div>
+</div>
+
+<!-- ===== MAIN APP ===== -->
+<div id="app" class="hidden pt-8 pb-4">
+  <div class="max-w-6xl mx-auto px-4 flex flex-wrap items-baseline justify-between gap-2 pb-3 border-b border-brand-200 dark:border-brand-800">
+    <h1 class="font-serif text-2xl md:text-3xl font-bold text-brand-800 dark:text-white">Aprende a jugar <span aria-hidden="true">⭐</span></h1>
+    <p id="aj-total" class="text-sm text-brand-600 dark:text-brand-300"></p>
+  </div>
+  <p class="max-w-6xl mx-auto px-4 text-sm text-brand-600 dark:text-brand-300 mt-3">Desde cómo se mueve cada pieza hasta el enroque y el ahogado, en 18 etapas y 110 niveles. Junta las estrellas con la pieza, come las piezas negras sin perder las tuyas y da jaque: cuantas menos jugadas uses, más estrellas ganas. Son las lecciones de lichess.org/learn.</p>
+
+  <div class="mode-bar">
+    <span>Modo:</span>
+    <div class="mode-switch" role="group" aria-label="Elegir modo de interacción">
+      <button type="button" id="mode-normal-btn" aria-pressed="true" class="mode-btn active">Modo normal</button>
+      <button type="button" id="mode-blind-btn" aria-pressed="false" class="mode-btn">🔊 Adaptado</button>
+    </div>
+    <button type="button" id="speech-toggle-btn" style="display:none" class="speech-btn"></button>
+  </div>
+
+  <div class="aj">
+    <nav class="aj-menu" id="aj-menu" aria-label="Etapas"></nav>
+
+    <main id="main-content" class="aj-centro">
+      <div class="board-wrap" id="board-wrap">
+        <div class="board8" id="board" role="group" aria-label="Tablero de la lección"></div>
+        <svg class="flechas" id="flechas" viewBox="0 0 8 8" aria-hidden="true"></svg>
+        <div class="aj-tarjeta" id="tarjeta" hidden>
+          <div role="dialog" aria-modal="false" aria-labelledby="tarjeta-titulo">
+            <div class="grande" id="tarjeta-icono" aria-hidden="true"></div>
+            <h2 id="tarjeta-titulo" tabindex="-1"></h2>
+            <p id="tarjeta-texto"></p>
+            <p id="tarjeta-estrellas" class="text-lg"></p>
+            <div class="aj-botones" id="tarjeta-botones"></div>
+          </div>
+        </div>
+      </div>
+      <div id="position-readout" class="position-readout" role="region" aria-label="Posición actual" style="display:none;"></div>
+      <!-- Donde se escribe la jugada y se le pregunta a la posición
+           (js/cuadro-comandos.js). Lo destapa el CSS en Modo Adaptado. -->
+      <div id="q-comandos" class="max-w-xl mx-auto"></div>
+    </main>
+
+    <aside class="aj-panel" aria-label="La etapa">
+      <div class="aj-cab">
+        <div class="ic" id="etapa-icono" aria-hidden="true"></div>
+        <div>
+          <h2 id="etapa-titulo"></h2>
+          <p id="etapa-subtitulo"></p>
+        </div>
+      </div>
+      <p class="aj-meta" id="nivel-meta"></p>
+      <nav class="aj-niveles" id="aj-niveles" aria-label="Niveles de la etapa"></nav>
+      <p class="aj-estado" id="aj-estado" role="status" aria-live="polite"></p>
+      <div class="aj-botones">
+        <button type="button" class="bctrl" id="btn-reintentar">↺ Reintentar</button>
+        <button type="button" class="bctrl primary" id="btn-siguiente" hidden>Siguiente →</button>
+      </div>
+      <p class="aj-puntos" id="aj-puntos"></p>
+    </aside>
+  </div>
+</div>
+
+<footer class="bg-brand-900 text-brand-300 py-8"><div class="max-w-7xl mx-auto px-4 text-center text-sm"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p><!-- legal: inicio --><p class="mt-2"><a href="../privacidad.html" class="underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Política de privacidad</a> <span aria-hidden="true">·</span> <a href="../terminos.html" class="underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Términos y condiciones</a></p><!-- legal: fin --></div></footer>
+<!-- tablero-js: inicio -->
+<script src="../js/board-themes.js"></script>
+<script src="../js/pieza-preferida.js"></script>
+<script src="../js/coronacion.js"></script>
+<!-- tablero-js: fin -->
+<script src="../js/vendor/supabase.js"></script>
+<script src="../js/supabase-client.js"></script>
+<script src="../js/tiempo-plataforma.js" data-activity="aprender"></script>
+<script src="../js/chess-piece-svg.js"></script>
+<script src="../js/main.js"></script>
+<script src="../js/coordenadas-tablero.js"></script>
+<script src="../js/blind-notation.js"></script>
+<!-- El teclado del tablero, las preguntas que se le pueden hacer y el recuadro
+     donde se contesta: escritos una sola vez para todo Entrenamiento. -->
+<script src="../js/tablero-accesible.js"></script>
+<script src="../js/chess-move-parser.js"></script>
+<script src="../js/comandos-tablero.js"></script>
+<script src="../js/cuadro-comandos.js"></script>
+<script src="../js/board-drag.js"></script>
+<script src="../js/entreno-progress.js"></script>
+<script src="../js/progreso-usuario.js"></script>
+<script src="../js/ejercicio-tablero.js"></script>
+<script src="../js/mini-chess.js"></script>
+<script src="../js/aprende-a-jugar-motor.js"></script>
+<script src="../js/aprende-a-jugar-etapas.js"></script>
+<script src="../js/aprende-a-jugar.js"></script>
+<!-- burbuja: inicio --><script src="../js/burbuja-en-linea.js" defer></script><!-- burbuja: fin --><!-- juego-aviso: inicio --><script src="../js/juego-aviso.js" defer></script><!-- juego-aviso: fin --><!-- aviso-profe: inicio --><script src="../js/aviso-profe.js" defer></script><!-- aviso-profe: fin --><!-- tanda: inicio --><script src="../js/tanda-diez.js" defer></script><!-- tanda: fin --><!-- bromas: inicio --><script src="../js/bromas.js" defer></script><!-- bromas: fin --><!-- acceso: inicio --><script src="../js/acceso-vigente.js" defer></script><!-- acceso: fin --><!-- modo-vista: inicio --><script src="../js/modo-vista.js" defer></script><!-- modo-vista: fin --><!-- marca: inicio --><script src="../js/marca-academia.js" defer></script><!-- marca: fin --><!-- ayuda: inicio --><script src="../js/ayuda-guia.js" defer></script><!-- ayuda: fin --><!-- atajo: inicio --><script src="../js/atajo-buscar.js" data-arriba="../" defer></script><!-- atajo: fin --></body>
+</html>

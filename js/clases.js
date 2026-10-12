@@ -92,6 +92,7 @@
                 { emoji: "♚", label: "Mates", desc: "Las figuras de mate que hay que conocer, del pasillo al de la Ópera", href: "entreno/estudio.html?cat=mate", soloAlumno: true },
                 { emoji: "💡", label: "Conceptos", desc: "Las fichas de las ideas que deciden la partida", href: "entreno/estudio.html?cat=concepto", soloAlumno: true },
                 { emoji: "🏁", label: "Finales", desc: "Las fichas de los finales: cómo se gana y cómo se salva", href: "entreno/estudio.html?cat=final", soloAlumno: true },
+                { emoji: "⭐", label: "Aprende a jugar", desc: "Cómo se mueve cada pieza, el jaque, el enroque y más, juntando estrellas", href: "entreno/aprende-a-jugar.html", soloAlumno: true },
                 { emoji: "🎓", label: "Lecciones", desc: "Interactivas, paso a paso", href: "entreno/aprender.html", soloAlumno: true },
                 { emoji: "🧠", label: "Desafíos", desc: "Coronación, ganar material, salir del apuro y jaque mate", href: "entreno/desafios.html", soloAlumno: true },
                 { emoji: "📖", label: "Artículos", desc: "Lecturas técnicas y pedagógicas", href: "articulos.html" },
