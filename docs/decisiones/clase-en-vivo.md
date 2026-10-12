@@ -3652,6 +3652,9 @@ mostrarlo para explicarlo, preguntarlo a la clase y que lo practiquen.
   centro del nivel como dificultad de la pregunta. Antes salían «ELO
   undefined», metidos en cualquier lugar (restar un rating que no está da
   NaN).
+- **Memoria trae todo su banco**: las 40 posiciones de cada cantidad de
+  piezas, numeradas en cada tramo. Antes iban 8 de cada una (240 de 1200),
+  sin que nada lo dijera.
 - **«🪟 Abrirlo a todos en una ventana» no manda una dirección**: manda el
   slug (y el recorte) en la presencia del profe, como la Fotografía, y cada
   alumno arma el enlace con la lista del sitio (`EntrenosClase.enlaceDe`).

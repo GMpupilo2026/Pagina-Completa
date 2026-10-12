@@ -211,6 +211,22 @@ async function pruebaDelProfe(browser) {
   igual("Finales: están todos los del archivo", finales,
     JSON.parse(fs.readFileSync(path.join(RAIZ, "entreno", "data", "finales.json"), "utf8")).finales.length);
 
+  /* Memoria: todas las posiciones del banco (antes 8 de cada cantidad de piezas,
+     240 de 1200). Aperturas: todas las líneas, cada una en su grupo. */
+  const memoriaBanco = JSON.parse(fs.readFileSync(path.join(RAIZ, "entreno", "data", "memoria.json"), "utf8"));
+  const memoria = await page.evaluate(async () => {
+    const grupos = await ADAPTADORES_ENTRENO.memoria.cargar();
+    const ids = grupos.flatMap((g) => g.items.map((it) => it.id));
+    return [ids.length, new Set(ids).size, grupos.every((g) => g.items.every((it, i) => it.titulo.startsWith((i + 1) + ". ")))];
+  });
+  const enBanco = Object.values(memoriaBanco.porPiezas).reduce((n, l) => n + l.length, 0);
+  igual("Memoria: todas las posiciones del banco, sin repetir y numeradas", memoria, [enBanco, enBanco, true]);
+  const aperturas = await page.evaluate(async () => {
+    const grupos = await ADAPTADORES_ENTRENO.aperturas.cargar();
+    return [grupos.reduce((n, g) => n + g.items.length, 0), window.AperturasLineas.LINEAS.length];
+  });
+  igual("Aperturas: todas las líneas (aperturas y celadas)", aperturas[0], aperturas[1]);
+
   // La vista previa y el guion (solo el profe).
   await page.evaluate(() => { activateTeacherTab("tipos"); entrenosView = { slug: "mates", grupo: "mate1", mostrar: 30 }; pintarEntrenos(); });
   await page.waitForSelector("#entrenos-body li");

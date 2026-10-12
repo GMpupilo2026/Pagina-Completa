@@ -270,9 +270,11 @@ const ADAPTADORES_ENTRENO = {
             const d = await bajarJsonEntreno("entreno/data/memoria.json");
             const tramos = [[3, 6, 8], [7, 10, 12], [11, 16, 15], [17, 24, 20], [25, 32, 30]];
             return tramos.map(([a, b, seg]) => {
+                // Todas las del banco (40 por cada cantidad de piezas). Antes iban 8 de
+                // cada una: 240 de 1200, sin que nada lo dijera.
                 const items = [];
-                for (let n = a; n <= b; n++) ((d.porPiezas || {})[n] || []).slice(0, 8).forEach((p) => items.push({
-                    id: p.id, titulo: n + " piezas", fen: p.fen, foto: seg, guion: ["Pídeles que la reconstruyan en su tablero o que la dicten pieza por pieza."],
+                for (let n = a; n <= b; n++) ((d.porPiezas || {})[n] || []).forEach((p) => items.push({
+                    id: p.id, titulo: (items.length + 1) + ". " + n + " piezas", fen: p.fen, foto: seg, guion: ["Pídeles que la reconstruyan en su tablero o que la dicten pieza por pieza."],
                 }));
                 return { id: a + "-" + b, titulo: "De " + a + " a " + b + " piezas", desc: seg + " segundos para mirarla · " + items.length + " posiciones", items, practica: { enlace: null } };
             });
