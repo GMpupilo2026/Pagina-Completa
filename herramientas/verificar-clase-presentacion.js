@@ -184,7 +184,7 @@ async function pruebaProfesor(browser) {
   await page.evaluate((v) => window.__cambioEnBase("game_state", v), fila({ presentacion: { deck: DECK, n: 3 } }));
   await page.waitForTimeout(300);
   cierto("los ecos viejos no la devuelven atrás", (await imagen(page)).src === "04.webp", (await imagen(page)).src);
-  cierto("y dice cuál es", (await page.textContent("#presentacion-cuenta")) === "Diapositiva 4 de 48");
+  cierto("y dice cuál es", (await page.textContent("#presentacion-cuenta")) === "Diapositiva 4 de 51");
 
   // A la 18 (colocación del tablero): su posición, al tablero de la clase.
   await page.click("#presentacion-siguiente");
@@ -216,11 +216,11 @@ async function pruebaProfesor(browser) {
   await esperarImagen(page, "28.webp");
   cierto("en la 28 (un receso), que no tiene notas, no queda la caja de notas", !(await seVe(page, "#presentacion-notas")));
 
-  await page.evaluate((d) => mostrarPresentacion({ deck: d, n: 48 }), DECK);
-  await esperarImagen(page, "48.webp");
+  await page.evaluate((d) => mostrarPresentacion({ deck: d, n: 51 }), DECK);
+  await esperarImagen(page, "51.webp");
   cierto("▶ apagado en la última", await page.isDisabled("#presentacion-siguiente"));
   await page.evaluate((d) => mostrarPresentacion({ deck: d, n: 99 }), DECK);
-  cierto("pasarse del final se queda en la última", JSON.stringify(await ultimaPresentacion(page)) === JSON.stringify({ deck: DECK, n: 48 }));
+  cierto("pasarse del final se queda en la última", JSON.stringify(await ultimaPresentacion(page)) === JSON.stringify({ deck: DECK, n: 51 }));
 
   await page.click("#presentacion-quitar");
   await page.waitForTimeout(200);
@@ -415,15 +415,15 @@ async function pruebaAlumna(browser) {
   const pedidas = [];
   page.on("request", (r) => { if (/\.webp$/.test(r.url())) pedidas.push(r.url().split("/").pop()); });
   await esperarImagen(page, "05.webp");
-  cierto("al entrar ya ve la diapositiva que está en la base", (await page.textContent("#presentacion-cuenta")) === "Diapositiva 5 de 48");
+  cierto("al entrar ya ve la diapositiva que está en la base", (await page.textContent("#presentacion-cuenta")) === "Diapositiva 5 de 51");
   cierto("la imagen dice cuál es", /^Diapositiva 5: Cronograma/.test((await imagen(page)).alt), (await imagen(page)).alt);
   cierto("y su texto se puede leer", /240 minutos/.test(await page.textContent("#presentacion-texto")));
   cierto("sin los botones del profe", !(await seVe(page, "#presentacion-profe")) && !(await seVe(page, "#presentacion-siguiente")));
   await page.evaluate((v) => window.__cambioEnBase("game_state", v), fila({ presentacion: { deck: DECK, n: 21 } }));
   await esperarImagen(page, "21.webp");
-  cierto("el profe la pasa: la alumna ve la 21", (await page.textContent("#presentacion-cuenta")) === "Diapositiva 21 de 48");
-  await page.waitForFunction(() => /diapositiva 21 de 48/.test(document.getElementById("clase-voz").textContent), null, { timeout: 3000 }).catch(() => {});
-  cierto("y se le dice en voz", /diapositiva 21 de 48: Captura al paso/.test(await page.textContent("#clase-voz")));
+  cierto("el profe la pasa: la alumna ve la 21", (await page.textContent("#presentacion-cuenta")) === "Diapositiva 21 de 51");
+  await page.waitForFunction(() => /diapositiva 21 de 51/.test(document.getElementById("clase-voz").textContent), null, { timeout: 3000 }).catch(() => {});
+  cierto("y se le dice en voz", /diapositiva 21 de 51: Captura al paso/.test(await page.textContent("#clase-voz")));
   cierto("sin las posiciones para mandar al tablero", !(await seVe(page, "#presentacion-posiciones")));
   await page.setViewportSize({ width: 390, height: 844 });
   await page.waitForTimeout(200);

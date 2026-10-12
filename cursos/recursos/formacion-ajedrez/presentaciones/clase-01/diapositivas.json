@@ -295,12 +295,12 @@
   },
   {
    "titulo": "Práctica en salas de trabajo",
-   "texto": "Identificación de jugadas legales y finales de partida, 40 minutos. 1. Grupos de 3 o 4 personas, una sala de trabajo por grupo. 2. Para cada una de las 8 posiciones decidan: ¿jaque, jaque mate, ahogado, posición muerta o la partida sigue? 3. Justifiquen cada respuesta con el artículo de las Leyes. 4. Una persona anota y otra, diferente, presenta en la plenaria. Tiempo: 25 minutos en salas y 15 minutos de plenaria.",
-   "notas": "25 minutos en salas y 15 de plenaria. Son las mismas 8 posiciones del cuadernillo de ejercicios de la sesión 1 (respuestas en la diapositiva siguiente a las posiciones).",
+   "texto": "Práctica en salas de trabajo, por estaciones, 40 minutos. Cada sala de trabajo, de 3 o 4 personas, hace una estación distinta. Estación 1: las 8 posiciones; decidir si hay jaque, jaque mate, ahogado, posición muerta o si la partida sigue, con su artículo. Estación 2: dictado de planilla. Estación 3: juego de roles de un reclamo. Estación 4: los casos del laboratorio, en grupo. 25 minutos en salas y 15 de plenaria: una persona anota y otra, diferente, cuenta en la plenaria lo que hizo su sala.",
+   "notas": "25 minutos en salas y 15 de plenaria. Con más de cuatro salas, se repiten estaciones; con menos, se dejan fuera las últimas. La estación 1 usa las mismas 8 posiciones del cuadernillo de ejercicios de la sesión 1 (las láminas que siguen). A cada sala se le manda por el chat lo que necesita: la partida del dictado, la situación de cada ronda del juego de roles o los cuatro casos.",
    "imagen": "41.webp"
   },
   {
-   "titulo": "Práctica: posiciones 1 a 4",
+   "titulo": "Estación 1: posiciones 1 a 4",
    "texto": "¿Jaque, jaque mate, ahogado, posición muerta o la partida sigue? Posición 1, juegan las negras: torre blanca en a8, rey negro en g8 con peones en f7, g7 y h7, rey blanco en g1. Posición 2, juegan las negras: rey negro en h8, dama blanca en f7 y rey blanco en g6. Posición 3, juegan las negras: rey negro en e8, torre blanca en e1 y rey blanco en g1. Posición 4, juegan las blancas: rey blanco en e1 y alfil en c3 contra rey negro en e6.",
    "notas": "Posiciones verificadas con chess.js. Dejar que cada grupo responda antes de pasar a las respuestas.",
    "posiciones": [
@@ -324,7 +324,7 @@
    "imagen": "42.webp"
   },
   {
-   "titulo": "Práctica: posiciones 5 a 8",
+   "titulo": "Estación 1: posiciones 5 a 8",
    "texto": "¿Jaque, jaque mate, ahogado, posición muerta o la partida sigue? Posición 5, juegan las blancas: tras 1.f3 e5 2.g4 Dh4. Posición 6, juegan las negras: rey blanco en e1 y caballo en c3 contra rey negro en e6. Posición 7, juegan las negras: rey blanco en e1 y torre en c3 contra rey negro en e6. Posición 8, juegan las negras: rey negro en a8, peón blanco en a7 y rey blanco en b6.",
    "notas": "Posiciones verificadas con chess.js. Dejar que cada grupo responda antes de pasar a las respuestas.",
    "posiciones": [
@@ -348,34 +348,58 @@
    "imagen": "43.webp"
   },
   {
-   "titulo": "Práctica: respuestas",
+   "titulo": "Estación 1: respuestas",
    "texto": "Cada respuesta, con su artículo. 1: jaque mate (5.1): la torre da jaque en la octava y los peones encierran al rey. 2: ahogado, tablas (5.2.1): el rey de h8 no está en jaque y no tiene casillas. 3: jaque, no mate; la partida sigue (3.9): el rey puede salir del jaque (d7, f7…). 4: posición muerta, tablas (5.2.2): rey y alfil contra rey, nunca hay mate. 5: jaque mate (5.1): mate del loco, nada tapa ni captura la dama. 6: posición muerta, tablas (5.2.2): rey y caballo contra rey, nunca hay mate. 7: la partida sigue: con rey y torre sí hay mate posible. 8: ahogado, tablas (5.2.1): el rey de a8 no está en jaque; b8 la controla el peón y b7, el rey blanco.",
    "notas": "Repasar en plenaria; si un grupo dudó entre mate y ahogado, volver a la diapositiva «Mate frente a ahogado».",
    "imagen": "44.webp"
   },
   {
+   "titulo": "Estación 2: dictado de planilla",
+   "texto": "Estación 2, dictado de planilla, en salas. Uno: una persona dicta la partida en voz alta, sin mostrar el tablero. Dos: las demás la anotan en su planilla, jugada a jugada, en notación algebraica. Tres: juntas la reproducen en un tablero; si una jugada no se puede hacer, hay un error. Cuatro: comparan las planillas y marcan cada diferencia con su corrección. La partida llega por el chat de la sala: 7 jugadas, con capturas, jaque y mate.",
+   "notas": "La partida para mandar por el chat (comprobada con chess.js): 1.e4 e5 2.Cf3 d6 3.Ac4 Ag4 4.Cc3 g6 5.Cxe5 Axd1 6.Axf7+ Re7 7.Cd5#. Lleva capturas (x), un jaque (+) y el mate (#). Errores que suelen salir: olvidar la x de una captura, escribir R (rey) por C (caballo) y no anotar el + o el #. En la plenaria, una lección extra: 5.Cxe5 deja la dama colgando y aun así ganan las blancas (el mate de Légal).",
+   "posiciones": [
+    {
+     "nombre": "La partida del dictado, tras 7.Cd5#",
+     "fen": "rn1q1bnr/ppp1kB1p/3p2p1/3NN3/4P3/8/PPPP1PPP/R1BbK2R b KQ - 2 7"
+    }
+   ],
+   "imagen": "45.webp"
+  },
+  {
+   "titulo": "Estación 3: juego de roles de un reclamo",
+   "texto": "Estación 3, juego de roles de un reclamo, en salas. El procedimiento: pausa el reloj, escucha a los dos, verifica, decide con el artículo y registra. Roles: árbitro, dos jugadores y una persona que observa y marca en la lista cada paso. Situaciones, una por ronda, que los jugadores no le dicen al árbitro: pieza tocada, jugada ilegal y «compongo» sin avisar. Se rotan los roles.",
+   "notas": "Las tres situaciones, una por ronda (se mandan solo a los dos jugadores): 1. Pieza tocada: el jugador toca su alfil y mueve el caballo; el rival reclama. Decisión: debe mover el alfil si tiene jugada legal (4.3). 2. Jugada ilegal: deja su rey en jaque y presiona el reloj. Decisión: se vuelve a la posición anterior, juega con la pieza que tocó si puede y el rival recibe 2 minutos (7.5). 3. «Compongo» sin avisar: acomoda una pieza sin decirlo antes. Decisión: pieza tocada; «compongo» solo vale en su turno y avisando antes (4.2.1). Quien observa marca si el árbitro pausó el reloj, escuchó a los dos, verificó, citó el artículo y registró.",
+   "imagen": "46.webp"
+  },
+  {
+   "titulo": "Estación 4: los casos del laboratorio, en grupo",
+   "texto": "Estación 4, los casos del laboratorio, en grupo. Cada sala decide los cuatro casos y cita el artículo. Uno, la torre primero: toma la torre para enrocar corto. Dos, el peón en la octava: lo deja como peón y presiona el reloj. Tres, rey contra rey: quedan los dos reyes y quieren seguir. Cuatro, al paso, tarde: captura dos jugadas después del avance. En la plenaria, cada grupo da su decisión.",
+   "notas": "Decisiones: 1. Debe mover la torre y no puede enrocar por ese lado (4.4.2). 2. Jugada ilegal completada: el peón se cambia por una dama y el rival recibe 2 minutos, 1 en rápidas (3.7.5, 7.5.2 y 7.5.5). 3. La partida ya terminó en tablas al llegar a esa posición: es posición muerta y no hace falta reclamo (5.2.2). 4. Jugada ilegal: al paso solo se captura en la jugada inmediata siguiente; se vuelve atrás, pieza tocada y sanción (3.7.4.1 y 7.5).",
+   "imagen": "47.webp"
+  },
+  {
    "titulo": "Errores frecuentes en el aula",
    "texto": "Lo que más se repite en los torneos estudiantiles. Llamar «mate» a un ahogado, o al revés (5.1 y 5.2.1). Dejar el peón en la octava fila sin cambiarlo y presionar el reloj: jugada ilegal, el peón pasa a ser dama (7.5.2). Enrocar después de haber movido el rey, aunque haya vuelto a su casilla (3.8.2). Capturar al paso una o dos jugadas tarde (3.7.4.1). Seguir jugando con rey contra rey: la partida ya terminó en tablas (5.2.2). Darse la mano sin oferta previa y creer que son tablas (9.1). Tocar la torre primero para enrocar (4.4.2).",
    "notas": "Conviene repasarlos en la charla técnica antes de la primera ronda de cada torneo.",
-   "imagen": "45.webp"
+   "imagen": "48.webp"
   },
   {
    "titulo": "Quiz de la sesión",
    "texto": "Responde de forma individual. 1. Un rey está en jaque y no existe ninguna jugada legal que lo saque de esa condición. ¿Cómo se denomina esta situación? 2. Un jugador no está en jaque, pero no dispone de ninguna jugada legal en su turno. ¿Qué resultado corresponde? 3. ¿Cuándo se pierde para siempre el derecho a enrocar de un lado? 4. Quedan en el tablero rey contra rey. ¿Qué corresponde? 5. ¿Cuándo puede un jugador decir «compongo» para acomodar una pieza? 6. ¿Qué debe anotar cada jugador en su planilla en una partida de ritmo clásico?",
    "notas": "Dar 1 minuto por pregunta y luego pasar a las respuestas.",
-   "imagen": "46.webp"
+   "imagen": "49.webp"
   },
   {
    "titulo": "Quiz: respuestas",
    "texto": "1. Jaque mate. 2. Partida ahogada (tablas). 3. Cuando ya se movió el rey o la torre de ese lado, aunque hayan vuelto a su casilla. 4. Tablas de inmediato: es posición muerta, sin necesidad de reclamo. 5. Solo en su turno y antes de tocar la pieza. 6. Sus jugadas y las del rival, jugada a jugada, en notación algebraica y de forma legible.",
    "notas": "Comentar las preguntas con más respuestas distintas.",
-   "imagen": "47.webp"
+   "imagen": "50.webp"
   },
   {
    "titulo": "Tarea y cierre",
    "texto": "Para la sesión 2: reglas de competición (4 horas). Tarea: leer el capítulo de reglas básicas de las Leyes de Ajedrez de la FIDE y completar una ficha breve de reflexión sobre una situación de arbitraje básica vivida en tu contexto educativo. Antes de irte: dudas de la sesión; evaluación breve de la sesión (formulario); material de repaso: cuadernillo y ejercicios de la sesión 1 en la Academia.",
    "notas": "20 minutos: dudas, explicación de la tarea y evaluación breve de la sesión.",
-   "imagen": "48.webp"
+   "imagen": "51.webp"
   }
  ]
 }

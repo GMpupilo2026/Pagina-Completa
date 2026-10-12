@@ -3300,7 +3300,7 @@ al tablero que sigue en vivo. Código en `js/clase-presentacion.js`.
 - **«Las del curso»** (`LISTA`): imágenes y `diapositivas.json` en
   `cursos/recursos/<curso>/presentaciones/<clase>/`, detrás del candado del
   worker; `deck` = `"<curso>/<clase>"`. De Formación Ajedrez están las seis
-  sesiones virtuales: la Clase 1 es la presentación propia del profe (48
+  sesiones virtuales: la Clase 1 es la presentación propia del profe (51
   láminas, transcritas a mano) y las sesiones 2 a 6 las arma
   `herramientas/curso-generar-formacion.py` con el mismo `.pptx` que se baja
   del curso (ver «Las presentaciones de Formación Ajedrez» abajo). Las láminas
@@ -3631,7 +3631,10 @@ idea por lámina, dibujos en vez de frases y el detalle en las `notas`:
   árbitro para decidir?» (la versión de los jugadores, la planilla, el
   tablero y el reloj), después de las sanciones, y la 23, «¿Cuándo cuenta una
   jugada?» (hecha al soltar la pieza, 4.6 y 4.7; completada al presionar el
-  reloj, 6.2.1), antes de las jugadas ilegales: la Clase 1 tiene 48. La tabla
+  reloj, 6.2.1), antes de las jugadas ilegales, y la práctica en salas pasó a
+  cuatro estaciones (una por sala: las 8 posiciones, dictado de planilla, juego
+  de roles de un reclamo y los casos del laboratorio, láminas 41 a 47, con lo
+  que el profe manda a cada sala en las notas): la Clase 1 tiene 51. La tabla
   de finales suma el abandono (5.1.2) y la planilla, cómo se anota el
   resultado (1-0, 0-1, ½-½). Una tabla de más de 8 filas se dibuja con las
   filas más juntas, no con letra más chica.
