@@ -3300,13 +3300,14 @@ al tablero que sigue en vivo. Código en `js/clase-presentacion.js`.
 - **«Las del curso»** (`LISTA`): imágenes y `diapositivas.json` en
   `cursos/recursos/<curso>/presentaciones/<clase>/`, detrás del candado del
   worker; `deck` = `"<curso>/<clase>"`. De Formación Ajedrez están las seis
-  sesiones virtuales: la Clase 1 es la presentación propia del profe (46
+  sesiones virtuales: la Clase 1 es la presentación propia del profe (48
   láminas, transcritas a mano) y las sesiones 2 a 6 las arma
   `herramientas/curso-generar-formacion.py` con el mismo `.pptx` que se baja
   del curso (ver «Las presentaciones de Formación Ajedrez» abajo). Las láminas
   de la Clase 1 son imágenes: si cambia un dato que la lámina dice (horas,
-  minutos, cantidad de sesiones), hay que rehacer la imagen además del
-  `texto`, o se ve una cosa y se lee otra. Así se rehicieron el mapa del
+  minutos, cantidad de sesiones), hay que volver a dibujarla además de
+  cambiar el `texto`, o se ve una cosa y se lee otra (hoy las dibuja un script:
+  ver «Las láminas dicen poco»). Así se rehicieron el mapa del
   curso, el cronograma, los dos recesos, la práctica y la tarea cuando el curso
   pasó a 6 sesiones virtuales de 4 horas, y se sumaron las 12 láminas visibles
   del PowerPoint del profe sobre el papel del árbitro y la planilla.
@@ -3589,7 +3590,10 @@ el JSON del curso con el estilo de la Clase 1 del profe (franja azul, letra
 grande, una idea por diapositiva), y `presentacion_de_clase()` lo pasa a
 imágenes con el texto de cada diapositiva, sus notas y las posiciones de sus
 ejercicios. Así el `.pptx` que se baja y la presentación de la clase en vivo
-son la misma, y cambian juntas al volver a generar.
+tienen las mismas láminas, en el mismo orden, y cambian juntas al volver a
+generar. Las imágenes de la clase en vivo, en cambio, las dibuja
+`herramientas/formacion-laminas.js` con poco texto (ver «Las láminas dicen
+poco»): el `.pptx` sigue siendo el material completo para leer.
 
 - **Nada por debajo de 22 pt en las listas** (20 en lo que no se puede
   partir): lo que no cabe se parte en una diapositiva «(continuación)», nunca
@@ -3602,7 +3606,52 @@ son la misma, y cambian juntas al volver a generar.
   que usa las piezas del sitio— y sus respuestas, el quiz y sus respuestas, y
   la tarea.
 - La Clase 1 lleva `"presentacion_clase": "propia"` en el JSON: el generador no
-  la toca.
+  la toca. Sus láminas las dibuja `herramientas/formacion-laminas.js` (ver
+  «Las láminas dicen poco»).
+
+#### Las láminas dicen poco
+
+Las láminas de la Clase 1 eran imágenes hechas a mano con casi todo lo que el
+profe decía escrito: 88 palabras de promedio, 40 de 46 por encima de 60. En un
+proyector no se leían, y quien las leía no escuchaba. Se rehicieron con una
+idea por lámina, dibujos en vez de frases y el detalle en las `notas`:
+
+- **Lo que se ve** está en `herramientas/datos/formacion-laminas-clase-01.js`,
+  una entrada por lámina, y lo dibuja `node herramientas/formacion-laminas.js
+  clase-01` (HTML a 1600 × 900, sacado en WebP con Chromium). El título sale
+  del `titulo` del JSON y los tableros, de sus `posiciones`: no hay una
+  segunda copia que se separe de lo que se dice en voz o se manda al tablero.
+- **Lo que sale de la lámina va a las `notas`** (solo las ve el profe), y el
+  `texto` sigue con la transcripción completa, para el Modo Adaptado y la voz.
+- Una lámina sigue siendo la misma lámina: al rehacerlas se mantuvieron las
+  46 y su número, porque la clase en vivo y su verificador las nombran por
+  número. Una lámina nueva se puede sumar, pero corre las de atrás: se agrega
+  en los datos y en el JSON a la vez y se suben los números de
+  `verificar-clase-presentacion.js`. Así entró la 14, «¿En qué se apoya el
+  árbitro para decidir?» (la versión de los jugadores, la planilla, el
+  tablero y el reloj), después de las sanciones, y la 23, «¿Cuándo cuenta una
+  jugada?» (hecha al soltar la pieza, 4.6 y 4.7; completada al presionar el
+  reloj, 6.2.1), antes de las jugadas ilegales: la Clase 1 tiene 48. La tabla
+  de finales suma el abandono (5.1.2) y la planilla, cómo se anota el
+  resultado (1-0, 0-1, ½-½). Una tabla de más de 8 filas se dibuja con las
+  filas más juntas, no con letra más chica.
+- **Las sesiones 2 a 6 también** (`formacion-laminas-clase-02.js` a `-06.js`,
+  una entrada por diapositiva del JSON que arma `curso-generar-formacion.py`).
+  Ahí el `diapositivas.json` lo sigue escribiendo el generador del curso: si
+  la sesión tiene sus datos, no pasa por LibreOffice y llama a
+  `formacion-laminas.js` al final. Si el curso cambia y una sesión gana o
+  pierde láminas, el dibujo falla («Hay N láminas en los datos y M en
+  diapositivas.json») hasta que se ajusten sus datos: mejor eso que una lámina
+  corrida que dice lo de la vecina. Las notas que se escriben a mano (como las
+  de la Clase 1) no sirven en esas sesiones, porque el generador reescribe el
+  JSON; ahí el profe tiene el `texto` completo debajo de la lámina.
+- El cronograma reparte sus filas en dos columnas, las que sean.
+- Las marcas de color (verde, rojo, ámbar, azul) llevan siempre su palabra y
+  su signo (✓, ✗, =, →); los colores de texto se midieron contra su fondo.
+- `verificar-formacion-laminas.js` cuenta las palabras que se ven (tope 65; 90
+  una tabla), que cada tablero tenga su posición y que las imágenes estén al
+  día: el generador deja una huella de los datos, del generador y del JSON, y
+  si alguien cambia una lámina sin volver a dibujarla, falla.
 - Hace falta LibreOffice y PyMuPDF; sin ellos se avisa y el resto del curso se
   genera igual. `verificar-formacion.js` revisa que cada sesión virtual tenga
   su presentación de clase, que se ofrezca en la clase, que traiga los casos

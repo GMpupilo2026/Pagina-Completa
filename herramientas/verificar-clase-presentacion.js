@@ -184,16 +184,16 @@ async function pruebaProfesor(browser) {
   await page.evaluate((v) => window.__cambioEnBase("game_state", v), fila({ presentacion: { deck: DECK, n: 3 } }));
   await page.waitForTimeout(300);
   cierto("los ecos viejos no la devuelven atrás", (await imagen(page)).src === "04.webp", (await imagen(page)).src);
-  cierto("y dice cuál es", (await page.textContent("#presentacion-cuenta")) === "Diapositiva 4 de 46");
+  cierto("y dice cuál es", (await page.textContent("#presentacion-cuenta")) === "Diapositiva 4 de 48");
 
-  // A la 17 (colocación del tablero): su posición, al tablero de la clase.
+  // A la 18 (colocación del tablero): su posición, al tablero de la clase.
   await page.click("#presentacion-siguiente");
   await esperarImagen(page, "05.webp");
   cierto("las notas de la diapositiva, solo en la pantalla del profe",
     await seVe(page, "#presentacion-notas") && /^Notas \(solo tú\): Mostrar al inicio/.test(await page.textContent("#presentacion-notas")));
   cierto("y qué sigue", (await page.textContent("#presentacion-sigue")) === "Sigue: Prólogo");
-  for (let i = 0; i < 12; i++) await page.click("#presentacion-siguiente");
-  await esperarImagen(page, "17.webp");
+  for (let i = 0; i < 13; i++) await page.click("#presentacion-siguiente");
+  await esperarImagen(page, "18.webp");
   cierto("la diapositiva con posición trae su botón", await page.isVisible("#presentacion-posiciones button:has-text('Al tablero de la clase')"));
   await page.click("#presentacion-posiciones button:has-text('Al tablero de la clase')");
   await page.waitForTimeout(300);
@@ -205,19 +205,22 @@ async function pruebaProfesor(browser) {
     puesta && puesta.start_fen === new Chess().fen() && puesta.moves.length === 0 && puesta.vista === null,
     JSON.stringify(puesta));
 
-  // La 28 (mate frente a ahogado): Practicar solo donde la partida sigue.
-  await page.evaluate((d) => mostrarPresentacion({ deck: d, n: 28 }), DECK);
-  await esperarImagen(page, "28.webp");
+  // La 30 (mate frente a ahogado): Practicar solo donde la partida sigue.
+  await page.evaluate((d) => mostrarPresentacion({ deck: d, n: 30 }), DECK);
+  await esperarImagen(page, "30.webp");
   const filas = await page.$$eval("#presentacion-posiciones > div", (ds) => ds.map((d) => d.textContent));
   cierto("en el mate y el ahogado no se ofrece practicar; en «No es ahogado», sí",
     filas.length === 3 && !/Practicar/.test(filas[0]) && !/Practicar/.test(filas[1]) && /Practicar/.test(filas[2]), filas.join(" | "));
-  cierto("en la 28, que no tiene notas, no queda la caja de notas", !(await seVe(page, "#presentacion-notas")));
+  cierto("la 30 trae sus notas (el ejemplo para el profe)", await seVe(page, "#presentacion-notas"));
+  await page.evaluate((d) => mostrarPresentacion({ deck: d, n: 28 }), DECK);
+  await esperarImagen(page, "28.webp");
+  cierto("en la 28 (un receso), que no tiene notas, no queda la caja de notas", !(await seVe(page, "#presentacion-notas")));
 
-  await page.evaluate((d) => mostrarPresentacion({ deck: d, n: 46 }), DECK);
-  await esperarImagen(page, "46.webp");
+  await page.evaluate((d) => mostrarPresentacion({ deck: d, n: 48 }), DECK);
+  await esperarImagen(page, "48.webp");
   cierto("▶ apagado en la última", await page.isDisabled("#presentacion-siguiente"));
   await page.evaluate((d) => mostrarPresentacion({ deck: d, n: 99 }), DECK);
-  cierto("pasarse del final se queda en la última", JSON.stringify(await ultimaPresentacion(page)) === JSON.stringify({ deck: DECK, n: 46 }));
+  cierto("pasarse del final se queda en la última", JSON.stringify(await ultimaPresentacion(page)) === JSON.stringify({ deck: DECK, n: 48 }));
 
   await page.click("#presentacion-quitar");
   await page.waitForTimeout(200);
@@ -412,15 +415,15 @@ async function pruebaAlumna(browser) {
   const pedidas = [];
   page.on("request", (r) => { if (/\.webp$/.test(r.url())) pedidas.push(r.url().split("/").pop()); });
   await esperarImagen(page, "05.webp");
-  cierto("al entrar ya ve la diapositiva que está en la base", (await page.textContent("#presentacion-cuenta")) === "Diapositiva 5 de 46");
+  cierto("al entrar ya ve la diapositiva que está en la base", (await page.textContent("#presentacion-cuenta")) === "Diapositiva 5 de 48");
   cierto("la imagen dice cuál es", /^Diapositiva 5: Cronograma/.test((await imagen(page)).alt), (await imagen(page)).alt);
   cierto("y su texto se puede leer", /240 minutos/.test(await page.textContent("#presentacion-texto")));
   cierto("sin los botones del profe", !(await seVe(page, "#presentacion-profe")) && !(await seVe(page, "#presentacion-siguiente")));
-  await page.evaluate((v) => window.__cambioEnBase("game_state", v), fila({ presentacion: { deck: DECK, n: 20 } }));
-  await esperarImagen(page, "20.webp");
-  cierto("el profe la pasa: la alumna ve la 20", (await page.textContent("#presentacion-cuenta")) === "Diapositiva 20 de 46");
-  await page.waitForFunction(() => /diapositiva 20 de 46/.test(document.getElementById("clase-voz").textContent), null, { timeout: 3000 }).catch(() => {});
-  cierto("y se le dice en voz", /diapositiva 20 de 46: Captura al paso/.test(await page.textContent("#clase-voz")));
+  await page.evaluate((v) => window.__cambioEnBase("game_state", v), fila({ presentacion: { deck: DECK, n: 21 } }));
+  await esperarImagen(page, "21.webp");
+  cierto("el profe la pasa: la alumna ve la 21", (await page.textContent("#presentacion-cuenta")) === "Diapositiva 21 de 48");
+  await page.waitForFunction(() => /diapositiva 21 de 48/.test(document.getElementById("clase-voz").textContent), null, { timeout: 3000 }).catch(() => {});
+  cierto("y se le dice en voz", /diapositiva 21 de 48: Captura al paso/.test(await page.textContent("#clase-voz")));
   cierto("sin las posiciones para mandar al tablero", !(await seVe(page, "#presentacion-posiciones")));
   await page.setViewportSize({ width: 390, height: 844 });
   await page.waitForTimeout(200);
@@ -428,7 +431,7 @@ async function pruebaAlumna(browser) {
     document.documentElement.scrollWidth <= innerWidth && document.getElementById("presentacion-caja").getBoundingClientRect().right <= innerWidth));
   await page.waitForTimeout(300);
   cierto("solo se le pidió la que se ve (no la siguiente: son las respuestas)",
-    pedidas.every((p) => p === "20.webp" || p === "05.webp"), pedidas.join(" "));
+    pedidas.every((p) => p === "21.webp" || p === "05.webp"), pedidas.join(" "));
   await page.evaluate((v) => window.__cambioEnBase("game_state", v), fila({ presentacion: { deck: "../../x", n: 1 } }));
   await page.waitForTimeout(200);
   cierto("una forma que no es la de la base no se muestra", !(await seVe(page, "#presentacion-caja")));
@@ -610,9 +613,9 @@ async function pruebaVistaLimpia(browser) {
     cierto("sin errores en consola", errores.length === 0, errores.join(" | "));
     await ctx.close();
   }
-  const { page, ctx, errores } = await abrir(browser, "u-ana", CLASE, { game_state: [fila({ presentacion: { deck: DECK, n: 29, limpia: true } })] });
+  const { page, ctx, errores } = await abrir(browser, "u-ana", CLASE, { game_state: [fila({ presentacion: { deck: DECK, n: 31, limpia: true } })] });
   await page.setViewportSize({ width: 1440, height: 900 });
-  await esperarImagen(page, "29.webp");
+  await esperarImagen(page, "31.webp");
   cierto("la alumna queda en vista limpia", await page.evaluate(() => document.documentElement.classList.contains("vista-limpia")));
   cierto("sin encabezado, título, columna lateral ni lista de jugadas",
     !(await seVe(page, "#header")) && !(await seVe(page, "#status-banner")) && !(await seVe(page, "#herramientas-profe")) && !(await seVe(page, "#moves-panel")));
@@ -628,8 +631,8 @@ async function pruebaVistaLimpia(browser) {
   // Con la máquina cargada, el aviso de la diapositiva (que llega cuando carga
   // la imagen) puede pisar al de la vista limpia antes de leerlo: con la lámina
   // ya a la vista, el profe la apaga y la vuelve a encender, y se lee ese.
-  await page.evaluate((v) => window.__cambioEnBase("game_state", v), fila({ presentacion: { deck: DECK, n: 29 } }));
-  await page.evaluate((v) => window.__cambioEnBase("game_state", v), fila({ presentacion: { deck: DECK, n: 29, limpia: true } }));
+  await page.evaluate((v) => window.__cambioEnBase("game_state", v), fila({ presentacion: { deck: DECK, n: 31 } }));
+  await page.evaluate((v) => window.__cambioEnBase("game_state", v), fila({ presentacion: { deck: DECK, n: 31, limpia: true } }));
   await page.waitForFunction(() => /vista limpia/.test(document.getElementById("clase-voz").textContent), null, { timeout: 5000 }).catch(() => {});
   cierto("y se le dice en voz", /vista limpia/.test(await page.textContent("#clase-voz")));
   const encima = await page.evaluate(() => {
@@ -645,17 +648,17 @@ async function pruebaVistaLimpia(browser) {
   await page.evaluate(() => document.documentElement.classList.add("adaptive-mode"));
   cierto("con el Modo Adaptado no se aplica (vuelve el encabezado)", await seVe(page, "#header"));
   await page.evaluate(() => document.documentElement.classList.remove("adaptive-mode"));
-  await page.evaluate((v) => window.__cambioEnBase("game_state", v), fila({ presentacion: { deck: DECK, n: 29 } }));
+  await page.evaluate((v) => window.__cambioEnBase("game_state", v), fila({ presentacion: { deck: DECK, n: 31 } }));
   await page.waitForTimeout(200);
   cierto("el profe la apaga: vuelve todo", !(await page.evaluate(() => document.documentElement.classList.contains("vista-limpia"))) && await seVe(page, "#header"));
-  await page.evaluate((v) => window.__cambioEnBase("game_state", v), fila({ presentacion: { deck: DECK, n: 29, limpia: true } }));
+  await page.evaluate((v) => window.__cambioEnBase("game_state", v), fila({ presentacion: { deck: DECK, n: 31, limpia: true } }));
   await page.waitForTimeout(200);
   await page.evaluate((v) => window.__cambioEnBase("game_state", v), fila({ presentacion: null }));
   await page.waitForTimeout(200);
   cierto("y si quita la presentación, también", !(await page.evaluate(() => document.documentElement.classList.contains("vista-limpia"))));
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.evaluate((v) => window.__cambioEnBase("game_state", v), fila({ presentacion: { deck: DECK, n: 29, limpia: true } }));
-  await esperarImagen(page, "29.webp");
+  await page.evaluate((v) => window.__cambioEnBase("game_state", v), fila({ presentacion: { deck: DECK, n: 31, limpia: true } }));
+  await esperarImagen(page, "31.webp");
   cierto("en el celular, una columna que cabe", await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth
     && document.getElementById("presentacion-caja").getBoundingClientRect().bottom <= document.getElementById("chessboard").getBoundingClientRect().top));
   cierto("sin errores en consola", errores.length === 0, errores.join(" | "));
@@ -665,9 +668,9 @@ async function pruebaVistaLimpia(browser) {
 
 async function pruebaTableroMini(browser) {
   console.log("\n10. En pantalla completa, el tablero de la clase en pequeño");
-  const { page, ctx, errores } = await abrir(browser, "u-ana", CLASE, { game_state: [fila({ presentacion: { deck: DECK, n: 18 } })] });
+  const { page, ctx, errores } = await abrir(browser, "u-ana", CLASE, { game_state: [fila({ presentacion: { deck: DECK, n: 19 } })] });
   await page.setViewportSize({ width: 1600, height: 900 });
-  await esperarImagen(page, "18.webp");
+  await esperarImagen(page, "19.webp");
   cierto("fuera de la pantalla completa no hay mini tablero ni su botón",
     !(await seVe(page, "#presentacion-mini")) && !(await seVe(page, "#presentacion-mini-btn")));
   await page.click("#presentacion-completa");
@@ -678,7 +681,7 @@ async function pruebaTableroMini(browser) {
     return m.checkVisibility() && r.right > innerWidth * 0.75 && r.bottom > innerHeight * 0.75 && r.width > 100;
   }));
   await page.evaluate((v) => window.__cambioEnBase("game_state", v),
-    fila({ moves: ["e4", "e5", "Nf3"], last_move: "Nf3", arrows: [{ from: "f8", to: "c5", color: "green" }], presentacion: { deck: DECK, n: 18 } }));
+    fila({ moves: ["e4", "e5", "Nf3"], last_move: "Nf3", arrows: [{ from: "f8", to: "c5", color: "green" }], presentacion: { deck: DECK, n: 19 } }));
   await page.waitForTimeout(300);
   const mini = await page.evaluate(() => {
     const m = document.getElementById("presentacion-mini");
@@ -741,10 +744,10 @@ async function pruebaPantallaCompletaTodos(browser) {
     await ctx.close();
   }
   const PROFE_MIN = { full_name: "Karina Rojas", email: "karina@x.cr", role: "profesor" };
-  const { page, ctx, errores } = await abrir(browser, "u-ana", CLASE, { game_state: [fila({ presentacion: { deck: DECK, n: 18, completa: true } })],
+  const { page, ctx, errores } = await abrir(browser, "u-ana", CLASE, { game_state: [fila({ presentacion: { deck: DECK, n: 19, completa: true } })],
     class_chat_messages: [{ id: "m-1", student_id: "u-ana", sender_id: "u-profe", body: "Bienvenida a la clase.", created_at: "2026-10-12T15:00:00Z", profiles: PROFE_MIN }] });
   await page.setViewportSize({ width: 1440, height: 900 });
-  await esperarImagen(page, "18.webp");
+  await esperarImagen(page, "19.webp");
   const tapa = () => page.evaluate(() => {
     const r = document.getElementById("presentacion-caja").getBoundingClientRect();
     const centro = document.elementFromPoint(innerWidth / 2, innerHeight / 2);
@@ -758,8 +761,8 @@ async function pruebaPantallaCompletaTodos(browser) {
   cierto("con el tablero de la clase en pequeño", await page.evaluate(() => document.getElementById("presentacion-mini").checkVisibility()));
   cierto("sin los botones del profe", !(await seVe(page, "#presentacion-profe")));
   // Como en la vista limpia: el aviso de la diapositiva puede pisar a este; se apaga y se vuelve a encender.
-  await page.evaluate((v) => window.__cambioEnBase("game_state", v), fila({ presentacion: { deck: DECK, n: 18 } }));
-  await page.evaluate((v) => window.__cambioEnBase("game_state", v), fila({ presentacion: { deck: DECK, n: 18, completa: true } }));
+  await page.evaluate((v) => window.__cambioEnBase("game_state", v), fila({ presentacion: { deck: DECK, n: 19 } }));
+  await page.evaluate((v) => window.__cambioEnBase("game_state", v), fila({ presentacion: { deck: DECK, n: 19, completa: true } }));
   await page.waitForFunction(() => /pantalla completa/.test(document.getElementById("clase-voz").textContent), null, { timeout: 5000 }).catch(() => {});
   cierto("y se le dice en voz", /pantalla completa/.test(await page.textContent("#clase-voz")));
   cierto("el alumno no ve el texto de la diapositiva debajo", !(await seVe(page, "#presentacion-texto-caja")));
@@ -810,20 +813,20 @@ async function pruebaPantallaCompletaTodos(browser) {
   cierto("con el Modo Adaptado no se aplica", !(await tapa()) && await seVe(page, "#header"));
   cierto("y con el Modo Adaptado sí tiene el texto de la diapositiva (quien no la ve)", await seVe(page, "#presentacion-texto-caja"));
   await page.evaluate(() => document.documentElement.classList.remove("adaptive-mode"));
-  await page.evaluate((v) => window.__cambioEnBase("game_state", v), fila({ presentacion: { deck: DECK, n: 18 } }));
+  await page.evaluate((v) => window.__cambioEnBase("game_state", v), fila({ presentacion: { deck: DECK, n: 19 } }));
   await page.waitForFunction(() => !document.fullscreenElement, null, { timeout: 3000 }).catch(() => {});
   cierto("el profe la quita: sale de la pantalla completa y vuelve todo",
     !(await tapa()) && await page.evaluate(() => !document.fullscreenElement) && await seVe(page, "#header") && await seVe(page, "#chat-caja")
       && !(await seVe(page, "#presentacion-mini")));
-  await page.evaluate((v) => window.__cambioEnBase("game_state", v), fila({ presentacion: { deck: DECK, n: 18, completa: true } }));
+  await page.evaluate((v) => window.__cambioEnBase("game_state", v), fila({ presentacion: { deck: DECK, n: 19, completa: true } }));
   await page.waitForTimeout(200);
   await page.evaluate((v) => window.__cambioEnBase("game_state", v), fila({ presentacion: null }));
   await page.waitForTimeout(200);
   cierto("y si quita la presentación, también", !(await page.evaluate(() => document.documentElement.classList.contains("presentacion-forzada")))
     && !(await seVe(page, "#presentacion-caja")) && await seVe(page, "#header"));
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.evaluate((v) => window.__cambioEnBase("game_state", v), fila({ presentacion: { deck: DECK, n: 18, completa: true } }));
-  await esperarImagen(page, "18.webp");
+  await page.evaluate((v) => window.__cambioEnBase("game_state", v), fila({ presentacion: { deck: DECK, n: 19, completa: true } }));
+  await esperarImagen(page, "19.webp");
   cierto("en el celular también la tapa y cabe", await tapa() && await page.evaluate(() =>
     document.getElementById("presentacion-img").getBoundingClientRect().right <= innerWidth + 1));
   const piezasCaben = () => page.evaluate(() => {
