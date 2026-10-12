@@ -52,7 +52,9 @@ window.MaterialPlataforma = (function () {
        'aprende-a-jugar'), junto con Aprender: por cantidad no se distinguen,
        así que solo ofrece minutos y terminarla. */
     { slug: "aprende-a-jugar", label: "Aprende a jugar", href: "entreno/aprende-a-jugar.html",
-      actividades: ["aprender"], metas: ["minutos", "completar"], unidad: "niveles" },
+      actividades: ["aprender"], metas: ["minutos", "completar"], unidad: "niveles",
+      // «torre» (la etapa) o «torre/3» (ese nivel): la clase en vivo abre uno en particular.
+      hrefRecorte: (c) => "entreno/aprende-a-jugar.html" + (/^[a-z-]+(\/\d{1,2})?$/.test(c) ? "#" + c : "") },
 
     { slug: "aprender", label: "Aprender", href: "entreno/aprender.html",
       actividades: ["aprender"], metas: ["cantidad", "minutos"],

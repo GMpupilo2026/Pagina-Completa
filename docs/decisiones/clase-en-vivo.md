@@ -3907,6 +3907,38 @@ interruptor del encabezado, porque esas páginas los usan para más cosas que
 encender el modo; y las regiones vivas de cada lección de un curso siguen como
 estaban: están vacías hasta que se marca una lección, así que no hablan solas.
 
+#### Aprende a jugar, nivel por nivel
+
+La tarjeta **Aprende a jugar** trae sus 18 etapas y, adentro, cada nivel en
+su fila: el profe elige el ejercicio exacto que quiere que practiquen y lo
+manda con **«🪟 Que la practiquen»**. A cada alumno se le abre ESE nivel,
+con sus estrellas, en la ventana encima de la clase; el siguiente se manda
+igual, uno a uno.
+
+- El nivel viaja como recorte (`torre/3`) y la dirección sale de
+  `hrefRecorte` en `js/material-plataforma.js`, que solo acepta
+  `etapa` o `etapa/número`: un recorte raro abre la página sin elegir nada.
+- La página elige el nivel con el fragmento (`#torre/3`), así que
+  `enlaceEnClase` pone el `en-clase=1` ANTES del `#`. Pegado al final quedaba
+  dentro del fragmento: la página no se enteraba de que estaba en la clase y
+  el nivel no se encontraba.
+- El pedido siguiente cambia solo el fragmento y el marco no se recarga: la
+  página escucha `hashchange` y abre el nivel nuevo.
+- **En la ventana de la clase, solo el ejercicio.** Con `en-clase` (ver
+  js/main.js) la página esconde el menú de etapas, el encabezado, la
+  descripción, los modos, los botones de niveles y los puntos: queda el
+  tablero, el nombre de la etapa, lo que pide el nivel, el aviso y
+  «Reintentar». Tampoco sale la presentación de la etapa, el aviso no repite
+  lo que ya se lee arriba, y al ganar un nivel que mandó el profe NO pasa
+  solo al siguiente: dice «Espera el siguiente ejercicio de tu profe». Si el
+  profe mandó la etapa entera (`torre`), sí avanza dentro de ella, pero no
+  ofrece la etapa siguiente.
+- Va «Al tablero» lo que el tablero de la clase acepta
+  (`PosicionValida.motivo`); las estrellas no existen ahí, y la fila lo dice.
+- Lo prueba `verificar-clase-entrenamientos.js` (la lista, el pedido y el
+  enlace con su fragmento al final) y `verificar-aprende-a-jugar-pagina.js`
+  (el cambio de nivel sin recargar).
+
 ### Todo lo que lanza el profe, contestado sin ver
 
 Con las cuentas ciegas marcadas se repasó cada cosa que el profe puede lanzar

@@ -125,6 +125,26 @@ async function pruebaDelProfe(browser) {
   igual("revisados más de 3000 ejercicios", revision.ejercicios > 3000, true);
   igual("cada posición la acepta el tablero de la clase y cada solución se juega", revision.malos.slice(0, 10), []);
 
+  /* Aprende a jugar: sus 18 etapas, cada nivel en su fila y con
+     «Que la practiquen», que pide abrir ESE nivel (el recorte «torre/3»). */
+  const aj = await page.evaluate(async () => {
+    const g = await ADAPTADORES_ENTRENO["aprende-a-jugar"].cargar();
+    const torre = g.find((x) => x.id === "torre");
+    return [g.length, g.reduce((a, x) => a + x.items.length, 0), torre.items[2].practica.enlace,
+      EntrenosClase.enlaceDe(MaterialPlataforma.HERRAMIENTAS, "aprende-a-jugar", "torre/3").href,
+      EntrenosClase.enlaceDe(MaterialPlataforma.HERRAMIENTAS, "aprende-a-jugar", "a/../../x").href];
+  });
+  igual("Aprende a jugar: 18 etapas, 110 niveles, cada uno se pide por su nombre (y un recorte raro no arma ningún enlace)",
+    aj, [18, 110, "torre/3", "entreno/aprende-a-jugar.html#torre/3", "entreno/aprende-a-jugar.html"]);
+  await page.click('#entrenos-body [data-entreno="aprende-a-jugar"]');
+  await page.click('#entrenos-body [data-grupo="torre"]');
+  await page.waitForSelector("#entrenos-body li");
+  igual("la etapa muestra sus niveles uno a uno, cada uno con «Que la practiquen»",
+    await page.$$eval("#entrenos-body li", (l) => [l.length, l.every((x) => /Que la practiquen/.test(x.textContent))]), [6, true]);
+  await page.locator("#entrenos-body li").nth(2).getByRole("button", { name: "Que la practiquen" }).click();
+  igual("y pedirlo manda ESE nivel en la presencia", await page.evaluate(() => [entrenoEnCurso.slug, entrenoEnCurso.recorte]), ["aprende-a-jugar", "torre/3"]);
+  await page.click('#entrenos-body .entreno-migas button');
+
   // Mates → Mate en 2: «Al tablero» y «Preguntar».
   await page.click('#entrenos-body [data-entreno="mates"]');
   await page.click('#entrenos-body [data-grupo="mate2"]');
@@ -318,6 +338,11 @@ async function pruebaDelAlumno(browser) {
   await page.evaluate(() => window.__ponerPresencia("u-profe", { role: "profesor", full_name: "Profe", entreno: { slug: "aperturas", recorte: "italiana", at: new Date(Date.now() + 1000).toISOString() } }));
   await page.waitForFunction(() => document.getElementById("entreno-ventana").checkVisibility(), null, { timeout: 5000 });
   igual("otro pedido se abre solo, con su recorte", await page.getAttribute("#entreno-ventana-marco", "src"), "entreno/aperturas.html?linea=italiana&en-clase=1");
+
+  // Un nivel de Aprende a jugar: el «en-clase=1» va ANTES del fragmento que elige el nivel.
+  await page.evaluate(() => window.__ponerPresencia("u-profe", { role: "profesor", full_name: "Profe", entreno: { slug: "aprende-a-jugar", recorte: "torre/3", at: new Date(Date.now() + 2000).toISOString() } }));
+  await page.waitForFunction(() => /aprende-a-jugar/.test(document.getElementById("entreno-ventana-marco").getAttribute("src") || ""), null, { timeout: 5000 });
+  igual("un nivel de Aprende a jugar se abre con su fragmento al final", await page.getAttribute("#entreno-ventana-marco", "src"), "entreno/aprende-a-jugar.html?en-clase=1#torre/3");
 
   // El profe cierra la ventana a todos: se cierra y el marco se vacía.
   await page.evaluate(() => window.__ponerPresencia("u-profe", { role: "profesor", full_name: "Profe" }));

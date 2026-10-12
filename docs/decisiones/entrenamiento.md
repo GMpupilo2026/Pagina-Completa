@@ -3842,3 +3842,12 @@ mate).
 - Se juega con clic, arrastrando, con el teclado del tablero y escribiendo
   («Te7»; «estrellas», «meta», «reintentar», «siguiente»). Lo prueba
   `verificar-aprende-a-jugar-pagina.js`.
+- **Suena como en Lichess**, en los mismos siete momentos de su
+  `ui/learn/src/sound.ts`: mover, tomar (una estrella, una pieza o la jugada
+  del guion), empezar y terminar el nivel, empezar y terminar la etapa, y el
+  error. Lichess usa archivos de audio de licencias mezcladas; acá los arma
+  `js/sonidos.js` con WebAudio, como el Sonar, sin nada que bajar. El botón
+  «Sonido» los apaga (`sonidos_apagados_v1`, del aparato y no de la cuenta,
+  como el modo oscuro); su nombre no cambia, lo que cambia es `aria-pressed`.
+  Al apretar «¡Vamos!» suena solo el acorde de la etapa: el ping del nivel,
+  encima, lo pisaba. `Sonidos.historial` deja ver al verificador qué sonó.

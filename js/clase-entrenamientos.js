@@ -278,6 +278,33 @@ const ADAPTADORES_ENTRENO = {
             });
         },
     },
+    "aprende-a-jugar": {
+        corto: "Las lecciones de Lichess",
+        desc: "Las 18 etapas de Lichess, nivel por nivel: elige uno y «Que la practiquen» se lo abre a cada alumno con sus estrellas.",
+        async cargar() {
+            await cargarScriptEntreno("js/mini-chess.js", "MiniChess");
+            await cargarScriptEntreno("js/aprende-a-jugar-motor.js", "AprendeMotor");
+            const etapas = await cargarScriptEntreno("js/aprende-a-jugar-etapas.js", "APRENDE_ETAPAS");
+            return etapas.map((e) => {
+                const items = e.niveles.map((n) => {
+                    /* Va «Al tablero» lo que el tablero de la clase acepta (los dos
+                       reyes, sin jaque imposible); el resto se ve y se manda a practicar
+                       en su página. Las estrellas no existen en el tablero de la clase:
+                       solo salen en la página. */
+                    const alTablero = !PosicionValida.motivo(n.fen);
+                    const guion = [n.meta]
+                        .concat(n.estrellas.length ? ["Estrellas en: " + n.estrellas.join(", ") + "."] : [])
+                        .concat(["Tres estrellas con " + n.jugadas + (n.jugadas === 1 ? " jugada." : " jugadas.")]);
+                    return { id: "aj-" + e.clave + "-" + n.id, titulo: "Nivel " + n.id + ": " + n.meta, fen: n.fen,
+                        soloVer: !alTablero, guion, practica: { enlace: e.clave + "/" + n.id },
+                        nota: !alTablero ? "No va al tablero de la clase: con «Que la practiquen» a cada alumno se le abre este nivel en su página."
+                            : n.estrellas.length ? "En el tablero de la clase no salen las estrellas: con «Que la practiquen» cada alumno lo juega con ellas." : null };
+                });
+                return { id: e.clave, emoji: e.icono || "⭐", titulo: e.numero + ". " + e.titulo, desc: e.subtitulo + " · " + items.length + " niveles",
+                    items, practica: { enlace: e.clave } };
+            });
+        },
+    },
     aprender: {
         corto: "Las piezas y las reglas",
         desc: "Las lecciones de Aprender: cómo mueve cada pieza, las reglas especiales y las tácticas básicas.",
@@ -691,7 +718,13 @@ let entrenoAbiertoAt = null;   // el pedido que ya se abrió solo
 let entrenoEnLaVentana = null; // el pedido cargado en el marco
 let entrenoFocoAntes = null;
 
-const enlaceEnClase = (href) => href + (href.includes("?") ? "&" : "?") + "en-clase=1";
+/* El «en-clase=1» va antes del «#»: Aprende a jugar elige el nivel con el
+   fragmento (#torre/3), y pegado detrás quedaba adentro del fragmento. */
+const enlaceEnClase = (href) => {
+    const i = href.indexOf("#");
+    const base = i < 0 ? href : href.slice(0, i), frag = i < 0 ? "" : href.slice(i);
+    return base + (base.includes("?") ? "&" : "?") + "en-clase=1" + frag;
+};
 
 function abrirVentanaDeEntreno(e, at) {
     const v = document.getElementById("entreno-ventana");
