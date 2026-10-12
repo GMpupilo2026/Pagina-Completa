@@ -703,6 +703,99 @@ async function pruebaTableroMini(browser) {
   await ctx.close();
 }
 
+async function pruebaPantallaCompletaTodos(browser) {
+  console.log("\n11. La pantalla completa para todos: el profe la pone y la quita");
+  {
+    const { page, ctx, errores } = await abrir(browser, "u-profe", CLASE, { game_state: [fila({ presentacion: { deck: DECK, n: 3 } })] });
+    await esperarImagen(page, "03.webp");
+    await page.click("#presentacion-completa-todos");
+    cierto("«⛶ Pantalla completa para todos» la manda en la presentación", JSON.stringify(await ultimaPresentacion(page)) === JSON.stringify({ deck: DECK, n: 3, completa: true }));
+    cierto("y el botón dice cómo quitarla", (await page.getAttribute("#presentacion-completa-todos", "aria-pressed")) === "true"
+      && /Quitar la pantalla completa/.test(await page.textContent("#presentacion-completa-todos")));
+    cierto("al profe no se le aplica: sigue con sus herramientas", !(await page.evaluate(() => document.documentElement.classList.contains("presentacion-forzada")))
+      && await seVe(page, "#teacher-toolbar"));
+    await page.click("#presentacion-siguiente");
+    await esperarImagen(page, "04.webp");
+    cierto("pasar la diapositiva no la quita", JSON.stringify(await ultimaPresentacion(page)) === JSON.stringify({ deck: DECK, n: 4, completa: true }));
+    await page.click("#presentacion-completa-todos");
+    cierto("quitarla la saca de la presentación", JSON.stringify(await ultimaPresentacion(page)) === JSON.stringify({ deck: DECK, n: 4 }));
+    cierto("sin errores en consola", errores.length === 0, errores.join(" | "));
+    await ctx.close();
+  }
+  {
+    // Desde el control remoto (el celular del profe): el mismo botón, grande para el dedo.
+    const { page, ctx, errores } = await abrir(browser, "u-profe", CLASE, { game_state: [fila({ presentacion: { deck: DECK, n: 3 } })] },
+      { ruta: "/sesion.html?control=1" });
+    await page.setViewportSize({ width: 390, height: 844 });
+    await esperarImagen(page, "03.webp");
+    const boton = await page.evaluate(() => { const b = document.getElementById("presentacion-completa-todos"), r = b.getBoundingClientRect();
+      return { ve: b.checkVisibility(), alto: r.height, cabe: r.right <= innerWidth }; });
+    cierto("en el control remoto se ve el botón, de 44 px para el dedo", boton.ve && boton.alto >= 44 && boton.cabe, JSON.stringify(boton));
+    await page.click("#presentacion-completa-todos");
+    cierto("y desde ahí la pone a todos", JSON.stringify(await ultimaPresentacion(page)) === JSON.stringify({ deck: DECK, n: 3, completa: true }));
+    cierto("al celular del profe no se le aplica", !(await page.evaluate(() => document.documentElement.classList.contains("presentacion-forzada"))));
+    await page.click("#presentacion-completa-todos");
+    cierto("y desde ahí la quita", JSON.stringify(await ultimaPresentacion(page)) === JSON.stringify({ deck: DECK, n: 3 }));
+    cierto("sin errores en consola", errores.length === 0, errores.join(" | "));
+    await ctx.close();
+  }
+  const { page, ctx, errores } = await abrir(browser, "u-ana", CLASE, { game_state: [fila({ presentacion: { deck: DECK, n: 18, completa: true } })] });
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await esperarImagen(page, "18.webp");
+  const tapa = () => page.evaluate(() => {
+    const r = document.getElementById("presentacion-caja").getBoundingClientRect();
+    const centro = document.elementFromPoint(innerWidth / 2, innerHeight / 2);
+    return r.left <= 0 && r.top <= 0 && r.right >= innerWidth && r.bottom >= innerHeight
+      && !!centro && !!centro.closest("#presentacion-caja");
+  });
+  cierto("a la alumna la diapositiva le tapa la ventana entera, sin tocar nada", await tapa());
+  cierto("sin encabezado, y el tablero y el chat quedan debajo", !(await seVe(page, "#header"))
+    && await page.evaluate(() => { const r = document.getElementById("chat-caja").getBoundingClientRect();
+      const el = document.elementFromPoint(r.left + 5, Math.min(r.top + 5, innerHeight - 5)); return !el || !el.closest("#chat-caja"); }));
+  cierto("con el tablero de la clase en pequeño", await page.evaluate(() => document.getElementById("presentacion-mini").checkVisibility()));
+  cierto("sin los botones del profe", !(await seVe(page, "#presentacion-profe")));
+  // Como en la vista limpia: el aviso de la diapositiva puede pisar a este; se apaga y se vuelve a encender.
+  await page.evaluate((v) => window.__cambioEnBase("game_state", v), fila({ presentacion: { deck: DECK, n: 18 } }));
+  await page.evaluate((v) => window.__cambioEnBase("game_state", v), fila({ presentacion: { deck: DECK, n: 18, completa: true } }));
+  await page.waitForFunction(() => /pantalla completa/.test(document.getElementById("clase-voz").textContent), null, { timeout: 5000 }).catch(() => {});
+  cierto("y se le dice en voz", /pantalla completa/.test(await page.textContent("#clase-voz")));
+  await page.mouse.click(30, 30);
+  await page.waitForFunction(() => document.fullscreenElement === document.documentElement, null, { timeout: 3000 }).catch(() => {});
+  cierto("con su primer toque pasa a la pantalla completa de verdad (de toda la página)",
+    await page.evaluate(() => document.fullscreenElement === document.documentElement));
+  const encima = await page.evaluate(() => {
+    const c = document.getElementById("calentamiento-caja");
+    c.hidden = false;
+    const s = getComputedStyle(c), q = getComputedStyle(document.getElementById("question-card")), k = getComputedStyle(document.getElementById("presentacion-caja"));
+    const r = { cal: [s.position, +s.zIndex], pregunta: [q.position, +q.zIndex], caja: +k.zIndex };
+    c.hidden = true;
+    return r;
+  });
+  cierto("el calentamiento y las preguntas le salen encima de la diapositiva",
+    encima.cal[0] === "fixed" && encima.cal[1] > encima.caja && encima.pregunta[0] === "fixed" && encima.pregunta[1] > encima.caja, JSON.stringify(encima));
+  await page.evaluate(() => document.documentElement.classList.add("adaptive-mode"));
+  cierto("con el Modo Adaptado no se aplica", !(await tapa()) && await seVe(page, "#header"));
+  await page.evaluate(() => document.documentElement.classList.remove("adaptive-mode"));
+  await page.evaluate((v) => window.__cambioEnBase("game_state", v), fila({ presentacion: { deck: DECK, n: 18 } }));
+  await page.waitForFunction(() => !document.fullscreenElement, null, { timeout: 3000 }).catch(() => {});
+  cierto("el profe la quita: sale de la pantalla completa y vuelve todo",
+    !(await tapa()) && await page.evaluate(() => !document.fullscreenElement) && await seVe(page, "#header") && await seVe(page, "#chat-caja")
+      && !(await seVe(page, "#presentacion-mini")));
+  await page.evaluate((v) => window.__cambioEnBase("game_state", v), fila({ presentacion: { deck: DECK, n: 18, completa: true } }));
+  await page.waitForTimeout(200);
+  await page.evaluate((v) => window.__cambioEnBase("game_state", v), fila({ presentacion: null }));
+  await page.waitForTimeout(200);
+  cierto("y si quita la presentación, también", !(await page.evaluate(() => document.documentElement.classList.contains("presentacion-forzada")))
+    && !(await seVe(page, "#presentacion-caja")) && await seVe(page, "#header"));
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.evaluate((v) => window.__cambioEnBase("game_state", v), fila({ presentacion: { deck: DECK, n: 18, completa: true } }));
+  await esperarImagen(page, "18.webp");
+  cierto("en el celular también la tapa y cabe", await tapa() && await page.evaluate(() =>
+    document.getElementById("presentacion-img").getBoundingClientRect().right <= innerWidth + 1));
+  cierto("sin errores en consola", errores.length === 0, errores.join(" | "));
+  await ctx.close();
+}
+
 (async () => {
   try { datos(); } catch (e) { cierto("los datos se pudieron leer", false, e && e.stack); }
   const browser = await chromium.launch({ executablePath: CHROME });
@@ -716,6 +809,7 @@ async function pruebaTableroMini(browser) {
     await pruebaSubidaAlumna(browser);
     await pruebaVistaLimpia(browser);
     await pruebaTableroMini(browser);
+    await pruebaPantallaCompletaTodos(browser);
   } catch (e) {
     console.log("  ✗ la prueba se cayó: " + (e && e.stack || e));
     fallos += 1;
