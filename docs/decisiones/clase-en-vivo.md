@@ -3674,6 +3674,12 @@ mostrarlo para explicarlo, preguntarlo a la clase y que lo practiquen.
   y apretar «Empezar». Ahora hay un botón por modo (`rondasClase` en
   `MaterialPlataforma`) y `entreno/coordenadas.html?ronda=mode10` arranca la
   ronda en ese modo.
+- **4×4 se abre ya en un nivel.** Estaba completo (1000 ejercicios, cada uno
+  con su tablero y su imagen, sin repetir, y todos con solución con las reglas
+  de la página: un solucionador lo comprobó). En la clase hay un botón por
+  nivel, y `entreno/4x4.html?nivel=AVANZADO` abre ese nivel en el ejercicio que
+  le toca a cada uno (los siguientes se destapan al resolver el anterior). El
+  mismo `hrefRecorte` arregla las tareas de un nivel, que abrían siempre Fácil.
 - **Una lección de Aprender con varias posiciones va una por posición.**
   «¿Jaque mate o ahogado?» tiene dos y la clase solo tomaba la primera (el
   mate): el ahogado no se veía nunca. Cada una va como pregunta de opciones

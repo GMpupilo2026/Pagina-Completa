@@ -54,7 +54,11 @@ async function initApp(){
     }
     if(loadError) loadError.hidden = true;
     buildTabs();
-    showCategory('FACIL');
+    /* «?nivel=AVANZADO»: lo piden la clase en vivo y las tareas de un nivel. Abre
+       ese nivel en el ejercicio que le toca a cada uno; antes abría siempre Fácil. */
+    let pedido = null;
+    try{ pedido = new URLSearchParams(location.search).get('nivel'); }catch(e){ pedido = null; }
+    showCategory(pedido && CATEGORY_ORDER.includes(pedido) ? pedido : 'FACIL');
   }catch(err){
     appInitialized = false;
     if(loadError) loadError.hidden = false;

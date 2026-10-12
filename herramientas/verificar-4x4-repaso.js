@@ -34,8 +34,8 @@ function cierto(n, v, detalle) {
   else { console.log("  ✗ " + n + (detalle ? "\n      salió: " + detalle : "")); fallos += 1; }
 }
 
-async function abrir(browser, local) {
-  const r = await doble.abrir(browser, "/entreno/4x4.html", {}, Object.assign({ oscarBlindMode_v1: "1" }, local || {}));
+async function abrir(browser, local, ruta) {
+  const r = await doble.abrir(browser, ruta || "/entreno/4x4.html", {}, Object.assign({ oscarBlindMode_v1: "1" }, local || {}));
   await r.page.waitForSelector("#solo-panel:not([hidden]), #solo-complete:not([hidden])", { timeout: 20000 });
   await r.page.waitForTimeout(300);
   return r;
@@ -128,6 +128,17 @@ async function decir(page, t) {
   await page.waitForTimeout(300);
   igual("y abre el 150", await texto(page, "#solo-progress-text"), "Fácil — Ejercicio 150 de 200");
   igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
+  await ctx.close();
+
+  /* «?nivel=INTERMEDIO» (la clase en vivo y las tareas de un nivel): abre ese
+     nivel, en el que le toca; antes abría siempre Fácil. */
+  console.log("\n=== ?nivel= abre ese nivel ===");
+  const dosInter = {}; ids.intermedio.slice(0, 2).forEach((i) => { dosInter[i] = true; });
+  ({ page, ctx, errores } = await abrir(browser, { entreno_solved: JSON.stringify(dosInter) }, "/entreno/4x4.html?nivel=INTERMEDIO"));
+  igual("?nivel=INTERMEDIO abre Intermedio en el que toca", await texto(page, "#solo-progress-text"), "Intermedio — Ejercicio 3 de 200");
+  await ctx.close();
+  ({ page, ctx, errores } = await abrir(browser, {}, "/entreno/4x4.html?nivel=NOEXISTE"));
+  igual("un nivel que no existe abre Fácil", await texto(page, "#solo-progress-text"), "Fácil — Ejercicio 1 de 200");
   await ctx.close();
 
   await browser.close();

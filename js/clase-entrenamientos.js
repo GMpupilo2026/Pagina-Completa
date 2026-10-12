@@ -372,14 +372,14 @@ function pintarEntrenos() {
         body.appendChild(cajaQueLoAbran(t, null));
     }
     if (!ad) {
-        // Las que se abren ya jugando un modo (Coordenadas): un botón por modo.
+        // Las que se abren ya en un modo o un nivel (Coordenadas, 4×4): un botón por cada uno.
         const h = herramientasDelSitio().find((x) => x.slug === t.slug);
         if (h && Array.isArray(h.rondasClase) && h.rondasClase.length) {
             const fila = document.createElement("div");
             fila.className = "flex flex-wrap items-center gap-1.5 mt-2";
             const dice = document.createElement("p");
             dice.className = "w-full text-xs text-brand-600 dark:text-brand-300";
-            dice.textContent = "O que lo empiecen ya, en un modo:";
+            dice.textContent = h.rondasTitulo || "O que lo abran ya en:";
             fila.appendChild(dice);
             h.rondasClase.forEach(([id, nombre]) => fila.appendChild(entrenoBoton("🪟 " + nombre, () => pedirQueLoAbran(t.slug, id), false,
                 "A cada alumno se le abre «" + t.label + "» ya jugando: " + nombre)));

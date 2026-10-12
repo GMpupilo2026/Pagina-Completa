@@ -286,6 +286,15 @@ async function pruebaDelProfe(browser) {
     await page.evaluate(() => EntrenosClase.enlaceDe(herramientasDelSitio(), "coordenadas", "mode10").href)],
     ["coordenadas", "mode10", "entreno/coordenadas.html?ronda=mode10"]);
   await page.click("#entreno-pedido-quitar");
+  // 4×4: un botón por nivel.
+  await page.evaluate(() => { entrenosView = { slug: "4x4", grupo: null, mostrar: 30 }; pintarEntrenos(); });
+  await page.locator("#entrenos-body").getByRole("button", { name: "Avanzado" }).click();
+  const nivel4 = await page.evaluate(() => window.__tracks.slice(-1)[0].entreno);
+  igual("4×4: el botón de un nivel pide ese nivel", [nivel4.slug, nivel4.recorte,
+    await page.evaluate(() => EntrenosClase.enlaceDe(herramientasDelSitio(), "4x4", "AVANZADO").href)],
+    ["4x4", "AVANZADO", "entreno/4x4.html?nivel=AVANZADO"]);
+  await page.click("#entreno-pedido-quitar");
+  await page.evaluate(() => { entrenosView = { slug: "coordenadas", grupo: null, mostrar: 30 }; pintarEntrenos(); });
   await page.locator("#entrenos-body").getByRole("button", { name: "Abrirlo a todos en una ventana" }).click();
   const meta = await page.evaluate(() => window.__tracks.slice(-1)[0].entreno);
   igual("«Abrirlo a todos» va en la presencia del profe: el slug, no la dirección", [meta.slug, meta.href], ["coordenadas", undefined]);

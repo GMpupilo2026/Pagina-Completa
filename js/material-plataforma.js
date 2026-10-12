@@ -46,7 +46,12 @@ window.MaterialPlataforma = (function () {
 
     { slug: "4x4", label: "4×4", href: "entreno/4x4.html",
       actividades: ["4x4"], metas: ["cantidad", "minutos"],
-      unidad: "ejercicios", recortes: "4x4", recorteLabel: "Nivel" },
+      unidad: "ejercicios", recortes: "4x4", recorteLabel: "Nivel",
+      // Abre ese nivel, en el ejercicio que le toca a cada uno (los siguientes se
+      // destapan al resolver el anterior). Antes la tarea de un nivel abría «Fácil».
+      hrefRecorte: (c) => `entreno/4x4.html?nivel=${encodeURIComponent(c)}`,
+      rondasTitulo: "O que lo abran ya en un nivel (cada alumno, en el ejercicio que le toca):",
+      rondasClase: [["FACIL", "Fácil"], ["INTERMEDIO", "Intermedio"], ["AVANZADO", "Avanzado"], ["ESPECIALISTA", "Especialista"], ["MAESTRO", "Maestro"], ["GRANMAESTRO", "Gran Maestro"]] },
 
     { slug: "aprender", label: "Aprender", href: "entreno/aprender.html",
       actividades: ["aprender"], metas: ["cantidad", "minutos"],
@@ -75,6 +80,7 @@ window.MaterialPlataforma = (function () {
       unidad: "rondas",
       /* La clase en vivo la abre ya jugando un modo (js/clase-entrenamientos.js):
          uno por botón, con el nombre que tiene en la página. */
+      rondasTitulo: "O que lo empiecen ya, en un modo:",
       rondasClase: [["classic", "Clásico: 30 segundos"], ["mode10", "10 segundos por casilla"], ["mode3", "3 segundos por casilla"]],
       hrefRecorte: (c) => `entreno/coordenadas.html?ronda=${encodeURIComponent(c)}` },
 
