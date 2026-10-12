@@ -10,12 +10,12 @@ presencial, con agenda y evaluación final en vez de quiz y presentación.
 
 Arma:
   cursos/formacion-ajedrez.html            portada y temario — público
-  cursos/protegido/formacion-ajedrez.html  fragmento con las 8 sesiones completas
+  cursos/protegido/formacion-ajedrez.html  fragmento con las 7 sesiones completas
   cursos/academia/formacion-ajedrez.html   página de Academia (clonada de
                                             cursos/academia/fundamentos-del-ajedrez.html)
-  cursos/recursos/formacion-ajedrez/       por sesión 1-7: cuadernillo de repaso
+  cursos/recursos/formacion-ajedrez/       por sesión 1-6: cuadernillo de repaso
                                             (PDF), presentación (.pptx) y
-                                            ejercicios (PDF); la sesión 8 trae en
+                                            ejercicios (PDF); la sesión 7 trae en
                                             cambio los formularios/lista de
                                             cotejo y la prueba final teórica (20
                                             preguntas reales, tomadas del banco
@@ -26,16 +26,17 @@ Arma:
     npm install chess.js@0.10.3     (ya lo usa cursos-diagramas.js)
     python3 herramientas/curso-generar-formacion.py
 
-Cada sesión virtual está calculada para 5 horas: su `cronograma` (minutos,
-bloque, detalle) tiene que sumar 300, y la agenda presencial va de 8:00 a. m. a
-1:00 p. m. Trae además `objetivos`, `temas` (con su fuente), `casos` (situación
-y decisión) y `ejercicios` con respuesta; la respuesta de los ejercicios con
-posición la calculó chess.js. `node herramientas/verificar-formacion.js`
-comprueba todo eso y que lo generado esté al día.
+Cada sesión virtual está calculada para 4 horas: su `cronograma` (minutos,
+bloque, detalle) tiene que sumar 240, y la agenda presencial va de 8:00 a. m. a
+1:00 p. m. (5 horas, el 14 de diciembre). Trae además `objetivos`, `temas` (con
+su fuente), `casos` (situación y decisión) y `ejercicios` con respuesta; la
+respuesta de los ejercicios con posición la calculó chess.js. `node
+herramientas/verificar-formacion.js` comprueba todo eso y que lo generado esté
+al día.
 
 Las presentaciones (.pptx) siguen el estilo de la presentación de la Clase 1
 que armó el profe —franja azul, letra grande, una idea por diapositiva— y,
-además del .pptx, cada sesión 2 a 7 sale como presentación de la clase en vivo
+además del .pptx, cada sesión 2 a 6 sale como presentación de la clase en vivo
 (cursos/recursos/formacion-ajedrez/presentaciones/clase-NN/: una imagen por
 diapositiva y diapositivas.json, ver js/clase-presentacion.js). Para eso hace
 falta LibreOffice (pptx a PDF) y PyMuPDF; los tableros salen de
@@ -134,7 +135,7 @@ def portada(curso):
             <section aria-labelledby="academia-invite" class="mt-12 rounded-2xl bg-brand-800 dark:bg-brand-900 p-6 md:p-8 text-center shadow-lg">
                 <p class="text-accent-400 text-xs font-semibold uppercase tracking-wide">Contenido completo</p>
                 <h2 id="academia-invite" class="font-serif text-2xl font-bold text-white mt-2 mb-3">Este curso se estudia en Ajedrez Integral</h2>
-                <p class="text-brand-200 text-sm max-w-2xl mx-auto mb-2">Cada sesión, de 5 horas, desarrollada por completo: el cronograma, el contenido para ver en clase con ejemplos y casos, la práctica con ejercicios resueltos, el quiz con su respuesta y la tarea, con su presentación y su cuadernillo de repaso. La Sesión 8 es presencial y cierra el curso con un torneo real, la evaluación final y la entrega de certificados.</p>
+                <p class="text-brand-200 text-sm max-w-2xl mx-auto mb-2">Cada sesión virtual, de 4 horas, desarrollada por completo: el cronograma, el contenido para ver en clase con ejemplos y casos, la práctica con ejercicios resueltos, el quiz con su respuesta y la tarea, con su presentación y su cuadernillo de repaso. La Sesión 7 es presencial, el 14 de diciembre, y cierra el curso con un torneo real, la evaluación final y la entrega de certificados.</p>
                 <p class="text-brand-200 text-sm max-w-2xl mx-auto mb-6">Las {total} sesiones completas están dentro del panel de Ajedrez Integral, en orden y con tu línea de progreso: cada sesión se abre al terminar la anterior, y tu profesor ve hasta dónde llegaste.</p>
                 <div class="flex flex-wrap justify-center gap-3">
                     <a href="../precios.html" class="inline-block bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-6 py-2.5 rounded-lg transition-colors">💬 Inscribirme en Ajedrez Integral</a>
@@ -203,7 +204,7 @@ def agenda_html(leccion):
 def cronograma_filas(leccion):
     """(inicio, fin, minutos, bloque, detalle) de cada bloque, con la hora contada
     desde el comienzo de la sesión: las sesiones virtuales no tienen una hora de
-    reloj fija, pero sí una duración (5 horas) que el cronograma tiene que llenar."""
+    reloj fija, pero sí una duración (4 horas) que el cronograma tiene que llenar."""
     filas, t = [], 0
     for minutos, bloque, detalle in leccion["cronograma"]:
         filas.append(("%d:%02d" % divmod(t, 60), "%d:%02d" % divmod(t + minutos, 60), minutos, bloque, detalle))
@@ -333,8 +334,9 @@ def protegido(curso):
             else:
                 cuerpo.insert(0, '<h5 class="font-serif text-base font-bold text-brand-800 dark:text-white mt-1 mb-1">Objetivos de la sesión</h5>'
                                  '<ul class="list-disc list-inside space-y-1">%s</ul>'
-                                 '<h5 class="font-serif text-base font-bold text-brand-800 dark:text-white mt-4 mb-1">Cronograma de la sesión (5 horas)</h5>%s'
-                              % ("".join("<li>%s</li>" % escapar(o) for o in l["objetivos"]), cronograma_html(l)))
+                                 '<h5 class="font-serif text-base font-bold text-brand-800 dark:text-white mt-4 mb-1">Cronograma de la sesión (%s)</h5>%s'
+                              % ("".join("<li>%s</li>" % escapar(o) for o in l["objetivos"]),
+                                 duracion_texto(sum(m for m, _, _ in l["cronograma"])), cronograma_html(l)))
                 cuerpo[1] = cuerpo[1].replace("mt-1 mb-1", "mt-4 mb-1")
                 cuerpo.append(temas_html(l))
                 cuerpo.append('<h5 class="font-serif text-base font-bold text-brand-800 dark:text-white mt-4 mb-1">Ejemplos y casos para comentar</h5>')
@@ -353,7 +355,7 @@ def protegido(curso):
             titulo_lec = escapar(l["titulo"])
             if l.get("presencial"):
                 titulo_lec += (' <span class="text-xs font-normal text-accent-700 dark:text-accent-400 uppercase '
-                               'tracking-wide">· Sesión presencial, 5 horas</span>')
+                               'tracking-wide">· Sesión presencial, 5 horas, 14 de diciembre</span>')
 
             # Sin data-curso-enc, sin ac-marca y sin envolver el título en un
             # h4: eso lo hace js/curso-adaptado.js (ponerEncabezados) y
@@ -404,7 +406,7 @@ def academia(curso):
 
             <section aria-labelledby="ac-contenido">
                 <h2 id="ac-contenido" class="font-serif text-2xl font-bold text-brand-800 dark:text-white mb-1">Tus lecciones</h2>
-                <p class="text-brand-500 dark:text-brand-300 text-sm mb-5">Cada sesión dura 5 horas e incluye su cronograma, el contenido para ver en clase con ejemplos y casos, una práctica con ejercicios resueltos, un quiz de evaluación y una tarea, además del material de apoyo y la presentación descargables. Las sesiones se abren en orden: al terminar una, márcala como estudiada y se desbloquea la siguiente. La Sesión 8 es presencial y cierra el curso con un torneo real, la evaluación final y la entrega de certificados.</p>
+                <p class="text-brand-500 dark:text-brand-300 text-sm mb-5">Cada sesión virtual dura 4 horas e incluye su cronograma, el contenido para ver en clase con ejemplos y casos, una práctica con ejercicios resueltos, un quiz de evaluación y una tarea, además del material de apoyo y la presentación descargables. Las sesiones se abren en orden: al terminar una, márcala como estudiada y se desbloquea la siguiente. La Sesión 7 es presencial, el 14 de diciembre, y cierra el curso con un torneo real, la evaluación final y la entrega de certificados.</p>
                 <div id="ac-progreso" class="ac-prog" aria-label="Tu progreso en el curso"></div>
                 <div id="ac-avisos" class="ac-avisos" aria-live="polite" role="status"></div>
                 <div id="course-content-body" data-course="{slug}" data-titulo="{titulo}" class="space-y-8">
@@ -600,7 +602,8 @@ def presentacion(curso, leccion, destino):
 
     # 3 · cronograma
     filas = cronograma_filas(leccion)
-    d = nueva("Cronograma de la sesión", "Sesión %d · 5 horas (300 minutos)" % leccion["n"], None,
+    total_min = sum(f[2] for f in filas)
+    d = nueva("Cronograma de la sesión", "Sesión %d · %s (%d minutos)" % (leccion["n"], duracion_texto(total_min), total_min), None,
               " ".join("De %s a %s, %s." % (a, b, bloque.lower() if bloque == "Receso" else bloque) for a, b, m, bloque, _ in filas))
     alto_fila = min(0.48, 5.0 / (len(filas) + 1))
     tabla = d.shapes.add_table(len(filas) + 1, 3, Inches(0.8), Inches(1.95), Inches(W - 1.6), Inches(alto_fila * (len(filas) + 1))).table
@@ -620,12 +623,14 @@ def presentacion(curso, leccion, destino):
             r.font.size, r.font.name = Pt(16), "Calibri"
             r.font.color.rgb, r.font.bold = rgb(OSCURO_T), bloque == "Receso"
 
+    minutos_receso = iter(f[2] for f in filas if f[3] == "Receso")
     recesos = sum(1 for f in filas if f[3] == "Receso")
 
     def receso():
-        d = nueva("Receso", oscura=True, texto_clase="Receso de 15 minutos. Pausa los relojes: seguimos en breve.")
+        m = next(minutos_receso)
+        d = nueva("Receso", oscura=True, texto_clase="Receso de %d minutos. Pausa los relojes: seguimos en breve." % m)
         caja(d, 0.5, 2.3, W - 1.0, 1.4, "Receso", 72, "FFFFFF", True, True)
-        caja(d, 0.5, 3.9, W - 1.0, 1.2, ["15 minutos", "Pausa los relojes: seguimos en breve."], 28, "CADCFC", centrado=True)
+        caja(d, 0.5, 3.9, W - 1.0, 1.2, ["%d minutos" % m, "Pausa los relojes: seguimos en breve."], 28, "CADCFC", centrado=True)
 
     # 4 · temas (y el primer receso a la mitad)
     mitad = (len(leccion["temas"]) + 1) // 2
@@ -899,7 +904,7 @@ def ejercicios_pdf(curso, leccion, destino):
     doc.build(f, onFirstPage=pie, onLaterPages=pie)
 
 
-# ---------------------------------------- sesión 8: formularios + prueba final
+# ---------------------------------------- sesión 7: formularios + prueba final
 def formularios_pdf(curso, leccion, destino):
     from reportlab.lib.pagesizes import letter
     from reportlab.lib.styles import ParagraphStyle

@@ -51,20 +51,20 @@
   },
   {
    "n": 3,
-   "titulo": "Apéndices de las Leyes de Ajedrez y normativa de los Juegos Deportivos Estudiantiles",
-   "resumen": "Ajedrez rápido y relámpago, sistemas de desempate y normativa vigente de los Juegos Deportivos Estudiantiles.",
+   "titulo": "Apéndices de las Leyes de Ajedrez, normativa JDE y sistemas de emparejamiento",
+   "resumen": "Ajedrez rápido y relámpago, sistemas de desempate, normativa vigente de los Juegos Deportivos Estudiantiles y los sistemas de emparejamiento suizo y todos contra todos.",
    "presencial": false,
    "archivos": [
     {
-     "archivo": "03-apendices-y-normativa-jde-material.pdf",
+     "archivo": "03-apendices-normativa-y-emparejamiento-material.pdf",
      "texto": "📚 Material de estudio (PDF)"
     },
     {
-     "archivo": "03-apendices-y-normativa-jde.pptx",
+     "archivo": "03-apendices-normativa-y-emparejamiento.pptx",
      "texto": "📊 Descargar presentación"
     },
     {
-     "archivo": "03-apendices-y-normativa-jde-ejercicios.pdf",
+     "archivo": "03-apendices-normativa-y-emparejamiento-ejercicios.pdf",
      "texto": "📄 Descargar ejercicios (PDF)"
     }
    ],
@@ -72,20 +72,20 @@
   },
   {
    "n": 4,
-   "titulo": "Sistemas de emparejamiento para torneos",
-   "resumen": "Sistema suizo y todos contra todos (round robin): cómo funcionan y cuándo usar cada uno.",
+   "titulo": "Uso, configuración y control del reloj de ajedrez",
+   "resumen": "Controles de tiempo, incrementos y resolución de incidencias con el reloj en competencia.",
    "presencial": false,
    "archivos": [
     {
-     "archivo": "04-sistemas-de-emparejamiento-material.pdf",
+     "archivo": "04-uso-y-control-del-reloj-material.pdf",
      "texto": "📚 Material de estudio (PDF)"
     },
     {
-     "archivo": "04-sistemas-de-emparejamiento.pptx",
+     "archivo": "04-uso-y-control-del-reloj.pptx",
      "texto": "📊 Descargar presentación"
     },
     {
-     "archivo": "04-sistemas-de-emparejamiento-ejercicios.pdf",
+     "archivo": "04-uso-y-control-del-reloj-ejercicios.pdf",
      "texto": "📄 Descargar ejercicios (PDF)"
     }
    ],
@@ -93,20 +93,20 @@
   },
   {
    "n": 5,
-   "titulo": "Uso, configuración y control del reloj de ajedrez",
-   "resumen": "Controles de tiempo, incrementos y resolución de incidencias con el reloj en competencia.",
+   "titulo": "Resolución de casos en grupos y experiencias regionales",
+   "resumen": "Casos integradores de arbitraje y elementos logísticos de un torneo estudiantil.",
    "presencial": false,
    "archivos": [
     {
-     "archivo": "05-uso-y-control-del-reloj-material.pdf",
+     "archivo": "05-resolucion-de-casos-en-grupos-material.pdf",
      "texto": "📚 Material de estudio (PDF)"
     },
     {
-     "archivo": "05-uso-y-control-del-reloj.pptx",
+     "archivo": "05-resolucion-de-casos-en-grupos.pptx",
      "texto": "📊 Descargar presentación"
     },
     {
-     "archivo": "05-uso-y-control-del-reloj-ejercicios.pdf",
+     "archivo": "05-resolucion-de-casos-en-grupos-ejercicios.pdf",
      "texto": "📄 Descargar ejercicios (PDF)"
     }
    ],
@@ -114,20 +114,20 @@
   },
   {
    "n": 6,
-   "titulo": "Resolución de casos en grupos y experiencias regionales",
-   "resumen": "Casos integradores de arbitraje y elementos logísticos de un torneo estudiantil.",
+   "titulo": "Talleres prácticos y simulacros de arbitraje",
+   "resumen": "Simulacros de arbitraje entre pares y preparación de roles para la sesión presencial.",
    "presencial": false,
    "archivos": [
     {
-     "archivo": "06-resolucion-de-casos-en-grupos-material.pdf",
+     "archivo": "06-talleres-y-simulacros-de-arbitraje-material.pdf",
      "texto": "📚 Material de estudio (PDF)"
     },
     {
-     "archivo": "06-resolucion-de-casos-en-grupos.pptx",
+     "archivo": "06-talleres-y-simulacros-de-arbitraje.pptx",
      "texto": "📊 Descargar presentación"
     },
     {
-     "archivo": "06-resolucion-de-casos-en-grupos-ejercicios.pdf",
+     "archivo": "06-talleres-y-simulacros-de-arbitraje-ejercicios.pdf",
      "texto": "📄 Descargar ejercicios (PDF)"
     }
    ],
@@ -135,37 +135,16 @@
   },
   {
    "n": 7,
-   "titulo": "Talleres prácticos y simulacros de arbitraje",
-   "resumen": "Simulacros de arbitraje entre pares y preparación de roles para la sesión presencial.",
-   "presencial": false,
-   "archivos": [
-    {
-     "archivo": "07-talleres-y-simulacros-de-arbitraje-material.pdf",
-     "texto": "📚 Material de estudio (PDF)"
-    },
-    {
-     "archivo": "07-talleres-y-simulacros-de-arbitraje.pptx",
-     "texto": "📊 Descargar presentación"
-    },
-    {
-     "archivo": "07-talleres-y-simulacros-de-arbitraje-ejercicios.pdf",
-     "texto": "📄 Descargar ejercicios (PDF)"
-    }
-   ],
-   "presentacion": "formacion-ajedrez/clase-07"
-  },
-  {
-   "n": 8,
    "titulo": "Torneo real, evaluación final y certificación",
-   "resumen": "Sesión presencial, 5 horas.",
+   "resumen": "Sesión presencial, 5 horas, el 14 de diciembre.",
    "presencial": true,
    "archivos": [
     {
-     "archivo": "08-torneo-real-evaluacion-formularios.pdf",
+     "archivo": "07-torneo-real-evaluacion-formularios.pdf",
      "texto": "📚 Formularios y lista de cotejo (PDF)"
     },
     {
-     "archivo": "08-prueba-final.pdf",
+     "archivo": "07-prueba-final.pdf",
      "texto": "📄 Prueba final teórica (PDF)"
     }
    ],

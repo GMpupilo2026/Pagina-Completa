@@ -14,7 +14,7 @@
   },
   {
    "titulo": "Mapa del curso",
-   "texto": "El camino hacia el arbitraje en los JDE, en tres pasos. Paso 1, sesiones virtuales: 7 sesiones virtuales de 5 horas (explicación, casos reales, trabajo en grupo y quiz). Paso 2, evaluación continua: quizzes de cada sesión y tareas asignadas. Paso 3, sesión presencial: cierre práctico con tableros y relojes reales. Recuerda: en los JDE, quien arbitra también forma; el trato con estudiantes, docentes y familias es parte integral del trabajo.",
+   "texto": "El camino hacia el arbitraje en los JDE, en tres pasos. Paso 1, sesiones virtuales: 6 sesiones virtuales de 4 horas (explicación, casos reales, trabajo en grupo y quiz). Paso 2, evaluación continua: quizzes de cada sesión y tareas asignadas. Paso 3, sesión presencial, 14 de diciembre: cierre práctico con tableros y relojes reales. Recuerda: en los JDE, quien arbitra también forma; el trato con estudiantes, docentes y familias es parte integral del trabajo.",
    "imagen": "03.webp"
   },
   {
@@ -24,8 +24,8 @@
   },
   {
    "titulo": "Cronograma de la sesión",
-   "texto": "Clase 1, 5 horas (300 minutos). De 0:00 a 0:15, bienvenida y encuadre del curso. De 0:15 a 0:45, el rol de la persona árbitra y asesora. De 0:45 a 1:30, reglas básicas I: tablero, piezas y jugadas especiales. De 1:30 a 1:45, receso. De 1:45 a 2:30, reglas básicas II: cómo termina una partida. De 2:30 a 3:00, notación algebraica y planilla. De 3:00 a 3:15, receso. De 3:15 a 4:05, práctica en salas de trabajo. De 4:05 a 4:40, quiz de la sesión y errores frecuentes en el aula. De 4:40 a 5:00, cierre.",
-   "notas": "Mostrar al inicio y volver a ella en cada cambio de bloque. Total: 300 minutos (5 horas) con dos recesos de 15 minutos.",
+   "texto": "Clase 1, 4 horas (240 minutos). De 0:00 a 0:10, bienvenida y encuadre del curso. De 0:10 a 0:35, el rol de la persona árbitra y asesora. De 0:35 a 1:15, reglas básicas I: tablero, piezas y jugadas especiales. De 1:15 a 1:25, receso. De 1:25 a 2:00, reglas básicas II: cómo termina una partida. De 2:00 a 2:25, notación algebraica y planilla. De 2:25 a 2:35, receso. De 2:35 a 3:15, práctica en salas de trabajo. De 3:15 a 3:45, quiz de la sesión y errores frecuentes en el aula. De 3:45 a 4:00, cierre.",
+   "notas": "Mostrar al inicio y volver a ella en cada cambio de bloque. Total: 240 minutos (4 horas) con dos recesos de 10 minutos.",
    "imagen": "05.webp"
   },
   {
@@ -113,7 +113,7 @@
   },
   {
    "titulo": "Receso",
-   "texto": "Receso de 15 minutos. Pausa los relojes. Nos vemos en breve para la segunda mitad de la sesión.",
+   "texto": "Receso de 10 minutos. Pausa los relojes. Nos vemos en breve para la segunda mitad de la sesión.",
    "imagen": "18.webp"
   },
   {
@@ -163,7 +163,7 @@
   {
    "titulo": "Notación algebraica",
    "texto": "Obligatoria en competencia (art. 8.1 y apéndice C). Casillas: columna (a a h) más fila (1 a 8): e4, f7, a8. Piezas: R rey, D dama, T torre, A alfil, C caballo; el peón no lleva letra. Jugada: pieza más casilla de llegada: Cf3, Ab5, e4. Si dos piezas iguales pueden ir a la misma casilla, se agrega la columna o la fila de salida: Cbd2, T1e1. Las iniciales pueden ser las del idioma del jugador; la estructura es la misma en todo el mundo. Signos: x captura (Axc6, dxc6); + jaque; # jaque mate (Dh4#); O-O enroque corto; O-O-O enroque largo; =D coronación (e8=D); a.p. captura al paso (exd6 a.p.); (=) oferta de tablas en la planilla.",
-   "notas": "30 minutos de bloque junto con la planilla. Pedir que cada participante escriba en el chat la jugada que el profesor muestra en el tablero.",
+   "notas": "25 minutos de bloque junto con la planilla. Pedir que cada participante escriba en el chat la jugada que el profesor muestra en el tablero.",
    "imagen": "23.webp"
   },
   {
@@ -191,13 +191,13 @@
   },
   {
    "titulo": "Receso",
-   "texto": "Receso de 15 minutos. Pausa los relojes. Nos vemos en breve para la segunda mitad de la sesión.",
+   "texto": "Receso de 10 minutos. Pausa los relojes. Nos vemos en breve para la segunda mitad de la sesión.",
    "imagen": "26.webp"
   },
   {
    "titulo": "Práctica en salas de trabajo",
-   "texto": "Identificación de jugadas legales y finales de partida, 50 minutos. 1. Grupos de 3 o 4 personas, una sala de trabajo por grupo. 2. Para cada una de las 8 posiciones decidan: ¿jaque, jaque mate, ahogado, posición muerta o la partida sigue? 3. Justifiquen cada respuesta con el artículo de las Leyes. 4. Una persona anota y otra, diferente, presenta en la plenaria. Tiempo: 30 minutos en salas y 20 minutos de plenaria.",
-   "notas": "30 minutos en salas y 20 de plenaria. Son las mismas 8 posiciones del cuadernillo de ejercicios de la sesión 1 (respuestas en la diapositiva siguiente a las posiciones).",
+   "texto": "Identificación de jugadas legales y finales de partida, 40 minutos. 1. Grupos de 3 o 4 personas, una sala de trabajo por grupo. 2. Para cada una de las 8 posiciones decidan: ¿jaque, jaque mate, ahogado, posición muerta o la partida sigue? 3. Justifiquen cada respuesta con el artículo de las Leyes. 4. Una persona anota y otra, diferente, presenta en la plenaria. Tiempo: 25 minutos en salas y 15 minutos de plenaria.",
+   "notas": "25 minutos en salas y 15 de plenaria. Son las mismas 8 posiciones del cuadernillo de ejercicios de la sesión 1 (respuestas en la diapositiva siguiente a las posiciones).",
    "imagen": "27.webp"
   },
   {
@@ -274,7 +274,7 @@
   },
   {
    "titulo": "Tarea y cierre",
-   "texto": "Para la sesión 2: reglas de competición (5 horas). Tarea: leer el capítulo de reglas básicas de las Leyes de Ajedrez de la FIDE y completar una ficha breve de reflexión sobre una situación de arbitraje básica vivida en tu contexto educativo. Antes de irte: dudas de la sesión; evaluación breve de la sesión (formulario); material de repaso: cuadernillo y ejercicios de la sesión 1 en la Academia.",
+   "texto": "Para la sesión 2: reglas de competición (4 horas). Tarea: leer el capítulo de reglas básicas de las Leyes de Ajedrez de la FIDE y completar una ficha breve de reflexión sobre una situación de arbitraje básica vivida en tu contexto educativo. Antes de irte: dudas de la sesión; evaluación breve de la sesión (formulario); material de repaso: cuadernillo y ejercicios de la sesión 1 en la Academia.",
    "notas": "20 minutos: dudas, explicación de la tarea y evaluación breve de la sesión.",
    "imagen": "34.webp"
   }

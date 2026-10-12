@@ -414,7 +414,7 @@ async function pruebaAlumna(browser) {
   await esperarImagen(page, "05.webp");
   cierto("al entrar ya ve la diapositiva que está en la base", (await page.textContent("#presentacion-cuenta")) === "Diapositiva 5 de 34");
   cierto("la imagen dice cuál es", /^Diapositiva 5: Cronograma/.test((await imagen(page)).alt), (await imagen(page)).alt);
-  cierto("y su texto se puede leer", /300 minutos/.test(await page.textContent("#presentacion-texto")));
+  cierto("y su texto se puede leer", /240 minutos/.test(await page.textContent("#presentacion-texto")));
   cierto("sin los botones del profe", !(await seVe(page, "#presentacion-profe")) && !(await seVe(page, "#presentacion-siguiente")));
   await page.evaluate((v) => window.__cambioEnBase("game_state", v), fila({ presentacion: { deck: DECK, n: 12 } }));
   await esperarImagen(page, "12.webp");

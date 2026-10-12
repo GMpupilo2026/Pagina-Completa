@@ -773,7 +773,7 @@ async function clic(page, selector) {
 /* ============ admin.html · Asesores: «Formación Ajedrez» sesión por sesión ============
    Las sesiones salen de cursos/recursos/formacion-ajedrez/sesiones.json (el de
    verdad, que arma el generador); el estado de cada una, de
-   preparacion_sesiones. Se mira que estén las 8 en orden, que el estado y la
+   preparacion_sesiones. Se mira que estén las 7 en orden, que el estado y la
    nota se guarden en la base (y se pinte lo que quedó), que el Kahoot cargado
    lleve a su cuestionario y el que falta lo diga, que la presentación se vea
    acá mismo y que «Con quién lo compartes» sea el de Materiales, con este curso. */
@@ -785,13 +785,13 @@ async function pruebaAsesores(browser) {
   await page.evaluate(contestarAvisos);
   await irA(page, "asesores");
   await page.waitForSelector("#ase-lista article", { timeout: 10000 });
-  igual("las 8 sesiones, en orden", await page.evaluate(() =>
-    Array.from(document.querySelectorAll("#ase-lista article h3")).length), 8);
+  igual("las 7 sesiones, en orden", await page.evaluate(() =>
+    Array.from(document.querySelectorAll("#ase-lista article h3")).length), 7);
   igual("la primera y la última", await page.evaluate(() => {
     const h = Array.from(document.querySelectorAll("#ase-lista article h3")).map((x) => x.textContent);
-    return [h[0], h[7]];
+    return [h[0], h[6]];
   }), ["Encuadre del curso y reglas básicas del ajedrez", "Torneo real, evaluación final y certificación"]);
-  igual("cuántas van listas y cuál sigue", await page.textContent("#ase-resumen"), "1 de 8 sesiones listas. La que sigue: Sesión 2.");
+  igual("cuántas van listas y cuál sigue", await page.textContent("#ase-resumen"), "1 de 7 sesiones listas. La que sigue: Sesión 2.");
   igual("la sesión 1 trae su estado y su nota de la base", [await page.inputValue("#ase-1-estado"), await page.inputValue("#ase-1-nota")],
     ["lista", "Revisada con la Normativa 2026"]);
   igual("el Kahoot de la sesión 1 lleva a su cuestionario, con cuántas preguntas", await page.evaluate(() => {
@@ -812,7 +812,7 @@ async function pruebaAsesores(browser) {
     Array.from(document.querySelectorAll("#ase-grupo tbody tr")).map((tr) => Array.from(tr.children).slice(0, 5).map((c) => c.textContent.replace(/\s+/g, " ").trim()))),
     [["Ana Asesora · Heredia", "9 oct, 11:24 a. m.", "2", "13/223 veces", "—No lo contestó"],
      ['<img src=x onerror="window.__xss=1">Beto', "Nunca entró", "0", "—No lo contestó", "—No lo contestó"]]);
-  igual("una columna por sesión", await page.evaluate(() => document.querySelectorAll("#ase-grupo thead th").length), 3 + 8);
+  igual("una columna por sesión", await page.evaluate(() => document.querySelectorAll("#ase-grupo thead th").length), 3 + 7);
   igual("el nombre ajeno no se ejecuta", await page.evaluate(() => !window.__xss), true);
   igual("sin cuestionario no hay nada que mandar", await page.evaluate(() =>
     !document.querySelector("#ase-lista article:nth-child(2) a[href^='tareas.html']")), true);
@@ -822,15 +822,15 @@ async function pruebaAsesores(browser) {
     Array.from(document.querySelectorAll("#ase-lista article:nth-child(2) a[href^='cursos/']")).map((a) => a.getAttribute("href"))),
     ["cursos/recursos/formacion-ajedrez/02-reglas-de-competicion-material.pdf", "cursos/recursos/formacion-ajedrez/02-reglas-de-competicion.pptx",
      "cursos/recursos/formacion-ajedrez/02-reglas-de-competicion-ejercicios.pdf"]);
-  igual("la sesión 8 (presencial) no tiene presentación", await page.evaluate(() =>
-    !document.querySelector("#ase-lista article:nth-child(8) button[aria-label^='Ver la presentación']")), true);
+  igual("la sesión 7 (presencial) no tiene presentación", await page.evaluate(() =>
+    !document.querySelector("#ase-lista article:nth-child(7) button[aria-label^='Ver la presentación']")), true);
 
   // El estado se guarda en la base y se pinta lo que quedó.
   await page.selectOption("#ase-2-estado", "lista");
-  await page.waitForFunction(() => /2 de 8/.test(document.getElementById("ase-resumen").textContent), null, { timeout: 5000 });
+  await page.waitForFunction(() => /2 de 7/.test(document.getElementById("ase-resumen").textContent), null, { timeout: 5000 });
   igual("marcar lista la sesión 2 la guarda con su curso y su número", await page.evaluate(() => window.__upserts.slice(-1)[0]),
     { tabla: "preparacion_sesiones", fila: { curso: "formacion-ajedrez", sesion: 2, estado: "lista", nota: "" } });
-  igual("y el resumen pasa a la siguiente", await page.textContent("#ase-resumen"), "2 de 8 sesiones listas. La que sigue: Sesión 3.");
+  igual("y el resumen pasa a la siguiente", await page.textContent("#ase-resumen"), "2 de 7 sesiones listas. La que sigue: Sesión 3.");
   await page.fill("#ase-3-nota", "  Falta el Kahoot  ");
   await page.click("button[aria-label='Guardar la nota de la sesión 3']");
   await page.waitForFunction(() => (window.__upserts || []).length === 2, null, { timeout: 5000 });

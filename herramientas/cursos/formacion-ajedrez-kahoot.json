@@ -4,7 +4,7 @@
     "Cada pregunta con la correcta aparte y sus distractores: el lugar de la correcta",
     "lo reparte herramientas/formacion-cuestionarios.js (parejo entre A, B, C y D).",
     "Son cuestionarios listos del material «formacion-ajedrez»: los usa quien tenga",
-    "el curso compartido (admin.html#asesores). Hay uno por sesión, de la 1 a la 8."
+    "el curso compartido (admin.html#asesores). Hay uno por sesión, de la 1 a la 7."
   ],
   "material": "formacion-ajedrez",
   "sesiones": [
@@ -508,7 +508,7 @@
     },
     {
       "sesion": 3,
-      "titulo": "Formación Ajedrez · Sesión 3: rápidas, relámpago, desempates y JDE",
+      "titulo": "Formación Ajedrez · Sesión 3: ritmos, desempates, JDE y emparejamiento",
       "preguntas": [
         {
           "texto": "Un torneo escolar se juega a 5 min + 3 s por jugada. ¿Qué ritmo es para la FIDE?",
@@ -740,13 +740,7 @@
           ],
           "tiempo": 30,
           "fuente": "Normativa art. 30"
-        }
-      ]
-    },
-    {
-      "sesion": 4,
-      "titulo": "Formación Ajedrez · Sesión 4: suizo y todos contra todos",
-      "preguntas": [
+        },
         {
           "texto": "¿Qué sistema conviene con muchos participantes y pocas rondas posibles?",
           "correcta": "Suizo",
@@ -970,8 +964,8 @@
       ]
     },
     {
-      "sesion": 5,
-      "titulo": "Formación Ajedrez · Sesión 5: el reloj de ajedrez",
+      "sesion": 4,
+      "titulo": "Formación Ajedrez · Sesión 4: el reloj de ajedrez",
       "preguntas": [
         {
           "texto": "Es la hora de inicio y el jugador de blancas no está en la mesa. ¿Qué hace la persona árbitra?",
@@ -1196,8 +1190,8 @@
       ]
     },
     {
-      "sesion": 6,
-      "titulo": "Formación Ajedrez · Sesión 6: casos y logística de un torneo",
+      "sesion": 5,
+      "titulo": "Formación Ajedrez · Sesión 5: casos y logística de un torneo",
       "preguntas": [
         {
           "texto": "¿Cuáles son los cuatro pasos para resolver un caso arbitral?",
@@ -1400,8 +1394,8 @@
       ]
     },
     {
-      "sesion": 7,
-      "titulo": "Formación Ajedrez · Sesión 7: simulacros y lista de cotejo",
+      "sesion": 6,
+      "titulo": "Formación Ajedrez · Sesión 6: simulacros y lista de cotejo",
       "preguntas": [
         {
           "texto": "¿Qué roles hay en cada sala de trabajo del simulacro?",
@@ -1604,8 +1598,8 @@
       ]
     },
     {
-      "sesion": 8,
-      "titulo": "Formación Ajedrez · Sesión 8: repaso para el torneo real",
+      "sesion": 7,
+      "titulo": "Formación Ajedrez · Sesión 7: repaso para el torneo real",
       "preguntas": [
         {
           "texto": "El torneo del día se juega a 10 min + 5 s. ¿Qué ritmo es?",
