@@ -370,6 +370,7 @@
                                 <p id="presentacion-cuenta" class="text-xs text-brand-500 dark:text-brand-300" aria-live="off"></p>
                             </div>
                             <div class="flex flex-wrap items-center gap-1.5 shrink-0">
+                            <button id="presentacion-chat-btn" type="button" aria-controls="chat-caja" aria-expanded="false" class="solo-forzada text-xs font-semibold px-3 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">💬 </span>Preguntar al profe</button>
                             <button id="presentacion-mini-btn" type="button" aria-controls="presentacion-mini" class="solo-pantalla-completa text-xs font-semibold px-3 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">♟ </span>Ocultar el tablero</button>
                             <button id="presentacion-completa" type="button" class="presentacion-sin-proyector shrink-0 text-xs font-semibold px-3 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">⛶ </span>Pantalla completa</button>
                             </div>
@@ -384,7 +385,10 @@
                             <img id="presentacion-img" alt="" class="presentacion-img block w-full h-auto aspect-video object-contain rounded-lg bg-white border border-brand-200 dark:border-brand-700">
                             <svg id="presentacion-pizarra" class="presentacion-pizarra" aria-hidden="true" focusable="false" preserveAspectRatio="xMidYMid meet" viewBox="0 0 1000 563"></svg>
                         </div>
-                        <details class="presentacion-sin-proyector mt-2">
+                        <!-- El texto de la lámina: el profe sí; el alumno, solo con el Modo Adaptado
+                             (quien no la ve). Lo decide el CSS con .texto-del-profe (ver «El texto de la
+                             diapositiva, solo para el profe y el Modo Adaptado»). -->
+                        <details id="presentacion-texto-caja" class="presentacion-sin-proyector mt-2">
                             <summary class="cursor-pointer text-xs font-semibold text-brand-700 dark:text-brand-200 marker:text-accent-600">Leer el texto de la diapositiva</summary>
                             <p id="presentacion-texto" class="text-sm text-brand-700 dark:text-brand-200 mt-1"></p>
                         </details>

@@ -1307,6 +1307,32 @@ html.presentacion-forzada:not(.adaptive-mode) #presentacion-caja:not([hidden]) {
   position: fixed; inset: 0; z-index: 48; margin: 0; padding: 1rem;
 }
 html.presentacion-forzada:not(.adaptive-mode) body { overflow: hidden; }
+/* El texto de la diapositiva: el profe sí; el alumno, solo con el Modo
+   Adaptado (quien no ve la lámina). Ver «El texto de la diapositiva, solo
+   para el profe y el Modo Adaptado». */
+html:not(.adaptive-mode) #presentacion-caja:not(.texto-del-profe) #presentacion-texto-caja { display: none; }
+/* El chat con el profe en la pantalla completa (.chat-flotante,
+   js/clase-presentacion.js): el mismo #chat-caja, abajo a la izquierda, encima
+   de la tapa y debajo de las preguntas (z-50). */
+.solo-forzada { display: none; }
+html.presentacion-forzada:not(.adaptive-mode) .solo-forzada { display: inline-flex; }
+html.presentacion-forzada:not(.adaptive-mode) .solo-forzada.chat-con-nuevo { background: #f4c430; color: #0b1220; }
+html.presentacion-forzada.chat-flotante:not(.adaptive-mode) #chat-caja {
+  display: block !important; position: fixed; left: 1rem; bottom: 1rem; z-index: 49; margin: 0;
+  width: min(calc(100vw - 2rem), 380px); padding: 0.75rem 1rem; box-shadow: 0 8px 32px rgb(0 0 0 / 0.55);
+}
+html.presentacion-forzada.chat-flotante:not(.adaptive-mode) #chat-caja > p { display: none; }
+html.presentacion-forzada.chat-flotante:not(.adaptive-mode) #chat-messages { max-height: 35vh; }
+/* Con la tarjeta girada (el celular parado), el chat se gira igual: su borde
+   de abajo queda del lado de abajo de la lámina. Se gira desde su esquina de
+   arriba a la izquierda y se corre su propio alto (translateY(-100%)). */
+@media (orientation: portrait) and (max-width: 767px) {
+  html.presentacion-forzada.chat-flotante:not(.adaptive-mode) #chat-caja {
+    left: 0.5rem; top: 0.5rem; bottom: auto; width: min(55vh, 380px);
+    transform-origin: top left; transform: rotate(90deg) translateY(-100%);
+  }
+  html.presentacion-forzada.chat-flotante:not(.adaptive-mode) #chat-messages { max-height: 30vw; }
+}
 /* En el celular parado, la diapositiva (que es ancha) se gira de lado: si no,
    queda una franja chica en medio de la pantalla y el tablero diminuto. Donde
    el navegador deja girar la pantalla de verdad (screen.orientation.lock), el

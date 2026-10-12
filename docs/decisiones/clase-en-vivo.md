@@ -3350,6 +3350,13 @@ al tablero que sigue en vivo. Código en `js/clase-presentacion.js`.
   `diapositivas.json` su título y su transcripción completa, que va en el
   desplegable «Leer el texto de la diapositiva» y se anuncia en `#clase-voz`
   al cambiar. Una imagen sola no la lee nadie que no la vea.
+- **El texto de la diapositiva, solo para el profe y el Modo Adaptado**: el
+  desplegable lo ve el profe; el alumno, solo con el Modo Adaptado (quien no
+  ve la lámina y la escucha). Para los demás alumnos estorbaba: leían el texto
+  de abajo en vez de mirar la lámina, y en el celular ocupaba lugar. Lo decide
+  el CSS (`.texto-del-profe` en la tarjeta, que pone `pintarPresentacion`), y
+  el aviso en voz solo dice «Su texto está debajo de la imagen» a quien lo
+  tiene.
 - **Viven con el material del curso** (`cursos/recursos/<curso>/presentaciones/<clase>/`),
   detrás del candado del worker: la ve quien tiene el acceso a la Academia.
   Si no lo tiene, la tarjeta lo dice en vez de quedar vacía.
@@ -3448,6 +3455,29 @@ lámina y nada más mientras el profe explica algo puntual.
   de la presentación ya salía ahí con sus botones, así que el mismo botón la
   pone y la quita desde el celular. En el control remoto los botones de la
   presentación miden 44 px de alto para el dedo (antes 28).
+
+#### El chat con el profe, en la pantalla completa
+
+La pantalla completa del profe tapa todo lo de abajo, también el chat, y el
+alumno se quedaba sin cómo preguntar. Con ella puesta, la tarjeta le muestra
+«💬 Preguntar al profe», que abre su chat privado encima de la diapositiva,
+abajo a la izquierda (el tablero pequeño queda a la derecha).
+
+- **Es el MISMO `#chat-caja`**, puesto encima por el CSS (`.chat-flotante` en
+  `<html>`, z-49: encima de la tapa y debajo de las preguntas), no una copia:
+  los mensajes, el envío y lo que decide la RLS son los de siempre.
+- Al abrirlo, el cursor queda en el cuadro para escribir. Se cierra con el
+  mismo botón («Cerrar el chat») o con Esc. Al quitar el profe la pantalla
+  completa, se cierra solo.
+- **Si el profe contesta con el chat cerrado, el botón lo dice** («Tu profe te
+  respondió», en amarillo): `renderChatMessages` avisa con el evento
+  `chat-clase-pintado` quién mandó el último. Lo que ya estaba al entrar no
+  cuenta como nuevo.
+- Con la tarjeta girada (el celular parado), el chat se gira igual, con su
+  borde de abajo del lado de abajo de la lámina.
+- En la prueba, el mensaje nuevo se mete ADELANTE en la tabla del doble: la
+  base lo devuelve del más nuevo al más viejo (`order desc`) y el doble no
+  ordena.
 
 #### La pantalla completa en el celular, de lado
 

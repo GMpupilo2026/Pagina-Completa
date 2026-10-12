@@ -247,8 +247,11 @@ async function pintarPresentacion(p, propia) {
     document.getElementById("presentacion-titulo").textContent = datos.titulo;
     document.getElementById("presentacion-cuenta").textContent = "Diapositiva " + n + " de " + total;
     document.getElementById("presentacion-texto").textContent = d.texto;
+    // El texto de la lámina, al alumno solo con el Modo Adaptado (lo dice el CSS).
+    const conTexto = presentacionEsDelProfe() || document.documentElement.classList.contains("adaptive-mode");
+    caja.classList.toggle("texto-del-profe", presentacionEsDelProfe());
     anunciarALaClase("presentacion", nueva.deck + ":" + n,
-        "Tu profe muestra la diapositiva " + n + " de " + total + ": " + d.titulo + ". Su texto está debajo de la imagen.");
+        "Tu profe muestra la diapositiva " + n + " de " + total + ": " + d.titulo + "." + (conTexto ? " Su texto está debajo de la imagen." : ""));
 
     // En el proyector no van los botones ni las notas: es lo que ve la clase.
     const delProfe = presentacionEsDelProfe() && !modoProyector;
@@ -579,12 +582,55 @@ function pintarPantallaCompletaForzada(p) {
         document.addEventListener("pointerdown", pedirPantallaCompletaDeVerdad, { capture: true, once: true });
         document.addEventListener("keydown", pedirPantallaCompletaDeVerdad, { capture: true, once: true });
     } else {
+        ponerChatFlotante(false);
         document.removeEventListener("pointerdown", pedirPantallaCompletaDeVerdad, { capture: true });
         document.removeEventListener("keydown", pedirPantallaCompletaDeVerdad, { capture: true });
         if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(() => {});
     }
     pintarTableroMini();
 }
+
+/* El chat con el profe, en la pantalla completa: la tapa esconde todo lo de
+   abajo, también el chat, y el alumno se quedaba sin cómo preguntar.
+   «💬 Preguntar al profe» (en la tarjeta, solo con la pantalla completa del
+   profe puesta) le abre su chat privado encima de la diapositiva: el MISMO
+   #chat-caja, puesto encima por el CSS (.chat-flotante en <html>), no una
+   copia. Si el profe le contesta con el chat cerrado, el botón lo dice. */
+let chatUltimoVisto = null;
+let chatUltimoAjeno = null;
+
+function ponerChatFlotante(abierto) {
+    const html = document.documentElement;
+    const btn = document.getElementById("presentacion-chat-btn");
+    const va = !!abierto && pantallaCompletaForzada();
+    html.classList.toggle("chat-flotante", va);
+    btn.setAttribute("aria-expanded", String(va));
+    if (va) chatUltimoVisto = chatUltimoAjeno;
+    pintarBotonChat();
+    if (va) {
+        const lista = document.getElementById("chat-messages");
+        lista.scrollTop = lista.scrollHeight;
+        document.getElementById("chat-input").focus({ preventScroll: true });
+    }
+}
+
+function pintarBotonChat() {
+    const btn = document.getElementById("presentacion-chat-btn");
+    const abierto = document.documentElement.classList.contains("chat-flotante");
+    const nuevo = !abierto && chatUltimoAjeno !== null && chatUltimoAjeno !== chatUltimoVisto;
+    btn.lastChild.textContent = abierto ? "Cerrar el chat" : (nuevo ? "Tu profe te respondió" : "Preguntar al profe");
+    btn.classList.toggle("chat-con-nuevo", nuevo);
+}
+
+document.addEventListener("chat-clase-pintado", (e) => {
+    const d = e.detail || {};
+    if (!d.ajeno) { if (chatUltimoAjeno === null) chatUltimoVisto = null; return; }
+    // Lo que ya estaba al entrar no es nuevo: solo lo que llega después.
+    if (chatUltimoAjeno === null) chatUltimoVisto = d.id;
+    chatUltimoAjeno = d.id;
+    if (document.documentElement.classList.contains("chat-flotante")) chatUltimoVisto = d.id;
+    pintarBotonChat();
+});
 
 function cambiarPantallaCompletaTodos() {
     if (!presentacionActual) return;
@@ -951,6 +997,14 @@ document.getElementById("presentacion-siguiente").addEventListener("click", () =
 document.getElementById("presentacion-quitar").addEventListener("click", () => mostrarPresentacion(null));
 document.getElementById("presentacion-limpia").addEventListener("click", cambiarVistaLimpia);
 document.getElementById("presentacion-completa-todos").addEventListener("click", cambiarPantallaCompletaTodos);
+document.getElementById("presentacion-chat-btn").addEventListener("click", () =>
+    ponerChatFlotante(!document.documentElement.classList.contains("chat-flotante")));
+document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && document.documentElement.classList.contains("chat-flotante")) {
+        ponerChatFlotante(false);
+        document.getElementById("presentacion-chat-btn").focus();
+    }
+});
 document.getElementById("presentacion-caja").addEventListener("keydown", (e) => {
     if (!presentacionEsDelProfe() || document.fullscreenElement !== e.currentTarget) return;
     if (e.key === "ArrowRight" || e.key === "PageDown") { e.preventDefault(); pasarDiapositiva(1); }
