@@ -496,6 +496,13 @@
     }
   }
 
+  /* En la clase en vivo, el profe manda otro nivel cambiando solo el
+     fragmento (#torre/3): el marco no se recarga, así que se escucha. */
+  window.addEventListener("hashchange", () => {
+    const d = desdeElEnlace();
+    if (d && !$("app").classList.contains("hidden")) abrirEtapa(d.i, d.n, d.n == null);
+  });
+
   async function requireLoginThenGate() {
     let hay = false;
     try { const { data } = await sb.auth.getSession(); hay = !!(data && data.session); } catch (e) { hay = false; }

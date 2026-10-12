@@ -130,6 +130,14 @@ const estado = (page) => page.textContent("#aj-estado");
     cierto("«Te7» escrito gana el nivel", /Nivel terminado/.test(t3), t3);
     await page.context().close();
 
+    console.log("La clase en vivo cambia de nivel con el fragmento");
+    ({ page } = await abrir(browser, "#torre/1"));
+    await page.evaluate(() => { location.hash = "caballo/2"; });
+    await page.waitForTimeout(300);
+    cierto("#caballo/2 abre ese nivel sin recargar", /El caballo/.test(await page.textContent("#etapa-titulo"))
+      && (await page.getAttribute('#aj-niveles [aria-current="step"]', "aria-label") || "").startsWith("Nivel 2"));
+    await page.context().close();
+
     console.log("Captura al paso: el rival empieza");
     ({ page } = await abrir(browser, "#al-paso/1"));
     await page.waitForTimeout(1400);
