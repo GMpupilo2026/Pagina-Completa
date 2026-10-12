@@ -3299,11 +3299,17 @@ al tablero que sigue en vivo. Código en `js/clase-presentacion.js`.
 
 - **«Las del curso»** (`LISTA`): imágenes y `diapositivas.json` en
   `cursos/recursos/<curso>/presentaciones/<clase>/`, detrás del candado del
-  worker; `deck` = `"<curso>/<clase>"`. De Formación Ajedrez están las siete
-  sesiones virtuales: la Clase 1 es la presentación propia del profe (34
-  láminas, transcritas a mano) y las sesiones 2 a 7 las arma
+  worker; `deck` = `"<curso>/<clase>"`. De Formación Ajedrez están las seis
+  sesiones virtuales: la Clase 1 es la presentación propia del profe (46
+  láminas, transcritas a mano) y las sesiones 2 a 6 las arma
   `herramientas/curso-generar-formacion.py` con el mismo `.pptx` que se baja
-  del curso (ver «Las presentaciones de Formación Ajedrez» abajo).
+  del curso (ver «Las presentaciones de Formación Ajedrez» abajo). Las láminas
+  de la Clase 1 son imágenes: si cambia un dato que la lámina dice (horas,
+  minutos, cantidad de sesiones), hay que rehacer la imagen además del
+  `texto`, o se ve una cosa y se lee otra. Así se rehicieron el mapa del
+  curso, el cronograma, los dos recesos, la práctica y la tarea cuando el curso
+  pasó a 6 sesiones virtuales de 4 horas, y se sumaron las 12 láminas visibles
+  del PowerPoint del profe sobre el papel del árbitro y la planilla.
 - **«Las tuyas»**: sube un PDF desde el mismo panel (PowerPoint y Google Slides
   lo exportan; un `.pptx` no, porque el navegador no sabe dibujarlo). pdf.js —el
   mismo de «📄 PDF»— dibuja cada página a 1600 px y se guarda en WebP (JPG si el
@@ -3476,7 +3482,7 @@ PyMuPDF (cada página a 1600 px de ancho, WebP calidad 80).
 
 #### Las presentaciones de Formación Ajedrez
 
-Las sesiones 2 a 7 no se transcriben a mano: `presentacion()` de
+Las sesiones 2 a 6 no se transcriben a mano: `presentacion()` de
 `herramientas/curso-generar-formacion.py` arma el `.pptx` de cada sesión desde
 el JSON del curso con el estilo de la Clase 1 del profe (franja azul, letra
 grande, una idea por diapositiva), y `presentacion_de_clase()` lo pasa a
