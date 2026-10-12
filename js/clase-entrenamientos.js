@@ -372,6 +372,19 @@ function pintarEntrenos() {
         body.appendChild(cajaQueLoAbran(t, null));
     }
     if (!ad) {
+        // Las que se abren ya jugando un modo (Coordenadas): un botón por modo.
+        const h = herramientasDelSitio().find((x) => x.slug === t.slug);
+        if (h && Array.isArray(h.rondasClase) && h.rondasClase.length) {
+            const fila = document.createElement("div");
+            fila.className = "flex flex-wrap items-center gap-1.5 mt-2";
+            const dice = document.createElement("p");
+            dice.className = "w-full text-xs text-brand-600 dark:text-brand-300";
+            dice.textContent = "O que lo empiecen ya, en un modo:";
+            fila.appendChild(dice);
+            h.rondasClase.forEach(([id, nombre]) => fila.appendChild(entrenoBoton("🪟 " + nombre, () => pedirQueLoAbran(t.slug, id), false,
+                "A cada alumno se le abre «" + t.label + "» ya jugando: " + nombre)));
+            body.appendChild(fila);
+        }
         const p = document.createElement("p");
         p.className = "text-xs text-brand-450 dark:text-brand-350 mt-2";
         p.textContent = "Este entrenamiento tiene su propio tablero: con «Abrirlo a todos en una ventana», a cada alumno se le abre encima de la clase, como la práctica contra el motor. Cuando termines, «Cerrar la ventana a todos».";

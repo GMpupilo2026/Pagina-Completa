@@ -377,6 +377,15 @@ async function coordenadas(browser) {
     (ProgresoUsuario.claves().find((c) => c.clave === "entreno_coord_casillas_v1") || {}).fusion), "maxPorClave");
   sinErrores(errores, "coordenadas");
   await ctx.close();
+
+  /* «?ronda=mode10» (lo pide la clase en vivo): arranca ya, en ese modo, sin la
+     portada ni el «Empezar». */
+  const u = await doble.abrir(browser, "/entreno/coordenadas.html?ronda=mode10", {});
+  await u.page.waitForFunction(() => typeof playing !== "undefined" && playing, null, { timeout: 20000 });
+  igual("?ronda=mode10 arranca jugando en «10 s por casilla»", await u.page.evaluate(() =>
+    [modeSetting, perSquareLimit > 0, getComputedStyle(document.getElementById("start-screen")).display]), ["mode10", true, "none"]);
+  sinErrores(u.errores, "coordenadas pedida");
+  await u.ctx.close();
 }
 
 /* En las tácticas, cualquier jugada que cumpla el motivo es buena

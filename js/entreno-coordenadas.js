@@ -503,6 +503,13 @@ document.getElementById('again-btn').addEventListener('click', startRound);
 function initApp(){
   document.getElementById('start-screen').style.display = 'block';
   renderBestLine();
+  /* «?ronda=mode10»: lo pide la clase en vivo, que se la abre a cada alumno en
+     una ventana. Arranca ya con ese modo: antes se abría la portada y cada uno
+     tenía que elegir el modo y apretar «Empezar», mientras el profe esperaba. */
+  let pedida = null;
+  try{ pedida = new URLSearchParams(location.search).get('ronda'); }catch(e){ pedida = null; }
+  const boton = pedida && MODES[pedida] ? document.querySelector('#mode-switch .option-btn[data-value="' + pedida + '"]') : null;
+  if(boton){ boton.click(); startRound(); }
 }
 
 // Entrenamiento exige sesión iniciada en el sitio (Academia) — así el

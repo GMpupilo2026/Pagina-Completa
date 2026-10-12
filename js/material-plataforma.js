@@ -72,7 +72,11 @@ window.MaterialPlataforma = (function () {
 
     { slug: "coordenadas", label: "Coordenadas", href: "entreno/coordenadas.html",
       actividades: ["coordenadas"], metas: ["minutos", "cantidad"],
-      unidad: "rondas" },
+      unidad: "rondas",
+      /* La clase en vivo la abre ya jugando un modo (js/clase-entrenamientos.js):
+         uno por botón, con el nombre que tiene en la página. */
+      rondasClase: [["classic", "Clásico: 30 segundos"], ["mode10", "10 segundos por casilla"], ["mode3", "3 segundos por casilla"]],
+      hrefRecorte: (c) => `entreno/coordenadas.html?ronda=${encodeURIComponent(c)}` },
 
     /* Desafíos apunta sus series como 'practicar', igual que Practicar: por
        cantidad no se podrían distinguir las unas de las otras, así que solo

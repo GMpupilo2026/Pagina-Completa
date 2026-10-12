@@ -3668,6 +3668,12 @@ mostrarlo para explicarlo, preguntarlo a la clase y que lo practiquen.
   las rechazaba. El generador ya no las acepta (`--solo construye` rehace ese
   banco sin motor) y `verificar-tipos.js` revisa todas las posiciones con
   `PosicionValida`.
+- **Coordenadas se abre ya jugando un modo.** No tiene banco (sortea las 64
+  casillas, pesando las que cuestan), así que no le faltaba nada; pero en la
+  clase solo se podía abrir la portada, y cada alumno tenía que elegir el modo
+  y apretar «Empezar». Ahora hay un botón por modo (`rondasClase` en
+  `MaterialPlataforma`) y `entreno/coordenadas.html?ronda=mode10` arranca la
+  ronda en ese modo.
 - **Una lección de Aprender con varias posiciones va una por posición.**
   «¿Jaque mate o ahogado?» tiene dos y la clase solo tomaba la primera (el
   mate): el ahogado no se veía nunca. Cada una va como pregunta de opciones

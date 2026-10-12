@@ -279,6 +279,13 @@ async function pruebaDelProfe(browser) {
   await page.evaluate(() => { entrenosView = { slug: null, grupo: null, mostrar: 30 }; pintarEntrenos(); });
   igual("Habilidades se esconde al volver", await seVe(page, "#tipos-body"), false);
   await page.click('#entrenos-body [data-entreno="coordenadas"]');
+  // Un botón por modo: a cada alumno se le abre ya jugando ese.
+  await page.locator("#entrenos-body").getByRole("button", { name: "10 segundos por casilla" }).click();
+  const conModo = await page.evaluate(() => window.__tracks.slice(-1)[0].entreno);
+  igual("Coordenadas: el botón de un modo pide ese modo, y el enlace arranca jugando", [conModo.slug, conModo.recorte,
+    await page.evaluate(() => EntrenosClase.enlaceDe(herramientasDelSitio(), "coordenadas", "mode10").href)],
+    ["coordenadas", "mode10", "entreno/coordenadas.html?ronda=mode10"]);
+  await page.click("#entreno-pedido-quitar");
   await page.locator("#entrenos-body").getByRole("button", { name: "Abrirlo a todos en una ventana" }).click();
   const meta = await page.evaluate(() => window.__tracks.slice(-1)[0].entreno);
   igual("«Abrirlo a todos» va en la presencia del profe: el slug, no la dirección", [meta.slug, meta.href], ["coordenadas", undefined]);
