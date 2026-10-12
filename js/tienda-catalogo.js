@@ -189,7 +189,7 @@ window.TiendaCatalogo = (function () {
       gancho: "Para quien quiere formar a quien va a dar la clase.",
       resumen: "Encuadre, reglas de competición, normativa, emparejamientos y un torneo real como evaluación. El curso con el que se arma un equipo docente.",
       carpeta: "cursos/recursos/formacion-ajedrez",
-      piezas: { cuadernillos: 7, ejercicios: 7, presentaciones: 7, accesibles: 0 },
+      piezas: { cuadernillos: 6, ejercicios: 6, presentaciones: 6, accesibles: 0 },
     },
     {
       id: "arbitro-nacional",
