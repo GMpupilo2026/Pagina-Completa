@@ -226,6 +226,14 @@ async function pruebaDelProfe(browser) {
     return [grupos.reduce((n, g) => n + g.items.length, 0), window.AperturasLineas.LINEAS.length];
   });
   igual("Aperturas: todas las líneas (aperturas y celadas)", aperturas[0], aperturas[1]);
+  // Estudio y Precisión posicional: cada ficha y cada posición del banco, en su grupo.
+  const otros = await page.evaluate(async () => {
+    const est = await ADAPTADORES_ENTRENO.estudio.cargar();
+    const pp = await ADAPTADORES_ENTRENO["precision-posicional"].cargar();
+    const n = (g) => g.reduce((k, x) => k + x.items.length, 0);
+    return [[n(est), window.FichasEstudio.FICHAS.length], [n(pp), window.PRECISION_POSICIONAL_ITEMS.length]];
+  });
+  igual("Estudio y Precisión posicional: todas las fichas y todas las posiciones", otros.map(([a, b]) => a === b && b > 0), [true, true]);
 
   // La vista previa y el guion (solo el profe).
   await page.evaluate(() => { activateTeacherTab("tipos"); entrenosView = { slug: "mates", grupo: "mate1", mostrar: 30 }; pintarEntrenos(); });
