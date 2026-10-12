@@ -143,15 +143,26 @@ const ADAPTADORES_ENTRENO = {
             const d = await bajarJsonEntreno("entreno/data/desafios.json");
             return (d.categories || []).map((c) => {
                 const todos = (d.challenges || []).filter((x) => x.cat === c.id);
-                // Los que no tienen los dos reyes no van al tablero de la clase (ni los juega chess.js).
-                const items = todos.filter((x) => TandaCalentamiento.tieneLosDosReyes(x.fen)).map((x) => ({
-                    id: "desafio-" + x.n, titulo: x.n + ". " + x.text, fen: x.fen, solucion: x.solution.san, prompt: x.text, elo: 1100,
-                    guion: [x.text, "La solución: " + x.solution.san.join(" ") + ".", x.solution.explain].filter(Boolean),
-                }));
-                const fuera = todos.length - items.length;
-                return { id: c.id, emoji: c.emoji, titulo: c.title, desc: c.desc + " · " + items.length + " para la clase"
-                    + (fuera ? " (" + fuera + " sin los dos reyes se hacen en la página)" : ""),
-                    items, practica: items.length >= 5 ? { tanda: { banco: "desafios", filtro: "cat:" + c.id, titulo: "Desafíos: " + c.title } } : { enlace: null } };
+                /* Van TODOS, numerados dentro de su tema (el «n» del archivo es el del
+                   cuaderno entero: con él, «Carrera a la coronación» empezaba en el 73).
+                   Los que no tienen los dos reyes —casi todas las carreras de peones— no
+                   van al tablero de la clase: chess.js los carga, pero rompen a Stockfish
+                   para el resto de la sesión. Se ven, se explican con su guion y se
+                   abren en la página de Desafíos, que tiene su propio motor. */
+                const items = todos.map((x, i) => {
+                    const conReyes = TandaCalentamiento.tieneLosDosReyes(x.fen);
+                    const guion = [x.text, "La solución: " + x.solution.san.join(" ") + ".", x.solution.explain].filter(Boolean);
+                    const titulo = (i + 1) + ". " + x.text;
+                    if (!conReyes) return { id: "desafio-" + x.n, titulo, fen: x.fen, soloVer: true, guion,
+                        nota: "Sin los dos reyes: no va al tablero de la clase. Se hace en la página de Desafíos.",
+                        practica: { enlace: c.id } };
+                    return { id: "desafio-" + x.n, titulo, fen: x.fen, solucion: x.solution.san, prompt: x.text, elo: 1100, guion };
+                });
+                const enClase = items.filter((x) => !x.soloVer).length;
+                const fuera = items.length - enClase;
+                return { id: c.id, emoji: c.emoji, titulo: c.title, desc: c.desc + " · " + items.length + " ejercicios"
+                    + (fuera ? ", " + enClase + " van al tablero de la clase" : ""),
+                    items, practica: enClase >= 5 ? { tanda: { banco: "desafios", filtro: "cat:" + c.id, titulo: "Desafíos: " + c.title } } : { enlace: null } };
             });
         },
     },
@@ -163,10 +174,19 @@ const ADAPTADORES_ENTRENO = {
             const niveles = [["l1", "Visualiza 1 jugada por delante"], ["l2", "Visualiza 2 jugadas"], ["l3", "Visualiza 3 jugadas"], ["l4", "Visualiza 4 jugadas"], ["l5", "Visualiza 5 jugadas o más"]];
             return niveles.map(([id, titulo], k) => {
                 const sub = TandaCalentamiento.filtrar(d.puzzles, "largo:" + id);
-                const items = Object.keys(sub).sort((a, b) => sub[a].rating - sub[b].rating).map((pid, i) => ({
-                    id: pid, titulo: (i + 1) + ". ELO " + sub[pid].rating + " · " + Math.ceil(sub[pid].solution.length / 2) + " jugadas tuyas",
-                    fen: sub[pid].fen, solucion: sub[pid].solution, elo: sub[pid].rating, guion: ["La línea: " + sub[pid].solution.join(" ") + "."],
-                }));
+                /* De fácil a difícil, como en su página (js/entreno-visualizacion.js): los
+                   de táctica de la casa no traen rating y van al final, con el id de
+                   desempate. Restar un rating que no está da NaN: quedaban metidos en
+                   cualquier lugar de la lista, con el rótulo «ELO undefined». */
+                const r = (pid) => (typeof sub[pid].rating === "number" ? sub[pid].rating : Infinity);
+                const centro = TandaCalentamiento.eloDe(sub);
+                const items = Object.keys(sub).sort((a, b) => (r(a) - r(b)) || (a < b ? -1 : a > b ? 1 : 0)).map((pid, i) => {
+                    const conRating = typeof sub[pid].rating === "number";
+                    return {
+                        id: pid, titulo: (i + 1) + ". " + (conRating ? "ELO " + sub[pid].rating : "Sin ELO") + " · " + Math.ceil(sub[pid].solution.length / 2) + " jugadas tuyas",
+                        fen: sub[pid].fen, solucion: sub[pid].solution, elo: conRating ? sub[pid].rating : centro, guion: ["La línea: " + sub[pid].solution.join(" ") + "."],
+                    };
+                });
                 return { id, titulo: "Nivel " + (k + 1) + ": " + titulo, desc: items.length + " ejercicios", items,
                     practica: { tanda: { banco: "temas", filtro: "largo:" + id, titulo: "Visualización, nivel " + (k + 1) } } };
             });
@@ -265,8 +285,20 @@ const ADAPTADORES_ENTRENO = {
             await cargarScriptEntreno("js/aprender-lecciones.js", "AprenderLecciones");
             const L = window.AprenderLecciones;
             return L.CATEGORY_ORDER.filter((c) => L.LESSONS.some((l) => l.cat === c)).map((c) => {
-                const items = L.LESSONS.filter((l) => l.cat === c).map((l) => {
-                    const fen = l.fen || (l.rounds && l.rounds[0] && l.rounds[0].fen) || null;
+                const items = L.LESSONS.filter((l) => l.cat === c).flatMap((l) => {
+                    /* Una lección de varias posiciones («¿Jaque mate o ahogado?») va una
+                       por posición, como pregunta de opciones: antes solo iba la primera,
+                       y el ahogado no se veía nunca en la clase. */
+                    if (l.type === "quiz" && Array.isArray(l.rounds) && l.rounds.length) {
+                        const OPCIONES = { mate: "Jaque mate", ahogado: "Ahogado" };
+                        const claves = Object.keys(OPCIONES);
+                        return l.rounds.map((r, k) => ({
+                            id: l.id + "-" + (k + 1), titulo: l.title + " (" + (k + 1) + " de " + l.rounds.length + ")", fen: r.fen,
+                            prompt: l.title, opciones: claves.map((x) => OPCIONES[x]), correcta: claves.indexOf(r.answer), elo: 600,
+                            guion: [l.text, "La respuesta: " + (OPCIONES[r.answer] || r.answer) + "."],
+                        }));
+                    }
+                    const fen = l.fen || null;
                     const san = l.type === "move" && l.solution ? EntrenosClase.sanDe(l.fen, l.solution.from, l.solution.to, l.solution.promotion) : null;
                     return { id: l.id, titulo: l.title, fen, solucion: san ? [san] : null, prompt: l.type === "move" ? l.text : null, elo: 600,
                         guion: [l.text].concat(san ? ["La jugada: " + san + "."] : []).concat(l.targets ? ["Las casillas: " + l.targets.join(", ") + "."] : []) };
@@ -482,12 +514,12 @@ function filaDeEntreno(t, item) {
         const fb = entrenoBoton("📸 Mostrar " + item.foto + " s y ocultar", () => tiposFotografia({ fen: item.fen }, item.foto, fb), true,
             "La clase ve la posición y después las piezas desaparecen de todos los tableros");
         acciones.appendChild(fb);
-    } else if (item.fen) {
+    } else if (item.fen && !item.soloVer) {
         acciones.appendChild(entrenoBoton("📥 Al tablero", () => aplicarPosicionEnClase(item.fen,
             item.linea ? "Posición inicial en el tablero: juega la línea con la clase (la tienes en «Guion»)." : "Posición en el tablero de la clase: explícala."),
         true, "La posición le llega a todos, para explicarla"));
     }
-    const fenPregunta = item.fenClave || item.fen;
+    const fenPregunta = item.soloVer ? null : item.fenClave || item.fen;
     if (item.opciones && fenPregunta) {
         acciones.appendChild(entrenoBoton("❓ Preguntar", () => preguntarDeOpcionesEntreno(item), false, "Una pregunta de opciones: la base la califica sola"));
     } else if (item.solucion && fenPregunta) {
@@ -515,6 +547,12 @@ function filaDeEntreno(t, item) {
         acciones.appendChild(g);
     }
     li.appendChild(acciones);
+    if (item.nota) {
+        const n = document.createElement("p");
+        n.className = "text-xs text-brand-450 dark:text-brand-350 mt-1.5";
+        n.textContent = item.nota;
+        li.appendChild(n);
+    }
     const caja = document.createElement("div");
     caja.hidden = true;
     caja.className = "text-xs text-brand-700 dark:text-brand-200 bg-white dark:bg-brand-900 rounded-lg p-2 mt-2 space-y-1";

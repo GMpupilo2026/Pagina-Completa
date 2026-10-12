@@ -100,6 +100,13 @@ async function pruebaDelProfe(browser) {
       for (const g of grupos) for (const it of g.items) {
         out.ejercicios += 1;
         if (!it.fen) { out.malos.push(slug + "/" + it.id + ": sin posición"); continue; }
+        if (it.soloVer) {
+          // Solo se ve: tiene que ser de verdad una que el tablero de la clase no acepta,
+          // y no traer nada que la mande ahí.
+          if (!motivoPosicionInvalida(it.fen)) out.malos.push(slug + "/" + it.id + ": la posición es válida y no va al tablero");
+          if (it.solucion || it.opciones) out.malos.push(slug + "/" + it.id + ": solo se ve, pero trae para preguntarla");
+          continue;
+        }
         if (!it.foto) {
           const m = motivoPosicionInvalida(it.fen);
           if (m) { out.malos.push(slug + "/" + it.id + ": " + m); continue; }
@@ -132,6 +139,77 @@ async function pruebaDelProfe(browser) {
   await page.waitForFunction(() => window.__inserts.some((i) => i.tabla === "questions"), null, { timeout: 5000 });
   const q = await page.evaluate(() => window.__inserts.filter((i) => i.tabla === "questions").slice(-1)[0].fila);
   igual("«Preguntar» crea la pregunta con su posición y las jugadas del alumno (mate en 2: 2)", [q.fen, q.expected_plies], [primero.fen, 2]);
+
+  /* Desafíos: van TODOS, numerados desde el 1 dentro de su tema. Antes solo los que
+     tenían los dos reyes, con el número del cuaderno entero: «Carrera a la
+     coronación» mostraba 4 de 42 y empezaba en el 73. */
+  const desafios = JSON.parse(fs.readFileSync(path.join(RAIZ, "entreno", "data", "desafios.json"), "utf8"));
+  const deCoronacion = desafios.challenges.filter((x) => x.cat === "promocion").length;
+  await page.evaluate(() => { activateTeacherTab("tipos"); entrenosView = { slug: "desafios", grupo: "promocion", mostrar: 100 }; pintarEntrenos(); });
+  await page.waitForSelector("#entrenos-body li");
+  const filasDesafio = await page.$$eval("#entrenos-body li", (l) => l.map((x) => ({
+    titulo: x.querySelector("p").textContent,
+    botones: [...x.querySelectorAll("button")].map((b) => b.textContent),
+  })));
+  igual("Desafíos → Carrera a la coronación: están todos", [filasDesafio.length, deCoronacion > 4], [deCoronacion, true]);
+  // Y lo mismo en cada tema: todos los del archivo, del 1 al último, sin saltos.
+  const porTema = await page.evaluate(async () => (await ADAPTADORES_ENTRENO.desafios.cargar())
+    .map((g) => [g.id, g.items.length, g.items.map((it) => it.titulo.split(".")[0]).join(",")]));
+  igual("Desafíos: cada tema con todos sus ejercicios, numerados del 1 sin saltos",
+    porTema, desafios.categories.map((c) => {
+      const n = desafios.challenges.filter((x) => x.cat === c.id).length;
+      return [c.id, n, Array.from({ length: n }, (_, i) => String(i + 1)).join(",")];
+    }));
+  igual("numerados desde el 1", filasDesafio.slice(0, 2).map((f) => f.titulo.split(".")[0]), ["1", "2"]);
+  const sinReyes = filasDesafio.filter((f) => !f.botones.some((b) => /Al tablero/.test(b)));
+  igual("los que no tienen reyes: vista previa, ventana y guion, sin tablero ni pregunta",
+    [sinReyes.length > 0, sinReyes.every((f) => f.botones.some((b) => /Vista previa/.test(b)) && f.botones.some((b) => /Que la practiquen/.test(b))
+      && f.botones.some((b) => /Guion/.test(b)) && !f.botones.some((b) => /Preguntar|Calentamiento/.test(b)))], [true, true]);
+  const k = filasDesafio.findIndex((f) => !f.botones.some((b) => /Al tablero/.test(b)));
+  await page.locator("#entrenos-body li").nth(k).getByRole("button", { name: "Vista previa" }).click();
+  await page.waitForFunction((k) => document.querySelectorAll("#entrenos-body li")[k].querySelector(".example-board"), k, { timeout: 5000 });
+  igual("la vista previa de uno sin reyes dibuja el tablero", true, true);
+
+  /* Aprender: «¿Jaque mate o ahogado?» tiene dos posiciones y en la clase solo iba
+     la primera. Van las dos, como pregunta de opciones, y la respuesta la confirma
+     chess.js (la correcta es mate si hay mate, ahogado si hay ahogado). */
+  const quiz = await page.evaluate(async () => {
+    const grupos = await ADAPTADORES_ENTRENO.aprender.cargar();
+    const lecciones = window.AprenderLecciones.LESSONS;
+    const enClase = grupos.flatMap((g) => g.items);
+    const rondas = lecciones.reduce((n, l) => n + (l.type === "quiz" ? l.rounds.length : 1), 0);
+    const malos = enClase.filter((it) => it.opciones).filter((it) => {
+      const g = new Chess(it.fen);
+      const debe = g.in_checkmate() ? "Jaque mate" : g.in_stalemate() ? "Ahogado" : null;
+      return !debe || it.opciones[it.correcta] !== debe;
+    }).map((it) => it.id);
+    return [enClase.length === rondas, enClase.filter((it) => it.opciones).length, malos];
+  });
+  igual("Aprender: cada posición de cada lección, y las de mate o ahogado bien contestadas", quiz, [true, 2, []]);
+
+  /* Visualización: los de táctica de la casa no traen rating. Antes salían «ELO
+     undefined», metidos en cualquier lugar (restar undefined da NaN). Van al
+     final, como en su página, y cada nivel trae todos los de su largo. */
+  const vis = await page.evaluate(async () => {
+    const grupos = await ADAPTADORES_ENTRENO.visualizacion.cargar();
+    const datos = await temasParaEntrenos();
+    return grupos.map((g) => {
+      const elos = g.items.map((it) => it.elo);
+      const conRating = g.items.filter((it) => /^\d+\. ELO \d+/.test(it.titulo)).map((it) => it.elo);
+      const primerSin = g.items.findIndex((it) => /Sin ELO/.test(it.titulo));
+      return [g.id,
+        g.items.length === Object.keys(TandaCalentamiento.filtrar(datos.puzzles, "largo:" + g.id)).length,
+        g.items.some((it) => /undefined|NaN/.test(it.titulo)) || elos.some((e) => typeof e !== "number" || !isFinite(e)),
+        conRating.every((e, i) => !i || conRating[i - 1] <= e),
+        primerSin === -1 || g.items.slice(primerSin).every((it) => /Sin ELO/.test(it.titulo))];
+    });
+  });
+  igual("Visualización: todos, de fácil a difícil, los sin rating al final y sin «undefined»",
+    vis, ["l1", "l2", "l3", "l4", "l5"].map((id) => [id, true, false, true, true]));
+  // Finales: los del archivo, todos.
+  const finales = await page.evaluate(async () => (await ADAPTADORES_ENTRENO.finales.cargar())[0].items.length);
+  igual("Finales: están todos los del archivo", finales,
+    JSON.parse(fs.readFileSync(path.join(RAIZ, "entreno", "data", "finales.json"), "utf8")).finales.length);
 
   // La vista previa y el guion (solo el profe).
   await page.evaluate(() => { activateTeacherTab("tipos"); entrenosView = { slug: "mates", grupo: "mate1", mostrar: 30 }; pintarEntrenos(); });

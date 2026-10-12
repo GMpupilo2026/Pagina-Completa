@@ -3631,8 +3631,27 @@ mostrarlo para explicarlo, preguntarlo a la clase y que lo practiquen.
 - **Ninguna posición se inventa ni se cuela una inválida.** El verificador
   carga TODOS los ejercicios de todos los adaptadores (más de 3000) y
   comprueba que el tablero de la clase acepta cada posición y que cada
-  solución se juega con chess.js (las de Mates, hasta el mate). De Desafíos
-  solo van los que tienen los dos reyes: los otros se hacen en su página.
+  solución se juega con chess.js (las de Mates, hasta el mate).
+- **De Desafíos van TODOS, numerados desde el 1 dentro de su tema.** Antes
+  solo iban los que tenían los dos reyes, con el número del cuaderno entero:
+  «Carrera a la coronación» mostraba 4 de 42 y empezaba en el 73, y el profe
+  creía que faltaban ejercicios (faltaban). Los que no tienen los dos reyes
+  —casi todas las carreras de peones— llevan `soloVer`: vista previa, guion y
+  «🪟 Que la practiquen» (la página de Desafíos, con su propio motor), pero ni
+  «Al tablero» ni «Preguntar» ni «Calentamiento», porque rompen a Stockfish.
+  No se les agregan reyes: eso sería inventar otra posición. El verificador
+  comprueba que todo `soloVer` sea de verdad una posición que el tablero no
+  acepta.
+- **Una lección de Aprender con varias posiciones va una por posición.**
+  «¿Jaque mate o ahogado?» tiene dos y la clase solo tomaba la primera (el
+  mate): el ahogado no se veía nunca. Cada una va como pregunta de opciones
+  («Jaque mate» / «Ahogado»), y el verificador confirma la respuesta con
+  chess.js.
+- **Visualización ordena como su página**: de fácil a difícil, y los de
+  táctica de la casa —que no traen rating— al final, con «Sin ELO» y el
+  centro del nivel como dificultad de la pregunta. Antes salían «ELO
+  undefined», metidos en cualquier lugar (restar un rating que no está da
+  NaN).
 - **«🪟 Abrirlo a todos en una ventana» no manda una dirección**: manda el
   slug (y el recorte) en la presencia del profe, como la Fotografía, y cada
   alumno arma el enlace con la lista del sitio (`EntrenosClase.enlaceDe`).
