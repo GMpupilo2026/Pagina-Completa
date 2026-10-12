@@ -3305,8 +3305,9 @@ al tablero que sigue en vivo. Código en `js/clase-presentacion.js`.
   `herramientas/curso-generar-formacion.py` con el mismo `.pptx` que se baja
   del curso (ver «Las presentaciones de Formación Ajedrez» abajo). Las láminas
   de la Clase 1 son imágenes: si cambia un dato que la lámina dice (horas,
-  minutos, cantidad de sesiones), hay que rehacer la imagen además del
-  `texto`, o se ve una cosa y se lee otra. Así se rehicieron el mapa del
+  minutos, cantidad de sesiones), hay que volver a dibujarla además de
+  cambiar el `texto`, o se ve una cosa y se lee otra (hoy las dibuja un script:
+  ver «Las láminas dicen poco»). Así se rehicieron el mapa del
   curso, el cronograma, los dos recesos, la práctica y la tarea cuando el curso
   pasó a 6 sesiones virtuales de 4 horas, y se sumaron las 12 láminas visibles
   del PowerPoint del profe sobre el papel del árbitro y la planilla.
@@ -3587,7 +3588,31 @@ son la misma, y cambian juntas al volver a generar.
   que usa las piezas del sitio— y sus respuestas, el quiz y sus respuestas, y
   la tarea.
 - La Clase 1 lleva `"presentacion_clase": "propia"` en el JSON: el generador no
-  la toca.
+  la toca. Sus láminas las dibuja `herramientas/formacion-laminas.js` (ver
+  «Las láminas dicen poco»).
+
+#### Las láminas dicen poco
+
+Las láminas de la Clase 1 eran imágenes hechas a mano con casi todo lo que el
+profe decía escrito: 88 palabras de promedio, 40 de 46 por encima de 60. En un
+proyector no se leían, y quien las leía no escuchaba. Se rehicieron con una
+idea por lámina, dibujos en vez de frases y el detalle en las `notas`:
+
+- **Lo que se ve** está en `herramientas/datos/formacion-laminas-clase-01.js`,
+  una entrada por lámina, y lo dibuja `node herramientas/formacion-laminas.js
+  clase-01` (HTML a 1600 × 900, sacado en WebP con Chromium). El título sale
+  del `titulo` del JSON y los tableros, de sus `posiciones`: no hay una
+  segunda copia que se separe de lo que se dice en voz o se manda al tablero.
+- **Lo que sale de la lámina va a las `notas`** (solo las ve el profe), y el
+  `texto` sigue con la transcripción completa, para el Modo Adaptado y la voz.
+- Una lámina sigue siendo la misma lámina: se mantienen las 46 y su número,
+  porque la clase en vivo y su verificador las nombran por número.
+- Las marcas de color (verde, rojo, ámbar, azul) llevan siempre su palabra y
+  su signo (✓, ✗, =, →); los colores de texto se midieron contra su fondo.
+- `verificar-formacion-laminas.js` cuenta las palabras que se ven (tope 65; 90
+  una tabla), que cada tablero tenga su posición y que las imágenes estén al
+  día: el generador deja una huella de los datos, del generador y del JSON, y
+  si alguien cambia una lámina sin volver a dibujarla, falla.
 - Hace falta LibreOffice y PyMuPDF; sin ellos se avisa y el resto del curso se
   genera igual. `verificar-formacion.js` revisa que cada sesión virtual tenga
   su presentación de clase, que se ofrezca en la clase, que traiga los casos

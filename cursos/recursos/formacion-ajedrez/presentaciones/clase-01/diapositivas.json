@@ -31,6 +31,7 @@
   {
    "titulo": "Prólogo",
    "texto": "Prólogo de las Leyes del Ajedrez. Las Leyes del Ajedrez no pueden abarcar todas las situaciones posibles que pueden surgir durante una partida, así como tampoco pueden regular todas las cuestiones administrativas. En los casos no regulados con precisión por un artículo de las Leyes, debería ser posible llegar a una decisión correcta estudiando situaciones análogas examinadas en las mismas. Las Leyes presuponen que los árbitros tienen la competencia, recto juicio y absoluta objetividad necesarios para ello. Una reglamentación excesivamente detallada podría privar al árbitro de su libertad de criterio e impedirle hallar la solución a un problema, guiada por la ecuanimidad, la lógica y la consideración de factores especiales.",
+   "notas": "Las Leyes presuponen árbitros con competencia, recto juicio y absoluta objetividad: una reglamentación excesiva les quitaría la libertad de criterio.",
    "imagen": "06.webp"
   },
   {
@@ -56,11 +57,13 @@
   {
    "titulo": "Imparcialidad, árbitro principal y adjuntos",
    "texto": "Imparcialidad absoluta: no favorecer centros educativos, regiones ni estudiantes; no arbitrar partidas del propio centro (si es evitable) ni conversar con entrenadores durante la ronda. El equipo arbitral (12.4): el árbitro principal dirige el torneo, resuelve los casos difíciles y firma los resultados; los adjuntos vigilan sectores, resuelven casos sencillos y consultan al principal ante dudas. El entorno (12.7): el público y otros jugadores no pueden intervenir; si alguien observa una irregularidad, solo puede informar al árbitro, que puede expulsar a quien interfiera.",
+   "notas": "No arbitrar partidas del propio centro (si se puede evitar) ni conversar con entrenadores durante la ronda. El principal firma los resultados; los adjuntos resuelven los casos sencillos y le consultan las dudas. El árbitro puede expulsar a quien interfiera (12.7).",
    "imagen": "11.webp"
   },
   {
    "titulo": "Tabla «Puede / No debe»",
    "texto": "Los límites de la intervención durante la partida. Puede (y debe): explicar el significado de una regla si se lo piden (11.9), sin decir sí o no sobre la posición actual; detener los relojes para resolver reclamaciones; intervenir de inmediato ante jugadas ilegales o pieza tocada, sin esperar reclamación (4.8 y 7.5); pedir silencio y ordenar el área. No debe: señalar jaque, mate o ahogado (12.6); indicar cuántas jugadas se han hecho, salvo si ya cayó una bandera (12.6 y 8.5); avisar que el rival jugó o que no presionó el reloj (12.6); sugerir jugadas, ofrecer tablas ni comentar la posición.",
+   "notas": "Al explicar una regla, no se dice sí o no sobre la posición de la partida. Cuántas jugadas van se dice solo si ya cayó una bandera (8.5). Tampoco se avisa que el rival no presionó el reloj ni se ofrecen tablas.",
    "imagen": "12.webp"
   },
   {
@@ -93,6 +96,7 @@
      "fen": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
     }
    ],
+   "notas": "Si el error se descubre durante la partida, el árbitro decide según el artículo 7: por lo general se anula o se traslada la posición a un tablero bien colocado.",
    "imagen": "17.webp"
   },
   {
@@ -130,26 +134,30 @@
   {
    "titulo": "Coronación",
    "texto": "Coronación de peón (art. 3.7.5), en cuatro pasos. Uno: el peón que llega a la última fila se cambia en la misma jugada por dama, torre, alfil o caballo del mismo color; la elección no depende de las piezas ya capturadas. Dos: si la pieza no está, el jugador pausa el reloj y la pide al árbitro (6.11.4). Tres: la elección se fija cuando la nueva pieza toca la casilla de coronación (4.4.4); no es necesario colocar el peón físicamente en la casilla final primero (4.6.1). Penalización: si presiona el reloj sin cambiar el peón, es jugada ilegal; el peón se cambia por una dama (7.5.2) y se aplica la sanción de jugada ilegal (7.5.5).",
+   "notas": "No hace falta poner primero el peón en la casilla final (4.6.1). Además de cambiar el peón por dama, se aplica la sanción de jugada ilegal (7.5.5).",
    "imagen": "21.webp"
   },
   {
    "titulo": "Jugadas ilegales",
    "texto": "Gestión de jugadas ilegales (art. 7.5). ¿Cuándo se completa? Cuando el jugador presiona el reloj; antes de eso puede corregirla, respetando pieza tocada. La regla de las dos manos (7.5.4): usar dos manos para una sola jugada (por ejemplo, enroque o captura) y presionar el reloj es jugada ilegal. El reloj (7.5.3): presionar el reloj sin haber jugado es jugada ilegal. Procedimiento y sanciones (7.5.1 y 7.5.5): primero se restablece la posición anterior. Primera ilegal: el árbitro suma 2 minutos al rival (1 en rápidas). Segunda ilegal del mismo jugador: pierde la partida, salvo que el rival no tenga material para dar mate; entonces son tablas.",
+   "notas": "Antes de presionar el reloj, quien juega puede corregir la jugada, respetando pieza tocada. Dos manos: por ejemplo, en un enroque o en una captura.",
    "imagen": "22.webp"
   },
   {
    "titulo": "Pieza tocada y «compongo»",
    "texto": "Contacto físico con las piezas (arts. 4.1 a 4.8). Pieza tocada: tocar una pieza propia obliga a moverla; tocar una pieza rival obliga a capturarla, si hay jugada legal (4.3). Si toca rey y torre, debe enrocar por ese lado si es legal (4.4.1). Si toca la torre primero, debe mover la torre y pierde el derecho a enrocar por ese lado (4.4.2). Si no hay jugada legal con lo tocado, puede hacer cualquier otra jugada legal (4.5). Ojo: quien toca una pieza para jugar pierde el derecho a reclamar (4.8). «Compongo» (art. 4.2.1): solo quien tiene el turno; debe avisar antes de tocar; sirve para centrar, no para cambiar hacia dónde mira un caballo.",
+   "notas": "Pieza tocada vale si hay jugada legal con ella; si no la hay, puede hacer cualquier otra jugada legal (4.5). Quien toca una pieza para jugar pierde el derecho a reclamar (4.8). «Compongo» sirve para centrar una pieza, no para cambiar hacia dónde mira un caballo.",
    "imagen": "23.webp"
   },
   {
    "titulo": "Laboratorio de casos (enunciados)",
-   "texto": "Casos de discusión: ¿qué haría usted? Caso 1: con el rey y la torre de h1 sin mover, un estudiante toma primero la torre para enrocar corto. Caso 2: un peón blanco llega a e8; el jugador lo deja como peón y presiona el reloj. Caso 4: un peón negro avanzó de d7 a d5 hace dos jugadas; ahora el peón blanco de e5 lo captura al paso. Piensa tu respuesta antes de pasar a la siguiente diapositiva.",
+   "texto": "Casos de discusión: ¿qué haría usted? Caso 1: con el rey y la torre de h1 sin mover, un estudiante toma primero la torre para enrocar corto. Caso 2: un peón blanco llega a e8; el jugador lo deja como peón y presiona el reloj. Caso 3: un peón negro avanzó de d7 a d5 hace dos jugadas; ahora el peón blanco de e5 lo captura al paso. Piensa tu respuesta antes de pasar a la siguiente diapositiva.",
    "imagen": "24.webp"
   },
   {
    "titulo": "Laboratorio de casos (decisiones y artículos)",
-   "texto": "Decisiones arbitrales. Caso 1, el enroque que empezó por la torre: se aplica pieza tocada; al tocar la torre primero, debe mover esa torre y no puede enrocar por ese lado (4.4.2). Caso 2, el peón que llegó a la octava: es jugada ilegal completada; no se vuelve atrás: el peón se cambia por una dama del mismo color y el rival recibe 2 minutos extra en clásico o 1 minuto en rápidas (3.7.5, 7.5.2 y 7.5.5). Caso 4, la captura al paso tardía: es jugada ilegal; solo se puede capturar al paso en la jugada inmediatamente siguiente. Se restablece la posición, se respeta la pieza tocada para la nueva jugada y se aplica la sanción por primera jugada ilegal (3.7.4.1, 7.5.1 y 7.5.5).",
+   "texto": "Decisiones arbitrales. Caso 1, el enroque que empezó por la torre: se aplica pieza tocada; al tocar la torre primero, debe mover esa torre y no puede enrocar por ese lado (4.4.2). Caso 2, el peón que llegó a la octava: es jugada ilegal completada; no se vuelve atrás: el peón se cambia por una dama del mismo color y el rival recibe 2 minutos extra en clásico o 1 minuto en rápidas (3.7.5, 7.5.2 y 7.5.5). Caso 3, la captura al paso tardía: es jugada ilegal; solo se puede capturar al paso en la jugada inmediatamente siguiente. Se restablece la posición, se respeta la pieza tocada para la nueva jugada y se aplica la sanción por primera jugada ilegal (3.7.4.1, 7.5.1 y 7.5.5).",
+   "notas": "Caso 2: no se vuelve atrás; en rápidas, el rival recibe 1 minuto. Caso 3: en la nueva jugada se respeta la pieza tocada.",
    "imagen": "25.webp"
   },
   {
@@ -199,12 +207,13 @@
   {
    "titulo": "Triple repetición y 50 jugadas",
    "texto": "Reclamar tablas: repetición y 50 jugadas (arts. 9.2 y 9.3). ¿Qué es la misma posición? (9.2.3): turno del mismo jugador, piezas del mismo tipo y color en las mismas casillas y las mismas jugadas posibles, incluidos los derechos de enroque y captura al paso. Cómo reclamar: si se va a producir, escribe la jugada en la planilla sin hacerla en el tablero y lo declara al árbitro; si acaba de producirse, reclama antes de hacer su siguiente jugada. Cuidado: si toca una pieza con intención de moverla, pierde el derecho a reclamar en esa jugada (9.4). Rol del árbitro: se pausa el reloj (9.5.1). Si es correcto, tablas de inmediato (9.5.2). Si es incorrecto, el jugador está obligado a hacer la jugada anunciada y el árbitro suma 2 minutos al rival (9.5.3).",
+   "notas": "La misma posición incluye los derechos de enroque y de captura al paso. Si la repetición acaba de producirse, se reclama antes de hacer la siguiente jugada. El árbitro pausa el reloj (9.5.1).",
    "imagen": "30.webp"
   },
   {
    "titulo": "Notación algebraica",
    "texto": "Obligatoria en competencia (art. 8.1 y apéndice C). Casillas: columna (a a h) más fila (1 a 8): e4, f7, a8. Piezas: R rey, D dama, T torre, A alfil, C caballo; el peón no lleva letra. Jugada: pieza más casilla de llegada: Cf3, Ab5, e4. Si dos piezas iguales pueden ir a la misma casilla, se agrega la columna o la fila de salida: Cbd2, T1e1. Las iniciales pueden ser las del idioma del jugador; la estructura es la misma en todo el mundo. Signos: x captura (Axc6, dxc6); + jaque; # jaque mate (Dh4#); O-O enroque corto; O-O-O enroque largo; =D coronación (e8=D); a.p. captura al paso (exd6 a.p.); (=) oferta de tablas en la planilla.",
-   "notas": "25 minutos de bloque junto con la planilla. Pedir que cada participante escriba en el chat la jugada que el profesor muestra en el tablero.",
+   "notas": "Si dos piezas iguales pueden ir a la misma casilla, se agrega la columna o la fila de salida: Cbd2, T1e1. Las iniciales pueden ser las del idioma de quien juega; la estructura es la misma en todo el mundo. 25 minutos de bloque junto con la planilla. Pedir que cada participante escriba en el chat la jugada que el profesor muestra en el tablero.",
    "imagen": "31.webp"
   },
   {
@@ -227,7 +236,7 @@
   {
    "titulo": "La planilla",
    "texto": "Obligaciones durante y después de la partida (art. 8). Anotar las jugadas propias y las del rival, jugada a jugada, en notación algebraica (8.1). No anotar la jugada antes de hacerla, salvo para reclamar tablas (8.1). La planilla queda a la vista del árbitro durante toda la partida (8.1). Las ofertas de tablas se anotan con el signo (=) (8.1 y 9.1). Se puede dejar de anotar solo con menos de 5 minutos y sin incremento de 30 segundos o más (8.4). Al terminar, los dos jugadores firman las dos planillas con el resultado (8.7); firmar no quita el derecho a apelar. Las planillas pertenecen al organizador (8.3).",
-   "notas": "Insistir: la planilla es documento del torneo y prueba en los reclamos (repetición, 50 jugadas, control de tiempo).",
+   "notas": "Las planillas son del organizador (8.3). Insistir: la planilla es documento del torneo y prueba en los reclamos (repetición, 50 jugadas, control de tiempo).",
    "imagen": "33.webp"
   },
   {
@@ -243,6 +252,7 @@
   {
    "titulo": "Artículo 8.4-8.6: Excepciones en la anotación",
    "texto": "Artículo 8.4 a 8.6: Excepciones en la anotación. Apuro de tiempo: si un jugador dispone de menos de cinco minutos en su reloj y no tiene incremento de 30 segundos o más, no está obligado a cumplir los requisitos de anotación hasta el final del periodo. Asistencia del árbitro: si ningún jugador anota, el árbitro o un asistente procurarán estar presentes y anotar los movimientos. Actualización: si solo un jugador ha dejado de anotar, debe actualizar completamente su planilla en cuanto haya caído cualquiera de las dos banderas. Reconstrucción: si no hay planilla completa disponible, los jugadores deben reconstruir la partida sobre un segundo tablero bajo el control del árbitro.",
+   "notas": "Con un incremento de 30 segundos o más, se anota siempre.",
    "imagen": "36.webp"
   },
   {
