@@ -276,8 +276,20 @@ const ADAPTADORES_ENTRENO = {
             await cargarScriptEntreno("js/aprender-lecciones.js", "AprenderLecciones");
             const L = window.AprenderLecciones;
             return L.CATEGORY_ORDER.filter((c) => L.LESSONS.some((l) => l.cat === c)).map((c) => {
-                const items = L.LESSONS.filter((l) => l.cat === c).map((l) => {
-                    const fen = l.fen || (l.rounds && l.rounds[0] && l.rounds[0].fen) || null;
+                const items = L.LESSONS.filter((l) => l.cat === c).flatMap((l) => {
+                    /* Una lección de varias posiciones («¿Jaque mate o ahogado?») va una
+                       por posición, como pregunta de opciones: antes solo iba la primera,
+                       y el ahogado no se veía nunca en la clase. */
+                    if (l.type === "quiz" && Array.isArray(l.rounds) && l.rounds.length) {
+                        const OPCIONES = { mate: "Jaque mate", ahogado: "Ahogado" };
+                        const claves = Object.keys(OPCIONES);
+                        return l.rounds.map((r, k) => ({
+                            id: l.id + "-" + (k + 1), titulo: l.title + " (" + (k + 1) + " de " + l.rounds.length + ")", fen: r.fen,
+                            prompt: l.title, opciones: claves.map((x) => OPCIONES[x]), correcta: claves.indexOf(r.answer), elo: 600,
+                            guion: [l.text, "La respuesta: " + (OPCIONES[r.answer] || r.answer) + "."],
+                        }));
+                    }
+                    const fen = l.fen || null;
                     const san = l.type === "move" && l.solution ? EntrenosClase.sanDe(l.fen, l.solution.from, l.solution.to, l.solution.promotion) : null;
                     return { id: l.id, titulo: l.title, fen, solucion: san ? [san] : null, prompt: l.type === "move" ? l.text : null, elo: 600,
                         guion: [l.text].concat(san ? ["La jugada: " + san + "."] : []).concat(l.targets ? ["Las casillas: " + l.targets.join(", ") + "."] : []) };

@@ -170,6 +170,23 @@ async function pruebaDelProfe(browser) {
   await page.waitForFunction((k) => document.querySelectorAll("#entrenos-body li")[k].querySelector(".example-board"), k, { timeout: 5000 });
   igual("la vista previa de uno sin reyes dibuja el tablero", true, true);
 
+  /* Aprender: «¿Jaque mate o ahogado?» tiene dos posiciones y en la clase solo iba
+     la primera. Van las dos, como pregunta de opciones, y la respuesta la confirma
+     chess.js (la correcta es mate si hay mate, ahogado si hay ahogado). */
+  const quiz = await page.evaluate(async () => {
+    const grupos = await ADAPTADORES_ENTRENO.aprender.cargar();
+    const lecciones = window.AprenderLecciones.LESSONS;
+    const enClase = grupos.flatMap((g) => g.items);
+    const rondas = lecciones.reduce((n, l) => n + (l.type === "quiz" ? l.rounds.length : 1), 0);
+    const malos = enClase.filter((it) => it.opciones).filter((it) => {
+      const g = new Chess(it.fen);
+      const debe = g.in_checkmate() ? "Jaque mate" : g.in_stalemate() ? "Ahogado" : null;
+      return !debe || it.opciones[it.correcta] !== debe;
+    }).map((it) => it.id);
+    return [enClase.length === rondas, enClase.filter((it) => it.opciones).length, malos];
+  });
+  igual("Aprender: cada posición de cada lección, y las de mate o ahogado bien contestadas", quiz, [true, 2, []]);
+
   // La vista previa y el guion (solo el profe).
   await page.evaluate(() => { activateTeacherTab("tipos"); entrenosView = { slug: "mates", grupo: "mate1", mostrar: 30 }; pintarEntrenos(); });
   await page.waitForSelector("#entrenos-body li");

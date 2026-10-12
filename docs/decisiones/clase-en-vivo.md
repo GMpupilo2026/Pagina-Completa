@@ -3636,6 +3636,11 @@ mostrarlo para explicarlo, preguntarlo a la clase y que lo practiquen.
   No se les agregan reyes: eso sería inventar otra posición. El verificador
   comprueba que todo `soloVer` sea de verdad una posición que el tablero no
   acepta.
+- **Una lección de Aprender con varias posiciones va una por posición.**
+  «¿Jaque mate o ahogado?» tiene dos y la clase solo tomaba la primera (el
+  mate): el ahogado no se veía nunca. Cada una va como pregunta de opciones
+  («Jaque mate» / «Ahogado»), y el verificador confirma la respuesta con
+  chess.js.
 - **«🪟 Abrirlo a todos en una ventana» no manda una dirección**: manda el
   slug (y el recorte) en la presencia del profe, como la Fotografía, y cada
   alumno arma el enlace con la lista del sitio (`EntrenosClase.enlaceDe`).
