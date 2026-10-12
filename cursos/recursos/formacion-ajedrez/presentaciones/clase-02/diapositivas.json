@@ -14,7 +14,7 @@
   },
   {
    "titulo": "Cronograma de la sesión",
-   "texto": "De 0:00 a 0:15, Repaso y revisión de la tarea. De 0:15 a 1:00, Conducta y zona de juego. De 1:00 a 1:30, Dispositivos electrónicos. De 1:30 a 1:45, receso. De 1:45 a 2:30, Irregularidades. De 2:30 a 3:00, Sanciones, reclamos y apelaciones. De 3:00 a 3:15, receso. De 3:15 a 4:05, Simulación de reclamos en salas de trabajo. De 4:05 a 4:40, Quiz de la sesión y revisión. De 4:40 a 5:00, Cierre.",
+   "texto": "De 0:00 a 0:10, Repaso y revisión de la tarea. De 0:10 a 0:45, Conducta y zona de juego. De 0:45 a 1:10, Dispositivos electrónicos. De 1:10 a 1:20, receso. De 1:20 a 1:55, Irregularidades. De 1:55 a 2:20, Sanciones, reclamos y apelaciones. De 2:20 a 2:30, receso. De 2:30 a 3:15, Simulación de reclamos en salas de trabajo. De 3:15 a 3:45, Quiz de la sesión y revisión. De 3:45 a 4:00, Cierre.",
    "imagen": "03.webp"
   },
   {
@@ -39,7 +39,7 @@
   },
   {
    "titulo": "Receso",
-   "texto": "Receso de 15 minutos. Pausa los relojes: seguimos en breve.",
+   "texto": "Receso de 10 minutos. Pausa los relojes: seguimos en breve.",
    "imagen": "08.webp"
   },
   {
@@ -120,7 +120,7 @@
   },
   {
    "titulo": "Receso",
-   "texto": "Receso de 15 minutos. Pausa los relojes: seguimos en breve.",
+   "texto": "Receso de 10 minutos. Pausa los relojes: seguimos en breve.",
    "imagen": "23.webp"
   },
   {

@@ -2,7 +2,7 @@
 /* Comprueba el curso «Formación Ajedrez» (herramientas/cursos/formacion-ajedrez.json
  * y lo que genera herramientas/curso-generar-formacion.py).
  *
- * Cada sesión está calculada para 5 horas y trae su cronograma, temas con su
+ * Cada sesión virtual está calculada para 4 horas y trae su cronograma, temas con su
  * fuente, casos, ejercicios con respuesta y quiz. Lo que se rompe acá no da
  * ningún error en pantalla:
  *
@@ -40,10 +40,10 @@ function cierto(nombre, cond, detalle) {
   else { console.log("  ✗ " + nombre + (detalle ? "\n      " + detalle : "")); fallos += 1; }
 }
 
-console.log("1. Cada sesión dura 5 horas");
+console.log("1. Cada sesión virtual dura 4 horas");
 virtuales.forEach((l) => {
   const total = l.cronograma.reduce((a, [m]) => a + m, 0);
-  cierto(`${l.archivo}: el cronograma suma 300 minutos`, total === 300, `suma ${total}`);
+  cierto(`${l.archivo}: el cronograma suma 240 minutos`, total === 240, `suma ${total}`);
 });
 const aMin = (h) => {
   const m = h.match(/^(\d+):(\d\d) ([ap])\. m\.$/);
@@ -51,10 +51,10 @@ const aMin = (h) => {
   return hora * 60 + +m[2];
 };
 const agenda = presencial.agenda.map(([h]) => aMin(h));
-cierto("la sesión presencial va de la primera a la última hora en 5 horas",
-  agenda[agenda.length - 1] - agenda[0] === 300, `dura ${agenda[agenda.length - 1] - agenda[0]} minutos`);
+cierto("la sesión presencial va de la primera a la última hora en 6 horas",
+  agenda[agenda.length - 1] - agenda[0] === 360, `dura ${agenda[agenda.length - 1] - agenda[0]} minutos`);
 cierto("la agenda presencial está en orden", agenda.every((m, i) => i === 0 || m > agenda[i - 1]));
-cierto("la portada del curso dice 40 horas", /^40 horas/.test(curso.duracion_texto));
+cierto("la portada del curso dice 30 horas", /^30 horas/.test(curso.duracion_texto));
 
 console.log("\n2. Cada sesión virtual trae todas sus partes");
 virtuales.forEach((l) => {
@@ -106,7 +106,7 @@ const sesionesHoy = execFileSync("python3", ["-c", py.replace("sys.stdout.write(
 cierto("sesiones.json (la ficha Asesores) es lo que arma hoy el generador",
   JSON.stringify(JSON.parse(fs.readFileSync(path.join(RECURSOS, "sesiones.json"), "utf8"))) === JSON.stringify(JSON.parse(sesionesHoy)));
 const sesionesJson = JSON.parse(sesionesHoy).sesiones;
-cierto("sesiones.json: las 8 sesiones, y cada archivo que nombra existe",
+cierto("sesiones.json: las 7 sesiones, y cada archivo que nombra existe",
   sesionesJson.length === lecciones.length && sesionesJson.every((x) => x.archivos.every((f) => fs.existsSync(path.join(RECURSOS, f.archivo)))));
 
 const leerPdf = (f) => execFileSync("python3", ["-c",

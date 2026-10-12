@@ -23,7 +23,7 @@
     "nombre": "Formación docente"
    }
   ],
-  "total": 889,
+  "total": 887,
   "material": [
    {
     "ruta": "material/cambiar-o-no-cambiar/cambiar-o-no-cambiar.pdf",
@@ -7823,34 +7823,34 @@
      },
      {
       "numero": 3,
-      "titulo": "Apéndices de las Leyes de Ajedrez y normativa de los Juegos Deportivos Estudiantiles",
+      "titulo": "Apéndices de las Leyes de Ajedrez, normativa JDE y sistemas de emparejamiento",
       "archivos": [
        {
-        "ruta": "cursos/recursos/formacion-ajedrez/03-apendices-y-normativa-jde-material.pdf",
+        "ruta": "cursos/recursos/formacion-ajedrez/03-apendices-normativa-y-emparejamiento-material.pdf",
         "titulo": "Material de estudio",
         "tipo": "material",
-        "kb": 16
+        "kb": 25
        },
        {
-        "ruta": "cursos/recursos/formacion-ajedrez/03-apendices-y-normativa-jde-ejercicios.pdf",
+        "ruta": "cursos/recursos/formacion-ajedrez/03-apendices-normativa-y-emparejamiento-ejercicios.pdf",
         "titulo": "Ejercicios",
         "tipo": "ejercicios",
-        "kb": 6
+        "kb": 7
        }
       ]
      },
      {
       "numero": 4,
-      "titulo": "Sistemas de emparejamiento para torneos",
+      "titulo": "Uso, configuración y control del reloj de ajedrez",
       "archivos": [
        {
-        "ruta": "cursos/recursos/formacion-ajedrez/04-sistemas-de-emparejamiento-material.pdf",
+        "ruta": "cursos/recursos/formacion-ajedrez/04-uso-y-control-del-reloj-material.pdf",
         "titulo": "Material de estudio",
         "tipo": "material",
-        "kb": 13
+        "kb": 12
        },
        {
-        "ruta": "cursos/recursos/formacion-ajedrez/04-sistemas-de-emparejamiento-ejercicios.pdf",
+        "ruta": "cursos/recursos/formacion-ajedrez/04-uso-y-control-del-reloj-ejercicios.pdf",
         "titulo": "Ejercicios",
         "tipo": "ejercicios",
         "kb": 5
@@ -7859,16 +7859,16 @@
      },
      {
       "numero": 5,
-      "titulo": "Uso, configuración y control del reloj de ajedrez",
+      "titulo": "Resolución de casos en grupos y experiencias regionales",
       "archivos": [
        {
-        "ruta": "cursos/recursos/formacion-ajedrez/05-uso-y-control-del-reloj-material.pdf",
+        "ruta": "cursos/recursos/formacion-ajedrez/05-resolucion-de-casos-en-grupos-material.pdf",
         "titulo": "Material de estudio",
         "tipo": "material",
-        "kb": 12
+        "kb": 11
        },
        {
-        "ruta": "cursos/recursos/formacion-ajedrez/05-uso-y-control-del-reloj-ejercicios.pdf",
+        "ruta": "cursos/recursos/formacion-ajedrez/05-resolucion-de-casos-en-grupos-ejercicios.pdf",
         "titulo": "Ejercicios",
         "tipo": "ejercicios",
         "kb": 5
@@ -7877,34 +7877,16 @@
      },
      {
       "numero": 6,
-      "titulo": "Resolución de casos en grupos y experiencias regionales",
-      "archivos": [
-       {
-        "ruta": "cursos/recursos/formacion-ajedrez/06-resolucion-de-casos-en-grupos-material.pdf",
-        "titulo": "Material de estudio",
-        "tipo": "material",
-        "kb": 11
-       },
-       {
-        "ruta": "cursos/recursos/formacion-ajedrez/06-resolucion-de-casos-en-grupos-ejercicios.pdf",
-        "titulo": "Ejercicios",
-        "tipo": "ejercicios",
-        "kb": 5
-       }
-      ]
-     },
-     {
-      "numero": 7,
       "titulo": "Talleres prácticos y simulacros de arbitraje",
       "archivos": [
        {
-        "ruta": "cursos/recursos/formacion-ajedrez/07-talleres-y-simulacros-de-arbitraje-material.pdf",
+        "ruta": "cursos/recursos/formacion-ajedrez/06-talleres-y-simulacros-de-arbitraje-material.pdf",
         "titulo": "Material de estudio",
         "tipo": "material",
         "kb": 10
        },
        {
-        "ruta": "cursos/recursos/formacion-ajedrez/07-talleres-y-simulacros-de-arbitraje-ejercicios.pdf",
+        "ruta": "cursos/recursos/formacion-ajedrez/06-talleres-y-simulacros-de-arbitraje-ejercicios.pdf",
         "titulo": "Ejercicios",
         "tipo": "ejercicios",
         "kb": 4
@@ -7912,17 +7894,17 @@
       ]
      },
      {
-      "numero": 8,
-      "titulo": "Torneo real, evaluación final y certificación · Sesión presencial, 5 horas",
+      "numero": 7,
+      "titulo": "Torneo real, evaluación final y certificación · Sesión presencial, 6 horas, 14 de diciembre",
       "archivos": [
        {
-        "ruta": "cursos/recursos/formacion-ajedrez/08-torneo-real-evaluacion-formularios.pdf",
+        "ruta": "cursos/recursos/formacion-ajedrez/07-torneo-real-evaluacion-formularios.pdf",
         "titulo": "Formularios y lista de cotejo del torneo",
         "tipo": "otro",
         "kb": 4
        },
        {
-        "ruta": "cursos/recursos/formacion-ajedrez/08-prueba-final.pdf",
+        "ruta": "cursos/recursos/formacion-ajedrez/07-prueba-final.pdf",
         "titulo": "Prueba final teórica",
         "tipo": "otro",
         "kb": 14
@@ -8211,7 +8193,7 @@
     "nombre": "Formación docente"
    }
   ],
-  "total": 415,
+  "total": 414,
   "material": [],
   "cursos": [
    {
@@ -13034,7 +13016,7 @@
         "ruta": "cursos/recursos/formacion-ajedrez/01-encuadre-y-reglas-basicas.pptx",
         "titulo": "Presentación",
         "tipo": "presentacion",
-        "kb": 296
+        "kb": 300
        }
       ]
      },
@@ -13052,22 +13034,22 @@
      },
      {
       "numero": 3,
-      "titulo": "Apéndices de las Leyes de Ajedrez y normativa de los Juegos Deportivos Estudiantiles",
+      "titulo": "Apéndices de las Leyes de Ajedrez, normativa JDE y sistemas de emparejamiento",
       "archivos": [
        {
-        "ruta": "cursos/recursos/formacion-ajedrez/03-apendices-y-normativa-jde.pptx",
+        "ruta": "cursos/recursos/formacion-ajedrez/03-apendices-normativa-y-emparejamiento.pptx",
         "titulo": "Presentación",
         "tipo": "presentacion",
-        "kb": 103
+        "kb": 139
        }
       ]
      },
      {
       "numero": 4,
-      "titulo": "Sistemas de emparejamiento para torneos",
+      "titulo": "Uso, configuración y control del reloj de ajedrez",
       "archivos": [
        {
-        "ruta": "cursos/recursos/formacion-ajedrez/04-sistemas-de-emparejamiento.pptx",
+        "ruta": "cursos/recursos/formacion-ajedrez/04-uso-y-control-del-reloj.pptx",
         "titulo": "Presentación",
         "tipo": "presentacion",
         "kb": 81
@@ -13076,22 +13058,10 @@
      },
      {
       "numero": 5,
-      "titulo": "Uso, configuración y control del reloj de ajedrez",
-      "archivos": [
-       {
-        "ruta": "cursos/recursos/formacion-ajedrez/05-uso-y-control-del-reloj.pptx",
-        "titulo": "Presentación",
-        "tipo": "presentacion",
-        "kb": 81
-       }
-      ]
-     },
-     {
-      "numero": 6,
       "titulo": "Resolución de casos en grupos y experiencias regionales",
       "archivos": [
        {
-        "ruta": "cursos/recursos/formacion-ajedrez/06-resolucion-de-casos-en-grupos.pptx",
+        "ruta": "cursos/recursos/formacion-ajedrez/05-resolucion-de-casos-en-grupos.pptx",
         "titulo": "Presentación",
         "tipo": "presentacion",
         "kb": 75
@@ -13099,11 +13069,11 @@
       ]
      },
      {
-      "numero": 7,
+      "numero": 6,
       "titulo": "Talleres prácticos y simulacros de arbitraje",
       "archivos": [
        {
-        "ruta": "cursos/recursos/formacion-ajedrez/07-talleres-y-simulacros-de-arbitraje.pptx",
+        "ruta": "cursos/recursos/formacion-ajedrez/06-talleres-y-simulacros-de-arbitraje.pptx",
         "titulo": "Presentación",
         "tipo": "presentacion",
         "kb": 71
@@ -18498,7 +18468,7 @@
   ]
  },
  "imagenes": {
-  "total": 837,
+  "total": 840,
   "grupos": [
    {
     "carpeta": "entreno/img/facil",
@@ -22304,7 +22274,7 @@
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-01/03.webp",
       "titulo": "03",
       "tipo": "otro",
-      "kb": 47
+      "kb": 52
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-01/04.webp",
@@ -22316,181 +22286,253 @@
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-01/05.webp",
       "titulo": "05",
       "tipo": "otro",
-      "kb": 61
+      "kb": 64
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-01/06.webp",
       "titulo": "06",
       "tipo": "otro",
-      "kb": 81
+      "kb": 91
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-01/07.webp",
       "titulo": "07",
       "tipo": "otro",
-      "kb": 90
+      "kb": 54
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-01/08.webp",
       "titulo": "08",
       "tipo": "otro",
-      "kb": 90
+      "kb": 81
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-01/09.webp",
       "titulo": "09",
       "tipo": "otro",
-      "kb": 63
+      "kb": 61
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-01/10.webp",
       "titulo": "10",
       "tipo": "otro",
-      "kb": 89
+      "kb": 47
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-01/11.webp",
       "titulo": "11",
       "tipo": "otro",
-      "kb": 49
+      "kb": 90
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-01/12.webp",
       "titulo": "12",
       "tipo": "otro",
-      "kb": 51
+      "kb": 90
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-01/13.webp",
       "titulo": "13",
       "tipo": "otro",
-      "kb": 73
+      "kb": 69
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-01/14.webp",
       "titulo": "14",
       "tipo": "otro",
-      "kb": 95
+      "kb": 82
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-01/15.webp",
       "titulo": "15",
       "tipo": "otro",
-      "kb": 88
+      "kb": 92
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-01/16.webp",
       "titulo": "16",
       "tipo": "otro",
-      "kb": 69
+      "kb": 104
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-01/17.webp",
       "titulo": "17",
       "tipo": "otro",
-      "kb": 107
+      "kb": 63
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-01/18.webp",
       "titulo": "18",
       "tipo": "otro",
-      "kb": 32
+      "kb": 89
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-01/19.webp",
       "titulo": "19",
       "tipo": "otro",
-      "kb": 98
+      "kb": 49
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-01/20.webp",
       "titulo": "20",
       "tipo": "otro",
-      "kb": 65
+      "kb": 51
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-01/21.webp",
       "titulo": "21",
       "tipo": "otro",
-      "kb": 67
+      "kb": 73
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-01/22.webp",
       "titulo": "22",
       "tipo": "otro",
-      "kb": 102
+      "kb": 95
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-01/23.webp",
       "titulo": "23",
       "tipo": "otro",
-      "kb": 68
+      "kb": 88
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-01/24.webp",
       "titulo": "24",
       "tipo": "otro",
-      "kb": 55
+      "kb": 69
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-01/25.webp",
       "titulo": "25",
       "tipo": "otro",
-      "kb": 73
+      "kb": 107
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-01/26.webp",
       "titulo": "26",
       "tipo": "otro",
-      "kb": 32
+      "kb": 31
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-01/27.webp",
       "titulo": "27",
       "tipo": "otro",
-      "kb": 60
+      "kb": 98
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-01/28.webp",
       "titulo": "28",
       "tipo": "otro",
-      "kb": 50
+      "kb": 65
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-01/29.webp",
       "titulo": "29",
       "tipo": "otro",
-      "kb": 57
+      "kb": 67
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-01/30.webp",
       "titulo": "30",
       "tipo": "otro",
-      "kb": 63
+      "kb": 102
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-01/31.webp",
       "titulo": "31",
       "tipo": "otro",
-      "kb": 69
+      "kb": 68
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-01/32.webp",
       "titulo": "32",
       "tipo": "otro",
-      "kb": 66
+      "kb": 55
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-01/33.webp",
       "titulo": "33",
       "tipo": "otro",
-      "kb": 46
+      "kb": 73
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-01/34.webp",
       "titulo": "34",
       "tipo": "otro",
-      "kb": 52
+      "kb": 114
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-01/35.webp",
+      "titulo": "35",
+      "tipo": "otro",
+      "kb": 104
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-01/36.webp",
+      "titulo": "36",
+      "tipo": "otro",
+      "kb": 77
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-01/37.webp",
+      "titulo": "37",
+      "tipo": "otro",
+      "kb": 136
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-01/38.webp",
+      "titulo": "38",
+      "tipo": "otro",
+      "kb": 31
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-01/39.webp",
+      "titulo": "39",
+      "tipo": "otro",
+      "kb": 62
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-01/40.webp",
+      "titulo": "40",
+      "tipo": "otro",
+      "kb": 50
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-01/41.webp",
+      "titulo": "41",
+      "tipo": "otro",
+      "kb": 57
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-01/42.webp",
+      "titulo": "42",
+      "tipo": "otro",
+      "kb": 63
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-01/43.webp",
+      "titulo": "43",
+      "tipo": "otro",
+      "kb": 69
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-01/44.webp",
+      "titulo": "44",
+      "tipo": "otro",
+      "kb": 66
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-01/45.webp",
+      "titulo": "45",
+      "tipo": "otro",
+      "kb": 46
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-01/46.webp",
+      "titulo": "46",
+      "tipo": "otro",
+      "kb": 55
      }
     ]
    },
@@ -22732,49 +22774,49 @@
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-03/01.webp",
       "titulo": "01",
       "tipo": "otro",
-      "kb": 46
+      "kb": 51
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-03/02.webp",
       "titulo": "02",
       "tipo": "otro",
-      "kb": 68
+      "kb": 80
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-03/03.webp",
       "titulo": "03",
       "tipo": "otro",
-      "kb": 49
+      "kb": 40
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-03/04.webp",
       "titulo": "04",
       "tipo": "otro",
-      "kb": 76
+      "kb": 55
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-03/05.webp",
       "titulo": "05",
       "tipo": "otro",
-      "kb": 110
+      "kb": 76
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-03/06.webp",
       "titulo": "06",
       "tipo": "otro",
-      "kb": 37
+      "kb": 110
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-03/07.webp",
       "titulo": "07",
       "tipo": "otro",
-      "kb": 84
+      "kb": 37
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-03/08.webp",
       "titulo": "08",
       "tipo": "otro",
-      "kb": 12
+      "kb": 84
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-03/09.webp",
@@ -22810,163 +22852,283 @@
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-03/14.webp",
       "titulo": "14",
       "tipo": "otro",
-      "kb": 26
+      "kb": 12
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-03/15.webp",
       "titulo": "15",
       "tipo": "otro",
-      "kb": 24
+      "kb": 88
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-03/16.webp",
       "titulo": "16",
       "tipo": "otro",
-      "kb": 23
+      "kb": 101
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-03/17.webp",
       "titulo": "17",
       "tipo": "otro",
-      "kb": 26
+      "kb": 100
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-03/18.webp",
       "titulo": "18",
       "tipo": "otro",
-      "kb": 27
+      "kb": 39
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-03/19.webp",
       "titulo": "19",
       "tipo": "otro",
-      "kb": 24
+      "kb": 91
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-03/20.webp",
       "titulo": "20",
       "tipo": "otro",
-      "kb": 33
+      "kb": 91
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-03/21.webp",
       "titulo": "21",
       "tipo": "otro",
-      "kb": 50
+      "kb": 49
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-03/22.webp",
       "titulo": "22",
       "tipo": "otro",
-      "kb": 31
+      "kb": 26
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-03/23.webp",
       "titulo": "23",
       "tipo": "otro",
-      "kb": 39
+      "kb": 24
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-03/24.webp",
       "titulo": "24",
       "tipo": "otro",
-      "kb": 39
+      "kb": 23
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-03/25.webp",
       "titulo": "25",
       "tipo": "otro",
-      "kb": 43
+      "kb": 26
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-03/26.webp",
       "titulo": "26",
       "tipo": "otro",
-      "kb": 12
+      "kb": 27
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-03/27.webp",
       "titulo": "27",
       "tipo": "otro",
-      "kb": 37
+      "kb": 24
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-03/28.webp",
       "titulo": "28",
       "tipo": "otro",
-      "kb": 23
+      "kb": 33
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-03/29.webp",
       "titulo": "29",
       "tipo": "otro",
-      "kb": 44
+      "kb": 50
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-03/30.webp",
       "titulo": "30",
       "tipo": "otro",
-      "kb": 35
+      "kb": 31
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-03/31.webp",
       "titulo": "31",
       "tipo": "otro",
-      "kb": 48
+      "kb": 39
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-03/32.webp",
       "titulo": "32",
       "tipo": "otro",
-      "kb": 32
+      "kb": 39
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-03/33.webp",
       "titulo": "33",
       "tipo": "otro",
-      "kb": 102
+      "kb": 43
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-03/34.webp",
       "titulo": "34",
       "tipo": "otro",
-      "kb": 55
+      "kb": 33
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-03/35.webp",
       "titulo": "35",
       "tipo": "otro",
-      "kb": 67
+      "kb": 64
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-03/36.webp",
       "titulo": "36",
       "tipo": "otro",
-      "kb": 77
+      "kb": 38
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-03/37.webp",
       "titulo": "37",
       "tipo": "otro",
-      "kb": 31
+      "kb": 59
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-03/38.webp",
       "titulo": "38",
       "tipo": "otro",
-      "kb": 65
+      "kb": 25
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-03/39.webp",
       "titulo": "39",
       "tipo": "otro",
-      "kb": 63
+      "kb": 28
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-03/40.webp",
       "titulo": "40",
       "tipo": "otro",
-      "kb": 41
+      "kb": 12
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-03/41.webp",
+      "titulo": "41",
+      "tipo": "otro",
+      "kb": 65
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-03/42.webp",
+      "titulo": "42",
+      "tipo": "otro",
+      "kb": 23
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-03/43.webp",
+      "titulo": "43",
+      "tipo": "otro",
+      "kb": 44
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-03/44.webp",
+      "titulo": "44",
+      "tipo": "otro",
+      "kb": 35
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-03/45.webp",
+      "titulo": "45",
+      "tipo": "otro",
+      "kb": 48
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-03/46.webp",
+      "titulo": "46",
+      "tipo": "otro",
+      "kb": 33
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-03/47.webp",
+      "titulo": "47",
+      "tipo": "otro",
+      "kb": 25
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-03/48.webp",
+      "titulo": "48",
+      "tipo": "otro",
+      "kb": 22
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-03/49.webp",
+      "titulo": "49",
+      "tipo": "otro",
+      "kb": 23
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-03/50.webp",
+      "titulo": "50",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-03/51.webp",
+      "titulo": "51",
+      "tipo": "otro",
+      "kb": 102
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-03/52.webp",
+      "titulo": "52",
+      "tipo": "otro",
+      "kb": 93
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-03/53.webp",
+      "titulo": "53",
+      "tipo": "otro",
+      "kb": 67
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-03/54.webp",
+      "titulo": "54",
+      "tipo": "otro",
+      "kb": 77
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-03/55.webp",
+      "titulo": "55",
+      "tipo": "otro",
+      "kb": 76
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-03/56.webp",
+      "titulo": "56",
+      "tipo": "otro",
+      "kb": 69
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-03/57.webp",
+      "titulo": "57",
+      "tipo": "otro",
+      "kb": 65
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-03/58.webp",
+      "titulo": "58",
+      "tipo": "otro",
+      "kb": 71
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-03/59.webp",
+      "titulo": "59",
+      "tipo": "otro",
+      "kb": 70
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-03/60.webp",
+      "titulo": "60",
+      "tipo": "otro",
+      "kb": 54
      }
     ]
    },
@@ -22991,163 +23153,163 @@
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-04/03.webp",
       "titulo": "03",
       "tipo": "otro",
-      "kb": 46
+      "kb": 47
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-04/04.webp",
       "titulo": "04",
       "tipo": "otro",
-      "kb": 88
+      "kb": 86
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-04/05.webp",
       "titulo": "05",
       "tipo": "otro",
-      "kb": 101
+      "kb": 81
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-04/06.webp",
       "titulo": "06",
       "tipo": "otro",
-      "kb": 100
+      "kb": 12
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-04/07.webp",
       "titulo": "07",
       "tipo": "otro",
-      "kb": 39
+      "kb": 88
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-04/08.webp",
       "titulo": "08",
       "tipo": "otro",
-      "kb": 12
+      "kb": 97
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-04/09.webp",
       "titulo": "09",
       "tipo": "otro",
-      "kb": 90
+      "kb": 33
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-04/10.webp",
       "titulo": "10",
       "tipo": "otro",
-      "kb": 91
+      "kb": 36
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-04/11.webp",
       "titulo": "11",
       "tipo": "otro",
-      "kb": 49
+      "kb": 26
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-04/12.webp",
       "titulo": "12",
       "tipo": "otro",
-      "kb": 33
+      "kb": 28
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-04/13.webp",
       "titulo": "13",
       "tipo": "otro",
-      "kb": 64
+      "kb": 31
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-04/14.webp",
       "titulo": "14",
       "tipo": "otro",
-      "kb": 38
+      "kb": 60
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-04/15.webp",
       "titulo": "15",
       "tipo": "otro",
-      "kb": 59
+      "kb": 24
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-04/16.webp",
       "titulo": "16",
       "tipo": "otro",
-      "kb": 25
+      "kb": 35
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-04/17.webp",
       "titulo": "17",
       "tipo": "otro",
-      "kb": 28
+      "kb": 12
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-04/18.webp",
       "titulo": "18",
       "tipo": "otro",
-      "kb": 12
+      "kb": 41
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-04/19.webp",
       "titulo": "19",
       "tipo": "otro",
-      "kb": 40
+      "kb": 32
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-04/20.webp",
       "titulo": "20",
       "tipo": "otro",
-      "kb": 25
+      "kb": 23
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-04/21.webp",
       "titulo": "21",
       "tipo": "otro",
-      "kb": 22
+      "kb": 20
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-04/22.webp",
       "titulo": "22",
       "tipo": "otro",
-      "kb": 23
+      "kb": 18
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-04/23.webp",
       "titulo": "23",
       "tipo": "otro",
-      "kb": 19
+      "kb": 22
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-04/24.webp",
       "titulo": "24",
       "tipo": "otro",
-      "kb": 69
+      "kb": 73
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-04/25.webp",
       "titulo": "25",
       "tipo": "otro",
-      "kb": 70
+      "kb": 65
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-04/26.webp",
       "titulo": "26",
       "tipo": "otro",
-      "kb": 65
+      "kb": 70
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-04/27.webp",
       "titulo": "27",
       "tipo": "otro",
-      "kb": 59
+      "kb": 58
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-04/28.webp",
       "titulo": "28",
       "tipo": "otro",
-      "kb": 43
+      "kb": 20
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-04/29.webp",
       "titulo": "29",
       "tipo": "otro",
-      "kb": 32
+      "kb": 38
      }
     ]
    },
@@ -23160,173 +23322,149 @@
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-05/01.webp",
       "titulo": "01",
       "tipo": "otro",
-      "kb": 33
+      "kb": 36
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-05/02.webp",
       "titulo": "02",
       "tipo": "otro",
-      "kb": 62
+      "kb": 57
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-05/03.webp",
       "titulo": "03",
       "tipo": "otro",
-      "kb": 47
+      "kb": 50
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-05/04.webp",
       "titulo": "04",
       "tipo": "otro",
-      "kb": 86
+      "kb": 80
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-05/05.webp",
       "titulo": "05",
       "tipo": "otro",
-      "kb": 81
+      "kb": 97
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-05/06.webp",
       "titulo": "06",
       "tipo": "otro",
-      "kb": 12
+      "kb": 35
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-05/07.webp",
       "titulo": "07",
       "tipo": "otro",
-      "kb": 88
+      "kb": 12
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-05/08.webp",
       "titulo": "08",
       "tipo": "otro",
-      "kb": 97
+      "kb": 76
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-05/09.webp",
       "titulo": "09",
       "tipo": "otro",
-      "kb": 33
+      "kb": 78
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-05/10.webp",
       "titulo": "10",
       "tipo": "otro",
-      "kb": 36
+      "kb": 86
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-05/11.webp",
       "titulo": "11",
       "tipo": "otro",
-      "kb": 26
+      "kb": 66
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-05/12.webp",
       "titulo": "12",
       "tipo": "otro",
-      "kb": 28
+      "kb": 51
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-05/13.webp",
       "titulo": "13",
       "tipo": "otro",
-      "kb": 31
+      "kb": 47
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-05/14.webp",
       "titulo": "14",
       "tipo": "otro",
-      "kb": 60
+      "kb": 34
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-05/15.webp",
       "titulo": "15",
       "tipo": "otro",
-      "kb": 24
+      "kb": 62
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-05/16.webp",
       "titulo": "16",
       "tipo": "otro",
-      "kb": 35
+      "kb": 12
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-05/17.webp",
       "titulo": "17",
       "tipo": "otro",
-      "kb": 12
+      "kb": 38
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-05/18.webp",
       "titulo": "18",
       "tipo": "otro",
-      "kb": 41
+      "kb": 25
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-05/19.webp",
       "titulo": "19",
       "tipo": "otro",
-      "kb": 32
+      "kb": 19
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-05/20.webp",
       "titulo": "20",
       "tipo": "otro",
-      "kb": 23
+      "kb": 19
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-05/21.webp",
       "titulo": "21",
       "tipo": "otro",
-      "kb": 20
+      "kb": 111
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-05/22.webp",
       "titulo": "22",
       "tipo": "otro",
-      "kb": 18
+      "kb": 72
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-05/23.webp",
       "titulo": "23",
       "tipo": "otro",
-      "kb": 22
+      "kb": 36
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-05/24.webp",
       "titulo": "24",
       "tipo": "otro",
-      "kb": 73
+      "kb": 71
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-05/25.webp",
       "titulo": "25",
-      "tipo": "otro",
-      "kb": 65
-     },
-     {
-      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-05/26.webp",
-      "titulo": "26",
-      "tipo": "otro",
-      "kb": 70
-     },
-     {
-      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-05/27.webp",
-      "titulo": "27",
-      "tipo": "otro",
-      "kb": 58
-     },
-     {
-      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-05/28.webp",
-      "titulo": "28",
-      "tipo": "otro",
-      "kb": 20
-     },
-     {
-      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-05/29.webp",
-      "titulo": "29",
       "tipo": "otro",
       "kb": 38
      }
@@ -23341,13 +23479,13 @@
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-06/01.webp",
       "titulo": "01",
       "tipo": "otro",
-      "kb": 36
+      "kb": 32
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-06/02.webp",
       "titulo": "02",
       "tipo": "otro",
-      "kb": 57
+      "kb": 52
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-06/03.webp",
@@ -23359,73 +23497,73 @@
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-06/04.webp",
       "titulo": "04",
       "tipo": "otro",
-      "kb": 80
+      "kb": 77
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-06/05.webp",
       "titulo": "05",
       "tipo": "otro",
-      "kb": 97
+      "kb": 85
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-06/06.webp",
       "titulo": "06",
       "tipo": "otro",
-      "kb": 35
+      "kb": 12
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-06/07.webp",
       "titulo": "07",
       "tipo": "otro",
-      "kb": 12
+      "kb": 73
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-06/08.webp",
       "titulo": "08",
       "tipo": "otro",
-      "kb": 76
+      "kb": 34
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-06/09.webp",
       "titulo": "09",
       "tipo": "otro",
-      "kb": 78
+      "kb": 44
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-06/10.webp",
       "titulo": "10",
       "tipo": "otro",
-      "kb": 86
+      "kb": 39
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-06/11.webp",
       "titulo": "11",
       "tipo": "otro",
-      "kb": 66
+      "kb": 51
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-06/12.webp",
       "titulo": "12",
       "tipo": "otro",
-      "kb": 51
+      "kb": 26
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-06/13.webp",
       "titulo": "13",
       "tipo": "otro",
-      "kb": 47
+      "kb": 43
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-06/14.webp",
       "titulo": "14",
       "tipo": "otro",
-      "kb": 34
+      "kb": 30
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-06/15.webp",
       "titulo": "15",
       "tipo": "otro",
-      "kb": 62
+      "kb": 32
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-06/16.webp",
@@ -23443,191 +23581,34 @@
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-06/18.webp",
       "titulo": "18",
       "tipo": "otro",
-      "kb": 25
+      "kb": 27
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-06/19.webp",
       "titulo": "19",
       "tipo": "otro",
-      "kb": 19
+      "kb": 24
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-06/20.webp",
       "titulo": "20",
       "tipo": "otro",
-      "kb": 19
+      "kb": 71
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-06/21.webp",
       "titulo": "21",
       "tipo": "otro",
-      "kb": 111
+      "kb": 83
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-06/22.webp",
       "titulo": "22",
       "tipo": "otro",
-      "kb": 72
-     },
-     {
-      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-06/23.webp",
-      "titulo": "23",
-      "tipo": "otro",
-      "kb": 36
-     },
-     {
-      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-06/24.webp",
-      "titulo": "24",
-      "tipo": "otro",
-      "kb": 71
-     },
-     {
-      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-06/25.webp",
-      "titulo": "25",
-      "tipo": "otro",
-      "kb": 38
-     }
-    ]
-   },
-   {
-    "carpeta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-07",
-    "titulo": "Clase 07",
-    "grupo": "Carpetas",
-    "archivos": [
-     {
-      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-07/01.webp",
-      "titulo": "01",
-      "tipo": "otro",
-      "kb": 32
-     },
-     {
-      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-07/02.webp",
-      "titulo": "02",
-      "tipo": "otro",
-      "kb": 52
-     },
-     {
-      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-07/03.webp",
-      "titulo": "03",
-      "tipo": "otro",
-      "kb": 50
-     },
-     {
-      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-07/04.webp",
-      "titulo": "04",
-      "tipo": "otro",
-      "kb": 77
-     },
-     {
-      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-07/05.webp",
-      "titulo": "05",
-      "tipo": "otro",
-      "kb": 85
-     },
-     {
-      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-07/06.webp",
-      "titulo": "06",
-      "tipo": "otro",
-      "kb": 12
-     },
-     {
-      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-07/07.webp",
-      "titulo": "07",
-      "tipo": "otro",
-      "kb": 73
-     },
-     {
-      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-07/08.webp",
-      "titulo": "08",
-      "tipo": "otro",
-      "kb": 34
-     },
-     {
-      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-07/09.webp",
-      "titulo": "09",
-      "tipo": "otro",
-      "kb": 44
-     },
-     {
-      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-07/10.webp",
-      "titulo": "10",
-      "tipo": "otro",
-      "kb": 39
-     },
-     {
-      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-07/11.webp",
-      "titulo": "11",
-      "tipo": "otro",
-      "kb": 51
-     },
-     {
-      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-07/12.webp",
-      "titulo": "12",
-      "tipo": "otro",
-      "kb": 26
-     },
-     {
-      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-07/13.webp",
-      "titulo": "13",
-      "tipo": "otro",
-      "kb": 43
-     },
-     {
-      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-07/14.webp",
-      "titulo": "14",
-      "tipo": "otro",
-      "kb": 30
-     },
-     {
-      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-07/15.webp",
-      "titulo": "15",
-      "tipo": "otro",
-      "kb": 32
-     },
-     {
-      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-07/16.webp",
-      "titulo": "16",
-      "tipo": "otro",
-      "kb": 12
-     },
-     {
-      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-07/17.webp",
-      "titulo": "17",
-      "tipo": "otro",
-      "kb": 38
-     },
-     {
-      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-07/18.webp",
-      "titulo": "18",
-      "tipo": "otro",
-      "kb": 27
-     },
-     {
-      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-07/19.webp",
-      "titulo": "19",
-      "tipo": "otro",
-      "kb": 24
-     },
-     {
-      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-07/20.webp",
-      "titulo": "20",
-      "tipo": "otro",
-      "kb": 71
-     },
-     {
-      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-07/21.webp",
-      "titulo": "21",
-      "tipo": "otro",
-      "kb": 83
-     },
-     {
-      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-07/22.webp",
-      "titulo": "22",
-      "tipo": "otro",
       "kb": 56
      },
      {
-      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-07/23.webp",
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-06/23.webp",
       "titulo": "23",
       "tipo": "otro",
       "kb": 33
