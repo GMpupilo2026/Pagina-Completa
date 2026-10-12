@@ -943,6 +943,7 @@
                 if (tarjeta) wrap.appendChild(tarjeta);
             }
             pintarVideollamada();
+            CalendarioTaller.ponerEntrada(document.getElementById("calendario-taller"), entradaTaller());
             claseCompacta();
         }
 
@@ -1082,6 +1083,7 @@
             } catch (e) { /* sin sesiones, la tarjeta lo dice */ }
             const quedan = CalendarioTaller.pintar(document.getElementById("calendario-taller"), sesiones, {
                 alBajar: (boton, estado) => bajarCalendario(boton, estado, 90),
+                entrada: entradaTaller(),
             });
             if (!panelAdaptado && quedan) {
                 const s = sesiones.find((x) => new Date(x.fin) > new Date());
@@ -1090,6 +1092,19 @@
                     ? "Tu sesión es ahora, hasta las " + T.hora(s.fin)
                     : "Tu próxima sesión es el " + T.dia(s.inicio).toLowerCase() + " a las " + T.hora(s.inicio));
             }
+        }
+
+        /* Si se puede entrar a la clase desde el renglón de hoy del
+           calendario: la misma regla que la tarjeta «Sesión en vivo» y el
+           botón de la videollamada (mis_clases(), que trae Realtime). */
+        function entradaTaller() {
+            if (!videollamadaLista || profile._persona) return null;
+            const clase = Videollamada.claseConLlamada(misClases, boardOwnerId);
+            const seguro = clase && Videollamada.esSeguro(clase.videollamada);
+            return {
+                abierta: !!clase,
+                videollamada: seguro ? { href: clase.videollamada, etiqueta: Videollamada.etiqueta(clase.videollamada) } : null,
+            };
         }
 
         async function bajarCalendario(boton, estado, dias = 28) {
