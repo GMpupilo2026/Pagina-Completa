@@ -1258,30 +1258,31 @@ html.modo-proyector .proyector-columna:has(> #presentacion-caja:not([hidden])) >
 html.modo-proyector .proyector-columna:has(> #presentacion-caja:not([hidden])) > #entrar-qr-caja { grid-column: 1 / -1; }
 html.modo-proyector .proyector-columna:has(> #presentacion-caja:not([hidden])) > #presentacion-caja { grid-column: 1; grid-row: 2 / span 40; max-width: none; margin: 0; }
 html.modo-proyector .presentacion-sin-proyector { display: none !important; }
-/* A pantalla completa (el botón ⛶ de la tarjeta): la lámina tan grande como quepa. */
-#presentacion-caja:fullscreen { max-width: none; display: flex; flex-direction: column; justify-content: center; background: #0b1220; border-radius: 0; overflow-y: auto; }
-#presentacion-caja:fullscreen .presentacion-lienzo { width: fit-content; max-width: 100%; margin: 0 auto; }
-#presentacion-caja:fullscreen .presentacion-img { max-height: calc(100vh - 9rem); width: auto; max-width: 100%; }
+/* A pantalla completa (el botón ⛶ de la tarjeta, o la que el profe pone a todos,
+   .presentacion-forzada): la lámina tan grande como quepa. */
+:is(#presentacion-caja:fullscreen, html.presentacion-forzada:not(.adaptive-mode) #presentacion-caja:not([hidden])) { max-width: none; display: flex; flex-direction: column; justify-content: center; background: #0b1220; border-radius: 0; overflow-y: auto; }
+:is(#presentacion-caja:fullscreen, html.presentacion-forzada:not(.adaptive-mode) #presentacion-caja:not([hidden])) .presentacion-lienzo { width: fit-content; max-width: 100%; margin: 0 auto; }
+:is(#presentacion-caja:fullscreen, html.presentacion-forzada:not(.adaptive-mode) #presentacion-caja:not([hidden])) .presentacion-img { max-height: calc(100vh - 9rem); width: auto; max-width: 100%; }
 /* Sobre el fondo oscuro, los textos de la tarjeta en claro (eran gris oscuro y no se leían). */
-#presentacion-caja:fullscreen #presentacion-titulo,
-#presentacion-caja:fullscreen #presentacion-cuenta,
-#presentacion-caja:fullscreen summary,
-#presentacion-caja:fullscreen #presentacion-texto,
-#presentacion-caja:fullscreen #presentacion-sigue,
-#presentacion-caja:fullscreen #presentacion-posiciones > p,
-#presentacion-caja:fullscreen #presentacion-posiciones span { color: #f1f5f9; }
+:is(#presentacion-caja:fullscreen, html.presentacion-forzada:not(.adaptive-mode) #presentacion-caja:not([hidden])) #presentacion-titulo,
+:is(#presentacion-caja:fullscreen, html.presentacion-forzada:not(.adaptive-mode) #presentacion-caja:not([hidden])) #presentacion-cuenta,
+:is(#presentacion-caja:fullscreen, html.presentacion-forzada:not(.adaptive-mode) #presentacion-caja:not([hidden])) summary,
+:is(#presentacion-caja:fullscreen, html.presentacion-forzada:not(.adaptive-mode) #presentacion-caja:not([hidden])) #presentacion-texto,
+:is(#presentacion-caja:fullscreen, html.presentacion-forzada:not(.adaptive-mode) #presentacion-caja:not([hidden])) #presentacion-sigue,
+:is(#presentacion-caja:fullscreen, html.presentacion-forzada:not(.adaptive-mode) #presentacion-caja:not([hidden])) #presentacion-posiciones > p,
+:is(#presentacion-caja:fullscreen, html.presentacion-forzada:not(.adaptive-mode) #presentacion-caja:not([hidden])) #presentacion-posiciones span { color: #f1f5f9; }
 /* El tablero de la clase en pequeño, abajo a la derecha: solo en pantalla completa. */
 .solo-pantalla-completa,
 .presentacion-mini { display: none; }
-#presentacion-caja:fullscreen .solo-pantalla-completa { display: inline-flex; }
-#presentacion-caja:fullscreen .presentacion-mini:not([hidden]) {
+:is(#presentacion-caja:fullscreen, html.presentacion-forzada:not(.adaptive-mode) #presentacion-caja:not([hidden])) .solo-pantalla-completa { display: inline-flex; }
+:is(#presentacion-caja:fullscreen, html.presentacion-forzada:not(.adaptive-mode) #presentacion-caja:not([hidden])) .presentacion-mini:not([hidden]) {
   display: block; position: absolute; right: 1rem; bottom: 1rem; z-index: 2;
   width: min(32vh, 26vw); aspect-ratio: 1; border-radius: 0.5rem; overflow: hidden;
   border: 3px solid #f4c430; box-shadow: 0 8px 24px rgb(0 0 0 / 0.5); background: #ffffff; pointer-events: none;
 }
 .presentacion-mini > * { width: 100%; height: 100%; max-width: none; border-width: 0; border-radius: 0; box-shadow: none; }
 /* Con el tablero a la vista, la lámina se corre a la izquierda y le deja su lugar: no tapa nada. */
-#presentacion-caja:fullscreen:has(.presentacion-mini:not([hidden])) .presentacion-lienzo {
+:is(#presentacion-caja:fullscreen, html.presentacion-forzada:not(.adaptive-mode) #presentacion-caja:not([hidden])):has(.presentacion-mini:not([hidden])) .presentacion-lienzo {
   margin-left: 0; max-width: calc(100% - min(32vh, 26vw) - 2rem);
 }
 /* La pizarra del profe (js/clase-pizarra.js): un SVG justo encima de la imagen.
@@ -1292,9 +1293,27 @@ html.modo-proyector .presentacion-sin-proyector { display: none !important; }
 .presentacion-pizarra { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: hidden; }
 .presentacion-pizarra.dibujando { pointer-events: auto; touch-action: none; cursor: crosshair; }
 .presentacion-pizarra.borrando { cursor: cell; }
-#presentacion-caja:fullscreen #presentacion-mis-notas label,
-#presentacion-caja:fullscreen #presentacion-nota-msg,
-#presentacion-caja:fullscreen #pizarra-msg { color: #f1f5f9; }
+:is(#presentacion-caja:fullscreen, html.presentacion-forzada:not(.adaptive-mode) #presentacion-caja:not([hidden])) #presentacion-mis-notas label,
+:is(#presentacion-caja:fullscreen, html.presentacion-forzada:not(.adaptive-mode) #presentacion-caja:not([hidden])) #presentacion-nota-msg,
+:is(#presentacion-caja:fullscreen, html.presentacion-forzada:not(.adaptive-mode) #presentacion-caja:not([hidden])) #pizarra-msg { color: #f1f5f9; }
+
+/* La pantalla completa que el profe pone a todos (presentacion.completa,
+   js/clase-presentacion.js): la tarjeta tapa la ventana sin esperar a que el
+   alumno toque nada (el navegador no deja abrir la de verdad sin un toque).
+   Por debajo de las preguntas y las prácticas (z-50), que le siguen saliendo
+   encima, igual que el calentamiento y la competencia. Con el Modo Adaptado no
+   se aplica. Ver «La pantalla completa para todos». */
+html.presentacion-forzada:not(.adaptive-mode) #presentacion-caja:not([hidden]) {
+  position: fixed; inset: 0; z-index: 48; margin: 0; padding: 1rem;
+}
+html.presentacion-forzada:not(.adaptive-mode) body { overflow: hidden; }
+html.presentacion-forzada:not(.adaptive-mode) #header { display: none !important; }
+html.presentacion-forzada:not(.adaptive-mode) #calentamiento-caja:not([hidden]),
+html.presentacion-forzada:not(.adaptive-mode) #tanda-caja:not([hidden]) {
+  position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 49;
+  width: min(94vw, 600px); max-width: none; max-height: 92vh; overflow-y: auto; margin: 0;
+  box-shadow: 0 0 0 100vmax rgb(0 0 0 / 0.6);
+}
 
 /* La vista limpia de los alumnos (presentacion.limpia, js/clase-presentacion.js):
    la diapositiva, el tablero y el chat, como en el proyector. Por LISTA NEGRA a

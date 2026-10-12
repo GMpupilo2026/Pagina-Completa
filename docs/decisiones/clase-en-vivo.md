@@ -3417,6 +3417,34 @@ lámina se corre a la izquierda para dejarle su lugar.
 - Sobre el fondo oscuro, los textos de la tarjeta van en claro: antes eran
   gris oscuro y no se leían.
 
+#### La pantalla completa para todos
+
+Con una presentación en pantalla, «⛶ Pantalla completa para todos» (en la
+tarjeta, junto a 🧹) le pone la diapositiva a pantalla completa a cada alumno,
+con el tablero de la clase en pequeño, hasta que el profe la quita con el mismo
+botón («⛶ Quitar la pantalla completa a todos»). Es para que todos miren la
+lámina y nada más mientras el profe explica algo puntual.
+
+- **Va en la misma columna**: `presentacion.completa = true`, como `limpia`
+  (el CHECK solo mira `deck` y `n`, y el trigger protege la columna entera).
+  Pasar la diapositiva o elegir otra presentación la deja como estaba; quitar
+  la presentación la quita.
+- **El navegador no deja abrir la pantalla completa de verdad sin un toque de
+  la persona**: un `requestFullscreen()` que llega por Realtime se rechaza. Por
+  eso la tapa la pone el CSS (`.presentacion-forzada` en `<html>`: la tarjeta
+  `position: fixed` sobre toda la ventana, sin el encabezado), que funciona en
+  el acto, y la de verdad se pide con el primer toque o tecla del alumno.
+- **La de verdad es la de TODA la página, no la de la tarjeta**: con la tarjeta
+  a pantalla completa, lo que está fuera de ella no se ve, y una pregunta o una
+  práctica que el profe lance quedaría escondida. Así le siguen saliendo
+  encima (z-50 contra 48 de la tapa), y el calentamiento y la competencia
+  también, como en la vista limpia.
+- **Al quitarla se sale también de la de verdad** (`exitFullscreen()` no pide
+  toque). Si el alumno sale con Esc, la tapa sigue: la quita el profe.
+- Al profe, al proyector y a quien supervisa no se les aplica; con el Modo
+  Adaptado tampoco (lo dice el CSS), por lo mismo que la vista limpia.
+- Se le dice en voz: «Tu profe puso la presentación en pantalla completa…».
+
 #### La pizarra de la presentación
 
 «✏️ Pizarra» (junto a ◀ ▶) deja al profe dibujar ENCIMA de la diapositiva:
@@ -3517,7 +3545,9 @@ celular), al proyector (la lámina al lado del tablero, sin lo del profe) y las
 la vista limpia (el profe la enciende y la apaga, a él no se le aplica, la
 alumna queda con la diapositiva, el tablero y el chat en su lugar, el
 calentamiento encima y las preguntas más arriba, el Modo Adaptado la anula, en
-el celular cabe), el tablero en pequeño a pantalla completa (copia la jugada
+el celular cabe), la pantalla completa para todos (el profe la pone y la quita, a
+la alumna le tapa la ventana sin tocar nada y con su primer toque pasa a la de
+verdad de toda la página, las preguntas encima, al quitarla sale), el tablero en pequeño a pantalla completa (copia la jugada
 y la flecha en vivo, no tapa la lámina, se oculta y se muestra) y las subidas con un PDF de verdad armado en la prueba y un Storage de mentira
 (`opciones.extra` del doble): una imagen por página en su carpeta, la fila
 después de las imágenes y con el texto de cada página, elegirla, guardar y
@@ -3526,7 +3556,8 @@ se le firma la que se ve.
 Está probado que falla de verdad sin la guardia de los ecos, adelantándole
 láminas a la alumna (las del curso y las subidas), sin la línea del trigger y
 guardando la fila antes de subir las imágenes, sin poner el calentamiento al
-frente en la vista limpia, aplicándosela también al profe y sin volver a
+frente en la vista limpia, sin la tapa fija de la pantalla completa para todos o sin
+salir de la de verdad al quitarla, aplicándosela también al profe y sin volver a
 copiar el tablero en pequeño cuando cambia.
 
 ### Buscar un ejercicio es mirarlo: «Ver todas las posiciones»

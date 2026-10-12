@@ -171,6 +171,7 @@ function formaPresentacion(p) {
     if (!PresentacionClase.valida(p)) return null;
     const q = { deck: p.deck, n: p.n };
     if (p.limpia === true) q.limpia = true;
+    if (p.completa === true) q.completa = true;
     const trazos = Pizarra.limpiar(p.trazos);
     if (trazos.length) q.trazos = trazos;
     return q;
@@ -192,7 +193,7 @@ async function pintarPresentacion(p, propia) {
     if (presentacionDatos && JSON.stringify(nueva) === JSON.stringify(presentacionActual) && !caja.hidden) return;
     // La misma diapositiva con otras marcas de la pizarra: solo las marcas.
     if (presentacionDatos && !caja.hidden && mismaDiapositiva(nueva, presentacionActual)
-        && !!nueva.limpia === !!presentacionActual.limpia) {
+        && !!nueva.limpia === !!presentacionActual.limpia && !!nueva.completa === !!presentacionActual.completa) {
         presentacionActual = nueva;
         pintarPizarra(nueva.trazos);
         return;
@@ -200,6 +201,7 @@ async function pintarPresentacion(p, propia) {
     presentacionActual = nueva;
     pintarPresentacionPanel();
     pintarVistaLimpia(nueva);
+    pintarPantallaCompletaForzada(nueva);
     const turno = ++presentacionPintando;
     if (!nueva) {
         caja.hidden = true;
@@ -221,6 +223,7 @@ async function pintarPresentacion(p, propia) {
         document.getElementById("presentacion-pizarra").replaceChildren();
         // Sin la diapositiva, la vista limpia dejaría al alumno sin nada que mirar.
         document.documentElement.classList.remove("vista-limpia");
+        pintarPantallaCompletaForzada(null);
     };
     let datos, d, src, n;
     try {
@@ -254,6 +257,9 @@ async function pintarPresentacion(p, propia) {
     const limpia = document.getElementById("presentacion-limpia");
     limpia.setAttribute("aria-pressed", String(!!nueva.limpia));
     limpia.textContent = nueva.limpia ? "🧹 Vista limpia: encendida" : "🧹 Vista limpia para los alumnos";
+    const completa = document.getElementById("presentacion-completa-todos");
+    completa.setAttribute("aria-pressed", String(!!nueva.completa));
+    completa.textContent = nueva.completa ? "⛶ Quitar la pantalla completa a todos" : "⛶ Pantalla completa para todos";
     document.getElementById("presentacion-anterior").disabled = n <= 1;
     document.getElementById("presentacion-siguiente").disabled = n >= total;
     const notas = document.getElementById("presentacion-notas");
@@ -497,6 +503,7 @@ function pasarDiapositiva(paso) {
     if (!presentacionActual) return;
     const p = { deck: presentacionActual.deck, n: presentacionActual.n + paso };
     if (presentacionActual.limpia) p.limpia = true;
+    if (presentacionActual.completa) p.completa = true;
     mostrarPresentacion(p);
 }
 
@@ -522,6 +529,56 @@ function cambiarVistaLimpia() {
     if (!presentacionActual) return;
     const p = Object.assign({}, presentacionActual);
     if (p.limpia) delete p.limpia; else p.limpia = true;
+    mostrarPresentacion(p);
+}
+
+/* ---------- La pantalla completa para todos ----------
+   El profe la enciende («⛶ Pantalla completa para todos», presentacion.completa)
+   y a cada alumno la diapositiva le tapa la ventana entera, con el tablero de
+   la clase en pequeño, hasta que el profe se la quita: así miran lo que él
+   quiere que miren. El navegador no deja abrir la pantalla completa de verdad
+   sin un toque de la persona, así que la tapa la pone el CSS
+   (.presentacion-forzada en <html>, sin esperar a nadie) y la de verdad se pide
+   con el primer toque o tecla del alumno; se pide de TODA la página y no de la
+   tarjeta, para que las preguntas y las prácticas le sigan saliendo encima.
+   Al quitarla, se sale también de la de verdad (para eso no hace falta toque).
+   Al profe, al proyector y a quien supervisa no se les aplica, y con el Modo
+   Adaptado tampoco (lo dice el CSS). */
+function pantallaCompletaForzada() {
+    const html = document.documentElement;
+    return html.classList.contains("presentacion-forzada") && !html.classList.contains("adaptive-mode");
+}
+
+function pedirPantallaCompletaDeVerdad() {
+    if (!pantallaCompletaForzada() || document.fullscreenElement) return;
+    const html = document.documentElement;
+    if (html.requestFullscreen) html.requestFullscreen().catch(() => {});
+}
+
+function pintarPantallaCompletaForzada(p) {
+    const forzada = !!(p && p.completa) && !isTeacher && !esObservador && !modoProyector;
+    const html = document.documentElement;
+    const habia = html.classList.contains("presentacion-forzada");
+    html.classList.toggle("presentacion-forzada", forzada);
+    anunciarALaClase("pantalla-completa", forzada ? "si" : null,
+        "Tu profe puso la presentación en pantalla completa para que todos miren la diapositiva. Él te la quita cuando termine.");
+    if (habia === forzada) return;
+    if (forzada) {
+        pedirPantallaCompletaDeVerdad();   // casi siempre la niega: no hubo toque
+        document.addEventListener("pointerdown", pedirPantallaCompletaDeVerdad, { capture: true, once: true });
+        document.addEventListener("keydown", pedirPantallaCompletaDeVerdad, { capture: true, once: true });
+    } else {
+        document.removeEventListener("pointerdown", pedirPantallaCompletaDeVerdad, { capture: true });
+        document.removeEventListener("keydown", pedirPantallaCompletaDeVerdad, { capture: true });
+        if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(() => {});
+    }
+    pintarTableroMini();
+}
+
+function cambiarPantallaCompletaTodos() {
+    if (!presentacionActual) return;
+    const p = Object.assign({}, presentacionActual);
+    if (p.completa) delete p.completa; else p.completa = true;
     mostrarPresentacion(p);
 }
 
@@ -554,9 +611,11 @@ function filaDePresentacion(deck, titulo, detalle, alBorrar) {
     } else {
         const mostrar = presentacionBoton("▶ Mostrar a la clase", "Mostrar la primera diapositiva a toda la clase, arriba del tablero", true);
         mostrar.addEventListener("click", () => {
-            // Si ya estaba en vista limpia, la siguiente presentación sigue igual.
-            const limpia = !!(presentacionActual && presentacionActual.limpia);
-            mostrarPresentacion(limpia ? { deck: deck, n: 1, limpia: true } : { deck: deck, n: 1 });
+            // Si ya estaba en vista limpia o en pantalla completa, la siguiente sigue igual.
+            const nueva = { deck: deck, n: 1 };
+            if (presentacionActual && presentacionActual.limpia) nueva.limpia = true;
+            if (presentacionActual && presentacionActual.completa) nueva.completa = true;
+            mostrarPresentacion(nueva);
             cerrarPanelPresentacion();
         });
         acciones.appendChild(mostrar);
@@ -837,7 +896,7 @@ function pintarTableroMini() {
     const mini = document.getElementById("presentacion-mini");
     const btn = document.getElementById("presentacion-mini-btn");
     const fuente = document.getElementById("chessboard");
-    const ver = document.fullscreenElement === caja && miniQuiereVerse();
+    const ver = (document.fullscreenElement === caja || pantallaCompletaForzada()) && miniQuiereVerse();
     mini.hidden = !ver;
     btn.textContent = miniQuiereVerse() ? "♟ Ocultar el tablero" : "♟ Ver el tablero";
     btn.setAttribute("aria-expanded", String(ver));
@@ -860,15 +919,18 @@ document.getElementById("presentacion-mini-btn").addEventListener("click", () =>
 });
 
 // Lo de todos: pantalla completa. Lo del profe: ◀ ▶ y quitar (también con el teclado en pantalla completa).
+// Con la pantalla completa del profe puesta, la de verdad es la de toda la página (ver arriba).
 document.getElementById("presentacion-completa").addEventListener("click", () => {
     const caja = document.getElementById("presentacion-caja");
+    const el = pantallaCompletaForzada() ? document.documentElement : caja;
     if (document.fullscreenElement) document.exitFullscreen();
-    else if (caja.requestFullscreen) caja.requestFullscreen().catch(() => {});
+    else if (el.requestFullscreen) el.requestFullscreen().catch(() => {});
 });
 document.getElementById("presentacion-anterior").addEventListener("click", () => pasarDiapositiva(-1));
 document.getElementById("presentacion-siguiente").addEventListener("click", () => pasarDiapositiva(1));
 document.getElementById("presentacion-quitar").addEventListener("click", () => mostrarPresentacion(null));
 document.getElementById("presentacion-limpia").addEventListener("click", cambiarVistaLimpia);
+document.getElementById("presentacion-completa-todos").addEventListener("click", cambiarPantallaCompletaTodos);
 document.getElementById("presentacion-caja").addEventListener("keydown", (e) => {
     if (!presentacionEsDelProfe() || document.fullscreenElement !== e.currentTarget) return;
     if (e.key === "ArrowRight" || e.key === "PageDown") { e.preventDefault(); pasarDiapositiva(1); }
