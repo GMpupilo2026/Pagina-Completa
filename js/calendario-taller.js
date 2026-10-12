@@ -11,6 +11,12 @@
    regla de «Tu próxima clase» y del .ics, así que las tres cosas dicen lo
    mismo. Las que ya terminaron no se piden.
 
+   El renglón de la sesión de hoy lleva «Entrar a la sesión» (y, si es en
+   línea y el profe puso el enlace, el de la videollamada): con la misma regla
+   que la tarjeta «Sesión en vivo», se abre solo cuando el profe abrió la
+   clase. Antes hay que ir a buscar esa tarjeta a otra parte del panel justo
+   cuando el calendario dice «Ahora».
+
    Va aparte de js/clases.js para que se pueda probar sin la base: pintar()
    recibe las filas tal cual las devuelve mis_clases_proximas().
    Ver «El panel de taller» en docs/decisiones/paneles.md. */
@@ -45,7 +51,52 @@ window.CalendarioTaller = (function () {
         return null;
     }
 
-    function renglon(s, ahora, esPrimera) {
+    const CLASE_BOTON = "inline-flex items-center gap-1 rounded-xl px-4 py-2 text-sm font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2";
+
+    /* Lo que va en el renglón de hoy según la clase. `entrada`:
+       undefined/null mientras no se sabe; { abierta, videollamada } después,
+       con `videollamada` = { href, etiqueta } o null. El candado lo pone la
+       base (sin clase abierta la RLS no da el tablero): acá solo se dice
+       antes de tocar, como en la tarjeta «Sesión en vivo». */
+    function pintarEntrada(caja, entrada, modalidad) {
+        caja.replaceChildren();
+        if (!entrada || !entrada.abierta) {
+            // Apagado: sin href, pero se alcanza con Tab para leer por qué.
+            const apagado = document.createElement("span");
+            apagado.className = CLASE_BOTON + " cursor-not-allowed bg-brand-100 dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-700 dark:text-brand-200";
+            apagado.tabIndex = 0;
+            apagado.setAttribute("role", "link");
+            apagado.setAttribute("aria-disabled", "true");
+            apagado.dataset.entrar = "apagado";
+            const candado = document.createElement("span");
+            candado.setAttribute("aria-hidden", "true");
+            candado.textContent = "🔒 ";
+            apagado.append(candado, entrada ? "Entrar a la sesión: se abre cuando tu profe empiece la clase" : "Viendo si hay clase…");
+            caja.appendChild(apagado);
+            return;
+        }
+        const entrar = document.createElement("a");
+        entrar.href = "sesion.html";
+        entrar.dataset.entrar = "sesion";
+        entrar.className = CLASE_BOTON + " bg-accent-500 text-brand-900 hover:bg-accent-400";
+        entrar.textContent = "Entrar a la sesión →";
+        caja.appendChild(entrar);
+        if (modalidad !== "presencial" && entrada.videollamada && entrada.videollamada.href) {
+            const llamada = document.createElement("a");
+            llamada.href = entrada.videollamada.href;
+            llamada.target = "_blank";
+            llamada.rel = "noopener noreferrer";
+            llamada.dataset.entrar = "videollamada";
+            llamada.className = CLASE_BOTON + " bg-white dark:bg-brand-900 border-2 border-accent-500 text-brand-800 dark:text-white hover:bg-accent-50 dark:hover:bg-brand-800";
+            const icono = document.createElement("span");
+            icono.setAttribute("aria-hidden", "true");
+            icono.textContent = "📹 ";
+            llamada.append(icono, entrada.videollamada.etiqueta || "Entrar a la videollamada");
+            caja.appendChild(llamada);
+        }
+    }
+
+    function renglon(s, ahora, esPrimera, entrada) {
         const li = document.createElement("li");
         const estado = estadoDe(s, ahora, esPrimera);
         li.className = "flex items-start gap-3 rounded-xl px-3 py-3 "
@@ -82,14 +133,26 @@ window.CalendarioTaller = (function () {
         donde.textContent = s.modalidad === "presencial" ? "Presencial" : "En línea";
         cuerpo.append(arriba, cuando, donde);
 
+        // Solo la sesión de hoy (la que pasa ahora o la que viene más tarde):
+        // el profe puede abrir la clase unos minutos antes de la hora.
+        if (estado && estado.texto !== "Próxima") {
+            const botones = document.createElement("div");
+            botones.className = "mt-3 flex flex-wrap gap-2";
+            botones.setAttribute("data-entrada", "");
+            botones.dataset.modalidad = s.modalidad || "";
+            pintarEntrada(botones, entrada, s.modalidad);
+            cuerpo.appendChild(botones);
+        }
+
         li.append(icono, cuerpo);
         return li;
     }
 
     /* Pinta la tarjeta en `caja`. `sesiones` son las filas de
        mis_clases_proximas() (ya ordenadas y sin las que terminaron);
-       `alBajar` es lo que hace «Agregar a mi calendario». */
-    function pintar(caja, sesiones, { ahora = new Date(), alBajar = null } = {}) {
+       `alBajar` es lo que hace «Agregar a mi calendario»; `entrada`, si la
+       clase está abierta (ver pintarEntrada). */
+    function pintar(caja, sesiones, { ahora = new Date(), alBajar = null, entrada = null } = {}) {
         caja.replaceChildren();
         const lista = (sesiones || []).filter((s) => s && s.inicio && s.fin && new Date(s.fin) > ahora);
 
@@ -111,7 +174,7 @@ window.CalendarioTaller = (function () {
             const ol = document.createElement("ol");
             ol.className = "space-y-2";
             ol.setAttribute("aria-label", "Sesiones que vienen");
-            lista.forEach((s, i) => ol.appendChild(renglon(s, ahora, i === 0)));
+            lista.forEach((s, i) => ol.appendChild(renglon(s, ahora, i === 0, entrada)));
             caja.appendChild(ol);
         }
 
@@ -132,5 +195,13 @@ window.CalendarioTaller = (function () {
         return lista.length;
     }
 
-    return { pintar, hora, dia, conPunto };
+    /* Cuando la clase se abre o se cierra (llega por Realtime), se repinta
+       solo el lugar de los botones: repintar la tarjeta entera borraría lo
+       que dijo «Agregar a mi calendario». */
+    function ponerEntrada(caja, entrada) {
+        const lugar = caja && caja.querySelector("[data-entrada]");
+        if (lugar) pintarEntrada(lugar, entrada, lugar.dataset.modalidad);
+    }
+
+    return { pintar, ponerEntrada, hora, dia, conPunto };
 })();

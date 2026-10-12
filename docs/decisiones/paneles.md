@@ -3874,7 +3874,25 @@ cuentas, después de validar la captura.
   - en el celular la hora («8:00 a. m. a 12:00 m. d.») baja entera al renglón
     de abajo, no partida.
   
-  «Agregar a mi calendario» baja las de 90 días (el de «Tus clases» sigue con
+- **Se entra a la sesión desde el renglón de hoy.** Antes el calendario decía
+  «Ahora» y el clic había que darlo en la tarjeta «Sesión en vivo», en otra
+  parte del panel; el dueño preguntó si las asesoras entraban desde ahí, y no.
+  Ahora la sesión de hoy (la que dice «Ahora» u «Hoy», nunca «Próxima»: el
+  profe puede abrir unos minutos antes) lleva **«Entrar a la sesión →»**
+  (`sesion.html`) y, si es en línea y el profe puso un enlace `https`, el de la
+  videollamada, que dice el servicio («Entrar a Meet», «Entrar a Zoom»,
+  «Entrar a Teams», Jitsi, Whereby, Discord; si no lo reconoce, «Entrar a la
+  videollamada») con `Videollamada.etiqueta()`, que lo saca del dominio del
+  enlace y no de buscar el nombre en el texto. **La regla es la de la tarjeta «Sesión en vivo»**: con la clase
+  cerrada va el candado escrito («se abre cuando tu profe empiece la clase»),
+  sin `href` pero alcanzable con Tab, porque sin clase abierta la RLS no da el
+  tablero y entrar pintaría una pantalla vacía. Lo calcula `entradaTaller()` de
+  `js/clases.js` con `mis_clases()` y `Videollamada.claseConLlamada()`, y cuando
+  la clase se abre o cierra por Realtime `CalendarioTaller.ponerEntrada()`
+  repinta solo los botones (repintar la tarjeta borraba lo que dijo «Agregar a
+  mi calendario»). Contraste medido: 6,5:1 el botón, 8,8:1 (claro) y 10,2:1
+  (oscuro) el candado, 14,6:1 y 16,7:1 la videollamada.
+- «Agregar a mi calendario» baja las de 90 días (el de «Tus clases» sigue con
   cuatro semanas). Contraste medido contra el fondo real: 5,5:1 o más en claro
   y 6,5:1 en oscuro.
 
@@ -3898,6 +3916,10 @@ panel) **y `verificar-academias.js`** (la casilla).
   - con taller: sin «Hoy te toca» ni diagnóstico, la tarea del profe sí, la
     sesión que pasó fuera, «Ahora», el mediodía, el subtítulo, el `.ics` y el
     celular;
+  - «Entrar a la sesión»: con candado y sin enlace mientras la clase está
+    cerrada, abierto (con la videollamada) cuando está abierta, solo en la
+    sesión de hoy, sin videollamada en la presencial, y que se destape sin
+    repintar la tarjeta;
   - sin taller: «Hoy te toca» sigue;
   - si la base no contesta: el panel de siempre.
 - **Prueba la tarjeta sola:** «Hoy», «Próxima», el título como texto y la

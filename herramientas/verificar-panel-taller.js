@@ -11,6 +11,9 @@
  *  - Una sesión que ya pasó sigue en la lista, la hora se lee mal («12:00 p. m.»
  *    en lugar de «12:00 m. d.», «a. m..») o se parte a la mitad en el celular.
  *  - Lo que pide el profe (una tarea) deja de salir junto con el diagnóstico.
+ *  - «Entrar a la sesión» del renglón de hoy lleva al tablero sin clase
+ *    abierta (una pantalla vacía), o no se destapa cuando el profe la abre;
+ *    o sale en las sesiones de otro día.
  *  - Cualquiera enciende el panel de taller desde la consola: solo la función
  *    lo cambia, y solo para quien administra o supervisa esa academia.
  *
@@ -161,7 +164,7 @@ function sesiones() {
 }
 
 const YO = "u-asesor";
-function cfg({ taller = true, tareas = [], fallan = [] } = {}) {
+function cfg({ taller = true, tareas = [], fallan = [], abierta = false, videollamada = null } = {}) {
   return {
     yo: YO,
     tablas: { profiles: [{ id: YO, full_name: "Asesora de prueba · Cartago", role: "alumno", is_admin: false, grupo: "MEP" }] },
@@ -169,7 +172,7 @@ function cfg({ taller = true, tareas = [], fallan = [] } = {}) {
       mi_acceso: { vigente: true, motivo: "temporal", exigido: false, vence: "2030-12-20T06:00:00+00:00", detalle: "Taller", dias: 70 },
       mi_panel_taller: taller,
       mis_clases_proximas: sesiones(),
-      mis_clases: [{ profesor_id: "u-profe", profesor: "Campeones", es_principal: true, clase_abierta: false, titulo_clase: null, videollamada: null }],
+      mis_clases: [{ profesor_id: "u-profe", profesor: "Campeones", es_principal: true, clase_abierta: abierta, titulo_clase: null, videollamada }],
       tareas_con_avance: tareas,
       examenes_con_nota: [],
     },
@@ -201,8 +204,36 @@ async function pruebaTaller(browser) {
   const ics = fs.readFileSync(await descarga.path(), "utf8");
   cierto("«Agregar a mi calendario» baja las sesiones en un .ics", /BEGIN:VCALENDAR/.test(ics) && /SUMMARY:.*Sesión presencial de cierre/.test(ics));
   igual("y las pide para 90 días", (await llamadas(page, "mis_clases_proximas")).slice(-1)[0], { p_dias: 90 });
+  const entrada = await page.$$eval("#calendario-taller li", (ls) => ls.map((l) => [...l.querySelectorAll("[data-entrar]")].map((e) => e.dataset.entrar + (e.getAttribute("href") ? ":" + e.getAttribute("href") : ""))));
+  igual("sin clase abierta, la sesión de ahora dice el candado (sin enlace) y las otras no llevan nada", entrada, [["apagado"], [], [], []]);
+  igual("y el candado se alcanza con Tab y se anuncia apagado",
+    await page.$eval("[data-entrar=apagado]", (e) => [e.tabIndex, e.getAttribute("aria-disabled"), /se abre cuando tu profe empiece la clase/.test(e.textContent)]), [0, "true", true]);
   cierto("sin errores en la página", errores.length === 0, errores.join(" | "));
   await cerrar();
+
+  console.log("\n=== Con la clase abierta ===");
+  let abierta = await abrir(browser, cfg({ abierta: true, videollamada: "https://meet.google.com/abc-defg-hij" }));
+  const enlaces = await abierta.page.$$eval("#calendario-taller li:first-child [data-entrar]", (es) => es.map((e) => [e.dataset.entrar, e.getAttribute("href"), e.target || "", e.checkVisibility()]));
+  igual("la sesión de ahora lleva «Entrar a la sesión» y la videollamada, a la vista",
+    enlaces, [["sesion", "sesion.html", "", true], ["videollamada", "https://meet.google.com/abc-defg-hij", "_blank", true]]);
+  igual("el botón dice lo que hace", await abierta.page.$eval("[data-entrar=sesion]", (e) => e.textContent), "Entrar a la sesión →");
+  igual("la videollamada dice el servicio, reconocido por el dominio del enlace",
+    await abierta.page.$eval("[data-entrar=videollamada]", (e) => e.textContent.replace(/^\S+\s/, "")), "Entrar a Meet");
+  cierto("sin errores en la página", abierta.errores.length === 0, abierta.errores.join(" | "));
+  await abierta.cerrar();
+  for (const [enlace, nombre] of [["https://us02web.zoom.us/j/123", "Entrar a Zoom"], ["https://teams.microsoft.com/l/meetup-join/x", "Entrar a Teams"],
+      ["https://meet.jit.si/clase", "Entrar a Jitsi"], ["https://otra.example.com/sala", "Entrar a la videollamada"],
+      ["http://meet.google.com/sin-https", "sin botón"]]) {
+    const otra = await abrir(browser, cfg({ abierta: true, videollamada: enlace }));
+    igual("con " + enlace.split("/").slice(0, 3).join("/") + (nombre === "sin botón" ? " (sin https) no sale" : " dice «" + nombre + "»"),
+      await otra.page.$eval("[data-entrar=videollamada]", (e) => e.textContent.replace(/^\S+\s/, "")).catch(() => "sin botón"), nombre);
+    await otra.cerrar();
+  }
+  abierta = await abrir(browser, cfg({ abierta: true, videollamada: "https://meet.google.com/abc-defg-hij" }));
+  igual("las otras sesiones no llevan botón", await abierta.page.$$eval("#calendario-taller li:not(:first-child) [data-entrar]", (es) => es.length), 0);
+  igual("en el celular no se desborda", await abierta.page.setViewportSize({ width: 390, height: 900 }).then(() => abierta.page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth)), false);
+  cierto("sin errores en la página", abierta.errores.length === 0, abierta.errores.join(" | "));
+  await abierta.cerrar();
 
   console.log("\n=== En el celular ===");
   const cel = await abrir(browser, cfg(), 390);
@@ -257,13 +288,27 @@ async function pruebaTarjeta(browser) {
     const sinBoton = !caja.querySelector("#calendario-taller-bajar");
     const manana = CalendarioTaller.pintar(caja, [s("Sesión II", "2026-10-20T14:00:00Z", "2026-10-20T18:00:00Z")], { ahora });
     const etiquetaManana = caja.querySelector("li .rounded-full").textContent;
+    const abierta = { abierta: true, videollamada: { href: "https://meet.google.com/x", etiqueta: "Entrar a Meet" } };
+    CalendarioTaller.pintar(caja, [s("Sesión de cierre", "2026-10-12T14:00:00Z", "2026-10-12T21:00:00Z", "presencial")], { ahora, entrada: abierta });
+    const presencial = [...caja.querySelectorAll("[data-entrar]")].map((e) => e.dataset.entrar);
+    CalendarioTaller.pintar(caja, [s("Sesión II", "2026-10-20T14:00:00Z", "2026-10-20T18:00:00Z")], { ahora, entrada: abierta });
+    const otroDia = caja.querySelectorAll("[data-entrar]").length;
+    CalendarioTaller.pintar(caja, [s("Sesión I", "2026-10-12T14:00:00Z", "2026-10-12T18:00:00Z")], { ahora, entrada: null });
+    const mientras = caja.querySelector("[data-entrar]").textContent;
+    caja.insertAdjacentHTML("beforeend", '<p id="dicho">Listo</p>');
+    CalendarioTaller.ponerEntrada(caja, abierta);
+    const despues = [[...caja.querySelectorAll("[data-entrar]")].map((e) => e.dataset.entrar), !!caja.querySelector("#dicho")];
     const vacia = CalendarioTaller.pintar(caja, [], { ahora });
-    return { hoy, etiquetas, titulo, sinBoton, manana, etiquetaManana, vacia, textoVacio: caja.innerText.trim(), filasVacia: caja.querySelectorAll("li").length };
+    return { hoy, etiquetas, titulo, sinBoton, manana, etiquetaManana, presencial, otroDia, mientras, despues, vacia, textoVacio: caja.innerText.trim(), filasVacia: caja.querySelectorAll("li").length };
   });
   igual("la sesión de hoy dice «Hoy» y la siguiente no lleva etiqueta", r.etiquetas, ["Hoy", ""]);
   igual("el título que escribió el profe va como texto, no como HTML", r.titulo, "<b>Sesión I</b>");
   igual("sin «alBajar» no hay botón", r.sinBoton, true);
   igual("la primera de otro día dice «Próxima»", r.etiquetaManana, "Próxima");
+  igual("en la presencial de hoy, con clase abierta, «Entrar a la sesión» sí y la videollamada no", r.presencial, ["sesion"]);
+  igual("una sesión de otro día no lleva botón aunque haya clase abierta", r.otroDia, 0);
+  cierto("mientras no se sabe si hay clase, lo dice", /Viendo si hay clase/.test(r.mientras), r.mientras);
+  igual("cuando la clase se abre se destapan los botones sin repintar la tarjeta", r.despues, [["sesion", "videollamada"], true]);
   igual("sin sesiones lo dice y no pinta renglones", [r.vacia, r.filasVacia, /No te quedan sesiones/.test(r.textoVacio)], [0, 0, true]);
   await cerrar();
 }
