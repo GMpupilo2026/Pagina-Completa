@@ -57,7 +57,7 @@ body{width:1600px;height:900px;overflow:hidden;font-family:A,"Noto Color Emoji",
 header{background:var(--azul);color:#fff;padding:30px 70px 26px;flex:none}
 header small{display:block;font-size:30px;letter-spacing:.3px;opacity:.95}
 header h1{font-size:64px;line-height:1.08}
-header h1.largo{font-size:54px}
+header h1.largo{font-size:54px}header h1.muy-largo{font-size:44px}
 main{flex:1;min-height:0;padding:42px 70px 40px;display:flex;flex-direction:column;gap:30px}
 .ic{font-family:"Noto Color Emoji";line-height:1;display:inline-flex;align-items:center;justify-content:center}
 .ic svg{width:1.2em;height:1.2em}
@@ -115,12 +115,17 @@ td{background:#fff;padding:11px 22px}
 td:first-child{border-radius:12px 0 0 12px;font-weight:700}td:last-child{border-radius:0 12px 12px 0;color:var(--gris)}
 td .art{margin-left:10px;font-size:22px}
 td .marca{font-size:28px;padding:2px 16px;border-width:2px}
+/* frase: una sola idea grande (un caso, una decisión) */
+.frase{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:26px;padding:40px 90px}
+.frase .ic{font-size:120px}.frase p{font-size:52px;font-weight:700;line-height:1.2;max-width:1200px}
+.frase span.s{font-size:36px;color:var(--gris);max-width:1150px;line-height:1.25}
+.frase.tono{background:var(--tf);outline:4px solid var(--tb);outline-offset:-4px}.frase.tono p{color:var(--tt)}
 /* chips */
 .chips{flex:1;display:grid;grid-template-columns:repeat(4,1fr);gap:20px;align-content:center}
 .chip{display:flex;align-items:center;gap:18px;padding:18px 22px;font-size:32px;font-weight:700;line-height:1.15}
 .chip .ic{font-size:50px;flex:none}
 /* cronograma */
-.crono{flex:1;display:grid;grid-template-columns:1fr 1fr;grid-auto-flow:column;grid-template-rows:repeat(5,1fr);gap:16px 40px}
+.crono{flex:1;display:grid;grid-template-columns:1fr 1fr;grid-auto-flow:column;gap:16px 40px}
 .hito{display:flex;align-items:center;gap:26px;padding:0 28px;font-size:36px;font-weight:700}
 .hito time{font-size:34px;color:var(--azul);width:100px;flex:none;font-variant-numeric:tabular-nums}
 .hito.receso{background:#fff3d1;outline:3px solid #d49b00;outline-offset:-3px;color:#6b4200}
@@ -224,10 +229,15 @@ function cuerpo(d, diapo, usadas) {
         d.filas.map(([sit, a, res, tn, que]) => "<tr><td>" + esc(sit) + art(a) + "</td><td>" +
           (tn ? '<span class="marca ' + tn + '">' + MARCA[tn] + " " + esc(res) + "</span>" : esc(res)) + "</td><td>" + esc(que) + "</td></tr>").join("") +
         "</tbody></table>";
+    case "frase":
+      return '<div class="frase caja' + tono(d.tono) + '">' + ic(d.ic) + "<p>" + esc(d.t) + "</p>" +
+        (d.s ? '<span class="s">' + esc(d.s) + "</span>" : "") + art(d.a) + "</div>" +
+        (d.clave ? '<div class="clave">' + esc(d.clave) + "</div>" : "");
     case "chips":
       return '<div class="chips">' + d.items.map((x) => '<div class="caja chip">' + ic(x.ic) + "<span>" + esc(x.t) + "</span></div>").join("") + "</div>";
     case "crono":
-      return '<div class="crono">' + d.items.map(([h, t, r]) => '<div class="caja hito' + (r ? " receso" : "") + '"><time>' + esc(h) + "</time>" +
+      // Dos columnas, la izquierda con la mitad de arriba (o una más).
+      return '<div class="crono" style="grid-template-rows:repeat(' + Math.ceil(d.items.length / 2) + ',1fr)">' + d.items.map(([h, t, r]) => '<div class="caja hito' + (r ? " receso" : "") + '"><time>' + esc(h) + "</time>" +
         (r ? '<span class="ic" aria-hidden="true">☕</span>' : "") + "<span>" + esc(t) + (r ? " · 10 min" : "") + "</span></div>").join("") + "</div>";
     case "cita":
       return '<div class="cita"><blockquote>' + esc(d.cita) + "</blockquote><p>" + esc(d.s) + '</p><div class="fila3">' +
@@ -276,7 +286,7 @@ function html(d, diapo) {
   const c = cuerpo(d, diapo, usadas);
   const titulo = diapo.titulo;
   return "<!doctype html><meta charset=utf-8><style>" + CSS + "</style><body>" + defsPiezas(usadas) +
-    "<header>" + (d.k ? "<small>" + esc(d.k) + "</small>" : "") + '<h1 class="' + (titulo.length > 38 ? "largo" : "") + '">' + esc(titulo) + "</h1></header><main>" + c + "</main></body>";
+    "<header>" + (d.k ? "<small>" + esc(d.k) + "</small>" : "") + '<h1 class="' + (titulo.length > 52 ? "muy-largo" : titulo.length > 38 ? "largo" : "") + '">' + esc(titulo) + "</h1></header><main>" + c + "</main></body>";
 }
 
 (async () => {
@@ -286,7 +296,8 @@ function html(d, diapo) {
   if (fs.existsSync(local)) opciones.executablePath = local;
   const navegador = await chromium.launch(opciones);
   const pagina = await navegador.newPage({ viewport: { width: 1600, height: 900 } });
-  const tmp = path.join(require("os").tmpdir(), "formacion-lamina.html");
+  // Uno por proceso: dos clases se pueden dibujar a la vez.
+  const tmp = path.join(require("os").tmpdir(), "formacion-lamina-" + clase + "-" + process.pid + ".html");
   for (let i = 0; i < DATOS.length; i++) {
     fs.writeFileSync(tmp, html(DATOS[i], DIAPOS[i]));
     await pagina.goto("file://" + tmp);

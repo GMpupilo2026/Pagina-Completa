@@ -3575,7 +3575,10 @@ el JSON del curso con el estilo de la Clase 1 del profe (franja azul, letra
 grande, una idea por diapositiva), y `presentacion_de_clase()` lo pasa a
 imágenes con el texto de cada diapositiva, sus notas y las posiciones de sus
 ejercicios. Así el `.pptx` que se baja y la presentación de la clase en vivo
-son la misma, y cambian juntas al volver a generar.
+tienen las mismas láminas, en el mismo orden, y cambian juntas al volver a
+generar. Las imágenes de la clase en vivo, en cambio, las dibuja
+`herramientas/formacion-laminas.js` con poco texto (ver «Las láminas dicen
+poco»): el `.pptx` sigue siendo el material completo para leer.
 
 - **Nada por debajo de 22 pt en las listas** (20 en lo que no se puede
   partir): lo que no cabe se parte en una diapositiva «(continuación)», nunca
@@ -3607,6 +3610,17 @@ idea por lámina, dibujos en vez de frases y el detalle en las `notas`:
   `texto` sigue con la transcripción completa, para el Modo Adaptado y la voz.
 - Una lámina sigue siendo la misma lámina: se mantienen las 46 y su número,
   porque la clase en vivo y su verificador las nombran por número.
+- **Las sesiones 2 a 6 también** (`formacion-laminas-clase-02.js` a `-06.js`,
+  una entrada por diapositiva del JSON que arma `curso-generar-formacion.py`).
+  Ahí el `diapositivas.json` lo sigue escribiendo el generador del curso: si
+  la sesión tiene sus datos, no pasa por LibreOffice y llama a
+  `formacion-laminas.js` al final. Si el curso cambia y una sesión gana o
+  pierde láminas, el dibujo falla («Hay N láminas en los datos y M en
+  diapositivas.json») hasta que se ajusten sus datos: mejor eso que una lámina
+  corrida que dice lo de la vecina. Las notas que se escriben a mano (como las
+  de la Clase 1) no sirven en esas sesiones, porque el generador reescribe el
+  JSON; ahí el profe tiene el `texto` completo debajo de la lámina.
+- El cronograma reparte sus filas en dos columnas, las que sean.
 - Las marcas de color (verde, rojo, ámbar, azul) llevan siempre su palabra y
   su signo (✓, ✗, =, →); los colores de texto se midieron contra su fondo.
 - `verificar-formacion-laminas.js` cuenta las palabras que se ven (tope 65; 90

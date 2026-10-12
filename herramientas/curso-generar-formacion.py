@@ -38,7 +38,10 @@ Las presentaciones (.pptx) siguen el estilo de la presentación de la Clase 1
 que armó el profe —franja azul, letra grande, una idea por diapositiva— y,
 además del .pptx, cada sesión 2 a 6 sale como presentación de la clase en vivo
 (cursos/recursos/formacion-ajedrez/presentaciones/clase-NN/: una imagen por
-diapositiva y diapositivas.json, ver js/clase-presentacion.js). Para eso hace
+diapositiva y diapositivas.json, ver js/clase-presentacion.js). Las imágenes
+de esa presentación las dibuja herramientas/formacion-laminas.js cuando la
+sesión tiene sus datos en herramientas/datos/ (poco texto, una idea por
+lámina); si no, salen del .pptx, y para eso hace
 falta LibreOffice (pptx a PDF) y PyMuPDF; los tableros salen de
 herramientas/lib/tablero-png.js (playwright). La Clase 1 se da con la
 presentación propia del profe ("presentacion_clase": "propia"). La guía rápida
@@ -709,41 +712,52 @@ def presentacion(curso, leccion, destino):
 
 def presentacion_de_clase(curso, leccion, pptx, diapos):
     """La presentación de la sesión, para mostrarla dentro de la clase en vivo
-    (js/clase-presentacion.js): una imagen por diapositiva, sacada del mismo
-    .pptx (LibreOffice a PDF y PyMuPDF a WebP de 1600 px), y diapositivas.json
+    (js/clase-presentacion.js): una imagen por diapositiva y diapositivas.json
     con el título, el texto completo de cada una (para el lector de pantalla),
     sus notas y las posiciones de los ejercicios, para mandarlas al tablero.
-    La Clase 1 no: esa es la presentación propia del profe ("presentacion_clase":
-    "propia" en el JSON del curso). Sin LibreOffice o PyMuPDF no se arma y se
-    avisa: el resto del curso se genera igual."""
+
+    Si la sesión tiene sus láminas en herramientas/datos/formacion-laminas-clase-NN.js,
+    las imágenes las dibuja herramientas/formacion-laminas.js (poco texto, una
+    idea por lámina: ver «Las láminas dicen poco» en docs/decisiones/clase-en-vivo.md).
+    Si no, salen del mismo .pptx (LibreOffice a PDF y PyMuPDF a WebP de 1600 px).
+    La Clase 1 no se toca: es la presentación propia del profe
+    ("presentacion_clase": "propia" en el JSON del curso). Sin LibreOffice o
+    PyMuPDF no se arma la que sale del .pptx y se avisa: el resto del curso se
+    genera igual."""
     import shutil
     import tempfile
     if leccion.get("presentacion_clase") == "propia":
         return
-    soffice = shutil.which("soffice") or shutil.which("libreoffice")
-    try:
-        import pymupdf
-        from PIL import Image
-    except ImportError:
-        pymupdf = None
-    if not soffice or not pymupdf:
-        print("  (sin LibreOffice o PyMuPDF: no se armó la presentación de clase de la sesión %d)" % leccion["n"])
-        return
-    tmp = tempfile.mkdtemp()
-    subprocess.run([soffice, "--headless", "--convert-to", "pdf", "--outdir", tmp, pptx],
-                   check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    pdf = pymupdf.open(os.path.join(tmp, os.path.splitext(os.path.basename(pptx))[0] + ".pdf"))
-    if pdf.page_count != len(diapos):
-        raise SystemExit("La presentación de la sesión %d salió con %d páginas y %d diapositivas" % (leccion["n"], pdf.page_count, len(diapos)))
-    carpeta = os.path.join(RAIZ, "cursos", "recursos", curso["slug"], "presentaciones", "clase-%02d" % leccion["n"])
+    clase = "clase-%02d" % leccion["n"]
+    carpeta = os.path.join(RAIZ, "cursos", "recursos", curso["slug"], "presentaciones", clase)
+    dibujadas = os.path.exists(os.path.join(RAIZ, "herramientas", "datos", "formacion-laminas-%s.js" % clase))
+    pdf = None
+    if not dibujadas:
+        soffice = shutil.which("soffice") or shutil.which("libreoffice")
+        try:
+            import pymupdf
+            from PIL import Image
+        except ImportError:
+            pymupdf = None
+        if not soffice or not pymupdf:
+            print("  (sin LibreOffice o PyMuPDF: no se armó la presentación de clase de la sesión %d)" % leccion["n"])
+            return
+        tmp = tempfile.mkdtemp()
+        subprocess.run([soffice, "--headless", "--convert-to", "pdf", "--outdir", tmp, pptx],
+                       check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        pdf = pymupdf.open(os.path.join(tmp, os.path.splitext(os.path.basename(pptx))[0] + ".pdf"))
+        if pdf.page_count != len(diapos):
+            raise SystemExit("La presentación de la sesión %d salió con %d páginas y %d diapositivas" % (leccion["n"], pdf.page_count, len(diapos)))
     if os.path.isdir(carpeta):
         shutil.rmtree(carpeta)
     os.makedirs(carpeta)
     salida = []
-    for i, (pagina, d) in enumerate(zip(pdf, diapos), 1):
-        import io
-        pix = pagina.get_pixmap(matrix=pymupdf.Matrix(1600 / pagina.rect.width, 1600 / pagina.rect.width))
-        Image.open(io.BytesIO(pix.tobytes("png"))).convert("RGB").save(os.path.join(carpeta, "%02d.webp" % i), "WEBP", quality=80, method=6)
+    for i, d in enumerate(diapos, 1):
+        if pdf is not None:
+            import io
+            pagina = pdf[i - 1]
+            pix = pagina.get_pixmap(matrix=pymupdf.Matrix(1600 / pagina.rect.width, 1600 / pagina.rect.width))
+            Image.open(io.BytesIO(pix.tobytes("png"))).convert("RGB").save(os.path.join(carpeta, "%02d.webp" % i), "WEBP", quality=80, method=6)
         fila = {"titulo": d["titulo"], "texto": d["texto"], "imagen": "%02d.webp" % i}
         if d.get("notas"):
             fila["notas"] = d["notas"]
@@ -754,6 +768,10 @@ def presentacion_de_clase(curso, leccion, pptx, diapos):
              "curso": curso["slug"], "diapositivas": salida}
     with open(os.path.join(carpeta, "diapositivas.json"), "w", encoding="utf-8") as fh:
         json.dump(datos, fh, ensure_ascii=False, indent=1)
+    if dibujadas:
+        # Con el JSON ya escrito: el generador saca de ahí el título y las
+        # posiciones, y falla si la sesión cambió de largo y los datos no.
+        subprocess.run(["node", os.path.join(RAIZ, "herramientas", "formacion-laminas.js"), clase], check=True)
 
 
 # --------------------------------------------- material de estudio (PDF)
