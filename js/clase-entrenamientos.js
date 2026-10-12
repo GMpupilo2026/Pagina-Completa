@@ -174,10 +174,19 @@ const ADAPTADORES_ENTRENO = {
             const niveles = [["l1", "Visualiza 1 jugada por delante"], ["l2", "Visualiza 2 jugadas"], ["l3", "Visualiza 3 jugadas"], ["l4", "Visualiza 4 jugadas"], ["l5", "Visualiza 5 jugadas o más"]];
             return niveles.map(([id, titulo], k) => {
                 const sub = TandaCalentamiento.filtrar(d.puzzles, "largo:" + id);
-                const items = Object.keys(sub).sort((a, b) => sub[a].rating - sub[b].rating).map((pid, i) => ({
-                    id: pid, titulo: (i + 1) + ". ELO " + sub[pid].rating + " · " + Math.ceil(sub[pid].solution.length / 2) + " jugadas tuyas",
-                    fen: sub[pid].fen, solucion: sub[pid].solution, elo: sub[pid].rating, guion: ["La línea: " + sub[pid].solution.join(" ") + "."],
-                }));
+                /* De fácil a difícil, como en su página (js/entreno-visualizacion.js): los
+                   de táctica de la casa no traen rating y van al final, con el id de
+                   desempate. Restar un rating que no está da NaN: quedaban metidos en
+                   cualquier lugar de la lista, con el rótulo «ELO undefined». */
+                const r = (pid) => (typeof sub[pid].rating === "number" ? sub[pid].rating : Infinity);
+                const centro = TandaCalentamiento.eloDe(sub);
+                const items = Object.keys(sub).sort((a, b) => (r(a) - r(b)) || (a < b ? -1 : a > b ? 1 : 0)).map((pid, i) => {
+                    const conRating = typeof sub[pid].rating === "number";
+                    return {
+                        id: pid, titulo: (i + 1) + ". " + (conRating ? "ELO " + sub[pid].rating : "Sin ELO") + " · " + Math.ceil(sub[pid].solution.length / 2) + " jugadas tuyas",
+                        fen: sub[pid].fen, solucion: sub[pid].solution, elo: conRating ? sub[pid].rating : centro, guion: ["La línea: " + sub[pid].solution.join(" ") + "."],
+                    };
+                });
                 return { id, titulo: "Nivel " + (k + 1) + ": " + titulo, desc: items.length + " ejercicios", items,
                     practica: { tanda: { banco: "temas", filtro: "largo:" + id, titulo: "Visualización, nivel " + (k + 1) } } };
             });

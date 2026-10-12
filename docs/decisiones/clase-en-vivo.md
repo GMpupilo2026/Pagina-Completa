@@ -3641,6 +3641,11 @@ mostrarlo para explicarlo, preguntarlo a la clase y que lo practiquen.
   mate): el ahogado no se veía nunca. Cada una va como pregunta de opciones
   («Jaque mate» / «Ahogado»), y el verificador confirma la respuesta con
   chess.js.
+- **Visualización ordena como su página**: de fácil a difícil, y los de
+  táctica de la casa —que no traen rating— al final, con «Sin ELO» y el
+  centro del nivel como dificultad de la pregunta. Antes salían «ELO
+  undefined», metidos en cualquier lugar (restar un rating que no está da
+  NaN).
 - **«🪟 Abrirlo a todos en una ventana» no manda una dirección**: manda el
   slug (y el recorte) en la presencia del profe, como la Fotografía, y cada
   alumno arma el enlace con la lista del sitio (`EntrenosClase.enlaceDe`).

@@ -187,6 +187,30 @@ async function pruebaDelProfe(browser) {
   });
   igual("Aprender: cada posición de cada lección, y las de mate o ahogado bien contestadas", quiz, [true, 2, []]);
 
+  /* Visualización: los de táctica de la casa no traen rating. Antes salían «ELO
+     undefined», metidos en cualquier lugar (restar undefined da NaN). Van al
+     final, como en su página, y cada nivel trae todos los de su largo. */
+  const vis = await page.evaluate(async () => {
+    const grupos = await ADAPTADORES_ENTRENO.visualizacion.cargar();
+    const datos = await temasParaEntrenos();
+    return grupos.map((g) => {
+      const elos = g.items.map((it) => it.elo);
+      const conRating = g.items.filter((it) => /^\d+\. ELO \d+/.test(it.titulo)).map((it) => it.elo);
+      const primerSin = g.items.findIndex((it) => /Sin ELO/.test(it.titulo));
+      return [g.id,
+        g.items.length === Object.keys(TandaCalentamiento.filtrar(datos.puzzles, "largo:" + g.id)).length,
+        g.items.some((it) => /undefined|NaN/.test(it.titulo)) || elos.some((e) => typeof e !== "number" || !isFinite(e)),
+        conRating.every((e, i) => !i || conRating[i - 1] <= e),
+        primerSin === -1 || g.items.slice(primerSin).every((it) => /Sin ELO/.test(it.titulo))];
+    });
+  });
+  igual("Visualización: todos, de fácil a difícil, los sin rating al final y sin «undefined»",
+    vis, ["l1", "l2", "l3", "l4", "l5"].map((id) => [id, true, false, true, true]));
+  // Finales: los del archivo, todos.
+  const finales = await page.evaluate(async () => (await ADAPTADORES_ENTRENO.finales.cargar())[0].items.length);
+  igual("Finales: están todos los del archivo", finales,
+    JSON.parse(fs.readFileSync(path.join(RAIZ, "entreno", "data", "finales.json"), "utf8")).finales.length);
+
   // La vista previa y el guion (solo el profe).
   await page.evaluate(() => { activateTeacherTab("tipos"); entrenosView = { slug: "mates", grupo: "mate1", mostrar: 30 }; pintarEntrenos(); });
   await page.waitForSelector("#entrenos-body li");
