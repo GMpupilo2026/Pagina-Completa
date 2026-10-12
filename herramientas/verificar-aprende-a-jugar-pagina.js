@@ -13,6 +13,10 @@
    - «Reintentar» devuelve la posición.
    - Se juega escribiendo: «Te7» en el recuadro gana el nivel 1.
    - El enlace #al-paso/1 abre esa etapa y las negras juegan solas d7-d5.
+   - Los sonidos de Lichess en sus momentos (js/sonidos.js): el acorde de la
+     etapa, «tomar» al juntar una estrella sin terminar, «fin-nivel» al
+     ganar, «fallo» al perder; y apagados con el botón «Sonido», no suena
+     ninguno y la preferencia se recuerda.
 
    Uso:  node herramientas/verificar-todo.js aprende-a-jugar-pagina          */
 const { chromium } = require("./lib/playwright-con-sesion");
@@ -59,6 +63,43 @@ const estado = (page) => page.textContent("#aj-estado");
     cierto("guarda los puntos del nivel", guardado["torre:1"] === 550, JSON.stringify(guardado));
     await page.waitForTimeout(1700);
     cierto("pasa solo al nivel 2", /Junta todas las estrellas/.test(await page.textContent("#nivel-meta")));
+    await page.context().close();
+
+    console.log("Los sonidos");
+    ({ page } = await abrir(browser, "#torre/2"));
+    const sonidos = () => page.evaluate(() => window.Sonidos.historial.slice());
+    await page.evaluate(() => { window.Sonidos.historial.length = 0; });
+    await page.click('[data-square="c7"]'); await page.click('[data-square="c5"]');
+    await page.waitForTimeout(100);
+    cierto("juntar una estrella sin terminar suena «tomar»", JSON.stringify(await sonidos()) === '["tomar"]', JSON.stringify(await sonidos()));
+    // La torre sigue elegida después de juntar la estrella (como en Lichess): basta tocar g5.
+    await page.click('[data-square="g5"]');
+    await page.waitForTimeout(100);
+    cierto("ganar el nivel suena «fin-nivel»", (await sonidos())[1] === "fin-nivel", JSON.stringify(await sonidos()));
+    await page.waitForTimeout(1600);
+    cierto("el nivel siguiente avisa con «inicio-nivel»", (await sonidos())[2] === "inicio-nivel", JSON.stringify(await sonidos()));
+    const boton = await page.evaluate(() => { const b = document.getElementById("sonido-btn"); return [b.checkVisibility(), b.getAttribute("aria-pressed"), b.textContent.trim()]; });
+    cierto("el botón «Sonido» se ve y dice que está encendido", boton[0] && boton[1] === "true" && /Sonido$/.test(boton[2]), JSON.stringify(boton));
+    await page.click("#sonido-btn");
+    await page.evaluate(() => { window.Sonidos.historial.length = 0; });
+    await page.click('[data-square="d4"]'); await page.click('[data-square="a4"]');
+    await page.waitForTimeout(100);
+    cierto("apagado, no suena nada", (await sonidos()).length === 0, JSON.stringify(await sonidos()));
+    cierto("y el botón dice que está apagado, y se recuerda", await page.evaluate(() =>
+      document.getElementById("sonido-btn").getAttribute("aria-pressed") === "false" && localStorage.getItem("sonidos_apagados_v1") === "1"));
+    await page.context().close();
+
+    ({ page } = await abrir(browser, "#capturar/2"));
+    await page.evaluate(() => { window.Sonidos.historial.length = 0; });
+    await page.click('[data-square="f4"]'); await page.click('[data-square="f7"]');
+    await page.waitForTimeout(100);
+    cierto("perder el nivel suena «fallo»", (await page.evaluate(() => window.Sonidos.historial[0])) === "fallo");
+    await page.context().close();
+
+    ({ page } = await abrir(browser));
+    await page.evaluate(() => { window.Sonidos.historial.length = 0; });
+    await page.click("#tarjeta-botones .primary");
+    cierto("«¡Vamos!» suena el acorde de la etapa, solo", JSON.stringify(await page.evaluate(() => window.Sonidos.historial.slice())) === '["inicio-etapa"]');
     await page.context().close();
 
     console.log("Capturar 2: la dama colgada");

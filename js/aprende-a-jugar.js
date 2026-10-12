@@ -23,6 +23,8 @@
   let flechas = [];
   let bloqueado = false;
   let temporizadores = [];
+  /* Los sonidos de Lichess en los mismos momentos (js/sonidos.js). */
+  const sonar = (n) => { if (window.Sonidos) Sonidos.tocar(n); };
 
   /* ---------------- Progreso ---------------- */
   function leerProgreso() { try { return JSON.parse(localStorage.getItem(CLAVE) || "{}") || {}; } catch (e) { return {}; } }
@@ -222,12 +224,13 @@
     const idx = n == null ? primerPendiente(e) : n;
     cargarNivel(idx, true);
     if (conPresentacion && idx === 0 && !puntosDe(e, e.niveles[0])) {
-      tarjeta({ etapa: e, titulo: e.titulo, texto: e.intro, botones: [{ texto: "¡Vamos!", primario: true, hacer: () => empezarNivel() }] });
+      tarjeta({ etapa: e, titulo: e.titulo, texto: e.intro, botones: [{ texto: "¡Vamos!", primario: true, hacer: () => { sonar("inicio-etapa"); empezarNivel(true); } }] });
     } else empezarNivel();
   }
 
   function cerrarEtapa() {
     const e = ETAPAS[etapaIdx];
+    sonar("fin-etapa");
     const est = estrellasEtapa(e);
     const sig = ETAPAS[etapaIdx + 1];
     const botones = [{ texto: "↺ Jugar la etapa otra vez", hacer: () => abrirEtapa(etapaIdx, 0, false) }];
@@ -257,8 +260,10 @@
     if (!sinEmpezar) empezarNivel();
   }
 
-  function empezarNivel() {
+  function empezarNivel(conEtapa) {
     bloqueado = false;
+    // Recién sonó el acorde de la etapa: el ping del nivel se lo pisaría.
+    if (!conEtapa) sonar("inicio-nivel");
     const e = ETAPAS[etapaIdx];
     decir(e.titulo + ", nivel " + nivel.plano.id + " de " + e.niveles.length + ". " + nivel.plano.meta + estrellasQueQuedan());
     if (nivel.empiezaElRival()) {
@@ -280,6 +285,7 @@
     if (!r) return;
     ultima = { from: r.jugada.from, to: r.jugada.to };
     flechas = (r.flechas || []).slice();
+    sonar(r.jugada.flags.includes("c") || r.jugada.flags === "e" ? "tomar" : "mover");
     dibujar();
     decir("Las negras juegan " + jugadaDicha(r.jugada.san) + ". Te toca.");
   }
@@ -312,6 +318,11 @@
     // Tomar una estrella no es comer una pieza: «Te7», no «Txe7».
     const dicha = jugadaDicha(r.comio === "estrella" && r.jugada.piece !== "p" ? r.jugada.san.replace("x", "") : r.jugada.san);
 
+    // Como en Lichess: error, o «tomar» si juntó una estrella, comió o siguió el guion, o «mover».
+    if (r.estado === "fallo") sonar("fallo");
+    else if (r.estado === "completo") sonar("fin-nivel");
+    else sonar(r.comio || r.guion ? "tomar" : "mover");
+
     if (r.estado === "fallo") {
       $("btn-reintentar").focus({ preventScroll: true });
       if (r.motivo === "jaque-propio") {
@@ -322,11 +333,11 @@
         castigo = r.castigo;
         dibujar();
         decir("✗ Con " + dicha + " te comen una pieza sin proteger: " + casillaDicha(castigo.from) + " come en " + casillaDicha(castigo.to) + ". Presiona «Reintentar».", "bad");
-        luego(700, () => { nivel.juego.apply(castigo); ultima = { from: castigo.from, to: castigo.to }; castigo = null; dibujar(); });
+        luego(700, () => { sonar("tomar"); nivel.juego.apply(castigo); ultima = { from: castigo.from, to: castigo.to }; castigo = null; dibujar(); });
       } else {
         dibujar();
         decir("✗ " + dicha + " no era la jugada. Presiona «Reintentar» y prueba otra vez.", "bad");
-        if (nivel.plano.seguirTrasFallo) luego(700, () => { const m = nivel.rivalAlAzar(); if (m) { ultima = { from: m.from, to: m.to }; dibujar(); } });
+        if (nivel.plano.seguirTrasFallo) luego(700, () => { const m = nivel.rivalAlAzar(); if (m) { sonar("mover"); ultima = { from: m.from, to: m.to }; dibujar(); } });
       }
       pintarPanel();
       return;
@@ -454,6 +465,7 @@
     else try { localStorage.setItem("oscarBlindMode_v1", on ? "1" : "0"); } catch (e) {}
     pintarModo();
   }
+  if (window.Sonidos) Sonidos.boton($("sonido-btn"));
   modeNormalBtn.addEventListener("click", () => ponerModo(false));
   modeBlindBtn.addEventListener("click", () => ponerModo(true));
   document.addEventListener("adaptivemode:change", pintarModo);
