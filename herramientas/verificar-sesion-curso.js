@@ -450,6 +450,30 @@ async function pruebaTactica(browser) {
   if (!medida.turno) mal("la vista previa no dice de quién es la jugada");
   else bien("dice de quién es la jugada: " + medida.turno);
 
+  /* Los temas de táctica de la casa no traen rating: van en una sola tanda («📋
+     Todos», «Sin ELO»), no partidos en Fácil/Media/Difícil con «ELO NaN–NaN», y
+     ningún ejercicio dice «ELO undefined». */
+  const sinRating = await page.evaluate(() => {
+    const vistaAntes = tacticsView;
+    const out = {};
+    for (const key of Object.keys(tacticsData.themes)) {
+      const ids = tacticsData.themes[key];
+      if (ids.some((id) => typeof tacticsData.puzzles[id].rating === "number")) continue;
+      tacticsView = { level: "difficulty", groupId: null, themeKey: key, themeName: key };
+      renderTacticsView();
+      const dif = document.getElementById("tactics-body").textContent;
+      tacticsView = { level: "exercises", groupId: null, themeKey: key, themeName: key, diffIndex: 0 };
+      renderTacticsView();
+      const filas = [...document.querySelectorAll("#tactics-body li")];
+      out[key] = [tacticsThemeBuckets(key).length, /NaN/.test(dif), /Todos/.test(dif), filas.length === ids.length, filas.some((li) => /undefined/.test(li.textContent))];
+    }
+    tacticsView = vistaAntes;
+    renderTacticsView();
+    return out;
+  });
+  igual("Táctica: los temas sin rating, en una sola tanda y sin «NaN» ni «undefined»",
+    [Object.keys(sinRating).length >= 5, Object.values(sinRating).every((v) => JSON.stringify(v) === JSON.stringify([1, false, true, true, false]))], [true, true]);
+
   /* El botón nuevo manda SOLO la posición: si de paso abriera una pregunta, el
      alumno estaría contestando mientras el profesor explica. */
   const fenDelEjercicio = await page.evaluate(() => {

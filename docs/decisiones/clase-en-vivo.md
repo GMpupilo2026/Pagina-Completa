@@ -3650,6 +3650,11 @@ mostrarlo para explicarlo, preguntarlo a la clase y que lo practiquen.
   tienen reyes es la única forma de llevarlos a la clase, porque chess.js los
   da por terminados (ve jaques y mates que no existen: «Bd4#») y el tablero de
   la clase no los puede jugar.
+- **Táctica: los temas sin rating van en una sola tanda.** Los de táctica de
+  la casa (Ataque doble, Columnas y diagonales, los dos enroques, Última
+  línea) no traen rating: la clase los partía en «Fácil/Media/Difícil» —un
+  reparto que no medía nada— con «ELO NaN–NaN», y 54 ejercicios decían «ELO
+  undefined». Ahora van en «📋 Todos», «Sin ELO».
 - **Una lección de Aprender con varias posiciones va una por posición.**
   «¿Jaque mate o ahogado?» tiene dos y la clase solo tomaba la primera (el
   mate): el ahogado no se veía nunca. Cada una va como pregunta de opciones
