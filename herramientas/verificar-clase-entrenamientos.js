@@ -152,6 +152,14 @@ async function pruebaDelProfe(browser) {
     botones: [...x.querySelectorAll("button")].map((b) => b.textContent),
   })));
   igual("Desafíos → Carrera a la coronación: están todos", [filasDesafio.length, deCoronacion > 4], [deCoronacion, true]);
+  // Y lo mismo en cada tema: todos los del archivo, del 1 al último, sin saltos.
+  const porTema = await page.evaluate(async () => (await ADAPTADORES_ENTRENO.desafios.cargar())
+    .map((g) => [g.id, g.items.length, g.items.map((it) => it.titulo.split(".")[0]).join(",")]));
+  igual("Desafíos: cada tema con todos sus ejercicios, numerados del 1 sin saltos",
+    porTema, desafios.categories.map((c) => {
+      const n = desafios.challenges.filter((x) => x.cat === c.id).length;
+      return [c.id, n, Array.from({ length: n }, (_, i) => String(i + 1)).join(",")];
+    }));
   igual("numerados desde el 1", filasDesafio.slice(0, 2).map((f) => f.titulo.split(".")[0]), ["1", "2"]);
   const sinReyes = filasDesafio.filter((f) => !f.botones.some((b) => /Al tablero/.test(b)));
   igual("los que no tienen reyes: vista previa, ventana y guion, sin tablero ni pregunta",
