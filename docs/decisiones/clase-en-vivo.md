@@ -3300,7 +3300,7 @@ al tablero que sigue en vivo. Código en `js/clase-presentacion.js`.
 - **«Las del curso»** (`LISTA`): imágenes y `diapositivas.json` en
   `cursos/recursos/<curso>/presentaciones/<clase>/`, detrás del candado del
   worker; `deck` = `"<curso>/<clase>"`. De Formación Ajedrez están las seis
-  sesiones virtuales: la Clase 1 es la presentación propia del profe (46
+  sesiones virtuales: la Clase 1 es la presentación propia del profe (47
   láminas, transcritas a mano) y las sesiones 2 a 6 las arma
   `herramientas/curso-generar-formacion.py` con el mismo `.pptx` que se baja
   del curso (ver «Las presentaciones de Formación Ajedrez» abajo). Las láminas
@@ -3608,8 +3608,13 @@ idea por lámina, dibujos en vez de frases y el detalle en las `notas`:
   segunda copia que se separe de lo que se dice en voz o se manda al tablero.
 - **Lo que sale de la lámina va a las `notas`** (solo las ve el profe), y el
   `texto` sigue con la transcripción completa, para el Modo Adaptado y la voz.
-- Una lámina sigue siendo la misma lámina: se mantienen las 46 y su número,
-  porque la clase en vivo y su verificador las nombran por número.
+- Una lámina sigue siendo la misma lámina: al rehacerlas se mantuvieron las
+  46 y su número, porque la clase en vivo y su verificador las nombran por
+  número. Una lámina nueva se puede sumar, pero corre las de atrás: se agrega
+  en los datos y en el JSON a la vez y se suben los números de
+  `verificar-clase-presentacion.js`. Así entró la 14, «¿En qué se apoya el
+  árbitro para decidir?» (la versión de los jugadores, la planilla, el
+  tablero y el reloj), después de las sanciones: la Clase 1 tiene 47.
 - **Las sesiones 2 a 6 también** (`formacion-laminas-clase-02.js` a `-06.js`,
   una entrada por diapositiva del JSON que arma `curso-generar-formacion.py`).
   Ahí el `diapositivas.json` lo sigue escribiendo el generador del curso: si
