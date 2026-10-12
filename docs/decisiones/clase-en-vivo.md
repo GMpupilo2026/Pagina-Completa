@@ -3444,6 +3444,10 @@ lámina y nada más mientras el profe explica algo puntual.
 - Al profe, al proyector y a quien supervisa no se les aplica; con el Modo
   Adaptado tampoco (lo dice el CSS), por lo mismo que la vista limpia.
 - Se le dice en voz: «Tu profe puso la presentación en pantalla completa…».
+- **También desde el control remoto** (`sesion.html?control=1`): la tarjeta
+  de la presentación ya salía ahí con sus botones, así que el mismo botón la
+  pone y la quita desde el celular. En el control remoto los botones de la
+  presentación miden 44 px de alto para el dedo (antes 28).
 
 #### La pizarra de la presentación
 

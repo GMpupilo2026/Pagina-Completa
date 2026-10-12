@@ -722,6 +722,23 @@ async function pruebaPantallaCompletaTodos(browser) {
     cierto("sin errores en consola", errores.length === 0, errores.join(" | "));
     await ctx.close();
   }
+  {
+    // Desde el control remoto (el celular del profe): el mismo botón, grande para el dedo.
+    const { page, ctx, errores } = await abrir(browser, "u-profe", CLASE, { game_state: [fila({ presentacion: { deck: DECK, n: 3 } })] },
+      { ruta: "/sesion.html?control=1" });
+    await page.setViewportSize({ width: 390, height: 844 });
+    await esperarImagen(page, "03.webp");
+    const boton = await page.evaluate(() => { const b = document.getElementById("presentacion-completa-todos"), r = b.getBoundingClientRect();
+      return { ve: b.checkVisibility(), alto: r.height, cabe: r.right <= innerWidth }; });
+    cierto("en el control remoto se ve el botón, de 44 px para el dedo", boton.ve && boton.alto >= 44 && boton.cabe, JSON.stringify(boton));
+    await page.click("#presentacion-completa-todos");
+    cierto("y desde ahí la pone a todos", JSON.stringify(await ultimaPresentacion(page)) === JSON.stringify({ deck: DECK, n: 3, completa: true }));
+    cierto("al celular del profe no se le aplica", !(await page.evaluate(() => document.documentElement.classList.contains("presentacion-forzada"))));
+    await page.click("#presentacion-completa-todos");
+    cierto("y desde ahí la quita", JSON.stringify(await ultimaPresentacion(page)) === JSON.stringify({ deck: DECK, n: 3 }));
+    cierto("sin errores en consola", errores.length === 0, errores.join(" | "));
+    await ctx.close();
+  }
   const { page, ctx, errores } = await abrir(browser, "u-ana", CLASE, { game_state: [fila({ presentacion: { deck: DECK, n: 18, completa: true } })] });
   await page.setViewportSize({ width: 1440, height: 900 });
   await esperarImagen(page, "18.webp");

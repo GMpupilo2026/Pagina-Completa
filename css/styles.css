@@ -1359,6 +1359,9 @@ html.modo-control .proyector-contenido > aside,
 html.modo-control .proyector-columna > :not(.control-se-ve) { display: none !important; }
 html.modo-control #app { padding-top: 0.75rem; }
 html.modo-control .proyector-contenido { display: block; }
+/* Los botones de la presentación (◀ ▶, vista limpia, pantalla completa para
+   todos, pizarra), de 44 px para el dedo: en el control remoto se tocan. */
+html.modo-control #presentacion-profe button { min-height: 44px; }
 
 /* ver-clase.html: la clase vista por un invitado sin cuenta. El tablero es
    lo único que hay: tan grande como quepa en el ancho y en el alto que dejan
