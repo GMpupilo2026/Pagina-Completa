@@ -324,16 +324,30 @@ async function main() {
     // El mismo accesorio que acaba de equipar lo tendría que devolver
     // accesorios_de(), y Puntos.decorarAvatar debería pintarlo como una
     // insignia chica encima de la caja del avatar (lo que usa js/sesion.js
-    // en «Alumnos conectados»).
+    // en «Alumnos conectados»), SIN que quede recortada: la caja de
+    // FotoPerfil.avatar() recorta a círculo (overflow-hidden + rounded-full,
+    // para la foto), y la esquina de un cuadrado siempre cae FUERA del
+    // círculo inscrito en él — una insignia metida ahí adentro queda en el
+    // DOM con el emoji correcto pero invisible de verdad (así estuvo desde
+    // que se agregaron los accesorios, sin que esta prueba lo notara: una
+    // caja sin recortar nunca lo iba a encontrar).
     const insignia = await page.evaluate(async () => {
       const caja = document.createElement("span");
+      caja.className = "w-8 h-8 rounded-full overflow-hidden";
       document.body.appendChild(caja);
       const mapa = await window.Puntos.accesoriosDe(window.sb, ["u-ana"]);
       window.Puntos.decorarAvatar(caja, mapa.get("u-ana"));
-      const ins = caja.querySelector("[data-accesorio-avatar]");
-      return ins ? ins.textContent : null;
+      // El envoltorio (sin recortar) reemplaza a la caja en su lugar: ahí
+      // es donde tiene que estar la insignia, no adentro de la caja recortada.
+      const envoltorio = caja.parentElement;
+      const ins = envoltorio && envoltorio.querySelector(":scope > [data-accesorio-avatar]");
+      return { dentroDeLaCajaRecortada: !!caja.querySelector("[data-accesorio-avatar]"),
+        envoltorioSinRecortar: !!envoltorio && getComputedStyle(envoltorio).overflow !== "hidden",
+        texto: ins ? ins.textContent : null };
     });
-    ok(insignia === "🎩", `Puntos.decorarAvatar no puso la insignia del accesorio equipado (salió ${JSON.stringify(insignia)})`);
+    ok(!insignia.dentroDeLaCajaRecortada, "Puntos.decorarAvatar puso la insignia DENTRO de la caja que recorta a círculo: queda invisible, aunque esté en el DOM");
+    ok(insignia.envoltorioSinRecortar, "Puntos.decorarAvatar no envolvió la caja en algo sin recortar");
+    ok(insignia.texto === "🎩", `Puntos.decorarAvatar no puso la insignia del accesorio equipado (salió ${JSON.stringify(insignia.texto)})`);
 
     // Quitárselo (equipar_premio con p_activo:false) lo saca de «Mis premios»
     // Y de lo que ve el profesor: accesorios_de() ya no lo debería devolver.
