@@ -434,8 +434,48 @@
                             <div id="presentacion-posiciones" hidden class="mt-2 border-t border-brand-200 dark:border-brand-700 pt-2"></div>
                         </div>
                     </section>
-                    <div class="proyector-se-ve control-se-ve flex justify-center">
+                    <!-- El tablero y, cuando el profe la abre, la planilla de torneo al lado
+                         (js/clase-planilla.js). En una pantalla angosta la planilla va debajo. -->
+                    <div id="tablero-y-planilla" class="proyector-se-ve control-se-ve flex justify-center">
                         <div id="chessboard" class="grid grid-cols-8 grid-rows-[repeat(8,minmax(0,1fr))] w-full max-w-[560px] aspect-square rounded-xl overflow-hidden shadow-2xl border-4 border-brand-700 select-none"></div>
+                        <!-- La planilla en vivo: se llena sola con las jugadas de la clase. Lo que el
+                             profe le agrega (nombres, ofertas de tablas, resultado) va en
+                             game_state.planilla; ver «La planilla en vivo» en
+                             docs/decisiones/clase-en-vivo.md. -->
+                        <section id="planilla-caja" hidden aria-labelledby="planilla-titulo" class="planilla">
+                            <div class="planilla-hoja">
+                                <h2 id="planilla-titulo" class="planilla-titulo"><span aria-hidden="true">📝 </span>Planilla de torneo</h2>
+                                <p class="planilla-jugadores"><span>Blancas: <b id="planilla-blancas">Blancas</b></span><span>Negras: <b id="planilla-negras">Negras</b></span></p>
+                                <div class="planilla-tabla">
+                                    <table>
+                                        <caption class="sr-only">Las jugadas de la partida, como se anotan en la planilla</caption>
+                                        <thead><tr><th scope="col">N.º</th><th scope="col">Blancas</th><th scope="col">Negras</th></tr></thead>
+                                        <tbody id="planilla-jugadas"></tbody>
+                                    </table>
+                                </div>
+                                <p class="planilla-pie">Resultado: <b id="planilla-resultado" class="planilla-resultado">&nbsp;</b> <span class="planilla-firmas">Firmas: ________ ________</span></p>
+                            </div>
+                            <p id="planilla-cartel" class="planilla-cartel"></p>
+                            <!-- Solo el profe: lo que se le agrega a la planilla. -->
+                            <div id="planilla-profe" hidden class="planilla-profe">
+                                <div class="planilla-nombres">
+                                    <label for="planilla-blancas-input">Blancas</label>
+                                    <input id="planilla-blancas-input" type="text" maxlength="60" autocomplete="off" placeholder="Nombre de quien juega con blancas">
+                                    <label for="planilla-negras-input">Negras</label>
+                                    <input id="planilla-negras-input" type="text" maxlength="60" autocomplete="off" placeholder="Nombre de quien juega con negras">
+                                </div>
+                                <div class="planilla-acciones">
+                                    <button id="planilla-tablas-btn" type="button" aria-pressed="false">Ofrecer tablas (=) en la última jugada</button>
+                                    <span id="planilla-resultados" role="group" aria-label="Resultado">
+                                        <button type="button" data-resultado="1-0" aria-pressed="false">1-0</button>
+                                        <button type="button" data-resultado="0-1" aria-pressed="false">0-1</button>
+                                        <button type="button" data-resultado="½-½" aria-pressed="false">½-½</button>
+                                    </span>
+                                    <button id="planilla-limpiar-btn" type="button">Borrar tablas y resultado</button>
+                                    <button id="planilla-cerrar-btn" type="button">Cerrar la planilla</button>
+                                </div>
+                            </div>
+                        </section>
                     </div>
 
                     <!-- La barra del tablero: UNA fila de botones de solo icono; lo que hace cada
@@ -456,6 +496,7 @@
                             <button id="clear-marks-btn" type="button" class="boton-icono"><span aria-hidden="true">🧹</span><span class="boton-icono-ayuda">Borrar flechas y círculos</span></button>
                             <button id="toggle-hide-btn" type="button" class="boton-icono"><span aria-hidden="true">🙈</span><span class="boton-icono-ayuda">Ocultar las piezas a los alumnos</span></button>
                             <button id="save-game-btn" type="button" class="boton-icono"><span aria-hidden="true">💾</span><span class="boton-icono-ayuda">Guardar PGN</span></button>
+                            <button id="planilla-btn" type="button" class="boton-icono" aria-pressed="false" aria-controls="planilla-caja"><span aria-hidden="true">📝</span><span class="boton-icono-ayuda">Planilla de torneo al lado del tablero (la ve toda la clase)</span></button>
                         </span>
                         <span id="move-nav" class="barra-grupo hidden items-center gap-1.5">
                             <button id="move-nav-first" type="button" class="boton-icono"><span aria-hidden="true">⏮</span><span class="boton-icono-ayuda">Primera jugada</span></button>
@@ -1634,6 +1675,7 @@
     <script src="js/clase-buscar.js"></script>
     <script src="js/clase-presentacion.js"></script>
     <script src="js/clase-pizarra.js"></script>
+    <script src="js/clase-planilla.js"></script>
     <script src="js/foto-perfil.js"></script>
     <script src="js/cursos-ocultos.js"></script>
     <!-- Después de cursos-ocultos.js: la lista del material la consulta. -->

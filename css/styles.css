@@ -1919,3 +1919,45 @@ html.dark .comparar-serie-3 { background: #199e70; }
 .dark .ec-lista { color: rgb(var(--c-brand-50, 240 244 248)); }
 .ec-lista a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
 .hj-resultado:focus-visible, .ec-abrir:focus-visible, .ec-lista a:focus-visible, #hj-nombre:focus-visible, #ec-detalle-t:focus-visible { outline: 3px solid rgb(var(--c-accent-500, 222 145 29)); outline-offset: 2px; }
+
+/* La planilla en vivo de la clase (js/clase-planilla.js, sesion.html): al lado
+   del tablero en una pantalla ancha; debajo en una angosta. La hoja es de
+   papel también en modo oscuro: es una planilla, y así se la reconoce. Los
+   colores del texto se midieron contra ese papel (#fffef8): #14233a 15:1,
+   #123e7c 10:1, #3b4a5e 9:1. */
+/* Al lado cuando cabe con un tablero de al menos ~340 px (la columna del centro
+   mide unos 616 px en una computadora con las tres columnas); si no, debajo. Lo
+   decide el ancho de la columna (consulta de contenedor), no el de la ventana. */
+#tablero-y-planilla.con-planilla { container-type: inline-size; flex-wrap: wrap; align-items: flex-start; gap: 1rem; }
+/* El tablero va envuelto en .board-coords-outer (las coordenadas por fuera, de
+   js/clases-board.js); sin ese envoltorio, el tablero mismo. */
+#tablero-y-planilla.con-planilla > .board-coords-outer,
+#tablero-y-planilla.con-planilla > #chessboard { min-width: 0; flex: 1 1 0; }
+.planilla { flex: 1 1 100%; max-width: 560px; }
+@container (min-width: 600px) {
+  .planilla { flex: 0 0 15rem; }
+}
+.planilla-hoja { background: #fffef8; color: #14233a; border: 1px solid #c9d3df; border-radius: 0.5rem; box-shadow: 0 3px 12px rgb(29 58 90 / 0.15); padding: 0.75rem 0.875rem; }
+.planilla-titulo { font-size: 1rem; font-weight: 700; margin: 0; }
+.planilla-jugadores { display: flex; flex-wrap: wrap; gap: 0.25rem 1rem; font-size: 0.8125rem; color: #3b4a5e; border-bottom: 2px solid #14233a; padding-bottom: 0.4rem; margin: 0.25rem 0 0; }
+.planilla-jugadores b { color: #14233a; }
+.planilla-tabla { max-height: 22rem; overflow-y: auto; position: relative; }
+.planilla-tabla table { width: 100%; border-collapse: collapse; font-size: 0.95rem; }
+.planilla-tabla th { position: sticky; top: 0; background: #fffef8; font-size: 0.75rem; color: #3b4a5e; text-align: left; padding: 0.3rem 0.4rem; border-bottom: 1px solid #9aa8b8; }
+.planilla-tabla td { border-bottom: 1px solid #d9e0e8; padding: 0.2rem 0.4rem; height: 1.6rem; font-weight: 700; color: #123e7c; }
+.planilla-tabla td.planilla-n { width: 2.5rem; font-weight: 400; color: #3b4a5e; }
+.planilla-tabla td.planilla-ultima { background: #fff3d1; outline: 2px solid #d49b00; outline-offset: -2px; }
+.planilla-pie { font-size: 0.8125rem; color: #3b4a5e; margin: 0.5rem 0 0; display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1rem; }
+.planilla-resultado { display: inline-block; min-width: 3rem; border-bottom: 2px solid #14233a; text-align: center; color: #123e7c; font-size: 1.05rem; }
+.planilla-cartel { margin: 0.5rem 0 0; border-left: 6px solid rgb(var(--c-brand-600, 36 59 83)); border-radius: 0.5rem; padding: 0.5rem 0.75rem; font-size: 0.9rem; background: rgb(var(--c-brand-100, 217 226 236)); color: rgb(var(--c-brand-800, 16 42 67)); }
+.dark .planilla-cartel { background: rgb(var(--c-brand-900, 10 31 51)); color: rgb(var(--c-brand-50, 240 244 248)); }
+.planilla-profe { margin-top: 0.5rem; font-size: 0.8125rem; }
+.planilla-nombres { display: grid; grid-template-columns: auto 1fr; gap: 0.3rem 0.5rem; align-items: center; }
+.planilla-nombres input { width: 100%; border: 1px solid rgb(var(--c-brand-200, 188 204 220)); border-radius: 0.5rem; padding: 0.3rem 0.5rem; background: #fff; color: #14233a; }
+.planilla-acciones { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.5rem; }
+.planilla-acciones button { font-weight: 600; border-radius: 0.5rem; padding: 0.35rem 0.6rem; background: rgb(var(--c-brand-100, 217 226 236)); color: rgb(var(--c-brand-700, 51 78 104)); min-height: 2.25rem; }
+.dark .planilla-acciones button { background: rgb(var(--c-brand-800, 16 42 67)); color: rgb(var(--c-brand-200, 188 204 220)); }
+.planilla-acciones button[aria-pressed="true"] { background: rgb(var(--c-accent-500, 222 145 29)); color: #102a43; }
+.planilla-acciones button:disabled { opacity: 0.5; }
+.planilla-acciones button:focus-visible, .planilla-nombres input:focus-visible { outline: 3px solid rgb(var(--c-accent-500, 222 145 29)); outline-offset: 2px; }
+#planilla-resultados { display: inline-flex; gap: 0.35rem; }

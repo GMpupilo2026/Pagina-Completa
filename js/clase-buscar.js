@@ -62,6 +62,7 @@ window.ClaseBuscar = (function () {
         { nombre: "Borrar flechas y círculos", donde: "Tablero", claves: "borrar flechas circulos marcas limpiar", destino: "clear-marks-btn" },
         { nombre: "Ocultar las piezas a los alumnos", donde: "Tablero", claves: "ocultar esconder piezas ciegas", destino: "toggle-hide-btn" },
         { nombre: "Guardar el PGN de la clase", donde: "Tablero", claves: "guardar pgn descargar partida", destino: "save-game-btn" },
+        { nombre: "Planilla de torneo al lado del tablero", donde: "Tablero", claves: "planilla anotar notacion anotacion jugadas torneo resultado", destino: "planilla-btn" },
         { nombre: "Reiniciar el tablero", donde: "Tablero", claves: "reiniciar posicion inicial empezar de nuevo", destino: "reset-board-btn" },
         { nombre: "Proyector: el tablero solo, en otra ventana", donde: "Tablero", claves: "proyector pantalla grande televisor ventana", destino: "proyector-btn" },
         { nombre: "Ver tu clase como un alumno", donde: "Tablero", claves: "ver como alumno vista previa", destino: "vista-alumno-btn" },
