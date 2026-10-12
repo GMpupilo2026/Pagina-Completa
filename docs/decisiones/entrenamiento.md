@@ -1035,7 +1035,7 @@ y el alumno practicaba otro motivo sin que nada fallara.
 
 ## El hub de Entrenamiento y sus grupos
 
-`entreno/index.html` reparte los accesos en **Fundamentos** (Mates,
+`entreno/index.html` reparte los accesos en **Fundamentos** (Mates, Aprende a jugar,
 Aprender, Coordenadas, Desafíos), **Practicar** (Ejercicios por tema, Practicar), **Entreno** (Aperturas y
 celadas, 4×4, Visualización, Precisión posicional, Finales contra la máquina,
 Memoria) y
@@ -3799,3 +3799,46 @@ ignora.
 Lo mide `verificar-4x4-repaso.js` (con 3 resueltos, los favoritos, la cuenta
 ciega y el nivel completo). Probado que falla: si `showCategory` no abre el
 pedido y no se mira si está abierto, saltan dos.
+
+## Aprende a jugar: las lecciones de Lichess
+
+`entreno/aprende-a-jugar.html` trae las lecciones de lichess.org/learn tal
+cual se juegan allá: las mismas 18 etapas en el mismo orden (las piezas;
+capturar, proteger, combate, jaque, salir del jaque, mate en una; el tablero,
+el enroque, la captura al paso, el ahogado; el valor de las piezas y el jaque
+en dos), cada nivel con la misma posición, las mismas estrellas, el mismo
+número de jugadas para tres estrellas y las mismas condiciones de éxito y de
+fallo. Las posiciones salen de `ui/learn/src/stage/*.ts` de lila (software
+libre, AGPL); los textos están escritos de nuevo, con tuteo. Aprender
+(`aprender.html`) sigue aparte: pide otra cosa (marcar casillas, reconocer el
+mate).
+
+- **Las reglas viven en `js/aprende-a-jugar-motor.js`, sin pantalla**, y las
+  etapas en `js/aprende-a-jugar-etapas.js`. La página solo pregunta y pinta.
+  Así `verificar-aprende-a-jugar.js` juega cada nivel con el MISMO código que
+  el alumno (búsqueda en anchura sin repetir posiciones) y exige que se gane
+  con tres estrellas en las jugadas que pide. Desde la posición inicial
+  (enroque 4 y 5) la búsqueda no termina, y ahí se juega una línea escrita.
+  Tarda un par de minutos.
+- **Una estrella es, por dentro, un peón negro**, como en Lichess: la torre se
+  detiene en la primera y el peón solo la alcanza comiendo en diagonal. Para
+  lo que se pinta, lo que oye el lector de pantalla y lo que entiende el
+  recuadro, la página pasa una `vista` que no la muestra como pieza (la
+  casilla dice «estrella»). En las del rey no hay peón (`estrellasVacias`):
+  le daría jaque.
+- **El rival no juega**: después de cada jugada vuelve a ser el turno del
+  alumno. Solo mueve con un guion (la captura al paso, el ahogado, el valor
+  de las piezas) o para mostrar el error. Sin estrellas, dejar una pieza que
+  el rival come sin que se la devuelvan pierde el nivel, y se ve la captura.
+- **Las estrellas se cuentan como en Lichess**: 50 por estrella o pieza
+  comida, 500/300/100 al terminar según las jugadas de más; tres estrellas
+  con el máximo, dos si faltan hasta 200.
+- **El motor sin reyes es el de Desafíos**: `MiniChess` se mudó a
+  `js/mini-chess.js` para no tener dos copias.
+- El progreso es `entreno_aprende_jugar_v1` («torre:3» → mejores puntos, en
+  `CLAVES` con `maxPorClave`). Cada nivel terminado por primera vez se
+  registra como `aprender` (categoría `aprende-a-jugar`): cuenta en Informes
+  con las lecciones de Aprender. `#torre/3` abre ese nivel.
+- Se juega con clic, arrastrando, con el teclado del tablero y escribiendo
+  («Te7»; «estrellas», «meta», «reintentar», «siguiente»). Lo prueba
+  `verificar-aprende-a-jugar-pagina.js`.

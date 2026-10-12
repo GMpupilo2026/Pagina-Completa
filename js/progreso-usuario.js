@@ -141,6 +141,7 @@ window.ProgresoUsuario = (function () {
     { clave: "f100:progreso",                    fusion: "unionObjeto" },   // Los 100 finales
     { clave: "entreno_practicas_v1",             fusion: "maxPorClave" },   // serie → estrellas
     { clave: "entreno_desafios_v2",              fusion: "maxPorClave" },
+    { clave: "entreno_aprende_jugar_v1",         fusion: "maxPorClave" },   // Aprende a jugar: "torre:3" → mejores puntos
     { clave: "concentracion_objeto_perdido_v1",  fusion: "maxPorClave" },   // nivel → ejercicios
     { clave: "entreno_mates_best",               fusion: "maxNumero" },
     { clave: "entreno_mates_streak",             fusion: "ultimaEscritura" },
