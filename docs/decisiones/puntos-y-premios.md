@@ -123,8 +123,20 @@ lista «Alumnos conectados» que ve el profesor en la clase en vivo
   listado de alumnos conectados no puede pedir uno por uno sin volverse
   lento.
 - `Puntos.decorarAvatar(caja, accesorio)` (en `js/puntos.js`) pone esa
-  insignia encima de la caja que arma `FotoPerfil.avatar()`/`poner()`: la
-  caja necesita `position: relative`, que la función agrega sola.
+  insignia encima de la caja que arma `FotoPerfil.avatar()`/`poner()`. **No
+  la agrega DENTRO de la caja**: la caja recorta a círculo (`overflow-hidden`
+  + `rounded-full`, para que la foto no se salga del redondel), y la esquina
+  de un cuadrado siempre cae FUERA del círculo inscrito en él —una insignia
+  metida ahí adentro queda en el DOM con el emoji correcto, pero invisible
+  de verdad, recortada junto con la foto—. Así estuvo desde que se agregó
+  esta categoría, sin que nadie lo notara (ni el profesor llegó a verla
+  nunca en «Alumnos conectados»): se encontró revisando cómo se veía en el
+  celular lo de «Los compañeros también lo ven», de acá abajo. La corrección
+  envuelve la caja en un `<span>` aparte, sin recortar (se arma una sola vez
+  por caja; si ya estaba envuelta de una decoración anterior, se reusa), y
+  ahí es donde va la insignia — la caja original, con su `data-foto-de`,
+  sigue siendo la misma, así que `querySelectorAll("[data-foto-de]")` la
+  sigue encontrando igual.
 - `Puntos.accesoriosDe(sb, ids)` tiene memoria de página con un vencimiento
   de 60 segundos (no sin vencer: un alumno se puede quitar el accesorio a
   mitad de clase desde la tienda, en otra pestaña, y la lista del profesor no
@@ -371,8 +383,11 @@ mismo estilo que `verificar-trofeos.js`): el saldo se pinta, un premio que no
 alcanza se ve deshabilitado y dice cuánto falta, canjear descuenta y queda en
 «Mis premios», el límite de una vez por alumno se respeta, equipar/quitar un
 cosmético no toca el saldo, el aviso de «puntos dobles» aparece solo si está
-vigente, un accesorio canjeado decora el avatar (`Puntos.decorarAvatar`) y
-deja de aparecer en `accesorios_de()` al quitárselo, y el bono de racha se
+vigente, un accesorio canjeado decora el avatar (`Puntos.decorarAvatar`,
+sobre una caja recortada a círculo de verdad, como la real —no una caja
+cualquiera: con eso se encontró que la insignia quedaba adentro de la caja
+recortada, invisible— y SIN quedar recortada) y deja de aparecer en
+`accesorios_de()` al quitárselo, y el bono de racha se
 anuncia una vez y no se repite. También comprueba, en estático, que
 `js/puntos.js` y `js/puntos-tienda-pagina.js` no usan `alert()`/`confirm()`/
 `prompt()` y que `puntos-tienda.html` no tiene código escrito adentro fuera
