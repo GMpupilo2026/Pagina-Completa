@@ -3690,6 +3690,13 @@ mostrarlo para explicarlo, preguntarlo a la clase y que lo practiquen.
   usan la página y la clase (una sola copia; `metas-indice.py` y los
   verificadores las leen de ahí). Va dentro de una función: dos scripts
   clásicos con `const SETS` arriba chocan y la página no carga.
+- **Los juegos se abren ya en un nivel.** Sonar y Batalla naval ya aceptaban
+  `?nivel=N`; Concentración (`?nivel=N`) e Ilumina el tablero (`?grupo=G`)
+  ahora también, **sin saltarse el candado**: si el alumno todavía no tiene
+  abierto ese nivel, se queda en la lista y ve cuál le toca. En la clase, un
+  botón por nivel o grupo (`rondasClase`). Los nombres están escritos en el
+  juego y en `MaterialPlataforma`: `verificar-clase-entrenamientos.js`
+  comprueba que coincidan. Confites no tiene niveles: abrirlo ya es jugar.
 - **Una lección de Aprender con varias posiciones va una por posición.**
   «¿Jaque mate o ahogado?» tiene dos y la clase solo tomaba la primera (el
   mate): el ahogado no se veía nunca. Cada una va como pregunta de opciones

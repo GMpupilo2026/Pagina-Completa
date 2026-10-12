@@ -291,7 +291,7 @@ async function pruebaDelProfe(browser) {
   igual("Habilidades se esconde al volver", await seVe(page, "#tipos-body"), false);
   await page.click('#entrenos-body [data-entreno="coordenadas"]');
   // Un botón por modo: a cada alumno se le abre ya jugando ese.
-  await page.locator("#entrenos-body").getByRole("button", { name: "10 segundos por casilla" }).click();
+  await page.locator("#entrenos-body").getByRole("button", { name: "10s por casilla" }).click();
   const conModo = await page.evaluate(() => window.__tracks.slice(-1)[0].entreno);
   igual("Coordenadas: el botón de un modo pide ese modo, y el enlace arranca jugando", [conModo.slug, conModo.recorte,
     await page.evaluate(() => EntrenosClase.enlaceDe(herramientasDelSitio(), "coordenadas", "mode10").href)],
@@ -301,6 +301,25 @@ async function pruebaDelProfe(browser) {
   await page.evaluate(() => { entrenosView = { slug: "4x4", grupo: null, mostrar: 30 }; pintarEntrenos(); });
   await page.locator("#entrenos-body").getByRole("button", { name: "Avanzado" }).click();
   const nivel4 = await page.evaluate(() => window.__tracks.slice(-1)[0].entreno);
+  /* Los que se abren ya en un modo, nivel o grupo: un botón por cada uno, y su
+     nombre es el que tiene en el juego (está escrito en los dos lados: si uno
+     cambia y el otro no, salta acá). */
+  const NOMBRES_EN = { coordenadas: "js/entreno-coordenadas.js", "4x4": "js/entreno-4x4.js", sonar: "js/sonar-motor.js",
+    "batalla-naval": "js/batalla-naval-motor.js", concentracion: "js/concentracion.js", ilumina: "js/ilumina-tablero.js" };
+  const conRondas = await page.evaluate(() => herramientasDelSitio().filter((h) => h.rondasClase).map((h) => [h.slug, h.rondasClase]));
+  igual("los que se abren en un modo o un nivel son los que se revisan", conRondas.map(([k]) => k).sort(), Object.keys(NOMBRES_EN).sort());
+  const nombresMal = [];
+  conRondas.forEach(([slug, rondas]) => {
+    const src = fs.readFileSync(path.join(RAIZ, NOMBRES_EN[slug]), "utf8");
+    rondas.forEach(([, nombre]) => { const n = nombre.replace(/^\d+\. /, ""); if (!src.includes(n)) nombresMal.push(slug + ": «" + n + "»"); });
+  });
+  igual("y cada nombre está en su juego", nombresMal, []);
+  for (const [slug, rondas] of conRondas) {
+    await page.evaluate((s) => { entrenosView = { slug: s, grupo: null, mostrar: 30 }; pintarEntrenos(); }, slug);
+    const n = await page.$$eval("#entrenos-body button", (b, r) => r.filter(([, nom]) => b.some((x) => x.textContent.includes(nom))).length, rondas);
+    if (n !== rondas.length) nombresMal.push(slug + ": " + n + " botones de " + rondas.length);
+  }
+  igual("con un botón por cada uno", nombresMal, []);
   igual("4×4: el botón de un nivel pide ese nivel", [nivel4.slug, nivel4.recorte,
     await page.evaluate(() => EntrenosClase.enlaceDe(herramientasDelSitio(), "4x4", "AVANZADO").href)],
     ["4x4", "AVANZADO", "entreno/4x4.html?nivel=AVANZADO"]);

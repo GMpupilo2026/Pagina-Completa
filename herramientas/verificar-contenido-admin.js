@@ -155,6 +155,25 @@ const CASOS = [
         await page.close();
       }
     }
+    /* El enlace directo de la clase en vivo («?nivel=», «?grupo=»): abre lo
+       pedido si el alumno ya lo tiene abierto; si no, lo deja en la lista. El
+       candado no se salta por la dirección. */
+    console.log("\n=== El enlace directo respeta el candado (alumno) ===");
+    const alumno = QUIENES.find((q) => q.nombre === "alumno");
+    const directo = [
+      ["/concentracion.html?nivel=1", "abre el nivel 1 (abierto)", () => !document.getElementById("game-view").classList.contains("hidden"), true],
+      ["/concentracion.html?nivel=3", "el nivel 3 (cerrado) no se abre", () => !document.getElementById("game-view").classList.contains("hidden"), false],
+      ["/ilumina-tablero.html?grupo=1", "abre el primer nivel del grupo 1", () => !document.getElementById("game-view").classList.contains("hidden") && /^1\. /.test(document.getElementById("level-title").textContent), true],
+      ["/ilumina-tablero.html?grupo=3", "el grupo 3 (cerrado) no se abre", () => !document.getElementById("game-view").classList.contains("hidden"), false],
+    ];
+    for (const [ruta, nombre, abierto, esperado] of directo) {
+      const { page, errores } = await abrir(browser, ruta, alumno);
+      await page.waitForFunction(() => document.getElementById("app") && !document.getElementById("app").classList.contains("hidden"), null, { timeout: 20000 });
+      await page.waitForTimeout(200);
+      igual(ruta + ": " + nombre, await page.evaluate(abierto), esperado);
+      if (errores.length) { console.log("  ✗ errores en la página: " + errores.join(" | ")); fallos += 1; }
+      await page.close();
+    }
   } finally {
     await browser.close();
   }
