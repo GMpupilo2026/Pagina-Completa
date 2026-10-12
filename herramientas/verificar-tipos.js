@@ -586,5 +586,24 @@ DATOS.tiempo.forEach((x) => {
   ok("tiempo: en Modo Adaptado, el triple", M.segundosTiempo(8, true) === 24 && M.segundosTiempo(8, false) === 8);
 }
 
+/* Toda posición de Habilidades la tiene que aceptar el tablero de la clase
+   (js/posicion-valida.js): la clase las pone con «Al tablero». Dos de
+   Constrúyela tú tenían en jaque al rey que no mueve y no se podían dar. */
+titulo("El tablero de la clase acepta cada posición");
+{
+  global.window = global;
+  global.Chess = Chess;
+  require("../js/posicion-valida.js");
+  const malas = [];
+  Object.keys(DATOS).filter((k) => k !== "fuente").forEach((k) => (DATOS[k] || []).forEach((x) => {
+    ["fen", "fenA", "fenB"].forEach((campo) => {
+      if (!x[campo]) return;
+      const m = global.PosicionValida.motivo(x[campo]);
+      if (m) malas.push(k + "/" + x.id + " (" + campo + "): " + m);
+    });
+  }));
+  ok("ninguna posición que la clase rechace", !malas.length, malas.slice(0, 5).join("\n      "));
+}
+
 console.log("\n" + (fallos ? "✗ " + fallos + " de " + pruebas + " comprobaciones fallaron." : "✓ Las " + pruebas + " comprobaciones pasaron."));
 process.exit(fallos ? 1 : 0);

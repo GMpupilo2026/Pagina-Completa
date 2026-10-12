@@ -3662,6 +3662,12 @@ mostrarlo para explicarlo, preguntarlo a la clase y que lo practiquen.
   cuestionario en juego —su clave, su tiempo, su posición o sin tablero—, menos
   el «Pregunta 1 de N» y el no dejar cambiar la opción. Con un cuestionario en
   juego no se puede: la pregunta nueva cerraría la que está corriendo.
+- **Toda posición de Habilidades la acepta el tablero de la clase.** Dos de
+  «Constrúyela tú» (nivel 4, mate en 1) tenían en jaque al rey que no mueve:
+  al sacar la pieza que daba mate se descubría el jaque de otra. «Al tablero»
+  las rechazaba. El generador ya no las acepta (`--solo construye` rehace ese
+  banco sin motor) y `verificar-tipos.js` revisa todas las posiciones con
+  `PosicionValida`.
 - **Una lección de Aprender con varias posiciones va una por posición.**
   «¿Jaque mate o ahogado?» tiene dos y la clase solo tomaba la primera (el
   mate): el ahogado no se veía nunca. Cada una va como pregunta de opciones
