@@ -32,7 +32,7 @@ window.EntrenosClase = (function () {
     // cuestionarios y el plan contra un rival no son algo que se da en clase.
     const QUEDA_AFUERA = new Set(["temas", "diagnostico", "arbitraje", "cuestionario", "plan-rival"]);
     const EMOJI = {
-        mates: "♛", aprender: "🎓", desafios: "🏆", estudio: "📖", aperturas: "📚", "4x4": "🔲",
+        mates: "♛", "aprende-a-jugar": "⭐", aprender: "🎓", desafios: "🏆", estudio: "📖", aperturas: "📚", "4x4": "🔲",
         visualizacion: "👁️", "precision-posicional": "🎯", finales: "🤖", memoria: "🧠", tipos: "🧩",
         coordenadas: "🧭", practicas: "✍️", sonar: "📡", "batalla-naval": "🚢", concentracion: "🃏",
         ilumina: "💡", confites: "🍬",

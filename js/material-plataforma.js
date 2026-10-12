@@ -48,6 +48,12 @@ window.MaterialPlataforma = (function () {
       actividades: ["4x4"], metas: ["cantidad", "minutos"],
       unidad: "ejercicios", recortes: "4x4", recorteLabel: "Nivel" },
 
+    /* Aprende a jugar registra sus niveles como 'aprender' (categoría
+       'aprende-a-jugar'), junto con Aprender: por cantidad no se distinguen,
+       así que solo ofrece minutos y terminarla. */
+    { slug: "aprende-a-jugar", label: "Aprende a jugar", href: "entreno/aprende-a-jugar.html",
+      actividades: ["aprender"], metas: ["minutos", "completar"], unidad: "niveles" },
+
     { slug: "aprender", label: "Aprender", href: "entreno/aprender.html",
       actividades: ["aprender"], metas: ["cantidad", "minutos"],
       unidad: "lecciones", recortes: "aprender", recorteLabel: "Bloque" },
