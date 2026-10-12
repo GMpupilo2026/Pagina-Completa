@@ -109,6 +109,23 @@ async function practicar(browser) {
   igual("y no se festeja como «¡Correcto!»: dice cuál era", /^La solución era: \S/.test(await estado(page)) && !/Correcto/.test(await estado(page)), "true");
   sinErrores(errores, "practicar");
   await ctx.close();
+
+  /* «?abrir=»: una posición sola («pasillo:2», la clase en vivo), una serie o un
+     tema («tacticas», las tareas). */
+  const u = await abrir(browser, "/entreno/practicas.html?abrir=pasillo:2");
+  await u.page.waitForFunction(() => currentSet, null, { timeout: 20000 });
+  igual("?abrir=pasillo:2 abre esa posición sola", await u.page.evaluate(() =>
+    [currentSet.rounds.length, currentSet.rounds[0].fen === SETS.find((s) => s.id === "pasillo").rounds[2].fen, getComputedStyle(document.getElementById("list-view")).display]),
+    [1, true, "none"]);
+  await u.page.evaluate(() => { giveHint(); giveHint(); giveHint(); });
+  await u.page.waitForFunction(() => getComputedStyle(document.getElementById("celebration")).display !== "none", null, { timeout: 8000 });
+  igual("y al terminarla no se anota como una serie de la lista", await u.page.evaluate(() => Object.keys(getProgress()).filter((k) => /ronda-/.test(k))), []);
+  sinErrores(u.errores, "practicar pedida");
+  await u.ctx.close();
+  const t = await abrir(browser, "/entreno/practicas.html?abrir=tacticas");
+  await t.page.waitForFunction(() => typeof currentCategory !== "undefined" && document.getElementById("list-view").checkVisibility(), null, { timeout: 20000 });
+  igual("?abrir=tacticas abre ese tema", await t.page.evaluate(() => currentCategory), "tacticas");
+  await t.ctx.close();
 }
 
 async function desafios(browser) {
@@ -123,6 +140,19 @@ async function desafios(browser) {
   igual("y el aviso dice «Solución» (y que no cuenta), no «¡Correcto!»", /^Solución( \(no cuenta como resuelto\))?:/.test(await estado(page)), "true");
   sinErrores(errores, "desafíos");
   await ctx.close();
+
+  /* «?n=73» (lo que manda la clase con «Que la practiquen»): abre ese desafío
+     solo, sin la lista, y sin anotar estrellas a ninguna serie. */
+  const u = await abrir(browser, "/entreno/desafios.html?n=73");
+  await u.page.waitForFunction(() => currentSet, { timeout: 20000 });
+  igual("?n=73 abre ese desafío solo",
+    await u.page.evaluate(() => [currentSet.rounds.length, currentSet.rounds[0].n, getComputedStyle(document.getElementById("list-view")).display,
+      document.getElementById("set-view").checkVisibility()]), [1, 73, "none", true]);
+  await u.page.evaluate(() => { giveHint(); giveHint(); giveHint(); });
+  await u.page.waitForFunction(() => getComputedStyle(document.getElementById("celebration")).display !== "none", { timeout: 8000 });
+  igual("al terminarlo no se anota como una serie de la lista", await u.page.evaluate(() => getProgress()["desafio-73"]), undefined);
+  sinErrores(u.errores, "desafío pedido");
+  await u.ctx.close();
 }
 
 async function aprender(browser) {
@@ -364,6 +394,15 @@ async function coordenadas(browser) {
     (ProgresoUsuario.claves().find((c) => c.clave === "entreno_coord_casillas_v1") || {}).fusion), "maxPorClave");
   sinErrores(errores, "coordenadas");
   await ctx.close();
+
+  /* «?ronda=mode10» (lo pide la clase en vivo): arranca ya, en ese modo, sin la
+     portada ni el «Empezar». */
+  const u = await doble.abrir(browser, "/entreno/coordenadas.html?ronda=mode10", {});
+  await u.page.waitForFunction(() => typeof playing !== "undefined" && playing, null, { timeout: 20000 });
+  igual("?ronda=mode10 arranca jugando en «10 s por casilla»", await u.page.evaluate(() =>
+    [modeSetting, perSquareLimit > 0, getComputedStyle(document.getElementById("start-screen")).display]), ["mode10", true, "none"]);
+  sinErrores(u.errores, "coordenadas pedida");
+  await u.ctx.close();
 }
 
 /* En las tácticas, cualquier jugada que cumpla el motivo es buena

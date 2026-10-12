@@ -479,7 +479,7 @@ function finishSet(){
   document.getElementById('celebration').style.display = 'block';
   const avg = setStarsEarned.reduce((a,b) => a+b, 0) / setStarsEarned.length;
   const stars = avg >= 2.6 ? 3 : (avg >= 1.6 ? 2 : 1);
-  setSetStars(currentSet.id, stars);
+  if(!currentSet.unico) setSetStars(currentSet.id, stars);
   document.getElementById('celebration-stars').innerHTML = starString(stars);
   const totalSeconds = ((Date.now() - setStartTime) / 1000).toFixed(0);
   const limpia = setStarsEarned.every(s => s === 3);
@@ -606,6 +606,30 @@ function initApp(){
   setStreak(getStreak());
   applyBlindModeUI();
   showList(document.documentElement.classList.contains('modo-ciego'));
+  abrirElPedido();
+}
+
+/* «?n=73»: abre ESE desafío solo, sin la lista. Es lo que manda la clase en vivo
+   con «🪟 Que la practiquen» (js/clase-entrenamientos.js): antes abría la
+   sección entera y el alumno tenía que buscarlo entre noventa. Va como una serie
+   de un solo desafío; no se anotan estrellas de serie, porque no es ninguna de
+   las de la lista (sí cuenta para el registro de actividad, como cualquier otra). */
+function abrirElPedido(){
+  let n = null;
+  try { n = parseInt(new URLSearchParams(location.search).get('n'), 10); } catch (e) { n = null; }
+  if(!Number.isInteger(n)) return;
+  const ch = DATA.challenges.find((x) => x.n === n);
+  if(!ch) return;
+  const cat = DATA.categories.find((c) => c.id === ch.cat) || { emoji: '', title: '' };
+  currentCategory = ch.cat;
+  openSet({
+    id: 'desafio-' + ch.n, cat: ch.cat, emoji: cat.emoji, unico: true,
+    // Sin el número: la clase los numera dentro de su tema y el del cuaderno no
+    // coincidiría con el que vio el profe.
+    title: cat.title,
+    desc: 'Te lo abrió tu profe. ' + cat.desc,
+    rounds: [{ n: ch.n, fen: ch.fen, text: ch.text, hint: ch.hint, moves: ch.solution.moves, san: ch.solution.san, explain: ch.solution.explain, source: 'Desafío #' + ch.n }],
+  });
 }
 
 async function requireLoginThenGate(){

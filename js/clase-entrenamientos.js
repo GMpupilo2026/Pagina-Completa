@@ -153,16 +153,35 @@ const ADAPTADORES_ENTRENO = {
                     const conReyes = TandaCalentamiento.tieneLosDosReyes(x.fen);
                     const guion = [x.text, "La solución: " + x.solution.san.join(" ") + ".", x.solution.explain].filter(Boolean);
                     const titulo = (i + 1) + ". " + x.text;
-                    if (!conReyes) return { id: "desafio-" + x.n, titulo, fen: x.fen, soloVer: true, guion,
-                        nota: "Sin los dos reyes: no va al tablero de la clase. Se hace en la página de Desafíos.",
-                        practica: { enlace: c.id } };
-                    return { id: "desafio-" + x.n, titulo, fen: x.fen, solucion: x.solution.san, prompt: x.text, elo: 1100, guion };
+                    // «🪟 Que la practiquen» abre ESTE desafío a cada alumno, no la sección.
+                    const practica = { enlace: String(x.n) };
+                    if (!conReyes) return { id: "desafio-" + x.n, titulo, fen: x.fen, soloVer: true, guion, practica,
+                        nota: "Sin los dos reyes: no va al tablero de la clase. «Que la practiquen» se lo abre a cada alumno en una ventana." };
+                    return { id: "desafio-" + x.n, titulo, fen: x.fen, solucion: x.solution.san, prompt: x.text, elo: 1100, guion, practica };
                 });
                 const enClase = items.filter((x) => !x.soloVer).length;
                 const fuera = items.length - enClase;
                 return { id: c.id, emoji: c.emoji, titulo: c.title, desc: c.desc + " · " + items.length + " ejercicios"
                     + (fuera ? ", " + enClase + " van al tablero de la clase" : ""),
                     items, practica: enClase >= 5 ? { tanda: { banco: "desafios", filtro: "cat:" + c.id, titulo: "Desafíos: " + c.title } } : { enlace: null } };
+            });
+        },
+    },
+    practicas: {
+        corto: "Mates de escuela, motivos y finales",
+        desc: "Las series de Practicar: cinco posiciones cada una, con una jugada que la resuelve. «Que la practiquen» le abre a cada alumno esa posición sola.",
+        async cargar() {
+            const P = await cargarScriptEntreno("js/practicas-series.js", "PracticasSeries");
+            return P.SETS.map((serie) => {
+                const items = serie.rounds.map((r, k) => {
+                    const san = EntrenosClase.sanDe(r.fen, r.from, r.to, r.promotion);
+                    return { id: "practica-" + serie.id + "-" + k, titulo: (k + 1) + ". Juegan " + (r.fen.split(" ")[1] === "w" ? "blancas" : "negras"),
+                        fen: r.fen, solucion: san ? [san] : null, prompt: serie.title, elo: 900,
+                        guion: [serie.desc].concat(san ? ["La jugada: " + san + "."] : []),
+                        // «serie:índice», como lo nombra la página (y su repaso).
+                        practica: { enlace: serie.id + ":" + k } };
+                });
+                return { id: serie.id, emoji: serie.emoji, titulo: serie.title, desc: serie.desc + " · " + items.length + " posiciones", items, practica: { enlace: null } };
             });
         },
     },
@@ -256,10 +275,22 @@ const ADAPTADORES_ENTRENO = {
         desc: "Los finales que hay que saber ganar o hacer tablas. En la clase: explicarlo y que cada uno lo juegue contra la máquina.",
         async cargar() {
             const d = await bajarJsonEntreno("entreno/data/finales.json");
-            const items = (d.finales || []).map((f, i) => ({
-                id: f.id, titulo: (i + 1) + ". " + f.titulo + " (" + (f.meta === "tablas" ? "hacer tablas" : "ganar") + " con " + (f.alumno === "w" ? "blancas" : "negras") + ")",
-                fen: f.fen, final: true, guion: [f.idea, f.pista ? "Pista: " + f.pista : null].filter(Boolean),
-            }));
+            const items = (d.finales || []).map((f, i) => {
+                /* La práctica de la clase le da al alumno el color que mueve en la
+                   posición (practice_sessions no guarda otro). En los finales que
+                   empieza la máquina —el alumno defiende y el rival juega primero—
+                   eso le daba el bando equivocado: el que tenía que hacer tablas con
+                   negras jugaba con la dama blanca. Esos van solo a su página, que
+                   sí hace mover primero a la máquina. */
+                const empiezaLaMaquina = f.fen.split(" ")[1] !== f.alumno;
+                return {
+                    id: f.id, titulo: (i + 1) + ". " + f.titulo + " (" + (f.meta === "tablas" ? "hacer tablas" : "ganar") + " con " + (f.alumno === "w" ? "blancas" : "negras") + ")",
+                    fen: f.fen, final: !empiezaLaMaquina, guion: [f.idea, f.pista ? "Pista: " + f.pista : null].filter(Boolean),
+                    // «🪟 Que lo practiquen»: ese final en su página, con su meta y sus pistas.
+                    practica: { enlace: f.id },
+                    nota: empiezaLaMaquina ? "Aquí empieza la máquina: se juega en su página, con «Que la practiquen»." : undefined,
+                };
+            });
             return [{ id: "finales", titulo: "Finales contra la máquina", desc: items.length + " finales", items, practica: { enlace: null } }];
         },
     },
@@ -270,9 +301,11 @@ const ADAPTADORES_ENTRENO = {
             const d = await bajarJsonEntreno("entreno/data/memoria.json");
             const tramos = [[3, 6, 8], [7, 10, 12], [11, 16, 15], [17, 24, 20], [25, 32, 30]];
             return tramos.map(([a, b, seg]) => {
+                // Todas las del banco (40 por cada cantidad de piezas). Antes iban 8 de
+                // cada una: 240 de 1200, sin que nada lo dijera.
                 const items = [];
-                for (let n = a; n <= b; n++) ((d.porPiezas || {})[n] || []).slice(0, 8).forEach((p) => items.push({
-                    id: p.id, titulo: n + " piezas", fen: p.fen, foto: seg, guion: ["Pídeles que la reconstruyan en su tablero o que la dicten pieza por pieza."],
+                for (let n = a; n <= b; n++) ((d.porPiezas || {})[n] || []).forEach((p) => items.push({
+                    id: p.id, titulo: (items.length + 1) + ". " + n + " piezas", fen: p.fen, foto: seg, guion: ["Pídeles que la reconstruyan en su tablero o que la dicten pieza por pieza."],
                 }));
                 return { id: a + "-" + b, titulo: "De " + a + " a " + b + " piezas", desc: seg + " segundos para mirarla · " + items.length + " posiciones", items, practica: { enlace: null } };
             });
@@ -396,6 +429,19 @@ function pintarEntrenos() {
         body.appendChild(cajaQueLoAbran(t, null));
     }
     if (!ad) {
+        // Las que se abren ya en un modo o un nivel (Coordenadas, 4×4): un botón por cada uno.
+        const h = herramientasDelSitio().find((x) => x.slug === t.slug);
+        if (h && Array.isArray(h.rondasClase) && h.rondasClase.length) {
+            const fila = document.createElement("div");
+            fila.className = "flex flex-wrap items-center gap-1.5 mt-2";
+            const dice = document.createElement("p");
+            dice.className = "w-full text-xs text-brand-600 dark:text-brand-300";
+            dice.textContent = h.rondasTitulo || "O que lo abran ya en:";
+            fila.appendChild(dice);
+            h.rondasClase.forEach(([id, nombre]) => fila.appendChild(entrenoBoton("🪟 " + nombre, () => pedirQueLoAbran(t.slug, id), false,
+                "A cada alumno se le abre «" + t.label + "» ya jugando: " + nombre)));
+            body.appendChild(fila);
+        }
         const p = document.createElement("p");
         p.className = "text-xs text-brand-450 dark:text-brand-350 mt-2";
         p.textContent = "Este entrenamiento tiene su propio tablero: con «Abrirlo a todos en una ventana», a cada alumno se le abre encima de la clase, como la práctica contra el motor. Cuando termines, «Cerrar la ventana a todos».";

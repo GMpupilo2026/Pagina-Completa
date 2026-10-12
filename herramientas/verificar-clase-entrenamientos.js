@@ -185,6 +185,12 @@ async function pruebaDelProfe(browser) {
   igual("los que no tienen reyes: vista previa, ventana y guion, sin tablero ni pregunta",
     [sinReyes.length > 0, sinReyes.every((f) => f.botones.some((b) => /Vista previa/.test(b)) && f.botones.some((b) => /Que la practiquen/.test(b))
       && f.botones.some((b) => /Guion/.test(b)) && !f.botones.some((b) => /Preguntar|Calentamiento/.test(b)))], [true, true]);
+  igual("«Que la practiquen» de un desafío abre ESE desafío, no la sección",
+    await page.evaluate(() => EntrenosClase.enlaceDe(herramientasDelSitio(), "desafios", "73").href), "entreno/desafios.html?n=73");
+  await page.locator("#entrenos-body li").first().getByRole("button", { name: "Que la practiquen" }).click();
+  const pedido = await page.evaluate(() => window.__tracks.slice(-1)[0].entreno);
+  igual("y el botón pide el desafío de la fila (el 1 de coronación es el n.º 1 del cuaderno)", [pedido.slug, pedido.recorte], ["desafios", "1"]);
+  await page.click("#entreno-pedido-quitar");
   const k = filasDesafio.findIndex((f) => !f.botones.some((b) => /Al tablero/.test(b)));
   await page.locator("#entrenos-body li").nth(k).getByRole("button", { name: "Vista previa" }).click();
   await page.waitForFunction((k) => document.querySelectorAll("#entrenos-body li")[k].querySelector(".example-board"), k, { timeout: 5000 });
@@ -228,8 +234,53 @@ async function pruebaDelProfe(browser) {
     vis, ["l1", "l2", "l3", "l4", "l5"].map((id) => [id, true, false, true, true]));
   // Finales: los del archivo, todos.
   const finales = await page.evaluate(async () => (await ADAPTADORES_ENTRENO.finales.cargar())[0].items.length);
+  /* Los finales que empieza la máquina no van a la práctica de la clase: ahí el
+     alumno juega el color que mueve, y le tocaba el bando equivocado. Todos
+     llevan «Que la practiquen», que abre ese final en su página. */
+  const finalesBanco = JSON.parse(fs.readFileSync(path.join(RAIZ, "entreno", "data", "finales.json"), "utf8")).finales;
+  const empiezaMaquina = finalesBanco.filter((f) => f.fen.split(" ")[1] !== f.alumno).map((f) => f.id);
+  const fin = await page.evaluate(async () => (await ADAPTADORES_ENTRENO.finales.cargar())[0].items.map((it) => [it.id, !!it.final, it.practica && it.practica.enlace]));
+  igual("Finales: los que empieza la máquina no van contra la máquina de la clase; todos abren su página",
+    [empiezaMaquina.length > 0, fin.filter(([, f]) => !f).map(([id]) => id), fin.every(([id, , e]) => e === id),
+      await page.evaluate(() => EntrenosClase.enlaceDe(herramientasDelSitio(), "finales", "lucena").href)],
+    [true, empiezaMaquina, true, "entreno/finales.html?final=lucena"]);
   igual("Finales: están todos los del archivo", finales,
     JSON.parse(fs.readFileSync(path.join(RAIZ, "entreno", "data", "finales.json"), "utf8")).finales.length);
+
+  /* Practicar: sus 9 series y sus 45 posiciones, con la jugada en SAN, y «Que la
+     practiquen» abre esa posición sola («serie:índice», como la nombra la página). */
+  const practicas = await page.evaluate(async () => {
+    const g = await ADAPTADORES_ENTRENO.practicas.cargar();
+    return [g.length, g.reduce((n, x) => n + x.items.length, 0), window.PracticasSeries.SETS.reduce((n, s) => n + s.rounds.length, 0),
+      g.every((x) => x.items.every((it) => it.solucion && it.solucion.length === 1)), g[0].items[2].practica.enlace,
+      EntrenosClase.enlaceDe(herramientasDelSitio(), "practicas", g[0].id + ":2").href];
+  });
+  igual("Practicar: todas las series y posiciones, cada una con su jugada, y el enlace abre esa sola", practicas,
+    [9, practicas[2], 45, true, "pasillo:2", "entreno/practicas.html?abrir=pasillo%3A2"]);
+
+  /* Memoria: todas las posiciones del banco (antes 8 de cada cantidad de piezas,
+     240 de 1200). Aperturas: todas las líneas, cada una en su grupo. */
+  const memoriaBanco = JSON.parse(fs.readFileSync(path.join(RAIZ, "entreno", "data", "memoria.json"), "utf8"));
+  const memoria = await page.evaluate(async () => {
+    const grupos = await ADAPTADORES_ENTRENO.memoria.cargar();
+    const ids = grupos.flatMap((g) => g.items.map((it) => it.id));
+    return [ids.length, new Set(ids).size, grupos.every((g) => g.items.every((it, i) => it.titulo.startsWith((i + 1) + ". ")))];
+  });
+  const enBanco = Object.values(memoriaBanco.porPiezas).reduce((n, l) => n + l.length, 0);
+  igual("Memoria: todas las posiciones del banco, sin repetir y numeradas", memoria, [enBanco, enBanco, true]);
+  const aperturas = await page.evaluate(async () => {
+    const grupos = await ADAPTADORES_ENTRENO.aperturas.cargar();
+    return [grupos.reduce((n, g) => n + g.items.length, 0), window.AperturasLineas.LINEAS.length];
+  });
+  igual("Aperturas: todas las líneas (aperturas y celadas)", aperturas[0], aperturas[1]);
+  // Estudio y Precisión posicional: cada ficha y cada posición del banco, en su grupo.
+  const otros = await page.evaluate(async () => {
+    const est = await ADAPTADORES_ENTRENO.estudio.cargar();
+    const pp = await ADAPTADORES_ENTRENO["precision-posicional"].cargar();
+    const n = (g) => g.reduce((k, x) => k + x.items.length, 0);
+    return [[n(est), window.FichasEstudio.FICHAS.length], [n(pp), window.PRECISION_POSICIONAL_ITEMS.length]];
+  });
+  igual("Estudio y Precisión posicional: todas las fichas y todas las posiciones", otros.map(([a, b]) => a === b && b > 0), [true, true]);
 
   // La vista previa y el guion (solo el profe).
   await page.evaluate(() => { activateTeacherTab("tipos"); entrenosView = { slug: "mates", grupo: "mate1", mostrar: 30 }; pintarEntrenos(); });
@@ -269,6 +320,41 @@ async function pruebaDelProfe(browser) {
   await page.evaluate(() => { entrenosView = { slug: null, grupo: null, mostrar: 30 }; pintarEntrenos(); });
   igual("Habilidades se esconde al volver", await seVe(page, "#tipos-body"), false);
   await page.click('#entrenos-body [data-entreno="coordenadas"]');
+  // Un botón por modo: a cada alumno se le abre ya jugando ese.
+  await page.locator("#entrenos-body").getByRole("button", { name: "10s por casilla" }).click();
+  const conModo = await page.evaluate(() => window.__tracks.slice(-1)[0].entreno);
+  igual("Coordenadas: el botón de un modo pide ese modo, y el enlace arranca jugando", [conModo.slug, conModo.recorte,
+    await page.evaluate(() => EntrenosClase.enlaceDe(herramientasDelSitio(), "coordenadas", "mode10").href)],
+    ["coordenadas", "mode10", "entreno/coordenadas.html?ronda=mode10"]);
+  await page.click("#entreno-pedido-quitar");
+  // 4×4: un botón por nivel.
+  await page.evaluate(() => { entrenosView = { slug: "4x4", grupo: null, mostrar: 30 }; pintarEntrenos(); });
+  await page.locator("#entrenos-body").getByRole("button", { name: "Avanzado" }).click();
+  const nivel4 = await page.evaluate(() => window.__tracks.slice(-1)[0].entreno);
+  /* Los que se abren ya en un modo, nivel o grupo: un botón por cada uno, y su
+     nombre es el que tiene en el juego (está escrito en los dos lados: si uno
+     cambia y el otro no, salta acá). */
+  const NOMBRES_EN = { coordenadas: "js/entreno-coordenadas.js", "4x4": "js/entreno-4x4.js", sonar: "js/sonar-motor.js",
+    "batalla-naval": "js/batalla-naval-motor.js", concentracion: "js/concentracion.js", ilumina: "js/ilumina-tablero.js" };
+  const conRondas = await page.evaluate(() => herramientasDelSitio().filter((h) => h.rondasClase).map((h) => [h.slug, h.rondasClase]));
+  igual("los que se abren en un modo o un nivel son los que se revisan", conRondas.map(([k]) => k).sort(), Object.keys(NOMBRES_EN).sort());
+  const nombresMal = [];
+  conRondas.forEach(([slug, rondas]) => {
+    const src = fs.readFileSync(path.join(RAIZ, NOMBRES_EN[slug]), "utf8");
+    rondas.forEach(([, nombre]) => { const n = nombre.replace(/^\d+\. /, ""); if (!src.includes(n)) nombresMal.push(slug + ": «" + n + "»"); });
+  });
+  igual("y cada nombre está en su juego", nombresMal, []);
+  for (const [slug, rondas] of conRondas) {
+    await page.evaluate((s) => { entrenosView = { slug: s, grupo: null, mostrar: 30 }; pintarEntrenos(); }, slug);
+    const n = await page.$$eval("#entrenos-body button", (b, r) => r.filter(([, nom]) => b.some((x) => x.textContent.includes(nom))).length, rondas);
+    if (n !== rondas.length) nombresMal.push(slug + ": " + n + " botones de " + rondas.length);
+  }
+  igual("con un botón por cada uno", nombresMal, []);
+  igual("4×4: el botón de un nivel pide ese nivel", [nivel4.slug, nivel4.recorte,
+    await page.evaluate(() => EntrenosClase.enlaceDe(herramientasDelSitio(), "4x4", "AVANZADO").href)],
+    ["4x4", "AVANZADO", "entreno/4x4.html?nivel=AVANZADO"]);
+  await page.click("#entreno-pedido-quitar");
+  await page.evaluate(() => { entrenosView = { slug: "coordenadas", grupo: null, mostrar: 30 }; pintarEntrenos(); });
   await page.locator("#entrenos-body").getByRole("button", { name: "Abrirlo a todos en una ventana" }).click();
   const meta = await page.evaluate(() => window.__tracks.slice(-1)[0].entreno);
   igual("«Abrirlo a todos» va en la presencia del profe: el slug, no la dirección", [meta.slug, meta.href], ["coordenadas", undefined]);

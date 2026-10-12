@@ -3731,6 +3731,69 @@ mostrarlo para explicarlo, preguntarlo a la clase y que lo practiquen.
   No se les agregan reyes: eso sería inventar otra posición. El verificador
   comprueba que todo `soloVer` sea de verdad una posición que el tablero no
   acepta.
+- **«🪟 Que la practiquen» de un desafío abre ESE desafío**, no la sección:
+  el recorte es su número del cuaderno y `entreno/desafios.html?n=73` lo abre
+  solo, como una serie de uno (sin anotarle estrellas a ninguna serie de la
+  lista). Antes abría la página entera y el alumno tenía que buscarlo entre
+  noventa. Va en todos los desafíos, con reyes o sin ellos: para los que no
+  tienen reyes es la única forma de llevarlos a la clase, porque chess.js los
+  da por terminados (ve jaques y mates que no existen: «Bd4#») y el tablero de
+  la clase no los puede jugar.
+- **Táctica: los temas sin rating van en una sola tanda.** Los de táctica de
+  la casa (Ataque doble, Columnas y diagonales, los dos enroques, Última
+  línea) no traen rating: la clase los partía en «Fácil/Media/Difícil» —un
+  reparto que no medía nada— con «ELO NaN–NaN», y 54 ejercicios decían «ELO
+  undefined». Ahora van en «📋 Todos», «Sin ELO».
+- **«❓ Preguntarla ahora»: una pregunta del cuestionario, suelta.** Cada
+  pregunta del armador (y de los cuestionarios listos) lleva el botón, solo en
+  la clase (`CQ.accionesPregunta`; en `cuestionarios.html` no hay a quién
+  preguntarle). Va por `hacer_pregunta_de_opciones` igual que una del
+  cuestionario en juego —su clave, su tiempo, su posición o sin tablero—, menos
+  el «Pregunta 1 de N» y el no dejar cambiar la opción. Con un cuestionario en
+  juego no se puede: la pregunta nueva cerraría la que está corriendo.
+- **Toda posición de Habilidades la acepta el tablero de la clase.** Dos de
+  «Constrúyela tú» (nivel 4, mate en 1) tenían en jaque al rey que no mueve:
+  al sacar la pieza que daba mate se descubría el jaque de otra. «Al tablero»
+  las rechazaba. El generador ya no las acepta (`--solo construye` rehace ese
+  banco sin motor) y `verificar-tipos.js` revisa todas las posiciones con
+  `PosicionValida`.
+- **Coordenadas se abre ya jugando un modo.** No tiene banco (sortea las 64
+  casillas, pesando las que cuestan), así que no le faltaba nada; pero en la
+  clase solo se podía abrir la portada, y cada alumno tenía que elegir el modo
+  y apretar «Empezar». Ahora hay un botón por modo (`rondasClase` en
+  `MaterialPlataforma`) y `entreno/coordenadas.html?ronda=mode10` arranca la
+  ronda en ese modo.
+- **4×4 se abre ya en un nivel.** Estaba completo (1000 ejercicios, cada uno
+  con su tablero y su imagen, sin repetir, y todos con solución con las reglas
+  de la página: un solucionador lo comprobó). En la clase hay un botón por
+  nivel, y `entreno/4x4.html?nivel=AVANZADO` abre ese nivel en el ejercicio que
+  le toca a cada uno (los siguientes se destapan al resolver el anterior). El
+  mismo `hrefRecorte` arregla las tareas de un nivel, que abrían siempre Fácil.
+- **Practicar tiene su lista en la clase.** Sus 9 series (45 posiciones,
+  todas válidas y con la jugada legal) se abrían solo como página. Ahora van
+  en Entrenamientos con el tablero de la clase —«Al tablero», «Preguntar»,
+  «Calentamiento», «Guion»— y «🪟 Que la practiquen» abre esa posición sola
+  (`entreno/practicas.html?abrir=pasillo:2`, el «serie:índice» que ya usaba
+  su repaso). `?abrir=tacticas` abre un tema: lo usan las tareas, que antes
+  abrían siempre la lista. Las series viven en `js/practicas-series.js`, que
+  usan la página y la clase (una sola copia; `metas-indice.py` y los
+  verificadores las leen de ahí). Va dentro de una función: dos scripts
+  clásicos con `const SETS` arriba chocan y la página no carga.
+- **Los juegos se abren ya en un nivel.** Sonar y Batalla naval ya aceptaban
+  `?nivel=N`; Concentración (`?nivel=N`) e Ilumina el tablero (`?grupo=G`)
+  ahora también, **sin saltarse el candado**: si el alumno todavía no tiene
+  abierto ese nivel, se queda en la lista y ve cuál le toca. En la clase, un
+  botón por nivel o grupo (`rondasClase`). Los nombres están escritos en el
+  juego y en `MaterialPlataforma`: `verificar-clase-entrenamientos.js`
+  comprueba que coincidan. Confites no tiene niveles: abrirlo ya es jugar.
+- **Finales: los que empieza la máquina no van a la práctica de la clase.**
+  Ahí el alumno juega el color que mueve en la posición (`practice_sessions`
+  no guarda otro), y en «Dama y peón de alfil» y «Torre contra alfil» —donde
+  el alumno defiende y el rival juega primero— le tocaba el bando
+  equivocado: el que tenía que hacer tablas con negras jugaba con la dama
+  blanca. Esos van solo a su página, que hace mover primero a la máquina.
+  Todos los finales llevan «🪟 Que la practiquen» (`finales.html?final=<id>`,
+  con su meta y sus pistas).
 - **Una lección de Aprender con varias posiciones va una por posición.**
   «¿Jaque mate o ahogado?» tiene dos y la clase solo tomaba la primera (el
   mate): el ahogado no se veía nunca. Cada una va como pregunta de opciones
@@ -3741,6 +3804,9 @@ mostrarlo para explicarlo, preguntarlo a la clase y que lo practiquen.
   centro del nivel como dificultad de la pregunta. Antes salían «ELO
   undefined», metidos en cualquier lugar (restar un rating que no está da
   NaN).
+- **Memoria trae todo su banco**: las 40 posiciones de cada cantidad de
+  piezas, numeradas en cada tramo. Antes iban 8 de cada una (240 de 1200),
+  sin que nada lo dijera.
 - **«🪟 Abrirlo a todos en una ventana» no manda una dirección**: manda el
   slug (y el recorte) en la presencia del profe, como la Fotografía, y cada
   alumno arma el enlace con la lista del sitio (`EntrenosClase.enlaceDe`).

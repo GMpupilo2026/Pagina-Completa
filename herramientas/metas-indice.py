@@ -94,7 +94,7 @@ def recortes_de_pagina(archivo, nombres, actividad):
     """Las categorías de Aprender y Practicar, que viven en el JS de la página.
 
     No tienen un JSON propio: son listas escritas dentro del código de la
-    página (js/aprender-lecciones.js, js/entreno-practicas.js). Se leen de
+    página (js/aprender-lecciones.js, js/practicas-series.js). Se leen de
     ahí igual, que es la fuente, en vez de copiarlas.
 
     Antes estaban dentro del HTML y se leían de entreno/<página>.html. Cuando
@@ -195,7 +195,7 @@ def main():
         "mates": recortes_por_categoria("mates.json", NOMBRE_MATE, "mates"),
         "4x4": recortes_por_categoria("exercises.json", {}, "4x4"),
         "aprender": recortes_de_pagina("js/aprender-lecciones.js", NOMBRE_APRENDER, "aprender"),
-        "practicas": recortes_de_pagina("js/entreno-practicas.js", NOMBRE_PRACTICAR, "practicar"),
+        "practicas": recortes_de_pagina("js/practicas-series.js", NOMBRE_PRACTICAR, "practicar"),
         "aperturas": recortes_de_aperturas(),
         "estudio": recortes_de_estudio(),
         "tipos": recortes_de_tipos(),

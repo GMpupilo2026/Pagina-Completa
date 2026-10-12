@@ -173,6 +173,19 @@ async function init() {
 
     document.getElementById("loading").classList.add("hidden");
     document.getElementById("app").classList.remove("hidden");
+    abrirElGrupoPedido();
+}
+
+/* «?grupo=2»: lo pide la clase en vivo. Abre el primer nivel de ese grupo que el
+   alumno tenga abierto y sin resolver; si no tiene ninguno abierto (se abren al
+   resolver el anterior) o ya los resolvió todos, se queda en la lista. */
+function abrirElGrupoPedido() {
+    let g = null;
+    try { g = Number(new URLSearchParams(location.search).get("grupo")); } catch (e) { g = null; }
+    if (!GRUPO_NOMBRE[g]) return;
+    const resueltos = leerResueltos();
+    const idx = NIVELES.findIndex((n, i) => n.grupo === g && !resueltos[n.id] && nivelDesbloqueado(i));
+    if (idx >= 0) abrirNivel(idx);
 }
 init();
     

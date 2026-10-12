@@ -5031,8 +5031,14 @@
         // Cada tema ya viene ordenado de fácil a difícil por rating (ver
         // entreno/data/construir_temas.py) — repartirlo en tercios da tres tandas de
         // dificultad creciente sin tener que volver a ordenar nada aquí.
+        //
+        // Los temas de táctica de la casa (Ataque doble, Última línea, los enroques…)
+        // no traen rating: partirlos en «Fácil/Media/Difícil» era un reparto que no
+        // medía nada, con el rótulo «ELO NaN–NaN». Van en una sola tanda.
+        const tacticsRating = (id) => (typeof tacticsData.puzzles[id].rating === "number" ? tacticsData.puzzles[id].rating : null);
         function tacticsThemeBuckets(themeKey) {
             const ids = tacticsData.themes[themeKey] || [];
+            if (ids.length && !ids.some((id) => tacticsRating(id) !== null)) return [ids];
             const third = Math.ceil(ids.length / 3) || 1;
             return [ids.slice(0, third), ids.slice(third, third * 2), ids.slice(third * 2)].filter((b) => b.length);
         }
@@ -5113,12 +5119,14 @@
                 body.appendChild(title);
                 const list = document.createElement("div");
                 list.className = "space-y-1.5";
-                tacticsThemeBuckets(tacticsView.themeKey).forEach((ids, i) => {
-                    const ratings = ids.map((id) => tacticsData.puzzles[id].rating);
+                const tandas = tacticsThemeBuckets(tacticsView.themeKey);
+                tandas.forEach((ids, i) => {
+                    const ratings = ids.map(tacticsRating).filter((r) => r !== null);
+                    const rango = ratings.length ? "ELO " + Math.min.apply(null, ratings) + "–" + Math.max.apply(null, ratings) : "Sin ELO";
                     const btn = document.createElement("button");
                     btn.type = "button";
                     btn.className = "w-full text-left text-sm font-semibold px-3 py-2.5 rounded-lg bg-brand-50 hover:bg-brand-100 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-800 dark:text-white flex items-center justify-between gap-2 transition-colors";
-                    btn.innerHTML = "<span>" + TACTICS_DIFF_LABELS[i] + "</span><span class=\"text-brand-450 dark:text-brand-350 font-normal shrink-0\">ELO " + Math.min.apply(null, ratings) + "–" + Math.max.apply(null, ratings) + " · " + ids.length + " ›</span>";
+                    btn.innerHTML = "<span>" + (tandas.length === 1 && !ratings.length ? "📋 Todos" : TACTICS_DIFF_LABELS[i]) + "</span><span class=\"text-brand-450 dark:text-brand-350 font-normal shrink-0\">" + rango + " · " + ids.length + " ›</span>";
                     btn.addEventListener("click", () => { tacticsView = Object.assign({}, tacticsView, { level: "exercises", diffIndex: i }); renderTacticsView(); });
                     list.appendChild(btn);
                 });
@@ -5184,7 +5192,7 @@
                     // botón que se salió.
                     const label = document.createElement("p");
                     label.className = "text-sm font-semibold text-brand-700 dark:text-brand-200";
-                    label.textContent = (i + 1) + ". " + (ex.mate ? "Mate en " + Math.ceil(ex.solution.length / 2) : "ELO " + ex.rating);
+                    label.textContent = (i + 1) + ". " + (ex.mate ? "Mate en " + Math.ceil(ex.solution.length / 2) : typeof ex.rating === "number" ? "ELO " + ex.rating : "Sin ELO");
                     li.appendChild(label);
                     const actions = document.createElement("div");
                     actions.className = "flex items-center flex-wrap gap-1.5 mt-2";

@@ -25,6 +25,7 @@
  * Cómo se corre (Stockfish instalado: apt install stockfish):
  *
  *   node herramientas/tipos-generar.js
+ *   node herramientas/tipos-generar.js --solo construye   (sin motor: solo Constrúyela tú)
  *
  * El análisis del motor se guarda en herramientas/.cache-tipos.json (fuera del
  * repositorio) para no repetirlo. entreno/data/tipos.json NO se edita a mano.
@@ -64,7 +65,7 @@ const PUZZLES = Object.keys(TEMAS.puzzles).sort((a, b) => hash(a) - hash(b)).map
    usan el motor: los demás bancos no se vuelven a analizar,
    así que ningún id cambia y nadie pierde sus estrellas. */
 const SOLO = process.argv.includes("--solo") ? process.argv[process.argv.indexOf("--solo") + 1] : null;
-const MOTORES = SOLO === "con-lo-justo" ? [] : Array.from({ length: Math.max(1, Math.min(4, require("os").cpus().length)) }, () => new Motor());
+const MOTORES = SOLO === "con-lo-justo" || SOLO === "construye" ? [] : Array.from({ length: Math.max(1, Math.min(4, require("os").cpus().length)) }, () => new Motor());
 let libre = MOTORES.slice();
 const cola = [];
 function conMotor(fn) {
@@ -738,6 +739,12 @@ function generarConstruye(reales) {
   const out = [];
   const mates = PUZZLES.filter((pz) => (pz.themes || []).includes("mateIn1"));
   const empuja = (n, base) => {
+    /* El rey que NO le toca mover no puede estar en jaque: el tablero de la clase
+       rechaza esa posición (js/posicion-valida.js) y rompe a Stockfish. Pasaba en
+       el nivel 4: al sacar la pieza que daba mate se descubría el jaque de otra
+       (un caballo que tapaba a la dama), y dos ejercicios no se podían dar. */
+    const otro = new Chess();
+    if (!otro.load(base.fen.replace(/ [wb] /, " " + R.otro(base.fen.split(" ")[1]) + " ")) || otro.in_check()) return false;
     const sol = M.solucionesConstruye(Chess, base);
     if (!sol.length || sol.length > (n === 4 || n === 5 ? 5 : 3)) return false;
     out.push(Object.assign(base, { id: "con-" + n + "-" + hash(base.fen + base.pieza + base.objetivo).toString(36), nivel: n, soluciones: sol,
@@ -1411,8 +1418,17 @@ if (SOLO === "aguanta") {
     console.log("tablas        ", JSON.stringify(c));
     process.exit(0);
   })().catch((e) => { console.error(e); process.exit(1); });
+} else if (SOLO === "construye") {
+  // Sin motor: las soluciones las cuenta chess.js (js/tipos-reglas.js).
+  const datos = JSON.parse(fs.readFileSync(SALIDA, "utf8"));
+  console.log("Constrúyela tú…");
+  datos.construye = generarConstruye(posicionesReales(3000));
+  fs.writeFileSync(SALIDA, JSON.stringify(datos) + "\n");
+  const c = datos.construye.reduce((m, x) => { m[x.nivel] = (m[x.nivel] || 0) + 1; return m; }, {});
+  console.log("construye     ", JSON.stringify(c));
+  process.exit(0);
 } else if (SOLO) {
-  if (SOLO !== "con-lo-justo") { console.error("--solo solo sabe rehacer «con-lo-justo», «aguanta», «remata», «tiempo» o «tablas»."); process.exit(2); }
+  if (SOLO !== "con-lo-justo") { console.error("--solo solo sabe rehacer «con-lo-justo», «construye», «aguanta», «remata», «tiempo» o «tablas»."); process.exit(2); }
   const datos = JSON.parse(fs.readFileSync(SALIDA, "utf8"));
   console.log("Con lo justo (tablas de finales, tarda un par de minutos)…");
   datos["con-lo-justo"] = generarConLoJusto();

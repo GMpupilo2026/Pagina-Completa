@@ -400,6 +400,13 @@ async function init(){
   mostrarNiveles();
   document.getElementById('loading').classList.add('hidden');
   document.getElementById('app').classList.remove('hidden');
+  /* «?nivel=3»: lo pide la clase en vivo. Abre ese nivel si el alumno ya lo
+     tiene abierto; si todavía no (se abre al terminar el anterior), se queda
+     en la lista de niveles, donde ve cuál le toca. */
+  let pedido = null;
+  try{ pedido = Number(new URLSearchParams(location.search).get('nivel')); }catch(e){ pedido = null; }
+  const nivel = NIVELES.find((n) => n.id === pedido);
+  if(nivel && nivelDesbloqueado(nivel)) abrirNivel(nivel);
 }
 init();
     

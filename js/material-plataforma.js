@@ -46,7 +46,12 @@ window.MaterialPlataforma = (function () {
 
     { slug: "4x4", label: "4×4", href: "entreno/4x4.html",
       actividades: ["4x4"], metas: ["cantidad", "minutos"],
-      unidad: "ejercicios", recortes: "4x4", recorteLabel: "Nivel" },
+      unidad: "ejercicios", recortes: "4x4", recorteLabel: "Nivel",
+      // Abre ese nivel, en el ejercicio que le toca a cada uno (los siguientes se
+      // destapan al resolver el anterior). Antes la tarea de un nivel abría «Fácil».
+      hrefRecorte: (c) => `entreno/4x4.html?nivel=${encodeURIComponent(c)}`,
+      rondasTitulo: "O que lo abran ya en un nivel (cada alumno, en el ejercicio que le toca):",
+      rondasClase: [["FACIL", "Fácil"], ["INTERMEDIO", "Intermedio"], ["AVANZADO", "Avanzado"], ["ESPECIALISTA", "Especialista"], ["MAESTRO", "Maestro"], ["GRANMAESTRO", "Gran Maestro"]] },
 
     /* Aprende a jugar registra sus niveles como 'aprender' (categoría
        'aprende-a-jugar'), junto con Aprender: por cantidad no se distinguen,
@@ -62,7 +67,9 @@ window.MaterialPlataforma = (function () {
 
     { slug: "practicas", label: "Practicar", href: "entreno/practicas.html",
       actividades: ["practicar"], metas: ["cantidad", "minutos"],
-      unidad: "series", recortes: "practicas", recorteLabel: "Bloque" },
+      unidad: "series", recortes: "practicas", recorteLabel: "Bloque",
+      // Un tema («tacticas»: las tareas), una serie o una posición («pasillo:2»: la clase).
+      hrefRecorte: (c) => `entreno/practicas.html?abrir=${encodeURIComponent(c)}` },
 
     { slug: "aperturas", label: "Aperturas y celadas", href: "entreno/aperturas.html",
       actividades: ["aperturas"], metas: ["cantidad", "minutos"],
@@ -80,13 +87,20 @@ window.MaterialPlataforma = (function () {
 
     { slug: "coordenadas", label: "Coordenadas", href: "entreno/coordenadas.html",
       actividades: ["coordenadas"], metas: ["minutos", "cantidad"],
-      unidad: "rondas" },
+      unidad: "rondas",
+      /* La clase en vivo la abre ya jugando un modo (js/clase-entrenamientos.js):
+         uno por botón, con el nombre que tiene en la página. */
+      rondasTitulo: "O que lo empiecen ya, en un modo:",
+      rondasClase: [["classic", "Clásico"], ["mode10", "10s por casilla"], ["mode3", "3s por casilla"]],
+      hrefRecorte: (c) => `entreno/coordenadas.html?ronda=${encodeURIComponent(c)}` },
 
     /* Desafíos apunta sus series como 'practicar', igual que Practicar: por
        cantidad no se podrían distinguir las unas de las otras, así que solo
        ofrece minutos (que sí lleva su propio nombre en el registro de
        tiempo). Pedir "5 desafíos" contaría también lo hecho en Practicar. */
     { slug: "desafios", label: "Desafíos", href: "entreno/desafios.html",
+      // Un desafío solo, por su número del cuaderno (lo pide la clase en vivo).
+      hrefRecorte: (c) => `entreno/desafios.html?n=${encodeURIComponent(c)}`,
       actividades: ["desafios"], metas: ["minutos", "completar"], unidad: "series" },
 
     { slug: "visualizacion", label: "Visualización", href: "entreno/visualizacion.html",
@@ -95,7 +109,9 @@ window.MaterialPlataforma = (function () {
     /* Cuenta cada final ganado o salvado UNA vez (como Mates): son diez, así
        que «5 finales» son cinco distintos. */
     { slug: "finales", label: "Finales contra la máquina", href: "entreno/finales.html",
-      actividades: ["finales"], metas: ["cantidad", "minutos"], unidad: "finales" },
+      actividades: ["finales"], metas: ["cantidad", "minutos"], unidad: "finales",
+      // Ese final, en su página (la clase en vivo lo pide así).
+      hrefRecorte: (c) => `entreno/finales.html?final=${encodeURIComponent(c)}` },
 
     /* Cada ejercicio resuelto se registra una vez como 'tipos', con el tipo en
        detail.category: ese es el recorte («10 de Detective»), y el enlace
@@ -112,20 +128,32 @@ window.MaterialPlataforma = (function () {
       actividades: ["precision-posicional"], metas: ["cantidad", "minutos"], unidad: "tandas" },
 
     { slug: "sonar", label: "El Sonar", href: "sonar.html",
-      actividades: ["sonar"], metas: ["cantidad", "minutos"], unidad: "partidas" },
+      actividades: ["sonar"], metas: ["cantidad", "minutos"], unidad: "partidas",
+      hrefRecorte: (c) => `sonar.html?nivel=${encodeURIComponent(c)}`,
+      rondasTitulo: "O que lo empiecen ya, en un nivel:",
+      rondasClase: [["1", "1. El rey buzo"], ["2", "2. El caballo buzo"], ["3", "3. Dos tesoros"], ["4", "4. Aguas turbias"]] },
 
     { slug: "batalla-naval", label: "Batalla naval", href: "batalla-naval.html",
-      actividades: ["batalla-naval"], metas: ["cantidad", "minutos"], unidad: "partidas" },
+      actividades: ["batalla-naval"], metas: ["cantidad", "minutos"], unidad: "partidas",
+      hrefRecorte: (c) => `batalla-naval.html?nivel=${encodeURIComponent(c)}`,
+      rondasTitulo: "O que lo empiecen ya, en un nivel:",
+      rondasClase: [["1", "1. Tres barcos"], ["2", "2. Zarpa la dama"], ["3", "3. Flota completa"], ["4", "4. Duelo contra la computadora"]] },
 
     /* Memoria: cada posición reconstruida, como una ronda (se sortea). */
     { slug: "memoria", label: "Memoria", href: "entreno/memoria.html",
       actividades: ["memoria"], metas: ["cantidad", "minutos"], unidad: "posiciones" },
 
     { slug: "concentracion", label: "Concentración", href: "concentracion.html",
-      actividades: ["concentracion"], metas: ["cantidad", "minutos"], unidad: "rondas" },
+      actividades: ["concentracion"], metas: ["cantidad", "minutos"], unidad: "rondas",
+      hrefRecorte: (c) => `concentracion.html?nivel=${encodeURIComponent(c)}`,
+      rondasTitulo: "O que lo abran ya en un nivel (quien todavía no lo tiene abierto ve los niveles):",
+      rondasClase: [["1", "1. Primeros pasos"], ["2", "2. Calentando"], ["3", "3. Ojo fino"], ["4", "4. Memoria de campeón"], ["5", "5. Doble desafío"]] },
 
     { slug: "ilumina", label: "Ilumina el tablero", href: "ilumina-tablero.html",
-      actividades: ["ilumina"], metas: ["cantidad", "minutos"], unidad: "niveles" },
+      actividades: ["ilumina"], metas: ["cantidad", "minutos"], unidad: "niveles",
+      hrefRecorte: (c) => `ilumina-tablero.html?grupo=${encodeURIComponent(c)}`,
+      rondasTitulo: "O que lo abran ya en un grupo (cada alumno, en el primer nivel que tiene sin resolver):",
+      rondasClase: [["1", "1. Aprende cada pieza"], ["2", "2. Dos piezas, un equipo"], ["3", "3. Cuidado con las negras"], ["4", "4. El reto final"]] },
 
     { slug: "confites", label: "Confites del caballo", href: "confites.html",
       actividades: ["confites"], metas: ["cantidad", "minutos"], unidad: "partidas" },

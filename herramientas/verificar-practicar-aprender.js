@@ -68,8 +68,8 @@ function valida(donde, fen) {
 }
 
 /* ------------------------------------------------ Practicar */
-console.log("=== Practicar (js/entreno-practicas.js) ===");
-const SETS = lista("js/entreno-practicas.js", "SETS");
+console.log("=== Practicar (js/practicas-series.js) ===");
+const SETS = lista("js/practicas-series.js", "SETS");
 SETS.forEach((set) => set.rounds.forEach((r, i) => {
   const donde = `${set.id} #${i + 1}`;
   revisados++;

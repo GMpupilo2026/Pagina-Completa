@@ -229,6 +229,25 @@ async function pruebaListoEnClase(browser) {
   igual("se juega tal cual: su pregunta, su clave, su tiempo y sin dejar cambiar", [r.p_prompt, r.p_correcta, r.p_tiempo_limite, r.p_sin_tablero, r.p_bloquea_cambio],
     ["🎯 Pregunta 1 de 1: ¿Cuántas casillas tiene el tablero?", 1, 30, true, true]);
   igual("y no se guardó ninguna copia", await page.evaluate(() => window.__inserts.filter((i) => i.tabla === "cuestionarios").length), 0);
+
+  /* «❓ Preguntarla ahora»: UNA pregunta, suelta, sin jugar el cuestionario. Desde
+     un listo (la de «Repaso», propia, se ve en el armador). Mientras se juega el
+     cuestionario no se puede: cerraría la que está corriendo. */
+  await page.evaluate(() => terminarCuestionario());
+  await page.evaluate(() => { window.__rpcs = []; });
+  await page.selectOption("#cuestionario-select", "m-1");
+  await page.getByRole("button", { name: "Pregunta 1: preguntarla ahora a la clase" }).click();
+  await page.waitForFunction(() => (window.__rpcs || []).some((r) => r.n === "hacer_pregunta_de_opciones"), null, { timeout: 5000 });
+  const suelta = await page.evaluate(() => window.__rpcs.find((x) => x.n === "hacer_pregunta_de_opciones").args);
+  igual("«Preguntarla ahora» manda solo esa pregunta, con su clave y su tiempo, sin tablero ni «1 de N»",
+    [suelta.p_prompt, suelta.p_opciones, suelta.p_correcta, suelta.p_tiempo_limite, suelta.p_sin_tablero, !!suelta.p_bloquea_cambio, await seVe(page, "#cuestionario-juego")],
+    ["¿Qué vale más?", ["La torre", "El alfil"], 0, 20, true, false, false]);
+  await page.evaluate(() => { window.__rpcs = []; });
+  await page.selectOption("#cuestionario-select", "l-1");
+  await page.click("#cuestionario-listo summary");
+  await page.getByRole("button", { name: "Pregunta 1: preguntarla ahora a la clase" }).click();
+  await page.waitForFunction(() => (window.__rpcs || []).some((r) => r.n === "hacer_pregunta_de_opciones"), null, { timeout: 5000 });
+  igual("y desde uno listo también", await page.evaluate(() => window.__rpcs.find((x) => x.n === "hacer_pregunta_de_opciones").args.p_prompt), "¿Cuántas casillas tiene el tablero?");
   igual("sin errores en consola", errores, []);
   await ctx.close();
 }
