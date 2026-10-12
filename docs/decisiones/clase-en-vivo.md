@@ -3473,8 +3473,23 @@ abajo a la izquierda (el tablero pequeño queda a la derecha).
   respondió», en amarillo): `renderChatMessages` avisa con el evento
   `chat-clase-pintado` quién mandó el último. Lo que ya estaba al entrar no
   cuenta como nuevo.
-- Con la tarjeta girada (el celular parado), el chat se gira igual, con su
-  borde de abajo del lado de abajo de la lámina.
+- **Con el celular parado y el chat abierto, la lámina deja de estar girada**:
+  el chat va derecho, ARRIBA y a lo ancho, y la lámina queda debajo, sin
+  girar y sin el tablero pequeño. Al principio el chat se giraba con la
+  lámina, y en un celular de verdad salió mal: para escribir se abre el
+  teclado, la pantalla se achica, y la lámina girada (medida con `100dvh`)
+  quedaba en la mitad de arriba, con la página asomándose debajo. Escribir
+  de lado tampoco es cómodo. Arriba, el teclado (que sale abajo) nunca tapa lo
+  que se escribe. El chat trae su propio «✕ Cerrar el chat», porque el de la
+  tarjeta queda tapado por él.
+- **La lámina girada se mide con JavaScript**: `medirVentana()` pone
+  `--ventana-alto` y `--ventana-ancho` con `innerHeight`/`innerWidth` en cada
+  `resize`, y otra vez al cerrar el chat, que además vuelve la página arriba
+  (el celular pudo correrla para mostrar el cuadro de escribir).
+- **Un fondo que se sale de la tarjeta para todos lados** (`box-shadow` de
+  200vmax): si por lo que sea la tarjeta queda más chica que la pantalla, la
+  página de abajo no se asoma. Y `overflow: hidden` también en `<html>`, no
+  solo en `<body>`.
 - En la prueba, el mensaje nuevo se mete ADELANTE en la tabla del doble: la
   base lo devuelve del más nuevo al más viejo (`order desc`) y el doble no
   ordena.

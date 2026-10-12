@@ -1305,7 +1305,11 @@ html.modo-proyector .presentacion-sin-proyector { display: none !important; }
    se aplica. Ver «La pantalla completa para todos». */
 html.presentacion-forzada:not(.adaptive-mode) #presentacion-caja:not([hidden]) {
   position: fixed; inset: 0; z-index: 48; margin: 0; padding: 1rem;
+  /* Un fondo que se sale de la tarjeta para todos lados: si por lo que sea la
+     tarjeta queda más chica que la pantalla, la página de abajo no se asoma. */
+  box-shadow: 0 0 0 200vmax #0b1220;
 }
+html.presentacion-forzada:not(.adaptive-mode),
 html.presentacion-forzada:not(.adaptive-mode) body { overflow: hidden; }
 /* El texto de la diapositiva: el profe sí; el alumno, solo con el Modo
    Adaptado (quien no ve la lámina). Ver «El texto de la diapositiva, solo
@@ -1322,26 +1326,40 @@ html.presentacion-forzada.chat-flotante:not(.adaptive-mode) #chat-caja {
   width: min(calc(100vw - 2rem), 380px); padding: 0.75rem 1rem; box-shadow: 0 8px 32px rgb(0 0 0 / 0.55);
 }
 html.presentacion-forzada.chat-flotante:not(.adaptive-mode) #chat-caja > p { display: none; }
+.solo-chat-flotante { display: none; }
+html.presentacion-forzada.chat-flotante:not(.adaptive-mode) .solo-chat-flotante { display: inline-flex; }
 html.presentacion-forzada.chat-flotante:not(.adaptive-mode) #chat-messages { max-height: 35vh; }
-/* Con la tarjeta girada (el celular parado), el chat se gira igual: su borde
-   de abajo queda del lado de abajo de la lámina. Se gira desde su esquina de
-   arriba a la izquierda y se corre su propio alto (translateY(-100%)). */
+/* Con el celular parado y el chat abierto, la lámina deja de estar girada y
+   el chat va derecho, ARRIBA y a lo ancho: para escribir se pone el celular
+   derecho, y el teclado sale abajo, así que arriba nunca tapa lo que se
+   escribe. Girado, el teclado achicaba la pantalla y la lámina quedaba a la
+   mitad, con la página asomándose debajo. La lámina queda abajo del chat. */
 @media (orientation: portrait) and (max-width: 767px) {
   html.presentacion-forzada.chat-flotante:not(.adaptive-mode) #chat-caja {
-    left: 0.5rem; top: 0.5rem; bottom: auto; width: min(55vh, 380px);
-    transform-origin: top left; transform: rotate(90deg) translateY(-100%);
+    left: 0.5rem; right: 0.5rem; top: 0.5rem; bottom: auto; width: auto;
   }
-  html.presentacion-forzada.chat-flotante:not(.adaptive-mode) #chat-messages { max-height: 30vw; }
+  html.presentacion-forzada.chat-flotante:not(.adaptive-mode) #chat-messages { max-height: 22vh; }
+  html.presentacion-forzada.chat-flotante:not(.adaptive-mode) #presentacion-caja:not([hidden]) {
+    inset: 0; width: auto; height: auto; transform: none; justify-content: flex-end; padding-bottom: 1.5rem;
+  }
+  html.presentacion-forzada.chat-flotante:not(.adaptive-mode) #presentacion-caja:not([hidden]) .presentacion-img { max-height: 40vh; }
+  html.presentacion-forzada.chat-flotante:not(.adaptive-mode) #presentacion-caja:not([hidden]) :is(.presentacion-mini, #presentacion-mini-btn) { display: none !important; }
+  html.presentacion-forzada.chat-flotante:not(.adaptive-mode) #presentacion-caja:not([hidden]) .presentacion-lienzo { max-width: 100% !important; margin: 0 auto; }
 }
 /* En el celular parado, la diapositiva (que es ancha) se gira de lado: si no,
    queda una franja chica en medio de la pantalla y el tablero diminuto. Donde
    el navegador deja girar la pantalla de verdad (screen.orientation.lock), el
    celular queda horizontal y esto deja de aplicarse solo. Se gira desde la
    esquina de arriba a la izquierda: el ancho de la tarjeta es el alto de la
-   pantalla y al revés. Ver «La pantalla completa en el celular, de lado». */
+   pantalla y al revés. El alto y el ancho de la ventana los mide
+   js/clase-presentacion.js (--ventana-alto, --ventana-ancho) cada vez que
+   cambian: con 100vh o 100dvh, un celular que se quedaba con la medida de
+   cuando estaba abierto el teclado dejaba la lámina a la mitad.
+   Ver «La pantalla completa en el celular, de lado». */
 @media (orientation: portrait) and (max-width: 767px) {
   :is(#presentacion-caja:fullscreen, html.presentacion-forzada:not(.adaptive-mode) #presentacion-caja:not([hidden])) {
-    position: fixed; inset: auto; top: 0; left: 100vw; width: 100vh; height: 100vw; max-height: none;
+    position: fixed; inset: auto; top: 0; left: var(--ventana-ancho, 100vw);
+    width: var(--ventana-alto, 100vh); height: var(--ventana-ancho, 100vw); max-height: none;
     transform-origin: top left; transform: rotate(90deg);
   }
   :is(#presentacion-caja:fullscreen, html.presentacion-forzada:not(.adaptive-mode) #presentacion-caja:not([hidden])) .presentacion-img { max-height: calc(100vw - 6.5rem); }
@@ -1358,15 +1376,6 @@ html.presentacion-forzada.chat-flotante:not(.adaptive-mode) #chat-messages { max
   :is(#presentacion-caja:fullscreen, html.presentacion-forzada:not(.adaptive-mode) #presentacion-caja:not([hidden])) .presentacion-mini:not([hidden]) { width: min(42vh, 30vw); }
   :is(#presentacion-caja:fullscreen, html.presentacion-forzada:not(.adaptive-mode) #presentacion-caja:not([hidden])):has(.presentacion-mini:not([hidden])) .presentacion-lienzo {
     max-width: calc(100% - min(42vh, 30vw) - 2rem);
-  }
-}
-@supports (height: 100dvh) {
-  @media (orientation: portrait) and (max-width: 767px) {
-    :is(#presentacion-caja:fullscreen, html.presentacion-forzada:not(.adaptive-mode) #presentacion-caja:not([hidden])) { width: 100dvh; }
-    :is(#presentacion-caja:fullscreen, html.presentacion-forzada:not(.adaptive-mode) #presentacion-caja:not([hidden])) .presentacion-mini:not([hidden]) { width: min(42vw, 30dvh); }
-    :is(#presentacion-caja:fullscreen, html.presentacion-forzada:not(.adaptive-mode) #presentacion-caja:not([hidden])):has(.presentacion-mini:not([hidden])) .presentacion-lienzo {
-      max-width: calc(100% - min(42vw, 30dvh) - 2rem);
-    }
   }
 }
 html.presentacion-forzada:not(.adaptive-mode) #header { display: none !important; }

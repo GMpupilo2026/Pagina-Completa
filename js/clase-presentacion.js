@@ -569,6 +569,19 @@ function pantallaCompletaDe(el) {
     }).catch(() => {});
 }
 
+/* El alto y el ancho de la ventana, para la lámina girada del celular (el
+   CSS usa --ventana-alto y --ventana-ancho). Medidos cada vez que cambian:
+   con 100vh/100dvh, un celular que se quedaba con la medida de cuando estaba
+   abierto el teclado dejaba la lámina a la mitad. */
+function medirVentana() {
+    const s = document.documentElement.style;
+    s.setProperty("--ventana-alto", window.innerHeight + "px");
+    s.setProperty("--ventana-ancho", window.innerWidth + "px");
+}
+medirVentana();
+window.addEventListener("resize", medirVentana);
+window.addEventListener("orientationchange", () => setTimeout(medirVentana, 300));
+
 function pintarPantallaCompletaForzada(p) {
     const forzada = !!(p && p.completa) && !isTeacher && !esObservador && !modoProyector;
     const html = document.documentElement;
@@ -605,6 +618,9 @@ function ponerChatFlotante(abierto) {
     const va = !!abierto && pantallaCompletaForzada();
     html.classList.toggle("chat-flotante", va);
     btn.setAttribute("aria-expanded", String(va));
+    // Al cerrarlo, el celular pudo haber corrido la página para mostrar el
+    // cuadro de escribir: se vuelve arriba y se vuelve a medir la ventana.
+    if (!va) { window.scrollTo(0, 0); medirVentana(); }
     if (va) chatUltimoVisto = chatUltimoAjeno;
     pintarBotonChat();
     if (va) {
@@ -999,6 +1015,10 @@ document.getElementById("presentacion-limpia").addEventListener("click", cambiar
 document.getElementById("presentacion-completa-todos").addEventListener("click", cambiarPantallaCompletaTodos);
 document.getElementById("presentacion-chat-btn").addEventListener("click", () =>
     ponerChatFlotante(!document.documentElement.classList.contains("chat-flotante")));
+document.getElementById("chat-cerrar-flotante").addEventListener("click", () => {
+    ponerChatFlotante(false);
+    document.getElementById("presentacion-chat-btn").focus({ preventScroll: true });
+});
 document.addEventListener("keydown", (e) => {
     if (e.key === "Escape" && document.documentElement.classList.contains("chat-flotante")) {
         ponerChatFlotante(false);
