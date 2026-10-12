@@ -214,6 +214,16 @@ async function pruebaDelProfe(browser) {
     vis, ["l1", "l2", "l3", "l4", "l5"].map((id) => [id, true, false, true, true]));
   // Finales: los del archivo, todos.
   const finales = await page.evaluate(async () => (await ADAPTADORES_ENTRENO.finales.cargar())[0].items.length);
+  /* Los finales que empieza la máquina no van a la práctica de la clase: ahí el
+     alumno juega el color que mueve, y le tocaba el bando equivocado. Todos
+     llevan «Que la practiquen», que abre ese final en su página. */
+  const finalesBanco = JSON.parse(fs.readFileSync(path.join(RAIZ, "entreno", "data", "finales.json"), "utf8")).finales;
+  const empiezaMaquina = finalesBanco.filter((f) => f.fen.split(" ")[1] !== f.alumno).map((f) => f.id);
+  const fin = await page.evaluate(async () => (await ADAPTADORES_ENTRENO.finales.cargar())[0].items.map((it) => [it.id, !!it.final, it.practica && it.practica.enlace]));
+  igual("Finales: los que empieza la máquina no van contra la máquina de la clase; todos abren su página",
+    [empiezaMaquina.length > 0, fin.filter(([, f]) => !f).map(([id]) => id), fin.every(([id, , e]) => e === id),
+      await page.evaluate(() => EntrenosClase.enlaceDe(herramientasDelSitio(), "finales", "lucena").href)],
+    [true, empiezaMaquina, true, "entreno/finales.html?final=lucena"]);
   igual("Finales: están todos los del archivo", finales,
     JSON.parse(fs.readFileSync(path.join(RAIZ, "entreno", "data", "finales.json"), "utf8")).finales.length);
 

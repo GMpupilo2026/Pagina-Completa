@@ -3697,6 +3697,14 @@ mostrarlo para explicarlo, preguntarlo a la clase y que lo practiquen.
   botón por nivel o grupo (`rondasClase`). Los nombres están escritos en el
   juego y en `MaterialPlataforma`: `verificar-clase-entrenamientos.js`
   comprueba que coincidan. Confites no tiene niveles: abrirlo ya es jugar.
+- **Finales: los que empieza la máquina no van a la práctica de la clase.**
+  Ahí el alumno juega el color que mueve en la posición (`practice_sessions`
+  no guarda otro), y en «Dama y peón de alfil» y «Torre contra alfil» —donde
+  el alumno defiende y el rival juega primero— le tocaba el bando
+  equivocado: el que tenía que hacer tablas con negras jugaba con la dama
+  blanca. Esos van solo a su página, que hace mover primero a la máquina.
+  Todos los finales llevan «🪟 Que la practiquen» (`finales.html?final=<id>`,
+  con su meta y sus pistas).
 - **Una lección de Aprender con varias posiciones va una por posición.**
   «¿Jaque mate o ahogado?» tiene dos y la clase solo tomaba la primera (el
   mate): el ahogado no se veía nunca. Cada una va como pregunta de opciones

@@ -101,7 +101,9 @@ window.MaterialPlataforma = (function () {
     /* Cuenta cada final ganado o salvado UNA vez (como Mates): son diez, así
        que «5 finales» son cinco distintos. */
     { slug: "finales", label: "Finales contra la máquina", href: "entreno/finales.html",
-      actividades: ["finales"], metas: ["cantidad", "minutos"], unidad: "finales" },
+      actividades: ["finales"], metas: ["cantidad", "minutos"], unidad: "finales",
+      // Ese final, en su página (la clase en vivo lo pide así).
+      hrefRecorte: (c) => `entreno/finales.html?final=${encodeURIComponent(c)}` },
 
     /* Cada ejercicio resuelto se registra una vez como 'tipos', con el tipo en
        detail.category: ese es el recorte («10 de Detective»), y el enlace

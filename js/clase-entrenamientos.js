@@ -275,10 +275,22 @@ const ADAPTADORES_ENTRENO = {
         desc: "Los finales que hay que saber ganar o hacer tablas. En la clase: explicarlo y que cada uno lo juegue contra la máquina.",
         async cargar() {
             const d = await bajarJsonEntreno("entreno/data/finales.json");
-            const items = (d.finales || []).map((f, i) => ({
-                id: f.id, titulo: (i + 1) + ". " + f.titulo + " (" + (f.meta === "tablas" ? "hacer tablas" : "ganar") + " con " + (f.alumno === "w" ? "blancas" : "negras") + ")",
-                fen: f.fen, final: true, guion: [f.idea, f.pista ? "Pista: " + f.pista : null].filter(Boolean),
-            }));
+            const items = (d.finales || []).map((f, i) => {
+                /* La práctica de la clase le da al alumno el color que mueve en la
+                   posición (practice_sessions no guarda otro). En los finales que
+                   empieza la máquina —el alumno defiende y el rival juega primero—
+                   eso le daba el bando equivocado: el que tenía que hacer tablas con
+                   negras jugaba con la dama blanca. Esos van solo a su página, que
+                   sí hace mover primero a la máquina. */
+                const empiezaLaMaquina = f.fen.split(" ")[1] !== f.alumno;
+                return {
+                    id: f.id, titulo: (i + 1) + ". " + f.titulo + " (" + (f.meta === "tablas" ? "hacer tablas" : "ganar") + " con " + (f.alumno === "w" ? "blancas" : "negras") + ")",
+                    fen: f.fen, final: !empiezaLaMaquina, guion: [f.idea, f.pista ? "Pista: " + f.pista : null].filter(Boolean),
+                    // «🪟 Que lo practiquen»: ese final en su página, con su meta y sus pistas.
+                    practica: { enlace: f.id },
+                    nota: empiezaLaMaquina ? "Aquí empieza la máquina: se juega en su página, con «Que la practiquen»." : undefined,
+                };
+            });
             return [{ id: "finales", titulo: "Finales contra la máquina", desc: items.length + " finales", items, practica: { enlace: null } }];
         },
     },
