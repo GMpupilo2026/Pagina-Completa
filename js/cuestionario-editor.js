@@ -163,6 +163,8 @@ const CQ = {
     estado: () => {},
     pintarLista: () => {},
     accionesListo: () => {},
+    // Lo de cada pregunta: en la clase, «❓ Preguntarla ahora» (una sola, a todos).
+    accionesPregunta: () => {},
     alBorrar: () => {},
     enJuego: () => false,
 };
@@ -257,7 +259,7 @@ function pintarCuestionarioListo() {
     det.appendChild(sum);
     const ol = document.createElement("ol");
     ol.className = "mt-2 space-y-2 text-xs text-brand-700 dark:text-brand-200 list-decimal pl-5";
-    (c.preguntas || []).forEach((p) => {
+    (c.preguntas || []).forEach((p, i) => {
         const li = document.createElement("li");
         const t = document.createElement("p");
         t.className = "font-semibold";
@@ -271,6 +273,10 @@ function pintarCuestionarioListo() {
             ul.appendChild(op);
         });
         li.append(t, ul);
+        const propias = document.createElement("div");
+        propias.className = "flex flex-wrap gap-2 mt-1";
+        CQ.accionesPregunta(p, i + 1, propias);
+        if (propias.childElementCount) li.appendChild(propias);
         ol.appendChild(li);
     });
     det.appendChild(ol);
@@ -408,6 +414,10 @@ function tarjetaDePregunta(p, i, total) {
         pos.appendChild(quitar);
     }
     li.appendChild(pos);
+    const propias = document.createElement("div");
+    propias.className = "flex flex-wrap gap-2";
+    CQ.accionesPregunta(p, n, propias);
+    if (propias.childElementCount) li.appendChild(propias);
 
     const orden = document.createElement("div");
     orden.className = "flex flex-wrap gap-2";

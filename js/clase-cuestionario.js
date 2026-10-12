@@ -263,6 +263,40 @@ CQ.accionesListo = (c, botones) => {
     botones.prepend(b);
 };
 
+/* «❓ Preguntarla ahora»: UNA pregunta del cuestionario, a toda la clase, sin
+   jugar el cuestionario entero. Va como cualquier pregunta de opciones
+   (hacer_pregunta_de_opciones: la correcta queda en la base y la califica
+   ella), con el tiempo que tiene puesto y, si lleva posición, en el tablero.
+   Se puede desde el armador y desde los listos. Mientras se juega un
+   cuestionario no: la pregunta nueva cerraría la que está corriendo. */
+CQ.accionesPregunta = (p, n, botones) => {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "text-xs font-semibold px-3 py-2 rounded-lg bg-accent-500 hover:bg-accent-600 text-brand-900 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
+    b.textContent = "❓ Preguntarla ahora";
+    b.setAttribute("aria-label", "Pregunta " + n + ": preguntarla ahora a la clase");
+    b.title = "Mandar solo esta pregunta a todos los alumnos";
+    b.addEventListener("click", () => preguntarUnaDelCuestionario(p, n));
+    botones.appendChild(b);
+};
+
+async function preguntarUnaDelCuestionario(p, n) {
+    if (cuestionarioEnJuego) { cqAviso("Hay un cuestionario en juego: termínalo antes de preguntar otra cosa."); return; }
+    const faltan = Cuestionario.problemas({ titulo: "-", preguntas: [p] }).map((t) => t.replace(/^Pregunta 1: /, "Pregunta " + n + ": "));
+    if (faltan.length) { cqAviso(faltan[0]); setStatus(faltan[0]); return; }
+    const q = Cuestionario.limpiar(p);
+    if (q.fen && !(await aplicarPosicionEnClase(q.fen))) return;
+    // Igual que una del cuestionario en juego (siguienteDelCuestionario), menos el
+    // «Pregunta 1 de N» y el no dejar cambiar la opción: aquí es una pregunta suelta.
+    const { error } = await sb.rpc("hacer_pregunta_de_opciones", {
+        p_fen: q.fen || Cuestionario.FEN_INICIAL, p_prompt: q.texto, p_opciones: q.opciones,
+        p_correcta: q.correcta, p_tiempo_limite: q.tiempo, p_sin_tablero: !q.fen,
+    });
+    if (error) { console.error(error); setStatus("No se pudo mandar la pregunta: " + error.message); return; }
+    cqAviso("La pregunta " + n + " ya les llegó a los alumnos.");
+    setStatus("Pregunta enviada a la clase: " + q.texto);
+}
+
 /* sesion.html?cuestionario=<id>: viene de cuestionarios.html, a jugarlo. Se
    abre la caja con ese elegido; empezar lo decide el profe, con la clase ya
    conectada. Lo llama sesion.js cuando ya sabe que quien entra da clase. */

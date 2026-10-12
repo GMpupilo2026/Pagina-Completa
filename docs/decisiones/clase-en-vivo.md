@@ -3655,6 +3655,13 @@ mostrarlo para explicarlo, preguntarlo a la clase y que lo practiquen.
   línea) no traen rating: la clase los partía en «Fácil/Media/Difícil» —un
   reparto que no medía nada— con «ELO NaN–NaN», y 54 ejercicios decían «ELO
   undefined». Ahora van en «📋 Todos», «Sin ELO».
+- **«❓ Preguntarla ahora»: una pregunta del cuestionario, suelta.** Cada
+  pregunta del armador (y de los cuestionarios listos) lleva el botón, solo en
+  la clase (`CQ.accionesPregunta`; en `cuestionarios.html` no hay a quién
+  preguntarle). Va por `hacer_pregunta_de_opciones` igual que una del
+  cuestionario en juego —su clave, su tiempo, su posición o sin tablero—, menos
+  el «Pregunta 1 de N» y el no dejar cambiar la opción. Con un cuestionario en
+  juego no se puede: la pregunta nueva cerraría la que está corriendo.
 - **Una lección de Aprender con varias posiciones va una por posición.**
   «¿Jaque mate o ahogado?» tiene dos y la clase solo tomaba la primera (el
   mate): el ahogado no se veía nunca. Cada una va como pregunta de opciones
