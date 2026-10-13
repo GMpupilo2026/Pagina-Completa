@@ -149,7 +149,7 @@
     const slug = (n) => sinTilde(n).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
     function resumen(filtro) {
         const C = {};
-        const c = (n) => C[n] || (C[n] = { nombre: n, zonas: new Set(), oro: 0, plata: 0, bronce: 0, ind: 0, eqm: 0, fin: new Set(), insc: 0, eqElim: 0 });
+        const c = (n) => C[n] || (C[n] = { nombre: n, zonas: new Set(), oro: 0, plata: 0, bronce: 0, ind: 0, eqm: 0, tab: 0, fin: new Set(), insc: 0, eqElim: 0 });
         for (const r of ind.filter(filtro)) {
             const x = c(r.comite);
             if (r.fase === "elim") { x.insc++; if (r.zona === "Z1" || r.zona === "Z2") x.zonas.add(r.zona); }
@@ -160,6 +160,8 @@
             if (r.fase === "elim") { x.eqElim++; if (r.zona === "Z1" || r.zona === "Z2") x.zonas.add(r.zona); }
             else if (r.rk >= 1 && r.rk <= 3) { x[MED[r.rk]]++; x.eqm++; }
         }
+        // Los tres primeros de cada tablero también son medallas oficiales.
+        for (const r of tabs.filter(filtro)) if (r.rk >= 1 && r.rk <= 3) { const x = c(r.comite); x[MED[r.rk]]++; x.tab++; }
         delete C["Sin comité"];
         return Object.values(C).sort((a, b) => b.oro - a.oro || b.plata - a.plata || b.bronce - a.bronce
             || b.fin.size - a.fin.size || b.insc - a.insc || a.nombre.localeCompare(b.nombre, "es"));
@@ -198,18 +200,18 @@
         const finales = EDICIONES.filter((x) => x.fase === "final").map((x) => x.titulo.replace(/^Final /, ""));
         $("general-titulo").textContent = !e ? "Medallero de las finales" : e.fase === "final" ? "Medallero · " + e.titulo : "Participación · " + e.titulo;
         $("general-texto").textContent = !e
-            ? "Medallas de las finales (" + finales.join(", ") + "), sumando individual y equipos, e inscritos de las eliminatorias. Elige un comité para ver su ficha, o una final en «Edición» para ver también sus mejores tableros. El orden es por oros, después platas y bronces."
-            : e.fase === "final" ? "Medallas de " + e.titulo + (e.detalle ? " (" + e.detalle + ")" : "") + ", sumando individual y equipos. Debajo están sus mejores tableros. Elige un comité para ver su ficha."
+            ? "Medallas de las finales (" + finales.join(", ") + "), sumando individual, equipos y tableros, e inscritos de las eliminatorias. Elige un comité para ver su ficha, o una final en «Edición» para ver también sus mejores tableros. El orden es por oros, después platas y bronces."
+            : e.fase === "final" ? "Medallas de " + e.titulo + (e.detalle ? " (" + e.detalle + ")" : "") + ", sumando individual, equipos y tableros. Debajo están sus mejores tableros. Elige un comité para ver su ficha."
                 : "En una eliminatoria no hay medallas: la tabla dice cuántos jugadores y equipos inscribió cada comité. Elige un comité para ver su ficha.";
         const tb = document.querySelector("#medallero tbody"); tb.replaceChildren();
         for (const x of lista) {
             const b = el("button", { type: "button", "data-c": slug(x.nombre), class: "font-semibold text-left underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-500" }, x.nombre);
             b.addEventListener("click", () => elegir(b.dataset.c, $("edicion").value));
             tb.append(el("tr", {}, el("td", { class: TD }, b), td(zonaTxt(x.zonas)),
-                td(x.oro || "", 1), td(x.plata || "", 1), td(x.bronce || "", 1), td(x.ind || "", 1), td(x.eqm || "", 1),
+                td(x.oro || "", 1), td(x.plata || "", 1), td(x.bronce || "", 1), td(x.ind || "", 1), td(x.eqm || "", 1), td(x.tab || "", 1),
                 td(x.fin.size || "", 1), td(x.insc || "", 1), td(x.eqElim || "", 1)));
         }
-        if (!lista.length) tb.append(el("tr", {}, el("td", { class: TD, colspan: "10" }, "No hay resultados de esta edición.")));
+        if (!lista.length) tb.append(el("tr", {}, el("td", { class: TD, colspan: "11" }, "No hay resultados de esta edición.")));
         pintarTableros(e && e.fase === "final" ? e : null);
     }
 
@@ -266,8 +268,9 @@
         const filasEd = [];
         for (const e of EDICIONES) {
             const ri = ind.filter((r) => r.ed === e.id && r.comite === x.nombre), re = eq.filter((r) => r.ed === e.id && r.comite === x.nombre);
+            const rt = tabs.filter((r) => r.ed === e.id && r.comite === x.nombre);
             if (!ri.length && !re.length) continue;
-            const n = (k) => e.fase === "final" ? [...ri, ...re].filter((r) => r.rk === k).length : "—";
+            const n = (k) => e.fase === "final" ? [...ri, ...re, ...rt].filter((r) => r.rk === k).length : "—";
             filasEd.push(el("tr", {}, td(e.titulo), td(ri.length, 1), td(re.length, 1), td(n(1), 1), td(n(2), 1), td(n(3), 1)));
         }
         ficha.append(el("h3", { class: "font-serif text-lg font-bold text-brand-800 dark:text-white mt-6" }, "Edición por edición"));
@@ -308,11 +311,11 @@
                 || (ORD_R[a.ritmo] || 0) - (ORD_R[b.ritmo] || 0) || a.equipo.localeCompare(b.equipo) || a.tablero - b.tablero);
             if (rt.length) {
                 sec.append(el("h4", { class: "font-semibold text-brand-800 dark:text-white mt-4" }, "Tableros de sus equipos"));
-                const cab = ["Categoría", "Ritmo", "Equipo", "Tablero", "Jugador", { t: "Puesto en el tablero", num: 1 }, { t: "Porcentaje", num: 1 }, { t: "Puntos", num: 1 }, ""];
+                const cab = ["Categoría", "Ritmo", "Equipo", "Tablero", "Jugador", { t: "Puesto en el tablero", num: 1 }, { t: "Porcentaje", num: 1 }, { t: "Puntos", num: 1 }, "Medalla"];
                 sec.append(tabla("Tableros de los equipos de " + x.nombre + " en " + e.titulo, cab, rt.map((r) => el("tr", { "data-tablero-de": r.nombre },
                     td(r.cat + " " + r.rama), td(r.ritmo), td(r.equipo), td(nomTablero(r.tablero)), td(r.nombre),
                     td(r.rk + " de " + tamT[r.ed + r.cod + "-" + r.tablero], 1), td(pctTxt(r.pct), 1), td(fmt(r.pts), 1),
-                    el("td", { class: TD }, r.rk === 1 ? etiqueta("Mejor tablero") : null)))));
+                    el("td", { class: TD }, medalla(r.rk))))));
             }
             ficha.append(sec);
         }

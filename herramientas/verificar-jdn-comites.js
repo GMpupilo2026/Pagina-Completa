@@ -16,7 +16,8 @@
      vuelve a abrir lo mismo;
    - los mejores tableros (jdn_tableros) salen debajo del medallero de una
      final, con el empate sin desempatar compartido y la reserva aparte, y en
-     la ficha del comité, con «Mejor tablero»; sin licencia no se piden.
+     la ficha del comité, con su medalla; los tres primeros de cada tablero
+     suman al medallero (son medallas oficiales); sin licencia no se piden.
 
    Ver «Resultados JDN por comité» en docs/decisiones/juegos-y-torneos.md.
 
@@ -143,11 +144,13 @@ const medallero = (p) => p.$$eval("#medallero tbody tr", (trs) => trs.map((t) =>
     const m = await medallero(p);
     igual("junta las variantes y ordena por oros, platas y bronces",
         m.map((f) => f.slice(0, 5)),
-        [["Goicoechea", "Z1", "2", "", ""], ["CODEA (Alajuela)", "Z1", "", "2", ""], ["Belén", "—", "", "1", ""], ["Limón", "Z2", "", "", ""], ["Escazú", "Z1", "", "", ""]]);
+        [["Goicoechea", "Z1", "5", "", ""], ["CODEA (Alajuela)", "Z1", "1", "3", ""], ["Belén", "—", "", "1", ""], ["Limón", "Z2", "", "", ""], ["Escazú", "Z1", "", "", ""]]);
+    igual("los tres primeros de cada tablero suman medallas (columna «Medallas tab.»)",
+        m.filter((f) => f[0] === "Goicoechea" || f[0] === "CODEA (Alajuela)").map((f) => [f[0], f[7]]), [["Goicoechea", "3"], ["CODEA (Alajuela)", "2"]]);
     igual("el empate sin desempatar comparte la plata, y el comité deducido suma su plata a CODEA",
         m.filter((f) => f[0] === "Belén" || f[0] === "CODEA (Alajuela)").map((f) => [f[0], f[3], f[5], f[6]]),
-        [["CODEA (Alajuela)", "2", "1", "1"], ["Belén", "1", "1", ""]]);
-    igual("las 1100 inscripciones de Limón, todas", m.find((f) => f[0] === "Limón")[8], "1100");
+        [["CODEA (Alajuela)", "3", "1", "1"], ["Belén", "1", "1", ""]]);
+    igual("las 1100 inscripciones de Limón, todas", m.find((f) => f[0] === "Limón")[9], "1100");
     igual("el medallero se ve y la ficha no", [await visible(p, "#general"), await visible(p, "#ficha")], [true, false]);
     igual("sin elegir una final no se ven los mejores tableros", await visible(p, "#tableros"), false);
 
@@ -171,9 +174,9 @@ const medallero = (p) => p.$$eval("#medallero tbody tr", (trs) => trs.map((t) =>
         await p.$$eval("#ficha section[data-edicion]", (s) => s.map((x) => x.dataset.edicion)), ["2026-F", "2025-E"]);
     const oro = await p.$eval("#ficha section[data-edicion='2026-F'] tr[data-jugador='Mora Vargas, Ana']", (t) => t.lastElementChild.textContent.trim());
     igual("la medalla va con su emoji y escrita", oro, "🥇 Oro");
-    igual("la ficha dice en qué tablero jugó cada uno, su puesto y si fue el mejor",
+    igual("la ficha dice en qué tablero jugó cada uno, su puesto y su medalla",
         await p.$$eval("#ficha section[data-edicion='2026-F'] tr[data-tablero-de]", (t) => t.map((x) => [x.cells[3].textContent, x.cells[4].textContent, x.cells[5].textContent, x.cells[6].textContent, x.lastElementChild.textContent.trim()])),
-        [["Tablero 1", "Mora Vargas, Ana", "1 de 2", "100\u00a0%", "Mejor tablero"], ["Tablero 2", "Leon Vega, Sol", "1 de 2", "83,3\u00a0%", "Mejor tablero"], ["Reserva", "Arce Brenes, Teo", "1 de 1", "100\u00a0%", "Mejor tablero"]]);
+        [["Tablero 1", "Mora Vargas, Ana", "1 de 2", "100\u00a0%", "🥇 Oro"], ["Tablero 2", "Leon Vega, Sol", "1 de 2", "83,3\u00a0%", "🥇 Oro"], ["Reserva", "Arce Brenes, Teo", "1 de 1", "100\u00a0%", "🥇 Oro"]]);
     igual("en la eliminatoria dice quién jugó la final",
         await p.$eval("#ficha section[data-edicion='2025-E'] tr[data-jugador='Mora Vargas, Ana']", (t) => t.lastElementChild.textContent.trim()), "Jugó la final");
 

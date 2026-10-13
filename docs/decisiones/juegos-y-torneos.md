@@ -2932,7 +2932,8 @@ torneos de ajedrez de los Juegos Deportivos Nacionales que están en
 chess-results —eliminatorias 2018, 2019, 2021, 2022, 2024 y 2025; finales 2018,
 2019, 2020-2021, 2022-2023, 2024 y 2026— y los ordena **por comité de deportes**: lo pidió el
 dueño («lo que importa es filtrar por resultados de todos los comités»). Arriba,
-el medallero de las finales (todas o una edición); al elegir un comité, su
+el medallero de las finales (todas o una edición; suma individual, equipos y
+los tres primeros de cada tablero); al elegir un comité, su
 ficha con cada jugador y cada equipo, edición por edición. El enlace guarda lo
 elegido (`#comite~edicion`).
 
@@ -3013,8 +3014,16 @@ la deducción, salta.
 Al elegir una final, debajo del medallero sale «Mejores tableros»: el primero
 de cada tablero en cada torneo por equipos (la reserva aparte, en las finales
 2018-2021). En la ficha del comité, cada final suma «Tableros de sus equipos»:
-quién jugó en qué tablero, su puesto en ese tablero, su porcentaje y la marca
-«Mejor tablero». El dueño lo pidió solo para las finales.
+quién jugó en qué tablero, su puesto en ese tablero, su porcentaje y su
+medalla. El dueño lo pidió solo para las finales.
+
+- **Los tres primeros de cada tablero son medallas oficiales** (lo dijo el
+  dueño) y **se suman al medallero**: cada comité suma también las de los
+  tableros de sus equipos, en su propia columna («Medallas tab.»), y cuentan
+  para el orden por oros, platas y bronces. La reserva de 2018-2021 también
+  cuenta. Como hay cuatro o cinco tableros por torneo, pesan más que las
+  medallas de equipo: en todas las finales son 378 oros de tablero, contra 86
+  de equipo y 91 individuales.
 
 - **El orden es el de chess-results, no uno calculado acá**: la «Clasificación
   por tableros» (`art=81`) de cada torneo. Cada árbitro eligió sus desempates
@@ -3038,8 +3047,9 @@ quién jugó en qué tablero, su puesto en ese tablero, su porcentaje y la marca
 
 `verificar-jdn-comites.js` lo prueba: la columna de cada tablero y la reserva,
 el empate que comparte el primer puesto, que una eliminatoria no muestra
-tableros, la ficha con «Mejor tablero» y que sin licencia no se pide la tabla.
-Rompiendo a propósito el empate, salta.
+tableros, la ficha con la medalla de cada tablero, que el medallero suma las
+medallas de tablero y que sin licencia no se pide la tabla. Rompiendo a
+propósito el empate o la suma de tableros, salta.
 
 ## Proyección JDN por comité
 
