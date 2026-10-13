@@ -3009,6 +3009,31 @@ comparte la plata, el comité deducido, la medalla escrita, «Jugó la final», 
 filtro de edición y el enlace. Rompiendo a propósito la paginación, el empate o
 la deducción, salta.
 
+### Los participantes de cada comité
+
+Debajo del medallero, «Participantes por comité» (lo pidió el dueño, para las
+eliminatorias y las finales): con una edición elegida, cada comité en cada
+categoría y rama (U12, U16, U20; absoluto y femenino), en jugadores de los
+torneos individuales y equipos, con sus totales y la lista de los torneos de
+esa edición con su enlace a chess-results; con todas las ediciones, una tabla
+comité por eliminatoria y otra comité por final. Cada cifra abre la ficha del
+comité en esa edición, donde cada jugador y equipo tiene su enlace.
+
+- **Un jugador o un equipo que jugó varios ritmos cuenta una vez.** El jugador
+  se reconoce por su nombre sin tildes ni números (con los nombres cortados de
+  chess-results juntos, como en el comité deducido); el equipo, por su comité
+  y su letra o número (`sufijo()`: «A», «J», «2»), porque chess-results
+  escribe el mismo equipo distinto de un ritmo a otro («Goicochea» y
+  «Goicoechea» en la final 2026, «CODEA 01» y «CODEA 1» en la de 2020-2021).
+  Contando por nombre, la final 2020-2021 daba 39 equipos en lugar de 36.
+- **Comprobado contra la base**: en cada eliminatoria, jugadores y equipos son
+  exactamente las filas de sus torneos (un torneo por zona, nadie repite), y en
+  las finales los equipos coinciden con el torneo más grande de cada categoría
+  (213 jugadores y 211 equipos en las seis finales).
+- Los datos de prueba del verificador no pueden distinguir jugadores por un
+  número en el nombre («Jugador 1», «Jugador 2»): la página los compara sin
+  números y los junta.
+
 ### Los mejores tableros de las finales
 
 Al elegir una final, debajo del medallero sale «Mejores tableros»: el primero

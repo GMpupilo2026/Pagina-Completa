@@ -63,6 +63,14 @@
         if (esEquipo) { let a; do { a = s; s = s.replace(/\s+(\d{1,2}|[A-Za-z]|SNF)$/, ""); } while (s !== a); }
         return NOMBRES[s.toLowerCase()] || titulo(s);
     }
+    /* La letra o el número que distingue a los equipos de un mismo comité
+       («A», «J», «2»); «01» y «1» son el mismo. */
+    function sufijo(nombre) {
+        let s = sinTilde(String(nombre || "")).trim().replace(/^C+DR\s*/i, "").replace(/^CC Distrit(o|al) (de )?/i, "").trim(), m;
+        const suf = [];
+        while ((m = s.match(/\s+(\d{1,2}|[A-Za-z]|SNF)$/))) { const t = m[1].toUpperCase(); suf.unshift(/^\d+$/.test(t) ? String(+t) : t); s = s.slice(0, m.index); }
+        return suf.join(" ");
+    }
     const RITMO = { C: "Clásico", R: "Rápido", B: "Blitz" };
     function fmt(n) { if (isNaN(n)) return ""; const e = Math.floor(n); return (n - e) ? (e ? e + "½" : "½") : String(e); }
     function categoria(cod) {
@@ -125,7 +133,7 @@
             const rk = f.puesto || previo[k] || 0; previo[k] = rk;
             const esEquipo = f.codigo.split("-")[2][0] === "E";
             const r = { ed: f.edicion, cod: f.codigo, tnr: f.tnr, ...categoria(f.codigo), rk, pts: Number(f.puntos), fase: edicion(f.edicion).fase };
-            if (esEquipo) eq.push(Object.assign(r, { equipo: f.nombre.replace(/^C+DR\s+/i, ""), comite: comite(f.comite || f.nombre, true), record: f.record || "" }));
+            if (esEquipo) eq.push(Object.assign(r, { equipo: f.nombre.replace(/^C+DR\s+/i, ""), comite: comite(f.comite || f.nombre, true), sufijo: sufijo(f.nombre), record: f.record || "" }));
             else ind.push(Object.assign(r, { nombre: f.nombre, clave: clave(f.nombre), comite: comite(f.comite, false), deducido: false }));
             tam[k] = (tam[k] || 0) + 1;
         }
@@ -225,6 +233,100 @@
         if (!lista.length) tb.append(el("tr", {}, el("td", { class: TD, colspan: "11" }, "No hay resultados de esta edición.")));
         pintarTableros(e && e.fase === "final" ? e : null);
         pintarPorFinal(!e);
+        pintarParticipacion(e);
+    }
+
+    /* Participantes de cada comité: jugadores de los torneos individuales y
+       equipos, por categoría y rama. Un jugador o un equipo que jugó varios
+       ritmos cuenta una vez; un mismo equipo escrito distinto por
+       chess-results («Goicochea», «CODEA 01») también. */
+    const CATS = ["U12-A", "U12-F", "U16-A", "U16-F", "U20-A", "U20-F"];
+    const catNom = (k) => k.replace("-A", " Abs.").replace("-F", " Fem.");
+    const catDe = (r) => r.cat + "-" + r.rama[0];
+    function distintos(claves) {
+        const out = [];
+        for (const k of [...claves].sort((a, b) => b.length - a.length)) if (!out.some((o) => mismo(o, k))) out.push(k);
+        return out.length;
+    }
+    function participantes(ed) {
+        const J = {}, E = {};
+        for (const r of ind) if (r.ed === ed) ((J[r.comite] = J[r.comite] || {})[catDe(r)] = J[r.comite][catDe(r)] || []).push(r.clave);
+        for (const r of eq) if (r.ed === ed) ((E[r.comite] = E[r.comite] || {})[catDe(r)] = E[r.comite][catDe(r)] || new Set()).add(r.sufijo);
+        const P = {};
+        for (const c of new Set([...Object.keys(J), ...Object.keys(E)])) {
+            const x = P[c] = { nombre: c, j: 0, e: 0 };
+            for (const k of CATS) {
+                const v = [J[c] && J[c][k] ? distintos(J[c][k]) : 0, E[c] && E[c][k] ? E[c][k].size : 0];
+                x[k] = v; x.j += v[0]; x.e += v[1];
+            }
+        }
+        return P;
+    }
+    const cuantos = (j, e) => [j ? j + " jugador" + (j === 1 ? "" : "es") : "", e ? e + " equipo" + (e === 1 ? "" : "s") : ""].filter(Boolean).join(" y ");
+    function cifraParticipantes(c, ed, j, e, donde) {
+        if (!j && !e) return td("—", 1);
+        const txt = [j ? String(j) : "", e ? e + "E" : ""].filter(Boolean).join(" · ");
+        if (c === "Sin comité") return td(txt, 1);
+        const b = el("button", { type: "button", class: "underline underline-offset-2 hover:no-underline rounded tabular-nums focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-500",
+            "aria-label": `${c}${donde}: ${cuantos(j, e)}. Ver su ficha` }, txt);
+        b.addEventListener("click", () => elegir(slug(c), ed));
+        return el("td", { class: TDN, "data-edicion": ed }, b);
+    }
+    function pintarParticipacion(e) {
+        const caja = $("participacion");
+        caja.replaceChildren();
+        const eds = EDICIONES.filter((x) => Object.keys(tam).some((k) => k.startsWith(x.id)));
+        if (e) {
+            const P = participantes(e.id);
+            const filas = Object.values(P).sort((a, b) => (b.j + b.e) - (a.j + a.e) || b.e - a.e || a.nombre.localeCompare(b.nombre, "es"));
+            caja.append(el("h2", { id: "participacion-titulo", class: "font-serif text-xl font-bold text-brand-800 dark:text-white" }, "Participantes por comité · " + e.titulo),
+                el("p", { class: "text-sm text-brand-500 dark:text-brand-300 mt-1" },
+                    "Jugadores de los torneos individuales y equipos (E) de cada comité, por categoría y rama. Quien jugó varios ritmos cuenta una vez. Cada cifra abre la ficha del comité, con cada jugador y equipo y su enlace a chess-results."));
+            const tot = CATS.map((k) => [0, 1].map((i) => filas.reduce((a, x) => a + x[k][i], 0)));
+            const tr = filas.map((x) => el("tr", { "data-comite": x.nombre }, td(x.nombre),
+                ...CATS.map((k) => cifraParticipantes(x.nombre, e.id, x[k][0], x[k][1], " en " + catNom(k) + " de " + e.titulo)), td(x.j, 1), td(x.e, 1)));
+            tr.push(el("tr", { class: "font-semibold" }, td("Total"), ...tot.map((v) => td([v[0] ? String(v[0]) : "", v[1] ? v[1] + "E" : ""].filter(Boolean).join(" · ") || "—", 1)),
+                td(filas.reduce((a, x) => a + x.j, 0), 1), td(filas.reduce((a, x) => a + x.e, 0), 1)));
+            caja.append(tabla("Participantes de cada comité en " + e.titulo + " por categoría y rama",
+                ["Comité", ...CATS.map((k) => ({ t: catNom(k), num: 1 })), { t: "Jugadores", num: 1 }, { t: "Equipos", num: 1 }], tr));
+            // Los torneos de la edición, para comprobar cada dato en chess-results.
+            const torneos = new Map();
+            for (const r of [...ind, ...eq]) if (r.ed === e.id && r.tnr && !torneos.has(r.cod)) torneos.set(r.cod, r);
+            const lista = [...torneos.values()].sort(ordCat);
+            const det = el("details", { class: "mt-3 text-sm" }, el("summary", { class: "cursor-pointer font-semibold text-brand-700 dark:text-brand-200" },
+                "Los " + lista.length + " torneos de " + e.titulo + " en chess-results"));
+            const ul = el("ul", { class: "mt-2 grid sm:grid-cols-2 gap-x-6 gap-y-1" });
+            for (const r of lista) {
+                const que = r.cat + " " + r.rama + " · " + (r.ritmo || (r.zona === "Única" ? "Zona única" : "Zona " + r.zona.slice(1))) + " · " + r.modo;
+                ul.append(el("li", {}, el("a", { href: "https://chess-results.com/tnr" + r.tnr + ".aspx?lan=2&art=1", target: "_blank", rel: "noopener",
+                    "aria-label": que + " en chess-results (se abre en otra pestaña)",
+                    class: "underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-500" }, que)));
+            }
+            det.append(ul); caja.append(det);
+            caja.classList.remove("hidden");
+            return;
+        }
+        // Todas las ediciones: comité por eliminatoria y comité por final.
+        caja.append(el("h2", { id: "participacion-titulo", class: "font-serif text-xl font-bold text-brand-800 dark:text-white" }, "Participantes por edición"),
+            el("p", { class: "text-sm text-brand-500 dark:text-brand-300 mt-1" },
+                "Jugadores de los torneos individuales y equipos (E) de cada comité en cada eliminatoria y cada final. Elige una edición para verlos por categoría y rama; cada cifra abre la ficha del comité en esa edición."));
+        for (const [fase, titulo] of [["elim", "Eliminatorias"], ["final", "Finales (clasificados)"]]) {
+            const lista = eds.filter((x) => x.fase === fase).reverse();
+            const P = lista.map((x) => participantes(x.id));
+            const nombres = [...new Set(P.flatMap((p) => Object.keys(p)))];
+            const sum = (c) => [0, 1].map((i) => P.reduce((a, p) => a + (p[c] ? [p[c].j, p[c].e][i] : 0), 0));
+            nombres.sort((a, b) => { const x = sum(a), y = sum(b); return (y[0] + y[1]) - (x[0] + x[1]) || y[1] - x[1] || a.localeCompare(b, "es"); });
+            const tr = nombres.map((c) => el("tr", { "data-comite": c }, td(c),
+                ...lista.map((x, i) => cifraParticipantes(c, x.id, P[i][c] ? P[i][c].j : 0, P[i][c] ? P[i][c].e : 0, " en " + x.titulo)),
+                td(sum(c)[0], 1), td(sum(c)[1], 1)));
+            const tj = P.map((p) => [0, 1].map((i) => Object.values(p).reduce((a, x) => a + [x.j, x.e][i], 0)));
+            tr.push(el("tr", { class: "font-semibold" }, td("Total"), ...tj.map((v) => td(v[0] + " · " + v[1] + "E", 1)),
+                td(tj.reduce((a, v) => a + v[0], 0), 1), td(tj.reduce((a, v) => a + v[1], 0), 1)));
+            caja.append(el("h3", { class: "font-serif text-lg font-bold text-brand-800 dark:text-white mt-5" }, titulo));
+            caja.append(tabla(titulo + ": participantes de cada comité", ["Comité", ...lista.map((x) => ({ t: x.titulo.replace(/^(Final|Eliminatoria) /, ""), num: 1 })),
+                { t: "Jugadores", num: 1 }, { t: "Equipos", num: 1 }], tr));
+        }
+        caja.classList.remove("hidden");
     }
 
     /* Con todas las ediciones: cuántas medallas de cada tipo hubo y cuántas
