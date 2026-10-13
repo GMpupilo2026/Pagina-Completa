@@ -3008,6 +3008,39 @@ comparte la plata, el comité deducido, la medalla escrita, «Jugó la final», 
 filtro de edición y el enlace. Rompiendo a propósito la paginación, el empate o
 la deducción, salta.
 
+### Los mejores tableros de las finales
+
+Al elegir una final, debajo del medallero sale «Mejores tableros»: el primero
+de cada tablero en cada torneo por equipos (la reserva aparte, en las finales
+2018-2021). En la ficha del comité, cada final suma «Tableros de sus equipos»:
+quién jugó en qué tablero, su puesto en ese tablero, su porcentaje y la marca
+«Mejor tablero». El dueño lo pidió solo para las finales.
+
+- **El orden es el de chess-results, no uno calculado acá**: la «Clasificación
+  por tableros» (`art=81`) de cada torneo. Cada árbitro eligió sus desempates
+  (siempre primero el porcentaje; después puntos, partidas, victorias o
+  rendimiento) y su mínimo de partidas, y chess-results ya deja afuera a quien
+  no llegó a ese mínimo (en 2018-2021 la configuración dice «at least 42/57/80
+  games», que es un porcentaje de las rondas: el tablero 1 de una final 2019
+  lista solo a los tres que jugaron el 80 %). Recalcularlo con otra regla daría
+  otro «mejor tablero» que el que se premió.
+- **Los datos están en `jdn_tableros`** (migración `20261013134600`), con el
+  mismo candado que `jdn_resultados`: solo la lee quien tiene la herramienta.
+  Una fila por puesto de cada tablero: 2153 filas de los 86 torneos por equipos
+  de las finales. Se llena con `herramientas/jdn-comites/cargar-tableros.sql`,
+  igual que `cargar.sql`: las páginas se piden con `pg_net` y el archivo las
+  lee. El porcentaje y los puntos salen del desempate que la leyenda llama
+  «Percent» y «points (game-points)», que cambian de número según el torneo.
+- **El comité sale del nombre del equipo**, con el mismo `comite()` de la
+  página; un puesto vacío es un empate y lo comparten los dos.
+- **Si la tabla no se puede leer, la página sigue sin los tableros**: son un
+  agregado, no la herramienta.
+
+`verificar-jdn-comites.js` lo prueba: la columna de cada tablero y la reserva,
+el empate que comparte el primer puesto, que una eliminatoria no muestra
+tableros, la ficha con «Mejor tablero» y que sin licencia no se pide la tabla.
+Rompiendo a propósito el empate, salta.
+
 ## Proyección JDN por comité
 
 `jdn-proyeccion.html` (`js/jdn-proyeccion.js`) es una herramienta de arbitraje

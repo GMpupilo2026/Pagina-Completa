@@ -13,7 +13,10 @@
    - la ficha del comité marca la medalla con su emoji y escrita, y «Jugó la
      final» en la eliminatoria;
    - el filtro de edición deja solo esa edición, y el enlace (#comite~edicion)
-     vuelve a abrir lo mismo.
+     vuelve a abrir lo mismo;
+   - los mejores tableros (jdn_tableros) salen debajo del medallero de una
+     final, con el empate sin desempatar compartido y la reserva aparte, y en
+     la ficha del comité, con «Mejor tablero»; sin licencia no se piden.
 
    Ver «Resultados JDN por comité» en docs/decisiones/juegos-y-torneos.md.
 
@@ -46,12 +49,24 @@ fila("2026-F", "C-U12-IA", 4, 4, "Perez Mora, Leo", "CCDR Belen", 0);
 fila("2026-F", "C-U12-EA", 1, 1, "CCDR Goicoechea A", "", 10, "3-0-0");
 fila("2026-F", "C-U12-EA", 2, 2, "CODEA B", "", 8, "2-0-1");
 
+// La clasificación por tableros de las finales por equipos.
+const TABLEROS = [];
+function tablero(edicion, codigo, tablero, orden, puesto, nombre, equipo, porcentaje, puntos) {
+    TABLEROS.push({ edicion, codigo, tablero, orden, puesto, nombre, equipo, porcentaje, puntos });
+}
+tablero("2026-F", "C-U12-EA", 1, 1, 1, "Mora Vargas, Ana", "CCDR Goicoechea A", 100, 3);
+tablero("2026-F", "C-U12-EA", 1, 2, 2, "Diaz Solis, Pia", "CODEA B", 50, 1.5);
+tablero("2026-F", "C-U12-EA", 2, 1, 1, "Ruiz Mena, Ivo", "CODEA B", 83.3, 2.5);
+tablero("2026-F", "C-U12-EA", 2, 2, null, "Leon Vega, Sol", "CCDR Goicoechea A", 83.3, 2.5);
+tablero("2026-F", "C-U12-EA", 5, 1, 1, "Arce Brenes, Teo", "CCDR Goicoechea A", 100, 2);
+
 function doble(tieneLicencia) {
     return `
 window.SUPABASE_URL = "https://falso.supabase.co";
 window.SUPABASE_ANON_KEY = "anon-falsa";
 (function () {
   const FILAS = ${JSON.stringify(FILAS)};
+  const TABLEROS = ${JSON.stringify(TABLEROS)};
   const LICENCIA = ${tieneLicencia ? "true" : "false"};
   window.__pedidos = [];
   function respuesta(data, error) { return Promise.resolve({ data, error: error || null }); }
@@ -65,6 +80,10 @@ window.SUPABASE_ANON_KEY = "anon-falsa";
         window.__pedidos.push("jdn_resultados " + q._desde);
         // Como PostgREST: nunca más de mil por pedido, y sin licencia, nada.
         data = LICENCIA ? FILAS.slice(q._desde, Math.min(q._hasta + 1, q._desde + 1000)) : [];
+      }
+      if (tabla === "jdn_tableros") {
+        window.__pedidos.push("jdn_tableros " + q._desde);
+        data = LICENCIA ? TABLEROS.slice(q._desde, Math.min(q._hasta + 1, q._desde + 1000)) : [];
       }
       if (tabla === "profiles") data = { id: "yo", is_admin: false, role: "profesor" };
       return Promise.resolve({ data, error: null }).then(ok, mal);
@@ -112,7 +131,7 @@ const medallero = (p) => p.$$eval("#medallero tbody tr", (trs) => trs.map((t) =>
     let { ctx, p } = await abrir(browser, "jdn-comites.html", false);
     await p.waitForFunction(() => !document.getElementById("loading").checkVisibility());
     igual("se ve el candado y no la herramienta", [await visible(p, "#denegado"), await visible(p, "#app")], [true, false]);
-    igual("no pide los resultados", await p.evaluate(() => window.__pedidos.filter((x) => x.startsWith("jdn_resultados")).length), 0);
+    igual("no pide los resultados ni los tableros", await p.evaluate(() => window.__pedidos.filter((x) => x.startsWith("jdn_")).length), 0);
     await ctx.close();
 
     console.log("\n=== Con licencia: el medallero ===");
@@ -130,6 +149,18 @@ const medallero = (p) => p.$$eval("#medallero tbody tr", (trs) => trs.map((t) =>
         [["CODEA (Alajuela)", "2", "1", "1"], ["Belén", "1", "1", ""]]);
     igual("las 1100 inscripciones de Limón, todas", m.find((f) => f[0] === "Limón")[8], "1100");
     igual("el medallero se ve y la ficha no", [await visible(p, "#general"), await visible(p, "#ficha")], [true, false]);
+    igual("sin elegir una final no se ven los mejores tableros", await visible(p, "#tableros"), false);
+
+    console.log("\n=== Los mejores tableros de una final ===");
+    await p.selectOption("#edicion", "2026-F");
+    await p.waitForFunction(() => document.getElementById("tableros").checkVisibility());
+    igual("las columnas: un tablero cada una, y la reserva aparte",
+        await p.$$eval("#tableros th", (t) => t.map((x) => x.textContent)), ["Categoría", "Ritmo", "Tablero 1", "Tablero 2", "Reserva"]);
+    igual("el primero de cada tablero, con su comité y su porcentaje; el empate sin desempatar, los dos",
+        await p.$$eval("#tableros tr[data-torneo='C-U12-EA'] td[data-tablero]", (t) => t.map((x) => [...x.querySelectorAll(":scope > span")].map((s) => s.textContent))),
+        [["Mora Vargas, AnaGoicoechea · 100\u00a0%"], ["Ruiz Mena, IvoCODEA (Alajuela) · 83,3\u00a0%", "Leon Vega, SolGoicoechea · 83,3\u00a0%"], ["Arce Brenes, TeoGoicoechea · 100\u00a0%"]]);
+    igual("en una eliminatoria no hay tableros", await (async () => { await p.selectOption("#edicion", "2025-E"); return visible(p, "#tableros"); })(), false);
+    await p.selectOption("#edicion", "");
 
     console.log("\n=== La ficha de un comité ===");
     await p.click("#medallero button:text-is('Goicoechea')");
@@ -140,6 +171,9 @@ const medallero = (p) => p.$$eval("#medallero tbody tr", (trs) => trs.map((t) =>
         await p.$$eval("#ficha section[data-edicion]", (s) => s.map((x) => x.dataset.edicion)), ["2026-F", "2025-E"]);
     const oro = await p.$eval("#ficha section[data-edicion='2026-F'] tr[data-jugador='Mora Vargas, Ana']", (t) => t.lastElementChild.textContent.trim());
     igual("la medalla va con su emoji y escrita", oro, "🥇 Oro");
+    igual("la ficha dice en qué tablero jugó cada uno, su puesto y si fue el mejor",
+        await p.$$eval("#ficha section[data-edicion='2026-F'] tr[data-tablero-de]", (t) => t.map((x) => [x.cells[3].textContent, x.cells[4].textContent, x.cells[5].textContent, x.cells[6].textContent, x.lastElementChild.textContent.trim()])),
+        [["Tablero 1", "Mora Vargas, Ana", "1 de 2", "100\u00a0%", "Mejor tablero"], ["Tablero 2", "Leon Vega, Sol", "1 de 2", "83,3\u00a0%", "Mejor tablero"], ["Reserva", "Arce Brenes, Teo", "1 de 1", "100\u00a0%", "Mejor tablero"]]);
     igual("en la eliminatoria dice quién jugó la final",
         await p.$eval("#ficha section[data-edicion='2025-E'] tr[data-jugador='Mora Vargas, Ana']", (t) => t.lastElementChild.textContent.trim()), "Jugó la final");
 

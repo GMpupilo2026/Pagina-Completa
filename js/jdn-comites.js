@@ -74,6 +74,9 @@
     const mismo = (a, b) => a === b || (a.length > 12 && b.startsWith(a)) || (b.length > 12 && a.startsWith(b));
 
     let ind = [], eq = [], tam = {}, todos = [], finalistasDe = {};
+    /* Los mejores tableros de las finales por equipos (jdn_tableros): el orden
+       de la «Clasificación por tableros» de chess-results, tal cual. */
+    let tabs = [], tamT = {};
 
     async function leerTodo() {
         const filas = [];
@@ -87,6 +90,32 @@
             if (data.length < 1000) return filas;
         }
     }
+
+    /* Los tableros son un extra: si no se pueden leer, la página sigue sin ellos. */
+    async function leerTableros() {
+        const filas = [];
+        for (let desde = 0; ; desde += 1000) {
+            const { data, error } = await sb.from("jdn_tableros")
+                .select("edicion,codigo,tablero,orden,puesto,nombre,equipo,porcentaje,puntos")
+                .order("edicion").order("codigo").order("tablero").order("orden")
+                .range(desde, desde + 999);
+            if (error) return [];
+            filas.push(...data);
+            if (data.length < 1000) return filas;
+        }
+    }
+    function prepararTableros(filas) {
+        const previo = {};
+        for (const f of filas) {
+            const k = f.edicion + f.codigo + "-" + f.tablero;
+            const rk = f.puesto || previo[k] || 0; previo[k] = rk;
+            tabs.push({ ed: f.edicion, cod: f.codigo, ...categoria(f.codigo), tablero: f.tablero, rk, nombre: f.nombre,
+                equipo: f.equipo.replace(/^C+DR\s+/i, ""), comite: comite(f.equipo, true), pct: Number(f.porcentaje), pts: Number(f.puntos) });
+            tamT[k] = (tamT[k] || 0) + 1;
+        }
+    }
+    const nomTablero = (t) => t === 5 ? "Reserva" : "Tablero " + t;
+    const pctTxt = (n) => n.toLocaleString("es-CR", { maximumFractionDigits: 1 }) + "\u00a0%";
 
     function preparar(filas) {
         const previo = {};
@@ -169,8 +198,8 @@
         const finales = EDICIONES.filter((x) => x.fase === "final").map((x) => x.titulo.replace(/^Final /, ""));
         $("general-titulo").textContent = !e ? "Medallero de las finales" : e.fase === "final" ? "Medallero · " + e.titulo : "Participación · " + e.titulo;
         $("general-texto").textContent = !e
-            ? "Medallas de las finales (" + finales.join(", ") + "), sumando individual y equipos, e inscritos de las eliminatorias. Elige un comité para ver su ficha. El orden es por oros, después platas y bronces."
-            : e.fase === "final" ? "Medallas de " + e.titulo + (e.detalle ? " (" + e.detalle + ")" : "") + ", sumando individual y equipos. Elige un comité para ver su ficha."
+            ? "Medallas de las finales (" + finales.join(", ") + "), sumando individual y equipos, e inscritos de las eliminatorias. Elige un comité para ver su ficha, o una final en «Edición» para ver también sus mejores tableros. El orden es por oros, después platas y bronces."
+            : e.fase === "final" ? "Medallas de " + e.titulo + (e.detalle ? " (" + e.detalle + ")" : "") + ", sumando individual y equipos. Debajo están sus mejores tableros. Elige un comité para ver su ficha."
                 : "En una eliminatoria no hay medallas: la tabla dice cuántos jugadores y equipos inscribió cada comité. Elige un comité para ver su ficha.";
         const tb = document.querySelector("#medallero tbody"); tb.replaceChildren();
         for (const x of lista) {
@@ -181,6 +210,30 @@
                 td(x.fin.size || "", 1), td(x.insc || "", 1), td(x.eqElim || "", 1)));
         }
         if (!lista.length) tb.append(el("tr", {}, el("td", { class: TD, colspan: "10" }, "No hay resultados de esta edición.")));
+        pintarTableros(e && e.fase === "final" ? e : null);
+    }
+
+    /* En el medallero de una final: el primero de cada tablero de cada torneo
+       por equipos (si empataron sin desempate, todos los primeros). */
+    function pintarTableros(e) {
+        const caja = $("tableros");
+        const de = e ? tabs.filter((r) => r.ed === e.id) : [];
+        caja.replaceChildren();
+        caja.classList.toggle("hidden", !de.length);
+        if (!de.length) return;
+        const nums = [...new Set(de.map((r) => r.tablero))].sort((a, b) => a - b);
+        const torneos = [...new Map(de.map((r) => [r.cod, r])).values()].sort(ordCat);
+        caja.append(el("h2", { id: "tableros-titulo", class: "font-serif text-xl font-bold text-brand-800 dark:text-white" }, "Mejores tableros · " + e.titulo),
+            el("p", { class: "text-sm text-brand-500 dark:text-brand-300 mt-1" },
+                "El primero de cada tablero en cada torneo por equipos, según la clasificación por tableros de chess-results (porcentaje de puntos, con los desempates y el mínimo de partidas que fijó el árbitro de cada torneo)."
+                + (nums.includes(5) ? " En esta final los equipos tenían una reserva." : "")));
+        caja.append(tabla("Mejores tableros de " + e.titulo, ["Categoría", "Ritmo", ...nums.map(nomTablero)], torneos.map((t) =>
+            el("tr", { "data-torneo": t.cod }, td(t.cat + " " + t.rama), td(t.ritmo), ...nums.map((n) => {
+                const mejores = de.filter((r) => r.cod === t.cod && r.tablero === n && r.rk === 1);
+                return el("td", { class: TD.replace("whitespace-nowrap", "min-w-[10rem] align-top"), "data-tablero": n }, ...(mejores.length ? mejores.map((r) =>
+                    el("span", { class: "block" }, el("span", { class: "font-semibold" }, r.nombre),
+                        el("span", { class: "block text-xs text-brand-500 dark:text-brand-300" }, r.comite + " · " + pctTxt(r.pct)))) : ["—"]));
+            })))));
     }
 
     function cifra(n, texto) {
@@ -251,6 +304,16 @@
                     td(r.rk + " de " + tam[r.ed + r.cod], 1), td(r.record || "—", 1), td(fmt(r.pts), 1),
                     final ? el("td", { class: TD }, medalla(r.rk)) : null))));
             }
+            const rt = tabs.filter((r) => r.ed === e.id && r.comite === x.nombre).sort((a, b) => a.cat.localeCompare(b.cat) || a.rama.localeCompare(b.rama)
+                || (ORD_R[a.ritmo] || 0) - (ORD_R[b.ritmo] || 0) || a.equipo.localeCompare(b.equipo) || a.tablero - b.tablero);
+            if (rt.length) {
+                sec.append(el("h4", { class: "font-semibold text-brand-800 dark:text-white mt-4" }, "Tableros de sus equipos"));
+                const cab = ["Categoría", "Ritmo", "Equipo", "Tablero", "Jugador", { t: "Puesto en el tablero", num: 1 }, { t: "Porcentaje", num: 1 }, { t: "Puntos", num: 1 }, ""];
+                sec.append(tabla("Tableros de los equipos de " + x.nombre + " en " + e.titulo, cab, rt.map((r) => el("tr", { "data-tablero-de": r.nombre },
+                    td(r.cat + " " + r.rama), td(r.ritmo), td(r.equipo), td(nomTablero(r.tablero)), td(r.nombre),
+                    td(r.rk + " de " + tamT[r.ed + r.cod + "-" + r.tablero], 1), td(pctTxt(r.pct), 1), td(fmt(r.pts), 1),
+                    el("td", { class: TD }, r.rk === 1 ? etiqueta("Mejor tablero") : null)))));
+            }
             ficha.append(sec);
         }
     }
@@ -286,6 +349,7 @@
             return;
         }
         preparar(filas);
+        prepararTableros(await leerTableros());
         const torneos = Object.keys(tam).length;
         const nE = EDICIONES.filter((e) => e.fase === "elim" && Object.keys(tam).some((k) => k.startsWith(e.id))).length;
         const nF = EDICIONES.filter((e) => e.fase === "final" && Object.keys(tam).some((k) => k.startsWith(e.id))).length;
