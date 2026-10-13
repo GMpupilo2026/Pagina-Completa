@@ -2927,10 +2927,10 @@ reclamos de tablas desde el PGN— no comparten nada de código con esta.
 ## Resultados JDN por comité
 
 `jdn-comites.html` es una de las herramientas con licencia (`id: "jdn-comites"`
-en `js/herramientas-arbitraje.js`). Junta los 216
+en `js/herramientas-arbitraje.js`). Junta los 240
 torneos de ajedrez de los Juegos Deportivos Nacionales que están en
-chess-results —eliminatorias 2018, 2021, 2022, 2024 y 2025; finales 2019,
-2022-2023, 2024 y 2026— y los ordena **por comité de deportes**: lo pidió el
+chess-results —eliminatorias 2018, 2021, 2022, 2024 y 2025; finales 2018,
+2019, 2022-2023, 2024 y 2026— y los ordena **por comité de deportes**: lo pidió el
 dueño («lo que importa es filtrar por resultados de todos los comités»). Arriba,
 el medallero de las finales (todas o una edición); al elegir un comité, su
 ficha con cada jugador y cada equipo, edición por edición. El enlace guarda lo
@@ -2952,8 +2952,19 @@ elegido (`#comite~edicion`).
   «Juegos Deportivos Nacionales» según el año. Las columnas se leen por el
   nombre del encabezado, nunca por la posición.
 - **Comprobado al cargar**: las 2570 filas (1823 individuales y 747 de
-  equipos) coinciden torneo por torneo con la revisión a mano —cantidad, suma
+  equipos) de la primera carga coinciden torneo por torneo con la revisión a mano —cantidad, suma
   de puntos y la huella de los nombres en orden—.
+- **La final 2018 y la eliminatoria 2018 por equipos se sumaron después**
+  (24 torneos, 209 filas): faltaban porque tres de sus títulos no dicen «2018»
+  y las finales se subieron en otro bloque (364296–364768, edición `2018-F`).
+  Los números salieron del buscador de chess-results pedido desde la base: el
+  formulario se manda con un POST `application/x-www-form-urlencoded`, que
+  `net.http_post` no deja (solo acepta JSON), así que se inserta directo en
+  `net.http_request_queue` y se llama `net.wake()`. Como pg_net borra sus
+  respuestas a las pocas horas, se cargaron solo esos torneos con la misma
+  lectura de `cargar.sql`, sin borrar la tabla; cuadran: cada final
+  individual de 8 suma 28 puntos y cada una por equipos, 112. La Zona 1 U20
+  Femenino por equipos (344086) está vacía en chess-results.
 - **Son más de mil filas**: la página las pide de mil en mil (`range()`), si no
   PostgREST corta sin avisar.
 - **Los comités se juntan en la página**: chess-results escribe el mismo comité
@@ -2973,11 +2984,11 @@ elegido (`#comite~edicion`).
   cada final.
 - **Las medallas van con su emoji y escritas** (🥇 Oro, 🥈 Plata, 🥉 Bronce),
   sin colores nuevos: el color nunca va solo.
-- En equipos, chess-results ordena primero por puntos de partida. En 17
+- En equipos, chess-results ordena primero por puntos de partida. En 20
   eliminatorias por equipos no hay tabla final: el orden sale de la página de
   resultados y no hay récord de matches.
-- Lo que no está en chess-results no está acá: la eliminatoria 2019, las
-  finales 2018 y 2021, la eliminatoria 2018 de U12, y cuatro eliminatorias por
+- Lo que no está en chess-results no está acá: la eliminatoria 2019, la
+  final 2021, la eliminatoria 2018 de U12, y cuatro eliminatorias por
   equipos de 2024. La página lo dice en «De dónde salen los datos».
 
 `verificar-jdn-comites.js` lo prueba con un doble de Supabase: el candado sin

@@ -27,7 +27,8 @@
         { id: "2022-E", fase: "elim", titulo: "Eliminatoria 2022", detalle: "Alajuela, septiembre y octubre de 2022", ciclo: "2023-F" },
         { id: "2021-E", fase: "elim", titulo: "Eliminatoria 2021", detalle: "octubre de 2021", ciclo: "" },
         { id: "2019-F", fase: "final", titulo: "Final 2019", detalle: "Ciudad Colón, junio y julio de 2019", ciclo: "2019-F" },
-        { id: "2018-E", fase: "elim", titulo: "Eliminatoria 2018", detalle: "abril de 2018", ciclo: "" },
+        { id: "2018-F", fase: "final", titulo: "Final 2018", detalle: "Ciudad Colón, julio de 2018", ciclo: "2018-F" },
+        { id: "2018-E", fase: "elim", titulo: "Eliminatoria 2018", detalle: "Alajuela, abril de 2018", ciclo: "2018-F" },
     ];
     const ED = Object.fromEntries(EDICIONES.map((e) => [e.id, e]));
     /* Una edición que se cargue después y no esté arriba igual se ve. */
