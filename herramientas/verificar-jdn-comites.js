@@ -264,6 +264,55 @@ const medallero = (p) => p.$$eval("#medallero tbody tr", (trs) => trs.map((t) =>
         await p.$eval("#ficha tr[data-jugador='Rojas Arias, Luis']", (t) => [t.cells[3].textContent, t.lastElementChild.previousElementSibling.textContent.trim()]), ["2 de 4", "🥈 Plata"]);
     await ctx.close();
 
+    console.log("\n=== Los filtros ===");
+    ({ ctx, p } = await abrir(browser, "jdn-comites.html", true));
+    await p.waitForFunction(() => document.getElementById("app").checkVisibility());
+    igual("sin filtros no hay aviso ni «Quitar filtros»", [await p.textContent("#filtros-activos"), await visible(p, "#quitar-filtros")], ["", false]);
+    await p.selectOption("#f-modo", "I");
+    igual("solo individual: el medallero cuenta solo las medallas individuales",
+        (await medallero(p)).map((f) => [f[0], f[2], f[3], f[7]]), [["Goicoechea", "1", "", ""], ["Belén", "", "1", ""], ["CODEA (Alajuela)", "", "1", ""], ["Limón", "", "", ""], ["Escazú", "", "", ""]]);
+    igual("el aviso dice qué filtros hay y aparece «Quitar filtros»",
+        [await p.textContent("#filtros-activos"), await visible(p, "#quitar-filtros")], ["Filtros: Individual. Todo lo de abajo cuenta solo eso.", true]);
+    igual("el enlace guarda el filtro", await p.evaluate(() => location.hash), "#~~modo=I");
+    await p.selectOption("#f-modo", "");
+    await p.selectOption("#f-ritmo", "B");
+    igual("solo Blitz: ninguna medalla (el equipo de Blitz quedó 4.º) y solo ese equipo participa",
+        [(await medallero(p)).filter((f) => f[2] || f[3] || f[4]).length,
+         (await p.$$eval("#participacion table", (ts) => ts.map((t) => [...t.querySelectorAll("tbody tr")].map((x) => [x.cells[0].textContent, x.cells[1].textContent]))))],
+        [0, [[["Goicoechea", "1E"], ["Total", "0 · 1E"]]]]);
+    await p.selectOption("#f-ritmo", "");
+    await p.selectOption("#f-fase", "elim");
+    igual("solo eliminatorias: sale solo la tabla de eliminatorias", await p.$$eval("#participacion h3", (h) => h.map((x) => x.textContent)), ["Eliminatorias"]);
+    await p.click("#quitar-filtros");
+    igual("«Quitar filtros» deja todo como al principio",
+        [await p.$eval("#f-fase", (s) => s.value), await p.textContent("#filtros-activos"), (await medallero(p))[0].slice(0, 3)], ["", "", ["Goicoechea", "Z1", "5"]]);
+
+    console.log("\n=== Buscar jugador ===");
+    await p.fill("#buscar", "mora va");
+    igual("con menos de 3 letras de un nombre ya busca por cada parte, y encuentra sus torneos y su tablero",
+        await p.$$eval("#busqueda tbody tr", (t) => t.map((x) => [x.cells[2].textContent, x.cells[5].textContent, x.cells[7].textContent.trim()])),
+        [["Final 2026", "Individual", "🥇 Oro"], ["Final 2026", "Tablero 1 · Goicoechea A", "🥇 Oro"], ["Eliminatoria 2025", "Individual", ""]]);
+    igual("dice cuántos resultados y de cuántos jugadores", await p.textContent("#busqueda p"), "3 resultados de 1 jugador.");
+    igual("cada resultado lleva su enlace a chess-results",
+        await p.$$eval("#busqueda tbody a", (a) => a.map((x) => x.getAttribute("href").replace("https://chess-results.com/tnr", ""))),
+        ["900003.aspx?lan=2&art=1", "900004.aspx?lan=2&art=81&turdet=YES&flag=30", "900001.aspx?lan=2&art=1"]);
+    await p.selectOption("#f-fase", "final");
+    igual("la búsqueda respeta los filtros", (await p.$$eval("#busqueda tbody tr", (t) => t.length)), 2);
+    await p.click("#busqueda tbody button");
+    await p.waitForFunction(() => document.getElementById("ficha").checkVisibility());
+    igual("el comité del resultado abre su ficha en esa edición, con los filtros en el enlace",
+        await p.evaluate(() => location.hash), "#goicoechea~2026-F~fase=final&q=mora+va");
+    await p.fill("#buscar", "zz");
+    igual("con menos de 3 letras no busca", await visible(p, "#busqueda"), false);
+    await ctx.close();
+
+    console.log("\n=== Un enlace con filtros abre lo mismo ===");
+    ({ ctx, p } = await abrir(browser, "jdn-comites.html#belen~2026-F~cat=U12&modo=I", true));
+    await p.waitForFunction(() => document.getElementById("ficha").checkVisibility());
+    igual("los filtros vuelven a sus listas", [await p.$eval("#f-cat", (s) => s.value), await p.$eval("#f-modo", (s) => s.value), await p.$eval("#comite", (s) => s.value)], ["U12", "I", "belen"]);
+    igual("y la ficha muestra solo lo individual", await p.$$eval("#ficha section[data-edicion='2026-F'] h4", (h) => h.map((x) => x.textContent)), ["Individual"]);
+    await ctx.close();
+
     await browser.close();
     console.log(fallos ? `\n✗ ${fallos} comprobación(es) fallaron.` : "\n✓ Todo bien.");
     process.exit(fallos ? 1 : 0);

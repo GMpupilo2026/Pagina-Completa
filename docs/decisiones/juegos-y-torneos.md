@@ -3009,6 +3009,29 @@ comparte la plata, el comité deducido, la medalla escrita, «Jugó la final», 
 filtro de edición y el enlace. Rompiendo a propósito la paginación, el empate o
 la deducción, salta.
 
+### Los filtros y la búsqueda de jugador
+
+Arriba de todo, además del comité y la edición: fase (eliminatorias o finales),
+categoría, rama, modalidad (individual, o equipos con sus tableros), ritmo (de
+las finales) y zona (de las eliminatorias), y «Buscar jugador» (lo pidió el
+dueño, «para un mejor manejo»).
+
+- **Los filtros valen para todo lo que se pinta**: el medallero, las medallas
+  por final, los mejores tableros, los participantes y la ficha del comité.
+  Los datos completos quedan en `TODO` y `ind`/`eq`/`tabs` son lo que pasa los
+  filtros; la deducción del comité, «Jugó la final» y el «puesto de N» salen
+  siempre de lo completo, así un filtro nunca cambia un dato, solo qué se ve.
+  La lista de comités también es la completa (`comitesTodos`): un comité que
+  con un filtro no tiene nada abre su ficha igual y lo dice.
+- **El ritmo solo existe en las finales y la zona solo en las eliminatorias**:
+  con un ritmo elegido no sale la tabla de eliminatorias, y con una zona, la de
+  finales.
+- **«Buscar jugador»** (desde 3 letras, sin tildes): sus torneos individuales y
+  sus tableros en todos los JDN, con comité, edición, puesto, medalla y el
+  enlace a chess-results; respeta los filtros, y el comité abre su ficha.
+- **El enlace guarda todo**: `#comite~edicion~fase=final&cat=U16&q=…`; los
+  enlaces viejos (`#comite~edicion`) siguen abriendo lo mismo.
+
 ### Los participantes de cada comité
 
 Debajo del medallero, «Participantes por comité» (lo pidió el dueño, para las
