@@ -2031,7 +2031,9 @@ entrenamiento del área de estrategia, en «Archivos» y en
 
 `admin.html#materiales` («Materiales de clases») junta los materiales para dar
 clase —hoy, «Ponte a prueba», los diez volúmenes del banco de ejercicios «Mide
-tu fuerza», los libros «Rompe el estancamiento», «Ganar con poco», «Cambiar o no cambiar» e «Ideas que ganan partidas», los cuentos de Peonita y «Coachess en resumen»— y dice **con quién se comparte cada uno**: una
+tu fuerza», los libros «Rompe el estancamiento», «Ganar con poco», «Cambiar o no cambiar» e «Ideas que ganan partidas», los cuentos de Peonita, «Coachess en resumen» y los
+Programas de Estudio de Ajedrez de 1.° a 11.° (ver «Los programas de estudio de
+Ajedrez»)— y dice **con quién se comparte cada uno**: una
 persona, una academia entera o todos los profesores. Lo pinta
 `js/admin-materiales.js`; lo prueba `verificar-admin.js`.
 
@@ -2309,3 +2311,49 @@ encontrado) sin cerrarla. La pinta `js/vista-previa.js`:
   lugar, buscar y filtrar esconden de verdad, «Bajar los N» baja N, las
   flechas pasan de ficha) y `verificar-archivos-catalogo.js` (la lista al día
   con el disco).
+
+## Los programas de estudio de Ajedrez
+
+Once programas de estudio, uno por año escolar (1.° a 11.°), con la estructura
+de los programas del MEP —presentación, fundamentación, enfoque, habilidades del
+marco de «Educar para una nueva ciudadanía», ejes transversales, perfil de
+salida, orientaciones metodológicas y de evaluación, malla curricular con
+aprendizajes esperados, indicadores y niveles de desempeño, proyectos,
+instrumentos, glosario y referencias— y el planeamiento de las **200 lecciones**
+de cada año (40 semanas de 5 lecciones de 40 minutos), cada una con los cuatro
+momentos de la mediación (focalización, exploración, contrastación y
+aplicación), su evaluación y sus materiales. Son 89 documentos de Word: por año,
+el programa en dos partes y el planeamiento en un documento por unidad, más el
+«Alcance y secuencia» de la serie. Autor: Oscar Angulo Cubero.
+
+- **Se bajan desde `admin.html#materiales`**, como un material más
+  (`producto: "programas-de-estudio"` en `js/admin-materiales.js`): el .zip con
+  todos, el «Alcance y secuencia» y un desplegable por año con sus ocho
+  documentos. Viven en `material/programas-de-estudio/`, detrás del candado del
+  worker: los baja administración y a quien se le comparta desde esa misma
+  ficha. **No se venden**: no están en `js/tienda-catalogo.js`.
+- **No se editan a mano.** El contenido está en
+  `herramientas/programas-estudio/datos/grado-N.json`; `generar.py` arma los
+  .docx, el .zip y `js/programas-estudio-lista.js` (la lista que pinta el
+  panel). `datos/GUIA.md` dice cómo se escribe un año (tuteo, nada de rayas
+  largas ni frases de relleno, ninguna posición con resultado inventado: las
+  partidas y ejercicios citados salen de los manuales de referencia, resumidos
+  en `datos/fuentes.md`), y `datos/secuencia.md` qué va en cada año. Al tocar un
+  JSON: `python3 herramientas/programas-estudio/generar.py`,
+  `node herramientas/archivos-catalogo.js` y el verificador.
+- **La marca de agua va en el encabezado**, detrás del texto (el logo de
+  `marca.png`, tenue), así sale en todas las páginas; el autor va en la portada,
+  en el pie y en los datos del archivo, y `docbase.limpiar_metadatos()` borra los
+  rastros de la librería que arma el Word.
+- **El calendario es por semana y día, no por fecha**: el del MEP para 2027 no
+  estaba publicado (se iba a recortar). La fecha queda en blanco en cada lección
+  y unas diez lecciones por año van marcadas como «flexibles» (refuerzo o
+  ampliación), las primeras que se saltan si el año trae menos días lectivos.
+- La carpeta del generador va en `.assetsignore`: los JSON son el contenido
+  entero, y no deben quedar publicados al lado del candado.
+- `verificar-programas-estudio.py` revisa los once JSON (`datos/validar.py`: 200
+  lecciones, unidades sin huecos, sin voseo ni rayas), que la lista del panel y
+  los archivos coincidan, que cada .docx tenga marca de agua y autor y ningún
+  rastro de la herramienta, que la carpeta esté bajo el candado y fuera de la
+  tienda. `verificar-admin.js` mira la ficha en el panel.
+
