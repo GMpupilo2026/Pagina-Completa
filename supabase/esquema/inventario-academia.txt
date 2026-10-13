@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261013134600
+# al-dia-con: 20261013184211
 tabla  Ejercicios Lichess  rls=true
 tabla  _foto_rls_tmp  rls=false
 tabla  _pedidos_elo  rls=false
@@ -90,6 +90,7 @@ tabla  interno.lector_planilla_uso  rls=true
 tabla  interno.salud_base  rls=true
 tabla  jde_eventos  rls=true
 tabla  jdn_inscripciones  rls=true
+tabla  jdn_jugadores  rls=true
 tabla  jdn_resultados  rls=true
 tabla  jdn_tableros  rls=true
 tabla  justificaciones_ausencia  rls=true
@@ -874,6 +875,22 @@ columna  jdn_inscripciones.identificacion  text
 columna  jdn_inscripciones.nacimiento  date
 columna  jdn_inscripciones.nombre  text
 columna  jdn_inscripciones.tipo  text
+columna  jdn_jugadores.codigo  text
+columna  jdn_jugadores.con_elo  smallint
+columna  jdn_jugadores.edicion  text
+columna  jdn_jugadores.elo  smallint
+columna  jdn_jugadores.elo_rivales  smallint
+columna  jdn_jugadores.equipo  text
+columna  jdn_jugadores.equipo_orden  smallint
+columna  jdn_jugadores.esperado  numeric(5,2)
+columna  jdn_jugadores.id  bigint
+columna  jdn_jugadores.nombre  text
+columna  jdn_jugadores.orden  smallint
+columna  jdn_jugadores.partidas  smallint
+columna  jdn_jugadores.puntos  numeric(4,1)
+columna  jdn_jugadores.puntos_elo  numeric(4,1)
+columna  jdn_jugadores.tablero  smallint
+columna  jdn_jugadores.tnr  integer
 columna  jdn_resultados.codigo  text
 columna  jdn_resultados.comite  text
 columna  jdn_resultados.edicion  text
@@ -2174,6 +2191,7 @@ politica  insignias  verificacion_en_dos_pasos  ALL  restrictiva
 politica  insignias_tipos  insignias_tipos_ver  SELECT
 politica  jde_eventos  jde_eventos_lectura_publica  SELECT
 politica  jdn_inscripciones  jdn_inscripciones_con_herramienta  SELECT
+politica  jdn_jugadores  jdn_jugadores_con_herramienta  SELECT
 politica  jdn_resultados  jdn_resultados_lectura_publica  SELECT
 politica  jdn_resultados  zzz_prueba_temporal  SELECT
 politica  jdn_tableros  jdn_tableros_con_herramienta  SELECT
@@ -2732,6 +2750,8 @@ indice  jde_eventos  jde_eventos_anio_fase_idx
 indice  jde_eventos  jde_eventos_pkey
 indice  jdn_inscripciones  jdn_inscripciones_edicion_comite
 indice  jdn_inscripciones  jdn_inscripciones_pkey
+indice  jdn_jugadores  jdn_jugadores_pkey
+indice  jdn_jugadores  jdn_jugadores_tnr_orden_key
 indice  jdn_resultados  jdn_resultados_edicion_codigo_orden_key
 indice  jdn_resultados  jdn_resultados_pkey
 indice  jdn_tableros  jdn_tableros_pkey
@@ -3519,6 +3539,9 @@ grant  jde_eventos  authenticated  TRIGGER
 grant  jdn_inscripciones  authenticated  REFERENCES
 grant  jdn_inscripciones  authenticated  SELECT
 grant  jdn_inscripciones  authenticated  TRIGGER
+grant  jdn_jugadores  authenticated  REFERENCES
+grant  jdn_jugadores  authenticated  SELECT
+grant  jdn_jugadores  authenticated  TRIGGER
 grant  jdn_resultados  anon  SELECT
 grant  jdn_resultados  authenticated  REFERENCES
 grant  jdn_resultados  authenticated  SELECT

@@ -88,6 +88,9 @@
     /* Los filtros: los datos completos quedan en TODO y ind/eq/tabs son lo que
        pasa los filtros; todo lo que se pinta lee ind/eq/tabs. La deducción del
        comité, «Jugó la final» y el «puesto de N» salen siempre de lo completo. */
+    /* Cada jugador de cada torneo con sus partidas (jdn_jugadores): quiénes
+       jugaron en cada equipo y el rendimiento contra el Elo. */
+    let jugs = [];
     let TODO = null, comitesTodos = [];
     const FILTRO = { fase: "", cat: "", rama: "", modo: "", ritmo: "", zona: "", q: "" };
     const CLAVES_FILTRO = ["fase", "cat", "rama", "modo", "ritmo", "zona", "q"];
@@ -118,6 +121,35 @@
             if (data.length < 1000) return filas;
         }
     }
+    /* Los jugadores también son un extra: sin ellos no salen los integrantes
+       ni el rendimiento contra el Elo, y lo demás sigue igual. */
+    async function leerJugadores() {
+        const filas = [];
+        for (let desde = 0; ; desde += 1000) {
+            const { data, error } = await sb.from("jdn_jugadores")
+                .select("edicion,codigo,tnr,orden,equipo,equipo_orden,tablero,nombre,elo,partidas,puntos,con_elo,puntos_elo,elo_rivales,esperado")
+                .order("edicion").order("codigo").order("orden")
+                .range(desde, desde + 999);
+            if (error) return [];
+            filas.push(...data);
+            if (data.length < 1000) return filas;
+        }
+    }
+    /* Un jugador individual toma el comité de su fila de jdn_resultados (el
+       mismo torneo y el mismo orden), con lo deducido; un integrante de equipo,
+       el de su equipo. */
+    function prepararJugadores(filas) {
+        const deInd = new Map(ind.map((r) => [r.tnr + "-" + r.orden, r]));
+        for (const f of filas) {
+            const enEquipo = !!f.equipo, r = deInd.get(f.tnr + "-" + f.orden);
+            if (!enEquipo && !r) continue;
+            jugs.push({ ed: f.edicion, cod: f.codigo, tnr: f.tnr, ...categoria(f.codigo), fase: edicion(f.edicion).fase, orden: f.orden,
+                nombre: enEquipo ? f.nombre : r.nombre, clave: clave(f.nombre), comite: enEquipo ? comite(f.equipo, true) : r.comite,
+                equipo: enEquipo ? f.equipo.replace(/^C+DR\s+/i, "") : "", sufijo: enEquipo ? sufijo(f.equipo) : "", eqRk: f.equipo_orden || 0, tablero: f.tablero || 0,
+                elo: f.elo || 0, partidas: f.partidas, pts: Number(f.puntos), conElo: f.con_elo, ptsElo: Number(f.puntos_elo),
+                eloRiv: f.elo_rivales || 0, esperado: f.esperado == null ? null : Number(f.esperado) });
+        }
+    }
     function prepararTableros(filas) {
         const previo = {};
         for (const f of filas) {
@@ -138,7 +170,7 @@
             // Un puesto vacío es un empate con el de arriba.
             const rk = f.puesto || previo[k] || 0; previo[k] = rk;
             const esEquipo = f.codigo.split("-")[2][0] === "E";
-            const r = { ed: f.edicion, cod: f.codigo, tnr: f.tnr, ...categoria(f.codigo), rk, pts: Number(f.puntos), fase: edicion(f.edicion).fase };
+            const r = { ed: f.edicion, cod: f.codigo, tnr: f.tnr, orden: f.orden, ...categoria(f.codigo), rk, pts: Number(f.puntos), fase: edicion(f.edicion).fase };
             if (esEquipo) eq.push(Object.assign(r, { equipo: f.nombre.replace(/^C+DR\s+/i, ""), comite: comite(f.comite || f.nombre, true), sufijo: sufijo(f.nombre), record: f.record || "" }));
             else ind.push(Object.assign(r, { nombre: f.nombre, clave: clave(f.nombre), comite: comite(f.comite, false), deducido: false }));
             tam[k] = (tam[k] || 0) + 1;
@@ -200,11 +232,12 @@
     const zonaTxt = (z) => [...z].sort().join(" y ") || "—";
     /* Cada dato lleva su enlace a chess-results para comprobarlo: art=1 la
        clasificación, art=46 la tabla final de equipos, art=81 la clasificación
-       por tableros. */
+       por tableros, art=20 la composición de los equipos con cada partida y
+       art=4 la tabla cruzada. */
     function fuente(tnr, art, que) {
         if (!tnr) return el("td", { class: TD });
         return el("td", { class: TD }, el("a", {
-            href: "https://chess-results.com/tnr" + tnr + ".aspx?lan=2&art=" + art + (art === 81 ? "&turdet=YES&flag=30" : ""),
+            href: "https://chess-results.com/tnr" + tnr + ".aspx?lan=2&art=" + art + (art === 81 ? "&turdet=YES&flag=30" : art === 20 ? "&turdet=YES" : ""),
             target: "_blank", rel: "noopener", "aria-label": "Ver " + que + " en chess-results (se abre en otra pestaña)",
             class: "underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-500",
         }, "chess-results"));
@@ -242,6 +275,8 @@
         pintarPorFinal(!e);
         pintarParticipacion(e);
         pintarEfectividad(e);
+        pintarCopa(e);
+        pintarRendimiento(e);
         pintarComparar(!e);
     }
 
@@ -258,16 +293,23 @@
         return out.length;
     }
     function participantes(ed) {
-        const J = {}, E = {};
+        const J = {}, E = {}, I = {}, vis = catsVisibles();
         for (const r of ind) if (r.ed === ed) ((J[r.comite] = J[r.comite] || {})[catDe(r)] = J[r.comite][catDe(r)] || []).push(r.clave);
         for (const r of eq) if (r.ed === ed) ((E[r.comite] = E[r.comite] || {})[catDe(r)] = E[r.comite][catDe(r)] || new Set()).add(r.sufijo);
+        // Las personas que jugaron en sus equipos (al menos una partida).
+        for (const r of jugs) if (r.ed === ed && r.equipo && r.partidas > 0 && vis.includes(catDe(r))) (I[r.comite] = I[r.comite] || []).push(r.clave);
         const P = {};
         for (const c of new Set([...Object.keys(J), ...Object.keys(E)])) {
             const x = P[c] = { nombre: c, j: 0, e: 0 };
-            for (const k of catsVisibles()) {
+            for (const k of vis) {
                 const v = [J[c] && J[c][k] ? distintos(J[c][k]) : 0, E[c] && E[c][k] ? E[c][k].size : 0];
                 x[k] = v; x.j += v[0]; x.e += v[1];
             }
+            // pe: integrantes de sus equipos; pt: personas distintas, sumando
+            // los torneos individuales (quien jugó los dos cuenta una vez).
+            const enEq = I[c] || [];
+            x.pe = distintos(enEq);
+            x.pt = distintos([...vis.flatMap((k) => (J[c] && J[c][k]) || []), ...enEq]);
         }
         return P;
     }
@@ -294,12 +336,18 @@
                 el("p", { class: "text-sm text-brand-500 dark:text-brand-300 mt-1" },
                     "Jugadores de los torneos individuales y equipos (E) de cada comité, por categoría y rama. Quien jugó varios ritmos cuenta una vez. Cada cifra abre la ficha del comité, con cada jugador y equipo y su enlace a chess-results."));
             const tot = CATS.map((k) => [0, 1].map((i) => filas.reduce((a, x) => a + x[k][i], 0)));
+            const conInt = jugs.some((r) => r.ed === e.id && r.equipo);
             const tr = filas.map((x) => el("tr", { "data-comite": x.nombre }, td(x.nombre),
-                ...CATS.map((k) => cifraParticipantes(x.nombre, e.id, x[k][0], x[k][1], " en " + catNom(k) + " de " + e.titulo)), td(x.j, 1), td(x.e, 1)));
+                ...CATS.map((k) => cifraParticipantes(x.nombre, e.id, x[k][0], x[k][1], " en " + catNom(k) + " de " + e.titulo)), td(x.j, 1), td(x.e, 1),
+                conInt ? td(x.pe, 1) : null, conInt ? td(x.pt, 1) : null));
             tr.push(el("tr", { class: "font-semibold" }, td("Total"), ...tot.map((v) => td([v[0] ? String(v[0]) : "", v[1] ? v[1] + "E" : ""].filter(Boolean).join(" · ") || "—", 1)),
-                td(filas.reduce((a, x) => a + x.j, 0), 1), td(filas.reduce((a, x) => a + x.e, 0), 1)));
+                td(filas.reduce((a, x) => a + x.j, 0), 1), td(filas.reduce((a, x) => a + x.e, 0), 1),
+                conInt ? td(filas.reduce((a, x) => a + x.pe, 0), 1) : null, conInt ? td(filas.reduce((a, x) => a + x.pt, 0), 1) : null));
             caja.append(tabla("Participantes de cada comité en " + e.titulo + " por categoría y rama",
-                ["Comité", ...CATS.map((k) => ({ t: catNom(k), num: 1 })), { t: "Jugadores", num: 1 }, { t: "Equipos", num: 1 }], tr));
+                ["Comité", ...CATS.map((k) => ({ t: catNom(k), num: 1 })), { t: "Jugadores", num: 1 }, { t: "Equipos", num: 1 },
+                    ...(conInt ? [{ t: "Integrantes de equipos", num: 1 }, { t: "Personas", num: 1 }] : [])], tr));
+            if (conInt) caja.append(el("p", { class: "text-sm text-brand-500 dark:text-brand-300 mt-2" },
+                "«Integrantes de equipos» son las personas que jugaron al menos una partida en los equipos del comité, según la composición de cada equipo en chess-results; «Personas» las suma a los jugadores individuales, y quien jugó los dos cuenta una vez."));
             // Los torneos de la edición, para comprobar cada dato en chess-results.
             const torneos = new Map();
             for (const r of [...ind, ...eq]) if (r.ed === e.id && r.tnr && !torneos.has(r.cod)) torneos.set(r.cod, r);
@@ -429,17 +477,26 @@
             cifra(x.eqElim, "equipos en eliminatorias")));
         ficha.append(el("h3", { class: "font-serif text-lg font-bold text-brand-800 dark:text-white mt-6" }, "Cómo viene"), evolucion(x.nombre));
 
-        const filasEd = [];
+        const filasEd = [], hayElo = jugs.some((r) => r.comite === x.nombre && r.esperado != null);
         for (const e of EDICIONES) {
             const ri = ind.filter((r) => r.ed === e.id && r.comite === x.nombre), re = eq.filter((r) => r.ed === e.id && r.comite === x.nombre);
             const rt = tabs.filter((r) => r.ed === e.id && r.comite === x.nombre);
             if (!ri.length && !re.length) continue;
             const n = (k) => e.fase === "final" ? [...ri, ...re, ...rt].filter((r) => r.rk === k).length : "—";
-            filasEd.push(el("tr", {}, td(e.titulo), td(ri.length, 1), td(re.length, 1), td(n(1), 1), td(n(2), 1), td(n(3), 1)));
+            const ce = contraElo(jugs.filter((r) => r.ed === e.id && r.comite === x.nombre));
+            filasEd.push(el("tr", { "data-edicion": e.id }, td(e.titulo), td(ri.length, 1), td(re.length, 1), td(n(1), 1), td(n(2), 1), td(n(3), 1),
+                hayElo ? td(ce.partidas ? signo(ce.dif) + " en " + ce.partidas : "—", 1) : null));
         }
         ficha.append(el("h3", { class: "font-serif text-lg font-bold text-brand-800 dark:text-white mt-6" }, "Edición por edición"));
         ficha.append(tabla("Jugadores, equipos y medallas de " + x.nombre + " en cada edición",
-            ["Edición", { t: "Jugadores ind.", num: 1 }, { t: "Equipos", num: 1 }, { t: "Oro", num: 1 }, { t: "Plata", num: 1 }, { t: "Bronce", num: 1 }], filasEd));
+            ["Edición", { t: "Jugadores ind.", num: 1 }, { t: "Equipos", num: 1 }, { t: "Oro", num: 1 }, { t: "Plata", num: 1 }, { t: "Bronce", num: 1 },
+                ...(hayElo ? [{ t: "Contra el Elo (puntos en partidas)", num: 1 }] : [])], filasEd));
+        if (hayElo) {
+            const ce = contraElo(jugs.filter((r) => r.comite === x.nombre && (!edVal || r.ed === edVal)));
+            ficha.append(el("p", { class: "text-sm text-brand-600 dark:text-brand-300 mt-2", "data-contra-elo": x.nombre }, ce.partidas
+                ? `Contra el Elo${edVal ? " en " + ED[edVal].titulo : ""}: sus jugadores sacaron ${fmt1(ce.puntos)} puntos en ${ce.partidas} partidas contra rivales con Elo, y por el Elo se esperaban ${fmt1(ce.esperado)}: ${ce.dif >= 0 ? fmt1(ce.dif) + " por encima" : fmt1(-ce.dif) + " por debajo"} de lo esperado. Ver «Rendimiento contra el Elo» en el medallero.`
+                : "Sin partidas entre jugadores con Elo" + (edVal ? " en " + ED[edVal].titulo : "") + "."));
+        }
 
         for (const e of EDICIONES.filter((y) => !edVal || y.id === edVal)) {
             const ri = ind.filter((r) => r.ed === e.id && r.comite === x.nombre).sort(ordCat);
@@ -473,6 +530,16 @@
                     td(r.rk + " de " + tam[r.ed + r.cod], 1), td(r.record || "—", 1), td(fmt(r.pts), 1),
                     final ? el("td", { class: TD }, medalla(r.rk)) : null,
                     fuente(r.tnr, r.record ? 46 : 1, "la clasificación de equipos de " + r.cat + " " + r.rama + " de " + e.titulo)))));
+            }
+            const ri2 = jugs.filter((r) => r.ed === e.id && r.equipo && r.comite === x.nombre).sort((a, b) => a.cat.localeCompare(b.cat) || a.rama.localeCompare(b.rama)
+                || (ORD_R[a.ritmo] || 0) - (ORD_R[b.ritmo] || 0) || a.equipo.localeCompare(b.equipo) || a.tablero - b.tablero);
+            if (ri2.length) {
+                sec.append(el("h4", { class: "font-semibold text-brand-800 dark:text-white mt-4" }, "Integrantes de sus equipos"));
+                const cab = ["Categoría", final ? "Ritmo" : "Zona", "Equipo", { t: "Tablero", num: 1 }, "Jugador", { t: "Elo", num: 1 }, { t: "Partidas", num: 1 }, { t: "Puntos", num: 1 }, "Comprobar"];
+                sec.append(tabla("Integrantes de los equipos de " + x.nombre + " en " + e.titulo, cab, ri2.map((r) => el("tr", { "data-integrante": r.nombre },
+                    td(r.cat + " " + r.rama), td(final ? r.ritmo : r.zona), td(r.equipo), td(r.tablero || "—", 1),
+                    el("td", { class: TD }, botonJugador(r.nombre, r.clave)), td(r.elo || "—", 1), td(r.partidas, 1), td(fmt(r.pts), 1),
+                    fuente(r.tnr, 20, "la composición de los equipos de " + r.cat + " " + r.rama + " de " + e.titulo)))));
             }
             const rt = tabs.filter((r) => r.ed === e.id && r.comite === x.nombre).sort((a, b) => a.cat.localeCompare(b.cat) || a.rama.localeCompare(b.rama)
                 || (ORD_R[a.ritmo] || 0) - (ORD_R[b.ritmo] || 0) || a.equipo.localeCompare(b.equipo) || a.tablero - b.tablero);
@@ -510,6 +577,7 @@
         ind = TODO.ind.filter((r) => pasa(r, false));
         eq = TODO.eq.filter((r) => pasa(r, false));
         tabs = TODO.tabs.filter((r) => pasa(r, true));
+        jugs = TODO.jugs.filter((r) => pasa(r, !!r.equipo));
         todos = resumen(() => true);
         const txt = [];
         const nom = { fase: { elim: "Eliminatorias", final: "Finales" }, cat: { U12: "U12", U16: "U16", U20: "U20" }, rama: { A: "Absoluto", F: "Femenino" },
@@ -527,10 +595,8 @@
         const q = clave(FILTRO.q || "");
         caja.classList.toggle("hidden", q.length < 3);
         if (q.length < 3) return;
-        const filas = [
-            ...ind.filter((r) => r.clave.includes(q)).map((r) => ({ r, nombre: r.nombre, que: "Individual", n: tam[r.ed + r.cod], tnr: r.tnr, art: 1 })),
-            ...tabs.filter((r) => clave(r.nombre).includes(q)).map((r) => ({ r, nombre: r.nombre, que: nomTablero(r.tablero) + " · " + r.equipo, n: tamT[r.ed + r.cod + "-" + r.tablero], tnr: r.tnr, art: 81 })),
-        ].sort((a, b) => b.r.ed.localeCompare(a.r.ed) || a.nombre.localeCompare(b.nombre, "es") || ordCat(a.r, b.r));
+        const filas = torneosDe((c) => c.includes(q))
+            .sort((a, b) => b.r.ed.localeCompare(a.r.ed) || a.nombre.localeCompare(b.nombre, "es") || ordCat(a.r, b.r));
         const personas = new Set(filas.map((f) => clave(f.nombre))).size;
         caja.append(el("h2", { id: "busqueda-titulo", class: "font-serif text-xl font-bold text-brand-800 dark:text-white" }, "Jugadores que coinciden con «" + FILTRO.q + "»"),
             el("p", { class: "text-sm text-brand-500 dark:text-brand-300 mt-1", role: "status" }, filas.length
@@ -543,8 +609,8 @@
             const b = el("button", { type: "button", class: "underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-500" }, r.comite);
             b.addEventListener("click", () => elegir(slug(r.comite), r.ed));
             return el("tr", { "data-jugador": f.nombre }, el("td", { class: TD }, botonJugador(f.nombre, clave(f.nombre))), r.comite === "Sin comité" ? td(r.comite) : el("td", { class: TD }, b), td(ED[r.ed].titulo),
-                td(r.cat + " " + r.rama), td(r.ritmo || (r.zona === "Única" ? "Zona única" : "Zona " + r.zona.slice(1))), td(f.que), td(r.rk + " de " + f.n, 1),
-                el("td", { class: TD }, final ? medalla(r.rk) : null), fuente(f.tnr, f.art, "el torneo de " + f.nombre + " en " + ED[r.ed].titulo));
+                td(r.cat + " " + r.rama), td(r.ritmo || (r.zona === "Única" ? "Zona única" : "Zona " + r.zona.slice(1))), td(f.que), td(puestoDe(f), 1),
+                el("td", { class: TD }, final && !f.sinMedalla ? medalla(r.rk) : null), fuente(f.tnr, f.art, "el torneo de " + f.nombre + " en " + ED[r.ed].titulo));
         })));
     }
 
@@ -609,6 +675,160 @@
             td((s("jugF") + s("eqF")) ? (s("med") / (s("jugF") + s("eqF"))).toLocaleString("es-CR", { maximumFractionDigits: 1 }) : "—", 1)));
         caja.append(tabla("De la eliminatoria a la final, por comité", ["Comité", { t: "Jugadores en la eliminatoria", num: 1 }, { t: "Jugaron la final", num: 1 }, { t: "Pasaron", num: 1 },
             { t: "Equipos en la eliminatoria", num: 1 }, { t: "Equipos en la final", num: 1 }, { t: "Jugadores en la final", num: 1 }, { t: "Medallas en la final", num: 1 }, { t: "Medallas por clasificado", num: 1 }], tr));
+    }
+
+    /* ---- La copa: puntos por puesto en las finales ----
+       Como la tabla de unos juegos: cada jugador individual, cada equipo y
+       (si se marca) cada tablero suma por su puesto, con la escala elegida.
+       Así cuentan también el 4.º, el 5.º… La escala no es oficial: la elige
+       quien mira (ver «La copa de puntos por puesto»). Un empate sin
+       desempatar comparte el puesto, y los dos suman sus puntos. */
+    const ESCALAS = [
+        { id: "8", nombre: "Los ocho primeros: 10, 8, 6, 5, 4, 3, 2, 1", puntos: [10, 8, 6, 5, 4, 3, 2, 1] },
+        { id: "6", nombre: "Los seis primeros: 7, 5, 4, 3, 2, 1", puntos: [7, 5, 4, 3, 2, 1] },
+        { id: "3", nombre: "Solo el podio: 3, 2, 1", puntos: [3, 2, 1] },
+        { id: "x", nombre: "Otra escala (escríbela)", puntos: null },
+    ];
+    const COPA = { escala: "8", propia: "", tableros: true };
+    // Cualquier cosa que no sea un número separa: «10, 8, 6», «10-8-6» o «10 8 6».
+    const leerEscala = (t) => String(t || "").split(/[^0-9.]+/).filter(Boolean).map(Number).filter((n) => isFinite(n) && n >= 0 && n <= 1000).slice(0, 40);
+    function escalaCopa() {
+        const e = ESCALAS.find((x) => x.id === COPA.escala);
+        if (e && e.puntos) return e.puntos;
+        const v = leerEscala(COPA.propia);
+        return v.length ? v : [3, 2, 1];
+    }
+    function copa(filtro) {
+        const P = escalaCopa(), C = {};
+        const sumar = (r, k) => {
+            const v = r.rk >= 1 && r.rk <= P.length ? P[r.rk - 1] : 0;
+            if (!v) return;
+            const x = C[r.comite] || (C[r.comite] = { nombre: r.comite, total: 0, ind: 0, eq: 0, tab: 0, puestos: 0 });
+            x[k] += v; x.total += v; x.puestos++;
+        };
+        for (const r of ind) if (r.fase === "final" && filtro(r)) sumar(r, "ind");
+        for (const r of eq) if (r.fase === "final" && filtro(r)) sumar(r, "eq");
+        if (COPA.tableros) for (const r of tabs) if (filtro(r)) sumar(r, "tab");
+        delete C["Sin comité"];
+        return Object.values(C).sort((a, b) => b.total - a.total || b.puestos - a.puestos || a.nombre.localeCompare(b.nombre, "es"));
+    }
+    const num1 = (n) => n.toLocaleString("es-CR", { maximumFractionDigits: 1 });
+    const SEL = "w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none";
+    const ETQ = "block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1";
+    let copaEd = null;
+    function pintarCopa(e) {
+        const caja = $("copa");
+        copaEd = e;
+        const ver = (!e || e.fase === "final") && FILTRO.fase !== "elim" && !FILTRO.zona;
+        caja.classList.toggle("hidden", !ver);
+        if (!ver) return;
+        if (!caja.dataset.armado) {
+            caja.dataset.armado = "1";
+            const sel = el("select", { id: "copa-escala", class: SEL }, ...ESCALAS.map((x) => el("option", { value: x.id }, x.nombre)));
+            const propia = el("input", { id: "copa-propia", type: "text", inputmode: "decimal", autocomplete: "off", placeholder: "Por ejemplo: 9, 7, 6, 5, 4, 3, 2, 1", class: SEL });
+            const tab = el("input", { id: "copa-tableros", type: "checkbox", class: "w-4 h-4 rounded focus:ring-2 focus:ring-accent-500" });
+            const cajaPropia = el("div", {}, el("label", { for: "copa-propia", class: ETQ }, "Puntos del 1.º, del 2.º…"), propia);
+            caja.append(el("h2", { id: "copa-titulo", class: "font-serif text-xl font-bold text-brand-800 dark:text-white" }, "La copa: puntos por puesto"),
+                el("p", { id: "copa-texto", class: "text-sm text-brand-500 dark:text-brand-300 mt-1" }),
+                el("div", { class: "grid sm:grid-cols-3 gap-3 mt-3 items-end" },
+                    el("div", {}, el("label", { for: "copa-escala", class: ETQ }, "Puntos por puesto"), sel), cajaPropia,
+                    el("label", { for: "copa-tableros", class: "flex items-center gap-2 text-sm text-brand-700 dark:text-brand-200 py-2" }, tab, "Sumar también los puestos de cada tablero")),
+                el("div", { id: "copa-tabla" }));
+            sel.value = COPA.escala; propia.value = COPA.propia; tab.checked = COPA.tableros;
+            const cambio = () => {
+                COPA.escala = sel.value; COPA.propia = propia.value.trim(); COPA.tableros = tab.checked;
+                enlace($("comite").value, $("edicion").value);
+                dibujarCopa();
+            };
+            sel.addEventListener("change", cambio); propia.addEventListener("input", cambio); tab.addEventListener("change", cambio);
+        }
+        dibujarCopa();
+    }
+    function dibujarCopa() {
+        const e = copaEd, P = escalaCopa();
+        $("copa-propia").parentElement.classList.toggle("hidden", COPA.escala !== "x");
+        $("copa-texto").textContent = "Una tabla de puntos por puesto en " + (e ? e.titulo : "las finales") + ", como la copa de unos juegos: el 1.º suma " + num1(P[0])
+            + (P.length > 1 ? ", el 2.º " + num1(P[1]) : "") + (P.length > 2 ? ", el 3.º " + num1(P[2]) : "") + (P.length > 3 ? " y así hasta el " + P.length + ".º" : "")
+            + ". Así cuentan también los puestos sin medalla. Suma cada jugador individual, cada equipo y, si se marca, cada tablero; un empate sin desempatar comparte el puesto y sus puntos. "
+            + "La escala no es oficial: elige la del reglamento de los JDN, o escribe otra. La última columna trae las medallas, para comparar.";
+        const lista = copa((r) => !e || r.ed === e.id);
+        const med = Object.fromEntries(resumen((r) => !e || r.ed === e.id).map((x) => [x.nombre, x]));
+        const caja = $("copa-tabla");
+        caja.replaceChildren();
+        if (!lista.length) { caja.append(el("p", { class: "mt-2 text-brand-500 dark:text-brand-300 italic" }, "Ningún comité suma puntos con estos filtros.")); return; }
+        let pos = 0, antes = null;
+        const filas = lista.map((x, i) => {
+            if (x.total !== antes) { pos = i + 1; antes = x.total; }
+            const m = med[x.nombre] || vacio(x.nombre);
+            const b = el("button", { type: "button", class: "font-semibold text-left underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-500" }, x.nombre);
+            b.addEventListener("click", () => elegir(slug(x.nombre), e ? e.id : ""));
+            return el("tr", { "data-comite": x.nombre }, td(pos, 1), el("td", { class: TD }, b), el("td", { class: TDN + " font-semibold" }, num1(x.total)),
+                td(num1(x.ind), 1), td(num1(x.eq), 1), COPA.tableros ? td(num1(x.tab), 1) : null, td(x.puestos, 1), td(m.oro + "·" + m.plata + "·" + m.bronce, 1));
+        });
+        caja.append(tabla("La copa: puntos de cada comité por sus puestos en " + (e ? e.titulo : "las finales"),
+            [{ t: "Puesto", num: 1 }, "Comité", { t: "Puntos", num: 1 }, { t: "Individual", num: 1 }, { t: "Equipos", num: 1 },
+                ...(COPA.tableros ? [{ t: "Tableros", num: 1 }] : []), { t: "Puestos que suman", num: 1 }, { t: "Oro·Plata·Bronce", num: 1 }], filas));
+    }
+
+    /* ---- El rendimiento contra el Elo ----
+       De jdn_jugadores: partida por partida entre dos jugadores con Elo, los
+       puntos que se esperaban por la fórmula de FIDE (diferencia topada en
+       400) contra los que sacó. Ver «El rendimiento contra el Elo». */
+    function contraElo(lista) {
+        const r = { partidas: 0, puntos: 0, esperado: 0, dif: 0, jugadores: 0 };
+        for (const x of lista) if (x.esperado != null && x.conElo) { r.partidas += x.conElo; r.puntos += x.ptsElo; r.esperado += x.esperado; r.jugadores++; }
+        r.dif = r.puntos - r.esperado;
+        return r;
+    }
+    const fmt1 = (n) => (Math.round(n * 10) / 10).toLocaleString("es-CR", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+    // El signo va escrito: el dato nunca depende de un color.
+    const signo = (n) => (Math.round(n * 10) === 0 ? "" : n > 0 ? "+" : "−") + fmt1(Math.abs(n));
+    /* El Elo de su actuación: el Elo medio de sus rivales más la diferencia
+       que da su porcentaje (la curva de la fórmula de FIDE, con 0 % y 100 %
+       a 800 puntos). Es aproximado: los rivales sin Elo no cuentan. */
+    function actuacion(x) {
+        if (!x.conElo || !x.eloRiv) return null;
+        const p = x.ptsElo / x.conElo;
+        const d = p <= 0 ? -800 : p >= 1 ? 800 : Math.max(-800, Math.min(800, -400 * Math.log10(1 / p - 1)));
+        return Math.round(x.eloRiv + d);
+    }
+    const modalidad = (r) => r.equipo ? r.equipo + " · tablero " + (r.tablero || "—") : "Individual";
+    function pintarRendimiento(e) {
+        const caja = $("rendimiento");
+        caja.replaceChildren();
+        const de = jugs.filter((r) => !e || r.ed === e.id);
+        const C = {};
+        for (const r of de) if (r.comite !== "Sin comité") (C[r.comite] = C[r.comite] || []).push(r);
+        const lista = Object.entries(C).map(([n, rs]) => ({ nombre: n, ...contraElo(rs), elo: (() => { const v = rs.filter((x) => x.elo); return v.length ? Math.round(v.reduce((a, x) => a + x.elo, 0) / v.length) : 0; })() }))
+            .filter((x) => x.partidas).sort((a, b) => b.dif - a.dif || a.nombre.localeCompare(b.nombre, "es"));
+        caja.classList.toggle("hidden", !lista.length);
+        if (!lista.length) return;
+        caja.append(el("h2", { id: "rendimiento-titulo", class: "font-serif text-xl font-bold text-brand-800 dark:text-white" }, "Rendimiento contra el Elo · " + (e ? e.titulo : "todas las ediciones")),
+            el("p", { class: "text-sm text-brand-500 dark:text-brand-300 mt-1" },
+                "Cuántos puntos sacaron los jugadores de cada comité frente a los que se esperaban por su Elo y el de sus rivales, partida por partida, con la fórmula de FIDE. Un número positivo es que rindieron por encima de su Elo: el comité que más sorprende, no solo el que más gana. "
+                + "Cuentan las partidas jugadas (sin forfeits ni byes) entre dos jugadores con Elo, individuales y de equipo; el Elo es el nacional si lo hay. Muchos jugadores aparecen con 1400 justo: si es el Elo con que se entra a la lista, quien recién empieza puede rendir por encima sin que sea sorpresa."));
+        const filas = lista.map((x) => {
+            const b = el("button", { type: "button", class: "font-semibold text-left underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-500" }, x.nombre);
+            b.addEventListener("click", () => elegir(slug(x.nombre), e ? e.id : ""));
+            return el("tr", { "data-comite": x.nombre }, el("td", { class: TD }, b), td(x.jugadores, 1), td(x.elo || "—", 1), td(x.partidas, 1), td(fmt1(x.puntos), 1), td(fmt1(x.esperado), 1),
+                el("td", { class: TDN + " font-semibold" }, signo(x.dif)), td(signo(100 * x.dif / x.partidas), 1));
+        });
+        const t = contraElo(de.filter((r) => r.comite !== "Sin comité"));
+        filas.push(el("tr", { class: "font-semibold" }, td("Total"), td(t.jugadores, 1), td("", 1), td(t.partidas, 1), td(fmt1(t.puntos), 1), td(fmt1(t.esperado), 1), td(signo(t.dif), 1), td("", 1)));
+        caja.append(tabla("Rendimiento de cada comité contra el Elo", ["Comité", { t: "Jugadores (torneos)", num: 1 }, { t: "Elo medio", num: 1 }, { t: "Partidas con Elo", num: 1 },
+            { t: "Puntos", num: 1 }, { t: "Esperados", num: 1 }, { t: "Diferencia", num: 1 }, { t: "Por cada 100 partidas", num: 1 }], filas));
+        // Los que más sorprendieron: torneo por torneo, con al menos 3 partidas con Elo.
+        const top = de.filter((r) => r.esperado != null && r.conElo >= 3 && r.comite !== "Sin comité")
+            .map((r) => ({ r, dif: r.ptsElo - r.esperado })).sort((a, b) => b.dif - a.dif || a.r.nombre.localeCompare(b.r.nombre, "es")).slice(0, 20);
+        if (!top.length) return;
+        caja.append(el("h3", { class: "font-serif text-lg font-bold text-brand-800 dark:text-white mt-5" }, "Quiénes más sorprendieron"),
+            el("p", { class: "text-sm text-brand-500 dark:text-brand-300 mt-1" }, "Los " + top.length + " torneos en que un jugador sacó más puntos por encima de lo esperado (al menos 3 partidas contra rivales con Elo). «Actuación» es el Elo que corresponde a su resultado contra esos rivales."));
+        caja.append(tabla("Los jugadores que más rindieron por encima de su Elo", ["Jugador", "Comité", "Edición", "Categoría", "Modalidad", { t: "Elo", num: 1 }, { t: "Elo medio de sus rivales", num: 1 },
+            { t: "Partidas", num: 1 }, { t: "Puntos", num: 1 }, { t: "Esperados", num: 1 }, { t: "Diferencia", num: 1 }, { t: "Actuación", num: 1 }, "Comprobar"],
+            top.map(({ r, dif }) => el("tr", { "data-sorpresa": r.nombre }, el("td", { class: TD }, botonJugador(r.nombre, r.clave)), td(r.comite), td(ED[r.ed].titulo),
+                td(r.cat + " " + r.rama + " · " + (r.ritmo || (r.zona === "Única" ? "Zona única" : "Zona " + r.zona.slice(1)))), td(modalidad(r)), td(r.elo, 1), td(r.eloRiv || "—", 1),
+                td(r.conElo, 1), td(fmt1(r.ptsElo), 1), td(fmt1(r.esperado), 1), el("td", { class: TDN + " font-semibold" }, signo(dif)), td(actuacion(r) || "—", 1),
+                fuente(r.tnr, r.equipo ? 20 : 4, (r.equipo ? "la composición de los equipos" : "la tabla cruzada") + " de " + r.cat + " " + r.rama + " de " + ED[r.ed].titulo)))));
     }
 
     /* ---- Gráficas (SVG propio, sin librerías) ----
@@ -731,11 +951,23 @@
        de chess-results juntos (mismo()). Junta sus torneos individuales y sus
        tableros en todos los JDN, con los filtros puestos. */
     let JUG = "";
-    function filasDe(k) {
+    /* Los torneos de quien cumple «es(clave)»: individuales, tableros de las
+       finales y, de jdn_jugadores, los equipos en que jugó y que no salen en
+       los tableros (las eliminatorias, o quien no llegó al mínimo de partidas
+       de la clasificación por tableros). Esos van con el puesto del equipo y
+       sin medalla: la medalla de un integrante es la de su tablero. */
+    function torneosDe(es) {
+        const tb = tabs.filter((r) => es(clave(r.nombre)));
         return [
-            ...ind.filter((r) => mismo(r.clave, k)).map((r) => ({ r, nombre: r.nombre, que: "Individual", n: tam[r.ed + r.cod], tnr: r.tnr, art: 1, tablero: false })),
-            ...tabs.filter((r) => mismo(clave(r.nombre), k)).map((r) => ({ r, nombre: r.nombre, que: nomTablero(r.tablero) + " · " + r.equipo, n: tamT[r.ed + r.cod + "-" + r.tablero], tnr: r.tnr, art: 81, tablero: true })),
-        ].sort((a, b) => a.r.ed.localeCompare(b.r.ed) || ordCat(a.r, b.r));
+            ...ind.filter((r) => es(r.clave)).map((r) => ({ r, nombre: r.nombre, que: "Individual", n: tam[r.ed + r.cod], tnr: r.tnr, art: 1, tablero: false })),
+            ...tb.map((r) => ({ r, nombre: r.nombre, que: nomTablero(r.tablero) + " · " + r.equipo, n: tamT[r.ed + r.cod + "-" + r.tablero], tnr: r.tnr, art: 81, tablero: true })),
+            ...jugs.filter((r) => r.equipo && es(r.clave) && !tb.some((t) => t.tnr === r.tnr && mismo(clave(t.nombre), r.clave)))
+                .map((r) => ({ r: { ...r, rk: r.eqRk }, nombre: r.nombre, que: "Equipo " + r.equipo + " · tablero " + (r.tablero || "—"), n: tam[r.ed + r.cod], tnr: r.tnr, art: 20, tablero: true, sinMedalla: true })),
+        ];
+    }
+    const puestoDe = (f) => (f.sinMedalla ? "equipo " : "") + f.r.rk + " de " + f.n;
+    function filasDe(k) {
+        return torneosDe((c) => mismo(c, k)).sort((a, b) => a.r.ed.localeCompare(b.r.ed) || ordCat(a.r, b.r));
     }
     function abrirJugador(k) { JUG = k; enlace("", ""); pintarJugador(); window.scrollTo({ top: 0, behavior: "smooth" }); }
     function pintarJugador() {
@@ -750,7 +982,7 @@
         if (!filas.length) { caja.append(el("p", { class: "mt-2 text-brand-500 dark:text-brand-300" }, "No hay torneos de este jugador" + (hayFiltros() ? " con estos filtros." : "."))); return; }
         const comites = [...new Set(filas.map((f) => f.r.comite))];
         const eds = [...new Set(filas.map((f) => f.r.ed))];
-        const med = [1, 2, 3].map((k) => filas.filter((f) => f.r.fase === "final" && f.r.rk === k).length);
+        const med = [1, 2, 3].map((k) => filas.filter((f) => f.r.fase === "final" && !f.sinMedalla && f.r.rk === k).length);
         // El camino por categorías: la primera edición en cada una.
         const camino = [];
         for (const f of filas) if (!camino.some((c) => c.cat === f.r.cat)) camino.push({ cat: f.r.cat, ed: f.r.ed });
@@ -765,9 +997,24 @@
             filas.map((f) => {
                 const r = f.r;
                 return el("tr", { "data-edicion": r.ed }, td(ED[r.ed].titulo), td(r.cat + " " + r.rama), td(r.ritmo || (r.zona === "Única" ? "Zona única" : "Zona " + r.zona.slice(1))),
-                    td(f.que), td(r.comite), td(r.rk + " de " + f.n, 1), el("td", { class: TD }, r.fase === "final" ? medalla(r.rk) : null),
+                    td(f.que), td(r.comite), td(puestoDe(f), 1), el("td", { class: TD }, r.fase === "final" && !f.sinMedalla ? medalla(r.rk) : null),
                     fuente(f.tnr, f.art, "el torneo de " + f.nombre + " en " + ED[r.ed].titulo));
             })));
+        // Contra el Elo: cada torneo en que jugó al menos una partida.
+        const pj = jugs.filter((r) => mismo(r.clave, JUG) && r.partidas > 0).sort((a, b) => a.ed.localeCompare(b.ed) || ordCat(a, b));
+        if (pj.length) {
+            const ce = contraElo(pj);
+            caja.append(el("h3", { class: "font-serif text-lg font-bold text-brand-800 dark:text-white mt-6" }, "Sus partidas contra el Elo"),
+                el("p", { class: "text-sm text-brand-500 dark:text-brand-300 mt-1", "data-contra-elo": nombre }, ce.partidas
+                    ? `En ${ce.partidas} partidas contra rivales con Elo sacó ${fmt1(ce.puntos)} puntos; por el Elo se esperaban ${fmt1(ce.esperado)}: ${ce.dif >= 0 ? fmt1(ce.dif) + " por encima" : fmt1(-ce.dif) + " por debajo"} de lo esperado.`
+                    : "Ninguna de sus partidas fue entre dos jugadores con Elo: no hay con qué compararlas."));
+            caja.append(tabla("Partidas de " + nombre + " contra el Elo, torneo por torneo", ["Edición", "Categoría", "Modalidad", { t: "Elo", num: 1 }, { t: "Partidas", num: 1 }, { t: "Puntos", num: 1 },
+                { t: "Elo medio de sus rivales", num: 1 }, { t: "Esperados", num: 1 }, { t: "Diferencia", num: 1 }, { t: "Actuación", num: 1 }, "Comprobar"],
+                pj.map((r) => el("tr", { "data-elo-edicion": r.ed }, td(ED[r.ed].titulo), td(r.cat + " " + r.rama + " · " + (r.ritmo || (r.zona === "Única" ? "Zona única" : "Zona " + r.zona.slice(1)))),
+                    td(modalidad(r)), td(r.elo || "—", 1), td(r.partidas, 1), td(fmt(r.pts), 1), td(r.eloRiv || "—", 1),
+                    td(r.esperado != null ? fmt1(r.esperado) : "—", 1), td(r.esperado != null ? signo(r.ptsElo - r.esperado) : "—", 1), td(r.esperado != null ? actuacion(r) || "—" : "—", 1),
+                    fuente(r.tnr, r.equipo ? 20 : 4, (r.equipo ? "la composición de los equipos" : "la tabla cruzada") + " de " + r.cat + " " + r.rama + " de " + ED[r.ed].titulo)))));
+        }
     }
     const botonJugador = (nombre, k) => {
         const b = el("button", { type: "button", class: "underline underline-offset-2 hover:no-underline rounded text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-500", "aria-label": "Ver la ficha de " + nombre }, nombre);
@@ -788,13 +1035,15 @@
         };
         for (const r of ind) if (r.comite === nombre) tocar(r.clave, r.nombre, r, false);
         for (const r of tabs) if (r.comite === nombre) tocar(clave(r.nombre), r.nombre, r, true);
+        // Quien jugó en sus equipos (también en las eliminatorias): sin medalla aparte.
+        for (const r of jugs) if (r.equipo && r.partidas > 0 && r.comite === nombre) tocar(r.clave, r.nombre, { ed: r.ed, fase: r.fase, rk: 0 }, true);
         const lista = [...P.values()].map((p) => ({ ...p, nombre: p.nombres.sort((a, b) => b.length - a.length)[0], eds: [...p.eds].sort() }))
             .sort((a, b) => b.eds.length - a.eds.length || b.med - a.med || a.nombre.localeCompare(b.nombre, "es"));
         const volvieron = lista.filter((p) => p.anios.size > 1).length;
         const caja = el("section", { class: "mt-6", "data-jugadores": nombre },
             el("h3", { class: "font-serif text-lg font-bold text-brand-800 dark:text-white" }, "Sus jugadores"),
             el("p", { class: "text-sm text-brand-500 dark:text-brand-300 mt-1" },
-                lista.length ? `${lista.length} jugador${lista.length === 1 ? "" : "es"} en torneos individuales y tableros de equipo; ${volvieron} (${pct(volvieron, lista.length)}) jugaron los JDN en más de un año. Toca un nombre para ver su trayectoria.`
+                lista.length ? `${lista.length} jugador${lista.length === 1 ? "" : "es"} en torneos individuales y en sus equipos; ${volvieron} (${pct(volvieron, lista.length)}) jugaron los JDN en más de un año. Toca un nombre para ver su trayectoria.`
                     : "Sin jugadores con estos filtros."));
         if (lista.length) caja.append(tabla("Jugadores de " + nombre, ["Jugador", "Primera edición", "Última edición", { t: "Ediciones", num: 1 }, { t: "Medallas", num: 1 }],
             lista.slice(0, 60).map((p) => el("tr", { "data-jugador": p.nombre }, el("td", { class: TD }, botonJugador(p.nombre, p.k)),
@@ -807,6 +1056,9 @@
         const p = new URLSearchParams();
         for (const k of CLAVES_FILTRO) if (FILTRO[k]) p.set(k, FILTRO[k]);
         if (JUG) p.set("j", JUG);
+        // La escala de la copa, si no es la de siempre.
+        if (COPA.escala !== "8") p.set("copa", COPA.escala === "x" ? leerEscala(COPA.propia).join("-") || "x" : COPA.escala);
+        if (!COPA.tableros) p.set("ct", "0");
         const f = p.toString();
         const h = [s || "", ed || "", f].join("~").replace(/~+$/, "");
         try { history.replaceState(null, "", h ? "#" + h : location.pathname); } catch (e) { /* sin historial */ }
@@ -868,13 +1120,19 @@
             return;
         }
         preparar(filas);
-        prepararTableros(await leerTableros());
-        TODO = { ind, eq, tabs };
+        const [filasT, filasJ] = await Promise.all([leerTableros(), leerJugadores()]);
+        prepararTableros(filasT);
+        prepararJugadores(filasJ);
+        TODO = { ind, eq, tabs, jugs };
         comitesTodos = resumen(() => true); // con las medallas de tablero
         const [h1, h2, h3] = decodeURIComponent((location.hash || "").slice(1)).split("~");
         const pf = new URLSearchParams(h3 || "");
         for (const k of CLAVES_FILTRO) FILTRO[k] = pf.get(k) || "";
         JUG = pf.get("j") || "";
+        const cp = pf.get("copa") || "";
+        if (cp && ESCALAS.some((x) => x.id === cp && x.puntos)) COPA.escala = cp;
+        else if (cp) { COPA.escala = "x"; COPA.propia = leerEscala(cp.replace(/-/g, " ")).join(", "); }
+        COPA.tableros = pf.get("ct") !== "0";
         aplicarFiltros();
         const torneos = Object.keys(tam).length;
         const nE = EDICIONES.filter((e) => e.fase === "elim" && Object.keys(tam).some((k) => k.startsWith(e.id))).length;
