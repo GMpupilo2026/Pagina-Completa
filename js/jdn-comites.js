@@ -63,6 +63,14 @@
         if (esEquipo) { let a; do { a = s; s = s.replace(/\s+(\d{1,2}|[A-Za-z]|SNF)$/, ""); } while (s !== a); }
         return NOMBRES[s.toLowerCase()] || titulo(s);
     }
+    /* La letra o el número que distingue a los equipos de un mismo comité
+       («A», «J», «2»); «01» y «1» son el mismo. */
+    function sufijo(nombre) {
+        let s = sinTilde(String(nombre || "")).trim().replace(/^C+DR\s*/i, "").replace(/^CC Distrit(o|al) (de )?/i, "").trim(), m;
+        const suf = [];
+        while ((m = s.match(/\s+(\d{1,2}|[A-Za-z]|SNF)$/))) { const t = m[1].toUpperCase(); suf.unshift(/^\d+$/.test(t) ? String(+t) : t); s = s.slice(0, m.index); }
+        return suf.join(" ");
+    }
     const RITMO = { C: "Clásico", R: "Rápido", B: "Blitz" };
     function fmt(n) { if (isNaN(n)) return ""; const e = Math.floor(n); return (n - e) ? (e ? e + "½" : "½") : String(e); }
     function categoria(cod) {
@@ -77,6 +85,12 @@
     /* Los mejores tableros de las finales por equipos (jdn_tableros): el orden
        de la «Clasificación por tableros» de chess-results, tal cual. */
     let tabs = [], tamT = {};
+    /* Los filtros: los datos completos quedan en TODO y ind/eq/tabs son lo que
+       pasa los filtros; todo lo que se pinta lee ind/eq/tabs. La deducción del
+       comité, «Jugó la final» y el «puesto de N» salen siempre de lo completo. */
+    let TODO = null, comitesTodos = [];
+    const FILTRO = { fase: "", cat: "", rama: "", modo: "", ritmo: "", zona: "", q: "" };
+    const CLAVES_FILTRO = ["fase", "cat", "rama", "modo", "ritmo", "zona", "q"];
 
     async function leerTodo() {
         const filas = [];
@@ -110,7 +124,7 @@
             const k = f.edicion + f.codigo + "-" + f.tablero;
             const rk = f.puesto || previo[k] || 0; previo[k] = rk;
             tabs.push({ ed: f.edicion, cod: f.codigo, tnr: f.tnr, ...categoria(f.codigo), tablero: f.tablero, rk, nombre: f.nombre,
-                equipo: f.equipo.replace(/^C+DR\s+/i, ""), comite: comite(f.equipo, true), pct: Number(f.porcentaje), pts: Number(f.puntos) });
+                equipo: f.equipo.replace(/^C+DR\s+/i, ""), comite: comite(f.equipo, true), pct: Number(f.porcentaje), pts: Number(f.puntos), fase: "final" });
             tamT[k] = (tamT[k] || 0) + 1;
         }
     }
@@ -125,7 +139,7 @@
             const rk = f.puesto || previo[k] || 0; previo[k] = rk;
             const esEquipo = f.codigo.split("-")[2][0] === "E";
             const r = { ed: f.edicion, cod: f.codigo, tnr: f.tnr, ...categoria(f.codigo), rk, pts: Number(f.puntos), fase: edicion(f.edicion).fase };
-            if (esEquipo) eq.push(Object.assign(r, { equipo: f.nombre.replace(/^C+DR\s+/i, ""), comite: comite(f.comite || f.nombre, true), record: f.record || "" }));
+            if (esEquipo) eq.push(Object.assign(r, { equipo: f.nombre.replace(/^C+DR\s+/i, ""), comite: comite(f.comite || f.nombre, true), sufijo: sufijo(f.nombre), record: f.record || "" }));
             else ind.push(Object.assign(r, { nombre: f.nombre, clave: clave(f.nombre), comite: comite(f.comite, false), deducido: false }));
             tam[k] = (tam[k] || 0) + 1;
         }
@@ -147,9 +161,10 @@
 
     const MED = ["", "oro", "plata", "bronce"];
     const slug = (n) => sinTilde(n).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+    const vacio = (n) => ({ nombre: n, zonas: new Set(), oro: 0, plata: 0, bronce: 0, ind: 0, eqm: 0, tab: 0, fin: new Set(), insc: 0, eqElim: 0 });
     function resumen(filtro) {
         const C = {};
-        const c = (n) => C[n] || (C[n] = { nombre: n, zonas: new Set(), oro: 0, plata: 0, bronce: 0, ind: 0, eqm: 0, tab: 0, fin: new Set(), insc: 0, eqElim: 0 });
+        const c = (n) => C[n] || (C[n] = vacio(n));
         for (const r of ind.filter(filtro)) {
             const x = c(r.comite);
             if (r.fase === "elim") { x.insc++; if (r.zona === "Z1" || r.zona === "Z2") x.zonas.add(r.zona); }
@@ -225,6 +240,102 @@
         if (!lista.length) tb.append(el("tr", {}, el("td", { class: TD, colspan: "11" }, "No hay resultados de esta edición.")));
         pintarTableros(e && e.fase === "final" ? e : null);
         pintarPorFinal(!e);
+        pintarParticipacion(e);
+    }
+
+    /* Participantes de cada comité: jugadores de los torneos individuales y
+       equipos, por categoría y rama. Un jugador o un equipo que jugó varios
+       ritmos cuenta una vez; un mismo equipo escrito distinto por
+       chess-results («Goicochea», «CODEA 01») también. */
+    const CATS = ["U12-A", "U12-F", "U16-A", "U16-F", "U20-A", "U20-F"];
+    const catNom = (k) => k.replace("-A", " Abs.").replace("-F", " Fem.");
+    const catDe = (r) => r.cat + "-" + r.rama[0];
+    function distintos(claves) {
+        const out = [];
+        for (const k of [...claves].sort((a, b) => b.length - a.length)) if (!out.some((o) => mismo(o, k))) out.push(k);
+        return out.length;
+    }
+    function participantes(ed) {
+        const J = {}, E = {};
+        for (const r of ind) if (r.ed === ed) ((J[r.comite] = J[r.comite] || {})[catDe(r)] = J[r.comite][catDe(r)] || []).push(r.clave);
+        for (const r of eq) if (r.ed === ed) ((E[r.comite] = E[r.comite] || {})[catDe(r)] = E[r.comite][catDe(r)] || new Set()).add(r.sufijo);
+        const P = {};
+        for (const c of new Set([...Object.keys(J), ...Object.keys(E)])) {
+            const x = P[c] = { nombre: c, j: 0, e: 0 };
+            for (const k of catsVisibles()) {
+                const v = [J[c] && J[c][k] ? distintos(J[c][k]) : 0, E[c] && E[c][k] ? E[c][k].size : 0];
+                x[k] = v; x.j += v[0]; x.e += v[1];
+            }
+        }
+        return P;
+    }
+    const cuantos = (j, e) => [j ? j + " jugador" + (j === 1 ? "" : "es") : "", e ? e + " equipo" + (e === 1 ? "" : "s") : ""].filter(Boolean).join(" y ");
+    function cifraParticipantes(c, ed, j, e, donde) {
+        if (!j && !e) return td("—", 1);
+        const txt = [j ? String(j) : "", e ? e + "E" : ""].filter(Boolean).join(" · ");
+        if (c === "Sin comité") return td(txt, 1);
+        const b = el("button", { type: "button", class: "underline underline-offset-2 hover:no-underline rounded tabular-nums focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-500",
+            "aria-label": `${c}${donde}: ${cuantos(j, e)}. Ver su ficha` }, txt);
+        b.addEventListener("click", () => elegir(slug(c), ed));
+        return el("td", { class: TDN, "data-edicion": ed }, b);
+    }
+    const catsVisibles = () => CATS.filter((k) => (!FILTRO.cat || k.startsWith(FILTRO.cat)) && (!FILTRO.rama || k.endsWith(FILTRO.rama)));
+    function pintarParticipacion(e) {
+        const CATS = catsVisibles();
+        const caja = $("participacion");
+        caja.replaceChildren();
+        const eds = EDICIONES.filter((x) => Object.keys(tam).some((k) => k.startsWith(x.id)));
+        if (e) {
+            const P = participantes(e.id);
+            const filas = Object.values(P).sort((a, b) => (b.j + b.e) - (a.j + a.e) || b.e - a.e || a.nombre.localeCompare(b.nombre, "es"));
+            caja.append(el("h2", { id: "participacion-titulo", class: "font-serif text-xl font-bold text-brand-800 dark:text-white" }, "Participantes por comité · " + e.titulo),
+                el("p", { class: "text-sm text-brand-500 dark:text-brand-300 mt-1" },
+                    "Jugadores de los torneos individuales y equipos (E) de cada comité, por categoría y rama. Quien jugó varios ritmos cuenta una vez. Cada cifra abre la ficha del comité, con cada jugador y equipo y su enlace a chess-results."));
+            const tot = CATS.map((k) => [0, 1].map((i) => filas.reduce((a, x) => a + x[k][i], 0)));
+            const tr = filas.map((x) => el("tr", { "data-comite": x.nombre }, td(x.nombre),
+                ...CATS.map((k) => cifraParticipantes(x.nombre, e.id, x[k][0], x[k][1], " en " + catNom(k) + " de " + e.titulo)), td(x.j, 1), td(x.e, 1)));
+            tr.push(el("tr", { class: "font-semibold" }, td("Total"), ...tot.map((v) => td([v[0] ? String(v[0]) : "", v[1] ? v[1] + "E" : ""].filter(Boolean).join(" · ") || "—", 1)),
+                td(filas.reduce((a, x) => a + x.j, 0), 1), td(filas.reduce((a, x) => a + x.e, 0), 1)));
+            caja.append(tabla("Participantes de cada comité en " + e.titulo + " por categoría y rama",
+                ["Comité", ...CATS.map((k) => ({ t: catNom(k), num: 1 })), { t: "Jugadores", num: 1 }, { t: "Equipos", num: 1 }], tr));
+            // Los torneos de la edición, para comprobar cada dato en chess-results.
+            const torneos = new Map();
+            for (const r of [...ind, ...eq]) if (r.ed === e.id && r.tnr && !torneos.has(r.cod)) torneos.set(r.cod, r);
+            const lista = [...torneos.values()].sort(ordCat);
+            const det = el("details", { class: "mt-3 text-sm" }, el("summary", { class: "cursor-pointer font-semibold text-brand-700 dark:text-brand-200" },
+                "Los " + lista.length + " torneos de " + e.titulo + " en chess-results"));
+            const ul = el("ul", { class: "mt-2 grid sm:grid-cols-2 gap-x-6 gap-y-1" });
+            for (const r of lista) {
+                const que = r.cat + " " + r.rama + " · " + (r.ritmo || (r.zona === "Única" ? "Zona única" : "Zona " + r.zona.slice(1))) + " · " + r.modo;
+                ul.append(el("li", {}, el("a", { href: "https://chess-results.com/tnr" + r.tnr + ".aspx?lan=2&art=1", target: "_blank", rel: "noopener",
+                    "aria-label": que + " en chess-results (se abre en otra pestaña)",
+                    class: "underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-500" }, que)));
+            }
+            det.append(ul); caja.append(det);
+            caja.classList.remove("hidden");
+            return;
+        }
+        // Todas las ediciones: comité por eliminatoria y comité por final.
+        caja.append(el("h2", { id: "participacion-titulo", class: "font-serif text-xl font-bold text-brand-800 dark:text-white" }, "Participantes por edición"),
+            el("p", { class: "text-sm text-brand-500 dark:text-brand-300 mt-1" },
+                "Jugadores de los torneos individuales y equipos (E) de cada comité en cada eliminatoria y cada final. Elige una edición para verlos por categoría y rama; cada cifra abre la ficha del comité en esa edición."));
+        for (const [fase, titulo] of [["elim", "Eliminatorias"], ["final", "Finales (clasificados)"]].filter(([f]) => faseVisible(f))) {
+            const lista = eds.filter((x) => x.fase === fase).reverse();
+            const P = lista.map((x) => participantes(x.id));
+            const nombres = [...new Set(P.flatMap((p) => Object.keys(p)))];
+            const sum = (c) => [0, 1].map((i) => P.reduce((a, p) => a + (p[c] ? [p[c].j, p[c].e][i] : 0), 0));
+            nombres.sort((a, b) => { const x = sum(a), y = sum(b); return (y[0] + y[1]) - (x[0] + x[1]) || y[1] - x[1] || a.localeCompare(b, "es"); });
+            const tr = nombres.map((c) => el("tr", { "data-comite": c }, td(c),
+                ...lista.map((x, i) => cifraParticipantes(c, x.id, P[i][c] ? P[i][c].j : 0, P[i][c] ? P[i][c].e : 0, " en " + x.titulo)),
+                td(sum(c)[0], 1), td(sum(c)[1], 1)));
+            const tj = P.map((p) => [0, 1].map((i) => Object.values(p).reduce((a, x) => a + [x.j, x.e][i], 0)));
+            tr.push(el("tr", { class: "font-semibold" }, td("Total"), ...tj.map((v) => td(v[0] + " · " + v[1] + "E", 1)),
+                td(tj.reduce((a, v) => a + v[0], 0), 1), td(tj.reduce((a, v) => a + v[1], 0), 1)));
+            caja.append(el("h3", { class: "font-serif text-lg font-bold text-brand-800 dark:text-white mt-5" }, titulo));
+            caja.append(tabla(titulo + ": participantes de cada comité", ["Comité", ...lista.map((x) => ({ t: x.titulo.replace(/^(Final|Eliminatoria) /, ""), num: 1 })),
+                { t: "Jugadores", num: 1 }, { t: "Equipos", num: 1 }], tr));
+        }
+        caja.classList.remove("hidden");
     }
 
     /* Con todas las ediciones: cuántas medallas de cada tipo hubo y cuántas
@@ -293,7 +404,8 @@
     }
 
     function pintar(s, edSel) {
-        const x = todos.find((y) => slug(y.nombre) === s);
+        const enTodos = comitesTodos.find((y) => slug(y.nombre) === s);
+        const x = enTodos && (todos.find((y) => y.nombre === enTodos.nombre) || vacio(enTodos.nombre));
         const ficha = $("ficha");
         $("edicion").value = ED[edSel] ? edSel : "";
         if (!x) {
@@ -304,9 +416,10 @@
         $("comite").value = s; $("general").classList.add("hidden"); ficha.classList.remove("hidden"); $("volver").classList.remove("hidden");
         ficha.replaceChildren();
         const pos = todos.indexOf(x) + 1;
+        const lugar = pos ? "puesto " + pos + " de " + todos.length + " en el medallero" + (hayFiltros() ? " con estos filtros" : " de todas las finales") : "sin resultados con estos filtros";
         ficha.append(el("div", { class: "flex flex-wrap items-baseline justify-between gap-2" },
             el("h2", { id: "ficha-titulo", class: "font-serif text-2xl font-bold text-brand-800 dark:text-white" }, x.nombre),
-            el("p", { class: "text-sm text-brand-500 dark:text-brand-300" }, "Zona " + zonaTxt(x.zonas) + " · puesto " + pos + " de " + todos.length + " en el medallero de todas las finales")));
+            el("p", { class: "text-sm text-brand-500 dark:text-brand-300" }, "Zona " + zonaTxt(x.zonas) + " · " + lugar)));
         ficha.append(el("div", { class: "grid grid-cols-2 md:grid-cols-4 gap-3 mt-4" },
             cifra(x.oro + x.plata + x.bronce, `medallas en las finales (${x.oro} de oro, ${x.plata} de plata, ${x.bronce} de bronce)`),
             cifra(x.fin.size, "participaciones en finales individuales"),
@@ -373,22 +486,106 @@
         }
     }
 
-    function elegir(s, ed) {
-        const h = [s, ed].filter(Boolean).join("~");
+    /* ---- Filtros y búsqueda de jugador ---- */
+    const RITMO_DE = { C: "Clásico", R: "Rápido", B: "Blitz" };
+    function pasa(r, esTablero) {
+        const F = FILTRO;
+        if (F.fase && r.fase !== F.fase) return false;
+        if (F.cat && r.cat !== F.cat) return false;
+        if (F.rama && r.rama[0] !== F.rama) return false;
+        if (F.modo === "I" && (esTablero || r.modo !== "Individual")) return false;
+        if (F.modo === "E" && !esTablero && r.modo !== "Equipos") return false;
+        if (F.ritmo && r.ritmo !== RITMO_DE[F.ritmo]) return false;
+        if (F.zona && r.zona !== F.zona) return false;
+        return true;
+    }
+    // El ritmo solo existe en las finales y la zona solo en las eliminatorias.
+    const faseVisible = (f) => (!FILTRO.fase || f === FILTRO.fase) && !(FILTRO.ritmo && f === "elim") && !(FILTRO.zona && f === "final");
+    const hayFiltros = () => ["fase", "cat", "rama", "modo", "ritmo", "zona"].some((k) => FILTRO[k]);
+    function aplicarFiltros() {
+        ind = TODO.ind.filter((r) => pasa(r, false));
+        eq = TODO.eq.filter((r) => pasa(r, false));
+        tabs = TODO.tabs.filter((r) => pasa(r, true));
+        todos = resumen(() => true);
+        const txt = [];
+        const nom = { fase: { elim: "Eliminatorias", final: "Finales" }, cat: { U12: "U12", U16: "U16", U20: "U20" }, rama: { A: "Absoluto", F: "Femenino" },
+            modo: { I: "Individual", E: "Equipos y tableros" }, ritmo: RITMO_DE, zona: { Z1: "Zona 1", Z2: "Zona 2" } };
+        for (const k of Object.keys(nom)) if (FILTRO[k]) txt.push(nom[k][FILTRO[k]]);
+        $("filtros-activos").textContent = txt.length ? "Filtros: " + txt.join(" · ") + ". Todo lo de abajo cuenta solo eso." : "";
+        $("quitar-filtros").classList.toggle("hidden", !txt.length && !FILTRO.q);
+    }
+
+    /* Un jugador en todos los JDN: sus torneos individuales y sus tableros,
+       con los filtros puestos. */
+    function pintarBusqueda() {
+        const caja = $("busqueda");
+        caja.replaceChildren();
+        const q = clave(FILTRO.q || "");
+        caja.classList.toggle("hidden", q.length < 3);
+        if (q.length < 3) return;
+        const filas = [
+            ...ind.filter((r) => r.clave.includes(q)).map((r) => ({ r, nombre: r.nombre, que: "Individual", n: tam[r.ed + r.cod], tnr: r.tnr, art: 1 })),
+            ...tabs.filter((r) => clave(r.nombre).includes(q)).map((r) => ({ r, nombre: r.nombre, que: nomTablero(r.tablero) + " · " + r.equipo, n: tamT[r.ed + r.cod + "-" + r.tablero], tnr: r.tnr, art: 81 })),
+        ].sort((a, b) => b.r.ed.localeCompare(a.r.ed) || a.nombre.localeCompare(b.nombre, "es") || ordCat(a.r, b.r));
+        const personas = new Set(filas.map((f) => clave(f.nombre))).size;
+        caja.append(el("h2", { id: "busqueda-titulo", class: "font-serif text-xl font-bold text-brand-800 dark:text-white" }, "Jugadores que coinciden con «" + FILTRO.q + "»"),
+            el("p", { class: "text-sm text-brand-500 dark:text-brand-300 mt-1", role: "status" }, filas.length
+                ? `${filas.length} resultado${filas.length === 1 ? "" : "s"} de ${personas} jugador${personas === 1 ? "" : "es"}` + (filas.length > 300 ? "; se muestran los 300 más recientes" : "") + "."
+                : "Ningún jugador coincide" + (hayFiltros() ? " con estos filtros." : ".")));
+        if (!filas.length) return;
+        const cab = ["Jugador", "Comité", "Edición", "Categoría", "Ritmo o zona", "Modalidad", { t: "Puesto", num: 1 }, "Medalla", "Comprobar"];
+        caja.append(tabla("Resultados de la búsqueda de jugador", cab, filas.slice(0, 300).map((f) => {
+            const r = f.r, final = r.fase === "final";
+            const b = el("button", { type: "button", class: "underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-500" }, r.comite);
+            b.addEventListener("click", () => elegir(slug(r.comite), r.ed));
+            return el("tr", { "data-jugador": f.nombre }, td(f.nombre), r.comite === "Sin comité" ? td(r.comite) : el("td", { class: TD }, b), td(ED[r.ed].titulo),
+                td(r.cat + " " + r.rama), td(r.ritmo || (r.zona === "Única" ? "Zona única" : "Zona " + r.zona.slice(1))), td(f.que), td(r.rk + " de " + f.n, 1),
+                el("td", { class: TD }, final ? medalla(r.rk) : null), fuente(f.tnr, f.art, "el torneo de " + f.nombre + " en " + ED[r.ed].titulo));
+        })));
+    }
+
+    function enlace(s, ed) {
+        const p = new URLSearchParams();
+        for (const k of CLAVES_FILTRO) if (FILTRO[k]) p.set(k, FILTRO[k]);
+        const f = p.toString();
+        const h = [s || "", ed || "", f].join("~").replace(/~+$/, "");
         try { history.replaceState(null, "", h ? "#" + h : location.pathname); } catch (e) { /* sin historial */ }
+    }
+
+    function elegir(s, ed) {
+        enlace(s, ed);
         pintar(s, ed);
+        pintarBusqueda();
         window.scrollTo({ top: 0, behavior: "smooth" });
     }
 
     function armarControles() {
         const selC = $("comite"), selE = $("edicion");
         selC.append(el("option", { value: "" }, "Todos los comités (medallero)"));
-        for (const x of [...todos].sort((a, b) => a.nombre.localeCompare(b.nombre, "es"))) selC.append(el("option", { value: slug(x.nombre) }, x.nombre));
+        for (const x of [...comitesTodos].sort((a, b) => a.nombre.localeCompare(b.nombre, "es"))) selC.append(el("option", { value: slug(x.nombre) }, x.nombre));
         selE.append(el("option", { value: "" }, "Todas las ediciones"));
         for (const e of EDICIONES) if (tam && Object.keys(tam).some((k) => k.startsWith(e.id))) selE.append(el("option", { value: e.id }, e.titulo + (e.detalle ? " · " + e.detalle : "")));
         selC.addEventListener("change", () => elegir(selC.value, selE.value));
         selE.addEventListener("change", () => elegir(selC.value, selE.value));
         $("volver").addEventListener("click", () => elegir("", selE.value));
+        for (const k of ["fase", "cat", "rama", "modo", "ritmo", "zona"]) {
+            const sel = $("f-" + k);
+            sel.value = FILTRO[k];
+            sel.addEventListener("change", () => {
+                FILTRO[k] = sel.value;
+                // Una edición que no es de la fase elegida deja de tener sentido.
+                if (k === "fase" && FILTRO.fase && ED[selE.value] && ED[selE.value].fase !== FILTRO.fase) selE.value = "";
+                aplicarFiltros(); elegir(selC.value, selE.value);
+            });
+        }
+        const bus = $("buscar");
+        bus.value = FILTRO.q;
+        bus.addEventListener("input", () => { FILTRO.q = bus.value.trim(); aplicarFiltros(); enlace(selC.value, selE.value); pintarBusqueda(); });
+        $("quitar-filtros").addEventListener("click", () => {
+            for (const k of CLAVES_FILTRO) { FILTRO[k] = ""; if (k !== "q") $("f-" + k).value = ""; }
+            bus.value = "";
+            aplicarFiltros(); elegir(selC.value, selE.value);
+        });
     }
 
     async function init() {
@@ -405,15 +602,20 @@
         }
         preparar(filas);
         prepararTableros(await leerTableros());
-        todos = resumen(() => true); // con las medallas de tablero
+        TODO = { ind, eq, tabs };
+        comitesTodos = resumen(() => true); // con las medallas de tablero
+        const [h1, h2, h3] = decodeURIComponent((location.hash || "").slice(1)).split("~");
+        const pf = new URLSearchParams(h3 || "");
+        for (const k of CLAVES_FILTRO) FILTRO[k] = pf.get(k) || "";
+        aplicarFiltros();
         const torneos = Object.keys(tam).length;
         const nE = EDICIONES.filter((e) => e.fase === "elim" && Object.keys(tam).some((k) => k.startsWith(e.id))).length;
         const nF = EDICIONES.filter((e) => e.fase === "final" && Object.keys(tam).some((k) => k.startsWith(e.id))).length;
         $("intro").textContent = `Los resultados de cada comité de deportes en los ${torneos} torneos de ajedrez de los Juegos Deportivos Nacionales que están en chess-results: ${nE} eliminatorias y ${nF} finales. Elige un comité para ver a todos sus jugadores y equipos, edición por edición.`;
         armarControles();
         $("loading").classList.add("hidden"); $("app").classList.remove("hidden");
-        const [h1, h2] = decodeURIComponent((location.hash || "").slice(1)).split("~");
         if (ED[h1]) pintar("", h1); else pintar(h1 || "", h2 || "");
+        pintarBusqueda();
     }
 
     init();

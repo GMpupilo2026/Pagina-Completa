@@ -43,7 +43,43 @@
                     <select id="edicion" class="w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none"></select>
                 </div>
                 <button type="button" id="volver" class="hidden text-sm font-semibold px-4 py-2 rounded-lg bg-brand-100 dark:bg-brand-800 hover:bg-brand-200 dark:hover:bg-brand-700">Ver todos los comités</button>
+                <div class="w-full grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 pt-3 border-t border-brand-100 dark:border-brand-800">
+                    <div>
+                        <label for="f-fase" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Fase</label>
+                        <select id="f-fase" class="w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none"><option value="">Todas</option><option value="elim">Solo eliminatorias</option><option value="final">Solo finales</option></select>
+                    </div>
+                    <div>
+                        <label for="f-cat" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Categoría</label>
+                        <select id="f-cat" class="w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none"><option value="">Todas</option><option value="U12">U12</option><option value="U16">U16</option><option value="U20">U20</option></select>
+                    </div>
+                    <div>
+                        <label for="f-rama" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Rama</label>
+                        <select id="f-rama" class="w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none"><option value="">Todas</option><option value="A">Absoluto</option><option value="F">Femenino</option></select>
+                    </div>
+                    <div>
+                        <label for="f-modo" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Modalidad</label>
+                        <select id="f-modo" class="w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none"><option value="">Todas</option><option value="I">Individual</option><option value="E">Equipos y tableros</option></select>
+                    </div>
+                    <div>
+                        <label for="f-ritmo" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Ritmo (finales)</label>
+                        <select id="f-ritmo" class="w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none"><option value="">Todos</option><option value="C">Clásico</option><option value="R">Rápido</option><option value="B">Blitz</option></select>
+                    </div>
+                    <div>
+                        <label for="f-zona" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Zona (eliminatorias)</label>
+                        <select id="f-zona" class="w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none"><option value="">Todas</option><option value="Z1">Zona 1</option><option value="Z2">Zona 2</option></select>
+                    </div>
+                </div>
+                <div class="w-full flex flex-wrap gap-3 items-end">
+                    <div class="flex-1 min-w-[16rem]">
+                        <label for="buscar" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Buscar jugador</label>
+                        <input id="buscar" type="search" autocomplete="off" placeholder="Al menos 3 letras del nombre o apellido" class="w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none">
+                    </div>
+                    <button type="button" id="quitar-filtros" class="hidden text-sm font-semibold px-4 py-2 rounded-lg bg-brand-100 dark:bg-brand-800 hover:bg-brand-200 dark:hover:bg-brand-700">Quitar filtros</button>
+                </div>
+                <p id="filtros-activos" class="w-full text-sm text-brand-600 dark:text-brand-300" aria-live="polite"></p>
             </div>
+
+            <section id="busqueda" class="hidden mt-6" aria-labelledby="busqueda-titulo"></section>
 
             <section id="general" class="mt-6" aria-labelledby="general-titulo">
                 <h2 id="general-titulo" class="font-serif text-xl font-bold text-brand-800 dark:text-white">Medallero de las finales</h2>
@@ -59,6 +95,7 @@
                 </div>
                 <section id="tableros" class="hidden mt-8" aria-labelledby="tableros-titulo"></section>
                 <section id="por-final" class="hidden mt-8" aria-labelledby="por-final-titulo"></section>
+                <section id="participacion" class="hidden mt-8" aria-labelledby="participacion-titulo"></section>
             </section>
 
             <section id="ficha" class="hidden mt-6" aria-labelledby="ficha-titulo"></section>
@@ -70,7 +107,7 @@
                     <p>De la eliminatoria 2018 están U16 y U20, individual y por equipos, salvo el U20 Femenino por equipos de la Zona 1, que está vacío en chess-results. De la eliminatoria 2024 faltan dos torneos por equipos (Z1 y Z2 U12 Femenino). Las finales 2018, 2019 y 2020-2021 se jugaron en Clásico y Blitz.</p>
                     <p>La final 2022-2023 no trae el comité de cada jugador: se toma del mismo jugador en la eliminatoria 2022 y se marca como «comité deducido».</p>
                     <p>En equipos, chess-results ordena primero por puntos de partida y después por matches. En 25 eliminatorias por equipos la página no trae la tabla final; ahí el puesto es el orden por puntos de partida, sin el récord de matches. Un 0 al final de una eliminatoria suele ser alguien que se inscribió y no jugó. Cuando una final tuvo 3 jugadores o equipos, los tres tienen medalla. Los tres primeros de cada tablero de los torneos por equipos también son medallas oficiales y se suman al medallero. Un empate sin desempatar comparte el puesto, y la medalla.</p>
-                    <p>Cada jugador, equipo y tablero de la ficha de un comité tiene su enlace al torneo en chess-results, para comprobar cada dato. Los mejores tableros de las finales son los de la «Clasificación por tableros» de chess-results de cada torneo por equipos, con los desempates y el mínimo de partidas que eligió su árbitro. En las finales 2018 a 2020-2021 los equipos tenían una reserva, que sale aparte.</p>
+                    <p>En «Participantes por comité», un jugador o un equipo que jugó varios ritmos cuenta una vez, aunque chess-results escriba su nombre distinto de un torneo a otro. Cada jugador, equipo y tablero de la ficha de un comité tiene su enlace al torneo en chess-results, para comprobar cada dato. Los mejores tableros de las finales son los de la «Clasificación por tableros» de chess-results de cada torneo por equipos, con los desempates y el mínimo de partidas que eligió su árbitro. En las finales 2018 a 2020-2021 los equipos tenían una reserva, que sale aparte.</p>
                 </div>
             </details>
         </div>

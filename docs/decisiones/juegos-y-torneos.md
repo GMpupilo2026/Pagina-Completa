@@ -3009,6 +3009,54 @@ comparte la plata, el comité deducido, la medalla escrita, «Jugó la final», 
 filtro de edición y el enlace. Rompiendo a propósito la paginación, el empate o
 la deducción, salta.
 
+### Los filtros y la búsqueda de jugador
+
+Arriba de todo, además del comité y la edición: fase (eliminatorias o finales),
+categoría, rama, modalidad (individual, o equipos con sus tableros), ritmo (de
+las finales) y zona (de las eliminatorias), y «Buscar jugador» (lo pidió el
+dueño, «para un mejor manejo»).
+
+- **Los filtros valen para todo lo que se pinta**: el medallero, las medallas
+  por final, los mejores tableros, los participantes y la ficha del comité.
+  Los datos completos quedan en `TODO` y `ind`/`eq`/`tabs` son lo que pasa los
+  filtros; la deducción del comité, «Jugó la final» y el «puesto de N» salen
+  siempre de lo completo, así un filtro nunca cambia un dato, solo qué se ve.
+  La lista de comités también es la completa (`comitesTodos`): un comité que
+  con un filtro no tiene nada abre su ficha igual y lo dice.
+- **El ritmo solo existe en las finales y la zona solo en las eliminatorias**:
+  con un ritmo elegido no sale la tabla de eliminatorias, y con una zona, la de
+  finales.
+- **«Buscar jugador»** (desde 3 letras, sin tildes): sus torneos individuales y
+  sus tableros en todos los JDN, con comité, edición, puesto, medalla y el
+  enlace a chess-results; respeta los filtros, y el comité abre su ficha.
+- **El enlace guarda todo**: `#comite~edicion~fase=final&cat=U16&q=…`; los
+  enlaces viejos (`#comite~edicion`) siguen abriendo lo mismo.
+
+### Los participantes de cada comité
+
+Debajo del medallero, «Participantes por comité» (lo pidió el dueño, para las
+eliminatorias y las finales): con una edición elegida, cada comité en cada
+categoría y rama (U12, U16, U20; absoluto y femenino), en jugadores de los
+torneos individuales y equipos, con sus totales y la lista de los torneos de
+esa edición con su enlace a chess-results; con todas las ediciones, una tabla
+comité por eliminatoria y otra comité por final. Cada cifra abre la ficha del
+comité en esa edición, donde cada jugador y equipo tiene su enlace.
+
+- **Un jugador o un equipo que jugó varios ritmos cuenta una vez.** El jugador
+  se reconoce por su nombre sin tildes ni números (con los nombres cortados de
+  chess-results juntos, como en el comité deducido); el equipo, por su comité
+  y su letra o número (`sufijo()`: «A», «J», «2»), porque chess-results
+  escribe el mismo equipo distinto de un ritmo a otro («Goicochea» y
+  «Goicoechea» en la final 2026, «CODEA 01» y «CODEA 1» en la de 2020-2021).
+  Contando por nombre, la final 2020-2021 daba 39 equipos en lugar de 36.
+- **Comprobado contra la base**: en cada eliminatoria, jugadores y equipos son
+  exactamente las filas de sus torneos (un torneo por zona, nadie repite), y en
+  las finales los equipos coinciden con el torneo más grande de cada categoría
+  (213 jugadores y 211 equipos en las seis finales).
+- Los datos de prueba del verificador no pueden distinguir jugadores por un
+  número en el nombre («Jugador 1», «Jugador 2»): la página los compara sin
+  números y los junta.
+
 ### Los mejores tableros de las finales
 
 Al elegir una final, debajo del medallero sale «Mejores tableros»: el primero
