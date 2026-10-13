@@ -17,7 +17,10 @@
    - los mejores tableros (jdn_tableros) salen debajo del medallero de una
      final, con el empate sin desempatar compartido y la reserva aparte, y en
      la ficha del comité, con su medalla; los tres primeros de cada tablero
-     suman al medallero (son medallas oficiales); sin licencia no se piden.
+     suman al medallero (son medallas oficiales); sin licencia no se piden;
+   - con todas las ediciones, las medallas por tipo y por final de cada
+     comité, cada cifra abre la ficha en esa final, y cada medalla de la ficha
+     y cada torneo de los mejores tableros lleva su enlace a chess-results.
 
    Ver «Resultados JDN por comité» en docs/decisiones/juegos-y-torneos.md.
 
@@ -34,8 +37,11 @@ function igual(nombre, hallado, esperado) {
 }
 
 const FILAS = [];
+// Cada torneo inventado lleva su número de chess-results (para los enlaces).
+const TNR = {};
+const tnr = (edicion, codigo) => TNR[edicion + codigo] || (TNR[edicion + codigo] = 900000 + Object.keys(TNR).length);
 function fila(edicion, codigo, orden, puesto, nombre, comite, puntos, record) {
-    FILAS.push({ edicion, codigo, orden, puesto, nombre, comite: comite || "", record: record || null, puntos });
+    FILAS.push({ edicion, codigo, tnr: tnr(edicion, codigo), orden, puesto, nombre, comite: comite || "", record: record || null, puntos });
 }
 // Una eliminatoria enorme: 1100 inscritos de Limón (más que un pedido).
 for (let i = 1; i <= 1100; i++) fila("2018-E", "Z2-U16-IA", i, i, "Jugador " + i + ", Prueba", "CCDR Limon", 1);
@@ -53,7 +59,7 @@ fila("2026-F", "C-U12-EA", 2, 2, "CODEA B", "", 8, "2-0-1");
 // La clasificación por tableros de las finales por equipos.
 const TABLEROS = [];
 function tablero(edicion, codigo, tablero, orden, puesto, nombre, equipo, porcentaje, puntos) {
-    TABLEROS.push({ edicion, codigo, tablero, orden, puesto, nombre, equipo, porcentaje, puntos });
+    TABLEROS.push({ edicion, codigo, tnr: tnr(edicion, codigo), tablero, orden, puesto, nombre, equipo, porcentaje, puntos });
 }
 tablero("2026-F", "C-U12-EA", 1, 1, 1, "Mora Vargas, Ana", "CCDR Goicoechea A", 100, 3);
 tablero("2026-F", "C-U12-EA", 1, 2, 2, "Diaz Solis, Pia", "CODEA B", 50, 1.5);
@@ -154,14 +160,37 @@ const medallero = (p) => p.$$eval("#medallero tbody tr", (trs) => trs.map((t) =>
     igual("el medallero se ve y la ficha no", [await visible(p, "#general"), await visible(p, "#ficha")], [true, false]);
     igual("sin elegir una final no se ven los mejores tableros", await visible(p, "#tableros"), false);
 
+    console.log("\n=== Medallas por final ===");
+    igual("con todas las ediciones se ve la tabla por final", await visible(p, "#por-final"), true);
+    igual("las cifras por tipo: individuales, equipos, tableros y total",
+        await p.$$eval("#por-final .grid > div", (d) => d.map((x) => x.textContent)),
+        ["3Individuales: 1 de oro, 2 de plata, 0 de bronce", "2Por equipos: 1 de oro, 1 de plata, 0 de bronce", "5Tableros: 4 de oro, 1 de plata, 0 de bronce", "10Total: 6 de oro, 4 de plata, 0 de bronce"]);
+    igual("cada comité en cada final (oro·plata·bronce) y su total",
+        await p.$$eval("#por-final tbody tr", (t) => t.map((x) => [...x.cells].map((c) => c.textContent))),
+        [["Goicoechea", "5·0·0", "5·0·0", "5"], ["CODEA (Alajuela)", "1·3·0", "1·3·0", "4"], ["Belén", "0·1·0", "0·1·0", "1"], ["Total", "6·4·0", "6·4·0", "10"]]);
+    await p.click("#por-final tr[data-comite='Goicoechea'] td[data-final='2026-F'] button");
+    await p.waitForFunction(() => document.getElementById("ficha").checkVisibility());
+    igual("la cifra abre la ficha del comité en esa final", await p.evaluate(() => location.hash), "#goicoechea~2026-F");
+    igual("cada medalla de la ficha lleva su enlace a chess-results",
+        await p.$$eval("#ficha section[data-edicion='2026-F'] a[href*='chess-results']", (a) => a.map((x) => x.getAttribute("href").replace(/^https:\/\/chess-results\.com\/tnr/, ""))),
+        ["900003.aspx?lan=2&art=1", "900004.aspx?lan=2&art=46", "900004.aspx?lan=2&art=81&turdet=YES&flag=30", "900004.aspx?lan=2&art=81&turdet=YES&flag=30", "900004.aspx?lan=2&art=81&turdet=YES&flag=30"]);
+    igual("el enlace se abre aparte y dice qué abre",
+        await p.$eval("#ficha a[href*='chess-results']", (a) => [a.target, a.rel, a.getAttribute("aria-label")]),
+        ["_blank", "noopener", "Ver la clasificación de U12 Absoluto de Final 2026 en chess-results (se abre en otra pestaña)"]);
+    await p.click("#volver");
+    await p.selectOption("#edicion", "");
+
     console.log("\n=== Los mejores tableros de una final ===");
     await p.selectOption("#edicion", "2026-F");
     await p.waitForFunction(() => document.getElementById("tableros").checkVisibility());
     igual("las columnas: un tablero cada una, y la reserva aparte",
-        await p.$$eval("#tableros th", (t) => t.map((x) => x.textContent)), ["Categoría", "Ritmo", "Tablero 1", "Tablero 2", "Reserva"]);
+        await p.$$eval("#tableros th", (t) => t.map((x) => x.textContent)), ["Categoría", "Ritmo", "Tablero 1", "Tablero 2", "Reserva", "Comprobar"]);
     igual("el primero de cada tablero, con su comité y su porcentaje; el empate sin desempatar, los dos",
         await p.$$eval("#tableros tr[data-torneo='C-U12-EA'] td[data-tablero]", (t) => t.map((x) => [...x.querySelectorAll(":scope > span")].map((s) => s.textContent))),
         [["Mora Vargas, AnaGoicoechea · 100\u00a0%"], ["Ruiz Mena, IvoCODEA (Alajuela) · 83,3\u00a0%", "Leon Vega, SolGoicoechea · 83,3\u00a0%"], ["Arce Brenes, TeoGoicoechea · 100\u00a0%"]]);
+    igual("con una final elegida no sale la tabla por final", await visible(p, "#por-final"), false);
+    igual("cada torneo de los mejores tableros lleva su enlace a la clasificación por tableros",
+        await p.$eval("#tableros tr[data-torneo='C-U12-EA'] a", (a) => a.getAttribute("href")), "https://chess-results.com/tnr900004.aspx?lan=2&art=81&turdet=YES&flag=30");
     igual("en una eliminatoria no hay tableros", await (async () => { await p.selectOption("#edicion", "2025-E"); return visible(p, "#tableros"); })(), false);
     await p.selectOption("#edicion", "");
 
@@ -172,13 +201,13 @@ const medallero = (p) => p.$$eval("#medallero tbody tr", (trs) => trs.map((t) =>
     igual("el enlace lleva el comité", await p.evaluate(() => location.hash), "#goicoechea");
     igual("las ediciones del comité, de la más nueva a la más vieja",
         await p.$$eval("#ficha section[data-edicion]", (s) => s.map((x) => x.dataset.edicion)), ["2026-F", "2025-E"]);
-    const oro = await p.$eval("#ficha section[data-edicion='2026-F'] tr[data-jugador='Mora Vargas, Ana']", (t) => t.lastElementChild.textContent.trim());
+    const oro = await p.$eval("#ficha section[data-edicion='2026-F'] tr[data-jugador='Mora Vargas, Ana']", (t) => t.lastElementChild.previousElementSibling.textContent.trim());
     igual("la medalla va con su emoji y escrita", oro, "🥇 Oro");
     igual("la ficha dice en qué tablero jugó cada uno, su puesto y su medalla",
-        await p.$$eval("#ficha section[data-edicion='2026-F'] tr[data-tablero-de]", (t) => t.map((x) => [x.cells[3].textContent, x.cells[4].textContent, x.cells[5].textContent, x.cells[6].textContent, x.lastElementChild.textContent.trim()])),
+        await p.$$eval("#ficha section[data-edicion='2026-F'] tr[data-tablero-de]", (t) => t.map((x) => [x.cells[3].textContent, x.cells[4].textContent, x.cells[5].textContent, x.cells[6].textContent, x.lastElementChild.previousElementSibling.textContent.trim()])),
         [["Tablero 1", "Mora Vargas, Ana", "1 de 2", "100\u00a0%", "🥇 Oro"], ["Tablero 2", "Leon Vega, Sol", "1 de 2", "83,3\u00a0%", "🥇 Oro"], ["Reserva", "Arce Brenes, Teo", "1 de 1", "100\u00a0%", "🥇 Oro"]]);
     igual("en la eliminatoria dice quién jugó la final",
-        await p.$eval("#ficha section[data-edicion='2025-E'] tr[data-jugador='Mora Vargas, Ana']", (t) => t.lastElementChild.textContent.trim()), "Jugó la final");
+        await p.$eval("#ficha section[data-edicion='2025-E'] tr[data-jugador='Mora Vargas, Ana']", (t) => t.lastElementChild.previousElementSibling.textContent.trim()), "Jugó la final");
 
     console.log("\n=== El comité deducido ===");
     await p.selectOption("#comite", "codea-alajuela");
@@ -201,7 +230,7 @@ const medallero = (p) => p.$$eval("#medallero tbody tr", (trs) => trs.map((t) =>
     await p.waitForFunction(() => document.getElementById("ficha").checkVisibility());
     igual("abre la ficha de Belén en la final 2026", [await p.$eval("#comite", (s) => s.value), await p.$eval("#edicion", (s) => s.value)], ["belen", "2026-F"]);
     igual("el empate de Rojas comparte la plata",
-        await p.$eval("#ficha tr[data-jugador='Rojas Arias, Luis']", (t) => [t.cells[3].textContent, t.lastElementChild.textContent.trim()]), ["2 de 4", "🥈 Plata"]);
+        await p.$eval("#ficha tr[data-jugador='Rojas Arias, Luis']", (t) => [t.cells[3].textContent, t.lastElementChild.previousElementSibling.textContent.trim()]), ["2 de 4", "🥈 Plata"]);
     await ctx.close();
 
     await browser.close();

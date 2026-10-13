@@ -3044,6 +3044,19 @@ medalla. El dueño lo pidió solo para las finales.
   página; un puesto vacío es un empate y lo comparten los dos.
 - **Si la tabla no se puede leer, la página sigue sin los tableros**: son un
   agregado, no la herramienta.
+- **Con «Todas las ediciones» sale «Medallas por final»**: cuántas medallas
+  hubo de cada tipo (individuales, equipos, tableros y total) y una tabla
+  comité por final (oro·plata·bronce), como el medallero que el dueño pidió en
+  imagen. Cada cifra abre la ficha del comité en esa final.
+- **Cada dato se puede comprobar en chess-results** (lo pidió el dueño): cada
+  jugador, equipo y tablero de la ficha y cada torneo de «Mejores tableros»
+  lleva su enlace al torneo (`art=1` la clasificación, `art=46` la tabla final
+  de equipos cuando existe, `art=81` la clasificación por tableros). Por eso la
+  página lee también el `tnr` de cada fila.
+- **El total de cada comité (`todos`) se vuelve a calcular después de leer los
+  tableros**: se calculaba al preparar los resultados, antes de los tableros, y
+  la columna de total y el «puesto en el medallero» de la ficha los dejaban
+  afuera sin avisar.
 
 `verificar-jdn-comites.js` lo prueba: la columna de cada tablero y la reserva,
 el empate que comparte el primer puesto, que una eliminatoria no muestra

@@ -82,7 +82,7 @@
         const filas = [];
         for (let desde = 0; ; desde += 1000) {
             const { data, error } = await sb.from("jdn_resultados")
-                .select("edicion,codigo,orden,puesto,nombre,comite,record,puntos")
+                .select("edicion,codigo,tnr,orden,puesto,nombre,comite,record,puntos")
                 .order("edicion").order("codigo").order("orden")
                 .range(desde, desde + 999);
             if (error) throw error;
@@ -96,7 +96,7 @@
         const filas = [];
         for (let desde = 0; ; desde += 1000) {
             const { data, error } = await sb.from("jdn_tableros")
-                .select("edicion,codigo,tablero,orden,puesto,nombre,equipo,porcentaje,puntos")
+                .select("edicion,codigo,tnr,tablero,orden,puesto,nombre,equipo,porcentaje,puntos")
                 .order("edicion").order("codigo").order("tablero").order("orden")
                 .range(desde, desde + 999);
             if (error) return [];
@@ -109,7 +109,7 @@
         for (const f of filas) {
             const k = f.edicion + f.codigo + "-" + f.tablero;
             const rk = f.puesto || previo[k] || 0; previo[k] = rk;
-            tabs.push({ ed: f.edicion, cod: f.codigo, ...categoria(f.codigo), tablero: f.tablero, rk, nombre: f.nombre,
+            tabs.push({ ed: f.edicion, cod: f.codigo, tnr: f.tnr, ...categoria(f.codigo), tablero: f.tablero, rk, nombre: f.nombre,
                 equipo: f.equipo.replace(/^C+DR\s+/i, ""), comite: comite(f.equipo, true), pct: Number(f.porcentaje), pts: Number(f.puntos) });
             tamT[k] = (tamT[k] || 0) + 1;
         }
@@ -124,7 +124,7 @@
             // Un puesto vacío es un empate con el de arriba.
             const rk = f.puesto || previo[k] || 0; previo[k] = rk;
             const esEquipo = f.codigo.split("-")[2][0] === "E";
-            const r = { ed: f.edicion, cod: f.codigo, ...categoria(f.codigo), rk, pts: Number(f.puntos), fase: edicion(f.edicion).fase };
+            const r = { ed: f.edicion, cod: f.codigo, tnr: f.tnr, ...categoria(f.codigo), rk, pts: Number(f.puntos), fase: edicion(f.edicion).fase };
             if (esEquipo) eq.push(Object.assign(r, { equipo: f.nombre.replace(/^C+DR\s+/i, ""), comite: comite(f.comite || f.nombre, true), record: f.record || "" }));
             else ind.push(Object.assign(r, { nombre: f.nombre, clave: clave(f.nombre), comite: comite(f.comite, false), deducido: false }));
             tam[k] = (tam[k] || 0) + 1;
@@ -183,6 +183,17 @@
     }
     const etiqueta = (t) => el("span", { class: "inline-block rounded-full bg-accent-100 text-brand-900 text-xs font-semibold px-2 py-0.5" }, t);
     const zonaTxt = (z) => [...z].sort().join(" y ") || "—";
+    /* Cada dato lleva su enlace a chess-results para comprobarlo: art=1 la
+       clasificación, art=46 la tabla final de equipos, art=81 la clasificación
+       por tableros. */
+    function fuente(tnr, art, que) {
+        if (!tnr) return el("td", { class: TD });
+        return el("td", { class: TD }, el("a", {
+            href: "https://chess-results.com/tnr" + tnr + ".aspx?lan=2&art=" + art + (art === 81 ? "&turdet=YES&flag=30" : ""),
+            target: "_blank", rel: "noopener", "aria-label": "Ver " + que + " en chess-results (se abre en otra pestaña)",
+            class: "underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-500",
+        }, "chess-results"));
+    }
 
     function tabla(caption, cabeza, filas) {
         const t = el("table", { class: "w-full text-sm" }, el("caption", { class: "sr-only" }, caption),
@@ -213,6 +224,43 @@
         }
         if (!lista.length) tb.append(el("tr", {}, el("td", { class: TD, colspan: "11" }, "No hay resultados de esta edición.")));
         pintarTableros(e && e.fase === "final" ? e : null);
+        pintarPorFinal(!e);
+    }
+
+    /* Con todas las ediciones: cuántas medallas de cada tipo hubo y cuántas
+       ganó cada comité en cada final. Cada celda abre la ficha del comité en
+       esa final, donde cada medalla tiene su enlace a chess-results. */
+    function pintarPorFinal(ver) {
+        const caja = $("por-final");
+        caja.replaceChildren();
+        caja.classList.toggle("hidden", !ver);
+        if (!ver) return;
+        const finales = EDICIONES.filter((x) => x.fase === "final" && Object.keys(tam).some((k) => k.startsWith(x.id))).reverse();
+        const cuenta = (lista) => [1, 2, 3].map((k) => lista.filter((r) => r.fase !== "elim" && r.rk === k).length);
+        const tipos = [["Individuales", cuenta(ind)], ["Por equipos", cuenta(eq)], ["Tableros", cuenta(tabs)]];
+        const suma = [0, 1, 2].map((j) => tipos.reduce((a, t) => a + t[1][j], 0));
+        tipos.push(["Total", suma]);
+        caja.append(el("h2", { id: "por-final-titulo", class: "font-serif text-xl font-bold text-brand-800 dark:text-white" }, "Medallas por final"),
+            el("p", { class: "text-sm text-brand-500 dark:text-brand-300 mt-1" },
+                "Oros · platas · bronces de cada comité en cada final. Cada cifra abre la ficha del comité en esa final, donde cada medalla tiene su enlace a chess-results para comprobarla."));
+        caja.append(el("div", { class: "grid grid-cols-2 md:grid-cols-4 gap-3 mt-3" }, ...tipos.map(([n, m]) =>
+            cifra(m[0] + m[1] + m[2], n + ": " + m[0] + " de oro, " + m[1] + " de plata, " + m[2] + " de bronce"))));
+        const por = finales.map((f) => Object.fromEntries(resumen((r) => r.ed === f.id).map((x) => [x.nombre, x])));
+        const lista = todos.filter((x) => x.oro + x.plata + x.bronce);
+        const celda = (x, f, i) => {
+            const y = por[i][x.nombre];
+            if (!y || !(y.oro + y.plata + y.bronce)) return td("—", 1);
+            const b = el("button", { type: "button", class: "underline underline-offset-2 hover:no-underline rounded tabular-nums focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-500",
+                "aria-label": `${x.nombre} en ${f.titulo}: ${y.oro} de oro, ${y.plata} de plata, ${y.bronce} de bronce. Ver su ficha` }, y.oro + "·" + y.plata + "·" + y.bronce);
+            b.addEventListener("click", () => elegir(slug(x.nombre), f.id));
+            return el("td", { class: TDN, "data-final": f.id }, b);
+        };
+        const filas = lista.map((x) => el("tr", { "data-comite": x.nombre }, td(x.nombre), ...finales.map((f, i) => celda(x, f, i)),
+            td(x.oro + "·" + x.plata + "·" + x.bronce, 1), td(x.oro + x.plata + x.bronce, 1)));
+        const tot = finales.map((f, i) => { const v = Object.values(por[i]); return [0, 1, 2].map((j) => v.reduce((a, y) => a + y[MED[j + 1]], 0)).join("·"); });
+        filas.push(el("tr", { class: "font-semibold" }, td("Total"), ...tot.map((t) => td(t, 1)), td(suma.join("·"), 1), td(suma[0] + suma[1] + suma[2], 1)));
+        caja.append(tabla("Medallas de cada comité en cada final", ["Comité", ...finales.map((f) => ({ t: f.titulo.replace(/^Final /, ""), num: 1 })),
+            { t: "Oro·Plata·Bronce", num: 1 }, { t: "Medallas", num: 1 }], filas));
     }
 
     /* En el medallero de una final: el primero de cada tablero de cada torneo
@@ -229,13 +277,13 @@
             el("p", { class: "text-sm text-brand-500 dark:text-brand-300 mt-1" },
                 "El primero de cada tablero en cada torneo por equipos, según la clasificación por tableros de chess-results (porcentaje de puntos, con los desempates y el mínimo de partidas que fijó el árbitro de cada torneo)."
                 + (nums.includes(5) ? " En esta final los equipos tenían una reserva." : "")));
-        caja.append(tabla("Mejores tableros de " + e.titulo, ["Categoría", "Ritmo", ...nums.map(nomTablero)], torneos.map((t) =>
+        caja.append(tabla("Mejores tableros de " + e.titulo, ["Categoría", "Ritmo", ...nums.map(nomTablero), "Comprobar"], torneos.map((t) =>
             el("tr", { "data-torneo": t.cod }, td(t.cat + " " + t.rama), td(t.ritmo), ...nums.map((n) => {
                 const mejores = de.filter((r) => r.cod === t.cod && r.tablero === n && r.rk === 1);
                 return el("td", { class: TD.replace("whitespace-nowrap", "min-w-[10rem] align-top"), "data-tablero": n }, ...(mejores.length ? mejores.map((r) =>
                     el("span", { class: "block" }, el("span", { class: "font-semibold" }, r.nombre),
                         el("span", { class: "block text-xs text-brand-500 dark:text-brand-300" }, r.comite + " · " + pctTxt(r.pct)))) : ["—"]));
-            })))));
+            }), fuente(t.tnr, 81, "la clasificación por tableros de " + t.cat + " " + t.rama + " " + t.ritmo + " de " + e.titulo)))));
     }
 
     function cifra(n, texto) {
@@ -290,32 +338,36 @@
                 el("p", { class: "text-sm text-brand-500 dark:text-brand-300" }, e.detalle));
             if (ri.length) {
                 sec.append(el("h4", { class: "font-semibold text-brand-800 dark:text-white mt-4" }, "Individual"));
-                const cab = ["Categoría", final ? "Ritmo" : "Zona", "Jugador", { t: "Puesto", num: 1 }, { t: "Puntos", num: 1 }, final ? "Medalla" : "Final"];
+                const cab = ["Categoría", final ? "Ritmo" : "Zona", "Jugador", { t: "Puesto", num: 1 }, { t: "Puntos", num: 1 }, final ? "Medalla" : "Final", "Comprobar"];
                 sec.append(tabla("Jugadores de " + x.nombre + " en " + e.titulo, cab, ri.map((r) => el("tr", { "data-jugador": r.nombre },
                     td(r.cat + " " + r.rama), td(final ? r.ritmo : r.zona),
                     el("td", { class: TD.replace("whitespace-nowrap", "min-w-[12rem]") }, r.nombre,
                         r.deducido ? el("span", { class: "block text-xs text-brand-500 dark:text-brand-300" }, "comité deducido") : null),
                     td(r.rk + " de " + tam[r.ed + r.cod], 1), td(fmt(r.pts), 1),
-                    el("td", { class: TD }, final ? medalla(r.rk) : (jugoFinal(r) ? etiqueta("Jugó la final") : null))))));
+                    el("td", { class: TD }, final ? medalla(r.rk) : (jugoFinal(r) ? etiqueta("Jugó la final") : null)),
+                    fuente(r.tnr, 1, "la clasificación de " + r.cat + " " + r.rama + " de " + e.titulo)))));
             }
             if (re.length) {
                 sec.append(el("h4", { class: "font-semibold text-brand-800 dark:text-white mt-4" }, "Equipos"));
                 const cab = ["Categoría", final ? "Ritmo" : "Zona", "Equipo", { t: "Puesto", num: 1 }, { t: "Matches G-E-P", num: 1 }, { t: "Puntos de partida", num: 1 }];
                 if (final) cab.push("Medalla");
+                cab.push("Comprobar");
                 sec.append(tabla("Equipos de " + x.nombre + " en " + e.titulo, cab, re.map((r) => el("tr", {},
                     td(r.cat + " " + r.rama), td(final ? r.ritmo : r.zona), td(r.equipo),
                     td(r.rk + " de " + tam[r.ed + r.cod], 1), td(r.record || "—", 1), td(fmt(r.pts), 1),
-                    final ? el("td", { class: TD }, medalla(r.rk)) : null))));
+                    final ? el("td", { class: TD }, medalla(r.rk)) : null,
+                    fuente(r.tnr, r.record ? 46 : 1, "la clasificación de equipos de " + r.cat + " " + r.rama + " de " + e.titulo)))));
             }
             const rt = tabs.filter((r) => r.ed === e.id && r.comite === x.nombre).sort((a, b) => a.cat.localeCompare(b.cat) || a.rama.localeCompare(b.rama)
                 || (ORD_R[a.ritmo] || 0) - (ORD_R[b.ritmo] || 0) || a.equipo.localeCompare(b.equipo) || a.tablero - b.tablero);
             if (rt.length) {
                 sec.append(el("h4", { class: "font-semibold text-brand-800 dark:text-white mt-4" }, "Tableros de sus equipos"));
-                const cab = ["Categoría", "Ritmo", "Equipo", "Tablero", "Jugador", { t: "Puesto en el tablero", num: 1 }, { t: "Porcentaje", num: 1 }, { t: "Puntos", num: 1 }, "Medalla"];
+                const cab = ["Categoría", "Ritmo", "Equipo", "Tablero", "Jugador", { t: "Puesto en el tablero", num: 1 }, { t: "Porcentaje", num: 1 }, { t: "Puntos", num: 1 }, "Medalla", "Comprobar"];
                 sec.append(tabla("Tableros de los equipos de " + x.nombre + " en " + e.titulo, cab, rt.map((r) => el("tr", { "data-tablero-de": r.nombre },
                     td(r.cat + " " + r.rama), td(r.ritmo), td(r.equipo), td(nomTablero(r.tablero)), td(r.nombre),
                     td(r.rk + " de " + tamT[r.ed + r.cod + "-" + r.tablero], 1), td(pctTxt(r.pct), 1), td(fmt(r.pts), 1),
-                    el("td", { class: TD }, medalla(r.rk))))));
+                    el("td", { class: TD }, medalla(r.rk)),
+                    fuente(r.tnr, 81, "la clasificación por tableros de " + r.cat + " " + r.rama + " " + r.ritmo + " de " + e.titulo)))));
             }
             ficha.append(sec);
         }
@@ -353,6 +405,7 @@
         }
         preparar(filas);
         prepararTableros(await leerTableros());
+        todos = resumen(() => true); // con las medallas de tablero
         const torneos = Object.keys(tam).length;
         const nE = EDICIONES.filter((e) => e.fase === "elim" && Object.keys(tam).some((k) => k.startsWith(e.id))).length;
         const nF = EDICIONES.filter((e) => e.fase === "final" && Object.keys(tam).some((k) => k.startsWith(e.id))).length;
