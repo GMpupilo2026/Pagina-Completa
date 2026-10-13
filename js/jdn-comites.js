@@ -50,7 +50,7 @@
         "escazu": "Escazú", "san ramon": "San Ramón", "paraiso": "Paraíso", "poas": "Poás", "la union": "La Unión",
         "rio cuarto": "Río Cuarto", "puerto jimenez": "Puerto Jiménez", "sarapiqui": "Sarapiquí", "canas": "Cañas", "tibas": "Tibás",
         "montes de oca": "Montes de Oca", "monres de oca": "Montes de Oca", "goicochea": "Goicoechea", "goicoechea": "Goicoechea", "goico": "Goicoechea",
-        "asociacion goicoechea": "Goicoechea", "codea": "CODEA (Alajuela)", "alajuela": "CODEA (Alajuela)", "turri": "Turrialba", "crecia": "Grecia",
+        "asociacion goicoechea": "Goicoechea", "asociacion naranjo": "Naranjo", "codea": "CODEA (Alajuela)", "alajuela": "CODEA (Alajuela)", "turri": "Turrialba", "crecia": "Grecia",
         "san joe": "San José", "lepanto": "Lepanto (distrital)", "lepantp": "Lepanto (distrital)", "paquera": "Paquera (distrital)", "el guarco": "El Guarco", "los chiles": "Los Chiles",
     };
     const titulo = (s) => s.toLowerCase().replace(/(^|\s)\S/g, (m) => m.toUpperCase()).replace(/\bDe\b/g, "de");
