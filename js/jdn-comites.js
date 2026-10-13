@@ -25,9 +25,12 @@
         { id: "2024-E", fase: "elim", titulo: "Eliminatoria 2024", detalle: "Cartago, mayo de 2024", ciclo: "2024-F" },
         { id: "2023-F", fase: "final", titulo: "Final 2022-2023", detalle: "enero de 2023", ciclo: "2023-F" },
         { id: "2022-E", fase: "elim", titulo: "Eliminatoria 2022", detalle: "Alajuela, septiembre y octubre de 2022", ciclo: "2023-F" },
-        { id: "2021-E", fase: "elim", titulo: "Eliminatoria 2021", detalle: "octubre de 2021", ciclo: "" },
+        { id: "2021-F", fase: "final", titulo: "Final 2020-2021", detalle: "noviembre de 2021", ciclo: "2021-F" },
+        { id: "2021-E", fase: "elim", titulo: "Eliminatoria 2021", detalle: "octubre de 2021", ciclo: "2021-F" },
         { id: "2019-F", fase: "final", titulo: "Final 2019", detalle: "Ciudad Colón, junio y julio de 2019", ciclo: "2019-F" },
-        { id: "2018-E", fase: "elim", titulo: "Eliminatoria 2018", detalle: "abril de 2018", ciclo: "" },
+        { id: "2019-E", fase: "elim", titulo: "Eliminatoria 2019", detalle: "abril de 2019", ciclo: "2019-F" },
+        { id: "2018-F", fase: "final", titulo: "Final 2018", detalle: "Ciudad Colón, julio de 2018", ciclo: "2018-F" },
+        { id: "2018-E", fase: "elim", titulo: "Eliminatoria 2018", detalle: "Alajuela, abril de 2018", ciclo: "2018-F" },
     ];
     const ED = Object.fromEntries(EDICIONES.map((e) => [e.id, e]));
     /* Una edición que se cargue después y no esté arriba igual se ve. */
