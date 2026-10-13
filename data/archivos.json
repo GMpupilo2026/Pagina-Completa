@@ -8143,7 +8143,7 @@
   ]
  },
  "word": {
-  "total": 2,
+  "total": 91,
   "grupos": [
    {
     "carpeta": "documentos/jdn",
@@ -8161,6 +8161,547 @@
       "titulo": "Consentimiento informado JDN 2027 — atleta",
       "tipo": "otro",
       "kb": 76
+     }
+    ]
+   },
+   {
+    "carpeta": "material/programas-de-estudio",
+    "titulo": "Programas de Estudio de Ajedrez (1.° a 11.°)",
+    "grupo": "Carpetas",
+    "archivos": [
+     {
+      "ruta": "material/programas-de-estudio/00 Alcance y secuencia - Programas de Estudio de Ajedrez.docx",
+      "titulo": "00 Alcance y secuencia   Programas de Estudio de Ajedrez",
+      "tipo": "otro",
+      "kb": 30
+     },
+     {
+      "ruta": "material/programas-de-estudio/01 Primer año - Planeamiento Unidad 1 (lecciones 1 a 30).docx",
+      "titulo": "01 Primer año   Planeamiento Unidad 1 (lecciones 1 a 30)",
+      "tipo": "otro",
+      "kb": 29
+     },
+     {
+      "ruta": "material/programas-de-estudio/01 Primer año - Planeamiento Unidad 2 (lecciones 31 a 60).docx",
+      "titulo": "01 Primer año   Planeamiento Unidad 2 (lecciones 31 a 60)",
+      "tipo": "otro",
+      "kb": 28
+     },
+     {
+      "ruta": "material/programas-de-estudio/01 Primer año - Planeamiento Unidad 3 (lecciones 61 a 100).docx",
+      "titulo": "01 Primer año   Planeamiento Unidad 3 (lecciones 61 a 100)",
+      "tipo": "otro",
+      "kb": 30
+     },
+     {
+      "ruta": "material/programas-de-estudio/01 Primer año - Planeamiento Unidad 4 (lecciones 101 a 133).docx",
+      "titulo": "01 Primer año   Planeamiento Unidad 4 (lecciones 101 a 133)",
+      "tipo": "otro",
+      "kb": 29
+     },
+     {
+      "ruta": "material/programas-de-estudio/01 Primer año - Planeamiento Unidad 5 (lecciones 134 a 166).docx",
+      "titulo": "01 Primer año   Planeamiento Unidad 5 (lecciones 134 a 166)",
+      "tipo": "otro",
+      "kb": 28
+     },
+     {
+      "ruta": "material/programas-de-estudio/01 Primer año - Planeamiento Unidad 6 (lecciones 167 a 200).docx",
+      "titulo": "01 Primer año   Planeamiento Unidad 6 (lecciones 167 a 200)",
+      "tipo": "otro",
+      "kb": 29
+     },
+     {
+      "ruta": "material/programas-de-estudio/01 Primer año - Programa de Estudio de Ajedrez, parte 1 (fundamentos).docx",
+      "titulo": "01 Primer año   Programa de Estudio de Ajedrez, parte 1 (fundamentos)",
+      "tipo": "otro",
+      "kb": 23
+     },
+     {
+      "ruta": "material/programas-de-estudio/01 Primer año - Programa de Estudio de Ajedrez, parte 2 (malla curricular).docx",
+      "titulo": "01 Primer año   Programa de Estudio de Ajedrez, parte 2 (malla curricular)",
+      "tipo": "otro",
+      "kb": 33
+     },
+     {
+      "ruta": "material/programas-de-estudio/02 Segundo año - Planeamiento Unidad 1 (lecciones 1 a 30).docx",
+      "titulo": "02 Segundo año   Planeamiento Unidad 1 (lecciones 1 a 30)",
+      "tipo": "otro",
+      "kb": 29
+     },
+     {
+      "ruta": "material/programas-de-estudio/02 Segundo año - Planeamiento Unidad 2 (lecciones 31 a 65).docx",
+      "titulo": "02 Segundo año   Planeamiento Unidad 2 (lecciones 31 a 65)",
+      "tipo": "otro",
+      "kb": 30
+     },
+     {
+      "ruta": "material/programas-de-estudio/02 Segundo año - Planeamiento Unidad 3 (lecciones 66 a 100).docx",
+      "titulo": "02 Segundo año   Planeamiento Unidad 3 (lecciones 66 a 100)",
+      "tipo": "otro",
+      "kb": 29
+     },
+     {
+      "ruta": "material/programas-de-estudio/02 Segundo año - Planeamiento Unidad 4 (lecciones 101 a 133).docx",
+      "titulo": "02 Segundo año   Planeamiento Unidad 4 (lecciones 101 a 133)",
+      "tipo": "otro",
+      "kb": 29
+     },
+     {
+      "ruta": "material/programas-de-estudio/02 Segundo año - Planeamiento Unidad 5 (lecciones 134 a 166).docx",
+      "titulo": "02 Segundo año   Planeamiento Unidad 5 (lecciones 134 a 166)",
+      "tipo": "otro",
+      "kb": 28
+     },
+     {
+      "ruta": "material/programas-de-estudio/02 Segundo año - Planeamiento Unidad 6 (lecciones 167 a 200).docx",
+      "titulo": "02 Segundo año   Planeamiento Unidad 6 (lecciones 167 a 200)",
+      "tipo": "otro",
+      "kb": 28
+     },
+     {
+      "ruta": "material/programas-de-estudio/02 Segundo año - Programa de Estudio de Ajedrez, parte 1 (fundamentos).docx",
+      "titulo": "02 Segundo año   Programa de Estudio de Ajedrez, parte 1 (fundamentos)",
+      "tipo": "otro",
+      "kb": 23
+     },
+     {
+      "ruta": "material/programas-de-estudio/02 Segundo año - Programa de Estudio de Ajedrez, parte 2 (malla curricular).docx",
+      "titulo": "02 Segundo año   Programa de Estudio de Ajedrez, parte 2 (malla curricular)",
+      "tipo": "otro",
+      "kb": 33
+     },
+     {
+      "ruta": "material/programas-de-estudio/03 Tercer año - Planeamiento Unidad 1 (lecciones 1 a 33).docx",
+      "titulo": "03 Tercer año   Planeamiento Unidad 1 (lecciones 1 a 33)",
+      "tipo": "otro",
+      "kb": 30
+     },
+     {
+      "ruta": "material/programas-de-estudio/03 Tercer año - Planeamiento Unidad 2 (lecciones 34 a 66).docx",
+      "titulo": "03 Tercer año   Planeamiento Unidad 2 (lecciones 34 a 66)",
+      "tipo": "otro",
+      "kb": 29
+     },
+     {
+      "ruta": "material/programas-de-estudio/03 Tercer año - Planeamiento Unidad 3 (lecciones 67 a 100).docx",
+      "titulo": "03 Tercer año   Planeamiento Unidad 3 (lecciones 67 a 100)",
+      "tipo": "otro",
+      "kb": 29
+     },
+     {
+      "ruta": "material/programas-de-estudio/03 Tercer año - Planeamiento Unidad 4 (lecciones 101 a 133).docx",
+      "titulo": "03 Tercer año   Planeamiento Unidad 4 (lecciones 101 a 133)",
+      "tipo": "otro",
+      "kb": 28
+     },
+     {
+      "ruta": "material/programas-de-estudio/03 Tercer año - Planeamiento Unidad 5 (lecciones 134 a 166).docx",
+      "titulo": "03 Tercer año   Planeamiento Unidad 5 (lecciones 134 a 166)",
+      "tipo": "otro",
+      "kb": 28
+     },
+     {
+      "ruta": "material/programas-de-estudio/03 Tercer año - Planeamiento Unidad 6 (lecciones 167 a 200).docx",
+      "titulo": "03 Tercer año   Planeamiento Unidad 6 (lecciones 167 a 200)",
+      "tipo": "otro",
+      "kb": 28
+     },
+     {
+      "ruta": "material/programas-de-estudio/03 Tercer año - Programa de Estudio de Ajedrez, parte 1 (fundamentos).docx",
+      "titulo": "03 Tercer año   Programa de Estudio de Ajedrez, parte 1 (fundamentos)",
+      "tipo": "otro",
+      "kb": 24
+     },
+     {
+      "ruta": "material/programas-de-estudio/03 Tercer año - Programa de Estudio de Ajedrez, parte 2 (malla curricular).docx",
+      "titulo": "03 Tercer año   Programa de Estudio de Ajedrez, parte 2 (malla curricular)",
+      "tipo": "otro",
+      "kb": 34
+     },
+     {
+      "ruta": "material/programas-de-estudio/04 Cuarto año - Planeamiento Unidad 1 (lecciones 1 a 30).docx",
+      "titulo": "04 Cuarto año   Planeamiento Unidad 1 (lecciones 1 a 30)",
+      "tipo": "otro",
+      "kb": 29
+     },
+     {
+      "ruta": "material/programas-de-estudio/04 Cuarto año - Planeamiento Unidad 2 (lecciones 31 a 65).docx",
+      "titulo": "04 Cuarto año   Planeamiento Unidad 2 (lecciones 31 a 65)",
+      "tipo": "otro",
+      "kb": 30
+     },
+     {
+      "ruta": "material/programas-de-estudio/04 Cuarto año - Planeamiento Unidad 3 (lecciones 66 a 100).docx",
+      "titulo": "04 Cuarto año   Planeamiento Unidad 3 (lecciones 66 a 100)",
+      "tipo": "otro",
+      "kb": 29
+     },
+     {
+      "ruta": "material/programas-de-estudio/04 Cuarto año - Planeamiento Unidad 4 (lecciones 101 a 133).docx",
+      "titulo": "04 Cuarto año   Planeamiento Unidad 4 (lecciones 101 a 133)",
+      "tipo": "otro",
+      "kb": 29
+     },
+     {
+      "ruta": "material/programas-de-estudio/04 Cuarto año - Planeamiento Unidad 5 (lecciones 134 a 168).docx",
+      "titulo": "04 Cuarto año   Planeamiento Unidad 5 (lecciones 134 a 168)",
+      "tipo": "otro",
+      "kb": 29
+     },
+     {
+      "ruta": "material/programas-de-estudio/04 Cuarto año - Planeamiento Unidad 6 (lecciones 169 a 200).docx",
+      "titulo": "04 Cuarto año   Planeamiento Unidad 6 (lecciones 169 a 200)",
+      "tipo": "otro",
+      "kb": 28
+     },
+     {
+      "ruta": "material/programas-de-estudio/04 Cuarto año - Programa de Estudio de Ajedrez, parte 1 (fundamentos).docx",
+      "titulo": "04 Cuarto año   Programa de Estudio de Ajedrez, parte 1 (fundamentos)",
+      "tipo": "otro",
+      "kb": 24
+     },
+     {
+      "ruta": "material/programas-de-estudio/04 Cuarto año - Programa de Estudio de Ajedrez, parte 2 (malla curricular).docx",
+      "titulo": "04 Cuarto año   Programa de Estudio de Ajedrez, parte 2 (malla curricular)",
+      "tipo": "otro",
+      "kb": 34
+     },
+     {
+      "ruta": "material/programas-de-estudio/05 Quinto año - Planeamiento Unidad 1 (lecciones 1 a 34).docx",
+      "titulo": "05 Quinto año   Planeamiento Unidad 1 (lecciones 1 a 34)",
+      "tipo": "otro",
+      "kb": 31
+     },
+     {
+      "ruta": "material/programas-de-estudio/05 Quinto año - Planeamiento Unidad 2 (lecciones 35 a 66).docx",
+      "titulo": "05 Quinto año   Planeamiento Unidad 2 (lecciones 35 a 66)",
+      "tipo": "otro",
+      "kb": 29
+     },
+     {
+      "ruta": "material/programas-de-estudio/05 Quinto año - Planeamiento Unidad 3 (lecciones 67 a 100).docx",
+      "titulo": "05 Quinto año   Planeamiento Unidad 3 (lecciones 67 a 100)",
+      "tipo": "otro",
+      "kb": 29
+     },
+     {
+      "ruta": "material/programas-de-estudio/05 Quinto año - Planeamiento Unidad 4 (lecciones 101 a 134).docx",
+      "titulo": "05 Quinto año   Planeamiento Unidad 4 (lecciones 101 a 134)",
+      "tipo": "otro",
+      "kb": 29
+     },
+     {
+      "ruta": "material/programas-de-estudio/05 Quinto año - Planeamiento Unidad 5 (lecciones 135 a 166).docx",
+      "titulo": "05 Quinto año   Planeamiento Unidad 5 (lecciones 135 a 166)",
+      "tipo": "otro",
+      "kb": 28
+     },
+     {
+      "ruta": "material/programas-de-estudio/05 Quinto año - Planeamiento Unidad 6 (lecciones 167 a 200).docx",
+      "titulo": "05 Quinto año   Planeamiento Unidad 6 (lecciones 167 a 200)",
+      "tipo": "otro",
+      "kb": 30
+     },
+     {
+      "ruta": "material/programas-de-estudio/05 Quinto año - Programa de Estudio de Ajedrez, parte 1 (fundamentos).docx",
+      "titulo": "05 Quinto año   Programa de Estudio de Ajedrez, parte 1 (fundamentos)",
+      "tipo": "otro",
+      "kb": 24
+     },
+     {
+      "ruta": "material/programas-de-estudio/05 Quinto año - Programa de Estudio de Ajedrez, parte 2 (malla curricular).docx",
+      "titulo": "05 Quinto año   Programa de Estudio de Ajedrez, parte 2 (malla curricular)",
+      "tipo": "otro",
+      "kb": 34
+     },
+     {
+      "ruta": "material/programas-de-estudio/06 Sexto año - Planeamiento Unidad 1 (lecciones 1 a 34).docx",
+      "titulo": "06 Sexto año   Planeamiento Unidad 1 (lecciones 1 a 34)",
+      "tipo": "otro",
+      "kb": 31
+     },
+     {
+      "ruta": "material/programas-de-estudio/06 Sexto año - Planeamiento Unidad 2 (lecciones 35 a 66).docx",
+      "titulo": "06 Sexto año   Planeamiento Unidad 2 (lecciones 35 a 66)",
+      "tipo": "otro",
+      "kb": 30
+     },
+     {
+      "ruta": "material/programas-de-estudio/06 Sexto año - Planeamiento Unidad 3 (lecciones 67 a 100).docx",
+      "titulo": "06 Sexto año   Planeamiento Unidad 3 (lecciones 67 a 100)",
+      "tipo": "otro",
+      "kb": 29
+     },
+     {
+      "ruta": "material/programas-de-estudio/06 Sexto año - Planeamiento Unidad 4 (lecciones 101 a 134).docx",
+      "titulo": "06 Sexto año   Planeamiento Unidad 4 (lecciones 101 a 134)",
+      "tipo": "otro",
+      "kb": 29
+     },
+     {
+      "ruta": "material/programas-de-estudio/06 Sexto año - Planeamiento Unidad 5 (lecciones 135 a 164).docx",
+      "titulo": "06 Sexto año   Planeamiento Unidad 5 (lecciones 135 a 164)",
+      "tipo": "otro",
+      "kb": 28
+     },
+     {
+      "ruta": "material/programas-de-estudio/06 Sexto año - Planeamiento Unidad 6 (lecciones 165 a 200).docx",
+      "titulo": "06 Sexto año   Planeamiento Unidad 6 (lecciones 165 a 200)",
+      "tipo": "otro",
+      "kb": 29
+     },
+     {
+      "ruta": "material/programas-de-estudio/06 Sexto año - Programa de Estudio de Ajedrez, parte 1 (fundamentos).docx",
+      "titulo": "06 Sexto año   Programa de Estudio de Ajedrez, parte 1 (fundamentos)",
+      "tipo": "otro",
+      "kb": 24
+     },
+     {
+      "ruta": "material/programas-de-estudio/06 Sexto año - Programa de Estudio de Ajedrez, parte 2 (malla curricular).docx",
+      "titulo": "06 Sexto año   Programa de Estudio de Ajedrez, parte 2 (malla curricular)",
+      "tipo": "otro",
+      "kb": 35
+     },
+     {
+      "ruta": "material/programas-de-estudio/07 Sétimo año - Planeamiento Unidad 1 (lecciones 1 a 35).docx",
+      "titulo": "07 Sétimo año   Planeamiento Unidad 1 (lecciones 1 a 35)",
+      "tipo": "otro",
+      "kb": 32
+     },
+     {
+      "ruta": "material/programas-de-estudio/07 Sétimo año - Planeamiento Unidad 2 (lecciones 36 a 70).docx",
+      "titulo": "07 Sétimo año   Planeamiento Unidad 2 (lecciones 36 a 70)",
+      "tipo": "otro",
+      "kb": 31
+     },
+     {
+      "ruta": "material/programas-de-estudio/07 Sétimo año - Planeamiento Unidad 3 (lecciones 71 a 100).docx",
+      "titulo": "07 Sétimo año   Planeamiento Unidad 3 (lecciones 71 a 100)",
+      "tipo": "otro",
+      "kb": 29
+     },
+     {
+      "ruta": "material/programas-de-estudio/07 Sétimo año - Planeamiento Unidad 4 (lecciones 101 a 135).docx",
+      "titulo": "07 Sétimo año   Planeamiento Unidad 4 (lecciones 101 a 135)",
+      "tipo": "otro",
+      "kb": 30
+     },
+     {
+      "ruta": "material/programas-de-estudio/07 Sétimo año - Planeamiento Unidad 5 (lecciones 136 a 168).docx",
+      "titulo": "07 Sétimo año   Planeamiento Unidad 5 (lecciones 136 a 168)",
+      "tipo": "otro",
+      "kb": 29
+     },
+     {
+      "ruta": "material/programas-de-estudio/07 Sétimo año - Planeamiento Unidad 6 (lecciones 169 a 200).docx",
+      "titulo": "07 Sétimo año   Planeamiento Unidad 6 (lecciones 169 a 200)",
+      "tipo": "otro",
+      "kb": 28
+     },
+     {
+      "ruta": "material/programas-de-estudio/07 Sétimo año - Programa de Estudio de Ajedrez, parte 1 (fundamentos).docx",
+      "titulo": "07 Sétimo año   Programa de Estudio de Ajedrez, parte 1 (fundamentos)",
+      "tipo": "otro",
+      "kb": 24
+     },
+     {
+      "ruta": "material/programas-de-estudio/07 Sétimo año - Programa de Estudio de Ajedrez, parte 2 (malla curricular).docx",
+      "titulo": "07 Sétimo año   Programa de Estudio de Ajedrez, parte 2 (malla curricular)",
+      "tipo": "otro",
+      "kb": 36
+     },
+     {
+      "ruta": "material/programas-de-estudio/08 Octavo año - Planeamiento Unidad 1 (lecciones 1 a 34).docx",
+      "titulo": "08 Octavo año   Planeamiento Unidad 1 (lecciones 1 a 34)",
+      "tipo": "otro",
+      "kb": 33
+     },
+     {
+      "ruta": "material/programas-de-estudio/08 Octavo año - Planeamiento Unidad 2 (lecciones 35 a 67).docx",
+      "titulo": "08 Octavo año   Planeamiento Unidad 2 (lecciones 35 a 67)",
+      "tipo": "otro",
+      "kb": 31
+     },
+     {
+      "ruta": "material/programas-de-estudio/08 Octavo año - Planeamiento Unidad 3 (lecciones 68 a 100).docx",
+      "titulo": "08 Octavo año   Planeamiento Unidad 3 (lecciones 68 a 100)",
+      "tipo": "otro",
+      "kb": 31
+     },
+     {
+      "ruta": "material/programas-de-estudio/08 Octavo año - Planeamiento Unidad 4 (lecciones 101 a 134).docx",
+      "titulo": "08 Octavo año   Planeamiento Unidad 4 (lecciones 101 a 134)",
+      "tipo": "otro",
+      "kb": 31
+     },
+     {
+      "ruta": "material/programas-de-estudio/08 Octavo año - Planeamiento Unidad 5 (lecciones 135 a 167).docx",
+      "titulo": "08 Octavo año   Planeamiento Unidad 5 (lecciones 135 a 167)",
+      "tipo": "otro",
+      "kb": 30
+     },
+     {
+      "ruta": "material/programas-de-estudio/08 Octavo año - Planeamiento Unidad 6 (lecciones 168 a 200).docx",
+      "titulo": "08 Octavo año   Planeamiento Unidad 6 (lecciones 168 a 200)",
+      "tipo": "otro",
+      "kb": 30
+     },
+     {
+      "ruta": "material/programas-de-estudio/08 Octavo año - Programa de Estudio de Ajedrez, parte 1 (fundamentos).docx",
+      "titulo": "08 Octavo año   Programa de Estudio de Ajedrez, parte 1 (fundamentos)",
+      "tipo": "otro",
+      "kb": 24
+     },
+     {
+      "ruta": "material/programas-de-estudio/08 Octavo año - Programa de Estudio de Ajedrez, parte 2 (malla curricular).docx",
+      "titulo": "08 Octavo año   Programa de Estudio de Ajedrez, parte 2 (malla curricular)",
+      "tipo": "otro",
+      "kb": 35
+     },
+     {
+      "ruta": "material/programas-de-estudio/09 Noveno año - Planeamiento Unidad 1 (lecciones 1 a 34).docx",
+      "titulo": "09 Noveno año   Planeamiento Unidad 1 (lecciones 1 a 34)",
+      "tipo": "otro",
+      "kb": 32
+     },
+     {
+      "ruta": "material/programas-de-estudio/09 Noveno año - Planeamiento Unidad 2 (lecciones 35 a 66).docx",
+      "titulo": "09 Noveno año   Planeamiento Unidad 2 (lecciones 35 a 66)",
+      "tipo": "otro",
+      "kb": 30
+     },
+     {
+      "ruta": "material/programas-de-estudio/09 Noveno año - Planeamiento Unidad 3 (lecciones 67 a 100).docx",
+      "titulo": "09 Noveno año   Planeamiento Unidad 3 (lecciones 67 a 100)",
+      "tipo": "otro",
+      "kb": 29
+     },
+     {
+      "ruta": "material/programas-de-estudio/09 Noveno año - Planeamiento Unidad 4 (lecciones 101 a 134).docx",
+      "titulo": "09 Noveno año   Planeamiento Unidad 4 (lecciones 101 a 134)",
+      "tipo": "otro",
+      "kb": 30
+     },
+     {
+      "ruta": "material/programas-de-estudio/09 Noveno año - Planeamiento Unidad 5 (lecciones 135 a 166).docx",
+      "titulo": "09 Noveno año   Planeamiento Unidad 5 (lecciones 135 a 166)",
+      "tipo": "otro",
+      "kb": 29
+     },
+     {
+      "ruta": "material/programas-de-estudio/09 Noveno año - Planeamiento Unidad 6 (lecciones 167 a 200).docx",
+      "titulo": "09 Noveno año   Planeamiento Unidad 6 (lecciones 167 a 200)",
+      "tipo": "otro",
+      "kb": 28
+     },
+     {
+      "ruta": "material/programas-de-estudio/09 Noveno año - Programa de Estudio de Ajedrez, parte 1 (fundamentos).docx",
+      "titulo": "09 Noveno año   Programa de Estudio de Ajedrez, parte 1 (fundamentos)",
+      "tipo": "otro",
+      "kb": 24
+     },
+     {
+      "ruta": "material/programas-de-estudio/09 Noveno año - Programa de Estudio de Ajedrez, parte 2 (malla curricular).docx",
+      "titulo": "09 Noveno año   Programa de Estudio de Ajedrez, parte 2 (malla curricular)",
+      "tipo": "otro",
+      "kb": 35
+     },
+     {
+      "ruta": "material/programas-de-estudio/10 Décimo año - Planeamiento Unidad 1 (lecciones 1 a 34).docx",
+      "titulo": "10 Décimo año   Planeamiento Unidad 1 (lecciones 1 a 34)",
+      "tipo": "otro",
+      "kb": 31
+     },
+     {
+      "ruta": "material/programas-de-estudio/10 Décimo año - Planeamiento Unidad 2 (lecciones 35 a 66).docx",
+      "titulo": "10 Décimo año   Planeamiento Unidad 2 (lecciones 35 a 66)",
+      "tipo": "otro",
+      "kb": 29
+     },
+     {
+      "ruta": "material/programas-de-estudio/10 Décimo año - Planeamiento Unidad 3 (lecciones 67 a 100).docx",
+      "titulo": "10 Décimo año   Planeamiento Unidad 3 (lecciones 67 a 100)",
+      "tipo": "otro",
+      "kb": 29
+     },
+     {
+      "ruta": "material/programas-de-estudio/10 Décimo año - Planeamiento Unidad 4 (lecciones 101 a 134).docx",
+      "titulo": "10 Décimo año   Planeamiento Unidad 4 (lecciones 101 a 134)",
+      "tipo": "otro",
+      "kb": 29
+     },
+     {
+      "ruta": "material/programas-de-estudio/10 Décimo año - Planeamiento Unidad 5 (lecciones 135 a 166).docx",
+      "titulo": "10 Décimo año   Planeamiento Unidad 5 (lecciones 135 a 166)",
+      "tipo": "otro",
+      "kb": 29
+     },
+     {
+      "ruta": "material/programas-de-estudio/10 Décimo año - Planeamiento Unidad 6 (lecciones 167 a 200).docx",
+      "titulo": "10 Décimo año   Planeamiento Unidad 6 (lecciones 167 a 200)",
+      "tipo": "otro",
+      "kb": 28
+     },
+     {
+      "ruta": "material/programas-de-estudio/10 Décimo año - Programa de Estudio de Ajedrez, parte 1 (fundamentos).docx",
+      "titulo": "10 Décimo año   Programa de Estudio de Ajedrez, parte 1 (fundamentos)",
+      "tipo": "otro",
+      "kb": 24
+     },
+     {
+      "ruta": "material/programas-de-estudio/10 Décimo año - Programa de Estudio de Ajedrez, parte 2 (malla curricular).docx",
+      "titulo": "10 Décimo año   Programa de Estudio de Ajedrez, parte 2 (malla curricular)",
+      "tipo": "otro",
+      "kb": 36
+     },
+     {
+      "ruta": "material/programas-de-estudio/11 Undécimo año - Planeamiento Unidad 1 (lecciones 1 a 34).docx",
+      "titulo": "11 Undécimo año   Planeamiento Unidad 1 (lecciones 1 a 34)",
+      "tipo": "otro",
+      "kb": 31
+     },
+     {
+      "ruta": "material/programas-de-estudio/11 Undécimo año - Planeamiento Unidad 2 (lecciones 35 a 67).docx",
+      "titulo": "11 Undécimo año   Planeamiento Unidad 2 (lecciones 35 a 67)",
+      "tipo": "otro",
+      "kb": 30
+     },
+     {
+      "ruta": "material/programas-de-estudio/11 Undécimo año - Planeamiento Unidad 3 (lecciones 68 a 100).docx",
+      "titulo": "11 Undécimo año   Planeamiento Unidad 3 (lecciones 68 a 100)",
+      "tipo": "otro",
+      "kb": 30
+     },
+     {
+      "ruta": "material/programas-de-estudio/11 Undécimo año - Planeamiento Unidad 4 (lecciones 101 a 135).docx",
+      "titulo": "11 Undécimo año   Planeamiento Unidad 4 (lecciones 101 a 135)",
+      "tipo": "otro",
+      "kb": 30
+     },
+     {
+      "ruta": "material/programas-de-estudio/11 Undécimo año - Planeamiento Unidad 5 (lecciones 136 a 168).docx",
+      "titulo": "11 Undécimo año   Planeamiento Unidad 5 (lecciones 136 a 168)",
+      "tipo": "otro",
+      "kb": 30
+     },
+     {
+      "ruta": "material/programas-de-estudio/11 Undécimo año - Planeamiento Unidad 6 (lecciones 169 a 200).docx",
+      "titulo": "11 Undécimo año   Planeamiento Unidad 6 (lecciones 169 a 200)",
+      "tipo": "otro",
+      "kb": 29
+     },
+     {
+      "ruta": "material/programas-de-estudio/11 Undécimo año - Programa de Estudio de Ajedrez, parte 1 (fundamentos).docx",
+      "titulo": "11 Undécimo año   Programa de Estudio de Ajedrez, parte 1 (fundamentos)",
+      "tipo": "otro",
+      "kb": 24
+     },
+     {
+      "ruta": "material/programas-de-estudio/11 Undécimo año - Programa de Estudio de Ajedrez, parte 2 (malla curricular).docx",
+      "titulo": "11 Undécimo año   Programa de Estudio de Ajedrez, parte 2 (malla curricular)",
+      "tipo": "otro",
+      "kb": 36
      }
     ]
    }

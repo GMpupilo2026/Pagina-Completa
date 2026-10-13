@@ -157,6 +157,7 @@ function tituloDe(ruta) {
    el nombre de la carpeta. */
 const CARPETAS = {
   "documentos/jdn": ["Juegos Deportivos Nacionales 2027", "Carpetas"],
+  "material/programas-de-estudio": ["Programas de Estudio de Ajedrez (1.° a 11.°)", "Carpetas"],
   "entreno/img/facil": ["Nivel fácil", "Ejercicios de Entrenamiento"],
   "entreno/img/intermedio": ["Nivel intermedio", "Ejercicios de Entrenamiento"],
   "entreno/img/avanzado": ["Nivel avanzado", "Ejercicios de Entrenamiento"],

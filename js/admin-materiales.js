@@ -2,7 +2,7 @@
  * «Ponte a prueba», los diez volúmenes del banco de ejercicios «Mide tu fuerza»,
  * los libros «Rompe el estancamiento», «Ganar con poco», «Cambiar o no cambiar»,
  * «Ideas que ganan partidas» y «Los cimientos del ajedrez», los cuentos de Peonita y
- * «Coachess en resumen»), con sus
+ * «Coachess en resumen» y los Programas de Estudio de Ajedrez de 1.° a 11.°), con sus
  * sub-fichas —las pruebas y sus versiones como cuestionario, si las tiene— y
  * CON QUIÉN se comparte.
  *
@@ -251,6 +251,20 @@
         { href: "material/coachess-resumen/coachess-resumen.pdf", texto: "📥 El libro en PDF" },
         { href: "material/coachess-resumen/coachess-resumen-accesible.html", texto: "♿ Versión accesible" },
       ],
+    },
+    {
+      producto: "programas-de-estudio",
+      emoji: "🎓",
+      titulo: "Programas de Estudio de Ajedrez · 1.° a 11.°",
+      autor: "Oscar Angulo Cubero",
+      resumen: "Once programas de estudio, uno por año escolar, con la estructura de los programas del MEP (fundamentación, habilidades, ejes transversales, perfil de salida, malla curricular con aprendizajes esperados e indicadores, proyectos e instrumentos de evaluación), y el planeamiento de las 200 lecciones de cada año: los cuatro momentos de la mediación, la evaluación y los materiales de cada día. En Word, para editarlos.",
+      // La lista de archivos por año la escribe herramientas/programas-estudio/generar.py
+      // en js/programas-estudio-lista.js: acá solo el .zip y el documento de la serie.
+      archivos: [
+        { href: "material/programas-de-estudio/" + encodeURIComponent("Programas de Estudio de Ajedrez (todos).zip"), texto: "📦 Los 89 documentos (.zip)" },
+        { href: "material/programas-de-estudio/" + encodeURIComponent("00 Alcance y secuencia - Programas de Estudio de Ajedrez.docx"), texto: "📄 Alcance y secuencia" },
+      ],
+      porAño: true,
     },
   ];
 
@@ -558,6 +572,7 @@
       cab.appendChild(archivos);
       art.appendChild(cab);
       art.appendChild(el("p", "text-sm text-brand-600 dark:text-brand-200 mb-5", m.resumen));
+      if (m.porAño) pintarPorAño(art);
 
       const comp = el("section", "mb-6");
       comp.appendChild(el("h4", "text-sm font-bold uppercase tracking-wide text-brand-500 dark:text-brand-300 mb-2", "Con quién lo compartes"));
@@ -576,6 +591,34 @@
       art.appendChild(pr);
       lista.appendChild(art);
     });
+  }
+
+  /* Los programas de estudio: un desplegable por año con sus ocho documentos
+     (el programa en dos partes y el planeamiento por unidad). La lista viene de
+     js/programas-estudio-lista.js, que se genera con los .docx. */
+  function pintarPorAño(art) {
+    const P = window.PROGRAMAS_ESTUDIO;
+    if (!P) return;
+    const caja = el("section", "mb-6");
+    caja.appendChild(el("h4", "text-sm font-bold uppercase tracking-wide text-brand-500 dark:text-brand-300 mb-2", "Por año"));
+    P.años.forEach((a) => {
+      const det = el("details", "border-b border-brand-100 dark:border-brand-800 py-2");
+      const sum = el("summary", "cursor-pointer font-semibold text-brand-800 dark:text-white rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400",
+        a.nombre + " · " + a.ciclo + " · " + a.edad);
+      det.appendChild(sum);
+      const ul = el("ul", "mt-2 space-y-1 pl-4");
+      a.archivos.forEach((f) => {
+        const li = el("li");
+        const enlace = el("a", "text-sm text-accent-700 dark:text-accent-400 underline underline-offset-2 hover:text-accent-600 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400", "📄 " + f.titulo);
+        enlace.href = P.carpeta + encodeURIComponent(f.archivo);
+        enlace.setAttribute("download", f.archivo);
+        li.appendChild(enlace);
+        ul.appendChild(li);
+      });
+      det.appendChild(ul);
+      caja.appendChild(det);
+    });
+    art.appendChild(caja);
   }
 
   /* «Con quién lo compartes» de un producto en otra ficha (la de Asesores):

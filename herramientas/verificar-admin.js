@@ -686,7 +686,21 @@ async function pruebaMateriales(browser) {
      "material/peonita/peonita.pdf", "material/peonita/peonita-accesible.html",
      "material/peonita-trucos/peonita-trucos.pdf", "material/peonita-trucos/peonita-trucos-accesible.html",
      "material/peonita-rey/peonita-rey.pdf", "material/peonita-rey/peonita-rey-accesible.html",
-     "material/coachess-resumen/coachess-resumen.pdf", "material/coachess-resumen/coachess-resumen-accesible.html"]);
+     "material/coachess-resumen/coachess-resumen.pdf", "material/coachess-resumen/coachess-resumen-accesible.html",
+     "material/programas-de-estudio/Programas%20de%20Estudio%20de%20Ajedrez%20(todos).zip",
+     "material/programas-de-estudio/00%20Alcance%20y%20secuencia%20-%20Programas%20de%20Estudio%20de%20Ajedrez.docx"]);
+  // Los programas de estudio: un desplegable por año con sus ocho Word, todos
+  // bajo material/programas-de-estudio/ (el candado del worker: solo quien
+  // administra o a quien se le compartió). La lista es la que se generó.
+  igual("los programas de estudio, por año, con sus ocho documentos", await page.evaluate(() => {
+    const art = document.querySelector("#mat-lista article[aria-labelledby='mat-titulo-programas-de-estudio']");
+    const años = Array.from(art.querySelectorAll("details"));
+    const enlaces = años.flatMap((d) => Array.from(d.querySelectorAll("a")));
+    return [años.length, años[0].querySelector("summary").textContent, enlaces.length,
+      enlaces.every((a) => a.getAttribute("href").startsWith("material/programas-de-estudio/") && /\.docx$/.test(a.getAttribute("href"))),
+      decodeURIComponent(años[10].querySelector("a").getAttribute("href"))];
+  }), [11, "Primer año · I Ciclo de la Educación General Básica · 6 a 7 años", 88, true,
+       "material/programas-de-estudio/11 Undécimo año - Programa de Estudio de Ajedrez, parte 1 (fundamentos).docx"]);
   // El banco de ejercicios no tiene pruebas como cuestionario: solo se
   // comparte. Antes de separarlo, cualquier material sin pruebas pintaba
   // igual el título y «todavía no están en la base».
@@ -969,10 +983,22 @@ async function pruebaPdfs(browser) {
     document.activeElement.id, document.getElementById("arch-ficha-word").getAttribute("aria-selected"),
     ["pdf", "word", "excel", "presentaciones", "accesibles", "imagenes"].filter((t) => document.getElementById("arch-panel-" + t).checkVisibility())]),
     ["arch-ficha-word", "true", ["word"]]);
-  igual("están todos los Word, por carpeta, con vista previa y para bajar (no «Abrir»)", await page.evaluate(() => {
-    const filas = Array.from(document.querySelectorAll("#arch-contenido-word .arch-fila")).filter((f) => f.checkVisibility());
-    return [filas.map((f) => f.dataset.ruta).sort(), filas.every((f) => f.querySelectorAll("a").length === 1 && f.querySelector("[data-vista]"))];
-  }), [rutasDe(todo.word).sort(), true]);
+  /* Una carpeta a la vista por vez (los formularios de los JDN, los
+     programas de estudio…): se recorren todas con su botón, como una persona. */
+  const wordVistos = [];
+  let wordBien = true;
+  for (const id of await page.evaluate(() => Array.from(document.querySelectorAll("#arch-carpetas-word .arch-carpeta")).map((b) => b.dataset.carpeta))) {
+    await page.click('#arch-carpetas-word .arch-carpeta[data-carpeta="' + id + '"]');
+    const [rutas, bien] = await page.evaluate(() => {
+      const filas = Array.from(document.querySelectorAll("#arch-contenido-word .arch-fila")).filter((f) => f.checkVisibility());
+      return [filas.map((f) => f.dataset.ruta), filas.every((f) => f.querySelectorAll("a").length === 1 && f.querySelector("[data-vista]"))];
+    });
+    wordVistos.push(...rutas);
+    wordBien = wordBien && bien;
+  }
+  igual("están todos los Word, por carpeta, con vista previa y para bajar (no «Abrir»)",
+    [wordVistos.sort(), wordBien], [rutasDe(todo.word).sort(), true]);
+  await page.click("#arch-carpetas-word .arch-carpeta");
   await clic(page, "#arch-contenido-word .arch-fila [data-vista]");
   await page.waitForSelector("#vista-previa[open] .vista-contenido p", { timeout: 10000 });
   igual("la vista previa del Word trae su texto (y nada del archivo se ejecuta)", await page.evaluate(() => {

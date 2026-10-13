@@ -117,6 +117,9 @@ cortés descortés
 encontré revisé recargué creé comprometí revelé
 dejé llegué terminé
 moví saqué enroqué pensé equivoqué encerré
+analicé anoté apuré calculé cambié capturé cumplí debí entregué gané perdí quedé recibí relajé
+respeté sacrifiqué saludé sentí sufrí transformé usé cambiaré
+andré dupré vienés
 ojalá
 quizá
 pococí sarapiquí sinaí poás tibás
