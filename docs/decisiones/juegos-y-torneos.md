@@ -3009,6 +3009,38 @@ comparte la plata, el comité deducido, la medalla escrita, «Jugó la final», 
 filtro de edición y el enlace. Rompiendo a propósito la paginación, el empate o
 la deducción, salta.
 
+### De la eliminatoria a la final, cómo viene cada comité y la ficha del jugador
+
+Tres mejoras que pidió el dueño para que la estadística diga más que el
+medallero:
+
+- **«De la eliminatoria a la final»** (debajo de los participantes): por
+  comité, cuántos jugadores inscribió en la eliminatoria, cuántos de ellos
+  jugaron la final del mismo ciclo (y el porcentaje), cuántos equipos llevó a
+  cada una y cuántas medallas sacó en la final por cada clasificado (jugador o
+  equipo). Con una edición elegida, solo su ciclo; con todas, la suma. Un
+  jugador que cambió de comité entre la eliminatoria y la final no cuenta como
+  «pasó» para ninguno: así «pasaron» nunca supera a los jugadores en la final.
+  No sale con un filtro de fase, ritmo o zona, que la partirían a la mitad.
+- **La evolución en el tiempo**: en la ficha de cada comité, «Cómo viene» con
+  dos gráficas de barras (medallas en cada final y participantes en cada
+  eliminatoria), y con todas las ediciones, «Comparar comités»: hasta tres en
+  una gráfica de líneas, con una tabla debajo con oro·plata·bronce. Las
+  gráficas son SVG propio, sin librerías. Las barras son una sola serie, cada
+  una con su número escrito; las líneas usan los tres primeros colores de la
+  paleta categórica validada (`#2a78d6`, `#eb6834`, `#1baf7a`; en oscuro
+  `#3987e5`, `#d95926`, `#199e70`), comprobados con el validador de la guía de
+  gráficos contra el blanco y contra el fondo oscuro: el aqua queda bajo 3:1 en
+  claro, por eso cada línea lleva su nombre al final y la tabla repite los
+  números (el color nunca va solo). Un solo eje, nunca dos.
+- **La ficha del jugador**: tocar un nombre (en «Buscar jugador» o en «Sus
+  jugadores» de un comité) abre su trayectoria: eliminatorias y finales que
+  jugó, sus medallas individuales y de tablero, las categorías en el orden en
+  que las jugó y cada torneo con su enlace a chess-results. Los filtros la
+  recortan sin cerrarla y el enlace la guarda (`#~~j=…`). En la ficha del
+  comité, «Sus jugadores» dice cuántos volvieron a los JDN en otro año (la
+  retención) y lista a los 60 que más jugaron.
+
 ### Los filtros y la búsqueda de jugador
 
 Arriba de todo, además del comité y la edición: fase (eliminatorias o finales),

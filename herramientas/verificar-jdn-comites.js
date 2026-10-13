@@ -18,6 +18,11 @@
      final, con el empate sin desempatar compartido y la reserva aparte, y en
      la ficha del comité, con su medalla; los tres primeros de cada tablero
      suman al medallero (son medallas oficiales); sin licencia no se piden;
+   - de la eliminatoria a la final (cuántos pasaron, medallas por
+     clasificado), comparar comités en una gráfica con su tabla, cómo viene
+     cada comité (barras con su número), sus jugadores y cuántos volvieron, y
+     la ficha de cada jugador con su trayectoria, que un filtro recorta y el
+     enlace guarda;
    - los participantes de cada comité: por edición con todas las ediciones,
      por categoría y rama con una elegida (un equipo escrito distinto en otro
      ritmo cuenta una vez), la lista de torneos con su enlace y la cifra que
@@ -298,12 +303,60 @@ const medallero = (p) => p.$$eval("#medallero tbody tr", (trs) => trs.map((t) =>
         ["900003.aspx?lan=2&art=1", "900004.aspx?lan=2&art=81&turdet=YES&flag=30", "900001.aspx?lan=2&art=1"]);
     await p.selectOption("#f-fase", "final");
     igual("la búsqueda respeta los filtros", (await p.$$eval("#busqueda tbody tr", (t) => t.length)), 2);
-    await p.click("#busqueda tbody button");
+    await p.click("#busqueda tbody td:nth-child(2) button");
     await p.waitForFunction(() => document.getElementById("ficha").checkVisibility());
     igual("el comité del resultado abre su ficha en esa edición, con los filtros en el enlace",
         await p.evaluate(() => location.hash), "#goicoechea~2026-F~fase=final&q=mora+va");
     await p.fill("#buscar", "zz");
     igual("con menos de 3 letras no busca", await visible(p, "#busqueda"), false);
+    await ctx.close();
+
+    console.log("\n=== De la eliminatoria a la final ===");
+    ({ ctx, p } = await abrir(browser, "jdn-comites.html", true));
+    await p.waitForFunction(() => document.getElementById("app").checkVisibility());
+    igual("por comité: inscritos en la eliminatoria, cuántos jugaron la final, equipos y medallas por clasificado",
+        await p.$$eval("#efectividad tbody tr", (t) => t.slice(0, 2).map((x) => [...x.cells].map((c) => c.textContent.trim()))),
+        [["Goicoechea", "1", "1", "100\u00a0%", "1", "1", "1", "5", "2,5"], ["CODEA (Alajuela)", "1", "1", "100\u00a0%", "0", "1", "1", "4", "2"]]);
+    await p.selectOption("#edicion", "2025-E");
+    igual("con una edición, el título dice su ciclo", await p.textContent("#efectividad h2"), "De la eliminatoria a la final · ciclo 2025 → 2026");
+
+    console.log("\n=== Comparar comités ===");
+    await p.selectOption("#edicion", "");
+    igual("compara los tres primeros del medallero, con la tabla de cada final",
+        await p.$$eval("#comparar tbody tr", (t) => t.map((x) => [...x.cells].map((c) => c.textContent))),
+        [["Goicoechea", "5·0·0"], ["CODEA (Alajuela)", "1·3·0"], ["Belén", "0·1·0"]]);
+    igual("la gráfica nombra cada línea al final", await p.$$eval("#comparar svg text.font-semibold", (t) => t.map((x) => x.textContent).sort()), ["Belén", "CODEA (Alajuela)", "Goicoechea"]);
+    await p.selectOption("#comparar-3", "");
+    igual("con dos comités, dos líneas", await p.$$eval("#comparar polyline", (l) => l.length), 2);
+
+    console.log("\n=== Cómo viene un comité y sus jugadores ===");
+    await p.selectOption("#comite", "goicoechea");
+    await p.waitForFunction(() => document.getElementById("ficha").checkVisibility());
+    igual("las barras de medallas por final y de participantes por eliminatoria, con su número escrito",
+        await p.$$eval("[data-evolucion] figure", (f) => f.map((x) => [x.querySelector("figcaption").textContent, [...x.querySelectorAll("svg text.font-semibold")].map((t) => t.textContent)])),
+        [["Medallas en cada final", ["5·0·0"]], ["Participantes en cada eliminatoria", ["0", "1 · 1E"]]]);
+    igual("sus jugadores y cuántos volvieron otro año", await p.textContent("[data-jugadores] p"),
+        "3 jugadores en torneos individuales y tableros de equipo; 1 (33\u00a0%) jugaron los JDN en más de un año. Toca un nombre para ver su trayectoria.");
+
+    console.log("\n=== La ficha del jugador ===");
+    await p.click("[data-jugadores] tbody tr[data-jugador='Mora Vargas, Ana'] button");
+    await p.waitForFunction(() => document.getElementById("jugador").checkVisibility());
+    igual("abre su ficha, esconde lo demás y el enlace la guarda",
+        [await visible(p, "#ficha"), await visible(p, "#general"), await p.evaluate(() => location.hash)], [false, false, "#~~j=mora+vargas+ana"]);
+    igual("sus cifras: eliminatorias, finales, medallas (individual y tablero) y categorías",
+        await p.$$eval("#jugador .grid > div p:first-child", (d) => d.map((x) => x.textContent)), ["1", "1", "2", "U12"]);
+    igual("su trayectoria, en orden, con la medalla",
+        await p.$$eval("#jugador tbody tr", (t) => t.map((x) => [x.cells[0].textContent, x.cells[3].textContent, x.cells[6].textContent.trim()])),
+        [["Eliminatoria 2025", "Individual", ""], ["Final 2026", "Individual", "🥇 Oro"], ["Final 2026", "Tablero 1 · Goicoechea A", "🥇 Oro"]]);
+    await p.selectOption("#f-modo", "I");
+    igual("un filtro deja la ficha del jugador abierta y la recorta", [await visible(p, "#jugador"), await p.$$eval("#jugador tbody tr", (t) => t.length)], [true, 2]);
+    await p.click("#volver");
+    igual("«Ver todos los comités» la cierra", [await visible(p, "#jugador"), await visible(p, "#general")], [false, true]);
+    await ctx.close();
+
+    ({ ctx, p } = await abrir(browser, "jdn-comites.html#~~j=mora+vargas+ana", true));
+    await p.waitForFunction(() => document.getElementById("jugador").checkVisibility());
+    igual("el enlace de un jugador abre su ficha", await p.textContent("#jugador h2"), "Mora Vargas, Ana");
     await ctx.close();
 
     console.log("\n=== Un enlace con filtros abre lo mismo ===");
