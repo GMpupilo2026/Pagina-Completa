@@ -29,7 +29,16 @@
      abre la ficha;
    - con todas las ediciones, las medallas por tipo y por final de cada
      comité, cada cifra abre la ficha en esa final, y cada medalla de la ficha
-     y cada torneo de los mejores tableros lleva su enlace a chess-results.
+     y cada torneo de los mejores tableros lleva su enlace a chess-results;
+   - la copa: puntos por puesto con la escala elegida (también una escrita a
+     mano), con o sin los tableros, el empate que comparte los puntos y la
+     escala en el enlace; no sale en una eliminatoria;
+   - los integrantes de cada equipo (jdn_jugadores): en la ficha del comité,
+     las personas en «Participantes», sus jugadores y la ficha del jugador
+     (el equipo de la eliminatoria, sin medalla), y la búsqueda;
+   - el rendimiento contra el Elo: por comité (puntos, esperados, diferencia
+     con su signo escrito), quiénes más sorprendieron con su actuación y su
+     enlace, la columna de la ficha del comité y las partidas del jugador.
 
    Ver «Resultados JDN por comité» en docs/decisiones/juegos-y-torneos.md.
 
@@ -80,6 +89,27 @@ tablero("2026-F", "C-U12-EA", 2, 1, 1, "Ruiz Mena, Ivo", "CODEA B", 83.3, 2.5);
 tablero("2026-F", "C-U12-EA", 2, 2, null, "Leon Vega, Sol", "CCDR Goicoechea A", 83.3, 2.5);
 tablero("2026-F", "C-U12-EA", 5, 1, 1, "Arce Brenes, Teo", "CCDR Goicoechea A", 100, 2);
 
+// Los jugadores de cada torneo con su Elo y sus partidas (jdn_jugadores). Los
+// individuales van por (torneo, orden) como en jdn_resultados.
+const JUGADORES = [];
+function jugador(edicion, codigo, orden, nombre, elo, partidas, puntos, conElo, puntosElo, eloRivales, esperado, equipo, equipoOrden, tablero) {
+    JUGADORES.push({ edicion, codigo, tnr: tnr(edicion, codigo), orden, equipo: equipo || null, equipo_orden: equipoOrden || null, tablero: tablero || null,
+        nombre, elo, partidas, puntos, con_elo: conElo, puntos_elo: puntosElo, elo_rivales: eloRivales, esperado });
+}
+jugador("2025-E", "Z1-U12-EA", 1, "Mora Vargas, Ana", 1580, 2, 1.5, 2, 1.5, 1500, 1.22, "CCDR Goicochea A", 1, 1);
+jugador("2025-E", "Z1-U12-EA", 2, "Brenes Soto, Kai", 1400, 2, 2, 2, 2, 1450, 0.86, "CCDR Goicochea A", 1, 2);
+jugador("2025-E", "Z1-U12-EA", 3, "Vega Rojas, Noa", null, 0, 0, 0, 0, null, null, "CCDR Goicochea A", 1, 3);
+jugador("2025-E", "Z1-U12-IA", 1, "Mora Vargas, Ana", 1580, 2, 2, 2, 2, 1500, 1.22);
+jugador("2026-F", "C-U12-EA", 1, "Mora Vargas, Ana", 1600, 3, 3, 3, 3, 1500, 1.92, "CCDR Goicoechea A", 1, 1);
+jugador("2026-F", "C-U12-EA", 2, "Leon Vega, Sol", 1550, 3, 2.5, 3, 2.5, 1500, 1.71, "CCDR Goicoechea A", 1, 2);
+jugador("2026-F", "C-U12-EA", 3, "Brenes Soto, Kai", 1400, 2, 1, 2, 1, 1500, 0.72, "CCDR Goicoechea A", 1, 3);
+jugador("2026-F", "C-U12-EA", 4, "Diaz Solis, Pia", 1500, 3, 1.5, 3, 1.5, 1550, 1.29, "CODEA B", 2, 1);
+jugador("2026-F", "C-U12-EA", 5, "Ruiz Mena, Ivo", 1500, 3, 2.5, 3, 2.5, 1500, 1.5, "CODEA B", 2, 2);
+jugador("2026-F", "C-U12-IA", 1, "Mora Vargas, Ana", 1600, 3, 3, 3, 3, 1500, 1.92);
+jugador("2026-F", "C-U12-IA", 2, "Solis Rojas, Juan", 1500, 3, 2, 3, 2, 1533, 1.4);
+jugador("2026-F", "C-U12-IA", 3, "Rojas Arias, Luis", null, 3, 1, 3, 1, 1520, null);
+jugador("2026-F", "C-U12-IA", 4, "Perez Mora, Leo", 1450, 3, 0, 2, 0, 1550, 0.72);
+
 function doble(tieneLicencia) {
     return `
 window.SUPABASE_URL = "https://falso.supabase.co";
@@ -87,6 +117,7 @@ window.SUPABASE_ANON_KEY = "anon-falsa";
 (function () {
   const FILAS = ${JSON.stringify(FILAS)};
   const TABLEROS = ${JSON.stringify(TABLEROS)};
+  const JUGADORES = ${JSON.stringify(JUGADORES)};
   const LICENCIA = ${tieneLicencia ? "true" : "false"};
   window.__pedidos = [];
   function respuesta(data, error) { return Promise.resolve({ data, error: error || null }); }
@@ -104,6 +135,10 @@ window.SUPABASE_ANON_KEY = "anon-falsa";
       if (tabla === "jdn_tableros") {
         window.__pedidos.push("jdn_tableros " + q._desde);
         data = LICENCIA ? TABLEROS.slice(q._desde, Math.min(q._hasta + 1, q._desde + 1000)) : [];
+      }
+      if (tabla === "jdn_jugadores") {
+        window.__pedidos.push("jdn_jugadores " + q._desde);
+        data = LICENCIA ? JUGADORES.slice(q._desde, Math.min(q._hasta + 1, q._desde + 1000)) : [];
       }
       if (tabla === "profiles") data = { id: "yo", is_admin: false, role: "profesor" };
       return Promise.resolve({ data, error: null }).then(ok, mal);
@@ -186,7 +221,9 @@ const medallero = (p) => p.$$eval("#medallero tbody tr", (trs) => trs.map((t) =>
     igual("la cifra abre la ficha del comité en esa final", await p.evaluate(() => location.hash), "#goicoechea~2026-F");
     igual("cada medalla de la ficha lleva su enlace a chess-results",
         await p.$$eval("#ficha section[data-edicion='2026-F'] a[href*='chess-results']", (a) => a.map((x) => x.getAttribute("href").replace(/^https:\/\/chess-results\.com\/tnr/, ""))),
-        ["900003.aspx?lan=2&art=1", "900004.aspx?lan=2&art=46", "900005.aspx?lan=2&art=46", "900004.aspx?lan=2&art=81&turdet=YES&flag=30", "900004.aspx?lan=2&art=81&turdet=YES&flag=30", "900004.aspx?lan=2&art=81&turdet=YES&flag=30"]);
+        ["900003.aspx?lan=2&art=1", "900004.aspx?lan=2&art=46", "900005.aspx?lan=2&art=46",
+         "900004.aspx?lan=2&art=20&turdet=YES", "900004.aspx?lan=2&art=20&turdet=YES", "900004.aspx?lan=2&art=20&turdet=YES",
+         "900004.aspx?lan=2&art=81&turdet=YES&flag=30", "900004.aspx?lan=2&art=81&turdet=YES&flag=30", "900004.aspx?lan=2&art=81&turdet=YES&flag=30"]);
     igual("el enlace se abre aparte y dice qué abre",
         await p.$eval("#ficha a[href*='chess-results']", (a) => [a.target, a.rel, a.getAttribute("aria-label")]),
         ["_blank", "noopener", "Ver la clasificación de U12 Absoluto de Final 2026 en chess-results (se abre en otra pestaña)"]);
@@ -294,13 +331,14 @@ const medallero = (p) => p.$$eval("#medallero tbody tr", (trs) => trs.map((t) =>
 
     console.log("\n=== Buscar jugador ===");
     await p.fill("#buscar", "mora va");
-    igual("con menos de 3 letras de un nombre ya busca por cada parte, y encuentra sus torneos y su tablero",
-        await p.$$eval("#busqueda tbody tr", (t) => t.map((x) => [x.cells[2].textContent, x.cells[5].textContent, x.cells[7].textContent.trim()])),
-        [["Final 2026", "Individual", "🥇 Oro"], ["Final 2026", "Tablero 1 · Goicoechea A", "🥇 Oro"], ["Eliminatoria 2025", "Individual", ""]]);
-    igual("dice cuántos resultados y de cuántos jugadores", await p.textContent("#busqueda p"), "3 resultados de 1 jugador.");
-    igual("cada resultado lleva su enlace a chess-results",
+    igual("con menos de 3 letras de un nombre ya busca por cada parte, y encuentra sus torneos, su tablero y su equipo de la eliminatoria (sin medalla)",
+        await p.$$eval("#busqueda tbody tr", (t) => t.map((x) => [x.cells[2].textContent, x.cells[5].textContent, x.cells[6].textContent, x.cells[7].textContent.trim()])),
+        [["Final 2026", "Individual", "1 de 4", "🥇 Oro"], ["Final 2026", "Tablero 1 · Goicoechea A", "1 de 2", "🥇 Oro"],
+         ["Eliminatoria 2025", "Individual", "1 de 3", ""], ["Eliminatoria 2025", "Equipo Goicochea A · tablero 1", "equipo 1 de 1", ""]]);
+    igual("dice cuántos resultados y de cuántos jugadores", await p.textContent("#busqueda p"), "4 resultados de 1 jugador.");
+    igual("cada resultado lleva su enlace a chess-results (el equipo, a su composición)",
         await p.$$eval("#busqueda tbody a", (a) => a.map((x) => x.getAttribute("href").replace("https://chess-results.com/tnr", ""))),
-        ["900003.aspx?lan=2&art=1", "900004.aspx?lan=2&art=81&turdet=YES&flag=30", "900001.aspx?lan=2&art=1"]);
+        ["900003.aspx?lan=2&art=1", "900004.aspx?lan=2&art=81&turdet=YES&flag=30", "900001.aspx?lan=2&art=1", "900002.aspx?lan=2&art=20&turdet=YES"]);
     await p.selectOption("#f-fase", "final");
     igual("la búsqueda respeta los filtros", (await p.$$eval("#busqueda tbody tr", (t) => t.length)), 2);
     await p.click("#busqueda tbody td:nth-child(2) button");
@@ -336,7 +374,7 @@ const medallero = (p) => p.$$eval("#medallero tbody tr", (trs) => trs.map((t) =>
         await p.$$eval("[data-evolucion] figure", (f) => f.map((x) => [x.querySelector("figcaption").textContent, [...x.querySelectorAll("svg text.font-semibold")].map((t) => t.textContent)])),
         [["Medallas en cada final", ["5·0·0"]], ["Participantes en cada eliminatoria", ["0", "1 · 1E"]]]);
     igual("sus jugadores y cuántos volvieron otro año", await p.textContent("[data-jugadores] p"),
-        "3 jugadores en torneos individuales y tableros de equipo; 1 (33\u00a0%) jugaron los JDN en más de un año. Toca un nombre para ver su trayectoria.");
+        "4 jugadores en torneos individuales y en sus equipos; 2 (50\u00a0%) jugaron los JDN en más de un año. Toca un nombre para ver su trayectoria.");
 
     console.log("\n=== La ficha del jugador ===");
     await p.click("[data-jugadores] tbody tr[data-jugador='Mora Vargas, Ana'] button");
@@ -346,10 +384,15 @@ const medallero = (p) => p.$$eval("#medallero tbody tr", (trs) => trs.map((t) =>
     igual("sus cifras: eliminatorias, finales, medallas (individual y tablero) y categorías",
         await p.$$eval("#jugador .grid > div p:first-child", (d) => d.map((x) => x.textContent)), ["1", "1", "2", "U12"]);
     igual("su trayectoria, en orden, con la medalla",
-        await p.$$eval("#jugador tbody tr", (t) => t.map((x) => [x.cells[0].textContent, x.cells[3].textContent, x.cells[6].textContent.trim()])),
-        [["Eliminatoria 2025", "Individual", ""], ["Final 2026", "Individual", "🥇 Oro"], ["Final 2026", "Tablero 1 · Goicoechea A", "🥇 Oro"]]);
+        await p.$$eval("#jugador tbody tr:not([data-elo-edicion])", (t) => t.map((x) => [x.cells[0].textContent, x.cells[3].textContent, x.cells[6].textContent.trim()])),
+        [["Eliminatoria 2025", "Individual", ""], ["Eliminatoria 2025", "Equipo Goicochea A · tablero 1", ""], ["Final 2026", "Individual", "🥇 Oro"], ["Final 2026", "Tablero 1 · Goicoechea A", "🥇 Oro"]]);
+    igual("sus partidas contra el Elo, torneo por torneo, con la diferencia con su signo",
+        [await p.textContent("#jugador [data-contra-elo]"),
+         await p.$$eval("#jugador tr[data-elo-edicion]", (t) => t.map((x) => [x.cells[2].textContent, x.cells[8].textContent, x.cells[9].textContent]))],
+        ["En 10 partidas contra rivales con Elo sacó 9,5 puntos; por el Elo se esperaban 6,3: 3,2 por encima de lo esperado.",
+         [["Goicochea A · tablero 1", "+0,3", "1691"], ["Individual", "+0,8", "2300"], ["Goicoechea A · tablero 1", "+1,1", "2300"], ["Individual", "+1,1", "2300"]]]);
     await p.selectOption("#f-modo", "I");
-    igual("un filtro deja la ficha del jugador abierta y la recorta", [await visible(p, "#jugador"), await p.$$eval("#jugador tbody tr", (t) => t.length)], [true, 2]);
+    igual("un filtro deja la ficha del jugador abierta y la recorta", [await visible(p, "#jugador"), await p.$$eval("#jugador tbody tr:not([data-elo-edicion])", (t) => t.length)], [true, 2]);
     await p.click("#volver");
     igual("«Ver todos los comités» la cierra", [await visible(p, "#jugador"), await visible(p, "#general")], [false, true]);
     await ctx.close();
@@ -364,6 +407,85 @@ const medallero = (p) => p.$$eval("#medallero tbody tr", (trs) => trs.map((t) =>
     await p.waitForFunction(() => document.getElementById("ficha").checkVisibility());
     igual("los filtros vuelven a sus listas", [await p.$eval("#f-cat", (s) => s.value), await p.$eval("#f-modo", (s) => s.value), await p.$eval("#comite", (s) => s.value)], ["U12", "I", "belen"]);
     igual("y la ficha muestra solo lo individual", await p.$$eval("#ficha section[data-edicion='2026-F'] h4", (h) => h.map((x) => x.textContent)), ["Individual"]);
+    await ctx.close();
+
+
+    console.log("\n=== La copa: puntos por puesto ===");
+    ({ ctx, p } = await abrir(browser, "jdn-comites.html", true));
+    await p.waitForFunction(() => document.getElementById("app").checkVisibility());
+    const copaFilas = () => p.$$eval("#copa tbody tr", (t) => t.map((x) => [...x.cells].map((c) => c.textContent.trim())));
+    igual("con la escala de siempre (10, 8, 6…) y los tableros: individual, equipos y tableros; el empate suma los dos",
+        await copaFilas(),
+        [["1", "Goicoechea", "55", "10", "15", "30", "6", "5·0·0"], ["2", "CODEA (Alajuela)", "34", "8", "8", "18", "4", "1·3·0"], ["3", "Belén", "13", "13", "0", "0", "2", "0·1·0"]]);
+    igual("la escala propia está escondida mientras no se elige", await visible(p, "#copa-propia"), false);
+    await p.selectOption("#copa-escala", "3");
+    igual("solo el podio: el 4.º ya no suma", (await copaFilas()).map((f) => [f[1], f[2], f[6]]), [["Goicoechea", "15", "5"], ["CODEA (Alajuela)", "9", "4"], ["Belén", "2", "1"]]);
+    igual("el enlace guarda la escala", await p.evaluate(() => location.hash), "#~~copa=3");
+    await p.uncheck("#copa-tableros");
+    igual("sin los tableros desaparece su columna y su suma",
+        [await p.$$eval("#copa th", (t) => t.map((x) => x.textContent)), (await copaFilas()).map((f) => [f[1], f[2]]), await p.evaluate(() => location.hash)],
+        [["Puesto", "Comité", "Puntos", "Individual", "Equipos", "Puestos que suman", "Oro·Plata·Bronce"], [["Goicoechea", "6"], ["CODEA (Alajuela)", "4"], ["Belén", "2"]], "#~~copa=3&ct=0"]);
+    await p.selectOption("#copa-escala", "x");
+    igual("«Otra escala» muestra la caja para escribirla", await visible(p, "#copa-propia"), true);
+    await p.fill("#copa-propia", "5, 3");
+    igual("una escala escrita a mano, también en el enlace",
+        [(await copaFilas()).map((f) => [f[1], f[2]]), await p.evaluate(() => location.hash)],
+        [[["Goicoechea", "10"], ["CODEA (Alajuela)", "6"], ["Belén", "3"]], "#~~copa=5-3&ct=0"]);
+    await p.selectOption("#edicion", "2025-E");
+    igual("en una eliminatoria no hay copa", await visible(p, "#copa"), false);
+    await ctx.close();
+    ({ ctx, p } = await abrir(browser, "jdn-comites.html#~~copa=5-3&ct=0", true));
+    await p.waitForFunction(() => document.getElementById("app").checkVisibility());
+    igual("el enlace con la escala la vuelve a poner",
+        [await p.$eval("#copa-escala", (s) => s.value), await p.$eval("#copa-propia", (s) => s.value), await p.$eval("#copa-tableros", (c) => c.checked), (await copaFilas())[0][2]],
+        ["x", "5, 3", false, "10"]);
+    await ctx.close();
+
+    console.log("\n=== Los integrantes de cada equipo ===");
+    ({ ctx, p } = await abrir(browser, "jdn-comites.html#goicoechea", true));
+    await p.waitForFunction(() => document.getElementById("ficha").checkVisibility());
+    igual("lee los jugadores", await p.evaluate(() => window.__pedidos.filter((x) => x.startsWith("jdn_jugadores"))), ["jdn_jugadores 0"]);
+    igual("la ficha del comité dice quién jugó en cada equipo, con su tablero, Elo y partidas (también quien no jugó)",
+        await p.$$eval("#ficha section[data-edicion='2025-E'] tr[data-integrante]", (t) => t.map((x) => [x.cells[2].textContent, x.cells[3].textContent, x.cells[4].textContent, x.cells[5].textContent, x.cells[6].textContent, x.cells[7].textContent])),
+        [["Goicochea A", "1", "Mora Vargas, Ana", "1580", "2", "1½"], ["Goicochea A", "2", "Brenes Soto, Kai", "1400", "2", "2"], ["Goicochea A", "3", "Vega Rojas, Noa", "—", "0", "0"]]);
+    igual("cada integrante lleva su enlace a la composición del equipo",
+        await p.$eval("#ficha section[data-edicion='2025-E'] tr[data-integrante] a", (a) => a.getAttribute("href")), "https://chess-results.com/tnr900002.aspx?lan=2&art=20&turdet=YES");
+    igual("la columna «Contra el Elo» de cada edición y la frase del total",
+        [await p.$$eval("#ficha tr[data-edicion]", (t) => t.map((x) => x.lastElementChild.textContent)), await p.textContent("#ficha [data-contra-elo]")],
+        [["+3,2 en 11", "+2,2 en 6"], "Contra el Elo: sus jugadores sacaron 15,0 puntos en 17 partidas contra rivales con Elo, y por el Elo se esperaban 9,6: 5,4 por encima de lo esperado. Ver «Rendimiento contra el Elo» en el medallero."]);
+    await p.click("#ficha tr[data-integrante='Brenes Soto, Kai'] button");
+    await p.waitForFunction(() => document.getElementById("jugador").checkVisibility());
+    igual("un integrante abre su ficha, con sus dos equipos (sin medalla: no está en la clasificación por tableros)",
+        await p.$$eval("#jugador tbody tr:not([data-elo-edicion])", (t) => t.map((x) => [x.cells[0].textContent, x.cells[3].textContent, x.cells[5].textContent, x.cells[6].textContent.trim()])),
+        [["Eliminatoria 2025", "Equipo Goicochea A · tablero 2", "equipo 1 de 1", ""], ["Final 2026", "Equipo Goicoechea A · tablero 3", "equipo 1 de 2", ""]]);
+    await p.click("#volver");
+    await p.selectOption("#edicion", "2026-F");
+    igual("«Participantes» de una edición cuenta los integrantes y las personas (quien jugó individual y por equipos, una vez)",
+        await p.$$eval("#participacion tbody tr", (t) => t.map((x) => [x.cells[0].textContent, x.cells[9].textContent, x.cells[10].textContent])),
+        [["CODEA (Alajuela)", "2", "3"], ["Goicoechea", "3", "3"], ["Belén", "0", "2"], ["Total", "5", "8"]]);
+    await ctx.close();
+
+    console.log("\n=== El rendimiento contra el Elo ===");
+    ({ ctx, p } = await abrir(browser, "jdn-comites.html", true));
+    await p.waitForFunction(() => document.getElementById("app").checkVisibility());
+    igual("por comité: partidas entre jugadores con Elo, puntos, esperados y la diferencia con su signo; el que no tiene Elo no cuenta",
+        await p.$$eval("#rendimiento > div:first-of-type tbody tr", (t) => t.map((x) => [...x.cells].map((c) => c.textContent.trim()))),
+        [["Goicoechea", "7", "1530", "17", "15,0", "9,6", "+5,4", "+31,9"], ["CODEA (Alajuela)", "3", "1500", "9", "6,0", "4,2", "+1,8", "+20,1"],
+         ["Belén", "1", "1450", "2", "0,0", "0,7", "−0,7", "−36,0"], ["Total", "11", "", "28", "21,0", "14,5", "+6,5", ""]]);
+    igual("quiénes más sorprendieron: solo con 3 partidas o más, con su actuación",
+        await p.$$eval("#rendimiento tr[data-sorpresa]", (t) => t.map((x) => [x.cells[0].textContent, x.cells[4].textContent, x.cells[10].textContent, x.cells[11].textContent])),
+        [["Mora Vargas, Ana", "Goicoechea A · tablero 1", "+1,1", "2300"], ["Mora Vargas, Ana", "Individual", "+1,1", "2300"], ["Ruiz Mena, Ivo", "CODEA B · tablero 2", "+1,0", "1780"],
+         ["Leon Vega, Sol", "Goicoechea A · tablero 2", "+0,8", "1780"], ["Solis Rojas, Juan", "Individual", "+0,6", "1653"], ["Diaz Solis, Pia", "CODEA B · tablero 1", "+0,2", "1550"]]);
+    igual("cada uno con su enlace: la tabla cruzada o la composición del equipo",
+        await p.$$eval("#rendimiento tr[data-sorpresa] a", (a) => a.slice(0, 2).map((x) => x.getAttribute("href").replace("https://chess-results.com/tnr", ""))),
+        ["900004.aspx?lan=2&art=20&turdet=YES", "900003.aspx?lan=2&art=4"]);
+    await p.selectOption("#edicion", "2025-E");
+    igual("con una edición, solo esa", await p.$$eval("#rendimiento > div:first-of-type tbody tr", (t) => t.map((x) => [x.cells[0].textContent, x.cells[6].textContent])),
+        [["Goicoechea", "+2,2"], ["Total", "+2,2"]]);
+    await p.selectOption("#edicion", "");
+    await p.selectOption("#f-modo", "I");
+    igual("el filtro de modalidad deja solo lo individual", await p.$$eval("#rendimiento > div:first-of-type tbody tr", (t) => t.map((x) => [x.cells[0].textContent, x.cells[3].textContent])),
+        [["Goicoechea", "5"], ["CODEA (Alajuela)", "3"], ["Belén", "2"], ["Total", "10"]]);
     await ctx.close();
 
     await browser.close();

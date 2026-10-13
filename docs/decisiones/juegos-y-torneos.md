@@ -3144,6 +3144,113 @@ tableros, la ficha con la medalla de cada tablero, que el medallero suma las
 medallas de tablero y que sin licencia no se pide la tabla. Rompiendo a
 propósito el empate o la suma de tableros, salta.
 
+### La copa de puntos por puesto
+
+Debajo de «De la eliminatoria a la final», con todas las ediciones o una
+final, sale «La copa»: una tabla de puntos por puesto, como la de unos juegos,
+para que cuenten también el 4.º, el 5.º… y no solo las medallas.
+
+- **La escala la elige quien mira, no está escrita como oficial**: el dueño no
+  dio una regla y el reglamento de los JDN no estaba a mano. Trae tres (10-8-6-
+  5-4-3-2-1, la de siempre; 7-5-4-3-2-1; 3-2-1) y «Otra escala», que se
+  escribe («10, 8, 6» o «10-8-6»: cualquier cosa que no sea un número separa;
+  el decimal va con punto). El texto lo dice: «La escala no es oficial».
+- **Suma lo mismo que el medallero**: cada jugador individual, cada equipo y,
+  si la casilla está marcada (lo está de entrada), cada tablero de
+  `jdn_tableros`, siempre de las finales. Un empate sin desempatar comparte el
+  puesto y los dos suman sus puntos, como comparten la medalla.
+- **La escala va en el enlace** (`copa=3`, `copa=5-3`, `ct=0` sin tableros):
+  quien comparte la tabla comparte con qué regla se armó. La de siempre no se
+  escribe.
+- No sale en una eliminatoria ni con los filtros «Solo eliminatorias» o de
+  zona: ahí no hay puestos de final.
+
+### Los integrantes de cada equipo
+
+En `jdn_resultados` un equipo es una fila: no se sabía quiénes jugaron. Ahora
+`jdn_jugadores` (migración `20261013184211`) trae a cada integrante de cada
+equipo de las finales **y de las eliminatorias**, con su equipo, su tablero (la
+«M.» de chess-results), su Elo y sus partidas.
+
+- **Sale de la «Composición de equipos» de chess-results con el detalle de cada
+  jugador** (`art=20&turdet=YES`): primero cada equipo con sus jugadores y
+  después, desde «Información de jugadores», un bloque por jugador con cada
+  partida (el Elo del rival y el resultado). Lo carga
+  `herramientas/jdn-comites/cargar-jugadores-equipos.sql`, de a 25 o 30
+  páginas por vez: son de hasta 300 kB y las 140 juntas pasan el minuto que
+  aguanta una consulta.
+- **Los bloques de detalle no vienen en el orden de la composición**: se juntan
+  por el nombre, sin la coma que la composición pone. El encabezado del bloque
+  es «Castro Garcia Ileana  WCM 1716 CRC»: el nombre termina en el primer par
+  de espacios. La primera carga lo cortaba en tres espacios y a quien tenía
+  título le quedaba el título pegado: 288 integrantes salían sin partidas y en
+  68 torneos los puntos no daban la mitad de las partidas. Así se encontró.
+- **Comprobado al cargar**: 4549 integrantes de los 140 torneos; en todos, los
+  puntos son exactamente la mitad de las partidas (cada partida está en los dos
+  jugadores). 143 no jugaron ninguna partida (reservas, o solo forfeits). Dos
+  equipos de las clasificaciones no tienen composición: el «Descanso» (el bye)
+  de la eliminatoria 2018 y San José B, que en la final 2020-2021 perdió todo
+  sin jugar.
+- **Dónde se ven**: en la ficha del comité, «Integrantes de sus equipos» en
+  cada edición, con su enlace a la composición; en «Participantes» de una
+  edición, «Integrantes de equipos» (quien jugó al menos una partida) y
+  «Personas» (sumados a los individuales: quien jugó los dos cuenta una vez);
+  en «Sus jugadores» del comité, que ahora cuenta también a los de los equipos
+  para la retención; en la ficha del jugador y en la búsqueda, el equipo de la
+  eliminatoria (o de la final, si no salió en la clasificación por tableros
+  por no llegar al mínimo de partidas).
+- **El equipo de un integrante va sin medalla**: su puesto es el del equipo
+  («equipo 1 de 9») y la medalla de un integrante es la de su tablero, que ya
+  sale en su fila de tablero. Si se le pusiera la del equipo, se contaría dos
+  veces en las medallas del jugador.
+
+### El rendimiento contra el Elo
+
+«Rendimiento contra el Elo» dice cuántos puntos sacó cada comité frente a los
+que se esperaban por el Elo: el que más sorprende, no solo el que más gana.
+
+- **Se calcula partida por partida, no con promedios**: lo esperado de cada
+  partida es el de la fórmula de FIDE, 1 / (1 + 10^(−D/400)), con la diferencia
+  D topada en 400. Lo hace la base al cargar y guarda la suma (`esperado`), con
+  las partidas y los puntos contra rivales con Elo (`con_elo`, `puntos_elo`) y
+  el Elo medio de esos rivales.
+- **Solo cuentan las partidas jugadas** (1, ½ o 0 con color): los forfeits y
+  los byes no. Y solo **entre dos jugadores con Elo**: sin Elo no hay qué
+  esperar. El Elo es el nacional si chess-results lo trae, si no el que llama
+  Elo, si no el FIDE.
+- **Los individuales salen de la tabla cruzada** (`art=4`) y la clasificación
+  (`art=1`), con `cargar-jugadores-individual.sql`: en el suizo cada ronda
+  dice el rival por su puesto («18w1»), en el todos contra todos la columna es
+  el rival y la celda trae una o dos partidas («1 1», «(0 +)»). Las dos tablas
+  vienen en el orden de la clasificación, que es el `orden` de
+  `jdn_resultados`: comprobado nombre por nombre en los 148 torneos (2170
+  jugadores), y cada una de las 12 192 partidas aparece en los dos jugadores
+  con el resultado al revés. Los equipos salen del detalle de `art=20`.
+- **El control de que el cálculo está bien**: sumando a todos, lo sacado menos
+  lo esperado da casi cero (−1,0 en equipos y +0,2 en individuales), como debe
+  ser cuando los dos jugadores tienen Elo: lo que gana uno lo pierde el otro.
+- **Lo que muestra**: por comité, las partidas, los puntos, los esperados, la
+  diferencia y la diferencia cada 100 partidas (para comparar comités de
+  distinto tamaño); debajo, «Quiénes más sorprendieron», los 20 torneos de un
+  jugador con más puntos por encima de lo esperado (al menos 3 partidas con
+  Elo), con su «actuación»: el Elo medio de sus rivales más la diferencia que
+  da su porcentaje (la misma curva, con 0 % y 100 % a 800 puntos; es
+  aproximada). En la ficha del comité, una columna por edición y la frase del
+  total; en la del jugador, sus torneos uno por uno.
+- **El signo va escrito** («+5,4», «−0,7»): la diferencia no se marca con
+  color.
+- **La advertencia del 1400**: muchos jugadores aparecen con 1400 justo. Si es
+  el Elo con que se entra a la lista, quien recién empieza rinde por encima sin
+  que sea sorpresa, y la página lo dice.
+
+`verificar-jdn-comites.js` prueba la copa (cada escala, sin tableros, la
+escrita a mano, el empate y el enlace), los integrantes (la ficha del comité,
+«Participantes», la ficha del jugador sin medalla de equipo y la búsqueda) y el
+rendimiento (por comité, quien no tiene Elo no cuenta, quiénes sorprendieron
+con su actuación y su enlace, la edición y el filtro). Rompiendo a propósito
+que el rendimiento cuente las partidas sin Elo, o que la copa sume los
+tableros, salta.
+
 ## Proyección JDN por comité
 
 `jdn-proyeccion.html` (`js/jdn-proyeccion.js`) es una herramienta de arbitraje
