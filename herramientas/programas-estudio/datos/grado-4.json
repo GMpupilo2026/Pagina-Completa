@@ -4,7 +4,7 @@
  "ciclo": "II Ciclo de la Educación General Básica",
  "edad": "9 a 10 años",
  "presentacion": [
-  "En cuarto año el estudiantado llega jugando partidas completas. En tercero aprendió a anotar en notación algebraica, a dar mate con dama y con torre, a reconocer las tablas y a no caer en el mate del pastor. Lo que todavía no tiene es un método para ver lo que pasa en el tablero antes de mover: deja piezas sin defender, no ve la horquilla del caballo que le viene encima y juega rápido sin mirar el reloj, porque nunca lo ha usado. Este año arranca justamente ahí, con un repaso corto de reglas y planilla y con la entrada del reloj de ajedrez, que acompañará todas las partidas del curso.",
+  "En cuarto año el estudiantado llega jugando partidas completas. En tercero aprendió a anotar en notación algebraica, a dar mate con dama y con torre, a reconocer las tablas y a no caer en el mate del pastor. Lo que todavía no tiene es un método para ver lo que pasa en el tablero antes de mover: deja piezas sin defender, no ve el tenedor del caballo que le viene encima y juega rápido sin mirar el reloj, porque nunca lo ha usado. Este año arranca justamente ahí, con un repaso corto de reglas y planilla y con la entrada del reloj de ajedrez, que acompañará todas las partidas del curso.",
   "El centro del año es la táctica elemental, siguiendo las unidades 6 y 7 de «Ajedrez en el aula 3» y los ejemplos del «Manual 2» de Guil Russek: piezas indefensas, ataque doble, clavada, enfilada, ataque a la descubierta, jaque a la descubierta y jaque doble. Cada tema se trabaja en tres capas: primero se descubre en el tablero mural con una partida real (Anderssen contra Mayet, Berlín 1862; Greco contra un aficionado, Italia 1620; Krilov contra Tarasov, Leningrado 1961), luego se practica con hojas de ejercicios graduadas y minijuegos en parejas, y al final se busca dentro de partidas con consigna, anotadas y con reloj. En el II semestre se suman los finales de rey y peón (la regla del cuadrado, las cuatro posiciones básicas del «Manual 3» y la oposición), que se aprenden jugando en parejas una y otra vez, y una apertura abierta, la Italiana, que cierra el año con un torneo de aula.",
   "Al terminar cuarto año la persona estudiante revisa qué piezas cuelgan antes de mover, encuentra ataques dobles y clavadas sencillas en sus partidas, sabe cuándo un rey alcanza a un peón y juega con reloj y planilla sin ayuda. En quinto año todo esto se amplía con la desviación, la atracción, la eliminación de la defensa, los mates con nombre y los finales de peones con peón pasado y rupturas, de modo que este año deja el vocabulario táctico y el hábito de las preguntas de control bien instalados."
  ],
@@ -144,7 +144,7 @@
     31,
     65
    ],
-   "proposito": "Que la persona estudiante adquiera el hábito de revisar, antes de cada jugada, qué piezas propias y rivales están indefensas, y que aprenda el primer tema táctico del año: el ataque doble, con el caballo (la horquilla), el peón, la dama, el alfil, la torre y el rey. Se usan las unidades 6 y 7 de «Ajedrez en el aula 3», el ejemplo de ataque doble del Manual 2 y la partida Greco contra un aficionado (Italia, 1620) del Manual 3. Se inicia el cuaderno de táctica del proyecto del semestre. El eje de salud se trabaja con pausas activas entre partidas y la postura frente al tablero.",
+   "proposito": "Que la persona estudiante adquiera el hábito de revisar, antes de cada jugada, qué piezas propias y rivales están indefensas, y que aprenda el primer tema táctico del año: el ataque doble, con el caballo (el tenedor), el peón, la dama, el alfil, la torre y el rey. Se usan las unidades 6 y 7 de «Ajedrez en el aula 3», el ejemplo de ataque doble del Manual 2 y la partida Greco contra un aficionado (Italia, 1620) del Manual 3. Se inicia el cuaderno de táctica del proyecto del semestre. El eje de salud se trabaja con pausas activas entre partidas y la postura frente al tablero.",
    "eje": "Educación para la salud",
    "valores": [
     "perseverancia",
@@ -188,7 +188,7 @@
      "contenidos": {
       "conceptuales": [
        "Ataque doble: una jugada, dos amenazas.",
-       "Horquilla de caballo y de peón.",
+       "Tenedor de caballo y de peón.",
        "Ataque doble de dama, alfil, torre y rey.",
        "Ataque doble contra una pieza y una casilla de mate."
       ],
@@ -221,7 +221,7 @@
       "conceptuales": [
        "Preguntas de control del Manual 2: ¿qué amenaza mi rival?, ¿qué puedo capturar?, ¿mi jugada es un error grave?",
        "Defensas contra el ataque doble: jugada con jaque, defender las dos piezas, contraataque.",
-       "Casillas de horquilla que conviene vigilar."
+       "Casillas de tenedor que conviene vigilar."
       ],
       "procedimentales": [
        "Aplicar las preguntas de control en partidas con consigna.",
@@ -428,7 +428,7 @@
      "indicador_habilidad": "Explica por escrito y en voz alta las ideas de una jugada usando el vocabulario del tema.",
      "contenidos": {
       "conceptuales": [
-       "Vocabulario táctico: indefensa, ataque doble, horquilla, clavada, enfilada, batería, descubierta, jaque doble.",
+       "Vocabulario táctico: indefensa, ataque doble, tenedor, clavada, enfilada, batería, descubierta, jaque doble.",
        "Signos de comentario: !, ?, !!, ??.",
        "Comentario corto en la planilla."
       ],
@@ -1440,43 +1440,43 @@
   {
    "d": 38,
    "u": 2,
-   "tema": "La horquilla de caballo",
+   "tema": "El tenedor de caballo",
    "ae": "2.2",
    "objetivo": "Ejecutar ataques dobles con el caballo.",
    "foc": "Adivinanza: «Salto sin tocar a nadie y ataco a dos sin que se den cuenta. ¿Quién soy?».",
    "exp": "Minijuego del caballo hambriento con dos objetivos: un caballo blanco contra una torre y una dama negras inmóviles colocadas por la pareja. El caballo debe llegar en el menor número de saltos a una casilla desde la cual ataque las dos piezas. Se juegan cinco montajes distintos y se anota cuántos saltos necesitó.",
-   "con": "Se muestra que el caballo ataca casillas de color contrario al suyo, por eso solo puede atacar a la vez piezas que están en casillas del mismo color. Se nombra la horquilla.",
-   "apl": "Para cerrar, cada estudiante dibuja en su cuaderno un caballo y dos piezas en una posición de horquilla.",
+   "con": "Se muestra que el caballo ataca casillas de color contrario al suyo, por eso solo puede atacar a la vez piezas que están en casillas del mismo color. Se nombra el tenedor.",
+   "apl": "Para cerrar, cada estudiante dibuja en su cuaderno un caballo y dos piezas en una posición de tenedor.",
    "eval": {
     "tipo": "Formativa",
-    "como": "Revisión de los dibujos de horquilla en el cuaderno."
+    "como": "Revisión de los dibujos de tenedor en el cuaderno."
    },
    "mat": "Tableros, piezas, cuadernos."
   },
   {
    "d": 39,
    "u": 2,
-   "tema": "Horquilla con jaque: rey y dama",
+   "tema": "Tenedor con jaque: rey y dama",
    "ae": "2.2",
-   "objetivo": "Reconocer la horquilla de caballo que ataca al rey y a otra pieza.",
-   "foc": "Se pregunta: «¿Por qué es peor una horquilla que da jaque?». Se escuchan ideas.",
+   "objetivo": "Reconocer el tenedor de caballo que ataca al rey y a otra pieza.",
+   "foc": "Se pregunta: «¿Por qué es peor un tenedor que da jaque?». Se escuchan ideas.",
    "exp": "En parejas se usan tarjetas con posiciones de Ajedrez en el aula 3, unidad 7, en las que un caballo puede dar jaque y atacar otra pieza a la vez. Antes de mover, cada pareja escribe qué responde el rival y qué pieza se gana.",
-   "con": "La persona docente explica que el jaque obliga a atender al rey primero y por eso la otra pieza cae. Se repasan en el tablero mural las casillas de horquilla más típicas cerca del enroque.",
-   "apl": "Partida de 10 minutos con consigna: cada horquilla que se logre se marca con «!» en la planilla.",
+   "con": "La persona docente explica que el jaque obliga a atender al rey primero y por eso la otra pieza cae. Se repasan en el tablero mural las casillas de tenedor más típicas cerca del enroque.",
+   "apl": "Partida de 10 minutos con consigna: cada tenedor que se logre se marca con «!» en la planilla.",
    "eval": {
     "tipo": "Formativa",
-    "como": "Revisión de las tarjetas y de las horquillas marcadas en la planilla."
+    "como": "Revisión de las tarjetas y de los tenedores marcados en la planilla."
    },
    "mat": "Tarjetas de Ajedrez en el aula 3, tableros, relojes, planillas."
   },
   {
    "d": 40,
    "u": 2,
-   "tema": "Buscar la casilla de la horquilla",
+   "tema": "Buscar la casilla del tenedor",
    "ae": "2.2",
    "objetivo": "Encontrar con rapidez la casilla desde la cual el caballo ataca dos piezas.",
    "foc": "Calentamiento: la persona docente coloca un caballo en el tablero mural y el grupo dice en coro todas sus casillas de salto.",
-   "exp": "Juego de velocidad por equipos de tres: la persona docente coloca en el tablero mural un caballo blanco y dos piezas negras. El primer equipo que escribe la casilla de horquilla en su pizarra pequeña gana un punto. Se juegan diez montajes, algunos sin solución, en los que hay que escribir «no hay».",
+   "exp": "Juego de velocidad por equipos de tres: la persona docente coloca en el tablero mural un caballo blanco y dos piezas negras. El primer equipo que escribe la casilla de tenedor en su pizarra pequeña gana un punto. Se juegan diez montajes, algunos sin solución, en los que hay que escribir «no hay».",
    "con": "Se comentan los casos sin solución: las dos piezas estaban en casillas de distinto color o demasiado lejos.",
    "apl": "Cada equipo inventa un montaje para el siguiente equipo y lo comprueba antes de pasarlo.",
    "eval": {
@@ -1637,7 +1637,7 @@
    "ae": "2.2",
    "objetivo": "Resolver ejercicios de ataque doble de mayor dificultad.",
    "foc": "La persona docente plantea en el tablero mural un ataque doble del Manual 2 que requiere ver una jugada previa.",
-   "exp": "Quien llegó al nivel oro trabaja la hoja de ataques dobles que necesitan preparación; quien no, termina la hoja de plata con apoyo de la persona docente en una mesa aparte. En la mesa de apoyo se repasan las casillas de horquilla con el caballo.",
+   "exp": "Quien llegó al nivel oro trabaja la hoja de ataques dobles que necesitan preparación; quien no, termina la hoja de plata con apoyo de la persona docente en una mesa aparte. En la mesa de apoyo se repasan las casillas de tenedor con el caballo.",
    "con": "Se corrigen dos ejercicios de oro con explicaciones del estudiantado.",
    "apl": "Salida: cada estudiante elige el ejercicio que más le gustó y lo copia en su cuaderno para el proyecto.",
    "eval": {
@@ -1669,7 +1669,7 @@
    "tema": "Tres maneras de salvarse de un ataque doble",
    "ae": "2.3",
    "objetivo": "Aplicar defensas contra el ataque doble.",
-   "foc": "La persona docente monta una horquilla de caballo sobre una dama y una torre y pregunta: «¿Ya está todo perdido?».",
+   "foc": "La persona docente monta un tenedor de caballo sobre una dama y una torre y pregunta: «¿Ya está todo perdido?».",
    "exp": "En parejas se trabajan ocho tarjetas en las que una persona acaba de recibir un ataque doble. Para cada una buscan una de tres salidas: mover una pieza con jaque o con amenaza mayor, mover una pieza a un lugar donde defienda a la otra, o capturar la pieza que hace el ataque doble. Algunas tarjetas no tienen salvación y se escribe «se pierde material».",
    "con": "Se nombran las tres salidas en la pizarra y se comprueban las tarjetas en el tablero mural.",
    "apl": "Pregunta de salida: «¿Cuál de las tres salidas es la más fácil de olvidar?».",
@@ -1682,13 +1682,13 @@
   {
    "d": 53,
    "u": 2,
-   "tema": "Vigilar las casillas de horquilla",
+   "tema": "Vigilar las casillas de tenedor",
    "ae": "2.3",
    "objetivo": "Prevenir ataques dobles revisando las casillas desde donde el rival los haría.",
    "foc": "Se recuerda la regla del día 38: el caballo solo ataca a la vez piezas en casillas del mismo color.",
    "exp": "En parejas se juega una partida de 15 minutos en la que, después de cada jugada del rival, se responde en voz baja: «¿A qué casilla puede saltar su caballo para atacar dos piezas mías?». Una persona observadora anota las veces que se hizo la revisión.",
-   "con": "La persona docente muestra en el tablero mural posiciones con rey, dama y torre en casillas del mismo color y explica por qué son vulnerables a la horquilla.",
-   "apl": "Cada estudiante escribe una regla propia para no recibir horquillas.",
+   "con": "La persona docente muestra en el tablero mural posiciones con rey, dama y torre en casillas del mismo color y explica por qué son vulnerables al tenedor.",
+   "apl": "Cada estudiante escribe una regla propia para no recibir tenedores.",
    "eval": {
     "tipo": "Formativa",
     "como": "Hoja del observador y regla escrita por cada estudiante."
@@ -2509,7 +2509,7 @@
    "objetivo": "Reconocer que en la descubierta la pieza delantera puede crear otra amenaza.",
    "foc": "Se comenta por qué el caballo y el rey no sirven de pieza trasera.",
    "exp": "En parejas se resuelven seis tarjetas de Ajedrez en el aula 3, unidad 7, en las que la pieza delantera se mueve a una casilla donde también ataca. Se escriben las dos amenazas.",
-   "con": "Se concluye que la descubierta es una forma de ataque doble: dos piezas atacan con una sola jugada. Se compara con la horquilla de la unidad 2.",
+   "con": "Se concluye que la descubierta es una forma de ataque doble: dos piezas atacan con una sola jugada. Se compara con el tenedor de la unidad 2.",
    "apl": "Para el portafolio: cada estudiante elige una tarjeta y la copia como ficha para su cuaderno.",
    "eval": {
     "tipo": "Formativa",
@@ -2684,7 +2684,7 @@
    "tema": "El mapa de los temas tácticos",
    "ae": "4.3",
    "objetivo": "Organizar todos los temas tácticos aprendidos en un esquema.",
-   "foc": "Se escriben en tarjetas sueltas los nombres: indefensa, ataque doble, horquilla, clavada, enfilada, batería, descubierta, jaque a la descubierta, jaque doble.",
+   "foc": "Se escriben en tarjetas sueltas los nombres: indefensa, ataque doble, tenedor, clavada, enfilada, batería, descubierta, jaque a la descubierta, jaque doble.",
    "exp": "En grupos mixtos de cuatro se arma un mapa conceptual en un papelógrafo con esas tarjetas, uniendo con flechas los temas que se parecen (por ejemplo, la descubierta es una forma de ataque doble). Cada grupo pega junto a cada tema un ejemplo de la caja de ejercicios.",
    "con": "Cada grupo presenta su mapa en dos minutos. La persona docente señala relaciones que faltan y corrige confusiones.",
    "apl": "Salida: cada estudiante copia en su cuaderno el mapa de su grupo.",
