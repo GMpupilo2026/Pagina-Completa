@@ -111,7 +111,7 @@ más además después jamás quizás atrás detrás través compás interés ing
 así aquí allí ahí allá acá está están estás esté estés japonés portugués marqués revés dirá
 demás porqué comité comités subcomité josé café caché también según razón bebé qué holandés escocés parís danés
 aperturasmás
-elistá andrés valdés josué prevé noé carné
+elistá andrés valdés josué prevé noé carné mié
 empecé aprendí entendí leí tomé repasé jugué estudié olvidé
 cortés descortés
 encontré revisé recargué creé comprometí revelé

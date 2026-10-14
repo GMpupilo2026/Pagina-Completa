@@ -3787,6 +3787,85 @@ Calendar y Outlook lo abren y lo agregan.
   suyo con su id, sin profe no está y quien da clase no lo ve. Si el escapado
   de la coma se rompe a propósito, salta.
 
+## Mi calendario: clases, tareas y exámenes, con un plan
+
+Lo que tiene fecha estaba repartido: «Tu próxima clase» en el panel, las
+tareas en `tareas.html`, los exámenes en `examenes.html` y el `.ics` en «Tus
+clases». Nadie veía la semana entera, y menos qué hacer cada día para no
+juntar todo al final. Lo pidió el dueño del sitio («un calendario inteligente
+con clases, tareas, etc.»). `calendario.html` lo junta en un mes (o una
+agenda de cuatro semanas) con dos cosas encima: **lo que conviene saber** y
+**un plan día por día**.
+
+- **No hay tabla ni función nueva.** El alumno ve sus clases con
+  `mis_clases_proximas(90)` (la regla de «Tu próxima clase» y del `.ics`), sus
+  tareas pendientes con `tareas_con_avance` y sus exámenes con
+  `examenes_con_nota`. Quien da clase lee su horario (`horario_clases`, que la
+  RLS ya le deja leer) y las entregas de sus alumnos con las mismas dos
+  funciones y `p_profesor`. Todas contestan solo sobre quien pregunta.
+- **La cuenta es pura y está a la vista** (`js/calendario-inteligente.js`, se
+  prueba sin navegador). «Inteligente» no es una caja negra: cada sugerencia
+  dice por qué («es tu día más libre antes de eso»).
+  - **El plan del alumno** reparte lo pendiente, de la entrega más cercana a
+    la más lejana, en el día con MENOS carga entre hoy (o el día en que se
+    abre la tarea) y el día en que vence. La carga de un día es lo que el plan
+    ya puso ahí, más uno si hay clase, más uno por cada cosa que vence. El
+    mismo día del vencimiento pesa 1,5 más (dejar todo para el final es lo que
+    hace llegar tarde); lo que vence antes del mediodía se hace a más tardar
+    el día anterior; una tarea con cuatro o más ejercicios por hacer se parte
+    en dos días; un examen ya empezado va hoy y primero. Nunca sugiere un día
+    antes de hoy, antes de que la tarea se abra ni después de que vence (lo
+    prueba con 300 lotes al azar).
+  - **Lo que conviene saber** (alumno): lo que vence hoy, un examen empezado,
+    los días con dos o más entregas juntas, las tareas vencidas sin terminar y
+    la próxima clase.
+  - **Quien da clase** ve cada entrega UNA vez, no una por alumno: una tarea a
+    doce alumnos es «Tarea: Mates · 4 alumnos sin terminar». Su plan es «Para
+    tus clases»: cada entrega en la clase de antes (recordarla, si alguien no
+    la terminó y vence esa semana) y en la primera de después (revisarla). Y
+    le avisa lo que vence hoy con cuántos faltan, y el alumno con tres o más
+    tareas suyas el mismo día.
+- **Los días son de Costa Rica**: una tarea que vence a las 11 p. m. del
+  sábado es del sábado, aunque en UTC ya sea domingo. El mes va de lunes a
+  domingo. Las 12 del mediodía se escriben «12:00 m. d.».
+- **Hasta dónde se ve**: un mes atrás y hasta el mes en que terminan los 90
+  días de `mis_clases_proximas` (y lo dice: «las clases se ven hasta el…»).
+  Las clases del alumno que ya pasaron no vienen; las del profe, sí desde el
+  principio del mes (salen del horario).
+- **El profe ve sus pendientes de a mil** (`p_limite: 1000`): PostgREST corta
+  ahí. Si llegan mil, se le dice y se le manda a «Tareas». Las completadas no
+  se piden: lo que importa en el calendario es lo que falta.
+- **Accesible**: el mes es una tabla con encabezados de día (`abbr` con el
+  nombre entero); cada día es un botón con lo que tiene dicho en su
+  `aria-label` («Sábado 17 de octubre: 2 tareas»), hoy lleva
+  `aria-current="date"` y **un solo día es parada de tabulador**: las flechas
+  mueven un día o una semana, Inicio y Fin van al lunes o al domingo y Re Pág /
+  Av Pág cambian de mes. El estado va escrito («Vence hoy», «Vencida»,
+  «Ahora»), nunca solo en color. «Vence hoy» y el aviso urgente miden 4,5:1 o
+  más en claro y en oscuro (lo mide el verificador). En el celular cada día
+  muestra solo los dibujitos (📋2) y el detalle va abajo; no se desborda a 360
+  px. La vista elegida (mes o agenda) es del aparato (`calendario_vista_v1`).
+- **Mirando como otra persona** («Ver como») el calendario es el de la propia
+  cuenta, y lo dice: las funciones contestan por quien pregunta. Quien
+  administra no da clase: su panel no trae la tarjeta, y lo revisa con «Ver
+  como: profesor».
+- **El `.ics` es el mismo** (`js/calendario-ics.js`): el alumno baja sus
+  clases, tareas y exámenes; quien da clase, solo las clases de su horario
+  (las entregas de cada alumno no son eventos suyos).
+- La tarjeta «📅 Mi calendario» va en «Lo que te pone tu profesor» (alumno) y
+  en «Tus clases» (quien da clase), justo después de su proyecto si tiene uno
+  (`verificar-proyectos.js` pide que el proyecto vaya primero); «Tu
+  calendario» del panel lleva un enlace a la página.
+
+**Al tocarlo, correr** `node herramientas/verificar-calendario-inteligente.js`
+(la cuenta: días de Costa Rica, el mes de lunes a domingo, el plan, los avisos,
+el horario y las entregas agrupadas) y
+`node herramientas/verificar-calendario-pagina.js` (la pantalla, con el reloj
+fijo: lo que pide cada quien, el teclado, los filtros con `checkVisibility`,
+el texto ajeno como texto, el celular, el contraste y el `.ics`). Rompiendo a
+propósito el escapado, el lunes como primer día o la fecha en que se abre una
+tarea, saltan.
+
 ## El panel para los más pequeños
 
 El panel del alumno está pensado para quien lee: grupos, descripciones, «Hoy
