@@ -2675,8 +2675,17 @@ después «ponerlo en herramientas pero con licencia», y primero lo de FIDE
   y habría chocado con el `statement_timeout` antes de terminar; con el
   pedazo (y `strpos` para saber qué página es) tarda menos de un segundo.
   El reporte ronda a ronda (300 KB cada uno) se pide **solo** de los torneos
-  que, por sus jugadores con Elo, podrían valer para alguna norma: en el
-  resto la respuesta es «no» igual. Como pg_net borra lo bajado a las seis
+  que podrían valer para alguna norma: los que tienen los jugadores con Elo
+  que pide una de AF, y además los de ritmo estándar que podrían valer para
+  una de AI aunque tengan pocos (una final nacional, un campeonato oficial o
+  continental, el nacional por equipos o uno con tres federaciones). La
+  primera vez se pidió solo por los jugadores con Elo, y un Panamericano
+  Sub-8 de 9 jugadores con Elo se quedó sin rondas y salía «no» para AI: lo
+  delató compararlo con la página de Oscar Angulo. En el resto la respuesta
+  es «no» igual. FIDE no tiene el ronda a ronda de muchos torneos viejos:
+  contesta 200 con una página sin `calc_table`, que cuenta como pedida (si
+  no, la consulta la vuelve a pedir cada vez y se traba). En los más viejos
+  la celda de la ronda no trae la fecha, solo el número. Como pg_net borra lo bajado a las seis
   horas, se resume enseguida con `herramientas/arbitros-cr/exportar.sql` a
   `herramientas/datos/arbitros-cr-fide.json`.
 - **Las normas se evalúan con la misma copia** que la página de Oscar Angulo

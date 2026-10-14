@@ -69,7 +69,9 @@ info as (
     (length(pieza) - length(replace(pieza, 'Forfeit</font> (-)', ''))) / length('Forfeit</font> (-)') ausencias
   from src_p where previa is not null
 ), rondas as (
-  select ev, max(m[1]::int) rondas from ult, regexp_matches(c, '<td bgcolor=#FFFFFF>(\d+)\s+\d\d/\d\d/\d\d', 'g') m where tipo = 'src' group by ev
+  -- La celda de la ronda trae la fecha («3 12/05/18»); en los torneos viejos,
+  -- solo el número y un &nbsp;.
+  select ev, max(m[1]::int) rondas from ult, regexp_matches(c, '<td bgcolor=#FFFFFF>(\d{1,2})\s+(?:\d\d/\d\d/\d\d|&nbsp;)', 'g') m where tipo = 'src' group by ev
 )
 select json_build_object('actualizado', to_char(now() at time zone 'America/Costa_Rica', 'YYYY-MM-DD'),
   'torneos', json_agg(json_build_object(
