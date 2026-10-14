@@ -1899,6 +1899,22 @@ html.dark .comparar-serie-3 { background: #199e70; }
 .ae-tabla th[aria-sort="ascending"] button::after { content: " ▲"; font-size: 0.7em; }
 .ae-tabla th[aria-sort="descending"] button::after { content: " ▼"; font-size: 0.7em; }
 .ae-tabla a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
+/* oscar-angulo-torneos.html: las mismas tarjetas y tablas de arriba, y cada
+ * resumen como una lista de barras horizontales. Cada fila es un botón que
+ * pone (o quita) ese filtro; la barra es de adorno, el número va escrito. */
+.oa-barras { display: grid; gap: 0.15rem; }
+.oa-fila { font: inherit; display: grid; grid-template-columns: minmax(6rem, 13rem) 1fr 3.5rem; align-items: center; gap: 0.75rem; width: 100%; padding: 0.3rem 0.4rem; border: 1px solid transparent; border-radius: 0.5rem; background: transparent; color: rgb(var(--c-brand-800, 16 42 67)); text-align: left; cursor: pointer; }
+.dark .oa-fila { color: #fff; }
+.oa-fila:hover { background: rgb(var(--c-brand-50, 240 244 248)); }
+.dark .oa-fila:hover { background: rgb(var(--c-brand-800, 16 42 67)); }
+.oa-fila[aria-pressed="true"] { border-color: rgb(var(--c-brand-700, 36 59 83)); background: rgb(var(--c-brand-50, 240 244 248)); font-weight: 600; }
+.dark .oa-fila[aria-pressed="true"] { border-color: rgb(var(--c-brand-200, 188 204 220)); background: rgb(var(--c-brand-800, 16 42 67)); }
+.oa-fila:focus-visible { outline: 3px solid rgb(var(--c-accent-500, 222 145 29)); outline-offset: 2px; }
+.oa-fila-et { font-size: 0.875rem; overflow-wrap: anywhere; }
+.oa-fila-pista { display: block; height: 0.8rem; }
+.oa-fila-barra { display: block; height: 100%; min-width: 2px; border-radius: 0 3px 3px 0; }
+.oa-fila-n { font-size: 0.875rem; font-variant-numeric: tabular-nums; text-align: right; font-weight: 600; }
+.oa-ejemplos { margin: 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: 0.15rem 1rem; }
 /* historial-jugador.html y estadisticas-colegios.html: las mismas tarjetas,
  * tablas y colores de etapa que ajedrez-estudiantil.html (arriba). */
 .hj-resultados { display: grid; gap: 0.5rem; grid-template-columns: repeat(auto-fill, minmax(min(100%, 18rem), 1fr)); list-style: none; margin: 0; padding: 0; }
