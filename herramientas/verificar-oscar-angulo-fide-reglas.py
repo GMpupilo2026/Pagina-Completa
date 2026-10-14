@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
-"""Las reglas de normas de árbitro de herramientas/oscar-angulo-fide.py, con
-torneos de prueba armados a mano: cada condición del reglamento FIDE B.06.1
+"""Las reglas de normas de árbitro de herramientas/normas_arbitro.py (las
+usan oscar-angulo-fide.py y arbitros-cr.py), con torneos de prueba armados a
+mano: cada condición del reglamento FIDE B.06.1
 (vigente desde el 1 de marzo de 2026) por los dos lados del límite.
 
 Comprueba también que data/oscar-angulo-fide.json esté al día con su fuente.
@@ -15,7 +16,7 @@ import subprocess
 import sys
 
 RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-spec = importlib.util.spec_from_file_location("fide", os.path.join(RAIZ, "herramientas", "oscar-angulo-fide.py"))
+spec = importlib.util.spec_from_file_location("fide", os.path.join(RAIZ, "herramientas", "normas_arbitro.py"))
 fide = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(fide)
 
