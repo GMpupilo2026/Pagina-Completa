@@ -2662,11 +2662,18 @@ después «ponerlo en herramientas pero con licencia», y primero lo de FIDE
   cada torneo enlaza a cada árbitro con su perfil (`/profile/ID`), su
   federación y su cargo («Chief Arbiter», «Deputy Chief Arbiter», «Arbiter»,
   «Pairings Arbiter»…): de ahí sale la lista de árbitros de Costa Rica, sin
-  buscar a nadie a mano. En los meses más viejos la lista no trae el enlace
+  buscar a nadie a mano. FIDE usa además «Deputy Arbiter» y «Sector
+  Arbiter»: son árbitros del torneo y se guardan como «Arbiter» (cuentan
+  igual para la norma), sin suponerles un cargo más alto. En los meses más viejos la lista no trae el enlace
   `report.phtml` en el nombre: una lista se reconoce por empezar con
   `{"data"`, nada más.
 - **Se baja con pg_net de a 12 páginas con pausas de 25 segundos** (FIDE corta
   si se le pide mucho junto), con una consulta idempotente que mira qué falta.
+  Esa consulta y `exportar.sql` **no pasan regex por la página entera**: la
+  ficha pesa unos 45 KB y el dato está en los 8 KB que siguen a «Event code».
+  Con la página entera, la consulta pasaba del minuto con 136 fichas bajadas
+  y habría chocado con el `statement_timeout` antes de terminar; con el
+  pedazo (y `strpos` para saber qué página es) tarda menos de un segundo.
   El reporte ronda a ronda (300 KB cada uno) se pide **solo** de los torneos
   que, por sus jugadores con Elo, podrían valer para alguna norma: en el
   resto la respuesta es «no» igual. Como pg_net borra lo bajado a las seis

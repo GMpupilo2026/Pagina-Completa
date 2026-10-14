@@ -35,8 +35,11 @@ TITULOS = os.path.join(RAIZ, "herramientas", "datos", "arbitros-cr-titulos.json"
 CARPETA = os.path.join(RAIZ, "herramientas", "arbitros-cr")
 # Los cargos de la ficha de FIDE. Para una norma valen el principal, el
 # adjunto y el árbitro; el asistente no (B.06.1, 2.4.4) y el de pareos queda
-# para revisar (el reglamento no lo nombra).
+# para revisar (el reglamento no lo nombra). «Deputy Arbiter» y «Sector
+# Arbiter», que FIDE también usa, son árbitros del torneo: van como «Arbiter»
+# (cuentan igual) y no se les supone un cargo más alto.
 CARGOS = {"Chief Arbiter": "Chief", "Deputy Chief Arbiter": "Dep. Chief", "Arbiter": "Arbiter",
+          "Deputy Arbiter": "Arbiter", "Sector Arbiter": "Arbiter",
           "Pairings Arbiter": "Pairings", "Assistant Arbiter": "Assistant"}
 TITULO_ARBITRO = {"International Arbiter": "IA", "FIDE Arbiter": "FA", "National Arbiter": "AN"}
 FILAS_POR_CARGA = 400

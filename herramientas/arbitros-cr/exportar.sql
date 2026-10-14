@@ -12,17 +12,26 @@
 -- las 6 horas: esto se corre antes. :desde es el primer id de net._http_response
 -- de la tanda.
 with resp as (
+  -- Se clasifica con strpos y los regex pasan solo por el pedazo de la ficha
+  -- (8 KB desde «Event code»): por la página entera, con miles de páginas, la
+  -- consulta pasa del statement_timeout.
   select id rid, content c,
-    case when content ~ '^\W*\{"data"' then 'lista'
-         when content ~ 'Event code' then 'info' when content ~ 'class="table2"' then 'rep' when content ~ 'calc_table' then 'src' end tipo,
-    coalesce(substring(regexp_replace(regexp_replace(content, '<[^>]+>', ' | ', 'g'), '(\s*\|\s*)+', ' | ', 'g') from 'Event code \| &nbsp;(\d+)'),
-             substring(content from 'tournament_information\.phtml\?event=(\d+)')) ev
+    case when left(ltrim(content), 8) ~ '^\W*\{"data' then 'lista'
+         when strpos(content, 'Event code') > 0 then 'info' when strpos(content, 'class="table2"') > 0 then 'rep'
+         when strpos(content, 'calc_table') > 0 then 'src' end tipo
   from net._http_response where id > :desde and status_code = 200
+), resp2 as (
+  select *, case when tipo = 'info' then substr(c, strpos(c, 'Event code'), 8000) end pedazo from resp
+), resp3 as (
+  select *, regexp_replace(regexp_replace(pedazo, '<[^>]+>', ' | ', 'g'), '(\s*\|\s*)+', ' | ', 'g') s,
+    case when tipo = 'info' then substring(regexp_replace(regexp_replace(pedazo, '<[^>]+>', ' | ', 'g'), '(\s*\|\s*)+', ' | ', 'g') from 'Event code \| &nbsp;(\d+)')
+         when tipo in ('rep', 'src') then substring(c from 'tournament_information\.phtml\?event=(\d+)') end ev
+  from resp2
 ), evs as (
   select distinct x->>0 ev from resp, jsonb_array_elements(substr(c, strpos(c, '{'))::jsonb->'data') x where tipo = 'lista'
-), ult as (select distinct on (tipo, ev) * from resp where tipo in ('info', 'rep', 'src') order by tipo, ev, rid desc),
+), ult as (select distinct on (tipo, ev) * from resp3 where tipo in ('info', 'rep', 'src') order by tipo, ev, rid desc),
 info as (
-  select ev, c, regexp_replace(regexp_replace(c, '<[^>]+>', ' | ', 'g'), '(\s*\|\s*)+', ' | ', 'g') s from ult where tipo = 'info'
+  select ev, pedazo c, s from ult where tipo = 'info'
 ), info2 as (
   select ev,
     btrim(substring(s from 'Tournament Name \| &nbsp;([^|]*)')) nombre,
