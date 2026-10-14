@@ -51,6 +51,11 @@
             { title: "Lo que te pone tu profesor", tiles: [
                 { emoji: "📋", label: "Tareas", desc: "Con fecha límite, y se llenan solas con lo que entrenas", descProfe: "Pide cantidades y la tarea se llena sola con lo que entrenan", href: "tareas.html" },
                 { emoji: "📝", label: "Exámenes", desc: "Con nota y reloj: una sola oportunidad por pregunta", descProfe: "Con nota y reloj, y el informe pregunta por pregunta de cada uno", href: "examenes.html" },
+                /* Lo que tiene fecha, junto en un mes: las clases, las tareas y
+                   los exámenes, con un plan para llegar a tiempo. A quien da
+                   clase le va en «Tus clases» (PANEL_DOCENTE). Ver «Mi
+                   calendario» en docs/decisiones/paneles.md. */
+                { emoji: "📅", label: "Mi calendario", desc: "Tus clases, tareas y exámenes en el mes, con un plan para llegar a tiempo", descProfe: "Tu horario y las entregas de tus alumnos, con qué recordar y revisar en cada clase", href: "calendario.html" },
                 /* El diagnóstico entra acá y no en un grupo propio: no se
                    practica, se APLICA —es tu profesor quien te lo pide para
                    ubicarte—, y lo que sale de él es el plan que te arma. Es
@@ -406,7 +411,7 @@
         const PANEL_DOCENTE = [
             { title: "Clase en vivo", id: "grupo-clase-en-vivo", destacado: true, hrefs: ["sesion.html"] },
             { title: "Tus alumnos", id: "grupo-tus-alumnos", hrefs: ["alumno-nuevo.html", "tareas.html", "examenes.html", "informes.html", "justificaciones.html", "libreta-torneos.html", "subgrupos.html"] },
-            { title: "Tus clases", hrefs: ["proyecto.html", "planes.html", "cuestionarios.html", "asistencia.html", "repasar-clases.html", "partidas.html", "preparacion-rivales.html", "informe-mensual.html"] },
+            { title: "Tus clases", hrefs: ["calendario.html", "proyecto.html", "planes.html", "cuestionarios.html", "asistencia.html", "repasar-clases.html", "partidas.html", "preparacion-rivales.html", "informe-mensual.html"] },
             { title: "Coordinación", hrefs: ["coordinacion.html", "solicitudes.html", "formularios.html", "cobros.html"] },
             { title: "Aprender", hrefs: ["entreno/index.html", "entreno/estudio.html", "cursos/academia/index.html", "articulos.html"] },
             { title: "Jugar y competir", hrefs: ["juegos.html", "competir.html", "tablero.html"] },
@@ -1382,6 +1387,7 @@
             "tablero.html": "bot motor oscar jugar contra la computadora",
             "logros.html": "medallas racha premios",
             "cuaderno.html": "notas apuntes posiciones guardadas favoritas",
+            "calendario.html": "agenda horario fechas mes semana plan entregas vence cuando",
             "reto-ejercicios.html": "retar companero duelo ejercicios competir quien resuelve mas",
             "entreno/diagnostico.html": "nivel examen de nivel prueba de nivel",
             "nivel-de-arbitraje.html": "arbitro reglamento fide",

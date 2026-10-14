@@ -363,9 +363,9 @@ async function pruebaAlumna(browser) {
      común, que es lo que no se deduce de sus nombres. */
   /* Y el diagnóstico de nivel va con ellas: no se practica, lo pide el
      profesor para ubicarte. */
-  igual("lo que te ponen va junto, y de segundo, con el diagnóstico al final",
+  igual("lo que te ponen va junto, y de segundo, con su calendario y el diagnóstico al final",
     grupo(grupos, "Lo que te pone tu profesor").tiles.map((t) => t.enlace),
-    ["tareas.html", "examenes.html", "entreno/diagnostico.html"]);
+    ["tareas.html", "examenes.html", "calendario.html", "entreno/diagnostico.html"]);
   /* Por índice a propósito: que vaya PRIMERA es el punto. Y se mira la
      etiqueta y no el href, porque sin clase abierta esa tarjeta está
      bloqueada y no tiene ninguno — eso tiene su propia prueba más abajo. */
@@ -515,9 +515,9 @@ async function pruebaProfesora(browser) {
      `soloAdmin`, igual que la guía del profesor, así que a quien da clase se le
      QUITAN — no se le apagan: una tarjeta gris dice «esto vuelve», y lo que se
      quiere decir es que no es suyo. */
-  igual("«Tus clases»: prepararlas (planes y cuestionarios), darlas, repasarlas e informarlas",
+  igual("«Tus clases»: su calendario, prepararlas (planes y cuestionarios), darlas, repasarlas e informarlas",
     grupo(grupos, "Tus clases").tiles.map((t) => t.enlace),
-    ["planes.html", "cuestionarios.html", "asistencia.html", "repasar-clases.html", "partidas.html", "informe-mensual.html"]);
+    ["calendario.html", "planes.html", "cuestionarios.html", "asistencia.html", "repasar-clases.html", "partidas.html", "informe-mensual.html"]);
   /* La tienda de materiales entra en la misma regla: todavía no está abierta,
      así que a quien da clase no se le pinta ni escondida — un enlace
      invisible pero presente sigue siendo una parada de tabulador, y encima
@@ -1026,7 +1026,7 @@ async function pruebaBuscador(browser) {
   await buscar(alumna.page, "cobros");
   igual("a la alumna, «cobros» no le encuentra nada: busca solo en SU panel", await alumna.page.evaluate(VISIBLES), []);
   await buscar(alumna.page, "tareas");
-  igual("y lo suyo sí", await alumna.page.evaluate(VISIBLES), ["Tareas"]);
+  igual("y lo suyo sí (también su calendario, que tiene las tareas)", await alumna.page.evaluate(VISIBLES), ["Tareas", "Mi calendario"]);
   igual("sin errores en la página de la alumna", alumna.errores, []);
   await alumna.ctx.close();
 
