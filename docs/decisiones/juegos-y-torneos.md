@@ -2707,7 +2707,10 @@ después «ponerlo en herramientas pero con licencia», y primero lo de FIDE
   «una», 92 «opción»; AI: 30 «sí», 4 «una», 17 «opción» y 90 «revisar»
   (los títulos de los rivales son los de hoy). Comparada con la página de
   Oscar Angulo, da lo mismo en todos los torneos en común salvo donde él fue
-  organizador, que allá no cuenta y acá se mira por cargo.
+  organizador, que allá no cuenta y acá se mira por cargo. Las tres huellas
+  de la base dieron iguales a las de las cargas, y el candado se comprobó
+  impersonando en SQL: una cuenta sin la licencia ve 0 filas en las tres
+  tablas; una que administra, 132 / 1338 / 4602.
 - `herramientas/arbitros-cr.py` arma con el JSON las cargas
   (`herramientas/arbitros-cr/carga-*.sql`, que borran y vuelven a llenar las
   tres tablas) y se corren en orden con `execute_sql`. Van en archivos de
