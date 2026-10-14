@@ -2710,7 +2710,11 @@ después «ponerlo en herramientas pero con licencia», y primero lo de FIDE
   organizador, que allá no cuenta y acá se mira por cargo.
 - `herramientas/arbitros-cr.py` arma con el JSON las cargas
   (`herramientas/arbitros-cr/carga-*.sql`, que borran y vuelven a llenar las
-  tres tablas) y se corren en orden con `execute_sql`.
+  tres tablas) y se corren en orden con `execute_sql`. Van en archivos de
+  unos 20 KB: uno de 130 KB no pasaba entero por la conversación. Y los
+  `delete` de la primera piden que alguien los apruebe: un subagente en
+  segundo plano no puede, y la llamada se queda esperando hasta vencer a los
+  60 s sin llegar a la base. Con las tablas vacías basta con los `insert`.
 - `verificar-arbitros-cr.js` prueba la página con un doble: el candado sin
   licencia (no se piden las tablas), los conteos de la lista, la norma por
   cargo (lo rompí haciendo contar al asistente y salta), los filtros, la

@@ -48,7 +48,10 @@ CARGOS = {"Chief Arbiter": "Chief", "Deputy Chief Arbiter": "Dep. Chief", "Arbit
 TITULO_ARBITRO = {"International Arbiter": "IA", "FIDE Arbiter": "FA", "National Arbiter": "AN"}
 TITULO_ES = {"International Arbiter": "Árbitro Internacional", "FIDE Arbiter": "Árbitro FIDE",
              "National Arbiter": "Árbitro Nacional"}
-FILAS_POR_CARGA = 400
+# Archivos chicos (unos 20 KB): cada uno se corre pegado entero en
+# execute_sql, y uno de 130 KB no pasaba por la conversación.
+FILAS_POR_CARGA = 60
+CARGOS_POR_CARGA = 450
 
 
 def sql(v):
@@ -137,8 +140,8 @@ def cargas(torneos, cargos, arbitros):
     for i in range(0, len(filas), FILAS_POR_CARGA):
         bloques.append([f"insert into public.arbitros_cr_torneos ({columnas}) values\n  " + ",\n  ".join(filas[i:i + FILAS_POR_CARGA]) + ";"])
     filas = [f"({t}, {int(f)}, {sql(c)})" for t, f, c in sorted(cargos, key=lambda x: (x[0], int(x[1]), x[2]))]
-    for i in range(0, len(filas), FILAS_POR_CARGA * 3):
-        bloques.append([f"insert into public.arbitros_cr_cargos (torneo_id, fide_id, cargo) values\n  " + ",\n  ".join(filas[i:i + FILAS_POR_CARGA * 3]) + ";"])
+    for i in range(0, len(filas), CARGOS_POR_CARGA):
+        bloques.append([f"insert into public.arbitros_cr_cargos (torneo_id, fide_id, cargo) values\n  " + ",\n  ".join(filas[i:i + CARGOS_POR_CARGA]) + ";"])
     bloques[-1].append("commit;")
     return bloques
 

@@ -1,4 +1,4 @@
--- Carga 1 de 9 de la herramienta arbitros-cr. La arma herramientas/arbitros-cr.py: no se edita a mano.
+-- Carga 1 de 35 de la herramienta arbitros-cr. La arma herramientas/arbitros-cr.py: no se edita a mano.
 delete from public.arbitros_cr_cargos;
 delete from public.arbitros_cr_torneos;
 delete from public.arbitros_cr;
