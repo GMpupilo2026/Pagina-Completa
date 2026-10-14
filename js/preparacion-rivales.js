@@ -14,6 +14,7 @@
  *   js/preparacion-descarga.js    bajar las partidas de Lichess o Chess.com
  *   js/preparacion-teoria.js      dónde deja la teoría (explorador de maestros)
  *   js/preparacion-cruce.js       el cruce con las partidas del alumno
+ *   js/preparacion-arbol.js       «Su árbol de aperturas», para recorrerlo a mano
  *
  * El PGN no sale de la computadora; lo que se guarda es el resultado
  * (preparaciones_rival.analisis). Ver «La preparación de rivales» en
@@ -404,6 +405,19 @@
     rec.addEventListener("change", alCambiar);
   }
 
+  // ------------------------------------------------------------ su árbol
+
+  // «Su árbol de aperturas» (js/preparacion-arbol.js): se arma la primera vez
+  // que hay un análisis. Sin Stockfish: el árbol se ve apenas se abre el
+  // análisis, y encender el motor ahí sería gastarlo en cada análisis.
+  let arbol = null;
+  function pintarArbol(r) {
+    $("arbol-caja").hidden = !!r.vacio;
+    if (r.vacio) return;
+    if (!arbol) arbol = window.PreparacionArbol.montar($("arbol"));
+    arbol.cargar(r);
+  }
+
   // ------------------------------------------------------------ pintar
 
   function mostrar(r, id) {
@@ -418,6 +432,7 @@
     pintarFiltros(r);
     const aviso = $("filtros-aviso");
     $("alumno-caja").hidden = !!r.vacio;
+    pintarArbol(r);
     if (r.vacio) {
       $("resultado-sub").textContent = "Ninguna de sus " + r.totalRival.toLocaleString("es-CR") + " partidas pasa estos filtros.";
       aviso.textContent = "Amplía los filtros para ver el análisis.";
@@ -971,7 +986,10 @@
 
   async function guardar() {
     if (!actual || actual.vacio) return;
-    const json = JSON.stringify(actual);
+    // Si no cabe, se guarda sin «Su árbol de aperturas», que es lo que más pesa.
+    let aGuardar = actual;
+    if (JSON.stringify(aGuardar).length > TOPE_BYTES && aGuardar.explorador) aGuardar = Object.assign({}, actual, { explorador: null });
+    const json = JSON.stringify(aGuardar);
     if (json.length > TOPE_BYTES) {
       Avisos.avisar("El análisis es demasiado grande para guardarlo.", { tipo: "error" });
       return;
@@ -979,7 +997,7 @@
     const b = $("guardar");
     b.disabled = true;
     const { data, error } = await sb.from("preparaciones_rival")
-      .insert({ rival: String(actual.rival).slice(0, 120), partidas: actual.total, analisis: actual })
+      .insert({ rival: String(actual.rival).slice(0, 120), partidas: actual.total, analisis: aGuardar })
       .select("id").single();
     if (error) {
       console.error(error);
