@@ -2469,6 +2469,97 @@ los internacionales (CODICADER y escolares de la federación). Se enlaza desde
   400 px, el modo oscuro y la página sin datos. Sumando también los blitz, o
   sin filtrar la tabla por región, salta.
 
+## Los torneos de Oscar Angulo en chess-results
+
+`oscar-angulo-torneos.html` es una página pública con todos los torneos de
+chess-results.com en que Oscar Angulo Cubero (ID FIDE 6501435) figura como
+árbitro principal, árbitro adjunto principal, árbitro, director del torneo u
+organizador, con filtros y totales (pedido del dueño, octubre de 2026). Se
+enlaza desde `sobre-oscar.html`, en la línea de sus títulos de árbitro.
+
+- **De dónde salen los datos.** Como Ajedrez estudiantil: el buscador de
+  torneos (`TurnierSuche.aspx`) pedido desde la base con `pg_net` (los POST en
+  `net.http_request_queue` y un `net.http_get` para despertarlo; un
+  `net.http_get` con cabeceras propias, como un `User-Agent`, devuelve 400).
+  El buscador tiene una casilla por rol (`txt_leiter` director,
+  `txt_veranstalter` organizador, `txt_Hauptschiedsrichter` árbitro principal,
+  `txt_Schiedsrichter` árbitro), busca por pedazo de texto y su tabla trae las
+  cinco columnas de quién hizo qué. Se buscó, en todas las federaciones
+  (`combo_land=-`) y con 2000 filas (`combo_anzahl_zeilen=5`), «Angulo»,
+  «Ángulo», «Cubero» y «6501435» en las cuatro casillas, «Ajedrez Integral»
+  como organizador y director, y «Angulo» en el nombre del torneo. Ninguna
+  búsqueda llegó a 1000 filas (la más grande, 568), así que ninguna quedó
+  cortada (ver arriba: **una búsqueda que da justo 1000 no está completa**).
+  «Ángulo» no trajo nada aparte: chess-results ya ignora la tilde.
+- **Quién es él.** De 1195 torneos distintos, una casilla lo nombra si trae su
+  ID, sus dos apellidos o «Oscar» y «Angulo» juntos en cualquier orden
+  (`ES_EL` en `herramientas/oscar-angulo-torneos.py`): «IA Angulo Cubero,
+  Oscar 6501435», «Angulo Oscar», «IOscar Angulo Cubero», «Óscar Ángulo
+  Cubero», «6501435 Angulo Cubero, Oscar FA», o dentro de una lista de varios
+  árbitros. Los demás Angulo (Noris Angulo en Venezuela, Rivero Angulo en
+  Perú…) y los Cubero (Rodrigo Cubero Ferreiro en Galicia, Marlin Porras
+  Cubero) quedan fuera solos. «AnguloChess» y «Angulo Chess // ADASA //
+  ASOEDUFI» como organizador son suyos: en los seis torneos él es también el
+  árbitro principal o el director. Ninguna forma de su nombre aparece sin
+  «Angulo» (la búsqueda por «Cubero» y por el ID no trajo nada nuevo).
+- **Lo que se dejó fuera a mano** (`NO_SON_DE_EL`): once torneos de los Juegos
+  Intercolegiados de Montería (Colombia, 2022), con «Oscar Angulo» de árbitro,
+  sin segundo apellido ni ID, organizados por la Alcaldía de Montería: es otra
+  persona. Los de Honduras (CODICADER 2016, «FA Oscar Angulo Cubero»), Cuba,
+  República Dominicana y El Salvador sí son suyos. Un torneo subido dos veces
+  (La Vega 2019, mismo nombre, fechas e inscritos) cuenta una vez
+  (`REPETIDOS`), y el del 14/11/2015 en Escazú, con la federación sin poner
+  (ZZZ), cuenta como de Costa Rica.
+- **La fuente es `herramientas/datos/oscar-angulo-torneos.csv`**, un torneo
+  por fila como lo da el buscador, con el nombre completo de los 338 que
+  llegaban cortados a 50 letras (leído del `<h2>` de la página de cada uno).
+  De las casillas de director y árbitros se guarda solo la que nombra a un
+  «Angulo»: las demás traen nombres de otras personas que la página no usa. El
+  organizador se guarda pero no pasa al JSON (a veces es una persona, como en
+  Ajedrez estudiantil). `herramientas/oscar-angulo-torneos.py` arma
+  `data/oscar-angulo-torneos.json`, que no se edita a mano, y falla si un
+  torneo del CSV no lo nombra en ninguna casilla.
+- **Lo que se saca de cada torneo**, todo en el script: sus roles (un torneo
+  puede tener dos: director y árbitro principal), la forma del nombre sin
+  título ni ID (siete formas, con cómo vienen escritas de verdad), el título
+  que lo acompaña (IA o AI, FA o AF, AN o NA: la página dice el primer y el
+  último torneo con cada uno), el ritmo (el nombre manda —«blitz»,
+  «rápido»—; si no, el control de tiempo con la regla de FIDE: minutos más el
+  incremento de 60 jugadas, blitz hasta 10, rápido hasta 60, clásico desde
+  60; 141 no lo dicen: «.», «pendiente» o nada), la modalidad, el país (la
+  federación) y un tipo según el nombre: Juegos estudiantiles (los que están
+  en `ajedrez-estudiantil-torneos.csv` o dicen JDE, estudiantil, CODICADER…),
+  Juegos Deportivos Nacionales, Internacional, Campeonatos nacionales y el
+  resto. Tres torneos no tienen fecha en chess-results y sin año en el
+  nombre: toman el del torneo de clave más cercana (chess-results numera en
+  el orden en que se crean) y la página dice «hacia 2016».
+- **La página cuenta todo en el navegador** (`js/oscar-angulo-torneos.js`),
+  con las tarjetas y tablas de Ajedrez estudiantil (`ae-*`). Cada resumen (por
+  año, rol, tipo, ritmo, país) es una lista de barras horizontales en HTML,
+  no un SVG: cada fila es un botón con el número escrito, que pone ese filtro
+  (`aria-pressed`) y lo quita al tocarla de nuevo, y cuenta con todos los
+  filtros menos el suyo, para que la barra elegida no deje a las demás en
+  cero. Los filtros van en la dirección
+  (`?rol=ap&titulo=IA&ritmo=Clásico&desde=2022&hasta=2025`); uno que no existe
+  se ignora. La tabla muestra de a 100 y baja en Excel con
+  `js/tabla-excel.js`. Las fechas son días de calendario y se escriben tal
+  cual, sin `new Date()`.
+- **Un `sr-only` dentro de una tabla con scroll alarga la página.** El primer
+  intento ponía «(abre chess-results en otra pestaña)» oculto en cada enlace:
+  `.sr-only` es `position: absolute`, sin un antecesor posicionado se ubica
+  contra la página y se escapa de la caja con `overflow: auto`, y la página
+  medía 10 143 px en vez de 4 904, con un hueco en blanco debajo del pie. El
+  aviso pasó al `caption` de la tabla, y el verificador mide que la página
+  termine en el pie.
+- **No se pone al día sola**: es una foto del 14/10/2026
+  (`herramientas/datos/oscar-angulo-actualizado.txt`). Para sumar lo nuevo,
+  repetir las búsquedas desde la base y volver a correr el script.
+- `verificar-oscar-angulo-torneos.js` cuenta por otro camino, directo del CSV
+  (torneos, jugadores, rondas, árbitro principal, organizador, Honduras),
+  comprueba que Montería y la copia repetida no estén, los filtros, la
+  dirección, las barras, la búsqueda sin tildes, «Mostrar más», ordenar, el
+  Excel, el celular, el modo oscuro y que la página termine en el pie.
+
 ## Historial del jugador y estadísticas por colegio
 
 Dos herramientas gratis y públicas, hechas con los mismos torneos de
