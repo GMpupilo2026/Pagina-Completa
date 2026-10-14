@@ -12,6 +12,11 @@ la lista, no los de la fecha de cada torneo (ver «Sus torneos en FIDE y las
 normas de árbitro» en docs/decisiones/juegos-y-torneos.md).
 
     python3 herramientas/oscar-angulo-fide-titulos.py ruta/a/players_list_foa.txt
+    python3 herramientas/oscar-angulo-fide-titulos.py ruta/a/players_list_foa.txt FUENTE DESTINO
+
+Con FUENTE y DESTINO hace lo mismo con otro resumen de FIDE: la herramienta
+«Árbitros de Costa Rica en FIDE» lo corre con herramientas/datos/arbitros-cr-fide.json
+y herramientas/datos/arbitros-cr-titulos.json.
 """
 import json
 import os
@@ -23,9 +28,10 @@ DESTINO = os.path.join(RAIZ, "herramientas", "datos", "oscar-angulo-fide-titulos
 
 
 def main():
-    if len(sys.argv) != 2:
+    if len(sys.argv) not in (2, 4):
         raise SystemExit(__doc__)
-    with open(FUENTE, encoding="utf-8") as f:
+    fuente, destino = (sys.argv[2], sys.argv[3]) if len(sys.argv) == 4 else (FUENTE, DESTINO)
+    with open(fuente, encoding="utf-8") as f:
         ids = {j["fid"] for t in json.load(f)["torneos"] for j in t.get("conElo") or []}
     titulos = {}
     with open(sys.argv[1], encoding="utf-8", errors="replace") as f:
@@ -39,10 +45,10 @@ def main():
             tit, wtit = linea[i_tit:i_wtit].strip(), linea[i_wtit:i_otit].strip()
             if tit or wtit:
                 titulos[fid] = [tit, wtit]
-    with open(DESTINO, "w", encoding="utf-8") as f:
+    with open(destino, "w", encoding="utf-8") as f:
         json.dump(dict(sorted(titulos.items(), key=lambda x: int(x[0]))), f, ensure_ascii=False, separators=(",", ":"))
         f.write("\n")
-    print(f"{os.path.relpath(DESTINO, RAIZ)}: {len(titulos)} titulados de {len(ids)} jugadores con Elo.")
+    print(f"{os.path.relpath(os.path.abspath(destino), RAIZ)}: {len(titulos)} titulados de {len(ids)} jugadores con Elo.")
 
 
 if __name__ == "__main__":
