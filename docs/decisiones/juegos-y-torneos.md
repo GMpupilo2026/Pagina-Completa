@@ -2701,6 +2701,13 @@ después «ponerlo en herramientas pero con licencia», y primero lo de FIDE
   `js/arbitros-cr.js`): principal, adjunto y árbitro llevan la norma del
   torneo; el asistente no cuenta (B.06.1, 2.4.4) y el de pareos, que el
   reglamento no nombra, queda para revisar.
+- **Lo que dio la primera carga (14/10/2026):** 1338 torneos de 2002 a
+  2026, 132 árbitros de Costa Rica (10 IA y 18 AF según su perfil; FIDE no
+  devolvió el perfil de uno) y 4602 cargos. Por torneo, AF: 381 «sí», 32
+  «una», 92 «opción»; AI: 30 «sí», 4 «una», 17 «opción» y 90 «revisar»
+  (los títulos de los rivales son los de hoy). Comparada con la página de
+  Oscar Angulo, da lo mismo en todos los torneos en común salvo donde él fue
+  organizador, que allá no cuenta y acá se mira por cargo.
 - `herramientas/arbitros-cr.py` arma con el JSON las cargas
   (`herramientas/arbitros-cr/carga-*.sql`, que borran y vuelven a llenar las
   tres tablas) y se corren en orden con `execute_sql`.
