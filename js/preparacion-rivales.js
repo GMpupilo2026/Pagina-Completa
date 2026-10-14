@@ -14,6 +14,7 @@
  *   js/preparacion-descarga.js    bajar las partidas de Lichess o Chess.com
  *   js/preparacion-teoria.js      dónde deja la teoría (explorador de maestros)
  *   js/preparacion-cruce.js       el cruce con las partidas del alumno
+ *   js/preparacion-arbol.js       «Su árbol de aperturas», para recorrerlo a mano
  *
  * El PGN no sale de la computadora; lo que se guarda es el resultado
  * (preparaciones_rival.analisis). Ver «La preparación de rivales» en
@@ -35,7 +36,6 @@
   let rivalCargado = null;          // el rival cuyas partidas tiene el trabajador
   let jugadoresLeidos = [];
   let revision = null;              // { parar, promesa } de la revisión en curso
-  let cuentaBajada = null;          // { sitio, usuario } si las partidas se bajaron (para OpeningTree)
 
   // ------------------------------------------------------------ el trabajador
 
@@ -139,7 +139,6 @@
     }
     boton.disabled = true;
     $("leido").textContent = "Leyendo…";
-    cuentaBajada = null;
     let textos;
     try {
       textos = await Promise.all(archivos.map(leerArchivo));
@@ -231,7 +230,6 @@
     }
     terminarBajada();
     const todo = textos.join("\n\n");
-    cuentaBajada = { sitio, usuario };
     if (!todo || !(await cargarTexto(todo, estado, usuario))) {
       if (parado) estado.textContent = "Se paró antes de que llegara alguna partida.";
       return;
@@ -407,33 +405,17 @@
     rec.addEventListener("change", alCambiar);
   }
 
-  // ------------------------------------------------------------ OpeningTree
+  // ------------------------------------------------------------ su árbol
 
-  /* La caja de OpeningTree (openingtree.com): una herramienta de afuera que
-     arma el árbol de aperturas del rival. No acepta la cuenta en el enlace,
-     así que se le deja a mano: si las partidas se bajaron de la cuenta de
-     este rival, se dice cuál y se puede copiar. Con un PGN o un análisis
-     guardado no se sabe su cuenta: queda solo el enlace. */
-  function pintarOpeningTree(rival) {
-    const c = cuentaBajada && claveDe(cuentaBajada.usuario) === claveDe(rival) ? cuentaBajada : null;
-    const linea = $("opentree-cuenta");
-    linea.hidden = !c;
-    $("opentree-copiar").hidden = !c;
-    $("opentree-estado").textContent = "";
-    linea.textContent = "";
-    if (!c) return;
-    linea.append("Su cuenta: ", el("strong", null, c.usuario), " en " + (c.sitio === "lichess" ? "Lichess" : "Chess.com") + ".");
-  }
-
-  async function copiarUsuarioOpeningTree() {
-    const estado = $("opentree-estado");
-    if (!cuentaBajada) return;
-    try {
-      await navigator.clipboard.writeText(cuentaBajada.usuario);
-      estado.textContent = "Usuario copiado. Pégalo en OpeningTree.";
-    } catch (e) {
-      estado.textContent = "No se pudo copiar: escríbelo a mano en OpeningTree.";
-    }
+  // «Su árbol de aperturas» (js/preparacion-arbol.js): se arma la primera vez
+  // que hay un análisis. Sin Stockfish: el árbol se ve apenas se abre el
+  // análisis, y encender el motor ahí sería gastarlo en cada análisis.
+  let arbol = null;
+  function pintarArbol(r) {
+    $("arbol-caja").hidden = !!r.vacio;
+    if (r.vacio) return;
+    if (!arbol) arbol = window.PreparacionArbol.montar($("arbol"));
+    arbol.cargar(r);
   }
 
   // ------------------------------------------------------------ pintar
@@ -447,10 +429,10 @@
     $("sparring-caja").hidden = true;
     $("resultado").hidden = false;
     $("titulo-resultado").textContent = r.rival;
-    pintarOpeningTree(r.rival);
     pintarFiltros(r);
     const aviso = $("filtros-aviso");
     $("alumno-caja").hidden = !!r.vacio;
+    pintarArbol(r);
     if (r.vacio) {
       $("resultado-sub").textContent = "Ninguna de sus " + r.totalRival.toLocaleString("es-CR") + " partidas pasa estos filtros.";
       aviso.textContent = "Amplía los filtros para ver el análisis.";
@@ -1004,7 +986,10 @@
 
   async function guardar() {
     if (!actual || actual.vacio) return;
-    const json = JSON.stringify(actual);
+    // Si no cabe, se guarda sin «Su árbol de aperturas», que es lo que más pesa.
+    let aGuardar = actual;
+    if (JSON.stringify(aGuardar).length > TOPE_BYTES && aGuardar.explorador) aGuardar = Object.assign({}, actual, { explorador: null });
+    const json = JSON.stringify(aGuardar);
     if (json.length > TOPE_BYTES) {
       Avisos.avisar("El análisis es demasiado grande para guardarlo.", { tipo: "error" });
       return;
@@ -1012,7 +997,7 @@
     const b = $("guardar");
     b.disabled = true;
     const { data, error } = await sb.from("preparaciones_rival")
-      .insert({ rival: String(actual.rival).slice(0, 120), partidas: actual.total, analisis: actual })
+      .insert({ rival: String(actual.rival).slice(0, 120), partidas: actual.total, analisis: aGuardar })
       .select("id").single();
     if (error) {
       console.error(error);
@@ -1099,7 +1084,6 @@
     $("app").classList.remove("hidden");
     $("leer").addEventListener("click", leer);
     $("bajar-form").addEventListener("submit", bajar);
-    $("opentree-copiar").addEventListener("click", copiarUsuarioOpeningTree);
     $("bajar-parar").addEventListener("click", () => { if (bajando) bajando.abort(); });
     $("analizar").addEventListener("click", analizar);
     $("guardar").addEventListener("click", guardar);

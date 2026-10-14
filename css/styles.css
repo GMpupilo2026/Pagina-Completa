@@ -1961,3 +1961,15 @@ html.dark .comparar-serie-3 { background: #199e70; }
 .planilla-acciones button:disabled { opacity: 0.5; }
 .planilla-acciones button:focus-visible, .planilla-nombres input:focus-visible { outline: 3px solid rgb(var(--c-accent-500, 222 145 29)); outline-offset: 2px; }
 #planilla-resultados { display: inline-flex; gap: 0.35rem; }
+
+/* ===== «Su árbol de aperturas» (js/preparacion-arbol.js) =====
+   La barra de cómo le fue con cada jugada: ayuda a la vista (aria-hidden), el
+   dato va escrito al lado. Los tres tonos se separan por LUMINANCIA, no por el
+   matiz: entre vecinos, 3:1 o más (medido: gana–tablas 3,07:1, tablas–pierde
+   3,04:1), y el borde la separa del fondo, claro u oscuro. */
+.arbol-barra { display: inline-flex; width: 5rem; height: 0.75rem; border-radius: 9999px; overflow: hidden; border: 1px solid rgb(var(--c-brand-500, 72 101 129)); flex: none; }
+.dark .arbol-barra { border-color: rgb(var(--c-brand-300, 159 179 200)); }
+.arbol-barra > span { display: block; height: 100%; }
+.arbol-gana { background: #0f3d1f; }
+.arbol-tablas { background: #7f7f7f; }
+.arbol-pierde { background: #f9d9d9; }

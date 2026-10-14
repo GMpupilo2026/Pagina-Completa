@@ -3415,26 +3415,49 @@ después de la táctica, cada veredicto escrito, el dato y el resumen. Roto a
 propósito sin lo esperable por color, con «cerrado» para d4 contra d5 y sin el
 mínimo: saltó cada vez.
 
-### OpeningTree, al lado del análisis
+### El árbol de aperturas, dentro de la plataforma
 
-Debajo del resultado va la caja **«Su árbol de aperturas en OpeningTree»**, con
-el enlace a [openingtree.com](https://www.openingtree.com/): una herramienta
-gratis, de afuera, que arma el árbol de aperturas de un jugador (en cada
-posición, qué jugó, cuántas veces y cómo le fue) para recorrerlo a mano. Lo que
-hace la plataforma ya lo trae resumido; OpeningTree sirve para mirar una rama
-que el plan no muestra.
+Se pidió OpeningTree (openingtree.com) en la preparación. Primero fue un
+enlace, pero obligaba a salir de la cuenta, escribir ahí el usuario del rival
+(OpeningTree no lo recibe por la dirección) y depender de un sitio ajeno. Así
+que la plataforma hace lo mismo con lo que ya tiene: debajo del resultado va
+**«Su árbol de aperturas»** (`js/preparacion-arbol.js`), un tablero y, al lado,
+las jugadas que se hicieron desde esa posición en sus partidas, con cuántas
+veces y cómo le fue **a él** después de cada una (gana, tablas, pierde y
+cuánto saca). Se toca una jugada y se avanza; con ◀ del tablero se vuelve.
 
-- **Es solo un enlace.** No se le manda nada: ni el usuario ni las partidas.
-  OpeningTree no recibe la cuenta por la dirección, así que el profesor la
-  escribe ahí (o sube el mismo PGN). Por eso no va en la lista de proveedores
-  de `privacidad.html`: el sitio no le pasa ningún dato.
-- **La cuenta, lista para copiar.** Si las partidas se bajaron de Lichess o
-  Chess.com y el rival analizado es esa cuenta, la caja dice «Su cuenta: X en
-  Lichess» y trae «Copiar su usuario». Con un PGN o un análisis guardado no se
-  sabe su cuenta y queda solo el enlace (`pintarOpeningTree()` en
-  `js/preparacion-rivales.js`).
-- Lo prueba `verificar-preparacion-rivales.js`: con un PGN, el enlace se ve,
-  abre en otra pestaña y no hay cuenta; al bajar de Lichess, dice la cuenta.
+- **Los datos salen del mismo árbol del análisis.** `exploradorDe()` (en
+  `js/preparacion-analisis.js`) recorre el árbol por posición (las
+  transposiciones llegan al mismo lugar, como en el libro) y guarda, por color
+  del rival, cada posición que vieron **2 partidas o más** con sus jugadas
+  —las de él y las de sus rivales, 10 como mucho— como
+  `[jugada, partidas, ganadas, tablas, perdidas]`, bajo la huella de la
+  posición (`PreparacionLibro.huella`). Respeta los filtros (ritmo, fechas,
+  lo reciente), porque sale del mismo análisis.
+- **Viaja con el análisis guardado**: se queda con las **2500 posiciones** más
+  jugadas por color. Medido con 3000 partidas de prueba: 3300 posiciones y
+  170 KB, de 380 KB del análisis entero (el tope para guardar es 1,4 MB). Si
+  aun así no cabe, `guardar()` lo guarda sin el árbol, que es lo que más pesa.
+- **Un análisis guardado antes no lo trae**: la caja lo dice («vuelve a bajar
+  o a cargar sus partidas») en vez de mostrar un árbol vacío.
+- **Arranca con el color con que más partidas tiene**, y el tablero se mira
+  desde tu lado: si él lleva blancas, tú llevas negras.
+- **Sin Stockfish.** El tablero es el de `js/visor-linea.js` (teclado, lector
+  de pantalla, recorrer escribiendo), pero sin `evaluar`: el árbol se pinta
+  apenas se abre el análisis, y encender el motor ahí lo gastaba en cada
+  análisis (lo detectó «hasta acá, el motor no se pidió» de «Juega contra
+  él»). Para la evaluación está el tablero del plan.
+- **Nada sale de la computadora**: no se le pide nada a ningún sitio.
+- **La barra es solo a la vista** (`aria-hidden`): el dato va escrito al lado.
+  Sus tres tonos (gana `#0f3d1f`, tablas `#7f7f7f`, pierde `#f9d9d9`) se
+  separan por luminancia y no por el matiz, 3:1 o más entre vecinos (medido:
+  3,07 y 3,04), con un borde que la separa del fondo claro u oscuro.
+- Lo prueba `verificar-preparacion-rivales.js`: sin navegador, las jugadas y
+  los resultados desde la salida y después de 1.e4 e6 2.d4 d5, y que no entra
+  ninguna posición de una sola partida; en la página, que arranca con negras,
+  que tocar 1.e4 avanza tablero y tabla, que ◀ vuelve, que el cambio de color
+  da sus primeras jugadas desde el lado de las negras, que dice dónde ya no se
+  repite nada y que un análisis viejo avisa que no tiene árbol.
 
 ## Los proyectos
 

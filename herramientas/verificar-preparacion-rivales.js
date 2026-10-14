@@ -106,6 +106,16 @@ function pruebaAnalisis() {
   igual("el plan sigue su línea: después de 1.e4 él juega 1…e5 siempre",
     [r.conBlancas.plan[0].hijos[0].san, r.conBlancas.plan[0].hijos[0].quien, Math.round(100 * r.conBlancas.plan[0].hijos[0].reparto)], ["e5", "rival", 100]);
   cierto("dice dónde improvisa: después de 1.e4 e6 2.d4 d5", r.improvisa.some((x) => x.color === "w" && A.lineaEs(x.sec) === "1.e4 e6 2.d4 d5"));
+  // Su árbol de aperturas (exploradorDe): por posición, todas las jugadas
+  // de ahí con [jugada, partidas, ganadas, tablas, perdidas] para ÉL.
+  const salida = Lb.huella(Lb.claveDeFen(new Chess().fen()));
+  igual("el árbol con negras: desde la salida, lo que le jugaron y cómo le fue (1.e4: 21, gana 5, pierde 16)",
+    r.explorador.b[salida], [["e4", 21, 5, 0, 16], ["d4", 20, 16, 4, 0]]);
+  igual("con blancas: sus primeras jugadas, de la más jugada a la menos", r.explorador.w[salida], [["e4", 20, 12, 0, 8], ["d4", 12, 10, 0, 2]]);
+  const despues = new Chess(); ["e4", "e6", "d4", "d5"].forEach((m) => despues.move(m));
+  igual("y más adentro: después de 1.e4 e6 2.d4 d5 reparte entre cuatro", r.explorador.w[Lb.huella(Lb.claveDeFen(despues.fen()))].map((x) => x[0] + " " + x[1]), ["Nc3 5", "e5 5", "exd5 5", "Nd2 5"]);
+  cierto("ninguna posición que vio una sola partida entra al árbol",
+    Object.values(r.explorador.b).every((js) => js.reduce((t, x) => t + x[1], 0) >= 2));
   cierto("el FODA trae algo en los cuatro cuadros",
     ["fortalezas", "debilidades", "oportunidades", "amenazas"].every((k) => r.foda[k].length > 0));
   cierto("y habla en notación española (Cf3, no Nf3)", !JSON.stringify(r.foda).match(/\bN[a-h][1-8]\b/) && /Cf3|Dh4|Ab5/.test(JSON.stringify(r.foda) + A.lineaEs(r.principal.b.sec)));
@@ -251,7 +261,7 @@ function pruebaPgnDelPlan(r) {
    ahora, que es exactamente lo que no tenían. */
 function analisisVersion1() {
   const r = A.analizar(A.leerPgn(pgnDePrueba()), "Pedro Perez");
-  for (const k of ["filtros", "disponibles", "totalRival", "pocas"]) delete r[k];
+  for (const k of ["filtros", "disponibles", "totalRival", "pocas", "explorador"]) delete r[k];
   r.version = 1;
   r.rival = "Viejo Rival";
   return JSON.parse(JSON.stringify(r));
@@ -846,8 +856,34 @@ async function pruebaEtapa1(browser, viejo) {
   await page.waitForFunction((n) => document.getElementById("titulo-resultado").textContent === n, viejo.rival, { timeout: 10000 });
   igual("un análisis de la versión 1 se abre igual, sin filtros (no los tenía)",
     [await page.evaluate(() => SE_VE("filtros")), await page.evaluate(() => [...document.querySelectorAll("#resultado-cuerpo h3")].length >= 5)], [false, true]);
+  igual("y sin árbol (no lo tenía): lo dice, en vez de un árbol vacío", await page.evaluate(() => [SE_VE("arbol-caja"), SE_VE("arbol-visor"), document.getElementById("arbol").textContent.startsWith("Este análisis se guardó antes")]), [true, false, true]);
   igual("sin errores en consola ni diálogos del navegador", errores.join(" | ") || "ninguno", "ninguno");
   await ctx.close();
+}
+
+/* «Su árbol de aperturas» (js/preparacion-arbol.js), con el PGN de prueba ya
+   analizado: arranca con el color con que más partidas tiene (negras: 41 de
+   73), se avanza tocando una jugada, se vuelve con ◀ del tablero y se cambia
+   de color. */
+async function pruebaArbolEnLaPagina(page) {
+  const tabla = () => page.evaluate(() => [document.getElementById("arbol-donde").textContent,
+    [...document.querySelectorAll("#arbol-jugadas tbody tr")].map((tr) => [...tr.children].map((td) => td.textContent).join(" | "))]);
+  igual("se ve «Su árbol de aperturas», con tablero", await page.evaluate(() => [SE_VE("arbol-caja"), document.querySelectorAll("#arbol-visor .visor-sq").length]), [true, 64]);
+  igual("arranca con sus partidas con negras: desde la salida, lo que le jugaron, con lo que sacó él", await tabla(),
+    ["Posición de salida: le toca a su rival.", ["1. e4 | 21 (51 %) | gana 24 % · tablas 0 % · pierde 76 % | 24 %", "1. d4 | 20 (49 %) | gana 80 % · tablas 20 % · pierde 0 % | 90 %"]]);
+  igual("la barra es solo a la vista: el dato va escrito", await page.evaluate(() => [...document.querySelectorAll("#arbol-jugadas .arbol-barra")].every((b) => b.getAttribute("aria-hidden") === "true")), true);
+  await page.click('#arbol-jugadas button[data-san="e4"]');
+  igual("al tocar 1.e4 avanza: el tablero la muestra y la tabla es la de esa posición", [await tabla(), await page.evaluate(() => !!document.querySelector('#arbol-visor .visor-sq[data-square="e4"] [aria-hidden="true"]'))],
+    [["Después de 1.e4: le toca a él.", ["1… e5 | 21 (100 %) | gana 24 % · tablas 0 % · pierde 76 % | 24 %"]], true]);
+  igual("el foco queda en la primera jugada nueva", await page.evaluate(() => document.activeElement.dataset.san), "e5");
+  await page.click('#arbol-visor button[aria-label="Jugada anterior"]');
+  igual("con ◀ del tablero vuelve a la salida", (await tabla())[0], "Posición de salida: le toca a su rival.");
+  await page.check("#arbol-color-w");
+  igual("con blancas: sus primeras jugadas", await tabla(),
+    ["Posición de salida: le toca a él.", ["1. e4 | 20 (63 %) | gana 60 % · tablas 0 % · pierde 40 % | 60 %", "1. d4 | 12 (38 %) | gana 83 % · tablas 0 % · pierde 17 % | 83 %"]]);
+  igual("el tablero se mira desde tu lado: con él de blancas, tú llevas negras", await page.evaluate(() => document.querySelector("#arbol-visor .visor-sq").dataset.square), "h1");
+  for (const san of ["e4", "e6", "d4", "d5", "Nc3", "Nf6"]) await page.click('#arbol-jugadas button[data-san="' + san + '"]');
+  igual("donde ya no se repite nada, lo dice", (await page.textContent("#arbol-jugadas")).startsWith("Desde aquí no sigue ninguna línea"), true);
 }
 
 async function pruebaSinPermiso(browser) {
@@ -876,10 +912,7 @@ async function pruebaConPermiso(browser) {
   await page.waitForFunction(() => /Listo/.test(document.getElementById("motor-estado").textContent), null, { timeout: 30000 });
   igual("se ve el resultado, con el nombre como más se escribe en el archivo", await page.evaluate(() => SE_VE("resultado") && document.getElementById("titulo-resultado").textContent), "Pedro Perez");
   igual("el foco va al título del resultado", await page.evaluate(() => document.activeElement.id), "titulo-resultado");
-  igual("OpeningTree: el enlace se ve y abre en otra pestaña; con un PGN no hay cuenta que copiar", await page.evaluate(() => {
-    const a = document.getElementById("opentree-abrir");
-    return [SE_VE("opentree-caja"), a.checkVisibility(), a.href, a.target, a.rel, SE_VE("opentree-cuenta"), SE_VE("opentree-copiar")];
-  }), [true, true, "https://www.openingtree.com/", "_blank", "noopener noreferrer", false, false]);
+  await pruebaArbolEnLaPagina(page);
   const titulos = await page.evaluate(() => [...document.querySelectorAll("#resultado-cuerpo h3")].filter((h) => h.checkVisibility()).map((h) => h.textContent));
   igual("están todas las partes, en orden", titulos,
     ["Qué hacer contra él", "Qué jugarle, jugada por jugada", "La línea a fondo", "Lo que dice Stockfish", "Análisis FODA, visto desde quien quiere ganarle", "Su táctica: con qué gana y con qué pierde", "Más allá de la apertura", "Su repertorio", "Dónde rinde menos y dónde más", "Por ritmo, por año y por Elo"]);
@@ -1806,8 +1839,6 @@ async function pruebaDescarga(browser) {
     ["/api/games/user/PedroP max=500 clocks=true evals=false"]);
   igual("y analiza solo, con el usuario como rival", [await page.textContent("#titulo-resultado"), await page.evaluate(() => document.getElementById("rival").value)], ["PedroP", "PedroP"]);
   cierto("con todas sus partidas", /^73 partidas/.test(await page.textContent("#resultado-sub")));
-  igual("OpeningTree: dice la cuenta bajada y deja copiarla", await page.evaluate(() =>
-    [SE_VE("opentree-cuenta") && document.getElementById("opentree-cuenta").textContent, SE_VE("opentree-copiar")]), ["Su cuenta: PedroP en Lichess.", true]);
 
   // Un usuario que no existe: se dice, en palabras.
   await page.fill("#bajar-usuario", "nadie");
