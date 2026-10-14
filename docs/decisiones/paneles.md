@@ -3809,8 +3809,9 @@ agenda de cuatro semanas) con dos cosas encima: **lo que conviene saber** y
   clases, tareas y exámenes; quien da clase, solo las clases de su horario
   (las entregas de cada alumno no son eventos suyos).
 - La tarjeta «📅 Mi calendario» va en «Lo que te pone tu profesor» (alumno) y
-  primera en «Tus clases» (quien da clase); «Tu calendario» del panel lleva un
-  enlace a la página.
+  en «Tus clases» (quien da clase), justo después de su proyecto si tiene uno
+  (`verificar-proyectos.js` pide que el proyecto vaya primero); «Tu
+  calendario» del panel lleva un enlace a la página.
 
 **Al tocarlo, correr** `node herramientas/verificar-calendario-inteligente.js`
 (la cuenta: días de Costa Rica, el mes de lunes a domingo, el plan, los avisos,

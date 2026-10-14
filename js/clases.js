@@ -411,7 +411,7 @@
         const PANEL_DOCENTE = [
             { title: "Clase en vivo", id: "grupo-clase-en-vivo", destacado: true, hrefs: ["sesion.html"] },
             { title: "Tus alumnos", id: "grupo-tus-alumnos", hrefs: ["alumno-nuevo.html", "tareas.html", "examenes.html", "informes.html", "justificaciones.html", "libreta-torneos.html", "subgrupos.html"] },
-            { title: "Tus clases", hrefs: ["calendario.html", "proyecto.html", "planes.html", "cuestionarios.html", "asistencia.html", "repasar-clases.html", "partidas.html", "preparacion-rivales.html", "informe-mensual.html"] },
+            { title: "Tus clases", hrefs: ["proyecto.html", "calendario.html", "planes.html", "cuestionarios.html", "asistencia.html", "repasar-clases.html", "partidas.html", "preparacion-rivales.html", "informe-mensual.html"] },
             { title: "Coordinación", hrefs: ["coordinacion.html", "solicitudes.html", "formularios.html", "cobros.html"] },
             { title: "Aprender", hrefs: ["entreno/index.html", "entreno/estudio.html", "cursos/academia/index.html", "articulos.html"] },
             { title: "Jugar y competir", hrefs: ["juegos.html", "competir.html", "tablero.html"] },
