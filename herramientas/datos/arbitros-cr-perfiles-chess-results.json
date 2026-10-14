@@ -1,0 +1,502 @@
+{
+"nota": "Perfiles de FIDE de los ID que aparecen en las columnas de árbitros de chess-results y no estaban entre los árbitros de FIDE; solo los de Costa Rica (los demás son de otros países o ID mal escritos que FIDE no reconoce). Ninguno trae título de árbitro en FIDE.",
+"perfiles": [
+{
+"fid": "6500196",
+"nombre": "Murillo Tsijli, Manuel",
+"pais": "cr",
+"titulos": [],
+"categoria": null
+},
+{
+"fid": "6500293",
+"nombre": "Quiros Rojas, Luis Eduardo",
+"pais": "cr",
+"titulos": [],
+"categoria": null
+},
+{
+"fid": "6500366",
+"nombre": "Arias Santana, Mauricio",
+"pais": "cr",
+"titulos": [],
+"categoria": null
+},
+{
+"fid": "6500382",
+"nombre": "Vargas Villalobos, Oliverio",
+"pais": "cr",
+"titulos": [],
+"categoria": null
+},
+{
+"fid": "6500447",
+"nombre": "Campos Cerdas, Jorge",
+"pais": "cr",
+"titulos": [],
+"categoria": null
+},
+{
+"fid": "6500536",
+"nombre": "Vega Araya, Edwin",
+"pais": "cr",
+"titulos": [],
+"categoria": null
+},
+{
+"fid": "6500862",
+"nombre": "Bonilla Sequeira, Pablo",
+"pais": "cr",
+"titulos": [],
+"categoria": null
+},
+{
+"fid": "6501010",
+"nombre": "Brenes Salgado, Juan Carlos",
+"pais": "cr",
+"titulos": [],
+"categoria": null
+},
+{
+"fid": "6501524",
+"nombre": "Calvo Gutierrez, Luis Guillermo",
+"pais": "cr",
+"titulos": [],
+"categoria": null
+},
+{
+"fid": "6501630",
+"nombre": "Fernandez Sanchez, Ana Patricia",
+"pais": "cr",
+"titulos": [],
+"categoria": null
+},
+{
+"fid": "6502008",
+"nombre": "Anchia Cabezas, Adonay",
+"pais": "cr",
+"titulos": [],
+"categoria": null
+},
+{
+"fid": "6502415",
+"nombre": "Monge Calvo, Hugo Luis",
+"pais": "cr",
+"titulos": [],
+"categoria": null
+},
+{
+"fid": "6502687",
+"nombre": "Toro Soto, Anthony Roy",
+"pais": "cr",
+"titulos": [],
+"categoria": null
+},
+{
+"fid": "6502830",
+"nombre": "Aragon Masis, Sergio",
+"pais": "cr",
+"titulos": [],
+"categoria": null
+},
+{
+"fid": "6503420",
+"nombre": "Balmaceda Segura, Randall",
+"pais": "cr",
+"titulos": [],
+"categoria": null
+},
+{
+"fid": "6503608",
+"nombre": "Ramirez Almeciga, Cristian A.",
+"pais": "cr",
+"titulos": [],
+"categoria": null
+},
+{
+"fid": "6503616",
+"nombre": "Ramirez Almeciga, Yenny Melisa",
+"pais": "cr",
+"titulos": [],
+"categoria": null
+},
+{
+"fid": "6503918",
+"nombre": "Segura Calderon, Ronald",
+"pais": "cr",
+"titulos": [],
+"categoria": null
+},
+{
+"fid": "6504450",
+"nombre": "Acevedo Mendez, Oscar",
+"pais": "cr",
+"titulos": [],
+"categoria": null
+},
+{
+"fid": "6504922",
+"nombre": "Porras Cubero, Marlin",
+"pais": "cr",
+"titulos": [],
+"categoria": null
+},
+{
+"fid": "6504930",
+"nombre": "Porras Chavarria, Michael",
+"pais": "cr",
+"titulos": [],
+"categoria": null
+},
+{
+"fid": "6504957",
+"nombre": "Porras Chavarria, Steve",
+"pais": "cr",
+"titulos": [],
+"categoria": null
+},
+{
+"fid": "6506020",
+"nombre": "Gamboa Vargas, Jose Pablo",
+"pais": "cr",
+"titulos": [],
+"categoria": null
+},
+{
+"fid": "6506054",
+"nombre": "Leon Vargas, Mercedes Lucia",
+"pais": "cr",
+"titulos": [],
+"categoria": null
+},
+{
+"fid": "6507204",
+"nombre": "Bustamante Blanco, Roberto",
+"pais": "cr",
+"titulos": [],
+"categoria": null
+},
+{
+"fid": "6507921",
+"nombre": "Zamora Rodriguez, Elbert",
+"pais": "cr",
+"titulos": [],
+"categoria": null
+},
+{
+"fid": "6508138",
+"nombre": "Hernandez Hernandez, George",
+"pais": "cr",
+"titulos": [],
+"categoria": null
+},
+{
+"fid": "6508766",
+"nombre": "Duque Araya, Cristofer",
+"pais": "cr",
+"titulos": [],
+"categoria": null
+},
+{
+"fid": "6508901",
+"nombre": "Duran Morales, Oswaldo",
+"pais": "cr",
+"titulos": [],
+"categoria": null
+},
+{
+"fid": "6509150",
+"nombre": "Sandi Castro, Allan",
+"pais": "cr",
+"titulos": [],
+"categoria": null
+},
+{
+"fid": "6510574",
+"nombre": "Guevara Guzman, Mauricio",
+"pais": "cr",
+"titulos": [],
+"categoria": null
+},
+{
+"fid": "6510639",
+"nombre": "Boza Araya, Enrique",
+"pais": "cr",
+"titulos": [],
+"categoria": null
+},
+{
+"fid": "6511970",
+"nombre": "Redondo Washington, Josymar",
+"pais": "cr",
+"titulos": [],
+"categoria": null
+},
+{
+"fid": "6512186",
+"nombre": "Baltodano Sanchez, Sara Patricia",
+"pais": "cr",
+"titulos": [],
+"categoria": null
+},
+{
+"fid": "6512569",
+"nombre": "Ramirez Mendez, Gerardo",
+"pais": "cr",
+"titulos": [],
+"categoria": null
+},
+{
+"fid": "6514863",
+"nombre": "Delgado Arce, Oscar Gerardo",
+"pais": "cr",
+"titulos": [],
+"categoria": null
+},
+{
+"fid": "6515860",
+"nombre": "Zamora Sierra, Alfredo",
+"pais": "cr",
+"titulos": [],
+"categoria": null
+},
+{
+"fid": "6518303",
+"nombre": "Morales Zumbado, Raul",
+"pais": "cr",
+"titulos": [],
+"categoria": null
+},
+{
+"fid": "6518826",
+"nombre": "Barrantes Granados, Ian Daniel",
+"pais": "cr",
+"titulos": [],
+"categoria": null
+},
+{
+"fid": "6519717",
+"nombre": "Aguilar Ortega, Walter Adrian",
+"pais": "cr",
+"titulos": [],
+"categoria": null
+},
+{
+"fid": "6519814",
+"nombre": "Bustos Arias, Darien",
+"pais": "cr",
+"titulos": [],
+"categoria": null
+},
+{
+"fid": "6521541",
+"nombre": "Mora Chavarria, Sebastian Noel",
+"pais": "cr",
+"titulos": [],
+"categoria": null
+},
+{
+"fid": "6524370",
+"nombre": "Pomares Mendez, Noel David",
+"pais": "cr",
+"titulos": [],
+"categoria": null
+},
+{
+"fid": "6525962",
+"nombre": "Rodriguez Pazmino, Tomas",
+"pais": "cr",
+"titulos": [],
+"categoria": null
+},
+{
+"fid": "6526187",
+"nombre": "Nunez Vargas, Medelyn Nicole",
+"pais": "cr",
+"titulos": [],
+"categoria": null
+},
+{
+"fid": "6527841",
+"nombre": "Gonzalez Camacho, Arleth",
+"pais": "cr",
+"titulos": [],
+"categoria": null
+},
+{
+"fid": "6529011",
+"nombre": "Charpentier Quiros, Cesar",
+"pais": "cr",
+"titulos": [],
+"categoria": null
+},
+{
+"fid": "6531431",
+"nombre": "Monge Calvo, Fiorella",
+"pais": "cr",
+"titulos": [],
+"categoria": null
+},
+{
+"fid": "6532152",
+"nombre": "Campos Sanchez, Kevin Felipe",
+"pais": "cr",
+"titulos": [],
+"categoria": null
+},
+{
+"fid": "6532934",
+"nombre": "Chaves Diaz, Luis Guillermo",
+"pais": "cr",
+"titulos": [],
+"categoria": null
+},
+{
+"fid": "6534554",
+"nombre": "Abarca Tijerino, Jorge Alberto",
+"pais": "cr",
+"titulos": [],
+"categoria": null
+},
+{
+"fid": "6534589",
+"nombre": "Zamora Lopez, Norbin",
+"pais": "cr",
+"titulos": [],
+"categoria": null
+},
+{
+"fid": "6537278",
+"nombre": "Nunez Mora, Rodolfo",
+"pais": "cr",
+"titulos": [],
+"categoria": null
+},
+{
+"fid": "6542280",
+"nombre": "Gabb Torres, Henry",
+"pais": "cr",
+"titulos": [],
+"categoria": null
+},
+{
+"fid": "6544797",
+"nombre": "Campos Ortiz, Adriana Patricia",
+"pais": "cr",
+"titulos": [],
+"categoria": null
+},
+{
+"fid": "6544860",
+"nombre": "Mesen Vega, Roberspiel",
+"pais": "cr",
+"titulos": [],
+"categoria": null
+},
+{
+"fid": "6551963",
+"nombre": "Martinez Rodriguez, Luis David",
+"pais": "cr",
+"titulos": [],
+"categoria": null
+},
+{
+"fid": "6553761",
+"nombre": "Alvarado Guzman, Alberto",
+"pais": "cr",
+"titulos": [],
+"categoria": null
+},
+{
+"fid": "6556426",
+"nombre": "Alvarado Sanchez, Diego Asdrubal",
+"pais": "cr",
+"titulos": [],
+"categoria": null
+},
+{
+"fid": "6558151",
+"nombre": "Salazar Viales, Lester Mauricio",
+"pais": "cr",
+"titulos": [],
+"categoria": null
+},
+{
+"fid": "6561420",
+"nombre": "Perez Saenz, Rosa Elena",
+"pais": "cr",
+"titulos": [],
+"categoria": null
+},
+{
+"fid": "6561454",
+"nombre": "Rojas Acuna, Itzel Karina",
+"pais": "cr",
+"titulos": [],
+"categoria": null
+},
+{
+"fid": "6561691",
+"nombre": "da Silva Ramirez, Luis Fernando",
+"pais": "cr",
+"titulos": [],
+"categoria": null
+},
+{
+"fid": "6562213",
+"nombre": "Valverde Rivera, Grettel",
+"pais": "cr",
+"titulos": [],
+"categoria": null
+},
+{
+"fid": "6562485",
+"nombre": "Ramirez Ordonez, Brandon Adrian",
+"pais": "cr",
+"titulos": [],
+"categoria": null
+},
+{
+"fid": "6562795",
+"nombre": "Ramos Torres, Sergio Arturo",
+"pais": "cr",
+"titulos": [],
+"categoria": null
+},
+{
+"fid": "6569218",
+"nombre": "Pereira Montero, Melissa",
+"pais": "cr",
+"titulos": [],
+"categoria": null
+},
+{
+"fid": "6572057",
+"nombre": "Valenciano Calvo, Britany",
+"pais": "cr",
+"titulos": [],
+"categoria": null
+},
+{
+"fid": "6574890",
+"nombre": "Morales Castrillo, Luis Antonio",
+"pais": "cr",
+"titulos": [],
+"categoria": null
+},
+{
+"fid": "6578659",
+"nombre": "Zuniga Calderon, Maritza",
+"pais": "cr",
+"titulos": [],
+"categoria": null
+},
+{
+"fid": "6583350",
+"nombre": "Sanchez Perez, Manrique Jesus",
+"pais": "cr",
+"titulos": [],
+"categoria": null
+}
+]
+}

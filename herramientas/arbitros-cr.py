@@ -144,7 +144,7 @@ def palabras(s):
     return [w for w in re.findall(r"[a-z]+", sin_tildes(html.unescape(s))) if w not in NO_ES_NOMBRE]
 
 
-def formas_del_nombre(nombre):
+def formas_del_nombre(nombre, ambiguo=False):
     """Las formas en que se escribe a alguien en una celda, como expresiones
     sobre las palabras sin tildes: «Apellido1 Apellido2, Nombre», «Nombre
     [segundo] Apellido1» y, si no tiene segundo apellido, «Apellido, Nombre»."""
@@ -152,10 +152,21 @@ def formas_del_nombre(nombre):
     a, n = palabras(ap), palabras(no)
     if not a or not n:
         return []
-    formas = [r"\b" + " ".join(a) + r" " + n[0] + r"\b", r"\b" + n[0] + r"(?: [a-z]+)? " + a[0] + r"\b"]
+    # «Nombre Apellido» suelto, salvo que otro árbitro comparta nombre y
+    # primer apellido (Stanley Gómez Huertas y Stanley Gómez Villalobos):
+    # entonces pide también el segundo.
+    corto = r"\b" + n[0] + r"(?: [a-z]+)? " + a[0] + (" " + a[1] if ambiguo and len(a) > 1 else "") + r"\b"
+    formas = [r"\b" + " ".join(a) + r" " + n[0] + r"\b", corto]
     if len(a) > 1:
         formas.append(r"\b" + a[0] + " " + a[1] + r" " + n[0] + r"\b")
-    formas.append(r"\b" + a[0] + " " + n[0] + r"\b")  # «Angulo Oscar»
+    # «Apellido Nombre» («Angulo Oscar») solo con un apellido: con dos,
+    # «Martinez Luis» calza en «Loria Martinez, Luis Felipe».
+    if len(a) == 1:
+        formas.append(r"\b" + a[0] + " " + n[0] + r"\b")
+    # El segundo nombre, solo con los dos apellidos: «Josué Amaya Madrigal»
+    # (Amaya Madrigal, Alvaro Josue), «Leticia Gamboa Alvarado».
+    if len(a) > 1:
+        formas += [r"\b" + x + " " + a[0] + " " + a[1] + r"\b" for x in n[1:]]
     return [re.compile(f) for f in formas]
 
 
@@ -174,7 +185,10 @@ def armar_chess_results(arbitros):
         with open(PERFILES_CR, encoding="utf-8") as f:
             perfiles = {p["fid"]: p for p in json.load(f)["perfiles"]}
     texto = lambda celda: " ".join(palabras(celda))
-    # Primero, los de Costa Rica que figuran con su ID y no estaban.
+    # Primero, los de Costa Rica que figuran con su ID y no estaban. Al final
+    # se quedan solo los que arbitraron (quien solo fue director u
+    # organizador no entra a la lista).
+    nuevos = set()
     for t in fuente["torneos"]:
         for col in ROLES_CR:
             for fid in re.findall(r"\b(\d{5,8})\b", t[col]):
@@ -185,7 +199,10 @@ def armar_chess_results(arbitros):
                 if ap and ap[0] in texto(t[col]).split():
                     arbitros[fid] = {"nombre": p["nombre"], "titulo": TITULO_ARBITRO.get(p.get("titulo") or "", ""),
                                      "detalle": p.get("detalle") or "", "solo_cr": True}
-    formas = {fid: formas_del_nombre(a["nombre"]) for fid, a in arbitros.items()}
+                    nuevos.add(fid)
+    clave_corta = lambda nombre: (tuple(palabras(nombre.partition(",")[2])[:1]), tuple(palabras(nombre.partition(",")[0])[:1]))
+    repetidos = Counter(clave_corta(a["nombre"]) for a in arbitros.values())
+    formas = {fid: formas_del_nombre(a["nombre"], repetidos[clave_corta(a["nombre"])] > 1) for fid, a in arbitros.items()}
     primer_apellido = {fid: (palabras(a["nombre"].partition(",")[0]) or [""])[0] for fid, a in arbitros.items()}
     torneos, cargos = {}, set()
     for t in fuente["torneos"]:
@@ -206,6 +223,10 @@ def armar_chess_results(arbitros):
             "rondas": int(t["rondas"]) if t["rondas"].isdigit() else 0,
             "jugadores": int(t["jugadores"]) if t["jugadores"].isdigit() else 0,
         }
+    arbitraron = {f for _, f, r in cargos if r in ("ap", "adj", "arb")}
+    for fid in nuevos - arbitraron:
+        del arbitros[fid]
+    cargos = {c for c in cargos if c[1] in arbitros}
     usados = {c for c, _, _ in cargos}
     return {k: v for k, v in torneos.items() if k in usados}, cargos
 

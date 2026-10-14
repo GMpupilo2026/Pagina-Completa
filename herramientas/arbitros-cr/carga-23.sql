@@ -1,4 +1,4 @@
--- Carga 23 de 35 de la herramienta arbitros-cr. La arma herramientas/arbitros-cr.py: no se edita a mano.
+-- Carga 23 de 63 de la herramienta arbitros-cr. La arma herramientas/arbitros-cr.py: no se edita a mano.
 insert into public.arbitros_cr_torneos (id, nombre, ciudad, pais, inicio, fin, sistema, ritmo, jugadores, con_elo, contados, rondas, federaciones, valorado, af_estado, af_detalle, ai_estado, ai_detalle) values
   (466191, convert_from(decode('Q2FtcGVvbmF0byBOYWNpb25hbCBDYXRlZ29yaWFzIE1lbm9yZXMgUGFyZXMgMjAyNiBVMTggQWJzb2x1dG8=', 'base64'), 'UTF8'), 'San Jose', 'Costa Rica', '2026-02-20', '2026-02-22', 's', 'Standard', 100, 31, 28, 7, 1, 'marzo de 2026', 'si', 'Suizo, 28 jugadores con Elo, 7 rondas', 'no', 'nacional: solo vale la final del campeonato nacional o el nacional por equipos'),
   (466640, convert_from(decode('SUkgVG9ybmVvIEFiaWVydG8gTWVtb3JpYWwgTHVpcyBBcmF5YSBBcmF5YSAyMDI2', 'base64'), 'UTF8'), 'San Jose', 'Costa Rica', '2026-04-18', '2026-04-26', 's', 'Standard', 100, 78, 69, 7, 1, 'mayo de 2026', 'si', 'Suizo, 69 jugadores con Elo, 7 rondas', 'no', 'nacional: solo vale la final del campeonato nacional o el nacional por equipos'),

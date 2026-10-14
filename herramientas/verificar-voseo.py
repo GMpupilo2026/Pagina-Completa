@@ -210,7 +210,12 @@ def archivos():
             # herramientas/ajedrez-estudiantil.py): Solís, Tomás, Sarchí… Crece
             # solo cada seis horas, así que un nombre nuevo con tilde
             # rompería el PR automático sin que nadie haya escrito nada.
-            and f != os.path.join("data", "ajedrez-estudiantil-jugadores.json")]
+            and f != os.path.join("data", "ajedrez-estudiantil-jugadores.json")
+            # Lo mismo con los torneos de Costa Rica en chess-results de la
+            # herramienta arbitros-cr (los nombres de los árbitros y de los
+            # torneos tal cual: Solís, Zurquí…). No se publica: está en
+            # herramientas/, fuera del sitio.
+            and f != os.path.join("herramientas", "datos", "arbitros-cr-chess-results.json")]
 
 def hallazgos(ruta):
     """Devuelve [(palabra, contexto)] del voseo que quede en el archivo."""

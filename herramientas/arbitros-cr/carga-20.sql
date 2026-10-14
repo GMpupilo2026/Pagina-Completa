@@ -1,4 +1,4 @@
--- Carga 20 de 35 de la herramienta arbitros-cr. La arma herramientas/arbitros-cr.py: no se edita a mano.
+-- Carga 20 de 63 de la herramienta arbitros-cr. La arma herramientas/arbitros-cr.py: no se edita a mano.
 insert into public.arbitros_cr_torneos (id, nombre, ciudad, pais, inicio, fin, sistema, ritmo, jugadores, con_elo, contados, rondas, federaciones, valorado, af_estado, af_detalle, ai_estado, ai_detalle) values
   (421801, convert_from(decode('VG9ybmVvIFJhcGlkIEFuZXhpb24gZGUgR3VhbmFjYXN0ZSAyMDI1', 'base64'), 'UTF8'), 'Montes de Oca', 'Costa Rica', '2025-07-26', '2025-07-26', 's', 'Rapid', 70, 55, 53, 7, 1, 'septiembre de 2025', 'no', 'rápido: pide 30 jugadores con Elo y 9 rondas (tiene 53 y 7)', 'no', 'rápido: solo valen los campeonatos mundiales o continentales oficiales'),
   (421802, convert_from(decode('QUJJRVJUTyBBSkVEUkVaIFJJTyBDVUFSVE8gMjAyNQ==', 'base64'), 'UTF8'), 'Rio Cuarto', 'Costa Rica', '2025-05-03', '2025-05-03', 's', 'Rapid', 30, 25, 25, 0, 1, 'junio de 2025', 'no', 'rápido: pide 30 jugadores con Elo y 9 rondas (tiene 25; las rondas, FIDE no las publica)', 'no', 'rápido: solo valen los campeonatos mundiales o continentales oficiales'),

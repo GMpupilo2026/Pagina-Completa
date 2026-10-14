@@ -1,4 +1,4 @@
--- Carga 14 de 35 de la herramienta arbitros-cr. La arma herramientas/arbitros-cr.py: no se edita a mano.
+-- Carga 14 de 63 de la herramienta arbitros-cr. La arma herramientas/arbitros-cr.py: no se edita a mano.
 insert into public.arbitros_cr_torneos (id, nombre, ciudad, pais, inicio, fin, sistema, ritmo, jugadores, con_elo, contados, rondas, federaciones, valorado, af_estado, af_detalle, ai_estado, ai_detalle) values
   (284673, convert_from(decode('VG9ybmVvIEEgR29pY29lY2hlYSBBYnJpbCAyMDIy', 'base64'), 'UTF8'), 'Guadalupe de Goicoechea', 'Costa Rica', '2022-03-27', '2022-04-17', 'r', 'Standard', 10, 10, 10, 9, 1, 'mayo de 2022', 'si', 'Todos contra todos, 10 jugadores con Elo, 9 rondas', 'no', 'nacional: solo vale la final del campeonato nacional o el nacional por equipos'),
   (284677, convert_from(decode('VG9ybmVvIEIgR29pY29lY2hlYSBBYnJpbCAyMDIy', 'base64'), 'UTF8'), 'Guadalupe de Goicoechea', 'Costa Rica', '2022-03-27', '2022-04-17', 'r', 'Standard', 10, 10, 9, 9, 1, 'mayo de 2022', 'si', 'Todos contra todos, 9 jugadores con Elo, 9 rondas', 'no', 'nacional: solo vale la final del campeonato nacional o el nacional por equipos'),

@@ -1,4 +1,4 @@
--- Carga 13 de 35 de la herramienta arbitros-cr. La arma herramientas/arbitros-cr.py: no se edita a mano.
+-- Carga 13 de 63 de la herramienta arbitros-cr. La arma herramientas/arbitros-cr.py: no se edita a mano.
 insert into public.arbitros_cr_torneos (id, nombre, ciudad, pais, inicio, fin, sistema, ritmo, jugadores, con_elo, contados, rondas, federaciones, valorado, af_estado, af_detalle, ai_estado, ai_detalle) values
   (237758, convert_from(decode('Q2FtcGVvbmF0byBOYWNpb25hbCBJbmZhbnRpbCBTdWIxMiAyMDIw', 'base64'), 'UTF8'), 'Escazu', 'Costa Rica', '2020-01-23', '2020-01-26', 's', 'Standard', 35, 35, 35, 8, 1, 'febrero de 2020', 'si', 'Suizo, 35 jugadores con Elo, 8 rondas', 'no', 'nacional: solo vale la final del campeonato nacional o el nacional por equipos'),
   (237759, convert_from(decode('Q2FtcGVvbmF0byBOYWNpb25hbCBJbmZhbnRpbCBTdWIxMiBGZW1lbmlubyAyMDIw', 'base64'), 'UTF8'), 'Escazu', 'Costa Rica', '2020-01-23', '2020-01-26', 's', 'Standard', 30, 14, 14, 8, 1, 'febrero de 2020', 'no', '14 jugadores con Elo que jugaron casi todo (pide 20)', 'no', 'nacional: solo vale la final del campeonato nacional o el nacional por equipos'),

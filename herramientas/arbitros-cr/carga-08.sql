@@ -1,4 +1,4 @@
--- Carga 8 de 35 de la herramienta arbitros-cr. La arma herramientas/arbitros-cr.py: no se edita a mano.
+-- Carga 8 de 63 de la herramienta arbitros-cr. La arma herramientas/arbitros-cr.py: no se edita a mano.
 insert into public.arbitros_cr_torneos (id, nombre, ciudad, pais, inicio, fin, sistema, ritmo, jugadores, con_elo, contados, rondas, federaciones, valorado, af_estado, af_detalle, ai_estado, ai_detalle) values
   (173996, convert_from(decode('SSBUb3JuZW8gVW5pZG9zIHBvciBlbCBBamVkcmV6IFN1YjE0IDIwMTc=', 'base64'), 'UTF8'), 'Alajuela', 'Costa Rica', '2017-11-11', '2017-11-12', 's', 'Rapid', 50, 50, 50, 7, 1, 'diciembre de 2017', 'no', 'rápido: pide 30 jugadores con Elo y 9 rondas (tiene 50 y 7)', 'no', 'rápido: solo valen los campeonatos mundiales o continentales oficiales'),
   (173997, convert_from(decode('SSBUb3JuZW8gQWJpZXJ0byBVbmlkb3MgcG9yIGVsIEFqZWRyZXo=', 'base64'), 'UTF8'), 'Alajuela', 'Costa Rica', '2017-11-11', '2017-11-12', 's', 'Rapid', 30, 30, 27, 7, 1, 'diciembre de 2017', 'no', 'rápido: pide 30 jugadores con Elo y 9 rondas (tiene 27 y 7)', 'no', 'rápido: solo valen los campeonatos mundiales o continentales oficiales'),
