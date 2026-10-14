@@ -2635,6 +2635,107 @@ octubre de 2026, «cuáles son válidos aunque ya las tenga».
   rondas, 99 y 100 jugadores, 29 % y 30 % con Elo, el Sub-16 que no es la
   final…). `verificar-oscar-angulo-fide.js` prueba la página.
 
+## Árbitros de Costa Rica en FIDE
+
+`arbitros-cr.html` es una de las herramientas con licencia (`id: "arbitros-cr"`
+en `js/herramientas-arbitraje.js`): lo mismo que «Sus torneos en FIDE y las
+normas de árbitro» hace con Oscar Angulo, para todos los árbitros de Costa
+Rica. Lo pidió el dueño (octubre de 2026): primero solo para administración,
+después «ponerlo en herramientas pero con licencia», y primero lo de FIDE
+(chess-results queda para después).
+
+- **Los datos están en la base, no en `data/`** (todo lo de `data/` es
+  público): `arbitros_cr` (cada árbitro, con su título), `arbitros_cr_torneos`
+  (cada torneo, con la norma de AF y de AI ya evaluada) y `arbitros_cr_cargos`
+  (quién fue qué en cada torneo), migración `20261014162543`. **El candado es
+  la RLS**, como en «Resultados JDN por comité»: la única política es de
+  lectura y pregunta `(select tengo_herramienta('arbitros-cr'))`; sin licencia
+  las tablas no devuelven nada. No hay política de escritura.
+- **De dónde salen.** No hay una lista pública de árbitros por federación que
+  sirva: la columna OTit de la lista de jugadores de FIDE no trae el título de
+  árbitro (la de Oscar Angulo dice «AO», no «IA»). Se parte de los
+  **torneos**: FIDE lista los de Costa Rica mes a mes
+  (`a_tournaments_panel.php?country=CRC&periods_tab=1` da los 172 meses desde
+  2002, 1338 torneos; `a_tournaments.php?country=CRC&period=AAAA-MM-01` los
+  de un mes, y **solo contesta con las cabeceras de un pedido AJAX**:
+  `X-Requested-With: XMLHttpRequest` y el `Referer` de la página). La ficha de
+  cada torneo enlaza a cada árbitro con su perfil (`/profile/ID`), su
+  federación y su cargo («Chief Arbiter», «Deputy Chief Arbiter», «Arbiter»,
+  «Pairings Arbiter»…): de ahí sale la lista de árbitros de Costa Rica, sin
+  buscar a nadie a mano. FIDE usa además «Deputy Arbiter» y «Sector
+  Arbiter»: son árbitros del torneo y se guardan como «Arbiter» (cuentan
+  igual para la norma), sin suponerles un cargo más alto. En los meses más viejos la lista no trae el enlace
+  `report.phtml` en el nombre: una lista se reconoce por empezar con
+  `{"data"`, nada más.
+- **Se baja con pg_net de a 12 páginas con pausas de 25 segundos** (FIDE corta
+  si se le pide mucho junto), con una consulta idempotente que mira qué falta.
+  Esa consulta y `exportar.sql` **no pasan regex por la página entera**: la
+  ficha pesa unos 45 KB y el dato está en los 8 KB que siguen a «Event code».
+  Con la página entera, la consulta pasaba del minuto con 136 fichas bajadas
+  y habría chocado con el `statement_timeout` antes de terminar; con el
+  pedazo (y `strpos` para saber qué página es) tarda menos de un segundo.
+  El reporte ronda a ronda (300 KB cada uno) se pide **solo** de los torneos
+  que podrían valer para alguna norma: los que tienen los jugadores con Elo
+  que pide una de AF, y además los de ritmo estándar que podrían valer para
+  una de AI aunque tengan pocos (una final nacional, un campeonato oficial o
+  continental, el nacional por equipos o uno con tres federaciones). La
+  primera vez se pidió solo por los jugadores con Elo, y un Panamericano
+  Sub-8 de 9 jugadores con Elo se quedó sin rondas y salía «no» para AI: lo
+  delató compararlo con la página de Oscar Angulo. En el resto la respuesta
+  es «no» igual. FIDE no tiene el ronda a ronda de muchos torneos viejos:
+  contesta 200 con una página sin `calc_table`, que cuenta como pedida (si
+  no, la consulta la vuelve a pedir cada vez y se traba). En los más viejos
+  la celda de la ronda no trae la fecha, solo el número. Como pg_net borra lo bajado a las seis
+  horas, se resume enseguida con `herramientas/arbitros-cr/exportar.sql` a
+  `herramientas/datos/arbitros-cr-fide.json`.
+- **El título de árbitro sale del perfil de FIDE** (`/profile/ID`): trae
+  «Arbiter/Trainer | FIDE Arbiter (2016) | International Arbiter (2020)» y
+  «Arbiter Category D». `herramientas/arbitros-cr/perfiles.sql` lo resume en
+  `herramientas/datos/arbitros-cr-perfiles.json`; la columna `titulo` guarda
+  el más alto (IA, FA o AN) y `titulo_detalle` todos, con su año y la
+  categoría. Quien no tiene título en FIDE queda en blanco (el título
+  nacional no siempre figura ahí).
+- **Las normas se evalúan con la misma copia** que la página de Oscar Angulo
+  (`herramientas/normas_arbitro.py`, que salió de `oscar-angulo-fide.py` para
+  eso), por torneo; el cargo se aplica en la página (`normaDe()` en
+  `js/arbitros-cr.js`): principal, adjunto y árbitro llevan la norma del
+  torneo; el asistente no cuenta (B.06.1, 2.4.4) y el de pareos, que el
+  reglamento no nombra, queda para revisar.
+- **Lo que dio la primera carga (14/10/2026):** 1338 torneos de 2002 a
+  2026, 132 árbitros de Costa Rica (10 IA y 18 AF según su perfil; FIDE no
+  devolvió el perfil de uno) y 4602 cargos. Por torneo, AF: 381 «sí», 32
+  «una», 92 «opción»; AI: 30 «sí», 4 «una», 17 «opción» y 90 «revisar»
+  (los títulos de los rivales son los de hoy). Comparada con la página de
+  Oscar Angulo, da lo mismo en todos los torneos en común salvo donde él fue
+  organizador, que allá no cuenta y acá se mira por cargo. Las tres huellas
+  de la base dieron iguales a las de las cargas, y el candado se comprobó
+  impersonando en SQL: una cuenta sin la licencia ve 0 filas en las tres
+  tablas; una que administra, 132 / 1338 / 4602.
+- `herramientas/arbitros-cr.py` arma con el JSON las cargas
+  (`herramientas/arbitros-cr/carga-*.sql`, que borran y vuelven a llenar las
+  tres tablas) y se corren en orden con `execute_sql`. Van en archivos de
+  unos 20 KB: uno de 130 KB no pasaba entero por la conversación. Y los
+  `delete` de la primera piden que alguien los apruebe: un subagente en
+  segundo plano no puede, y la llamada se queda esperando hasta vencer a los
+  60 s sin llegar a la base. Por eso las cargas no borran: los torneos se
+  insertan con `on conflict (id) do update` (reescriben lo que ya estaba) y
+  los cargos con `on conflict do nothing`; para sacar algo que ya no está en
+  FIDE hay que borrarlo aparte. **El nombre del torneo va en base64**
+  (`convert_from(decode(…))`): muchos son títulos de libros («Cien años de
+  soledad», «Crónica de una muerte anunciada»…) y la carga que los traía
+  escritos tal cual se cortaba al pasar por la conversación. Al terminar,
+  `python3 herramientas/arbitros-cr.py --huella` da la huella (md5) que
+  deben dar las tres tablas y la consulta que la saca de la base: si
+  coinciden, nada llegó cambiado.
+- **Sin el ronda a ronda no son «0 rondas».** Si FIDE no publica el reporte
+  (o no se pidió porque el torneo no podía valer), no se sabe cuántas rondas
+  tuvo: si con 9 valdría, queda «revisar» con ese aviso; si no, el «no» se
+  explica por lo otro, sin nombrar rondas que no se conocen.
+- `verificar-arbitros-cr.js` prueba la página con un doble: el candado sin
+  licencia (no se piden las tablas), los conteos de la lista, la norma por
+  cargo (lo rompí haciendo contar al asistente y salta), los filtros, la
+  ficha y el enlace directo `#ID`.
+
 ## Historial del jugador y estadísticas por colegio
 
 Dos herramientas gratis y públicas, hechas con los mismos torneos de

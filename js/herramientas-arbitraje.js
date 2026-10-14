@@ -82,6 +82,21 @@
             ],
         },
         {
+            id: "arbitros-cr",
+            emoji: "🧑‍⚖️",
+            nombre: "Árbitros de Costa Rica en FIDE",
+            corto: "Árbitros en FIDE",
+            href: "arbitros-cr.html",
+            disponible: true,
+            resumen: "Los torneos valorados por FIDE de cada árbitro de Costa Rica, con su cargo, y cuáles cumplen las condiciones de un torneo para una norma de Árbitro FIDE y de Árbitro Internacional según el reglamento vigente.",
+            puntos: [
+                "Todos los torneos de Costa Rica en FIDE desde 2002, y los que cada árbitro arbitró afuera, con quién fue principal, adjunto o árbitro.",
+                "Por torneo, si vale para una norma de AF y de AI (B.06.1, 2026) y por qué: jugadores con Elo que cuentan, rondas, federaciones, ritmo y sistema.",
+                "La lista de árbitros con sus torneos y normas, por años y por título; la ficha de cada uno, para bajar en Excel.",
+                "Los títulos de los jugadores salen de la lista de FIDE, para saber si un internacional permitía una norma de jugador.",
+            ],
+        },
+        {
             id: "ajedrez-estudiantil",
             emoji: "📊",
             nombre: "Ajedrez estudiantil en Costa Rica",
