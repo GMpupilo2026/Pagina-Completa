@@ -2688,6 +2688,13 @@ después «ponerlo en herramientas pero con licencia», y primero lo de FIDE
   la celda de la ronda no trae la fecha, solo el número. Como pg_net borra lo bajado a las seis
   horas, se resume enseguida con `herramientas/arbitros-cr/exportar.sql` a
   `herramientas/datos/arbitros-cr-fide.json`.
+- **El título de árbitro sale del perfil de FIDE** (`/profile/ID`): trae
+  «Arbiter/Trainer | FIDE Arbiter (2016) | International Arbiter (2020)» y
+  «Arbiter Category D». `herramientas/arbitros-cr/perfiles.sql` lo resume en
+  `herramientas/datos/arbitros-cr-perfiles.json`; la columna `titulo` guarda
+  el más alto (IA, FA o AN) y `titulo_detalle` todos, con su año y la
+  categoría. Quien no tiene título en FIDE queda en blanco (el título
+  nacional no siempre figura ahí).
 - **Las normas se evalúan con la misma copia** que la página de Oscar Angulo
   (`herramientas/normas_arbitro.py`, que salió de `oscar-angulo-fide.py` para
   eso), por torneo; el cargo se aplica en la página (`normaDe()` en

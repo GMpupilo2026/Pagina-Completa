@@ -32,6 +32,9 @@ from normas_arbitro import PAISES, TITULADOS, evaluar, valorado  # noqa: E402
 
 FUENTE = os.path.join(RAIZ, "herramientas", "datos", "arbitros-cr-fide.json")
 TITULOS = os.path.join(RAIZ, "herramientas", "datos", "arbitros-cr-titulos.json")
+# El título de árbitro de cada uno, del perfil de FIDE (la lista de jugadores
+# no lo trae): lo arma herramientas/arbitros-cr/perfiles.sql.
+PERFILES = os.path.join(RAIZ, "herramientas", "datos", "arbitros-cr-perfiles.json")
 CARPETA = os.path.join(RAIZ, "herramientas", "arbitros-cr")
 # Los cargos de la ficha de FIDE. Para una norma valen el principal, el
 # adjunto y el árbitro; el asistente no (B.06.1, 2.4.4) y el de pareos queda
@@ -41,7 +44,10 @@ CARPETA = os.path.join(RAIZ, "herramientas", "arbitros-cr")
 CARGOS = {"Chief Arbiter": "Chief", "Deputy Chief Arbiter": "Dep. Chief", "Arbiter": "Arbiter",
           "Deputy Arbiter": "Arbiter", "Sector Arbiter": "Arbiter",
           "Pairings Arbiter": "Pairings", "Assistant Arbiter": "Assistant"}
+# Del más alto al más bajo: vale el primero que tenga.
 TITULO_ARBITRO = {"International Arbiter": "IA", "FIDE Arbiter": "FA", "National Arbiter": "AN"}
+TITULO_ES = {"International Arbiter": "Árbitro Internacional", "FIDE Arbiter": "Árbitro FIDE",
+             "National Arbiter": "Árbitro Nacional"}
 FILAS_POR_CARGA = 400
 
 
@@ -94,10 +100,20 @@ def armar():
                 continue
             arbitros.setdefault(a["fid"], {"nombre": a["nombre"], "titulo": "", "detalle": ""})
             cargos.add((t["id"], a["fid"], CARGOS[a["cargo"]]))
-    for p in fuente.get("perfiles", []):
-        if p["fid"] in arbitros:
-            arbitros[p["fid"]]["titulo"] = TITULO_ARBITRO.get(p.get("titulo") or "", "")
-            arbitros[p["fid"]]["detalle"] = p.get("tituloDetalle") or ""
+    perfiles = []
+    if os.path.exists(PERFILES):
+        with open(PERFILES, encoding="utf-8") as f:
+            perfiles = json.load(f)["perfiles"]
+    for p in perfiles:
+        a = arbitros.get(p["fid"])
+        if not a:
+            continue
+        tit = {t: anio for t, anio in p.get("titulos") or []}
+        a["titulo"] = next((TITULO_ARBITRO[t] for t in TITULO_ARBITRO if t in tit), "")
+        partes = [f"{TITULO_ES[t]} ({tit[t]})" for t in reversed(list(TITULO_ARBITRO)) if t in tit]
+        if p.get("categoria"):
+            partes.append(f"categoría {p['categoria']}")
+        a["detalle"] = ", ".join(partes)
     return fuente, torneos, cargos, arbitros
 
 
