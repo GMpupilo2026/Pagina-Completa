@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261013184211
+# al-dia-con: 20261014010407
 tabla  Ejercicios Lichess  rls=true
 tabla  _foto_rls_tmp  rls=false
 tabla  _pedidos_elo  rls=false
@@ -89,8 +89,10 @@ tabla  interno.envios_publicos  rls=true
 tabla  interno.lector_planilla_uso  rls=true
 tabla  interno.salud_base  rls=true
 tabla  jde_eventos  rls=true
+tabla  jdn_correcciones  rls=true
 tabla  jdn_inscripciones  rls=true
 tabla  jdn_jugadores  rls=true
+tabla  jdn_partidas  rls=true
 tabla  jdn_resultados  rls=true
 tabla  jdn_tableros  rls=true
 tabla  justificaciones_ausencia  rls=true
@@ -866,6 +868,13 @@ columna  jde_eventos.nombre  text
 columna  jde_eventos.rama  text
 columna  jde_eventos.region  text
 columna  jde_eventos.sede  text
+columna  jdn_correcciones.comite  text
+columna  jdn_correcciones.creado  timestamp with time zone
+columna  jdn_correcciones.creado_por  uuid
+columna  jdn_correcciones.edicion  text
+columna  jdn_correcciones.id  bigint
+columna  jdn_correcciones.nombre  text
+columna  jdn_correcciones.nota  text
 columna  jdn_inscripciones.categoria  text
 columna  jdn_inscripciones.comite  text
 columna  jdn_inscripciones.edicion  text
@@ -891,6 +900,13 @@ columna  jdn_jugadores.puntos  numeric(4,1)
 columna  jdn_jugadores.puntos_elo  numeric(4,1)
 columna  jdn_jugadores.tablero  smallint
 columna  jdn_jugadores.tnr  integer
+columna  jdn_partidas.id  bigint
+columna  jdn_partidas.orden  smallint
+columna  jdn_partidas.puntos  numeric(2,1)
+columna  jdn_partidas.rival  smallint
+columna  jdn_partidas.ronda  smallint
+columna  jdn_partidas.tnr  integer
+columna  jdn_partidas.vez  smallint
 columna  jdn_resultados.codigo  text
 columna  jdn_resultados.comite  text
 columna  jdn_resultados.edicion  text
@@ -2190,8 +2206,13 @@ politica  insignias  insignias_ver  SELECT
 politica  insignias  verificacion_en_dos_pasos  ALL  restrictiva
 politica  insignias_tipos  insignias_tipos_ver  SELECT
 politica  jde_eventos  jde_eventos_lectura_publica  SELECT
+politica  jdn_correcciones  jdn_correcciones_admin_borra  DELETE
+politica  jdn_correcciones  jdn_correcciones_admin_cambia  UPDATE
+politica  jdn_correcciones  jdn_correcciones_admin_crea  INSERT
+politica  jdn_correcciones  jdn_correcciones_con_herramienta  SELECT
 politica  jdn_inscripciones  jdn_inscripciones_con_herramienta  SELECT
 politica  jdn_jugadores  jdn_jugadores_con_herramienta  SELECT
+politica  jdn_partidas  jdn_partidas_con_herramienta  SELECT
 politica  jdn_resultados  jdn_resultados_lectura_publica  SELECT
 politica  jdn_resultados  zzz_prueba_temporal  SELECT
 politica  jdn_tableros  jdn_tableros_con_herramienta  SELECT
@@ -2748,10 +2769,14 @@ indice  interno.lector_planilla_uso  lector_planilla_uso_pkey
 indice  interno.salud_base  salud_base_pkey
 indice  jde_eventos  jde_eventos_anio_fase_idx
 indice  jde_eventos  jde_eventos_pkey
+indice  jdn_correcciones  jdn_correcciones_pkey
+indice  jdn_correcciones  jdn_correcciones_una
 indice  jdn_inscripciones  jdn_inscripciones_edicion_comite
 indice  jdn_inscripciones  jdn_inscripciones_pkey
 indice  jdn_jugadores  jdn_jugadores_pkey
 indice  jdn_jugadores  jdn_jugadores_tnr_orden_key
+indice  jdn_partidas  jdn_partidas_pkey
+indice  jdn_partidas  jdn_partidas_tnr_ronda_orden_rival_vez_key
 indice  jdn_resultados  jdn_resultados_edicion_codigo_orden_key
 indice  jdn_resultados  jdn_resultados_pkey
 indice  jdn_tableros  jdn_tableros_pkey
@@ -3536,12 +3561,21 @@ grant  jde_eventos  anon  TRIGGER
 grant  jde_eventos  authenticated  REFERENCES
 grant  jde_eventos  authenticated  SELECT
 grant  jde_eventos  authenticated  TRIGGER
+grant  jdn_correcciones  authenticated  DELETE
+grant  jdn_correcciones  authenticated  INSERT
+grant  jdn_correcciones  authenticated  REFERENCES
+grant  jdn_correcciones  authenticated  SELECT
+grant  jdn_correcciones  authenticated  TRIGGER
+grant  jdn_correcciones  authenticated  UPDATE
 grant  jdn_inscripciones  authenticated  REFERENCES
 grant  jdn_inscripciones  authenticated  SELECT
 grant  jdn_inscripciones  authenticated  TRIGGER
 grant  jdn_jugadores  authenticated  REFERENCES
 grant  jdn_jugadores  authenticated  SELECT
 grant  jdn_jugadores  authenticated  TRIGGER
+grant  jdn_partidas  authenticated  REFERENCES
+grant  jdn_partidas  authenticated  SELECT
+grant  jdn_partidas  authenticated  TRIGGER
 grant  jdn_resultados  anon  SELECT
 grant  jdn_resultados  authenticated  REFERENCES
 grant  jdn_resultados  authenticated  SELECT

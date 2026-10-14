@@ -26,8 +26,12 @@
 --     partida: el Elo del rival y el resultado («w 1», «s ½»);
 --   · los bloques no vienen en el orden de la composición: se juntan por el
 --     nombre (sin la coma que chess-results pone en la composición). El
---     encabezado del bloque es «Nombre  WCM 1716 CRC Rp:1823»: el nombre
---     termina en el primer par de espacios;
+--     encabezado del bloque es «Nombre  WCM 1716 CRC Rp:1823»: se le quita
+--     del final el título, el Elo, la federación y el «Rp» (no se corta en
+--     el primer par de espacios: hay nombres con dos espacios adentro, como
+--     «Chavarria  Juan Carlos»);
+--   · solo toma las páginas de equipos (con «Información de jugadores»), para
+--     que una tanda con tablas cruzadas no borre a los individuales;
 --   · el Elo es el nacional (EloN) si lo hay, si no el que la página llama Elo,
 --     si no el FIDE; 0 es «sin Elo»;
 --   · una partida cuenta si tiene color y un resultado 1, ½ o 0: los forfeits
@@ -37,7 +41,8 @@
 
 with pag as (
   select substring(r.content from 'tnr(\d+)\.aspx')::int tnr, substr(r.content, strpos(r.content, '<table class="CRs1"')) html
-    from net._http_response r where r.id between :desde and :hasta and r.status_code = 200),
+    from net._http_response r where r.id between :desde and :hasta and r.status_code = 200
+     and r.content like '%Información de jugadores%'),
 filas as (
   select p.tnr, u.o, substring(u.x from '<tr[^>]*class="([^"]*)"') clase,
          array(select btrim(replace(replace(regexp_replace(c, '<[^>]+>', '', 'g'), '&nbsp;', ' '), '&frac12;', '½'), E' \r\n\t')
@@ -66,7 +71,7 @@ integrantes as materialized (
    where not detalle and array_position(cab, 'Nombre') is not null and array_position(cab, 'M.') is not null and grupo ~ '^\d+\.'),
 partidas as materialized (
   select tnr,
-         lower(regexp_replace(regexp_replace(regexp_replace(grupo, '^Información de jugadores\s*', ''), '\s{2,}.*$', ''), '\s+', ' ', 'g')) k,
+         lower(regexp_replace(regexp_replace(regexp_replace(grupo, '^Información de jugadores\s*', ''), '\s+((W?(GM|IM|FM|CM)|A(IM|FM|CM))\s+)?\d+(\s+[A-Z]{3})?\s+Rp:\S*$', ''), '\s+', ' ', 'g')) k,
          coalesce(nullif(c[array_position(cab, 'EloN')], '0'), nullif(c[array_position(cab, 'Elo')], '0'), nullif(c[array_position(cab, 'FIDE')], '0'))::int elo_rival,
          case substring(c[array_position(cab, 'Res.')] from '^[wsb]\s*(1|0|½)$') when '1' then 1 when '½' then 0.5 when '0' then 0 end res
     from datos
