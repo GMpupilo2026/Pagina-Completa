@@ -269,6 +269,11 @@ def main():
         jug.escribir_csv(PARTIDAS, COLUMNAS_PARTIDAS, partidas)
         jug.escribir_csv(LEIDAS, COLUMNAS_LEIDAS,
                           [{"clave": c, "snr": s} for c, s in sorted(leidas_fin, key=lambda t: (int(t[0]), int(t[1])))])
+    # completar el snr también cambia JUGADORES (de donde sale data/ajedrez-
+    # estudiantil-jugadores.json): sin esto, una vuelta que solo completa snr
+    # (sin partidas nuevas que leer) deja el JSON desactualizado y
+    # verificar-ajedrez-estudiantil-reglas.py lo agarra en la próxima corrida.
+    if completados or nuevas or leidas_ahora:
         subprocess.run([sys.executable, os.path.join(RAIZ, "herramientas", "ajedrez-estudiantil.py")], check=True)
 
     if "--resumen" in sys.argv:

@@ -127,5 +127,12 @@ completados2, leidas_ahora2, nuevas2, _, pedidos2 = p.procesar(torneos_e, jugado
 cierto("con --maximo 1 solo alcanza para completar el snr, no para las partidas",
        pedidos2 == 1 and completados2 == ["1"] and leidas_ahora2 == [], (pedidos2, completados2, leidas_ahora2))
 
+print("Completar el snr también dispara la regeneración del JSON")
+fuente_main = open(os.path.join(RAIZ, "herramientas", "ajedrez-estudiantil-partidas.py"), encoding="utf-8").read()
+cierto("el subprocess que reconstruye los JSON corre también cuando una vuelta solo completó el "
+       "snr, sin partidas nuevas que leer (si no, data/ajedrez-estudiantil-jugadores.json queda "
+       "desactualizado y el CI lo agarra en la próxima corrida)",
+       "if completados or nuevas or leidas_ahora:" in fuente_main)
+
 print("Todo bien" if fallos == 0 else f"\n{fallos} fallo(s)")
 sys.exit(1 if fallos else 0)
