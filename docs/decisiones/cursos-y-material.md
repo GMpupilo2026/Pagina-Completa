@@ -1220,13 +1220,35 @@ WhatsApp y se abre con la lupa del celular. Sale del mismo generador
 - Las jugadas van como en la versión accesible («torre anna 8»), y la portada
   explica los nombres de las letras. Las promesas y los consejos del último
   capítulo van en lista, no pegados a la pregunta.
+- **Cumple PDF/UA-1, validado con veraPDF** (1.28.2, `-f ua1`: 0 reglas
+  fallidas en los tres cuentos). Lo que Chromium deja a medias lo arregla
+  `herramientas/lib/pdf-adaptado.py` (lo llama `datosAdaptado()` de
+  `lib/pdf-armar.js`). veraPDF encontró dos fallos y los dos callados:
+  - **11 001 trozos de contenido sin marcar** (7.1-3): Chromium etiqueta lo
+    que está en el árbol de accesibilidad, pero lo que va con `aria-hidden`
+    (dibujos y tableros) y el número de página quedaban ni etiquetados ni
+    como Artifact. El script envuelve en `/Artifact BMC … EMC` todo lo que se
+    pinta fuera de una secuencia marcada, sin partir un trazado ni un texto a
+    la mitad y sin tocar lo etiquetado (los MCID quedan iguales).
+  - **Faltaba el XMP** (7.1-8): se pone con `pdfuaid:part` 1, el título, el
+    autor y el idioma.
 - **Los datos del PDF se ponen con `clone_from`**, no copiando página por
   página como en `proteger()`: así se pierde el árbol de etiquetas sin ningún
-  error (`datosAdaptado()` de `lib/pdf-armar.js`).
+  error.
 - `verificar-libro-ninos.js` lo lee con pypdf: que esté etiquetado, sin
-  cifrar, en español, con su título y marcadores, y con cada capítulo, cada
-  dibujo contado y las soluciones. Se rompió a propósito (el PDF cifrado en su
-  lugar) y saltó.
+  cifrar, en español, con su título, marcadores y el XMP de PDF/UA, **sin
+  ningún trazo ni texto fuera de una secuencia marcada** (lo mismo que
+  rechaza veraPDF, para no tener que bajar Java en el CI), y con cada
+  capítulo, cada dibujo contado y las soluciones. Se rompió a propósito dos
+  veces (el PDF cifrado en su lugar; el script sin marcar los Artifact ni el
+  XMP) y saltó las dos.
+- Para volver a validarlo con veraPDF: Maven Central sí se alcanza desde el
+  contenedor (la página de veraPDF no). Un `pom.xml` con la dependencia
+  `org.verapdf.apps:greenfield-apps:1.28.2`, `mvn dependency:copy-dependencies
+  -DoutputDirectory=lib` y `java -cp "lib/*"
+  org.verapdf.apps.GreenfieldCliWrapper -f ua1 --format xml <pdf>`: tiene que
+  dar `isCompliant="true"`. Las advertencias «Invalid glyph code» de las
+  fuentes no son fallos.
 
 ### Los diplomas se coleccionan
 

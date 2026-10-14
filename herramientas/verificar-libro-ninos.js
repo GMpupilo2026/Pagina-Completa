@@ -27,7 +27,8 @@
  * anagrama se rompen con una corrección y nadie lo nota, justo porque están
  * escondidos), y lo generado: que exista el PDF, que la versión accesible
  * traiga todos los capítulos y una descripción de cada dibujo, y que el PDF
- * adaptado esté etiquetado, sin cifrar, en español y con todo el cuento.
+ * adaptado esté etiquetado, sin cifrar, en español, con todo el cuento, con
+ * su XMP de PDF/UA-1 y sin contenido suelto (ni etiquetado ni Artifact).
  *
  *   node herramientas/verificar-libro-ninos.js
  */
@@ -317,6 +318,19 @@ r = PdfReader(sys.argv[1])
 raiz = r.trailer["/Root"]
 prefs = raiz.get("/ViewerPreferences")
 marca = raiz.get("/MarkInfo")
+# Lo que se pinta fuera de toda secuencia marcada (ni etiquetado ni
+# Artifact): PDF/UA-1 lo prohíbe (7.1-3) y veraPDF lo rechaza.
+PINTA = {b"S", b"s", b"f", b"F", b"f*", b"B", b"B*", b"b", b"b*", b"Do", b"sh", b"INLINE IMAGE", b"Tj", b"TJ", b"'", b'"'}
+from pypdf.generic import ContentStream
+sueltos = 0
+for pag in r.pages:
+    nivel = 0
+    for _, op in ContentStream(pag.get_contents(), r).operations:
+        if op in (b"BMC", b"BDC"): nivel += 1
+        elif op == b"EMC": nivel -= 1
+        elif nivel == 0 and op in PINTA: sueltos += 1
+xmp = raiz.get("/Metadata")
+xmp = xmp.get_object().get_data().decode("utf-8", "replace") if xmp is not None else ""
 def titulos(o):
     for x in o:
         if isinstance(x, list): yield from titulos(x)
@@ -329,6 +343,8 @@ print(json.dumps({
   "titulo": (r.metadata or {}).get("/Title", ""),
   "marcadores": list(titulos(r.outline)),
   "texto": "".join(p.extract_text() for p in r.pages),
+  "sueltos": sueltos,
+  "pdfua": "<pdfuaid:part>1</pdfuaid:part>" in xmp,
 }))`;
   let d = null;
   try {
@@ -345,6 +361,8 @@ print(json.dumps({
     ok(d.etiquetado, `${L.SLUG}: el PDF adaptado no está etiquetado (tagged): el lector de pantalla no sabe qué es título ni en qué orden se lee`);
     ok(/^es/.test(d.idioma), `${L.SLUG}: el PDF adaptado no dice que está en español (/Lang)`);
     ok(d.titulo_visible && d.titulo.includes(L.TITULO), `${L.SLUG}: el PDF adaptado no muestra su título`);
+    ok(d.pdfua, `${L.SLUG}: el PDF adaptado no dice en su XMP que es PDF/UA-1 (pdfuaid:part): ¿se saltó pdf-adaptado.py?`);
+    ok(d.sueltos === 0, `${L.SLUG}: el PDF adaptado tiene ${d.sueltos} trozo(s) de contenido sin etiquetar ni marcar como Artifact: PDF/UA-1 lo rechaza (¿se saltó pdf-adaptado.py?)`);
     ok(d.marcadores.length > 0, `${L.SLUG}: el PDF adaptado no tiene marcadores para saltar de capítulo`);
     L.CAPITULOS.forEach((c) => {
       ok(texto.includes(junto(c.titulo)), `${L.SLUG}: el PDF adaptado no tiene el capítulo «${c.titulo}»: hay que volver a correr libro-ninos-pdf.js`);
