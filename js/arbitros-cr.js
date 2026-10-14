@@ -1,18 +1,23 @@
-/* El código de arbitros-cr.html: los árbitros de Costa Rica en FIDE.
+/* El código de arbitros-cr.html: los árbitros de Costa Rica, en FIDE y en
+   chess-results.
 
    - Los datos están en tres tablas de la base que solo lee quien tiene la
      herramienta (RLS: tengo_herramienta('arbitros-cr')): arbitros_cr (cada
      árbitro), arbitros_cr_torneos (cada torneo, con la norma de AF y de AI
      ya evaluada por herramientas/normas_arbitro.py) y arbitros_cr_cargos
      (quién fue qué en cada torneo). Se llenan desde la base con lo leído de
-     ratings.fide.com (herramientas/arbitros-cr.py).
+     ratings.fide.com (herramientas/arbitros-cr.py). Aparte, arbitros_cr_cr
+     (los torneos de la federación en chess-results) y arbitros_cr_cr_cargos
+     (quién fue qué: principal, adjunto, árbitro, director, organizador); ahí
+     no hay normas: chess-results no dice si FIDE valoró el torneo.
    - La norma de un torneo vale para quien fue principal, adjunto o árbitro;
      el asistente no cuenta (B.06.1, 2.4.4) y el de pareos queda para revisar
      (el reglamento no lo nombra): eso se aplica acá, por cargo, en normaDe().
    - Los años y el título filtran la lista; el árbitro elegido va en la
      dirección (#ID) para compartirlo.
 
-   Ver «Árbitros de Costa Rica en FIDE» en docs/decisiones/juegos-y-torneos.md. */
+   Ver «Árbitros de Costa Rica en FIDE» y «Árbitros de Costa Rica en
+   chess-results» en docs/decisiones/juegos-y-torneos.md. */
 (function () {
     "use strict";
     const $ = (id) => document.getElementById(id);
@@ -27,9 +32,9 @@
     const RITMOS = { Standard: "Clásico", Rapid: "Rápido", Blitz: "Blitz" };
     const ESTADOS = { si: "Vale", una: "Vale (una así)", opcion: "Vale una vez", revisar: "Revisar", no: "No" };
     const VALE = ["si", "una", "opcion"];
-    const ORDEN = { si: 0, una: 1, opcion: 2, revisar: 3, no: 4 };
+    const ROLES_CR = { ap: "Árbitro principal", adj: "Árbitro adjunto principal", arb: "Árbitro", dir: "Director del torneo", org: "Organizador" };
 
-    let arbitros = [], torneos = new Map(), PRIMER = 0, ULTIMO = 0;
+    let arbitros = [], torneos = new Map(), torneosCr = new Map(), PRIMER = 0, ULTIMO = 0;
     const estado = { q: "", titulo: "", desde: 0, hasta: 0, orden: { col: "torneos", dir: -1 }, normaAf: "", normaAi: "", elegido: null };
 
     // «AAAA-MM-DD» a «DD/MM/AAAA» sin pasar por Date.
@@ -57,26 +62,37 @@
         return { estado: "no", detalle: "Figura como árbitro asistente, que no cuenta para una norma (2.4.4)." };
     }
 
+    // De mil en mil, ordenado por la clave completa: con un orden que se
+    // repite, una fila puede caer en dos páginas o en ninguna.
     async function leerTodo(tabla, columnas, orden) {
         const filas = [];
         for (let desde = 0; ; desde += 1000) {
-            const { data, error } = await sb.from(tabla).select(columnas).order(orden).range(desde, desde + 999);
+            let q = sb.from(tabla).select(columnas);
+            for (const c of orden.split(",")) q = q.order(c);
+            const { data, error } = await q.range(desde, desde + 999);
             if (error) throw error;
             filas.push(...data);
             if (data.length < 1000) return filas;
         }
     }
 
-    function preparar(filasArb, filasTor, filasCar) {
-        for (const t of filasTor) { t.anio = parseInt(t.inicio.slice(0, 4), 10); torneos.set(t.id, t); }
-        const porArbitro = new Map();
-        for (const c of filasCar) {
-            const m = porArbitro.get(c.fide_id) || new Map();
-            m.set(c.torneo_id, (m.get(c.torneo_id) || []).concat(c.cargo));
-            porArbitro.set(c.fide_id, m);
+    // De cada árbitro, un Map torneo → sus cargos (o roles) en él.
+    function porArbitro(filas, clave, valor) {
+        const m = new Map();
+        for (const c of filas) {
+            const d = m.get(c.fide_id) || new Map();
+            d.set(c[clave], (d.get(c[clave]) || []).concat(c[valor]));
+            m.set(c.fide_id, d);
         }
-        arbitros = filasArb.map((a) => ({ ...a, busca: sinTildes(a.nombre) + " " + a.fide_id, torneos: porArbitro.get(a.fide_id) || new Map() }));
-        const anios = filasTor.map((t) => t.anio);
+        return m;
+    }
+
+    function preparar(filasArb, filasTor, filasCar, filasCr, filasCrCar) {
+        for (const t of filasTor) { t.anio = parseInt(t.inicio.slice(0, 4), 10); torneos.set(t.id, t); }
+        for (const t of filasCr) { t.anio = parseInt(t.inicio.slice(0, 4), 10); torneosCr.set(t.clave, t); }
+        const fide = porArbitro(filasCar, "torneo_id", "cargo"), cr = porArbitro(filasCrCar, "clave", "rol");
+        arbitros = filasArb.map((a) => ({ ...a, busca: sinTildes(a.nombre) + " " + a.fide_id, torneos: fide.get(a.fide_id) || new Map(), cr: cr.get(a.fide_id) || new Map() }));
+        const anios = filasTor.map((t) => t.anio).concat(filasCr.map((t) => t.anio));
         PRIMER = Math.min(...anios); ULTIMO = Math.max(...anios);
     }
 
@@ -91,8 +107,19 @@
         return lista.sort((x, y) => (y.t.inicio + y.t.id).localeCompare(x.t.inicio + x.t.id));
     }
 
+    // Sus torneos de chess-results dentro de los años elegidos.
+    function torneosCrDe(a) {
+        const lista = [];
+        for (const [clave, roles] of a.cr) {
+            const t = torneosCr.get(clave);
+            if (!t || t.anio < estado.desde || t.anio > estado.hasta) continue;
+            lista.push({ t, roles });
+        }
+        return lista.sort((x, y) => (y.t.inicio + y.t.clave).localeCompare(x.t.inicio + x.t.clave));
+    }
+
     function resumen(a) {
-        const l = torneosDe(a);
+        const l = torneosDe(a), lc = torneosCrDe(a);
         const cuenta = (f) => l.filter(f).length;
         return {
             a, torneos: l.length,
@@ -101,7 +128,8 @@
             arbitro: cuenta((x) => x.cargos.includes("Arbiter")),
             af: cuenta((x) => x.af.estado !== "no"), afRevisar: cuenta((x) => x.af.estado === "revisar"),
             ai: cuenta((x) => x.ai.estado !== "no"), aiRevisar: cuenta((x) => x.ai.estado === "revisar"),
-            ultimo: l.length ? l[0].t.inicio : "",
+            cr: lc.length,
+            ultimo: [l.length ? l[0].t.inicio : "", lc.length ? lc[0].t.inicio : ""].sort().pop(),
         };
     }
 
@@ -109,7 +137,7 @@
         const q = sinTildes(estado.q.trim());
         const filas = arbitros
             .filter((a) => (!q || a.busca.includes(q)) && (!estado.titulo || (estado.titulo === "-" ? !a.titulo : a.titulo === estado.titulo)))
-            .map(resumen).filter((r) => r.torneos > 0);
+            .map(resumen).filter((r) => r.torneos > 0 || r.cr > 0);
         const { col, dir } = estado.orden;
         const valor = (r) => col === "nombre" ? r.a.nombre : col === "titulo" ? (r.a.titulo || "~") : r[col];
         filas.sort((x, y) => {
@@ -125,15 +153,16 @@
             return el("tr", { class: "border-t border-brand-100 dark:border-brand-800" },
                 el("th", { scope: "row", class: "px-3 py-2 font-normal" }, boton),
                 td(r.a.titulo || "—"), td(miles(r.torneos), true), td(miles(r.principal), true), td(miles(r.adjunto), true), td(miles(r.arbitro), true),
-                td(conRev(r.af, r.afRevisar), true), td(conRev(r.ai, r.aiRevisar), true), td(fecha(r.ultimo)));
+                td(conRev(r.af, r.afRevisar), true), td(conRev(r.ai, r.aiRevisar), true), td(miles(r.cr), true), td(fecha(r.ultimo)));
         }));
         for (const th of $("tabla-arbitros").tHead.rows[0].cells) {
             const c = th.querySelector("button").dataset.col;
             th.setAttribute("aria-sort", c === col ? (dir < 0 ? "descending" : "ascending") : "none");
         }
         const torneosVistos = new Set(filas.flatMap((r) => torneosDe(r.a).map((x) => x.t.id)));
+        const crVistos = new Set(filas.flatMap((r) => torneosCrDe(r.a).map((x) => x.t.clave)));
         $("cuenta").textContent = filas.length
-            ? `${miles(filas.length)} árbitros con ${miles(torneosVistos.size)} torneos en FIDE de ${estado.desde} a ${estado.hasta}.`
+            ? `${miles(filas.length)} árbitros con ${miles(torneosVistos.size)} torneos en FIDE y ${miles(crVistos.size)} en chess-results de ${estado.desde} a ${estado.hasta}.`
             : "Ningún árbitro cumple con estos filtros.";
     }
 
@@ -157,7 +186,9 @@
             (a.titulo ? TITULOS[a.titulo] + (a.titulo_detalle ? " (" + a.titulo_detalle + ")" : "") + " · " : ""),
             "ID FIDE ",
             el("a", { href: "https://ratings.fide.com/profile/" + a.fide_id, target: "_blank", rel: "noopener", class: "underline underline-offset-2 hover:no-underline" }, String(a.fide_id)),
-            ` · ${miles(r.torneos)} torneos de ${estado.desde} a ${estado.hasta}: valen para AF ${miles(r.af)}, para AI ${miles(r.ai)}.`);
+            a.solo_chess_results
+                ? ` · No figura como árbitro en ningún torneo de FIDE; ${miles(r.cr)} torneos en chess-results de ${estado.desde} a ${estado.hasta}.`
+                : ` · ${miles(r.torneos)} torneos en FIDE de ${estado.desde} a ${estado.hasta}: valen para AF ${miles(r.af)}, para AI ${miles(r.ai)}. En chess-results, ${miles(r.cr)}.`);
         const lista = filasFicha(a);
         $("tabla-torneos").tBodies[0].replaceChildren(...lista.map((x) => {
             const t = x.t;
@@ -173,7 +204,20 @@
                 td(t.rondas ? miles(t.rondas) : "—", true), td(miles(t.federaciones), true),
                 td(norma(x.af)), td(norma(x.ai)));
         }));
-        $("ficha-cuenta").textContent = lista.length ? miles(lista.length) + (lista.length === 1 ? " torneo." : " torneos.") + " «Con Elo» cuenta a quien no faltó a más de una ronda." : "Ningún torneo cumple con estos filtros.";
+        $("ficha-cuenta").textContent = lista.length ? miles(lista.length) + (lista.length === 1 ? " torneo." : " torneos.") + " «Con Elo» cuenta a quien no faltó a más de una ronda." : "Ningún torneo de FIDE cumple con estos filtros.";
+        const listaCr = torneosCrDe(a);
+        $("tabla-cr").tBodies[0].replaceChildren(...listaCr.map((x) => {
+            const t = x.t;
+            const nombre = el("div", {},
+                el("a", { href: "https://chess-results.com/tnr" + t.clave + ".aspx?lan=2", target: "_blank", rel: "noopener", class: "underline underline-offset-2 hover:no-underline" }, t.nombre),
+                t.lugar ? el("span", { class: "of-detalle" }, t.lugar) : null);
+            const td = (v, der) => el("td", { class: "px-3 py-2 align-top" + (der ? " text-right tabular-nums" : "") }, v);
+            return el("tr", { class: "border-t border-brand-100 dark:border-brand-800" },
+                td(fecha(t.inicio)), el("th", { scope: "row", class: "px-3 py-2 align-top font-normal" }, nombre),
+                td(x.roles.map((c) => ROLES_CR[c] || c).join(", ")), td(t.control || "—"),
+                td(t.rondas ? miles(t.rondas) : "—", true), td(t.jugadores ? miles(t.jugadores) : "—", true));
+        }));
+        $("cr-cuenta").textContent = listaCr.length ? miles(listaCr.length) + (listaCr.length === 1 ? " torneo en chess-results." : " torneos en chess-results.") : "Ningún torneo en chess-results en estos años.";
     }
 
     function excel() {
@@ -183,7 +227,10 @@
             .concat(filasFicha(a).map((x) => [x.t.inicio, x.t.nombre, x.t.ciudad, x.t.pais, x.cargos.map((c) => CARGOS[c] || c).join(", "),
                 RITMOS[x.t.ritmo] || "", SISTEMAS[x.t.sistema] || "", x.t.jugadores, x.t.contados, x.t.rondas || "", x.t.federaciones,
                 ESTADOS[x.af.estado], x.af.detalle, ESTADOS[x.ai.estado], x.ai.detalle, "https://ratings.fide.com/tournament_information.phtml?event=" + x.t.id]));
-        window.TablaExcel.bajar("arbitro-" + a.fide_id + "-fide.xlsx", [{ nombre: "Torneos FIDE", filas }]);
+        const filasCr = [["Inicio", "Torneo", "Lugar", "Rol", "Control de tiempo", "Rondas", "Jugadores", "chess-results"]]
+            .concat(torneosCrDe(a).map((x) => [x.t.inicio, x.t.nombre, x.t.lugar, x.roles.map((c) => ROLES_CR[c] || c).join(", "), x.t.control,
+                x.t.rondas || "", x.t.jugadores || "", "https://chess-results.com/tnr" + x.t.clave + ".aspx?lan=2"]));
+        window.TablaExcel.bajar("arbitro-" + a.fide_id + ".xlsx", [{ nombre: "Torneos FIDE", filas }, { nombre: "chess-results", filas: filasCr }]);
     }
 
     function elegir(id) {
@@ -226,12 +273,14 @@
         const { data: puede, error } = await sb.rpc("tengo_herramienta", { p_herramienta: "arbitros-cr" });
         if (error || puede !== true) { $("loading").classList.add("hidden"); $("denegado").classList.remove("hidden"); return; }
         try {
-            const [a, t, c] = await Promise.all([
-                leerTodo("arbitros_cr", "fide_id,nombre,titulo,titulo_detalle", "fide_id"),
+            const [a, t, c, cr, crc] = await Promise.all([
+                leerTodo("arbitros_cr", "fide_id,nombre,titulo,titulo_detalle,solo_chess_results", "fide_id"),
                 leerTodo("arbitros_cr_torneos", "id,nombre,ciudad,pais,inicio,fin,sistema,ritmo,jugadores,con_elo,contados,rondas,federaciones,valorado,af_estado,af_detalle,ai_estado,ai_detalle", "id"),
-                leerTodo("arbitros_cr_cargos", "torneo_id,fide_id,cargo", "torneo_id"),
+                leerTodo("arbitros_cr_cargos", "torneo_id,fide_id,cargo", "torneo_id,fide_id,cargo"),
+                leerTodo("arbitros_cr_cr", "clave,nombre,inicio,fin,lugar,control,rondas,jugadores", "clave"),
+                leerTodo("arbitros_cr_cr_cargos", "clave,fide_id,rol", "clave,fide_id,rol"),
             ]);
-            preparar(a, t, c);
+            preparar(a, t, c, cr, crc);
         } catch (e) {
             $("loading").classList.add("hidden"); $("app").classList.remove("hidden");
             $("error").textContent = "No se pudieron leer los datos: " + (e.message || e) + ". Vuelve a cargar la página en un rato.";
