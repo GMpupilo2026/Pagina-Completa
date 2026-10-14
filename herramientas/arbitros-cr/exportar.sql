@@ -10,7 +10,10 @@
 -- (tournament_information.phtml), la lista con Elo (report.phtml) y el
 -- reporte ronda a ronda (tournament_src_report.phtml). pg_net las borra a
 -- las 6 horas: esto se corre antes. :desde es el primer id de net._http_response
--- de la tanda.
+-- de la tanda. Se corre por tramos de torneos (:ev_desde a :ev_hasta, el
+-- código FIDE del torneo): todo junto son unos 100 MB de páginas y la
+-- respuesta pasa de lo que devuelve execute_sql. Los tramos se juntan en el
+-- JSON con herramientas/arbitros-cr/juntar.py.
 with resp as (
   -- Se clasifica con strpos y los regex pasan solo por el pedazo de la ficha
   -- (8 KB desde «Event code»): por la página entera, con miles de páginas, la
@@ -29,7 +32,7 @@ with resp as (
   from resp2
 ), evs as (
   select distinct x->>0 ev from resp, jsonb_array_elements(substr(c, strpos(c, '{'))::jsonb->'data') x where tipo = 'lista'
-), ult as (select distinct on (tipo, ev) * from resp3 where tipo in ('info', 'rep', 'src') order by tipo, ev, rid desc),
+), ult as (select distinct on (tipo, ev) * from resp3 where tipo in ('info', 'rep', 'src') and ev::int between :ev_desde and :ev_hasta order by tipo, ev, rid desc),
 info as (
   select ev, pedazo c, s from ult where tipo = 'info'
 ), info2 as (
