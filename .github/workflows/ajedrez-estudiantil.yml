@@ -1,7 +1,9 @@
 # Pone al día ajedrez-estudiantil.html con lo que se publica en chess-results.
 #
-# Cada seis horas revisa los 250 torneos de Costa Rica tocados más
-# recientemente en chess-results (herramientas/ajedrez-estudiantil-actualizar.py):
+# Una vez al mes, de abril a diciembre (nunca en enero, febrero ni marzo: sin
+# clases, no hay torneos estudiantiles que revisar), revisa los 250 torneos de
+# Costa Rica tocados más recientemente en chess-results
+# (herramientas/ajedrez-estudiantil-actualizar.py):
 # suma los de los juegos estudiantiles que sean nuevos y pone al día los
 # inscritos de los que ya estaban. Después lee la clasificación de los torneos
 # nuevos o que cambiaron (herramientas/ajedrez-estudiantil-jugadores.py), para
@@ -27,7 +29,7 @@ name: Ajedrez estudiantil
 
 on:
   schedule:
-    - cron: "41 */6 * * *"   # cada seis horas, a los 41 minutos (UTC)
+    - cron: "41 12 1 4-12 *"   # el 1.° de cada mes de abril a diciembre, 12:41 UTC (06:41 Costa Rica)
   workflow_dispatch:
 
 permissions:
