@@ -2584,6 +2584,24 @@ enlace al historial del rival.
      todavía no se leyó. A este ritmo, completar los individuales de 2024 en
      adelante tarda unas dos semanas; lo que se agregue después se pone al
      día solo.
+- **Completar el snr (paso 1) también dispara la reconstrucción de los
+  tres JSON, aunque el paso 2 no haya leído ninguna partida nueva.** El
+  flujo volvió a los JSON con `ajedrez-estudiantil.py` solo cuando había
+  partidas nuevas o lecturas nuevas (`if nuevas or leidas_ahora:`), pero el
+  paso 1 reescribe `ajedrez-estudiantil-jugadores.csv` por su cuenta (le
+  pone el snr a quien no lo tenía) sin que eso cuente ahí. Con el tope de
+  100 pedidos compartido entre los dos pasos, una vuelta puede gastarlo
+  entero completando snr y no llegar al paso 2: `completados` queda con
+  algo, `nuevas` y `leidas_ahora` quedan vacíos, y el JSON de jugadores se
+  queda desactualizado respecto al CSV que sí cambió. La siguiente corrida
+  del flujo lo agarra (`verificar-ajedrez-estudiantil-reglas.py`, con
+  `ajedrez-estudiantil.py --comprobar`) y falla antes de llegar a abrir el
+  PR — así estuvo el flujo automático sin sumar nada nuevo desde el
+  10/10/2026 hasta que se encontró esto el 14/10/2026. El arreglo es la
+  condición de siempre, con `completados` adentro:
+  `if completados or nuevas or leidas_ahora:`.
+  `verificar-ajedrez-estudiantil-partidas.py` comprueba, leyendo el código
+  fuente, que esa condición sigue incluyendo `completados`.
 - **El color sale de un `<div class="FarbewT">` (blancas) o
   `<div class="FarbesT">` (negras) DENTRO de la celda del resultado** — se
   comprobó contra una página real (torneo 911786, Regional Turrialba, marzo
