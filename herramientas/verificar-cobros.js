@@ -191,6 +191,11 @@ window.SUPABASE_ANON_KEY = "anon-falsa";
                      aplicar((f) => (val === null ? f[col] == null : f[col] === val)); return b; },
       not(col, op, val) { window.__consultas.push({ tabla, verbo: "not", col, op, val });
                           if (op === "is" && val === null) aplicar((f) => f[col] != null); return b; },
+      // Los periodos que se cruzan: periodo_inicio <= hasta y periodo_fin >= desde.
+      lte(col, val) { window.__consultas.push({ tabla, verbo: "lte", col, val }); filtros.push({ col, lte: val });
+                      aplicar((f) => String(f[col]) <= String(val)); return b; },
+      gte(col, val) { window.__consultas.push({ tabla, verbo: "gte", col, val }); filtros.push({ col, gte: val });
+                      aplicar((f) => String(f[col]) >= String(val)); return b; },
       ilike(col, patron) { window.__consultas.push({ tabla, verbo: "ilike", col, patron });
                            const t = String(patron).replace(/%/g, "").toLowerCase();
                            aplicar((f) => String(f[col] || "").toLowerCase().includes(t)); return b; },
@@ -235,7 +240,9 @@ window.SUPABASE_ANON_KEY = "anon-falsa";
     from: (t) => constructor(TABLAS[t] !== undefined ? TABLAS[t] : [], t),
     rpc: (n, args) => { if (n === "mis_funciones_coordinacion") return Promise.resolve({ data: (window.__misFunciones || ["formularios","altas","solicitudes","cuentas","acceso","roles","cobros","equipos","subgrupos"]), error: null });
                         window.__llamadas.push({ rpc: n, args: args || null });
-                        return constructor(RPC[n] !== undefined ? RPC[n] : [], "rpc:" + n); },
+                        // window.__rpc cambia una respuesta para una prueba (y se borra después).
+                        const otra = window.__rpc && window.__rpc[n] !== undefined ? window.__rpc[n] : undefined;
+                        return constructor(otra !== undefined ? otra : RPC[n] !== undefined ? RPC[n] : [], "rpc:" + n); },
     channel: () => ({ on() { return this; }, subscribe() { return this; }, track() { return Promise.resolve(); }, presenceState: () => ({}) }),
     removeChannel: () => {},
   };
@@ -1180,6 +1187,43 @@ async function pruebaSupervisora(browser) {
   await page.waitForTimeout(300);
   igual("un plan sin las dos fechas no se manda",
     await page.evaluate(() => window.__llamadas.filter((l) => l.rpc === "registrar_cobro_y_abono").length), 0);
+
+  /* Esos días ya tienen su cobro (el del mes salió y la familia paga): la base
+     no deja emitir otro, así que la página ofrece registrar el pago EN ese
+     cobro, con lo que ya se escribió. Sin esto, el 14/10 se terminó
+     corrigiendo un recibo de septiembre para que dijera octubre. */
+  await page.evaluate(() => { window.__rpc = { cobro_cotizar: { concepto: "Mensualidad · setiembre 2026", monto: 22500, moneda: "CRC",
+    se_cruza_con: "Mensualidad · setiembre 2026" } }; window.__llamadas = []; });
+  await page.fill("#pa-desde", "2026-09-01");
+  await page.fill("#pa-hasta", "2026-09-30");
+  await page.press("#pa-hasta", "Tab");
+  await page.waitForSelector("#pa-cruce button", { timeout: 5000 });
+  igual("ofrece pagar el cobro que ya cubre esos días (y solo ese: el de agosto no)",
+    sinSeparadores(await page.evaluate(() => [...document.querySelectorAll("#pa-cruce button")].map((x) => x.textContent).join(" | "))),
+    "💵 Registrar el pago en «Mensualidad · setiembre 2026» (falta ₡22500)");
+  igual("y se ve", await page.evaluate(() => document.querySelector("#pa-cruce button").checkVisibility()), true);
+  await page.evaluate(() => { window.__llamadas = []; window.__avisos = []; });
+  await page.click("#pa-guardar");
+  await page.waitForTimeout(300);
+  igual("«Registrar el pago» ya no intenta un cobro nuevo, y dice dónde va",
+    [await page.evaluate(() => window.__llamadas.filter((l) => l.rpc === "registrar_cobro_y_abono").length),
+     await page.evaluate(() => window.__avisos.some((a) => a.includes("con el botón de abajo")))], [0, true]);
+  await page.fill("#pa-pagado", "30000");
+  await page.click("#pa-cruce button");
+  await page.waitForTimeout(300);
+  igual("pagar más de lo que falta no se manda",
+    await page.evaluate(() => window.__llamadas.filter((l) => l.rpc === "registrar_pago").length), 0);
+  await page.fill("#pa-pagado", "10000");
+  await page.fill("#pa-referencia", "SINPE-9");
+  await page.click("#pa-cruce button");
+  await page.waitForTimeout(500);
+  igual("el pago va a ESE cobro, con el método, el comprobante y la fecha del formulario",
+    await page.evaluate(() => (window.__llamadas.find((l) => l.rpc === "registrar_pago") || {}).args),
+    { p_pagos: [{ cobro_id: "c-1", monto: 10000 }], p_metodo: "transferencia", p_referencia: "SINPE-9", p_nota: null,
+      p_fecha: await fechaDelPago(page) });
+  igual("y se pone delante su recibo para revisarlo",
+    await page.evaluate(() => window.__avisos.some((a) => a.includes("Revisa el recibo R-ADAPZ-2026-0004"))), true);
+  await page.evaluate(() => { window.__rpc = null; });
 
   await page.selectOption("#pa-que", "otro");
   igual("«Otra cosa» cambia los campos: sin periodos, con moneda",

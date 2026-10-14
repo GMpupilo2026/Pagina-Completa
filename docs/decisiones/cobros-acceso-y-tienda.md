@@ -477,6 +477,18 @@ suyos en «Tus recibos».
   avisos de cobro. Hasta 24 periodos y tres años; respeta el `fin` del plan.
 - **Algo que no tenía cobro** (una inscripción, un torneo):
   `registrar_cobro_pagado()` emite el cobro y lo paga entero, con su recibo.
+- **Si esos días ya tienen su cobro, el pago va en ese cobro.** La base no deja
+  emitir otro que se cruce (se cobraría dos veces), y antes el formulario solo
+  avisaba. El 14/10 una supervisora quiso registrar el pago de octubre por
+  acá: la base lo rechazó dos veces porque el cobro de octubre ya existía, y
+  terminó corrigiendo un recibo de septiembre para que dijera octubre, que dejó
+  septiembre pagado con fecha de octubre y octubre debiendo. Ahora, cuando
+  `cobro_cotizar()` dice `se_cruza_con`, la página busca esos cobros en
+  `cobros_vista` (mismo plan, vigentes, que se cruzan con las fechas) y ofrece
+  «💵 Registrar el pago en …» con `registrar_pago()`, usando el método, el
+  comprobante, la fecha y «Paga hoy» que ya se escribieron (en blanco, lo que
+  falta). «Registrar el pago» ya no intenta el cobro nuevo y dice dónde va. Lo
+  prueba `verificar-cobros.js`.
 
 Comprobado en la base impersonando roles, en una transacción revertida, con
 la supervisora real de ADAPZ y una alumna suya: adelantar 2 periodos de un

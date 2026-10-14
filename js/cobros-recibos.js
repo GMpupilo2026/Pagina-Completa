@@ -385,6 +385,7 @@ function queSePaga() {
    dejaba tocar nada, y contaba un pedazo de mes como un periodo: a quien ya
    tenía pagado hasta el 15, «adelantar 1» le cobraba del 16 al 31. */
 function pintarAyudaAdelanto() {
+    limpiarCruce();
     const { modo, suscripcion } = queSePaga();
     document.getElementById("pa-plan-cell").classList.toggle("hidden", modo !== "plan");
     // En un plan la moneda es la del plan: no se elige.
@@ -449,6 +450,7 @@ async function cotizarMedida() {
     }
     if (hasta < desde) { ayuda.textContent = "El periodo termina antes de empezar: revisa las dos fechas."; return; }
     const mia = ++cotizacionPeticion;
+    limpiarCruce();
     const { data, error } = await sb.rpc("cobro_cotizar", { p_suscripcion: suscripcion, p_desde: desde, p_hasta: hasta });
     if (mia !== cotizacionPeticion) return;
     if (error) { ayuda.textContent = "No se pudo calcular: " + error.message; return; }
@@ -458,9 +460,74 @@ async function cotizarMedida() {
         ? " Ojo: este plan tiene cobros sin pagar (" + paPendientes + "); esos se pagan en la ficha «Cobros», o se anulan si no van."
         : "";
     ayuda.textContent = data.se_cruza_con
-        ? "⚠️ Esos días ya están en otro cobro de este plan (" + data.se_cruza_con + "). Paga ese cobro desde «Cobros», o anúlalo o corrige su periodo primero."
+        ? "⚠️ Esos días ya están en otro cobro de este plan (" + data.se_cruza_con + "): este pago va en ese cobro, no en uno nuevo."
         : "Por esos días el plan da " + plata(data.monto, data.moneda) + ". Puedes cambiar las fechas, el monto, el concepto y cuánto paga hoy. "
           + "La corrida diaria ya no cobra esos días." + debe;
+    if (data.se_cruza_con) await pintarCruce(suscripcion, desde, hasta, mia);
+}
+
+/* Cuando esos días ya tienen su cobro (lo más común: el del mes ya salió y la
+   familia paga), la base no deja emitir otro, y con razón: se cobraría dos
+   veces. Pero el aviso solo dejaba a quien registra sin salida, y el 14/10 se
+   terminó corrigiendo un recibo de septiembre para que dijera octubre. Así
+   que se ofrece lo que corresponde: registrar el pago EN ese cobro, con el
+   método, el comprobante y la fecha que ya se escribieron. */
+let paCruce = [];
+
+function limpiarCruce() {
+    paCruce = [];
+    const caja = document.getElementById("pa-cruce");
+    if (caja) caja.innerHTML = "";
+}
+
+async function pintarCruce(suscripcion, desde, hasta, mia) {
+    const { data, error } = await sb.from("cobros_vista")
+        .select("id, concepto, consecutivo, monto, saldo, moneda")
+        .eq("suscripcion_id", suscripcion).eq("estado", "emitido")
+        .lte("periodo_inicio", hasta).gte("periodo_fin", desde)
+        .order("periodo_inicio");
+    if (mia !== cotizacionPeticion || error) return;
+    paCruce = data || [];
+    const caja = document.getElementById("pa-cruce");
+    paCruce.forEach((c) => {
+        if (Number(c.saldo) > 0) {
+            const b = boton("💵 Registrar el pago en «" + c.concepto + "» (falta " + plata(c.saldo, c.moneda) + ")",
+                BTN_RECIBO_FUERTE, () => pagarCobroCruzado(c, b));
+            caja.appendChild(b);
+        } else {
+            caja.appendChild(el("p", "text-xs text-brand-500 dark:text-brand-300",
+                "«" + c.concepto + "» ya está pagado. Si este pago es de otros días, cambia las fechas."));
+        }
+    });
+}
+
+async function pagarCobroCruzado(c, b) {
+    if (b.disabled) return;
+    const fechaPago = document.getElementById("pa-fecha").value || hoyCR();
+    if (fechaPago > hoyCR()) return avisar("La fecha del pago no puede ser en el futuro.", true);
+    const textoPagado = document.getElementById("pa-pagado").value.trim();
+    const monto = textoPagado ? Number(textoPagado) : Number(c.saldo);
+    if (!(monto > 0)) return avisar("Lo que paga hoy tiene que ser mayor que cero (o déjalo en blanco si paga todo).", true);
+    if (monto > Number(c.saldo)) {
+        return avisar("A «" + c.concepto + "» le faltan " + plata(c.saldo, c.moneda) + ": lo que paga hoy no puede ser más.", true);
+    }
+    b.disabled = true;
+    try {
+        const { data, error } = await sb.rpc("registrar_pago", {
+            p_pagos: [{ cobro_id: c.id, monto }],
+            p_metodo: document.getElementById("pa-metodo").value,
+            p_referencia: document.getElementById("pa-referencia").value.trim() || null,
+            p_nota: null, p_fecha: fechaPago,
+        });
+        if (error) return avisar("No se pudo registrar: " + error.message, true);
+        ["pa-referencia", "pa-concepto", "pa-monto", "pa-pagado", "pa-desde", "pa-hasta"].forEach((id) => { document.getElementById(id).value = ""; });
+        document.getElementById("pa-periodos").value = "1";
+        await cargarTodo();
+        await trasRegistrarPago(data);
+        pintarAyudaAdelanto();
+    } finally {
+        b.disabled = false;
+    }
 }
 
 async function registrarPagoAdelantado() {
@@ -487,6 +554,9 @@ async function registrarPagoAdelantado() {
     // Lo que paga hoy: en blanco, todo; menos, y lo que falta queda pendiente.
     if (textoPagado && !(pagado > 0)) return avisar("Lo que paga hoy tiene que ser mayor que cero (o déjalo en blanco si paga todo).", true);
     if (textoPagado && textoMonto && pagado > monto) return avisar("Lo que paga hoy es más que el monto del cobro.", true);
+    if (modo === "plan" && paCruce.length) {
+        return avisar("Esos días ya tienen su cobro: registra el pago con el botón de abajo, en ese cobro.", true);
+    }
     const res = await sb.rpc("registrar_cobro_y_abono", {
         p_alumno: alumno, p_concepto: concepto || null, p_monto: textoMonto ? monto : null,
         p_moneda: document.getElementById("pa-moneda").value, p_metodo: metodo,
