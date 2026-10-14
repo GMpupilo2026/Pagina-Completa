@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261014010407
+# al-dia-con: 20261014162543
 tabla  Ejercicios Lichess  rls=true
 tabla  _foto_rls_tmp  rls=false
 tabla  _pedidos_elo  rls=false
@@ -13,6 +13,9 @@ tabla  ajustes_academia  rls=true
 tabla  analisis_partidas_alumno  rls=true
 tabla  arbitraje_consulta_config  rls=true
 tabla  arbitrajes_publicos  rls=true
+tabla  arbitros_cr  rls=true
+tabla  arbitros_cr_cargos  rls=true
+tabla  arbitros_cr_torneos  rls=true
 tabla  archivos_pgn  rls=true
 tabla  auditoria  rls=true
 tabla  aviso_destinatarios  rls=true
@@ -257,6 +260,32 @@ columna  arbitrajes_publicos.retroalimentacion  text
 columna  arbitrajes_publicos.revisado  boolean
 columna  arbitrajes_publicos.revisado_at  timestamp with time zone
 columna  arbitrajes_publicos.revisado_por  uuid
+columna  arbitros_cr.federacion  text
+columna  arbitros_cr.fide_id  integer
+columna  arbitros_cr.nombre  text
+columna  arbitros_cr.titulo  text
+columna  arbitros_cr.titulo_detalle  text
+columna  arbitros_cr_cargos.cargo  text
+columna  arbitros_cr_cargos.fide_id  integer
+columna  arbitros_cr_cargos.torneo_id  integer
+columna  arbitros_cr_torneos.af_detalle  text
+columna  arbitros_cr_torneos.af_estado  text
+columna  arbitros_cr_torneos.ai_detalle  text
+columna  arbitros_cr_torneos.ai_estado  text
+columna  arbitros_cr_torneos.ciudad  text
+columna  arbitros_cr_torneos.con_elo  smallint
+columna  arbitros_cr_torneos.contados  smallint
+columna  arbitros_cr_torneos.federaciones  smallint
+columna  arbitros_cr_torneos.fin  date
+columna  arbitros_cr_torneos.id  integer
+columna  arbitros_cr_torneos.inicio  date
+columna  arbitros_cr_torneos.jugadores  smallint
+columna  arbitros_cr_torneos.nombre  text
+columna  arbitros_cr_torneos.pais  text
+columna  arbitros_cr_torneos.ritmo  text
+columna  arbitros_cr_torneos.rondas  smallint
+columna  arbitros_cr_torneos.sistema  text
+columna  arbitros_cr_torneos.valorado  text
 columna  archivos_pgn.carpeta  text
 columna  archivos_pgn.created_at  timestamp with time zone
 columna  archivos_pgn.fen_final  text
@@ -2049,6 +2078,9 @@ politica  arbitraje_consulta_config  arbitraje_consulta_config_select  SELECT
 politica  arbitrajes_publicos  arbitrajes_publicos_insert  INSERT
 politica  arbitrajes_publicos  arbitrajes_publicos_select  SELECT
 politica  arbitrajes_publicos  arbitrajes_publicos_update  UPDATE
+politica  arbitros_cr  arbitros_cr_con_herramienta  SELECT
+politica  arbitros_cr_cargos  arbitros_cr_cargos_con_herramienta  SELECT
+politica  arbitros_cr_torneos  arbitros_cr_torneos_con_herramienta  SELECT
 politica  archivos_pgn  archivos_pgn_delete  DELETE
 politica  archivos_pgn  archivos_pgn_insert  INSERT
 politica  archivos_pgn  archivos_pgn_select  SELECT
@@ -2572,6 +2604,10 @@ indice  arbitraje_consulta_config  arbitraje_consulta_config_pkey
 indice  arbitrajes_publicos  arbitrajes_publicos_pendientes
 indice  arbitrajes_publicos  arbitrajes_publicos_pkey
 indice  arbitrajes_publicos  arbitrajes_publicos_revisado_por_fk
+indice  arbitros_cr  arbitros_cr_pkey
+indice  arbitros_cr_cargos  arbitros_cr_cargos_fide_id
+indice  arbitros_cr_cargos  arbitros_cr_cargos_pkey
+indice  arbitros_cr_torneos  arbitros_cr_torneos_pkey
 indice  archivos_pgn  archivos_pgn_pkey
 indice  archivos_pgn  archivos_pgn_profesor_id_idx
 indice  auditoria  auditoria_cuando
@@ -3103,6 +3139,15 @@ grant  arbitrajes_publicos  authenticated  SELECT
 grant  arbitrajes_publicos  authenticated  TRIGGER
 grant  arbitrajes_publicos  authenticated  TRUNCATE
 grant  arbitrajes_publicos  authenticated  UPDATE
+grant  arbitros_cr  authenticated  REFERENCES
+grant  arbitros_cr  authenticated  SELECT
+grant  arbitros_cr  authenticated  TRIGGER
+grant  arbitros_cr_cargos  authenticated  REFERENCES
+grant  arbitros_cr_cargos  authenticated  SELECT
+grant  arbitros_cr_cargos  authenticated  TRIGGER
+grant  arbitros_cr_torneos  authenticated  REFERENCES
+grant  arbitros_cr_torneos  authenticated  SELECT
+grant  arbitros_cr_torneos  authenticated  TRIGGER
 grant  archivos_pgn  anon  DELETE
 grant  archivos_pgn  anon  INSERT
 grant  archivos_pgn  anon  REFERENCES
