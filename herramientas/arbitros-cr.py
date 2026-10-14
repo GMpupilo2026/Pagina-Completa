@@ -16,13 +16,17 @@ Angulo.
 
     python3 herramientas/arbitros-cr.py               escribe herramientas/arbitros-cr/carga-*.sql
     python3 herramientas/arbitros-cr.py --resumen     solo cuenta
+    python3 herramientas/arbitros-cr.py --huella      la huella que debe dar la base y la consulta que la saca
 
 Las cargas se corren en la base en orden (borran y vuelven a llenar las tres
 tablas). Ver «Árbitros de Costa Rica en FIDE» en
 docs/decisiones/juegos-y-torneos.md.
 """
+import base64
+import hashlib
 import json
 import os
+import re
 import sys
 from collections import Counter
 
@@ -64,6 +68,13 @@ def sql(v):
     return "'" + str(v).replace("'", "''") + "'"
 
 
+def texto_cifrado(v):
+    """El nombre de un torneo va en base64: muchos son títulos de libros
+    («Cien años de soledad», «Crónica de una muerte anunciada»…) y, escritos
+    tal cual, la carga se cortaba al pasarla por la conversación."""
+    return "convert_from(decode('" + base64.b64encode(v.encode()).decode() + "', 'base64'), 'UTF8')"
+
+
 def torneo(e, titulos):
     """Lo que pide evaluar() de un torneo, como en oscar-angulo-fide.py."""
     rep = e.get("conElo") or []
@@ -86,6 +97,24 @@ def torneo(e, titulos):
     }
 
 
+def sin_rondas(t):
+    """Sin el reporte ronda a ronda (FIDE no lo publica de muchos torneos
+    viejos, y no se pidió de los que no podían valer) no se sabe cuántas
+    rondas tuvo: no son «0 rondas». Si con 9 valdría, queda para revisar;
+    si no, el «no» es por otra cosa y se dice sin nombrar las rondas."""
+    con_cero, con_nueve = evaluar(t), evaluar(dict(t, rondas=9))
+    salida = []
+    for cero, nueve in zip(con_cero, con_nueve):
+        if nueve["estado"] != "no":
+            salida.append({"estado": "revisar", "detalle": "FIDE no publica cuántas rondas tuvo; si fueron las que pide: " + nueve["detalle"]})
+            continue
+        d = re.sub(r"0 rondas \(pide [^)]*\)(; )?", "", cero["detalle"])
+        d = d.replace("internacional de 0 rondas:", "internacional (FIDE no publica cuántas rondas tuvo):")
+        d = re.sub(r"\(tiene (\d+) y 0\)", r"(tiene \1; las rondas, FIDE no las publica)", d).strip("; ")
+        salida.append({"estado": "no", "detalle": d or "FIDE no publica cuántas rondas tuvo"})
+    return tuple(salida)
+
+
 def armar():
     with open(FUENTE, encoding="utf-8") as f:
         fuente = json.load(f)
@@ -97,6 +126,8 @@ def armar():
             continue
         t = torneo(e, titulos)
         t["af"], t["ai"] = evaluar(t)
+        if not t["rondas"]:
+            t["af"], t["ai"] = sin_rondas(t)
         torneos[t["id"]] = t
         for a in e.get("arbitros") or []:
             if a["fed"] != "CRC" or a["cargo"] not in CARGOS:
@@ -128,22 +159,46 @@ def cargas(torneos, cargos, arbitros):
     filas = [f"({sql(int(fid))}, {sql(a['nombre'])}, 'CRC', {sql(a['titulo'])}, {sql(a['detalle'])})"
              for fid, a in sorted(arbitros.items(), key=lambda x: int(x[0]))]
     bloques = [lineas + [f"insert into public.arbitros_cr (fide_id, nombre, federacion, titulo, titulo_detalle) values\n  "
-                         + ",\n  ".join(filas) + ";"]]
+                         + ",\n  ".join(filas)
+                         + "\non conflict (fide_id) do update set nombre = excluded.nombre, titulo = excluded.titulo, titulo_detalle = excluded.titulo_detalle;"]]
     filas = []
     for t in sorted(torneos.values(), key=lambda t: t["id"]):
-        filas.append("(" + ", ".join(sql(v) for v in (
-            t["id"], t["nombre"], t["ciudad"], t["pais"], t["inicio"], t["fin"], t["sistema"], t["ritmo"],
+        filas.append("(" + sql(t["id"]) + ", " + texto_cifrado(t["nombre"]) + ", " + ", ".join(sql(v) for v in (
+            t["ciudad"], t["pais"], t["inicio"], t["fin"], t["sistema"], t["ritmo"],
             t["jugadores"], t["conElo"], t["contados"], t["rondas"], len(t["federaciones"]), t["valorado"],
             t["af"]["estado"], t["af"]["detalle"][:400], t["ai"]["estado"], t["ai"]["detalle"][:400])) + ")")
     columnas = ("id, nombre, ciudad, pais, inicio, fin, sistema, ritmo, jugadores, con_elo, contados, rondas, "
                 "federaciones, valorado, af_estado, af_detalle, ai_estado, ai_detalle")
     for i in range(0, len(filas), FILAS_POR_CARGA):
-        bloques.append([f"insert into public.arbitros_cr_torneos ({columnas}) values\n  " + ",\n  ".join(filas[i:i + FILAS_POR_CARGA]) + ";"])
+        # Si el torneo ya está, se reescribe: así la carga sirve también para
+        # corregir lo ya cargado sin borrar nada.
+        bloques.append([f"insert into public.arbitros_cr_torneos ({columnas}) values\n  " + ",\n  ".join(filas[i:i + FILAS_POR_CARGA])
+                        + "\non conflict (id) do update set " + ", ".join(f"{c} = excluded.{c}" for c in columnas.split(", ")[1:]) + ";"])
     filas = [f"({t}, {int(f)}, {sql(c)})" for t, f, c in sorted(cargos, key=lambda x: (x[0], int(x[1]), x[2]))]
     for i in range(0, len(filas), CARGOS_POR_CARGA):
-        bloques.append([f"insert into public.arbitros_cr_cargos (torneo_id, fide_id, cargo) values\n  " + ",\n  ".join(filas[i:i + CARGOS_POR_CARGA]) + ";"])
+        bloques.append([f"insert into public.arbitros_cr_cargos (torneo_id, fide_id, cargo) values\n  " + ",\n  ".join(filas[i:i + CARGOS_POR_CARGA])
+                        + "\non conflict do nothing;"])
     bloques[-1].append("commit;")
     return bloques
+
+
+HUELLA_SQL = """select (select md5(string_agg(concat_ws('|', id, nombre, ciudad, pais, inicio, fin, sistema, ritmo, jugadores, con_elo,
+  contados, rondas, federaciones, valorado, af_estado, af_detalle, ai_estado, ai_detalle), E'\\n' order by id)) from public.arbitros_cr_torneos) torneos,
+  (select md5(string_agg(concat_ws('|', torneo_id, fide_id, cargo), E'\\n' order by torneo_id, fide_id, cargo)) from public.arbitros_cr_cargos) cargos,
+  (select md5(string_agg(concat_ws('|', fide_id, nombre, titulo, titulo_detalle), E'\\n' order by fide_id)) from public.arbitros_cr) arbitros;"""
+
+
+def huellas(torneos, cargos, arbitros):
+    """Lo mismo que HUELLA_SQL, para comprobar que la base quedó igual a las
+    cargas (concat_ws se salta los nulos, como acá)."""
+    md5 = lambda filas: hashlib.md5("\n".join(filas).encode()).hexdigest()
+    col = lambda *v: "|".join(str(x) for x in v if x is not None)
+    t = [col(t["id"], t["nombre"], t["ciudad"], t["pais"], t["inicio"], t["fin"], t["sistema"], t["ritmo"], t["jugadores"],
+             t["conElo"], t["contados"], t["rondas"], len(t["federaciones"]), t["valorado"], t["af"]["estado"],
+             t["af"]["detalle"][:400], t["ai"]["estado"], t["ai"]["detalle"][:400]) for t in sorted(torneos.values(), key=lambda t: t["id"])]
+    c = [col(a, int(b), c) for a, b, c in sorted(cargos, key=lambda x: (x[0], int(x[1]), x[2]))]
+    a = [col(int(f), x["nombre"], x["titulo"], x["detalle"]) for f, x in sorted(arbitros.items(), key=lambda x: int(x[0]))]
+    return {"torneos": md5(t), "cargos": md5(c), "arbitros": md5(a)}
 
 
 def main():
@@ -152,6 +207,10 @@ def main():
     print(f"{len(arbitros)} árbitros de Costa Rica, {len(torneos)} torneos ({len(con_cargo)} con algún árbitro de Costa Rica), {len(cargos)} cargos.")
     print("AF:", dict(Counter(t["af"]["estado"] for t in torneos.values())), " AI:", dict(Counter(t["ai"]["estado"] for t in torneos.values())))
     if "--resumen" in sys.argv:
+        return
+    if "--huella" in sys.argv:
+        print("Lo que debe dar en la base:", huellas(torneos, cargos, arbitros))
+        print(HUELLA_SQL)
         return
     os.makedirs(CARPETA, exist_ok=True)
     for viejo in os.listdir(CARPETA):

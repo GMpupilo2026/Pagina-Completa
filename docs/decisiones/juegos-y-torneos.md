@@ -2714,7 +2714,20 @@ después «ponerlo en herramientas pero con licencia», y primero lo de FIDE
   unos 20 KB: uno de 130 KB no pasaba entero por la conversación. Y los
   `delete` de la primera piden que alguien los apruebe: un subagente en
   segundo plano no puede, y la llamada se queda esperando hasta vencer a los
-  60 s sin llegar a la base. Con las tablas vacías basta con los `insert`.
+  60 s sin llegar a la base. Por eso las cargas no borran: los torneos se
+  insertan con `on conflict (id) do update` (reescriben lo que ya estaba) y
+  los cargos con `on conflict do nothing`; para sacar algo que ya no está en
+  FIDE hay que borrarlo aparte. **El nombre del torneo va en base64**
+  (`convert_from(decode(…))`): muchos son títulos de libros («Cien años de
+  soledad», «Crónica de una muerte anunciada»…) y la carga que los traía
+  escritos tal cual se cortaba al pasar por la conversación. Al terminar,
+  `python3 herramientas/arbitros-cr.py --huella` da la huella (md5) que
+  deben dar las tres tablas y la consulta que la saca de la base: si
+  coinciden, nada llegó cambiado.
+- **Sin el ronda a ronda no son «0 rondas».** Si FIDE no publica el reporte
+  (o no se pidió porque el torneo no podía valer), no se sabe cuántas rondas
+  tuvo: si con 9 valdría, queda «revisar» con ese aviso; si no, el «no» se
+  explica por lo otro, sin nombrar rondas que no se conocen.
 - `verificar-arbitros-cr.js` prueba la página con un doble: el candado sin
   licencia (no se piden las tablas), los conteos de la lista, la norma por
   cargo (lo rompí haciendo contar al asistente y salta), los filtros, la

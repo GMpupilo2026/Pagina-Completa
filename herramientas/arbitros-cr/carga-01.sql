@@ -134,4 +134,5 @@ insert into public.arbitros_cr (fide_id, nombre, federacion, titulo, titulo_deta
   (6571654, 'Cordoba Sevilla, Justin', 'CRC', '', ''),
   (6574882, 'Alvarado Solano, Blanca Isabel', 'CRC', '', ''),
   (6575447, 'Sobrado Chamberlain, Marcela Cristina', 'CRC', '', ''),
-  (6580580, 'Cordero Sanabria, Sandra Isabel', 'CRC', '', '');
+  (6580580, 'Cordero Sanabria, Sandra Isabel', 'CRC', '', '')
+on conflict (fide_id) do update set nombre = excluded.nombre, titulo = excluded.titulo, titulo_detalle = excluded.titulo_detalle;

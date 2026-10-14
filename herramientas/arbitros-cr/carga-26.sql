@@ -449,4 +449,5 @@ insert into public.arbitros_cr_cargos (torneo_id, fide_id, cargo) values
   (218334, 6508650, 'Arbiter'),
   (218502, 6500579, 'Chief'),
   (218503, 6502822, 'Chief'),
-  (218738, 6509576, 'Chief');
+  (218738, 6509576, 'Chief')
+on conflict do nothing;
