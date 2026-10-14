@@ -2560,6 +2560,81 @@ enlaza desde `sobre-oscar.html`, en la línea de sus títulos de árbitro.
   dirección, las barras, la búsqueda sin tildes, «Mostrar más», ordenar, el
   Excel, el celular, el modo oscuro y que la página termine en el pie.
 
+## Sus torneos en FIDE y las normas de árbitro
+
+`oscar-angulo-fide.html` es la hermana de la de chess-results: los torneos
+registrados en FIDE en que Oscar Angulo figura en su perfil de
+ratings.fide.com como árbitro principal (Chief), adjunto principal (Dep.
+Chief), árbitro (Arbiter) u organizador, y si cada uno cumple las condiciones
+de un torneo para una norma de Árbitro FIDE (AF) y de Árbitro Internacional
+(AI). Él ya tiene los dos títulos (AF 2016, AI 2020): pedido del dueño,
+octubre de 2026, «cuáles son válidos aunque ya las tenga».
+
+- **De dónde salen los datos.** Desde la base con `pg_net`, como chess-results.
+  El perfil (`ratings.fide.com/profile/6501435`) carga sus pestañas «Arbiter»
+  y «Organizer» aparte, en JSON (`a_profile_data.php?records=1|3&event=…`):
+  fecha, cargo, torneo y su número. De cada torneo se leen tres páginas: la
+  ficha (`tournament_information.phtml`: sistema `s`/`r`/`d`/`t`, «Rated …
+  as Standard|Rapid|Blitz», jugadores, fechas, árbitros), la lista de
+  jugadores con Elo (`report.phtml`: ID, federación, Elo, partidas) y el
+  reporte ronda a ronda (`tournament_src_report.phtml`: cada jugador con Elo
+  y sus rondas, con «Forfeit (-)» cuando no se presentó).
+- **FIDE corta si se le piden muchas páginas juntas**: de 226 pedidos a la
+  vez contestó 23 («Server returned nothing»). Se pidió de a 10–15 con pausas
+  de 25 segundos, una consulta idempotente que mira qué falta y pide lo
+  siguiente. `net.http_get` con cabeceras propias (un `User-Agent`) devuelve
+  400 en chess-results; a FIDE no le hacen falta.
+- **Lo que FIDE no dice, y cómo se resolvió**:
+  - el reporte ronda a ronda trae **solo a los jugadores con Elo** y sus
+    partidas valoradas, así que las federaciones de jugadores sin Elo no se
+    ven: el número de federaciones es un mínimo;
+  - la columna «Tit.» de la lista viene **vacía siempre** (6206 jugadores, ni
+    uno con título). Los títulos salen de la lista completa de FIDE
+    (`players_list_foa.txt`, ~300 MB, la que pasó el dueño por Drive):
+    `herramientas/oscar-angulo-fide-titulos.py` guarda solo los titulados de
+    sus torneos en `herramientas/datos/oscar-angulo-fide-titulos.json` (251
+    de 2343). Son los títulos de hoy, no los de la fecha del torneo, y eso
+    decide cómo se lee: un título no se pierde, así que si con los de hoy un
+    internacional no daba para una norma de jugador (B.01: la mitad de los
+    rivales titulados GM, IM, FM, WGM, WIM o WFM y un tercio GM o MI, o WGM y
+    WIM para una norma femenina), tampoco daba entonces y es «no»; si da,
+    alguien pudo sacar el título después, y queda «para revisar» (también el
+    promedio de Elo, que no se mira);
+  - la ficha a veces trae menos jugadores de los que tiene su propia lista
+    (el XLV Metropolitano U14 dice 60 y lista 108): se toma el mayor;
+  - un torneo registrado pero sin valorar (los U07) no dice «Rated as»: el
+    ritmo sale del control («Standard: …») y no vale por no tener jugadores
+    con Elo;
+  - si FIDE no tiene el reporte ronda a ronda, las rondas salen del mismo
+    torneo en chess-results (mismo día de inicio y dos palabras del nombre en
+    común), que también da el enlace.
+- **Las reglas son las de B.06.1 vigente desde el 1 de marzo de 2026**
+  (`handbook.fide.com/chapter/B06012026`), en `evaluar()` de
+  `herramientas/oscar-angulo-fide.py`, y solo las de un torneo: AF, suizo 20
+  con Elo, todos contra todos 8, doble 6, equipos y eliminación 20, 7 rondas
+  (una de 5 o 6), rápido o blitz 30 y 9 rondas una vez; AI, final del
+  nacional individual de mayores (por el nombre, sin Sub, U, pares, impares,
+  blitz…), eventos oficiales y continentales (por el nombre: «revisar»),
+  internacional de 100 jugadores, 3 federaciones, 30 % con Elo y 7 rondas una
+  vez, nacional por equipos (revisar), 9 rondas (una de 7 u 8); y lo que vale
+  para AI vale para AF (3.12). Un jugador cuenta si faltó a lo sumo a una
+  ronda (2.4.1): se descuenta a quien tiene dos «Forfeit (-)» o más. Las
+  reglas de la solicitud (firmas, fechas que no se tocan, un solo torneo por
+  festival, un certificado cada 25 jugadores, seis años, dos sistemas) no se
+  ven desde afuera y la página las explica en vez de aplicarlas. Cuando él
+  sacó los títulos regía el reglamento anterior (AF pedía 10 en un todos
+  contra todos): la página mide todo con el de hoy y lo dice.
+- **Cada norma va escrita** («Vale», «Vale (una así)», «Vale una vez»,
+  «Revisar», «No») **con su porqué** debajo: no hay color que la diga sola.
+- La fuente es `herramientas/datos/oscar-angulo-fide.json` (lo leído de FIDE,
+  ya resumido por la consulta) y `herramientas/oscar-angulo-fide.py` arma
+  `data/oscar-angulo-fide.json`. Las barras que filtran salieron de la página
+  de chess-results a `js/barras-filtro.js`, que usan las dos.
+- `verificar-oscar-angulo-fide-reglas.py` prueba cada condición con torneos
+  armados a mano, por los dos lados del límite (19 y 20 jugadores, 6 y 7
+  rondas, 99 y 100 jugadores, 29 % y 30 % con Elo, el Sub-16 que no es la
+  final…). `verificar-oscar-angulo-fide.js` prueba la página.
+
 ## Historial del jugador y estadísticas por colegio
 
 Dos herramientas gratis y públicas, hechas con los mismos torneos de
