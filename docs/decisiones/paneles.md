@@ -3415,6 +3415,27 @@ después de la táctica, cada veredicto escrito, el dato y el resumen. Roto a
 propósito sin lo esperable por color, con «cerrado» para d4 contra d5 y sin el
 mínimo: saltó cada vez.
 
+### OpeningTree, al lado del análisis
+
+Debajo del resultado va la caja **«Su árbol de aperturas en OpeningTree»**, con
+el enlace a [openingtree.com](https://www.openingtree.com/): una herramienta
+gratis, de afuera, que arma el árbol de aperturas de un jugador (en cada
+posición, qué jugó, cuántas veces y cómo le fue) para recorrerlo a mano. Lo que
+hace la plataforma ya lo trae resumido; OpeningTree sirve para mirar una rama
+que el plan no muestra.
+
+- **Es solo un enlace.** No se le manda nada: ni el usuario ni las partidas.
+  OpeningTree no recibe la cuenta por la dirección, así que el profesor la
+  escribe ahí (o sube el mismo PGN). Por eso no va en la lista de proveedores
+  de `privacidad.html`: el sitio no le pasa ningún dato.
+- **La cuenta, lista para copiar.** Si las partidas se bajaron de Lichess o
+  Chess.com y el rival analizado es esa cuenta, la caja dice «Su cuenta: X en
+  Lichess» y trae «Copiar su usuario». Con un PGN o un análisis guardado no se
+  sabe su cuenta y queda solo el enlace (`pintarOpeningTree()` en
+  `js/preparacion-rivales.js`).
+- Lo prueba `verificar-preparacion-rivales.js`: con un PGN, el enlace se ve,
+  abre en otra pestaña y no hay cuenta; al bajar de Lichess, dice la cuenta.
+
 ## Los proyectos
 
 `admin.html#proyectos` y `proyecto.html`: un programa de clases armado de

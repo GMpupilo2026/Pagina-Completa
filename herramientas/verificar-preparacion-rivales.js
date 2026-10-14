@@ -876,6 +876,10 @@ async function pruebaConPermiso(browser) {
   await page.waitForFunction(() => /Listo/.test(document.getElementById("motor-estado").textContent), null, { timeout: 30000 });
   igual("se ve el resultado, con el nombre como más se escribe en el archivo", await page.evaluate(() => SE_VE("resultado") && document.getElementById("titulo-resultado").textContent), "Pedro Perez");
   igual("el foco va al título del resultado", await page.evaluate(() => document.activeElement.id), "titulo-resultado");
+  igual("OpeningTree: el enlace se ve y abre en otra pestaña; con un PGN no hay cuenta que copiar", await page.evaluate(() => {
+    const a = document.getElementById("opentree-abrir");
+    return [SE_VE("opentree-caja"), a.checkVisibility(), a.href, a.target, a.rel, SE_VE("opentree-cuenta"), SE_VE("opentree-copiar")];
+  }), [true, true, "https://www.openingtree.com/", "_blank", "noopener noreferrer", false, false]);
   const titulos = await page.evaluate(() => [...document.querySelectorAll("#resultado-cuerpo h3")].filter((h) => h.checkVisibility()).map((h) => h.textContent));
   igual("están todas las partes, en orden", titulos,
     ["Qué hacer contra él", "Qué jugarle, jugada por jugada", "La línea a fondo", "Lo que dice Stockfish", "Análisis FODA, visto desde quien quiere ganarle", "Su táctica: con qué gana y con qué pierde", "Más allá de la apertura", "Su repertorio", "Dónde rinde menos y dónde más", "Por ritmo, por año y por Elo"]);
@@ -1802,6 +1806,8 @@ async function pruebaDescarga(browser) {
     ["/api/games/user/PedroP max=500 clocks=true evals=false"]);
   igual("y analiza solo, con el usuario como rival", [await page.textContent("#titulo-resultado"), await page.evaluate(() => document.getElementById("rival").value)], ["PedroP", "PedroP"]);
   cierto("con todas sus partidas", /^73 partidas/.test(await page.textContent("#resultado-sub")));
+  igual("OpeningTree: dice la cuenta bajada y deja copiarla", await page.evaluate(() =>
+    [SE_VE("opentree-cuenta") && document.getElementById("opentree-cuenta").textContent, SE_VE("opentree-copiar")]), ["Su cuenta: PedroP en Lichess.", true]);
 
   // Un usuario que no existe: se dice, en palabras.
   await page.fill("#bajar-usuario", "nadie");

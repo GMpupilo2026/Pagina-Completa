@@ -189,6 +189,20 @@
                         </div>
                     </form>
                 </section>
+                <!-- OpeningTree: otra herramienta, fuera del sitio, para ver el
+                     árbol de aperturas del rival. Solo un enlace: no se le manda
+                     nada; el profesor escribe ahí el usuario (o sube el PGN). La
+                     cuenta la pone js/preparacion-rivales.js si se bajó. -->
+                <section id="opentree-caja" aria-labelledby="opentree-titulo" class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6">
+                    <h3 id="opentree-titulo" class="font-serif text-xl font-bold text-brand-800 dark:text-white mb-1">Su árbol de aperturas en OpeningTree</h3>
+                    <p class="text-sm text-brand-500 dark:text-brand-300 mb-3">OpeningTree es una herramienta gratis, fuera de la plataforma, que arma el árbol de aperturas del rival: en cada posición, qué jugó, cuántas veces y cómo le fue. Sirve para recorrer su repertorio a mano, rama por rama. Ábrela, elige Lichess o Chess.com y escribe su usuario, o sube el mismo PGN que cargaste aquí.</p>
+                    <p id="opentree-cuenta" hidden class="text-sm text-brand-700 dark:text-brand-100 mb-3"></p>
+                    <div class="flex flex-wrap items-center gap-3">
+                        <a id="opentree-abrir" href="https://www.openingtree.com/" target="_blank" rel="noopener noreferrer" class="inline-block bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Abrir OpeningTree<span class="sr-only"> (se abre en otra pestaña)</span></a>
+                        <button id="opentree-copiar" type="button" hidden class="px-4 py-2 rounded-lg text-sm font-semibold bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Copiar su usuario</button>
+                        <p id="opentree-estado" role="status" class="text-sm text-brand-600 dark:text-brand-200"></p>
+                    </div>
+                </section>
                 <!-- Cruzar con las partidas del alumno que lo va a enfrentar
                      (js/preparacion-cruce.js, en el trabajador). -->
                 <section id="alumno-caja" aria-labelledby="alumno-titulo" class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6">

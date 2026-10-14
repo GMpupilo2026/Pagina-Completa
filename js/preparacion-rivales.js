@@ -35,6 +35,7 @@
   let rivalCargado = null;          // el rival cuyas partidas tiene el trabajador
   let jugadoresLeidos = [];
   let revision = null;              // { parar, promesa } de la revisión en curso
+  let cuentaBajada = null;          // { sitio, usuario } si las partidas se bajaron (para OpeningTree)
 
   // ------------------------------------------------------------ el trabajador
 
@@ -138,6 +139,7 @@
     }
     boton.disabled = true;
     $("leido").textContent = "Leyendo…";
+    cuentaBajada = null;
     let textos;
     try {
       textos = await Promise.all(archivos.map(leerArchivo));
@@ -229,6 +231,7 @@
     }
     terminarBajada();
     const todo = textos.join("\n\n");
+    cuentaBajada = { sitio, usuario };
     if (!todo || !(await cargarTexto(todo, estado, usuario))) {
       if (parado) estado.textContent = "Se paró antes de que llegara alguna partida.";
       return;
@@ -404,6 +407,35 @@
     rec.addEventListener("change", alCambiar);
   }
 
+  // ------------------------------------------------------------ OpeningTree
+
+  /* La caja de OpeningTree (openingtree.com): una herramienta de afuera que
+     arma el árbol de aperturas del rival. No acepta la cuenta en el enlace,
+     así que se le deja a mano: si las partidas se bajaron de la cuenta de
+     este rival, se dice cuál y se puede copiar. Con un PGN o un análisis
+     guardado no se sabe su cuenta: queda solo el enlace. */
+  function pintarOpeningTree(rival) {
+    const c = cuentaBajada && claveDe(cuentaBajada.usuario) === claveDe(rival) ? cuentaBajada : null;
+    const linea = $("opentree-cuenta");
+    linea.hidden = !c;
+    $("opentree-copiar").hidden = !c;
+    $("opentree-estado").textContent = "";
+    linea.textContent = "";
+    if (!c) return;
+    linea.append("Su cuenta: ", el("strong", null, c.usuario), " en " + (c.sitio === "lichess" ? "Lichess" : "Chess.com") + ".");
+  }
+
+  async function copiarUsuarioOpeningTree() {
+    const estado = $("opentree-estado");
+    if (!cuentaBajada) return;
+    try {
+      await navigator.clipboard.writeText(cuentaBajada.usuario);
+      estado.textContent = "Usuario copiado. Pégalo en OpeningTree.";
+    } catch (e) {
+      estado.textContent = "No se pudo copiar: escríbelo a mano en OpeningTree.";
+    }
+  }
+
   // ------------------------------------------------------------ pintar
 
   function mostrar(r, id) {
@@ -415,6 +447,7 @@
     $("sparring-caja").hidden = true;
     $("resultado").hidden = false;
     $("titulo-resultado").textContent = r.rival;
+    pintarOpeningTree(r.rival);
     pintarFiltros(r);
     const aviso = $("filtros-aviso");
     $("alumno-caja").hidden = !!r.vacio;
@@ -1066,6 +1099,7 @@
     $("app").classList.remove("hidden");
     $("leer").addEventListener("click", leer);
     $("bajar-form").addEventListener("submit", bajar);
+    $("opentree-copiar").addEventListener("click", copiarUsuarioOpeningTree);
     $("bajar-parar").addEventListener("click", () => { if (bajando) bajando.abort(); });
     $("analizar").addEventListener("click", analizar);
     $("guardar").addEventListener("click", guardar);
