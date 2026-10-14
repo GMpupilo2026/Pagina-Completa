@@ -148,6 +148,8 @@ window.SUPABASE_ANON_KEY = "anon-falsa";
     corregir_recibo: null,
     anular_recibo: null,
     recibo_entregado_en_mano: null,
+    // Las cuentas de la lista de recibos: las hace la base.
+    recibos_resumen: [{ moneda: "CRC", vigentes: 2, total_vigentes: 35000, anulados: 1, total_anulados: 25000, por_entregar: 1 }],
   };
   /* Este doble FILTRA, ORDENA, CUENTA Y RECORTA de verdad.
      Uno que devolviera siempre la tabla entera daría por buena una página que
@@ -1069,6 +1071,61 @@ async function pruebaSupervisora(browser) {
     ["👁️ Ver o imprimir", "📧 Mandar por correo", "Marcar como entregado en mano", "Corregir", "Anular"]);
   igual("el anulado solo se ve o se reactiva",
     await fila("r-3").locator("button").allTextContents(), ["👁️ Ver o imprimir", "Reactivar"]);
+
+  /* Ver el mes entero de una vez: el filtro «Mes», las cuentas de arriba (las
+     hace la base, con los MISMOS filtros que la lista) y la tabla con todos. */
+  igual("el filtro de meses arranca en el mes de Costa Rica",
+    await page.evaluate(() => [...document.getElementById("rc-mes").options].slice(0, 2).map((o) => o.value)),
+    ["", await page.evaluate(() => hoyCR().slice(0, 7))]);
+  igual("las cuentas de todos los recibos las pide a la base, sin filtros",
+    await page.evaluate(() => (window.__llamadas.filter((l) => l.rpc === "recibos_resumen").pop() || {}).args),
+    { p_desde: null, p_hasta: null, p_alumno: null, p_buscar: null });
+  igual("y las pinta, con el dato escrito",
+    (await page.evaluate(() => [...document.querySelectorAll("#rc-resumen p")].map((p) => p.textContent))).map(sinSeparadores),
+    ["Todos los recibos", "₡35000", "2 recibos vigentes", "₡25000", "1 anulado", "1", "por revisar y entregar"]);
+  igual("y se ve", await page.evaluate(() => document.getElementById("rc-resumen").checkVisibility()), true);
+  // Los recibos de prueba son de 2026: si ese mes ya salió de la lista, se agrega.
+  const elegirMes = (mes) => page.evaluate((m) => {
+    const sel = document.getElementById("rc-mes");
+    if (![...sel.options].some((o) => o.value === m)) { const o = document.createElement("option"); o.value = m; o.textContent = m; sel.appendChild(o); }
+    sel.value = m;
+    sel.dispatchEvent(new Event("change"));
+  }, mes);
+  await page.evaluate(() => { window.__llamadas = []; window.__consultas = []; });
+  await elegirMes("2026-09");
+  await page.waitForTimeout(400);
+  igual("un mes pide las cuentas de ESE mes, de su primer a su último día",
+    await page.evaluate(() => (window.__llamadas.filter((l) => l.rpc === "recibos_resumen").pop() || {}).args),
+    { p_desde: "2026-09-01", p_hasta: "2026-09-30", p_alumno: null, p_buscar: null });
+  igual("y la lista trae solo los de ese mes (lo filtra la base)",
+    [await page.evaluate(() => [...document.querySelectorAll("#rc-lista .recibo-fila")].map((d) => d.dataset.id)),
+     await page.evaluate(() => window.__consultas.filter((c) => c.tabla === "recibos_vista" && (c.verbo === "gte" || c.verbo === "lte"))
+       .map((c) => c.verbo + " " + c.col + " " + c.val))],
+    [["r-1"], ["gte fecha 2026-09-01", "lte fecha 2026-09-30"]]);
+  igual("el resumen dice de qué mes es",
+    await page.evaluate(() => document.querySelector("#rc-resumen p").textContent), "Recibos de setiembre 2026");
+  await page.evaluate(() => { window.__consultas = []; });
+  await elegirMes("2026-07");
+  await page.selectOption("#rc-vista", "tabla");
+  await page.waitForSelector("#rc-lista table");
+  igual("«Tabla (todos)» los trae de mil en mil, sin «Ver más»",
+    [await page.evaluate(() => window.__consultas.filter((c) => c.tabla === "recibos_vista" && c.verbo === "range").pop()),
+     await page.evaluate(() => document.getElementById("rc-mas").checkVisibility())],
+    [{ tabla: "recibos_vista", verbo: "range", desde: 0, hasta: 999 }, false]);
+  igual("una fila por recibo, con el anulado y su motivo a la vista",
+    await page.evaluate(() => [...document.querySelectorAll("#rc-lista tbody tr")].map((tr) => [tr.dataset.id,
+      tr.querySelector("th").textContent, tr.innerText.includes("Motivo: Pago duplicado"), tr.innerText.includes("Anulado")])),
+    [["r-3", "R-ADAPZ-2026-0003", true, true]]);
+  igual("la tabla se ve", await page.evaluate(() => document.querySelector("#rc-lista table").checkVisibility()), true);
+  await page.evaluate(() => { window.__llamadas = []; });
+  await page.locator("#rc-lista tbody tr").first().locator("button", { hasText: "Ver" }).click();
+  await page.waitForFunction(() => { const m = document.querySelector("#rc-previa iframe"); return m && m.srcdoc; });
+  igual("«Ver» abre ESE recibo",
+    await page.evaluate(() => (window.__llamadas.find((l) => l.funcion && l.funcion.action === "recibo_ver") || {}).funcion.recibo_id), "r-3");
+  await page.click("#rc-previa-botones button:has-text('Cerrar')");
+  await page.selectOption("#rc-vista", "tarjetas");
+  await page.selectOption("#rc-mes", "");
+  await page.waitForTimeout(400);
 
   // Mandar: primero se ve (es la revisión) y después se manda ESE.
   await page.evaluate(() => { window.__llamadas = []; });

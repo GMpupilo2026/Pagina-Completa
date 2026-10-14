@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261014162543
+# al-dia-con: 20261014232457
 tabla  Ejercicios Lichess  rls=true
 tabla  _foto_rls_tmp  rls=false
 tabla  _pedidos_elo  rls=false
@@ -1981,6 +1981,7 @@ funcion  quitar_insignia(p_id uuid)  definer  anon=false  auth=true
 funcion  quitar_verificacion_en_dos_pasos(p_persona uuid)  definer  anon=false  auth=true
 funcion  rango_es(p_desde date, p_hasta date)  invoker  anon=false  auth=true
 funcion  recibo_entregado_en_mano(p_recibo uuid, p_entregado boolean)  definer  anon=false  auth=true
+funcion  recibos_resumen(p_desde date, p_hasta date, p_alumno uuid, p_buscar text)  invoker  anon=false  auth=true
 funcion  reclamar_puntos_pendientes()  definer  anon=false  auth=true
 funcion  recordar_informes_mensuales(p_hoy date)  definer  anon=false  auth=false
 funcion  regalar_premio(p_premio_id uuid, p_para uuid, p_mensaje text)  definer  anon=false  auth=true

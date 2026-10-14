@@ -455,6 +455,17 @@ suyos en «Tus recibos».
   cobro quedaría pagado de más.
 - **El total del recibo se calcula** (`recibos_vista`, la suma de sus pagos),
   no se guarda: corregir un monto lo cambia solo.
+- **El mes entero de un vistazo.** La lista de recibos se filtra por «Mes» (los
+  últimos 24, desde el de Costa Rica), y arriba van las cuentas de lo filtrado:
+  vigentes y su total, anulados y su total, y cuántos falta entregar. Las hace
+  la base, `recibos_resumen()` (`SECURITY INVOKER` sobre `recibos_vista`, con
+  los MISMOS filtros que la lista: mes, alumno y número), porque sumar en el
+  navegador lo que trajo la lista se corta a las 1000 filas. «Ver como: Tabla
+  (todos)» trae todo lo filtrado de mil en mil, una fila por recibo con lo que
+  paga, el monto, el estado y el motivo si se anuló; «Ver» abre el recibo (y
+  desde ahí se manda). Corregir y anular siguen en las tarjetas. Nació de que
+  quien supervisa tenía que ir de 30 en 30 y abrir recibo por recibo para saber
+  qué salió en setiembre y qué se anuló.
 - **El recibo es UN HTML** (`cobros-recordatorios/recibo-html.ts`): el mismo
   para la vista previa, para imprimir y para el correo, con la marca de la
   academia DEL RECIBO. Dice que es un recibo interno y no una factura

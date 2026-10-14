@@ -45,29 +45,107 @@ function entregaDe(r) {
 }
 
 // ------------------------------------------------------------- la lista
+/* Los meses del filtro «Mes», del actual hacia atrás. Los nombres van como se
+   dicen acá («setiembre»); el mes actual es el de Costa Rica. */
+const MESES_RECIBO = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio",
+    "agosto", "setiembre", "octubre", "noviembre", "diciembre"];
+
+function nombreMes(mes) {
+    const [a, m] = mes.split("-").map(Number);
+    return MESES_RECIBO[m - 1] + " " + a;
+}
+
+function llenarMesesRecibos() {
+    const sel = document.getElementById("rc-mes");
+    let [a, m] = hoyCR().slice(0, 7).split("-").map(Number);
+    for (let i = 0; i < 24; i++) {
+        const valor = a + "-" + String(m).padStart(2, "0");
+        const o = el("option", null, nombreMes(valor));
+        o.value = valor;
+        sel.appendChild(o);
+        m -= 1;
+        if (m === 0) { m = 12; a -= 1; }
+    }
+}
+
+/* Los filtros que comparten la lista y el resumen: el mismo mes, el mismo
+   alumno y el mismo número, para que las cuentas de arriba digan lo mismo
+   que la lista de abajo. */
+function filtrosRecibos() {
+    const mes = document.getElementById("rc-mes").value;
+    return {
+        desde: mes ? leerFecha(mes, "inicio") : null,
+        hasta: mes ? leerFecha(mes, "fin") : null,
+        alumno: document.getElementById("rc-alumno").value || null,
+        buscar: BusquedaBase.limpiar(document.getElementById("rc-buscar").value.trim()) || null,
+    };
+}
+
 function consultaRecibos() {
     let q = sb.from("recibos_vista").select("*", { count: "exact" });
     const estado = document.getElementById("rc-estado").value;
-    const alumno = document.getElementById("rc-alumno").value;
-    const buscar = BusquedaBase.limpiar(document.getElementById("rc-buscar").value.trim());
+    const f = filtrosRecibos();
     if (estado === "sin-entregar") q = q.eq("estado", "emitido").is("entrega", null);
     if (estado === "entregados") q = q.eq("estado", "emitido").not("entrega", "is", null);
     if (estado === "anulados") q = q.eq("estado", "anulado");
-    if (alumno) q = q.eq("student_id", alumno);
-    if (buscar) q = q.ilike("numero", "%" + buscar + "%");
+    if (f.desde) q = q.gte("fecha", f.desde).lte("fecha", f.hasta);
+    if (f.alumno) q = q.eq("student_id", f.alumno);
+    if (f.buscar) q = q.ilike("numero", "%" + f.buscar + "%");
     return q.order("fecha", { ascending: false }).order("created_at", { ascending: false });
 }
 
+// «Tabla (todos)»: todo lo del filtro de una vez, de mil en mil (el techo de PostgREST).
+const enTabla = () => document.getElementById("rc-vista").value === "tabla";
+
 async function cargarRecibos(desdeCero) {
-    if (desdeCero) { recibosDesde = 0; recibos = []; }
+    if (desdeCero) { recibosDesde = 0; recibos = []; pintarResumenRecibos(); }
     const mia = ++recibosPeticion;
-    const { data, error, count } = await consultaRecibos().range(recibosDesde, recibosDesde + RECIBOS_POR_PAGINA - 1);
-    if (mia !== recibosPeticion) return;
-    if (error) { avisar("No se pudieron cargar los recibos: " + error.message, true); return; }
-    if (count != null) recibosTotal = count;
-    recibos = recibos.concat(data || []);
-    recibosDesde = recibos.length;
+    const tanda = enTabla() ? 1000 : RECIBOS_POR_PAGINA;
+    do {
+        const { data, error, count } = await consultaRecibos().range(recibosDesde, recibosDesde + tanda - 1);
+        if (mia !== recibosPeticion) return;
+        if (error) { avisar("No se pudieron cargar los recibos: " + error.message, true); return; }
+        if (count != null) recibosTotal = count;
+        recibos = recibos.concat(data || []);
+        recibosDesde = recibos.length;
+        if (!data || !data.length) break;
+    } while (enTabla() && recibos.length < recibosTotal);
     pintarRecibos();
+}
+
+/* Las cuentas de lo filtrado, de la base (recibos_resumen): vigentes y su
+   total, anulados y su total, y cuántos falta entregar. Así quien supervisa
+   ve el mes entero de un vistazo, sin abrir ni contar recibo por recibo. */
+let resumenPeticion = 0;
+async function pintarResumenRecibos() {
+    const caja = document.getElementById("rc-resumen");
+    const f = filtrosRecibos();
+    const mia = ++resumenPeticion;
+    const { data, error } = await sb.rpc("recibos_resumen",
+        { p_desde: f.desde, p_hasta: f.hasta, p_alumno: f.alumno, p_buscar: f.buscar });
+    if (mia !== resumenPeticion) return;
+    caja.innerHTML = "";
+    const filas = error ? [] : (data || []);
+    caja.hidden = !filas.length;
+    if (!filas.length) return;
+    const mes = document.getElementById("rc-mes").value;
+    caja.appendChild(el("p", "text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-2",
+        mes ? "Recibos de " + nombreMes(mes) : "Todos los recibos"));
+    const fila = el("div", "flex flex-wrap gap-x-8 gap-y-2");
+    const dato = (numero, texto) => {
+        const d = el("div");
+        d.appendChild(el("p", "text-lg font-bold text-brand-800 dark:text-white", numero));
+        d.appendChild(el("p", "text-xs text-brand-500 dark:text-brand-300", texto));
+        fila.appendChild(d);
+    };
+    const uno = (n, singular, plural) => n + " " + (n === 1 ? singular : plural);
+    filas.forEach((r) => {
+        dato(plata(r.total_vigentes, r.moneda), uno(r.vigentes, "recibo vigente", "recibos vigentes"));
+        dato(plata(r.total_anulados, r.moneda), uno(r.anulados, "anulado", "anulados"));
+    });
+    const porEntregar = filas.reduce((s, r) => s + r.por_entregar, 0);
+    dato(String(porEntregar), "por revisar y entregar");
+    caja.appendChild(fila);
 }
 
 function pintarRecibos() {
@@ -77,7 +155,52 @@ function pintarRecibos() {
     document.getElementById("rc-cuenta").textContent = recibos.length
         ? "Mostrando " + recibos.length + " de " + recibosTotal + (recibosTotal === 1 ? " recibo" : " recibos") : "";
     document.getElementById("rc-mas").classList.toggle("hidden", recibos.length >= recibosTotal);
-    recibos.forEach((r) => caja.appendChild(tarjetaRecibo(r)));
+    if (!recibos.length) return;
+    if (enTabla()) caja.appendChild(tablaRecibos(recibos));
+    else recibos.forEach((r) => caja.appendChild(tarjetaRecibo(r)));
+}
+
+/* Todos los recibos del filtro en una tabla: una fila por recibo, con lo que
+   paga, el monto y cómo quedó (y por qué se anuló). «Ver» abre el mismo
+   recibo que las tarjetas, y desde ahí se manda. Corregir y anular siguen en
+   la vista de tarjetas. */
+function tablaRecibos(lista) {
+    const marco = el("div", "bg-white dark:bg-brand-900 rounded-2xl shadow-md overflow-x-auto");
+    const t = el("table", "w-full text-sm");
+    const cab = el("tr", "text-left text-xs uppercase tracking-wide text-brand-500 dark:text-brand-300 border-b border-brand-100 dark:border-brand-800");
+    ["Recibo", "Fecha", "Alumno", "Qué paga", "Cómo pagó", "Monto", "Estado", ""].forEach((x, i) => {
+        const th = el("th", "px-3 py-2 font-semibold" + (i === 5 ? " text-right" : ""), x);
+        th.scope = "col";
+        cab.appendChild(th);
+    });
+    const thead = el("thead");
+    thead.appendChild(cab);
+    t.appendChild(thead);
+    const cuerpo = el("tbody");
+    lista.forEach((r) => {
+        const tr = el("tr", "recibo-fila border-b border-brand-100 dark:border-brand-800 last:border-0 align-top"
+            + (r.estado === "anulado" ? " text-brand-450 dark:text-brand-350" : " text-brand-700 dark:text-brand-200"));
+        tr.dataset.id = r.id;
+        const celda = (texto, clase) => { const td = el("td", "px-3 py-2 " + (clase || ""), texto); tr.appendChild(td); return td; };
+        const num = el("th", "px-3 py-2 font-semibold whitespace-nowrap text-left", r.numero);
+        num.scope = "row";
+        tr.appendChild(num);
+        celda(fecha(r.fecha), "whitespace-nowrap");
+        celda(nombreDe(r.student_id));
+        celda((r.detalle || []).map((x) => x.concepto).join(" · "));
+        celda((METODOS[r.metodo] || r.metodo) + (r.referencia ? " · ref. " + r.referencia : ""));
+        celda(plata(r.total, r.moneda || "CRC"), "text-right whitespace-nowrap font-semibold"
+            + (r.estado === "anulado" ? " line-through" : ""));
+        const e = entregaDe(r);
+        const est = celda("");
+        est.appendChild(el("span", "recibo-entrega inline-block px-2 py-0.5 rounded-full text-xs font-semibold whitespace-nowrap " + e.clase, e.texto));
+        if (r.estado === "anulado" && r.anulado_motivo) est.appendChild(el("p", "text-xs mt-1", "Motivo: " + r.anulado_motivo));
+        celda("").appendChild(boton("Ver", BTN_RECIBO_SUAVE, () => verRecibo(r)));
+        cuerpo.appendChild(tr);
+    });
+    t.appendChild(cuerpo);
+    marco.appendChild(t);
+    return marco;
 }
 
 function tarjetaRecibo(r) {
@@ -639,7 +762,8 @@ async function recibosDelAlumno() {
 
 // --------------------------------------------------------------- eventos
 function engancharRecibos() {
-    ["rc-estado", "rc-alumno"].forEach((id) => document.getElementById(id).addEventListener("change", () => cargarRecibos(true)));
+    llenarMesesRecibos();
+    ["rc-estado", "rc-alumno", "rc-mes", "rc-vista"].forEach((id) => document.getElementById(id).addEventListener("change", () => cargarRecibos(true)));
     let espera = null;
     document.getElementById("rc-buscar").addEventListener("input", () => {
         clearTimeout(espera);
