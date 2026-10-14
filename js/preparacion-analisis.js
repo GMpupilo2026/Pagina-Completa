@@ -487,6 +487,41 @@
     return libro;
   }
 
+  /* Su árbol de aperturas, para recorrerlo a mano (js/preparacion-arbol.js):
+     en cada posición que vieron EXPLORADOR_MIN partidas o más, todas las
+     jugadas que se hicieron ahí (las suyas y las de sus rivales, diez como
+     mucho), con cuántas veces y cómo le fue a ÉL después de cada una:
+     { "<huella>": [["e4", 120, 60, 12, 48], …] }  ([jugada, partidas,
+     ganadas, tablas, perdidas]). Por posición, como el libro: las
+     transposiciones llegan al mismo lugar. Se queda con las EXPLORADOR_MAX
+     posiciones más jugadas, porque viaja con el análisis guardado. */
+  const EXPLORADOR_MIN = 2, EXPLORADOR_MAX = 2500, EXPLORADOR_JUGADAS = 10;
+  function exploradorDe(raiz) {
+    if (!Libro) return null;
+    const out = [];
+    const vistos = new Set([raiz]);
+    let nivel = [raiz];
+    while (nivel.length) {
+      const sig = [];
+      for (const nodo of nivel) {
+        const total = totalAristas(nodo);
+        if (total >= EXPLORADOR_MIN) {
+          const jugadas = [...nodo.hijos.entries()]
+            .sort((a, b) => b[1].c.n - a[1].c.n || b[1].c.w - a[1].c.w)
+            .slice(0, EXPLORADOR_JUGADAS)
+            .map(([san, a]) => [san, a.c.n, a.c.g, a.c.t, a.c.p]);
+          out.push({ clave: nodo.clave, total, jugadas });
+        }
+        for (const a of nodo.hijos.values()) if (!vistos.has(a.nodo)) { vistos.add(a.nodo); sig.push(a.nodo); }
+      }
+      nivel = sig;
+    }
+    out.sort((a, b) => b.total - a.total);
+    const arbol = {};
+    for (const x of out.slice(0, EXPLORADOR_MAX)) arbol[Libro.huella(x.clave)] = x.jugadas;
+    return arbol;
+  }
+
   // Las líneas donde el rival se aparta de su promedio. Una línea larga que
   // son casi las mismas partidas que su comienzo no se repite: queda la más
   // corta, que es la que se puede buscar.
@@ -1009,6 +1044,8 @@
       jugadasSuyas: jugadasSuyas(arbol.w, "w", minN).concat(jugadasSuyas(arbol.b, "b", minN)),
       // Lo que juega en cada posición: «Juega contra él» (js/preparacion-libro.js).
       libro: { w: libroDe(arbol.w, "w"), b: libroDe(arbol.b, "b") },
+      // Su árbol entero, para recorrerlo jugada a jugada (js/preparacion-arbol.js).
+      explorador: { w: exploradorDe(arbol.w), b: exploradorDe(arbol.b) },
       teoria: null,
       motor: null,
     };

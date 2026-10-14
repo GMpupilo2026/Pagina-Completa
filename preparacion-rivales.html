@@ -189,6 +189,13 @@
                         </div>
                     </form>
                 </section>
+                <!-- Su árbol de aperturas, para recorrerlo jugada a jugada
+                     (js/preparacion-arbol.js, con r.explorador del análisis). -->
+                <section id="arbol-caja" aria-labelledby="arbol-titulo" class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6">
+                    <h3 id="arbol-titulo" class="font-serif text-xl font-bold text-brand-800 dark:text-white mb-1">Su árbol de aperturas</h3>
+                    <p class="text-sm text-brand-500 dark:text-brand-300 mb-4">Recorre su repertorio rama por rama: en cada posición, qué se jugó en sus partidas, cuántas veces y cómo le fue a él después. Toca una jugada para avanzar; con ◀ vuelves. Las partidas no salen de tu computadora.</p>
+                    <div id="arbol"></div>
+                </section>
                 <!-- Cruzar con las partidas del alumno que lo va a enfrentar
                      (js/preparacion-cruce.js, en el trabajador). -->
                 <section id="alumno-caja" aria-labelledby="alumno-titulo" class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6">
@@ -271,6 +278,7 @@
     <script src="js/preparacion-motor.js"></script>
     <script src="js/entrenador-linea.js"></script>
     <script src="js/preparacion-sparring.js"></script>
+    <script src="js/preparacion-arbol.js"></script>
     <script src="js/hora-cr.js"></script>
     <script src="js/preparacion-rivales.js"></script>
 <!-- La hoja para imprimir (pintarHoja): solo se ve al imprimir. -->
