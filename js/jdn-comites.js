@@ -92,6 +92,10 @@
        jugaron en cada equipo y el rendimiento contra el Elo. */
     let jugs = [];
     let TODO = null, comitesTodos = [];
+    /* El comité de un jugador corregido a mano por administración
+       (jdn_correcciones), y si quien mira administra: solo así ve los
+       botones para corregir (la base es la que no deja escribir a nadie más). */
+    let CORR = [], ADMIN = false;
     const FILTRO = { fase: "", cat: "", rama: "", modo: "", ritmo: "", zona: "", q: "" };
     const CLAVES_FILTRO = ["fase", "cat", "rama", "modo", "ritmo", "zona", "q"];
 
@@ -121,6 +125,17 @@
             if (data.length < 1000) return filas;
         }
     }
+    async function leerCorrecciones() {
+        const { data, error } = await sb.from("jdn_correcciones").select("id,nombre,edicion,comite,nota,creado").order("nombre");
+        return error ? [] : data || [];
+    }
+    async function soyAdmin(uid) {
+        const { data, error } = await sb.from("profiles").select("is_admin").eq("id", uid).maybeSingle();
+        return !error && !!(data && data.is_admin);
+    }
+    /* La corrección de esa edición manda sobre la de todas. */
+    const correccionDe = (k, ed) => CORR.find((c) => c.edicion === ed && mismo(c.nombre, k)) || CORR.find((c) => !c.edicion && mismo(c.nombre, k));
+
     /* Los jugadores también son un extra: sin ellos no salen los integrantes
        ni el rendimiento contra el Elo, y lo demás sigue igual. */
     async function leerJugadores() {
@@ -174,6 +189,11 @@
             if (esEquipo) eq.push(Object.assign(r, { equipo: f.nombre.replace(/^C+DR\s+/i, ""), comite: comite(f.comite || f.nombre, true), sufijo: sufijo(f.nombre), record: f.record || "" }));
             else ind.push(Object.assign(r, { nombre: f.nombre, clave: clave(f.nombre), comite: comite(f.comite, false), deducido: false }));
             tam[k] = (tam[k] || 0) + 1;
+        }
+        // Lo que administración corrigió a mano manda sobre chess-results.
+        for (const r of ind) {
+            const c = correccionDe(r.clave, r.ed);
+            if (c) { r.comiteOriginal = r.comite; r.comite = c.comite; r.corregido = true; }
         }
         // El comité que falta: el del mismo jugador en la misma edición, si no
         // en la eliminatoria de su ciclo, si no en cualquier otra.
@@ -248,7 +268,103 @@
             el("thead", { class: "text-left text-xs uppercase tracking-wide text-brand-500 dark:text-brand-300" },
                 el("tr", {}, ...cabeza.map((h) => el("th", { scope: "col", class: "px-3 py-2" + (h.num ? " text-right" : "") }, h.t || h)))));
         const b = el("tbody"); for (const f of filas) b.append(f); t.append(b);
-        return el("div", { class: "overflow-x-auto mt-2 bg-white dark:bg-brand-900 rounded-2xl shadow-md" }, t);
+        return el("div", { "data-tabla": "" }, menuBajar(t), el("div", { class: "overflow-x-auto mt-1 bg-white dark:bg-brand-900 rounded-2xl shadow-md" }, t));
+    }
+
+    /* ---- Bajar cada tabla: en Excel, como imagen y como imagen para el
+       celular. Se lee lo que la tabla muestra (con los filtros puestos): una
+       sola fuente para la pantalla, el Excel y la imagen. En el Excel, el
+       enlace a chess-results va escrito; en la imagen, la columna «Comprobar»
+       no va (un enlace en una imagen no se puede tocar). ---- */
+    function datosTabla(t) {
+        const ths = [...t.querySelectorAll("thead th")];
+        return {
+            titulo: (t.querySelector("caption") || {}).textContent || "Tabla",
+            encabezados: ths.map((h) => h.textContent.trim()),
+            derecha: ths.map((h) => h.classList.contains("text-right")),
+            filas: [...t.querySelectorAll("tbody tr")].map((tr) => [...tr.cells].map((c) => {
+                const a = c.querySelector("a[href*='chess-results']");
+                return a ? a.href : c.textContent.replace(/\s+/g, " ").trim();
+            })),
+        };
+    }
+    function contexto() {
+        const e = ED[$("edicion").value];
+        return [e ? e.titulo + (e.detalle ? " (" + e.detalle + ")" : "") : "Todas las ediciones", $("filtros-activos").textContent.replace(/ Todo lo de abajo cuenta solo eso\.$/, "")].filter(Boolean).join(" · ");
+    }
+    const PIE = "Datos de chess-results.com, juntados por Ajedrez Integral · ajedrez-integral.com";
+    function menuBajar(t) {
+        const d = el("details", { class: "relative text-sm", "data-bajar": "" },
+            el("summary", { class: "cursor-pointer select-none font-semibold text-brand-700 dark:text-brand-200 rounded-lg px-2 py-1 hover:bg-brand-100 dark:hover:bg-brand-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-500" }, "Bajar"));
+        const caja = el("div", { class: "absolute right-0 z-10 mt-1 flex flex-col bg-white dark:bg-brand-900 rounded-xl shadow-lg p-1 min-w-[13rem]" });
+        for (const [como, txt] of [["excel", "En Excel"], ["imagen", "Como imagen"], ["celular", "Imagen para celular"]]) {
+            const b = el("button", { type: "button", "data-bajar-como": como, class: "text-left px-3 py-2 rounded-lg hover:bg-brand-100 dark:hover:bg-brand-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-500" }, txt);
+            b.addEventListener("click", () => { d.open = false; bajarTabla(t, como); });
+            caja.append(b);
+        }
+        d.append(caja);
+        return el("div", { class: "flex justify-end mt-2" }, d);
+    }
+    async function bajarTabla(t, como) {
+        const d = datosTabla(t), ctx = contexto();
+        const nombre = (slug(d.titulo).slice(0, 70) || "tabla") + (como === "celular" ? "-celular" : "");
+        try {
+            if (como === "excel") {
+                window.TablaExcel.bajar(nombre + ".xlsx", [{ nombre: d.titulo, filas: [d.encabezados, ...d.filas, [], [ctx], [PIE]] }]);
+                return;
+            }
+            const sin = d.encabezados.indexOf("Comprobar");
+            const quitar = (f) => sin < 0 ? f : f.filter((_, i) => i !== sin);
+            await window.TablaImagen.bajar({ titulo: d.titulo, subtitulo: ctx, pie: PIE, encabezados: quitar(d.encabezados), derecha: quitar(d.derecha),
+                filas: d.filas.map(quitar), celular: como === "celular" }, nombre + ".png");
+        } catch (e) {
+            window.Avisos.avisar("No se pudo bajar la tabla: " + (e.message || e), { tipo: "error" });
+        }
+    }
+
+    /* ---- El informe de un comité en PDF: lo que muestra su ficha, en orden,
+       con js/reporte-pdf.js (sin librería). Las gráficas van como texto (su
+       descripción) y la columna «Comprobar» no va: en papel no se toca. ---- */
+    function documentoFicha(caja) {
+        const bloques = [];
+        let titulo = "", subtitulo = "";
+        const recorrer = (n) => {
+            for (const h of n.children) {
+                const tag = h.tagName;
+                if (h.matches("[data-bajar], [data-no-pdf]")) continue;
+                if (tag === "H2" && !titulo) titulo = h.textContent.trim();
+                else if (tag === "H3") bloques.push({ tipo: "titulo", texto: h.textContent.trim() });
+                else if (tag === "H4") bloques.push({ tipo: "subtitulo", texto: h.textContent.trim() });
+                else if (tag === "P") { const t = h.textContent.trim(); if (t) { if (!subtitulo && !bloques.length) subtitulo = t; else bloques.push({ tipo: "parrafo", texto: t }); } }
+                else if (tag === "TABLE") {
+                    const d = datosTabla(h), sin = d.encabezados.indexOf("Comprobar");
+                    const q = (f) => sin < 0 ? f : f.filter((_, i) => i !== sin);
+                    const enc = q(d.encabezados), filas = d.filas.map(q);
+                    const anchos = enc.map((x, i) => Math.max(5, Math.min(28, Math.max(x.length, ...filas.map((f) => String(f[i] || "").length)))));
+                    bloques.push({ tipo: "tabla", encabezados: enc, anchos, filas });
+                } else if (tag === "FIGURE") {
+                    const svg = h.querySelector("svg[aria-label]");
+                    if (svg) bloques.push({ tipo: "nota", texto: svg.getAttribute("aria-label") });
+                } else if (h.classList.contains("grid") && h.querySelector("p")) {
+                    bloques.push({ tipo: "lista", items: [...h.children].map((c) => [...c.querySelectorAll("p")].map((p) => p.textContent.trim()).join(" ")) });
+                } else recorrer(h);
+            }
+        };
+        recorrer(caja);
+        bloques.push({ tipo: "separador" }, { tipo: "nota", texto: "Cada dato se puede comprobar en chess-results.com: la ficha de este comité en ajedrez-integral.com/jdn-comites.html lleva el enlace de cada torneo. " + contexto() + "." });
+        return { titulo: titulo || "Informe del comité", subtitulo: (subtitulo ? subtitulo + " · " : "") + "Resultados JDN por comité · " + window.HoraCR.fecha(new Date()),
+            pie: "Resultados JDN por comité · Ajedrez Integral", autor: "Ajedrez Integral", bloques, fotos: [] };
+    }
+    async function bajarFicha(nombre) {
+        try {
+            const blob = await window.ReportePDF.generar(documentoFicha($("ficha")));
+            const url = URL.createObjectURL(blob);
+            const a = el("a", { href: url, download: "informe-jdn-" + slug(nombre) + ".pdf" });
+            document.body.append(a); a.click(); a.remove();
+            setTimeout(() => URL.revokeObjectURL(url), 10000);
+        } catch (e) {
+            window.Avisos.avisar("No se pudo armar el PDF: " + (e.message || e), { tipo: "error" });
+        }
     }
     const ORD_R = { "Clásico": 0, "Rápido": 1, "Blitz": 2 };
     const ordCat = (a, b) => a.cat.localeCompare(b.cat) || a.rama.localeCompare(b.rama) || (ORD_R[a.ritmo] || 0) - (ORD_R[b.ritmo] || 0) || a.zona.localeCompare(b.zona) || a.rk - b.rk;
@@ -277,7 +393,9 @@
         pintarEfectividad(e);
         pintarCopa(e);
         pintarRendimiento(e);
+        pintarEnfrentamientos(e);
         pintarComparar(!e);
+        pintarCalidad(!e);
     }
 
     /* Participantes de cada comité: jugadores de los torneos individuales y
@@ -467,9 +585,11 @@
         ficha.replaceChildren();
         const pos = todos.indexOf(x) + 1;
         const lugar = pos ? "puesto " + pos + " de " + todos.length + " en el medallero" + (hayFiltros() ? " con estos filtros" : " de todas las finales") : "sin resultados con estos filtros";
+        const botonPdf = el("button", { type: "button", id: "ficha-pdf", "data-no-pdf": "", class: "text-sm font-semibold px-4 py-2 rounded-lg bg-brand-100 dark:bg-brand-800 hover:bg-brand-200 dark:hover:bg-brand-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-500" }, "Informe del comité en PDF");
+        botonPdf.addEventListener("click", () => bajarFicha(x.nombre));
         ficha.append(el("div", { class: "flex flex-wrap items-baseline justify-between gap-2" },
             el("h2", { id: "ficha-titulo", class: "font-serif text-2xl font-bold text-brand-800 dark:text-white" }, x.nombre),
-            el("p", { class: "text-sm text-brand-500 dark:text-brand-300" }, "Zona " + zonaTxt(x.zonas) + " · " + lugar)));
+            el("p", { class: "text-sm text-brand-500 dark:text-brand-300" }, "Zona " + zonaTxt(x.zonas) + " · " + lugar), botonPdf));
         ficha.append(el("div", { class: "grid grid-cols-2 md:grid-cols-4 gap-3 mt-4" },
             cifra(x.oro + x.plata + x.bronce, `medallas en las finales (${x.oro} de oro, ${x.plata} de plata, ${x.bronce} de bronce)`),
             cifra(x.fin.size, "participaciones en finales individuales"),
@@ -515,7 +635,8 @@
                 sec.append(tabla("Jugadores de " + x.nombre + " en " + e.titulo, cab, ri.map((r) => el("tr", { "data-jugador": r.nombre },
                     td(r.cat + " " + r.rama), td(final ? r.ritmo : r.zona),
                     el("td", { class: TD.replace("whitespace-nowrap", "min-w-[12rem]") }, r.nombre,
-                        r.deducido ? el("span", { class: "block text-xs text-brand-500 dark:text-brand-300" }, "comité deducido") : null),
+                        r.deducido ? el("span", { class: "block text-xs text-brand-500 dark:text-brand-300" }, "comité deducido") : null,
+                        r.corregido ? el("span", { class: "block text-xs text-brand-500 dark:text-brand-300" }, "comité corregido a mano") : null),
                     td(r.rk + " de " + tam[r.ed + r.cod], 1), td(fmt(r.pts), 1),
                     el("td", { class: TD }, final ? medalla(r.rk) : (jugoFinal(r) ? etiqueta("Jugó la final") : null)),
                     fuente(r.tnr, 1, "la clasificación de " + r.cat + " " + r.rama + " de " + e.titulo)))));
@@ -554,6 +675,8 @@
             }
             ficha.append(sec);
         }
+        ficha.append(rankingDe(x.nombre));
+        ficha.append(contraComites(x.nombre, edVal));
         ficha.append(susJugadores(x.nombre));
     }
 
@@ -831,6 +954,246 @@
                 fuente(r.tnr, r.equipo ? 20 : 4, (r.equipo ? "la composición de los equipos" : "la tabla cruzada") + " de " + r.cat + " " + r.rama + " de " + ED[r.ed].titulo)))));
     }
 
+    /* ---- Los enfrentamientos entre comités ----
+       De jdn_partidas: cada partida jugada, una vez, con los dos jugadores
+       (su orden en jdn_jugadores). Son unas 18 000: se leen DESPUÉS de pintar
+       la página, de mil en mil, y las secciones que las usan dicen «Cargando»
+       mientras tanto. Un comité contra sí mismo (dos equipos del mismo comité)
+       no cuenta. Los encuentros de equipos salen de sumar los tableros de cada
+       ronda entre los mismos dos equipos. Ver «Los enfrentamientos entre
+       comités». */
+    let PARTIDAS = null, cargando = null;
+    function cargarPartidas() {
+        if (!cargando) cargando = (async () => {
+            const filas = [];
+            for (let desde = 0; ; desde += 1000) {
+                const { data, error } = await sb.from("jdn_partidas").select("tnr,ronda,orden,rival,puntos")
+                    .order("tnr").order("ronda").order("orden").order("rival").order("vez").range(desde, desde + 999);
+                if (error) { PARTIDAS = []; return; }
+                filas.push(...data);
+                if (data.length < 1000) break;
+            }
+            const de = new Map(TODO.jugs.map((r) => [r.tnr + "-" + r.orden, r]));
+            PARTIDAS = filas.map((f) => ({ tnr: f.tnr, ronda: f.ronda, a: de.get(f.tnr + "-" + f.orden), b: de.get(f.tnr + "-" + f.rival), pa: Number(f.puntos) }))
+                .filter((x) => x.a && x.b);
+        })();
+        return cargando;
+    }
+    /* Las partidas que pasan los filtros y la edición elegida. */
+    function partidasVisibles(ed) {
+        const vale = new Set(jugs.map((r) => r.tnr));
+        return (PARTIDAS || []).filter((x) => vale.has(x.tnr) && (!ed || x.a.ed === ed));
+    }
+    /* Lo de un comité contra cada otro: partidas G-E-P desde su lado y los
+       encuentros de equipos. */
+    function contra(nombre, lista) {
+        const R = {};
+        const de = (n) => R[n] || (R[n] = { nombre: n, g: 0, e: 0, p: 0, pts: 0, n: 0, eg: 0, ee: 0, ep: 0 });
+        const encuentros = {};
+        for (const x of lista) {
+            const ca = x.a.comite, cb = x.b.comite;
+            if (ca === cb || (ca !== nombre && cb !== nombre)) continue;
+            const yo = ca === nombre ? x.pa : 1 - x.pa, otro = ca === nombre ? cb : ca;
+            const r = de(otro);
+            r.n++; r.pts += yo;
+            if (yo === 1) r.g++; else if (yo === 0) r.p++; else r.e++;
+            if (x.a.equipo) {
+                const mio = ca === nombre ? x.a : x.b, suyo = ca === nombre ? x.b : x.a;
+                const k = x.tnr + "|" + x.ronda + "|" + mio.eqRk + "|" + suyo.eqRk;
+                (encuentros[k] = encuentros[k] || { otro, yo: 0, el: 0 });
+                encuentros[k].yo += yo; encuentros[k].el += 1 - yo;
+            }
+        }
+        for (const m of Object.values(encuentros)) { const r = de(m.otro); if (m.yo > m.el) r.eg++; else if (m.yo < m.el) r.ep++; else r.ee++; }
+        delete R["Sin comité"];
+        return Object.values(R).sort((a, b) => b.n - a.n || a.nombre.localeCompare(b.nombre, "es"));
+    }
+    const resultado = (pa) => pa === 1 ? "1–0" : pa === 0 ? "0–1" : "½–½";
+    const pctTxt0 = (a, b) => b ? Math.round(100 * a / b) + " %" : "—";
+
+    /* En la ficha del comité: contra quién gana y pierde. */
+    function contraComites(nombre, ed) {
+        const caja = el("section", { class: "mt-6", id: "contra-comites", "data-contra": nombre },
+            el("h3", { class: "font-serif text-lg font-bold text-brand-800 dark:text-white" }, "Contra qué comités"));
+        if (!PARTIDAS) { caja.append(el("p", { class: "text-sm text-brand-500 dark:text-brand-300 mt-1", role: "status" }, "Cargando las partidas…")); return caja; }
+        const lista = contra(nombre, partidasVisibles(ed));
+        caja.append(el("p", { class: "text-sm text-brand-500 dark:text-brand-300 mt-1" }, lista.length
+            ? "Las partidas jugadas de verdad de sus jugadores (individuales y de equipo) contra cada comité, desde su lado: ganadas, tablas y perdidas; y los encuentros de equipo contra equipos de ese comité. Toca un comité para ver el historial completo, partida por partida."
+            : "Sin partidas con estos filtros."));
+        if (!lista.length) return caja;
+        caja.append(tabla("Partidas de " + nombre + " contra cada comité", ["Contra", { t: "Partidas", num: 1 }, { t: "Ganadas", num: 1 }, { t: "Tablas", num: 1 }, { t: "Perdidas", num: 1 },
+            { t: "Puntos", num: 1 }, { t: "Porcentaje", num: 1 }, { t: "Encuentros de equipo G-E-P", num: 1 }],
+            lista.map((r) => {
+                const b = el("button", { type: "button", class: "font-semibold text-left underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-500" }, r.nombre);
+                b.addEventListener("click", () => abrirDuelo(nombre, r.nombre));
+                return el("tr", { "data-rival": r.nombre }, el("td", { class: TD }, b), td(r.n, 1), td(r.g, 1), td(r.e, 1), td(r.p, 1), td(fmt(r.pts), 1), td(pctTxt0(r.pts, r.n), 1),
+                    td(r.eg + r.ee + r.ep ? r.eg + "-" + r.ee + "-" + r.ep : "—", 1));
+            })));
+        return caja;
+    }
+
+    /* En el medallero: dos comités frente a frente, o los más jugados. */
+    const DUELO = { a: "", b: "" };
+    function abrirDuelo(a, b) {
+        DUELO.a = a; DUELO.b = b;
+        elegir("", $("edicion").value);
+        const s = $("enfrentamientos");
+        if (s) s.scrollIntoView({ behavior: "smooth" });
+    }
+    function pintarEnfrentamientos(e) {
+        const caja = $("enfrentamientos");
+        caja.classList.remove("hidden");
+        if (!caja.dataset.armado) {
+            caja.dataset.armado = "1";
+            caja.append(el("h2", { id: "enfrentamientos-titulo", class: "font-serif text-xl font-bold text-brand-800 dark:text-white" }, "Enfrentamientos entre comités"),
+                el("p", { class: "text-sm text-brand-500 dark:text-brand-300 mt-1" }, "Elige dos comités para ver su historial: cada partida entre jugadores de uno y otro, en torneos individuales y por equipos, y los encuentros entre sus equipos. Sin elegir, salen los enfrentamientos más jugados."));
+            const fila = el("div", { class: "grid sm:grid-cols-2 gap-3 mt-3" });
+            for (const k of ["a", "b"]) {
+                const id = "duelo-" + k;
+                const sel = el("select", { id, class: SEL }, el("option", { value: "" }, "—"),
+                    ...[...comitesTodos].sort((x, y) => x.nombre.localeCompare(y.nombre, "es")).map((x) => el("option", { value: x.nombre }, x.nombre)));
+                sel.addEventListener("change", () => { DUELO[k] = sel.value; dibujarDuelo(); });
+                fila.append(el("div", {}, el("label", { for: id, class: ETQ }, k === "a" ? "Comité" : "Contra"), sel));
+            }
+            caja.append(fila, el("div", { id: "duelo-resultado" }));
+        }
+        $("duelo-a").value = DUELO.a; $("duelo-b").value = DUELO.b;
+        dibujarDuelo();
+    }
+    function dibujarDuelo() {
+        const g = $("duelo-resultado");
+        if (!g) return;
+        g.replaceChildren();
+        if (!PARTIDAS) { g.append(el("p", { class: "mt-3 text-sm text-brand-500 dark:text-brand-300", role: "status" }, "Cargando las partidas…")); return; }
+        const ed = $("edicion").value, lista = partidasVisibles(ed);
+        const { a, b } = DUELO;
+        if (!a || !b || a === b) {
+            // Los más jugados: cada par de comités una vez.
+            const P = {};
+            for (const x of lista) {
+                const ca = x.a.comite, cb = x.b.comite;
+                if (ca === cb || ca === "Sin comité" || cb === "Sin comité") continue;
+                const [u, v] = [ca, cb].sort((p, q) => p.localeCompare(q, "es")), k = u + "|" + v;
+                const r = P[k] || (P[k] = { u, v, n: 0, pu: 0 });
+                r.n++; r.pu += ca === u ? x.pa : 1 - x.pa;
+            }
+            const top = Object.values(P).sort((p, q) => q.n - p.n || p.u.localeCompare(q.u, "es") || p.v.localeCompare(q.v, "es")).slice(0, 15);
+            if (!top.length) { g.append(el("p", { class: "mt-3 text-sm text-brand-500 dark:text-brand-300 italic" }, "Sin partidas con estos filtros.")); return; }
+            g.append(el("h3", { class: "font-serif text-lg font-bold text-brand-800 dark:text-white mt-5" }, "Los enfrentamientos más jugados"));
+            g.append(tabla("Los enfrentamientos entre comités con más partidas", ["Comités", { t: "Partidas", num: 1 }, { t: "Puntos", num: 1 }],
+                top.map((r) => {
+                    const bt = el("button", { type: "button", class: "font-semibold text-left underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-500" }, r.u + " contra " + r.v);
+                    bt.addEventListener("click", () => abrirDuelo(r.u, r.v));
+                    return el("tr", { "data-par": r.u + "|" + r.v }, el("td", { class: TD }, bt), td(r.n, 1), td(fmt(r.pu) + " – " + fmt(r.n - r.pu), 1));
+                })));
+            return;
+        }
+        const pp = lista.filter((x) => (x.a.comite === a && x.b.comite === b) || (x.a.comite === b && x.b.comite === a))
+            .map((x) => x.a.comite === a ? { x, ja: x.a, jb: x.b, pa: x.pa } : { x, ja: x.b, jb: x.a, pa: 1 - x.pa })
+            .sort((p, q) => q.ja.ed.localeCompare(p.ja.ed) || ordCat(p.ja, q.ja) || p.x.ronda - q.x.ronda);
+        const r = contra(a, lista).find((y) => y.nombre === b) || { n: 0, g: 0, e: 0, p: 0, pts: 0, eg: 0, ee: 0, ep: 0 };
+        g.append(el("p", { class: "mt-4 font-semibold text-brand-800 dark:text-white", "data-duelo-resumen": "" }, r.n
+            ? `${a} y ${b} jugaron ${r.n} partida${r.n === 1 ? "" : "s"}${ed ? " en " + ED[ed].titulo : ""}: ${a} ganó ${r.g}, ${r.e} terminaron en tablas y ${b} ganó ${r.p} (${fmt(r.pts)} a ${fmt(r.n - r.pts)}).`
+              + (r.eg + r.ee + r.ep ? ` En encuentros de equipos: ${a} ganó ${r.eg}, empataron ${r.ee} y ${b} ganó ${r.ep}.` : "")
+            : `${a} y ${b} no jugaron entre sí` + (ed ? " en " + ED[ed].titulo : "") + (hayFiltros() ? " con estos filtros." : ".")));
+        if (!pp.length) return;
+        g.append(tabla("Partidas entre " + a + " y " + b, ["Edición", "Categoría", { t: "Ronda", num: 1 }, "Jugador de " + a, "Resultado", "Jugador de " + b, "Comprobar"],
+            pp.slice(0, 300).map(({ x, ja, jb, pa }) => el("tr", { "data-partida": "" }, td(ED[ja.ed].titulo),
+                td(ja.cat + " " + ja.rama + " · " + (ja.ritmo || (ja.zona === "Única" ? "Zona única" : "Zona " + ja.zona.slice(1)))),
+                td(x.ronda || "—", 1), td(ja.nombre + (ja.equipo ? " (" + ja.equipo + ")" : "")), td(resultado(pa)), td(jb.nombre + (jb.equipo ? " (" + jb.equipo + ")" : "")),
+                fuente(x.tnr, ja.equipo ? 20 : 4, (ja.equipo ? "la composición de los equipos" : "la tabla cruzada") + " de " + ja.cat + " " + ja.rama + " de " + ED[ja.ed].titulo)))));
+        if (pp.length > 300) g.append(el("p", { class: "text-sm text-brand-500 dark:text-brand-300 mt-2" }, "Se muestran las 300 más recientes."));
+    }
+    /* Cuando terminan de llegar las partidas, se pinta lo que estaba esperando. */
+    function refrescarEnfrentamientos() {
+        if ($("duelo-resultado") && !$("general").classList.contains("hidden")) dibujarDuelo();
+        const vieja = $("contra-comites");
+        if (vieja) vieja.replaceWith(contraComites(vieja.dataset.contra, $("edicion").value));
+    }
+
+    /* ---- La calidad de los datos ----
+       Qué se dedujo, qué falta y qué se corrigió a mano. Mira TODO (sin los
+       filtros): la calidad de los datos no cambia con lo que se esté mirando.
+       Quien administra puede corregir el comité de un jugador
+       (jdn_correcciones; la RLS no deja escribir a nadie más) y la página
+       vuelve a cargar con la corrección. Ver «La calidad de los datos y la
+       corrección del comité». */
+    const nomEd = (ed) => ED[ed] ? ED[ed].titulo : ed;
+    async function corregir(nombre, k, ed) {
+        const actual = correccionDe(k, ed);
+        const v = await window.Avisos.formulario({
+            titulo: "Corregir el comité de " + nombre,
+            texto: "El comité que se le pone a este jugador manda sobre el de chess-results y sobre el deducido.",
+            campos: [
+                { nombre: "comite", etiqueta: "Comité", tipo: "select", valor: actual ? actual.comite : "",
+                  opciones: [...comitesTodos].map((x) => x.nombre).sort((a, b) => a.localeCompare(b, "es")).map((n) => [n, n]) },
+                { nombre: "edicion", etiqueta: "En qué edición", tipo: "select", valor: actual ? actual.edicion || "" : ed || "",
+                  opciones: [["", "En todas"], ...EDICIONES.filter((e) => Object.keys(tam).some((t) => t.startsWith(e.id))).map((e) => [e.id, e.titulo])] },
+                { nombre: "nota", etiqueta: "Por qué (opcional)", tipo: "textarea", valor: actual ? actual.nota || "" : "", max: 300 },
+            ],
+            aceptar: "Guardar la corrección",
+        });
+        if (!v || !v.comite) return;
+        const fila = { nombre: k, edicion: v.edicion || null, comite: v.comite, nota: (v.nota || "").trim() || null };
+        const ya = CORR.find((c) => c.nombre === k && (c.edicion || "") === (v.edicion || ""));
+        const { error } = ya ? await sb.from("jdn_correcciones").update(fila).eq("id", ya.id) : await sb.from("jdn_correcciones").insert(fila);
+        if (error) { window.Avisos.avisar("No se pudo guardar la corrección: " + error.message, { tipo: "error" }); return; }
+        location.reload();
+    }
+    async function quitarCorreccion(c) {
+        if (!(await window.Avisos.confirmar("¿Quitar la corrección de " + c.nombre + "? Vuelve a valer el comité de chess-results (o el deducido).", { aceptar: "Quitar la corrección", peligro: true }))) return;
+        const { error } = await sb.from("jdn_correcciones").delete().eq("id", c.id);
+        if (error) { window.Avisos.avisar("No se pudo quitar: " + error.message, { tipo: "error" }); return; }
+        location.reload();
+    }
+    const botonCorregir = (nombre, k, ed) => {
+        const b = el("button", { type: "button", "data-corregir": k, class: "text-sm font-semibold underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-500" }, "Corregir");
+        b.addEventListener("click", () => corregir(nombre, k, ed));
+        return el("td", { class: TD }, b);
+    };
+    function pintarCalidad(ver) {
+        const caja = $("calidad");
+        caja.replaceChildren();
+        caja.classList.toggle("hidden", !ver);
+        if (!ver) return;
+        const I = TODO.ind;
+        const deducidos = I.filter((r) => r.deducido), sin = I.filter((r) => r.comite === "Sin comité"), corregidos = I.filter((r) => r.corregido);
+        const sinTabla = TODO.eq.filter((r) => r.fase === "elim" && !r.record);
+        const torneosSinTabla = new Set(sinTabla.map((r) => r.tnr)).size;
+        caja.append(el("h2", { id: "calidad-titulo", class: "font-serif text-xl font-bold text-brand-800 dark:text-white" }, "La calidad de los datos"),
+            el("p", { class: "text-sm text-brand-500 dark:text-brand-300 mt-1" },
+                "Qué se dedujo y qué falta, para saber cuánto confiar en cada cifra. Mira todos los datos, sin los filtros."
+                + (ADMIN ? " Como administras, puedes corregir el comité de un jugador: la corrección manda sobre chess-results y sobre lo deducido." : "")));
+        caja.append(el("div", { class: "grid grid-cols-2 md:grid-cols-4 gap-3 mt-3" },
+            cifra(I.length - deducidos.length - sin.length - corregidos.length, "jugadores individuales con el comité tal como lo trae chess-results"),
+            cifra(deducidos.length, "con el comité deducido (del mismo jugador en otra edición)"),
+            cifra(sin.length, "sin comité: chess-results no lo trae y no se pudo deducir"),
+            cifra(corregidos.length, "corregidos a mano por administración")));
+        const lista = (titulo, filas, id) => {
+            const d = el("details", { class: "mt-4", "data-calidad": id }, el("summary", { class: "cursor-pointer font-semibold text-brand-700 dark:text-brand-200" }, titulo));
+            if (filas) d.append(filas);
+            return d;
+        };
+        const tablaJug = (cap, rs, conCom) => tabla(cap, ["Jugador", "Edición", "Categoría", ...(conCom ? ["Comité"] : []), "Comprobar", ...(ADMIN ? [""] : [])],
+            rs.slice(0, 300).map((r) => el("tr", { "data-jugador": r.nombre }, el("td", { class: TD }, botonJugador(r.nombre, r.clave)), td(nomEd(r.ed)),
+                td(r.cat + " " + r.rama + " · " + (r.ritmo || (r.zona === "Única" ? "Zona única" : "Zona " + r.zona.slice(1)))), conCom ? td(r.comite) : null,
+                fuente(r.tnr, 1, "la clasificación de " + r.cat + " " + r.rama + " de " + nomEd(r.ed)), ADMIN ? botonCorregir(r.nombre, r.clave, r.ed) : null)));
+        caja.append(lista(`Jugadores con el comité deducido (${deducidos.length})`, deducidos.length ? tablaJug("Jugadores con el comité deducido", deducidos, true) : null, "deducidos"));
+        caja.append(lista(`Jugadores sin comité (${sin.length})`, sin.length ? tablaJug("Jugadores sin comité", sin, false) : null, "sin-comite"));
+        if (CORR.length) caja.append(lista(`Corregidos a mano (${CORR.length})`, tabla("Correcciones de comité hechas por administración", ["Jugador", "Edición", "Comité", "Por qué", "Desde", ...(ADMIN ? [""] : [])],
+            CORR.map((c) => {
+                let quitar = null;
+                if (ADMIN) { const b = el("button", { type: "button", class: "text-sm font-semibold underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-500" }, "Quitar"); b.addEventListener("click", () => quitarCorreccion(c)); quitar = el("td", { class: TD }, b); }
+                return el("tr", { "data-correccion": c.nombre }, td(titulo(c.nombre)), td(c.edicion ? nomEd(c.edicion) : "Todas"), td(c.comite), td(c.nota || "—"), td(c.creado ? window.HoraCR.fecha(c.creado) : ""), quitar);
+            })), "corregidos"));
+        caja.append(lista("Lo que falta en chess-results", el("ul", { class: "mt-2 list-disc pl-6 text-sm text-brand-600 dark:text-brand-300 space-y-1" },
+            el("li", {}, `${torneosSinTabla} eliminatorias por equipos no traen la tabla final: ahí el puesto es el orden por puntos de partida, sin el récord de matches.`),
+            el("li", {}, "De la eliminatoria 2018 están solo U16 y U20, y el U20 Femenino por equipos de la Zona 1 está vacío en chess-results."),
+            el("li", {}, "De la eliminatoria 2024 faltan dos torneos por equipos (Z1 y Z2 U12 Femenino)."),
+            el("li", {}, "La final 2022-2023 no trae el comité de cada jugador: sale del mismo jugador en la eliminatoria 2022 («comité deducido»)."),
+            el("li", {}, "Dos equipos de las clasificaciones no tienen integrantes: el «Descanso» de la eliminatoria 2018 (el bye) y San José B en el Blitz U20 Femenino de la final 2020-2021, que perdió todo sin jugar.")), "falta"));
+    }
+
     /* ---- Gráficas (SVG propio, sin librerías) ----
        Las barras son una sola serie (sin leyenda: el título la nombra) y cada
        una lleva su número escrito; las líneas para comparar comités usan los
@@ -867,25 +1230,38 @@
         return el("figure", { class: "mt-3 bg-white dark:bg-brand-900 rounded-2xl shadow-md p-4" },
             el("figcaption", { class: "text-sm font-semibold text-brand-800 dark:text-white" }, titulo), svg);
     }
-    function lineas(titulo, etiquetas, series) {
-        const W = 860, H = 300, M = { a: 24, b: 40, i: 36, d: 170 };
-        const max = Math.max(1, ...series.flatMap((x) => x.valores));
+    /* opc.unidad: lo que mide (para el título de cada punto); opc.desde: el
+       piso del eje (0 si no se dice; con Elo, un piso redondo debajo del
+       mínimo, para que la línea no quede aplastada arriba). Un valor null es
+       una edición sin dato: no lleva punto y corta la línea. */
+    function lineas(titulo, etiquetas, series, opc) {
+        const o = opc || {}, unidad = o.unidad == null ? "medallas" : o.unidad;
+        const W = 860, H = 300, M = { a: 24, b: 40, i: 44, d: 170 };
+        const vals = series.flatMap((x) => x.valores).filter((v) => v != null);
+        const max = Math.max(1, ...vals);
+        const min = o.desde === "auto" ? Math.max(0, Math.floor((Math.min(...vals) - 50) / 100) * 100) : 0;
+        const tope = o.desde === "auto" ? Math.ceil((max + 50) / 100) * 100 : max;
         const X = (i) => M.i + (W - M.i - M.d) * (etiquetas.length > 1 ? i / (etiquetas.length - 1) : 0.5);
-        const Y = (v) => H - M.b - (H - M.a - M.b) * v / max;
+        const Y = (v) => H - M.b - (H - M.a - M.b) * (v - min) / Math.max(1, tope - min);
         const svg = sv("svg", { viewBox: `0 0 ${W} ${H}`, class: "w-full h-auto", role: "img",
-            "aria-label": titulo + ". " + series.map((x) => x.nombre + ": " + x.valores.map((v, i) => etiquetas[i] + " " + v).join(", ")).join(". ") });
-        for (const t of [0, Math.round(max / 2), max]) {
+            "aria-label": titulo + ". " + series.map((x) => x.nombre + ": " + x.valores.map((v, i) => etiquetas[i] + " " + (v == null ? "sin dato" : v)).join(", ")).join(". ") });
+        for (const t of [min, Math.round((min + tope) / 2), tope]) {
             svg.append(sv("line", { x1: M.i, x2: W - M.d, y1: Y(t), y2: Y(t), class: EJE, "stroke-width": 1 }));
             svg.append(sv("text", { x: M.i - 6, y: Y(t) + 4, "text-anchor": "end", class: TINTA2 + " text-[11px]" }, t));
         }
         etiquetas.forEach((t, i) => svg.append(sv("text", { x: X(i), y: H - M.b + 18, "text-anchor": "middle", class: TINTA2 + " text-[12px]" }, t)));
-        // Los nombres al final de cada línea, sin encimarse.
-        const fin = series.map((x, k) => ({ k, y: Y(x.valores[x.valores.length - 1]) })).sort((a, b) => a.y - b.y);
+        // Los nombres al final de cada línea (en su último dato), sin encimarse.
+        const ultimo = (x) => { for (let i = x.valores.length - 1; i >= 0; i--) if (x.valores[i] != null) return x.valores[i]; return min; };
+        const fin = series.map((x, k) => ({ k, y: Y(ultimo(x)) })).sort((a, b) => a.y - b.y);
         for (let i = 1; i < fin.length; i++) if (fin[i].y - fin[i - 1].y < 16) fin[i].y = fin[i - 1].y + 16;
         series.forEach((x, k) => {
-            svg.append(sv("polyline", { points: x.valores.map((v, i) => X(i) + "," + Y(v)).join(" "), fill: "none", class: TRAZO[k], "stroke-width": 2, "stroke-linejoin": "round" }));
-            x.valores.forEach((v, i) => svg.append(sv("g", {}, sv("title", {}, `${x.nombre} · ${etiquetas[i]}: ${v} medallas`),
-                sv("circle", { cx: X(i), cy: Y(v), r: 5, class: SERIE[k] + " stroke-white dark:stroke-brand-900", "stroke-width": 2 }))));
+            // Un tramo por cada racha de ediciones con dato.
+            let tramo = [];
+            const cerrar = () => { if (tramo.length) svg.append(sv("polyline", { points: tramo.join(" "), fill: "none", class: TRAZO[k], "stroke-width": 2, "stroke-linejoin": "round" })); tramo = []; };
+            x.valores.forEach((v, i) => { if (v == null) cerrar(); else tramo.push(X(i) + "," + Y(v)); });
+            cerrar();
+            x.valores.forEach((v, i) => { if (v != null) svg.append(sv("g", {}, sv("title", {}, `${x.nombre} · ${etiquetas[i]}: ${v}${unidad ? " " + unidad : ""}`),
+                sv("circle", { cx: X(i), cy: Y(v), r: 5, class: SERIE[k] + " stroke-white dark:stroke-brand-900", "stroke-width": 2 }))); });
             svg.append(sv("text", { x: W - M.d + 8, y: fin.find((f) => f.k === k).y + 4, class: TINTA + " text-[12px] font-semibold" }, x.nombre));
         });
         return el("figure", { class: "mt-3 bg-white dark:bg-brand-900 rounded-2xl shadow-md p-4" },
@@ -986,7 +1362,13 @@
         // El camino por categorías: la primera edición en cada una.
         const camino = [];
         for (const f of filas) if (!camino.some((c) => c.cat === f.r.cat)) camino.push({ cat: f.r.cat, ed: f.r.ed });
-        caja.append(el("p", { class: "text-sm text-brand-500 dark:text-brand-300" }, "Comité" + (comites.length > 1 ? "s" : "") + ": " + comites.join(", ")));
+        const lineaComite = el("p", { class: "text-sm text-brand-500 dark:text-brand-300" }, "Comité" + (comites.length > 1 ? "s" : "") + ": " + comites.join(", "));
+        if (ADMIN) {
+            const b = el("button", { type: "button", id: "jugador-corregir", class: "ml-3 font-semibold underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-500" }, "Corregir su comité");
+            b.addEventListener("click", () => corregir(nombre, JUG, ""));
+            lineaComite.append(b);
+        }
+        caja.append(lineaComite);
         caja.append(el("div", { class: "grid grid-cols-2 md:grid-cols-4 gap-3 mt-4" },
             cifra(eds.filter((e) => ED[e].fase === "elim").length, "eliminatorias jugadas"),
             cifra(eds.filter((e) => ED[e].fase === "final").length, "finales jugadas"),
@@ -1014,6 +1396,7 @@
                     td(modalidad(r)), td(r.elo || "—", 1), td(r.partidas, 1), td(fmt(r.pts), 1), td(r.eloRiv || "—", 1),
                     td(r.esperado != null ? fmt1(r.esperado) : "—", 1), td(r.esperado != null ? signo(r.ptsElo - r.esperado) : "—", 1), td(r.esperado != null ? actuacion(r) || "—" : "—", 1),
                     fuente(r.tnr, r.equipo ? 20 : 4, (r.equipo ? "la composición de los equipos" : "la tabla cruzada") + " de " + r.cat + " " + r.rama + " de " + ED[r.ed].titulo)))));
+            caja.append(crecimiento(pj));
         }
     }
     const botonJugador = (nombre, k) => {
@@ -1021,6 +1404,55 @@
         b.addEventListener("click", () => abrirJugador(k));
         return b;
     };
+
+    /* Cómo crece un jugador: su Elo y su actuación edición por edición. El
+       Elo de una edición es el más alto con que jugó en ella; la actuación,
+       la de todas sus partidas con Elo de esa edición juntas. */
+    function crecimiento(pj) {
+        const eds = EDICIONES.filter((e) => pj.some((r) => r.ed === e.id)).reverse();
+        if (eds.length < 2) return el("p", { class: "text-sm text-brand-500 dark:text-brand-300 mt-3", "data-crecimiento": "" }, "Con una sola edición todavía no hay cómo ver si crece.");
+        const elo = eds.map((e) => { const v = pj.filter((r) => r.ed === e.id && r.elo).map((r) => r.elo); return v.length ? Math.max(...v) : null; });
+        const act = eds.map((e) => actuacion(juntar(pj.filter((r) => r.ed === e.id && r.esperado != null))));
+        const caja = el("div", { "data-crecimiento": "" }, el("h3", { class: "font-serif text-lg font-bold text-brand-800 dark:text-white mt-6" }, "Cómo crece"),
+            el("p", { class: "text-sm text-brand-500 dark:text-brand-300 mt-1" }, "Su Elo en cada edición (el más alto con que jugó) y su actuación: el Elo que corresponde a lo que sacó contra rivales con Elo. Si la actuación queda por encima de su Elo, jugó mejor que su Elo."));
+        caja.append(lineas("Su Elo y su actuación, edición por edición", eds.map((e) => e.titulo.replace(/^(Final|Eliminatoria) /, (m) => m[0] + ". ")),
+            [{ nombre: "Elo", valores: elo }, { nombre: "Actuación", valores: act }], { unidad: "", desde: "auto" }));
+        return caja;
+    }
+    /* Varias filas de jdn_jugadores juntas, para una actuación de conjunto: el
+       Elo medio de los rivales se pondera por las partidas. */
+    function juntar(rs) {
+        const c = rs.reduce((a, r) => a + r.conElo, 0);
+        return { conElo: c, ptsElo: rs.reduce((a, r) => a + r.ptsElo, 0), eloRiv: c ? Math.round(rs.reduce((a, r) => a + r.eloRiv * r.conElo, 0) / c) : 0 };
+    }
+
+    /* El ranking de los jugadores de un comité por su actuación en todos los
+       JDN (con los filtros), con al menos 5 partidas contra rivales con Elo.
+       Una persona son todas sus filas, con los nombres cortados juntos. */
+    function rankingDe(nombre) {
+        const P = [];
+        for (const r of jugs) {
+            if (r.comite !== nombre || r.esperado == null || !r.conElo) continue;
+            let p = P.find((x) => mismo(x.k, r.clave));
+            if (!p) P.push(p = { k: r.clave, nombres: [], filas: [] });
+            p.nombres.push(r.nombre); p.filas.push(r);
+        }
+        const lista = P.map((p) => {
+            const j = juntar(p.filas), ult = [...p.filas].sort((a, b) => b.ed.localeCompare(a.ed))[0];
+            return { k: p.k, nombre: p.nombres.sort((a, b) => b.length - a.length)[0], elo: ult.elo, torneos: p.filas.length, ...j,
+                esperado: p.filas.reduce((a, r) => a + r.esperado, 0), act: actuacion(j) };
+        }).filter((x) => x.conElo >= 5).sort((a, b) => b.act - a.act || b.conElo - a.conElo);
+        const caja = el("section", { class: "mt-6", "data-ranking": nombre },
+            el("h3", { class: "font-serif text-lg font-bold text-brand-800 dark:text-white" }, "Ranking de sus jugadores"),
+            el("p", { class: "text-sm text-brand-500 dark:text-brand-300 mt-1" }, lista.length
+                ? "Sus jugadores ordenados por su actuación en todos los JDN" + (hayFiltros() ? " (con estos filtros)" : "") + ": el Elo que corresponde a lo que sacaron contra rivales con Elo, juntando todas sus partidas. Solo los que tienen al menos 5 partidas contra rivales con Elo. Sirve para ver quién rinde más, no solo quién tiene más Elo."
+                : "Ninguno de sus jugadores tiene 5 partidas contra rivales con Elo" + (hayFiltros() ? " con estos filtros." : ".")));
+        if (lista.length) caja.append(tabla("Ranking de los jugadores de " + nombre + " por su actuación", [{ t: "Puesto", num: 1 }, "Jugador", { t: "Último Elo", num: 1 }, { t: "Torneos", num: 1 },
+            { t: "Partidas con Elo", num: 1 }, { t: "Puntos", num: 1 }, { t: "Esperados", num: 1 }, { t: "Diferencia", num: 1 }, { t: "Actuación", num: 1 }],
+            lista.slice(0, 25).map((x, i) => el("tr", { "data-jugador": x.nombre }, td(i + 1, 1), el("td", { class: TD }, botonJugador(x.nombre, x.k)), td(x.elo || "—", 1), td(x.torneos, 1),
+                td(x.conElo, 1), td(fmt1(x.ptsElo), 1), td(fmt1(x.esperado), 1), td(signo(x.ptsElo - x.esperado), 1), el("td", { class: TDN + " font-semibold" }, x.act || "—")))));
+        return caja;
+    }
 
     /* Los jugadores de un comité: cuántos volvieron a otro JDN (la retención)
        y la lista, de los que más jugaron a los que menos. */
@@ -1080,6 +1512,9 @@
 
     function armarControles() {
         const selC = $("comite"), selE = $("edicion");
+        // El medallero está escrito en el HTML: su menú «Bajar» se le pone acá.
+        const med = $("medallero");
+        med.parentElement.before(menuBajar(med));
         selC.append(el("option", { value: "" }, "Todos los comités (medallero)"));
         for (const x of [...comitesTodos].sort((a, b) => a.nombre.localeCompare(b.nombre, "es"))) selC.append(el("option", { value: slug(x.nombre) }, x.nombre));
         selE.append(el("option", { value: "" }, "Todas las ediciones"));
@@ -1113,7 +1548,7 @@
         const { data: puede, error } = await sb.rpc("tengo_herramienta", { p_herramienta: "jdn-comites" });
         if (error || puede !== true) { $("loading").classList.add("hidden"); $("denegado").classList.remove("hidden"); return; }
         let filas;
-        try { filas = await leerTodo(); } catch (e) {
+        try { [filas, CORR, ADMIN] = await Promise.all([leerTodo(), leerCorrecciones(), soyAdmin(session.user.id)]); } catch (e) {
             $("loading").classList.add("hidden"); $("app").classList.remove("hidden");
             $("error").textContent = "No se pudieron leer los resultados: " + (e.message || e) + ". Vuelve a cargar la página en un rato.";
             $("error").classList.remove("hidden");
@@ -1143,6 +1578,9 @@
         if (ED[h1]) pintar("", h1); else pintar(h1 || "", h2 || "");
         pintarBusqueda();
         pintarJugador();
+        // Las partidas (para los enfrentamientos) son muchas: se leen después
+        // de pintar, sin hacer esperar a nadie.
+        cargarPartidas().then(refrescarEnfrentamientos);
     }
 
     init();

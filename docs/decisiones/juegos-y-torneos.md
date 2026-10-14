@@ -3181,13 +3181,16 @@ equipo de las finales **y de las eliminatorias**, con su equipo, su tablero (la
   aguanta una consulta.
 - **Los bloques de detalle no vienen en el orden de la composición**: se juntan
   por el nombre, sin la coma que la composición pone. El encabezado del bloque
-  es «Castro Garcia Ileana  WCM 1716 CRC»: el nombre termina en el primer par
-  de espacios. La primera carga lo cortaba en tres espacios y a quien tenía
-  título le quedaba el título pegado: 288 integrantes salían sin partidas y en
-  68 torneos los puntos no daban la mitad de las partidas. Así se encontró.
+  es «Castro Garcia Ileana  WCM 1716 CRC Rp:1823»: se le quita del final el
+  título, el Elo, la federación y el «Rp» (los 4549 encabezados de jugador
+  tienen esa forma). Dos intentos fallaron callados: cortar en tres espacios
+  dejaba el título pegado (288 integrantes sin partidas y 68 torneos donde los
+  puntos no daban la mitad de las partidas), y cortar en el primer par de
+  espacios partía los nombres que traen dos espacios adentro («Chavarria  Juan
+  Carlos»): cinco jugadores no cuadraban al cruzar con `jdn_partidas`.
 - **Comprobado al cargar**: 4549 integrantes de los 140 torneos; en todos, los
   puntos son exactamente la mitad de las partidas (cada partida está en los dos
-  jugadores). 143 no jugaron ninguna partida (reservas, o solo forfeits). Dos
+  jugadores). 141 no jugaron ninguna partida (reservas, o solo forfeits). Dos
   equipos de las clasificaciones no tienen composición: el «Descanso» (el bye)
   de la eliminatoria 2018 y San José B, que en la final 2020-2021 perdió todo
   sin jugar.
@@ -3250,6 +3253,133 @@ rendimiento (por comité, quien no tiene Elo no cuenta, quiénes sorprendieron
 con su actuación y su enlace, la edición y el filtro). Rompiendo a propósito
 que el rendimiento cuente las partidas sin Elo, o que la copa sume los
 tableros, salta.
+
+### Los enfrentamientos entre comités
+
+«Enfrentamientos entre comités» (en el medallero) y «Contra qué comités» (en la
+ficha de un comité) dicen contra quién se gana y se pierde más, y el historial
+directo entre dos comités, partida por partida.
+
+- **Los datos están en `jdn_partidas`** (migración `20261014010407`): cada
+  partida jugada de verdad (1, ½ o 0; sin forfeits ni byes), **una sola vez**,
+  desde el jugador de menor orden, con la ronda y el resultado. `orden` y
+  `rival` son el orden de `jdn_jugadores`, así que el comité de cada lado sale
+  de ahí. Lo carga `herramientas/jdn-comites/cargar-partidas.sql`, de la misma
+  `art=20` de los equipos (el rival se busca por nombre en la composición) y de
+  la tabla cruzada (`art=4`) de los individuales. En un todos contra todos la
+  tabla cruzada no dice la ronda: va 0, y `vez` separa las dos partidas de un
+  doble todos contra todos.
+- **Comprobado al cargar**: 17 873 partidas de los 288 torneos, exactamente la
+  mitad de las 35 746 que suman los jugadores; jugador por jugador, las
+  partidas y los puntos que salen de `jdn_partidas` son los de
+  `jdn_jugadores` (0 diferencias).
+- **La primera versión del cargador no terminaba**: unía las filas de la página
+  consigo mismas para buscar el encabezado de columnas y el nombre del bloque,
+  y como Postgres estima un CTE en un puñado de filas, cruzaba todas contra
+  todas dentro de cada torneo (minutos por diez páginas). Ahora el encabezado y
+  el nombre se arrastran con `first_value` sobre la partición de su bloque, y
+  la consulta va con `set join_collapse_limit = 1` para que no una primero a
+  los jugadores entre sí. Con eso, setenta páginas tardan segundos.
+- **Las partidas se leen después de pintar la página**: son unas 18 000 (18
+  pedidos de mil). Las secciones que las usan dicen «Cargando las partidas…» y
+  se pintan cuando llegan; nadie espera para ver el medallero.
+- **Un comité contra sí mismo no cuenta** (dos equipos del mismo comité, o dos
+  jugadores del mismo comité en un individual): no es un enfrentamiento entre
+  comités.
+- **Los encuentros de equipo** salen de sumar los tableros de cada ronda entre
+  los mismos dos equipos: gana el que suma más. Se cuentan aparte de las
+  partidas («Encuentros de equipo G-E-P»).
+- **Lo que se muestra**: en la ficha, cada comité rival con partidas, ganadas,
+  tablas, perdidas, puntos y porcentaje (desde el lado del comité de la
+  ficha); en el medallero, sin elegir, los 15 enfrentamientos más jugados, y
+  eligiendo dos comités, la frase del historial y cada partida con su enlace a
+  chess-results (la composición del equipo o la tabla cruzada). Respeta los
+  filtros y la edición elegida.
+
+### Bajar e imprimir
+
+Cada tabla de la página trae su menú «Bajar» (un `<details>`, que ya dice si
+está abierto): **en Excel, como imagen y como imagen para el celular**. Y la
+ficha de un comité trae «Informe del comité en PDF».
+
+- **Se baja lo que la tabla muestra**, leído de la propia tabla: una sola
+  fuente para la pantalla, el Excel y la imagen, con los filtros puestos. El
+  título es el de la tabla y debajo va la edición y los filtros.
+- **El Excel lo escribe `js/tabla-excel.js`, sin librería** (SheetJS pesa unos
+  900 KB): un .xlsx es un ZIP con unos XML y el ZIP puede ir sin comprimir, así
+  que basta con el CRC32. La primera fila va en negrita y fija; un texto que es
+  un número a la tica («15,0», «+5,4», «−0,7», «1 234») se guarda como número,
+  para que la hoja sume; lo demás («1 de 3», «1½») queda como texto. El enlace
+  a chess-results va escrito como dirección. Comprobado abriéndolo con
+  openpyxl (sin advertencias, después de agregarle el estilo «Normal» que
+  pedía).
+- **La imagen la dibuja `js/tabla-imagen.js` en un canvas**, con la letra de
+  la página: horizontal como la tabla, o para el celular (1080 de ancho) con
+  cada fila como una tarjeta «Encabezado: valor». Los colores están medidos
+  (todos por encima de 7:1 sobre su fondo real) y la columna «Comprobar» no va:
+  en una imagen un enlace no se toca. Hasta 200 filas en la horizontal y 60 en
+  la del celular; si hay más, lo dice al pie.
+- **El PDF del comité lo arma `js/reporte-pdf.js`** (el de los informes, sin
+  librería) con lo que muestra la ficha, en orden: títulos, párrafos, las
+  cifras como lista, las gráficas por su descripción y las tablas sin
+  «Comprobar». En hoja vertical, una tabla de muchas columnas corta algún
+  texto: el PDF es para entregar el resumen; el detalle está en el Excel.
+
+### La calidad de los datos y la corrección del comité
+
+«La calidad de los datos» (al final del medallero) dice cuánto confiar en cada
+cifra: cuántos jugadores tienen el comité tal como lo trae chess-results,
+cuántos deducido, cuántos sin comité y cuántos corregidos a mano, con la lista
+de cada grupo, y lo que falta en chess-results. Mira todos los datos, sin los
+filtros: la calidad no cambia con lo que se esté mirando.
+
+- **Quien administra puede corregir el comité de un jugador** (botón
+  «Corregir» en las listas y «Corregir su comité» en la ficha del jugador): en
+  todas las ediciones o en una. Va a `jdn_correcciones` (misma migración), que
+  lee quien tiene la herramienta y **solo escribe quien administra: lo decide
+  la RLS** (`my_profile().is_admin`), no el botón. Comprobado impersonando en
+  SQL: alguien que no administra recibe «new row violates row-level security
+  policy»; quien administra escribe, y la fila queda a su nombre.
+- **La corrección manda sobre chess-results y sobre lo deducido**, y la de una
+  edición sobre la de todas. Se aplica al preparar los datos, antes de deducir,
+  así que también corrige lo que se deducía de esa persona. El jugador sale
+  marcado «comité corregido a mano». Solo toca los torneos individuales: en un
+  equipo, el comité es el del equipo.
+- La persona se guarda con la misma clave con que la página la reconoce (sin
+  tildes, números ni signos), y un índice único no deja dos correcciones para
+  la misma persona y edición. Después de guardar o quitar, la página se vuelve
+  a cargar con la corrección puesta.
+
+### El ranking de los jugadores y cómo crece cada uno
+
+- **«Ranking de sus jugadores»**, en la ficha de un comité: sus jugadores por
+  su actuación juntando todas sus partidas contra rivales con Elo (el Elo
+  medio de los rivales, ponderado por las partidas, más la diferencia que da el
+  porcentaje), con al menos 5 partidas. Ordena por cuánto rinden, no por su
+  Elo: sirve para armar la selección del comité.
+- **«Cómo crece»**, en la ficha del jugador: una gráfica con su Elo (el más
+  alto con que jugó en cada edición) y su actuación edición por edición. El eje
+  empieza en un piso redondo debajo del mínimo (con Elo, desde 0 todo quedaría
+  aplastado arriba); una edición sin dato corta la línea en vez de inventar un
+  punto, y la descripción de la gráfica dice cada valor.
+
+### La escala oficial de la copa
+
+El dueño pidió poner la escala del reglamento de los JDN como la de entrada de
+«La copa». No se encontró: las «Normas específicas por deporte» del ICODER no
+traen una tabla de puntos por lugar para el ajedrez (y desde la sesión no hay
+salida a icoder.go.cr). Sigue la de siempre (10-8-6-5-4-3-2-1) con el aviso de
+que no es oficial, hasta que el dueño la diga.
+
+`verificar-jdn-comites.js` prueba también los enfrentamientos (los más
+jugados, el historial con cada partida y los encuentros de equipo, contra qué
+comités en la ficha y que el rival abre el historial), las descargas (el .xlsx
+se abre como ZIP y trae los oros como número, el PNG horizontal y el de 1080
+de ancho, y el PDF con la ficha y sin «Comprobar»), la calidad (cifras, la
+lista de deducidos, una corrección que pasa a alguien de comité) y que solo
+quien administra ve «Corregir», guarda y quita. Rompiendo a propósito que un
+comité contra sí mismo cuente, que la corrección se aplique o que el Excel
+guarde números, salta.
 
 ## Proyección JDN por comité
 

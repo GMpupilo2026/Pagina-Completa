@@ -38,7 +38,18 @@
      (el equipo de la eliminatoria, sin medalla), y la búsqueda;
    - el rendimiento contra el Elo: por comité (puntos, esperados, diferencia
      con su signo escrito), quiénes más sorprendieron con su actuación y su
-     enlace, la columna de la ficha del comité y las partidas del jugador.
+     enlace, la columna de la ficha del comité y las partidas del jugador;
+   - los enfrentamientos (jdn_partidas, leídas DESPUÉS de pintar): contra qué
+     comités en la ficha, los más jugados y el historial de dos comités con
+     cada partida y los encuentros de equipo; un comité contra sí mismo no
+     cuenta;
+   - bajar: cada tabla en Excel (un .xlsx que se abre, con números como
+     números), como imagen y como imagen para el celular (PNG), y el informe
+     del comité en PDF;
+   - la calidad de los datos (deducidos, sin comité, corregidos) y la
+     corrección del comité, que solo ve y guarda quien administra;
+   - el ranking de los jugadores de un comité por su actuación y la gráfica
+     de cómo crece un jugador (su Elo y su actuación, edición por edición).
 
    Ver «Resultados JDN por comité» en docs/decisiones/juegos-y-torneos.md.
 
@@ -100,6 +111,9 @@ jugador("2025-E", "Z1-U12-EA", 1, "Mora Vargas, Ana", 1580, 2, 1.5, 2, 1.5, 1500
 jugador("2025-E", "Z1-U12-EA", 2, "Brenes Soto, Kai", 1400, 2, 2, 2, 2, 1450, 0.86, "CCDR Goicochea A", 1, 2);
 jugador("2025-E", "Z1-U12-EA", 3, "Vega Rojas, Noa", null, 0, 0, 0, 0, null, null, "CCDR Goicochea A", 1, 3);
 jugador("2025-E", "Z1-U12-IA", 1, "Mora Vargas, Ana", 1580, 2, 2, 2, 2, 1500, 1.22);
+// Sin Elo: juegan (para los enfrentamientos) pero no cuentan contra el Elo.
+jugador("2025-E", "Z1-U12-IA", 2, "Solis Rojas, Juan", null, 2, 1.5, 0, 0, null, null);
+jugador("2025-E", "Z1-U12-IA", 3, "Quesada Mena, Eva", null, 2, 0.5, 0, 0, null, null);
 jugador("2026-F", "C-U12-EA", 1, "Mora Vargas, Ana", 1600, 3, 3, 3, 3, 1500, 1.92, "CCDR Goicoechea A", 1, 1);
 jugador("2026-F", "C-U12-EA", 2, "Leon Vega, Sol", 1550, 3, 2.5, 3, 2.5, 1500, 1.71, "CCDR Goicoechea A", 1, 2);
 jugador("2026-F", "C-U12-EA", 3, "Brenes Soto, Kai", 1400, 2, 1, 2, 1, 1500, 0.72, "CCDR Goicoechea A", 1, 3);
@@ -110,7 +124,28 @@ jugador("2026-F", "C-U12-IA", 2, "Solis Rojas, Juan", 1500, 3, 2, 3, 2, 1533, 1.
 jugador("2026-F", "C-U12-IA", 3, "Rojas Arias, Luis", null, 3, 1, 3, 1, 1520, null);
 jugador("2026-F", "C-U12-IA", 4, "Perez Mora, Leo", 1450, 3, 0, 2, 0, 1550, 0.72);
 
-function doble(tieneLicencia) {
+// Las partidas (jdn_partidas): orden y rival son el orden de JUGADORES en su
+// torneo; puntos, lo que sacó el de `orden`. Belén contra Belén no cuenta.
+const PARTIDAS = [];
+function partida(edicion, codigo, ronda, orden, rival, puntos) {
+    PARTIDAS.push({ tnr: tnr(edicion, codigo), ronda, orden, rival, vez: 1, puntos });
+}
+partida("2025-E", "Z1-U12-IA", 1, 1, 2, 0);     // Mora (Goicoechea) pierde con Solís (CODEA)
+partida("2025-E", "Z1-U12-IA", 2, 1, 3, 1);     // Mora le gana a Quesada (Escazú)
+partida("2025-E", "Z1-U12-IA", 3, 2, 3, 0.5);
+partida("2026-F", "C-U12-IA", 0, 1, 2, 1);      // Mora le gana a Solís
+partida("2026-F", "C-U12-IA", 0, 1, 3, 1);
+partida("2026-F", "C-U12-IA", 0, 1, 4, 1);
+partida("2026-F", "C-U12-IA", 0, 2, 3, 1);
+partida("2026-F", "C-U12-IA", 0, 2, 4, 0.5);
+partida("2026-F", "C-U12-IA", 0, 3, 4, 1);      // Belén contra Belén
+partida("2026-F", "C-U12-EA", 1, 1, 4, 1);      // ronda 1: Goicoechea A 1½ – ½ CODEA B
+partida("2026-F", "C-U12-EA", 1, 2, 5, 0.5);
+partida("2026-F", "C-U12-EA", 2, 1, 4, 0.5);    // ronda 2: Goicoechea A ½ – 1½ CODEA B
+partida("2026-F", "C-U12-EA", 2, 3, 5, 0);
+
+function doble(tieneLicencia, opc) {
+    const o = opc || {};
     return `
 window.SUPABASE_URL = "https://falso.supabase.co";
 window.SUPABASE_ANON_KEY = "anon-falsa";
@@ -118,12 +153,18 @@ window.SUPABASE_ANON_KEY = "anon-falsa";
   const FILAS = ${JSON.stringify(FILAS)};
   const TABLEROS = ${JSON.stringify(TABLEROS)};
   const JUGADORES = ${JSON.stringify(JUGADORES)};
+  const PARTIDAS = ${JSON.stringify(PARTIDAS)};
+  const CORRECCIONES = ${JSON.stringify(o.correcciones || [])};
+  const ADMIN = ${o.admin ? "true" : "false"};
+  window.__escrituras = [];
   const LICENCIA = ${tieneLicencia ? "true" : "false"};
   window.__pedidos = [];
   function respuesta(data, error) { return Promise.resolve({ data, error: error || null }); }
   function consulta(tabla) {
     const q = { _tabla: tabla, _desde: 0, _hasta: 999 };
-    ["select", "eq", "order", "in", "update", "insert", "single", "maybeSingle", "limit"].forEach((m) => { q[m] = () => q; });
+    ["select", "eq", "order", "in", "single", "maybeSingle", "limit"].forEach((m) => { q[m] = () => q; });
+    ["insert", "update", "delete"].forEach((m) => { q[m] = (v) => { q._op = m; q._v = v; return q; }; });
+    const eq0 = q.eq; q.eq = (c, v) => { q._eq = [c, v]; return eq0(c, v); };
     q.range = (a, b) => { q._desde = a; q._hasta = b; return q; };
     q.then = (ok, mal) => {
       let data = [];
@@ -140,7 +181,21 @@ window.SUPABASE_ANON_KEY = "anon-falsa";
         window.__pedidos.push("jdn_jugadores " + q._desde);
         data = LICENCIA ? JUGADORES.slice(q._desde, Math.min(q._hasta + 1, q._desde + 1000)) : [];
       }
-      if (tabla === "profiles") data = { id: "yo", is_admin: false, role: "profesor" };
+      if (tabla === "jdn_partidas") {
+        window.__pedidos.push("jdn_partidas " + q._desde);
+        data = LICENCIA ? PARTIDAS.slice(q._desde, Math.min(q._hasta + 1, q._desde + 1000)) : [];
+      }
+      if (tabla === "jdn_correcciones") {
+        if (q._op) {
+          // También en sessionStorage: después de guardar, la página se vuelve a cargar.
+          const e = { op: q._op, v: q._v || null, eq: q._eq || null };
+          window.__escrituras.push(e);
+          try { sessionStorage.setItem("escrituras", JSON.stringify([...JSON.parse(sessionStorage.getItem("escrituras") || "[]"), e])); } catch (x) {}
+          data = null;
+        }
+        else data = LICENCIA ? CORRECCIONES : [];
+      }
+      if (tabla === "profiles") data = { id: "yo", is_admin: ADMIN, role: ADMIN ? "admin" : "profesor" };
       return Promise.resolve({ data, error: null }).then(ok, mal);
     };
     return q;
@@ -166,9 +221,9 @@ window.SUPABASE_ANON_KEY = "anon-falsa";
 })();`;
 }
 
-async function abrir(browser, ruta, licencia) {
-    const ctx = await browser.newContext({ serviceWorkers: "block" });
-    await ctx.route("**/js/supabase-client.js", (r) => r.fulfill({ contentType: "application/javascript", body: doble(licencia) }));
+async function abrir(browser, ruta, licencia, opc) {
+    const ctx = await browser.newContext({ serviceWorkers: "block", acceptDownloads: true });
+    await ctx.route("**/js/supabase-client.js", (r) => r.fulfill({ contentType: "application/javascript", body: doble(licencia, opc) }));
     await ctx.route("**/js/vendor/supabase.js", (r) => r.fulfill({ contentType: "application/javascript", body: "" }));
     await ctx.route(/supabase\.co|sentry|googletagmanager/, (r) => r.abort());
     const p = await ctx.newPage();
@@ -177,6 +232,23 @@ async function abrir(browser, ruta, licencia) {
     return { ctx, p };
 }
 const visible = (p, sel) => p.$eval(sel, (e) => e.checkVisibility());
+/* Lo que se bajó: el archivo, en bytes. */
+async function bajado(p, accion) {
+    const [d] = await Promise.all([p.waitForEvent("download"), accion()]);
+    const ruta = await d.path();
+    return { nombre: d.suggestedFilename(), bytes: require("fs").readFileSync(ruta) };
+}
+/* Una parte de un ZIP guardado sin comprimir (como lo escribe js/tabla-excel.js). */
+function parteZip(buf, nombre) {
+    for (let i = 0; i + 30 < buf.length;) {
+        if (buf.readUInt32LE(i) !== 0x04034b50) break;
+        const tam = buf.readUInt32LE(i + 18), ln = buf.readUInt16LE(i + 26), le = buf.readUInt16LE(i + 28);
+        const n = buf.slice(i + 30, i + 30 + ln).toString("utf8"), ini = i + 30 + ln + le;
+        if (n === nombre) return buf.slice(ini, ini + tam).toString("utf8");
+        i = ini + tam;
+    }
+    return null;
+}
 const medallero = (p) => p.$$eval("#medallero tbody tr", (trs) => trs.map((t) => [...t.cells].map((c) => c.textContent.trim())));
 
 (async () => {
@@ -486,6 +558,116 @@ const medallero = (p) => p.$$eval("#medallero tbody tr", (trs) => trs.map((t) =>
     await p.selectOption("#f-modo", "I");
     igual("el filtro de modalidad deja solo lo individual", await p.$$eval("#rendimiento > div:first-of-type tbody tr", (t) => t.map((x) => [x.cells[0].textContent, x.cells[3].textContent])),
         [["Goicoechea", "5"], ["CODEA (Alajuela)", "3"], ["Belén", "2"], ["Total", "10"]]);
+    await ctx.close();
+
+    console.log("\n=== Los enfrentamientos entre comités ===");
+    ({ ctx, p } = await abrir(browser, "jdn-comites.html", true));
+    await p.waitForFunction(() => document.getElementById("app").checkVisibility());
+    await p.waitForSelector("#enfrentamientos tbody tr");
+    igual("las partidas se leen después de pintar", await p.evaluate(() => window.__pedidos.filter((x) => x.startsWith("jdn_partidas"))), ["jdn_partidas 0"]);
+    igual("sin elegir, los enfrentamientos más jugados (Belén contra Belén no cuenta)",
+        await p.$$eval("#enfrentamientos tbody tr", (t) => t.map((x) => [...x.cells].map((c) => c.textContent.trim()))),
+        [["CODEA (Alajuela) contra Goicoechea", "6", "3 – 3"], ["Belén contra CODEA (Alajuela)", "2", "½ – 1½"], ["Belén contra Goicoechea", "2", "0 – 2"],
+         ["CODEA (Alajuela) contra Escazú", "1", "½ – ½"], ["Escazú contra Goicoechea", "1", "0 – 1"]]);
+    await p.selectOption("#duelo-a", "Goicoechea");
+    await p.selectOption("#duelo-b", "CODEA (Alajuela)");
+    igual("el historial de dos comités: partidas, quién ganó y los encuentros de equipo",
+        await p.textContent("[data-duelo-resumen]"),
+        "Goicoechea y CODEA (Alajuela) jugaron 6 partidas: Goicoechea ganó 2, 2 terminaron en tablas y CODEA (Alajuela) ganó 2 (3 a 3). En encuentros de equipos: Goicoechea ganó 1, empataron 0 y CODEA (Alajuela) ganó 1.");
+    igual("cada partida, de la más nueva a la más vieja, con su resultado desde el primero y su enlace",
+        await p.$$eval("#enfrentamientos tr[data-partida]", (t) => t.map((x) => [x.cells[0].textContent, x.cells[2].textContent, x.cells[3].textContent, x.cells[4].textContent, x.cells[5].textContent, x.querySelector("a").getAttribute("href").replace("https://chess-results.com/tnr", "")])),
+        [["Final 2026", "—", "Mora Vargas, Ana", "1–0", "Solis Rojas, Juan", "900003.aspx?lan=2&art=4"],
+         ["Final 2026", "1", "Mora Vargas, Ana (Goicoechea A)", "1–0", "Diaz Solis, Pia (CODEA B)", "900004.aspx?lan=2&art=20&turdet=YES"],
+         ["Final 2026", "1", "Leon Vega, Sol (Goicoechea A)", "½–½", "Ruiz Mena, Ivo (CODEA B)", "900004.aspx?lan=2&art=20&turdet=YES"],
+         ["Final 2026", "2", "Mora Vargas, Ana (Goicoechea A)", "½–½", "Diaz Solis, Pia (CODEA B)", "900004.aspx?lan=2&art=20&turdet=YES"],
+         ["Final 2026", "2", "Brenes Soto, Kai (Goicoechea A)", "0–1", "Ruiz Mena, Ivo (CODEA B)", "900004.aspx?lan=2&art=20&turdet=YES"],
+         ["Eliminatoria 2025", "1", "Mora Vargas, Ana", "0–1", "Solis Rojas, Juan", "900001.aspx?lan=2&art=4"]]);
+    await p.selectOption("#comite", "goicoechea");
+    await p.waitForSelector("#contra-comites tbody tr");
+    igual("en la ficha, contra qué comités: G-E-P, puntos, porcentaje y encuentros de equipo",
+        await p.$$eval("#contra-comites tbody tr", (t) => t.map((x) => [...x.cells].map((c) => c.textContent.trim()))),
+        [["CODEA (Alajuela)", "6", "2", "2", "2", "3", "50 %", "1-0-1"], ["Belén", "2", "2", "0", "0", "2", "100 %", "—"], ["Escazú", "1", "1", "0", "0", "1", "100 %", "—"]]);
+    await p.click("#contra-comites tr[data-rival='Belén'] button");
+    await p.waitForFunction(() => document.getElementById("general").checkVisibility());
+    igual("un rival abre el historial de los dos", [await p.$eval("#duelo-a", (s) => s.value), await p.$eval("#duelo-b", (s) => s.value), (await p.textContent("[data-duelo-resumen]")).slice(0, 40)],
+        ["Goicoechea", "Belén", "Goicoechea y Belén jugaron 2 partidas: G"]);
+
+    console.log("\n=== El ranking de sus jugadores y cómo crece ===");
+    await p.selectOption("#comite", "goicoechea");
+    await p.waitForSelector("[data-ranking] tbody tr");
+    igual("el ranking por actuación, solo con 5 partidas o más con Elo",
+        await p.$$eval("[data-ranking] tbody tr", (t) => t.map((x) => [...x.cells].map((c) => c.textContent.trim()))),
+        [["1", "Mora Vargas, Ana", "1600", "4", "10", "9,5", "6,3", "+3,2", "2012"]]);
+    await p.click("[data-ranking] tbody tr button");
+    await p.waitForFunction(() => document.getElementById("jugador").checkVisibility());
+    igual("cómo crece: su Elo y su actuación en cada edición, dichos también en texto",
+        await p.$eval("[data-crecimiento] svg", (s) => s.getAttribute("aria-label")),
+        "Su Elo y su actuación, edición por edición. Elo: E. 2025 1580, F. 2026 1600. Actuación: E. 2025 1838, F. 2026 2300");
+    igual("sin ser de administración no hay botón para corregir", await p.$$eval("#jugador-corregir, [data-corregir]", (b) => b.length), 0);
+    await ctx.close();
+
+    console.log("\n=== Bajar: Excel, imagen y PDF ===");
+    ({ ctx, p } = await abrir(browser, "jdn-comites.html", true));
+    await p.waitForFunction(() => document.getElementById("app").checkVisibility());
+    await p.click("#general details[data-bajar] summary");
+    const xlsx = await bajado(p, () => p.click("#general details[data-bajar] [data-bajar-como='excel']"));
+    const hoja = parteZip(xlsx.bytes, "xl/worksheets/sheet1.xml") || "";
+    igual("el medallero en Excel: un .xlsx con su hoja, el encabezado y los oros como número",
+        [xlsx.nombre, xlsx.bytes.slice(0, 2).toString(), /<t xml:space="preserve">Comité<\/t>/.test(hoja), /<c r="A2" s="0"|<c r="A2" t="inlineStr"><is><t xml:space="preserve">Goicoechea<\/t>/.test(hoja), /<c r="C2"><v>5<\/v><\/c>/.test(hoja)],
+        ["medallas-y-participacion-de-cada-comite.xlsx", "PK", true, true, true]);
+    await p.click("#general details[data-bajar] summary");
+    const png = await bajado(p, () => p.click("#general details[data-bajar] [data-bajar-como='imagen']"));
+    igual("como imagen: un PNG", [png.nombre, png.bytes.slice(1, 4).toString(), png.bytes.readUInt32BE(16) > 1000], ["medallas-y-participacion-de-cada-comite.png", "PNG", true]);
+    await p.click("#general details[data-bajar] summary");
+    const cel = await bajado(p, () => p.click("#general details[data-bajar] [data-bajar-como='celular']"));
+    igual("para el celular: un PNG de 1080 de ancho (o el doble, nítido)", [cel.nombre, [1080, 2160].includes(cel.bytes.readUInt32BE(16))], ["medallas-y-participacion-de-cada-comite-celular.png", true]);
+    igual("cada tabla trae su «Bajar»", await p.$$eval("#copa [data-tabla] details[data-bajar]", (d) => d.length), 1);
+    await p.selectOption("#comite", "goicoechea");
+    await p.waitForSelector("#ficha-pdf");
+    const pdf = await bajado(p, () => p.click("#ficha-pdf"));
+    const texto = pdf.bytes.toString("latin1");
+    igual("el informe del comité en PDF, con su ficha y sin la columna «Comprobar»",
+        [pdf.nombre, texto.slice(0, 5), texto.includes("(Goicoechea)"), texto.includes("Ranking de sus jugadores"), texto.includes("Contra qu"), texto.includes("(Comprobar)")],
+        ["informe-jdn-goicoechea.pdf", "%PDF-", true, true, true, false]);
+    await ctx.close();
+
+    console.log("\n=== La calidad de los datos ===");
+    ({ ctx, p } = await abrir(browser, "jdn-comites.html", true));
+    await p.waitForFunction(() => document.getElementById("app").checkVisibility());
+    igual("las cifras: como lo trae chess-results, deducidos, sin comité y corregidos",
+        await p.$$eval("#calidad .grid > div p:first-child", (d) => d.map((x) => x.textContent)), ["1106", "1", "0", "0"]);
+    await p.click("[data-calidad='deducidos'] summary");
+    igual("quién tiene el comité deducido, con su enlace", await p.$$eval("[data-calidad='deducidos'] tbody tr", (t) => t.map((x) => [x.cells[0].textContent, x.cells[1].textContent, x.cells[3].textContent])),
+        [["Solis Rojas, Juan", "Final 2026", "CODEA (Alajuela)"]]);
+    await ctx.close();
+
+    const CORR = [{ id: 7, nombre: "perez mora leo", edicion: null, comite: "Escazú", nota: "Se cambió de comité", creado: "2026-10-01T18:00:00Z" }];
+    ({ ctx, p } = await abrir(browser, "jdn-comites.html", true, { admin: true, correcciones: CORR }));
+    await p.waitForFunction(() => document.getElementById("app").checkVisibility());
+    igual("una corrección manda: Pérez pasa de Belén a Escazú", (await p.$$eval("#calidad .grid > div p:first-child", (d) => d.map((x) => x.textContent))), ["1105", "1", "0", "1"]);
+    igual("la lista de corregidos, con quién y desde cuándo",
+        await p.$$eval("[data-calidad='corregidos'] tbody tr", (t) => t.map((x) => [...x.cells].slice(0, 5).map((c) => c.textContent))),
+        [["Perez Mora Leo", "Todas", "Escazú", "Se cambió de comité", "1 de octubre de 2026"]]);
+    await p.selectOption("#comite", "escazu");
+    await p.waitForSelector("#ficha tr[data-jugador='Perez Mora, Leo']");
+    igual("en la ficha del comité nuevo, marcado como corregido", (await p.$eval("#ficha tr[data-jugador='Perez Mora, Leo']", (t) => t.cells[2].textContent)), "Perez Mora, Leocomité corregido a mano");
+    await p.click("#volver");
+    await p.click("[data-calidad='deducidos'] summary");
+    await p.click("[data-calidad='deducidos'] [data-corregir]");
+    await p.waitForSelector("dialog[data-avisos='formulario'][open]");
+    await p.selectOption("dialog[open] select[name='comite']", "Belén");
+    igual("el formulario propone la edición del resultado", await p.$eval("dialog[open] select[name='edicion']", (s) => s.value), "2026-F");
+    await p.fill("dialog[open] textarea[name='nota']", "Prueba");
+    await Promise.all([p.waitForNavigation(), p.click("dialog[open] button:text-is('Guardar la corrección')")]);
+    igual("quien administra guarda la corrección (y la página se vuelve a cargar)",
+        await p.evaluate(() => JSON.parse(sessionStorage.getItem("escrituras") || "[]")),
+        [{ op: "insert", v: { nombre: "solis rojas juan", edicion: "2026-F", comite: "Belén", nota: "Prueba" }, eq: null }]);
+    await p.waitForFunction(() => document.getElementById("app").checkVisibility());
+    await p.evaluate(() => sessionStorage.removeItem("escrituras"));
+    await p.click("[data-calidad='corregidos'] summary");
+    await p.click("[data-calidad='corregidos'] button:text-is('Quitar')");
+    await Promise.all([p.waitForNavigation(), p.click("dialog[open] button:text-is('Quitar la corrección')")]);
+    igual("y la puede quitar", await p.evaluate(() => JSON.parse(sessionStorage.getItem("escrituras") || "[]")), [{ op: "delete", v: null, eq: ["id", 7] }]);
     await ctx.close();
 
     await browser.close();
