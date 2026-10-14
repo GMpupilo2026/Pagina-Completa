@@ -183,7 +183,7 @@
     "ruta": "material/peonita-rey/peonita-rey-adaptado.pdf",
     "titulo": "Peonita y el rey escondido — versión adaptada (letra grande y lector de pantalla)",
     "tipo": "otro",
-    "kb": 1025,
+    "kb": 971,
     "libro": "Peonita y el rey escondido"
    },
    {
@@ -197,7 +197,7 @@
     "ruta": "material/peonita-trucos/peonita-trucos-adaptado.pdf",
     "titulo": "Peonita, Tizón y los trucos del bosque — versión adaptada (letra grande y lector de pantalla)",
     "tipo": "otro",
-    "kb": 974,
+    "kb": 926,
     "libro": "Peonita, Tizón y los trucos del bosque"
    },
    {
@@ -211,7 +211,7 @@
     "ruta": "material/peonita/peonita-adaptado.pdf",
     "titulo": "Peonita y el reino de las 64 casillas — versión adaptada (letra grande y lector de pantalla)",
     "tipo": "otro",
-    "kb": 1311,
+    "kb": 1290,
     "libro": "Peonita y el reino de las 64 casillas"
    },
    {
@@ -8164,7 +8164,7 @@
   ]
  },
  "word": {
-  "total": 91,
+  "total": 94,
   "grupos": [
    {
     "carpeta": "documentos/jdn",
@@ -8723,6 +8723,45 @@
       "titulo": "11 Undécimo año   Programa de Estudio de Ajedrez, parte 2 (malla curricular)",
       "tipo": "otro",
       "kb": 36
+     }
+    ]
+   },
+   {
+    "carpeta": "material/peonita",
+    "titulo": "Peonita y el reino de las 64 casillas",
+    "grupo": "Carpetas",
+    "archivos": [
+     {
+      "ruta": "material/peonita/peonita-adaptado.docx",
+      "titulo": "Peonita y el reino de las 64 casillas — versión adaptada en Word (letra grande y lector de pantalla)",
+      "tipo": "otro",
+      "kb": 4315
+     }
+    ]
+   },
+   {
+    "carpeta": "material/peonita-trucos",
+    "titulo": "Peonita, Tizón y los trucos del bosque",
+    "grupo": "Carpetas",
+    "archivos": [
+     {
+      "ruta": "material/peonita-trucos/peonita-trucos-adaptado.docx",
+      "titulo": "Peonita, Tizón y los trucos del bosque — versión adaptada en Word (letra grande y lector de pantalla)",
+      "tipo": "otro",
+      "kb": 3422
+     }
+    ]
+   },
+   {
+    "carpeta": "material/peonita-rey",
+    "titulo": "Peonita y el rey escondido",
+    "grupo": "Carpetas",
+    "archivos": [
+     {
+      "ruta": "material/peonita-rey/peonita-rey-adaptado.docx",
+      "titulo": "Peonita y el rey escondido — versión adaptada en Word (letra grande y lector de pantalla)",
+      "tipo": "otro",
+      "kb": 3133
      }
     ]
    }

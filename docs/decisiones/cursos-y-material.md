@@ -1094,9 +1094,9 @@ soluciones.
   **sus respuestas escritas a mano**, la tapa, el final, el diploma y sus
   secretos. `dibujos.js` tiene los personajes y las escenas, y
   `herramientas/libro-ninos-pdf.js` los pone en papel **con una sola
-  maqueta**: `material/<slug>/<slug>.pdf`, `<slug>-accesible.html` y
-  `<slug>-adaptado.pdf` (ver «El PDF adaptado: letra grande y lector de
-  pantalla»).
+  maqueta**: `material/<slug>/<slug>.pdf`, `<slug>-accesible.html`,
+  `<slug>-adaptado.pdf` y `<slug>-adaptado.docx` (ver «El PDF adaptado: letra
+  grande y lector de pantalla» y «El adaptado también en Word»).
 - Los revisa `verificar-libro-ninos.js`, todos. Un cuento nuevo se suma a
   `libros.js` y entra solo al generador y al verificador.
 
@@ -1249,6 +1249,53 @@ WhatsApp y se abre con la lupa del celular. Sale del mismo generador
   org.verapdf.apps.GreenfieldCliWrapper -f ua1 --format xml <pdf>`: tiene que
   dar `isCompliant="true"`. Las advertencias «Invalid glyph code» de las
   fuentes no son fallos.
+
+### El adaptado también en Word
+
+Después del PDF, el dueño lo pidió **en Word**: un .docx se agranda, se
+cambia de letra o de color y se lee con el lector de pantalla que cada quien
+ya usa. Sale del mismo generador: `material/<slug>/<slug>-adaptado.docx`, con
+`--solo-adaptado` igual que el PDF.
+
+- **Una sola copia del contenido.** `bloquesAdaptado()` arma el libro una vez
+  como lista de bloques (título, párrafo, recuadro, lista, imagen, raya para
+  la respuesta, grupo) y de ahí salen los dos: `adaptadoHTML()` para el PDF y
+  `adaptadoDocx()` para el Word (librería `docx` del `package.json`). Si cada
+  formato armara su texto, el primer arreglo en uno dejaría al otro atrás.
+- **Lo accesible en Word:** títulos con los estilos Título 1–4 de Word (el
+  panel de navegación y el lector saltan por ellos), listas con numeración de
+  verdad, idioma español (Costa Rica) en el estilo base, el título en las
+  propiedades del documento y **cada imagen marcada como decorativa** (la
+  extensión `adec:decorative` que pone «Marcar como decorativa»; la librería
+  no la trae y se agrega al final). Al lado de cada imagen va escrito lo que
+  muestra, como en el PDF.
+- **Verdana a 18 pt, no Atkinson Hyperlegible**: una letra que la computadora
+  no tiene, Word la cambia por otra sin avisar, y Atkinson no viene en Windows
+  ni en Mac. Verdana está en todas y es de las que se recomiendan para baja
+  visión. Las imágenes se sacan de los mismos SVG con Chromium, a unos
+  290 ppp.
+- **Tres cosas que fallaban calladas** y que ahora revisa el verificador:
+  - **El interlineado sin `lineRule`**: Word lo toma como automático, pero
+    LibreOffice como exacto, y recortaba cada tablero a la altura de un
+    renglón (solo se veía la fila de letras) y encimaba los títulos de dos
+    renglones. Va `lineRule: auto` en todos.
+  - **Los títulos con `paragraphStyles`** dejaban dos estilos «Heading1», el
+    de la librería y el propio: van en `styles.default.heading1…`.
+  - **El Word salía con el cuento equivocado**: el paso del Word corre
+    después de recorrer todos los libros y leía `L`, que había quedado en el
+    último. Los tres .docx tenían el cuento del rey escondido. Se fija `L`
+    antes de armarlo, y el verificador comprueba que cada Word sea de su libro.
+- Además, `docx` 9.7.1 escribe los bordes de un párrafo en un orden que el
+  esquema de Word no acepta (top, bottom, left, right): Word lo abre igual,
+  pero el archivo no valida. Se reordenan al final.
+- «Lo que aprendí» va sin recuadro en el Word: Word solo une los bordes de
+  párrafos con la misma sangría, y el título y la lista quedaban en dos
+  recuadros.
+- `verificar-libro-ninos.js` lo lee con python-docx: título del documento,
+  idioma, un solo Título 1 y un solo estilo «Heading1», cada capítulo en
+  Título 2, cada dibujo contado, todas las imágenes decorativas, ningún
+  interlineado exacto o sin regla, listas con numeración y las soluciones.
+  Los tres validan contra el esquema de Office.
 
 ### Los diplomas se coleccionan
 
