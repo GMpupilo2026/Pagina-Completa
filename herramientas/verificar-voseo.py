@@ -122,7 +122,7 @@ respeté sacrifiqué saludé sentí sufrí transformé usé cambiaré
 andré dupré vienés
 ojalá
 quizá
-pococí sarapiquí sinaí poás tibás
+pococí sarapiquí sinaí poás tibás aserrí
 mamá papá bebé
 dará hará podrá dispondrá será tendrá tendrás vendrá verá verás sabrás habrá saldrá
 pondrá querrá irá
