@@ -25,8 +25,9 @@
  *
  * Revisa también los secretos para Alessandro de cada libro (un acróstico o un
  * anagrama se rompen con una corrección y nadie lo nota, justo porque están
- * escondidos), y lo generado: que exista el PDF y que la versión accesible
- * traiga todos los capítulos y una descripción de cada dibujo.
+ * escondidos), y lo generado: que exista el PDF, que la versión accesible
+ * traiga todos los capítulos y una descripción de cada dibujo, y que el PDF
+ * adaptado esté etiquetado, sin cifrar, en español y con todo el cuento.
  *
  *   node herramientas/verificar-libro-ninos.js
  */
@@ -302,6 +303,58 @@ if (fs.existsSync(acc)) {
   fallos.push(`falta material/${L.SLUG}/${L.SLUG}-accesible.html: hay que correr herramientas/libro-ninos-pdf.js`);
 }
 ok(fs.existsSync(path.join(CARPETA, L.SLUG + ".pdf")), `falta material/${L.SLUG}/${L.SLUG}.pdf`);
+
+// El PDF adaptado (letra grande, para quien ve poco o no ve). Lo que lo hace
+// adaptado no se ve a simple vista, y se pierde sin ningún error: un
+// PdfWriter que copia página por página bota las etiquetas, un cifrado de más
+// estorba al lector de pantalla. Se lee con pypdf.
+const adap = path.join(CARPETA, L.SLUG + "-adaptado.pdf");
+if (fs.existsSync(adap)) {
+  const guion = `
+import sys, json
+from pypdf import PdfReader
+r = PdfReader(sys.argv[1])
+raiz = r.trailer["/Root"]
+prefs = raiz.get("/ViewerPreferences")
+marca = raiz.get("/MarkInfo")
+def titulos(o):
+    for x in o:
+        if isinstance(x, list): yield from titulos(x)
+        else: yield x.title
+print(json.dumps({
+  "cifrado": r.is_encrypted,
+  "etiquetado": bool(marca and marca.get_object().get("/Marked")) and "/StructTreeRoot" in raiz,
+  "idioma": str(raiz.get("/Lang", "")),
+  "titulo_visible": bool(prefs and prefs.get_object().get("/DisplayDocTitle")),
+  "titulo": (r.metadata or {}).get("/Title", ""),
+  "marcadores": list(titulos(r.outline)),
+  "texto": "".join(p.extract_text() for p in r.pages),
+}))`;
+  let d = null;
+  try {
+    d = JSON.parse(require("child_process").execFileSync("python3", ["-c", guion, adap], { maxBuffer: 64 * 1024 * 1024 }));
+  } catch (e) {
+    fallos.push(`${L.SLUG}: no se pudo leer el PDF adaptado (¿falta pypdf? pip install pypdf)`);
+  }
+  if (d) {
+    // pypdf saca el texto con los renglones cortados donde cae el salto: se
+    // compara sin espacios.
+    const junto = (t) => String(t).replace(/\s+/g, "");
+    const texto = junto(d.texto);
+    ok(!d.cifrado, `${L.SLUG}: el PDF adaptado está cifrado: el cifrado estorba al lector de pantalla`);
+    ok(d.etiquetado, `${L.SLUG}: el PDF adaptado no está etiquetado (tagged): el lector de pantalla no sabe qué es título ni en qué orden se lee`);
+    ok(/^es/.test(d.idioma), `${L.SLUG}: el PDF adaptado no dice que está en español (/Lang)`);
+    ok(d.titulo_visible && d.titulo.includes(L.TITULO), `${L.SLUG}: el PDF adaptado no muestra su título`);
+    ok(d.marcadores.length > 0, `${L.SLUG}: el PDF adaptado no tiene marcadores para saltar de capítulo`);
+    L.CAPITULOS.forEach((c) => {
+      ok(texto.includes(junto(c.titulo)), `${L.SLUG}: el PDF adaptado no tiene el capítulo «${c.titulo}»: hay que volver a correr libro-ninos-pdf.js`);
+      ok(texto.includes(junto(c.escena.alt)), `${L.SLUG}: el PDF adaptado no cuenta el dibujo del capítulo ${c.n}`);
+    });
+    ok(texto.includes(junto("Soluciones")), `${L.SLUG}: el PDF adaptado no trae las soluciones`);
+  }
+} else {
+  fallos.push(`falta material/${L.SLUG}/${L.SLUG}-adaptado.pdf: hay que correr herramientas/libro-ninos-pdf.js --solo-adaptado`);
+}
 }
 
 LIBROS.forEach(verificarLibro);

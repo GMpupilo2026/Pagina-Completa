@@ -103,4 +103,45 @@ with open(archivo, "wb") as f:
   console.log(`Protegido: se abre sin contraseña, no se puede copiar${datos.imprimir ? "" : " ni imprimir"}.`);
 }
 
-module.exports = { unir, proteger };
+/* Los datos de un PDF ADAPTADO (letra grande y etiquetado, para quien ve poco
+   o no ve): el idioma, que el lector de pantalla necesita para pronunciar, y
+   que el visor muestre el título y no el nombre del archivo. NO se cifra: el
+   cifrado y los permisos estorban a más de un lector de pantalla y a la lupa.
+   Se clona el documento entero (clone_from) y no página por página como en
+   proteger(): página por página se pierde el árbol de etiquetas, y el PDF
+   quedaría sin títulos ni orden de lectura, sin ningún error. */
+function datosAdaptado(archivo, datos) {
+  const guion = `
+import sys
+from pypdf import PdfReader, PdfWriter
+from pypdf.generic import NameObject, TextStringObject, BooleanObject, DictionaryObject
+
+archivo, autor, titulo, asunto = sys.argv[1:5]
+escritor = PdfWriter(clone_from=PdfReader(archivo))
+raiz = escritor._root_object
+raiz[NameObject("/Lang")] = TextStringObject("es-CR")
+prefs = raiz.get("/ViewerPreferences")
+prefs = prefs.get_object() if prefs is not None else DictionaryObject()
+prefs[NameObject("/DisplayDocTitle")] = BooleanObject(True)
+raiz[NameObject("/ViewerPreferences")] = prefs
+raiz[NameObject("/PageMode")] = NameObject("/UseOutlines")
+escritor.add_metadata({
+    "/Title": titulo,
+    "/Author": autor,
+    "/Subject": asunto,
+    "/Creator": "Ajedrez Integral",
+    "/Producer": "Ajedrez Integral",
+})
+with open(archivo, "wb") as f:
+    escritor.write(f)
+`;
+  try {
+    execFileSync("python3", ["-c", guion, archivo, datos.autor, datos.titulo, datos.asunto], { stdio: ["ignore", "pipe", "pipe"] });
+  } catch (e) {
+    console.error("\nNo se pudieron poner los datos del PDF adaptado. Falta pypdf: pip install pypdf");
+    console.error(String(e.stderr || "").trim().split("\n").slice(-3).join("\n"));
+    process.exit(1);
+  }
+}
+
+module.exports = { unir, proteger, datosAdaptado };

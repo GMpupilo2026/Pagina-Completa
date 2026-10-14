@@ -217,6 +217,7 @@
       archivos: [
         { href: "material/peonita/peonita.pdf", texto: "📥 El libro en PDF" },
         { href: "material/peonita/peonita-accesible.html", texto: "♿ Versión accesible" },
+        { href: "material/peonita/peonita-adaptado.pdf", texto: "🔎 PDF adaptado (letra grande)" },
       ],
     },
     {
@@ -228,6 +229,7 @@
       archivos: [
         { href: "material/peonita-trucos/peonita-trucos.pdf", texto: "📥 El libro en PDF" },
         { href: "material/peonita-trucos/peonita-trucos-accesible.html", texto: "♿ Versión accesible" },
+        { href: "material/peonita-trucos/peonita-trucos-adaptado.pdf", texto: "🔎 PDF adaptado (letra grande)" },
       ],
     },
     {
@@ -239,6 +241,7 @@
       archivos: [
         { href: "material/peonita-rey/peonita-rey.pdf", texto: "📥 El libro en PDF" },
         { href: "material/peonita-rey/peonita-rey-accesible.html", texto: "♿ Versión accesible" },
+        { href: "material/peonita-rey/peonita-rey-adaptado.pdf", texto: "🔎 PDF adaptado (letra grande)" },
       ],
     },
     {

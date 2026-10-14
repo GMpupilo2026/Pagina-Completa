@@ -1094,7 +1094,9 @@ soluciones.
   **sus respuestas escritas a mano**, la tapa, el final, el diploma y sus
   secretos. `dibujos.js` tiene los personajes y las escenas, y
   `herramientas/libro-ninos-pdf.js` los pone en papel **con una sola
-  maqueta**: `material/<slug>/<slug>.pdf` y `<slug>-accesible.html`.
+  maqueta**: `material/<slug>/<slug>.pdf`, `<slug>-accesible.html` y
+  `<slug>-adaptado.pdf` (ver «El PDF adaptado: letra grande y lector de
+  pantalla»).
 - Los revisa `verificar-libro-ninos.js`, todos. Un cuento nuevo se suma a
   `libros.js` y entra solo al generador y al verificador.
 
@@ -1193,6 +1195,38 @@ porque está escondido. Este archivo y `herramientas/` no se publican
 - Comparte con «Ponte a prueba» el cierre (`lib/pdf-armar.js`) y el
   `describir()` de la versión accesible. Va en `admin.html#materiales` y se
   comparte igual; sin pruebas como cuestionario, esa sección no aparece.
+
+### El PDF adaptado: letra grande y lector de pantalla
+
+El dueño pidió el libro de Peonita «adaptado al 100 %» y en PDF. La versión
+accesible en HTML ya estaba, pero un PDF es lo que se imprime, se manda por
+WhatsApp y se abre con la lupa del celular. Sale del mismo generador
+(`adaptado()` de `libro-ninos-pdf.js`), para los tres cuentos:
+`material/<slug>/<slug>-adaptado.pdf`; `--solo-adaptado` rehace solo esos.
+
+- **Para quien ve poco:** Atkinson Hyperlegible (la letra hecha para baja
+  visión) a 20 pt, interlineado 1,5, negro sobre blanco y títulos azul oscuro
+  (13,4:1), sin justificar ni cortar palabras. Un tablero grande por página
+  (150 mm en los diagramas, 108 mm en los ejercicios para que la pregunta y la
+  raya de la respuesta quepan en la misma hoja), con la casilla oscura más
+  oscura que la madera del libro. Sin marca de agua.
+- **Para quien no ve:** el PDF va **etiquetado** (`tagged` de Chromium:
+  títulos H1–H4, párrafos y listas), con marcadores por capítulo, `/Lang
+  es-CR` y el título a la vista (`DisplayDocTitle`), **sin cifrar**: el
+  cifrado y los permisos estorban a más de un lector de pantalla.
+- **Los dibujos y los tableros van con `aria-hidden`**, y al lado va escrito
+  lo que muestran (el dibujo contado, la posición pieza por pieza, adónde
+  puede ir). Con texto alternativo además, el lector lo diría dos veces.
+- Las jugadas van como en la versión accesible («torre anna 8»), y la portada
+  explica los nombres de las letras. Las promesas y los consejos del último
+  capítulo van en lista, no pegados a la pregunta.
+- **Los datos del PDF se ponen con `clone_from`**, no copiando página por
+  página como en `proteger()`: así se pierde el árbol de etiquetas sin ningún
+  error (`datosAdaptado()` de `lib/pdf-armar.js`).
+- `verificar-libro-ninos.js` lo lee con pypdf: que esté etiquetado, sin
+  cifrar, en español, con su título y marcadores, y con cada capítulo, cada
+  dibujo contado y las soluciones. Se rompió a propósito (el PDF cifrado en su
+  lugar) y saltó.
 
 ### Los diplomas se coleccionan
 

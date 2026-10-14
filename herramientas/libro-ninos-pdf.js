@@ -8,8 +8,9 @@
  * Cada libro es un módulo de herramientas/libro-ninos/ (la lista está en
  * libros.js) con su cuento, sus ejercicios y respuestas, su tapa y sus
  * secretos; los dibujos están en dibujos.js. Este script los pone en papel,
- * todos con la MISMA maqueta: material/<slug>/<slug>.pdf y
- * <slug>-accesible.html. Las respuestas las comprueba verificar-libro-ninos.js.
+ * todos con la MISMA maqueta: material/<slug>/<slug>.pdf,
+ * <slug>-accesible.html y <slug>-adaptado.pdf (letra grande y etiquetado,
+ * para quien ve poco o no ve). Las respuestas las comprueba verificar-libro-ninos.js.
  *
  * Se cierra como los otros libros (tapa a página completa, marca de agua con
  * el logo, firma del autor y PDF protegido: herramientas/lib/pdf-armar.js),
@@ -21,6 +22,7 @@
  *     node herramientas/libro-ninos-pdf.js                   # todos los libros
  *     node herramientas/libro-ninos-pdf.js peonita-trucos    # uno solo, por su slug
  *     node herramientas/libro-ninos-pdf.js --solo-accesible   # sin PDF ni pypdf
+ *     node herramientas/libro-ninos-pdf.js --solo-adaptado    # solo los PDF adaptados
  *
  * Con CHROMIUM=/ruta/al/chrome se le puede indicar un Chromium ya instalado.
  */
@@ -31,7 +33,7 @@ const os = require("os");
 const { Chess } = require("chess.js");
 const { tablero } = require("./lib/tablero-svg.js");
 const { describir } = require("./lib/describir-fen.js");
-const { unir, proteger } = require("./lib/pdf-armar.js");
+const { unir, proteger, datosAdaptado } = require("./lib/pdf-armar.js");
 const N = require("./lib/notacion.js");
 const D = require("./libro-ninos/dibujos.js");
 const LIBROS = require("./libro-ninos/libros.js");
@@ -629,6 +631,186 @@ ${L.CAPITULOS.map((c) => `<h3>Capítulo ${c.n}. ${esc(c.titulo)}</h3><ol>${c.eje
 </body></html>`;
 }
 
+/* ---------------------------------------------------------- adaptado */
+/* La versión ADAPTADA en PDF, para quien ve poco o no ve: el mismo libro, con
+   letra grande (Atkinson Hyperlegible a 20 pt, hecha para baja visión),
+   negro sobre blanco, un diagrama grande por página y el PDF ETIQUETADO
+   (títulos, párrafos, listas y marcadores) para que un lector de pantalla lo
+   lea en orden. Sin marca de agua ni cifrado: las dos cosas estorban a la
+   lupa y al lector. Los dibujos y los tableros van escondidos del lector
+   (aria-hidden) porque al lado está escrito lo que muestran —el dibujo
+   contado, la posición pieza por pieza—: con el texto alternativo además, el
+   lector lo diría dos veces. El que ve poco mira el tablero grande; el que no
+   ve, oye el texto. */
+const NEGRO = "#000", AZUL = "#0b2e6b"; // 21:1 y 13,4:1 contra el blanco
+/* Los tableros del adaptado: las casillas oscuras más oscuras que la madera
+   del libro, para que la pieza blanca se recorte, y el borde casi negro. Los
+   puntos (#0b4a1f) siguen dando más de 3:1 contra las dos casillas. */
+const MADERA_ADAPTADA = { clara: "#fbf1dc", oscura: "#b07f4f", borde: "#2b1a0b", marca: "#ffd43b" };
+
+function diagramaAdaptado(fen, o) {
+  const extra = {};
+  if (o.casilla && o.mostrar) {
+    const mov = new Chess(fen).moves({ square: o.casilla, verbose: true });
+    extra.puntos = [...new Set(mov.filter((m) => !m.captured).map((m) => m.to))];
+    extra.capturas = [...new Set(mov.filter((m) => m.captured).map((m) => m.to))];
+  }
+  const svg = tablero(fen, Object.assign({
+    colores: MADERA_ADAPTADA, coordenadas: true, titulo: "Diagrama",
+    destacar: o.casilla ? [o.casilla] : [], estrellas: o.estrellas || [], flechas: o.flechas || [],
+  }, extra));
+  return `<div class="tablero-a" aria-hidden="true">${svg}</div>`;
+}
+
+const dibujoAdaptado = (def) => `<div class="dibujo-a" aria-hidden="true">${D.escena(def)}</div><p class="cuadro"><strong>El dibujo.</strong> ${esc(def.alt)}</p>`;
+const hablado = (t) => esc(N.textoHablado(t, "espanol"));
+
+function ejercicioAdaptado(e, num) {
+  let visual = "";
+  if (e.fen) {
+    visual = diagramaAdaptado(e.fen, {
+      casilla: ["contar", "comer", "destinos", "color", "saltos", "corona"].includes(e.tipo) ? e.casilla : null,
+      estrellas: e.estrellas || (e.meta ? [e.meta] : []),
+    }) + posicionEnPalabras(e.fen).replace('class="posicion"', 'class="cuadro"');
+  } else if (e.tipo === "tableros") {
+    visual = `<div class="dos-a" aria-hidden="true"><figure>${tableroVacio(true)}<figcaption>A</figcaption></figure><figure>${tableroVacio(false)}<figcaption>B</figcaption></figure></div>`;
+  } else if (e.tipo === "colorear") {
+    visual = `<div class="colorear-a" aria-hidden="true">${tableroColorear()}</div>`;
+  }
+  const espacio = ["promesas", "partida", "colorear"].includes(e.tipo) ? "" : `<p class="resp">Mi respuesta: <span class="raya-a"></span></p>`;
+  // Las promesas y los consejos van en lista, uno por renglón, y no pegados a
+  // la pregunta como en la versión accesible: en letra grande, un párrafo así
+  // ocupa media página y no se sabe dónde termina cada uno.
+  if (e.tipo === "promesas" || e.tipo === "partida") {
+    const items = e.tipo === "promesas" ? L.PROMESAS : L.CONSEJOS_PARTIDA;
+    return `<section class="ej-a"><h4>Ejercicio ${num}</h4><p class="preg-a">${esc(e.pregunta)}</p><ul>${items.map((t) => `<li>${esc(t)}</li>`).join("")}</ul></section>`;
+  }
+  return `<section class="ej-a"><h4>Ejercicio ${num}</h4>${visual}<p class="preg-a">${hablado(preguntaAccesible(e))}</p>${espacio}</section>`;
+}
+
+function adaptado() {
+  const PRES = L.PRESENTACION;
+  const capitulos = L.CAPITULOS.map((c) => `<section class="cap-a">
+    <h2>Capítulo ${c.n}. ${esc(c.titulo)}</h2>
+    ${dibujoAdaptado(c.escena)}
+    ${c.cuento.map((t) => `<p>${esc(t)}</p>`).join("")}
+    ${c.muestras.map((m) => `<section class="muestra-a"><h3>Diagrama</h3>${diagramaAdaptado(m.fen, { casilla: m.casilla, mostrar: !!m.casilla, flechas: m.flechas })}
+      <p><strong>${hablado(m.pie)}</strong></p>${posicionEnPalabras(m.fen, [
+      m.casilla ? `Puede ir a: ${lista(destinos(m.fen, m.casilla))}.` : "",
+      m.flechas && m.flechas.length ? `${m.flechas.length === 1 ? "La flecha va" : "Las flechas van"} ${lista(m.flechas.map(([x, y]) => `de ${x} a ${y}`))}.` : "",
+    ].filter(Boolean).join(" ")).replace('class="posicion"', 'class="cuadro"')}</section>`).join("")}
+    <section class="aprendi-a"><h3>Lo que aprendí</h3><ul>${c.aprendi.map((t) => `<li>${esc(t)}</li>`).join("")}</ul></section>
+  </section>
+  <section class="jugar-a"><h3 class="h-jugar">¡A jugar! Capítulo ${c.n}</h3>
+    ${c.ejercicios.map((e, i) => ejercicioAdaptado(e, i + 1)).join("")}
+  </section>`).join("");
+  return `<!doctype html><html lang="es"><head><meta charset="utf-8">
+<title>${esc(L.TITULO)} — versión adaptada</title>
+<style>
+  @font-face { font-family: "Atkinson"; font-weight: 400; src: url("${incrustar("fonts/atkinson-hyperlegible-400-latin.woff2", "font/woff2")}") format("woff2"); }
+  @font-face { font-family: "Atkinson"; font-weight: 400; src: url("${incrustar("fonts/atkinson-hyperlegible-400-latin-ext.woff2", "font/woff2")}") format("woff2"); unicode-range: U+0100-024F, U+1E00-1EFF, U+2020, U+20A0-20AB, U+20AD-20CF, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+  @font-face { font-family: "Atkinson"; font-weight: 700; src: url("${incrustar("fonts/atkinson-hyperlegible-700-latin.woff2", "font/woff2")}") format("woff2"); }
+  @font-face { font-family: "Atkinson"; font-weight: 700; src: url("${incrustar("fonts/atkinson-hyperlegible-700-latin-ext.woff2", "font/woff2")}") format("woff2"); unicode-range: U+0100-024F, U+1E00-1EFF, U+2020, U+20A0-20AB, U+20AD-20CF, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+  @page { size: A4; }
+  * { box-sizing: border-box; }
+  html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body { margin: 0; background: #fff; color: ${NEGRO}; font-family: "Atkinson", Verdana, sans-serif; font-size: 20pt; line-height: 1.5; letter-spacing: .01em; }
+  p, li { margin: 0 0 5mm; text-align: left; hyphens: none; }
+  ul, ol { padding-left: 16mm; margin: 0 0 5mm; }
+  h1, h2, h3, h4 { color: ${AZUL}; line-height: 1.2; font-weight: 700; break-after: avoid; }
+  h1 { font-size: 36pt; margin: 0 0 8mm; }
+  h2 { font-size: 30pt; margin: 0 0 8mm; padding-bottom: 3mm; border-bottom: 1.5mm solid ${AZUL}; }
+  h3 { font-size: 25pt; margin: 9mm 0 5mm; }
+  h4 { font-size: 23pt; margin: 0 0 5mm; }
+  .portada { text-align: left; padding-top: 25mm; }
+  .portada .sub { font-size: 24pt; font-weight: 700; }
+  .pagina, .cap-a, .jugar-a, .final-a, .diploma-a, .soluciones-a { break-before: page; }
+  .cuadro { border: 1mm solid ${NEGRO}; padding: 4mm 5mm; border-radius: 3mm; }
+  .dibujo-a { margin: 0 0 6mm; break-inside: avoid; }
+  .dibujo-a svg { width: 100%; height: auto; display: block; }
+  .tablero-a { margin: 0 auto 6mm; width: 150mm; break-inside: avoid; }
+  .tablero-a svg { width: 150mm; height: auto; display: block; }
+  .muestra-a, .ej-a { break-before: page; }
+  /* Un ejercicio entero en su página: el tablero un poco menor que el de los
+     diagramas para que la pregunta y la raya de la respuesta quepan con él. */
+  .ej-a { break-inside: avoid; }
+  .ej-a .tablero-a, .ej-a .tablero-a svg { width: 108mm; }
+  .muestra-a h3 { margin-top: 0; }
+  .aprendi-a { border: 1.5mm solid ${AZUL}; border-radius: 4mm; padding: 2mm 7mm 3mm; margin-top: 8mm; break-inside: avoid; }
+  .aprendi-a h3 { margin-top: 4mm; }
+  .h-jugar { font-size: 30pt; margin: 0 0 6mm; }
+  .jugar-a > .ej-a:first-of-type { break-before: auto; }
+  .preg-a { font-weight: 700; }
+  .resp { display: flex; align-items: flex-end; gap: 4mm; margin-top: 8mm; }
+  .raya-a { flex: 1; border-bottom: 1mm solid ${NEGRO}; height: 14mm; }
+  .dos-a { display: flex; gap: 16mm; justify-content: center; margin-bottom: 6mm; }
+  .dos-a figure { margin: 0; text-align: center; }
+  .dos-a svg { width: 75mm; height: auto; }
+  .dos-a figcaption { font-size: 26pt; font-weight: 700; }
+  .colorear-a svg { width: 165mm; height: auto; margin: 0 auto 6mm; display: block; }
+  .medalla-a { width: 60mm; margin: 0 auto 6mm; }
+  .medalla-a svg { width: 100%; height: auto; display: block; }
+  .nombre-a { border-bottom: 1mm solid ${NEGRO}; height: 20mm; margin: 4mm 0 8mm; }
+  .soluciones-a h3 { break-before: auto; }
+  .soluciones-a ol > li { margin-bottom: 4mm; }
+</style>
+</head><body>
+<section class="portada">
+  <h1>${esc(L.TITULO)}</h1>
+  <p class="sub">${esc(L.SUBTITULO)}</p>
+  <p>De ${esc(L.AUTOR)}. Academia Ajedrez Integral, Costa Rica, ${ANIO}.</p>
+  <p class="cuadro"><strong>Versión adaptada.</strong> Es el mismo libro, hecho para quien ve poco o no ve: letra grande,
+  negro sobre blanco, un tablero grande en cada página y todo escrito, para leerlo con lupa o con lector de pantalla.
+  Cada dibujo va contado en palabras y cada posición, pieza por pieza.</p>
+  <p>Las casillas se nombran con una letra de la a a la h, que dice la columna, y un número del 1 al 8, que dice la fila.
+  En los tableros, la casilla de la pregunta va pintada de amarillo, los puntos dicen adónde puede ir la pieza y el aro, qué puede comer.</p>
+  <p>Las jugadas van escritas como se dicen en voz alta, con un nombre para cada letra: anna, bella, cesar, david, eva, felix, gustav y hector.
+  «Torre anna 8» quiere decir que la torre va a la casilla a8.</p>
+  <p>© ${ANIO} ${esc(L.AUTOR)}. Todos los derechos reservados. Este libro se puede imprimir para usarlo en casa o en la clase.</p>
+</section>
+<section class="pagina">
+  <h2>Los capítulos</h2>
+  <ol>${L.CAPITULOS.map((c) => `<li>${esc(c.titulo)}</li>`).join("")}</ol>
+  <p>Al final: ${esc(L.FINAL_TITULO)}, el diploma n.º ${L.DIPLOMA.numero} («${esc(L.DIPLOMA.nombre)}») y las soluciones.</p>
+</section>
+<section class="pagina">
+  <h2>Para las familias y el personal docente</h2>
+  ${L.NOTA_ADULTOS.map((t) => `<p>${esc(t)}</p>`).join("")}
+  <p>${esc(L.AUTOR)}</p>
+</section>
+<section class="pagina">
+  <h2>Dedicatoria</h2>
+  <p>${L.DEDICATORIA.map(esc).join("<br>")}</p>
+</section>
+<section class="pagina">
+  <h2>${esc(PRES.titulo)}</h2>
+  ${dibujoAdaptado(PRES.escena)}
+  ${PRES.parrafos.map((t) => `<p>${esc(t)}</p>`).join("")}
+</section>
+${capitulos}
+<section class="final-a">
+  <h2>${esc(L.FINAL_TITULO)}</h2>
+  ${dibujoAdaptado(L.ESCENA_FINAL)}
+  ${L.FINAL.map((t) => `<p>${esc(t)}</p>`).join("")}
+</section>
+<section class="diploma-a">
+  <h2>Diploma n.º ${L.DIPLOMA.numero}: ${esc(L.DIPLOMA.nombre)}</h2>
+  <div class="medalla-a" aria-hidden="true">${D.medalla(L.DIPLOMA.medalla)}</div>
+  <p><strong>${esc(L.DIPLOMA.sub)}</strong></p>
+  <p>Nombre:</p><div class="nombre-a"></div>
+  <p>${L.DIPLOMA.texto.map(esc).join(" ")}</p>
+  <p>Firman: ${esc(L.DIPLOMA.firma)}.</p>
+  <p>Fecha: <span class="raya-a" style="display:inline-block;width:90mm;height:8mm"></span></p>
+  <p>Es el diploma n.º ${L.DIPLOMA.numero} de la colección de Peonita. La colección: ${esc(lista(LIBROS.map((l) => `n.º ${l.DIPLOMA.numero}, «${l.DIPLOMA.nombre}»`)))}.</p>
+</section>
+<section class="soluciones-a">
+  <h2>Soluciones</h2>
+  <p>Para leerlas con una persona adulta después de intentarlo.</p>
+  ${L.CAPITULOS.map((c) => `<h3>Capítulo ${c.n}. ${esc(c.titulo)}</h3><ol>${c.ejercicios.map((e) => `<li>${hablado(solucion(e))}</li>`).join("")}</ol>`).join("")}
+</section>
+</body></html>`;
+}
+
 /* ---------------------------------------------------------- generar */
 const elegidos = process.argv.slice(2).filter((x) => !x.startsWith("--"));
 const aArmar = elegidos.length ? LIBROS.filter((l) => elegidos.includes(l.SLUG)) : LIBROS;
@@ -641,6 +823,8 @@ function archivos(libro) {
     carpeta,
     accesible: path.join(carpeta, libro.SLUG + "-accesible.html"),
     pdf: path.join(carpeta, libro.SLUG + ".pdf"),
+    adaptado: path.join(carpeta, libro.SLUG + "-adaptado.pdf"),
+    htmlAdaptado: path.join(tmp, libro.SLUG + "-adaptado.html"),
     htmlCuerpo: path.join(tmp, libro.SLUG + "-cuerpo.html"),
     htmlTapa: path.join(tmp, libro.SLUG + "-tapa.html"),
     htmlSello: path.join(tmp, libro.SLUG + "-marca.html"),
@@ -655,9 +839,11 @@ for (const libro of aArmar) {
   fs.writeFileSync(a.htmlTapa, tapa());
   fs.writeFileSync(a.htmlSello, htmlMarca);
   fs.writeFileSync(a.accesible, accesible());
+  fs.writeFileSync(a.htmlAdaptado, adaptado());
   console.log(`${libro.TITULO}: ${libro.CAPITULOS.length} capítulos · ${libro.CAPITULOS.reduce((s, c) => s + c.ejercicios.length, 0)} ejercicios\n  Maqueta: ${a.htmlCuerpo}\n  Accesible: ${a.accesible}`);
 }
 if (process.argv.includes("--solo-accesible")) process.exit(0);
+const soloAdaptado = process.argv.includes("--solo-adaptado");
 
 (async () => {
   const { chromium } = require("playwright");
@@ -665,6 +851,23 @@ if (process.argv.includes("--solo-accesible")) process.exit(0);
   const sinMargen = { top: 0, bottom: 0, left: 0, right: 0 };
   for (const libro of aArmar) {
     const a = archivos(libro);
+    // El adaptado: etiquetado (tagged) y con marcadores (outline) para el
+    // lector de pantalla; sin cifrar ni marca de agua. datosAdaptado() le pone
+    // el idioma, el título que se muestra y los datos del documento.
+    const pAdap = await navegador.newPage();
+    await pAdap.goto("file://" + a.htmlAdaptado, { waitUntil: "load" });
+    await pAdap.evaluate(() => document.fonts.ready);
+    await pAdap.pdf({
+      path: a.adaptado, format: "A4", printBackground: true, tagged: true, outline: true,
+      margin: { top: "16mm", bottom: "20mm", left: "18mm", right: "18mm" },
+      displayHeaderFooter: true,
+      headerTemplate: "<div></div>",
+      footerTemplate: `<div style="width:100%;font-size:14pt;color:#000;font-family:Verdana,sans-serif;text-align:center;">Página <span class="pageNumber"></span> de <span class="totalPages"></span></div>`,
+    });
+    await pAdap.close();
+    datosAdaptado(a.adaptado, { titulo: libro.TITULO + " — versión adaptada", autor: libro.AUTOR, asunto: libro.ASUNTO });
+    console.log("PDF adaptado listo:", a.adaptado);
+    if (soloAdaptado) continue;
     const pdfTapa = path.join(tmp, libro.SLUG + "-tapa.pdf");
     const pdfCuerpo = path.join(tmp, libro.SLUG + "-cuerpo.pdf");
     const pdfMarca = path.join(tmp, libro.SLUG + "-marca.pdf");

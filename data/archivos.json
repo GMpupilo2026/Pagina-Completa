@@ -23,7 +23,7 @@
     "nombre": "Formación docente"
    }
   ],
-  "total": 887,
+  "total": 890,
   "material": [
    {
     "ruta": "material/cambiar-o-no-cambiar/cambiar-o-no-cambiar.pdf",
@@ -180,6 +180,13 @@
     "libro": "Mide tu fuerza"
    },
    {
+    "ruta": "material/peonita-rey/peonita-rey-adaptado.pdf",
+    "titulo": "Peonita y el rey escondido — versión adaptada (letra grande y lector de pantalla)",
+    "tipo": "otro",
+    "kb": 1025,
+    "libro": "Peonita y el rey escondido"
+   },
+   {
     "ruta": "material/peonita-rey/peonita-rey.pdf",
     "titulo": "Peonita y el rey escondido — el cuento ilustrado",
     "tipo": "otro",
@@ -187,11 +194,25 @@
     "libro": "Peonita y el rey escondido"
    },
    {
+    "ruta": "material/peonita-trucos/peonita-trucos-adaptado.pdf",
+    "titulo": "Peonita, Tizón y los trucos del bosque — versión adaptada (letra grande y lector de pantalla)",
+    "tipo": "otro",
+    "kb": 974,
+    "libro": "Peonita, Tizón y los trucos del bosque"
+   },
+   {
     "ruta": "material/peonita-trucos/peonita-trucos.pdf",
     "titulo": "Peonita, Tizón y los trucos del bosque — el cuento ilustrado",
     "tipo": "otro",
     "kb": 1221,
     "libro": "Peonita, Tizón y los trucos del bosque"
+   },
+   {
+    "ruta": "material/peonita/peonita-adaptado.pdf",
+    "titulo": "Peonita y el reino de las 64 casillas — versión adaptada (letra grande y lector de pantalla)",
+    "tipo": "otro",
+    "kb": 1311,
+    "libro": "Peonita y el reino de las 64 casillas"
    },
    {
     "ruta": "material/peonita/peonita.pdf",
