@@ -466,6 +466,21 @@ suyos en «Tus recibos».
   desde ahí se manda). Corregir y anular siguen en las tarjetas. Nació de que
   quien supervisa tenía que ir de 30 en 30 y abrir recibo por recibo para saber
   qué salió en setiembre y qué se anuló.
+
+#### Quién pagó y quién debe
+
+La ficha «Cobros» se filtra por el mes en que **vencen** («Vencen en», los
+mismos 24 meses que los recibos), y arriba van las cuentas de lo filtrado:
+cuántos alumnos deben y cuánto (y cuántos cobros ya vencieron), y cuántos
+pagaron todo y cuánto entró, abonos incluidos. Las hace la base,
+`cobros_quien_debe()` (`SECURITY INVOKER` sobre `cobros_vista`, con los MISMOS
+filtros que la lista y que el CSV: mes, alumno y lo buscado); los anulados no
+cuentan, porque no cobran nada. «Ver como: Quién pagó y quién debe» trae todo
+lo filtrado de mil en mil y lo pone en dos tablas: **Deben**, con lo vencido
+arriba por días de atraso y el mismo «💵 Registrar pago» de las tarjetas, y
+**Pagaron**; los anulados van aparte, al final. Cada fila dice el monto,
+cuánto pagó y cuánto falta. Un alumno que debe un cobro y pagó otro cuenta
+como que debe: «pagó todo» es eso, todo lo filtrado.
 - **El recibo es UN HTML** (`cobros-recordatorios/recibo-html.ts`): el mismo
   para la vista previa, para imprimir y para el correo, con la marca de la
   academia DEL RECIBO. Dice que es un recibo interno y no una factura

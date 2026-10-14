@@ -55,8 +55,9 @@ function nombreMes(mes) {
     return MESES_RECIBO[m - 1] + " " + a;
 }
 
-function llenarMesesRecibos() {
-    const sel = document.getElementById("rc-mes");
+/* Los mismos meses en el filtro de recibos y en el de cobros. */
+function llenarMeses(id) {
+    const sel = document.getElementById(id);
     let [a, m] = hoyCR().slice(0, 7).split("-").map(Number);
     for (let i = 0; i < 24; i++) {
         const valor = a + "-" + String(m).padStart(2, "0");
@@ -762,7 +763,7 @@ async function recibosDelAlumno() {
 
 // --------------------------------------------------------------- eventos
 function engancharRecibos() {
-    llenarMesesRecibos();
+    llenarMeses("rc-mes");
     ["rc-estado", "rc-alumno", "rc-mes", "rc-vista"].forEach((id) => document.getElementById(id).addEventListener("change", () => cargarRecibos(true)));
     let espera = null;
     document.getElementById("rc-buscar").addEventListener("input", () => {

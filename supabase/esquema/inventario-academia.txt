@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261014232457
+# al-dia-con: 20261014233542
 tabla  Ejercicios Lichess  rls=true
 tabla  _foto_rls_tmp  rls=false
 tabla  _pedidos_elo  rls=false
@@ -1681,6 +1681,7 @@ funcion  clase_invitado_ver(p_token text, p_secreto text)  definer  anon=true  a
 funcion  cobro_cotizar(p_suscripcion uuid, p_desde date, p_hasta date)  definer  anon=false  auth=true
 funcion  cobro_siguiente(p_suscripcion uuid, p_periodos integer)  definer  anon=false  auth=true
 funcion  cobros_morosos()  invoker  anon=true  auth=true
+funcion  cobros_quien_debe(p_desde date, p_hasta date, p_alumno uuid, p_buscar text)  invoker  anon=false  auth=true
 funcion  cobros_resumen()  invoker  anon=true  auth=true
 funcion  color_con_texto_blanco(p text)  invoker  anon=true  auth=true
 funcion  consumir_invitacion(p_profesor uuid)  definer  anon=false  auth=false

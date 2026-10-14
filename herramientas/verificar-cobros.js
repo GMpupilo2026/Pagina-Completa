@@ -149,6 +149,9 @@ window.SUPABASE_ANON_KEY = "anon-falsa";
     anular_recibo: null,
     recibo_entregado_en_mano: null,
     // Las cuentas de la lista de recibos: las hace la base.
+    // Quién pagó y quién debe: las cuentas también las hace la base.
+    cobros_quien_debe: [{ moneda: "CRC", alumnos_deben: 1, alumnos_pagaron: 1, cobros_deben: 2, total_debe: 35000,
+                          vencidos: 1, cobros_pagados: 1, total_pagado: 35000 }],
     recibos_resumen: [{ moneda: "CRC", vigentes: 2, total_vigentes: 35000, anulados: 1, total_anulados: 25000, por_entregar: 1 }],
   };
   /* Este doble FILTRA, ORDENA, CUENTA Y RECORTA de verdad.
@@ -394,6 +397,50 @@ async function pruebaCoordinacion(browser) {
     await page.evaluate(() => document.querySelectorAll("#cobros-lista .cobro-fila").length), 1);
   await page.fill("#f-buscar", "");
   await page.waitForTimeout(600);
+  await abrirMeses();
+
+  /* Quién pagó y quién debe: el mes en que vencen, las cuentas (de la base,
+     con los MISMOS filtros que la lista) y las dos tablas con todo. */
+  igual("las cuentas de quién debe las pide a la base, con los filtros de la lista",
+    await page.evaluate(() => (window.__llamadas.filter((l) => l.rpc === "cobros_quien_debe").pop() || {}).args),
+    { p_desde: null, p_hasta: null, p_alumno: null, p_buscar: null });
+  igual("y las pinta, con el dato escrito",
+    (await page.evaluate(() => [...document.querySelectorAll("#cobros-quien-debe p")].map((p) => p.textContent))).map(sinSeparadores),
+    ["Todos los cobros", "₡35000", "1 alumno debe · 1 cobro vencido", "₡35000", "1 alumno pagó todo"]);
+  igual("el cuadro se ve", await page.evaluate(() => document.getElementById("cobros-quien-debe").checkVisibility()), true);
+  const mesC3 = COBROS[2].vence.slice(0, 7);
+  const [aC3, mC3] = mesC3.split("-").map(Number);
+  const finC3 = new Date(Date.UTC(aC3, mC3, 0)).toISOString().slice(0, 10);
+  await page.evaluate(() => { window.__llamadas = []; window.__consultas = []; });
+  await page.selectOption("#f-mes", mesC3);
+  await page.waitForTimeout(400);
+  igual("un mes pide las cuentas de los cobros que vencen ese mes",
+    await page.evaluate(() => (window.__llamadas.filter((l) => l.rpc === "cobros_quien_debe").pop() || {}).args),
+    { p_desde: mesC3 + "-01", p_hasta: finC3, p_alumno: null, p_buscar: null });
+  await abrirMeses();
+  igual("y la lista trae solo esos (lo filtra la base)",
+    await page.evaluate(() => document.querySelectorAll("#cobros-lista .cobro-fila").length), 1);
+  await page.selectOption("#f-mes", "");
+  await page.evaluate(() => { window.__consultas = []; });
+  await page.selectOption("#f-vista", "tabla");
+  await page.waitForSelector("#cobros-lista .quien-debe");
+  igual("«Quién pagó y quién debe» trae todo de mil en mil, sin «Ver más»",
+    [await page.evaluate(() => window.__consultas.filter((c) => c.tabla === "cobros_vista" && c.verbo === "range").pop()),
+     await page.evaluate(() => document.getElementById("cobros-mas").checkVisibility())],
+    [{ tabla: "cobros_vista", verbo: "range", desde: 0, hasta: 999 }, false]);
+  igual("primero quien debe, después quien pagó, y los anulados aparte",
+    await page.evaluate(() => [...document.querySelectorAll("#cobros-lista .quien-debe h3")].map((h) => h.textContent)),
+    ["Deben (2)", "Pagaron (1)", "Anulados (1)"]);
+  igual("quien debe va con lo vencido arriba, y solo ahí se registra un pago",
+    await page.evaluate(() => [...document.querySelectorAll("#cobros-lista tbody tr")].map((tr) =>
+      [tr.dataset.id, tr.querySelector("th").textContent, !!tr.querySelector("button")])),
+    [["c-2", "Ana Rojas", true], ["c-1", "Ana Rojas", true], ["c-3", "Bruno Mena", false], ["c-4", "Bruno Mena", false]]);
+  igual("cada fila dice cuánto pagó y cuánto falta",
+    (await page.evaluate(() => [...document.querySelectorAll('#cobros-lista tr[data-id="c-2"] td')].slice(3, 5).map((td) => td.textContent))).map(sinSeparadores),
+    ["₡10000", "₡12500"]);
+  igual("las tablas se ven", await page.evaluate(() => document.querySelector("#cobros-lista .quien-debe").checkVisibility()), true);
+  await page.selectOption("#f-vista", "tarjetas");
+  await page.waitForTimeout(400);
   await abrirMeses();
 
   // -------- el plan personalizado no es catálogo de nadie más
@@ -1123,6 +1170,8 @@ async function pruebaSupervisora(browser) {
   igual("«Ver» abre ESE recibo",
     await page.evaluate(() => (window.__llamadas.find((l) => l.funcion && l.funcion.action === "recibo_ver") || {}).funcion.recibo_id), "r-3");
   await page.click("#rc-previa-botones button:has-text('Cerrar')");
+  // Sin el marco de ESE recibo: la prueba de abajo espera a que se llene el del suyo.
+  await page.evaluate(() => document.querySelector("#rc-previa iframe").remove());
   await page.selectOption("#rc-vista", "tarjetas");
   await page.selectOption("#rc-mes", "");
   await page.waitForTimeout(400);
