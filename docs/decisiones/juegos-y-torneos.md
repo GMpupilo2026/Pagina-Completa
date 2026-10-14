@@ -2372,8 +2372,18 @@ los internacionales (CODICADER y escolares de la federación). Se enlaza desde
     empezaron a publicar (la historia de la frase de arriba). El rango va del
     primer torneo (CODICADER 2009) al último, y sale de los datos: un año nuevo
     entra solo.
-- **Se pone al día sola, cada seis horas**
-  (`.github/workflows/ajedrez-estudiantil.yml`). Chess-results no avisa cuando
+- **Se pone al día sola, una vez al mes, de abril a diciembre**
+  (`.github/workflows/ajedrez-estudiantil.yml`, el 1.° de cada mes: en enero,
+  febrero y marzo no hay clases y por lo tanto no hay torneos de los JDE que
+  revisar — correrlo en esos meses solo gastaría pedidos contra
+  chess-results por nada). Antes corría cada seis horas; el dueño pidió
+  bajarlo a una vez al mes a partir de abril de 2026. Esto también le baja el
+  ritmo al que se completan las partidas atrasadas de
+  «Leer las partidas de los individuales de 2024 en adelante» más abajo: con
+  solo 100 pedidos por corrida y una corrida al mes (en vez de cuatro por
+  día), terminar un backlog de varios miles tarda años en vez de semanas; si
+  hace falta ponerse al día más rápido, se puede correr el flujo a mano
+  (`workflow_dispatch`) las veces que haga falta. Chess-results no avisa cuando
   se publica algo, así que se revisa: `herramientas/ajedrez-estudiantil-actualizar.py`
   hace UNA búsqueda, los 250 torneos de Costa Rica tocados más recientemente
   (orden «Última actualización»), que trae fechas, lugar, rondas e inscritos
@@ -2394,7 +2404,7 @@ los internacionales (CODICADER y escolares de la federación). Se enlaza desde
   and approve pull requests»); sin eso, el paso de abrir el PR falla y GitHub
   avisa por correo. La fecha que dice la página
   (`herramientas/datos/ajedrez-estudiantil-actualizado.txt`) cambia solo
-  cuando hubo algo nuevo, para no abrir un PR cada seis horas por nada.
+  cuando hubo algo nuevo, para no abrir un PR en cada corrida por nada.
 - **Las reglas son una sola copia** (`ajedrez_estudiantil_reglas.py`), y
   `verificar-ajedrez-estudiantil-reglas.py` comprueba que clasifiquen los
   torneos guardados exactamente como están: una regla que cambie desordenaría
@@ -2473,7 +2483,7 @@ la vitrina de Herramientas con `gratis: true`.
   `art=1` (puesto, nombre, Elo, «Club/Ciudad» y puntos); en uno por equipos,
   `art=0` (la clasificación de los equipos) y `art=16` (los jugadores con su
   equipo; no `art=4`, que trae solo a quien jugó: ver «Herramientas de
-  arbitraje»). Lo corre el mismo flujo de cada seis horas, después del
+  arbitraje»). Lo corre el mismo flujo mensual, después del
   actualizador, con un tope de 100 torneos por vuelta y un segundo entre
   pedido y pedido. Relee lo que cambió de inscritos o de rondas y lo que no
   había terminado si empezó hace menos de 60 días. La primera lectura completa
@@ -2572,7 +2582,7 @@ enlace al historial del rival.
   tablero dentro de un duelo entre equipos, una estructura distinta que no se
   lee todavía.
 - **`herramientas/ajedrez-estudiantil-partidas.py`**, después de
-  `ajedrez-estudiantil-jugadores.py` en el mismo flujo de cada seis horas, en
+  `ajedrez-estudiantil-jugadores.py` en el mismo flujo mensual, en
   dos pasos que cuentan juntos para `--maximo` (100 por vuelta, igual
   cadencia que el resto del sitio):
   1. completa el «snr» (el `No.Ini.` con que arrancó cada jugador, lo que
@@ -2581,9 +2591,10 @@ enlace al historial del rival.
      columna — una página por torneo, no por jugador, para toda su lista de
      una vez;
   2. con el snr ya puesto, pide las partidas de cada (torneo, jugador) que
-     todavía no se leyó. A este ritmo, completar los individuales de 2024 en
-     adelante tarda unas dos semanas; lo que se agregue después se pone al
-     día solo.
+     todavía no se leyó. Con el flujo mensual (ver «Se pone al día sola, una
+     vez al mes, de abril a diciembre» arriba) esto avanza mucho más lento
+     que cuando corría cada seis horas: para ponerse al día rápido, correr el
+     flujo a mano (`workflow_dispatch`) las veces que haga falta.
 - **Completar el snr (paso 1) también dispara la reconstrucción de los
   tres JSON, aunque el paso 2 no haya leído ninguna partida nueva.** El
   flujo volvió a los JSON con `ajedrez-estudiantil.py` solo cuando había

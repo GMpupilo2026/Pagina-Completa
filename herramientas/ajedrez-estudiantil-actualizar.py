@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Suma a ajedrez-estudiantil.html los torneos que se publican en chess-results.
 
-Lo corre el flujo .github/workflows/ajedrez-estudiantil.yml cada seis horas
-(desde una sesión de Claude Code no hay salida a chess-results). Hace una sola
+Lo corre el flujo .github/workflows/ajedrez-estudiantil.yml una vez al mes, de
+abril a diciembre (desde una sesión de Claude Code no hay salida a
+chess-results). Hace una sola
 búsqueda en el buscador de torneos de chess-results: los 250 de Costa Rica que
 se tocaron más recientemente, con sus fechas, lugar, rondas y número de
 jugadores. Con eso:
