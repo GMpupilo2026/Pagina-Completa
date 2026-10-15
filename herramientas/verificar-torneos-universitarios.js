@@ -10,7 +10,8 @@
      propios), y tocar una deja solo sus torneos;
    - cada torneo con su podio: la universidad del medallista solo si es una
      universidad (un club cantonal no), la de un equipo sale del equipo, y un
-     torneo en curso no tiene podio sino el aviso;
+     torneo en curso no tiene podio sino el aviso; un medallista o un equipo
+     de una universidad de afuera no sale, y los demás guardan su puesto;
    - «Quién más ganó» junta el mismo nombre con coma o sin ella, con tilde o
      sin ella y cortado por chess-results;
    - los filtros (año, tipo, ritmo, búsqueda) y el enlace que los guarda;
@@ -40,13 +41,13 @@ torneo(9001, "XXV JUNCOS 2026 Individual", "2026-10-12", "UCR", "entre universid
 torneo(9002, "Torneo CONARE 2025 · Absoluto individual · Rápido", "2025-09-27", "UNA", "entre universidades", "R", "I", 60,
     [[1, "Cabezas Solano, David Alejandro", "UCR Rodrigo Facio"], [2, "Fernández Sibaja, Felipe", "UNA Omar Dengo"], [3, "Mora Chavarria, Sebastian", "UNED"]]);
 torneo(9003, "Torneo CONARE 2025 · Absoluto por equipos · Rápido", "2025-09-28", "UNA", "entre universidades", "R", "E", 20,
-    [[1, "UCR A", ""], [2, "ITCR", ""], [3, "UNA B", ""]]);
+    [[1, "UNAH - HONDURAS", ""], [2, "UCR A", ""], [3, "ITCR", ""]]);
 torneo(9004, "Blitz UCR Marzo 2019", "2019-03-08", "UCR", "de una universidad", "B", "I", 14,
     [[1, "Cabezas Solano David Alejandro", "Asociacion Goicoechea"], [2, "Jimenez Garcia Emmanuel", "Pococi"], [3, "Rivera Gonzalez Jose", "CRC"]]);
 torneo(9005, "Blitz UCR Abril 2019", "2019-04-08", "UCR", "de una universidad", "B", "I", 10,
     [[1, "Cabézas Solano, David Alejandr", ""], [2, "Jimenez Garcia Emmanuel", ""], [3, "Rivera Gonzalez Jose", ""]]);
 torneo(9006, "Desafío Mentes Maestras", "2025-09-28", "CENFOTEC", "de una universidad", "R", "I", 42,
-    [[1, "Ulloa Jimenez, Santiago", "CRC"], [2, "Barrantes Granados, Ian", "CRC"], [3, "Gutierrez Chavarria, Joseph", "CRC"]]);
+    [[1, "Ulloa Jimenez, Santiago", "CRC"], [2, "Barrantes Granados, Ian", "CRC"], [3, "Gutierrez Chavarria, Joseph", "UNAN MANAGUA (NCA)"]]);
 // Relleno: más de mil torneos viejos del TEC (más que un pedido de PostgREST).
 for (let i = 0; i < 1094; i++) torneo(100000 + i, "Interno TEC " + i, "2011-0" + (1 + (i % 9)) + "-10", "TEC", "de una universidad", "R", "I", 1, []);
 
@@ -142,7 +143,10 @@ function parteZip(buf, nombre) {
         ["XXV JUNCOS 2026 Individual En curso Sede", "UCR", "Entre universidades", "Clásico", "13", "Se está jugando: el podio sale cuando termine."]);
     igual("el podio lleva la universidad de cada medallista, junta en su nombre", (await fila(9002)).slice(6, 9),
         ["🥇 Cabezas Solano, David Alejandro UCR", "🥈 Fernández Sibaja, Felipe UNA", "🥉 Mora Chavarria, Sebastian UNED"]);
-    igual("en un torneo por equipos, la universidad sale del equipo", (await fila(9003)).slice(6, 9), ["🥇 UCR A UCR", "🥈 ITCR TEC", "🥉 UNA B UNA"]);
+    igual("en un torneo por equipos, la universidad sale del equipo; uno de afuera no sale y los demás guardan su puesto",
+        (await fila(9003)).slice(6, 9), ["—", "🥈 UCR A UCR", "🥉 ITCR TEC"]);
+    igual("un medallista individual de una universidad de afuera no sale", (await fila(9006)).slice(6, 9),
+        ["🥇 Ulloa Jimenez, Santiago", "🥈 Barrantes Granados, Ian", "—"]);
     igual("un club cantonal o un país no es una universidad: no se muestra", (await fila(9004)).slice(6, 9),
         ["🥇 Cabezas Solano David Alejandro", "🥈 Jimenez Garcia Emmanuel", "🥉 Rivera Gonzalez Jose"]);
     igual("cada torneo lleva su enlace a chess-results",

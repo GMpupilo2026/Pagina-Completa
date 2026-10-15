@@ -4114,6 +4114,37 @@ más, clásico) o del nombre («Blitz», «Bullet», «Standard»). Los filtros
 jugadores del podio) van en el enlace. «Bajar en Excel» baja lo que se ve,
 con el enlace de cada torneo. Lo comprueba `verificar-torneos-universitarios.js`.
 
+### Solo las universidades de Costa Rica
+
+Las dos páginas (`universidades.html` y `torneos-universitarios.html`)
+muestran solo universidades de Costa Rica: así lo pidió el dueño (octubre de
+2026). Las de afuera llegan por los JUDUCA y antes salían en el medallero,
+la copa, los enfrentamientos y los podios con su país al lado.
+
+- **Se quitan al pintar, no en la base.** `uni_resultados`, `uni_jugadores`
+  y `uni_partidas` siguen con los JUDUCA completos, porque el puesto y el
+  «de N» de una universidad de Costa Rica salen de la tabla completa: la UCR
+  plata en un JUDUCA sigue siendo plata aunque el oro fuera de Honduras, y
+  la casilla del 1.º del catálogo queda con una raya. Borrarlas de la base
+  rompería eso y obligaría a volver a cargar si un día se quieren ver.
+- **Quién es de afuera lo dice `UniversidadesNombres.extranjera(crudo)`**
+  (`js/universidades-nombres.js`, la única lista): una universidad de la
+  lista con su país entre paréntesis («UNAH (Honduras)») o un código de país
+  que no es Costa Rica («NIC»). Un nombre desconocido no cuenta como de
+  afuera: no se esconde nada que no esté en la lista.
+- **Se quita después de deducir.** Un JUDUCA individual trae solo el país
+  («NIC»): en `preparar()` primero toma la universidad de su equipo y
+  después se filtra, con el nombre crudo y con el deducido. Los integrantes
+  de un equipo de afuera se saltan en `prepararJugadores()`, y con ellos se
+  van solas sus partidas (el cruce de `cargarPartidas()` no los encuentra):
+  las partidas de la UCR contra Honduras dejan de contar en «Enfrentamientos».
+  El rendimiento contra el Elo de cada jugador de Costa Rica no cambia: sale
+  de los totales de su fila en `uni_jugadores`.
+- **«Santa Barbara» es la UNED**: así se inscribió Edwin Vega Araya en la
+  FEDEU 2023 de funcionarios (en el paraninfo de la UNED); lo dijo el dueño.
+  Va en la expresión de la UNED del normalizador, no en una corrección a
+  mano, porque el catálogo lee el mismo nombre del podio.
+
 ## Proyección JDN por comité
 
 `jdn-proyeccion.html` (`js/jdn-proyeccion.js`) es una herramienta de arbitraje

@@ -64,9 +64,13 @@
 
     /* Cada medallista con su universidad: la que trae chess-results o, en un
        torneo por equipos, la del equipo. Un club que no es una universidad (los
-       Blitz de la UCR traen el comité cantonal) no se muestra. */
+       Blitz de la UCR traen el comité cantonal) no se muestra. Los de una
+       universidad de afuera (o de un país que no es Costa Rica, en los JUDUCA
+       individuales) no salen: el podio muestra solo a los de Costa Rica, con
+       su puesto de verdad. */
     function medallistas(t) {
-        return (t.podio || []).map((m) => {
+        const afuera = window.UniversidadesNombres.extranjera;
+        return (t.podio || []).filter((m) => !afuera(t.modalidad === "E" ? m.n : m.u)).map((m) => {
             const u = t.modalidad === "E" ? universidad(m.n, true) : universidad(m.u, false);
             const esUni = !!u && window.UniversidadesNombres.conocida(u);
             return { p: m.p, n: m.n, u: esUni ? u : "" };
