@@ -1,4 +1,4 @@
--- Carga 3 de 35 de la herramienta arbitros-cr. La arma herramientas/arbitros-cr.py: no se edita a mano.
+-- Carga 3 de 63 de la herramienta arbitros-cr. La arma herramientas/arbitros-cr.py: no se edita a mano.
 insert into public.arbitros_cr_torneos (id, nombre, ciudad, pais, inicio, fin, sistema, ritmo, jugadores, con_elo, contados, rondas, federaciones, valorado, af_estado, af_detalle, ai_estado, ai_detalle) values
   (71074, convert_from(decode('Q2FtcGVvbmF0byBOYWNpb25hbCBBYmllcnRvIDIwMTI=', 'base64'), 'UTF8'), 'San Jose', 'Costa Rica', '2012-08-22', '2012-09-10', 's', 'Standard', 60, 26, 26, 9, 1, 'octubre de 2012', 'si', 'Suizo, 26 jugadores con Elo, 9 rondas', 'si', 'Final del campeonato nacional individual (máximo dos por solicitud, 4.8.1)'),
   (73553, convert_from(decode('VG9ybmVvIEJsaXR6IEluZGl2aWR1YWw=', 'base64'), 'UTF8'), 'San Jose', 'Costa Rica', '2012-10-13', '2012-10-13', 's', 'Blitz', 60, 26, 26, 0, 2, 'noviembre de 2012', 'no', 'blitz: pide 30 jugadores con Elo y 9 rondas (tiene 26; las rondas, FIDE no las publica)', 'no', 'blitz: solo valen los campeonatos mundiales o continentales oficiales'),

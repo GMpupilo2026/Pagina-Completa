@@ -23,10 +23,13 @@ tablas). Ver «Árbitros de Costa Rica en FIDE» en
 docs/decisiones/juegos-y-torneos.md.
 """
 import base64
+import datetime
 import hashlib
+import html
 import json
 import os
 import re
+import unicodedata
 import sys
 from collections import Counter
 
@@ -39,6 +42,20 @@ TITULOS = os.path.join(RAIZ, "herramientas", "datos", "arbitros-cr-titulos.json"
 # El título de árbitro de cada uno, del perfil de FIDE (la lista de jugadores
 # no lo trae): lo arma herramientas/arbitros-cr/perfiles.sql.
 PERFILES = os.path.join(RAIZ, "herramientas", "datos", "arbitros-cr-perfiles.json")
+# Los torneos de la federación de Costa Rica en chess-results (el buscador,
+# año por año) con sus columnas de quién hizo qué, y los perfiles de FIDE de
+# los ID que aparecen ahí y no están entre los árbitros de FIDE (para saber
+# su nombre y si son de Costa Rica). Ver «Árbitros de Costa Rica en
+# chess-results» en docs/decisiones/juegos-y-torneos.md.
+CHESS_RESULTS = os.path.join(RAIZ, "herramientas", "datos", "arbitros-cr-chess-results.json")
+PERFILES_CR = os.path.join(RAIZ, "herramientas", "datos", "arbitros-cr-perfiles-chess-results.json")
+# Las columnas del buscador y su código en arbitros_cr_cr_cargos.
+ROLES_CR = {"principal": "ap", "adjunto": "adj", "arbitros": "arb", "director": "dir", "organizador": "org"}
+# Las respuestas del buscador en net._http_response de la descarga que armó
+# arbitros-cr-chess-results.json (pg_net las borra a las seis horas): los
+# torneos de chess-results se insertan desde ahí, en la base, sin pasar su
+# texto por la conversación. Otra descarga cambia estos números.
+RESPUESTAS_CR = (17486, 17514)
 CARPETA = os.path.join(RAIZ, "herramientas", "arbitros-cr")
 # Los cargos de la ficha de FIDE. Para una norma valen el principal, el
 # adjunto y el árbitro; el asistente no (B.06.1, 2.4.4) y el de pareos queda
@@ -115,6 +132,207 @@ def sin_rondas(t):
     return tuple(salida)
 
 
+def sin_tildes(s):
+    return "".join(c for c in unicodedata.normalize("NFD", s.lower()) if unicodedata.category(c) != "Mn")
+
+
+# Lo que no es parte de un nombre en una celda de chess-results: títulos
+# («IA.», «FA», «AN», «NA», «AI», «AF», «Lic.»…).
+NO_ES_NOMBRE = {"ia", "fa", "an", "na", "ai", "af", "io", "ao", "oi", "lic", "licda", "dr", "msc", "prof", "wfm", "fm", "cm", "im", "gm"}
+
+
+def palabras(s):
+    return [w for w in re.findall(r"[a-z]+", sin_tildes(html.unescape(s))) if w not in NO_ES_NOMBRE]
+
+
+def formas_del_nombre(nombre, ambiguo=False):
+    """Las formas en que se escribe a alguien en una celda, como expresiones
+    sobre las palabras sin tildes: «Apellido1 Apellido2, Nombre», «Nombre
+    [segundo] Apellido1» y, si no tiene segundo apellido, «Apellido, Nombre»."""
+    ap, _, no = nombre.partition(",")
+    a, n = palabras(ap), palabras(no)
+    if not a or not n:
+        return []
+    # «Nombre Apellido» suelto, salvo que otro árbitro comparta nombre y
+    # primer apellido (Stanley Gómez Huertas y Stanley Gómez Villalobos):
+    # entonces pide también el segundo.
+    corto = r"\b" + n[0] + r"(?: [a-z]+)? " + a[0] + (" " + a[1] if ambiguo and len(a) > 1 else "") + r"\b"
+    formas = [r"\b" + " ".join(a) + r" " + n[0] + r"\b", corto]
+    if len(a) > 1:
+        formas.append(r"\b" + a[0] + " " + a[1] + r" " + n[0] + r"\b")
+    # «Apellido Nombre» («Angulo Oscar») solo con un apellido: con dos,
+    # «Martinez Luis» calza en «Loria Martinez, Luis Felipe».
+    if len(a) == 1:
+        formas.append(r"\b" + a[0] + " " + n[0] + r"\b")
+    # El segundo nombre, solo con los dos apellidos: «Josué Amaya Madrigal»
+    # (Amaya Madrigal, Alvaro Josue), «Leticia Gamboa Alvarado».
+    if len(a) > 1:
+        formas += [r"\b" + x + " " + a[0] + " " + a[1] + r"\b" for x in n[1:]]
+    return [re.compile(f) for f in formas]
+
+
+def armar_chess_results(arbitros):
+    """Los torneos de chess-results y quién fue qué en cada uno. Se reconoce a
+    una persona en una celda por su ID FIDE (solo si al lado está su primer
+    apellido: hay ID mal escritos, como 6500189 por 6508189) o por su nombre
+    (formas_del_nombre). Suma a `arbitros` las personas de Costa Rica que
+    figuran con su ID y no estaban (su perfil de FIDE dice nombre y país)."""
+    if not os.path.exists(CHESS_RESULTS):
+        return {}, set()
+    with open(CHESS_RESULTS, encoding="utf-8") as f:
+        fuente = json.load(f)
+    perfiles = {}
+    if os.path.exists(PERFILES_CR):
+        with open(PERFILES_CR, encoding="utf-8") as f:
+            perfiles = {p["fid"]: p for p in json.load(f)["perfiles"]}
+    texto = lambda celda: " ".join(palabras(celda))
+    # Primero, los de Costa Rica que figuran con su ID y no estaban. Al final
+    # se quedan solo los que arbitraron (quien solo fue director u
+    # organizador no entra a la lista).
+    nuevos = set()
+    for t in fuente["torneos"]:
+        for col in ROLES_CR:
+            for fid in re.findall(r"\b(\d{5,8})\b", t[col]):
+                p = perfiles.get(fid)
+                if fid in arbitros or not p or p.get("pais") != "cr" or not p.get("nombre"):
+                    continue
+                ap = palabras(p["nombre"].partition(",")[0])
+                if ap and ap[0] in texto(t[col]).split():
+                    arbitros[fid] = {"nombre": p["nombre"], "titulo": TITULO_ARBITRO.get(p.get("titulo") or "", ""),
+                                     "detalle": p.get("detalle") or "", "solo_cr": True}
+                    nuevos.add(fid)
+    clave_corta = lambda nombre: (tuple(palabras(nombre.partition(",")[2])[:1]), tuple(palabras(nombre.partition(",")[0])[:1]))
+    repetidos = Counter(clave_corta(a["nombre"]) for a in arbitros.values())
+    formas = {fid: formas_del_nombre(a["nombre"], repetidos[clave_corta(a["nombre"])] > 1) for fid, a in arbitros.items()}
+    primer_apellido = {fid: (palabras(a["nombre"].partition(",")[0]) or [""])[0] for fid, a in arbitros.items()}
+    torneos, cargos = {}, set()
+    for t in fuente["torneos"]:
+        clave = int(t["clave"])
+        for col, rol in ROLES_CR.items():
+            celda = t[col]
+            if not celda:
+                continue
+            plano = texto(celda)
+            quienes = {fid for fid in re.findall(r"\b(\d{5,8})\b", celda) if fid in arbitros and primer_apellido[fid] in plano.split()}
+            quienes |= {fid for fid, fs in formas.items() if any(f.search(plano) for f in fs)}
+            for fid in quienes:
+                cargos.add((clave, fid, rol))
+        torneos[clave] = {
+            "clave": clave, "nombre": html.unescape(t["nombre"]).strip() or "(sin nombre)",
+            "inicio": t["inicio"].replace("/", "-"), "fin": (t["fin"] or "").replace("/", "-") or None,
+            "lugar": html.unescape(t["lugar"]).strip()[:200], "control": html.unescape(t["control"]).strip()[:200],
+            "rondas": int(t["rondas"]) if t["rondas"].isdigit() else 0,
+            "jugadores": int(t["jugadores"]) if t["jugadores"].isdigit() else 0,
+        }
+    # Fuera los de prueba y los que no se jugaron (sin rondas o sin jugadores).
+    torneos = {k: v for k, v in torneos.items() if not es_basura(v)}
+    cargos = {c for c in cargos if c[0] in torneos}
+    arbitraron = {f for _, f, r in cargos if r in ("ap", "adj", "arb")}
+    for fid in nuevos - arbitraron:
+        del arbitros[fid]
+    cargos = {c for c in cargos if c[1] in arbitros}
+    usados = {c for c, _, _ in cargos}
+    return {k: v for k, v in torneos.items() if k in usados}, cargos
+
+
+def es_basura(t):
+    """Un torneo de prueba («test 260319») o que no se jugó: sin rondas o sin
+    jugadores en chess-results."""
+    return bool(re.search(r"\b(prueba|pruebas|test|testing)\b", sin_tildes(t["nombre"]))) or not t["rondas"] or not t["jugadores"]
+
+
+# ---------- El mismo torneo en FIDE y en chess-results ----------
+
+PALABRAS_VACIAS = {"del", "de", "la", "los", "las", "torneo", "el", "en", "por", "costa", "rica"}
+
+
+def palabras_torneo(s):
+    return {w for w in re.findall(r"[a-z0-9]{2,}", sin_tildes(s)) if w not in PALABRAS_VACIAS}
+
+
+def rasgos(s):
+    """Lo que, si los dos nombres lo dicen distinto, son torneos distintos:
+    categoría (U14, Sub-16), división, rama (femenino/absoluto) y año."""
+    s = sin_tildes(s)
+    cat = {"u" + m for m in re.findall(r"(?:\bu|sub\s*-?\s*|u)(\d{1,2})\b", s)}
+    div = {i for i, ws in enumerate((("primera", "1ra", "i division"), ("segunda", "2da", "ii division"),
+                                     ("tercera", "3ra", "iii division"), ("cuarta", "4ta", "iv division")))
+           if any(re.search(r"\b" + w + r"\b", s) for w in ws)}
+    gen = ({"f"} if re.search(r"femen|damas|\bfem\b|mujer", s) else set()) | ({"a"} if re.search(r"absolut|masculin|\bopen\b|abierto", s) else set())
+    anio = set(re.findall(r"(?<!\d)(20\d\d)(?!\d)", s))
+    return cat, div, gen, anio
+
+
+def ritmo_chess_results(t):
+    """El ritmo como lo cuenta FIDE (base + incremento x 60 jugadas), del nombre
+    o del control de tiempo; vacío si no se entiende."""
+    n = sin_tildes(t["nombre"])
+    if re.search(r"\bblitz\b", n):
+        return "Blitz"
+    if re.search(r"\brapid", n):
+        return "Rapid"
+    c = sin_tildes(t["control"]).replace(",", ".")
+    h = re.search(r"(\d+(?:\.\d+)?)\s*(?:h\b|hr|hora)", c)
+    m = re.search(r"(\d+)\s*(?:min|m\b|'|minutos)", c[h.end():] if h else c)
+    base = (float(h.group(1)) * 60 if h else 0) + (int(m.group(1)) if m else 0)
+    if not h and not m:
+        x = re.match(r"\s*(\d+)\s*\+", c)
+        if not x:
+            return ""
+        base = int(x.group(1))
+    inc = re.search(r"\+\s*(\d+)", c)
+    total = base + (int(inc.group(1)) if inc else 0)
+    if not total:
+        return ""
+    return "Blitz" if total <= 10 else "Rapid" if total < 60 else "Standard"
+
+
+def cruzar_con_fide(cr_torneos, fide_torneos, cargos, cr_cargos):
+    """{clave de chess-results: id de FIDE} del mismo torneo. Si el nombre trae
+    el código de FIDE entre paréntesis («… (204453)»), ese. Si no, uno de FIDE
+    que empezó el mismo día (±1), con dos palabras del nombre en común, sin
+    chocar en categoría, división, rama, año ni ritmo, con puntaje: parecido
+    del nombre, mismas rondas y jugadores, y si comparten árbitro (suma) o
+    tienen árbitros distintos (resta). Uno a uno, de mayor a menor puntaje."""
+    fa, ca = {}, {}
+    for t, f, _ in cargos:
+        fa.setdefault(t, set()).add(f)
+    for k, f, r in cr_cargos:
+        if r in ("ap", "adj", "arb"):
+            ca.setdefault(k, set()).add(f)
+    por_dia = {}
+    for f in fide_torneos.values():
+        por_dia.setdefault(f["inicio"], []).append(f)
+    pares = []
+    for t in cr_torneos.values():
+        for m in re.findall(r"\((\d{4,7})", t["nombre"]):
+            if int(m) in fide_torneos:
+                pares.append((99, t["clave"], int(m)))
+        pc, rc = palabras_torneo(t["nombre"]), ritmo_chess_results(t)
+        dia = datetime.date.fromisoformat(t["inicio"])
+        for dd in (-1, 0, 1):
+            for f in por_dia.get((dia + datetime.timedelta(dd)).isoformat(), []):
+                comun = len(pc & palabras_torneo(f["nombre"]))
+                if comun < 2 or (rc and f["ritmo"] and rc != f["ritmo"]):
+                    continue
+                if any(x and y and not (x & y) for x, y in zip(rasgos(t["nombre"]), rasgos(f["nombre"][:60]))):
+                    continue
+                s = comun / len(pc | palabras_torneo(f["nombre"][:50])) * 4
+                s += 2 if f["rondas"] and t["rondas"] == f["rondas"] else 0
+                s += 2 if t["jugadores"] == f["jugadores"] else 1 if abs(t["jugadores"] - f["jugadores"]) <= 2 else 0
+                s += 0.5 if dd == 0 else 0
+                if fa.get(f["id"]) and ca.get(t["clave"]):
+                    s += 2 if fa[f["id"]] & ca[t["clave"]] else -1.5
+                if s >= 3.05:
+                    pares.append((s, t["clave"], f["id"]))
+    enlace, usados = {}, set()
+    for s, c, f in sorted(pares, reverse=True):
+        if c not in enlace and f not in usados:
+            enlace[c] = f
+            usados.add(f)
+    return enlace
+
+
 def armar():
     with open(FUENTE, encoding="utf-8") as f:
         fuente = json.load(f)
@@ -151,16 +369,19 @@ def armar():
     return fuente, torneos, cargos, arbitros
 
 
-def cargas(torneos, cargos, arbitros):
+def cargas(torneos, cargos, arbitros, cr_torneos=(), cr_cargos=(), cruce=None):
     lineas = ["begin;",
+              "delete from public.arbitros_cr_cr_cargos;",
+              "delete from public.arbitros_cr_cr;",
               "delete from public.arbitros_cr_cargos;",
               "delete from public.arbitros_cr_torneos;",
               "delete from public.arbitros_cr;"]
-    filas = [f"({sql(int(fid))}, {sql(a['nombre'])}, 'CRC', {sql(a['titulo'])}, {sql(a['detalle'])})"
+    filas = [f"({sql(int(fid))}, {sql(a['nombre'])}, 'CRC', {sql(a['titulo'])}, {sql(a['detalle'])}, {sql(bool(a.get('solo_cr')))})"
              for fid, a in sorted(arbitros.items(), key=lambda x: int(x[0]))]
-    bloques = [lineas + [f"insert into public.arbitros_cr (fide_id, nombre, federacion, titulo, titulo_detalle) values\n  "
+    bloques = [lineas + [f"insert into public.arbitros_cr (fide_id, nombre, federacion, titulo, titulo_detalle, solo_chess_results) values\n  "
                          + ",\n  ".join(filas)
-                         + "\non conflict (fide_id) do update set nombre = excluded.nombre, titulo = excluded.titulo, titulo_detalle = excluded.titulo_detalle;"]]
+                         + "\non conflict (fide_id) do update set nombre = excluded.nombre, titulo = excluded.titulo, titulo_detalle = excluded.titulo_detalle,"
+                         + " solo_chess_results = excluded.solo_chess_results;"]]
     filas = []
     for t in sorted(torneos.values(), key=lambda t: t["id"]):
         filas.append("(" + sql(t["id"]) + ", " + texto_cifrado(t["nombre"]) + ", " + ", ".join(sql(v) for v in (
@@ -178,17 +399,66 @@ def cargas(torneos, cargos, arbitros):
     for i in range(0, len(filas), CARGOS_POR_CARGA):
         bloques.append([f"insert into public.arbitros_cr_cargos (torneo_id, fide_id, cargo) values\n  " + ",\n  ".join(filas[i:i + CARGOS_POR_CARGA])
                         + "\non conflict do nothing;"])
+    if cr_torneos:
+        bloques.append(["-- Lee las respuestas del buscador de chess-results que siguen en net._http_response (RESPUESTAS_CR).",
+                        cr_torneos_sql(cr_torneos)])
+    filas = [f"({c}, {int(f)}, {sql(r)})" for c, f, r in sorted(cr_cargos, key=lambda x: (x[0], int(x[1]), x[2]))]
+    for i in range(0, len(filas), CARGOS_POR_CARGA):
+        bloques.append([f"insert into public.arbitros_cr_cr_cargos (clave, fide_id, rol) values\n  " + ",\n  ".join(filas[i:i + CARGOS_POR_CARGA])
+                        + "\non conflict do nothing;"])
+    if cruce:
+        # El mismo torneo en FIDE: primero se borra el cruce viejo (el índice
+        # único no deja dos con el mismo torneo de FIDE) y después se escribe.
+        bloques.append(["update public.arbitros_cr_cr set fide_torneo = null where fide_torneo is not null;",
+                        "update public.arbitros_cr_cr c set fide_torneo = v.fide from (values\n  "
+                        + ",\n  ".join(f"({k}, {f})" for k, f in sorted(cruce.items()))
+                        + "\n) v(clave, fide) where c.clave = v.clave;"])
     bloques[-1].append("commit;")
     return bloques
+
+
+def limpiar_sql(x):
+    """Una celda de chess-results limpia, en SQL: sin etiquetas, con las
+    entidades de letras y puntuación traducidas (las de emojis y símbolos de
+    piezas, fuera) y los espacios juntos."""
+    num = (f"coalesce((select string_agg(case when m[1] is not null then case when m[1]::int between 32 and 8999 then chr(m[1]::int) else '' end "
+           f"when m[2] is not null then '' else m[3] end, '' order by o) from regexp_matches(regexp_replace({x}, '<[^>]+>', '', 'g'), "
+           f"'&#(\\d+);|&#x([0-9A-Fa-f]+);|([^&]+|&)', 'g') with ordinality r(m, o)), '')")
+    for ent, letra in (("&quot;", '"'), ("&#39;", "''"), ("&uuml;", "ü"), ("&Ouml;", "Ö"), ("&copy;", "©"), ("&lt;", "<"), ("&gt;", ">"), ("&nbsp;", " "), ("&amp;", "&")):
+        num = f"replace({num}, '{ent}', '{letra}')"
+    return f"btrim(regexp_replace(replace({num}, chr(160), ' '), '\\s+', ' ', 'g'))"
+
+
+def cr_torneos_sql(claves):
+    """Inserta los torneos de chess-results que tienen algún árbitro de Costa
+    Rica, leyéndolos de las respuestas del buscador que siguen en la base."""
+    return f"""with r as (select id, substr(content, strpos(content, '<table class="CRs2"')) t from net._http_response
+  where id between {RESPUESTAS_CR[0]} and {RESPUESTAS_CR[1]} and strpos(content, '<table class="CRs2"') > 0),
+filas as (select f from r, regexp_split_to_table(substr(t, 1, strpos(t, '</table>')), '<tr class="CR') f where f ~ '^n?g[12]">'),
+celdas as (select regexp_split_to_array(f, '</t[dh]>') c from filas),
+t as (select distinct on (btrim(regexp_replace(c[19], '<[^>]+>', '', 'g'))::int) btrim(regexp_replace(c[19], '<[^>]+>', '', 'g'))::int clave, c from celdas
+  where btrim(regexp_replace(c[19], '<[^>]+>', '', 'g')) ~ '^\\d+$')
+insert into public.arbitros_cr_cr (clave, nombre, inicio, fin, lugar, control, rondas, jugadores)
+select clave, coalesce(nullif({limpiar_sql("c[2]")}, ''), '(sin nombre)'),
+  replace(btrim(regexp_replace(c[6], '<[^>]+>', '', 'g')), '/', '-')::date,
+  nullif(replace(btrim(regexp_replace(c[7], '<[^>]+>', '', 'g')), '/', '-'), '')::date,
+  left({limpiar_sql("c[13]")}, 200), left({limpiar_sql("c[14]")}, 200),
+  coalesce(nullif(btrim(regexp_replace(c[17], '<[^>]+>', '', 'g')), '')::smallint, 0),
+  coalesce(nullif(btrim(regexp_replace(c[18], '<[^>]+>', '', 'g')), '')::int, 0)
+from t where clave = any('{{{",".join(str(c) for c in sorted(claves))}}}'::int[])
+on conflict (clave) do update set nombre = excluded.nombre, inicio = excluded.inicio, fin = excluded.fin, lugar = excluded.lugar,
+  control = excluded.control, rondas = excluded.rondas, jugadores = excluded.jugadores;"""
 
 
 HUELLA_SQL = """select (select md5(string_agg(concat_ws('|', id, nombre, ciudad, pais, inicio, fin, sistema, ritmo, jugadores, con_elo,
   contados, rondas, federaciones, valorado, af_estado, af_detalle, ai_estado, ai_detalle), E'\\n' order by id)) from public.arbitros_cr_torneos) torneos,
   (select md5(string_agg(concat_ws('|', torneo_id, fide_id, cargo), E'\\n' order by torneo_id, fide_id, cargo)) from public.arbitros_cr_cargos) cargos,
-  (select md5(string_agg(concat_ws('|', fide_id, nombre, titulo, titulo_detalle), E'\\n' order by fide_id)) from public.arbitros_cr) arbitros;"""
+  (select md5(string_agg(concat_ws('|', fide_id, nombre, titulo, titulo_detalle, solo_chess_results), E'\\n' order by fide_id)) from public.arbitros_cr) arbitros,
+  (select md5(string_agg(concat_ws('|', clave, inicio, fin, rondas, jugadores, fide_torneo), E'\\n' order by clave)) from public.arbitros_cr_cr) cr_torneos,
+  (select md5(string_agg(concat_ws('|', clave, fide_id, rol), E'\\n' order by clave, fide_id, rol)) from public.arbitros_cr_cr_cargos) cr_cargos;"""
 
 
-def huellas(torneos, cargos, arbitros):
+def huellas(torneos, cargos, arbitros, cr_torneos=None, cr_cargos=(), cruce=None):
     """Lo mismo que HUELLA_SQL, para comprobar que la base quedó igual a las
     cargas (concat_ws se salta los nulos, como acá)."""
     md5 = lambda filas: hashlib.md5("\n".join(filas).encode()).hexdigest()
@@ -197,26 +467,36 @@ def huellas(torneos, cargos, arbitros):
              t["conElo"], t["contados"], t["rondas"], len(t["federaciones"]), t["valorado"], t["af"]["estado"],
              t["af"]["detalle"][:400], t["ai"]["estado"], t["ai"]["detalle"][:400]) for t in sorted(torneos.values(), key=lambda t: t["id"])]
     c = [col(a, int(b), c) for a, b, c in sorted(cargos, key=lambda x: (x[0], int(x[1]), x[2]))]
-    a = [col(int(f), x["nombre"], x["titulo"], x["detalle"]) for f, x in sorted(arbitros.items(), key=lambda x: int(x[0]))]
-    return {"torneos": md5(t), "cargos": md5(c), "arbitros": md5(a)}
+    a = [col(int(f), x["nombre"], x["titulo"], x["detalle"], "t" if x.get("solo_cr") else "f")  # concat_ws escribe un booleano como t o f
+         for f, x in sorted(arbitros.items(), key=lambda x: int(x[0]))]
+    # De los torneos de chess-results, solo números y fechas: el texto lo
+    # escribe la base misma desde las respuestas del buscador.
+    ct = [col(k, v["inicio"], v["fin"], v["rondas"], v["jugadores"], (cruce or {}).get(k)) for k, v in sorted((cr_torneos or {}).items())]
+    cc = [col(a, int(b), c) for a, b, c in sorted(cr_cargos, key=lambda x: (x[0], int(x[1]), x[2]))]
+    return {"torneos": md5(t), "cargos": md5(c), "arbitros": md5(a), "cr_torneos": md5(ct), "cr_cargos": md5(cc)}
 
 
 def main():
     fuente, torneos, cargos, arbitros = armar()
+    cr_torneos, cr_cargos = armar_chess_results(arbitros)
+    cruce = cruzar_con_fide(cr_torneos, torneos, cargos, cr_cargos)
     con_cargo = {t for t, _, _ in cargos}
     print(f"{len(arbitros)} árbitros de Costa Rica, {len(torneos)} torneos ({len(con_cargo)} con algún árbitro de Costa Rica), {len(cargos)} cargos.")
     print("AF:", dict(Counter(t["af"]["estado"] for t in torneos.values())), " AI:", dict(Counter(t["ai"]["estado"] for t in torneos.values())))
+    print(f"chess-results: {len(cr_torneos)} torneos con algún árbitro de Costa Rica, {len(cr_cargos)} cargos, "
+          f"{len({f for _, f, _ in cr_cargos})} árbitros ({sum(1 for a in arbitros.values() if a.get('solo_cr'))} que solo están ahí); "
+          f"{len(cruce)} son el mismo torneo que uno de FIDE.")
     if "--resumen" in sys.argv:
         return
     if "--huella" in sys.argv:
-        print("Lo que debe dar en la base:", huellas(torneos, cargos, arbitros))
+        print("Lo que debe dar en la base:", huellas(torneos, cargos, arbitros, cr_torneos, cr_cargos, cruce))
         print(HUELLA_SQL)
         return
     os.makedirs(CARPETA, exist_ok=True)
     for viejo in os.listdir(CARPETA):
         if viejo.startswith("carga-") and viejo.endswith(".sql"):
             os.remove(os.path.join(CARPETA, viejo))
-    bloques = cargas(torneos, cargos, arbitros)
+    bloques = cargas(torneos, cargos, arbitros, cr_torneos, cr_cargos, cruce)
     # Todo en una transacción: las cargas se corren seguidas en la misma
     # conexión no se puede desde execute_sql, así que cada archivo es una
     # unidad y el primero borra. Se corren en orden; si una falla, se vuelve

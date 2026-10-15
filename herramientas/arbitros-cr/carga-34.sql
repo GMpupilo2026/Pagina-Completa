@@ -1,4 +1,4 @@
--- Carga 34 de 35 de la herramienta arbitros-cr. La arma herramientas/arbitros-cr.py: no se edita a mano.
+-- Carga 34 de 63 de la herramienta arbitros-cr. La arma herramientas/arbitros-cr.py: no se edita a mano.
 insert into public.arbitros_cr_cargos (torneo_id, fide_id, cargo) values
   (466181, 6512933, 'Arbiter'),
   (466181, 6513590, 'Arbiter'),

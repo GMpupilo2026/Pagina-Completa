@@ -2736,6 +2736,117 @@ después «ponerlo en herramientas pero con licencia», y primero lo de FIDE
   cargo (lo rompí haciendo contar al asistente y salta), los filtros, la
   ficha y el enlace directo `#ID`.
 
+## Árbitros de Costa Rica en chess-results
+
+La misma herramienta (`arbitros-cr.html`, que pasó a llamarse «Árbitros de
+Costa Rica») suma los torneos de chess-results (pedido del dueño, octubre de
+2026: «primero FIDE», después chess-results). En chess-results no hay normas:
+el buscador no dice si FIDE valoró el torneo, y los valorados ya están en la
+parte de FIDE. Lo que aporta es la actividad: todos los torneos, valorados o
+no, con quién fue árbitro principal, adjunto, árbitro, director u organizador.
+
+- **De dónde salen.** El buscador (`TurnierSuche.aspx`) pedido con pg_net, con
+  la federación CRC y un año por búsqueda (del 01/01 al 31/12, hasta 2000
+  filas; el año más grande, 2026, dio 603): 4495 torneos de 2007 a 2026 (antes
+  de 2007 casi no hay). **El POST va al servidor que dio el formulario**
+  (`https://S1.chess-results.com/…`, el `location` de la respuesta al GET):
+  mandado a `chess-results.com` redirige, la redirección lo vuelve GET y
+  devuelve el formulario vacío, sin ningún error. La tabla del buscador trae
+  las cinco columnas de quién hizo qué; **el nombre del torneo llega cortado
+  a 50 letras** (así lo da el buscador) y se guarda así, con el enlace al
+  torneo. Los torneos sin fecha en chess-results no salen en una búsqueda por
+  año (de los de Oscar Angulo, 7 de 930).
+- **A quién se reconoce** (`armar_chess_results()` en
+  `herramientas/arbitros-cr.py`). Una celda trae a una o varias personas, de
+  cualquier forma («IA. Angulo Cubero, Oscar (6501435)», «FA Zeledon Perez,
+  Edgar 6509851», «Oscar Angulo», «Neeshmy Núñez, Edgar Zeledón»…), así que no
+  se parte: se busca a cada árbitro conocido adentro, sin tildes ni títulos.
+  Por su ID FIDE, **solo si al lado está su primer apellido** (hay ID mal
+  escritos: 6500189 por 6508189, 65005694 por 6505694), o por su nombre:
+  «Apellido1 Apellido2, Nombre», «Nombre [segundo] Apellido1» y «Segundo
+  nombre Apellido1 Apellido2» («Josué Amaya Madrigal» es Amaya Madrigal,
+  Alvaro Josue). «Apellido Nombre» solo para quien tiene un apellido: con
+  dos, «Martinez Luis» calzaba en «Loria Martinez, Luis Felipe». Si dos
+  árbitros comparten nombre y primer apellido (Stanley Gómez Huertas y
+  Stanley Gómez Villalobos), a los dos se les pide el segundo apellido.
+- **Los que solo están en chess-results.** Los ID FIDE de las celdas que no
+  eran de los árbitros de FIDE (132) se buscaron en el perfil de FIDE
+  (nombre y bandera): los de Costa Rica cuyo apellido calza con la celda
+  entran a la lista (`solo_chess_results`), **solo si alguna vez fueron
+  árbitro principal, adjunto o árbitro**: quien solo dirigió u organizó
+  (Luis Quirós Rojas, Marlin Porras Cubero, Arleth González Camacho) no es
+  un árbitro. Quedan en `herramientas/datos/arbitros-cr-perfiles-chess-results.json`.
+  Quien nunca figura con su ID (Sebastián Castillo Chavarría, Eduardo Acuña
+  Chacón…) no se puede reconocer y no está.
+- **Comprobado contra la recopilación de Oscar Angulo** (que se revisó a
+  mano): de sus 930 torneos de la federación de Costa Rica, 921 salen acá y
+  ninguno de más; los 9 que faltan son 7 sin fecha y 2 con su nombre escrito
+  «Angulo Oscar» o «IOscar Angulo Cubero».
+- **La carga de los torneos no pasa por la conversación**: el SQL
+  (`cr_torneos_sql()`, la carga que dice «Lee las respuestas del buscador»)
+  los lee de `net._http_response` (`RESPUESTAS_CR`), mientras pg_net no los
+  borre, y limpia el texto ahí mismo: sin etiquetas, con las entidades de
+  letras y puntuación traducidas y sin las de emojis y símbolos de piezas.
+  Solo se suben los cargos (números). Por eso la huella de
+  `arbitros_cr_cr` mira números y fechas, no el texto. Otra descarga cambia
+  `RESPUESTAS_CR`.
+- **La página** suma la columna «En chess-results» a la lista (y cuenta a
+  quien solo está ahí), la tabla de sus torneos de chess-results en la ficha
+  (con su rol y el enlace al torneo) y una hoja más en el Excel. Las tablas
+  de cargos se piden ordenadas por su clave completa: ordenadas por una
+  columna que se repite, de mil en mil, una fila puede caer en dos páginas o
+  en ninguna.
+- **Lo que dio la carga (15/10/2026):** 4211 torneos de chess-results con
+  algún árbitro de Costa Rica, 11 993 cargos y 34 árbitros que solo están
+  ahí (la lista pasó de 132 a 166). Las cinco huellas de la base dieron
+  iguales a las del generador (la de `arbitros_cr` con el booleano escrito
+  `t`/`f`, como lo escribe `concat_ws`), y el candado, impersonando en SQL:
+  sin la licencia, 0 filas en las tablas nuevas.
+- `verificar-arbitros-cr.js` suma una persona que solo está en chess-results
+  y comprueba la columna, la ficha y el enlace (lo rompí dejando fuera a
+  quien no tiene torneos de FIDE y salta).
+
+## El mismo torneo en FIDE y en chess-results
+
+En `arbitros-cr.html` cada torneo sale **una vez** (pedido del dueño, octubre
+de 2026: «que no haya duplicados; en el filtro, todos, pero poder filtrar por
+FIDE y no FIDE»). Un torneo valorado por FIDE casi siempre está también en
+chess-results, y sin cruzarlos se contaba dos veces.
+
+- **El cruce** (`cruzar_con_fide()` en `herramientas/arbitros-cr.py`, y la
+  columna `arbitros_cr_cr.fide_torneo`, única: uno a uno). Si el nombre de
+  chess-results trae el código de FIDE entre paréntesis («Torneo Blitz de
+  Canes (139418)»), ese. Si no, un torneo de FIDE que empezó el mismo día
+  (±1), con dos palabras del nombre en común y sin chocar en categoría
+  (U14/Sub-16), división (con `\b`: «ii division» calzaba dentro de «iii
+  division»), rama (femenino/absoluto), año ni ritmo, con un puntaje:
+  parecido del nombre, mismas rondas y jugadores, y **si comparten árbitro
+  (suma 2) o tienen árbitros distintos (resta 1,5)**. Se emparejan de mayor
+  a menor puntaje. Antes de sumar el árbitro, los dos Festival
+  Centroamericano Sub-14 de 2013 (absoluto y femenino) quedaban cruzados al
+  revés.
+- **El ritmo como lo cuenta FIDE**: base + incremento × 60 jugadas. Un «30 +
+  30» es clásico (60 minutos), no rápido; contado solo por la base, el
+  cruce rechazaba 659 pares buenos.
+- **Lo que dio** (15/10/2026): 973 de los 4029 torneos de chess-results son
+  el mismo que uno de FIDE, y en 955 de ellos el mismo árbitro está en los
+  dos lados. Los nombres de chess-results llegan cortados a 50 letras, y el
+  de FIDE se compara cortado igual.
+- **En la página**: la lista cuenta «Torneos», «FIDE» (los que FIDE valoró,
+  estén o no en chess-results) y «No FIDE» (los que solo están en
+  chess-results), y el filtro «Torneos» (Todos / Solo FIDE / No FIDE) vale
+  para la lista y la ficha. La ficha es una sola tabla: el torneo de FIDE
+  lleva sus dos enlaces y los cargos de los dos lados. Quien arbitró un
+  torneo de FIDE según chess-results pero no figura en la ficha de FIDE
+  queda «Revisar» (para FIDE, sin estar en su ficha, no cuenta); quien solo
+  fue director u organizador, «No».
+- **Los que no se jugaron, fuera** (pedido del dueño): un torneo de
+  chess-results de prueba («test 260319») o sin rondas o sin jugadores no
+  entra a la carga (`es_basura()`) y la página tampoco lo muestra. De los
+  que tenían árbitros de Costa Rica eran 182, ninguno «de prueba». Los
+  torneos de FIDE no se tocan: sin rondas ahí es que FIDE no publica el
+  ronda a ronda, no que no se jugó.
+
 ## Historial del jugador y estadísticas por colegio
 
 Dos herramientas gratis y públicas, hechas con los mismos torneos de

@@ -1,4 +1,4 @@
--- Carga 5 de 35 de la herramienta arbitros-cr. La arma herramientas/arbitros-cr.py: no se edita a mano.
+-- Carga 5 de 63 de la herramienta arbitros-cr. La arma herramientas/arbitros-cr.py: no se edita a mano.
 insert into public.arbitros_cr_torneos (id, nombre, ciudad, pais, inicio, fin, sistema, ritmo, jugadores, con_elo, contados, rondas, federaciones, valorado, af_estado, af_detalle, ai_estado, ai_detalle) values
   (119118, convert_from(decode('Q2FtcGVvbmF0byBOYWNpb25hbCBkZSBUZXJjZXJhIENhdGVnb3JpYSAyMDE1', 'base64'), 'UTF8'), 'San Jose', 'Costa Rica', '2015-08-08', '2015-08-16', 'r', 'Standard', 8, 8, 7, 7, 1, 'septiembre de 2015', 'no', '7 jugadores con Elo que jugaron casi todo (pide 8)', 'no', 'nacional: solo vale la final del campeonato nacional o el nacional por equipos'),
   (119390, convert_from(decode('QmxpdHogZGUgSnVsaW8gZGUgQ2FydGFnbyAyMDE1', 'base64'), 'UTF8'), 'Cartago', 'Costa Rica', '2015-07-31', '2015-07-31', 's', 'Blitz', 21, 21, 21, 0, 1, 'septiembre de 2015', 'no', 'blitz: pide 30 jugadores con Elo y 9 rondas (tiene 21; las rondas, FIDE no las publica)', 'no', 'blitz: solo valen los campeonatos mundiales o continentales oficiales'),

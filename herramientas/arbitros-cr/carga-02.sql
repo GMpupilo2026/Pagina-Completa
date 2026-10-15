@@ -1,4 +1,4 @@
--- Carga 2 de 35 de la herramienta arbitros-cr. La arma herramientas/arbitros-cr.py: no se edita a mano.
+-- Carga 2 de 63 de la herramienta arbitros-cr. La arma herramientas/arbitros-cr.py: no se edita a mano.
 insert into public.arbitros_cr_torneos (id, nombre, ciudad, pais, inicio, fin, sistema, ritmo, jugadores, con_elo, contados, rondas, federaciones, valorado, af_estado, af_detalle, ai_estado, ai_detalle) values
   (5308, convert_from(decode('Q29zdGEgUmljYW4gTmF0aW9uYWwgQ2htcA==', 'base64'), 'UTF8'), 'San Jose', 'Costa Rica', '2006-06-11', '2006-06-25', 's', 'Standard', 43, 42, 42, 0, 1, 'enero de 2007', 'revisar', 'FIDE no publica cuántas rondas tuvo; si fueron las que pide: Suizo, 42 jugadores con Elo, 9 rondas', 'no', 'nacional: solo vale la final del campeonato nacional o el nacional por equipos'),
   (5309, convert_from(decode('Q29zdGEgUmljYW4gbmF0aW9uYWwgQ2htcA==', 'base64'), 'UTF8'), 'San Jose', 'Costa Rica', '2006-09-14', '2006-09-28', 'r', 'Standard', 14, 0, 0, 0, 0, '', 'no', 'FIDE no lo valoró: no tiene jugadores con Elo', 'no', 'FIDE no lo valoró: no tiene jugadores con Elo'),

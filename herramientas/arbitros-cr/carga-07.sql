@@ -1,4 +1,4 @@
--- Carga 7 de 35 de la herramienta arbitros-cr. La arma herramientas/arbitros-cr.py: no se edita a mano.
+-- Carga 7 de 63 de la herramienta arbitros-cr. La arma herramientas/arbitros-cr.py: no se edita a mano.
 insert into public.arbitros_cr_torneos (id, nombre, ciudad, pais, inicio, fin, sistema, ritmo, jugadores, con_elo, contados, rondas, federaciones, valorado, af_estado, af_detalle, ai_estado, ai_detalle) values
   (157111, convert_from(decode('UGFuYW1lcmljYW4gWW91dGggQ2hhbXBpb25zaGlwIDIwMTcgVS0xMA==', 'base64'), 'UTF8'), 'San Jose', 'Costa Rica', '2017-07-01', '2017-07-06', 's', 'Standard', 54, 54, 54, 9, 20, 'agosto de 2017', 'si', 'Suizo, 54 jugadores con Elo, 9 rondas', 'revisar', 'Evento oficial de FIDE o continental (4.8.2): revisar'),
   (157112, convert_from(decode('UGFuYW1lcmljYW4gWW91dGggQ2hhbXBpb25zaGlwIDIwMTcgVS0xMg==', 'base64'), 'UTF8'), 'San Jose', 'Costa Rica', '2017-07-01', '2017-07-06', 's', 'Standard', 57, 57, 56, 9, 14, 'agosto de 2017', 'si', 'Suizo, 56 jugadores con Elo, 9 rondas', 'revisar', 'Evento oficial de FIDE o continental (4.8.2): revisar'),

@@ -686,7 +686,7 @@ NOMBRE_Y_PADRE = {
     "desempates.html": ("Desempates explicados", "clases.html"),
     "jdn-comites.html": ("Resultados JDN por comité", "clases.html"),
     "jdn-proyeccion.html": ("Proyección JDN por comité", "clases.html"),
-    "arbitros-cr.html": ("Árbitros de Costa Rica en FIDE", "clases.html"),
+    "arbitros-cr.html": ("Árbitros de Costa Rica", "clases.html"),
     "encuesta-profesor.html": ("¿Cómo van tus clases?", "clases.html"),
     "justificaciones.html": ("Justificaciones de ausencia", "clases.html"),
     "satisfaccion.html": ("Satisfacción con los profesores", "clases.html"),

@@ -1,4 +1,4 @@
--- Carga 11 de 35 de la herramienta arbitros-cr. La arma herramientas/arbitros-cr.py: no se edita a mano.
+-- Carga 11 de 63 de la herramienta arbitros-cr. La arma herramientas/arbitros-cr.py: no se edita a mano.
 insert into public.arbitros_cr_torneos (id, nombre, ciudad, pais, inicio, fin, sistema, ritmo, jugadores, con_elo, contados, rondas, federaciones, valorado, af_estado, af_detalle, ai_estado, ai_detalle) values
   (221547, convert_from(decode('SSBUb3JuZW8gQW1hdGV1ciBTYW4gUmFtb24gMjAxOQ==', 'base64'), 'UTF8'), 'San Ramon', 'Costa Rica', '2019-06-01', '2019-06-08', 's', 'Standard', 30, 14, 14, 0, 1, 'julio de 2019', 'no', '14 jugadores con Elo que jugaron casi todo (pide 20)', 'no', 'nacional: solo vale la final del campeonato nacional o el nacional por equipos'),
   (221548, convert_from(decode('Q2xhc2lmaWNhdG9yaW8gZGUgQ3VhcnRhIENhdGVnb3JpYSBBbGFqdWVsaXRhIDIwMTk=', 'base64'), 'UTF8'), 'Alajuelita', 'Costa Rica', '2019-06-15', '2019-06-16', 's', 'Standard', 30, 18, 18, 0, 1, 'julio de 2019', 'no', '18 jugadores con Elo que jugaron casi todo (pide 20)', 'no', 'nacional: solo vale la final del campeonato nacional o el nacional por equipos'),

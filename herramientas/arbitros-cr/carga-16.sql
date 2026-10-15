@@ -1,4 +1,4 @@
--- Carga 16 de 35 de la herramienta arbitros-cr. La arma herramientas/arbitros-cr.py: no se edita a mano.
+-- Carga 16 de 63 de la herramienta arbitros-cr. La arma herramientas/arbitros-cr.py: no se edita a mano.
 insert into public.arbitros_cr_torneos (id, nombre, ciudad, pais, inicio, fin, sistema, ritmo, jugadores, con_elo, contados, rondas, federaciones, valorado, af_estado, af_detalle, ai_estado, ai_detalle) values
   (339880, convert_from(decode('QWplZHJleiBDb21wbGVqbyBFZHVjYXRpdm8gQ0lU', 'base64'), 'UTF8'), 'Heredia', 'Costa Rica', '2023-09-03', '2023-09-03', 's', 'Blitz', 30, 28, 28, 0, 1, 'octubre de 2023', 'no', 'blitz: pide 30 jugadores con Elo y 9 rondas (tiene 28; las rondas, FIDE no las publica)', 'no', 'blitz: solo valen los campeonatos mundiales o continentales oficiales'),
   (341476, convert_from(decode('RmVzdGl2YWwgQ2VudHJvYW1lcmljYW5vIHkgQ2FyaWJlIEVzY29sYXIgMjAyMyBVMTc=', 'base64'), 'UTF8'), 'San Jose', 'Costa Rica', '2023-09-13', '2023-09-18', 's', 'Standard', 30, 16, 15, 9, 2, 'octubre de 2023', 'no', '15 jugadores con Elo que jugaron casi todo (pide 20)', 'revisar', 'Evento oficial de FIDE o continental (4.8.2): revisar'),

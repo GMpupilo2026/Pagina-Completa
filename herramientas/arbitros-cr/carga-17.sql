@@ -1,4 +1,4 @@
--- Carga 17 de 35 de la herramienta arbitros-cr. La arma herramientas/arbitros-cr.py: no se edita a mano.
+-- Carga 17 de 63 de la herramienta arbitros-cr. La arma herramientas/arbitros-cr.py: no se edita a mano.
 insert into public.arbitros_cr_torneos (id, nombre, ciudad, pais, inicio, fin, sistema, ritmo, jugadores, con_elo, contados, rondas, federaciones, valorado, af_estado, af_detalle, ai_estado, ai_detalle) values
   (364812, convert_from(decode('SSBUb3JuZW8gQmxpdHogVXZpZXRhIEVuZXJnaWEgMjAyNA==', 'base64'), 'UTF8'), 'San Jose', 'Costa Rica', '2024-03-12', '2024-03-12', 's', 'Blitz', 30, 16, 16, 0, 1, 'abril de 2024', 'no', 'blitz: pide 30 jugadores con Elo y 9 rondas (tiene 16; las rondas, FIDE no las publica)', 'no', 'blitz: solo valen los campeonatos mundiales o continentales oficiales'),
   (365330, convert_from(decode('SSBBREFNTyBJUlQgRmVicmVybyBBIDIwMjQ=', 'base64'), 'UTF8'), 'San Jose', 'Costa Rica', '2024-02-11', '2024-03-25', 'r', 'Standard', 8, 8, 7, 7, 1, 'abril de 2024', 'no', '7 jugadores con Elo que jugaron casi todo (pide 8)', 'no', 'nacional: solo vale la final del campeonato nacional o el nacional por equipos'),

@@ -1,4 +1,4 @@
--- Carga 4 de 35 de la herramienta arbitros-cr. La arma herramientas/arbitros-cr.py: no se edita a mano.
+-- Carga 4 de 63 de la herramienta arbitros-cr. La arma herramientas/arbitros-cr.py: no se edita a mano.
 insert into public.arbitros_cr_torneos (id, nombre, ciudad, pais, inicio, fin, sistema, ritmo, jugadores, con_elo, contados, rondas, federaciones, valorado, af_estado, af_detalle, ai_estado, ai_detalle) values
   (90572, convert_from(decode('Q2FtcGVvbmF0byBOYWNpb25hbCBKdXZlbmlsIENSQyAyMDE0', 'base64'), 'UTF8'), 'Moravia', 'Costa Rica', '2014-01-15', '2014-01-19', 's', 'Standard', 60, 34, 33, 9, 1, 'febrero de 2014', 'si', 'Suizo, 33 jugadores con Elo, 9 rondas', 'no', 'nacional: solo vale la final del campeonato nacional o el nacional por equipos'),
   (90573, convert_from(decode('Q2FtcGVvbmF0byBOYWNpb25hbCBKdXZlbmlsIEZlbWVuaW5vIENSQyAyMDE0', 'base64'), 'UTF8'), 'Moravia', 'Costa Rica', '2014-01-15', '2014-01-19', 's', 'Standard', 30, 16, 16, 9, 1, 'febrero de 2014', 'no', '16 jugadores con Elo que jugaron casi todo (pide 20)', 'no', 'nacional: solo vale la final del campeonato nacional o el nacional por equipos'),
