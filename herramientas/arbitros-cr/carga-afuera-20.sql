@@ -1,4 +1,4 @@
--- Carga 20 de 20 de la herramienta arbitros-cr. La arma herramientas/arbitros-cr.py: no se edita a mano.
+-- Carga 20 de 21 de la herramienta arbitros-cr. La arma herramientas/arbitros-cr.py: no se edita a mano.
 insert into public.arbitros_cr_cr_cargos (clave, fide_id, rol) values
   (18367, 6500382, 'arb'),
   (51625, 6505244, 'arb'),
@@ -189,13 +189,16 @@ insert into public.arbitros_cr_cr_cargos (clave, fide_id, rol) values
   (1092671, 6500579, 'adj'),
   (1092674, 6500579, 'adj'),
   (1133118, 6500463, 'ap'),
+  (1167290, 6510582, 'ap'),
   (1192895, 6558216, 'arb'),
   (1192897, 6558216, 'arb'),
+  (1212209, 6524575, 'ap'),
   (1223023, 6500579, 'ap'),
   (1226467, 6558216, 'arb'),
   (1226473, 6558216, 'arb'),
   (1228839, 6558216, 'arb'),
   (1228852, 6558216, 'arb'),
+  (1241286, 6510582, 'ap'),
   (1244430, 6502849, 'arb'),
   (1245594, 6505694, 'arb'),
   (1245595, 6505694, 'arb'),

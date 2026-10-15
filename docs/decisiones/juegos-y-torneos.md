@@ -2921,9 +2921,18 @@ la columna «En el extranjero».
     respetan los signos: «Isaac 3896536; Ochoa Rivera» no es «Isaac Rivera».
   Venezuela y México salieron de `CERCA` por un «Luis Calvo» y un «Carlos
   Salazar» que no eran.
-- **Lo que queda fuera.** Los de chess-results sin federación (en blanco: no
-  se sabe dónde se jugaron, y unos son de Valencia y otros de un club de
-  Costa Rica), los que no se jugaron (sin rondas o jugadores, como en Costa
+- **Los sin federación** (en blanco en chess-results; pedido del dueño,
+  octubre de 2026: «decidir dónde se jugaron»). El lugar venía vacío en los
+  que tenían un árbitro de Costa Rica, así que no servía. Sirve **la
+  federación de sus jugadores**: la lista de cada uno (`tnrCLAVE.aspx`) se
+  contó a mano y quedó en `herramientas/datos/arbitros-cr-sin-federacion.json`
+  (cuántos con federación y cuántos de CRC). Con el 80 % o más de CRC, el
+  torneo se jugó acá y entra como de Costa Rica (con su cruce con FIDE: los
+  tres eran el mismo torneo que uno de FIDE). Dos del Círculo Ponziani (10 de
+  10, 8 de 8) y el «II Torneo por la Plata» (26 de 27) entraron; los tres de
+  Valencia (0 de 46, 0 de 31, 0 de 62) no. `--afuera` carga todo lo que salió
+  de la búsqueda en todos los países, también estos.
+- **Lo que queda fuera.** Los sin federación que no son de Costa Rica, los que no se jugaron (sin rondas o jugadores, como en Costa
   Rica) y los torneos donde alguien de Costa Rica solo dirigió u organizó.
   Las federaciones que no son países salen dichas: `FID` es un evento de FIDE
   y `CCA`, de la Confederación de Ajedrez de América.
@@ -2978,6 +2987,21 @@ se ven desde afuera:
 - `verificar-arbitros-cr.js` lo prueba con Luis (sin título: 1 de 3), Ana (AF:
   ya lo tiene; para AI, 0 de 4 y una para revisar), Juan (su norma de 2015 ya
   no cuenta) y Óscar (IA). Lo rompí quitando el límite de seis años y salta.
+
+## La ficha de un árbitro en PDF
+
+«Descargar en PDF» en la ficha de `arbitros-cr.html` (pedido del dueño,
+octubre de 2026, para adjuntar a una solicitud): el nombre, su título y su
+ID FIDE, los filtros puestos, los dos cuadros de normas (el mismo texto de
+la pantalla: `textoNorma()` lo arma para los dos) y la tabla de torneos con
+los filtros que estén puestos, con `js/reporte-pdf.js` (sin librería). Se
+arma con los datos, no copiando la pantalla. Esa tabla **recorta** las celdas
+(a propósito, no parte renglones), así que el cargo va corto («Principal»,
+«Adjunto», «Pareos»…) con una nota que lo explica, y las columnas «Rds.» y
+«Jug.»; el porqué de cada norma queda en la ficha en línea y en el Excel.
+`verificar-arbitros-cr.js` baja el PDF de Luis y busca su nombre, el cuadro
+de AF, su torneo y la nota de las fuentes (lo rompí sacando los cuadros y
+salta); la tabla se miró convertida a imagen.
 
 ## Historial del jugador y estadísticas por colegio
 

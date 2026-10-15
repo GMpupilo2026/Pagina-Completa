@@ -279,6 +279,11 @@ const porNombre = (m) => Object.fromEntries(m.map((f) => [f[0], f]));
     igual("Luis, sin título: 1 norma de AF de las 3 (el internacional de 2023), le faltan 2", [e1, /Junta 1 de las 3/.test(t1), /01\/03\/2023 · Internacional con titulados 2023 \(Vale\)/.test(t1)],
         ["Le faltan 2", true, true]);
     igual("y para AI, primero el AF", (await tarjeta("ai"))[0], "Primero el AF");
+    const [descarga] = await Promise.all([p.waitForEvent("download"), p.click("#pdf")]);
+    const pdf = require("fs").readFileSync(await descarga.path()).toString("latin1");
+    igual("la ficha en PDF: su nombre, el cuadro de AF, su torneo y la nota de las fuentes",
+        [descarga.suggestedFilename(), pdf.slice(0, 5), pdf.includes("(Rojas Prueba, Luis)"), pdf.includes("Le faltan 2."), pdf.includes("(Internacional con titulados 2023)"), pdf.includes("chess-results.com")],
+        ["arbitro-6500003.pdf", "%PDF-", true, true, true, true]);
     await ctx.close();
     ({ ctx, p } = await abrir(browser, "arbitros-cr.html#6500004", true));
     await p.waitForFunction(() => document.getElementById("ficha").checkVisibility());
