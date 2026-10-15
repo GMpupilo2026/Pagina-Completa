@@ -7,6 +7,10 @@
      UniversidadesNombres.universidad(nombre, esEquipo) → "UCR", "TEC",
        "UNAH (Honduras)"…; "" si no dice universidad (un país solo, vacío).
      UniversidadesNombres.conocida(nombre) → si es una de la lista.
+     UniversidadesNombres.clave(nombre) / .mismo(a, b) → una persona: su
+       nombre sin tildes ni signos, y dos claves son la misma si una empieza
+       la otra (chess-results corta los nombres largos). Iguales a las de
+       js/jdn-comites.js: el enlace «#~~j=clave» de universidades.html las usa.
      UniversidadesNombres.extranjera(crudo) → si el nombre (tal como lo
        escribe chess-results) es de una universidad o un país de afuera: las
        dos páginas muestran solo las de Costa Rica.
@@ -84,5 +88,8 @@
         return PAIS_AFUERA.test(s) || (conocida(u) && /\)$/.test(u));
     };
 
-    raiz.UniversidadesNombres = { universidad, conocida, extranjera };
+    const clave = (n) => sinTilde(String(n || "")).toLowerCase().replace(/[^a-z ]/g, "").replace(/\s+/g, " ").trim();
+    const mismo = (a, b) => a === b || (a.length > 12 && b.startsWith(a)) || (b.length > 12 && a.startsWith(b));
+
+    raiz.UniversidadesNombres = { universidad, conocida, extranjera, clave, mismo };
 })(typeof self !== "undefined" ? self : this);
