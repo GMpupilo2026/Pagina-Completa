@@ -2948,6 +2948,37 @@ la columna «En el extranjero».
   columna, «No consta» y el país en el lugar (lo rompí dejando todo «en Costa
   Rica» y salta).
 
+## El resumen de normas de cada árbitro
+
+La ficha de un árbitro en `arbitros-cr.html` abre con dos cuadros, uno para
+AF y otro para AI: cuántas normas de torneo podría juntar **hoy** para la
+solicitud del título (pedido del dueño, octubre de 2026). Lo arma
+`cuentaNormas()` en `js/arbitros-cr.js` con lo que ya dice cada torneo
+(`normaDe()`, su cargo incluido) y las reglas de la solicitud de B.06.1 que
+se ven desde afuera:
+
+- **Los últimos seis años**, contados desde hoy en hora de Costa Rica
+  (`HoraCR.hoy()`). Lo que valía y es más viejo se cuenta aparte y se dice.
+- **Una por grupo de fechas que se tocan**: un festival lo es, y también dos
+  torneos que se solapan aunque no empiecen el mismo día. De cada grupo vale
+  el mejor.
+- **Topes**: todas las «Vale», una sola «Vale (una así)» (la de 5 o 6 rondas
+  para AF, la de 7 u 8 para AI) y una sola «Vale una vez» (rápido o blitz,
+  nacional por equipos, el internacional de 100). Las demás se cuentan como
+  sobrantes. Las «Revisar» no se suman: se dice cuántas son.
+- **AF pide 3 normas de al menos dos sistemas; AI pide 4 y va después del
+  AF.** El cuadro dice «Ya tiene el título» (según el perfil de FIDE),
+  «Primero el AF», «Le alcanzaría», «Le falta otro sistema» o «Le faltan N»,
+  siempre escrito y con la lista de los torneos que cuenta.
+- Lo que no se ve desde afuera va escrito debajo: el seminario, si los
+  certificados se emitieron y quién los firmó, que no todas las de AI sean de
+  la misma persona y el tope de dos finales nacionales.
+- Los torneos del extranjero no entran: no se sabe si FIDE los valoró (ver
+  «Árbitros de Costa Rica en el extranjero»).
+- `verificar-arbitros-cr.js` lo prueba con Luis (sin título: 1 de 3), Ana (AF:
+  ya lo tiene; para AI, 0 de 4 y una para revisar), Juan (su norma de 2015 ya
+  no cuenta) y Óscar (IA). Lo rompí quitando el límite de seis años y salta.
+
 ## Historial del jugador y estadísticas por colegio
 
 Dos herramientas gratis y públicas, hechas con los mismos torneos de
