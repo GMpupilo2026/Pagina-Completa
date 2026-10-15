@@ -9,9 +9,11 @@
    - con licencia lee uni_resultados de mil en mil (hay 1100 filas de un solo
      torneo) y nunca pide jdn_* ni uni_tableros (no hay);
    - junta las variantes y las sedes de una misma universidad («UCR Grecia»,
-     «Universidad de Costa Rica», «UCR (CRC)»; «ITCR», «TEC Alajuela»), deja
-     aparte las de otro país con el mismo nombre («UNA - NCA» es la UNA de
-     Nicaragua) y un país solo («NIC») no es una universidad;
+     «Universidad de Costa Rica», «UCR (CRC)»; «ITCR», «TEC Alajuela»;
+     «Santa Barbara» es la UNED), y solo salen las de Costa Rica: ni «UNA -
+     NCA» (la UNA de Nicaragua) ni «UNAH - HONDURAS», en ninguna lista, y un
+     país solo («NIC») no es una universidad; el puesto de las de Costa Rica
+     sigue siendo el de la tabla completa;
    - el medallero tiene las columnas de universidades.html (sin zona,
      tableros ni eliminatorias) y ordena por oros, platas y bronces;
    - a quien no trae universidad (los JUDUCA individuales traen el país) se
@@ -54,6 +56,8 @@ fila("2022-CONARE", "R-U-IA", 1103, 3, "Quesada Mena, Eva", "Universidad de Cost
 fila("2023-JUNCOS", "R-U-IF", 1, 1, "Rojas Arias, Lia", "TEC Alajuela", 5);
 fila("2023-JUNCOS", "R-U-IF", 2, 2, "Perez Mora, Leo", "UNA Omar Dengo", 4);
 fila("2023-JUNCOS", "R-U-IF", 3, 3, "Vega Soto, Ema", "NIC", 3);
+// «Santa Barbara» es la UNED (un funcionario en la FEDEU 2023).
+fila("2023-FEDEU", "R-FUN-IA", 1, 1, "Vega Araya, Edwin", "Santa Barbara", 4);
 fila("2023-JUNCOS", "R-U-EA", 1, 1, "UCR (CRC)", "", 10, "3-0-0");
 fila("2023-JUNCOS", "R-U-EA", 2, 2, "UNA - NCA", "", 6, "1-0-2");
 fila("2023-JUNCOS", "R-U-EA", 3, 3, "Tecnológico de Costa Rica", "", 4, "0-0-3");
@@ -169,9 +173,11 @@ const palabrasJdn = (p) => p.evaluate((re) => {
     igual("las columnas del medallero son las de universidades.html",
         await p.$$eval("#medallero thead th", (ths) => ths.map((t) => t.textContent.trim())),
         ["Universidad", "🥇 Oro", "🥈 Plata", "🥉 Bronce", "Medallas ind.", "Medallas eq.", "Participaciones ind.", "Equipos"]);
-    igual("junta sedes y variantes; la UNA de Nicaragua va aparte; «NIC» no es una universidad; ordena por oros",
+    igual("junta sedes y variantes; «Santa Barbara» es la UNED; ni la UNA de Nicaragua ni la UNAH; «NIC» no es una universidad; ordena por oros",
         (await medallero(p)).map((f) => f.slice(0, 4)),
-        [["UCR", "2", "", "1"], ["UNED", "2", "", ""], ["TEC", "1", "1", "1"], ["UNAH (Honduras)", "", "2", ""], ["UNA", "", "1", ""], ["UNA (Nicaragua)", "", "1", ""]]);
+        [["UNED", "3", "", ""], ["UCR", "2", "", "1"], ["TEC", "1", "1", "1"], ["UNA", "", "1", ""]]);
+    igual("ninguna universidad de afuera en la lista para elegir",
+        await p.$$eval("#comite option", (os) => os.filter((o) => /Nicaragua|Honduras|NIC/.test(o.textContent)).length), 0);
     igual("cada fila tiene una celda por columna", (await medallero(p)).every((f) => f.length === 8), true);
     igual("el título y la introducción hablan de universidades",
         [await p.$eval("#general-titulo", (e) => e.textContent), /universidad/.test(await p.$eval("#intro", (e) => e.textContent))], ["Medallero de todos los torneos", true]);
@@ -193,7 +199,7 @@ const palabrasJdn = (p) => p.evaluate((re) => {
     await p.selectOption("#comite", "");
     await p.selectOption("#f-serie", "JUDUCA");
     await p.waitForFunction(() => /JUDUCA/.test(document.getElementById("filtros-activos").textContent));
-    igual("el filtro «Evento» deja solo los JUDUCA", (await medallero(p)).map((f) => f[0]), ["UNED", "UNAH (Honduras)"]);
+    igual("el filtro «Evento» deja solo los JUDUCA, sin la UNAH", (await medallero(p)).map((f) => f[0]), ["UNED"]);
     igual("el enlace guarda el evento", await p.evaluate(() => decodeURIComponent(location.hash)), "#~~serie=JUDUCA");
     await ctx.close();
 

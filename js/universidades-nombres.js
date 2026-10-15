@@ -7,6 +7,9 @@
      UniversidadesNombres.universidad(nombre, esEquipo) → "UCR", "TEC",
        "UNAH (Honduras)"…; "" si no dice universidad (un país solo, vacío).
      UniversidadesNombres.conocida(nombre) → si es una de la lista.
+     UniversidadesNombres.extranjera(crudo) → si el nombre (tal como lo
+       escribe chess-results) es de una universidad o un país de afuera: las
+       dos páginas muestran solo las de Costa Rica.
 */
 (function (raiz) {
     "use strict";
@@ -24,7 +27,9 @@
         [/^(una catacamas|unag|universidad (nacional )?de agricultura)\b/, "UNAG (Honduras)"],
         [/^(ucr|sur ucr|universidad de costa rica)\b/, "UCR"],
         [/^(tec|itcr|itc|it|tecnologico de costa rica|instituto tecnologico)\b/, "TEC"],
-        [/^(uned|une|universidad estatal a distancia)\b/, "UNED"],
+        // «Santa Barbara» es la UNED: así se inscribió un funcionario en la
+        // FEDEU 2023 (el torneo de funcionarios, en el paraninfo de la UNED).
+        [/^(uned|une|universidad estatal a distancia|santa barbara)\b/, "UNED"],
         [/^(utn|universidad tecnica nacional)\b/, "UTN"],
         [/^cuc\b/, "CUC"],
         [/^(ula|u ?latina|ulatina|universidad latina)\b/, "ULatina"],
@@ -70,5 +75,14 @@
     const CONOCIDAS = new Set(UNIVERSIDADES.map((x) => x[1]));
     const conocida = (n) => CONOCIDAS.has(n);
 
-    raiz.UniversidadesNombres = { universidad, conocida };
+    /* De afuera: una de la lista con su país («UNAH (Honduras)») o un país
+       que no es Costa Rica («NIC», los JUDUCA individuales sin universidad). */
+    const PAIS_AFUERA = /^(nic|nca|pan|gua|hon|esa|slv|biz)$/;
+    const extranjera = (crudo) => {
+        const s = sinTilde(String(crudo || "")).toLowerCase().replace(/\s+/g, " ").trim();
+        const u = universidad(crudo, true);
+        return PAIS_AFUERA.test(s) || (conocida(u) && /\)$/.test(u));
+    };
+
+    raiz.UniversidadesNombres = { universidad, conocida, extranjera };
 })(typeof self !== "undefined" ? self : this);
