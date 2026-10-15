@@ -59,6 +59,7 @@
             { emoji: "🏅", label: "Selección por parámetros", desc: "La selección CODICADER desde chess-results, en vivo ronda a ronda", href: "seleccion-codicader.html", zona: "contenido" },
             { emoji: "🏆", label: "Resultados JDN por comité", desc: "Medallero y ficha de cada comité en los Juegos Deportivos Nacionales, de 2018 a hoy", href: "jdn-comites.html", zona: "contenido" },
             { emoji: "🎓", label: "Resultados universitarios por universidad", desc: "Medallero y ficha de cada universidad en los JUNCOS, CONARE, FEDEU, FECUNDE y JUDUCA, de 2010 a hoy", href: "universidades.html", zona: "contenido" },
+            { emoji: "📅", label: "Torneos universitarios de Costa Rica", desc: "Todos los torneos universitarios de chess-results, entre universidades y de cada una, con su podio", href: "torneos-universitarios.html", zona: "contenido" },
             { emoji: "📋", label: "Proyección JDN por comité", desc: "Quién sigue en carrera por comité para la próxima eliminatoria, cruzado con su actividad 2026 en chess-results", href: "jdn-proyeccion.html", zona: "contenido" },
         ] },
         { title: "Herramientas", tiles: [

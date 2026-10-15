@@ -3949,11 +3949,12 @@ guarde números, salta.
 `universidades.html`, herramienta de arbitraje con licencia (`universidades`
 en `js/herramientas-arbitraje.js`): lo mismo que «Resultados JDN por comité»,
 pero con los torneos universitarios de ajedrez que están en chess-results y
-ordenados por universidad. Son 100 torneos de 30 ediciones, de 2010 a 2026:
+ordenados por universidad. Son 115 torneos de 33 ediciones, de 2010 a 2026:
 los JUNCOS (Juegos Universitarios Costarricenses: 2011, 2013, 2015, 2017,
 2019 y el XXIV de 2023), el torneo universitario CONARE (2018 y de 2022 a
 2026, dos en 2026), la FEDEU (2022 a 2026), la FECUNDE (2014 y 2020 en
-línea), la Liga Universitaria 2014, el Interuniversitario UNA 2011, el Blitz
+línea), el Grand Prix universitario 2016 (tres etapas: TEC, UTN y UCR, con
+división A y B), la Liga Universitaria 2014, el Interuniversitario UNA 2011, el Blitz
 universitario 2019, y los JUDUCA (Juegos Deportivos Universitarios
 Centroamericanos: 2010, 2014, 2016, 2018, 2023 y 2025) con el
 Centroamericano universitario en línea de 2020. La lista, con el porqué de
@@ -3963,8 +3964,8 @@ lo que quedó fuera, está en `herramientas/universidades/torneos.txt`.
 `jdn-comites.html` con `<body data-evento="universidades">`, y
 `js/jdn-comites.js` cambia con eso cinco cosas: las tablas (`uni_*` en vez
 de `jdn_*`, misma forma), la licencia que pregunta, las ediciones
-(`EDICIONES_UNI`), cómo se junta el nombre (`universidad()` en vez de
-`comite()`) y las palabras. Lo demás —medallero, ficha, copa, Elo,
+(`EDICIONES_UNI`), cómo se junta el nombre (`universidad()` de
+`js/universidades-nombres.js` en vez de `comite()`) y las palabras. Lo demás —medallero, ficha, copa, Elo,
 enfrentamientos, bajar, calidad, ranking— es el mismo código: una mejora en
 una herramienta llega a la otra. Copiar los 1600 renglones habría sido más
 rápido el primer día y dos veces el trabajo después.
@@ -4048,6 +4049,70 @@ cuando termine, sumando sus seis torneos a `torneos.txt` (y su edición a
 `EDICIONES_UNI`; una edición que falte igual se ve, con su código de
 nombre). Están los torneos que se publicaron en chess-results: de antes de
 2010 no hay.
+
+## Torneos universitarios de Costa Rica
+
+`torneos-universitarios.html`, con la misma licencia que «Resultados
+universitarios por universidad» (`universidades`) y colgando de ella en las
+migas: el catálogo de TODOS los torneos universitarios de ajedrez de Costa
+Rica que están en chess-results, uno por fila, con su fecha, quién lo
+organiza, si es entre universidades o de una universidad, el ritmo, cuántos
+jugaron, el podio y el enlace para comprobarlo. Son 171 (octubre de 2026):
+los 115 entre universidades del medallero, los 6 del XXV JUNCOS 2026 «en
+curso» (sin podio hasta que termine), los dos grupos del femenino del
+Interuniversitario 2011, y 48 de una universidad: 42 de la UCR (los Blitz
+mensuales de su club desde 2015, los preparatorios para el JUDUCA 2018, el
+encuentro del 83 aniversario, un amistoso y el Bullet de 2026), el interno
+del TEC, los dos «Desafío Mentes Maestras» de CENFOTEC, los dos recreativos de
+la UNED en Pérez Zeledón y el de la UISIL en Río Claro.
+
+**Por qué una tabla aparte y no más filas en el medallero.** Un Blitz del
+club de la UCR lo juegan sobre todo personas de la UCR (y de clubes
+cantonales): sumado al medallero entre universidades, la UCR se llevaría
+cientos de «medallas» que no ganó contra nadie de otra universidad. El
+medallero sigue siendo solo de torneos entre universidades; el catálogo los
+tiene todos y dice de qué tipo es cada uno. `uni_torneos` guarda el podio
+(los tres primeros, con su universidad tal como la escribe chess-results) en
+vez de toda la clasificación: para un catálogo alcanza, y los torneos entre
+universidades ya tienen todo en `uni_resultados`.
+
+**Qué es un torneo universitario.** Uno que juega o arma una universidad:
+entre universidades, o de una universidad para su gente o abierto con su
+nombre. NO lo es un torneo de otros que solo se juega en un recinto
+universitario: en chess-results hay regionales de los Juegos Estudiantiles en
+la UACA, un nacional de categorías menores en la Universidad San José, un
+interregional en la UNED de Parrita, el abierto de Golfito en el recinto de
+la UCR o el de «Ajedrez sin fronteras» en la UCR; tampoco el «Remberto
+Fernández» de Cuba (universitario, pero de otro país). La lista con el
+porqué está en `herramientas/universidades/catalogo.sql`.
+
+**El nombre de la universidad, una sola vez.** La lista de variantes («UCR
+Grecia», «ITCR», «Universidad Estatal a Distancia de Costa»…) salió de
+`js/jdn-comites.js` a `js/universidades-nombres.js`, que usan las dos
+páginas. En el catálogo, un medallista solo lleva universidad si lo que trae
+chess-results ES una universidad de la lista (`conocida()`): los Blitz de la
+UCR traen el comité cantonal del jugador («Asociación Goicoechea»,
+«Pococí») o solo «CRC», y eso no se muestra como universidad. En un torneo
+por equipos, la universidad sale del nombre del equipo.
+
+**Quién más ganó.** Los podios de los torneos individuales, por jugador. El
+mismo nombre se escribe distinto de un torneo a otro: con coma («Cabezas
+Solano, David») o sin ella, con tilde o sin ella, y chess-results corta los
+largos («Diaz Charpentier Kristel Meliss»). Se juntan por la clave sin
+tildes ni signos, y un nombre de más de 12 letras que empieza otro más largo
+es la misma persona (como `mismo()` en los JDN). Dos formas del todo
+distintas («Carvajal Jonathan» y «Carvajal Gorgona Jonathan») quedan
+separadas: la página lo avisa.
+
+**La carga.** `catalogo.sql` reemplaza la tabla entera: los torneos entre
+universidades salen de `uni_resultados` (el nombre es la edición más la
+categoría), y los demás de su clasificación en chess-results (art=1), con la
+fecha, el lugar y el ritmo de `arbitros_cr_cr` cuando el torneo está ahí. El
+ritmo sale del control de tiempo (menos de 10 minutos, blitz; una hora o
+más, clásico) o del nombre («Blitz», «Bullet», «Standard»). Los filtros
+(año, quién organiza, tipo, ritmo y la búsqueda, que también encuentra a los
+jugadores del podio) van en el enlace. «Bajar en Excel» baja lo que se ve,
+con el enlace de cada torneo. Lo comprueba `verificar-torneos-universitarios.js`.
 
 ## Proyección JDN por comité
 

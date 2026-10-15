@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261015052120
+# al-dia-con: 20261015112022
 tabla  Ejercicios Lichess  rls=true
 tabla  _foto_rls_tmp  rls=false
 tabla  _pedidos_elo  rls=false
@@ -185,6 +185,7 @@ tabla  uni_correcciones  rls=true
 tabla  uni_jugadores  rls=true
 tabla  uni_partidas  rls=true
 tabla  uni_resultados  rls=true
+tabla  uni_torneos  rls=true
 tabla  variant_nodes  rls=true
 tabla  vision_personas  rls=true
 columna  Ejercicios Lichess.DailyDate  text
@@ -1662,6 +1663,18 @@ columna  uni_resultados.puesto  smallint
 columna  uni_resultados.puntos  numeric(4,1)
 columna  uni_resultados.record  text
 columna  uni_resultados.tnr  integer
+columna  uni_torneos.edicion  text
+columna  uni_torneos.en_curso  boolean
+columna  uni_torneos.inicio  date
+columna  uni_torneos.jugadores  smallint
+columna  uni_torneos.lugar  text
+columna  uni_torneos.modalidad  text
+columna  uni_torneos.nombre  text
+columna  uni_torneos.organiza  text
+columna  uni_torneos.podio  jsonb
+columna  uni_torneos.ritmo  text
+columna  uni_torneos.tipo  text
+columna  uni_torneos.tnr  integer
 columna  variant_nodes.created_at  timestamp with time zone
 columna  variant_nodes.created_by  uuid
 columna  variant_nodes.fen  text
@@ -2553,6 +2566,7 @@ politica  uni_correcciones  uni_correcciones_con_herramienta  SELECT
 politica  uni_jugadores  uni_jugadores_con_herramienta  SELECT
 politica  uni_partidas  uni_partidas_con_herramienta  SELECT
 politica  uni_resultados  uni_resultados_con_herramienta  SELECT
+politica  uni_torneos  uni_torneos_con_herramienta  SELECT
 politica  variant_nodes  variant_nodes_delete  DELETE
 politica  variant_nodes  variant_nodes_exige_acceso_sel  SELECT  restrictiva
 politica  variant_nodes  variant_nodes_insert  INSERT
@@ -3114,6 +3128,7 @@ indice  uni_partidas  uni_partidas_pkey
 indice  uni_partidas  uni_partidas_tnr_ronda_orden_rival_vez_key
 indice  uni_resultados  uni_resultados_edicion_codigo_orden_key
 indice  uni_resultados  uni_resultados_pkey
+indice  uni_torneos  uni_torneos_pkey
 indice  variant_nodes  variant_nodes_created_by_fk
 indice  variant_nodes  variant_nodes_parent_id_fk
 indice  variant_nodes  variant_nodes_pkey
@@ -4339,6 +4354,9 @@ grant  uni_partidas  authenticated  TRIGGER
 grant  uni_resultados  authenticated  REFERENCES
 grant  uni_resultados  authenticated  SELECT
 grant  uni_resultados  authenticated  TRIGGER
+grant  uni_torneos  authenticated  REFERENCES
+grant  uni_torneos  authenticated  SELECT
+grant  uni_torneos  authenticated  TRIGGER
 grant  variant_nodes  anon  DELETE
 grant  variant_nodes  anon  INSERT
 grant  variant_nodes  anon  REFERENCES
