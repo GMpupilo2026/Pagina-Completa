@@ -2937,6 +2937,13 @@ la columna «En el extranjero».
   necesita vivas las respuestas de Costa Rica y las de afuera: otra descarga
   cambia `RESPUESTAS_CR` y `RESPUESTAS_AFUERA`. Los de afuera no se cruzan
   con FIDE: los de FIDE que hay son todos de Costa Rica.
+- **Lo que dio la carga (15/10/2026):** 212 torneos en el extranjero de 28
+  árbitros (los que más, Carolina Muñoz Solís con 74, Neeshmy Núñez y
+  Stanley Gómez Huertas con 23, Oscar Angulo con 20), en 23 federaciones
+  (CCA 32, Colombia 30, Honduras 29, El Salvador 28, FID 25…), y 250 cargos.
+  Las huellas de lo de afuera en la base (torneos y cargos con `pais <> 'CRC'`)
+  dieron iguales a las del generador, y una cuenta sin la licencia ve 0
+  filas.
 - `verificar-arbitros-cr.js` suma un torneo en Panamá: el filtro «Dónde», la
   columna, «No consta» y el país en el lugar (lo rompí dejando todo «en Costa
   Rica» y salta).
