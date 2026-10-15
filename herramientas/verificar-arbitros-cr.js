@@ -73,6 +73,8 @@ const CR = [
     // El mismo que el 102, donde Eduardo arbitró sin figurar en la ficha de FIDE.
     { clave: 900004, nombre: "Nacional Absoluto 2024", inicio: "2024-05-01", fin: "2024-05-01", lugar: "San José", control: "90 min", rondas: 9, jugadores: 40, fide_torneo: 102 },
     // Sin rondas: no se jugó y no se muestra.
+    // El mismo día que el 102: un festival con él.
+    { clave: 900006, nombre: "Nacional Sub-16 2024", inicio: "2024-05-01", fin: "2024-05-03", lugar: "San José", control: "60 min", rondas: 7, jugadores: 18, fide_torneo: null },
     { clave: 900005, nombre: "Torneo que no se jugó 2024", inicio: "2024-09-01", fin: "2024-09-01", lugar: "", control: "", rondas: 0, jugadores: 10, fide_torneo: null },
 ];
 const CR_CARGOS = [
@@ -82,6 +84,7 @@ const CR_CARGOS = [
     { clave: 900002, fide_id: 6500005, rol: "dir" },
     { clave: 900003, fide_id: 6500005, rol: "arb" },
     { clave: 900004, fide_id: 6500005, rol: "arb" },
+    { clave: 900006, fide_id: 6500001, rol: "arb" },
     { clave: 900005, fide_id: 6500005, rol: "ap" },
     { clave: 900005, fide_id: 6500001, rol: "ap" },
 ];
@@ -160,9 +163,9 @@ const porNombre = (m) => Object.fromEntries(m.map((f) => [f[0], f]));
     let m = porNombre(await filas(p, "#tabla-arbitros"));
     igual("los cinco árbitros salen (todos los años), también quien solo está en chess-results", Object.keys(m).sort(),
         ["Ángulo Prueba, Óscar", "Quiros Prueba, Eduardo", "Rojas Prueba, Luis", "Soto Prueba, Ana", "Viejo Prueba, Juan"].sort());
-    // Óscar: 4 de FIDE (el 900001 es el mismo que el 101: no suma) y 1 que no (900002, director); el 900005 no se jugó.
-    igual("Óscar: 5 torneos (4 FIDE, 1 no), 2 principal, 1 adjunto, 1 árbitro, AF 3, AI 3 (1 para revisar), último 10/01/2025",
-        m["Ángulo Prueba, Óscar"].slice(1), ["IA", "5", "4", "1", "2", "1", "1", "3", "3 (1)", "10/01/2025"]);
+    // Óscar: 4 de FIDE (el 900001 es el mismo que el 101: no suma) y 2 que no (900002, director; 900006, árbitro); el 900005 no se jugó.
+    igual("Óscar: 6 torneos (4 FIDE, 2 no), 2 principal, 1 adjunto, 2 árbitro, AF 3, AI 3 (1 para revisar), último 10/01/2025",
+        m["Ángulo Prueba, Óscar"].slice(1), ["IA", "6", "4", "2", "2", "1", "2", "3", "3 (1)", "10/01/2025"]);
     // Eduardo: el 900004 es el 102 de FIDE (vale, pero no figura en la ficha de FIDE: revisar); 900002 y 900003 no son de FIDE.
     igual("Eduardo: 3 torneos (1 FIDE para revisar, 2 no), último 10/07/2024",
         m["Quiros Prueba, Eduardo"].slice(1), ["—", "3", "1", "2", "1", "0", "2", "1 (1)", "1 (1)", "10/07/2024"]);
@@ -173,11 +176,21 @@ const porNombre = (m) => Object.fromEntries(m.map((f) => [f[0], f]));
     await p.selectOption("#tipo", "nofide");
     m = porNombre(await filas(p, "#tabla-arbitros"));
     igual("«No FIDE»: solo quienes tienen torneos que no son de FIDE, con esos", [Object.keys(m).sort(), m["Ángulo Prueba, Óscar"][2], m["Quiros Prueba, Eduardo"][2]],
-        [["Quiros Prueba, Eduardo", "Ángulo Prueba, Óscar"].sort(), "1", "2"]);
+        [["Quiros Prueba, Eduardo", "Ángulo Prueba, Óscar"].sort(), "2", "2"]);
     await p.selectOption("#tipo", "fide");
     m = porNombre(await filas(p, "#tabla-arbitros"));
     igual("«Solo FIDE»: Óscar con 4 y Eduardo con 1", [m["Ángulo Prueba, Óscar"][2], m["Quiros Prueba, Eduardo"][2]], ["4", "1"]);
     await p.selectOption("#tipo", "");
+
+    const cuentaGeneral = () => p.$eval("#cuenta", (e) => e.textContent);
+    igual("cada torneo cuenta aparte", /con 8 torneos \(5 de FIDE y 3 que no\)/.test(await cuentaGeneral()), true);
+    await p.selectOption("#contar", "festival");
+    m = porNombre(await filas(p, "#tabla-arbitros"));
+    igual("«Festivales como uno»: el 102 y el 900006 (mismo día) cuentan como uno de FIDE para Óscar; 2 principal y 2 árbitro siguen",
+        m["Ángulo Prueba, Óscar"].slice(1), ["IA", "5", "4", "1", "2", "1", "2", "3", "3 (1)", "10/01/2025"]);
+    igual("y Eduardo, que estuvo solo en uno de ese día, no cambia", m["Quiros Prueba, Eduardo"][2], "3");
+    igual("la cuenta general junta todo lo del mismo día", /con 7 torneos o festivales \(5 de FIDE y 2 que no\)/.test(await cuentaGeneral()), true);
+    await p.selectOption("#contar", "");
 
     await p.selectOption("#desde", "2023");
     m = porNombre(await filas(p, "#tabla-arbitros"));
@@ -220,12 +233,23 @@ const porNombre = (m) => Object.fromEntries(m.map((f) => [f[0], f]));
     igual("cada torneo una vez, el más nuevo primero, con FIDE sí o no y su cargo (el 900001 dentro del 101, el 900005 fuera)",
         o.map((f) => [f[0], f[2], f[3]]),
         [["10/01/2025", "Sí", "Árbitro principal"], ["01/08/2024", "Sí", "Árbitro adjunto principal"], ["10/07/2024", "No", "Director del torneo"],
-         ["01/05/2024", "Sí", "Árbitro principal"], ["01/03/2023", "Sí", "Árbitro"]]);
+         ["01/05/2024", "Sí", "Árbitro principal"], ["01/05/2024", "No", "Árbitro"], ["01/03/2023", "Sí", "Árbitro"]]);
     const conPorque = await p.$eval("#tabla-torneos tbody tr", (tr) => [tr.cells[8].querySelector(".of-estado").textContent, tr.cells[8].querySelector(".of-detalle").textContent]);
     igual("la norma va escrita con su porqué", conPorque, ["Vale", "porque si"]);
     igual("un torneo que no es de FIDE no tiene norma", o[2].slice(8), ["—", "—"]);
     await p.selectOption("#tipo", "nofide");
-    igual("«No FIDE» deja solo el que no es de FIDE", (await filas(p, "#tabla-torneos")).map((f) => f[1].split("Heredia")[0].trim()), ["Abierto del club 2024"]);
+    igual("«No FIDE» deja solo los que no son de FIDE", (await filas(p, "#tabla-torneos")).map((f) => f[1].split(/Heredia|San José/)[0].trim()), ["Abierto del club 2024", "Nacional Sub-16 2024"]);
+    await p.selectOption("#tipo", "");
+    await p.selectOption("#contar", "festival");
+    const fest = await filas(p, "#tabla-torneos");
+    igual("con festivales, el del 01/05/2024 es una sola fila", fest.map((f) => f[0]), ["10/01/2025", "01/08/2024", "10/07/2024", "01/05/2024", "01/03/2023"]);
+    igual("la fila del festival: sus dos torneos, FIDE sí, los dos cargos, jugadores sumados y la mejor norma con su porqué",
+        [fest[3][1].startsWith("Festival de 2 torneos"), /Nacional Absoluto 2024/.test(fest[3][1]), /Nacional Sub-16 2024/.test(fest[3][1]), fest[3][2], fest[3][3], fest[3][7],
+         fest[3][8].startsWith("Vale"), /Festival de 2 torneos \(cuenta una vez\)/.test(fest[3][8])],
+        [true, true, true, "Sí", "Árbitro principal, Árbitro", "58", true, true]);
+    igual("y enlaza a cada torneo", await p.$$eval("#tabla-torneos tbody tr:nth-child(4) a", (as) => as.map((a) => a.href)),
+        ["https://ratings.fide.com/tournament_information.phtml?event=102", "https://chess-results.com/tnr900004.aspx?lan=2", "https://chess-results.com/tnr900006.aspx?lan=2"]);
+    igual("la cuenta de la ficha dice «torneos o festivales»", /^5 torneos o festivales\./.test(await p.$eval("#ficha-cuenta", (e) => e.textContent)), true);
     await ctx.close();
 
     console.log("\n=== Quien solo está en chess-results ===");
