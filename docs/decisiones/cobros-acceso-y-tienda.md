@@ -455,6 +455,32 @@ suyos en «Tus recibos».
   cobro quedaría pagado de más.
 - **El total del recibo se calcula** (`recibos_vista`, la suma de sus pagos),
   no se guarda: corregir un monto lo cambia solo.
+- **El mes entero de un vistazo.** La lista de recibos se filtra por «Mes» (los
+  últimos 24, desde el de Costa Rica), y arriba van las cuentas de lo filtrado:
+  vigentes y su total, anulados y su total, y cuántos falta entregar. Las hace
+  la base, `recibos_resumen()` (`SECURITY INVOKER` sobre `recibos_vista`, con
+  los MISMOS filtros que la lista: mes, alumno y número), porque sumar en el
+  navegador lo que trajo la lista se corta a las 1000 filas. «Ver como: Tabla
+  (todos)» trae todo lo filtrado de mil en mil, una fila por recibo con lo que
+  paga, el monto, el estado y el motivo si se anuló; «Ver» abre el recibo (y
+  desde ahí se manda). Corregir y anular siguen en las tarjetas. Nació de que
+  quien supervisa tenía que ir de 30 en 30 y abrir recibo por recibo para saber
+  qué salió en setiembre y qué se anuló.
+
+#### Quién pagó y quién debe
+
+La ficha «Cobros» se filtra por el mes en que **vencen** («Vencen en», los
+mismos 24 meses que los recibos), y arriba van las cuentas de lo filtrado:
+cuántos alumnos deben y cuánto (y cuántos cobros ya vencieron), y cuántos
+pagaron todo y cuánto entró, abonos incluidos. Las hace la base,
+`cobros_quien_debe()` (`SECURITY INVOKER` sobre `cobros_vista`, con los MISMOS
+filtros que la lista y que el CSV: mes, alumno y lo buscado); los anulados no
+cuentan, porque no cobran nada. «Ver como: Quién pagó y quién debe» trae todo
+lo filtrado de mil en mil y lo pone en dos tablas: **Deben**, con lo vencido
+arriba por días de atraso y el mismo «💵 Registrar pago» de las tarjetas, y
+**Pagaron**; los anulados van aparte, al final. Cada fila dice el monto,
+cuánto pagó y cuánto falta. Un alumno que debe un cobro y pagó otro cuenta
+como que debe: «pagó todo» es eso, todo lo filtrado.
 - **El recibo es UN HTML** (`cobros-recordatorios/recibo-html.ts`): el mismo
   para la vista previa, para imprimir y para el correo, con la marca de la
   academia DEL RECIBO. Dice que es un recibo interno y no una factura
@@ -477,6 +503,18 @@ suyos en «Tus recibos».
   avisos de cobro. Hasta 24 periodos y tres años; respeta el `fin` del plan.
 - **Algo que no tenía cobro** (una inscripción, un torneo):
   `registrar_cobro_pagado()` emite el cobro y lo paga entero, con su recibo.
+- **Si esos días ya tienen su cobro, el pago va en ese cobro.** La base no deja
+  emitir otro que se cruce (se cobraría dos veces), y antes el formulario solo
+  avisaba. El 14/10 una supervisora quiso registrar el pago de octubre por
+  acá: la base lo rechazó dos veces porque el cobro de octubre ya existía, y
+  terminó corrigiendo un recibo de septiembre para que dijera octubre, que dejó
+  septiembre pagado con fecha de octubre y octubre debiendo. Ahora, cuando
+  `cobro_cotizar()` dice `se_cruza_con`, la página busca esos cobros en
+  `cobros_vista` (mismo plan, vigentes, que se cruzan con las fechas) y ofrece
+  «💵 Registrar el pago en …» con `registrar_pago()`, usando el método, el
+  comprobante, la fecha y «Paga hoy» que ya se escribieron (en blanco, lo que
+  falta). «Registrar el pago» ya no intenta el cobro nuevo y dice dónde va. Lo
+  prueba `verificar-cobros.js`.
 
 Comprobado en la base impersonando roles, en una transacción revertida, con
 la supervisora real de ADAPZ y una alumna suya: adelantar 2 periodos de un

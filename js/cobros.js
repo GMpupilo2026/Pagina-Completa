@@ -698,30 +698,79 @@ let mesesAbiertos = null;    // null = todavía no se abrió ninguno a mano
 function consultaCobros(conCuenta) {
     let q = sb.from("cobros_vista").select("*", conCuenta ? { count: "exact" } : undefined);
     const situacion = document.getElementById("f-situacion").value;
-    const alumno = document.getElementById("f-alumno").value;
-    const buscar = document.getElementById("f-buscar").value.trim();
+    const f = filtrosCobros();
     if (situacion) q = q.eq("situacion", situacion);
-    if (alumno) q = q.eq("student_id", alumno);
-    if (buscar) {
-        // PostgREST arma el `or=(...)` con comas y paréntesis: un concepto con
-        // una coma rompería la consulta entera (ver js/busqueda-base.js).
-        const limpio = BusquedaBase.limpiar(buscar);
-        if (limpio) q = q.or(`concepto.ilike.%${limpio}%,consecutivo.ilike.%${limpio}%`);
-    }
+    if (f.desde) q = q.gte("vence", f.desde).lte("vence", f.hasta);
+    if (f.alumno) q = q.eq("student_id", f.alumno);
+    // PostgREST arma el `or=(...)` con comas y paréntesis: un concepto con
+    // una coma rompería la consulta entera (ver js/busqueda-base.js).
+    if (f.buscar) q = q.or(`concepto.ilike.%${f.buscar}%,consecutivo.ilike.%${f.buscar}%`);
     return q.order("vence", { ascending: false });
 }
 
+/* Lo que comparten la lista, el CSV y las cuentas de «quién pagó y quién
+   debe»: el mes en que vence, el alumno y lo buscado. */
+function filtrosCobros() {
+    const mes = document.getElementById("f-mes").value;
+    return {
+        desde: mes ? leerFecha(mes, "inicio") : null,
+        hasta: mes ? leerFecha(mes, "fin") : null,
+        alumno: document.getElementById("f-alumno").value || null,
+        buscar: BusquedaBase.limpiar(document.getElementById("f-buscar").value.trim()) || null,
+    };
+}
+
+// «Quién pagó y quién debe»: todo lo filtrado de una vez, de mil en mil.
+const cobrosEnTabla = () => document.getElementById("f-vista").value === "tabla";
+
 async function cargarCobros(desdeCero) {
-    if (desdeCero) { cobrosDesde = 0; cobros = []; mesesAbiertos = null; }
+    if (desdeCero) { cobrosDesde = 0; cobros = []; mesesAbiertos = null; pintarQuienDebe(); }
     const mia = ++cobrosPeticion;
-    const { data, error, count } = await consultaCobros(true)
-        .range(cobrosDesde, cobrosDesde + COBROS_POR_PAGINA - 1);
-    if (mia !== cobrosPeticion) return;     // llegó tarde: el filtro ya es otro
-    if (error) { avisar("No se pudieron cargar los cobros: " + error.message, true); return; }
-    if (count != null) cobrosTotal = count;
-    cobros = cobros.concat(data || []);
-    cobrosDesde = cobros.length;
+    const tanda = cobrosEnTabla() ? 1000 : COBROS_POR_PAGINA;
+    do {
+        const { data, error, count } = await consultaCobros(true).range(cobrosDesde, cobrosDesde + tanda - 1);
+        if (mia !== cobrosPeticion) return;     // llegó tarde: el filtro ya es otro
+        if (error) { avisar("No se pudieron cargar los cobros: " + error.message, true); return; }
+        if (count != null) cobrosTotal = count;
+        cobros = cobros.concat(data || []);
+        cobrosDesde = cobros.length;
+        if (!data || !data.length) break;
+    } while (cobrosEnTabla() && cobros.length < cobrosTotal);
     pintarCobros();
+}
+
+/* Las cuentas de lo filtrado (cobros_quien_debe(), en la base): cuántos
+   alumnos deben y cuánto, cuántos pagaron todo y cuánto entró. Los anulados
+   no cuentan. */
+let quienDebePeticion = 0;
+async function pintarQuienDebe() {
+    const caja = document.getElementById("cobros-quien-debe");
+    const f = filtrosCobros();
+    const mia = ++quienDebePeticion;
+    const { data, error } = await sb.rpc("cobros_quien_debe",
+        { p_desde: f.desde, p_hasta: f.hasta, p_alumno: f.alumno, p_buscar: f.buscar });
+    if (mia !== quienDebePeticion) return;
+    caja.innerHTML = "";
+    const filas = error ? [] : (data || []);
+    caja.hidden = !filas.length;
+    if (!filas.length) return;
+    const mes = document.getElementById("f-mes").value;
+    caja.appendChild(el("p", "text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-2",
+        mes ? "Cobros que vencen en " + nombreMes(mes) : "Todos los cobros"));
+    const fila = el("div", "flex flex-wrap gap-x-8 gap-y-2");
+    const dato = (numero, texto) => {
+        const d = el("div");
+        d.appendChild(el("p", "text-lg font-bold text-brand-800 dark:text-white", numero));
+        d.appendChild(el("p", "text-xs text-brand-500 dark:text-brand-300", texto));
+        fila.appendChild(d);
+    };
+    const uno = (n, singular, plural) => n + " " + (n === 1 ? singular : plural);
+    filas.forEach((r) => {
+        dato(plata(r.total_debe, r.moneda), uno(r.alumnos_deben, "alumno debe", "alumnos deben")
+            + (r.vencidos ? " · " + uno(r.vencidos, "cobro vencido", "cobros vencidos") : ""));
+        dato(plata(r.total_pagado, r.moneda), uno(r.alumnos_pagaron, "alumno pagó todo", "alumnos pagaron todo"));
+    });
+    caja.appendChild(fila);
 }
 
 function pintarCobros() {
@@ -732,6 +781,10 @@ function pintarCobros() {
         ? "Mostrando " + cobros.length + " de " + cobrosTotal + (cobrosTotal === 1 ? " cobro" : " cobros")
         : "";
     document.getElementById("cobros-mas").classList.toggle("hidden", cobros.length >= cobrosTotal);
+    if (cobrosEnTabla()) {
+        if (cobros.length) tablaQuienDebe(cobros).forEach((n) => caja.appendChild(n));
+        return;
+    }
 
     // Agrupado por el mes en que vence, de lo más nuevo a lo más viejo. Se
     // repinta desde lo que se lleva cargado en vez de ir pegando filas: así un
@@ -772,6 +825,67 @@ function pintarCobros() {
         bloque.appendChild(dentro);
         caja.appendChild(bloque);
     });
+}
+
+/* «Quién pagó y quién debe»: dos tablas, primero quien debe (lo vencido
+   arriba, por días de atraso) y después quien pagó. Cada fila con lo que se
+   cobra, cuánto pagó y cuánto falta; quien debe trae «Registrar pago», el
+   mismo de las tarjetas. Los anulados van aparte, al final, si se piden. */
+function tablaQuienDebe(lista) {
+    const deben = lista.filter((c) => c.situacion !== "anulado" && Number(c.saldo) > 0)
+        .sort((a, b) => (b.dias_atraso || 0) - (a.dias_atraso || 0) || nombreDe(a.student_id).localeCompare(nombreDe(b.student_id), "es"));
+    const pagaron = lista.filter((c) => c.situacion !== "anulado" && !(Number(c.saldo) > 0))
+        .sort((a, b) => nombreDe(a.student_id).localeCompare(nombreDe(b.student_id), "es"));
+    const anulados = lista.filter((c) => c.situacion === "anulado");
+    const bloques = [];
+    const bloque = (titulo, filas, conPagar) => {
+        if (!filas.length) return;
+        const marco = el("section", "quien-debe bg-white dark:bg-brand-900 rounded-2xl shadow-md overflow-x-auto");
+        marco.appendChild(el("h3", "px-4 pt-3 font-semibold text-brand-800 dark:text-white", titulo + " (" + filas.length + ")"));
+        const t = el("table", "w-full text-sm");
+        const cab = el("tr", "text-left text-xs uppercase tracking-wide text-brand-500 dark:text-brand-300 border-b border-brand-100 dark:border-brand-800");
+        ["Alumno", "Qué se cobra", "Vence", "Monto", "Pagó", "Falta", "Situación", ""].forEach((x, i) => {
+            const th = el("th", "px-3 py-2 font-semibold" + (i >= 3 && i <= 5 ? " text-right" : ""), x);
+            th.scope = "col";
+            cab.appendChild(th);
+        });
+        const thead = el("thead");
+        thead.appendChild(cab);
+        t.appendChild(thead);
+        const cuerpo = el("tbody");
+        filas.forEach((c) => {
+            const tr = el("tr", "cobro-fila border-b border-brand-100 dark:border-brand-800 last:border-0 align-top text-brand-700 dark:text-brand-200");
+            tr.dataset.id = c.id;
+            const quien = el("th", "px-3 py-2 font-semibold text-left", nombreDe(c.student_id));
+            quien.scope = "row";
+            tr.appendChild(quien);
+            const celda = (texto, clase) => { const td = el("td", "px-3 py-2 " + (clase || ""), texto); tr.appendChild(td); return td; };
+            celda(c.concepto);
+            celda(fecha(c.vence), "whitespace-nowrap");
+            celda(plata(c.monto, c.moneda), "text-right whitespace-nowrap");
+            celda(plata(c.pagado, c.moneda), "text-right whitespace-nowrap");
+            celda(Number(c.saldo) > 0 && c.situacion !== "anulado" ? plata(c.saldo, c.moneda) : "—", "text-right whitespace-nowrap font-semibold");
+            const s = SITUACION[c.situacion] || SITUACION.pendiente;
+            const est = celda("");
+            est.appendChild(el("span", "inline-block px-2 py-0.5 rounded-full text-xs font-semibold whitespace-nowrap " + s.clase, s.texto));
+            if (c.dias_atraso > 0) est.appendChild(el("p", "text-xs mt-1", c.dias_atraso + (c.dias_atraso === 1 ? " día de atraso" : " días de atraso")));
+            const acc = celda("");
+            if (conPagar) {
+                const pagar = el("button", "bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-3 py-1.5 rounded-lg text-sm whitespace-nowrap transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400", "💵 Registrar pago");
+                pagar.type = "button";
+                pagar.addEventListener("click", () => registrarPago(c));
+                acc.appendChild(pagar);
+            }
+            cuerpo.appendChild(tr);
+        });
+        t.appendChild(cuerpo);
+        marco.appendChild(t);
+        bloques.push(marco);
+    };
+    bloque("Deben", deben, true);
+    bloque("Pagaron", pagaron, false);
+    bloque("Anulados", anulados, false);
+    return bloques;
 }
 
 function mesLargo(clave) {
@@ -1681,7 +1795,9 @@ document.getElementById("s-primero").addEventListener("change", (e) => {
     document.getElementById("s-pagado-cell").classList.toggle("hidden", e.target.value !== "pagado");
 });
 document.getElementById("rp-guardar").addEventListener("click", programarRecordatorio);
+llenarMeses("f-mes");
 document.getElementById("f-situacion").addEventListener("change", () => cargarCobros(true));
+["f-mes", "f-vista"].forEach((id) => document.getElementById(id).addEventListener("change", () => cargarCobros(true)));
 document.getElementById("f-alumno").addEventListener("change", () => cargarCobros(true));
 // Al escribir se espera un momento: una consulta por letra sería una consulta
 // por letra, y la que llegue tarde ya la descarta cargarCobros().
