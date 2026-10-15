@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261015014350
+# al-dia-con: 20261015052120
 tabla  Ejercicios Lichess  rls=true
 tabla  _foto_rls_tmp  rls=false
 tabla  _pedidos_elo  rls=false
@@ -181,6 +181,10 @@ tabla  training_progress  rls=true
 tabla  training_state  rls=true
 tabla  trofeos_ajustes  rls=true
 tabla  tv_settings  rls=true
+tabla  uni_correcciones  rls=true
+tabla  uni_jugadores  rls=true
+tabla  uni_partidas  rls=true
+tabla  uni_resultados  rls=true
 tabla  variant_nodes  rls=true
 tabla  vision_personas  rls=true
 columna  Ejercicios Lichess.DailyDate  text
@@ -279,6 +283,7 @@ columna  arbitros_cr_cr.inicio  date
 columna  arbitros_cr_cr.jugadores  integer
 columna  arbitros_cr_cr.lugar  text
 columna  arbitros_cr_cr.nombre  text
+columna  arbitros_cr_cr.pais  text
 columna  arbitros_cr_cr.rondas  smallint
 columna  arbitros_cr_cr_cargos.clave  integer
 columna  arbitros_cr_cr_cargos.fide_id  integer
@@ -1617,6 +1622,46 @@ columna  tv_settings.note  text
 columna  tv_settings.updated_at  timestamp with time zone
 columna  tv_settings.updated_by  uuid
 columna  tv_settings.video_url  text
+columna  uni_correcciones.comite  text
+columna  uni_correcciones.creado  timestamp with time zone
+columna  uni_correcciones.creado_por  uuid
+columna  uni_correcciones.edicion  text
+columna  uni_correcciones.id  bigint
+columna  uni_correcciones.nombre  text
+columna  uni_correcciones.nota  text
+columna  uni_jugadores.codigo  text
+columna  uni_jugadores.con_elo  smallint
+columna  uni_jugadores.edicion  text
+columna  uni_jugadores.elo  smallint
+columna  uni_jugadores.elo_rivales  smallint
+columna  uni_jugadores.equipo  text
+columna  uni_jugadores.equipo_orden  smallint
+columna  uni_jugadores.esperado  numeric(5,2)
+columna  uni_jugadores.id  bigint
+columna  uni_jugadores.nombre  text
+columna  uni_jugadores.orden  smallint
+columna  uni_jugadores.partidas  smallint
+columna  uni_jugadores.puntos  numeric(4,1)
+columna  uni_jugadores.puntos_elo  numeric(4,1)
+columna  uni_jugadores.tablero  smallint
+columna  uni_jugadores.tnr  integer
+columna  uni_partidas.id  bigint
+columna  uni_partidas.orden  smallint
+columna  uni_partidas.puntos  numeric(2,1)
+columna  uni_partidas.rival  smallint
+columna  uni_partidas.ronda  smallint
+columna  uni_partidas.tnr  integer
+columna  uni_partidas.vez  smallint
+columna  uni_resultados.codigo  text
+columna  uni_resultados.comite  text
+columna  uni_resultados.edicion  text
+columna  uni_resultados.id  bigint
+columna  uni_resultados.nombre  text
+columna  uni_resultados.orden  smallint
+columna  uni_resultados.puesto  smallint
+columna  uni_resultados.puntos  numeric(4,1)
+columna  uni_resultados.record  text
+columna  uni_resultados.tnr  integer
 columna  variant_nodes.created_at  timestamp with time zone
 columna  variant_nodes.created_by  uuid
 columna  variant_nodes.fen  text
@@ -2501,6 +2546,13 @@ politica  trofeos_ajustes  verificacion_en_dos_pasos  ALL  restrictiva
 politica  tv_settings  tv_settings_select_public  SELECT
 politica  tv_settings  tv_settings_update_profesor  UPDATE
 politica  tv_settings  verificacion_en_dos_pasos  ALL  restrictiva
+politica  uni_correcciones  uni_correcciones_admin_borra  DELETE
+politica  uni_correcciones  uni_correcciones_admin_cambia  UPDATE
+politica  uni_correcciones  uni_correcciones_admin_crea  INSERT
+politica  uni_correcciones  uni_correcciones_con_herramienta  SELECT
+politica  uni_jugadores  uni_jugadores_con_herramienta  SELECT
+politica  uni_partidas  uni_partidas_con_herramienta  SELECT
+politica  uni_resultados  uni_resultados_con_herramienta  SELECT
 politica  variant_nodes  variant_nodes_delete  DELETE
 politica  variant_nodes  variant_nodes_exige_acceso_sel  SELECT  restrictiva
 politica  variant_nodes  variant_nodes_insert  INSERT
@@ -3054,6 +3106,14 @@ indice  trofeos_ajustes  trofeos_ajustes_creado_por_fk
 indice  trofeos_ajustes  trofeos_ajustes_pkey
 indice  tv_settings  tv_settings_pkey
 indice  tv_settings  tv_settings_updated_by_fk
+indice  uni_correcciones  uni_correcciones_pkey
+indice  uni_correcciones  uni_correcciones_una
+indice  uni_jugadores  uni_jugadores_pkey
+indice  uni_jugadores  uni_jugadores_tnr_orden_key
+indice  uni_partidas  uni_partidas_pkey
+indice  uni_partidas  uni_partidas_tnr_ronda_orden_rival_vez_key
+indice  uni_resultados  uni_resultados_edicion_codigo_orden_key
+indice  uni_resultados  uni_resultados_pkey
 indice  variant_nodes  variant_nodes_created_by_fk
 indice  variant_nodes  variant_nodes_parent_id_fk
 indice  variant_nodes  variant_nodes_pkey
@@ -4264,6 +4324,21 @@ grant  tv_settings  authenticated  SELECT
 grant  tv_settings  authenticated  TRIGGER
 grant  tv_settings  authenticated  TRUNCATE
 grant  tv_settings  authenticated  UPDATE
+grant  uni_correcciones  authenticated  DELETE
+grant  uni_correcciones  authenticated  INSERT
+grant  uni_correcciones  authenticated  REFERENCES
+grant  uni_correcciones  authenticated  SELECT
+grant  uni_correcciones  authenticated  TRIGGER
+grant  uni_correcciones  authenticated  UPDATE
+grant  uni_jugadores  authenticated  REFERENCES
+grant  uni_jugadores  authenticated  SELECT
+grant  uni_jugadores  authenticated  TRIGGER
+grant  uni_partidas  authenticated  REFERENCES
+grant  uni_partidas  authenticated  SELECT
+grant  uni_partidas  authenticated  TRIGGER
+grant  uni_resultados  authenticated  REFERENCES
+grant  uni_resultados  authenticated  SELECT
+grant  uni_resultados  authenticated  TRIGGER
 grant  variant_nodes  anon  DELETE
 grant  variant_nodes  anon  INSERT
 grant  variant_nodes  anon  REFERENCES

@@ -67,6 +67,21 @@
             ],
         },
         {
+            id: "universidades",
+            emoji: "🎓",
+            nombre: "Resultados universitarios por universidad",
+            corto: "Resultados universitarios",
+            href: "universidades.html",
+            disponible: true,
+            resumen: "Todos los torneos universitarios de ajedrez de Costa Rica que están en chess-results —los JUNCOS, el torneo CONARE, la FEDEU, la FECUNDE— y los JUDUCA centroamericanos, desde 2010, ordenados por universidad.",
+            puntos: [
+                "El medallero de todos los torneos o de uno, con individual y equipos, y las medallas de cada universidad torneo por torneo.",
+                "La ficha de cada universidad: sus jugadores, sus equipos y quién jugó en cada uno, edición por edición, con el puesto, los puntos y la medalla.",
+                "El rendimiento contra el Elo, los enfrentamientos entre universidades, la copa de puntos por puesto y cada tabla en Excel, imagen o PDF.",
+                "Junta las sedes y las variantes de una misma universidad («ITCR», «TEC Alajuela») y deduce la de quien no la trae.",
+            ],
+        },
+        {
             id: "jdn-proyeccion",
             emoji: "📋",
             nombre: "Proyección JDN por comité",

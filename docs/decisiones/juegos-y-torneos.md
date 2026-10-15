@@ -3804,6 +3804,111 @@ quien administra ve «Corregir», guarda y quita. Rompiendo a propósito que un
 comité contra sí mismo cuente, que la corrección se aplique o que el Excel
 guarde números, salta.
 
+## Resultados universitarios por universidad
+
+`universidades.html`, herramienta de arbitraje con licencia (`universidades`
+en `js/herramientas-arbitraje.js`): lo mismo que «Resultados JDN por comité»,
+pero con los torneos universitarios de ajedrez que están en chess-results y
+ordenados por universidad. Son 100 torneos de 30 ediciones, de 2010 a 2026:
+los JUNCOS (Juegos Universitarios Costarricenses: 2011, 2013, 2015, 2017,
+2019 y el XXIV de 2023), el torneo universitario CONARE (2018 y de 2022 a
+2026, dos en 2026), la FEDEU (2022 a 2026), la FECUNDE (2014 y 2020 en
+línea), la Liga Universitaria 2014, el Interuniversitario UNA 2011, el Blitz
+universitario 2019, y los JUDUCA (Juegos Deportivos Universitarios
+Centroamericanos: 2010, 2014, 2016, 2018, 2023 y 2025) con el
+Centroamericano universitario en línea de 2020. La lista, con el porqué de
+lo que quedó fuera, está en `herramientas/universidades/torneos.txt`.
+
+**Una sola página para las dos herramientas.** `universidades.html` es
+`jdn-comites.html` con `<body data-evento="universidades">`, y
+`js/jdn-comites.js` cambia con eso cinco cosas: las tablas (`uni_*` en vez
+de `jdn_*`, misma forma), la licencia que pregunta, las ediciones
+(`EDICIONES_UNI`), cómo se junta el nombre (`universidad()` en vez de
+`comite()`) y las palabras. Lo demás —medallero, ficha, copa, Elo,
+enfrentamientos, bajar, calidad, ranking— es el mismo código: una mejora en
+una herramienta llega a la otra. Copiar los 1600 renglones habría sido más
+rápido el primer día y dos veces el trabajo después.
+
+**Las palabras pasan por `T()`.** Todo texto que la página pinta pasa por
+`el()`, `sv()` o un `textContent`, y ahí `T()` cambia «comité» por
+«universidad» con su artículo («el comité» → «la universidad», «comité
+deducido» → «universidad deducida»), «JDN» por «torneos universitarios» y
+«final» por «edición». En `jdn-comites.html` no cambia nada. Los nombres de
+jugadores, equipos y universidades nunca traen esas palabras. Cuidado con
+`\b`: en JavaScript «é» no es letra para `\b`, así que `/comité\b/` no
+encuentra nada; las reglas usan `(?![\wáéíóúñ])`. `verificar-universidades.js`
+recorre todo el texto visible (y los `aria-label`) con todas las ediciones,
+con una, en una ficha y en la calidad, y falla si queda «comité», «JDN»,
+«eliminatoria», «final» o «zona».
+
+**Sin eliminatorias, sin zonas, sin tableros.** Cada torneo universitario da
+sus medallas: todas las ediciones son `fase: "final"` y su propio ciclo, así
+que «Jugó la final» y «De la eliminatoria a la final» no salen solos. El
+filtro de fase se cambia por «Evento» (`serie`: JUNCOS, CONARE, FEDEU,
+FECUNDE, JUDUCA, otros), que va en el enlace como los demás. chess-results no
+publica una clasificación por tableros de estos torneos: no hay
+`uni_tableros`, la página no la pide y la copa no ofrece sumarlos. El
+medallero tiene sus columnas (`universidades.html`): oro, plata, bronce,
+medallas individuales y de equipos, participaciones individuales y equipos.
+La categoría es «Universitario», «División B» (el CONARE 2018 partió el
+absoluto en A y B) o «Funcionarios» (FEDEU 2023).
+
+**La universidad.** chess-results la escribe de muchas formas: en la columna
+del club, en el grupo (el FECUNDE 2020 en línea puso ahí la universidad y en
+el club el usuario de chess.com), en la federación (los JUNCOS viejos:
+«UCR», «UNE», «CUC») o en el nombre del equipo («UCR (CRC)», «UNED - CRC»,
+«Universidad Estatal a Distancia de Costa»). `universidad()` la reduce a la
+sigla con que se conoce y, si no es de Costa Rica, el país: «UNAH
+(Honduras)», «USAC (Guatemala)». **Las sedes cuentan para su universidad**
+(«UCR Grecia», «UCR Sede Sur», «TEC Alajuela», «UNA Omar Dengo», «UTN Sede
+Pacífico»): la pregunta es qué universidad, no qué recinto. «UNA» sola es la
+de Costa Rica (comprobado en el Centroamericano 2020: sus jugadores son
+CRC); la de Nicaragua viene como «UNA - NCA», «UNA Nicaragua» o
+«Universidad Nacional Agraria», y la de Honduras como «UNA Catacamas» o
+«UNAG». La regla de «Universidad Nacional» va al final de la lista porque
+también empieza «Universidad Nacional de Ingeniería» (UNI, Nicaragua) y
+«Universidad Nacional Autónoma de Honduras». Un país solo («NIC») no es una
+universidad: queda vacío y se deduce. Lo que no se reconoce queda con su
+nombre (en la FEDEU 2023 aparecen «Naranjo» y «Santa Barbara»): para eso
+está la corrección a mano de administración, en `uni_correcciones`.
+
+**La deducción, también del equipo.** Los JUDUCA individuales traen el país
+y no la universidad. Además de buscar al mismo jugador en otro torneo de la
+edición o en otra edición (como en los JDN), en las universidades se busca
+en los equipos de la misma edición (`uni_jugadores`): quien jugó el
+individual y por equipos en un JUDUCA sale con la universidad de su equipo,
+marcada «universidad deducida». Por eso la página lee los jugadores ANTES de
+preparar los resultados.
+
+**La carga.** `herramientas/universidades/cargar.sql` (los resultados, con
+`torneos.txt`) y, para los jugadores y las partidas, los mismos archivos de
+`herramientas/jdn-comites/` cambiando `jdn_` por `uni_`. Dos cosas que
+salieron con estos torneos y quedaron en los archivos de los JDN para las
+dos herramientas: el nombre de un equipo puede llevar el país entre
+paréntesis («UNI (NCA)», «UNA CATACAMAS ( HON )»), y algunos torneos
+escriben «Nombre, Apellidos» en la composición y «Apellidos Nombre» en el
+bloque del jugador (el JUNCOS 2023: sin la segunda clave, sus 34 jugadores
+salían con 0 partidas). En `cargar.sql` hay dos reglas propias: los puntos
+de un torneo por equipos sin tabla final salen de la página de resultados, y
+en los JUDUCA 2018, 2023 y 2025 sin tabla final son el SEGUNDO desempate (el
+primero son los puntos de match, como dicen sus torneos hermanos, que sí
+tienen tabla): `torneos.txt` lo marca con «D2». Comprobado al cargar: cada
+equipo tiene integrantes y sus puntos no pasan de los del equipo (la
+diferencia son los forfeits), y cada torneo individual tiene en
+`uni_jugadores` las mismas filas que en `uni_resultados`. 19 partidas de
+equipos (de 5530) no se ubicaron porque chess-results escribe distinto el
+nombre del rival; cuentan en el jugador, no en los enfrentamientos.
+
+**Lo que quedó fuera, a propósito.** Los Blitz mensuales del club de la UCR
+(son de un club, no entre universidades), los selectivos internos para el
+JUDUCA, los torneos recreativos de una sede, los grupos de la fase 1 del
+femenino individual del Interuniversitario 2011 (no son una clasificación
+final) y el XXV JUNCOS 2026, que el 15/10/2026 iba por la ronda 4: se carga
+cuando termine, sumando sus seis torneos a `torneos.txt` (y su edición a
+`EDICIONES_UNI`; una edición que falte igual se ve, con su código de
+nombre). Están los torneos que se publicaron en chess-results: de antes de
+2010 no hay.
+
 ## Proyección JDN por comité
 
 `jdn-proyeccion.html` (`js/jdn-proyeccion.js`) es una herramienta de arbitraje
