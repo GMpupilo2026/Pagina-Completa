@@ -2863,6 +2863,146 @@ chess-results, y sin cruzarlos se contaba dos veces.
   - Lo revisa `verificar-arbitros-cr.js` (el 102 de FIDE y el 900006 de
     chess-results, el mismo día).
 
+## Árbitros de Costa Rica en el extranjero
+
+`arbitros-cr.html` suma los torneos que los árbitros de Costa Rica
+arbitraron fuera del país (pedido del dueño, octubre de 2026: «agrega los
+torneos que arbitraron en el extranjero»). Salen de chess-results, van en la
+misma tabla (`arbitros_cr_cr`) con la federación del torneo en `pais`
+(migración `20261015040916`; los de Costa Rica quedan con `CRC`) y la página
+tiene el filtro «Dónde» (en todas partes, en Costa Rica, en el extranjero) y
+la columna «En el extranjero».
+
+- **FIDE no se pudo.** El camino natural era la pestaña «Arbiter» del perfil
+  de cada árbitro (`a_profile_data.php?records=1&event=ID`), que lista todos
+  sus torneos en cualquier país. El 15/10/2026 FIDE contestaba **200 con un
+  solo carácter** (la marca de orden de bytes) al perfil, a esa pestaña y a
+  la lista de torneos por país (`a_tournaments.php`), con o sin las cabeceras
+  de un pedido AJAX y un `User-Agent` de navegador, mientras la ficha de un
+  torneo (`tournament_information.phtml`) seguía contestando. Sin eso no hay
+  cómo saber qué torneos de afuera valoró FIDE: los de afuera dicen «No
+  consta» en la columna FIDE y no llevan norma. Si FIDE vuelve a contestar,
+  los torneos de afuera de su perfil entran a `arbitros_cr_torneos` como los
+  de Costa Rica, con su norma.
+- **De dónde salen.** El buscador de chess-results tiene las casillas
+  «Árbitro principal» (`txt_Hauptschiedsrichter`) y «Árbitro»
+  (`txt_Schiedsrichter`, que mira también la de adjunto), y busca **texto
+  contenido**, en todos los países (`combo_land=-`). Se buscó cada ID FIDE y
+  cada primer apellido en las dos (`herramientas/arbitros-cr/buscar-afuera.sql`):
+  600 búsquedas de a 80, sin que chess-results cortara. **El buscador
+  distingue tildes** («Nunez» da 470 filas, «Núñez» 55): cada apellido se
+  buscó también con las formas con tilde que aparecen en los torneos de Costa
+  Rica, y los que llenaban las 2000 filas (Rodríguez, González, Mora, Vargas…)
+  con «Apellido1 Apellido2» y «Nombre Apellido1». Un pedido que se mete a
+  mano en `net.http_request_queue` **no sale hasta `net.wake()`**.
+- **El colador, en la base.** Las respuestas traen 82 000 torneos (77 748 de
+  otra federación): cualquiera que se apellide igual.
+  `herramientas/arbitros-cr/afuera.sql` deja los que nombran a alguien de la
+  lista por su ID o por su primer nombre y su primer apellido como palabras
+  sueltas, por tramos de respuestas, y `juntar-afuera.py` los guarda en
+  `herramientas/datos/arbitros-cr-chess-results-afuera.json` (4421). La
+  consulta pasaba del minuto **con una sola página de 1,5 MB**: tenía una
+  expresión regular por árbitro (166 distintas, y Postgres guarda compiladas
+  pocas) y las CTE `celdas` y `t` sin `materialized`, que Postgres metía
+  dentro del join y recalculaba por cada par fila × árbitro. Con `strpos`
+  sobre el texto con espacios a los lados y las dos CTE materializadas, cada
+  tramo tarda segundos.
+- **Afuera hay homónimos** (`armar_chess_results()`): con las reglas de Costa
+  Rica, «Juan López», «Luis Martínez» o «José Rodríguez» sumaban cientos de
+  torneos en España, México y Perú. Afuera vale:
+  - el **ID FIDE** con el primer apellido al lado, como siempre;
+  - el nombre con **los dos apellidos**, con el segundo nombre solo si es el
+    suyo («Juan Carlos López López» no es Juan Francisco López López);
+  - «Nombre Apellido1» solo **en una federación cercana** (Centroamérica, el
+    Caribe, Colombia y los eventos de FIDE y de la Confederación de Ajedrez de
+    América, `CERCA`) y solo si **nunca aparece afuera con otro segundo
+    nombre u otro segundo apellido** (`homonimos_afuera()`: «Juan López
+    Ticona» delata que «Juan López» es de otra gente). En el texto se
+    respetan los signos: «Isaac 3896536; Ochoa Rivera» no es «Isaac Rivera».
+  Venezuela y México salieron de `CERCA` por un «Luis Calvo» y un «Carlos
+  Salazar» que no eran.
+- **Los sin federación** (en blanco en chess-results; pedido del dueño,
+  octubre de 2026: «decidir dónde se jugaron»). El lugar venía vacío en los
+  que tenían un árbitro de Costa Rica, así que no servía. Sirve **la
+  federación de sus jugadores**: la lista de cada uno (`tnrCLAVE.aspx`) se
+  contó a mano y quedó en `herramientas/datos/arbitros-cr-sin-federacion.json`
+  (cuántos con federación y cuántos de CRC). Con el 80 % o más de CRC, el
+  torneo se jugó acá y entra como de Costa Rica (con su cruce con FIDE: los
+  tres eran el mismo torneo que uno de FIDE). Dos del Círculo Ponziani (10 de
+  10, 8 de 8) y el «II Torneo por la Plata» (26 de 27) entraron; los tres de
+  Valencia (0 de 46, 0 de 31, 0 de 62) no. `--afuera` carga todo lo que salió
+  de la búsqueda en todos los países, también estos.
+- **Lo que queda fuera.** Los sin federación que no son de Costa Rica, los que no se jugaron (sin rondas o jugadores, como en Costa
+  Rica) y los torneos donde alguien de Costa Rica solo dirigió u organizó.
+  Las federaciones que no son países salen dichas: `FID` es un evento de FIDE
+  y `CCA`, de la Confederación de Ajedrez de América.
+- **Comprobado contra la recopilación de Oscar Angulo:** de sus 23 torneos
+  afuera, salen los 20 que se jugaron y ninguno de más (los otros 3 tienen 0
+  rondas y 0 jugadores en chess-results).
+- **La carga** (`python3 herramientas/arbitros-cr.py --afuera`, que escribe
+  `carga-afuera-*.sql`) no borra nada: inserta los torneos desde las
+  respuestas (`RESPUESTAS_AFUERA`, de a 40 respuestas por archivo: todas
+  juntas pasan del minuto) y los cargos. La carga completa (`carga-*.sql`)
+  necesita vivas las respuestas de Costa Rica y las de afuera: otra descarga
+  cambia `RESPUESTAS_CR` y `RESPUESTAS_AFUERA`. Los de afuera no se cruzan
+  con FIDE: los de FIDE que hay son todos de Costa Rica.
+- **Lo que dio la carga (15/10/2026):** 212 torneos en el extranjero de 28
+  árbitros (los que más, Carolina Muñoz Solís con 74, Neeshmy Núñez y
+  Stanley Gómez Huertas con 23, Oscar Angulo con 20), en 23 federaciones
+  (CCA 32, Colombia 30, Honduras 29, El Salvador 28, FID 25…), y 250 cargos.
+  Las huellas de lo de afuera en la base (torneos y cargos con `pais <> 'CRC'`)
+  dieron iguales a las del generador, y una cuenta sin la licencia ve 0
+  filas.
+- `verificar-arbitros-cr.js` suma un torneo en Panamá: el filtro «Dónde», la
+  columna, «No consta» y el país en el lugar (lo rompí dejando todo «en Costa
+  Rica» y salta).
+
+## El resumen de normas de cada árbitro
+
+La ficha de un árbitro en `arbitros-cr.html` abre con dos cuadros, uno para
+AF y otro para AI: cuántas normas de torneo podría juntar **hoy** para la
+solicitud del título (pedido del dueño, octubre de 2026). Lo arma
+`cuentaNormas()` en `js/arbitros-cr.js` con lo que ya dice cada torneo
+(`normaDe()`, su cargo incluido) y las reglas de la solicitud de B.06.1 que
+se ven desde afuera:
+
+- **Los últimos seis años**, contados desde hoy en hora de Costa Rica
+  (`HoraCR.hoy()`). Lo que valía y es más viejo se cuenta aparte y se dice.
+- **Una por grupo de fechas que se tocan**: un festival lo es, y también dos
+  torneos que se solapan aunque no empiecen el mismo día. De cada grupo vale
+  el mejor.
+- **Topes**: todas las «Vale», una sola «Vale (una así)» (la de 5 o 6 rondas
+  para AF, la de 7 u 8 para AI) y una sola «Vale una vez» (rápido o blitz,
+  nacional por equipos, el internacional de 100). Las demás se cuentan como
+  sobrantes. Las «Revisar» no se suman: se dice cuántas son.
+- **AF pide 3 normas de al menos dos sistemas; AI pide 4 y va después del
+  AF.** El cuadro dice «Ya tiene el título» (según el perfil de FIDE),
+  «Primero el AF», «Le alcanzaría», «Le falta otro sistema» o «Le faltan N»,
+  siempre escrito y con la lista de los torneos que cuenta.
+- Lo que no se ve desde afuera va escrito debajo: el seminario, si los
+  certificados se emitieron y quién los firmó, que no todas las de AI sean de
+  la misma persona y el tope de dos finales nacionales.
+- Los torneos del extranjero no entran: no se sabe si FIDE los valoró (ver
+  «Árbitros de Costa Rica en el extranjero»).
+- `verificar-arbitros-cr.js` lo prueba con Luis (sin título: 1 de 3), Ana (AF:
+  ya lo tiene; para AI, 0 de 4 y una para revisar), Juan (su norma de 2015 ya
+  no cuenta) y Óscar (IA). Lo rompí quitando el límite de seis años y salta.
+
+## La ficha de un árbitro en PDF
+
+«Descargar en PDF» en la ficha de `arbitros-cr.html` (pedido del dueño,
+octubre de 2026, para adjuntar a una solicitud): el nombre, su título y su
+ID FIDE, los filtros puestos, los dos cuadros de normas (el mismo texto de
+la pantalla: `textoNorma()` lo arma para los dos) y la tabla de torneos con
+los filtros que estén puestos, con `js/reporte-pdf.js` (sin librería). Se
+arma con los datos, no copiando la pantalla. Esa tabla **recorta** las celdas
+(a propósito, no parte renglones), así que el cargo va corto («Principal»,
+«Adjunto», «Pareos»…) con una nota que lo explica, y las columnas «Rds.» y
+«Jug.»; el porqué de cada norma queda en la ficha en línea y en el Excel.
+`verificar-arbitros-cr.js` baja el PDF de Luis y busca su nombre, el cuadro
+de AF, su torneo y la nota de las fuentes (lo rompí sacando los cuadros y
+salta); la tabla se miró convertida a imagen.
+
 ## Historial del jugador y estadísticas por colegio
 
 Dos herramientas gratis y públicas, hechas con los mismos torneos de
