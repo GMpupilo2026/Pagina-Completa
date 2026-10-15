@@ -11,6 +11,14 @@ torneo que sale en dos tramos queda una vez. El reconocimiento fino de quién
 fue qué lo hace herramientas/arbitros-cr.py, igual que con los de Costa Rica.
 
     python3 herramientas/arbitros-cr/juntar-afuera.py salida-1.json salida-2.json …
+
+Con --cr, las respuestas son de exportar-cr.sql (los torneos de Costa Rica de
+un año) y se SUMAN a herramientas/datos/arbitros-cr-chess-results.json: un
+torneo que ya estaba se reemplaza por el nuevo, los demás quedan. Sin --cr,
+el archivo del extranjero se reescribe entero (cada mes se busca todo de
+nuevo).
+
+    python3 herramientas/arbitros-cr/juntar-afuera.py --cr salida-cr.json
 """
 import datetime
 import json
@@ -19,6 +27,7 @@ import sys
 
 RAIZ = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 DESTINO = os.path.join(RAIZ, "herramientas", "datos", "arbitros-cr-chess-results-afuera.json")
+DESTINO_CR = os.path.join(RAIZ, "herramientas", "datos", "arbitros-cr-chess-results.json")
 # Las celdas 2 a 18 de una fila del buscador, en orden (la 4, la 5, la 15 y la
 # 16 no se usan).
 COLUMNAS = ["nombre", "fed", None, None, "inicio", "fin", "director", "organizador", "principal", "adjunto", "arbitros",
@@ -38,10 +47,17 @@ def filas(ruta):
 
 
 def main():
-    if len(sys.argv) < 2:
+    cr = "--cr" in sys.argv
+    rutas = [x for x in sys.argv[1:] if x != "--cr"]
+    if not rutas:
         raise SystemExit(__doc__)
     torneos = {}
-    for ruta in sys.argv[1:]:
+    destino = DESTINO_CR if cr else DESTINO
+    if cr:
+        with open(destino, encoding="utf-8") as f:
+            torneos = {t["clave"]: t for t in json.load(f)["torneos"]}
+        antes = len(torneos)
+    for ruta in rutas:
         for clave, celdas in filas(ruta):
             t = {"clave": clave}
             for nombre, valor in zip(COLUMNAS, celdas):
@@ -49,10 +65,13 @@ def main():
                     t[nombre] = valor or ""
             torneos[clave] = t
     salida = {"actualizado": datetime.date.today().isoformat(), "torneos": [torneos[k] for k in sorted(torneos, key=int)]}
-    with open(DESTINO, "w", encoding="utf-8") as f:
+    with open(destino, "w", encoding="utf-8") as f:
         json.dump(salida, f, ensure_ascii=False, separators=(",", ":"))
         f.write("\n")
-    print(f"{os.path.relpath(DESTINO, RAIZ)}: {len(torneos)} torneos de otra federación que nombran a alguien de Costa Rica.")
+    if cr:
+        print(f"{os.path.relpath(destino, RAIZ)}: {len(torneos)} torneos de Costa Rica ({len(torneos) - antes} nuevos).")
+    else:
+        print(f"{os.path.relpath(destino, RAIZ)}: {len(torneos)} torneos de otra federación que nombran a alguien de Costa Rica.")
 
 
 if __name__ == "__main__":

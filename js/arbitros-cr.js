@@ -31,6 +31,13 @@
      (un festival es eso), una sola de pocas rondas («una») y una sola de
      las que valen una vez («opcion»). Lo que no se ve (firmas, seminario,
      certificados) lo dice escrito.
+   - En la lista, «Hoy para AF/AI» es ese mismo resumen, para ordenar y ver
+     quién está más cerca del título; en la ficha, cada norma dice hasta
+     cuándo cuenta (seis años desde que empezó el torneo).
+   - «Torneos por año»: una tabla con barra (el total) y los números escritos,
+     en la lista (torneos distintos de los árbitros que se ven) y en la ficha.
+   - En la ficha, cada torneo trae su «Equipo de Costa Rica»: quiénes de la
+     lista lo arbitraron, dirigieron u organizaron, con su cargo.
    - «Contar: festivales como uno»: los torneos de un árbitro que empiezan
      el mismo día son un festival y cuentan como uno; su norma es la mejor
      de sus torneos (FIDE da una norma por festival).
@@ -67,7 +74,7 @@
         FID: "evento de FIDE", CCA: "evento de la Confederación de Ajedrez de América", XXX: "sin federación" };
     const pais = (codigo) => PAISES[codigo] || codigo;
 
-    let arbitros = [], torneos = new Map(), torneosCr = new Map(), crDeFide = new Map(), PRIMER = 0, ULTIMO = 0;
+    let equipos = new Map(), arbitros = [], torneos = new Map(), torneosCr = new Map(), crDeFide = new Map(), PRIMER = 0, ULTIMO = 0;
     const estado = { q: "", titulo: "", tipo: "", donde: "", contar: "", desde: 0, hasta: 0, orden: { col: "torneos", dir: -1 }, normaAf: "", normaAi: "", elegido: null };
 
     // «AAAA-MM-DD» a «DD/MM/AAAA» sin pasar por Date.
@@ -173,6 +180,10 @@
         const fide = porArbitro(filasCar, "torneo_id", "cargo"), cr = porArbitro(filasCrCar, "clave", "rol");
         arbitros = filasArb.map((a) => ({ ...a, busca: sinTildes(a.nombre) + " " + a.fide_id,
             todos: torneosDelArbitro(fide.get(a.fide_id) || new Map(), cr.get(a.fide_id) || new Map()) }));
+        for (const a of arbitros) a.normas = { af: cuentaNormas(a, "af").usadas.length, ai: cuentaNormas(a, "ai").usadas.length };
+        // El equipo de Costa Rica de cada torneo: quién de la lista estuvo y en qué.
+        equipos = new Map();
+        for (const a of arbitros) for (const x of a.todos) equipos.set(x.clave, (equipos.get(x.clave) || []).concat({ a, x }));
         const anios = arbitros.flatMap((a) => a.todos.map((x) => x.anio));
         PRIMER = Math.min(...anios); ULTIMO = Math.max(...anios);
     }
@@ -231,6 +242,8 @@
             af: cuenta((x) => x.fide && x.af.estado !== "no"), afRevisar: cuenta((x) => x.af.estado === "revisar"),
             ai: cuenta((x) => x.fide && x.ai.estado !== "no"), aiRevisar: cuenta((x) => x.ai.estado === "revisar"),
             ultimo: l.length ? l[0].inicio : "",
+            // «Hoy para AF/AI»: no depende de los filtros (es lo que junta hoy).
+            cercaAf: ["FA", "IA"].includes(a.titulo) ? 100 : a.normas.af, cercaAi: a.titulo === "IA" ? 100 : a.normas.ai,
         };
     }
 
@@ -255,7 +268,9 @@
                 el("th", { scope: "row", class: "px-3 py-2 font-normal" }, boton),
                 td(r.a.titulo || "—"), td(miles(r.torneos), true), td(miles(r.fide), true), td(miles(r.nofide), true), td(miles(r.fuera), true),
                 td(miles(r.principal), true), td(miles(r.adjunto), true), td(miles(r.arbitro), true),
-                td(conRev(r.af, r.afRevisar), true), td(conRev(r.ai, r.aiRevisar), true), td(fecha(r.ultimo)));
+                td(conRev(r.af, r.afRevisar), true), td(conRev(r.ai, r.aiRevisar), true),
+                td(r.cercaAf === 100 ? "Ya es AF" : `${miles(r.cercaAf)} de 3`, true), td(r.cercaAi === 100 ? "Ya es AI" : `${miles(r.cercaAi)} de 4`, true),
+                td(fecha(r.ultimo)));
         }));
         for (const th of $("tabla-arbitros").tHead.rows[0].cells) {
             const c = th.querySelector("button").dataset.col;
@@ -268,10 +283,35 @@
             const v = vistos.get(clave(x)) || { fide: false, fuera: false };
             vistos.set(clave(x), { fide: v.fide || x.fide, fuera: v.fuera || x.fuera });
         }
+        // Para la tabla por año: cada torneo una vez (el primero que aparece).
+        const unicos = new Map();
+        for (const r of filas) for (const x of torneosDe(r.a)) if (!unicos.has(clave(x))) unicos.set(clave(x), x);
+        pintarActividad("actividad", [...unicos.values()]);
         const fideVistos = [...vistos.values()].filter((v) => v.fide).length, fueraVistos = [...vistos.values()].filter((v) => v.fuera).length;
         $("cuenta").textContent = filas.length
             ? `${miles(filas.length)} árbitros con ${miles(vistos.size)} ${estado.contar === "festival" ? "torneos o festivales" : "torneos"} (${miles(fideVistos)} de FIDE y ${miles(vistos.size - fideVistos)} que no; ${miles(fueraVistos)} en el extranjero) de ${estado.desde} a ${estado.hasta}.`
             : "Ningún árbitro cumple con estos filtros.";
+    }
+
+    /* «Torneos por año»: una fila por año con una barra del total (el número
+       va escrito al lado) y cuántos de FIDE, no FIDE y en el extranjero. */
+    function pintarActividad(tabla, lista) {
+        const por = new Map();
+        for (const x of lista) {
+            const v = por.get(x.anio) || { total: 0, fide: 0, nofide: 0, fuera: 0 };
+            v.total++; if (x.fide) v.fide++; else v.nofide++; if (x.fuera) v.fuera++;
+            por.set(x.anio, v);
+        }
+        const max = Math.max(1, ...[...por.values()].map((v) => v.total));
+        const td = (v, der) => el("td", { class: "px-3 py-1.5" + (der ? " text-right tabular-nums" : "") }, v);
+        $(tabla).tBodies[0].replaceChildren(...[...por.entries()].sort((a, b) => b[0] - a[0]).map(([anio, v]) => {
+            const barra = el("span", { class: "inline-block h-3 rounded-full bg-brand-500 dark:bg-brand-300 align-middle", "aria-hidden": "true" });
+            barra.style.width = Math.max(4, Math.round(160 * v.total / max)) + "px";
+            return el("tr", { class: "border-t border-brand-100 dark:border-brand-800" },
+                el("th", { scope: "row", class: "px-3 py-1.5 font-normal tabular-nums" }, String(anio)),
+                el("td", { class: "px-3 py-1.5 whitespace-nowrap" }, barra, " ", el("span", { class: "tabular-nums" }, miles(v.total))),
+                td(miles(v.fide), true), td(miles(v.nofide), true), td(miles(v.fuera), true));
+        }));
     }
 
     const FILTRO_NORMA = { vale: VALE, revisar: ["revisar"], no: ["no"] };
@@ -303,6 +343,7 @@
             ` · ${miles(r.torneos)} torneos de ${estado.desde} a ${estado.hasta} (${miles(r.fide)} de FIDE, ${miles(r.nofide)} que no; ${miles(r.fuera)} en el extranjero)`
             + (a.solo_chess_results ? ". No figura como árbitro en ninguna ficha de FIDE." : `: valen para AF ${miles(r.af)}, para AI ${miles(r.ai)}.`));
         $("ficha-normas").replaceChildren(tarjetaNorma(a, "af"), tarjetaNorma(a, "ai"));
+        pintarActividad("ficha-actividad", torneosDe(a));
         const lista = filasFicha(a);
         $("tabla-torneos").tBodies[0].replaceChildren(...lista.map((x) => {
             if (x.festival) return filaFestival(x);
@@ -311,7 +352,8 @@
             const nombre = el("div", {},
                 el("span", { class: "font-semibold" }, t ? t.nombre : c.nombre),
                 lugar ? el("span", { class: "of-detalle" }, lugar) : null,
-                el("span", { class: "of-detalle" }, t ? enlace(urlFide(t), "FIDE") : null, t && c ? " · " : null, c ? enlace(urlCr(c), "chess-results") : null));
+                el("span", { class: "of-detalle" }, t ? enlace(urlFide(t), "FIDE") : null, t && c ? " · " : null, c ? enlace(urlCr(c), "chess-results") : null),
+                equipoDe(x, a));
             const td = (v, der) => el("td", { class: "px-3 py-2 align-top" + (der ? " text-right tabular-nums" : "") }, v);
             return el("tr", { class: "border-t border-brand-100 dark:border-brand-800" },
                 td(fecha(x.inicio)), el("th", { scope: "row", class: "px-3 py-2 align-top font-normal" }, nombre),
@@ -374,7 +416,14 @@
         if (c.viejas) extra.push(`${miles(c.viejas)} ${c.viejas === 1 ? "torneo que valía es" : "torneos que valían son"} de antes de los últimos seis años.`);
         extra.push(cual === "af" ? "Además del seminario. No se ve desde afuera si los certificados se emitieron y quién los firmó."
             : "Además del seminario, no todas firmadas por la misma persona y a lo sumo dos finales nacionales: eso no se ve desde afuera.");
-        return { titulo: "Norma de " + titulo, estado, dicho, torneos: c.usadas.map((x) => `${fecha(x.inicio)} · ${x.t.nombre} (${ESTADOS[x[cual].estado]})`),
+        // Hasta cuándo cuenta cada una: seis años desde que empezó el torneo.
+        const hoy = window.HoraCR ? HoraCR.hoy() : "";
+        const enUnAnio = hoy ? (parseInt(hoy.slice(0, 4), 10) + 1) + hoy.slice(4) : "";
+        const hasta = (x) => (parseInt(x.inicio.slice(0, 4), 10) + 6) + x.inicio.slice(4);
+        const vencen = c.usadas.filter((x) => hasta(x) <= enUnAnio);
+        if (vencen.length && !tiene) extra.unshift(`${miles(vencen.length)} ${vencen.length === 1 ? "deja" : "dejan"} de contar en menos de un año.`);
+        return { titulo: "Norma de " + titulo, estado, dicho, torneos: c.usadas.map((x) => `${fecha(x.inicio)} · ${x.t.nombre} (${ESTADOS[x[cual].estado]}) · cuenta hasta el ${fecha(hasta(x))}`
+            + (hasta(x) <= enUnAnio ? " (vence pronto)" : "")),
             nota: `Cuenta desde el ${fecha(c.desde)}, una por festival o fechas que se tocan. ` + extra.join(" ") };
     }
 
@@ -385,6 +434,21 @@
             el("p", { class: "mt-1" }, el("strong", { class: "of-estado" }, n.estado), " ", el("span", {}, n.dicho)),
             n.torneos.length ? el("ul", { class: "mt-2 space-y-0.5" }, ...n.torneos.map((t) => el("li", { class: "of-detalle" }, t))) : null,
             el("p", { class: "of-detalle mt-2" }, n.nota));
+    }
+
+    // «Equipo de Costa Rica»: quiénes de la lista estuvieron en el torneo y en
+    // qué; cada nombre abre su ficha.
+    function equipoDe(x, a) {
+        const gente = (equipos.get(x.clave) || []).slice().sort((p, q) => (p.a === a ? -1 : q.a === a ? 1 : p.a.nombre.localeCompare(q.a.nombre, "es")));
+        if (gente.length < 2) return null;
+        const det = el("details", { class: "of-detalle mt-1" }, el("summary", { class: "cursor-pointer underline underline-offset-2" }, `Equipo de Costa Rica (${miles(gente.length)})`));
+        det.append(el("ul", { class: "mt-1 space-y-0.5" }, ...gente.map(({ a: p, x: y }) => {
+            const quien = p === a ? el("span", { class: "font-semibold" }, p.nombre)
+                : el("button", { type: "button", class: "underline underline-offset-2 hover:no-underline text-left", "data-fide": String(p.fide_id) }, p.nombre);
+            if (p !== a) quien.addEventListener("click", () => elegir(p.fide_id));
+            return el("li", {}, quien, ": " + cargoEscrito(y));
+        })));
+        return det;
     }
 
     // Afuera no se cruzó con FIDE: no se sabe si lo valoró.

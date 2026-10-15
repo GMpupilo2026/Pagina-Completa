@@ -2988,6 +2988,63 @@ se ven desde afuera:
   ya lo tiene; para AI, 0 de 4 y una para revisar), Juan (su norma de 2015 ya
   no cuenta) y Óscar (IA). Lo rompí quitando el límite de seis años y salta.
 
+## La puesta al día de cada mes
+
+«Árbitros de Costa Rica» se pone al día una vez al mes con una tarea
+programada de Claude (no con GitHub Actions: los datos van a la base, que
+solo se escribe desde una sesión con acceso a Supabase, y la descarga se hace
+con pg_net desde la base). La tarea sigue la habilidad
+`.claude/skills/arbitros-cr-actualizar/SKILL.md`, paso a paso:
+
+- **¿Volvió FIDE?** Prueba el perfil de un árbitro. Si contesta, lo avisa: los
+  torneos del extranjero en FIDE (con su norma) se arman con el dueño, no
+  solos en la pasada.
+- **Lo nuevo de chess-results**: la búsqueda del año en Costa Rica
+  (`buscar-cr.sql`, y el año anterior en enero y febrero), la búsqueda en
+  todos los países (`buscar-afuera.sql`), las exportaciones (`exportar-cr.sql`,
+  `afuera.sql`) y los juntadores (`juntar-afuera.py --cr` suma al JSON de
+  Costa Rica; sin `--cr` reescribe el del extranjero).
+- **La carga parcial** (`arbitros-cr.py --parcial AAAA --respuestas-cr D-H
+  --respuestas-afuera D-H`): no borra nada; inserta o pone al día los torneos
+  de esas búsquedas, suma sus cargos y vuelve a escribir su cruce con FIDE
+  (soltando antes el que tuvieran, por el índice único). Después, la huella
+  de lo cargado contra la del generador.
+- **Probada el 15/10/2026**: la búsqueda de 2026 en Costa Rica (603 torneos;
+  ninguno nuevo desde el día anterior, pero tres en juego habían sumado una
+  ronda) y lo del extranjero; las huellas de los 769 torneos dieron iguales.
+  La exportación nueva junta los espacios y deja algunas entidades
+  (`&#10145;`) que la vieja no dejaba: al generador no le cambia nada (des-
+  escapa el texto) y el texto que se muestra lo escribe la base desde las
+  respuestas.
+- Lo que no hace sola: sumar árbitros nuevos (hace falta su perfil de FIDE)
+  ni borrar torneos que desaparecieron de chess-results.
+
+## Quién está cerca del título, qué vence, la actividad y el equipo
+
+Cuatro piezas más en `arbitros-cr.html` (pedido del dueño, octubre de 2026):
+
+- **«Hoy para AF» y «Hoy para AI» en la lista**: el mismo conteo del cuadro
+  de la ficha (`cuentaNormas()`), «1 de 3», o «Ya es AF» si su perfil de FIDE
+  dice que tiene el título. Ordenables: al ordenar, quien ya lo tiene va
+  arriba (vale 100) y después quien más junta. No dependen de los filtros de
+  años ni de tipo: es lo que junta **hoy**. Se calcula una vez al cargar.
+- **Hasta cuándo cuenta cada norma**: en el cuadro, cada torneo dice «cuenta
+  hasta el DD/MM/AAAA» (seis años desde que empezó) y «vence pronto» si es
+  en menos de un año; arriba se dice cuántas vencen así.
+- **«Torneos por año»** en la lista (los torneos distintos de los árbitros
+  que se ven, con los filtros) y en la ficha: una tabla con una barra del
+  total por año y los números escritos al lado (FIDE, no FIDE, en el
+  extranjero). La barra es `brand-500` sobre blanco (6,1:1) y `brand-300`
+  sobre `brand-900` en modo oscuro (7,8:1); el número va siempre escrito.
+- **«Equipo de Costa Rica»** en cada torneo de la ficha (si hay más de uno):
+  quiénes de la lista estuvieron y con qué cargo, y cada nombre abre su
+  ficha. Sale del mismo índice de torneos de cada árbitro (la clave `f<id>`
+  o `c<clave>` es la misma para todos).
+- `verificar-arbitros-cr.js` prueba las columnas, la tabla por año (en 2024,
+  5 torneos: 2 de FIDE, 3 no, 1 en el extranjero), «cuenta hasta», y el
+  equipo con su enlace. Lo rompí cambiando los seis años por siete, quitando
+  el equipo y dejando la columna en 0, y salta cada vez.
+
 ## La ficha de un árbitro en PDF
 
 «Descargar en PDF» en la ficha de `arbitros-cr.html` (pedido del dueño,
