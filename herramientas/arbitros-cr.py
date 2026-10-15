@@ -17,6 +17,7 @@ Angulo.
     python3 herramientas/arbitros-cr.py               escribe herramientas/arbitros-cr/carga-*.sql
     python3 herramientas/arbitros-cr.py --resumen     solo cuenta
     python3 herramientas/arbitros-cr.py --huella      la huella que debe dar la base y la consulta que la saca
+    python3 herramientas/arbitros-cr.py --afuera      solo los torneos del extranjero (carga-afuera-*.sql), sin borrar
 
 Las cargas se corren en la base en orden (borran y vuelven a llenar las tres
 tablas). Ver «Árbitros de Costa Rica en FIDE» en
@@ -56,6 +57,15 @@ ROLES_CR = {"principal": "ap", "adjunto": "adj", "arbitros": "arb", "director": 
 # torneos de chess-results se insertan desde ahí, en la base, sin pasar su
 # texto por la conversación. Otra descarga cambia estos números.
 RESPUESTAS_CR = (17486, 17514)
+# Los torneos en el extranjero: el mismo buscador, en todos los países,
+# buscando a cada árbitro por su ID FIDE y por su apellido en las casillas de
+# árbitro principal y de árbitros (ver «Árbitros de Costa Rica en el
+# extranjero»). Lo que sirve de esas búsquedas (las filas de otro país que
+# nombran a algún árbitro de Costa Rica) lo junta
+# herramientas/arbitros-cr/juntar-afuera.py en este archivo, y sus torneos se
+# insertan desde las respuestas, como los de Costa Rica.
+CHESS_RESULTS_AFUERA = os.path.join(RAIZ, "herramientas", "datos", "arbitros-cr-chess-results-afuera.json")
+RESPUESTAS_AFUERA = (17685, 18413)
 CARPETA = os.path.join(RAIZ, "herramientas", "arbitros-cr")
 # Los cargos de la ficha de FIDE. Para una norma valen el principal, el
 # adjunto y el árbitro; el asistente no (B.06.1, 2.4.4) y el de pareos queda
@@ -181,6 +191,10 @@ def armar_chess_results(arbitros):
         return {}, set()
     with open(CHESS_RESULTS, encoding="utf-8") as f:
         fuente = json.load(f)
+    afuera = []
+    if os.path.exists(CHESS_RESULTS_AFUERA):
+        with open(CHESS_RESULTS_AFUERA, encoding="utf-8") as f:
+            afuera = [t for t in json.load(f)["torneos"] if t["fed"] != "CRC"]
     perfiles = {}
     if os.path.exists(PERFILES_CR):
         with open(PERFILES_CR, encoding="utf-8") as f:
@@ -206,7 +220,7 @@ def armar_chess_results(arbitros):
     formas = {fid: formas_del_nombre(a["nombre"], repetidos[clave_corta(a["nombre"])] > 1) for fid, a in arbitros.items()}
     primer_apellido = {fid: (palabras(a["nombre"].partition(",")[0]) or [""])[0] for fid, a in arbitros.items()}
     torneos, cargos = {}, set()
-    for t in fuente["torneos"]:
+    for t in fuente["torneos"] + afuera:
         clave = int(t["clave"])
         for col, rol in ROLES_CR.items():
             celda = t[col]
@@ -223,6 +237,7 @@ def armar_chess_results(arbitros):
             "lugar": html.unescape(t["lugar"]).strip()[:200], "control": html.unescape(t["control"]).strip()[:200],
             "rondas": int(t["rondas"]) if t["rondas"].isdigit() else 0,
             "jugadores": int(t["jugadores"]) if t["jugadores"].isdigit() else 0,
+            "pais": t.get("fed") or "CRC",
         }
     # Fuera los de prueba y los que no se jugaron (sin rondas o sin jugadores).
     torneos = {k: v for k, v in torneos.items() if not es_basura(v)}
@@ -231,6 +246,10 @@ def armar_chess_results(arbitros):
     for fid in nuevos - arbitraron:
         del arbitros[fid]
     cargos = {c for c in cargos if c[1] in arbitros}
+    # Del extranjero, solo los que alguien de Costa Rica arbitró: la búsqueda
+    # por apellido trae también a quien solo dirigió u organizó.
+    arbitrados = {c for c, _, r in cargos if r in ("ap", "adj", "arb")}
+    cargos = {c for c in cargos if torneos[c[0]]["pais"] == "CRC" or c[0] in arbitrados}
     usados = {c for c, _, _ in cargos}
     return {k: v for k, v in torneos.items() if k in usados}, cargos
 
@@ -400,8 +419,7 @@ def cargas(torneos, cargos, arbitros, cr_torneos=(), cr_cargos=(), cruce=None):
         bloques.append([f"insert into public.arbitros_cr_cargos (torneo_id, fide_id, cargo) values\n  " + ",\n  ".join(filas[i:i + CARGOS_POR_CARGA])
                         + "\non conflict do nothing;"])
     if cr_torneos:
-        bloques.append(["-- Lee las respuestas del buscador de chess-results que siguen en net._http_response (RESPUESTAS_CR).",
-                        cr_torneos_sql(cr_torneos)])
+        bloques += cargas_cr_torneos(cr_torneos)
     filas = [f"({c}, {int(f)}, {sql(r)})" for c, f, r in sorted(cr_cargos, key=lambda x: (x[0], int(x[1]), x[2]))]
     for i in range(0, len(filas), CARGOS_POR_CARGA):
         bloques.append([f"insert into public.arbitros_cr_cr_cargos (clave, fide_id, rol) values\n  " + ",\n  ".join(filas[i:i + CARGOS_POR_CARGA])
@@ -417,6 +435,32 @@ def cargas(torneos, cargos, arbitros, cr_torneos=(), cr_cargos=(), cruce=None):
     return bloques
 
 
+def cargas_cr_torneos(cr_torneos):
+    """Los torneos de chess-results, leídos de las respuestas del buscador:
+    los de Costa Rica de RESPUESTAS_CR y los del extranjero de
+    RESPUESTAS_AFUERA (las dos tienen que seguir en net._http_response)."""
+    bloques = []
+    for respuestas, cuales in ((RESPUESTAS_CR, lambda v: v["pais"] == "CRC"), (RESPUESTAS_AFUERA, lambda v: v["pais"] != "CRC")):
+        claves = [k for k, v in cr_torneos.items() if cuales(v)]
+        if claves:
+            bloques.append([f"-- Lee las respuestas del buscador de chess-results que siguen en net._http_response ({respuestas[0]} a {respuestas[1]}).",
+                            cr_torneos_sql(claves, respuestas)])
+    return bloques
+
+
+def cargas_afuera(cr_torneos, cr_cargos):
+    """Solo lo del extranjero, sin borrar nada: para sumarlo a una base que ya
+    tiene lo de Costa Rica (las respuestas de RESPUESTAS_CR ya no están)."""
+    afuera = {k: v for k, v in cr_torneos.items() if v["pais"] != "CRC"}
+    bloques = [["-- Lee las respuestas del buscador de chess-results que siguen en net._http_response "
+                f"({RESPUESTAS_AFUERA[0]} a {RESPUESTAS_AFUERA[1]}).", cr_torneos_sql(afuera, RESPUESTAS_AFUERA)]]
+    filas = [f"({c}, {int(f)}, {sql(r)})" for c, f, r in sorted(cr_cargos, key=lambda x: (x[0], int(x[1]), x[2])) if c in afuera]
+    for i in range(0, len(filas), CARGOS_POR_CARGA):
+        bloques.append([f"insert into public.arbitros_cr_cr_cargos (clave, fide_id, rol) values\n  " + ",\n  ".join(filas[i:i + CARGOS_POR_CARGA])
+                        + "\non conflict do nothing;"])
+    return bloques
+
+
 def limpiar_sql(x):
     """Una celda de chess-results limpia, en SQL: sin etiquetas, con las
     entidades de letras y puntuación traducidas (las de emojis y símbolos de
@@ -429,32 +473,34 @@ def limpiar_sql(x):
     return f"btrim(regexp_replace(replace({num}, chr(160), ' '), '\\s+', ' ', 'g'))"
 
 
-def cr_torneos_sql(claves):
+def cr_torneos_sql(claves, respuestas=RESPUESTAS_CR):
     """Inserta los torneos de chess-results que tienen algún árbitro de Costa
-    Rica, leyéndolos de las respuestas del buscador que siguen en la base."""
+    Rica, leyéndolos de las respuestas del buscador que siguen en la base
+    (con la federación del torneo, la columna que sigue al nombre)."""
     return f"""with r as (select id, substr(content, strpos(content, '<table class="CRs2"')) t from net._http_response
-  where id between {RESPUESTAS_CR[0]} and {RESPUESTAS_CR[1]} and strpos(content, '<table class="CRs2"') > 0),
+  where id between {respuestas[0]} and {respuestas[1]} and strpos(content, '<table class="CRs2"') > 0),
 filas as (select f from r, regexp_split_to_table(substr(t, 1, strpos(t, '</table>')), '<tr class="CR') f where f ~ '^n?g[12]">'),
 celdas as (select regexp_split_to_array(f, '</t[dh]>') c from filas),
 t as (select distinct on (btrim(regexp_replace(c[19], '<[^>]+>', '', 'g'))::int) btrim(regexp_replace(c[19], '<[^>]+>', '', 'g'))::int clave, c from celdas
   where btrim(regexp_replace(c[19], '<[^>]+>', '', 'g')) ~ '^\\d+$')
-insert into public.arbitros_cr_cr (clave, nombre, inicio, fin, lugar, control, rondas, jugadores)
+insert into public.arbitros_cr_cr (clave, nombre, inicio, fin, lugar, control, rondas, jugadores, pais)
 select clave, coalesce(nullif({limpiar_sql("c[2]")}, ''), '(sin nombre)'),
   replace(btrim(regexp_replace(c[6], '<[^>]+>', '', 'g')), '/', '-')::date,
   nullif(replace(btrim(regexp_replace(c[7], '<[^>]+>', '', 'g')), '/', '-'), '')::date,
   left({limpiar_sql("c[13]")}, 200), left({limpiar_sql("c[14]")}, 200),
   coalesce(nullif(btrim(regexp_replace(c[17], '<[^>]+>', '', 'g')), '')::smallint, 0),
-  coalesce(nullif(btrim(regexp_replace(c[18], '<[^>]+>', '', 'g')), '')::int, 0)
+  coalesce(nullif(btrim(regexp_replace(c[18], '<[^>]+>', '', 'g')), '')::int, 0),
+  coalesce(substring(btrim(regexp_replace(c[3], '<[^>]+>', '', 'g')) from '^[A-Z]{{3}}$'), 'CRC')
 from t where clave = any('{{{",".join(str(c) for c in sorted(claves))}}}'::int[])
 on conflict (clave) do update set nombre = excluded.nombre, inicio = excluded.inicio, fin = excluded.fin, lugar = excluded.lugar,
-  control = excluded.control, rondas = excluded.rondas, jugadores = excluded.jugadores;"""
+  control = excluded.control, rondas = excluded.rondas, jugadores = excluded.jugadores, pais = excluded.pais;"""
 
 
 HUELLA_SQL = """select (select md5(string_agg(concat_ws('|', id, nombre, ciudad, pais, inicio, fin, sistema, ritmo, jugadores, con_elo,
   contados, rondas, federaciones, valorado, af_estado, af_detalle, ai_estado, ai_detalle), E'\\n' order by id)) from public.arbitros_cr_torneos) torneos,
   (select md5(string_agg(concat_ws('|', torneo_id, fide_id, cargo), E'\\n' order by torneo_id, fide_id, cargo)) from public.arbitros_cr_cargos) cargos,
   (select md5(string_agg(concat_ws('|', fide_id, nombre, titulo, titulo_detalle, solo_chess_results), E'\\n' order by fide_id)) from public.arbitros_cr) arbitros,
-  (select md5(string_agg(concat_ws('|', clave, inicio, fin, rondas, jugadores, fide_torneo), E'\\n' order by clave)) from public.arbitros_cr_cr) cr_torneos,
+  (select md5(string_agg(concat_ws('|', clave, inicio, fin, rondas, jugadores, fide_torneo, pais), E'\\n' order by clave)) from public.arbitros_cr_cr) cr_torneos,
   (select md5(string_agg(concat_ws('|', clave, fide_id, rol), E'\\n' order by clave, fide_id, rol)) from public.arbitros_cr_cr_cargos) cr_cargos;"""
 
 
@@ -471,7 +517,7 @@ def huellas(torneos, cargos, arbitros, cr_torneos=None, cr_cargos=(), cruce=None
          for f, x in sorted(arbitros.items(), key=lambda x: int(x[0]))]
     # De los torneos de chess-results, solo números y fechas: el texto lo
     # escribe la base misma desde las respuestas del buscador.
-    ct = [col(k, v["inicio"], v["fin"], v["rondas"], v["jugadores"], (cruce or {}).get(k)) for k, v in sorted((cr_torneos or {}).items())]
+    ct = [col(k, v["inicio"], v["fin"], v["rondas"], v["jugadores"], (cruce or {}).get(k), v["pais"]) for k, v in sorted((cr_torneos or {}).items())]
     cc = [col(a, int(b), c) for a, b, c in sorted(cr_cargos, key=lambda x: (x[0], int(x[1]), x[2]))]
     return {"torneos": md5(t), "cargos": md5(c), "arbitros": md5(a), "cr_torneos": md5(ct), "cr_cargos": md5(cc)}
 
@@ -479,7 +525,8 @@ def huellas(torneos, cargos, arbitros, cr_torneos=None, cr_cargos=(), cruce=None
 def main():
     fuente, torneos, cargos, arbitros = armar()
     cr_torneos, cr_cargos = armar_chess_results(arbitros)
-    cruce = cruzar_con_fide(cr_torneos, torneos, cargos, cr_cargos)
+    # Los de afuera no se cruzan: los de FIDE que hay son todos de Costa Rica.
+    cruce = cruzar_con_fide({k: v for k, v in cr_torneos.items() if v["pais"] == "CRC"}, torneos, cargos, cr_cargos)
     con_cargo = {t for t, _, _ in cargos}
     print(f"{len(arbitros)} árbitros de Costa Rica, {len(torneos)} torneos ({len(con_cargo)} con algún árbitro de Costa Rica), {len(cargos)} cargos.")
     print("AF:", dict(Counter(t["af"]["estado"] for t in torneos.values())), " AI:", dict(Counter(t["ai"]["estado"] for t in torneos.values())))
@@ -494,9 +541,12 @@ def main():
         return
     os.makedirs(CARPETA, exist_ok=True)
     for viejo in os.listdir(CARPETA):
-        if viejo.startswith("carga-") and viejo.endswith(".sql"):
+        if viejo.startswith(prefijo + "-") and viejo[len(prefijo) + 1:-4].isdigit() and viejo.endswith(".sql"):
             os.remove(os.path.join(CARPETA, viejo))
-    bloques = cargas(torneos, cargos, arbitros, cr_torneos, cr_cargos, cruce)
+    if "--afuera" in sys.argv:
+        bloques, prefijo = cargas_afuera(cr_torneos, cr_cargos), "carga-afuera"
+    else:
+        bloques, prefijo = cargas(torneos, cargos, arbitros, cr_torneos, cr_cargos, cruce), "carga"
     # Todo en una transacción: las cargas se corren seguidas en la misma
     # conexión no se puede desde execute_sql, así que cada archivo es una
     # unidad y el primero borra. Se corren en orden; si una falla, se vuelve
@@ -504,7 +554,7 @@ def main():
     bloques[0] = [l for l in bloques[0] if l != "begin;"]
     bloques[-1] = [l for l in bloques[-1] if l != "commit;"]
     for i, b in enumerate(bloques, start=1):
-        with open(os.path.join(CARPETA, f"carga-{i:02d}.sql"), "w", encoding="utf-8") as f:
+        with open(os.path.join(CARPETA, f"{prefijo}-{i:02d}.sql"), "w", encoding="utf-8") as f:
             f.write(f"-- Carga {i} de {len(bloques)} de la herramienta arbitros-cr. La arma herramientas/arbitros-cr.py: no se edita a mano.\n")
             f.write("\n".join(b) + "\n")
     print(f"{len(bloques)} archivos en {os.path.relpath(CARPETA, RAIZ)}/")
