@@ -181,6 +181,66 @@ def formas_del_nombre(nombre, ambiguo=False):
     return [re.compile(f) for f in formas]
 
 
+# Afuera, «Nombre Apellido» solo vale cerca (donde un árbitro de Costa Rica
+# suele ir): en España o en Perú, «Luis Martínez» es otra persona.
+CERCA = {"PAN", "NCA", "HON", "ESA", "GUA", "BIZ", "CUB", "DOM", "PUR", "COL", "CCA", "FID"}
+
+
+def plano_con_signos(celda):
+    """La celda sin tildes ni títulos raros pero con su puntuación: dos
+    palabras están juntas solo si en la celda van seguidas («Isaac 389;
+    Ochoa Rivera» no es «Isaac Rivera»)."""
+    s = re.sub(r"[^a-z,;()/|\-]+", " ", sin_tildes(html.unescape(celda)).lower())
+    return re.sub(r"\s+", " ", s)
+
+
+def formas_afuera(nombre):
+    """Para los torneos del extranjero: las formas con los dos apellidos (que
+    valen siempre) y la expresión de «Nombre [segundo] Apellido1 [algo]», que
+    vale solo si no es un homónimo (ver homonimos_afuera)."""
+    ap, _, no = nombre.partition(",")
+    a, n = palabras(ap), palabras(no)
+    if not a or not n:
+        return [], None
+    estrictas = []
+    if len(a) > 1:
+        # El segundo nombre, si va, tiene que ser el suyo: «Juan Carlos López
+        # López» no es Juan Francisco López López.
+        medio = "(?: (?:" + "|".join(n[1:]) + "))?" if n[1:] else ""
+        estrictas = [r"\b" + a[0] + " " + a[1] + " " + n[0] + r"\b", r"\b" + n[0] + medio + " " + a[0] + " " + a[1] + r"\b"]
+        estrictas += [r"\b" + x + " " + a[0] + " " + a[1] + r"\b" for x in n[1:]]
+    corto = re.compile(r"\b" + n[0] + r"(?: ([a-z]+))? " + a[0] + r"(?: ([a-z]+))?\b")
+    return [re.compile(f) for f in estrictas], corto
+
+
+def homonimos_afuera(arbitros, celdas):
+    """Los árbitros cuyo «Nombre Apellido1» aparece afuera con otro segundo
+    nombre o con otro segundo apellido («Juan López Ticona», «Juan Gabriel
+    López Díaz»): ese nombre corto es de otra gente y no se usa."""
+    planos = [plano_con_signos(c) for c in celdas]
+    homonimos = set()
+    for fid, x in arbitros.items():
+        a, n = palabras(x["nombre"].partition(",")[0]), palabras(x["nombre"].partition(",")[2])
+        _, corto = formas_afuera(x["nombre"])
+        if not corto:
+            continue
+        siguientes = set()
+        for s in planos:
+            for m in corto.finditer(s):
+                medio, sig = m.group(1), m.group(2)
+                if medio and len(medio) > 1 and medio not in n[1:] and medio not in NO_ES_NOMBRE:
+                    homonimos.add(fid)
+                if sig and len(sig) > 1 and sig not in NO_ES_NOMBRE:
+                    if len(a) > 1 and sig != a[1]:
+                        homonimos.add(fid)
+                    siguientes.add(sig)
+        # Con un solo apellido en FIDE, el segundo no se conoce: es otra
+        # persona si aparece con dos distintos.
+        if len(a) == 1 and len(siguientes) > 1:
+            homonimos.add(fid)
+    return homonimos
+
+
 def armar_chess_results(arbitros):
     """Los torneos de chess-results y quién fue qué en cada uno. Se reconoce a
     una persona en una celda por su ID FIDE (solo si al lado está su primer
@@ -194,7 +254,8 @@ def armar_chess_results(arbitros):
     afuera = []
     if os.path.exists(CHESS_RESULTS_AFUERA):
         with open(CHESS_RESULTS_AFUERA, encoding="utf-8") as f:
-            afuera = [t for t in json.load(f)["torneos"] if t["fed"] != "CRC"]
+            # Sin federación (en blanco) no se sabe dónde se jugó: fuera.
+            afuera = [t for t in json.load(f)["torneos"] if re.fullmatch(r"[A-Z]{3}", t["fed"] or "") and t["fed"] != "CRC"]
     perfiles = {}
     if os.path.exists(PERFILES_CR):
         with open(PERFILES_CR, encoding="utf-8") as f:
@@ -219,16 +280,26 @@ def armar_chess_results(arbitros):
     repetidos = Counter(clave_corta(a["nombre"]) for a in arbitros.values())
     formas = {fid: formas_del_nombre(a["nombre"], repetidos[clave_corta(a["nombre"])] > 1) for fid, a in arbitros.items()}
     primer_apellido = {fid: (palabras(a["nombre"].partition(",")[0]) or [""])[0] for fid, a in arbitros.items()}
+    # Afuera el nombre se pide más completo: hay muchos homónimos.
+    afuera_formas = {fid: formas_afuera(a["nombre"]) for fid, a in arbitros.items()}
+    homonimos = homonimos_afuera(arbitros, [t[c] for t in afuera for c in ("principal", "adjunto", "arbitros")])
     torneos, cargos = {}, set()
     for t in fuente["torneos"] + afuera:
         clave = int(t["clave"])
+        fed = t.get("fed") or "CRC"
         for col, rol in ROLES_CR.items():
             celda = t[col]
             if not celda:
                 continue
             plano = texto(celda)
             quienes = {fid for fid in re.findall(r"\b(\d{5,8})\b", celda) if fid in arbitros and primer_apellido[fid] in plano.split()}
-            quienes |= {fid for fid, fs in formas.items() if any(f.search(plano) for f in fs)}
+            if fed == "CRC":
+                quienes |= {fid for fid, fs in formas.items() if any(f.search(plano) for f in fs)}
+            else:
+                con_signos = plano_con_signos(celda)
+                quienes |= {fid for fid, (fs, corto) in afuera_formas.items()
+                            if any(f.search(plano) for f in fs)
+                            or (corto and fed in CERCA and fid not in homonimos and corto.search(con_signos))}
             for fid in quienes:
                 cargos.add((clave, fid, rol))
         torneos[clave] = {
@@ -452,8 +523,11 @@ def cargas_afuera(cr_torneos, cr_cargos):
     """Solo lo del extranjero, sin borrar nada: para sumarlo a una base que ya
     tiene lo de Costa Rica (las respuestas de RESPUESTAS_CR ya no están)."""
     afuera = {k: v for k, v in cr_torneos.items() if v["pais"] != "CRC"}
-    bloques = [["-- Lee las respuestas del buscador de chess-results que siguen en net._http_response "
-                f"({RESPUESTAS_AFUERA[0]} a {RESPUESTAS_AFUERA[1]}).", cr_torneos_sql(afuera, RESPUESTAS_AFUERA)]]
+    # De a 40 respuestas: hay páginas de 1,5 MB y todas juntas pasan del
+    # minuto. Un torneo que sale en dos tramos se escribe dos veces, igual.
+    bloques = [[f"-- Lee las respuestas {d} a {min(d + 39, RESPUESTAS_AFUERA[1])} del buscador de chess-results (net._http_response).",
+                cr_torneos_sql(afuera, (d, min(d + 39, RESPUESTAS_AFUERA[1])))]
+               for d in range(RESPUESTAS_AFUERA[0], RESPUESTAS_AFUERA[1] + 1, 40)]
     filas = [f"({c}, {int(f)}, {sql(r)})" for c, f, r in sorted(cr_cargos, key=lambda x: (x[0], int(x[1]), x[2])) if c in afuera]
     for i in range(0, len(filas), CARGOS_POR_CARGA):
         bloques.append([f"insert into public.arbitros_cr_cr_cargos (clave, fide_id, rol) values\n  " + ",\n  ".join(filas[i:i + CARGOS_POR_CARGA])
@@ -539,14 +613,14 @@ def main():
         print("Lo que debe dar en la base:", huellas(torneos, cargos, arbitros, cr_torneos, cr_cargos, cruce))
         print(HUELLA_SQL)
         return
-    os.makedirs(CARPETA, exist_ok=True)
-    for viejo in os.listdir(CARPETA):
-        if viejo.startswith(prefijo + "-") and viejo[len(prefijo) + 1:-4].isdigit() and viejo.endswith(".sql"):
-            os.remove(os.path.join(CARPETA, viejo))
     if "--afuera" in sys.argv:
         bloques, prefijo = cargas_afuera(cr_torneos, cr_cargos), "carga-afuera"
     else:
         bloques, prefijo = cargas(torneos, cargos, arbitros, cr_torneos, cr_cargos, cruce), "carga"
+    os.makedirs(CARPETA, exist_ok=True)
+    for viejo in os.listdir(CARPETA):
+        if viejo.startswith(prefijo + "-") and viejo[len(prefijo) + 1:-4].isdigit() and viejo.endswith(".sql"):
+            os.remove(os.path.join(CARPETA, viejo))
     # Todo en una transacción: las cargas se corren seguidas en la misma
     # conexión no se puede desde execute_sql, así que cada archivo es una
     # unidad y el primero borra. Se corren en orden; si una falla, se vuelve
