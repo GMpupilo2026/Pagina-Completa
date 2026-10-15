@@ -2988,6 +2988,32 @@ se ven desde afuera:
   ya lo tiene; para AI, 0 de 4 y una para revisar), Juan (su norma de 2015 ya
   no cuenta) y Óscar (IA). Lo rompí quitando el límite de seis años y salta.
 
+## Quién está cerca del título, qué vence, la actividad y el equipo
+
+Cuatro piezas más en `arbitros-cr.html` (pedido del dueño, octubre de 2026):
+
+- **«Hoy para AF» y «Hoy para AI» en la lista**: el mismo conteo del cuadro
+  de la ficha (`cuentaNormas()`), «1 de 3», o «Ya es AF» si su perfil de FIDE
+  dice que tiene el título. Ordenables: al ordenar, quien ya lo tiene va
+  arriba (vale 100) y después quien más junta. No dependen de los filtros de
+  años ni de tipo: es lo que junta **hoy**. Se calcula una vez al cargar.
+- **Hasta cuándo cuenta cada norma**: en el cuadro, cada torneo dice «cuenta
+  hasta el DD/MM/AAAA» (seis años desde que empezó) y «vence pronto» si es
+  en menos de un año; arriba se dice cuántas vencen así.
+- **«Torneos por año»** en la lista (los torneos distintos de los árbitros
+  que se ven, con los filtros) y en la ficha: una tabla con una barra del
+  total por año y los números escritos al lado (FIDE, no FIDE, en el
+  extranjero). La barra es `brand-500` sobre blanco (6,1:1) y `brand-300`
+  sobre `brand-900` en modo oscuro (7,8:1); el número va siempre escrito.
+- **«Equipo de Costa Rica»** en cada torneo de la ficha (si hay más de uno):
+  quiénes de la lista estuvieron y con qué cargo, y cada nombre abre su
+  ficha. Sale del mismo índice de torneos de cada árbitro (la clave `f<id>`
+  o `c<clave>` es la misma para todos).
+- `verificar-arbitros-cr.js` prueba las columnas, la tabla por año (en 2024,
+  5 torneos: 2 de FIDE, 3 no, 1 en el extranjero), «cuenta hasta», y el
+  equipo con su enlace. Lo rompí cambiando los seis años por siete, quitando
+  el equipo y dejando la columna en 0, y salta cada vez.
+
 ## La ficha de un árbitro en PDF
 
 «Descargar en PDF» en la ficha de `arbitros-cr.html` (pedido del dueño,
