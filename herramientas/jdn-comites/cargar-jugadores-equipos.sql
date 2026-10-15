@@ -25,7 +25,10 @@
 --     desde «Información de jugadores», un bloque por jugador con cada
 --     partida: el Elo del rival y el resultado («w 1», «s ½»);
 --   · los bloques no vienen en el orden de la composición: se juntan por el
---     nombre (sin la coma que chess-results pone en la composición). El
+--     nombre (sin la coma que chess-results pone en la composición, o con lo
+--     de antes y lo de después de la coma al revés: algunos torneos escriben
+--     «Nombre, Apellidos» en la composición y «Apellidos Nombre» en el
+--     bloque, como el JUNCOS 2023). El
 --     encabezado del bloque es «Nombre  WCM 1716 CRC Rp:1823»: se le quita
 --     del final el título, el Elo, la federación y el «Rp» (no se corta en
 --     el primer par de espacios: hay nombres con dos espacios adentro, como
@@ -62,7 +65,7 @@ datos as materialized (
    where u.clase ~ '^CRng[12]( |$)'),
 integrantes as materialized (
   select tnr, row_number() over (partition by tnr order by o) orden,
-         btrim(substring(grupo from '^\d+\.\s*([^(]*)')) equipo,
+         btrim(substring(grupo from '^\d+\.\s*([^(]*(?:\( ?[A-Z]{3} ?\))?)')) equipo,
          substring(grupo from '^(\d+)\.')::smallint equipo_orden,
          nullif(c[array_position(cab, 'M.')], '')::smallint tablero,
          btrim(c[array_position(cab, 'Nombre')]) nombre,
@@ -84,7 +87,9 @@ suma as (
          round(avg(p.elo_rival) filter (where p.res is not null and p.elo_rival > 0)) elo_rivales,
          round(sum(1 / (1 + power(10, greatest(-400, least(400, p.elo_rival - i.elo)) / 400.0)))
                filter (where p.res is not null and p.elo_rival > 0 and i.elo > 0), 2) esperado
-    from integrantes i left join partidas p on p.tnr = i.tnr and p.k = lower(regexp_replace(replace(i.nombre, ',', ''), '\s+', ' ', 'g'))
+    from integrantes i left join partidas p on p.tnr = i.tnr
+     and p.k in (lower(regexp_replace(replace(i.nombre, ',', ''), '\s+', ' ', 'g')),
+                 lower(regexp_replace(btrim(split_part(i.nombre, ',', 2)) || ' ' || split_part(i.nombre, ',', 1), '\s+', ' ', 'g')))
    group by i.tnr, i.orden),
 torneo as (select distinct tnr, edicion, codigo from public.jdn_resultados where codigo ~ '-E'),
 borrar as (delete from public.jdn_jugadores where tnr in (select tnr from pag) returning 1)

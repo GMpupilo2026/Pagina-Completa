@@ -1,4 +1,15 @@
-/* El código de jdn-comites.html: los resultados JDN por comité.
+/* El código de jdn-comites.html (los resultados JDN por comité) y de
+   universidades.html (los resultados universitarios por universidad).
+
+   La misma página sirve a las dos herramientas: universidades.html lleva
+   <body data-evento="universidades"> y acá cambian las tablas (uni_* en vez
+   de jdn_*), la licencia, las ediciones, cómo se junta el nombre de una
+   universidad y las palabras («universidad» por «comité»). Lo demás —el
+   medallero, la ficha, la copa, el Elo, los enfrentamientos, la calidad— es
+   el mismo código. Ver «Resultados universitarios por universidad» en
+   docs/decisiones/juegos-y-torneos.md.
+
+   Lo que sigue habla de los JDN; con las universidades vale igual.
 
    - Los datos están en jdn_resultados: cada puesto de cada torneo JDN de
      chess-results, con el comité como lo escribió chess-results. Solo los lee
@@ -15,6 +26,7 @@
 (function () {
     "use strict";
     const $ = (id) => document.getElementById(id);
+    const UNI = document.body.dataset.evento === "universidades";
 
     /* Cada final cierra un ciclo: la eliminatoria de su ciclo es la que la
        clasificó («Jugó la final» y el comité deducido salen de ahí). */
@@ -32,9 +44,50 @@
         { id: "2018-F", fase: "final", titulo: "Final 2018", detalle: "Ciudad Colón, julio de 2018", ciclo: "2018-F" },
         { id: "2018-E", fase: "elim", titulo: "Eliminatoria 2018", detalle: "Alajuela, abril de 2018", ciclo: "2018-F" },
     ];
+    /* Las universitarias: cada una es un evento (JUNCOS, CONARE, FEDEU…),
+       todas con medallas, sin eliminatoria ni ciclo. Van en el orden del
+       tiempo, de la más nueva a la más vieja. */
+    const EDICIONES_UNI = [
+        ["2026-CONARE2", "CONARE", "II Torneo CONARE 2026", "UTN, Alajuela, septiembre de 2026"],
+        ["2026-CONARE", "CONARE", "Torneo CONARE 2026", "UTN, Alajuela, agosto de 2026"],
+        ["2026-FEDEU", "FEDEU", "FEDEU 2026", "CENFOTEC, San José, mayo de 2026"],
+        ["2025-CONARE", "CONARE", "Torneo CONARE 2025", "UNA, Heredia, septiembre de 2025"],
+        ["2025-JUDUCA", "JUDUCA", "JUDUCA 2025", "Tegucigalpa, Honduras, julio de 2025"],
+        ["2025-FEDEU", "FEDEU", "FEDEU 2025", "CENFOTEC, San José, mayo de 2025"],
+        ["2024-CONARE", "CONARE", "Torneo CONARE 2024", "UCR, Sabanilla, octubre de 2024"],
+        ["2024-FEDEU", "FEDEU", "FEDEU 2024", "CENFOTEC, San José, mayo de 2024"],
+        ["2023-CONARE", "CONARE", "Torneo CONARE 2023", "UNA, Heredia, octubre de 2023"],
+        ["2023-FEDEU", "FEDEU", "FEDEU 2023", "UNED, Sabanilla, septiembre de 2023"],
+        ["2023-JUDUCA", "JUDUCA", "JUDUCA 2023", "El Salvador, julio de 2023"],
+        ["2023-JUNCOS", "JUNCOS", "XXIV JUNCOS 2023", "UNA, Heredia, mayo de 2023"],
+        ["2022-FEDEU", "FEDEU", "FEDEU 2022", "UCR, San Pedro, agosto de 2022"],
+        ["2022-CONARE", "CONARE", "Torneo CONARE 2022", "TEC, junio de 2022"],
+        ["2020-FECUNDE", "FECUNDE", "FECUNDE 2020 (en línea)", "chess.com, octubre de 2020"],
+        ["2020-CENTRO", "OTROS", "Centroamericano universitario 2020 (en línea)", "Lichess, agosto y septiembre de 2020"],
+        ["2019-BLITZ", "OTROS", "Blitz universitario 2019", "TEC, Barrio Amón, agosto de 2019"],
+        ["2019-JUNCOS", "JUNCOS", "JUNCOS 2019", "TEC, Cartago, marzo de 2019"],
+        ["2018-CONARE", "CONARE", "Torneo CONARE 2018", "UNED, Sabanilla, noviembre de 2018"],
+        ["2018-JUDUCA", "JUDUCA", "JUDUCA 2018", "Panamá, abril de 2018"],
+        ["2017-JUNCOS", "JUNCOS", "JUNCOS 2017", "UCR, San Pedro, marzo y abril de 2017"],
+        ["2016-JUDUCA", "JUDUCA", "JUDUCA 2016", "Honduras, abril de 2016"],
+        ["2015-JUNCOS", "JUNCOS", "JUNCOS 2015", "UNED, San José, septiembre de 2015"],
+        ["2014-LIGA", "OTROS", "Liga Universitaria 2014", "UNA, Heredia, septiembre de 2014"],
+        ["2014-JUDUCA", "JUDUCA", "JUDUCA 2014", "Nicaragua, abril de 2014"],
+        ["2014-FECUNDE", "FECUNDE", "FECUNDE 2014", "TEC, San José, marzo de 2014"],
+        ["2013-JUNCOS", "JUNCOS", "JUNCOS 2013", "UNA, Heredia, abril de 2013"],
+        ["2011-INTER", "OTROS", "Interuniversitario UNA 2011", "UNA, Heredia, octubre de 2011"],
+        ["2011-JUNCOS", "JUNCOS", "JUNCOS 2011", "TEC, mayo de 2011"],
+        ["2010-JUDUCA", "JUDUCA", "JUDUCA 2010", "Honduras, abril de 2010"],
+    ].map(([id, serie, titulo, detalle]) => ({ id, serie, fase: "final", titulo, detalle, ciclo: id }));
+    if (UNI) EDICIONES.splice(0, EDICIONES.length, ...EDICIONES_UNI);
     const ED = Object.fromEntries(EDICIONES.map((e) => [e.id, e]));
     /* Una edición que se cargue después y no esté arriba igual se ve. */
     function edicion(id) {
+        if (!ED[id] && UNI) {
+            ED[id] = { id, serie: "OTROS", fase: "final", titulo: id.slice(5) + " " + id.slice(0, 4), detalle: "", ciclo: id };
+            EDICIONES.push(ED[id]);
+            EDICIONES.sort((a, b) => b.id.slice(0, 4).localeCompare(a.id.slice(0, 4)));
+        }
         if (!ED[id]) {
             const final = id.endsWith("F");
             ED[id] = { id, fase: final ? "final" : "elim", titulo: (final ? "Final " : "Eliminatoria ") + id.slice(0, 4), detalle: "", ciclo: final ? id : "" };
@@ -57,6 +110,7 @@
     /* El comité tal como lo escribe chess-results → un solo nombre. A un equipo
        se le quita además la letra o el número del final («Escazú A»). */
     function comite(nombre, esEquipo) {
+        if (UNI) return universidad(nombre, esEquipo);
         let s = sinTilde(String(nombre || "")).trim().replace(/^C+DR\s*/i, "").replace(/^CC Distrit(o|al) (de )?/i, "").trim();
         if (!s) return "";
         if (/^codea\b/i.test(s)) return NOMBRES.codea;
@@ -71,11 +125,66 @@
         while ((m = s.match(/\s+(\d{1,2}|[A-Za-z]|SNF)$/))) { const t = m[1].toUpperCase(); suf.unshift(/^\d+$/.test(t) ? String(+t) : t); s = s.slice(0, m.index); }
         return suf.join(" ");
     }
+    /* La universidad como la escribe chess-results → un solo nombre: la sigla
+       con que se la conoce, y el país si no es de Costa Rica. Las sedes y los
+       recintos («UCR Grecia», «TEC Alajuela», «UNA Omar Dengo») cuentan para
+       su universidad. «UNA» sola es la de Costa Rica (en los JUDUCA, la de
+       Nicaragua y la de Honduras vienen con su país o su nombre). Un país
+       solo («NIC») no dice la universidad: queda vacío y se deduce. */
+    const UNIVERSIDADES = [
+        [/^(una\s*(-\s*)?(nca|nicaragua)|universidad nacional agraria)\b/, "UNA (Nicaragua)"],
+        [/^(una catacamas|unag|universidad (nacional )?de agricultura)\b/, "UNAG (Honduras)"],
+        [/^(ucr|sur ucr|universidad de costa rica)\b/, "UCR"],
+        [/^(tec|itcr|itc|it|tecnologico de costa rica|instituto tecnologico)\b/, "TEC"],
+        [/^(uned|une|universidad estatal a distancia)\b/, "UNED"],
+        [/^(utn|universidad tecnica nacional)\b/, "UTN"],
+        [/^cuc\b/, "CUC"],
+        [/^(ula|u ?latina|ulatina|universidad latina)\b/, "ULatina"],
+        [/^earth\b/, "EARTH"],
+        [/^unibe\b/, "UNIBE"],
+        [/^uaca\b/, "UACA"],
+        [/^uisil\b/, "UISIL"],
+        [/^cenfotec\b/, "CENFOTEC"],
+        [/^lead\b/, "LEAD University"],
+        [/^ucimed\b/, "UCIMED"],
+        [/^(universidad )?castro carazo\b/, "U. Castro Carazo"],
+        [/^universidad santa lucia\b/, "U. Santa Lucía"],
+        [/^(unah|universidad (nacional )?autonoma de hondura)/, "UNAH (Honduras)"],
+        [/^(upn[-_ ]?fm|universidad pedagogica)/, "UPNFM (Honduras)"],
+        [/^unan\W*(managua|mga)\b/, "UNAN-Managua (Nicaragua)"],
+        [/^unan\W*leon\b/, "UNAN-León (Nicaragua)"],
+        [/^(uni|universidad nacional de ingenieria)\b/, "UNI (Nicaragua)"],
+        [/^(usac|universidad de san carlos)\b/, "USAC (Guatemala)"],
+        [/^(ues|u\.? ?(de )?el salvador|universidad (de )?el salvador|universidad del salvador)\b/, "UES (El Salvador)"],
+        [/^(utp|universidad tecnologica de panama)\b/, "UTP (Panamá)"],
+        [/^(up|universidad de panama)\b/, "UP (Panamá)"],
+        [/^udelas\b/, "UDELAS (Panamá)"],
+        [/^umip\b/, "UMIP (Panamá)"],
+        [/chiriqui/, "UNACHI (Panamá)"],
+        // Al final: «Universidad Nacional» también empieza otros nombres.
+        [/^(una|universidad nacional( de costa rica)?)\b/, "UNA"],
+    ];
+    const PAISES = /^(crc|cri|nic|nca|pan|gua|hon|esa|slv|biz)$/;
+    function universidad(nombre, esEquipo) {
+        const crudo = String(nombre || "").trim();
+        let s = sinTilde(crudo).toLowerCase().replace(/\s+/g, " ").trim();
+        if (!s || PAISES.test(s)) return "";
+        for (const [re, n] of UNIVERSIDADES.slice(0, 2)) if (re.test(s)) return n;
+        // El país del final: «UCR (CRC)», «UCR - CRC», «( HON )», «- Panama».
+        s = s.replace(/\s*\(\s*[a-z]{3}\s*\)$/, "").replace(/\s+-\s+(crc|nca|pan|gua|hon|honduras|panama)$/, "").trim();
+        if (esEquipo) { let a; do { a = s; s = s.replace(/\s+(femenino|masculino|\d{1,2}|[a-z])$/, ""); } while (s !== a); }
+        for (const [re, n] of UNIVERSIDADES) if (re.test(s)) return n;
+        return titulo(sinTilde(crudo).replace(/\s+/g, " "));
+    }
+
     const RITMO = { C: "Clásico", R: "Rápido", B: "Blitz" };
+    /* La categoría como se lee: en los JDN el código (U12), en las
+       universidades lo que quiere decir. */
+    const CATEGORIA = UNI ? { U: "Universitario", UB: "División B", FUN: "Funcionarios" } : {};
     function fmt(n) { if (isNaN(n)) return ""; const e = Math.floor(n); return (n - e) ? (e ? e + "½" : "½") : String(e); }
     function categoria(cod) {
         const [a, cat, mod] = cod.split("-");
-        return { ritmo: RITMO[a] || "", zona: RITMO[a] ? "" : (a || "Única"), cat, modo: mod[0] === "I" ? "Individual" : "Equipos", rama: mod[1] === "F" ? "Femenino" : "Absoluto" };
+        return { ritmo: RITMO[a] || "", zona: RITMO[a] ? "" : (a || "Única"), cat: CATEGORIA[cat] || cat, modo: mod[0] === "I" ? "Individual" : "Equipos", rama: mod[1] === "F" ? "Femenino" : "Absoluto" };
     }
     const clave = (n) => sinTilde(n).toLowerCase().replace(/[^a-z ]/g, "").replace(/\s+/g, " ").trim();
     /* chess-results corta algunos nombres largos: «Diaz Charpentier Kristel Meli». */
@@ -96,13 +205,18 @@
        (jdn_correcciones), y si quien mira administra: solo así ve los
        botones para corregir (la base es la que no deja escribir a nadie más). */
     let CORR = [], ADMIN = false;
-    const FILTRO = { fase: "", cat: "", rama: "", modo: "", ritmo: "", zona: "", q: "" };
-    const CLAVES_FILTRO = ["fase", "cat", "rama", "modo", "ritmo", "zona", "q"];
+    /* En las universidades no hay fases ni zonas: el filtro es el evento
+       (JUNCOS, CONARE, FEDEU…), que cada edición trae en «serie». */
+    const FILTROS = UNI ? ["serie", "cat", "rama", "modo", "ritmo"] : ["fase", "cat", "rama", "modo", "ritmo", "zona"];
+    const FILTRO = { fase: "", serie: "", cat: "", rama: "", modo: "", ritmo: "", zona: "", q: "" };
+    const CLAVES_FILTRO = [...FILTROS, "q"];
+    const SERIES = { JUNCOS: "JUNCOS", CONARE: "Torneo CONARE", FEDEU: "FEDEU", FECUNDE: "FECUNDE", JUDUCA: "JUDUCA (Centroamérica)", OTROS: "Otros torneos" };
 
+    const TABLA = UNI ? "uni_" : "jdn_";
     async function leerTodo() {
         const filas = [];
         for (let desde = 0; ; desde += 1000) {
-            const { data, error } = await sb.from("jdn_resultados")
+            const { data, error } = await sb.from(TABLA + "resultados")
                 .select("edicion,codigo,tnr,orden,puesto,nombre,comite,record,puntos")
                 .order("edicion").order("codigo").order("orden")
                 .range(desde, desde + 999);
@@ -114,9 +228,10 @@
 
     /* Los tableros son un extra: si no se pueden leer, la página sigue sin ellos. */
     async function leerTableros() {
+        if (UNI) return [];
         const filas = [];
         for (let desde = 0; ; desde += 1000) {
-            const { data, error } = await sb.from("jdn_tableros")
+            const { data, error } = await sb.from(TABLA + "tableros")
                 .select("edicion,codigo,tnr,tablero,orden,puesto,nombre,equipo,porcentaje,puntos")
                 .order("edicion").order("codigo").order("tablero").order("orden")
                 .range(desde, desde + 999);
@@ -126,7 +241,7 @@
         }
     }
     async function leerCorrecciones() {
-        const { data, error } = await sb.from("jdn_correcciones").select("id,nombre,edicion,comite,nota,creado").order("nombre");
+        const { data, error } = await sb.from(TABLA + "correcciones").select("id,nombre,edicion,comite,nota,creado").order("nombre");
         return error ? [] : data || [];
     }
     async function soyAdmin(uid) {
@@ -141,7 +256,7 @@
     async function leerJugadores() {
         const filas = [];
         for (let desde = 0; ; desde += 1000) {
-            const { data, error } = await sb.from("jdn_jugadores")
+            const { data, error } = await sb.from(TABLA + "jugadores")
                 .select("edicion,codigo,tnr,orden,equipo,equipo_orden,tablero,nombre,elo,partidas,puntos,con_elo,puntos_elo,elo_rivales,esperado")
                 .order("edicion").order("codigo").order("orden")
                 .range(desde, desde + 999);
@@ -178,7 +293,7 @@
     const nomTablero = (t) => t === 5 ? "Reserva" : "Tablero " + t;
     const pctTxt = (n) => n.toLocaleString("es-CR", { maximumFractionDigits: 1 }) + "\u00a0%";
 
-    function preparar(filas) {
+    function preparar(filas, filasJ) {
         const previo = {};
         for (const f of filas) {
             const k = f.edicion + f.codigo;
@@ -203,6 +318,10 @@
             for (const ed of orden) {
                 const o = ind.find((x) => x.ed === ed && x.comite && mismo(x.clave, r.clave));
                 if (o) { r.comite = o.comite; r.deducido = true; break; }
+                // En las universidades, también el equipo en que jugó esa
+                // edición: los JUDUCA individuales traen solo el país.
+                const q = UNI && (filasJ || []).find((x) => x.edicion === ed && x.equipo && mismo(clave(x.nombre), r.clave));
+                if (q && comite(q.equipo, true)) { r.comite = comite(q.equipo, true); r.deducido = true; break; }
             }
             if (!r.comite) r.comite = "Sin comité";
         }
@@ -213,7 +332,7 @@
 
     const MED = ["", "oro", "plata", "bronce"];
     const slug = (n) => sinTilde(n).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
-    const vacio = (n) => ({ nombre: n, zonas: new Set(), oro: 0, plata: 0, bronce: 0, ind: 0, eqm: 0, tab: 0, fin: new Set(), insc: 0, eqElim: 0 });
+    const vacio = (n) => ({ nombre: n, zonas: new Set(), oro: 0, plata: 0, bronce: 0, ind: 0, eqm: 0, tab: 0, fin: new Set(), insc: 0, eqElim: 0, eqFin: 0 });
     function resumen(filtro) {
         const C = {};
         const c = (n) => C[n] || (C[n] = vacio(n));
@@ -225,7 +344,7 @@
         for (const r of eq.filter(filtro)) {
             const x = c(r.comite);
             if (r.fase === "elim") { x.eqElim++; if (r.zona === "Z1" || r.zona === "Z2") x.zonas.add(r.zona); }
-            else if (r.rk >= 1 && r.rk <= 3) { x[MED[r.rk]]++; x.eqm++; }
+            else { x.eqFin++; if (r.rk >= 1 && r.rk <= 3) { x[MED[r.rk]]++; x.eqm++; } }
         }
         // Los tres primeros de cada tablero también son medallas oficiales.
         for (const r of tabs.filter(filtro)) if (r.rk >= 1 && r.rk <= 3) { const x = c(r.comite); x[MED[r.rk]]++; x.tab++; }
@@ -234,10 +353,38 @@
             || b.fin.size - a.fin.size || b.insc - a.insc || a.nombre.localeCompare(b.nombre, "es"));
     }
 
+    /* Las palabras de las universidades: todo texto que se pinta pasa por T()
+       (el(), sv() y los textContent de abajo), que en universidades.html
+       cambia «comité» por «universidad» con su artículo, «JDN» por «torneos
+       universitarios» y «final» por «edición» (cada torneo universitario da
+       medallas: no hay eliminatoria). En jdn-comites.html no cambia nada.
+       Los nombres de jugadores, equipos y universidades nunca traen estas
+       palabras. */
+    const PALABRAS = !UNI ? [] : [
+        [/Resultados JDN por comit\u00e9/g, "Resultados universitarios por universidad"],
+        [/\b(c|C)omit\u00e9s? de deportes\b/g, (m, c) => (c === "C" ? "U" : "u") + (m.includes("comit\u00e9s") ? "niversidades" : "niversidad")],
+        [/\b(el|El|un|Un|este|Este|ese|del|al|mismo|otro|ningún|Ningún) comit\u00e9(?![\wáéíóúñ])/g, (m, a) => ({ el: "la", El: "La", un: "una", Un: "Una", este: "esta", Este: "Esta", ese: "esa", del: "de la", al: "a la", mismo: "misma", otro: "otra", "ningún": "ninguna", "Ningún": "Ninguna" })[a] + " universidad"],
+        [/\b(los|Los|otros|todos los|Todos los|varios|sus|tres) comit\u00e9s\b/g, (m, a) => ({ los: "las", Los: "Las", otros: "otras", "todos los": "todas las", "Todos los": "Todas las", varios: "varias", sus: "sus", tres: "tres" })[a] + " universidades"],
+        [/\bcomit\u00e9s\b/g, "universidades"], [/\bComit\u00e9s\b/g, "Universidades"],
+        [/\bcomit\u00e9(?![\wáéíóúñ])/g, "universidad"], [/\bComit\u00e9(?![\wáéíóúñ])/g, "Universidad"],
+        [/\b(universidad(?:es)?) (deducid|corregid|comparad|elegid)o(s?)\b/g, "$1 $2a$3"],
+        [/\b(todos|Todos) los JDN\b/g, "$1 los torneos universitarios"],
+        [/\botro JDN\b/g, "otro torneo universitario"], [/\blos JDN\b/g, "los torneos universitarios"], [/\bJDN\b/g, "torneos universitarios"],
+        [/\bFinales \(clasificados\)/g, "Todas las ediciones"],
+        [/\bcada eliminatoria y cada final\b/g, "cada edición"], [/\bcada eliminatoria\b/g, "cada edición"],
+        [/\bfinal por final\b/g, "edición por edición"],
+        [/\bfinales individuales\b/g, "torneos individuales"],
+        [/\b(de|en) (todas )?las finales\b/g, (m, a) => a + " todas las ediciones"],
+        [/\b(cada|una|esta|esa|la|Cada|Una|Esta|La) final\b/g, "$1 edición"], [/\bpor final\b/g, "por edición"],
+        [/\bfinales\b/g, "ediciones"], [/\bFinales\b/g, "Ediciones"],
+        [/\buniversidad tal como lo trae\b/g, "universidad tal como la trae"], [/\bno lo trae y no se pudo deducir\b/g, "no la trae y no se pudo deducir"],
+        [/\(del mismo jugador en otra edición\)/g, "(del mismo jugador en otro torneo de esa edición, en su equipo o en otra edición)"],
+    ];
+    const T = (t) => { if (!UNI || typeof t !== "string") return t; for (const [a, b] of PALABRAS) t = t.replace(a, b); return t; };
     function el(tag, attrs, ...hijos) {
         const e = document.createElement(tag);
-        for (const [k, v] of Object.entries(attrs || {})) { if (k === "class") e.className = v; else e.setAttribute(k, v); }
-        for (const h of hijos) if (h != null && h !== "") e.append(h instanceof Node ? h : document.createTextNode(String(h)));
+        for (const [k, v] of Object.entries(attrs || {})) { if (k === "class") e.className = v; else e.setAttribute(k, k === "aria-label" || k === "placeholder" ? T(v) : v); }
+        for (const h of hijos) if (h != null && h !== "") e.append(h instanceof Node ? h : document.createTextNode(T(String(h))));
         return e;
     }
     const TD = "px-3 py-2 border-t border-brand-100 dark:border-brand-800 whitespace-nowrap";
@@ -351,15 +498,15 @@
             }
         };
         recorrer(caja);
-        bloques.push({ tipo: "separador" }, { tipo: "nota", texto: "Cada dato se puede comprobar en chess-results.com: la ficha de este comité en ajedrez-integral.com/jdn-comites.html lleva el enlace de cada torneo. " + contexto() + "." });
-        return { titulo: titulo || "Informe del comité", subtitulo: (subtitulo ? subtitulo + " · " : "") + "Resultados JDN por comité · " + window.HoraCR.fecha(new Date()),
-            pie: "Resultados JDN por comité · Ajedrez Integral", autor: "Ajedrez Integral", bloques, fotos: [] };
+        bloques.push({ tipo: "separador" }, { tipo: "nota", texto: T("Cada dato se puede comprobar en chess-results.com: la ficha de este comité en ajedrez-integral.com/") + (UNI ? "universidades.html" : "jdn-comites.html") + " lleva el enlace de cada torneo. " + contexto() + "." });
+        return { titulo: titulo || T("Informe del comité"), subtitulo: (subtitulo ? subtitulo + " · " : "") + T("Resultados JDN por comité") + " · " + window.HoraCR.fecha(new Date()),
+            pie: T("Resultados JDN por comité") + " · Ajedrez Integral", autor: "Ajedrez Integral", bloques, fotos: [] };
     }
     async function bajarFicha(nombre) {
         try {
             const blob = await window.ReportePDF.generar(documentoFicha($("ficha")));
             const url = URL.createObjectURL(blob);
-            const a = el("a", { href: url, download: "informe-jdn-" + slug(nombre) + ".pdf" });
+            const a = el("a", { href: url, download: (UNI ? "informe-universitario-" : "informe-jdn-") + slug(nombre) + ".pdf" });
             document.body.append(a); a.click(); a.remove();
             setTimeout(() => URL.revokeObjectURL(url), 10000);
         } catch (e) {
@@ -373,8 +520,11 @@
         const lista = resumen((r) => !edSel || r.ed === edSel);
         const e = ED[edSel];
         const finales = EDICIONES.filter((x) => x.fase === "final").map((x) => x.titulo.replace(/^Final /, ""));
-        $("general-titulo").textContent = !e ? "Medallero de las finales" : e.fase === "final" ? "Medallero · " + e.titulo : "Participación · " + e.titulo;
-        $("general-texto").textContent = !e
+        $("general-titulo").textContent = !e ? (UNI ? "Medallero de todos los torneos" : "Medallero de las finales") : e.fase === "final" ? "Medallero · " + e.titulo : "Participación · " + e.titulo;
+        $("general-texto").textContent = UNI ? (!e
+            ? "Medallas de los torneos universitarios de chess-results, de " + EDICIONES[EDICIONES.length - 1].id.slice(0, 4) + " a " + EDICIONES[0].id.slice(0, 4) + " (JUNCOS, CONARE, FEDEU, FECUNDE, los JUDUCA centroamericanos y otros), sumando individual y equipos. Elige una universidad para ver su ficha, o un torneo en «Edición» para ver solo ese. El orden es por oros, después platas y bronces."
+            : "Medallas de " + e.titulo + (e.detalle ? " (" + e.detalle + ")" : "") + ", sumando individual y equipos. Elige una universidad para ver su ficha.")
+            : !e
             ? "Medallas de las finales (" + finales.join(", ") + "), sumando individual, equipos y tableros, e inscritos de las eliminatorias. Elige un comité para ver su ficha, o una final en «Edición» para ver también sus mejores tableros. El orden es por oros, después platas y bronces."
             : e.fase === "final" ? "Medallas de " + e.titulo + (e.detalle ? " (" + e.detalle + ")" : "") + ", sumando individual, equipos y tableros. Debajo están sus mejores tableros. Elige un comité para ver su ficha."
                 : "En una eliminatoria no hay medallas: la tabla dice cuántos jugadores y equipos inscribió cada comité. Elige un comité para ver su ficha.";
@@ -382,11 +532,16 @@
         for (const x of lista) {
             const b = el("button", { type: "button", "data-c": slug(x.nombre), class: "font-semibold text-left underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-500" }, x.nombre);
             b.addEventListener("click", () => elegir(b.dataset.c, $("edicion").value));
-            tb.append(el("tr", {}, el("td", { class: TD }, b), td(zonaTxt(x.zonas)),
+            // En las universidades no hay zonas, tableros ni eliminatorias: las
+            // columnas son las de universidades.html.
+            tb.append(UNI ? el("tr", {}, el("td", { class: TD }, b),
+                td(x.oro || "", 1), td(x.plata || "", 1), td(x.bronce || "", 1), td(x.ind || "", 1), td(x.eqm || "", 1),
+                td(x.fin.size || "", 1), td(x.eqFin || "", 1))
+                : el("tr", {}, el("td", { class: TD }, b), td(zonaTxt(x.zonas)),
                 td(x.oro || "", 1), td(x.plata || "", 1), td(x.bronce || "", 1), td(x.ind || "", 1), td(x.eqm || "", 1), td(x.tab || "", 1),
                 td(x.fin.size || "", 1), td(x.insc || "", 1), td(x.eqElim || "", 1)));
         }
-        if (!lista.length) tb.append(el("tr", {}, el("td", { class: TD, colspan: "11" }, "No hay resultados de esta edición.")));
+        if (!lista.length) tb.append(el("tr", {}, el("td", { class: TD, colspan: UNI ? "8" : "11" }, "No hay resultados de esta edición.")));
         pintarTableros(e && e.fase === "final" ? e : null);
         pintarPorFinal(!e);
         pintarParticipacion(e);
@@ -402,7 +557,7 @@
        equipos, por categoría y rama. Un jugador o un equipo que jugó varios
        ritmos cuenta una vez; un mismo equipo escrito distinto por
        chess-results («Goicochea», «CODEA 01») también. */
-    const CATS = ["U12-A", "U12-F", "U16-A", "U16-F", "U20-A", "U20-F"];
+    const CATS = UNI ? ["Universitario-A", "Universitario-F", "División B-A", "Funcionarios-A"] : ["U12-A", "U12-F", "U16-A", "U16-F", "U20-A", "U20-F"];
     const catNom = (k) => k.replace("-A", " Abs.").replace("-F", " Fem.");
     const catDe = (r) => r.cat + "-" + r.rama[0];
     function distintos(claves) {
@@ -516,7 +671,7 @@
         if (!ver) return;
         const finales = EDICIONES.filter((x) => x.fase === "final" && Object.keys(tam).some((k) => k.startsWith(x.id))).reverse();
         const cuenta = (lista) => [1, 2, 3].map((k) => lista.filter((r) => r.fase !== "elim" && r.rk === k).length);
-        const tipos = [["Individuales", cuenta(ind)], ["Por equipos", cuenta(eq)], ["Tableros", cuenta(tabs)]];
+        const tipos = [["Individuales", cuenta(ind)], ["Por equipos", cuenta(eq)], ...(UNI ? [] : [["Tableros", cuenta(tabs)]])];
         const suma = [0, 1, 2].map((j) => tipos.reduce((a, t) => a + t[1][j], 0));
         tipos.push(["Total", suma]);
         caja.append(el("h2", { id: "por-final-titulo", class: "font-serif text-xl font-bold text-brand-800 dark:text-white" }, "Medallas por final"),
@@ -589,8 +744,13 @@
         botonPdf.addEventListener("click", () => bajarFicha(x.nombre));
         ficha.append(el("div", { class: "flex flex-wrap items-baseline justify-between gap-2" },
             el("h2", { id: "ficha-titulo", class: "font-serif text-2xl font-bold text-brand-800 dark:text-white" }, x.nombre),
-            el("p", { class: "text-sm text-brand-500 dark:text-brand-300" }, "Zona " + zonaTxt(x.zonas) + " · " + lugar), botonPdf));
-        ficha.append(el("div", { class: "grid grid-cols-2 md:grid-cols-4 gap-3 mt-4" },
+            el("p", { class: "text-sm text-brand-500 dark:text-brand-300" }, (UNI ? "" : "Zona " + zonaTxt(x.zonas) + " · ") + lugar), botonPdf));
+        ficha.append(UNI ? el("div", { class: "grid grid-cols-2 md:grid-cols-4 gap-3 mt-4" },
+            cifra(x.oro + x.plata + x.bronce, `medallas (${x.oro} de oro, ${x.plata} de plata, ${x.bronce} de bronce)`),
+            cifra(x.fin.size, "participaciones en torneos individuales"),
+            cifra(x.eqFin, "equipos en torneos por equipos"),
+            cifra(new Set([...ind, ...eq].filter((r) => r.comite === x.nombre).map((r) => r.ed)).size, "torneos universitarios en que participó"))
+            : el("div", { class: "grid grid-cols-2 md:grid-cols-4 gap-3 mt-4" },
             cifra(x.oro + x.plata + x.bronce, `medallas en las finales (${x.oro} de oro, ${x.plata} de plata, ${x.bronce} de bronce)`),
             cifra(x.fin.size, "participaciones en finales individuales"),
             cifra(x.insc, "inscripciones en eliminatorias individuales"),
@@ -685,6 +845,7 @@
     function pasa(r, esTablero) {
         const F = FILTRO;
         if (F.fase && r.fase !== F.fase) return false;
+        if (F.serie && (ED[r.ed] || {}).serie !== F.serie) return false;
         if (F.cat && r.cat !== F.cat) return false;
         if (F.rama && r.rama[0] !== F.rama) return false;
         if (F.modo === "I" && (esTablero || r.modo !== "Individual")) return false;
@@ -694,8 +855,8 @@
         return true;
     }
     // El ritmo solo existe en las finales y la zona solo en las eliminatorias.
-    const faseVisible = (f) => (!FILTRO.fase || f === FILTRO.fase) && !(FILTRO.ritmo && f === "elim") && !(FILTRO.zona && f === "final");
-    const hayFiltros = () => ["fase", "cat", "rama", "modo", "ritmo", "zona"].some((k) => FILTRO[k]);
+    const faseVisible = (f) => !(UNI && f === "elim") && (!FILTRO.fase || f === FILTRO.fase) && !(FILTRO.ritmo && f === "elim") && !(FILTRO.zona && f === "final");
+    const hayFiltros = () => FILTROS.some((k) => FILTRO[k]);
     function aplicarFiltros() {
         ind = TODO.ind.filter((r) => pasa(r, false));
         eq = TODO.eq.filter((r) => pasa(r, false));
@@ -703,10 +864,10 @@
         jugs = TODO.jugs.filter((r) => pasa(r, !!r.equipo));
         todos = resumen(() => true);
         const txt = [];
-        const nom = { fase: { elim: "Eliminatorias", final: "Finales" }, cat: { U12: "U12", U16: "U16", U20: "U20" }, rama: { A: "Absoluto", F: "Femenino" },
+        const nom = { fase: { elim: "Eliminatorias", final: "Finales" }, serie: SERIES, cat: UNI ? Object.fromEntries(Object.values(CATEGORIA).map((c) => [c, c])) : { U12: "U12", U16: "U16", U20: "U20" }, rama: { A: "Absoluto", F: "Femenino" },
             modo: { I: "Individual", E: "Equipos y tableros" }, ritmo: RITMO_DE, zona: { Z1: "Zona 1", Z2: "Zona 2" } };
         for (const k of Object.keys(nom)) if (FILTRO[k]) txt.push(nom[k][FILTRO[k]]);
-        $("filtros-activos").textContent = txt.length ? "Filtros: " + txt.join(" · ") + ". Todo lo de abajo cuenta solo eso." : "";
+        $("filtros-activos").textContent = !txt.length ? "" : T ("Filtros: " + txt.join(" · ") + ". Todo lo de abajo cuenta solo eso.");
         $("quitar-filtros").classList.toggle("hidden", !txt.length && !FILTRO.q);
     }
 
@@ -812,7 +973,8 @@
         { id: "3", nombre: "Solo el podio: 3, 2, 1", puntos: [3, 2, 1] },
         { id: "x", nombre: "Otra escala (escríbela)", puntos: null },
     ];
-    const COPA = { escala: "8", propia: "", tableros: true };
+    // En las universidades no hay clasificación por tableros: la copa no los suma.
+    const COPA = { escala: "8", propia: "", tableros: !UNI };
     // Cualquier cosa que no sea un número separa: «10, 8, 6», «10-8-6» o «10 8 6».
     const leerEscala = (t) => String(t || "").split(/[^0-9.]+/).filter(Boolean).map(Number).filter((n) => isFinite(n) && n >= 0 && n <= 1000).slice(0, 40);
     function escalaCopa() {
@@ -855,7 +1017,7 @@
                 el("p", { id: "copa-texto", class: "text-sm text-brand-500 dark:text-brand-300 mt-1" }),
                 el("div", { class: "grid sm:grid-cols-3 gap-3 mt-3 items-end" },
                     el("div", {}, el("label", { for: "copa-escala", class: ETQ }, "Puntos por puesto"), sel), cajaPropia,
-                    el("label", { for: "copa-tableros", class: "flex items-center gap-2 text-sm text-brand-700 dark:text-brand-200 py-2" }, tab, "Sumar también los puestos de cada tablero")),
+                    UNI ? null : el("label", { for: "copa-tableros", class: "flex items-center gap-2 text-sm text-brand-700 dark:text-brand-200 py-2" }, tab, "Sumar también los puestos de cada tablero")),
                 el("div", { id: "copa-tabla" }));
             sel.value = COPA.escala; propia.value = COPA.propia; tab.checked = COPA.tableros;
             const cambio = () => {
@@ -870,10 +1032,10 @@
     function dibujarCopa() {
         const e = copaEd, P = escalaCopa();
         $("copa-propia").parentElement.classList.toggle("hidden", COPA.escala !== "x");
-        $("copa-texto").textContent = "Una tabla de puntos por puesto en " + (e ? e.titulo : "las finales") + ", como la copa de unos juegos: el 1.º suma " + num1(P[0])
+        $("copa-texto").textContent = T("Una tabla de puntos por puesto en " + (e ? e.titulo : "las finales") + ", como la copa de unos juegos: el 1.º suma " + num1(P[0])
             + (P.length > 1 ? ", el 2.º " + num1(P[1]) : "") + (P.length > 2 ? ", el 3.º " + num1(P[2]) : "") + (P.length > 3 ? " y así hasta el " + P.length + ".º" : "")
-            + ". Así cuentan también los puestos sin medalla. Suma cada jugador individual, cada equipo y, si se marca, cada tablero; un empate sin desempatar comparte el puesto y sus puntos. "
-            + "La escala no es oficial: elige la del reglamento de los JDN, o escribe otra. La última columna trae las medallas, para comparar.";
+            + ". Así cuentan también los puestos sin medalla. Suma cada jugador individual" + (UNI ? " y cada equipo" : ", cada equipo y, si se marca, cada tablero") + "; un empate sin desempatar comparte el puesto y sus puntos. "
+            + (UNI ? "La escala no es oficial: elige la del reglamento de cada torneo, o escribe otra." : "La escala no es oficial: elige la del reglamento de los JDN, o escribe otra.") + " La última columna trae las medallas, para comparar.");
         const lista = copa((r) => !e || r.ed === e.id);
         const med = Object.fromEntries(resumen((r) => !e || r.ed === e.id).map((x) => [x.nombre, x]));
         const caja = $("copa-tabla");
@@ -967,7 +1129,7 @@
         if (!cargando) cargando = (async () => {
             const filas = [];
             for (let desde = 0; ; desde += 1000) {
-                const { data, error } = await sb.from("jdn_partidas").select("tnr,ronda,orden,rival,puntos")
+                const { data, error } = await sb.from(TABLA + "partidas").select("tnr,ronda,orden,rival,puntos")
                     .order("tnr").order("ronda").order("orden").order("rival").order("vez").range(desde, desde + 999);
                 if (error) { PARTIDAS = []; return; }
                 filas.push(...data);
@@ -1122,10 +1284,10 @@
     async function corregir(nombre, k, ed) {
         const actual = correccionDe(k, ed);
         const v = await window.Avisos.formulario({
-            titulo: "Corregir el comité de " + nombre,
-            texto: "El comité que se le pone a este jugador manda sobre el de chess-results y sobre el deducido.",
+            titulo: T("Corregir el comité de ") + nombre,
+            texto: UNI ? "La universidad que se le pone a este jugador manda sobre la de chess-results y sobre la deducida." : "El comité que se le pone a este jugador manda sobre el de chess-results y sobre el deducido.",
             campos: [
-                { nombre: "comite", etiqueta: "Comité", tipo: "select", valor: actual ? actual.comite : "",
+                { nombre: "comite", etiqueta: T("Comité"), tipo: "select", valor: actual ? actual.comite : "",
                   opciones: [...comitesTodos].map((x) => x.nombre).sort((a, b) => a.localeCompare(b, "es")).map((n) => [n, n]) },
                 { nombre: "edicion", etiqueta: "En qué edición", tipo: "select", valor: actual ? actual.edicion || "" : ed || "",
                   opciones: [["", "En todas"], ...EDICIONES.filter((e) => Object.keys(tam).some((t) => t.startsWith(e.id))).map((e) => [e.id, e.titulo])] },
@@ -1136,13 +1298,13 @@
         if (!v || !v.comite) return;
         const fila = { nombre: k, edicion: v.edicion || null, comite: v.comite, nota: (v.nota || "").trim() || null };
         const ya = CORR.find((c) => c.nombre === k && (c.edicion || "") === (v.edicion || ""));
-        const { error } = ya ? await sb.from("jdn_correcciones").update(fila).eq("id", ya.id) : await sb.from("jdn_correcciones").insert(fila);
+        const { error } = ya ? await sb.from(TABLA + "correcciones").update(fila).eq("id", ya.id) : await sb.from(TABLA + "correcciones").insert(fila);
         if (error) { window.Avisos.avisar("No se pudo guardar la corrección: " + error.message, { tipo: "error" }); return; }
         location.reload();
     }
     async function quitarCorreccion(c) {
-        if (!(await window.Avisos.confirmar("¿Quitar la corrección de " + c.nombre + "? Vuelve a valer el comité de chess-results (o el deducido).", { aceptar: "Quitar la corrección", peligro: true }))) return;
-        const { error } = await sb.from("jdn_correcciones").delete().eq("id", c.id);
+        if (!(await window.Avisos.confirmar("¿Quitar la corrección de " + c.nombre + (UNI ? "? Vuelve a valer la universidad de chess-results (o la deducida)." : "? Vuelve a valer el comité de chess-results (o el deducido)."), { aceptar: "Quitar la corrección", peligro: true }))) return;
+        const { error } = await sb.from(TABLA + "correcciones").delete().eq("id", c.id);
         if (error) { window.Avisos.avisar("No se pudo quitar: " + error.message, { tipo: "error" }); return; }
         location.reload();
     }
@@ -1186,7 +1348,14 @@
                 if (ADMIN) { const b = el("button", { type: "button", class: "text-sm font-semibold underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-500" }, "Quitar"); b.addEventListener("click", () => quitarCorreccion(c)); quitar = el("td", { class: TD }, b); }
                 return el("tr", { "data-correccion": c.nombre }, td(titulo(c.nombre)), td(c.edicion ? nomEd(c.edicion) : "Todas"), td(c.comite), td(c.nota || "—"), td(c.creado ? window.HoraCR.fecha(c.creado) : ""), quitar);
             })), "corregidos"));
-        caja.append(lista("Lo que falta en chess-results", el("ul", { class: "mt-2 list-disc pl-6 text-sm text-brand-600 dark:text-brand-300 space-y-1" },
+        caja.append(lista("Lo que falta en chess-results", UNI ? el("ul", { class: "mt-2 list-disc pl-6 text-sm text-brand-600 dark:text-brand-300 space-y-1" },
+            el("li", {}, `${new Set(TODO.eq.filter((r) => !r.record).map((r) => r.tnr)).size} torneos por equipos no traen la tabla final: ahí el puesto es el orden de la página de resultados, sin el récord de matches.`),
+            el("li", {}, "Los JUDUCA individuales traen el país y no la universidad: sale del mismo jugador en los equipos de esa edición («universidad deducida»)."),
+            el("li", {}, "Están los torneos publicados en chess-results: los JUNCOS desde 2011 y los JUDUCA desde 2010. Los de antes no se publicaron ahí."),
+            el("li", {}, "Del Interuniversitario UNA 2011 no está la final del femenino individual: solo los grupos de la primera fase, que no se cuentan."),
+            el("li", {}, "El XXV JUNCOS 2026 (octubre) se carga cuando termine."),
+            el("li", {}, "Algunas partidas de equipos no se pudieron ubicar porque chess-results escribe distinto el nombre del rival: cuentan en el jugador, no en los enfrentamientos."))
+            : el("ul", { class: "mt-2 list-disc pl-6 text-sm text-brand-600 dark:text-brand-300 space-y-1" },
             el("li", {}, `${torneosSinTabla} eliminatorias por equipos no traen la tabla final: ahí el puesto es el orden por puntos de partida, sin el récord de matches.`),
             el("li", {}, "De la eliminatoria 2018 están solo U16 y U20, y el U20 Femenino por equipos de la Zona 1 está vacío en chess-results."),
             el("li", {}, "De la eliminatoria 2024 faltan dos torneos por equipos (Z1 y Z2 U12 Femenino)."),
@@ -1202,8 +1371,8 @@
     const SVG = "http://www.w3.org/2000/svg";
     function sv(tag, attrs, ...hijos) {
         const e = document.createElementNS(SVG, tag);
-        for (const [k, v] of Object.entries(attrs || {})) e.setAttribute(k, v);
-        for (const h of hijos) if (h != null) e.append(h instanceof Node ? h : document.createTextNode(String(h)));
+        for (const [k, v] of Object.entries(attrs || {})) e.setAttribute(k, k === "aria-label" ? T(v) : v);
+        for (const h of hijos) if (h != null) e.append(h instanceof Node ? h : document.createTextNode(T(String(h))));
         return e;
     }
     const SERIE = ["fill-[#2a78d6] dark:fill-[#3987e5]", "fill-[#eb6834] dark:fill-[#d95926]", "fill-[#1baf7a] dark:fill-[#199e70]"];
@@ -1272,7 +1441,8 @@
        cada eliminatoria, en el orden del tiempo. */
     function evolucion(nombre) {
         const fin = EDICIONES.filter((e) => e.fase === "final" && Object.keys(tam).some((k) => k.startsWith(e.id))).reverse();
-        const eli = EDICIONES.filter((e) => e.fase === "elim" && Object.keys(tam).some((k) => k.startsWith(e.id))).reverse();
+        // En las universidades no hay eliminatorias: los participantes van torneo por torneo.
+        const eli = UNI ? fin : EDICIONES.filter((e) => e.fase === "elim" && Object.keys(tam).some((k) => k.startsWith(e.id))).reverse();
         const med = fin.map((e) => { const x = resumen((r) => r.ed === e.id).find((y) => y.nombre === nombre) || vacio(nombre); return { e, x }; });
         const par = eli.map((e) => { const x = participantes(e.id)[nombre] || { j: 0, e: 0 }; return { e, x }; });
         const corta = (e) => e.titulo.replace(/^(Final|Eliminatoria) /, "");
@@ -1490,7 +1660,7 @@
         if (JUG) p.set("j", JUG);
         // La escala de la copa, si no es la de siempre.
         if (COPA.escala !== "8") p.set("copa", COPA.escala === "x" ? leerEscala(COPA.propia).join("-") || "x" : COPA.escala);
-        if (!COPA.tableros) p.set("ct", "0");
+        if (!UNI && !COPA.tableros) p.set("ct", "0");
         const f = p.toString();
         const h = [s || "", ed || "", f].join("~").replace(/~+$/, "");
         try { history.replaceState(null, "", h ? "#" + h : location.pathname); } catch (e) { /* sin historial */ }
@@ -1522,7 +1692,7 @@
         selC.addEventListener("change", () => elegir(selC.value, selE.value));
         selE.addEventListener("change", () => elegir(selC.value, selE.value));
         $("volver").addEventListener("click", () => elegir("", selE.value));
-        for (const k of ["fase", "cat", "rama", "modo", "ritmo", "zona"]) {
+        for (const k of FILTROS) {
             const sel = $("f-" + k);
             sel.value = FILTRO[k];
             sel.addEventListener("change", () => {
@@ -1544,8 +1714,8 @@
 
     async function init() {
         const { data: { session } } = await sb.auth.getSession();
-        if (!session) { location.href = "login.html?next=jdn-comites.html"; return; }
-        const { data: puede, error } = await sb.rpc("tengo_herramienta", { p_herramienta: "jdn-comites" });
+        if (!session) { location.href = "login.html?next=" + (UNI ? "universidades.html" : "jdn-comites.html"); return; }
+        const { data: puede, error } = await sb.rpc("tengo_herramienta", { p_herramienta: UNI ? "universidades" : "jdn-comites" });
         if (error || puede !== true) { $("loading").classList.add("hidden"); $("denegado").classList.remove("hidden"); return; }
         let filas;
         try { [filas, CORR, ADMIN] = await Promise.all([leerTodo(), leerCorrecciones(), soyAdmin(session.user.id)]); } catch (e) {
@@ -1554,8 +1724,8 @@
             $("error").classList.remove("hidden");
             return;
         }
-        preparar(filas);
         const [filasT, filasJ] = await Promise.all([leerTableros(), leerJugadores()]);
+        preparar(filas, filasJ);
         prepararTableros(filasT);
         prepararJugadores(filasJ);
         TODO = { ind, eq, tabs, jugs };
@@ -1567,12 +1737,14 @@
         const cp = pf.get("copa") || "";
         if (cp && ESCALAS.some((x) => x.id === cp && x.puntos)) COPA.escala = cp;
         else if (cp) { COPA.escala = "x"; COPA.propia = leerEscala(cp.replace(/-/g, " ")).join(", "); }
-        COPA.tableros = pf.get("ct") !== "0";
+        COPA.tableros = !UNI && pf.get("ct") !== "0";
         aplicarFiltros();
         const torneos = Object.keys(tam).length;
         const nE = EDICIONES.filter((e) => e.fase === "elim" && Object.keys(tam).some((k) => k.startsWith(e.id))).length;
         const nF = EDICIONES.filter((e) => e.fase === "final" && Object.keys(tam).some((k) => k.startsWith(e.id))).length;
-        $("intro").textContent = `Los resultados de cada comité de deportes en los ${torneos} torneos de ajedrez de los Juegos Deportivos Nacionales que están en chess-results: ${nE} eliminatorias y ${nF} finales. Elige un comité para ver a todos sus jugadores y equipos, edición por edición.`;
+        $("intro").textContent = UNI
+            ? `Los resultados de cada universidad en los ${torneos} torneos universitarios de ajedrez que están en chess-results, de ${nF} ediciones: los JUNCOS, el torneo CONARE, la FEDEU, la FECUNDE y otros de Costa Rica, y los JUDUCA centroamericanos. Elige una universidad para ver a todos sus jugadores y equipos, edición por edición.`
+            : `Los resultados de cada comité de deportes en los ${torneos} torneos de ajedrez de los Juegos Deportivos Nacionales que están en chess-results: ${nE} eliminatorias y ${nF} finales. Elige un comité para ver a todos sus jugadores y equipos, edición por edición.`;
         armarControles();
         $("loading").classList.add("hidden"); $("app").classList.remove("hidden");
         if (ED[h1]) pintar("", h1); else pintar(h1 || "", h2 || "");

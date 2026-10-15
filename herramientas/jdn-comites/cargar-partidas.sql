@@ -26,7 +26,9 @@
 --   · equipos: en el bloque de cada jugador, cada fila es una partida con la
 --     ronda («Rd.»), el rival («Nombre») y el resultado («w 1», «s ½»); el
 --     jugador y el rival se buscan por nombre en jdn_jugadores (sin la coma de
---     la composición; ningún nombre se repite dentro de un torneo);
+--     la composición, o con sus dos partes al revés, como en
+--     cargar-jugadores-equipos.sql; ningún nombre se repite dentro de un
+--     torneo);
 --   · individuales: como en cargar-jugadores-individual.sql, el rival es su
 --     puesto en la tabla, que es su orden; en todos contra todos la ronda es 0
 --     y «vez» separa las dos partidas de un doble todos contra todos;
@@ -73,7 +75,10 @@ det as materialized (
    where clase ~ '^CRng[12]( |$)' and 'Res.' = any(cab)),
 llave as materialized (
   select tnr, orden, lower(regexp_replace(replace(nombre, ',', ''), '\s+', ' ', 'g')) k from public.jdn_jugadores
-   where equipo is not null and tnr in (select tnr from pag where es_eq)),
+   where equipo is not null and tnr in (select tnr from pag where es_eq)
+  union
+  select tnr, orden, lower(regexp_replace(btrim(split_part(nombre, ',', 2)) || ' ' || split_part(nombre, ',', 1), '\s+', ' ', 'g')) from public.jdn_jugadores
+   where equipo is not null and nombre like '%,%' and tnr in (select tnr from pag where es_eq)),
 de_equipos as (
   select d.tnr, d.ronda, a.orden, b.orden rival, d.puntos
     from det d
