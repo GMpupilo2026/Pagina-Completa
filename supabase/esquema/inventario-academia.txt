@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261015112022
+# al-dia-con: 20261015224105
 tabla  Ejercicios Lichess  rls=true
 tabla  _foto_rls_tmp  rls=false
 tabla  _pedidos_elo  rls=false
@@ -181,6 +181,7 @@ tabla  training_progress  rls=true
 tabla  training_state  rls=true
 tabla  trofeos_ajustes  rls=true
 tabla  tv_settings  rls=true
+tabla  uni_clasificacion  rls=true
 tabla  uni_correcciones  rls=true
 tabla  uni_jugadores  rls=true
 tabla  uni_partidas  rls=true
@@ -1623,6 +1624,14 @@ columna  tv_settings.note  text
 columna  tv_settings.updated_at  timestamp with time zone
 columna  tv_settings.updated_by  uuid
 columna  tv_settings.video_url  text
+columna  uni_clasificacion.club  text
+columna  uni_clasificacion.elo  smallint
+columna  uni_clasificacion.nombre  text
+columna  uni_clasificacion.orden  smallint
+columna  uni_clasificacion.puesto  smallint
+columna  uni_clasificacion.puntos  numeric(4,1)
+columna  uni_clasificacion.titulo  text
+columna  uni_clasificacion.tnr  integer
 columna  uni_correcciones.comite  text
 columna  uni_correcciones.creado  timestamp with time zone
 columna  uni_correcciones.creado_por  uuid
@@ -2559,6 +2568,7 @@ politica  trofeos_ajustes  verificacion_en_dos_pasos  ALL  restrictiva
 politica  tv_settings  tv_settings_select_public  SELECT
 politica  tv_settings  tv_settings_update_profesor  UPDATE
 politica  tv_settings  verificacion_en_dos_pasos  ALL  restrictiva
+politica  uni_clasificacion  uni_clasificacion_leer  SELECT
 politica  uni_correcciones  uni_correcciones_admin_borra  DELETE
 politica  uni_correcciones  uni_correcciones_admin_cambia  UPDATE
 politica  uni_correcciones  uni_correcciones_admin_crea  INSERT
@@ -3120,6 +3130,7 @@ indice  trofeos_ajustes  trofeos_ajustes_creado_por_fk
 indice  trofeos_ajustes  trofeos_ajustes_pkey
 indice  tv_settings  tv_settings_pkey
 indice  tv_settings  tv_settings_updated_by_fk
+indice  uni_clasificacion  uni_clasificacion_pkey
 indice  uni_correcciones  uni_correcciones_pkey
 indice  uni_correcciones  uni_correcciones_una
 indice  uni_jugadores  uni_jugadores_pkey
@@ -4339,6 +4350,9 @@ grant  tv_settings  authenticated  SELECT
 grant  tv_settings  authenticated  TRIGGER
 grant  tv_settings  authenticated  TRUNCATE
 grant  tv_settings  authenticated  UPDATE
+grant  uni_clasificacion  authenticated  REFERENCES
+grant  uni_clasificacion  authenticated  SELECT
+grant  uni_clasificacion  authenticated  TRIGGER
 grant  uni_correcciones  authenticated  DELETE
 grant  uni_correcciones  authenticated  INSERT
 grant  uni_correcciones  authenticated  REFERENCES

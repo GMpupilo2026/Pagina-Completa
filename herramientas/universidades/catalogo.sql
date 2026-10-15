@@ -19,6 +19,8 @@
 -- universitario (regionales de los JDE, campeonatos nacionales de la
 -- federación, abiertos como el de Golfito o el de «Ajedrez sin fronteras») y
 -- el universitario «Remberto Fernández» de Cuba.
+-- Después de este va clasificacion.sql, con las mismas páginas: la
+-- clasificación completa de los torneos de las partes 2 y 3.
 -- Ver «Torneos universitarios de Costa Rica» en
 -- docs/decisiones/juegos-y-torneos.md.
 

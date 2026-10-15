@@ -142,7 +142,9 @@
         return { ritmo: RITMO[a] || "", zona: RITMO[a] ? "" : (a || "Única"), cat: CATEGORIA[cat] || cat, modo: mod[0] === "I" ? "Individual" : "Equipos", rama: mod[1] === "F" ? "Femenino" : "Absoluto" };
     }
     const clave = (n) => sinTilde(n).toLowerCase().replace(/[^a-z ]/g, "").replace(/\s+/g, " ").trim();
-    /* chess-results corta algunos nombres largos: «Diaz Charpentier Kristel Meli». */
+    /* chess-results corta algunos nombres largos: «Diaz Charpentier Kristel Meli».
+       Iguales a UniversidadesNombres.clave/mismo (js/universidades-nombres.js):
+       torneos-universitarios.html abre la ficha de aquí con «#~~j=clave». */
     const mismo = (a, b) => a === b || (a.length > 12 && b.startsWith(a)) || (b.length > 12 && a.startsWith(b));
 
     let ind = [], eq = [], tam = {}, todos = [], finalistasDe = {};

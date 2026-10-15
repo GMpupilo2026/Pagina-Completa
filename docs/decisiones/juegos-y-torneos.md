@@ -4114,6 +4114,51 @@ más, clásico) o del nombre («Blitz», «Bullet», «Standard»). Los filtros
 jugadores del podio) van en el enlace. «Bajar en Excel» baja lo que se ve,
 con el enlace de cada torneo. Lo comprueba `verificar-torneos-universitarios.js`.
 
+### La ficha del jugador universitario
+
+En `torneos-universitarios.html`, «Buscar un jugador» abre la ficha de una
+persona con TODOS sus torneos universitarios (octubre de 2026): los
+individuales entre universidades, los que jugó con su equipo y los de cada
+universidad (los Blitz del club de la UCR, el interno del TEC…), con su
+puesto, sus puntos y su Elo, sus podios, por qué universidades jugó, el año a
+año (torneos, podios, mejor puesto y el Elo más alto con que jugó ese año) y
+el enlace a chess-results de cada torneo. Se abre también desde «Quién más
+ganó» y desde el enlace (`#j=clave`).
+
+- **La clasificación completa de los torneos de una universidad va en
+  `uni_clasificacion`.** Antes solo estaba su podio en `uni_torneos`, y la
+  ficha no podía decir que alguien quedó 7.º en un Blitz de la UCR. Son 50
+  torneos y 646 filas: los 48 de una universidad y los dos grupos del
+  Interuniversitario 2011 (los que no están en `uni_resultados`). La llena
+  `herramientas/universidades/clasificacion.sql` con las mismas páginas
+  (`art=1`) que lee `catalogo.sql`; se comprobó que el número de jugadores y
+  el podio de cada torneo son los del catálogo. Las columnas cambian de un
+  torneo a otro: el Elo viene como «Elo», «FIDE» o «EloN», y cuando no hay
+  columna «Pts.» los puntos son el primer desempate («Des 1»), como los
+  publica chess-results. El XXV JUNCOS 2026 (en curso) entra cuando termine.
+- **Una persona es lo mismo en las dos páginas.** La clave (el nombre sin
+  tildes ni signos) y `mismo()` (un nombre cortado por chess-results empieza
+  el completo) están en `js/universidades-nombres.js` y son iguales a las de
+  `js/jdn-comites.js`: así el enlace «Ver sus partidas contra el Elo» abre la
+  misma persona en `universidades.html#~~j=clave`. La ficha no repite el
+  rendimiento contra el Elo partida por partida: ese ya está allá, y una
+  sola copia es la regla.
+- **Sus tablas se leen la primera vez que hacen falta** (al escribir en el
+  buscador o al abrir un enlace con `#j=`), de mil en mil: la página del
+  catálogo no paga por ellas si nadie busca a nadie. De `uni_resultados` se
+  piden solo los individuales (`codigo like '%-I%'`): una fila de equipo
+  («UCR A») no es una persona.
+- **Los podios de un jugador y los de su equipo se cuentan aparte**: la
+  medalla de un equipo no es un podio individual. Las universidades de
+  afuera tampoco salen aquí (ver «Solo las universidades de Costa Rica»), y
+  un club que no es una universidad (los Blitz de la UCR traen el comité
+  cantonal) no se muestra como su universidad.
+- **Dos personas que se llaman igual salen juntas**: chess-results no da un
+  número de jugador en estos torneos. Pasa poco con dos apellidos, y la
+  página lo dice en «De dónde salen los datos».
+
+Lo comprueba `verificar-torneos-universitarios.js`.
+
 ### Solo las universidades de Costa Rica
 
 Las dos páginas (`universidades.html` y `torneos-universitarios.html`)
