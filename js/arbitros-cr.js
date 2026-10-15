@@ -54,7 +54,10 @@
     // acá se muestra con su código).
     const PAISES = { ARG: "Argentina", BOL: "Bolivia", BRA: "Brasil", CAN: "Canadá", CHI: "Chile", COL: "Colombia", CUB: "Cuba", DOM: "República Dominicana",
         ECU: "Ecuador", ESA: "El Salvador", ESP: "España", GUA: "Guatemala", HON: "Honduras", MEX: "México", NCA: "Nicaragua", PAN: "Panamá", PAR: "Paraguay",
-        PER: "Perú", PUR: "Puerto Rico", URU: "Uruguay", USA: "Estados Unidos", VEN: "Venezuela" };
+        PER: "Perú", PUR: "Puerto Rico", URU: "Uruguay", USA: "Estados Unidos", VEN: "Venezuela", ITA: "Italia", RUS: "Rusia", KSA: "Arabia Saudita",
+        GRE: "Grecia", TUR: "Turquía", HUN: "Hungría", GER: "Alemania", FRA: "Francia", AND: "Andorra", JAM: "Jamaica", TTO: "Trinidad y Tobago",
+        // No son países: el buscador pone FID a los eventos de FIDE y CCA a los de la Confederación de Ajedrez de América.
+        FID: "evento de FIDE", CCA: "evento de la Confederación de Ajedrez de América", XXX: "sin federación" };
     const pais = (codigo) => PAISES[codigo] || codigo;
 
     let arbitros = [], torneos = new Map(), torneosCr = new Map(), crDeFide = new Map(), PRIMER = 0, ULTIMO = 0;
