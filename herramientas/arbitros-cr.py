@@ -18,6 +18,8 @@ Angulo.
     python3 herramientas/arbitros-cr.py --resumen     solo cuenta
     python3 herramientas/arbitros-cr.py --huella      la huella que debe dar la base y la consulta que la saca
     python3 herramientas/arbitros-cr.py --afuera      solo los torneos del extranjero (carga-afuera-*.sql), sin borrar
+    python3 herramientas/arbitros-cr.py --parcial 2026 --respuestas-cr D-H --respuestas-afuera D-H
+                                                      la puesta al día del mes (carga-parcial-*.sql), sin borrar
 
 Las cargas se corren en la base en orden (borran y vuelven a llenar las tres
 tablas). Ver «Árbitros de Costa Rica en FIDE» en
@@ -535,24 +537,37 @@ def cargas_cr_torneos(cr_torneos):
     return bloques
 
 
-def cargas_afuera(cr_torneos, cr_cargos, cruce=None):
-    """Solo lo que salió de la búsqueda en todos los países (los del
-    extranjero y los sin federación que se jugaron acá), sin borrar nada:
-    para sumarlo a una base que ya tiene lo de Costa Rica (las respuestas de
-    RESPUESTAS_CR ya no están)."""
-    afuera = {k: v for k, v in cr_torneos.items() if v["de_afuera"]}
+def cargas_parciales(cr_torneos, cr_cargos, cruce=None, anios=()):
+    """Sin borrar nada, para sumarle a la base lo de una descarga nueva: lo
+    que salió de la búsqueda en todos los países (los del extranjero y los
+    sin federación que se jugaron acá; RESPUESTAS_AFUERA) y, si se pasan
+    `anios`, los torneos de Costa Rica de esos años (RESPUESTAS_CR). Los
+    torneos se insertan o se ponen al día, los cargos se suman y el cruce
+    con FIDE de esos torneos se vuelve a escribir. Es lo que corre la puesta
+    al día de cada mes (.claude/skills/arbitros-cr-actualizar)."""
+    elegidos = {k: v for k, v in cr_torneos.items()
+                if v["de_afuera"] or (anios and int(v["inicio"][:4]) in anios)}
+    bloques = []
     # De a 40 respuestas: hay páginas de 1,5 MB y todas juntas pasan del
     # minuto. Un torneo que sale en dos tramos se escribe dos veces, igual.
-    bloques = [[f"-- Lee las respuestas {d} a {min(d + 39, RESPUESTAS_AFUERA[1])} del buscador de chess-results (net._http_response).",
-                cr_torneos_sql(afuera, (d, min(d + 39, RESPUESTAS_AFUERA[1])))]
-               for d in range(RESPUESTAS_AFUERA[0], RESPUESTAS_AFUERA[1] + 1, 40)]
-    filas = [f"({c}, {int(f)}, {sql(r)})" for c, f, r in sorted(cr_cargos, key=lambda x: (x[0], int(x[1]), x[2])) if c in afuera]
+    for respuestas, cuales in ((RESPUESTAS_CR, lambda v: not v["de_afuera"]), (RESPUESTAS_AFUERA, lambda v: v["de_afuera"])):
+        claves = {k: v for k, v in elegidos.items() if cuales(v)}
+        if not claves:
+            continue
+        for d in range(respuestas[0], respuestas[1] + 1, 40):
+            h = min(d + 39, respuestas[1])
+            bloques.append([f"-- Lee las respuestas {d} a {h} del buscador de chess-results (net._http_response).", cr_torneos_sql(claves, (d, h))])
+    filas = [f"({c}, {int(f)}, {sql(r)})" for c, f, r in sorted(cr_cargos, key=lambda x: (x[0], int(x[1]), x[2])) if c in elegidos]
     for i in range(0, len(filas), CARGOS_POR_CARGA):
         bloques.append([f"insert into public.arbitros_cr_cr_cargos (clave, fide_id, rol) values\n  " + ",\n  ".join(filas[i:i + CARGOS_POR_CARGA])
                         + "\non conflict do nothing;"])
-    mismos = {k: f for k, f in (cruce or {}).items() if k in afuera}
+    mismos = {k: f for k, f in (cruce or {}).items() if k in elegidos}
     if mismos:
-        bloques.append(["update public.arbitros_cr_cr c set fide_torneo = v.fide from (values\n  "
+        # El índice único no deja dos con el mismo torneo de FIDE: primero se
+        # suelta lo que estos torneos o esos torneos de FIDE tenían.
+        bloques.append([f"update public.arbitros_cr_cr set fide_torneo = null where clave = any('{{{','.join(str(k) for k in sorted(mismos))}}}'::int[])"
+                        f" or fide_torneo = any('{{{','.join(str(f) for f in sorted(mismos.values()))}}}'::int[]);",
+                        "update public.arbitros_cr_cr c set fide_torneo = v.fide from (values\n  "
                         + ",\n  ".join(f"({k}, {f})" for k, f in sorted(mismos.items()))
                         + "\n) v(clave, fide) where c.clave = v.clave;"])
     return bloques
@@ -619,7 +634,19 @@ def huellas(torneos, cargos, arbitros, cr_torneos=None, cr_cargos=(), cruce=None
     return {"torneos": md5(t), "cargos": md5(c), "arbitros": md5(a), "cr_torneos": md5(ct), "cr_cargos": md5(cc)}
 
 
+def rango(opcion, omision):
+    """«--respuestas-cr 20100-20130»: los ids de net._http_response de una
+    descarga nueva, en vez de los que quedaron escritos arriba."""
+    if opcion in sys.argv:
+        d, h = sys.argv[sys.argv.index(opcion) + 1].split("-")
+        return int(d), int(h)
+    return omision
+
+
 def main():
+    global RESPUESTAS_CR, RESPUESTAS_AFUERA
+    RESPUESTAS_CR = rango("--respuestas-cr", RESPUESTAS_CR)
+    RESPUESTAS_AFUERA = rango("--respuestas-afuera", RESPUESTAS_AFUERA)
     fuente, torneos, cargos, arbitros = armar()
     cr_torneos, cr_cargos = armar_chess_results(arbitros)
     # Los de afuera no se cruzan: los de FIDE que hay son todos de Costa Rica.
@@ -637,7 +664,10 @@ def main():
         print(HUELLA_SQL)
         return
     if "--afuera" in sys.argv:
-        bloques, prefijo = cargas_afuera(cr_torneos, cr_cargos, cruce), "carga-afuera"
+        bloques, prefijo = cargas_parciales(cr_torneos, cr_cargos, cruce), "carga-afuera"
+    elif "--parcial" in sys.argv:
+        anios = {int(x) for x in sys.argv[sys.argv.index("--parcial") + 1].split(",")}
+        bloques, prefijo = cargas_parciales(cr_torneos, cr_cargos, cruce, anios), "carga-parcial"
     else:
         bloques, prefijo = cargas(torneos, cargos, arbitros, cr_torneos, cr_cargos, cruce), "carga"
     os.makedirs(CARPETA, exist_ok=True)
