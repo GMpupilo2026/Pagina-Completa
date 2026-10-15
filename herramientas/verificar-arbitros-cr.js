@@ -14,9 +14,11 @@
    - la ficha de un árbitro: el enlace lleva su ID, cada torneo enlaza a FIDE,
      la norma va escrita con su porqué, y el filtro de norma recorta la
      tabla;
-   - chess-results: la columna de la lista, quien solo figura ahí (sin
-     torneos de FIDE) sale igual, y la ficha trae sus torneos con su rol y
-     el enlace a chess-results;
+   - chess-results: cada torneo sale una vez (el que es el mismo que uno de
+     FIDE va dentro de él, con los dos enlaces), el filtro «FIDE / No FIDE»
+     en la lista y en la ficha, quien solo figura en chess-results sale
+     igual, quien arbitró un torneo de FIDE sin figurar en su ficha queda
+     para revisar, y el que no se jugó (sin rondas) no se muestra;
    - las tablas se piden de mil en mil (range).
 
    Ver «Árbitros de Costa Rica en FIDE» en docs/decisiones/juegos-y-torneos.md.
@@ -64,9 +66,14 @@ const CARGOS = [
 ];
 
 const CR = [
-    { clave: 900001, nombre: "Blitz de la federación 2024", inicio: "2024-03-02", fin: "2024-03-02", lugar: "San José", control: "3 min + 2 seg", rondas: 9, jugadores: 40 },
-    { clave: 900002, nombre: "Abierto del club 2024", inicio: "2024-07-10", fin: "2024-07-12", lugar: "Heredia", control: "60 min", rondas: 5, jugadores: 22 },
-    { clave: 900003, nombre: "Torneo escolar 2019", inicio: "2019-05-01", fin: "2019-05-01", lugar: "", control: "", rondas: 0, jugadores: 0 },
+    // El mismo torneo que el 101 de FIDE: no tiene que salir dos veces.
+    { clave: 900001, nombre: "Abierto Internacional 2025 (101)", inicio: "2025-01-10", fin: "2025-01-12", lugar: "San José", control: "90 min", rondas: 9, jugadores: 40, fide_torneo: 101 },
+    { clave: 900002, nombre: "Abierto del club 2024", inicio: "2024-07-10", fin: "2024-07-12", lugar: "Heredia", control: "60 min", rondas: 5, jugadores: 22, fide_torneo: null },
+    { clave: 900003, nombre: "Torneo escolar 2019", inicio: "2019-05-01", fin: "2019-05-01", lugar: "", control: "", rondas: 5, jugadores: 12, fide_torneo: null },
+    // El mismo que el 102, donde Eduardo arbitró sin figurar en la ficha de FIDE.
+    { clave: 900004, nombre: "Nacional Absoluto 2024", inicio: "2024-05-01", fin: "2024-05-01", lugar: "San José", control: "90 min", rondas: 9, jugadores: 40, fide_torneo: 102 },
+    // Sin rondas: no se jugó y no se muestra.
+    { clave: 900005, nombre: "Torneo que no se jugó 2024", inicio: "2024-09-01", fin: "2024-09-01", lugar: "", control: "", rondas: 0, jugadores: 10, fide_torneo: null },
 ];
 const CR_CARGOS = [
     { clave: 900001, fide_id: 6500001, rol: "ap" },
@@ -74,6 +81,9 @@ const CR_CARGOS = [
     { clave: 900002, fide_id: 6500005, rol: "ap" },
     { clave: 900002, fide_id: 6500005, rol: "dir" },
     { clave: 900003, fide_id: 6500005, rol: "arb" },
+    { clave: 900004, fide_id: 6500005, rol: "arb" },
+    { clave: 900005, fide_id: 6500005, rol: "ap" },
+    { clave: 900005, fide_id: 6500001, rol: "ap" },
 ];
 
 function doble(tieneLicencia) {
@@ -150,20 +160,29 @@ const porNombre = (m) => Object.fromEntries(m.map((f) => [f[0], f]));
     let m = porNombre(await filas(p, "#tabla-arbitros"));
     igual("los cinco árbitros salen (todos los años), también quien solo está en chess-results", Object.keys(m).sort(),
         ["Ángulo Prueba, Óscar", "Quiros Prueba, Eduardo", "Rojas Prueba, Luis", "Soto Prueba, Ana", "Viejo Prueba, Juan"].sort());
-    // Óscar: 4 torneos (principal 2, adjunto 1, árbitro 1); AF vale en 101, 102, 104 (3); AI vale en 101, 102 y revisar en 104 (3, uno para revisar).
-    igual("Óscar: IA, 4 torneos, 2 principal, 1 adjunto, 1 árbitro, AF 3, AI 3 (1 para revisar), 2 en chess-results, último 10/01/2025",
-        m["Ángulo Prueba, Óscar"].slice(1), ["IA", "4", "2", "1", "1", "3", "3 (1)", "2", "10/01/2025"]);
-    igual("Eduardo: sin torneos de FIDE, 2 en chess-results, último 10/07/2024",
-        m["Quiros Prueba, Eduardo"].slice(1), ["—", "0", "0", "0", "0", "0", "0", "2", "10/07/2024"]);
-    // Ana: asistente en 101 (no vale) y de pareos en 102 (revisar en AF y AI).
+    // Óscar: 4 de FIDE (el 900001 es el mismo que el 101: no suma) y 1 que no (900002, director); el 900005 no se jugó.
+    igual("Óscar: 5 torneos (4 FIDE, 1 no), 2 principal, 1 adjunto, 1 árbitro, AF 3, AI 3 (1 para revisar), último 10/01/2025",
+        m["Ángulo Prueba, Óscar"].slice(1), ["IA", "5", "4", "1", "2", "1", "1", "3", "3 (1)", "10/01/2025"]);
+    // Eduardo: el 900004 es el 102 de FIDE (vale, pero no figura en la ficha de FIDE: revisar); 900002 y 900003 no son de FIDE.
+    igual("Eduardo: 3 torneos (1 FIDE para revisar, 2 no), último 10/07/2024",
+        m["Quiros Prueba, Eduardo"].slice(1), ["—", "3", "1", "2", "1", "0", "2", "1 (1)", "1 (1)", "10/07/2024"]);
     igual("Ana: el asistente no vale y el de pareos queda para revisar (AF 1 (1), AI 1 (1))",
-        m["Soto Prueba, Ana"].slice(1), ["FA", "2", "0", "0", "0", "1 (1)", "1 (1)", "0", "10/01/2025"]);
+        m["Soto Prueba, Ana"].slice(1), ["FA", "2", "2", "0", "0", "0", "0", "1 (1)", "1 (1)", "10/01/2025"]);
     igual("la lista va ordenada por cantidad de torneos", (await filas(p, "#tabla-arbitros")).map((f) => f[0])[0], "Ángulo Prueba, Óscar");
+
+    await p.selectOption("#tipo", "nofide");
+    m = porNombre(await filas(p, "#tabla-arbitros"));
+    igual("«No FIDE»: solo quienes tienen torneos que no son de FIDE, con esos", [Object.keys(m).sort(), m["Ángulo Prueba, Óscar"][2], m["Quiros Prueba, Eduardo"][2]],
+        [["Quiros Prueba, Eduardo", "Ángulo Prueba, Óscar"].sort(), "1", "2"]);
+    await p.selectOption("#tipo", "fide");
+    m = porNombre(await filas(p, "#tabla-arbitros"));
+    igual("«Solo FIDE»: Óscar con 4 y Eduardo con 1", [m["Ángulo Prueba, Óscar"][2], m["Quiros Prueba, Eduardo"][2]], ["4", "1"]);
+    await p.selectOption("#tipo", "");
 
     await p.selectOption("#desde", "2023");
     m = porNombre(await filas(p, "#tabla-arbitros"));
     igual("desde 2023, Juan (solo 2015) ya no sale", "Viejo Prueba, Juan" in m, false);
-    igual("desde 2023, Eduardo cuenta solo su torneo de 2024 en chess-results", m["Quiros Prueba, Eduardo"][8], "1");
+    igual("desde 2023, Eduardo ya no cuenta su torneo de 2019", m["Quiros Prueba, Eduardo"][2], "2");
     await p.selectOption("#desde", "2015");
     await p.selectOption("#titulo", "-");
     igual("«sin título en FIDE» deja a Luis y a Eduardo", Object.keys(porNombre(await filas(p, "#tabla-arbitros"))).sort(), ["Quiros Prueba, Eduardo", "Rojas Prueba, Luis"]);
@@ -183,9 +202,10 @@ const porNombre = (m) => Object.fromEntries(m.map((f) => [f[0], f]));
     igual("abre la ficha y esconde la lista", [await visible(p, "#ficha"), await visible(p, "#general")], [true, false]);
     igual("el enlace lleva su ID FIDE", await p.evaluate(() => location.hash), "#6500002");
     const ficha = await filas(p, "#tabla-torneos");
-    igual("como asistente: «No», con el porqué (2.4.4)", [ficha[0][2], ficha[0][7].startsWith("No"), /2\.4\.4/.test(ficha[0][7])], ["Árbitro asistente", true, true]);
-    igual("como árbitro de pareos: «Revisar» en AF y AI", [ficha[1][2], ficha[1][7].startsWith("Revisar"), ficha[1][8].startsWith("Revisar")], ["Árbitro de pareos", true, true]);
-    igual("cada torneo enlaza a su ficha de FIDE", await p.$eval("#tabla-torneos tbody a", (a) => a.href), "https://ratings.fide.com/tournament_information.phtml?event=101");
+    igual("como asistente: «No», con el porqué (2.4.4)", [ficha[0][3], ficha[0][8].startsWith("No"), /2\.4\.4/.test(ficha[0][8])], ["Árbitro asistente", true, true]);
+    igual("como árbitro de pareos: «Revisar» en AF y AI", [ficha[1][3], ficha[1][8].startsWith("Revisar"), ficha[1][9].startsWith("Revisar")], ["Árbitro de pareos", true, true]);
+    igual("el torneo que también está en chess-results lleva los dos enlaces", await p.$$eval("#tabla-torneos tbody tr:first-child a", (as) => as.map((a) => a.href)),
+        ["https://ratings.fide.com/tournament_information.phtml?event=101", "https://chess-results.com/tnr900001.aspx?lan=2"]);
     await p.selectOption("#norma-ai", "revisar");
     igual("el filtro de norma recorta la tabla", (await filas(p, "#tabla-torneos")).length, 1);
     await p.click("#volver");
@@ -196,21 +216,27 @@ const porNombre = (m) => Object.fromEntries(m.map((f) => [f[0], f]));
     ({ ctx, p } = await abrir(browser, "arbitros-cr.html#6500001", true));
     await p.waitForFunction(() => document.getElementById("ficha").checkVisibility());
     igual("abre su ficha", await p.$eval("#ficha-titulo", (e) => e.textContent), "Ángulo Prueba, Óscar");
-    const conPorque = await p.$eval("#tabla-torneos tbody tr", (tr) => [tr.cells[7].querySelector(".of-estado").textContent, tr.cells[7].querySelector(".of-detalle").textContent]);
+    const o = await filas(p, "#tabla-torneos");
+    igual("cada torneo una vez, el más nuevo primero, con FIDE sí o no y su cargo (el 900001 dentro del 101, el 900005 fuera)",
+        o.map((f) => [f[0], f[2], f[3]]),
+        [["10/01/2025", "Sí", "Árbitro principal"], ["01/08/2024", "Sí", "Árbitro adjunto principal"], ["10/07/2024", "No", "Director del torneo"],
+         ["01/05/2024", "Sí", "Árbitro principal"], ["01/03/2023", "Sí", "Árbitro"]]);
+    const conPorque = await p.$eval("#tabla-torneos tbody tr", (tr) => [tr.cells[8].querySelector(".of-estado").textContent, tr.cells[8].querySelector(".of-detalle").textContent]);
     igual("la norma va escrita con su porqué", conPorque, ["Vale", "porque si"]);
-    igual("sus torneos de chess-results, el más nuevo primero, con su rol", (await filas(p, "#tabla-cr")).map((f) => [f[0], f[2]]),
-        [["10/07/2024", "Director del torneo"], ["02/03/2024", "Árbitro principal"]]);
+    igual("un torneo que no es de FIDE no tiene norma", o[2].slice(8), ["—", "—"]);
+    await p.selectOption("#tipo", "nofide");
+    igual("«No FIDE» deja solo el que no es de FIDE", (await filas(p, "#tabla-torneos")).map((f) => f[1].split("Heredia")[0].trim()), ["Abierto del club 2024"]);
     await ctx.close();
 
     console.log("\n=== Quien solo está en chess-results ===");
     ({ ctx, p } = await abrir(browser, "arbitros-cr.html#6500005", true));
     await p.waitForFunction(() => document.getElementById("ficha").checkVisibility());
-    igual("la ficha dice que no figura en FIDE", /No figura como árbitro en ningún torneo de FIDE/.test(await p.$eval("#ficha-sub", (e) => e.textContent)), true);
-    igual("la tabla de FIDE queda vacía", (await filas(p, "#tabla-torneos")).length, 0);
-    const cr = await filas(p, "#tabla-cr");
-    igual("sus dos torneos de chess-results, con los dos roles juntos", cr.map((f) => f[2]), ["Árbitro principal, Director del torneo", "Árbitro"]);
-    igual("cada torneo enlaza a chess-results", await p.$eval("#tabla-cr tbody a", (a) => a.href), "https://chess-results.com/tnr900002.aspx?lan=2");
-    igual("sin lugar, rondas ni jugadores: guiones", cr[1].slice(3), ["—", "—", "—"]);
+    igual("la ficha dice que no figura en FIDE", /No figura como árbitro en ninguna ficha de FIDE/.test(await p.$eval("#ficha-sub", (e) => e.textContent)), true);
+    const e = await filas(p, "#tabla-torneos");
+    igual("sus tres torneos (el que no se jugó, fuera), con los dos roles juntos", e.map((f) => [f[2], f[3]]),
+        [["No", "Árbitro principal, Director del torneo"], ["Sí", "Árbitro"], ["No", "Árbitro"]]);
+    igual("en un torneo de FIDE donde arbitró sin figurar en su ficha: revisar", [e[1][8].startsWith("Revisar"), /no figura como árbitro; sí en chess-results/.test(e[1][8])], [true, true]);
+    igual("el que no es de FIDE enlaza a chess-results", await p.$eval("#tabla-torneos tbody tr:first-child a", (a) => a.href), "https://chess-results.com/tnr900002.aspx?lan=2");
     await ctx.close();
 
     await browser.close();

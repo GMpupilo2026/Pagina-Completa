@@ -359,8 +359,6 @@ insert into public.arbitros_cr_cr_cargos (clave, fide_id, rol) values
   (85327, 6500218, 'ap'),
   (85328, 6500218, 'ap'),
   (85329, 6500218, 'ap'),
-  (85331, 6500218, 'ap'),
-  (85332, 6500218, 'ap'),
   (85335, 6500218, 'ap'),
   (85336, 6500218, 'ap'),
   (85338, 6500218, 'ap'),
@@ -449,5 +447,7 @@ insert into public.arbitros_cr_cr_cargos (clave, fide_id, rol) values
   (91563, 6501435, 'arb'),
   (91566, 6500226, 'dir'),
   (91566, 6500625, 'ap'),
-  (91566, 6501435, 'arb')
+  (91566, 6501435, 'arb'),
+  (91567, 6500226, 'dir'),
+  (91567, 6500625, 'ap')
 on conflict do nothing;

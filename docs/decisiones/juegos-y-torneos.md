@@ -2806,6 +2806,47 @@ no, con quién fue árbitro principal, adjunto, árbitro, director u organizador
   y comprueba la columna, la ficha y el enlace (lo rompí dejando fuera a
   quien no tiene torneos de FIDE y salta).
 
+## El mismo torneo en FIDE y en chess-results
+
+En `arbitros-cr.html` cada torneo sale **una vez** (pedido del dueño, octubre
+de 2026: «que no haya duplicados; en el filtro, todos, pero poder filtrar por
+FIDE y no FIDE»). Un torneo valorado por FIDE casi siempre está también en
+chess-results, y sin cruzarlos se contaba dos veces.
+
+- **El cruce** (`cruzar_con_fide()` en `herramientas/arbitros-cr.py`, y la
+  columna `arbitros_cr_cr.fide_torneo`, única: uno a uno). Si el nombre de
+  chess-results trae el código de FIDE entre paréntesis («Torneo Blitz de
+  Canes (139418)»), ese. Si no, un torneo de FIDE que empezó el mismo día
+  (±1), con dos palabras del nombre en común y sin chocar en categoría
+  (U14/Sub-16), división (con `\b`: «ii division» calzaba dentro de «iii
+  division»), rama (femenino/absoluto), año ni ritmo, con un puntaje:
+  parecido del nombre, mismas rondas y jugadores, y **si comparten árbitro
+  (suma 2) o tienen árbitros distintos (resta 1,5)**. Se emparejan de mayor
+  a menor puntaje. Antes de sumar el árbitro, los dos Festival
+  Centroamericano Sub-14 de 2013 (absoluto y femenino) quedaban cruzados al
+  revés.
+- **El ritmo como lo cuenta FIDE**: base + incremento × 60 jugadas. Un «30 +
+  30» es clásico (60 minutos), no rápido; contado solo por la base, el
+  cruce rechazaba 659 pares buenos.
+- **Lo que dio** (15/10/2026): 973 de los 4029 torneos de chess-results son
+  el mismo que uno de FIDE, y en 955 de ellos el mismo árbitro está en los
+  dos lados. Los nombres de chess-results llegan cortados a 50 letras, y el
+  de FIDE se compara cortado igual.
+- **En la página**: la lista cuenta «Torneos», «FIDE» (los que FIDE valoró,
+  estén o no en chess-results) y «No FIDE» (los que solo están en
+  chess-results), y el filtro «Torneos» (Todos / Solo FIDE / No FIDE) vale
+  para la lista y la ficha. La ficha es una sola tabla: el torneo de FIDE
+  lleva sus dos enlaces y los cargos de los dos lados. Quien arbitró un
+  torneo de FIDE según chess-results pero no figura en la ficha de FIDE
+  queda «Revisar» (para FIDE, sin estar en su ficha, no cuenta); quien solo
+  fue director u organizador, «No».
+- **Los que no se jugaron, fuera** (pedido del dueño): un torneo de
+  chess-results de prueba («test 260319») o sin rondas o sin jugadores no
+  entra a la carga (`es_basura()`) y la página tampoco lo muestra. De los
+  que tenían árbitros de Costa Rica eran 182, ninguno «de prueba». Los
+  torneos de FIDE no se tocan: sin rondas ahí es que FIDE no publica el
+  ronda a ronda, no que no se jugó.
+
 ## Historial del jugador y estadísticas por colegio
 
 Dos herramientas gratis y públicas, hechas con los mismos torneos de
