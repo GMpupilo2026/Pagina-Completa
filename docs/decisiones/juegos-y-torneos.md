@@ -2988,6 +2988,37 @@ se ven desde afuera:
   ya lo tiene; para AI, 0 de 4 y una para revisar), Juan (su norma de 2015 ya
   no cuenta) y Óscar (IA). Lo rompí quitando el límite de seis años y salta.
 
+## La puesta al día de cada mes
+
+«Árbitros de Costa Rica» se pone al día una vez al mes con una tarea
+programada de Claude (no con GitHub Actions: los datos van a la base, que
+solo se escribe desde una sesión con acceso a Supabase, y la descarga se hace
+con pg_net desde la base). La tarea sigue la habilidad
+`.claude/skills/arbitros-cr-actualizar/SKILL.md`, paso a paso:
+
+- **¿Volvió FIDE?** Prueba el perfil de un árbitro. Si contesta, lo avisa: los
+  torneos del extranjero en FIDE (con su norma) se arman con el dueño, no
+  solos en la pasada.
+- **Lo nuevo de chess-results**: la búsqueda del año en Costa Rica
+  (`buscar-cr.sql`, y el año anterior en enero y febrero), la búsqueda en
+  todos los países (`buscar-afuera.sql`), las exportaciones (`exportar-cr.sql`,
+  `afuera.sql`) y los juntadores (`juntar-afuera.py --cr` suma al JSON de
+  Costa Rica; sin `--cr` reescribe el del extranjero).
+- **La carga parcial** (`arbitros-cr.py --parcial AAAA --respuestas-cr D-H
+  --respuestas-afuera D-H`): no borra nada; inserta o pone al día los torneos
+  de esas búsquedas, suma sus cargos y vuelve a escribir su cruce con FIDE
+  (soltando antes el que tuvieran, por el índice único). Después, la huella
+  de lo cargado contra la del generador.
+- **Probada el 15/10/2026**: la búsqueda de 2026 en Costa Rica (603 torneos;
+  ninguno nuevo desde el día anterior, pero tres en juego habían sumado una
+  ronda) y lo del extranjero; las huellas de los 769 torneos dieron iguales.
+  La exportación nueva junta los espacios y deja algunas entidades
+  (`&#10145;`) que la vieja no dejaba: al generador no le cambia nada (des-
+  escapa el texto) y el texto que se muestra lo escribe la base desde las
+  respuestas.
+- Lo que no hace sola: sumar árbitros nuevos (hace falta su perfil de FIDE)
+  ni borrar torneos que desaparecieron de chess-results.
+
 ## Quién está cerca del título, qué vence, la actividad y el equipo
 
 Cuatro piezas más en `arbitros-cr.html` (pedido del dueño, octubre de 2026):
