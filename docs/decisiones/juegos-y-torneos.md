@@ -2796,6 +2796,12 @@ no, con quién fue árbitro principal, adjunto, árbitro, director u organizador
   de cargos se piden ordenadas por su clave completa: ordenadas por una
   columna que se repite, de mil en mil, una fila puede caer en dos páginas o
   en ninguna.
+- **Lo que dio la carga (15/10/2026):** 4211 torneos de chess-results con
+  algún árbitro de Costa Rica, 11 993 cargos y 34 árbitros que solo están
+  ahí (la lista pasó de 132 a 166). Las cinco huellas de la base dieron
+  iguales a las del generador (la de `arbitros_cr` con el booleano escrito
+  `t`/`f`, como lo escribe `concat_ws`), y el candado, impersonando en SQL:
+  sin la licencia, 0 filas en las tablas nuevas.
 - `verificar-arbitros-cr.js` suma una persona que solo está en chess-results
   y comprueba la columna, la ficha y el enlace (lo rompí dejando fuera a
   quien no tiene torneos de FIDE y salta).

@@ -358,7 +358,7 @@ def huellas(torneos, cargos, arbitros, cr_torneos=None, cr_cargos=()):
              t["conElo"], t["contados"], t["rondas"], len(t["federaciones"]), t["valorado"], t["af"]["estado"],
              t["af"]["detalle"][:400], t["ai"]["estado"], t["ai"]["detalle"][:400]) for t in sorted(torneos.values(), key=lambda t: t["id"])]
     c = [col(a, int(b), c) for a, b, c in sorted(cargos, key=lambda x: (x[0], int(x[1]), x[2]))]
-    a = [col(int(f), x["nombre"], x["titulo"], x["detalle"], "true" if x.get("solo_cr") else "false")
+    a = [col(int(f), x["nombre"], x["titulo"], x["detalle"], "t" if x.get("solo_cr") else "f")  # concat_ws escribe un booleano como t o f
          for f, x in sorted(arbitros.items(), key=lambda x: int(x[0]))]
     # De los torneos de chess-results, solo números y fechas: el texto lo
     # escribe la base misma desde las respuestas del buscador.
