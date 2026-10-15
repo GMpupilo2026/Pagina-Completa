@@ -117,3 +117,21 @@
 1473963 2026-CONARE  R-U-IF
 1498218 2026-CONARE2 R-U-IA
 1498221 2026-CONARE2 R-U-IF
+# Grand Prix universitario 2016: tres etapas (TEC, UTN y UCR), con división A
+# y B; la B femenina de la primera etapa (236051) tuvo una sola jugadora y no
+# se jugó.
+236049  2016-GP1     R-U-IF
+236107  2016-GP1     R-U-IA
+236110  2016-GP1     R-UB-IA
+239993  2016-GP2     R-U-IF
+239995  2016-GP2     R-UB-IF
+239997  2016-GP2     R-U-IA
+240000  2016-GP2     R-UB-IA
+240003  2016-GP2     R-U-EF
+240007  2016-GP2     R-U-EA
+245683  2016-GP3     R-U-IF
+245653  2016-GP3     R-UB-IF
+245654  2016-GP3     R-U-IA
+245655  2016-GP3     R-UB-IA
+245652  2016-GP3     R-U-EF
+245651  2016-GP3     R-U-EA

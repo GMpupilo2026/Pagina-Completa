@@ -79,6 +79,7 @@
                 "La ficha de cada universidad: sus jugadores, sus equipos y quién jugó en cada uno, edición por edición, con el puesto, los puntos y la medalla.",
                 "El rendimiento contra el Elo, los enfrentamientos entre universidades, la copa de puntos por puesto y cada tabla en Excel, imagen o PDF.",
                 "Junta las sedes y las variantes de una misma universidad («ITCR», «TEC Alajuela») y deduce la de quien no la trae.",
+                "Con la misma licencia, «Torneos universitarios de Costa Rica»: el catálogo de todos los torneos universitarios, también los que organiza cada universidad (los Blitz del club de la UCR, el Desafío Mentes Maestras de CENFOTEC…), con su podio.",
             ],
         },
         {

@@ -31,6 +31,7 @@
         <div id="app" class="hidden">
             <h1 class="font-serif text-3xl font-bold text-brand-800 dark:text-white">Resultados universitarios por universidad</h1>
             <p id="intro" class="text-brand-500 dark:text-brand-300 mt-1">Los resultados de cada universidad en los torneos universitarios de ajedrez que están en chess-results: los JUNCOS, el torneo CONARE, la FEDEU, la FECUNDE y otros de Costa Rica, y los JUDUCA centroamericanos. Elige una universidad para ver a todos sus jugadores y equipos, edición por edición.</p>
+            <p class="text-sm mt-2"><a href="torneos-universitarios.html" class="font-semibold text-brand-700 dark:text-brand-200 underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-500">Ver todos los torneos universitarios, también los de cada universidad</a></p>
             <p id="error" class="hidden mt-3 rounded-xl bg-accent-100 text-brand-900 px-4 py-3 text-sm" role="alert"></p>
 
             <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 mt-6 flex flex-wrap gap-3 items-end">
@@ -46,7 +47,7 @@
                 <div class="w-full grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 pt-3 border-t border-brand-100 dark:border-brand-800">
                     <div>
                         <label for="f-serie" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Evento</label>
-                        <select id="f-serie" class="w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none"><option value="">Todos</option><option value="JUNCOS">JUNCOS</option><option value="CONARE">Torneo CONARE</option><option value="FEDEU">FEDEU</option><option value="FECUNDE">FECUNDE</option><option value="JUDUCA">JUDUCA (Centroamérica)</option><option value="OTROS">Otros torneos</option></select>
+                        <select id="f-serie" class="w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none"><option value="">Todos</option><option value="JUNCOS">JUNCOS</option><option value="CONARE">Torneo CONARE</option><option value="FEDEU">FEDEU</option><option value="FECUNDE">FECUNDE</option><option value="JUDUCA">JUDUCA (Centroamérica)</option><option value="GP">Grand Prix universitario</option><option value="OTROS">Otros torneos</option></select>
                     </div>
                     <div>
                         <label for="f-cat" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Categoría</label>
@@ -128,6 +129,7 @@
     <script src="js/reporte-pdf.js"></script>
     <script src="js/tabla-excel.js"></script>
     <script src="js/tabla-imagen.js"></script>
+    <script src="js/universidades-nombres.js"></script>
     <script src="js/jdn-comites.js"></script>
 <!-- burbuja: inicio --><script src="js/burbuja-en-linea.js" defer></script><!-- burbuja: fin --><!-- juego-aviso: inicio --><script src="js/juego-aviso.js" defer></script><!-- juego-aviso: fin --><!-- aviso-profe: inicio --><script src="js/aviso-profe.js" defer></script><!-- aviso-profe: fin --><!-- tanda: inicio --><script src="js/tanda-diez.js" defer></script><!-- tanda: fin --><!-- acceso: inicio --><script src="js/acceso-vigente.js" defer></script><!-- acceso: fin --><!-- modo-vista: inicio --><script src="js/modo-vista.js" defer></script><!-- modo-vista: fin --><!-- marca: inicio --><script src="js/marca-academia.js" defer></script><!-- marca: fin --><!-- atajo: inicio --><script src="js/atajo-buscar.js" data-arriba="" defer></script><!-- atajo: fin --></body>
 </html>
