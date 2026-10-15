@@ -228,6 +228,7 @@
         for (const f of filas) {
             const enEquipo = !!f.equipo, r = deInd.get(f.tnr + "-" + f.orden);
             if (!enEquipo && !r) continue;
+            if (UNI && enEquipo && window.UniversidadesNombres.extranjera(f.equipo)) continue;
             jugs.push({ ed: f.edicion, cod: f.codigo, tnr: f.tnr, ...categoria(f.codigo), fase: edicion(f.edicion).fase, orden: f.orden,
                 nombre: enEquipo ? f.nombre : r.nombre, clave: clave(f.nombre), comite: enEquipo ? comite(f.equipo, true) : r.comite,
                 equipo: enEquipo ? f.equipo.replace(/^C+DR\s+/i, "") : "", sufijo: enEquipo ? sufijo(f.equipo) : "", eqRk: f.equipo_orden || 0, tablero: f.tablero || 0,
@@ -256,8 +257,8 @@
             const rk = f.puesto || previo[k] || 0; previo[k] = rk;
             const esEquipo = f.codigo.split("-")[2][0] === "E";
             const r = { ed: f.edicion, cod: f.codigo, tnr: f.tnr, orden: f.orden, ...categoria(f.codigo), rk, pts: Number(f.puntos), fase: edicion(f.edicion).fase };
-            if (esEquipo) eq.push(Object.assign(r, { equipo: f.nombre.replace(/^C+DR\s+/i, ""), comite: comite(f.comite || f.nombre, true), sufijo: sufijo(f.nombre), record: f.record || "" }));
-            else ind.push(Object.assign(r, { nombre: f.nombre, clave: clave(f.nombre), comite: comite(f.comite, false), deducido: false }));
+            if (esEquipo) eq.push(Object.assign(r, { equipo: f.nombre.replace(/^C+DR\s+/i, ""), comite: comite(f.comite || f.nombre, true), crudo: f.comite || f.nombre, sufijo: sufijo(f.nombre), record: f.record || "" }));
+            else ind.push(Object.assign(r, { nombre: f.nombre, clave: clave(f.nombre), comite: comite(f.comite, false), crudo: f.comite, deducido: false }));
             tam[k] = (tam[k] || 0) + 1;
         }
         // Lo que administración corrigió a mano manda sobre chess-results.
@@ -279,6 +280,16 @@
                 if (q && comite(q.equipo, true)) { r.comite = comite(q.equipo, true); r.deducido = true; break; }
             }
             if (!r.comite) r.comite = "Sin comité";
+        }
+        /* Solo las universidades de Costa Rica: las de afuera (las de los
+           JUDUCA) no salen en ninguna lista, y con ellas sus jugadores y sus
+           partidas. Se quitan después de deducir, para que un JUDUCA
+           individual que trae solo el país tome antes la de su equipo. El
+           puesto y el «de N» siguen siendo los del torneo completo. */
+        if (UNI) {
+            const afuera = (r) => window.UniversidadesNombres.extranjera(r.crudo) || window.UniversidadesNombres.extranjera(r.comite);
+            ind = ind.filter((r) => !afuera(r));
+            eq = eq.filter((r) => !afuera(r));
         }
         for (const r of ind) if (r.fase === "final") (finalistasDe[r.ed] = finalistasDe[r.ed] || []).push(r.clave);
         todos = resumen(() => true);
@@ -477,7 +488,7 @@
         const finales = EDICIONES.filter((x) => x.fase === "final").map((x) => x.titulo.replace(/^Final /, ""));
         $("general-titulo").textContent = !e ? (UNI ? "Medallero de todos los torneos" : "Medallero de las finales") : e.fase === "final" ? "Medallero · " + e.titulo : "Participación · " + e.titulo;
         $("general-texto").textContent = UNI ? (!e
-            ? "Medallas de los torneos universitarios de chess-results, de " + EDICIONES[EDICIONES.length - 1].id.slice(0, 4) + " a " + EDICIONES[0].id.slice(0, 4) + " (JUNCOS, CONARE, FEDEU, FECUNDE, los JUDUCA centroamericanos y otros), sumando individual y equipos. Elige una universidad para ver su ficha, o un torneo en «Edición» para ver solo ese. El orden es por oros, después platas y bronces."
+            ? "Medallas de las universidades de Costa Rica en los torneos universitarios de chess-results, de " + EDICIONES[EDICIONES.length - 1].id.slice(0, 4) + " a " + EDICIONES[0].id.slice(0, 4) + " (JUNCOS, CONARE, FEDEU, FECUNDE, los JUDUCA centroamericanos y otros), sumando individual y equipos. Elige una universidad para ver su ficha, o un torneo en «Edición» para ver solo ese. El orden es por oros, después platas y bronces."
             : "Medallas de " + e.titulo + (e.detalle ? " (" + e.detalle + ")" : "") + ", sumando individual y equipos. Elige una universidad para ver su ficha.")
             : !e
             ? "Medallas de las finales (" + finales.join(", ") + "), sumando individual, equipos y tableros, e inscritos de las eliminatorias. Elige un comité para ver su ficha, o una final en «Edición» para ver también sus mejores tableros. El orden es por oros, después platas y bronces."
@@ -1698,7 +1709,7 @@
         const nE = EDICIONES.filter((e) => e.fase === "elim" && Object.keys(tam).some((k) => k.startsWith(e.id))).length;
         const nF = EDICIONES.filter((e) => e.fase === "final" && Object.keys(tam).some((k) => k.startsWith(e.id))).length;
         $("intro").textContent = UNI
-            ? `Los resultados de cada universidad en los ${torneos} torneos universitarios de ajedrez que están en chess-results, de ${nF} ediciones: los JUNCOS, el torneo CONARE, la FEDEU, la FECUNDE y otros de Costa Rica, y los JUDUCA centroamericanos. Elige una universidad para ver a todos sus jugadores y equipos, edición por edición.`
+            ? `Los resultados de cada universidad de Costa Rica en los ${torneos} torneos universitarios de ajedrez que están en chess-results, de ${nF} ediciones: los JUNCOS, el torneo CONARE, la FEDEU, la FECUNDE y otros de Costa Rica, y lo que hicieron en los JUDUCA centroamericanos. Las universidades de afuera no salen. Elige una universidad para ver a todos sus jugadores y equipos, edición por edición.`
             : `Los resultados de cada comité de deportes en los ${torneos} torneos de ajedrez de los Juegos Deportivos Nacionales que están en chess-results: ${nE} eliminatorias y ${nF} finales. Elige un comité para ver a todos sus jugadores y equipos, edición por edición.`;
         armarControles();
         $("loading").classList.add("hidden"); $("app").classList.remove("hidden");
