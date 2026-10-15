@@ -20,6 +20,9 @@
      normaDe().
    - Los años, el título y el tipo filtran la lista; el árbitro elegido va
      en la dirección (#ID) para compartirlo.
+   - «Contar: festivales como uno»: los torneos de un árbitro que empiezan
+     el mismo día son un festival y cuentan como uno; su norma es la mejor
+     de sus torneos (FIDE da una norma por festival).
 
    Ver «Árbitros de Costa Rica en FIDE», «Árbitros de Costa Rica en
    chess-results» y «El mismo torneo en FIDE y en chess-results» en
@@ -42,9 +45,10 @@
     // El rol de chess-results que es el mismo cargo de FIDE.
     const ROL_A_CARGO = { ap: "Chief", adj: "Dep. Chief", arb: "Arbiter" };
     const SIN_NORMA = { estado: "", detalle: "" };
+    const PESO = { si: 0, una: 1, opcion: 2, revisar: 3, no: 4 };
 
     let arbitros = [], torneos = new Map(), torneosCr = new Map(), crDeFide = new Map(), PRIMER = 0, ULTIMO = 0;
-    const estado = { q: "", titulo: "", tipo: "", desde: 0, hasta: 0, orden: { col: "torneos", dir: -1 }, normaAf: "", normaAi: "", elegido: null };
+    const estado = { q: "", titulo: "", tipo: "", contar: "", desde: 0, hasta: 0, orden: { col: "torneos", dir: -1 }, normaAf: "", normaAi: "", elegido: null };
 
     // «AAAA-MM-DD» a «DD/MM/AAAA» sin pasar por Date.
     function fecha(iso) {
@@ -151,16 +155,42 @@
         PRIMER = Math.min(...anios); ULTIMO = Math.max(...anios);
     }
 
-    // Sus torneos dentro de los años y del tipo elegidos, el más nuevo primero.
+    // Sus torneos dentro de los años y del tipo elegidos, el más nuevo
+    // primero; con «festivales como uno», los del mismo día juntos.
     function torneosDe(a) {
-        return a.todos.filter((x) => x.anio >= estado.desde && x.anio <= estado.hasta
-            && (!estado.tipo || (estado.tipo === "fide") === x.fide))
+        const l = a.todos.filter((x) => x.anio >= estado.desde && x.anio <= estado.hasta
+            && (!estado.tipo || (estado.tipo === "fide") === x.fide));
+        return (estado.contar === "festival" ? enFestivales(l) : l)
             .sort((x, y) => (y.inicio + y.clave).localeCompare(x.inicio + x.clave));
+    }
+
+    // La mejor norma de los torneos de un festival (FIDE da una por festival).
+    function mejorNorma(items, cual) {
+        const conNorma = items.filter((x) => x.fide).map((x) => x[cual]);
+        if (!conNorma.length) return SIN_NORMA;
+        const n = conNorma.reduce((m, x) => (PESO[x.estado] < PESO[m.estado] ? x : m));
+        return { estado: n.estado, detalle: `Festival de ${items.length} torneos (cuenta una vez); el mejor: ${n.detalle}` };
+    }
+
+    // Los torneos que empiezan el mismo día, juntos en un festival.
+    function enFestivales(lista) {
+        const porDia = new Map();
+        for (const x of lista) porDia.set(x.inicio, (porDia.get(x.inicio) || []).concat(x));
+        return [...porDia.values()].map((items) => {
+            if (items.length === 1) return items[0];
+            items.sort((x, y) => (y.fide - x.fide) || (x.t || x.cr).nombre.localeCompare((y.t || y.cr).nombre, "es"));
+            return {
+                festival: true, items, t: null, cr: null, inicio: items[0].inicio, anio: items[0].anio, clave: "d" + items[0].inicio,
+                fide: items.some((x) => x.fide), cargos: [...new Set(items.flatMap((x) => x.cargos))], roles: [...new Set(items.flatMap((x) => x.roles))],
+                af: mejorNorma(items, "af"), ai: mejorNorma(items, "ai"),
+            };
+        });
     }
 
     // Lo que hizo en un torneo, en palabras: el cargo de FIDE y, si no lo
     // dice ya, su rol en chess-results.
     function cargoEscrito(x) {
+        if (x.festival) return [...new Set(x.items.flatMap((y) => cargoEscrito(y).split(", ")))].join(", ");
         const dichos = new Set(x.cargos.map((c) => CARGOS[c] || c));
         for (const r of x.roles) if (!(ROL_A_CARGO[r] && x.cargos.length)) dichos.add(ROLES_CR[r] || r);
         return [...dichos].join(", ");
@@ -208,10 +238,13 @@
             const c = th.querySelector("button").dataset.col;
             th.setAttribute("aria-sort", c === col ? (dir < 0 ? "descending" : "ascending") : "none");
         }
-        const vistos = new Set(filas.flatMap((r) => torneosDe(r.a).map((x) => x.clave)));
-        const fideVistos = [...vistos].filter((k) => k[0] === "f").length;
+        // Con «festivales como uno», todo lo que empieza el mismo día es uno
+        // solo, aunque cada árbitro haya estado en una parte distinta.
+        const vistos = new Map(), clave = (x) => estado.contar === "festival" ? x.inicio : x.clave;
+        for (const r of filas) for (const x of torneosDe(r.a)) vistos.set(clave(x), vistos.get(clave(x)) || x.fide);
+        const fideVistos = [...vistos.values()].filter(Boolean).length;
         $("cuenta").textContent = filas.length
-            ? `${miles(filas.length)} árbitros con ${miles(vistos.size)} torneos (${miles(fideVistos)} de FIDE y ${miles(vistos.size - fideVistos)} que no) de ${estado.desde} a ${estado.hasta}.`
+            ? `${miles(filas.length)} árbitros con ${miles(vistos.size)} ${estado.contar === "festival" ? "torneos o festivales" : "torneos"} (${miles(fideVistos)} de FIDE y ${miles(vistos.size - fideVistos)} que no) de ${estado.desde} a ${estado.hasta}.`
             : "Ningún árbitro cumple con estos filtros.";
     }
 
@@ -245,6 +278,7 @@
             + (a.solo_chess_results ? ". No figura como árbitro en ninguna ficha de FIDE." : `: valen para AF ${miles(r.af)}, para AI ${miles(r.ai)}.`));
         const lista = filasFicha(a);
         $("tabla-torneos").tBodies[0].replaceChildren(...lista.map((x) => {
+            if (x.festival) return filaFestival(x);
             const t = x.t, c = x.cr;
             const lugar = t ? [t.ciudad, t.pais].filter(Boolean).join(", ") + (t.valorado ? " · valorado en " + t.valorado : "") : c.lugar;
             const nombre = el("div", {},
@@ -262,8 +296,21 @@
                 td(norma(x.af)), td(norma(x.ai)));
         }));
         $("ficha-cuenta").textContent = lista.length
-            ? miles(lista.length) + (lista.length === 1 ? " torneo." : " torneos.") + " «Con Elo» cuenta a quien no faltó a más de una ronda; los torneos que no son de FIDE no tienen norma."
+            ? miles(lista.length) + (estado.contar === "festival" ? (lista.length === 1 ? " torneo o festival." : " torneos o festivales.") : (lista.length === 1 ? " torneo." : " torneos.")) + " «Con Elo» cuenta a quien no faltó a más de una ronda; los torneos que no son de FIDE no tienen norma."
             : "Ningún torneo cumple con estos filtros.";
+    }
+
+    // Un festival en la ficha: sus torneos uno debajo del otro, con sus enlaces.
+    function filaFestival(x) {
+        const td = (v, der) => el("td", { class: "px-3 py-2 align-top" + (der ? " text-right tabular-nums" : "") }, v);
+        const nombre = el("div", {}, el("span", { class: "font-semibold" }, `Festival de ${x.items.length} torneos`),
+            ...x.items.map((y) => el("span", { class: "of-detalle" }, (y.t || y.cr).nombre, " (",
+                y.t ? enlace(urlFide(y.t), "FIDE") : null, y.t && y.cr ? " · " : null, y.cr ? enlace(urlCr(y.cr), "chess-results") : null, ")")));
+        const jugadores = x.items.reduce((s, y) => s + ((y.t || y.cr).jugadores || 0), 0);
+        return el("tr", { class: "border-t border-brand-100 dark:border-brand-800" },
+            td(fecha(x.inicio)), el("th", { scope: "row", class: "px-3 py-2 align-top font-normal" }, nombre),
+            td(x.fide ? "Sí" : "No"), td(cargoEscrito(x)), td("—"), td("—", true), td("—", true), td(miles(jugadores), true),
+            td(norma(x.af)), td(norma(x.ai)));
     }
 
     function excel() {
@@ -272,6 +319,12 @@
         const filas = [["Inicio", "Torneo", "FIDE", "Lugar", "Cargo", "Ritmo o control", "Sistema", "Jugadores", "Con Elo que cuentan", "Rondas", "Federaciones",
             "Norma de AF", "Por qué (AF)", "Norma de AI", "Por qué (AI)", "En FIDE", "En chess-results"]]
             .concat(filasFicha(a).map((x) => {
+                if (x.festival) {
+                    const n = (y) => (y.t || y.cr);
+                    return [x.inicio, "Festival: " + x.items.map((y) => n(y).nombre).join(" / "), x.fide ? "Sí" : "No", "", cargoEscrito(x), "", "",
+                        x.items.reduce((s, y) => s + (n(y).jugadores || 0), 0), "", "", "", ESTADOS[x.af.estado] || "", x.af.detalle, ESTADOS[x.ai.estado] || "", x.ai.detalle,
+                        x.items.filter((y) => y.t).map((y) => urlFide(y.t)).join(" "), x.items.filter((y) => y.cr).map((y) => urlCr(y.cr)).join(" ")];
+                }
                 const t = x.t, c = x.cr;
                 return [x.inicio, t ? t.nombre : c.nombre, x.fide ? "Sí" : "No", t ? [t.ciudad, t.pais].filter(Boolean).join(", ") : c.lugar, cargoEscrito(x),
                     t ? RITMOS[t.ritmo] || "" : c.control, t ? SISTEMAS[t.sistema] || "" : "", t ? t.jugadores : c.jugadores, t ? t.contados : "",
@@ -301,6 +354,7 @@
         $("buscar").addEventListener("input", (e) => { clearTimeout(espera); espera = setTimeout(() => { estado.q = e.target.value; if (estado.elegido) elegir(null); else pintar(); }, 200); });
         $("titulo").addEventListener("change", (e) => { estado.titulo = e.target.value; pintar(); });
         $("tipo").addEventListener("change", (e) => { estado.tipo = e.target.value; pintar(); });
+        $("contar").addEventListener("change", (e) => { estado.contar = e.target.value; pintar(); });
         $("desde").addEventListener("change", (e) => { estado.desde = +e.target.value; if (estado.hasta < estado.desde) { estado.hasta = estado.desde; $("hasta").value = e.target.value; } pintar(); });
         $("hasta").addEventListener("change", (e) => { estado.hasta = +e.target.value; if (estado.desde > estado.hasta) { estado.desde = estado.hasta; $("desde").value = e.target.value; } pintar(); });
         $("norma-af").addEventListener("change", (e) => { estado.normaAf = e.target.value; pintarFicha(); });

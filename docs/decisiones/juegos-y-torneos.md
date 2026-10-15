@@ -2846,6 +2846,22 @@ chess-results, y sin cruzarlos se contaba dos veces.
   que tenían árbitros de Costa Rica eran 182, ninguno «de prueba». Los
   torneos de FIDE no se tocan: sin rondas ahí es que FIDE no publica el
   ronda a ronda, no que no se jugó.
+- **«Contar: festivales como uno»** (pedido del dueño): los torneos que
+  empiezan el mismo día son un festival (el Nacional por categorías, las
+  eliminatorias de los JDE en varias categorías) y cuentan como uno. Es una
+  opción, no lo de siempre: «Cada torneo» sigue siendo la cuenta por omisión.
+  - En la ficha de un árbitro, sus torneos del mismo día se juntan en una
+    fila «Festival de N torneos», con cada uno y sus enlaces, los cargos de
+    todos y los jugadores sumados. Es de FIDE si lo es alguno.
+  - Su norma es la mejor de sus torneos de FIDE (Vale, Una, Opción, Revisar,
+    No, en ese orden), con el porqué de esa: FIDE da una norma por festival
+    (B.06.1), así que contar cada torneo inflaría las normas.
+  - En la lista general, la cuenta de abajo junta TODO lo que empieza el
+    mismo día aunque cada árbitro haya estado en una parte distinta: la fecha
+    es lo que define el festival. Es una aproximación aceptada: dos torneos
+    ajenos que arrancan el mismo día cuentan como uno.
+  - Lo revisa `verificar-arbitros-cr.js` (el 102 de FIDE y el 900006 de
+    chess-results, el mismo día).
 
 ## Historial del jugador y estadísticas por colegio
 
