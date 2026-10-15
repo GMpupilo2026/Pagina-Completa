@@ -1696,6 +1696,7 @@ funcion  clase_invitado_ver(p_token text, p_secreto text)  definer  anon=true  a
 funcion  cobro_cotizar(p_suscripcion uuid, p_desde date, p_hasta date)  definer  anon=false  auth=true
 funcion  cobro_siguiente(p_suscripcion uuid, p_periodos integer)  definer  anon=false  auth=true
 funcion  cobros_morosos()  invoker  anon=true  auth=true
+funcion  cobros_quien_debe(p_desde date, p_hasta date, p_alumno uuid, p_buscar text)  invoker  anon=false  auth=true
 funcion  cobros_resumen()  invoker  anon=true  auth=true
 funcion  color_con_texto_blanco(p text)  invoker  anon=true  auth=true
 funcion  consumir_invitacion(p_profesor uuid)  definer  anon=false  auth=false
@@ -1996,6 +1997,7 @@ funcion  quitar_insignia(p_id uuid)  definer  anon=false  auth=true
 funcion  quitar_verificacion_en_dos_pasos(p_persona uuid)  definer  anon=false  auth=true
 funcion  rango_es(p_desde date, p_hasta date)  invoker  anon=false  auth=true
 funcion  recibo_entregado_en_mano(p_recibo uuid, p_entregado boolean)  definer  anon=false  auth=true
+funcion  recibos_resumen(p_desde date, p_hasta date, p_alumno uuid, p_buscar text)  invoker  anon=false  auth=true
 funcion  reclamar_puntos_pendientes()  definer  anon=false  auth=true
 funcion  recordar_informes_mensuales(p_hoy date)  definer  anon=false  auth=false
 funcion  regalar_premio(p_premio_id uuid, p_para uuid, p_mensaje text)  definer  anon=false  auth=true

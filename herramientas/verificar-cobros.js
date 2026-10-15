@@ -148,6 +148,11 @@ window.SUPABASE_ANON_KEY = "anon-falsa";
     corregir_recibo: null,
     anular_recibo: null,
     recibo_entregado_en_mano: null,
+    // Las cuentas de la lista de recibos: las hace la base.
+    // Quién pagó y quién debe: las cuentas también las hace la base.
+    cobros_quien_debe: [{ moneda: "CRC", alumnos_deben: 1, alumnos_pagaron: 1, cobros_deben: 2, total_debe: 35000,
+                          vencidos: 1, cobros_pagados: 1, total_pagado: 35000 }],
+    recibos_resumen: [{ moneda: "CRC", vigentes: 2, total_vigentes: 35000, anulados: 1, total_anulados: 25000, por_entregar: 1 }],
   };
   /* Este doble FILTRA, ORDENA, CUENTA Y RECORTA de verdad.
      Uno que devolviera siempre la tabla entera daría por buena una página que
@@ -191,6 +196,11 @@ window.SUPABASE_ANON_KEY = "anon-falsa";
                      aplicar((f) => (val === null ? f[col] == null : f[col] === val)); return b; },
       not(col, op, val) { window.__consultas.push({ tabla, verbo: "not", col, op, val });
                           if (op === "is" && val === null) aplicar((f) => f[col] != null); return b; },
+      // Los periodos que se cruzan: periodo_inicio <= hasta y periodo_fin >= desde.
+      lte(col, val) { window.__consultas.push({ tabla, verbo: "lte", col, val }); filtros.push({ col, lte: val });
+                      aplicar((f) => String(f[col]) <= String(val)); return b; },
+      gte(col, val) { window.__consultas.push({ tabla, verbo: "gte", col, val }); filtros.push({ col, gte: val });
+                      aplicar((f) => String(f[col]) >= String(val)); return b; },
       ilike(col, patron) { window.__consultas.push({ tabla, verbo: "ilike", col, patron });
                            const t = String(patron).replace(/%/g, "").toLowerCase();
                            aplicar((f) => String(f[col] || "").toLowerCase().includes(t)); return b; },
@@ -235,7 +245,9 @@ window.SUPABASE_ANON_KEY = "anon-falsa";
     from: (t) => constructor(TABLAS[t] !== undefined ? TABLAS[t] : [], t),
     rpc: (n, args) => { if (n === "mis_funciones_coordinacion") return Promise.resolve({ data: (window.__misFunciones || ["formularios","altas","solicitudes","cuentas","acceso","roles","cobros","equipos","subgrupos"]), error: null });
                         window.__llamadas.push({ rpc: n, args: args || null });
-                        return constructor(RPC[n] !== undefined ? RPC[n] : [], "rpc:" + n); },
+                        // window.__rpc cambia una respuesta para una prueba (y se borra después).
+                        const otra = window.__rpc && window.__rpc[n] !== undefined ? window.__rpc[n] : undefined;
+                        return constructor(otra !== undefined ? otra : RPC[n] !== undefined ? RPC[n] : [], "rpc:" + n); },
     channel: () => ({ on() { return this; }, subscribe() { return this; }, track() { return Promise.resolve(); }, presenceState: () => ({}) }),
     removeChannel: () => {},
   };
@@ -385,6 +397,50 @@ async function pruebaCoordinacion(browser) {
     await page.evaluate(() => document.querySelectorAll("#cobros-lista .cobro-fila").length), 1);
   await page.fill("#f-buscar", "");
   await page.waitForTimeout(600);
+  await abrirMeses();
+
+  /* Quién pagó y quién debe: el mes en que vencen, las cuentas (de la base,
+     con los MISMOS filtros que la lista) y las dos tablas con todo. */
+  igual("las cuentas de quién debe las pide a la base, con los filtros de la lista",
+    await page.evaluate(() => (window.__llamadas.filter((l) => l.rpc === "cobros_quien_debe").pop() || {}).args),
+    { p_desde: null, p_hasta: null, p_alumno: null, p_buscar: null });
+  igual("y las pinta, con el dato escrito",
+    (await page.evaluate(() => [...document.querySelectorAll("#cobros-quien-debe p")].map((p) => p.textContent))).map(sinSeparadores),
+    ["Todos los cobros", "₡35000", "1 alumno debe · 1 cobro vencido", "₡35000", "1 alumno pagó todo"]);
+  igual("el cuadro se ve", await page.evaluate(() => document.getElementById("cobros-quien-debe").checkVisibility()), true);
+  const mesC3 = COBROS[2].vence.slice(0, 7);
+  const [aC3, mC3] = mesC3.split("-").map(Number);
+  const finC3 = new Date(Date.UTC(aC3, mC3, 0)).toISOString().slice(0, 10);
+  await page.evaluate(() => { window.__llamadas = []; window.__consultas = []; });
+  await page.selectOption("#f-mes", mesC3);
+  await page.waitForTimeout(400);
+  igual("un mes pide las cuentas de los cobros que vencen ese mes",
+    await page.evaluate(() => (window.__llamadas.filter((l) => l.rpc === "cobros_quien_debe").pop() || {}).args),
+    { p_desde: mesC3 + "-01", p_hasta: finC3, p_alumno: null, p_buscar: null });
+  await abrirMeses();
+  igual("y la lista trae solo esos (lo filtra la base)",
+    await page.evaluate(() => document.querySelectorAll("#cobros-lista .cobro-fila").length), 1);
+  await page.selectOption("#f-mes", "");
+  await page.evaluate(() => { window.__consultas = []; });
+  await page.selectOption("#f-vista", "tabla");
+  await page.waitForSelector("#cobros-lista .quien-debe");
+  igual("«Quién pagó y quién debe» trae todo de mil en mil, sin «Ver más»",
+    [await page.evaluate(() => window.__consultas.filter((c) => c.tabla === "cobros_vista" && c.verbo === "range").pop()),
+     await page.evaluate(() => document.getElementById("cobros-mas").checkVisibility())],
+    [{ tabla: "cobros_vista", verbo: "range", desde: 0, hasta: 999 }, false]);
+  igual("primero quien debe, después quien pagó, y los anulados aparte",
+    await page.evaluate(() => [...document.querySelectorAll("#cobros-lista .quien-debe h3")].map((h) => h.textContent)),
+    ["Deben (2)", "Pagaron (1)", "Anulados (1)"]);
+  igual("quien debe va con lo vencido arriba, y solo ahí se registra un pago",
+    await page.evaluate(() => [...document.querySelectorAll("#cobros-lista tbody tr")].map((tr) =>
+      [tr.dataset.id, tr.querySelector("th").textContent, !!tr.querySelector("button")])),
+    [["c-2", "Ana Rojas", true], ["c-1", "Ana Rojas", true], ["c-3", "Bruno Mena", false], ["c-4", "Bruno Mena", false]]);
+  igual("cada fila dice cuánto pagó y cuánto falta",
+    (await page.evaluate(() => [...document.querySelectorAll('#cobros-lista tr[data-id="c-2"] td')].slice(3, 5).map((td) => td.textContent))).map(sinSeparadores),
+    ["₡10000", "₡12500"]);
+  igual("las tablas se ven", await page.evaluate(() => document.querySelector("#cobros-lista .quien-debe").checkVisibility()), true);
+  await page.selectOption("#f-vista", "tarjetas");
+  await page.waitForTimeout(400);
   await abrirMeses();
 
   // -------- el plan personalizado no es catálogo de nadie más
@@ -1063,6 +1119,63 @@ async function pruebaSupervisora(browser) {
   igual("el anulado solo se ve o se reactiva",
     await fila("r-3").locator("button").allTextContents(), ["👁️ Ver o imprimir", "Reactivar"]);
 
+  /* Ver el mes entero de una vez: el filtro «Mes», las cuentas de arriba (las
+     hace la base, con los MISMOS filtros que la lista) y la tabla con todos. */
+  igual("el filtro de meses arranca en el mes de Costa Rica",
+    await page.evaluate(() => [...document.getElementById("rc-mes").options].slice(0, 2).map((o) => o.value)),
+    ["", await page.evaluate(() => hoyCR().slice(0, 7))]);
+  igual("las cuentas de todos los recibos las pide a la base, sin filtros",
+    await page.evaluate(() => (window.__llamadas.filter((l) => l.rpc === "recibos_resumen").pop() || {}).args),
+    { p_desde: null, p_hasta: null, p_alumno: null, p_buscar: null });
+  igual("y las pinta, con el dato escrito",
+    (await page.evaluate(() => [...document.querySelectorAll("#rc-resumen p")].map((p) => p.textContent))).map(sinSeparadores),
+    ["Todos los recibos", "₡35000", "2 recibos vigentes", "₡25000", "1 anulado", "1", "por revisar y entregar"]);
+  igual("y se ve", await page.evaluate(() => document.getElementById("rc-resumen").checkVisibility()), true);
+  // Los recibos de prueba son de 2026: si ese mes ya salió de la lista, se agrega.
+  const elegirMes = (mes) => page.evaluate((m) => {
+    const sel = document.getElementById("rc-mes");
+    if (![...sel.options].some((o) => o.value === m)) { const o = document.createElement("option"); o.value = m; o.textContent = m; sel.appendChild(o); }
+    sel.value = m;
+    sel.dispatchEvent(new Event("change"));
+  }, mes);
+  await page.evaluate(() => { window.__llamadas = []; window.__consultas = []; });
+  await elegirMes("2026-09");
+  await page.waitForTimeout(400);
+  igual("un mes pide las cuentas de ESE mes, de su primer a su último día",
+    await page.evaluate(() => (window.__llamadas.filter((l) => l.rpc === "recibos_resumen").pop() || {}).args),
+    { p_desde: "2026-09-01", p_hasta: "2026-09-30", p_alumno: null, p_buscar: null });
+  igual("y la lista trae solo los de ese mes (lo filtra la base)",
+    [await page.evaluate(() => [...document.querySelectorAll("#rc-lista .recibo-fila")].map((d) => d.dataset.id)),
+     await page.evaluate(() => window.__consultas.filter((c) => c.tabla === "recibos_vista" && (c.verbo === "gte" || c.verbo === "lte"))
+       .map((c) => c.verbo + " " + c.col + " " + c.val))],
+    [["r-1"], ["gte fecha 2026-09-01", "lte fecha 2026-09-30"]]);
+  igual("el resumen dice de qué mes es",
+    await page.evaluate(() => document.querySelector("#rc-resumen p").textContent), "Recibos de setiembre 2026");
+  await page.evaluate(() => { window.__consultas = []; });
+  await elegirMes("2026-07");
+  await page.selectOption("#rc-vista", "tabla");
+  await page.waitForSelector("#rc-lista table");
+  igual("«Tabla (todos)» los trae de mil en mil, sin «Ver más»",
+    [await page.evaluate(() => window.__consultas.filter((c) => c.tabla === "recibos_vista" && c.verbo === "range").pop()),
+     await page.evaluate(() => document.getElementById("rc-mas").checkVisibility())],
+    [{ tabla: "recibos_vista", verbo: "range", desde: 0, hasta: 999 }, false]);
+  igual("una fila por recibo, con el anulado y su motivo a la vista",
+    await page.evaluate(() => [...document.querySelectorAll("#rc-lista tbody tr")].map((tr) => [tr.dataset.id,
+      tr.querySelector("th").textContent, tr.innerText.includes("Motivo: Pago duplicado"), tr.innerText.includes("Anulado")])),
+    [["r-3", "R-ADAPZ-2026-0003", true, true]]);
+  igual("la tabla se ve", await page.evaluate(() => document.querySelector("#rc-lista table").checkVisibility()), true);
+  await page.evaluate(() => { window.__llamadas = []; });
+  await page.locator("#rc-lista tbody tr").first().locator("button", { hasText: "Ver" }).click();
+  await page.waitForFunction(() => { const m = document.querySelector("#rc-previa iframe"); return m && m.srcdoc; });
+  igual("«Ver» abre ESE recibo",
+    await page.evaluate(() => (window.__llamadas.find((l) => l.funcion && l.funcion.action === "recibo_ver") || {}).funcion.recibo_id), "r-3");
+  await page.click("#rc-previa-botones button:has-text('Cerrar')");
+  // Sin el marco de ESE recibo: la prueba de abajo espera a que se llene el del suyo.
+  await page.evaluate(() => document.querySelector("#rc-previa iframe").remove());
+  await page.selectOption("#rc-vista", "tarjetas");
+  await page.selectOption("#rc-mes", "");
+  await page.waitForTimeout(400);
+
   // Mandar: primero se ve (es la revisión) y después se manda ESE.
   await page.evaluate(() => { window.__llamadas = []; });
   await fila("r-1").locator("button", { hasText: "Mandar por correo" }).click();
@@ -1180,6 +1293,43 @@ async function pruebaSupervisora(browser) {
   await page.waitForTimeout(300);
   igual("un plan sin las dos fechas no se manda",
     await page.evaluate(() => window.__llamadas.filter((l) => l.rpc === "registrar_cobro_y_abono").length), 0);
+
+  /* Esos días ya tienen su cobro (el del mes salió y la familia paga): la base
+     no deja emitir otro, así que la página ofrece registrar el pago EN ese
+     cobro, con lo que ya se escribió. Sin esto, el 14/10 se terminó
+     corrigiendo un recibo de septiembre para que dijera octubre. */
+  await page.evaluate(() => { window.__rpc = { cobro_cotizar: { concepto: "Mensualidad · setiembre 2026", monto: 22500, moneda: "CRC",
+    se_cruza_con: "Mensualidad · setiembre 2026" } }; window.__llamadas = []; });
+  await page.fill("#pa-desde", "2026-09-01");
+  await page.fill("#pa-hasta", "2026-09-30");
+  await page.press("#pa-hasta", "Tab");
+  await page.waitForSelector("#pa-cruce button", { timeout: 5000 });
+  igual("ofrece pagar el cobro que ya cubre esos días (y solo ese: el de agosto no)",
+    sinSeparadores(await page.evaluate(() => [...document.querySelectorAll("#pa-cruce button")].map((x) => x.textContent).join(" | "))),
+    "💵 Registrar el pago en «Mensualidad · setiembre 2026» (falta ₡22500)");
+  igual("y se ve", await page.evaluate(() => document.querySelector("#pa-cruce button").checkVisibility()), true);
+  await page.evaluate(() => { window.__llamadas = []; window.__avisos = []; });
+  await page.click("#pa-guardar");
+  await page.waitForTimeout(300);
+  igual("«Registrar el pago» ya no intenta un cobro nuevo, y dice dónde va",
+    [await page.evaluate(() => window.__llamadas.filter((l) => l.rpc === "registrar_cobro_y_abono").length),
+     await page.evaluate(() => window.__avisos.some((a) => a.includes("con el botón de abajo")))], [0, true]);
+  await page.fill("#pa-pagado", "30000");
+  await page.click("#pa-cruce button");
+  await page.waitForTimeout(300);
+  igual("pagar más de lo que falta no se manda",
+    await page.evaluate(() => window.__llamadas.filter((l) => l.rpc === "registrar_pago").length), 0);
+  await page.fill("#pa-pagado", "10000");
+  await page.fill("#pa-referencia", "SINPE-9");
+  await page.click("#pa-cruce button");
+  await page.waitForTimeout(500);
+  igual("el pago va a ESE cobro, con el método, el comprobante y la fecha del formulario",
+    await page.evaluate(() => (window.__llamadas.find((l) => l.rpc === "registrar_pago") || {}).args),
+    { p_pagos: [{ cobro_id: "c-1", monto: 10000 }], p_metodo: "transferencia", p_referencia: "SINPE-9", p_nota: null,
+      p_fecha: await fechaDelPago(page) });
+  igual("y se pone delante su recibo para revisarlo",
+    await page.evaluate(() => window.__avisos.some((a) => a.includes("Revisa el recibo R-ADAPZ-2026-0004"))), true);
+  await page.evaluate(() => { window.__rpc = null; });
 
   await page.selectOption("#pa-que", "otro");
   igual("«Otra cosa» cambia los campos: sin periodos, con moneda",

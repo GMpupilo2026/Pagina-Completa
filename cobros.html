@@ -112,6 +112,12 @@
                         </select>
                     </div>
                     <div>
+                        <label for="f-mes" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Vencen en</label>
+                        <select id="f-mes" class="bg-white dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                            <option value="">Todos los meses</option>
+                        </select>
+                    </div>
+                    <div>
                         <label for="f-alumno" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Alumno</label>
                         <select id="f-alumno" class="bg-white dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></select>
                     </div>
@@ -119,8 +125,18 @@
                         <label for="f-buscar" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Buscar</label>
                         <input id="f-buscar" type="search" placeholder="Concepto o número de recibo…" class="w-full bg-white dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
                     </div>
+                    <!-- «Quién pagó y quién debe»: todo lo filtrado, en dos tablas. -->
+                    <div>
+                        <label for="f-vista" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Ver como</label>
+                        <select id="f-vista" class="bg-white dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                            <option value="tarjetas">Por mes</option>
+                            <option value="tabla">Quién pagó y quién debe</option>
+                        </select>
+                    </div>
                     <button type="button" id="csv-btn" class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 hover:border-accent-400 px-4 py-2 rounded-lg text-sm font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">⬇️ Bajar en Excel (CSV)</button>
                 </div>
+                <!-- Las cuentas de lo filtrado: las hace la base (cobros_quien_debe). -->
+                <div id="cobros-quien-debe" hidden class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-4 mb-4" aria-live="polite"></div>
                 <p id="cobros-cuenta" class="text-xs text-brand-450 dark:text-brand-350 mb-3" aria-live="polite"></p>
                 <div id="cobros-lista" class="space-y-4"></div>
                 <div class="text-center mt-4">
@@ -222,6 +238,8 @@
                         </div>
                     </div>
                     <p id="pa-plan-ayuda" class="text-xs text-brand-500 dark:text-brand-300 mt-3" aria-live="polite"></p>
+                    <!-- Si esos días ya tienen su cobro: el pago va en ese cobro. -->
+                    <div id="pa-cruce" class="flex flex-wrap gap-2 mt-2"></div>
                 </div>
 
                 <!-- El prefijo de los números: solo quien supervisa o administra. -->
@@ -253,6 +271,12 @@
                         </select>
                     </div>
                     <div>
+                        <label for="rc-mes" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Mes</label>
+                        <select id="rc-mes" class="bg-white dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                            <option value="">Todos los meses</option>
+                        </select>
+                    </div>
+                    <div>
                         <label for="rc-alumno" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Alumno</label>
                         <select id="rc-alumno" class="bg-white dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></select>
                     </div>
@@ -260,7 +284,17 @@
                         <label for="rc-buscar" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Buscar</label>
                         <input id="rc-buscar" type="search" placeholder="Número de recibo…" class="w-full bg-white dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
                     </div>
+                    <!-- «Tabla (todos)»: todo lo filtrado de una vez, sin ir de 30 en 30. -->
+                    <div>
+                        <label for="rc-vista" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Ver como</label>
+                        <select id="rc-vista" class="bg-white dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                            <option value="tarjetas">Tarjetas</option>
+                            <option value="tabla">Tabla (todos)</option>
+                        </select>
+                    </div>
                 </div>
+                <!-- Las cuentas de lo filtrado: las hace la base (recibos_resumen). -->
+                <div id="rc-resumen" hidden class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-4 mb-4" aria-live="polite"></div>
                 <p id="rc-quien" class="text-xs text-brand-500 dark:text-brand-300 mb-3"></p>
 
                 <!-- Lo que se ve, se imprime y se manda es el MISMO recibo: lo arma
