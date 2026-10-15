@@ -24,6 +24,13 @@
    - Los torneos en el extranjero salen de chess-results (arbitros_cr_cr
      con pais distinto de CRC): no se cruzan con FIDE, así que en la columna
      FIDE dicen «No consta» y no tienen norma.
+   - El resumen de normas de la ficha (resumenNormas): cuántas normas de
+     torneo podría juntar hoy para AF (pide 3, de dos sistemas) y para AI
+     (pide 4, después del AF), con los topes de B.06.1 que se ven desde
+     afuera: los últimos seis años, una por grupo de fechas que se tocan
+     (un festival es eso), una sola de pocas rondas («una») y una sola de
+     las que valen una vez («opcion»). Lo que no se ve (firmas, seminario,
+     certificados) lo dice escrito.
    - «Contar: festivales como uno»: los torneos de un árbitro que empiezan
      el mismo día son un festival y cuentan como uno; su norma es la mejor
      de sus torneos (FIDE da una norma por festival).
@@ -295,6 +302,7 @@
             enlace("https://ratings.fide.com/profile/" + a.fide_id, String(a.fide_id)),
             ` · ${miles(r.torneos)} torneos de ${estado.desde} a ${estado.hasta} (${miles(r.fide)} de FIDE, ${miles(r.nofide)} que no; ${miles(r.fuera)} en el extranjero)`
             + (a.solo_chess_results ? ". No figura como árbitro en ninguna ficha de FIDE." : `: valen para AF ${miles(r.af)}, para AI ${miles(r.ai)}.`));
+        $("ficha-normas").replaceChildren(tarjetaNorma(a, "af"), tarjetaNorma(a, "ai"));
         const lista = filasFicha(a);
         $("tabla-torneos").tBodies[0].replaceChildren(...lista.map((x) => {
             if (x.festival) return filaFestival(x);
@@ -317,6 +325,66 @@
         $("ficha-cuenta").textContent = lista.length
             ? miles(lista.length) + (estado.contar === "festival" ? (lista.length === 1 ? " torneo o festival." : " torneos o festivales.") : (lista.length === 1 ? " torneo." : " torneos.")) + " «Con Elo» cuenta a quien no faltó a más de una ronda; los torneos que no son de FIDE no tienen norma, ni los del extranjero, que salen solo de chess-results («No consta» si FIDE los valoró)."
             : "Ningún torneo cumple con estos filtros.";
+    }
+
+    /* Cuántas normas de torneo podría juntar hoy para AF o AI: sus torneos
+       de FIDE de los últimos seis años, uno por grupo de fechas que se tocan
+       (el mejor de cada grupo), con todas las «si», una sola «una» y una
+       sola «opcion». */
+    const PIDE = { af: 3, ai: 4 };
+    function cuentaNormas(a, cual) {
+        const hoy = window.HoraCR ? HoraCR.hoy() : "";
+        const desde = hoy ? (parseInt(hoy.slice(0, 4), 10) - 6) + hoy.slice(4) : "";
+        const fide = a.todos.filter((x) => x.fide);
+        const viejas = fide.filter((x) => x.inicio < desde && VALE.includes(x[cual].estado)).length;
+        const grupos = [];
+        for (const x of fide.filter((y) => y.inicio >= desde).sort((y, z) => y.inicio.localeCompare(z.inicio))) {
+            const fin = x.t.fin && x.t.fin > x.inicio ? x.t.fin : x.inicio, g = grupos[grupos.length - 1];
+            if (g && x.inicio <= g.fin) { g.items.push(x); if (fin > g.fin) g.fin = fin; } else grupos.push({ fin, items: [x] });
+        }
+        const mejores = grupos.map((g) => g.items.reduce((m, x) => (PESO[x[cual].estado] < PESO[m[cual].estado] ? x : m)));
+        const de = (e) => mejores.filter((x) => x[cual].estado === e);
+        const usadas = de("si").concat(de("una").slice(0, 1), de("opcion").slice(0, 1))
+            .sort((x, y) => y.inicio.localeCompare(x.inicio));
+        return { usadas, sistemas: [...new Set(usadas.map((x) => x.t.sistema))], revisar: de("revisar").length,
+            sobran: de("una").length - Math.min(1, de("una").length) + de("opcion").length - Math.min(1, de("opcion").length), viejas, desde };
+    }
+
+    // Lo que dice el cuadro de una norma: lo usan la pantalla y el PDF.
+    function textoNorma(a, cual) {
+        const titulo = cual === "af" ? "Árbitro FIDE (AF)" : "Árbitro Internacional (AI)";
+        const tiene = cual === "af" ? ["FA", "IA"].includes(a.titulo) : a.titulo === "IA";
+        const c = cuentaNormas(a, cual), n = c.usadas.length, pide = PIDE[cual];
+        const sistemas = c.sistemas.map((s) => (SISTEMAS[s] || s).toLowerCase());
+        let estado, dicho;
+        if (tiene) {
+            estado = "Ya tiene el título"; dicho = "Según su perfil de FIDE. Igual se ven abajo los torneos que hoy le darían norma.";
+        } else if (cual === "ai" && a.titulo !== "FA") {
+            estado = "Primero el AF"; dicho = `El AI se pide después del título de AF. Con lo de hoy juntaría ${miles(n)} de las ${pide} normas de AI.`;
+        } else if (n >= pide && (cual === "ai" || sistemas.length >= 2)) {
+            estado = "Le alcanzaría"; dicho = `Junta ${miles(n)} normas de las ${pide} que pide la solicitud` + (cual === "af" ? `, de ${sistemas.length} sistemas (${sistemas.join(", ")}).` : ".");
+        } else if (n >= pide) {
+            estado = "Le falta otro sistema"; dicho = `Junta ${miles(n)} normas, pero todas de ${sistemas.join(", ")}: la solicitud pide al menos dos sistemas distintos.`;
+        } else {
+            estado = `Le faltan ${miles(pide - n)}`; dicho = `Junta ${miles(n)} de las ${pide} normas que pide la solicitud` + (sistemas.length ? ` (${sistemas.join(", ")}).` : ".");
+        }
+        const extra = [];
+        if (c.revisar) extra.push(`${miles(c.revisar)} ${c.revisar === 1 ? "torneo queda" : "torneos quedan"} para revisar y no se cuentan.`);
+        if (c.sobran) extra.push(`${miles(c.sobran)} más de los que valen una sola vez por solicitud.`);
+        if (c.viejas) extra.push(`${miles(c.viejas)} ${c.viejas === 1 ? "torneo que valía es" : "torneos que valían son"} de antes de los últimos seis años.`);
+        extra.push(cual === "af" ? "Además del seminario. No se ve desde afuera si los certificados se emitieron y quién los firmó."
+            : "Además del seminario, no todas firmadas por la misma persona y a lo sumo dos finales nacionales: eso no se ve desde afuera.");
+        return { titulo: "Norma de " + titulo, estado, dicho, torneos: c.usadas.map((x) => `${fecha(x.inicio)} · ${x.t.nombre} (${ESTADOS[x[cual].estado]})`),
+            nota: `Cuenta desde el ${fecha(c.desde)}, una por festival o fechas que se tocan. ` + extra.join(" ") };
+    }
+
+    function tarjetaNorma(a, cual) {
+        const n = textoNorma(a, cual);
+        return el("div", { class: "bg-white dark:bg-brand-900 rounded-2xl shadow-md p-4", "data-norma": cual },
+            el("h3", { class: "text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide" }, n.titulo),
+            el("p", { class: "mt-1" }, el("strong", { class: "of-estado" }, n.estado), " ", el("span", {}, n.dicho)),
+            n.torneos.length ? el("ul", { class: "mt-2 space-y-0.5" }, ...n.torneos.map((t) => el("li", { class: "of-detalle" }, t))) : null,
+            el("p", { class: "of-detalle mt-2" }, n.nota));
     }
 
     // Afuera no se cruzó con FIDE: no se sabe si lo valoró.
@@ -357,6 +425,63 @@
         window.TablaExcel.bajar("arbitro-" + a.fide_id + ".xlsx", [{ nombre: "Torneos", filas }]);
     }
 
+    /* La ficha en PDF, con js/reporte-pdf.js (sin librería): el encabezado,
+       los dos cuadros de normas y la tabla de torneos con los filtros que
+       estén puestos. Se arma con los datos, no con la pantalla. */
+    function documentoPdf(a) {
+        const r = resumen(a);
+        const filtros = [`de ${estado.desde} a ${estado.hasta}`];
+        if (estado.tipo) filtros.push(estado.tipo === "fide" ? "solo FIDE" : "no FIDE");
+        if (estado.donde) filtros.push(estado.donde === "fuera" ? "en el extranjero" : "en Costa Rica");
+        if (estado.contar === "festival") filtros.push("festivales como uno");
+        if (estado.normaAf) filtros.push("norma de AF: " + $("norma-af").selectedOptions[0].textContent.toLowerCase());
+        if (estado.normaAi) filtros.push("norma de AI: " + $("norma-ai").selectedOptions[0].textContent.toLowerCase());
+        const bloques = [];
+        for (const cual of ["af", "ai"]) {
+            const n = textoNorma(a, cual);
+            bloques.push({ tipo: "titulo", texto: n.titulo }, { tipo: "parrafo", texto: n.estado + ". " + n.dicho });
+            if (n.torneos.length) bloques.push({ tipo: "lista", items: n.torneos });
+            bloques.push({ tipo: "nota", texto: n.nota });
+        }
+        const lista = filasFicha(a);
+        const nombre = (x) => x.festival ? "Festival: " + x.items.map((y) => (y.t || y.cr).nombre).join(" / ")
+            : (x.t ? x.t.nombre : x.cr.nombre) + (x.fuera && !x.t ? " (" + pais(x.cr.pais) + ")" : "");
+        const rondas = (x) => x.festival ? "" : x.t ? (x.t.rondas || "") : x.cr.rondas;
+        const jugadores = (x) => x.festival ? x.items.reduce((s, y) => s + ((y.t || y.cr).jugadores || 0), 0) : (x.t ? x.t.jugadores : x.cr.jugadores);
+        // La tabla del PDF recorta las celdas (no parte renglones): el cargo, corto.
+        const CORTO = { "Árbitro principal": "Principal", "Árbitro adjunto principal": "Adjunto", "Árbitro de pareos": "Pareos",
+            "Árbitro asistente": "Asistente", "Director del torneo": "Director" };
+        const cargoCorto = (x) => cargoEscrito(x).split(", ").map((c) => CORTO[c] || c).join(", ");
+        bloques.push({ tipo: "titulo", texto: `Torneos (${miles(lista.length)})` },
+            { tipo: "nota", texto: "Cargo: «Principal» es árbitro principal y «Adjunto», árbitro adjunto principal. Rds.: rondas; Jug.: jugadores." },
+            { tipo: "tabla", encabezados: ["Fecha", "Torneo", "FIDE", "Cargo", "Rds.", "Jug.", "AF", "AI"], anchos: [12, 34, 9, 17, 6, 6, 8, 8],
+              filas: lista.map((x) => [fecha(x.inicio), nombre(x), siFide(x), cargoCorto(x), String(rondas(x)), String(jugadores(x)),
+                  ESTADOS[x.af.estado] || "—", ESTADOS[x.ai.estado] || "—"]) },
+            { tipo: "separador" },
+            { tipo: "nota", texto: "Las normas son las condiciones de un torneo según FIDE B.06.1 (vigente desde el 1 de marzo de 2026), con los títulos de los rivales de hoy; el porqué de cada una está en la ficha en línea y en el Excel. Los torneos salen de ratings.fide.com y de chess-results.com; los del extranjero, solo de chess-results, y no se sabe si FIDE los valoró («No consta»). Lo que no se ve desde afuera (seminario, certificados, firmas) lo revisa quien arma la solicitud." });
+        return {
+            titulo: a.nombre,
+            subtitulo: [a.titulo ? TITULOS[a.titulo] + (a.titulo_detalle ? " (" + a.titulo_detalle + ")" : "") : "Sin título de árbitro en FIDE",
+                "ID FIDE " + a.fide_id, `${miles(r.torneos)} torneos (${miles(r.fide)} de FIDE, ${miles(r.nofide)} que no; ${miles(r.fuera)} en el extranjero)`,
+                filtros.join(", "), "al " + window.HoraCR.fecha(new Date())].join(" · "),
+            pie: "Árbitros de Costa Rica · Ajedrez Integral", autor: "Ajedrez Integral", bloques, fotos: [],
+        };
+    }
+
+    async function pdf() {
+        const a = arbitros.find((x) => x.fide_id === estado.elegido);
+        if (!a) return;
+        try {
+            const blob = await window.ReportePDF.generar(documentoPdf(a));
+            const url = URL.createObjectURL(blob);
+            const enlace = el("a", { href: url, download: "arbitro-" + a.fide_id + ".pdf" });
+            document.body.append(enlace); enlace.click(); enlace.remove();
+            setTimeout(() => URL.revokeObjectURL(url), 10000);
+        } catch (e) {
+            window.Avisos.avisar("No se pudo armar el PDF: " + (e.message || e), { tipo: "error" });
+        }
+    }
+
     function elegir(id) {
         estado.elegido = id;
         history.replaceState(null, "", location.pathname + location.search + (id ? "#" + id : ""));
@@ -385,6 +510,7 @@
         $("norma-ai").addEventListener("change", (e) => { estado.normaAi = e.target.value; pintarFicha(); });
         $("volver").addEventListener("click", () => elegir(null));
         $("excel").addEventListener("click", excel);
+        $("pdf").addEventListener("click", pdf);
         for (const b of $("tabla-arbitros").tHead.querySelectorAll("button")) {
             b.addEventListener("click", () => {
                 const col = b.dataset.col;

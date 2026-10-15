@@ -96,6 +96,7 @@
             <section id="ficha" class="hidden mt-6" aria-labelledby="ficha-titulo">
                 <h2 id="ficha-titulo" class="font-serif text-2xl font-bold text-brand-800 dark:text-white"></h2>
                 <p id="ficha-sub" class="text-sm text-brand-500 dark:text-brand-300 mt-1"></p>
+                <div id="ficha-normas" class="grid gap-3 md:grid-cols-2 mt-4" aria-label="Las normas que podría juntar hoy"></div>
                 <div class="flex flex-wrap gap-3 items-end mt-4">
                 <div class="min-w-[10rem]">
                     <label for="norma-af" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Norma de AF</label>
@@ -106,6 +107,7 @@
                     <select id="norma-ai" class="w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none"><option value="">Todas</option><option value="vale">Vale (con o sin condición)</option><option value="revisar">Revisar</option><option value="no">No vale</option></select>
                 </div>
                     <button type="button" id="excel" class="text-sm font-semibold px-4 py-2 rounded-lg bg-brand-100 dark:bg-brand-800 hover:bg-brand-200 dark:hover:bg-brand-700">Descargar en Excel</button>
+                    <button type="button" id="pdf" class="text-sm font-semibold px-4 py-2 rounded-lg bg-brand-100 dark:bg-brand-800 hover:bg-brand-200 dark:hover:bg-brand-700">Descargar en PDF</button>
                 </div>
                 <div class="overflow-x-auto mt-3 bg-white dark:bg-brand-900 rounded-2xl shadow-md">
                     <table id="tabla-torneos" class="w-full text-sm">
@@ -140,6 +142,7 @@
     <script src="js/hora-cr.js"></script>
     <script src="js/main.js"></script>
     <script src="js/tabla-excel.js"></script>
+    <script src="js/reporte-pdf.js"></script>
     <script src="js/arbitros-cr.js"></script>
 <!-- burbuja: inicio --><script src="js/burbuja-en-linea.js" defer></script><!-- burbuja: fin --><!-- juego-aviso: inicio --><script src="js/juego-aviso.js" defer></script><!-- juego-aviso: fin --><!-- aviso-profe: inicio --><script src="js/aviso-profe.js" defer></script><!-- aviso-profe: fin --><!-- tanda: inicio --><script src="js/tanda-diez.js" defer></script><!-- tanda: fin --><!-- acceso: inicio --><script src="js/acceso-vigente.js" defer></script><!-- acceso: fin --><!-- modo-vista: inicio --><script src="js/modo-vista.js" defer></script><!-- modo-vista: fin --><!-- marca: inicio --><script src="js/marca-academia.js" defer></script><!-- marca: fin --><!-- atajo: inicio --><script src="js/atajo-buscar.js" data-arriba="" defer></script><!-- atajo: fin --></body>
 </html>

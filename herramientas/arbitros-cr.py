@@ -66,6 +66,10 @@ RESPUESTAS_CR = (17486, 17514)
 # insertan desde las respuestas, como los de Costa Rica.
 CHESS_RESULTS_AFUERA = os.path.join(RAIZ, "herramientas", "datos", "arbitros-cr-chess-results-afuera.json")
 RESPUESTAS_AFUERA = (17685, 18413)
+# Los torneos de chess-results sin federación (en blanco): cuántos de sus
+# jugadores con federación son de Costa Rica. Con el 80 % o más, se jugaron
+# acá y cuentan como de Costa Rica; si no, quedan fuera.
+SIN_FEDERACION = os.path.join(RAIZ, "herramientas", "datos", "arbitros-cr-sin-federacion.json")
 CARPETA = os.path.join(RAIZ, "herramientas", "arbitros-cr")
 # Los cargos de la ficha de FIDE. Para una norma valen el principal, el
 # adjunto y el árbitro; el asistente no (B.06.1, 2.4.4) y el de pareos queda
@@ -254,8 +258,18 @@ def armar_chess_results(arbitros):
     afuera = []
     if os.path.exists(CHESS_RESULTS_AFUERA):
         with open(CHESS_RESULTS_AFUERA, encoding="utf-8") as f:
-            # Sin federación (en blanco) no se sabe dónde se jugó: fuera.
-            afuera = [t for t in json.load(f)["torneos"] if re.fullmatch(r"[A-Z]{3}", t["fed"] or "") and t["fed"] != "CRC"]
+            afuera = json.load(f)["torneos"]
+        # Sin federación (en blanco): de Costa Rica si casi todos sus
+        # jugadores lo son (SIN_FEDERACION); si no, no se sabe dónde se jugó.
+        jugadores_crc = {}
+        if os.path.exists(SIN_FEDERACION):
+            with open(SIN_FEDERACION, encoding="utf-8") as f:
+                jugadores_crc = json.load(f)["torneos"]
+        for t in afuera:
+            crc, con_fed = jugadores_crc.get(t["clave"], (0, 0))
+            if not re.fullmatch(r"[A-Z]{3}", t["fed"] or "") and con_fed and crc / con_fed >= 0.8:
+                t["fed"] = "CRC"
+        afuera = [t for t in afuera if re.fullmatch(r"[A-Z]{3}", t["fed"] or "")]
     perfiles = {}
     if os.path.exists(PERFILES_CR):
         with open(PERFILES_CR, encoding="utf-8") as f:
@@ -309,6 +323,8 @@ def armar_chess_results(arbitros):
             "rondas": int(t["rondas"]) if t["rondas"].isdigit() else 0,
             "jugadores": int(t["jugadores"]) if t["jugadores"].isdigit() else 0,
             "pais": t.get("fed") or "CRC",
+            # De la búsqueda en todos los países (se carga con --afuera).
+            "de_afuera": t in afuera,
         }
     # Fuera los de prueba y los que no se jugaron (sin rondas o sin jugadores).
     torneos = {k: v for k, v in torneos.items() if not es_basura(v)}
@@ -519,10 +535,12 @@ def cargas_cr_torneos(cr_torneos):
     return bloques
 
 
-def cargas_afuera(cr_torneos, cr_cargos):
-    """Solo lo del extranjero, sin borrar nada: para sumarlo a una base que ya
-    tiene lo de Costa Rica (las respuestas de RESPUESTAS_CR ya no están)."""
-    afuera = {k: v for k, v in cr_torneos.items() if v["pais"] != "CRC"}
+def cargas_afuera(cr_torneos, cr_cargos, cruce=None):
+    """Solo lo que salió de la búsqueda en todos los países (los del
+    extranjero y los sin federación que se jugaron acá), sin borrar nada:
+    para sumarlo a una base que ya tiene lo de Costa Rica (las respuestas de
+    RESPUESTAS_CR ya no están)."""
+    afuera = {k: v for k, v in cr_torneos.items() if v["de_afuera"]}
     # De a 40 respuestas: hay páginas de 1,5 MB y todas juntas pasan del
     # minuto. Un torneo que sale en dos tramos se escribe dos veces, igual.
     bloques = [[f"-- Lee las respuestas {d} a {min(d + 39, RESPUESTAS_AFUERA[1])} del buscador de chess-results (net._http_response).",
@@ -532,6 +550,11 @@ def cargas_afuera(cr_torneos, cr_cargos):
     for i in range(0, len(filas), CARGOS_POR_CARGA):
         bloques.append([f"insert into public.arbitros_cr_cr_cargos (clave, fide_id, rol) values\n  " + ",\n  ".join(filas[i:i + CARGOS_POR_CARGA])
                         + "\non conflict do nothing;"])
+    mismos = {k: f for k, f in (cruce or {}).items() if k in afuera}
+    if mismos:
+        bloques.append(["update public.arbitros_cr_cr c set fide_torneo = v.fide from (values\n  "
+                        + ",\n  ".join(f"({k}, {f})" for k, f in sorted(mismos.items()))
+                        + "\n) v(clave, fide) where c.clave = v.clave;"])
     return bloques
 
 
@@ -614,7 +637,7 @@ def main():
         print(HUELLA_SQL)
         return
     if "--afuera" in sys.argv:
-        bloques, prefijo = cargas_afuera(cr_torneos, cr_cargos), "carga-afuera"
+        bloques, prefijo = cargas_afuera(cr_torneos, cr_cargos, cruce), "carga-afuera"
     else:
         bloques, prefijo = cargas(torneos, cargos, arbitros, cr_torneos, cr_cargos, cruce), "carga"
     os.makedirs(CARPETA, exist_ok=True)

@@ -225,6 +225,11 @@ const porNombre = (m) => Object.fromEntries(m.map((f) => [f[0], f]));
     await p.waitForFunction(() => document.getElementById("ficha").checkVisibility());
     igual("abre la ficha y esconde la lista", [await visible(p, "#ficha"), await visible(p, "#general")], [true, false]);
     igual("el enlace lleva su ID FIDE", await p.evaluate(() => location.hash), "#6500002");
+    const normas = (cual) => p.$eval(`#ficha-normas [data-norma="${cual}"]`, (e) => [e.querySelector(".of-estado").textContent, e.textContent]);
+    let [estAf, txtAf] = await normas("af"), [estAi, txtAi] = await normas("ai");
+    igual("Ana (AF): el AF ya lo tiene; para AI no junta ninguna (el de pareos queda para revisar)",
+        [estAf, estAi, /1 torneo queda para revisar/.test(txtAi)], ["Ya tiene el título", "Le faltan 4", true]);
+    igual("el resumen de normas se ve", await visible(p, "#ficha-normas"), true);
     const ficha = await filas(p, "#tabla-torneos");
     igual("como asistente: «No», con el porqué (2.4.4)", [ficha[0][3], ficha[0][8].startsWith("No"), /2\.4\.4/.test(ficha[0][8])], ["Árbitro asistente", true, true]);
     igual("el de Panamá: «No consta» en FIDE, el país en el lugar y sin norma", [ficha[1][2], ficha[1][3], /Ciudad de Panamá, Panamá/.test(ficha[1][1]), ficha[1].slice(8)],
@@ -242,6 +247,7 @@ const porNombre = (m) => Object.fromEntries(m.map((f) => [f[0], f]));
     ({ ctx, p } = await abrir(browser, "arbitros-cr.html#6500001", true));
     await p.waitForFunction(() => document.getElementById("ficha").checkVisibility());
     igual("abre su ficha", await p.$eval("#ficha-titulo", (e) => e.textContent), "Ángulo Prueba, Óscar");
+    igual("Óscar (IA) ya tiene los dos títulos", await p.$$eval("#ficha-normas .of-estado", (es) => es.map((e) => e.textContent)), ["Ya tiene el título", "Ya tiene el título"]);
     const o = await filas(p, "#tabla-torneos");
     igual("cada torneo una vez, el más nuevo primero, con FIDE sí o no y su cargo (el 900001 dentro del 101, el 900005 fuera)",
         o.map((f) => [f[0], f[2], f[3]]),
@@ -263,6 +269,26 @@ const porNombre = (m) => Object.fromEntries(m.map((f) => [f[0], f]));
     igual("y enlaza a cada torneo", await p.$$eval("#tabla-torneos tbody tr:nth-child(4) a", (as) => as.map((a) => a.href)),
         ["https://ratings.fide.com/tournament_information.phtml?event=102", "https://chess-results.com/tnr900004.aspx?lan=2", "https://chess-results.com/tnr900006.aspx?lan=2"]);
     igual("la cuenta de la ficha dice «torneos o festivales»", /^5 torneos o festivales\./.test(await p.$eval("#ficha-cuenta", (e) => e.textContent)), true);
+    await ctx.close();
+
+    console.log("\n=== El resumen de normas ===");
+    ({ ctx, p } = await abrir(browser, "arbitros-cr.html#6500003", true));
+    await p.waitForFunction(() => document.getElementById("ficha").checkVisibility());
+    const tarjeta = (cual) => p.$eval(`#ficha-normas [data-norma="${cual}"]`, (e) => [e.querySelector(".of-estado").textContent, e.textContent]);
+    let [e1, t1] = await tarjeta("af");
+    igual("Luis, sin título: 1 norma de AF de las 3 (el internacional de 2023), le faltan 2", [e1, /Junta 1 de las 3/.test(t1), /01\/03\/2023 · Internacional con titulados 2023 \(Vale\)/.test(t1)],
+        ["Le faltan 2", true, true]);
+    igual("y para AI, primero el AF", (await tarjeta("ai"))[0], "Primero el AF");
+    const [descarga] = await Promise.all([p.waitForEvent("download"), p.click("#pdf")]);
+    const pdf = require("fs").readFileSync(await descarga.path()).toString("latin1");
+    igual("la ficha en PDF: su nombre, el cuadro de AF, su torneo y la nota de las fuentes",
+        [descarga.suggestedFilename(), pdf.slice(0, 5), pdf.includes("(Rojas Prueba, Luis)"), pdf.includes("Le faltan 2."), pdf.includes("(Internacional con titulados 2023)"), pdf.includes("chess-results.com")],
+        ["arbitro-6500003.pdf", "%PDF-", true, true, true, true]);
+    await ctx.close();
+    ({ ctx, p } = await abrir(browser, "arbitros-cr.html#6500004", true));
+    await p.waitForFunction(() => document.getElementById("ficha").checkVisibility());
+    [e1, t1] = await tarjeta("af");
+    igual("Juan: su norma de 2015 ya no cuenta (más de seis años) y lo dice", [e1, /1 torneo que valía es de antes de los últimos seis años/.test(t1)], ["Le faltan 3", true]);
     await ctx.close();
 
     console.log("\n=== Quien solo está en chess-results ===");
