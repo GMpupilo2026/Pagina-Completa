@@ -89,6 +89,15 @@ inserts con `on conflict`, correr uno dos veces no hace daño). Después:
   torneos, en la base y en Python). Tienen que dar igual.
 - `node herramientas/verificar-todo.js arbitros-cr`.
 
+**Fechas por revisar.** El resumen termina con los torneos de Costa Rica cuya
+fecha parece mal escrita en chess-results: los que duran casi un año o más, y
+los que tienen un año a 3 o más del de los torneos creados junto a ellos (las
+claves van en orden). Abrir la página de cada uno (el enlace va en el resumen)
+y mirar las fechas de las rondas y la «Última actualización»: si se ve cuál es
+la buena, anotarla en `herramientas/datos/arbitros-cr-corregir.json` con su
+motivo y volver a cargar; si no, **preguntarle al dueño** en el resumen del mes.
+Nunca se adivina una fecha.
+
 Los árbitros nuevos (alguien de Costa Rica que figura por primera vez con su
 ID) **no entran solos**: hace falta su perfil de FIDE para saber su nombre y su
 país. Si el resumen los nombra, anotarlos en el PR.

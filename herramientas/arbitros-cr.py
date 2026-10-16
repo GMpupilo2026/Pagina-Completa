@@ -357,6 +357,40 @@ def armar_chess_results(arbitros, sin_reconocer=None):
     return {k: v for k, v in torneos.items() if k in usados}, cargos
 
 
+def fechas_raras(torneos, corregidas=()):
+    """Los torneos de chess-results con la fecha probablemente mal escrita,
+    para que el dueño confirme la buena (y vaya a CORREGIR). Dos señales:
+    - dura casi un año o más (300 días): el festival de 2010 decía del
+      22/09/2010 al 22/09/2011; un torneo de club de una ronda por semana dura
+      dos o tres meses y no salta;
+    - su año queda a 3 o más del de sus vecinos: las claves de chess-results
+      van en orden de creación, así que el año de los 50 de antes y los 50 de
+      después (la mediana) dice cuándo se creó (el Infantil S8 decía 2002 con
+      clave de 2011-2012).
+    Devuelve [(clave, nombre, inicio, fin, por qué)], sin las ya corregidas."""
+    hechas = {int(c) for c in corregidas}
+    lista = sorted(torneos, key=lambda t: int(t["clave"]))
+    anios = [int(t["inicio"][:4]) for t in lista]
+    raras = []
+    for i, t in enumerate(lista):
+        if int(t["clave"]) in hechas:
+            continue
+        dia = lambda s: datetime.date.fromisoformat(s.replace("/", "-"))
+        motivos = []
+        if t.get("fin"):
+            dura = (dia(t["fin"]) - dia(t["inicio"])).days
+            if dura >= 300:
+                motivos.append(f"dura {dura} días")
+        vecinos = sorted(anios[max(0, i - 50):i] + anios[i + 1:i + 51])
+        if len(vecinos) >= 20:
+            mediana = vecinos[len(vecinos) // 2]
+            if abs(anios[i] - mediana) >= 3:
+                motivos.append(f"es de {anios[i]} y los torneos creados junto a él son de {mediana}")
+        if motivos:
+            raras.append((int(t["clave"]), t["nombre"], t["inicio"], t.get("fin"), "; ".join(motivos)))
+    return raras
+
+
 def es_basura(t):
     """Un torneo de prueba («test 260319») o que no se jugó: sin rondas o sin
     jugadores en chess-results."""
@@ -671,6 +705,17 @@ def main():
     print(f"chess-results: {len(cr_torneos)} torneos con algún árbitro de Costa Rica, {len(cr_cargos)} cargos, "
           f"{len({f for _, f, _ in cr_cargos})} árbitros ({sum(1 for a in arbitros.values() if a.get('solo_cr'))} que solo están ahí); "
           f"{len(cruce)} son el mismo torneo que uno de FIDE.")
+    corregidas = []
+    if os.path.exists(CORREGIR):
+        with open(CORREGIR, encoding="utf-8") as f:
+            corregidas = [c["clave"] for c in json.load(f)["corregir"]]
+    raras = fechas_raras([t for t in cr_torneos.values() if t["pais"] == "CRC"], corregidas)
+    if raras:
+        print(f"Fechas por revisar ({len(raras)}): confirmar la buena en la página de cada uno y anotarla en {os.path.relpath(CORREGIR, RAIZ)}.")
+        for clave, nombre, inicio, fin, porque in raras:
+            print(f"  https://chess-results.com/tnr{clave}.aspx?lan=2&turdet=YES  {nombre} ({inicio} a {fin or '?'}): {porque}")
+    else:
+        print("Fechas por revisar: ninguna.")
     if "--resumen" in sys.argv:
         return
     if "--huella" in sys.argv:

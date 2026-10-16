@@ -2826,6 +2826,17 @@ rondas en 2002 pero actualizado por última vez el 13/01/2012 a las 22:21, la
 noche de su última ronda. Los otros que duran más de dos meses son torneos de
 club de una ronda por semana: esos están bien.
 
+Para que no se cuele otro, `python3 herramientas/arbitros-cr.py --resumen`
+termina con «Fechas por revisar» (`fechas_raras()`): un torneo que dura 300
+días o más, o cuyo año queda a 3 o más de la mediana de los 50 de antes y los
+50 de después en orden de clave (con menos de 20 vecinos no compara). Con los
+datos de octubre de 2026 y sin las correcciones, salen exactamente los cuatro de
+arriba y ninguno más; los de club, de dos o tres meses, no saltan. No corrige
+nada solo: la fecha buena la confirma una persona en la página del torneo
+(paso 3 de `.claude/skills/arbitros-cr-actualizar/`). Lo comprueba
+`verificar-arbitros-cr-fechas.py`, con torneos inventados, y que cada
+corrección tenga motivo y una fecha que se lea.
+
 
 ## El mismo torneo en FIDE y en chess-results
 
