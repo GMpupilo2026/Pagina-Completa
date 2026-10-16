@@ -18,6 +18,10 @@
      pareos queda para revisar (el reglamento no lo nombra) y quien figura
      solo en chess-results, también para revisar: eso se aplica acá, en
      normaDe().
+   - Una norma de AI cuenta solo si el torneo es posterior al título de AF
+     (antesDelAf): quien no tiene el AF no junta ninguna, y del perfil de
+     FIDE sale el año del AF, no el día, así que un torneo de ese mismo año
+     queda para revisar.
    - Los años, el título, el tipo y el lugar (Costa Rica o el extranjero)
      filtran la lista; el árbitro elegido va en la dirección (#ID) para
      compartirlo.
@@ -118,6 +122,22 @@
         return { estado: "no", detalle: "Figura como director u organizador, no como árbitro." };
     }
 
+    /* La norma de AI de un torneo según cuándo sacó el AF: cuenta solo si el
+       torneo es posterior al título. Su perfil de FIDE da el año («Árbitro
+       FIDE (2019)»), no el día: el mismo año queda para revisar. Un AI sin
+       ese año (los títulos viejos) queda como estaba: ya tiene el título. */
+    function antesDelAf(n, inicio, a) {
+        if (!n.estado || n.estado === "no") return n;
+        const tiene = ["FA", "IA"].includes(a.titulo);
+        if (!tiene) return { estado: "no", detalle: "No tiene el título de AF, y una norma de AI cuenta solo si el torneo es posterior al AF: esta no le servirá aunque lo saque. El torneo: " + n.detalle };
+        const m = /Árbitro FIDE \((\d{4})\)/.exec(a.titulo_detalle || "");
+        if (!m) return n;
+        const af = parseInt(m[1], 10), anio = parseInt(inicio.slice(0, 4), 10);
+        if (anio > af) return n;
+        if (anio < af) return { estado: "no", detalle: `Es de antes de su título de AF (${af}), y una norma de AI cuenta solo si el torneo es posterior al AF. El torneo: ` + n.detalle };
+        return { estado: "revisar", detalle: `Es del mismo año de su título de AF (${af}): cuenta solo si el torneo empezó después de que se lo dieran. Si contara: ` + n.detalle };
+    }
+
     // De mil en mil, ordenado por la clave completa: con un orden que se
     // repite, una fila puede caer en dos páginas o en ninguna.
     async function leerTodo(tabla, columnas, orden) {
@@ -146,7 +166,7 @@
     /* Los torneos de un árbitro, cada uno una vez: los de FIDE (con el de
        chess-results que es el mismo, si hay) y los que solo están en
        chess-results. */
-    function torneosDelArbitro(cargosFide, rolesCr) {
+    function torneosDelArbitro(a, cargosFide, rolesCr) {
         const lista = new Map();   // "f<id>" o "c<clave>" → entrada
         const entrada = (t) => ({ t, cargos: [], roles: [], cr: null });
         for (const [id, cargos] of cargosFide) {
@@ -174,7 +194,7 @@
             // FIDE escribe el país («Costa Rica»); chess-results da el código.
             const fuera = fide ? e.t.pais !== "Costa Rica" : (e.cr.pais || "CRC") !== "CRC";
             return { ...e, fide, fuera, inicio, anio: parseInt(inicio.slice(0, 4), 10), clave: fide ? "f" + e.t.id : "c" + e.cr.clave,
-                af: fide ? normaDe(e.t, e.cargos, e.roles, "af") : SIN_NORMA, ai: fide ? normaDe(e.t, e.cargos, e.roles, "ai") : SIN_NORMA };
+                af: fide ? normaDe(e.t, e.cargos, e.roles, "af") : SIN_NORMA, ai: fide ? antesDelAf(normaDe(e.t, e.cargos, e.roles, "ai"), inicio, a) : SIN_NORMA };
         });
     }
 
@@ -186,7 +206,7 @@
         }
         const fide = porArbitro(filasCar, "torneo_id", "cargo"), cr = porArbitro(filasCrCar, "clave", "rol");
         arbitros = filasArb.map((a) => ({ ...a, busca: sinTildes(a.nombre) + " " + a.fide_id,
-            todos: torneosDelArbitro(fide.get(a.fide_id) || new Map(), cr.get(a.fide_id) || new Map()) }));
+            todos: torneosDelArbitro(a, fide.get(a.fide_id) || new Map(), cr.get(a.fide_id) || new Map()) }));
         for (const a of arbitros) a.normas = { af: cuentaNormas(a, "af").usadas.length, ai: cuentaNormas(a, "ai").usadas.length };
         // El equipo de Costa Rica de cada torneo: quién de la lista estuvo y en qué.
         equipos = new Map();
@@ -463,7 +483,7 @@
         if (tiene) {
             estado = "Ya tiene el título"; dicho = "Según su perfil de FIDE. Igual se ven abajo los torneos que hoy le darían norma.";
         } else if (cual === "ai" && a.titulo !== "FA") {
-            estado = "Primero el AF"; dicho = `El AI se pide después del título de AF. Con lo de hoy juntaría ${miles(n)} de las ${pide} normas de AI.`;
+            estado = "Primero el AF"; dicho = "El AI se pide después del título de AF, y una norma de AI cuenta solo si el torneo es posterior al AF: hoy no junta ninguna.";
         } else if (n >= pide && (cual === "ai" || sistemas.length >= 2)) {
             estado = "Le alcanzaría"; dicho = `Junta ${miles(n)} normas de las ${pide} que pide la solicitud` + (cual === "af" ? `, de ${sistemas.length} sistemas (${sistemas.join(", ")}).` : ".");
         } else if (n >= pide) {
@@ -475,6 +495,11 @@
         if (c.revisar) extra.push(`${miles(c.revisar)} ${c.revisar === 1 ? "torneo queda" : "torneos quedan"} para revisar y no se cuentan.`);
         if (c.sobran) extra.push(`${miles(c.sobran)} más de los que valen una sola vez por solicitud.`);
         if (c.viejas) extra.push(`${miles(c.viejas)} ${c.viejas === 1 ? "torneo que valía es" : "torneos que valían son"} de antes de los últimos seis años.`);
+        if (cual === "ai" && !tiene) {
+            const m = /Árbitro FIDE \((\d{4})\)/.exec(a.titulo_detalle || "");
+            if (m) extra.push(`Solo cuentan los torneos posteriores a su AF (${m[1]}); los del mismo año quedan para revisar.`);
+            else if (a.titulo === "FA") extra.push("Solo cuentan los torneos posteriores a su AF; su perfil no dice de qué año es: revisar.");
+        }
         extra.push(cual === "af" ? "Además del seminario. No se ve desde afuera si los certificados se emitieron y quién los firmó."
             : "Además del seminario, no todas firmadas por la misma persona y a lo sumo dos finales nacionales: eso no se ve desde afuera.");
         // Hasta cuándo cuenta cada una: seis años desde que empezó el torneo.

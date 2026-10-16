@@ -40,7 +40,9 @@ function igual(nombre, hallado, esperado) {
 }
 
 const ARBITROS = [
-    { fide_id: 6500001, nombre: "Ángulo Prueba, Óscar", titulo: "IA", titulo_detalle: "Congreso 2020" },
+    // Óscar sacó el AF en 2024: su norma de AI de 2023 no cuenta, la de 2024
+    // queda para revisar y la de 2025 sí.
+    { fide_id: 6500001, nombre: "Ángulo Prueba, Óscar", titulo: "IA", titulo_detalle: "Árbitro FIDE (2024), Árbitro Internacional (2026)" },
     { fide_id: 6500002, nombre: "Soto Prueba, Ana", titulo: "FA", titulo_detalle: "" },
     { fide_id: 6500003, nombre: "Rojas Prueba, Luis", titulo: "", titulo_detalle: "" },
     { fide_id: 6500004, nombre: "Viejo Prueba, Juan", titulo: "AN", titulo_detalle: "" },
@@ -171,11 +173,12 @@ const porNombre = (m) => Object.fromEntries(m.map((f) => [f[0], f]));
     igual("los cinco árbitros salen (todos los años), también quien solo está en chess-results", Object.keys(m).sort(),
         ["Ángulo Prueba, Óscar", "Quiros Prueba, Eduardo", "Rojas Prueba, Luis", "Soto Prueba, Ana", "Viejo Prueba, Juan"].sort());
     // Óscar: 4 de FIDE (el 900001 es el mismo que el 101: no suma) y 2 que no (900002, director; 900006, árbitro); el 900005 no se jugó.
-    igual("Óscar: 6 torneos (4 FIDE, 2 no), 2 principal, 1 adjunto, 2 árbitro, AF 3, AI 3 (1 para revisar), último 10/01/2025",
-        m["Ángulo Prueba, Óscar"].slice(1), ["IA", "6", "4", "2", "0", "2", "1", "2", "3", "3 (1)", "Ya es AF", "Ya es AI", "10/01/2025"]);
+    // AI: el de 2023 es de antes de su AF (2024) y no cuenta; el de 2024, del mismo año, queda para revisar.
+    igual("Óscar: 6 torneos (4 FIDE, 2 no), 2 principal, 1 adjunto, 2 árbitro, AF 3, AI 2 (1 para revisar: el del año de su AF), último 10/01/2025",
+        m["Ángulo Prueba, Óscar"].slice(1), ["IA", "6", "4", "2", "0", "2", "1", "2", "3", "2 (1)", "Ya es AF", "Ya es AI", "10/01/2025"]);
     // Eduardo: el 900004 es el 102 de FIDE (vale, pero no figura en la ficha de FIDE: revisar); 900002 y 900003 no son de FIDE.
-    igual("Eduardo: 3 torneos (1 FIDE para revisar, 2 no), último 10/07/2024",
-        m["Quiros Prueba, Eduardo"].slice(1), ["—", "3", "1", "2", "0", "1", "0", "2", "1 (1)", "1 (1)", "0 de 3", "0 de 4", "10/07/2024"]);
+    igual("Eduardo: 3 torneos (1 FIDE para revisar, 2 no), sin AF no le vale ninguno para AI, último 10/07/2024",
+        m["Quiros Prueba, Eduardo"].slice(1), ["—", "3", "1", "2", "0", "1", "0", "2", "1 (1)", "0", "0 de 3", "0 de 4", "10/07/2024"]);
     igual("Ana: el asistente no vale, el de pareos queda para revisar (AF 1 (1), AI 1 (1)) y su torneo en Panamá cuenta en el extranjero",
         m["Soto Prueba, Ana"].slice(1), ["FA", "3", "2", "1", "1", "0", "0", "1", "1 (1)", "1 (1)", "Ya es AF", "0 de 4", "10/01/2025"]);
     igual("«Hoy para AF» de Luis: 1 de 3", porNombre(await filas(p, "#tabla-arbitros"))["Rojas Prueba, Luis"][11], "1 de 3");
@@ -224,7 +227,7 @@ const porNombre = (m) => Object.fromEntries(m.map((f) => [f[0], f]));
     await p.selectOption("#contar", "festival");
     m = porNombre(await filas(p, "#tabla-arbitros"));
     igual("«Festivales como uno»: el 102 y el 900006 (mismo día) cuentan como uno de FIDE para Óscar; 2 principal y 2 árbitro siguen",
-        m["Ángulo Prueba, Óscar"].slice(1), ["IA", "5", "4", "1", "0", "2", "1", "2", "3", "3 (1)", "Ya es AF", "Ya es AI", "10/01/2025"]);
+        m["Ángulo Prueba, Óscar"].slice(1), ["IA", "5", "4", "1", "0", "2", "1", "2", "3", "2 (1)", "Ya es AF", "Ya es AI", "10/01/2025"]);
     igual("y Eduardo, que estuvo solo en uno de ese día, no cambia", m["Quiros Prueba, Eduardo"][2], "3");
     igual("la cuenta general junta todo lo del mismo día", /con 8 torneos o festivales \(5 de FIDE y 3 que no; 1 en el extranjero\)/.test(await cuentaGeneral()), true);
     await p.selectOption("#contar", "");
@@ -305,7 +308,10 @@ const porNombre = (m) => Object.fromEntries(m.map((f) => [f[0], f]));
     igual("Luis, sin título: 1 norma de AF de las 3 (el internacional de 2023), le faltan 2, y hasta cuándo cuenta", [e1, /Junta 1 de las 3/.test(t1), /01\/03\/2023 · Internacional con titulados 2023 \(Vale\) · cuenta hasta el 01\/03\/2029/.test(t1)],
         ["Le faltan 2", true, true]);
     igual("su ficha trae «Torneos por año»", (await filas(p, "#ficha-actividad")).map((f) => [f[0], f[1].trim()]), [["2023", "1"]]);
-    igual("y para AI, primero el AF", (await tarjeta("ai"))[0], "Primero el AF");
+    const [eAi, tAi] = await tarjeta("ai");
+    igual("y para AI, primero el AF: sin el AF no junta ninguna", [eAi, /hoy no junta ninguna/.test(tAi)], ["Primero el AF", true]);
+    const aiLuis = (await filas(p, "#tabla-torneos"))[0][9];
+    igual("su torneo que cumple las condiciones de AI no le cuenta: no tiene el AF", [aiLuis.startsWith("No"), /No tiene el título de AF/.test(aiLuis)], [true, true]);
     const [descarga] = await Promise.all([p.waitForEvent("download"), p.click("#pdf")]);
     const pdf = require("fs").readFileSync(await descarga.path()).toString("latin1");
     igual("la ficha en PDF: su nombre, el cuadro de AF, su torneo y la nota de las fuentes",
@@ -321,6 +327,15 @@ const porNombre = (m) => Object.fromEntries(m.map((f) => [f[0], f]));
     await p.waitForFunction(() => document.getElementById("ficha").checkVisibility());
     [e1, t1] = await tarjeta("af");
     igual("Juan: su norma de 2015 ya no cuenta (más de seis años) y lo dice", [e1, /1 torneo que valía es de antes de los últimos seis años/.test(t1)], ["Le faltan 3", true]);
+    await ctx.close();
+
+    console.log("\n=== Las normas de AI, solo después del AF ===");
+    ({ ctx, p } = await abrir(browser, "arbitros-cr.html#6500001", true));
+    await p.waitForFunction(() => document.getElementById("ficha").checkVisibility());
+    const ai = Object.fromEntries((await filas(p, "#tabla-torneos")).filter((f) => f[2] === "Sí").map((f) => [f[0].slice(-4), f[9]]));
+    igual("Óscar (AF en 2024): el de 2023 no cuenta, el de 2024 queda para revisar, el de 2025 vale",
+        [ai["2023"].startsWith("No"), /antes de su título de AF \(2024\)/.test(ai["2023"]), ai["2024"].startsWith("Revisar"), /mismo año de su título de AF \(2024\)/.test(ai["2024"]), ai["2025"].startsWith("Vale")],
+        [true, true, true, true, true]);
     await ctx.close();
 
     console.log("\n=== Comparar dos árbitros ===");

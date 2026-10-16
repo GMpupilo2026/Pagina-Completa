@@ -3045,6 +3045,30 @@ Cuatro piezas más en `arbitros-cr.html` (pedido del dueño, octubre de 2026):
   equipo con su enlace. Lo rompí cambiando los seis años por siete, quitando
   el equipo y dejando la columna en 0, y salta cada vez.
 
+## Las normas de AI, solo después del título de AF
+
+Regla del dueño (octubre de 2026): **una norma de AI no sirve si se hizo
+antes de tener el título de AF**. `antesDelAf()` en `js/arbitros-cr.js` la
+aplica a la norma de AI de cada torneo, por persona, después de `normaDe()`:
+
+- **Sin AF** (AN o sin título): ninguna norma de AI le cuenta, ni le
+  servirá cuando saque el AF. El torneo dice «No» con lo que cumplía, y el
+  cuadro de AI dice «Primero el AF… hoy no junta ninguna». Antes ese cuadro
+  sumaba las de AI de todos modos («juntaría 2 de 4»): engañaba.
+- **Con AF**: el perfil de FIDE da el año («Árbitro FIDE (2019)»), no el
+  día. Un torneo de un año posterior cuenta y uno de un año anterior no. Uno
+  del mismo año queda **para revisar**: no se sabe si empezó antes o
+  después del Consejo que dio el título. Tampoco se cuenta en «Hoy para
+  AI».
+- Un AI sin el año del AF en su perfil (los títulos viejos, como el de
+  1989) queda como estaba: ya tiene el título y no hay con qué comparar.
+- Cambia «Valen para AI» y «Hoy para AI» en la lista, el ranking (por AF no
+  cambia) y la comparación.
+- `verificar-arbitros-cr.js` lo prueba con Óscar (AF en 2024): el torneo de
+  2023 da «No», el de 2024 «Revisar» y el de 2025 «Vale». Con Luis y
+  Eduardo, sin AF, ninguno cuenta. Lo rompí quitando la regla y saltan
+  cinco comprobaciones.
+
 ## Comparar dos árbitros y el ranking del año
 
 Dos piezas más en `arbitros-cr.html` (pedido del dueño, octubre de 2026):
