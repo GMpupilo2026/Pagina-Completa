@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261015224105
+# al-dia-con: 20261016005855
 tabla  Ejercicios Lichess  rls=true
 tabla  _foto_rls_tmp  rls=false
 tabla  _pedidos_elo  rls=false
@@ -70,6 +70,7 @@ tabla  enlaces_diagnostico  rls=true
 tabla  equipo_alumnos  rls=true
 tabla  equipo_entrenadores  rls=true
 tabla  equipos  rls=true
+tabla  estudios  rls=true
 tabla  examen_items  rls=true
 tabla  examen_respuestas  rls=true
 tabla  examenes  rls=true
@@ -690,6 +691,15 @@ columna  equipos.created_at  timestamp with time zone
 columna  equipos.created_by  uuid
 columna  equipos.id  uuid
 columna  equipos.nombre  text
+columna  estudios.alumno_id  uuid
+columna  estudios.capitulos  jsonb
+columna  estudios.compartido  boolean
+columna  estudios.created_at  timestamp with time zone
+columna  estudios.descripcion  text
+columna  estudios.id  uuid
+columna  estudios.n_capitulos  integer
+columna  estudios.titulo  text
+columna  estudios.updated_at  timestamp with time zone
 columna  examen_items.area  text
 columna  examen_items.banco  text
 columna  examen_items.clave  jsonb
@@ -1902,6 +1912,7 @@ funcion  interno.cuestionario_del_renglon(p_item uuid)  definer  anon=false  aut
 funcion  interno.emitir_cobros(p_hasta date, p_suscripcion uuid)  definer  anon=false  auth=false
 funcion  interno.emitir_recibo(p_alumno uuid, p_fecha date, p_metodo text, p_referencia text, p_nota text, p_emitido_por uuid)  definer  anon=false  auth=false
 funcion  interno.enlaces_de_sala_validos(p jsonb)  invoker  anon=true  auth=true
+funcion  interno.estudio_al_guardar()  definer  anon=false  auth=false
 funcion  interno.frenar_envio_publico(p_tipo text, p_ambito text, p_correo text, p_ip text)  invoker  anon=false  auth=false
 funcion  interno.gente_de_mis_academias()  definer  anon=false  auth=true
 funcion  interno.jsonb_o_nulo(p text)  invoker  anon=false  auth=true
@@ -2277,6 +2288,14 @@ politica  encuestas_profesor  encuestas_profesor_ver  SELECT
 politica  equipo_alumnos  equipo_alumnos_select  SELECT
 politica  equipo_entrenadores  equipo_entrenadores_select  SELECT
 politica  equipos  equipos_select  SELECT
+politica  estudios  estudios_delete_propio  DELETE
+politica  estudios  estudios_exige_acceso_ins  INSERT  restrictiva
+politica  estudios  estudios_exige_acceso_upd  UPDATE  restrictiva
+politica  estudios  estudios_insert_propio  INSERT
+politica  estudios  estudios_select_profesor  SELECT
+politica  estudios  estudios_select_propio  SELECT
+politica  estudios  estudios_select_supervisor  SELECT
+politica  estudios  estudios_update_propio  UPDATE
 politica  examen_items  examen_items_delete  DELETE
 politica  examen_items  examen_items_insert  INSERT
 politica  examen_items  examen_items_select  SELECT
@@ -2613,6 +2632,7 @@ trigger  equipo_entrenadores  auditar
 trigger  equipo_entrenadores  equipo_entrenadores_subgrupo
 trigger  equipos  auditar
 trigger  equipos  equipos_renombra_subgrupos
+trigger  estudios  estudio_al_guardar
 trigger  examen_respuestas  examen_respuestas_exige_acceso
 trigger  examenes  avisar_examen_asignado
 trigger  examenes  avisar_examen_reabierto
@@ -2840,6 +2860,8 @@ indice  equipo_entrenadores  equipo_entrenadores_teacher_idx
 indice  equipos  equipos_created_by_fk
 indice  equipos  equipos_nombre_unico
 indice  equipos  equipos_pkey
+indice  estudios  estudios_alumno_fecha
+indice  estudios  estudios_pkey
 indice  examen_items  examen_items_examen_id_orden_key
 indice  examen_items  examen_items_examen_idx
 indice  examen_items  examen_items_pkey
@@ -3594,6 +3616,13 @@ grant  equipos  authenticated  SELECT
 grant  equipos  authenticated  TRIGGER
 grant  equipos  authenticated  TRUNCATE
 grant  equipos  authenticated  UPDATE
+grant  estudios  authenticated  DELETE
+grant  estudios  authenticated  INSERT
+grant  estudios  authenticated  REFERENCES
+grant  estudios  authenticated  SELECT
+grant  estudios  authenticated  TRIGGER
+grant  estudios  authenticated  TRUNCATE
+grant  estudios  authenticated  UPDATE
 grant  examen_items  anon  DELETE
 grant  examen_items  anon  INSERT
 grant  examen_items  anon  REFERENCES
