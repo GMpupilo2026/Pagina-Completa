@@ -19,6 +19,10 @@
      en la lista y en la ficha, quien solo figura en chess-results sale
      igual, quien arbitró un torneo de FIDE sin figurar en su ficha queda
      para revisar, y el que no se jugó (sin rondas) no se muestra;
+   - el ranking del año: el puesto con empates, cómo le fue el año anterior
+     y «Ordenar por»;
+   - comparar dos árbitros: dato por dato, por año, los torneos juntos con
+     el cargo de cada uno, y la dirección lleva a los dos;
    - las tablas se piden de mil en mil (range).
 
    Ver «Árbitros de Costa Rica en FIDE» en docs/decisiones/juegos-y-torneos.md.
@@ -180,6 +184,22 @@ const porNombre = (m) => Object.fromEntries(m.map((f) => [f[0], f]));
         actividad.map((f) => [f[0], f[1].trim(), f[2], f[3], f[4]]),
         [["2025", "1", "1", "0", "0"], ["2024", "5", "2", "3", "1"], ["2023", "1", "1", "0", "0"], ["2019", "1", "0", "1", "0"], ["2015", "1", "1", "0", "0"]]);
     igual("la barra no va sola: el número está escrito y la barra se ve", [await visible(p, "#actividad tbody tr:first-child td span[aria-hidden]")], [true]);
+    // El ranking arranca en el último año con torneos (2025): Óscar y Ana
+    // empatan con 1; en 2024 Óscar fue 1.º y Ana 2.ª (empatada con Eduardo).
+    igual("el ranking arranca en 2025: Óscar y Ana comparten el 1.º, y cómo les fue en 2024",
+        [await p.$eval("#ranking-anio", (e) => e.value), await filas(p, "#tabla-ranking")],
+        ["2025", [["1.º", "Ángulo Prueba, Óscar", "1", "1", "1", "0", "1", "Igual (1.º)"], ["1.º", "Soto Prueba, Ana", "1", "0", "1", "0", "0", "Sube 1 (era 2.º)"]]]);
+    await p.selectOption("#ranking-anio", "2024");
+    await p.selectOption("#ranking-por", "principal");
+    igual("2024 por «como principal»: Óscar y Eduardo con 1, y en 2023 nadie", (await filas(p, "#tabla-ranking")).map((f) => [f[0], f[1], f[3], f[7]]),
+        [["1.º", "Ángulo Prueba, Óscar", "1", "No figuraba en 2023"], ["1.º", "Quiros Prueba, Eduardo", "1", "No figuraba en 2023"]]);
+    igual("la columna elegida lo dice (aria-sort) y la cuenta también", [await p.$eval("#tabla-ranking th[data-col=principal]", (e) => e.getAttribute("aria-sort")),
+        await p.$eval("#ranking-cuenta", (e) => e.textContent)], ["descending", "2 árbitros con torneos como principal en 2024."]);
+    await p.selectOption("#ranking-por", "torneos");
+    igual("2024 por torneos: los empates comparten el puesto y el siguiente salta (1, 2, 2)", (await filas(p, "#tabla-ranking")).map((f) => [f[0], f[1], f[2]]),
+        [["1.º", "Ángulo Prueba, Óscar", "4"], ["2.º", "Quiros Prueba, Eduardo", "2"], ["2.º", "Soto Prueba, Ana", "2"]]);
+    await p.selectOption("#ranking-anio", "2015");
+    igual("el primer año no tiene año anterior", (await filas(p, "#tabla-ranking")).map((f) => f[7]), ["—"]);
     igual("la lista va ordenada por cantidad de torneos", (await filas(p, "#tabla-arbitros")).map((f) => f[0])[0], "Ángulo Prueba, Óscar");
 
     await p.selectOption("#tipo", "nofide");
@@ -301,6 +321,23 @@ const porNombre = (m) => Object.fromEntries(m.map((f) => [f[0], f]));
     await p.waitForFunction(() => document.getElementById("ficha").checkVisibility());
     [e1, t1] = await tarjeta("af");
     igual("Juan: su norma de 2015 ya no cuenta (más de seis años) y lo dice", [e1, /1 torneo que valía es de antes de los últimos seis años/.test(t1)], ["Le faltan 3", true]);
+    await ctx.close();
+
+    console.log("\n=== Comparar dos árbitros ===");
+    ({ ctx, p } = await abrir(browser, "arbitros-cr.html#6500003,6500001", true));
+    await p.waitForFunction(() => document.getElementById("comparacion").checkVisibility());
+    const dato = async (n) => (await filas(p, "#tabla-comparar")).find((f) => f[0] === n);
+    igual("la dirección con dos ID abre la comparación: Luis contra Óscar, dato por dato",
+        [await p.$eval("#comparar", (e) => e.value), await p.$$eval("#tabla-comparar thead th", (t) => t.map((x) => x.textContent)), await dato("Torneos"), await dato("Hoy para AF"), await dato("Título")],
+        ["6500001", ["Dato", "Rojas Prueba, Luis", "Ángulo Prueba, Óscar"], ["Torneos", "1", "6"], ["Hoy para AF", "1 de 3", "Ya es AF"], ["Título", "Sin título en FIDE", "Árbitro Internacional (IA)"]]);
+    igual("por año, con los que hicieron juntos", (await filas(p, "#comparar-anios")).find((f) => f[0] === "2023"), ["2023", "1", "1", "1"]);
+    igual("el torneo que hicieron juntos, con el cargo de cada uno", [await p.$eval("#comparar-juntos-texto", (e) => e.textContent), await filas(p, "#comparar-juntos")],
+        ["1 torneo hicieron juntos de 2015 a 2025:", [["01/03/2023", "Internacional con titulados 2023", "Árbitro adjunto principal", "Árbitro"]]]);
+    await p.selectOption("#comparar", "6500002");
+    igual("con Ana: ningún torneo juntos (sin tabla vacía) y la dirección cambia", [await p.$eval("#comparar-juntos-texto", (e) => e.textContent),
+        await visible(p, "#comparar-juntos"), await p.evaluate(() => location.hash)], ["Ningún torneo juntos de 2015 a 2025.", false, "#6500003,6500002"]);
+    await p.click("#quitar-comparar");
+    igual("«Quitar la comparación» la esconde y deja solo su ID en la dirección", [await visible(p, "#comparacion"), await p.evaluate(() => location.hash)], [false, "#6500003"]);
     await ctx.close();
 
     console.log("\n=== Quien solo está en chess-results ===");

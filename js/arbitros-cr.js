@@ -38,6 +38,12 @@
      en la lista (torneos distintos de los árbitros que se ven) y en la ficha.
    - En la ficha, cada torneo trae su «Equipo de Costa Rica»: quiénes de la
      lista lo arbitraron, dirigieron u organizaron, con su cargo.
+   - «Ranking del año»: en la lista, los árbitros por lo que hicieron en un
+     año (con los filtros de arriba menos los años), con el puesto (los
+     empates comparten puesto: 1, 1, 3) y cómo les fue el año anterior.
+   - «Comparar con otro árbitro»: en la ficha, los números de los dos lado a
+     lado, año por año y los torneos que hicieron juntos; la dirección lleva
+     los dos (#ID,ID) para compartirla.
    - «Contar: festivales como uno»: los torneos de un árbitro que empiezan
      el mismo día son un festival y cuentan como uno; su norma es la mejor
      de sus torneos (FIDE da una norma por festival).
@@ -75,7 +81,8 @@
     const pais = (codigo) => PAISES[codigo] || codigo;
 
     let equipos = new Map(), arbitros = [], torneos = new Map(), torneosCr = new Map(), crDeFide = new Map(), PRIMER = 0, ULTIMO = 0;
-    const estado = { q: "", titulo: "", tipo: "", donde: "", contar: "", desde: 0, hasta: 0, orden: { col: "torneos", dir: -1 }, normaAf: "", normaAi: "", elegido: null };
+    const estado = { q: "", titulo: "", tipo: "", donde: "", contar: "", desde: 0, hasta: 0, orden: { col: "torneos", dir: -1 }, normaAf: "", normaAi: "", elegido: null, otro: null,
+        rankAnio: 0, rankPor: "torneos" };
 
     // «AAAA-MM-DD» a «DD/MM/AAAA» sin pasar por Date.
     function fecha(iso) {
@@ -190,8 +197,8 @@
 
     // Sus torneos dentro de los años y del tipo elegidos, el más nuevo
     // primero; con «festivales como uno», los del mismo día juntos.
-    function torneosDe(a) {
-        const l = a.todos.filter((x) => x.anio >= estado.desde && x.anio <= estado.hasta
+    function torneosDe(a, desde = estado.desde, hasta = estado.hasta) {
+        const l = a.todos.filter((x) => x.anio >= desde && x.anio <= hasta
             && (!estado.tipo || (estado.tipo === "fide") === x.fide)
             && (!estado.donde || (estado.donde === "fuera") === x.fuera));
         return (estado.contar === "festival" ? enFestivales(l) : l)
@@ -231,8 +238,8 @@
     }
     const fue = (x, cargo, rol) => x.cargos.includes(cargo) || x.roles.includes(rol);
 
-    function resumen(a) {
-        const l = torneosDe(a);
+    function resumen(a, desde, hasta) {
+        const l = torneosDe(a, desde, hasta);
         const cuenta = (f) => l.filter(f).length;
         return {
             a, torneos: l.length, fide: cuenta((x) => x.fide), nofide: cuenta((x) => !x.fide), fuera: cuenta((x) => x.fuera),
@@ -241,17 +248,20 @@
             arbitro: cuenta((x) => fue(x, "Arbiter", "arb")),
             af: cuenta((x) => x.fide && x.af.estado !== "no"), afRevisar: cuenta((x) => x.af.estado === "revisar"),
             ai: cuenta((x) => x.fide && x.ai.estado !== "no"), aiRevisar: cuenta((x) => x.ai.estado === "revisar"),
-            ultimo: l.length ? l[0].inicio : "",
+            ultimo: l.length ? l[0].inicio : "", primero: l.length ? l[l.length - 1].inicio : "",
             // «Hoy para AF/AI»: no depende de los filtros (es lo que junta hoy).
             cercaAf: ["FA", "IA"].includes(a.titulo) ? 100 : a.normas.af, cercaAi: a.titulo === "IA" ? 100 : a.normas.ai,
         };
     }
 
-    function pintarGeneral() {
+    // El buscador y el título: los usan la lista y el ranking.
+    function enLista() {
         const q = sinTildes(estado.q.trim());
-        const filas = arbitros
-            .filter((a) => (!q || a.busca.includes(q)) && (!estado.titulo || (estado.titulo === "-" ? !a.titulo : a.titulo === estado.titulo)))
-            .map(resumen).filter((r) => r.torneos > 0);
+        return arbitros.filter((a) => (!q || a.busca.includes(q)) && (!estado.titulo || (estado.titulo === "-" ? !a.titulo : a.titulo === estado.titulo)));
+    }
+
+    function pintarGeneral() {
+        const filas = enLista().map((a) => resumen(a)).filter((r) => r.torneos > 0);
         const { col, dir } = estado.orden;
         const valor = (r) => col === "nombre" ? r.a.nombre : col === "titulo" ? (r.a.titulo || "~") : r[col];
         filas.sort((x, y) => {
@@ -291,6 +301,56 @@
         $("cuenta").textContent = filas.length
             ? `${miles(filas.length)} árbitros con ${miles(vistos.size)} ${estado.contar === "festival" ? "torneos o festivales" : "torneos"} (${miles(fideVistos)} de FIDE y ${miles(vistos.size - fideVistos)} que no; ${miles(fueraVistos)} en el extranjero) de ${estado.desde} a ${estado.hasta}.`
             : "Ningún árbitro cumple con estos filtros.";
+        pintarRanking();
+    }
+
+    /* «Ranking del año»: los de la lista (buscador, título, tipo, dónde y
+       contar; los años no) por lo elegido en «Ordenar por», con el puesto
+       (los empates lo comparten: 1, 1, 3). */
+    const ORDINAL = (n) => miles(n) + ".º";
+    function ranking(anio) {
+        const por = estado.rankPor;
+        const filas = enLista().map((a) => resumen(a, anio, anio)).filter((r) => r[por] > 0)
+            .sort((x, y) => y[por] - x[por] || x.a.nombre.localeCompare(y.a.nombre, "es"));
+        filas.forEach((r, i) => { r.puesto = i && r[por] === filas[i - 1][por] ? filas[i - 1].puesto : i + 1; });
+        return filas;
+    }
+
+    // Cómo le fue el año anterior, en palabras (el color no va solo: no hay color).
+    function antes(r, previo, anio) {
+        if (anio - 1 < PRIMER) return "—";
+        const p = previo.get(r.a.fide_id);
+        if (!p) return `No figuraba en ${anio - 1}`;
+        if (p === r.puesto) return `Igual (${ORDINAL(p)})`;
+        return `${p > r.puesto ? "Sube" : "Baja"} ${miles(Math.abs(p - r.puesto))} (era ${ORDINAL(p)})`;
+    }
+
+    function pintarRanking() {
+        const anio = estado.rankAnio, filas = ranking(anio);
+        const previo = new Map(anio - 1 >= PRIMER ? ranking(anio - 1).map((r) => [r.a.fide_id, r.puesto]) : []);
+        const td = (v, der) => el("td", { class: "px-3 py-2" + (der ? " text-right tabular-nums" : "") }, v);
+        $("tabla-ranking").tBodies[0].replaceChildren(...filas.map((r) => {
+            const boton = el("button", { type: "button", class: "font-semibold underline underline-offset-2 hover:no-underline text-left" }, r.a.nombre);
+            boton.addEventListener("click", () => elegir(r.a.fide_id));
+            return el("tr", { class: "border-t border-brand-100 dark:border-brand-800" },
+                td(ORDINAL(r.puesto), true), el("th", { scope: "row", class: "px-3 py-2 font-normal text-left" }, boton),
+                td(miles(r.torneos), true), td(miles(r.principal), true), td(miles(r.fide), true), td(miles(r.fuera), true), td(miles(r.af), true),
+                td(antes(r, previo, anio)));
+        }));
+        for (const th of $("tabla-ranking").tHead.rows[0].cells) {
+            if (th.dataset.col) th.setAttribute("aria-sort", th.dataset.col === estado.rankPor ? "descending" : "none");
+        }
+        $("ranking-cuenta").textContent = filas.length
+            ? `${miles(filas.length)} ${filas.length === 1 ? "árbitro" : "árbitros"} con ${$("ranking-por").selectedOptions[0].textContent.toLowerCase()} en ${anio}.`
+            : `Nadie con ${$("ranking-por").selectedOptions[0].textContent.toLowerCase()} en ${anio} con estos filtros.`;
+    }
+
+    function excelRanking() {
+        const anio = estado.rankAnio, filas = ranking(anio);
+        const previo = new Map(anio - 1 >= PRIMER ? ranking(anio - 1).map((r) => [r.a.fide_id, r.puesto]) : []);
+        window.TablaExcel.bajar("ranking-arbitros-" + anio + ".xlsx", [{ nombre: "Ranking " + anio, filas: [["Puesto", "Árbitro", "ID FIDE", "Título", "Torneos", "Principal", "FIDE",
+            "En el extranjero", "Valen para AF", "El año anterior"]].concat(filas.map((r) => [r.puesto, r.a.nombre, r.a.fide_id, r.a.titulo || "", r.torneos, r.principal, r.fide,
+            r.fuera, r.af, antes(r, previo, anio)])) }]);
     }
 
     /* «Torneos por año»: una fila por año con una barra del total (el número
@@ -343,6 +403,7 @@
             ` · ${miles(r.torneos)} torneos de ${estado.desde} a ${estado.hasta} (${miles(r.fide)} de FIDE, ${miles(r.nofide)} que no; ${miles(r.fuera)} en el extranjero)`
             + (a.solo_chess_results ? ". No figura como árbitro en ninguna ficha de FIDE." : `: valen para AF ${miles(r.af)}, para AI ${miles(r.ai)}.`));
         $("ficha-normas").replaceChildren(tarjetaNorma(a, "af"), tarjetaNorma(a, "ai"));
+        pintarComparacion(a);
         pintarActividad("ficha-actividad", torneosDe(a));
         const lista = filasFicha(a);
         $("tabla-torneos").tBodies[0].replaceChildren(...lista.map((x) => {
@@ -434,6 +495,54 @@
             el("p", { class: "mt-1" }, el("strong", { class: "of-estado" }, n.estado), " ", el("span", {}, n.dicho)),
             n.torneos.length ? el("ul", { class: "mt-2 space-y-0.5" }, ...n.torneos.map((t) => el("li", { class: "of-detalle" }, t))) : null,
             el("p", { class: "of-detalle mt-2" }, n.nota));
+    }
+
+    /* «Comparar con otro árbitro»: los números de los dos con los filtros
+       puestos, año por año y los torneos que hicieron juntos. */
+    function pintarComparacion(a) {
+        const sel = $("comparar");
+        sel.replaceChildren(el("option", { value: "" }, "Elegir un árbitro"),
+            ...arbitros.filter((x) => x !== a).sort((x, y) => x.nombre.localeCompare(y.nombre, "es")).map((x) => el("option", { value: String(x.fide_id) }, x.nombre)));
+        const b = arbitros.find((x) => x.fide_id === estado.otro && x !== a);
+        sel.value = b ? String(b.fide_id) : "";
+        $("comparacion").classList.toggle("hidden", !b);
+        $("quitar-comparar").classList.toggle("hidden", !b);
+        if (!b) return;
+        const ra = resumen(a), rb = resumen(b);
+        const hoy = (r, cual) => cual === "af" ? (r.cercaAf === 100 ? "Ya es AF" : `${miles(r.cercaAf)} de 3`) : (r.cercaAi === 100 ? "Ya es AI" : `${miles(r.cercaAi)} de 4`);
+        const DATOS = [
+            ["Título", (r) => r.a.titulo ? TITULOS[r.a.titulo] : "Sin título en FIDE"],
+            ["Torneos", (r) => miles(r.torneos)], ["De FIDE", (r) => miles(r.fide)], ["No FIDE", (r) => miles(r.nofide)], ["En el extranjero", (r) => miles(r.fuera)],
+            ["Como principal", (r) => miles(r.principal)], ["Como adjunto", (r) => miles(r.adjunto)], ["Como árbitro", (r) => miles(r.arbitro)],
+            ["Valen para AF", (r) => miles(r.af)], ["Valen para AI", (r) => miles(r.ai)], ["Hoy para AF", (r) => hoy(r, "af")], ["Hoy para AI", (r) => hoy(r, "ai")],
+            ["Primer torneo", (r) => fecha(r.primero)], ["Último torneo", (r) => fecha(r.ultimo)],
+        ];
+        const td = (v, der) => el("td", { class: "px-3 py-1.5" + (der ? " text-right tabular-nums" : "") }, v);
+        const fila = (...celdas) => el("tr", { class: "border-t border-brand-100 dark:border-brand-800" }, ...celdas);
+        const th = (v) => el("th", { scope: "row", class: "px-3 py-1.5 font-normal text-left" }, v);
+        // Las columnas de números van a la derecha; las de texto, a la izquierda.
+        const cabeza = (tabla, numeros, ...cols) => $(tabla).tHead.rows[0].replaceChildren(...cols.map((c, i) => el("th", { scope: "col", class: "px-3 py-2" + (i && numeros ? " text-right" : "") }, c)));
+        cabeza("tabla-comparar", true, "Dato", a.nombre, b.nombre);
+        $("tabla-comparar").tBodies[0].replaceChildren(...DATOS.map(([n, f]) => fila(th(n), td(f(ra), true), td(f(rb), true))));
+        // Juntos: el mismo torneo (o festival, con «festivales como uno») en los dos.
+        const la = torneosDe(a), lb = new Map(torneosDe(b).map((x) => [x.clave, x]));
+        const juntos = la.filter((x) => lb.has(x.clave));
+        const anios = new Map();
+        const suma = (anio, k) => { const v = anios.get(anio) || { a: 0, b: 0, juntos: 0 }; v[k]++; anios.set(anio, v); };
+        for (const x of la) suma(x.anio, "a");
+        for (const x of lb.values()) suma(x.anio, "b");
+        for (const x of juntos) suma(x.anio, "juntos");
+        cabeza("comparar-anios", true, "Año", a.nombre, b.nombre, "Juntos");
+        $("comparar-anios").tBodies[0].replaceChildren(...[...anios.entries()].sort((p, q) => q[0] - p[0])
+            .map(([anio, v]) => fila(th(String(anio)), td(miles(v.a), true), td(miles(v.b), true), td(miles(v.juntos), true))));
+        $("comparar-juntos-texto").textContent = juntos.length
+            ? `${miles(juntos.length)} ${juntos.length === 1 ? "torneo hicieron juntos" : "torneos hicieron juntos"} de ${estado.desde} a ${estado.hasta}:`
+            : `Ningún torneo juntos de ${estado.desde} a ${estado.hasta}.`;
+        const nombre = (x) => x.festival ? `Festival de ${x.items.length} torneos` : (x.t || x.cr).nombre;
+        $("comparar-juntos").classList.toggle("hidden", !juntos.length);
+        cabeza("comparar-juntos", false, "Fecha", "Torneo", a.nombre, b.nombre);
+        $("comparar-juntos").tBodies[0].replaceChildren(...juntos.map((x) => fila(td(fecha(x.inicio)), th(nombre(x)),
+            el("td", { class: "px-3 py-1.5" }, cargoEscrito(x)), el("td", { class: "px-3 py-1.5" }, cargoEscrito(lb.get(x.clave))))));
     }
 
     // «Equipo de Costa Rica»: quiénes de la lista estuvieron en el torneo y en
@@ -546,9 +655,15 @@
         }
     }
 
-    function elegir(id) {
-        estado.elegido = id;
-        history.replaceState(null, "", location.pathname + location.search + (id ? "#" + id : ""));
+    // La dirección lleva el árbitro elegido y, si hay, con quién se compara.
+    function ponerDireccion() {
+        const id = estado.elegido;
+        history.replaceState(null, "", location.pathname + location.search + (id ? "#" + id + (estado.otro ? "," + estado.otro : "") : ""));
+    }
+
+    function elegir(id, otro) {
+        estado.elegido = id; estado.otro = otro || null;
+        ponerDireccion();
         $("general").classList.toggle("hidden", !!id);
         $("ficha").classList.toggle("hidden", !id);
         $("volver").classList.toggle("hidden", !id);
@@ -574,6 +689,13 @@
         $("norma-ai").addEventListener("change", (e) => { estado.normaAi = e.target.value; pintarFicha(); });
         $("volver").addEventListener("click", () => elegir(null));
         $("excel").addEventListener("click", excel);
+        $("comparar").addEventListener("change", (e) => { estado.otro = +e.target.value || null; ponerDireccion(); pintarFicha(); });
+        $("quitar-comparar").addEventListener("click", () => { estado.otro = null; ponerDireccion(); pintarFicha(); $("comparar").focus(); });
+        $("ranking-anio").replaceChildren(...anios.map((o) => o.cloneNode(true)).reverse());
+        $("ranking-anio").value = String(estado.rankAnio);
+        $("ranking-anio").addEventListener("change", (e) => { estado.rankAnio = +e.target.value; pintarRanking(); });
+        $("ranking-por").addEventListener("change", (e) => { estado.rankPor = e.target.value; pintarRanking(); });
+        $("ranking-excel").addEventListener("click", excelRanking);
         $("pdf").addEventListener("click", pdf);
         for (const b of $("tabla-arbitros").tHead.querySelectorAll("button")) {
             b.addEventListener("click", () => {
@@ -605,10 +727,14 @@
             return;
         }
         estado.desde = PRIMER; estado.hasta = ULTIMO;
+        // El ranking arranca en el año en curso (o el último con torneos).
+        const este = window.HoraCR ? parseInt(HoraCR.hoy().slice(0, 4), 10) : ULTIMO;
+        estado.rankAnio = Math.min(Math.max(este, PRIMER), ULTIMO);
         armarControles();
         $("loading").classList.add("hidden"); $("app").classList.remove("hidden");
-        const h = parseInt(decodeURIComponent((location.hash || "").slice(1)), 10);
-        if (h && arbitros.some((a) => a.fide_id === h)) elegir(h); else pintarGeneral();
+        const [h, o] = decodeURIComponent((location.hash || "").slice(1)).split(",").map((x) => parseInt(x, 10));
+        const existe = (id) => id && arbitros.some((a) => a.fide_id === id);
+        if (existe(h)) elegir(h, existe(o) && o !== h ? o : null); else pintarGeneral();
     }
 
     init();

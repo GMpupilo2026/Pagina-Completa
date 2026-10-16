@@ -3045,6 +3045,47 @@ Cuatro piezas más en `arbitros-cr.html` (pedido del dueño, octubre de 2026):
   equipo con su enlace. Lo rompí cambiando los seis años por siete, quitando
   el equipo y dejando la columna en 0, y salta cada vez.
 
+## Comparar dos árbitros y el ranking del año
+
+Dos piezas más en `arbitros-cr.html` (pedido del dueño, octubre de 2026):
+
+- **«Comparar con otro árbitro»**, en la ficha, debajo de los cuadros de
+  normas: se elige a otro en una lista y salen tres tablas. La primera pone a
+  los dos dato por dato (el mismo `resumen()` de la lista, con los filtros
+  puestos). La segunda va año por año, con cuántos torneos hicieron juntos.
+  La tercera son esos torneos, con el cargo de cada uno.
+  - «Juntos» es la misma clave de torneo en los dos (`f<id>` o `c<clave>`).
+    Con «festivales como uno», la clave es el día (`d<fecha>`): dos que
+    estuvieron en partes distintas del mismo festival cuentan como juntos,
+    igual que en la cuenta general.
+  - La dirección lleva a los dos (`#ID,ID`) para compartirla. Una dirección
+    vieja con un solo ID sigue abriendo solo la ficha, y abrir otra ficha
+    quita la comparación.
+  - No hay color que diga quién tiene más: los números van escritos y se
+    leen solos.
+- **«Ranking del año»**, en la lista, debajo de «Torneos por año»: los
+  árbitros de un año, ordenados por lo que se elija en «Ordenar por»
+  (torneos, como principal, de FIDE, en el extranjero o que valen para AF).
+  - Usa los filtros de arriba (buscador, título, tipo, dónde, contar), pero
+    no los años: el año es el suyo. Arranca en el año en curso, o en el
+    último con torneos si el año en curso todavía no tiene.
+  - El puesto con empates es el de las competencias (1, 1, 3): quien empata
+    comparte el puesto y el siguiente salta. Es lo que se espera de un
+    ranking y lo que no engaña: un 2.º no queda «detrás» de otro con el
+    mismo número.
+  - «El año anterior» dice el puesto de entonces, con lo mismo elegido y en
+    palabras («Sube 1 (era 2.º)», «Igual (1.º)», «No figuraba en 2023»), sin
+    flechas de color. Se baja en Excel.
+- `verificar-arbitros-cr.js` prueba:
+  - el ranking: el empate en el 1.º, el salto 1, 2, 2, «Ordenar por» con su
+    `aria-sort`, el año anterior y el primer año sin anterior;
+  - la comparación: abrir con dos ID, dato por dato, por año, los torneos
+    juntos con cada cargo, ninguno juntos sin tabla vacía, y que la dirección
+    cambie y se limpie.
+
+  Lo rompí sin empates, con la dirección sin el segundo ID y sin torneos
+  juntos, y salta cada vez.
+
 ## La ficha de un árbitro en PDF
 
 «Descargar en PDF» en la ficha de `arbitros-cr.html` (pedido del dueño,

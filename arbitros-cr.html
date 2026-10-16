@@ -105,12 +105,73 @@
                         </table>
                     </div>
                 </div>
+                <div class="mt-6">
+                    <h3 id="ranking-titulo" class="font-serif text-lg font-bold text-brand-800 dark:text-white">Ranking del año</h3>
+                    <p class="text-sm text-brand-500 dark:text-brand-300 mt-1 max-w-3xl">Los árbitros por lo que hicieron en un año, con los filtros de arriba menos los años. Quienes empatan comparten el puesto; la última columna dice cómo les fue el año anterior, con lo mismo elegido.</p>
+                    <div class="flex flex-wrap gap-3 items-end mt-2">
+                        <div class="min-w-[8rem]">
+                            <label for="ranking-anio" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Año</label>
+                            <select id="ranking-anio" class="w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none"></select>
+                        </div>
+                        <div class="min-w-[12rem]">
+                            <label for="ranking-por" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Ordenar por</label>
+                            <select id="ranking-por" class="w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none"><option value="torneos">Torneos</option><option value="principal">Torneos como principal</option><option value="fide">Torneos de FIDE</option><option value="fuera">Torneos en el extranjero</option><option value="af">Torneos que valen para AF</option></select>
+                        </div>
+                        <button type="button" id="ranking-excel" class="text-sm font-semibold px-4 py-2 rounded-lg bg-brand-100 dark:bg-brand-800 hover:bg-brand-200 dark:hover:bg-brand-700">Descargar en Excel</button>
+                    </div>
+                    <div class="overflow-x-auto mt-2 bg-white dark:bg-brand-900 rounded-2xl shadow-md">
+                        <table id="tabla-ranking" class="w-full text-sm" aria-labelledby="ranking-titulo">
+                            <thead class="text-left text-xs uppercase tracking-wide text-brand-500 dark:text-brand-300">
+                                <tr><th scope="col" class="px-3 py-2 text-right">Puesto</th><th scope="col" class="px-3 py-2">Árbitro</th><th scope="col" class="px-3 py-2 text-right" data-col="torneos">Torneos</th><th scope="col" class="px-3 py-2 text-right" data-col="principal">Principal</th><th scope="col" class="px-3 py-2 text-right" data-col="fide">FIDE</th><th scope="col" class="px-3 py-2 text-right" data-col="fuera">En el extranjero</th><th scope="col" class="px-3 py-2 text-right" data-col="af">Valen para AF</th><th scope="col" class="px-3 py-2">El año anterior</th></tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                    <p id="ranking-cuenta" class="text-sm text-brand-500 dark:text-brand-300 mt-2" aria-live="polite"></p>
+                </div>
             </section>
 
             <section id="ficha" class="hidden mt-6" aria-labelledby="ficha-titulo">
                 <h2 id="ficha-titulo" class="font-serif text-2xl font-bold text-brand-800 dark:text-white"></h2>
                 <p id="ficha-sub" class="text-sm text-brand-500 dark:text-brand-300 mt-1"></p>
                 <div id="ficha-normas" class="grid gap-3 md:grid-cols-2 mt-4" aria-label="Las normas que podría juntar hoy"></div>
+                <div class="mt-6">
+                    <h3 id="comparar-titulo" class="font-serif text-lg font-bold text-brand-800 dark:text-white">Comparar con otro árbitro</h3>
+                    <p class="text-sm text-brand-500 dark:text-brand-300 mt-1 max-w-3xl">Los números de los dos lado a lado, con los filtros puestos, año por año y los torneos que hicieron juntos. La dirección de la página lleva a los dos, para compartirla.</p>
+                    <div class="flex flex-wrap gap-3 items-end mt-2">
+                        <div class="min-w-[16rem]">
+                            <label for="comparar" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Comparar con</label>
+                            <select id="comparar" class="w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none"></select>
+                        </div>
+                        <button type="button" id="quitar-comparar" class="hidden text-sm font-semibold px-4 py-2 rounded-lg bg-brand-100 dark:bg-brand-800 hover:bg-brand-200 dark:hover:bg-brand-700">Quitar la comparación</button>
+                    </div>
+                    <div id="comparacion" class="hidden mt-3 grid gap-3 lg:grid-cols-2 items-start">
+                        <div class="overflow-x-auto bg-white dark:bg-brand-900 rounded-2xl shadow-md">
+                            <table id="tabla-comparar" class="w-full text-sm">
+                                <caption class="sr-only">Los dos árbitros, dato por dato.</caption>
+                                <thead class="text-left text-xs uppercase tracking-wide text-brand-500 dark:text-brand-300"><tr></tr></thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                        <div class="overflow-x-auto bg-white dark:bg-brand-900 rounded-2xl shadow-md">
+                            <table id="comparar-anios" class="w-full text-sm">
+                                <caption class="sr-only">Los torneos de cada uno por año y cuántos hicieron juntos.</caption>
+                                <thead class="text-left text-xs uppercase tracking-wide text-brand-500 dark:text-brand-300"><tr></tr></thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                        <div class="lg:col-span-2">
+                            <p id="comparar-juntos-texto" class="text-sm text-brand-500 dark:text-brand-300" aria-live="polite"></p>
+                            <div class="overflow-x-auto mt-2 bg-white dark:bg-brand-900 rounded-2xl shadow-md">
+                                <table id="comparar-juntos" class="w-full text-sm">
+                                    <caption class="sr-only">Los torneos que hicieron juntos, con el cargo de cada uno.</caption>
+                                    <thead class="text-left text-xs uppercase tracking-wide text-brand-500 dark:text-brand-300"><tr></tr></thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 <div class="flex flex-wrap gap-3 items-end mt-4">
                 <div class="min-w-[10rem]">
                     <label for="norma-af" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Norma de AF</label>
