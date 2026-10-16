@@ -76,6 +76,12 @@ window.MaterialPlataforma = (function () {
       unidad: "líneas", recortes: "aperturas", recorteLabel: "Línea",
       hrefRecorte: (c) => `entreno/aperturas.html?linea=${encodeURIComponent(c)}` },
 
+    /* Mis estudios no escribe en training_progress ni cuenta tiempo por
+       sección (ver «Mis estudios» en docs/decisiones/entrenamiento.md): solo
+       se le puede pedir que lo complete, y lo marca el alumno. */
+    { slug: "mis-estudios", label: "Mis estudios", href: "entreno/mis-estudios.html",
+      actividades: [], metas: ["completar"], unidad: "estudios" },
+
     /* Estudio NO escribe en training_progress, y es a propósito (ver
        CLAUDE.md): la memorización de verdad vive en Aperturas y celadas. Así
        que no ofrece 'cantidad' — ofrecerla sería una barra clavada en cero

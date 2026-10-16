@@ -1935,7 +1935,8 @@ function pruebaArchivosDelMotor() {
     const hallada = fs.existsSync(ruta) ? crypto.createHash("sha256").update(fs.readFileSync(ruta)).digest("hex") : "no existe";
     igual(f + " es el de npm, sin tocar", hallada, h);
   }
-  // Solo esta página pide otro motor; las demás, el de siempre.
+  // Solo las páginas de análisis piden otro motor (esta y Mis estudios, que no
+  // juegan contra el alumno); las demás, el de siempre, calibrado para el bot.
   const conMotor = [];
   (function recorrer(dir) {
     for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
@@ -1945,7 +1946,7 @@ function pruebaArchivosDelMotor() {
       else if (e.name.endsWith(".html") && /data-motor=/.test(fs.readFileSync(p, "utf8"))) conMotor.push(path.relative(raiz, p));
     }
   })(raiz);
-  igual("solo preparacion-rivales.html pide otro motor", conMotor, ["preparacion-rivales.html"]);
+  igual("solo preparacion-rivales.html y Mis estudios piden otro motor", conMotor.sort(), ["entreno/mis-estudios.html", "preparacion-rivales.html"]);
   const compartido = fs.readFileSync(path.join(raiz, "js/shared-engine.js"), "utf8");
   cierto("el motor por defecto sigue siendo Stockfish 16", /MOTOR_POR_DEFECTO = "stockfish-nnue-16-single\.js"/.test(compartido));
 }
