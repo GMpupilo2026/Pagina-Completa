@@ -1,0 +1,1294 @@
+{
+ "lista": {
+  "fuente": "https://arbiters.fide.com/wp-content/uploads/Database/List_of_Arbiters.pdf",
+  "publicada": "2026-10-12",
+  "leida": "2026-10-16"
+ },
+ "nota": "arbitros: [ID FIDE, nombre, título (IA, FA o NA), inactivo («i» de la lista), categoría, licencia]. aprobaciones: el título de AF o AI de cada uno, con la reunión del Consejo de FIDE que lo aprobó y su fecha, del informe de la Comisión de Árbitros a esa reunión (solo desde 2023: lo de antes no cambia qué normas cuentan hoy).",
+ "arbitros": [
+  [
+   109363,
+   "Francia, Victor",
+   "FA",
+   false,
+   "D",
+   "FA-D"
+  ],
+  [
+   6500056,
+   "Alvarez Hernandez, David",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6500218,
+   "Murillo Tsijli, Alexis",
+   "FA",
+   false,
+   "D",
+   "FA-D"
+  ],
+  [
+   6500226,
+   "Hernandez Basante, Francisco",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6500358,
+   "Barrios Zamora, Carlos",
+   "IA",
+   false,
+   "D",
+   "IA-D"
+  ],
+  [
+   6500382,
+   "Vargas Villalobos, Oliverio",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6500404,
+   "Gonzalez Acosta, Paul Jesus",
+   "IA",
+   false,
+   "D",
+   "IA-D"
+  ],
+  [
+   6500420,
+   "Alvarado, Dizan Ernesto",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6500439,
+   "Cordoba Solano, Edwin",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6500463,
+   "Jimenez Esquivel, Greivin",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6500536,
+   "Vega Araya, Edwin",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6500579,
+   "Munoz Solis, Carolina",
+   "IA",
+   false,
+   "A",
+   "IA-A"
+  ],
+  [
+   6500625,
+   "Carvajal Gorgona, Jonathan",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6500650,
+   "Urbina Quiroz, Edwin",
+   "FA",
+   false,
+   "D",
+   "FA-D"
+  ],
+  [
+   6500676,
+   "Vargas Serrano, Pablo Andres",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6501028,
+   "Castro Madrigal, Randall",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6501133,
+   "Cabrera Chaves, Marco Antonio",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6501168,
+   "Jimenez Rojas, Fabian",
+   "FA",
+   false,
+   "D",
+   "FA-D"
+  ],
+  [
+   6501176,
+   "Jimenez Aguilar, Gustavo",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6501397,
+   "Redondo Vargas, Diego Alejandro",
+   "FA",
+   true,
+   "D",
+   "FA-D"
+  ],
+  [
+   6501400,
+   "Araya, Luis Manuel",
+   "IA",
+   true,
+   "D",
+   "No"
+  ],
+  [
+   6501435,
+   "Angulo Cubero, Oscar",
+   "IA",
+   false,
+   "D",
+   "IA-D"
+  ],
+  [
+   6501451,
+   "Artavia Mendez, Jose Lidier",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6501460,
+   "Badilla Hernandez, Johans",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6501486,
+   "Bolanos Arguello, Alexis",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6501621,
+   "Fernandez Sanchez, Mario Andres",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6502180,
+   "Chaves Sanchez, Gabriel A",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6502229,
+   "Elizondo Aguilar, Grettel",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6502270,
+   "Gamboa Alvarado, Olga Leticia",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6502580,
+   "Ruiz Simes, Glenn",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6502822,
+   "Amaya Madrigal, Alvaro Josue",
+   "FA",
+   false,
+   "D",
+   "FA-D"
+  ],
+  [
+   6502849,
+   "Gomez Huertas, Stanley",
+   "IA",
+   false,
+   "D",
+   "IA-D"
+  ],
+  [
+   6502857,
+   "Murillo Ortiz, Gustavo",
+   "FA",
+   true,
+   "D",
+   "FA-D"
+  ],
+  [
+   6502903,
+   "Rodriguez Arrieta, Jose Allan",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6502946,
+   "Araya Fuentes, Cristian",
+   "IA",
+   false,
+   "D",
+   "IA-D"
+  ],
+  [
+   6503128,
+   "Ordonez Chacon, Guillermo",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6503306,
+   "Zumbado Gutierrez, Marco Antonio",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6503349,
+   "Ramirez Gonzalez, Maria Jose",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6503489,
+   "Cordero Maroto, Nelson",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6503594,
+   "Quiros Cajina, Allan",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6503950,
+   "Alvarado Castro, Sergio",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6504035,
+   "Bermudez Vives, Pablo",
+   "IA",
+   false,
+   "D",
+   "IA-D"
+  ],
+  [
+   6504396,
+   "Nunez Gonzalez, Neeshmy",
+   "FA",
+   false,
+   "D",
+   "FA-D"
+  ],
+  [
+   6504442,
+   "Acevedo Mendez, Jennifer",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6504892,
+   "Murillo Gonzalez, Carlos E",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6504949,
+   "Porras Chavarria, Pamela Maria",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6504957,
+   "Porras Chavarria, Steve",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6505007,
+   "Ramirez Arroyo, Joan Emmanuel",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6505155,
+   "Solano Cordero, Jorge Alexis",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6505244,
+   "Castro Solano, Mauricio",
+   "IA",
+   false,
+   "D",
+   "IA-D"
+  ],
+  [
+   6505252,
+   "Bustamante Grijalba, Ariadna",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6505473,
+   "Morera Campos, Yanori Maria",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6505600,
+   "Bonilla Rodriguez, Andres",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6505694,
+   "Nunez Gonzalez, Joshebeth Elena",
+   "IA",
+   false,
+   "D",
+   "IA-D"
+  ],
+  [
+   6505716,
+   "Salas Torres, Pamela",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6505910,
+   "Morera Campos, Heizel Maria",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6505961,
+   "Rivera Gonzalez, Jose Alexis",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6506054,
+   "Leon Vargas, Mercedes Lucia",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6506097,
+   "Chaves Williams, Jose Andres",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6506178,
+   "Castro Castillo, Juan Jose",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6506607,
+   "Bonilla Quiros, Diego Alonso",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6506780,
+   "Alvarado Soto, Shirley",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6507395,
+   "Castillo Morales, Thais",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6508049,
+   "Rosales Gonzalez, Erick Josue",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6508162,
+   "Bustos Torres, Fiorella",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6508189,
+   "Arguello Acuna, Graciela",
+   "FA",
+   false,
+   "D",
+   "FA-D"
+  ],
+  [
+   6508308,
+   "Chaves Alfaro, Beatriz",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6508332,
+   "Espitia Torres, Mateo",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6508650,
+   "Herrera Granados, Maria Jose",
+   "FA",
+   false,
+   "D",
+   "FA-D"
+  ],
+  [
+   6508677,
+   "Rivera Obando, Juan Jose",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6508693,
+   "Chinchilla Ramirez, Alejandra",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6508804,
+   "Jimenez Artavia, Rebeca",
+   "FA",
+   false,
+   "D",
+   "FA-D"
+  ],
+  [
+   6508820,
+   "Chaves Solera, Milton",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6508880,
+   "Sandi Barrantes, Victoria",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6509207,
+   "Lobo Meneses, Natalia",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6509576,
+   "Salazar Obando, Carlos",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6509690,
+   "Herrera Granados, Felipe",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6509797,
+   "Rivera Coto, Isaac",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6509851,
+   "Zeledon Perez, Edgar",
+   "FA",
+   false,
+   "D",
+   "FA-D"
+  ],
+  [
+   6509932,
+   "Jimenez Salas, Kristel",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6509959,
+   "Miranda Solano, Keylor",
+   "FA",
+   false,
+   "D",
+   "FA-D"
+  ],
+  [
+   6510582,
+   "Ramirez Camacho, Daniel",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6510590,
+   "Murillo Varela, Ricardo",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6511201,
+   "Granados Wing, Brian Saul",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6511686,
+   "Araya Fuentes, Mario",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6511813,
+   "Guerrero Jimenez, Luis Fernando",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6511899,
+   "Bonilla Sequeira, Adriana",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6512062,
+   "Rosales Gonzalez, Jessica",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6512933,
+   "Munoz Ramirez, Kyara Vanessa",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6513328,
+   "Jaramillo Naranjo, Sebastian",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6513484,
+   "Castro Esquivel, Eduardo",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6513522,
+   "Melendez Arce, Kalet",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6513530,
+   "Funez Fonseca, Bernal",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6513590,
+   "Alvarez Alvarez, Johanel",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6513697,
+   "Meza Vega, Jose Antonio",
+   "FA",
+   false,
+   "D",
+   "FA-D"
+  ],
+  [
+   6515223,
+   "Valverde Mora, Mauricio",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6515290,
+   "Torres Braiz, Sandra Maria",
+   "FA",
+   false,
+   "D",
+   "FA-D"
+  ],
+  [
+   6515304,
+   "Navarro Castillo, Llamin",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6515720,
+   "Campos Astorga, Priscila",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6515932,
+   "Chacon Lopez, William",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6516017,
+   "Porras Palma, Dennis",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6516130,
+   "Campos Quintanilla, Karen D",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6516718,
+   "Pastor Carvajal, Jeigoth",
+   "FA",
+   false,
+   "D",
+   "FA-D"
+  ],
+  [
+   6518877,
+   "Diaz Diaz, Gerardo",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6519938,
+   "Navarrete Badilla, Myckel",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6520464,
+   "Cubillo Duran, Aaron Josue",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6522181,
+   "Montero Romero, Dany Jose",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6524575,
+   "Rodriguez Vargas, Brandon Jesus",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6524800,
+   "Salazar Delgado, Aylin Naomi",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6526373,
+   "Quesada Arauz, Jean Carlo",
+   "FA",
+   false,
+   "D",
+   "FA-D"
+  ],
+  [
+   6526683,
+   "Sanchez Rodriguez, Pablo Roberto",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6526900,
+   "Araya Mora, Jose Andres",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6529151,
+   "Mora Arias, Pablo Andres",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6530095,
+   "Lewis Castillo, William Antonio",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6532950,
+   "Gonzalez Jimenez, Sara",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6533965,
+   "Viquez Miranda, Vivian",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6537855,
+   "Gomez Villalobos, Stanley",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6544592,
+   "Bluvol Nadeau, Ayen Claude",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6548040,
+   "Nunez Gonzalez, Wilberth G.",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6548130,
+   "Ramirez Quiros, Josue",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6548482,
+   "Rojas Vindas, Emmanuel de Jesus",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6550096,
+   "Aguero Espinoza, Sebasthian",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6550924,
+   "Redondo Acuna, Sebastian",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6551122,
+   "Venegas Sandoval, Ariana",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6553478,
+   "Rojas Guzman, Freddy",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6555942,
+   "Leiton Campos, Johanna Karolina",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6556426,
+   "Alvarado Sanchez, Diego Asdrubal",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6557945,
+   "Chavarria Campos, Diego Andrey",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6558186,
+   "Lippi Mena, Andres Eduardo",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6558216,
+   "Loria Martinez, Luis Felipe",
+   "FA",
+   false,
+   "D",
+   "FA-D"
+  ],
+  [
+   6558674,
+   "Gomez Villalobos, Etienne",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6561462,
+   "Araya Montero, William Antonio",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6561470,
+   "Salazar Leon, Esteban Orlando",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6563147,
+   "Villalobos Nunez, Ethan Alonso",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6564925,
+   "Zamora Aguilar, Amalia Maria",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6565662,
+   "Montero Ramirez, Michael",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6568394,
+   "Salazar Hernandez, Allan Z.",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6570658,
+   "Porras Miranda, Emanuel",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6571654,
+   "Cordoba Sevilla, Justin",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6574874,
+   "Villalobos Herrera, Rommy",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6574882,
+   "Alvarado Solano, Blanca Isabel",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6574890,
+   "Morales Castrillo, Luis Antonio",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6575005,
+   "Leiva Chaves, Emily Gabriela",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6575013,
+   "Trujillo Sisfontes, Gabriela Violeta",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6575447,
+   "Sobrado Chamberlain, Marcela Cristina",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6578837,
+   "Pernett Briceno, Javier Andres",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6580580,
+   "Cordero Sanabria, Sandra Isabel",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6580688,
+   "Villegas Ruiz, Fidel De Jesus",
+   "NA",
+   false,
+   "",
+   "NA"
+  ]
+ ],
+ "aprobaciones": [
+  {
+   "fide_id": 6502849,
+   "titulo": "IA",
+   "fecha": "2023-04-04",
+   "consejo": "1.ª reunión del Consejo de FIDE de 2023 (Ciudad de México)",
+   "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2023Q1CouncilARBReport.pdf"
+  },
+  {
+   "fide_id": 6558216,
+   "titulo": "FA",
+   "fecha": "2023-12-17",
+   "consejo": "3.ª reunión del Consejo de FIDE de 2023 (en línea, del 11 al 17 de diciembre)",
+   "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2023Q3CouncilARBReport.pdf"
+  },
+  {
+   "fide_id": 6504035,
+   "titulo": "IA",
+   "fecha": "2024-04-13",
+   "consejo": "1.ª reunión del Consejo de FIDE de 2024 (en línea, del 8 al 13 de abril)",
+   "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2024Q1CouncilARBReport.pdf"
+  },
+  {
+   "fide_id": 6502946,
+   "titulo": "IA",
+   "fecha": "2024-07-29",
+   "consejo": "2.ª reunión del Consejo de FIDE de 2024 (en línea)",
+   "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2024Q2CouncilARBReport.pdf"
+  },
+  {
+   "fide_id": 6500218,
+   "titulo": "FA",
+   "fecha": "2024-07-29",
+   "consejo": "2.ª reunión del Consejo de FIDE de 2024 (en línea)",
+   "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2024Q2CouncilARBReport.pdf"
+  },
+  {
+   "fide_id": 6509851,
+   "titulo": "FA",
+   "fecha": "2024-07-29",
+   "consejo": "2.ª reunión del Consejo de FIDE de 2024 (en línea)",
+   "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2024Q2CouncilARBReport.pdf"
+  },
+  {
+   "fide_id": 6508189,
+   "titulo": "FA",
+   "fecha": "2024-09-05",
+   "consejo": "3.ª reunión del Consejo de FIDE de 2024 (Budapest)",
+   "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2024Q3CouncilARBReport.pdf"
+  },
+  {
+   "fide_id": 6513697,
+   "titulo": "FA",
+   "fecha": "2024-11-10",
+   "consejo": "4.ª reunión del Consejo de FIDE de 2024 (en línea)",
+   "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2024Q4CouncilARBReport.pdf"
+  },
+  {
+   "fide_id": 6504396,
+   "titulo": "FA",
+   "fecha": "2024-11-10",
+   "consejo": "4.ª reunión del Consejo de FIDE de 2024 (en línea)",
+   "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2024Q4CouncilARBReport.pdf"
+  },
+  {
+   "fide_id": 6526373,
+   "titulo": "FA",
+   "fecha": "2025-03-22",
+   "consejo": "1.ª reunión del Consejo de FIDE de 2025 (Nicosia, 21 y 22 de marzo)",
+   "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2025Q1CouncilARBReport.pdf"
+  },
+  {
+   "fide_id": 6515290,
+   "titulo": "FA",
+   "fecha": "2025-03-22",
+   "consejo": "1.ª reunión del Consejo de FIDE de 2025 (Nicosia, 21 y 22 de marzo)",
+   "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2025Q1CouncilARBReport.pdf"
+  },
+  {
+   "fide_id": 109363,
+   "titulo": "FA",
+   "fecha": "2026-04-02",
+   "consejo": "1.ª reunión del Consejo de FIDE de 2026 (en línea)",
+   "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2026Q1CouncilARBReport.pdf"
+  },
+  {
+   "fide_id": 6505694,
+   "titulo": "IA",
+   "fecha": "2026-08-23",
+   "consejo": "2.ª reunión del Consejo de FIDE de 2026 (en línea)",
+   "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2026Q2CouncilARBReport.pdf"
+  },
+  {
+   "fide_id": 6516718,
+   "titulo": "FA",
+   "fecha": "2026-08-23",
+   "consejo": "2.ª reunión del Consejo de FIDE de 2026 (en línea)",
+   "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2026Q2CouncilARBReport.pdf"
+  }
+ ]
+}

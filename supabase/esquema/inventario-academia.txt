@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261015224105
+# al-dia-con: 20261016011935
 tabla  Ejercicios Lichess  rls=true
 tabla  _foto_rls_tmp  rls=false
 tabla  _pedidos_elo  rls=false
@@ -17,6 +17,7 @@ tabla  arbitros_cr  rls=true
 tabla  arbitros_cr_cargos  rls=true
 tabla  arbitros_cr_cr  rls=true
 tabla  arbitros_cr_cr_cargos  rls=true
+tabla  arbitros_cr_fide  rls=true
 tabla  arbitros_cr_torneos  rls=true
 tabla  archivos_pgn  rls=true
 tabla  auditoria  rls=true
@@ -290,6 +291,17 @@ columna  arbitros_cr_cr.rondas  smallint
 columna  arbitros_cr_cr_cargos.clave  integer
 columna  arbitros_cr_cr_cargos.fide_id  integer
 columna  arbitros_cr_cr_cargos.rol  text
+columna  arbitros_cr_fide.af_consejo  text
+columna  arbitros_cr_fide.af_fecha  date
+columna  arbitros_cr_fide.categoria  text
+columna  arbitros_cr_fide.fide_id  integer
+columna  arbitros_cr_fide.ia_consejo  text
+columna  arbitros_cr_fide.ia_fecha  date
+columna  arbitros_cr_fide.inactivo  boolean
+columna  arbitros_cr_fide.licencia  text
+columna  arbitros_cr_fide.lista  date
+columna  arbitros_cr_fide.nombre  text
+columna  arbitros_cr_fide.titulo  text
 columna  arbitros_cr_torneos.af_detalle  text
 columna  arbitros_cr_torneos.af_estado  text
 columna  arbitros_cr_torneos.ai_detalle  text
@@ -2166,6 +2178,7 @@ politica  arbitros_cr  arbitros_cr_con_herramienta  SELECT
 politica  arbitros_cr_cargos  arbitros_cr_cargos_con_herramienta  SELECT
 politica  arbitros_cr_cr  arbitros_cr_cr_con_herramienta  SELECT
 politica  arbitros_cr_cr_cargos  arbitros_cr_cr_cargos_con_herramienta  SELECT
+politica  arbitros_cr_fide  arbitros_cr_fide_con_herramienta  SELECT
 politica  arbitros_cr_torneos  arbitros_cr_torneos_con_herramienta  SELECT
 politica  archivos_pgn  archivos_pgn_delete  DELETE
 politica  archivos_pgn  archivos_pgn_insert  INSERT
@@ -2706,6 +2719,7 @@ indice  arbitros_cr_cr  arbitros_cr_cr_fide_torneo
 indice  arbitros_cr_cr  arbitros_cr_cr_pkey
 indice  arbitros_cr_cr_cargos  arbitros_cr_cr_cargos_fide_id
 indice  arbitros_cr_cr_cargos  arbitros_cr_cr_cargos_pkey
+indice  arbitros_cr_fide  arbitros_cr_fide_pkey
 indice  arbitros_cr_torneos  arbitros_cr_torneos_pkey
 indice  archivos_pgn  archivos_pgn_pkey
 indice  archivos_pgn  archivos_pgn_profesor_id_idx
@@ -3260,6 +3274,9 @@ grant  arbitros_cr_cr  authenticated  TRIGGER
 grant  arbitros_cr_cr_cargos  authenticated  REFERENCES
 grant  arbitros_cr_cr_cargos  authenticated  SELECT
 grant  arbitros_cr_cr_cargos  authenticated  TRIGGER
+grant  arbitros_cr_fide  authenticated  REFERENCES
+grant  arbitros_cr_fide  authenticated  SELECT
+grant  arbitros_cr_fide  authenticated  TRIGGER
 grant  arbitros_cr_torneos  authenticated  REFERENCES
 grant  arbitros_cr_torneos  authenticated  SELECT
 grant  arbitros_cr_torneos  authenticated  TRIGGER

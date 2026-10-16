@@ -3069,6 +3069,103 @@ aplica a la norma de AI de cada torneo, por persona, después de `normaDe()`:
   Eduardo, sin AF, ninguno cuenta. Lo rompí quitando la regla y saltan
   cinco comprobaciones.
 
+## Lo que dice FIDE de cada árbitro
+
+El dueño pidió tres cosas (octubre de 2026): la fecha del primer torneo, si
+cada árbitro está activo o no, y **la fecha exacta en que se le aprobó el
+AF**, porque desde ese día todo lo que arbitre cuenta como norma de AI y ya
+no de AF.
+
+- **La fecha del primer torneo** es una columna más en la lista («Primer
+  torneo», ordenable) y va en la ficha («del … al …») y en la comparación.
+  Sale de los torneos de los años elegidos, igual que «Último torneo».
+- **Activo o inactivo**: de la **lista oficial de árbitros de la Comisión
+  de Árbitros de FIDE**
+  (`arbiters.fide.com/wp-content/uploads/Database/List_of_Arbiters.pdf`,
+  530 páginas, con la fecha de publicación en la cabecera). Cada fila trae
+  el ID, el nombre, la federación, el título (IA, FA, NA), la marca «i» de
+  inactivo, la categoría y la licencia («IA-D», «No» = sin licencia).
+  - En la página, la columna y el filtro «En FIDE» dicen «Activo»,
+    «Inactivo» o «No figura»: quien no está en la lista no es árbitro de
+    FIDE. La ficha dice además la licencia.
+  - La lista también dice **NA** (Árbitro Nacional) de muchos a quienes el
+    perfil de FIDE no les da título. Por eso la página les pone AN (antes
+    salían como «Sin título en FIDE»).
+  - El 16/10/2026, en la lista del 12/10/2026, había 148 de Costa Rica.
+    Inactivos eran 3 (Luis Manuel Araya, IA y sin licencia; Gustavo Murillo
+    Ortiz y Diego Redondo Vargas, FA). De los nuestros, 41 no figuran,
+    casi todos los que solo están en chess-results.
+- **Cómo se lee la lista**: FIDE no contesta desde el contenedor, y desde la
+  base `net.http_get` corta el PDF en el primer byte nulo (llegaron 4475
+  bytes de 530 páginas). Lo convierte a texto `https://r.jina.ai/<url>`,
+  pedido con pg_net. Las filas de Costa Rica se sacan con
+  `(\d{5,9}) ([^0-9\n]+?) CRC (IA|FA|NA) (i )?(?:([A-D]) )?([A-Z]{2}-[A-D]|No|NA)`:
+  salieron 148 de las 148 veces que aparece « CRC ».
+- **La fecha exacta del AF** no la dice el perfil de FIDE, que solo trae el
+  año (y además está cerrado). La dicen los **informes de la Comisión de
+  Árbitros a cada reunión del Consejo de FIDE**
+  (`Reporting/AAAAQnCouncilARBReport.pdf`, uno por reunión desde 2023).
+  - Cada informe trae las solicitudes de título en dos apéndices: «FA Title
+    Applications…» e «IA Title Applications…». Cada solicitud va con su
+    nombre, «CRC ID#…» y sus torneos.
+  - **El veredicto va DESPUÉS de los torneos**, no antes. Se comprobó con
+    las razones de los rechazos: el «dos torneos a la vez» es el de Pablo
+    Bermúdez en 2023, y el «seminario muy viejo» es el de Neeshmy Núñez,
+    con su seminario de 2017.
+  - La fecha es la de la reunión, que va en la primera línea del informe
+    («online, July 29th, 2024»). Si duró varios días, se toma el último.
+- Desde 2023 se aprobaron, para Costa Rica:
+  - **AF**:
+    - Loria Martínez, 11-17/12/2023. Ojo: su perfil de FIDE dice 2024; se
+      toma la reunión.
+    - Murillo Tsijli y Zeledón Pérez, 29/07/2024.
+    - Argüello Acuña, 05/09/2024.
+    - Meza Vega y Neeshmy Núñez, 10/11/2024.
+    - Quesada Arauz y Torres Braiz, 22/03/2025.
+    - Francia Roa, 02/04/2026.
+    - Pastor Carvajal, 23/08/2026.
+  - **AI**:
+    - Gómez Huertas, 04/04/2023.
+    - Bermúdez Vives, 13/04/2024.
+    - Cristian Araya Fuentes, 29/07/2024.
+    - Joshebeth Núñez, 23/08/2026.
+  - Lo de antes de 2023 no se buscó, y no hace falta: un torneo del año de
+    un AF de 2022 o antes ya quedó fuera de los seis años que cuentan.
+- **La regla en la página**:
+  - Con la fecha exacta (`af_fecha`), un torneo cuenta para AI si empezó
+    después de esa fecha (`antesDelAf`). Uno anterior no cuenta, y uno del
+    mismo día queda para revisar.
+  - Además, un torneo posterior al AF **ya no cuenta para AF**
+    (`despuesDelAf`), porque ya tiene el título: lo dijo el dueño.
+  - Sin la fecha exacta se sigue usando el año del perfil: el mismo año
+    queda para revisar en AI y no cambia nada en AF.
+  - El cuadro de AI dice «solo cuentan los torneos que empezaron después
+    del …».
+- **Dónde vive**: en `arbitros_cr_fide` (migración
+  `20261016011935_arbitros_cr_fide.sql`), aparte de `arbitros_cr`, porque
+  `herramientas/arbitros-cr.py` borra y vuelve a llenar esa.
+  - La fuente es `herramientas/datos/arbitros-cr-lista-fide.json`: la lista
+    y las aprobaciones, cada una con su informe.
+  - El SQL lo arma `herramientas/arbitros-cr/lista-fide.py`.
+  - La carga de 16 KB en un solo `execute_sql` se cortó a los 60 s, sin
+    cargar nada. En tres tandas de 50 filas entra.
+  - La huella de lo cargado (md5 de las filas) es igual en la base y en el
+    JSON. Ojo: en `concat_ws`, un booleano se escribe `t`/`f`, no
+    `true`/`false`.
+- `verificar-arbitros-cr.js` lo prueba con tres casos:
+  - Óscar, activo y con AF el 01/05/2024: para AI, lo de 2023 no cuenta, lo
+    del mismo día queda para revisar y lo de 2025 vale; para AF, lo de 2025
+    ya no cuenta.
+  - Ana, inactiva y sin licencia, de quien solo se sabe el año del AF.
+  - Luis, AN por la lista.
+
+  Además prueba el filtro «En FIDE» y «Primer torneo». Lo rompí sin la
+  fecha exacta, sin «ya no para AF» y sin la marca de inactivo, y salta
+  cada vez.
+- **Cada mes**, en la puesta al día (`arbitros-cr-actualizar`): bajar la
+  lista otra vez y leer el informe de la última reunión del Consejo, por si
+  hay títulos nuevos.
+
 ## Comparar dos árbitros y el ranking del año
 
 Dos piezas más en `arbitros-cr.html` (pedido del dueño, octubre de 2026):

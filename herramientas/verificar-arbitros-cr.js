@@ -23,6 +23,10 @@
      y «Ordenar por»;
    - comparar dos árbitros: dato por dato, por año, los torneos juntos con
      el cargo de cada uno, y la dirección lleva a los dos;
+   - lo que dice FIDE (arbitros_cr_fide): activo, inactivo o no figura, el
+     filtro «En FIDE», el AN que el perfil no dice, y la fecha exacta del AF:
+     desde ella sus torneos cuentan para AI y ya no para AF (con solo el año,
+     el mismo año queda para revisar);
    - las tablas se piden de mil en mil (range).
 
    Ver «Árbitros de Costa Rica en FIDE» en docs/decisiones/juegos-y-torneos.md.
@@ -40,13 +44,23 @@ function igual(nombre, hallado, esperado) {
 }
 
 const ARBITROS = [
-    // Óscar sacó el AF en 2024: su norma de AI de 2023 no cuenta, la de 2024
-    // queda para revisar y la de 2025 sí.
+    // Óscar sacó el AF el 01/05/2024 (ARBITROS_FIDE): su norma de AI de 2023
+    // no cuenta, la del mismo día queda para revisar y la de 2025 sí (y esa
+    // ya no cuenta para AF).
     { fide_id: 6500001, nombre: "Ángulo Prueba, Óscar", titulo: "IA", titulo_detalle: "Árbitro FIDE (2024), Árbitro Internacional (2026)" },
-    { fide_id: 6500002, nombre: "Soto Prueba, Ana", titulo: "FA", titulo_detalle: "" },
+    // De Ana solo se sabe el año del AF: lo de 2024 queda para revisar.
+    { fide_id: 6500002, nombre: "Soto Prueba, Ana", titulo: "FA", titulo_detalle: "Árbitro FIDE (2024), categoría D" },
     { fide_id: 6500003, nombre: "Rojas Prueba, Luis", titulo: "", titulo_detalle: "" },
     { fide_id: 6500004, nombre: "Viejo Prueba, Juan", titulo: "AN", titulo_detalle: "" },
     { fide_id: 6500005, nombre: "Quiros Prueba, Eduardo", titulo: "", titulo_detalle: "", solo_chess_results: true },
+];
+// La lista oficial de árbitros de FIDE: Óscar activo con la fecha de su AF,
+// Ana inactiva y sin licencia, Luis como Árbitro Nacional (su perfil no lo
+// dice); Juan y Eduardo no figuran.
+const ARBITROS_FIDE = [
+    { fide_id: 6500001, titulo: "IA", inactivo: false, categoria: "D", licencia: "IA-D", af_fecha: "2024-05-01", af_consejo: "2.ª reunión del Consejo de FIDE de 2024 (en línea)", ia_fecha: null, ia_consejo: "", lista: "2026-10-12" },
+    { fide_id: 6500002, titulo: "FA", inactivo: true, categoria: "D", licencia: "No", af_fecha: null, af_consejo: "", ia_fecha: null, ia_consejo: "", lista: "2026-10-12" },
+    { fide_id: 6500003, titulo: "NA", inactivo: false, categoria: "", licencia: "NA", af_fecha: null, af_consejo: "", ia_fecha: null, ia_consejo: "", lista: "2026-10-12" },
 ];
 const T = (id, nombre, inicio, af, ai) => ({
     id, nombre, ciudad: "San José", pais: "Costa Rica", inicio, fin: inicio, sistema: "s", ritmo: "Standard",
@@ -103,7 +117,7 @@ function doble(tieneLicencia) {
 window.SUPABASE_URL = "https://falso.supabase.co";
 window.SUPABASE_ANON_KEY = "anon-falsa";
 (function () {
-  const TABLAS = ${JSON.stringify({ arbitros_cr: ARBITROS, arbitros_cr_torneos: TORNEOS, arbitros_cr_cargos: CARGOS, arbitros_cr_cr: CR.map((c) => ({ pais: "CRC", ...c })), arbitros_cr_cr_cargos: CR_CARGOS })};
+  const TABLAS = ${JSON.stringify({ arbitros_cr: ARBITROS, arbitros_cr_torneos: TORNEOS, arbitros_cr_cargos: CARGOS, arbitros_cr_cr: CR.map((c) => ({ pais: "CRC", ...c })), arbitros_cr_cr_cargos: CR_CARGOS, arbitros_cr_fide: ARBITROS_FIDE })};
   const LICENCIA = ${tieneLicencia ? "true" : "false"};
   window.__pedidos = [];
   function respuesta(data, error) { return Promise.resolve({ data, error: error || null }); }
@@ -168,20 +182,26 @@ const porNombre = (m) => Object.fromEntries(m.map((f) => [f[0], f]));
     ({ ctx, p } = await abrir(browser, "arbitros-cr.html", true));
     await p.waitForFunction(() => document.getElementById("app").checkVisibility());
     igual("pide cada tabla de mil en mil", await p.evaluate(() => window.__pedidos.filter((x) => x.startsWith("arbitros_cr")).sort()),
-        ["arbitros_cr 0-999", "arbitros_cr_cargos 0-999", "arbitros_cr_cr 0-999", "arbitros_cr_cr_cargos 0-999", "arbitros_cr_torneos 0-999"]);
+        ["arbitros_cr 0-999", "arbitros_cr_cargos 0-999", "arbitros_cr_cr 0-999", "arbitros_cr_cr_cargos 0-999", "arbitros_cr_fide 0-999", "arbitros_cr_torneos 0-999"]);
     let m = porNombre(await filas(p, "#tabla-arbitros"));
     igual("los cinco árbitros salen (todos los años), también quien solo está en chess-results", Object.keys(m).sort(),
         ["Ángulo Prueba, Óscar", "Quiros Prueba, Eduardo", "Rojas Prueba, Luis", "Soto Prueba, Ana", "Viejo Prueba, Juan"].sort());
     // Óscar: 4 de FIDE (el 900001 es el mismo que el 101: no suma) y 2 que no (900002, director; 900006, árbitro); el 900005 no se jugó.
-    // AI: el de 2023 es de antes de su AF (2024) y no cuenta; el de 2024, del mismo año, queda para revisar.
-    igual("Óscar: 6 torneos (4 FIDE, 2 no), 2 principal, 1 adjunto, 2 árbitro, AF 3, AI 2 (1 para revisar: el del año de su AF), último 10/01/2025",
-        m["Ángulo Prueba, Óscar"].slice(1), ["IA", "6", "4", "2", "0", "2", "1", "2", "3", "2 (1)", "Ya es AF", "Ya es AI", "10/01/2025"]);
+    // AF el 01/05/2024: el de 2023 no cuenta para AI; el de ese mismo día queda para revisar; el de 2025 vale para AI y ya no para AF.
+    igual("Óscar: activo, 6 torneos (4 FIDE, 2 no), 2 principal, 1 adjunto, 2 árbitro, AF 2, AI 2 (1 para revisar: el del día de su AF), del 01/03/2023 al 10/01/2025",
+        m["Ángulo Prueba, Óscar"].slice(1), ["IA", "Activo", "6", "4", "2", "0", "2", "1", "2", "2", "2 (1)", "Ya es AF", "Ya es AI", "01/03/2023", "10/01/2025"]);
     // Eduardo: el 900004 es el 102 de FIDE (vale, pero no figura en la ficha de FIDE: revisar); 900002 y 900003 no son de FIDE.
     igual("Eduardo: 3 torneos (1 FIDE para revisar, 2 no), sin AF no le vale ninguno para AI, último 10/07/2024",
-        m["Quiros Prueba, Eduardo"].slice(1), ["—", "3", "1", "2", "0", "1", "0", "2", "1 (1)", "0", "0 de 3", "0 de 4", "10/07/2024"]);
+        m["Quiros Prueba, Eduardo"].slice(1), ["—", "No figura", "3", "1", "2", "0", "1", "0", "2", "1 (1)", "0", "0 de 3", "0 de 4", "01/05/2019", "10/07/2024"]);
     igual("Ana: el asistente no vale, el de pareos queda para revisar (AF 1 (1), AI 1 (1)) y su torneo en Panamá cuenta en el extranjero",
-        m["Soto Prueba, Ana"].slice(1), ["FA", "3", "2", "1", "1", "0", "0", "1", "1 (1)", "1 (1)", "Ya es AF", "0 de 4", "10/01/2025"]);
-    igual("«Hoy para AF» de Luis: 1 de 3", porNombre(await filas(p, "#tabla-arbitros"))["Rojas Prueba, Luis"][11], "1 de 3");
+        m["Soto Prueba, Ana"].slice(1), ["FA", "Inactivo", "3", "2", "1", "1", "0", "0", "1", "1 (1)", "1 (1)", "Ya es AF", "0 de 4", "01/05/2024", "10/01/2025"]);
+    const luis = porNombre(await filas(p, "#tabla-arbitros"))["Rojas Prueba, Luis"];
+    igual("Luis: Árbitro Nacional por la lista de FIDE (su perfil no lo dice), activo, «Hoy para AF» 1 de 3", [luis[1], luis[2], luis[12]], ["AN", "Activo", "1 de 3"]);
+    await p.selectOption("#en-fide", "inactivo");
+    igual("«En FIDE: inactivos» deja solo a Ana", Object.keys(porNombre(await filas(p, "#tabla-arbitros"))), ["Soto Prueba, Ana"]);
+    await p.selectOption("#en-fide", "no");
+    igual("«No figuran» deja a Juan y Eduardo", Object.keys(porNombre(await filas(p, "#tabla-arbitros"))).sort(), ["Quiros Prueba, Eduardo", "Viejo Prueba, Juan"]);
+    await p.selectOption("#en-fide", "");
     const actividad = await filas(p, "#actividad");
     igual("«Torneos por año» en la lista: cada torneo una vez, el año más nuevo primero, con FIDE, no FIDE y extranjero",
         actividad.map((f) => [f[0], f[1].trim(), f[2], f[3], f[4]]),
@@ -191,7 +211,7 @@ const porNombre = (m) => Object.fromEntries(m.map((f) => [f[0], f]));
     // empatan con 1; en 2024 Óscar fue 1.º y Ana 2.ª (empatada con Eduardo).
     igual("el ranking arranca en 2025: Óscar y Ana comparten el 1.º, y cómo les fue en 2024",
         [await p.$eval("#ranking-anio", (e) => e.value), await filas(p, "#tabla-ranking")],
-        ["2025", [["1.º", "Ángulo Prueba, Óscar", "1", "1", "1", "0", "1", "Igual (1.º)"], ["1.º", "Soto Prueba, Ana", "1", "0", "1", "0", "0", "Sube 1 (era 2.º)"]]]);
+        ["2025", [["1.º", "Ángulo Prueba, Óscar", "1", "1", "1", "0", "0", "Igual (1.º)"], ["1.º", "Soto Prueba, Ana", "1", "0", "1", "0", "0", "Sube 1 (era 2.º)"]]]);
     await p.selectOption("#ranking-anio", "2024");
     await p.selectOption("#ranking-por", "principal");
     igual("2024 por «como principal»: Óscar y Eduardo con 1, y en 2023 nadie", (await filas(p, "#tabla-ranking")).map((f) => [f[0], f[1], f[3], f[7]]),
@@ -207,19 +227,19 @@ const porNombre = (m) => Object.fromEntries(m.map((f) => [f[0], f]));
 
     await p.selectOption("#tipo", "nofide");
     m = porNombre(await filas(p, "#tabla-arbitros"));
-    igual("«No FIDE»: solo quienes tienen torneos que no son de FIDE, con esos", [Object.keys(m).sort(), m["Ángulo Prueba, Óscar"][2], m["Quiros Prueba, Eduardo"][2]],
+    igual("«No FIDE»: solo quienes tienen torneos que no son de FIDE, con esos", [Object.keys(m).sort(), m["Ángulo Prueba, Óscar"][3], m["Quiros Prueba, Eduardo"][3]],
         [["Quiros Prueba, Eduardo", "Soto Prueba, Ana", "Ángulo Prueba, Óscar"].sort(), "2", "2"]);
     await p.selectOption("#tipo", "fide");
     m = porNombre(await filas(p, "#tabla-arbitros"));
-    igual("«Solo FIDE»: Óscar con 4 y Eduardo con 1", [m["Ángulo Prueba, Óscar"][2], m["Quiros Prueba, Eduardo"][2]], ["4", "1"]);
+    igual("«Solo FIDE»: Óscar con 4 y Eduardo con 1", [m["Ángulo Prueba, Óscar"][3], m["Quiros Prueba, Eduardo"][3]], ["4", "1"]);
     await p.selectOption("#tipo", "");
 
     await p.selectOption("#donde", "fuera");
     m = porNombre(await filas(p, "#tabla-arbitros"));
-    igual("«En el extranjero»: solo Ana, con su torneo en Panamá", [Object.keys(m), m["Soto Prueba, Ana"][2]], [["Soto Prueba, Ana"], "1"]);
+    igual("«En el extranjero»: solo Ana, con su torneo en Panamá", [Object.keys(m), m["Soto Prueba, Ana"][3]], [["Soto Prueba, Ana"], "1"]);
     await p.selectOption("#donde", "cr");
     m = porNombre(await filas(p, "#tabla-arbitros"));
-    igual("«En Costa Rica»: Ana sin el de Panamá, Óscar igual", [m["Soto Prueba, Ana"][2], m["Soto Prueba, Ana"][5], m["Ángulo Prueba, Óscar"][2]], ["2", "0", "6"]);
+    igual("«En Costa Rica»: Ana sin el de Panamá, Óscar igual", [m["Soto Prueba, Ana"][3], m["Soto Prueba, Ana"][6], m["Ángulo Prueba, Óscar"][3]], ["2", "0", "6"]);
     await p.selectOption("#donde", "");
 
     const cuentaGeneral = () => p.$eval("#cuenta", (e) => e.textContent);
@@ -227,18 +247,18 @@ const porNombre = (m) => Object.fromEntries(m.map((f) => [f[0], f]));
     await p.selectOption("#contar", "festival");
     m = porNombre(await filas(p, "#tabla-arbitros"));
     igual("«Festivales como uno»: el 102 y el 900006 (mismo día) cuentan como uno de FIDE para Óscar; 2 principal y 2 árbitro siguen",
-        m["Ángulo Prueba, Óscar"].slice(1), ["IA", "5", "4", "1", "0", "2", "1", "2", "3", "2 (1)", "Ya es AF", "Ya es AI", "10/01/2025"]);
-    igual("y Eduardo, que estuvo solo en uno de ese día, no cambia", m["Quiros Prueba, Eduardo"][2], "3");
+        m["Ángulo Prueba, Óscar"].slice(1), ["IA", "Activo", "5", "4", "1", "0", "2", "1", "2", "2", "2 (1)", "Ya es AF", "Ya es AI", "01/03/2023", "10/01/2025"]);
+    igual("y Eduardo, que estuvo solo en uno de ese día, no cambia", m["Quiros Prueba, Eduardo"][3], "3");
     igual("la cuenta general junta todo lo del mismo día", /con 8 torneos o festivales \(5 de FIDE y 3 que no; 1 en el extranjero\)/.test(await cuentaGeneral()), true);
     await p.selectOption("#contar", "");
 
     await p.selectOption("#desde", "2023");
     m = porNombre(await filas(p, "#tabla-arbitros"));
     igual("desde 2023, Juan (solo 2015) ya no sale", "Viejo Prueba, Juan" in m, false);
-    igual("desde 2023, Eduardo ya no cuenta su torneo de 2019", m["Quiros Prueba, Eduardo"][2], "2");
+    igual("desde 2023, Eduardo ya no cuenta su torneo de 2019", m["Quiros Prueba, Eduardo"][3], "2");
     await p.selectOption("#desde", "2015");
     await p.selectOption("#titulo", "-");
-    igual("«sin título en FIDE» deja a Luis y a Eduardo", Object.keys(porNombre(await filas(p, "#tabla-arbitros"))).sort(), ["Quiros Prueba, Eduardo", "Rojas Prueba, Luis"]);
+    igual("«sin título en FIDE» deja a Eduardo (Luis es AN por la lista de FIDE)", Object.keys(porNombre(await filas(p, "#tabla-arbitros"))).sort(), ["Quiros Prueba, Eduardo"]);
     await p.selectOption("#titulo", "");
     await p.fill("#buscar", "angulo");
     await p.waitForTimeout(400);
@@ -282,8 +302,8 @@ const porNombre = (m) => Object.fromEntries(m.map((f) => [f[0], f]));
         o.map((f) => [f[0], f[2], f[3]]),
         [["10/01/2025", "Sí", "Árbitro principal"], ["01/08/2024", "Sí", "Árbitro adjunto principal"], ["10/07/2024", "No", "Director del torneo"],
          ["01/05/2024", "Sí", "Árbitro principal"], ["01/05/2024", "No", "Árbitro"], ["01/03/2023", "Sí", "Árbitro"]]);
-    const conPorque = await p.$eval("#tabla-torneos tbody tr", (tr) => [tr.cells[8].querySelector(".of-estado").textContent, tr.cells[8].querySelector(".of-detalle").textContent]);
-    igual("la norma va escrita con su porqué", conPorque, ["Vale", "porque si"]);
+    const conPorque = await p.$eval("#tabla-torneos tbody tr", (tr) => [tr.cells[9].querySelector(".of-estado").textContent, tr.cells[9].querySelector(".of-detalle").textContent]);
+    igual("la norma va escrita con su porqué", conPorque, ["Vale una vez", "porque opcion"]);
     igual("un torneo que no es de FIDE no tiene norma", o[2].slice(8), ["—", "—"]);
     await p.selectOption("#tipo", "nofide");
     igual("«No FIDE» deja solo los que no son de FIDE", (await filas(p, "#tabla-torneos")).map((f) => f[1].split(/Heredia|San José/)[0].trim()), ["Abierto del club 2024", "Nacional Sub-16 2024"]);
@@ -333,9 +353,19 @@ const porNombre = (m) => Object.fromEntries(m.map((f) => [f[0], f]));
     ({ ctx, p } = await abrir(browser, "arbitros-cr.html#6500001", true));
     await p.waitForFunction(() => document.getElementById("ficha").checkVisibility());
     const ai = Object.fromEntries((await filas(p, "#tabla-torneos")).filter((f) => f[2] === "Sí").map((f) => [f[0].slice(-4), f[9]]));
-    igual("Óscar (AF en 2024): el de 2023 no cuenta, el de 2024 queda para revisar, el de 2025 vale",
-        [ai["2023"].startsWith("No"), /antes de su título de AF \(2024\)/.test(ai["2023"]), ai["2024"].startsWith("Revisar"), /mismo año de su título de AF \(2024\)/.test(ai["2024"]), ai["2025"].startsWith("Vale")],
+    igual("Óscar (AF aprobado el 01/05/2024): para AI, el de 2023 no cuenta, el del mismo día queda para revisar, el de 2025 vale",
+        [ai["2023"].startsWith("No"), /antes de su título de AF \(aprobado el 01\/05\/2024\)/.test(ai["2023"]), ai["2024"].startsWith("Revisar"), /mismo día en que se le aprobó el AF/.test(ai["2024"]), ai["2025"].startsWith("Vale")],
         [true, true, true, true, true]);
+    const af = Object.fromEntries((await filas(p, "#tabla-torneos")).filter((f) => f[2] === "Sí").map((f) => [f[0].slice(-4), f[8]]));
+    igual("y para AF, el de 2025 ya no cuenta (ya tenía el AF); los de antes sí", [af["2025"].startsWith("No"), /Ya tenía el título de AF \(aprobado el 01\/05\/2024\)/.test(af["2025"]), af["2023"].startsWith("Vale")], [true, true, true]);
+    igual("la ficha dice que está activo, su licencia y cuándo se le aprobó el AF", await p.$eval("#ficha-fide", (e) => e.textContent),
+        "Activo en la lista de árbitros de FIDE del 12/10/2026, licencia IA-D. AF aprobado el 01/05/2024 (2.ª reunión del Consejo de FIDE de 2024 (en línea)): desde entonces sus torneos cuentan para AI y ya no para AF.");
+    await ctx.close();
+    ({ ctx, p } = await abrir(browser, "arbitros-cr.html#6500002", true));
+    await p.waitForFunction(() => document.getElementById("ficha").checkVisibility());
+    const ana = (await filas(p, "#tabla-torneos")).find((f) => /Nacional Absoluto/.test(f[1]));
+    igual("Ana (de su AF solo se sabe el año, 2024): su torneo de 2024 queda para revisar en AI", [ana[9].startsWith("Revisar"), /mismo año de su título de AF \(2024\)/.test(ana[9])], [true, true]);
+    igual("y su ficha dice que está inactiva y sin licencia", /^Inactivo en la lista de árbitros de FIDE del 12\/10\/2026, sin licencia\. De su AF solo se sabe el año/.test(await p.$eval("#ficha-fide", (e) => e.textContent)), true);
     await ctx.close();
 
     console.log("\n=== Comparar dos árbitros ===");
@@ -344,7 +374,7 @@ const porNombre = (m) => Object.fromEntries(m.map((f) => [f[0], f]));
     const dato = async (n) => (await filas(p, "#tabla-comparar")).find((f) => f[0] === n);
     igual("la dirección con dos ID abre la comparación: Luis contra Óscar, dato por dato",
         [await p.$eval("#comparar", (e) => e.value), await p.$$eval("#tabla-comparar thead th", (t) => t.map((x) => x.textContent)), await dato("Torneos"), await dato("Hoy para AF"), await dato("Título")],
-        ["6500001", ["Dato", "Rojas Prueba, Luis", "Ángulo Prueba, Óscar"], ["Torneos", "1", "6"], ["Hoy para AF", "1 de 3", "Ya es AF"], ["Título", "Sin título en FIDE", "Árbitro Internacional (IA)"]]);
+        ["6500001", ["Dato", "Rojas Prueba, Luis", "Ángulo Prueba, Óscar"], ["Torneos", "1", "6"], ["Hoy para AF", "1 de 3", "Ya es AF"], ["Título", "Árbitro Nacional (AN)", "Árbitro Internacional (IA)"]]);
     igual("por año, con los que hicieron juntos", (await filas(p, "#comparar-anios")).find((f) => f[0] === "2023"), ["2023", "1", "1", "1"]);
     igual("el torneo que hicieron juntos, con el cargo de cada uno", [await p.$eval("#comparar-juntos-texto", (e) => e.textContent), await filas(p, "#comparar-juntos")],
         ["1 torneo hicieron juntos de 2015 a 2025:", [["01/03/2023", "Internacional con titulados 2023", "Árbitro adjunto principal", "Árbitro"]]]);
