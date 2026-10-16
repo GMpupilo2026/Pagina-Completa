@@ -93,9 +93,38 @@ Los árbitros nuevos (alguien de Costa Rica que figura por primera vez con su
 ID) **no entran solos**: hace falta su perfil de FIDE para saber su nombre y su
 país. Si el resumen los nombra, anotarlos en el PR.
 
+## 3 bis. La lista de FIDE y los títulos nuevos
+
+Ver «Lo que dice FIDE de cada árbitro» en `docs/decisiones/juegos-y-torneos.md`.
+
+1. La lista oficial: `select net.http_get('https://r.jina.ai/https://arbiters.fide.com/wp-content/uploads/Database/List_of_Arbiters.pdf', timeout_milliseconds := 300000);`
+   (el PDF directo llega cortado). Si la fecha de «Published Time» es la
+   misma que `lista.publicada` del JSON, no cambió: seguir. Si es nueva,
+   sacar las filas de CRC con la expresión de la decisión (tienen que salir
+   tantas como veces aparece « CRC ») y reemplazar `arbitros` y `lista` en
+   `herramientas/datos/arbitros-cr-lista-fide.json` (las filas se sacan de
+   la respuesta guardada, nunca se transcriben).
+2. Los títulos nuevos: si hubo una reunión del Consejo de FIDE desde la
+   última aprobación del JSON, leer su informe
+   (`https://arbiters.fide.com/wp-content/uploads/Reporting/AAAAQnCouncilARBReport.pdf`,
+   por r.jina.ai) y sumar a `aprobaciones` cada «CRC ID#» aprobado, con el
+   título de su apéndice (FA o IA) y la fecha de la reunión (primera línea
+   del informe). El veredicto va después de los torneos de cada uno.
+   De ese mismo informe, sumar a `solicitudes` cada solicitud de CRC
+   (veredicto, motivo y torneos) y a `seminarios` los seminarios de AF y
+   de AI aprobados, como dice «La ruta al título, el historial, la
+   actividad y los que faltan».
+3. `python3 herramientas/arbitros-cr/lista-fide.py > /tmp/lista-fide.sql` y
+   cargarlo sentencia por sentencia (van de a 25 filas; en un solo llamado
+   se corta a los 60 s). El `delete` pide confirmación: si los ID son los
+   mismos, cargar con `on conflict (fide_id) do update` sin borrar.
+   Comparar la huella como dice la decisión.
+4. Después de cargar los torneos (paso 3 de arriba): `python3 herramientas/arbitros-cr/por-identificar.py > /tmp/sin-id.sql`,
+   cargarlo igual y comparar con `--huella`.
+
 ## 4. Guardar
 
-En una rama `datos/arbitros-cr-AAAA-MM`: los JSON de `herramientas/datos/`, los
+En una rama `datos/arbitros-cr-AAAA-MM`: los JSON de `herramientas/datos/` (también `arbitros-cr-lista-fide.json` si cambió), los
 `carga-parcial-*.sql` (no se borran los `carga-*.sql` ni los `carga-afuera-*.sql`)
 y, en «Lo que dio la carga» de «Árbitros de Costa Rica en el extranjero», una
 línea con la fecha y cuántos torneos y cargos sumó la pasada. Abrir el PR contra

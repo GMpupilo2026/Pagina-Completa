@@ -1,0 +1,1733 @@
+{
+ "lista": {
+  "fuente": "https://arbiters.fide.com/wp-content/uploads/Database/List_of_Arbiters.pdf",
+  "publicada": "2026-10-12",
+  "leida": "2026-10-16"
+ },
+ "nota": "arbitros: [ID FIDE, nombre, título (IA, FA o NA), inactivo («i» de la lista), categoría, licencia]. aprobaciones: el título de AF o AI de cada uno, con la reunión del Consejo de FIDE que lo aprobó y su fecha, del informe de la Comisión de Árbitros a esa reunión (solo desde 2023: lo de antes no cambia qué normas cuentan hoy). solicitudes: cada solicitud de título de Costa Rica en esos informes (veredicto, motivo y los torneos tal como los lista el informe). seminarios: quién aprobó un seminario de AF o de AI y en qué mes, con el día en que terminó si lo dice una solicitud (la norma de seminario vale 4 años, B.06.1 5.3.2).",
+ "arbitros": [
+  [
+   109363,
+   "Francia, Victor",
+   "FA",
+   false,
+   "D",
+   "FA-D"
+  ],
+  [
+   6500056,
+   "Alvarez Hernandez, David",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6500218,
+   "Murillo Tsijli, Alexis",
+   "FA",
+   false,
+   "D",
+   "FA-D"
+  ],
+  [
+   6500226,
+   "Hernandez Basante, Francisco",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6500358,
+   "Barrios Zamora, Carlos",
+   "IA",
+   false,
+   "D",
+   "IA-D"
+  ],
+  [
+   6500382,
+   "Vargas Villalobos, Oliverio",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6500404,
+   "Gonzalez Acosta, Paul Jesus",
+   "IA",
+   false,
+   "D",
+   "IA-D"
+  ],
+  [
+   6500420,
+   "Alvarado, Dizan Ernesto",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6500439,
+   "Cordoba Solano, Edwin",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6500463,
+   "Jimenez Esquivel, Greivin",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6500536,
+   "Vega Araya, Edwin",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6500579,
+   "Munoz Solis, Carolina",
+   "IA",
+   false,
+   "A",
+   "IA-A"
+  ],
+  [
+   6500625,
+   "Carvajal Gorgona, Jonathan",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6500650,
+   "Urbina Quiroz, Edwin",
+   "FA",
+   false,
+   "D",
+   "FA-D"
+  ],
+  [
+   6500676,
+   "Vargas Serrano, Pablo Andres",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6501028,
+   "Castro Madrigal, Randall",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6501133,
+   "Cabrera Chaves, Marco Antonio",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6501168,
+   "Jimenez Rojas, Fabian",
+   "FA",
+   false,
+   "D",
+   "FA-D"
+  ],
+  [
+   6501176,
+   "Jimenez Aguilar, Gustavo",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6501397,
+   "Redondo Vargas, Diego Alejandro",
+   "FA",
+   true,
+   "D",
+   "FA-D"
+  ],
+  [
+   6501400,
+   "Araya, Luis Manuel",
+   "IA",
+   true,
+   "D",
+   "No"
+  ],
+  [
+   6501435,
+   "Angulo Cubero, Oscar",
+   "IA",
+   false,
+   "D",
+   "IA-D"
+  ],
+  [
+   6501451,
+   "Artavia Mendez, Jose Lidier",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6501460,
+   "Badilla Hernandez, Johans",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6501486,
+   "Bolanos Arguello, Alexis",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6501621,
+   "Fernandez Sanchez, Mario Andres",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6502180,
+   "Chaves Sanchez, Gabriel A",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6502229,
+   "Elizondo Aguilar, Grettel",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6502270,
+   "Gamboa Alvarado, Olga Leticia",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6502580,
+   "Ruiz Simes, Glenn",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6502822,
+   "Amaya Madrigal, Alvaro Josue",
+   "FA",
+   false,
+   "D",
+   "FA-D"
+  ],
+  [
+   6502849,
+   "Gomez Huertas, Stanley",
+   "IA",
+   false,
+   "D",
+   "IA-D"
+  ],
+  [
+   6502857,
+   "Murillo Ortiz, Gustavo",
+   "FA",
+   true,
+   "D",
+   "FA-D"
+  ],
+  [
+   6502903,
+   "Rodriguez Arrieta, Jose Allan",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6502946,
+   "Araya Fuentes, Cristian",
+   "IA",
+   false,
+   "D",
+   "IA-D"
+  ],
+  [
+   6503128,
+   "Ordonez Chacon, Guillermo",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6503306,
+   "Zumbado Gutierrez, Marco Antonio",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6503349,
+   "Ramirez Gonzalez, Maria Jose",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6503489,
+   "Cordero Maroto, Nelson",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6503594,
+   "Quiros Cajina, Allan",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6503950,
+   "Alvarado Castro, Sergio",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6504035,
+   "Bermudez Vives, Pablo",
+   "IA",
+   false,
+   "D",
+   "IA-D"
+  ],
+  [
+   6504396,
+   "Nunez Gonzalez, Neeshmy",
+   "FA",
+   false,
+   "D",
+   "FA-D"
+  ],
+  [
+   6504442,
+   "Acevedo Mendez, Jennifer",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6504892,
+   "Murillo Gonzalez, Carlos E",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6504949,
+   "Porras Chavarria, Pamela Maria",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6504957,
+   "Porras Chavarria, Steve",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6505007,
+   "Ramirez Arroyo, Joan Emmanuel",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6505155,
+   "Solano Cordero, Jorge Alexis",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6505244,
+   "Castro Solano, Mauricio",
+   "IA",
+   false,
+   "D",
+   "IA-D"
+  ],
+  [
+   6505252,
+   "Bustamante Grijalba, Ariadna",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6505473,
+   "Morera Campos, Yanori Maria",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6505600,
+   "Bonilla Rodriguez, Andres",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6505694,
+   "Nunez Gonzalez, Joshebeth Elena",
+   "IA",
+   false,
+   "D",
+   "IA-D"
+  ],
+  [
+   6505716,
+   "Salas Torres, Pamela",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6505910,
+   "Morera Campos, Heizel Maria",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6505961,
+   "Rivera Gonzalez, Jose Alexis",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6506054,
+   "Leon Vargas, Mercedes Lucia",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6506097,
+   "Chaves Williams, Jose Andres",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6506178,
+   "Castro Castillo, Juan Jose",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6506607,
+   "Bonilla Quiros, Diego Alonso",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6506780,
+   "Alvarado Soto, Shirley",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6507395,
+   "Castillo Morales, Thais",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6508049,
+   "Rosales Gonzalez, Erick Josue",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6508162,
+   "Bustos Torres, Fiorella",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6508189,
+   "Arguello Acuna, Graciela",
+   "FA",
+   false,
+   "D",
+   "FA-D"
+  ],
+  [
+   6508308,
+   "Chaves Alfaro, Beatriz",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6508332,
+   "Espitia Torres, Mateo",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6508650,
+   "Herrera Granados, Maria Jose",
+   "FA",
+   false,
+   "D",
+   "FA-D"
+  ],
+  [
+   6508677,
+   "Rivera Obando, Juan Jose",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6508693,
+   "Chinchilla Ramirez, Alejandra",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6508804,
+   "Jimenez Artavia, Rebeca",
+   "FA",
+   false,
+   "D",
+   "FA-D"
+  ],
+  [
+   6508820,
+   "Chaves Solera, Milton",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6508880,
+   "Sandi Barrantes, Victoria",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6509207,
+   "Lobo Meneses, Natalia",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6509576,
+   "Salazar Obando, Carlos",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6509690,
+   "Herrera Granados, Felipe",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6509797,
+   "Rivera Coto, Isaac",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6509851,
+   "Zeledon Perez, Edgar",
+   "FA",
+   false,
+   "D",
+   "FA-D"
+  ],
+  [
+   6509932,
+   "Jimenez Salas, Kristel",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6509959,
+   "Miranda Solano, Keylor",
+   "FA",
+   false,
+   "D",
+   "FA-D"
+  ],
+  [
+   6510582,
+   "Ramirez Camacho, Daniel",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6510590,
+   "Murillo Varela, Ricardo",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6511201,
+   "Granados Wing, Brian Saul",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6511686,
+   "Araya Fuentes, Mario",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6511813,
+   "Guerrero Jimenez, Luis Fernando",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6511899,
+   "Bonilla Sequeira, Adriana",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6512062,
+   "Rosales Gonzalez, Jessica",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6512933,
+   "Munoz Ramirez, Kyara Vanessa",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6513328,
+   "Jaramillo Naranjo, Sebastian",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6513484,
+   "Castro Esquivel, Eduardo",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6513522,
+   "Melendez Arce, Kalet",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6513530,
+   "Funez Fonseca, Bernal",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6513590,
+   "Alvarez Alvarez, Johanel",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6513697,
+   "Meza Vega, Jose Antonio",
+   "FA",
+   false,
+   "D",
+   "FA-D"
+  ],
+  [
+   6515223,
+   "Valverde Mora, Mauricio",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6515290,
+   "Torres Braiz, Sandra Maria",
+   "FA",
+   false,
+   "D",
+   "FA-D"
+  ],
+  [
+   6515304,
+   "Navarro Castillo, Llamin",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6515720,
+   "Campos Astorga, Priscila",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6515932,
+   "Chacon Lopez, William",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6516017,
+   "Porras Palma, Dennis",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6516130,
+   "Campos Quintanilla, Karen D",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6516718,
+   "Pastor Carvajal, Jeigoth",
+   "FA",
+   false,
+   "D",
+   "FA-D"
+  ],
+  [
+   6518877,
+   "Diaz Diaz, Gerardo",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6519938,
+   "Navarrete Badilla, Myckel",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6520464,
+   "Cubillo Duran, Aaron Josue",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6522181,
+   "Montero Romero, Dany Jose",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6524575,
+   "Rodriguez Vargas, Brandon Jesus",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6524800,
+   "Salazar Delgado, Aylin Naomi",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6526373,
+   "Quesada Arauz, Jean Carlo",
+   "FA",
+   false,
+   "D",
+   "FA-D"
+  ],
+  [
+   6526683,
+   "Sanchez Rodriguez, Pablo Roberto",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6526900,
+   "Araya Mora, Jose Andres",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6529151,
+   "Mora Arias, Pablo Andres",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6530095,
+   "Lewis Castillo, William Antonio",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6532950,
+   "Gonzalez Jimenez, Sara",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6533965,
+   "Viquez Miranda, Vivian",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6537855,
+   "Gomez Villalobos, Stanley",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6544592,
+   "Bluvol Nadeau, Ayen Claude",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6548040,
+   "Nunez Gonzalez, Wilberth G.",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6548130,
+   "Ramirez Quiros, Josue",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6548482,
+   "Rojas Vindas, Emmanuel de Jesus",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6550096,
+   "Aguero Espinoza, Sebasthian",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6550924,
+   "Redondo Acuna, Sebastian",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6551122,
+   "Venegas Sandoval, Ariana",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6553478,
+   "Rojas Guzman, Freddy",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6555942,
+   "Leiton Campos, Johanna Karolina",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6556426,
+   "Alvarado Sanchez, Diego Asdrubal",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6557945,
+   "Chavarria Campos, Diego Andrey",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6558186,
+   "Lippi Mena, Andres Eduardo",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6558216,
+   "Loria Martinez, Luis Felipe",
+   "FA",
+   false,
+   "D",
+   "FA-D"
+  ],
+  [
+   6558674,
+   "Gomez Villalobos, Etienne",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6561462,
+   "Araya Montero, William Antonio",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6561470,
+   "Salazar Leon, Esteban Orlando",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6563147,
+   "Villalobos Nunez, Ethan Alonso",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6564925,
+   "Zamora Aguilar, Amalia Maria",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6565662,
+   "Montero Ramirez, Michael",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6568394,
+   "Salazar Hernandez, Allan Z.",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6570658,
+   "Porras Miranda, Emanuel",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6571654,
+   "Cordoba Sevilla, Justin",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6574874,
+   "Villalobos Herrera, Rommy",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6574882,
+   "Alvarado Solano, Blanca Isabel",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6574890,
+   "Morales Castrillo, Luis Antonio",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6575005,
+   "Leiva Chaves, Emily Gabriela",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6575013,
+   "Trujillo Sisfontes, Gabriela Violeta",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6575447,
+   "Sobrado Chamberlain, Marcela Cristina",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6578837,
+   "Pernett Briceno, Javier Andres",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6580580,
+   "Cordero Sanabria, Sandra Isabel",
+   "NA",
+   false,
+   "",
+   "NA"
+  ],
+  [
+   6580688,
+   "Villegas Ruiz, Fidel De Jesus",
+   "NA",
+   false,
+   "",
+   "NA"
+  ]
+ ],
+ "aprobaciones": [
+  {
+   "fide_id": 6502849,
+   "titulo": "IA",
+   "fecha": "2023-04-04",
+   "consejo": "1.ª reunión del Consejo de FIDE de 2023 (Ciudad de México)",
+   "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2023Q1CouncilARBReport.pdf"
+  },
+  {
+   "fide_id": 6558216,
+   "titulo": "FA",
+   "fecha": "2023-12-17",
+   "consejo": "3.ª reunión del Consejo de FIDE de 2023 (en línea, del 11 al 17 de diciembre)",
+   "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2023Q3CouncilARBReport.pdf"
+  },
+  {
+   "fide_id": 6504035,
+   "titulo": "IA",
+   "fecha": "2024-04-13",
+   "consejo": "1.ª reunión del Consejo de FIDE de 2024 (en línea, del 8 al 13 de abril)",
+   "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2024Q1CouncilARBReport.pdf"
+  },
+  {
+   "fide_id": 6502946,
+   "titulo": "IA",
+   "fecha": "2024-07-29",
+   "consejo": "2.ª reunión del Consejo de FIDE de 2024 (en línea)",
+   "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2024Q2CouncilARBReport.pdf"
+  },
+  {
+   "fide_id": 6500218,
+   "titulo": "FA",
+   "fecha": "2024-07-29",
+   "consejo": "2.ª reunión del Consejo de FIDE de 2024 (en línea)",
+   "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2024Q2CouncilARBReport.pdf"
+  },
+  {
+   "fide_id": 6509851,
+   "titulo": "FA",
+   "fecha": "2024-07-29",
+   "consejo": "2.ª reunión del Consejo de FIDE de 2024 (en línea)",
+   "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2024Q2CouncilARBReport.pdf"
+  },
+  {
+   "fide_id": 6508189,
+   "titulo": "FA",
+   "fecha": "2024-09-05",
+   "consejo": "3.ª reunión del Consejo de FIDE de 2024 (Budapest)",
+   "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2024Q3CouncilARBReport.pdf"
+  },
+  {
+   "fide_id": 6513697,
+   "titulo": "FA",
+   "fecha": "2024-11-10",
+   "consejo": "4.ª reunión del Consejo de FIDE de 2024 (en línea)",
+   "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2024Q4CouncilARBReport.pdf"
+  },
+  {
+   "fide_id": 6504396,
+   "titulo": "FA",
+   "fecha": "2024-11-10",
+   "consejo": "4.ª reunión del Consejo de FIDE de 2024 (en línea)",
+   "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2024Q4CouncilARBReport.pdf"
+  },
+  {
+   "fide_id": 6526373,
+   "titulo": "FA",
+   "fecha": "2025-03-22",
+   "consejo": "1.ª reunión del Consejo de FIDE de 2025 (Nicosia, 21 y 22 de marzo)",
+   "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2025Q1CouncilARBReport.pdf"
+  },
+  {
+   "fide_id": 6515290,
+   "titulo": "FA",
+   "fecha": "2025-03-22",
+   "consejo": "1.ª reunión del Consejo de FIDE de 2025 (Nicosia, 21 y 22 de marzo)",
+   "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2025Q1CouncilARBReport.pdf"
+  },
+  {
+   "fide_id": 109363,
+   "titulo": "FA",
+   "fecha": "2026-04-02",
+   "consejo": "1.ª reunión del Consejo de FIDE de 2026 (en línea)",
+   "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2026Q1CouncilARBReport.pdf"
+  },
+  {
+   "fide_id": 6505694,
+   "titulo": "IA",
+   "fecha": "2026-08-23",
+   "consejo": "2.ª reunión del Consejo de FIDE de 2026 (en línea)",
+   "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2026Q2CouncilARBReport.pdf"
+  },
+  {
+   "fide_id": 6516718,
+   "titulo": "FA",
+   "fecha": "2026-08-23",
+   "consejo": "2.ª reunión del Consejo de FIDE de 2026 (en línea)",
+   "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2026Q2CouncilARBReport.pdf"
+  }
+ ],
+ "solicitudes": [
+  {
+   "fide_id": 109363,
+   "titulo": "FA",
+   "fecha": "2026-04-02",
+   "consejo": "1.ª reunión del Consejo de FIDE de 2026 (en línea)",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "09.01-12.01.26 215 th Internet-based FIDE Arbiters’ Seminar",
+    "11.10-19.10.25 San Jose CRC Memorial Rosalia Escalante SS 71 88 7 1 11.25",
+    "06.09-07.09.25 Heredia CRC Nac Eliminatorias 2025 U20 TM 35 44 7 1 10.25",
+    "17.05-18.05.25 San Jose CRC Torneo Clasificatorio de Cuarta SS 41 134 7 1 06.25"
+   ],
+   "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2026Q1CouncilARBReport.pdf"
+  },
+  {
+   "fide_id": 6500218,
+   "titulo": "FA",
+   "fecha": "2024-07-29",
+   "consejo": "2.ª reunión del Consejo de FIDE de 2024 (en línea)",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "26.12-30.12.23 San Jose CRC Abierto Metropolitano A 2023 RR 10 10 9 3 01.24",
+    "21.10-29.10.23 San Jose CRC I Memorial Samuel Li Chen SS 65 97 7 4 11.23",
+    "25.06-25.06.23 San Jose CRC I Brada Chess Open Rapid SS 36 58 9 3 07.23",
+    "18.08-25.08.20 80 th Internet based FIDE Arbiters’ Seminar"
+   ],
+   "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2024Q2CouncilARBReport.pdf"
+  },
+  {
+   "fide_id": 6502849,
+   "titulo": "IA",
+   "fecha": "2023-04-04",
+   "consejo": "1.ª reunión del Consejo de FIDE de 2023 (Ciudad de México)",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "12.11-17.11.19 Medellin COL X PanAm Escolar U15 Abs SS 43 52 9 9 12.19",
+    "11.12-16.12.19 Alajuela CRC I Juan Santamaria Gr A RR 10 10 9 7 01.20",
+    "11.06-18.06.22 Panama PAN FIDE World School CC SS 6 29 9 10 07.22",
+    "20.11-25.11.22 Tegucigalpa HON XVIII CAC 2022 U8 Abs SS 104 196 9 11 12.22"
+   ],
+   "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2023Q1CouncilARBReport.pdf"
+  },
+  {
+   "fide_id": 6502946,
+   "titulo": "IA",
+   "fecha": "2024-07-29",
+   "consejo": "2.ª reunión del Consejo de FIDE de 2024 (en línea)",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "15.03-16.03.24 FIDE International Arbiters’ Seminar",
+    "06.01-13.01.24 San Jose CRC Camp Nac Absoluto 2024 SS 30 30 9 1 02.24",
+    "16.10-21.10.23 Lima PER XII Panam EscolarU15 Abs SS 89 96 9 6 11.23",
+    "13.09-18.09.23 San Jose CRC Festival CAC Escolar 2023 SS 36 102 9 6 10.23",
+    "10.01-20.01.19 San Jose CRC Camp Nac Absoluto 2019 RR 12 12 11 1 02.19"
+   ],
+   "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2024Q2CouncilARBReport.pdf"
+  },
+  {
+   "fide_id": 6504035,
+   "titulo": "IA",
+   "fecha": "2023-12-17",
+   "consejo": "3.ª reunión del Consejo de FIDE de 2023 (en línea, del 11 al 17 de diciembre)",
+   "veredicto": "rechazada",
+   "motivo": "Only 3 norms (Two tournaments at the same time)",
+   "torneos": [
+    "07.01-15.01.23 San Jose CRC Camp Nac Fem CRC 2023 SS 17 19 9 2 02.23",
+    "07.01-15.01.23 San Jose CRC Camp Nac Abs CRC 2023 SS 27 27 9 3 02.23",
+    "19.12-24.12.22 San Jose CRC Joaquin Gutierrez Mangel RR 10 10 9 4 01.23",
+    "29.07-02.08.18 San Pedro Sula CRC II Camp CAC Abs 2018 SS 58 71 9 8 09.18"
+   ],
+   "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2023Q3CouncilARBReport.pdf"
+  },
+  {
+   "fide_id": 6504035,
+   "titulo": "IA",
+   "fecha": "2024-04-13",
+   "consejo": "1.ª reunión del Consejo de FIDE de 2024 (en línea, del 8 al 13 de abril)",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "26.12-30.12.23 San Jose CRC Abierto Metropolitano B SS 82 127 9 7 01.24",
+    "07.01-15.01.23 San Jose CRC Camp Nac Abs CRC 2023 SS 27 27 9 3 02.23",
+    "19.12-24.12.22 San Jose CRC Intl J. Gutierrez Mangel RR 10 10 9 4 01.23",
+    "28.07-06.08.18 San Pedro Sula HON II CAC Absoluto 2018 SS 58 71 9 8 09.18"
+   ],
+   "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2024Q1CouncilARBReport.pdf"
+  },
+  {
+   "fide_id": 6504396,
+   "titulo": "FA",
+   "fecha": "2023-12-17",
+   "consejo": "3.ª reunión del Consejo de FIDE de 2023 (en línea, del 11 al 17 de diciembre)",
+   "veredicto": "rechazada",
+   "motivo": "Seminar is too old and late applications",
+   "torneos": [
+    "29.10-07.11.21 San Jose CRC Torneo Seleccion Nacional B RR 10 10 9 1 12.21",
+    "26.12-30.12.19 San Jose CRC Intl Metropolitano Grupo A SS 28 28 9 7 01.20",
+    "16.03-24.03.19 San Jose CRC II Abierto AI Luis Araya 2019 SS 31 41 7 1 04.19",
+    "12.12-17.12.17 56 th Internet based FIDE Arbiters’ Seminar"
+   ],
+   "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2023Q3CouncilARBReport.pdf"
+  },
+  {
+   "fide_id": 6504396,
+   "titulo": "FA",
+   "fecha": "2024-11-10",
+   "consejo": "4.ª reunión del Consejo de FIDE de 2024 (en línea)",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "26.07-28.07.24 161 st Internet based FIDE Arbiters’ Seminar",
+    "29.10-07.11.21 San Jose CRC Torneo Seleccion Nacional B RR 10 10 9 1 12.21",
+    "26.12-30.12.19 San Jose CRC Metropolitano Grupo A 2019 SS 28 28 9 7 01.20",
+    "16.03-24.03.19 San Jose CRC II Torneo AI Luis Araya 2019 SS 31 41 7 1 04.19"
+   ],
+   "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2024Q4CouncilARBReport.pdf"
+  },
+  {
+   "fide_id": 6505694,
+   "titulo": "IA",
+   "fecha": "2026-04-02",
+   "consejo": "1.ª reunión del Consejo de FIDE de 2026 (en línea)",
+   "veredicto": "rechazada",
+   "motivo": "Only 3 tournament norms (Joaquin Gutierrez Mangel 2022 – Signed by untitled organiser)",
+   "torneos": [
+    "30.08-09.09.25 18th IA Seminar",
+    "26.12-30.12.24 San Jose CRC XLV Metropolitano B 2024 SS 110 157 9 8 01.25",
+    "11.09-22.09.24 Budapest HUN 45th Chess Olympiad TM/SS 755 907 11 180 10.24",
+    "07.01-15.01.23 San Jose CRC Camp Nac Abs CRC 2023 SS 27 27 9 3 02.23",
+    "19.12-24.12.22 San Jose CRC Joaquin Gutierrez Mangel RR 10 10 9 4 01.23"
+   ],
+   "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2026Q1CouncilARBReport.pdf"
+  },
+  {
+   "fide_id": 6505694,
+   "titulo": "IA",
+   "fecha": "2026-08-23",
+   "consejo": "2.ª reunión del Consejo de FIDE de 2026 (en línea)",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "30.09-09.09.25 18 th IA Seminar",
+    "26.12-30.12.24 San Jose CRC XLV Metropolitano B 2024 SS 110 157 9 8 01.25",
+    "11.09-22.09.24 Budapest HUN 45 Olympiad Budapest W TM/SS 755 907 11 180 10.24",
+    "07.01-15.01.23 San Jose CRC Camp Nac Abs CRC 2023 SS 27 27 9 3 02.23",
+    "19.12-24.12.22 San Jose CRC Joaquin Gutierrez Mangel RR 10 10 9 4 01.23"
+   ],
+   "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2026Q2CouncilARBReport.pdf"
+  },
+  {
+   "fide_id": 6508189,
+   "titulo": "FA",
+   "fecha": "2024-09-05",
+   "consejo": "3.ª reunión del Consejo de FIDE de 2024 (Budapest)",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "02.03-03.03.24 San Jose CRC Festival Impares U17 2024 SS 24 48 7 1 04.24",
+    "27.03-17.04.22 Guadalupe CRC Torneo B Goicoechea Abril RR 10 10 9 1 05.22",
+    "26.12-26.12.21 San Jose CRC Abierto Metropolitano Blitz SS 101 169 9 2 01.22",
+    "18.08-25.08.20 80 th Internet based FIDE Arbiters’ Seminar"
+   ],
+   "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2024Q3CouncilARBReport.pdf"
+  },
+  {
+   "fide_id": 6509851,
+   "titulo": "FA",
+   "fecha": "2024-07-29",
+   "consejo": "2.ª reunión del Consejo de FIDE de 2024 (en línea)",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "02.02-11.02.24 San Jose CRC Camp Nac Femenino 2024 SS 22 27 9 1 03.24",
+    "27.01-02.03.24 Heredia CRC Barbareno de Altura Verano SS 30 31 6 1 04.24",
+    "30.12-30.12.23 San Jose CRC Torneo Metropolitano Blitz SS 134 203 9 10 01.24",
+    "10.11-12.11.23 143 rd Internet based FIDE Arbiters’ Seminar"
+   ],
+   "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2024Q2CouncilARBReport.pdf"
+  },
+  {
+   "fide_id": 6512062,
+   "titulo": "FA",
+   "fecha": "2026-04-02",
+   "consejo": "1.ª reunión del Consejo de FIDE de 2026 (en línea)",
+   "veredicto": "rechazada",
+   "motivo": "Only 2 norms (XLVI Metropolitano 2025 B and XLVI Metropolitano Blitz - on the same dates, art. 2.10)",
+   "torneos": [
+    "30.12-30.12.25 San Jose CRC XLVI Metropolitano Blitz SS 197 227 9 10 01.26",
+    "26.12-30.12.25 San Jose CRC XLVI Metropolitano 2025 B SS 135 157 9 7 01.26",
+    "26.12-30.12.24 San Jose CRC XLV Metropolitano B 2024 SS 110 157 9 8 01.25",
+    "15.07-17.07.22 113 th Internet-based FIDE Arbiters’ Seminar"
+   ],
+   "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2026Q1CouncilARBReport.pdf"
+  },
+  {
+   "fide_id": 6512062,
+   "titulo": "FA",
+   "fecha": "2026-09-21",
+   "consejo": "3.ª reunión del Consejo de FIDE de 2026 (Samarcanda)",
+   "veredicto": "rechazada",
+   "motivo": "Seminar is too old (expired 17/07/2026) and incomplete documents",
+   "torneos": [
+    "27.12-30.12.25 San Jose CRC XLVI Metropolitano 2025 B SS 135 157 9 7 01.26",
+    "13.04-16.04.25 San Jose CRC Nac Clasico Menores Impares SS 42 42 7 1 05.25",
+    "26.12-30.12.24 San Jose CRC XLV Metropolitano Intl B SS 110 157 9 8 01.25",
+    "15.07-17.07.22 113 th Internet based FIDE Arbiters’ Seminar"
+   ],
+   "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2026Q3CouncilARBReport.pdf"
+  },
+  {
+   "fide_id": 6513697,
+   "titulo": "FA",
+   "fecha": "2024-11-10",
+   "consejo": "4.ª reunión del Consejo de FIDE de 2024 (en línea)",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "14.09-15.09.24 Desamparados CRC Cuarta Desamparados ADA SS 66 108 7 2 10.24",
+    "30.08-01.09.24 163 rd Internet based FIDE Arbiters’ Seminar",
+    "14.04-14.04.24 San Jose CRC Torneo Abierto Blitz ADAS SS 67 131 9 2 05.24",
+    "13.04-14.04.23 San Jose CRC Cuarta Division ADAS Abril SS 28 106 7 2 05.23"
+   ],
+   "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2024Q4CouncilARBReport.pdf"
+  },
+  {
+   "fide_id": 6515290,
+   "titulo": "FA",
+   "fecha": "2025-03-22",
+   "consejo": "1.ª reunión del Consejo de FIDE de 2025 (Nicosia, 21 y 22 de marzo)",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "30.12-30.12.24 San Jose CRC XLV Metropolitano Intl Blitz SS 221 295 9 7 01.25",
+    "13.09-18.09.23 San Jose CRC Festival CAC Escolar 2023 SS 36 102 9 36 10.23",
+    "26.12-30.12.22 San Jose CRC XLV Metropolitano Intl A SS 32 93 9 7 01.23",
+    "19.11-21.11.22 123 rd Internet based FIDE Arbiters’ Seminar"
+   ],
+   "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2025Q1CouncilARBReport.pdf"
+  },
+  {
+   "fide_id": 6516718,
+   "titulo": "FA",
+   "fecha": "2026-08-23",
+   "consejo": "2.ª reunión del Consejo de FIDE de 2026 (en línea)",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "21.02-22.02.26 San Jose CRC Camp Nac Categorias Menores SS 141 348 7 1 03.26",
+    "20.07-20.07.25 Plaza Viquez CRC I Blitz Plaza Viquez 2025 SS 42 50 9 1 08.25",
+    "27.06-29.06.25 189th Internet-based FIDE Arbiters’ Seminar",
+    "07.02-16.02.25 San Jose CRC FCA Camp Nacional Fem SS 27 29 7 1 03.25"
+   ],
+   "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2026Q2CouncilARBReport.pdf"
+  },
+  {
+   "fide_id": 6526373,
+   "titulo": "FA",
+   "fecha": "2025-03-22",
+   "consejo": "1.ª reunión del Consejo de FIDE de 2025 (Nicosia, 21 y 22 de marzo)",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "29.01-01.02.25 173 rd Internet based FIDE Arbiters’ Seminar",
+    "24.01-26.01.25 San Jose CRC Camp Nac Pares U18 Abs 2025SS 39 50 7 1 02.25",
+    "11.01-19.01.25 San Jose CRC FCA Camp Nac Absoluto 2025 SS 31 31 9 1 02.25",
+    "26.12-30.12.24 San Jose CRC XLV Metropolitano Intl B 2024SS 110 157 9 8 01.25"
+   ],
+   "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2025Q1CouncilARBReport.pdf"
+  },
+  {
+   "fide_id": 6558216,
+   "titulo": "FA",
+   "fecha": "2023-12-17",
+   "consejo": "3.ª reunión del Consejo de FIDE de 2023 (en línea, del 11 al 17 de diciembre)",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "28.07-30.07.23 136 th Internet based FIDE Arbiters’ Seminar",
+    "11.06-11.06.23 San Jose CRC I Torneo Blitz la Capital SS 39 56 9 2 07.23",
+    "03.06-11.06.23 San Jose CRC I por Equipos la Capital TM/SS 119 119 7 3 07.23",
+    "22.04-30.04.23 San Jose CRC Camp Nac Senior Mayores 50 SS 21 24 7 2 05.23"
+   ],
+   "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2023Q3CouncilARBReport.pdf"
+  }
+ ],
+ "seminarios": [
+  {
+   "fide_id": 109363,
+   "tipo": "FA",
+   "seminario": "215th Internet Based Jan 2026 (CRC)",
+   "mes": "2026-01",
+   "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2026Q1CouncilARBReport.pdf",
+   "fecha": "2026-01-12"
+  },
+  {
+   "fide_id": 6500218,
+   "tipo": "FA",
+   "seminario": "80th Internet based FIDE Arbiters’ Seminar",
+   "mes": "2020-08",
+   "fecha": "2020-08-25",
+   "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2024Q2CouncilARBReport.pdf"
+  },
+  {
+   "fide_id": 6502946,
+   "tipo": "IA",
+   "seminario": "1st IA Internet Based Mar 2024 (ARB)",
+   "mes": "2024-03",
+   "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2024Q1CouncilARBReport.pdf",
+   "fecha": "2024-03-16"
+  },
+  {
+   "fide_id": 6503306,
+   "tipo": "FA",
+   "seminario": "147th Internet Based Dec 2023 (CCA)",
+   "mes": "2023-12",
+   "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2024Q1CouncilARBReport.pdf"
+  },
+  {
+   "fide_id": 6504396,
+   "tipo": "FA",
+   "seminario": "56th Internet based FIDE Arbiters’ Seminar",
+   "mes": "2017-12",
+   "fecha": "2017-12-17",
+   "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2023Q3CouncilARBReport.pdf"
+  },
+  {
+   "fide_id": 6504396,
+   "tipo": "FA",
+   "seminario": "161st Internet Based Jul 2024 (CCA)",
+   "mes": "2024-07",
+   "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2024Q3CouncilARBReport.pdf",
+   "fecha": "2024-07-28"
+  },
+  {
+   "fide_id": 6505694,
+   "tipo": "IA",
+   "seminario": "18th IACS Internet Based Aug 2025 (ARB)",
+   "mes": "2025-09",
+   "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2025Q3CouncilARBReport.pdf",
+   "fecha": "2025-09-09"
+  },
+  {
+   "fide_id": 6508189,
+   "tipo": "FA",
+   "seminario": "80th Internet based FIDE Arbiters’ Seminar",
+   "mes": "2020-08",
+   "fecha": "2020-08-25",
+   "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2024Q3CouncilARBReport.pdf"
+  },
+  {
+   "fide_id": 6509851,
+   "tipo": "FA",
+   "seminario": "143rd Internet Based Nov 2023 (CCA)",
+   "mes": "2023-11",
+   "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2023Q3CouncilARBReport.pdf",
+   "fecha": "2023-11-12"
+  },
+  {
+   "fide_id": 6509851,
+   "tipo": "IA",
+   "seminario": "25th IACS Internet Based May 2026 (ARB)",
+   "mes": "2026-05",
+   "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2026Q2CouncilARBReport.pdf"
+  },
+  {
+   "fide_id": 6512062,
+   "tipo": "FA",
+   "seminario": "113th Internet-based FIDE Arbiters’ Seminar",
+   "mes": "2022-07",
+   "fecha": "2022-07-17",
+   "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2026Q1CouncilARBReport.pdf"
+  },
+  {
+   "fide_id": 6513590,
+   "tipo": "FA",
+   "seminario": "215th Internet Based Jan 2026 (CRC)",
+   "mes": "2026-01",
+   "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2026Q1CouncilARBReport.pdf"
+  },
+  {
+   "fide_id": 6513697,
+   "tipo": "FA",
+   "seminario": "163rd Internet Based Aug 2024 (CCA)",
+   "mes": "2024-09",
+   "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2024Q3CouncilARBReport.pdf",
+   "fecha": "2024-09-01"
+  },
+  {
+   "fide_id": 6515290,
+   "tipo": "FA",
+   "seminario": "123rd Internet Based Nov 2022 (PAN)",
+   "mes": "2022-11",
+   "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2023Q1CouncilARBReport.pdf",
+   "fecha": "2022-11-21"
+  },
+  {
+   "fide_id": 6515304,
+   "tipo": "FA",
+   "seminario": "182nd Internet Based Mar 2025 (GUA)",
+   "mes": "2025-03",
+   "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2025Q2CouncilARBReport.pdf"
+  },
+  {
+   "fide_id": 6516718,
+   "tipo": "FA",
+   "seminario": "189th Internet Based Jun 2025 (CCA)",
+   "mes": "2025-06",
+   "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2025Q3CouncilARBReport.pdf",
+   "fecha": "2025-06-29"
+  },
+  {
+   "fide_id": 6526373,
+   "tipo": "FA",
+   "seminario": "173rd Internet Based Jan 2025 (PAN)",
+   "mes": "2025-02",
+   "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2025Q1CouncilARBReport.pdf",
+   "fecha": "2025-02-01"
+  },
+  {
+   "fide_id": 6544592,
+   "tipo": "FA",
+   "seminario": "146th Internet Based Dec 2023 (PAN)",
+   "mes": "2023-12",
+   "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2024Q1CouncilARBReport.pdf"
+  },
+  {
+   "fide_id": 6558216,
+   "tipo": "FA",
+   "seminario": "136th Internet Based Jul 2023 (PER)",
+   "mes": "2023-07",
+   "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2023Q3CouncilARBReport.pdf",
+   "fecha": "2023-07-30"
+  }
+ ]
+}
