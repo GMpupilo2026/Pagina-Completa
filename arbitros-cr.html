@@ -135,6 +135,46 @@
                     </div>
                     <p id="ranking-cuenta" class="text-sm text-brand-500 dark:text-brand-300 mt-2" aria-live="polite"></p>
                 </div>
+                <div class="mt-6">
+                    <h3 id="solicitudes-titulo" class="font-serif text-lg font-bold text-brand-800 dark:text-white">Quiénes pueden pedir el título</h3>
+                    <p class="text-sm text-brand-500 dark:text-brand-300 mt-1 max-w-3xl">Cada uno con su siguiente título (AF si no lo tiene, AI si es FA) y al menos una norma para él, con lo que pide el reglamento B.06.1 para la solicitud: las normas, un seminario de los últimos cuatro años y la fecha límite. Lo que no se ve desde afuera (certificados, firmas, edad) lo revisa quien la arma. El detalle, punto por punto, está en la ficha de cada uno, con el Excel de los torneos para la solicitud.</p>
+                    <div class="overflow-x-auto mt-2 bg-white dark:bg-brand-900 rounded-2xl shadow-md">
+                        <table id="tabla-solicitudes" class="w-full text-sm" aria-labelledby="solicitudes-titulo">
+                            <thead class="text-left text-xs uppercase tracking-wide text-brand-500 dark:text-brand-300"><tr><th scope="col" class="px-3 py-2">Árbitro</th><th scope="col" class="px-3 py-2">Pediría</th><th scope="col" class="px-3 py-2 text-right">Normas</th><th scope="col" class="px-3 py-2">Seminario</th><th scope="col" class="px-3 py-2">Cómo va</th></tr></thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                    <p id="solicitudes-cuenta" class="text-sm text-brand-500 dark:text-brand-300 mt-2" aria-live="polite"></p>
+                </div>
+                <div class="mt-6">
+                    <h3 id="actividad-fide-titulo" class="font-serif text-lg font-bold text-brand-800 dark:text-white">La actividad en FIDE</h3>
+                    <p class="text-sm text-brand-500 dark:text-brand-300 mt-1 max-w-3xl">Un IA o FA queda inactivo si en cuatro años no aprueba un curso de actualización de la Comisión de Árbitros (B.06.3, 2), y uno inactivo no puede ser árbitro principal de un torneo de FIDE donde haya normas para los jugadores. Los cuatro años se cuentan desde su AF o desde su último curso o seminario de AI. Los cursos no salen en los informes de la Comisión, así que la fecha es un piso: con un curso después, sigue activo más tiempo.</p>
+                    <div class="overflow-x-auto mt-2 bg-white dark:bg-brand-900 rounded-2xl shadow-md">
+                        <table id="tabla-actividad-fide" class="w-full text-sm" aria-labelledby="actividad-fide-titulo">
+                            <thead class="text-left text-xs uppercase tracking-wide text-brand-500 dark:text-brand-300"><tr><th scope="col" class="px-3 py-2">Árbitro</th><th scope="col" class="px-3 py-2">Título</th><th scope="col" class="px-3 py-2">En FIDE</th><th scope="col" class="px-3 py-2">Activo por lo menos hasta</th></tr></thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+                <details class="mt-6">
+                    <summary id="por-identificar-titulo" class="font-serif text-lg font-bold text-brand-800 dark:text-white cursor-pointer">Por identificar</summary>
+                    <p class="text-sm text-brand-500 dark:text-brand-300 mt-1 max-w-3xl">Para corregir la lista: quienes no figuran en la lista de árbitros de FIDE, y las celdas de árbitro de los torneos de Costa Rica en chess-results en que no se reconoce a nadie (un nombre escrito de otra forma, un ID equivocado o alguien que falta). Una celda donde se reconoce a alguien no sale aunque traiga a otra persona más.</p>
+                    <p id="por-identificar-cuenta" class="text-sm text-brand-600 dark:text-brand-200 mt-2"></p>
+                    <h4 id="no-fide-titulo" class="font-semibold mt-3">No figuran en la lista de árbitros de FIDE</h4>
+                    <div class="overflow-x-auto mt-2 bg-white dark:bg-brand-900 rounded-2xl shadow-md">
+                        <table id="tabla-no-fide" class="w-full text-sm" aria-labelledby="no-fide-titulo">
+                            <thead class="text-left text-xs uppercase tracking-wide text-brand-500 dark:text-brand-300"><tr><th scope="col" class="px-3 py-2">Árbitro</th><th scope="col" class="px-3 py-2">ID FIDE</th><th scope="col" class="px-3 py-2">Dónde sale</th><th scope="col" class="px-3 py-2 text-right">Torneos</th><th scope="col" class="px-3 py-2">Último torneo</th></tr></thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                    <h4 id="sin-id-titulo" class="font-semibold mt-4">Nombres de chess-results que no se reconocen</h4>
+                    <div class="overflow-x-auto mt-2 bg-white dark:bg-brand-900 rounded-2xl shadow-md">
+                        <table id="tabla-sin-id" class="w-full text-sm" aria-labelledby="sin-id-titulo">
+                            <thead class="text-left text-xs uppercase tracking-wide text-brand-500 dark:text-brand-300"><tr><th scope="col" class="px-3 py-2">Como sale</th><th scope="col" class="px-3 py-2">Cargo</th><th scope="col" class="px-3 py-2 text-right">Torneos</th><th scope="col" class="px-3 py-2">Fechas</th><th scope="col" class="px-3 py-2">ID en la celda</th><th scope="col" class="px-3 py-2">Torneos de ejemplo</th></tr></thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </details>
             </section>
 
             <section id="ficha" class="hidden mt-6" aria-labelledby="ficha-titulo">
@@ -142,6 +182,11 @@
                 <p id="ficha-sub" class="text-sm text-brand-500 dark:text-brand-300 mt-1"></p>
                 <p id="ficha-fide" class="text-sm text-brand-600 dark:text-brand-200 mt-1"></p>
                 <div id="ficha-normas" class="grid gap-3 md:grid-cols-2 mt-4" aria-label="Las normas que podría juntar hoy"></div>
+                <div class="mt-6">
+                    <h3 id="historial-titulo" class="font-serif text-lg font-bold text-brand-800 dark:text-white">Historial en FIDE</h3>
+                    <p class="text-sm text-brand-500 dark:text-brand-300 mt-1 max-w-3xl">Sus solicitudes de título y sus seminarios, según los informes de la Comisión de Árbitros a cada reunión del Consejo de FIDE (desde 2023).</p>
+                    <div id="ficha-historial" class="mt-2 bg-white dark:bg-brand-900 rounded-2xl shadow-md p-4" aria-labelledby="historial-titulo"></div>
+                </div>
                 <div class="mt-6">
                     <h3 id="comparar-titulo" class="font-serif text-lg font-bold text-brand-800 dark:text-white">Comparar con otro árbitro</h3>
                     <p class="text-sm text-brand-500 dark:text-brand-300 mt-1 max-w-3xl">Los números de los dos lado a lado, con los filtros puestos, año por año y los torneos que hicieron juntos. La dirección de la página lleva a los dos, para compartirla.</p>

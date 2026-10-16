@@ -27,6 +27,9 @@
      filtro «En FIDE», el AN que el perfil no dice, y la fecha exacta del AF:
      desde ella sus torneos cuentan para AI y ya no para AF (con solo el año,
      el mismo año queda para revisar);
+   - «Para pedir el título» (la ruta de B.06.1 punto por punto) y su Excel,
+     «Quiénes pueden pedir el título», el historial en FIDE (solicitudes y
+     seminarios), «La actividad en FIDE» y «Por identificar»;
    - las tablas se piden de mil en mil (range).
 
    Ver «Árbitros de Costa Rica en FIDE» en docs/decisiones/juegos-y-torneos.md.
@@ -58,9 +61,24 @@ const ARBITROS = [
 // Ana inactiva y sin licencia, Luis como Árbitro Nacional (su perfil no lo
 // dice); Juan y Eduardo no figuran.
 const ARBITROS_FIDE = [
-    { fide_id: 6500001, titulo: "IA", inactivo: false, categoria: "D", licencia: "IA-D", af_fecha: "2024-05-01", af_consejo: "2.ª reunión del Consejo de FIDE de 2024 (en línea)", ia_fecha: null, ia_consejo: "", lista: "2026-10-12" },
-    { fide_id: 6500002, titulo: "FA", inactivo: true, categoria: "D", licencia: "No", af_fecha: null, af_consejo: "", ia_fecha: null, ia_consejo: "", lista: "2026-10-12" },
-    { fide_id: 6500003, titulo: "NA", inactivo: false, categoria: "", licencia: "NA", af_fecha: null, af_consejo: "", ia_fecha: null, ia_consejo: "", lista: "2026-10-12" },
+    { fide_id: 6500001, titulo: "IA", inactivo: false, categoria: "D", licencia: "IA-D", af_fecha: "2024-05-01", af_consejo: "2.ª reunión del Consejo de FIDE de 2024 (en línea)", ia_fecha: null, ia_consejo: "", lista: "2026-10-12",
+      // Una solicitud de AI rechazada y otra aprobada, y su seminario de AI.
+      solicitudes: [
+          { titulo: "IA", fecha: "2025-04-02", consejo: "1.ª reunión del Consejo de FIDE de 2025 (en línea)", veredicto: "rechazada", motivo: "Only 3 tournament norms",
+            torneos: ["30.08-09.09.24 18th IA Seminar", "26.12-30.12.24 San Jose CRC Metropolitano SS 110 157 9 8 01.25"], fuente: "https://arbiters.fide.com/informe-1.pdf" },
+          { titulo: "IA", fecha: "2026-08-23", consejo: "2.ª reunión del Consejo de FIDE de 2026 (en línea)", veredicto: "aprobada", motivo: "",
+            torneos: ["30.08-09.09.25 18th IA Seminar"], fuente: "https://arbiters.fide.com/informe-2.pdf" },
+      ],
+      seminarios: [{ tipo: "IA", seminario: "18th IACS Internet Based Aug 2025 (ARB)", mes: "2025-09", fecha: "2025-09-09", fuente: "https://arbiters.fide.com/informe-2.pdf" }] },
+    { fide_id: 6500002, titulo: "FA", inactivo: true, categoria: "D", licencia: "No", af_fecha: null, af_consejo: "", ia_fecha: null, ia_consejo: "", lista: "2026-10-12", solicitudes: [], seminarios: [] },
+    // Luis tiene su seminario de AF (vale cuatro años) y una norma de las tres.
+    { fide_id: 6500003, titulo: "NA", inactivo: false, categoria: "", licencia: "NA", af_fecha: null, af_consejo: "", ia_fecha: null, ia_consejo: "", lista: "2026-10-12", solicitudes: [],
+      seminarios: [{ tipo: "FA", seminario: "189th Internet Based Jun 2025 (CCA)", mes: "2025-06", fecha: "2025-06-29", fuente: "https://arbiters.fide.com/informe-3.pdf" }] },
+];
+// Las celdas de chess-results en que no se reconoce a nadie.
+const SIN_ID = [
+    { texto: "AF Josué Prueba", roles: ["ap", "arb"], torneos: 3, primero: "2011-05-09", ultimo: "2016-08-27", claves: [236537, 236115], ids: [] },
+    { texto: "AI Fulano Prueba (8400687)", roles: ["ap"], torneos: 1, primero: "2017-07-01", ultimo: "2017-07-01", claves: [292598], ids: ["8400687"] },
 ];
 const T = (id, nombre, inicio, af, ai) => ({
     id, nombre, ciudad: "San José", pais: "Costa Rica", inicio, fin: inicio, sistema: "s", ritmo: "Standard",
@@ -117,7 +135,7 @@ function doble(tieneLicencia) {
 window.SUPABASE_URL = "https://falso.supabase.co";
 window.SUPABASE_ANON_KEY = "anon-falsa";
 (function () {
-  const TABLAS = ${JSON.stringify({ arbitros_cr: ARBITROS, arbitros_cr_torneos: TORNEOS, arbitros_cr_cargos: CARGOS, arbitros_cr_cr: CR.map((c) => ({ pais: "CRC", ...c })), arbitros_cr_cr_cargos: CR_CARGOS, arbitros_cr_fide: ARBITROS_FIDE })};
+  const TABLAS = ${JSON.stringify({ arbitros_cr: ARBITROS, arbitros_cr_torneos: TORNEOS, arbitros_cr_cargos: CARGOS, arbitros_cr_cr: CR.map((c) => ({ pais: "CRC", ...c })), arbitros_cr_cr_cargos: CR_CARGOS, arbitros_cr_fide: ARBITROS_FIDE, arbitros_cr_sin_id: SIN_ID })};
   const LICENCIA = ${tieneLicencia ? "true" : "false"};
   window.__pedidos = [];
   function respuesta(data, error) { return Promise.resolve({ data, error: error || null }); }
@@ -182,7 +200,7 @@ const porNombre = (m) => Object.fromEntries(m.map((f) => [f[0], f]));
     ({ ctx, p } = await abrir(browser, "arbitros-cr.html", true));
     await p.waitForFunction(() => document.getElementById("app").checkVisibility());
     igual("pide cada tabla de mil en mil", await p.evaluate(() => window.__pedidos.filter((x) => x.startsWith("arbitros_cr")).sort()),
-        ["arbitros_cr 0-999", "arbitros_cr_cargos 0-999", "arbitros_cr_cr 0-999", "arbitros_cr_cr_cargos 0-999", "arbitros_cr_fide 0-999", "arbitros_cr_torneos 0-999"]);
+        ["arbitros_cr 0-999", "arbitros_cr_cargos 0-999", "arbitros_cr_cr 0-999", "arbitros_cr_cr_cargos 0-999", "arbitros_cr_fide 0-999", "arbitros_cr_sin_id 0-999", "arbitros_cr_torneos 0-999"]);
     let m = porNombre(await filas(p, "#tabla-arbitros"));
     igual("los cinco árbitros salen (todos los años), también quien solo está en chess-results", Object.keys(m).sort(),
         ["Ángulo Prueba, Óscar", "Quiros Prueba, Eduardo", "Rojas Prueba, Luis", "Soto Prueba, Ana", "Viejo Prueba, Juan"].sort());
@@ -202,6 +220,14 @@ const porNombre = (m) => Object.fromEntries(m.map((f) => [f[0], f]));
     await p.selectOption("#en-fide", "no");
     igual("«No figuran» deja a Juan y Eduardo", Object.keys(porNombre(await filas(p, "#tabla-arbitros"))).sort(), ["Quiros Prueba, Eduardo", "Viejo Prueba, Juan"]);
     await p.selectOption("#en-fide", "");
+    igual("«Quiénes pueden pedir el título»: Luis, para el AF, con su seminario y lo que le falta", await filas(p, "#tabla-solicitudes"),
+        [["Rojas Prueba, Luis", "AF", "1 de 3", "Vigente hasta 29/06/2029", "Le falta: normas de torneo"]]);
+    igual("«La actividad en FIDE»: Ana inactiva primero, Óscar activo por lo menos hasta cuatro años después de su seminario de AI", await filas(p, "#tabla-actividad-fide"),
+        [["Soto Prueba, Ana", "FA", "Inactivo", "—"], ["Ángulo Prueba, Óscar", "IA", "Activo", "09/09/2029"]]);
+    igual("«Por identificar»: quienes no figuran en FIDE, el de más torneos primero", (await filas(p, "#tabla-no-fide")).map((f) => [f[0], f[3]]), [["Quiros Prueba, Eduardo", "3"], ["Viejo Prueba, Juan", "1"]]);
+    igual("y los nombres de chess-results sin reconocer, con su cargo, sus ID y enlaces a los torneos", await filas(p, "#tabla-sin-id"),
+        [["AF Josué Prueba", "principal, árbitro", "3", "09/05/2011 al 27/08/2016", "—", "236537 · 236115"], ["AI Fulano Prueba (8400687)", "principal", "1", "01/07/2017 al 01/07/2017", "8400687", "292598"]]);
+    igual("los ejemplos enlazan a chess-results", await p.$eval("#tabla-sin-id tbody a", (a) => a.href), "https://chess-results.com/tnr236537.aspx?lan=2");
     const actividad = await filas(p, "#actividad");
     igual("«Torneos por año» en la lista: cada torneo una vez, el año más nuevo primero, con FIDE, no FIDE y extranjero",
         actividad.map((f) => [f[0], f[1].trim(), f[2], f[3], f[4]]),
@@ -330,6 +356,14 @@ const porNombre = (m) => Object.fromEntries(m.map((f) => [f[0], f]));
     igual("su ficha trae «Torneos por año»", (await filas(p, "#ficha-actividad")).map((f) => [f[0], f[1].trim()]), [["2023", "1"]]);
     const [eAi, tAi] = await tarjeta("ai");
     igual("y para AI, primero el AF: sin el AF no junta ninguna", [eAi, /hoy no junta ninguna/.test(tAi)], ["Primero el AF", true]);
+    const ruta = await p.$$eval("[data-ruta='af'] li", (ls) => ls.map((l) => l.dataset.estado + " " + l.textContent.split(":")[1].trim()));
+    igual("«Para pedir el título» del AF: le faltan normas, el seminario está, un año de AN o un torneo más, la norma más vieja vence, y lo que no se ve",
+        ruta.map((r) => r.split(" ").slice(0, 3).join(" ")), ["Falta Normas de", "Listo Seminario de", "Revisar Necesita un", "Revisar La norma", "Revisar Lo que"]);
+    igual("el seminario vale cuatro años y la norma más vieja seis", [/vale para la solicitud hasta el 29\/06\/2029/.test(await p.$eval("[data-ruta='af']", (e) => e.textContent)),
+        /La norma más vieja que junta vence el 01\/03\/2029/.test(await p.$eval("[data-ruta='af']", (e) => e.textContent))], [true, true]);
+    const [solicitud] = await Promise.all([p.waitForEvent("download"), p.click("[data-ruta='af'] button")]);
+    igual("y el Excel de los torneos para la solicitud", solicitud.suggestedFilename(), "solicitud-af-6500003.xlsx");
+    igual("su historial: el seminario de AF", await p.$$eval("#ficha-historial > ul > li strong", (s) => s.map((x) => x.textContent)), ["29/06/2025 · Seminario de AF: 189th Internet Based Jun 2025 (CCA)"]);
     const aiLuis = (await filas(p, "#tabla-torneos"))[0][9];
     igual("su torneo que cumple las condiciones de AI no le cuenta: no tiene el AF", [aiLuis.startsWith("No"), /No tiene el título de AF/.test(aiLuis)], [true, true]);
     const [descarga] = await Promise.all([p.waitForEvent("download"), p.click("#pdf")]);
@@ -359,12 +393,21 @@ const porNombre = (m) => Object.fromEntries(m.map((f) => [f[0], f]));
     const af = Object.fromEntries((await filas(p, "#tabla-torneos")).filter((f) => f[2] === "Sí").map((f) => [f[0].slice(-4), f[8]]));
     igual("y para AF, el de 2025 ya no cuenta (ya tenía el AF); los de antes sí", [af["2025"].startsWith("No"), /Ya tenía el título de AF \(aprobado el 01\/05\/2024\)/.test(af["2025"]), af["2023"].startsWith("Vale")], [true, true, true]);
     igual("la ficha dice que está activo, su licencia y cuándo se le aprobó el AF", await p.$eval("#ficha-fide", (e) => e.textContent),
-        "Activo en la lista de árbitros de FIDE del 12/10/2026, licencia IA-D. AF aprobado el 01/05/2024 (2.ª reunión del Consejo de FIDE de 2024 (en línea)): desde entonces sus torneos cuentan para AI y ya no para AF.");
+        "Activo en la lista de árbitros de FIDE del 12/10/2026, licencia IA-D. AF aprobado el 01/05/2024 (2.ª reunión del Consejo de FIDE de 2024 (en línea)): desde entonces sus torneos cuentan para AI y ya no para AF."
+        + " Sigue activo por lo menos hasta el 09/09/2029: cuatro años desde su seminario de AI (B.06.3, 2). Un curso de actualización después lo corre.");
+    const hist = await p.$$eval("#ficha-historial > ul > li", (ls) => ls.map((l) => l.querySelector("strong").textContent));
+    igual("su historial en FIDE: las solicitudes, la más nueva primero, y el seminario", hist,
+        ["23/08/2026 · Solicitud de AI: Aprobada", "02/04/2025 · Solicitud de AI: Rechazada", "09/09/2025 · Seminario de AI: 18th IACS Internet Based Aug 2025 (ARB)"]);
+    igual("la rechazada dice por qué (como lo escribe FIDE) y lo que mandó", await p.$eval("#ficha-historial li[data-solicitud='2025-04-02']", (l) => [/«Only 3 tournament norms»/.test(l.textContent), l.querySelectorAll("details li").length]), [true, 2]);
+    igual("quien ya tiene el título no lleva «Para pedir el título»", await p.$$eval("[data-ruta]", (r) => r.length), 0);
     await ctx.close();
     ({ ctx, p } = await abrir(browser, "arbitros-cr.html#6500002", true));
     await p.waitForFunction(() => document.getElementById("ficha").checkVisibility());
     const ana = (await filas(p, "#tabla-torneos")).find((f) => /Nacional Absoluto/.test(f[1]));
     igual("Ana (de su AF solo se sabe el año, 2024): su torneo de 2024 queda para revisar en AI", [ana[9].startsWith("Revisar"), /mismo año de su título de AF \(2024\)/.test(ana[9])], [true, true]);
+    igual("la ruta al AI de Ana: sin normas, sin seminario de AI, y los dos años con el AF por revisar (solo se sabe el año)",
+        await p.$$eval("[data-ruta='ai'] li", (ls) => ls.map((l) => l.dataset.estado + " " + l.textContent.split(":")[1].trim().split(" ").slice(0, 2).join(" "))),
+        ["Falta Normas de", "Falta Seminario de", "Revisar Pide dos", "Revisar Lo que"]);
     igual("y su ficha dice que está inactiva y sin licencia", /^Inactivo en la lista de árbitros de FIDE del 12\/10\/2026, sin licencia\. De su AF solo se sabe el año/.test(await p.$eval("#ficha-fide", (e) => e.textContent)), true);
     await ctx.close();
 

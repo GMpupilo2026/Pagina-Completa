@@ -3166,6 +3166,109 @@ no de AF.
   lista otra vez y leer el informe de la última reunión del Consejo, por si
   hay títulos nuevos.
 
+## La ruta al título, el historial, la actividad y los que faltan
+
+Seis piezas más en `arbitros-cr.html` (pedido del dueño, octubre de 2026),
+todas sobre el reglamento vigente: **B.06.1** (títulos de árbitro, aprobado
+por el Consejo de FIDE el 11/12/2025, publicado como
+`Regulations/20251211_B061_approved_by_FIDE_Council.pdf`) y **B.06.3** (la
+clasificación y la actividad, en el Manual del Árbitro 2026). Los dos se
+leyeron convertidos a texto con r.jina.ai, como los informes.
+
+- **«Para pedir el título»** (`rutaTitulo`), en el cuadro de AF o AI de
+  quien todavía no tiene ese título. Es lo que pide B.06.1 punto por punto.
+  Cada punto dice «Listo», «Falta» o «Revisar», escrito; no hay color.
+  - Normas de torneo: 3 para AF, 4 para AI (5.4.4 y 5.5.4). Para AF, de dos
+    sistemas distintos, que solo se marca cuando ya junta todas.
+  - Un seminario de AF o de AI de los últimos **cuatro** años (5.3.2).
+    Coincide con el rechazo de Jessica Rosales en 2026: su seminario de
+    julio de 2022 «venció el 17/07/2026».
+  - Para AF, un año con la licencia de AN o un torneo de FIDE más que no
+    vaya en la solicitud (5.4.3). Para AI, dos años con el AF o tres
+    torneos de FIDE más (5.5.3).
+  - La fecha límite: la norma más vieja vale **seis años** (5.3.1), y la
+    solicitud va a más tardar **un año después del último evento** que
+    lleva (5.3.3), seminario incluido.
+  - Lo que no se ve desde afuera: los certificados y las firmas (no todas
+    de la misma persona, 4.13.1), la edad (19 y 21) y las dos finales
+    nacionales.
+  - El botón «Descargar los torneos para la solicitud» baja un Excel con
+    las columnas del formulario, las mismas de los informes: Start-Close,
+    City, Fed, Tournament, TS, Rtd, Total, Rds, Feds, FRL. Lleva también el
+    seminario.
+  - La ruta va también en el PDF de la ficha.
+- **«Quiénes pueden pedir el título»** (en la lista). Cada uno con su
+  siguiente título (AF si no lo tiene, AI si es FA) y al menos una norma
+  para él. Primero van los que tienen todo; después, el más avanzado.
+- **El historial en FIDE** (en la ficha). Sale de los 14 informes de la
+  Comisión a las reuniones del Consejo de FIDE, de 2023 a 2026:
+  - **19 solicitudes de Costa Rica**, con el veredicto y el motivo tal como
+    lo escribe FIDE, en inglés y entre comillas. Cada una con los torneos
+    que mandó.
+  - **19 seminarios** de 17 personas.
+  - Los informes ponen el veredicto **después** de los torneos de cada
+    solicitante (ver «Lo que dice FIDE de cada árbitro»).
+  - Postgres no cortó bien el `.*?` y la primera extracción tomaba los
+    torneos de los solicitantes siguientes: se corta en el primer
+    veredicto, ya en Python.
+  - Un seminario que empezó en un mes y terminó en el siguiente (el 163,
+    del 30/08 al 01/09) sale una vez, por su número, con el día en que
+    terminó si lo dice la solicitud.
+  - Va en dos columnas jsonb de `arbitros_cr_fide`, `solicitudes` y
+    `seminarios` (migración `20261016014132_arbitros_cr_historial_y_sin_id.sql`).
+    La fuente es el mismo JSON de la lista.
+- **La actividad en FIDE.** El dueño la pensaba por torneos, pero los
+  datos no cuadraban: Mauricio Castro (último torneo de FIDE en el país, en
+  2018) y Edwin Urbina (2020) siguen activos. La regla está en B.06.3,
+  punto 2:
+  - un IA o FA queda inactivo si en **cuatro años no aprueba un curso de
+    actualización**;
+  - los cuatro años se cuentan desde su AF (si es nuevo) o desde su último
+    curso o seminario de AI;
+  - un título nuevo no cambia esa fecha (2.3);
+  - inactivo, no puede ser árbitro principal de un torneo de FIDE donde
+    haya normas para los jugadores (2.1.1), y vuelve con un curso (2.5).
+
+  Los informes no dicen quién hizo cada curso. Por eso `actividad()` da un
+  **piso**: «sigue activo por lo menos hasta» cuatro años desde su AF o su
+  seminario de AI, lo más nuevo que se sabe. Si después hizo un curso,
+  sigue más tiempo. Si el piso cae en menos de un año, lo avisa. La tabla
+  de la lista pone primero a los inactivos y después al que vence antes.
+- **«Por identificar»** (en la lista, plegado):
+  - Los de la lista que no figuran en la lista de árbitros de FIDE: hoy
+    son 41.
+  - Los nombres de chess-results que no se reconocen: `arbitros_cr_sin_id`,
+    que arma `herramientas/arbitros-cr/por-identificar.py`. Son 141 celdas
+    en 426 torneos. Por ejemplo, «AF Josué Amaya» (26 torneos), que es
+    Álvaro Josué Amaya Madrigal escrito con su segundo nombre.
+  - El script usa el mismo reconocimiento del generador: un colector
+    opcional en `armar_chess_results(arbitros, sin_reconocer=…)`, que no
+    cambia nada de lo que el generador carga (el resumen da los mismos
+    11899 cargos).
+  - Solo salen las celdas de árbitro (principal, adjunto, árbitros) de los
+    torneos de Costa Rica en que no se reconoce a **nadie**. Una celda
+    donde sí se reconoce a alguien no se puede partir: no se sabe dónde
+    termina un nombre y empieza el otro.
+  - Cada celda trae hasta cinco torneos de ejemplo enlazados y los ID que
+    traiga.
+- **La carga.** El `delete` de `execute_sql` pide confirmación, y cuando
+  nadie la da, se cancela solo. La primera vez la tabla ya tenía los mismos
+  148 ID, así que se cargó con `on conflict … do update`, sin borrar nada.
+  Las huellas de lo cargado son iguales a las del JSON y del script: las
+  solicitudes, los seminarios y `por-identificar.py --huella`.
+- `verificar-arbitros-cr.js` lo prueba:
+  - la ruta de Luis al AF (le faltan normas, su seminario vale hasta el
+    29/06/2029, la norma más vieja vence a los seis años) y su Excel;
+  - la ruta de Ana al AI;
+  - que quien tiene el título no lleva ruta;
+  - el historial de Óscar (la rechazada con su motivo y lo que mandó);
+  - «Quiénes pueden pedir el título», la actividad (Ana inactiva primero,
+    Óscar hasta el 09/09/2029) y «Por identificar» con sus enlaces.
+
+  Lo rompí con los cuatro años del seminario cambiados por tres, la
+  actividad a dos años, la lista con los que no tienen normas, el
+  historial vacío y la tabla sin nombres, y salta cada vez.
+
 ## Comparar dos árbitros y el ranking del año
 
 Dos piezas más en `arbitros-cr.html` (pedido del dueño, octubre de 2026):
