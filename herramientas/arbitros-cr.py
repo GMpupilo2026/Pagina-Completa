@@ -72,6 +72,9 @@ RESPUESTAS_AFUERA = (17685, 18413)
 # jugadores con federación son de Costa Rica. Con el 80 % o más, se jugaron
 # acá y cuentan como de Costa Rica; si no, quedan fuera.
 SIN_FEDERACION = os.path.join(RAIZ, "herramientas", "datos", "arbitros-cr-sin-federacion.json")
+# Torneos de chess-results que no van en la historia de un árbitro aunque la
+# celda lo nombre (lo pidió el dueño; cada uno con su motivo).
+QUITAR = os.path.join(RAIZ, "herramientas", "datos", "arbitros-cr-quitar.json")
 CARPETA = os.path.join(RAIZ, "herramientas", "arbitros-cr")
 # Los cargos de la ficha de FIDE. Para una norma valen el principal, el
 # adjunto y el árbitro; el asistente no (B.06.1, 2.4.4) y el de pareos queda
@@ -345,6 +348,10 @@ def armar_chess_results(arbitros, sin_reconocer=None):
     # por apellido trae también a quien solo dirigió u organizó.
     arbitrados = {c for c, _, r in cargos if r in ("ap", "adj", "arb")}
     cargos = {c for c in cargos if torneos[c[0]]["pais"] == "CRC" or c[0] in arbitrados}
+    if os.path.exists(QUITAR):
+        with open(QUITAR, encoding="utf-8") as f:
+            quitar = {(int(q["clave"]), str(q["fide_id"])) for q in json.load(f)["quitar"]}
+        cargos = {c for c in cargos if (c[0], str(c[1])) not in quitar}
     usados = {c for c, _, _ in cargos}
     return {k: v for k, v in torneos.items() if k in usados}, cargos
 

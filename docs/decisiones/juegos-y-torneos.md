@@ -2806,6 +2806,16 @@ no, con quién fue árbitro principal, adjunto, árbitro, director u organizador
   y comprueba la columna, la ficha y el enlace (lo rompí dejando fuera a
   quien no tiene torneos de FIDE y salta).
 
+**Quitar un torneo de la historia de un árbitro a mano.** Cuando el dueño pide
+sacar un torneo de chess-results de un árbitro (la celda lo nombra, pero no va),
+va en `herramientas/datos/arbitros-cr-quitar.json` (clave, ID FIDE y motivo) y
+`armar_chess_results()` lo descarta en cada carga: borrarlo solo en la base no
+basta, porque la pasada del mes lo vuelve a sumar. El primero (16/10/2026): el
+«Festival de divisiones Centro Cultural Herediano» (666406 y 666407, con fecha
+22/09/2010 en chess-results) de Jeigoth Pastor Carvajal. El torneo queda para
+los demás árbitros que nombra.
+
+
 ## El mismo torneo en FIDE y en chess-results
 
 En `arbitros-cr.html` cada torneo sale **una vez** (pedido del dueño, octubre

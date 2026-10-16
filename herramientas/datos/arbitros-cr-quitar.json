@@ -1,0 +1,18 @@
+{
+ "quitar": [
+  {
+   "clave": 666406,
+   "fide_id": "6516718",
+   "nombre": "Pastor Carvajal, Jeigoth",
+   "torneo": "Festival de divisiones Centro Cultural Herediano O (22/09/2010)",
+   "motivo": "Lo pidió el dueño el 16/10/2026: ese torneo de 2010 no va en su historia."
+  },
+  {
+   "clave": 666407,
+   "fide_id": "6516718",
+   "nombre": "Pastor Carvajal, Jeigoth",
+   "torneo": "Festival de Divisiones Centro Cultural Herediano O (22/09/2010)",
+   "motivo": "La otra sección del mismo festival."
+  }
+ ]
+}
