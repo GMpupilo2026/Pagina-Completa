@@ -1,0 +1,20 @@
+{
+ "corregir": [
+  {
+   "clave": 666406,
+   "torneo": "Festival de divisiones Centro Cultural Herediano O",
+   "inicio": "2022-09-10",
+   "fin": "2022-09-10",
+   "en_chess_results": "del 22/09/2010 al 22/09/2011",
+   "motivo": "Fecha mal escrita en chess-results; el dueño dio la buena el 16/10/2026."
+  },
+  {
+   "clave": 666407,
+   "torneo": "Festival de Divisiones Centro Cultural Herediano O",
+   "inicio": "2022-09-10",
+   "fin": "2022-09-10",
+   "en_chess_results": "del 22/09/2010 al 22/09/2011",
+   "motivo": "La otra sección del mismo festival."
+  }
+ ]
+}

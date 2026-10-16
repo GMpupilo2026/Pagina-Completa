@@ -2806,14 +2806,16 @@ no, con quién fue árbitro principal, adjunto, árbitro, director u organizador
   y comprueba la columna, la ficha y el enlace (lo rompí dejando fuera a
   quien no tiene torneos de FIDE y salta).
 
-**Quitar un torneo de la historia de un árbitro a mano.** Cuando el dueño pide
-sacar un torneo de chess-results de un árbitro (la celda lo nombra, pero no va),
-va en `herramientas/datos/arbitros-cr-quitar.json` (clave, ID FIDE y motivo) y
-`armar_chess_results()` lo descarta en cada carga: borrarlo solo en la base no
-basta, porque la pasada del mes lo vuelve a sumar. El primero (16/10/2026): el
-«Festival de divisiones Centro Cultural Herediano» (666406 y 666407, con fecha
-22/09/2010 en chess-results) de Jeigoth Pastor Carvajal. El torneo queda para
-los demás árbitros que nombra.
+**Una fecha de chess-results mal escrita se corrige a mano.** Hay torneos con
+la fecha equivocada en chess-results: el «Festival de divisiones Centro
+Cultural Herediano» (666406 y 666407) dice del 22/09/2010 al 22/09/2011, pero
+su clave es de 2022 y el dueño confirmó que se jugó el 10/09/2022 (lo vio en
+la historia de Jeigoth Pastor Carvajal, que no arbitraba en 2010). La fecha
+buena va en `herramientas/datos/arbitros-cr-corregir.json` (clave, inicio, fin
+y motivo) y `armar_chess_results()` la pone en cada carga: corregirla solo en
+la base no basta, porque la pasada del mes la vuelve a escribir. Vale para
+todos los árbitros del torneo. Primero se pensó en quitarle el torneo a él solo,
+pero el error es la fecha, no quién lo arbitró.
 
 
 ## El mismo torneo en FIDE y en chess-results
