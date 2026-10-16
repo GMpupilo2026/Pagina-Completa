@@ -3688,6 +3688,21 @@ idea por lámina, dibujos en vez de frases y el detalle en las `notas`:
   corrida que dice lo de la vecina. Las notas que se escriben a mano (como las
   de la Clase 1) no sirven en esas sesiones, porque el generador reescribe el
   JSON; ahí el profe tiene el `texto` completo debajo de la lámina.
+- **El .pptx que se baja es el que se proyecta.** Lo arma
+  `herramientas/formacion-pptx.py` con las mismas láminas: una imagen por
+  diapositiva (en JPEG: PowerPoint viejo y LibreOffice no abren WebP dentro de
+  un .pptx; en PNG la Clase 1 pesaba 13 MB, así pesa 5), las `notas` en las
+  notas del orador y el `texto` como texto alternativo de la imagen. Antes el
+  .pptx salía de `presentacion()`, con todo el texto del curso, y se quedó
+  viejo sin que nada fallara: el lunes 12 de octubre la Clase 1 se dio con las
+  51 láminas nuevas y lo que se bajaba era el PowerPoint del domingo, con
+  otra cantidad de diapositivas. El generador del curso lo llama al final; para
+  volver a armar solo el PowerPoint, `python3 herramientas/formacion-pptx.py
+  clase-01`. En el Asunto del archivo queda la huella (sha-256 de
+  `diapositivas.json` y de las imágenes), y `verificar-formacion-pptx.py` la
+  vuelve a calcular, junto con una diapositiva por lámina y las notas: lámina
+  vuelta a dibujar sin su .pptx, falla. Las fechas van fijas, también las del
+  zip, para que el mismo contenido dé el mismo archivo.
 - El cronograma reparte sus filas en dos columnas, las que sean.
 - Las marcas de color (verde, rojo, ámbar, azul) llevan siempre su palabra y
   su signo (✓, ✗, =, →); los colores de texto se midieron contra su fondo.
