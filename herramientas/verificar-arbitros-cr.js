@@ -73,7 +73,7 @@ const ARBITROS_FIDE = [
       seminarios: [{ tipo: "IA", seminario: "18th IACS Internet Based Aug 2025 (ARB)", mes: "2025-09", fecha: "2025-09-09", fuente: "https://arbiters.fide.com/informe-2.pdf" }] },
     { fide_id: 6500002, titulo: "FA", inactivo: true, categoria: "D", licencia: "No", af_fecha: null, af_consejo: "", ia_fecha: null, ia_consejo: "", lista: "2026-10-12", solicitudes: [], seminarios: [] },
     // Luis tiene su seminario de AF (vale cuatro años) y una norma de las tres.
-    { fide_id: 6500003, titulo: "NA", inactivo: false, categoria: "", licencia: "NA", af_fecha: null, af_consejo: "", ia_fecha: null, ia_consejo: "", lista: "2026-10-12", solicitudes: [],
+    { fide_id: 6500003, titulo: "NA", inactivo: false, categoria: "", licencia: "NA", categoria_nacional: "B", fca_leida: "2026-10-16", af_fecha: null, af_consejo: "", ia_fecha: null, ia_consejo: "", lista: "2026-10-12", solicitudes: [],
       seminarios: [{ tipo: "FA", seminario: "189th Internet Based Jun 2025 (CCA)", mes: "2025-06", fecha: "2025-06-29", fuente: "https://arbiters.fide.com/informe-3.pdf" }] },
 ];
 // Las celdas de chess-results en que no se reconoce a nadie.
@@ -140,15 +140,42 @@ window.SUPABASE_ANON_KEY = "anon-falsa";
   const LICENCIA = ${tieneLicencia ? "true" : "false"};
   window.__pedidos = [];
   function respuesta(data, error) { return Promise.resolve({ data, error: error || null }); }
+  TABLAS.arbitros_cr_normas_revision = [];
+  TABLAS.arbitros_cr_solicitudes_enviadas = [];
+  // Lo que pone la base al insertar, y su índice único, por tabla.
+  const ALTA = {
+    arbitros_cr_normas_revision: { claves: ["creada_por", "fide_id", "cual", "torneo_id"], omision: { firmante_fide_id: null, firmante_nombre: "", archivo: null, nombre_archivo: "" } },
+    arbitros_cr_solicitudes_enviadas: { claves: ["creada_por", "fide_id", "cual", "enviada"], omision: { resultado: "pendiente", consejo: "", motivo: "", normas: [] } },
+  };
+  window.__archivos = {};
+  let nuevas = 0;
   function consulta(tabla) {
-    const q = { _desde: 0, _hasta: 999 };
-    ["select", "eq", "order", "in", "limit"].forEach((m) => { q[m] = () => q; });
+    // Los filtros se anotan y se aplican en el RESOLVER, de verdad.
+    const q = { _desde: 0, _hasta: 999, _filtros: [], _op: "select" };
+    ["select", "order", "in", "limit"].forEach((m) => { q[m] = () => q; });
+    q.eq = (c, v) => { q._filtros.push([c, v]); return q; };
+    q.insert = (fila) => { q._op = "insert"; q._fila = fila; return q; };
+    q.delete = () => { q._op = "delete"; return q; };
+    q.update = (cambio) => { q._op = "update"; q._cambio = cambio; return q; };
+    q.single = () => { q._single = true; return q; };
     q.range = (a, b) => { q._desde = a; q._hasta = b; return q; };
     q.then = (ok, mal) => {
-      window.__pedidos.push(tabla + " " + q._desde + "-" + q._hasta);
-      // La RLS: sin la herramienta, las tablas no devuelven nada.
-      const filas = LICENCIA ? (TABLAS[tabla] || []) : [];
-      return Promise.resolve({ data: filas.slice(q._desde, q._hasta + 1), error: null }).then(ok, mal);
+      window.__pedidos.push(tabla + " " + (q._op === "select" ? q._desde + "-" + q._hasta : q._op));
+      const pasa = (f) => q._filtros.every(([c, v]) => f[c] === v);
+      let r;
+      if (!LICENCIA) r = { data: q._op === "select" ? [] : null, error: q._op === "select" ? null : { message: "sin permiso" } };   // la RLS
+      else if (q._op === "insert") {
+        const alta = ALTA[tabla];
+        const fila = { id: "n" + (++nuevas), creada_por: "yo", creada: "2026-10-16T04:00:00Z", ...alta.omision, ...q._fila };
+        const rep = TABLAS[tabla].some((f) => alta.claves.every((k) => f[k] === fila[k]));
+        // Como el trigger de la base: sin la versión de la privacidad, no entra.
+        if (tabla === "arbitros_cr_normas_revision" && !/^\\d{4}-\\d{2}-\\d{2}$/.test(fila.privacidad_version || "")) r = { data: null, error: { message: "Para subir una norma hay que aceptar la Política de privacidad.", code: "23514" } };
+        else if (rep) r = { data: null, error: { message: "duplicate key value violates unique constraint", code: "23505" } };
+        else { TABLAS[tabla].push(fila); r = { data: q._single ? fila : [fila], error: null }; }
+      } else if (q._op === "update") { for (const f of TABLAS[tabla].filter(pasa)) Object.assign(f, q._cambio); r = { data: null, error: null }; }
+      else if (q._op === "delete") { TABLAS[tabla] = TABLAS[tabla].filter((f) => !pasa(f)); r = { data: null, error: null }; }
+      else r = { data: (TABLAS[tabla] || []).filter(pasa).slice(q._desde, q._hasta + 1), error: null };
+      return Promise.resolve(r).then(ok, mal);
     };
     return q;
   }
@@ -162,9 +189,15 @@ window.SUPABASE_ANON_KEY = "anon-falsa";
     rpc: (nombre, args) => {
       window.__pedidos.push(nombre);
       if (nombre === "tengo_herramienta") return respuesta(LICENCIA && args.p_herramienta === "arbitros-cr");
+      if (nombre === "soy_admin") return respuesta(false);
       return respuesta(null);
     },
     from: (t) => consulta(t),
+    storage: { from: (bucket) => ({
+      upload: (ruta, archivo) => { window.__archivos[bucket + "/" + ruta] = archivo.name; return respuesta({ path: ruta }); },
+      remove: (rutas) => { for (const r of rutas) delete window.__archivos[bucket + "/" + r]; return respuesta([]); },
+      createSignedUrl: (ruta) => respuesta({ signedUrl: "about:blank#" + ruta }),
+    }) },
     functions: { invoke: () => respuesta(null) },
     channel: () => ({ on() { return this; }, subscribe() { return this; }, unsubscribe() {} }),
     removeChannel: () => {},
@@ -215,7 +248,14 @@ const porNombre = (m) => Object.fromEntries(m.map((f) => [f[0], f]));
     igual("Ana: el asistente no vale, el de pareos queda para revisar (AF 1 (1), AI 1 (1)) y su torneo en Panamá cuenta en el extranjero",
         m["Soto Prueba, Ana"].slice(1), ["FA", "2024", "—", "Inactivo", "3", "2", "1", "1", "0", "0", "1", "1 (1)", "1 (1)", "Ya es AF", "0 de 4", "01/05/2024", "10/01/2025"]);
     const luis = porNombre(await filas(p, "#tabla-arbitros"))["Rojas Prueba, Luis"];
-    igual("Luis: Árbitro Nacional por la lista de FIDE (su perfil no lo dice), activo, «Hoy para AF» 1 de 3", [luis[1], luis[2], luis[4], luis[14]], ["AN", "—", "Activo", "1 de 3"]);
+    igual("Luis: Árbitro Nacional por la lista de FIDE (su perfil no lo dice), categoría B por la de la Federación, activo, «Hoy para AF» 1 de 3", [luis[1], luis[2], luis[4], luis[14]], ["AN-B", "—", "Activo", "1 de 3"]);
+    await p.selectOption("#titulo", "AN-B");
+    igual("el filtro «Árbitro Nacional, categoría B» deja solo a Luis", Object.keys(porNombre(await filas(p, "#tabla-arbitros"))), ["Rojas Prueba, Luis"]);
+    await p.selectOption("#titulo", "AN-A");
+    igual("y con la A, nadie", Object.keys(porNombre(await filas(p, "#tabla-arbitros"))), []);
+    await p.selectOption("#titulo", "AN");
+    igual("«Árbitro Nacional (AN)» sigue juntando todas las categorías, también a Juan, que no tiene", Object.keys(porNombre(await filas(p, "#tabla-arbitros"))).sort(), ["Rojas Prueba, Luis", "Viejo Prueba, Juan"]);
+    await p.selectOption("#titulo", "");
     igual("«AF desde» y «AI desde»: el año de cada título, el de su perfil de FIDE (sin título, «—»)",
         ["Ángulo Prueba, Óscar", "Soto Prueba, Ana", "Rojas Prueba, Luis"].map((n) => m[n].slice(2, 4)), [["2024", "2026"], ["2024", "—"], ["—", "—"]]);
     await p.click("#tabla-arbitros button[data-col='anioAi']");
@@ -372,6 +412,16 @@ const porNombre = (m) => Object.fromEntries(m.map((f) => [f[0], f]));
         /La norma más vieja que junta vence el 01\/03\/2029/.test(await p.$eval("[data-ruta='af']", (e) => e.textContent))], [true, true]);
     const [solicitud] = await Promise.all([p.waitForEvent("download"), p.click("[data-ruta='af'] button")]);
     igual("y el Excel de los torneos para la solicitud", solicitud.suggestedFilename(), "solicitud-af-6500003.xlsx");
+    const [informe] = await Promise.all([p.waitForEvent("download"), p.click("[data-ruta='af'] button:text-is('Informe para la comisión (PDF)')")]);
+    const inf = require("fs").readFileSync(await informe.path()).toString("latin1");
+    igual("el informe para la comisión: lo que pide FIDE, la norma con quién firma y hasta cuándo cuenta, y los riesgos",
+        [informe.suggestedFilename(), inf.includes("(Lo que pide FIDE, punto por punto)"), inf.includes("(- Falta: Normas de torneo: junta 1 de las 3; le faltan 2.)"),
+         inf.includes("(Internacional con titulados 2023)"), inf.includes("(No consta)"), inf.includes("(01/03/2029)"), inf.includes("(Riesgos de esta solicitud)"),
+         inf.includes("(Con lo que se ve desde afuera, ninguno en particular.)")],
+        ["informe-af-6500003.pdf", true, true, true, true, true, true, true]);
+    igual("su ficha dice la categoría nacional, de la lista de la Federación",
+        [/Árbitro Nacional \(AN\), categoría B/.test(await p.$eval("#ficha-sub", (e) => e.textContent)),
+         /Árbitro Nacional categoría B según la lista de la Federación Central de Ajedrez \(leída el 16\/10\/2026\)/.test(await p.$eval("#ficha-fide", (e) => e.textContent))], [true, true]);
     igual("su historial: el seminario de AF", await p.$$eval("#ficha-historial > ul > li strong", (s) => s.map((x) => x.textContent)), ["29/06/2025 · Seminario de AF: 189th Internet Based Jun 2025 (CCA)"]);
     const aiLuis = (await filas(p, "#tabla-torneos"))[0][9];
     igual("su torneo que cumple las condiciones de AI no le cuenta: no tiene el AF", [aiLuis.startsWith("No"), /No tiene el título de AF/.test(aiLuis)], [true, true]);
@@ -442,8 +492,130 @@ const porNombre = (m) => Object.fromEntries(m.map((f) => [f[0], f]));
     ({ ctx, p } = await abrir(browser, "arbitros-cr.html#6500003", true));
     await p.waitForFunction(() => document.getElementById("ficha").checkVisibility());
     igual("si el principal fue él mismo, el certificado lo firma otro", /fue él el árbitro principal; ese certificado no lo puede firmar él \(2\.8\)/.test(await p.$eval("[data-ruta='af']", (e) => e.textContent)), true);
+    const [informe2] = await Promise.all([p.waitForEvent("download"), p.click("[data-ruta='af'] button:text-is('Informe para la comisión (PDF)')")]);
+    igual("y el informe lo dice en la columna de la firma", require("fs").readFileSync(await informe2.path()).toString("latin1").includes("(Él mismo: firma otro \\(2.8\\))"), true);
     await ctx.close();
     CARGOS.pop();
+
+    // Ana (FA) arbitra el 101, que vale una sola vez para AI (opción), y en
+    // las mismas fechas el 106: el informe avisa de las dos cosas.
+    CARGOS.push({ torneo_id: 101, fide_id: 6500002, cargo: "Arbiter" }, { torneo_id: 106, fide_id: 6500002, cargo: "Arbiter" });
+    TORNEOS.push(T(106, "Rápido del mismo día", "2025-01-10", "no", "no"));
+    ({ ctx, p } = await abrir(browser, "arbitros-cr.html#6500002", true));
+    await p.waitForFunction(() => document.getElementById("ficha").checkVisibility());
+    const [informe3] = await Promise.all([p.waitForEvent("download"), p.click("[data-ruta='ai'] button:text-is('Informe para la comisión (PDF)')")]);
+    const inf3 = require("fs").readFileSync(await informe3.path()).toString("latin1");
+    igual("el informe de AI de Ana: el 101 vale una sola vez y se tocó con otro torneo (2.10)",
+        [informe3.suggestedFilename(), inf3.includes("4.9.1"), inf3.includes("2.10"), inf3.includes("(Riesgos de esta solicitud)")], ["informe-ai-6500002.pdf", true, true, true]);
+    await ctx.close();
+    CARGOS.splice(-2, 2); TORNEOS.pop();
+
+    console.log("\n=== Revisar normas antes de mandarlas ===");
+    // Un torneo más de Luis (árbitro), con Óscar de principal ya AF: sirve de reserva.
+    // Y otro con Juan (AN) de principal: también vale, pero su firma no sirve (va después).
+    TORNEOS.push(T(107, "Abierto de reserva 2024", "2024-06-01", "si", "no"), T(108, "Torneo firmado por un AN 2022", "2022-02-01", "si", "no"));
+    CARGOS.push({ torneo_id: 107, fide_id: 6500003, cargo: "Arbiter" }, { torneo_id: 107, fide_id: 6500001, cargo: "Chief" },
+        { torneo_id: 108, fide_id: 6500003, cargo: "Arbiter" }, { torneo_id: 108, fide_id: 6500004, cargo: "Chief" });
+    ({ ctx, p } = await abrir(browser, "arbitros-cr.html#6500003", true));
+    await p.waitForFunction(() => document.getElementById("revision").checkVisibility());
+    igual("Luis (AN) arranca en la solicitud de AF, con sus torneos de FIDE para elegir y nada subido",
+        [await p.$eval("#revision-cual", (e) => e.value), await p.$$eval("#revision-torneo option", (os) => os.map((o) => o.textContent)),
+         await p.$$eval("#revision-lista > li", (ls) => ls.length), await visible(p, "#revision-solicitud")],
+        ["af", ["Elegir el torneo", "01/06/2024 · Abierto de reserva 2024", "01/03/2023 · Internacional con titulados 2023", "01/02/2022 · Torneo firmado por un AN 2022"], 0, false]);
+    const certificado = { name: "norma-104.pdf", mimeType: "application/pdf", buffer: Buffer.from("%PDF-1.4 prueba") };
+    await p.selectOption("#revision-torneo", "104");
+    await p.click("#revision-subir");
+    igual("sin el certificado no sube nada y lo dice", [await p.$$eval("#revision-lista > li", (ls) => ls.length), /Sube el certificado/.test(await p.textContent("body"))], [0, true]);
+    await p.selectOption("#revision-cargo", "Dep. Chief");
+    await p.selectOption("#revision-firmante", "otro");
+    igual("«Otra persona» pide el nombre", await visible(p, "#revision-otro"), true);
+    await p.fill("#revision-otro", "Fulano Externo");
+    await p.setInputFiles("#revision-archivo", certificado);
+    await p.click("#revision-subir");
+    igual("sin marcar la casilla de la privacidad no sube ni el archivo, y la casilla enlaza la política",
+        [await p.$$eval("#revision-lista > li", (ls) => ls.length), Object.keys(await p.evaluate(() => window.__archivos)).length,
+         /marcar la casilla de la Política de privacidad/.test(await p.textContent("body")), await p.$eval("#revision-acepto + span a", (a) => a.getAttribute("href"))],
+        [0, 0, true, "privacidad.html"]);
+    await p.check("#revision-acepto");
+    await p.click("#revision-subir");
+    await p.waitForFunction(() => document.querySelectorAll("#revision-lista > li").length === 1);
+    const norma = () => p.$eval("#revision-lista > li", (li) => [li.dataset.veredicto, [...li.querySelectorAll("li")].map((x) => x.textContent)]);
+    let [ver, mot] = await norma();
+    igual("la norma subida: el archivo va a la carpeta de quien la sube; el torneo vale; quien firma no está en la lista: revisar",
+        [Object.keys(await p.evaluate(() => window.__archivos))[0].startsWith("normas-arbitros/yo/"), ver,
+         mot.some((m) => /^Listo: El torneo: Vale\./.test(m)), mot.some((m) => /^Revisar: Lo firma Fulano Externo, que no está en la lista/.test(m))],
+        [true, "Revisar", true, true]);
+    igual("la norma para revisar propone con qué reemplazarla, con quién la firmaría",
+        await p.$eval("#revision-lista [data-reserva]", (e) => e.textContent),
+        "Para reemplazarla: «Abierto de reserva 2024» (01/06/2024); lo firmaría Ángulo Prueba, Óscar (AF).");
+    igual("y la solicitud lista lo que podría completarla",
+        await p.$eval("#revision-solicitud [data-candidatas]", (e) => e.textContent),
+        "Para completarla (le faltan 2) o tener de reserva01/06/2024 · Abierto de reserva 2024 (Vale): lo firmaría Ángulo Prueba, Óscar (AF)."
+        + "01/02/2022 · Torneo firmado por un AN 2022 (Vale): el principal, Viejo Prueba, Juan, no tenía el título que hace falta: la rechazarían (2.8).");
+    igual("la solicitud de AF con una sola norma: todavía no (le faltan 2)",
+        [await p.$eval("#revision-solicitud .of-estado", (e) => e.textContent), /Normas de torneo: junta 1 de las 3; le faltan 2/.test(await p.textContent("#revision-solicitud"))],
+        ["Todavía no: FIDE la rechazaría", true]);
+    await p.click("#revision-enviada");
+    await p.click("button:text-is('Marcar como enviada')");
+    await p.waitForFunction(() => document.querySelectorAll("#revision-enviadas > li").length === 1);
+    igual("«Marcar como enviada a FIDE» guarda la fecha, lo que dijo la revisión y sus normas",
+        [await p.$eval("#revision-enviadas > li", (li) => li.textContent.includes("La revisión dijo: Todavía no: FIDE la rechazaría. FIDE: Pendiente.")),
+         await p.evaluate(() => window.sb.from("arbitros_cr_solicitudes_enviadas").select().then((r) => r.data.map((e) => [e.prediccion, e.normas.map((n) => n.torneo_id + " " + n.veredicto)])))],
+        [true, [["todavia", ["104 Revisar"]]]]);
+    await p.selectOption("#revision-enviadas select", "rechazada");
+    await p.fill("#revision-enviadas input", "Consejo de marzo de 2027");
+    await p.fill("#revision-enviadas textarea", "Only 1 norm");
+    await p.click("#revision-enviadas button:text-is('Guardar el resultado')");
+    await p.waitForFunction(() => /La revisión acertó\./.test(document.getElementById("revision-enviadas").textContent));
+    igual("con el resultado de FIDE: dijo «Todavía no» y la rechazaron, así que acertó; y la cuenta de aciertos",
+        [/FIDE: Rechazada \(Consejo de marzo de 2027\)\./.test(await p.textContent("#revision-enviadas")), await p.textContent("#revision-acierto")],
+        [true, "La revisión acertó en 1 de 1 solicitud resuelta (de todos los árbitros; las «Casi» no cuentan)."]);
+    igual("después de subir, la casilla vuelve a quedar sin marcar (va con cada certificado)", await p.$eval("#revision-acepto", (e) => e.checked), false);
+    await p.selectOption("#revision-torneo", "104");
+    await p.setInputFiles("#revision-archivo", certificado);
+    await p.check("#revision-acepto");
+    await p.click("#revision-subir");
+    igual("la misma norma dos veces no se sube", [await p.$$eval("#revision-lista > li", (ls) => ls.length), /ya está subida/.test(await p.textContent("body"))], [1, true]);
+    await p.click("#revision-lista button:text-is('Quitar esta norma')");
+    await p.click("button:text-is('Quitar la norma')");
+    await p.waitForFunction(() => document.querySelectorAll("#revision-lista > li").length === 0);
+    igual("«Quitar esta norma» la borra con su archivo y la solicitud desaparece; la enviada queda",
+        [Object.keys(await p.evaluate(() => window.__archivos)).length, await visible(p, "#revision-solicitud"), await p.$$eval("#revision-enviadas > li", (ls) => ls.length)], [0, false, 1]);
+    // Una norma que no vale (la firma él mismo) no se propone como su propio
+    // reemplazo: va el 104 (ya quitado, el más nuevo de los que quedan).
+    await p.selectOption("#revision-torneo", "107");
+    await p.selectOption("#revision-firmante", "6500003");
+    await p.setInputFiles("#revision-archivo", certificado);
+    await p.check("#revision-acepto");
+    await p.click("#revision-subir");
+    await p.waitForFunction(() => document.querySelectorAll("#revision-lista > li").length === 1);
+    igual("la que no vale propone otra, no a sí misma",
+        [await p.$eval("#revision-lista > li", (li) => li.dataset.veredicto), await p.$eval("#revision-lista [data-reserva]", (e) => e.textContent)],
+        ["No vale", "Para reemplazarla: «Internacional con titulados 2023» (01/03/2023); no consta quién fue el principal: ver el certificado."]);
+    await ctx.close();
+    TORNEOS.splice(-2, 2); CARGOS.splice(-4, 4);
+
+    // Ana (FA) pide el AI con el 101 (vale una vez para AI): el certificado
+    // dice «Árbitro» y FIDE la tiene de asistente, y lo firma Óscar, que en
+    // enero de 2025 era AF, no AI: FIDE la rechazaría.
+    ({ ctx, p } = await abrir(browser, "arbitros-cr.html#6500002", true));
+    await p.waitForFunction(() => document.getElementById("revision").checkVisibility());
+    igual("Ana (FA) arranca en la solicitud de AI", await p.$eval("#revision-cual", (e) => e.value), "ai");
+    await p.selectOption("#revision-torneo", "101");
+    await p.selectOption("#revision-firmante", "6500001");
+    await p.setInputFiles("#revision-archivo", { name: "norma-101.jpg", mimeType: "image/jpeg", buffer: Buffer.from("foto") });
+    await p.check("#revision-acepto");
+    await p.click("#revision-subir");
+    await p.waitForFunction(() => document.querySelectorAll("#revision-lista > li").length === 1);
+    [ver, mot] = await norma();
+    igual("no vale: lo firma alguien que entonces no era AI (2.8), y el cargo no coincide con la ficha de FIDE",
+        [ver, mot.some((m) => /^No vale: Lo firma Ángulo Prueba, Óscar, que en esa fecha no era AI/.test(m)),
+         mot.some((m) => /^Revisar: El certificado dice «Árbitro» y la ficha de FIDE, «Árbitro asistente»/.test(m))],
+        ["No vale", true, true]);
+    igual("y la solicitud lo dice: una norma que no vale",
+        [await p.$eval("#revision-solicitud .of-estado", (e) => e.textContent), /1 norma subida, 1 no vale/.test(await p.textContent("#revision-solicitud"))],
+        ["Todavía no: FIDE la rechazaría", true]);
+    await ctx.close();
 
     console.log("\n=== Comparar dos árbitros ===");
     ({ ctx, p } = await abrir(browser, "arbitros-cr.html#6500003,6500001", true));
@@ -451,7 +623,7 @@ const porNombre = (m) => Object.fromEntries(m.map((f) => [f[0], f]));
     const dato = async (n) => (await filas(p, "#tabla-comparar")).find((f) => f[0] === n);
     igual("la dirección con dos ID abre la comparación: Luis contra Óscar, dato por dato",
         [await p.$eval("#comparar", (e) => e.value), await p.$$eval("#tabla-comparar thead th", (t) => t.map((x) => x.textContent)), await dato("Torneos"), await dato("Hoy para AF"), await dato("Título"), await dato("AF desde"), await dato("AI desde")],
-        ["6500001", ["Dato", "Rojas Prueba, Luis", "Ángulo Prueba, Óscar"], ["Torneos", "1", "6"], ["Hoy para AF", "1 de 3", "Ya es AF"], ["Título", "Árbitro Nacional (AN)", "Árbitro Internacional (IA)"], ["AF desde", "—", "2024"], ["AI desde", "—", "2026"]]);
+        ["6500001", ["Dato", "Rojas Prueba, Luis", "Ángulo Prueba, Óscar"], ["Torneos", "1", "6"], ["Hoy para AF", "1 de 3", "Ya es AF"], ["Título", "Árbitro Nacional (AN), categoría B", "Árbitro Internacional (IA)"], ["AF desde", "—", "2024"], ["AI desde", "—", "2026"]]);
     igual("por año, con los que hicieron juntos", (await filas(p, "#comparar-anios")).find((f) => f[0] === "2023"), ["2023", "1", "1", "1"]);
     igual("el torneo que hicieron juntos, con el cargo de cada uno", [await p.$eval("#comparar-juntos-texto", (e) => e.textContent), await filas(p, "#comparar-juntos")],
         ["1 torneo hicieron juntos de 2015 a 2025:", [["01/03/2023", "Internacional con titulados 2023", "Árbitro adjunto principal", "Árbitro"]]]);

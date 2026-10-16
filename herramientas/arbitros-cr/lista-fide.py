@@ -5,7 +5,10 @@ desde herramientas/datos/arbitros-cr-lista-fide.json: los árbitros de Costa
 Rica de la lista oficial de FIDE, la fecha en que el Consejo de FIDE les
 aprobó el AF y el AI (y la fecha que dice su perfil de FIDE, la oficial, en
 «perfil» de cada aprobación cuando se conoce), y sus solicitudes de título y seminarios según los
-informes de la Comisión de Árbitros.
+informes de la Comisión de Árbitros. Al final, la categoría nacional (A, B o
+C) de cada Árbitro Nacional, de la lista de la Federación Central de Ajedrez
+(herramientas/datos/arbitros-cr-lista-fca.json, migración
+20261016033536_arbitros_cr_categoria_nacional.sql).
 
     python3 herramientas/arbitros-cr/lista-fide.py > /tmp/lista-fide.sql
 
@@ -23,6 +26,9 @@ POR_CARGA = 25
 
 RAIZ = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 DATOS = os.path.join(RAIZ, "herramientas", "datos", "arbitros-cr-lista-fide.json")
+FCA = os.path.join(RAIZ, "herramientas", "datos", "arbitros-cr-lista-fca.json")
+# La categoría nacional de un NA, como la escribe la Federación.
+CATEGORIA_NACIONAL = {"NAA": "A", "NAB": "B", "NAC": "C"}
 
 
 def sql(v):
@@ -62,6 +68,20 @@ def main():
     for i in range(0, len(filas), POR_CARGA):
         print("insert into public.arbitros_cr_fide (fide_id, nombre, titulo, inactivo, categoria, licencia, af_fecha, af_consejo, ia_fecha, ia_consejo, lista, solicitudes, seminarios, af_perfil, ia_perfil) values\n  "
               + ",\n  ".join(filas[i:i + POR_CARGA]) + ";")
+    print(categorias_nacionales({f[0] for f in d["arbitros"]}))
+
+
+def categorias_nacionales(en_lista):
+    """El update de categoria_nacional desde la lista de la Federación. Quien
+    figura en ella y no en la de FIDE no se carga (no tiene fila): se avisa."""
+    with open(FCA, encoding="utf-8") as f:
+        fca = json.load(f)
+    valores = [(fid, CATEGORIA_NACIONAL[cat]) for fid, _, _, titulo, cat, _ in fca["arbitros"] if cat in CATEGORIA_NACIONAL]
+    fuera = sorted(fid for fid, _ in valores if fid not in en_lista)
+    if fuera:
+        raise SystemExit(f"En la lista de la Federación y no en la de FIDE: {fuera}")
+    return ("update public.arbitros_cr_fide f set categoria_nacional = v.c, fca_leida = " + sql(fca["leida"]) + "\nfrom (values "
+            + ", ".join(f"({fid}, {sql(c)})" for fid, c in valores) + ") v(f, c)\nwhere f.fide_id = v.f;")
 
 
 if __name__ == "__main__":

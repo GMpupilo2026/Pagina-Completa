@@ -2817,6 +2817,26 @@ la base no basta, porque la pasada del mes la vuelve a escribir. Vale para
 todos los árbitros del torneo. Primero se pensó en quitarle el torneo a él solo,
 pero el error es la fecha, no quién lo arbitró.
 
+Después se buscaron los demás casos en los 4214 torneos de Costa Rica (un
+torneo que dura más de un año, o con un año que no cuadra con su clave: las
+claves de chess-results van en orden) y salieron dos, corregidos con la página
+de cada uno a la vista: el **JUNCOS 2011 por equipos femenino** (48235), con
+solo la ronda 1 en 2010, y el **Nacional Infantil S8** (63763), con las siete
+rondas en 2002 pero actualizado por última vez el 13/01/2012 a las 22:21, la
+noche de su última ronda. Los otros que duran más de dos meses son torneos de
+club de una ronda por semana: esos están bien.
+
+Para que no se cuele otro, `python3 herramientas/arbitros-cr.py --resumen`
+termina con «Fechas por revisar» (`fechas_raras()`): un torneo que dura 300
+días o más, o cuyo año queda a 3 o más de la mediana de los 50 de antes y los
+50 de después en orden de clave (con menos de 20 vecinos no compara). Con los
+datos de octubre de 2026 y sin las correcciones, salen exactamente los cuatro de
+arriba y ninguno más; los de club, de dos o tres meses, no saltan. No corrige
+nada solo: la fecha buena la confirma una persona en la página del torneo
+(paso 3 de `.claude/skills/arbitros-cr-actualizar/`). Lo comprueba
+`verificar-arbitros-cr-fechas.py`, con torneos inventados, y que cada
+corrección tenga motivo y una fecha que se lea.
+
 
 ## El mismo torneo en FIDE y en chess-results
 
@@ -3187,6 +3207,41 @@ no de AF.
   lista otra vez y leer el informe de la última reunión del Consejo, por si
   hay títulos nuevos.
 
+## La categoría nacional: la lista de la Federación
+
+La lista oficial de FIDE dice si alguien es NA, pero no su categoría nacional.
+La Federación Central de Ajedrez la publica en
+`fcacostarica.com/lista-de-arbitros/`, una tabla con el FIDE ID, el nombre, la
+federación, el título, la categoría y la licencia. La categoría de un NA viene
+como «NAA», «NAB» o «NAC» (A, B o C); la de un FA o IA es la de FIDE (D, o A
+para Carolina Muñoz). El dueño la pasó en octubre de 2026.
+
+- **Cómo se lee.** Desde el contenedor la página no contesta (el proxy la
+  rechaza); desde la base con `net.http_get` sí. La tabla se parte por
+  `</tr>` y `</td>` (con `regexp_matches` y `.*?` Postgres se vuelve codicioso y
+  junta todas las filas en una), se limpia con `btrim(..., E' \t\r\n')` (el
+  `trim` común no quita tabuladores) y se guarda tal cual en
+  `herramientas/datos/arbitros-cr-lista-fca.json`, sacada de la respuesta y
+  nunca copiada a mano.
+- **Dónde va.** `arbitros_cr_fide.categoria_nacional` (A, B o C, con su
+  `check`) y `fca_leida` (migración `20261016033536`). La carga la arma
+  `herramientas/arbitros-cr/lista-fide.py`, al final, y falla si alguien de la
+  Federación no está en la lista de FIDE. La huella de la base (md5 de
+  `fide_id|categoría`) dio igual a la del JSON: 95 NA (20 A, 5 B y 70 C).
+- **Cómo se ve.** «AN-B» en la columna Título y «Árbitro Nacional (AN),
+  categoría B» en la ficha, la comparación y los PDF. La ficha dice además de
+  dónde sale y qué día se leyó. El filtro de título tiene una opción por
+  categoría, y «Árbitro Nacional (AN)» sigue juntándolas a todas.
+- **Solo para quien hoy es AN en FIDE.** La lista de la Federación está atrasada:
+  todavía da como NA a Jeigoth Pastor, Víctor Francia, Sandra Torres y Jean
+  Carlo Quesada, que FIDE ya tiene como FA, y como FA a Joshebeth Núñez, ya IA.
+  Manda la lista de FIDE; la categoría nacional se muestra solo si FIDE también
+  lo tiene como NA.
+- **Doce que no salen.** La Federación nombra a 12 NA que no arbitraron ningún
+  torneo en lo que se leyó de FIDE y de chess-results (Edwin Vega, por ejemplo,
+  sale como director, y eso no cuenta): la lista de la herramienta muestra solo
+  a quien arbitró algo.
+
 ## La fecha oficial del título: la del perfil de FIDE
 
 Pregunta del dueño (octubre de 2026), con una captura de un perfil de FIDE:
@@ -3381,6 +3436,137 @@ leyeron convertidos a texto con r.jina.ai, como los informes.
   Lo rompí con los cuatro años del seminario cambiados por tres, la
   actividad a dos años, la lista con los que no tienen normas, el
   historial vacío y la tabla sin nombres, y salta cada vez.
+
+**El informe para la comisión (PDF).** Al lado de «Descargar los torneos para
+la solicitud», «Informe para la comisión (PDF)» arma con `js/reporte-pdf.js`
+lo que hace falta para decidir si se manda la solicitud, en el mismo orden que
+el informe que se le hizo a mano a José Antonio Meza Vega:
+- en resumen;
+- «Para pedir el título» punto por punto;
+- las normas que junta, con quién firma cada certificado (el principal, con el
+  título que tenía ese día, `tituloEn()`) y hasta cuándo cuenta, y por qué
+  cuenta cada una (con sus jugadores con Elo, federaciones, rondas y enlace);
+- los riesgos de esa solicitud (`riesgosSolicitud()`), cada uno sacado de lo que
+  FIDE rechaza en sus informes:
+  - fechas que se tocan con otro torneo de FIDE (2.10);
+  - una norma que vale una sola vez (4.9.1);
+  - para AI, una norma a menos de 60 días de su AF (conviene la captura del
+    perfil y una norma de reserva);
+  - una norma que vence en menos de un año;
+  - los torneos que quedaron para revisar;
+- el catálogo de los rechazos.
+
+La tabla lleva solo cuatro columnas (empezó, torneo, quién firma, cuenta
+hasta): con nueve, `reporte-pdf.js` cortaba el texto de cada celda.
+
+## La revisión de normas antes de mandarlas
+
+El dueño pidió (octubre de 2026) un lugar donde subir las normas de una
+solicitud y saber, antes de mandarla, si FIDE la aceptaría y qué le falta:
+una solicitud rechazada son meses perdidos. Está en la ficha de cada árbitro,
+«Revisar normas antes de mandarlas».
+
+- **Lo decidió el dueño:**
+  - la suben quienes tienen la licencia de la herramienta, para cualquier
+    árbitro de la lista;
+  - los datos del certificado se eligen de una lista (el torneo de FIDE, el
+    cargo, quién firma), no los lee una IA: lo demás (jugadores, Elo,
+    federaciones, fechas, el título de quien firma) ya está en la base, y una
+    lectura automática puede leer mal y cuesta en cada certificado;
+  - cada certificado lo ven solo quien lo subió y quien administra.
+- **Norma por norma** (`revisarNorma()`):
+  - el torneo, con el cargo que dice el certificado (`normaDe`) y la fecha
+    contra el AF (`antesDelAf` / `despuesDelAf`);
+  - que el cargo coincida con la ficha de FIDE del torneo, porque FIDE lo
+    comprueba ahí;
+  - la vigencia de seis años (5.3.1);
+  - quién firma: no el solicitante (2.8); con el título que hacía falta ese
+    día (`tituloEn`); si no está en la lista, para revisar; y si no fue el
+    principal que dice FIDE, para revisar;
+  - que esté el certificado.
+
+  Dice «La aceptaría», «Revisar», «Falta algo» o «No vale», y cada punto con
+  su porqué.
+- **La solicitud entera** (`revisarSolicitud()`): con las normas que no se
+  caen, las fechas que se tocan (2.10), las que valen una sola vez (4.9.1) y
+  «Para pedir el título» de siempre. `rutaTitulo()` recibe ahora la lista de
+  normas (`propias`, cada una con `firmante`) en lugar de elegirlas sola: una
+  sola copia de las reglas. Dice «Lista para mandar», «Casi: revisar lo
+  marcado» o «Todavía no: FIDE la rechazaría».
+- **La base** (`20261016034255_arbitros_cr_revision_de_normas` y las que
+  siguen):
+  - `arbitros_cr_normas_revision`, con su RLS: ve, sube, cambia y borra quien la
+    subió con la licencia, y quien administra ve y borra;
+  - un índice único por (quién, árbitro, título, torneo): la misma norma no se
+    sube dos veces;
+  - la ruta del archivo tiene que estar en la carpeta de quien la sube;
+  - el bucket privado `normas-arbitros` (PDF, JPG, PNG o WebP, hasta 10 MB), con
+    las mismas reglas por carpeta.
+
+  Comprobado impersonando en SQL a alguien con licencia, a alguien sin ella, a
+  administración y a `anon`.
+- **El `TRUNCATE` que quedó abierto.** La tabla nació con los permisos que
+  Supabase da por omisión a `authenticated` (`TRUNCATE`, `REFERENCES`,
+  `TRIGGER`), y un `TRUNCATE` no pasa por la RLS: cualquiera con sesión vaciaba
+  la tabla de todos. Lo mostró el retrato del esquema;
+  `20261016035011_arbitros_cr_revision_sin_truncate` deja solo `select`,
+  `insert`, `update` y `delete`.
+- **El consentimiento.** Un certificado lleva firmas y datos de otras personas:
+  la casilla («Tengo permiso del árbitro… y acepto la Política de privacidad»)
+  se mira antes de subir el archivo, y la base exige la versión y guarda la hora
+  del servidor (ver «El consentimiento queda guardado» en `legal.md`). El
+  trigger es `security definer` porque `authenticated` no ejecuta
+  `interno.version_legal_valida()`; un segundo trigger, `consentimiento_fijo`,
+  no deja cambiar la aceptación después.
+- `verificar-arbitros-cr.js`:
+  - sube una norma de Luis con quien firma fuera de la lista (Revisar);
+  - comprueba la solicitud de AF con una sola norma (Todavía no), la misma
+    norma dos veces, quitarla con su archivo y la casilla;
+  - sube una de Ana para AI firmada por alguien que entonces no era AI (No
+    vale) y con un cargo distinto al de FIDE.
+
+  El doble guarda y borra de verdad, filtra en el resolver y rechaza sin la
+  versión de la privacidad, como el trigger.
+
+**Las normas de reserva** (`candidatas()`). Junto a cada norma que no vale o
+queda para revisar, y al pie de la solicitud, la página propone otros torneos
+del mismo árbitro que sirven:
+- de FIDE, de los últimos seis años, que valen con su cargo en FIDE y con la
+  fecha contra el AF;
+- que no estén subidos y no se toquen en fechas con las normas subidas que
+  sirven (2.10);
+- si ya hay una norma que vale una sola vez, ninguna otra de ese tipo (4.9.1).
+
+Primero van las que firmaría alguien con el título que hace falta (el
+principal según FIDE, con `tituloEn()`); después, las que valen siempre;
+después, las más nuevas. La que no vale nunca se propone como su propio
+reemplazo.
+
+## El seguimiento: lo que dijo la revisión y lo que resolvió FIDE
+
+«Marcar como enviada a FIDE» guarda en `arbitros_cr_solicitudes_enviadas`
+(migración `20261016040007`) la fecha, lo que dijo la revisión
+(`prediccion`: lista, casi o todavía) y la foto de cada norma con su
+veredicto. Cuando el Consejo resuelve, se anota el resultado (aprobada o
+rechazada), el Consejo y el porqué del informe de la Comisión.
+
+La revisión **acertó** si dijo «Lista» y FIDE la aprobó, o «Todavía no» y la
+rechazó; las «Casi» no cuentan. La página dice cuántas acertó de todas las
+resueltas: donde falla, el motivo del informe dice qué regla falta o sobra.
+
+Los permisos son los de las normas subidas: quien la marcó con la licencia, y
+administración ve todo, con `TRUNCATE` cerrado desde el principio. Se
+comprobaron impersonando en SQL; también que no se marca dos veces el mismo
+día y que no entra una predicción inventada.
+
+`verificar-arbitros-cr.js`:
+- dos torneos de reserva para Luis, uno con un principal AF y otro con un AN,
+  en ese orden;
+- la norma que no vale y propone otra;
+- marcar como enviada, anotar «Rechazada» y ver que acertó.
+
+Rompí a propósito el filtro de las ya subidas, la firma y la regla del
+acierto; salta cada vez.
 
 ## Comparar dos árbitros y el ranking del año
 
