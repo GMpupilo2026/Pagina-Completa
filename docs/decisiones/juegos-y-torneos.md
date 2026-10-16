@@ -3207,6 +3207,41 @@ no de AF.
   lista otra vez y leer el informe de la última reunión del Consejo, por si
   hay títulos nuevos.
 
+## La categoría nacional: la lista de la Federación
+
+La lista oficial de FIDE dice si alguien es NA, pero no su categoría nacional.
+La Federación Central de Ajedrez la publica en
+`fcacostarica.com/lista-de-arbitros/`, una tabla con el FIDE ID, el nombre, la
+federación, el título, la categoría y la licencia. La categoría de un NA viene
+como «NAA», «NAB» o «NAC» (A, B o C); la de un FA o IA es la de FIDE (D, o A
+para Carolina Muñoz). El dueño la pasó en octubre de 2026.
+
+- **Cómo se lee.** Desde el contenedor la página no contesta (el proxy la
+  rechaza); desde la base con `net.http_get` sí. La tabla se parte por
+  `</tr>` y `</td>` (con `regexp_matches` y `.*?` Postgres se vuelve codicioso y
+  junta todas las filas en una), se limpia con `btrim(..., E' \t\r\n')` (el
+  `trim` común no quita tabuladores) y se guarda tal cual en
+  `herramientas/datos/arbitros-cr-lista-fca.json`, sacada de la respuesta y
+  nunca copiada a mano.
+- **Dónde va.** `arbitros_cr_fide.categoria_nacional` (A, B o C, con su
+  `check`) y `fca_leida` (migración `20261016033536`). La carga la arma
+  `herramientas/arbitros-cr/lista-fide.py`, al final, y falla si alguien de la
+  Federación no está en la lista de FIDE. La huella de la base (md5 de
+  `fide_id|categoría`) dio igual a la del JSON: 95 NA (20 A, 5 B y 70 C).
+- **Cómo se ve.** «AN-B» en la columna Título y «Árbitro Nacional (AN),
+  categoría B» en la ficha, la comparación y los PDF. La ficha dice además de
+  dónde sale y qué día se leyó. El filtro de título tiene una opción por
+  categoría, y «Árbitro Nacional (AN)» sigue juntándolas a todas.
+- **Solo para quien hoy es AN en FIDE.** La lista de la Federación está atrasada:
+  todavía da como NA a Jeigoth Pastor, Víctor Francia, Sandra Torres y Jean
+  Carlo Quesada, que FIDE ya tiene como FA, y como FA a Joshebeth Núñez, ya IA.
+  Manda la lista de FIDE; la categoría nacional se muestra solo si FIDE también
+  lo tiene como NA.
+- **Doce que no salen.** La Federación nombra a 12 NA que no arbitraron ningún
+  torneo en lo que se leyó de FIDE y de chess-results (Edwin Vega, por ejemplo,
+  sale como director, y eso no cuenta): la lista de la herramienta muestra solo
+  a quien arbitró algo.
+
 ## La fecha oficial del título: la del perfil de FIDE
 
 Pregunta del dueño (octubre de 2026), con una captura de un perfil de FIDE:

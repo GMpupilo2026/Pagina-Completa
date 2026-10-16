@@ -73,7 +73,7 @@ const ARBITROS_FIDE = [
       seminarios: [{ tipo: "IA", seminario: "18th IACS Internet Based Aug 2025 (ARB)", mes: "2025-09", fecha: "2025-09-09", fuente: "https://arbiters.fide.com/informe-2.pdf" }] },
     { fide_id: 6500002, titulo: "FA", inactivo: true, categoria: "D", licencia: "No", af_fecha: null, af_consejo: "", ia_fecha: null, ia_consejo: "", lista: "2026-10-12", solicitudes: [], seminarios: [] },
     // Luis tiene su seminario de AF (vale cuatro años) y una norma de las tres.
-    { fide_id: 6500003, titulo: "NA", inactivo: false, categoria: "", licencia: "NA", af_fecha: null, af_consejo: "", ia_fecha: null, ia_consejo: "", lista: "2026-10-12", solicitudes: [],
+    { fide_id: 6500003, titulo: "NA", inactivo: false, categoria: "", licencia: "NA", categoria_nacional: "B", fca_leida: "2026-10-16", af_fecha: null, af_consejo: "", ia_fecha: null, ia_consejo: "", lista: "2026-10-12", solicitudes: [],
       seminarios: [{ tipo: "FA", seminario: "189th Internet Based Jun 2025 (CCA)", mes: "2025-06", fecha: "2025-06-29", fuente: "https://arbiters.fide.com/informe-3.pdf" }] },
 ];
 // Las celdas de chess-results en que no se reconoce a nadie.
@@ -215,7 +215,14 @@ const porNombre = (m) => Object.fromEntries(m.map((f) => [f[0], f]));
     igual("Ana: el asistente no vale, el de pareos queda para revisar (AF 1 (1), AI 1 (1)) y su torneo en Panamá cuenta en el extranjero",
         m["Soto Prueba, Ana"].slice(1), ["FA", "2024", "—", "Inactivo", "3", "2", "1", "1", "0", "0", "1", "1 (1)", "1 (1)", "Ya es AF", "0 de 4", "01/05/2024", "10/01/2025"]);
     const luis = porNombre(await filas(p, "#tabla-arbitros"))["Rojas Prueba, Luis"];
-    igual("Luis: Árbitro Nacional por la lista de FIDE (su perfil no lo dice), activo, «Hoy para AF» 1 de 3", [luis[1], luis[2], luis[4], luis[14]], ["AN", "—", "Activo", "1 de 3"]);
+    igual("Luis: Árbitro Nacional por la lista de FIDE (su perfil no lo dice), categoría B por la de la Federación, activo, «Hoy para AF» 1 de 3", [luis[1], luis[2], luis[4], luis[14]], ["AN-B", "—", "Activo", "1 de 3"]);
+    await p.selectOption("#titulo", "AN-B");
+    igual("el filtro «Árbitro Nacional, categoría B» deja solo a Luis", Object.keys(porNombre(await filas(p, "#tabla-arbitros"))), ["Rojas Prueba, Luis"]);
+    await p.selectOption("#titulo", "AN-A");
+    igual("y con la A, nadie", Object.keys(porNombre(await filas(p, "#tabla-arbitros"))), []);
+    await p.selectOption("#titulo", "AN");
+    igual("«Árbitro Nacional (AN)» sigue juntando todas las categorías, también a Juan, que no tiene", Object.keys(porNombre(await filas(p, "#tabla-arbitros"))).sort(), ["Rojas Prueba, Luis", "Viejo Prueba, Juan"]);
+    await p.selectOption("#titulo", "");
     igual("«AF desde» y «AI desde»: el año de cada título, el de su perfil de FIDE (sin título, «—»)",
         ["Ángulo Prueba, Óscar", "Soto Prueba, Ana", "Rojas Prueba, Luis"].map((n) => m[n].slice(2, 4)), [["2024", "2026"], ["2024", "—"], ["—", "—"]]);
     await p.click("#tabla-arbitros button[data-col='anioAi']");
@@ -379,6 +386,9 @@ const porNombre = (m) => Object.fromEntries(m.map((f) => [f[0], f]));
          inf.includes("(Internacional con titulados 2023)"), inf.includes("(No consta)"), inf.includes("(01/03/2029)"), inf.includes("(Riesgos de esta solicitud)"),
          inf.includes("(Con lo que se ve desde afuera, ninguno en particular.)")],
         ["informe-af-6500003.pdf", true, true, true, true, true, true, true]);
+    igual("su ficha dice la categoría nacional, de la lista de la Federación",
+        [/Árbitro Nacional \(AN\), categoría B/.test(await p.$eval("#ficha-sub", (e) => e.textContent)),
+         /Árbitro Nacional categoría B según la lista de la Federación Central de Ajedrez \(leída el 16\/10\/2026\)/.test(await p.$eval("#ficha-fide", (e) => e.textContent))], [true, true]);
     igual("su historial: el seminario de AF", await p.$$eval("#ficha-historial > ul > li strong", (s) => s.map((x) => x.textContent)), ["29/06/2025 · Seminario de AF: 189th Internet Based Jun 2025 (CCA)"]);
     const aiLuis = (await filas(p, "#tabla-torneos"))[0][9];
     igual("su torneo que cumple las condiciones de AI no le cuenta: no tiene el AF", [aiLuis.startsWith("No"), /No tiene el título de AF/.test(aiLuis)], [true, true]);
@@ -473,7 +483,7 @@ const porNombre = (m) => Object.fromEntries(m.map((f) => [f[0], f]));
     const dato = async (n) => (await filas(p, "#tabla-comparar")).find((f) => f[0] === n);
     igual("la dirección con dos ID abre la comparación: Luis contra Óscar, dato por dato",
         [await p.$eval("#comparar", (e) => e.value), await p.$$eval("#tabla-comparar thead th", (t) => t.map((x) => x.textContent)), await dato("Torneos"), await dato("Hoy para AF"), await dato("Título"), await dato("AF desde"), await dato("AI desde")],
-        ["6500001", ["Dato", "Rojas Prueba, Luis", "Ángulo Prueba, Óscar"], ["Torneos", "1", "6"], ["Hoy para AF", "1 de 3", "Ya es AF"], ["Título", "Árbitro Nacional (AN)", "Árbitro Internacional (IA)"], ["AF desde", "—", "2024"], ["AI desde", "—", "2026"]]);
+        ["6500001", ["Dato", "Rojas Prueba, Luis", "Ángulo Prueba, Óscar"], ["Torneos", "1", "6"], ["Hoy para AF", "1 de 3", "Ya es AF"], ["Título", "Árbitro Nacional (AN), categoría B", "Árbitro Internacional (IA)"], ["AF desde", "—", "2024"], ["AI desde", "—", "2026"]]);
     igual("por año, con los que hicieron juntos", (await filas(p, "#comparar-anios")).find((f) => f[0] === "2023"), ["2023", "1", "1", "1"]);
     igual("el torneo que hicieron juntos, con el cargo de cada uno", [await p.$eval("#comparar-juntos-texto", (e) => e.textContent), await filas(p, "#comparar-juntos")],
         ["1 torneo hicieron juntos de 2015 a 2025:", [["01/03/2023", "Internacional con titulados 2023", "Árbitro adjunto principal", "Árbitro"]]]);

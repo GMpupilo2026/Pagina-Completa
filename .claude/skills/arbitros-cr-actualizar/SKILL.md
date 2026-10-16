@@ -135,6 +135,14 @@ Ver «Lo que dice FIDE de cada árbitro» en `docs/decisiones/juegos-y-torneos.m
 4. Después de cargar los torneos (paso 3 de arriba): `python3 herramientas/arbitros-cr/por-identificar.py > /tmp/sin-id.sql`,
    cargarlo igual y comparar con `--huella`.
 
+**La lista de la Federación (la categoría nacional).** Pedir
+`https://fcacostarica.com/lista-de-arbitros/` con `net.http_get`, sacar la
+tabla como dice «La categoría nacional: la lista de la Federación» y, si
+cambió, reemplazar `arbitros` y `leida` en
+`herramientas/datos/arbitros-cr-lista-fca.json` y volver a correr la carga de
+`lista-fide.py`. Si la Federación sube a alguien de categoría o suma NA nuevos,
+decirlo en el resumen.
+
 ## 4. Guardar
 
 En una rama `datos/arbitros-cr-AAAA-MM`: los JSON de `herramientas/datos/` (también `arbitros-cr-lista-fide.json` si cambió), los
