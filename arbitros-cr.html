@@ -43,6 +43,10 @@
                     <select id="titulo" class="w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none"><option value="">Todos</option><option value="IA">Árbitro Internacional (IA)</option><option value="FA">Árbitro FIDE (FA)</option><option value="AN">Árbitro Nacional (AN)</option><option value="-">Sin título en FIDE</option></select>
                 </div>
                 <div class="min-w-[10rem]">
+                    <label for="en-fide" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">En FIDE</label>
+                    <select id="en-fide" class="w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none"><option value="">Todos</option><option value="activo">Activos</option><option value="inactivo">Inactivos</option><option value="no">No figuran</option></select>
+                </div>
+                <div class="min-w-[10rem]">
                     <label for="tipo" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Torneos</label>
                     <select id="tipo" class="w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none"><option value="">Todos</option><option value="fide">Solo FIDE</option><option value="nofide">No FIDE</option></select>
                 </div>
@@ -67,7 +71,7 @@
 
             <section id="general" class="mt-6" aria-labelledby="general-titulo">
                 <h2 id="general-titulo" class="font-serif text-xl font-bold text-brand-800 dark:text-white">Los árbitros</h2>
-                <p id="general-texto" class="text-sm text-brand-500 dark:text-brand-300 mt-1 max-w-3xl">Cada árbitro con sus torneos en los años elegidos, cada uno una vez: «FIDE» son los que valoró FIDE (estén o no también en chess-results) y «No FIDE», los que solo están en chess-results. «En el extranjero» cuenta los que se jugaron fuera de Costa Rica: salen de chess-results, buscando a cada árbitro por su ID FIDE y por su apellido en todos los países, y de esos no se sabe si FIDE los valoró («No consta»), así que no tienen norma. «Valen para AF» y «Valen para AI» cuentan los torneos que cumplen las condiciones de una norma en un cargo que cuenta (principal, adjunto o árbitro); entre paréntesis, cuántos de esos quedan para revisar. Con «Festivales como uno», los torneos de un árbitro que empiezan el mismo día cuentan como uno, con la mejor norma de ellos (FIDE da una norma por festival). «Hoy para AF» y «Hoy para AI» dicen cuántas normas de torneo junta cada uno hoy para pedir el título (3 para AF, 4 para AI, de los últimos seis años; ver su ficha), o si ya lo tiene: ordénalos para ver quién está más cerca. Toca un nombre para ver sus torneos.</p>
+                <p id="general-texto" class="text-sm text-brand-500 dark:text-brand-300 mt-1 max-w-3xl">Cada árbitro con sus torneos en los años elegidos, cada uno una vez: «FIDE» son los que valoró FIDE (estén o no también en chess-results) y «No FIDE», los que solo están en chess-results. «En el extranjero» cuenta los que se jugaron fuera de Costa Rica: salen de chess-results, buscando a cada árbitro por su ID FIDE y por su apellido en todos los países, y de esos no se sabe si FIDE los valoró («No consta»), así que no tienen norma. «Valen para AF» y «Valen para AI» cuentan los torneos que cumplen las condiciones de una norma en un cargo que cuenta (principal, adjunto o árbitro); entre paréntesis, cuántos de esos quedan para revisar. Con «Festivales como uno», los torneos de un árbitro que empiezan el mismo día cuentan como uno, con la mejor norma de ellos (FIDE da una norma por festival). «Hoy para AF» y «Hoy para AI» dicen cuántas normas de torneo junta cada uno hoy para pedir el título (3 para AF, 4 para AI, de los últimos seis años; ver su ficha), o si ya lo tiene: ordénalos para ver quién está más cerca. «En FIDE» dice si está activo o inactivo en la lista oficial de árbitros de FIDE, o si no figura en ella. Toca un nombre para ver sus torneos.</p>
                 <div class="overflow-x-auto mt-3 bg-white dark:bg-brand-900 rounded-2xl shadow-md">
                     <table id="tabla-arbitros" class="w-full text-sm">
                         <caption class="sr-only">Árbitros de Costa Rica con sus torneos (de FIDE y no) y cuántos de FIDE valen para norma. Los encabezados ordenan la tabla.</caption>
@@ -75,6 +79,7 @@
                             <tr>
                                 <th scope="col" class="px-3 py-2" aria-sort="none"><button type="button" data-col="nombre">Árbitro</button></th>
                                 <th scope="col" class="px-3 py-2" aria-sort="none"><button type="button" data-col="titulo">Título</button></th>
+                                <th scope="col" class="px-3 py-2" aria-sort="none"><button type="button" data-col="enFide">En FIDE</button></th>
                                 <th scope="col" class="px-3 py-2 text-right" aria-sort="descending"><button type="button" data-col="torneos">Torneos</button></th>
                                 <th scope="col" class="px-3 py-2 text-right" aria-sort="none"><button type="button" data-col="fide">FIDE</button></th>
                                 <th scope="col" class="px-3 py-2 text-right" aria-sort="none"><button type="button" data-col="nofide">No FIDE</button></th>
@@ -86,6 +91,7 @@
                                 <th scope="col" class="px-3 py-2 text-right" aria-sort="none"><button type="button" data-col="ai">Valen para AI</button></th>
                                 <th scope="col" class="px-3 py-2 text-right" aria-sort="none"><button type="button" data-col="cercaAf">Hoy para AF</button></th>
                                 <th scope="col" class="px-3 py-2 text-right" aria-sort="none"><button type="button" data-col="cercaAi">Hoy para AI</button></th>
+                                <th scope="col" class="px-3 py-2" aria-sort="none"><button type="button" data-col="primero">Primer torneo</button></th>
                                 <th scope="col" class="px-3 py-2" aria-sort="none"><button type="button" data-col="ultimo">Último torneo</button></th>
                             </tr>
                         </thead>
@@ -105,12 +111,119 @@
                         </table>
                     </div>
                 </div>
+                <div class="mt-6">
+                    <h3 id="ranking-titulo" class="font-serif text-lg font-bold text-brand-800 dark:text-white">Ranking del año</h3>
+                    <p class="text-sm text-brand-500 dark:text-brand-300 mt-1 max-w-3xl">Los árbitros por lo que hicieron en un año, con los filtros de arriba menos los años. Quienes empatan comparten el puesto; la última columna dice cómo les fue el año anterior, con lo mismo elegido.</p>
+                    <div class="flex flex-wrap gap-3 items-end mt-2">
+                        <div class="min-w-[8rem]">
+                            <label for="ranking-anio" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Año</label>
+                            <select id="ranking-anio" class="w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none"></select>
+                        </div>
+                        <div class="min-w-[12rem]">
+                            <label for="ranking-por" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Ordenar por</label>
+                            <select id="ranking-por" class="w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none"><option value="torneos">Torneos</option><option value="principal">Torneos como principal</option><option value="fide">Torneos de FIDE</option><option value="fuera">Torneos en el extranjero</option><option value="af">Torneos que valen para AF</option></select>
+                        </div>
+                        <button type="button" id="ranking-excel" class="text-sm font-semibold px-4 py-2 rounded-lg bg-brand-100 dark:bg-brand-800 hover:bg-brand-200 dark:hover:bg-brand-700">Descargar en Excel</button>
+                    </div>
+                    <div class="overflow-x-auto mt-2 bg-white dark:bg-brand-900 rounded-2xl shadow-md">
+                        <table id="tabla-ranking" class="w-full text-sm" aria-labelledby="ranking-titulo">
+                            <thead class="text-left text-xs uppercase tracking-wide text-brand-500 dark:text-brand-300">
+                                <tr><th scope="col" class="px-3 py-2 text-right">Puesto</th><th scope="col" class="px-3 py-2">Árbitro</th><th scope="col" class="px-3 py-2 text-right" data-col="torneos">Torneos</th><th scope="col" class="px-3 py-2 text-right" data-col="principal">Principal</th><th scope="col" class="px-3 py-2 text-right" data-col="fide">FIDE</th><th scope="col" class="px-3 py-2 text-right" data-col="fuera">En el extranjero</th><th scope="col" class="px-3 py-2 text-right" data-col="af">Valen para AF</th><th scope="col" class="px-3 py-2">El año anterior</th></tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                    <p id="ranking-cuenta" class="text-sm text-brand-500 dark:text-brand-300 mt-2" aria-live="polite"></p>
+                </div>
+                <div class="mt-6">
+                    <h3 id="solicitudes-titulo" class="font-serif text-lg font-bold text-brand-800 dark:text-white">Quiénes pueden pedir el título</h3>
+                    <p class="text-sm text-brand-500 dark:text-brand-300 mt-1 max-w-3xl">Cada uno con su siguiente título (AF si no lo tiene, AI si es FA) y al menos una norma para él, con lo que pide el reglamento B.06.1 para la solicitud: las normas, un seminario de los últimos cuatro años y la fecha límite. Lo que no se ve desde afuera (certificados, firmas, edad) lo revisa quien la arma. El detalle, punto por punto, está en la ficha de cada uno, con el Excel de los torneos para la solicitud.</p>
+                    <div class="overflow-x-auto mt-2 bg-white dark:bg-brand-900 rounded-2xl shadow-md">
+                        <table id="tabla-solicitudes" class="w-full text-sm" aria-labelledby="solicitudes-titulo">
+                            <thead class="text-left text-xs uppercase tracking-wide text-brand-500 dark:text-brand-300"><tr><th scope="col" class="px-3 py-2">Árbitro</th><th scope="col" class="px-3 py-2">Pediría</th><th scope="col" class="px-3 py-2 text-right">Normas</th><th scope="col" class="px-3 py-2">Seminario</th><th scope="col" class="px-3 py-2">Cómo va</th></tr></thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                    <p id="solicitudes-cuenta" class="text-sm text-brand-500 dark:text-brand-300 mt-2" aria-live="polite"></p>
+                </div>
+                <div class="mt-6">
+                    <h3 id="actividad-fide-titulo" class="font-serif text-lg font-bold text-brand-800 dark:text-white">La actividad en FIDE</h3>
+                    <p class="text-sm text-brand-500 dark:text-brand-300 mt-1 max-w-3xl">Un IA o FA queda inactivo si en cuatro años no aprueba un curso de actualización de la Comisión de Árbitros (B.06.3, 2), y uno inactivo no puede ser árbitro principal de un torneo de FIDE donde haya normas para los jugadores. Los cuatro años se cuentan desde su AF o desde su último curso o seminario de AI. Los cursos no salen en los informes de la Comisión, así que la fecha es un piso: con un curso después, sigue activo más tiempo.</p>
+                    <div class="overflow-x-auto mt-2 bg-white dark:bg-brand-900 rounded-2xl shadow-md">
+                        <table id="tabla-actividad-fide" class="w-full text-sm" aria-labelledby="actividad-fide-titulo">
+                            <thead class="text-left text-xs uppercase tracking-wide text-brand-500 dark:text-brand-300"><tr><th scope="col" class="px-3 py-2">Árbitro</th><th scope="col" class="px-3 py-2">Título</th><th scope="col" class="px-3 py-2">En FIDE</th><th scope="col" class="px-3 py-2">Activo por lo menos hasta</th></tr></thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+                <details class="mt-6">
+                    <summary id="por-identificar-titulo" class="font-serif text-lg font-bold text-brand-800 dark:text-white cursor-pointer">Por identificar</summary>
+                    <p class="text-sm text-brand-500 dark:text-brand-300 mt-1 max-w-3xl">Para corregir la lista: quienes no figuran en la lista de árbitros de FIDE, y las celdas de árbitro de los torneos de Costa Rica en chess-results en que no se reconoce a nadie (un nombre escrito de otra forma, un ID equivocado o alguien que falta). Una celda donde se reconoce a alguien no sale aunque traiga a otra persona más.</p>
+                    <p id="por-identificar-cuenta" class="text-sm text-brand-600 dark:text-brand-200 mt-2"></p>
+                    <h4 id="no-fide-titulo" class="font-semibold mt-3">No figuran en la lista de árbitros de FIDE</h4>
+                    <div class="overflow-x-auto mt-2 bg-white dark:bg-brand-900 rounded-2xl shadow-md">
+                        <table id="tabla-no-fide" class="w-full text-sm" aria-labelledby="no-fide-titulo">
+                            <thead class="text-left text-xs uppercase tracking-wide text-brand-500 dark:text-brand-300"><tr><th scope="col" class="px-3 py-2">Árbitro</th><th scope="col" class="px-3 py-2">ID FIDE</th><th scope="col" class="px-3 py-2">Dónde sale</th><th scope="col" class="px-3 py-2 text-right">Torneos</th><th scope="col" class="px-3 py-2">Último torneo</th></tr></thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                    <h4 id="sin-id-titulo" class="font-semibold mt-4">Nombres de chess-results que no se reconocen</h4>
+                    <div class="overflow-x-auto mt-2 bg-white dark:bg-brand-900 rounded-2xl shadow-md">
+                        <table id="tabla-sin-id" class="w-full text-sm" aria-labelledby="sin-id-titulo">
+                            <thead class="text-left text-xs uppercase tracking-wide text-brand-500 dark:text-brand-300"><tr><th scope="col" class="px-3 py-2">Como sale</th><th scope="col" class="px-3 py-2">Cargo</th><th scope="col" class="px-3 py-2 text-right">Torneos</th><th scope="col" class="px-3 py-2">Fechas</th><th scope="col" class="px-3 py-2">ID en la celda</th><th scope="col" class="px-3 py-2">Torneos de ejemplo</th></tr></thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </details>
             </section>
 
             <section id="ficha" class="hidden mt-6" aria-labelledby="ficha-titulo">
                 <h2 id="ficha-titulo" class="font-serif text-2xl font-bold text-brand-800 dark:text-white"></h2>
                 <p id="ficha-sub" class="text-sm text-brand-500 dark:text-brand-300 mt-1"></p>
+                <p id="ficha-fide" class="text-sm text-brand-600 dark:text-brand-200 mt-1"></p>
                 <div id="ficha-normas" class="grid gap-3 md:grid-cols-2 mt-4" aria-label="Las normas que podría juntar hoy"></div>
+                <div class="mt-6">
+                    <h3 id="historial-titulo" class="font-serif text-lg font-bold text-brand-800 dark:text-white">Historial en FIDE</h3>
+                    <p class="text-sm text-brand-500 dark:text-brand-300 mt-1 max-w-3xl">Sus solicitudes de título y sus seminarios, según los informes de la Comisión de Árbitros a cada reunión del Consejo de FIDE (desde 2023).</p>
+                    <div id="ficha-historial" class="mt-2 bg-white dark:bg-brand-900 rounded-2xl shadow-md p-4" aria-labelledby="historial-titulo"></div>
+                </div>
+                <div class="mt-6">
+                    <h3 id="comparar-titulo" class="font-serif text-lg font-bold text-brand-800 dark:text-white">Comparar con otro árbitro</h3>
+                    <p class="text-sm text-brand-500 dark:text-brand-300 mt-1 max-w-3xl">Los números de los dos lado a lado, con los filtros puestos, año por año y los torneos que hicieron juntos. La dirección de la página lleva a los dos, para compartirla.</p>
+                    <div class="flex flex-wrap gap-3 items-end mt-2">
+                        <div class="min-w-[16rem]">
+                            <label for="comparar" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Comparar con</label>
+                            <select id="comparar" class="w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none"></select>
+                        </div>
+                        <button type="button" id="quitar-comparar" class="hidden text-sm font-semibold px-4 py-2 rounded-lg bg-brand-100 dark:bg-brand-800 hover:bg-brand-200 dark:hover:bg-brand-700">Quitar la comparación</button>
+                    </div>
+                    <div id="comparacion" class="hidden mt-3 grid gap-3 lg:grid-cols-2 items-start">
+                        <div class="overflow-x-auto bg-white dark:bg-brand-900 rounded-2xl shadow-md">
+                            <table id="tabla-comparar" class="w-full text-sm">
+                                <caption class="sr-only">Los dos árbitros, dato por dato.</caption>
+                                <thead class="text-left text-xs uppercase tracking-wide text-brand-500 dark:text-brand-300"><tr></tr></thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                        <div class="overflow-x-auto bg-white dark:bg-brand-900 rounded-2xl shadow-md">
+                            <table id="comparar-anios" class="w-full text-sm">
+                                <caption class="sr-only">Los torneos de cada uno por año y cuántos hicieron juntos.</caption>
+                                <thead class="text-left text-xs uppercase tracking-wide text-brand-500 dark:text-brand-300"><tr></tr></thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                        <div class="lg:col-span-2">
+                            <p id="comparar-juntos-texto" class="text-sm text-brand-500 dark:text-brand-300" aria-live="polite"></p>
+                            <div class="overflow-x-auto mt-2 bg-white dark:bg-brand-900 rounded-2xl shadow-md">
+                                <table id="comparar-juntos" class="w-full text-sm">
+                                    <caption class="sr-only">Los torneos que hicieron juntos, con el cargo de cada uno.</caption>
+                                    <thead class="text-left text-xs uppercase tracking-wide text-brand-500 dark:text-brand-300"><tr></tr></thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 <div class="flex flex-wrap gap-3 items-end mt-4">
                 <div class="min-w-[10rem]">
                     <label for="norma-af" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Norma de AF</label>
@@ -153,7 +266,8 @@
                 <div class="mt-2 space-y-2 max-w-3xl">
                     <p>Fuente de los torneos de FIDE: ratings.fide.com. Todos los torneos de Costa Rica que valoró FIDE, mes a mes desde 2002; de cada uno, su ficha (quién fue árbitro principal, adjunto, árbitro, de pareos o asistente, con su ID FIDE), la lista de jugadores con Elo y, donde hace falta, el reporte ronda a ronda. El título de cada árbitro sale de su perfil de FIDE. Los títulos de los jugadores salen de la lista de FIDE. Los datos llegan hasta el último mes que FIDE tenía publicado cuando se cargaron. Los torneos que un árbitro de Costa Rica arbitró en otro país no están (todavía).</p>
                     <p>Fuente de la otra tabla: el buscador de chess-results.com, todos los torneos de la federación de Costa Rica año por año (desde 2007), con sus columnas de director, organizador, árbitro principal, adjunto y árbitros. Un torneo que está en los dos lados sale una vez, como de FIDE, con los dos enlaces: se reconoce por el código de FIDE que a veces trae el nombre, o por la fecha, el nombre, las rondas, los jugadores y los árbitros. No se muestran los de prueba ni los que no tienen rondas o jugadores. A cada persona se la reconoce por su ID FIDE (si al lado está su apellido) o por su nombre escrito de las formas de siempre ("Apellidos, Nombre", "Nombre Apellido"); quien figura con su ID FIDE y no arbitró en FIDE se suma a la lista. Un nombre escrito de otra forma, o un torneo sin fecha en chess-results, puede quedar fuera.</p>
-                    <p>Las normas se miden con el reglamento FIDE B.06.1 vigente desde el 1 de marzo de 2026, en las condiciones de un torneo: <strong>AF</strong>, suizo con 20 jugadores con Elo (todos contra todos 8, doble 6, equipos 20), 7 rondas (una de 5 o 6), o un rápido o blitz de 30 con Elo y 9 rondas una vez; <strong>AI</strong>, la final del campeonato nacional individual, eventos oficiales, internacionales en que un jugador podía hacer una norma de título, o el internacional de 100 jugadores, 3 federaciones y 30 % con Elo una vez, con 9 rondas (una de 7 u 8). Un jugador cuenta si faltó a lo sumo a una ronda. El asistente no cuenta (2.4.4) y el árbitro de pareos queda para revisar.</p>
+                    <p>Las normas se miden con el reglamento FIDE B.06.1 vigente desde el 1 de marzo de 2026, en las condiciones de un torneo: <strong>AF</strong>, suizo con 20 jugadores con Elo (todos contra todos 8, doble 6, equipos 20), 7 rondas (una de 5 o 6), o un rápido o blitz de 30 con Elo y 9 rondas una vez; <strong>AI</strong>, la final del campeonato nacional individual, eventos oficiales, internacionales en que un jugador podía hacer una norma de título, o el internacional de 100 jugadores, 3 federaciones y 30 % con Elo una vez, con 9 rondas (una de 7 u 8). Un jugador cuenta si faltó a lo sumo a una ronda. El asistente no cuenta (2.4.4) y el árbitro de pareos queda para revisar. Una norma de AI cuenta solo si el torneo es posterior al título de AF, y desde el AF sus torneos ya no cuentan para AF: quien no tiene el AF no junta ninguna de AI. La fecha del AF es la de la reunión del Consejo de FIDE que lo aprobó (de los informes de la Comisión de Árbitros, desde 2023); de quien no la tiene se usa el año de su perfil, y un torneo de ese mismo año queda para revisar.</p>
+                    <p>Activo o inactivo, la licencia y el título de Árbitro Nacional salen de la lista oficial de árbitros de la Comisión de Árbitros de FIDE (arbiters.fide.com).</p>
                     <p>No se ve desde afuera y queda para quien arme una solicitud: los certificados emitidos y quién los firmó, que las fechas no se toquen, una norma por festival, un certificado cada 25 jugadores, los seis años de vigencia y los dos sistemas distintos.</p>
                 </div>
             </details>

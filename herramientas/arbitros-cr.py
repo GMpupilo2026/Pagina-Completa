@@ -247,12 +247,16 @@ def homonimos_afuera(arbitros, celdas):
     return homonimos
 
 
-def armar_chess_results(arbitros):
+def armar_chess_results(arbitros, sin_reconocer=None):
     """Los torneos de chess-results y quién fue qué en cada uno. Se reconoce a
     una persona en una celda por su ID FIDE (solo si al lado está su primer
     apellido: hay ID mal escritos, como 6500189 por 6508189) o por su nombre
     (formas_del_nombre). Suma a `arbitros` las personas de Costa Rica que
-    figuran con su ID y no estaban (su perfil de FIDE dice nombre y país)."""
+    figuran con su ID y no estaban (su perfil de FIDE dice nombre y país).
+
+    Con `sin_reconocer` (una lista), anota ahí las celdas de árbitro
+    (principal, adjunto, árbitros) de los torneos de Costa Rica en que no se
+    reconoció a nadie: las usa herramientas/arbitros-cr/por-identificar.py."""
     if not os.path.exists(CHESS_RESULTS):
         return {}, set()
     with open(CHESS_RESULTS, encoding="utf-8") as f:
@@ -318,6 +322,8 @@ def armar_chess_results(arbitros):
                             or (corto and fed in CERCA and fid not in homonimos and corto.search(con_signos))}
             for fid in quienes:
                 cargos.add((clave, fid, rol))
+            if sin_reconocer is not None and fed == "CRC" and rol in ("ap", "adj", "arb") and not quienes:
+                sin_reconocer.append({"clave": clave, "rol": rol, "celda": html.unescape(celda).strip(), "inicio": t["inicio"].replace("/", "-")})
         torneos[clave] = {
             "clave": clave, "nombre": html.unescape(t["nombre"]).strip() or "(sin nombre)",
             "inicio": t["inicio"].replace("/", "-"), "fin": (t["fin"] or "").replace("/", "-") or None,
