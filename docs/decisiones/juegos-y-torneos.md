@@ -3101,8 +3101,10 @@ no de AF.
   pedido con pg_net. Las filas de Costa Rica se sacan con
   `(\d{5,9}) ([^0-9\n]+?) CRC (IA|FA|NA) (i )?(?:([A-D]) )?([A-Z]{2}-[A-D]|No|NA)`:
   salieron 148 de las 148 veces que aparece « CRC ».
-- **La fecha exacta del AF** no la dice el perfil de FIDE, que solo trae el
-  año (y además está cerrado). La dicen los **informes de la Comisión de
+- **La fecha de la reunión del Consejo que aprobó el AF.** Ojo: la fecha
+  OFICIAL no es esa sino la del perfil de FIDE, de dos a cinco semanas
+  después (ver «La fecha oficial del título: la del perfil de FIDE»). El
+  perfil que se lee desde afuera solo traía el año, y además está cerrado. La dicen los **informes de la Comisión de
   Árbitros a cada reunión del Consejo de FIDE**
   (`Reporting/AAAAQnCouncilARBReport.pdf`, uno por reunión desde 2023).
   - Cada informe trae las solicitudes de título en dos apéndices: «FA Title
@@ -3165,6 +3167,86 @@ no de AF.
 - **Cada mes**, en la puesta al día (`arbitros-cr-actualizar`): bajar la
   lista otra vez y leer el informe de la última reunión del Consejo, por si
   hay títulos nuevos.
+
+## La fecha oficial del título: la del perfil de FIDE
+
+Pregunta del dueño (octubre de 2026), con una captura de un perfil de FIDE:
+«FIDE Arbiter (2024) · License level: FIDE Arbiter Category D (2024-12-15) ·
+Licensed: YES (2025-01-13)». ¿Desde qué fecha cuenta una norma de AI: la del
+Consejo que aprobó el AF, la del perfil o la de la licencia? Se estudiaron
+las **2563 solicitudes** (1951 de AF y 612 de AI) de los 14 informes de la
+Comisión de Árbitros de 2023 a 2026, de todos los países.
+
+- **No es la del Consejo.** En la misma reunión (Bakú, 1 y 2 de agosto de
+  2023), FIDE trató distinto a tres árbitros:
+  - al iraní 22535659 le **rechazó** como «before FA» el «17 Avicenna Open
+    Cup A», del 24 al 31 de agosto, 22 días **después** del Consejo;
+  - al polaco 1185250 le **aceptó** una norma del 19 de agosto;
+  - al malasio 7102380, una del 27 de agosto.
+
+  Cada uno tiene su fecha.
+- **Es la que FIDE anota en su base, la del perfil.** En octubre de 2025
+  rechazó una norma de AF con «Signee became FA (13/08/2025) after the
+  tournament»: a ese árbitro lo había aprobado el Consejo del 18 y 19 de
+  julio de 2025, y FIDE usó una fecha 25 días posterior. Con el NA hace lo
+  mismo: «two norms before NA – 12 August 2024».
+  - La del perfil de la captura (15/12/2024) cae 35 días después del
+    Consejo del 10/11/2024 (el de Meza Vega y Neeshmy Núñez).
+  - El desfase va de **dos a cinco semanas**.
+- **«Licensed» es otra cosa**: el pago anual de la licencia (B.06.1, 6.1).
+  En los 343 rechazos no hay ninguno de un FA o IA por esa fecha; los de
+  licencia son todos de antes del NA.
+- **En la página**:
+  - `af_perfil` (y `ia_perfil`) en `arbitros_cr_fide` (migración
+    `20261016022547_arbitros_cr_fecha_del_perfil.sql`) es la fecha oficial.
+    Sale de «perfil» en cada aprobación del JSON y se copia a mano de una
+    captura, porque el perfil de FIDE no contesta a la base.
+  - Con ella, una norma de AI cuenta si el torneo empezó **después**; si
+    empezó antes, no cuenta; el mismo día, revisar.
+  - Sin ella, se usa la fecha del Consejo:
+    - lo que empezó hasta el día del Consejo no cuenta;
+    - lo que empezó en los **60 días siguientes** queda para **revisar**,
+      con el porqué;
+    - después cuenta.
+  - «Ya no cuenta para AF» empieza en la misma fecha oficial o, sin ella,
+    después de los 60 días.
+  - La ficha dice las dos fechas.
+- **Quién firma**, de los mismos rechazos: el certificado lo firma el árbitro
+  principal.
+  - **No puede ser el solicitante** (2.8: «signed by applicant himself»).
+  - **Tiene que tener el título**: FA o IA para una norma de AF («Chief
+    Arbiter was National Arbiter»), IA para una de AI («Chief Arbiter was FA
+    (art. 2.8/2.8.1)»).
+  - En AI, **no todas de la misma persona** (4.13.1).
+  - «Para pedir el título» lo avisa cuando el principal es de la lista: su
+    cargo sale de la ficha de FIDE o de chess-results, y su título en esa
+    fecha, de lo que se sepa (`tituloEn`). El principal extranjero no se ve.
+- **Por qué rechaza FIDE**, en 343 rechazos (263 de AF y 80 de AI); los
+  números son AF y AI:
+  - el torneo no tiene el nivel: 113 y 33;
+  - documentos incompletos o formularios viejos: 52 y 32;
+  - solo suizos chicos (2.4 y 2.5): 54 y 6;
+  - seminario de más de cuatro años: 38 de AF;
+  - el mismo tipo de torneo usado de más: 36 y 18;
+  - pocas rondas: 24 y 7;
+  - firmado por quien no tenía el título que hace falta: 22 y 5;
+  - dos torneos en fechas que se tocan (2.10): 10 y 5;
+  - antes del NA o del AF: 5 y 4;
+  - firmado por el mismo solicitante: 1 y 5;
+  - en AI, todas firmadas por la misma persona: 2;
+  - en AI, no hablar inglés (4.3): 4.
+
+  Aparte salen la solicitud más de un año después del último torneo
+  (5.3.3) y la edad. La lista va en «De dónde salen los datos y qué pide el
+  reglamento» de la página.
+- `verificar-arbitros-cr.js` lo prueba:
+  - Óscar solo con el Consejo (15/04/2024): su torneo del 01/05/2024 queda
+    para revisar.
+  - Con la fecha del perfil (10/05/2024), ese mismo torneo ya no cuenta.
+  - Firmas: un principal sin título, y el propio solicitante de principal.
+
+  Lo rompí con la ventana en cero, sin la fecha del perfil y sin cada aviso
+  de firmas, y salta cada vez.
 
 ## La ruta al título, el historial, la actividad y los que faltan
 

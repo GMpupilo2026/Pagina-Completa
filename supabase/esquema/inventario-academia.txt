@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261016014132
+# al-dia-con: 20261016022547
 tabla  Ejercicios Lichess  rls=true
 tabla  _foto_rls_tmp  rls=false
 tabla  _pedidos_elo  rls=false
@@ -294,10 +294,12 @@ columna  arbitros_cr_cr_cargos.fide_id  integer
 columna  arbitros_cr_cr_cargos.rol  text
 columna  arbitros_cr_fide.af_consejo  text
 columna  arbitros_cr_fide.af_fecha  date
+columna  arbitros_cr_fide.af_perfil  date
 columna  arbitros_cr_fide.categoria  text
 columna  arbitros_cr_fide.fide_id  integer
 columna  arbitros_cr_fide.ia_consejo  text
 columna  arbitros_cr_fide.ia_fecha  date
+columna  arbitros_cr_fide.ia_perfil  date
 columna  arbitros_cr_fide.inactivo  boolean
 columna  arbitros_cr_fide.licencia  text
 columna  arbitros_cr_fide.lista  date
