@@ -1352,6 +1352,79 @@ guarde), lo que se guarda, entrenarla entera, «Volver», borrar ESA y su ficha
 marcada, y el enlace `?linea=mi:<id>`. Rompiendo el choque o la marca de
 borrada, salta.
 
+## Mis estudios: los estudios de Lichess, en la cuenta del alumno
+
+«🔬 Mis estudios» (`entreno/mis-estudios.html`, tarjeta en Entrenamiento
+intermedio del panel y en el hub) es el lugar para estudiar a fondo: un
+estudio tiene capítulos, y cada capítulo es una partida o una posición con su
+árbol de jugadas, como los estudios de Lichess. Ahí el alumno arma y revisa
+sus aperturas, busca mejoras con el motor y analiza sus partidas.
+
+- **Cada capítulo se guarda en PGN** (`js/estudio-pgn.js`, sin pantalla y
+  probado en Node). Es el formato de Lichess, Chess.com y cualquier programa:
+  el alumno trae sus partidas pegándolas o con un `.pgn` (cada partida, un
+  capítulo) y se lleva su estudio con «⬇️ Bajar en PGN». Se leen las
+  variantes anidadas, los comentarios, los signos (`$5` o `!?`) y las marcas
+  de Lichess (`[%csl Ge4]`, `[%cal Gd2d4]`); lo demás que traiga un
+  comentario (`[%clk]`, `[%eval]`) no se muestra. **Cada jugada la juega
+  chess.js**: una ilegal corta esa línea y se avisa, nunca se guarda una
+  jugada imposible. Escribir y volver a leer da lo mismo (el verificador lo
+  compara).
+- **El árbol**: `hijos[0]` es la línea principal y los demás son variantes,
+  como en Lichess. Jugar en el tablero (con clics o escribiendo en la
+  notación de acá, el mismo intérprete de todo el sitio) donde ya había otra
+  jugada abre una variante; si era la misma, va a la que estaba. «Hacerla la
+  principal», «Subir la variante» y «Borrar desde aquí» (pide confirmar si se
+  lleva más de una jugada). Los signos de jugada son uno a la vez, y se dicen
+  al lector de pantalla («2. Cc3!? (jugada interesante)»). Las marcas se
+  hacen con «✏️ Marcar»: dos toques en una casilla la marcan, dos casillas
+  distintas hacen una flecha; y se escriben debajo del tablero, para que el
+  color no vaya solo.
+- **El motor es el de la preparación de rivales** (Stockfish 19 lite, el
+  mismo Worker de `js/shared-engine.js`): sus tres mejores líneas, en la
+  notación de acá, con «➕ Agregar» para dejarlas como variante. Se baja al
+  apretar el botón, no al abrir la página.
+- **«🧪 Buscar mejoras en la línea»** revisa la línea principal desde la
+  jugada elegida (hasta 80), a profundidad 14: donde la jugada pierde contra
+  la mejor 0,7 o más la marca (?! desde 0,7, ? desde 1,5, ?? desde 3), deja
+  la del motor como variante con su evaluación en el comentario y respeta un
+  signo que el alumno ya había puesto. Se para cuando se quiere.
+- **El repertorio va y viene.** «🗂️ Llevar a mi repertorio» manda la línea
+  desde el principio hasta la jugada elegida a `public.repertorio`, con el
+  color del tablero (para cambiarlo, se gira): el trigger
+  `repertorio_coherente` sigue siendo el que frena dos respuestas en la misma
+  posición, y su mensaje se muestra tal cual. Solo va lo que empieza en la
+  posición inicial y tiene de 2 a 40 jugadas. «Hacer un estudio con mi
+  repertorio» hace lo contrario: un capítulo por color con el árbol de sus
+  líneas y el nombre de cada una en un comentario.
+- **Se guarda solo**, un momento después de cada cambio, y la barra dice
+  «Guardado» o por qué no. Salir con algo sin guardar lo guarda y avisa.
+- **La tabla es `public.estudios`** (migración `20261016005855`), con los
+  capítulos en la misma fila (`jsonb`: título, orientación y PGN): un
+  estudio se abre y se guarda de una vez. `n_capitulos` es una columna
+  generada, para que la lista no se baje los PGN. La base exige la forma (64
+  capítulos, 100 000 caracteres por capítulo, 100 estudios por alumno, trigger
+  `estudio_al_guardar`); la legalidad, como en el repertorio, la comprueba la
+  página. La RLS es la del cuaderno: lo escribe solo su dueño (con el acceso
+  vigente) y lo leen su profe, quien lo supervisa y administración solo si lo
+  marcó «Que lo vea mi profe». El profe lo abre con
+  `mis-estudios.html?alumno=<id>`, en solo lectura: puede recorrerlo,
+  analizarlo y bajarlo, no cambiarlo. Todavía no hay un enlace desde el
+  informe del alumno: la base ya lo permite.
+- **No cuenta tiempo por sección** todavía: hacerlo pide una sección nueva en
+  `js/tiempo-secciones.js` y en `informe-html.ts`, y volver a desplegar la
+  función de los correos.
+- La prueba de la RLS impersonando roles quedó pendiente (se canceló al
+  correrla); las políticas son las del cuaderno, revisadas en `pg_policies`.
+
+**Al tocarlo, correr `node herramientas/verificar-todo.js mis-estudios`.**
+Prueba el árbol en Node (leer, escribir, ida y vuelta, la jugada ilegal, el
+FEN, promover y borrar) y la página con el doble: la lista, jugar con clics y
+escribiendo, la variante, el signo y el comentario, lo que se guarda, llevar
+al repertorio, las marcas, importar, el estudio del repertorio, la vista del
+profe y, con el motor de verdad, el mate en uno y «Buscar mejoras». Rompiendo
+«Hacerla la principal», salta.
+
 ## Ejercicios sin internet
 
 `entreno/sin-internet.html` (tarjeta «📴 Ejercicios sin internet», en
