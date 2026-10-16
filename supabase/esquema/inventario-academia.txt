@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261016033536
+# al-dia-con: 20261016035132
 tabla  Ejercicios Lichess  rls=true
 tabla  _foto_rls_tmp  rls=false
 tabla  _pedidos_elo  rls=false
@@ -18,6 +18,7 @@ tabla  arbitros_cr_cargos  rls=true
 tabla  arbitros_cr_cr  rls=true
 tabla  arbitros_cr_cr_cargos  rls=true
 tabla  arbitros_cr_fide  rls=true
+tabla  arbitros_cr_normas_revision  rls=true
 tabla  arbitros_cr_sin_id  rls=true
 tabla  arbitros_cr_torneos  rls=true
 tabla  archivos_pgn  rls=true
@@ -310,6 +311,19 @@ columna  arbitros_cr_fide.nombre  text
 columna  arbitros_cr_fide.seminarios  jsonb
 columna  arbitros_cr_fide.solicitudes  jsonb
 columna  arbitros_cr_fide.titulo  text
+columna  arbitros_cr_normas_revision.archivo  text
+columna  arbitros_cr_normas_revision.cargo  text
+columna  arbitros_cr_normas_revision.creada  timestamp with time zone
+columna  arbitros_cr_normas_revision.creada_por  uuid
+columna  arbitros_cr_normas_revision.cual  text
+columna  arbitros_cr_normas_revision.fide_id  integer
+columna  arbitros_cr_normas_revision.firmante_fide_id  integer
+columna  arbitros_cr_normas_revision.firmante_nombre  text
+columna  arbitros_cr_normas_revision.id  uuid
+columna  arbitros_cr_normas_revision.nombre_archivo  text
+columna  arbitros_cr_normas_revision.privacidad_aceptada_en  timestamp with time zone
+columna  arbitros_cr_normas_revision.privacidad_version  text
+columna  arbitros_cr_normas_revision.torneo_id  integer
 columna  arbitros_cr_sin_id.claves  integer[]
 columna  arbitros_cr_sin_id.ids  text[]
 columna  arbitros_cr_sin_id.primero  date
@@ -1917,6 +1931,7 @@ funcion  interno.academia_para_recibo(p_alumno uuid)  definer  anon=false  auth=
 funcion  interno.academias_de(p_persona uuid)  definer  anon=false  auth=true
 funcion  interno.alumnos_de(p_profesor uuid)  definer  anon=false  auth=true
 funcion  interno.analisis_partidas_al_guardar()  definer  anon=false  auth=false
+funcion  interno.arbitros_cr_normas_revision_consentimiento()  definer  anon=false  auth=false
 funcion  interno.auditar()  definer  anon=false  auth=false
 funcion  interno.auditoria_intocable()  invoker  anon=false  auth=false
 funcion  interno.autores_visibles_para_mi_supervision()  definer  anon=false  auth=true
@@ -2204,6 +2219,10 @@ politica  arbitros_cr_cargos  arbitros_cr_cargos_con_herramienta  SELECT
 politica  arbitros_cr_cr  arbitros_cr_cr_con_herramienta  SELECT
 politica  arbitros_cr_cr_cargos  arbitros_cr_cr_cargos_con_herramienta  SELECT
 politica  arbitros_cr_fide  arbitros_cr_fide_con_herramienta  SELECT
+politica  arbitros_cr_normas_revision  arbitros_cr_normas_revision_borrar  DELETE
+politica  arbitros_cr_normas_revision  arbitros_cr_normas_revision_cambiar  UPDATE
+politica  arbitros_cr_normas_revision  arbitros_cr_normas_revision_subir  INSERT
+politica  arbitros_cr_normas_revision  arbitros_cr_normas_revision_ver  SELECT
 politica  arbitros_cr_sin_id  arbitros_cr_sin_id_con_herramienta  SELECT
 politica  arbitros_cr_torneos  arbitros_cr_torneos_con_herramienta  SELECT
 politica  archivos_pgn  archivos_pgn_delete  DELETE
@@ -2637,6 +2656,8 @@ trigger  acceso_config  auditar
 trigger  ajustes_academia  ajustes_academia_protegido
 trigger  analisis_partidas_alumno  analisis_partidas_al_guardar
 trigger  arbitraje_consulta_config  auditar
+trigger  arbitros_cr_normas_revision  consentimiento
+trigger  arbitros_cr_normas_revision  consentimiento_fijo
 trigger  auditoria  auditoria_intocable
 trigger  auditoria  auditoria_sin_truncate
 trigger  certificados  auditar
@@ -2755,6 +2776,9 @@ indice  arbitros_cr_cr  arbitros_cr_cr_pkey
 indice  arbitros_cr_cr_cargos  arbitros_cr_cr_cargos_fide_id
 indice  arbitros_cr_cr_cargos  arbitros_cr_cr_cargos_pkey
 indice  arbitros_cr_fide  arbitros_cr_fide_pkey
+indice  arbitros_cr_normas_revision  arbitros_cr_normas_revision_creada_por_idx
+indice  arbitros_cr_normas_revision  arbitros_cr_normas_revision_pkey
+indice  arbitros_cr_normas_revision  arbitros_cr_normas_revision_una_por_torneo
 indice  arbitros_cr_sin_id  arbitros_cr_sin_id_pkey
 indice  arbitros_cr_torneos  arbitros_cr_torneos_pkey
 indice  archivos_pgn  archivos_pgn_pkey
@@ -3315,6 +3339,10 @@ grant  arbitros_cr_cr_cargos  authenticated  TRIGGER
 grant  arbitros_cr_fide  authenticated  REFERENCES
 grant  arbitros_cr_fide  authenticated  SELECT
 grant  arbitros_cr_fide  authenticated  TRIGGER
+grant  arbitros_cr_normas_revision  authenticated  DELETE
+grant  arbitros_cr_normas_revision  authenticated  INSERT
+grant  arbitros_cr_normas_revision  authenticated  SELECT
+grant  arbitros_cr_normas_revision  authenticated  UPDATE
 grant  arbitros_cr_sin_id  authenticated  REFERENCES
 grant  arbitros_cr_sin_id  authenticated  SELECT
 grant  arbitros_cr_sin_id  authenticated  TRIGGER

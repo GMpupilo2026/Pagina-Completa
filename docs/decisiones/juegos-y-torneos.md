@@ -3459,6 +3459,75 @@ el informe que se le hizo a mano a José Antonio Meza Vega:
 La tabla lleva solo cuatro columnas (empezó, torneo, quién firma, cuenta
 hasta): con nueve, `reporte-pdf.js` cortaba el texto de cada celda.
 
+## La revisión de normas antes de mandarlas
+
+El dueño pidió (octubre de 2026) un lugar donde subir las normas de una
+solicitud y saber, antes de mandarla, si FIDE la aceptaría y qué le falta:
+una solicitud rechazada son meses perdidos. Está en la ficha de cada árbitro,
+«Revisar normas antes de mandarlas».
+
+- **Lo decidió el dueño:**
+  - la suben quienes tienen la licencia de la herramienta, para cualquier
+    árbitro de la lista;
+  - los datos del certificado se eligen de una lista (el torneo de FIDE, el
+    cargo, quién firma), no los lee una IA: lo demás (jugadores, Elo,
+    federaciones, fechas, el título de quien firma) ya está en la base, y una
+    lectura automática puede leer mal y cuesta en cada certificado;
+  - cada certificado lo ven solo quien lo subió y quien administra.
+- **Norma por norma** (`revisarNorma()`):
+  - el torneo, con el cargo que dice el certificado (`normaDe`) y la fecha
+    contra el AF (`antesDelAf` / `despuesDelAf`);
+  - que el cargo coincida con la ficha de FIDE del torneo, porque FIDE lo
+    comprueba ahí;
+  - la vigencia de seis años (5.3.1);
+  - quién firma: no el solicitante (2.8); con el título que hacía falta ese
+    día (`tituloEn`); si no está en la lista, para revisar; y si no fue el
+    principal que dice FIDE, para revisar;
+  - que esté el certificado.
+
+  Dice «La aceptaría», «Revisar», «Falta algo» o «No vale», y cada punto con
+  su porqué.
+- **La solicitud entera** (`revisarSolicitud()`): con las normas que no se
+  caen, las fechas que se tocan (2.10), las que valen una sola vez (4.9.1) y
+  «Para pedir el título» de siempre. `rutaTitulo()` recibe ahora la lista de
+  normas (`propias`, cada una con `firmante`) en lugar de elegirlas sola: una
+  sola copia de las reglas. Dice «Lista para mandar», «Casi: revisar lo
+  marcado» o «Todavía no: FIDE la rechazaría».
+- **La base** (`20261016034255_arbitros_cr_revision_de_normas` y las que
+  siguen):
+  - `arbitros_cr_normas_revision`, con su RLS: ve, sube, cambia y borra quien la
+    subió con la licencia, y quien administra ve y borra;
+  - un índice único por (quién, árbitro, título, torneo): la misma norma no se
+    sube dos veces;
+  - la ruta del archivo tiene que estar en la carpeta de quien la sube;
+  - el bucket privado `normas-arbitros` (PDF, JPG, PNG o WebP, hasta 10 MB), con
+    las mismas reglas por carpeta.
+
+  Comprobado impersonando en SQL a alguien con licencia, a alguien sin ella, a
+  administración y a `anon`.
+- **El `TRUNCATE` que quedó abierto.** La tabla nació con los permisos que
+  Supabase da por omisión a `authenticated` (`TRUNCATE`, `REFERENCES`,
+  `TRIGGER`), y un `TRUNCATE` no pasa por la RLS: cualquiera con sesión vaciaba
+  la tabla de todos. Lo mostró el retrato del esquema;
+  `20261016035011_arbitros_cr_revision_sin_truncate` deja solo `select`,
+  `insert`, `update` y `delete`.
+- **El consentimiento.** Un certificado lleva firmas y datos de otras personas:
+  la casilla («Tengo permiso del árbitro… y acepto la Política de privacidad»)
+  se mira antes de subir el archivo, y la base exige la versión y guarda la hora
+  del servidor (ver «El consentimiento queda guardado» en `legal.md`). El
+  trigger es `security definer` porque `authenticated` no ejecuta
+  `interno.version_legal_valida()`; un segundo trigger, `consentimiento_fijo`,
+  no deja cambiar la aceptación después.
+- `verificar-arbitros-cr.js`:
+  - sube una norma de Luis con quien firma fuera de la lista (Revisar);
+  - comprueba la solicitud de AF con una sola norma (Todavía no), la misma
+    norma dos veces, quitarla con su archivo y la casilla;
+  - sube una de Ana para AI firmada por alguien que entonces no era AI (No
+    vale) y con un cargo distinto al de FIDE.
+
+  El doble guarda y borra de verdad, filtra en el resolver y rechaza sin la
+  versión de la privacidad, como el trigger.
+
 ## Comparar dos árbitros y el ranking del año
 
 Dos piezas más en `arbitros-cr.html` (pedido del dueño, octubre de 2026):

@@ -615,6 +615,7 @@
         $("ficha-fide").textContent = textoFide(a);
         pintarHistorial(a);
         $("ficha-normas").replaceChildren(tarjetaNorma(a, "af"), tarjetaNorma(a, "ai"));
+        pintarRevision(a);
         pintarComparacion(a);
         pintarActividad("ficha-actividad", torneosDe(a));
         const lista = filasFicha(a);
@@ -685,11 +686,16 @@
     /* «Para pedir el título»: lo que pide B.06.1 (artículos 3, 4 y 5) para
        la solicitud de AF o de AI, punto por punto. Cada punto dice «Listo»,
        «Falta» o «Revisar» (nunca solo un color). Vacía si ya tiene el
-       título o si para el AI le falta el AF. */
-    function rutaTitulo(a, cual) {
+       título o si para el AI le falta el AF. Con `propias` (las normas que
+       se subieron en «Revisar normas antes de mandarlas», cada una con
+       quién firma su certificado en `firmante`) revisa esas en lugar de las
+       que la página elige sola. */
+    function rutaTitulo(a, cual, propias) {
         const tiene = cual === "af" ? ["FA", "IA"].includes(a.titulo) : a.titulo === "IA";
         if (tiene || (cual === "ai" && a.titulo !== "FA")) return [];
-        const c = cuentaNormas(a, cual), n = c.usadas.length, pide = PIDE[cual], hoy = hoyCr();
+        const c = propias ? { usadas: propias, sistemas: [...new Set(propias.map((x) => x.t.sistema))] } : cuentaNormas(a, cual);
+        const firmaDe = propias ? (x) => x.firmante : principalDe;
+        const n = c.usadas.length, pide = PIDE[cual], hoy = hoyCr();
         const ruta = [];
         const punto = (estado, texto) => ruta.push({ estado, texto });
         if (n >= pide) punto("Listo", `Normas de torneo: junta ${miles(n)} de las ${pide}.`);
@@ -722,7 +728,7 @@
         // una norma de AF, IA para una de AI: FIDE rechazó «Chief Arbiter was
         // NA» y, para AI, «Chief Arbiter was FA») y, para AI, no todas del
         // mismo (4.13.1). Solo se ve si el principal es de Costa Rica.
-        const principales = c.usadas.map((x) => ({ x, p: principalDe(x) }));
+        const principales = c.usadas.map((x) => ({ x, p: firmaDe(x) }));
         const propios = principales.filter((y) => y.p === a);
         if (propios.length) punto("Revisar", `Firmas: en ${propios.map((y) => "«" + y.x.t.nombre + "»").join(", ")} fue él el árbitro principal; ese certificado no lo puede firmar él (2.8): lo firma otro con título.`);
         const pide2 = cual === "af" ? ["FA", "IA"] : ["IA"];
@@ -914,6 +920,188 @@
                 textoFide(a), "al " + window.HoraCR.fecha(new Date())].join(" · "),
             pie: "Árbitros de Costa Rica · Ajedrez Integral", autor: "Ajedrez Integral", bloques, fotos: [],
         };
+    }
+
+    /* ---- Revisar normas antes de mandarlas ----
+       Quien tiene la licencia sube el certificado de cada norma (PDF o
+       foto) de este árbitro, elige el torneo de FIDE, el cargo que dice el
+       certificado y quién lo firmó, y la página dice, norma por norma y la
+       solicitud entera, si FIDE la aceptaría y qué le falta: con las mismas
+       reglas de «Para pedir el título» (rutaTitulo con las normas subidas).
+       Las filas van en arbitros_cr_normas_revision y los archivos en el
+       bucket privado normas-arbitros: cada quien ve lo suyo y quien
+       administra, todo (la RLS, no la pantalla). */
+    const TIPOS_ARCHIVO = { "application/pdf": "pdf", "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp" };
+    const MAX_ARCHIVO = 10 * 1024 * 1024;
+    let subidas = [], miId = null, soyAdmin = false;
+
+    async function leerSubidas(a) {
+        const { data, error } = await sb.from("arbitros_cr_normas_revision")
+            .select("id,creada_por,creada,fide_id,cual,torneo_id,cargo,firmante_fide_id,firmante_nombre,archivo,nombre_archivo")
+            .eq("fide_id", a.fide_id).order("creada").range(0, 999);
+        if (error) throw error;
+        return data || [];
+    }
+
+    // Una norma subida: lo que diría FIDE y por qué, punto por punto.
+    function revisarNorma(a, cual, s) {
+        const motivos = [], di = (estado, texto) => motivos.push({ estado, texto });
+        const t = torneos.get(s.torneo_id);
+        if (!t) {
+            di("Revisar", `El torneo ${s.torneo_id} ya no está entre los torneos de FIDE de Costa Rica que tiene la herramienta: revisarlo en su ficha de FIDE.`);
+            return { veredicto: "Revisar", motivos, x: null };
+        }
+        const x = a.todos.find((y) => y.t === t), enFide = x ? x.cargos : [];
+        if (!enFide.length) di("Revisar", "En la ficha de FIDE de ese torneo no figura como árbitro, y FIDE lo comprueba ahí: pedir que lo agreguen antes de mandarla.");
+        else if (!enFide.includes(s.cargo)) di("Revisar", `El certificado dice «${CARGOS[s.cargo]}» y la ficha de FIDE, «${enFide.map((c) => CARGOS[c] || c).join(", ")}»: tienen que coincidir.`);
+        let n = normaDe(t, [s.cargo], [], cual);
+        n = cual === "ai" ? antesDelAf(n, t.inicio, a) : despuesDelAf(n, t.inicio, a);
+        di(n.estado === "no" ? "No vale" : n.estado === "revisar" ? "Revisar" : "Listo", `El torneo: ${ESTADOS[n.estado]}. ${n.detalle}`);
+        const vence = masAnios(t.inicio, 6);
+        if (vence < hoyCr()) di("No vale", `Venció el ${fecha(vence)}: una norma cuenta seis años (5.3.1).`);
+        const pide = cual === "af" ? ["FA", "IA"] : ["IA"], quien = cual === "af" ? "AF ni AI" : "AI";
+        const p = s.firmante_fide_id ? arbitros.find((z) => z.fide_id === s.firmante_fide_id) || null : null;
+        if (s.firmante_fide_id === a.fide_id) di("No vale", "Lo firma él mismo: el certificado lo firma otro con título (2.8).");
+        else if (p) {
+            const tit = tituloEn(p, t.inicio);
+            if (pide.includes(tit)) di("Listo", `Lo firma ${p.nombre}, ${TITULOS_CORTOS[tit]} en esa fecha.`);
+            else di("No vale", `Lo firma ${p.nombre}, que en esa fecha no era ${quien}: FIDE la rechaza (2.8).`);
+        } else if (s.firmante_nombre) di("Revisar", `Lo firma ${s.firmante_nombre}, que no está en la lista: confirmar que en esa fecha era ${cual === "af" ? "AF o AI" : "AI"}.`);
+        else di("Falta", "Falta decir quién firma el certificado.");
+        const principal = x ? principalDe(x) : null;
+        if (principal && p && principal !== p) di("Revisar", `En FIDE el árbitro principal de ese torneo fue ${principal.nombre}: el certificado lo firma el principal.`);
+        if (!s.archivo) di("Falta", "Falta subir el certificado.");
+        const hay = (e) => motivos.some((m) => m.estado === e);
+        const veredicto = hay("No vale") ? "No vale" : hay("Falta") ? "Falta algo" : hay("Revisar") ? "Revisar" : "La aceptaría";
+        return { veredicto, motivos, x: { t, inicio: t.inicio, clave: "f" + t.id, cargos: [s.cargo], roles: [], [cual]: n,
+            firmante: s.firmante_fide_id === a.fide_id ? a : p, subida: s } };
+    }
+
+    // La solicitud entera con las normas subidas que no se caen solas.
+    function revisarSolicitud(a, cual, revisadas) {
+        const sirven = revisadas.filter((r) => r.x && r.veredicto !== "No vale").map((r) => r.x);
+        const extra = [];
+        const finDe = (x) => (x.t.fin && x.t.fin > x.inicio ? x.t.fin : x.inicio);
+        for (let i = 0; i < sirven.length; i++) for (let j = i + 1; j < sirven.length; j++) {
+            const [x, y] = [sirven[i], sirven[j]];
+            if (x.inicio <= finDe(y) && y.inicio <= finDe(x)) extra.push({ estado: "Falta", texto: `«${x.t.nombre}» y «${y.t.nombre}» se jugaron en fechas que se tocan: va una sola (2.10).` });
+        }
+        for (const e of ["una", "opcion"]) {
+            const de = sirven.filter((x) => x[cual].estado === e);
+            if (de.length > 1) extra.push({ estado: "Falta", texto: `${de.map((x) => "«" + x.t.nombre + "»").join(" y ")} valen una sola vez por solicitud (4.9.1): va una sola.` });
+        }
+        const ruta = extra.concat(rutaTitulo(a, cual, sirven));
+        const caen = revisadas.filter((r) => r.veredicto === "No vale").length;
+        // El último punto («lo que no se ve desde afuera») siempre queda para revisar.
+        const dudas = ruta.slice(0, -1).some((r) => r.estado === "Revisar") || revisadas.some((r) => r.veredicto === "Revisar");
+        const veredicto = caen || ruta.some((r) => r.estado === "Falta") || revisadas.some((r) => r.veredicto === "Falta algo")
+            ? "Todavía no: FIDE la rechazaría" : dudas ? "Casi: revisar lo marcado" : "Lista para mandar";
+        return { veredicto, ruta, caen };
+    }
+
+    function pintarRevision(a) {
+        const cual = $("revision-cual").value;
+        const tiene = cual === "af" ? ["FA", "IA"].includes(a.titulo) : a.titulo === "IA";
+        $("revision-aviso").textContent = tiene ? `Ya tiene el título de ${cual === "af" ? "AF" : "AI"}: no hace falta revisar normas para él.`
+            : cual === "ai" && a.titulo !== "FA" ? "El AI se pide después del AF: sus normas de AI todavía no cuentan." : "";
+        // Los torneos de FIDE en que figura, el más nuevo primero.
+        const sel = $("revision-torneo"), antes = sel.value;
+        sel.replaceChildren(el("option", { value: "" }, "Elegir el torneo"),
+            ...a.todos.filter((x) => x.fide).sort((x, y) => y.inicio.localeCompare(x.inicio))
+                .map((x) => el("option", { value: String(x.t.id) }, `${fecha(x.inicio)} · ${x.t.nombre}`)));
+        sel.value = antes && sel.querySelector(`option[value="${antes}"]`) ? antes : "";
+        const firm = $("revision-firmante"), antesF = firm.value;
+        firm.replaceChildren(el("option", { value: "" }, "Elegir quién firma"),
+            ...arbitros.slice().sort((x, y) => x.nombre.localeCompare(y.nombre, "es")).map((z) => el("option", { value: String(z.fide_id) }, z.nombre)),
+            el("option", { value: "otro" }, "Otra persona (no está en la lista)"));
+        firm.value = antesF && firm.querySelector(`option[value="${antesF}"]`) ? antesF : "";
+        $("revision-otro-caja").classList.toggle("hidden", firm.value !== "otro");
+
+        const mias = subidas.filter((s) => s.cual === cual);
+        const revisadas = mias.map((s) => ({ s, ...revisarNorma(a, cual, s) }));
+        const lista = $("revision-lista");
+        lista.replaceChildren(...revisadas.map((r) => {
+            const t = torneos.get(r.s.torneo_id);
+            const ver = el("button", { type: "button", class: "text-sm font-semibold underline underline-offset-2 hover:no-underline" }, "Ver el certificado");
+            ver.addEventListener("click", () => verCertificado(r.s));
+            const quitar = el("button", { type: "button", class: "text-sm font-semibold underline underline-offset-2 hover:no-underline" }, "Quitar esta norma");
+            quitar.addEventListener("click", () => quitarSubida(a, r.s));
+            return el("li", { class: "bg-white dark:bg-brand-900 rounded-2xl shadow-md p-4", "data-veredicto": r.veredicto },
+                el("p", { class: "font-semibold" }, t ? `${fecha(t.inicio)} · ${t.nombre}` : `Torneo ${r.s.torneo_id}`),
+                el("p", { class: "mt-1" }, el("strong", { class: "of-estado" }, r.veredicto)),
+                el("p", { class: "of-detalle" }, CARGOS[r.s.cargo] + (r.s.nombre_archivo ? " · " + r.s.nombre_archivo : "")),
+                el("ul", { class: "mt-2 space-y-1 text-sm" }, ...r.motivos.map((m) => el("li", { "data-estado": m.estado }, el("strong", {}, m.estado + ": "), m.texto))),
+                el("div", { class: "flex flex-wrap gap-4 mt-2" }, r.s.archivo ? ver : null,
+                    r.s.creada_por === miId || soyAdmin ? quitar : null));
+        }));
+        const sol = $("revision-solicitud");
+        if (!revisadas.length || tiene) { sol.replaceChildren(); sol.classList.add("hidden"); return; }
+        const v = revisarSolicitud(a, cual, revisadas);
+        sol.classList.remove("hidden");
+        sol.replaceChildren(
+            el("h4", { class: "text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide" }, `La solicitud de ${cual === "af" ? "AF" : "AI"} con estas normas`),
+            el("p", { class: "mt-1" }, el("strong", { class: "of-estado" }, v.veredicto)),
+            el("p", { class: "of-detalle" }, `${miles(revisadas.length)} ${revisadas.length === 1 ? "norma subida" : "normas subidas"}` + (v.caen ? `, ${miles(v.caen)} no ${v.caen === 1 ? "vale" : "valen"}` : "") + "."),
+            el("ul", { class: "mt-2 space-y-1 text-sm" }, ...v.ruta.map((r) => el("li", { "data-estado": r.estado }, el("strong", {}, r.estado + ": "), r.texto))));
+    }
+
+    async function subirNorma(a, ev) {
+        ev.preventDefault();
+        const cual = $("revision-cual").value, torneo = parseInt($("revision-torneo").value, 10), cargo = $("revision-cargo").value;
+        const firm = $("revision-firmante").value, otro = $("revision-otro").value.trim(), archivo = $("revision-archivo").files[0];
+        if (!torneo) { Avisos.avisar("Elige el torneo de la norma.", { tipo: "error" }); return; }
+        if (!archivo) { Avisos.avisar("Sube el certificado de la norma (PDF o foto).", { tipo: "error" }); return; }
+        const ext = TIPOS_ARCHIVO[archivo.type];
+        if (!ext) { Avisos.avisar("El certificado tiene que ser un PDF o una foto (JPG, PNG o WebP).", { tipo: "error" }); return; }
+        if (archivo.size > MAX_ARCHIVO) { Avisos.avisar("El certificado pesa más de 10 MB: súbelo más liviano.", { tipo: "error" }); return; }
+        // La casilla se mira ANTES de subir el archivo: subirlo ya es tratar el dato.
+        if (!$("revision-acepto").checked) { Avisos.avisar("Para subir el certificado hay que marcar la casilla de la Política de privacidad.", { tipo: "error" }); $("revision-acepto").focus(); return; }
+        if (subidas.some((s) => s.cual === cual && s.torneo_id === torneo && s.creada_por === miId)) { Avisos.avisar("Esa norma ya está subida para esta solicitud.", { tipo: "error" }); return; }
+        const boton = $("revision-subir");
+        boton.disabled = true; $("revision-estado").textContent = "Subiendo el certificado…";
+        const ruta = `${miId}/${crypto.randomUUID()}.${ext}`;
+        try {
+            const up = await sb.storage.from("normas-arbitros").upload(ruta, archivo, { contentType: archivo.type, upsert: false });
+            if (up.error) throw up.error;
+            const fila = { fide_id: a.fide_id, cual, torneo_id: torneo, cargo, archivo: ruta, nombre_archivo: archivo.name.slice(0, 200),
+                firmante_fide_id: firm && firm !== "otro" ? parseInt(firm, 10) : null, firmante_nombre: firm === "otro" ? otro.slice(0, 120) : "",
+                privacidad_version: window.LegalVersion.PRIVACIDAD };
+            const { data, error } = await sb.from("arbitros_cr_normas_revision").insert(fila).select().single();
+            if (error) { await sb.storage.from("normas-arbitros").remove([ruta]); throw error; }
+            subidas.push(data);
+            $("revision-form").reset(); $("revision-cual").value = cual;
+            $("revision-estado").textContent = "Listo: la norma quedó subida y revisada.";
+            pintarRevision(a);
+        } catch (e) {
+            $("revision-estado").textContent = "";
+            Avisos.avisar("No se pudo subir la norma: " + (e.message || e), { tipo: "error" });
+        } finally { boton.disabled = false; }
+    }
+
+    async function verCertificado(s) {
+        const { data, error } = await sb.storage.from("normas-arbitros").createSignedUrl(s.archivo, 3600);
+        if (error || !data) { Avisos.avisar("No se pudo abrir el certificado.", { tipo: "error" }); return; }
+        const a = el("a", { href: data.signedUrl, target: "_blank", rel: "noopener" });
+        document.body.append(a); a.click(); a.remove();
+    }
+
+    async function quitarSubida(a, s) {
+        const t = torneos.get(s.torneo_id);
+        const si = await Avisos.confirmar(`¿Quitar la norma de «${t ? t.nombre : s.torneo_id}» y su certificado?`, { aceptar: "Quitar la norma", cancelar: "Dejarla", peligro: true });
+        if (!si) return;
+        const { error } = await sb.from("arbitros_cr_normas_revision").delete().eq("id", s.id);
+        if (error) { Avisos.avisar("No se pudo quitar: " + error.message, { tipo: "error" }); return; }
+        if (s.archivo) await sb.storage.from("normas-arbitros").remove([s.archivo]);
+        subidas = subidas.filter((x) => x.id !== s.id);
+        $("revision-estado").textContent = "La norma se quitó.";
+        pintarRevision(a);
+    }
+
+    async function abrirRevision(a) {
+        subidas = [];
+        pintarRevision(a);
+        try { subidas = await leerSubidas(a); } catch (e) { $("revision-estado").textContent = "No se pudieron leer las normas subidas: " + (e.message || e); return; }
+        if (estado.elegido === a.fide_id) pintarRevision(a);
     }
 
     /* Lo que dice FIDE de él: si está activo en la lista oficial de
@@ -1126,7 +1314,13 @@
         $("general").classList.toggle("hidden", !!id);
         $("ficha").classList.toggle("hidden", !id);
         $("volver").classList.toggle("hidden", !id);
-        if (id) { pintarFicha(); $("ficha-titulo").setAttribute("tabindex", "-1"); $("ficha-titulo").focus(); } else pintarGeneral();
+        if (id) {
+            const a = arbitros.find((x) => x.fide_id === id);
+            // La revisión arranca en el título que le toca pedir.
+            if (a) $("revision-cual").value = ["FA", "IA"].includes(a.titulo) ? "ai" : "af";
+            pintarFicha(); $("ficha-titulo").setAttribute("tabindex", "-1"); $("ficha-titulo").focus();
+            if (a) abrirRevision(a);
+        } else pintarGeneral();
     }
 
     function pintar() { if (estado.elegido) pintarFicha(); else pintarGeneral(); }
@@ -1148,6 +1342,10 @@
         $("norma-af").addEventListener("change", (e) => { estado.normaAf = e.target.value; pintarFicha(); });
         $("norma-ai").addEventListener("change", (e) => { estado.normaAi = e.target.value; pintarFicha(); });
         $("volver").addEventListener("click", () => elegir(null));
+        const elegido = () => arbitros.find((x) => x.fide_id === estado.elegido);
+        $("revision-cual").addEventListener("change", () => { const a = elegido(); if (a) pintarRevision(a); });
+        $("revision-firmante").addEventListener("change", (e) => $("revision-otro-caja").classList.toggle("hidden", e.target.value !== "otro"));
+        $("revision-form").addEventListener("submit", (e) => { const a = elegido(); if (a) subirNorma(a, e); else e.preventDefault(); });
         $("excel").addEventListener("click", excel);
         $("comparar").addEventListener("change", (e) => { estado.otro = +e.target.value || null; ponerDireccion(); pintarFicha(); });
         $("quitar-comparar").addEventListener("click", () => { estado.otro = null; ponerDireccion(); pintarFicha(); $("comparar").focus(); });
@@ -1171,6 +1369,9 @@
         if (!session) { location.href = "login.html?next=arbitros-cr.html"; return; }
         const { data: puede, error } = await sb.rpc("tengo_herramienta", { p_herramienta: "arbitros-cr" });
         if (error || puede !== true) { $("loading").classList.add("hidden"); $("denegado").classList.remove("hidden"); return; }
+        miId = session.user.id;
+        const { data: adm } = await sb.rpc("soy_admin");
+        soyAdmin = adm === true;
         try {
             const [a, t, c, cr, crc, f, s] = await Promise.all([
                 leerTodo("arbitros_cr", "fide_id,nombre,titulo,titulo_detalle,solo_chess_results", "fide_id"),

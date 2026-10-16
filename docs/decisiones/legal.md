@@ -112,6 +112,7 @@ prueba nada.
 | `responder_encuesta_curso` | `encuesta-curso.html` | `encuesta_curso_respuestas.privacidad_version` y `privacidad_aceptada_en` |
 | `justificar_ausencia` | `justificaciones.html` | `justificaciones_ausencia.privacidad_version` y `privacidad_aceptada_en` (una constancia médica es un dato sensible) |
 | `guardar_mi_foto` | `configuracion.html` | `profiles.foto_privacidad_version` y `foto_aceptada_en` (la foto de perfil; ver «La foto de perfil» en `permisos-y-roles.md`) |
+| (trigger `consentimiento`) | `arbitros-cr.html`, «Revisar normas antes de mandarlas» | `arbitros_cr_normas_revision.privacidad_version` y `privacidad_aceptada_en` (el certificado de una norma lleva firmas y datos de otras personas; la casilla dice además que hay permiso del árbitro) |
 | `elegir_plan` | `elegir-plan.html` | `solicitudes_academia.terminos_version` y `terminos_aceptados_en` (y la privacidad, si la solicitud no la tenía) |
 
 - **Lo exige la base, no la pantalla.** Sin una versión válida, las tres
