@@ -2817,6 +2817,15 @@ la base no basta, porque la pasada del mes la vuelve a escribir. Vale para
 todos los árbitros del torneo. Primero se pensó en quitarle el torneo a él solo,
 pero el error es la fecha, no quién lo arbitró.
 
+Después se buscaron los demás casos en los 4214 torneos de Costa Rica (un
+torneo que dura más de un año, o con un año que no cuadra con su clave: las
+claves de chess-results van en orden) y salieron dos, corregidos con la página
+de cada uno a la vista: el **JUNCOS 2011 por equipos femenino** (48235), con
+solo la ronda 1 en 2010, y el **Nacional Infantil S8** (63763), con las siete
+rondas en 2002 pero actualizado por última vez el 13/01/2012 a las 22:21, la
+noche de su última ronda. Los otros que duran más de dos meses son torneos de
+club de una ronda por semana: esos están bien.
+
 
 ## El mismo torneo en FIDE y en chess-results
 

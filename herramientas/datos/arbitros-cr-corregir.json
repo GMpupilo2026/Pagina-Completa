@@ -15,6 +15,22 @@
    "fin": "2022-09-10",
    "en_chess_results": "del 22/09/2010 al 22/09/2011",
    "motivo": "La otra sección del mismo festival."
+  },
+  {
+   "clave": 48235,
+   "torneo": "Por Equipos Femenino JUNCOS 2011",
+   "inicio": "2011-05-10",
+   "fin": "2011-05-12",
+   "en_chess_results": "del 10/05/2010 al 12/05/2011",
+   "motivo": "Solo la ronda 1 dice 2010 (10/05/2010); las rondas 2 y 3 son del 11 y 12/05/2011. Comprobado en su página el 16/10/2026."
+  },
+  {
+   "clave": 63763,
+   "torneo": "Campeonato Nacional Infantil S8",
+   "inicio": "2012-01-10",
+   "fin": "2012-01-13",
+   "en_chess_results": "del 10/01/2002 al 13/01/2002",
+   "motivo": "Las siete rondas dicen 2002, pero la página se actualizó por última vez el 13/01/2012 a las 22:21 (la noche de la última ronda) y su clave es de 2011-2012. Comprobado el 16/10/2026."
   }
  ]
 }
