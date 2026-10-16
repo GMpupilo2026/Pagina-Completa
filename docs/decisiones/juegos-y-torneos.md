@@ -3528,6 +3528,46 @@ una solicitud rechazada son meses perdidos. Está en la ficha de cada árbitro,
   El doble guarda y borra de verdad, filtra en el resolver y rechaza sin la
   versión de la privacidad, como el trigger.
 
+**Las normas de reserva** (`candidatas()`). Junto a cada norma que no vale o
+queda para revisar, y al pie de la solicitud, la página propone otros torneos
+del mismo árbitro que sirven:
+- de FIDE, de los últimos seis años, que valen con su cargo en FIDE y con la
+  fecha contra el AF;
+- que no estén subidos y no se toquen en fechas con las normas subidas que
+  sirven (2.10);
+- si ya hay una norma que vale una sola vez, ninguna otra de ese tipo (4.9.1).
+
+Primero van las que firmaría alguien con el título que hace falta (el
+principal según FIDE, con `tituloEn()`); después, las que valen siempre;
+después, las más nuevas. La que no vale nunca se propone como su propio
+reemplazo.
+
+## El seguimiento: lo que dijo la revisión y lo que resolvió FIDE
+
+«Marcar como enviada a FIDE» guarda en `arbitros_cr_solicitudes_enviadas`
+(migración `20261016040007`) la fecha, lo que dijo la revisión
+(`prediccion`: lista, casi o todavía) y la foto de cada norma con su
+veredicto. Cuando el Consejo resuelve, se anota el resultado (aprobada o
+rechazada), el Consejo y el porqué del informe de la Comisión.
+
+La revisión **acertó** si dijo «Lista» y FIDE la aprobó, o «Todavía no» y la
+rechazó; las «Casi» no cuentan. La página dice cuántas acertó de todas las
+resueltas: donde falla, el motivo del informe dice qué regla falta o sobra.
+
+Los permisos son los de las normas subidas: quien la marcó con la licencia, y
+administración ve todo, con `TRUNCATE` cerrado desde el principio. Se
+comprobaron impersonando en SQL; también que no se marca dos veces el mismo
+día y que no entra una predicción inventada.
+
+`verificar-arbitros-cr.js`:
+- dos torneos de reserva para Luis, uno con un principal AF y otro con un AN,
+  en ese orden;
+- la norma que no vale y propone otra;
+- marcar como enviada, anotar «Rechazada» y ver que acertó.
+
+Rompí a propósito el filtro de las ya subidas, la firma y la regla del
+acierto; salta cada vez.
+
 ## Comparar dos árbitros y el ranking del año
 
 Dos piezas más en `arbitros-cr.html` (pedido del dueño, octubre de 2026):

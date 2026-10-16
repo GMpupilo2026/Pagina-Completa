@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261016035132
+# al-dia-con: 20261016040007
 tabla  Ejercicios Lichess  rls=true
 tabla  _foto_rls_tmp  rls=false
 tabla  _pedidos_elo  rls=false
@@ -20,6 +20,7 @@ tabla  arbitros_cr_cr_cargos  rls=true
 tabla  arbitros_cr_fide  rls=true
 tabla  arbitros_cr_normas_revision  rls=true
 tabla  arbitros_cr_sin_id  rls=true
+tabla  arbitros_cr_solicitudes_enviadas  rls=true
 tabla  arbitros_cr_torneos  rls=true
 tabla  archivos_pgn  rls=true
 tabla  auditoria  rls=true
@@ -331,6 +332,17 @@ columna  arbitros_cr_sin_id.roles  text[]
 columna  arbitros_cr_sin_id.texto  text
 columna  arbitros_cr_sin_id.torneos  integer
 columna  arbitros_cr_sin_id.ultimo  date
+columna  arbitros_cr_solicitudes_enviadas.consejo  text
+columna  arbitros_cr_solicitudes_enviadas.creada  timestamp with time zone
+columna  arbitros_cr_solicitudes_enviadas.creada_por  uuid
+columna  arbitros_cr_solicitudes_enviadas.cual  text
+columna  arbitros_cr_solicitudes_enviadas.enviada  date
+columna  arbitros_cr_solicitudes_enviadas.fide_id  integer
+columna  arbitros_cr_solicitudes_enviadas.id  uuid
+columna  arbitros_cr_solicitudes_enviadas.motivo  text
+columna  arbitros_cr_solicitudes_enviadas.normas  jsonb
+columna  arbitros_cr_solicitudes_enviadas.prediccion  text
+columna  arbitros_cr_solicitudes_enviadas.resultado  text
 columna  arbitros_cr_torneos.af_detalle  text
 columna  arbitros_cr_torneos.af_estado  text
 columna  arbitros_cr_torneos.ai_detalle  text
@@ -2224,6 +2236,10 @@ politica  arbitros_cr_normas_revision  arbitros_cr_normas_revision_cambiar  UPDA
 politica  arbitros_cr_normas_revision  arbitros_cr_normas_revision_subir  INSERT
 politica  arbitros_cr_normas_revision  arbitros_cr_normas_revision_ver  SELECT
 politica  arbitros_cr_sin_id  arbitros_cr_sin_id_con_herramienta  SELECT
+politica  arbitros_cr_solicitudes_enviadas  arbitros_cr_solicitudes_enviadas_borrar  DELETE
+politica  arbitros_cr_solicitudes_enviadas  arbitros_cr_solicitudes_enviadas_cambiar  UPDATE
+politica  arbitros_cr_solicitudes_enviadas  arbitros_cr_solicitudes_enviadas_marcar  INSERT
+politica  arbitros_cr_solicitudes_enviadas  arbitros_cr_solicitudes_enviadas_ver  SELECT
 politica  arbitros_cr_torneos  arbitros_cr_torneos_con_herramienta  SELECT
 politica  archivos_pgn  archivos_pgn_delete  DELETE
 politica  archivos_pgn  archivos_pgn_insert  INSERT
@@ -2780,6 +2796,9 @@ indice  arbitros_cr_normas_revision  arbitros_cr_normas_revision_creada_por_idx
 indice  arbitros_cr_normas_revision  arbitros_cr_normas_revision_pkey
 indice  arbitros_cr_normas_revision  arbitros_cr_normas_revision_una_por_torneo
 indice  arbitros_cr_sin_id  arbitros_cr_sin_id_pkey
+indice  arbitros_cr_solicitudes_enviadas  arbitros_cr_solicitudes_enviadas_creada_por_idx
+indice  arbitros_cr_solicitudes_enviadas  arbitros_cr_solicitudes_enviadas_pkey
+indice  arbitros_cr_solicitudes_enviadas  arbitros_cr_solicitudes_enviadas_una_por_dia
 indice  arbitros_cr_torneos  arbitros_cr_torneos_pkey
 indice  archivos_pgn  archivos_pgn_pkey
 indice  archivos_pgn  archivos_pgn_profesor_id_idx
@@ -3346,6 +3365,10 @@ grant  arbitros_cr_normas_revision  authenticated  UPDATE
 grant  arbitros_cr_sin_id  authenticated  REFERENCES
 grant  arbitros_cr_sin_id  authenticated  SELECT
 grant  arbitros_cr_sin_id  authenticated  TRIGGER
+grant  arbitros_cr_solicitudes_enviadas  authenticated  DELETE
+grant  arbitros_cr_solicitudes_enviadas  authenticated  INSERT
+grant  arbitros_cr_solicitudes_enviadas  authenticated  SELECT
+grant  arbitros_cr_solicitudes_enviadas  authenticated  UPDATE
 grant  arbitros_cr_torneos  authenticated  REFERENCES
 grant  arbitros_cr_torneos  authenticated  SELECT
 grant  arbitros_cr_torneos  authenticated  TRIGGER

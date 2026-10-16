@@ -933,7 +933,10 @@
        administra, todo (la RLS, no la pantalla). */
     const TIPOS_ARCHIVO = { "application/pdf": "pdf", "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp" };
     const MAX_ARCHIVO = 10 * 1024 * 1024;
-    let subidas = [], miId = null, soyAdmin = false;
+    let subidas = [], enviadas = [], miId = null, soyAdmin = false;
+    const PREDICCION = { "Lista para mandar": "lista", "Casi: revisar lo marcado": "casi", "Todavía no: FIDE la rechazaría": "todavia" };
+    const PREDICCION_TEXTO = { lista: "Lista para mandar", casi: "Casi: revisar lo marcado", todavia: "Todavía no: FIDE la rechazaría" };
+    const RESULTADOS = { pendiente: "Pendiente", aprobada: "Aprobada", rechazada: "Rechazada" };
 
     async function leerSubidas(a) {
         const { data, error } = await sb.from("arbitros_cr_normas_revision")
@@ -999,6 +1002,105 @@
         return { veredicto, ruta, caen };
     }
 
+    /* Las normas que podría sumar o usar de reserva: sus torneos de FIDE de
+       los últimos seis años que valen (con su cargo en FIDE y la fecha contra
+       el AF), que no están subidos, que no se tocan en fechas con las subidas
+       que sirven (2.10) y, si ya hay una que vale una sola vez, ninguna otra
+       de ese tipo (4.9.1). Primero las que firmaría alguien con el título que
+       hace falta; después las que valen siempre; después las más nuevas. */
+    function candidatas(a, cual, revisadas) {
+        const desde = masAnios(hoyCr(), -6), pide = cual === "af" ? ["FA", "IA"] : ["IA"];
+        const finDe = (x) => (x.t.fin && x.t.fin > x.inicio ? x.t.fin : x.inicio);
+        const subidos = new Set(revisadas.map((r) => r.s.torneo_id));
+        const sirven = revisadas.filter((r) => r.x && r.veredicto !== "No vale").map((r) => r.x);
+        const unaVez = new Set(sirven.map((x) => x[cual].estado).filter((e) => e !== "si"));
+        return a.todos.filter((x) => x.fide && !subidos.has(x.t.id) && x.inicio >= desde && VALE.includes(x[cual].estado)
+                && !unaVez.has(x[cual].estado) && !sirven.some((y) => x.inicio <= finDe(y) && y.inicio <= finDe(x)))
+            .map((x) => {
+                const p = principalDe(x), tit = p && p !== a ? tituloEn(p, x.inicio) : "";
+                const firmaBien = !!p && p !== a && pide.includes(tit);
+                const firma = !p ? "no consta quién fue el principal: ver el certificado"
+                    : p === a ? "fue él el principal: el certificado lo firma otro con título (2.8)"
+                    : firmaBien ? `lo firmaría ${p.nombre} (${TITULOS_CORTOS[tit]})`
+                    : `el principal, ${p.nombre}, no tenía el título que hace falta: la rechazarían (2.8)`;
+                return { x, firma, firmaBien };
+            })
+            .sort((m, n) => (n.firmaBien - m.firmaBien) || (PESO[m.x[cual].estado] - PESO[n.x[cual].estado]) || n.x.inicio.localeCompare(m.x.inicio));
+    }
+
+    /* El seguimiento: al mandarla se marca «enviada» con la foto de lo que
+       dijo la revisión, y cuando el Consejo resuelve se anota el resultado.
+       La revisión acertó si dijo «Lista» y FIDE la aprobó, o «Todavía no» y
+       la rechazó; «Casi» no cuenta. */
+    function acerto(e) {
+        if (e.resultado === "pendiente" || e.prediccion === "casi") return null;
+        return (e.prediccion === "lista") === (e.resultado === "aprobada");
+    }
+
+    async function leerEnviadas() {
+        const { data, error } = await sb.from("arbitros_cr_solicitudes_enviadas")
+            .select("id,creada_por,fide_id,cual,enviada,prediccion,normas,resultado,consejo,motivo").order("enviada").range(0, 999);
+        if (error) throw error;
+        return data || [];
+    }
+
+    async function marcarEnviada(a, cual, revisadas, veredicto) {
+        const dia = await Avisos.pedir("¿Qué día se mandó la solicitud a FIDE?", { titulo: "Marcar como enviada", etiqueta: "Fecha (AAAA-MM-DD)", valor: hoyCr(), aceptar: "Marcar como enviada" });
+        if (dia === null) return;
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(dia.trim()) || dia.trim() > hoyCr()) { Avisos.avisar("Escribe la fecha como AAAA-MM-DD, y que no sea del futuro.", { tipo: "error" }); return; }
+        const fila = { fide_id: a.fide_id, cual, enviada: dia.trim(), prediccion: PREDICCION[veredicto],
+            normas: revisadas.map((r) => ({ torneo_id: r.s.torneo_id, nombre: r.x ? r.x.t.nombre : "", inicio: r.x ? r.x.inicio : "", cargo: r.s.cargo, veredicto: r.veredicto })) };
+        const { data, error } = await sb.from("arbitros_cr_solicitudes_enviadas").insert(fila).select().single();
+        if (error) { Avisos.avisar(error.code === "23505" ? "Esa solicitud ya está marcada como enviada ese día." : "No se pudo marcar: " + error.message, { tipo: "error" }); return; }
+        enviadas.push(data);
+        $("revision-estado").textContent = "La solicitud quedó marcada como enviada. Cuando FIDE resuelva, anota el resultado abajo.";
+        pintarRevision(a);
+    }
+
+    async function guardarResultado(a, e, caja) {
+        const cambio = { resultado: caja.querySelector("select").value, consejo: caja.querySelector("input").value.trim().slice(0, 120),
+            motivo: caja.querySelector("textarea").value.trim().slice(0, 1000) };
+        const { error } = await sb.from("arbitros_cr_solicitudes_enviadas").update(cambio).eq("id", e.id);
+        if (error) { Avisos.avisar("No se pudo guardar el resultado: " + error.message, { tipo: "error" }); return; }
+        Object.assign(e, cambio);
+        Avisos.avisar("Resultado guardado.");
+        pintarRevision(a);
+    }
+
+    function pintarEnviadas(a) {
+        const suyas = enviadas.filter((e) => e.fide_id === a.fide_id).sort((x, y) => y.enviada.localeCompare(x.enviada));
+        const resueltas = enviadas.map(acerto).filter((v) => v !== null);
+        $("revision-acierto").textContent = resueltas.length
+            ? `La revisión acertó en ${miles(resueltas.filter(Boolean).length)} de ${miles(resueltas.length)} ${resueltas.length === 1 ? "solicitud resuelta" : "solicitudes resueltas"} (de todos los árbitros; las «Casi» no cuentan).`
+            : "";
+        $("revision-enviadas").replaceChildren(...suyas.map((e) => {
+            const id = "sol-" + e.id, ac = acerto(e);
+            const sel = el("select", { id: id + "-resultado", class: "w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm" },
+                ...Object.entries(RESULTADOS).map(([k, v]) => el("option", { value: k }, v)));
+            sel.value = e.resultado;
+            const consejo = el("input", { id: id + "-consejo", type: "text", maxlength: "120", class: "w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm" });
+            consejo.value = e.consejo;
+            const motivo = el("textarea", { id: id + "-motivo", rows: "2", maxlength: "1000", class: "w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm" });
+            motivo.value = e.motivo;
+            const etiqueta = (para, texto) => el("label", { for: para, class: "block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1" }, texto);
+            const caja = el("div", { class: "grid gap-2 md:grid-cols-2 mt-2" },
+                el("div", {}, etiqueta(id + "-resultado", "Lo que resolvió FIDE"), sel),
+                el("div", {}, etiqueta(id + "-consejo", "Consejo o informe"), consejo),
+                el("div", { class: "md:col-span-2" }, etiqueta(id + "-motivo", "Por qué (lo que dice el informe de la Comisión)"), motivo));
+            const guardar = el("button", { type: "button", class: "mt-2 text-sm font-semibold px-3 py-1.5 rounded-lg bg-brand-100 dark:bg-brand-800 hover:bg-brand-200 dark:hover:bg-brand-700" }, "Guardar el resultado");
+            guardar.addEventListener("click", () => guardarResultado(a, e, caja));
+            const propia = e.creada_por === miId;
+            return el("li", { class: "bg-white dark:bg-brand-900 rounded-2xl shadow-md p-4", "data-resultado": e.resultado },
+                el("p", { class: "font-semibold" }, `Enviada el ${fecha(e.enviada)} · solicitud de ${e.cual === "af" ? "AF" : "AI"}`),
+                el("p", { class: "text-sm mt-1" }, `La revisión dijo: ${PREDICCION_TEXTO[e.prediccion]}. FIDE: ${RESULTADOS[e.resultado]}` + (e.consejo ? ` (${e.consejo})` : "") + "."),
+                ac === null ? null : el("p", { class: "text-sm mt-1" }, el("strong", {}, ac ? "La revisión acertó." : "La revisión no acertó: ver qué regla faltó o sobró.")),
+                e.motivo ? el("p", { class: "of-detalle" }, e.motivo) : null,
+                el("p", { class: "of-detalle" }, "Normas: " + (e.normas || []).map((n) => `${n.nombre || n.torneo_id} (${n.veredicto})`).join("; ")),
+                propia ? caja : null, propia ? guardar : null);
+        }));
+        $("revision-enviadas-titulo").classList.toggle("hidden", !suyas.length);
+    }
+
     function pintarRevision(a) {
         const cual = $("revision-cual").value;
         const tiene = cual === "af" ? ["FA", "IA"].includes(a.titulo) : a.titulo === "IA";
@@ -1019,6 +1121,8 @@
 
         const mias = subidas.filter((s) => s.cual === cual);
         const revisadas = mias.map((s) => ({ s, ...revisarNorma(a, cual, s) }));
+        const reserva = tiene ? [] : candidatas(a, cual, revisadas);
+        pintarEnviadas(a);
         const lista = $("revision-lista");
         lista.replaceChildren(...revisadas.map((r) => {
             const t = torneos.get(r.s.torneo_id);
@@ -1031,18 +1135,29 @@
                 el("p", { class: "mt-1" }, el("strong", { class: "of-estado" }, r.veredicto)),
                 el("p", { class: "of-detalle" }, CARGOS[r.s.cargo] + (r.s.nombre_archivo ? " · " + r.s.nombre_archivo : "")),
                 el("ul", { class: "mt-2 space-y-1 text-sm" }, ...r.motivos.map((m) => el("li", { "data-estado": m.estado }, el("strong", {}, m.estado + ": "), m.texto))),
+                (r.veredicto === "No vale" || r.veredicto === "Revisar") && reserva.length
+                    ? el("p", { class: "text-sm mt-2", "data-reserva": "" }, el("strong", {}, "Para reemplazarla: "), `«${reserva[0].x.t.nombre}» (${fecha(reserva[0].x.inicio)}); ${reserva[0].firma}.`) : null,
                 el("div", { class: "flex flex-wrap gap-4 mt-2" }, r.s.archivo ? ver : null,
                     r.s.creada_por === miId || soyAdmin ? quitar : null));
         }));
         const sol = $("revision-solicitud");
         if (!revisadas.length || tiene) { sol.replaceChildren(); sol.classList.add("hidden"); return; }
         const v = revisarSolicitud(a, cual, revisadas);
+        const enviar = el("button", { type: "button", id: "revision-enviada", class: "mt-3 text-sm font-semibold px-3 py-1.5 rounded-lg bg-brand-100 dark:bg-brand-800 hover:bg-brand-200 dark:hover:bg-brand-700" }, "Marcar como enviada a FIDE");
+        enviar.addEventListener("click", () => marcarEnviada(a, cual, revisadas, v.veredicto));
+        const faltan = Math.max(0, PIDE[cual] - revisadas.filter((r) => r.veredicto !== "No vale").length);
         sol.classList.remove("hidden");
         sol.replaceChildren(
             el("h4", { class: "text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide" }, `La solicitud de ${cual === "af" ? "AF" : "AI"} con estas normas`),
             el("p", { class: "mt-1" }, el("strong", { class: "of-estado" }, v.veredicto)),
             el("p", { class: "of-detalle" }, `${miles(revisadas.length)} ${revisadas.length === 1 ? "norma subida" : "normas subidas"}` + (v.caen ? `, ${miles(v.caen)} no ${v.caen === 1 ? "vale" : "valen"}` : "") + "."),
-            el("ul", { class: "mt-2 space-y-1 text-sm" }, ...v.ruta.map((r) => el("li", { "data-estado": r.estado }, el("strong", {}, r.estado + ": "), r.texto))));
+            el("ul", { class: "mt-2 space-y-1 text-sm" }, ...v.ruta.map((r) => el("li", { "data-estado": r.estado }, el("strong", {}, r.estado + ": "), r.texto))),
+            reserva.length ? el("div", { class: "mt-3", "data-candidatas": "" },
+                el("h5", { class: "text-sm font-semibold" }, faltan ? `Para completarla (le ${faltan === 1 ? "falta 1 norma" : "faltan " + miles(faltan)}) o tener de reserva` : "Normas de reserva"),
+                el("ul", { class: "mt-1 space-y-1 text-sm" }, ...reserva.slice(0, 5).map((c) => el("li", {},
+                    el("strong", {}, `${fecha(c.x.inicio)} · ${c.x.t.nombre}`), ` (${ESTADOS[c.x[cual].estado]}): ${c.firma}.`))))
+                : el("p", { class: "text-sm mt-3", "data-candidatas": "" }, "No tiene otros torneos de FIDE de los últimos seis años que sirvan de reserva."),
+            enviar);
     }
 
     async function subirNorma(a, ev) {
@@ -1100,7 +1215,7 @@
     async function abrirRevision(a) {
         subidas = [];
         pintarRevision(a);
-        try { subidas = await leerSubidas(a); } catch (e) { $("revision-estado").textContent = "No se pudieron leer las normas subidas: " + (e.message || e); return; }
+        try { [subidas, enviadas] = await Promise.all([leerSubidas(a), leerEnviadas()]); } catch (e) { $("revision-estado").textContent = "No se pudieron leer las normas subidas: " + (e.message || e); return; }
         if (estado.elegido === a.fide_id) pintarRevision(a);
     }
 
