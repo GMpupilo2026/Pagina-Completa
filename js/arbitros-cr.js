@@ -20,9 +20,11 @@
      normaDe().
    - Una norma de AI cuenta solo si el torneo es posterior al título de AF
      (antesDelAf), y desde el AF sus torneos ya no cuentan para AF
-     (despuesDelAf). La fecha exacta del AF sale de arbitros_cr_fide (la
-     reunión del Consejo de FIDE que lo aprobó); si no está, del año de su
-     perfil, y un torneo de ese mismo año queda para revisar.
+     (despuesDelAf). La fecha OFICIAL es la de su perfil de FIDE (af_perfil):
+     FIDE rechaza como «before FA» una norma posterior al Consejo pero
+     anterior a esa fecha. Sin ella, la del Consejo (af_fecha) con 60 días
+     para revisar; sin ninguna, el año de su perfil (el mismo año, a
+     revisar). Ver «La fecha oficial del título: la del perfil de FIDE».
    - «En FIDE»: activo, inactivo o que no figura en la lista oficial de
      árbitros de FIDE (arbitros_cr_fide), que también da el título de
      Árbitro Nacional que el perfil no dice.
@@ -140,6 +142,19 @@
         return { estado: "no", detalle: "Figura como director u organizador, no como árbitro." };
     }
 
+    // «AAAA-MM-DD» más n días de calendario: Date.UTC solo hace la cuenta
+    // del calendario (meses y bisiestos); no es una hora.
+    const masDias = (iso, n) => {
+        const d = new Date(Date.UTC(+iso.slice(0, 4), +iso.slice(5, 7) - 1, +iso.slice(8, 10) + n));
+        const dos = (x) => String(x).padStart(2, "0");
+        return `${d.getUTCFullYear()}-${dos(d.getUTCMonth() + 1)}-${dos(d.getUTCDate())}`;
+    };
+    // Después del Consejo, FIDE anota el título en su base de 2 a 5 semanas
+    // más tarde: hasta 60 días, lo que empezó en el medio queda para revisar.
+    const VENTANA = 60;
+    // La fecha del AF: la del perfil (oficial) o la del Consejo.
+    const fechaAf = (a) => ({ perfil: (a.fide && a.fide.af_perfil) || "", consejo: (a.fide && a.fide.af_fecha) || "" });
+
     /* La norma de AI de un torneo según cuándo sacó el AF: cuenta solo si el
        torneo es posterior al título. Su perfil de FIDE da el año («Árbitro
        FIDE (2019)»), no el día: el mismo año queda para revisar. Un AI sin
@@ -148,11 +163,16 @@
         if (!n.estado || n.estado === "no") return n;
         const tiene = ["FA", "IA"].includes(a.titulo);
         if (!tiene) return { estado: "no", detalle: "No tiene el título de AF, y una norma de AI cuenta solo si el torneo es posterior al AF: esta no le servirá aunque lo saque. El torneo: " + n.detalle };
-        const f = a.fide && a.fide.af_fecha;
-        if (f) {
-            if (inicio > f) return n;
-            if (inicio < f) return { estado: "no", detalle: `Es de antes de su título de AF (aprobado el ${fecha(f)}), y una norma de AI cuenta solo si el torneo es posterior al AF. El torneo: ` + n.detalle };
-            return { estado: "revisar", detalle: `Empezó el mismo día en que se le aprobó el AF (${fecha(f)}): cuenta solo si es posterior. Si contara: ` + n.detalle };
+        const { perfil, consejo } = fechaAf(a);
+        if (perfil) {
+            if (inicio > perfil) return n;
+            if (inicio < perfil) return { estado: "no", detalle: `Es de antes de su título de AF (${fecha(perfil)} en su perfil de FIDE, la fecha oficial), y una norma de AI cuenta solo si el torneo es posterior al AF. El torneo: ` + n.detalle };
+            return { estado: "revisar", detalle: `Empezó el mismo día de su título de AF en el perfil de FIDE (${fecha(perfil)}): cuenta solo si es posterior. Si contara: ` + n.detalle };
+        }
+        if (consejo) {
+            if (inicio <= consejo) return { estado: "no", detalle: `Es de antes de su título de AF (aprobado por el Consejo el ${fecha(consejo)}), y una norma de AI cuenta solo si el torneo es posterior al AF. El torneo: ` + n.detalle };
+            if (inicio <= masDias(consejo, VENTANA)) return { estado: "revisar", detalle: `Empezó después del Consejo que le aprobó el AF (${fecha(consejo)}), pero la fecha oficial es la que FIDE anota en su perfil, de dos a cinco semanas después: FIDE rechazó así una norma 22 días después del Consejo. Mirar su perfil. Si contara: ` + n.detalle };
+            return n;
         }
         const m = /Árbitro FIDE \((\d{4})\)/.exec(a.titulo_detalle || "");
         if (!m) return n;
@@ -168,11 +188,11 @@
        tiene el título). */
     function despuesDelAf(n, inicio, a) {
         if (!n.estado || n.estado === "no" || !["FA", "IA"].includes(a.titulo)) return n;
-        const f = a.fide && a.fide.af_fecha;
+        const { perfil, consejo } = fechaAf(a);
         const m = /Árbitro FIDE \((\d{4})\)/.exec(a.titulo_detalle || "");
-        const despues = f ? inicio > f : m ? parseInt(inicio.slice(0, 4), 10) > parseInt(m[1], 10) : false;
+        const despues = perfil ? inicio > perfil : consejo ? inicio > masDias(consejo, VENTANA) : m ? parseInt(inicio.slice(0, 4), 10) > parseInt(m[1], 10) : false;
         if (!despues) return n;
-        return { estado: "no", detalle: `Ya tenía el título de AF (${f ? "aprobado el " + fecha(f) : "de " + m[1]}): desde entonces sus torneos cuentan para AI, no para AF. El torneo: ` + n.detalle };
+        return { estado: "no", detalle: `Ya tenía el título de AF (${perfil ? fecha(perfil) + " en su perfil de FIDE" : consejo ? "aprobado el " + fecha(consejo) : "de " + m[1]}): desde entonces sus torneos cuentan para AI, no para AF. El torneo: ` + n.detalle };
     }
 
     // De mil en mil, ordenado por la clave completa: con un orden que se
@@ -320,7 +340,15 @@
             // «Hoy para AF/AI»: no depende de los filtros (es lo que junta hoy).
             enFide: ESTADO_FIDE[a.enFide],
             cercaAf: ["FA", "IA"].includes(a.titulo) ? 100 : a.normas.af, cercaAi: a.titulo === "IA" ? 100 : a.normas.ai,
+            anioAf: anioTitulo(a, "af"), anioAi: anioTitulo(a, "ai"),
         };
+    }
+
+    // El año en que consiguió cada título, el que dice su perfil de FIDE
+    // («Árbitro FIDE (2009), Árbitro Internacional (2015)»). 0 si no lo tiene.
+    function anioTitulo(a, cual) {
+        const m = (cual === "af" ? /Árbitro FIDE \((\d{4})\)/ : /Árbitro Internacional \((\d{4})\)/).exec(a.titulo_detalle || "");
+        return m ? parseInt(m[1], 10) : 0;
     }
 
     // El buscador y el título: los usan la lista y el ranking.
@@ -333,7 +361,9 @@
     function pintarGeneral() {
         const filas = enLista().map((a) => resumen(a)).filter((r) => r.torneos > 0);
         const { col, dir } = estado.orden;
-        const valor = (r) => col === "nombre" ? r.a.nombre : col === "titulo" ? (r.a.titulo || "~") : r[col];
+        // Sin el título, al final en los dos sentidos.
+        const valor = (r) => col === "nombre" ? r.a.nombre : col === "titulo" ? (r.a.titulo || "~")
+            : col.startsWith("anio") && !r[col] ? (dir > 0 ? 9999 : 0) : r[col];
         filas.sort((x, y) => {
             const a = valor(x), b = valor(y);
             const c = typeof a === "number" ? a - b : String(a).localeCompare(String(b), "es");
@@ -346,7 +376,7 @@
             const td = (v, der) => el("td", { class: "px-3 py-2" + (der ? " text-right tabular-nums" : "") }, v);
             return el("tr", { class: "border-t border-brand-100 dark:border-brand-800" },
                 el("th", { scope: "row", class: "px-3 py-2 font-normal" }, boton),
-                td(r.a.titulo || "—"), td(r.enFide), td(miles(r.torneos), true), td(miles(r.fide), true), td(miles(r.nofide), true), td(miles(r.fuera), true),
+                td(r.a.titulo || "—"), td(r.anioAf ? String(r.anioAf) : "—", true), td(r.anioAi ? String(r.anioAi) : "—", true), td(r.enFide), td(miles(r.torneos), true), td(miles(r.fide), true), td(miles(r.nofide), true), td(miles(r.fuera), true),
                 td(miles(r.principal), true), td(miles(r.adjunto), true), td(miles(r.arbitro), true),
                 td(conRev(r.af, r.afRevisar), true), td(conRev(r.ai, r.aiRevisar), true),
                 td(r.cercaAf === 100 ? "Ya es AF" : `${miles(r.cercaAf)} de 3`, true), td(r.cercaAi === 100 ? "Ya es AI" : `${miles(r.cercaAi)} de 4`, true),
@@ -672,13 +702,27 @@
             punto(deFide >= 1 ? "Listo" : "Revisar", deFide >= 1 ? `Tiene ${miles(deFide)} ${deFide === 1 ? "torneo" : "torneos"} de FIDE más, fuera de la solicitud (5.4.3).`
                 : "Necesita un año con la licencia de Árbitro Nacional o un torneo de FIDE más que no vaya en la solicitud (5.4.3).");
         } else {
-            const af = a.fide && a.fide.af_fecha, m = /Árbitro FIDE \((\d{4})\)/.exec(a.titulo_detalle || "");
+            const af = fechaAf(a).perfil || fechaAf(a).consejo, m = /Árbitro FIDE \((\d{4})\)/.exec(a.titulo_detalle || "");
             const dos = af ? masAnios(af, 2) : null;
             if (dos && dos <= hoy) punto("Listo", `Tiene el AF desde el ${fecha(af)}: más de dos años (5.5.3).`);
             else if (deFide >= 3) punto("Listo", `Tiene ${miles(deFide)} torneos de FIDE más, fuera de la solicitud (5.5.3).`);
             else if (dos) punto("Falta", `Cumple dos años con el AF el ${fecha(dos)}, o antes si junta ${miles(3 - deFide)} ${3 - deFide === 1 ? "torneo" : "torneos"} de FIDE más fuera de la solicitud (5.5.3).`);
             else punto("Revisar", `Pide dos años con el AF${m ? " (es de " + m[1] + ")" : ""} o tres torneos de FIDE más fuera de la solicitud (5.5.3).`);
         }
+        // Quién firma: el certificado lo firma el árbitro principal, que no
+        // puede ser el solicitante (2.8), tiene que tener título (FA o IA para
+        // una norma de AF, IA para una de AI: FIDE rechazó «Chief Arbiter was
+        // NA» y, para AI, «Chief Arbiter was FA») y, para AI, no todas del
+        // mismo (4.13.1). Solo se ve si el principal es de Costa Rica.
+        const principales = c.usadas.map((x) => ({ x, p: principalDe(x) }));
+        const propios = principales.filter((y) => y.p === a);
+        if (propios.length) punto("Revisar", `Firmas: en ${propios.map((y) => "«" + y.x.t.nombre + "»").join(", ")} fue él el árbitro principal; ese certificado no lo puede firmar él (2.8): lo firma otro con título.`);
+        const pide2 = cual === "af" ? ["FA", "IA"] : ["IA"];
+        const sinTitulo = principales.filter((y) => y.p && y.p !== a && !pide2.includes(tituloEn(y.p, y.x.inicio)));
+        if (sinTitulo.length) punto("Falta", `Firmas: ${sinTitulo.map((y) => `«${y.x.t.nombre}» la firma ${y.p.nombre}, que entonces no era ${cual === "af" ? "FA ni IA" : "IA"}`).join("; ")}: FIDE la rechaza (2.8).`);
+        const ajenos = principales.filter((y) => y.p && y.p !== a);
+        if (cual === "ai" && n >= 2 && ajenos.length === n && new Set(ajenos.map((y) => y.p)).size === 1)
+            punto("Falta", `Firmas: todas las firma ${ajenos[0].p.nombre}, y no pueden ser todas de la misma persona (4.13.1).`);
         // Las fechas: la norma más vieja vence a los seis años (5.3.1) y la
         // solicitud va a más tardar un año después del último evento (5.3.3).
         if (n) {
@@ -692,6 +736,22 @@
         punto("Revisar", cual === "af" ? "Lo que no se ve desde afuera: los certificados y quién los firmó, y tener 19 años (5.4.2)."
             : "Lo que no se ve desde afuera: que no estén todas firmadas por la misma persona (4.13.1), a lo sumo dos finales nacionales, y tener 21 años (5.5.2).");
         return ruta;
+    }
+
+    // El árbitro principal de un torneo, si es de la lista (por su cargo en FIDE o en chess-results).
+    function principalDe(x) {
+        const y = (equipos.get(x.clave) || []).find((e) => e.x.cargos.includes("Chief") || e.x.roles.includes("ap"));
+        return y ? y.a : null;
+    }
+    // El título que tenía alguien en una fecha: con las fechas que se sepan
+    // (el perfil, el Consejo o el año del perfil); si no se sabe, el de hoy.
+    function tituloEn(p, dia) {
+        const anio = (re) => { const m = re.exec(p.titulo_detalle || ""); return m ? m[1] + "-12-31" : ""; };
+        const iaDia = (p.fide && (p.fide.ia_perfil || p.fide.ia_fecha)) || anio(/Árbitro Internacional \((\d{4})\)/);
+        const afDia = fechaAf(p).perfil || fechaAf(p).consejo || anio(/Árbitro FIDE \((\d{4})\)/);
+        if (p.titulo === "IA" && (!iaDia || iaDia <= dia)) return "IA";
+        if (["FA", "IA"].includes(p.titulo) && (!afDia || afDia <= dia)) return "FA";
+        return p.titulo === "AN" ? "AN" : "";
     }
 
     // Lo que dice el cuadro de una norma: lo usan la pantalla y el PDF.
@@ -718,7 +778,9 @@
         if (c.viejas) extra.push(`${miles(c.viejas)} ${c.viejas === 1 ? "torneo que valía es" : "torneos que valían son"} de antes de los últimos seis años.`);
         if (cual === "ai" && !tiene) {
             const m = /Árbitro FIDE \((\d{4})\)/.exec(a.titulo_detalle || "");
-            if (a.fide && a.fide.af_fecha) extra.push(`Solo cuentan los torneos que empezaron después del ${fecha(a.fide.af_fecha)}, cuando se le aprobó el AF.`);
+            const fa = fechaAf(a);
+            if (fa.perfil) extra.push(`Solo cuentan los torneos que empezaron después del ${fecha(fa.perfil)}, la fecha de su AF en el perfil de FIDE.`);
+            else if (fa.consejo) extra.push(`Solo cuentan los torneos que empezaron después de su AF: el Consejo lo aprobó el ${fecha(fa.consejo)}, y lo de los ${VENTANA} días siguientes queda para revisar hasta tener la fecha de su perfil de FIDE.`);
             else if (m) extra.push(`Solo cuentan los torneos posteriores a su AF (${m[1]}); los del mismo año quedan para revisar.`);
             else if (a.titulo === "FA") extra.push("Solo cuentan los torneos posteriores a su AF; su perfil no dice de qué año es: revisar.");
         }
@@ -777,7 +839,8 @@
         if (!f) return `No figura en la lista de árbitros de FIDE${LISTA ? " del " + fecha(LISTA) : ""}.`;
         const partes = [`${f.inactivo ? "Inactivo" : "Activo"} en la lista de árbitros de FIDE del ${fecha(f.lista)}`
             + (f.licencia && f.licencia !== "NA" ? (f.licencia === "No" ? ", sin licencia" : `, licencia ${f.licencia}`) : "") + "."];
-        if (f.af_fecha) partes.push(`AF aprobado el ${fecha(f.af_fecha)} (${f.af_consejo}): desde entonces sus torneos cuentan para AI y ya no para AF.`);
+        if (f.af_perfil) partes.push(`AF desde el ${fecha(f.af_perfil)} según su perfil de FIDE (la fecha oficial)` + (f.af_fecha ? `; el Consejo lo aprobó el ${fecha(f.af_fecha)} (${f.af_consejo})` : "") + ": desde entonces sus torneos cuentan para AI y ya no para AF.");
+        else if (f.af_fecha) partes.push(`AF aprobado por el Consejo el ${fecha(f.af_fecha)} (${f.af_consejo}). La fecha oficial es la que FIDE anota en su perfil, de dos a cinco semanas después: hasta tenerla, lo que empezó en los ${VENTANA} días siguientes queda para revisar.`);
         else if (["FA", "IA"].includes(a.titulo)) partes.push("De su AF solo se sabe el año (el de su perfil).");
         if (f.ia_fecha) partes.push(`AI aprobado el ${fecha(f.ia_fecha)} (${f.ia_consejo}).`);
         const act = actividad(a);
@@ -795,10 +858,11 @@
         if (!f || !["FA", "IA"].includes(a.titulo)) return null;
         if (f.inactivo) return { estado: "inactivo", hasta: "", texto: "Para volver a estar activo tiene que aprobar un curso de actualización (B.06.3, 2.5); mientras tanto no puede ser árbitro principal de un torneo de FIDE donde haya normas para los jugadores (2.1.1)." };
         const ia = seminarioDe(a, "IA");
-        const base = [f.af_fecha, ia && ia.fecha].filter(Boolean).sort().pop();
+        const af = f.af_perfil || f.af_fecha;
+        const base = [af, ia && ia.fecha].filter(Boolean).sort().pop();
         if (!base) return { estado: "activo", hasta: "", texto: "Sigue activo mientras haga un curso de actualización cada cuatro años (B.06.3, 2): de cuándo fue el último no hay datos." };
         const hasta = masAnios(base, 4), pronto = hasta <= masAnios(hoyCr(), 1);
-        return { estado: "activo", hasta, pronto, texto: `Sigue activo por lo menos hasta el ${fecha(hasta)}: cuatro años desde ${base === f.af_fecha ? "su AF" : "su seminario de AI"} (B.06.3, 2). Un curso de actualización después lo corre${pronto ? "; si no ha hecho ninguno, le toca en menos de un año" : ""}.` };
+        return { estado: "activo", hasta, pronto, texto: `Sigue activo por lo menos hasta el ${fecha(hasta)}: cuatro años desde ${base === af ? "su AF" : "su seminario de AI"} (B.06.3, 2). Un curso de actualización después lo corre${pronto ? "; si no ha hecho ninguno, le toca en menos de un año" : ""}.` };
     }
 
     /* «Comparar con otro árbitro»: los números de los dos con los filtros
@@ -816,6 +880,7 @@
         const hoy = (r, cual) => cual === "af" ? (r.cercaAf === 100 ? "Ya es AF" : `${miles(r.cercaAf)} de 3`) : (r.cercaAi === 100 ? "Ya es AI" : `${miles(r.cercaAi)} de 4`);
         const DATOS = [
             ["Título", (r) => r.a.titulo ? TITULOS[r.a.titulo] : "Sin título en FIDE"],
+            ["AF desde", (r) => r.anioAf ? String(r.anioAf) : "—"], ["AI desde", (r) => r.anioAi ? String(r.anioAi) : "—"],
             ["En FIDE", (r) => r.enFide], ["AF aprobado", (r) => r.a.fide && r.a.fide.af_fecha ? fecha(r.a.fide.af_fecha) : "—"],
             ["Torneos", (r) => miles(r.torneos)], ["De FIDE", (r) => miles(r.fide)], ["No FIDE", (r) => miles(r.nofide)], ["En el extranjero", (r) => miles(r.fuera)],
             ["Como principal", (r) => miles(r.principal)], ["Como adjunto", (r) => miles(r.adjunto)], ["Como árbitro", (r) => miles(r.arbitro)],
@@ -1007,7 +1072,7 @@
         for (const b of $("tabla-arbitros").tHead.querySelectorAll("button")) {
             b.addEventListener("click", () => {
                 const col = b.dataset.col;
-                estado.orden = { col, dir: estado.orden.col === col ? -estado.orden.dir : (["nombre", "titulo", "enFide", "primero"].includes(col) ? 1 : -1) };
+                estado.orden = { col, dir: estado.orden.col === col ? -estado.orden.dir : (["nombre", "titulo", "enFide", "primero", "anioAf", "anioAi"].includes(col) ? 1 : -1) };
                 pintarGeneral();
             });
         }
@@ -1025,7 +1090,7 @@
                 leerTodo("arbitros_cr_cargos", "torneo_id,fide_id,cargo", "torneo_id,fide_id,cargo"),
                 leerTodo("arbitros_cr_cr", "clave,nombre,inicio,fin,lugar,control,rondas,jugadores,fide_torneo,pais", "clave"),
                 leerTodo("arbitros_cr_cr_cargos", "clave,fide_id,rol", "clave,fide_id,rol"),
-                leerTodo("arbitros_cr_fide", "fide_id,titulo,inactivo,categoria,licencia,af_fecha,af_consejo,ia_fecha,ia_consejo,lista,solicitudes,seminarios", "fide_id"),
+                leerTodo("arbitros_cr_fide", "fide_id,titulo,inactivo,categoria,licencia,af_fecha,af_consejo,ia_fecha,ia_consejo,lista,solicitudes,seminarios,af_perfil,ia_perfil", "fide_id"),
                 leerTodo("arbitros_cr_sin_id", "texto,roles,torneos,primero,ultimo,claves,ids", "texto"),
             ]);
             sinId = s;

@@ -3,7 +3,8 @@
 20261016011935_arbitros_cr_fide.sql y 20261016014132_arbitros_cr_historial_y_sin_id.sql)
 desde herramientas/datos/arbitros-cr-lista-fide.json: los árbitros de Costa
 Rica de la lista oficial de FIDE, la fecha en que el Consejo de FIDE les
-aprobó el AF y el AI, y sus solicitudes de título y seminarios según los
+aprobó el AF y el AI (y la fecha que dice su perfil de FIDE, la oficial, en
+«perfil» de cada aprobación cuando se conoce), y sus solicitudes de título y seminarios según los
 informes de la Comisión de Árbitros.
 
     python3 herramientas/arbitros-cr/lista-fide.py > /tmp/lista-fide.sql
@@ -52,13 +53,14 @@ def main():
         filas.append("(" + ", ".join(sql(v) for v in (
             fid, nombre, titulo, inactivo, categoria, licencia,
             af and af["fecha"], af["consejo"] if af else "", ia and ia["fecha"], ia["consejo"] if ia else "", lista))
-            + ", " + js(sols.get(fid, [])) + ", " + js(sems.get(fid, [])) + ")")
+            + ", " + js(sols.get(fid, [])) + ", " + js(sems.get(fid, []))
+            + ", " + sql(af and af.get("perfil")) + ", " + sql(ia and ia.get("perfil")) + ")")
     faltan = (set(apro) | set(sols) | set(sems)) - {f[0] for f in d["arbitros"]}
     if faltan:
         raise SystemExit(f"Aprobaciones, solicitudes o seminarios de quien no está en la lista: {sorted(faltan)}")
     print("delete from public.arbitros_cr_fide;")
     for i in range(0, len(filas), POR_CARGA):
-        print("insert into public.arbitros_cr_fide (fide_id, nombre, titulo, inactivo, categoria, licencia, af_fecha, af_consejo, ia_fecha, ia_consejo, lista, solicitudes, seminarios) values\n  "
+        print("insert into public.arbitros_cr_fide (fide_id, nombre, titulo, inactivo, categoria, licencia, af_fecha, af_consejo, ia_fecha, ia_consejo, lista, solicitudes, seminarios, af_perfil, ia_perfil) values\n  "
               + ",\n  ".join(filas[i:i + POR_CARGA]) + ";")
 
 

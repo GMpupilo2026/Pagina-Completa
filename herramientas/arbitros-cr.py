@@ -72,6 +72,9 @@ RESPUESTAS_AFUERA = (17685, 18413)
 # jugadores con federación son de Costa Rica. Con el 80 % o más, se jugaron
 # acá y cuentan como de Costa Rica; si no, quedan fuera.
 SIN_FEDERACION = os.path.join(RAIZ, "herramientas", "datos", "arbitros-cr-sin-federacion.json")
+# Fechas de chess-results mal escritas, corregidas a mano (lo pidió el dueño;
+# cada una con su motivo). Valen para todos los árbitros del torneo.
+CORREGIR = os.path.join(RAIZ, "herramientas", "datos", "arbitros-cr-corregir.json")
 CARPETA = os.path.join(RAIZ, "herramientas", "arbitros-cr")
 # Los cargos de la ficha de FIDE. Para una norma valen el principal, el
 # adjunto y el árbitro; el asistente no (B.06.1, 2.4.4) y el de pareos queda
@@ -334,6 +337,11 @@ def armar_chess_results(arbitros, sin_reconocer=None):
             # De la búsqueda en todos los países (se carga con --afuera).
             "de_afuera": t in afuera,
         }
+    if os.path.exists(CORREGIR):
+        with open(CORREGIR, encoding="utf-8") as f:
+            for c in json.load(f)["corregir"]:
+                if c["clave"] in torneos:
+                    torneos[c["clave"]].update(inicio=c["inicio"], fin=c["fin"])
     # Fuera los de prueba y los que no se jugaron (sin rondas o sin jugadores).
     torneos = {k: v for k, v in torneos.items() if not es_basura(v)}
     cargos = {c for c in cargos if c[0] in torneos}

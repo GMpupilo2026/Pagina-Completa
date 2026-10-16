@@ -114,6 +114,10 @@ Ver «Lo que dice FIDE de cada árbitro» en `docs/decisiones/juegos-y-torneos.m
    (veredicto, motivo y torneos) y a `seminarios` los seminarios de AF y
    de AI aprobados, como dice «La ruta al título, el historial, la
    actividad y los que faltan».
+   Si el dueño mandó capturas de perfiles de FIDE, la fecha que va junto a
+   «License level» es la fecha OFICIAL del título: va como `"perfil":
+   "AAAA-MM-DD"` en la aprobación de esa persona (ver «La fecha oficial del
+   título: la del perfil de FIDE»).
 3. `python3 herramientas/arbitros-cr/lista-fide.py > /tmp/lista-fide.sql` y
    cargarlo sentencia por sentencia (van de a 25 filas; en un solo llamado
    se corta a los 60 s). El `delete` pide confirmación: si los ID son los
