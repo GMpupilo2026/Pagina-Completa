@@ -340,7 +340,15 @@
             // «Hoy para AF/AI»: no depende de los filtros (es lo que junta hoy).
             enFide: ESTADO_FIDE[a.enFide],
             cercaAf: ["FA", "IA"].includes(a.titulo) ? 100 : a.normas.af, cercaAi: a.titulo === "IA" ? 100 : a.normas.ai,
+            anioAf: anioTitulo(a, "af"), anioAi: anioTitulo(a, "ai"),
         };
+    }
+
+    // El año en que consiguió cada título, el que dice su perfil de FIDE
+    // («Árbitro FIDE (2009), Árbitro Internacional (2015)»). 0 si no lo tiene.
+    function anioTitulo(a, cual) {
+        const m = (cual === "af" ? /Árbitro FIDE \((\d{4})\)/ : /Árbitro Internacional \((\d{4})\)/).exec(a.titulo_detalle || "");
+        return m ? parseInt(m[1], 10) : 0;
     }
 
     // El buscador y el título: los usan la lista y el ranking.
@@ -353,7 +361,9 @@
     function pintarGeneral() {
         const filas = enLista().map((a) => resumen(a)).filter((r) => r.torneos > 0);
         const { col, dir } = estado.orden;
-        const valor = (r) => col === "nombre" ? r.a.nombre : col === "titulo" ? (r.a.titulo || "~") : r[col];
+        // Sin el título, al final en los dos sentidos.
+        const valor = (r) => col === "nombre" ? r.a.nombre : col === "titulo" ? (r.a.titulo || "~")
+            : col.startsWith("anio") && !r[col] ? (dir > 0 ? 9999 : 0) : r[col];
         filas.sort((x, y) => {
             const a = valor(x), b = valor(y);
             const c = typeof a === "number" ? a - b : String(a).localeCompare(String(b), "es");
@@ -366,7 +376,7 @@
             const td = (v, der) => el("td", { class: "px-3 py-2" + (der ? " text-right tabular-nums" : "") }, v);
             return el("tr", { class: "border-t border-brand-100 dark:border-brand-800" },
                 el("th", { scope: "row", class: "px-3 py-2 font-normal" }, boton),
-                td(r.a.titulo || "—"), td(r.enFide), td(miles(r.torneos), true), td(miles(r.fide), true), td(miles(r.nofide), true), td(miles(r.fuera), true),
+                td(r.a.titulo || "—"), td(r.anioAf ? String(r.anioAf) : "—", true), td(r.anioAi ? String(r.anioAi) : "—", true), td(r.enFide), td(miles(r.torneos), true), td(miles(r.fide), true), td(miles(r.nofide), true), td(miles(r.fuera), true),
                 td(miles(r.principal), true), td(miles(r.adjunto), true), td(miles(r.arbitro), true),
                 td(conRev(r.af, r.afRevisar), true), td(conRev(r.ai, r.aiRevisar), true),
                 td(r.cercaAf === 100 ? "Ya es AF" : `${miles(r.cercaAf)} de 3`, true), td(r.cercaAi === 100 ? "Ya es AI" : `${miles(r.cercaAi)} de 4`, true),
@@ -870,6 +880,7 @@
         const hoy = (r, cual) => cual === "af" ? (r.cercaAf === 100 ? "Ya es AF" : `${miles(r.cercaAf)} de 3`) : (r.cercaAi === 100 ? "Ya es AI" : `${miles(r.cercaAi)} de 4`);
         const DATOS = [
             ["Título", (r) => r.a.titulo ? TITULOS[r.a.titulo] : "Sin título en FIDE"],
+            ["AF desde", (r) => r.anioAf ? String(r.anioAf) : "—"], ["AI desde", (r) => r.anioAi ? String(r.anioAi) : "—"],
             ["En FIDE", (r) => r.enFide], ["AF aprobado", (r) => r.a.fide && r.a.fide.af_fecha ? fecha(r.a.fide.af_fecha) : "—"],
             ["Torneos", (r) => miles(r.torneos)], ["De FIDE", (r) => miles(r.fide)], ["No FIDE", (r) => miles(r.nofide)], ["En el extranjero", (r) => miles(r.fuera)],
             ["Como principal", (r) => miles(r.principal)], ["Como adjunto", (r) => miles(r.adjunto)], ["Como árbitro", (r) => miles(r.arbitro)],
@@ -1061,7 +1072,7 @@
         for (const b of $("tabla-arbitros").tHead.querySelectorAll("button")) {
             b.addEventListener("click", () => {
                 const col = b.dataset.col;
-                estado.orden = { col, dir: estado.orden.col === col ? -estado.orden.dir : (["nombre", "titulo", "enFide", "primero"].includes(col) ? 1 : -1) };
+                estado.orden = { col, dir: estado.orden.col === col ? -estado.orden.dir : (["nombre", "titulo", "enFide", "primero", "anioAf", "anioAi"].includes(col) ? 1 : -1) };
                 pintarGeneral();
             });
         }

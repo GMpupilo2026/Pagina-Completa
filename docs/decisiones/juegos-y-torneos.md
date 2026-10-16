@@ -3079,6 +3079,13 @@ no de AF.
 - **La fecha del primer torneo** es una columna más en la lista («Primer
   torneo», ordenable) y va en la ficha («del … al …») y en la comparación.
   Sale de los torneos de los años elegidos, igual que «Último torneo».
+- **El año de cada título** (pedido aparte, octubre de 2026): «AF desde»
+  y «AI desde» en la lista (ordenables; quien no tiene el título queda al
+  final en los dos sentidos) y en la comparación. Es el año que da su
+  perfil de FIDE en `titulo_detalle` («Árbitro FIDE (2009), Árbitro
+  Internacional (2015)»), el mismo que ya usa la regla de las normas cuando
+  falta la fecha exacta (`anioTitulo()`). El de Árbitro Nacional no sale:
+  ni el perfil ni la lista de FIDE lo traen.
 - **Activo o inactivo**: de la **lista oficial de árbitros de la Comisión
   de Árbitros de FIDE**
   (`arbiters.fide.com/wp-content/uploads/Database/List_of_Arbiters.pdf`,
