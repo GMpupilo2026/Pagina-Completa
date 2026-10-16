@@ -85,6 +85,7 @@
     const CARGOS = { "Chief": "Árbitro principal", "Dep. Chief": "Árbitro adjunto principal", "Arbiter": "Árbitro", "Pairings": "Árbitro de pareos", "Assistant": "Árbitro asistente" };
     const CUENTAN = ["Chief", "Dep. Chief", "Arbiter"];
     const TITULOS = { IA: "Árbitro Internacional (IA)", FA: "Árbitro FIDE (FA)", AN: "Árbitro Nacional (AN)" };
+    const TITULOS_CORTOS = { IA: "AI", FA: "AF", AN: "AN" };
     const SISTEMAS = { s: "Suizo", r: "Todos contra todos", d: "Doble todos contra todos", t: "Por equipos", k: "Eliminación directa" };
     const RITMOS = { Standard: "Clásico", Rapid: "Rápido", Blitz: "Blitz" };
     const ESTADOS = { si: "Vale", una: "Vale (una así)", opcion: "Vale una vez", revisar: "Revisar", no: "No" };
@@ -804,7 +805,7 @@
             n.ruta.length ? el("div", { class: "mt-3", "data-ruta": cual },
                 el("h4", { class: "text-sm font-semibold" }, "Para pedir el título"),
                 el("ul", { class: "mt-1 space-y-1 text-sm" }, ...n.ruta.map((r) => el("li", { "data-estado": r.estado }, el("strong", {}, r.estado + ": "), r.texto))),
-                botonSolicitud(a, cual)) : null,
+                el("div", { class: "flex flex-wrap gap-2" }, botonSolicitud(a, cual), botonInforme(a, cual))) : null,
             el("p", { class: "of-detalle mt-2" }, n.nota));
     }
 
@@ -830,6 +831,82 @@
             window.TablaExcel.bajar(`solicitud-${cual}-${a.fide_id}.xlsx`, [{ nombre: "Solicitud " + (cual === "af" ? "AF" : "AI"), filas }]);
         });
         return b;
+    }
+
+    /* El informe para la comisión, en PDF: lo que pide FIDE punto por punto,
+       las normas con quién firma cada una y hasta cuándo cuenta, y los
+       riesgos de esta solicitud según lo que FIDE rechaza en sus informes
+       (ver «Por qué rechaza FIDE» en la página). Lo usa quien va a armar la
+       solicitud antes de mandarla. */
+    function botonInforme(a, cual) {
+        const b = el("button", { type: "button", class: "mt-2 text-sm font-semibold px-3 py-1.5 rounded-lg bg-brand-100 dark:bg-brand-800 hover:bg-brand-200 dark:hover:bg-brand-700" },
+            "Informe para la comisión (PDF)");
+        b.addEventListener("click", () => bajarPdf(informeSolicitud(a, cual), `informe-${cual}-${a.fide_id}.pdf`));
+        return b;
+    }
+
+    function riesgosSolicitud(a, cual, c) {
+        const riesgos = [];
+        const finDe = (x) => (x.t.fin && x.t.fin > x.inicio ? x.t.fin : x.inicio);
+        // Fechas que se tocan (2.10): de cada grupo solo se cuenta el mejor.
+        for (const x of c.usadas) {
+            const otros = a.todos.filter((y) => y.fide && y !== x && y.inicio <= finDe(x) && finDe(y) >= x.inicio);
+            if (otros.length) riesgos.push(`«${x.t.nombre}» se jugó en fechas que se tocan con ${otros.map((y) => "«" + y.t.nombre + "»").join(", ")}: en la solicitud va uno solo (2.10). Se contó el mejor.`);
+        }
+        for (const x of c.usadas.filter((y) => y[cual].estado === "una" || y[cual].estado === "opcion"))
+            riesgos.push(`«${x.t.nombre}» vale una sola vez por solicitud (4.9.1): no se puede sumar otro del mismo tipo.`);
+        if (cual === "ai") {
+            const fa = fechaAf(a), af = fa.perfil || fa.consejo;
+            for (const x of c.usadas.filter((y) => af && masDias(af, VENTANA) >= y.inicio)) {
+                riesgos.push(`«${x.t.nombre}» empezó el ${fecha(x.inicio)}, cerca de su AF (${fa.perfil ? "el " + fecha(fa.perfil) + " en su perfil de FIDE" : "aprobado por el Consejo el " + fecha(fa.consejo)}). `
+                    + "FIDE cuenta desde la fecha del título, no desde el pago de la licencia: conviene adjuntar la captura del perfil y tener una norma de reserva.");
+            }
+        }
+        const hoy = hoyCr(), enUnAnio = masAnios(hoy, 1);
+        for (const x of c.usadas.filter((y) => masAnios(y.inicio, 6) <= enUnAnio))
+            riesgos.push(`«${x.t.nombre}» deja de contar el ${fecha(masAnios(x.inicio, 6))} (seis años, 5.3.1): la solicitud tiene que llegar antes.`);
+        if (c.revisar) riesgos.push(`${miles(c.revisar)} ${c.revisar === 1 ? "torneo queda" : "torneos quedan"} para revisar y no se ${c.revisar === 1 ? "contó" : "contaron"}: si alguno vale, mejor confirmarlo con su informe antes de usarlo.`);
+        return riesgos;
+    }
+
+    function informeSolicitud(a, cual) {
+        const n = textoNorma(a, cual), c = cuentaNormas(a, cual);
+        const titulo = cual === "af" ? "Árbitro FIDE (AF)" : "Árbitro Internacional (AI)";
+        const finDe = (x) => (x.t.fin && x.t.fin > x.inicio ? x.t.fin : x.inicio);
+        const firma = (x) => {
+            const p = principalDe(x);
+            if (!p) return "No consta";
+            if (p === a) return "Él mismo: firma otro (2.8)";
+            return `${p.nombre} (${TITULOS_CORTOS[tituloEn(p, x.inicio)] || "sin título"})`;
+        };
+        const riesgos = riesgosSolicitud(a, cual, c);
+        const bloques = [
+            { tipo: "titulo", texto: "En resumen" },
+            { tipo: "parrafo", texto: `${n.estado}. ${n.dicho}` },
+            { tipo: "nota", texto: n.nota },
+            { tipo: "titulo", texto: "Lo que pide FIDE, punto por punto" },
+            { tipo: "lista", items: n.ruta.map((r) => `${r.estado}: ${r.texto}`) },
+            { tipo: "titulo", texto: `Las normas que junta (${miles(c.usadas.length)} de ${PIDE[cual]})` },
+        ];
+        if (c.usadas.length) {
+            bloques.push({ tipo: "tabla", encabezados: ["Empezó", "Torneo", "Firma el certificado", "Cuenta hasta"], anchos: [13, 40, 32, 15],
+                filas: c.usadas.map((x) => [fecha(x.inicio), x.t.nombre, firma(x), fecha(masAnios(x.inicio, 6))]) },
+                { tipo: "nota", texto: "Firma el certificado el árbitro principal del torneo, con el título que tenía entonces. «No consta» quiere decir que el principal no es de la lista de árbitros de Costa Rica: hay que ver el certificado." },
+                { tipo: "subtitulo", texto: "Por qué cuenta cada una" },
+                { tipo: "lista", items: c.usadas.map((x) => `${x.t.nombre} (${fecha(x.inicio)} al ${fecha(finDe(x))}, ${[x.t.ciudad, x.t.pais].filter(Boolean).join(", ")}): `
+                    + `${x[cual].detalle}. ${miles(x.t.con_elo)} jugadores con Elo de ${miles(x.t.federaciones)} ${x.t.federaciones === 1 ? "federación" : "federaciones"}, ${miles(x.t.rondas)} rondas. ${urlFide(x.t)}`) });
+        } else bloques.push({ tipo: "parrafo", texto: "Todavía no junta ninguna." });
+        bloques.push({ tipo: "titulo", texto: "Riesgos de esta solicitud" },
+            riesgos.length ? { tipo: "lista", items: riesgos } : { tipo: "parrafo", texto: "Con lo que se ve desde afuera, ninguno en particular." },
+            { tipo: "nota", texto: "Por qué rechaza FIDE, en los 343 rechazos de 2023 a 2026 de los informes de la Comisión de Árbitros: un torneo sin el nivel (jugadores con Elo, tipo de torneo); documentos incompletos o formularios viejos; el seminario de más de cuatro años; el mismo tipo de torneo usado de más; pocas rondas; un certificado firmado por quien no tenía el título que hace falta o por el mismo solicitante; dos torneos en fechas que se tocan; una norma de antes del NA o del AF; todas firmadas por la misma persona; la solicitud más de un año después del último torneo, y la edad." },
+            { tipo: "separador" },
+            { tipo: "nota", texto: "Armado con FIDE B.06.1 (vigente desde el 1 de marzo de 2026), los torneos de ratings.fide.com y los informes de la Comisión de Árbitros de FIDE. Lo que no se ve desde afuera (los certificados emitidos, quién los firmó si el principal no es de Costa Rica, la edad, el inglés para el AI) lo revisa quien arma la solicitud." });
+        return {
+            titulo: a.nombre,
+            subtitulo: [`Informe para la solicitud de ${titulo}`, "ID FIDE " + a.fide_id, a.titulo ? TITULOS[a.titulo] + (a.titulo_detalle ? " (" + a.titulo_detalle + ")" : "") : "Sin título de árbitro en FIDE",
+                textoFide(a), "al " + window.HoraCR.fecha(new Date())].join(" · "),
+            pie: "Árbitros de Costa Rica · Ajedrez Integral", autor: "Ajedrez Integral", bloques, fotos: [],
+        };
     }
 
     /* Lo que dice FIDE de él: si está activo en la lista oficial de
@@ -1014,11 +1091,14 @@
 
     async function pdf() {
         const a = arbitros.find((x) => x.fide_id === estado.elegido);
-        if (!a) return;
+        if (a) bajarPdf(documentoPdf(a), "arbitro-" + a.fide_id + ".pdf");
+    }
+
+    async function bajarPdf(documento, nombre) {
         try {
-            const blob = await window.ReportePDF.generar(documentoPdf(a));
+            const blob = await window.ReportePDF.generar(documento);
             const url = URL.createObjectURL(blob);
-            const enlace = el("a", { href: url, download: "arbitro-" + a.fide_id + ".pdf" });
+            const enlace = el("a", { href: url, download: nombre });
             document.body.append(enlace); enlace.click(); enlace.remove();
             setTimeout(() => URL.revokeObjectURL(url), 10000);
         } catch (e) {

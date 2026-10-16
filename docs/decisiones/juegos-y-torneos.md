@@ -3402,6 +3402,28 @@ leyeron convertidos a texto con r.jina.ai, como los informes.
   actividad a dos años, la lista con los que no tienen normas, el
   historial vacío y la tabla sin nombres, y salta cada vez.
 
+**El informe para la comisión (PDF).** Al lado de «Descargar los torneos para
+la solicitud», «Informe para la comisión (PDF)» arma con `js/reporte-pdf.js`
+lo que hace falta para decidir si se manda la solicitud, en el mismo orden que
+el informe que se le hizo a mano a José Antonio Meza Vega:
+- en resumen;
+- «Para pedir el título» punto por punto;
+- las normas que junta, con quién firma cada certificado (el principal, con el
+  título que tenía ese día, `tituloEn()`) y hasta cuándo cuenta, y por qué
+  cuenta cada una (con sus jugadores con Elo, federaciones, rondas y enlace);
+- los riesgos de esa solicitud (`riesgosSolicitud()`), cada uno sacado de lo que
+  FIDE rechaza en sus informes:
+  - fechas que se tocan con otro torneo de FIDE (2.10);
+  - una norma que vale una sola vez (4.9.1);
+  - para AI, una norma a menos de 60 días de su AF (conviene la captura del
+    perfil y una norma de reserva);
+  - una norma que vence en menos de un año;
+  - los torneos que quedaron para revisar;
+- el catálogo de los rechazos.
+
+La tabla lleva solo cuatro columnas (empezó, torneo, quién firma, cuenta
+hasta): con nueve, `reporte-pdf.js` cortaba el texto de cada celda.
+
 ## Comparar dos árbitros y el ranking del año
 
 Dos piezas más en `arbitros-cr.html` (pedido del dueño, octubre de 2026):

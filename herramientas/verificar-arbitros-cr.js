@@ -372,6 +372,13 @@ const porNombre = (m) => Object.fromEntries(m.map((f) => [f[0], f]));
         /La norma más vieja que junta vence el 01\/03\/2029/.test(await p.$eval("[data-ruta='af']", (e) => e.textContent))], [true, true]);
     const [solicitud] = await Promise.all([p.waitForEvent("download"), p.click("[data-ruta='af'] button")]);
     igual("y el Excel de los torneos para la solicitud", solicitud.suggestedFilename(), "solicitud-af-6500003.xlsx");
+    const [informe] = await Promise.all([p.waitForEvent("download"), p.click("[data-ruta='af'] button:text-is('Informe para la comisión (PDF)')")]);
+    const inf = require("fs").readFileSync(await informe.path()).toString("latin1");
+    igual("el informe para la comisión: lo que pide FIDE, la norma con quién firma y hasta cuándo cuenta, y los riesgos",
+        [informe.suggestedFilename(), inf.includes("(Lo que pide FIDE, punto por punto)"), inf.includes("(- Falta: Normas de torneo: junta 1 de las 3; le faltan 2.)"),
+         inf.includes("(Internacional con titulados 2023)"), inf.includes("(No consta)"), inf.includes("(01/03/2029)"), inf.includes("(Riesgos de esta solicitud)"),
+         inf.includes("(Con lo que se ve desde afuera, ninguno en particular.)")],
+        ["informe-af-6500003.pdf", true, true, true, true, true, true, true]);
     igual("su historial: el seminario de AF", await p.$$eval("#ficha-historial > ul > li strong", (s) => s.map((x) => x.textContent)), ["29/06/2025 · Seminario de AF: 189th Internet Based Jun 2025 (CCA)"]);
     const aiLuis = (await filas(p, "#tabla-torneos"))[0][9];
     igual("su torneo que cumple las condiciones de AI no le cuenta: no tiene el AF", [aiLuis.startsWith("No"), /No tiene el título de AF/.test(aiLuis)], [true, true]);
@@ -442,8 +449,23 @@ const porNombre = (m) => Object.fromEntries(m.map((f) => [f[0], f]));
     ({ ctx, p } = await abrir(browser, "arbitros-cr.html#6500003", true));
     await p.waitForFunction(() => document.getElementById("ficha").checkVisibility());
     igual("si el principal fue él mismo, el certificado lo firma otro", /fue él el árbitro principal; ese certificado no lo puede firmar él \(2\.8\)/.test(await p.$eval("[data-ruta='af']", (e) => e.textContent)), true);
+    const [informe2] = await Promise.all([p.waitForEvent("download"), p.click("[data-ruta='af'] button:text-is('Informe para la comisión (PDF)')")]);
+    igual("y el informe lo dice en la columna de la firma", require("fs").readFileSync(await informe2.path()).toString("latin1").includes("(Él mismo: firma otro \\(2.8\\))"), true);
     await ctx.close();
     CARGOS.pop();
+
+    // Ana (FA) arbitra el 101, que vale una sola vez para AI (opción), y en
+    // las mismas fechas el 106: el informe avisa de las dos cosas.
+    CARGOS.push({ torneo_id: 101, fide_id: 6500002, cargo: "Arbiter" }, { torneo_id: 106, fide_id: 6500002, cargo: "Arbiter" });
+    TORNEOS.push(T(106, "Rápido del mismo día", "2025-01-10", "no", "no"));
+    ({ ctx, p } = await abrir(browser, "arbitros-cr.html#6500002", true));
+    await p.waitForFunction(() => document.getElementById("ficha").checkVisibility());
+    const [informe3] = await Promise.all([p.waitForEvent("download"), p.click("[data-ruta='ai'] button:text-is('Informe para la comisión (PDF)')")]);
+    const inf3 = require("fs").readFileSync(await informe3.path()).toString("latin1");
+    igual("el informe de AI de Ana: el 101 vale una sola vez y se tocó con otro torneo (2.10)",
+        [informe3.suggestedFilename(), inf3.includes("4.9.1"), inf3.includes("2.10"), inf3.includes("(Riesgos de esta solicitud)")], ["informe-ai-6500002.pdf", true, true, true]);
+    await ctx.close();
+    CARGOS.splice(-2, 2); TORNEOS.pop();
 
     console.log("\n=== Comparar dos árbitros ===");
     ({ ctx, p } = await abrir(browser, "arbitros-cr.html#6500003,6500001", true));
