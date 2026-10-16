@@ -3190,8 +3190,20 @@ Comisión de Árbitros de 2023 a 2026, de todos los países.
   tournament»: a ese árbitro lo había aprobado el Consejo del 18 y 19 de
   julio de 2025, y FIDE usó una fecha 25 días posterior. Con el NA hace lo
   mismo: «two norms before NA – 12 August 2024».
-  - La del perfil de la captura (15/12/2024) cae 35 días después del
-    Consejo del 10/11/2024 (el de Meza Vega y Neeshmy Núñez).
+  - La captura era de **José Antonio Meza Vega**: Consejo del 10/11/2024 y
+    perfil del 15/12/2024, 35 días después. Es la primera fecha de perfil
+    cargada (`"perfil"` en su aprobación).
+  - La pregunta era si le sirve para AI el XLV Metropolitano B 2024 (del
+    26 al 30/12/2024). Sí:
+    - empezó después del 15/12, y fue árbitro;
+    - es un gran internacional (4.9.1, una vez por solicitud), con 152
+      jugadores con Elo, 8 federaciones y 9 rondas;
+    - el principal era IA y no era él;
+    - el mismo torneo se lo aprobaron para AI a Joshebeth Núñez el
+      23/08/2026.
+
+    Ojo: esa semana arbitró también el A, el Sub-14 y el Blitz, en las
+    mismas fechas, y solo puede usar uno (2.10).
   - El desfase va de **dos a cinco semanas**.
 - **«Licensed» es otra cosa**: el pago anual de la licencia (B.06.1, 6.1).
   En los 343 rechazos no hay ninguno de un FA o IA por esa fecha; los de
