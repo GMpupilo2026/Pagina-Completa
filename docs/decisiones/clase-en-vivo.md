@@ -600,9 +600,23 @@ todas, y el profe elige cuál mostrar a la clase.
   no tiene la posición de la práctica pregunta antes de reemplazarla. «Decir
   de quién es al mostrarlo» arranca sin marcar, por lo mismo que allá.
 
+- **Las jugadas van escritas**, numeradas y en algebraica española («1. Rf1
+  Rf8 2. Re2»), debajo de cada intento: se lee dónde se equivocó sin tener que
+  mostrarlo. Una sola función arma la fila (`filaDeIntento`) para las dos
+  listas.
+- **También en la ventana de la partida de un alumno** («👁 Mirar y ayudar»):
+  «🔁 Ver las jugadas de cada intento» trae solo los suyos (pedidos al abrir la
+  lista, filtrados por alumno en la base). El intento en curso es la fila que
+  ya se está mirando: crece con cada jugada sin volver a pedir nada, y si
+  reintenta se vuelve a pedir la lista. «📺 Mostrar» cierra la ventana —el
+  tablero de la clase queda debajo— y lo pasa como variante por la misma
+  `mostrarJugadasALaClase()`, para recorrerlo jugada a jugada con la clase. Su
+  casilla «Decir de quién es» es aparte y arranca sin marcar.
+
 **Al tocar esto, correr `node herramientas/verificar-todo.js practica-intentos
-clase-mostrar`.** Está probado que falla de verdad: sin ordenar los intentos o
-mandando siempre el nombre, salta.
+clase-mostrar`.** Está probado que falla de verdad: sin ordenar los intentos,
+mandando siempre el nombre o sin poner al día el intento en curso de la
+ventana, salta.
 
 ### Antes y después de la clase: el plan marcado, la tarea de repaso y «Tu última clase»
 
