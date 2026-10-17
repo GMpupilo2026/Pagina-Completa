@@ -153,8 +153,8 @@ async function pruebaRevisar(browser) {
     practice_sessions: [ronda({ max_intentos: 3, ended_at: new Date().toISOString() })],
     practice_games: [partida({ status: "resigned", attempts: 3, moves: ["Kh1"], profiles: { full_name: "Ana Rojas" } })],
     practice_intentos: [
-      { student_id: "u-ana", session_id: "p1", intento: 2, status: "checkmate_win", moves: ["Ra8#"] },
-      { student_id: "u-ana", session_id: "p1", intento: 1, status: "draw", moves: ["Kf1", "Kf8"] },
+      { game_id: "pg1", student_id: "u-ana", session_id: "p1", intento: 2, status: "checkmate_win", moves: ["Ra8#"] },
+      { game_id: "pg1", student_id: "u-ana", session_id: "p1", intento: 1, status: "draw", moves: ["Kf1", "Kf8"] },
     ],
   });
   await r.page.evaluate(() => activateTeacherTab("practicar"));
@@ -210,9 +210,9 @@ async function pruebaMirada(browser) {
     practice_sessions: [ronda({ max_intentos: 3 })],
     practice_games: [partida({ status: "playing", attempts: 2, moves: ["Kh1"], profiles: { full_name: "Ana Rojas" } })],
     practice_intentos: [
-      { student_id: "u-ana", session_id: "p1", intento: 1, status: "resigned", moves: ["Kf1", "Kf8"] },
+      { game_id: "pg1", student_id: "u-ana", session_id: "p1", intento: 1, status: "resigned", moves: ["Kf1", "Kf8"] },
       // De otro alumno: no se mezcla con los de Ana.
-      { student_id: "u-otro", session_id: "p1", intento: 1, status: "draw", moves: ["Ra8#"] },
+      { game_id: "pg2", student_id: "u-otro", session_id: "p1", intento: 1, status: "draw", moves: ["Ra8#"] },
     ],
   }, { sinTopeDePresencia: true });
   await r.page.evaluate(() => activateTeacherTab("practicar"));

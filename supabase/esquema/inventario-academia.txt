@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261017200000
+# al-dia-con: 20261017201230
 tabla  Ejercicios Lichess  rls=true
 tabla  _foto_rls_tmp  rls=false
 tabla  _pedidos_elo  rls=false
@@ -2033,6 +2033,7 @@ funcion  interno.repertorio_coherente()  definer  anon=false  auth=false
 funcion  interno.retos_ejercicios_abiertos_para_mi()  definer  anon=false  auth=true
 funcion  interno.retos_ejercicios_cuantas()  definer  anon=false  auth=true
 funcion  interno.retos_ejercicios_tope()  definer  anon=false  auth=false
+funcion  interno.rondas_de_mis_alumnos()  definer  anon=false  auth=true
 funcion  interno.salas_torneo_sello()  invoker  anon=false  auth=false
 funcion  interno.sesiones_de_supervisados()  definer  anon=false  auth=true
 funcion  interno.subgrupo_del_equipo_al_dia(p_equipo uuid, p_profesor uuid)  definer  anon=false  auth=false
@@ -2515,6 +2516,7 @@ politica  practice_games  practice_games_update  UPDATE
 politica  practice_games  verificacion_en_dos_pasos  ALL  restrictiva
 politica  practice_intentos  practice_intentos_exige_acceso_sel  SELECT  restrictiva
 politica  practice_intentos  practice_intentos_select  SELECT
+politica  practice_sessions  practice_sessions_de_mis_alumnos  SELECT
 politica  practice_sessions  practice_sessions_exige_acceso_sel  SELECT  restrictiva
 politica  practice_sessions  practice_sessions_insert  INSERT
 politica  practice_sessions  practice_sessions_select  SELECT
