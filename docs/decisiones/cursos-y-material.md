@@ -1094,7 +1094,9 @@ soluciones.
   **sus respuestas escritas a mano**, la tapa, el final, el diploma y sus
   secretos. `dibujos.js` tiene los personajes y las escenas, y
   `herramientas/libro-ninos-pdf.js` los pone en papel **con una sola
-  maqueta**: `material/<slug>/<slug>.pdf` y `<slug>-accesible.html`.
+  maqueta**: `material/<slug>/<slug>.pdf`, `<slug>-accesible.html`,
+  `<slug>-adaptado.pdf` y `<slug>-adaptado.docx` (ver «El PDF adaptado: letra
+  grande y lector de pantalla» y «El adaptado también en Word»).
 - Los revisa `verificar-libro-ninos.js`, todos. Un cuento nuevo se suma a
   `libros.js` y entra solo al generador y al verificador.
 
@@ -1193,6 +1195,107 @@ porque está escondido. Este archivo y `herramientas/` no se publican
 - Comparte con «Ponte a prueba» el cierre (`lib/pdf-armar.js`) y el
   `describir()` de la versión accesible. Va en `admin.html#materiales` y se
   comparte igual; sin pruebas como cuestionario, esa sección no aparece.
+
+### El PDF adaptado: letra grande y lector de pantalla
+
+El dueño pidió el libro de Peonita «adaptado al 100 %» y en PDF. La versión
+accesible en HTML ya estaba, pero un PDF es lo que se imprime, se manda por
+WhatsApp y se abre con la lupa del celular. Sale del mismo generador
+(`adaptado()` de `libro-ninos-pdf.js`), para los tres cuentos:
+`material/<slug>/<slug>-adaptado.pdf`; `--solo-adaptado` rehace solo esos.
+
+- **Para quien ve poco:** Atkinson Hyperlegible (la letra hecha para baja
+  visión) a 20 pt, interlineado 1,5, negro sobre blanco y títulos azul oscuro
+  (13,4:1), sin justificar ni cortar palabras. Un tablero grande por página
+  (150 mm en los diagramas, 108 mm en los ejercicios para que la pregunta y la
+  raya de la respuesta quepan en la misma hoja), con la casilla oscura más
+  oscura que la madera del libro. Sin marca de agua.
+- **Para quien no ve:** el PDF va **etiquetado** (`tagged` de Chromium:
+  títulos H1–H4, párrafos y listas), con marcadores por capítulo, `/Lang
+  es-CR` y el título a la vista (`DisplayDocTitle`), **sin cifrar**: el
+  cifrado y los permisos estorban a más de un lector de pantalla.
+- **Los dibujos y los tableros van con `aria-hidden`**, y al lado va escrito
+  lo que muestran (el dibujo contado, la posición pieza por pieza, adónde
+  puede ir). Con texto alternativo además, el lector lo diría dos veces.
+- Las jugadas van como en la versión accesible («torre anna 8»), y la portada
+  explica los nombres de las letras. Las promesas y los consejos del último
+  capítulo van en lista, no pegados a la pregunta.
+- **Cumple PDF/UA-1, validado con veraPDF** (1.28.2, `-f ua1`: 0 reglas
+  fallidas en los tres cuentos). Lo que Chromium deja a medias lo arregla
+  `herramientas/lib/pdf-adaptado.py` (lo llama `datosAdaptado()` de
+  `lib/pdf-armar.js`). veraPDF encontró dos fallos y los dos callados:
+  - **11 001 trozos de contenido sin marcar** (7.1-3): Chromium etiqueta lo
+    que está en el árbol de accesibilidad, pero lo que va con `aria-hidden`
+    (dibujos y tableros) y el número de página quedaban ni etiquetados ni
+    como Artifact. El script envuelve en `/Artifact BMC … EMC` todo lo que se
+    pinta fuera de una secuencia marcada, sin partir un trazado ni un texto a
+    la mitad y sin tocar lo etiquetado (los MCID quedan iguales).
+  - **Faltaba el XMP** (7.1-8): se pone con `pdfuaid:part` 1, el título, el
+    autor y el idioma.
+- **Los datos del PDF se ponen con `clone_from`**, no copiando página por
+  página como en `proteger()`: así se pierde el árbol de etiquetas sin ningún
+  error.
+- `verificar-libro-ninos.js` lo lee con pypdf: que esté etiquetado, sin
+  cifrar, en español, con su título, marcadores y el XMP de PDF/UA, **sin
+  ningún trazo ni texto fuera de una secuencia marcada** (lo mismo que
+  rechaza veraPDF, para no tener que bajar Java en el CI), y con cada
+  capítulo, cada dibujo contado y las soluciones. Se rompió a propósito dos
+  veces (el PDF cifrado en su lugar; el script sin marcar los Artifact ni el
+  XMP) y saltó las dos.
+- Para volver a validarlo con veraPDF: Maven Central sí se alcanza desde el
+  contenedor (la página de veraPDF no). Un `pom.xml` con la dependencia
+  `org.verapdf.apps:greenfield-apps:1.28.2`, `mvn dependency:copy-dependencies
+  -DoutputDirectory=lib` y `java -cp "lib/*"
+  org.verapdf.apps.GreenfieldCliWrapper -f ua1 --format xml <pdf>`: tiene que
+  dar `isCompliant="true"`. Las advertencias «Invalid glyph code» de las
+  fuentes no son fallos.
+
+### El adaptado también en Word
+
+Después del PDF, el dueño lo pidió **en Word**: un .docx se agranda, se
+cambia de letra o de color y se lee con el lector de pantalla que cada quien
+ya usa. Sale del mismo generador: `material/<slug>/<slug>-adaptado.docx`, con
+`--solo-adaptado` igual que el PDF.
+
+- **Una sola copia del contenido.** `bloquesAdaptado()` arma el libro una vez
+  como lista de bloques (título, párrafo, recuadro, lista, imagen, raya para
+  la respuesta, grupo) y de ahí salen los dos: `adaptadoHTML()` para el PDF y
+  `adaptadoDocx()` para el Word (librería `docx` del `package.json`). Si cada
+  formato armara su texto, el primer arreglo en uno dejaría al otro atrás.
+- **Lo accesible en Word:** títulos con los estilos Título 1–4 de Word (el
+  panel de navegación y el lector saltan por ellos), listas con numeración de
+  verdad, idioma español (Costa Rica) en el estilo base, el título en las
+  propiedades del documento y **cada imagen marcada como decorativa** (la
+  extensión `adec:decorative` que pone «Marcar como decorativa»; la librería
+  no la trae y se agrega al final). Al lado de cada imagen va escrito lo que
+  muestra, como en el PDF.
+- **Verdana a 18 pt, no Atkinson Hyperlegible**: una letra que la computadora
+  no tiene, Word la cambia por otra sin avisar, y Atkinson no viene en Windows
+  ni en Mac. Verdana está en todas y es de las que se recomiendan para baja
+  visión. Las imágenes se sacan de los mismos SVG con Chromium, a unos
+  290 ppp.
+- **Tres cosas que fallaban calladas** y que ahora revisa el verificador:
+  - **El interlineado sin `lineRule`**: Word lo toma como automático, pero
+    LibreOffice como exacto, y recortaba cada tablero a la altura de un
+    renglón (solo se veía la fila de letras) y encimaba los títulos de dos
+    renglones. Va `lineRule: auto` en todos.
+  - **Los títulos con `paragraphStyles`** dejaban dos estilos «Heading1», el
+    de la librería y el propio: van en `styles.default.heading1…`.
+  - **El Word salía con el cuento equivocado**: el paso del Word corre
+    después de recorrer todos los libros y leía `L`, que había quedado en el
+    último. Los tres .docx tenían el cuento del rey escondido. Se fija `L`
+    antes de armarlo, y el verificador comprueba que cada Word sea de su libro.
+- Además, `docx` 9.7.1 escribe los bordes de un párrafo en un orden que el
+  esquema de Word no acepta (top, bottom, left, right): Word lo abre igual,
+  pero el archivo no valida. Se reordenan al final.
+- «Lo que aprendí» va sin recuadro en el Word: Word solo une los bordes de
+  párrafos con la misma sangría, y el título y la lista quedaban en dos
+  recuadros.
+- `verificar-libro-ninos.js` lo lee con python-docx: título del documento,
+  idioma, un solo Título 1 y un solo estilo «Heading1», cada capítulo en
+  Título 2, cada dibujo contado, todas las imágenes decorativas, ningún
+  interlineado exacto o sin regla, listas con numeración y las soluciones.
+  Los tres validan contra el esquema de Office.
 
 ### Los diplomas se coleccionan
 

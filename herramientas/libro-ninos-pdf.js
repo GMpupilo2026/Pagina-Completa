@@ -8,8 +8,9 @@
  * Cada libro es un módulo de herramientas/libro-ninos/ (la lista está en
  * libros.js) con su cuento, sus ejercicios y respuestas, su tapa y sus
  * secretos; los dibujos están en dibujos.js. Este script los pone en papel,
- * todos con la MISMA maqueta: material/<slug>/<slug>.pdf y
- * <slug>-accesible.html. Las respuestas las comprueba verificar-libro-ninos.js.
+ * todos con la MISMA maqueta: material/<slug>/<slug>.pdf,
+ * <slug>-accesible.html, y <slug>-adaptado.pdf y <slug>-adaptado.docx (letra
+ * grande y listos para lector de pantalla, para quien ve poco o no ve). Las respuestas las comprueba verificar-libro-ninos.js.
  *
  * Se cierra como los otros libros (tapa a página completa, marca de agua con
  * el logo, firma del autor y PDF protegido: herramientas/lib/pdf-armar.js),
@@ -21,6 +22,7 @@
  *     node herramientas/libro-ninos-pdf.js                   # todos los libros
  *     node herramientas/libro-ninos-pdf.js peonita-trucos    # uno solo, por su slug
  *     node herramientas/libro-ninos-pdf.js --solo-accesible   # sin PDF ni pypdf
+ *     node herramientas/libro-ninos-pdf.js --solo-adaptado    # solo los adaptados (PDF y Word)
  *
  * Con CHROMIUM=/ruta/al/chrome se le puede indicar un Chromium ya instalado.
  */
@@ -31,7 +33,7 @@ const os = require("os");
 const { Chess } = require("chess.js");
 const { tablero } = require("./lib/tablero-svg.js");
 const { describir } = require("./lib/describir-fen.js");
-const { unir, proteger } = require("./lib/pdf-armar.js");
+const { unir, proteger, datosAdaptado } = require("./lib/pdf-armar.js");
 const N = require("./lib/notacion.js");
 const D = require("./libro-ninos/dibujos.js");
 const LIBROS = require("./libro-ninos/libros.js");
@@ -629,6 +631,383 @@ ${L.CAPITULOS.map((c) => `<h3>Capítulo ${c.n}. ${esc(c.titulo)}</h3><ol>${c.eje
 </body></html>`;
 }
 
+/* ---------------------------------------------------------- adaptado */
+/* La versión ADAPTADA, para quien ve poco o no ve, en PDF y en Word: el mismo
+   libro con letra grande, negro sobre blanco, un tablero grande por página y
+   todo escrito. El contenido se arma UNA vez, como una lista de bloques
+   (bloquesAdaptado), y de ahí salen los dos formatos: adaptadoHTML() para el
+   PDF (Chromium) y adaptadoDocx() para el Word. Si cada formato armara su
+   propio contenido, el primer arreglo en uno dejaría al otro atrás.
+
+   Los dibujos y los tableros van escondidos del lector de pantalla
+   (aria-hidden en el PDF, «decorativo» en el Word) porque al lado está escrito
+   lo que muestran —el dibujo contado, la posición pieza por pieza—: con el
+   texto alternativo además, el lector lo diría dos veces. El que ve poco mira
+   el tablero grande; el que no ve, oye el texto. Sin marca de agua ni
+   cifrado: las dos cosas estorban a la lupa y al lector. */
+const NEGRO = "#000", AZUL = "#0b2e6b"; // 21:1 y 13,4:1 contra el blanco
+/* Los tableros del adaptado: las casillas oscuras más oscuras que la madera
+   del libro, para que la pieza blanca se recorte, y el borde casi negro. Los
+   puntos (#0b4a1f) siguen dando más de 3:1 contra las dos casillas. */
+const MADERA_ADAPTADA = { clara: "#fbf1dc", oscura: "#b07f4f", borde: "#2b1a0b", marca: "#ffd43b" };
+/* El ancho de cada dibujo en la página, en mm (A4 con 18 mm de margen: caben
+   174). El tablero de un ejercicio es menor que el de un diagrama para que la
+   pregunta y la raya de la respuesta quepan en la misma hoja. */
+const ANCHO = { dibujo: 174, diagrama: 150, ejercicio: 108, dos: 166, colorear: 165, medalla: 60 };
+
+function diagramaAdaptado(fen, o) {
+  const extra = {};
+  if (o.casilla && o.mostrar) {
+    const mov = new Chess(fen).moves({ square: o.casilla, verbose: true });
+    extra.puntos = [...new Set(mov.filter((m) => !m.captured).map((m) => m.to))];
+    extra.capturas = [...new Set(mov.filter((m) => m.captured).map((m) => m.to))];
+  }
+  return tablero(fen, Object.assign({
+    colores: MADERA_ADAPTADA, coordenadas: true, titulo: "Diagrama",
+    destacar: o.casilla ? [o.casilla] : [], estrellas: o.estrellas || [], flechas: o.flechas || [],
+  }, extra));
+}
+
+/* La posición en palabras, como texto (posicionEnPalabras la da en HTML). */
+function posicionTexto(fen, extra) {
+  const d = describir(fen);
+  const partes = [];
+  if (d.blancas) partes.push(`Piezas blancas: ${d.blancas}.`);
+  if (d.negras) partes.push(`Piezas negras: ${d.negras}.`);
+  if (!partes.length) partes.push("El tablero está vacío.");
+  return partes.join(" ") + (extra ? " " + extra : "");
+}
+
+/* Los bloques. Cada uno es { t, … }:
+     h       { nivel 1–4, texto }
+     p       { texto, fuerte }                 un párrafo (fuerte: en negrita)
+     cuadro  { lead, texto }                   un párrafo con marco
+     lista   { items, ordenada }
+     verso   { lineas }                        renglones de un poema
+     img     { html, ancho, clase }            un dibujo, escondido del lector
+     raya    { antes, ancho }                  para escribir la respuesta
+     grupo   { clase, salto, hijos }           lo que va junto (salto: en hoja nueva)
+   El texto va crudo: cada formato lo escapa a su manera. */
+const h = (nivel, texto) => ({ t: "h", nivel, texto });
+const p = (texto, fuerte) => ({ t: "p", texto, fuerte: !!fuerte });
+const cuadro = (lead, texto) => ({ t: "cuadro", lead, texto });
+const listaB = (items, ordenada) => ({ t: "lista", items, ordenada: !!ordenada });
+const img = (html, ancho, clase) => ({ t: "img", html, ancho, clase });
+const grupo = (clase, salto, hijos) => ({ t: "grupo", clase, salto: !!salto, hijos });
+const hab = (t) => N.textoHablado(t, "espanol");
+const dibujoB = (def) => [img(D.escena(def), ANCHO.dibujo, "dibujo-a"), cuadro("El dibujo.", def.alt)];
+
+function ejercicioB(e, num) {
+  const hijos = [h(4, `Ejercicio ${num}`)];
+  // Las promesas y los consejos van en lista, uno por renglón, y no pegados a
+  // la pregunta como en la versión accesible: en letra grande, un párrafo así
+  // ocupa media página y no se sabe dónde termina cada uno.
+  if (e.tipo === "promesas" || e.tipo === "partida") {
+    hijos.push(p(e.pregunta, true), listaB(e.tipo === "promesas" ? L.PROMESAS : L.CONSEJOS_PARTIDA));
+    return grupo("ej-a", true, hijos);
+  }
+  if (e.fen) {
+    hijos.push(img(diagramaAdaptado(e.fen, {
+      casilla: ["contar", "comer", "destinos", "color", "saltos", "corona"].includes(e.tipo) ? e.casilla : null,
+      estrellas: e.estrellas || (e.meta ? [e.meta] : []),
+    }), ANCHO.ejercicio, "tablero-a"), cuadro("La posición.", posicionTexto(e.fen)));
+  } else if (e.tipo === "tableros") {
+    hijos.push(img(`<div class="dos-a"><figure>${tableroVacio(true)}<figcaption>A</figcaption></figure><figure>${tableroVacio(false)}<figcaption>B</figcaption></figure></div>`, ANCHO.dos, "dos-a-caja"));
+  } else if (e.tipo === "colorear") {
+    hijos.push(img(tableroColorear(), ANCHO.colorear, "colorear-a"));
+  }
+  hijos.push(p(hab(preguntaAccesible(e)), true));
+  if (e.tipo !== "colorear") hijos.push({ t: "raya", antes: "Mi respuesta:" });
+  return grupo("ej-a", true, hijos);
+}
+
+function bloquesAdaptado() {
+  const PRES = L.PRESENTACION;
+  const B = [];
+  B.push(grupo("portada", false, [
+    h(1, L.TITULO),
+    p(L.SUBTITULO, true),
+    p(`De ${L.AUTOR}. Academia Ajedrez Integral, Costa Rica, ${ANIO}.`),
+    cuadro("Versión adaptada.", "Es el mismo libro, hecho para quien ve poco o no ve: letra grande, negro sobre blanco, un tablero grande en cada página y todo escrito, para leerlo con lupa o con lector de pantalla. Cada dibujo va contado en palabras y cada posición, pieza por pieza."),
+    p("Las casillas se nombran con una letra de la a a la h, que dice la columna, y un número del 1 al 8, que dice la fila. En los tableros, la casilla de la pregunta va pintada de amarillo, los puntos dicen adónde puede ir la pieza y el aro, qué puede comer."),
+    p("Las jugadas van escritas como se dicen en voz alta, con un nombre para cada letra: anna, bella, cesar, david, eva, felix, gustav y hector. «Torre anna 8» quiere decir que la torre va a la casilla a8."),
+    p(`© ${ANIO} ${L.AUTOR}. Todos los derechos reservados. Este libro se puede imprimir para usarlo en casa o en la clase.`),
+  ]));
+  B.push(grupo("pagina", true, [
+    h(2, "Los capítulos"),
+    listaB(L.CAPITULOS.map((c) => c.titulo), true),
+    p(`Al final: ${L.FINAL_TITULO}, el diploma n.º ${L.DIPLOMA.numero} («${L.DIPLOMA.nombre}») y las soluciones.`),
+  ]));
+  B.push(grupo("pagina", true, [h(2, "Para las familias y el personal docente"), ...L.NOTA_ADULTOS.map((t) => p(t)), p(L.AUTOR)]));
+  B.push(grupo("pagina", true, [h(2, "Dedicatoria"), { t: "verso", lineas: L.DEDICATORIA }]));
+  B.push(grupo("pagina", true, [h(2, PRES.titulo), ...dibujoB(PRES.escena), ...PRES.parrafos.map((t) => p(t))]));
+  L.CAPITULOS.forEach((c) => {
+    B.push(grupo("cap-a", true, [
+      h(2, `Capítulo ${c.n}. ${c.titulo}`),
+      ...dibujoB(c.escena),
+      ...c.cuento.map((t) => p(t)),
+      ...c.muestras.map((m) => grupo("muestra-a", true, [
+        h(3, "Diagrama"),
+        img(diagramaAdaptado(m.fen, { casilla: m.casilla, mostrar: !!m.casilla, flechas: m.flechas }), ANCHO.diagrama, "tablero-a"),
+        p(hab(m.pie), true),
+        cuadro("La posición.", posicionTexto(m.fen, [
+          m.casilla ? `Puede ir a: ${lista(destinos(m.fen, m.casilla))}.` : "",
+          m.flechas && m.flechas.length ? `${m.flechas.length === 1 ? "La flecha va" : "Las flechas van"} ${lista(m.flechas.map(([x, y]) => `de ${x} a ${y}`))}.` : "",
+        ].filter(Boolean).join(" "))),
+      ])),
+      grupo("aprendi-a", false, [h(3, "Lo que aprendí"), listaB(c.aprendi)]),
+    ]));
+    B.push(grupo("jugar-a", true, [
+      h(3, `¡A jugar! Capítulo ${c.n}`),
+      // El primer ejercicio va debajo del título, sin hoja nueva.
+      ...c.ejercicios.map((e, i) => Object.assign(ejercicioB(e, i + 1), i ? {} : { salto: false })),
+    ]));
+  });
+  B.push(grupo("final-a", true, [h(2, L.FINAL_TITULO), ...dibujoB(L.ESCENA_FINAL), ...L.FINAL.map((t) => p(t))]));
+  B.push(grupo("diploma-a", true, [
+    h(2, `Diploma n.º ${L.DIPLOMA.numero}: ${L.DIPLOMA.nombre}`),
+    img(D.medalla(L.DIPLOMA.medalla), ANCHO.medalla, "medalla-a"),
+    p(L.DIPLOMA.sub, true),
+    { t: "raya", antes: "Nombre:" },
+    p(L.DIPLOMA.texto.join(" ")),
+    p(`Firman: ${L.DIPLOMA.firma}.`),
+    { t: "raya", antes: "Fecha:" },
+    p(`Es el diploma n.º ${L.DIPLOMA.numero} de la colección de Peonita. La colección: ${lista(LIBROS.map((l) => `n.º ${l.DIPLOMA.numero}, «${l.DIPLOMA.nombre}»`))}.`),
+  ]));
+  B.push(grupo("soluciones-a", true, [
+    h(2, "Soluciones"),
+    p("Para leerlas con una persona adulta después de intentarlo."),
+    ...L.CAPITULOS.flatMap((c) => [h(3, `Capítulo ${c.n}. ${c.titulo}`), listaB(c.ejercicios.map((e) => hab(solucion(e))), true)]),
+  ]));
+  return B;
+}
+
+/* ---- el PDF: los bloques en HTML, que Chromium etiqueta */
+function bloqueHTML(b) {
+  switch (b.t) {
+    case "h": return `<h${b.nivel}>${esc(b.texto)}</h${b.nivel}>`;
+    case "p": return `<p${b.fuerte ? ' class="fuerte"' : ""}>${esc(b.texto)}</p>`;
+    case "cuadro": return `<p class="cuadro"><strong>${esc(b.lead)}</strong> ${esc(b.texto)}</p>`;
+    case "lista": { const e = b.ordenada ? "ol" : "ul"; return `<${e}>${b.items.map((t) => `<li>${esc(t)}</li>`).join("")}</${e}>`; }
+    case "verso": return `<p>${b.lineas.map(esc).join("<br>")}</p>`;
+    case "img": return `<div class="img-a ${b.clase}" style="width:${b.ancho}mm" aria-hidden="true">${b.html}</div>`;
+    case "raya": return `<p class="resp">${esc(b.antes)} <span class="raya-a"></span></p>`;
+    case "grupo": return `<section class="${b.clase}${b.salto ? " salto" : ""}">${b.hijos.map(bloqueHTML).join("\n")}</section>`;
+  }
+  throw new Error("Bloque desconocido: " + b.t);
+}
+
+function estiloAdaptado() {
+  const f = (peso, archivo, rango) => `@font-face { font-family: "Atkinson"; font-weight: ${peso}; src: url("${incrustar("fonts/" + archivo, "font/woff2")}") format("woff2");${rango ? " unicode-range: U+0100-024F, U+1E00-1EFF, U+2020, U+20A0-20AB, U+20AD-20CF, U+2113, U+2C60-2C7F, U+A720-A7FF;" : ""} }`;
+  return `${FUENTES}
+  ${f(400, "atkinson-hyperlegible-400-latin.woff2")}
+  ${f(400, "atkinson-hyperlegible-400-latin-ext.woff2", true)}
+  ${f(700, "atkinson-hyperlegible-700-latin.woff2")}
+  ${f(700, "atkinson-hyperlegible-700-latin-ext.woff2", true)}
+  @page { size: A4; }
+  * { box-sizing: border-box; }
+  html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body { margin: 0; background: #fff; color: ${NEGRO}; font-family: "Atkinson", Verdana, sans-serif; font-size: 20pt; line-height: 1.5; letter-spacing: .01em; }
+  p, li { margin: 0 0 5mm; text-align: left; hyphens: none; }
+  ul, ol { padding-left: 16mm; margin: 0 0 5mm; }
+  h1, h2, h3, h4 { color: ${AZUL}; line-height: 1.2; font-weight: 700; break-after: avoid; }
+  h1 { font-size: 36pt; margin: 25mm 0 8mm; }
+  h2 { font-size: 30pt; margin: 0 0 8mm; padding-bottom: 3mm; border-bottom: 1.5mm solid ${AZUL}; }
+  h3 { font-size: 25pt; margin: 9mm 0 5mm; }
+  h4 { font-size: 23pt; margin: 0 0 5mm; }
+  .fuerte { font-weight: 700; }
+  .portada > .fuerte:nth-child(2) { font-size: 24pt; }
+  .salto { break-before: page; }
+  .cuadro { border: 1mm solid ${NEGRO}; padding: 4mm 5mm; border-radius: 3mm; }
+  .img-a { margin: 0 auto 6mm; break-inside: avoid; }
+  .img-a > svg, .img-a .dos-a svg { width: 100%; height: auto; display: block; }
+  .dos-a { display: flex; gap: 16mm; justify-content: center; }
+  .dos-a figure { margin: 0; text-align: center; flex: 1; }
+  .dos-a figcaption { font-size: 26pt; font-weight: 700; }
+  .muestra-a > h3, .jugar-a > h3 { margin-top: 0; }
+  .jugar-a > h3 { font-size: 30pt; margin-bottom: 6mm; }
+  .aprendi-a { border: 1.5mm solid ${AZUL}; border-radius: 4mm; padding: 2mm 7mm 3mm; margin-top: 8mm; break-inside: avoid; }
+  .aprendi-a h3 { margin-top: 4mm; }
+  .ej-a { break-inside: avoid; }
+  .resp { display: flex; align-items: flex-end; gap: 4mm; margin-top: 8mm; }
+  .raya-a { flex: 1; border-bottom: 1mm solid ${NEGRO}; height: 14mm; }
+  .soluciones-a ol > li { margin-bottom: 4mm; }`;
+}
+
+function adaptadoHTML() {
+  return `<!doctype html><html lang="es"><head><meta charset="utf-8">
+<title>${esc(L.TITULO)} — versión adaptada</title>
+<style>${estiloAdaptado()}</style>
+</head><body>
+${bloquesAdaptado().map(bloqueHTML).join("\n")}
+</body></html>`;
+}
+
+/* ---- el Word: los mismos bloques con la librería docx
+   Lo accesible en Word: los títulos con los estilos Título 1–4 de Word (el
+   panel de navegación y el lector de pantalla saltan de uno a otro), las
+   listas con su numeración de verdad, el idioma español (Costa Rica) en todo
+   el texto, el título del documento en sus propiedades y cada imagen marcada
+   como DECORATIVA (el Comprobador de accesibilidad de Word no pide texto
+   alternativo para una imagen decorativa, y el lector la salta). Letra
+   Verdana a 18 pt: Atkinson Hyperlegible no viene en Windows ni en Mac, y una
+   letra que la computadora no tiene se cambia por otra sin avisar; Verdana
+   está en todas y es de las que se recomiendan para baja visión. Las
+   imágenes se sacan de los mismos SVG, con Chromium, a 3 píxeles por píxel
+   de CSS (unos 290 ppp): se imprimen nítidas. */
+async function adaptadoDocx(navegador, destino) {
+  const X = require("docx");
+  const JSZip = require("jszip");
+  const PT = (n) => n * 2; // docx mide la letra en medios puntos
+  const MM = (n) => Math.round(n * 56.693); // y la página en veinteavos de punto
+  const AZ = AZUL.slice(1), NE = "000000";
+  const IDIOMA = { value: "es-CR" };
+  const bloques = bloquesAdaptado();
+
+  // Las imágenes: cada SVG en una página con el mismo estilo (las letras de
+  // los dibujos), fotografiado a su ancho en la hoja.
+  const pagina = await navegador.newPage({ deviceScaleFactor: 3 });
+  const fotos = new Map();
+  async function foto(b) {
+    if (fotos.has(b)) return fotos.get(b);
+    await pagina.setContent(`<!doctype html><html><head><meta charset="utf-8"><style>${estiloAdaptado()} body{margin:0} .img-a{margin:0}</style></head>
+      <body><div id="x" class="img-a ${b.clase}" style="width:${b.ancho}mm">${b.html}</div></body></html>`, { waitUntil: "load" });
+    await pagina.evaluate(() => document.fonts.ready);
+    const caja = await pagina.locator("#x").boundingBox();
+    const data = await pagina.locator("#x").screenshot({ type: "png", omitBackground: false });
+    const r = { data, ancho: caja.width, alto: caja.height };
+    fotos.set(b, r);
+    return r;
+  }
+
+  const LETRA = "Verdana";
+  const borde = (color, grosor) => ({ style: X.BorderStyle.SINGLE, size: grosor, color, space: 6 });
+  const marco = (color, grosor) => ({ top: borde(color, grosor), left: borde(color, grosor), bottom: borde(color, grosor), right: borde(color, grosor) });
+  const ANCHO_UTIL = MM(174);
+  let instancia = 0;
+
+  // Cada bloque da las OPCIONES de sus párrafos (no los párrafos): así un
+  // grupo todavía puede soltar el «mantener con el siguiente» del último.
+  // ctx: { salto, junto, marco } que el grupo le pasa a sus hijos.
+  async function aParrafos(b, ctx) {
+    const base = (extra) => Object.assign({
+      pageBreakBefore: ctx.salto ? (ctx.salto = false, true) : undefined,
+      keepNext: ctx.junto || undefined,
+      keepLines: true,
+      border: ctx.marco,
+    }, extra);
+    switch (b.t) {
+      case "h": {
+        const nivel = [null, X.HeadingLevel.HEADING_1, X.HeadingLevel.HEADING_2, X.HeadingLevel.HEADING_3, X.HeadingLevel.HEADING_4][b.nivel];
+        return [(base({ heading: nivel, keepNext: true, children: [new X.TextRun(b.texto)] }))];
+      }
+      case "p": return [(base({ children: [new X.TextRun({ text: b.texto, bold: b.fuerte })] }))];
+      case "cuadro": return [(base({ border: marco(NE, 12), children: [new X.TextRun({ text: b.lead + " ", bold: true }), new X.TextRun(b.texto)] }))];
+      case "verso": return [(base({ children: b.lineas.map((t, i) => new X.TextRun({ text: t, break: i ? 1 : 0 })) }))];
+      case "lista": {
+        const inst = ++instancia;
+        return b.items.map((t, i) => (base({
+          keepNext: ctx.junto && i < b.items.length - 1 ? true : ctx.junto || undefined,
+          numbering: { reference: b.ordenada ? "numeros" : "vinetas", level: 0, instance: b.ordenada ? inst : undefined },
+          children: [new X.TextRun(t)],
+        })));
+      }
+      case "img": {
+        const f = await foto(b);
+        return [(base({
+          alignment: X.AlignmentType.CENTER, keepNext: true,
+          children: [new X.ImageRun({ type: "png", data: f.data, transformation: { width: f.ancho, height: f.alto }, altText: { name: "Dibujo decorativo", title: "", description: "" } })],
+        }))];
+      }
+      case "raya": return [(base({
+        spacing: { before: 360 },
+        tabStops: [{ type: X.TabStopType.RIGHT, position: ANCHO_UTIL }],
+        children: [new X.TextRun(b.antes + " "), new X.TextRun({ text: "\t", underline: { type: X.UnderlineType.SINGLE, color: NE } })],
+      }))];
+      case "grupo": {
+        const sub = { salto: b.salto || ctx.salto, junto: b.clase === "ej-a" || b.clase === "muestra-a" || b.clase === "aprendi-a" || ctx.junto, marco: ctx.marco };
+        // «Lo que aprendí» va sin marco en el Word: Word une los bordes solo
+        // entre párrafos con la misma sangría, y el título y la lista quedaban
+        // en dos recuadros separados. El título solo ya lo distingue.
+        ctx.salto = false;
+        const salida = [];
+        for (const hijo of b.hijos) salida.push(...await aParrafos(hijo, sub));
+        // El último párrafo de un grupo no se ata al que sigue.
+        if (sub.junto && !ctx.junto && salida.length) salida[salida.length - 1].keepNext = undefined;
+        return salida;
+      }
+    }
+    throw new Error("Bloque desconocido: " + b.t);
+  }
+
+  const hijos = [];
+  for (const b of bloques) hijos.push(...await aParrafos(b, { salto: false, junto: false, marco: undefined }));
+  const parrafos = hijos.map((o) => new X.Paragraph(o));
+  await pagina.close();
+
+  // El interlineado, siempre «automático» (múltiplo de la letra): sin decirlo,
+  // LibreOffice lo toma como exacto, recorta cada imagen a la altura de un
+  // renglón y encima los títulos de dos renglones.
+  const AUTO = X.LineRuleType.AUTO;
+  // Los títulos, en los estilos de Word (default.heading1…): con
+  // paragraphStyles quedaban DOS estilos «Heading1», el de la librería y el
+  // propio.
+  const titulo = (tam) => ({
+    run: { font: LETRA, size: PT(tam), bold: true, color: AZ, language: IDIOMA },
+    paragraph: { spacing: { before: 240, after: 240, line: 276, lineRule: AUTO }, keepNext: true, keepLines: true },
+  });
+  const doc = new X.Document({
+    title: L.TITULO + " — versión adaptada",
+    subject: L.ASUNTO,
+    creator: L.AUTOR,
+    description: "Versión adaptada: letra grande, alto contraste y lista para lector de pantalla.",
+    styles: {
+      default: {
+        document: { run: { font: LETRA, size: PT(18), color: NE, language: IDIOMA }, paragraph: { spacing: { after: 240, line: 360, lineRule: AUTO } } },
+        heading1: titulo(32), heading2: titulo(26), heading3: titulo(22), heading4: titulo(20),
+      },
+    },
+    numbering: {
+      config: [
+        { reference: "vinetas", levels: [{ level: 0, format: X.LevelFormat.BULLET, text: "•", alignment: X.AlignmentType.LEFT, style: { paragraph: { indent: { left: MM(12), hanging: MM(7) } } } }] },
+        { reference: "numeros", levels: [{ level: 0, format: X.LevelFormat.DECIMAL, text: "%1.", alignment: X.AlignmentType.LEFT, style: { paragraph: { indent: { left: MM(14), hanging: MM(10) } } } }] },
+      ],
+    },
+    sections: [{
+      properties: { page: { size: { width: MM(210), height: MM(297) }, margin: { top: MM(16), bottom: MM(20), left: MM(18), right: MM(18), footer: MM(8) } } },
+      footers: {
+        default: new X.Footer({ children: [new X.Paragraph({
+          alignment: X.AlignmentType.CENTER,
+          children: [new X.TextRun({ text: "Página ", size: PT(14) }), new X.TextRun({ children: [X.PageNumber.CURRENT], size: PT(14) }), new X.TextRun({ text: " de ", size: PT(14) }), new X.TextRun({ children: [X.PageNumber.TOTAL_PAGES], size: PT(14) })],
+        })] }),
+      },
+      children: parrafos,
+    }],
+  });
+  const buf = await X.Packer.toBuffer(doc);
+
+  // Cada imagen, marcada como decorativa: la librería no lo trae, se agrega
+  // a mano la extensión de Office 2019 que usa Word («Marcar como decorativa»).
+  const zip = await JSZip.loadAsync(buf);
+  const DEC = '<a:extLst xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"><a:ext uri="{C183D7F6-B498-43B3-948B-1728B52AA6E4}"><adec:decorative xmlns:adec="http://schemas.microsoft.com/office/drawing/2017/decorative" val="1"/></a:ext></a:extLst>';
+  let xml = await zip.file("word/document.xml").async("string");
+  let decorativas = 0;
+  xml = xml.replace(/<wp:docPr\b([^>]*?)(\/>|>([\s\S]*?)<\/wp:docPr>)/g, (todo, attrs, cierre, dentro) => {
+    decorativas++;
+    return `<wp:docPr${attrs}>${dentro || ""}${DEC}</wp:docPr>`;
+  });
+  // Los bordes de un párrafo, en el orden que pide el esquema de Word (top,
+  // left, bottom, right). docx 9.7.1 los escribe top, bottom, left, right
+  // los pida uno como los pida: Word lo abre igual, pero el archivo no valida.
+  xml = xml.replace(/<w:pBdr>([\s\S]*?)<\/w:pBdr>/g, (todo, dentro) => {
+    const lado = (n) => (dentro.match(new RegExp(`<w:${n}\\b[^>]*/>`)) || [""])[0];
+    return `<w:pBdr>${["top", "left", "bottom", "right", "between", "bar"].map(lado).join("")}</w:pBdr>`;
+  });
+  zip.file("word/document.xml", xml);
+  fs.writeFileSync(destino, await zip.generateAsync({ type: "nodebuffer", compression: "DEFLATE", compressionOptions: { level: 9 } }));
+  return { imagenes: fotos.size, decorativas };
+}
+
 /* ---------------------------------------------------------- generar */
 const elegidos = process.argv.slice(2).filter((x) => !x.startsWith("--"));
 const aArmar = elegidos.length ? LIBROS.filter((l) => elegidos.includes(l.SLUG)) : LIBROS;
@@ -641,6 +1020,9 @@ function archivos(libro) {
     carpeta,
     accesible: path.join(carpeta, libro.SLUG + "-accesible.html"),
     pdf: path.join(carpeta, libro.SLUG + ".pdf"),
+    adaptado: path.join(carpeta, libro.SLUG + "-adaptado.pdf"),
+    adaptadoDocx: path.join(carpeta, libro.SLUG + "-adaptado.docx"),
+    htmlAdaptado: path.join(tmp, libro.SLUG + "-adaptado.html"),
     htmlCuerpo: path.join(tmp, libro.SLUG + "-cuerpo.html"),
     htmlTapa: path.join(tmp, libro.SLUG + "-tapa.html"),
     htmlSello: path.join(tmp, libro.SLUG + "-marca.html"),
@@ -655,9 +1037,11 @@ for (const libro of aArmar) {
   fs.writeFileSync(a.htmlTapa, tapa());
   fs.writeFileSync(a.htmlSello, htmlMarca);
   fs.writeFileSync(a.accesible, accesible());
+  fs.writeFileSync(a.htmlAdaptado, adaptadoHTML());
   console.log(`${libro.TITULO}: ${libro.CAPITULOS.length} capítulos · ${libro.CAPITULOS.reduce((s, c) => s + c.ejercicios.length, 0)} ejercicios\n  Maqueta: ${a.htmlCuerpo}\n  Accesible: ${a.accesible}`);
 }
 if (process.argv.includes("--solo-accesible")) process.exit(0);
+const soloAdaptado = process.argv.includes("--solo-adaptado");
 
 (async () => {
   const { chromium } = require("playwright");
@@ -665,6 +1049,28 @@ if (process.argv.includes("--solo-accesible")) process.exit(0);
   const sinMargen = { top: 0, bottom: 0, left: 0, right: 0 };
   for (const libro of aArmar) {
     const a = archivos(libro);
+    // El adaptado: etiquetado (tagged) y con marcadores (outline) para el
+    // lector de pantalla; sin cifrar ni marca de agua. datosAdaptado() le pone
+    // el idioma, el título que se muestra y los datos del documento.
+    const pAdap = await navegador.newPage();
+    await pAdap.goto("file://" + a.htmlAdaptado, { waitUntil: "load" });
+    await pAdap.evaluate(() => document.fonts.ready);
+    await pAdap.pdf({
+      path: a.adaptado, format: "A4", printBackground: true, tagged: true, outline: true,
+      margin: { top: "16mm", bottom: "20mm", left: "18mm", right: "18mm" },
+      displayHeaderFooter: true,
+      headerTemplate: "<div></div>",
+      footerTemplate: `<div style="width:100%;font-size:14pt;color:#000;font-family:Verdana,sans-serif;text-align:center;">Página <span class="pageNumber"></span> de <span class="totalPages"></span></div>`,
+    });
+    await pAdap.close();
+    datosAdaptado(a.adaptado, { titulo: libro.TITULO + " — versión adaptada", autor: libro.AUTOR, asunto: libro.ASUNTO });
+    console.log("PDF adaptado listo:", a.adaptado);
+    // bloquesAdaptado() lee el libro de L, y el primer recorrido lo dejó en
+    // el último: sin esto, los tres Word salían con el cuento del último.
+    L = libro;
+    const w = await adaptadoDocx(navegador, a.adaptadoDocx);
+    console.log(`Word adaptado listo: ${a.adaptadoDocx} (${w.imagenes} imágenes, ${w.decorativas} marcadas como decorativas)`);
+    if (soloAdaptado) continue;
     const pdfTapa = path.join(tmp, libro.SLUG + "-tapa.pdf");
     const pdfCuerpo = path.join(tmp, libro.SLUG + "-cuerpo.pdf");
     const pdfMarca = path.join(tmp, libro.SLUG + "-marca.pdf");

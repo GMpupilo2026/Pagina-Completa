@@ -683,9 +683,9 @@ async function pruebaMateriales(browser) {
      "material/cambiar-o-no-cambiar/cambiar-o-no-cambiar.pdf", "material/cambiar-o-no-cambiar/cambiar-o-no-cambiar-accesible.html",
      "material/ideas-que-ganan-partidas/ideas-que-ganan-partidas.pdf", "material/ideas-que-ganan-partidas/ideas-que-ganan-partidas-accesible.html",
      "material/los-cimientos-del-ajedrez/los-cimientos-del-ajedrez.pdf", "material/los-cimientos-del-ajedrez/los-cimientos-del-ajedrez-accesible.html",
-     "material/peonita/peonita.pdf", "material/peonita/peonita-accesible.html",
-     "material/peonita-trucos/peonita-trucos.pdf", "material/peonita-trucos/peonita-trucos-accesible.html",
-     "material/peonita-rey/peonita-rey.pdf", "material/peonita-rey/peonita-rey-accesible.html",
+     "material/peonita/peonita.pdf", "material/peonita/peonita-accesible.html", "material/peonita/peonita-adaptado.pdf", "material/peonita/peonita-adaptado.docx",
+     "material/peonita-trucos/peonita-trucos.pdf", "material/peonita-trucos/peonita-trucos-accesible.html", "material/peonita-trucos/peonita-trucos-adaptado.pdf", "material/peonita-trucos/peonita-trucos-adaptado.docx",
+     "material/peonita-rey/peonita-rey.pdf", "material/peonita-rey/peonita-rey-accesible.html", "material/peonita-rey/peonita-rey-adaptado.pdf", "material/peonita-rey/peonita-rey-adaptado.docx",
      "material/coachess-resumen/coachess-resumen.pdf", "material/coachess-resumen/coachess-resumen-accesible.html",
      "material/programas-de-estudio/Programas%20de%20Estudio%20de%20Ajedrez%20(todos).zip",
      "material/programas-de-estudio/00%20Alcance%20y%20secuencia%20-%20Programas%20de%20Estudio%20de%20Ajedrez.docx"]);

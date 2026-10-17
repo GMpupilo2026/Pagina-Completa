@@ -25,8 +25,11 @@
  *
  * Revisa también los secretos para Alessandro de cada libro (un acróstico o un
  * anagrama se rompen con una corrección y nadie lo nota, justo porque están
- * escondidos), y lo generado: que exista el PDF y que la versión accesible
- * traiga todos los capítulos y una descripción de cada dibujo.
+ * escondidos), y lo generado: que exista el PDF, que la versión accesible
+ * traiga todos los capítulos y una descripción de cada dibujo, y que el PDF
+ * adaptado esté etiquetado, sin cifrar, en español, con todo el cuento, con
+ * su XMP de PDF/UA-1 y sin contenido suelto (ni etiquetado ni Artifact), y
+ * que el Word adaptado tenga sus títulos, su idioma y las imágenes decorativas.
  *
  *   node herramientas/verificar-libro-ninos.js
  */
@@ -302,6 +305,130 @@ if (fs.existsSync(acc)) {
   fallos.push(`falta material/${L.SLUG}/${L.SLUG}-accesible.html: hay que correr herramientas/libro-ninos-pdf.js`);
 }
 ok(fs.existsSync(path.join(CARPETA, L.SLUG + ".pdf")), `falta material/${L.SLUG}/${L.SLUG}.pdf`);
+
+// El PDF adaptado (letra grande, para quien ve poco o no ve). Lo que lo hace
+// adaptado no se ve a simple vista, y se pierde sin ningún error: un
+// PdfWriter que copia página por página bota las etiquetas, un cifrado de más
+// estorba al lector de pantalla. Se lee con pypdf.
+const adap = path.join(CARPETA, L.SLUG + "-adaptado.pdf");
+if (fs.existsSync(adap)) {
+  const guion = `
+import sys, json
+from pypdf import PdfReader
+r = PdfReader(sys.argv[1])
+raiz = r.trailer["/Root"]
+prefs = raiz.get("/ViewerPreferences")
+marca = raiz.get("/MarkInfo")
+# Lo que se pinta fuera de toda secuencia marcada (ni etiquetado ni
+# Artifact): PDF/UA-1 lo prohíbe (7.1-3) y veraPDF lo rechaza.
+PINTA = {b"S", b"s", b"f", b"F", b"f*", b"B", b"B*", b"b", b"b*", b"Do", b"sh", b"INLINE IMAGE", b"Tj", b"TJ", b"'", b'"'}
+from pypdf.generic import ContentStream
+sueltos = 0
+for pag in r.pages:
+    nivel = 0
+    for _, op in ContentStream(pag.get_contents(), r).operations:
+        if op in (b"BMC", b"BDC"): nivel += 1
+        elif op == b"EMC": nivel -= 1
+        elif nivel == 0 and op in PINTA: sueltos += 1
+xmp = raiz.get("/Metadata")
+xmp = xmp.get_object().get_data().decode("utf-8", "replace") if xmp is not None else ""
+def titulos(o):
+    for x in o:
+        if isinstance(x, list): yield from titulos(x)
+        else: yield x.title
+print(json.dumps({
+  "cifrado": r.is_encrypted,
+  "etiquetado": bool(marca and marca.get_object().get("/Marked")) and "/StructTreeRoot" in raiz,
+  "idioma": str(raiz.get("/Lang", "")),
+  "titulo_visible": bool(prefs and prefs.get_object().get("/DisplayDocTitle")),
+  "titulo": (r.metadata or {}).get("/Title", ""),
+  "marcadores": list(titulos(r.outline)),
+  "texto": "".join(p.extract_text() for p in r.pages),
+  "sueltos": sueltos,
+  "pdfua": "<pdfuaid:part>1</pdfuaid:part>" in xmp,
+}))`;
+  let d = null;
+  try {
+    d = JSON.parse(require("child_process").execFileSync("python3", ["-c", guion, adap], { maxBuffer: 64 * 1024 * 1024 }));
+  } catch (e) {
+    fallos.push(`${L.SLUG}: no se pudo leer el PDF adaptado (¿falta pypdf? pip install pypdf)`);
+  }
+  if (d) {
+    // pypdf saca el texto con los renglones cortados donde cae el salto: se
+    // compara sin espacios.
+    const junto = (t) => String(t).replace(/\s+/g, "");
+    const texto = junto(d.texto);
+    ok(!d.cifrado, `${L.SLUG}: el PDF adaptado está cifrado: el cifrado estorba al lector de pantalla`);
+    ok(d.etiquetado, `${L.SLUG}: el PDF adaptado no está etiquetado (tagged): el lector de pantalla no sabe qué es título ni en qué orden se lee`);
+    ok(/^es/.test(d.idioma), `${L.SLUG}: el PDF adaptado no dice que está en español (/Lang)`);
+    ok(d.titulo_visible && d.titulo.includes(L.TITULO), `${L.SLUG}: el PDF adaptado no muestra su título`);
+    ok(d.pdfua, `${L.SLUG}: el PDF adaptado no dice en su XMP que es PDF/UA-1 (pdfuaid:part): ¿se saltó pdf-adaptado.py?`);
+    ok(d.sueltos === 0, `${L.SLUG}: el PDF adaptado tiene ${d.sueltos} trozo(s) de contenido sin etiquetar ni marcar como Artifact: PDF/UA-1 lo rechaza (¿se saltó pdf-adaptado.py?)`);
+    ok(d.marcadores.length > 0, `${L.SLUG}: el PDF adaptado no tiene marcadores para saltar de capítulo`);
+    L.CAPITULOS.forEach((c) => {
+      ok(texto.includes(junto(c.titulo)), `${L.SLUG}: el PDF adaptado no tiene el capítulo «${c.titulo}»: hay que volver a correr libro-ninos-pdf.js`);
+      ok(texto.includes(junto(c.escena.alt)), `${L.SLUG}: el PDF adaptado no cuenta el dibujo del capítulo ${c.n}`);
+    });
+    ok(texto.includes(junto("Soluciones")), `${L.SLUG}: el PDF adaptado no trae las soluciones`);
+  }
+} else {
+  fallos.push(`falta material/${L.SLUG}/${L.SLUG}-adaptado.pdf: hay que correr herramientas/libro-ninos-pdf.js --solo-adaptado`);
+}
+
+// El Word adaptado: lo que lo hace accesible tampoco se ve a simple vista.
+// Los títulos con los estilos de Word (el lector de pantalla y el panel de
+// navegación saltan por ellos), el idioma, el título del documento, cada
+// imagen marcada como decorativa (si no, el Comprobador de accesibilidad de
+// Word pide texto alternativo y el lector la anuncia) y el interlineado
+// automático (con uno exacto, LibreOffice recorta las imágenes).
+const docx = path.join(CARPETA, L.SLUG + "-adaptado.docx");
+if (fs.existsSync(docx)) {
+  const guionW = `
+import sys, json, re, zipfile
+from docx import Document
+d = Document(sys.argv[1])
+z = zipfile.ZipFile(sys.argv[1])
+xml = z.read("word/document.xml").decode("utf-8")
+estilos = z.read("word/styles.xml").decode("utf-8")
+print(json.dumps({
+  "titulo": d.core_properties.title or "",
+  "idioma": bool(re.search(r'<w:docDefaults>.*?<w:lang w:val="es-CR"', estilos, re.S)),
+  "titulos2": [p.text for p in d.paragraphs if p.style is not None and p.style.name == "Heading 2"],
+  "h1": sum(1 for p in d.paragraphs if p.style is not None and p.style.name == "Heading 1"),
+  "estilos_repetidos": len(re.findall(r'w:styleId="Heading1"', estilos)),
+  "imagenes": len(re.findall(r"<wp:docPr\\b", xml)),
+  "decorativas": len(re.findall(r'<adec:decorative [^>]*val="1"', xml)),
+  "exactos": len(re.findall(r'w:lineRule="exact"', xml + estilos)),
+  "sin_regla": len(re.findall(r'<w:spacing(?![^>]*w:lineRule)[^>]*w:line="', xml + estilos)),
+  "listas": len(re.findall(r"<w:numPr>", xml)),
+  "texto": " ".join(p.text for p in d.paragraphs),
+}))`;
+  let w = null;
+  try {
+    w = JSON.parse(require("child_process").execFileSync("python3", ["-c", guionW, docx], { maxBuffer: 64 * 1024 * 1024 }));
+  } catch (e) {
+    fallos.push(`${L.SLUG}: no se pudo leer el Word adaptado (¿falta python-docx? pip install python-docx)`);
+  }
+  if (w) {
+    const junto = (t) => String(t).replace(/\s+/g, "");
+    const texto = junto(w.texto);
+    ok(w.titulo.includes(L.TITULO), `${L.SLUG}: el Word adaptado no tiene su título en las propiedades del documento`);
+    ok(w.idioma, `${L.SLUG}: el Word adaptado no está en español (Costa Rica): el lector de pantalla lo pronunciaría en otro idioma`);
+    ok(w.h1 === 1 && w.estilos_repetidos === 1, `${L.SLUG}: el Word adaptado tiene que tener un solo título principal y un solo estilo «Heading1» (hay ${w.h1} y ${w.estilos_repetidos})`);
+    // El Word es de ESTE libro (y no del último que se armó).
+    ok(w.titulo.includes(L.TITULO) && texto.includes(junto(L.DEDICATORIA.join(""))), `${L.SLUG}: el Word adaptado no es de este libro`);
+    L.CAPITULOS.forEach((c) => {
+      ok(w.titulos2.some((t) => t.includes(c.titulo)), `${L.SLUG}: en el Word adaptado, el capítulo «${c.titulo}» no va con el estilo Título 2`);
+      ok(texto.includes(junto(c.escena.alt)), `${L.SLUG}: el Word adaptado no cuenta el dibujo del capítulo ${c.n}`);
+    });
+    ok(w.imagenes > 0 && w.decorativas === w.imagenes, `${L.SLUG}: en el Word adaptado hay ${w.imagenes} imágenes y ${w.decorativas} marcadas como decorativas: tienen que ser todas`);
+    ok(w.exactos === 0 && w.sin_regla === 0, `${L.SLUG}: el Word adaptado tiene interlineados que no son automáticos: LibreOffice recorta las imágenes y encima los títulos`);
+    ok(w.listas > 0, `${L.SLUG}: el Word adaptado no tiene listas de verdad (con su numeración)`);
+    ok(texto.includes(junto("Soluciones")), `${L.SLUG}: el Word adaptado no trae las soluciones`);
+  }
+} else {
+  fallos.push(`falta material/${L.SLUG}/${L.SLUG}-adaptado.docx: hay que correr herramientas/libro-ninos-pdf.js --solo-adaptado`);
+}
 }
 
 LIBROS.forEach(verificarLibro);
