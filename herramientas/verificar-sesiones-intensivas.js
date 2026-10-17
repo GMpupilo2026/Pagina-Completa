@@ -60,23 +60,40 @@ function deDiagramas(archivo, id) {
   const d = diagramas[archivo][id];
   return d && { fen: d.fen, jugadas: d.jugadas.map((j) => j.san) };
 }
-let unaClase = null;
-function deUnaClase(id) {
-  if (!unaClase) {
-    unaClase = {};
-    const dir = path.join(RAIZ, "cursos/protegido/data/una-clase-al-dia");
-    for (const f of fs.readdirSync(dir)) {
-      for (const e of Object.values(JSON.parse(fs.readFileSync(path.join(dir, f), "utf8")).ejercicios || {})) unaClase[e.id] = e;
-    }
+let unaClase = null, partidas = null;
+function leerUnaClase() {
+  if (unaClase) return;
+  unaClase = {};
+  partidas = {};
+  const dir = path.join(RAIZ, "cursos/protegido/data/una-clase-al-dia");
+  for (const f of fs.readdirSync(dir)) {
+    const l = JSON.parse(fs.readFileSync(path.join(dir, f), "utf8"));
+    for (const e of Object.values(l.ejercicios || {})) unaClase[e.id] = e;
+    for (const p of Object.values(l.partidas || {})) partidas[p.id] = p;
   }
+}
+function deUnaClase(id) {
+  leerUnaClase();
   const e = unaClase[id];
   return e && { fen: e.fen, jugadas: e.solucion.map((s) => s.san) };
+}
+/* «ucdp:ml001-1@18»: la partida después de sus primeras 18 medias jugadas, y
+   lo que se jugó después. */
+function dePartida(id) {
+  leerUnaClase();
+  const [pid, ply] = id.split("@");
+  const p = partidas[pid];
+  if (!p || !/^\d+$/.test(ply || "")) return null;
+  const sans = p.moves.map((m) => m.san);
+  const c = jugar(p.start_fen, sans.slice(0, +ply));
+  return c && { fen: c.fen(), jugadas: sans.slice(+ply), apertura: p.apertura, previas: sans.slice(0, +ply) };
 }
 function delBanco(banco) {
   const [tipo, id] = String(banco).split(":");
   if (tipo === "mapa") return deDiagramas("cursos/protegido/data/el-mapa-de-los-finales.json", id);
   if (tipo === "gp") return deDiagramas("cursos/protegido/data/ganar-con-poco.json", id);
   if (tipo === "ucd") return deUnaClase(id);
+  if (tipo === "ucdp") return dePartida(id);
   if (tipo === "lt") {
     const p = (leer("entreno/data/temas.json").puzzles || {})[id];
     return p && { fen: p.fen, jugadas: p.solution.slice() };
@@ -184,6 +201,19 @@ for (const nombre of NOMBRES) {
     const c = jugar(it.fen, sans);
     if (!c) { mal("la línea de la chuleta no se puede jugar: " + it.titulo); return; }
     if (c.fen() !== ej.final) mal("la línea de la chuleta no es la del ejercicio: " + it.titulo);
+  });
+  // En un ejercicio de partida, la nota dice cómo se llegó: la apertura y sus
+  // jugadas desde el principio. Tienen que llevar a ESTA posición.
+  ejercicios.forEach((ej) => {
+    const b = delBanco(ej.banco);
+    if (!b || !b.previas) return;
+    const it = plan.items.find((x) => x.tipo === "nota" && x.titulo === "Ejercicio " + ej.n + " · El cálculo");
+    const m = it && /^Cómo se llegó \((.+?)\): (.+)$/m.exec(it.nota);
+    if (!m) { mal("Ejercicio " + ej.n + ": la nota no dice cómo se llegó a la posición"); return; }
+    if (!m[1].startsWith(b.apertura)) mal("Ejercicio " + ej.n + ": la apertura de la nota no es la de la partida");
+    const sans = m[2].trim().split(/\s+/).map((x) => aIngles(x.replace(/^\d+\.+/, ""))).filter(Boolean);
+    const c = jugar("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", sans);
+    if (!c || c.fen() !== ej.fen) mal("Ejercicio " + ej.n + ": las jugadas de «Cómo se llegó» no llevan a la posición");
   });
   if (fallos === antes1) console.log("  ✓ las diez posiciones salen del banco; líneas, trampas y chuletas se juegan con chess.js");
 
