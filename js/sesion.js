@@ -3001,6 +3001,8 @@
                 fotografia: fotoEnCurso || undefined,
                 // El entrenamiento que el profe pide abrir (js/clase-entrenamientos.js).
                 entreno: entrenoEnCurso || undefined,
+                // Alumno: cuántos lleva del entrenamiento que abrió el profe (js/clase-entrenamientos.js).
+                entreno_hechos: entrenoHechosPresencia || undefined,
             };
         }
 
@@ -3072,7 +3074,7 @@
                     }
                     if (meta && meta.role === "alumno") {
                         if (isTeacher && sacadosDeLaClase.has(key)) continue;
-                        onlineStudents.set(key, { email: meta.email, full_name: meta.full_name, hand_raised: !!meta.hand_raised, hand_at: meta.hand_at || null, calentamiento: meta.calentamiento || null, tanda: meta.tanda || null });
+                        onlineStudents.set(key, { email: meta.email, full_name: meta.full_name, hand_raised: !!meta.hand_raised, hand_at: meta.hand_at || null, calentamiento: meta.calentamiento || null, tanda: meta.tanda || null, entreno_hechos: meta.entreno_hechos || null });
                     } else if (meta && meta.role === "supervision") {
                         // Si además está mirando la partida de un alumno, el profe lo sabe.
                         const suya = meta.mirando_a && practiceStudentBoards[meta.mirando_a];
@@ -3088,7 +3090,7 @@
                 // En la competencia, el alumno ve su puesto: sale de lo que anuncian los demás.
                 else if (!isTeacher && !esObservador && tandaMia && tandaEsReto()) pintarTandaAlumno();
                 pintarEquiposProfe();
-                if (isTeacher) { anotarConectados(); revisarCallados(); pintarQuienesEntraron(); }
+                if (isTeacher) { pintarAciertosDelEntreno(); anotarConectados(); revisarCallados(); pintarQuienesEntraron(); }
                 pintarObservadores(mirando);
                 if (!isTeacher && !esObservador) pintarTeMiran(meMiran);
                 // El nombre del elegido sale de la presencia: al recargar llega después.
@@ -5601,6 +5603,25 @@
             cuenta.textContent = items.length + " ejercicios";
             barra.append(cuenta, vistaPreviaTipos.control());
             body.appendChild(barra);
+            /* «Que lo practiquen solos»: a cada alumno se le abre este nivel de
+               entreno/tipos.html en la ventana de la clase, cada uno lo resuelve
+               en su tablero y el profe ve cuántos acierta (js/clase-entrenamientos.js).
+               Va en todos los tipos: la mayoría no tiene «Preguntar» porque se
+               contesta con algo que el tablero de la clase no sabe pedir (una
+               opción, una cifra, casillas, piezas para armar). */
+            const desde = (item) => t.id + "/" + nivel.n + "/" + item.id;
+            if (items.length) {
+                const solos = document.createElement("div");
+                solos.className = "mt-2 rounded-lg border border-accent-500 bg-accent-50 dark:bg-brand-800 p-2.5";
+                const sp = document.createElement("p");
+                sp.className = "text-xs text-brand-800 dark:text-white";
+                sp.textContent = "Que lo practiquen solos: a cada alumno se le abren los " + items.length + " ejercicios de este nivel en una ventana encima de la clase, y aquí ves cuántos acierta cada uno.";
+                const solosBtn = tiposBoton("🪟 Que lo practiquen solos", TIPOS_BTN_ACCION, () => pedirQueLoAbran("tipos", desde(items[0])), "Cada alumno resuelve el nivel en su tablero; tú ves sus aciertos");
+                solosBtn.classList.add("mt-1.5");
+                solosBtn.dataset.practicarSolos = "1";
+                solos.append(sp, solosBtn);
+                body.appendChild(solos);
+            }
             const ul = document.createElement("ul");
             ul.className = "space-y-2 mt-2 max-h-96 overflow-y-auto pr-1";
             items.forEach((item, i) => {
@@ -5651,6 +5672,7 @@
                 if (t.id === "remata") acciones.appendChild(tiposBoton("🎯 Practicar", TIPOS_BTN_ACCION, () => tiposPracticar(item.fen), "Cada alumno juega la posición contra el motor para rematar la ventaja"));
                 if (t.id === "tablas") acciones.appendChild(tiposBoton("🎯 Practicar", TIPOS_BTN_ACCION, () => tiposPracticar(item.fen), "Cada alumno juega la posición contra el motor para salvar las tablas"));
                 if (t.id === "con-lo-justo") acciones.appendChild(tiposBoton("🎯 Practicar", TIPOS_BTN_ACCION, () => tiposPracticar(item.fen), "Cada alumno juega el final contra el motor"));
+                acciones.appendChild(tiposBoton("🪟 Que la practiquen", TIPOS_BTN, () => pedirQueLoAbran("tipos", desde(item)), "A cada alumno se le abre este ejercicio en una ventana (y sigue con los del nivel); tú ves sus aciertos"));
                 const respBtn = tiposBoton("🔎 Respuesta", TIPOS_BTN, () => {
                     const abierta = !respWrap.classList.contains("hidden");
                     if (!abierta && !respWrap.firstChild) respWrap.appendChild(tiposRespuesta(t.id, item));

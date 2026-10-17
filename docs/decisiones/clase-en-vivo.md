@@ -4051,6 +4051,48 @@ panel, que cada uno mande la posición que es, que la respuesta no llegue a la
 base, que la práctica arranque con el final y que Fotografía mande primero la
 posición, después `pieces_hidden=false` y a los segundos `true`.
 
+#### Habilidades: que lo practiquen solos
+
+La mayoría de los tipos (el Detective, la Balanza, el Barrido, Intercambios,
+Constrúyela tú, la Ruta segura, Elige a tiempo, ¿Qué apertura es?, Rey y peón
+1 y 2…) solo tenían «📥 Al tablero»: se contestan con algo que el tablero de la
+clase no sabe pedir (una opción, una cifra, casillas marcadas, piezas para
+armar), así que no había cómo mandárselos al alumno para que los hiciera solo.
+Rehacer cada juego dentro de la clase era copiar diecinueve juegos; ya existen
+en `entreno/tipos.html` y la clase ya sabe abrir una página en la ventana de
+cada alumno («Abrirlo a todos en una ventana»).
+
+- **Cada nivel lleva «🪟 Que lo practiquen solos»** (arriba de la lista) y cada
+  ejercicio «🪟 Que la practiquen». Es el pedido de siempre de la ventana con
+  el recorte `tipo/nivel/id`: la página se abre en ese nivel desde ese
+  ejercicio (`abrirJuego` ya aceptaba el id; el nivel entero va desde el
+  PRIMERO, no desde el primero que el alumno no tenía resuelto, para que toda
+  la clase haga los mismos).
+- **La página le avisa a la clase cada ejercicio que termina**: dentro del
+  marco con `?en-clase=1`, `terminar()` manda `postMessage({fuente:
+  "entreno-en-clase", id: "tipo:id", estrellas})` solo a `location.origin`. La
+  clase lo acepta solo si viene de SU marco (`ev.source`), del mismo origen y
+  con forma válida: otra ventana no puede sumarle aciertos a nadie (sería
+  hacerse trampa a sí mismo, porque solo cambia lo que el alumno anuncia).
+- **Cuenta lo primero que sacó en cada ejercicio**: «Otra vez» no lo mejora,
+  como en el calentamiento. Bien es con una estrella o más (lo resolvió);
+  «sin errores», con tres. Lo lleva en `sessionStorage` por pedido: si recarga,
+  sigue con lo que llevaba.
+- **El alumno lo anuncia en su presencia** (`entreno_hechos` {at, hechos, bien,
+  perfectos}, con el `at` del pedido del profe), con un rato al azar para que
+  no anuncie toda la clase a la vez (el tope de la presencia es por cliente).
+  El profe ve la tabla debajo de «Cerrar la ventana a todos»
+  (`#entreno-aciertos`): quien se desconecta sigue con lo que llevaba, la tabla
+  se queda al cerrar la ventana («Así les fue») y se limpia con el pedido
+  siguiente. Lo de un pedido viejo no cuenta.
+- **No queda en la base como el calentamiento** (`tanda_resultados`): la tabla
+  es de esa clase. Lo que sí queda es lo de siempre: cada ejercicio resuelto
+  va a `training_progress` desde la página (meta del día, informes, tareas).
+
+Lo revisa `verificar-clase-entrenamientos.js`: cada tipo con lista tiene los
+dos botones, el recorte y el enlace, la tabla del profe, y un Detective
+resuelto de verdad dentro de la ventana llega anunciado.
+
 ## La clase en vivo, sin ver la pantalla (y lo que quedaba de la Academia)
 
 Se recorrió la Academia como la recorre una persona ciega —Modo Adaptado
