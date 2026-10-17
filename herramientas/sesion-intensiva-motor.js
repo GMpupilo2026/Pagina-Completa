@@ -26,6 +26,7 @@
  *   trampa    tras la jugada tentadora y su refutación:
  *               «tablas»  entre −noGana y +noGana;
  *               «escapa»  noGana o menos (la ventaja ya no está);
+ *               «rival»   −noGana o menos (el rival queda mejor);
  *               «pierde»  −gana o menos (la ventaja pasó al rival);
  *               «castiga» `gana` o más: la trampa es un error del RIVAL y la
  *                         refutación lo castiga.
@@ -107,6 +108,7 @@ async function resolver(m, t) {
     const ok = t.resultado === "pierde" ? v <= -GANA
              : t.resultado === "tablas" ? Math.abs(v) <= NO_GANA
              : t.resultado === "escapa" ? v <= NO_GANA
+             : t.resultado === "rival" ? v <= -NO_GANA
              : t.resultado === "castiga" ? v >= GANA : false;
     return { ok, resultado: t.resultado, refuta: t.refuta, detalle: "eval " + texto(v) };
   }
