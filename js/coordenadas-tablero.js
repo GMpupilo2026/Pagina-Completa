@@ -161,6 +161,29 @@ window.Coordenadas = (function () {
     };
   }
 
+  /* Las cajas con barra propia que hay ENTRE el tablero y el bloque que
+     contiene a la capa. La capa se coloca respecto de ese bloque, así que si el
+     tablero va en una lista que se desplaza por su cuenta (los ejercicios de la
+     pestaña Entrenamientos de la clase, `max-h-96 overflow-y-auto`), la caja ni
+     recorta las etiquetas ni las mueve: al bajar la lista quedaban sueltas
+     encima del panel, sobre «Así les fue» y los nombres. Cada etiqueta se
+     esconde si su centro cae fuera de lo que se ve de alguna de esas cajas, y
+     se recoloca cuando cualquiera de ellas se desplaza. */
+  function cajasQueRecortan(tablero, marco) {
+    const hasta = marco.offsetParent;
+    const cajas = [];
+    for (let n = tablero.parentElement; n && n !== hasta && n !== document.body && n !== document.documentElement; n = n.parentElement) {
+      const cs = getComputedStyle(n);
+      if (cs.overflowX !== "visible" || cs.overflowY !== "visible") cajas.push(n);
+    }
+    return cajas;
+  }
+  function loQueSeVe(caja) {
+    const r = caja.getBoundingClientRect();
+    const izq = r.left + caja.clientLeft, arriba = r.top + caja.clientTop;
+    return { left: izq, top: arriba, right: izq + caja.clientWidth, bottom: arriba + caja.clientHeight };
+  }
+
   function posicionar(tablero, marco) {
     const visible = tablero.isConnected && tablero.getClientRects().length > 0;
     const b = visible && bordes(tablero);
@@ -179,6 +202,13 @@ window.Coordenadas = (function () {
     const lado = b.abajo[0].r.width;
     const letra = Math.max(9, Math.min(13, Math.round(lado * 0.24)));
     marco.style.color = colorPara(tablero);
+    const cajas = cajasQueRecortan(tablero, marco);
+    cajas.forEach((c) => {
+      if (marco.__cajas && marco.__cajas.has(c)) return;
+      (marco.__cajas = marco.__cajas || new WeakSet()).add(c);
+      c.addEventListener("scroll", () => marco.__repintar && marco.__repintar(), { passive: true });
+    });
+    const recortes = cajas.map(loQueSeVe);
 
     todas.forEach((e, i) => {
       const span = marco.children[i];
@@ -196,6 +226,11 @@ window.Coordenadas = (function () {
         span.style.left = (x - ESPACIO - origen.left) + "px";
         span.style.top = (e.r.top + e.r.height / 2 - origen.top) + "px";
       }
+      // El centro de la etiqueta en la pantalla, para ver si cae dentro de lo
+      // que muestran las cajas con barra (ver cajasQueRecortan).
+      const cx = parseFloat(span.style.left) + origen.left, cy = parseFloat(span.style.top) + origen.top;
+      const fuera = recortes.some((r) => cx < r.left || cx > r.right || cy < r.top || cy > r.bottom);
+      span.style.visibility = fuera ? "hidden" : "";
     });
   }
 
@@ -233,6 +268,7 @@ window.Coordenadas = (function () {
         posicionar(tablero, marco);
       });
     };
+    marco.__repintar = repintar;
     new MutationObserver(repintar).observe(tablero, { childList: true, subtree: true, attributes: true, attributeFilter: ["data-square", "class", "style", "hidden"] });
     if (window.ResizeObserver) {
       const ro = new ResizeObserver(repintar);
