@@ -80,6 +80,72 @@ for (const p of ["estandar.html", "niebla.html", "crazyhouse.html"]) {
   ok(s.includes("Tablas por triple repetición."), p + ": el final dice por qué fueron tablas");
 }
 
+console.log("\nLas prácticas que se juegan en la página (triple repetición y 50 jugadas, automáticas)");
+{
+  // Lo que hace el Bot de Oscar: el motor se vuelve a cargar desde la FEN en
+  // cada jugada, y eso le borra a chess.js el historial.
+  const motor = new Chess();
+  const c = Repeticion.contador();
+  c.anotar(motor);
+  for (const j of vaiven) { motor.move(j); motor.load(motor.fen()); c.anotar(motor); }
+  ok(!motor.in_threefold_repetition(), "recargado desde la FEN, chess.js solo no ve la repetición (por eso hace falta el contador)");
+  ok(c.veces() === 3, "el contador la ve: la posición inicial tres veces");
+  c.reiniciar(); c.anotar(motor);
+  ok(c.veces() === 1, "al empezar otra partida el contador vuelve a cero");
+  const c2 = Repeticion.contador(); const m2 = new Chess(); c2.anotar(m2);
+  for (const j of alPaso) { m2.move(j); m2.load(m2.fen()); c2.anotar(m2); }
+  ok(c2.veces() === 3, "el contador tampoco separa por una captura al paso que nadie puede hacer");
+  ok(Repeticion.cincuentaJugadas("8/8/4k3/8/8/4K3/4R3/8 b - - 100 80"), "100 medias jugadas sin captura ni peón: 50 jugadas");
+  ok(!Repeticion.cincuentaJugadas("8/8/4k3/8/8/4K3/4R3/8 b - - 99 80"), "99 medias jugadas todavía no");
+  ok(!Repeticion.cincuentaJugadas("lo-que-sea"), "lo que no es una FEN no declara tablas");
+
+  // Bot de Oscar: cada jugada (del alumno, del bot y la escrita a ciegas)
+  // anota su posición antes de mirar si terminó.
+  const bot = fs.readFileSync(path.join(RAIZ, "js", "bot.js"), "utf8");
+  const html = fs.readFileSync(path.join(RAIZ, "bot.html"), "utf8");
+  ok(html.indexOf('src="js/repeticion.js"') !== -1 && html.indexOf('src="js/repeticion.js"') < html.indexOf('src="js/bot.js"'),
+    "bot.html carga js/repeticion.js antes que js/bot.js");
+  const finales = bot.match(/^.*if \(revisarFinal\(\)\) return;$/gm) || [];
+  const conAnotar = bot.match(/anotarPosicion\(\);\n\s*if \(revisarFinal\(\)\) return;/g) || [];
+  ok(finales.length >= 4 && conAnotar.length === finales.length,
+    "bot.js: las " + finales.length + " jugadas anotan la posición antes de revisar el final (" + conAnotar.length + ")");
+  ok(/tablasPorReglamento\(\) \|\| d/.test(bot) && bot.includes("Tablas por triple repetición") && bot.includes("Tablas por la regla de las 50 jugadas"),
+    "bot.js: el final mira la repetición y las 50 jugadas, y dice por qué");
+
+  // «La clase juega» (la votación de la clase en vivo): se corre de verdad.
+  const vm = require("vm");
+  const ctx = { Chess, Repeticion, document: { getElementById: () => null }, sessionStorage: { getItem: () => null }, console };
+  vm.createContext(ctx);
+  vm.runInContext(fs.readFileSync(path.join(RAIZ, "js", "clase-votacion.js"), "utf8")
+    + "\n;globalThis.__t = { fin: finalDeLaPartida, poner: (p, b) => { partidaClase = p; board = b; } };", ctx);
+  const tablero = (g) => ({ game: g, fen: () => g.fen() });
+  const juego = new Chess();
+  // El profe mostró el vaivén ANTES de empezar: eso no cuenta.
+  vaiven.forEach((j) => juego.move(j));
+  ctx.__t.poner({ fenInicial: juego.fen(), desde: juego.history().length, color: "w" }, tablero(juego));
+  vaiven.slice(0, 4).forEach((j) => juego.move(j));
+  ok(ctx.__t.fin() === null, "la clase juega: lo que el profe mostró antes de empezar no cuenta para la repetición");
+  vaiven.slice(4).forEach((j) => juego.move(j));
+  ok(ctx.__t.fin() === "Tablas por triple repetición.", "la clase juega: la tercera vez desde que empezó son tablas, solas");
+  const cincuenta = new Chess("8/8/4k3/8/8/4K3/4R3/8 w - - 99 80");
+  ctx.__t.poner({ fenInicial: cincuenta.fen(), desde: 0, color: "w" }, tablero(cincuenta));
+  ok(ctx.__t.fin() === null, "la clase juega: a 99 medias jugadas todavía sigue");
+  cincuenta.move("Ra2");
+  ok(ctx.__t.fin() === "Tablas por la regla de las 50 jugadas.", "la clase juega: a las 50 jugadas son tablas, solas");
+  const vieja = new Chess(); vaiven.forEach((j) => vieja.move(j));
+  ctx.__t.poner({ color: "w" }, tablero(vieja));
+  ok(ctx.__t.fin() === null, "la clase juega: una partida guardada sin fenInicial (de antes) no inventa tablas");
+
+  // Habilidades: «Con lo justo» y «Rey y peón» se juegan contra la defensa.
+  const tipos = fs.readFileSync(path.join(RAIZ, "js", "entreno-tipos.js"), "utf8");
+  const conLoJusto = tipos.slice(tipos.indexOf('JUEGOS["con-lo-justo"]'), tipos.indexOf("function rutear()"));
+  ok(/in_threefold_repetition\(\)/.test(conLoJusto) && /in_draw\(\)/.test(conLoJusto) && (conLoJusto.match(/tablasPorReglamento\(\)\) return/g) || []).length === 2,
+    "Con lo justo: mira la repetición y las 50 jugadas después de cada jugada de los dos");
+  const mas = fs.readFileSync(path.join(RAIZ, "js", "entreno-tipos-mas.js"), "utf8");
+  const kpk = mas.slice(mas.indexOf("M.defensaKpk(Chess, bitsKpk, juego.fen())"), mas.indexOf("$(\"juego-enunciado\").textContent = item.nivel === 3"));
+  ok(/in_threefold_repetition\(\)/.test(kpk) && /in_draw\(\)/.test(kpk), "Rey y peón: mira la repetición y las 50 jugadas después de la defensa");
+}
+
 console.log("\nEl desfase contra el servidor");
 (async () => {
   global.document = { addEventListener() {}, visibilityState: "visible" };

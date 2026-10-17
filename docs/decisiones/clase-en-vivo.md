@@ -526,6 +526,84 @@ impersonando roles.
 Está probado que falla de verdad: sin descontar el reloj al mover, o sin
 pintar la partida escrita, se cae.
 
+### Practicar: cuántos intentos tiene cada alumno
+
+En «🎯 Practicar» el alumno podía reintentar la ronda sin fin: el profe veía
+«intento 7» en la grilla, pero no podía decir «tienes tres». Ahora elige
+**«Intentos por alumno»** al abrir la ronda (sin límite, 1, 2, 3, 5 o 10) y lo
+puede cambiar con la ronda en curso —darles uno más, o cortar los reintentos—
+desde el mismo selector de la práctica activa.
+
+- **Se guarda en la ronda**, `practice_sessions.max_intentos` (null: sin
+  límite, como siempre; de 1 a 20 por un `check`). Viaja por `crearPractica()`,
+  la única puerta, así que vale también para Archivos, Entrenamientos y «Con lo
+  justo». Cambiarlo es un UPDATE de la ronda (la política ya le deja al profe
+  escribir la suya) y al alumno le llega por el Realtime que ya escucha.
+- **Lo hace cumplir la base, no el botón** (migración
+  `practica_intentos_por_alumno`, en el trigger que ya protegía la fila del
+  alumno, `practica_ayuda_proteger`). Esconder «↻ Reintentar» no basta: desde
+  la consola se podía mandar el UPDATE igual. Para el alumno:
+  - reintentar es **sumar uno**: `attempts` no vuelve a 1 ni salta;
+  - una partida terminada **no vuelve a «playing» sin gastar un intento** —si
+    no, el tope se saltaba reiniciando la fila sin tocar el contador—;
+  - no se reintenta pasado el tope ni con la ronda cerrada;
+  - su fila nueva arranca en el intento 1 aunque mande otra cosa
+    (`practica_intentos_al_crear`, BEFORE INSERT).
+  Comprobado impersonando a una alumna en un bloque que se deshace solo: con
+  tope 2, el 3.º lo rechaza («Ya usaste tus 2 intentos de esta práctica.»), y
+  con el profe subiéndolo a 3, pasa. El profe y quien observa no tocan
+  `attempts`: el trigger ya les devolvía la fila como estaba.
+- **El alumno lo ve escrito**: «Intento 2 de 3.» debajo del estado, y al
+  gastarlos «Usaste tus 3 intentos.» (con uno solo, «Esta práctica era de un
+  solo intento.»). «↻ Reintentar» no se ofrece, y escribir «reintentar» en el
+  cuadro de comandos contesta lo mismo en vez de no hacer nada. Si la base
+  rechaza el reintento (el profe bajó el tope justo antes), se dice lo que
+  contestó y la partida queda como estaba: `savePracticeGameRow()` devuelve el
+  error en lugar de tragárselo.
+- **La grilla del profe dice «intento 2 de 3»**, y se pone al día al cambiar el
+  tope.
+
+Se aplicó con `execute_sql` (`apply_migration` se colgó dos veces sin aplicar
+nada) y se anotó a mano en `supabase_migrations.schema_migrations` con el texto
+exacto del archivo (mismo md5). Para que no pidiera la confirmación aparte de
+un `drop`, el trigger va con `create or replace trigger`.
+
+**Al tocar esto, correr `node herramientas/verificar-todo.js practica-intentos`.**
+Está probado que falla de verdad: sin mandar el tope en la ronda o sin
+esconder «Reintentar» con los intentos gastados, salta.
+
+### Practicar: las jugadas de cada intento, para revisarlas en clase
+
+Reintentar reusa la fila de `practice_games` (un solo tablero por alumno en la
+grilla), así que las jugadas del intento anterior se perdían. Ahora se guardan
+todas, y el profe elige cuál mostrar a la clase.
+
+- **Las guarda la base** (migración `practica_guarda_cada_intento`): el trigger
+  `interno.practica_guardar_intento` (SECURITY DEFINER, AFTER UPDATE OF
+  attempts) copia el intento que termina a `practice_intentos` —jugadas, cómo
+  terminó y su número— en el mismo momento en que el alumno reintenta. El
+  intento en curso sigue en `practice_games`; juntos son la ronda entera. Que
+  lo haga un trigger y no la página quiere decir que no se saltea y que el
+  alumno no lo escribe: la tabla no tiene permisos de escritura para nadie
+  desde afuera. Comprobado impersonando: una alumna que reintenta dos veces
+  deja sus dos intentos; no puede insertarlos, cambiarlos ni borrarlos; su
+  profe los ve, otro alumno no. La lectura es la de `practice_games`, con el
+  conjunto armado una vez, más la restrictiva de acceso vigente.
+- **«🔁 Revisar los intentos»** en la pestaña Practicar sigue a mano después de
+  «Terminar práctica»: es para repasar, no para seguir en vivo. La lista se
+  pide **solo al abrirla**, sin Realtime (la práctica ya escucha bastante;
+  ver «La práctica no recarga la lista en cada jugada»). Cada alumno, con sus
+  intentos del primero al último y cómo terminó cada uno.
+- **«📺 Mostrar»** usa la misma puerta que «Mostrar a la clase» de Preguntar,
+  ahora `mostrarJugadasALaClase()`: va como variante que mira el profe
+  (`game_state.vista`), la partida de la clase no se toca, y si el tablero ya
+  no tiene la posición de la práctica pregunta antes de reemplazarla. «Decir
+  de quién es al mostrarlo» arranca sin marcar, por lo mismo que allá.
+
+**Al tocar esto, correr `node herramientas/verificar-todo.js practica-intentos
+clase-mostrar`.** Está probado que falla de verdad: sin ordenar los intentos o
+mandando siempre el nombre, salta.
+
 ### Antes y después de la clase: el plan marcado, la tarea de repaso y «Tu última clase»
 
 La clase empezaba en «Mi plan» y terminaba en «Cerrar la clase», pero ninguno
@@ -1288,6 +1366,52 @@ sin aviso y vuelve a llamar lo que la página hace al quedar suscrita) y mira
 que la alumna vea la jugada y la pregunta, y que el profe no relea.
 `verificar-clase-tanda.js` comprueba que el anuncio no sale en el acto. Los
 dos fallan sin el arreglo.
+
+### La presencia tiene un tope de anuncios
+
+El 17/10/2026 el profe vio a varios alumnos fuera de «Alumnos conectados»
+estando conectados. En la base estaba la prueba: su latido de asistencia
+(`class_presence_log`) seguía, y en el registro de Realtime había doce
+`ClientPresenceRateLimitReached` de siete alumnos, todos durante la
+competencia y el calentamiento de esa clase.
+
+- **Realtime deja a cada uno 5 anuncios de presencia (`track` o `untrack`)
+  cada 30 s por canal**, y con el sexto **cierra el canal** (no lo deja caer:
+  lo cierra, y un canal cerrado `supabase-js` no lo vuelve a abrir). El alumno
+  sigue viendo la clase —el tablero va por otro canal— y en su pantalla no
+  pasa nada; solo deja de estar en la presencia, hasta que recarga. Es el
+  límite por defecto del servidor (`client_presence_rate_limit`, en
+  `presence_handler.ex` de supabase/realtime), y es aparte de los 500
+  mensajes por segundo del proyecto (ver «Treinta alumnos a la vez»).
+- **Lo que lo pasaba**: en la tanda cada ejercicio cerrado es un anuncio
+  (`anunciarTanda`), y la espera al azar de 0,3-4 s solo junta los que caen
+  dentro de ella. Ese día hubo quien cerró 10 en 30 s (fallar rápido también
+  cierra). A un profe le podía pasar igual con «Mirar y ayudar», la Fotografía
+  o abrir entrenamientos seguidos, y entonces el que dejaba de ver a todos era
+  él.
+- **Todo anuncio sale por `anunciarPresencia()`** (`js/sesion.js`), nunca con
+  `track()` suelto: como mucho 4 cada 31 s (`cupoDePresencia`, uno menos y un
+  segundo más que Realtime). Lo que pide anunciar de más espera su lugar y
+  sale **uno solo, con lo último** (`metaDePresencia()` se arma al mandar):
+  nada se pierde, solo llega más tarde. Lo que cuesta: en una competencia
+  rápida el profe ve la cuenta de cada uno hasta unos 30 s atrasada.
+- **Un canal recién suscrito arranca con el cupo entero**
+  (`reiniciarCupoDePresencia()`): en Realtime es otro proceso, con su cuenta
+  en cero.
+- **Si Realtime cierra el canal igual** (`CLOSED`), la página arma otro a los
+  1-4 s, al azar para que no vuelvan todos juntos, y se vuelve a anunciar.
+  No lo hace si al alumno lo sacaron de la clase (`meSacaron`): ahí se cierra
+  a propósito.
+
+**Al tocar esto, correr `node herramientas/verificar-todo.js
+clase-presencia-tope clase-tanda clase-entrenamientos practica-ayuda`.**
+`verificar-clase-presencia-tope.js` mira que no haya `track()` suelto en las
+partes de la clase, que diez anuncios seguidos no pasen del tope y el que
+espera salga con lo último, y que tras un `CLOSED` haya canal nuevo (y no si
+lo sacaron). Está probado que falla de verdad: mandando siempre en el acto y
+sin reconectar, salta. Los verificadores que prueban qué dice cada anuncio, y
+no su ritmo, abren la página con `sinTopeDePresencia` (en `abrir()` de
+`verificar-clase-registrada.js`).
 
 ### La clase sin actividad se cierra sola
 
@@ -4005,6 +4129,48 @@ panel, que cada uno mande la posición que es, que la respuesta no llegue a la
 base, que la práctica arranque con el final y que Fotografía mande primero la
 posición, después `pieces_hidden=false` y a los segundos `true`.
 
+#### Habilidades: que lo practiquen solos
+
+La mayoría de los tipos (el Detective, la Balanza, el Barrido, Intercambios,
+Constrúyela tú, la Ruta segura, Elige a tiempo, ¿Qué apertura es?, Rey y peón
+1 y 2…) solo tenían «📥 Al tablero»: se contestan con algo que el tablero de la
+clase no sabe pedir (una opción, una cifra, casillas marcadas, piezas para
+armar), así que no había cómo mandárselos al alumno para que los hiciera solo.
+Rehacer cada juego dentro de la clase era copiar diecinueve juegos; ya existen
+en `entreno/tipos.html` y la clase ya sabe abrir una página en la ventana de
+cada alumno («Abrirlo a todos en una ventana»).
+
+- **Cada nivel lleva «🪟 Que lo practiquen solos»** (arriba de la lista) y cada
+  ejercicio «🪟 Que la practiquen». Es el pedido de siempre de la ventana con
+  el recorte `tipo/nivel/id`: la página se abre en ese nivel desde ese
+  ejercicio (`abrirJuego` ya aceptaba el id; el nivel entero va desde el
+  PRIMERO, no desde el primero que el alumno no tenía resuelto, para que toda
+  la clase haga los mismos).
+- **La página le avisa a la clase cada ejercicio que termina**: dentro del
+  marco con `?en-clase=1`, `terminar()` manda `postMessage({fuente:
+  "entreno-en-clase", id: "tipo:id", estrellas})` solo a `location.origin`. La
+  clase lo acepta solo si viene de SU marco (`ev.source`), del mismo origen y
+  con forma válida: otra ventana no puede sumarle aciertos a nadie (sería
+  hacerse trampa a sí mismo, porque solo cambia lo que el alumno anuncia).
+- **Cuenta lo primero que sacó en cada ejercicio**: «Otra vez» no lo mejora,
+  como en el calentamiento. Bien es con una estrella o más (lo resolvió);
+  «sin errores», con tres. Lo lleva en `sessionStorage` por pedido: si recarga,
+  sigue con lo que llevaba.
+- **El alumno lo anuncia en su presencia** (`entreno_hechos` {at, hechos, bien,
+  perfectos}, con el `at` del pedido del profe), con un rato al azar para que
+  no anuncie toda la clase a la vez (el tope de la presencia es por cliente).
+  El profe ve la tabla debajo de «Cerrar la ventana a todos»
+  (`#entreno-aciertos`): quien se desconecta sigue con lo que llevaba, la tabla
+  se queda al cerrar la ventana («Así les fue») y se limpia con el pedido
+  siguiente. Lo de un pedido viejo no cuenta.
+- **No queda en la base como el calentamiento** (`tanda_resultados`): la tabla
+  es de esa clase. Lo que sí queda es lo de siempre: cada ejercicio resuelto
+  va a `training_progress` desde la página (meta del día, informes, tareas).
+
+Lo revisa `verificar-clase-entrenamientos.js`: cada tipo con lista tiene los
+dos botones, el recorte y el enlace, la tabla del profe, y un Detective
+resuelto de verdad dentro de la ventana llega anunciado.
+
 ## La clase en vivo, sin ver la pantalla (y lo que quedaba de la Academia)
 
 Se recorrió la Academia como la recorre una persona ciega —Modo Adaptado
@@ -4198,3 +4364,62 @@ escondido no hable, que `#clase-voz` se oiga, que al recargar no lea los
 carteles y que apagarla la calle. Está probado que falla de verdad: sin la
 excepción de `.cc-msg` salta la jugada del profe, y sin la regla del mismo
 texto salta el eco.
+
+## Dos alumnos juegan en el tablero de la clase
+
+La base ya sabe que dos alumnos juegan en el tablero de la clase, uno con cada
+color: `game_state.rival_id` mueve el color que no tiene quien lleva el control
+(`active_player_id` con `active_player_color` en `w` o `b`). Toda la clase mira
+la partida. La migración es `20261017173336_clase_dos_alumnos_juegan.sql`. **La
+pantalla para ponerle el rival a un alumno («Contra: …») todavía no está en
+`main`**: vive en el PR #693, sin mergear. Hasta que entre, `rival_id` queda
+siempre vacío y lo único que cambia en la clase es lo de abajo.
+
+- **Solo el profe decide quién juega y con qué color.** El trigger
+  `protect_game_state_teacher_columns` le devuelve al alumno
+  `active_player_color` y `rival_id`, como ya hacía con `active_player_id`.
+  Antes `active_player_color` no estaba en la lista: desde la consola, un
+  alumno con el control de las blancas podía pasarse a los dos colores.
+- **Sin control de un solo color no hay rival**: si el profe quita el control,
+  pasa a «ambos colores» o se lo da al mismo alumno, la base borra `rival_id`.
+- **Con un solo color se juega de a una jugada**, y eso lo dice la base, no el
+  botón: se agrega una jugada del color propio o se deshace la propia.
+  Deshacer la jugada del otro, meter dos jugadas de golpe o cambiar la posición
+  sin jugar se rechaza («Ese color no es el tuyo.», «Con un solo color se juega
+  de a una jugada.»). Con dos alumnos escribiendo la misma fila, la pantalla no
+  puede ser la que decide.
+- Por eso `js/sesion.js` ya no le ofrece a quien juega con un solo color lo que
+  la base le rechazaría. Antes, «Deshacer» le aparecía justo cuando le tocaba
+  mover, es decir, cuando deshacer quitaba la jugada **del otro**.
+  `canUndoNow()` le deja deshacer solo la jugada propia, y «Jugar desde aquí»
+  (cortar la partida en una jugada anterior) queda para el profe y para quien
+  tiene los dos colores (`puedeReescribirPartida()`).
+
+### Una migración escrita antes se come lo que se sumó después
+
+El SQL se escribió el 3/10 en `supabase/pendientes/` del PR #693 y quedó sin
+aplicar dos semanas. En ese tiempo, otras dos migraciones sumaron
+`presentacion` (8/10) y `planilla` (12/10) a la lista del trigger. **Aplicado
+tal cual, el `create or replace` habría reemplazado la función entera por la
+del 3/10** y le habría vuelto a abrir al alumno la diapositiva y la planilla
+de la clase. No habría dado ningún error. Se aplicó con las dos sumadas
+y se comprobó impersonando al profe y a dos alumnos, en un bloque que se
+deshace solo, caso por caso: el rival mueve; ninguno mueve el color del otro,
+ni dos jugadas, ni deshace la ajena; el alumno no cambia color, rival,
+presentación ni planilla; el profe sigue libre, y con «ambos colores» el rival
+se borra.
+
+- **`verificar-game-state-protegido.js`** (sin navegador ni red) lee todas las
+  versiones de la función en `supabase/migraciones/` y falla si una le devuelve
+  al alumno menos columnas que la anterior. También mira los dos botones de
+  `js/sesion.js`. Está probado que salta: sin `planilla` en la migración, con
+  «Deshacer» atado otra vez a `canMoveNow()` y con «Jugar desde aquí» sin
+  `puedeReescribirPartida()`.
+- La política `game_state_update` se cambió con `alter policy` y no borrándola
+  para volver a crearla: así no hay un instante sin política. Además, por
+  `execute_sql` toda consulta con la palabra `drop` se queda colgada (ver «La
+  huella no cuadraba» en sitio-e-infraestructura.md).
+- **Si se mergea el PR #693**, su `supabase/pendientes/clase_dos_alumnos_juegan.sql`
+  ya está aplicado: no se vuelve a correr, y la carpeta se borra del PR. Su
+  otro archivo, `practica_limite_de_intentos.sql`, lo reemplazó
+  `20261017180000_practica_intentos_por_alumno.sql` (PR #905).

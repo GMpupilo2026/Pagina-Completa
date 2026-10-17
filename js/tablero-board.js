@@ -814,7 +814,7 @@
     if (typeof game.insufficient_material === "function" && game.insufficient_material()) {
       return { over: true, draw: true, reason: "material insuficiente" };
     }
-    if (game.in_draw()) return { over: true, draw: true, reason: null };
+    if (game.in_draw()) return { over: true, draw: true, reason: "50 jugadas" };
     return { over: false };
   }
 
@@ -827,6 +827,7 @@
     if (info.reason === "ahogado") return "Tablas por ahogado";
     if (info.reason === "repetición") return "Tablas por repetición";
     if (info.reason === "material insuficiente") return "Tablas por material insuficiente";
+    if (info.reason === "50 jugadas") return "Tablas por la regla de las 50 jugadas";
     return "Tablas";
   }
 

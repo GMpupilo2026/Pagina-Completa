@@ -20,7 +20,7 @@
    desde la computadora del profe. El estado vive en esta página
    (sessionStorage): al recargar, la partida queda en pausa. */
 const PARTIDA_CLAVE = "sesion_partida_clase_v1";
-let partidaClase = null;          // {rival, color, nivel, segundos}
+let partidaClase = null;          // {fenInicial, desde, rival, color, nivel, segundos}
 let votacion = null;              // {id, fen, cierre}
 let motorPensandoPartida = false;
 const colorEscrito = (c) => (c === "w" ? "blancas" : "negras");
@@ -57,15 +57,26 @@ function jugarEnElTablero(jugada) {
     return board.jugar({ from: m.from, to: m.to, promotion: m.promotion });
 }
 
-function finalDeLaPartida(g) {
+/* Cómo terminó la partida de la clase, o null si sigue. La triple repetición
+   y las 50 jugadas son automáticas. `new Chess(board.fen())` no tiene
+   historial, así que su in_threefold_repetition() nunca veía nada: se
+   reproducen las jugadas desde que empezó la partida (js/repeticion.js), sin
+   contar lo que el profe mostró antes. Si no se llega a la posición del
+   tablero, no se declara repetición (equivocarse hacia «no hay» deja la
+   partida como estaba). */
+function finalDeLaPartida() {
+    const fen = board.fen();
+    const g = new Chess(fen);
     if (g.in_checkmate()) {
         const gana = g.turn() === "w" ? "b" : "w";
         return "¡Jaque mate! Ganaron las " + colorEscrito(gana) + (gana === partidaClase.color ? ": ganó la clase. 🎉" : ".");
     }
     if (g.in_stalemate()) return "Tablas por ahogado.";
-    if (g.in_threefold_repetition()) return "Tablas por triple repetición.";
+    const jugadas = partidaClase.fenInicial ? board.game.history().slice(partidaClase.desde || 0) : null;
+    if (jugadas && Repeticion.esTriple(partidaClase.fenInicial, jugadas, (f) => new Chess(f), fen)) return "Tablas por triple repetición.";
+    if (Repeticion.cincuentaJugadas(fen)) return "Tablas por la regla de las 50 jugadas.";
     if (g.insufficient_material()) return "Tablas: no queda material para dar mate.";
-    return "Tablas.";
+    return null;
 }
 
 async function empezarPartidaClase() {
@@ -78,6 +89,9 @@ async function empezarPartidaClase() {
     if (motivo) { setStatus(motivo); return; }
     if (new Chess(fen).game_over()) { setStatus("En esta posición la partida ya terminó."); return; }
     partidaClase = {
+        // Desde dónde se cuenta la triple repetición (ver finalDeLaPartida).
+        fenInicial: fen,
+        desde: board.game.history().length,
         rival: document.getElementById("partida-rival").value === "profe" ? "profe" : "motor",
         color: document.getElementById("partida-color").value === "b" ? "b" : "w",
         nivel: document.getElementById("partida-nivel").value || "1500",
@@ -94,7 +108,8 @@ async function seguirPartidaClase() {
     if (!partidaClase || votacion || motorPensandoPartida) return;
     document.getElementById("partida-reabrir-btn").hidden = true;
     const g = new Chess(board.fen());
-    if (g.game_over()) { terminarPartidaClase(finalDeLaPartida(g)); return; }
+    const fin = finalDeLaPartida();
+    if (fin) { terminarPartidaClase(fin); return; }
     if (g.turn() === partidaClase.color) { await abrirVotacion(); return; }
     if (partidaClase.rival === "motor") { await jugarMotorEnLaPartida(); return; }
     pintarPartidaClase("Te toca a ti con las " + colorEscrito(g.turn()) + ": juega en el tablero de la clase.");

@@ -889,6 +889,40 @@ podían repetir la misma posición veinte veces y la partida seguía.
   siempre. **Las de `variante.html` y Cartas no la tienen**: sus motores y sus
   cartas cambian lo que significa «la misma posición», y es otra decisión.
 
+### En las prácticas también: triple repetición y 50 jugadas, solas
+
+En toda práctica o entrenamiento que se juega como partida (contra el bot, el
+motor o la defensa de un ejercicio), la triple repetición y la regla de las 50
+jugadas terminan la partida en tablas **automáticamente**, y el final dice por
+qué. Donde el juego conserva el historial de chess.js (Finales contra la
+máquina, Finales 100, las partidas de los cursos, el entrenador de líneas, la
+práctica de la clase en vivo, el bot de `tablero.html`, Remata y Salva las
+tablas) ya lo hacía `in_draw()`. Faltaba en cuatro lugares, y en ninguno daba
+error: la partida seguía y nada más.
+
+- **Bot de Oscar (`bot.html`), en Estándar, Niebla, A ciegas y Crazyhouse.**
+  El motor se recargaba desde la FEN en cada jugada (el tablero lleva el suyo),
+  así que chess.js nunca veía una posición repetida. Ahora se anota cada
+  posición al pasar con `Repeticion.contador()` (`js/repeticion.js`, la misma
+  clave que en línea, con la captura al paso recortada) y las 50 jugadas se
+  leen del reloj de medias jugadas de la FEN (`Repeticion.cincuentaJugadas`).
+  El mate manda: si la jugada que repite da mate, ganó. Abrazos, Camaleón y
+  Cartas no la llevan, por lo mismo que en línea.
+- **«La clase juega» (`js/clase-votacion.js`).** Miraba `new Chess(board.fen())`,
+  sin historial. Ahora reproduce con `Repeticion.esTriple` las jugadas desde
+  que empezó la partida (`fenInicial` y `desde`, guardados al empezar): lo que
+  el profe mostró antes en el tablero no cuenta. Una partida guardada de antes,
+  sin `fenInicial`, no declara repetición (equivocarse hacia «no hay»).
+- **Habilidades: «Con lo justo» y «Rey y peón».** Solo miraban el mate, el
+  ahogado y la captura; dando vueltas, la partida no terminaba nunca. El tope
+  propio de «Con lo justo» (mate antes de 50 jugadas desde el principio) sigue:
+  es la consigna del ejercicio, no la regla.
+
+Lo comprueba `verificar-reloj-y-repeticion.js` (el contador, las 50 jugadas,
+que cada jugada del bot anote su posición antes de revisar el final, «La clase
+juega» corrida de verdad y los dos tipos). Probado que falla: quitando el
+`anotarPosicion()` de una jugada del bot o la repetición de la clase, salta.
+
 **Al tocar el reloj, `js/reloj-servidor.js`, `js/repeticion.js` o
 `handleLocalMove` de una página de partida, correr `node
 herramientas/verificar-reloj-y-repeticion.js`** (con `npm install

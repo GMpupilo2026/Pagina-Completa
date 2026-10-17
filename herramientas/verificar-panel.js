@@ -3538,47 +3538,91 @@ async function pruebaPanelPequenos(browser) {
   await r.ctx.close();
 }
 
+/* ===== Que una prueba colgada no se lleve el verificador entero =====
+   En el CI (con el Chromium de Playwright 1.63, no con el de las sesiones de
+   Claude Code) el verificador se quedó dos veces quieto en el mismo lugar —
+   justo después de que «Ver los planes» navega a precios.html— hasta que
+   verificar-todo.js lo mató a los 10 minutos. Normalmente tarda 3. Con la
+   salida cortada no se veía dónde, y la tanda entera salía roja por una
+   prueba que había pasado.
+
+   Dos topes, y ninguno esconde un fallo de la página:
+   - Cerrar un contexto es limpieza, no lo que se comprueba: si pasa de
+     CIERRE_MS se avisa (⚠, con la prueba) y se sigue sin esperarlo.
+   - Cada prueba tiene PRUEBA_MS (la más larga tarda unos 30 s): si no termina,
+     cuenta como fallo CON SU NOMBRE y se sigue con la siguiente. Un cuelgue
+     de verdad sigue saliendo rojo, pero en dos minutos y diciendo dónde. */
+const CIERRE_MS = 15000;
+const PRUEBA_MS = 120000;
+let pruebaEnCurso = "";
+
+function conTope(promesa, ms, alPasarse) {
+  let t;
+  const tope = new Promise((resolve) => { t = setTimeout(() => resolve(alPasarse()), ms); });
+  return Promise.race([promesa, tope]).finally(() => clearTimeout(t));
+}
+
+function cierresConTope(browser) {
+  const nuevo = browser.newContext.bind(browser);
+  browser.newContext = async (opciones) => {
+    const ctx = await nuevo(opciones);
+    const cerrar = ctx.close.bind(ctx);
+    ctx.close = (op) => conTope(cerrar(op), CIERRE_MS,
+      () => console.log("  ⚠ cerrar el contexto pasó de " + CIERRE_MS / 1000 + " s (" + pruebaEnCurso + "): se sigue sin esperarlo"));
+    return ctx;
+  };
+}
+
+const PRUEBAS = [
+  pruebaAlumna,
+  pruebaTareasAlumna,
+  pruebaDiagnosticoPedido,
+  pruebaExamenesEnLaFranja,
+  pruebaPrimerPaso,
+  pruebaFranjaDeClase,
+  pruebaVideollamada,
+  pruebaSesionEnVivo,
+  pruebaLectorDePantalla,
+  pruebaEntrenarConLaPaginaAbierta,
+  pruebaProgresoAlumna,
+  pruebaHoyEnElPanel,
+  pruebaPlegables,
+  pruebaLoQueHaceFalta,
+  pruebaMasDelPanel,
+  pruebaCalendario,
+  pruebaRetosEjercicios,
+  pruebaPanelPequenos,
+  pruebaTercera,
+  pruebaBaseLenta,
+  pruebaSemanaProfesora,
+  pruebaProfesora,
+  pruebaRecorrido,
+  pruebaProximaDelProfe,
+  pruebaCupoInvitaciones,
+  pruebaPreparacionRivales,
+  pruebaUrgenteProfesora,
+  pruebaTextosPorRol,
+  pruebaAdmin,
+  pruebaBuscador,
+  pruebaPersonas,
+  pruebaCoordinadorRecortado,
+  pruebaRegistro,
+  pruebaRegistroResumen,
+  pruebaUltimaClase,
+  pruebaPantalla,
+];
+
 (async () => {
   const browser = await chromium.launch({ executablePath: CHROME });
+  cierresConTope(browser);
   try {
-    await pruebaAlumna(browser);
-    await pruebaTareasAlumna(browser);
-    await pruebaDiagnosticoPedido(browser);
-    await pruebaExamenesEnLaFranja(browser);
-    await pruebaPrimerPaso(browser);
-    await pruebaFranjaDeClase(browser);
-    await pruebaVideollamada(browser);
-    await pruebaSesionEnVivo(browser);
-    await pruebaLectorDePantalla(browser);
-    await pruebaEntrenarConLaPaginaAbierta(browser);
-    await pruebaProgresoAlumna(browser);
-    await pruebaHoyEnElPanel(browser);
-    await pruebaPlegables(browser);
-    await pruebaLoQueHaceFalta(browser);
-    await pruebaMasDelPanel(browser);
-    await pruebaCalendario(browser);
-    await pruebaRetosEjercicios(browser);
-    await pruebaPanelPequenos(browser);
-    await pruebaTercera(browser);
-    await pruebaBaseLenta(browser);
-    await pruebaSemanaProfesora(browser);
-    await pruebaProfesora(browser);
-    await pruebaRecorrido(browser);
-    await pruebaProximaDelProfe(browser);
-    await pruebaCupoInvitaciones(browser);
-    await pruebaPreparacionRivales(browser);
-    await pruebaUrgenteProfesora(browser);
-    await pruebaTextosPorRol(browser);
-    await pruebaAdmin(browser);
-    await pruebaBuscador(browser);
-    await pruebaPersonas(browser);
-    await pruebaCoordinadorRecortado(browser);
-    await pruebaRegistro(browser);
-    await pruebaRegistroResumen(browser);
-    await pruebaUltimaClase(browser);
-    await pruebaPantalla(browser);
+    for (const prueba of PRUEBAS) {
+      pruebaEnCurso = prueba.name;
+      const colgada = await conTope(prueba(browser).then(() => false), PRUEBA_MS, () => true);
+      if (colgada) mal(prueba.name + " se colgó: pasó de " + PRUEBA_MS / 1000 + " s sin terminar");
+    }
   } finally {
-    await browser.close();
+    await conTope(browser.close(), CIERRE_MS, () => console.log("  ⚠ cerrar el navegador pasó de " + CIERRE_MS / 1000 + " s"));
   }
   console.log(fallos ? `\n${fallos} fallo(s)` : "\nEl panel de la Academia está como se pidió.");
   process.exit(fallos ? 1 : 0);

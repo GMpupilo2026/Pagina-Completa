@@ -345,6 +345,7 @@ function adaptadorChess(juego) {
         desenlace() {
             if (juego.in_checkmate()) return { fin: true, ganador: juego.turn() === "w" ? "b" : "w", texto: "Jaque mate" };
             if (juego.in_stalemate()) return { fin: true, ganador: null, texto: "Ahogado: tablas" };
+            if (juego.insufficient_material()) return { fin: true, ganador: null, texto: "Tablas por material insuficiente" };
             if (juego.game_over()) return { fin: true, ganador: null, texto: "Tablas" };
             return { fin: false };
         },
@@ -441,6 +442,7 @@ function adaptadorCiegas(motor) {
             const g = motor.game;
             if (g.in_checkmate()) return { fin: true, ganador: g.turn() === "w" ? "b" : "w", texto: "Jaque mate" };
             if (g.in_stalemate()) return { fin: true, ganador: null, texto: "Ahogado: tablas" };
+            if (g.insufficient_material()) return { fin: true, ganador: null, texto: "Tablas por material insuficiente" };
             if (g.game_over()) return { fin: true, ganador: null, texto: "Tablas" };
             return { fin: false };
         },
@@ -649,10 +651,12 @@ function empezar() {
     historial = [];
     terminada = false;
     pensando = false;
+    posiciones.reiniciar();
 
     if (m.tablero === "duelo") { empezarDuelo(); return; }
 
     ad = m.crear();
+    anotarPosicion();
     montarTablero(m);
     pintarHistorial();
     actualizar();
@@ -726,6 +730,7 @@ function alMover(info) {
         // ya no está en la casilla de origen) y desharía el movimiento.
         anotar(info, info);
         refrescar();
+        anotarPosicion();
         if (revisarFinal()) return;
         setTimeout(turnoDelBot, BotOscar.demora(nivel));
         return;
@@ -738,6 +743,7 @@ function alMover(info) {
     else ad.motor.load(info.fen);
     anotar(info, info);
     refrescar();
+    anotarPosicion();
     if (revisarFinal()) return;
     setTimeout(turnoDelBot, BotOscar.demora(nivel));
 }
@@ -753,6 +759,7 @@ function turnoDelBot() {
     const hecho = ad.jugar(jugada);
     anotar(hecho, jugada);
     refrescar();
+    anotarPosicion();
     if (revisarFinal()) return;
     // "Doble turno" (Ajedrez de Cartas) le devuelve el turno a quien acaba de
     // mover: si sigue siendo el del bot, que juegue otra vez.
@@ -810,8 +817,39 @@ function actualizar() {
     if (MODALIDADES[modalidad].ciegas) $("ciegas-input").disabled = !miTurno;
 }
 
+/* Triple repetición y 50 jugadas, automáticas. El motor de la partida se
+   vuelve a cargar desde la FEN en cada jugada (el tablero de Niebla, Crazyhouse
+   y A ciegas lleva el suyo), y eso le borra a chess.js el historial: su
+   in_threefold_repetition() no veía nunca una posición repetida. Se anota cada
+   posición al pasar (js/repeticion.js). Solo en las modalidades con las reglas
+   de siempre: en Abrazos, Camaleón y Cartas «la misma posición» es otra cosa. */
+const posiciones = Repeticion.contador();
+
+function motorConReglas() {
+    const m = MODALIDADES[modalidad];
+    if (!ad || !m) return null;
+    if (m.tablero === "niebla" || m.tablero === "crazyhouse") return ad.motor;
+    if (m.ciegas) return ad.motor.game;
+    return null;
+}
+
+function anotarPosicion() {
+    const motor = motorConReglas();
+    if (motor) posiciones.anotar(motor);
+}
+
+function tablasPorReglamento() {
+    const motor = motorConReglas();
+    if (!motor) return null;
+    if (posiciones.veces() >= 3) return { fin: true, ganador: null, texto: "Tablas por triple repetición" };
+    if (Repeticion.cincuentaJugadas(motor.fen())) return { fin: true, ganador: null, texto: "Tablas por la regla de las 50 jugadas" };
+    return null;
+}
+
 function revisarFinal() {
-    const d = ad.desenlace();
+    let d = ad.desenlace();
+    // El mate manda: si la jugada que repite o que cumple las 50 da mate, ganó.
+    if (!d.fin || d.texto === "Tablas") d = tablasPorReglamento() || d;
     if (!d.fin) return false;
     terminada = true;
     const gane = d.ganador === miColor;
@@ -861,6 +899,7 @@ function jugarEscrita() {
     $("ciegas-input").value = "";
     anotar(hecho, {});
     refrescar();
+    anotarPosicion();
     if (revisarFinal()) return;
     setTimeout(turnoDelBot, BotOscar.demora(nivel));
 }
