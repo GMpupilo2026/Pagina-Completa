@@ -544,6 +544,36 @@ if (fs.existsSync(guion)) {
 }
 
 LIBROS.forEach(verificarLibro);
+
+// Los guiones por voz (herramientas/audiolibro-grabar.js): lo que se le da a
+// cada persona que graba. Si el guion cambió y el Word no, la persona graba
+// líneas viejas o con el número corrido, y nadie lo nota hasta armar el audio.
+{
+  const G = require("./audiolibro-grabar.js");
+  let guiones = null;
+  try { guiones = G.leerGuiones(); } catch (e) { /* ya avisó cada libro */ }
+  if (guiones) {
+    const voces = G.vocesUsadas(guiones);
+    const docs = [...voces.map((v) => path.join(G.SALIDA, G.slugVoz(v) + ".docx")), path.join(G.SALIDA, "cesion-de-voz.docx")];
+    const faltan = docs.filter((f) => !fs.existsSync(f));
+    ok(!faltan.length, `faltan los guiones por voz (${faltan.map((f) => path.basename(f)).join(", ")}): hay que correr herramientas/audiolibro-grabar.js`);
+    if (!faltan.length) {
+      const leer = `
+import sys, json, zipfile, re, html
+print(json.dumps([html.unescape(re.sub(r"<[^>]+>", " ", zipfile.ZipFile(f).read("word/document.xml").decode("utf-8"))) for f in sys.argv[1:]]))`;
+      const textos = JSON.parse(require("child_process").execFileSync("python3", ["-c", leer, ...docs], { maxBuffer: 64 * 1024 * 1024 }));
+      const letras = (t) => t.replace(/[^\p{L}\p{N}]/gu, "").toLowerCase();
+      voces.forEach((v, i) => {
+        const doc = letras(textos[i]);
+        const pistas = G.lineasDe(guiones, v).flatMap((l) => l.pistas);
+        const viejas = pistas.flatMap((x) => x.lineas.filter((y) => !doc.includes(letras(`${y.n}. ${y.texto}`))));
+        ok(!viejas.length, `${G.slugVoz(v)}.docx: le faltan ${viejas.length} líneas del guion o tienen otro número (¿se cambió el guion sin volver a correr audiolibro-grabar.js?): «${viejas.length ? viejas[0].texto.slice(0, 50) : ""}…»`);
+        ok(pistas.every((x) => doc.includes(letras(x.archivo))), `${G.slugVoz(v)}.docx: no dice el nombre de archivo de cada pista`);
+      });
+      ok(textos[voces.length].includes("persona menor") && textos[voces.length].includes("Ley 8968"), "cesion-de-voz.docx no trae la parte de la persona menor o la de datos personales");
+    }
+  }
+}
 // Los diplomas se coleccionan: el n.º de cada uno es su lugar en libros.js y
 // cada medalla es distinta.
 LIBROS.forEach((l, i) => ok(l.DIPLOMA.numero === i + 1, `${l.SLUG}: su diploma dice n.º ${l.DIPLOMA.numero} y es el libro ${i + 1} de la colección`));
