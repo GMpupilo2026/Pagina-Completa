@@ -1,5 +1,6 @@
 /* Comprueba las sesiones intensivas (herramientas/sesion-*-intensiva.js):
- * finales, estrategia y las que se agreguen, que se encuentran solas.
+ * finales, estrategia, táctica, aperturas y las que se agreguen, que se
+ * encuentran solas.
  *
  * Sin navegador ni motor: el CI no tiene Stockfish. Lo que dice el motor lo
  * deja herramientas/sesion-intensiva-motor.js en sesion-<nombre>-motor.json,
@@ -25,7 +26,7 @@
  *     acepta, dos sesiones con el mismo título.
  *
  * Uso:  npm install
- *       node herramientas/sesion-finales-intensiva.js && node herramientas/sesion-estrategia-intensiva.js
+ *       node herramientas/sesion-<nombre>-intensiva.js   (cada una)
  *       node herramientas/verificar-sesiones-intensivas.js
  */
 const fs = require("fs");
@@ -208,7 +209,7 @@ for (const nombre of NOMBRES) {
     const b = delBanco(ej.banco);
     if (!b || !b.previas) return;
     const it = plan.items.find((x) => x.tipo === "nota" && x.titulo === "Ejercicio " + ej.n + " · El cálculo");
-    const m = it && /^Cómo se llegó \((.+?)\): (.+)$/m.exec(it.nota);
+    const m = it && /^Cómo se llegó · (.+?): (\d+\..+)$/m.exec(it.nota);
     if (!m) { mal("Ejercicio " + ej.n + ": la nota no dice cómo se llegó a la posición"); return; }
     if (!m[1].startsWith(b.apertura)) mal("Ejercicio " + ej.n + ": la apertura de la nota no es la de la partida");
     const sans = m[2].trim().split(/\s+/).map((x) => aIngles(x.replace(/^\d+\.+/, ""))).filter(Boolean);
