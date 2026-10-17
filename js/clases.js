@@ -64,6 +64,11 @@
                    Informes, que ya tiene su tarjeta y su selector de tema. El
                    de arbitraje sigue siendo solo de administración. */
                 { emoji: "🧭", label: "Diagnóstico de nivel", desc: "La prueba que ubica tu nivel y arma tu plan de entrenamiento", href: "entreno/diagnostico.html", soloAlumno: true },
+                /* La prueba de estilo va al lado del diagnóstico: no se
+                   practica, se hace de vez en cuando, y lo que sale es qué
+                   aperturas te quedan. Su profe la ve en Informes, dentro de
+                   «Sus aperturas». */
+                { emoji: "🎭", label: "Tu estilo de juego", desc: "Qué tipo de partida te gusta y qué aperturas te quedan", href: "entreno/estilo.html", soloAlumno: true },
             ] },
             /* "Aprender" va antes que "Jugar y competir": esto es una academia,
                y lo primero que se ofrece al entrar es lo que se viene a hacer.
@@ -1392,6 +1397,7 @@
             "calendario.html": "agenda horario fechas mes semana plan entregas vence cuando",
             "reto-ejercicios.html": "retar companero duelo ejercicios competir quien resuelve mas",
             "entreno/diagnostico.html": "nivel examen de nivel prueba de nivel",
+            "entreno/estilo.html": "estilo de juego aperturas defensas repertorio que apertura jugar atacar posicional",
             "nivel-de-arbitraje.html": "arbitro reglamento fide",
             "arbitraje.html": "arbitro reglamento fide revisar",
             "pareo.html": "pareo emparejar emparejamientos suizo holandes fide desempates buchholz sonneborn arbitro arbitraje torneo rondas trf swiss manager",
