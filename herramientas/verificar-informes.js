@@ -1772,6 +1772,89 @@ async function pruebaConEsteAlumno(browser) {
   await r.page.close();
 }
 
+/* «Practicar en clase»: sus partidas contra el motor en la clase en vivo, con
+   cada intento y sus jugadas numeradas desde la posición de salida de la ronda.
+   Los intentos terminados vienen de practice_intentos y el último de
+   practice_games; solo los de ESTE alumno, de la ronda más nueva a la más vieja. */
+async function pruebaPracticaClase(browser) {
+  console.log("\n=== Practicar en clase ===");
+  const FEN_B = "6k1/5ppp/8/8/8/8/5PPP/R5K1 b - - 0 12";
+  const FEN_W = "6k1/5ppp/8/8/8/8/5PPP/R5K1 w - - 0 1";
+  const tablas = (perfil) => ({
+    profiles: [perfil], training_plans: [], diagnosticos_publicos: [], arbitrajes_publicos: [],
+    practice_sessions: [{ id: "r1", fen: FEN_W }, { id: "r2", fen: FEN_B }],
+    practice_games: [
+      { id: "g1", session_id: "r1", student_id: "a-1", attempts: 2, status: "checkmate_win", moves: ["Ra8#"], student_color: "w", created_at: "2026-10-10T20:00:00Z" },
+      { id: "g2", session_id: "r2", student_id: "a-1", attempts: 1, status: "playing", moves: ["h6", "Kh1"], student_color: "b", created_at: "2026-10-15T20:00:00Z" },
+      // De otro alumno, en la misma ronda: no se cuela.
+      { id: "g3", session_id: "r1", student_id: "a-2", attempts: 2, status: "draw", moves: ["Kf1"], student_color: "w", created_at: "2026-10-10T20:00:00Z" },
+    ],
+    practice_intentos: [
+      { game_id: "g1", intento: 1, status: "resigned", moves: ["Kf1", "Kf8", "Ke2"] },
+      { game_id: "g3", intento: 1, status: "draw", moves: ["Kh1"] },
+    ],
+  });
+  const leer = (page) => page.evaluate(() => ({
+    seVe: document.getElementById("practica-report").checkVisibility(),
+    sub: document.getElementById("practica-sub").textContent,
+    rondas: [...document.querySelectorAll("#practica-body > li")].map((li) => ({
+      cab: li.querySelector("p").textContent,
+      intentos: [...li.querySelectorAll("ul > li")].map((x) => [x.querySelector("p").textContent,
+        x.querySelector("details p") ? x.querySelector("details p").textContent : null]),
+    })),
+  }));
+  let r = await abrir(browser, {
+    rpc: { informes_resumen_alumnos: [ANA, BRUNO], informes_totales: { clases_cerradas: 0, preguntas: 0, partidas: 0 } },
+    tablas: tablas({ id: "prof-1", role: "profesor", is_admin: false, full_name: "Karina", email: "k@x.cr" }),
+  }, "prof-1", "/informes.html?alumno=a-1");
+  await r.page.waitForFunction(() => !document.getElementById("practica-report").classList.contains("hidden"), null, { timeout: 10000 });
+  let v = await leer(r.page);
+  igual("en el informe del alumno se ve", v.seVe, true);
+  igual("dice qué es", v.sub, "Sus partidas contra el motor en la clase en vivo, intento por intento, con todas sus jugadas.");
+  igual("sus rondas, de la más nueva a la más vieja, con cada intento y todas sus jugadas", v.rondas, [
+    { cab: "15 oct 2026 · con negras · 1 intento", intentos: [
+      ["Intento 1 · Jugando… · 2 jugadas (sin terminar)", "12… h6 13. Rh1"]] },
+    { cab: "10 oct 2026 · con blancas · 2 intentos", intentos: [
+      ["Intento 1 · 🏳️ Se rindió · 3 jugadas", "1. Rf1 Rf8 2. Re2"],
+      ["Intento 2 · 🏆 Ganó por jaque mate · 1 jugada", "1. Ta8#"]] },
+  ]);
+  igual("las jugadas van plegadas", await r.page.evaluate(() =>
+    [...document.querySelectorAll("#practica-body details")].every((d) => !d.open && !d.querySelector("p").checkVisibility())), true);
+  await r.page.locator("#practica-body summary").first().click();
+  igual("y se abren con un clic", await r.page.evaluate(() => document.querySelector("#practica-body details p").checkVisibility()), true);
+  igual("pide las partidas de UN alumno", await r.page.evaluate(() => window.__consultas.filter((c) => c.etiqueta === "from:practice_games")
+    .every((c) => c.donde.some(([col, val]) => col === "student_id" && val === "a-1"))), true);
+  // Otro alumno sin práctica: el bloque se esconde, no se queda el de antes.
+  await r.page.selectOption("#student-filter", "a-2");
+  await r.page.waitForFunction(() => /Bruno/.test(document.getElementById("student-report-title").textContent), null, { timeout: 10000 });
+  await r.page.waitForTimeout(400);
+  v = await leer(r.page);
+  igual("con otro alumno, solo lo suyo", v.rondas.map((x) => x.cab), ["10 oct 2026 · con blancas · 2 intentos"]);
+  igual("sin errores", r.errores.join(" | "), "");
+  await r.page.close();
+
+  // El alumno, en su propio informe, de tú.
+  r = await abrir(browser, {
+    rpc: { informes_resumen_alumnos: [ANA], informes_totales: { clases_cerradas: 4, preguntas: 10, partidas: 2 } },
+    tablas: tablas({ id: "a-1", role: "alumno", is_admin: false, full_name: "Ana Rojas", email: "ana@x.cr" }),
+  }, "a-1");
+  await r.page.waitForFunction(() => !document.getElementById("practica-report").classList.contains("hidden"), null, { timeout: 10000 });
+  v = await leer(r.page);
+  igual("el alumno ve las suyas, de tú", [v.sub, v.rondas[1].intentos[0][0]],
+    ["Tus partidas contra el motor en la clase en vivo, intento por intento, con todas tus jugadas.", "Intento 1 · 🏳️ Te rendiste · 3 jugadas"]);
+  igual("sin errores", r.errores.join(" | "), "");
+  await r.page.close();
+
+  // Sin práctica, no se destapa.
+  r = await abrir(browser, {
+    rpc: { informes_resumen_alumnos: [ANA], informes_totales: { clases_cerradas: 4, preguntas: 10, partidas: 2 } },
+    tablas: Object.assign(tablas({ id: "a-1", role: "alumno", is_admin: false, full_name: "Ana Rojas", email: "ana@x.cr" }), { practice_games: [] }),
+  }, "a-1");
+  await r.page.waitForTimeout(800);
+  igual("sin práctica, no se ve", await r.page.evaluate(() => document.getElementById("practica-report").checkVisibility()), false);
+  await r.page.close();
+}
+
 async function pruebaPdfVisitante(browser) {
   console.log("\n=== El diagnóstico de un visitante, en PDF ===");
   const VISITANTES = [
@@ -2326,6 +2409,7 @@ async function pruebaInformeGrupo(browser) {
     await pruebaPdfAcademia(browser);
     await pruebaAlumnoPorEnlace(browser);
     await pruebaConEsteAlumno(browser);
+    await pruebaPracticaClase(browser);
     await pruebaContrasenaProfesor(browser);
   } finally {
     await browser.close();

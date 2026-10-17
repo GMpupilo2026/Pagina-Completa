@@ -612,6 +612,10 @@ todas, y el profe elige cuál mostrar a la clase.
   tablero de la clase queda debajo— y lo pasa como variante por la misma
   `mostrarJugadasALaClase()`, para recorrerlo jugada a jugada con la clase. Su
   casilla «Decir de quién es» es aparte y arranca sin marcar.
+- **También en el informe del alumno** («🎯 Practicar en clase», ver «Las
+  partidas de práctica en el informe» en `informes.md`). Lo que dice cada
+  intento —cómo terminó, las jugadas numeradas, el orden— sale de
+  `js/practica-intentos.js`, una sola copia para las dos páginas.
 
 **Al tocar esto, correr `node herramientas/verificar-todo.js practica-intentos
 clase-mostrar`.** Está probado que falla de verdad: sin ordenar los intentos,

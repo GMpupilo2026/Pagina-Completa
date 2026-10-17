@@ -6139,13 +6139,9 @@
             return (typeof PracticeEngine !== "undefined" && PracticeEngine.LEVELS[level] && PracticeEngine.LEVELS[level].label) || level;
         }
 
+        // Lo mismo que dice el informe del alumno: js/practica-intentos.js.
         function practiceStatusLabel(status) {
-            if (status === "checkmate_win") return "🏆 Ganó por jaque mate";
-            if (status === "checkmate_loss") return "💀 Perdió por jaque mate";
-            if (status === "draw") return "🤝 Tablas";
-            if (status === "resigned") return "🏳️ Se rindió";
-            if (status === "timeout") return "⏱️ Se quedó sin tiempo";
-            return "Jugando…";
+            return PracticaIntentos.estado(status);
         }
 
         // "Jugando…" / "Ganó por jaque mate" + cuántos intentos lleva en esta ronda (solo le
@@ -6688,7 +6684,7 @@
             const pedido = {};
             mirar.intentos = pedido;
             mirarEl("intentos-msg").textContent = "Buscando sus intentos…";
-            const { data, error } = await sb.from("practice_intentos").select("student_id, intento, status, moves")
+            const { data, error } = await sb.from("practice_intentos").select("game_id, intento, status, moves")
                 .eq("session_id", ronda.id).eq("student_id", studentId).order("intento").range(0, 999);
             // Se cerró, cambió de alumno o se pidió de nuevo mientras tanto.
             if (mirar.intentos !== pedido || mirar.studentId !== studentId) return;
@@ -7001,20 +6997,11 @@
 
         // Los intentos de cada alumno, del primero al último: [{nombre, intentos: [{intento, status, moves, ultimo}]}].
         function armarIntentosPorAlumno(juegos, guardados) {
-            const porAlumno = new Map();
-            for (const g of juegos) {
+            const porJuego = PracticaIntentos.juntar(juegos, guardados);
+            const lista = juegos.map((g) => {
                 const p = g.profiles || {};
-                porAlumno.set(g.student_id, {
-                    nombre: p.full_name || p.email || "Alumno",
-                    intentos: [{ intento: g.attempts || 1, status: g.status, moves: g.moves || [], ultimo: true }],
-                });
-            }
-            for (const i of guardados) {
-                const a = porAlumno.get(i.student_id);
-                if (a) a.intentos.push({ intento: i.intento, status: i.status, moves: i.moves || [], ultimo: false });
-            }
-            const lista = [...porAlumno.values()];
-            lista.forEach((a) => a.intentos.sort((x, y) => x.intento - y.intento));
+                return { nombre: p.full_name || p.email || "Alumno", intentos: porJuego.get(g.id) };
+            });
             lista.sort((a, b) => a.nombre.localeCompare(b.nombre, "es"));
             return lista;
         }
@@ -7027,7 +7014,7 @@
             msg.textContent = "Buscando los intentos…";
             const [juegos, guardados] = await Promise.all([
                 sb.from("practice_games").select("id, student_id, attempts, status, moves, profiles(full_name, email)").eq("session_id", ronda.id),
-                sb.from("practice_intentos").select("student_id, intento, status, moves").eq("session_id", ronda.id).order("intento").range(0, 999),
+                sb.from("practice_intentos").select("game_id, intento, status, moves").eq("session_id", ronda.id).order("intento").range(0, 999),
             ]);
             if (revisarDeRonda !== ronda.id) return; // cambió la ronda mientras se pedía
             const error = juegos.error || guardados.error;

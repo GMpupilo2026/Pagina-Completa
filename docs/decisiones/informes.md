@@ -1254,6 +1254,49 @@ jugadas plegadas en castellano. Lo que no tiene forma de jugada se descarta y
 todo va por `textContent`. Si se cambia de alumno antes de que conteste, la
 respuesta vieja no se pinta (`torneoVez`).
 
+### Las partidas de práctica en el informe
+
+En la clase en vivo, «Practicar» pone a cada alumno contra el motor desde una
+posición, y la base guarda cada intento con sus jugadas (ver «Practicar: las
+jugadas de cada intento, para revisarlas en clase» en `clase-en-vivo.md`).
+Eso se veía solo durante la clase; ahora el informe del alumno tiene
+**«🎯 Practicar en clase»**: sus últimas rondas, de la más nueva a la más
+vieja, con cada intento —cómo terminó y cuántas jugadas— y sus jugadas
+numeradas, plegadas en «Ver las jugadas del intento N».
+
+- **Lo ven el alumno (de tú: «Te rendiste») y sus profesores**, con la RLS de
+  siempre: `practice_games` y `practice_intentos` ya las leían todos los
+  profesores del alumno (`interno.alumnos_de`).
+- **Pero la ronda no**: `practice_sessions` solo la leía quien la armó, y sin
+  ella no hay posición de salida. Comprobado impersonando en la base: un
+  profesor que comparte alumnos veía 482 partidas de práctica y **ninguna** de
+  sus rondas. Las jugadas salían, pero numeradas mal o sin número —la ronda
+  puede empezar con las negras o en la jugada 30—. La migración
+  `practica_rondas_de_mis_alumnos` agrega la política
+  `practice_sessions_de_mis_alumnos`: las rondas donde jugó uno mismo o un
+  alumno suyo. El conjunto lo arma una vez `interno.rondas_de_mis_alumnos()`,
+  SECURITY DEFINER **sin RLS** (`row_security = off`): si leyera
+  `practice_games` con la RLS puesta, la política de `practice_games` (que lee
+  `practice_sessions`) y esta se llamarían una a la otra. Con ella, el mismo
+  profesor ve 476 de 482 (las otras 6 son partidas que jugó él en la clase de
+  otro) y alguien sin relación, ninguna.
+- **Coordinación y supervisión leen la práctica solo con la clase abierta**
+  (`interno.clases_que_coordino()` mira las clases sin cerrar). En el informe,
+  a quien coordina no le sale el bloque de una ronda vieja; ampliar eso es
+  otra decisión, no se hizo acá.
+- **Se piden pocas, con su total**: 5 rondas y «Las últimas 5 de N rondas».
+  La tabla crece con cada clase, y PostgREST corta a mil sin avisar.
+- **Sin práctica, el bloque no se destapa**, como «Antes y ahora».
+- **Lo que dice cada intento sale de `js/practica-intentos.js`**, el mismo
+  módulo que usa la clase en vivo: cómo terminó (`estado`), las jugadas
+  numeradas desde la posición de salida (`numerar`; sin ella, sin números,
+  porque inventar «1.» mentiría) y los intentos de cada partida en orden
+  (`juntar`).
+
+**Al tocar esto, correr `node herramientas/verificar-todo.js informes
+practica-intentos`.** Está probado que falla de verdad: numerando sin la
+posición de la ronda, salta.
+
 ## Los informes que llegan a la casa
 
 En Informes, mirando a UN alumno, está "📧 Informes a la casa": a qué correos se

@@ -172,6 +172,15 @@
             <!-- «Lo que le costó a <alumno>» (solo el profe, js/lo-que-costo.js): las preguntas de
                  clase que contestó mal, qué jugó, y un plan de repaso para él. -->
             <section id="le-costo-report" hidden aria-labelledby="le-costo-titulo" class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6"></section>
+            <!-- «Practicar en clase»: sus partidas contra el motor en la clase en vivo, ronda por
+                 ronda, con cada intento y sus jugadas (practice_games y practice_intentos, que
+                 guarda la base). Lo ven el alumno y sus profesores. Arranca oculto y solo se
+                 destapa si jugó alguna. Ver «Las partidas de práctica en el informe». -->
+            <div id="practica-report" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6">
+                <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1"><span aria-hidden="true">🎯</span> Practicar en clase</h2>
+                <p id="practica-sub" class="text-xs text-brand-450 dark:text-brand-350 mb-4"></p>
+                <ul id="practica-body" class="space-y-4"></ul>
+            </div>
             <div id="notas-report" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6">
                 <h2 id="notas-title" class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1"><span aria-hidden="true">📝</span> Bitácora</h2>
                 <p id="notas-sub" class="text-xs text-brand-450 dark:text-brand-350 mb-4">Lo que vas viendo de este alumno. Es tuya: un colega que comparta el alumno no la ve. Marca "Que la vea el alumno" para que le aparezca a él en su propia página.</p>
@@ -534,6 +543,7 @@
     <script src="js/comparar-alumnos.js"></script>
     <script src="js/plantillas-casa.js"></script>
     <script src="js/analisis-alumno.js"></script>
+    <script src="js/practica-intentos.js"></script>
     <script src="js/informes.js"></script>
 <!-- burbuja: inicio --><script src="js/burbuja-en-linea.js" defer></script><!-- burbuja: fin --><!-- juego-aviso: inicio --><script src="js/juego-aviso.js" defer></script><!-- juego-aviso: fin --><!-- aviso-profe: inicio --><script src="js/aviso-profe.js" defer></script><!-- aviso-profe: fin --><!-- tanda: inicio --><script src="js/tanda-diez.js" defer></script><!-- tanda: fin --><!-- acceso: inicio --><script src="js/acceso-vigente.js" defer></script><!-- acceso: fin --><!-- marca: inicio --><script src="js/marca-academia.js" defer></script><!-- marca: fin --><!-- ayuda: inicio --><script src="js/ayuda-guia.js" defer></script><!-- ayuda: fin --><!-- atajo: inicio --><script src="js/atajo-buscar.js" data-arriba="" defer></script><!-- atajo: fin --></body>
 </html>
