@@ -1104,7 +1104,7 @@
           "donde": "clases.html › Jugar y competir › Competir › Torneos",
           "intro": "Un torneo con sus inscripciones, sus rondas, sus cruces y su tabla.",
           "pasos": [
-            "«Crear un torneo nuevo»: nombre, modalidad (cualquiera de las de a dos, o «Aleatorio», que cambia de modalidad en cada ronda) y control de tiempo.",
+            "«Crear un torneo nuevo»: nombre, modalidad (cualquiera de las de a dos, o «Aleatorio», que cambia de modalidad en cada ronda entre las que marques) y control de tiempo.",
             "Los alumnos se inscriben. Tú también puedes inscribirte y jugarlo.",
             "Generas cada ronda y se crean todas las partidas.",
             "Anotas los resultados y la tabla se actualiza."
