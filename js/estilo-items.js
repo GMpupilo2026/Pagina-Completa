@@ -1,0 +1,2341 @@
+/* ===== Ajedrez Integral — Banco de la prueba de estilo =====
+ *
+ * La prueba de estilo no mide cuánto sabe la persona (eso es el diagnóstico de
+ * nivel, js/diagnostico-items.js) sino qué tipo de juego prefiere, para
+ * recomendarle aperturas y defensas que le queden. Cada pregunta pone una
+ * posición de una partida real y DOS jugadas que Stockfish valora casi igual
+ * (a 30 centipeones o menos de la mejor, a profundidad 20) y que son de
+ * carácter opuesto en uno de tres ejes:
+ *
+ *   ataque      atacar al rey  ↔  maniobrar
+ *   estructura  abrir el juego ↔  mantenerlo cerrado
+ *   cambios     cambiar piezas ↔  mantenerlas
+ *
+ * No hay respuesta correcta: las dos son buenas, y lo que elige dice su
+ * preferencia. Cada jugada lleva su `polo` (qué representa en su eje), su
+ * evaluación (`eval`, en centipeones desde el bando que mueve), la línea del
+ * motor que la sigue (`linea`, UCI) y sus `medidas`, las que calcula
+ * herramientas/lib/estilo-medidas.js y vuelve a calcular el verificador.
+ *
+ * El bloque ESTILO lo genera herramientas/estilo-generar.js y NO se edita a
+ * mano: se vuelve a correr el script. Lo comprueba
+ * herramientas/verificar-estilo.js.
+ */
+(function (raiz) {
+  "use strict";
+
+  /* ESTILO-INICIO: generado por herramientas/estilo-generar.js — no se edita a mano. */
+  const ITEMS = [
+   {
+    "id": "es01",
+    "eje": "ataque",
+    "fen": "2rr2k1/p4ppp/4p3/1bb5/2p1B3/2B1P1P1/PP3P1P/3RK2R w K - 3 18",
+    "a": {
+     "san": "Rxd8+",
+     "uci": "d1d8",
+     "polo": "atacar",
+     "eval": 45,
+     "linea": [
+      "d1d8",
+      "c8d8",
+      "g3g4",
+      "c5e7"
+     ],
+     "medidas": {
+      "ataque": 2,
+      "estructura": 0,
+      "cambios": 10,
+      "propone": 1
+     }
+    },
+    "b": {
+     "san": "Bf3",
+     "uci": "e4f3",
+     "polo": "maniobrar",
+     "eval": 37,
+     "linea": [
+      "e4f3",
+      "d8d1",
+      "e1d1",
+      "f7f5"
+     ],
+     "medidas": {
+      "ataque": -2,
+      "estructura": 0,
+      "cambios": 10,
+      "propone": 0
+     }
+    },
+    "mejor": 45,
+    "fuente": {
+     "de": "una-clase-al-dia",
+     "partida": "ml320-1",
+     "blancas": "V. Ivanchuk",
+     "negras": "M. Illescas",
+     "evento": "Barcelona, 2005",
+     "ply": 34,
+     "enLaPartida": "Ke2"
+    }
+   },
+   {
+    "id": "es02",
+    "eje": "ataque",
+    "fen": "8/2n1k1p1/ppr2p1p/2p2P2/5P2/1B2P3/PP2K2P/2R5 w - - 1 36",
+    "a": {
+     "san": "Bc2",
+     "uci": "b3c2",
+     "polo": "maniobrar",
+     "eval": 35,
+     "linea": [
+      "b3c2",
+      "c6d6",
+      "a2a4",
+      "d6d7"
+     ],
+     "medidas": {
+      "ataque": -2,
+      "estructura": 0,
+      "cambios": 0,
+      "propone": 0
+     }
+    },
+    "b": {
+     "san": "e4",
+     "uci": "e3e4",
+     "polo": "atacar",
+     "eval": 57,
+     "linea": [
+      "e3e4",
+      "c6d6",
+      "e2e3",
+      "d6d7"
+     ],
+     "medidas": {
+      "ataque": 2,
+      "estructura": 0,
+      "cambios": 0,
+      "propone": 0
+     }
+    },
+    "mejor": 57,
+    "fuente": {
+     "de": "una-clase-al-dia",
+     "partida": "ml146-4",
+     "blancas": "M. Najdorf",
+     "negras": "G. Stahlberg",
+     "evento": "Zurich, 1953",
+     "ply": 70,
+     "enLaPartida": "a4"
+    }
+   },
+   {
+    "id": "es03",
+    "eje": "ataque",
+    "fen": "r2q1rk1/pbpnbppp/1p2pn2/3p4/5P2/1PNBPN2/PBPP2PP/R2Q1RK1 w - - 6 9",
+    "a": {
+     "san": "Ne5",
+     "uci": "f3e5",
+     "polo": "atacar",
+     "eval": 3,
+     "linea": [
+      "f3e5",
+      "g7g6",
+      "d1e1",
+      "c7c5"
+     ],
+     "medidas": {
+      "ataque": 2,
+      "estructura": 0,
+      "cambios": 0,
+      "propone": 0
+     }
+    },
+    "b": {
+     "san": "Be2",
+     "uci": "d3e2",
+     "polo": "maniobrar",
+     "eval": -19,
+     "linea": [
+      "d3e2",
+      "f6e8",
+      "d1e1",
+      "c7c5"
+     ],
+     "medidas": {
+      "ataque": -2,
+      "estructura": 0,
+      "cambios": 0,
+      "propone": 0
+     }
+    },
+    "mejor": 3,
+    "fuente": {
+     "de": "una-clase-al-dia",
+     "partida": "ml075-1",
+     "blancas": "Blancas",
+     "negras": "Negras",
+     "evento": "",
+     "ply": 16,
+     "enLaPartida": "Ne2"
+    }
+   },
+   {
+    "id": "es04",
+    "eje": "ataque",
+    "fen": "r3rbk1/1q3p1p/p5p1/3bBP2/8/3B3Q/1PP3P1/4RR1K w - - 1 27",
+    "a": {
+     "san": "c4",
+     "uci": "c2c4",
+     "polo": "maniobrar",
+     "eval": 107,
+     "linea": [
+      "c2c4",
+      "d5c6",
+      "f5g6",
+      "f7g6"
+     ],
+     "medidas": {
+      "ataque": 0,
+      "estructura": 0,
+      "cambios": 0,
+      "propone": 0
+     }
+    },
+    "b": {
+     "san": "fxg6",
+     "uci": "f5g6",
+     "polo": "atacar",
+     "eval": 95,
+     "linea": [
+      "f5g6",
+      "f7g6",
+      "c2c4",
+      "d5c6"
+     ],
+     "medidas": {
+      "ataque": 4,
+      "estructura": 1,
+      "cambios": 0,
+      "propone": 1
+     }
+    },
+    "mejor": 117,
+    "fuente": {
+     "de": "una-clase-al-dia",
+     "partida": "ml120-3",
+     "blancas": "G. Canfell",
+     "negras": "D. Johansen",
+     "evento": "Sydney, 1995",
+     "ply": 52,
+     "enLaPartida": "Re2"
+    }
+   },
+   {
+    "id": "es05",
+    "eje": "ataque",
+    "fen": "2rn3r/p2kn3/1p2p1pp/3pPp2/3P3P/P2P1N2/2RBKPP1/2R5 w - - 6 22",
+    "a": {
+     "san": "Rxc8",
+     "uci": "c2c8",
+     "polo": "atacar",
+     "eval": 0,
+     "linea": [
+      "c2c8",
+      "e7c8",
+      "c1a1",
+      "d8c6"
+     ],
+     "medidas": {
+      "ataque": 4,
+      "estructura": 0,
+      "cambios": 10,
+      "propone": 1
+     }
+    },
+    "b": {
+     "san": "a4",
+     "uci": "a3a4",
+     "polo": "maniobrar",
+     "eval": -23,
+     "linea": [
+      "a3a4",
+      "c8c2",
+      "c1c2",
+      "d8f7"
+     ],
+     "medidas": {
+      "ataque": 0,
+      "estructura": 0,
+      "cambios": 10,
+      "propone": 0
+     }
+    },
+    "mejor": 0,
+    "fuente": {
+     "de": "cambiar-o-no-cambiar",
+     "partida": "polgar-morovic-1992",
+     "blancas": "Judit Polgár",
+     "negras": "Iván Morovic Fernández",
+     "evento": "Buenos Aires, 1992",
+     "ply": 42,
+     "enLaPartida": "Rxc8"
+    }
+   },
+   {
+    "id": "es06",
+    "eje": "ataque",
+    "fen": "4r1k1/p5bp/1pn1p1p1/2p5/4N3/4P3/PP2KPPP/1RB5 b - - 1 18",
+    "a": {
+     "san": "Ne7",
+     "uci": "c6e7",
+     "polo": "maniobrar",
+     "eval": -41,
+     "linea": [
+      "c6e7",
+      "c1d2",
+      "e7d5",
+      "a2a4"
+     ],
+     "medidas": {
+      "ataque": -1,
+      "estructura": 0,
+      "cambios": 0,
+      "propone": 0
+     }
+    },
+    "b": {
+     "san": "Rd8",
+     "uci": "e8d8",
+     "polo": "atacar",
+     "eval": -40,
+     "linea": [
+      "e8d8",
+      "c1d2",
+      "g8f7",
+      "a2a3"
+     ],
+     "medidas": {
+      "ataque": 4,
+      "estructura": 0,
+      "cambios": 0,
+      "propone": 0
+     }
+    },
+    "mejor": -40,
+    "fuente": {
+     "de": "una-clase-al-dia",
+     "partida": "ml231-2",
+     "blancas": "T. Petrosian",
+     "negras": "M. Botvinnik",
+     "evento": "Cto Mundial. Moscú (5), 1963",
+     "ply": 35,
+     "enLaPartida": "Nb4"
+    }
+   },
+   {
+    "id": "es07",
+    "eje": "ataque",
+    "fen": "6k1/1p3pnp/p2p1qp1/2pP4/P1Pb4/3B2PP/1PQ2PK1/2B5 b - - 1 25",
+    "a": {
+     "san": "Nh5",
+     "uci": "g7h5",
+     "polo": "atacar",
+     "eval": -10,
+     "linea": [
+      "g7h5",
+      "c2e2",
+      "f6d8",
+      "d3c2"
+     ],
+     "medidas": {
+      "ataque": 2,
+      "estructura": 0,
+      "cambios": 0,
+      "propone": 0
+     }
+    },
+    "b": {
+     "san": "Qd8",
+     "uci": "f6d8",
+     "polo": "maniobrar",
+     "eval": -17,
+     "linea": [
+      "f6d8",
+      "c2e2",
+      "g7e8",
+      "b2b3"
+     ],
+     "medidas": {
+      "ataque": -3,
+      "estructura": 0,
+      "cambios": 0,
+      "propone": 0
+     }
+    },
+    "mejor": -10,
+    "fuente": {
+     "de": "una-clase-al-dia",
+     "partida": "ml247-2",
+     "blancas": "Y. Averbakh",
+     "negras": "I. Boleslavsky",
+     "evento": "URSS, 1953",
+     "ply": 49,
+     "enLaPartida": "Qe7"
+    }
+   },
+   {
+    "id": "es08",
+    "eje": "ataque",
+    "fen": "3rrnk1/pp2qppp/2p5/3p4/3P2b1/P1NBP3/1PQ2PPP/R3R1K1 b - - 2 15",
+    "a": {
+     "san": "Bc8",
+     "uci": "g4c8",
+     "polo": "maniobrar",
+     "eval": -26,
+     "linea": [
+      "g4c8",
+      "b2b4",
+      "a7a6",
+      "a1b1"
+     ],
+     "medidas": {
+      "ataque": -1,
+      "estructura": 0,
+      "cambios": 0,
+      "propone": 0
+     }
+    },
+    "b": {
+     "san": "Qh4",
+     "uci": "e7h4",
+     "polo": "atacar",
+     "eval": -21,
+     "linea": [
+      "e7h4",
+      "f2f3",
+      "g4c8",
+      "b2b4"
+     ],
+     "medidas": {
+      "ataque": 4,
+      "estructura": 0,
+      "cambios": 0,
+      "propone": 0
+     }
+    },
+    "mejor": -17,
+    "fuente": {
+     "de": "una-clase-al-dia",
+     "partida": "ml192-1",
+     "blancas": "Blancas",
+     "negras": "Negras",
+     "evento": "",
+     "ply": 29,
+     "enLaPartida": "Rd6"
+    }
+   },
+   {
+    "id": "es09",
+    "eje": "ataque",
+    "fen": "6r1/2p5/3bk3/1p2pp2/p7/1PP2PP1/P2R1BK1/8 b - - 1 31",
+    "a": {
+     "san": "Rh8",
+     "uci": "g8h8",
+     "polo": "atacar",
+     "eval": 50,
+     "linea": [
+      "g8h8",
+      "d2e2",
+      "h8b8",
+      "f2e3"
+     ],
+     "medidas": {
+      "ataque": 2,
+      "estructura": 0,
+      "cambios": 0,
+      "propone": 0
+     }
+    },
+    "b": {
+     "san": "Rd8",
+     "uci": "g8d8",
+     "polo": "maniobrar",
+     "eval": 60,
+     "linea": [
+      "g8d8",
+      "d2e2",
+      "d8a8",
+      "f2d4"
+     ],
+     "medidas": {
+      "ataque": -2,
+      "estructura": 0,
+      "cambios": 0,
+      "propone": 0
+     }
+    },
+    "mejor": 60,
+    "fuente": {
+     "de": "cambiar-o-no-cambiar",
+     "partida": "znosko-alekhine-1933",
+     "blancas": "Eugene Znosko Borovsky",
+     "negras": "Alexander Alekhine",
+     "evento": "París, 1933",
+     "ply": 30,
+     "enLaPartida": "axb3"
+    }
+   },
+   {
+    "id": "es10",
+    "eje": "ataque",
+    "fen": "r2qr1k1/1p3p1p/p1pn2p1/3pN3/PP1P4/1Q2P3/5PPP/R3R1K1 b - - 3 20",
+    "a": {
+     "san": "h5",
+     "uci": "h7h5",
+     "polo": "maniobrar",
+     "eval": 26,
+     "linea": [
+      "h7h5",
+      "e3e4",
+      "e8e7",
+      "e4d5"
+     ],
+     "medidas": {
+      "ataque": 0,
+      "estructura": 0,
+      "cambios": 0,
+      "propone": 0
+     }
+    },
+    "b": {
+     "san": "Qh4",
+     "uci": "d8h4",
+     "polo": "atacar",
+     "eval": 25,
+     "linea": [
+      "d8h4",
+      "b3d1",
+      "g8g7",
+      "d1f3"
+     ],
+     "medidas": {
+      "ataque": 4,
+      "estructura": 0,
+      "cambios": 0,
+      "propone": 0
+     }
+    },
+    "mejor": 35,
+    "fuente": {
+     "de": "una-clase-al-dia",
+     "partida": "ml099-1",
+     "blancas": "L. Portisch",
+     "negras": "G. Kasparov",
+     "evento": "Skelleftea, 1989",
+     "ply": 39,
+     "enLaPartida": "Qg5"
+    }
+   },
+   {
+    "id": "es11",
+    "eje": "ataque",
+    "fen": "6k1/1p4pp/2p2b2/2PbN2q/rP3PP1/3Q4/rB3R1P/5RK1 b - - 0 26",
+    "a": {
+     "san": "Qh4",
+     "uci": "h5h4",
+     "polo": "atacar",
+     "eval": 6,
+     "linea": [
+      "h5h4",
+      "d3f5",
+      "a4a8",
+      "e5f3"
+     ],
+     "medidas": {
+      "ataque": 2,
+      "estructura": 0,
+      "cambios": 0,
+      "propone": 0
+     }
+    },
+    "b": {
+     "san": "Qe8",
+     "uci": "h5e8",
+     "polo": "maniobrar",
+     "eval": 7,
+     "linea": [
+      "h5e8",
+      "d3c3",
+      "e8e6",
+      "h2h3"
+     ],
+     "medidas": {
+      "ataque": -2,
+      "estructura": 0,
+      "cambios": 0,
+      "propone": 0
+     }
+    },
+    "mejor": 14,
+    "fuente": {
+     "de": "una-clase-al-dia",
+     "partida": "ml240-4",
+     "blancas": "Blancas",
+     "negras": "Negras",
+     "evento": "1949 Defensa Holandesa",
+     "ply": 51,
+     "enLaPartida": "Qh4"
+    }
+   },
+   {
+    "id": "es12",
+    "eje": "ataque",
+    "fen": "4r3/1p1n2p1/1b1Pkp2/p3p3/P3N1P1/BP6/2R2PK1/8 b - - 1 34",
+    "a": {
+     "san": "g6",
+     "uci": "g7g6",
+     "polo": "maniobrar",
+     "eval": 8,
+     "linea": [
+      "g7g6",
+      "e4d2",
+      "e8b8",
+      "d2c4"
+     ],
+     "medidas": {
+      "ataque": 0,
+      "estructura": 0,
+      "cambios": 0,
+      "propone": 0
+     }
+    },
+    "b": {
+     "san": "Rh8",
+     "uci": "e8h8",
+     "polo": "atacar",
+     "eval": 26,
+     "linea": [
+      "e8h8",
+      "e4d2",
+      "h8b8",
+      "d2c4"
+     ],
+     "medidas": {
+      "ataque": 4,
+      "estructura": 0,
+      "cambios": 0,
+      "propone": 0
+     }
+    },
+    "mejor": 26,
+    "fuente": {
+     "de": "cambiar-o-no-cambiar",
+     "partida": "spassky-karpov-1974",
+     "blancas": "Boris Spassky",
+     "negras": "Anatoly Karpov",
+     "evento": "Leningrado (semifinal de Candidatos), 1974",
+     "ply": 32,
+     "enLaPartida": "Rb8"
+    }
+   },
+   {
+    "id": "es13",
+    "eje": "ataque",
+    "fen": "8/2p2qk1/1p1p1bp1/3P4/1PPpQ3/3B2P1/5PK1/8 b - - 1 33",
+    "a": {
+     "san": "Bg5",
+     "uci": "f6g5",
+     "polo": "atacar",
+     "eval": -29,
+     "linea": [
+      "f6g5",
+      "e4g4",
+      "g5f6",
+      "g2f3"
+     ],
+     "medidas": {
+      "ataque": 4,
+      "estructura": 0,
+      "cambios": 0,
+      "propone": 0
+     }
+    },
+    "b": {
+     "san": "Kh6",
+     "uci": "g7h6",
+     "polo": "maniobrar",
+     "eval": -25,
+     "linea": [
+      "g7h6",
+      "e4e6",
+      "h6g7",
+      "e6g4"
+     ],
+     "medidas": {
+      "ataque": 0,
+      "estructura": 0,
+      "cambios": 0,
+      "propone": 0
+     }
+    },
+    "mejor": -25,
+    "fuente": {
+     "de": "una-clase-al-dia",
+     "partida": "ml289-3",
+     "blancas": "B. Gelfand",
+     "negras": "Ye Jiangchuan",
+     "evento": "FIDE World Cup Shenyang, 2000",
+     "ply": 65,
+     "enLaPartida": "Kh6"
+    }
+   },
+   {
+    "id": "es14",
+    "eje": "ataque",
+    "fen": "r2q1rk1/5pbp/p1npb3/1p1Np3/8/2P1N3/PP3PPP/R2QKB1R w KQ - 4 15",
+    "a": {
+     "san": "g4",
+     "uci": "g2g4",
+     "polo": "maniobrar",
+     "eval": -10,
+     "linea": [
+      "g2g4",
+      "b5b4",
+      "f1g2",
+      "a8c8"
+     ],
+     "medidas": {
+      "ataque": 0,
+      "estructura": 0,
+      "cambios": 0,
+      "propone": 0
+     }
+    },
+    "b": {
+     "san": "Qh5",
+     "uci": "d1h5",
+     "polo": "atacar",
+     "eval": -4,
+     "linea": [
+      "d1h5",
+      "f7f5",
+      "f1d3",
+      "e5e4"
+     ],
+     "medidas": {
+      "ataque": 4,
+      "estructura": 0,
+      "cambios": 0,
+      "propone": 0
+     }
+    },
+    "mejor": 13,
+    "fuente": {
+     "de": "una-clase-al-dia",
+     "partida": "ml062-4",
+     "blancas": "M. Adams",
+     "negras": "V. Salov",
+     "evento": "Dortmund, 1992",
+     "ply": 28,
+     "enLaPartida": "g3"
+    }
+   },
+   {
+    "id": "es15",
+    "eje": "ataque",
+    "fen": "r1r3k1/5ppp/p2qp3/1p1n4/8/3N1QP1/PP2PPKP/2R2R2 b - - 3 21",
+    "a": {
+     "san": "Rc4",
+     "uci": "c8c4",
+     "polo": "atacar",
+     "eval": -8,
+     "linea": [
+      "c8c4",
+      "e2e4",
+      "d5e7",
+      "b2b3"
+     ],
+     "medidas": {
+      "ataque": 3,
+      "estructura": 0,
+      "cambios": 0,
+      "propone": 0
+     }
+    },
+    "b": {
+     "san": "Qe7",
+     "uci": "d6e7",
+     "polo": "maniobrar",
+     "eval": -16,
+     "linea": [
+      "d6e7",
+      "f1d1",
+      "h7h6",
+      "h2h4"
+     ],
+     "medidas": {
+      "ataque": -1,
+      "estructura": 0,
+      "cambios": 0,
+      "propone": 0
+     }
+    },
+    "mejor": -8,
+    "fuente": {
+     "de": "ganar-con-poco",
+     "partida": "gcp-1",
+     "blancas": "Ulf Andersson",
+     "negras": "Vladimir Potkin",
+     "evento": "Istanbul, 2003",
+     "ply": 41,
+     "enLaPartida": "h6"
+    }
+   },
+   {
+    "id": "es16",
+    "eje": "estructura",
+    "fen": "5R2/6pk/pp2qn1p/5p2/PP6/1r2BQP1/5PKP/8 w - - 1 34",
+    "a": {
+     "san": "b5",
+     "uci": "b4b5",
+     "polo": "abrir",
+     "eval": -39,
+     "linea": [
+      "b4b5",
+      "a6b5",
+      "a4b5",
+      "b3b5"
+     ],
+     "medidas": {
+      "ataque": 0,
+      "estructura": 1,
+      "cambios": 0,
+      "propone": 1
+     }
+    },
+    "b": {
+     "san": "a5",
+     "uci": "a4a5",
+     "polo": "cerrar",
+     "eval": -63,
+     "linea": [
+      "a4a5",
+      "b6b5",
+      "f3f4",
+      "f6d5"
+     ],
+     "medidas": {
+      "ataque": 0,
+      "estructura": -2,
+      "cambios": 0,
+      "propone": 0
+     }
+    },
+    "mejor": -39,
+    "fuente": {
+     "de": "una-clase-al-dia",
+     "partida": "ml273-1",
+     "blancas": "V. Hort",
+     "negras": "M. Tal",
+     "evento": "Olimpiada. La Habana, 1966",
+     "ply": 66,
+     "enLaPartida": "a5"
+    }
+   },
+   {
+    "id": "es17",
+    "eje": "estructura",
+    "fen": "r2q1rk1/3bbppp/p2p1n2/np2p3/P1p1P3/N1PP1N2/BP3PPP/R1BQR1K1 w - - 3 13",
+    "a": {
+     "san": "Bg5",
+     "uci": "c1g5",
+     "polo": "cerrar",
+     "eval": 32,
+     "linea": [
+      "c1g5",
+      "d8c7",
+      "a4b5",
+      "a6b5"
+     ],
+     "medidas": {
+      "ataque": 1,
+      "estructura": 0,
+      "cambios": 0,
+      "propone": 0
+     }
+    },
+    "b": {
+     "san": "dxc4",
+     "uci": "d3c4",
+     "polo": "abrir",
+     "eval": 18,
+     "linea": [
+      "d3c4",
+      "b5a4",
+      "c4c5",
+      "d8c7"
+     ],
+     "medidas": {
+      "ataque": 0,
+      "estructura": 3,
+      "cambios": 0,
+      "propone": 0
+     }
+    },
+    "mejor": 32,
+    "fuente": {
+     "de": "una-clase-al-dia",
+     "partida": "ml062-3",
+     "blancas": "Y. Balashov",
+     "negras": "E. Torre",
+     "evento": "Lone Pine, 1980",
+     "ply": 24,
+     "enLaPartida": "Bg5"
+    }
+   },
+   {
+    "id": "es18",
+    "eje": "estructura",
+    "fen": "r1b1k2r/pp2qppp/2n1p3/2ppP3/3P4/2PB1N2/P1P2PPP/R2QK2R w KQkq - 2 10",
+    "a": {
+     "san": "dxc5",
+     "uci": "d4c5",
+     "polo": "abrir",
+     "eval": -16,
+     "linea": [
+      "d4c5",
+      "e7c5",
+      "d1d2",
+      "h7h6"
+     ],
+     "medidas": {
+      "ataque": 1,
+      "estructura": 2,
+      "cambios": 0,
+      "propone": 1
+     }
+    },
+    "b": {
+     "san": "a4",
+     "uci": "a2a4",
+     "polo": "cerrar",
+     "eval": -43,
+     "linea": [
+      "a2a4",
+      "c5c4",
+      "d3e2",
+      "c8d7"
+     ],
+     "medidas": {
+      "ataque": 0,
+      "estructura": -1,
+      "cambios": 0,
+      "propone": 0
+     }
+    },
+    "mejor": -16,
+    "fuente": {
+     "de": "una-clase-al-dia",
+     "partida": "ml157-2",
+     "blancas": "A. Burn",
+     "negras": "A. Alekhine",
+     "evento": "Carlsbad, 1911",
+     "ply": 18,
+     "enLaPartida": "O-O"
+    }
+   },
+   {
+    "id": "es19",
+    "eje": "estructura",
+    "fen": "rn1qkb1r/pb3ppp/4pn2/2ppN3/1pPP4/6P1/PP2PPBP/RNBQK2R w KQkq - 1 9",
+    "a": {
+     "san": "Be3",
+     "uci": "c1e3",
+     "polo": "cerrar",
+     "eval": 48,
+     "linea": [
+      "c1e3",
+      "b8d7",
+      "e1g1",
+      "f8e7"
+     ],
+     "medidas": {
+      "ataque": 0,
+      "estructura": 0,
+      "cambios": 0,
+      "propone": 0
+     }
+    },
+    "b": {
+     "san": "a3",
+     "uci": "a2a3",
+     "polo": "abrir",
+     "eval": 57,
+     "linea": [
+      "a2a3",
+      "c5d4",
+      "e1g1",
+      "a7a5"
+     ],
+     "medidas": {
+      "ataque": 0,
+      "estructura": 3,
+      "cambios": 0,
+      "propone": 0
+     }
+    },
+    "mejor": 57,
+    "fuente": {
+     "de": "una-clase-al-dia",
+     "partida": "ml322-4",
+     "blancas": "J. Dorfman",
+     "negras": "R. Skrobek",
+     "evento": "Warsaw, 1983",
+     "ply": 16,
+     "enLaPartida": "Qa4+"
+    }
+   },
+   {
+    "id": "es20",
+    "eje": "estructura",
+    "fen": "r2q1rk1/1p1n1ppp/n1pb4/3pp1P1/pPPP3P/P3PQ2/1B1N1P2/R3KB1R w KQ - 0 16",
+    "a": {
+     "san": "cxd5",
+     "uci": "c4d5",
+     "polo": "abrir",
+     "eval": 145,
+     "linea": [
+      "c4d5",
+      "e5d4",
+      "d5c6",
+      "b7c6"
+     ],
+     "medidas": {
+      "ataque": 0,
+      "estructura": 2,
+      "cambios": 0,
+      "propone": 0
+     }
+    },
+    "b": {
+     "san": "c5",
+     "uci": "c4c5",
+     "polo": "cerrar",
+     "eval": 131,
+     "linea": [
+      "c4c5",
+      "d6c7",
+      "f3f5",
+      "d8e7"
+     ],
+     "medidas": {
+      "ataque": 0,
+      "estructura": -1,
+      "cambios": 0,
+      "propone": 0
+     }
+    },
+    "mejor": 145,
+    "fuente": {
+     "de": "una-clase-al-dia",
+     "partida": "ml075-3",
+     "blancas": "M. Taimanov",
+     "negras": "A. Shashin",
+     "evento": "USSR, 1978",
+     "ply": 30,
+     "enLaPartida": "cxd5"
+    }
+   },
+   {
+    "id": "es21",
+    "eje": "estructura",
+    "fen": "2rq1rk1/p2nbppp/bpp1p3/3p4/2PP4/1PB3P1/P2NPPBP/R2QR1K1 b - - 5 13",
+    "a": {
+     "san": "b5",
+     "uci": "b6b5",
+     "polo": "cerrar",
+     "eval": -21,
+     "linea": [
+      "b6b5",
+      "c4c5",
+      "e6e5",
+      "e2e3"
+     ],
+     "medidas": {
+      "ataque": 0,
+      "estructura": -1,
+      "cambios": 0,
+      "propone": 0
+     }
+    },
+    "b": {
+     "san": "c5",
+     "uci": "c6c5",
+     "polo": "abrir",
+     "eval": -4,
+     "linea": [
+      "c6c5",
+      "c4d5",
+      "e6d5",
+      "h2h4"
+     ],
+     "medidas": {
+      "ataque": 0,
+      "estructura": 2,
+      "cambios": 0,
+      "propone": 0
+     }
+    },
+    "mejor": -4,
+    "fuente": {
+     "de": "una-clase-al-dia",
+     "partida": "ml181-3",
+     "blancas": "A. Vyzmanavin",
+     "negras": "L. Psakhis",
+     "evento": "Novosibirsk, 1993",
+     "ply": 25,
+     "enLaPartida": "f5"
+    }
+   },
+   {
+    "id": "es22",
+    "eje": "estructura",
+    "fen": "1b1n4/p4pkp/bp2p1p1/2p1P3/2P2P2/1P2B1P1/P3N2P/5BK1 b - - 0 25",
+    "a": {
+     "san": "f6",
+     "uci": "f7f6",
+     "polo": "abrir",
+     "eval": 0,
+     "linea": [
+      "f7f6",
+      "e5f6",
+      "g7f6",
+      "e3d2"
+     ],
+     "medidas": {
+      "ataque": 0,
+      "estructura": 2,
+      "cambios": 0,
+      "propone": 1
+     }
+    },
+    "b": {
+     "san": "f5",
+     "uci": "f7f5",
+     "polo": "cerrar",
+     "eval": -19,
+     "linea": [
+      "f7f5",
+      "g1f2",
+      "g6g5",
+      "a2a3"
+     ],
+     "medidas": {
+      "ataque": 0,
+      "estructura": -1,
+      "cambios": 0,
+      "propone": 0
+     }
+    },
+    "mejor": 0,
+    "fuente": {
+     "de": "una-clase-al-dia",
+     "partida": "ml025-2",
+     "blancas": "Vassili Smyslov",
+     "negras": "Harry Golombek",
+     "evento": "Londres, 1947",
+     "ply": 49,
+     "enLaPartida": "f6"
+    }
+   },
+   {
+    "id": "es23",
+    "eje": "estructura",
+    "fen": "r1bq1rk1/pp1nbppp/2pp1n2/4p3/P2PP3/2N2N2/BPP2PPP/R1BQ1RK1 b - - 1 8",
+    "a": {
+     "san": "a5",
+     "uci": "a7a5",
+     "polo": "cerrar",
+     "eval": -45,
+     "linea": [
+      "a7a5",
+      "f1e1",
+      "e5d4",
+      "f3d4"
+     ],
+     "medidas": {
+      "ataque": 0,
+      "estructura": -1,
+      "cambios": 0,
+      "propone": 0
+     }
+    },
+    "b": {
+     "san": "exd4",
+     "uci": "e5d4",
+     "polo": "abrir",
+     "eval": -46,
+     "linea": [
+      "e5d4",
+      "f3d4",
+      "f8e8",
+      "f1e1"
+     ],
+     "medidas": {
+      "ataque": 0,
+      "estructura": 2,
+      "cambios": 0,
+      "propone": 1
+     }
+    },
+    "mejor": -41,
+    "fuente": {
+     "de": "una-clase-al-dia",
+     "partida": "ml091-2",
+     "blancas": "P. Motwani",
+     "negras": "J. Rowson",
+     "evento": "Dundee, 1995",
+     "ply": 15,
+     "enLaPartida": "b6"
+    }
+   },
+   {
+    "id": "es24",
+    "eje": "estructura",
+    "fen": "r1bq1rk1/3nbppp/2n1p3/1p1pP3/p1pP3P/P4NP1/1PP2PB1/R1BQRNK1 b - - 0 13",
+    "a": {
+     "san": "b4",
+     "uci": "b5b4",
+     "polo": "abrir",
+     "eval": -105,
+     "linea": [
+      "b5b4",
+      "a3b4",
+      "c6b4",
+      "f1e3"
+     ],
+     "medidas": {
+      "ataque": 0,
+      "estructura": 2,
+      "cambios": 0,
+      "propone": 1
+     }
+    },
+    "b": {
+     "san": "h6",
+     "uci": "h7h6",
+     "polo": "cerrar",
+     "eval": -114,
+     "linea": [
+      "h7h6",
+      "c2c3",
+      "f7f6",
+      "e5f6"
+     ],
+     "medidas": {
+      "ataque": 0,
+      "estructura": -1,
+      "cambios": 0,
+      "propone": 0
+     }
+    },
+    "mejor": -104,
+    "fuente": {
+     "de": "una-clase-al-dia",
+     "partida": "ml131-5",
+     "blancas": "J. Tompa",
+     "negras": "Y. Anikaev",
+     "evento": "URSS, 1967",
+     "ply": 25,
+     "enLaPartida": "b4"
+    }
+   },
+   {
+    "id": "es25",
+    "eje": "estructura",
+    "fen": "rn1q1rk1/pbp1bpp1/1p2pn1p/3p4/2PP3B/2NBPN2/PP3PPP/2RQK2R b K - 3 9",
+    "a": {
+     "san": "c5",
+     "uci": "c7c5",
+     "polo": "cerrar",
+     "eval": 0,
+     "linea": [
+      "c7c5",
+      "e1g1",
+      "d5c4",
+      "d3c4"
+     ],
+     "medidas": {
+      "ataque": 0,
+      "estructura": -1,
+      "cambios": 0,
+      "propone": 0
+     }
+    },
+    "b": {
+     "san": "dxc4",
+     "uci": "d5c4",
+     "polo": "abrir",
+     "eval": -2,
+     "linea": [
+      "d5c4",
+      "d3c4",
+      "c7c5",
+      "e1g1"
+     ],
+     "medidas": {
+      "ataque": 2,
+      "estructura": 2,
+      "cambios": 0,
+      "propone": 1
+     }
+    },
+    "mejor": 0,
+    "fuente": {
+     "de": "una-clase-al-dia",
+     "partida": "ml189-3",
+     "blancas": "V. Akopian",
+     "negras": "G. Giorgadze",
+     "evento": "Lvov, 1990",
+     "ply": 17,
+     "enLaPartida": "Nbd7"
+    }
+   },
+   {
+    "id": "es26",
+    "eje": "estructura",
+    "fen": "rnbq1rk1/pp2bpp1/2p2n1p/3pN3/2PP4/1Q1B1N2/PP3PPP/R1B1R1K1 b - - 3 11",
+    "a": {
+     "san": "dxc4",
+     "uci": "d5c4",
+     "polo": "abrir",
+     "eval": -96,
+     "linea": [
+      "d5c4",
+      "e5c4",
+      "b7b5",
+      "c4e5"
+     ],
+     "medidas": {
+      "ataque": 0,
+      "estructura": 2,
+      "cambios": 0,
+      "propone": 1
+     }
+    },
+    "b": {
+     "san": "a5",
+     "uci": "a7a5",
+     "polo": "cerrar",
+     "eval": -101,
+     "linea": [
+      "a7a5",
+      "c4c5",
+      "f6e4",
+      "c1f4"
+     ],
+     "medidas": {
+      "ataque": 0,
+      "estructura": -1,
+      "cambios": 0,
+      "propone": 0
+     }
+    },
+    "mejor": -91,
+    "fuente": {
+     "de": "una-clase-al-dia",
+     "partida": "ml076-5",
+     "blancas": "J. Richardson",
+     "negras": "Marsh",
+     "evento": "España, 1969",
+     "ply": 21,
+     "enLaPartida": "Nbd7"
+    }
+   },
+   {
+    "id": "es27",
+    "eje": "estructura",
+    "fen": "1r6/2p1kpp1/2p1p2p/p2rP3/7P/2P5/PP2RPP1/1K5R b - - 0 26",
+    "a": {
+     "san": "h5",
+     "uci": "h6h5",
+     "polo": "cerrar",
+     "eval": -19,
+     "linea": [
+      "h6h5",
+      "b1c1",
+      "f7f5",
+      "e5f6"
+     ],
+     "medidas": {
+      "ataque": 0,
+      "estructura": -1,
+      "cambios": 0,
+      "propone": 0
+     }
+    },
+    "b": {
+     "san": "f6",
+     "uci": "f7f6",
+     "polo": "abrir",
+     "eval": -31,
+     "linea": [
+      "f7f6",
+      "e5f6",
+      "g7f6",
+      "b1c2"
+     ],
+     "medidas": {
+      "ataque": 0,
+      "estructura": 2,
+      "cambios": 0,
+      "propone": 1
+     }
+    },
+    "mejor": -19,
+    "fuente": {
+     "de": "cambiar-o-no-cambiar",
+     "partida": "kasparov-bareev-2000",
+     "blancas": "Garry Kasparov",
+     "negras": "Evgeny Bareev",
+     "evento": "Sarajevo, 2000",
+     "ply": 51,
+     "enLaPartida": "f6"
+    }
+   },
+   {
+    "id": "es28",
+    "eje": "estructura",
+    "fen": "r2q1rk1/1bp1bppp/p2p1n2/np2p3/3PP3/2P2N1P/PPB2PP1/RNBQR1K1 b - - 2 11",
+    "a": {
+     "san": "exd4",
+     "uci": "e5d4",
+     "polo": "abrir",
+     "eval": -76,
+     "linea": [
+      "e5d4",
+      "c3d4",
+      "f8e8",
+      "b1d2"
+     ],
+     "medidas": {
+      "ataque": 0,
+      "estructura": 2,
+      "cambios": 0,
+      "propone": 1
+     }
+    },
+    "b": {
+     "san": "c5",
+     "uci": "c7c5",
+     "polo": "cerrar",
+     "eval": -83,
+     "linea": [
+      "c7c5",
+      "d4d5",
+      "a5c4",
+      "b2b3"
+     ],
+     "medidas": {
+      "ataque": 0,
+      "estructura": -1,
+      "cambios": 0,
+      "propone": 0
+     }
+    },
+    "mejor": -76,
+    "fuente": {
+     "de": "una-clase-al-dia",
+     "partida": "ml239-3",
+     "blancas": "R. Bellin",
+     "negras": "A. Petrosian",
+     "evento": "USSR, 1973",
+     "ply": 21,
+     "enLaPartida": "Nc4"
+    }
+   },
+   {
+    "id": "es29",
+    "eje": "estructura",
+    "fen": "r1bq1rk1/pp1nbppp/4pn2/2pp2B1/2PP4/2NBPN2/PP3PPP/R2Q1RK1 b - - 1 8",
+    "a": {
+     "san": "h6",
+     "uci": "h7h6",
+     "polo": "cerrar",
+     "eval": -7,
+     "linea": [
+      "h7h6",
+      "g5h4",
+      "b7b6",
+      "c4d5"
+     ],
+     "medidas": {
+      "ataque": 0,
+      "estructura": 0,
+      "cambios": 0,
+      "propone": 0
+     }
+    },
+    "b": {
+     "san": "dxc4",
+     "uci": "d5c4",
+     "polo": "abrir",
+     "eval": -13,
+     "linea": [
+      "d5c4",
+      "d3c4",
+      "c5d4",
+      "e3d4"
+     ],
+     "medidas": {
+      "ataque": 0,
+      "estructura": 3,
+      "cambios": 0,
+      "propone": 1
+     }
+    },
+    "mejor": -7,
+    "fuente": {
+     "de": "una-clase-al-dia",
+     "partida": "ml036-5",
+     "blancas": "I. Bondarevsky",
+     "negras": "G. Ravinsky",
+     "evento": "Moscu, 1940",
+     "ply": 15,
+     "enLaPartida": "dxc4"
+    }
+   },
+   {
+    "id": "es30",
+    "eje": "estructura",
+    "fen": "rn1q1rk1/pb2bppp/1p2pn2/2pp4/2PP4/PP1BPN2/1B1N1PPP/R2Q1RK1 b - - 1 10",
+    "a": {
+     "san": "dxc4",
+     "uci": "d5c4",
+     "polo": "abrir",
+     "eval": -16,
+     "linea": [
+      "d5c4",
+      "d2c4",
+      "c5d4",
+      "f3d4"
+     ],
+     "medidas": {
+      "ataque": 1,
+      "estructura": 3,
+      "cambios": 0,
+      "propone": 1
+     }
+    },
+    "b": {
+     "san": "Nbd7",
+     "uci": "b8d7",
+     "polo": "cerrar",
+     "eval": -17,
+     "linea": [
+      "b8d7",
+      "d1e2",
+      "a8c8",
+      "f1d1"
+     ],
+     "medidas": {
+      "ataque": 0,
+      "estructura": 0,
+      "cambios": 0,
+      "propone": 0
+     }
+    },
+    "mejor": -16,
+    "fuente": {
+     "de": "una-clase-al-dia",
+     "partida": "ml117-5",
+     "blancas": "B. Ivkov",
+     "negras": "V. Korchnoi",
+     "evento": "Interzonal. Sousse, 1967",
+     "ply": 19,
+     "enLaPartida": "cxd4"
+    }
+   },
+   {
+    "id": "es31",
+    "eje": "cambios",
+    "fen": "rn1qk2r/p4pbp/1pb1p1p1/2pn4/7Q/2NP1NP1/PP1BPPBP/R3K2R w KQkq - 0 11",
+    "a": {
+     "san": "Qxd8+",
+     "uci": "h4d8",
+     "polo": "cambiar",
+     "eval": 22,
+     "linea": [
+      "h4d8",
+      "e8d8",
+      "c3d5",
+      "e6d5"
+     ],
+     "medidas": {
+      "ataque": 2,
+      "estructura": 0,
+      "cambios": 24,
+      "propone": 1
+     }
+    },
+    "b": {
+     "san": "Bg5",
+     "uci": "d2g5",
+     "polo": "mantener",
+     "eval": 0,
+     "linea": [
+      "d2g5",
+      "d8d7",
+      "g5h6",
+      "g7f6"
+     ],
+     "medidas": {
+      "ataque": 0,
+      "estructura": 0,
+      "cambios": 0,
+      "propone": 0
+     }
+    },
+    "mejor": 27,
+    "fuente": {
+     "de": "una-clase-al-dia",
+     "partida": "ml337-2",
+     "blancas": "R. Huebner",
+     "negras": "A. Karpov",
+     "evento": "Tilburg, 1977",
+     "ply": 20,
+     "enLaPartida": "Qxd8+"
+    }
+   },
+   {
+    "id": "es32",
+    "eje": "cambios",
+    "fen": "3r2k1/p1r2ppp/1q6/3n4/3N4/2p1P3/P1R1QPPP/2R3K1 w - - 6 26",
+    "a": {
+     "san": "g3",
+     "uci": "g2g3",
+     "polo": "mantener",
+     "eval": 7,
+     "linea": [
+      "g2g3",
+      "b6f6",
+      "e2f3",
+      "f6e5"
+     ],
+     "medidas": {
+      "ataque": 0,
+      "estructura": 0,
+      "cambios": 0,
+      "propone": 0
+     }
+    },
+    "b": {
+     "san": "Qb5",
+     "uci": "e2b5",
+     "polo": "cambiar",
+     "eval": -9,
+     "linea": [
+      "e2b5",
+      "b6b5",
+      "d4b5",
+      "c7d7"
+     ],
+     "medidas": {
+      "ataque": 0,
+      "estructura": 0,
+      "cambios": 18,
+      "propone": 1
+     }
+    },
+    "mejor": 7,
+    "fuente": {
+     "de": "una-clase-al-dia",
+     "partida": "ml118-1",
+     "blancas": "O. Bernstein",
+     "negras": "JR. Capablanca",
+     "evento": "Moscú, 1914",
+     "ply": 50,
+     "enLaPartida": "Nb5"
+    }
+   },
+   {
+    "id": "es33",
+    "eje": "cambios",
+    "fen": "3r2k1/4qp1p/6p1/2pQ4/p6P/P5P1/1P3P2/2R3K1 w - - 4 27",
+    "a": {
+     "san": "Qg5",
+     "uci": "d5g5",
+     "polo": "cambiar",
+     "eval": 17,
+     "linea": [
+      "d5g5",
+      "e7g5",
+      "h4g5",
+      "d8d5"
+     ],
+     "medidas": {
+      "ataque": 2,
+      "estructura": 0,
+      "cambios": 18,
+      "propone": 1
+     }
+    },
+    "b": {
+     "san": "Qf3",
+     "uci": "d5f3",
+     "polo": "mantener",
+     "eval": 1,
+     "linea": [
+      "d5f3",
+      "h7h5",
+      "f3c6",
+      "d8d2"
+     ],
+     "medidas": {
+      "ataque": 1,
+      "estructura": -1,
+      "cambios": 0,
+      "propone": 0
+     }
+    },
+    "mejor": 20,
+    "fuente": {
+     "de": "una-clase-al-dia",
+     "partida": "ml135-1",
+     "blancas": "V. Akopian",
+     "negras": "K. Georgiev",
+     "evento": "Las Vegas 1999",
+     "ply": 52,
+     "enLaPartida": "Qxc5"
+    }
+   },
+   {
+    "id": "es34",
+    "eje": "cambios",
+    "fen": "3q4/p4pk1/2p2bp1/2p1p3/2B1P3/2P3P1/PP2Q2P/5K2 w - - 1 26",
+    "a": {
+     "san": "h4",
+     "uci": "h2h4",
+     "polo": "mantener",
+     "eval": 50,
+     "linea": [
+      "h2h4",
+      "d8c8",
+      "f1g2",
+      "c8b7"
+     ],
+     "medidas": {
+      "ataque": 1,
+      "estructura": 0,
+      "cambios": 0,
+      "propone": 0
+     }
+    },
+    "b": {
+     "san": "Qd3",
+     "uci": "e2d3",
+     "polo": "cambiar",
+     "eval": 26,
+     "linea": [
+      "e2d3",
+      "d8d3",
+      "c4d3",
+      "f6g5"
+     ],
+     "medidas": {
+      "ataque": -1,
+      "estructura": 0,
+      "cambios": 18,
+      "propone": 1
+     }
+    },
+    "mejor": 50,
+    "fuente": {
+     "de": "ganar-con-poco",
+     "partida": "gcp-14",
+     "blancas": "Akiba Rubinstein",
+     "negras": "Ernst Grünfeld",
+     "evento": "Karlsbad, 1929",
+     "ply": 50,
+     "enLaPartida": "h4"
+    }
+   },
+   {
+    "id": "es35",
+    "eje": "cambios",
+    "fen": "5qk1/p6p/2p3pQ/2p2P2/4P1p1/1P1p3b/PBP4P/6K1 w - - 2 32",
+    "a": {
+     "san": "Qxf8+",
+     "uci": "h6f8",
+     "polo": "cambiar",
+     "eval": 4,
+     "linea": [
+      "h6f8",
+      "g8f8",
+      "c2d3",
+      "g6f5"
+     ],
+     "medidas": {
+      "ataque": 1,
+      "estructura": 0,
+      "cambios": 18,
+      "propone": 1
+     }
+    },
+    "b": {
+     "san": "Qg5",
+     "uci": "h6g5",
+     "polo": "mantener",
+     "eval": 0,
+     "linea": [
+      "h6g5",
+      "d3c2",
+      "g5d2",
+      "g6f5"
+     ],
+     "medidas": {
+      "ataque": -1,
+      "estructura": 1,
+      "cambios": 0,
+      "propone": 0
+     }
+    },
+    "mejor": 6,
+    "fuente": {
+     "de": "una-clase-al-dia",
+     "partida": "ml079-1",
+     "blancas": "J. Bellon",
+     "negras": "H. Pfleger",
+     "evento": "Olot, 1972",
+     "ply": 62,
+     "enLaPartida": "Qxf8+"
+    }
+   },
+   {
+    "id": "es36",
+    "eje": "cambios",
+    "fen": "3rr1k1/p4pp1/1p5p/3p1nq1/P2Bb3/1PR4P/2PQ1PP1/3R1BK1 b - - 3 25",
+    "a": {
+     "san": "Qg6",
+     "uci": "g5g6",
+     "polo": "mantener",
+     "eval": -5,
+     "linea": [
+      "g5g6",
+      "d1e1",
+      "d8c8",
+      "f2f3"
+     ],
+     "medidas": {
+      "ataque": 0,
+      "estructura": 0,
+      "cambios": 0,
+      "propone": 0
+     }
+    },
+    "b": {
+     "san": "Qxd2",
+     "uci": "g5d2",
+     "polo": "cambiar",
+     "eval": -15,
+     "linea": [
+      "g5d2",
+      "d1d2",
+      "f5d4",
+      "d2d4"
+     ],
+     "medidas": {
+      "ataque": -1,
+      "estructura": 0,
+      "cambios": 24,
+      "propone": 1
+     }
+    },
+    "mejor": -5,
+    "fuente": {
+     "de": "una-clase-al-dia",
+     "partida": "ml100-4",
+     "blancas": "A. Gipslis",
+     "negras": "V. Korchnoi",
+     "evento": "Riga, 1970",
+     "ply": 49,
+     "enLaPartida": "Rc8"
+    }
+   },
+   {
+    "id": "es37",
+    "eje": "cambios",
+    "fen": "r4rk1/ppp2pbp/6p1/3q4/6b1/1N2B3/PPPQ1PPP/R4RK1 b - - 1 14",
+    "a": {
+     "san": "Qxd2",
+     "uci": "d5d2",
+     "polo": "cambiar",
+     "eval": 71,
+     "linea": [
+      "d5d2",
+      "b3d2",
+      "a7a5",
+      "h2h3"
+     ],
+     "medidas": {
+      "ataque": -1,
+      "estructura": 0,
+      "cambios": 18,
+      "propone": 1
+     }
+    },
+    "b": {
+     "san": "Qc4",
+     "uci": "d5c4",
+     "polo": "mantener",
+     "eval": 48,
+     "linea": [
+      "d5c4",
+      "h2h3",
+      "a8d8",
+      "d2c1"
+     ],
+     "medidas": {
+      "ataque": -1,
+      "estructura": 0,
+      "cambios": 0,
+      "propone": 0
+     }
+    },
+    "mejor": 71,
+    "fuente": {
+     "de": "una-clase-al-dia",
+     "partida": "ml067-2",
+     "blancas": "Blancas",
+     "negras": "Negras",
+     "evento": "",
+     "ply": 27,
+     "enLaPartida": "Qxd2"
+    }
+   },
+   {
+    "id": "es38",
+    "eje": "cambios",
+    "fen": "2rr2k1/p7/bp2p1p1/n1p1Pp1p/q1P2P2/P1P1N1P1/Q3B1P1/3RR1K1 b - - 1 26",
+    "a": {
+     "san": "Kf7",
+     "uci": "g8f7",
+     "polo": "mantener",
+     "eval": 55,
+     "linea": [
+      "g8f7",
+      "e2d3",
+      "a4e8",
+      "a2c2"
+     ],
+     "medidas": {
+      "ataque": 0,
+      "estructura": 0,
+      "cambios": 0,
+      "propone": 0
+     }
+    },
+    "b": {
+     "san": "Qb3",
+     "uci": "a4b3",
+     "polo": "cambiar",
+     "eval": 71,
+     "linea": [
+      "a4b3",
+      "a2b3",
+      "a5b3",
+      "e3f1"
+     ],
+     "medidas": {
+      "ataque": 0,
+      "estructura": 0,
+      "cambios": 18,
+      "propone": 1
+     }
+    },
+    "mejor": 81,
+    "fuente": {
+     "de": "una-clase-al-dia",
+     "partida": "ml048-2",
+     "blancas": "M. Botvinnik",
+     "negras": "S. Reshevsky",
+     "evento": "Cto Mundial, 1948",
+     "ply": 51,
+     "enLaPartida": "Kf7"
+    }
+   },
+   {
+    "id": "es39",
+    "eje": "cambios",
+    "fen": "2brk2r/1p2qnpp/p1p2p2/2N5/PP6/R3Q1P1/4PPBP/5RK1 b k - 2 22",
+    "a": {
+     "san": "Qxe3",
+     "uci": "e7e3",
+     "polo": "cambiar",
+     "eval": -58,
+     "linea": [
+      "e7e3",
+      "a3e3",
+      "e8f8",
+      "f1b1"
+     ],
+     "medidas": {
+      "ataque": 3,
+      "estructura": 0,
+      "cambios": 18,
+      "propone": 1
+     }
+    },
+    "b": {
+     "san": "Ne5",
+     "uci": "f7e5",
+     "polo": "mantener",
+     "eval": -65,
+     "linea": [
+      "f7e5",
+      "f1c1",
+      "e8g8",
+      "f2f4"
+     ],
+     "medidas": {
+      "ataque": 1,
+      "estructura": 0,
+      "cambios": 0,
+      "propone": 0
+     }
+    },
+    "mejor": -57,
+    "fuente": {
+     "de": "una-clase-al-dia",
+     "partida": "ml090-1",
+     "blancas": "G. Levenfish",
+     "negras": "S. Flohr",
+     "evento": "Moscú, 1936",
+     "ply": 43,
+     "enLaPartida": "Nd6"
+    }
+   },
+   {
+    "id": "es40",
+    "eje": "cambios",
+    "fen": "1R6/3brk1p/2p1n1p1/3p4/3P3q/3B1P2/4NQPP/6K1 b - - 2 28",
+    "a": {
+     "san": "Qh5",
+     "uci": "h4h5",
+     "polo": "mantener",
+     "eval": -20,
+     "linea": [
+      "h4h5",
+      "h2h3",
+      "e6g7",
+      "f3f4"
+     ],
+     "medidas": {
+      "ataque": -1,
+      "estructura": 0,
+      "cambios": 0,
+      "propone": 0
+     }
+    },
+    "b": {
+     "san": "Qxf2+",
+     "uci": "h4f2",
+     "polo": "cambiar",
+     "eval": -1,
+     "linea": [
+      "h4f2",
+      "g1f2",
+      "f7f6",
+      "h2h4"
+     ],
+     "medidas": {
+      "ataque": 1,
+      "estructura": 0,
+      "cambios": 18,
+      "propone": 1
+     }
+    },
+    "mejor": 0,
+    "fuente": {
+     "de": "una-clase-al-dia",
+     "partida": "ml192-4",
+     "blancas": "H. Bouwmeester",
+     "negras": "M. Euwe",
+     "evento": "Amsterdam, 1950",
+     "ply": 55,
+     "enLaPartida": "Qh6"
+    }
+   },
+   {
+    "id": "es41",
+    "eje": "cambios",
+    "fen": "r6k/pp2r2p/2p3p1/4qn2/1PB5/3R1P2/P2Q2PP/R5K1 w - - 6 28",
+    "a": {
+     "san": "Qc3",
+     "uci": "d2c3",
+     "polo": "cambiar",
+     "eval": 0,
+     "linea": [
+      "d2c3",
+      "e5c3",
+      "d3c3",
+      "a8d8"
+     ],
+     "medidas": {
+      "ataque": -1,
+      "estructura": 0,
+      "cambios": 18,
+      "propone": 1
+     }
+    },
+    "b": {
+     "san": "Rf1",
+     "uci": "a1f1",
+     "polo": "mantener",
+     "eval": 0,
+     "linea": [
+      "a1f1",
+      "a8e8",
+      "c4b3",
+      "h7h5"
+     ],
+     "medidas": {
+      "ataque": 0,
+      "estructura": 0,
+      "cambios": 0,
+      "propone": 0
+     }
+    },
+    "mejor": 13,
+    "fuente": {
+     "de": "una-clase-al-dia",
+     "partida": "ml360-4",
+     "blancas": "L. Van Wely",
+     "negras": "T. Radjabov",
+     "evento": "Monte Carlo (a ciegas), 2007",
+     "ply": 54,
+     "enLaPartida": "Rd1"
+    }
+   },
+   {
+    "id": "es42",
+    "eje": "cambios",
+    "fen": "r4rk1/pp2ppbp/6p1/2P1q3/1PQ5/2N1P2P/P5P1/2R2RK1 w - - 1 20",
+    "a": {
+     "san": "Rf3",
+     "uci": "f1f3",
+     "polo": "mantener",
+     "eval": -25,
+     "linea": [
+      "f1f3",
+      "a8d8",
+      "g1h1",
+      "a7a6"
+     ],
+     "medidas": {
+      "ataque": 0,
+      "estructura": 0,
+      "cambios": 0,
+      "propone": 0
+     }
+    },
+    "b": {
+     "san": "Qf4",
+     "uci": "c4f4",
+     "polo": "cambiar",
+     "eval": -30,
+     "linea": [
+      "c4f4",
+      "e5f4",
+      "f1f4",
+      "f8d8"
+     ],
+     "medidas": {
+      "ataque": 0,
+      "estructura": 0,
+      "cambios": 18,
+      "propone": 1
+     }
+    },
+    "mejor": -12,
+    "fuente": {
+     "de": "una-clase-al-dia",
+     "partida": "ml328-5",
+     "blancas": "M. Pandurevic",
+     "negras": "V. Kovacevic",
+     "evento": "CRO-chT Tucepi, 1996",
+     "ply": 38,
+     "enLaPartida": "Qe4"
+    }
+   },
+   {
+    "id": "es43",
+    "eje": "cambios",
+    "fen": "rnb2rk1/1p3pnp/pq2p1p1/1N1p4/7P/1N2P3/PPP2PP1/R2QKB1R w KQ - 0 14",
+    "a": {
+     "san": "Qd4",
+     "uci": "d1d4",
+     "polo": "cambiar",
+     "eval": 9,
+     "linea": [
+      "d1d4",
+      "b6d4",
+      "b5d4",
+      "b8d7"
+     ],
+     "medidas": {
+      "ataque": 2,
+      "estructura": 0,
+      "cambios": 18,
+      "propone": 1
+     }
+    },
+    "b": {
+     "san": "Nc3",
+     "uci": "b5c3",
+     "polo": "mantener",
+     "eval": 27,
+     "linea": [
+      "b5c3",
+      "c8d7",
+      "d1d2",
+      "a6a5"
+     ],
+     "medidas": {
+      "ataque": 0,
+      "estructura": 0,
+      "cambios": 0,
+      "propone": 0
+     }
+    },
+    "mejor": 27,
+    "fuente": {
+     "de": "ganar-con-poco",
+     "partida": "gcp-15",
+     "blancas": "José Raúl Capablanca",
+     "negras": "Frederick Yates",
+     "evento": "New York, 1924",
+     "ply": 26,
+     "enLaPartida": "Nc3"
+    }
+   },
+   {
+    "id": "es44",
+    "eje": "cambios",
+    "fen": "4bb1k/p5q1/2p2pp1/7p/1pB1QPnP/1P5N/PNP3P1/2K5 b - - 1 29",
+    "a": {
+     "san": "Bd7",
+     "uci": "e8d7",
+     "polo": "mantener",
+     "eval": 46,
+     "linea": [
+      "e8d7",
+      "b2d3",
+      "d7f5",
+      "e4e8"
+     ],
+     "medidas": {
+      "ataque": 0,
+      "estructura": 0,
+      "cambios": 0,
+      "propone": 0
+     }
+    },
+    "b": {
+     "san": "Qe7",
+     "uci": "g7e7",
+     "polo": "cambiar",
+     "eval": 46,
+     "linea": [
+      "g7e7",
+      "e4e7",
+      "f8e7",
+      "c1d2"
+     ],
+     "medidas": {
+      "ataque": 0,
+      "estructura": 0,
+      "cambios": 18,
+      "propone": 1
+     }
+    },
+    "mejor": 58,
+    "fuente": {
+     "de": "una-clase-al-dia",
+     "partida": "ml339-1",
+     "blancas": "I. Nepomniachtchi",
+     "negras": "G. Sargissian",
+     "evento": "Aeroflot Open. Moscú, 2007",
+     "ply": 57,
+     "enLaPartida": "Qe7"
+    }
+   },
+   {
+    "id": "es45",
+    "eje": "cambios",
+    "fen": "rnb2rk1/b1pq1ppp/p3p3/3pP1B1/2P5/1N3N2/PP3PPP/2RQ1RK1 b - - 5 15",
+    "a": {
+     "san": "dxc4",
+     "uci": "d5c4",
+     "polo": "cambiar",
+     "eval": -63,
+     "linea": [
+      "d5c4",
+      "c1c4",
+      "d7d1",
+      "f1d1"
+     ],
+     "medidas": {
+      "ataque": 0,
+      "estructura": 1,
+      "cambios": 18,
+      "propone": 1
+     }
+    },
+    "b": {
+     "san": "h6",
+     "uci": "h7h6",
+     "polo": "mantener",
+     "eval": -66,
+     "linea": [
+      "h7h6",
+      "g5d2",
+      "b8c6",
+      "c4c5"
+     ],
+     "medidas": {
+      "ataque": 0,
+      "estructura": 0,
+      "cambios": 0,
+      "propone": 0
+     }
+    },
+    "mejor": -54,
+    "fuente": {
+     "de": "una-clase-al-dia",
+     "partida": "ml253-4",
+     "blancas": "G. Estevez",
+     "negras": "R. Huebner",
+     "evento": "Interzonal Leningrado, 1973",
+     "ply": 29,
+     "enLaPartida": "Bb7"
+    }
+   }
+  ];
+  /* ESTILO-FIN */
+
+  /* Los ejes, con sus dos polos en el orden de POLOS de estilo-medidas.js. */
+  const EJES = {
+    ataque: { nombre: "Atacar o maniobrar", polos: { atacar: "Atacar al rey", maniobrar: "Maniobrar" } },
+    estructura: { nombre: "Abrir o cerrar", polos: { abrir: "Abrir el juego", cerrar: "Mantenerlo cerrado" } },
+    cambios: { nombre: "Cambiar o mantener piezas", polos: { cambiar: "Cambiar piezas", mantener: "Mantener las piezas" } },
+  };
+
+  /* Cuántas preguntas por eje lleva cada prueba, y hasta cuántas más agrega
+   * en un eje que quedó dudoso. */
+  const FORMA = { porEje: 10, extraPorEje: 5 };
+
+  const api = { VERSION: 1, ITEMS, EJES, FORMA };
+  raiz.EstiloItems = api;
+  if (typeof module !== "undefined" && module.exports) module.exports = api;
+})(typeof window !== "undefined" ? window : globalThis);

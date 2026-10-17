@@ -3924,3 +3924,96 @@ mate).
   como el modo oscuro); su nombre no cambia, lo que cambia es `aria-pressed`.
   Al apretar «¡Vamos!» suena solo el acorde de la etapa: el ping del nivel,
   encima, lo pisaba. `Sonidos.historial` deja ver al verificador qué sonó.
+
+## La prueba de estilo: qué tipo de juego prefiere, para elegir aperturas
+
+El diagnóstico de nivel mide si la persona **resuelve** bien cada área; no dice
+qué tipo de partida le gusta jugar, que es lo que hace falta para recomendarle
+una apertura con blancas y sus defensas. Alguien puede resolver bien la
+táctica y sentirse incómodo en posiciones caóticas. La prueba de estilo mide
+eso aparte, sin tocar el diagnóstico (ni su `FORMA` ni su `VERSION`).
+
+**Por ahora está el banco** (`js/estilo-items.js`); la página de la prueba y la
+tarjeta de «Apertura sugerida» vienen después y se apoyan en él.
+
+### Preguntas de elección: dos jugadas buenas, de carácter opuesto
+
+Cada pregunta pone una posición y **dos jugadas que Stockfish valora casi
+igual**. Como las dos son buenas, no hay respuesta correcta: la que elige dice
+qué prefiere. Tres ejes, 15 posiciones por eje (45 en el banco):
+
+| Eje | Un polo | El otro |
+|---|---|---|
+| `ataque` | Atacar al rey | Maniobrar |
+| `estructura` | Abrir el juego | Mantenerlo cerrado |
+| `cambios` | Cambiar piezas | Mantener las piezas |
+
+- **Parejas de verdad.** A profundidad 20, cada jugada a 30 centipeones o
+  menos de la más alta entre la mejor de la posición y las dos jugadas (a esa
+  profundidad, buscar una jugada sola puede darle más que la búsqueda
+  general), y la posición sin decidir (±1,5). Si una fuera claramente mejor,
+  la pregunta mediría fuerza y no gusto: es la misma regla que «Ninguna
+  opción absurda», al revés.
+- **El carácter no se pone a ojo**: lo miden las funciones de
+  `herramientas/lib/estilo-medidas.js`, solo con chess.js, sobre la línea del
+  motor que sigue a cada jugada. `ataque` cuenta los ataques que caen en la
+  zona del rey rival; `estructura`, columnas abiertas y semiabiertas menos
+  peones bloqueados tras la jugada y la respuesta; `cambios`, el material de
+  piezas que sale en cuatro medias jugadas. Cada pregunta separa mucho a las
+  dos jugadas en su eje y poco en los otros dos (`UMBRAL`), para medir una
+  sola cosa.
+- **Cada jugada es lo que dice su polo**, no solo «más que la otra». La
+  primera versión dejó pasar una «jugada de ataque» que solo se retiraba menos
+  que la de maniobrar, un «Rg1» que «cambiaba» porque el cambio aparecía tres
+  jugadas después en la línea del motor y un «abrir» donde quien abría era el
+  rival. Ahora la de atacar suma presión y la de maniobrar no; la de abrir es
+  una jugada de peón o una captura y la de cerrar no captura; la de cambiar
+  captura una pieza u ofrece el cambio (`propone`) y la de mantener no
+  captura.
+- **El orden no delata**: en cada eje, el primer polo (atacar, abrir,
+  cambiar) va una vez como jugada «a» y otra como «b». La primera tanda salió
+  con «atacar» en la «a» 13 de 15 veces.
+
+### De dónde salen las posiciones
+
+De partidas reales que ya están en el repositorio: las de «Una clase al día»,
+las de «Cambiar o no cambiar» y las de «Ganar con poco». Las jugadas de una
+partida son hechos; no se copia ningún comentario. Además:
+
+- Entre la jugada 8 y la 35, sin venir de una captura ni de un jaque (con una
+  recaptura pendiente, una de las dos jugadas sería obligada) y sin estar en
+  jaque.
+- **Ninguna posición que «Una clase al día» pregunta o dibuja** (sus `claves`
+  y `diagramas`, con dos medias jugadas de margen): quien hizo el curso la
+  reconocería.
+- **Una partida, una pregunta; una posición, una pregunta.** La misma partida
+  está en varias lecciones del curso con otro id (de 17 773 posiciones
+  quedaron 11 726 al sacar las repetidas), y dos partidas distintas pueden
+  llegar a la misma posición por otro orden de jugadas: las dos cosas
+  aparecieron en la primera tanda.
+- En cada eje, al menos 5 con cada color al turno.
+
+### Cuántas preguntas: 30 por prueba, adaptativa
+
+Cada elección es un sí o un no por eje, y el margen baja con la raíz del
+número de preguntas: con 7 por eje (una prueba de 20) el margen al 95 % es
+de ±37 puntos y solo se distinguen los estilos extremos; con 10, ±31; con
+15, ±25; con 20, ±22. Por eso `FORMA`: **10 por eje y hasta 5 más** en un eje
+que quedó dudoso. Nadie pasa de 45 y la mayoría termina en 30. El banco de 45
+deja además repetir la prueba meses después sin que se acuerde de las
+respuestas. El resultado se muestra siempre con su margen («tendencia
+táctica» frente a «claramente táctico»).
+
+**No todas las posiciones pesan igual**: unas tientan más hacia un lado
+aunque las dos jugadas valgan lo mismo. Como en el diagnóstico, ese tirón se
+calibrará con las respuestas reales cuando las haya.
+
+**Al tocarlo:** el banco no se edita a mano. Se cambia el generador o las
+medidas y se corre `STOCKFISH=/usr/games/stockfish node
+herramientas/estilo-generar.js` (unos 40 minutos la primera vez; el caché
+queda en `herramientas/.cache-estilo.json`, fuera del repositorio). Después,
+`node herramientas/verificar-todo.js estilo`: vuelve a jugar cada partida
+hasta su posición, juega las dos jugadas y sus líneas, recalcula las medidas
+y los polos, y exige las evaluaciones parejas y el orden repartido. Saltó al
+cambiar un polo, alejar una evaluación, correr la posición dos medias
+jugadas, poner un SAN falso y subir un umbral.
