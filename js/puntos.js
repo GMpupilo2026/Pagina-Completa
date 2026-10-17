@@ -639,6 +639,35 @@ window.Puntos = (function () {
         info.appendChild(de);
       }
       li.append(ic, info);
+      // Un material canjeado tiene que poder abrirse desde acá: antes la fila
+      // decía «Canjeado el…» y nada más, y ninguna otra pantalla le da al
+      // alumno el enlace (la tienda de materiales es solo de administración).
+      // Se pagó, el worker lo dejaba bajar, y no había por dónde llegar. Los
+      // archivos salen de js/tienda-catalogo.js, como en la tienda.
+      if (p.tipo_efecto === "material_tienda") {
+        const producto = window.TiendaCatalogo && p.parametros && p.parametros.producto
+          ? window.TiendaCatalogo.PRODUCTOS.find((x) => x.id === p.parametros.producto) : null;
+        const archivos = producto ? producto.archivos || [] : [];
+        const accesible = (ruta) => /-accesible\.html$/.test(ruta);
+        const principales = archivos.filter((r) => !accesible(r)).length;
+        if (archivos.length) {
+          const enlaces = document.createElement("p");
+          enlaces.className = "text-xs flex flex-wrap gap-x-3 gap-y-1 mt-0.5";
+          enlaces.setAttribute("data-material", producto.id);
+          archivos.forEach((ruta) => {
+            const a = document.createElement("a");
+            a.href = ruta;
+            a.target = "_blank";
+            a.rel = "noopener";
+            a.className = "font-semibold underline text-accent-700 dark:text-accent-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 rounded";
+            a.textContent = accesible(ruta) ? "Versión accesible"
+              : principales > 1 ? "Abrir " + ruta.split("/").pop() : "Abrir el material";
+            a.setAttribute("aria-label", a.textContent + " de " + p.nombre + " (se abre en otra pestaña)");
+            enlaces.appendChild(a);
+          });
+          info.appendChild(enlaces);
+        }
+      }
       if (p.tipo_efecto === "titulo" || p.tipo_efecto === "marco_perfil" || p.tipo_efecto === "accesorio_avatar") {
         const btn = boton(p.activo ? "Quitar" : "Mostrar", (p.activo ? "Quitar" : "Mostrar") + " " + p.nombre);
         btn.addEventListener("click", async () => {
