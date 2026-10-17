@@ -258,8 +258,18 @@ async function pruebaAlumna(browser) {
   await page.click("#ir-inicio");
   await page.click("#revisar-boton");
   await page.waitForFunction(() => /^Listo/.test(document.getElementById("revisar-estado").textContent), null, { timeout: 60000 }).catch(() => {});
-  igual("dice cuántas se pudieron mejorar", (await page.textContent("#revisar-estado")).split(":")[0], "Listo. Una jugada se pudo mejorar");
-  igual("marca la jugada que pierde y deja la del motor como variante", await jugadas(page), ["1. h3??", "1. Ta8#", "1… h6"]);
+  /* Lo seguro es h3??: se pierde un mate en uno, a cualquier profundidad. h6
+     NO: las negras están perdidas igual, y cuánto «pierde» h6 frente a g6 o
+     Rf8 ronda el umbral de 70 centipeones. En el CI, con el motor más lento,
+     salió h6?! con su variante y la prueba falló sin que la página tuviera
+     nada roto. Se exige lo seguro, y que el número del mensaje sea el de las
+     jugadas que quedaron marcadas en el árbol. */
+  const tras = await jugadas(page);
+  igual("marca la jugada que pierde y deja la del motor como variante", tras.slice(0, 2), ["1. h3??", "1. Ta8#"]);
+  igual("la jugada de las negras sigue en la línea", tras.some((t) => /^(1… )?h6(\?!|\?|\?\?)?$/.test(t)), true);
+  const marcadasEnArbol = tras.filter((t) => /[?!]$/.test(t) && /\?/.test(t)).length;
+  igual("dice cuántas se pudieron mejorar, las mismas que quedaron marcadas", (await page.textContent("#revisar-estado")).split(":")[0],
+    marcadasEnArbol === 1 ? "Listo. Una jugada se pudo mejorar" : "Listo. " + marcadasEnArbol + " jugadas se pudieron mejorar");
 
   // Volver a la lista y borrar.
   await page.click("#volver-lista");

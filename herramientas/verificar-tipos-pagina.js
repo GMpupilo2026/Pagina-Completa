@@ -124,6 +124,25 @@ async function abrir(browser, conSesion, hash, preparar) {
   const errores = [];
   page.on("pageerror", (e) => errores.push(String(e)));
   page.on("console", (m) => { if (m.type() === "error" && !/Failed to load resource/.test(m.text())) errores.push("console: " + m.text()); });
+  /* En el CI una espera de los botones del juego se pasó una vez de 30 s, y el
+     error decía solo eso: no se sabía si la página estaba en otra vista, en el
+     login o mostrando un aviso. Ahora, si una espera se pasa, dice qué había. */
+  const esperar = page.waitForSelector.bind(page);
+  page.waitForSelector = async (sel, op) => {
+    try { return await esperar(sel, op); } catch (e) {
+      const visto = await page.evaluate(() => {
+        const txt = (id) => { const n = document.getElementById(id); return n ? n.textContent.trim().slice(0, 120) : "—"; };
+        const vistas = ["gate", "vista-fichas", "vista-tipo", "vista-juego"].filter((id) => { const n = document.getElementById(id); return n && n.checkVisibility(); });
+        return "dirección " + location.pathname + location.hash + " | vistas a la vista: " + (vistas.join(", ") || "ninguna") +
+          " | título: " + txt("titulo-juego") + " | estado: " + txt("estado") + " | botones en #controles: " + document.querySelectorAll("#controles button").length;
+      }).catch((x) => "no se pudo leer la página: " + x.message);
+      const mas = "\n  En pantalla: " + visto + "\n  Errores de la página: " + (errores.join(" | ") || "ninguno");
+      // Node imprime el stack, que se armó antes: va en los dos.
+      e.message += mas;
+      if (e.stack) e.stack = e.stack.replace(/\n/, mas + "\n");
+      throw e;
+    }
+  };
   await page.goto(BASE + "/entreno/tipos.html" + (hash || ""), { waitUntil: "domcontentloaded" });
   return { page, ctx, errores };
 }
