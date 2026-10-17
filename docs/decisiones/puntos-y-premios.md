@@ -106,6 +106,21 @@ porque está pensada para que alguien registre a mano un pago por WhatsApp.
 puntos en lugar de dinero. El resultado para `puede_bajar()`/`worker.js` es
 exactamente el mismo: da igual por cuál de las dos vías se compró.
 
+### El material canjeado se abre desde «Mis premios»
+
+**Corregido después.** El candado quedaba abierto, pero no había puerta: la
+fila de «Mis premios» decía «Canjeado el…» y nada más, y `tienda.html` (la
+única pantalla con los enlaces a cada material) es solo de administración. Un
+alumno canjeó el libro de diagnóstico por 500 puntos el 13/10/2026, la base le
+registró la compra, el worker se lo habría dejado bajar, y no tuvo por dónde
+llegar; se le devolvieron los puntos a mano (`ajuste_manual`, con la
+referencia `devolucion:canje:<id>`). Ahora la fila de un `material_tienda`
+trae un enlace por cada archivo del producto, sacados de
+`js/tienda-catalogo.js` (la misma lista que la tienda, que
+`verificar-tienda.js` compara contra el disco), así que un material nuevo en
+el catálogo de premios sale con sus enlaces sin tocar `js/puntos.js`. Lo
+revisa la prueba «4 bis» de `verificar-puntos.js`.
+
 ## Los accesorios de avatar: lo único que otros alumnos (no solo quien lo tiene) llegan a ver
 
 Los títulos y los marcos de perfil solo se ven en el panel y la tienda de

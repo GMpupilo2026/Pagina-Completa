@@ -387,6 +387,26 @@ async function main() {
     await ctx.close();
   }
 
+  // ---------- 4 bis) un material canjeado se abre desde «Mis premios» ----------
+  // Pasó de verdad: un alumno canjeó el libro de diagnóstico por 500 puntos,
+  // la base le registró la compra, y la fila decía «Canjeado el…» sin ningún
+  // enlace. No había otra pantalla por donde llegar al PDF.
+  {
+    const libro = { id: "c-libro", premio_id: "p-libro", clave: "material_libro_diagnostico", nombre: "Libro de diagnóstico",
+      emoji: "📖", categoria: "contenido", tipo_efecto: "material_tienda", parametros: { producto: "libro-de-diagnostico" },
+      activo: true, vigente_hasta: null, created_at: new Date().toISOString() };
+    const { page, ctx } = await abrir(navegador, 50, [libro]);
+    const enlaces = page.locator('[data-material="libro-de-diagnostico"] a');
+    await enlaces.first().waitFor({ timeout: 5000 }).catch(() => {});
+    const hrefs = await enlaces.evaluateAll((as) => as.map((a) => ({ href: a.getAttribute("href"), texto: a.textContent, ve: a.checkVisibility() })));
+    ok(hrefs.some((a) => a.href === "material/libro-de-diagnostico/libro-de-diagnostico.pdf" && a.ve),
+      "el libro canjeado no tiene un enlace visible a su PDF en «Mis premios»: " + JSON.stringify(hrefs));
+    ok(hrefs.some((a) => a.href === "material/libro-de-diagnostico/libro-de-diagnostico-accesible.html" && a.texto === "Versión accesible"),
+      "falta el enlace a la versión accesible del libro canjeado");
+    ok(hrefs.every((a) => fs.existsSync(path.join(__dirname, "..", a.href))), "un enlace del material canjeado apunta a un archivo que no existe");
+    await ctx.close();
+  }
+
   // ---------- 5) lo pendiente se cobra al abrir la tienda, una sola vez ----------
   {
     const { page, ctx, errores } = await abrir(navegador, 100, [], false);
