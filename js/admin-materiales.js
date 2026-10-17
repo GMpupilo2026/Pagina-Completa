@@ -219,6 +219,7 @@
         { href: "material/peonita/peonita-accesible.html", texto: "♿ Versión accesible" },
         { href: "material/peonita/peonita-adaptado.pdf", texto: "🔎 PDF adaptado (letra grande)" },
         { href: "material/peonita/peonita-adaptado.docx", texto: "🔎 Word adaptado (letra grande)" },
+        { href: "material/peonita/peonita-adaptado.epub", texto: "📖 EPUB accesible (lector de libros)" },
       ],
     },
     {
@@ -232,6 +233,7 @@
         { href: "material/peonita-trucos/peonita-trucos-accesible.html", texto: "♿ Versión accesible" },
         { href: "material/peonita-trucos/peonita-trucos-adaptado.pdf", texto: "🔎 PDF adaptado (letra grande)" },
         { href: "material/peonita-trucos/peonita-trucos-adaptado.docx", texto: "🔎 Word adaptado (letra grande)" },
+        { href: "material/peonita-trucos/peonita-trucos-adaptado.epub", texto: "📖 EPUB accesible (lector de libros)" },
       ],
     },
     {
@@ -245,6 +247,7 @@
         { href: "material/peonita-rey/peonita-rey-accesible.html", texto: "♿ Versión accesible" },
         { href: "material/peonita-rey/peonita-rey-adaptado.pdf", texto: "🔎 PDF adaptado (letra grande)" },
         { href: "material/peonita-rey/peonita-rey-adaptado.docx", texto: "🔎 Word adaptado (letra grande)" },
+        { href: "material/peonita-rey/peonita-rey-adaptado.epub", texto: "📖 EPUB accesible (lector de libros)" },
       ],
     },
     {

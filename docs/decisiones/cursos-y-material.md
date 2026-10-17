@@ -1095,8 +1095,9 @@ soluciones.
   secretos. `dibujos.js` tiene los personajes y las escenas, y
   `herramientas/libro-ninos-pdf.js` los pone en papel **con una sola
   maqueta**: `material/<slug>/<slug>.pdf`, `<slug>-accesible.html`,
-  `<slug>-adaptado.pdf` y `<slug>-adaptado.docx` (ver «El PDF adaptado: letra
-  grande y lector de pantalla» y «El adaptado también en Word»).
+  `<slug>-adaptado.pdf`, `.docx` y `.epub` (ver «El PDF adaptado: letra
+  grande y lector de pantalla», «El adaptado también en Word» y «Para quien no
+  ve: los ejercicios con las manos y el EPUB»).
 - Los revisa `verificar-libro-ninos.js`, todos. Un cuento nuevo se suma a
   `libros.js` y entra solo al generador y al verificador.
 
@@ -1296,6 +1297,69 @@ ya usa. Sale del mismo generador: `material/<slug>/<slug>-adaptado.docx`, con
   Título 2, cada dibujo contado, todas las imágenes decorativas, ningún
   interlineado exacto o sin regla, listas con numeración y las soluciones.
   Los tres validan contra el esquema de Office.
+
+### Para quien no ve: los ejercicios con las manos y el EPUB
+
+El dueño preguntó qué era lo mejor para un niño ciego y eligió dos cosas: los
+ejercicios con las manos y el libro en EPUB.
+
+**Con las manos.** Un niño ciego de 4 a 8 años no hace los ejercicios con
+un lector de pantalla: los hace en un tablero táctil (las casillas oscuras
+más altas, las piezas negras con una puntita arriba) y contesta en voz alta
+a quien le lee. Las versiones para quien no ve decían todavía «la casilla
+amarilla», «la estrella», «marca con una ✗», «pinta», «mira».
+
+- `tactil(e)` de `libro-ninos-pdf.js` da, para cada tipo de ejercicio, **qué
+  armar y qué tocar** («Con las manos.») y la pregunta sin nada que solo se
+  ve. La estrella es una **ficha** (un botón o una moneda) que se pone en la
+  casilla; en el ejercicio de nombrar la casilla, la pone el adulto sin
+  decir cuál, porque encontrarla es el ejercicio. «Pintar» pasa a tocar las
+  casillas altas; «unir» a reconocer cada pieza por su forma (las pistas de
+  cómo se siente cada una).
+- `solucionTactil(e)` hace lo mismo con las soluciones, y `manosMuestra(m)`
+  con los diagramas del cuento («pon el dedo en la torre de d4 y recorre sus
+  caminos: puede ir a…»).
+- **Para leer con las manos** (`MANOS_ADULTOS`): una página para la persona
+  adulta (qué es un tablero táctil, las fichas, cómo se nombran las
+  casillas, armar la posición CON el niño y no por él, recorrer el tablero
+  antes de empezar).
+- Va en la versión accesible, el PDF, el Word y el EPUB, que salen del mismo
+  contenido; el libro con dibujos no cambia.
+- Con el recuadro nuevo, el ejercicio ya no cabía en su hoja: la raya de la
+  respuesta (y a veces el «Con las manos») se pasaba sola a la siguiente. El
+  tablero de un ejercicio quedó en 90 mm (72 si tiene más de 12 piezas), el
+  de un diagrama en 120 (95), los diagramas no se parten y en los adaptados
+  ya no se repite «puede ir a» en «La posición». Ninguna hoja de los tres
+  libros queda casi vacía.
+
+**El EPUB** (`adaptadoEpub()`, `material/<slug>/<slug>-adaptado.epub`): el
+formato de los libros accesibles. El texto se acomoda a la pantalla y a la
+letra que elige quien lee, y se lee con VoiceOver, TalkBack o un lector de
+libros saltando por capítulos.
+
+- Una página XHTML por parte del libro, con sus títulos; índice (nav) con
+  los capítulos y su «¡A jugar!» (sin «Diagrama» ni «Lo que aprendí», que se
+  repiten en cada capítulo y leídos en fila no dicen nada); idioma es-CR;
+  los metadatos de EPUB Accessibility 1.1 (accessMode, accessModeSufficient
+  textual, accessibilityFeature, hazard, resumen, conformsTo); imágenes con
+  `alt=""` porque al lado va escrito lo que muestran; sin colores ni tamaños
+  de letra fijos. La raya de la respuesta no va: en la pantalla se contesta
+  en voz alta. El identificador sale del slug: vuelto a generar, sigue
+  siendo el mismo libro para la biblioteca del lector.
+- **Validado** en los tres cuentos con **EPUBCheck 5.4.0** (0 errores, 0
+  advertencias) y **Ace by DAISY** (pass, sin ningún problema). EPUBCheck se
+  baja de Maven Central (`org.w3c:epubcheck`) como veraPDF; Ace con `npm
+  install @daisy/ace` en una carpeta aparte y `ace-puppeteer` con
+  `PUPPETEER_EXECUTABLE_PATH` apuntando al Chromium de Playwright (`ace` a
+  secas usa Electron, que como root no arranca).
+- `verificar-libro-ninos.js` comprueba sin Java ni navegador: el mimetype
+  primero y sin comprimir (si no, un lector no lo reconoce), idioma,
+  metadatos de accesibilidad, índice, cada página XML bien formado y con su
+  idioma, cada imagen con alt, que sea de este libro, y el «Con las manos».
+  En la versión accesible: que cada ejercicio con posición diga «Con las
+  manos» y que ni los ejercicios ni las soluciones pidan algo que solo se ve.
+  Se rompió a propósito («la casilla amarilla» en un ejercicio; el EPUB con el
+  mimetype comprimido) y saltó.
 
 ### Los diplomas se coleccionan
 
