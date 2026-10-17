@@ -526,6 +526,84 @@ impersonando roles.
 Está probado que falla de verdad: sin descontar el reloj al mover, o sin
 pintar la partida escrita, se cae.
 
+### Practicar: cuántos intentos tiene cada alumno
+
+En «🎯 Practicar» el alumno podía reintentar la ronda sin fin: el profe veía
+«intento 7» en la grilla, pero no podía decir «tienes tres». Ahora elige
+**«Intentos por alumno»** al abrir la ronda (sin límite, 1, 2, 3, 5 o 10) y lo
+puede cambiar con la ronda en curso —darles uno más, o cortar los reintentos—
+desde el mismo selector de la práctica activa.
+
+- **Se guarda en la ronda**, `practice_sessions.max_intentos` (null: sin
+  límite, como siempre; de 1 a 20 por un `check`). Viaja por `crearPractica()`,
+  la única puerta, así que vale también para Archivos, Entrenamientos y «Con lo
+  justo». Cambiarlo es un UPDATE de la ronda (la política ya le deja al profe
+  escribir la suya) y al alumno le llega por el Realtime que ya escucha.
+- **Lo hace cumplir la base, no el botón** (migración
+  `practica_intentos_por_alumno`, en el trigger que ya protegía la fila del
+  alumno, `practica_ayuda_proteger`). Esconder «↻ Reintentar» no basta: desde
+  la consola se podía mandar el UPDATE igual. Para el alumno:
+  - reintentar es **sumar uno**: `attempts` no vuelve a 1 ni salta;
+  - una partida terminada **no vuelve a «playing» sin gastar un intento** —si
+    no, el tope se saltaba reiniciando la fila sin tocar el contador—;
+  - no se reintenta pasado el tope ni con la ronda cerrada;
+  - su fila nueva arranca en el intento 1 aunque mande otra cosa
+    (`practica_intentos_al_crear`, BEFORE INSERT).
+  Comprobado impersonando a una alumna en un bloque que se deshace solo: con
+  tope 2, el 3.º lo rechaza («Ya usaste tus 2 intentos de esta práctica.»), y
+  con el profe subiéndolo a 3, pasa. El profe y quien observa no tocan
+  `attempts`: el trigger ya les devolvía la fila como estaba.
+- **El alumno lo ve escrito**: «Intento 2 de 3.» debajo del estado, y al
+  gastarlos «Usaste tus 3 intentos.» (con uno solo, «Esta práctica era de un
+  solo intento.»). «↻ Reintentar» no se ofrece, y escribir «reintentar» en el
+  cuadro de comandos contesta lo mismo en vez de no hacer nada. Si la base
+  rechaza el reintento (el profe bajó el tope justo antes), se dice lo que
+  contestó y la partida queda como estaba: `savePracticeGameRow()` devuelve el
+  error en lugar de tragárselo.
+- **La grilla del profe dice «intento 2 de 3»**, y se pone al día al cambiar el
+  tope.
+
+Se aplicó con `execute_sql` (`apply_migration` se colgó dos veces sin aplicar
+nada) y se anotó a mano en `supabase_migrations.schema_migrations` con el texto
+exacto del archivo (mismo md5). Para que no pidiera la confirmación aparte de
+un `drop`, el trigger va con `create or replace trigger`.
+
+**Al tocar esto, correr `node herramientas/verificar-todo.js practica-intentos`.**
+Está probado que falla de verdad: sin mandar el tope en la ronda o sin
+esconder «Reintentar» con los intentos gastados, salta.
+
+### Practicar: las jugadas de cada intento, para revisarlas en clase
+
+Reintentar reusa la fila de `practice_games` (un solo tablero por alumno en la
+grilla), así que las jugadas del intento anterior se perdían. Ahora se guardan
+todas, y el profe elige cuál mostrar a la clase.
+
+- **Las guarda la base** (migración `practica_guarda_cada_intento`): el trigger
+  `interno.practica_guardar_intento` (SECURITY DEFINER, AFTER UPDATE OF
+  attempts) copia el intento que termina a `practice_intentos` —jugadas, cómo
+  terminó y su número— en el mismo momento en que el alumno reintenta. El
+  intento en curso sigue en `practice_games`; juntos son la ronda entera. Que
+  lo haga un trigger y no la página quiere decir que no se saltea y que el
+  alumno no lo escribe: la tabla no tiene permisos de escritura para nadie
+  desde afuera. Comprobado impersonando: una alumna que reintenta dos veces
+  deja sus dos intentos; no puede insertarlos, cambiarlos ni borrarlos; su
+  profe los ve, otro alumno no. La lectura es la de `practice_games`, con el
+  conjunto armado una vez, más la restrictiva de acceso vigente.
+- **«🔁 Revisar los intentos»** en la pestaña Practicar sigue a mano después de
+  «Terminar práctica»: es para repasar, no para seguir en vivo. La lista se
+  pide **solo al abrirla**, sin Realtime (la práctica ya escucha bastante;
+  ver «La práctica no recarga la lista en cada jugada»). Cada alumno, con sus
+  intentos del primero al último y cómo terminó cada uno.
+- **«📺 Mostrar»** usa la misma puerta que «Mostrar a la clase» de Preguntar,
+  ahora `mostrarJugadasALaClase()`: va como variante que mira el profe
+  (`game_state.vista`), la partida de la clase no se toca, y si el tablero ya
+  no tiene la posición de la práctica pregunta antes de reemplazarla. «Decir
+  de quién es al mostrarlo» arranca sin marcar, por lo mismo que allá.
+
+**Al tocar esto, correr `node herramientas/verificar-todo.js practica-intentos
+clase-mostrar`.** Está probado que falla de verdad: sin ordenar los intentos o
+mandando siempre el nombre, salta.
+
 ### Antes y después de la clase: el plan marcado, la tarea de repaso y «Tu última clase»
 
 La clase empezaba en «Mi plan» y terminaba en «Cerrar la clase», pero ninguno
