@@ -183,7 +183,7 @@
     "ruta": "material/peonita-rey/peonita-rey-adaptado.pdf",
     "titulo": "Peonita y el rey escondido — versión adaptada (letra grande y lector de pantalla)",
     "tipo": "otro",
-    "kb": 971,
+    "kb": 1032,
     "libro": "Peonita y el rey escondido"
    },
    {
@@ -197,7 +197,7 @@
     "ruta": "material/peonita-trucos/peonita-trucos-adaptado.pdf",
     "titulo": "Peonita, Tizón y los trucos del bosque — versión adaptada (letra grande y lector de pantalla)",
     "tipo": "otro",
-    "kb": 926,
+    "kb": 971,
     "libro": "Peonita, Tizón y los trucos del bosque"
    },
    {
@@ -211,7 +211,7 @@
     "ruta": "material/peonita/peonita-adaptado.pdf",
     "titulo": "Peonita y el reino de las 64 casillas — versión adaptada (letra grande y lector de pantalla)",
     "tipo": "otro",
-    "kb": 1290,
+    "kb": 1377,
     "libro": "Peonita y el reino de las 64 casillas"
    },
    {
@@ -8735,7 +8735,7 @@
       "ruta": "material/peonita/peonita-adaptado.docx",
       "titulo": "Peonita y el reino de las 64 casillas — versión adaptada en Word (letra grande y lector de pantalla)",
       "tipo": "otro",
-      "kb": 4315
+      "kb": 3859
      }
     ]
    },
@@ -8748,7 +8748,7 @@
       "ruta": "material/peonita-trucos/peonita-trucos-adaptado.docx",
       "titulo": "Peonita, Tizón y los trucos del bosque — versión adaptada en Word (letra grande y lector de pantalla)",
       "tipo": "otro",
-      "kb": 3422
+      "kb": 3146
      }
     ]
    },
@@ -8761,7 +8761,7 @@
       "ruta": "material/peonita-rey/peonita-rey-adaptado.docx",
       "titulo": "Peonita y el rey escondido — versión adaptada en Word (letra grande y lector de pantalla)",
       "tipo": "otro",
-      "kb": 3133
+      "kb": 2871
      }
     ]
    }
@@ -14047,21 +14047,21 @@
     "ruta": "material/peonita-rey/peonita-rey-accesible.html",
     "titulo": "Peonita y el rey escondido",
     "tipo": "accesible",
-    "kb": 32,
+    "kb": 41,
     "libro": "Peonita y el rey escondido"
    },
    {
     "ruta": "material/peonita-trucos/peonita-trucos-accesible.html",
     "titulo": "Peonita, Tizón y los trucos del bosque",
     "tipo": "accesible",
-    "kb": 32,
+    "kb": 38,
     "libro": "Peonita, Tizón y los trucos del bosque"
    },
    {
     "ruta": "material/peonita/peonita-accesible.html",
     "titulo": "Peonita y el reino de las 64 casillas",
     "tipo": "accesible",
-    "kb": 45,
+    "kb": 58,
     "libro": "Peonita y el reino de las 64 casillas"
    },
    {

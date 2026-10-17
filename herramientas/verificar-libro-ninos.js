@@ -29,7 +29,9 @@
  * traiga todos los capítulos y una descripción de cada dibujo, y que el PDF
  * adaptado esté etiquetado, sin cifrar, en español, con todo el cuento, con
  * su XMP de PDF/UA-1 y sin contenido suelto (ni etiquetado ni Artifact), y
- * que el Word adaptado tenga sus títulos, su idioma y las imágenes decorativas.
+ * que el Word adaptado tenga sus títulos, su idioma y las imágenes decorativas,
+ * que el EPUB sea un EPUB accesible de este libro, y que los ejercicios para
+ * quien no ve se hagan con las manos y no pidan nada que solo se ve.
  *
  *   node herramientas/verificar-libro-ninos.js
  */
@@ -300,6 +302,21 @@ if (fs.existsSync(acc)) {
     ok(html.includes(c.escena.alt), `${L.SLUG}: la versión accesible no describe el dibujo del capítulo ${c.n}`);
   });
   ok(!/<img|<svg/i.test(html), `${L.SLUG}: la versión accesible tiene imágenes: tiene que ser solo texto`);
+  // Con las manos: un niño ciego hace los ejercicios en un tablero táctil.
+  // Cada ejercicio con posición dice qué armar y qué tocar, y ni los
+  // ejercicios ni las soluciones le piden algo que solo se ve (la casilla
+  // amarilla, la estrella, marcar con una ✗, pintar). Los nombres propios
+  // («la Dama Estrella», «caminos de colores») y el aviso de dónde estaba la
+  // estrella del libro sí pueden ir.
+  const conPosicion = L.CAPITULOS.reduce((n, c) => n + c.ejercicios.filter((e) => e.fen).length, 0);
+  const manos = (html.match(/<strong>Con las manos\.<\/strong>/g) || []).length;
+  ok(manos >= conPosicion, `${L.SLUG}: la versión accesible dice «Con las manos» ${manos} veces y hay ${conPosicion} ejercicios con posición: cada uno tiene que decir qué armar y qué tocar`);
+  ok(html.includes("<h2>Para leer con las manos</h2>"), `${L.SLUG}: la versión accesible no explica cómo leer el libro con un tablero táctil`);
+  const ejercicios = (html.match(/<h3>¡A jugar!<\/h3><ol>[\s\S]*?<\/ol>\s*<\/section>/g) || []).join(" ") + html.slice(html.indexOf("<h2>Soluciones</h2>"));
+  const plano = ejercicios.replace(/<[^>]+>/g, " ").replace(/Dama Estrella|caminos de colores|en el libro, ahí hay una estrella|la de la estrella del libro/g, "");
+  const VISUAL = /amarill|estrella|✗|encierra|\bpinta|colorea|\bmira\b|\bves\b|puntos? verdes?|flecha|círculo|marca con/gi;
+  const vistas = [...new Set(plano.match(VISUAL) || [])];
+  ok(!vistas.length, `${L.SLUG}: los ejercicios o las soluciones de la versión accesible piden algo que solo se ve: ${vistas.join(", ")}`);
   ok(html.includes(L.AUTOR), `${L.SLUG}: la versión accesible no dice quién es el autor`);
 } else {
   fallos.push(`falta material/${L.SLUG}/${L.SLUG}-accesible.html: hay que correr herramientas/libro-ninos-pdf.js`);
@@ -428,6 +445,71 @@ print(json.dumps({
   }
 } else {
   fallos.push(`falta material/${L.SLUG}/${L.SLUG}-adaptado.docx: hay que correr herramientas/libro-ninos-pdf.js --solo-adaptado`);
+}
+
+// El EPUB adaptado. Lo validan EPUBCheck y Ace by DAISY (a mano: piden Java y
+// un Chromium); acá se comprueba sin ellos lo que se rompe callado: el
+// mimetype primero y sin comprimir (si no, el lector no lo reconoce como
+// EPUB), el idioma, los metadatos de accesibilidad, el índice, que cada
+// página sea XML bien formado con su idioma, que cada imagen tenga su alt y
+// que el libro sea ESTE (con sus capítulos, sus dibujos contados y el «Con
+// las manos»).
+const epub = path.join(CARPETA, L.SLUG + "-adaptado.epub");
+if (fs.existsSync(epub)) {
+  const guionE = `
+import sys, json, re, zipfile
+import xml.etree.ElementTree as ET
+z = zipfile.ZipFile(sys.argv[1])
+primero = z.infolist()[0]
+opf = z.read("EPUB/package.opf").decode("utf-8")
+paginas, malas, sin_idioma, imgs, sin_alt, texto = [], [], [], 0, 0, []
+for n in z.namelist():
+    if not n.endswith(".xhtml"): continue
+    x = z.read(n).decode("utf-8")
+    try:
+        raiz = ET.fromstring(x.encode("utf-8"))
+    except ET.ParseError as e:
+        malas.append(n + ": " + str(e)); continue
+    if 'lang="es-CR"' not in x: sin_idioma.append(n)
+    for im in raiz.iter("{http://www.w3.org/1999/xhtml}img"):
+        imgs += 1
+        if im.get("alt") is None: sin_alt += 1
+    if n != "EPUB/nav.xhtml": texto.append("".join(raiz.itertext()))
+    paginas.append(n)
+print(json.dumps({
+  "mimetype": primero.filename == "mimetype" and primero.compress_type == zipfile.ZIP_STORED and z.read("mimetype") == b"application/epub+zip",
+  "idioma": "<dc:language>es-CR</dc:language>" in opf,
+  "titulo": (re.search(r"<dc:title>(.*?)</dc:title>", opf) or [None, ""])[1],
+  "a11y": [p for p in ["schema:accessMode", "schema:accessModeSufficient", "schema:accessibilityFeature", "schema:accessibilityHazard", "schema:accessibilitySummary", "dcterms:conformsTo"] if 'property="' + p + '"' not in opf],
+  "nav": 'properties="nav"' in opf and "EPUB/nav.xhtml" in z.namelist(),
+  "paginas": len(paginas), "malas": malas, "sin_idioma": sin_idioma, "imgs": imgs, "sin_alt": sin_alt,
+  "texto": " ".join(texto),
+}))`;
+  let ep = null;
+  try {
+    ep = JSON.parse(require("child_process").execFileSync("python3", ["-c", guionE, epub], { maxBuffer: 64 * 1024 * 1024 }));
+  } catch (e) {
+    fallos.push(`${L.SLUG}: no se pudo leer el EPUB adaptado`);
+  }
+  if (ep) {
+    const junto = (t) => String(t).replace(/\s+/g, "");
+    const texto = junto(ep.texto);
+    ok(ep.mimetype, `${L.SLUG}: el EPUB no empieza con su mimetype sin comprimir: un lector no lo reconoce como libro`);
+    ok(ep.idioma, `${L.SLUG}: el EPUB no dice que está en español (Costa Rica)`);
+    ok(ep.titulo.includes(L.TITULO) && texto.includes(junto(L.DEDICATORIA.join(""))), `${L.SLUG}: el EPUB no es de este libro`);
+    ok(!ep.a11y.length, `${L.SLUG}: al EPUB le faltan metadatos de accesibilidad: ${ep.a11y.join(", ")}`);
+    ok(ep.nav, `${L.SLUG}: el EPUB no tiene índice (nav)`);
+    ok(!ep.malas.length, `${L.SLUG}: páginas del EPUB que no son XML bien formado: ${ep.malas.join("; ")}`);
+    ok(!ep.sin_idioma.length, `${L.SLUG}: páginas del EPUB sin idioma: ${ep.sin_idioma.join(", ")}`);
+    ok(ep.imgs > 0 && ep.sin_alt === 0, `${L.SLUG}: en el EPUB hay ${ep.sin_alt} imágenes sin alt`);
+    L.CAPITULOS.forEach((c) => {
+      ok(texto.includes(junto(c.titulo)), `${L.SLUG}: el EPUB no tiene el capítulo «${c.titulo}»`);
+      ok(texto.includes(junto(c.escena.alt)), `${L.SLUG}: el EPUB no cuenta el dibujo del capítulo ${c.n}`);
+    });
+    ok(texto.includes(junto("Con las manos.")) && texto.includes(junto("Para leer con las manos")), `${L.SLUG}: el EPUB no trae los ejercicios para hacer con las manos`);
+  }
+} else {
+  fallos.push(`falta material/${L.SLUG}/${L.SLUG}-adaptado.epub: hay que correr herramientas/libro-ninos-pdf.js --solo-adaptado`);
 }
 }
 
