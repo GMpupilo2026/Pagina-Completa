@@ -40,6 +40,7 @@
         <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
             <h1 id="t-name" class="font-serif text-2xl md:text-3xl font-bold text-brand-800 dark:text-white mb-1"></h1>
             <p id="t-meta" class="text-sm text-brand-500 dark:text-brand-300 mb-6"></p>
+            <p id="t-modos" hidden class="text-sm text-brand-500 dark:text-brand-300 -mt-4 mb-6"></p>
 
             <section id="ritmo-seccion" hidden class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 mb-6" aria-labelledby="ritmo-titulo">
                 <h2 id="ritmo-titulo" class="font-serif font-bold text-brand-800 dark:text-white mb-1"><span aria-hidden="true">⏱️</span> Tiempo por partida</h2>
@@ -51,6 +52,19 @@
                 <div class="flex items-center gap-3 mt-3">
                     <button id="ritmo-guardar" type="button" class="bg-accent-500 hover:bg-accent-600 disabled:opacity-50 disabled:cursor-not-allowed text-brand-900 font-bold px-4 py-2 rounded-xl text-sm transition-colors">Guardar el tiempo</button>
                     <p id="ritmo-msg" role="status" class="text-xs min-h-[1em]"></p>
+                </div>
+            </section>
+
+            <section id="modos-seccion" hidden class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 mb-6" aria-labelledby="modos-titulo">
+                <h2 id="modos-titulo" class="font-serif font-bold text-brand-800 dark:text-white mb-1"><span aria-hidden="true">🎲</span> Modalidades del sorteo</h2>
+                <p id="modos-nota" class="text-xs text-brand-450 dark:text-brand-350 mb-3"></p>
+                <fieldset>
+                    <legend class="sr-only">Modalidades que entran al sorteo</legend>
+                    <div id="modos-casillas" class="grid sm:grid-cols-2 gap-x-4 gap-y-1.5"></div>
+                </fieldset>
+                <div class="flex items-center gap-3 mt-3">
+                    <button id="modos-guardar" type="button" class="bg-accent-500 hover:bg-accent-600 disabled:opacity-50 disabled:cursor-not-allowed text-brand-900 font-bold px-4 py-2 rounded-xl text-sm transition-colors">Guardar las modalidades</button>
+                    <p id="modos-msg" role="status" class="text-xs min-h-[1em]"></p>
                 </div>
             </section>
 

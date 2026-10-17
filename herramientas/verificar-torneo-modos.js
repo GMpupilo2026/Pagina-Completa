@@ -22,6 +22,13 @@
      6. variante.html: un compañero que no juega puede MIRAR una partida de
         Volcanes (antes: «No formas parte de esta partida»), pero no una A
         ciegas en curso.
+     7. Las modalidades del sorteo (tournaments.modos_aleatorio, ver «Las
+        modalidades que entran al sorteo»): el sorteo con una lista no se
+        sale de ella; al crear, las casillas salen todas marcadas, menos de
+        dos no crea nada y lo dice, y lo marcado se manda (todas = nulo); en
+        un torneo con lista, las rondas salen solo de ella y se dice cuáles
+        entran; quien organiza las cambia y vale desde la ronda siguiente, y
+        a una inscrita no se le pinta la tarjeta.
 
    Uso: con el sitio en localhost:8777 (npm run verificar lo levanta solo),
         node herramientas/verificar-torneo-modos.js */
@@ -51,7 +58,7 @@ function cargarComun() {
   const ctx = { window: {}, document: { createElement: () => ({}) }, Math: Math };
   vm.createContext(ctx);
   const codigo = fs.readFileSync(path.join(RAIZ, "js", "juegos-comun.js"), "utf8") +
-    "\n;this.__x = { MODOS_TORNEO, ALEATORIO, sortearModoDeRonda, etiquetaModoTorneo, pageFor2pVariant };";
+    "\n;this.__x = { MODOS_TORNEO, ALEATORIO, sortearModoDeRonda, modosDelSorteo, etiquetaModoTorneo, pageFor2pVariant };";
   vm.runInContext(codigo, ctx);
   return ctx.__x;
 }
@@ -93,6 +100,25 @@ function pruebaLista() {
   ok("en 1000 torneos, ninguna se repite antes de que salgan todas", repiteAntes === 0, repiteAntes);
   ok("en las once primeras rondas salen las once", faltan === 0, faltan);
   ok("nunca la misma dos rondas seguidas (25 rondas)", seguidas === 0, seguidas);
+
+  // Con una lista elegida: nunca se sale de ella, y la recorre igual que a las once.
+  const LISTA = ["cartas", "volcanes", "camaleon"];
+  let fuera = 0, seguidasLista = 0, faltanLista = 0;
+  for (let t = 0; t < 1000; t++) {
+    const jugadas = [];
+    for (let r = 0; r < 9; r++) jugadas.push(C.sortearModoDeRonda(jugadas.slice(), jugadas[jugadas.length - 1], LISTA));
+    fuera += jugadas.filter((v) => !LISTA.includes(v)).length;
+    if (LISTA.some((v) => !jugadas.slice(0, 3).includes(v))) faltanLista++;
+    for (let r = 1; r < jugadas.length; r++) if (jugadas[r] === jugadas[r - 1]) seguidasLista++;
+  }
+  ok("con una lista de 3, ninguna ronda se sale de ella (1000 torneos)", fuera === 0, fuera);
+  ok("con una lista de 3, en las 3 primeras rondas salen las 3", faltanLista === 0, faltanLista);
+  ok("con una lista de 3, nunca la misma dos rondas seguidas", seguidasLista === 0, seguidasLista);
+  // Si la lista cambia a mitad de torneo, lo jugado fuera de ella no cuenta.
+  const tras = C.sortearModoDeRonda(["estandar", "niebla"], "niebla", ["duelo", "abrazos"]);
+  ok("lo jugado fuera de la lista nueva no la estorba", ["duelo", "abrazos"].includes(tras), tras);
+  ok("sin lista, el sorteo es entre las once", C.modosDelSorteo(null).length === 11 && C.modosDelSorteo([]).length === 11);
+  ok("una lista con algo que no es de a dos se queda sin eso", JSON.stringify(C.modosDelSorteo(["relevo", "cartas", "4ffa", "duelo"])) === JSON.stringify(["cartas", "duelo"]));
   ok("«Aleatorio» se nombra como tal", /Aleatorio/.test(C.etiquetaModoTorneo("aleatorio")), C.etiquetaModoTorneo("aleatorio"));
 }
 
@@ -149,6 +175,7 @@ function doble(datos, usuarioId) {
             const t = T.tournaments.find((x) => x.id === n.tournament_id);
             if (t.variant !== "aleatorio") n.variant = t.variant;
             else if (!n.variant) return { data: null, error: { message: "En un torneo aleatorio cada ronda lleva su modalidad" } };
+            else if (t.modos_aleatorio && !t.modos_aleatorio.includes(n.variant)) return { data: null, error: { message: "Esa modalidad no está entre las que eligió quien organiza el torneo" } };
           }
         }
         // Las columnas que la base deja en null (o en su default) si no vienen:
@@ -161,7 +188,14 @@ function doble(datos, usuarioId) {
       }
       if (op === "update") {
         const tocadas = filas.filter(pasa);
-        tocadas.forEach((r) => { const c = Object.assign({}, carga); if (tabla === "tournament_rounds") delete c.variant; Object.assign(r, c); });
+        // Lo de interno.modalidad_de_la_ronda() y proteger_torneo(): la modalidad
+        // de una ronda no cambia, y las del sorteo solo las cambia quien organiza.
+        tocadas.forEach((r) => {
+          const c = JSON.parse(JSON.stringify(carga));
+          if (tabla === "tournament_rounds") delete c.variant;
+          if (tabla === "tournaments" && r.created_by !== ${JSON.stringify(usuarioId)}) delete c.modos_aleatorio;
+          Object.assign(r, c);
+        });
         return { data: devolver ? tocadas.map((r) => Object.assign({}, r)) : null, error: null };
       }
       if (op === "delete") { T[tabla] = filas.filter((r) => !pasa(r)); return { data: null, error: null }; }
@@ -235,7 +269,9 @@ async function pruebaFormulario(browser) {
     }
     await page.selectOption("#variant-select", elegida);
     const desc = await page.textContent("#variant-desc");
-    ok("dice de qué se trata «" + elegida + "»", elegida === "aleatorio" ? /distinta/.test(desc) && /11/.test(desc) : /volcán/.test(desc), desc);
+    ok("dice de qué se trata «" + elegida + "»", elegida === "aleatorio" ? /distinta/.test(desc) : /volcán/.test(desc), desc);
+    const campo = await page.locator("#modos-campo").evaluate((e) => e.checkVisibility());
+    ok(elegida === "aleatorio" ? "las casillas del sorteo se ven" : "las casillas del sorteo no se ven", campo === (elegida === "aleatorio"));
     await page.fill("#name-input", "Copa " + elegida);
     await page.click("#create-form button[type=submit]");
     await page.waitForURL(/torneo\.html\?id=/, { timeout: 5000 }).catch(() => {});
@@ -247,6 +283,109 @@ async function pruebaFormulario(browser) {
     ok("sin errores de JavaScript", errores.length === 0, errores);
     await ctx.close();
   }
+}
+
+/* ---------------------------------------------------------- 7. el sorteo, elegido */
+async function pruebaElegirAlCrear(browser) {
+  console.log("\n▶ torneos.html: elegir qué modalidades entran al sorteo");
+  const { ctx, page, errores } = await abrir(browser, "/torneos.html", datosBase({}, { tournaments: [] }));
+  await page.selectOption("#variant-select", "aleatorio");
+  const marcadas = await page.$$eval("#modos-casillas input", (cs) => cs.filter((c) => c.checked).map((c) => c.value));
+  ok("salen las once, todas marcadas", marcadas.length === 11 && DE_A_DOS.every((v) => marcadas.includes(v)), marcadas);
+  ok("y la cuenta lo dice", /las 11/.test(await page.textContent("#modos-cuenta")), await page.textContent("#modos-cuenta"));
+  // Se deja una sola: no se crea nada, y lo dice.
+  for (const v of DE_A_DOS) if (v !== "cartas") await page.uncheck("#modos-casillas input[value=" + v + "]");
+  ok("con una sola, la cuenta pide al menos 2", /al menos 2/.test(await page.textContent("#modos-cuenta")), await page.textContent("#modos-cuenta"));
+  await page.fill("#name-input", "Copa elegida");
+  await page.click("#create-form button[type=submit]");
+  await page.waitForTimeout(500);
+  const msg = await page.textContent("#create-msg");
+  const creados = await page.evaluate(() => window.__T.tournaments.length);
+  ok("con una sola no se crea el torneo y se dice por qué", creados === 0 && /al menos 2/.test(msg), { creados, msg });
+  await page.check("#modos-casillas input[value=volcanes]");
+  await page.check("#modos-casillas input[value=duelo]");
+  ok("con tres, la cuenta dice «3 de 11»", /3 de 11/.test(await page.textContent("#modos-cuenta")), await page.textContent("#modos-cuenta"));
+  await page.click("#create-form button[type=submit]");
+  await page.waitForURL(/torneo\.html\?id=/, { timeout: 5000 }).catch(() => {});
+  await page.waitForTimeout(800);
+  const t = await page.evaluate(() => window.__T.tournaments[0]);
+  ok("se manda la lista marcada", t && JSON.stringify((t.modos_aleatorio || []).slice().sort()) === JSON.stringify(["cartas", "duelo", "volcanes"]), t && t.modos_aleatorio);
+  const linea = await page.locator("#t-modos").evaluate((e) => e.checkVisibility() ? e.textContent : null);
+  ok("el torneo dice cuáles entran", !!linea && /3 de 11/.test(linea) && /Volcanes/.test(linea) && !/Niebla/.test(linea), linea);
+  ok("sin errores de JavaScript", errores.length === 0, errores);
+  await ctx.close();
+
+  // Con las once marcadas se guarda nulo: «todas», también las que se sumen.
+  const b = await abrir(browser, "/torneos.html", datosBase({}, { tournaments: [] }));
+  await b.page.selectOption("#variant-select", "aleatorio");
+  await b.page.fill("#name-input", "Copa todas");
+  await b.page.click("#create-form button[type=submit]");
+  await b.page.waitForURL(/torneo\.html\?id=/, { timeout: 5000 }).catch(() => {});
+  await b.page.waitForTimeout(800);
+  const t2 = await b.page.evaluate(() => window.__T.tournaments[0]);
+  ok("con todas marcadas se guarda nulo (= las once)", t2 && t2.modos_aleatorio === null, t2 && t2.modos_aleatorio);
+  await b.ctx.close();
+}
+
+async function pruebaRondasDeLaLista(browser) {
+  const LISTA = ["volcanes", "cartas", "abrazos"];
+  console.log("\n▶ torneo.html: un aleatorio con " + LISTA.join(", ") + ", y cambiar la lista a mitad");
+  const { ctx, page, errores } = await abrir(browser, "/torneo.html?id=t1", datosBase({ modos_aleatorio: LISTA }));
+  const linea = await page.locator("#t-modos").evaluate((e) => e.checkVisibility() ? e.textContent : null);
+  ok("se dice cuáles entran al sorteo", !!linea && /3 de 11/.test(linea), linea);
+  const tarjeta = await page.locator("#modos-seccion").evaluate((e) => e.checkVisibility());
+  ok("quien organiza ve la tarjeta para cambiarlas", tarjeta);
+  const puestas = await page.$$eval("#modos-casillas input", (cs) => cs.filter((c) => c.checked).map((c) => c.value).sort());
+  ok("con las del torneo marcadas", JSON.stringify(puestas) === JSON.stringify(LISTA.slice().sort()), puestas);
+  await page.fill("#rounds-input", "6");
+  await page.click("#start-btn");
+  await page.waitForTimeout(1200);
+  for (let n = 1; n < 3; n++) {
+    await cerrarRonda(page, n);
+    await page.click("#generate-round-btn");
+    await page.waitForFunction((k) => document.querySelectorAll("#rounds-container h3").length === k, n + 1, { timeout: 8000 }).catch(() => {});
+  }
+  let modos = await page.evaluate(() => window.__T.tournament_rounds.slice().sort((a, b) => a.round_number - b.round_number).map((r) => r.variant));
+  ok("las tres primeras rondas son las tres de la lista", modos.length === 3 && JSON.stringify(modos.slice().sort()) === JSON.stringify(LISTA.slice().sort()), modos);
+
+  // A mitad de torneo: pasa a niebla y duelo, y vale desde la ronda siguiente.
+  for (const v of LISTA) await page.uncheck("#modos-casillas input[value=" + v + "]");
+  await page.check("#modos-casillas input[value=niebla]");
+  await page.check("#modos-casillas input[value=duelo]");
+  await page.click("#modos-guardar");
+  await page.waitForTimeout(500);
+  const guardado = await page.evaluate(() => window.__T.tournaments[0].modos_aleatorio);
+  ok("se guarda la lista nueva", JSON.stringify((guardado || []).slice().sort()) === JSON.stringify(["duelo", "niebla"]), guardado);
+  ok("y lo dice", /Guardado/.test(await page.textContent("#modos-msg")), await page.textContent("#modos-msg"));
+  const ronda3 = modos[2];
+  for (let n = 3; n < 6; n++) {
+    await cerrarRonda(page, n);
+    await page.click("#generate-round-btn");
+    await page.waitForFunction((k) => document.querySelectorAll("#rounds-container h3").length === k, n + 1, { timeout: 8000 }).catch(() => {});
+  }
+  modos = await page.evaluate(() => window.__T.tournament_rounds.slice().sort((a, b) => a.round_number - b.round_number).map((r) => r.variant));
+  ok("la ronda en juego se quedó con la suya", modos[2] === ronda3, modos);
+  ok("de la 4 a la 6, solo niebla y duelo, alternadas", modos.length === 6 && modos.slice(3).every((v) => v === "niebla" || v === "duelo") && modos.slice(3).every((m, i, a) => i === 0 || m !== a[i - 1]), modos);
+
+  // Menos de dos no se guarda.
+  await page.uncheck("#modos-casillas input[value=duelo]");
+  await page.click("#modos-guardar");
+  await page.waitForTimeout(400);
+  const sigue = await page.evaluate(() => window.__T.tournaments[0].modos_aleatorio);
+  ok("con una sola no se guarda, y lo dice", JSON.stringify((sigue || []).slice().sort()) === JSON.stringify(["duelo", "niebla"]) && /al menos 2/.test(await page.textContent("#modos-msg")), sigue);
+  ok("sin errores de JavaScript", errores.length === 0, errores);
+  await ctx.close();
+
+  // Una inscrita: ve la lista, no la tarjeta, y si lo intenta la base lo revierte.
+  const b = await abrir(browser, "/torneo.html?id=t1", datosBase({ modos_aleatorio: LISTA }), "u-j1");
+  const r = await b.page.evaluate(() => ({
+    linea: document.getElementById("t-modos").checkVisibility(),
+    tarjeta: document.getElementById("modos-seccion").checkVisibility(),
+  }));
+  ok("la inscrita ve qué modalidades entran", r.linea);
+  ok("pero no la tarjeta para cambiarlas", !r.tarjeta);
+  ok("sin errores de JavaScript (inscrita)", b.errores.length === 0, b.errores);
+  await b.ctx.close();
 }
 
 /* ---------------------------------------------------------- 3. aleatorio */
@@ -392,7 +531,7 @@ async function correr(prueba, ...args) {
 }
 
 (async () => {
-  pruebaLista();
+  await correr(pruebaLista);
   const browser = await chromium.launch({ executablePath: CHROME });
   try {
     await correr(pruebaFormulario, browser);
@@ -400,6 +539,8 @@ async function correr(prueba, ...args) {
     await correr(pruebaFijo, browser);
     await correr(pruebaEnVivo, browser);
     await correr(pruebaMirar, browser);
+    await correr(pruebaElegirAlCrear, browser);
+    await correr(pruebaRondasDeLaLista, browser);
   } finally {
     await browser.close();
   }

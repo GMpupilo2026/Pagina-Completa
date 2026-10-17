@@ -200,11 +200,12 @@
             }
 
             /* La modalidad de esta ronda. En un torneo aleatorio se sortea acá,
-               entre las que todavía no salieron (ver sortearModoDeRonda), y se
+               entre las que eligió quien organiza y todavía no salieron (ver
+               sortearModoDeRonda), y se
                escribe en la ronda; la base exige que venga y no deja cambiarla
                después. En uno fijo es la del torneo, y la base la pone igual. */
             const modo = tournament.variant === ALEATORIO.id
-                ? sortearModoDeRonda(rounds.map((r) => r.variant).filter(Boolean), anterior && anterior.variant)
+                ? sortearModoDeRonda(rounds.map((r) => r.variant).filter(Boolean), anterior && anterior.variant, tournament.modos_aleatorio)
                 : tournament.variant;
 
             // Primero TODAS las salas, y recién con todas creadas la ronda y sus cruces.
@@ -316,10 +317,65 @@
             msg.className = "text-xs text-green-700 dark:text-green-400 min-h-[1em]";
         }
 
+        /* Las modalidades del sorteo de un torneo aleatorio. Las ve todo el
+           mundo debajo de la cabecera —quien juega quiere saber qué le puede
+           tocar—, y quien organiza las cambia mientras el torneo no termine:
+           valen desde la ronda siguiente, igual que el tiempo, porque la que
+           está en juego ya tiene la suya. Las casillas se vuelven a poner solo
+           si lo guardado cambió, por lo mismo que el ritmo (un repintado por
+           Realtime no le pisa la elección a quien la está haciendo). La base
+           revierte el cambio a quien no organiza y rechaza menos de dos. */
+        let casillasModos = null, modosPuestos = null;
+        function renderModos() {
+            const azar = tournament.variant === ALEATORIO.id;
+            const linea = document.getElementById("t-modos");
+            linea.hidden = !azar;
+            if (azar) {
+                const lista = modosDelSorteo(tournament.modos_aleatorio);
+                linea.textContent = "Entran al sorteo" + (lista.length === MODOS_TORNEO.length ? " las " + lista.length : " " + lista.length + " de " + MODOS_TORNEO.length) +
+                    ": " + lista.map(variantLabel).join(", ") + ".";
+            }
+            const seccion = document.getElementById("modos-seccion");
+            const puede = azar && isOwner && tournament.status !== "finished";
+            seccion.hidden = !puede;
+            if (!puede) return;
+            if (!casillasModos) casillasModos = montarCasillasModos(document.getElementById("modos-casillas"), tournament.modos_aleatorio);
+            const clave = JSON.stringify(tournament.modos_aleatorio || null);
+            if (clave !== modosPuestos) { casillasModos.poner(tournament.modos_aleatorio); modosPuestos = clave; }
+            document.getElementById("modos-nota").textContent = tournament.status === "registration"
+                ? "Todavía no empieza: cada ronda se va a sortear entre las que dejes marcadas."
+                : "La ronda en juego sigue con la suya; lo que cambies vale desde la próxima ronda.";
+        }
+
+        async function guardarModos() {
+            const msg = document.getElementById("modos-msg");
+            const r = casillasModos.leer();
+            if (r.error) { msg.textContent = r.error; msg.className = "text-xs text-red-600 dark:text-red-400 min-h-[1em]"; return; }
+            const boton = document.getElementById("modos-guardar");
+            boton.disabled = true;
+            const { data, error } = await sb.from("tournaments")
+                .update({ modos_aleatorio: r.modos, updated_at: new Date().toISOString() })
+                .eq("id", tournament.id).select("modos_aleatorio");
+            boton.disabled = false;
+            const fila = data && data[0];
+            // Se vuelve a leer lo que quedó: la base revierte en silencio a quien no organiza.
+            if (error || !fila || JSON.stringify(fila.modos_aleatorio || null) !== JSON.stringify(r.modos)) {
+                msg.textContent = "No se pudieron cambiar las modalidades" + (error ? ": " + error.message : ".");
+                msg.className = "text-xs text-red-600 dark:text-red-400 min-h-[1em]";
+                return;
+            }
+            tournament.modos_aleatorio = fila.modos_aleatorio;
+            modosPuestos = null;
+            render();
+            msg.textContent = "✅ Guardado: entran " + modosDelSorteo(fila.modos_aleatorio).length + ".";
+            msg.className = "text-xs text-green-700 dark:text-green-400 min-h-[1em]";
+        }
+
         function render() {
             document.getElementById("t-name").textContent = tournament.name;
             document.getElementById("t-meta").textContent = (FORMAT_LABEL[tournament.format] || tournament.format) + " · " + etiquetaModoTorneo(tournament.variant) + " · ⏱️ " + Ritmos.etiqueta(tournament.initial_seconds, tournament.increment_seconds) + " · " + (STATUS_LABEL[tournament.status] || tournament.status);
             renderRitmo();
+            renderModos();
 
             document.getElementById("registration-section").classList.toggle("hidden", tournament.status !== "registration");
             if (tournament.status === "registration") renderRegistration();
@@ -591,6 +647,7 @@
         document.getElementById("self-register-btn").addEventListener("click", () => amIRegistered ? withdraw() : register());
         document.getElementById("start-btn").addEventListener("click", (e) => unaVez(e.currentTarget, startTournament));
         document.getElementById("ritmo-guardar").addEventListener("click", guardarRitmo);
+        document.getElementById("modos-guardar").addEventListener("click", guardarModos);
         document.getElementById("generate-round-btn").addEventListener("click", (e) => unaVez(e.currentTarget, generateRound));
 
         async function loadAll() {

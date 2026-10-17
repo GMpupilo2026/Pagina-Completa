@@ -38,15 +38,28 @@
                 opcion.textContent = etiquetaModoTorneo(id);
                 select.appendChild(opcion);
             });
+            /* En «Aleatorio», quien organiza elige cuáles entran al sorteo
+               (montarCasillasModos, la misma de torneo.html): todas marcadas
+               de entrada, y al menos dos. La cuenta dice cuántas quedaron. */
+            const campo = document.getElementById("modos-campo");
+            casillasModos = montarCasillasModos(document.getElementById("modos-casillas"));
             const describir = () => {
                 const v = VARIANTS.find((x) => x.id === select.value);
-                document.getElementById("variant-desc").textContent = select.value === ALEATORIO.id
-                    ? "Cada ronda se juega en una modalidad distinta, sorteada al armarla entre las " + MODOS_TORNEO.length + " de arriba: no se repite ninguna hasta que salgan todas, y nunca dos rondas seguidas."
+                const azar = select.value === ALEATORIO.id;
+                campo.hidden = !azar;
+                const n = casillasModos.cuantas();
+                document.getElementById("variant-desc").textContent = azar
+                    ? "Cada ronda se juega en una modalidad distinta, sorteada al armarla entre las que marques abajo: no se repite ninguna hasta que salgan todas, y nunca dos rondas seguidas."
                     : (v ? v.desc : "");
+                document.getElementById("modos-cuenta").textContent = n < MINIMO_DEL_SORTEO
+                    ? "Marca al menos " + MINIMO_DEL_SORTEO + "."
+                    : (n === MODOS_TORNEO.length ? "Entran las " + n + "." : "Entran " + n + " de " + MODOS_TORNEO.length + ".");
             };
             select.addEventListener("change", describir);
+            campo.addEventListener("change", describir);
             describir();
         }
+        let casillasModos = null;
         const STATUS_LABEL = { registration: "🟢 Inscripción abierta", in_progress: "🔵 En curso", finished: "🏁 Terminado" };
 
         async function register(tournamentId) {
@@ -109,10 +122,16 @@
             if (!name) return;
             const format = document.getElementById("format-select").value;
             const variant = document.getElementById("variant-select").value;
+            let modos = null;
+            if (variant === ALEATORIO.id) {
+                const elegidos = casillasModos.leer();
+                if (elegidos.error) { msg.textContent = elegidos.error; msg.className = "text-xs text-red-600 dark:text-red-400 min-h-[1em]"; return; }
+                modos = elegidos.modos;
+            }
             const tc = ritmoTorneo.leer();
             if (tc.error) { msg.textContent = tc.error; msg.className = "text-xs text-red-600 dark:text-red-400 min-h-[1em]"; return; }
             const { data, error } = await sb.from("tournaments").insert({
-                name: name, format: format, variant: variant,
+                name: name, format: format, variant: variant, modos_aleatorio: modos,
                 initial_seconds: tc.initial, increment_seconds: tc.increment,
                 created_by: profile.id,
             }).select().single();

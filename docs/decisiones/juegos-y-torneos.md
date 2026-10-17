@@ -578,6 +578,49 @@ enlace), uno fijo en Camaleón, las partidas en vivo que no se dibujan y
 `variante.html` mirada por un compañero. Contra el código de antes saltan 13
 comprobaciones.
 
+### Las modalidades que entran al sorteo
+
+Después de «Aleatorio» se pidió que el profe pueda elegir qué modos entran al
+sorteo: no todas las modalidades sirven para todos los grupos (a ciegas o
+Misiones secretas con los más pequeños, por ejemplo).
+
+- **La lista vive en `tournaments.modos_aleatorio`**, nula = las once. Nula y
+  no la lista entera escrita a propósito: un torneo que eligió «todas» sigue
+  eligiéndolas todas si mañana se suma una modalidad de a dos. Por eso
+  `montarCasillasModos().leer()` devuelve `null` con todas marcadas, y los
+  aleatorios creados antes de esto (sin lista) se siguen sorteando entre todas.
+- **Al menos dos**, y lo exige la base (`tournaments_modos_aleatorio_check`,
+  que además pide que sean de a dos y que el torneo sea aleatorio): con una
+  sola no hay sorteo —para eso está el torneo fijo— y «nunca dos rondas
+  seguidas» necesita otra. La pantalla lo dice antes de mandar («Marca al
+  menos 2») y no crea nada.
+- **La base hace cumplir la lista al crear la ronda**:
+  `interno.modalidad_de_la_ronda()` rechaza una ronda de un aleatorio cuya
+  modalidad no está en la lista. La lista la cambia solo quien organiza (o
+  administra): `proteger_torneo()` se la revierte en silencio a un inscrito,
+  como el ritmo, y un torneo terminado ya no la cambia. Comprobado en SQL
+  impersonando al organizador y a un inscrito, y con una ronda fuera de la
+  lista, una lista de una sola y una con Relevo, que la base rechaza.
+- **Se elige al crear y se puede cambiar después**: la tarjeta «🎲
+  Modalidades del sorteo» de `torneo.html`, que solo ve quien organiza
+  mientras el torneo no terminó, igual que la del tiempo. Vale desde la ronda
+  siguiente (la que está en juego ya tiene la suya). Lo jugado antes con
+  modalidades que ya no están en la lista no estorba al sorteo: se recorre la
+  lista nueva desde cero.
+- **Todos ven cuáles entran**, debajo de la cabecera del torneo («Entran al
+  sorteo 3 de 11: …»): quien juega quiere saber qué le puede tocar para
+  repasar las reglas antes.
+- **Las casillas son una sola copia** (`montarCasillasModos` en
+  `js/juegos-comun.js`) para crear y para cambiar, con `leer()`, `poner()` y
+  `cuantas()`; se vuelven a poner solo si lo guardado cambió, por lo mismo que
+  el selector del ritmo.
+
+Lo comprueba el mismo `verificar-torneo-modos.js` (apartado 7): el sorteo con
+una lista en mil torneos, crear con una sola (no crea), con tres (las manda) y
+con todas (manda nulo), un aleatorio de tres modalidades que cambia a otras
+dos a mitad de torneo, y la inscrita que ve la lista pero no la tarjeta. Con
+`torneo.js` y `torneos.js` de antes saltan las pruebas de las dos páginas.
+
 ### El verificador de voseo no miraba la mitad del sitio
 
 Se descubrió acá, de rebote: `torneo.html` decía «Vuelve a Torneos y **entrá**
