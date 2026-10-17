@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261016040007
+# al-dia-con: 20261017200000
 tabla  Ejercicios Lichess  rls=true
 tabla  _foto_rls_tmp  rls=false
 tabla  _pedidos_elo  rls=false
@@ -124,6 +124,7 @@ tabla  planes_rival_alumno  rls=true
 tabla  plantillas_casa  rls=true
 tabla  platform_activity_log  rls=true
 tabla  practice_games  rls=true
+tabla  practice_intentos  rls=true
 tabla  practice_sessions  rls=true
 tabla  preferencias_avisos  rls=true
 tabla  preguntas_clave  rls=true
@@ -1202,6 +1203,14 @@ columna  practice_games.status  text
 columna  practice_games.student_color  text
 columna  practice_games.student_id  uuid
 columna  practice_games.updated_at  timestamp with time zone
+columna  practice_intentos.game_id  uuid
+columna  practice_intentos.id  bigint
+columna  practice_intentos.intento  integer
+columna  practice_intentos.moves  jsonb
+columna  practice_intentos.session_id  uuid
+columna  practice_intentos.status  text
+columna  practice_intentos.student_id  uuid
+columna  practice_intentos.terminado_at  timestamp with time zone
 columna  practice_sessions.class_session_id  uuid
 columna  practice_sessions.created_at  timestamp with time zone
 columna  practice_sessions.created_by  uuid
@@ -1210,6 +1219,7 @@ columna  practice_sessions.fen  text
 columna  practice_sessions.id  uuid
 columna  practice_sessions.incremento_segundos  integer
 columna  practice_sessions.level  text
+columna  practice_sessions.max_intentos  integer
 columna  practice_sessions.reloj_segundos  integer
 columna  preferencias_avisos.racha  boolean
 columna  preferencias_avisos.updated_at  timestamp with time zone
@@ -1985,6 +1995,7 @@ funcion  interno.otorgar_puntos_de_examen()  definer  anon=false  auth=false
 funcion  interno.pagar(p_pagos jsonb, p_metodo text, p_referencia text, p_nota text, p_fecha date)  definer  anon=false  auth=false
 funcion  interno.pizarras_de_sala_validas(p jsonb)  invoker  anon=true  auth=true
 funcion  interno.plantillas_casa_tope()  definer  anon=false  auth=false
+funcion  interno.practica_guardar_intento()  definer  anon=false  auth=false
 funcion  interno.prefijo_de_nombre(p_nombre text)  invoker  anon=false  auth=true
 funcion  interno.preguntas_visibles_para_mi_supervision()  definer  anon=false  auth=true
 funcion  interno.preparacion_sesiones_sello()  invoker  anon=false  auth=false
@@ -2082,6 +2093,7 @@ funcion  personas_para_ver_como()  definer  anon=false  auth=true
 funcion  plan_compartido_conmigo(p_plan uuid)  definer  anon=true  auth=true
 funcion  planes_compartidos_conmigo()  definer  anon=false  auth=true
 funcion  practica_ayuda_proteger()  invoker  anon=false  auth=false
+funcion  practica_intentos_al_crear()  invoker  anon=false  auth=false
 funcion  prefijo_recibo(p_academia uuid)  invoker  anon=false  auth=true
 funcion  preguntas_que_costaron(p_dias integer)  invoker  anon=false  auth=true
 funcion  preguntas_que_le_costaron(p_alumno uuid, p_dias integer)  invoker  anon=false  auth=true
@@ -2471,6 +2483,8 @@ politica  practice_games  practice_games_insert_own  INSERT
 politica  practice_games  practice_games_select  SELECT
 politica  practice_games  practice_games_update  UPDATE
 politica  practice_games  verificacion_en_dos_pasos  ALL  restrictiva
+politica  practice_intentos  practice_intentos_exige_acceso_sel  SELECT  restrictiva
+politica  practice_intentos  practice_intentos_select  SELECT
 politica  practice_sessions  practice_sessions_exige_acceso_sel  SELECT  restrictiva
 politica  practice_sessions  practice_sessions_insert  INSERT
 politica  practice_sessions  practice_sessions_select  SELECT
@@ -2724,6 +2738,8 @@ trigger  planes_cobro  auditar
 trigger  plantillas_casa  plantillas_casa_tope
 trigger  platform_activity_log  platform_activity_log_protege_tiempos
 trigger  practice_games  practica_ayuda_proteger
+trigger  practice_games  practica_guardar_intento
+trigger  practice_games  practica_intentos_al_crear
 trigger  practice_sessions  practice_sessions_ligar_a_la_clase
 trigger  premios_canjeados  auditar
 trigger  preparacion_rivales_profesores  auditar
@@ -3067,6 +3083,10 @@ indice  practice_games  practice_games_pkey
 indice  practice_games  practice_games_session_id_idx
 indice  practice_games  practice_games_session_id_student_id_key
 indice  practice_games  practice_games_student_id_fk
+indice  practice_intentos  practice_intentos_game_id_intento_key
+indice  practice_intentos  practice_intentos_pkey
+indice  practice_intentos  practice_intentos_session_idx
+indice  practice_intentos  practice_intentos_student_idx
 indice  practice_sessions  practice_sessions_class_session_idx
 indice  practice_sessions  practice_sessions_created_by_fk
 indice  practice_sessions  practice_sessions_pkey
@@ -3972,6 +3992,7 @@ grant  practice_games  authenticated  SELECT
 grant  practice_games  authenticated  TRIGGER
 grant  practice_games  authenticated  TRUNCATE
 grant  practice_games  authenticated  UPDATE
+grant  practice_intentos  authenticated  SELECT
 grant  practice_sessions  anon  DELETE
 grant  practice_sessions  anon  INSERT
 grant  practice_sessions  anon  REFERENCES
