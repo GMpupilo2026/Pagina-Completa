@@ -3943,7 +3943,7 @@ Las piezas, una por archivo:
 | `js/estilo-aperturas.js` | el carácter de cada apertura (lo mide `herramientas/estilo-aperturas-medir.js`) y la recomendación |
 | `js/estilo-partidas.js` | el estilo en sus partidas de Lichess y Chess.com, y el seguimiento de la recomendación |
 | `js/estilo-tarjeta.js` | lo que se pinta: lo usan la página y Informes |
-| `entreno/estilo.html` + `js/entreno-estilo.js` | la página «Tu estilo de juego», en el panel al lado del diagnóstico |
+| `entreno/estilo.html` + `js/entreno-estilo.js` | la página «Tu estilo de juego», en el panel al lado de «Aperturas y celadas» (no con el diagnóstico, en «Lo que te pone tu profesor»: esta no la pone nadie; `verificar-panel.js` lo cuida) |
 | `public.estilo_pruebas` | una fila por prueba rendida |
 
 ### Preguntas de elección: dos jugadas buenas, de carácter opuesto

@@ -402,7 +402,7 @@ async function pruebaAlumna(browser) {
     ["entreno/coordenadas.html", "entreno/memoria.html", "entreno/mates.html", "entreno/practicas.html", "entreno/4x4.html"]);
   igual("Entrenamiento intermedio",
     grupo(grupos, "Entrenamiento intermedio").tiles.map((t) => t.enlace),
-    ["entreno/temas.html", "entreno/aperturas.html", "entreno/mis-estudios.html", "entreno/sin-internet.html"]);
+    ["entreno/temas.html", "entreno/aperturas.html", "entreno/estilo.html", "entreno/mis-estudios.html", "entreno/sin-internet.html"]);
   igual("Entrenamiento avanzado",
     grupo(grupos, "Entrenamiento avanzado").tiles.map((t) => t.enlace),
     ["entreno/visualizacion.html", "entreno/precision-posicional.html", "entreno/finales.html"]);

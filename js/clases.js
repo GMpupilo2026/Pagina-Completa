@@ -64,11 +64,6 @@
                    Informes, que ya tiene su tarjeta y su selector de tema. El
                    de arbitraje sigue siendo solo de administración. */
                 { emoji: "🧭", label: "Diagnóstico de nivel", desc: "La prueba que ubica tu nivel y arma tu plan de entrenamiento", href: "entreno/diagnostico.html", soloAlumno: true },
-                /* La prueba de estilo va al lado del diagnóstico: no se
-                   practica, se hace de vez en cuando, y lo que sale es qué
-                   aperturas te quedan. Su profe la ve en Informes, dentro de
-                   «Sus aperturas». */
-                { emoji: "🎭", label: "Tu estilo de juego", desc: "Qué tipo de partida te gusta y qué aperturas te quedan", href: "entreno/estilo.html", soloAlumno: true },
             ] },
             /* "Aprender" va antes que "Jugar y competir": esto es una academia,
                y lo primero que se ofrece al entrar es lo que se viene a hacer.
@@ -126,6 +121,12 @@
             { title: "Entrenamiento intermedio", plegable: true, tiles: [
                 { emoji: "🗂️", label: "Ejercicios por tema", desc: "Clavadas, ataques dobles, mates, finales y táctica de ataque", href: "entreno/temas.html", soloAlumno: true },
                 { emoji: "♞", label: "Aperturas y celadas", desc: "Líneas para memorizar jugándolas, con repaso espaciado", href: "entreno/aperturas.html", soloAlumno: true },
+                /* La prueba de estilo va al lado de Aperturas y celadas: lo que
+                   sale de ella es qué aperturas te quedan, y cada una lleva a
+                   practicarla ahí. No va con el diagnóstico, en «Lo que te pone
+                   tu profesor»: esta no te la pone nadie. Su profe la ve en
+                   Informes, dentro de «Sus aperturas». */
+                { emoji: "🎭", label: "Tu estilo de juego", desc: "Qué tipo de partida te gusta y qué aperturas te quedan", href: "entreno/estilo.html", soloAlumno: true },
                 { emoji: "🔬", label: "Mis estudios", desc: "Tus líneas con variantes y comentarios, el motor para buscar mejoras y tu repertorio", href: "entreno/mis-estudios.html", soloAlumno: true },
                 { emoji: "📴", label: "Ejercicios sin internet", desc: "Guarda una tanda en el celular y resuélvela donde no hay señal", href: "entreno/sin-internet.html", soloAlumno: true },
             ] },
