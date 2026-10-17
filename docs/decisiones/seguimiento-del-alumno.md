@@ -506,48 +506,87 @@ del script) y desde ahí se reparten: marcándolos «con todo el equipo docente�
 por profesor ya no hace falta, y no conviene: serían 53 copias que se van
 separando a la primera corrección.
 
-## La sesión intensiva de finales: una sola manera de ganar, y comprobada
+## Las sesiones intensivas: una sola manera de ganar, y comprobada
 
 Se pidió una sesión intensiva de finales con unos diez ejercicios en los que
 la ventaja sea poca pero suficiente para ganar aunque el rival juegue bien, y
 en los que el alumno tenga que entender cada jugada: cálculo preciso y
-justificado. Es un plan de clase más («Finales · Sesión intensiva: ganar con
-poca ventaja», de quien administra, como los de arranque), así que se da
-desde `planes.html` y la clase en vivo sin nada nuevo.
+justificado. Después, otra igual de estrategia. Cada una es un plan de clase
+más, de quien administra como los de arranque, así que se da desde
+`planes.html` y la clase en vivo sin nada nuevo:
 
-- **Las diez posiciones salen de «El mapa de los finales»**, ya verificado,
-  y se eligieron por lo que el motor dice de ellas, no por el título: de las
-  dieciocho candidatas se descartaron las que se ganan con casi cualquier
-  jugada (el peón pasado alejado, el peón pasado defendido, alfil y peón
-  contra caballo…). Una posición donde todo gana no entrena el cálculo. Las
-  que quedaron tienen al menos una jugada que es la ÚNICA que gana y, casi
-  siempre, una tentadora que solo empata o pierde.
+- «Finales · Sesión intensiva: ganar con poca ventaja»
+  (`herramientas/sesion-finales-intensiva.js`): diez finales de «El mapa de
+  los finales», ocho de peones y dos de torre.
+- «Estrategia · Sesión intensiva: conservar una ventaja pequeña»
+  (`herramientas/sesion-estrategia-intensiva.js`): nueve partidas reales de
+  «Una clase al día» y un ejercicio de «Ganar con poco», de lo técnico (qué
+  cambiar, el caballo sin casillas, el alfil malo, las dos debilidades) al
+  medio juego (alfiles de distinto color, sacrificios posicionales).
+
+Lo que comparten (leer el banco, la chuleta, el SQL) está en
+`herramientas/lib/sesion-intensiva.js`; cada sesión es un archivo con sus diez
+ejercicios, sus textos y sus umbrales. El motor y el verificador las
+encuentran solas por el nombre (`sesion-*-intensiva.js`), así que una sesión
+nueva no se anota en ningún otro lado (el generador sí va en `ANTES` del
+corredor).
+
+- **Las posiciones se eligieron por lo que el motor dice de ellas, no por el
+  título.** En finales, de dieciocho candidatas se descartaron las que se
+  ganan con casi cualquier jugada (el peón pasado alejado, el peón pasado
+  defendido, alfil y peón contra caballo…): una posición donde todo gana no
+  entrena el cálculo. En estrategia, de unas 150 de los bloques de piezas,
+  peones, estructuras y juego posicional de «Una clase al día» quedaron las
+  que tienen UNA jugada que conserva la ventaja con todas las demás debajo, y
+  se descartaron las que en realidad son una combinación (un ataque doble de
+  caballo, un sacrificio sobre h2): en una sesión de estrategia, una táctica
+  enseña otra cosa.
 - **Cada ejercicio son dos renglones**: la posición, con la chuleta (tiempo,
   línea, únicas y trampas, en los 500 de la base; lo que se recorta son las
   trampas, nunca la línea), y la nota «El cálculo», con el porqué de cada
   jugada y la refutación de cada trampa. Arriba va el método de la sesión
-  (calcular en papel, defender en voz alta, el profe hace de rival, jugarla
-  contra el motor) y al final el cierre, una idea por ejercicio.
-- **Nada de lo que se afirma se cree a ciegas.** `sesion-finales-motor.js`
-  (a mano, como `fichas-motor.js`: el CI no tiene Stockfish) comprueba que la
-  posición gane al principio y al final de la línea, que cada «única» gane y
-  ninguna otra jugada legal pase de +1, que lo que dice «también gana» gane, y
-  que cada trampa con su refutación quede en tablas (±1) o perdida (−3). Sin
-  tablas de finales, un final de torre ganado da ~+5 y uno de peones ~+35, y
-  las tablas 0,00; el hueco entre +1 y +3 no se da por bueno ni por malo.
-  Al revisarlo apareció un error en el texto: decía que 9.b8=D+ era la única
-  del ejercicio de Duras, y 9.b8=T+ también gana. Se quitó la afirmación.
-- **El texto no puede decir más que los datos.** `verificar-sesion-finales.js`
-  lee cada «N.jugada! ÚNICA» y cada «N.jugada?» escritos en las notas y exige
-  que estén entre las únicas y las trampas, con su veredicto bueno del motor
-  para la misma posición y la misma refutación. Corregir la nota sin los datos
-  dejaría una afirmación que el motor nunca miró. También vuelve a leer el
-  banco por su cuenta, juega cada línea, trampa y chuleta con chess.js y
-  pasa la posición por la regla de «Al tablero».
-- El SQL (`herramientas/planes/sesion-finales-intensiva.sql`) borra el plan por
-  su título exacto y lo vuelve a sembrar. No lleva la marca «· AI» de los de
-  arranque a propósito: el SQL de `planes-semilla.js` borra por esa marca y
-  se lo llevaría.
+  (pensar en papel, defender en voz alta, el profe hace de rival, jugarla
+  contra el motor) y al final el cierre, una idea por ejercicio. En
+  estrategia, la nota termina con la partida de donde sale, **tal como la
+  dice el banco**: no se escribe a mano quién ganó ni un año que el banco no
+  trae.
+- **Nada de lo que se afirma se cree a ciegas.**
+  `node herramientas/sesion-intensiva-motor.js <finales|estrategia>` (a mano,
+  como `fichas-motor.js`: el CI no tiene Stockfish) comprueba que la posición
+  sea buena al principio y al final de la línea, que cada «única» llegue al
+  umbral `gana` y ninguna otra jugada legal pase de `noGana`, que lo que dice
+  «también gana» gane, y que cada trampa con su refutación quede en tablas,
+  sin la ventaja («escapa») o con la ventaja del rival («pierde»). Cada
+  veredicto guarda el umbral con que se dio.
+  - **Finales: gana +3, no gana +1.** Sin tablas de finales, un final de torre
+    ganado da ~+5 y uno de peones ~+35, y las tablas 0,00; el hueco entre +1 y
+    +3 no se da por bueno ni por malo.
+  - **Estrategia: gana +0,7, no gana +0,6.** Son ventajas de posición, no
+    finales ganados: los números son chicos a propósito, y por eso la única
+    exige que TODAS las demás jugadas queden debajo. Alekhine–Yates lleva los
+    suyos (+0,5 y +0,1): la ventaja es la más chica de la sesión (algo más de
+    medio peón) pero 33.d4 es igual de única, con todas las demás en igualdad
+    o peor, y la nota lo dice.
+  Al revisarlo aparecieron dos errores en el texto: en finales decía que
+  9.b8=D+ era la única del ejercicio de Duras, y 9.b8=T+ también gana; en
+  estrategia decía que tras 45...f3? de Saidy–Fischer la ventaja «pasaba al
+  blanco», y solo se escapa (−0,6). Se corrigieron los dos.
+- **El texto no puede decir más que los datos.**
+  `verificar-sesiones-intensivas.js` lee cada «N.jugada! ÚNICA» (o
+  «N...jugada! ÚNICA», de las negras) y cada «N.jugada?» escritos en las notas
+  y exige que estén entre las únicas y las trampas, con su veredicto bueno del
+  motor para la misma posición, la misma refutación y el mismo umbral.
+  Corregir la nota sin los datos dejaría una afirmación que el motor nunca
+  miró. También vuelve a leer cada banco por su cuenta (no con el código que
+  arma la sesión), juega cada línea, trampa y chuleta con chess.js y pasa la
+  posición por la regla de «Al tablero».
+- El SQL (`herramientas/planes/sesion-<nombre>-intensiva.sql`) borra el plan
+  por su título exacto y lo vuelve a sembrar. No lleva la marca «· AI» de los
+  de arranque a propósito: el SQL de `planes-semilla.js` borra por esa marca y
+  se lo llevaría. **Desde Claude, el borrado pide una confirmación aparte y se
+  cancela solo**: la primera vez se sembró insertando directo (el plan todavía
+  no existía), en dos tandas de renglones, y se comprobó con una huella md5 de
+  los renglones contra el JSON.
 
 ## La bitácora: lo que el profesor observa, donde lo observa
 
