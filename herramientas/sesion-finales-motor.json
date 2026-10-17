@@ -1,13 +1,15 @@
 {
   "motor": "Stockfish 16",
   "profundidad": 26,
-  "gana": 300,
-  "tablas": 100,
   "veredictos": {
     "7k/8/6K1/6P1/8/8/8/8 w - - 1 5|trampa|Kf5": {
       "ejercicio": 1,
       "tipo": "trampa",
       "san": "Kf5",
+      "umbral": {
+        "gana": 300,
+        "noGana": 100
+      },
       "ok": true,
       "resultado": "tablas",
       "refuta": [
@@ -19,6 +21,10 @@
       "ejercicio": 1,
       "tipo": "trampa",
       "san": "Kh5",
+      "umbral": {
+        "gana": 300,
+        "noGana": 100
+      },
       "ok": true,
       "resultado": "tablas",
       "refuta": [
@@ -29,12 +35,20 @@
     "8/5KP1/7k/8/8/8/8/8 b - - 0 7|final|": {
       "ejercicio": 1,
       "tipo": "final",
+      "umbral": {
+        "gana": 300,
+        "noGana": 100
+      },
       "ok": true,
       "detalle": "eval #11"
     },
     "8/6k1/8/6K1/8/6P1/8/8 w - - 0 1|inicio|": {
       "ejercicio": 1,
       "tipo": "inicio",
+      "umbral": {
+        "gana": 300,
+        "noGana": 100
+      },
       "ok": true,
       "detalle": "eval 34.40"
     },
@@ -42,6 +56,10 @@
       "ejercicio": 1,
       "tipo": "tambien",
       "san": "Kf5",
+      "umbral": {
+        "gana": 300,
+        "noGana": 100
+      },
       "ok": true,
       "detalle": "eval 35.11"
     },
@@ -49,6 +67,10 @@
       "ejercicio": 1,
       "tipo": "tambien",
       "san": "Kh5",
+      "umbral": {
+        "gana": 300,
+        "noGana": 100
+      },
       "ok": true,
       "detalle": "eval 35.12"
     },
@@ -56,6 +78,10 @@
       "ejercicio": 1,
       "tipo": "trampa",
       "san": "Kf4",
+      "umbral": {
+        "gana": 300,
+        "noGana": 100
+      },
       "ok": true,
       "resultado": "tablas",
       "refuta": [
@@ -67,6 +93,10 @@
       "ejercicio": 1,
       "tipo": "trampa",
       "san": "Kh4",
+      "umbral": {
+        "gana": 300,
+        "noGana": 100
+      },
       "ok": true,
       "resultado": "tablas",
       "refuta": [
@@ -78,6 +108,10 @@
       "ejercicio": 2,
       "tipo": "unica",
       "san": "Kf4",
+      "umbral": {
+        "gana": 300,
+        "noGana": 100
+      },
       "ok": true,
       "detalle": "Kf4 35.14, Kf3 0.00, Kf2 0.00, Kh2 -35.75, Kh3 -35.75, Kg4 -35.78, Kg2 -35.78, Kh4 -35.78"
     },
@@ -85,6 +119,10 @@
       "ejercicio": 2,
       "tipo": "unica",
       "san": "Ke5",
+      "umbral": {
+        "gana": 300,
+        "noGana": 100
+      },
       "ok": true,
       "detalle": "Ke5 34.94, Ke4 0.00, Ke3 0.00, Kg3 -34.99, Kg4 -34.99, Kg5 -35.04, Kf3 -35.04, Kf5 -35.05"
     },
@@ -92,6 +130,10 @@
       "ejercicio": 2,
       "tipo": "trampa",
       "san": "Kd4",
+      "umbral": {
+        "gana": 300,
+        "noGana": 100
+      },
       "ok": true,
       "resultado": "tablas",
       "refuta": [],
@@ -101,6 +143,10 @@
       "ejercicio": 2,
       "tipo": "trampa",
       "san": "Ke4",
+      "umbral": {
+        "gana": 300,
+        "noGana": 100
+      },
       "ok": true,
       "resultado": "tablas",
       "refuta": [],
@@ -110,18 +156,30 @@
       "ejercicio": 2,
       "tipo": "unica",
       "san": "Kd5",
+      "umbral": {
+        "gana": 300,
+        "noGana": 100
+      },
       "ok": true,
       "detalle": "Kd5 34.94, Ke4 -0.11, Kd4 -0.12, Kf4 -35.46, Kf5 -35.46, Kf6 -35.49"
     },
     "k7/8/1K6/1P6/8/8/8/8 b - - 0 10|final|": {
       "ejercicio": 2,
       "tipo": "final",
+      "umbral": {
+        "gana": 300,
+        "noGana": 100
+      },
       "ok": true,
       "detalle": "eval #20"
     },
     "k7/8/1p6/1P6/8/8/7K/8 w - - 0 1|inicio|": {
       "ejercicio": 2,
       "tipo": "inicio",
+      "umbral": {
+        "gana": 300,
+        "noGana": 100
+      },
       "ok": true,
       "detalle": "eval 35.10"
     },
@@ -129,6 +187,10 @@
       "ejercicio": 2,
       "tipo": "trampa",
       "san": "Kg2",
+      "umbral": {
+        "gana": 300,
+        "noGana": 100
+      },
       "ok": true,
       "resultado": "tablas",
       "refuta": [
@@ -144,6 +206,10 @@
       "ejercicio": 2,
       "tipo": "trampa",
       "san": "Kh3",
+      "umbral": {
+        "gana": 300,
+        "noGana": 100
+      },
       "ok": true,
       "resultado": "pierde",
       "refuta": [
@@ -161,18 +227,30 @@
       "ejercicio": 2,
       "tipo": "unica",
       "san": "Kg3",
+      "umbral": {
+        "gana": 300,
+        "noGana": 100
+      },
       "ok": true,
       "detalle": "Kg3 35.09, Kg2 0.00, Kg1 0.00, Kh3 -34.81, Kh1 -35.48"
     },
     "1k6/8/K1P5/P7/8/8/8/8 b - - 0 6|final|": {
       "ejercicio": 3,
       "tipo": "final",
+      "umbral": {
+        "gana": 300,
+        "noGana": 100
+      },
       "ok": true,
       "detalle": "eval #11"
     },
     "2k5/8/p1P5/P2K4/8/8/8/8 w - - 0 1|inicio|": {
       "ejercicio": 3,
       "tipo": "inicio",
+      "umbral": {
+        "gana": 300,
+        "noGana": 100
+      },
       "ok": true,
       "detalle": "eval 36.69"
     },
@@ -180,6 +258,10 @@
       "ejercicio": 3,
       "tipo": "trampa",
       "san": "c7",
+      "umbral": {
+        "gana": 300,
+        "noGana": 100
+      },
       "ok": true,
       "resultado": "tablas",
       "refuta": [
@@ -197,6 +279,10 @@
       "ejercicio": 3,
       "tipo": "trampa",
       "san": "Kd4",
+      "umbral": {
+        "gana": 300,
+        "noGana": 100
+      },
       "ok": true,
       "resultado": "tablas",
       "refuta": [
@@ -208,12 +294,20 @@
       "ejercicio": 3,
       "tipo": "unica",
       "san": "Kc5",
+      "umbral": {
+        "gana": 300,
+        "noGana": 100
+      },
       "ok": true,
       "detalle": "Kc5 #19, Kd4 0.00, Kc4 -0.04, Ke4 -0.04, Ke5 -0.04, Ke6 -0.06"
     },
     "6k1/8/6P1/7K/7P/8/8/8 b - - 0 8|final|": {
       "ejercicio": 4,
       "tipo": "final",
+      "umbral": {
+        "gana": 300,
+        "noGana": 100
+      },
       "ok": true,
       "detalle": "eval #14"
     },
@@ -221,6 +315,10 @@
       "ejercicio": 4,
       "tipo": "trampa",
       "san": "Kf4",
+      "umbral": {
+        "gana": 300,
+        "noGana": 100
+      },
       "ok": true,
       "resultado": "tablas",
       "refuta": [
@@ -232,6 +330,10 @@
       "ejercicio": 4,
       "tipo": "unica",
       "san": "Kg5",
+      "umbral": {
+        "gana": 300,
+        "noGana": 100
+      },
       "ok": true,
       "detalle": "Kg5 #22, Kf4 0.04, Ke6 0.04, Ke4 0.04, Ke5 0.04"
     },
@@ -239,6 +341,10 @@
       "ejercicio": 4,
       "tipo": "unica",
       "san": "h4",
+      "umbral": {
+        "gana": 300,
+        "noGana": 100
+      },
       "ok": true,
       "detalle": "h4 35.04, Kf3 0.03, Ke3 0.03, Kg3 0.03, Ke4 0.03, g5+ 0.00"
     },
@@ -246,6 +352,10 @@
       "ejercicio": 4,
       "tipo": "trampa",
       "san": "gxh5",
+      "umbral": {
+        "gana": 300,
+        "noGana": 100
+      },
       "ok": true,
       "resultado": "tablas",
       "refuta": [
@@ -257,12 +367,20 @@
       "ejercicio": 4,
       "tipo": "unica",
       "san": "g5+",
+      "umbral": {
+        "gana": 300,
+        "noGana": 100
+      },
       "ok": true,
       "detalle": "g5+ 36.43, Kg3 0.00, gxh5 0.00, Kf3 0.00, Ke4 0.00, Ke3 0.00"
     },
     "8/8/6kp/8/5KP1/8/7P/8 w - - 0 1|inicio|": {
       "ejercicio": 4,
       "tipo": "inicio",
+      "umbral": {
+        "gana": 300,
+        "noGana": 100
+      },
       "ok": true,
       "detalle": "eval 7.80"
     },
@@ -270,6 +388,10 @@
       "ejercicio": 4,
       "tipo": "trampa",
       "san": "g5",
+      "umbral": {
+        "gana": 300,
+        "noGana": 100
+      },
       "ok": true,
       "resultado": "tablas",
       "refuta": [
@@ -281,6 +403,10 @@
       "ejercicio": 4,
       "tipo": "trampa",
       "san": "h4",
+      "umbral": {
+        "gana": 300,
+        "noGana": 100
+      },
       "ok": true,
       "resultado": "tablas",
       "refuta": [
@@ -292,18 +418,30 @@
       "ejercicio": 4,
       "tipo": "unica",
       "san": "h3",
+      "umbral": {
+        "gana": 300,
+        "noGana": 100
+      },
       "ok": true,
       "detalle": "h3 35.33, h4 0.07, Kf3 0.07, Kg3 0.05, g5 0.00, Ke4 0.00, Ke3 0.00, Ke5 0.00"
     },
     "8/6K1/4k3/7P/8/8/8/8 b - - 2 6|final|": {
       "ejercicio": 5,
       "tipo": "final",
+      "umbral": {
+        "gana": 300,
+        "noGana": 100
+      },
       "ok": true,
       "detalle": "eval #16"
     },
     "8/8/3k3p/3P3P/2K5/8/8/8 w - - 0 1|inicio|": {
       "ejercicio": 5,
       "tipo": "inicio",
+      "umbral": {
+        "gana": 300,
+        "noGana": 100
+      },
       "ok": true,
       "detalle": "eval 35.00"
     },
@@ -311,6 +449,10 @@
       "ejercicio": 5,
       "tipo": "trampa",
       "san": "Kb4",
+      "umbral": {
+        "gana": 300,
+        "noGana": 100
+      },
       "ok": true,
       "resultado": "tablas",
       "refuta": [
@@ -322,6 +464,10 @@
       "ejercicio": 5,
       "tipo": "trampa",
       "san": "Kd3",
+      "umbral": {
+        "gana": 300,
+        "noGana": 100
+      },
       "ok": true,
       "resultado": "tablas",
       "refuta": [
@@ -333,6 +479,10 @@
       "ejercicio": 5,
       "tipo": "unica",
       "san": "Kd4",
+      "umbral": {
+        "gana": 300,
+        "noGana": 100
+      },
       "ok": true,
       "detalle": "Kd4 35.15, Kb4 -0.07, Kc3 -0.07, Kd3 -0.07, Kb5 -0.07, Kb3 -0.07"
     },
@@ -340,6 +490,10 @@
       "ejercicio": 5,
       "tipo": "trampa",
       "san": "Kf6",
+      "umbral": {
+        "gana": 300,
+        "noGana": 100
+      },
       "ok": true,
       "resultado": "tablas",
       "refuta": [
@@ -355,6 +509,10 @@
       "ejercicio": 5,
       "tipo": "unica",
       "san": "Kxh6",
+      "umbral": {
+        "gana": 300,
+        "noGana": 100
+      },
       "ok": true,
       "detalle": "Kxh6 96.05, Kf6 0.02, Kf5 0.02, Kh7 0.02, Kg7 0.02, Kf7 0.02"
     },
@@ -362,6 +520,10 @@
       "ejercicio": 6,
       "tipo": "unica",
       "san": "d8=Q",
+      "umbral": {
+        "gana": 300,
+        "noGana": 100
+      },
       "ok": true,
       "detalle": "d8=Q #7, Kc5 0.00, Kb5 0.00, Kb4 0.00, d8=B -0.24, d8=R -2.55, d8=N -33.59, Kd5 -35.92, Kd4 -#25, Kd3 -#14"
     },
@@ -369,6 +531,10 @@
       "ejercicio": 6,
       "tipo": "unica",
       "san": "d7",
+      "umbral": {
+        "gana": 300,
+        "noGana": 100
+      },
       "ok": true,
       "detalle": "d7 #8, Kb5 0.00, Kc5 0.00, Kb4 0.00, Kd5 -35.91, Kd3 -96.05, Kd4 -96.05"
     },
@@ -376,12 +542,20 @@
       "ejercicio": 6,
       "tipo": "unica",
       "san": "d6",
+      "umbral": {
+        "gana": 300,
+        "noGana": 100
+      },
       "ok": true,
       "detalle": "d6 35.19, Kb5 0.00, Kb4 0.00, Kc5 0.00, Kd4 -35.84, Kd3 -35.84"
     },
     "8/8/8/8/2K5/8/1k1Q4/q7 b - - 1 10|final|": {
       "ejercicio": 6,
       "tipo": "final",
+      "umbral": {
+        "gana": 300,
+        "noGana": 100
+      },
       "ok": true,
       "detalle": "eval #4"
     },
@@ -389,6 +563,10 @@
       "ejercicio": 6,
       "tipo": "unica",
       "san": "d5",
+      "umbral": {
+        "gana": 300,
+        "noGana": 100
+      },
       "ok": true,
       "detalle": "d5 34.75, Kc3 0.04, Kb5 0.00, Kc5 0.00, Kd3 -35.54, Kd5 -35.54"
     },
@@ -396,6 +574,10 @@
       "ejercicio": 6,
       "tipo": "unica",
       "san": "d4",
+      "umbral": {
+        "gana": 300,
+        "noGana": 100
+      },
       "ok": true,
       "detalle": "d4 35.18, Kc3 0.00, d3 0.00, Kb5 0.00, Kc5 0.00, Kd4 -35.88, Kd5 -35.88, Kd3 -35.88"
     },
@@ -403,6 +585,10 @@
       "ejercicio": 6,
       "tipo": "trampa",
       "san": "Kc3",
+      "umbral": {
+        "gana": 300,
+        "noGana": 100
+      },
       "ok": true,
       "resultado": "tablas",
       "refuta": [
@@ -414,6 +600,10 @@
       "ejercicio": 6,
       "tipo": "trampa",
       "san": "Kd4",
+      "umbral": {
+        "gana": 300,
+        "noGana": 100
+      },
       "ok": true,
       "resultado": "pierde",
       "refuta": [
@@ -429,6 +619,10 @@
       "ejercicio": 6,
       "tipo": "unica",
       "san": "Kc4",
+      "umbral": {
+        "gana": 300,
+        "noGana": 100
+      },
       "ok": true,
       "detalle": "Kc4 35.07, Kc3 0.00, Kc2 0.00, Ke4 0.00, Ke2 0.00, Ke3 0.00, Kd4 -35.88"
     },
@@ -436,6 +630,10 @@
       "ejercicio": 6,
       "tipo": "trampa",
       "san": "d3+",
+      "umbral": {
+        "gana": 300,
+        "noGana": 100
+      },
       "ok": true,
       "resultado": "tablas",
       "refuta": [
@@ -447,6 +645,10 @@
       "ejercicio": 6,
       "tipo": "trampa",
       "san": "d4",
+      "umbral": {
+        "gana": 300,
+        "noGana": 100
+      },
       "ok": true,
       "resultado": "tablas",
       "refuta": [
@@ -458,12 +660,20 @@
       "ejercicio": 6,
       "tipo": "unica",
       "san": "Ke2",
+      "umbral": {
+        "gana": 300,
+        "noGana": 100
+      },
       "ok": true,
       "detalle": "Ke2 35.21, Kd1 0.00, Kf1 0.00, Kf2 0.00, d4 0.00, d3+ 0.00"
     },
     "8/8/8/p7/P7/3k4/3P4/3K4 w - - 0 1|inicio|": {
       "ejercicio": 6,
       "tipo": "inicio",
+      "umbral": {
+        "gana": 300,
+        "noGana": 100
+      },
       "ok": true,
       "detalle": "eval 35.10"
     },
@@ -471,6 +681,10 @@
       "ejercicio": 6,
       "tipo": "trampa",
       "san": "d4",
+      "umbral": {
+        "gana": 300,
+        "noGana": 100
+      },
       "ok": true,
       "resultado": "tablas",
       "refuta": [
@@ -482,6 +696,10 @@
       "ejercicio": 6,
       "tipo": "unica",
       "san": "Kd3",
+      "umbral": {
+        "gana": 300,
+        "noGana": 100
+      },
       "ok": true,
       "detalle": "Kd3 35.58, Kd1 0.00, d4 0.00, Ke1 0.00, Ke3 0.00, Kf3 0.00, d3 0.00, Kf2 0.00, Kf1 -0.03"
     },
@@ -489,6 +707,10 @@
       "ejercicio": 7,
       "tipo": "unica",
       "san": "b7",
+      "umbral": {
+        "gana": 300,
+        "noGana": 100
+      },
       "ok": true,
       "detalle": "b7 #18, Ka8 0.00, Kb7 -#15, Ka6 -#13, Kb8 -#10"
     },
@@ -496,6 +718,10 @@
       "ejercicio": 7,
       "tipo": "trampa",
       "san": "b6",
+      "umbral": {
+        "gana": 300,
+        "noGana": 100
+      },
       "ok": true,
       "resultado": "tablas",
       "refuta": [
@@ -511,6 +737,10 @@
       "ejercicio": 7,
       "tipo": "trampa",
       "san": "Kb6",
+      "umbral": {
+        "gana": 300,
+        "noGana": 100
+      },
       "ok": true,
       "resultado": "tablas",
       "refuta": [
@@ -530,6 +760,10 @@
       "ejercicio": 7,
       "tipo": "unica",
       "san": "Kc6",
+      "umbral": {
+        "gana": 300,
+        "noGana": 100
+      },
       "ok": true,
       "detalle": "Kc6 35.15, Kb6 0.02, b6 0.00, Kd5 0.00, Kc4 0.00, Kd4 0.00, Kb4 0.00"
     },
@@ -537,6 +771,10 @@
       "ejercicio": 7,
       "tipo": "unica",
       "san": "b5",
+      "umbral": {
+        "gana": 300,
+        "noGana": 100
+      },
       "ok": true,
       "detalle": "b5 35.77, Kc6 0.02, Kd6 0.00, Kd4 0.00, Kc4 0.00, Kb6 0.00, Kd5 0.00, Kb5 0.00"
     },
@@ -544,12 +782,20 @@
       "ejercicio": 7,
       "tipo": "unica",
       "san": "b4",
+      "umbral": {
+        "gana": 300,
+        "noGana": 100
+      },
       "ok": true,
       "detalle": "b4 35.24, Kc6 0.00, Kd5 0.00, Kd6 0.00, Kd4 0.00, b3 0.00, Kc4 0.00, Kb5 0.00, Kb4 0.00, Kb6 0.00"
     },
     "8/6p1/7k/8/1K6/8/1P6/8 w - - 0 1|inicio|": {
       "ejercicio": 7,
       "tipo": "inicio",
+      "umbral": {
+        "gana": 300,
+        "noGana": 100
+      },
       "ok": true,
       "detalle": "eval 35.26"
     },
@@ -557,6 +803,10 @@
       "ejercicio": 7,
       "tipo": "trampa",
       "san": "Ka4",
+      "umbral": {
+        "gana": 300,
+        "noGana": 100
+      },
       "ok": true,
       "resultado": "pierde",
       "refuta": [
@@ -568,6 +818,10 @@
       "ejercicio": 7,
       "tipo": "trampa",
       "san": "Kc4",
+      "umbral": {
+        "gana": 300,
+        "noGana": 100
+      },
       "ok": true,
       "resultado": "tablas",
       "refuta": [
@@ -591,12 +845,20 @@
       "ejercicio": 7,
       "tipo": "unica",
       "san": "Kc5",
+      "umbral": {
+        "gana": 300,
+        "noGana": 100
+      },
       "ok": true,
       "detalle": "Kc5 35.09, Kc4 0.00, Ka5 0.00, Kb5 0.00, Kc3 0.00, Kb3 0.00, b3 0.00, Ka3 -35.95, Ka4 -#39"
     },
     "8/K3k3/8/8/8/6Q1/6p1/8 b - - 2 10|final|": {
       "ejercicio": 7,
       "tipo": "final",
+      "umbral": {
+        "gana": 300,
+        "noGana": 100
+      },
       "ok": true,
       "detalle": "eval #12"
     },
@@ -604,12 +866,20 @@
       "ejercicio": 8,
       "tipo": "unica",
       "san": "Kxb5",
+      "umbral": {
+        "gana": 300,
+        "noGana": 100
+      },
       "ok": true,
       "detalle": "Kxb5 35.04, Kb7 0.02, Kc6 0.02, Ka7 0.02, Ka5 0.02, Ka6 0.02, Kc5 0.02"
     },
     "3k4/8/8/1K6/1P6/8/8/8 b - - 0 12|final|": {
       "ejercicio": 8,
       "tipo": "final",
+      "umbral": {
+        "gana": 300,
+        "noGana": 100
+      },
       "ok": true,
       "detalle": "eval 34.81"
     },
@@ -617,6 +887,10 @@
       "ejercicio": 8,
       "tipo": "trampa",
       "san": "Kd5",
+      "umbral": {
+        "gana": 300,
+        "noGana": 100
+      },
       "ok": true,
       "resultado": "tablas",
       "refuta": [
@@ -628,12 +902,20 @@
       "ejercicio": 8,
       "tipo": "unica",
       "san": "Kf5",
+      "umbral": {
+        "gana": 300,
+        "noGana": 100
+      },
       "ok": true,
       "detalle": "Kf5 35.39, Kd5 0.02, Kd6 0.02, Kd4 0.00, Ke4 0.00, Kf4 0.00"
     },
     "8/1p6/4k1p1/1p6/1P2KPP1/8/8/8 w - - 0 1|inicio|": {
       "ejercicio": 8,
       "tipo": "inicio",
+      "umbral": {
+        "gana": 300,
+        "noGana": 100
+      },
       "ok": true,
       "detalle": "eval 35.13"
     },
@@ -641,6 +923,10 @@
       "ejercicio": 8,
       "tipo": "unica",
       "san": "gxf5+",
+      "umbral": {
+        "gana": 300,
+        "noGana": 100
+      },
       "ok": true,
       "detalle": "gxf5+ 35.62, Kf3 -36.66, Kf4 -42.50, Ke3 -42.50, Kd4 -42.50, Kd3 -42.50"
     },
@@ -648,6 +934,10 @@
       "ejercicio": 8,
       "tipo": "trampa",
       "san": "Kd4",
+      "umbral": {
+        "gana": 300,
+        "noGana": 100
+      },
       "ok": true,
       "resultado": "tablas",
       "refuta": [
@@ -663,6 +953,10 @@
       "ejercicio": 8,
       "tipo": "unica",
       "san": "Kf4",
+      "umbral": {
+        "gana": 300,
+        "noGana": 100
+      },
       "ok": true,
       "detalle": "Kf4 35.62, Kd3 0.00, Kd4 0.00, Kd5 0.00, Ke3 0.00, Kf3 -35.98"
     },
@@ -670,6 +964,10 @@
       "ejercicio": 8,
       "tipo": "trampa",
       "san": "Kb6",
+      "umbral": {
+        "gana": 300,
+        "noGana": 100
+      },
       "ok": true,
       "resultado": "tablas",
       "refuta": [
@@ -687,12 +985,20 @@
       "ejercicio": 8,
       "tipo": "unica",
       "san": "Kxb7",
+      "umbral": {
+        "gana": 300,
+        "noGana": 100
+      },
       "ok": true,
       "detalle": "Kxb7 35.23, Kb6 0.03, Kb8 0.03, Kd6 0.03, Kc8 0.03, Kd8 -34.90, Kd7 -35.08"
     },
     "3K4/3P1k2/8/8/8/8/2r5/4R3 w - - 1 2|inicio|": {
       "ejercicio": 9,
       "tipo": "inicio",
+      "umbral": {
+        "gana": 300,
+        "noGana": 100
+      },
       "ok": true,
       "detalle": "eval 5.06"
     },
@@ -700,6 +1006,10 @@
       "ejercicio": 9,
       "tipo": "trampa",
       "san": "Re4",
+      "umbral": {
+        "gana": 300,
+        "noGana": 100
+      },
       "ok": true,
       "resultado": "tablas",
       "refuta": [
@@ -710,6 +1020,10 @@
     "8/3P2k1/8/3K4/3R4/8/8/3r4 b - - 14 8|final|": {
       "ejercicio": 9,
       "tipo": "final",
+      "umbral": {
+        "gana": 300,
+        "noGana": 100
+      },
       "ok": true,
       "detalle": "eval #11"
     },
@@ -717,6 +1031,10 @@
       "ejercicio": 9,
       "tipo": "trampa",
       "san": "Re4",
+      "umbral": {
+        "gana": 300,
+        "noGana": 100
+      },
       "ok": true,
       "resultado": "tablas",
       "refuta": [
@@ -728,6 +1046,10 @@
       "ejercicio": 10,
       "tipo": "trampa",
       "san": "e7+",
+      "umbral": {
+        "gana": 300,
+        "noGana": 100
+      },
       "ok": true,
       "resultado": "tablas",
       "refuta": [
@@ -739,6 +1061,10 @@
       "ejercicio": 10,
       "tipo": "trampa",
       "san": "Rd7+",
+      "umbral": {
+        "gana": 300,
+        "noGana": 100
+      },
       "ok": true,
       "resultado": "tablas",
       "refuta": [
@@ -754,12 +1080,20 @@
       "ejercicio": 10,
       "tipo": "unica",
       "san": "Kf7",
+      "umbral": {
+        "gana": 300,
+        "noGana": 100
+      },
       "ok": true,
       "detalle": "Kf7 5.02, Rd7+ 0.00, Rf7 0.00, Rg6 0.00, e7+ 0.00, Rg1 0.00, Rb7 0.00, Rg5 0.00, Rg4 0.00, Rg2 0.00, Rg3 0.00, Kg5 0.00, Ke5 0.00, Kg6 0.00, Kf5 0.00, Ra7 0.00, Re7 0.00, Rg8+ -4.88, Rh7 -4.88, Rc7 -4.88"
     },
     "4R3/2k5/4K3/4P3/8/8/4r3/8 w - - 0 1|inicio|": {
       "ejercicio": 10,
       "tipo": "inicio",
+      "umbral": {
+        "gana": 300,
+        "noGana": 100
+      },
       "ok": true,
       "detalle": "eval 4.98"
     },
@@ -767,6 +1101,10 @@
       "ejercicio": 10,
       "tipo": "trampa",
       "san": "Kf5",
+      "umbral": {
+        "gana": 300,
+        "noGana": 100
+      },
       "ok": true,
       "resultado": "tablas",
       "refuta": [
@@ -778,6 +1116,10 @@
       "ejercicio": 10,
       "tipo": "trampa",
       "san": "Rf8",
+      "umbral": {
+        "gana": 300,
+        "noGana": 100
+      },
       "ok": true,
       "resultado": "tablas",
       "refuta": [
@@ -789,12 +1131,20 @@
       "ejercicio": 10,
       "tipo": "unica",
       "san": "Kf7",
+      "umbral": {
+        "gana": 300,
+        "noGana": 100
+      },
       "ok": true,
       "detalle": "Kf7 4.87, Re7+ 0.03, Ra8 0.01, Rf8 0.01, Rh8 0.01, Kf6 0.01, Rg8 0.01, Kf5 0.00, Kd5 0.00, Ke7 0.00, Rc8+ -5.19, Rb8 -5.24, Rd8 -5.24"
     },
     "7r/2k5/4P1K1/8/8/8/8/3R4 b - - 10 10|final|": {
       "ejercicio": 10,
       "tipo": "final",
+      "umbral": {
+        "gana": 300,
+        "noGana": 100
+      },
       "ok": true,
       "detalle": "eval 4.78"
     }

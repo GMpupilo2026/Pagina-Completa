@@ -6,62 +6,32 @@
  * justificado: en cada posición hay al menos una jugada que es la ÚNICA que
  * gana, y casi siempre una tentadora que solo empata (o pierde).
  *
- * NINGUNA POSICIÓN SE INVENTA. Cada ejercicio dice de qué diagrama de «El mapa
- * de los finales» sale (cursos/protegido/data/el-mapa-de-los-finales.json, ya
- * verificado con Stockfish 16), y la FEN y la línea se leen de ahí. Lo único
- * escrito acá es la explicación, las jugadas que se declaran únicas, las
- * trampas con su refutación y, en tres casos, unas jugadas más al final de la
- * línea del banco.
+ * NINGUNA POSICIÓN SE INVENTA: todas salen de «El mapa de los finales»
+ * (cursos/protegido/data/el-mapa-de-los-finales.json, ya verificado con
+ * Stockfish 16), y la FEN y la línea se leen de ahí. Lo que comparte con las
+ * otras sesiones intensivas (leer el banco, la chuleta, el SQL) está en
+ * herramientas/lib/sesion-intensiva.js, con lo que significa cada campo.
  *
  * Y NADA DE LO QUE SE AFIRMA SE CREE A CIEGAS: «única», «tablas», «pierde» y
- * «gana» los comprueba Stockfish con herramientas/sesion-finales-motor.js, que
- * deja su veredicto en herramientas/sesion-finales-motor.json.
- * verificar-sesion-finales.js (en cada CI, sin motor) exige que cada
+ * «gana» los comprueba Stockfish con
+ * `node herramientas/sesion-intensiva-motor.js finales`, que deja su
+ * veredicto en herramientas/sesion-finales-motor.json.
+ * verificar-sesiones-intensivas.js (en cada CI, sin motor) exige que cada
  * afirmación —también las que están escritas en el texto de la explicación,
  * como «3.Tf4! ÚNICA» o «1.c7?»— tenga su veredicto ahí y que sea bueno.
  *
  * Uso:  npm install
  *       node herramientas/sesion-finales-intensiva.js
- * Escribe herramientas/planes/sesion-finales-intensiva.json (lo que revisa el
- * verificador) y .sql (lo que se aplica: borra el plan por su título y lo
- * vuelve a sembrar, así que se puede correr las veces que haga falta).
- * Al cambiar un ejercicio: node herramientas/sesion-finales-motor.js
+ * Escribe herramientas/planes/sesion-finales-intensiva.json y .sql (borra el
+ * plan por su título y lo vuelve a sembrar: se puede correr las veces que
+ * haga falta).
  */
 "use strict";
-const fs = require("fs");
-const path = require("path");
+const { crear } = require("./lib/sesion-intensiva");
 
-const banco = require("./lib/planes-banco");
-const { RAIZ, Chess, fenUsable, leerJSON, aEspanol, recorta } = banco;
-
-/* La nota de lib/planes-banco.js aplana los saltos de línea (es para una
-   frase). Acá cada nota es un paso a paso, y planes.html y la clase en vivo
-   la muestran con pre-wrap: se guardan tal cual, como en los proyectos. La
-   base no deja más de 2000 caracteres, y eso lo exige el verificador. */
-const nota = (titulo, texto) => ({ tipo: "nota", titulo: recorta(titulo, 200), nota: String(texto).trim() });
-
-/* El plan es de quien administra, como los de arranque y los de los
-   proyectos: un plan es del profesor que lo escribió (la RLS no deja firmar
-   por otro). Desde planes.html se comparte con quien haga falta. */
-const PROFESOR_ID = process.env.PROFESOR_ID || "5fc884eb-5374-4353-9a5d-60454c0be6c9";
-const TITULO = "Finales · Sesión intensiva: ganar con poca ventaja";
-
-/* Cada ejercicio:
- *   banco      id del diagrama en «El mapa de los finales»
- *   saltar     jugadas de la línea del banco que se juegan antes de dar la
- *              posición (Lucena empieza con jugada negra; se da después)
- *   extra      jugadas que siguen a la línea del banco (de Stockfish)
- *   unicas     jugadas de la línea (contadas desde 0) que son la ÚNICA que gana
- *   tambien    otras jugadas que la explicación dice que también ganan
- *   trampas    { jugada (índice en la línea), san, refuta, resultado }: la
- *              jugada tentadora en lugar de la de la línea, y cómo se contesta
- *   minutos    tiempo de cálculo en silencio
- *   explicacion  la nota «El cálculo», con la notación de acá
- * Todo SAN va en inglés (lo que entiende chess.js) y se traduce al escribirse.
- */
 const EJERCICIOS = [
   {
-    banco: "F3-5", nombre: "El tiempo de reserva", minutos: 5,
+    banco: "mapa:F3-5", nombre: "El tiempo de reserva", minutos: 5,
     unicas: [],
     tambien: [{ jugada: 0, san: "Kf5" }, { jugada: 0, san: "Kh5" }],
     trampas: [
@@ -86,7 +56,7 @@ const EJERCICIOS = [
       "no una jugada: rey en casilla crítica = ganado; el peón se mueve solo para pasar el turno.",
   },
   {
-    banco: "F79-1", nombre: "La carrera hacia las casillas críticas", minutos: 6,
+    banco: "mapa:F79-1", nombre: "La carrera hacia las casillas críticas", minutos: 6,
     unicas: [0, 2, 4, 6],
     trampas: [
       { jugada: 0, san: "Kg2", refuta: ["Kb8", "Kf3", "Kc7", "Ke4", "Kd6"], resultado: "tablas" },
@@ -111,7 +81,7 @@ const EJERCICIOS = [
       "casilla crítica de cada bando, y quien llega primero gana.",
   },
   {
-    banco: "F86-1", nombre: "La triangulación", minutos: 6,
+    banco: "mapa:F86-1", nombre: "La triangulación", minutos: 6,
     extra: ["Kc8", "Kb6", "Kb8", "Kxa6"],
     unicas: [6],
     trampas: [
@@ -134,7 +104,7 @@ const EJERCICIOS = [
       "idea: si el rival estaría en zugzwang con el turno al revés, se le pasa el turno con un triángulo.",
   },
   {
-    banco: "F87-2", nombre: "Dos contra uno: la regla de Steinitz", minutos: 7,
+    banco: "mapa:F87-2", nombre: "Dos contra uno: la regla de Steinitz", minutos: 7,
     extra: ["Kg8", "Kxh5"],
     unicas: [0, 2, 4, 12],
     trampas: [
@@ -158,7 +128,7 @@ const EJERCICIOS = [
       "avanzar una o dos casillas, y así el bando fuerte elige quién queda con el turno.",
   },
   {
-    banco: "F83-1", nombre: "El peón pasado como señuelo", minutos: 7,
+    banco: "mapa:F83-1", nombre: "El peón pasado como señuelo", minutos: 7,
     unicas: [0, 8],
     trampas: [
       { jugada: 0, san: "Kb4", refuta: ["Kxd5"], resultado: "tablas" },
@@ -181,7 +151,7 @@ const EJERCICIOS = [
       "alcanza primero decide.",
   },
   {
-    banco: "F84-4", nombre: "La carrera de peones que decide el rey", minutos: 8,
+    banco: "mapa:F84-4", nombre: "La carrera de peones que decide el rey", minutos: 8,
     unicas: [2, 4, 6, 8, 10, 12, 14, 16],
     trampas: [
       { jugada: 2, san: "d4", refuta: ["Kxd4"], resultado: "tablas" },
@@ -206,7 +176,7 @@ const EJERCICIOS = [
       "coronan los dos.",
   },
   {
-    banco: "F82-1", nombre: "Un rey con dos tareas (Duras, 1905)", minutos: 8,
+    banco: "mapa:F82-1", nombre: "Un rey con dos tareas (Duras, 1905)", minutos: 8,
     extra: ["Ke7", "Qg3"],
     unicas: [0, 2, 4, 6, 14],
     trampas: [
@@ -233,7 +203,7 @@ const EJERCICIOS = [
       "jaque vale un tiempo entero.",
   },
   {
-    banco: "F91-1", nombre: "El peón doblado vale menos", minutos: 10,
+    banco: "mapa:F91-1", nombre: "El peón doblado vale menos", minutos: 10,
     unicas: [2, 4, 10, 18, 22],
     trampas: [
       { jugada: 4, san: "Kd4", refuta: ["Kxf5", "Kc5", "Ke4", "Kxb5", "Kd4"], resultado: "tablas" },
@@ -256,7 +226,7 @@ const EJERCICIOS = [
       "aunque se pierda, si mientras tanto el rey gana algo más.",
   },
   {
-    banco: "F53-1", nombre: "Lucena: el puente", minutos: 8, saltar: 1,
+    banco: "mapa:F53-1", nombre: "Lucena: el puente", minutos: 8, saltar: 1,
     unicas: [],
     trampas: [
       { jugada: 6, san: "Re4", refuta: ["Rxe4+"], resultado: "tablas" },
@@ -278,7 +248,7 @@ const EJERCICIOS = [
       "El puente funciona con todos los peones menos el de torre.",
   },
   {
-    banco: "F56-3", nombre: "La torre no espera", minutos: 10,
+    banco: "mapa:F56-3", nombre: "La torre no espera", minutos: 10,
     unicas: [0, 12],
     trampas: [
       { jugada: 0, san: "Rf8", refuta: ["Re1"], resultado: "tablas" },
@@ -303,74 +273,20 @@ const EJERCICIOS = [
   },
 ];
 
-// ------------------------------------------------------------------ el banco
-
-const MAPA = leerJSON("cursos/protegido/data/el-mapa-de-los-finales.json");
-function diagrama(id) {
-  for (const f of MAPA.finales) for (const d of f.diagramas || []) if (d.id === id) return d;
-  throw new Error("No está en «El mapa de los finales»: " + id);
-}
-
-/* La posición y la línea de un ejercicio, leídas del banco y vueltas a jugar
-   con chess.js. Devuelve también la FEN ANTES de cada jugada de la línea: ahí
-   es donde se comprueban las únicas y las trampas. */
-function armar(ej) {
-  const d = diagrama(ej.banco);
-  const c = new Chess();
-  if (!c.load(d.fen)) throw new Error(ej.banco + ": la FEN del banco no carga");
-  const delBanco = d.jugadas.map((j) => j.san);
-  const saltar = ej.saltar || 0;
-  for (const san of delBanco.slice(0, saltar)) {
-    if (!c.move(san)) throw new Error(ej.banco + ": no se puede jugar " + san);
-  }
-  const fen = c.fen();
-  const linea = delBanco.slice(saltar).concat(ej.extra || []);
-  const antes = [];
-  for (const san of linea) {
-    antes.push(c.fen());
-    if (!c.move(san)) throw new Error(ej.banco + ": la línea no se puede jugar en " + san);
-  }
-  return { d, fen, linea, antes, final: c.fen() };
-}
-
-/* "1.Rg3 Rb7 2.Rf4" con la notación de acá, a partir de la FEN de salida. */
-function numerar(fen, sans, marca) {
-  const partes = fen.split(" ");
-  let n = +partes[5], blancas = partes[1] === "w";
-  const out = [];
-  sans.forEach((san, i) => {
-    const es = aEspanol(san) + (i === 0 && marca ? marca : "");
-    if (blancas) out.push(n + "." + es);
-    else out.push(i === 0 ? n + "..." + es : es);
-    if (!blancas) n += 1;
-    blancas = !blancas;
-  });
-  return out.join(" ");
-}
-
-function chuleta(ej, a) {
-  const quien = a.fen.split(" ")[1] === "w" ? "Juegan blancas" : "Juegan negras";
-  const unicas = ej.unicas.map((i) => numerar(a.antes[i], [a.linea[i]]).replace(/\s.*/, "")).join(", ");
-  const trampas = ej.trampas.map((t) =>
-    numerar(a.antes[t.jugada], [t.san].concat(t.refuta), "?") + " (" + (t.resultado === "pierde" ? "pierde" : "tablas") + ")");
-  const base = quien + " y ganan. ③ " + ej.minutos + " min en papel: la jugada, la respuesta del rival y por qué. " +
-               "Línea: " + numerar(a.fen, a.linea);
-  let texto = base + (unicas ? " · Únicas: " + unicas : "");
-  // Lo que no cabe en los 500 de la base es la lista de trampas, nunca la línea:
-  // las trampas están completas en la nota «El cálculo».
-  for (const t of trampas) {
-    const mas = texto + (texto.includes("· Trampa") ? "; " : " · Trampa: ") + t;
-    if (mas.length > 500) break;
-    texto = mas;
-  }
-  return texto;
-}
-
-// ------------------------------------------------------------------ el plan
-
-function armarPlan() {
-  const items = [];
-  items.push(nota("Cómo se trabaja esta sesión",
+module.exports = crear({
+  slug: "finales",
+  titulo: "Finales · Sesión intensiva: ganar con poca ventaja",
+  notas: "Sesión intensiva de cálculo en finales: diez posiciones de «El mapa de los finales» con " +
+                   "poca ventaja y una sola manera de ganar. Cada ejercicio trae la chuleta (línea, jugadas " +
+                   "únicas y la trampa) y la nota con el cálculo explicado. Todo comprobado con Stockfish 16.",
+  /* Sin tablas de finales, Stockfish da ~+5 en un final de torre ganado y
+     ~+35 en uno de peones; las tablas, 0,00. El hueco entre +1 y +3 no se da
+     por bueno ni por malo. */
+  umbral: { gana: 300, noGana: 100 },
+  resultados: { tablas: "tablas", pierde: "pierde" },
+  consigna: (ej, a) => (a.fen.split(" ")[1] === "w" ? "Juegan blancas" : "Juegan negras") +
+    " y ganan. ③ " + ej.minutos + " min en papel: la jugada, la respuesta del rival y por qué.",
+  intro:
     "Diez finales en los que la ventaja es mínima —un peón, o solo un rey mejor puesto— y aun así se gana " +
     "contra la mejor defensa. Ninguno se gana «jugando natural»: en cada uno hay al menos una jugada que es " +
     "la ÚNICA que gana, y casi siempre una tentadora que solo empata (o pierde). Todos salen de «El mapa de " +
@@ -387,22 +303,8 @@ function armarPlan() {
     "5. Práctica: cada uno la juega desde la posición, contra ti o contra el motor, hasta ganarla.\n" +
     "Del 1 al 8 son finales de peones (donde un solo tiempo decide) y el 9 y el 10, de torre. La regla de " +
     "toda la sesión: antes de mover en un final, contar. Cuántas jugadas necesita cada rey y cada peón, " +
-    "quién llega primero y a quién le toca mover cuando llega."));
-
-  const salida = [];
-  EJERCICIOS.forEach((ej, i) => {
-    const a = armar(ej);
-    const n = i + 1;
-    if (!fenUsable(a.fen)) throw new Error(ej.banco + ": la clase en vivo rechazaría la posición");
-    items.push({ tipo: "posicion", titulo: recorta("Ejercicio " + n + " · " + ej.nombre, 200), fen: a.fen,
-                 pregunta: chuleta(ej, a) });
-    items.push(nota("Ejercicio " + n + " · El cálculo", ej.explicacion));
-    salida.push({ n, banco: ej.banco, fen: a.fen, linea: a.linea, antes: a.antes, final: a.final,
-                  unicas: ej.unicas, tambien: ej.tambien || [], trampas: ej.trampas,
-                  explicacion: ej.explicacion });
-  });
-
-  items.push(nota("Cierre",
+    "quién llega primero y a quién le toca mover cuando llega.",
+  cierre:
     "Lo que tiene que quedar, en una frase por ejercicio:\n" +
     "1. Con el rey en una casilla crítica el final está ganado; el peón solo se mueve para pasar el turno.\n" +
     "2. Con peones bloqueados, se cuentan las jugadas hasta las casillas críticas: gana quien llega primero.\n" +
@@ -416,45 +318,8 @@ function armarPlan() {
     "10. Con poca ventaja no se espera: rey adelante, peón cubierto, torre que corta.\n" +
     "Para la casa: los diez están en el curso «El mapa de los finales», con su explicación. Que cada uno " +
     "repase ahí los que no ganó en clase y siga practicando contra el motor en Finales contra la máquina " +
-    "(entreno/finales.html)."));
+    "(entreno/finales.html).",
+  ejercicios: EJERCICIOS,
+});
 
-  items.forEach((it, i) => { it.orden = i; });
-  return {
-    titulo: TITULO,
-    notas: recorta("Sesión intensiva de cálculo en finales: diez posiciones de «El mapa de los finales» con " +
-                   "poca ventaja y una sola manera de ganar. Cada ejercicio trae la chuleta (línea, jugadas " +
-                   "únicas y la trampa) y la nota con el cálculo explicado. Todo comprobado con Stockfish 16.", 4000),
-    items, ejercicios: salida,
-  };
-}
-
-function aSQL(plan) {
-  const esc = (v) => (v === null || v === undefined ? "NULL" : "'" + String(v).replace(/'/g, "''") + "'");
-  const out = [];
-  out.push("-- " + TITULO + ". Generado por herramientas/sesion-finales-intensiva.js.");
-  out.push("-- Se puede correr las veces que haga falta: borra primero el plan por su título.");
-  out.push("begin;");
-  out.push("delete from public.planes_clase where profesor_id = " + esc(PROFESOR_ID) + " and titulo = " + esc(plan.titulo) + ";");
-  out.push("with p as (insert into public.planes_clase (profesor_id, titulo, notas) values (" +
-           esc(PROFESOR_ID) + ", " + esc(plan.titulo) + ", " + esc(plan.notas) + ") returning id)");
-  out.push("insert into public.plan_items (plan_id, orden, tipo, titulo, fen, pregunta, nota) select p.id, x.orden, x.tipo, x.titulo, x.fen, x.pregunta, x.nota from p, (values");
-  out.push(plan.items.map((it) => "  (" + it.orden + ", " + esc(it.tipo) + ", " + esc(it.titulo) + ", " +
-           esc(it.fen || null) + ", " + esc(it.pregunta || null) + ", " + esc(it.nota || null) + ")").join(",\n"));
-  out.push(") as x(orden, tipo, titulo, fen, pregunta, nota);");
-  out.push("commit;");
-  return out.join("\n") + "\n";
-}
-
-module.exports = { EJERCICIOS, armar, armarPlan, numerar, TITULO };
-
-if (require.main === module) {
-  const plan = armarPlan();
-  const dir = path.join(__dirname, "planes");
-  fs.mkdirSync(dir, { recursive: true });
-  const json = path.join(dir, "sesion-finales-intensiva.json");
-  const sql = path.join(dir, "sesion-finales-intensiva.sql");
-  fs.writeFileSync(json, JSON.stringify({ profesor_id: PROFESOR_ID, planes: [plan] }, null, 2));
-  fs.writeFileSync(sql, aSQL(plan));
-  console.log(plan.items.length + " renglones (" + plan.ejercicios.length + " ejercicios)");
-  console.log("Escritos:\n  " + path.relative(RAIZ, json) + "\n  " + path.relative(RAIZ, sql));
-}
+if (require.main === module) module.exports.escribir();
