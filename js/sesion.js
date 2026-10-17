@@ -6599,7 +6599,7 @@
         // base igual le devuelve la fila tal cual si lo intentara: ver la migración
         // practica_el_profe_mira_y_ayuda) y le manda una ayuda que al alumno le aparece en
         // su tablero. El alumno ve que lo están mirando: viaja en la presencia.
-        const mirar = { studentId: null, row: null, board: null, jugadas: null, volverA: null };
+        const mirar = { studentId: null, row: null, board: null, jugadas: null, volverA: null, intentos: null };
 
         function mirarEl(id) { return document.getElementById("practica-mirar-" + id); }
 
@@ -6617,6 +6617,7 @@
                 });
                 mirarEl("tablero").setAttribute("aria-label", "Tablero del alumno, solo para mirar");
             }
+            if (mirar.studentId !== studentId) cerrarIntentosMirada();
             mirar.studentId = studentId;
             mirar.volverA = boton || null;
             mirar.jugadas = null;
@@ -6666,12 +6667,63 @@
             }
             if (movio) estado += " Se borraron las flechas que tenías dibujadas.";
             mirarEl("estado").textContent = estado;
+            refrescarIntentosMirada(row);
+        }
+
+        /* Sus intentos, con las jugadas de cada uno: los terminados los guarda la base
+           (practice_intentos); el que juega ahora es la fila que ya se está mirando. */
+        function cerrarIntentosMirada() {
+            mirar.intentos = null;
+            mirarEl("intentos-btn").setAttribute("aria-expanded", "false");
+            mirarEl("intentos-texto").textContent = "Ver las jugadas de cada intento";
+            mirarEl("intentos-caja").hidden = true;
+            mirarEl("intentos").replaceChildren();
+            mirarEl("intentos-msg").textContent = "";
+        }
+
+        async function cargarIntentosMirada() {
+            const ronda = latestPracticeSession;
+            const studentId = mirar.studentId;
+            if (!ronda || !studentId || !mirar.row) return;
+            const pedido = {};
+            mirar.intentos = pedido;
+            mirarEl("intentos-msg").textContent = "Buscando sus intentos…";
+            const { data, error } = await sb.from("practice_intentos").select("student_id, intento, status, moves")
+                .eq("session_id", ronda.id).eq("student_id", studentId).order("intento").range(0, 999);
+            // Se cerró, cambió de alumno o se pidió de nuevo mientras tanto.
+            if (mirar.intentos !== pedido || mirar.studentId !== studentId) return;
+            if (error) { console.error(error); mirarEl("intentos-msg").textContent = "No se pudieron traer sus intentos: " + error.message; return; }
+            const nombre = mirarEl("nombre").textContent;
+            const intentos = armarIntentosPorAlumno([mirar.row], data || [])[0].intentos;
+            const ul = mirarEl("intentos");
+            ul.replaceChildren();
+            for (const i of intentos) {
+                const li = filaDeIntento(i, nombre, ronda.fen,
+                    () => (i.ultimo ? (mirar.row && mirar.row.moves) || [] : i.moves),
+                    () => mirarEl("con-nombre").checked,
+                    // El tablero de la clase queda debajo de la ventana: se cierra para verlo.
+                    cerrarMirada);
+                if (i.ultimo) { pedido.enCurso = li; pedido.intento = i.intento; }
+                ul.appendChild(li);
+            }
+            const n = intentos.length;
+            mirarEl("intentos-msg").textContent = (n === 1 ? "Un intento" : n + " intentos")
+                + ". «📺 Mostrar» lo pasa al tablero de la clase como variante, para revisarlo jugada a jugada.";
+        }
+
+        // El intento en curso crece con cada jugada; si reintentó, cambió la lista entera.
+        function refrescarIntentosMirada(row) {
+            const abierta = mirar.intentos;
+            if (!abierta || !abierta.enCurso) return;
+            if ((row.attempts || 1) !== abierta.intento) { cargarIntentosMirada(); return; }
+            abierta.enCurso.ponerAlDia(row.status, row.moves || []);
         }
 
         function cerrarMirada() {
             if (!mirar.studentId) return;
             mirar.studentId = null;
             mirar.row = null;
+            cerrarIntentosMirada();
             document.getElementById("practica-mirar").classList.add("hidden");
             anunciarMirada(null);
             const volver = mirar.volverA;
@@ -6806,6 +6858,14 @@
             mirarEl("atendido").addEventListener("click", marcarAtendido);
             mirarEl("mandar").addEventListener("click", mandarAyuda);
             mirarEl("quitar").addEventListener("click", quitarAyuda);
+            mirarEl("intentos-btn").addEventListener("click", () => {
+                const abrir = mirarEl("intentos-btn").getAttribute("aria-expanded") !== "true";
+                if (!abrir) { cerrarIntentosMirada(); return; }
+                mirarEl("intentos-btn").setAttribute("aria-expanded", "true");
+                mirarEl("intentos-texto").textContent = "Ocultar las jugadas de cada intento";
+                mirarEl("intentos-caja").hidden = false;
+                cargarIntentosMirada();
+            });
             // Escribir marcas las dibuja en cuanto se entienden (a medio escribir, «g1-», no).
             mirarEl("marcas").addEventListener("input", () => {
                 const leidas = PracticaAyuda.leerMarcas(mirarEl("marcas").value);
@@ -6982,32 +7042,53 @@
                 titulo.className = "font-semibold text-brand-700 dark:text-brand-200 break-words";
                 titulo.textContent = a.nombre;
                 const ul = document.createElement("ul");
-                ul.className = "mt-1 space-y-1";
+                ul.className = "mt-1 space-y-2";
                 for (const i of a.intentos) {
-                    const li = document.createElement("li");
-                    li.className = "flex items-center justify-between gap-2";
-                    const texto = document.createElement("span");
-                    texto.className = "text-brand-600 dark:text-brand-300 min-w-0";
-                    const n = i.moves.length;
-                    texto.textContent = "Intento " + i.intento + " · " + practiceStatusLabel(i.status)
-                        + " · " + (n === 1 ? "1 jugada" : n + " jugadas") + (i.ultimo && i.status === "playing" ? " (en curso)" : "");
-                    li.appendChild(texto);
-                    if (n) {
-                        const btn = document.createElement("button");
-                        btn.type = "button";
-                        btn.className = "shrink-0 font-semibold px-2 py-1 rounded-lg bg-accent-500 hover:bg-accent-600 text-brand-900 transition-colors";
-                        btn.textContent = "📺 Mostrar";
-                        btn.setAttribute("aria-label", "Mostrar a la clase el intento " + i.intento + " de " + a.nombre);
-                        btn.addEventListener("click", () => mostrarJugadasALaClase(ronda.fen, i.moves, a.nombre,
-                            document.getElementById("practica-mostrar-con-nombre").checked,
-                            { de: "la práctica", que: "el intento " + i.intento }));
-                        li.appendChild(btn);
-                    }
-                    ul.appendChild(li);
+                    ul.appendChild(filaDeIntento(i, a.nombre, ronda.fen, () => i.moves,
+                        () => document.getElementById("practica-mostrar-con-nombre").checked));
                 }
                 bloque.append(titulo, ul);
                 lista.appendChild(bloque);
             }
+        }
+
+        // Un intento: cómo terminó, sus jugadas escritas y numeradas (para leer dónde se
+        // equivocó sin tener que mostrarlo) y «📺 Mostrar», que lo pasa al tablero de la
+        // clase para revisarlo jugada a jugada. La usan «Revisar los intentos» y la
+        // ventana de la partida de un alumno. `jugadasDe` se lee al hacer clic: el
+        // intento en curso sigue creciendo mientras la lista está abierta.
+        function filaDeIntento(i, nombre, fen, jugadasDe, conNombre, antesDeMostrar) {
+            const li = document.createElement("li");
+            const fila = document.createElement("div");
+            fila.className = "flex items-center justify-between gap-2";
+            const texto = document.createElement("span");
+            texto.className = "text-brand-600 dark:text-brand-300 min-w-0";
+            const jugadas = document.createElement("p");
+            jugadas.className = "mt-0.5 font-mono text-brand-700 dark:text-brand-200 break-words";
+            const btn = document.createElement("button");
+            btn.type = "button";
+            btn.className = "shrink-0 font-semibold px-2 py-1 rounded-lg bg-accent-500 hover:bg-accent-600 text-brand-900 transition-colors";
+            btn.textContent = "📺 Mostrar";
+            btn.setAttribute("aria-label", "Mostrar a la clase el intento " + i.intento + " de " + nombre);
+            btn.addEventListener("click", () => {
+                const lista = jugadasDe();
+                if (!lista.length) return;
+                if (antesDeMostrar) antesDeMostrar();
+                mostrarJugadasALaClase(fen, lista, nombre, conNombre(), { de: "la práctica", que: "el intento " + i.intento });
+            });
+            fila.append(texto, btn);
+            li.append(fila, jugadas);
+            // Para poner al día el intento en curso sin volver a armar la lista (y sin
+            // que se le pierda el foco a quien está sobre un botón).
+            li.ponerAlDia = (status, moves) => {
+                const n = moves.length;
+                texto.textContent = "Intento " + i.intento + " · " + practiceStatusLabel(status)
+                    + " · " + (n === 1 ? "1 jugada" : n + " jugadas") + (i.ultimo && status === "playing" ? " (en curso)" : "");
+                jugadas.textContent = n ? ClaseAdaptada.numerarJugadas(moves, 0, fen) : "Todavía sin jugadas.";
+                btn.hidden = !n;
+            };
+            li.ponerAlDia(i.status, i.moves);
+            return li;
         }
 
         document.getElementById("practice-revisar-btn").addEventListener("click", async (ev) => {
