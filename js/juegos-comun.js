@@ -30,6 +30,28 @@
             { id: "kingofthehill", emoji: "⛰️", label: "Rey de la colina", desc: "Próximamente", disabled: true },
             { id: "threecheck", emoji: "🎯", label: "Tres jaques", desc: "Próximamente", disabled: true },
         ];
+        /* Las modalidades en las que se puede jugar un torneo: todas las de a dos
+           que ya están abiertas. Relevo (por equipos) y las de 4 jugadores no
+           entran porque un torneo empareja de a dos. Una modalidad nueva de a
+           dos en VARIANTS entra sola acá; en la base, la lista está en
+           tournaments_variant_check y tournament_rounds_variant_check. */
+        const MODOS_TORNEO = VARIANTS.filter((v) => !v.disabled && !v.equipos && v.id !== "4ffa" && v.id !== "4teams").map((v) => v.id);
+        const ALEATORIO = { id: "aleatorio", emoji: "🎲", label: "Aleatorio (cambia cada ronda)" };
+
+        /* La modalidad de la ronda que viene, en un torneo aleatorio: primero
+           las que todavía no salieron en el torneo, y cuando ya salieron todas,
+           cualquiera menos la de la ronda anterior. Así ninguna se repite dos
+           rondas seguidas y en 11 rondas salen las 11. */
+        function sortearModoDeRonda(yaJugadas, anterior) {
+            let opciones = MODOS_TORNEO.filter((id) => !yaJugadas.includes(id));
+            if (!opciones.length) opciones = MODOS_TORNEO.filter((id) => id !== anterior);
+            return opciones[Math.floor(Math.random() * opciones.length)];
+        }
+
+        function etiquetaModoTorneo(id) {
+            return id === ALEATORIO.id ? ALEATORIO.emoji + " " + ALEATORIO.label : variantLabel(id);
+        }
+
         const SEATS = ["red", "blue", "yellow", "green"];
         const SEAT_LABEL = { red: "🔴 Rojo", blue: "🔵 Azul", yellow: "🟡 Amarillo", green: "🟢 Verde" };
 

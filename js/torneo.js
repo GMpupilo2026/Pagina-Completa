@@ -17,29 +17,31 @@
         const TOURNEY_ID = new URLSearchParams(window.location.search).get("id");
 
         const FORMAT_LABEL = { swiss: "Suizo", elimination: "Eliminación directa", round_robin: "Todos contra todos" };
-        const VARIANT_LABEL = { estandar: "⚔️ Ajedrez Estándar", crazyhouse: "♞ Crazyhouse", cartas: "🃏 Ajedrez de Cartas", duelo: "⚡ Duelo Simultáneo", niebla: "🌫️ Niebla de Guerra" };
         const STATUS_LABEL = { registration: "🟢 Inscripción abierta", in_progress: "🔵 En curso", finished: "🏁 Terminado" };
 
         function nameFor(id) { return playerNames[id] || "Jugador"; }   // "Jugador" y no "Alumno": el profesor también se inscribe
-        function escapeHtml(text) {
-            const div = document.createElement("div");
-            div.textContent = text;
-            return div.innerHTML.replace(/"/g, "&quot;").replace(/'/g, "&#39;");
-        }
         function showError(text) {
             document.getElementById("loading").classList.add("hidden");
             document.getElementById("error-text").textContent = text;
             document.getElementById("error-state").classList.remove("hidden");
         }
 
-        // Cada variante de 2 jugadores vive en su propia página — igual que en
-        // juegos.html, pero acá se enlaza directo desde un cruce de torneo.
-        function pageFor2pVariant(variant) {
-            if (variant === "estandar") return "estandar.html";
-            if (variant === "cartas") return "cartas.html";
-            if (variant === "duelo") return "duelo.html";
-            if (variant === "niebla") return "niebla.html";
-            return "crazyhouse.html";
+        /* Las modalidades, su página, su posición de salida y su nombre salen
+           de js/juegos-comun.js, la misma copia de juegos.html y competir.html:
+           un cruce de torneo es una sala más, y si se armara distinto que una
+           partida amistosa podría arrancar en otra posición.
+
+           La modalidad de una ronda: la suya, escrita en tournament_rounds
+           (en un torneo aleatorio cambia ronda a ronda), o la del torneo en
+           las rondas de antes de que existiera esa columna. */
+        function modoDeRonda(round) {
+            return (round && round.variant) || tournament.variant;
+        }
+        // A qué página se entra para jugar o ver un cruce: lo dice la sala si
+        // llegó, y si no, la ronda.
+        function paginaDelCruce(p, round) {
+            const sala = salasEnJuego[p.game_room_id];
+            return pageFor2pVariant((sala && sala.variant) || modoDeRonda(round)) + "?room=" + p.game_room_id;
         }
 
         /* ---------------------------------------------------------------
@@ -63,16 +65,26 @@
             return (room.fen || "").replace(/\[[^\]]*\]/, "") || null;
         }
 
-        function buildGameRoomFields(whiteId, blackId) {
+        /* Las que NO se dibujan mientras se juegan. Niebla y A ciegas, por lo
+           mismo que escribe tv.html: cualquiera de los dos jugadores puede
+           tener esta página abierta al lado, y con la posición a la vista se
+           acabó la niebla (o el jugar a ciegas), que es el juego entero.
+           Abrazos guarda en `fen` un JSON con sus unidades abrazadas, no una
+           FEN: el tablerito caería en la posición inicial y enseñaría una
+           partida que nadie está jugando, así que se dice en vez de dibujarla. */
+        const SIN_TABLERO_EN_VIVO = {
+            niebla: "🌫️ Oculta por la niebla hasta que termine",
+            ciegas: "🙈 Se juega a ciegas: se ve al terminar",
+            abrazos: "🤗 Los abrazos se ven entrando a la partida",
+        };
+
+        function buildGameRoomFields(whiteId, blackId, variant) {
             const fila = {
-                variant: tournament.variant, white_id: whiteId, black_id: blackId, created_by: profile.id,
+                variant: variant, white_id: whiteId, black_id: blackId, created_by: profile.id,
                 initial_seconds: tournament.initial_seconds, increment_seconds: tournament.increment_seconds,
                 white_time_left: tournament.initial_seconds, black_time_left: tournament.initial_seconds,
             };
-            if (tournament.variant === "cartas") fila.cartas_state = CartasChess.Game.iniciar().toJSON();
-            if (tournament.variant === "duelo") fila.duelo_state = new DueloSimultaneo.Game().toJSON();
-            if (tournament.variant === "niebla" || tournament.variant === "estandar") fila.fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
-            return fila;
+            return Object.assign(fila, estadoInicial(variant));
         }
 
         async function register() {
@@ -187,6 +199,14 @@
                 }
             }
 
+            /* La modalidad de esta ronda. En un torneo aleatorio se sortea acá,
+               entre las que todavía no salieron (ver sortearModoDeRonda), y se
+               escribe en la ronda; la base exige que venga y no deja cambiarla
+               después. En uno fijo es la del torneo, y la base la pone igual. */
+            const modo = tournament.variant === ALEATORIO.id
+                ? sortearModoDeRonda(rounds.map((r) => r.variant).filter(Boolean), anterior && anterior.variant)
+                : tournament.variant;
+
             // Primero TODAS las salas, y recién con todas creadas la ronda y sus cruces.
             // Al revés, un cruce cuya sala fallaba desaparecía de la ronda: la ronda
             // se daba por completa sin esos dos jugadores, el suizo no les sumaba nada y
@@ -201,7 +221,7 @@
             const erroresDeSala = [];
             await Promise.all(pairings.map(async (p, i) => {
                 if (p.isBye) return;
-                const { data: roomRow, error: roomError } = await sb.from("game_rooms").insert(buildGameRoomFields(p.white, p.black)).select().single();
+                const { data: roomRow, error: roomError } = await sb.from("game_rooms").insert(buildGameRoomFields(p.white, p.black, modo)).select().single();
                 if (roomError) { console.error(roomError); erroresDeSala.push(roomError.message); return; }
                 salas.set(i, roomRow.id);
             }));
@@ -214,7 +234,7 @@
             }
 
             const { data: roundRow, error: roundError } = await sb.from("tournament_rounds").insert({
-                tournament_id: tournament.id, round_number: nextRoundNumber,
+                tournament_id: tournament.id, round_number: nextRoundNumber, variant: modo,
             }).select().single();
             if (roundError) {
                 if (salas.size) await sb.from("game_rooms").delete().in("id", [...salas.values()]);
@@ -298,7 +318,7 @@
 
         function render() {
             document.getElementById("t-name").textContent = tournament.name;
-            document.getElementById("t-meta").textContent = (FORMAT_LABEL[tournament.format] || tournament.format) + " · " + (VARIANT_LABEL[tournament.variant] || tournament.variant) + " · ⏱️ " + Ritmos.etiqueta(tournament.initial_seconds, tournament.increment_seconds) + " · " + (STATUS_LABEL[tournament.status] || tournament.status);
+            document.getElementById("t-meta").textContent = (FORMAT_LABEL[tournament.format] || tournament.format) + " · " + etiquetaModoTorneo(tournament.variant) + " · ⏱️ " + Ritmos.etiqueta(tournament.initial_seconds, tournament.increment_seconds) + " · " + (STATUS_LABEL[tournament.status] || tournament.status);
             renderRitmo();
 
             document.getElementById("registration-section").classList.toggle("hidden", tournament.status !== "registration");
@@ -384,7 +404,7 @@
                     right.appendChild(span);
                 } else if (p.game_room_id && !p.result) {
                     const link = document.createElement("a");
-                    link.href = pageFor2pVariant(tournament.variant) + "?room=" + p.game_room_id;
+                    link.href = paginaDelCruce(p, round);
                     link.className = "text-xs font-semibold text-accent-600 hover:text-accent-700 transition-colors";
                     const soyJugador = p.white_id === profile.id || p.black_id === profile.id;
                     link.textContent = soyJugador ? "Jugar →" : "Ver →";
@@ -428,7 +448,7 @@
            `interactive: false` en los dos sentidos que importan: acá no se
            juega —jugar es entrar a la partida— y la base tampoco lo dejaría,
            porque `game_rooms_update` no nombra a es_companero(). */
-        function renderPartidasEnVivo(pairings) {
+        function renderPartidasEnVivo(pairings, round) {
             const enJuego = pairings.filter((p) => !p.is_bye && p.game_room_id && !p.result && salasEnJuego[p.game_room_id]);
             if (!enJuego.length) return null;
 
@@ -453,7 +473,7 @@
                 const soyJugador = p.white_id === profile.id || p.black_id === profile.id;
 
                 const tarjeta = document.createElement("a");
-                tarjeta.href = pageFor2pVariant(tournament.variant) + "?room=" + p.game_room_id;
+                tarjeta.href = paginaDelCruce(p, round);
                 tarjeta.className = "block rounded-xl overflow-hidden border-2 border-brand-200 dark:border-brand-700 hover:border-accent-500 transition-colors bg-white dark:bg-brand-900";
                 tarjeta.setAttribute("aria-label",
                     (soyJugador ? "Seguir jugando" : "Ver") + " la partida del tablero " + p.board_number +
@@ -464,15 +484,12 @@
                 cabecera.textContent = "Tablero " + p.board_number + " · " + nameFor(p.white_id) + " vs " + nameFor(p.black_id);
                 tarjeta.appendChild(cabecera);
 
-                /* Niebla de Guerra es la única que NO se dibuja mientras se
-                   juega, y es la misma regla que ya escribe tv.html: cualquiera
-                   de los dos jugadores puede tener esta página abierta al lado,
-                   y con la posición real a la vista se acabó la niebla, que es
-                   el juego entero. */
-                if (tournament.variant === "niebla") {
+                // Ver SIN_TABLERO_EN_VIVO: se dice por qué, en vez de dejar un hueco.
+                const sinTablero = SIN_TABLERO_EN_VIVO[sala.variant];
+                if (sinTablero) {
                     const tapada = document.createElement("p");
                     tapada.className = "aspect-square w-full flex items-center justify-center text-center text-xs text-brand-450 dark:text-brand-350 px-3";
-                    tapada.textContent = "🌫️ Oculta por la niebla hasta que termine";
+                    tapada.textContent = sinTablero;
                     tarjeta.appendChild(tapada);
                     grid.appendChild(tarjeta);
                     return;
@@ -513,9 +530,18 @@
                 heading.className = "font-serif font-bold text-brand-800 dark:text-white mb-1";
                 heading.textContent = "Ronda " + round.round_number + (round.status === "finished" ? " ✅" : " (en curso)");
                 box.appendChild(heading);
+                // En un torneo aleatorio, cada ronda dice en qué se juega: es lo
+                // primero que hay que saber antes de sentarse.
+                if (tournament.variant === ALEATORIO.id) {
+                    const modo = document.createElement("p");
+                    modo.className = "text-sm font-semibold text-accent-700 dark:text-accent-400 mb-2";
+                    modo.dataset.modoRonda = modoDeRonda(round);
+                    modo.textContent = "Se juega: " + variantLabel(modoDeRonda(round));
+                    box.appendChild(modo);
+                }
                 pairings.forEach((p) => box.appendChild(renderPairingRow(p, round)));
                 if (round.status !== "finished") {
-                    const enVivo = renderPartidasEnVivo(pairings);
+                    const enVivo = renderPartidasEnVivo(pairings, round);
                     if (enVivo) box.appendChild(enVivo);
                 }
                 container.appendChild(box);
@@ -662,10 +688,11 @@
            vez, eso atrasaba las jugadas de TODOS, también las de los tableros de
            los que juegan. Ahora se escuchan solo las mesas que se dibujan,
            `id=in.(…)` de a 100 (el tope de Realtime), y se vuelven a armar
-           cuando cambia la lista. Niebla no dibuja sus mesas: no escucha nada. */
+           cuando cambia la lista. Las que no se dibujan (SIN_TABLERO_EN_VIVO) no
+           escuchan nada. */
         let canalesSalas = [], salasEscuchadas = "";
         function escucharSalas() {
-            const ids = tournament && tournament.variant !== "niebla" ? Object.keys(salasEnJuego).sort() : [];
+            const ids = Object.keys(salasEnJuego).filter((id) => !SIN_TABLERO_EN_VIVO[salasEnJuego[id].variant]).sort();
             const clave = ids.join(",");
             if (clave === salasEscuchadas) return;
             salasEscuchadas = clave;
