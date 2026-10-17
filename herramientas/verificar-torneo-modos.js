@@ -29,6 +29,9 @@
         un torneo con lista, las rondas salen solo de ella y se dice cuáles
         entran; quien organiza las cambia y vale desde la ronda siguiente, y
         a una inscrita no se le pinta la tarjeta.
+     8. Aleatorio en eliminación directa: con 8, 6 y 5 inscritos (con byes)
+        llega al campeón, cada ronda con su modalidad distinta de la anterior
+        y dicha, y unas tablas se resuelven con «Avanza …» como siempre.
 
    Uso: con el sitio en localhost:8777 (npm run verificar lo levanta solo),
         node herramientas/verificar-torneo-modos.js */
@@ -169,6 +172,10 @@ function doble(datos, usuarioId) {
       const pasa = (r) => filtros.every((f) => f(r));
       if (op === "insert") {
         const nuevas = (Array.isArray(carga) ? carga : [carga]).map((f) => Object.assign({ id: tabla + "-" + (siguiente++) }, JSON.parse(JSON.stringify(f))));
+        // Los CHECK de la base: una ronda o una sala solo de una modalidad de a dos.
+        const DE_A_DOS = ${JSON.stringify(DE_A_DOS)};
+        if ((tabla === "game_rooms" || tabla === "tournament_rounds") && nuevas.some((n) => n.variant && !DE_A_DOS.includes(n.variant)))
+          return { data: null, error: { message: 'new row for relation "' + tabla + '" violates check constraint "' + tabla + '_variant_check"' } };
         if (tabla === "tournament_rounds") {
           for (const n of nuevas) {
             if (n.status === undefined) n.status = "in_progress";
@@ -388,6 +395,63 @@ async function pruebaRondasDeLaLista(browser) {
   await b.ctx.close();
 }
 
+/* ---------------------------------------------------------- 8. eliminación */
+async function pruebaEliminacion(browser, n, conTablas) {
+  console.log("\n▶ torneo.html: aleatorio en eliminación directa con " + n + " inscritos" + (conTablas ? " y unas tablas" : ""));
+  const jugadores = Array.from({ length: n }, (_, i) => ({ id: "u-e" + (i + 1), full_name: "Elim " + (i + 1), email: "e" + (i + 1) + "@x.cr", role: "alumno", is_admin: false }));
+  const datos = datosBase({ format: "elimination", modos_aleatorio: null });
+  datos.tournament_registrations = jugadores.map((p, i) => ({ tournament_id: "t1", player_id: p.id, registered_at: "2026-10-17T10:" + String(i).padStart(2, "0") }));
+  datos.profiles = [PROFE].concat(jugadores);
+  const { ctx, page, errores } = await abrir(browser, "/torneo.html?id=t1", datos);
+  await page.click("#start-btn");
+  await page.waitForFunction(() => document.querySelectorAll("#rounds-container h3").length === 1, null, { timeout: 8000 }).catch(() => {});
+  const total = await page.evaluate(() => window.__T.tournaments[0].total_rounds);
+  ok("las rondas son las de una llave (" + Math.ceil(Math.log2(n)) + ")", total === Math.ceil(Math.log2(n)), total);
+  const pasos = [];
+  for (let r = 1; r <= total; r++) {
+    await page.evaluate(async ([r, conTablas]) => {
+      const ronda = window.__T.tournament_rounds.find((x) => x.round_number === r);
+      window.__T.tournament_pairings.filter((p) => p.round_id === ronda.id && !p.is_bye).forEach((p, i) => {
+        if (conTablas && r === 1 && i === 0) { p.result = "draw"; p.needs_manual_advance = true; } else p.result = "white";
+        p.finished_at = new Date().toISOString();
+      });
+      window.__guardar();
+      await TorneoSync.maybeFinishRound(window.sb, ronda.id);
+    }, [r, conTablas]);
+    await page.reload();
+    await page.waitForTimeout(900);
+    if (conTablas && r === 1) {
+      const avanza = page.locator("#rounds-container button", { hasText: "Avanza" }).first();
+      if (!(await avanza.isVisible().catch(() => false))) { pasos.push("no se ofrece «Avanza …» tras las tablas"); break; }
+      await avanza.click();
+      await page.waitForTimeout(900);
+    }
+    if (r === total) break;
+    const boton = page.locator("#generate-round-btn");
+    if (!/Generar ronda/.test(await boton.textContent()) || await boton.isDisabled()) { pasos.push("trabado tras la ronda " + r); break; }
+    await boton.click();
+    await page.waitForFunction((k) => document.querySelectorAll("#rounds-container h3").length === k, r + 1, { timeout: 8000 }).catch(() => {});
+  }
+  ok("cada ronda se cierra y ofrece la siguiente", pasos.length === 0, pasos);
+  const res = await page.evaluate(() => {
+    const rondas = window.__T.tournament_rounds.slice().sort((a, b) => a.round_number - b.round_number);
+    return {
+      modos: rondas.map((x) => x.variant),
+      salasDeSuModo: rondas.every((ro) => window.__T.tournament_pairings.filter((p) => p.round_id === ro.id && !p.is_bye)
+        .every((p) => (window.__T.game_rooms.find((s) => s.id === p.game_room_id) || {}).variant === ro.variant)),
+      dichas: [...document.querySelectorAll("[data-modo-ronda]")].filter((e) => e.checkVisibility()).length,
+      t: window.__T.tournaments[0],
+      cartel: document.getElementById("finished-banner").checkVisibility(),
+    };
+  });
+  ok("cada ronda con una modalidad distinta de las de antes", res.modos.length === total && new Set(res.modos).size === total, res.modos);
+  ok("sus salas son de su modalidad", res.salasDeSuModo);
+  ok("cada ronda dice en qué se juega", res.dichas === total, res.dichas);
+  ok("el torneo cierra con un campeón", res.t.status === "finished" && (res.t.winner_ids || []).length === 1 && res.cartel, { status: res.t.status, winner_ids: res.t.winner_ids });
+  ok("sin errores de JavaScript", errores.length === 0, errores);
+  await ctx.close();
+}
+
 /* ---------------------------------------------------------- 3. aleatorio */
 async function cerrarRonda(page, numero) {
   await page.evaluate(async (numero) => {
@@ -541,6 +605,9 @@ async function correr(prueba, ...args) {
     await correr(pruebaMirar, browser);
     await correr(pruebaElegirAlCrear, browser);
     await correr(pruebaRondasDeLaLista, browser);
+    await correr(pruebaEliminacion, browser, 8, false);
+    await correr(pruebaEliminacion, browser, 6, false);
+    await correr(pruebaEliminacion, browser, 5, true);
   } finally {
     await browser.close();
   }
