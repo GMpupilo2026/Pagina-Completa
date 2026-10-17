@@ -364,6 +364,7 @@
           "ojo": [
             "Puedes mirar la partida de un alumno y mandarle una ayuda, sin que la vea el resto.",
             "Con un tope de intentos, el alumno no puede reintentar más de lo que le diste; con la ronda en curso puedes cambiarlo (por ejemplo, darles uno más).",
+            "En «🔁 Revisar los intentos» quedan las jugadas de cada intento de cada alumno, también después de terminar la ronda: «📺 Mostrar» pasa la que elijas al tablero de la clase.",
             "La ronda es tuya: cerrarla no toca la de ningún otro profesor que esté dando clase al mismo tiempo."
           ]
         },

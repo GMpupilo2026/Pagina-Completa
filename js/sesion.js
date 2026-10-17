@@ -4881,26 +4881,32 @@
             const q = preguntaConTableros();
             const fin = respuestasFinales.get(id);
             if (!q || !fin || !(fin.moves || []).length) return;
-            let k = jugadaDeLaPosicion(q.fen);
+            await mostrarJugadasALaClase(q.fen, fin.moves, nombreEnPregunta(id),
+                document.getElementById("mostrar-con-nombre").checked, { de: "la pregunta", que: "la respuesta" });
+        }
+
+        // La puerta de las dos: la respuesta de una pregunta y un intento de Practicar.
+        // `fen` es la posición de donde salen las jugadas; `textos` dice de qué se habla.
+        async function mostrarJugadasALaClase(fen, jugadas, nombre, conNombre, textos) {
+            let k = jugadaDeLaPosicion(fen);
             if (k === -1) {
-                // Se cambió la posición después de preguntar: hay que mandarla de nuevo.
-                const seguir = await Avisos.confirmar("El tablero de la clase ya no tiene la posición de la pregunta. Para mostrar la respuesta hay que volver a mandarla, y la partida que está ahora se reemplaza.",
-                    { titulo: "¿Volver a la posición de la pregunta?", aceptar: "Mandar la posición y mostrarla" });
-                if (!seguir || !(await aplicarPosicionEnClase(q.fen))) return;
+                // El tablero de la clase ya no tiene esa posición: hay que mandarla de nuevo.
+                const seguir = await Avisos.confirmar("El tablero de la clase ya no tiene la posición de " + textos.de + ". Para mostrar " + textos.que + " hay que volver a mandarla, y la partida que está ahora se reemplaza.",
+                    { titulo: "¿Volver a la posición de " + textos.de + "?", aceptar: "Mandar la posición y mostrarla" });
+                if (!seguir || !(await aplicarPosicionEnClase(fen))) return false;
                 k = 0;
             }
-            const vista = { path: board.moves().slice(0, k).concat(fin.moves), parent: null, root: k };
+            const vista = { path: board.moves().slice(0, k).concat(jugadas), parent: null, root: k };
             board.showView(vista);
             renderMoveList();
-            const conNombre = document.getElementById("mostrar-con-nombre").checked;
-            const nombre = nombreEnPregunta(id);
             // La vista local no lleva el autor: así transmitirVista() no la vuelve a mandar sin él.
             ultimaVistaEnviada = JSON.stringify(board.currentView());
             const { error } = await sb.from("game_state").update({ vista: Object.assign({}, vista, { respuesta: { nombre: conNombre ? nombre : null } }) })
                 .eq("id", myGameStateId);
-            if (error) { console.error(error); ultimaVistaEnviada = null; setStatus("No se pudo mostrar: " + error.message); return; }
-            setStatus("📺 La clase ve la respuesta de " + nombre + (conNombre ? ", con su nombre." : ", sin su nombre.")
+            if (error) { console.error(error); ultimaVistaEnviada = null; setStatus("No se pudo mostrar: " + error.message); return false; }
+            setStatus("📺 La clase ve " + textos.que + " de " + nombre + (conNombre ? ", con su nombre." : ", sin su nombre.")
                 + " Vuelve al final de la partida para seguir.");
+            return true;
         }
 
         function renderAnswersList(answers) {
@@ -6413,6 +6419,7 @@
         // ---------- Panel del profesor ----------
         function renderTeacherPracticePanel() {
             const active = !!(latestPracticeSession && !latestPracticeSession.ended_at);
+            pintarRevisarIntentos();
             document.getElementById("practice-start-controls").classList.toggle("hidden", active);
             document.getElementById("practice-active-controls").classList.toggle("hidden", !active);
             document.getElementById("practice-boards-section").classList.toggle("hidden", !active);
@@ -6863,6 +6870,111 @@
             const { error } = await crearPractica(board.fen(), selectedPracticeLevel);
             if (error) { console.error(error); setStatus("No se pudo iniciar la práctica: " + error.message); return; }
             setStatus("Práctica iniciada: los alumnos ya pueden jugar contra el motor.");
+        });
+
+        /* ---------- Revisar los intentos de la ronda ----------
+           Los intentos terminados los guarda la base al reintentar
+           (practice_intentos); el último sigue en practice_games. Se piden solo al
+           abrir la lista (nada de Realtime: es para repasar, no para seguir en vivo,
+           y la práctica ya escucha bastante — ver «La práctica no recarga la lista
+           en cada jugada»). Sigue a mano con la ronda cerrada. */
+        let revisarDeRonda = null;
+        function pintarRevisarIntentos() {
+            const caja = document.getElementById("practice-revisar");
+            if (!caja) return;
+            const ronda = latestPracticeSession ? latestPracticeSession.id : null;
+            caja.hidden = !ronda || !isTeacher;
+            if (ronda !== revisarDeRonda) {
+                // Otra ronda: la lista de antes ya no sirve.
+                revisarDeRonda = ronda;
+                document.getElementById("practice-revisar-lista").hidden = true;
+                document.getElementById("practice-revisar-lista").replaceChildren();
+                document.getElementById("practice-revisar-btn").setAttribute("aria-expanded", "false");
+                document.getElementById("practice-revisar-btn").textContent = "Ver los intentos de la ronda";
+                document.getElementById("practice-revisar-msg").textContent = "";
+            }
+        }
+
+        // Los intentos de cada alumno, del primero al último: [{nombre, intentos: [{intento, status, moves, ultimo}]}].
+        function armarIntentosPorAlumno(juegos, guardados) {
+            const porAlumno = new Map();
+            for (const g of juegos) {
+                const p = g.profiles || {};
+                porAlumno.set(g.student_id, {
+                    nombre: p.full_name || p.email || "Alumno",
+                    intentos: [{ intento: g.attempts || 1, status: g.status, moves: g.moves || [], ultimo: true }],
+                });
+            }
+            for (const i of guardados) {
+                const a = porAlumno.get(i.student_id);
+                if (a) a.intentos.push({ intento: i.intento, status: i.status, moves: i.moves || [], ultimo: false });
+            }
+            const lista = [...porAlumno.values()];
+            lista.forEach((a) => a.intentos.sort((x, y) => x.intento - y.intento));
+            lista.sort((a, b) => a.nombre.localeCompare(b.nombre, "es"));
+            return lista;
+        }
+
+        async function cargarRevisarIntentos() {
+            const ronda = latestPracticeSession;
+            const lista = document.getElementById("practice-revisar-lista");
+            const msg = document.getElementById("practice-revisar-msg");
+            if (!ronda) return;
+            msg.textContent = "Buscando los intentos…";
+            const [juegos, guardados] = await Promise.all([
+                sb.from("practice_games").select("id, student_id, attempts, status, moves, profiles(full_name, email)").eq("session_id", ronda.id),
+                sb.from("practice_intentos").select("student_id, intento, status, moves").eq("session_id", ronda.id).order("intento").range(0, 999),
+            ]);
+            if (revisarDeRonda !== ronda.id) return; // cambió la ronda mientras se pedía
+            const error = juegos.error || guardados.error;
+            if (error) { console.error(error); msg.textContent = "No se pudieron traer los intentos: " + error.message; return; }
+            const alumnos = armarIntentosPorAlumno(juegos.data || [], guardados.data || []);
+            lista.replaceChildren();
+            if (!alumnos.length) { msg.textContent = "Nadie jugó todavía en esta ronda."; return; }
+            msg.textContent = "";
+            for (const a of alumnos) {
+                const bloque = document.createElement("div");
+                const titulo = document.createElement("p");
+                titulo.className = "font-semibold text-brand-700 dark:text-brand-200 break-words";
+                titulo.textContent = a.nombre;
+                const ul = document.createElement("ul");
+                ul.className = "mt-1 space-y-1";
+                for (const i of a.intentos) {
+                    const li = document.createElement("li");
+                    li.className = "flex items-center justify-between gap-2";
+                    const texto = document.createElement("span");
+                    texto.className = "text-brand-600 dark:text-brand-300 min-w-0";
+                    const n = i.moves.length;
+                    texto.textContent = "Intento " + i.intento + " · " + practiceStatusLabel(i.status)
+                        + " · " + (n === 1 ? "1 jugada" : n + " jugadas") + (i.ultimo && i.status === "playing" ? " (en curso)" : "");
+                    li.appendChild(texto);
+                    if (n) {
+                        const btn = document.createElement("button");
+                        btn.type = "button";
+                        btn.className = "shrink-0 font-semibold px-2 py-1 rounded-lg bg-accent-500 hover:bg-accent-600 text-brand-900 transition-colors";
+                        btn.textContent = "📺 Mostrar";
+                        btn.setAttribute("aria-label", "Mostrar a la clase el intento " + i.intento + " de " + a.nombre);
+                        btn.addEventListener("click", () => mostrarJugadasALaClase(ronda.fen, i.moves, a.nombre,
+                            document.getElementById("practica-mostrar-con-nombre").checked,
+                            { de: "la práctica", que: "el intento " + i.intento }));
+                        li.appendChild(btn);
+                    }
+                    ul.appendChild(li);
+                }
+                bloque.append(titulo, ul);
+                lista.appendChild(bloque);
+            }
+        }
+
+        document.getElementById("practice-revisar-btn").addEventListener("click", async (ev) => {
+            const btn = ev.currentTarget;
+            const lista = document.getElementById("practice-revisar-lista");
+            const abrir = btn.getAttribute("aria-expanded") !== "true";
+            btn.setAttribute("aria-expanded", abrir ? "true" : "false");
+            btn.textContent = abrir ? "Ocultar los intentos" : "Ver los intentos de la ronda";
+            lista.hidden = !abrir;
+            if (abrir) await cargarRevisarIntentos();
+            else document.getElementById("practice-revisar-msg").textContent = "";
         });
 
         // Cambiar los intentos con la ronda en curso (darles uno más, o cortar los

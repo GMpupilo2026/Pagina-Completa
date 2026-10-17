@@ -572,6 +572,38 @@ un `drop`, el trigger va con `create or replace trigger`.
 Está probado que falla de verdad: sin mandar el tope en la ronda o sin
 esconder «Reintentar» con los intentos gastados, salta.
 
+### Practicar: las jugadas de cada intento, para revisarlas en clase
+
+Reintentar reusa la fila de `practice_games` (un solo tablero por alumno en la
+grilla), así que las jugadas del intento anterior se perdían. Ahora se guardan
+todas, y el profe elige cuál mostrar a la clase.
+
+- **Las guarda la base** (migración `practica_guarda_cada_intento`): el trigger
+  `interno.practica_guardar_intento` (SECURITY DEFINER, AFTER UPDATE OF
+  attempts) copia el intento que termina a `practice_intentos` —jugadas, cómo
+  terminó y su número— en el mismo momento en que el alumno reintenta. El
+  intento en curso sigue en `practice_games`; juntos son la ronda entera. Que
+  lo haga un trigger y no la página quiere decir que no se saltea y que el
+  alumno no lo escribe: la tabla no tiene permisos de escritura para nadie
+  desde afuera. Comprobado impersonando: una alumna que reintenta dos veces
+  deja sus dos intentos; no puede insertarlos, cambiarlos ni borrarlos; su
+  profe los ve, otro alumno no. La lectura es la de `practice_games`, con el
+  conjunto armado una vez, más la restrictiva de acceso vigente.
+- **«🔁 Revisar los intentos»** en la pestaña Practicar sigue a mano después de
+  «Terminar práctica»: es para repasar, no para seguir en vivo. La lista se
+  pide **solo al abrirla**, sin Realtime (la práctica ya escucha bastante;
+  ver «La práctica no recarga la lista en cada jugada»). Cada alumno, con sus
+  intentos del primero al último y cómo terminó cada uno.
+- **«📺 Mostrar»** usa la misma puerta que «Mostrar a la clase» de Preguntar,
+  ahora `mostrarJugadasALaClase()`: va como variante que mira el profe
+  (`game_state.vista`), la partida de la clase no se toca, y si el tablero ya
+  no tiene la posición de la práctica pregunta antes de reemplazarla. «Decir
+  de quién es al mostrarlo» arranca sin marcar, por lo mismo que allá.
+
+**Al tocar esto, correr `node herramientas/verificar-todo.js practica-intentos
+clase-mostrar`.** Está probado que falla de verdad: sin ordenar los intentos o
+mandando siempre el nombre, salta.
+
 ### Antes y después de la clase: el plan marcado, la tarea de repaso y «Tu última clase»
 
 La clase empezaba en «Mi plan» y terminaba en «Cerrar la clase», pero ninguno
