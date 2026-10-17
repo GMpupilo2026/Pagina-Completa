@@ -1,0 +1,802 @@
+{
+  "motor": "Stockfish 16",
+  "profundidad": 26,
+  "gana": 300,
+  "tablas": 100,
+  "veredictos": {
+    "7k/8/6K1/6P1/8/8/8/8 w - - 1 5|trampa|Kf5": {
+      "ejercicio": 1,
+      "tipo": "trampa",
+      "san": "Kf5",
+      "ok": true,
+      "resultado": "tablas",
+      "refuta": [
+        "Kg7"
+      ],
+      "detalle": "eval 0.00"
+    },
+    "7k/8/6K1/6P1/8/8/8/8 w - - 1 5|trampa|Kh5": {
+      "ejercicio": 1,
+      "tipo": "trampa",
+      "san": "Kh5",
+      "ok": true,
+      "resultado": "tablas",
+      "refuta": [
+        "Kg7"
+      ],
+      "detalle": "eval 0.00"
+    },
+    "8/5KP1/7k/8/8/8/8/8 b - - 0 7|final|": {
+      "ejercicio": 1,
+      "tipo": "final",
+      "ok": true,
+      "detalle": "eval #11"
+    },
+    "8/6k1/8/6K1/8/6P1/8/8 w - - 0 1|inicio|": {
+      "ejercicio": 1,
+      "tipo": "inicio",
+      "ok": true,
+      "detalle": "eval 34.40"
+    },
+    "8/6k1/8/6K1/8/6P1/8/8 w - - 0 1|tambien|Kf5": {
+      "ejercicio": 1,
+      "tipo": "tambien",
+      "san": "Kf5",
+      "ok": true,
+      "detalle": "eval 35.11"
+    },
+    "8/6k1/8/6K1/8/6P1/8/8 w - - 0 1|tambien|Kh5": {
+      "ejercicio": 1,
+      "tipo": "tambien",
+      "san": "Kh5",
+      "ok": true,
+      "detalle": "eval 35.12"
+    },
+    "8/6k1/8/6K1/8/6P1/8/8 w - - 0 1|trampa|Kf4": {
+      "ejercicio": 1,
+      "tipo": "trampa",
+      "san": "Kf4",
+      "ok": true,
+      "resultado": "tablas",
+      "refuta": [
+        "Kf6"
+      ],
+      "detalle": "eval 0.00"
+    },
+    "8/6k1/8/6K1/8/6P1/8/8 w - - 0 1|trampa|Kh4": {
+      "ejercicio": 1,
+      "tipo": "trampa",
+      "san": "Kh4",
+      "ok": true,
+      "resultado": "tablas",
+      "refuta": [
+        "Kh6"
+      ],
+      "detalle": "eval 0.00"
+    },
+    "8/1k6/1p6/1P6/8/6K1/8/8 w - - 2 2|unica|Kf4": {
+      "ejercicio": 2,
+      "tipo": "unica",
+      "san": "Kf4",
+      "ok": true,
+      "detalle": "Kf4 35.14, Kf3 0.00, Kf2 0.00, Kh2 -35.75, Kh3 -35.75, Kg4 -35.78, Kg2 -35.78, Kh4 -35.78"
+    },
+    "8/2k5/1p6/1P6/5K2/8/8/8 w - - 4 3|unica|Ke5": {
+      "ejercicio": 2,
+      "tipo": "unica",
+      "san": "Ke5",
+      "ok": true,
+      "detalle": "Ke5 34.94, Ke4 0.00, Ke3 0.00, Kg3 -34.99, Kg4 -34.99, Kg5 -35.04, Kf3 -35.04, Kf5 -35.05"
+    },
+    "8/3k4/1p6/1P2K3/8/8/8/8 w - - 6 4|trampa|Kd4": {
+      "ejercicio": 2,
+      "tipo": "trampa",
+      "san": "Kd4",
+      "ok": true,
+      "resultado": "tablas",
+      "refuta": [],
+      "detalle": "eval -0.07"
+    },
+    "8/3k4/1p6/1P2K3/8/8/8/8 w - - 6 4|trampa|Ke4": {
+      "ejercicio": 2,
+      "tipo": "trampa",
+      "san": "Ke4",
+      "ok": true,
+      "resultado": "tablas",
+      "refuta": [],
+      "detalle": "eval -0.03"
+    },
+    "8/3k4/1p6/1P2K3/8/8/8/8 w - - 6 4|unica|Kd5": {
+      "ejercicio": 2,
+      "tipo": "unica",
+      "san": "Kd5",
+      "ok": true,
+      "detalle": "Kd5 34.94, Ke4 -0.11, Kd4 -0.12, Kf4 -35.46, Kf5 -35.46, Kf6 -35.49"
+    },
+    "k7/8/1K6/1P6/8/8/8/8 b - - 0 10|final|": {
+      "ejercicio": 2,
+      "tipo": "final",
+      "ok": true,
+      "detalle": "eval #20"
+    },
+    "k7/8/1p6/1P6/8/8/7K/8 w - - 0 1|inicio|": {
+      "ejercicio": 2,
+      "tipo": "inicio",
+      "ok": true,
+      "detalle": "eval 35.10"
+    },
+    "k7/8/1p6/1P6/8/8/7K/8 w - - 0 1|trampa|Kg2": {
+      "ejercicio": 2,
+      "tipo": "trampa",
+      "san": "Kg2",
+      "ok": true,
+      "resultado": "tablas",
+      "refuta": [
+        "Kb8",
+        "Kf3",
+        "Kc7",
+        "Ke4",
+        "Kd6"
+      ],
+      "detalle": "eval 0.00"
+    },
+    "k7/8/1p6/1P6/8/8/7K/8 w - - 0 1|trampa|Kh3": {
+      "ejercicio": 2,
+      "tipo": "trampa",
+      "san": "Kh3",
+      "ok": true,
+      "resultado": "pierde",
+      "refuta": [
+        "Kb7",
+        "Kg2",
+        "Kc7",
+        "Kf2",
+        "Kd6",
+        "Ke1",
+        "Kc5"
+      ],
+      "detalle": "eval -35.04"
+    },
+    "k7/8/1p6/1P6/8/8/7K/8 w - - 0 1|unica|Kg3": {
+      "ejercicio": 2,
+      "tipo": "unica",
+      "san": "Kg3",
+      "ok": true,
+      "detalle": "Kg3 35.09, Kg2 0.00, Kg1 0.00, Kh3 -34.81, Kh1 -35.48"
+    },
+    "1k6/8/K1P5/P7/8/8/8/8 b - - 0 6|final|": {
+      "ejercicio": 3,
+      "tipo": "final",
+      "ok": true,
+      "detalle": "eval #11"
+    },
+    "2k5/8/p1P5/P2K4/8/8/8/8 w - - 0 1|inicio|": {
+      "ejercicio": 3,
+      "tipo": "inicio",
+      "ok": true,
+      "detalle": "eval 36.69"
+    },
+    "2k5/8/p1P5/P2K4/8/8/8/8 w - - 0 1|trampa|c7": {
+      "ejercicio": 3,
+      "tipo": "trampa",
+      "san": "c7",
+      "ok": true,
+      "resultado": "tablas",
+      "refuta": [
+        "Kxc7",
+        "Kc5",
+        "Kb7",
+        "Kd6",
+        "Kb8",
+        "Kc6",
+        "Kc8"
+      ],
+      "detalle": "eval 0.00"
+    },
+    "8/2k5/p1P5/P2K4/8/8/8/8 w - - 6 4|trampa|Kd4": {
+      "ejercicio": 3,
+      "tipo": "trampa",
+      "san": "Kd4",
+      "ok": true,
+      "resultado": "tablas",
+      "refuta": [
+        "Kxc6"
+      ],
+      "detalle": "eval 0.00"
+    },
+    "8/2k5/p1P5/P2K4/8/8/8/8 w - - 6 4|unica|Kc5": {
+      "ejercicio": 3,
+      "tipo": "unica",
+      "san": "Kc5",
+      "ok": true,
+      "detalle": "Kc5 #19, Kd4 0.00, Kc4 -0.04, Ke4 -0.04, Ke5 -0.04, Ke6 -0.06"
+    },
+    "6k1/8/6P1/7K/7P/8/8/8 b - - 0 8|final|": {
+      "ejercicio": 4,
+      "tipo": "final",
+      "ok": true,
+      "detalle": "eval #14"
+    },
+    "8/6k1/6P1/5K1p/7P/8/8/8 w - - 1 7|trampa|Kf4": {
+      "ejercicio": 4,
+      "tipo": "trampa",
+      "san": "Kf4",
+      "ok": true,
+      "resultado": "tablas",
+      "refuta": [
+        "Kxg6"
+      ],
+      "detalle": "eval 0.03"
+    },
+    "8/6k1/6P1/5K1p/7P/8/8/8 w - - 1 7|unica|Kg5": {
+      "ejercicio": 4,
+      "tipo": "unica",
+      "san": "Kg5",
+      "ok": true,
+      "detalle": "Kg5 #22, Kf4 0.04, Ke6 0.04, Ke4 0.04, Ke5 0.04"
+    },
+    "8/8/5k1p/8/5KP1/7P/8/8 w - - 1 2|unica|h4": {
+      "ejercicio": 4,
+      "tipo": "unica",
+      "san": "h4",
+      "ok": true,
+      "detalle": "h4 35.04, Kf3 0.03, Ke3 0.03, Kg3 0.03, Ke4 0.03, g5+ 0.00"
+    },
+    "8/8/5k2/7p/5KPP/8/8/8 w - - 0 3|trampa|gxh5": {
+      "ejercicio": 4,
+      "tipo": "trampa",
+      "san": "gxh5",
+      "ok": true,
+      "resultado": "tablas",
+      "refuta": [
+        "Kf7"
+      ],
+      "detalle": "eval 0.04"
+    },
+    "8/8/5k2/7p/5KPP/8/8/8 w - - 0 3|unica|g5+": {
+      "ejercicio": 4,
+      "tipo": "unica",
+      "san": "g5+",
+      "ok": true,
+      "detalle": "g5+ 36.43, Kg3 0.00, gxh5 0.00, Kf3 0.00, Ke4 0.00, Ke3 0.00"
+    },
+    "8/8/6kp/8/5KP1/8/7P/8 w - - 0 1|inicio|": {
+      "ejercicio": 4,
+      "tipo": "inicio",
+      "ok": true,
+      "detalle": "eval 7.80"
+    },
+    "8/8/6kp/8/5KP1/8/7P/8 w - - 0 1|trampa|g5": {
+      "ejercicio": 4,
+      "tipo": "trampa",
+      "san": "g5",
+      "ok": true,
+      "resultado": "tablas",
+      "refuta": [
+        "hxg5+"
+      ],
+      "detalle": "eval 0.00"
+    },
+    "8/8/6kp/8/5KP1/8/7P/8 w - - 0 1|trampa|h4": {
+      "ejercicio": 4,
+      "tipo": "trampa",
+      "san": "h4",
+      "ok": true,
+      "resultado": "tablas",
+      "refuta": [
+        "Kf6"
+      ],
+      "detalle": "eval 0.02"
+    },
+    "8/8/6kp/8/5KP1/8/7P/8 w - - 0 1|unica|h3": {
+      "ejercicio": 4,
+      "tipo": "unica",
+      "san": "h3",
+      "ok": true,
+      "detalle": "h3 35.33, h4 0.07, Kf3 0.07, Kg3 0.05, g5 0.00, Ke4 0.00, Ke3 0.00, Ke5 0.00"
+    },
+    "8/6K1/4k3/7P/8/8/8/8 b - - 2 6|final|": {
+      "ejercicio": 5,
+      "tipo": "final",
+      "ok": true,
+      "detalle": "eval #16"
+    },
+    "8/8/3k3p/3P3P/2K5/8/8/8 w - - 0 1|inicio|": {
+      "ejercicio": 5,
+      "tipo": "inicio",
+      "ok": true,
+      "detalle": "eval 35.00"
+    },
+    "8/8/3k3p/3P3P/2K5/8/8/8 w - - 0 1|trampa|Kb4": {
+      "ejercicio": 5,
+      "tipo": "trampa",
+      "san": "Kb4",
+      "ok": true,
+      "resultado": "tablas",
+      "refuta": [
+        "Kxd5"
+      ],
+      "detalle": "eval -0.05"
+    },
+    "8/8/3k3p/3P3P/2K5/8/8/8 w - - 0 1|trampa|Kd3": {
+      "ejercicio": 5,
+      "tipo": "trampa",
+      "san": "Kd3",
+      "ok": true,
+      "resultado": "tablas",
+      "refuta": [
+        "Kxd5"
+      ],
+      "detalle": "eval -0.04"
+    },
+    "8/8/3k3p/3P3P/2K5/8/8/8 w - - 0 1|unica|Kd4": {
+      "ejercicio": 5,
+      "tipo": "unica",
+      "san": "Kd4",
+      "ok": true,
+      "detalle": "Kd4 35.15, Kb4 -0.07, Kc3 -0.07, Kd3 -0.07, Kb5 -0.07, Kb3 -0.07"
+    },
+    "8/8/6Kp/3k3P/8/8/8/8 w - - 0 5|trampa|Kf6": {
+      "ejercicio": 5,
+      "tipo": "trampa",
+      "san": "Kf6",
+      "ok": true,
+      "resultado": "tablas",
+      "refuta": [
+        "Kd6",
+        "Kg6",
+        "Ke7",
+        "Kxh6",
+        "Kf7"
+      ],
+      "detalle": "eval 0.01"
+    },
+    "8/8/6Kp/3k3P/8/8/8/8 w - - 0 5|unica|Kxh6": {
+      "ejercicio": 5,
+      "tipo": "unica",
+      "san": "Kxh6",
+      "ok": true,
+      "detalle": "Kxh6 96.05, Kf6 0.02, Kf5 0.02, Kh7 0.02, Kg7 0.02, Kf7 0.02"
+    },
+    "8/3P4/8/8/2K5/8/pk6/8 w - - 0 9|unica|d8=Q": {
+      "ejercicio": 6,
+      "tipo": "unica",
+      "san": "d8=Q",
+      "ok": true,
+      "detalle": "d8=Q #7, Kc5 0.00, Kb5 0.00, Kb4 0.00, d8=B -0.24, d8=R -2.55, d8=N -33.59, Kd5 -35.92, Kd4 -#25, Kd3 -#14"
+    },
+    "8/8/3P4/8/2K5/p7/1k6/8 w - - 0 8|unica|d7": {
+      "ejercicio": 6,
+      "tipo": "unica",
+      "san": "d7",
+      "ok": true,
+      "detalle": "d7 #8, Kb5 0.00, Kc5 0.00, Kb4 0.00, Kd5 -35.91, Kd3 -96.05, Kd4 -96.05"
+    },
+    "8/8/8/3P4/p1K5/8/1k6/8 w - - 1 7|unica|d6": {
+      "ejercicio": 6,
+      "tipo": "unica",
+      "san": "d6",
+      "ok": true,
+      "detalle": "d6 35.19, Kb5 0.00, Kb4 0.00, Kc5 0.00, Kd4 -35.84, Kd3 -35.84"
+    },
+    "8/8/8/8/2K5/8/1k1Q4/q7 b - - 1 10|final|": {
+      "ejercicio": 6,
+      "tipo": "final",
+      "ok": true,
+      "detalle": "eval #4"
+    },
+    "8/8/8/8/p1KP4/k7/8/8 w - - 0 6|unica|d5": {
+      "ejercicio": 6,
+      "tipo": "unica",
+      "san": "d5",
+      "ok": true,
+      "detalle": "d5 34.75, Kc3 0.04, Kb5 0.00, Kc5 0.00, Kd3 -35.54, Kd5 -35.54"
+    },
+    "8/8/8/p7/2K5/k7/3P4/8 w - - 2 5|unica|d4": {
+      "ejercicio": 6,
+      "tipo": "unica",
+      "san": "d4",
+      "ok": true,
+      "detalle": "d4 35.18, Kc3 0.00, d3 0.00, Kb5 0.00, Kc5 0.00, Kd4 -35.88, Kd5 -35.88, Kd3 -35.88"
+    },
+    "8/8/8/p7/k7/3K4/3P4/8 w - - 0 4|trampa|Kc3": {
+      "ejercicio": 6,
+      "tipo": "trampa",
+      "san": "Kc3",
+      "ok": true,
+      "resultado": "tablas",
+      "refuta": [
+        "Kb5"
+      ],
+      "detalle": "eval 0.00"
+    },
+    "8/8/8/p7/k7/3K4/3P4/8 w - - 0 4|trampa|Kd4": {
+      "ejercicio": 6,
+      "tipo": "trampa",
+      "san": "Kd4",
+      "ok": true,
+      "resultado": "pierde",
+      "refuta": [
+        "Kb4",
+        "Kd3",
+        "Kb3",
+        "Ke4",
+        "a4"
+      ],
+      "detalle": "eval -35.56"
+    },
+    "8/8/8/p7/k7/3K4/3P4/8 w - - 0 4|unica|Kc4": {
+      "ejercicio": 6,
+      "tipo": "unica",
+      "san": "Kc4",
+      "ok": true,
+      "detalle": "Kc4 35.07, Kc3 0.00, Kc2 0.00, Ke4 0.00, Ke2 0.00, Ke3 0.00, Kd4 -35.88"
+    },
+    "8/8/8/p7/P1k5/8/3P4/4K3 w - - 2 2|trampa|d3+": {
+      "ejercicio": 6,
+      "tipo": "trampa",
+      "san": "d3+",
+      "ok": true,
+      "resultado": "tablas",
+      "refuta": [
+        "Kxd3"
+      ],
+      "detalle": "eval -0.04"
+    },
+    "8/8/8/p7/P1k5/8/3P4/4K3 w - - 2 2|trampa|d4": {
+      "ejercicio": 6,
+      "tipo": "trampa",
+      "san": "d4",
+      "ok": true,
+      "resultado": "tablas",
+      "refuta": [
+        "Kxd4"
+      ],
+      "detalle": "eval -0.04"
+    },
+    "8/8/8/p7/P1k5/8/3P4/4K3 w - - 2 2|unica|Ke2": {
+      "ejercicio": 6,
+      "tipo": "unica",
+      "san": "Ke2",
+      "ok": true,
+      "detalle": "Ke2 35.21, Kd1 0.00, Kf1 0.00, Kf2 0.00, d4 0.00, d3+ 0.00"
+    },
+    "8/8/8/p7/P7/3k4/3P4/3K4 w - - 0 1|inicio|": {
+      "ejercicio": 6,
+      "tipo": "inicio",
+      "ok": true,
+      "detalle": "eval 35.10"
+    },
+    "8/8/8/p7/Pk6/8/3PK3/8 w - - 4 3|trampa|d4": {
+      "ejercicio": 6,
+      "tipo": "trampa",
+      "san": "d4",
+      "ok": true,
+      "resultado": "tablas",
+      "refuta": [
+        "Kxa4"
+      ],
+      "detalle": "eval 0.00"
+    },
+    "8/8/8/p7/Pk6/8/3PK3/8 w - - 4 3|unica|Kd3": {
+      "ejercicio": 6,
+      "tipo": "unica",
+      "san": "Kd3",
+      "ok": true,
+      "detalle": "Kd3 35.58, Kd1 0.00, d4 0.00, Ke1 0.00, Ke3 0.00, Kf3 0.00, d3 0.00, Kf2 0.00, Kf1 -0.03"
+    },
+    "3k4/K7/1P6/8/8/6p1/8/8 w - - 0 8|unica|b7": {
+      "ejercicio": 7,
+      "tipo": "unica",
+      "san": "b7",
+      "ok": true,
+      "detalle": "b7 #18, Ka8 0.00, Kb7 -#15, Ka6 -#13, Kb8 -#10"
+    },
+    "8/4k1p1/8/1PK5/8/8/8/8 w - - 1 4|trampa|b6": {
+      "ejercicio": 7,
+      "tipo": "trampa",
+      "san": "b6",
+      "ok": true,
+      "resultado": "tablas",
+      "refuta": [
+        "Kd7",
+        "Kd5",
+        "Kc8",
+        "Ke5",
+        "Kb7"
+      ],
+      "detalle": "eval 0.00"
+    },
+    "8/4k1p1/8/1PK5/8/8/8/8 w - - 1 4|trampa|Kb6": {
+      "ejercicio": 7,
+      "tipo": "trampa",
+      "san": "Kb6",
+      "ok": true,
+      "resultado": "tablas",
+      "refuta": [
+        "g5",
+        "Ka6",
+        "g4",
+        "b6",
+        "g3",
+        "b7",
+        "g2",
+        "b8=Q",
+        "g1=Q"
+      ],
+      "detalle": "eval 0.00"
+    },
+    "8/4k1p1/8/1PK5/8/8/8/8 w - - 1 4|unica|Kc6": {
+      "ejercicio": 7,
+      "tipo": "unica",
+      "san": "Kc6",
+      "ok": true,
+      "detalle": "Kc6 35.15, Kb6 0.02, b6 0.00, Kd5 0.00, Kc4 0.00, Kd4 0.00, Kb4 0.00"
+    },
+    "8/5kp1/8/2K5/1P6/8/8/8 w - - 1 3|unica|b5": {
+      "ejercicio": 7,
+      "tipo": "unica",
+      "san": "b5",
+      "ok": true,
+      "detalle": "b5 35.77, Kc6 0.02, Kd6 0.00, Kd4 0.00, Kc4 0.00, Kb6 0.00, Kd5 0.00, Kb5 0.00"
+    },
+    "8/6p1/6k1/2K5/8/8/1P6/8 w - - 2 2|unica|b4": {
+      "ejercicio": 7,
+      "tipo": "unica",
+      "san": "b4",
+      "ok": true,
+      "detalle": "b4 35.24, Kc6 0.00, Kd5 0.00, Kd6 0.00, Kd4 0.00, b3 0.00, Kc4 0.00, Kb5 0.00, Kb4 0.00, Kb6 0.00"
+    },
+    "8/6p1/7k/8/1K6/8/1P6/8 w - - 0 1|inicio|": {
+      "ejercicio": 7,
+      "tipo": "inicio",
+      "ok": true,
+      "detalle": "eval 35.26"
+    },
+    "8/6p1/7k/8/1K6/8/1P6/8 w - - 0 1|trampa|Ka4": {
+      "ejercicio": 7,
+      "tipo": "trampa",
+      "san": "Ka4",
+      "ok": true,
+      "resultado": "pierde",
+      "refuta": [
+        "g5"
+      ],
+      "detalle": "eval -35.99"
+    },
+    "8/6p1/7k/8/1K6/8/1P6/8 w - - 0 1|trampa|Kc4": {
+      "ejercicio": 7,
+      "tipo": "trampa",
+      "san": "Kc4",
+      "ok": true,
+      "resultado": "tablas",
+      "refuta": [
+        "Kg5",
+        "Kc5",
+        "Kf5",
+        "b4",
+        "g5",
+        "b5",
+        "g4",
+        "b6",
+        "g3",
+        "b7",
+        "g2",
+        "b8=Q",
+        "g1=Q+"
+      ],
+      "detalle": "eval 0.00"
+    },
+    "8/6p1/7k/8/1K6/8/1P6/8 w - - 0 1|unica|Kc5": {
+      "ejercicio": 7,
+      "tipo": "unica",
+      "san": "Kc5",
+      "ok": true,
+      "detalle": "Kc5 35.09, Kc4 0.00, Ka5 0.00, Kb5 0.00, Kc3 0.00, Kb3 0.00, b3 0.00, Ka3 -35.95, Ka4 -#39"
+    },
+    "8/K3k3/8/8/8/6Q1/6p1/8 b - - 2 10|final|": {
+      "ejercicio": 7,
+      "tipo": "final",
+      "ok": true,
+      "detalle": "eval #12"
+    },
+    "3k4/8/1K6/1p6/1P6/8/8/8 w - - 3 12|unica|Kxb5": {
+      "ejercicio": 8,
+      "tipo": "unica",
+      "san": "Kxb5",
+      "ok": true,
+      "detalle": "Kxb5 35.04, Kb7 0.02, Kc6 0.02, Ka7 0.02, Ka5 0.02, Ka6 0.02, Kc5 0.02"
+    },
+    "3k4/8/8/1K6/1P6/8/8/8 b - - 0 12|final|": {
+      "ejercicio": 8,
+      "tipo": "final",
+      "ok": true,
+      "detalle": "eval 34.81"
+    },
+    "8/1p3k2/5P2/1p2K3/1P6/8/8/8 w - - 1 6|trampa|Kd5": {
+      "ejercicio": 8,
+      "tipo": "trampa",
+      "san": "Kd5",
+      "ok": true,
+      "resultado": "tablas",
+      "refuta": [
+        "Kxf6"
+      ],
+      "detalle": "eval 0.03"
+    },
+    "8/1p3k2/5P2/1p2K3/1P6/8/8/8 w - - 1 6|unica|Kf5": {
+      "ejercicio": 8,
+      "tipo": "unica",
+      "san": "Kf5",
+      "ok": true,
+      "detalle": "Kf5 35.39, Kd5 0.02, Kd6 0.02, Kd4 0.00, Ke4 0.00, Kf4 0.00"
+    },
+    "8/1p6/4k1p1/1p6/1P2KPP1/8/8/8 w - - 0 1|inicio|": {
+      "ejercicio": 8,
+      "tipo": "inicio",
+      "ok": true,
+      "detalle": "eval 35.13"
+    },
+    "8/1p6/4k3/1p3p2/1P2K1P1/8/8/8 w - - 0 2|unica|gxf5+": {
+      "ejercicio": 8,
+      "tipo": "unica",
+      "san": "gxf5+",
+      "ok": true,
+      "detalle": "gxf5+ 35.62, Kf3 -36.66, Kf4 -42.50, Ke3 -42.50, Kd4 -42.50, Kd3 -42.50"
+    },
+    "8/1p6/5k2/1p3P2/1P2K3/8/8/8 w - - 1 3|trampa|Kd4": {
+      "ejercicio": 8,
+      "tipo": "trampa",
+      "san": "Kd4",
+      "ok": true,
+      "resultado": "tablas",
+      "refuta": [
+        "Kxf5",
+        "Kc5",
+        "Ke4",
+        "Kxb5",
+        "Kd4"
+      ],
+      "detalle": "eval 0.00"
+    },
+    "8/1p6/5k2/1p3P2/1P2K3/8/8/8 w - - 1 3|unica|Kf4": {
+      "ejercicio": 8,
+      "tipo": "unica",
+      "san": "Kf4",
+      "ok": true,
+      "detalle": "Kf4 35.62, Kd3 0.00, Kd4 0.00, Kd5 0.00, Ke3 0.00, Kf3 -35.98"
+    },
+    "8/1pK5/5k2/1p6/1P6/8/8/8 w - - 0 10|trampa|Kb6": {
+      "ejercicio": 8,
+      "tipo": "trampa",
+      "san": "Kb6",
+      "ok": true,
+      "resultado": "tablas",
+      "refuta": [
+        "Ke6",
+        "Kxb7",
+        "Kd7",
+        "Kb6",
+        "Kc8",
+        "Kxb5",
+        "Kb7"
+      ],
+      "detalle": "eval 0.00"
+    },
+    "8/1pK5/5k2/1p6/1P6/8/8/8 w - - 0 10|unica|Kxb7": {
+      "ejercicio": 8,
+      "tipo": "unica",
+      "san": "Kxb7",
+      "ok": true,
+      "detalle": "Kxb7 35.23, Kb6 0.03, Kb8 0.03, Kd6 0.03, Kc8 0.03, Kd8 -34.90, Kd7 -35.08"
+    },
+    "3K4/3P1k2/8/8/8/8/2r5/4R3 w - - 1 2|inicio|": {
+      "ejercicio": 9,
+      "tipo": "inicio",
+      "ok": true,
+      "detalle": "eval 5.06"
+    },
+    "8/3P2k1/4K3/8/5R2/8/8/4r3 w - - 11 7|trampa|Re4": {
+      "ejercicio": 9,
+      "tipo": "trampa",
+      "san": "Re4",
+      "ok": true,
+      "resultado": "tablas",
+      "refuta": [
+        "Rxe4+"
+      ],
+      "detalle": "eval 0.00"
+    },
+    "8/3P2k1/8/3K4/3R4/8/8/3r4 b - - 14 8|final|": {
+      "ejercicio": 9,
+      "tipo": "final",
+      "ok": true,
+      "detalle": "eval #11"
+    },
+    "8/3PK1k1/8/8/5R2/8/8/4r3 w - - 7 5|trampa|Re4": {
+      "ejercicio": 9,
+      "tipo": "trampa",
+      "san": "Re4",
+      "ok": true,
+      "resultado": "tablas",
+      "refuta": [
+        "Rxe4+"
+      ],
+      "detalle": "eval 0.00"
+    },
+    "3k3r/6R1/4PK2/8/8/8/8/8 w - - 3 7|trampa|e7+": {
+      "ejercicio": 10,
+      "tipo": "trampa",
+      "san": "e7+",
+      "ok": true,
+      "resultado": "tablas",
+      "refuta": [
+        "Ke8"
+      ],
+      "detalle": "eval 0.00"
+    },
+    "3k3r/6R1/4PK2/8/8/8/8/8 w - - 3 7|trampa|Rd7+": {
+      "ejercicio": 10,
+      "tipo": "trampa",
+      "san": "Rd7+",
+      "ok": true,
+      "resultado": "tablas",
+      "refuta": [
+        "Ke8",
+        "Re7+",
+        "Kf8",
+        "Rf7+",
+        "Ke8"
+      ],
+      "detalle": "eval 0.00"
+    },
+    "3k3r/6R1/4PK2/8/8/8/8/8 w - - 3 7|unica|Kf7": {
+      "ejercicio": 10,
+      "tipo": "unica",
+      "san": "Kf7",
+      "ok": true,
+      "detalle": "Kf7 5.02, Rd7+ 0.00, Rf7 0.00, Rg6 0.00, e7+ 0.00, Rg1 0.00, Rb7 0.00, Rg5 0.00, Rg4 0.00, Rg2 0.00, Rg3 0.00, Kg5 0.00, Ke5 0.00, Kg6 0.00, Kf5 0.00, Ra7 0.00, Re7 0.00, Rg8+ -4.88, Rh7 -4.88, Rc7 -4.88"
+    },
+    "4R3/2k5/4K3/4P3/8/8/4r3/8 w - - 0 1|inicio|": {
+      "ejercicio": 10,
+      "tipo": "inicio",
+      "ok": true,
+      "detalle": "eval 4.98"
+    },
+    "4R3/2k5/4K3/4P3/8/8/4r3/8 w - - 0 1|trampa|Kf5": {
+      "ejercicio": 10,
+      "tipo": "trampa",
+      "san": "Kf5",
+      "ok": true,
+      "resultado": "tablas",
+      "refuta": [
+        "Kd7"
+      ],
+      "detalle": "eval 0.00"
+    },
+    "4R3/2k5/4K3/4P3/8/8/4r3/8 w - - 0 1|trampa|Rf8": {
+      "ejercicio": 10,
+      "tipo": "trampa",
+      "san": "Rf8",
+      "ok": true,
+      "resultado": "tablas",
+      "refuta": [
+        "Re1"
+      ],
+      "detalle": "eval 0.00"
+    },
+    "4R3/2k5/4K3/4P3/8/8/4r3/8 w - - 0 1|unica|Kf7": {
+      "ejercicio": 10,
+      "tipo": "unica",
+      "san": "Kf7",
+      "ok": true,
+      "detalle": "Kf7 4.87, Re7+ 0.03, Ra8 0.01, Rf8 0.01, Rh8 0.01, Kf6 0.01, Rg8 0.01, Kf5 0.00, Kd5 0.00, Ke7 0.00, Rc8+ -5.19, Rb8 -5.24, Rd8 -5.24"
+    },
+    "7r/2k5/4P1K1/8/8/8/8/3R4 b - - 10 10|final|": {
+      "ejercicio": 10,
+      "tipo": "final",
+      "ok": true,
+      "detalle": "eval 4.78"
+    }
+  }
+}
