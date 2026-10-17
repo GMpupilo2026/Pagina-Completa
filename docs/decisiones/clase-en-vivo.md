@@ -4322,3 +4322,62 @@ escondido no hable, que `#clase-voz` se oiga, que al recargar no lea los
 carteles y que apagarla la calle. Está probado que falla de verdad: sin la
 excepción de `.cc-msg` salta la jugada del profe, y sin la regla del mismo
 texto salta el eco.
+
+## Dos alumnos juegan en el tablero de la clase
+
+La base ya sabe que dos alumnos juegan en el tablero de la clase, uno con cada
+color: `game_state.rival_id` mueve el color que no tiene quien lleva el control
+(`active_player_id` con `active_player_color` en `w` o `b`). Toda la clase mira
+la partida. La migración es `20261017173336_clase_dos_alumnos_juegan.sql`. **La
+pantalla para ponerle el rival a un alumno («Contra: …») todavía no está en
+`main`**: vive en el PR #693, sin mergear. Hasta que entre, `rival_id` queda
+siempre vacío y lo único que cambia en la clase es lo de abajo.
+
+- **Solo el profe decide quién juega y con qué color.** El trigger
+  `protect_game_state_teacher_columns` le devuelve al alumno
+  `active_player_color` y `rival_id`, como ya hacía con `active_player_id`.
+  Antes `active_player_color` no estaba en la lista: desde la consola, un
+  alumno con el control de las blancas podía pasarse a los dos colores.
+- **Sin control de un solo color no hay rival**: si el profe quita el control,
+  pasa a «ambos colores» o se lo da al mismo alumno, la base borra `rival_id`.
+- **Con un solo color se juega de a una jugada**, y eso lo dice la base, no el
+  botón: se agrega una jugada del color propio o se deshace la propia.
+  Deshacer la jugada del otro, meter dos jugadas de golpe o cambiar la posición
+  sin jugar se rechaza («Ese color no es el tuyo.», «Con un solo color se juega
+  de a una jugada.»). Con dos alumnos escribiendo la misma fila, la pantalla no
+  puede ser la que decide.
+- Por eso `js/sesion.js` ya no le ofrece a quien juega con un solo color lo que
+  la base le rechazaría. Antes, «Deshacer» le aparecía justo cuando le tocaba
+  mover, es decir, cuando deshacer quitaba la jugada **del otro**.
+  `canUndoNow()` le deja deshacer solo la jugada propia, y «Jugar desde aquí»
+  (cortar la partida en una jugada anterior) queda para el profe y para quien
+  tiene los dos colores (`puedeReescribirPartida()`).
+
+### Una migración escrita antes se come lo que se sumó después
+
+El SQL se escribió el 3/10 en `supabase/pendientes/` del PR #693 y quedó sin
+aplicar dos semanas. En ese tiempo, otras dos migraciones sumaron
+`presentacion` (8/10) y `planilla` (12/10) a la lista del trigger. **Aplicado
+tal cual, el `create or replace` habría reemplazado la función entera por la
+del 3/10** y le habría vuelto a abrir al alumno la diapositiva y la planilla
+de la clase. No habría dado ningún error. Se aplicó con las dos sumadas
+y se comprobó impersonando al profe y a dos alumnos, en un bloque que se
+deshace solo, caso por caso: el rival mueve; ninguno mueve el color del otro,
+ni dos jugadas, ni deshace la ajena; el alumno no cambia color, rival,
+presentación ni planilla; el profe sigue libre, y con «ambos colores» el rival
+se borra.
+
+- **`verificar-game-state-protegido.js`** (sin navegador ni red) lee todas las
+  versiones de la función en `supabase/migraciones/` y falla si una le devuelve
+  al alumno menos columnas que la anterior. También mira los dos botones de
+  `js/sesion.js`. Está probado que salta: sin `planilla` en la migración, con
+  «Deshacer» atado otra vez a `canMoveNow()` y con «Jugar desde aquí» sin
+  `puedeReescribirPartida()`.
+- La política `game_state_update` se cambió con `alter policy` y no borrándola
+  para volver a crearla: así no hay un instante sin política. Además, por
+  `execute_sql` toda consulta con la palabra `drop` se queda colgada (ver «La
+  huella no cuadraba» en sitio-e-infraestructura.md).
+- **Si se mergea el PR #693**, su `supabase/pendientes/clase_dos_alumnos_juegan.sql`
+  ya está aplicado: no se vuelve a correr, y la carpeta se borra del PR. Su
+  otro archivo, `practica_limite_de_intentos.sql`, lo reemplazó
+  `20261017180000_practica_intentos_por_alumno.sql` (PR #905).

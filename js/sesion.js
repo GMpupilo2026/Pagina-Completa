@@ -110,9 +110,25 @@
             return activePlayerColor === "both" || activePlayerColor === board.game.turn();
         }
 
+        /* Con un solo color, la base (protect_game_state_teacher_columns) deja
+           jugar de a una jugada: agregar la suya o deshacer la suya. Deshacer la
+           del otro color o «Jugar desde aquí» (cortar la partida) se rechaza, así
+           que esos botones no se le ofrecen. */
+        function puedeReescribirPartida() {
+            if (isTeacher) return true;
+            return activePlayerId === profile.id && activePlayerColor === "both";
+        }
+
+        function canUndoNow() {
+            if (puedeReescribirPartida()) return canMoveNow();
+            if (activePlayerId !== profile.id) return false;
+            // La última jugada es suya cuando ahora le toca al otro color.
+            return board.moves().length > 0 && board.game.turn() !== activePlayerColor;
+        }
+
         function updateUndoButton() {
             const btn = document.getElementById("undo-move-btn");
-            btn.classList.toggle("hidden", !canMoveNow() || board.isViewingHistory());
+            btn.classList.toggle("hidden", !canUndoNow() || board.isViewingHistory());
         }
 
         // ---------- Pestañas del profesor (Mi plan/Táctica/Entrenamientos/Preguntar/Practicar) ----------
@@ -447,7 +463,7 @@
             const controls = document.getElementById("history-controls");
             controls.classList.toggle("hidden", !viewing);
             controls.classList.toggle("flex", viewing);
-            document.getElementById("history-fork-btn").classList.toggle("hidden", !(viewing && canMoveNow()));
+            document.getElementById("history-fork-btn").classList.toggle("hidden", !(viewing && canMoveNow() && puedeReescribirPartida()));
             updateUndoButton();
         }
 
@@ -523,7 +539,7 @@
         }
 
         document.getElementById("history-fork-btn").addEventListener("click", async () => {
-            if (!canMoveNow() || !board.isViewingHistory()) return;
+            if (!canMoveNow() || !puedeReescribirPartida() || !board.isViewingHistory()) return;
             const discardedMain = board.forkToView();
             if (discardedMain && discardedMain.length) {
                 // Archiva la línea en vivo ANTERIOR completa en "Partidas guardadas" para no
@@ -2278,7 +2294,7 @@
         });
 
         document.getElementById("undo-move-btn").addEventListener("click", async () => {
-            if (!canMoveNow() || board.isViewingHistory()) return;
+            if (!canUndoNow() || board.isViewingHistory()) return;
             const undone = board.undo();
             if (!undone) return;
             await pushBoardState();

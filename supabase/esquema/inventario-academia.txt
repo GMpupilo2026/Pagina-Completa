@@ -888,6 +888,7 @@ columna  game_state.pieces_hidden  boolean
 columna  game_state.planilla  jsonb
 columna  game_state.podio  jsonb
 columna  game_state.presentacion  jsonb
+columna  game_state.rival_id  uuid
 columna  game_state.shown_curso  text
 columna  game_state.shown_leccion  integer
 columna  game_state.start_fen  text
@@ -2985,6 +2986,7 @@ indice  game_rooms  game_rooms_white_id_fk
 indice  game_state  game_state_active_player_id_fk
 indice  game_state  game_state_owner_id_uidx
 indice  game_state  game_state_pkey
+indice  game_state  game_state_rival_id_idx
 indice  game_state  game_state_updated_by_fk
 indice  horario_clases  horario_clases_pkey
 indice  horario_clases  horario_clases_profesor
