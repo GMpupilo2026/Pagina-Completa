@@ -1402,6 +1402,49 @@ las voces) y `<slug>.md` (para leerlo y revisarlo). No se publica.
   `huggingface.co` a los dominios permitidos). Con eso, el siguiente paso es
   un MP3 por pista y el EPUB con el audio sincronizado.
 
+### Las voces las graban personas
+
+El dueño prefirió voces de personas a una voz de computadora. Doce voces
+(la narración es el 85 % del texto, unos 130 minutos de lectura; los
+personajes, de unos segundos a 8 minutos), y a cada persona le sirve solo lo
+suyo: `herramientas/audiolibro-grabar.js` lee el guion y arma en
+`herramientas/libro-ninos/guion/grabar/` un Word por voz y la autorización
+para firmar. No se publica (está bajo `herramientas/`).
+
+- **Un Word por voz, de los tres cuentos**, porque cada personaje es la misma
+  persona en toda la colección. Arriba: cómo es el personaje y su velocidad
+  en palabras («bastante más despacio que una conversación normal», no
+  «0,8»), cómo grabar con un celular, cómo nombrar y dónde subir; después,
+  pista por pista, cada línea con su número y en gris lo que se dice justo
+  antes, para entrar a tiempo.
+- **El número de la línea es su lugar en la pista contando todas las voces**,
+  no 1, 2, 3 dentro de cada guion: los números saltan, pero cada toma dice
+  sola dónde va. Quien graba **dice el número en voz alta** antes de cada
+  línea y, si se equivoca, lo repite y vuelve a leer: vale la última. Sin el
+  número, cortar 1211 líneas de la narración con repeticiones en medio sería
+  adivinar.
+- **Un archivo por persona y por pista**, `<libro>_pista<NN>_<voz>.wav`, en
+  la carpeta de Google Drive «Audiolibro Peonita», una subcarpeta por cuento.
+  Las pausas, los 8 segundos para pensar y el volumen se ponen al armar: nadie
+  graba silencios.
+- **La autorización** (`cesion-de-voz.docx`): una voz grabada que se publica
+  es un dato personal (Ley 8968) y una interpretación (Ley 6683). Dice para
+  qué se usa y para qué no —nunca para hacer una voz artificial ni entrenar
+  una—, el crédito y el pago a elegir, que se puede retirar (30 días para
+  dejar de publicarla) y cuánto se guarda cada cosa. Si la voz es de una
+  persona menor, firma quien tiene su representación, y se marca que se le
+  explicó y está de acuerdo. Es un modelo: no lo revisó un abogado.
+- `privacidad.html` dice que en Google Drive se guardan también las
+  grabaciones de quien presta su voz.
+- `verificar-libro-ninos.js` comprueba que estén todos los Word, que cada uno
+  traiga cada línea de su voz **con su número** y el nombre de archivo de cada
+  pista (si el guion cambia y el Word no, la persona graba líneas viejas o
+  corridas), y que la autorización traiga la parte de la persona menor. Se
+  rompió a propósito (el Word del coro en lugar del de Tizón) y saltó.
+- Al cambiar un cuento: `libro-ninos-pdf.js --solo-accesible` y después
+  `audiolibro-grabar.js`. Si alguien ya grabó, ver qué líneas cambiaron
+  antes de volver a mandarle el guion.
+
 ### Los diplomas se coleccionan
 
 Cada cuento cierra con su diploma, y los diplomas forman una colección:
