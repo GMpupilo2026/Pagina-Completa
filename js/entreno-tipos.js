@@ -1385,6 +1385,13 @@
       estado(texto + (estrellas ? " " + textoEstrellas(estrellas) : ""));
       if (estrellas) { anotarMejor(item.id, jugadas); terminar(item, estrellas); }
     }
+    // Triple repetición y 50 jugadas, automáticas como en toda partida (las
+    // decide chess.js, que tiene el historial entero).
+    function tablasPorReglamento() {
+      if (juego.in_threefold_repetition()) { fin("✗ La misma posición se repitió tres veces: tablas por triple repetición. Prueba otra vez.", 0); return true; }
+      if (juego.in_draw()) { fin("✗ 50 jugadas sin mover un peón ni capturar: tablas por la regla de las 50 jugadas. Prueba otra vez.", 0); return true; }
+      return false;
+    }
     function jugar(mov) {
       if (hecho || ocupado) return;
       const m = juego.move(mov);
@@ -1394,6 +1401,7 @@
       tab.ultima = [m.from, m.to];
       if (juego.in_checkmate()) return fin("✓ ¡Jaque mate en " + jugadas + "! Contra la mejor defensa hacen falta " + item.minimo + ".", R.estrellasFinal(jugadas, item.minimo));
       if (juego.in_stalemate()) return fin("✗ Ahogado: el rey negro no tiene jugadas y no está en jaque. Son tablas. Prueba otra vez.", 0);
+      if (tablasPorReglamento()) return;
       ocupado = true;
       redibujar([m.from, m.to]);
       setTimeout(() => {
@@ -1402,6 +1410,7 @@
         const r = juego.move(d);
         estado("El rey negro juega " + R.sanEs(r.san) + ".");
         if (r.captured) return fin("✗ El rey se comió una pieza que estaba sola: ya no hay mate posible. Prueba otra vez.", 0);
+        if (tablasPorReglamento()) return;
         if (jugadas >= 50) return fin("✗ Pasaron 50 jugadas sin mate: son tablas. Prueba otra vez.", 0);
         redibujar([r.from, r.to]);
       }, 350);
