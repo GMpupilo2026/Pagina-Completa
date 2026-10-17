@@ -219,6 +219,45 @@ async function main() {
     await ctx.close();
   }
 
+  console.log("\n=== Un tablero en una lista con barra propia (Entrenamientos de la clase) ===");
+  {
+    // La capa se coloca respecto de un bloque de AFUERA de la lista, así que
+    // la lista ni la recortaba ni la movía: al desplazarla, las etiquetas
+    // quedaban sueltas encima del panel, sobre «Así les fue» y los nombres.
+    const { page, ctx, errores } = await abrir(browser, "entreno/tipos.html");
+    await page.waitForFunction(() => window.Coordenadas);
+    await page.evaluate(() => {
+      const panel = document.createElement("div");
+      panel.style.cssText = "position:relative;width:340px;padding:24px;background:#fff";
+      panel.innerHTML = '<p id="arriba" style="height:120px;margin:0">Así les fue</p>' +
+        '<div id="lista" style="max-height:300px;overflow-y:auto;padding-left:24px">' +
+        '<div style="height:500px"></div><div id="tab-lista" style="display:grid;grid-template-columns:repeat(8,30px);grid-template-rows:repeat(8,30px)"></div><div style="height:500px"></div></div>';
+      document.body.prepend(panel);
+      const t = document.getElementById("tab-lista");
+      for (let f = 8; f >= 1; f--) for (const c of "abcdefgh") {
+        const q = document.createElement("div");
+        q.dataset.square = c + f;
+        q.style.background = ("abcdefgh".indexOf(c) + f) % 2 ? "#eee" : "#456";
+        t.appendChild(q);
+      }
+      Coordenadas.aplicar(t);
+      window.scrollTo(0, 0);
+    });
+    const visibles = () => page.evaluate(() => [...document.getElementById("tab-lista").__coordenadas.children]
+      .filter((s) => s.checkVisibility({ visibilityProperty: true })).map((s) => s.textContent));
+    await page.waitForTimeout(250);
+    let v = await visibles();
+    ok("con el tablero fuera de lo que muestra la lista, no se ve ninguna etiqueta", !v.length, "se ven: " + v.join(" "));
+    await page.evaluate(() => { document.getElementById("lista").scrollTop = 470; });
+    revisar("Bajando la lista hasta el tablero", await medir(page, "#tab-lista"), { abajo: "a b c d e f g h", izq: "8 7 6 5 4 3 2 1" });
+    await page.evaluate(() => { document.getElementById("lista").scrollTop = 1000; });
+    await page.waitForTimeout(250);
+    v = await visibles();
+    ok("al pasar de largo el tablero, las etiquetas se van con él", !v.length, "se ven: " + v.join(" "));
+    ok("sin errores en consola", !errores.length, errores.join(" | "));
+    await ctx.close();
+  }
+
   console.log("\n=== Ajedrez para 4: sin esquinas y girado según el asiento ===");
   for (const [asiento, esperado] of [
     ["red", { abajo: "a b c d e f g h i j k l m n", izq: "14 13 12 11 10 9 8 7 6 5 4 3 2 1" }],
