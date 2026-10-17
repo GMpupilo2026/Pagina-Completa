@@ -621,6 +621,19 @@ con todas (manda nulo), un aleatorio de tres modalidades que cambia a otras
 dos a mitad de torneo, y la inscrita que ve la lista pero no la tarjeta. Con
 `torneo.js` y `torneos.js` de antes saltan las pruebas de las dos páginas.
 
+**En eliminación directa ya funcionaba, y ahora se prueba.** Se pidió que el
+aleatorio sirva también en eliminación directa. No hubo que cambiar nada: la
+modalidad se sortea en `generateRound()` antes de mirar el formato, y la llave,
+los byes y las tablas («Avanza …») no dependen de la modalidad. Pero nada lo
+comprobaba, y un `if` por formato lo habría apagado sin ningún error, así que
+`verificar-torneo-modos.js` (apartado 8) juega llaves de 8, 6 y 5 inscritos
+(con byes, y una con tablas en la primera ronda) hasta el campeón. Con pocas
+rondas (log₂ de los inscritos) salen pocas modalidades: con 8 inscritos son 3
+rondas y 3 de las once, distintas entre sí. El doble del verificador hace
+cumplir además los CHECK de modalidad de `game_rooms` y `tournament_rounds`:
+sin eso, una ronda que la página mandaba como «aleatorio» la tragaba, y la
+base de verdad la rechaza.
+
 ### El verificador de voseo no miraba la mitad del sitio
 
 Se descubrió acá, de rebote: `torneo.html` decía «Vuelve a Torneos y **entrá**
