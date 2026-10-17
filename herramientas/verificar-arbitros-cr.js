@@ -30,7 +30,8 @@
    - «Para pedir el título» (la ruta de B.06.1 punto por punto) y su Excel,
      «Quiénes pueden pedir el título», el historial en FIDE (solicitudes y
      seminarios), «La actividad en FIDE» y «Por identificar»;
-   - las tablas se piden de mil en mil (range).
+   - las tablas se piden de mil en mil (range), y la lista de árbitros cabe
+     a lo ancho en 1280 px.
 
    Ver «Árbitros de Costa Rica en FIDE» en docs/decisiones/juegos-y-torneos.md.
 
@@ -233,6 +234,12 @@ const porNombre = (m) => Object.fromEntries(m.map((f) => [f[0], f]));
     console.log("\n=== Con licencia: la lista de árbitros ===");
     ({ ctx, p } = await abrir(browser, "arbitros-cr.html", true));
     await p.waitForFunction(() => document.getElementById("app").checkVisibility());
+    // Con sus 18 columnas, la lista cabe en una portátil (1280 px, el ancho
+    // que abre Playwright) sin barra de lado.
+    igual("la lista de árbitros cabe a lo ancho en 1280 px", await p.evaluate(() => {
+        const t = document.getElementById("tabla-arbitros");
+        return window.innerWidth === 1280 && t.scrollWidth <= t.parentElement.clientWidth;
+    }), true);
     igual("pide cada tabla de mil en mil", await p.evaluate(() => window.__pedidos.filter((x) => x.startsWith("arbitros_cr")).sort()),
         ["arbitros_cr 0-999", "arbitros_cr_cargos 0-999", "arbitros_cr_cr 0-999", "arbitros_cr_cr_cargos 0-999", "arbitros_cr_fide 0-999", "arbitros_cr_sin_id 0-999", "arbitros_cr_torneos 0-999"]);
     let m = porNombre(await filas(p, "#tabla-arbitros"));
