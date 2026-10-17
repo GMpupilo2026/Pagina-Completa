@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261017205359
+# al-dia-con: 20261017224637
 tabla  Ejercicios Lichess  rls=true
 tabla  _foto_rls_tmp  rls=false
 tabla  _pedidos_elo  rls=false
@@ -17,6 +17,7 @@ tabla  arbitros_cr  rls=true
 tabla  arbitros_cr_cargos  rls=true
 tabla  arbitros_cr_cr  rls=true
 tabla  arbitros_cr_cr_cargos  rls=true
+tabla  arbitros_cr_cr_elo  rls=true
 tabla  arbitros_cr_fide  rls=true
 tabla  arbitros_cr_normas_revision  rls=true
 tabla  arbitros_cr_sin_id  rls=true
@@ -298,6 +299,10 @@ columna  arbitros_cr_cr.rondas  smallint
 columna  arbitros_cr_cr_cargos.clave  integer
 columna  arbitros_cr_cr_cargos.fide_id  integer
 columna  arbitros_cr_cr_cargos.rol  text
+columna  arbitros_cr_cr_elo.calculo  text
+columna  arbitros_cr_cr_elo.clave  integer
+columna  arbitros_cr_cr_elo.leido  date
+columna  arbitros_cr_cr_elo.ritmo  text
 columna  arbitros_cr_fide.af_consejo  text
 columna  arbitros_cr_fide.af_fecha  date
 columna  arbitros_cr_fide.af_perfil  date
@@ -2269,6 +2274,7 @@ politica  arbitros_cr  arbitros_cr_con_herramienta  SELECT
 politica  arbitros_cr_cargos  arbitros_cr_cargos_con_herramienta  SELECT
 politica  arbitros_cr_cr  arbitros_cr_cr_con_herramienta  SELECT
 politica  arbitros_cr_cr_cargos  arbitros_cr_cr_cargos_con_herramienta  SELECT
+politica  arbitros_cr_cr_elo  arbitros_cr_cr_elo_con_herramienta  SELECT
 politica  arbitros_cr_fide  arbitros_cr_fide_con_herramienta  SELECT
 politica  arbitros_cr_normas_revision  arbitros_cr_normas_revision_borrar  DELETE
 politica  arbitros_cr_normas_revision  arbitros_cr_normas_revision_cambiar  UPDATE
@@ -2845,6 +2851,7 @@ indice  arbitros_cr_cr  arbitros_cr_cr_fide_torneo
 indice  arbitros_cr_cr  arbitros_cr_cr_pkey
 indice  arbitros_cr_cr_cargos  arbitros_cr_cr_cargos_fide_id
 indice  arbitros_cr_cr_cargos  arbitros_cr_cr_cargos_pkey
+indice  arbitros_cr_cr_elo  arbitros_cr_cr_elo_pkey
 indice  arbitros_cr_fide  arbitros_cr_fide_pkey
 indice  arbitros_cr_normas_revision  arbitros_cr_normas_revision_creada_por_idx
 indice  arbitros_cr_normas_revision  arbitros_cr_normas_revision_pkey
@@ -3422,6 +3429,7 @@ grant  arbitros_cr_cr  authenticated  TRIGGER
 grant  arbitros_cr_cr_cargos  authenticated  REFERENCES
 grant  arbitros_cr_cr_cargos  authenticated  SELECT
 grant  arbitros_cr_cr_cargos  authenticated  TRIGGER
+grant  arbitros_cr_cr_elo  authenticated  SELECT
 grant  arbitros_cr_fide  authenticated  REFERENCES
 grant  arbitros_cr_fide  authenticated  SELECT
 grant  arbitros_cr_fide  authenticated  TRIGGER
