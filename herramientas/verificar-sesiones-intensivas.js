@@ -77,6 +77,10 @@ function delBanco(banco) {
   if (tipo === "mapa") return deDiagramas("cursos/protegido/data/el-mapa-de-los-finales.json", id);
   if (tipo === "gp") return deDiagramas("cursos/protegido/data/ganar-con-poco.json", id);
   if (tipo === "ucd") return deUnaClase(id);
+  if (tipo === "lt") {
+    const p = (leer("entreno/data/temas.json").puzzles || {})[id];
+    return p && { fen: p.fen, jugadas: p.solution.slice() };
+  }
   return null;
 }
 

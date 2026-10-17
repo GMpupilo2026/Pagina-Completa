@@ -13,6 +13,8 @@
  *   gp:GP-6       «Ganar con poco» (ejercicios de Lichess, comprobados)
  *   ucd:ej212-r0  «Una clase al día» (partidas leídas jugada a jugada,
  *                 ejercicios contrastados con Stockfish 16)
+ *   lt:2mxHX      los ejercicios de Lichess de Entrenamiento
+ *                 (entreno/data/temas.json, base abierta CC0)
  *
  * Cada ejercicio:
  *   banco      de dónde sale, con su prefijo
@@ -83,6 +85,11 @@ function fuente(banco) {
     const lichess = /Ejercicio (\S+) de la base abierta de Lichess/.exec(d.comentario || "");
     return { fen: d.fen, jugadas: d.jugadas.map((j) => j.san),
              origen: lichess ? "ejercicio " + lichess[1] + " de la base abierta de Lichess" : null };
+  }
+  if (tipo === "lt") {
+    const p = (datos("entreno/data/temas.json").puzzles || {})[id];
+    if (!p) throw new Error("No está en los ejercicios de Lichess: " + banco);
+    return { fen: p.fen, jugadas: p.solution.slice(), origen: "ejercicio " + id + " de la base abierta de Lichess" };
   }
   if (tipo === "ucd") {
     const e = deUnaClase(id);

@@ -523,6 +523,12 @@ más, de quien administra como los de arranque, así que se da desde
   «Una clase al día» y un ejercicio de «Ganar con poco», de lo técnico (qué
   cambiar, el caballo sin casillas, el alfil malo, las dos debilidades) al
   medio juego (alfiles de distinto color, sacrificios posicionales).
+- «Táctica · Sesión intensiva: calcular hasta el final»
+  (`herramientas/sesion-tactica-intensiva.js`): diez combinaciones de la base
+  abierta de Lichess de Entrenamiento (`entreno/data/temas.json`), varias de
+  partidas entre maestros, que parten de material igualado y en las que CADA
+  jugada propia de la línea es la única que gana: no alcanza con ver la
+  primera.
 
 Lo que comparten (leer el banco, la chuleta, el SQL) está en
 `herramientas/lib/sesion-intensiva.js`; cada sesión es un archivo con sus diez
@@ -540,7 +546,11 @@ corredor).
   que tienen UNA jugada que conserva la ventaja con todas las demás debajo, y
   se descartaron las que en realidad son una combinación (un ataque doble de
   caballo, un sacrificio sobre h2): en una sesión de estrategia, una táctica
-  enseña otra cosa.
+  enseña otra cosa. En táctica, de 467 candidatas (sin mates,
+  tres jugadas propias o más, material parejo, rating 1500-2300) quedaron 364
+  con una sola primera jugada; se eligieron diez de temas distintos en las que
+  también las jugadas siguientes son únicas (desviación, jugada tranquila,
+  jugada intermedia, ataque descubierto, ensartada…).
 - **Cada ejercicio son dos renglones**: la posición, con la chuleta (tiempo,
   línea, únicas y trampas, en los 500 de la base; lo que se recorta son las
   trampas, nunca la línea), y la nota «El cálculo», con el porqué de cada
@@ -561,6 +571,9 @@ corredor).
   - **Finales: gana +3, no gana +1.** Sin tablas de finales, un final de torre
     ganado da ~+5 y uno de peones ~+35, y las tablas 0,00; el hueco entre +1 y
     +3 no se da por bueno ni por malo.
+  - **Táctica: igual que finales (+3 y +1).** La trampa que «no gana nada»
+    es la de «tablas» del motor (entre −1 y +1), con otra palabra en la
+    chuleta, porque en una combinación lo que se pierde es la ganancia.
   - **Estrategia: gana +0,7, no gana +0,6.** Son ventajas de posición, no
     finales ganados: los números son chicos a propósito, y por eso la única
     exige que TODAS las demás jugadas queden debajo. Alekhine–Yates lleva los
