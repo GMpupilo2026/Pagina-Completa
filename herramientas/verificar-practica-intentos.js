@@ -153,8 +153,8 @@ async function pruebaRevisar(browser) {
     practice_sessions: [ronda({ max_intentos: 3, ended_at: new Date().toISOString() })],
     practice_games: [partida({ status: "resigned", attempts: 3, moves: ["Kh1"], profiles: { full_name: "Ana Rojas" } })],
     practice_intentos: [
-      { student_id: "u-ana", session_id: "p1", intento: 2, status: "checkmate_win", moves: ["Ra8#"] },
-      { student_id: "u-ana", session_id: "p1", intento: 1, status: "draw", moves: ["Kf1", "Kf8"] },
+      { game_id: "pg1", student_id: "u-ana", session_id: "p1", intento: 2, status: "checkmate_win", moves: ["Ra8#"] },
+      { game_id: "pg1", student_id: "u-ana", session_id: "p1", intento: 1, status: "draw", moves: ["Kf1", "Kf8"] },
     ],
   });
   await r.page.evaluate(() => activateTeacherTab("practicar"));
@@ -171,6 +171,10 @@ async function pruebaRevisar(browser) {
     "Intento 3 · 🏳️ Se rindió · 1 jugada",
   ]);
   igual("con el nombre del alumno", await r.page.textContent("#practice-revisar-lista p"), "Ana Rojas");
+  igual("y todas las jugadas de cada intento, numeradas y en español", await r.page.evaluate(() =>
+    [...document.querySelectorAll("#practice-revisar-lista li p")].map((e) => e.textContent)), [
+    "1. Rf1 Rf8", "1. Ta8#", "1. Rh1",
+  ]);
   await r.page.getByRole("button", { name: "Mostrar a la clase el intento 1 de Ana Rojas" }).click();
   await r.page.waitForFunction(() => window.__updates.some((u) => u.tabla === "game_state" && u.campos.vista), null, { timeout: 5000 });
   const vista = await r.page.evaluate(() => window.__updates.filter((u) => u.tabla === "game_state" && u.campos.vista).pop().campos.vista);
@@ -198,6 +202,65 @@ async function pruebaRevisar(browser) {
   await a.ctx.close();
 }
 
+async function pruebaMirada(browser) {
+  console.log("\n=== Las jugadas de cada intento, en la ventana de la partida de un alumno ===");
+  const r = await abrir(browser, "u-profe", CLASE, {
+    game_state: [{ id: 7, owner_id: "u-profe", fen: FINAL, moves: [], start_fen: FINAL, arrows: [], circles: [],
+      active_player_color: "both", vista: null, comentarios: {} }],
+    practice_sessions: [ronda({ max_intentos: 3 })],
+    practice_games: [partida({ status: "playing", attempts: 2, moves: ["Kh1"], profiles: { full_name: "Ana Rojas" } })],
+    practice_intentos: [
+      { game_id: "pg1", student_id: "u-ana", session_id: "p1", intento: 1, status: "resigned", moves: ["Kf1", "Kf8"] },
+      // De otro alumno: no se mezcla con los de Ana.
+      { game_id: "pg2", student_id: "u-otro", session_id: "p1", intento: 1, status: "draw", moves: ["Ra8#"] },
+    ],
+  }, { sinTopeDePresencia: true });
+  await r.page.evaluate(() => activateTeacherTab("practicar"));
+  await r.page.waitForSelector("#practice-boards-grid .practice-mini-mirar", { timeout: 30000 });
+  await r.page.click("#practice-boards-grid .practice-mini-mirar");
+  await r.page.waitForFunction(() => !document.getElementById("practica-mirar").classList.contains("hidden"), null, { timeout: 5000 });
+  igual("la lista arranca cerrada", [await r.page.getAttribute("#practica-mirar-intentos-btn", "aria-expanded"),
+    await seVe(r.page, "#practica-mirar-intentos")], ["false", false]);
+  await r.page.click("#practica-mirar-intentos-btn");
+  await r.page.waitForFunction(() => document.querySelectorAll("#practica-mirar-intentos li").length === 2, null, { timeout: 5000 });
+  igual("dice que está abierta", [await r.page.getAttribute("#practica-mirar-intentos-btn", "aria-expanded"),
+    await r.page.textContent("#practica-mirar-intentos-texto")], ["true", "Ocultar las jugadas de cada intento"]);
+  const intentos = () => r.page.evaluate(() => [...document.querySelectorAll("#practica-mirar-intentos li")].map((li) =>
+    li.querySelector("span").textContent + " | " + li.querySelector("p").textContent));
+  igual("solo los suyos, en orden, con todas sus jugadas", await intentos(), [
+    "Intento 1 · 🏳️ Se rindió · 2 jugadas | 1. Rf1 Rf8",
+    "Intento 2 · Jugando… · 1 jugada (en curso) | 1. Rh1",
+  ]);
+  // El intento en curso sigue creciendo mientras la lista está abierta.
+  await r.page.evaluate((f) => window.__cambioEnBase("practice_games", f),
+    partida({ status: "playing", attempts: 2, moves: ["Kh1", "h6", "Kg1"], profiles: { full_name: "Ana Rojas" } }));
+  await r.page.waitForFunction(() => /3 jugadas/.test(document.querySelectorAll("#practica-mirar-intentos li span")[1].textContent), null, { timeout: 5000 });
+  igual("el intento en curso se pone al día", (await intentos())[1].split(" | ")[1], "1. Rh1 h6 2. Rg1");
+  await r.page.getByRole("button", { name: "Mostrar a la clase el intento 1 de Ana Rojas" }).click();
+  await r.page.waitForFunction(() => window.__updates.some((u) => u.tabla === "game_state" && u.campos.vista), null, { timeout: 5000 });
+  const vista = await r.page.evaluate(() => window.__updates.filter((u) => u.tabla === "game_state" && u.campos.vista).pop().campos.vista);
+  igual("«📺 Mostrar» pasa ese intento a la clase, como variante", [vista.path, vista.root, vista.respuesta], [["Kf1", "Kf8"], 0, { nombre: null }]);
+  igual("y cierra la ventana para ver el tablero de la clase", await seVe(r.page, "#practica-mirar"), false);
+  igual("la partida de la clase no se toca", await r.page.evaluate(() =>
+    window.__updates.filter((u) => u.tabla === "game_state" && "moves" in u.campos).length), 0);
+  // Al volver a abrirla, la lista arranca cerrada otra vez; con el nombre marcado, va el nombre.
+  await r.page.click("#practice-boards-grid .practice-mini-mirar");
+  await r.page.waitForFunction(() => !document.getElementById("practica-mirar").classList.contains("hidden"), null, { timeout: 5000 });
+  igual("al volver a abrirla, la lista está cerrada", await r.page.getAttribute("#practica-mirar-intentos-btn", "aria-expanded"), "false");
+  await r.page.click("#practica-mirar-intentos-btn");
+  await r.page.waitForFunction(() => document.querySelectorAll("#practica-mirar-intentos li").length === 2, null, { timeout: 5000 });
+  await r.page.check("#practica-mirar-con-nombre");
+  await r.page.getByRole("button", { name: "Mostrar a la clase el intento 2 de Ana Rojas" }).click();
+  await r.page.waitForFunction(() => {
+    const v = window.__updates.filter((u) => u.tabla === "game_state" && u.campos.vista).pop().campos.vista;
+    return v.path.join() === "Kh1,h6,Kg1";
+  }, null, { timeout: 5000 });
+  igual("el intento en curso va con sus jugadas de ahora y, marcado, con su nombre", await r.page.evaluate(() =>
+    window.__updates.filter((u) => u.tabla === "game_state" && u.campos.vista).pop().campos.vista.respuesta), { nombre: "Ana Rojas" });
+  igual("sin errores en consola", r.errores, []);
+  await r.ctx.close();
+}
+
 // Lo que contesta el cuadro de comandos de la práctica al escribir algo.
 async function escribir(page, texto) {
   // El cuadro se muestra solo en Modo Adaptado; lo que contesta es lo mismo.
@@ -219,6 +282,7 @@ async function escribir(page, texto) {
     await pruebaProfesor(browser);
     await pruebaAlumna(browser);
     await pruebaRevisar(browser);
+    await pruebaMirada(browser);
   } catch (e) {
     console.log("  ✗ la prueba se cayó: " + (e && e.stack || e));
     fallos += 1;

@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261017200000
+# al-dia-con: 20261017205359
 tabla  Ejercicios Lichess  rls=true
 tabla  _foto_rls_tmp  rls=false
 tabla  _pedidos_elo  rls=false
@@ -71,6 +71,7 @@ tabla  encuesta_curso_respuestas  rls=true
 tabla  encuestas_curso  rls=true
 tabla  encuestas_profesor  rls=true
 tabla  enlaces_diagnostico  rls=true
+tabla  entreno_pedidos  rls=true
 tabla  equipo_alumnos  rls=true
 tabla  equipo_entrenadores  rls=true
 tabla  equipos  rls=true
@@ -87,6 +88,7 @@ tabla  fourplayer_games  rls=true
 tabla  frases_regalo  rls=true
 tabla  game_rooms  rls=true
 tabla  game_state  rls=true
+tabla  habilidad_resultados  rls=true
 tabla  horario_clases  rls=true
 tabla  ia_uso  rls=true
 tabla  informes_profesor  rls=true
@@ -734,6 +736,13 @@ columna  encuestas_profesor.updated_at  timestamp with time zone
 columna  enlaces_diagnostico.codigo  text
 columna  enlaces_diagnostico.created_at  timestamp with time zone
 columna  enlaces_diagnostico.supervisor_id  uuid
+columna  entreno_pedidos.class_session_id  uuid
+columna  entreno_pedidos.created_at  timestamp with time zone
+columna  entreno_pedidos.ejercicios  jsonb
+columna  entreno_pedidos.id  uuid
+columna  entreno_pedidos.profe_id  uuid
+columna  entreno_pedidos.slug  text
+columna  entreno_pedidos.titulo  text
 columna  equipo_alumnos.alumno_id  uuid
 columna  equipo_alumnos.created_at  timestamp with time zone
 columna  equipo_alumnos.equipo_id  uuid
@@ -896,6 +905,15 @@ columna  game_state.tanda_calentamiento  jsonb
 columna  game_state.updated_at  timestamp with time zone
 columna  game_state.updated_by  uuid
 columna  game_state.vista  jsonb
+columna  habilidad_resultados.class_session_id  uuid
+columna  habilidad_resultados.created_at  timestamp with time zone
+columna  habilidad_resultados.dificultad  integer
+columna  habilidad_resultados.ejercicio  text
+columna  habilidad_resultados.estrellas  smallint
+columna  habilidad_resultados.id  bigint
+columna  habilidad_resultados.pedido_id  uuid
+columna  habilidad_resultados.profe_id  uuid
+columna  habilidad_resultados.student_id  uuid
 columna  horario_clases.created_at  timestamp with time zone
 columna  horario_clases.desde  date
 columna  horario_clases.dia_semana  integer
@@ -1652,6 +1670,7 @@ columna  tournament_rounds.id  uuid
 columna  tournament_rounds.round_number  integer
 columna  tournament_rounds.status  text
 columna  tournament_rounds.tournament_id  uuid
+columna  tournament_rounds.variant  text
 columna  tournaments.created_at  timestamp with time zone
 columna  tournaments.created_by  uuid
 columna  tournaments.current_round  integer
@@ -1660,6 +1679,7 @@ columna  tournaments.format  text
 columna  tournaments.id  uuid
 columna  tournaments.increment_seconds  integer
 columna  tournaments.initial_seconds  integer
+columna  tournaments.modos_aleatorio  text[]
 columna  tournaments.name  text
 columna  tournaments.started_at  timestamp with time zone
 columna  tournaments.status  text
@@ -1976,9 +1996,11 @@ funcion  interno.cuestionario_del_renglon(p_item uuid)  definer  anon=false  aut
 funcion  interno.emitir_cobros(p_hasta date, p_suscripcion uuid)  definer  anon=false  auth=false
 funcion  interno.emitir_recibo(p_alumno uuid, p_fecha date, p_metodo text, p_referencia text, p_nota text, p_emitido_por uuid)  definer  anon=false  auth=false
 funcion  interno.enlaces_de_sala_validos(p jsonb)  invoker  anon=true  auth=true
+funcion  interno.entreno_pedido_de_la_base()  definer  anon=false  auth=false
 funcion  interno.estudio_al_guardar()  definer  anon=false  auth=false
 funcion  interno.frenar_envio_publico(p_tipo text, p_ambito text, p_correo text, p_ip text)  invoker  anon=false  auth=false
 funcion  interno.gente_de_mis_academias()  definer  anon=false  auth=true
+funcion  interno.habilidad_resultado_de_la_base()  definer  anon=false  auth=false
 funcion  interno.jsonb_o_nulo(p text)  invoker  anon=false  auth=true
 funcion  interno.lecciones_hechas(p_alumno uuid, p_curso text)  definer  anon=false  auth=false
 funcion  interno.material_compartido_conmigo(p_producto text)  definer  anon=false  auth=true
@@ -1987,6 +2009,7 @@ funcion  interno.me_sacaron_de_la_pregunta(p_pregunta uuid)  definer  anon=false
 funcion  interno.mensajes_casa_al_crear()  definer  anon=false  auth=false
 funcion  interno.mis_relevos()  definer  anon=false  auth=true
 funcion  interno.mis_retos_ejercicios()  definer  anon=false  auth=true
+funcion  interno.modalidad_de_la_ronda()  invoker  anon=false  auth=false
 funcion  interno.monto_rango(p_base date, p_meses integer, p_precio numeric, p_desde date, p_hasta date)  invoker  anon=false  auth=false
 funcion  interno.nombre_libre_de_subgrupo(p_profesor uuid, p_base text, p_excepto uuid)  definer  anon=false  auth=false
 funcion  interno.otorgar_puntos(p_alumno uuid, p_cantidad integer, p_origen text, p_motivo text, p_referencia text, p_creado_por uuid)  definer  anon=false  auth=false
@@ -2013,6 +2036,7 @@ funcion  interno.repertorio_coherente()  definer  anon=false  auth=false
 funcion  interno.retos_ejercicios_abiertos_para_mi()  definer  anon=false  auth=true
 funcion  interno.retos_ejercicios_cuantas()  definer  anon=false  auth=true
 funcion  interno.retos_ejercicios_tope()  definer  anon=false  auth=false
+funcion  interno.rondas_de_mis_alumnos()  definer  anon=false  auth=true
 funcion  interno.salas_torneo_sello()  invoker  anon=false  auth=false
 funcion  interno.sesiones_de_supervisados()  definer  anon=false  auth=true
 funcion  interno.subgrupo_del_equipo_al_dia(p_equipo uuid, p_profesor uuid)  definer  anon=false  auth=false
@@ -2125,6 +2149,8 @@ funcion  puedo_armar_partida_con(p_jugadores uuid[])  definer  anon=false  auth=
 funcion  puedo_cambiar_fide_id(p_persona uuid)  invoker  anon=false  auth=true
 funcion  puedo_corregir_cobros(p_alumno uuid)  invoker  anon=false  auth=true
 funcion  puedo_preparar_rivales()  definer  anon=false  auth=true
+funcion  puntos_de_habilidades(p_clase uuid)  invoker  anon=false  auth=true
+funcion  puntos_de_habilidades_del_mes(p_profesor uuid)  invoker  anon=false  auth=true
 funcion  puntos_de_la_clase(p_clase uuid)  invoker  anon=false  auth=true
 funcion  puntos_de_tandas(p_clase uuid)  invoker  anon=false  auth=true
 funcion  puntos_de_tandas_del_mes(p_profesor uuid)  invoker  anon=false  auth=true
@@ -2361,6 +2387,9 @@ politica  encargados  encargados_update  UPDATE
 politica  encuesta_curso_respuestas  encuesta_curso_respuestas_ver  SELECT
 politica  encuestas_curso  encuestas_curso_admin  ALL
 politica  encuestas_profesor  encuestas_profesor_ver  SELECT
+politica  entreno_pedidos  entreno_pedidos_inserta_profe  INSERT
+politica  entreno_pedidos  entreno_pedidos_lee  SELECT
+politica  entreno_pedidos  verificacion_en_dos_pasos  ALL  restrictiva
 politica  equipo_alumnos  equipo_alumnos_select  SELECT
 politica  equipo_entrenadores  equipo_entrenadores_select  SELECT
 politica  equipos  equipos_select  SELECT
@@ -2409,6 +2438,10 @@ politica  game_state  game_state_insert  INSERT
 politica  game_state  game_state_select  SELECT
 politica  game_state  game_state_update  UPDATE
 politica  game_state  verificacion_en_dos_pasos  ALL  restrictiva
+politica  habilidad_resultados  habilidad_resultados_exige_acceso_ins  INSERT  restrictiva
+politica  habilidad_resultados  habilidad_resultados_inserta_alumno  INSERT
+politica  habilidad_resultados  habilidad_resultados_lee  SELECT
+politica  habilidad_resultados  verificacion_en_dos_pasos  ALL  restrictiva
 politica  horario_clases  horario_clases_delete  DELETE
 politica  horario_clases  horario_clases_insert  INSERT
 politica  horario_clases  horario_clases_select  SELECT
@@ -2486,6 +2519,7 @@ politica  practice_games  practice_games_update  UPDATE
 politica  practice_games  verificacion_en_dos_pasos  ALL  restrictiva
 politica  practice_intentos  practice_intentos_exige_acceso_sel  SELECT  restrictiva
 politica  practice_intentos  practice_intentos_select  SELECT
+politica  practice_sessions  practice_sessions_de_mis_alumnos  SELECT
 politica  practice_sessions  practice_sessions_exige_acceso_sel  SELECT  restrictiva
 politica  practice_sessions  practice_sessions_insert  INSERT
 politica  practice_sessions  practice_sessions_select  SELECT
@@ -2706,6 +2740,7 @@ trigger  cuentas_temporales  auditar
 trigger  desafios  desafios_avisa_push
 trigger  diagnosticos_publicos  diagnosticos_publicos_avisa
 trigger  diagnosticos_publicos  diagnosticos_publicos_supervisor
+trigger  entreno_pedidos  entreno_pedido_de_la_base
 trigger  equipo_alumnos  auditar
 trigger  equipo_alumnos  equipo_alumnos_subgrupo
 trigger  equipo_entrenadores  auditar
@@ -2725,6 +2760,7 @@ trigger  game_rooms  game_rooms_exige_acceso
 trigger  game_rooms  game_rooms_ligar_a_la_clase
 trigger  game_rooms  reloj_de_partida
 trigger  game_state  protect_game_state_teacher_columns_trigger
+trigger  habilidad_resultados  habilidad_resultado_de_la_base
 trigger  ia_uso  ia_uso_avisa_tope
 trigger  licencias_herramientas  auditar
 trigger  material_compartido  auditar
@@ -2771,6 +2807,7 @@ trigger  tanda_resultados  tanda_resultado_de_la_base
 trigger  tarea_items  proteger_tarea_items_alumno
 trigger  tareas  tareas_avisa_push
 trigger  tareas  tareas_protege_alumno
+trigger  tournament_rounds  tournament_rounds_modalidad
 trigger  tournaments  tournaments_proteger
 trigger  training_progress  otorgar_puntos_de_entrenamiento
 trigger  training_progress  training_progress_hora
@@ -2943,6 +2980,9 @@ indice  encuestas_profesor  encuestas_profesor_profesor
 indice  encuestas_profesor  encuestas_profesor_una_por_mes
 indice  enlaces_diagnostico  enlaces_diagnostico_codigo_key
 indice  enlaces_diagnostico  enlaces_diagnostico_pkey
+indice  entreno_pedidos  entreno_pedidos_clase
+indice  entreno_pedidos  entreno_pedidos_pkey
+indice  entreno_pedidos  entreno_pedidos_profe
 indice  equipo_alumnos  equipo_alumnos_alumno_idx
 indice  equipo_alumnos  equipo_alumnos_pkey
 indice  equipo_entrenadores  equipo_entrenadores_pkey
@@ -2988,6 +3028,11 @@ indice  game_state  game_state_owner_id_uidx
 indice  game_state  game_state_pkey
 indice  game_state  game_state_rival_id_idx
 indice  game_state  game_state_updated_by_fk
+indice  habilidad_resultados  habilidad_resultados_alumno
+indice  habilidad_resultados  habilidad_resultados_class_session_id_student_id_ejercicio_key
+indice  habilidad_resultados  habilidad_resultados_pedido
+indice  habilidad_resultados  habilidad_resultados_pkey
+indice  habilidad_resultados  habilidad_resultados_profe
 indice  horario_clases  horario_clases_pkey
 indice  horario_clases  horario_clases_profesor
 indice  horario_clases  horario_clases_subgrupo_id_fk
@@ -3683,6 +3728,20 @@ grant  encuestas_curso  authenticated  INSERT
 grant  encuestas_curso  authenticated  SELECT
 grant  encuestas_curso  authenticated  UPDATE
 grant  encuestas_profesor  authenticated  SELECT
+grant  entreno_pedidos  anon  DELETE
+grant  entreno_pedidos  anon  INSERT
+grant  entreno_pedidos  anon  REFERENCES
+grant  entreno_pedidos  anon  SELECT
+grant  entreno_pedidos  anon  TRIGGER
+grant  entreno_pedidos  anon  TRUNCATE
+grant  entreno_pedidos  anon  UPDATE
+grant  entreno_pedidos  authenticated  DELETE
+grant  entreno_pedidos  authenticated  INSERT
+grant  entreno_pedidos  authenticated  REFERENCES
+grant  entreno_pedidos  authenticated  SELECT
+grant  entreno_pedidos  authenticated  TRIGGER
+grant  entreno_pedidos  authenticated  TRUNCATE
+grant  entreno_pedidos  authenticated  UPDATE
 grant  equipo_alumnos  anon  DELETE
 grant  equipo_alumnos  anon  INSERT
 grant  equipo_alumnos  anon  REFERENCES
@@ -3839,6 +3898,20 @@ grant  game_state  authenticated  SELECT
 grant  game_state  authenticated  TRIGGER
 grant  game_state  authenticated  TRUNCATE
 grant  game_state  authenticated  UPDATE
+grant  habilidad_resultados  anon  DELETE
+grant  habilidad_resultados  anon  INSERT
+grant  habilidad_resultados  anon  REFERENCES
+grant  habilidad_resultados  anon  SELECT
+grant  habilidad_resultados  anon  TRIGGER
+grant  habilidad_resultados  anon  TRUNCATE
+grant  habilidad_resultados  anon  UPDATE
+grant  habilidad_resultados  authenticated  DELETE
+grant  habilidad_resultados  authenticated  INSERT
+grant  habilidad_resultados  authenticated  REFERENCES
+grant  habilidad_resultados  authenticated  SELECT
+grant  habilidad_resultados  authenticated  TRIGGER
+grant  habilidad_resultados  authenticated  TRUNCATE
+grant  habilidad_resultados  authenticated  UPDATE
 grant  horario_clases  authenticated  DELETE
 grant  horario_clases  authenticated  INSERT
 grant  horario_clases  authenticated  REFERENCES

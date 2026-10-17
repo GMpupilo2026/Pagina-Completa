@@ -30,6 +30,75 @@
             { id: "kingofthehill", emoji: "⛰️", label: "Rey de la colina", desc: "Próximamente", disabled: true },
             { id: "threecheck", emoji: "🎯", label: "Tres jaques", desc: "Próximamente", disabled: true },
         ];
+        /* Las modalidades en las que se puede jugar un torneo: todas las de a dos
+           que ya están abiertas. Relevo (por equipos) y las de 4 jugadores no
+           entran porque un torneo empareja de a dos. Una modalidad nueva de a
+           dos en VARIANTS entra sola acá; en la base, la lista está en
+           tournaments_variant_check y tournament_rounds_variant_check. */
+        const MODOS_TORNEO = VARIANTS.filter((v) => !v.disabled && !v.equipos && v.id !== "4ffa" && v.id !== "4teams").map((v) => v.id);
+        const ALEATORIO = { id: "aleatorio", emoji: "🎲", label: "Aleatorio (cambia cada ronda)" };
+
+        /* La modalidad de la ronda que viene, en un torneo aleatorio: primero
+           las que todavía no salieron en el torneo, y cuando ya salieron todas,
+           cualquiera menos la de la ronda anterior. Así ninguna se repite dos
+           rondas seguidas y en tantas rondas como modalidades salen todas.
+           `permitidas` es la lista que eligió quien organiza
+           (tournaments.modos_aleatorio); sin lista, las once. */
+        function sortearModoDeRonda(yaJugadas, anterior, permitidas) {
+            const lista = modosDelSorteo(permitidas);
+            let opciones = lista.filter((id) => !yaJugadas.includes(id));
+            if (!opciones.length) opciones = lista.filter((id) => id !== anterior);
+            if (!opciones.length) opciones = lista;
+            return opciones[Math.floor(Math.random() * opciones.length)];
+        }
+
+        // Las que entran al sorteo de un torneo, en el orden de VARIANTS. Lo que
+        // no sea de a dos se descarta (la base tampoco lo deja guardar).
+        function modosDelSorteo(permitidas) {
+            return Array.isArray(permitidas) && permitidas.length
+                ? MODOS_TORNEO.filter((id) => permitidas.includes(id))
+                : MODOS_TORNEO.slice();
+        }
+
+        /* Las casillas para elegir qué modalidades entran al sorteo: las usan
+           crear un torneo (torneos.html) y cambiarlas después (torneo.html).
+           Todas marcadas por omisión. leer() da { modos } —null si están todas,
+           que es lo que guarda la base— o { error } si quedan menos de dos: con
+           una sola no hay sorteo, y «nunca dos rondas seguidas» necesita otra. */
+        const MINIMO_DEL_SORTEO = 2;
+        function montarCasillasModos(contenedor, marcados) {
+            const elegidos = modosDelSorteo(marcados);
+            contenedor.innerHTML = "";
+            MODOS_TORNEO.forEach((id) => {
+                const etiqueta = document.createElement("label");
+                etiqueta.className = "flex items-center gap-2 text-sm text-brand-700 dark:text-brand-200 cursor-pointer";
+                const casilla = document.createElement("input");
+                casilla.type = "checkbox";
+                casilla.value = id;
+                casilla.checked = elegidos.includes(id);
+                casilla.className = "w-4 h-4 shrink-0 accent-accent-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
+                etiqueta.append(casilla, document.createTextNode(variantLabel(id)));
+                contenedor.appendChild(etiqueta);
+            });
+            const marcadas = () => Array.from(contenedor.querySelectorAll("input:checked")).map((c) => c.value);
+            return {
+                leer() {
+                    const m = marcadas();
+                    if (m.length < MINIMO_DEL_SORTEO) return { error: "Marca al menos " + MINIMO_DEL_SORTEO + " modalidades para el sorteo." };
+                    return { modos: m.length === MODOS_TORNEO.length ? null : m };
+                },
+                poner(lista) {
+                    const quedan = modosDelSorteo(lista);
+                    contenedor.querySelectorAll("input").forEach((c) => { c.checked = quedan.includes(c.value); });
+                },
+                cuantas: () => marcadas().length,
+            };
+        }
+
+        function etiquetaModoTorneo(id) {
+            return id === ALEATORIO.id ? ALEATORIO.emoji + " " + ALEATORIO.label : variantLabel(id);
+        }
+
         const SEATS = ["red", "blue", "yellow", "green"];
         const SEAT_LABEL = { red: "🔴 Rojo", blue: "🔵 Azul", yellow: "🟡 Amarillo", green: "🟢 Verde" };
 

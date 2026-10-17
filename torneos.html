@@ -56,14 +56,14 @@
                     </div>
                     <div>
                         <label for="variant-select" class="block text-xs font-medium text-brand-500 dark:text-brand-300 mb-1">Modalidad de juego</label>
-                        <select id="variant-select" class="w-full text-sm bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-2 text-brand-700 dark:text-brand-200 focus:outline-none focus:ring-2 focus:ring-accent-500">
-                            <option value="estandar">⚔️ Ajedrez Estándar</option>
-                            <option value="crazyhouse">♞ Crazyhouse</option>
-                            <option value="cartas">🃏 Ajedrez de Cartas</option>
-                            <option value="duelo">⚡ Duelo Simultáneo</option>
-                            <option value="niebla">🌫️ Niebla de Guerra</option>
-                        </select>
+                        <select id="variant-select" aria-describedby="variant-desc" class="w-full text-sm bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-2 text-brand-700 dark:text-brand-200 focus:outline-none focus:ring-2 focus:ring-accent-500"></select>
+                        <p id="variant-desc" class="text-xs text-brand-450 dark:text-brand-350 mt-1" aria-live="polite"></p>
                     </div>
+                    <fieldset id="modos-campo" hidden class="sm:col-span-2 border border-brand-200 dark:border-brand-700 rounded-lg px-3 pt-1 pb-3">
+                        <legend class="text-xs font-medium text-brand-500 dark:text-brand-300 px-1">🎲 Modalidades que entran al sorteo</legend>
+                        <div id="modos-casillas" class="grid sm:grid-cols-2 gap-x-4 gap-y-1.5 mt-1"></div>
+                        <p id="modos-cuenta" class="text-xs text-brand-450 dark:text-brand-350 mt-2" aria-live="polite"></p>
+                    </fieldset>
                     <div>
                         <label for="time-select" class="block text-xs font-medium text-brand-500 dark:text-brand-300 mb-1">⏱️ Tiempo por partida</label>
                         <select id="time-select" class="w-full text-sm bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-2 text-brand-700 dark:text-brand-200 focus:outline-none focus:ring-2 focus:ring-accent-500"></select>
@@ -86,6 +86,7 @@
     <script src="js/vendor/supabase.js"></script>
     <script src="js/supabase-client.js"></script>
     <script src="js/torneo-engine.js"></script>
+    <script src="js/juegos-comun.js"></script>
     <script src="js/ritmos.js"></script>
     <script src="js/avisos.js"></script>
     <script src="js/main.js"></script>

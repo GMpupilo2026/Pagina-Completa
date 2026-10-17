@@ -832,6 +832,20 @@
                                 </div>
                                 <p id="practica-mirar-aviso" role="status" class="text-xs text-brand-600 dark:text-brand-300"></p>
                             </div>
+                            <!-- Sus intentos de esta ronda, con todas las jugadas escritas, y cada uno se
+                                 puede pasar al tablero de la clase para revisar los errores entre todos.
+                                 Se piden al abrir la lista (nada de Realtime); el intento en curso se pone
+                                 al día con la partida que ya se está mirando. -->
+                            <div class="mt-4 border-t border-brand-100 dark:border-brand-800 pt-3 text-left">
+                                <button type="button" id="practica-mirar-intentos-btn" aria-expanded="false" aria-controls="practica-mirar-intentos" class="w-full text-sm font-semibold px-3 py-2 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors"><span aria-hidden="true">🔁 </span><span id="practica-mirar-intentos-texto">Ver las jugadas de cada intento</span></button>
+                                <p id="practica-mirar-intentos-msg" role="status" class="text-xs text-brand-600 dark:text-brand-300 mt-2"></p>
+                                <div id="practica-mirar-intentos-caja" hidden class="mt-2 text-xs">
+                                    <label class="flex items-center gap-2 text-brand-600 dark:text-brand-300 mb-2">
+                                        <input id="practica-mirar-con-nombre" type="checkbox"> Decir de quién es al mostrarlo a la clase
+                                    </label>
+                                    <ul id="practica-mirar-intentos" class="space-y-2"></ul>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -1684,6 +1698,7 @@
     <script src="js/clases-engine.js"></script>
     <script src="js/practice-engine.js"></script>
     <script src="js/practica-ayuda.js"></script>
+    <script src="js/practica-intentos.js"></script>
     <script src="js/posicion-valida.js"></script>
     <script src="js/pgn-clase.js"></script>
     <script src="js/resumen-clase.js"></script>

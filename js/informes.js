@@ -513,6 +513,7 @@
             renderDeberes(profile.id, true);
             renderPremios(profile.id, true);
             renderNotasDelAlumno(profile.id);
+            renderPracticaClase(profile.id, true);
             renderDiagnosticoAlumno(entreno, planCompartido);
 
             const historyEl = document.getElementById("student-history");
@@ -1010,6 +1011,7 @@
             document.getElementById("evolucion-report").classList.add("hidden");
             document.getElementById("notas-report").classList.add("hidden");
             document.getElementById("le-costo-report").hidden = true;
+            document.getElementById("practica-report").classList.add("hidden");
             document.getElementById("notas-alumno-report").classList.add("hidden");
             document.getElementById("topic-report").classList.add("hidden");
             document.getElementById("teacher-report").classList.add("hidden");
@@ -1190,6 +1192,7 @@
             renderDeberes(studentId, false);
             renderPremios(studentId, false);
             renderErroresPartidas(studentId, name);
+            renderPracticaClase(studentId, false);
             renderAcceso(studentId, name);
             renderNotas(studentId);
             renderCuadernoCompartido(studentId);
@@ -1446,6 +1449,87 @@
             sec.append(h, res, ul, libreta);
             body.appendChild(sec);
         }
+        /* ---------------- Practicar en clase ----------------
+
+           Sus partidas contra el motor en la clase en vivo, de la más nueva a la
+           más vieja, con cada intento y sus jugadas. Los intentos terminados los
+           guarda la base al reintentar (practice_intentos); el último sigue en
+           practice_games. Las rondas (practice_sessions) dan la posición de
+           salida para numerar las jugadas: las lee todo profesor del alumno
+           aunque las haya armado un colega (interno.rondas_de_mis_alumnos).
+           Se piden pocas y con su total: la tabla crece con cada clase. */
+        const PRACTICA_A_LA_VISTA = 5;
+        let practicaVez = 0;
+        async function renderPracticaClase(studentId, propio) {
+            const vez = ++practicaVez;
+            const caja = document.getElementById("practica-report");
+            if (!caja || !window.PracticaIntentos) return;
+            caja.classList.add("hidden");
+            const { data: juegos, error, count } = await sb.from("practice_games")
+                .select("id, session_id, attempts, status, moves, student_color, created_at", { count: "exact" })
+                .eq("student_id", studentId)
+                .order("created_at", { ascending: false })
+                .range(0, PRACTICA_A_LA_VISTA - 1);
+            if (vez !== practicaVez) return;
+            if (error) { console.error(error); return; }
+            if (!juegos || !juegos.length) return;
+            const [guardados, rondas] = await Promise.all([
+                sb.from("practice_intentos").select("game_id, intento, status, moves")
+                    .in("game_id", juegos.map((g) => g.id)).order("intento").range(0, 999),
+                sb.from("practice_sessions").select("id, fen").in("id", [...new Set(juegos.map((g) => g.session_id))]),
+            ]);
+            if (vez !== practicaVez) return;
+            if (guardados.error) console.error(guardados.error);
+            if (rondas.error) console.error(rondas.error);
+            const fenDe = new Map((rondas.data || []).map((r) => [r.id, r.fen]));
+            const porJuego = PracticaIntentos.juntar(juegos, guardados.data || []);
+            const sanEs = (x) => (window.TiposReglas ? TiposReglas.sanEs(x) : x);
+            const total = typeof count === "number" ? count : juegos.length;
+            document.getElementById("practica-sub").textContent =
+                (total > juegos.length ? "Las últimas " + juegos.length + " de " + total + " rondas. " : "")
+                + (propio ? "Tus partidas contra el motor en la clase en vivo, intento por intento, con todas tus jugadas."
+                    : "Sus partidas contra el motor en la clase en vivo, intento por intento, con todas sus jugadas.");
+            const body = document.getElementById("practica-body");
+            body.replaceChildren();
+            for (const g of juegos) {
+                const intentos = porJuego.get(g.id) || [];
+                const fen = fenDe.get(g.session_id) || null;
+                const li = document.createElement("li");
+                const cab = document.createElement("p");
+                cab.className = "text-sm font-semibold text-brand-700 dark:text-brand-200";
+                cab.textContent = [HoraCR.fecha(g.created_at, { day: "numeric", month: "short", year: "numeric" }),
+                    g.student_color === "b" ? "con negras" : "con blancas",
+                    pluralES(intentos.length, "intento", "intentos")].join(" · ");
+                const ul = document.createElement("ul");
+                ul.className = "mt-1 space-y-1";
+                for (const i of intentos) {
+                    const fila = document.createElement("li");
+                    fila.className = "text-sm";
+                    const n = i.moves.length;
+                    const linea = document.createElement("p");
+                    linea.className = "text-brand-600 dark:text-brand-300";
+                    linea.textContent = "Intento " + i.intento + " · " + PracticaIntentos.estado(i.status, propio)
+                        + " · " + pluralES(n, "jugada", "jugadas") + (i.ultimo && i.status === "playing" ? " (sin terminar)" : "");
+                    fila.appendChild(linea);
+                    if (n) {
+                        const det = document.createElement("details");
+                        const sum = document.createElement("summary");
+                        sum.className = "cursor-pointer text-xs text-accent-700 dark:text-accent-400 underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
+                        sum.textContent = "Ver las jugadas del intento " + i.intento;
+                        const txt = document.createElement("p");
+                        txt.className = "mt-1 text-xs font-mono text-brand-700 dark:text-brand-200 break-words";
+                        txt.textContent = PracticaIntentos.numerar(fen, i.moves, sanEs);
+                        det.append(sum, txt);
+                        fila.appendChild(det);
+                    }
+                    ul.appendChild(fila);
+                }
+                li.append(cab, ul);
+                body.appendChild(li);
+            }
+            caja.classList.remove("hidden");
+        }
+
         async function renderErroresDePartidas(studentId, name) {
             const caja = document.getElementById("errores-report");
             const body = document.getElementById("errores-body");

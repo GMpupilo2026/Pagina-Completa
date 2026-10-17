@@ -35,7 +35,7 @@ window.PuntosClase = (function () {
     }
 
     function puntos(fila) {
-        return (Number(fila && fila.puntos_preguntas) || 0) + (Number(fila && fila.puntos_tandas) || 0)
+        return (Number(fila && fila.puntos_preguntas) || 0) + (Number(fila && fila.puntos_tandas) || 0) + (Number(fila && fila.puntos_habilidades) || 0)
             + REGLAS.reduce((s, r) => s + (Number(fila && fila[r.campo]) || 0) * r.puntos, 0);
     }
 
@@ -55,6 +55,12 @@ window.PuntosClase = (function () {
             partes.push(tb + (tb === 1 ? " ejercicio" : " ejercicios") + " del calentamiento bien"
                 + (tp ? " (" + tp + (tp === 1 ? " vez primero" : " veces primero") + ")" : "") + " (+" + fila.puntos_tandas + ")");
         }
+        const hb = Number(fila.habilidad_bien) || 0;
+        if (hb && Number(fila.puntos_habilidades) > 0) {
+            const hp = Number(fila.habilidad_a_la_primera) || 0;
+            partes.push(hb + (hb === 1 ? " ejercicio" : " ejercicios") + " de Habilidades bien"
+                + (hp ? " (" + hp + " a la primera)" : "") + " (+" + fila.puntos_habilidades + ")");
+        }
         REGLAS.filter((r) => Number(fila[r.campo]) > 0)
             .forEach((r) => partes.push(fila[r.campo] + " × " + r.texto + " (+" + fila[r.campo] * r.puntos + ")"));
         return partes.join(" · ");
@@ -64,26 +70,28 @@ window.PuntosClase = (function () {
         return "cada respuesta bien vale de 10 a 50 puntos según su dificultad; a la primera, todo (al 2.º intento, el 60 %; después, el 30 %); "
             + "el 1.º en acertar suma un 50 % más, el 2.º un 30 % y el 3.º un 15 % · "
             + "cada ejercicio del calentamiento bien, lo mismo según su nivel (en la competencia, también el 1.º, 2.º y 3.º en resolverlo) · "
+            + "cada ejercicio de Habilidades que el profe manda a practicar, lo mismo según su dificultad: a la primera, todo; con un error o una pista, el 60 %; con más, el 30 % · "
             + REGLAS.map((r) => r.texto + ": " + r.puntos + " puntos").join(" · ");
     }
 
     /* Junta a cada fila del resumen sus puntos de preguntas (puntos_de_la_clase /
-       puntos_del_mes) y los de los calentamientos (puntos_de_tandas /
-       puntos_de_tandas_del_mes). Quien solo hizo el calentamiento también
-       aparece: no estaba en el resumen. */
-    function juntar(filas, puntosFilas, tandasFilas) {
+       puntos_del_mes), los de los calentamientos (puntos_de_tandas /
+       puntos_de_tandas_del_mes) y los de Habilidades (puntos_de_habilidades /
+       puntos_de_habilidades_del_mes). Quien solo hizo el calentamiento o
+       Habilidades también aparece: no estaba en el resumen. */
+    function juntar(filas, puntosFilas, tandasFilas, habilidadesFilas) {
         const por = new Map((puntosFilas || []).map((p) => [p.student_id, p]));
         const tan = new Map((tandasFilas || []).map((p) => [p.student_id, p]));
-        const out = (filas || []).map((f) => {
-            const p = por.get(f.student_id) || {}, t = tan.get(f.student_id) || {};
-            return Object.assign({}, f, { puntos_preguntas: p.puntos_preguntas || 0, a_la_primera: p.a_la_primera || 0, primeros: p.primeros || 0,
-                puntos_tandas: t.puntos || 0, tanda_bien: t.resueltos || 0, tanda_primeros: t.primeros || 0 });
-        });
+        const hab = new Map((habilidadesFilas || []).map((p) => [p.student_id, p]));
+        const con = (f, p, t, h) => Object.assign({}, f, { puntos_preguntas: p.puntos_preguntas || 0, a_la_primera: p.a_la_primera || 0, primeros: p.primeros || 0,
+            puntos_tandas: t.puntos || 0, tanda_bien: t.resueltos || 0, tanda_primeros: t.primeros || 0,
+            puntos_habilidades: h.puntos || 0, habilidad_bien: h.resueltos || 0, habilidad_a_la_primera: h.a_la_primera || 0 });
+        const out = (filas || []).map((f) => con(f, por.get(f.student_id) || {}, tan.get(f.student_id) || {}, hab.get(f.student_id) || {}));
         const ya = new Set(out.map((f) => f.student_id));
-        (tandasFilas || []).forEach((t) => {
-            if (ya.has(t.student_id)) return;
-            out.push({ student_id: t.student_id, nombre: t.nombre || "Alumno", puntos_preguntas: 0, a_la_primera: 0, primeros: 0,
-                puntos_tandas: t.puntos || 0, tanda_bien: t.resueltos || 0, tanda_primeros: t.primeros || 0 });
+        (tandasFilas || []).concat(habilidadesFilas || []).forEach((x) => {
+            if (ya.has(x.student_id)) return;
+            ya.add(x.student_id);
+            out.push(con({ student_id: x.student_id, nombre: x.nombre || "Alumno" }, {}, tan.get(x.student_id) || {}, hab.get(x.student_id) || {}));
         });
         return out;
     }
@@ -158,10 +166,12 @@ window.PuntosClase = (function () {
        profe pasa su id y ve a sus alumnos; el alumno pasa null y ve lo suyo. */
     async function cargarDelMes(sb, profesorId) {
         const args = { p_profesor: profesorId || null };
-        const [r, p, t] = await Promise.all([sb.rpc("resumen_del_mes", args), sb.rpc("puntos_del_mes", args), sb.rpc("puntos_de_tandas_del_mes", args)]);
+        const [r, p, t, h] = await Promise.all([sb.rpc("resumen_del_mes", args), sb.rpc("puntos_del_mes", args), sb.rpc("puntos_de_tandas_del_mes", args),
+            sb.rpc("puntos_de_habilidades_del_mes", args)]);
         if (p.error) console.error(p.error);
         if (t.error) console.error(t.error);
-        return { filas: juntar(r.data || [], p.data || [], t.data || []), error: r.error || p.error || t.error };
+        if (h.error) console.error(h.error);
+        return { filas: juntar(r.data || [], p.data || [], t.data || [], h.data || []), error: r.error || p.error || t.error || h.error };
     }
 
     function nombreDelMes() {
