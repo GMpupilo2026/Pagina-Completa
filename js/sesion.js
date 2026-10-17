@@ -6040,7 +6040,28 @@
         // interesa al profesor, que es quien puede estar viendo muchos tableros a la vez).
         function practiceStatusLabelWithAttempts(row) {
             const attempts = row.attempts || 1;
-            return practiceStatusLabel(row.status) + " · intento " + attempts;
+            const tope = latestPracticeSession && latestPracticeSession.max_intentos;
+            return practiceStatusLabel(row.status) + " · intento " + attempts + (tope ? " de " + tope : "");
+        }
+
+        // Cuántos intentos le quedan al alumno en esta ronda, además del que juega
+        // (Infinity sin tope). El tope lo hace cumplir la base: esto solo decide si se
+        // ofrece «Reintentar».
+        function practiceIntentosQuedan() {
+            const tope = latestPracticeSession && latestPracticeSession.max_intentos;
+            if (!tope) return Infinity;
+            return Math.max(0, tope - ((myPracticeGame && myPracticeGame.attempts) || 1));
+        }
+
+        // «Intento 2 de 3», escrito en la tarjeta del alumno (sin tope no dice nada).
+        function practiceIntentosTexto() {
+            const tope = latestPracticeSession && latestPracticeSession.max_intentos;
+            if (!tope || !myPracticeGame) return "";
+            const va = myPracticeGame.attempts || 1;
+            if (myPracticeGame.status !== "playing" && va >= tope) {
+                return tope === 1 ? "Esta práctica era de un solo intento." : "Usaste tus " + tope + " intentos.";
+            }
+            return "Intento " + va + " de " + tope + ".";
         }
 
         // Resultado desde el punto de vista del alumno, justo después de aplicar una jugada
@@ -6062,8 +6083,10 @@
             await sb.from("practice_sessions").update({ ended_at: new Date().toISOString() }).eq("created_by", boardOwnerId).is("ended_at", null);
             const reloj = parseInt((document.getElementById("practice-reloj") || {}).value, 10);
             const inc = parseInt((document.getElementById("practice-incremento") || {}).value, 10);
+            const intentos = parseInt((document.getElementById("practice-intentos") || {}).value, 10);
             return sb.from("practice_sessions").insert({
                 fen, level, created_by: session.user.id,
+                max_intentos: isFinite(intentos) && intentos > 0 ? intentos : null,
                 reloj_segundos: isFinite(reloj) && reloj > 0 ? reloj : null,
                 incremento_segundos: isFinite(reloj) && reloj > 0 && isFinite(inc) ? inc : 0,
             });
@@ -6333,6 +6356,18 @@
             document.getElementById("practice-boards-section").classList.toggle("hidden", !active);
             if (active) {
                 document.getElementById("practice-active-level").textContent = practiceLevelLabel(latestPracticeSession.level);
+                const intentosActiva = document.getElementById("practice-intentos-activa");
+                if (intentosActiva && document.activeElement !== intentosActiva) {
+                    intentosActiva.value = latestPracticeSession.max_intentos ? String(latestPracticeSession.max_intentos) : "";
+                    // Un tope que no está en la lista (puesto desde otra pantalla) igual se ve.
+                    if (intentosActiva.value !== (latestPracticeSession.max_intentos ? String(latestPracticeSession.max_intentos) : "")) {
+                        const o = document.createElement("option");
+                        o.value = String(latestPracticeSession.max_intentos);
+                        o.textContent = String(latestPracticeSession.max_intentos);
+                        intentosActiva.appendChild(o);
+                        intentosActiva.value = o.value;
+                    }
+                }
                 loadPracticeGamesForSession(latestPracticeSession.id);
             } else {
                 cerrarMirada();
@@ -6768,6 +6803,20 @@
             setStatus("Práctica iniciada: los alumnos ya pueden jugar contra el motor.");
         });
 
+        // Cambiar los intentos con la ronda en curso (darles uno más, o cortar los
+        // reintentos): se escribe en la ronda y a cada alumno le llega por Realtime.
+        document.getElementById("practice-intentos-activa").addEventListener("change", async (ev) => {
+            if (!latestPracticeSession || latestPracticeSession.ended_at) return;
+            const msg = document.getElementById("practice-intentos-msg");
+            const n = parseInt(ev.target.value, 10);
+            const tope = isFinite(n) && n > 0 ? n : null;
+            const { error } = await sb.from("practice_sessions").update({ max_intentos: tope }).eq("id", latestPracticeSession.id);
+            if (error) { console.error(error); msg.textContent = "No se pudo cambiar: " + error.message; return; }
+            latestPracticeSession = Object.assign({}, latestPracticeSession, { max_intentos: tope });
+            msg.textContent = tope ? "Ahora cada alumno tiene " + (tope === 1 ? "un solo intento." : tope + " intentos.") : "Ahora los intentos no tienen límite.";
+            Object.values(practiceStudentBoards).forEach((e) => { if (e.row) upsertPracticeStudentBoard(e.row); });
+        });
+
         document.getElementById("end-practice-btn").addEventListener("click", async () => {
             if (!latestPracticeSession || latestPracticeSession.ended_at) return;
             const { error } = await sb.from("practice_sessions").update({ ended_at: new Date().toISOString() }).eq("id", latestPracticeSession.id);
@@ -6855,12 +6904,18 @@
                     contestar: (texto) => {
                         const btn = document.getElementById("practice-retry-btn");
                         const pedido = CuadroComandos.normalizar(texto).replace(/[.!¡¿?]+/g, "").trim();
-                        if (!btn || btn.classList.contains("hidden") || !/^(reintentar|otra vez|jugar de nuevo|de nuevo|empezar de nuevo|volver a empezar)$/.test(pedido)) return null;
+                        const esReintentar = /^(reintentar|otra vez|jugar de nuevo|de nuevo|empezar de nuevo|volver a empezar)$/.test(pedido);
+                        if (esReintentar && myPracticeGame && myPracticeGame.status !== "playing" && practiceIntentosQuedan() === 0) {
+                            return { texto: practiceIntentosTexto() + " No quedan intentos." };
+                        }
+                        if (!btn || btn.classList.contains("hidden") || !esReintentar) return null;
                         btn.click();
                         return { texto: "Empezaste la partida de nuevo." };
                     },
                     porQueNoPuedes: () => !myPracticeGame || myPracticeGame.status !== "playing"
-                        ? "Esta partida ya terminó. Escribe «reintentar» para empezarla de nuevo."
+                        ? (practiceIntentosQuedan() === 0
+                            ? "Esta partida ya terminó. " + practiceIntentosTexto()
+                            : "Esta partida ya terminó. Escribe «reintentar» para empezarla de nuevo.")
                         : "El motor está pensando su jugada: espera un momento.",
                 }) : null;
             }
@@ -6885,12 +6940,14 @@
             const resignBtn = document.getElementById("practice-resign-btn");
             const retryBtn = document.getElementById("practice-retry-btn");
             const retryEngineBtn = document.getElementById("practice-retry-engine-btn");
+            const intentosEl = document.getElementById("practice-intentos-alumno");
+            if (intentosEl) intentosEl.textContent = practiceIntentosTexto();
             if (!myPracticeGame || myPracticeGame.status !== "playing") {
                 if (practiceBoard) practiceBoard.setInteractive(false);
                 statusEl.textContent = myPracticeGame ? practiceStatusLabel(myPracticeGame.status) : "";
                 resignBtn.classList.add("hidden");
                 retryEngineBtn.classList.add("hidden");
-                retryBtn.classList.toggle("hidden", !myPracticeGame);
+                retryBtn.classList.toggle("hidden", !myPracticeGame || practiceIntentosQuedan() === 0);
                 return;
             }
             resignBtn.classList.remove("hidden");
@@ -6907,10 +6964,11 @@
         }
 
         async function savePracticeGameRow(patch) {
-            if (!myPracticeGame) return;
+            if (!myPracticeGame) return null;
             const { error } = await sb.from("practice_games").update(patch).eq("id", myPracticeGame.id);
-            if (error) { console.error(error); return; }
+            if (error) { console.error(error); return error; }
             myPracticeGame = Object.assign({}, myPracticeGame, patch);
+            return null;
         }
 
         // gameIdAtMove/attemptsAtMove: por si mientras el motor pensaba el alumno se rindió o
@@ -7047,10 +7105,18 @@
         // tablero por alumno) y suma un intento — el profesor ve ese número en su grilla.
         async function retryPracticeGame() {
             if (!myPracticeGame || !latestPracticeSession || latestPracticeSession.ended_at) return;
-            await savePracticeGameRow({
+            if (practiceIntentosQuedan() === 0) { updatePracticeCardInteractivity(); return; }
+            const error = await savePracticeGameRow({
                 fen: latestPracticeSession.fen, moves: [], status: "playing",
                 eval_cp: null, attempts: (myPracticeGame.attempts || 1) + 1, reloj_ms: null,
             });
+            // La base no lo dejó (se acabaron los intentos o la ronda ya cerró): se dice
+            // lo que contestó, y la partida queda como estaba.
+            if (error) {
+                document.getElementById("practice-card-status").textContent = error.message || "No se pudo reintentar.";
+                document.getElementById("practice-retry-btn").classList.toggle("hidden", /intentos/.test(error.message || ""));
+                return;
+            }
             // La base borra la ayuda al reintentar: era de la partida anterior.
             myPracticeGame = Object.assign({}, myPracticeGame, { ayuda: null, pide_ayuda_at: null, respuesta: null });
             practiceBoard.loadMoves([], latestPracticeSession.fen);

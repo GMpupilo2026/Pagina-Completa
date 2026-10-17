@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261016040007
+# al-dia-con: 20261017180000
 tabla  Ejercicios Lichess  rls=true
 tabla  _foto_rls_tmp  rls=false
 tabla  _pedidos_elo  rls=false
@@ -1210,6 +1210,7 @@ columna  practice_sessions.fen  text
 columna  practice_sessions.id  uuid
 columna  practice_sessions.incremento_segundos  integer
 columna  practice_sessions.level  text
+columna  practice_sessions.max_intentos  integer
 columna  practice_sessions.reloj_segundos  integer
 columna  preferencias_avisos.racha  boolean
 columna  preferencias_avisos.updated_at  timestamp with time zone
@@ -2082,6 +2083,7 @@ funcion  personas_para_ver_como()  definer  anon=false  auth=true
 funcion  plan_compartido_conmigo(p_plan uuid)  definer  anon=true  auth=true
 funcion  planes_compartidos_conmigo()  definer  anon=false  auth=true
 funcion  practica_ayuda_proteger()  invoker  anon=false  auth=false
+funcion  practica_intentos_al_crear()  invoker  anon=false  auth=false
 funcion  prefijo_recibo(p_academia uuid)  invoker  anon=false  auth=true
 funcion  preguntas_que_costaron(p_dias integer)  invoker  anon=false  auth=true
 funcion  preguntas_que_le_costaron(p_alumno uuid, p_dias integer)  invoker  anon=false  auth=true
@@ -2724,6 +2726,7 @@ trigger  planes_cobro  auditar
 trigger  plantillas_casa  plantillas_casa_tope
 trigger  platform_activity_log  platform_activity_log_protege_tiempos
 trigger  practice_games  practica_ayuda_proteger
+trigger  practice_games  practica_intentos_al_crear
 trigger  practice_sessions  practice_sessions_ligar_a_la_clase
 trigger  premios_canjeados  auditar
 trigger  preparacion_rivales_profesores  auditar
