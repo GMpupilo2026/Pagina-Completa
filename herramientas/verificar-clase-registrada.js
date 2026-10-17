@@ -567,6 +567,12 @@ async function abrir(browser, quien, claseAbierta, semilla, opciones) {
      profesor, un alumno sin clase abierta NO monta #app — y esperarlo a secas
      dejaría la prueba colgada treinta segundos por algo que es lo correcto. */
   await page.waitForSelector("#app:not(.hidden), #sin-clase:not(.hidden)", { timeout: 30000 });
+  /* Quien prueba QUÉ dice cada anuncio de la presencia, y no a qué ritmo
+     salen, los ve salir al instante: el tope (js/sesion.js, cupoDePresencia)
+     lo prueba verificar-clase-presencia-tope.js. */
+  if (opciones && opciones.sinTopeDePresencia) {
+    await page.evaluate(() => { if (typeof cupoDePresencia !== "undefined") cupoDePresencia.tope = Infinity; });
+  }
   return { page, ctx, errores };
 }
 

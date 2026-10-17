@@ -2922,8 +2922,58 @@
             handRaised = !!value;
             handAt = handRaised ? (handAt || new Date().toISOString()) : null;
             updateRaiseHandBtn();
-            if (!presenceChannel) return;
-            await presenceChannel.track(metaDePresencia());
+            await anunciarPresencia();
+        }
+
+        /* Todo anuncio de la presencia sale por acá, nunca con track() suelto.
+           Realtime deja a cada uno 5 anuncios (track o untrack) cada 30 s por
+           canal, y con el sexto CIERRA el canal: el alumno sigue viendo la clase
+           (el tablero va por otro canal, y su latido de asistencia sigue), pero
+           desaparece de «Alumnos conectados» del profe y no vuelve hasta que
+           recarga. No da ningún error en su pantalla. Pasó el 17/10/2026: en la
+           competencia cada ejercicio resuelto anunciaba, y quien resolvía 8 o 10
+           en 30 s se quedaba fuera (en el registro de Realtime,
+           `ClientPresenceRateLimitReached`). Ver «La presencia tiene un tope de
+           anuncios» en docs/decisiones/clase-en-vivo.md.
+           Por eso salen como mucho `tope` en `ventanaMs` (uno menos y un segundo
+           más que Realtime, por margen); lo que pide anunciar de más espera su
+           lugar y sale UNO solo, con lo último que haya (metaDePresencia se arma
+           al mandar). Devuelve una promesa que se cumple cuando salió. */
+        const cupoDePresencia = { tope: 4, ventanaMs: 31000 };
+        let presenciaEnviados = [];     // cuándo salió cada anuncio en este canal
+        let presenciaPendiente = null;  // { timer, promesa, cumplir } del que espera su lugar
+        function anunciarPresencia() {
+            if (!presenceChannel) return Promise.resolve();
+            if (presenciaPendiente) return presenciaPendiente.promesa;
+            const ahora = Date.now();
+            presenciaEnviados = presenciaEnviados.filter((t) => ahora - t < cupoDePresencia.ventanaMs);
+            const espera = presenciaEnviados.length < cupoDePresencia.tope
+                ? 0 : presenciaEnviados[0] + cupoDePresencia.ventanaMs - ahora;
+            if (espera <= 0) return enviarAnuncioDePresencia();
+            let cumplir;
+            const promesa = new Promise((r) => { cumplir = r; });
+            presenciaPendiente = { promesa, cumplir, timer: setTimeout(() => {
+                const p = presenciaPendiente;
+                presenciaPendiente = null;
+                enviarAnuncioDePresencia().finally(() => p && p.cumplir());
+            }, espera) };
+            return promesa;
+        }
+        async function enviarAnuncioDePresencia() {
+            presenciaEnviados.push(Date.now());
+            try {
+                if (presenceChannel) await presenceChannel.track(metaDePresencia());
+            } catch (e) { console.error(e); }
+        }
+        // Un canal recién suscrito es otro en Realtime: arranca con el cupo entero.
+        function reiniciarCupoDePresencia() {
+            presenciaEnviados = [];
+            if (presenciaPendiente) {
+                clearTimeout(presenciaPendiente.timer);
+                const p = presenciaPendiente;
+                presenciaPendiente = null;
+                p.cumplir(); // el anuncio de la suscripción lleva lo último
+            }
         }
 
         /* Lo que cada uno anuncia de sí mismo en la presencia, armado SIEMPRE
@@ -3067,9 +3117,23 @@
                     setHandRaised(false);
                 }
             });
-            presenceChannel.subscribe(async (status) => {
+            const canal = presenceChannel;
+            canal.subscribe(async (status) => {
+                if (canal !== presenceChannel) return;
                 if (status === "SUBSCRIBED") {
-                    await presenceChannel.track(metaDePresencia());
+                    reiniciarCupoDePresencia();
+                    await anunciarPresencia();
+                } else if (status === "CLOSED" && !meSacaron) {
+                    /* Realtime cerró el canal (el tope de anuncios u otro corte
+                       del servidor): un canal cerrado no se vuelve a abrir solo,
+                       como sí uno que se cae por la red. Se arma otro, con una
+                       espera al azar para que no vuelvan todos en el mismo
+                       segundo. Quedar fuera de la clase cierra a propósito. */
+                    setTimeout(() => {
+                        if (meSacaron || canal !== presenceChannel) return;
+                        try { sb.removeChannel(canal); } catch (e) { console.error(e); }
+                        subscribePresence();
+                    }, 1000 + Math.random() * 3000);
                 }
             });
         }
@@ -3078,9 +3142,7 @@
         async function anunciarMirada(studentId) {
             mirandoA = studentId || null;
             if (!presenceChannel || !veLaPractica()) return;
-            try {
-                await presenceChannel.track(metaDePresencia());
-            } catch (e) { console.error(e); }
+            await anunciarPresencia();
         }
 
         /* Al alumno: quién está mirando su partida. Solo mientras tiene una
@@ -5415,13 +5477,13 @@
             }
             // Y en la presencia, para quien entra o recarga en estos segundos.
             fotoEnCurso = { fen: item.fen, segundos, hasta: new Date(Date.now() + segundos * 1000).toISOString() };
-            if (presenceChannel && presenceChannel.track) presenceChannel.track(metaDePresencia()).catch((e) => console.error(e));
+            anunciarPresencia();
             setStatus("📸 La clase ve la posición: " + segundos + " segundos.");
             btn.textContent = "⏳ " + segundos + " s…";
             fotoTimer = setTimeout(async () => {
                 fotoTimer = null;
                 fotoEnCurso = null;
-                if (presenceChannel && presenceChannel.track) presenceChannel.track(metaDePresencia()).catch((e) => console.error(e));
+                anunciarPresencia();
                 lastPiecesHidden = true;
                 updateHideBoardBtn();
                 const { error } = await sb.from("game_state").update({ pieces_hidden: true }).eq("id", myGameStateId);

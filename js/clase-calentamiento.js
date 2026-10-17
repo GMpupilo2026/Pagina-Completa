@@ -157,7 +157,7 @@ async function juzgarCalentamiento() {
         document.getElementById("calentamiento-solucion-btn").hidden = true;
         document.getElementById("calentamiento-otra-btn").hidden = true;
         calentamientoResuelto = cal.at;
-        if (presenceChannel) await presenceChannel.track(metaDePresencia());
+        await anunciarPresencia();
     } else {
         // Se pudo jugar pero no era: «Respuesta incorrecta», como en todo el sitio (js/comandos-tablero.js).
         const dicha = m ? sanDelCalentamiento(m.san) : "esa jugada";
