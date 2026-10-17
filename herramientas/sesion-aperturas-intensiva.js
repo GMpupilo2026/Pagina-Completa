@@ -81,7 +81,7 @@ const EJERCICIOS = [
       "de e1. Solo puede comerse el alfil (9.Dxb4 Cxb4 y el negro ganó la dama por el alfil) o meterse en " +
       "d2, donde el alfil la toma con jaque. Lo mejor que tiene el blanco es 9.dxc6 Axc3+ 10.Cxc3: el negro " +
       "dio el alfil y el caballo por la dama, y queda mejor.\n" +
-      "Las trampas: 8...Cd8? y 8...Ce7?, las retiradas naturales: 9.O-O y el rey negro sigue en el centro, " +
+      "Las trampas: 8...Cd8? y 8...Cce7?, las retiradas naturales: 9.O-O y el rey negro sigue en el centro, " +
       "con la columna e por abrirse y la dama de d7 tapando a sus propias piezas. El motor le da más de tres " +
       "peones al blanco.\n" +
       "En la partida siguió 10...bxc6 y aun así ganó Marshall: la ventaja también hay que cobrarla.\n" +
