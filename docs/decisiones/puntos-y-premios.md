@@ -43,7 +43,9 @@ ajuste a mano futuro) pasan `referencia` con un valor nuevo cada vez
 ## Qué fuentes de puntos se decidió cubrir, y qué se dejó afuera
 
 - **Clase**: al cerrarla (`class_sessions.ended_at` pasa de `null` a una
-  fecha), se suman `puntos_de_la_clase()` + `puntos_de_tandas()` de esa
+  fecha), se suman `puntos_de_la_clase()` + `puntos_de_tandas()` +
+  `puntos_de_habilidades()` (los ejercicios de Habilidades que el profe mandó
+  a practicar, ver «Habilidades: los puntos» en `clase-en-vivo.md`) de esa
   clase, por alumno. **No** se incluyen los turnos de palabra, las prácticas
   ni las partidas de `js/puntos-clase.js` (`REGLAS`): esos números viven solo
   en `game_state` (podio, equipos), que se limpia al cerrar la clase — para

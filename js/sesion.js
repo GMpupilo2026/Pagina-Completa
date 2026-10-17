@@ -4432,7 +4432,8 @@
            ni asistencia, ni turno, ni aviso de quién no contesta. */
         const RPC_DE_LECTURA = new Set(["mis_clases", "premios_de_alumno", "trofeos_de", "resultados_de_la_pregunta",
             "nombres_de_jugadores", "alumnos_del_profesor", "resumen_de_la_clase", "salida_de_la_clase", "resumen_del_mes",
-            "puntos_de_la_clase", "puntos_del_mes", "puntos_de_tandas", "puntos_de_tandas_del_mes"]);
+            "puntos_de_la_clase", "puntos_del_mes", "puntos_de_tandas", "puntos_de_tandas_del_mes",
+            "puntos_de_habilidades", "puntos_de_habilidades_del_mes"]);
         function nadaQueMandar() {
             const p = Promise.resolve({ data: null, error: null });
             const cadena = new Proxy({}, { get: (_, k) => (k === "then" ? p.then.bind(p) : k === "catch" ? p.catch.bind(p) : () => cadena) });
@@ -5632,13 +5633,18 @@
                contesta con algo que el tablero de la clase no sabe pedir (una
                opción, una cifra, casillas, piezas para armar). */
             const desde = (item) => t.id + "/" + nivel.n + "/" + item.id;
+            /* La lista del nivel con la dificultad de cada uno ("tipo:id" →
+               puntos Elo, la misma de «Preguntar»): va a la base con el pedido,
+               y de ahí salen los puntos de cada ejercicio que resuelvan. */
+            const puntuables = { titulo: t.nombre + ", nivel " + nivel.n,
+                ejercicios: Object.fromEntries(items.map((x) => [C.clave(t.id, x.id), tiposDificultad(x) || 1200])) };
             if (items.length) {
                 const solos = document.createElement("div");
                 solos.className = "mt-2 rounded-lg border border-accent-500 bg-accent-50 dark:bg-brand-800 p-2.5";
                 const sp = document.createElement("p");
                 sp.className = "text-xs text-brand-800 dark:text-white";
-                sp.textContent = "Que lo practiquen solos: a cada alumno se le abren los " + items.length + " ejercicios de este nivel en una ventana encima de la clase, y aquí ves cuántos acierta cada uno.";
-                const solosBtn = tiposBoton("🪟 Que lo practiquen solos", TIPOS_BTN_ACCION, () => pedirQueLoAbran("tipos", desde(items[0])), "Cada alumno resuelve el nivel en su tablero; tú ves sus aciertos");
+                sp.textContent = "Que lo practiquen solos: a cada alumno se le abren los " + items.length + " ejercicios de este nivel en una ventana encima de la clase, y aquí ves cuántos acierta cada uno. Cada uno resuelto suma puntos de la clase: más a la primera, menos con cada intento.";
+                const solosBtn = tiposBoton("🪟 Que lo practiquen solos", TIPOS_BTN_ACCION, () => pedirQueLoAbran("tipos", desde(items[0]), puntuables), "Cada alumno resuelve el nivel en su tablero; tú ves sus aciertos");
                 solosBtn.classList.add("mt-1.5");
                 solosBtn.dataset.practicarSolos = "1";
                 solos.append(sp, solosBtn);
@@ -5694,7 +5700,7 @@
                 if (t.id === "remata") acciones.appendChild(tiposBoton("🎯 Practicar", TIPOS_BTN_ACCION, () => tiposPracticar(item.fen), "Cada alumno juega la posición contra el motor para rematar la ventaja"));
                 if (t.id === "tablas") acciones.appendChild(tiposBoton("🎯 Practicar", TIPOS_BTN_ACCION, () => tiposPracticar(item.fen), "Cada alumno juega la posición contra el motor para salvar las tablas"));
                 if (t.id === "con-lo-justo") acciones.appendChild(tiposBoton("🎯 Practicar", TIPOS_BTN_ACCION, () => tiposPracticar(item.fen), "Cada alumno juega el final contra el motor"));
-                acciones.appendChild(tiposBoton("🪟 Que la practiquen", TIPOS_BTN, () => pedirQueLoAbran("tipos", desde(item)), "A cada alumno se le abre este ejercicio en una ventana (y sigue con los del nivel); tú ves sus aciertos"));
+                acciones.appendChild(tiposBoton("🪟 Que la practiquen", TIPOS_BTN, () => pedirQueLoAbran("tipos", desde(item), puntuables), "A cada alumno se le abre este ejercicio en una ventana (y sigue con los del nivel); tú ves sus aciertos"));
                 const respBtn = tiposBoton("🔎 Respuesta", TIPOS_BTN, () => {
                     const abierta = !respWrap.classList.contains("hidden");
                     if (!abierta && !respWrap.firstChild) respWrap.appendChild(tiposRespuesta(t.id, item));
