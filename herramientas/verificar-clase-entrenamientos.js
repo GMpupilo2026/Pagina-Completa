@@ -28,7 +28,10 @@ const path = require("path");
 const { chromium } = require("./lib/playwright-con-sesion");
 const R = require("./verificar-clase-registrada.js");
 
-const { abrir, CHROME } = R;
+const { CHROME } = R;
+// Los anuncios de la presencia salen al instante: acá se prueba lo que dicen, no su ritmo.
+const abrir = (browser, quien, clase, semilla, opciones) =>
+  R.abrir(browser, quien, clase, semilla, Object.assign({ sinTopeDePresencia: true }, opciones));
 const RAIZ = path.join(__dirname, "..");
 const CLASE = { id: "c-viva", created_by: "u-profe", started_at: new Date().toISOString(), ended_at: null };
 const INICIO = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";

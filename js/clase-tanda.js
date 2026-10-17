@@ -372,7 +372,10 @@ function puestoMioEnLaTanda() {
    conectados: unos 900 mensajes de golpe, por encima de los 500 por segundo
    que Realtime deja en el plan Pro (pasado el tope corta a todo el proyecto).
    Cada alumno espera un rato al azar (0,3-4 s) y manda lo último que tenga:
-   varios cambios seguidos salen en un solo anuncio. */
+   varios cambios seguidos salen en un solo anuncio. Y sale por
+   anunciarPresencia(), que no deja pasar más de 4 en 31 s: quien resolvía 10
+   ejercicios en 30 s se quedaba sin canal (ver «La presencia tiene un tope de
+   anuncios»). */
 let tandaAnuncioPendiente = null;
 function anunciarTanda() {
     if (tandaAnuncioPendiente) return;
@@ -387,7 +390,7 @@ async function enviarAnuncioDeTanda() {
     const nuevo = tandaMia ? { at: tandaMia.at, hechos: tandaMia.resultados.length, buenas, i: tandaMia.i, fin: !!tandaMia.fin } : null;
     if (JSON.stringify(nuevo) === JSON.stringify(tandaPresencia)) return;
     tandaPresencia = nuevo;
-    if (presenceChannel && !vistaPrevia) await presenceChannel.track(metaDePresencia());
+    if (!vistaPrevia) await anunciarPresencia();
 }
 
 /* ---------- Lo que llega de game_state ---------- */

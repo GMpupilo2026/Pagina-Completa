@@ -734,14 +734,14 @@ function pedirQueLoAbran(slug, recorte) {
     const e = EntrenosClase.enlaceDe(herramientasDelSitio(), slug, recorte);
     if (!e) return;
     entrenoEnCurso = { slug, recorte: recorte || null, at: new Date().toISOString() };
-    if (presenceChannel && presenceChannel.track) presenceChannel.track(metaDePresencia()).catch((err) => console.error(err));
+    anunciarPresencia();
     pintarEntrenoPedido();
     setStatus("🪟 A tus alumnos se les abre «" + e.label + "» en una ventana encima de la clase.");
 }
 
 function dejarDePedirloAbrir() {
     entrenoEnCurso = null;
-    if (presenceChannel && presenceChannel.track) presenceChannel.track(metaDePresencia()).catch((err) => console.error(err));
+    anunciarPresencia();
     pintarEntrenoPedido();
 }
 

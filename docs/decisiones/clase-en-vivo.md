@@ -1289,6 +1289,52 @@ que la alumna vea la jugada y la pregunta, y que el profe no relea.
 `verificar-clase-tanda.js` comprueba que el anuncio no sale en el acto. Los
 dos fallan sin el arreglo.
 
+### La presencia tiene un tope de anuncios
+
+El 17/10/2026 el profe vio a varios alumnos fuera de «Alumnos conectados»
+estando conectados. En la base estaba la prueba: su latido de asistencia
+(`class_presence_log`) seguía, y en el registro de Realtime había doce
+`ClientPresenceRateLimitReached` de siete alumnos, todos durante la
+competencia y el calentamiento de esa clase.
+
+- **Realtime deja a cada uno 5 anuncios de presencia (`track` o `untrack`)
+  cada 30 s por canal**, y con el sexto **cierra el canal** (no lo deja caer:
+  lo cierra, y un canal cerrado `supabase-js` no lo vuelve a abrir). El alumno
+  sigue viendo la clase —el tablero va por otro canal— y en su pantalla no
+  pasa nada; solo deja de estar en la presencia, hasta que recarga. Es el
+  límite por defecto del servidor (`client_presence_rate_limit`, en
+  `presence_handler.ex` de supabase/realtime), y es aparte de los 500
+  mensajes por segundo del proyecto (ver «Treinta alumnos a la vez»).
+- **Lo que lo pasaba**: en la tanda cada ejercicio cerrado es un anuncio
+  (`anunciarTanda`), y la espera al azar de 0,3-4 s solo junta los que caen
+  dentro de ella. Ese día hubo quien cerró 10 en 30 s (fallar rápido también
+  cierra). A un profe le podía pasar igual con «Mirar y ayudar», la Fotografía
+  o abrir entrenamientos seguidos, y entonces el que dejaba de ver a todos era
+  él.
+- **Todo anuncio sale por `anunciarPresencia()`** (`js/sesion.js`), nunca con
+  `track()` suelto: como mucho 4 cada 31 s (`cupoDePresencia`, uno menos y un
+  segundo más que Realtime). Lo que pide anunciar de más espera su lugar y
+  sale **uno solo, con lo último** (`metaDePresencia()` se arma al mandar):
+  nada se pierde, solo llega más tarde. Lo que cuesta: en una competencia
+  rápida el profe ve la cuenta de cada uno hasta unos 30 s atrasada.
+- **Un canal recién suscrito arranca con el cupo entero**
+  (`reiniciarCupoDePresencia()`): en Realtime es otro proceso, con su cuenta
+  en cero.
+- **Si Realtime cierra el canal igual** (`CLOSED`), la página arma otro a los
+  1-4 s, al azar para que no vuelvan todos juntos, y se vuelve a anunciar.
+  No lo hace si al alumno lo sacaron de la clase (`meSacaron`): ahí se cierra
+  a propósito.
+
+**Al tocar esto, correr `node herramientas/verificar-todo.js
+clase-presencia-tope clase-tanda clase-entrenamientos practica-ayuda`.**
+`verificar-clase-presencia-tope.js` mira que no haya `track()` suelto en las
+partes de la clase, que diez anuncios seguidos no pasen del tope y el que
+espera salga con lo último, y que tras un `CLOSED` haya canal nuevo (y no si
+lo sacaron). Está probado que falla de verdad: mandando siempre en el acto y
+sin reconectar, salta. Los verificadores que prueban qué dice cada anuncio, y
+no su ritmo, abren la página con `sinTopeDePresencia` (en `abrir()` de
+`verificar-clase-registrada.js`).
+
 ### La clase sin actividad se cierra sola
 
 Una clase en línea que nadie cierra se come la del día siguiente (ver «Cerrar
